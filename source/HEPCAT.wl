@@ -25,8 +25,6 @@ Begin["ConstructiveDiagrams`"];
 
 Get[ToFileName[Global`$HEPCATpath,"HEPCAT-Base.wl"]];
 Get[ToFileName[Global`$HEPCATpath,"HEPCAT-Model.wl"]];
-Get[ToFileName[Global`$HEPCATpath,"HEPCAT-SymReg.wl"]];
-Get[ToFileName[Global`$HEPCATpath,"Hayward.wl"]];
 
 
 (* ::Subsection:: *)
