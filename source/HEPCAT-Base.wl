@@ -397,7 +397,7 @@ sps=Sort[DeleteDuplicates[Cases[amp,SpinorChain[__],Infinity]]];
 ];
 
 
-(* ::Subsection::Closed:: *)
+(* ::Subsection:: *)
 (*Simplification*)
 
 
@@ -1151,6 +1151,75 @@ Simplify[res/.finalStandardFormRules]/.{SpinorChainReduced[a___]:>SpinorChain[a]
 (*xFactor*)
 
 
+Options[ReducexFactors]={Momenta->{1,2,3,4},ChannelMomenta->{1,4},ChannelMass->Mchannel};
+Options[xFactorReduced]={Momenta->{1,2,3,4},ChannelMomenta->{1,4},ChannelMass->Mchannel};
+Options[xTildeFactorReduced]={Momenta->{1,2,3,4},ChannelMomenta->{1,4},ChannelMass->Mchannel};
+
+
+ReducexFactors[amp_,OptionsPattern[]]:=Module[{options},
+options={Momenta->Sort[OptionValue[Momenta]],ChannelMomenta->Sort[OptionValue[ChannelMomenta]],ChannelMass->OptionValue[ChannelMass]};
+
+amp//.{
+xFactor[a_,Multiparticle[b__]]:>xFactorReduced[a,Multiparticle[b],options],
+
+xFactor[Multiparticle[b__],a_]:>-xFactorReduced[a,Multiparticle[b],options],
+
+xFactor[Multiparticle[a__],Multiparticle[b__]]:>xFactorReduced[a,Multiparticle[b],options],
+
+xTildeFactor[a_,Multiparticle[b__]]:>xTildeFactorReduced[a,Multiparticle[b],options],
+
+xTildeFactor[Multiparticle[b__],a_]:>-xTildeFactorReduced[a,Multiparticle[b],options],
+
+xTildeFactor[Multiparticle[a__],Multiparticle[b__]]:>xTildeFactorReduced[Multiparticle[a],Multiparticle[b],options]
+}
+]
+
+
+xFactorReduced[p1_,Multiparticle[p2_,p3_],OptionsPattern[]]:=Module[{p4,momenta,channelMomenta,channelPs,channelM},
+momenta=OptionValue[Momenta];
+p4=Complement[momenta,{p1,p2,p3}][[1]];
+channelMomenta=OptionValue[ChannelMomenta];
+If[MemberQ[channelMomenta,p4],
+channelPs=channelMomenta;
+,
+channelPs=Sort[Complement[momenta,channelMomenta]];
+];
+channelM=OptionValue[ChannelMass];
+
+SpinorChainReduced[Spinor["Helicity","Square",p4],Sum[Mom[channelPs[[i]]],{i,1,Length[channelPs]}],Mom[p2]+Mom[p3]-Mom[p1],Spinor["Helicity","Square",p4]]/(2Mass[p1]((channelMomenta/.List->Mandelstahm)-channelM^2))/.SpinorChainReduced->SpinorChain
+];
+
+
+xFactorReduced[p1_,Multiparticle[p2_,p3_],OptionsPattern[]]:=Module[{p4,momenta,channelMomenta,channelPs,channelM},
+momenta=OptionValue[Momenta];
+p4=Complement[momenta,{p1,p2,p3}][[1]];
+channelMomenta=OptionValue[ChannelMomenta];
+If[MemberQ[channelMomenta,p4],
+channelPs=channelMomenta;
+,
+channelPs=Sort[Complement[momenta,channelMomenta]];
+];
+channelM=OptionValue[ChannelMass];
+
+SpinorChainReduced[Spinor["Helicity","Square",p4],Sum[Mom[channelPs[[i]]],{i,1,Length[channelPs]}],Mom[p2]+Mom[p3]-Mom[p1],Spinor["Helicity","Square",p4]]/(2Mass[p1]((channelMomenta/.List->Mandelstahm)-channelM^2))/.SpinorChainReduced->SpinorChain
+];
+
+
+xTildeFactorReduced[p1_,Multiparticle[p2_,p3_],OptionsPattern[]]:=Module[{p4,momenta,channelMomenta,channelPs,channelM},
+momenta=OptionValue[Momenta];
+p4=Complement[momenta,{p1,p2,p3}][[1]];
+channelMomenta=OptionValue[ChannelMomenta];
+If[MemberQ[channelMomenta,p4],
+channelPs=channelMomenta;
+,
+channelPs=Sort[Complement[momenta,channelMomenta]];
+];
+channelM=OptionValue[ChannelMass];
+
+SpinorChainReduced[Spinor["Helicity","Angle",p4],Sum[Mom[channelPs[[i]]],{i,1,Length[channelPs]}],Mom[p2]+Mom[p3]-Mom[p1],Spinor["Helicity","Angle",p4]]/(2Mass[p1]((channelMomenta/.List->Mandelstahm)-channelM^2))/.SpinorChainReduced->SpinorChain
+];
+
+
 (*xFactorReduced[p1_,Multiparticle[p2_,p3_],p4_]:=-SpinorChain[Spinor["Helicity","Angle",p4],Mom[p1],Spinor["Helicity","Square",Complement[{1,2,3,4},{p1,p2,p3}][[1]]]]/(Mass[p1]SpinorChain[Spinor["Helicity","Angle",p4],Spinor["Helicity","Angle",Complement[{1,2,3,4},{p1,p2,p3}][[1]]]]);
 xFactorReduced[Multiparticle[p2_,p3_],p1_,p4_]:=SpinorChain[Spinor["Helicity","Angle",p4],Mom[p1],Spinor["Helicity","Square",Complement[{1,2,3,4},{p1,p2,p3}][[1]]]]/(Mass[p1]SpinorChain[Spinor["Helicity","Angle",p4],Spinor["Helicity","Angle",Complement[{1,2,3,4},{p1,p2,p3}][[1]]]]);
 xTildeFactorReduced[p1_,Multiparticle[p2_,p3_],p4_]:=-SpinorChain[Spinor["Helicity","Square",p4],Mom[p1],Spinor["Helicity","Angle",Complement[{1,2,3,4},{p1,p2,p3}][[1]]]]/(Mass[p1]SpinorChain[Spinor["Helicity","Square",p4],Spinor["Helicity","Square",Complement[{1,2,3,4},{p1,p2,p3}][[1]]]]);
@@ -1211,22 +1280,22 @@ xTildeFactor[p1_,p2_]xFactor[p3_,p4_]+xTildeFactor[p3_,p4_]xFactor[p1_,p2_]/;(Mi
 }*)
 
 
-TransformXXTAngleToSquare[exp_,pi_,pj_]:=exp/.{
+(*TransformXXTAngleToSquare[exp_,pi_,pj_]:=exp/.{
 xFactor[pi,pj]xTildeFactor[pk_,pl_]SpinorChain[Spinor["Spin","Angle",pi],Spinor["Spin","Angle",pj]]/;(Length[Union[{pi,pj,pk,pl}]]==4):>xFactor[pi,pj]xTildeFactor[pk,pl]SpinorChain[Spinor["Spin","Square",pi],Spinor["Spin","Square",pj]]+SpinorChain[Spinor["Spin","Square",pi],Mom[pl],Mom[pk],Spinor["Spin","Square",pj]]/(Mass[pi]Mass[pk])+SpinorChain[Spinor["Spin","Square",pi],Spinor["Spin","Square",pj]]*Mass[pk]/Mass[pi],
 
 xTildeFactor[pi,pj]xFactor[pk_,pl_]SpinorChain[Spinor["Spin","Angle",pi],Spinor["Spin","Angle",pj]]/;(Length[Union[{pi,pj,pk,pl}]]==4):>xTildeFactor[pi,pj]xFactor[pk,pl]SpinorChain[Spinor["Spin","Square",pi],Spinor["Spin","Square",pj]]-SpinorChain[Spinor["Spin","Angle",pi],Mom[pl],Mom[pk],Spinor["Spin","Angle",pj]]/(Mass[pi]Mass[pk])-SpinorChain[Spinor["Spin","Angle",pi],Spinor["Spin","Angle",pj]]*Mass[pk]/Mass[pi]
-}
+}*)
 
 
-TransformXXTSquareToAngle[exp_,pi_,pj_]:=exp/.{
+(*TransformXXTSquareToAngle[exp_,pi_,pj_]:=exp/.{
 xFactor[pi,pj]xTildeFactor[pk_,pl_]SpinorChain[Spinor["Spin","Square",pi],Spinor["Spin","Square",pj]]/;(Length[Union[{pi,pj,pk,pl}]]==4):>xFactor[pi,pj]xTildeFactor[pk,pl]SpinorChain[Spinor["Spin","Angle",pi],Spinor["Spin","Angle",pj]]-SpinorChain[Spinor["Spin","Square",pi],Mom[pl],Mom[pk],Spinor["Spin","Square",pj]]/(Mass[pi]Mass[pk])-SpinorChain[Spinor["Spin","Square",pi],Spinor["Spin","Square",pj]]*Mass[pk]/Mass[pi],
 
 xTildeFactor[pi,pj]xFactor[pk_,pl_]SpinorChain[Spinor["Spin","Square",pi],Spinor["Spin","Square",pj]]/;(Length[Union[{pi,pj,pk,pl}]]==4):>xTildeFactor[pi,pj]xFactor[pk,pl]SpinorChain[Spinor["Spin","Angle",pi],Spinor["Spin","Angle",pj]]+SpinorChain[Spinor["Spin","Angle",pi],Mom[pl],Mom[pk],Spinor["Spin","Angle",pj]]/(Mass[pi]Mass[pk])+SpinorChain[Spinor["Spin","Angle",pi],Spinor["Spin","Angle",pj]]*Mass[pk]/Mass[pi]
-}
+}*)
 
 
-ReduceXXTpXTX[exp_]:=exp/.xTildeFactor[p1_,p2_]xFactor[p3_,p4_]+xTildeFactor[p3_,p4_]xFactor[p1_,p2_]/;(Length[Union[{p1,p2,p3,p4}]]==4):>- (MomProd[p2,p4]-MomProd[p1,p4]-MomProd[p2,p3]+MomProd[p1,p3])/(2Mass[p2] Mass[p4])
-
+(*ReduceXXTpXTX[exp_]:=exp/.xTildeFactor[p1_,p2_]xFactor[p3_,p4_]+xTildeFactor[p3_,p4_]xFactor[p1_,p2_]/;(Length[Union[{p1,p2,p3,p4}]]==4):>- (MomProd[p2,p4]-MomProd[p1,p4]-MomProd[p2,p3]+MomProd[p1,p3])/(2Mass[p2] Mass[p4])
+*)
 
 
 (* ::Subsubsection::Closed:: *)
