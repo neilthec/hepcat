@@ -119,6 +119,8 @@ Format[Coupling[a_]]:=nice[Coupling[a]]
 nice[Coupling[a_]]:=Subscript["g", a]
 Format[Mandelstahm[i_,j_]]:=nice[Mandelstahm[i,j]]
 nice[Mandelstahm[i_,j_]]:=Subscript["s",ToString[i]<>ToString[j]]
+nice[xk]:=Subscript["k","x"]
+nice[xq]:=Subscript["q","x"]
 
 
 (* ::Subsubsection::Closed:: *)
@@ -1147,7 +1149,7 @@ Simplify[res/.finalStandardFormRules]/.{SpinorChainReduced[a___]:>SpinorChain[a]
 ]
 
 
-(* ::Subsubsection::Closed:: *)
+(* ::Subsubsection:: *)
 (*xFactor*)
 
 
@@ -1156,10 +1158,17 @@ Options[xFactorReduced]={Momenta->{1,2,3,4},ChannelMomenta->{1,4},ChannelMass->M
 Options[xTildeFactorReduced]={Momenta->{1,2,3,4},ChannelMomenta->{1,4},ChannelMass->Mchannel};
 
 
-ReducexFactors[amp_,OptionsPattern[]]:=Module[{options},
-options={Momenta->Sort[OptionValue[Momenta]],ChannelMomenta->Sort[OptionValue[ChannelMomenta]],ChannelMass->OptionValue[ChannelMass]};
+ReducexFactors[amp_,OptionsPattern[]]:=Module[{options,momenta,channelMomenta,complementMomenta},
+momenta=OptionValue[Momenta];
+channelMomenta=Sort[OptionValue[ChannelMomenta]];
+complementMomenta=Sort[Complement[momenta,channelMomenta]];
+options={Momenta->momenta,ChannelMomenta->channelMomenta,ChannelMass->OptionValue[ChannelMass]};
 
-amp//.{
+ReduceSpinorProducts[ReduceSpinorProducts[ReduceSpinorProducts[ReduceSpinorProducts[ReduceSpinContractions[amp//.{
+xFactor[i_,j_]/;(Head[i]==Integer&&Head[j]==Integer):>xFactorReduced[i,j],
+
+xTildeFactor[i_,j_]/;(Head[i]==Integer&&Head[j]==Integer):>xTildeFactorReduced[i,j],
+
 xFactor[a_,Multiparticle[b__]]:>xFactorReduced[a,Multiparticle[b],options],
 
 xFactor[Multiparticle[b__],a_]:>-xFactorReduced[a,Multiparticle[b],options],
@@ -1171,7 +1180,16 @@ xTildeFactor[a_,Multiparticle[b__]]:>xTildeFactorReduced[a,Multiparticle[b],opti
 xTildeFactor[Multiparticle[b__],a_]:>-xTildeFactorReduced[a,Multiparticle[b],options],
 
 xTildeFactor[Multiparticle[a__],Multiparticle[b__]]:>xTildeFactorReduced[Multiparticle[a],Multiparticle[b],options]
-}
+}]]/.{
+SpinorChain[Spinor[sp_,"Square",p1_],Mom[xk],Spinor[sp_,"Angle",p2_]]SpinorChain[Spinor[sp_,"Square",p3_],Mom[xq],Spinor[sp_,"Angle",p4_]]:>-SpinorChain[Spinor[sp,"Angle",p4],Spinor[sp,"Angle",p2]]SpinorChain[Spinor[sp,"Square",p3],Mom[xq],Mom[xk],Spinor[sp,"Square",p1]]+SpinorChain[Spinor[sp,"Angle",p4],Mom[xk],Spinor[sp,"Square",p1]]SpinorChain[Spinor[sp,"Square",p3],Mom[xq],Spinor[sp,"Angle",p2]]
+}]/.{
+SpinorChain[Spinor[sp_,"Square",p1_],Mom[xq],Mom[xk],Spinor[sp_,"Square",p2_]]:>2MomProd[xq,xk]SpinorChain[Spinor[sp,"Square",p1],Spinor[sp,"Square",p2]]-SpinorChain[Spinor[sp,"Square",p1],Mom[xk],Mom[xq],Spinor[sp,"Square",p2]]
+}]/.{
+SpinorChain[Spinor[sp1_,sa1_,channelMomenta[[1]]],Mom[xk],Spinor[sp2_,sa2_,channelMomenta[[2]]]]->SpinorChain[Spinor[sp1,sa1,channelMomenta[[1]]],Mom[Multiparticle[channelMomenta[[1]],channelMomenta[[2]]]],Spinor[sp2,sa2,channelMomenta[[2]]]],
+SpinorChain[Spinor[sp1_,sa1_,channelMomenta[[2]]],Mom[xk],Spinor[sp2_,sa2_,channelMomenta[[1]]]]->SpinorChain[Spinor[sp1,sa1,channelMomenta[[2]]],Mom[Multiparticle[channelMomenta[[1]],channelMomenta[[2]]]],Spinor[sp2,sa2,channelMomenta[[1]]]],
+SpinorChain[Spinor[sp1_,sa1_,complementMomenta[[1]]],Mom[xk],Spinor[sp2_,sa2_,complementMomenta[[2]]]]->SpinorChain[Spinor[sp1,sa1,complementMomenta[[1]]],Mom[Multiparticle[complementMomenta[[1]],complementMomenta[[2]]]],Spinor[sp2,sa2,complementMomenta[[2]]]],
+SpinorChain[Spinor[sp1_,sa1_,complementMomenta[[2]]],Mom[xk],Spinor[sp2_,sa2_,complementMomenta[[1]]]]->SpinorChain[Spinor[sp1,sa1,complementMomenta[[2]]],Mom[Multiparticle[complementMomenta[[1]],complementMomenta[[2]]]],Spinor[sp2,sa2,complementMomenta[[1]]]]
+}]
 ]
 
 
@@ -1218,6 +1236,12 @@ channelM=OptionValue[ChannelMass];
 
 SpinorChainReduced[Spinor["Helicity","Angle",p4],Sum[Mom[channelPs[[i]]],{i,1,Length[channelPs]}],Mom[p2]+Mom[p3]-Mom[p1],Spinor["Helicity","Angle",p4]]/(2Mass[p1]((channelMomenta/.List->Mandelstahm)-channelM^2))/.SpinorChainReduced->SpinorChain
 ];
+
+
+Unprotect[Times];
+xFactorReduced[i_,j_]SpinorChain[Spinor["Spin","Angle",i_],Spinor["Spin","Angle",j_]]:=(SpinorChain[Spinor["Spin","Angle",j],Spinor["Helicity","Angle",xq]]SpinorChain[Spinor["Spin","Square",i],Spinor["Helicity","Square",xk]]+SpinorChain[Spinor["Spin","Angle",i],Spinor["Helicity","Angle",xq]]SpinorChain[Spinor["Spin","Square",j],Spinor["Helicity","Square",xk]])/SpinorChain[Spinor["Helicity","Angle",xq],Spinor["Helicity","Angle",xk]];
+xTildeFactorReduced[i_,j_]SpinorChain[Spinor["Spin","Square",i_],Spinor["Spin","Square",j_]]:=(SpinorChain[Spinor["Spin","Square",j],Spinor["Helicity","Square",xq]]SpinorChain[Spinor["Spin","Angle",i],Spinor["Helicity","Angle",xk]]+SpinorChain[Spinor["Spin","Square",i],Spinor["Helicity","Square",xq]]SpinorChain[Spinor["Spin","Angle",j],Spinor["Helicity","Angle",xk]])/SpinorChain[Spinor["Helicity","Square",xq],Spinor["Helicity","Square",xk]];
+Protect[Times];
 
 
 (*xFactorReduced[p1_,Multiparticle[p2_,p3_],p4_]:=-SpinorChain[Spinor["Helicity","Angle",p4],Mom[p1],Spinor["Helicity","Square",Complement[{1,2,3,4},{p1,p2,p3}][[1]]]]/(Mass[p1]SpinorChain[Spinor["Helicity","Angle",p4],Spinor["Helicity","Angle",Complement[{1,2,3,4},{p1,p2,p3}][[1]]]]);
