@@ -399,8 +399,8 @@ sps=Sort[DeleteDuplicates[Cases[amp,SpinorChain[__],Infinity]]];
 ];
 
 
-(* ::Subsection:: *)
-(*Simplification*)
+(* ::Subsection::Closed:: *)
+(*Simplification *)
 
 
 (* ::Subsubsection::Closed:: *)
@@ -444,25 +444,44 @@ SpinorChain[Spinor["Helicity","Angle",pN_,J_],b__]SpinorChain[Spinor["Helicity",
 SpinorChain[b__,Spinor["Helicity","Angle",pN_,J_]]SpinorChain[d__,Spinor["Helicity","Square",pN_,J_]]:>(-1)^Length[List[d]] SpinorChain[b,Mom[pN],ReverseSequence[d]],
 
 (*Old Helicity Amplitude Rules*)
+(*...|b>[b|... and ...|b]<b|...*)
 SpinorChain[a__,Spinor["Helicity","Angle",b_]]SpinorChain[Spinor["Helicity","Square",b_],c__]:>SpinorChain[a,Mom[b],c],
 SpinorChain[a__,Spinor["Helicity","Square",b_]]SpinorChain[Spinor["Helicity","Angle",b_],c__]:>SpinorChain[a,Mom[b],c],
+
 SpinorChain[a__,Spinor["Helicity","Angle",b_]]^d_ SpinorChain[Spinor["Helicity","Square",b_],c__]^d_:>SpinorChain[a,Mom[b],c]^d,
 SpinorChain[a__,Spinor["Helicity","Square",b_]]^d_ SpinorChain[Spinor["Helicity","Angle",b_],c__]^d_:>SpinorChain[a,Mom[b],c]^d,
-SpinorChain[a__,Spinor["Helicity","Angle",b_]]SpinorChain[Spinor["Helicity","Square",b_],c__]^2:>SpinorChain[a,Mom[b],c]SpinorChain[Spinor["Helicity","Square",b],c],
-SpinorChain[a__,Spinor["Helicity","Angle",b_]]^2 SpinorChain[Spinor["Helicity","Square",b_],c__]:>SpinorChain[a,Spinor["Helicity","Angle",b]]SpinorChain[a,Mom[b],c],
-SpinorChain[a__,Spinor["Helicity","Square",b_]]SpinorChain[Spinor["Helicity","Angle",b_],c__]^2:>SpinorChain[a,Mom[b],c]SpinorChain[Spinor["Helicity","Angle",b],c],
-SpinorChain[a__,Spinor["Helicity","Square",b_]]^2 SpinorChain[Spinor["Helicity","Angle",b_],c__]:>SpinorChain[a,Spinor["Helicity","Square",b]]SpinorChain[a,Mom[b],c],
 
+SpinorChain[a__,Spinor["Helicity","Angle",b_]]SpinorChain[Spinor["Helicity","Square",b_],c__]^n_/;n>0:>SpinorChain[a,Mom[b],c]SpinorChain[Spinor["Helicity","Square",b],c]^(n-1),
+SpinorChain[a__,Spinor["Helicity","Angle",b_]]^n_ SpinorChain[Spinor["Helicity","Square",b_],c__]/;n>0:>SpinorChain[a,Spinor["Helicity","Angle",b]]^(n-1)SpinorChain[a,Mom[b],c],
+SpinorChain[a__,Spinor["Helicity","Square",b_]]SpinorChain[Spinor["Helicity","Angle",b_],c__]^n_/;n>0:>SpinorChain[a,Mom[b],c]SpinorChain[Spinor["Helicity","Angle",b],c]^(n-1),
+SpinorChain[a__,Spinor["Helicity","Square",b_]]^n_ SpinorChain[Spinor["Helicity","Angle",b_],c__]/;n>0:>SpinorChain[a,Spinor["Helicity","Square",b]]^(n-1)SpinorChain[a,Mom[b],c],
+
+(*...|b>...|b] and ...|b]...|b>*)
 SpinorChain[Spinor["Helicity","Square",pN_],b__]SpinorChain[Spinor["Helicity","Angle",pN_],d__]:>
 (-1)^Length[List[d]] SpinorChain[ReverseSequence[d],Mom[pN],b],
 SpinorChain[b__,Spinor["Helicity","Square",pN_]]SpinorChain[d__,Spinor["Helicity","Angle",pN_]]:>(-1)^Length[List[d]] SpinorChain[b,Mom[pN],ReverseSequence[d]],
 SpinorChain[Spinor["Helicity","Angle",pN_],b__]SpinorChain[Spinor["Helicity","Square",pN_],d__]:>(-1)^Length[List[d]] SpinorChain[ReverseSequence[d],Mom[pN],b],
 SpinorChain[b__,Spinor["Helicity","Angle",pN_]]SpinorChain[d__,Spinor["Helicity","Square",pN_]]:>(-1)^Length[List[d]] SpinorChain[b,Mom[pN],ReverseSequence[d]],
+
 SpinorChain[Spinor["Helicity","Square",pN_],b__]^pow_ SpinorChain[Spinor["Helicity","Angle",pN_],d__]^pow_:>
-(-1)^Length[List[d]] SpinorChain[ReverseSequence[d],Mom[pN],b]^pow,
-SpinorChain[b__,Spinor["Helicity","Square",pN_]]^pow_ SpinorChain[d__,Spinor["Helicity","Angle",pN_]]^pow_:>(-1)^Length[List[d]] SpinorChain[b,Mom[pN],ReverseSequence[d]]^pow,
-SpinorChain[Spinor["Helicity","Angle",pN_],b__]^pow_ SpinorChain[Spinor["Helicity","Square",pN_],d__]^pow_:>(-1)^Length[List[d]] SpinorChain[ReverseSequence[d],Mom[pN],b]^pow,
-SpinorChain[b__,Spinor["Helicity","Angle",pN_]]^pow_ SpinorChain[d__,Spinor["Helicity","Square",pN_]]^pow_:>(-1)^Length[List[d]] SpinorChain[b,Mom[pN],ReverseSequence[d]]^pow,
+(-1)^(pow Length[List[d]]) SpinorChain[ReverseSequence[d],Mom[pN],b]^pow,
+SpinorChain[b__,Spinor["Helicity","Square",pN_]]^pow_ SpinorChain[d__,Spinor["Helicity","Angle",pN_]]^pow_:>(-1)^(pow Length[List[d]]) SpinorChain[b,Mom[pN],ReverseSequence[d]]^pow,
+SpinorChain[Spinor["Helicity","Angle",pN_],b__]^pow_ SpinorChain[Spinor["Helicity","Square",pN_],d__]^pow_:>(-1)^(pow Length[List[d]]) SpinorChain[ReverseSequence[d],Mom[pN],b]^pow,
+SpinorChain[b__,Spinor["Helicity","Angle",pN_]]^pow_ SpinorChain[d__,Spinor["Helicity","Square",pN_]]^pow_:>(-1)^(pow Length[List[d]]) SpinorChain[b,Mom[pN],ReverseSequence[d]]^pow,
+
+SpinorChain[Spinor["Helicity","Square",pN_],b__]^pow_ SpinorChain[Spinor["Helicity","Angle",pN_],d__]/;(pow>0):>
+SpinorChain[Spinor["Helicity","Square",pN],b]^(pow-1)Length[List[d]] SpinorChain[ReverseSequence[d],Mom[pN],b],
+SpinorChain[Spinor["Helicity","Square",pN_],b__]SpinorChain[Spinor["Helicity","Angle",pN_],d__]^pow_/;(pow>0):>
+SpinorChain[Spinor["Helicity","Angle",pN],d]^(pow-1)(-1)^Length[List[d]] SpinorChain[ReverseSequence[d],Mom[pN],b],
+
+SpinorChain[b__,Spinor["Helicity","Square",pN_]]^pow_ SpinorChain[d__,Spinor["Helicity","Angle",pN_]]/;(pow>0):>SpinorChain[b,Spinor["Helicity","Square",pN]]^(pow-1)(-1)^Length[List[d]] SpinorChain[b,Mom[pN],ReverseSequence[d]],
+SpinorChain[b__,Spinor["Helicity","Square",pN_]]SpinorChain[d__,Spinor["Helicity","Angle",pN_]]^pow_/;(pow>0):>SpinorChain[d,Spinor["Helicity","Angle",pN]]^(pow-1)(-1)^Length[List[d]] SpinorChain[b,Mom[pN],ReverseSequence[d]],
+
+SpinorChain[Spinor["Helicity","Angle",pN_],b__]^pow_ SpinorChain[Spinor["Helicity","Square",pN_],d__]/;(pow>0):>SpinorChain[Spinor["Helicity","Angle",pN],b]^(pow-1)(-1)^Length[List[d]] SpinorChain[ReverseSequence[d],Mom[pN],b],
+SpinorChain[Spinor["Helicity","Angle",pN_],b__]SpinorChain[Spinor["Helicity","Square",pN_],d__]^pow_/;(pow>0):>SpinorChain[Spinor["Helicity","Square",pN],d]^(pow-1)(-1)^Length[List[d]] SpinorChain[ReverseSequence[d],Mom[pN],b],
+
+SpinorChain[b__,Spinor["Helicity","Angle",pN_]]^pow_ SpinorChain[d__,Spinor["Helicity","Square",pN_]]/;(pow>0):>SpinorChain[b,Spinor["Helicity","Angle",pN]]^(pow-1)(-1)^Length[List[d]] SpinorChain[b,Mom[pN],ReverseSequence[d]],
+SpinorChain[b__,Spinor["Helicity","Angle",pN_]]SpinorChain[d__,Spinor["Helicity","Square",pN_]]^pow_/;(pow>0):>SpinorChain[d,Spinor["Helicity","Square",pN]]^(pow-1)(-1)^Length[List[d]] SpinorChain[b,Mom[pN],ReverseSequence[d]],
 
 (*SpinorChain[Spinor...Spinor]\[Rule]SpinorTr[...]*)
 SpinorChain[Spinor["Spin","Upper","Square",pN_,J_],a___,Spinor["Spin","Lower","Angle",pN_,J_]]:>-SpinorTrace[Mom[pN],a],
@@ -1149,7 +1168,7 @@ Simplify[res/.finalStandardFormRules]/.{SpinorChainReduced[a___]:>SpinorChain[a]
 ]
 
 
-(* ::Subsubsection:: *)
+(* ::Subsubsection::Closed:: *)
 (*xFactor*)
 
 
@@ -1164,7 +1183,7 @@ channelMomenta=Sort[OptionValue[ChannelMomenta]];
 complementMomenta=Sort[Complement[momenta,channelMomenta]];
 options={Momenta->momenta,ChannelMomenta->channelMomenta,ChannelMass->OptionValue[ChannelMass]};
 
-ReduceSpinorProducts[ReduceSpinorProducts[ReduceSpinorProducts[ReduceSpinorProducts[ReduceSpinContractions[amp//.{
+amp//.{
 xFactor[i_,j_]/;(Head[i]==Integer&&Head[j]==Integer):>xFactorReduced[i,j],
 
 xTildeFactor[i_,j_]/;(Head[i]==Integer&&Head[j]==Integer):>xTildeFactorReduced[i,j],
@@ -1180,16 +1199,7 @@ xTildeFactor[a_,Multiparticle[b__]]:>xTildeFactorReduced[a,Multiparticle[b],opti
 xTildeFactor[Multiparticle[b__],a_]:>-xTildeFactorReduced[a,Multiparticle[b],options],
 
 xTildeFactor[Multiparticle[a__],Multiparticle[b__]]:>xTildeFactorReduced[Multiparticle[a],Multiparticle[b],options]
-}]]/.{
-SpinorChain[Spinor[sp_,"Square",p1_],Mom[xk],Spinor[sp_,"Angle",p2_]]SpinorChain[Spinor[sp_,"Square",p3_],Mom[xq],Spinor[sp_,"Angle",p4_]]:>-SpinorChain[Spinor[sp,"Angle",p4],Spinor[sp,"Angle",p2]]SpinorChain[Spinor[sp,"Square",p3],Mom[xq],Mom[xk],Spinor[sp,"Square",p1]]+SpinorChain[Spinor[sp,"Angle",p4],Mom[xk],Spinor[sp,"Square",p1]]SpinorChain[Spinor[sp,"Square",p3],Mom[xq],Spinor[sp,"Angle",p2]]
-}]/.{
-SpinorChain[Spinor[sp_,"Square",p1_],Mom[xq],Mom[xk],Spinor[sp_,"Square",p2_]]:>2MomProd[xq,xk]SpinorChain[Spinor[sp,"Square",p1],Spinor[sp,"Square",p2]]-SpinorChain[Spinor[sp,"Square",p1],Mom[xk],Mom[xq],Spinor[sp,"Square",p2]]
-}]/.{
-SpinorChain[Spinor[sp1_,sa1_,channelMomenta[[1]]],Mom[xk],Spinor[sp2_,sa2_,channelMomenta[[2]]]]->SpinorChain[Spinor[sp1,sa1,channelMomenta[[1]]],Mom[Multiparticle[channelMomenta[[1]],channelMomenta[[2]]]],Spinor[sp2,sa2,channelMomenta[[2]]]],
-SpinorChain[Spinor[sp1_,sa1_,channelMomenta[[2]]],Mom[xk],Spinor[sp2_,sa2_,channelMomenta[[1]]]]->SpinorChain[Spinor[sp1,sa1,channelMomenta[[2]]],Mom[Multiparticle[channelMomenta[[1]],channelMomenta[[2]]]],Spinor[sp2,sa2,channelMomenta[[1]]]],
-SpinorChain[Spinor[sp1_,sa1_,complementMomenta[[1]]],Mom[xk],Spinor[sp2_,sa2_,complementMomenta[[2]]]]->SpinorChain[Spinor[sp1,sa1,complementMomenta[[1]]],Mom[Multiparticle[complementMomenta[[1]],complementMomenta[[2]]]],Spinor[sp2,sa2,complementMomenta[[2]]]],
-SpinorChain[Spinor[sp1_,sa1_,complementMomenta[[2]]],Mom[xk],Spinor[sp2_,sa2_,complementMomenta[[1]]]]->SpinorChain[Spinor[sp1,sa1,complementMomenta[[2]]],Mom[Multiparticle[complementMomenta[[1]],complementMomenta[[2]]]],Spinor[sp2,sa2,complementMomenta[[1]]]]
-}]
+}
 ]
 
 
@@ -1239,9 +1249,38 @@ SpinorChainReduced[Spinor["Helicity","Angle",p4],Sum[Mom[channelPs[[i]]],{i,1,Le
 
 
 Unprotect[Times];
-xFactorReduced[i_,j_]SpinorChain[Spinor["Spin","Angle",i_],Spinor["Spin","Angle",j_]]:=(SpinorChain[Spinor["Spin","Angle",j],Spinor["Helicity","Angle",xq]]SpinorChain[Spinor["Spin","Square",i],Spinor["Helicity","Square",xk]]+SpinorChain[Spinor["Spin","Angle",i],Spinor["Helicity","Angle",xq]]SpinorChain[Spinor["Spin","Square",j],Spinor["Helicity","Square",xk]])/SpinorChain[Spinor["Helicity","Angle",xq],Spinor["Helicity","Angle",xk]];
-xTildeFactorReduced[i_,j_]SpinorChain[Spinor["Spin","Square",i_],Spinor["Spin","Square",j_]]:=(SpinorChain[Spinor["Spin","Square",j],Spinor["Helicity","Square",xq]]SpinorChain[Spinor["Spin","Angle",i],Spinor["Helicity","Angle",xk]]+SpinorChain[Spinor["Spin","Square",i],Spinor["Helicity","Square",xq]]SpinorChain[Spinor["Spin","Angle",j],Spinor["Helicity","Angle",xk]])/SpinorChain[Spinor["Helicity","Square",xq],Spinor["Helicity","Square",xk]];
+Unprotect[Plus];
+(*xij xtlk <ij>[lk] + xtij xlk [ij]<lk>*)
+xFactorReduced[i_,j_]xTildeFactorReduced[l_,k_]SpinorChain[Spinor["Spin","Angle",i_],Spinor["Spin","Angle",j_]]SpinorChain[Spinor["Spin","Square",l_],Spinor["Spin","Square",k_]]+xTildeFactorReduced[i_,j_]xFactorReduced[l_,k_]SpinorChain[Spinor["Spin","Square",i_],Spinor["Spin","Square",j_]]SpinorChain[Spinor["Spin","Angle",l_],Spinor["Spin","Angle",k_]]:=-(SpinorChain[Spinor["Spin","Angle",i],Spinor["Spin","Angle",k]]SpinorChain[Spinor["Spin","Square",j],Spinor["Spin","Square",l]]+SpinorChain[Spinor["Spin","Angle",i],Spinor["Spin","Angle",l]]SpinorChain[Spinor["Spin","Square",j],Spinor["Spin","Square",k]]+SpinorChain[Spinor["Spin","Angle",j],Spinor["Spin","Angle",k]]SpinorChain[Spinor["Spin","Square",i],Spinor["Spin","Square",l]]+SpinorChain[Spinor["Spin","Angle",j],Spinor["Spin","Angle",l]]SpinorChain[Spinor["Spin","Square",i],Spinor["Spin","Square",k]]);
+
+(*xij xtlk <ij>^2[lk] + xtij xlk [ij]^2<lk>*)
+xFactorReduced[i_,j_]xTildeFactorReduced[l_,k_]SpinorChain[Spinor["Spin","Angle",i_],Spinor["Spin","Angle",j_]]^2SpinorChain[Spinor["Spin","Square",l_],Spinor["Spin","Square",k_]]+xTildeFactorReduced[i_,j_]xFactorReduced[l_,k_]SpinorChain[Spinor["Spin","Square",i_],Spinor["Spin","Square",j_]]^2SpinorChain[Spinor["Spin","Angle",l_],Spinor["Spin","Angle",k_]]:=
+-1/2(SpinorChain[Spinor["Spin","Angle",i],Spinor["Spin","Angle",j]]+SpinorChain[Spinor["Spin","Square",i],Spinor["Spin","Square",j]])(SpinorChain[Spinor["Spin","Angle",i],Spinor["Spin","Angle",k]]SpinorChain[Spinor["Spin","Square",j],Spinor["Spin","Square",l]]+SpinorChain[Spinor["Spin","Angle",i],Spinor["Spin","Angle",l]]SpinorChain[Spinor["Spin","Square",j],Spinor["Spin","Square",k]]+SpinorChain[Spinor["Spin","Angle",j],Spinor["Spin","Angle",k]]SpinorChain[Spinor["Spin","Square",i],Spinor["Spin","Square",l]]+SpinorChain[Spinor["Spin","Angle",j],Spinor["Spin","Angle",l]]SpinorChain[Spinor["Spin","Square",i],Spinor["Spin","Square",k]])+
+1/2SpinorChain[Spinor["Spin","Angle",i],Spinor["Spin","Angle",j]]SpinorChain[Spinor["Spin","Square",l],Spinor["Spin","Square",k]](SpinorChain[Spinor["Spin","Square",i],Mom[l],Mom[k],Spinor["Spin","Square",j]]/Mass[l]/Mass[j]+SpinorChain[Spinor["Spin","Square",i],Spinor["Spin","Square",j]]*Mass[l]/Mass[j])+1/2SpinorChain[Spinor["Spin","Square",i],Spinor["Spin","Square",j]]SpinorChain[Spinor["Spin","Angle",l],Spinor["Spin","Angle",k]](SpinorChain[Spinor["Spin","Angle",i],Mom[l],Mom[k],Spinor["Spin","Angle",j]]/Mass[l]/Mass[j]+SpinorChain[Spinor["Spin","Angle",i],Spinor["Spin","Angle",j]]*Mass[l]/Mass[j]);
+
+(*xij xtlk <ij>^2[lk]^2 + xtij xlk [ij]^2<lk>^2*)
+xFactorReduced[i_,j_]xTildeFactorReduced[l_,k_]SpinorChain[Spinor["Spin","Angle",i_],Spinor["Spin","Angle",j_]]^2SpinorChain[Spinor["Spin","Square",l_],Spinor["Spin","Square",k_]]^2+xTildeFactorReduced[i_,j_]xFactorReduced[l_,k_]SpinorChain[Spinor["Spin","Square",i_],Spinor["Spin","Square",j_]]^2SpinorChain[Spinor["Spin","Angle",l_],Spinor["Spin","Angle",k_]]^2:=-1/2(SpinorChain[Spinor["Spin","Angle",i],Spinor["Spin","Angle",j]]SpinorChain[Spinor["Spin","Square",l],Spinor["Spin","Square",k]]+SpinorChain[Spinor["Spin","Square",i],Spinor["Spin","Square",j]]SpinorChain[Spinor["Spin","Angle",l],Spinor["Spin","Angle",k]])(SpinorChain[Spinor["Spin","Angle",i],Spinor["Spin","Angle",k]]SpinorChain[Spinor["Spin","Square",j],Spinor["Spin","Square",l]]+SpinorChain[Spinor["Spin","Angle",i],Spinor["Spin","Angle",l]]SpinorChain[Spinor["Spin","Square",j],Spinor["Spin","Square",k]]+SpinorChain[Spinor["Spin","Angle",j],Spinor["Spin","Angle",k]]SpinorChain[Spinor["Spin","Square",i],Spinor["Spin","Square",l]]+SpinorChain[Spinor["Spin","Angle",j],Spinor["Spin","Angle",l]]SpinorChain[Spinor["Spin","Square",i],Spinor["Spin","Square",k]])+1/4SpinorChain[Spinor["Spin","Angle",i],Spinor["Spin","Angle",j]]SpinorChain[Spinor["Spin","Square",l],Spinor["Spin","Square",k]]^2(SpinorChain[Spinor["Spin","Square",i],Mom[l],Mom[k],Spinor["Spin","Square",j]]/Mass[l]/Mass[j]+SpinorChain[Spinor["Spin","Square",i],Spinor["Spin","Square",j]]*Mass[l]/Mass[j])+1/4SpinorChain[Spinor["Spin","Angle",i],Spinor["Spin","Angle",j]]SpinorChain[Spinor["Spin","Square",i],Spinor["Spin","Square",j]]SpinorChain[Spinor["Spin","Square",l],Spinor["Spin","Square",k]](SpinorChain[Spinor["Spin","Angle",l],Mom[j],Mom[i],Spinor["Spin","Angle",k]]/Mass[l]/Mass[j]+SpinorChain[Spinor["Spin","Angle",l],Spinor["Spin","Angle",k]]*Mass[j]/Mass[l])+1/4SpinorChain[Spinor["Spin","Square",l],Spinor["Spin","Square",k]]SpinorChain[Spinor["Spin","Angle",i],Spinor["Spin","Angle",j]]^2(SpinorChain[Spinor["Spin","Angle",l],Mom[i],Mom[j],Spinor["Spin","Angle",k]]/Mass[l]/Mass[j]+SpinorChain[Spinor["Spin","Angle",l],Spinor["Spin","Angle",k]]*Mass[i]/Mass[k])+1/4SpinorChain[Spinor["Spin","Square",l],Spinor["Spin","Square",k]]SpinorChain[Spinor["Spin","Angle",l],Spinor["Spin","Angle",k]]SpinorChain[Spinor["Spin","Angle",i],Spinor["Spin","Angle",j]](SpinorChain[Spinor["Spin","Square",i],Mom[k],Mom[l],Spinor["Spin","Square",j]]/Mass[l]/Mass[j]+SpinorChain[Spinor["Spin","Square",i],Spinor["Spin","Square",j]]*Mass[k]/Mass[i])+1/4SpinorChain[Spinor["Spin","Angle",l],Spinor["Spin","Angle",k]]SpinorChain[Spinor["Spin","Square",i],Spinor["Spin","Square",j]]^2(SpinorChain[Spinor["Spin","Square",l],Mom[i],Mom[j],Spinor["Spin","Square",k]]/Mass[l]/Mass[j]+SpinorChain[Spinor["Spin","Square",l],Spinor["Spin","Square",k]]*Mass[i]/Mass[k])+1/4SpinorChain[Spinor["Spin","Angle",l],Spinor["Spin","Angle",k]]SpinorChain[Spinor["Spin","Square",l],Spinor["Spin","Square",k]]SpinorChain[Spinor["Spin","Square",i],Spinor["Spin","Square",j]](SpinorChain[Spinor["Spin","Angle",i],Mom[k],Mom[l],Spinor["Spin","Angle",j]]/Mass[l]/Mass[j]+SpinorChain[Spinor["Spin","Angle",i],Spinor["Spin","Angle",j]]*Mass[k]/Mass[i])+1/4SpinorChain[Spinor["Spin","Square",i],Spinor["Spin","Square",j]]SpinorChain[Spinor["Spin","Angle",l],Spinor["Spin","Angle",k]]^2(SpinorChain[Spinor["Spin","Angle",i],Mom[l],Mom[k],Spinor["Spin","Angle",j]]/Mass[l]/Mass[j]+SpinorChain[Spinor["Spin","Angle",i],Spinor["Spin","Angle",j]]*Mass[l]/Mass[j])+1/4SpinorChain[Spinor["Spin","Square",i],Spinor["Spin","Square",j]]SpinorChain[Spinor["Spin","Angle",i],Spinor["Spin","Angle",j]]SpinorChain[Spinor["Spin","Angle",l],Spinor["Spin","Angle",k]](SpinorChain[Spinor["Spin","Square",l],Mom[j],Mom[i],Spinor["Spin","Square",k]]/Mass[l]/Mass[j]+SpinorChain[Spinor["Spin","Square",l],Spinor["Spin","Square",k]]*Mass[j]/Mass[l]);
+
+
+Protect[Plus];
 Protect[Times];
+
+
+(*Unprotect[Times];
+
+xFactorReduced[i_,j_]SpinorChain[Spinor["Spin","Angle",i_],Spinor["Spin","Angle",j_]]:=-(SpinorChain[Spinor["Spin","Angle",j],Spinor["Helicity","Angle",xq]]SpinorChain[Spinor["Spin","Square",i],Spinor["Helicity","Square",xk]]+SpinorChain[Spinor["Spin","Angle",i],Spinor["Helicity","Angle",xq]]SpinorChain[Spinor["Spin","Square",j],Spinor["Helicity","Square",xk]])/SpinorChain[Spinor["Helicity","Angle",xq],Spinor["Helicity","Angle",xk]];
+xTildeFactorReduced[i_,j_]SpinorChain[Spinor["Spin","Square",i_],Spinor["Spin","Square",j_]]:=-(SpinorChain[Spinor["Spin","Square",j],Spinor["Helicity","Square",xq]]SpinorChain[Spinor["Spin","Angle",i],Spinor["Helicity","Angle",xk]]+SpinorChain[Spinor["Spin","Square",i],Spinor["Helicity","Square",xq]]SpinorChain[Spinor["Spin","Angle",j],Spinor["Helicity","Angle",xk]])/SpinorChain[Spinor["Helicity","Square",xq],Spinor["Helicity","Square",xk]];
+
+xFactorReduced[i_,j_]SpinorChain[Spinor["Spin","Angle",i_],Spinor["Spin","Angle",j_]]^n_/;n>0:=-SpinorChain[Spinor["Spin","Angle",i],Spinor["Spin","Angle",j]](SpinorChain[Spinor["Spin","Angle",j],Spinor["Helicity","Angle",xq]]SpinorChain[Spinor["Spin","Square",i],Spinor["Helicity","Square",xk]]+SpinorChain[Spinor["Spin","Angle",i],Spinor["Helicity","Angle",xq]]SpinorChain[Spinor["Spin","Square",j],Spinor["Helicity","Square",xk]])/SpinorChain[Spinor["Helicity","Angle",xq],Spinor["Helicity","Angle",xk]];
+xTildeFactorReduced[i_,j_]SpinorChain[Spinor["Spin","Square",i_],Spinor["Spin","Square",j_]]^n_/;n>0:=-SpinorChain[Spinor["Spin","Square",i],Spinor["Spin","Square",j]](SpinorChain[Spinor["Spin","Square",j],Spinor["Helicity","Square",xq]]SpinorChain[Spinor["Spin","Angle",i],Spinor["Helicity","Angle",xk]]+SpinorChain[Spinor["Spin","Square",i],Spinor["Helicity","Square",xq]]SpinorChain[Spinor["Spin","Angle",j],Spinor["Helicity","Angle",xk]])/SpinorChain[Spinor["Helicity","Square",xq],Spinor["Helicity","Square",xk]];
+
+xFactorReduced[i_,j_]^n_ SpinorChain[Spinor["Spin","Angle",i_],Spinor["Spin","Angle",j_]]/;n>0:=xFactorReduced[i,j]^(n-1)(SpinorChain[Spinor["Spin","Angle",j],Spinor["Helicity","Angle",xq]]SpinorChain[Spinor["Spin","Square",i],Spinor["Helicity","Square",xk]]+SpinorChain[Spinor["Spin","Angle",i],Spinor["Helicity","Angle",xq]]SpinorChain[Spinor["Spin","Square",j],Spinor["Helicity","Square",xk]])/SpinorChain[Spinor["Helicity","Angle",xq],Spinor["Helicity","Angle",xk]];
+xTildeFactorReduced[i_,j_]^n_ SpinorChain[Spinor["Spin","Square",i_],Spinor["Spin","Square",j_]]/;n>0:=xTildeFactorReduced[i,j]^(n-1)(SpinorChain[Spinor["Spin","Square",j],Spinor["Helicity","Square",xq]]SpinorChain[Spinor["Spin","Angle",i],Spinor["Helicity","Angle",xk]]+SpinorChain[Spinor["Spin","Square",i],Spinor["Helicity","Square",xq]]SpinorChain[Spinor["Spin","Angle",j],Spinor["Helicity","Angle",xk]])/SpinorChain[Spinor["Helicity","Square",xq],Spinor["Helicity","Square",xk]];
+
+xFactorReduced[i_,j_]^m_ SpinorChain[Spinor["Spin","Angle",i_],Spinor["Spin","Angle",j_]]^n_/;(m>0&&n>0):=xFactorReduced[i,j]^(m-1)SpinorChain[Spinor["Spin","Angle",i],Spinor["Spin","Angle",j]]^(n-1)(SpinorChain[Spinor["Spin","Angle",j],Spinor["Helicity","Angle",xq]]SpinorChain[Spinor["Spin","Square",i],Spinor["Helicity","Square",xk]]+SpinorChain[Spinor["Spin","Angle",i],Spinor["Helicity","Angle",xq]]SpinorChain[Spinor["Spin","Square",j],Spinor["Helicity","Square",xk]])/SpinorChain[Spinor["Helicity","Angle",xq],Spinor["Helicity","Angle",xk]];
+xTildeFactorReduced[i_,j_]^m_ SpinorChain[Spinor["Spin","Square",i_],Spinor["Spin","Square",j_]]^n_/;(m>0&&n>0):=xTildeFactorReduced[i,j]^(m-1)SpinorChain[Spinor["Spin","Square",i],Spinor["Spin","Square",j]]^(n-1)(SpinorChain[Spinor["Spin","Square",j],Spinor["Helicity","Square",xq]]SpinorChain[Spinor["Spin","Angle",i],Spinor["Helicity","Angle",xk]]+SpinorChain[Spinor["Spin","Square",i],Spinor["Helicity","Square",xq]]SpinorChain[Spinor["Spin","Angle",j],Spinor["Helicity","Angle",xk]])/SpinorChain[Spinor["Helicity","Square",xq],Spinor["Helicity","Square",xk]];
+
+Protect[Times];*)
 
 
 (*xFactorReduced[p1_,Multiparticle[p2_,p3_],p4_]:=-SpinorChain[Spinor["Helicity","Angle",p4],Mom[p1],Spinor["Helicity","Square",Complement[{1,2,3,4},{p1,p2,p3}][[1]]]]/(Mass[p1]SpinorChain[Spinor["Helicity","Angle",p4],Spinor["Helicity","Angle",Complement[{1,2,3,4},{p1,p2,p3}][[1]]]]);
@@ -1333,6 +1372,9 @@ xTildeFactor[pi,pj]xFactor[pk_,pl_]SpinorChain[Spinor["Spin","Square",pi],Spinor
 (* ::Input::Initialization:: *)
 ReduceColor[exp_]:=Module[{colorReplacementRules},
 colorReplacementRules={
+colorT[a_,k_,i_]colorT[b_,i_,k_]:>colorTrace[colorT[a],colorT[b]],
+colorT[a_,k_,i_]colorT[b_,i_,j_]colorT[c_,j_,k_]:>colorTrace[colorT[a],colorT[b],colorT[c]],
+colorT[a_,i_,j_]colorT[b_,j_,k_]colorT[c_,k_,l_]colorT[d_,l_,i_]:>colorTrace[colorT[a],colorT[b],colorT[c],colorT[d]],
 colorf[a_,b_,c_]:>2(colorTrace[colorT[a],colorT[b],colorT[c]]-colorTrace[colorT[a],colorT[c],colorT[b]]),
 colorTrace[X___,colorT[a_],Y___,colorT[a_],Z___]:>1/2 (colorTrace[Y]colorTrace[X,Z]-1/3 colorTrace[X,Y,Z]),
 colorTrace[X___,colorT[a_],Y___]colorTrace[Z___,colorT[a_],U___]:>1/2 (colorTrace[X,U,Z,Y]-1/3 colorTrace[X,Y]colorTrace[Z,U]),
