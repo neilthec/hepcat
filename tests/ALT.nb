@@ -1,0 +1,2411 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Wolfram 15.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       154,          7]
+NotebookDataLength[     92852,       2403]
+NotebookOptionsPosition[     89140,       2333]
+NotebookOutlinePosition[     89564,       2350]
+CellTagsIndexPosition[     89521,       2347]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell["Load Constructive Diagrams Package", "Section",
+ CellChangeTimes->{{3.768042522557477*^9, 
+  3.768042541565124*^9}},ExpressionUUID->"caa939ae-5ee2-4108-a9cf-\
+26a412665392"],
+
+Cell[BoxData[""], "Input",
+ CellChangeTimes->{{3.920024010952196*^9, 
+  3.920024018262097*^9}},ExpressionUUID->"b07ef3ae-1046-48ea-86fb-\
+f319e40ff44a"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"HEPCATBasePath", "=", "\"\<~/code/hepcat\>\""}], ";"}]], "Input",
+ CellChangeTimes->{{3.9250513074187317`*^9, 3.925051329256318*^9}, {
+   3.92719657213974*^9, 3.927196583769927*^9}, 3.9271966669343967`*^9, {
+   3.99148903938545*^9, 3.991489041049368*^9}},
+ CellLabel->"In[1]:=",ExpressionUUID->"43e028ef-c751-43f9-aad2-4b11c6c0389b"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"$HEPCATpath", "=", 
+   RowBox[{"HEPCATBasePath", "<>", "\"\</source/\>\""}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{"<<", 
+  RowBox[{"(", 
+   RowBox[{"$HEPCATpath", "<>", "\"\<HEPCAT.wl\>\""}], ")"}]}]}], "Input",
+ CellChangeTimes->{{3.768042514862636*^9, 3.768042563829361*^9}, {
+   3.7680525333486834`*^9, 3.768052534211089*^9}, {3.7683015195976257`*^9, 
+   3.768301522242947*^9}, {3.768575672868002*^9, 3.768575673137583*^9}, {
+   3.768576029581636*^9, 3.7685760333335876`*^9}, {3.768576855496388*^9, 
+   3.768576861760504*^9}, 3.76857700137854*^9, {3.76865664053384*^9, 
+   3.7686566408105297`*^9}, {3.768657929499627*^9, 3.7686579321956377`*^9}, 
+   3.768658199686228*^9, {3.7688241324732323`*^9, 3.768824132766108*^9}, 
+   3.768824659399822*^9, {3.7706516091508102`*^9, 3.770651624355074*^9}, {
+   3.799070219878542*^9, 3.799070222261084*^9}, {3.799077756063307*^9, 
+   3.799077788956506*^9}, {3.799077842228054*^9, 3.799077843050609*^9}, {
+   3.828804519770672*^9, 3.828804521200678*^9}, {3.9195031927308817`*^9, 
+   3.919503194861726*^9}, {3.920024059030916*^9, 3.920024063605576*^9}, {
+   3.92505126798701*^9, 3.925051273429143*^9}, {3.925051332842099*^9, 
+   3.925051339897481*^9}},
+ CellLabel->"In[2]:=",ExpressionUUID->"86350004-df1e-49fc-bc6b-4f6d5363e169"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData["\<\"----------HEPCAT----------\"\>"], "Print",
+ CellChangeTimes->{{3.9271966683630743`*^9, 3.9271966924080877`*^9}, 
+   3.9301329294331083`*^9, 3.991489049125792*^9},
+ CellLabel->
+  "During evaluation of \
+In[2]:=",ExpressionUUID->"f7e6cf42-7208-479a-83a1-4851ce914c0b"],
+
+Cell[BoxData["\<\"\"\>"], "Print",
+ CellChangeTimes->{{3.9271966683630743`*^9, 3.9271966924080877`*^9}, 
+   3.9301329294331083`*^9, 3.99148904913039*^9},
+ CellLabel->
+  "During evaluation of \
+In[2]:=",ExpressionUUID->"e9f76b71-dc6d-4ddf-ae9b-db20d70d2788"],
+
+Cell[BoxData["\<\"Version: \"\>"], "Print",
+ CellChangeTimes->{{3.9271966683630743`*^9, 3.9271966924080877`*^9}, 
+   3.9301329294331083`*^9, 3.991489049133321*^9},
+ CellLabel->
+  "During evaluation of \
+In[2]:=",ExpressionUUID->"ff1c9bc6-e079-4684-8f96-2a0c66b3dafa"],
+
+Cell[BoxData["\<\"Authors: N. Christensen\"\>"], "Print",
+ CellChangeTimes->{{3.9271966683630743`*^9, 3.9271966924080877`*^9}, 
+   3.9301329294331083`*^9, 3.991489049135508*^9},
+ CellLabel->
+  "During evaluation of \
+In[2]:=",ExpressionUUID->"e387d498-2618-4e39-899f-e03b0acca7b1"],
+
+Cell[BoxData["\<\"Please cite: ...\"\>"], "Print",
+ CellChangeTimes->{{3.9271966683630743`*^9, 3.9271966924080877`*^9}, 
+   3.9301329294331083`*^9, 3.99148904913757*^9},
+ CellLabel->
+  "During evaluation of \
+In[2]:=",ExpressionUUID->"86119e00-d0b4-448f-bd9b-5c0c49663367"],
+
+Cell[BoxData["\<\"Contributions by: ...\"\>"], "Print",
+ CellChangeTimes->{{3.9271966683630743`*^9, 3.9271966924080877`*^9}, 
+   3.9301329294331083`*^9, 3.991489049139515*^9},
+ CellLabel->
+  "During evaluation of \
+In[2]:=",ExpressionUUID->"fe8297f2-44b3-4095-92de-44b9fa6c8245"],
+
+Cell[BoxData["\<\"Instructions can be found...\"\>"], "Print",
+ CellChangeTimes->{{3.9271966683630743`*^9, 3.9271966924080877`*^9}, 
+   3.9301329294331083`*^9, 3.991489049141447*^9},
+ CellLabel->
+  "During evaluation of \
+In[2]:=",ExpressionUUID->"7c4981dd-fbbc-4999-b16d-93e2aefee6f5"],
+
+Cell[BoxData["\<\"\"\>"], "Print",
+ CellChangeTimes->{{3.9271966683630743`*^9, 3.9271966924080877`*^9}, 
+   3.9301329294331083`*^9, 3.991489049143353*^9},
+ CellLabel->
+  "During evaluation of \
+In[2]:=",ExpressionUUID->"bfddbbd4-3f85-40bc-bd45-4756ec25c1ea"],
+
+Cell[BoxData["\<\"------------------------------------\"\>"], "Print",
+ CellChangeTimes->{{3.9271966683630743`*^9, 3.9271966924080877`*^9}, 
+   3.9301329294331083`*^9, 3.991489049145214*^9},
+ CellLabel->
+  "During evaluation of \
+In[2]:=",ExpressionUUID->"836dccff-3442-45f7-934f-4609666ba0b5"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Read SM Files", "Section",
+ CellChangeTimes->{{3.767801811160771*^9, 
+  3.767801815551695*^9}},ExpressionUUID->"e12a4c53-2edd-4e2b-aa28-\
+7b378b8c89f6"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"sm", "=", 
+   RowBox[{"ReadModel", "[", 
+    RowBox[{
+     RowBox[{"HEPCATBasePath", "<>", "\"\</models\>\""}], ",", "1"}], "]"}]}],
+   ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"smMA", "=", 
+   RowBox[{"ReadModel", "[", 
+    RowBox[{
+     RowBox[{"HEPCATBasePath", "<>", "\"\</models\>\""}], ",", "2"}], "]"}]}],
+   ";"}]}], "Input",
+ CellChangeTimes->{{3.767801817798459*^9, 3.767801855135118*^9}, {
+   3.767802824901726*^9, 3.767802839340434*^9}, {3.767802930832019*^9, 
+   3.767802944488641*^9}, {3.767803125360076*^9, 3.767803131310231*^9}, {
+   3.7678033814853563`*^9, 3.7678033898113413`*^9}, {3.767803675798802*^9, 
+   3.767803684597925*^9}, {3.7678037551380653`*^9, 3.767803763098445*^9}, {
+   3.76788974056502*^9, 3.767889767483886*^9}, {3.767889804548368*^9, 
+   3.767889805916744*^9}, {3.767889993355874*^9, 3.76789001597052*^9}, {
+   3.76789059830956*^9, 3.7678905995776453`*^9}, {3.767891084005863*^9, 
+   3.767891087113866*^9}, {3.767960975431781*^9, 3.767960975551219*^9}, {
+   3.768048729160812*^9, 3.768048732063449*^9}, {3.768051676074789*^9, 
+   3.768051676959009*^9}, {3.768052049883505*^9, 3.768052097844254*^9}, {
+   3.7880253051957417`*^9, 3.788025306997615*^9}, 3.827508144922866*^9, {
+   3.82750818678765*^9, 3.827508195602305*^9}, {3.8673284719104967`*^9, 
+   3.867328472297782*^9}, {3.893935601008903*^9, 3.893935605053278*^9}, {
+   3.916393400984771*^9, 3.916393411636876*^9}, {3.91639361431892*^9, 
+   3.916393618317444*^9}, {3.916394222960904*^9, 3.916394223042222*^9}, {
+   3.919503287755743*^9, 3.9195032966909*^9}, {3.920024086829687*^9, 
+   3.920024097461072*^9}, {3.9250513451712017`*^9, 3.925051360263219*^9}},
+ CellLabel->"In[4]:=",ExpressionUUID->"f512215d-91ff-4d15-aaf3-4ddbbaf38a73"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Factorization Channels", "Section",
+ CellChangeTimes->{{3.991489137184761*^9, 
+  3.991489140967881*^9}},ExpressionUUID->"477ff88c-2cf5-4e59-bcc9-\
+d1ba11e39d3a"],
+
+Cell[CellGroupData[{
+
+Cell["FactorizationPartitions[particles_List]", "Subsubsection",
+ CellChangeTimes->{{3.991492141126491*^9, 
+  3.9914921527294493`*^9}},ExpressionUUID->"aa14adca-b7b2-4ebf-ba89-\
+0b3ea7179540"],
+
+Cell["\<\
+This function partitions the particle list into pairs of groups where each \
+group has at least two particles and all duplicates are removed.  Ordering \
+doesn\[CloseCurlyQuote]t matter.  
+\
+\>", "Text",
+ CellChangeTimes->{{3.991492176651381*^9, 
+  3.9914923095402603`*^9}},ExpressionUUID->"845ba873-e906-44ba-a76f-\
+83837c27a7d6"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"FactorizationPartitions", "[", "particles_List", "]"}], ":=", 
+  RowBox[{"Module", "[", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{"partitions", ",", 
+      RowBox[{"n", "=", 
+       RowBox[{"Length", "[", "particles", "]"}]}]}], "}"}], ",", 
+    "\[IndentingNewLine]", 
+    RowBox[{"(*", 
+     RowBox[{
+     "First", " ", "create", " ", "a", " ", "list", " ", "of", " ", "all", " ", 
+      RowBox[{"partitions", "."}]}], "*)"}], "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{"partitions", "=", 
+      RowBox[{"Select", "[", "\[IndentingNewLine]", "    ", 
+       RowBox[{
+        RowBox[{"Subsets", "[", 
+         RowBox[{"particles", ",", 
+          RowBox[{"{", 
+           RowBox[{"2", ",", 
+            RowBox[{"Floor", "[", 
+             RowBox[{"n", "/", "2"}], "]"}]}], "}"}]}], "]"}], ",", 
+        "\[IndentingNewLine]", "    ", 
+        RowBox[{
+         RowBox[{"2", "<=", 
+          RowBox[{"Length", "[", "#", "]"}], "<=", 
+          RowBox[{"n", "-", "2"}]}], " ", "&"}]}], "\[IndentingNewLine]", 
+       "  ", "]"}]}], ";", "\[IndentingNewLine]", " ", 
+     RowBox[{"partitions", "=", " ", 
+      RowBox[{"DeleteDuplicatesBy", "[", "\[IndentingNewLine]", "    ", 
+       RowBox[{
+        RowBox[{
+         RowBox[{
+          RowBox[{"Sort", " ", "/@", " ", 
+           RowBox[{"{", 
+            RowBox[{"#", ",", 
+             RowBox[{"Complement", "[", 
+              RowBox[{"particles", ",", "#"}], "]"}]}], "}"}]}], " ", "&"}], 
+         " ", "/@", " ", "partitions"}], ",", "\[IndentingNewLine]", "    ", 
+        "Sort"}], "\[IndentingNewLine]", "  ", "]"}]}], ";", 
+     "\[IndentingNewLine]", "partitions"}]}], "\[IndentingNewLine]", 
+   "]"}]}]], "Input",
+ CellChangeTimes->{{3.991489199475038*^9, 3.9914892419625387`*^9}, {
+   3.991489295742148*^9, 3.991489323307953*^9}, {3.991489572658195*^9, 
+   3.991489617308901*^9}, {3.991489652037736*^9, 3.991489654503828*^9}, 
+   3.9914898297918262`*^9, {3.991489895948242*^9, 3.991489902309574*^9}, {
+   3.991490039247065*^9, 3.991490063005774*^9}, {3.991491156811244*^9, 
+   3.991491255600806*^9}, {3.9914920231715508`*^9, 3.991492093345416*^9}, 
+   3.991492171856792*^9},ExpressionUUID->"c5eaf11a-3c3d-4785-81ed-\
+c974a24009f7"],
+
+Cell["Tests:", "Text",
+ CellChangeTimes->{{3.991492313858387*^9, 
+  3.9914923150233088`*^9}},ExpressionUUID->"dcde5553-945b-4ed1-af9b-\
+891e5e18ebb8"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"FactorizationPartitions", "[", 
+   RowBox[{"{", 
+    RowBox[{"\"\<e\>\"", ",", "\"\<E\>\"", ",", "\"\<M\>\"", 
+     ",", "\"\<m\>\""}], "}"}], "]"}], "===", 
+  RowBox[{"{", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<e\>\"", ",", "\"\<E\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<m\>\"", ",", "\"\<M\>\""}], "}"}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<e\>\"", ",", "\"\<M\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<E\>\"", ",", "\"\<m\>\""}], "}"}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<e\>\"", ",", "\"\<m\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<E\>\"", ",", "\"\<M\>\""}], "}"}]}], "}"}]}], 
+   "}"}]}]], "Input",
+ CellChangeTimes->{{3.991489171666254*^9, 3.991489190289772*^9}, {
+  3.991489262187203*^9, 3.991489262656455*^9}, {3.9914896457101297`*^9, 
+  3.991489648505033*^9}, {3.991492100510098*^9, 3.991492115236053*^9}, {
+  3.991492318711033*^9, 3.9914923309860983`*^9}},
+ CellLabel->"In[37]:=",ExpressionUUID->"b0b197da-ca04-4c4f-a59f-5dc6ffea3990"],
+
+Cell[BoxData["True"], "Output",
+ CellChangeTimes->{
+  3.9914896188761377`*^9, 3.991489656275165*^9, 3.991489846909243*^9, 
+   3.991489906466584*^9, 3.9914900647224483`*^9, {3.9914921063231907`*^9, 
+   3.991492115546589*^9}, {3.991492323460264*^9, 3.991492331860939*^9}},
+ CellLabel->"Out[37]=",ExpressionUUID->"a33658e7-4fbd-4ed5-b360-e088f1350618"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"FactorizationPartitions", "[", 
+   RowBox[{"{", 
+    RowBox[{"\"\<e\>\"", ",", "\"\<E\>\"", ",", "\"\<M\>\"", ",", "\"\<m\>\"",
+      ",", "\"\<A.+\>\""}], "}"}], "]"}], "===", 
+  RowBox[{"{", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<e\>\"", ",", "\"\<E\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<m\>\"", ",", "\"\<M\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<e\>\"", ",", "\"\<M\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<E\>\"", ",", "\"\<m\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<e\>\"", ",", "\"\<m\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<E\>\"", ",", "\"\<M\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<e\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<E\>\"", ",", "\"\<m\>\"", ",", "\"\<M\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<E\>\"", ",", "\"\<M\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<e\>\"", ",", "\"\<m\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<E\>\"", ",", "\"\<m\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<e\>\"", ",", "\"\<M\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<E\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<e\>\"", ",", "\"\<m\>\"", ",", "\"\<M\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<m\>\"", ",", "\"\<M\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<e\>\"", ",", "\"\<E\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<M\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<e\>\"", ",", "\"\<E\>\"", ",", "\"\<m\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<m\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<e\>\"", ",", "\"\<E\>\"", ",", "\"\<M\>\""}], "}"}]}], 
+     "}"}]}], "}"}]}]], "Input",
+ CellChangeTimes->{{3.9914900788364964`*^9, 3.991490087000915*^9}, {
+  3.9914921193669577`*^9, 3.991492124452552*^9}, {3.991492335034462*^9, 
+  3.9914923398653812`*^9}},
+ CellLabel->"In[38]:=",ExpressionUUID->"471e53e9-5359-4e3b-9325-520c3cc116b5"],
+
+Cell[BoxData["True"], "Output",
+ CellChangeTimes->{{3.99149008023446*^9, 3.9914900873262873`*^9}, {
+   3.991492121202587*^9, 3.991492125046403*^9}, 3.991492341044878*^9},
+ CellLabel->"Out[38]=",ExpressionUUID->"58af10e1-96dd-4516-a007-a129cea0d726"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"FactorizationPartitions", "[", 
+   RowBox[{"{", 
+    RowBox[{"\"\<e\>\"", ",", "\"\<E\>\"", ",", "\"\<M\>\"", ",", "\"\<m\>\"",
+      ",", "\"\<A.+\>\"", ",", "\"\<A.-\>\""}], "}"}], "]"}], "===", 
+  RowBox[{"{", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<e\>\"", ",", "\"\<E\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.-\>\"", ",", "\"\<A.+\>\"", ",", "\"\<m\>\"", 
+        ",", "\"\<M\>\""}], "}"}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<e\>\"", ",", "\"\<M\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.-\>\"", ",", "\"\<A.+\>\"", ",", "\"\<E\>\"", 
+        ",", "\"\<m\>\""}], "}"}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<e\>\"", ",", "\"\<m\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.-\>\"", ",", "\"\<A.+\>\"", ",", "\"\<E\>\"", 
+        ",", "\"\<M\>\""}], "}"}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<e\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.-\>\"", ",", "\"\<E\>\"", ",", "\"\<m\>\"", 
+        ",", "\"\<M\>\""}], "}"}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.-\>\"", ",", "\"\<e\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<E\>\"", ",", "\"\<m\>\"", 
+        ",", "\"\<M\>\""}], "}"}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<E\>\"", ",", "\"\<M\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.-\>\"", ",", "\"\<A.+\>\"", ",", "\"\<e\>\"", 
+        ",", "\"\<m\>\""}], "}"}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<E\>\"", ",", "\"\<m\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.-\>\"", ",", "\"\<A.+\>\"", ",", "\"\<e\>\"", 
+        ",", "\"\<M\>\""}], "}"}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<E\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.-\>\"", ",", "\"\<e\>\"", ",", "\"\<m\>\"", 
+        ",", "\"\<M\>\""}], "}"}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.-\>\"", ",", "\"\<E\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<e\>\"", ",", "\"\<m\>\"", 
+        ",", "\"\<M\>\""}], "}"}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<m\>\"", ",", "\"\<M\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.-\>\"", ",", "\"\<A.+\>\"", ",", "\"\<e\>\"", 
+        ",", "\"\<E\>\""}], "}"}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<M\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.-\>\"", ",", "\"\<e\>\"", ",", "\"\<E\>\"", 
+        ",", "\"\<m\>\""}], "}"}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.-\>\"", ",", "\"\<M\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<e\>\"", ",", "\"\<E\>\"", 
+        ",", "\"\<m\>\""}], "}"}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<m\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.-\>\"", ",", "\"\<e\>\"", ",", "\"\<E\>\"", 
+        ",", "\"\<M\>\""}], "}"}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.-\>\"", ",", "\"\<m\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<e\>\"", ",", "\"\<E\>\"", 
+        ",", "\"\<M\>\""}], "}"}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.-\>\"", ",", "\"\<A.+\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<e\>\"", ",", "\"\<E\>\"", ",", "\"\<m\>\"", 
+        ",", "\"\<M\>\""}], "}"}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<e\>\"", ",", "\"\<E\>\"", ",", "\"\<M\>\""}], "}"}], ",", 
+      
+      RowBox[{"{", 
+       RowBox[{"\"\<A.-\>\"", ",", "\"\<A.+\>\"", ",", "\"\<m\>\""}], "}"}]}],
+      "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<e\>\"", ",", "\"\<E\>\"", ",", "\"\<m\>\""}], "}"}], ",", 
+      
+      RowBox[{"{", 
+       RowBox[{"\"\<A.-\>\"", ",", "\"\<A.+\>\"", ",", "\"\<M\>\""}], "}"}]}],
+      "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<e\>\"", ",", "\"\<E\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.-\>\"", ",", "\"\<m\>\"", ",", "\"\<M\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.-\>\"", ",", "\"\<e\>\"", ",", "\"\<E\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<m\>\"", ",", "\"\<M\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<e\>\"", ",", "\"\<m\>\"", ",", "\"\<M\>\""}], "}"}], ",", 
+      
+      RowBox[{"{", 
+       RowBox[{"\"\<A.-\>\"", ",", "\"\<A.+\>\"", ",", "\"\<E\>\""}], "}"}]}],
+      "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<e\>\"", ",", "\"\<M\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.-\>\"", ",", "\"\<E\>\"", ",", "\"\<m\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.-\>\"", ",", "\"\<e\>\"", ",", "\"\<M\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<E\>\"", ",", "\"\<m\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<e\>\"", ",", "\"\<m\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.-\>\"", ",", "\"\<E\>\"", ",", "\"\<M\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.-\>\"", ",", "\"\<e\>\"", ",", "\"\<m\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<E\>\"", ",", "\"\<M\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.-\>\"", ",", "\"\<A.+\>\"", ",", "\"\<e\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<E\>\"", ",", "\"\<m\>\"", ",", "\"\<M\>\""}], "}"}]}], 
+     "}"}]}], "}"}]}]], "Input",
+ CellChangeTimes->{{3.991490105103725*^9, 3.991490107254636*^9}, {
+  3.991492128963482*^9, 3.9914921327384357`*^9}, {3.9914923500354347`*^9, 
+  3.99149235052986*^9}},
+ CellLabel->"In[39]:=",ExpressionUUID->"882c4452-d2ea-458f-9cd8-1a65e2414209"],
+
+Cell[BoxData["True"], "Output",
+ CellChangeTimes->{3.991490107610958*^9, 3.991492133280858*^9, 
+  3.9914923513706636`*^9},
+ CellLabel->"Out[39]=",ExpressionUUID->"d5e40d70-0c2a-44ed-8c0d-3f88b82ae37d"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"FactorizationPartitions", "[", 
+   RowBox[{"{", 
+    RowBox[{"\"\<e\>\"", ",", "\"\<E\>\"", ",", "\"\<M\>\"", ",", "\"\<m\>\"",
+      ",", "\"\<A.+\>\"", ",", "\"\<A.+\>\""}], "}"}], "]"}], "===", 
+  RowBox[{"{", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<e\>\"", ",", "\"\<E\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<m\>\"", ",", "\"\<M\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<e\>\"", ",", "\"\<M\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<E\>\"", ",", "\"\<m\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<e\>\"", ",", "\"\<m\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<E\>\"", ",", "\"\<M\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<e\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<E\>\"", ",", "\"\<m\>\"", ",", "\"\<M\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<E\>\"", ",", "\"\<M\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<e\>\"", ",", "\"\<m\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<E\>\"", ",", "\"\<m\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<e\>\"", ",", "\"\<M\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<E\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<e\>\"", ",", "\"\<m\>\"", ",", "\"\<M\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<m\>\"", ",", "\"\<M\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<e\>\"", ",", "\"\<E\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<M\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<e\>\"", ",", "\"\<E\>\"", ",", "\"\<m\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<m\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<e\>\"", ",", "\"\<E\>\"", ",", "\"\<M\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<A.+\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<e\>\"", ",", "\"\<E\>\"", ",", "\"\<m\>\"", 
+        ",", "\"\<M\>\""}], "}"}]}], "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<A.+\>\"", ",", "\"\<e\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<E\>\"", ",", "\"\<m\>\"", ",", "\"\<M\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<A.+\>\"", ",", "\"\<E\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<e\>\"", ",", "\"\<m\>\"", ",", "\"\<M\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<A.+\>\"", ",", "\"\<M\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<e\>\"", ",", "\"\<E\>\"", ",", "\"\<m\>\""}], "}"}]}], 
+     "}"}], ",", 
+    RowBox[{"{", 
+     RowBox[{
+      RowBox[{"{", 
+       RowBox[{"\"\<A.+\>\"", ",", "\"\<A.+\>\"", ",", "\"\<m\>\""}], "}"}], ",", 
+      RowBox[{"{", 
+       RowBox[{"\"\<e\>\"", ",", "\"\<E\>\"", ",", "\"\<M\>\""}], "}"}]}], 
+     "}"}]}], "}"}]}]], "Input",
+ CellChangeTimes->{{3.991492276457081*^9, 3.9914922767192383`*^9}, {
+  3.991492358726001*^9, 3.991492359284444*^9}},
+ CellLabel->"In[40]:=",ExpressionUUID->"4f6959e6-2e5d-4937-b34c-136f4d19df3a"],
+
+Cell[BoxData["True"], "Output",
+ CellChangeTimes->{3.991492277504724*^9, 3.9914923600685053`*^9},
+ CellLabel->"Out[40]=",ExpressionUUID->"37b866fc-a1f2-449c-b49f-e754d7cf5f16"]
+}, Open  ]]
+}, Closed]],
+
+Cell[CellGroupData[{
+
+Cell["FactorizationChannels[particles_List,model_]", "Subsubsection",
+ CellChangeTimes->{{3.9914923855202837`*^9, 
+  3.991492395810574*^9}},ExpressionUUID->"96f770ff-8bc0-498a-82e6-\
+c89a536e5aff"],
+
+Cell["\<\
+This function uses FactorizationPartitions to create the partitions and then \
+determines which particles can be \
+\>", "Text",
+ CellChangeTimes->{{3.991492404773733*^9, 3.991492434617929*^9}, {
+  3.9914924752859697`*^9, 
+  3.991492488605674*^9}},ExpressionUUID->"25687193-5bc6-46c8-9fad-\
+352755541e2a"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"sm", "[", 
+  RowBox[{"[", "2", "]"}], "]"}]], "Input",
+ CellChangeTimes->{{3.991492724382318*^9, 3.99149275015519*^9}},
+ CellLabel->"In[43]:=",ExpressionUUID->"f084dfea-2ec3-4e1a-be9b-f60aa59a554a"],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{"\<\"W+\"\>", ",", "\<\"W-\"\>", ",", "\<\"A.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox[
+      RowBox[{
+       SqrtBox["2"], " ", "EE"}], "MW"], ",", 
+     RowBox[{
+      SuperscriptBox[
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["2", Bold, StripOnInput -> False], 
+           "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], "2"], " ", 
+      SubscriptBox["\<\"x\"\>", "\<\"1,2\"\>"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"e\"\>", ",", "\<\"E\"\>", ",", "\<\"A.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     RowBox[{
+      RowBox[{"-", 
+       SqrtBox["2"]}], " ", "EE"}], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      SubscriptBox["\<\"x\"\>", "\<\"1,2\"\>"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"m\"\>", ",", "\<\"M\"\>", ",", "\<\"A.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     RowBox[{
+      RowBox[{"-", 
+       SqrtBox["2"]}], " ", "EE"}], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      SubscriptBox["\<\"x\"\>", "\<\"1,2\"\>"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"l\"\>", ",", "\<\"L\"\>", ",", "\<\"A.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     RowBox[{
+      RowBox[{"-", 
+       SqrtBox["2"]}], " ", "EE"}], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      SubscriptBox["\<\"x\"\>", "\<\"1,2\"\>"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d\"\>", ",", "\<\"D\"\>", ",", "\<\"A.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     RowBox[{"-", 
+      FractionBox[
+       RowBox[{
+        SqrtBox["2"], " ", "EE"}], "3"]}], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      SubscriptBox["\<\"x\"\>", "\<\"1,2\"\>"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"s\"\>", ",", "\<\"S\"\>", ",", "\<\"A.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     RowBox[{"-", 
+      FractionBox[
+       RowBox[{
+        SqrtBox["2"], " ", "EE"}], "3"]}], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      SubscriptBox["\<\"x\"\>", "\<\"1,2\"\>"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"b\"\>", ",", "\<\"B\"\>", ",", "\<\"A.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     RowBox[{"-", 
+      FractionBox[
+       RowBox[{
+        SqrtBox["2"], " ", "EE"}], "3"]}], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      SubscriptBox["\<\"x\"\>", "\<\"1,2\"\>"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"u\"\>", ",", "\<\"U\"\>", ",", "\<\"A.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox[
+      RowBox[{"2", " ", 
+       SqrtBox["2"], " ", "EE"}], "3"], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      SubscriptBox["\<\"x\"\>", "\<\"1,2\"\>"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"c\"\>", ",", "\<\"C\"\>", ",", "\<\"A.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox[
+      RowBox[{"2", " ", 
+       SqrtBox["2"], " ", "EE"}], "3"], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      SubscriptBox["\<\"x\"\>", "\<\"1,2\"\>"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"t\"\>", ",", "\<\"T\"\>", ",", "\<\"A.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox[
+      RowBox[{"2", " ", 
+       SqrtBox["2"], " ", "EE"}], "3"], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      SubscriptBox["\<\"x\"\>", "\<\"1,2\"\>"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"G\"\>", ",", "\<\"G\"\>", ",", "\<\"G.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     RowBox[{
+      SqrtBox["2"], " ", "GG"}], ",", 
+     FractionBox[
+      SuperscriptBox[
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, "RowDefault"], 
+         TemplateBox[{"2", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], "3"], 
+      RowBox[{
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", "2"}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["3", Bold, StripOnInput -> False], 
+           "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], " ", 
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{"1", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"]}]]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d\"\>", ",", "\<\"D\"\>", ",", "\<\"G.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     RowBox[{
+      SqrtBox["2"], " ", "GG"}], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      SubscriptBox["\<\"x\"\>", "\<\"1,2\"\>"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"s\"\>", ",", "\<\"S\"\>", ",", "\<\"G.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     RowBox[{
+      SqrtBox["2"], " ", "GG"}], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      SubscriptBox["\<\"x\"\>", "\<\"1,2\"\>"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"b\"\>", ",", "\<\"B\"\>", ",", "\<\"G.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     RowBox[{
+      SqrtBox["2"], " ", "GG"}], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      SubscriptBox["\<\"x\"\>", "\<\"1,2\"\>"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"u\"\>", ",", "\<\"U\"\>", ",", "\<\"G.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     RowBox[{
+      SqrtBox["2"], " ", "GG"}], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      SubscriptBox["\<\"x\"\>", "\<\"1,2\"\>"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"c\"\>", ",", "\<\"C\"\>", ",", "\<\"G.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     RowBox[{
+      SqrtBox["2"], " ", "GG"}], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      SubscriptBox["\<\"x\"\>", "\<\"1,2\"\>"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"t\"\>", ",", "\<\"T\"\>", ",", "\<\"G.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     RowBox[{
+      SqrtBox["2"], " ", "GG"}], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      SubscriptBox["\<\"x\"\>", "\<\"1,2\"\>"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"ne\"\>", ",", "\<\"Ne\"\>", ",", "\<\"Z\"\>", 
+     ",", "\<\"\"\>", ",", 
+     RowBox[{"-", 
+      FractionBox["EE", 
+       RowBox[{
+        SqrtBox["2"], " ", "MW", " ", "SW"}]]}], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"[\"", "2"}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["3", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{"1", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"nm\"\>", ",", "\<\"Nm\"\>", ",", "\<\"Z\"\>", 
+     ",", "\<\"\"\>", ",", 
+     RowBox[{"-", 
+      FractionBox["EE", 
+       RowBox[{
+        SqrtBox["2"], " ", "MW", " ", "SW"}]]}], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"[\"", "2"}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["3", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{"1", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"nl\"\>", ",", "\<\"Nl\"\>", ",", "\<\"Z\"\>", 
+     ",", "\<\"\"\>", ",", 
+     RowBox[{"-", 
+      FractionBox["EE", 
+       RowBox[{
+        SqrtBox["2"], " ", "MW", " ", "SW"}]]}], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"[\"", "2"}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["3", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{"1", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"e\"\>", ",", "\<\"E\"\>", ",", "\<\"Z\"\>", ",", "\<\"\"\>", 
+     ",", 
+     RowBox[{"-", 
+      FractionBox["EE", 
+       RowBox[{
+        SqrtBox["2"], " ", "MW", " ", "SW"}]]}], ",", 
+     RowBox[{
+      RowBox[{"gLe", " ", 
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["1", Bold, StripOnInput -> False], 
+           "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], " ", 
+       TemplateBox[{
+         TemplateBox[{"\"[\"", 
+           StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["3", Bold, StripOnInput -> False], "\"]\""}, 
+          "RowDefault"]},
+        "RowDefault"]}], "+", 
+      RowBox[{"gRe", " ", 
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["3", Bold, StripOnInput -> False], 
+           "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], " ", 
+       TemplateBox[{
+         TemplateBox[{"\"[\"", 
+           StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["1", Bold, StripOnInput -> False], "\"]\""}, 
+          "RowDefault"]},
+        "RowDefault"]}]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"m\"\>", ",", "\<\"M\"\>", ",", "\<\"Z\"\>", ",", "\<\"\"\>", 
+     ",", 
+     RowBox[{"-", 
+      FractionBox["EE", 
+       RowBox[{
+        SqrtBox["2"], " ", "MW", " ", "SW"}]]}], ",", 
+     RowBox[{
+      RowBox[{"gLe", " ", 
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["1", Bold, StripOnInput -> False], 
+           "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], " ", 
+       TemplateBox[{
+         TemplateBox[{"\"[\"", 
+           StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["3", Bold, StripOnInput -> False], "\"]\""}, 
+          "RowDefault"]},
+        "RowDefault"]}], "+", 
+      RowBox[{"gRe", " ", 
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["3", Bold, StripOnInput -> False], 
+           "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], " ", 
+       TemplateBox[{
+         TemplateBox[{"\"[\"", 
+           StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["1", Bold, StripOnInput -> False], "\"]\""}, 
+          "RowDefault"]},
+        "RowDefault"]}]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"l\"\>", ",", "\<\"L\"\>", ",", "\<\"Z\"\>", ",", "\<\"\"\>", 
+     ",", 
+     RowBox[{"-", 
+      FractionBox["EE", 
+       RowBox[{
+        SqrtBox["2"], " ", "MW", " ", "SW"}]]}], ",", 
+     RowBox[{
+      RowBox[{"gLe", " ", 
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["1", Bold, StripOnInput -> False], 
+           "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], " ", 
+       TemplateBox[{
+         TemplateBox[{"\"[\"", 
+           StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["3", Bold, StripOnInput -> False], "\"]\""}, 
+          "RowDefault"]},
+        "RowDefault"]}], "+", 
+      RowBox[{"gRe", " ", 
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["3", Bold, StripOnInput -> False], 
+           "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], " ", 
+       TemplateBox[{
+         TemplateBox[{"\"[\"", 
+           StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["1", Bold, StripOnInput -> False], "\"]\""}, 
+          "RowDefault"]},
+        "RowDefault"]}]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d\"\>", ",", "\<\"D\"\>", ",", "\<\"Z\"\>", ",", "\<\"\"\>", 
+     ",", 
+     RowBox[{"-", 
+      FractionBox["EE", 
+       RowBox[{
+        SqrtBox["2"], " ", "MW", " ", "SW"}]]}], ",", 
+     RowBox[{
+      RowBox[{"gLd", " ", 
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["1", Bold, StripOnInput -> False], 
+           "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], " ", 
+       TemplateBox[{
+         TemplateBox[{"\"[\"", 
+           StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["3", Bold, StripOnInput -> False], "\"]\""}, 
+          "RowDefault"]},
+        "RowDefault"]}], "+", 
+      RowBox[{"gRd", " ", 
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["3", Bold, StripOnInput -> False], 
+           "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], " ", 
+       TemplateBox[{
+         TemplateBox[{"\"[\"", 
+           StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["1", Bold, StripOnInput -> False], "\"]\""}, 
+          "RowDefault"]},
+        "RowDefault"]}]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"s\"\>", ",", "\<\"S\"\>", ",", "\<\"Z\"\>", ",", "\<\"\"\>", 
+     ",", 
+     RowBox[{"-", 
+      FractionBox["EE", 
+       RowBox[{
+        SqrtBox["2"], " ", "MW", " ", "SW"}]]}], ",", 
+     RowBox[{
+      RowBox[{"gLd", " ", 
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["1", Bold, StripOnInput -> False], 
+           "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], " ", 
+       TemplateBox[{
+         TemplateBox[{"\"[\"", 
+           StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["3", Bold, StripOnInput -> False], "\"]\""}, 
+          "RowDefault"]},
+        "RowDefault"]}], "+", 
+      RowBox[{"gRd", " ", 
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["3", Bold, StripOnInput -> False], 
+           "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], " ", 
+       TemplateBox[{
+         TemplateBox[{"\"[\"", 
+           StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["1", Bold, StripOnInput -> False], "\"]\""}, 
+          "RowDefault"]},
+        "RowDefault"]}]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"b\"\>", ",", "\<\"B\"\>", ",", "\<\"Z\"\>", ",", "\<\"\"\>", 
+     ",", 
+     RowBox[{"-", 
+      FractionBox["EE", 
+       RowBox[{
+        SqrtBox["2"], " ", "MW", " ", "SW"}]]}], ",", 
+     RowBox[{
+      RowBox[{"gLd", " ", 
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["1", Bold, StripOnInput -> False], 
+           "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], " ", 
+       TemplateBox[{
+         TemplateBox[{"\"[\"", 
+           StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["3", Bold, StripOnInput -> False], "\"]\""}, 
+          "RowDefault"]},
+        "RowDefault"]}], "+", 
+      RowBox[{"gRd", " ", 
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["3", Bold, StripOnInput -> False], 
+           "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], " ", 
+       TemplateBox[{
+         TemplateBox[{"\"[\"", 
+           StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["1", Bold, StripOnInput -> False], "\"]\""}, 
+          "RowDefault"]},
+        "RowDefault"]}]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"u\"\>", ",", "\<\"U\"\>", ",", "\<\"Z\"\>", ",", "\<\"\"\>", 
+     ",", 
+     RowBox[{"-", 
+      FractionBox["EE", 
+       RowBox[{
+        SqrtBox["2"], " ", "MW", " ", "SW"}]]}], ",", 
+     RowBox[{
+      RowBox[{"gLu", " ", 
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["1", Bold, StripOnInput -> False], 
+           "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], " ", 
+       TemplateBox[{
+         TemplateBox[{"\"[\"", 
+           StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["3", Bold, StripOnInput -> False], "\"]\""}, 
+          "RowDefault"]},
+        "RowDefault"]}], "+", 
+      RowBox[{"gRu", " ", 
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["3", Bold, StripOnInput -> False], 
+           "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], " ", 
+       TemplateBox[{
+         TemplateBox[{"\"[\"", 
+           StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["1", Bold, StripOnInput -> False], "\"]\""}, 
+          "RowDefault"]},
+        "RowDefault"]}]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"c\"\>", ",", "\<\"C\"\>", ",", "\<\"Z\"\>", ",", "\<\"\"\>", 
+     ",", 
+     RowBox[{"-", 
+      FractionBox["EE", 
+       RowBox[{
+        SqrtBox["2"], " ", "MW", " ", "SW"}]]}], ",", 
+     RowBox[{
+      RowBox[{"gLu", " ", 
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["1", Bold, StripOnInput -> False], 
+           "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], " ", 
+       TemplateBox[{
+         TemplateBox[{"\"[\"", 
+           StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["3", Bold, StripOnInput -> False], "\"]\""}, 
+          "RowDefault"]},
+        "RowDefault"]}], "+", 
+      RowBox[{"gRu", " ", 
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["3", Bold, StripOnInput -> False], 
+           "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], " ", 
+       TemplateBox[{
+         TemplateBox[{"\"[\"", 
+           StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["1", Bold, StripOnInput -> False], "\"]\""}, 
+          "RowDefault"]},
+        "RowDefault"]}]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"t\"\>", ",", "\<\"T\"\>", ",", "\<\"Z\"\>", ",", "\<\"\"\>", 
+     ",", 
+     RowBox[{"-", 
+      FractionBox["EE", 
+       RowBox[{
+        SqrtBox["2"], " ", "MW", " ", "SW"}]]}], ",", 
+     RowBox[{
+      RowBox[{"gLu", " ", 
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["1", Bold, StripOnInput -> False], 
+           "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], " ", 
+       TemplateBox[{
+         TemplateBox[{"\"[\"", 
+           StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["3", Bold, StripOnInput -> False], "\"]\""}, 
+          "RowDefault"]},
+        "RowDefault"]}], "+", 
+      RowBox[{"gRu", " ", 
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["3", Bold, StripOnInput -> False], 
+           "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], " ", 
+       TemplateBox[{
+         TemplateBox[{"\"[\"", 
+           StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["1", Bold, StripOnInput -> False], "\"]\""}, 
+          "RowDefault"]},
+        "RowDefault"]}]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"W+\"\>", ",", "\<\"W-\"\>", ",", "\<\"Z\"\>", 
+     ",", "\<\"\"\>", ",", 
+     RowBox[{"-", 
+      FractionBox["EE", 
+       RowBox[{
+        SqrtBox["2"], " ", "MZ", " ", "SW"}]]}], ",", 
+     RowBox[{
+      FractionBox[
+       RowBox[{
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+          TemplateBox[{
+            StyleBox["3", Bold, StripOnInput -> False], 
+            "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+          TemplateBox[{
+            StyleBox["1", Bold, StripOnInput -> False], 
+            "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"[\"", 
+            StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+          TemplateBox[{
+            StyleBox["2", Bold, StripOnInput -> False], "\"]\""}, 
+           "RowDefault"]},
+         "RowDefault"]}], "MW"], "+", 
+      FractionBox[
+       RowBox[{
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+          TemplateBox[{
+            StyleBox["2", Bold, StripOnInput -> False], 
+            "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+          TemplateBox[{
+            StyleBox["1", Bold, StripOnInput -> False], 
+            "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"[\"", 
+            StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+          TemplateBox[{
+            StyleBox["3", Bold, StripOnInput -> False], "\"]\""}, 
+           "RowDefault"]},
+         "RowDefault"]}], "MZ"], "+", 
+      FractionBox[
+       RowBox[{
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+          TemplateBox[{
+            StyleBox["1", Bold, StripOnInput -> False], 
+            "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"[\"", 
+            StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+          TemplateBox[{
+            StyleBox["2", Bold, StripOnInput -> False], "\"]\""}, 
+           "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"[\"", 
+            StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+          TemplateBox[{
+            StyleBox["3", Bold, StripOnInput -> False], "\"]\""}, 
+           "RowDefault"]},
+         "RowDefault"]}], "MZ"], "+", 
+      FractionBox[
+       RowBox[{
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+          TemplateBox[{
+            StyleBox["2", Bold, StripOnInput -> False], 
+            "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+          TemplateBox[{
+            StyleBox["3", Bold, StripOnInput -> False], 
+            "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"[\"", 
+            StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+          TemplateBox[{
+            StyleBox["1", Bold, StripOnInput -> False], "\"]\""}, 
+           "RowDefault"]},
+         "RowDefault"]}], "MZ"], "+", 
+      FractionBox[
+       RowBox[{
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+          TemplateBox[{
+            StyleBox["3", Bold, StripOnInput -> False], 
+            "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"[\"", 
+            StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+          TemplateBox[{
+            StyleBox["2", Bold, StripOnInput -> False], "\"]\""}, 
+           "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"[\"", 
+            StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+          TemplateBox[{
+            StyleBox["1", Bold, StripOnInput -> False], "\"]\""}, 
+           "RowDefault"]},
+         "RowDefault"]}], "MZ"], "+", 
+      FractionBox[
+       RowBox[{
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+          TemplateBox[{
+            StyleBox["2", Bold, StripOnInput -> False], 
+            "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"[\"", 
+            StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+          TemplateBox[{
+            StyleBox["3", Bold, StripOnInput -> False], "\"]\""}, 
+           "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"[\"", 
+            StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+          TemplateBox[{
+            StyleBox["1", Bold, StripOnInput -> False], "\"]\""}, 
+           "RowDefault"]},
+         "RowDefault"]}], "MW"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"e\"\>", ",", "\<\"Ne\"\>", ",", "\<\"W+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox["EE", 
+      RowBox[{"MW", " ", "SW"}]], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"[\"", "2"}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["3", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["1", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"ne\"\>", ",", "\<\"E\"\>", ",", "\<\"W-\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox["EE", 
+      RowBox[{"MW", " ", "SW"}]], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["3", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      TemplateBox[{
+        TemplateBox[{"\"[\"", 
+          StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"m\"\>", ",", "\<\"Nm\"\>", ",", "\<\"W+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox["EE", 
+      RowBox[{"MW", " ", "SW"}]], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"[\"", "2"}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["3", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["1", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"nm\"\>", ",", "\<\"M\"\>", ",", "\<\"W-\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox["EE", 
+      RowBox[{"MW", " ", "SW"}]], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["3", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      TemplateBox[{
+        TemplateBox[{"\"[\"", 
+          StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"l\"\>", ",", "\<\"Nl\"\>", ",", "\<\"W+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox["EE", 
+      RowBox[{"MW", " ", "SW"}]], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"[\"", "2"}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["3", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["1", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"nl\"\>", ",", "\<\"L\"\>", ",", "\<\"W-\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox["EE", 
+      RowBox[{"MW", " ", "SW"}]], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["3", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      TemplateBox[{
+        TemplateBox[{"\"[\"", 
+          StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d\"\>", ",", "\<\"U\"\>", ",", "\<\"W+\"\>", ",", "\<\"\"\>",
+      ",", 
+     FractionBox["EE", 
+      RowBox[{"MW", " ", "SW"}]], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["1", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      TemplateBox[{
+        TemplateBox[{"\"[\"", 
+          StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["3", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"u\"\>", ",", "\<\"D\"\>", ",", "\<\"W-\"\>", ",", "\<\"\"\>",
+      ",", 
+     FractionBox["EE", 
+      RowBox[{"MW", " ", "SW"}]], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["3", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      TemplateBox[{
+        TemplateBox[{"\"[\"", 
+          StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"s\"\>", ",", "\<\"C\"\>", ",", "\<\"W+\"\>", ",", "\<\"\"\>",
+      ",", 
+     FractionBox["EE", 
+      RowBox[{"MW", " ", "SW"}]], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["1", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      TemplateBox[{
+        TemplateBox[{"\"[\"", 
+          StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["3", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"c\"\>", ",", "\<\"S\"\>", ",", "\<\"W-\"\>", ",", "\<\"\"\>",
+      ",", 
+     FractionBox["EE", 
+      RowBox[{"MW", " ", "SW"}]], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["3", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      TemplateBox[{
+        TemplateBox[{"\"[\"", 
+          StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"b\"\>", ",", "\<\"T\"\>", ",", "\<\"W+\"\>", ",", "\<\"\"\>",
+      ",", 
+     FractionBox["EE", 
+      RowBox[{"MW", " ", "SW"}]], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["1", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      TemplateBox[{
+        TemplateBox[{"\"[\"", 
+          StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["3", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"t\"\>", ",", "\<\"B\"\>", ",", "\<\"W-\"\>", ",", "\<\"\"\>",
+      ",", 
+     FractionBox["EE", 
+      RowBox[{"MW", " ", "SW"}]], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["3", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      TemplateBox[{
+        TemplateBox[{"\"[\"", 
+          StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"e\"\>", ",", "\<\"E\"\>", ",", "\<\"h\"\>", ",", "\<\"\"\>", 
+     ",", 
+     RowBox[{"-", 
+      FractionBox[
+       RowBox[{"EE", " ", "Me"}], 
+       RowBox[{"2", " ", "MW", " ", "SW"}]]}], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], "+", 
+      TemplateBox[{
+        TemplateBox[{"\"[\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"m\"\>", ",", "\<\"M\"\>", ",", "\<\"h\"\>", ",", "\<\"\"\>", 
+     ",", 
+     RowBox[{"-", 
+      FractionBox[
+       RowBox[{"EE", " ", "Mm"}], 
+       RowBox[{"2", " ", "MW", " ", "SW"}]]}], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], "+", 
+      TemplateBox[{
+        TemplateBox[{"\"[\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"l\"\>", ",", "\<\"L\"\>", ",", "\<\"h\"\>", ",", "\<\"\"\>", 
+     ",", 
+     RowBox[{"-", 
+      FractionBox[
+       RowBox[{"EE", " ", "Ml"}], 
+       RowBox[{"2", " ", "MW", " ", "SW"}]]}], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], "+", 
+      TemplateBox[{
+        TemplateBox[{"\"[\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d\"\>", ",", "\<\"D\"\>", ",", "\<\"h\"\>", ",", "\<\"\"\>", 
+     ",", 
+     RowBox[{"-", 
+      FractionBox[
+       RowBox[{"EE", " ", "Md"}], 
+       RowBox[{"2", " ", "MW", " ", "SW"}]]}], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], "+", 
+      TemplateBox[{
+        TemplateBox[{"\"[\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"s\"\>", ",", "\<\"S\"\>", ",", "\<\"h\"\>", ",", "\<\"\"\>", 
+     ",", 
+     RowBox[{"-", 
+      FractionBox[
+       RowBox[{"EE", " ", "Ms"}], 
+       RowBox[{"2", " ", "MW", " ", "SW"}]]}], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], "+", 
+      TemplateBox[{
+        TemplateBox[{"\"[\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"b\"\>", ",", "\<\"B\"\>", ",", "\<\"h\"\>", ",", "\<\"\"\>", 
+     ",", 
+     RowBox[{"-", 
+      FractionBox[
+       RowBox[{"EE", " ", "Mb"}], 
+       RowBox[{"2", " ", "MW", " ", "SW"}]]}], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], "+", 
+      TemplateBox[{
+        TemplateBox[{"\"[\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"u\"\>", ",", "\<\"U\"\>", ",", "\<\"h\"\>", ",", "\<\"\"\>", 
+     ",", 
+     RowBox[{"-", 
+      FractionBox[
+       RowBox[{"EE", " ", "Mu"}], 
+       RowBox[{"2", " ", "MW", " ", "SW"}]]}], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], "+", 
+      TemplateBox[{
+        TemplateBox[{"\"[\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"c\"\>", ",", "\<\"C\"\>", ",", "\<\"h\"\>", ",", "\<\"\"\>", 
+     ",", 
+     RowBox[{"-", 
+      FractionBox[
+       RowBox[{"EE", " ", "Mc"}], 
+       RowBox[{"2", " ", "MW", " ", "SW"}]]}], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], "+", 
+      TemplateBox[{
+        TemplateBox[{"\"[\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"t\"\>", ",", "\<\"T\"\>", ",", "\<\"h\"\>", ",", "\<\"\"\>", 
+     ",", 
+     RowBox[{"-", 
+      FractionBox[
+       RowBox[{"EE", " ", "Mt"}], 
+       RowBox[{"2", " ", "MW", " ", "SW"}]]}], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], "+", 
+      TemplateBox[{
+        TemplateBox[{"\"[\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"W+\"\>", ",", "\<\"W-\"\>", ",", "\<\"h\"\>", 
+     ",", "\<\"\"\>", ",", 
+     RowBox[{"-", 
+      FractionBox["EE", 
+       RowBox[{"MW", " ", "SW"}]]}], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      TemplateBox[{
+        TemplateBox[{"\"[\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"Z\"\>", ",", "\<\"Z\"\>", ",", "\<\"h\"\>", ",", "\<\"\"\>", 
+     ",", 
+     RowBox[{"-", 
+      FractionBox["EE", 
+       RowBox[{"MW", " ", "SW"}]]}], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      TemplateBox[{
+        TemplateBox[{"\"[\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"h\"\>", ",", "\<\"h\"\>", ",", "\<\"h\"\>", ",", "\<\"\"\>", 
+     ",", 
+     RowBox[{"-", 
+      FractionBox[
+       RowBox[{"3", " ", "EE", " ", 
+        SuperscriptBox["Mh", "2"]}], 
+       RowBox[{"2", " ", "MW", " ", "SW"}]]}], ",", "1"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"h\"\>", ",", "\<\"h\"\>", ",", "\<\"h\"\>", ",", "\<\"h\"\>",
+      ",", 
+     RowBox[{"-", 
+      FractionBox[
+       RowBox[{"3", " ", 
+        SuperscriptBox["EE", "2"], " ", 
+        SuperscriptBox["Mh", "2"]}], 
+       RowBox[{"4", " ", 
+        SuperscriptBox["MW", "2"], " ", 
+        SuperscriptBox["SW", "2"]}]]}], ",", "1"}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"W+\"\>", ",", "\<\"W-\"\>", ",", "\<\"h\"\>", 
+     ",", "\<\"h\"\>", ",", 
+     FractionBox[
+      SuperscriptBox["EE", "2"], 
+      RowBox[{"2", " ", 
+       SuperscriptBox["MW", "2"], " ", 
+       SuperscriptBox["SW", "2"]}]], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      TemplateBox[{
+        TemplateBox[{"\"[\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"Z\"\>", ",", "\<\"Z\"\>", ",", "\<\"h\"\>", ",", "\<\"h\"\>",
+      ",", 
+     FractionBox[
+      SuperscriptBox["EE", "2"], 
+      RowBox[{"2", " ", 
+       SuperscriptBox["MW", "2"], " ", 
+       SuperscriptBox["SW", "2"]}]], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      TemplateBox[{
+        TemplateBox[{"\"[\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"Gr.-\"\>", ",", "\<\"Gr.-\"\>", ",", "\<\"Gr.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox["1", "MP"], ",", 
+     FractionBox[
+      SuperscriptBox[
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["2", Bold, StripOnInput -> False], 
+           "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], "6"], 
+      RowBox[{
+       SuperscriptBox[
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+          TemplateBox[{
+            StyleBox["3", Bold, StripOnInput -> False], 
+            "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], "2"], " ", 
+       SuperscriptBox[
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+          TemplateBox[{
+            StyleBox["1", Bold, StripOnInput -> False], 
+            "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], "2"]}]]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"A.-\"\>", ",", "\<\"A.+\"\>", ",", "\<\"Gr.-\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox["1", "MP"], ",", 
+     FractionBox[
+      SuperscriptBox[
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["1", Bold, StripOnInput -> False], 
+           "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], "4"], 
+      SuperscriptBox[
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["2", Bold, StripOnInput -> False], 
+           "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], "2"]]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"G.-\"\>", ",", "\<\"G.+\"\>", ",", "\<\"Gr.-\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox["1", "MP"], ",", 
+     FractionBox[
+      SuperscriptBox[
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["1", Bold, StripOnInput -> False], 
+           "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], "4"], 
+      SuperscriptBox[
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["2", Bold, StripOnInput -> False], 
+           "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], "2"]]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"W+\"\>", ",", "\<\"W-\"\>", ",", "\<\"Gr.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox["1", "MP"], ",", 
+     RowBox[{
+      SuperscriptBox[
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["2", Bold, StripOnInput -> False], 
+           "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], "2"], " ", 
+      SubsuperscriptBox["\<\"x\"\>", "\<\"1,2\"\>", "2"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"Z\"\>", ",", "\<\"Z\"\>", ",", "\<\"Gr.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox["1", "MP"], ",", 
+     RowBox[{
+      SuperscriptBox[
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{
+           StyleBox["2", Bold, StripOnInput -> False], 
+           "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], "2"], " ", 
+      SubsuperscriptBox["\<\"x\"\>", "\<\"1,2\"\>", "2"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"ne\"\>", ",", "\<\"Ne\"\>", ",", "\<\"Gr.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox["1", "MP"], ",", 
+     FractionBox[
+      SuperscriptBox[
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{"1", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], "3"], 
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, "RowDefault"], 
+        TemplateBox[{"2", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"]]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"nm\"\>", ",", "\<\"Nm\"\>", ",", "\<\"Gr.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox["1", "MP"], ",", 
+     FractionBox[
+      SuperscriptBox[
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{"1", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], "3"], 
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, "RowDefault"], 
+        TemplateBox[{"2", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"]]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"nl\"\>", ",", "\<\"Nl\"\>", ",", "\<\"Gr.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox["1", "MP"], ",", 
+     FractionBox[
+      SuperscriptBox[
+       TemplateBox[{
+         TemplateBox[{"\"\[LeftAngleBracket]\"", 
+           StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+         TemplateBox[{"1", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"], "3"], 
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, "RowDefault"], 
+        TemplateBox[{"2", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"]]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"e\"\>", ",", "\<\"E\"\>", ",", "\<\"Gr.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox["Me", "MP"], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      SubsuperscriptBox["\<\"x\"\>", "\<\"1,2\"\>", "2"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"m\"\>", ",", "\<\"M\"\>", ",", "\<\"Gr.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox["Mm", "MP"], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      SubsuperscriptBox["\<\"x\"\>", "\<\"1,2\"\>", "2"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"l\"\>", ",", "\<\"L\"\>", ",", "\<\"Gr.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox["Ml", "MP"], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      SubsuperscriptBox["\<\"x\"\>", "\<\"1,2\"\>", "2"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"d\"\>", ",", "\<\"D\"\>", ",", "\<\"Gr.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox["Md", "MP"], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      SubsuperscriptBox["\<\"x\"\>", "\<\"1,2\"\>", "2"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"s\"\>", ",", "\<\"S\"\>", ",", "\<\"Gr.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox["Ms", "MP"], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      SubsuperscriptBox["\<\"x\"\>", "\<\"1,2\"\>", "2"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"b\"\>", ",", "\<\"B\"\>", ",", "\<\"Gr.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox["Mb", "MP"], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      SubsuperscriptBox["\<\"x\"\>", "\<\"1,2\"\>", "2"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"u\"\>", ",", "\<\"U\"\>", ",", "\<\"Gr.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox["Mu", "MP"], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      SubsuperscriptBox["\<\"x\"\>", "\<\"1,2\"\>", "2"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"c\"\>", ",", "\<\"C\"\>", ",", "\<\"Gr.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox["Mc", "MP"], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      SubsuperscriptBox["\<\"x\"\>", "\<\"1,2\"\>", "2"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"t\"\>", ",", "\<\"T\"\>", ",", "\<\"Gr.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox["Mt", "MP"], ",", 
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      SubsuperscriptBox["\<\"x\"\>", "\<\"1,2\"\>", "2"]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{"\<\"h\"\>", ",", "\<\"h\"\>", ",", "\<\"Gr.+\"\>", 
+     ",", "\<\"\"\>", ",", 
+     FractionBox[
+      SuperscriptBox["Mh", "2"], "MP"], ",", 
+     SubsuperscriptBox["\<\"x\"\>", "\<\"1,2\"\>", "2"]}], "}"}]}], 
+  "}"}]], "Output",
+ CellChangeTimes->{{3.991492726281955*^9, 3.9914927505566607`*^9}},
+ CellLabel->"Out[43]=",ExpressionUUID->"272db3cd-bf51-45f7-89b6-bc0ab7a6b673"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+},
+WindowSize->{1223, 911},
+WindowMargins->{{Automatic, 156}, {Automatic, 50}},
+Magnification:>1.5 Inherited,
+FrontEndVersion->"15.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
+StyleDefinitions->"Default.nb",
+ExpressionUUID->"4aa4ead5-1f8c-462c-9e7b-e5af6afb3e94"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[576, 22, 179, 3, 99, "Section",ExpressionUUID->"caa939ae-5ee2-4108-a9cf-26a412665392"],
+Cell[758, 27, 152, 3, 44, "Input",ExpressionUUID->"b07ef3ae-1046-48ea-86fb-f319e40ff44a"],
+Cell[913, 32, 368, 6, 44, "Input",ExpressionUUID->"43e028ef-c751-43f9-aad2-4b11c6c0389b"],
+Cell[CellGroupData[{
+Cell[1306, 42, 1309, 21, 74, "Input",ExpressionUUID->"86350004-df1e-49fc-bc6b-4f6d5363e169"],
+Cell[CellGroupData[{
+Cell[2640, 67, 284, 5, 34, "Print",ExpressionUUID->"f7e6cf42-7208-479a-83a1-4851ce914c0b"],
+Cell[2927, 74, 257, 5, 34, "Print",ExpressionUUID->"e9f76b71-dc6d-4ddf-ae9b-db20d70d2788"],
+Cell[3187, 81, 267, 5, 34, "Print",ExpressionUUID->"ff1c9bc6-e079-4684-8f96-2a0c66b3dafa"],
+Cell[3457, 88, 281, 5, 34, "Print",ExpressionUUID->"e387d498-2618-4e39-899f-e03b0acca7b1"],
+Cell[3741, 95, 273, 5, 34, "Print",ExpressionUUID->"86119e00-d0b4-448f-bd9b-5c0c49663367"],
+Cell[4017, 102, 279, 5, 34, "Print",ExpressionUUID->"fe8297f2-44b3-4095-92de-44b9fa6c8245"],
+Cell[4299, 109, 286, 5, 34, "Print",ExpressionUUID->"7c4981dd-fbbc-4999-b16d-93e2aefee6f5"],
+Cell[4588, 116, 258, 5, 34, "Print",ExpressionUUID->"bfddbbd4-3f85-40bc-bd45-4756ec25c1ea"],
+Cell[4849, 123, 294, 5, 34, "Print",ExpressionUUID->"836dccff-3442-45f7-934f-4609666ba0b5"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[5204, 135, 158, 3, 99, "Section",ExpressionUUID->"e12a4c53-2edd-4e2b-aa28-7b378b8c89f6"],
+Cell[5365, 140, 1770, 31, 74, "Input",ExpressionUUID->"f512215d-91ff-4d15-aaf3-4ddbbaf38a73"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[7172, 176, 167, 3, 99, "Section",ExpressionUUID->"477ff88c-2cf5-4e59-bcc9-d1ba11e39d3a"],
+Cell[CellGroupData[{
+Cell[7364, 183, 192, 3, 65, "Subsubsection",ExpressionUUID->"aa14adca-b7b2-4ebf-ba89-0b3ea7179540"],
+Cell[7559, 188, 341, 8, 116, "Text",ExpressionUUID->"845ba873-e906-44ba-a76f-83837c27a7d6"],
+Cell[7903, 198, 2239, 51, 381, "Input",ExpressionUUID->"c5eaf11a-3c3d-4785-81ed-c974a24009f7"],
+Cell[10145, 251, 150, 3, 50, "Text",ExpressionUUID->"dcde5553-945b-4ed1-af9b-891e5e18ebb8"],
+Cell[CellGroupData[{
+Cell[10320, 258, 1190, 31, 74, "Input",ExpressionUUID->"b0b197da-ca04-4c4f-a59f-5dc6ffea3990"],
+Cell[11513, 291, 349, 5, 50, "Output",ExpressionUUID->"a33658e7-4fbd-4ed5-b360-e088f1350618"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[11899, 301, 2794, 81, 197, "Input",ExpressionUUID->"471e53e9-5359-4e3b-9325-520c3cc116b5"],
+Cell[14696, 384, 249, 3, 50, "Output",ExpressionUUID->"58af10e1-96dd-4516-a007-a129cea0d726"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[14982, 392, 6812, 189, 442, "Input",ExpressionUUID->"882c4452-d2ea-458f-9cd8-1a65e2414209"],
+Cell[21797, 583, 201, 3, 50, "Output",ExpressionUUID->"d5e40d70-0c2a-44ed-8c0d-3f88b82ae37d"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[22035, 591, 4009, 115, 289, "Input",ExpressionUUID->"4f6959e6-2e5d-4937-b34c-136f4d19df3a"],
+Cell[26047, 708, 176, 2, 50, "Output",ExpressionUUID->"37b866fc-a1f2-449c-b49f-e754d7cf5f16"]
+}, Open  ]]
+}, Closed]],
+Cell[CellGroupData[{
+Cell[26272, 716, 197, 3, 51, "Subsubsection",ExpressionUUID->"96f770ff-8bc0-498a-82e6-c89a536e5aff"],
+Cell[26472, 721, 314, 7, 50, "Text",ExpressionUUID->"25687193-5bc6-46c8-9fad-352755541e2a"],
+Cell[CellGroupData[{
+Cell[26811, 732, 222, 4, 44, "Input",ExpressionUUID->"f084dfea-2ec3-4e1a-be9b-f60aa59a554a"],
+Cell[27036, 738, 62064, 1590, 2047, "Output",ExpressionUUID->"272db3cd-bf51-45f7-89b6-bc0ab7a6b673"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+}
+]
+*)
+
