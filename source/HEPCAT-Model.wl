@@ -110,23 +110,23 @@ ReadVertices[file_,particleList_]:=Module[{str,vertexList={},line={""}},
 str=OpenRead[file];
 While[!StringContainsQ[line[[1]],"======"],
 line=StringTrim[StringSplit[ReadLine[str],"|"]];
-If[Length[line]==6&&line[[4]]!="P4"&&!StringContainsQ[line[[1]],"%"],
-line[[5]]=ToExpression[line[[5]]];
-line[[6]]=ConvertVertex[line,particleList];
+If[Length[line]>=5&&line[[3]]!="P3"&&!StringContainsQ[line[[1]],"%"],
+line[[-2]]=ToExpression[line[[-2]]];
+line[[-1]]=ConvertVertex[line,particleList];
 AppendTo[vertexList,line];
 ];
 ];
 Close[str];
-vertexList
+AddOppositeHelicityAmplitudes[vertexList]
 ]
 
 
 (* ::Input::Initialization:: *)
 ConvertVertex[line_,particleList_]:=Module[{masses={},res,SpinHelicity},
 SpinHelicity[mass_]:=If[mass===0,"Helicity","Spin"];
-Do[AppendTo[masses,ParticleMass[line[[ii]],particleList]],{ii,1,3}];
-If[line[[4]]=!="",AppendTo[masses,ParticleMass[line[[4]],particleList]]];
-res=StringReplace[line[[6]],{
+Do[AppendTo[masses,ParticleMass[line[[ii]],particleList]],{ii,1,Length[line]-2}];
+(*If[line[[4]]=!="",AppendTo[masses,ParticleMass[line[[4]],particleList]]];*)
+res=StringReplace[line[[-1]],{
 RegularExpression["x(\\d)(\\d)"]:>"xFactor[$1,$2]",
 RegularExpression["<(\\d)(\\d)>"]:>"SpinorChain[Spinor[\""<>SpinHelicity[masses[[ToExpression["$1"]]]]<>"\",\"Angle\",$1],Spinor[\""<>SpinHelicity[masses[[ToExpression["$2"]]]]<>"\",\"Angle\",$2]]",
 RegularExpression["\[(\\d)(\\d)\]"]:>"SpinorChain[Spinor[\""<>SpinHelicity[masses[[ToExpression["$1"]]]]<>"\",\"Square\",$1],Spinor[\""<>SpinHelicity[masses[[ToExpression["$2"]]]]<>"\",\"Square\",$2]]"
@@ -147,6 +147,23 @@ RegularExpression["\[(\\d)(\\d)\]"]:>"SpinorChain[Spinor[\""<>SpinHelicity[masse
 }];
 ToExpression[res]
 ];
+
+
+AddOppositeHelicityAmplitudes[vertices_]:=Module[{newVertices={},i,j,k,containsHelicity,vertex},
+Do[
+AppendTo[newVertices,vertices[[i]]];
+containsHelicity=False;
+Do[If[StringEndsQ[vertices[[i,j]],{".+",".-"}],containsHelicity=True],{j,1,Length[vertices[[i]]]-2}];
+If[containsHelicity,
+vertex={};
+Do[AppendTo[vertex,StringReplace[vertices[[i,j]],{".+"->".-",".-"->".+"}]],{j,1,Length[vertices[[i]]]-2}];
+AppendTo[vertex,vertices[[i,-2]]];
+AppendTo[vertex,vertices[[i,-1]]/.{xFactor[a__]:>xTildeFactor[a],"Angle"->"Square","Square"->"Angle"}];
+AppendTo[newVertices,vertex];
+];
+,{i,1,Length[vertices]}];
+newVertices
+]
 
 
 (* ::Subsection::Closed:: *)
@@ -190,8 +207,8 @@ Which[
 ];If[p1p p2p p3p>0,Print[ii,": ",p1p,",",p2p,",",p3p]];
 If[
 p1p p2p p3p>0,
-totFactor=model[[2,ii,5]];
-numerator=model[[2,ii,6]]//.{
+totFactor=model[[2,ii,-2]];
+numerator=model[[2,ii,-1]]//.{
 Spinor[a__,p1p]:>Spinor[a,pp5],
 Spinor[a__,p2p]:>Spinor[a,pp6],
 Spinor[a__,p3p]:>Spinor[a,pp7],
@@ -282,8 +299,8 @@ apsp==0&&p1p p2p!=0&&p1p!=3&&p2p!=3&&model[[2,ii,3]]===aps,apsp=3
 ];(*If[p1p p2p psp>0||p1p p2p apsp>0,Print[ii,"L: ",p1p,",",p2p,",",psp,",",apsp]];*)
 Which[
 p1p p2p psp>0,
-totFactor=totFactor model[[2,ii,5]];
-numeratorl=model[[2,ii,6]]//.{
+totFactor=totFactor model[[2,ii,-2]];
+numeratorl=model[[2,ii,-1]]//.{
 Spinor[a__,p1p]:>Spinor[a,pp5],
 Spinor[a__,p2p]:>Spinor[a,pp6],
 Spinor[a__,psp]:>Spinor[a,pp7],
@@ -299,8 +316,8 @@ numeratorl=MakeIndicesExplicit[numeratorl,Multiparticle[channel2[[1]],channel2[[
 psp=-1;
 lvrtx=True;,
 p1p p2p apsp>0,
-totFactor=totFactor model[[2,ii,5]];
-numeratorl=model[[2,ii,6]]//.{
+totFactor=totFactor model[[2,ii,-2]];
+numeratorl=model[[2,ii,-1]]//.{
 Spinor[a__,p1p]:>Spinor[a,pp5],
 Spinor[a__,p2p]:>Spinor[a,pp6],
 Spinor[a__,apsp]:>Spinor[a,pp7],
@@ -355,8 +372,8 @@ apsp==0&&p3p p4p!=0&&p3p!=3&&p4p!=3&&model[[2,ii,3]]===aps,apsp=3
 ];(*If[p3p p4p psp>0||p3p p4p apsp>0,Print[ii,"R: ",psp,",",apsp,",",p3p,",",p4p]];*)
 Which[
 p3p p4p psp>0,
-totFactor=totFactor model[[2,ii,5]];
-numeratorr=model[[2,ii,6]]//.{
+totFactor=totFactor model[[2,ii,-2]];
+numeratorr=model[[2,ii,-1]]//.{
 Spinor[a__,p3p]:>Spinor[a,pp5],Spinor[a__,p4p]:>Spinor[a,pp6],Spinor[a__,psp]:>Spinor[a,pp7],
 xFactor[a_,p3p]:>xFactor[a,pp5],xFactor[a_,p4p]:>xFactor[a,pp6],xFactor[a_,psp]:>xFactor[a,pp7],
 xFactor[p3p,a_]:>xFactor[pp5,a],xFactor[p4p,a_]:>xFactor[pp6,a],xFactor[psp,a_]:>xFactor[pp7,a]
@@ -365,8 +382,8 @@ numeratorr=SymmetrizeSpin[numeratorr,Multiparticle[channel[[1]],channel[[2]]],in
 psp=-1;
 rvrtx=True;,
 p3p p4p apsp>0,
-totFactor=totFactor model[[2,ii,5]];
-numeratorr=model[[2,ii,6]]//.{
+totFactor=totFactor model[[2,ii,-2]];
+numeratorr=model[[2,ii,-1]]//.{
 Spinor[a__,p3p]:>Spinor[a,pp5],Spinor[a__,p4p]:>Spinor[a,pp6],Spinor[a__,apsp]:>Spinor[a,pp7],
 xFactor[a_,p3p]:>xFactor[a,pp5],xFactor[a_,p4p]:>xFactor[a,pp6],xFactor[a_,apsp]:>xFactor[a,pp7],
 xFactor[p3p,a_]:>xFactor[pp5,a],xFactor[p4p,a_]:>xFactor[pp6,a],xFactor[apsp,a_]:>xFactor[pp7,a]
