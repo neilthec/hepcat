@@ -425,3 +425,259 @@ SpinorChain[a___,-Spinor[b__],c___]:>-SpinorChain[a,Spinor[b],c]
 (*The - sign is due to the 3 factors of I in the vertices and propagator with one removed for the amplitude.*)
 If[lvrtx&&rvrtx,-totFactor/PropDen[Mom[channel[[1]]]+Mom[channel[[2]]],mps] numerator,0]
 ]
+
+
+(* ::Subsection::Closed:: *)
+(*Factorization Channels*)
+
+
+(* ::Subsubsection::Closed:: *)
+(*FactorizationPartitions[particles_List]*)
+
+
+(* ::Text:: *)
+(*This function partitions the particle list into pairs of groups where each group has at least two particles and all duplicates are removed. *)
+
+
+(* ::Input::Initialization:: *)
+FactorizationPartitions[particles_List]:=Module[{partitions,taggedParticles,n=Length[particles]},
+(*First create a list of all partitions.*)
+taggedParticles=Thread[{particles,Range[Length[particles]]}];
+partitions=Select[
+    Subsets[taggedParticles,{2,Floor[n/2]}],
+    2<=Length[#]<=n-2 &
+  ];
+ partitions= DeleteDuplicatesBy[
+    Sort /@ {#,Complement[taggedParticles,#]} & /@ partitions,
+    Sort
+  ];
+partitions
+]
+
+
+(* ::Text:: *)
+(*Tests:*)
+
+
+(* ::Input:: *)
+(*(*FactorizationPartitions[{"e","E","M","m"}]==={{{{"e",1},{"E",2}},{{"m",4},{"M",3}}},{{{"e",1},{"M",3}},{{"E",2},{"m",4}}},{{{"e",1},{"m",4}},{{"E",2},{"M",3}}}}*)*)
+
+
+(* ::Input:: *)
+(*(*FactorizationPartitions[{"e","E","M","m","A.+"}]==={{{{"e",1},{"E",2}},{{"A.+",5},{"m",4},{"M",3}}},{{{"e",1},{"M",3}},{{"A.+",5},{"E",2},{"m",4}}},{{{"e",1},{"m",4}},{{"A.+",5},{"E",2},{"M",3}}},{{{"A.+",5},{"e",1}},{{"E",2},{"m",4},{"M",3}}},{{{"E",2},{"M",3}},{{"A.+",5},{"e",1},{"m",4}}},{{{"E",2},{"m",4}},{{"A.+",5},{"e",1},{"M",3}}},{{{"A.+",5},{"E",2}},{{"e",1},{"m",4},{"M",3}}},{{{"m",4},{"M",3}},{{"A.+",5},{"e",1},{"E",2}}},{{{"A.+",5},{"M",3}},{{"e",1},{"E",2},{"m",4}}},{{{"A.+",5},{"m",4}},{{"e",1},{"E",2},{"M",3}}}}*)*)
+
+
+(* ::Input:: *)
+(*(*FactorizationPartitions[{"e","E","M","m","A.+","A.-"}]==={{{{"e",1},{"E",2}},{{"A.-",6},{"A.+",5},{"m",4},{"M",3}}},{{{"e",1},{"M",3}},{{"A.-",6},{"A.+",5},{"E",2},{"m",4}}},{{{"e",1},{"m",4}},{{"A.-",6},{"A.+",5},{"E",2},{"M",3}}},{{{"A.+",5},{"e",1}},{{"A.-",6},{"E",2},{"m",4},{"M",3}}},{{{"A.-",6},{"e",1}},{{"A.+",5},{"E",2},{"m",4},{"M",3}}},{{{"E",2},{"M",3}},{{"A.-",6},{"A.+",5},{"e",1},{"m",4}}},{{{"E",2},{"m",4}},{{"A.-",6},{"A.+",5},{"e",1},{"M",3}}},{{{"A.+",5},{"E",2}},{{"A.-",6},{"e",1},{"m",4},{"M",3}}},{{{"A.-",6},{"E",2}},{{"A.+",5},{"e",1},{"m",4},{"M",3}}},{{{"m",4},{"M",3}},{{"A.-",6},{"A.+",5},{"e",1},{"E",2}}},{{{"A.+",5},{"M",3}},{{"A.-",6},{"e",1},{"E",2},{"m",4}}},{{{"A.-",6},{"M",3}},{{"A.+",5},{"e",1},{"E",2},{"m",4}}},{{{"A.+",5},{"m",4}},{{"A.-",6},{"e",1},{"E",2},{"M",3}}},{{{"A.-",6},{"m",4}},{{"A.+",5},{"e",1},{"E",2},{"M",3}}},{{{"A.-",6},{"A.+",5}},{{"e",1},{"E",2},{"m",4},{"M",3}}},{{{"e",1},{"E",2},{"M",3}},{{"A.-",6},{"A.+",5},{"m",4}}},{{{"e",1},{"E",2},{"m",4}},{{"A.-",6},{"A.+",5},{"M",3}}},{{{"A.+",5},{"e",1},{"E",2}},{{"A.-",6},{"m",4},{"M",3}}},{{{"A.-",6},{"e",1},{"E",2}},{{"A.+",5},{"m",4},{"M",3}}},{{{"e",1},{"m",4},{"M",3}},{{"A.-",6},{"A.+",5},{"E",2}}},{{{"A.+",5},{"e",1},{"M",3}},{{"A.-",6},{"E",2},{"m",4}}},{{{"A.-",6},{"e",1},{"M",3}},{{"A.+",5},{"E",2},{"m",4}}},{{{"A.+",5},{"e",1},{"m",4}},{{"A.-",6},{"E",2},{"M",3}}},{{{"A.-",6},{"e",1},{"m",4}},{{"A.+",5},{"E",2},{"M",3}}},{{{"A.-",6},{"A.+",5},{"e",1}},{{"E",2},{"m",4},{"M",3}}}}*)*)
+
+
+(* ::Text:: *)
+(*Right now, it treats each same particle differently since it has a different momentum.  It might be better to not duplicate the same particle.  I'm not sure if both factorization channels need to be included or not.*)
+
+
+(* ::Input:: *)
+(*(*FactorizationPartitions[{"e","E","M","m","A.+","A.+"}]==={{{{"e",1},{"E",2}},{{"A.+",5},{"A.+",6},{"m",4},{"M",3}}},{{{"e",1},{"M",3}},{{"A.+",5},{"A.+",6},{"E",2},{"m",4}}},{{{"e",1},{"m",4}},{{"A.+",5},{"A.+",6},{"E",2},{"M",3}}},{{{"A.+",5},{"e",1}},{{"A.+",6},{"E",2},{"m",4},{"M",3}}},{{{"A.+",6},{"e",1}},{{"A.+",5},{"E",2},{"m",4},{"M",3}}},{{{"E",2},{"M",3}},{{"A.+",5},{"A.+",6},{"e",1},{"m",4}}},{{{"E",2},{"m",4}},{{"A.+",5},{"A.+",6},{"e",1},{"M",3}}},{{{"A.+",5},{"E",2}},{{"A.+",6},{"e",1},{"m",4},{"M",3}}},{{{"A.+",6},{"E",2}},{{"A.+",5},{"e",1},{"m",4},{"M",3}}},{{{"m",4},{"M",3}},{{"A.+",5},{"A.+",6},{"e",1},{"E",2}}},{{{"A.+",5},{"M",3}},{{"A.+",6},{"e",1},{"E",2},{"m",4}}},{{{"A.+",6},{"M",3}},{{"A.+",5},{"e",1},{"E",2},{"m",4}}},{{{"A.+",5},{"m",4}},{{"A.+",6},{"e",1},{"E",2},{"M",3}}},{{{"A.+",6},{"m",4}},{{"A.+",5},{"e",1},{"E",2},{"M",3}}},{{{"A.+",5},{"A.+",6}},{{"e",1},{"E",2},{"m",4},{"M",3}}},{{{"e",1},{"E",2},{"M",3}},{{"A.+",5},{"A.+",6},{"m",4}}},{{{"e",1},{"E",2},{"m",4}},{{"A.+",5},{"A.+",6},{"M",3}}},{{{"A.+",5},{"e",1},{"E",2}},{{"A.+",6},{"m",4},{"M",3}}},{{{"A.+",6},{"e",1},{"E",2}},{{"A.+",5},{"m",4},{"M",3}}},{{{"e",1},{"m",4},{"M",3}},{{"A.+",5},{"A.+",6},{"E",2}}},{{{"A.+",5},{"e",1},{"M",3}},{{"A.+",6},{"E",2},{"m",4}}},{{{"A.+",6},{"e",1},{"M",3}},{{"A.+",5},{"E",2},{"m",4}}},{{{"A.+",5},{"e",1},{"m",4}},{{"A.+",6},{"E",2},{"M",3}}},{{{"A.+",6},{"e",1},{"m",4}},{{"A.+",5},{"E",2},{"M",3}}},{{{"A.+",5},{"A.+",6},{"e",1}},{{"E",2},{"m",4},{"M",3}}}}*)*)
+
+
+(* ::Subsubsection::Closed:: *)
+(*LookupAmplitude[taggedParticles_List,model_,rightSide_Boolean]*)
+
+
+(* ::Input::Initialization:: *)
+LookupAmplitude[taggedParticles_List,model_,rightSide_,{i1_,i2_,i3_,i4_}]:=Module[{amp=0,i,j,k,replacements,doubleSpin,indices},
+(*Find the amp*)
+Do[
+If[Sort[DeleteCases[DeleteCases[Flatten[taggedParticles],_Integer],Multiparticle[__]]]===Sort[DeleteCases[Drop[model[[2,i]],-2],""]],
+(*Print[model[[2,i]]];*)
+replacements={};
+Do[
+If[taggedParticles[[k,1]]===model[[2,i,j]],AppendTo[replacements,j->taggedParticles[[k,2]]]];
+,{k,1,Length[taggedParticles]},{j,1,Length[model[[2,i]]]-2}];
+(*Print[replacements];*)
+amp=model[[2,i,-2]]model[[2,i,-1]]/.{SpinorChain[args__]:>SpinorChain@@(List[args]/.replacements),xFactor[args__]:>xFactor@@(List[args]/.replacements),xTildeFactor[args__]:>xTildeFactor@@(List[args]/.replacements)};
+];
+(*Print[Sort[DeleteCases[Flatten[taggedParticles],_Integer]]];
+Print[Sort[DeleteCases[Drop[model[[2,i]],-2],""]]];*)
+,{i,1,Length[model[[2]]]}];
+(*Determine if the last particle (with a multiparticle momentum) is a particle or antiparticle and make the indices explicit appropriately.*)
+Do[
+If[MatchQ[taggedParticles[[-1,2]],Multiparticle[__]]&&(taggedParticles[[-1,1]]===model[[1,i,2]]||taggedParticles[[-1,1]]===model[[1,i,3]]),
+doubleSpin=model[[1,i,5]];
+indices={};
+If[doubleSpin>0,AppendTo[indices,i1]];
+If[doubleSpin>1,AppendTo[indices,i2]];
+If[doubleSpin>2,AppendTo[indices,i3]];
+If[doubleSpin>4,AppendTo[indices,i4]];
+If[taggedParticles[[-1,1]]===model[[1,i,2]],amp=SymmetrizeSpin[amp,taggedParticles[[-1,2]],indices]];
+If[taggedParticles[[-1,1]]===model[[1,i,3]]&&model[[1,i,2]]=!=model[[1,i,3]],amp=MakeIndicesExplicit[amp,taggedParticles[[-1,2]],indices]/."Upper"->"Lower"];
+If[rightSide&&model[[1,i,2]]==model[[1,i,3]],amp=amp/."Upper"->"Lower"];
+];
+,{i,1,Length[model[[1]]]}];
+amp
+]
+
+
+(* ::Input:: *)
+(*(*LookupAmplitude[{{"E",1},{"A.+",2},{"e",Multiparticle[3,4]}},sm,True,{i1,i2,i3,i4}]*)*)
+
+
+(* ::Input:: *)
+(*(*LookupAmplitude[{{"A.-",3},{"e",4},{"E",Multiparticle[1,2]}},sm,False,{i1,i2,i3,i4}]*)*)
+
+
+(* ::Subsubsection::Closed:: *)
+(*ExpandXFactors[expr_]*)
+
+
+(* ::Input::Initialization:: *)
+ExpandXFactors[expr_,n_]:=Module[{newExp,particleIndices,missingXReplacement,missingXTildeReplacement,XiN=10},
+particleIndices[term_]:=Which[
+  IntegerQ[term],{term},
+  MatchQ[term,Multiparticle[__]],List @@ term,
+  True,{}
+];
+(*missingXReplacement[l_,j_]:=
+  SpinorChain[SpinorHat["Xi","Angle",XiN],MomHat[j],SpinorHat["Helicity","Square",l]]/Mass[j]/SpinorChain[ SpinorHat["Xi","Angle",XiN++],SpinorHat["Helicity","Angle",l]];
+missingXTildeReplacement[l_,j_]:=  SpinorChain[SpinorHat["Xi","Square",XiN],MomHat[j],SpinorHat["Helicity","Angle",l]]/Mass[j]/SpinorChain[ SpinorHat["Xi","Square",XiN++],SpinorHat["Helicity","Square",l]];*)
+missingXReplacement[l_,j_]:=
+  SpinorChain[SpinorHat["Helicity","Square",l],MomHat[XiN],MomHat[j],SpinorHat["Helicity","Square",l]]/Mass[j]/PropDen[MomHat[Multiparticle[l,XiN]],Mass[XiN++]];
+missingXTildeReplacement[l_,j_]:=  SpinorChain[SpinorHat["Helicity","Angle",l],MomHat[XiN],MomHat[j],SpinorHat["Helicity","Angle",l]]/Mass[j]/PropDen[MomHat[Multiparticle[l,XiN]],Mass[XiN++]];
+
+newExp=expr/.{xFactor[i_,j_]xTildeFactor[k_,l_]SpinorChain[SpinorHat["Spin","Angle",i_],SpinorHat["Spin","Angle",j_]]SpinorChain[SpinorHat["Spin","Square",k_],SpinorHat["Spin","Square",l_]]+xFactor[k_,l_]xTildeFactor[i_,j_]SpinorChain[SpinorHat["Spin","Angle",k_],SpinorHat["Spin","Angle",l_]]SpinorChain[SpinorHat["Spin","Square",i_],SpinorHat["Spin","Square",j_]]:>SpinorChain[SpinorHat["Spin","Angle",i],SpinorHat["Spin","Angle",k]]SpinorChain[SpinorHat["Spin","Square",j],SpinorHat["Spin","Square",l]]+SpinorChain[SpinorHat["Spin","Angle",i],SpinorHat["Spin","Angle",l]]SpinorChain[SpinorHat["Spin","Square",j],SpinorHat["Spin","Square",k]]+SpinorChain[SpinorHat["Spin","Square",i],SpinorHat["Spin","Square",k]]SpinorChain[SpinorHat["Spin","Angle",j],SpinorHat["Spin","Angle",l]]+SpinorChain[SpinorHat["Spin","Square",i],SpinorHat["Spin","Square",l]]SpinorChain[SpinorHat["Spin","Angle",j],SpinorHat["Spin","Angle",k]]
+};
+newExp/.{
+xFactor[i_,j_]:>Module[
+  {allIndices,missingIndex},
+  allIndices=Union@Join[particleIndices[i],particleIndices[j]];
+  missingIndex=Complement[Range[n],allIndices];
+  If[Length[missingIndex]===1,
+    missingXReplacement[First[missingIndex],j],
+    xFactor[i,j]
+  ]
+],
+xTildeFactor[i_,j_]:>Module[
+  {allIndices,missingIndex},
+  allIndices=Union@Join[particleIndices[i],particleIndices[j]];
+  missingIndex=Complement[Range[n],allIndices];
+  If[Length[missingIndex]===1,
+    missingXTildeReplacement[First[missingIndex],j],
+    xFactor[i,j]
+  ]
+]
+}
+];
+
+
+(* ::Subsubsection::Closed:: *)
+(*FactorizationAmplitude[particles_List,model_]*)
+
+
+(* ::Text:: *)
+(*This function uses FactorizationPartitions to create the partitions and then calls LookupAmplitude to see if each side is nonzero.  If they are, it sews them together.*)
+
+
+(* ::Input::Initialization:: *)
+FactorizationAmplitudeChannels[particles_List,model_]:=Module[{partitions,j,i,k,channel,momenta1,momenta2,amp1,amp2,amp12A,amp12B,amplitude={},masses={},xFactorReverseProtect,xFactorReverseProtectInverse,Multipart,XiN=1},
+(*Create replacement lists that protect the xFactor*)
+xFactorReverseProtect={xFactor[a___,Multiparticle[b__],c___]:>xFactor[a,Multipart[b],c],xTildeFactor[a___,Multiparticle[b__],c___]:>xTildeFactor[a,Multipart[b],c]};
+xFactorReverseProtectInverse={xFactor[a___,Multipart[b__],c___]:>xFactor[a,Multiparticle[b],c],xTildeFactor[a___,Multipart[b__],c___]:>xTildeFactor[a,Multiparticle[b],c]};
+(*Get a list of the external masses.*)
+Do[
+If[particles[[i]]===model[[1,j,2]]||particles[[i]]===model[[1,j,3]],AppendTo[masses,model[[1,j,6]]]];
+,{i,1,Length[particles]},{j,1,Length[model[[1]]]}];
+(*Create the factorization channels*)
+partitions=FactorizationPartitions[particles];
+Do[
+channel=partitions[[i]];
+momenta1=Multiparticle[];Do[AppendTo[momenta1,channel[[2,k,2]]],{k,1,Length[channel[[2]]]}];momenta1=Sort[momenta1];
+momenta2=Multiparticle[];Do[AppendTo[momenta2,channel[[1,k,2]]],{k,1,Length[channel[[1]]]}];momenta2=Sort[momenta2];
+amp12A=0;
+channel[[1]]=Append[channel[[1]],{model[[1,j,2]],momenta1}];
+channel[[2]]=Append[channel[[2]],{model[[1,j,3]],momenta2}];
+(*Print[channel];*)
+amp1=ReverseMomentum[LookupAmplitude[channel[[1]],model,False,{i1,i2,i3,i4}],momenta1]//.xFactorReverseProtect/.momenta1->momenta2//.xFactorReverseProtectInverse;
+If[amp1=!=0,amp2=LookupAmplitude[channel[[2]],model,True,{i1,i2,i3,i4}]];
+If[amp1=!=0&&amp2=!=0,
+amp12A=ReduceSpinContractions[amp1 amp2]/.{
+Mass[momenta1]->model[[1,j,6]],
+Mom[Multiparticle[parts__]]:>Total[Mom/@{parts}]
+};];
+(*Now switch sides for particle and antiparticle, if they are different, and combine*)
+amp12B=0;
+If[model[[1,j,2]]=!=model[[1,j,3]],
+channel=partitions[[i]];
+channel[[1]]=Append[channel[[1]],{model[[1,j,3]],momenta1}];
+channel[[2]]=Append[channel[[2]],{model[[1,j,2]],momenta2}];
+(*Print[channel];*)
+amp1=ReverseMomentum[LookupAmplitude[channel[[1]],model,False,{i1,i2,i3,i4}],momenta1]//.xFactorReverseProtect/.momenta1->momenta2//.xFactorReverseProtectInverse;
+If[amp1=!=0,amp2=LookupAmplitude[channel[[2]],model,True,{i1,i2,i3,i4}]];
+If[amp1=!=0&&amp2=!=0,
+amp12B=ReduceSpinContractions[amp1 amp2]/.{
+Mass[momenta1]->model[[1,j,6]],
+Mom[Multiparticle[parts__]]:>Total[Mom/@{parts}]
+};];];
+(*Combine*)
+(*I think it will be better to rewrite models to have separate lines for internal photons where there are 4-point vertices and no x factors and external photons.  Using the x factors (or their replacements) just create unecessary complications when they always simplify to the same thing based on the spin of the particles on the ends.*)
+If[amp12A=!=0||amp12B=!=0,
+AppendTo[amplitude,Flatten[{masses,momenta2,model[[1,j,6]],ExpandXFactors[Simplify[ComplexifyMomenta[(amp12A+amp12B)/z/PropDen[Mom[momenta2],model[[1,j,6]]]]],Length[particles]]}]];
+];
+(*Print[Expand[amplitude[[-1]]]]];*)
+,{j,1,Length[model[[1]]]},{i,1,Length[partitions]}];
+amplitude
+]
+
+
+(* ::Subsubsection::Closed:: *)
+(*SimplifyFactorizationChannels[amp_]*)
+
+
+(* ::Text:: *)
+(*This applies SimplifySpinorProducts to each channel*)
+
+
+(* ::Input::Initialization:: *)
+SimplifyFactorizationChannels[amp_List]:=Module[{newAmp=amp,massReplacements={}},
+Do[
+massReplacements=Join[
+  Thread[Mass /@ Range[Length[newAmp[[i]]]-3]->Take[newAmp[[i]],Length[newAmp[[i]]]-3]],
+  {Mass[newAmp[[i,-3]]]->newAmp[[i,-2]]}
+];
+newAmp[[i,-1]]=SimplifySpinorProducts[newAmp[[i,-1]],Momenta->Range[Length[newAmp[[i]]]-3],InternalLines->newAmp[[i,-3]]/.Multiparticle[parts__]:>{parts},InternalLineOnShell->True,massReplacementRules->massReplacements]
+,{i,1,Length[amp]}];
+newAmp
+]
+
+
+(* ::Subsubsection::Closed:: *)
+(*ExpandMomHatAlt[amp_]*)
+
+
+(* ::Input::Initialization:: *)
+ExpandMomHatAlt[amp_]:=Module[{newAmp},
+amp//.{
+PropDen[MomHat[Multiparticle[a__]],m_]:>PropDen[Mom[Multiparticle[a]],m](z-zPlus[Multiparticle[a]])(z-zMinus[Multiparticle[a]])/zPlus[Multiparticle[a]]/zMinus[Multiparticle[a]],
+SpinorChain[a__,MomHat[b_],c__]:>SpinorChain[a,Mom[b],c]+z SpinorChain[a,MomQ[b],c]
+}
+]
+
+
+(* ::Subsubsection::Closed:: *)
+(*SumResiduesAlt[amp_]*)
+
+
+(* ::Input::Initialization:: *)
+SumResiduesAlt[amp_]:=Module[{newAmp=0},
+Do[
+newAmp+=(z-zPlus[amp[[j,-3]]])amp[[j,-1]]/.{z->zPlus[amp[[j,-3]]]};
+newAmp+=(z-zMinus[amp[[j,-3]]])amp[[j,-1]]/.{z->zMinus[amp[[j,-3]]]};
+,{j,1,Length[amp]}];
+newAmp
+]
+
+
+(* ::Subsubsection::Closed:: *)
+(*UnHatSpinors[amp_]*)
+
+
+(* ::Input::Initialization:: *)
+UnHatSpinors[amp_]:=amp/.SpinorHat[a__]:>Spinor[a]

@@ -15,6 +15,7 @@ Print["Please cite: ..."];
 Print["Contributions by: ..."];
 Print["Instructions can be found..."];
 Print[];
+Print["We welcome contributors.  Please contact Neil if interested."];
 Print["------------------------------------"];
 Begin["ConstructiveDiagrams`"];
 
@@ -27,7 +28,7 @@ Get[ToFileName[Global`$HEPCATpath,"HEPCAT-Base.wl"]];
 Get[ToFileName[Global`$HEPCATpath,"HEPCAT-Model.wl"]];
 
 
-(* ::Subsection:: *)
+(* ::Subsection::Closed:: *)
 (*End Package*)
 
 
