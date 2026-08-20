@@ -1,7 +1,6 @@
 SM
  Variables 
  Name   | Value       |>  Comment                                   <|
-MA      |0            |Mass of the photon
 EE      |0.31333      |Electromagnetic coupling constant (<->1/128)
 GG      |1.117        |Strong coupling constant (Z point)  (PDG-94)
 SW      |0.474        |sin of the Weinberg angle 0.474 - "on-shell",4

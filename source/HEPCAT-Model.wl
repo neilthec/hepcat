@@ -9,13 +9,13 @@
 
 
 (* ::Input::Initialization:: *)
-ReadModel[dir_,num_]:=Module[{particleList,vertexList,variableList,functionList},
+ReadModel[dir_,num_]:=Module[{particleList,amplitudeList,variableList,functionList},
 particleList=ReadParticles[dir<>"/prtcls"<>ToString[num]<>".mdl"];
-vertexList=ReadVertices[dir<>"/vrtcs"<>ToString[num]<>".mdl",particleList];
+amplitudeList=ReadAmplitudes[dir<>"/amps"<>ToString[num]<>".mdl",particleList];
 variableList=ReadVariables[dir<>"/vars"<>ToString[num]<>".mdl"];
 functionList=ReadFunctions[dir<>"/func"<>ToString[num]<>".mdl"];
 
-{particleList,vertexList,variableList,functionList}
+{particleList,amplitudeList,variableList,functionList}
 ]
 
 
@@ -102,32 +102,34 @@ res
 
 
 (* ::Subsubsection::Closed:: *)
-(*Vertex Reader*)
+(*Amplitude Reader*)
 
 
 (* ::Input::Initialization:: *)
-ReadVertices[file_,particleList_]:=Module[{str,vertexList={},line={""}},
+ReadAmplitudes[file_,particleList_]:=Module[{str,amplitudeList={},line={""}},
 str=OpenRead[file];
 While[!StringContainsQ[line[[1]],"======"],
 line=StringTrim[StringSplit[ReadLine[str],"|"]];
 If[Length[line]>=5&&line[[3]]!="P3"&&!StringContainsQ[line[[1]],"%"],
 line[[-2]]=ToExpression[line[[-2]]];
-line[[-1]]=ConvertVertex[line,particleList];
-AppendTo[vertexList,line];
+line[[-1]]=ConvertAmplitude[line,particleList];
+AppendTo[amplitudeList,line];
 ];
 ];
 Close[str];
-AddOppositeHelicityAmplitudes[vertexList]
+(*AddOppositeHelicityAmplitudes[amplitudeList]*)
+amplitudeList
 ]
 
 
 (* ::Input::Initialization:: *)
-ConvertVertex[line_,particleList_]:=Module[{masses={},res,SpinHelicity},
+ConvertAmplitude[line_,particleList_]:=Module[{masses={},res,SpinHelicity},
 SpinHelicity[mass_]:=If[mass===0,"Helicity","Spin"];
 Do[AppendTo[masses,ParticleMass[line[[ii]],particleList]],{ii,1,Length[line]-2}];
 (*If[line[[4]]=!="",AppendTo[masses,ParticleMass[line[[4]],particleList]]];*)
 res=StringReplace[line[[-1]],{
 RegularExpression["x(\\d)(\\d)"]:>"xFactor[$1,$2]",
+RegularExpression["xt(\\d)(\\d)"]:>"xTildeFactor[$1,$2]",
 RegularExpression["<(\\d)(\\d)>"]:>"SpinorChain[Spinor[\""<>SpinHelicity[masses[[ToExpression["$1"]]]]<>"\",\"Angle\",$1],Spinor[\""<>SpinHelicity[masses[[ToExpression["$2"]]]]<>"\",\"Angle\",$2]]",
 RegularExpression["\[(\\d)(\\d)\]"]:>"SpinorChain[Spinor[\""<>SpinHelicity[masses[[ToExpression["$1"]]]]<>"\",\"Square\",$1],Spinor[\""<>SpinHelicity[masses[[ToExpression["$2"]]]]<>"\",\"Square\",$2]]"
 }];
@@ -136,7 +138,7 @@ ToExpression[res]
 
 
 (* ::Input::Initialization:: *)
-ConvertAmplitude[amp_,particleList_]:=Module[{masses={},res,SpinHelicity},
+ConvertAmplitudeOld[amp_,particleList_]:=Module[{masses={},res,SpinHelicity},
 (*SpinHelicity[mass_]:=If[mass===0,"Helicity","Spin"];
 Do[AppendTo[masses,ParticleMass[line[[ii]],particleList]],{ii,1,3}];
 If[line[[4]]=!="",AppendTo[masses,ParticleMass[line[[4]],particleList]]];*)
@@ -149,17 +151,17 @@ ToExpression[res]
 ];
 
 
-AddOppositeHelicityAmplitudes[vertices_]:=Module[{newVertices={},i,j,k,containsHelicity,vertex},
+AddOppositeHelicityAmplitudes[vertices_]:=Module[{newVertices={},i,j,k,containsHelicity,amplitude},
 Do[
 AppendTo[newVertices,vertices[[i]]];
 containsHelicity=False;
 Do[If[StringEndsQ[vertices[[i,j]],{".+",".-"}],containsHelicity=True],{j,1,Length[vertices[[i]]]-2}];
 If[containsHelicity,
-vertex={};
-Do[AppendTo[vertex,StringReplace[vertices[[i,j]],{".+"->".-",".-"->".+"}]],{j,1,Length[vertices[[i]]]-2}];
-AppendTo[vertex,vertices[[i,-2]]];
-AppendTo[vertex,vertices[[i,-1]]/.{xFactor[a__]:>xTildeFactor[a],"Angle"->"Square","Square"->"Angle"}];
-AppendTo[newVertices,vertex];
+amplitude={};
+Do[AppendTo[amplitude,StringReplace[vertices[[i,j]],{".+"->".-",".-"->".+"}]],{j,1,Length[vertices[[i]]]-2}];
+AppendTo[amplitude,vertices[[i,-2]]];
+AppendTo[amplitude,vertices[[i,-1]]/.{xFactor[a__]:>xTildeFactor[a],xTildeFactor[a__]:>xFactor[a],"Angle"->"Square","Square"->"Angle"}];
+AppendTo[newVertices,amplitude];
 ];
 ,{i,1,Length[vertices]}];
 newVertices

@@ -1,23 +1,40 @@
 SM
- Vertices 
-P1   |P2   |P3   |P4   |>   Factor                   <|> dLagrangian/ dA(p1) dA(p2) dA(p3)                                                                          <|
+ Amplitudes 
+P1   |P2   |P3   |P4   |>   Factor                   <|> Amplitude/Factor
 W+   |W-   |A.+  |     |Sqrt[2]*EE/MW                 |x12*<12>^2
+W+   |W-   |A.-  |     |Sqrt[2]*EE/MW                 |xt12*[12]^2
 e    |E    |A.+  |     |-Sqrt[2]*EE                   |x12*<12>
+e    |E    |A.-  |     |-Sqrt[2]*EE                   |xt12*[12]
 m    |M    |A.+  |     |-Sqrt[2]*EE                   |x12*<12>
+m    |M    |A.-  |     |-Sqrt[2]*EE                   |xt12*[12]
 l    |L    |A.+  |     |-Sqrt[2]*EE                   |x12*<12>
+l    |L    |A.-  |     |-Sqrt[2]*EE                   |xt12*[12]
 d    |D    |A.+  |     |-Sqrt[2]*EE/3                 |x12*<12>
+d    |D    |A.-  |     |-Sqrt[2]*EE/3                 |xt12*[12]
 s    |S    |A.+  |     |-Sqrt[2]*EE/3                 |x12*<12>
+s    |S    |A.-  |     |-Sqrt[2]*EE/3                 |xt12*[12]
 b    |B    |A.+  |     |-Sqrt[2]*EE/3                 |x12*<12>
+b    |B    |A.-  |     |-Sqrt[2]*EE/3                 |xt12*[12]
 u    |U    |A.+  |     |Sqrt[2]*2EE/3                 |x12*<12>
+u    |U    |A.-  |     |Sqrt[2]*2EE/3                 |xt12*[12]
 c    |C    |A.+  |     |Sqrt[2]*2EE/3                 |x12*<12>
+c    |C    |A.-  |     |Sqrt[2]*2EE/3                 |xt12*[12]
 t    |T    |A.+  |     |Sqrt[2]*2EE/3                 |x12*<12>
+t    |T    |A.-  |     |Sqrt[2]*2EE/3                 |xt12*[12]
 G.-  |G.-  |G.+  |     |Sqrt[2]*GG                    |<12>^3/(<23>*<31>)
+G.+  |G.+  |G.-  |     |Sqrt[2]*GG                    |[12]^3/([23]*[31])
 d    |D    |G.+  |     |Sqrt[2]*GG                    |x12*<12>
+d    |D    |G.-  |     |Sqrt[2]*GG                    |xt12*[12]
 s    |S    |G.+  |     |Sqrt[2]*GG                    |x12*<12>
+s    |S    |G.-  |     |Sqrt[2]*GG                    |xt12*[12]
 b    |B    |G.+  |     |Sqrt[2]*GG                    |x12*<12>
+b    |B    |G.-  |     |Sqrt[2]*GG                    |xt12*[12]
 u    |U    |G.+  |     |Sqrt[2]*GG                    |x12*<12>
+u    |U    |G.-  |     |Sqrt[2]*GG                    |xt12*[12]
 c    |C    |G.+  |     |Sqrt[2]*GG                    |x12*<12>
+c    |C    |G.-  |     |Sqrt[2]*GG                    |xt12*[12]
 t    |T    |G.+  |     |Sqrt[2]*GG                    |x12*<12>
+t    |T    |G.-  |     |Sqrt[2]*GG                    |xt12*[12]
 ne   |Ne   |Z    |     |-EE/(Sqrt[2]*MW*SW)           |<31>*[23]
 nm   |Nm   |Z    |     |-EE/(Sqrt[2]*MW*SW)           |<31>*[23]
 nl   |Nl   |Z    |     |-EE/(Sqrt[2]*MW*SW)           |<31>*[23]
