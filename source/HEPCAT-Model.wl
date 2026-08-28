@@ -131,7 +131,10 @@ res=StringReplace[line[[-1]],{
 RegularExpression["x(\\d)(\\d)"]:>"xFactor[$1,$2]",
 RegularExpression["xt(\\d)(\\d)"]:>"xTildeFactor[$1,$2]",
 RegularExpression["<(\\d)(\\d)>"]:>"SpinorChain[Spinor[\""<>SpinHelicity[masses[[ToExpression["$1"]]]]<>"\",\"Angle\",$1],Spinor[\""<>SpinHelicity[masses[[ToExpression["$2"]]]]<>"\",\"Angle\",$2]]",
-RegularExpression["\[(\\d)(\\d)\]"]:>"SpinorChain[Spinor[\""<>SpinHelicity[masses[[ToExpression["$1"]]]]<>"\",\"Square\",$1],Spinor[\""<>SpinHelicity[masses[[ToExpression["$2"]]]]<>"\",\"Square\",$2]]"
+RegularExpression["\[(\\d)(\\d)\]"]:>"SpinorChain[Spinor[\""<>SpinHelicity[masses[[ToExpression["$1"]]]]<>"\",\"Square\",$1],Spinor[\""<>SpinHelicity[masses[[ToExpression["$2"]]]]<>"\",\"Square\",$2]]",
+RegularExpression["\[(\\d)(\\d)(\\d)>"]:>"SpinorChain[Spinor[\""<>SpinHelicity[masses[[ToExpression["$1"]]]]<>"\",\"Square\",$1],Mom[$2],Spinor[\""<>SpinHelicity[masses[[ToExpression["$3"]]]]<>"\",\"Angle\",$3]]",
+RegularExpression["s(\\d)(\\d)-([a-zA-Z0-9]+)\\^2"]:>"PropDen[Mom[Multiparticle[$1,$2]],$3]",
+RegularExpression["s(\\d)(\\d)"]:>"PropDen[Mom[Multiparticle[$1,$2]],0]"
 }];
 ToExpression[res]
 ];
@@ -169,7 +172,7 @@ newVertices
 
 
 (* ::Subsection::Closed:: *)
-(*Diagrams*)
+(*Diagrams (old: to be removed)*)
 
 
 (* ::Subsubsection::Closed:: *)
@@ -486,17 +489,48 @@ partitions
 
 
 (* ::Input::Initialization:: *)
-LookupAmplitude[taggedParticles_List,model_,rightSide_,{i1_,i2_,i3_,i4_}]:=Module[{amp=0,i,j,k,replacements,doubleSpin,indices},
-(*Find the amp*)
+LookupAmplitude[taggedParticles_List,model_,rightSide_,{i1_,i2_,i3_,i4_}]:=Module[{amp=0,i,j,k,replacements,doubleSpin,indices,buildReplacements},
+(*Helper function*)
+buildReplacements[i_]:=Module[{used={},particleList},
+replacements={};
+particleList=model[[2,i]];
+Do[
+ Do[
+If[
+taggedParticles[[k,1]]===particleList[[j]]&&! MemberQ[used,k],
+AppendTo[replacements,j->taggedParticles[[k,2]]];
+AppendTo[used,k];
+Break[]
+],
+{k,Length[taggedParticles]}
+],
+{j,Length[particleList]-2}
+];
+replacements
+];
+(*End helper function*)
+
+(*Find the amp*)(*Print[taggedParticles];*)
 Do[
 If[Sort[DeleteCases[DeleteCases[Flatten[taggedParticles],_Integer],Multiparticle[__]]]===Sort[DeleteCases[Drop[model[[2,i]],-2],""]],
 (*Print[model[[2,i]]];*)
+(*Old, remove once satisfied.
 replacements={};
 Do[
 If[taggedParticles[[k,1]]===model[[2,i,j]],AppendTo[replacements,j->taggedParticles[[k,2]]]];
-,{k,1,Length[taggedParticles]},{j,1,Length[model[[2,i]]]-2}];
+,{k,1,Length[taggedParticles]},{j,1,Length[model[[2,i]]]-2}];*)
+replacements=buildReplacements[i];
 (*Print[replacements];*)
-amp=model[[2,i,-2]]model[[2,i,-1]]/.{SpinorChain[args__]:>SpinorChain@@(List[args]/.replacements),xFactor[args__]:>xFactor@@(List[args]/.replacements),xTildeFactor[args__]:>xTildeFactor@@(List[args]/.replacements)};
+amp=model[[2,i,-2]]model[[2,i,-1]]/.{
+SpinorChain[args__]:>SpinorChain@@(List[args]/.replacements),
+PropDen[args__]:>PropDen@@(List[args]/.replacements),
+xFactor[args__]:>xFactor@@(List[args]/.replacements),
+xTildeFactor[args__]:>xTildeFactor@@(List[args]/.replacements)
+}/.{
+Multiparticle[Multiparticle[a__],b_]:>Multiparticle[a,b],
+Multiparticle[a_,Multiparticle[b__]]:>Multiparticle[a,b],
+Multiparticle[Multiparticle[a__],Multiparticle[b__]]:>Multiparticle[a,b]
+};
 ];
 (*Print[Sort[DeleteCases[Flatten[taggedParticles],_Integer]]];
 Print[Sort[DeleteCases[Drop[model[[2,i]],-2],""]]];*)
@@ -538,12 +572,12 @@ particleIndices[term_]:=Which[
   MatchQ[term,Multiparticle[__]],List @@ term,
   True,{}
 ];
-(*missingXReplacement[l_,j_]:=
-  SpinorChain[SpinorHat["Xi","Angle",XiN],MomHat[j],SpinorHat["Helicity","Square",l]]/Mass[j]/SpinorChain[ SpinorHat["Xi","Angle",XiN++],SpinorHat["Helicity","Angle",l]];
-missingXTildeReplacement[l_,j_]:=  SpinorChain[SpinorHat["Xi","Square",XiN],MomHat[j],SpinorHat["Helicity","Angle",l]]/Mass[j]/SpinorChain[ SpinorHat["Xi","Square",XiN++],SpinorHat["Helicity","Square",l]];*)
 missingXReplacement[l_,j_]:=
+  SpinorChain[SpinorHat["Xi","Angle",XiN],MomHat[j],SpinorHat["Helicity","Square",l]]/Mass[j]/SpinorChain[ SpinorHat["Xi","Angle",XiN++],SpinorHat["Helicity","Angle",l]];
+missingXTildeReplacement[l_,j_]:=  SpinorChain[SpinorHat["Xi","Square",XiN],MomHat[j],SpinorHat["Helicity","Angle",l]]/Mass[j]/SpinorChain[ SpinorHat["Xi","Square",XiN++],SpinorHat["Helicity","Square",l]];
+(*missingXReplacement[l_,j_]:=
   SpinorChain[SpinorHat["Helicity","Square",l],MomHat[XiN],MomHat[j],SpinorHat["Helicity","Square",l]]/Mass[j]/PropDen[MomHat[Multiparticle[l,XiN]],Mass[XiN++]];
-missingXTildeReplacement[l_,j_]:=  SpinorChain[SpinorHat["Helicity","Angle",l],MomHat[XiN],MomHat[j],SpinorHat["Helicity","Angle",l]]/Mass[j]/PropDen[MomHat[Multiparticle[l,XiN]],Mass[XiN++]];
+missingXTildeReplacement[l_,j_]:=  SpinorChain[SpinorHat["Helicity","Angle",l],MomHat[XiN],MomHat[j],SpinorHat["Helicity","Angle",l]]/Mass[j]/PropDen[MomHat[Multiparticle[l,XiN]],Mass[XiN++]];*)
 
 newExp=expr/.{xFactor[i_,j_]xTildeFactor[k_,l_]SpinorChain[SpinorHat["Spin","Angle",i_],SpinorHat["Spin","Angle",j_]]SpinorChain[SpinorHat["Spin","Square",k_],SpinorHat["Spin","Square",l_]]+xFactor[k_,l_]xTildeFactor[i_,j_]SpinorChain[SpinorHat["Spin","Angle",k_],SpinorHat["Spin","Angle",l_]]SpinorChain[SpinorHat["Spin","Square",i_],SpinorHat["Spin","Square",j_]]:>SpinorChain[SpinorHat["Spin","Angle",i],SpinorHat["Spin","Angle",k]]SpinorChain[SpinorHat["Spin","Square",j],SpinorHat["Spin","Square",l]]+SpinorChain[SpinorHat["Spin","Angle",i],SpinorHat["Spin","Angle",l]]SpinorChain[SpinorHat["Spin","Square",j],SpinorHat["Spin","Square",k]]+SpinorChain[SpinorHat["Spin","Square",i],SpinorHat["Spin","Square",k]]SpinorChain[SpinorHat["Spin","Angle",j],SpinorHat["Spin","Angle",l]]+SpinorChain[SpinorHat["Spin","Square",i],SpinorHat["Spin","Square",l]]SpinorChain[SpinorHat["Spin","Angle",j],SpinorHat["Spin","Angle",k]]
 };
@@ -571,7 +605,7 @@ xTildeFactor[i_,j_]:>Module[
 
 
 (* ::Subsubsection::Closed:: *)
-(*FactorizationAmplitude[particles_List,model_]*)
+(*FactorizationAmplitudeChannels[particles_List,model_]*)
 
 
 (* ::Text:: *)
@@ -579,7 +613,7 @@ xTildeFactor[i_,j_]:>Module[
 
 
 (* ::Input::Initialization:: *)
-FactorizationAmplitudeChannels[particles_List,model_]:=Module[{partitions,j,i,k,channel,momenta1,momenta2,amp1,amp2,amp12A,amp12B,amplitude={},masses={},xFactorReverseProtect,xFactorReverseProtectInverse,Multipart,XiN=1},
+FactorizationAmplitudeChannels[particles_List,model_]:=Module[{partitions,j,i,k,channel,momenta1,momenta2,amp1,amp2,amp12A,amp12B,amplitude={},masses={},xFactorReverseProtect,xFactorReverseProtectInverse,Multipart,XiN=1,massReplacements={}},
 (*Create replacement lists that protect the xFactor*)
 xFactorReverseProtect={xFactor[a___,Multiparticle[b__],c___]:>xFactor[a,Multipart[b],c],xTildeFactor[a___,Multiparticle[b__],c___]:>xTildeFactor[a,Multipart[b],c]};
 xFactorReverseProtectInverse={xFactor[a___,Multipart[b__],c___]:>xFactor[a,Multiparticle[b],c],xTildeFactor[a___,Multipart[b__],c___]:>xTildeFactor[a,Multiparticle[b],c]};
@@ -599,11 +633,11 @@ channel[[2]]=Append[channel[[2]],{model[[1,j,3]],momenta2}];
 (*Print[channel];*)
 amp1=ReverseMomentum[LookupAmplitude[channel[[1]],model,False,{i1,i2,i3,i4}],momenta1]//.xFactorReverseProtect/.momenta1->momenta2//.xFactorReverseProtectInverse;
 If[amp1=!=0,amp2=LookupAmplitude[channel[[2]],model,True,{i1,i2,i3,i4}]];
-If[amp1=!=0&&amp2=!=0,
+If[amp1=!=0&&amp2=!=0,(*Print[amp1];Print[amp2];*)
 amp12A=ReduceSpinContractions[amp1 amp2]/.{
 Mass[momenta1]->model[[1,j,6]],
-Mom[Multiparticle[parts__]]:>Total[Mom/@{parts}]
-};];
+SpinorChain[a__,Mom[Multiparticle[parts__]],b__]:>SpinorChain[a,Total[Mom/@{parts}],b]
+};];(*Print[amp12A];*)
 (*Now switch sides for particle and antiparticle, if they are different, and combine*)
 amp12B=0;
 If[model[[1,j,2]]=!=model[[1,j,3]],
@@ -613,19 +647,24 @@ channel[[2]]=Append[channel[[2]],{model[[1,j,2]],momenta2}];
 (*Print[channel];*)
 amp1=ReverseMomentum[LookupAmplitude[channel[[1]],model,False,{i1,i2,i3,i4}],momenta1]//.xFactorReverseProtect/.momenta1->momenta2//.xFactorReverseProtectInverse;
 If[amp1=!=0,amp2=LookupAmplitude[channel[[2]],model,True,{i1,i2,i3,i4}]];
-If[amp1=!=0&&amp2=!=0,
+If[amp1=!=0&&amp2=!=0,(*Print[amp1];Print[amp2];*)
 amp12B=ReduceSpinContractions[amp1 amp2]/.{
 Mass[momenta1]->model[[1,j,6]],
-Mom[Multiparticle[parts__]]:>Total[Mom/@{parts}]
-};];];
+SpinorChain[a__,Mom[Multiparticle[parts__]],b__]:>SpinorChain[a,Total[Mom/@{parts}],b]
+};];(*Print[amp12B];*)
+];
 (*Combine*)
 (*I think it will be better to rewrite models to have separate lines for internal photons where there are 4-point vertices and no x factors and external photons.  Using the x factors (or their replacements) just create unecessary complications when they always simplify to the same thing based on the spin of the particles on the ends.*)
 If[amp12A=!=0||amp12B=!=0,
-AppendTo[amplitude,Flatten[{masses,momenta2,model[[1,j,6]],ExpandXFactors[Simplify[ComplexifyMomenta[(amp12A+amp12B)/z/PropDen[Mom[momenta2],model[[1,j,6]]]]],Length[particles]]}]];
+Do[AppendTo[massReplacements,Mass[j]->masses[[j]]],{j,1,Length[masses]}];
+AppendTo[massReplacements,Mass[momenta2]->model[[1,j,6]]];
+AppendTo[massReplacements,Mass[momenta1]->model[[1,j,6]]];
+(*Print[massReplacements];*)
+AppendTo[amplitude,Flatten[{masses,momenta2,model[[1,j,6]],ExpandXFactors[Simplify[ComplexifyMomenta[(amp12A+amp12B)/z/PropDen[Mom[momenta2],model[[1,j,6]]]]],Length[particles]]}]/.massReplacements];
 ];
 (*Print[Expand[amplitude[[-1]]]]];*)
 ,{j,1,Length[model[[1]]]},{i,1,Length[partitions]}];
-amplitude
+amplitude/.massReplacements
 ]
 
 
@@ -673,7 +712,7 @@ Do[
 newAmp+=(z-zPlus[amp[[j,-3]]])amp[[j,-1]]/.{z->zPlus[amp[[j,-3]]]};
 newAmp+=(z-zMinus[amp[[j,-3]]])amp[[j,-1]]/.{z->zMinus[amp[[j,-3]]]};
 ,{j,1,Length[amp]}];
-newAmp
+-newAmp
 ]
 
 
