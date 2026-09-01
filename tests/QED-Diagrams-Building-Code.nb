@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       154,          7]
-NotebookDataLength[    260386,       5538]
-NotebookOptionsPosition[    254213,       5437]
-NotebookOutlinePosition[    254636,       5454]
-CellTagsIndexPosition[    254593,       5451]
+NotebookDataLength[    364232,       7899]
+NotebookOptionsPosition[    355807,       7766]
+NotebookOutlinePosition[    356562,       7791]
+CellTagsIndexPosition[    356480,       7786]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -355,6 +355,13 @@ Cell[BoxData[
    3.996237643672009*^9, {3.997268932050284*^9, 3.997268934800303*^9}},
  CellLabel->"In[4]:=",ExpressionUUID->"c6932cee-8594-45ec-97d1-6e682da89902"],
 
+Cell[CellGroupData[{
+
+Cell["Diagram Generation", "Subsubsection",
+ CellChangeTimes->{{3.997269559542688*^9, 
+  3.99726956167846*^9}},ExpressionUUID->"d1dae9f6-8b6f-4f1b-a70e-\
+63e337f750c2"],
+
 Cell[BoxData[{
  RowBox[{
   RowBox[{
@@ -442,6 +449,20 @@ Cell[BoxData[
   3.996927699116214*^9, 3.9972689665641537`*^9},
  CellLabel->"Out[11]=",ExpressionUUID->"2d521a63-b288-45e5-946a-0163b9152ba3"]
 }, Open  ]],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"modelRowParticles", "[", 
+   RowBox[{"row_", ",", "validParticles_List"}], "]"}], ":=", 
+  "\[IndentingNewLine]", "  ", 
+  RowBox[{"TakeWhile", "[", 
+   RowBox[{"row", ",", 
+    RowBox[{
+     RowBox[{"MemberQ", "[", 
+      RowBox[{"validParticles", ",", "#"}], "]"}], " ", "&"}]}], 
+   "]"}]}]], "Input",
+ CellChangeTimes->{3.9972751732661877`*^9},
+ CellLabel->"In[63]:=",ExpressionUUID->"aec1d454-491c-4ae2-8e0f-877f4a4ba5eb"],
 
 Cell[BoxData[{
  RowBox[{
@@ -1454,6 +1475,80 @@ Cell[BoxData[
    "]"}]}]], "Input",
  CellLabel->"In[19]:=",ExpressionUUID->"f9d2d989-fa42-4b53-8612-b8b7b088e6b6"],
 
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"internalEdgeAssignments", "[", "\[IndentingNewLine]", "  ", 
+   RowBox[{
+   "internalEdges_List", ",", "\[IndentingNewLine]", "  ", 
+    "particleTypes_List", ",", "\[IndentingNewLine]", "  ", 
+    "antiParticleRules_Association"}], "\[IndentingNewLine]", "]"}], ":=", 
+  RowBox[{"Module", "[", "\[IndentingNewLine]", "  ", 
+   RowBox[{
+    RowBox[{"{", "choicesPerEdge", "}"}], ",", "\[IndentingNewLine]", "  ", 
+    RowBox[{
+     RowBox[{"choicesPerEdge", "=", "\[IndentingNewLine]", "    ", 
+      RowBox[{
+       RowBox[{"Function", "[", 
+        RowBox[{"edge", ",", "\[IndentingNewLine]", "      ", 
+         RowBox[{"DeleteDuplicates", " ", "@", " ", 
+          RowBox[{"Flatten", "[", "\[IndentingNewLine]", "        ", 
+           RowBox[{
+            RowBox[{"Table", "[", "\[IndentingNewLine]", "          ", 
+             RowBox[{
+              RowBox[{"With", "[", 
+               RowBox[{
+                RowBox[{"{", 
+                 RowBox[{"anti", "=", 
+                  RowBox[{"Lookup", "[", 
+                   RowBox[{"antiParticleRules", ",", "particle", ",", 
+                    RowBox[{"Missing", "[", "\"\<NotFound\>\"", "]"}]}], 
+                   "]"}]}], "}"}], ",", "\[IndentingNewLine]", "            ", 
+                RowBox[{"If", "[", "\[IndentingNewLine]", "              ", 
+                 RowBox[{
+                  RowBox[{"MissingQ", "[", "anti", "]"}], ",", 
+                  "\[IndentingNewLine]", "              ", 
+                  RowBox[{"{", "}"}], ",", "\[IndentingNewLine]", 
+                  "              ", 
+                  RowBox[{"With", "[", 
+                   RowBox[{
+                    RowBox[{"{", 
+                    RowBox[{"ends", "=", 
+                    RowBox[{"Sort", "[", 
+                    RowBox[{"List", " ", "@@", " ", "edge"}], "]"}]}], "}"}], 
+                    ",", "\[IndentingNewLine]", "                ", 
+                    RowBox[{
+                    "{", "\[IndentingNewLine]", "                  ", 
+                    RowBox[{
+                    RowBox[{"AssociationThread", "[", 
+                    RowBox[{"ends", ",", 
+                    RowBox[{"{", 
+                    RowBox[{"particle", ",", "anti"}], "}"}]}], "]"}], ",", 
+                    "\[IndentingNewLine]", "                  ", 
+                    RowBox[{"AssociationThread", "[", 
+                    RowBox[{"ends", ",", 
+                    RowBox[{"{", 
+                    RowBox[{"anti", ",", "particle"}], "}"}]}], "]"}]}], 
+                    "\[IndentingNewLine]", "                ", "}"}]}], 
+                   "\[IndentingNewLine]", "              ", "]"}]}], 
+                 "\[IndentingNewLine]", "            ", "]"}]}], 
+               "\[IndentingNewLine]", "          ", "]"}], ",", 
+              "\[IndentingNewLine]", "          ", 
+              RowBox[{"{", 
+               RowBox[{"particle", ",", "particleTypes"}], "}"}]}], 
+             "\[IndentingNewLine]", "        ", "]"}], ",", 
+            "\[IndentingNewLine]", "        ", "1"}], "\[IndentingNewLine]", 
+           "      ", "]"}]}]}], "\[IndentingNewLine]", "    ", "]"}], " ", "/@",
+        " ", "internalEdges"}]}], ";", "\[IndentingNewLine]", 
+     "\[IndentingNewLine]", "  ", 
+     RowBox[{
+      RowBox[{
+       RowBox[{"AssociationThread", "[", 
+        RowBox[{"internalEdges", ",", "#"}], "]"}], " ", "&"}], " ", "/@", 
+      " ", 
+      RowBox[{"Tuples", "[", "choicesPerEdge", "]"}]}]}]}], 
+   "\[IndentingNewLine]", "]"}]}]], "Input",
+ CellLabel->"In[64]:=",ExpressionUUID->"79baa602-3c28-4020-be55-bf7131525cbc"],
+
 Cell[CellGroupData[{
 
 Cell[BoxData[
@@ -1504,7 +1599,7 @@ Cell[BoxData[
           RowBox[{"2", "->", "\"\<e\>\""}]}], "|>"}]}], "|>"}]}], 
      "\[IndentingNewLine]", " ", "}"}]}]}], "\[IndentingNewLine]", 
   "]"}]], "Input",
- CellLabel->"In[20]:=",ExpressionUUID->"46f8a159-ea0b-4674-8a7d-fbf043a4dc89"],
+ CellLabel->"In[65]:=",ExpressionUUID->"46f8a159-ea0b-4674-8a7d-fbf043a4dc89"],
 
 Cell[BoxData[
  InterpretationBox[
@@ -1863,12 +1958,12 @@ $CellContext`particleTypes, $CellContext`antiParticleRules]]]]], Method ->
     DynamicModuleValues:>{}], "]"}],
   TestObject[<|
    "MetaInformation" -> None, "AbsoluteTime" -> 
-    3.997268969257815`15.655368356985557*^9, "SameTest" -> SameQ, 
+    3.997275224710246`15.655369036626173*^9, "SameTest" -> SameQ, 
     "SameMessages" -> Testing`MessageMatchQ, "MemoryConstraint" -> 
     DirectedInfinity[1], "TimeConstraint" -> DirectedInfinity[1], 
-    "CreationID" -> "5ffff5b9-f765-4f01-a291-d5c8f279468f", "TestID" -> 
+    "CreationID" -> "a64682f7-189d-484e-a033-95c2fdcd8c26", "TestID" -> 
     "t0tczog5pkmlhe", "TestFileName" -> "", "EvaluationID" -> 
-    "4e6fc4df-3272-4181-849c-2e1d43756889", "Input" -> HoldForm[
+    "b2ce099e-bcc4-4452-8d4c-566faf4ce807", "Input" -> HoldForm[
       Module[{$CellContext`edges = {
           UndirectedEdge[1, 2]}, $CellContext`particleTypes = {
          "e"}, $CellContext`antiParticleRules = <|"e" -> "E", "E" -> "e"|>}, 
@@ -1878,8 +1973,8 @@ $CellContext`particleTypes, $CellContext`antiParticleRules]]]],
     "ExpectedMessages" -> HoldForm[{}], "ActualOutput" -> 
     HoldForm[{<|UndirectedEdge[1, 2] -> <|1 -> "e", 2 -> "E"|>|>, <|
        UndirectedEdge[1, 2] -> <|1 -> "E", 2 -> "e"|>|>}], 
-    "ActualMessages" -> {}, "AbsoluteTimeUsed" -> 0.000164`2.3653588458796917,
-     "CPUTimeUsed" -> 0.00015999999999971593`, "MemoryUsed" -> 5240, 
+    "ActualMessages" -> {}, "AbsoluteTimeUsed" -> 0.001839`3.4150967270700714,
+     "CPUTimeUsed" -> 0.0008310000000051332, "MemoryUsed" -> 4880, 
     "IntermediateTestsTree" -> {}, "ExpectedOutput" -> 
     HoldForm[{<|UndirectedEdge[1, 2] -> <|1 -> "e", 2 -> "E"|>|>, <|
        UndirectedEdge[1, 2] -> <|1 -> "E", 2 -> "e"|>|>}], "Outcome" -> 
@@ -1887,29 +1982,442 @@ $CellContext`particleTypes, $CellContext`antiParticleRules]]]],
   Editable->False,
   SelectWithContents->True,
   Selectable->False]], "Output",
- CellChangeTimes->{3.996934922262617*^9, 3.9972689692664948`*^9},
- CellLabel->"Out[20]=",ExpressionUUID->"d13ecf53-a8eb-416c-9549-177aeeb41bea"]
+ CellChangeTimes->{3.996934922262617*^9, 3.9972689692664948`*^9, 
+  3.997275224767808*^9},
+ CellLabel->"Out[65]=",ExpressionUUID->"a8363fa5-1704-4172-acb6-ed61abab7df5"]
 }, Open  ]],
 
 Cell[BoxData[
  RowBox[{
-  RowBox[{"validVertexAssignmentQ", "[", 
+  RowBox[{"internalEdgeIndexLabels", "[", "\[IndentingNewLine]", "  ", 
    RowBox[{
-   "graph_", ",", "internalVerts_List", ",", "externalMap_Association", ",", 
-    "internalEdgeLabels_Association", ",", "allowedVertices_List"}], "]"}], ":=", 
-  RowBox[{"AllTrue", "[", "\[IndentingNewLine]", "  ", 
-   RowBox[{"internalVerts", ",", "\[IndentingNewLine]", "  ", 
+   "graph_", ",", "\[IndentingNewLine]", "  ", "leafVerts_List", ",", 
+    "\[IndentingNewLine]", "  ", "externalMap_Association"}], 
+   "\[IndentingNewLine]", "]"}], ":=", 
+  RowBox[{"Module", "[", "\[IndentingNewLine]", "  ", 
+   RowBox[{
+    RowBox[{"{", "internalEdges", "}"}], ",", "\[IndentingNewLine]", "  ", 
     RowBox[{
-     RowBox[{"MemberQ", "[", "\[IndentingNewLine]", "    ", 
-      RowBox[{"allowedVertices", ",", "\[IndentingNewLine]", "    ", 
-       RowBox[{"vertexIncidentParticles", "[", 
+     RowBox[{"internalEdges", "=", 
+      RowBox[{"Select", "[", "\[IndentingNewLine]", "    ", 
+       RowBox[{
+        RowBox[{"EdgeList", "[", "graph", "]"}], ",", "\[IndentingNewLine]", 
+        "    ", 
         RowBox[{
-        "graph", ",", "#", ",", "externalMap", ",", "internalEdgeLabels"}], 
-        "]"}]}], "\[IndentingNewLine]", "  ", "]"}], " ", "&"}]}], 
+         RowBox[{"FreeQ", "[", 
+          RowBox[{"leafVerts", ",", 
+           RowBox[{"Alternatives", " ", "@@", " ", 
+            RowBox[{"(", 
+             RowBox[{"List", " ", "@@", " ", "#"}], ")"}]}]}], "]"}], " ", 
+         "&"}]}], "\[IndentingNewLine]", "  ", "]"}]}], ";", 
+     "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+     RowBox[{"Association", " ", "@", " ", 
+      RowBox[{"Map", "[", "\[IndentingNewLine]", "    ", 
+       RowBox[{
+        RowBox[{"Function", "[", 
+         RowBox[{"edge", ",", "\[IndentingNewLine]", "      ", 
+          RowBox[{"Module", "[", 
+           RowBox[{
+            RowBox[{"{", 
+             RowBox[{
+             "u", ",", "v", ",", "comps", ",", "compU", ",", "compV", ",", 
+              "leavesU", ",", "leavesV"}], "}"}], ",", "\[IndentingNewLine]", 
+            "        ", 
+            RowBox[{
+             RowBox[{
+              RowBox[{"{", 
+               RowBox[{"u", ",", "v"}], "}"}], "=", 
+              RowBox[{"List", " ", "@@", " ", "edge"}]}], ";", 
+             "\[IndentingNewLine]", "        ", 
+             RowBox[{"comps", "=", 
+              RowBox[{"ConnectedComponents", "[", 
+               RowBox[{"EdgeDelete", "[", 
+                RowBox[{"graph", ",", "edge"}], "]"}], "]"}]}], ";", 
+             "\[IndentingNewLine]", "        ", 
+             RowBox[{"compU", "=", 
+              RowBox[{"SelectFirst", "[", 
+               RowBox[{"comps", ",", 
+                RowBox[{
+                 RowBox[{"MemberQ", "[", 
+                  RowBox[{"#", ",", "u"}], "]"}], " ", "&"}]}], "]"}]}], ";", 
+             "\[IndentingNewLine]", "        ", 
+             RowBox[{"compV", "=", 
+              RowBox[{"SelectFirst", "[", 
+               RowBox[{"comps", ",", 
+                RowBox[{
+                 RowBox[{"MemberQ", "[", 
+                  RowBox[{"#", ",", "v"}], "]"}], " ", "&"}]}], "]"}]}], ";", 
+             "\[IndentingNewLine]", "\[IndentingNewLine]", "        ", 
+             RowBox[{"leavesU", "=", 
+              RowBox[{"Sort", " ", "@", " ", 
+               RowBox[{"Lookup", "[", "\[IndentingNewLine]", "          ", 
+                RowBox[{
+                 RowBox[{"externalMap", " ", "/@", " ", 
+                  RowBox[{"Intersection", "[", 
+                   RowBox[{"compU", ",", "leafVerts"}], "]"}]}], ",", 
+                 "\[IndentingNewLine]", "          ", "\"\<InputIndex\>\""}], 
+                "\[IndentingNewLine]", "        ", "]"}]}]}], ";", 
+             "\[IndentingNewLine]", "        ", 
+             RowBox[{"leavesV", "=", 
+              RowBox[{"Sort", " ", "@", " ", 
+               RowBox[{"Lookup", "[", "\[IndentingNewLine]", "          ", 
+                RowBox[{
+                 RowBox[{"externalMap", " ", "/@", " ", 
+                  RowBox[{"Intersection", "[", 
+                   RowBox[{"compV", ",", "leafVerts"}], "]"}]}], ",", 
+                 "\[IndentingNewLine]", "          ", "\"\<InputIndex\>\""}], 
+                "\[IndentingNewLine]", "        ", "]"}]}]}], ";", 
+             "\[IndentingNewLine]", "\[IndentingNewLine]", "        ", 
+             RowBox[{"edge", "->", 
+              RowBox[{"<|", "\[IndentingNewLine]", "          ", 
+               RowBox[{
+                RowBox[{"u", "->", 
+                 RowBox[{"Apply", "[", 
+                  RowBox[{"Multiparticle", ",", "leavesU"}], "]"}]}], ",", 
+                "\[IndentingNewLine]", "          ", 
+                RowBox[{"v", "->", 
+                 RowBox[{"Apply", "[", 
+                  RowBox[{"Multiparticle", ",", "leavesV"}], "]"}]}]}], 
+               "\[IndentingNewLine]", "        ", "|>"}]}]}]}], 
+           "\[IndentingNewLine]", "      ", "]"}]}], "\[IndentingNewLine]", 
+         "    ", "]"}], ",", "\[IndentingNewLine]", "    ", "internalEdges"}],
+        "\[IndentingNewLine]", "  ", "]"}]}]}]}], "\[IndentingNewLine]", 
+   "]"}]}]], "Input",
+ CellLabel->"In[66]:=",ExpressionUUID->"e721f3b1-577b-4826-8d4a-e35a68202fe7"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"vertexIncidentLegData", "[", "\[IndentingNewLine]", "  ", 
+   RowBox[{
+   "graph_", ",", "\[IndentingNewLine]", "  ", "vertex_", ",", 
+    "\[IndentingNewLine]", "  ", "externalMap_Association", ",", 
+    "\[IndentingNewLine]", "  ", "internalEdgeLabels_Association", ",", 
+    "\[IndentingNewLine]", "  ", "internalEdgeIndices_Association"}], 
+   "\[IndentingNewLine]", "]"}], ":=", 
+  RowBox[{"Module", "[", "\[IndentingNewLine]", "  ", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{"neighbors", ",", "edge"}], "}"}], ",", "\[IndentingNewLine]", 
+    "  ", 
+    RowBox[{
+     RowBox[{"neighbors", "=", 
+      RowBox[{"AdjacencyList", "[", 
+       RowBox[{"graph", ",", "vertex"}], "]"}]}], ";", "\[IndentingNewLine]", 
+     "\[IndentingNewLine]", "  ", 
+     RowBox[{"Map", "[", "\[IndentingNewLine]", "    ", 
+      RowBox[{
+       RowBox[{"Function", "[", 
+        RowBox[{"neighbor", ",", "\[IndentingNewLine]", "      ", 
+         RowBox[{"If", "[", "\[IndentingNewLine]", "        ", 
+          RowBox[{
+           RowBox[{"KeyExistsQ", "[", 
+            RowBox[{"externalMap", ",", "neighbor"}], "]"}], ",", 
+           "\[IndentingNewLine]", "        ", 
+           RowBox[{"<|", "\[IndentingNewLine]", "          ", 
+            RowBox[{
+             RowBox[{"\"\<Particle\>\"", "->", 
+              RowBox[{"externalMap", "[", 
+               RowBox[{"neighbor", ",", "\"\<Particle\>\""}], "]"}]}], ",", 
+             "\[IndentingNewLine]", "          ", 
+             RowBox[{"\"\<Index\>\"", "->", 
+              RowBox[{"externalMap", "[", 
+               RowBox[{"neighbor", ",", "\"\<InputIndex\>\""}], "]"}]}], ",", 
+             "\[IndentingNewLine]", "          ", 
+             RowBox[{"\"\<Kind\>\"", "->", "\"\<External\>\""}], ",", 
+             "\[IndentingNewLine]", "          ", 
+             RowBox[{"\"\<Source\>\"", "->", "neighbor"}]}], 
+            "\[IndentingNewLine]", "        ", "|>"}], ",", 
+           "\[IndentingNewLine]", "        ", 
+           RowBox[{
+            RowBox[{"edge", "=", 
+             RowBox[{"UndirectedEdge", " ", "@@", " ", 
+              RowBox[{"Sort", "[", 
+               RowBox[{"{", 
+                RowBox[{"vertex", ",", "neighbor"}], "}"}], "]"}]}]}], ";", 
+            "\[IndentingNewLine]", "        ", 
+            RowBox[{"<|", "\[IndentingNewLine]", "          ", 
+             RowBox[{
+              RowBox[{"\"\<Particle\>\"", "->", 
+               RowBox[{
+                RowBox[{"internalEdgeLabels", "[", "edge", "]"}], "[", 
+                "vertex", "]"}]}], ",", "\[IndentingNewLine]", "          ", 
+              RowBox[{"\"\<Index\>\"", "->", 
+               RowBox[{
+                RowBox[{"internalEdgeIndices", "[", "edge", "]"}], "[", 
+                "vertex", "]"}]}], ",", "\[IndentingNewLine]", "          ", 
+              RowBox[{"\"\<Kind\>\"", "->", "\"\<Internal\>\""}], ",", 
+              "\[IndentingNewLine]", "          ", 
+              RowBox[{"\"\<Source\>\"", "->", "edge"}]}], 
+             "\[IndentingNewLine]", "        ", "|>"}]}]}], 
+          "\[IndentingNewLine]", "      ", "]"}]}], "\[IndentingNewLine]", 
+        "    ", "]"}], ",", "\[IndentingNewLine]", "    ", "neighbors"}], 
+      "\[IndentingNewLine]", "  ", "]"}]}]}], "\[IndentingNewLine]", 
+   "]"}]}]], "Input",
+ CellLabel->"In[67]:=",ExpressionUUID->"6c46411b-a123-4f24-ab14-9dd8a070d066"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"diagramIncidentLegData", "[", "\[IndentingNewLine]", "  ", 
+   RowBox[{
+   "graph_", ",", "\[IndentingNewLine]", "  ", "internalVerts_List", ",", 
+    "\[IndentingNewLine]", "  ", "externalMap_Association", ",", 
+    "\[IndentingNewLine]", "  ", "internalEdgeLabels_Association", ",", 
+    "\[IndentingNewLine]", "  ", "internalEdgeIndices_Association"}], 
+   "\[IndentingNewLine]", "]"}], ":=", 
+  RowBox[{"AssociationMap", "[", "\[IndentingNewLine]", "  ", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"vertexIncidentLegData", "[", "\[IndentingNewLine]", "    ", 
+      RowBox[{
+      "graph", ",", "\[IndentingNewLine]", "    ", "#", ",", 
+       "\[IndentingNewLine]", "    ", "externalMap", ",", 
+       "\[IndentingNewLine]", "    ", "internalEdgeLabels", ",", 
+       "\[IndentingNewLine]", "    ", "internalEdgeIndices"}], 
+      "\[IndentingNewLine]", "  ", "]"}], " ", "&"}], ",", 
+    "\[IndentingNewLine]", "  ", "internalVerts"}], "\[IndentingNewLine]", 
+   "]"}]}]], "Input",
+ CellLabel->"In[72]:=",ExpressionUUID->"37a336f7-76f2-4566-bdda-7c346059d069"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"modelRowExpression", "[", "row_", "]"}], ":=", 
+  RowBox[{
+   RowBox[{"row", "[", 
+    RowBox[{"[", 
+     RowBox[{"-", "2"}], "]"}], "]"}], " ", 
+   RowBox[{"row", "[", 
+    RowBox[{"[", 
+     RowBox[{"-", "1"}], "]"}], "]"}]}]}]], "Input",
+ CellTags->"ChatGeneratedCell",
+ CellLabel->"In[73]:=",ExpressionUUID->"3c380033-6ca3-4415-9166-7be11b916316"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"slotIndexRules", "[", "orderedLegs_List", "]"}], ":=", 
+  "\[IndentingNewLine]", "  ", 
+  RowBox[{"AssociationThread", "[", 
+   RowBox[{
+    RowBox[{"Range", "[", 
+     RowBox[{"Length", "[", "orderedLegs", "]"}], "]"}], ",", 
+    RowBox[{"orderedLegs", "[", 
+     RowBox[{"[", 
+      RowBox[{"All", ",", "\"\<Index\>\""}], "]"}], "]"}]}], "]"}]}]], "Input",\
+
+ CellTags->"ChatGeneratedCell",
+ CellLabel->"In[74]:=",ExpressionUUID->"765ef977-660f-456d-b2d7-af32dbb33baf"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"replaceVertexIndices", "[", 
+   RowBox[{"expr_", ",", "slotRules_Association"}], "]"}], ":=", 
+  RowBox[{"expr", " ", "/.", " ", 
+   RowBox[{"{", "\[IndentingNewLine]", "  ", 
+    RowBox[{
+     RowBox[{
+      RowBox[{
+       RowBox[{"Spinor", "[", 
+        RowBox[{"a___", ",", "i_Integer"}], "]"}], " ", "/;", " ", 
+       RowBox[{"KeyExistsQ", "[", 
+        RowBox[{"slotRules", ",", "i"}], "]"}]}], ":>", "\[IndentingNewLine]",
+       "    ", 
+      RowBox[{"Spinor", "[", 
+       RowBox[{"a", ",", 
+        RowBox[{"slotRules", "[", "i", "]"}]}], "]"}]}], ",", 
+     "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+     RowBox[{
+      RowBox[{
+       RowBox[{"xFactor", "[", 
+        RowBox[{"i_Integer", ",", "j_Integer"}], "]"}], " ", "/;", 
+       "\[IndentingNewLine]", "      ", 
+       RowBox[{
+        RowBox[{"KeyExistsQ", "[", 
+         RowBox[{"slotRules", ",", "i"}], "]"}], "&&", 
+        RowBox[{"KeyExistsQ", "[", 
+         RowBox[{"slotRules", ",", "j"}], "]"}]}]}], ":>", 
+      "\[IndentingNewLine]", "    ", 
+      RowBox[{"xFactor", "[", 
+       RowBox[{
+        RowBox[{"slotRules", "[", "i", "]"}], ",", 
+        RowBox[{"slotRules", "[", "j", "]"}]}], "]"}]}]}], 
+    "\[IndentingNewLine]", "}"}]}]}]], "Input",
+ CellLabel->"In[75]:=",ExpressionUUID->"e51486ba-475b-4644-b6f1-6eaf2e5fcb82"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"vertexRowMatches", "[", 
+   RowBox[{"incidentLegs_List", ",", "row_", ",", "validParticles_List"}], 
+   "]"}], ":=", 
+  RowBox[{"Module", "[", "\[IndentingNewLine]", "  ", 
+   RowBox[{
+    RowBox[{"{", "rowParticles", "}"}], ",", "\[IndentingNewLine]", "  ", 
+    RowBox[{
+     RowBox[{"rowParticles", "=", 
+      RowBox[{"modelRowParticles", "[", 
+       RowBox[{"row", ",", "validParticles"}], "]"}]}], ";", 
+     "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+     RowBox[{"If", "[", 
+      RowBox[{
+       RowBox[{
+        RowBox[{"Length", "[", "rowParticles", "]"}], "=!=", 
+        RowBox[{"Length", "[", "incidentLegs", "]"}]}], ",", 
+       RowBox[{"Return", "[", 
+        RowBox[{"{", "}"}], "]"}]}], "]"}], ";", "\[IndentingNewLine]", 
+     "\[IndentingNewLine]", "  ", 
+     RowBox[{"Select", "[", "\[IndentingNewLine]", "    ", 
+      RowBox[{
+       RowBox[{"Permutations", "[", "incidentLegs", "]"}], ",", 
+       "\[IndentingNewLine]", "    ", 
+       RowBox[{
+        RowBox[{"rowParticles", "===", 
+         RowBox[{"#", "[", 
+          RowBox[{"[", 
+           RowBox[{"All", ",", "\"\<Particle\>\""}], "]"}], "]"}]}], " ", 
+        "&"}]}], "\[IndentingNewLine]", "  ", "]"}]}]}], 
    "\[IndentingNewLine]", "]"}]}]], "Input",
+ CellLabel->"In[76]:=",ExpressionUUID->"6a44fbfb-5646-45f0-9a26-99811de2f68c"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"vertexStructureInstances", "[", "\[IndentingNewLine]", "  ", 
+   RowBox[{
+   "graph_", ",", "\[IndentingNewLine]", "  ", "vertex_", ",", 
+    "\[IndentingNewLine]", "  ", "externalMap_Association", ",", 
+    "\[IndentingNewLine]", "  ", "internalEdgeLabels_Association", ",", 
+    "\[IndentingNewLine]", "  ", "internalEdgeIndices_Association", ",", 
+    "\[IndentingNewLine]", "  ", "model_"}], "\[IndentingNewLine]", "]"}], ":=", 
+  RowBox[{"Module", "[", "\[IndentingNewLine]", "  ", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{"validParticles", ",", "incidentLegs", ",", "candidateRows"}], 
+     "}"}], ",", "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+    RowBox[{
+     RowBox[{"validParticles", "=", 
+      RowBox[{"particleNames", "[", "model", "]"}]}], ";", 
+     "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+     RowBox[{"incidentLegs", "=", 
+      RowBox[{"vertexIncidentLegData", "[", "\[IndentingNewLine]", "    ", 
+       RowBox[{
+       "graph", ",", "\[IndentingNewLine]", "    ", "vertex", ",", 
+        "\[IndentingNewLine]", "    ", "externalMap", ",", 
+        "\[IndentingNewLine]", "    ", "internalEdgeLabels", ",", 
+        "\[IndentingNewLine]", "    ", "internalEdgeIndices"}], 
+       "\[IndentingNewLine]", "  ", "]"}]}], ";", "\[IndentingNewLine]", 
+     "\[IndentingNewLine]", "  ", 
+     RowBox[{"candidateRows", "=", 
+      RowBox[{"Select", "[", "\[IndentingNewLine]", "    ", 
+       RowBox[{
+        RowBox[{"model", "[", 
+         RowBox[{"[", "2", "]"}], "]"}], ",", "\[IndentingNewLine]", "    ", 
+        RowBox[{
+         RowBox[{
+          RowBox[{"Sort", "[", 
+           RowBox[{"modelRowParticles", "[", 
+            RowBox[{"#", ",", "validParticles"}], "]"}], "]"}], "===", 
+          "\[IndentingNewLine]", "      ", 
+          RowBox[{"Sort", "[", 
+           RowBox[{"incidentLegs", "[", 
+            RowBox[{"[", 
+             RowBox[{"All", ",", "\"\<Particle\>\""}], "]"}], "]"}], "]"}]}], 
+         " ", "&"}]}], "\[IndentingNewLine]", "  ", "]"}]}], ";", 
+     "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+     RowBox[{"Flatten", "[", "\[IndentingNewLine]", "    ", 
+      RowBox[{
+       RowBox[{"Map", "[", "\[IndentingNewLine]", "      ", 
+        RowBox[{
+         RowBox[{"Function", "[", 
+          RowBox[{"row", ",", "\[IndentingNewLine]", "        ", 
+           RowBox[{"Map", "[", "\[IndentingNewLine]", "          ", 
+            RowBox[{
+             RowBox[{"Function", "[", 
+              RowBox[{
+              "orderedLegs", ",", "\[IndentingNewLine]", "            ", 
+               RowBox[{"Module", "[", 
+                RowBox[{
+                 RowBox[{"{", 
+                  RowBox[{"rules", ",", "expr"}], "}"}], ",", 
+                 "\[IndentingNewLine]", "              ", 
+                 RowBox[{
+                  RowBox[{"rules", "=", 
+                   RowBox[{"slotIndexRules", "[", "orderedLegs", "]"}]}], ";",
+                   "\[IndentingNewLine]", "              ", 
+                  RowBox[{"expr", "=", 
+                   RowBox[{"replaceVertexIndices", "[", 
+                    RowBox[{
+                    RowBox[{"modelRowExpression", "[", "row", "]"}], ",", 
+                    "rules"}], "]"}]}], ";", "\[IndentingNewLine]", 
+                  "              ", 
+                  RowBox[{"<|", "\[IndentingNewLine]", "                ", 
+                   RowBox[{
+                    RowBox[{"\"\<Vertex\>\"", "->", "vertex"}], ",", 
+                    "\[IndentingNewLine]", "                ", 
+                    RowBox[{"\"\<IncidentLegs\>\"", "->", "orderedLegs"}], ",",
+                     "\[IndentingNewLine]", "                ", 
+                    RowBox[{"\"\<ModelRow\>\"", "->", "row"}], ",", 
+                    "\[IndentingNewLine]", "                ", 
+                    RowBox[{"\"\<SlotRules\>\"", "->", "rules"}], ",", 
+                    "\[IndentingNewLine]", "                ", 
+                    RowBox[{"\"\<Expression\>\"", "->", "expr"}]}], 
+                   "\[IndentingNewLine]", "              ", "|>"}]}]}], 
+                "\[IndentingNewLine]", "            ", "]"}]}], 
+              "\[IndentingNewLine]", "          ", "]"}], ",", 
+             "\[IndentingNewLine]", "          ", 
+             RowBox[{"vertexRowMatches", "[", 
+              RowBox[{"incidentLegs", ",", "row", ",", "validParticles"}], 
+              "]"}]}], "\[IndentingNewLine]", "        ", "]"}]}], 
+          "\[IndentingNewLine]", "      ", "]"}], ",", "\[IndentingNewLine]", 
+         "      ", "candidateRows"}], "\[IndentingNewLine]", "    ", "]"}], ",",
+        "\[IndentingNewLine]", "    ", "1"}], "\[IndentingNewLine]", "  ", 
+      "]"}]}]}], "\[IndentingNewLine]", "]"}]}]], "Input",
+ CellLabel->"In[77]:=",ExpressionUUID->"4285824e-2d42-4bd0-bc58-a9ef26eebfdc"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"validVertexAssignmentQ", "[", "\[IndentingNewLine]", "  ", 
+   RowBox[{
+   "graph_", ",", "\[IndentingNewLine]", "  ", "internalVerts_List", ",", 
+    "\[IndentingNewLine]", "  ", "externalMap_Association", ",", 
+    "\[IndentingNewLine]", "  ", "internalEdgeLabels_Association", ",", 
+    "\[IndentingNewLine]", "  ", "model_"}], "\[IndentingNewLine]", "]"}], ":=", 
+  RowBox[{"Module", "[", "\[IndentingNewLine]", "  ", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{"leafVerts", ",", "internalEdgeIndices"}], "}"}], ",", 
+    "\[IndentingNewLine]", "  ", 
+    RowBox[{
+     RowBox[{"leafVerts", "=", 
+      RowBox[{"Select", "[", 
+       RowBox[{
+        RowBox[{"VertexList", "[", "graph", "]"}], ",", 
+        RowBox[{
+         RowBox[{
+          RowBox[{"VertexDegree", "[", 
+           RowBox[{"graph", ",", "#"}], "]"}], "==", "1"}], " ", "&"}]}], 
+       "]"}]}], ";", "\[IndentingNewLine]", "  ", 
+     RowBox[{"internalEdgeIndices", "=", 
+      RowBox[{"internalEdgeIndexLabels", "[", 
+       RowBox[{"graph", ",", "leafVerts", ",", "externalMap"}], "]"}]}], ";", 
+     "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+     RowBox[{"AllTrue", "[", "\[IndentingNewLine]", "    ", 
+      RowBox[{"internalVerts", ",", "\[IndentingNewLine]", "    ", 
+       RowBox[{
+        RowBox[{
+         RowBox[{"Length", "[", "\[IndentingNewLine]", "      ", 
+          RowBox[{
+          "vertexStructureInstances", "[", "\[IndentingNewLine]", "        ", 
+           
+           RowBox[{
+           "graph", ",", "\[IndentingNewLine]", "        ", "#", ",", 
+            "\[IndentingNewLine]", "        ", "externalMap", ",", 
+            "\[IndentingNewLine]", "        ", "internalEdgeLabels", ",", 
+            "\[IndentingNewLine]", "        ", "internalEdgeIndices", ",", 
+            "\[IndentingNewLine]", "        ", "model"}], 
+           "\[IndentingNewLine]", "      ", "]"}], "\[IndentingNewLine]", 
+          "    ", "]"}], ">", "0"}], " ", "&"}]}], "\[IndentingNewLine]", 
+      "  ", "]"}]}]}], "\[IndentingNewLine]", "]"}]}]], "Input",
  CellChangeTimes->{
-  3.9969285384452457`*^9, {3.9969290734290457`*^9, 3.9969290868364697`*^9}},
- CellLabel->"In[21]:=",ExpressionUUID->"bc3b5e17-55c4-4d77-b6d1-b3fca19dad27"],
+  3.9969285384452457`*^9, {3.9969290734290457`*^9, 3.9969290868364697`*^9}, 
+   3.997275669600061*^9},
+ CellLabel->"In[78]:=",ExpressionUUID->"bc3b5e17-55c4-4d77-b6d1-b3fca19dad27"],
 
 Cell[CellGroupData[{
 
@@ -2563,6 +3071,156 @@ Cell[BoxData[
    "]"}]}]], "Input",
  CellLabel->"In[23]:=",ExpressionUUID->"0e78cf5f-524a-417a-ba90-174ea8c594c4"],
 
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"decorateTopology", "[", "\[IndentingNewLine]", "  ", 
+   RowBox[{
+   "graph_", ",", "\[IndentingNewLine]", "  ", "externalParticles_List", ",", 
+    "\[IndentingNewLine]", "  ", "model_", ",", "\[IndentingNewLine]", "  ", 
+    "antiParticleRules_Association"}], "\[IndentingNewLine]", "]"}], ":=", 
+  RowBox[{"Module", "[", "\[IndentingNewLine]", "  ", 
+   RowBox[{
+    RowBox[{"{", "\[IndentingNewLine]", "    ", 
+     RowBox[{
+     "particleTypes", ",", "\[IndentingNewLine]", "    ", "internalVerts", ",",
+       "\[IndentingNewLine]", "    ", "leafVerts", ",", "\[IndentingNewLine]",
+       "    ", "internalEdges", ",", "\[IndentingNewLine]", "    ", 
+      "extAssignments", ",", "\[IndentingNewLine]", "    ", 
+      "edgeAssignments"}], "\[IndentingNewLine]", "  ", "}"}], ",", 
+    "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+    RowBox[{
+     RowBox[{"particleTypes", "=", 
+      RowBox[{"particleNames", "[", "model", "]"}]}], ";", 
+     "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+     RowBox[{"internalVerts", "=", 
+      RowBox[{"Select", "[", 
+       RowBox[{
+        RowBox[{"VertexList", "[", "graph", "]"}], ",", 
+        RowBox[{
+         RowBox[{
+          RowBox[{"VertexDegree", "[", 
+           RowBox[{"graph", ",", "#"}], "]"}], ">", "1"}], " ", "&"}]}], 
+       "]"}]}], ";", "\[IndentingNewLine]", "  ", 
+     RowBox[{"leafVerts", "=", 
+      RowBox[{"Select", "[", 
+       RowBox[{
+        RowBox[{"VertexList", "[", "graph", "]"}], ",", 
+        RowBox[{
+         RowBox[{
+          RowBox[{"VertexDegree", "[", 
+           RowBox[{"graph", ",", "#"}], "]"}], "==", "1"}], " ", "&"}]}], 
+       "]"}]}], ";", "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+     RowBox[{"internalEdges", "=", 
+      RowBox[{"Select", "[", "\[IndentingNewLine]", "    ", 
+       RowBox[{
+        RowBox[{"EdgeList", "[", "graph", "]"}], ",", "\[IndentingNewLine]", 
+        "    ", 
+        RowBox[{
+         RowBox[{"FreeQ", "[", 
+          RowBox[{"leafVerts", ",", 
+           RowBox[{"Alternatives", " ", "@@", " ", 
+            RowBox[{"(", 
+             RowBox[{"List", " ", "@@", " ", "#"}], ")"}]}]}], "]"}], " ", 
+         "&"}]}], "\[IndentingNewLine]", "  ", "]"}]}], ";", 
+     "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+     RowBox[{"extAssignments", "=", 
+      RowBox[{"externalAssignments", "[", 
+       RowBox[{"externalParticles", ",", "leafVerts"}], "]"}]}], ";", 
+     "\[IndentingNewLine]", "  ", 
+     RowBox[{"edgeAssignments", "=", 
+      RowBox[{"internalEdgeAssignments", "[", "\[IndentingNewLine]", "    ", 
+       RowBox[{
+       "internalEdges", ",", "\[IndentingNewLine]", "    ", "particleTypes", ",",
+         "\[IndentingNewLine]", "    ", "antiParticleRules"}], 
+       "\[IndentingNewLine]", "  ", "]"}]}], ";", "\[IndentingNewLine]", 
+     "\[IndentingNewLine]", "  ", 
+     RowBox[{"Flatten", " ", "@", " ", 
+      RowBox[{"Table", "[", "\[IndentingNewLine]", "    ", 
+       RowBox[{
+        RowBox[{"Module", "[", 
+         RowBox[{
+          RowBox[{"{", 
+           RowBox[{
+           "internalEdgeIndices", ",", "incidentLegData", ",", 
+            "vertexStructures"}], "}"}], ",", "\[IndentingNewLine]", "      ", 
+          RowBox[{
+           RowBox[{"internalEdgeIndices", "=", 
+            RowBox[{"internalEdgeIndexLabels", "[", 
+             RowBox[{"graph", ",", "leafVerts", ",", "extMap"}], "]"}]}], ";",
+            "\[IndentingNewLine]", "\[IndentingNewLine]", "      ", 
+           RowBox[{"incidentLegData", "=", 
+            RowBox[{
+            "diagramIncidentLegData", "[", "\[IndentingNewLine]", "        ", 
+             
+             RowBox[{
+             "graph", ",", "\[IndentingNewLine]", "        ", "internalVerts",
+               ",", "\[IndentingNewLine]", "        ", "extMap", ",", 
+              "\[IndentingNewLine]", "        ", "internalEdgeLabels", ",", 
+              "\[IndentingNewLine]", "        ", "internalEdgeIndices"}], 
+             "\[IndentingNewLine]", "      ", "]"}]}], ";", 
+           "\[IndentingNewLine]", "\[IndentingNewLine]", "      ", 
+           RowBox[{"vertexStructures", "=", 
+            RowBox[{
+            "AssociationMap", "[", "\[IndentingNewLine]", "        ", 
+             RowBox[{
+              RowBox[{
+               RowBox[{
+               "vertexStructureInstances", "[", "\[IndentingNewLine]", 
+                "          ", 
+                RowBox[{
+                "graph", ",", "\[IndentingNewLine]", "          ", "#", ",", 
+                 "\[IndentingNewLine]", "          ", "extMap", ",", 
+                 "\[IndentingNewLine]", "          ", "internalEdgeLabels", ",",
+                  "\[IndentingNewLine]", "          ", "internalEdgeIndices", 
+                 ",", "\[IndentingNewLine]", "          ", "model"}], 
+                "\[IndentingNewLine]", "        ", "]"}], " ", "&"}], ",", 
+              "\[IndentingNewLine]", "        ", "internalVerts"}], 
+             "\[IndentingNewLine]", "      ", "]"}]}], ";", 
+           "\[IndentingNewLine]", "\[IndentingNewLine]", "      ", 
+           RowBox[{"If", "[", "\[IndentingNewLine]", "        ", 
+            RowBox[{
+             RowBox[{"AllTrue", "[", 
+              RowBox[{
+               RowBox[{"Values", "[", "vertexStructures", "]"}], ",", 
+               RowBox[{
+                RowBox[{
+                 RowBox[{"Length", "[", "#", "]"}], ">", "0"}], " ", "&"}]}], 
+              "]"}], ",", "\[IndentingNewLine]", "        ", 
+             RowBox[{"<|", "\[IndentingNewLine]", "          ", 
+              RowBox[{
+               RowBox[{"\"\<Graph\>\"", "->", "graph"}], ",", 
+               "\[IndentingNewLine]", "          ", 
+               RowBox[{"\"\<ExternalAssignment\>\"", "->", "extMap"}], ",", 
+               "\[IndentingNewLine]", "          ", 
+               
+               RowBox[{"\"\<InternalEdgeLabels\>\"", "->", 
+                "internalEdgeLabels"}], ",", "\[IndentingNewLine]", 
+               "          ", 
+               
+               RowBox[{"\"\<InternalEdgeIndices\>\"", "->", 
+                "internalEdgeIndices"}], ",", "\[IndentingNewLine]", 
+               "          ", 
+               RowBox[{"\"\<IncidentLegData\>\"", "->", "incidentLegData"}], ",",
+                "\[IndentingNewLine]", "          ", 
+               RowBox[{"\"\<InternalVertices\>\"", "->", "internalVerts"}], ",",
+                "\[IndentingNewLine]", "          ", 
+               RowBox[{"\"\<LeafVertices\>\"", "->", "leafVerts"}], ",", 
+               "\[IndentingNewLine]", "          ", 
+               
+               RowBox[{"\"\<VertexStructures\>\"", "->", 
+                "vertexStructures"}]}], "\[IndentingNewLine]", "        ", 
+              "|>"}], ",", "\[IndentingNewLine]", "        ", "Nothing"}], 
+            "\[IndentingNewLine]", "      ", "]"}]}]}], "\[IndentingNewLine]",
+          "    ", "]"}], ",", "\[IndentingNewLine]", "    ", 
+        RowBox[{"{", 
+         RowBox[{"extMap", ",", "extAssignments"}], "}"}], ",", 
+        "\[IndentingNewLine]", "    ", 
+        RowBox[{"{", 
+         RowBox[{"internalEdgeLabels", ",", "edgeAssignments"}], "}"}]}], 
+       "\[IndentingNewLine]", "  ", "]"}]}]}]}], "\[IndentingNewLine]", 
+   "]"}]}]], "Input",
+ CellLabel->"In[79]:=",ExpressionUUID->"34a6177f-43f1-487d-97dd-f9ce5878e838"],
+
 Cell[CellGroupData[{
 
 Cell[BoxData[
@@ -2782,6 +3440,229 @@ Cell[BoxData[
        "]"}]}]}]}], "\[IndentingNewLine]", "\t", "]"}]}]], "Input",
  CellChangeTimes->{3.997266067595345*^9},
  CellLabel->"In[25]:=",ExpressionUUID->"6df125e3-decc-4885-bc16-b392e174f3e2"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"canonicalDiagram", "[", "diag_", "]"}], ":=", 
+  RowBox[{"Module", "[", "\[IndentingNewLine]", "  ", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{"graph", ",", "automorphisms", ",", "representatives"}], "}"}], ",",
+     "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+    RowBox[{
+     RowBox[{"graph", "=", 
+      RowBox[{"diag", "[", "\"\<Graph\>\"", "]"}]}], ";", 
+     "\[IndentingNewLine]", "  ", 
+     RowBox[{"automorphisms", "=", 
+      RowBox[{"Normal", " ", "/@", " ", 
+       RowBox[{"FindGraphIsomorphism", "[", 
+        RowBox[{"graph", ",", "graph", ",", "All"}], "]"}]}]}], ";", 
+     "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+     RowBox[{"representatives", "=", 
+      RowBox[{"Map", "[", "\[IndentingNewLine]", "    ", 
+       RowBox[{
+        RowBox[{"Function", "[", 
+         RowBox[{"ruleList", ",", "\[IndentingNewLine]", "      ", 
+          RowBox[{"Module", "[", "\[IndentingNewLine]", "        ", 
+           RowBox[{
+            RowBox[{"{", "\[IndentingNewLine]", "          ", 
+             RowBox[{
+             "vertexRule", ",", "\[IndentingNewLine]", "          ", 
+              "newExternal", ",", "\[IndentingNewLine]", "          ", 
+              "newInternalLabels", ",", "\[IndentingNewLine]", "          ", 
+              "newInternalIndices", ",", "\[IndentingNewLine]", "          ", 
+              "newIncidentLegData", ",", "\[IndentingNewLine]", "          ", 
+              "newVertexStructures"}], "\[IndentingNewLine]", "        ", 
+             "}"}], ",", "\[IndentingNewLine]", "\[IndentingNewLine]", 
+            "        ", 
+            RowBox[{
+             RowBox[{"vertexRule", "=", 
+              RowBox[{"Association", "[", "ruleList", "]"}]}], ";", 
+             "\[IndentingNewLine]", "\[IndentingNewLine]", "        ", 
+             RowBox[{"newExternal", "=", 
+              RowBox[{"KeySort", " ", "@", " ", 
+               RowBox[{"Association", " ", "@", " ", 
+                RowBox[{
+                "KeyValueMap", "[", "\[IndentingNewLine]", "          ", 
+                 RowBox[{
+                  RowBox[{
+                   RowBox[{
+                    RowBox[{"vertexRule", "[", "#1", "]"}], "->", "#2"}], " ",
+                    "&"}], ",", "\[IndentingNewLine]", "          ", 
+                  RowBox[{"diag", "[", "\"\<ExternalAssignment\>\"", "]"}]}], 
+                 "\[IndentingNewLine]", "        ", "]"}]}]}]}], ";", 
+             "\[IndentingNewLine]", "\[IndentingNewLine]", "        ", 
+             RowBox[{"newInternalLabels", "=", 
+              RowBox[{"KeySort", " ", "@", " ", 
+               RowBox[{"Association", " ", "@", " ", 
+                RowBox[{
+                "KeyValueMap", "[", "\[IndentingNewLine]", "          ", 
+                 RowBox[{
+                  RowBox[{
+                   RowBox[{"With", "[", "\[IndentingNewLine]", "            ", 
+                    RowBox[{
+                    RowBox[{"{", "\[IndentingNewLine]", "              ", 
+                    RowBox[{
+                    RowBox[{"newEdge", "=", 
+                    RowBox[{"UndirectedEdge", " ", "@@", " ", 
+                    RowBox[{"Sort", "[", 
+                    RowBox[{"vertexRule", " ", "/@", " ", 
+                    RowBox[{"List", " ", "@@", " ", "#1"}]}], "]"}]}]}], ",", 
+                    "\[IndentingNewLine]", "              ", 
+                    RowBox[{"newLabel", "=", 
+                    RowBox[{"Association", " ", "@", " ", 
+                    RowBox[{
+                    "KeyValueMap", "[", "\[IndentingNewLine]", 
+                    "                ", 
+                    RowBox[{
+                    RowBox[{
+                    RowBox[{
+                    RowBox[{"vertexRule", "[", "#1", "]"}], "->", "#2"}], " ",
+                     "&"}], ",", "\[IndentingNewLine]", "                ", 
+                    "#2"}], "\[IndentingNewLine]", "              ", 
+                    "]"}]}]}]}], "\[IndentingNewLine]", "            ", "}"}],
+                     ",", "\[IndentingNewLine]", "            ", 
+                    RowBox[{"newEdge", "->", 
+                    RowBox[{"KeySort", "[", "newLabel", "]"}]}]}], 
+                    "\[IndentingNewLine]", "          ", "]"}], " ", "&"}], ",",
+                   "\[IndentingNewLine]", "          ", 
+                  RowBox[{"diag", "[", "\"\<InternalEdgeLabels\>\"", "]"}]}], 
+                 "\[IndentingNewLine]", "        ", "]"}]}]}]}], ";", 
+             "\[IndentingNewLine]", "\[IndentingNewLine]", "        ", 
+             RowBox[{"newInternalIndices", "=", 
+              RowBox[{"KeySort", " ", "@", " ", 
+               RowBox[{"Association", " ", "@", " ", 
+                RowBox[{
+                "KeyValueMap", "[", "\[IndentingNewLine]", "          ", 
+                 RowBox[{
+                  RowBox[{
+                   RowBox[{"With", "[", "\[IndentingNewLine]", "            ", 
+                    RowBox[{
+                    RowBox[{"{", "\[IndentingNewLine]", "              ", 
+                    RowBox[{
+                    RowBox[{"newEdge", "=", 
+                    RowBox[{"UndirectedEdge", " ", "@@", " ", 
+                    RowBox[{"Sort", "[", 
+                    RowBox[{"vertexRule", " ", "/@", " ", 
+                    RowBox[{"List", " ", "@@", " ", "#1"}]}], "]"}]}]}], ",", 
+                    "\[IndentingNewLine]", "              ", 
+                    RowBox[{"newIndexData", "=", 
+                    RowBox[{"Association", " ", "@", " ", 
+                    RowBox[{
+                    "KeyValueMap", "[", "\[IndentingNewLine]", 
+                    "                ", 
+                    RowBox[{
+                    RowBox[{
+                    RowBox[{
+                    RowBox[{"vertexRule", "[", "#1", "]"}], "->", "#2"}], " ",
+                     "&"}], ",", "\[IndentingNewLine]", "                ", 
+                    "#2"}], "\[IndentingNewLine]", "              ", 
+                    "]"}]}]}]}], "\[IndentingNewLine]", "            ", "}"}],
+                     ",", "\[IndentingNewLine]", "            ", 
+                    RowBox[{"newEdge", "->", 
+                    RowBox[{"KeySort", "[", "newIndexData", "]"}]}]}], 
+                    "\[IndentingNewLine]", "          ", "]"}], " ", "&"}], ",",
+                   "\[IndentingNewLine]", "          ", 
+                  RowBox[{"diag", "[", "\"\<InternalEdgeIndices\>\"", "]"}]}],
+                  "\[IndentingNewLine]", "        ", "]"}]}]}]}], ";", 
+             "\[IndentingNewLine]", "\[IndentingNewLine]", "        ", 
+             RowBox[{"newIncidentLegData", "=", 
+              RowBox[{"KeySort", " ", "@", " ", 
+               RowBox[{"Association", " ", "@", " ", 
+                RowBox[{
+                "KeyValueMap", "[", "\[IndentingNewLine]", "          ", 
+                 RowBox[{
+                  RowBox[{
+                   RowBox[{
+                    RowBox[{"vertexRule", "[", "#1", "]"}], "->", "#2"}], " ",
+                    "&"}], ",", "\[IndentingNewLine]", "          ", 
+                  RowBox[{"diag", "[", "\"\<IncidentLegData\>\"", "]"}]}], 
+                 "\[IndentingNewLine]", "        ", "]"}]}]}]}], ";", 
+             "\[IndentingNewLine]", "\[IndentingNewLine]", "        ", 
+             RowBox[{"newVertexStructures", "=", 
+              RowBox[{"KeySort", " ", "@", " ", 
+               RowBox[{"Association", " ", "@", " ", 
+                RowBox[{
+                "KeyValueMap", "[", "\[IndentingNewLine]", "          ", 
+                 RowBox[{
+                  RowBox[{
+                   RowBox[{
+                    RowBox[{"vertexRule", "[", "#1", "]"}], "->", 
+                    "\[IndentingNewLine]", "            ", 
+                    RowBox[{
+                    "SortBy", "[", "\[IndentingNewLine]", "              ", 
+                    RowBox[{
+                    RowBox[{
+                    "Map", "[", "\[IndentingNewLine]", "                ", 
+                    RowBox[{
+                    RowBox[{"Function", "[", 
+                    RowBox[{
+                    "vs", ",", "\[IndentingNewLine]", "                  ", 
+                    RowBox[{
+                    "<|", "\[IndentingNewLine]", "                    ", 
+                    RowBox[{
+                    RowBox[{"\"\<Vertex\>\"", "->", 
+                    RowBox[{"vertexRule", "[", 
+                    RowBox[{"vs", "[", "\"\<Vertex\>\"", "]"}], "]"}]}], ",", 
+                    "\[IndentingNewLine]", "                    ", 
+                    RowBox[{"\"\<IncidentLegs\>\"", "->", 
+                    RowBox[{"vs", "[", "\"\<IncidentLegs\>\"", "]"}]}], ",", 
+                    "\[IndentingNewLine]", "                    ", 
+                    RowBox[{"\"\<ModelRow\>\"", "->", 
+                    RowBox[{"vs", "[", "\"\<ModelRow\>\"", "]"}]}], ",", 
+                    "\[IndentingNewLine]", "                    ", 
+                    RowBox[{"\"\<SlotRules\>\"", "->", 
+                    RowBox[{"vs", "[", "\"\<SlotRules\>\"", "]"}]}], ",", 
+                    "\[IndentingNewLine]", "                    ", 
+                    RowBox[{"\"\<Expression\>\"", "->", 
+                    RowBox[{"vs", "[", "\"\<Expression\>\"", "]"}]}]}], 
+                    "\[IndentingNewLine]", "                  ", "|>"}]}], 
+                    "\[IndentingNewLine]", "                ", "]"}], ",", 
+                    "\[IndentingNewLine]", "                ", "#2"}], 
+                    "\[IndentingNewLine]", "              ", "]"}], ",", 
+                    "\[IndentingNewLine]", "              ", 
+                    RowBox[{
+                    RowBox[{"ToString", "[", 
+                    RowBox[{"InputForm", "[", "#", "]"}], "]"}], " ", "&"}]}],
+                     "\[IndentingNewLine]", "            ", "]"}]}], " ", 
+                   "&"}], ",", "\[IndentingNewLine]", "          ", 
+                  RowBox[{"diag", "[", "\"\<VertexStructures\>\"", "]"}]}], 
+                 "\[IndentingNewLine]", "        ", "]"}]}]}]}], ";", 
+             "\[IndentingNewLine]", "\[IndentingNewLine]", "        ", 
+             RowBox[{"<|", "\[IndentingNewLine]", "          ", 
+              RowBox[{
+               RowBox[{"\"\<Graph\>\"", "->", 
+                RowBox[{"CanonicalGraph", "[", "graph", "]"}]}], ",", 
+               "\[IndentingNewLine]", "          ", 
+               RowBox[{"\"\<ExternalAssignment\>\"", "->", "newExternal"}], ",",
+                "\[IndentingNewLine]", "          ", 
+               
+               RowBox[{"\"\<InternalEdgeLabels\>\"", "->", 
+                "newInternalLabels"}], ",", "\[IndentingNewLine]", 
+               "          ", 
+               
+               RowBox[{"\"\<InternalEdgeIndices\>\"", "->", 
+                "newInternalIndices"}], ",", "\[IndentingNewLine]", 
+               "          ", 
+               
+               RowBox[{"\"\<IncidentLegData\>\"", "->", 
+                "newIncidentLegData"}], ",", "\[IndentingNewLine]", 
+               "          ", 
+               
+               RowBox[{"\"\<VertexStructures\>\"", "->", 
+                "newVertexStructures"}]}], "\[IndentingNewLine]", "        ", 
+              "|>"}]}]}], "\[IndentingNewLine]", "      ", "]"}]}], 
+         "\[IndentingNewLine]", "    ", "]"}], ",", "\[IndentingNewLine]", 
+        "    ", "automorphisms"}], "\[IndentingNewLine]", "  ", "]"}]}], ";", 
+     "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+     RowBox[{"First", " ", "@", " ", 
+      RowBox[{"SortBy", "[", 
+       RowBox[{"representatives", ",", 
+        RowBox[{
+         RowBox[{"ToString", "[", 
+          RowBox[{"InputForm", "[", "#", "]"}], "]"}], " ", "&"}]}], 
+       "]"}]}]}]}], "\[IndentingNewLine]", "]"}]}]], "Input",
+ CellLabel->"In[80]:=",ExpressionUUID->"b4c7203c-7c1f-4669-8233-d23e2f839757"],
 
 Cell[CellGroupData[{
 
@@ -4041,6 +4922,158 @@ Cell[BoxData[
  CellChangeTimes->{{3.997191515056995*^9, 3.997191539397637*^9}},
  CellLabel->"In[31]:=",ExpressionUUID->"561f6d0b-8323-45d2-a2ed-abb1f2c0b0eb"],
 
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"CreateDiagrams", "[", 
+   RowBox[{"externalParticles___String", ",", "model_"}], "]"}], ":=", 
+  RowBox[{"Module", "[", "\[IndentingNewLine]", "  ", 
+   RowBox[{
+    RowBox[{"{", "\[IndentingNewLine]", "    ", 
+     RowBox[{
+      RowBox[{"ext", "=", 
+       RowBox[{"{", "externalParticles", "}"}]}], ",", "\[IndentingNewLine]", 
+      "    ", "valences", ",", "\[IndentingNewLine]", "    ", 
+      "countSolutions", ",", "\[IndentingNewLine]", "    ", "topologies", ",",
+       "\[IndentingNewLine]", "    ", "diagrams", ",", "\[IndentingNewLine]", 
+      "    ", "antiParticleRules"}], "\[IndentingNewLine]", "  ", "}"}], ",", 
+    "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+    RowBox[{
+     RowBox[{"antiParticleRules", "=", 
+      RowBox[{"antiParticleRulesFromModel", "[", "model", "]"}]}], ";", 
+     "\[IndentingNewLine]", "  ", 
+     RowBox[{"valences", "=", 
+      RowBox[{"vertexValences", "[", "model", "]"}]}], ";", 
+     "\[IndentingNewLine]", "  ", 
+     RowBox[{"countSolutions", "=", 
+      RowBox[{"topologyVertexCounts", "[", 
+       RowBox[{
+        RowBox[{"Length", "[", "ext", "]"}], ",", "valences"}], "]"}]}], ";", 
+     "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+     RowBox[{"topologies", "=", 
+      RowBox[{"Flatten", "[", "\[IndentingNewLine]", "    ", 
+       RowBox[{
+        RowBox[{
+         RowBox[{"makeTopologySkeletons", "[", 
+          RowBox[{"#", ",", 
+           RowBox[{"Length", "[", "ext", "]"}]}], "]"}], " ", "&"}], " ", "/@",
+         " ", "countSolutions"}], "\[IndentingNewLine]", "  ", "]"}]}], ";", 
+     "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+     RowBox[{"diagrams", "=", 
+      RowBox[{"Flatten", "[", "\[IndentingNewLine]", "    ", 
+       RowBox[{
+        RowBox[{
+         RowBox[{"decorateTopology", "[", 
+          RowBox[{"#", ",", "ext", ",", "model", ",", "antiParticleRules"}], 
+          "]"}], " ", "&"}], " ", "/@", " ", "topologies"}], 
+       "\[IndentingNewLine]", "  ", "]"}]}], ";", "\[IndentingNewLine]", 
+     "\[IndentingNewLine]", "  ", 
+     RowBox[{"DeleteDuplicatesBy", "[", 
+      RowBox[{"diagrams", ",", "canonicalDiagram"}], "]"}]}]}], 
+   "\[IndentingNewLine]", "]"}]}]], "Input",
+ CellLabel->"In[81]:=",ExpressionUUID->"53c49614-b2e8-4390-b488-21910290ff3c"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"canonicalVertexInstance", "[", "vs_", "]"}], ":=", 
+   RowBox[{"Module", "[", "\[IndentingNewLine]", "  ", 
+    RowBox[{
+     RowBox[{"{", "legs", "}"}], ",", "\[IndentingNewLine]", "  ", 
+     RowBox[{
+      RowBox[{"legs", "=", 
+       RowBox[{"SortBy", "[", "\[IndentingNewLine]", "    ", 
+        RowBox[{
+         RowBox[{
+          RowBox[{"vs", "[", "\"\<IncidentLegs\>\"", "]"}], "[", 
+          RowBox[{"[", 
+           RowBox[{"All", ",", 
+            RowBox[{"{", 
+             
+             RowBox[{"\"\<Particle\>\"", ",", "\"\<Index\>\"", 
+              ",", "\"\<Kind\>\""}], "}"}]}], "]"}], "]"}], ",", 
+         "\[IndentingNewLine]", "    ", 
+         RowBox[{
+          RowBox[{"ToString", "[", 
+           RowBox[{"InputForm", "[", "#", "]"}], "]"}], " ", "&"}]}], 
+        "\[IndentingNewLine]", "  ", "]"}]}], ";", "\[IndentingNewLine]", 
+      "  ", 
+      RowBox[{"<|", "\[IndentingNewLine]", "    ", 
+       RowBox[{
+        RowBox[{"\"\<Legs\>\"", "->", "legs"}], ",", "\[IndentingNewLine]", 
+        "    ", 
+        RowBox[{"\"\<Expression\>\"", "->", 
+         RowBox[{"vs", "[", "\"\<Expression\>\"", "]"}]}]}], 
+       "\[IndentingNewLine]", "  ", "|>"}]}]}], "\[IndentingNewLine]", 
+    "]"}]}], "\[IndentingNewLine]"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"diagramSignature", "[", "diag_", "]"}], ":=", 
+   RowBox[{"SortBy", "[", "\[IndentingNewLine]", "  ", 
+    RowBox[{
+     RowBox[{"Flatten", "[", "\[IndentingNewLine]", "    ", 
+      RowBox[{
+       RowBox[{
+        RowBox[{
+         RowBox[{"canonicalVertexInstance", " ", "/@", " ", "#"}], " ", "&"}],
+         " ", "/@", " ", 
+        RowBox[{"Values", "[", 
+         RowBox[{"diag", "[", "\"\<VertexStructures\>\"", "]"}], "]"}]}], ",",
+        "\[IndentingNewLine]", "    ", "1"}], "\[IndentingNewLine]", "  ", 
+      "]"}], ",", "\[IndentingNewLine]", "  ", 
+     RowBox[{
+      RowBox[{"ToString", "[", 
+       RowBox[{"InputForm", "[", "#", "]"}], "]"}], " ", "&"}]}], 
+    "\[IndentingNewLine]", "]"}]}], "\[IndentingNewLine]"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"CreateDiagrams", "[", 
+   RowBox[{"externalParticles___String", ",", "model_"}], "]"}], ":=", 
+  RowBox[{"Module", "[", "\[IndentingNewLine]", "  ", 
+   RowBox[{
+    RowBox[{"{", "\[IndentingNewLine]", "    ", 
+     RowBox[{
+      RowBox[{"ext", "=", 
+       RowBox[{"{", "externalParticles", "}"}]}], ",", "\[IndentingNewLine]", 
+      "    ", "valences", ",", "\[IndentingNewLine]", "    ", 
+      "countSolutions", ",", "\[IndentingNewLine]", "    ", "topologies", ",",
+       "\[IndentingNewLine]", "    ", "diagrams", ",", "\[IndentingNewLine]", 
+      "    ", "antiParticleRules"}], "\[IndentingNewLine]", "  ", "}"}], ",", 
+    "\[IndentingNewLine]", "  ", "\[IndentingNewLine]", "  ", 
+    RowBox[{
+     RowBox[{"antiParticleRules", "=", 
+      RowBox[{"antiParticleRulesFromModel", "[", "model", "]"}]}], ";", 
+     "\[IndentingNewLine]", "  ", 
+     RowBox[{"valences", "=", 
+      RowBox[{"vertexValences", "[", "model", "]"}]}], ";", 
+     "\[IndentingNewLine]", "  ", 
+     RowBox[{"countSolutions", "=", 
+      RowBox[{"topologyVertexCounts", "[", 
+       RowBox[{
+        RowBox[{"Length", "[", "ext", "]"}], ",", "valences"}], "]"}]}], ";", 
+     "\[IndentingNewLine]", "  ", "\[IndentingNewLine]", "  ", 
+     RowBox[{"topologies", "=", 
+      RowBox[{"Flatten", "[", "\[IndentingNewLine]", "    ", 
+       RowBox[{
+        RowBox[{
+         RowBox[{"makeTopologySkeletons", "[", 
+          RowBox[{"#", ",", 
+           RowBox[{"Length", "[", "ext", "]"}]}], "]"}], " ", "&"}], " ", "/@",
+         " ", "countSolutions"}], "\[IndentingNewLine]", "  ", "]"}]}], ";", 
+     "\[IndentingNewLine]", "  ", "\[IndentingNewLine]", "  ", 
+     RowBox[{"diagrams", "=", 
+      RowBox[{"Flatten", "[", "\[IndentingNewLine]", "    ", 
+       RowBox[{
+        RowBox[{
+         RowBox[{"decorateTopology", "[", 
+          RowBox[{"#", ",", "ext", ",", "model", ",", "antiParticleRules"}], 
+          "]"}], " ", "&"}], " ", "/@", " ", "topologies"}], 
+       "\[IndentingNewLine]", "  ", "]"}]}], ";", "\[IndentingNewLine]", "  ",
+      "\[IndentingNewLine]", "  ", 
+     RowBox[{"DeleteDuplicatesBy", "[", 
+      RowBox[{"diagrams", ",", "diagramSignature"}], "]"}]}]}], 
+   "\[IndentingNewLine]", "]"}]}]}], "Input",
+ CellLabel->"In[93]:=",ExpressionUUID->"8e4de57a-ceac-4bf1-b759-402c53972805"]
+}, Open  ]],
+
 Cell[CellGroupData[{
 
 Cell["Diagram Display", "Subsubsection",
@@ -4571,7 +5604,573 @@ Cell[BoxData[{
        RowBox[{"ImageSize", "->", "300"}]}], "\[IndentingNewLine]", "\t  ", 
       "]"}]}]}], "\[IndentingNewLine]", "\t", "]"}]}]}], "Input",
  CellChangeTimes->{3.9971902824801283`*^9, 3.997191166828722*^9},
- CellLabel->"In[32]:=",ExpressionUUID->"905ce1d9-1123-452d-b22b-1638f7ca5e70"]
+ CellLabel->"In[32]:=",ExpressionUUID->"905ce1d9-1123-452d-b22b-1638f7ca5e70"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"displayParticleName", "[", 
+    RowBox[{"edge_", ",", "internalEdgeLabels_Association"}], "]"}], ":=", 
+   RowBox[{"Module", "[", "\[IndentingNewLine]", "  ", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{"lab", ",", "vals", ",", "ends"}], "}"}], ",", 
+     "\[IndentingNewLine]", "  ", 
+     RowBox[{
+      RowBox[{"lab", "=", 
+       RowBox[{"Lookup", "[", 
+        RowBox[{"internalEdgeLabels", ",", "edge", ",", 
+         RowBox[{"Missing", "[", "\"\<NotFound\>\"", "]"}]}], "]"}]}], ";", 
+      "\[IndentingNewLine]", "  ", 
+      RowBox[{"If", "[", "\[IndentingNewLine]", "    ", 
+       RowBox[{
+        RowBox[{"MissingQ", "[", "lab", "]"}], ",", "\[IndentingNewLine]", 
+        "    ", "\"\<\>\"", ",", "\[IndentingNewLine]", "    ", 
+        RowBox[{
+         RowBox[{"vals", "=", 
+          RowBox[{"DeleteDuplicates", "[", 
+           RowBox[{"Values", "[", "lab", "]"}], "]"}]}], ";", 
+         "\[IndentingNewLine]", "    ", 
+         RowBox[{"ends", "=", 
+          RowBox[{"List", " ", "@@", " ", "edge"}]}], ";", 
+         "\[IndentingNewLine]", "    ", 
+         RowBox[{"If", "[", "\[IndentingNewLine]", "      ", 
+          RowBox[{
+           RowBox[{
+            RowBox[{"Length", "[", "vals", "]"}], "==", "1"}], ",", 
+           "\[IndentingNewLine]", "      ", 
+           RowBox[{"First", "[", "vals", "]"}], ",", "\[IndentingNewLine]", 
+           "      ", 
+           RowBox[{"Lookup", "[", 
+            RowBox[{"lab", ",", 
+             RowBox[{"First", "[", "ends", "]"}]}], "]"}]}], 
+          "\[IndentingNewLine]", "    ", "]"}]}]}], "\[IndentingNewLine]", 
+       "  ", "]"}]}]}], "\[IndentingNewLine]", "]"}]}], 
+  "\[IndentingNewLine]"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"arrowDirectionData", "[", "\[IndentingNewLine]", "  ", 
+    RowBox[{
+    "edge_", ",", "\[IndentingNewLine]", "  ", 
+     "internalEdgeLabels_Association", ",", "\[IndentingNewLine]", "  ", 
+     RowBox[{"particleToPrint_", ":", " ", "Automatic"}]}], 
+    "\[IndentingNewLine]", "]"}], ":=", 
+   RowBox[{"Module", "[", "\[IndentingNewLine]", "  ", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+      "lab", ",", "ends", ",", "printedParticle", ",", "targetVertex", ",", 
+       "sourceVertex"}], "}"}], ",", "\[IndentingNewLine]", 
+     "\[IndentingNewLine]", "  ", 
+     RowBox[{
+      RowBox[{"lab", "=", 
+       RowBox[{"Lookup", "[", 
+        RowBox[{"internalEdgeLabels", ",", "edge", ",", 
+         RowBox[{"Missing", "[", "\"\<NotFound\>\"", "]"}]}], "]"}]}], ";", 
+      "\[IndentingNewLine]", "  ", 
+      RowBox[{"If", "[", 
+       RowBox[{
+        RowBox[{
+         RowBox[{"MissingQ", "[", "lab", "]"}], "||", 
+         RowBox[{"!", 
+          RowBox[{"AssociationQ", "[", "lab", "]"}]}]}], ",", 
+        RowBox[{"Return", "[", 
+         RowBox[{"Missing", "[", "\"\<NotAvailable\>\"", "]"}], "]"}]}], 
+       "]"}], ";", "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+      RowBox[{"ends", "=", 
+       RowBox[{"List", " ", "@@", " ", "edge"}]}], ";", "\[IndentingNewLine]",
+       "\[IndentingNewLine]", "  ", 
+      RowBox[{"printedParticle", "=", 
+       RowBox[{"Replace", "[", "\[IndentingNewLine]", "    ", 
+        RowBox[{"particleToPrint", ",", "\[IndentingNewLine]", "    ", 
+         RowBox[{"Automatic", ":>", 
+          RowBox[{"First", "[", 
+           RowBox[{"DeleteDuplicates", "[", 
+            RowBox[{"Values", "[", "lab", "]"}], "]"}], "]"}]}]}], 
+        "\[IndentingNewLine]", "  ", "]"}]}], ";", "\[IndentingNewLine]", 
+      "\[IndentingNewLine]", "  ", 
+      RowBox[{"targetVertex", "=", 
+       RowBox[{"SelectFirst", "[", "\[IndentingNewLine]", "    ", 
+        RowBox[{"ends", ",", "\[IndentingNewLine]", "    ", 
+         RowBox[{
+          RowBox[{
+           RowBox[{"Lookup", "[", 
+            RowBox[{"lab", ",", "#", ",", "None"}], "]"}], "===", 
+           "printedParticle"}], " ", "&"}], ",", "\[IndentingNewLine]", 
+         "    ", 
+         RowBox[{"Missing", "[", "\"\<NotFound\>\"", "]"}]}], 
+        "\[IndentingNewLine]", "  ", "]"}]}], ";", "\[IndentingNewLine]", 
+      "\[IndentingNewLine]", "  ", 
+      RowBox[{"If", "[", 
+       RowBox[{
+        RowBox[{"MissingQ", "[", "targetVertex", "]"}], ",", 
+        RowBox[{"Return", "[", 
+         RowBox[{"Missing", "[", "\"\<NotAvailable\>\"", "]"}], "]"}]}], 
+       "]"}], ";", "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+      RowBox[{"sourceVertex", "=", 
+       RowBox[{"SelectFirst", "[", "\[IndentingNewLine]", "    ", 
+        RowBox[{"ends", ",", "\[IndentingNewLine]", "    ", 
+         RowBox[{
+          RowBox[{"#", "=!=", "targetVertex"}], " ", "&"}], ",", 
+         "\[IndentingNewLine]", "    ", 
+         RowBox[{"Missing", "[", "\"\<NotFound\>\"", "]"}]}], 
+        "\[IndentingNewLine]", "  ", "]"}]}], ";", "\[IndentingNewLine]", 
+      "\[IndentingNewLine]", "  ", 
+      RowBox[{"If", "[", 
+       RowBox[{
+        RowBox[{"MissingQ", "[", "sourceVertex", "]"}], ",", 
+        RowBox[{"Return", "[", 
+         RowBox[{"Missing", "[", "\"\<NotAvailable\>\"", "]"}], "]"}]}], 
+       "]"}], ";", "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+      RowBox[{"{", 
+       RowBox[{"sourceVertex", ",", "targetVertex"}], "}"}]}]}], 
+    "\[IndentingNewLine]", "]"}]}], "\[IndentingNewLine]"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"midArrowPoints", "[", 
+    RowBox[{"start_", ",", "end_", ",", 
+     RowBox[{"frac_", ":", " ", "0.22"}]}], "]"}], ":=", 
+   RowBox[{"Module", "[", "\[IndentingNewLine]", "  ", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{"mid", ",", "vec"}], "}"}], ",", "\[IndentingNewLine]", "  ", 
+     RowBox[{
+      RowBox[{"mid", "=", 
+       RowBox[{
+        RowBox[{"(", 
+         RowBox[{"start", "+", "end"}], ")"}], "/", "2"}]}], ";", 
+      "\[IndentingNewLine]", "  ", 
+      RowBox[{"vec", "=", 
+       RowBox[{"end", "-", "start"}]}], ";", "\[IndentingNewLine]", "  ", 
+      RowBox[{"{", "\[IndentingNewLine]", "    ", 
+       RowBox[{
+        RowBox[{"mid", "-", 
+         RowBox[{"frac", " ", 
+          RowBox[{"vec", "/", "2"}]}]}], ",", "\[IndentingNewLine]", "    ", 
+        RowBox[{"mid", "+", 
+         RowBox[{"frac", " ", 
+          RowBox[{"vec", "/", "2"}]}]}]}], "\[IndentingNewLine]", "  ", 
+       "}"}]}]}], "\[IndentingNewLine]", "]"}]}], "\[IndentingNewLine]"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"CreateArrowDiagram", "[", "diag_", "]"}], ":=", 
+  RowBox[{"Module", "[", "\[IndentingNewLine]", "  ", 
+   RowBox[{
+    RowBox[{"{", "\[IndentingNewLine]", "    ", 
+     RowBox[{
+     "graph", ",", "extMap", ",", "intLabels", ",", "leafVerts", ",", 
+      "internalVerts", ",", "vertexStructures", ",", "\[IndentingNewLine]", 
+      "    ", "embeddingGraph", ",", "coords", ",", "coordOf", ",", "edges", ",",
+       "\[IndentingNewLine]", "    ", "edgePrimitives", ",", 
+      "vertexPrimitives", ",", "externalLabelPrimitives", ",", 
+      "\[IndentingNewLine]", "    ", "edgeLabelPrimitives", ",", 
+      "vertexExpressionPrimitives", ",", "\[IndentingNewLine]", "    ", 
+      "midpoint", ",", "normalOffset"}], "\[IndentingNewLine]", "  ", "}"}], ",",
+     "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+    RowBox[{
+     RowBox[{"graph", "=", 
+      RowBox[{"diag", "[", "\"\<Graph\>\"", "]"}]}], ";", 
+     "\[IndentingNewLine]", "  ", 
+     RowBox[{"extMap", "=", 
+      RowBox[{"diag", "[", "\"\<ExternalAssignment\>\"", "]"}]}], ";", 
+     "\[IndentingNewLine]", "  ", 
+     RowBox[{"intLabels", "=", 
+      RowBox[{"diag", "[", "\"\<InternalEdgeLabels\>\"", "]"}]}], ";", 
+     "\[IndentingNewLine]", "  ", 
+     RowBox[{"vertexStructures", "=", 
+      RowBox[{"diag", "[", "\"\<VertexStructures\>\"", "]"}]}], ";", 
+     "\[IndentingNewLine]", "  ", 
+     RowBox[{"leafVerts", "=", 
+      RowBox[{"Lookup", "[", "\[IndentingNewLine]", "    ", 
+       RowBox[{
+       "diag", ",", "\[IndentingNewLine]", "    ", "\"\<LeafVertices\>\"", ",",
+         "\[IndentingNewLine]", "    ", 
+        RowBox[{"Select", "[", 
+         RowBox[{
+          RowBox[{"VertexList", "[", "graph", "]"}], ",", 
+          RowBox[{
+           RowBox[{
+            RowBox[{"VertexDegree", "[", 
+             RowBox[{"graph", ",", "#"}], "]"}], "==", "1"}], " ", "&"}]}], 
+         "]"}]}], "\[IndentingNewLine]", "  ", "]"}]}], ";", 
+     "\[IndentingNewLine]", "  ", 
+     RowBox[{"internalVerts", "=", 
+      RowBox[{"Lookup", "[", "\[IndentingNewLine]", "    ", 
+       RowBox[{
+       "diag", ",", "\[IndentingNewLine]", "    ", "\"\<InternalVertices\>\"",
+         ",", "\[IndentingNewLine]", "    ", 
+        RowBox[{"Complement", "[", 
+         RowBox[{
+          RowBox[{"VertexList", "[", "graph", "]"}], ",", "leafVerts"}], 
+         "]"}]}], "\[IndentingNewLine]", "  ", "]"}]}], ";", 
+     "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+     RowBox[{"embeddingGraph", "=", 
+      RowBox[{"Graph", "[", "\[IndentingNewLine]", "    ", 
+       RowBox[{
+        RowBox[{"VertexList", "[", "graph", "]"}], ",", "\[IndentingNewLine]",
+         "    ", 
+        RowBox[{"EdgeList", "[", "graph", "]"}], ",", "\[IndentingNewLine]", 
+        "    ", 
+        RowBox[{"GraphLayout", "->", "\"\<SpringElectricalEmbedding\>\""}]}], 
+       "\[IndentingNewLine]", "  ", "]"}]}], ";", "\[IndentingNewLine]", 
+     "\[IndentingNewLine]", "  ", 
+     RowBox[{"coords", "=", 
+      RowBox[{"GraphEmbedding", "[", "embeddingGraph", "]"}]}], ";", 
+     "\[IndentingNewLine]", "  ", 
+     RowBox[{"coordOf", "=", 
+      RowBox[{"AssociationThread", "[", 
+       RowBox[{
+        RowBox[{"VertexList", "[", "embeddingGraph", "]"}], ",", "coords"}], 
+       "]"}]}], ";", "\[IndentingNewLine]", "  ", 
+     RowBox[{"edges", "=", 
+      RowBox[{"EdgeList", "[", "graph", "]"}]}], ";", "\[IndentingNewLine]", 
+     "\[IndentingNewLine]", "  ", 
+     RowBox[{
+      RowBox[{"midpoint", "[", 
+       RowBox[{"p1_", ",", "p2_"}], "]"}], ":=", 
+      RowBox[{
+       RowBox[{"(", 
+        RowBox[{"p1", "+", "p2"}], ")"}], "/", "2"}]}], ";", 
+     "\[IndentingNewLine]", "  ", 
+     RowBox[{
+      RowBox[{"normalOffset", "[", 
+       RowBox[{"p1_", ",", "p2_"}], "]"}], ":=", 
+      RowBox[{"Module", "[", 
+       RowBox[{
+        RowBox[{"{", 
+         RowBox[{"n", "=", 
+          RowBox[{"{", 
+           RowBox[{
+            RowBox[{"-", 
+             RowBox[{
+              RowBox[{"(", 
+               RowBox[{"p2", "-", "p1"}], ")"}], "[", 
+              RowBox[{"[", "2", "]"}], "]"}]}], ",", 
+            RowBox[{
+             RowBox[{"(", 
+              RowBox[{"p2", "-", "p1"}], ")"}], "[", 
+             RowBox[{"[", "1", "]"}], "]"}]}], "}"}]}], "}"}], ",", 
+        "\[IndentingNewLine]", "    ", 
+        RowBox[{"0.08", " ", 
+         RowBox[{"Normalize", "[", 
+          RowBox[{"If", "[", 
+           RowBox[{
+            RowBox[{
+             RowBox[{"Norm", "[", "n", "]"}], "==", "0"}], ",", 
+            RowBox[{"{", 
+             RowBox[{"1", ",", "0"}], "}"}], ",", "n"}], "]"}], "]"}]}]}], 
+       "\[IndentingNewLine]", "  ", "]"}]}], ";", "\[IndentingNewLine]", 
+     "\[IndentingNewLine]", "  ", 
+     RowBox[{"edgePrimitives", "=", 
+      RowBox[{"Map", "[", "\[IndentingNewLine]", "    ", 
+       RowBox[{
+        RowBox[{"Function", "[", 
+         RowBox[{"edge", ",", "\[IndentingNewLine]", "      ", 
+          RowBox[{"Module", "[", "\[IndentingNewLine]", "        ", 
+           RowBox[{
+            RowBox[{"{", 
+             RowBox[{
+             "u", ",", "v", ",", "p1", ",", "p2", ",", "dirData", ",", 
+              "arrowPts"}], "}"}], ",", "\[IndentingNewLine]", "        ", 
+            RowBox[{
+             RowBox[{
+              RowBox[{"{", 
+               RowBox[{"u", ",", "v"}], "}"}], "=", 
+              RowBox[{"List", " ", "@@", " ", "edge"}]}], ";", 
+             "\[IndentingNewLine]", "        ", 
+             RowBox[{
+              RowBox[{"{", 
+               RowBox[{"p1", ",", "p2"}], "}"}], "=", 
+              RowBox[{"coordOf", " ", "/@", " ", 
+               RowBox[{"{", 
+                RowBox[{"u", ",", "v"}], "}"}]}]}], ";", 
+             "\[IndentingNewLine]", "\[IndentingNewLine]", "        ", 
+             RowBox[{"If", "[", "\[IndentingNewLine]", "          ", 
+              RowBox[{
+               RowBox[{
+                RowBox[{"MemberQ", "[", 
+                 RowBox[{"leafVerts", ",", "u"}], "]"}], "||", 
+                RowBox[{"MemberQ", "[", 
+                 RowBox[{"leafVerts", ",", "v"}], "]"}]}], ",", 
+               "\[IndentingNewLine]", "          ", 
+               RowBox[{"Module", "[", 
+                RowBox[{
+                 RowBox[{"{", 
+                  RowBox[{"leaf", ",", "inner", ",", "pLeaf", ",", "pInner"}],
+                   "}"}], ",", "\[IndentingNewLine]", "            ", 
+                 RowBox[{
+                  RowBox[{"leaf", "=", 
+                   RowBox[{"If", "[", 
+                    RowBox[{
+                    RowBox[{"MemberQ", "[", 
+                    RowBox[{"leafVerts", ",", "u"}], "]"}], ",", "u", ",", 
+                    "v"}], "]"}]}], ";", "\[IndentingNewLine]", 
+                  "            ", 
+                  RowBox[{"inner", "=", 
+                   RowBox[{"If", "[", 
+                    RowBox[{
+                    RowBox[{"leaf", "===", "u"}], ",", "v", ",", "u"}], 
+                    "]"}]}], ";", "\[IndentingNewLine]", "            ", 
+                  RowBox[{"pLeaf", "=", 
+                   RowBox[{"coordOf", "[", "leaf", "]"}]}], ";", 
+                  "\[IndentingNewLine]", "            ", 
+                  RowBox[{"pInner", "=", 
+                   RowBox[{"coordOf", "[", "inner", "]"}]}], ";", 
+                  "\[IndentingNewLine]", "            ", 
+                  RowBox[{"arrowPts", "=", 
+                   RowBox[{"midArrowPoints", "[", 
+                    RowBox[{"pLeaf", ",", "pInner"}], "]"}]}], ";", 
+                  "\[IndentingNewLine]", "            ", 
+                  RowBox[{"{", "\[IndentingNewLine]", "              ", 
+                   RowBox[{
+                   "Black", ",", "Thick", ",", "\[IndentingNewLine]", 
+                    "              ", 
+                    RowBox[{"Line", "[", 
+                    RowBox[{"{", 
+                    RowBox[{"pLeaf", ",", "pInner"}], "}"}], "]"}], ",", 
+                    "\[IndentingNewLine]", "              ", 
+                    RowBox[{"Arrow", "[", "arrowPts", "]"}]}], 
+                   "\[IndentingNewLine]", "            ", "}"}]}]}], 
+                "\[IndentingNewLine]", "          ", "]"}], ",", 
+               "\[IndentingNewLine]", "          ", 
+               RowBox[{
+                RowBox[{"dirData", "=", 
+                 RowBox[{"arrowDirectionData", "[", 
+                  RowBox[{"edge", ",", "intLabels"}], "]"}]}], ";", 
+                "\[IndentingNewLine]", "          ", 
+                RowBox[{"If", "[", "\[IndentingNewLine]", "            ", 
+                 RowBox[{
+                  RowBox[{"MissingQ", "[", "dirData", "]"}], ",", 
+                  "\[IndentingNewLine]", "            ", 
+                  RowBox[{"{", "\[IndentingNewLine]", "              ", 
+                   RowBox[{
+                   "Black", ",", "Thick", ",", "\[IndentingNewLine]", 
+                    "              ", 
+                    RowBox[{"Line", "[", 
+                    RowBox[{"{", 
+                    RowBox[{"p1", ",", "p2"}], "}"}], "]"}]}], 
+                   "\[IndentingNewLine]", "            ", "}"}], ",", 
+                  "\[IndentingNewLine]", "            ", 
+                  RowBox[{"Module", "[", 
+                   RowBox[{
+                    RowBox[{"{", 
+                    RowBox[{
+                    "startVertex", ",", "endVertex", ",", "pStart", ",", 
+                    "pEnd"}], "}"}], ",", "\[IndentingNewLine]", 
+                    "              ", 
+                    RowBox[{
+                    RowBox[{
+                    RowBox[{"{", 
+                    RowBox[{"startVertex", ",", "endVertex"}], "}"}], "=", 
+                    "dirData"}], ";", "\[IndentingNewLine]", "              ", 
+                    RowBox[{"pStart", "=", 
+                    RowBox[{"coordOf", "[", "startVertex", "]"}]}], ";", 
+                    "\[IndentingNewLine]", "              ", 
+                    RowBox[{"pEnd", "=", 
+                    RowBox[{"coordOf", "[", "endVertex", "]"}]}], ";", 
+                    "\[IndentingNewLine]", "              ", 
+                    RowBox[{"arrowPts", "=", 
+                    RowBox[{"midArrowPoints", "[", 
+                    RowBox[{"pStart", ",", "pEnd"}], "]"}]}], ";", 
+                    "\[IndentingNewLine]", "              ", 
+                    RowBox[{"{", "\[IndentingNewLine]", "                ", 
+                    RowBox[{
+                    "Black", ",", "Thick", ",", "\[IndentingNewLine]", 
+                    "                ", 
+                    RowBox[{"Line", "[", 
+                    RowBox[{"{", 
+                    RowBox[{"p1", ",", "p2"}], "}"}], "]"}], ",", 
+                    "\[IndentingNewLine]", "                ", 
+                    RowBox[{"Arrow", "[", "arrowPts", "]"}]}], 
+                    "\[IndentingNewLine]", "              ", "}"}]}]}], 
+                   "\[IndentingNewLine]", "            ", "]"}]}], 
+                 "\[IndentingNewLine]", "          ", "]"}]}]}], 
+              "\[IndentingNewLine]", "        ", "]"}]}]}], 
+           "\[IndentingNewLine]", "      ", "]"}]}], "\[IndentingNewLine]", 
+         "    ", "]"}], ",", "\[IndentingNewLine]", "    ", "edges"}], 
+       "\[IndentingNewLine]", "  ", "]"}]}], ";", "\[IndentingNewLine]", 
+     "\[IndentingNewLine]", "  ", 
+     RowBox[{"edgeLabelPrimitives", "=", 
+      RowBox[{"Map", "[", "\[IndentingNewLine]", "    ", 
+       RowBox[{
+        RowBox[{"Function", "[", 
+         RowBox[{"edge", ",", "\[IndentingNewLine]", "      ", 
+          RowBox[{"If", "[", "\[IndentingNewLine]", "        ", 
+           RowBox[{
+            RowBox[{"KeyExistsQ", "[", 
+             RowBox[{"intLabels", ",", "edge"}], "]"}], ",", 
+            "\[IndentingNewLine]", "        ", 
+            RowBox[{"Module", "[", 
+             RowBox[{
+              RowBox[{"{", 
+               RowBox[{"p1", ",", "p2", ",", "pos", ",", "lab"}], "}"}], ",", 
+              "\[IndentingNewLine]", "          ", 
+              RowBox[{
+               RowBox[{
+                RowBox[{"{", 
+                 RowBox[{"p1", ",", "p2"}], "}"}], "=", 
+                RowBox[{"coordOf", " ", "/@", " ", 
+                 RowBox[{"(", 
+                  RowBox[{"List", " ", "@@", " ", "edge"}], ")"}]}]}], ";", 
+               "\[IndentingNewLine]", "          ", 
+               RowBox[{"pos", "=", 
+                RowBox[{
+                 RowBox[{"midpoint", "[", 
+                  RowBox[{"p1", ",", "p2"}], "]"}], "+", 
+                 RowBox[{"normalOffset", "[", 
+                  RowBox[{"p1", ",", "p2"}], "]"}]}]}], ";", 
+               "\[IndentingNewLine]", "          ", 
+               RowBox[{"lab", "=", 
+                RowBox[{"displayParticleName", "[", 
+                 RowBox[{"edge", ",", "intLabels"}], "]"}]}], ";", 
+               "\[IndentingNewLine]", "          ", 
+               RowBox[{"{", "\[IndentingNewLine]", "            ", 
+                RowBox[{"White", ",", 
+                 RowBox[{"Disk", "[", 
+                  RowBox[{"pos", ",", "0.06"}], "]"}], ",", 
+                 "\[IndentingNewLine]", "            ", "Blue", ",", 
+                 RowBox[{"Text", "[", 
+                  RowBox[{
+                   RowBox[{"Style", "[", 
+                    RowBox[{"lab", ",", "14"}], "]"}], ",", "pos"}], "]"}]}], 
+                "\[IndentingNewLine]", "          ", "}"}]}]}], 
+             "\[IndentingNewLine]", "        ", "]"}], ",", 
+            "\[IndentingNewLine]", "        ", "Nothing"}], 
+           "\[IndentingNewLine]", "      ", "]"}]}], "\[IndentingNewLine]", 
+         "    ", "]"}], ",", "\[IndentingNewLine]", "    ", "edges"}], 
+       "\[IndentingNewLine]", "  ", "]"}]}], ";", "\[IndentingNewLine]", 
+     "\[IndentingNewLine]", "  ", 
+     RowBox[{"vertexPrimitives", "=", 
+      RowBox[{"{", "\[IndentingNewLine]", "    ", 
+       RowBox[{"Black", ",", "\[IndentingNewLine]", "    ", 
+        RowBox[{"Disk", "[", 
+         RowBox[{
+          RowBox[{"coordOf", " ", "/@", " ", "internalVerts"}], ",", "0.03"}],
+          "]"}]}], "\[IndentingNewLine]", "  ", "}"}]}], ";", 
+     "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+     RowBox[{"externalLabelPrimitives", "=", 
+      RowBox[{"Map", "[", "\[IndentingNewLine]", "    ", 
+       RowBox[{
+        RowBox[{"Function", "[", 
+         RowBox[{"v", ",", "\[IndentingNewLine]", "      ", 
+          RowBox[{"Module", "[", 
+           RowBox[{
+            RowBox[{"{", 
+             RowBox[{
+             "p", ",", "n", ",", "dir", ",", "pos", ",", "data", ",", 
+              "label"}], "}"}], ",", "\[IndentingNewLine]", "        ", 
+            RowBox[{
+             RowBox[{"p", "=", 
+              RowBox[{"coordOf", "[", "v", "]"}]}], ";", 
+             "\[IndentingNewLine]", "        ", 
+             RowBox[{"n", "=", 
+              RowBox[{"First", "[", 
+               RowBox[{"AdjacencyList", "[", 
+                RowBox[{"graph", ",", "v"}], "]"}], "]"}]}], ";", 
+             "\[IndentingNewLine]", "        ", 
+             RowBox[{"dir", "=", 
+              RowBox[{"Normalize", "[", 
+               RowBox[{
+                RowBox[{"p", "-", 
+                 RowBox[{"coordOf", "[", "n", "]"}]}], " ", "/.", " ", 
+                RowBox[{
+                 RowBox[{"{", 
+                  RowBox[{"0", ",", "0"}], "}"}], "->", 
+                 RowBox[{"{", 
+                  RowBox[{"1", ",", "0"}], "}"}]}]}], "]"}]}], ";", 
+             "\[IndentingNewLine]", "        ", 
+             RowBox[{"pos", "=", 
+              RowBox[{"p", "+", 
+               RowBox[{"0.12", " ", "dir"}]}]}], ";", "\[IndentingNewLine]", 
+             "        ", 
+             RowBox[{"data", "=", 
+              RowBox[{"Lookup", "[", 
+               RowBox[{"extMap", ",", "v", ",", 
+                RowBox[{"Missing", "[", "\"\<NotFound\>\"", "]"}]}], "]"}]}], 
+             ";", "\[IndentingNewLine]", "        ", 
+             RowBox[{"label", "=", 
+              RowBox[{"If", "[", "\[IndentingNewLine]", "          ", 
+               RowBox[{
+                RowBox[{"AssociationQ", "[", "data", "]"}], ",", 
+                "\[IndentingNewLine]", "          ", 
+                RowBox[{"Subscript", "[", 
+                 RowBox[{
+                  RowBox[{"data", "[", "\"\<Particle\>\"", "]"}], ",", 
+                  RowBox[{"data", "[", "\"\<InputIndex\>\"", "]"}]}], "]"}], ",",
+                 "\[IndentingNewLine]", "          ", "data"}], 
+               "\[IndentingNewLine]", "        ", "]"}]}], ";", 
+             "\[IndentingNewLine]", "        ", 
+             RowBox[{"Text", "[", 
+              RowBox[{
+               RowBox[{"Style", "[", 
+                RowBox[{"label", ",", "14", ",", "Black"}], "]"}], ",", 
+               "pos"}], "]"}]}]}], "\[IndentingNewLine]", "      ", "]"}]}], 
+         "\[IndentingNewLine]", "    ", "]"}], ",", "\[IndentingNewLine]", 
+        "    ", "leafVerts"}], "\[IndentingNewLine]", "  ", "]"}]}], ";", 
+     "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+     RowBox[{"vertexExpressionPrimitives", "=", 
+      RowBox[{"Map", "[", "\[IndentingNewLine]", "    ", 
+       RowBox[{
+        RowBox[{"Function", "[", 
+         RowBox[{"v", ",", "\[IndentingNewLine]", "      ", 
+          RowBox[{"Module", "[", 
+           RowBox[{
+            RowBox[{"{", 
+             RowBox[{"pos", ",", "expr"}], "}"}], ",", "\[IndentingNewLine]", 
+            "        ", 
+            RowBox[{
+             RowBox[{"pos", "=", 
+              RowBox[{
+               RowBox[{"coordOf", "[", "v", "]"}], "+", 
+               RowBox[{"{", 
+                RowBox[{"0", ",", "0.14"}], "}"}]}]}], ";", 
+             "\[IndentingNewLine]", "        ", 
+             RowBox[{"expr", "=", 
+              RowBox[{"Lookup", "[", 
+               RowBox[{"vertexStructures", ",", "v", ",", 
+                RowBox[{"{", "}"}]}], "]"}]}], ";", "\[IndentingNewLine]", 
+             "        ", 
+             RowBox[{"If", "[", "\[IndentingNewLine]", "          ", 
+              RowBox[{
+               RowBox[{"expr", "===", 
+                RowBox[{"{", "}"}]}], ",", "\[IndentingNewLine]", 
+               "          ", "Nothing", ",", "\[IndentingNewLine]", 
+               "          ", 
+               RowBox[{"Text", "[", "\[IndentingNewLine]", "            ", 
+                RowBox[{
+                 RowBox[{
+                 "Style", "[", "\[IndentingNewLine]", "              ", 
+                  RowBox[{
+                   RowBox[{"TraditionalForm", "[", 
+                    RowBox[{"expr", "[", 
+                    RowBox[{"[", 
+                    RowBox[{"1", ",", "\"\<Expression\>\""}], "]"}], "]"}], 
+                    "]"}], ",", "\[IndentingNewLine]", "              ", "10",
+                    ",", "\[IndentingNewLine]", "              ", 
+                   RowBox[{"Darker", "[", "Red", "]"}]}], 
+                  "\[IndentingNewLine]", "            ", "]"}], ",", 
+                 "\[IndentingNewLine]", "            ", "pos"}], 
+                "\[IndentingNewLine]", "          ", "]"}]}], 
+              "\[IndentingNewLine]", "        ", "]"}]}]}], 
+           "\[IndentingNewLine]", "      ", "]"}]}], "\[IndentingNewLine]", 
+         "    ", "]"}], ",", "\[IndentingNewLine]", "    ", "internalVerts"}],
+        "\[IndentingNewLine]", "  ", "]"}]}], ";", "\[IndentingNewLine]", 
+     "\[IndentingNewLine]", "  ", 
+     RowBox[{"Graphics", "[", "\[IndentingNewLine]", "    ", 
+      RowBox[{
+       RowBox[{"{", "\[IndentingNewLine]", "      ", 
+        RowBox[{
+        "edgePrimitives", ",", "\[IndentingNewLine]", "      ", 
+         "edgeLabelPrimitives", ",", "\[IndentingNewLine]", "      ", 
+         "vertexPrimitives", ",", "\[IndentingNewLine]", "      ", 
+         "externalLabelPrimitives", ",", "\[IndentingNewLine]", "      ", 
+         "vertexExpressionPrimitives"}], "\[IndentingNewLine]", "    ", "}"}],
+        ",", "\[IndentingNewLine]", "    ", 
+       RowBox[{"PlotRange", "->", "All"}], ",", "\[IndentingNewLine]", "    ", 
+       RowBox[{"ImagePadding", "->", "40"}], ",", "\[IndentingNewLine]", 
+       "    ", 
+       RowBox[{"ImageSize", "->", "450"}]}], "\[IndentingNewLine]", "  ", 
+      "]"}]}]}], "\[IndentingNewLine]", "]"}]}]}], "Input",
+ CellLabel->"In[82]:=",ExpressionUUID->"833e1d25-46ea-43fe-a996-666304a0202b"]
 }, Closed]],
 
 Cell[CellGroupData[{
@@ -4594,20 +6193,21 @@ Cell[BoxData[
    3.9971897693866167`*^9, 3.997189795939453*^9}, 3.997190311291641*^9, 
    3.9971907759704647`*^9, 3.997191556391889*^9, 3.997266083976334*^9, {
    3.997269025585067*^9, 3.997269027539913*^9}},
- CellLabel->"In[52]:=",ExpressionUUID->"1e7b8f2a-f954-45f1-99e8-b7d72cede217"],
+ CellLabel->"In[96]:=",ExpressionUUID->"1e7b8f2a-f954-45f1-99e8-b7d72cede217"],
 
 Cell[BoxData[
  RowBox[{"{", 
-  RowBox[{"0.052414`", ",", "Null"}], "}"}]], "Output",
- CellChangeTimes->{3.997269049043515*^9, 3.997269376553549*^9},
- CellLabel->"Out[52]=",ExpressionUUID->"61a9b14f-ad65-4fea-9353-e8e1ffb22097"]
+  RowBox[{"0.859248`", ",", "Null"}], "}"}]], "Output",
+ CellChangeTimes->{3.997269049043515*^9, 3.997269376553549*^9, 
+  3.997275912947774*^9, 3.997276359069206*^9, 3.99727659732617*^9},
+ CellLabel->"Out[96]=",ExpressionUUID->"d184c939-2406-49f7-8eed-9987f99f3230"]
 }, Open  ]],
 
 Cell[CellGroupData[{
 
 Cell[BoxData[
  RowBox[{"CreateArrowDiagram", " ", "/@", " ", "diags"}]], "Input",
- CellLabel->"In[53]:=",ExpressionUUID->"8ecbe82d-8cdb-4232-87cf-53c5f6960865"],
+ CellLabel->"In[98]:=",ExpressionUUID->"8ecbe82d-8cdb-4232-87cf-53c5f6960865"],
 
 Cell[BoxData[
  RowBox[{"{", 
@@ -4685,9 +6285,73 @@ Cell[BoxData[
         BackFaceColor->GrayLevel[0],
         GraphicsColor->GrayLevel[0],
         FontSize->14,
-        FontColor->GrayLevel[0]], {2.660740136034986, -0.08185487536559405}]}},
-    ImagePadding->20,
-    ImageSize->300,
+        FontColor->GrayLevel[
+         0]], {2.660740136034986, -0.08185487536559405}]}, {InsetBox[
+       StyleBox[
+        RowBox[{
+         RowBox[{"-", 
+          SqrtBox["2"]}], " ", "EE", " ", 
+         FormBox[
+          SubscriptBox["\<\"x\"\>", "\<\"1,13\"\>"],
+          TraditionalForm], " ", 
+         FormBox[
+          TemplateBox[{
+            TemplateBox[{"\"\[LeftAngleBracket]\"", 
+              StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+            TemplateBox[{
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"1", ",", "3"}]], Bold, StripOnInput -> False], 
+              "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"],
+          TraditionalForm]}],
+        StripOnInput->False,
+        LineColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FrontFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        BackFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        GraphicsColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FontSize->10,
+        FontColor->RGBColor[
+          Rational[2, 3], 0, 0]], {0.6946675821840382, 0.7870306711299551}], 
+      InsetBox[
+       StyleBox[
+        RowBox[{
+         RowBox[{"-", 
+          SqrtBox["2"]}], " ", "EE", " ", 
+         FormBox[
+          SubscriptBox["\<\"x\"\>", "\<\"24,2\"\>"],
+          TraditionalForm], " ", 
+         FormBox[
+          TemplateBox[{
+            TemplateBox[{"\"\[LeftAngleBracket]\"", 
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"2", ",", "4"}]], Bold, StripOnInput -> False]}, 
+             "RowDefault"], 
+            TemplateBox[{
+              StyleBox["2", Bold, StripOnInput -> False], 
+              "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"],
+          TraditionalForm]}],
+        StripOnInput->False,
+        LineColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FrontFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        BackFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        GraphicsColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FontSize->10,
+        FontColor->RGBColor[
+          Rational[2, 3], 0, 0]], {1.8793252207006348, 0.7870772778700712}]}},
+    
+    ImagePadding->40,
+    ImageSize->450,
     PlotRange->All], ",", 
    GraphicsBox[{{
       {GrayLevel[0], Thickness[Large], 
@@ -4762,15 +6426,80 @@ Cell[BoxData[
         BackFaceColor->GrayLevel[0],
         GraphicsColor->GrayLevel[0],
         FontSize->14,
-        FontColor->GrayLevel[0]], {2.660740136034986, -0.08185487536559405}]}},
-    ImagePadding->20,
-    ImageSize->300,
+        FontColor->GrayLevel[
+         0]], {2.660740136034986, -0.08185487536559405}]}, {InsetBox[
+       StyleBox[
+        RowBox[{
+         RowBox[{"-", 
+          SqrtBox["2"]}], " ", "EE", " ", 
+         FormBox[
+          SubscriptBox["\<\"x\"\>", "\<\"1,14\"\>"],
+          TraditionalForm], " ", 
+         FormBox[
+          TemplateBox[{
+            TemplateBox[{"\"\[LeftAngleBracket]\"", 
+              StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+            TemplateBox[{
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"1", ",", "4"}]], Bold, StripOnInput -> False], 
+              "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"],
+          TraditionalForm]}],
+        StripOnInput->False,
+        LineColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FrontFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        BackFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        GraphicsColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FontSize->10,
+        FontColor->RGBColor[
+          Rational[2, 3], 0, 0]], {0.6946675821840382, 0.7870306711299551}], 
+      InsetBox[
+       StyleBox[
+        RowBox[{
+         RowBox[{"-", 
+          SqrtBox["2"]}], " ", "EE", " ", 
+         FormBox[
+          SubscriptBox["\<\"x\"\>", "\<\"23,2\"\>"],
+          TraditionalForm], " ", 
+         FormBox[
+          TemplateBox[{
+            TemplateBox[{"\"\[LeftAngleBracket]\"", 
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"2", ",", "3"}]], Bold, StripOnInput -> False]}, 
+             "RowDefault"], 
+            TemplateBox[{
+              StyleBox["2", Bold, StripOnInput -> False], 
+              "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"],
+          TraditionalForm]}],
+        StripOnInput->False,
+        LineColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FrontFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        BackFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        GraphicsColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FontSize->10,
+        FontColor->RGBColor[
+          Rational[2, 3], 0, 0]], {1.8793252207006348, 0.7870772778700712}]}},
+    
+    ImagePadding->40,
+    ImageSize->450,
     PlotRange->All]}], "}"}]], "Output",
  CellChangeTimes->{
   3.997189800644203*^9, 3.997190162463848*^9, {3.9971902886868467`*^9, 
    3.997190305591219*^9}, 3.997191175018361*^9, 3.997191559528091*^9, 
-   3.997266076807674*^9, 3.99726897166313*^9, 3.997269377595902*^9},
- CellLabel->"Out[53]=",ExpressionUUID->"3b1b0c77-f051-47c5-aaf9-ec8f6db3ea80"]
+   3.997266076807674*^9, 3.99726897166313*^9, 3.997269377595902*^9, 
+   3.997275914217349*^9, 3.9972766053150797`*^9},
+ CellLabel->"Out[98]=",ExpressionUUID->"2ce88120-6f05-4ed2-aca5-ad031087e56d"]
 }, Open  ]],
 
 Cell[CellGroupData[{
@@ -4786,20 +6515,22 @@ Cell[BoxData[
  CellChangeTimes->{{3.996936228192474*^9, 3.996936229686573*^9}, {
    3.997189808495558*^9, 3.997189809587634*^9}, 3.997190317018323*^9, 
    3.997191581558309*^9, {3.997269018782032*^9, 3.997269021034397*^9}},
- CellLabel->"In[54]:=",ExpressionUUID->"bac66ff2-a6e0-476e-bceb-5d10fccbeab2"],
+ CellLabel->"In[99]:=",ExpressionUUID->"bac66ff2-a6e0-476e-bceb-5d10fccbeab2"],
 
 Cell[BoxData[
  RowBox[{"{", 
-  RowBox[{"2.013018`", ",", "Null"}], "}"}]], "Output",
- CellChangeTimes->{3.997269048900742*^9, 3.997269380507938*^9},
- CellLabel->"Out[54]=",ExpressionUUID->"9956218b-0788-41e3-af17-7119a1504bc2"]
+  RowBox[{"257.077123`", ",", "Null"}], "}"}]], "Output",
+ CellChangeTimes->{3.997269048900742*^9, 3.997269380507938*^9, 
+  3.997276180843665*^9, 3.99727689781703*^9},
+ CellLabel->"Out[99]=",ExpressionUUID->"adfc1df0-089a-4d67-9a9f-a250ee093700"]
 }, Open  ]],
 
 Cell[CellGroupData[{
 
 Cell[BoxData[
  RowBox[{"CreateArrowDiagram", " ", "/@", " ", "diags"}]], "Input",
- CellLabel->"In[55]:=",ExpressionUUID->"0a642920-493a-4c12-8f25-69622938a19d"],
+ CellLabel->
+  "In[100]:=",ExpressionUUID->"0a642920-493a-4c12-8f25-69622938a19d"],
 
 Cell[BoxData[
  RowBox[{"{", 
@@ -4904,9 +6635,106 @@ Cell[BoxData[
         BackFaceColor->GrayLevel[0],
         GraphicsColor->GrayLevel[0],
         FontSize->14,
-        FontColor->GrayLevel[0]], {4.145053338264864, 0.7044691946865363}]}},
-    ImagePadding->20,
-    ImageSize->300,
+        FontColor->GrayLevel[0]], {4.145053338264864, 0.7044691946865363}]}, {
+      InsetBox[
+       StyleBox[
+        RowBox[{
+         RowBox[{"-", 
+          SqrtBox["2"]}], " ", "EE", " ", 
+         FormBox[
+          SubscriptBox["\<\"x\"\>", "\<\"1,13\"\>"],
+          TraditionalForm], " ", 
+         FormBox[
+          TemplateBox[{
+            TemplateBox[{"\"\[LeftAngleBracket]\"", 
+              StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+            TemplateBox[{
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"1", ",", "3"}]], Bold, StripOnInput -> False], 
+              "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"],
+          TraditionalForm]}],
+        StripOnInput->False,
+        LineColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FrontFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        BackFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        GraphicsColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FontSize->10,
+        FontColor->RGBColor[
+          Rational[2, 3], 0, 0]], {0.8314029667543892, 1.268208654919134}], 
+      InsetBox[
+       StyleBox[
+        RowBox[{
+         RowBox[{"-", 
+          SqrtBox["2"]}], " ", "EE", " ", 
+         FormBox[
+          SubscriptBox["\<\"x\"\>", "\<\"245,Multiparticle[1, 3, 4]\"\>"],
+          TraditionalForm], " ", 
+         FormBox[
+          TemplateBox[{
+            TemplateBox[{"\"\[LeftAngleBracket]\"", 
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"2", ",", "4", ",", "5"}]], Bold, StripOnInput -> 
+               False]}, "RowDefault"], 
+            TemplateBox[{
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"1", ",", "3", ",", "4"}]], Bold, StripOnInput -> 
+               False], "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"],
+          TraditionalForm]}],
+        StripOnInput->False,
+        LineColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FrontFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        BackFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        GraphicsColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FontSize->10,
+        FontColor->RGBColor[
+          Rational[2, 3], 0, 0]], {2.0183044118241598, 1.0032060218298384}], 
+      InsetBox[
+       StyleBox[
+        RowBox[{
+         RowBox[{"-", 
+          SqrtBox["2"]}], " ", "EE", " ", 
+         FormBox[
+          SubscriptBox["\<\"x\"\>", "\<\"25,2\"\>"],
+          TraditionalForm], " ", 
+         FormBox[
+          TemplateBox[{
+            TemplateBox[{"\"\[LeftAngleBracket]\"", 
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"2", ",", "5"}]], Bold, StripOnInput -> False]}, 
+             "RowDefault"], 
+            TemplateBox[{
+              StyleBox["2", Bold, StripOnInput -> False], 
+              "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"],
+          TraditionalForm]}],
+        StripOnInput->False,
+        LineColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FrontFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        BackFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        GraphicsColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FontSize->10,
+        FontColor->RGBColor[
+          Rational[2, 3], 0, 0]], {3.2050037581076163, 1.268580587330268}]}},
+    ImagePadding->40,
+    ImageSize->450,
     PlotRange->All], ",", 
    GraphicsBox[{{
       {GrayLevel[0], Thickness[Large], 
@@ -5008,9 +6836,106 @@ Cell[BoxData[
         BackFaceColor->GrayLevel[0],
         GraphicsColor->GrayLevel[0],
         FontSize->14,
-        FontColor->GrayLevel[0]], {4.145053338264864, 0.7044691946865363}]}},
-    ImagePadding->20,
-    ImageSize->300,
+        FontColor->GrayLevel[0]], {4.145053338264864, 0.7044691946865363}]}, {
+      InsetBox[
+       StyleBox[
+        RowBox[{
+         RowBox[{"-", 
+          SqrtBox["2"]}], " ", "EE", " ", 
+         FormBox[
+          SubscriptBox["\<\"x\"\>", "\<\"1,13\"\>"],
+          TraditionalForm], " ", 
+         FormBox[
+          TemplateBox[{
+            TemplateBox[{"\"\[LeftAngleBracket]\"", 
+              StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+            TemplateBox[{
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"1", ",", "3"}]], Bold, StripOnInput -> False], 
+              "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"],
+          TraditionalForm]}],
+        StripOnInput->False,
+        LineColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FrontFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        BackFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        GraphicsColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FontSize->10,
+        FontColor->RGBColor[
+          Rational[2, 3], 0, 0]], {0.8314029667543892, 1.268208654919134}], 
+      InsetBox[
+       StyleBox[
+        RowBox[{
+         RowBox[{"-", 
+          SqrtBox["2"]}], " ", "EE", " ", 
+         FormBox[
+          SubscriptBox["\<\"x\"\>", "\<\"245,Multiparticle[1, 3, 5]\"\>"],
+          TraditionalForm], " ", 
+         FormBox[
+          TemplateBox[{
+            TemplateBox[{"\"\[LeftAngleBracket]\"", 
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"2", ",", "4", ",", "5"}]], Bold, StripOnInput -> 
+               False]}, "RowDefault"], 
+            TemplateBox[{
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"1", ",", "3", ",", "5"}]], Bold, StripOnInput -> 
+               False], "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"],
+          TraditionalForm]}],
+        StripOnInput->False,
+        LineColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FrontFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        BackFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        GraphicsColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FontSize->10,
+        FontColor->RGBColor[
+          Rational[2, 3], 0, 0]], {2.0183044118241598, 1.0032060218298384}], 
+      InsetBox[
+       StyleBox[
+        RowBox[{
+         RowBox[{"-", 
+          SqrtBox["2"]}], " ", "EE", " ", 
+         FormBox[
+          SubscriptBox["\<\"x\"\>", "\<\"24,2\"\>"],
+          TraditionalForm], " ", 
+         FormBox[
+          TemplateBox[{
+            TemplateBox[{"\"\[LeftAngleBracket]\"", 
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"2", ",", "4"}]], Bold, StripOnInput -> False]}, 
+             "RowDefault"], 
+            TemplateBox[{
+              StyleBox["2", Bold, StripOnInput -> False], 
+              "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"],
+          TraditionalForm]}],
+        StripOnInput->False,
+        LineColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FrontFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        BackFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        GraphicsColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FontSize->10,
+        FontColor->RGBColor[
+          Rational[2, 3], 0, 0]], {3.2050037581076163, 1.268580587330268}]}},
+    ImagePadding->40,
+    ImageSize->450,
     PlotRange->All], ",", 
    GraphicsBox[{{
       {GrayLevel[0], Thickness[Large], 
@@ -5112,9 +7037,106 @@ Cell[BoxData[
         BackFaceColor->GrayLevel[0],
         GraphicsColor->GrayLevel[0],
         FontSize->14,
-        FontColor->GrayLevel[0]], {4.145053338264864, 0.7044691946865363}]}},
-    ImagePadding->20,
-    ImageSize->300,
+        FontColor->GrayLevel[0]], {4.145053338264864, 0.7044691946865363}]}, {
+      InsetBox[
+       StyleBox[
+        RowBox[{
+         RowBox[{"-", 
+          SqrtBox["2"]}], " ", "EE", " ", 
+         FormBox[
+          SubscriptBox["\<\"x\"\>", "\<\"1,14\"\>"],
+          TraditionalForm], " ", 
+         FormBox[
+          TemplateBox[{
+            TemplateBox[{"\"\[LeftAngleBracket]\"", 
+              StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+            TemplateBox[{
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"1", ",", "4"}]], Bold, StripOnInput -> False], 
+              "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"],
+          TraditionalForm]}],
+        StripOnInput->False,
+        LineColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FrontFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        BackFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        GraphicsColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FontSize->10,
+        FontColor->RGBColor[
+          Rational[2, 3], 0, 0]], {0.8314029667543892, 1.268208654919134}], 
+      InsetBox[
+       StyleBox[
+        RowBox[{
+         RowBox[{"-", 
+          SqrtBox["2"]}], " ", "EE", " ", 
+         FormBox[
+          SubscriptBox["\<\"x\"\>", "\<\"235,Multiparticle[1, 3, 4]\"\>"],
+          TraditionalForm], " ", 
+         FormBox[
+          TemplateBox[{
+            TemplateBox[{"\"\[LeftAngleBracket]\"", 
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"2", ",", "3", ",", "5"}]], Bold, StripOnInput -> 
+               False]}, "RowDefault"], 
+            TemplateBox[{
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"1", ",", "3", ",", "4"}]], Bold, StripOnInput -> 
+               False], "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"],
+          TraditionalForm]}],
+        StripOnInput->False,
+        LineColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FrontFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        BackFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        GraphicsColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FontSize->10,
+        FontColor->RGBColor[
+          Rational[2, 3], 0, 0]], {2.0183044118241598, 1.0032060218298384}], 
+      InsetBox[
+       StyleBox[
+        RowBox[{
+         RowBox[{"-", 
+          SqrtBox["2"]}], " ", "EE", " ", 
+         FormBox[
+          SubscriptBox["\<\"x\"\>", "\<\"25,2\"\>"],
+          TraditionalForm], " ", 
+         FormBox[
+          TemplateBox[{
+            TemplateBox[{"\"\[LeftAngleBracket]\"", 
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"2", ",", "5"}]], Bold, StripOnInput -> False]}, 
+             "RowDefault"], 
+            TemplateBox[{
+              StyleBox["2", Bold, StripOnInput -> False], 
+              "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"],
+          TraditionalForm]}],
+        StripOnInput->False,
+        LineColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FrontFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        BackFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        GraphicsColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FontSize->10,
+        FontColor->RGBColor[
+          Rational[2, 3], 0, 0]], {3.2050037581076163, 1.268580587330268}]}},
+    ImagePadding->40,
+    ImageSize->450,
     PlotRange->All], ",", 
    GraphicsBox[{{
       {GrayLevel[0], Thickness[Large], 
@@ -5216,9 +7238,106 @@ Cell[BoxData[
         BackFaceColor->GrayLevel[0],
         GraphicsColor->GrayLevel[0],
         FontSize->14,
-        FontColor->GrayLevel[0]], {4.145053338264864, 0.7044691946865363}]}},
-    ImagePadding->20,
-    ImageSize->300,
+        FontColor->GrayLevel[0]], {4.145053338264864, 0.7044691946865363}]}, {
+      InsetBox[
+       StyleBox[
+        RowBox[{
+         RowBox[{"-", 
+          SqrtBox["2"]}], " ", "EE", " ", 
+         FormBox[
+          SubscriptBox["\<\"x\"\>", "\<\"1,14\"\>"],
+          TraditionalForm], " ", 
+         FormBox[
+          TemplateBox[{
+            TemplateBox[{"\"\[LeftAngleBracket]\"", 
+              StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+            TemplateBox[{
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"1", ",", "4"}]], Bold, StripOnInput -> False], 
+              "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"],
+          TraditionalForm]}],
+        StripOnInput->False,
+        LineColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FrontFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        BackFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        GraphicsColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FontSize->10,
+        FontColor->RGBColor[
+          Rational[2, 3], 0, 0]], {0.8314029667543892, 1.268208654919134}], 
+      InsetBox[
+       StyleBox[
+        RowBox[{
+         RowBox[{"-", 
+          SqrtBox["2"]}], " ", "EE", " ", 
+         FormBox[
+          SubscriptBox["\<\"x\"\>", "\<\"235,Multiparticle[1, 4, 5]\"\>"],
+          TraditionalForm], " ", 
+         FormBox[
+          TemplateBox[{
+            TemplateBox[{"\"\[LeftAngleBracket]\"", 
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"2", ",", "3", ",", "5"}]], Bold, StripOnInput -> 
+               False]}, "RowDefault"], 
+            TemplateBox[{
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"1", ",", "4", ",", "5"}]], Bold, StripOnInput -> 
+               False], "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"],
+          TraditionalForm]}],
+        StripOnInput->False,
+        LineColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FrontFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        BackFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        GraphicsColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FontSize->10,
+        FontColor->RGBColor[
+          Rational[2, 3], 0, 0]], {2.0183044118241598, 1.0032060218298384}], 
+      InsetBox[
+       StyleBox[
+        RowBox[{
+         RowBox[{"-", 
+          SqrtBox["2"]}], " ", "EE", " ", 
+         FormBox[
+          SubscriptBox["\<\"x\"\>", "\<\"23,2\"\>"],
+          TraditionalForm], " ", 
+         FormBox[
+          TemplateBox[{
+            TemplateBox[{"\"\[LeftAngleBracket]\"", 
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"2", ",", "3"}]], Bold, StripOnInput -> False]}, 
+             "RowDefault"], 
+            TemplateBox[{
+              StyleBox["2", Bold, StripOnInput -> False], 
+              "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"],
+          TraditionalForm]}],
+        StripOnInput->False,
+        LineColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FrontFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        BackFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        GraphicsColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FontSize->10,
+        FontColor->RGBColor[
+          Rational[2, 3], 0, 0]], {3.2050037581076163, 1.268580587330268}]}},
+    ImagePadding->40,
+    ImageSize->450,
     PlotRange->All], ",", 
    GraphicsBox[{{
       {GrayLevel[0], Thickness[Large], 
@@ -5320,9 +7439,106 @@ Cell[BoxData[
         BackFaceColor->GrayLevel[0],
         GraphicsColor->GrayLevel[0],
         FontSize->14,
-        FontColor->GrayLevel[0]], {4.145053338264864, 0.7044691946865363}]}},
-    ImagePadding->20,
-    ImageSize->300,
+        FontColor->GrayLevel[0]], {4.145053338264864, 0.7044691946865363}]}, {
+      InsetBox[
+       StyleBox[
+        RowBox[{
+         RowBox[{"-", 
+          SqrtBox["2"]}], " ", "EE", " ", 
+         FormBox[
+          SubscriptBox["\<\"x\"\>", "\<\"1,15\"\>"],
+          TraditionalForm], " ", 
+         FormBox[
+          TemplateBox[{
+            TemplateBox[{"\"\[LeftAngleBracket]\"", 
+              StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+            TemplateBox[{
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"1", ",", "5"}]], Bold, StripOnInput -> False], 
+              "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"],
+          TraditionalForm]}],
+        StripOnInput->False,
+        LineColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FrontFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        BackFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        GraphicsColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FontSize->10,
+        FontColor->RGBColor[
+          Rational[2, 3], 0, 0]], {0.8314029667543892, 1.268208654919134}], 
+      InsetBox[
+       StyleBox[
+        RowBox[{
+         RowBox[{"-", 
+          SqrtBox["2"]}], " ", "EE", " ", 
+         FormBox[
+          SubscriptBox["\<\"x\"\>", "\<\"234,Multiparticle[1, 3, 5]\"\>"],
+          TraditionalForm], " ", 
+         FormBox[
+          TemplateBox[{
+            TemplateBox[{"\"\[LeftAngleBracket]\"", 
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"2", ",", "3", ",", "4"}]], Bold, StripOnInput -> 
+               False]}, "RowDefault"], 
+            TemplateBox[{
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"1", ",", "3", ",", "5"}]], Bold, StripOnInput -> 
+               False], "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"],
+          TraditionalForm]}],
+        StripOnInput->False,
+        LineColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FrontFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        BackFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        GraphicsColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FontSize->10,
+        FontColor->RGBColor[
+          Rational[2, 3], 0, 0]], {2.0183044118241598, 1.0032060218298384}], 
+      InsetBox[
+       StyleBox[
+        RowBox[{
+         RowBox[{"-", 
+          SqrtBox["2"]}], " ", "EE", " ", 
+         FormBox[
+          SubscriptBox["\<\"x\"\>", "\<\"24,2\"\>"],
+          TraditionalForm], " ", 
+         FormBox[
+          TemplateBox[{
+            TemplateBox[{"\"\[LeftAngleBracket]\"", 
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"2", ",", "4"}]], Bold, StripOnInput -> False]}, 
+             "RowDefault"], 
+            TemplateBox[{
+              StyleBox["2", Bold, StripOnInput -> False], 
+              "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"],
+          TraditionalForm]}],
+        StripOnInput->False,
+        LineColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FrontFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        BackFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        GraphicsColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FontSize->10,
+        FontColor->RGBColor[
+          Rational[2, 3], 0, 0]], {3.2050037581076163, 1.268580587330268}]}},
+    ImagePadding->40,
+    ImageSize->450,
     PlotRange->All], ",", 
    GraphicsBox[{{
       {GrayLevel[0], Thickness[Large], 
@@ -5424,19 +7640,132 @@ Cell[BoxData[
         BackFaceColor->GrayLevel[0],
         GraphicsColor->GrayLevel[0],
         FontSize->14,
-        FontColor->GrayLevel[0]], {4.145053338264864, 0.7044691946865363}]}},
-    ImagePadding->20,
-    ImageSize->300,
+        FontColor->GrayLevel[0]], {4.145053338264864, 0.7044691946865363}]}, {
+      InsetBox[
+       StyleBox[
+        RowBox[{
+         RowBox[{"-", 
+          SqrtBox["2"]}], " ", "EE", " ", 
+         FormBox[
+          SubscriptBox["\<\"x\"\>", "\<\"1,15\"\>"],
+          TraditionalForm], " ", 
+         FormBox[
+          TemplateBox[{
+            TemplateBox[{"\"\[LeftAngleBracket]\"", 
+              StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+            TemplateBox[{
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"1", ",", "5"}]], Bold, StripOnInput -> False], 
+              "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"],
+          TraditionalForm]}],
+        StripOnInput->False,
+        LineColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FrontFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        BackFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        GraphicsColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FontSize->10,
+        FontColor->RGBColor[
+          Rational[2, 3], 0, 0]], {0.8314029667543892, 1.268208654919134}], 
+      InsetBox[
+       StyleBox[
+        RowBox[{
+         RowBox[{"-", 
+          SqrtBox["2"]}], " ", "EE", " ", 
+         FormBox[
+          SubscriptBox["\<\"x\"\>", "\<\"234,Multiparticle[1, 4, 5]\"\>"],
+          TraditionalForm], " ", 
+         FormBox[
+          TemplateBox[{
+            TemplateBox[{"\"\[LeftAngleBracket]\"", 
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"2", ",", "3", ",", "4"}]], Bold, StripOnInput -> 
+               False]}, "RowDefault"], 
+            TemplateBox[{
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"1", ",", "4", ",", "5"}]], Bold, StripOnInput -> 
+               False], "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"],
+          TraditionalForm]}],
+        StripOnInput->False,
+        LineColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FrontFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        BackFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        GraphicsColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FontSize->10,
+        FontColor->RGBColor[
+          Rational[2, 3], 0, 0]], {2.0183044118241598, 1.0032060218298384}], 
+      InsetBox[
+       StyleBox[
+        RowBox[{
+         RowBox[{"-", 
+          SqrtBox["2"]}], " ", "EE", " ", 
+         FormBox[
+          SubscriptBox["\<\"x\"\>", "\<\"23,2\"\>"],
+          TraditionalForm], " ", 
+         FormBox[
+          TemplateBox[{
+            TemplateBox[{"\"\[LeftAngleBracket]\"", 
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"2", ",", "3"}]], Bold, StripOnInput -> False]}, 
+             "RowDefault"], 
+            TemplateBox[{
+              StyleBox["2", Bold, StripOnInput -> False], 
+              "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"],
+          TraditionalForm]}],
+        StripOnInput->False,
+        LineColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FrontFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        BackFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        GraphicsColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FontSize->10,
+        FontColor->RGBColor[
+          Rational[2, 3], 0, 0]], {3.2050037581076163, 1.268580587330268}]}},
+    ImagePadding->40,
+    ImageSize->450,
     PlotRange->All]}], "}"}]], "Output",
  CellChangeTimes->{3.997189848425424*^9, 3.997190297986371*^9, 
   3.997191220471068*^9, 3.99719162128413*^9, 3.9972661175004272`*^9, 
-  3.9972690020887203`*^9, 3.9972693805967207`*^9},
- CellLabel->"Out[55]=",ExpressionUUID->"4c71eb06-2b99-4251-aad2-de4d28508d31"]
+  3.9972690020887203`*^9, 3.9972693805967207`*^9, 3.9972761825602837`*^9, 
+  3.997276898099568*^9},
+ CellLabel->
+  "Out[100]=",ExpressionUUID->"bcdc8200-5d45-419a-a973-57d53e8102f3"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"Length", "[", "diags", "]"}]], "Input",
+ CellChangeTimes->{{3.9972766465671*^9, 3.9972766493077*^9}},
+ CellLabel->
+  "In[101]:=",ExpressionUUID->"bcc992b6-7dc7-4d89-9ba4-c30034cce856"],
+
+Cell[BoxData["6"], "Output",
+ CellChangeTimes->{3.997276898169608*^9},
+ CellLabel->
+  "Out[101]=",ExpressionUUID->"a204664f-c4cf-4da8-80ba-fc19c9103e13"]
 }, Open  ]]
 }, Open  ]]
 },
 WindowSize->{1142, 981},
-WindowMargins->{{40, Automatic}, {28, Automatic}},
+WindowMargins->{{230, Automatic}, {25, Automatic}},
 Magnification:>1.5 Inherited,
 FrontEndVersion->"15.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
 StyleDefinitions->"Default.nb",
@@ -5446,10 +7775,18 @@ ExpressionUUID->"374051aa-15f3-4604-9a14-6948501e8d52"
 
 (* Internal cache information *)
 (*CellTagsOutline
-CellTagsIndex->{}
+CellTagsIndex->{
+ "ChatGeneratedCell"->{
+  Cell[106228, 2180, 386, 11, 44, "Input",ExpressionUUID->"3c380033-6ca3-4415-9166-7be11b916316",
+   CellTags->"ChatGeneratedCell"],
+  Cell[106617, 2193, 506, 13, 74, "Input",ExpressionUUID->"765ef977-660f-456d-b2d7-af32dbb33baf",
+   CellTags->"ChatGeneratedCell"]}
+ }
 *)
 (*CellTagsIndex
-CellTagsIndex->{}
+CellTagsIndex->{
+ {"ChatGeneratedCell", 356190, 7778}
+ }
 *)
 (*NotebookFileOutline
 Notebook[{
@@ -5470,74 +7807,98 @@ Cell[17417, 299, 1696, 25, 34, "Print",ExpressionUUID->"88a51e4b-7999-4e99-801d-
 }, Open  ]]
 }, Open  ]],
 Cell[19140, 328, 1726, 27, 44, "Input",ExpressionUUID->"c6932cee-8594-45ec-97d1-6e682da89902"],
-Cell[20869, 357, 2295, 56, 534, "Input",ExpressionUUID->"0b447014-d9b0-4292-b412-b02fa4499c3e"],
-Cell[23167, 415, 298, 5, 44, "Input",ExpressionUUID->"3c6d45d4-a0d0-4ef7-bcca-b0f59a33039d"],
-Cell[23468, 422, 304, 6, 44, "Input",ExpressionUUID->"a86fd81a-1c5b-4ae7-add8-eeb2abb5a409"],
 Cell[CellGroupData[{
-Cell[23797, 432, 213, 3, 44, "Input",ExpressionUUID->"1105f7c4-0cf5-45b7-a5da-cb977943790d"],
-Cell[24013, 437, 265, 5, 50, "Output",ExpressionUUID->"2d521a63-b288-45e5-946a-0163b9152ba3"]
+Cell[20891, 359, 168, 3, 65, "Subsubsection",ExpressionUUID->"d1dae9f6-8b6f-4f1b-a70e-63e337f750c2"],
+Cell[21062, 364, 2295, 56, 534, "Input",ExpressionUUID->"0b447014-d9b0-4292-b412-b02fa4499c3e"],
+Cell[23360, 422, 298, 5, 44, "Input",ExpressionUUID->"3c6d45d4-a0d0-4ef7-bcca-b0f59a33039d"],
+Cell[23661, 429, 304, 6, 44, "Input",ExpressionUUID->"a86fd81a-1c5b-4ae7-add8-eeb2abb5a409"],
+Cell[CellGroupData[{
+Cell[23990, 439, 213, 3, 44, "Input",ExpressionUUID->"1105f7c4-0cf5-45b7-a5da-cb977943790d"],
+Cell[24206, 444, 265, 5, 50, "Output",ExpressionUUID->"2d521a63-b288-45e5-946a-0163b9152ba3"]
 }, Open  ]],
-Cell[24293, 445, 5278, 122, 1269, "Input",ExpressionUUID->"b1e09183-d59b-4229-b30f-7fea6ee6781c"],
+Cell[24486, 452, 462, 12, 74, "Input",ExpressionUUID->"aec1d454-491c-4ae2-8e0f-877f4a4ba5eb"],
+Cell[24951, 466, 5278, 122, 1269, "Input",ExpressionUUID->"b1e09183-d59b-4229-b30f-7fea6ee6781c"],
 Cell[CellGroupData[{
-Cell[29596, 571, 398, 9, 44, "Input",ExpressionUUID->"325f342c-2f31-4940-9233-46a5c29c1f81"],
-Cell[29997, 582, 1564, 30, 210, "Output",ExpressionUUID->"1eacddef-c9f2-46b5-a327-0d7af8c17b4d"]
+Cell[30254, 592, 398, 9, 44, "Input",ExpressionUUID->"325f342c-2f31-4940-9233-46a5c29c1f81"],
+Cell[30655, 603, 1564, 30, 210, "Output",ExpressionUUID->"1eacddef-c9f2-46b5-a327-0d7af8c17b4d"]
 }, Open  ]],
-Cell[31576, 615, 2087, 49, 534, "Input",ExpressionUUID->"bfc23d95-81b1-48e1-a4b5-9dac4a684147"],
-Cell[33666, 666, 641, 13, 44, "Input",ExpressionUUID->"9cd3b801-aac9-45a1-bb4a-e57c0b8b75a5"],
-Cell[34310, 681, 2243, 47, 595, "Input",ExpressionUUID->"c932336a-17eb-4bcf-8e6d-26c56e8044c0"],
+Cell[32234, 636, 2087, 49, 534, "Input",ExpressionUUID->"bfc23d95-81b1-48e1-a4b5-9dac4a684147"],
+Cell[34324, 687, 641, 13, 44, "Input",ExpressionUUID->"9cd3b801-aac9-45a1-bb4a-e57c0b8b75a5"],
+Cell[34968, 702, 2243, 47, 595, "Input",ExpressionUUID->"c932336a-17eb-4bcf-8e6d-26c56e8044c0"],
 Cell[CellGroupData[{
-Cell[36578, 732, 3630, 85, 871, "Input",ExpressionUUID->"2971365c-7e1f-4a9b-b32f-813263ab2aa5"],
-Cell[40211, 819, 24944, 501, 87, "Output",ExpressionUUID->"c556c49f-a069-4657-98ed-1752896e42c7"]
+Cell[37236, 753, 3630, 85, 871, "Input",ExpressionUUID->"2971365c-7e1f-4a9b-b32f-813263ab2aa5"],
+Cell[40869, 840, 24944, 501, 87, "Output",ExpressionUUID->"c556c49f-a069-4657-98ed-1752896e42c7"]
 }, Open  ]],
-Cell[65170, 1323, 6587, 131, 1606, "Input",ExpressionUUID->"f9d2d989-fa42-4b53-8612-b8b7b088e6b6"],
+Cell[65828, 1344, 6587, 131, 1606, "Input",ExpressionUUID->"f9d2d989-fa42-4b53-8612-b8b7b088e6b6"],
+Cell[72418, 1477, 3631, 72, 932, "Input",ExpressionUUID->"79baa602-3c28-4020-be55-bf7131525cbc"],
 Cell[CellGroupData[{
-Cell[71782, 1458, 1937, 48, 442, "Input",ExpressionUUID->"46f8a159-ea0b-4674-8a7d-fbf043a4dc89"],
-Cell[73722, 1508, 19015, 382, 87, "Output",ExpressionUUID->"d13ecf53-a8eb-416c-9549-177aeeb41bea"]
+Cell[76074, 1553, 1937, 48, 442, "Input",ExpressionUUID->"46f8a159-ea0b-4674-8a7d-fbf043a4dc89"],
+Cell[78014, 1603, 19038, 383, 87, "Output",ExpressionUUID->"a8363fa5-1704-4172-acb6-ed61abab7df5"]
 }, Open  ]],
-Cell[92752, 1893, 932, 18, 258, "Input",ExpressionUUID->"bc3b5e17-55c4-4d77-b6d1-b3fca19dad27"],
+Cell[97067, 1989, 4650, 96, 1147, "Input",ExpressionUUID->"e721f3b1-577b-4826-8d4a-e35a68202fe7"],
+Cell[101720, 2087, 3405, 68, 993, "Input",ExpressionUUID->"6c46411b-a123-4f24-ab14-9dd8a070d066"],
+Cell[105128, 2157, 1097, 21, 503, "Input",ExpressionUUID->"37a336f7-76f2-4566-bdda-7c346059d069"],
+Cell[106228, 2180, 386, 11, 44, "Input",ExpressionUUID->"3c380033-6ca3-4415-9166-7be11b916316",
+ CellTags->"ChatGeneratedCell"],
+Cell[106617, 2193, 506, 13, 74, "Input",ExpressionUUID->"765ef977-660f-456d-b2d7-af32dbb33baf",
+ CellTags->"ChatGeneratedCell"],
+Cell[107126, 2208, 1356, 34, 258, "Input",ExpressionUUID->"e51486ba-475b-4644-b6f1-6eaf2e5fcb82"],
+Cell[108485, 2244, 1366, 32, 350, "Input",ExpressionUUID->"6a44fbfb-5646-45f0-9a26-99811de2f68c"],
+Cell[109854, 2278, 4868, 92, 1575, "Input",ExpressionUUID->"4285824e-2d42-4bd0-bc58-a9ef26eebfdc"],
+Cell[114725, 2372, 2289, 47, 779, "Input",ExpressionUUID->"bc3b5e17-55c4-4d77-b6d1-b3fca19dad27"],
 Cell[CellGroupData[{
-Cell[93709, 1915, 3659, 81, 993, "Input",ExpressionUUID->"4057add3-04f2-4b4d-b0e8-0036c43e1bc4"],
-Cell[97371, 1998, 22836, 461, 87, "Output",ExpressionUUID->"f20ad2cb-8f3f-4e3e-a9a9-f20038598b4a"]
+Cell[117039, 2423, 3659, 81, 993, "Input",ExpressionUUID->"4057add3-04f2-4b4d-b0e8-0036c43e1bc4"],
+Cell[120701, 2506, 22836, 461, 87, "Output",ExpressionUUID->"f20ad2cb-8f3f-4e3e-a9a9-f20038598b4a"]
 }, Open  ]],
-Cell[120222, 2462, 4894, 101, 1637, "Input",ExpressionUUID->"0e78cf5f-524a-417a-ba90-174ea8c594c4"],
+Cell[143552, 2970, 4894, 101, 1637, "Input",ExpressionUUID->"0e78cf5f-524a-417a-ba90-174ea8c594c4"],
+Cell[148449, 3073, 7362, 148, 2311, "Input",ExpressionUUID->"34a6177f-43f1-487d-97dd-f9ce5878e838"],
 Cell[CellGroupData[{
-Cell[125141, 2567, 3851, 87, 1055, "Input",ExpressionUUID->"c4abf66a-ecc8-453b-8338-45d28b6cc6b8"],
-Cell[128995, 2656, 791, 17, 80, "Output",ExpressionUUID->"df8dcaef-95e9-4bd6-a203-7400cde55f21"]
+Cell[155836, 3225, 3851, 87, 1055, "Input",ExpressionUUID->"c4abf66a-ecc8-453b-8338-45d28b6cc6b8"],
+Cell[159690, 3314, 791, 17, 80, "Output",ExpressionUUID->"df8dcaef-95e9-4bd6-a203-7400cde55f21"]
 }, Open  ]],
-Cell[129801, 2676, 5558, 107, 1361, "Input",ExpressionUUID->"6df125e3-decc-4885-bc16-b392e174f3e2"],
+Cell[160496, 3334, 5558, 107, 1361, "Input",ExpressionUUID->"6df125e3-decc-4885-bc16-b392e174f3e2"],
+Cell[166057, 3443, 11904, 221, 2862, "Input",ExpressionUUID->"b4c7203c-7c1f-4669-8233-d23e2f839757"],
 Cell[CellGroupData[{
-Cell[135384, 2787, 2579, 60, 564, "Input",ExpressionUUID->"61f7dca3-8fc0-4216-ab43-cc2c042409a6"],
-Cell[137966, 2849, 34243, 725, 87, "Output",ExpressionUUID->"2759604f-9fce-486d-8655-e779d2eeafdd"]
+Cell[177986, 3668, 2579, 60, 564, "Input",ExpressionUUID->"61f7dca3-8fc0-4216-ab43-cc2c042409a6"],
+Cell[180568, 3730, 34243, 725, 87, "Output",ExpressionUUID->"2759604f-9fce-486d-8655-e779d2eeafdd"]
 }, Open  ]],
-Cell[172224, 3577, 1463, 34, 411, "Input",ExpressionUUID->"13f7d9f5-c300-4fc7-b7fb-ffc739efa5ae"],
+Cell[214826, 4458, 1463, 34, 411, "Input",ExpressionUUID->"13f7d9f5-c300-4fc7-b7fb-ffc739efa5ae"],
 Cell[CellGroupData[{
-Cell[173712, 3615, 1285, 33, 319, "Input",ExpressionUUID->"7b003dff-1d71-43fc-9784-2c1fca282d7f"],
-Cell[175000, 3650, 14884, 308, 87, "Output",ExpressionUUID->"22779605-088c-41c6-ba85-7b6bce2a9ea2"]
+Cell[216314, 4496, 1285, 33, 319, "Input",ExpressionUUID->"7b003dff-1d71-43fc-9784-2c1fca282d7f"],
+Cell[217602, 4531, 14884, 308, 87, "Output",ExpressionUUID->"22779605-088c-41c6-ba85-7b6bce2a9ea2"]
 }, Open  ]],
-Cell[189899, 3961, 949, 22, 227, "Input",ExpressionUUID->"96e63fae-1973-4769-aae1-e253c28f7f83"],
-Cell[190851, 3985, 271, 5, 44, "Input",ExpressionUUID->"657cfb2b-7c8d-4ffa-94a2-671d53e860c2"],
-Cell[191125, 3992, 2388, 49, 779, "Input",ExpressionUUID->"561f6d0b-8323-45d2-a2ed-abb1f2c0b0eb"],
+Cell[232501, 4842, 949, 22, 227, "Input",ExpressionUUID->"96e63fae-1973-4769-aae1-e253c28f7f83"],
+Cell[233453, 4866, 271, 5, 44, "Input",ExpressionUUID->"657cfb2b-7c8d-4ffa-94a2-671d53e860c2"],
+Cell[233727, 4873, 2388, 49, 779, "Input",ExpressionUUID->"561f6d0b-8323-45d2-a2ed-abb1f2c0b0eb"],
+Cell[236118, 4924, 2313, 48, 748, "Input",ExpressionUUID->"53c49614-b2e8-4390-b488-21910290ff3c"],
+Cell[238434, 4974, 4445, 99, 1361, "Input",ExpressionUUID->"8e4de57a-ceac-4bf1-b759-402c53972805"]
+}, Open  ]],
 Cell[CellGroupData[{
-Cell[193538, 4045, 166, 3, 65, "Subsubsection",ExpressionUUID->"5b8b01cc-8641-43db-9cd1-0eb621d6ced0"],
-Cell[193707, 4050, 24838, 523, 70, "Input",ExpressionUUID->"905ce1d9-1123-452d-b22b-1638f7ca5e70"]
+Cell[242916, 5078, 166, 3, 65, "Subsubsection",ExpressionUUID->"5b8b01cc-8641-43db-9cd1-0eb621d6ced0"],
+Cell[243085, 5083, 24838, 523, 6263, "Input",ExpressionUUID->"905ce1d9-1123-452d-b22b-1638f7ca5e70"],
+Cell[267926, 5608, 26755, 564, 6907, "Input",ExpressionUUID->"833e1d25-46ea-43fe-a996-666304a0202b"]
 }, Closed]],
 Cell[CellGroupData[{
-Cell[218582, 4578, 157, 3, 51, "Subsubsection",ExpressionUUID->"37f01944-58cc-46b0-9a33-acf5e4e3de90"],
+Cell[294718, 6177, 157, 3, 51, "Subsubsection",ExpressionUUID->"37f01944-58cc-46b0-9a33-acf5e4e3de90"],
 Cell[CellGroupData[{
-Cell[218764, 4585, 589, 11, 44, "Input",ExpressionUUID->"1e7b8f2a-f954-45f1-99e8-b7d72cede217"],
-Cell[219356, 4598, 227, 4, 50, "Output",ExpressionUUID->"61a9b14f-ad65-4fea-9353-e8e1ffb22097"]
+Cell[294900, 6184, 589, 11, 44, "Input",ExpressionUUID->"1e7b8f2a-f954-45f1-99e8-b7d72cede217"],
+Cell[295492, 6197, 295, 5, 50, "Output",ExpressionUUID->"d184c939-2406-49f7-8eed-9987f99f3230"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[219620, 4607, 160, 2, 44, "Input",ExpressionUUID->"8ecbe82d-8cdb-4232-87cf-53c5f6960865"],
-Cell[219783, 4611, 6730, 161, 299, "Output",ExpressionUUID->"3b1b0c77-f051-47c5-aaf9-ec8f6db3ea80"]
+Cell[295824, 6207, 160, 2, 44, "Input",ExpressionUUID->"8ecbe82d-8cdb-4232-87cf-53c5f6960865"],
+Cell[295987, 6211, 11172, 290, 922, "Output",ExpressionUUID->"2ce88120-6f05-4ed2-aca5-ad031087e56d"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[226550, 4777, 560, 11, 44, "Input",ExpressionUUID->"bac66ff2-a6e0-476e-bceb-5d10fccbeab2"],
-Cell[227113, 4790, 227, 4, 50, "Output",ExpressionUUID->"9956218b-0788-41e3-af17-7119a1504bc2"]
+Cell[307196, 6506, 560, 11, 44, "Input",ExpressionUUID->"bac66ff2-a6e0-476e-bceb-5d10fccbeab2"],
+Cell[307759, 6519, 275, 5, 50, "Output",ExpressionUUID->"adfc1df0-089a-4d67-9a9f-a250ee093700"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[227377, 4799, 160, 2, 44, "Input",ExpressionUUID->"0a642920-493a-4c12-8f25-69622938a19d"],
-Cell[227540, 4803, 26645, 630, 882, "Output",ExpressionUUID->"4c71eb06-2b99-4251-aad2-de4d28508d31"]
+Cell[308071, 6529, 164, 3, 44, "Input",ExpressionUUID->"0a642920-493a-4c12-8f25-69622938a19d"],
+Cell[308238, 6534, 47140, 1214, 2637, "Output",ExpressionUUID->"bcdc8200-5d45-419a-a973-57d53e8102f3"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[355415, 7753, 208, 4, 44, "Input",ExpressionUUID->"bcc992b6-7dc7-4d89-9ba4-c30034cce856"],
+Cell[355626, 7759, 153, 3, 50, "Output",ExpressionUUID->"a204664f-c4cf-4da8-80ba-fc19c9103e13"]
 }, Open  ]]
 }, Open  ]]
 }
