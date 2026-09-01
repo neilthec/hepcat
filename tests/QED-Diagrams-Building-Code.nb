@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       154,          7]
-NotebookDataLength[    364232,       7899]
-NotebookOptionsPosition[    355807,       7766]
-NotebookOutlinePosition[    356562,       7791]
-CellTagsIndexPosition[    356480,       7786]
+NotebookDataLength[    488714,      10586]
+NotebookOptionsPosition[    479943,      10448]
+NotebookOutlinePosition[    480699,      10473]
+CellTagsIndexPosition[    480616,      10468]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -2084,6 +2084,116 @@ Cell[BoxData[
         "\[IndentingNewLine]", "  ", "]"}]}]}]}], "\[IndentingNewLine]", 
    "]"}]}]], "Input",
  CellLabel->"In[66]:=",ExpressionUUID->"e721f3b1-577b-4826-8d4a-e35a68202fe7"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"internalEdgeIndexLabels", "[", "\[IndentingNewLine]", "  ", 
+   RowBox[{
+   "graph_", ",", "\[IndentingNewLine]", "  ", "leafVerts_List", ",", 
+    "\[IndentingNewLine]", "  ", "externalMap_Association"}], 
+   "\[IndentingNewLine]", "]"}], ":=", 
+  RowBox[{"Module", "[", "\[IndentingNewLine]", "  ", 
+   RowBox[{
+    RowBox[{"{", 
+     RowBox[{"internalEdges", ",", "allInputIndices"}], "}"}], ",", 
+    "\[IndentingNewLine]", "  ", "\[IndentingNewLine]", "  ", 
+    RowBox[{
+     RowBox[{"internalEdges", "=", 
+      RowBox[{"Select", "[", "\[IndentingNewLine]", "    ", 
+       RowBox[{
+        RowBox[{"EdgeList", "[", "graph", "]"}], ",", "\[IndentingNewLine]", 
+        "    ", 
+        RowBox[{
+         RowBox[{"FreeQ", "[", 
+          RowBox[{"leafVerts", ",", 
+           RowBox[{"Alternatives", " ", "@@", " ", 
+            RowBox[{"(", 
+             RowBox[{"List", " ", "@@", " ", "#"}], ")"}]}]}], "]"}], " ", 
+         "&"}]}], "\[IndentingNewLine]", "  ", "]"}]}], ";", 
+     "\[IndentingNewLine]", "  ", "\[IndentingNewLine]", "  ", 
+     RowBox[{"allInputIndices", "=", 
+      RowBox[{"Sort", "[", 
+       RowBox[{"Lookup", "[", 
+        RowBox[{
+         RowBox[{"Values", "[", "externalMap", "]"}], 
+         ",", "\"\<InputIndex\>\""}], "]"}], "]"}]}], ";", 
+     "\[IndentingNewLine]", "  ", "\[IndentingNewLine]", "  ", 
+     RowBox[{"Association", " ", "@", " ", 
+      RowBox[{"Map", "[", "\[IndentingNewLine]", "    ", 
+       RowBox[{
+        RowBox[{"Function", "[", 
+         RowBox[{"edge", ",", "\[IndentingNewLine]", "      ", 
+          RowBox[{"Module", "[", 
+           RowBox[{
+            RowBox[{"{", 
+             RowBox[{
+             "u", ",", "v", ",", "comps", ",", "compU", ",", "compV", ",", 
+              "leavesU", ",", "leavesV"}], "}"}], ",", "\[IndentingNewLine]", 
+            "        ", 
+            RowBox[{
+             RowBox[{
+              RowBox[{"{", 
+               RowBox[{"u", ",", "v"}], "}"}], "=", 
+              RowBox[{"List", " ", "@@", " ", "edge"}]}], ";", 
+             "\[IndentingNewLine]", "        ", 
+             RowBox[{"comps", "=", 
+              RowBox[{"ConnectedComponents", "[", 
+               RowBox[{"EdgeDelete", "[", 
+                RowBox[{"graph", ",", "edge"}], "]"}], "]"}]}], ";", 
+             "\[IndentingNewLine]", "        ", 
+             RowBox[{"compU", "=", 
+              RowBox[{"SelectFirst", "[", 
+               RowBox[{"comps", ",", 
+                RowBox[{
+                 RowBox[{"MemberQ", "[", 
+                  RowBox[{"#", ",", "u"}], "]"}], " ", "&"}]}], "]"}]}], ";", 
+             "\[IndentingNewLine]", "        ", 
+             RowBox[{"compV", "=", 
+              RowBox[{"SelectFirst", "[", 
+               RowBox[{"comps", ",", 
+                RowBox[{
+                 RowBox[{"MemberQ", "[", 
+                  RowBox[{"#", ",", "v"}], "]"}], " ", "&"}]}], "]"}]}], ";", 
+             "\[IndentingNewLine]", "        ", "\[IndentingNewLine]", 
+             "        ", 
+             RowBox[{"leavesU", "=", 
+              RowBox[{"Sort", " ", "@", " ", 
+               RowBox[{"Lookup", "[", "\[IndentingNewLine]", "          ", 
+                RowBox[{
+                 RowBox[{"externalMap", " ", "/@", " ", 
+                  RowBox[{"Intersection", "[", 
+                   RowBox[{"compU", ",", "leafVerts"}], "]"}]}], ",", 
+                 "\[IndentingNewLine]", "          ", "\"\<InputIndex\>\""}], 
+                "\[IndentingNewLine]", "        ", "]"}]}]}], ";", 
+             "\[IndentingNewLine]", "        ", 
+             RowBox[{"leavesV", "=", 
+              RowBox[{"Sort", " ", "@", " ", 
+               RowBox[{"Lookup", "[", "\[IndentingNewLine]", "          ", 
+                RowBox[{
+                 RowBox[{"externalMap", " ", "/@", " ", 
+                  RowBox[{"Intersection", "[", 
+                   RowBox[{"compV", ",", "leafVerts"}], "]"}]}], ",", 
+                 "\[IndentingNewLine]", "          ", "\"\<InputIndex\>\""}], 
+                "\[IndentingNewLine]", "        ", "]"}]}]}], ";", 
+             "\[IndentingNewLine]", "        ", "\[IndentingNewLine]", 
+             "        ", 
+             RowBox[{"edge", "->", 
+              RowBox[{"<|", "\[IndentingNewLine]", "          ", 
+               RowBox[{
+                RowBox[{"u", "->", 
+                 RowBox[{"Apply", "[", 
+                  RowBox[{"Multiparticle", ",", "leavesV"}], "]"}]}], ",", 
+                "\[IndentingNewLine]", "          ", 
+                RowBox[{"v", "->", 
+                 RowBox[{"Apply", "[", 
+                  RowBox[{"Multiparticle", ",", "leavesU"}], "]"}]}]}], 
+               "\[IndentingNewLine]", "        ", "|>"}]}]}]}], 
+           "\[IndentingNewLine]", "      ", "]"}]}], "\[IndentingNewLine]", 
+         "    ", "]"}], ",", "\[IndentingNewLine]", "    ", "internalEdges"}],
+        "\[IndentingNewLine]", "  ", "]"}]}]}]}], "\[IndentingNewLine]", 
+   "]"}]}]], "Input",
+ CellLabel->
+  "In[103]:=",ExpressionUUID->"a09becd1-b972-4459-99a0-59d31d19d73f"],
 
 Cell[BoxData[
  RowBox[{
@@ -6193,21 +6303,25 @@ Cell[BoxData[
    3.9971897693866167`*^9, 3.997189795939453*^9}, 3.997190311291641*^9, 
    3.9971907759704647`*^9, 3.997191556391889*^9, 3.997266083976334*^9, {
    3.997269025585067*^9, 3.997269027539913*^9}},
- CellLabel->"In[96]:=",ExpressionUUID->"1e7b8f2a-f954-45f1-99e8-b7d72cede217"],
+ CellLabel->
+  "In[104]:=",ExpressionUUID->"1e7b8f2a-f954-45f1-99e8-b7d72cede217"],
 
 Cell[BoxData[
  RowBox[{"{", 
-  RowBox[{"0.859248`", ",", "Null"}], "}"}]], "Output",
+  RowBox[{"0.961087`", ",", "Null"}], "}"}]], "Output",
  CellChangeTimes->{3.997269049043515*^9, 3.997269376553549*^9, 
-  3.997275912947774*^9, 3.997276359069206*^9, 3.99727659732617*^9},
- CellLabel->"Out[96]=",ExpressionUUID->"d184c939-2406-49f7-8eed-9987f99f3230"]
+  3.997275912947774*^9, 3.997276359069206*^9, 3.99727659732617*^9, 
+  3.997277534434805*^9},
+ CellLabel->
+  "Out[104]=",ExpressionUUID->"52a6c6bc-60e3-4dc9-93ca-1a2b0081972d"]
 }, Open  ]],
 
 Cell[CellGroupData[{
 
 Cell[BoxData[
  RowBox[{"CreateArrowDiagram", " ", "/@", " ", "diags"}]], "Input",
- CellLabel->"In[98]:=",ExpressionUUID->"8ecbe82d-8cdb-4232-87cf-53c5f6960865"],
+ CellLabel->
+  "In[105]:=",ExpressionUUID->"8ecbe82d-8cdb-4232-87cf-53c5f6960865"],
 
 Cell[BoxData[
  RowBox[{"{", 
@@ -6292,7 +6406,7 @@ Cell[BoxData[
          RowBox[{"-", 
           SqrtBox["2"]}], " ", "EE", " ", 
          FormBox[
-          SubscriptBox["\<\"x\"\>", "\<\"1,13\"\>"],
+          SubscriptBox["\<\"x\"\>", "\<\"1,24\"\>"],
           TraditionalForm], " ", 
          FormBox[
           TemplateBox[{
@@ -6301,7 +6415,7 @@ Cell[BoxData[
             TemplateBox[{
               StyleBox[
                SubscriptBox["\"P\"", 
-                RowBox[{"1", ",", "3"}]], Bold, StripOnInput -> False], 
+                RowBox[{"2", ",", "4"}]], Bold, StripOnInput -> False], 
               "\"\[RightAngleBracket]\""}, "RowDefault"]},
            "RowDefault"],
           TraditionalForm]}],
@@ -6323,14 +6437,14 @@ Cell[BoxData[
          RowBox[{"-", 
           SqrtBox["2"]}], " ", "EE", " ", 
          FormBox[
-          SubscriptBox["\<\"x\"\>", "\<\"24,2\"\>"],
+          SubscriptBox["\<\"x\"\>", "\<\"13,2\"\>"],
           TraditionalForm], " ", 
          FormBox[
           TemplateBox[{
             TemplateBox[{"\"\[LeftAngleBracket]\"", 
               StyleBox[
                SubscriptBox["\"P\"", 
-                RowBox[{"2", ",", "4"}]], Bold, StripOnInput -> False]}, 
+                RowBox[{"1", ",", "3"}]], Bold, StripOnInput -> False]}, 
              "RowDefault"], 
             TemplateBox[{
               StyleBox["2", Bold, StripOnInput -> False], 
@@ -6433,7 +6547,7 @@ Cell[BoxData[
          RowBox[{"-", 
           SqrtBox["2"]}], " ", "EE", " ", 
          FormBox[
-          SubscriptBox["\<\"x\"\>", "\<\"1,14\"\>"],
+          SubscriptBox["\<\"x\"\>", "\<\"1,23\"\>"],
           TraditionalForm], " ", 
          FormBox[
           TemplateBox[{
@@ -6442,7 +6556,7 @@ Cell[BoxData[
             TemplateBox[{
               StyleBox[
                SubscriptBox["\"P\"", 
-                RowBox[{"1", ",", "4"}]], Bold, StripOnInput -> False], 
+                RowBox[{"2", ",", "3"}]], Bold, StripOnInput -> False], 
               "\"\[RightAngleBracket]\""}, "RowDefault"]},
            "RowDefault"],
           TraditionalForm]}],
@@ -6464,14 +6578,14 @@ Cell[BoxData[
          RowBox[{"-", 
           SqrtBox["2"]}], " ", "EE", " ", 
          FormBox[
-          SubscriptBox["\<\"x\"\>", "\<\"23,2\"\>"],
+          SubscriptBox["\<\"x\"\>", "\<\"14,2\"\>"],
           TraditionalForm], " ", 
          FormBox[
           TemplateBox[{
             TemplateBox[{"\"\[LeftAngleBracket]\"", 
               StyleBox[
                SubscriptBox["\"P\"", 
-                RowBox[{"2", ",", "3"}]], Bold, StripOnInput -> False]}, 
+                RowBox[{"1", ",", "4"}]], Bold, StripOnInput -> False]}, 
              "RowDefault"], 
             TemplateBox[{
               StyleBox["2", Bold, StripOnInput -> False], 
@@ -6498,8 +6612,9 @@ Cell[BoxData[
   3.997189800644203*^9, 3.997190162463848*^9, {3.9971902886868467`*^9, 
    3.997190305591219*^9}, 3.997191175018361*^9, 3.997191559528091*^9, 
    3.997266076807674*^9, 3.99726897166313*^9, 3.997269377595902*^9, 
-   3.997275914217349*^9, 3.9972766053150797`*^9},
- CellLabel->"Out[98]=",ExpressionUUID->"2ce88120-6f05-4ed2-aca5-ad031087e56d"]
+   3.997275914217349*^9, 3.9972766053150797`*^9, 3.997277535166767*^9},
+ CellLabel->
+  "Out[105]=",ExpressionUUID->"8203af5d-5d59-47bb-a15a-410b849f35ff"]
 }, Open  ]],
 
 Cell[CellGroupData[{
@@ -6515,14 +6630,16 @@ Cell[BoxData[
  CellChangeTimes->{{3.996936228192474*^9, 3.996936229686573*^9}, {
    3.997189808495558*^9, 3.997189809587634*^9}, 3.997190317018323*^9, 
    3.997191581558309*^9, {3.997269018782032*^9, 3.997269021034397*^9}},
- CellLabel->"In[99]:=",ExpressionUUID->"bac66ff2-a6e0-476e-bceb-5d10fccbeab2"],
+ CellLabel->
+  "In[106]:=",ExpressionUUID->"bac66ff2-a6e0-476e-bceb-5d10fccbeab2"],
 
 Cell[BoxData[
  RowBox[{"{", 
-  RowBox[{"257.077123`", ",", "Null"}], "}"}]], "Output",
+  RowBox[{"500.384101`", ",", "Null"}], "}"}]], "Output",
  CellChangeTimes->{3.997269048900742*^9, 3.997269380507938*^9, 
-  3.997276180843665*^9, 3.99727689781703*^9},
- CellLabel->"Out[99]=",ExpressionUUID->"adfc1df0-089a-4d67-9a9f-a250ee093700"]
+  3.997276180843665*^9, 3.99727689781703*^9, 3.997278748426622*^9},
+ CellLabel->
+  "Out[106]=",ExpressionUUID->"185d7e75-9f67-49d3-b943-d993644946ed"]
 }, Open  ]],
 
 Cell[CellGroupData[{
@@ -6530,7 +6647,7 @@ Cell[CellGroupData[{
 Cell[BoxData[
  RowBox[{"CreateArrowDiagram", " ", "/@", " ", "diags"}]], "Input",
  CellLabel->
-  "In[100]:=",ExpressionUUID->"0a642920-493a-4c12-8f25-69622938a19d"],
+  "In[107]:=",ExpressionUUID->"0a642920-493a-4c12-8f25-69622938a19d"],
 
 Cell[BoxData[
  RowBox[{"{", 
@@ -6642,51 +6759,51 @@ Cell[BoxData[
          RowBox[{"-", 
           SqrtBox["2"]}], " ", "EE", " ", 
          FormBox[
-          SubscriptBox["\<\"x\"\>", "\<\"1,13\"\>"],
+          SubscriptBox["\<\"x\"\>", "\<\"1,245\"\>"],
           TraditionalForm], " ", 
          FormBox[
           TemplateBox[{
             TemplateBox[{"\"\[LeftAngleBracket]\"", 
               StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
             TemplateBox[{
-              StyleBox[
-               SubscriptBox["\"P\"", 
-                RowBox[{"1", ",", "3"}]], Bold, StripOnInput -> False], 
-              "\"\[RightAngleBracket]\""}, "RowDefault"]},
-           "RowDefault"],
-          TraditionalForm]}],
-        StripOnInput->False,
-        LineColor->RGBColor[
-          Rational[2, 3], 0, 0],
-        FrontFaceColor->RGBColor[
-          Rational[2, 3], 0, 0],
-        BackFaceColor->RGBColor[
-          Rational[2, 3], 0, 0],
-        GraphicsColor->RGBColor[
-          Rational[2, 3], 0, 0],
-        FontSize->10,
-        FontColor->RGBColor[
-          Rational[2, 3], 0, 0]], {0.8314029667543892, 1.268208654919134}], 
-      InsetBox[
-       StyleBox[
-        RowBox[{
-         RowBox[{"-", 
-          SqrtBox["2"]}], " ", "EE", " ", 
-         FormBox[
-          SubscriptBox["\<\"x\"\>", "\<\"245,Multiparticle[1, 3, 4]\"\>"],
-          TraditionalForm], " ", 
-         FormBox[
-          TemplateBox[{
-            TemplateBox[{"\"\[LeftAngleBracket]\"", 
               StyleBox[
                SubscriptBox["\"P\"", 
                 RowBox[{"2", ",", "4", ",", "5"}]], Bold, StripOnInput -> 
-               False]}, "RowDefault"], 
+               False], "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"],
+          TraditionalForm]}],
+        StripOnInput->False,
+        LineColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FrontFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        BackFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        GraphicsColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FontSize->10,
+        FontColor->RGBColor[
+          Rational[2, 3], 0, 0]], {0.8314029667543892, 1.268208654919134}], 
+      InsetBox[
+       StyleBox[
+        RowBox[{
+         RowBox[{"-", 
+          SqrtBox["2"]}], " ", "EE", " ", 
+         FormBox[
+          SubscriptBox["\<\"x\"\>", "\<\"13,Multiparticle[2, 5]\"\>"],
+          TraditionalForm], " ", 
+         FormBox[
+          TemplateBox[{
+            TemplateBox[{"\"\[LeftAngleBracket]\"", 
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"1", ",", "3"}]], Bold, StripOnInput -> False]}, 
+             "RowDefault"], 
             TemplateBox[{
               StyleBox[
                SubscriptBox["\"P\"", 
-                RowBox[{"1", ",", "3", ",", "4"}]], Bold, StripOnInput -> 
-               False], "\"\[RightAngleBracket]\""}, "RowDefault"]},
+                RowBox[{"2", ",", "5"}]], Bold, StripOnInput -> False], 
+              "\"\[RightAngleBracket]\""}, "RowDefault"]},
            "RowDefault"],
           TraditionalForm]}],
         StripOnInput->False,
@@ -6707,15 +6824,15 @@ Cell[BoxData[
          RowBox[{"-", 
           SqrtBox["2"]}], " ", "EE", " ", 
          FormBox[
-          SubscriptBox["\<\"x\"\>", "\<\"25,2\"\>"],
+          SubscriptBox["\<\"x\"\>", "\<\"134,2\"\>"],
           TraditionalForm], " ", 
          FormBox[
           TemplateBox[{
             TemplateBox[{"\"\[LeftAngleBracket]\"", 
               StyleBox[
                SubscriptBox["\"P\"", 
-                RowBox[{"2", ",", "5"}]], Bold, StripOnInput -> False]}, 
-             "RowDefault"], 
+                RowBox[{"1", ",", "3", ",", "4"}]], Bold, StripOnInput -> 
+               False]}, "RowDefault"], 
             TemplateBox[{
               StyleBox["2", Bold, StripOnInput -> False], 
               "\"\[RightAngleBracket]\""}, "RowDefault"]},
@@ -6843,51 +6960,51 @@ Cell[BoxData[
          RowBox[{"-", 
           SqrtBox["2"]}], " ", "EE", " ", 
          FormBox[
-          SubscriptBox["\<\"x\"\>", "\<\"1,13\"\>"],
+          SubscriptBox["\<\"x\"\>", "\<\"1,245\"\>"],
           TraditionalForm], " ", 
          FormBox[
           TemplateBox[{
             TemplateBox[{"\"\[LeftAngleBracket]\"", 
               StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
             TemplateBox[{
-              StyleBox[
-               SubscriptBox["\"P\"", 
-                RowBox[{"1", ",", "3"}]], Bold, StripOnInput -> False], 
-              "\"\[RightAngleBracket]\""}, "RowDefault"]},
-           "RowDefault"],
-          TraditionalForm]}],
-        StripOnInput->False,
-        LineColor->RGBColor[
-          Rational[2, 3], 0, 0],
-        FrontFaceColor->RGBColor[
-          Rational[2, 3], 0, 0],
-        BackFaceColor->RGBColor[
-          Rational[2, 3], 0, 0],
-        GraphicsColor->RGBColor[
-          Rational[2, 3], 0, 0],
-        FontSize->10,
-        FontColor->RGBColor[
-          Rational[2, 3], 0, 0]], {0.8314029667543892, 1.268208654919134}], 
-      InsetBox[
-       StyleBox[
-        RowBox[{
-         RowBox[{"-", 
-          SqrtBox["2"]}], " ", "EE", " ", 
-         FormBox[
-          SubscriptBox["\<\"x\"\>", "\<\"245,Multiparticle[1, 3, 5]\"\>"],
-          TraditionalForm], " ", 
-         FormBox[
-          TemplateBox[{
-            TemplateBox[{"\"\[LeftAngleBracket]\"", 
               StyleBox[
                SubscriptBox["\"P\"", 
                 RowBox[{"2", ",", "4", ",", "5"}]], Bold, StripOnInput -> 
-               False]}, "RowDefault"], 
+               False], "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"],
+          TraditionalForm]}],
+        StripOnInput->False,
+        LineColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FrontFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        BackFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        GraphicsColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FontSize->10,
+        FontColor->RGBColor[
+          Rational[2, 3], 0, 0]], {0.8314029667543892, 1.268208654919134}], 
+      InsetBox[
+       StyleBox[
+        RowBox[{
+         RowBox[{"-", 
+          SqrtBox["2"]}], " ", "EE", " ", 
+         FormBox[
+          SubscriptBox["\<\"x\"\>", "\<\"13,Multiparticle[2, 4]\"\>"],
+          TraditionalForm], " ", 
+         FormBox[
+          TemplateBox[{
+            TemplateBox[{"\"\[LeftAngleBracket]\"", 
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"1", ",", "3"}]], Bold, StripOnInput -> False]}, 
+             "RowDefault"], 
             TemplateBox[{
               StyleBox[
                SubscriptBox["\"P\"", 
-                RowBox[{"1", ",", "3", ",", "5"}]], Bold, StripOnInput -> 
-               False], "\"\[RightAngleBracket]\""}, "RowDefault"]},
+                RowBox[{"2", ",", "4"}]], Bold, StripOnInput -> False], 
+              "\"\[RightAngleBracket]\""}, "RowDefault"]},
            "RowDefault"],
           TraditionalForm]}],
         StripOnInput->False,
@@ -6908,15 +7025,15 @@ Cell[BoxData[
          RowBox[{"-", 
           SqrtBox["2"]}], " ", "EE", " ", 
          FormBox[
-          SubscriptBox["\<\"x\"\>", "\<\"24,2\"\>"],
+          SubscriptBox["\<\"x\"\>", "\<\"135,2\"\>"],
           TraditionalForm], " ", 
          FormBox[
           TemplateBox[{
             TemplateBox[{"\"\[LeftAngleBracket]\"", 
               StyleBox[
                SubscriptBox["\"P\"", 
-                RowBox[{"2", ",", "4"}]], Bold, StripOnInput -> False]}, 
-             "RowDefault"], 
+                RowBox[{"1", ",", "3", ",", "5"}]], Bold, StripOnInput -> 
+               False]}, "RowDefault"], 
             TemplateBox[{
               StyleBox["2", Bold, StripOnInput -> False], 
               "\"\[RightAngleBracket]\""}, "RowDefault"]},
@@ -7044,7 +7161,7 @@ Cell[BoxData[
          RowBox[{"-", 
           SqrtBox["2"]}], " ", "EE", " ", 
          FormBox[
-          SubscriptBox["\<\"x\"\>", "\<\"1,14\"\>"],
+          SubscriptBox["\<\"x\"\>", "\<\"1,235\"\>"],
           TraditionalForm], " ", 
          FormBox[
           TemplateBox[{
@@ -7053,8 +7170,8 @@ Cell[BoxData[
             TemplateBox[{
               StyleBox[
                SubscriptBox["\"P\"", 
-                RowBox[{"1", ",", "4"}]], Bold, StripOnInput -> False], 
-              "\"\[RightAngleBracket]\""}, "RowDefault"]},
+                RowBox[{"2", ",", "3", ",", "5"}]], Bold, StripOnInput -> 
+               False], "\"\[RightAngleBracket]\""}, "RowDefault"]},
            "RowDefault"],
           TraditionalForm]}],
         StripOnInput->False,
@@ -7075,49 +7192,49 @@ Cell[BoxData[
          RowBox[{"-", 
           SqrtBox["2"]}], " ", "EE", " ", 
          FormBox[
-          SubscriptBox["\<\"x\"\>", "\<\"235,Multiparticle[1, 3, 4]\"\>"],
+          SubscriptBox["\<\"x\"\>", "\<\"14,Multiparticle[2, 5]\"\>"],
           TraditionalForm], " ", 
          FormBox[
           TemplateBox[{
             TemplateBox[{"\"\[LeftAngleBracket]\"", 
               StyleBox[
                SubscriptBox["\"P\"", 
-                RowBox[{"2", ",", "3", ",", "5"}]], Bold, StripOnInput -> 
-               False]}, "RowDefault"], 
+                RowBox[{"1", ",", "4"}]], Bold, StripOnInput -> False]}, 
+             "RowDefault"], 
             TemplateBox[{
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"2", ",", "5"}]], Bold, StripOnInput -> False], 
+              "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"],
+          TraditionalForm]}],
+        StripOnInput->False,
+        LineColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FrontFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        BackFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        GraphicsColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FontSize->10,
+        FontColor->RGBColor[
+          Rational[2, 3], 0, 0]], {2.0183044118241598, 1.0032060218298384}], 
+      InsetBox[
+       StyleBox[
+        RowBox[{
+         RowBox[{"-", 
+          SqrtBox["2"]}], " ", "EE", " ", 
+         FormBox[
+          SubscriptBox["\<\"x\"\>", "\<\"134,2\"\>"],
+          TraditionalForm], " ", 
+         FormBox[
+          TemplateBox[{
+            TemplateBox[{"\"\[LeftAngleBracket]\"", 
               StyleBox[
                SubscriptBox["\"P\"", 
                 RowBox[{"1", ",", "3", ",", "4"}]], Bold, StripOnInput -> 
-               False], "\"\[RightAngleBracket]\""}, "RowDefault"]},
-           "RowDefault"],
-          TraditionalForm]}],
-        StripOnInput->False,
-        LineColor->RGBColor[
-          Rational[2, 3], 0, 0],
-        FrontFaceColor->RGBColor[
-          Rational[2, 3], 0, 0],
-        BackFaceColor->RGBColor[
-          Rational[2, 3], 0, 0],
-        GraphicsColor->RGBColor[
-          Rational[2, 3], 0, 0],
-        FontSize->10,
-        FontColor->RGBColor[
-          Rational[2, 3], 0, 0]], {2.0183044118241598, 1.0032060218298384}], 
-      InsetBox[
-       StyleBox[
-        RowBox[{
-         RowBox[{"-", 
-          SqrtBox["2"]}], " ", "EE", " ", 
-         FormBox[
-          SubscriptBox["\<\"x\"\>", "\<\"25,2\"\>"],
-          TraditionalForm], " ", 
-         FormBox[
-          TemplateBox[{
-            TemplateBox[{"\"\[LeftAngleBracket]\"", 
-              StyleBox[
-               SubscriptBox["\"P\"", 
-                RowBox[{"2", ",", "5"}]], Bold, StripOnInput -> False]}, 
-             "RowDefault"], 
+               False]}, "RowDefault"], 
             TemplateBox[{
               StyleBox["2", Bold, StripOnInput -> False], 
               "\"\[RightAngleBracket]\""}, "RowDefault"]},
@@ -7245,51 +7362,51 @@ Cell[BoxData[
          RowBox[{"-", 
           SqrtBox["2"]}], " ", "EE", " ", 
          FormBox[
-          SubscriptBox["\<\"x\"\>", "\<\"1,14\"\>"],
+          SubscriptBox["\<\"x\"\>", "\<\"1,235\"\>"],
           TraditionalForm], " ", 
          FormBox[
           TemplateBox[{
             TemplateBox[{"\"\[LeftAngleBracket]\"", 
               StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
             TemplateBox[{
-              StyleBox[
-               SubscriptBox["\"P\"", 
-                RowBox[{"1", ",", "4"}]], Bold, StripOnInput -> False], 
-              "\"\[RightAngleBracket]\""}, "RowDefault"]},
-           "RowDefault"],
-          TraditionalForm]}],
-        StripOnInput->False,
-        LineColor->RGBColor[
-          Rational[2, 3], 0, 0],
-        FrontFaceColor->RGBColor[
-          Rational[2, 3], 0, 0],
-        BackFaceColor->RGBColor[
-          Rational[2, 3], 0, 0],
-        GraphicsColor->RGBColor[
-          Rational[2, 3], 0, 0],
-        FontSize->10,
-        FontColor->RGBColor[
-          Rational[2, 3], 0, 0]], {0.8314029667543892, 1.268208654919134}], 
-      InsetBox[
-       StyleBox[
-        RowBox[{
-         RowBox[{"-", 
-          SqrtBox["2"]}], " ", "EE", " ", 
-         FormBox[
-          SubscriptBox["\<\"x\"\>", "\<\"235,Multiparticle[1, 4, 5]\"\>"],
-          TraditionalForm], " ", 
-         FormBox[
-          TemplateBox[{
-            TemplateBox[{"\"\[LeftAngleBracket]\"", 
               StyleBox[
                SubscriptBox["\"P\"", 
                 RowBox[{"2", ",", "3", ",", "5"}]], Bold, StripOnInput -> 
-               False]}, "RowDefault"], 
+               False], "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"],
+          TraditionalForm]}],
+        StripOnInput->False,
+        LineColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FrontFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        BackFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        GraphicsColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FontSize->10,
+        FontColor->RGBColor[
+          Rational[2, 3], 0, 0]], {0.8314029667543892, 1.268208654919134}], 
+      InsetBox[
+       StyleBox[
+        RowBox[{
+         RowBox[{"-", 
+          SqrtBox["2"]}], " ", "EE", " ", 
+         FormBox[
+          SubscriptBox["\<\"x\"\>", "\<\"14,Multiparticle[2, 3]\"\>"],
+          TraditionalForm], " ", 
+         FormBox[
+          TemplateBox[{
+            TemplateBox[{"\"\[LeftAngleBracket]\"", 
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"1", ",", "4"}]], Bold, StripOnInput -> False]}, 
+             "RowDefault"], 
             TemplateBox[{
               StyleBox[
                SubscriptBox["\"P\"", 
-                RowBox[{"1", ",", "4", ",", "5"}]], Bold, StripOnInput -> 
-               False], "\"\[RightAngleBracket]\""}, "RowDefault"]},
+                RowBox[{"2", ",", "3"}]], Bold, StripOnInput -> False], 
+              "\"\[RightAngleBracket]\""}, "RowDefault"]},
            "RowDefault"],
           TraditionalForm]}],
         StripOnInput->False,
@@ -7310,15 +7427,15 @@ Cell[BoxData[
          RowBox[{"-", 
           SqrtBox["2"]}], " ", "EE", " ", 
          FormBox[
-          SubscriptBox["\<\"x\"\>", "\<\"23,2\"\>"],
+          SubscriptBox["\<\"x\"\>", "\<\"145,2\"\>"],
           TraditionalForm], " ", 
          FormBox[
           TemplateBox[{
             TemplateBox[{"\"\[LeftAngleBracket]\"", 
               StyleBox[
                SubscriptBox["\"P\"", 
-                RowBox[{"2", ",", "3"}]], Bold, StripOnInput -> False]}, 
-             "RowDefault"], 
+                RowBox[{"1", ",", "4", ",", "5"}]], Bold, StripOnInput -> 
+               False]}, "RowDefault"], 
             TemplateBox[{
               StyleBox["2", Bold, StripOnInput -> False], 
               "\"\[RightAngleBracket]\""}, "RowDefault"]},
@@ -7446,7 +7563,7 @@ Cell[BoxData[
          RowBox[{"-", 
           SqrtBox["2"]}], " ", "EE", " ", 
          FormBox[
-          SubscriptBox["\<\"x\"\>", "\<\"1,15\"\>"],
+          SubscriptBox["\<\"x\"\>", "\<\"1,234\"\>"],
           TraditionalForm], " ", 
          FormBox[
           TemplateBox[{
@@ -7455,8 +7572,8 @@ Cell[BoxData[
             TemplateBox[{
               StyleBox[
                SubscriptBox["\"P\"", 
-                RowBox[{"1", ",", "5"}]], Bold, StripOnInput -> False], 
-              "\"\[RightAngleBracket]\""}, "RowDefault"]},
+                RowBox[{"2", ",", "3", ",", "4"}]], Bold, StripOnInput -> 
+               False], "\"\[RightAngleBracket]\""}, "RowDefault"]},
            "RowDefault"],
           TraditionalForm]}],
         StripOnInput->False,
@@ -7477,49 +7594,49 @@ Cell[BoxData[
          RowBox[{"-", 
           SqrtBox["2"]}], " ", "EE", " ", 
          FormBox[
-          SubscriptBox["\<\"x\"\>", "\<\"234,Multiparticle[1, 3, 5]\"\>"],
+          SubscriptBox["\<\"x\"\>", "\<\"15,Multiparticle[2, 4]\"\>"],
           TraditionalForm], " ", 
          FormBox[
           TemplateBox[{
             TemplateBox[{"\"\[LeftAngleBracket]\"", 
               StyleBox[
                SubscriptBox["\"P\"", 
-                RowBox[{"2", ",", "3", ",", "4"}]], Bold, StripOnInput -> 
-               False]}, "RowDefault"], 
+                RowBox[{"1", ",", "5"}]], Bold, StripOnInput -> False]}, 
+             "RowDefault"], 
             TemplateBox[{
+              StyleBox[
+               SubscriptBox["\"P\"", 
+                RowBox[{"2", ",", "4"}]], Bold, StripOnInput -> False], 
+              "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"],
+          TraditionalForm]}],
+        StripOnInput->False,
+        LineColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FrontFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        BackFaceColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        GraphicsColor->RGBColor[
+          Rational[2, 3], 0, 0],
+        FontSize->10,
+        FontColor->RGBColor[
+          Rational[2, 3], 0, 0]], {2.0183044118241598, 1.0032060218298384}], 
+      InsetBox[
+       StyleBox[
+        RowBox[{
+         RowBox[{"-", 
+          SqrtBox["2"]}], " ", "EE", " ", 
+         FormBox[
+          SubscriptBox["\<\"x\"\>", "\<\"135,2\"\>"],
+          TraditionalForm], " ", 
+         FormBox[
+          TemplateBox[{
+            TemplateBox[{"\"\[LeftAngleBracket]\"", 
               StyleBox[
                SubscriptBox["\"P\"", 
                 RowBox[{"1", ",", "3", ",", "5"}]], Bold, StripOnInput -> 
-               False], "\"\[RightAngleBracket]\""}, "RowDefault"]},
-           "RowDefault"],
-          TraditionalForm]}],
-        StripOnInput->False,
-        LineColor->RGBColor[
-          Rational[2, 3], 0, 0],
-        FrontFaceColor->RGBColor[
-          Rational[2, 3], 0, 0],
-        BackFaceColor->RGBColor[
-          Rational[2, 3], 0, 0],
-        GraphicsColor->RGBColor[
-          Rational[2, 3], 0, 0],
-        FontSize->10,
-        FontColor->RGBColor[
-          Rational[2, 3], 0, 0]], {2.0183044118241598, 1.0032060218298384}], 
-      InsetBox[
-       StyleBox[
-        RowBox[{
-         RowBox[{"-", 
-          SqrtBox["2"]}], " ", "EE", " ", 
-         FormBox[
-          SubscriptBox["\<\"x\"\>", "\<\"24,2\"\>"],
-          TraditionalForm], " ", 
-         FormBox[
-          TemplateBox[{
-            TemplateBox[{"\"\[LeftAngleBracket]\"", 
-              StyleBox[
-               SubscriptBox["\"P\"", 
-                RowBox[{"2", ",", "4"}]], Bold, StripOnInput -> False]}, 
-             "RowDefault"], 
+               False]}, "RowDefault"], 
             TemplateBox[{
               StyleBox["2", Bold, StripOnInput -> False], 
               "\"\[RightAngleBracket]\""}, "RowDefault"]},
@@ -7647,7 +7764,7 @@ Cell[BoxData[
          RowBox[{"-", 
           SqrtBox["2"]}], " ", "EE", " ", 
          FormBox[
-          SubscriptBox["\<\"x\"\>", "\<\"1,15\"\>"],
+          SubscriptBox["\<\"x\"\>", "\<\"1,234\"\>"],
           TraditionalForm], " ", 
          FormBox[
           TemplateBox[{
@@ -7656,8 +7773,8 @@ Cell[BoxData[
             TemplateBox[{
               StyleBox[
                SubscriptBox["\"P\"", 
-                RowBox[{"1", ",", "5"}]], Bold, StripOnInput -> False], 
-              "\"\[RightAngleBracket]\""}, "RowDefault"]},
+                RowBox[{"2", ",", "3", ",", "4"}]], Bold, StripOnInput -> 
+               False], "\"\[RightAngleBracket]\""}, "RowDefault"]},
            "RowDefault"],
           TraditionalForm]}],
         StripOnInput->False,
@@ -7678,20 +7795,20 @@ Cell[BoxData[
          RowBox[{"-", 
           SqrtBox["2"]}], " ", "EE", " ", 
          FormBox[
-          SubscriptBox["\<\"x\"\>", "\<\"234,Multiparticle[1, 4, 5]\"\>"],
+          SubscriptBox["\<\"x\"\>", "\<\"15,Multiparticle[2, 3]\"\>"],
           TraditionalForm], " ", 
          FormBox[
           TemplateBox[{
             TemplateBox[{"\"\[LeftAngleBracket]\"", 
               StyleBox[
                SubscriptBox["\"P\"", 
-                RowBox[{"2", ",", "3", ",", "4"}]], Bold, StripOnInput -> 
-               False]}, "RowDefault"], 
+                RowBox[{"1", ",", "5"}]], Bold, StripOnInput -> False]}, 
+             "RowDefault"], 
             TemplateBox[{
               StyleBox[
                SubscriptBox["\"P\"", 
-                RowBox[{"1", ",", "4", ",", "5"}]], Bold, StripOnInput -> 
-               False], "\"\[RightAngleBracket]\""}, "RowDefault"]},
+                RowBox[{"2", ",", "3"}]], Bold, StripOnInput -> False], 
+              "\"\[RightAngleBracket]\""}, "RowDefault"]},
            "RowDefault"],
           TraditionalForm]}],
         StripOnInput->False,
@@ -7712,15 +7829,15 @@ Cell[BoxData[
          RowBox[{"-", 
           SqrtBox["2"]}], " ", "EE", " ", 
          FormBox[
-          SubscriptBox["\<\"x\"\>", "\<\"23,2\"\>"],
+          SubscriptBox["\<\"x\"\>", "\<\"145,2\"\>"],
           TraditionalForm], " ", 
          FormBox[
           TemplateBox[{
             TemplateBox[{"\"\[LeftAngleBracket]\"", 
               StyleBox[
                SubscriptBox["\"P\"", 
-                RowBox[{"2", ",", "3"}]], Bold, StripOnInput -> False]}, 
-             "RowDefault"], 
+                RowBox[{"1", ",", "4", ",", "5"}]], Bold, StripOnInput -> 
+               False]}, "RowDefault"], 
             TemplateBox[{
               StyleBox["2", Bold, StripOnInput -> False], 
               "\"\[RightAngleBracket]\""}, "RowDefault"]},
@@ -7744,9 +7861,9 @@ Cell[BoxData[
  CellChangeTimes->{3.997189848425424*^9, 3.997190297986371*^9, 
   3.997191220471068*^9, 3.99719162128413*^9, 3.9972661175004272`*^9, 
   3.9972690020887203`*^9, 3.9972693805967207`*^9, 3.9972761825602837`*^9, 
-  3.997276898099568*^9},
+  3.997276898099568*^9, 3.997278748627708*^9},
  CellLabel->
-  "Out[100]=",ExpressionUUID->"bcdc8200-5d45-419a-a973-57d53e8102f3"]
+  "Out[107]=",ExpressionUUID->"04512ecf-666b-4be4-859b-f9a0423b6e17"]
 }, Open  ]],
 
 Cell[CellGroupData[{
@@ -7755,12 +7872,2577 @@ Cell[BoxData[
  RowBox[{"Length", "[", "diags", "]"}]], "Input",
  CellChangeTimes->{{3.9972766465671*^9, 3.9972766493077*^9}},
  CellLabel->
-  "In[101]:=",ExpressionUUID->"bcc992b6-7dc7-4d89-9ba4-c30034cce856"],
+  "In[108]:=",ExpressionUUID->"bcc992b6-7dc7-4d89-9ba4-c30034cce856"],
 
 Cell[BoxData["6"], "Output",
- CellChangeTimes->{3.997276898169608*^9},
+ CellChangeTimes->{3.997276898169608*^9, 3.997278748778535*^9},
  CellLabel->
-  "Out[101]=",ExpressionUUID->"a204664f-c4cf-4da8-80ba-fc19c9103e13"]
+  "Out[108]=",ExpressionUUID->"7d776019-75d3-4815-bcd7-aa450c364947"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+This code appears to work as intended, but is really, really slow.  Madgraph \
+does this basically instantaneously for this process.\
+\>", "ChatInput",
+ TaggingRules-><|
+  "ChatNotebookSettings" -> <|
+    "Model" -> <|"Service" -> "LLMKit", "Name" -> Automatic|>, "LLMEvaluator" -> 
+     "WolframAIAssistant", "ServiceCaller" -> "Chatbar"|>|>,
+ CellLabel->
+  "In[109]:=",ExpressionUUID->"6c33bfc7-7d50-4801-85af-2b1baf3133b0"],
+
+Cell[TextData[{
+ "Yes \[LongDash] the main bottleneck is combinatorics, not graph drawing.\n\n\
+Your current pipeline does several expensive things:\n\n1. generates topology \
+skeletons via ",
+ StyleBox["all permutations",
+  FontWeight->Bold],
+ " of a Pr\[UDoubleDot]fer multiset,\n2. generates external assignments via \
+",
+ StyleBox["all permutations",
+  FontWeight->Bold],
+ " of tagged externals,\n3. generates internal labelings via ",
+ StyleBox["all tuples",
+  FontWeight->Bold],
+ " of particle choices,\n4. then removes duplicates only ",
+ StyleBox["after",
+  FontWeight->Bold],
+ " constructing full decorated diagrams,\n5. and repeatedly recomputes \
+expensive structural data like connected components and vertex matches.\n\n\
+That is why ",
+ Cell[BoxData[
+  TemplateBox[{
+    Cell["2 \\to 3", Background -> None]},
+   "ChatCodeInlineTemplate"]], "ChatCodeActive",ExpressionUUID->
+  "b9d7969a-2775-4c0d-8165-be73a78cc0a9"],
+ " already jumps to hundreds of seconds. \n",
+ Cell[BoxData[
+  PaneBox[
+   StyleBox["\<\"Where the blowup is\"\>", "Section",
+    CellFrame->0,
+    ShowStringCharacters->False,
+    FontSize->22],
+   ImageMargins->{{0, 0}, {5, 15}}]], "InlineSection",
+  Background->None,ExpressionUUID->"3533ca55-805d-40dc-aea6-9637328c74ca"],
+ "\nThe worst offenders are: \n",
+ Cell[BoxData[
+  PaneBox[
+   StyleBox[Cell[TextData[{
+     "1. ",
+     Cell[BoxData[
+      TemplateBox[{
+        Cell["makeTopologySkeletons", Background -> None]},
+       "ChatCodeInlineTemplate"]], "ChatCodeActive",ExpressionUUID->
+      "533ebb62-4372-43c0-a081-ed9a0f04fdb2"]
+    }],
+     Background->None,ExpressionUUID->"26ab47e9-3caa-40fe-afee-06ce5445c20a"],
+     "Subsection",
+    CellFrame->0,
+    ShowStringCharacters->False],
+   ImageMargins->{{0, 0}, {5, 15}}]], "InlineSection",
+  Background->None,ExpressionUUID->"d6a676c1-62a0-453e-b7f7-515385c29915"],
+ "\nThis line is brutal: \n",
+ Cell[BoxData[
+  TemplateBox[{
+    Cell[
+     BoxData[
+      RowBox[{
+        RowBox[{"pruferSeqs", "=", 
+          RowBox[{"Union", "[", 
+            RowBox[{"Permutations", "[", "pruferMultiset", "]"}], "]"}]}], 
+        ";"}]], "ChatCode", "Input", LanguageCategory -> "Input", 
+     ShowAutoStyles -> True, ShowStringCharacters -> True, ShowSyntaxStyles -> 
+     True, TranslationOptions -> {"Enabled" -> Dynamic[
+         AbsoluteCurrentValue[$FrontEnd, {TranslationOptions, "Enabled"}]]}], 
+    "Wolfram"},
+   "ChatCodeBlockTemplate"]], "ChatCodeBlock",ExpressionUUID->
+  "f20e7a8c-e54b-4143-b78b-7eb729246562"],
+ "\nEven with repeated elements, this is factorial growth. \n",
+ Cell[BoxData[
+  PaneBox[
+   StyleBox[Cell[TextData[{
+     "2. ",
+     Cell[BoxData[
+      TemplateBox[{
+        Cell["externalAssignments", Background -> None]},
+       "ChatCodeInlineTemplate"]], "ChatCodeActive",ExpressionUUID->
+      "3d43ed90-0d9f-414d-b8c9-312242bf8fa9"]
+    }],
+     Background->None,ExpressionUUID->"c69cf389-b56b-4829-8512-2ff8da248a9f"],
+     "Subsection",
+    CellFrame->0,
+    ShowStringCharacters->False],
+   ImageMargins->{{0, 0}, {5, 15}}]], "InlineSection",
+  Background->None,ExpressionUUID->"521dd6ee-246b-4a0f-95ce-bcede90bcbfc"],
+ "\nThis also does a factorial enumeration: \n",
+ Cell[BoxData[
+  TemplateBox[{
+    Cell[
+     BoxData[
+      RowBox[{"DeleteDuplicates", "[", 
+        RowBox[{"Permutations", "[", 
+          RowBox[{"tagParticles", "[", "externalParticles", "]"}], "]"}], 
+        "]"}]], "ChatCode", "Input", LanguageCategory -> "Input", 
+     ShowAutoStyles -> True, ShowStringCharacters -> True, ShowSyntaxStyles -> 
+     True, TranslationOptions -> {"Enabled" -> Dynamic[
+         AbsoluteCurrentValue[$FrontEnd, {TranslationOptions, "Enabled"}]]}], 
+    "Wolfram"},
+   "ChatCodeBlockTemplate"]], "ChatCodeBlock",ExpressionUUID->
+  "19912c24-1f13-4146-94f3-274ba43c401e"],
+ "\nFor identical photons this is still large, and you're doing it for every \
+topology. \n",
+ Cell[BoxData[
+  PaneBox[
+   StyleBox[Cell[TextData[{
+     "3. ",
+     Cell[BoxData[
+      TemplateBox[{
+        Cell["vertexStructureInstances", Background -> None]},
+       "ChatCodeInlineTemplate"]], "ChatCodeActive",ExpressionUUID->
+      "9a9cd200-ec5e-4768-895a-0b656dafcf6c"]
+    }],
+     Background->None,ExpressionUUID->"c64bbbd0-747e-4497-91c6-4586fac2cf68"],
+     "Subsection",
+    CellFrame->0,
+    ShowStringCharacters->False],
+   ImageMargins->{{0, 0}, {5, 15}}]], "InlineSection",
+  Background->None,ExpressionUUID->"f338d194-5745-46fd-96f5-e87537f1509c"],
+ "\nFor each candidate model row, you do: \n",
+ Cell[BoxData[
+  TemplateBox[{
+    Cell[
+     BoxData[
+      RowBox[{"Permutations", "[", "incidentLegs", "]"}]], "ChatCode", 
+     "Input", LanguageCategory -> "Input", ShowAutoStyles -> True, 
+     ShowStringCharacters -> True, ShowSyntaxStyles -> True, 
+     TranslationOptions -> {"Enabled" -> Dynamic[
+         AbsoluteCurrentValue[$FrontEnd, {TranslationOptions, "Enabled"}]]}], 
+    "Wolfram"},
+   "ChatCodeBlockTemplate"]], "ChatCodeBlock",ExpressionUUID->
+  "fa63731e-5e66-4914-9a7e-0c81cc625b6e"],
+ "\nThat is another local factorial at every vertex. \n",
+ Cell[BoxData[
+  PaneBox[
+   StyleBox[Cell[TextData[{
+     "4. ",
+     Cell[BoxData[
+      TemplateBox[{
+        Cell["internalEdgeIndexLabels", Background -> None]},
+       "ChatCodeInlineTemplate"]], "ChatCodeActive",ExpressionUUID->
+      "4ad2136b-6c75-4886-803a-a5fa042a1fd8"]
+    }],
+     Background->None,ExpressionUUID->"903daf99-d8fb-4f5c-8b97-fbcba5564c18"],
+     "Subsection",
+    CellFrame->0,
+    ShowStringCharacters->False],
+   ImageMargins->{{0, 0}, {5, 15}}]], "InlineSection",
+  Background->None,ExpressionUUID->"b050921c-ee39-4389-bd03-214c41eec5e5"],
+ "\nFor each internal edge, you do: \n",
+ Cell[BoxData[
+  TemplateBox[{
+    Cell[
+     BoxData[
+      RowBox[{"ConnectedComponents", "[", 
+        RowBox[{"EdgeDelete", "[", 
+          RowBox[{"graph", ",", "edge"}], "]"}], "]"}]], "ChatCode", "Input", 
+     LanguageCategory -> "Input", ShowAutoStyles -> True, 
+     ShowStringCharacters -> True, ShowSyntaxStyles -> True, 
+     TranslationOptions -> {"Enabled" -> Dynamic[
+         AbsoluteCurrentValue[$FrontEnd, {TranslationOptions, "Enabled"}]]}], 
+    "Wolfram"},
+   "ChatCodeBlockTemplate"]], "ChatCodeBlock",ExpressionUUID->
+  "e9e88cf6-dc76-4f87-841c-1a79ee049e65"],
+ "\nThat is expensive and repeated many times across assignments. \n",
+ Cell[BoxData[
+  PaneBox[
+   StyleBox["\<\"5. canonicalization only at the end\"\>", "Subsection",
+    CellFrame->0,
+    ShowStringCharacters->False],
+   ImageMargins->{{0, 0}, {5, 15}}]], "InlineSection",
+  Background->None,ExpressionUUID->"54416623-df56-4b0c-b5ac-57c1e0d16d5c"],
+ "\nYou allow many equivalent assignments to survive deep into the pipeline. \
+\n",
+ Cell[BoxData[
+  TagBox[GridBox[{
+     {
+      TemplateBox[{0},
+       "Spacer1"]},
+     {
+      TemplateBox[{0},
+       "Spacer1"]}
+    },
+    AutoDelete->False,
+    FrameStyle->Directive[
+      LightDarkSwitched[
+       GrayLevel[0.8], 
+       GrayLevel[0.4867756]], 
+      AbsoluteThickness[1]],
+    GridBoxDividers->{
+     "Columns" -> {False, {True}, False}, "Rows" -> {False, {True}, False}},
+    GridBoxItemSize->{"Columns" -> {{Fit}}, "Rows" -> {{Automatic}}}],
+   "Grid"]], "MarkdownDelimiter",
+  ShowStringCharacters->False,
+  Background->None,ExpressionUUID->"0ff38e40-f87e-4d43-973b-bf43eb4c391c"],
+ "\n",
+ Cell[BoxData[
+  PaneBox[
+   StyleBox["\<\"Big-picture fix\"\>", "Title",
+    CellFrame->0,
+    ShowStringCharacters->False,
+    FontSize->26],
+   ImageMargins->{{0, 0}, {5, 15}}]], "InlineSection",
+  Background->None,ExpressionUUID->"d83427d0-361c-49f9-a4a5-530b5a4d43af"],
+ "\nMadGraph is fast because it does ",
+ StyleBox["constraint-driven generation",
+  FontWeight->Bold],
+ ", not brute-force decorate-and-deduplicate.\n\nYou want to move toward: \n\
+",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  "generate only a tiny set of nonisomorphic topologies,"
+ }], "InlineItem",ExpressionUUID->"00002061-4c25-4ca5-89b9-d6103fa85f4a"],
+ "\n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  "assign externals in symmetry-reduced fashion,"
+ }], "InlineItem",ExpressionUUID->"5d935e05-49c1-40e2-9a54-c5a45c88faa9"],
+ "\n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  "propagate allowed internal particles by vertex constraints,"
+ }], "InlineItem",ExpressionUUID->"2b0376ba-d129-4b81-9b55-2d6194f387ea"],
+ "\n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  "avoid ",
+  Cell[BoxData[
+   TemplateBox[{
+    "Permutations", "paclet:ref/Permutations", 
+     "https://reference.wolfram.com/language/ref/Permutations.html"},
+    "TextRefLink"]],ExpressionUUID->"80c878e2-bb85-49b9-97f7-e11ec231aaae"],
+  " whenever matching can be done by indexed lookup,"
+ }], "InlineItem",ExpressionUUID->"e7a9845c-68a0-4c1a-b3cf-360a924aa81e"],
+ "\n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  "cache everything topology-dependent,"
+ }], "InlineItem",ExpressionUUID->"2d639c23-1816-4351-abed-a20c268aa155"],
+ "\n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  "canonicalize early."
+ }], "InlineItem",ExpressionUUID->"ff500e5c-2262-46d5-974e-a3e04cf29842"],
+ "\n",
+ Cell[BoxData[
+  TagBox[GridBox[{
+     {
+      TemplateBox[{0},
+       "Spacer1"]},
+     {
+      TemplateBox[{0},
+       "Spacer1"]}
+    },
+    AutoDelete->False,
+    FrameStyle->Directive[
+      LightDarkSwitched[
+       GrayLevel[0.8], 
+       GrayLevel[0.4867756]], 
+      AbsoluteThickness[1]],
+    GridBoxDividers->{
+     "Columns" -> {False, {True}, False}, "Rows" -> {False, {True}, False}},
+    GridBoxItemSize->{"Columns" -> {{Fit}}, "Rows" -> {{Automatic}}}],
+   "Grid"]], "MarkdownDelimiter",
+  ShowStringCharacters->False,
+  Background->None,ExpressionUUID->"54347e08-003a-4b7f-8090-af157b409a6a"],
+ "\n",
+ Cell[BoxData[
+  PaneBox[
+   StyleBox["\<\"Highest-impact changes\"\>", "Title",
+    CellFrame->0,
+    ShowStringCharacters->False,
+    FontSize->26],
+   ImageMargins->{{0, 0}, {5, 15}}]], "InlineSection",
+  Background->None,ExpressionUUID->"01789522-f733-4411-b8d7-b150f1e39325"],
+ "\n",
+ Cell[BoxData[
+  PaneBox[
+   StyleBox["\<\"1. Replace Pr\[UDoubleDot]fer multiset permutation \
+generation\"\>", "Section",
+    CellFrame->0,
+    ShowStringCharacters->False,
+    FontSize->22],
+   ImageMargins->{{0, 0}, {5, 15}}]], "InlineSection",
+  Background->None,ExpressionUUID->"e1014d72-2b7d-4172-8d34-57f25ea45c7c"],
+ "\nFor tree topologies with prescribed degrees, Pr\[UDoubleDot]fer decoding \
+is mathematically fine, but enumerating all multiset permutations is too \
+expensive.\n\nFor your use case, the number of internal vertices is usually \
+small. Better approaches: \n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  "build trees recursively by attaching leaves/internal vertices under degree \
+constraints,"
+ }], "InlineItem",ExpressionUUID->"45758dd6-212a-4d66-b777-b3b9d971096e"],
+ "\n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  "or generate unlabeled trees with given degree sequence directly,"
+ }], "InlineItem",ExpressionUUID->"47226f3a-e009-43d3-a68f-c9ebdfa0dccb"],
+ "\n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  "or at minimum, generate labeled trees and quotient by isomorphism ",
+  StyleBox["incrementally",
+   FontWeight->Bold],
+  ", not after ",
+  Cell[BoxData[
+   TemplateBox[{
+    "Permutations", "paclet:ref/Permutations", 
+     "https://reference.wolfram.com/language/ref/Permutations.html"},
+    "TextRefLink"]],ExpressionUUID->"21e7e11c-f5d7-4329-aec5-16e6f3b67546"],
+  "."
+ }], "InlineItem",ExpressionUUID->"205de382-aeac-4538-b795-fe92cffaa3ce"],
+ "\nIf you want a simple improvement without redesign, memoize by degree \
+sequence and canonical graph: \n",
+ Cell[BoxData[
+  TemplateBox[{
+    Cell[
+     BoxData[
+      RowBox[{
+        RowBox[{"ClearAll", "[", "makeTopologySkeletons", "]"}], 
+        "\[IndentingNewLine]", "\[IndentingNewLine]", 
+        RowBox[{
+          RowBox[{
+            RowBox[{"makeTopologySkeletons", "[", 
+              RowBox[{"valenceCount_Association", ",", "nExternal_Integer"}], 
+              "]"}], ":=", "\[IndentingNewLine]", "  ", 
+            RowBox[{
+              RowBox[{"makeTopologySkeletons", "[", 
+                RowBox[{"valenceCount", ",", "nExternal"}], "]"}], "=", 
+              "\[IndentingNewLine]", "    ", 
+              RowBox[{"Module", "[", "\[IndentingNewLine]", "      ", 
+                RowBox[{
+                  RowBox[{"{", "\[IndentingNewLine]", "        ", 
+                    
+                    RowBox[{
+                    "internalDegrees", ",", "nInternal", ",", "internalVerts",
+                     ",", "leafVerts", ",", "\[IndentingNewLine]", "        ",
+                     "allVerts", ",", "targetDegrees", ",", "pruferMultiset", 
+                    ",", "pruferSeqs"}], "\[IndentingNewLine]", "      ", 
+                    "}"}], ",", "\[IndentingNewLine]", "      ", 
+                  RowBox[{
+                    RowBox[{"internalDegrees", "=", 
+                    RowBox[{"Flatten", " ", "@", " ", 
+                    RowBox[{"KeyValueMap", "[", 
+                    RowBox[{
+                    RowBox[{
+                    RowBox[{"ConstantArray", "[", 
+                    RowBox[{"#1", ",", "#2"}], "]"}], " ", "&"}], ",", 
+                    "valenceCount"}], "]"}]}]}], ";", "\[IndentingNewLine]", 
+                    "      ", 
+                    RowBox[{"nInternal", "=", 
+                    RowBox[{"Length", "[", "internalDegrees", "]"}]}], ";", 
+                    "\[IndentingNewLine]", "      ", 
+                    RowBox[{"internalVerts", "=", 
+                    RowBox[{"Range", "[", "nInternal", "]"}]}], ";", 
+                    "\[IndentingNewLine]", "      ", 
+                    RowBox[{"leafVerts", "=", 
+                    RowBox[{"Range", "[", 
+                    RowBox[{
+                    RowBox[{"nInternal", "+", "1"}], ",", 
+                    RowBox[{"nInternal", "+", "nExternal"}]}], "]"}]}], ";", 
+                    "\[IndentingNewLine]", "      ", 
+                    RowBox[{"allVerts", "=", 
+                    RowBox[{"Join", "[", 
+                    RowBox[{"internalVerts", ",", "leafVerts"}], "]"}]}], ";",
+                     "\[IndentingNewLine]", "      ", 
+                    RowBox[{"targetDegrees", "=", 
+                    RowBox[{"Join", "[", 
+                    RowBox[{"internalDegrees", ",", 
+                    RowBox[{"ConstantArray", "[", 
+                    RowBox[{"1", ",", "nExternal"}], "]"}]}], "]"}]}], ";", 
+                    "\[IndentingNewLine]", "\[IndentingNewLine]", "      ", 
+                    RowBox[{"If", "[", 
+                    RowBox[{
+                    RowBox[{
+                    RowBox[{"Total", "[", "targetDegrees", "]"}], "=!=", 
+                    RowBox[{
+                    RowBox[{"2", " ", 
+                    RowBox[{"Length", "[", "allVerts", "]"}]}], "-", "2"}]}], 
+                    ",", 
+                    RowBox[{"Return", "[", 
+                    RowBox[{"{", "}"}], "]"}]}], "]"}], ";", 
+                    "\[IndentingNewLine]", "\[IndentingNewLine]", "      ", 
+                    RowBox[{"pruferMultiset", "=", 
+                    RowBox[{"Flatten", " ", "@", " ", 
+                    RowBox[{"MapThread", "[", 
+                    RowBox[{"ConstantArray", ",", 
+                    RowBox[{"{", 
+                    RowBox[{"allVerts", ",", 
+                    RowBox[{"targetDegrees", "-", "1"}]}], "}"}]}], "]"}]}]}],
+                     ";", "\[IndentingNewLine]", "\[IndentingNewLine]", 
+                    "      ", 
+                    RowBox[{"pruferSeqs", "=", 
+                    RowBox[{"DeleteDuplicates", "[", 
+                    RowBox[{"Permutations", "[", "pruferMultiset", "]"}], 
+                    "]"}]}], ";", "\[IndentingNewLine]", 
+                    "\[IndentingNewLine]", "      ", 
+                    
+                    RowBox[{
+                    "DeleteDuplicatesBy", "[", "\[IndentingNewLine]", 
+                    "        ", 
+                    RowBox[{
+                    RowBox[{
+                    RowBox[{
+                    RowBox[{"Graph", "[", 
+                    RowBox[{"allVerts", ",", 
+                    RowBox[{"EdgeList", "[", 
+                    RowBox[{"pruferDecode", "[", "#", "]"}], "]"}]}], "]"}], 
+                    " ", "&"}], " ", "/@", " ", "pruferSeqs"}], ",", 
+                    "\[IndentingNewLine]", "        ", "CanonicalGraph"}], 
+                    "\[IndentingNewLine]", "      ", "]"}]}]}], 
+                "\[IndentingNewLine]", "    ", "]"}]}]}], ";"}]}]], 
+     "ChatCode", "Input", LanguageCategory -> "Input", ShowAutoStyles -> True,
+      ShowStringCharacters -> True, ShowSyntaxStyles -> True, 
+     TranslationOptions -> {"Enabled" -> Dynamic[
+         AbsoluteCurrentValue[$FrontEnd, {TranslationOptions, "Enabled"}]]}], 
+    "Wolfram"},
+   "ChatCodeBlockTemplate"]], "ChatCodeBlock",ExpressionUUID->
+  "5ed85036-af30-40f6-ab0c-a2465474493c"],
+ "\nBut this only helps repeated calls. The real fix is to stop using full Pr\
+\[UDoubleDot]fer multiset permutations. \n",
+ Cell[BoxData[
+  TagBox[GridBox[{
+     {
+      TemplateBox[{0},
+       "Spacer1"]},
+     {
+      TemplateBox[{0},
+       "Spacer1"]}
+    },
+    AutoDelete->False,
+    FrameStyle->Directive[
+      LightDarkSwitched[
+       GrayLevel[0.8], 
+       GrayLevel[0.4867756]], 
+      AbsoluteThickness[1]],
+    GridBoxDividers->{
+     "Columns" -> {False, {True}, False}, "Rows" -> {False, {True}, False}},
+    GridBoxItemSize->{"Columns" -> {{Fit}}, "Rows" -> {{Automatic}}}],
+   "Grid"]], "MarkdownDelimiter",
+  ShowStringCharacters->False,
+  Background->None,ExpressionUUID->"09b18cd7-d605-4b7e-9f4e-de08d8d9ecb8"],
+ "\n",
+ Cell[BoxData[
+  PaneBox[
+   StyleBox["\<\"2. Precompute topology metadata once per skeleton\"\>", 
+    "Section",
+    CellFrame->0,
+    ShowStringCharacters->False,
+    FontSize->22],
+   ImageMargins->{{0, 0}, {5, 15}}]], "InlineSection",
+  Background->None,ExpressionUUID->"e50a5185-23c9-4d0b-9fb0-269fd5040700"],
+ "\nA lot of your work depends only on the graph topology, not on particle \
+labels.\n\nFor each graph, precompute: \n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  Cell[BoxData[
+   TemplateBox[{
+     Cell["leafVerts", Background -> None]},
+    "ChatCodeInlineTemplate"]], "ChatCodeActive",ExpressionUUID->
+   "0fbae0c7-8223-4e87-812c-a5ee7bc8d1ae"]
+ }], "InlineItem",ExpressionUUID->"d744adc0-7cd1-4f5a-8989-7b3023a87f6f"],
+ "\n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  Cell[BoxData[
+   TemplateBox[{
+     Cell["internalVerts", Background -> None]},
+    "ChatCodeInlineTemplate"]], "ChatCodeActive",ExpressionUUID->
+   "5537bd08-796f-4926-a4a7-129ece8f54d2"]
+ }], "InlineItem",ExpressionUUID->"f4ae0f54-e955-4eff-8cee-e9836dfb2e48"],
+ "\n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  Cell[BoxData[
+   TemplateBox[{
+     Cell["internalEdges", Background -> None]},
+    "ChatCodeInlineTemplate"]], "ChatCodeActive",ExpressionUUID->
+   "f4783f7a-93d8-48ca-b84e-1470c69e9cea"]
+ }], "InlineItem",ExpressionUUID->"e62bc000-7493-4fe4-9e85-3b49ce87c750"],
+ "\n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  "for each internal edge and endpoint, the leaf set on the opposite side"
+ }], "InlineItem",ExpressionUUID->"76029e1d-fb9b-4807-bbeb-fab5995e9a0e"],
+ "\n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  "adjacency structure for internal vertices"
+ }], "InlineItem",ExpressionUUID->"c7b9a61d-64c3-44f3-8080-7d26452c3192"],
+ "\n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  "automorphism group of the topology"
+ }], "InlineItem",ExpressionUUID->"23d7bdcd-de20-4d1b-ae79-2b1a2300a96c"],
+ "\nThis avoids recomputing connected components repeatedly.\n\nFor example: \
+\n",
+ Cell[BoxData[
+  TemplateBox[{
+    Cell[
+     BoxData[
+      RowBox[{
+        RowBox[{"ClearAll", "[", "topologyData", "]"}], "\[IndentingNewLine]",
+         "\[IndentingNewLine]", 
+        RowBox[{
+          RowBox[{
+            RowBox[{"topologyData", "[", "graph_", "]"}], ":=", 
+            RowBox[{
+              RowBox[{"topologyData", "[", "graph", "]"}], "=", 
+              "\[IndentingNewLine]", "  ", 
+              RowBox[{"Module", "[", "\[IndentingNewLine]", "    ", 
+                RowBox[{
+                  RowBox[{"{", 
+                    
+                    RowBox[{
+                    "leafVerts", ",", "internalVerts", ",", "internalEdges", 
+                    ",", "splitLeafIndices"}], "}"}], ",", 
+                  "\[IndentingNewLine]", "    ", 
+                  RowBox[{
+                    RowBox[{"leafVerts", "=", 
+                    RowBox[{"Select", "[", 
+                    RowBox[{
+                    RowBox[{"VertexList", "[", "graph", "]"}], ",", 
+                    RowBox[{
+                    RowBox[{
+                    RowBox[{"VertexDegree", "[", 
+                    RowBox[{"graph", ",", "#"}], "]"}], "==", "1"}], " ", 
+                    "&"}]}], "]"}]}], ";", "\[IndentingNewLine]", "    ", 
+                    RowBox[{"internalVerts", "=", 
+                    RowBox[{"Complement", "[", 
+                    RowBox[{
+                    RowBox[{"VertexList", "[", "graph", "]"}], ",", 
+                    "leafVerts"}], "]"}]}], ";", "\[IndentingNewLine]", 
+                    "    ", 
+                    RowBox[{"internalEdges", "=", 
+                    RowBox[{"Select", "[", "\[IndentingNewLine]", "      ", 
+                    RowBox[{
+                    RowBox[{"EdgeList", "[", "graph", "]"}], ",", 
+                    "\[IndentingNewLine]", "      ", 
+                    RowBox[{
+                    RowBox[{"FreeQ", "[", 
+                    RowBox[{"leafVerts", ",", 
+                    RowBox[{"Alternatives", " ", "@@", " ", 
+                    RowBox[{"(", 
+                    RowBox[{"List", " ", "@@", " ", "#"}], ")"}]}]}], "]"}], 
+                    " ", "&"}]}], "\[IndentingNewLine]", "    ", "]"}]}], ";",
+                     "\[IndentingNewLine]", "\[IndentingNewLine]", "    ", 
+                    RowBox[{"splitLeafIndices", "=", 
+                    RowBox[{"Association", " ", "@", " ", 
+                    RowBox[{"Map", "[", "\[IndentingNewLine]", "      ", 
+                    RowBox[{
+                    RowBox[{"Function", "[", 
+                    RowBox[{"edge", ",", "\[IndentingNewLine]", "        ", 
+                    RowBox[{"Module", "[", 
+                    RowBox[{
+                    RowBox[{"{", 
+                    
+                    RowBox[{"u", ",", "v", ",", "comps", ",", "compU", ",", 
+                    "compV"}], "}"}], ",", "\[IndentingNewLine]", 
+                    "          ", 
+                    RowBox[{
+                    RowBox[{
+                    RowBox[{"{", 
+                    RowBox[{"u", ",", "v"}], "}"}], "=", 
+                    RowBox[{"List", " ", "@@", " ", "edge"}]}], ";", 
+                    "\[IndentingNewLine]", "          ", 
+                    RowBox[{"comps", "=", 
+                    RowBox[{"ConnectedComponents", "[", 
+                    RowBox[{"EdgeDelete", "[", 
+                    RowBox[{"graph", ",", "edge"}], "]"}], "]"}]}], ";", 
+                    "\[IndentingNewLine]", "          ", 
+                    RowBox[{"compU", "=", 
+                    RowBox[{"SelectFirst", "[", 
+                    RowBox[{"comps", ",", 
+                    RowBox[{
+                    RowBox[{"MemberQ", "[", 
+                    RowBox[{"#", ",", "u"}], "]"}], " ", "&"}]}], "]"}]}], 
+                    ";", "\[IndentingNewLine]", "          ", 
+                    RowBox[{"compV", "=", 
+                    RowBox[{"SelectFirst", "[", 
+                    RowBox[{"comps", ",", 
+                    RowBox[{
+                    RowBox[{"MemberQ", "[", 
+                    RowBox[{"#", ",", "v"}], "]"}], " ", "&"}]}], "]"}]}], 
+                    ";", "\[IndentingNewLine]", "          ", 
+                    RowBox[{"edge", "->", 
+                    RowBox[{"<|", "\[IndentingNewLine]", "            ", 
+                    RowBox[{
+                    RowBox[{"u", "->", 
+                    RowBox[{"Intersection", "[", 
+                    RowBox[{"compV", ",", "leafVerts"}], "]"}]}], ",", 
+                    "\[IndentingNewLine]", "            ", 
+                    RowBox[{"v", "->", 
+                    RowBox[{"Intersection", "[", 
+                    RowBox[{"compU", ",", "leafVerts"}], "]"}]}]}], 
+                    "\[IndentingNewLine]", "          ", "|>"}]}]}]}], 
+                    "\[IndentingNewLine]", "        ", "]"}]}], 
+                    "\[IndentingNewLine]", "      ", "]"}], ",", 
+                    "\[IndentingNewLine]", "      ", "internalEdges"}], 
+                    "\[IndentingNewLine]", "    ", "]"}]}]}], ";", 
+                    "\[IndentingNewLine]", "\[IndentingNewLine]", "    ", 
+                    RowBox[{"<|", "\[IndentingNewLine]", "      ", 
+                    RowBox[{
+                    RowBox[{"\"LeafVertices\"", "->", "leafVerts"}], ",", 
+                    "\[IndentingNewLine]", "      ", 
+                    RowBox[{"\"InternalVertices\"", "->", "internalVerts"}], 
+                    ",", "\[IndentingNewLine]", "      ", 
+                    RowBox[{"\"InternalEdges\"", "->", "internalEdges"}], ",",
+                     "\[IndentingNewLine]", "      ", 
+                    
+                    RowBox[{
+                    "\"SplitLeafVertices\"", "->", "splitLeafIndices"}]}], 
+                    "\[IndentingNewLine]", "    ", "|>"}]}]}], 
+                "\[IndentingNewLine]", "  ", "]"}]}]}], ";"}]}]], "ChatCode", 
+     "Input", LanguageCategory -> "Input", ShowAutoStyles -> True, 
+     ShowStringCharacters -> True, ShowSyntaxStyles -> True, 
+     TranslationOptions -> {"Enabled" -> Dynamic[
+         AbsoluteCurrentValue[$FrontEnd, {TranslationOptions, "Enabled"}]]}], 
+    "Wolfram"},
+   "ChatCodeBlockTemplate"]], "ChatCodeBlock",ExpressionUUID->
+  "0d1a2299-ad60-40d0-8ace-fda56ee5e42e"],
+ "\nThen ",
+ Cell[BoxData[
+  TemplateBox[{
+    Cell["internalEdgeIndexLabels", Background -> None]},
+   "ChatCodeInlineTemplate"]], "ChatCodeActive",ExpressionUUID->
+  "62d22e4d-e4ca-4609-83b8-cdcf1f86e960"],
+ " becomes cheap: \n",
+ Cell[BoxData[
+  TemplateBox[{
+    Cell[
+     BoxData[
+      RowBox[{
+        RowBox[{"ClearAll", "[", "internalEdgeIndexLabels", "]"}], 
+        "\[IndentingNewLine]", "\[IndentingNewLine]", 
+        RowBox[{
+          RowBox[{"internalEdgeIndexLabels", "[", 
+            RowBox[{"graph_", ",", "externalMap_Association"}], "]"}], ":=", 
+          RowBox[{"Module", "[", "\[IndentingNewLine]", "  ", 
+            RowBox[{
+              RowBox[{"{", 
+                RowBox[{"data", ",", "splitLeafVertices"}], "}"}], ",", 
+              "\[IndentingNewLine]", "  ", 
+              RowBox[{
+                RowBox[{"data", "=", 
+                  RowBox[{"topologyData", "[", "graph", "]"}]}], ";", 
+                "\[IndentingNewLine]", "  ", 
+                RowBox[{"splitLeafVertices", "=", 
+                  RowBox[{"data", "[", "\"SplitLeafVertices\"", "]"}]}], ";", 
+                "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+                RowBox[{"Association", " ", "@", " ", 
+                  RowBox[{"KeyValueMap", "[", "\[IndentingNewLine]", "    ", 
+                    RowBox[{
+                    RowBox[{"Function", "[", 
+                    RowBox[{
+                    RowBox[{"{", 
+                    RowBox[{"edge", ",", "sideData"}], "}"}], ",", 
+                    "\[IndentingNewLine]", "      ", 
+                    RowBox[{"edge", "->", 
+                    RowBox[{"Association", " ", "@", " ", 
+                    
+                    RowBox[{"KeyValueMap", "[", "\[IndentingNewLine]", 
+                    "        ", 
+                    RowBox[{
+                    RowBox[{"Function", "[", 
+                    RowBox[{
+                    RowBox[{"{", 
+                    RowBox[{"v", ",", "leaves"}], "}"}], ",", 
+                    "\[IndentingNewLine]", "          ", 
+                    RowBox[{"v", "->", 
+                    
+                    RowBox[{"Apply", "[", "\[IndentingNewLine]", 
+                    "            ", 
+                    
+                    RowBox[{"Multiparticle", ",", "\[IndentingNewLine]", 
+                    "            ", 
+                    RowBox[{"Sort", "[", 
+                    RowBox[{"Lookup", "[", 
+                    RowBox[{
+                    RowBox[{"externalMap", " ", "/@", " ", "leaves"}], ",", 
+                    "\"InputIndex\""}], "]"}], "]"}]}], "\[IndentingNewLine]",
+                     "          ", "]"}]}]}], "\[IndentingNewLine]", 
+                    "        ", "]"}], ",", "\[IndentingNewLine]", "        ",
+                     "sideData"}], "\[IndentingNewLine]", "      ", 
+                    "]"}]}]}]}], "\[IndentingNewLine]", "    ", "]"}], ",", 
+                    "\[IndentingNewLine]", "    ", "splitLeafVertices"}], 
+                    "\[IndentingNewLine]", "  ", "]"}]}]}]}], 
+            "\[IndentingNewLine]", "]"}]}]}]], "ChatCode", "Input", 
+     LanguageCategory -> "Input", ShowAutoStyles -> True, 
+     ShowStringCharacters -> True, ShowSyntaxStyles -> True, 
+     TranslationOptions -> {"Enabled" -> Dynamic[
+         AbsoluteCurrentValue[$FrontEnd, {TranslationOptions, "Enabled"}]]}], 
+    "Wolfram"},
+   "ChatCodeBlockTemplate"]], "ChatCodeBlock",ExpressionUUID->
+  "f30b7346-c2df-40e9-868e-a1ff3e1ab1c2"],
+ "\nThis removes repeated calls to ",
+ Cell[BoxData[
+  TemplateBox[{
+   "ConnectedComponents", "paclet:ref/ConnectedComponents", 
+    "https://reference.wolfram.com/language/ref/ConnectedComponents.html"},
+   "TextRefLink"]],ExpressionUUID->"89944b45-1889-4bb4-a4a7-0edd17e4fd74"],
+ ". \n",
+ Cell[BoxData[
+  TagBox[GridBox[{
+     {
+      TemplateBox[{0},
+       "Spacer1"]},
+     {
+      TemplateBox[{0},
+       "Spacer1"]}
+    },
+    AutoDelete->False,
+    FrameStyle->Directive[
+      LightDarkSwitched[
+       GrayLevel[0.8], 
+       GrayLevel[0.4867756]], 
+      AbsoluteThickness[1]],
+    GridBoxDividers->{
+     "Columns" -> {False, {True}, False}, "Rows" -> {False, {True}, False}},
+    GridBoxItemSize->{"Columns" -> {{Fit}}, "Rows" -> {{Automatic}}}],
+   "Grid"]], "MarkdownDelimiter",
+  ShowStringCharacters->False,
+  Background->None,ExpressionUUID->"1da11bc5-4414-4851-9c5f-7b52e67dd01b"],
+ "\n",
+ Cell[BoxData[
+  PaneBox[
+   StyleBox["\<\"3. Stop permuting incident legs at each vertex\"\>", 
+    "Section",
+    CellFrame->0,
+    ShowStringCharacters->False,
+    FontSize->22],
+   ImageMargins->{{0, 0}, {5, 15}}]], "InlineSection",
+  Background->None,ExpressionUUID->"dbc1681b-ec3a-4d0a-96c7-6930fc2c991d"],
+ "\nThis is a major inefficiency: \n",
+ Cell[BoxData[
+  TemplateBox[{
+    Cell[
+     BoxData[
+      RowBox[{"Select", "[", 
+        RowBox[{
+          RowBox[{"Permutations", "[", "incidentLegs", "]"}], ",", 
+          RowBox[{
+            RowBox[{"rowParticles", "===", 
+              RowBox[{"#", "[", 
+                RowBox[{"[", 
+                  RowBox[{"All", ",", "\"Particle\""}], "]"}], "]"}]}], " ", 
+            "&"}]}], "]"}]], "ChatCode", "Input", LanguageCategory -> "Input",
+      ShowAutoStyles -> True, ShowStringCharacters -> True, ShowSyntaxStyles -> 
+     True, TranslationOptions -> {"Enabled" -> Dynamic[
+         AbsoluteCurrentValue[$FrontEnd, {TranslationOptions, "Enabled"}]]}], 
+    "Wolfram"},
+   "ChatCodeBlockTemplate"]], "ChatCodeBlock",ExpressionUUID->
+  "e3d5239b-0c88-4765-a41c-a0ca71c96bd7"],
+ "\nYou do not need all permutations. You only need permutations consistent \
+with repeated particle slots of a model row.\n\nA faster approach is: \n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  "group incident legs by particle type,"
+ }], "InlineItem",ExpressionUUID->"b6adac15-e565-4c27-bf94-d8a1ccc9feb3"],
+ "\n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  "group row slots by particle type,"
+ }], "InlineItem",ExpressionUUID->"0290fc12-abfb-4055-9fe3-84dcbab56637"],
+ "\n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  "assign only within matching groups,"
+ }], "InlineItem",ExpressionUUID->"11250333-6fee-46f4-969b-7193b75179e5"],
+ "\n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  "take product across particle groups."
+ }], "InlineItem",ExpressionUUID->"6e62f8c1-eb31-4d82-9654-8256c39e8318"],
+ "\nHere is a much faster replacement idea: \n",
+ Cell[BoxData[
+  TemplateBox[{
+    Cell[
+     BoxData[
+      RowBox[{
+        RowBox[{"ClearAll", "[", "vertexRowMatches", "]"}], 
+        "\[IndentingNewLine]", "\[IndentingNewLine]", 
+        RowBox[{
+          RowBox[{"vertexRowMatches", "[", 
+            
+            RowBox[{"incidentLegs_List", ",", "row_", ",", 
+              "validParticles_List"}], "]"}], ":=", 
+          RowBox[{"Module", "[", "\[IndentingNewLine]", "  ", 
+            RowBox[{
+              RowBox[{"{", 
+                
+                RowBox[{
+                 "rowParticles", ",", "legGroups", ",", "rowPositions", ",", 
+                  "assignmentsPerParticle"}], "}"}], ",", 
+              "\[IndentingNewLine]", "  ", 
+              RowBox[{
+                RowBox[{"rowParticles", "=", 
+                  RowBox[{"modelRowParticles", "[", 
+                    RowBox[{"row", ",", "validParticles"}], "]"}]}], ";", 
+                "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+                RowBox[{"If", "[", 
+                  RowBox[{
+                    RowBox[{
+                    RowBox[{"Length", "[", "rowParticles", "]"}], "=!=", 
+                    RowBox[{"Length", "[", "incidentLegs", "]"}]}], ",", 
+                    RowBox[{"Return", "[", 
+                    RowBox[{"{", "}"}], "]"}]}], "]"}], ";", 
+                "\[IndentingNewLine]", "  ", 
+                RowBox[{"If", "[", 
+                  RowBox[{
+                    RowBox[{
+                    RowBox[{"Sort", "[", "rowParticles", "]"}], "=!=", 
+                    RowBox[{"Sort", "[", 
+                    RowBox[{"incidentLegs", "[", 
+                    RowBox[{"[", 
+                    RowBox[{"All", ",", "\"Particle\""}], "]"}], "]"}], 
+                    "]"}]}], ",", 
+                    RowBox[{"Return", "[", 
+                    RowBox[{"{", "}"}], "]"}]}], "]"}], ";", 
+                "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+                RowBox[{"legGroups", "=", 
+                  RowBox[{"GroupBy", "[", 
+                    RowBox[{"incidentLegs", ",", 
+                    RowBox[{
+                    RowBox[{"#", "[", "\"Particle\"", "]"}], " ", "&"}]}], 
+                    "]"}]}], ";", "\[IndentingNewLine]", "  ", 
+                RowBox[{"rowPositions", "=", 
+                  RowBox[{"GroupBy", "[", 
+                    RowBox[{
+                    RowBox[{"Range", "[", 
+                    RowBox[{"Length", "[", "rowParticles", "]"}], "]"}], ",", 
+                    
+                    RowBox[{
+                    RowBox[{"rowParticles", "[", 
+                    RowBox[{"[", "#", "]"}], "]"}], " ", "&"}]}], "]"}]}], 
+                ";", "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+                
+                RowBox[{
+                 "assignmentsPerParticle", "=", "\[IndentingNewLine]", "    ", 
+                  RowBox[{"KeyValueMap", "[", "\[IndentingNewLine]", "      ", 
+                    RowBox[{
+                    RowBox[{"Function", "[", 
+                    RowBox[{
+                    RowBox[{"{", 
+                    RowBox[{"particle", ",", "positions"}], "}"}], ",", 
+                    "\[IndentingNewLine]", "        ", 
+                    RowBox[{
+                    RowBox[{
+                    RowBox[{"Thread", "[", 
+                    RowBox[{"positions", "->", "#"}], "]"}], " ", "&"}], " ", 
+                    "/@", " ", 
+                    RowBox[{"Permutations", "[", 
+                    RowBox[{"legGroups", "[", "particle", "]"}], "]"}]}]}], 
+                    "\[IndentingNewLine]", "      ", "]"}], ",", 
+                    "\[IndentingNewLine]", "      ", "rowPositions"}], 
+                    "\[IndentingNewLine]", "    ", "]"}]}], ";", 
+                "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+                RowBox[{"Map", "[", "\[IndentingNewLine]", "    ", 
+                  RowBox[{
+                    RowBox[{"Function", "[", 
+                    RowBox[{"rules", ",", "\[IndentingNewLine]", "      ", 
+                    RowBox[{"ReplacePart", "[", 
+                    RowBox[{
+                    RowBox[{"ConstantArray", "[", 
+                    RowBox[{"None", ",", 
+                    RowBox[{"Length", "[", "rowParticles", "]"}]}], "]"}], 
+                    ",", 
+                    RowBox[{"Flatten", "[", "rules", "]"}]}], "]"}]}], 
+                    "\[IndentingNewLine]", "    ", "]"}], ",", 
+                    "\[IndentingNewLine]", "    ", 
+                    RowBox[{"Tuples", "[", "assignmentsPerParticle", "]"}]}], 
+                  "\[IndentingNewLine]", "  ", "]"}]}]}], 
+            "\[IndentingNewLine]", "]"}]}]}]], "ChatCode", "Input", 
+     LanguageCategory -> "Input", ShowAutoStyles -> True, 
+     ShowStringCharacters -> True, ShowSyntaxStyles -> True, 
+     TranslationOptions -> {"Enabled" -> Dynamic[
+         AbsoluteCurrentValue[$FrontEnd, {TranslationOptions, "Enabled"}]]}], 
+    "Wolfram"},
+   "ChatCodeBlockTemplate"]], "ChatCodeBlock",ExpressionUUID->
+  "265f38f8-ca37-49bd-94f2-58fd2b0a62b9"],
+ "\nThis still uses permutations, but only within equal-particle groups \
+rather than across the whole vertex. For many realistic vertices this is much \
+smaller. \n",
+ Cell[BoxData[
+  TagBox[GridBox[{
+     {
+      TemplateBox[{0},
+       "Spacer1"]},
+     {
+      TemplateBox[{0},
+       "Spacer1"]}
+    },
+    AutoDelete->False,
+    FrameStyle->Directive[
+      LightDarkSwitched[
+       GrayLevel[0.8], 
+       GrayLevel[0.4867756]], 
+      AbsoluteThickness[1]],
+    GridBoxDividers->{
+     "Columns" -> {False, {True}, False}, "Rows" -> {False, {True}, False}},
+    GridBoxItemSize->{"Columns" -> {{Fit}}, "Rows" -> {{Automatic}}}],
+   "Grid"]], "MarkdownDelimiter",
+  ShowStringCharacters->False,
+  Background->None,ExpressionUUID->"c073d82a-f24f-4f59-8edd-37363d0b1046"],
+ "\n",
+ Cell[BoxData[
+  PaneBox[
+   StyleBox["\<\"4. Filter internal edge assignments by vertex compatibility \
+immediately\"\>", "Section",
+    CellFrame->0,
+    ShowStringCharacters->False,
+    FontSize->22],
+   ImageMargins->{{0, 0}, {5, 15}}]], "InlineSection",
+  Background->None,ExpressionUUID->"f952a100-9a48-43f3-8afb-f07242c97ce3"],
+ "\nRight now ",
+ Cell[BoxData[
+  TemplateBox[{
+    Cell["internalEdgeAssignments", Background -> None]},
+   "ChatCodeInlineTemplate"]], "ChatCodeActive",ExpressionUUID->
+  "61dca16f-395a-4433-9c70-8fb837b6f2f0"],
+ " generates all internal particle/orientation choices before checking \
+whether any vertex can use them.\n\nInstead, for each internal edge, derive \
+allowed particles from the adjacent vertex possibilities.\n\nFor a given \
+topology and external assignment:\n\n1. compute each internal vertex\
+\[CloseCurlyQuote]s required multiset patterns from the model,\n2. infer \
+which internal particles can appear on each adjacent internal edge,\n3. \
+intersect constraints from both ends of an internal edge,\n4. backtrack only \
+over surviving possibilities.\n\nThis is the single biggest algorithmic \
+shift.\n\nInstead of: \n",
+ Cell[BoxData[
+  TemplateBox[{
+    Cell[
+     BoxData[
+      RowBox[{
+        RowBox[{"edgeAssignments", "=", 
+          RowBox[{"internalEdgeAssignments", "[", 
+            
+            RowBox[{"internalEdges", ",", "particleTypes", ",", 
+              "antiParticleRules"}], "]"}]}], ";"}]], "ChatCode", "Input", 
+     LanguageCategory -> "Input", ShowAutoStyles -> True, 
+     ShowStringCharacters -> True, ShowSyntaxStyles -> True, 
+     TranslationOptions -> {"Enabled" -> Dynamic[
+         AbsoluteCurrentValue[$FrontEnd, {TranslationOptions, "Enabled"}]]}], 
+    "Wolfram"},
+   "ChatCodeBlockTemplate"]], "ChatCodeBlock",ExpressionUUID->
+  "707e50e1-f8f8-40ae-a727-ffd355ff08ef"],
+ "\nyou want a recursive constraint solver.\n\nPseudo-structure: \n",
+ Cell[BoxData[
+  TemplateBox[{
+    Cell[
+     BoxData[
+      RowBox[{
+        RowBox[{"assignInternalEdges", "[", 
+          
+          RowBox[{"graph_", ",", "extMap_", ",", "model_", ",", 
+            "antiRules_"}], "]"}], ":=", 
+        RowBox[{"Module", "[", "\[IndentingNewLine]", "  ", 
+          RowBox[{
+            RowBox[{"{", 
+              RowBox[{"internalEdges", ",", "domains", ",", 
+                RowBox[{"solutions", "=", 
+                  RowBox[{"{", "}"}]}]}], "}"}], ",", "\[IndentingNewLine]", 
+            "\[IndentingNewLine]", "  ", 
+            RowBox[{
+              RowBox[{"domains", "=", 
+                RowBox[{"initialDomainsFromVertexConstraints", "[", 
+                  
+                  RowBox[{
+                   "graph", ",", "extMap", ",", "model", ",", "antiRules"}], 
+                  "]"}]}], ";", "\[IndentingNewLine]", "\[IndentingNewLine]", 
+              "  ", 
+              RowBox[{
+                RowBox[{"backtrack", "[", 
+                  RowBox[{"currentDomains_", ",", "assigned_"}], "]"}], ":=", 
+                
+                RowBox[{"Module", "[", "\[IndentingNewLine]", "    ", 
+                  RowBox[{
+                    RowBox[{"{", 
+                    RowBox[{"edge", ",", "choices", ",", "newState"}], "}"}], 
+                    ",", "\[IndentingNewLine]", "    ", 
+                    RowBox[{"If", "[", 
+                    RowBox[{
+                    RowBox[{"allAssignedQ", "[", "currentDomains", "]"}], ",",
+                     "\[IndentingNewLine]", "      ", 
+                    RowBox[{"AppendTo", "[", 
+                    RowBox[{"solutions", ",", "assigned"}], "]"}], ",", 
+                    "\[IndentingNewLine]", "      ", 
+                    RowBox[{
+                    RowBox[{"edge", "=", 
+                    
+                    RowBox[{"chooseMostConstrainedEdge", "[", 
+                    "currentDomains", "]"}]}], ";", "\[IndentingNewLine]", 
+                    "      ", 
+                    RowBox[{"choices", "=", 
+                    RowBox[{"currentDomains", "[", "edge", "]"}]}], ";", 
+                    "\[IndentingNewLine]", "      ", 
+                    RowBox[{"Do", "[", "\[IndentingNewLine]", "        ", 
+                    RowBox[{
+                    RowBox[{
+                    RowBox[{"newState", "=", 
+                    RowBox[{"propagateChoice", "[", 
+                    
+                    RowBox[{"edge", ",", "choice", ",", "currentDomains", ",",
+                     "assigned"}], "]"}]}], ";", "\[IndentingNewLine]", 
+                    "        ", 
+                    RowBox[{"If", "[", 
+                    RowBox[{
+                    RowBox[{"newState", "=!=", "$Failed"}], ",", 
+                    "\[IndentingNewLine]", "          ", 
+                    RowBox[{"backtrack", "[", 
+                    RowBox[{
+                    RowBox[{"newState", "[", 
+                    RowBox[{"[", "1", "]"}], "]"}], ",", 
+                    RowBox[{"newState", "[", 
+                    RowBox[{"[", "2", "]"}], "]"}]}], "]"}]}], 
+                    "\[IndentingNewLine]", "        ", "]"}]}], ",", 
+                    "\[IndentingNewLine]", "        ", 
+                    RowBox[{"{", 
+                    RowBox[{"choice", ",", "choices"}], "}"}]}], 
+                    "\[IndentingNewLine]", "      ", "]"}]}]}], 
+                    "\[IndentingNewLine]", "    ", "]"}]}], 
+                  "\[IndentingNewLine]", "  ", "]"}]}], ";", 
+              "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+              RowBox[{"backtrack", "[", 
+                RowBox[{"domains", ",", 
+                  RowBox[{"<|", "|>"}]}], "]"}], ";", "\[IndentingNewLine]", 
+              "  ", "solutions"}]}], "\[IndentingNewLine]", "]"}]}]], 
+     "ChatCode", "Input", LanguageCategory -> "Input", ShowAutoStyles -> True,
+      ShowStringCharacters -> True, ShowSyntaxStyles -> True, 
+     TranslationOptions -> {"Enabled" -> Dynamic[
+         AbsoluteCurrentValue[$FrontEnd, {TranslationOptions, "Enabled"}]]}], 
+    "Wolfram"},
+   "ChatCodeBlockTemplate"]], "ChatCodeBlock",ExpressionUUID->
+  "39c335dd-a361-4b5c-a34f-5fd6648898bc"],
+ "\nThis is much closer to what fast diagram generators do. \n",
+ Cell[BoxData[
+  TagBox[GridBox[{
+     {
+      TemplateBox[{0},
+       "Spacer1"]},
+     {
+      TemplateBox[{0},
+       "Spacer1"]}
+    },
+    AutoDelete->False,
+    FrameStyle->Directive[
+      LightDarkSwitched[
+       GrayLevel[0.8], 
+       GrayLevel[0.4867756]], 
+      AbsoluteThickness[1]],
+    GridBoxDividers->{
+     "Columns" -> {False, {True}, False}, "Rows" -> {False, {True}, False}},
+    GridBoxItemSize->{"Columns" -> {{Fit}}, "Rows" -> {{Automatic}}}],
+   "Grid"]], "MarkdownDelimiter",
+  ShowStringCharacters->False,
+  Background->None,ExpressionUUID->"54f69d7f-7508-4f4a-9d03-c5c3dcc45a41"],
+ "\n",
+ Cell[BoxData[
+  PaneBox[
+   StyleBox["\<\"5. Canonicalize external assignments before deep \
+decoration\"\>", "Section",
+    CellFrame->0,
+    ShowStringCharacters->False,
+    FontSize->22],
+   ImageMargins->{{0, 0}, {5, 15}}]], "InlineSection",
+  Background->None,ExpressionUUID->"ff03090c-93e1-497d-975f-35fb227327ef"],
+ "\nWhen externals include repeated particles like ",
+ Cell[BoxData[
+  TemplateBox[{
+    Cell["{\"A.+\",\"A.+\",\"A.+\"}", Background -> None]},
+   "ChatCodeInlineTemplate"]], "ChatCodeActive",ExpressionUUID->
+  "9e342145-eaa0-4329-9ef7-83ca9856dd80"],
+ ", many leaf assignments are graph-automorphism equivalent.\n\nInstead of \
+all permutations of tagged particles over leaves, quotient by the \
+automorphism group of the topology.\n\nYou already compute automorphisms in \
+",
+ Cell[BoxData[
+  TemplateBox[{
+    Cell["canonicalDiagram", Background -> None]},
+   "ChatCodeInlineTemplate"]], "ChatCodeActive",ExpressionUUID->
+  "e21b6539-84d4-4d78-82be-482478e79673"],
+ ". Use them earlier.\n\nA practical quick fix: \n",
+ Cell[BoxData[
+  TemplateBox[{
+    Cell[
+     BoxData[
+      RowBox[{
+        RowBox[{"ClearAll", "[", "externalAssignmentsReduced", "]"}], 
+        "\[IndentingNewLine]", "\[IndentingNewLine]", 
+        RowBox[{
+          RowBox[{"externalAssignmentsReduced", "[", 
+            RowBox[{"graph_", ",", "externalParticles_List"}], "]"}], ":=", 
+          RowBox[{"Module", "[", "\[IndentingNewLine]", "  ", 
+            RowBox[{
+              RowBox[{"{", 
+                RowBox[{"leafVerts", ",", "raw", ",", "canonicalize"}], "}"}],
+               ",", "\[IndentingNewLine]", "  ", 
+              RowBox[{
+                RowBox[{"leafVerts", "=", 
+                  RowBox[{"Select", "[", 
+                    RowBox[{
+                    RowBox[{"VertexList", "[", "graph", "]"}], ",", 
+                    RowBox[{
+                    RowBox[{
+                    RowBox[{"VertexDegree", "[", 
+                    RowBox[{"graph", ",", "#"}], "]"}], "==", "1"}], " ", 
+                    "&"}]}], "]"}]}], ";", "\[IndentingNewLine]", "  ", 
+                RowBox[{"raw", "=", 
+                  RowBox[{
+                    RowBox[{
+                    RowBox[{"AssociationThread", "[", 
+                    RowBox[{"leafVerts", ",", "#"}], "]"}], " ", "&"}], " ", 
+                    "/@", " ", 
+                    RowBox[{"DeleteDuplicates", "[", 
+                    RowBox[{"Permutations", "[", 
+                    RowBox[{"tagParticles", "[", "externalParticles", "]"}], 
+                    "]"}], "]"}]}]}], ";", "\[IndentingNewLine]", 
+                "\[IndentingNewLine]", "  ", 
+                RowBox[{
+                  RowBox[{"canonicalize", "[", "extMap_", "]"}], ":=", 
+                  RowBox[{"First", " ", "@", " ", 
+                    RowBox[{"SortBy", "[", "\[IndentingNewLine]", "    ", 
+                    RowBox[{
+                    RowBox[{"Map", "[", "\[IndentingNewLine]", "      ", 
+                    RowBox[{
+                    RowBox[{"Function", "[", 
+                    RowBox[{"iso", ",", "\[IndentingNewLine]", "        ", 
+                    RowBox[{"KeySort", " ", "@", " ", 
+                    RowBox[{"Association", " ", "@", " ", 
+                    RowBox[{"KeyValueMap", "[", 
+                    RowBox[{
+                    RowBox[{
+                    RowBox[{"(", 
+                    RowBox[{
+                    RowBox[{"iso", "[", "#1", "]"}], "->", "#2"}], ")"}], " ",
+                     "&"}], ",", "extMap"}], "]"}]}]}]}], 
+                    "\[IndentingNewLine]", "      ", "]"}], ",", 
+                    "\[IndentingNewLine]", "      ", 
+                    RowBox[{"Association", " ", "/@", " ", 
+                    RowBox[{"(", 
+                    RowBox[{"Normal", " ", "/@", " ", 
+                    RowBox[{"FindGraphIsomorphism", "[", 
+                    RowBox[{"graph", ",", "graph", ",", "All"}], "]"}]}], 
+                    ")"}]}]}], "\[IndentingNewLine]", "    ", "]"}], ",", 
+                    "\[IndentingNewLine]", "    ", 
+                    RowBox[{
+                    RowBox[{"ToString", "[", 
+                    RowBox[{"InputForm", "[", "#", "]"}], "]"}], " ", "&"}]}],
+                     "\[IndentingNewLine]", "  ", "]"}]}]}], ";", 
+                "\[IndentingNewLine]", "\[IndentingNewLine]", "  ", 
+                RowBox[{"DeleteDuplicatesBy", "[", 
+                  RowBox[{"raw", ",", "canonicalize"}], "]"}]}]}], 
+            "\[IndentingNewLine]", "]"}]}]}]], "ChatCode", "Input", 
+     LanguageCategory -> "Input", ShowAutoStyles -> True, 
+     ShowStringCharacters -> True, ShowSyntaxStyles -> True, 
+     TranslationOptions -> {"Enabled" -> Dynamic[
+         AbsoluteCurrentValue[$FrontEnd, {TranslationOptions, "Enabled"}]]}], 
+    "Wolfram"},
+   "ChatCodeBlockTemplate"]], "ChatCodeBlock",ExpressionUUID->
+  "1697c4ab-5a53-4714-b44f-ac1d859b4439"],
+ "\nThen use this instead of ",
+ Cell[BoxData[
+  TemplateBox[{
+    Cell["externalAssignments", Background -> None]},
+   "ChatCodeInlineTemplate"]], "ChatCodeActive",ExpressionUUID->
+  "0b45e4bb-fbf1-43a9-9b3a-e25c29917de7"],
+ ".\n\nFor repeated bosons this can reduce work a lot. \n",
+ Cell[BoxData[
+  TagBox[GridBox[{
+     {
+      TemplateBox[{0},
+       "Spacer1"]},
+     {
+      TemplateBox[{0},
+       "Spacer1"]}
+    },
+    AutoDelete->False,
+    FrameStyle->Directive[
+      LightDarkSwitched[
+       GrayLevel[0.8], 
+       GrayLevel[0.4867756]], 
+      AbsoluteThickness[1]],
+    GridBoxDividers->{
+     "Columns" -> {False, {True}, False}, "Rows" -> {False, {True}, False}},
+    GridBoxItemSize->{"Columns" -> {{Fit}}, "Rows" -> {{Automatic}}}],
+   "Grid"]], "MarkdownDelimiter",
+  ShowStringCharacters->False,
+  Background->None,ExpressionUUID->"e8301f0a-67f2-449b-bc1e-a4c4a0c78d8c"],
+ "\n",
+ Cell[BoxData[
+  PaneBox[
+   StyleBox["\<\"6. Replace string-based canonicalization keys\"\>", "Section",
+    CellFrame->0,
+    ShowStringCharacters->False,
+    FontSize->22],
+   ImageMargins->{{0, 0}, {5, 15}}]], "InlineSection",
+  Background->None,ExpressionUUID->"0adf6612-337a-4a95-b648-29020ff833c6"],
+ "\nThis is slow: \n",
+ Cell[BoxData[
+  TemplateBox[{
+    Cell[
+     BoxData[
+      RowBox[{"SortBy", "[", 
+        RowBox[{"...", ",", 
+          RowBox[{
+            RowBox[{"ToString", "[", 
+              RowBox[{"InputForm", "[", "#", "]"}], "]"}], " ", "&"}]}], 
+        "]"}]], "ChatCode", "Input", LanguageCategory -> "Input", 
+     ShowAutoStyles -> True, ShowStringCharacters -> True, ShowSyntaxStyles -> 
+     True, TranslationOptions -> {"Enabled" -> Dynamic[
+         AbsoluteCurrentValue[$FrontEnd, {TranslationOptions, "Enabled"}]]}], 
+    "Wolfram"},
+   "ChatCodeBlockTemplate"]], "ChatCodeBlock",ExpressionUUID->
+  "8d102174-fb59-451d-821d-29472cde9f27"],
+ "\nPrefer structural keys such as ",
+ Cell[BoxData[
+  TemplateBox[{
+   "OrderedQ", "paclet:ref/OrderedQ", 
+    "https://reference.wolfram.com/language/ref/OrderedQ.html"},
+   "TextRefLink"]],ExpressionUUID->"db1e8bc6-5778-4505-ba56-910a1dc5fd7c"],
+ ", ",
+ Cell[BoxData[
+  TemplateBox[{
+   "Sort", "paclet:ref/Sort", 
+    "https://reference.wolfram.com/language/ref/Sort.html"},
+   "TextRefLink"]],ExpressionUUID->"f2674552-00c8-4942-8940-8b5b0958fadf"],
+ ", ",
+ Cell[BoxData[
+  TemplateBox[{
+   "CanonicalGraph", "paclet:ref/CanonicalGraph", 
+    "https://reference.wolfram.com/language/ref/CanonicalGraph.html"},
+   "TextRefLink"]],ExpressionUUID->"12fc8da7-41bc-46aa-8651-1887f16c6d27"],
+ ", or explicit normalized associations/lists.\n\nFor example, instead of \
+stringifying whole structures: \n",
+ Cell[BoxData[
+  TemplateBox[{
+    Cell[
+     BoxData[
+      RowBox[{
+        RowBox[{"canonicalVertexInstance", "[", "vs_", "]"}], ":=", 
+        RowBox[{"{", "\[IndentingNewLine]", "  ", 
+          RowBox[{
+            RowBox[{"SortBy", "[", "\[IndentingNewLine]", "    ", 
+              RowBox[{
+                RowBox[{
+                  RowBox[{"vs", "[", "\"IncidentLegs\"", "]"}], "[", 
+                  RowBox[{"[", 
+                    RowBox[{"All", ",", 
+                    RowBox[{"{", 
+                    
+                    RowBox[{
+                    "\"Particle\"", ",", "\"Index\"", ",", "\"Kind\""}], 
+                    "}"}]}], "]"}], "]"}], ",", "\[IndentingNewLine]", "    ", 
+                RowBox[{
+                  RowBox[{"{", 
+                    RowBox[{"#Particle", ",", "#Kind", ",", 
+                    RowBox[{"ToString", "[", 
+                    RowBox[{"#Index", ",", "InputForm"}], "]"}]}], "}"}], " ",
+                   "&"}]}], "\[IndentingNewLine]", "  ", "]"}], ",", 
+            "\[IndentingNewLine]", "  ", 
+            RowBox[{"HoldComplete", "[", 
+              RowBox[{"vs", "[", "\"Expression\"", "]"}], "]"}]}], 
+          "\[IndentingNewLine]", "}"}]}]], "ChatCode", "Input", 
+     LanguageCategory -> "Input", ShowAutoStyles -> True, 
+     ShowStringCharacters -> True, ShowSyntaxStyles -> True, 
+     TranslationOptions -> {"Enabled" -> Dynamic[
+         AbsoluteCurrentValue[$FrontEnd, {TranslationOptions, "Enabled"}]]}], 
+    "Wolfram"},
+   "ChatCodeBlockTemplate"]], "ChatCodeBlock",ExpressionUUID->
+  "a5363ea2-da33-4309-8fd1-07e44d52ab7e"],
+ "\nand then use direct structural comparison.\n\nEven better, define a \
+compact signature using only what determines uniqueness. \n",
+ Cell[BoxData[
+  TagBox[GridBox[{
+     {
+      TemplateBox[{0},
+       "Spacer1"]},
+     {
+      TemplateBox[{0},
+       "Spacer1"]}
+    },
+    AutoDelete->False,
+    FrameStyle->Directive[
+      LightDarkSwitched[
+       GrayLevel[0.8], 
+       GrayLevel[0.4867756]], 
+      AbsoluteThickness[1]],
+    GridBoxDividers->{
+     "Columns" -> {False, {True}, False}, "Rows" -> {False, {True}, False}},
+    GridBoxItemSize->{"Columns" -> {{Fit}}, "Rows" -> {{Automatic}}}],
+   "Grid"]], "MarkdownDelimiter",
+  ShowStringCharacters->False,
+  Background->None,ExpressionUUID->"4d7b0064-e7d3-4153-a4e8-a1cf3b372539"],
+ "\n",
+ Cell[BoxData[
+  PaneBox[
+   StyleBox["\<\"A concrete optimization plan\"\>", "Title",
+    CellFrame->0,
+    ShowStringCharacters->False,
+    FontSize->26],
+   ImageMargins->{{0, 0}, {5, 15}}]], "InlineSection",
+  Background->None,ExpressionUUID->"45956d5b-f21e-4653-8ae5-b5870819140b"],
+ "\nIf you want the biggest speedup for the least rewrite effort, do these in \
+order: \n",
+ Cell[BoxData[
+  PaneBox[
+   StyleBox["\<\"Step 1\"\>", "Section",
+    CellFrame->0,
+    ShowStringCharacters->False,
+    FontSize->22],
+   ImageMargins->{{0, 0}, {5, 15}}]], "InlineSection",
+  Background->None,ExpressionUUID->"f5a3d15f-0b4b-4593-b4e9-1a7cb0ea11ad"],
+ "\nMemoize topology-dependent computations: \n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  Cell[BoxData[
+   TemplateBox[{
+     Cell["makeTopologySkeletons", Background -> None]},
+    "ChatCodeInlineTemplate"]], "ChatCodeActive",ExpressionUUID->
+   "1bd1520a-ab24-487a-92ac-694fdb471b06"]
+ }], "InlineItem",ExpressionUUID->"fce4b3a3-7f11-4342-8933-8e9fb1bf75fa"],
+ "\n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  Cell[BoxData[
+   TemplateBox[{
+     Cell["topologyData", Background -> None]},
+    "ChatCodeInlineTemplate"]], "ChatCodeActive",ExpressionUUID->
+   "278b969b-64f0-48c2-8441-814e234897ee"]
+ }], "InlineItem",ExpressionUUID->"b7469049-d33f-44a0-885e-7b0405002403"],
+ "\n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  Cell[BoxData[
+   TemplateBox[{
+     Cell["canonicalDiagram", Background -> None]},
+    "ChatCodeInlineTemplate"]], "ChatCodeActive",ExpressionUUID->
+   "e06f07ac-96e9-4ef0-b744-e066b4035e55"],
+  " or better the topology automorphisms"
+ }], "InlineItem",ExpressionUUID->"8e83e12a-fb56-46e9-9a1e-efce960e1a2f"],
+ "\n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  "model-derived things:"
+ }], "InlineItem",ExpressionUUID->"64d66696-5b07-4dfc-aa74-1cbc93240498"],
+ "\n",
+ Cell[TextData[{
+  "  ",
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  Cell[BoxData[
+   TemplateBox[{
+     Cell["particleNames[model]", Background -> None]},
+    "ChatCodeInlineTemplate"]], "ChatCodeActive",ExpressionUUID->
+   "3f1dfece-686c-4553-a7b1-f16864c6b61e"]
+ }], "InlineSubitem",ExpressionUUID->"5a32f54a-1c67-4888-bfb6-b34a399daf1b"],
+ "\n",
+ Cell[TextData[{
+  "  ",
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  Cell[BoxData[
+   TemplateBox[{
+     Cell["modelVertices[model]", Background -> None]},
+    "ChatCodeInlineTemplate"]], "ChatCodeActive",ExpressionUUID->
+   "15d936fe-d134-4c21-aeb8-07a9041f5c21"]
+ }], "InlineSubitem",ExpressionUUID->"094aa485-fd9b-4fdb-aad4-b8b5df985e75"],
+ "\n",
+ Cell[TextData[{
+  "  ",
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  Cell[BoxData[
+   TemplateBox[{
+     Cell["vertexValences[model]", Background -> None]},
+    "ChatCodeInlineTemplate"]], "ChatCodeActive",ExpressionUUID->
+   "1ad3aaea-304d-45d1-a881-b7a5a5cbc40f"]
+ }], "InlineSubitem",ExpressionUUID->"64e540e5-31d8-407b-91ee-bc973b3c3c24"],
+ "\n",
+ Cell[TextData[{
+  "  ",
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  Cell[BoxData[
+   TemplateBox[{
+     Cell["antiParticleRulesFromModel[model]", Background -> None]},
+    "ChatCodeInlineTemplate"]], "ChatCodeActive",ExpressionUUID->
+   "9284ba7e-c244-4e4c-95b5-fde28d772577"]
+ }], "InlineSubitem",ExpressionUUID->"75b83e25-396f-4222-aa38-7807ee317c35"],
+ "\n",
+ Cell[BoxData[
+  PaneBox[
+   StyleBox["\<\"Step 2\"\>", "Section",
+    CellFrame->0,
+    ShowStringCharacters->False,
+    FontSize->22],
+   ImageMargins->{{0, 0}, {5, 15}}]], "InlineSection",
+  Background->None,ExpressionUUID->"9bd8e676-6dd2-4131-98cf-1578248f831d"],
+ "\nReplace ",
+ Cell[BoxData[
+  TemplateBox[{
+    Cell["internalEdgeIndexLabels", Background -> None]},
+   "ChatCodeInlineTemplate"]], "ChatCodeActive",ExpressionUUID->
+  "02040b13-c741-4eee-85fb-53af31421fc0"],
+ " with a version that uses cached edge-split data. \n",
+ Cell[BoxData[
+  PaneBox[
+   StyleBox["\<\"Step 3\"\>", "Section",
+    CellFrame->0,
+    ShowStringCharacters->False,
+    FontSize->22],
+   ImageMargins->{{0, 0}, {5, 15}}]], "InlineSection",
+  Background->None,ExpressionUUID->"5299281b-0988-437e-beb0-c60784b22d32"],
+ "\nReplace ",
+ Cell[BoxData[
+  TemplateBox[{
+    Cell["vertexRowMatches", Background -> None]},
+   "ChatCodeInlineTemplate"]], "ChatCodeActive",ExpressionUUID->
+  "bd482aca-0aa6-4284-9254-b61f17b40ddf"],
+ " so it does not permute all incident legs. \n",
+ Cell[BoxData[
+  PaneBox[
+   StyleBox["\<\"Step 4\"\>", "Section",
+    CellFrame->0,
+    ShowStringCharacters->False,
+    FontSize->22],
+   ImageMargins->{{0, 0}, {5, 15}}]], "InlineSection",
+  Background->None,ExpressionUUID->"3a4030fe-0cab-4f62-9508-a55f7158f095"],
+ "\nReduce external assignments modulo graph automorphisms. \n",
+ Cell[BoxData[
+  PaneBox[
+   StyleBox["\<\"Step 5\"\>", "Section",
+    CellFrame->0,
+    ShowStringCharacters->False,
+    FontSize->22],
+   ImageMargins->{{0, 0}, {5, 15}}]], "InlineSection",
+  Background->None,ExpressionUUID->"e0c9765a-62a2-431c-930d-0bf1b3b18621"],
+ "\nReplace brute-force ",
+ Cell[BoxData[
+  TemplateBox[{
+    Cell["internalEdgeAssignments", Background -> None]},
+   "ChatCodeInlineTemplate"]], "ChatCodeActive",ExpressionUUID->
+  "42609d5d-60e1-4045-8806-4d27b7cac2fd"],
+ " with backtracking + pruning.\n\nThat last step is where you'll go from \
+\[OpenCurlyDoubleQuote]works\[CloseCurlyDoubleQuote] to \
+\[OpenCurlyDoubleQuote]MadGraph-like.\[CloseCurlyDoubleQuote] \n",
+ Cell[BoxData[
+  TagBox[GridBox[{
+     {
+      TemplateBox[{0},
+       "Spacer1"]},
+     {
+      TemplateBox[{0},
+       "Spacer1"]}
+    },
+    AutoDelete->False,
+    FrameStyle->Directive[
+      LightDarkSwitched[
+       GrayLevel[0.8], 
+       GrayLevel[0.4867756]], 
+      AbsoluteThickness[1]],
+    GridBoxDividers->{
+     "Columns" -> {False, {True}, False}, "Rows" -> {False, {True}, False}},
+    GridBoxItemSize->{"Columns" -> {{Fit}}, "Rows" -> {{Automatic}}}],
+   "Grid"]], "MarkdownDelimiter",
+  ShowStringCharacters->False,
+  Background->None,ExpressionUUID->"474996a7-caf4-4125-97b4-cabe03ff344f"],
+ "\n",
+ Cell[BoxData[
+  PaneBox[
+   StyleBox["\<\"A few immediate code-level memoizations\"\>", "Title",
+    CellFrame->0,
+    ShowStringCharacters->False,
+    FontSize->26],
+   ImageMargins->{{0, 0}, {5, 15}}]], "InlineSection",
+  Background->None,ExpressionUUID->"d92e58f1-4c20-4de9-9de0-855567229de9"],
+ "\nThese are easy wins. \n",
+ Cell[BoxData[
+  TemplateBox[{
+    Cell[
+     BoxData[
+      RowBox[{
+        RowBox[{
+          RowBox[{"ClearAll", "[", "\[IndentingNewLine]", "  ", 
+            
+            RowBox[{"particleNames", ",", "modelVertices", ",", 
+              "vertexValences", ",", "\[IndentingNewLine]", "  ", 
+              "antiParticleRulesFromModel"}], "\[IndentingNewLine]", "]"}], 
+          ";"}], "\[IndentingNewLine]", "\[IndentingNewLine]", 
+        RowBox[{
+          RowBox[{
+            RowBox[{"particleNames", "[", "model_", "]"}], ":=", 
+            RowBox[{
+              RowBox[{"particleNames", "[", "model", "]"}], "=", 
+              "\[IndentingNewLine]", "  ", 
+              RowBox[{"DeleteDuplicates", " ", "@", " ", 
+                RowBox[{"Flatten", "[", 
+                  RowBox[{"model", "[", 
+                    RowBox[{"[", 
+                    RowBox[{"1", ",", "All", ",", 
+                    RowBox[{"{", 
+                    RowBox[{"2", ",", "3"}], "}"}]}], "]"}], "]"}], 
+                  "]"}]}]}]}], ";"}], "\[IndentingNewLine]", 
+        "\[IndentingNewLine]", 
+        RowBox[{
+          RowBox[{
+            RowBox[{"modelVertices", "[", "model_", "]"}], ":=", 
+            RowBox[{
+              RowBox[{"modelVertices", "[", "model", "]"}], "=", 
+              "\[IndentingNewLine]", "  ", 
+              RowBox[{"Module", "[", 
+                RowBox[{
+                  RowBox[{"{", "validParticles", "}"}], ",", 
+                  "\[IndentingNewLine]", "    ", 
+                  RowBox[{
+                    RowBox[{"validParticles", "=", 
+                    RowBox[{"particleNames", "[", "model", "]"}]}], ";", 
+                    "\[IndentingNewLine]", "    ", 
+                    
+                    RowBox[{
+                    "DeleteDuplicates", "[", "\[IndentingNewLine]", "      ", 
+                    
+                    RowBox[{"Sort", " ", "/@", " ", 
+                    
+                    RowBox[{
+                    "Select", "[", "\[IndentingNewLine]", "        ", 
+                    RowBox[{
+                    RowBox[{
+                    RowBox[{
+                    RowBox[{"vertexParticles", "[", 
+                    RowBox[{"#", ",", "validParticles"}], "]"}], " ", "&"}], 
+                    " ", "/@", " ", 
+                    RowBox[{"model", "[", 
+                    RowBox[{"[", "2", "]"}], "]"}]}], ",", 
+                    "\[IndentingNewLine]", "        ", 
+                    RowBox[{
+                    RowBox[{
+                    RowBox[{"Length", "[", "#", "]"}], ">=", "3"}], " ", 
+                    "&"}]}], "\[IndentingNewLine]", "      ", "]"}]}], 
+                    "\[IndentingNewLine]", "    ", "]"}]}]}], 
+                "\[IndentingNewLine]", "  ", "]"}]}]}], ";"}], 
+        "\[IndentingNewLine]", "\[IndentingNewLine]", 
+        RowBox[{
+          RowBox[{
+            RowBox[{"vertexValences", "[", "model_", "]"}], ":=", 
+            RowBox[{
+              RowBox[{"vertexValences", "[", "model", "]"}], "=", 
+              "\[IndentingNewLine]", "  ", 
+              RowBox[{"DeleteDuplicates", "[", 
+                RowBox[{"Length", " ", "/@", " ", 
+                  RowBox[{"modelVertices", "[", "model", "]"}]}], "]"}]}]}], 
+          ";"}], "\[IndentingNewLine]", "\[IndentingNewLine]", 
+        RowBox[{
+          RowBox[{
+            RowBox[{"antiParticleRulesFromModel", "[", "model_", "]"}], ":=", 
+            
+            RowBox[{
+              RowBox[{"antiParticleRulesFromModel", "[", "model", "]"}], "=", 
+              "\[IndentingNewLine]", "  ", 
+              RowBox[{"Association", " ", "@", " ", 
+                RowBox[{"Flatten", "[", "\[IndentingNewLine]", "    ", 
+                  RowBox[{
+                    RowBox[{
+                    RowBox[{"model", "[", 
+                    RowBox[{"[", 
+                    RowBox[{"1", ",", "All", ",", 
+                    RowBox[{"{", 
+                    RowBox[{"2", ",", "3"}], "}"}]}], "]"}], "]"}], " ", "/.",
+                     " ", 
+                    RowBox[{
+                    RowBox[{"{", 
+                    RowBox[{"particle_", ",", "antiParticle_"}], "}"}], ":>", 
+                    
+                    RowBox[{"{", "\[IndentingNewLine]", "      ", 
+                    RowBox[{
+                    RowBox[{"particle", "->", "antiParticle"}], ",", 
+                    "\[IndentingNewLine]", "      ", 
+                    RowBox[{"antiParticle", "->", "particle"}]}], 
+                    "\[IndentingNewLine]", "    ", "}"}]}]}], ",", 
+                    "\[IndentingNewLine]", "    ", "1"}], 
+                  "\[IndentingNewLine]", "  ", "]"}]}]}]}], ";"}]}]], 
+     "ChatCode", "Input", LanguageCategory -> "Input", ShowAutoStyles -> True,
+      ShowStringCharacters -> True, ShowSyntaxStyles -> True, 
+     TranslationOptions -> {"Enabled" -> Dynamic[
+         AbsoluteCurrentValue[$FrontEnd, {TranslationOptions, "Enabled"}]]}], 
+    "Wolfram"},
+   "ChatCodeBlockTemplate"]], "ChatCodeBlock",ExpressionUUID->
+  "fe5d03b6-23d2-48e3-be66-92d06ae4f1ca"],
+ "\n",
+ Cell[BoxData[
+  TagBox[GridBox[{
+     {
+      TemplateBox[{0},
+       "Spacer1"]},
+     {
+      TemplateBox[{0},
+       "Spacer1"]}
+    },
+    AutoDelete->False,
+    FrameStyle->Directive[
+      LightDarkSwitched[
+       GrayLevel[0.8], 
+       GrayLevel[0.4867756]], 
+      AbsoluteThickness[1]],
+    GridBoxDividers->{
+     "Columns" -> {False, {True}, False}, "Rows" -> {False, {True}, False}},
+    GridBoxItemSize->{"Columns" -> {{Fit}}, "Rows" -> {{Automatic}}}],
+   "Grid"]], "MarkdownDelimiter",
+  ShowStringCharacters->False,
+  Background->None,ExpressionUUID->"064aab34-9bff-4d52-b47b-faba036d8d89"],
+ "\n",
+ Cell[BoxData[
+  PaneBox[
+   StyleBox["\<\"Why MadGraph is so much faster\"\>", "Title",
+    CellFrame->0,
+    ShowStringCharacters->False,
+    FontSize->26],
+   ImageMargins->{{0, 0}, {5, 15}}]], "InlineSection",
+  Background->None,ExpressionUUID->"424f084c-963d-4fdd-8fa7-7afe66405df3"],
+ "\nMadGraph does not: \n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  "enumerate all external permutations blindly,"
+ }], "InlineItem",ExpressionUUID->"c8c2b7d3-73fe-4fe5-9806-4978d8f8d7d7"],
+ "\n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  "enumerate all internal particle assignments blindly,"
+ }], "InlineItem",ExpressionUUID->"2a49bc78-efe0-4fc1-93f2-cfe1894b3514"],
+ "\n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  "match vertices by trying all local permutations,"
+ }], "InlineItem",ExpressionUUID->"69b9e375-7df7-4fc0-ad25-52b2189e1e60"],
+ "\n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  "deduplicate only at the end."
+ }], "InlineItem",ExpressionUUID->"7a521249-aa8c-454b-a2f9-23935b8a3c60"],
+ "\nInstead it uses: \n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  "canonical topologies,"
+ }], "InlineItem",ExpressionUUID->"8d0f3a19-c5e9-4ec3-8715-dfabe9b86c84"],
+ "\n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  "recursive construction from interaction rules,"
+ }], "InlineItem",ExpressionUUID->"bd539972-5d7b-452b-9403-f028e6dd5e1c"],
+ "\n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  "immediate rejection of impossible partial assignments,"
+ }], "InlineItem",ExpressionUUID->"e34a7aa1-7aa1-4c56-8f4a-e9c9f2415a51"],
+ "\n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  "strong symmetry reduction,"
+ }], "InlineItem",ExpressionUUID->"d88d23d0-564f-458e-becb-10bb20ad50c8"],
+ "\n",
+ Cell[TextData[{
+  StyleBox["\[Bullet]",
+   FontColor->LightDarkSwitched[
+     GrayLevel[0.5], 
+     GrayLevel[0.7533742]]],
+  " ",
+  "process-specific pruning."
+ }], "InlineItem",ExpressionUUID->"c4f75951-23db-4e5f-95d6-cadab29289b2"],
+ "\nSo your code is more of a brute-force verifier, while MadGraph is a \
+constrained generator. \n",
+ Cell[BoxData[
+  TagBox[GridBox[{
+     {
+      TemplateBox[{0},
+       "Spacer1"]},
+     {
+      TemplateBox[{0},
+       "Spacer1"]}
+    },
+    AutoDelete->False,
+    FrameStyle->Directive[
+      LightDarkSwitched[
+       GrayLevel[0.8], 
+       GrayLevel[0.4867756]], 
+      AbsoluteThickness[1]],
+    GridBoxDividers->{
+     "Columns" -> {False, {True}, False}, "Rows" -> {False, {True}, False}},
+    GridBoxItemSize->{"Columns" -> {{Fit}}, "Rows" -> {{Automatic}}}],
+   "Grid"]], "MarkdownDelimiter",
+  ShowStringCharacters->False,
+  Background->None,ExpressionUUID->"705ea36b-f53e-49b2-ab11-1dc12ef1c4a8"],
+ "\n",
+ Cell[BoxData[
+  PaneBox[
+   StyleBox["\<\"Likely dominant cost in your example\"\>", "Title",
+    CellFrame->0,
+    ShowStringCharacters->False,
+    FontSize->26],
+   ImageMargins->{{0, 0}, {5, 15}}]], "InlineSection",
+  Background->None,ExpressionUUID->"12a21cf5-9abc-4ba3-8ab6-ee3a27d8c26a"],
+ "\nFor: \n",
+ Cell[BoxData[
+  TemplateBox[{
+    Cell[
+     BoxData[
+      RowBox[{"CreateDiagrams", "[", 
+        RowBox[{
+         "\"e\"", ",", "\"E\"", ",", "\"A.+\"", ",", "\"A.+\"", ",", 
+          "\"A.+\"", ",", "sm"}], "]"}]], "ChatCode", "Input", 
+     LanguageCategory -> "Input", ShowAutoStyles -> True, 
+     ShowStringCharacters -> True, ShowSyntaxStyles -> True, 
+     TranslationOptions -> {"Enabled" -> Dynamic[
+         AbsoluteCurrentValue[$FrontEnd, {TranslationOptions, "Enabled"}]]}], 
+    "Wolfram"},
+   "ChatCodeBlockTemplate"]], "ChatCodeBlock",ExpressionUUID->
+  "96cc9947-98e5-49fe-9890-eb97ca0467d7"],
+ "\nthe likely cost order is:\n\n1. external assignment permutations,\n2. \
+internal assignment generation plus repeated vertex matching,\n3. repeated \
+connected-component computation,\n4. duplicate elimination by full \
+signatures.\n\nThe fact that you still get only ",
+ Cell[BoxData[
+  TemplateBox[{
+    Cell["6", Background -> None]},
+   "ChatCodeInlineTemplate"]], "ChatCodeActive",ExpressionUUID->
+  "452c1528-7a6a-42c0-8ea4-646fb60f5cd9"],
+ " final diagrams after ",
+ Cell[BoxData[
+  TemplateBox[{
+    Cell["500", Background -> None]},
+   "ChatCodeInlineTemplate"]], "ChatCodeActive",ExpressionUUID->
+  "9628c8a3-b652-4338-90bf-0a3ff2710dc2"],
+ " seconds is exactly the symptom of \[OpenCurlyDoubleQuote]huge search tree, \
+tiny answer set.\[CloseCurlyDoubleQuote] \n",
+ Cell[BoxData[
+  TagBox[GridBox[{
+     {
+      TemplateBox[{0},
+       "Spacer1"]},
+     {
+      TemplateBox[{0},
+       "Spacer1"]}
+    },
+    AutoDelete->False,
+    FrameStyle->Directive[
+      LightDarkSwitched[
+       GrayLevel[0.8], 
+       GrayLevel[0.4867756]], 
+      AbsoluteThickness[1]],
+    GridBoxDividers->{
+     "Columns" -> {False, {True}, False}, "Rows" -> {False, {True}, False}},
+    GridBoxItemSize->{"Columns" -> {{Fit}}, "Rows" -> {{Automatic}}}],
+   "Grid"]], "MarkdownDelimiter",
+  ShowStringCharacters->False,
+  Background->None,ExpressionUUID->"a7efdf87-2d3a-47e7-8681-887ff461c24a"],
+ "\n",
+ Cell[BoxData[
+  PaneBox[
+   StyleBox["\<\"Recommendation\"\>", "Title",
+    CellFrame->0,
+    ShowStringCharacters->False,
+    FontSize->26],
+   ImageMargins->{{0, 0}, {5, 15}}]], "InlineSection",
+  Background->None,ExpressionUUID->"46f4ad16-7060-495a-9316-5440e4aab89d"],
+ "\nIf your goal is practical performance, I would strongly recommend \
+rewriting generation as:\n\n1. generate nonisomorphic tree topologies for the \
+external multiplicity,\n2. for each topology, assign external particles ",
+ StyleBox["modulo automorphisms",
+  FontWeight->Bold],
+ ",\n3. recursively assign internal lines one edge/vertex at a time using \
+model constraints,\n4. build vertex expressions only after a full consistent \
+assignment exists.\n\nThat will be dramatically faster than your current \
+decorate-everything approach.\n\nIf you want, I can help you with the next \
+step in a concrete way and provide either:\n\n1. a ",
+ StyleBox["drop-in optimized version",
+  FontWeight->Bold],
+ " of your current code with memoization and reduced permutations, or  \n2. a \
+",
+ StyleBox["more serious rewrite",
+  FontWeight->Bold],
+ " using recursive constraint propagation for internal line assignment.\n\nIf \
+you want maximum speedup, I\[CloseCurlyQuote]d suggest option 2."
+}], "ChatOutput",
+ TaggingRules-><|
+  "CellToStringData" -> 
+   "Yes \[LongDash] the main bottleneck is combinatorics, not graph drawing.\n\
+\nYour current pipeline does several expensive things:\n\n1. generates \
+topology skeletons via **all permutations** of a Pr\[UDoubleDot]fer multiset,\
+\n2. generates external assignments via **all permutations** of tagged \
+externals,\n3. generates internal labelings via **all tuples** of particle \
+choices,\n4. then removes duplicates only **after** constructing full \
+decorated diagrams,\n5. and repeatedly recomputes expensive structural data \
+like connected components and vertex matches.\n\nThat is why ``2 \\to 3`` \
+already jumps to hundreds of seconds.\n\n## Where the blowup is\n\nThe worst \
+offenders are:\n\n### 1. ``makeTopologySkeletons``\nThis line is brutal:\n\n\
+```wl\npruferSeqs = Union[Permutations[pruferMultiset]];\n```\n\nEven with \
+repeated elements, this is factorial growth.\n\n### 2. \
+``externalAssignments``\nThis also does a factorial enumeration:\n\n```wl\n\
+DeleteDuplicates[Permutations[tagParticles[externalParticles]]]\n```\n\nFor \
+identical photons this is still large, and you're doing it for every \
+topology.\n\n### 3. ``vertexStructureInstances``\nFor each candidate model \
+row, you do:\n\n```wl\nPermutations[incidentLegs]\n```\n\nThat is another \
+local factorial at every vertex.\n\n### 4. ``internalEdgeIndexLabels``\nFor \
+each internal edge, you do:\n\n```wl\nConnectedComponents[EdgeDelete[graph, \
+edge]]\n```\n\nThat is expensive and repeated many times across assignments.\n\
+\n### 5. canonicalization only at the end\nYou allow many equivalent \
+assignments to survive deep into the pipeline.\n\n---\n\n# Big-picture fix\n\n\
+MadGraph is fast because it does **constraint-driven generation**, not \
+brute-force decorate-and-deduplicate.\n\nYou want to move toward:\n\n- \
+generate only a tiny set of nonisomorphic topologies,\n- assign externals in \
+symmetry-reduced fashion,\n- propagate allowed internal particles by vertex \
+constraints,\n- avoid ``Permutations`` whenever matching can be done by \
+indexed lookup,\n- cache everything topology-dependent,\n- canonicalize \
+early.\n\n---\n\n# Highest-impact changes\n\n## 1. Replace Pr\[UDoubleDot]fer \
+multiset permutation generation\n\nFor tree topologies with prescribed \
+degrees, Pr\[UDoubleDot]fer decoding is mathematically fine, but enumerating \
+all multiset permutations is too expensive.\n\nFor your use case, the number \
+of internal vertices is usually small. Better approaches:\n\n- build trees \
+recursively by attaching leaves/internal vertices under degree constraints,\n\
+- or generate unlabeled trees with given degree sequence directly,\n- or at \
+minimum, generate labeled trees and quotient by isomorphism \
+**incrementally**, not after ``Permutations``.\n\nIf you want a simple \
+improvement without redesign, memoize by degree sequence and canonical graph:\
+\n\n```wl\nClearAll[makeTopologySkeletons]\n\n\
+makeTopologySkeletons[valenceCount_Association, nExternal_Integer] :=\n  \
+makeTopologySkeletons[valenceCount, nExternal] =\n    Module[\n      {\n      \
+  internalDegrees, nInternal, internalVerts, leafVerts,\n        allVerts, \
+targetDegrees, pruferMultiset, pruferSeqs\n      },\n      internalDegrees = \
+Flatten @ KeyValueMap[ConstantArray[#1, #2] &, valenceCount];\n      \
+nInternal = Length[internalDegrees];\n      internalVerts = Range[nInternal];\
+\n      leafVerts = Range[nInternal + 1, nInternal + nExternal];\n      \
+allVerts = Join[internalVerts, leafVerts];\n      targetDegrees = \
+Join[internalDegrees, ConstantArray[1, nExternal]];\n\n      \
+If[Total[targetDegrees] =!= 2 Length[allVerts] - 2, Return[{}]];\n\n      \
+pruferMultiset = Flatten @ MapThread[ConstantArray, {allVerts, targetDegrees \
+- 1}];\n\n      pruferSeqs = DeleteDuplicates[Permutations[pruferMultiset]];\n\
+\n      DeleteDuplicatesBy[\n        Graph[allVerts, \
+EdgeList[pruferDecode[#]]] & /@ pruferSeqs,\n        CanonicalGraph\n      ]\n\
+    ];\n```\n\nBut this only helps repeated calls. The real fix is to stop \
+using full Pr\[UDoubleDot]fer multiset permutations.\n\n---\n\n## 2. \
+Precompute topology metadata once per skeleton\n\nA lot of your work depends \
+only on the graph topology, not on particle labels.\n\nFor each graph, \
+precompute:\n\n- ``leafVerts``\n- ``internalVerts``\n- ``internalEdges``\n- \
+for each internal edge and endpoint, the leaf set on the opposite side\n- \
+adjacency structure for internal vertices\n- automorphism group of the \
+topology\n\nThis avoids recomputing connected components repeatedly.\n\nFor \
+example:\n\n```wl\nClearAll[topologyData]\n\ntopologyData[graph_] := \
+topologyData[graph] =\n  Module[\n    {leafVerts, internalVerts, \
+internalEdges, splitLeafIndices},\n    leafVerts = Select[VertexList[graph], \
+VertexDegree[graph, #] == 1 &];\n    internalVerts = \
+Complement[VertexList[graph], leafVerts];\n    internalEdges = Select[\n      \
+EdgeList[graph],\n      FreeQ[leafVerts, Alternatives @@ (List @@ #)] &\n    \
+];\n\n    splitLeafIndices = Association @ Map[\n      Function[edge,\n       \
+ Module[{u, v, comps, compU, compV},\n          {u, v} = List @@ edge;\n      \
+    comps = ConnectedComponents[EdgeDelete[graph, edge]];\n          compU = \
+SelectFirst[comps, MemberQ[#, u] &];\n          compV = SelectFirst[comps, \
+MemberQ[#, v] &];\n          edge -> <|\n            u -> Intersection[compV, \
+leafVerts],\n            v -> Intersection[compU, leafVerts]\n          |>\n  \
+      ]\n      ],\n      internalEdges\n    ];\n\n    <|\n      \
+\"LeafVertices\" -> leafVerts,\n      \"InternalVertices\" -> internalVerts,\n\
+      \"InternalEdges\" -> internalEdges,\n      \"SplitLeafVertices\" -> \
+splitLeafIndices\n    |>\n  ];\n```\n\nThen ``internalEdgeIndexLabels`` \
+becomes cheap:\n\n```wl\nClearAll[internalEdgeIndexLabels]\n\n\
+internalEdgeIndexLabels[graph_, externalMap_Association] := Module[\n  {data, \
+splitLeafVertices},\n  data = topologyData[graph];\n  splitLeafVertices = \
+data[\"SplitLeafVertices\"];\n\n  Association @ KeyValueMap[\n    \
+Function[{edge, sideData},\n      edge -> Association @ KeyValueMap[\n        \
+Function[{v, leaves},\n          v -> Apply[\n            Multiparticle,\n    \
+        Sort[Lookup[externalMap /@ leaves, \"InputIndex\"]]\n          ]\n    \
+    ],\n        sideData\n      ]\n    ],\n    splitLeafVertices\n  ]\n]\n```\
+\n\nThis removes repeated calls to \
+[ConnectedComponents](paclet:ref/ConnectedComponents).\n\n---\n\n## 3. Stop \
+permuting incident legs at each vertex\n\nThis is a major inefficiency:\n\n\
+```wl\nSelect[Permutations[incidentLegs], rowParticles === #[[All, \"Particle\
+\"]] &]\n```\n\nYou do not need all permutations. You only need permutations \
+consistent with repeated particle slots of a model row.\n\nA faster approach \
+is:\n\n- group incident legs by particle type,\n- group row slots by particle \
+type,\n- assign only within matching groups,\n- take product across particle \
+groups.\n\nHere is a much faster replacement idea:\n\n```wl\n\
+ClearAll[vertexRowMatches]\n\nvertexRowMatches[incidentLegs_List, row_, \
+validParticles_List] := Module[\n  {rowParticles, legGroups, rowPositions, \
+assignmentsPerParticle},\n  rowParticles = modelRowParticles[row, \
+validParticles];\n\n  If[Length[rowParticles] =!= Length[incidentLegs], \
+Return[{}]];\n  If[Sort[rowParticles] =!= Sort[incidentLegs[[All, \
+\"Particle\"]]], Return[{}]];\n\n  legGroups = GroupBy[incidentLegs, \
+#[\"Particle\"] &];\n  rowPositions = GroupBy[Range[Length[rowParticles]], \
+rowParticles[[#]] &];\n\n  assignmentsPerParticle =\n    KeyValueMap[\n      \
+Function[{particle, positions},\n        Thread[positions -> #] & /@ \
+Permutations[legGroups[particle]]\n      ],\n      rowPositions\n    ];\n\n  \
+Map[\n    Function[rules,\n      ReplacePart[ConstantArray[None, \
+Length[rowParticles]], Flatten[rules]]\n    ],\n    \
+Tuples[assignmentsPerParticle]\n  ]\n]\n```\n\nThis still uses permutations, \
+but only within equal-particle groups rather than across the whole vertex. \
+For many realistic vertices this is much smaller.\n\n---\n\n## 4. Filter \
+internal edge assignments by vertex compatibility immediately\n\nRight now \
+``internalEdgeAssignments`` generates all internal particle/orientation \
+choices before checking whether any vertex can use them.\n\nInstead, for each \
+internal edge, derive allowed particles from the adjacent vertex \
+possibilities.\n\nFor a given topology and external assignment:\n\n1. compute \
+each internal vertex\[CloseCurlyQuote]s required multiset patterns from the \
+model,\n2. infer which internal particles can appear on each adjacent \
+internal edge,\n3. intersect constraints from both ends of an internal edge,\n\
+4. backtrack only over surviving possibilities.\n\nThis is the single biggest \
+algorithmic shift.\n\nInstead of:\n\n```wl\nedgeAssignments = \
+internalEdgeAssignments[internalEdges, particleTypes, antiParticleRules];\n\
+```\n\nyou want a recursive constraint solver.\n\nPseudo-structure:\n\n```wl\n\
+assignInternalEdges[graph_, extMap_, model_, antiRules_] := Module[\n  \
+{internalEdges, domains, solutions = {}},\n\n  domains = \
+initialDomainsFromVertexConstraints[graph, extMap, model, antiRules];\n\n  \
+backtrack[currentDomains_, assigned_] := Module[\n    {edge, choices, \
+newState},\n    If[allAssignedQ[currentDomains],\n      AppendTo[solutions, \
+assigned],\n      edge = chooseMostConstrainedEdge[currentDomains];\n      \
+choices = currentDomains[edge];\n      Do[\n        newState = \
+propagateChoice[edge, choice, currentDomains, assigned];\n        If[newState \
+=!= $Failed,\n          backtrack[newState[[1]], newState[[2]]]\n        ],\n \
+       {choice, choices}\n      ]\n    ]\n  ];\n\n  backtrack[domains, <||>];\
+\n  solutions\n]\n```\n\nThis is much closer to what fast diagram generators \
+do.\n\n---\n\n## 5. Canonicalize external assignments before deep decoration\n\
+\nWhen externals include repeated particles like \
+``{\"A.+\",\"A.+\",\"A.+\"}``, many leaf assignments are graph-automorphism \
+equivalent.\n\nInstead of all permutations of tagged particles over leaves, \
+quotient by the automorphism group of the topology.\n\nYou already compute \
+automorphisms in ``canonicalDiagram``. Use them earlier.\n\nA practical quick \
+fix:\n\n```wl\nClearAll[externalAssignmentsReduced]\n\n\
+externalAssignmentsReduced[graph_, externalParticles_List] := Module[\n  \
+{leafVerts, raw, canonicalize},\n  leafVerts = Select[VertexList[graph], \
+VertexDegree[graph, #] == 1 &];\n  raw = AssociationThread[leafVerts, #] & /@ \
+DeleteDuplicates[Permutations[tagParticles[externalParticles]]];\n\n  \
+canonicalize[extMap_] := First @ SortBy[\n    Map[\n      Function[iso,\n     \
+   KeySort @ Association @ KeyValueMap[(iso[#1] -> #2) &, extMap]\n      ],\n \
+     Association /@ (Normal /@ FindGraphIsomorphism[graph, graph, All])\n    \
+],\n    ToString[InputForm[#]] &\n  ];\n\n  DeleteDuplicatesBy[raw, \
+canonicalize]\n]\n```\n\nThen use this instead of ``externalAssignments``.\n\n\
+For repeated bosons this can reduce work a lot.\n\n---\n\n## 6. Replace \
+string-based canonicalization keys\n\nThis is slow:\n\n```wl\nSortBy[..., \
+ToString[InputForm[#]] &]\n```\n\nPrefer structural keys such as \
+[OrderedQ](paclet:ref/OrderedQ), [Sort](paclet:ref/Sort), \
+[CanonicalGraph](paclet:ref/CanonicalGraph), or explicit normalized \
+associations/lists.\n\nFor example, instead of stringifying whole structures:\
+\n\n```wl\ncanonicalVertexInstance[vs_] := {\n  SortBy[\n    \
+vs[\"IncidentLegs\"][[All, {\"Particle\", \"Index\", \"Kind\"}]],\n    \
+{#Particle, #Kind, ToString[#Index, InputForm]} &\n  ],\n  \
+HoldComplete[vs[\"Expression\"]]\n}\n```\n\nand then use direct structural \
+comparison.\n\nEven better, define a compact signature using only what \
+determines uniqueness.\n\n---\n\n# A concrete optimization plan\n\nIf you \
+want the biggest speedup for the least rewrite effort, do these in order:\n\n\
+## Step 1\nMemoize topology-dependent computations:\n\n- \
+``makeTopologySkeletons``\n- ``topologyData``\n- ``canonicalDiagram`` or \
+better the topology automorphisms\n- model-derived things:\n  - \
+``particleNames[model]``\n  - ``modelVertices[model]``\n  - \
+``vertexValences[model]``\n  - ``antiParticleRulesFromModel[model]``\n\n## \
+Step 2\nReplace ``internalEdgeIndexLabels`` with a version that uses cached \
+edge-split data.\n\n## Step 3\nReplace ``vertexRowMatches`` so it does not \
+permute all incident legs.\n\n## Step 4\nReduce external assignments modulo \
+graph automorphisms.\n\n## Step 5\nReplace brute-force \
+``internalEdgeAssignments`` with backtracking + pruning.\n\nThat last step is \
+where you'll go from \[OpenCurlyDoubleQuote]works\[CloseCurlyDoubleQuote] to \
+\[OpenCurlyDoubleQuote]MadGraph-like.\[CloseCurlyDoubleQuote]\n\n---\n\n# A \
+few immediate code-level memoizations\n\nThese are easy wins.\n\n```wl\n\
+ClearAll[\n  particleNames, modelVertices, vertexValences,\n  \
+antiParticleRulesFromModel\n];\n\nparticleNames[model_] := \
+particleNames[model] =\n  DeleteDuplicates @ Flatten[model[[1, All, {2, \
+3}]]];\n\nmodelVertices[model_] := modelVertices[model] =\n  \
+Module[{validParticles},\n    validParticles = particleNames[model];\n    \
+DeleteDuplicates[\n      Sort /@ Select[\n        vertexParticles[#, \
+validParticles] & /@ model[[2]],\n        Length[#] >= 3 &\n      ]\n    ]\n  \
+];\n\nvertexValences[model_] := vertexValences[model] =\n  \
+DeleteDuplicates[Length /@ modelVertices[model]];\n\n\
+antiParticleRulesFromModel[model_] := antiParticleRulesFromModel[model] =\n  \
+Association @ Flatten[\n    model[[1, All, {2, 3}]] /. {particle_, \
+antiParticle_} :> {\n      particle -> antiParticle,\n      antiParticle -> \
+particle\n    },\n    1\n  ];\n```\n\n---\n\n# Why MadGraph is so much faster\
+\n\nMadGraph does not:\n\n- enumerate all external permutations blindly,\n- \
+enumerate all internal particle assignments blindly,\n- match vertices by \
+trying all local permutations,\n- deduplicate only at the end.\n\nInstead it \
+uses:\n\n- canonical topologies,\n- recursive construction from interaction \
+rules,\n- immediate rejection of impossible partial assignments,\n- strong \
+symmetry reduction,\n- process-specific pruning.\n\nSo your code is more of a \
+brute-force verifier, while MadGraph is a constrained generator.\n\n---\n\n# \
+Likely dominant cost in your example\n\nFor:\n\n```wl\nCreateDiagrams[\"e\", \
+\"E\", \"A.+\", \"A.+\", \"A.+\", sm]\n```\n\nthe likely cost order is:\n\n1. \
+external assignment permutations,\n2. internal assignment generation plus \
+repeated vertex matching,\n3. repeated connected-component computation,\n4. \
+duplicate elimination by full signatures.\n\nThe fact that you still get only \
+``6`` final diagrams after ``500`` seconds is exactly the symptom of \
+\[OpenCurlyDoubleQuote]huge search tree, tiny answer set.\
+\[CloseCurlyDoubleQuote]\n\n---\n\n# Recommendation\n\nIf your goal is \
+practical performance, I would strongly recommend rewriting generation as:\n\n\
+1. generate nonisomorphic tree topologies for the external multiplicity,\n2. \
+for each topology, assign external particles **modulo automorphisms**,\n3. \
+recursively assign internal lines one edge/vertex at a time using model \
+constraints,\n4. build vertex expressions only after a full consistent \
+assignment exists.\n\nThat will be dramatically faster than your current \
+decorate-everything approach.\n\nIf you want, I can help you with the next \
+step in a concrete way and provide either:\n\n1. a **drop-in optimized \
+version** of your current code with memoization and reduced permutations, or  \
+\n2. a **more serious rewrite** using recursive constraint propagation for \
+internal line assignment.\n\nIf you want maximum speedup, \
+I\[CloseCurlyQuote]d suggest option 2.", "ChatData" -> 
+   "OEM6eJztfdtyG0eWYF/\
+cdgvTF9vTPdMzsTubBr1uUQ2ABHgTZUtrSqRsTksyLVDyOmCMWAQSQJlAFbqqQBJNcaN/\
+YGJ3J6YfZmM35nFf5gcmYt7mA/Zpf6Cf9m3mE/ZcMrMyqwogKcnd7olG2CJQlZeTJ889T2ZufVFt/\
+vHOaWc46cruXS+We1E4Gidx71vxaw/8OIlLe14kgwS/N9/aiTveWHbvDbzI6yQyiqvNH28Nh+\
+FJUw5lJ/HD4F4YJPI0ib9z3xvGstr84dZ4LIPuPT/\
+x8HVsXrwBLx55I9l8Y1v2vMkwqTZLW3EM3XhBR5piP9iaJAPo3+9Q/ebrDx48/LlPhSdJeD+\
+MRl4Sv7YfTSSCAo+a3rEEII4BuEyPpXR4vW8XjO7aozCRh2F4FDd/9Fk47EXe6IEX9CdeXzaT6RBa+\
+JO707EXx49lPIaG5b2B7Bz5Qd/08CNATKIwsBfJMaPyGoIFYPqdavNtLLEd+ccyML3p2m/\
+hu48BkjCaPpBBPxl8+f++rarsBuMJ/NNFNIRR87V//fu/+Ydq8017oE+e7G7Hrz0KA8S6egGPH0+\
+GMtbP/5SfJ81pnMjR43Ao98MnMRTUMPz43iRChAD0PQlfYCb2vcPmd5syOvbhR7X5R9sy7kT+mGZj/\
+WM5HIsTPxmIk8hPABfCC7qiLwMZefRTIVJoTIpO2IV+frLtx51wEsGTndMk8vbDcHjPGw5jB1t/\
+BKXGQ2+KdNL7Zvzdx97J3fBUxvC9tD0NvJHfgd9Aqn9+f2cPkOol8uB+BPjfCbowSdB+RwIuAH+\
+I6GYS4WQ1/90eDDgMPGxVT4KmPCCst1TLefr6053AOxxKbO+jKJyMmzLBMaYU9jYXKOKj5r+/\
+PwmIQx7LcRj7OMm7QCj9iOn6pxmK2zn2hhOca8QMFkSGA7IB+LgT4AM9KRq+78Kw98MjGejp/\
+tHO6VhG/ggm1Bvel14yiQB532CIgHxgeICgadAZANLCSTqQN+9H8hcTmP7pngy8YTKN/sff4ecf/\
+xO8+ximeCgjPZ54qwQjz7A5QGKAyLxqJl6U6JfXEJlbh2H65Lv4ZC+MzYM36AEArn6/\
+zZj9iGksjOyuMq+crv4YMfkYhxUnj2VHAjJNxR/zO2ZrVT19+12kpSEVZ0T/\
+KIuCn8tp3HtdzfRrd8PutHkN/\
+703mARHzbfNV4AP50t2myWALZnE94AbmqV9Lz7i381rOyAaEiTNavP1j/\
+1uF2bTzMrH08PI7yKsD2UyCA08P9gNSIAr4eHw0A93gwHQAEnVfRkbYobnwLDekESWBM5Tz98EwjLE\
+RwL6bUWaW7sWl/zxQ+8UqzFTKXH1jQ+hPr5gEci06P+377z5jWrzz+D5J5MExFiuGkq5a/\
+CayzvQv0mP07mJ732n2vz+Qxn15UNAJDCKof4/eegH/\
+mgyMkX3WRd8s9r8zkNA83DrW0BMimdSPfIaK6H+\
+OKmu1VZBSzwEXeSPwq5nUPLaHDRoAfIZoFjyrDR/\
+ANQqgQ6Bwh74wRGA9glwANTb270H9DmUJK4fP2jeGCTJOL61tOSN/VoIZTy/\
+1glHS8f1pQ5My1LHlAbB+xY2ouUkiUEHU69/Evl9P2i+qcBc0mIPhrTndaAZGkXB628DuM2//\
+ubn4USAMhSeGIBQ702Gednt6YELkJCyawps7QqDk1oJG4rHsgPE5f9SCj/\
+INVQRh5NETKFcxwuoO9YhXjAVSTj2OzXArOIVIJNU0ryBWhLIZz9E8DUFlFX7B3pMB7ky1eb37BqoT\
+HSr8P215jBMkFBKWKg5ORz5rtp+kxUBvmUajt/J9ZktAmzJj4xu+\
+w8z6ugCMGgio7QNYsx3c9UKShVIqb/ISEM1+\
+D3UPmipATv8eXERNAyar7ORAIPPFELskaSDv28DG2Veb70O4yB7pYlE0FOWm6nV/\
+K6eBYDZTO2z3CCzvR4oOzH3XGv+SA5Ram+\
+HnQlpPGzXFAOpwTCRoRpGAM3rD6Ab0OIWPG98MmZYUx2JAyT2ecr2VPM7jdpKraGlwo8eF/\
+QKpkIWSmUZOFT1hrYRTG9I9Md+V0aW/\
+bUFwvMnYDQMvY58EvhoP6X2t9FIevLJBNZ2iRbpTRl0HSlqQ/\
+F9JRKRAmXE6vbQA4T9ANpB0tqGtg5TK+\
+j7zUF4QrIWuNsd0Jv4CobQB20d76MboOr8WXM89BMbBCO9jeUJKkGC3RX0maiNLAUVDpJEGWXAx2CP\
+HsquYkPV/lv7HmiE5N4wnHQ/OfwSZtiB6wf7YAOBUorB0vQD992PSevcnXShPol+gFRGKAy+\
+T29gkKwGX0cVsRoC02h+3Tn1UD7zLJKL0PwOmH7Y6lu6jDGknE5/pF8/lkk01bgwjgC+\
+dRp3KpdSAwCY1MdSYCrjQ0W9W6Ajv6e11XA88LZeI7ud2QfMBtPTd++\
+Hw67z5IegcOHB3SkImHACfteHd38IBPhHj6WPRug4kgbpP5llsm5dA0omt1B2d05lZ5LIPS8ZZDS7K\
+vBYel1+++0tFGNvqeck4/LVlD/55PGuwowG/\
+PvgKxCLfYwzrE23nyigAC0uDdz7ABCJRZUl5ajSgmdv7wFlZpr4C2jiM3l4XyYdMLG2vmkZP+\
+BSkm3jf+Mb30T0QbGm9CIq95oe5FYX5kMVj68pO012YVo0St2n0PguSGSygV7XBPBRGPaRAN6ELnZH\
+6Kt+xf3YXOwqirfsV8QPDgrptQkU7E/HEkXb9/CpEY/a4toPx3vIgz/ZB0F31OxE4XAIE/\
+DZQAZ7KAhNyTfRfd3FKZmwInElrCW0N2rLQD5P/\
+diHnpQLGOtAQJF117wGXfkBmQToepIRCcYkAdz7jqr4g3sgthLjSDZ/\
+7GgCPRk2obi8OZuNAA3bXuIhXRkV1XuNu0Vb9jUX+2+oGW7+\
+862vlSlXKn1wCP5wlaMhdxYEK8WhsGetVNIw+9rXDfqqJTGBKRYJ+KiTPv5UABlQcIKExn9N7A/\
+8WMB/Q/8IMRDJ/mToRSJQBYQ87chxIvxEDLzYNIb2NvQNOkV00OgSJwO/M4BeJXePo4MvMCYRg/\
+wRIzUh+ABeAdquAxIWsXuZvkS8ROxrih6MP21vAK6JOJQyEB0OycAcQFNjpDiBzhOXN1B3eHJrAgS+\
+D+MZTivYepT2RROuSR9Uy9Rqmdqy2j6UvTDC/hHLXQ6yMAAawJoA2xR++\
+TTCkzBCECIYS6J6FqNJnAivCwQtdcVeiOIG2+\
+xPwIoBjpXxrVLphvgcIY209QHzOhxC52LsReALAy2KkRcddcOTgMJHPbKKCW6CgSGqiDg0hIZTYerE\
+U+C2UwSCazJiTHc1sRPEE4ASK0uKYOJ0KwsKew+k7EJvfo+\
+KdENEOwAZD6w2LSAZN5IVdEVXO0FmgvIKnUB6YPIQoXvAoJEfH1l4U2D4iabxQxBz8dCLB7fEFzcAY\
+yjpJMyeOxYiA5jFGGsMw86RCHsUUQPkTCJgEMCebhMYRkpqF+jhKCbM+\
+hwnIJwOtSg4ga6ENwa7p4NC+Fbp4OBAvyxh4/\
+hAgWTCfPgc5YEDXkWEAdBdH8mdpw0bpLLvi0c7T3ceGwjKu0GrVqu1b90uC0BmGew5+g0/\
+h96hBAZUU08dEcHgpByaRg+\
+nhjIAtq0Hn2193rSQECDx6cqAjW44oVoGHci3x6EP1Dc69IFckykX7HDsgsRifEscHDycqnAGfNPuS\
+uu0zShBlQl0AfXk6RitXhRmABSi6IG3L/8zod2ABRCPNDxDlEqx3w+\
+gl3ffPf2rhviZmP5V4913oV0MGwAhMbshqDn53bW1DCKD+3S5kBnjlmgRStvXx+TI3JpE/\
+qJDw7dK126I1j7i1RQCB2SJnizSS9PxJ8foLsgTU5BYfUm/16+\
+5FrlcoklgmAoJCKkIZO4SO2T0clHTl/\
+Z7CmPH8XR0CLpXKDFWIWqUjFUPecLFCpAA6INPkCS7IcsyUxOJCamjBh3nRHYMjFMkoAtFcoWmmCg0\
+7MEDpNGu36NhKCl+gsrFiH5oPSaMU+Sd1QnJNSxl4Dj2U00n2SQgui+b5YCy0lSm+\
+0PkSFoikF0tAwBpFGoTuGJQE/e4BtjQHj31DkPFq5YCZDXMS0KklNgpBWHfpcgBqktmCdb+\
+adVY4KqHjHHk2CiI2AmUVoPKqMCExHkNMbHbw8eowLDrESFAjsDNI7EcUB2N9wr+mpoRR+\
+wZd5EHQCiGpykITAWqOopx5GYlw8lUvhuetsrvaO4AleN1Bkg+t5aW1ORW/e5iGXi9hiqM+\
+wR3IzRKHVsOKfAGwyTA4V+wp3yYAyA7DwiCtSg3YKyIgaW+\
+FFaAOhH6g4MLATo4yEneeJYWygPIJgrNAHSJfOCdINpDmgMQCWD8YeABH2SxJWNQND6+\
+pDn4ElUZMgsMi9omHc1iNfGGR4rCJkQMsTQSDeacyZ8JlNX3B+/\
+MGO87d3BASqKHgYY0NpTiByzoafwkEbTdILUtDS2Ew4zePji4Fw7D6JHsw2S15nRP879PuNEy3mK4m\
+GUDAEGEWBPbbD/\
+YujaLRwATeTBKqYKoikkDZiW1aNSwzUhRFzzg4ZIBEKMAa6JKw9KHE38IMKNJhE6B6Cl9BeZ7Mq2JL\
+ZoZEMNH1NokwKVBljI9ZTNGvEAiu2C3L+\
+QlMHl14iNj3aFx93MpxwxRTMEINijGYUyeVoknOoUExUkfGsVQD6IvkV4Xp3SM8d7uBAwmqKJwiF5K\
+PxD9YXgIFY9BZqEMjLkHP/\
+kp028gMVDsRVM0BIYn3jQmTEKDgGJU5GywBLiyQvoZyYPYJ23xuqz1awIjD9E90PzDe+\
+CyoFJ6REYYNof6FY0Zb+wDbQvQZGQ+JqEl87LtYb0DD2z2oHUkTkHB/59ftw/\
+sQR9sZV5inxz8EyNAaZT3uIwW9MgNoUhFSYtQw9deTNyHI0UfKJ4ME7tfmi4W7d0JsTOIcC5WMRLqh\
+Ht+po3BZy47sV1P1KsWfC3v7Vhq/ahQ8dAL/PEEY6WLlq1yQRc1HthU+\
+Yb9kOqFIDvJt8MiAunWsqxB0wMn3d25/8njHQGqFWvQXCeTKKh9sGT7okji5M2z+0kq3+sgMZFHg2+\
+UH4iDJNuTNSIuzEwSqTAGPLgfEhwKJsswsawx5XTZMGnxDU4SLvaMYEpLXtSv4z+\
+N0pI8lZ1SaYuUSCrc6HFFiU5icxJGkiNt9NwgRpM6EUskEQdUgAEHHmfsApFEfbKcYpIAIKcBmxQMl\
+YIYvaLEBGsUNI6RjCQITFNVDVWr4g4IV/bn0JAByUggc/c4yblB3+\
+LHRIslqAGMqmEosbBBrNyCJkM0FkpUWiOptLAA4s0D1xiNJDWpHJoxsQFxfalDT54Fh4v6pQfi4yQ1\
+6myPE8fBto8mV03SjjO4rxHO5kGRC+4qfHQ90h4RQ7j2h46b3XuttKXnpHRNd1yl3vQvpbJNU+\
+h4BTZwpZITjRI6HAWYAFP5WUw/F0uUjIFyLpJDYEBo+QJ/\
+IwZeHstEezqxhEmEIQtu0IEc1Ek0Bbi3gGgSlO6p40maBpuDUXfTrBIcFlnMQJg/\
+xeBCNFVsD9TmgzwuYTBNqGgaDOVEHj7r4a/\
+FEj20Ix3QNJtl6AzEbGt54snjBw6Qk2ioUAtvSteUy89PkulYsshkpJPAB5saABHXyxQixJ7YjSUFj\
+95bXF4EMBmLzynQh4B6iyVUhkWYgAZjNtrdWtBdXyZiMq4mYbWLFMvCx1PaVIkgZWehhkt8ZROBWwS\
+2XDStiPFgGvsdYOK+\
+RN0LPytiwMkC4L5E6MNAwTAIR1N2Z0YgqWql3Yd7nzze33q0f0tLYYyUWAIkRsQYQaFGUWHNDLZAGF\
+GEMVGTiZAfojVDDhvZMp5Wq6nEOtGRD21BUMwNRXOIrHMk0YSmECY61P5IFpIbzhx/\
+vw7zoiBbNOG71KVmNNeANcYeqbDscJQn5R3aQaPrXySLYMWC9B3H0BvAjCKJmh+EJwKfVw+\
+nVfwL6mg4Ibq+\
+fhcGKb2gAvzOs5fSSMppJv6LBAMl1G9ZnErlCiyYdcCoHskRmA9yaNn73VAqi98RUmjBW0ohNb6OBB\
+hQQENk8cLYpAaFPGfS/\
+qRzbVPX2BqZyJWPbA4GjQZ4xHOBMbAaUpdnhf10G7F2Pbvs3hsJisys7RSvsDNj6QD7ovRQTgj+\
+BeZR5rzBdDwZI7HGhfZLPEElF1sWDA+dzIUIu0ltBjDJgSd7PpiANcwtLGJ2drKJqg7+5a//\
+e6tMdApeZkUZG2i+AXGE/\
+XBCjXaSaFi9rerBWLW8B6fyUXHjiDmOrWqjwyyDkYuGMcIwOlJB8pHXiUJ0bkDlQgkeHdDxZNjVgTX\
+jmcwYDUAZHiYkdQe49MwNH3w6Qb2QTGFoB9uAOF6bxV87+jkI7IymA0KqziB2iwZJ49+fkOFDDh3o+\
+33H3kKL8RA4uKe0MKdJmuJMOl054gU9oGrkXDvAzAYg8ZTTggmtsJouVavVEsr16JbYGwLjgEi7frr\
+Iuqa6hkCvlUxua3JLAFuXsGALTf/TdkWcnVagYEWsnVfEFjjZD9D/F9U74qx8Wq6IMjdYPtfGDi/\
+53BIYNA3at8U7LdJxMyIGZ373fNEB4GMZyZ/\
+GNIQxAgxs8u67X0AvZ6fn777rAH6r9E4LYZ3ftoWBjwGJPS/CoMIU6fDR5/e4wbsh6JvgP+\
+Uw8ZEMt1XWb4vYgQtWxMOtMuCGHj0CE+\
+1zXIO4B0RTbreziNB01qqvr9ZW64Cyh8iC5bbT2y6qJS4hRvjeBgxH63RT0yMC4bQLPKLkG2j+\
+MdLEykDUN0YVIpoeaE9xAiJil12U/CBpFKprBZpY4rFxQ+\
+XZY1pbri1vpGOCeuWPQdplR0cBKmm8JK6lxol+MPBzZMb0GUUkQXmCHEA23wVuwaxkDCPtgm/bA2/\
+Q7w/Atw5PZoyG4dYx0ZN0AEQMyJ272gJg94pUReoYpRpfi+97Tx4/\
+3nm0b8R4raQ0EXSdyNSMIDsbGVR5gGgIqCCqWQ/\
+Tgg88RW28mw5rJYoJkxOJ8aQUElznYZti69uzF1j/8c8tw+\
+hjHbaMw1Gqo2eYy2YISrqqFUUeMIZcbtMH/VK9SvoRmmtiO/\
+JIpt0RKi9EfETpOlN4QiUULX8GOpYjA5R+U8qG3Kmsamyhvra+\
+ubl8s9FYR9GJOgMYPSaPKKEVPzTEuUHATYzJtGZVtgw+UblGowe/7gTmCUx/\
+GSe6QoSSeMKLeewm4guCDJU3u9Fm+\
+QukcrePDuHBwQHQ127Qqrdv3VZt3RbbPseOoimnbLWw9xvl9vslLNrAotj94RQL3x+\
+iERG0Hnrj1vX9ASro1gIK021wbhKJgZ249YihbVEPFbFQESsgaxba7cX3KtxtW7W+gq0T2khkq34q/\
+OiBN0XDgiR1c4wR9R1Mb4jQsNqh+DU8Qgn+WILlEAODUcr1HoaZylitugIi/ylGEE+\
+bA28s9QITvruOU9haaABcwP13vc5Rn1eR4N1nA2Cj9nuLIAJQCayAEviA/\
+ZwIFNqx7N6hRTueVh2dwakl6x8dW5wFnE2aGw5msaqjeULTHOac1gl1oAtpl7UrTpwKq2Npe95WAV0\
+lpELC1skzTvRtCweJ109hntIkttYJ4PqamqrtKBy3UB/W2zRp6mcdpkZj6gEvEMJbk+\
+pRARrB2LLs7nQxtAnvMD9EzeEazqEBqgyYPgKOQxIoKwSuvTgCmUgJdeRxEkXHk8OYEr8UQ9goWkcU\
+4dxeiCIk4f3wAQclcXmVizIJn1RoSAaNtRqS7LU+\
+1LsQlVhucQbO5mBZoXMD0WkGUMa4My4ykKimHxVllrOJod38mkb2xixkp9IPIdr3+\
+n3ZZfln5F4MX5udEFzyOxSMZqG4UbJWLTN1F9bX1ldX19frG6T80hh5B2iZc5E4InxwgDUdNjw4EDm\
+hRIuirUwnrbP6v/zXvwVWbcCfFZAm8KcOrJ1rkWTFmeyBTNiKovCk6f9SkiRYrtXPoQKi1Jh/\
+sofGIRY+A6vo9AH4zihMtn0PjNau+Qk18Ov5ucJvfRZ+9XyTtI2V20YBnHCIK+EIkEOqjfkD/jUP+\
+Nc84F+//IBpeaGFhTfbeuh6Iw/mQrXKufYRA/fBIJBdar7c1lhozMICIqtgrCu/H2N9EvSKRjtTA+\
+CugYLRrv5+jPaeFx3nxrp6sfzYCkAYkfH1lGLKjvzY4lwXTjyzBEem0kJ9fWNlc2N1pcGC4+\
+BgOwSBQGELXPY85uQeU4nD13FOYKBEVvs+JGP4ptH5mFUH2Hkou/\
+5kNId9DTNuh60MmK2zfkUcp2YEIroNXTbB8u56EU7qFBB+DP+\
+vgotZEesVsVERN0lcaLrvX0RFkZXTkBsyic/0vY/\
+JozlimwV5CwbczoMPzxtEKQj4WR2ppQulzhpoekkZ4HegzrvQDn6FQX0SeUFfnutxrVnjmqneeV6JD\
+3hqUTt0KXcrJr947vSup0x0mUnhwSjtCu23+oak1wHAs8cf3aUV6RaMdhn+gwrmEfyu5x/\
+h0zbZotMHQI/D1nJtvVH0wGm6tsYtXVTtPNX2RLd+J/4o8rutM/2rdbaARkR81IKBvCeWPhT/8Xy+\
+jq82r+1LdAvBlucU3jST9TV0TS036//+07dcRvp4Z+/e1j5trsSMq9ui/F+\
+WMCy0NJBjYOdy6g6U3uWyYy6XqfjBHVFeYtGzBJU++OC6XRzf8s/ayRCj+\
+NsTSpVJQ2hIF5ofy1Xz4Urp7/JFVS8soLKXb4kLS+\
+Iu6TCKb4lHNTCsI0rhiGVwYb29ofQwrRBY9pao1WoXVsDJifzDCZtNh9PL1bJTffVaKrmHl6l8YYHP\
+wA2Rww763x0NHiCjJoQeHmZNdhLxSPpDjHBQlJezHC5svHqJT7lkpFw8AnrDPQ2ULd4qojxc1x/\
+GZWTd91kKLcAH+MjDtAjl+CMclqRBYQaqChxw0Fa4HSVuUTPPyG1gz3Z7wmoN5PGHxgumUi1k+\
+y1cJkfxuXLebrdL10qU1Ha6pxqNW/z7cXjyrIKyzu+\
+aV89QWlFPpWsCBN6RBP8ThJ6pUQENBu5u9GnLrYgutXgPOyM4UPThhmUbdsDTBJrChs/\
+cyiA98an7ELBbgAZ0aEQODdSoEM0wSlA28dYD9RDazQx/ITtqgByrKQySMtJ1eXNHCwZ357ZYEe/\
+x8zb+gX9S5IIuoD1c8yarxY2ZrlwktVmZbSJtua/jkXLH6sv48hV3WK8XNBobEwVtFFS/\
+q6wj1tGI4DkGakhxGl2BmKKLyYi4bJNYIZqAsbEtUfy3wNNOG7XpKajQCHBwFQH/\
+sdsDkANpgWToKQoL4JGaUWiqLX4mGkRPui5yNJoWrYDpDB9AQaa5UBEUtofRJz8Cw+\
+FDZfBhCLBlgcD1heBNTPthiyCqiCdB13LFW9hWhZtqxe22rmXBY8ey0vaxni5MUEtqQD3R5HtmjfWc\
+SJYKzIdJfPih6Z/\
+LsymrEaOQq6gfQ6v74Rgsjv60eYSwguDHSUU6on1lz7biOOz4akkq2DkFiRx4w2d0JoKMclPJoJPgh\
+mLbsg82IAAZ7KonFfMOyVnhQn3lut5Qv0pos6Bpg2mJ9v6BYa9/N+UvYqyoaAT/z/\
+Sexhphvn8up2T4YciGtoh5QQJuizdtYfBuoQH0S4xgEMBINPCnJJjphcvZ3dMoUprULXBBM+\
+x8AaDruoUx+GnQznU1hqDqX4Z+\
+0JqFUS7tYDFbxSDXxUXdmup2OrLdXmsfrOdhy2kTvIB3bouGxouGri2qooHuACYztc7OrXbcmXTmB+\
+ZFRcUciEAjzqAL6KV+zk2nBAFNPgkw/39PRiOVgxG33G4teLKS9+\
+5UCQtbfKEcTnvQ1HrPC8IAw8jEZkaxkC1AormYxT54voL+JOB5lf4+\
+vwMuX5utDDYmyB0i8f3FO19c/+JGUUL0vNXE5WRlNFkst79YPKdmUxOdQr+J10/F/\
+zgv8xVPn8WYWQ8uwvPndxSHwQztBl15KrsKSWazxdkYuPs81b5YtzVGJ1EtB+\
+AD4Fv0apDI39cFP3iuvwkwdRUwFKIYp63Bq91teqjadV+\
+pg3fkKRVhmey3dYnnd5Tq15XMkC1bQCqK36JsVlrnbulnrlq0mMxVk5a0VGRsybcFZankFL1Dpc7M5\
+LpHk9CiEpxP8m6LYD8rU9xxB/8Z4T8P8Z+t2s/KMEksdMA02NArKHX0IJVBtBt0/\
+C6eL2QgwdFRTP2ZMveonPqhewfacBWGLQ9RPXGw2i4DqLfpLZB+\
+f3AIXgErKq359VOgpa3ul14Hd2qza44gVRQ0zNFkR5IkyRKobialHJBoKRGBbtjBrPr405Y1oIrp3a\
+E4q4TVbkq9bmHUzLcLVDXC2jpj6NOOztvvp3Xz6CPN31ZWvSHxdobCDc4coVS/\
+iZMMBGkOfMDDZhAJOS3et8ykq0gxBUCX5PPKUzU2eobM8CidYXqmx/\
+fInRxnBpyCjISMznd604Cj3dVy4jhAKc/\
+E0vsquMMqpIUhIJBS4CGkuvmRRXHKIckQXsXts13JNbpAjdbBIn7f5gPdtIXel+\
+jhTtpBhhORVwrFkTUDRkScuzCqRaXbRjTPIt3MLGfHeE4rWql8d6cJXpV75ZRRchjiAvyaRfjzO2ao\
+syRVFm8Vl5bcISLXMMXyeCyR2QOkENuQJ3WzjYuBccKpUS0Ls63yQ5l4uwHnxWFAHOHGcw2gXVBNW4\
+eUWSjxVAJ6tVLb3NxorN/cXN9YX62vLjcO6mu19bW1lfWbK2vrN5c3N1fWb/zVJoDQBNcZO6Vq+\
+ONTbhK/mlN1aEEQl+6C/oF6+NBLOoNPUeLLURhN07MQqDCA6gd+MuW23MMSMgXKlH2NsSOxWl/\
+bqK8tW5/6wXptZbm+url8c6W+2mg0NhpYY+8JNvkkll1qrF6rL6/eXLm5qT8b3C+\
+DZoqtLK9u3FytoCaH+VFbs+\
+ggrH2YSiqC7iDWxNPSkBL5bBF69XE47OIhPbkJrNCWVYw5Ubnyfc8fTiIsgy2pX3jGAb/\
+WCNfFtJdNzqwtiW09az/X9oG2L7Bp/QzzhDSZ0nF/\
+th40JoSxvCjhFtu8NwjRnTOWVe6NuG1YaE6IKVUpHApPfwvxmQ+W+xkCmFprOXDTUVXEQ5+\
+OfGqVH4XJfYwQlmlxwG4zo135o+p9Sq23sxUEz3HmmdHfqPfyrzX04BWTtEY+\
+RoSjkCJNWdAkdVX0sMiEw4ZBVKaDR9jPC4C/oAGsluLwvF1U/Tz/\
+MFcu88D5mYHKAtqhSKsbp0bdWBMgZvl7akcVDc2hfTZx0/b2J+OhCe/h5/\
+qcqbwU5VKrOerFz1dDwfgpoGLCywWUTOifQXovRrAzSfYVEO1Lkm0h4RaQbhE1FwiBi6m2sGbd4QSL\
+xNHrcih1MWs1s5FMMdLVebI+69Bo2U7xhwKZT/GaeXLf9X/I+u6wVAevcCd1gdyHRuLPYKh/\
+i2rgRZimkGFeklleglFyTPJbEeWKxHNMoET8pYQ6Vlbi3KVE41mur13aszTx/\
+Uw8HRzJhplHZ5BYGCw7/S5Hk+\
+SplJURt8MWIH2XZfYbVE0VG5jF3Sqk7nRdYLe5TgO0x8P64HnReNgBqito4ImC8fkddJcvWXHHVJRU\
+EaqdG98EMP+KfZONtUZjdaO+3FhdN77J5vLK+npjvb6x8vXzTS7vHti4mYX0Up7RW/\
+n5w3XGl2vNnlQQmzlfpTmh/UqUOZdxVHAGlW+\
+yvp7VVxQGVaGibNjOjVvOjd4VaCZHMJznw3tWtISFDgWtTJzOyKf74NJ9aodGt4bUCO7nilGiX9eif\
+WGxzcu27by0Kg7yuYpQe1OTijiu0JbMmP884T9PKZQLvT7RX546ioQqnqM2tHSNFZ2jFilxLAho8nF\
+BESYHpQkOnhWxDlOSompnqj8xSOOotQJSL7EuVMSkrUM8aa2nF9Y6VrXSemqkSn0C+\
+pSKt9WMHUACmU/eeMzpty2Ft3SBydVQdhDeUkrvZwF4+lIAPH0RANJfFIp1YlL4mVD+\
+9Hg8nLb4cFGjaxXOMj0dX1D+qaXJ9dpDPkTrsA5boDpMu7zyO+LqCi4vptcYGDb/\
+LbM6d5gBxdh9TDW0kBvbsfp2xaEBa4nvD2LjqmJD1/qD+\
+CjCxYuJkadXFCNPXlKMrBcs6T2QfUrkzsqQV7Wgly+juPcCKfTSK39Y/\
+Cte9HNn212qvtKCIBGbXqyeUdMWZJm6P/\
+eDrvJ1VN1ypkST0mapjG7SJqVXtTg5DyEXLVzOxEcB7cytmWJD58zMwQY2dBmmKl4+\
+3aCs5S6ngF7EUU5ezsWa+VUzl/VEs8VsSaAg16Nf0F/\
+yy7AFEBa9UXAR9nRM2EGIQemKyZl8HJ7smKPbKCmRBgJfWq1qo91W3+\
+rK89mgSF08DJlLyDVv0eEVsgtjuzA1g1MgVNqSVQ89O+\
+tnq0UpuWVtU6jOKdyhTjV8qvCqaBXGACSAgBUv82ABsVTjsEFz7Adh1PKePYM6fppYt/S+\
+LZtMY1AG2rijMK4rW721fM6AxQKn9z28RKFlmq2IL9MesAtN/jO7eu+9Ge++tMDQ/\
+dhA2CB9iYnMapvCeqqSYL4pGoDlU5rUrDI/\
+KdVWHZGVy6r0hv1IpOTlpLzmEomVEgH9oIjCboXT3EzyXwpuO5vkRrNqm8ZOfk+\
+mKpdwwb19Wyxoqkv1h7aODeNYyr1JafuTSO4G6mK2361+\
+50Kc3Fyg67NpwzZOKrjxoOvjEUowYTyfBP8l88sZurQ9cfvyYk/rulco+xREzpiyrlM+\
+dZ1Ub55o87nvbaIWzcVUzR58ARVl4inusoC92GcsKGKVVGfaZZxylszMRs61PxWx7EABWBCvj1Qod7\
+ZIt20P/pAsvS0KBXGxUgEkU0f5tlxrhj9lbpJsB5c8nFIWcXHUcw4yqMJDBRsVzmDYFGpqCcqlGHkF\
+5dIBKoNyHGVLpZYOf+\
+YtNcyVzhVRJDotf8lYVGmjDvVnDK26K9QoP40aZ8Sn4flPf3sG1kzBZcUxChj+\
+PBONSfncTkJT4RE3l4ul0IyMMasLcTv71ASFVBsWiHZkRIdPh0PczddyhZaTgK9UnJ67uQqGP44Mxc\
++C/aNAjNp950Vp9q0auv2aJihruos7YjmjIxuNyyxKxSqjMYs8J19MRcfc9LHcdgaPj9bUe3Ws4Jnu\
+5AWzKnO7BvKUpXvIElc6vBn0pZu0NsMUN5vZWqB4jXMN9aCunIlc0OjlAo0WYMrnvyjWaEKNTqQxl/\
+R44YroWXlc1ymT+H9m1nG1kiHKDRzraXDPCAMaG/gGn5+\
+nCY6zpWBKTln7w2FlTcNuEZfbMrAr9lHyGWWFWWcEZvoKciA3Gxsrjc2bTg7k5s2NxsrG12+\
+dUXellxrtYVkJj8ubNzc3Vw7Wa/XN+\
+try5mZjdXllk7Mb89mRyxuNm41GpTAncrPeuDAjcu56Jx2uw23PSIO8dA5kg1YkurIT4hE7WmzldPK\
+sDROpWn2xpJhCYtU0nFmwn8MRue1mGc42fGOJL/\
+PUzRYgZtXeSV4CFO3Z5G1KmcSGuX6MK6CvbE1Y2eGvyCq5vHh+ZUu+\
+7myI4s0uObrLKZbM9GUsqZkJvZdIB3FdKdCBdmaVFW2eK9ALDalCGs5L9ovtqQIp71jhmU1YtJuNxE\
+EOJBNyToego9gZiEw4NgVpRmC4sJaG1amTQ0T5gZplU9RMuy5kh7sfhXTwacYHOdPAu6SWauoikDP0\
+dO76MZtfA2n5uxeLf5B1X3dZN2e6C8knR4k29MUSUAd/Cn06343KVbL+\
+ZmzFiV6BP2y5wtyi0zu0Nmdt56uW0TNCiCSpLJizCBKFSz2FZYuc94IRZRz4opFcNJYLPfiMD2+\
+tEhVgtQgNziquDmuolJAsioAzraNAMEowb1l3jvK7ivp7UQWYqadwN2tlNFfToVtVK8NihX1dTt3OV\
+biZgk8zs2DFUNOHaQ13VdpR1Pnl2VevsRu0mphXog4NFEje36FjYlQtxwv4yNOXCC/\
+lRqfSrmeEbuaEPwqOwLnQGtClvoaGwG859e0VGQH4vxZtV2DzSzC4I6Dyoikt92iCeWWf9PJCk2spq\
+ewOuJ2rrrsjRsZ7C+zKaltChtUyp7QQWHSeFi+F6JAWnVH5vBg7eJphAyMsOYTQkUrmkMbzShFC+\
+KRZfHcREuqN5cpFY11Zfa5Ol6S8g44+\
+dkSdRtZCsyVzUBeKMEXMdI9IGI0HfjzCBRzr5sVjZWERvVhCBBtsKVWI5IRsbrcCRR5hsG+IWXb3/\
+YAPJd2NTQnNSOoPaGjVDP2TAUEdokyv7JVHGIl2iJQisIfHH5WhhMYoZimdaDTTD43Nc6sJYX9NK7t\
+2lOlbQZ2raPUENX8upyon0c00tc8bsirb/bYW+\
+NznhQZbQFYhnoQCi6NtFZsDoDlD6AUApO1WzhNSic5vxsLc/DELv0tWAL7ezgxVNcYH0d6+\
+LJBXwCV/Fhq5h+3Mk/\
+NcRT1IaFihsaVBdSu3Z8xggR14mRlE4V1smLrHDll65xKWqsMibo0Z9qpFSVZ5FKOpdZaaZ2wP2bKC\
+ntncb869AFTenbYywqAi9kM+\
+QZ0vJqZI9kKbTyhU1trN5cuKwStJQduMykrAVyMAS3OEHyKuUPYxlq0h8efMNrdtKWg/\
+z0y388LRNfHM14WuBr2f41jA+\
+6wDkL42yM7CPkcIp8VfRPQWISorLdIy8wSvLpODycXmC0CmRK6wPmfuz5cVuLm2LiNvReZzGQTyB6W\
+t+ySz4TWXBDRf1FrtFM9YsaA1lWbNWBpM+j2YMopxqWjV13vaDKRXnTod85g/\
+d9nQ3VcnCLJRlXlwZYXeKwHMxbZSm9lJKp52o1COC3PHirPe8JPPfCOIjuOWftMuIFBVN5cPh9Wch7\
+PrOqlxWM88mF3HzZTDSumT2bUyeXNYzXpUeNJFNo8OP4UdFDBRvtgsQ8ctN4NjcvG1mWQ5M8A50450\
+kHQZM9KqcLEVeaWg50WGSGHM8yLrpDg4Oddmmb1XJGPsWushL27nqqDk+\
+gX5a2dICvUKUURDiWV6ZJ3dZs23ujmkIT7gEOAKf0mPupg12ypqmDnBoDAeZE157mCDBp6mTtXH9XL\
+uRDcaxFzA68sEMAZMVvTXSwG/bKCvL784+HXot7E8ewCF/\
+kidc7QL3zXyqVaZM2Ab63RxZEfiBXxzznuN+5s3w0XnpNdV8pESFQFmwqYzjeNW7iBnc+\
+jxjC0WHaz31MPdefqeXB1sN6/QHqHjg+lJGoPTLastrKY+\
+7eMcHmuPxrRTu65r4BHCixiHNfDyocKZCvrBozB4JPvEXGpYhhszSjOf4ae7rKTNtnGPjoE27QSdPm\
+o3M13IrzOP18xk3hbOympFHdZuKJqPW1arWgttcUNc5xKEGQpRN3CLjpZMZHmBWRGTHEGyU8WtMpm1\
+sgXozEKckm0cjWYw3CTAr+IgxI366vr6WqNuJwFuNBpra421r18S4GVyAJdry+\
+uNmzcbB6u1zdXN5dX6yurq8s36ymZBCiCUXauvrm6kByTW1ytF6YCbyys3176qjMDLHTbSoLSWXA7A\
+/Sgc8UUa1n0Grq1r7zOZcdkFbYnTYfxnbqLVs3PcbZbJa0Hg7EJFOQpYRpfHt0po1bWGXaFbGeaMyN\
+zfsILneZeIDqSS4UXnQz9TFwVWxIzbMxhGvILwNi1juvWNa5UKJEvaNbPSSMkRPy2nEhjod2Gyhoq9\
+FJ2hdNHEarvGyOfi+\
+yxY4LoAQ9FCmZeuALVTHaT7SUeXHhKv90wVLm4uVKwlpbY6t8oFxLbPNK5yrecStxZopVnNaVEOIHe\
+VAmx3U3C+fDpLWbvA2H43f//\
+oLct8WZorPrnrMlT3B5r7rdDc5ooTVtfb6dS138dxnrqG4MubfU99fUSLMbTybr/\
+akniW7kk0e6srai//edsygGY7yDzlxlkwoYahtefuMi4+rwdf09v6m+\
+A6eOj7WasJ1pjcSZuBKpyXBZ4eZWbNctkz++CUxTVz1AjnvyGRoPJHvtZCgWH8KsVC6v1+\
+xYJh5nUn6YxlmSB1cpzbz7b9eDz0pva9rOpoDHq+Z2X20NkdzyoFWW+\
+5gxGc3IWhd0gTgYlbQddkKcDj9HDSWVlexSeT8gokJQ4SYs0ppNBmunRZLpuv2LsouJlL8TRWM2u36\
+mDSzIFP9CrtUVg+ccwZRtYaLB/JRK+\
+sp2qohA4ugV21zZorr67Syui1ayW6QpYvEAasmtxVNQf49TIbYE0yTbgHgiR5Jm6lt0sXbYtF2PgUV\
+LxdHVyP1CTn23qeqq3TfJ0j/7IkwMtNKmHYmUzx/Ll4xxqVnmJ1UIPdztYxuDuYrVxuW+eFFc+\
+mvr7IGaLAC7xo93nLdU8U8rQUNAhET4Ynci5htV2utfGYOcSrZAhQ92XTzEKFPTgKB2RhN4HlAtS6/\
+dsotmG5Clbt2b9wDAt04IYz7BeD1u71KtCe2RVdQqbDV4HbRj5ferwX+\
+qhDQPlHyTNiBfi3F3kd5JzlWqORF29QFZPdO1quwW9AyXVqQvwMm1gUS3TDHeo52cE0wKArqoJK8GO\
+dj4N1q9QflVziGJl59TPnFb041/KCjYktlhpzc8lUg/\
+pMunR7tObRgs3xJmuQZ3d0KLt4kflH3EYnDKNurP5+\
+0lN306XF4Rdw0MhX0XLW8PYTbboQBPYLq4XcO8DIOCS+\
+DCiU90mvF8uEsXLJTDiz6Xl2ngAXNNgxZYtWqLmsnatqDrYz9lSqnpxsRPP4RbNb7dycbObtPChyGZ\
+PmVfEucg1NmqOaywpyyUOo24x19wVtqTcF6bf0nKo/8KbhJOEQFwq//\
+g7iKUKTfUf3V86BwpSpQTAFWy6IqoYi38KN4xbUmbqa/DVJqcTizGAsmDTdtsZ1EC7jBrPo9XEd+\
+HvcsISFTdZuYXPLFtr91evjBkiNcX1RHT1j/carvtM8uOXa8k0V9/Z/KVsgW/FHKyAiWq5QouwyFA/\
+aBZPqMPGMPE99+\
+KayeApyPPkgznEdx4JGasRLemTt7CXxuVXbSaGbdRBnWoDbxCJ6HsF05moz0vJsc47AVYdnWvJvQhZ\
+IwYvjbJae25KaH75Y1A8CXJgZP6Bf4138mU9OVBeaosIrggP+x17fz9SitrkaNwAzyTie5MoSACl+\
+Wvr6UrfQrmpRl6IecsX0hOEeAVd3OsPM1ctnnt4Fi+\
+uoIvYHPv7JvX7gB4BIF3dFOacEQkuDlcsFddM7582dokl0XfMmOBO40QaZ4WUJyvJMVKt5yF8UIUzt\
+F+e8mmuI0NrQJhAYIPrruIkv4O9O0M3XRuOpsOI5KUIaU3aKhWrToiGrjRxFCOraKmz6KCg6h+\
+yscRRUzKP5QkRnUV1YZD7ZZQkvm6TsJA/\
+PycKVfCJsgUjOWEWXk8sunVrHAlpGIB3U6QxZU5IW3uMQbUXvMEs1xZL4ui24F90JgpZ4QrVexPp4t\
+WhGA9Jjtyo7nLOiFbNZNUsPnw38BIpv+/FRiwaGK3/\
+5Kb8Lbh1QDNiNrWYyBWyQZ1ZfbRM63Mm1p95tyeyJu+KEZw1nPp/\
+mGgPmWURMw7CQnzHjYWwr3Oe5aX2GCW7lNKcJaMZ70xQBJgMpc0UUXdLpQ2zJyjAcWzx+\
+nB7aZg5Syl6bqM4Ftg7Mhh5MtjYaMGMwc3SLAS87LqMFozf9LFtn3DKNjYGolmv1BjaVNsviXlnJ2i\
+E6nhOmUJRHGbdAOR07ddSJVnS1zNdvm5PDuBP544RetZxjhfmJc+65XRVXfO3fWFz/\
+SsFyaRPDivXVCpOHIVJFcyZMbZ20YJMb2bd+\
+J9bCIuWZrEfnvJjlxOXp165YTH7qfSpi9jAbEM97pRO3h+\
+nOB7pPec8jw1yo1CL7VRMIhnIVlpdLaaCN1udeZcBzRrzzlUTGnJBJGuzEh2VzUvIlQ52E8xmxMWdP\
+dmGck19lwpyq/MwoZ0p1vPzx+xbh/\
+JrFN2dHN38Xsc3fbWTz5eOav62o5svHNC8V0XzRgGY2njkvnFkczTSrksWxTP0mG8oU4txeFL0ojpn\
+d1X+lKGb26AIN1+XDmkU68EpRzZm6kltJV7bz1WaFPa3kjNk73y4X8LxCvLPwGJNZa+\
+TvO8aGHZhk647jkqTPcsFRMp5eODaaPSLyYgAK46L45vJhUes0oFkRUWywMCCKL2YcR3CVcKh1cPWl\
+I6GvIhA6Lw6qpMolYqCvNgSKuLtSBNSav+LgJxlBcy8eSq31S0U+\
+ncJzrh26INiZFsxc2Xn1CKdV93IxTWF9Lh3StCtdENG0i84KaDplZsYz7VJXCGfa1c7cn/\
+mQkvt2ZizTLZaLKdkvnatHM5WvGrpMa+\
+audi0MXL780E3U0hlStviVY5ZuX5cKWbpVLopYZkrPCVi6JS8fr8wMIfvgIvwWBSuzJebSVe5SW3ev\
+Z/ojPRdeuXS2PeOkLs6LT2KFGaJz1rVORcFJXWxubNJC6+\
+VCk2mFq0Ym05pXCkxaELqTMDssaZe6MCpZOMlOMxcc05Wb2+\
+JQJAPjpQR6uUAkxyGVfXpBFLIoDnnVSOTMWOSVopEvF4+\
+cG5F80ZhkGpXMCPT5QcmXCku6gUj3nr3LBiPzBOcc/uoSXZFzdHkCCeOCa0t4KlKCgDmhmavVV8+\
+t4ag7StSk5N1I6O/MmeLMLHB93MyVkUuK+9yHhDyX0RmVWcG9H3ldHwfsDSnFGLuhXTlOhnTRJu/\
+6cv7Zthcdyaj1WHazl5pnywLWrqojcqdB6qm1Ys1YzojBfKQ5fT7Dry6OM+\
+sZmOuSzyMxLmEmrigQjc+zcejVZeeNDkOvri3T8N2sXNwDZqXi1pfxLEOxDyAAx6N7Src7uGnj1rl+\
+6hoC/oP7ndReP2wHiG65trleX765URGPJsPhubqgFs8hE/\
+moC0pr6jG7kRVrQGNfvPPF9S9uPARi6YYnAY3tbnjaKr/T2p2zu/\
+XmzUY0WCy3v1isiBdrIRwvn6xQC+clZ5dsfXn9xZHl4Cw3YNy6e7a2vFxbwbP/\
+beRtXBl5G5fbBiwjuTxZzAwQN6XqgDw1XwDrTWh/nR//69//zT+\
+gvRiDZOtK4Y3HEnf3JqE4CaMj4cXEjiDSuxVxOEkEFISRDIfTivqLFzid1PBAii6HlLohiNoEWzz0Y\
+ow1QBmftkrAfzKcxPC7F0ZcZByFuBOxtvWtavO1x+FQNq9hnIlKV5tv3OORNv939Dk0+ptf/\
+S3UkmLk+YE4DJNkKAPZORIE/OjQD7wkjEA+YNQrUQGubuSdwFzXSqXPw0kkOpMoggbF2B/\
+jgXuSoY0lsLQ3RNkrgxgYWZCojW+VSnW8CAJ8MIxqm70E5kKOWBz7nrhxAwYpxtbFbzduiLAnPLEX/\
+fM/9cCzHOGFr2AFVkoNuz0taQDN6QmQ81pMvH5fdk29uFJasdvTkpM1PI7Aai2hoxO5HbOpsjMI6ZC\
+F0moNURvApI5C1JVdE8sXYQAzBm30oHGo3qFts6DPUHj1gM7NnoVuuhmktFYTHjhAkRwj3XehBfAzw\
+xHYBzRujedYaUaAmayZoX8ksQe+KJluMeabkqk1Frww/3RTFczp/\
+sAjkjwZTMXBQUN8AXS7cnAgvCHGoabiywlevQwPB2AERbIb4+\
+BjACToYnWQpp8NgIuIqg6BjidjaA2blUj+YPCHvR4SP3CEF8lbJIEFkMTBQeE+\
+EGAoYiWiLGSACKZveEsz3ziaADE05S9iOh4IrQ/ntkB+/\
+1DRCppsxKI7xzAvJ34yMNgUkoOLQOnERfBfjy5l9AGPfRAxyaDGsDYQ1oITRTWkQEMh84BnNSGDyQh\
+JCqAywOeWeBzQgTDTm+tym4xwDYiGAqaHoO1hKBfEeBASD+kxxIk/RNqN0PfB+\
+Z6Gk59GyKNIan5CYgNZdWo4UQ1zBYeZsbXM+dfQMfYrQYCml5Pxfhq+\
+3gy6gT7MSGff4MiD0ETngZQB6hHDEAeTYg/eMpAMkAJxFUGccXy5DaHhYXYBM7Bd5Q5xF9qU52y+\
+BF4KAJv+CCmgE4VxbMsiBTrwstn65v+SN3mTUICWkXOAQ1C68tHA3KL8xcSnfVWJI9uAE+\
+NJdIxQdKUc42BDakLLY+ixWq1Ct+Ku36+OfZpJ0fNPSyVQMBwZJ2oH3jyUHW8SSyQMouAbNzpmR3+\
+1G/nINko2AsQ3brBaQJ6UVaCkjjSCqwooqYKK08TN2kKcgBJCkFEiwt8TL+\
+rCRFSNwFVIAPTBiIFjUbggmvSxgB17uxzUY0yk0huGL+\
+LpaCSTaFoF6TTpwITA0Aa4cA3lQTmOvT52pA5dTolDC3CQMZrORDp67u049LtAczY5g2g8ASmP5MlS\
+FBkL5hZwCTgEoXWIuhroEvoakgeDLXWALiXTNOlFw32AszGKxyDhYoZGoLQXDafpbH7s90FiJ1V/\
+NAY+AbWDVnFMEhjEqVp2zqlLWwNaU8lyJImktHfqkYREkxx81EPURbTQAyJSt4qzTRY3EBAMfiBpEZ\
+vsk56P51agfWNEH5RDrVkECgmrJAxTnqoxSFM0MZAkO16MuQKAtYBO+kXKMHN3rFaLsJVJPGEjagR/\
+auKuTKAQWmFRiEiPid4OJ/6wS+NF4wtMGOwSKh0iB6JdiMDyJfJL+\
+V4mqL8UNrI0AjAbYp4EZDVI3RPhs09cpCrHwNW4U1LwOTlgA3ITIAbAnvZHk1Elbc5tDGXOLyZh4qN\
+EQCJLj84EvgUhG5FCQ1xoRiV7I0e/\
+gOndHklF4k5PxD4utYGdDCg7pkYIclz4ApaSyHEVMQKrBqkSes6OBSEzlMtGYyptAakR+\
+G2tQm0PjlPxblC1oZT2mrrJKLmjeHCZqjRrV6ndjlW3LbBKunzETulZSTvWmgS2NQMEep0yt8qdLrW\
+Y2jAF6iVnDJhWXOtE/0ZrRtU9141kAEj3uGaOwaMDWGAW+SChhXpFLDTo+\
+DN74GAFcatmFOJ29sBv1ZEpml3B5cu/TQOmnL3MnCkjfoZZTPbPFP+\
+6ukYV1P5LMFFas5BrKjgYzdYyiHbRUrdnHk8n4aZ2ey0+L8hpk++\
+tbmj8aADbfJKSc3O1asedVWeqYIrUeq4DUUWczaAR6KV+nm1ambvzzce85avaKNi+\
+bCiV18dTWMwqMre2jeJe4l56tUU6hSeldvdMvJIOSNG/yvy+O0nYQiVtP5DDcZyaT6g+\
+4ppAhwHdYbRUWDmAMRuOQbwbJ2mebouNoiSLfc+4SqnHCUaCRx5SiEIL6hoftFTaAl1NxgfpH/\
+LbWTErmEF5oipih1i3yEIWXhlfkCR2rFQZ2aLKnBwbeEgdHRwYygb8VC2ztugZHZJPz3qFJi4JYIBV\
+5asgoLSkS/YUAx6Ox2HsAzZiMMXRstFRd+M+Smo8p/\
+uwrHVcH7pG4OGhHz1IUVtSnhCaS7HxUskwKvJDU49WY+rUQw2UVxq6Az4UtWT/ZEOdkxTyz1nA2+\
+K96C7izE91F0MMnJLg4rG5priUlXQvfjdGkWy9bKqLWzt7tQYzXjaZRT2+\
+6t0ainvpbxYfIntWFS0JqH6ctUYjI/SyACcYICnE/OcJ/3l6npadmZaRFqAGCHGXd+\
+Wy9Z9kUg8VUDqDYoFSNt7LVXt6YbXjbDWpTvr94Ln1UIgJn5gG0xBz+\
+gC19dSe8IpT4biwwhMnGSot/fyO+\
+aEft7PWBZGQM9cGxnm3mugil7gjJVt01gUoulxT05rTZpYCS2aAWsPsY+\
+BtTnAAPd0QPXTwCLxxXtDMqAgyZ8ablr6WcMbl6U4eJZA0r5DG2eER3atFyAIphmSUq4Pr3bRWmEcW\
+T+OcU5MdHj3j+AiqBOzT8KAm2Avacds6rij/yWFlotmt8XhoGR34ITtFq02XzOlMxnRBViMXzQ/\
+ugM4/slZJrdrpd4t39Phc06TiyjaNQqSpkon7UKieo7muvYLmSatA/\
+LSvg3MOwudWJHtLBe8XLTNlpSaaaOGwFUNetYqU8dFQGARDXc+xCQUOqlnwdb4kXS17Pb/\
+joxo3FK20wewAXAUDdtaNVaCZFtQZU9ZyNB2qS0j4nKJnZOkEEoafjarXBJYgI4neO04++\
+sogw7VHmSLRWEwx2F0xR/pNOLGG9hjGpyw/\
+HgbOgSOyP1xEgUtq2kumY1kx5aAx1UNRGRVMItgRPD9IIzpUnxz8BBxLjCN1wUzSAT7TFBcDgD/\
+GGDhPzgSgVdBHHJUhlxoA9vKChyf3cXjykCPyIHGyj5z5UxeewsCeVfiCXPcu1KzcsScbObT/EQ+\
+MqABNQj6ayoowAunoGsTKLrnwLD22nrUoAOyCwnIIHCzlRdltsINl3E+HNB33ihogaZCvTo/\
+tygUknG2vJNLxU4IufAFnyG4FbDU7KUMpchtVVkV2d4tGmGGyljqlmkAoxrSKRxTI2FTCGnEpxhoaS\
+9YqP9O8ovP5ldvmSAODA3MFWDtnINgjtuyDvArBC0eM9lYxSBxTJjDBh9rOQJU+\
+vYvaajviWd1VVoyzdk5W8+rHJAZCtcUQhyVtNpe/\
+mHjDaoaLReTRYkQy8ALN6OjlnAxCKKNWIgT6KxSfR2cVGM7vpHFCvQpDIoDikTKyBP4q1PbR7s66b1\
+Z4345Fj8YA/6EPGmoq/\
+JE6v3YI3tZjvz8AcQzCzTV5nNUpa1ETZXYu7r0URj6frQ7qXS1igpkEXiCuacrOEYrBk4EknOCANVy\
+AHQzQYvQXQ4kwz0B4lRm+aQX86IiWTFT8PQ2796JwRAhWzmiiewAajnncvtTOtKfiqMabJ583v/\
+jL683a93fh4eZ/86u/Q23+\
+i4kf4eKNiSUgEUaBBRYfF4fLzX6AYYcT3IFatH6AGOFVf3S3qU8zJBcZuNbsawvejiRzr4ch6EgOOo\
+BCDLKVgX4Ovc4RVOkcqbAErkLwchDOVhZx2mLA0WAYBcj40O+DvQ2KbNiH+\
+U8GI6DfeOD3knQqoXOjpzJXgIpXeQk88a0VhjZxeQsxeJ74MTHRXiwn3bBqwhUGRJ57x8GwjXO0yyv\
+mcnCEgy8EzyrKDPzdEFMk7OPbMfXyHAQuGuz8krABuPaG2/\
+wAz1x8qg5JNFNr3FCVXGidQqgxAU2aiW2p/\
+ArV5DOtm2U3CzLe6kocpjMQ8D6GJjC0VGoB1Cdw3Zaq/\
+mmmZSPswTwHmtsPW9bZ7brPtuMT3Mauwlg+\
+DOPEjFCd9Z9pXDvAWrDcFm4BChCYUtth6h7oQWDSpl69u0ettOzhVjINWjCnzjdgIG0OzIZ38axu2b\
+UdjhTxuiTtZUmRSVtdCh2LMwMJD/Lc9TBKWm2mXRiq+\
+uD58zvs3ZnDLW1FpnVIZwjYjiiVCNegac1WJYho8R5GMdCjpWXWamlIlpYRizJklJynFWS1hEurgp+\
+hH22vrnaGk67M2+0xp5kcHJxxSpf17/\
+nBQYU1JAUh7V69SIVQq05MMV3pdoRQztWw0ndSOEgEasfQXh8jzXJh6FKtU+\
+tsF6043KvrfIwtZA8BPjioiSdKD9JarU9yaguo1utwdgaMCyR1zz/N2/0FCSWPefkaPIDZL3Nhh/\
+nWvxXwi7yTirO+TELiVQU1ofXCbWwWANoYfcksGOIoexwqa5ulY+YGGV7kKzCm/ThM+\
+fgy901dhxrptVeLuMTG/\
+eZsZ7sN3PVw5VsPFx0LeNbRxlq4FCzv5KbaspKlNt5QyqSsNiPDSRlfhv0Pw9hkG6HVwxkXKs8Rl1A\
+sObSeJiXENITqoRfLbj4P5khO41TuYS5kGs3gaazVavMu/\
+6Gh7UUSjTQrGw7bBeMIrbFYtD6JwBAFLehEaPTDxYogT9N5iQ/\
+whbvA5UZ4nFdQmBYzcCr8RO1dAfR3UQhqmoiX0GuI3ZWPij0XjC2/N2UDHJ0PY/\
+XEBjUXHTqOi9k2F7zwyeJsaSyk5zcs4CtrPhaoTkWYeWmfM31iVbxIg9c3Er4LzcmVL3FycQmN+\
+UTTJqdG2DNJrlAEHBjUVC7fIWV5oHOBeSdAe1QEa+mDmNXCIXt9qDy7Ei8BgdKYz+\
+Fj6gJmzZr0mi20OjuRxJykceKPNHUCBQduwgRlOiozOh5LzHlS2bi07hZj1sRJhIttsgfPEzQm8SXm\
+WQVAIUBylAYpmglo33rpocqsyKcEKXXEdKMWDmdlTeI7O4KsHuW1FtIoo89RhJlbuapsp1bZe+\
+uabF4hsFX3Jno+Oxw65JfuZfaZl+yDZY4dN28vPMWcU/gZc42Sli/zAv8Ud/TQ90OaQ+c+\
+4QgBpWR1ybCtUhiYouq1tP0Vq/\
+1sTA4ajkOTNofBUTZUpPK1rfCk1eJqidV4sU02Qr0dqjVmZzasJtYMUHYW3rwwACHAmKDIEz/\
+DdfyAU7opt3GIRBtj85QIjKFMzBuFkfRD9kx/86v/iUI+/s2v/hdao/\
+BT5xJW0RCswXOLk3ryJA1YUFZ8dSiP5VAlETE9kzYCnkCjELgGYzO0ip8xlErpISpEbcqB0vSlj3LQ\
+FIUyZzYVlVBnFhAvi8wiqqbAXFbHWvfzzLibB/\
+sp4APup4hB7PXqMzeYqrw596EoBpddn5yJpUwTsnLAEHGXjM1GHmN3LeTiuWy6qcE22pYTpIJ6YN3d\
+uS1W1NJx1gcq4nrGRaE8KES6irQaODIIxG4ud9HShUKGup9xHROO6iXuY2LkzLyQSb2feSETvlTkUL\
+dWPxXjfTaYCjvFFySUtRhhpf9qoUUqRadrsugykslxvA6HoPI5WdEtnouGuV5mWo0WVtJIKfpn0VRn\
+iHL6txOyhSpWNnE2V9ryE30W5zSUNAnRzRrORpYm5ASwZKMRePxARbOrlvCK5Je82E75pyOOsMEwab\
+yuAMeK0HgIg9IpyWwgJ2kyMu7UAW0jO3jhnSWGmyFnHtEOIvT+0TunVTFbzB/\
+TRXlo95wMfADCnmwvjZqBVjPBgdTAeQByGpDYDcEG8si2iDE8yf0qO5SM0tRZveqmLqZGsoO4M+\
+qDLB5ev6vXilRfZuYbtZSsrEJp8jLYZBNrQdbe0oK7OzHImq7W6jXYqklAsq0qCqqmZCaHuK2NOwES\
+pawzY1FyRFXSNgW2I9Ak5DWHvlQLDAcH66BzwSjF7Tj6hhKdh7u2vIyGA2+\
+e4R0FHiYBc4B2OhqDzsdZB/U6mPQxw9aLgGsw/7fCKfJeEJ+glyMTR+U+\
+xuwGwFJXhXF2VSJbPwQwaI+YDkkAqum+wQDjVrvguU2GXUW1eoMRtqNMWFoJTfHuZbZzZVP1M+\
+nk2ig2U07BdvaOpjTPZs0gTanLZPhbkZ4bN5SF5NhGN26oCU+TulUT6VYuMvoxNx+NvSVFL15C+\
+w5G2lPg5WcnuxsD7pQ4rqpI47uotECeWI8JxVrstshWnip3jyytEyQW3CkAdJGmzvNiMa07Te0tdmZ\
+zhbVxQC+Iu1ncOJfokGNuJT9Eq4+y5/\
+HaIrbtAhYS7OSceLyGgjnfYKwK6eNCD88v7nfrRuG4iv4KO0PMZzHtAjF5khpOklrUo2XgqU0yvCXD\
+XY6DWRc4/R7NaYSEHvkh8TQ5TtAFz0nhkoCOCpMIt3MWac9YivpMnvvIO8X8eu2yAcZ+86u/\
+A9qfsCeH44QGG7Vq83sPHjzcAQNoggK0+fZn4bAH07W1a7ZV/n+8vzn8"|>,
+ GeneratedCell->True,
+ CellAutoOverwrite->
+  True,ExpressionUUID->"538cc880-361d-4e11-8e74-cf0eef5f5855"]
 }, Open  ]]
 }, Open  ]]
 },
@@ -7777,15 +10459,15 @@ ExpressionUUID->"374051aa-15f3-4604-9a14-6948501e8d52"
 (*CellTagsOutline
 CellTagsIndex->{
  "ChatGeneratedCell"->{
-  Cell[106228, 2180, 386, 11, 44, "Input",ExpressionUUID->"3c380033-6ca3-4415-9166-7be11b916316",
+  Cell[111310, 2290, 386, 11, 44, "Input",ExpressionUUID->"3c380033-6ca3-4415-9166-7be11b916316",
    CellTags->"ChatGeneratedCell"],
-  Cell[106617, 2193, 506, 13, 74, "Input",ExpressionUUID->"765ef977-660f-456d-b2d7-af32dbb33baf",
+  Cell[111699, 2303, 506, 13, 74, "Input",ExpressionUUID->"765ef977-660f-456d-b2d7-af32dbb33baf",
    CellTags->"ChatGeneratedCell"]}
  }
 *)
 (*CellTagsIndex
 CellTagsIndex->{
- {"ChatGeneratedCell", 356190, 7778}
+ {"ChatGeneratedCell", 480326, 10460}
  }
 *)
 (*NotebookFileOutline
@@ -7836,69 +10518,74 @@ Cell[76074, 1553, 1937, 48, 442, "Input",ExpressionUUID->"46f8a159-ea0b-4674-8a7
 Cell[78014, 1603, 19038, 383, 87, "Output",ExpressionUUID->"a8363fa5-1704-4172-acb6-ed61abab7df5"]
 }, Open  ]],
 Cell[97067, 1989, 4650, 96, 1147, "Input",ExpressionUUID->"e721f3b1-577b-4826-8d4a-e35a68202fe7"],
-Cell[101720, 2087, 3405, 68, 993, "Input",ExpressionUUID->"6c46411b-a123-4f24-ab14-9dd8a070d066"],
-Cell[105128, 2157, 1097, 21, 503, "Input",ExpressionUUID->"37a336f7-76f2-4566-bdda-7c346059d069"],
-Cell[106228, 2180, 386, 11, 44, "Input",ExpressionUUID->"3c380033-6ca3-4415-9166-7be11b916316",
+Cell[101720, 2087, 5079, 108, 1238, "Input",ExpressionUUID->"a09becd1-b972-4459-99a0-59d31d19d73f"],
+Cell[106802, 2197, 3405, 68, 993, "Input",ExpressionUUID->"6c46411b-a123-4f24-ab14-9dd8a070d066"],
+Cell[110210, 2267, 1097, 21, 503, "Input",ExpressionUUID->"37a336f7-76f2-4566-bdda-7c346059d069"],
+Cell[111310, 2290, 386, 11, 44, "Input",ExpressionUUID->"3c380033-6ca3-4415-9166-7be11b916316",
  CellTags->"ChatGeneratedCell"],
-Cell[106617, 2193, 506, 13, 74, "Input",ExpressionUUID->"765ef977-660f-456d-b2d7-af32dbb33baf",
+Cell[111699, 2303, 506, 13, 74, "Input",ExpressionUUID->"765ef977-660f-456d-b2d7-af32dbb33baf",
  CellTags->"ChatGeneratedCell"],
-Cell[107126, 2208, 1356, 34, 258, "Input",ExpressionUUID->"e51486ba-475b-4644-b6f1-6eaf2e5fcb82"],
-Cell[108485, 2244, 1366, 32, 350, "Input",ExpressionUUID->"6a44fbfb-5646-45f0-9a26-99811de2f68c"],
-Cell[109854, 2278, 4868, 92, 1575, "Input",ExpressionUUID->"4285824e-2d42-4bd0-bc58-a9ef26eebfdc"],
-Cell[114725, 2372, 2289, 47, 779, "Input",ExpressionUUID->"bc3b5e17-55c4-4d77-b6d1-b3fca19dad27"],
+Cell[112208, 2318, 1356, 34, 258, "Input",ExpressionUUID->"e51486ba-475b-4644-b6f1-6eaf2e5fcb82"],
+Cell[113567, 2354, 1366, 32, 350, "Input",ExpressionUUID->"6a44fbfb-5646-45f0-9a26-99811de2f68c"],
+Cell[114936, 2388, 4868, 92, 1575, "Input",ExpressionUUID->"4285824e-2d42-4bd0-bc58-a9ef26eebfdc"],
+Cell[119807, 2482, 2289, 47, 779, "Input",ExpressionUUID->"bc3b5e17-55c4-4d77-b6d1-b3fca19dad27"],
 Cell[CellGroupData[{
-Cell[117039, 2423, 3659, 81, 993, "Input",ExpressionUUID->"4057add3-04f2-4b4d-b0e8-0036c43e1bc4"],
-Cell[120701, 2506, 22836, 461, 87, "Output",ExpressionUUID->"f20ad2cb-8f3f-4e3e-a9a9-f20038598b4a"]
+Cell[122121, 2533, 3659, 81, 993, "Input",ExpressionUUID->"4057add3-04f2-4b4d-b0e8-0036c43e1bc4"],
+Cell[125783, 2616, 22836, 461, 87, "Output",ExpressionUUID->"f20ad2cb-8f3f-4e3e-a9a9-f20038598b4a"]
 }, Open  ]],
-Cell[143552, 2970, 4894, 101, 1637, "Input",ExpressionUUID->"0e78cf5f-524a-417a-ba90-174ea8c594c4"],
-Cell[148449, 3073, 7362, 148, 2311, "Input",ExpressionUUID->"34a6177f-43f1-487d-97dd-f9ce5878e838"],
+Cell[148634, 3080, 4894, 101, 1637, "Input",ExpressionUUID->"0e78cf5f-524a-417a-ba90-174ea8c594c4"],
+Cell[153531, 3183, 7362, 148, 2311, "Input",ExpressionUUID->"34a6177f-43f1-487d-97dd-f9ce5878e838"],
 Cell[CellGroupData[{
-Cell[155836, 3225, 3851, 87, 1055, "Input",ExpressionUUID->"c4abf66a-ecc8-453b-8338-45d28b6cc6b8"],
-Cell[159690, 3314, 791, 17, 80, "Output",ExpressionUUID->"df8dcaef-95e9-4bd6-a203-7400cde55f21"]
+Cell[160918, 3335, 3851, 87, 1055, "Input",ExpressionUUID->"c4abf66a-ecc8-453b-8338-45d28b6cc6b8"],
+Cell[164772, 3424, 791, 17, 80, "Output",ExpressionUUID->"df8dcaef-95e9-4bd6-a203-7400cde55f21"]
 }, Open  ]],
-Cell[160496, 3334, 5558, 107, 1361, "Input",ExpressionUUID->"6df125e3-decc-4885-bc16-b392e174f3e2"],
-Cell[166057, 3443, 11904, 221, 2862, "Input",ExpressionUUID->"b4c7203c-7c1f-4669-8233-d23e2f839757"],
+Cell[165578, 3444, 5558, 107, 1361, "Input",ExpressionUUID->"6df125e3-decc-4885-bc16-b392e174f3e2"],
+Cell[171139, 3553, 11904, 221, 2862, "Input",ExpressionUUID->"b4c7203c-7c1f-4669-8233-d23e2f839757"],
 Cell[CellGroupData[{
-Cell[177986, 3668, 2579, 60, 564, "Input",ExpressionUUID->"61f7dca3-8fc0-4216-ab43-cc2c042409a6"],
-Cell[180568, 3730, 34243, 725, 87, "Output",ExpressionUUID->"2759604f-9fce-486d-8655-e779d2eeafdd"]
+Cell[183068, 3778, 2579, 60, 564, "Input",ExpressionUUID->"61f7dca3-8fc0-4216-ab43-cc2c042409a6"],
+Cell[185650, 3840, 34243, 725, 87, "Output",ExpressionUUID->"2759604f-9fce-486d-8655-e779d2eeafdd"]
 }, Open  ]],
-Cell[214826, 4458, 1463, 34, 411, "Input",ExpressionUUID->"13f7d9f5-c300-4fc7-b7fb-ffc739efa5ae"],
+Cell[219908, 4568, 1463, 34, 411, "Input",ExpressionUUID->"13f7d9f5-c300-4fc7-b7fb-ffc739efa5ae"],
 Cell[CellGroupData[{
-Cell[216314, 4496, 1285, 33, 319, "Input",ExpressionUUID->"7b003dff-1d71-43fc-9784-2c1fca282d7f"],
-Cell[217602, 4531, 14884, 308, 87, "Output",ExpressionUUID->"22779605-088c-41c6-ba85-7b6bce2a9ea2"]
+Cell[221396, 4606, 1285, 33, 319, "Input",ExpressionUUID->"7b003dff-1d71-43fc-9784-2c1fca282d7f"],
+Cell[222684, 4641, 14884, 308, 87, "Output",ExpressionUUID->"22779605-088c-41c6-ba85-7b6bce2a9ea2"]
 }, Open  ]],
-Cell[232501, 4842, 949, 22, 227, "Input",ExpressionUUID->"96e63fae-1973-4769-aae1-e253c28f7f83"],
-Cell[233453, 4866, 271, 5, 44, "Input",ExpressionUUID->"657cfb2b-7c8d-4ffa-94a2-671d53e860c2"],
-Cell[233727, 4873, 2388, 49, 779, "Input",ExpressionUUID->"561f6d0b-8323-45d2-a2ed-abb1f2c0b0eb"],
-Cell[236118, 4924, 2313, 48, 748, "Input",ExpressionUUID->"53c49614-b2e8-4390-b488-21910290ff3c"],
-Cell[238434, 4974, 4445, 99, 1361, "Input",ExpressionUUID->"8e4de57a-ceac-4bf1-b759-402c53972805"]
+Cell[237583, 4952, 949, 22, 227, "Input",ExpressionUUID->"96e63fae-1973-4769-aae1-e253c28f7f83"],
+Cell[238535, 4976, 271, 5, 44, "Input",ExpressionUUID->"657cfb2b-7c8d-4ffa-94a2-671d53e860c2"],
+Cell[238809, 4983, 2388, 49, 779, "Input",ExpressionUUID->"561f6d0b-8323-45d2-a2ed-abb1f2c0b0eb"],
+Cell[241200, 5034, 2313, 48, 748, "Input",ExpressionUUID->"53c49614-b2e8-4390-b488-21910290ff3c"],
+Cell[243516, 5084, 4445, 99, 1361, "Input",ExpressionUUID->"8e4de57a-ceac-4bf1-b759-402c53972805"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[242916, 5078, 166, 3, 65, "Subsubsection",ExpressionUUID->"5b8b01cc-8641-43db-9cd1-0eb621d6ced0"],
-Cell[243085, 5083, 24838, 523, 6263, "Input",ExpressionUUID->"905ce1d9-1123-452d-b22b-1638f7ca5e70"],
-Cell[267926, 5608, 26755, 564, 6907, "Input",ExpressionUUID->"833e1d25-46ea-43fe-a996-666304a0202b"]
+Cell[247998, 5188, 166, 3, 65, "Subsubsection",ExpressionUUID->"5b8b01cc-8641-43db-9cd1-0eb621d6ced0"],
+Cell[248167, 5193, 24838, 523, 6263, "Input",ExpressionUUID->"905ce1d9-1123-452d-b22b-1638f7ca5e70"],
+Cell[273008, 5718, 26755, 564, 6907, "Input",ExpressionUUID->"833e1d25-46ea-43fe-a996-666304a0202b"]
 }, Closed]],
 Cell[CellGroupData[{
-Cell[294718, 6177, 157, 3, 51, "Subsubsection",ExpressionUUID->"37f01944-58cc-46b0-9a33-acf5e4e3de90"],
+Cell[299800, 6287, 157, 3, 51, "Subsubsection",ExpressionUUID->"37f01944-58cc-46b0-9a33-acf5e4e3de90"],
 Cell[CellGroupData[{
-Cell[294900, 6184, 589, 11, 44, "Input",ExpressionUUID->"1e7b8f2a-f954-45f1-99e8-b7d72cede217"],
-Cell[295492, 6197, 295, 5, 50, "Output",ExpressionUUID->"d184c939-2406-49f7-8eed-9987f99f3230"]
+Cell[299982, 6294, 593, 12, 44, "Input",ExpressionUUID->"1e7b8f2a-f954-45f1-99e8-b7d72cede217"],
+Cell[300578, 6308, 324, 7, 50, "Output",ExpressionUUID->"52a6c6bc-60e3-4dc9-93ca-1a2b0081972d"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[295824, 6207, 160, 2, 44, "Input",ExpressionUUID->"8ecbe82d-8cdb-4232-87cf-53c5f6960865"],
-Cell[295987, 6211, 11172, 290, 922, "Output",ExpressionUUID->"2ce88120-6f05-4ed2-aca5-ad031087e56d"]
+Cell[300939, 6320, 164, 3, 44, "Input",ExpressionUUID->"8ecbe82d-8cdb-4232-87cf-53c5f6960865"],
+Cell[301106, 6325, 11198, 291, 922, "Output",ExpressionUUID->"8203af5d-5d59-47bb-a15a-410b849f35ff"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[307196, 6506, 560, 11, 44, "Input",ExpressionUUID->"bac66ff2-a6e0-476e-bceb-5d10fccbeab2"],
-Cell[307759, 6519, 275, 5, 50, "Output",ExpressionUUID->"adfc1df0-089a-4d67-9a9f-a250ee093700"]
+Cell[312341, 6621, 564, 12, 44, "Input",ExpressionUUID->"bac66ff2-a6e0-476e-bceb-5d10fccbeab2"],
+Cell[312908, 6635, 301, 6, 50, "Output",ExpressionUUID->"185d7e75-9f67-49d3-b943-d993644946ed"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[308071, 6529, 164, 3, 44, "Input",ExpressionUUID->"0a642920-493a-4c12-8f25-69622938a19d"],
-Cell[308238, 6534, 47140, 1214, 2637, "Output",ExpressionUUID->"bcdc8200-5d45-419a-a973-57d53e8102f3"]
+Cell[313246, 6646, 164, 3, 44, "Input",ExpressionUUID->"0a642920-493a-4c12-8f25-69622938a19d"],
+Cell[313413, 6651, 47150, 1214, 2637, "Output",ExpressionUUID->"04512ecf-666b-4be4-859b-f9a0423b6e17"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[355415, 7753, 208, 4, 44, "Input",ExpressionUUID->"bcc992b6-7dc7-4d89-9ba4-c30034cce856"],
-Cell[355626, 7759, 153, 3, 50, "Output",ExpressionUUID->"a204664f-c4cf-4da8-80ba-fc19c9103e13"]
+Cell[360600, 7870, 208, 4, 44, "Input",ExpressionUUID->"bcc992b6-7dc7-4d89-9ba4-c30034cce856"],
+Cell[360811, 7876, 175, 3, 50, "Output",ExpressionUUID->"7d776019-75d3-4815-bcd7-aa450c364947"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[361023, 7884, 436, 9, 103, "ChatInput",ExpressionUUID->"6c33bfc7-7d50-4801-85af-2b1baf3133b0"],
+Cell[361462, 7895, 118453, 2549, 15331, "ChatOutput",ExpressionUUID->"538cc880-361d-4e11-8e74-cf0eef5f5855"]
 }, Open  ]]
 }, Open  ]]
 }
