@@ -89,23 +89,9 @@ Cell["\<\
   SM particle list for every internal line.
 *)
 
-ClearAll[
-  buildModelData, modelData,
-  tagParticles, multiparticleOf, legParticles,
-  emptyCurrent, glueCurrents, orientationOf, diagramKey,
-  generateRawDiagrams, attachFeynmanRules,
-  replaceVertexIndices, vertexRowMatches, vertexStructureInstances,
-  vertexIncidentLegData, internalPropagatorData,
-  CreateDiagrams,
-  spinorVarianceAtEndpoint, symmetrizeIndices,
-  edgeSpinMultiplicity, edgeSpinIndexData,
-  makeVertexSpinIndicesExplicit, makeDiagramSpinIndicesExplicit,
-  diagramAmplitude, diagramAmplitudes,
-  displayParticleName, arrowDirectionData, midArrowPoints,
-  CreateArrowDiagram, CreateArrowDiagrams
-];
-
-(*Model cache*)
+(* Model lookup tables.  Built locally from the model argument of
+   each CreateDiagrams call, so multiple models (e.g. sm and qed) can
+   be used in the same notebook without shared state. *)
 
 buildModelData[model_] := Module[
   {names, nameQ, anti, mass, rank, vertices, bySorted, combineLookup},
@@ -169,8 +155,6 @@ buildModelData[model_] := Module[
     \"Valences\" -> Sort @ DeleteDuplicates[vertices[[All, \"Valence\"]]]
   |>
 ];
-
-modelData[model_] := modelData[model] = buildModelData[model];
 
 CreateDiagrams::usage = \"CreateDiagrams[p1, p2, ..., model] generates \
 tree-level constructive Feynman diagrams for the process with external \
@@ -508,7 +492,7 @@ raw[\"EdgeOrientation\"], md];
 CreateDiagrams[externalParticles___String, model_] := Module[
   {ext = {externalParticles}, md, raw},
   If[Length[ext] < 3, Return[{}]];
-  md = modelData[model];
+  md = buildModelData[model];
   raw = generateRawDiagrams[ext, md];
   DeleteCases[attachFeynmanRules[#, ext, md] & /@ raw, Nothing]
 ];
