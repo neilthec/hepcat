@@ -249,11 +249,14 @@ UChannelDiagram[p1_,p2_,p3_,p4_,ps_,model_]:=ConstructiveDiagram[{p1,p2,p3,p4},p
 
 (* ::Input::Initialization:: *)
 ConstructiveDiagram[parts_,pstmp_,model_,channel_]:=Module[{particles=parts,totFactor=1,numerator=0,numerator1=1,numerator2=1,numeratorl=0,numeratorr=0,lvrtx=False,rvrtx=False,ps=pstmp,aps="",fparts={False,False,False,False},p1p=0,p2p=0,psp=0,apsp=0,p3p=0,p4p=0,pp5,pp6,pp7,channel2=Complement[{1,2,3,4},channel],mps,spinp=0,i1,i2,i3,i4,indices={},helicitySigns={0,0,0,0},needxTilde=False},
-(*Remove .+ and .- for massless particle names*)
+(*Split .+ / .- to record helicity, but keep the model name (A.+, G.+).*)
 Do[
 particles[[ii]]=StringTrim[StringSplit[parts[[ii]],"."]];
-If[Length[particles[[ii]]]>1,helicitySigns[[ii]]=ToExpression[particles[[ii,2]]<>"1"]];
-particles[[ii]]=particles[[ii,1]];
+If[Length[particles[[ii]]]>1,
+helicitySigns[[ii]]=ToExpression[particles[[ii,2]]<>"1"];
+particles[[ii]]=parts[[ii]],
+particles[[ii]]=particles[[ii,1]]
+];
 ,{ii,1,4}];
 (*Print[particles,":",helicitySigns];*)
 
@@ -579,7 +582,8 @@ missingXTildeReplacement[l_,j_]:=  SpinorChain[SpinorHat["Xi","Square",XiN],MomH
   SpinorChain[SpinorHat["Helicity","Square",l],MomHat[XiN],MomHat[j],SpinorHat["Helicity","Square",l]]/Mass[j]/PropDen[MomHat[Multiparticle[l,XiN]],Mass[XiN++]];
 missingXTildeReplacement[l_,j_]:=  SpinorChain[SpinorHat["Helicity","Angle",l],MomHat[XiN],MomHat[j],SpinorHat["Helicity","Angle",l]]/Mass[j]/PropDen[MomHat[Multiparticle[l,XiN]],Mass[XiN++]];*)
 
-newExp=expr/.{xFactor[i_,j_]xTildeFactor[k_,l_]SpinorChain[SpinorHat["Spin","Angle",i_],SpinorHat["Spin","Angle",j_]]SpinorChain[SpinorHat["Spin","Square",k_],SpinorHat["Spin","Square",l_]]+xFactor[k_,l_]xTildeFactor[i_,j_]SpinorChain[SpinorHat["Spin","Angle",k_],SpinorHat["Spin","Angle",l_]]SpinorChain[SpinorHat["Spin","Square",i_],SpinorHat["Spin","Square",j_]]:>SpinorChain[SpinorHat["Spin","Angle",i],SpinorHat["Spin","Angle",k]]SpinorChain[SpinorHat["Spin","Square",j],SpinorHat["Spin","Square",l]]+SpinorChain[SpinorHat["Spin","Angle",i],SpinorHat["Spin","Angle",l]]SpinorChain[SpinorHat["Spin","Square",j],SpinorHat["Spin","Square",k]]+SpinorChain[SpinorHat["Spin","Square",i],SpinorHat["Spin","Square",k]]SpinorChain[SpinorHat["Spin","Angle",j],SpinorHat["Spin","Angle",l]]+SpinorChain[SpinorHat["Spin","Square",i],SpinorHat["Spin","Square",l]]SpinorChain[SpinorHat["Spin","Angle",j],SpinorHat["Spin","Angle",k]]
+newExp=expr/.{xFactor[i_,j_]xTildeFactor[k_,l_]SpinorChain[SpinorHat["Spin","Angle",i_],SpinorHat["Spin","Angle",j_]]SpinorChain[SpinorHat["Spin","Square",k_],SpinorHat["Spin","Square",l_]]+xFactor[k_,l_]xTildeFactor[i_,j_]SpinorChain[SpinorHat["Spin","Angle",k_],SpinorHat["Spin","Angle",l_]]SpinorChain[SpinorHat["Spin","Square",i_],SpinorHat["Spin","Square",j_]]:>SpinorChain[SpinorHat["Spin","Angle",i],SpinorHat["Spin","Angle",k]]SpinorChain[SpinorHat["Spin","Square",j],SpinorHat["Spin","Square",l]]+SpinorChain[SpinorHat["Spin","Angle",i],SpinorHat["Spin","Angle",l]]SpinorChain[SpinorHat["Spin","Square",j],SpinorHat["Spin","Square",k]]+SpinorChain[SpinorHat["Spin","Square",i],SpinorHat["Spin","Square",k]]SpinorChain[SpinorHat["Spin","Angle",j],SpinorHat["Spin","Angle",l]]+SpinorChain[SpinorHat["Spin","Square",i],SpinorHat["Spin","Square",l]]SpinorChain[SpinorHat["Spin","Angle",j],SpinorHat["Spin","Angle",k]],
+xFactor[i_,j_]xTildeFactor[k_,l_]SpinorChain[SpinorHat["Spin","Angle",i_],SpinorHat["Spin","Angle",j_]]^2SpinorChain[SpinorHat["Spin","Square",k_],SpinorHat["Spin","Square",l_]]:>-(SpinorChain[SpinorHat["Spin","Angle",j],SpinorHat["Spin","Angle",i]]+SpinorChain[SpinorHat["Spin","Square",j],SpinorHat["Spin","Square",i]])(SpinorChain[SpinorHat["Spin","Angle",k],SpinorHat["Spin","Angle",j]]SpinorChain[SpinorHat["Spin","Square",l],SpinorHat["Spin","Square",i]]+SpinorChain[SpinorHat["Spin","Angle",k],SpinorHat["Spin","Angle",i]]SpinorChain[SpinorHat["Spin","Square",l],SpinorHat["Spin","Square",j]]+SpinorChain[SpinorHat["Spin","Angle",l],SpinorHat["Spin","Angle",j]]SpinorChain[SpinorHat["Spin","Square",k],SpinorHat["Spin","Square",i]]+SpinorChain[SpinorHat["Spin","Angle",l],SpinorHat["Spin","Angle",i]]SpinorChain[SpinorHat["Spin","Square",k],SpinorHat["Spin","Square",j]])-1/Mass[3] SpinorChain[SpinorHat["Spin","Angle",j],SpinorHat["Spin","Angle",i]]SpinorChain[SpinorHat["Spin","Square",j],SpinorHat["Spin","Square",i]](SpinorChain[SpinorHat["Spin","Square",k],MomHat[j],SpinorHat["Spin","Angle",l]]+SpinorChain[SpinorHat["Spin","Square",l],MomHat[j],SpinorHat["Spin","Angle",k]])-xFactor[k,l]xTildeFactor[i,j]SpinorChain[SpinorHat["Spin","Angle",k],SpinorHat["Spin","Angle",l]]SpinorChain[SpinorHat["Spin","Square",i],SpinorHat["Spin","Square",j]]^2
 };
 newExp/.{
 xFactor[i_,j_]:>Module[
@@ -755,7 +759,7 @@ UnHatSpinors[amp_]:=amp/.SpinorHat[a__]:>Spinor[a]
    be used in the same notebook without shared state. *)
 
 buildModelData[model_] := Module[
-  {names, nameQ, anti, mass, rank, vertices, bySorted, combineLookup},
+  {names, nameQ, anti, mass, spin2, rank, vertices, bySorted, combineLookup},
   names = DeleteDuplicates @ Flatten[model[[1, All, {2, 3}]]];
   nameQ = AssociationThread[names, True];
   anti = Association @ Flatten[
@@ -764,6 +768,10 @@ buildModelData[model_] := Module[
   ];
   mass = Association @ Flatten[
     {#[[2]] -> #[[6]], #[[3]] -> #[[6]]} & /@ model[[1]],
+    1
+  ];
+  spin2 = Association @ Flatten[
+    {#[[2]] -> #[[5]], #[[3]] -> #[[5]]} & /@ model[[1]],
     1
   ];
   rank = AssociationThread[names, Range @ Length[names]];
@@ -809,6 +817,7 @@ buildModelData[model_] := Module[
     "Names" -> names,
     "Anti" -> anti,
     "Mass" -> mass,
+    "Spin2" -> spin2,
     "Rank" -> rank,
     "Vertices" -> vertices,
     "BySorted" -> bySorted,
@@ -1087,11 +1096,12 @@ vertexStructureInstances[vertex_, incidentLegs_, md_] := Module[
 internalPropagatorData[edgeLabels_, edgeIndices_, edgeOrientation_, md_] :=
   Association @ KeyValueMap[
     Function[{edge, labels},
-      Module[{orient, particle, index, mass},
+      Module[{orient, particle, index, mass, s2},
         orient = edgeOrientation[edge];
         particle = orient["Particle"];
-        index = First[Values[edgeIndices[edge]]];
+        index = First @ MinimalBy[Values[edgeIndices[edge]], Min[List @@ #] &];
         mass = Lookup[md["Mass"], particle, Missing["MassNotFound"]];
+        s2 = Lookup[md["Spin2"], particle, 0];
         edge -> <|
           "Particle" -> particle,
           "Antiparticle" -> orient["Antiparticle"],
@@ -1099,6 +1109,7 @@ internalPropagatorData[edgeLabels_, edgeIndices_, edgeOrientation_, md_] :=
           "AntiparticleVertex" -> orient["AntiparticleVertex"],
           "Index" -> index,
           "Mass" -> mass,
+          "Spin2" -> s2,
           "Factor" -> If[MissingQ[mass],
             Missing["MassNotFound", particle],
             I/PropDen[Mom[index], mass]
@@ -1137,6 +1148,8 @@ attachFeynmanRules[raw_, ext_List, md_] := Module[
   props = internalPropagatorData[raw["EdgeLabels"], raw["EdgeIndices"], raw["EdgeOrientation"], md];
   <|
     "Graph" -> graph,
+    "ExternalParticles" -> ext,
+    "Spin2" -> md["Spin2"],
     "ExternalAssignment" -> extMap,
     "InternalEdgeData" -> Association @ KeyValueMap[
       Function[{edge, labels},
@@ -1184,117 +1197,188 @@ CreateDiagrams[ext_List, model_] := CreateDiagrams[Sequence @@ ext, model];
 (* ::Input::Initialization:: *)
 (*Spin indices and amplitudes*)
 
-spinorVarianceAtEndpoint[diag_, edge_, vertex_] := Which[
-  vertex === diag["InternalEdgeOrientation"][edge, "ParticleVertex"], "Upper",
-  vertex === diag["InternalEdgeOrientation"][edge, "AntiparticleVertex"], "Lower",
-  True, Missing["InvalidVertex", {edge, vertex}]
+(* Number of constructive spin indices from the model's 2*spin column,
+   matching ConstructiveDiagram. *)
+spinIndexSymbols[spin2_] := Module[{idx = {}},
+  If[spin2 > 0, AppendTo[idx, i1]];
+  If[spin2 > 1, AppendTo[idx, i2]];
+  If[spin2 > 2, AppendTo[idx, i3]];
+  If[spin2 > 4, AppendTo[idx, i4]];
+  idx
 ];
 
-symmetrizeIndices[expr_, inds_List] := Module[{perms = Permutations[inds]},
-  If[Length[inds] <= 1, expr,
-    Total[(expr /. Thread[inds -> #]) & /@ perms]/Length[perms]
+diagramChannel[diag_] := Module[{props, parts},
+  props = Values[Lookup[diag, "Propagators", <||>]];
+  If[props === {} || Length[diag["LeafVertices"]] =!= 4, Return["contact"]];
+  parts = Sort[List @@ props[[1]]["Index"]];
+  Which[
+    parts === {1, 2} || parts === {3, 4}, "S",
+    parts === {1, 3} || parts === {2, 4}, "T",
+    parts === {1, 4} || parts === {2, 3}, "U",
+    True, "other"
   ]
 ];
 
-edgeSpinMultiplicity[diag_, edge_] := Module[{vertices},
-  vertices = Keys[diag["InternalEdgeIndices"][edge]];
-  Max[
-    1,
-    Sequence @@ Table[
-      Length @ Cases[
-        Lookup[Last @ Lookup[diag["VertexStructures"], vertex, {<||>}], "Expression", 1],
-        Spinor["Spin", _, diag["InternalEdgeIndices"][edge][vertex]],
-        Infinity
-      ],
-      {vertex, vertices}
-    ]
-  ]
-];
-
-edgeSpinIndexData[diag_] := Module[{edges, multiplicities, starts},
-  edges = Keys[diag["InternalEdgeLabels"]];
-  If[edges === {}, Return[<||>]];
-  multiplicities = edgeSpinMultiplicity[diag, #] & /@ edges;
-  starts = Most @ FoldList[Plus, 1, multiplicities];
-  AssociationThread[
-    edges,
-    MapThread[Array[Symbol["i" <> ToString[#]] &, #1, #2] &, {multiplicities, starts}]
-  ]
-];
-
-makeVertexSpinIndicesExplicit[vertexStructure_Association, vertex_, diag_, edgeIndexData_] := Module[
-  {expr, incidentLegs, spinorData, grouped, replacementRules, newExpr},
-  expr = vertexStructure["Expression"];
-  incidentLegs = diag["IncidentLegData"][vertex];
-  spinorData = Cases[
-    expr,
-    s : Spinor["Spin", sa_, mp_Multiparticle] :> Module[{leg},
-      leg = SelectFirst[incidentLegs, #["Kind"] === "Internal" && #["Index"] === mp &];
-      If[MissingQ[leg],
-        Nothing,
-        <|"Spinor" -> s, "SpinType" -> sa, "Multiparticle" -> mp, "Edge" -> leg["Source"]|>
-      ]
-    ],
-    Infinity
+(* Identical-fermion exchange: T is the 2<->3 crossing of S, U is 2<->4.
+   Apply Signature[perm] only when that permutation leaves the labelled
+   external state unchanged and moves at least one fermion. *)
+identicalFermionPermQ[ext_List, perm_List, spin2_Association] :=
+  And @@ Table[
+    ext[[i]] === ext[[perm[[i]]]] &&
+      (i === perm[[i]] || Lookup[spin2, ext[[i]], 0] === 1),
+    {i, Length[ext]}
   ];
-  If[spinorData === {}, Return[vertexStructure]];
-  grouped = GroupBy[spinorData, #Edge &];
-  replacementRules = Flatten @ KeyValueMap[
-    Function[{edge, items},
-      Module[{inds, variance},
-        inds = Take[edgeIndexData[edge], Length[items]];
-        variance = spinorVarianceAtEndpoint[diag, edge, vertex];
-        MapThread[
-          #1["Spinor"] :> Spinor["Spin", variance, #1["SpinType"], #1["Multiparticle"], #2] &,
-          {items, inds}
+
+diagramFermionSign[diag_] := Module[{ext, spin2, ch, perm},
+  ext = Lookup[diag, "ExternalParticles", {}];
+  spin2 = Lookup[diag, "Spin2", <||>];
+  If[Length[ext] =!= 4, Return[1]];
+  ch = diagramChannel[diag];
+  perm = Switch[ch,
+    "T", {1, 3, 2, 4},
+    "U", {1, 4, 3, 2},
+    _, {1, 2, 3, 4}
+  ];
+  If[identicalFermionPermQ[ext, perm, spin2], Signature[perm], 1]
+];
+
+(* Massless spin-1 exchange (photon/gluon) needs an extra minus relative
+   to the massive-vector construction so the helicity sum matches the
+   hardcoded 4-point templates. *)
+masslessVectorSign[diag_] :=
+  If[AnyTrue[Values[Lookup[diag, "Propagators", <||>]],
+      #["Mass"] === 0 && Lookup[#, "Spin2", 0] === 2 &],
+    -1, 1];
+
+(* Prefer the shorter internal partition; if the two sides have the same
+   length, keep the one that contains external 1. *)
+preferredInternalMultiparticle[mp1_Multiparticle, mp2_Multiparticle] :=
+  Module[{a = List @@ mp1, b = List @@ mp2},
+    Which[
+      Length[a] < Length[b], mp1,
+      Length[b] < Length[a], mp2,
+      MemberQ[a, 1], mp1,
+      MemberQ[b, 1], mp2,
+      Min[a] <= Min[b], mp1,
+      True, mp2
+    ]
+  ];
+
+(* Same dummy index on complementary Multiparticles: rewrite one side
+   onto the other by momentum conservation. Angle spinors pick up a
+   minus, pulled outside SpinorChain; Square spinors do not. *)
+alignInternalMultiparticles[expr_] := Module[
+  {byIndex, result},
+  byIndex = GroupBy[
+    Cases[expr, Spinor[__, mp_Multiparticle, idx_Symbol] :> {idx, mp}, Infinity],
+    First -> Last
+  ];
+  result = Fold[
+    Function[{cur, idx},
+      Module[{mps = DeleteDuplicates[byIndex[idx]], keep, drop},
+        If[Length[mps] != 2, cur,
+          keep = preferredInternalMultiparticle[mps[[1]], mps[[2]]];
+          drop = First @ Complement[mps, {keep}];
+          cur /. {
+            Spinor[h___, "Angle", drop, idx] :> -Spinor[h, "Angle", keep, idx],
+            Spinor[h___, "Square", drop, idx] :> Spinor[h, "Square", keep, idx]
+          }
         ]
       ]
     ],
-    grouped
+    expr,
+    Keys[byIndex]
   ];
-  newExpr = expr /. replacementRules;
-  newExpr = Fold[
-    Function[{currentExpr, edge},
-      If[Length[grouped[edge]] > 1,
-        symmetrizeIndices[currentExpr, Take[edgeIndexData[edge], Length[grouped[edge]]]],
-        currentExpr
-      ]
-    ],
-    newExpr,
-    Keys[grouped]
+  (* Massless internals leave Helicity spinors on Multiparticles (no dummy
+     index). Pair complementary partitions the same way. *)
+  result = Module[{mps, pairs},
+    mps = DeleteDuplicates @ Cases[result, Spinor[_, _, mp_Multiparticle] :> mp, Infinity];
+    pairs = Select[Subsets[mps, {2}],
+      Sort[Join[List @@ #[[1]], List @@ #[[2]]]] === Range[4] &];
+    Fold[
+      Function[{cur, pair},
+        Module[{keep, drop},
+          keep = preferredInternalMultiparticle[pair[[1]], pair[[2]]];
+          drop = First @ Complement[pair, {keep}];
+          cur /. {
+            Spinor[t_, "Angle", drop] :> -Spinor[t, "Angle", keep],
+            Spinor[t_, "Square", drop] :> Spinor[t, "Square", keep]
+          }
+        ]
+      ],
+      result,
+      pairs
+    ]
   ];
-  Join[vertexStructure, <|"Expression" -> newExpr|>]
+  result //. SpinorChain[a___, -Spinor[b__], c___] :> -SpinorChain[a, Spinor[b], c]
 ];
 
-makeDiagramSpinIndicesExplicit[diag_] := Module[{edgeIndexData, newVertexStructures},
-  edgeIndexData = edgeSpinIndexData[diag];
-  newVertexStructures = Association @ KeyValueMap[
-    Function[{vertex, structures},
-      vertex -> Replace[
-        structures,
-        {
-          {} :> {},
-          list_List :> ReplacePart[
-            list,
-            -1 -> makeVertexSpinIndicesExplicit[Last[list], vertex, diag, edgeIndexData]
-          ]
-        }
+makeDiagramSpinIndicesExplicit[diag_] := Module[
+  {newVertexStructures = diag["VertexStructures"], spinIndices = <||>},
+  KeyValueMap[
+    Function[{edge, pdata},
+      Module[{inds, mpOf},
+        inds = spinIndexSymbols[Lookup[pdata, "Spin2", 0]];
+        spinIndices[edge] = inds;
+        If[inds === {} || pdata["Mass"] === 0, Return[]];
+        mpOf[v_] := diag["InternalEdgeIndices"][edge][v];
+        Do[
+          newVertexStructures[v] = Replace[
+            newVertexStructures[v],
+            {
+              {} :> {},
+              list_List :> ReplacePart[
+                list,
+                -1 -> Module[{vs = Last[list], expr},
+                  expr = MakeIndicesExplicit[vs["Expression"], mpOf[v], inds];
+                  If[v === pdata["AntiparticleVertex"],
+                    expr = expr /. "Upper" -> "Lower"
+                  ];
+                  Join[vs, <|"Expression" -> expr|>]
+                ]
+              ]
+            }
+          ],
+          {v, Keys[diag["InternalEdgeIndices"][edge]]}
+        ]
       ]
     ],
-    diag["VertexStructures"]
+    Lookup[diag, "Propagators", <||>]
   ];
-  Join[diag, <|"VertexStructures" -> newVertexStructures, "SpinIndices" -> edgeIndexData|>]
+  Join[diag, <|"VertexStructures" -> newVertexStructures, "SpinIndices" -> spinIndices|>]
 ];
 
-diagramAmplitude[diag_] := Module[{processed, vertexFactors, propagatorFactors},
+(* Massive spin 1 (model column 5 is 2): average a vertex with i1 <-> i2
+   swapped, on one end of the propagator only. *)
+symmetrizeMassiveSpin1Indices[expr_, inds_List] :=
+  If[Length[inds] != 2, expr,
+    (expr + (expr /. Thread[inds -> Reverse[inds]]))/2
+  ];
+
+diagramAmplitude[diag_] := Module[
+  {processed, vertexExpr, propagatorFactors, amp},
   processed = makeDiagramSpinIndicesExplicit[diag];
-  vertexFactors = Replace[
-    Values[processed["VertexStructures"]],
-    {{} :> 1, list_List :> Lookup[Last[list], "Expression", 1]},
-    1
+  vertexExpr = Association @ KeyValueMap[
+    #1 -> Replace[#2, {{} :> 1, list_List :> Lookup[Last[list], "Expression", 1]}] &,
+    processed["VertexStructures"]
+  ];
+  KeyValueMap[
+    Function[{edge, pdata},
+      If[Lookup[pdata, "Spin2", 0] === 2 && pdata["Mass"] =!= 0,
+        Module[{v = pdata["AntiparticleVertex"], inds},
+          inds = Lookup[processed["SpinIndices"], edge, {}];
+          If[KeyExistsQ[vertexExpr, v] && Length[inds] == 2,
+            vertexExpr[v] = symmetrizeMassiveSpin1Indices[vertexExpr[v], inds]
+          ]
+        ]
+      ]
+    ],
+    Lookup[processed, "Propagators", <||>]
   ];
   propagatorFactors = Lookup[Values[processed["Propagators"]], "Factor", 1];
-  Times @@ Join[vertexFactors, propagatorFactors]/I
+  amp = diagramFermionSign[diag] *
+    Times @@ Join[Values[vertexExpr], propagatorFactors]/I;
+  alignInternalMultiparticles[amp]
 ];
 
 diagramAmplitudes[diags_List] := diagramAmplitude /@ diags;

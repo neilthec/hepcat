@@ -234,7 +234,60 @@ Cell[BoxData[
   3.9171778767613173`*^9}, {3.917178056694068*^9, 3.917178059690837*^9}, {
   3.917178324612371*^9, 3.917178357568068*^9}},
  CellLabel->
-  "In[232]:=",ExpressionUUID->"26bad88b-89f9-4867-8e66-ff1ec5de14cc"]
+  "In[232]:=",ExpressionUUID->"26bad88b-89f9-4867-8e66-ff1ec5de14cc"],
+
+Cell["\<\
+How this notebook simplifies and compares amplitudes (also used by \
+tests/SM-4-point-test.nb):
+
+compareAmps[amp, ampTested] checks Simplify[amp-ampTested]===0, then \
+Simplify[amp+ampTested]===0 (agreement up to an overall sign).
+
+Typical reduction of a generated diagram, depending on the internal line:
+  Higgs / massive fermion: ExtractMandelstahm @ SimplifySpinorProducts, \
+with InternalLines set to the channel pair {1,2} (S), {1,3} (T) or {1,4} \
+(U), InternalLineOnShell->True, then Mass[i]->particle masses.
+  Photon / gluon: first Simplify the two helicity diagrams, then \
+ReducexFactors (default ChannelMomenta) so the x-factor identities fire, \
+then ExtractMandelstahm. Same-flavour S+T needs SimplifySpinorProducts \
+(Schouten) against the template sum.
+  Photon S-channel into WW: ComplexifyMomenta, ExpandXFactors, Unhat, \
+ExtractMandelstahm. Compare the two-helicity sum.
+  Z / W: ReduceSpinContractions, then SimplifySpinorProducts with \
+InternalLineOnShell->True. For T/U, rewrite the second channel momentum by \
+conservation (e.g. Mom[3]->-Mom[1]-Mom[2]-Mom[4]) and SimplifySpinorProducts \
+again; Collect in MZ or FullSimplify. Replace Mass[Multiparticle[channel]] \
+by MZ or MW. For Z only, MW->MZ*CW; leave MW on W amplitudes.
+  Fermion T with a vector plus Higgs (ff -> Zh T, ff -> Wh T): after the \
+massive-fermion reduction, rewrite Mom[1]->-Mom[2]-Mom[3]-Mom[4] and \
+ReduceSpinorProducts (ampTSimp in this notebook). U-channel of the same \
+processes does not need that rewrite.
+  Four-boson contact: the model coupling (times the spinor factor). Higgs \
+exchange: ExtractMandelstahm @ SimplifySpinorProducts.
+  ff -> gamma gamma (same helicity): ExpandXFactors, UnHatSpinors, replace \
+dummy Xi spinors, then SimplifySpinorProducts. Compare one channel (T or \
+U), not the sum.
+  ff -> gamma+ gamma- (opposite helicity): ExpandXFactors, UnhatMomenta, \
+replace dummy Xi by the other photon's helicity spinor, then per-channel \
+on-shell identities. Compare the T+U sum after ExtractMandelstahm and \
+2 M1^2 - s13 - s14 -> s12.
+  ff -> gamma h: ExpandXFactors, UnhatMomenta, replace dummy Xi by [3| and \
+the other fermion momentum, [3|p_k|3> -> complementary PropDen, then \
+on-shell MomProd identities. Compare one channel (T or U), not the sum.
+  A.+ / G.+ f -> Z F: ExpandXFactors, Unhat, replace dummy Xi by [1| and \
+the other fermion momentum, then S-channel on-shell identities. Compare \
+S, not the sum.
+  h G.+ -> F f: ExpandXFactors, Unhat, replace dummy Xi by [2| and a \
+fermion momentum, then T-channel on-shell identities. Compare T, not \
+the sum.
+  Massless fermion internals: align complementary Multiparticle helicity \
+spinors, then the massive-fermion reduction. Replace Mass[Multiparticle] \
+even when the propagator mass is 0.
+  Mass replacements use mReplacments = {Mass[1]->...,...}. spPr/rsp turn \
+string spinor products into expressions with those masses.
+
+Automated CreateDiagrams checks live in tests/SM-4-point-test.nb.\
+\>", "Text",ExpressionUUID->"a1b2c3d4-simp-4cmp-9e0a-hepcatampguide01"]
 }, Closed]],
 
 Cell[CellGroupData[{
