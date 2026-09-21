@@ -837,7 +837,7 @@ CreateDiagrams::usage = "CreateDiagrams[p1, p2, ..., model] generates tree-level
 CreateArrowDiagram::usage = "CreateArrowDiagram[diag] draws a labeled tree diagram. Options: \"ShowVertexExpressions\", \"ShowPropagatorExpressions\".";
 CreateArrowDiagrams::usage = "CreateArrowDiagrams[{diag1, diag2, ...}] draws a list of diagrams.";
 diagramAmplitude::usage = "diagramAmplitude[diag] returns the constructive amplitude of a single diagram, including propagator and spin-index structure.";
-diagramAmplitudes::usage = "diagramAmplitudes[{diag1, diag2, ...}] maps diagramAmplitude over a list of diagrams.";
+diagramAmplitudes::usage = "diagramAmplitudes[{diag1, diag2, ...}] returns {{massRules, amplitude}, ...} for each diagram. massRules replaces Mass[i] for every external leg, then Mass[Multiparticle[...]] for both ends of every internal line.";
 
 
 
@@ -1167,7 +1167,8 @@ attachFeynmanRules[raw_, ext_List, md_] := Module[
     "InternalEdgeIndices" -> raw["EdgeIndices"],
     "IncidentLegData" -> incident,
     "VertexStructures" -> structures,
-    "Propagators" -> props
+    "Propagators" -> props,
+    "Masses" -> md["Mass"]
   |>
 ];
 
@@ -1381,7 +1382,34 @@ diagramAmplitude[diag_] := Module[
   alignInternalMultiparticles[amp]
 ];
 
-diagramAmplitudes[diags_List] := diagramAmplitude /@ diags;
+(* External Mass[i] rules in leg order, then both complementary
+   Multiparticles of each internal line. *)
+diagramMassReplacements[diag_] := Module[{ext, masses, externalRules, internalRules},
+  ext = Lookup[diag, "ExternalParticles", {}];
+  masses = Lookup[diag, "Masses", <||>];
+  externalRules = Table[
+    Mass[i] -> Lookup[masses, ext[[i]], Missing["MassNotFound", ext[[i]]]],
+    {i, Length[ext]}
+  ];
+  internalRules = Flatten @ KeyValueMap[
+    Function[{edge, pdata},
+      Module[{mass, mps},
+        mass = Lookup[pdata, "Mass", Missing["MassNotFound"]];
+        mps = SortBy[
+          DeleteDuplicates @ Values @ Lookup[
+            Lookup[diag, "InternalEdgeIndices", <||>], edge, <||>
+          ],
+          List @@ # &
+        ];
+        Mass[#] -> mass & /@ mps
+      ]
+    ],
+    Lookup[diag, "Propagators", <||>]
+  ];
+  Join[externalRules, internalRules]
+];
+
+diagramAmplitudes[diags_List] := {diagramMassReplacements[#], diagramAmplitude[#]} & /@ diags;
 
 
 
