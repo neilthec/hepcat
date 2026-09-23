@@ -837,7 +837,7 @@ CreateDiagrams::usage = "CreateDiagrams[p1, p2, ..., model] generates tree-level
 CreateArrowDiagram::usage = "CreateArrowDiagram[diag] draws a labeled tree diagram. Options: \"ShowVertexExpressions\", \"ShowPropagatorExpressions\".";
 CreateArrowDiagrams::usage = "CreateArrowDiagrams[{diag1, diag2, ...}] draws a list of diagrams.";
 diagramAmplitude::usage = "diagramAmplitude[diag] returns the constructive amplitude of a single diagram, including propagator and spin-index structure.";
-diagramAmplitudes::usage = "diagramAmplitudes[{diag1, diag2, ...}] returns {{massRules, amplitude}, ...} for each diagram. massRules replaces Mass[i] for every external leg, then Mass[Multiparticle[...]] for both ends of every internal line.";
+diagramAmplitudes::usage = "diagramAmplitudes[{diag1, diag2, ...}] returns {{massRules, amplitude}, ...}. A pair of diagrams that differ only by the helicity of one internal massless spin-1 line is returned as one entry: the two 3-point vertex factors times the simplified 4-point kinematic form. massRules replaces Mass[i] for every external leg, then Mass[Multiparticle[...]] for both ends of every internal line.";
 
 
 
@@ -1409,7 +1409,163 @@ diagramMassReplacements[diag_] := Module[{ext, masses, externalRules, internalRu
   Join[externalRules, internalRules]
 ];
 
-diagramAmplitudes[diags_List] := {diagramMassReplacements[#], diagramAmplitude[#]} & /@ diags;
+(* Kinematic factor left after the two 3-point couplings are removed.
+   Four fermions keep the minus produced by simplifying the x factors.
+   ffVV is positive: that minus is already in the fermion-photon coupling.
+   VVVV is Eq. (98) with the two vertex factors removed, so the kinematic
+   piece is that expression divided by 2 EE^2/Mass^2.
+   Legs {a,b} and {c,d} are the two vertices in 3-point slot order.
+   For ffff and ffVV the paper's (1,2,3,4) is (a,b,d,c), so the
+   vector mass in ffVV is Mass[d] (paper leg 3). For VVVV, paper
+   leg 1 is p, and that mass is Mass[p]. *)
+masslessSpin1Den[i_, j_] := PropDen[Mom[Multiparticle @@ Sort[{i, j}]], 0];
+
+spinAngle[kind_, i_, kind2_, j_] :=
+  SpinorChain[Spinor[kind, "Angle", i], Spinor[kind2, "Angle", j]];
+spinSquare[kind_, i_, kind2_, j_] :=
+  SpinorChain[Spinor[kind, "Square", i], Spinor[kind2, "Square", j]];
+spinInsert[kind_, i_, p_, kind2_, j_] :=
+  SpinorChain[Spinor[kind, "Square", i], Mom[p], Spinor[kind2, "Angle", j]];
+
+fourFermionMasslessVector[a_, b_, c_, d_, kinds_] := Module[{ka, kb, kc, kd},
+  {ka, kb, kc, kd} = kinds;
+  -(spinAngle[ka, a, kd, d]*spinSquare[kb, b, kc, c] +
+    spinAngle[ka, a, kc, c]*spinSquare[kb, b, kd, d] +
+    spinAngle[kb, b, kd, d]*spinSquare[ka, a, kc, c] +
+    spinAngle[kb, b, kc, c]*spinSquare[ka, a, kd, d])/masslessSpin1Den[a, b]
+];
+
+fermionVectorMasslessVector[a_, b_, c_, d_, kinds_] := Module[
+  {ka, kb, kc, kd, pairs, s1, s2},
+  {ka, kb, kc, kd} = kinds;
+  pairs = spinAngle[ka, a, kd, d]*spinSquare[kb, b, kc, c] +
+    spinAngle[ka, a, kc, c]*spinSquare[kb, b, kd, d] +
+    spinAngle[kb, b, kd, d]*spinSquare[ka, a, kc, c] +
+    spinAngle[kb, b, kc, c]*spinSquare[ka, a, kd, d];
+  s1 = (spinAngle[kd, d, kc, c] + spinSquare[kd, d, kc, c])*pairs;
+  s2 = spinAngle[kd, d, kc, c]*spinSquare[kd, d, kc, c]*
+    (spinInsert[ka, a, d, kb, b] + spinInsert[kb, b, d, ka, a]);
+  (s1 + s2/Mass[d])/masslessSpin1Den[a, b]
+];
+
+(* Eq. (98): T-channel photon. Paper (1,3) and (2,4) are the two vertices.
+   The MW in that equation is Mass[i1], the mass of paper leg 1. *)
+fourVectorMasslessPolynomial[i1_, i2_, i3_, i4_, kindOf_Association] := Module[
+  {a, s, p, poly, g1, g2},
+  a[i_, j_] := spinAngle[kindOf[i], i, kindOf[j], j];
+  s[i_, j_] := spinSquare[kindOf[i], i, kindOf[j], j];
+  p[i_, mom_, j_] := spinInsert[kindOf[i], i, mom, kindOf[j], j];
+  poly = -2*a[i2, i4]*a[i3, i4]*s[i1, i2]*s[i1, i3] +
+    a[i1, i3]*a[i2, i3]*a[i2, i4]*s[i1, i4] +
+    2*a[i2, i3]*a[i2, i4]*s[i1, i3]*s[i1, i4] +
+    a[i1, i4]*a[i2, i4]*s[i1, i3]*s[i2, i3] +
+    2*a[i1, i3]*a[i2, i4]*s[i1, i4]*s[i2, i3] +
+    a[i2, i4]*s[i1, i3]*s[i1, i4]*s[i2, i3] +
+    a[i1, i3]*a[i1, i4]*a[i2, i3]*s[i2, i4] +
+    2*a[i1, i4]*a[i2, i3]*s[i1, i3]*s[i2, i4] -
+    2*a[i1, i3]*a[i2, i4]*s[i1, i3]*s[i2, i4] +
+    a[i1, i2]*a[i3, i4]*s[i1, i3]*s[i2, i4] +
+    a[i1, i3]*a[i2, i3]*s[i1, i4]*s[i2, i4] +
+    2*a[i1, i3]*a[i1, i4]*s[i2, i3]*s[i2, i4] +
+    a[i1, i4]*s[i1, i3]*s[i2, i3]*s[i2, i4] +
+    a[i1, i3]*a[i2, i4]*s[i1, i2]*s[i3, i4] -
+    2*a[i1, i2]*a[i1, i3]*s[i2, i4]*s[i3, i4];
+  g1 = a[i1, i3]*a[i2, i4]*s[i2, i3] + a[i1, i3]*a[i2, i3]*s[i2, i4] +
+    a[i2, i3]*s[i1, i3]*s[i2, i4] + a[i1, i3]*s[i2, i3]*s[i2, i4];
+  g2 = a[i2, i3]*a[i2, i4]*s[i1, i3] + a[i1, i3]*a[i2, i4]*s[i2, i3] +
+    a[i2, i4]*s[i1, i3]*s[i2, i3] + a[i2, i3]*s[i1, i3]*s[i2, i4];
+  {poly, g1*p[i1, i3, i4] + g2*p[i4, i3, i1]}
+];
+
+(* (p,q) and (r,s) are the two vertices in slot order. Paper (1,3)=(p,q), (2,4)=(r,s).
+   Vertex factors supply 2 EE^2/Mass^2, so this kinematic factor is half of Eq. (98)
+   without that coupling. *)
+fourVectorMasslessVector[p_, q_, r_, s_, kinds_] := Module[{k, poly, mom},
+  k = AssociationThread[{p, q, r, s}, kinds];
+  {poly, mom} = fourVectorMasslessPolynomial[p, r, q, s, k];
+  (poly + mom/Mass[p])/(2*masslessSpin1Den[p, q])
+];
+
+vertexMatterEnds[diag_] := Map[
+  Function[st,
+    Module[{legs = Take[st["IncidentLegs"], 2]},
+      <|
+        "Factor" -> st["ModelRow"][[-2]],
+        "Index" -> legs[[All, "Index"]],
+        "Particle" -> legs[[All, "Particle"]],
+        "Spin2" -> (Lookup[diag["Spin2"], #, 0] & /@ legs[[All, "Particle"]])
+      |>
+    ]
+  ],
+  Last /@ Values[diag["VertexStructures"]]
+];
+
+spinKindOf[diag_, particle_] :=
+  If[Lookup[diag["Masses"], particle, 1] === 0, "Helicity", "Spin"];
+
+masslessSpin1Edge[diag_] := Module[{edges},
+  edges = Select[Normal @ Lookup[diag, "Propagators", <||>],
+    #[[2, "Mass"]] === 0 && Lookup[#[[2]], "Spin2", 0] === 2 &];
+  If[Length[edges] === 1, edges[[1, 1]], None]
+];
+
+masslessSpin1PairKey[diag_] := Module[{edge},
+  edge = masslessSpin1Edge[diag];
+  If[edge === None, None,
+    {Lookup[diag, "ExternalParticles", {}],
+     diag["Propagators"][edge, "Particle"],
+     diag["Propagators"][edge, "Index"]}
+  ]
+];
+
+masslessSpin1PairAmplitude[diag_] := Module[
+  {ends, fa, fb, a, b, c, d, kinds, sA, sB, generic, particles},
+  ends = SortBy[vertexMatterEnds[diag], Min[#["Index"]] &];
+  If[Length[ends] =!= 2, Return[diagramAmplitude[diag]]];
+  sA = ends[[1, "Spin2"]];
+  sB = ends[[2, "Spin2"]];
+  (* Fermions occupy (a,b) when one vertex is a fermion current. *)
+  If[sA === {2, 2} && sB === {1, 1}, ends = Reverse[ends]; {sA, sB} = {sB, sA}];
+  {a, b} = ends[[1, "Index"]];
+  {c, d} = ends[[2, "Index"]];
+  particles = Join[ends[[1, "Particle"]], ends[[2, "Particle"]]];
+  kinds = spinKindOf[diag, #] & /@ particles;
+  fa = ends[[1, "Factor"]];
+  fb = ends[[2, "Factor"]];
+  generic = Which[
+    sA === {1, 1} && sB === {1, 1},
+      fourFermionMasslessVector[a, b, c, d, kinds],
+    sA === {1, 1} && sB === {2, 2},
+      fermionVectorMasslessVector[a, b, c, d, kinds],
+    sA === {2, 2} && sB === {2, 2},
+      fourVectorMasslessVector[a, b, c, d, kinds],
+    True, Missing["UnsupportedMasslessSpin1"]
+  ];
+  If[MissingQ[generic], Return[diagramAmplitude[diag]]];
+  diagramFermionSign[diag]*fa*fb*generic
+];
+
+diagramAmplitudes[diags_List] := Module[{n, used, out, i, key, j},
+  n = Length[diags];
+  used = ConstantArray[False, n];
+  out = {};
+  Do[
+    If[used[[i]], Continue[]];
+    key = masslessSpin1PairKey[diags[[i]]];
+    If[key === None,
+      AppendTo[out, {diagramMassReplacements[diags[[i]]], diagramAmplitude[diags[[i]]]}],
+      j = SelectFirst[Range[i + 1, n],
+        !used[[#]] && masslessSpin1PairKey[diags[[#]]] === key &, None];
+      If[j === None,
+        AppendTo[out, {diagramMassReplacements[diags[[i]]], diagramAmplitude[diags[[i]]]}],
+        used[[j]] = True;
+        AppendTo[out, {diagramMassReplacements[diags[[i]]], masslessSpin1PairAmplitude[diags[[i]]]}]
+      ]
+    ],
+    {i, n}
+  ];
+  out
+];
 
 
 
