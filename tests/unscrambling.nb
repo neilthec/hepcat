@@ -1,0 +1,890 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Wolfram 15.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       154,          7]
+NotebookDataLength[     34333,        903]
+NotebookOptionsPosition[     30168,        827]
+NotebookOutlinePosition[     30560,        843]
+CellTagsIndexPosition[     30517,        840]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell["Unscrambling amplitudes", "Title",ExpressionUUID->"4b32ec66-9b2b-4d9d-a278-e7a25824c03f"],
+
+Cell["\<\
+Each sample is one diagramAmplitudes element, {mass rules, simplified \
+expression}. ComplicateAmplitude substitutes those rules before it does \
+anything else, so every expression contains Me, MW, or MZ rather than \
+Mass[i]. That is the expression the simplifier would see if it were the only \
+input. Each step is chosen from that full expression alone: Schouten, \
+reversal of a spinor product, a mass insertion, momentum conservation, or the \
+on-shell condition of an internal line. The expression is then expanded. \
+Only the final scrambled expression and the original expression are kept.\
+\>", "Text",ExpressionUUID->"53d1be7a-a63c-4a90-9b89-08e0b814194c"],
+
+Cell[CellGroupData[{
+
+Cell["Load", "Section",ExpressionUUID->"5d988c4e-9234-48be-b61a-6b75107e748c"],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+HEPCATBasePath = \"/Users/neil/code/hepcat\";
+$HEPCATpath = HEPCATBasePath <> \"/source/\";
+Get[$HEPCATpath <> \"HEPCAT.wl\"];
+Get[HEPCATBasePath <> \"/tests/unscrambling.wl\"];
+\
+\>", "Input",
+ CellLabel->
+  "In[6021]:=",ExpressionUUID->"08dbf5e5-9e48-48bf-96d6-d1623153cea0"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData["\<\"----------HEPCAT----------\"\>"], "Print",
+ CellChangeTimes->{3.999251282790866*^9, 3.9992537139711533`*^9},
+ CellLabel->
+  "During evaluation of \
+In[6021]:=",ExpressionUUID->"f08fd372-28b3-41c6-aff9-1f274bff3e95"],
+
+Cell[BoxData["\<\"\"\>"], "Print",
+ CellChangeTimes->{3.999251282790866*^9, 3.9992537139717493`*^9},
+ CellLabel->
+  "During evaluation of \
+In[6021]:=",ExpressionUUID->"d9ea2b9e-4cd7-425d-a9c8-9ba52474ae06"],
+
+Cell[BoxData["\<\"Version: \"\>"], "Print",
+ CellChangeTimes->{3.999251282790866*^9, 3.999253713972186*^9},
+ CellLabel->
+  "During evaluation of \
+In[6021]:=",ExpressionUUID->"c3326cb1-e778-40c8-b8ee-9a99c5016d72"],
+
+Cell[BoxData["\<\"Authors: N. Christensen\"\>"], "Print",
+ CellChangeTimes->{3.999251282790866*^9, 3.999253713972515*^9},
+ CellLabel->
+  "During evaluation of \
+In[6021]:=",ExpressionUUID->"4590e7f8-9be0-47eb-876a-932a002926b2"],
+
+Cell[BoxData["\<\"Please cite: ...\"\>"], "Print",
+ CellChangeTimes->{3.999251282790866*^9, 3.999253713972801*^9},
+ CellLabel->
+  "During evaluation of \
+In[6021]:=",ExpressionUUID->"504f0ede-6068-408d-946e-5f5fa10e3de2"],
+
+Cell[BoxData["\<\"Contributions by: ...\"\>"], "Print",
+ CellChangeTimes->{3.999251282790866*^9, 3.9992537139730997`*^9},
+ CellLabel->
+  "During evaluation of \
+In[6021]:=",ExpressionUUID->"4f33b617-5afd-4fb6-95d4-a981ac8b8c2f"],
+
+Cell[BoxData["\<\"Instructions can be found...\"\>"], "Print",
+ CellChangeTimes->{3.999251282790866*^9, 3.999253713973379*^9},
+ CellLabel->
+  "During evaluation of \
+In[6021]:=",ExpressionUUID->"632ec073-7a3f-4233-b61f-ff90c96c16b6"],
+
+Cell[BoxData["\<\"\"\>"], "Print",
+ CellChangeTimes->{3.999251282790866*^9, 3.999253713973647*^9},
+ CellLabel->
+  "During evaluation of \
+In[6021]:=",ExpressionUUID->"f4149382-3f0f-4f23-a495-e5c7a5ec91ab"],
+
+Cell[BoxData["\<\"We welcome contributors.  Please contact Neil if \
+interested.\"\>"], "Print",
+ CellChangeTimes->{3.999251282790866*^9, 3.999253713973917*^9},
+ CellLabel->
+  "During evaluation of \
+In[6021]:=",ExpressionUUID->"19fb939f-b365-4024-9764-823ebb69058c"],
+
+Cell[BoxData["\<\"------------------------------------\"\>"], "Print",
+ CellChangeTimes->{3.999251282790866*^9, 3.999253713974206*^9},
+ CellLabel->
+  "During evaluation of \
+In[6021]:=",ExpressionUUID->"89fae4a3-e9e4-485c-89b1-4349cbe34d56"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Sample amplitudes", "Section",ExpressionUUID->"fe1991ce-a4c1-4b83-a535-bac6bc074798"],
+
+Cell["\<\
+ang[k_, i_, j_] := SpinorChain[Spinor[k, \"Angle\", i], Spinor[k, \"Angle\", \
+j]];
+sq[k_, i_, j_] := SpinorChain[Spinor[k, \"Square\", i], Spinor[k, \"Square\", \
+j]];
+ins[k_, i_, p_, j_] := SpinorChain[Spinor[k, \"Square\", i], Mom[p], \
+Spinor[k, \"Angle\", j]];
+
+sampleAmplitudes = {
+  (* Four-fermion photon, S channel. *)
+  {
+    {Mass[1] -> Me, Mass[2] -> Me, Mass[3] -> Mm, Mass[4] -> Mm,
+      Mass[Multiparticle[1, 2]] -> 0, Mass[Multiparticle[3, 4]] -> 0},
+    -2*EE^2*(
+      ang[\"Spin\", 1, 3]*sq[\"Spin\", 2, 4] + ang[\"Spin\", 1, \
+4]*sq[\"Spin\", 2, 3] +
+      ang[\"Spin\", 2, 3]*sq[\"Spin\", 1, 4] + ang[\"Spin\", 2, \
+4]*sq[\"Spin\", 1, 3]
+    )/PropDen[Mom[Multiparticle[1, 2]], 0]
+  },
+  (* One momentum insertion, so momentum conservation can fire. *)
+  {
+    {Mass[1] -> MW, Mass[2] -> MW, Mass[3] -> MW, Mass[4] -> MW},
+    ins[\"Spin\", 1, 2, 3]*ang[\"Spin\", 1, 4]
+  },
+  (* Two angle brackets, so Schouten can fire. *)
+  {
+    {Mass[1] -> Me, Mass[2] -> Me, Mass[3] -> Me, Mass[4] -> Me},
+    ang[\"Spin\", 1, 2]*ang[\"Spin\", 3, 4]
+  },
+  (* Internal Z on (1,3), already on shell: (MZ^2 - 2 MW^2)/2 = p1.p3. *)
+  {
+    {Mass[1] -> MW, Mass[2] -> MW, Mass[3] -> MW, Mass[4] -> MW,
+      Mass[Multiparticle[1, 3]] -> MZ, Mass[Multiparticle[2, 4]] -> MZ},
+    (MZ^2/2 - MW^2)*ang[\"Spin\", 2, 4]
+  },
+  (* Two square brackets. *)
+  {
+    {Mass[1] -> Me, Mass[2] -> Me, Mass[3] -> Me, Mass[4] -> Me},
+    sq[\"Spin\", 1, 2]*sq[\"Spin\", 3, 4]
+  },
+  (* Internal Z on (1,2), already on shell. *)
+  {
+    {Mass[1] -> Me, Mass[2] -> Me, Mass[3] -> Mm, Mass[4] -> Mm,
+      Mass[Multiparticle[1, 2]] -> MZ, Mass[Multiparticle[3, 4]] -> MZ},
+    (MZ^2/2 - Me^2)*ang[\"Spin\", 1, 3]*sq[\"Spin\", 2, 4]
+  },
+  (* A mass insertion is already present, and leg 2 is massless. *)
+  {
+    {Mass[1] -> MW, Mass[2] -> 0, Mass[3] -> Mm, Mass[4] -> Me},
+    ins[\"Spin\", 1, 1, 3]*ang[\"Spin\", 2, 4]
+  },
+  (* Internal Z on (1,4). *)
+  {
+    {Mass[1] -> MW, Mass[2] -> MW, Mass[3] -> MW, Mass[4] -> MW,
+      Mass[Multiparticle[1, 4]] -> MZ, Mass[Multiparticle[2, 3]] -> MZ},
+    (MZ^2/2 - MW^2)*sq[\"Spin\", 1, 3]
+  },
+  (* Two fermion channels, no single-term Schouten product. *)
+  {
+    {Mass[1] -> Me, Mass[2] -> Me, Mass[3] -> Mm, Mass[4] -> Mm,
+      Mass[Multiparticle[1, 2]] -> 0, Mass[Multiparticle[3, 4]] -> 0},
+    ang[\"Spin\", 1, 3]*sq[\"Spin\", 2, 4] + ang[\"Spin\", 1, 4]*sq[\"Spin\", \
+2, 3]
+  },
+  (* Higgs-mass factor in front of two angle brackets. *)
+  {
+    {Mass[1] -> MW, Mass[2] -> MW, Mass[3] -> MW, Mass[4] -> MW,
+      Mass[Multiparticle[1, 2]] -> MH, Mass[Multiparticle[3, 4]] -> MH},
+    MH*ang[\"Spin\", 1, 3]*ang[\"Spin\", 2, 4]
+  }
+};
+\
+\>", "Input",
+ CellLabel->
+  "In[6026]:=",ExpressionUUID->"9b672565-e99b-4bd7-8120-b28311798aa4"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Round trip", "Section",ExpressionUUID->"f01a86f4-8b5b-4364-9b5c-06dd7bb51632"],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+roundTrip[pair_, n_, seed_] := Module[{scr},
+  scr = ComplicateAmplitude[pair, n, RandomSeed -> seed];
+  <|
+    \"Steps\" -> scr[\"Steps\"],
+    \"OriginalKept\" -> Expand[scr[\"Original\"] - Expand[pair[[2]] /. pair[[1]]]] === 0,
+    \"Changed\" -> Expand[scr[\"Expression\"] - scr[\"Original\"]] =!= 0
+  |>
+];
+
+roundTrip[sampleAmplitudes[[1]], 6, 1]
+roundTrip[sampleAmplitudes[[2]], 4, 2]
+roundTrip[sampleAmplitudes[[3]], 5, 3]
+roundTrip[sampleAmplitudes[[4]], 8, 2]
+\
+\>", "Input",
+ CellLabel->
+  "In[6032]:=",ExpressionUUID->"b63b5a30-6244-4b02-8473-4eb4fc385487"],
+
+Cell[BoxData[
+ RowBox[{"\[LeftAssociation]", 
+  RowBox[{
+   RowBox[{"\<\"Steps\"\>", "\[Rule]", "6"}], ",", 
+   RowBox[{"\<\"Trail\"\>", "\[Rule]", 
+    RowBox[{"{", 
+     RowBox[{"\<\"ReverseSpinor\"\>", ",", "\<\"ReverseSpinor\"\>", 
+      ",", "\<\"ReverseSpinor\"\>", ",", "\<\"ReverseSpinor\"\>", 
+      ",", "\<\"ReverseSpinor\"\>", ",", "\<\"Mass\"\>"}], "}"}]}], ",", 
+   RowBox[{"\<\"Restored\"\>", "\[Rule]", "True"}]}], 
+  "\[RightAssociation]"}]], "Output",
+ CellChangeTimes->{3.999251293236611*^9, 3.999253723702182*^9},
+ CellLabel->
+  "Out[6034]=",ExpressionUUID->"7610a1e7-669e-4386-b643-b2569ff908a5"],
+
+Cell[BoxData[
+ RowBox[{"\[LeftAssociation]", 
+  RowBox[{
+   RowBox[{"\<\"Steps\"\>", "\[Rule]", "4"}], ",", 
+   RowBox[{"\<\"Trail\"\>", "\[Rule]", 
+    RowBox[{"{", 
+     RowBox[{"\<\"Mass\"\>", ",", "\<\"Mass\"\>", ",", "\<\"Mass\"\>", 
+      ",", "\<\"MomentumConservation\"\>"}], "}"}]}], ",", 
+   RowBox[{"\<\"Restored\"\>", "\[Rule]", "True"}]}], 
+  "\[RightAssociation]"}]], "Output",
+ CellChangeTimes->{3.999251293236611*^9, 3.999253723703051*^9},
+ CellLabel->
+  "Out[6035]=",ExpressionUUID->"af4893f9-94f8-45d8-bda0-ac88ea2f0b71"],
+
+Cell[BoxData[
+ RowBox[{"\[LeftAssociation]", 
+  RowBox[{
+   RowBox[{"\<\"Steps\"\>", "\[Rule]", "5"}], ",", 
+   RowBox[{"\<\"Trail\"\>", "\[Rule]", 
+    RowBox[{"{", 
+     RowBox[{"\<\"ReverseSpinor\"\>", ",", "\<\"Mass\"\>", 
+      ",", "\<\"ReverseSpinor\"\>", ",", "\<\"Mass\"\>", 
+      ",", "\<\"ReverseSpinor\"\>"}], "}"}]}], ",", 
+   RowBox[{"\<\"Restored\"\>", "\[Rule]", "True"}]}], 
+  "\[RightAssociation]"}]], "Output",
+ CellChangeTimes->{3.999251293236611*^9, 3.9992537237037487`*^9},
+ CellLabel->
+  "Out[6036]=",ExpressionUUID->"73503d71-ff7e-41e2-a4b1-688e5cb671ac"],
+
+Cell[BoxData[
+ RowBox[{"\[LeftAssociation]", 
+  RowBox[{
+   RowBox[{"\<\"Steps\"\>", "\[Rule]", "8"}], ",", 
+   RowBox[{"\<\"Trail\"\>", "\[Rule]", 
+    RowBox[{"{", 
+     RowBox[{"\<\"MomentumConservation\"\>", ",", "\<\"ReverseSpinor\"\>", 
+      ",", "\<\"MomentumConservation\"\>", 
+      ",", "\<\"MomentumConservation\"\>", ",", "\<\"ReverseSpinor\"\>", 
+      ",", "\<\"ReverseSpinor\"\>", ",", "\<\"Mass\"\>", 
+      ",", "\<\"OnShell\"\>"}], "}"}]}], ",", 
+   RowBox[{"\<\"Restored\"\>", "\[Rule]", "True"}]}], 
+  "\[RightAssociation]"}]], "Output",
+ CellChangeTimes->{3.999251293236611*^9, 3.999253723722947*^9},
+ CellLabel->
+  "Out[6037]=",ExpressionUUID->"0e45b6d7-7a92-45e3-bb1a-d57354f5dadf"]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{"sampleAmplitudes", "[", 
+  RowBox[{"[", "1", "]"}], "]"}]], "Input",
+ CellLabel->
+  "In[5939]:=",ExpressionUUID->"18bfcb31-3134-4936-a778-53e9187e405a"],
+
+Cell[BoxData[
+ RowBox[{"scrambled", "=", 
+  RowBox[{"ComplicateAmplitude", "[", 
+   RowBox[{
+    RowBox[{"sampleAmplitudes", "[", 
+     RowBox[{"[", "1", "]"}], "]"}], ",", "14", ",", "3"}], "]"}]}]], "Input",\
+
+ CellChangeTimes->{{3.9991814264002028`*^9, 3.999181429549272*^9}, {
+   3.999181460086746*^9, 3.999181476840598*^9}, 3.9991815494055567`*^9, {
+   3.9991819422728977`*^9, 3.999181946124238*^9}},
+ CellLabel->
+  "In[5948]:=",ExpressionUUID->"09fa532f-8ca3-43f9-81c3-7113c8fb2ee0"],
+
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["One amplitude", "Section",ExpressionUUID->"0010c6e2-ebd8-43c9-a225-5fdbc9fb7600"],
+
+Cell["\<\
+scr = ComplicateAmplitude[sampleAmplitudes[[1]], 14, 3];
+scr[\"Steps\"]
+{FreeQ[scr[\"Expression\"], Mass], ! FreeQ[scr[\"Expression\"], Me | Mm]}
+Expand[scr[\"Original\"] - Expand[sampleAmplitudes[[1, 2]] /. sampleAmplitudes[[1, 1]]]]
+
+scrZ = ComplicateAmplitude[sampleAmplitudes[[4]], 8, 2];
+Expand[scrZ[\"Original\"] - Expand[sampleAmplitudes[[4, 2]] /. sampleAmplitudes[[4, 1]]]]
+\
+\>", "Input",
+ CellLabel->
+  "In[5941]:=",ExpressionUUID->"8bdb777d-59ab-4663-b431-efa5a0cfb5a0"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Reduce", "Section",ExpressionUUID->"b7e4c1a2-6d18-4a3e-9c4a-1a2d0e5c4e11"],
+
+Cell["\<\
+Scramble a few known amplitudes and let the trained net simplify them. \
+Lower score is simpler.\
+\>", "Text",ExpressionUUID->"c8f2a9b0-1e4d-4c55-9a10-7d6e2a11aa01"],
+
+Cell["\<\
+Do[
+  pair = sampleAmplitudes[[i]];
+  scr = ComplicateAmplitude[pair, 8, i];
+  back = UnscrambleSpinorAmplitudes[{pair[[1]], scr[\"Expression\"]}];
+  before = SpinorExpressionComplexity[scr[\"Expression\"]];
+  after = SpinorExpressionComplexity[back[[2]]];
+  Print[{i, \"before\", before, \"after\", after, \"simpler\", after < before}],
+  {i, Min[4, Length[sampleAmplitudes]]}
+]
+\
+\>", "Input",
+ CellLabel->
+  "In[5960]:=",ExpressionUUID->"d4a8e1f0-2b91-4e55-8c17-6a0c9d77e221"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Test", "Section",
+ CellChangeTimes->{{3.9992513496710453`*^9, 
+  3.9992513500237617`*^9}},ExpressionUUID->"518bb820-e93e-45fc-a22d-\
+bb6290dabbfb"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"sampleAmplitudes", "[", 
+  RowBox[{"[", 
+   RowBox[{"3", ",", "2"}], "]"}], "]"}]], "Input",
+ CellChangeTimes->{{3.999251588285475*^9, 3.999251588466378*^9}},
+ CellLabel->
+  "In[6039]:=",ExpressionUUID->"3d8b5ab8-451d-45cc-90be-e08228ce9e05"],
+
+Cell[BoxData[
+ RowBox[{
+  TemplateBox[{
+    TemplateBox[{"\"\[LeftAngleBracket]\"", 
+      StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+    TemplateBox[{
+      StyleBox["2", Bold, StripOnInput -> False], "\"\[RightAngleBracket]\""},
+      "RowDefault"]},
+   "RowDefault"], " ", 
+  TemplateBox[{
+    TemplateBox[{"\"\[LeftAngleBracket]\"", 
+      StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+    TemplateBox[{
+      StyleBox["4", Bold, StripOnInput -> False], "\"\[RightAngleBracket]\""},
+      "RowDefault"]},
+   "RowDefault"]}]], "Output",
+ CellChangeTimes->{3.999251588867302*^9, 3.999253732102236*^9},
+ CellLabel->
+  "Out[6039]=",ExpressionUUID->"8d9d3803-a979-4c4c-aeed-2f9eebd1620f"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"scr", "=", 
+   RowBox[{"ComplicateAmplitude", "[", 
+    RowBox[{
+     RowBox[{"sampleAmplitudes", "[", 
+      RowBox[{"[", "3", "]"}], "]"}], ",", "33", ",", "7"}], "]"}]}], ";", 
+  RowBox[{"scr", "[", 
+   RowBox[{"[", "2", "]"}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.999251487502407*^9, 3.999251489856415*^9}, {
+  3.9992515330166273`*^9, 3.999251563900753*^9}},
+ CellLabel->
+  "In[6040]:=",ExpressionUUID->"986eb90c-2fd2-478a-b0f4-d5a2ae91bb72"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"-", 
+   FractionBox[
+    RowBox[{
+     TemplateBox[{
+       TemplateBox[{"\"\[LeftAngleBracket]\"", 
+         StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+       TemplateBox[{
+         StyleBox["2", Bold, StripOnInput -> False], 
+         "\"\[RightAngleBracket]\""}, "RowDefault"]},
+      "RowDefault"], " ", 
+     TemplateBox[{
+       TemplateBox[{"\"\[LeftAngleBracket]\"", 
+         StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], "\"|\"", 
+       
+       SubscriptBox["p", "2"], "\"|\"", 
+       TemplateBox[{
+         StyleBox["4", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+      
+      "RowDefault"]}], "Me"]}], "+", 
+  FractionBox[
+   RowBox[{
+    TemplateBox[{
+      TemplateBox[{"\"\[LeftAngleBracket]\"", 
+        StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+      TemplateBox[{
+        StyleBox["3", Bold, StripOnInput -> False], 
+        "\"\[RightAngleBracket]\""}, "RowDefault"]},
+     "RowDefault"], " ", 
+    TemplateBox[{
+      TemplateBox[{"\"\[LeftAngleBracket]\"", 
+        StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], "\"|\"", 
+      SubscriptBox["p", "3"], "\"|\"", 
+      TemplateBox[{
+        StyleBox["4", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+     "RowDefault"]}], "Me"], "-", 
+  FractionBox[
+   RowBox[{
+    TemplateBox[{
+      TemplateBox[{"\"\[LeftAngleBracket]\"", 
+        StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+      TemplateBox[{
+        StyleBox["2", Bold, StripOnInput -> False], 
+        "\"\[RightAngleBracket]\""}, "RowDefault"]},
+     "RowDefault"], " ", 
+    TemplateBox[{
+      TemplateBox[{"\"\[LeftAngleBracket]\"", 
+        StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], "\"|\"", 
+      SubscriptBox["p", "3"], "\"|\"", 
+      TemplateBox[{
+        StyleBox["4", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+     "RowDefault"]}], "Me"], "-", 
+  FractionBox[
+   RowBox[{
+    TemplateBox[{
+      TemplateBox[{"\"\[LeftAngleBracket]\"", 
+        StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+      TemplateBox[{
+        StyleBox["2", Bold, StripOnInput -> False], 
+        "\"\[RightAngleBracket]\""}, "RowDefault"]},
+     "RowDefault"], " ", 
+    TemplateBox[{
+      TemplateBox[{"\"\[LeftAngleBracket]\"", 
+        StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], "\"|\"", 
+      SubscriptBox["p", "4"], "\"|\"", 
+      TemplateBox[{
+        StyleBox["4", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+     "RowDefault"]}], "Me"], "-", 
+  FractionBox[
+   RowBox[{
+    TemplateBox[{
+      TemplateBox[{"\"\[LeftAngleBracket]\"", 
+        StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+      TemplateBox[{
+        StyleBox["1", Bold, StripOnInput -> False], 
+        "\"\[RightAngleBracket]\""}, "RowDefault"]},
+     "RowDefault"], " ", 
+    TemplateBox[{
+      TemplateBox[{"\"\[LeftAngleBracket]\"", 
+        StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], "\"|\"", 
+      SubscriptBox["p", "1"], "\"|\"", 
+      TemplateBox[{
+        StyleBox["4", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+     "RowDefault"]}], "Me"], "+", 
+  FractionBox[
+   RowBox[{
+    TemplateBox[{
+      TemplateBox[{"\"\[LeftAngleBracket]\"", 
+        StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+      TemplateBox[{
+        StyleBox["2", Bold, StripOnInput -> False], 
+        "\"\[RightAngleBracket]\""}, "RowDefault"]},
+     "RowDefault"], " ", 
+    TemplateBox[{
+      TemplateBox[{"\"\[LeftAngleBracket]\"", 
+        StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], "\"|\"", 
+      SubscriptBox["p", "2"], "\"|\"", 
+      TemplateBox[{
+        StyleBox["4", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+     "RowDefault"]}], "Me"], "+", 
+  FractionBox[
+   RowBox[{
+    TemplateBox[{
+      TemplateBox[{"\"\[LeftAngleBracket]\"", 
+        StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+      TemplateBox[{
+        StyleBox["2", Bold, StripOnInput -> False], 
+        "\"\[RightAngleBracket]\""}, "RowDefault"]},
+     "RowDefault"], " ", 
+    TemplateBox[{
+      TemplateBox[{"\"\[LeftAngleBracket]\"", 
+        StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], "\"|\"", 
+      SubscriptBox["p", "3"], "\"|\"", 
+      TemplateBox[{
+        StyleBox["4", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+     "RowDefault"]}], "Me"], "+", 
+  FractionBox[
+   RowBox[{
+    TemplateBox[{
+      TemplateBox[{"\"\[LeftAngleBracket]\"", 
+        StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+      TemplateBox[{
+        StyleBox["2", Bold, StripOnInput -> False], 
+        "\"\[RightAngleBracket]\""}, "RowDefault"]},
+     "RowDefault"], " ", 
+    TemplateBox[{
+      TemplateBox[{"\"\[LeftAngleBracket]\"", 
+        StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], "\"|\"", 
+      SubscriptBox["p", "4"], "\"|\"", 
+      TemplateBox[{
+        StyleBox["4", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+     "RowDefault"]}], "Me"], "+", 
+  FractionBox[
+   RowBox[{
+    TemplateBox[{
+      TemplateBox[{"\"\[LeftAngleBracket]\"", 
+        StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+      TemplateBox[{
+        StyleBox["3", Bold, StripOnInput -> False], 
+        "\"\[RightAngleBracket]\""}, "RowDefault"]},
+     "RowDefault"], " ", 
+    TemplateBox[{
+      TemplateBox[{"\"\[LeftAngleBracket]\"", 
+        StyleBox["4", Bold, StripOnInput -> False]}, "RowDefault"], "\"|\"", 
+      SubscriptBox["p", "1"], "\"|\"", 
+      TemplateBox[{
+        StyleBox["1", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+     "RowDefault"]}], "Me"], "-", 
+  FractionBox[
+   RowBox[{
+    TemplateBox[{
+      TemplateBox[{"\"\[LeftAngleBracket]\"", 
+        StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+      TemplateBox[{
+        StyleBox["4", Bold, StripOnInput -> False], 
+        "\"\[RightAngleBracket]\""}, "RowDefault"]},
+     "RowDefault"], " ", 
+    TemplateBox[{
+      TemplateBox[{"\"[\"", 
+        StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], "\"|\"", 
+      SubscriptBox["p", "2"], "\"|\"", 
+      TemplateBox[{
+        StyleBox["1", Bold, StripOnInput -> False], 
+        "\"\[RightAngleBracket]\""}, "RowDefault"]},
+     "RowDefault"]}], "Me"], "-", 
+  FractionBox[
+   RowBox[{
+    TemplateBox[{
+      TemplateBox[{"\"[\"", 
+        StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], "\"|\"", 
+      SubscriptBox["p", "1"], "\"|\"", 
+      TemplateBox[{
+        StyleBox["2", Bold, StripOnInput -> False], 
+        "\"\[RightAngleBracket]\""}, "RowDefault"]},
+     "RowDefault"], " ", 
+    TemplateBox[{
+      TemplateBox[{"\"[\"", 
+        StyleBox["4", Bold, StripOnInput -> False]}, "RowDefault"], "\"|\"", 
+      SubscriptBox["p", "3"], "\"|\"", 
+      TemplateBox[{
+        StyleBox["1", Bold, StripOnInput -> False], 
+        "\"\[RightAngleBracket]\""}, "RowDefault"]},
+     "RowDefault"]}], 
+   SuperscriptBox["Me", "2"]], "-", 
+  FractionBox[
+   RowBox[{
+    TemplateBox[{
+      TemplateBox[{"\"[\"", 
+        StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], "\"|\"", 
+      SubscriptBox["p", "2"], "\"|\"", 
+      TemplateBox[{
+        StyleBox["2", Bold, StripOnInput -> False], 
+        "\"\[RightAngleBracket]\""}, "RowDefault"]},
+     "RowDefault"], " ", 
+    TemplateBox[{
+      TemplateBox[{"\"[\"", 
+        StyleBox["4", Bold, StripOnInput -> False]}, "RowDefault"], "\"|\"", 
+      SubscriptBox["p", "3"], "\"|\"", 
+      TemplateBox[{
+        StyleBox["1", Bold, StripOnInput -> False], 
+        "\"\[RightAngleBracket]\""}, "RowDefault"]},
+     "RowDefault"]}], 
+   SuperscriptBox["Me", "2"]], "-", 
+  FractionBox[
+   RowBox[{
+    TemplateBox[{
+      TemplateBox[{"\"[\"", 
+        StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], "\"|\"", 
+      SubscriptBox["p", "4"], "\"|\"", 
+      TemplateBox[{
+        StyleBox["2", Bold, StripOnInput -> False], 
+        "\"\[RightAngleBracket]\""}, "RowDefault"]},
+     "RowDefault"], " ", 
+    TemplateBox[{
+      TemplateBox[{"\"[\"", 
+        StyleBox["4", Bold, StripOnInput -> False]}, "RowDefault"], "\"|\"", 
+      SubscriptBox["p", "3"], "\"|\"", 
+      TemplateBox[{
+        StyleBox["1", Bold, StripOnInput -> False], 
+        "\"\[RightAngleBracket]\""}, "RowDefault"]},
+     "RowDefault"]}], 
+   SuperscriptBox["Me", "2"]], "-", 
+  FractionBox[
+   RowBox[{
+    TemplateBox[{
+      TemplateBox[{"\"\[LeftAngleBracket]\"", 
+        StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+      TemplateBox[{
+        StyleBox["1", Bold, StripOnInput -> False], 
+        "\"\[RightAngleBracket]\""}, "RowDefault"]},
+     "RowDefault"], " ", 
+    TemplateBox[{
+      TemplateBox[{"\"[\"", 
+        StyleBox["4", Bold, StripOnInput -> False]}, "RowDefault"], "\"|\"", 
+      SubscriptBox["p", "4"], "\"|\"", 
+      TemplateBox[{
+        StyleBox["2", Bold, StripOnInput -> False], 
+        "\"\[RightAngleBracket]\""}, "RowDefault"]},
+     "RowDefault"]}], "Me"], "-", 
+  FractionBox[
+   RowBox[{
+    TemplateBox[{
+      TemplateBox[{"\"\[LeftAngleBracket]\"", 
+        StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+      TemplateBox[{
+        StyleBox["2", Bold, StripOnInput -> False], 
+        "\"\[RightAngleBracket]\""}, "RowDefault"]},
+     "RowDefault"], " ", 
+    TemplateBox[{
+      TemplateBox[{"\"[\"", 
+        StyleBox["4", Bold, StripOnInput -> False]}, "RowDefault"], "\"|\"", 
+      SubscriptBox["p", "4"], "\"|\"", 
+      TemplateBox[{
+        StyleBox["3", Bold, StripOnInput -> False], 
+        "\"\[RightAngleBracket]\""}, "RowDefault"]},
+     "RowDefault"]}], "Me"]}]], "Output",
+ CellChangeTimes->{3.999251564251103*^9, 3.9992537333936443`*^9},
+ CellLabel->
+  "Out[6040]=",ExpressionUUID->"e84b556f-702c-4000-9bae-0029fb13a06f"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"UnscrambleSpinorAmplitudes", "[", 
+  RowBox[{"{", 
+   RowBox[{
+    RowBox[{"scr", "[", 
+     RowBox[{"[", "1", "]"}], "]"}], ",", 
+    RowBox[{"scr", "[", 
+     RowBox[{"[", "2", "]"}], "]"}]}], "}"}], "]"}]], "Input",
+ CellChangeTimes->{{3.999251368695733*^9, 3.9992514036837597`*^9}, {
+  3.999251570458205*^9, 3.9992515727060432`*^9}},
+ CellLabel->
+  "In[6041]:=",ExpressionUUID->"3e78955a-7aa8-4890-af41-5c3df5e01b70"],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{
+      SubscriptBox["M", "1"], "\[Rule]", "Me"}], ",", 
+     RowBox[{
+      SubscriptBox["M", "2"], "\[Rule]", "Me"}], ",", 
+     RowBox[{
+      SubscriptBox["M", "3"], "\[Rule]", "Me"}], ",", 
+     RowBox[{
+      SubscriptBox["M", "4"], "\[Rule]", "Me"}]}], "}"}], ",", 
+   RowBox[{
+    FractionBox[
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["3", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], "\"|\"", 
+        SubscriptBox["p", "3"], "\"|\"", 
+        TemplateBox[{
+          StyleBox["4", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+       "RowDefault"]}], "Me"], "+", 
+    FractionBox[
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["3", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      TemplateBox[{
+        TemplateBox[{"\"[\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], "\"|\"", 
+        SubscriptBox["p", "1"], "\"|\"", 
+        TemplateBox[{
+          StyleBox["4", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"]}], "Me"], "-", 
+    FractionBox[
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["4", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      TemplateBox[{
+        TemplateBox[{"\"[\"", 
+          StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], "\"|\"", 
+        SubscriptBox["p", "2"], "\"|\"", 
+        TemplateBox[{
+          StyleBox["1", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"]}], "Me"], "-", 
+    FractionBox[
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["2", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["3", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      TemplateBox[{
+        TemplateBox[{"\"[\"", 
+          StyleBox["4", Bold, StripOnInput -> False]}, "RowDefault"], "\"|\"", 
+        SubscriptBox["p", "3"], "\"|\"", 
+        TemplateBox[{
+          StyleBox["1", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"]}], "Me"], "-", 
+    FractionBox[
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["3", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["1", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      TemplateBox[{
+        TemplateBox[{"\"[\"", 
+          StyleBox["4", Bold, StripOnInput -> False]}, "RowDefault"], "\"|\"", 
+        SubscriptBox["p", "4"], "\"|\"", 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"]}], "Me"], "-", 
+    FractionBox[
+     RowBox[{
+      TemplateBox[{
+        TemplateBox[{"\"\[LeftAngleBracket]\"", 
+          StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+        TemplateBox[{
+          StyleBox["2", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], " ", 
+      TemplateBox[{
+        TemplateBox[{"\"[\"", 
+          StyleBox["4", Bold, StripOnInput -> False]}, "RowDefault"], "\"|\"", 
+        SubscriptBox["p", "4"], "\"|\"", 
+        TemplateBox[{
+          StyleBox["3", Bold, StripOnInput -> False], 
+          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"]}], "Me"]}]}], "}"}]], "Output",
+ CellChangeTimes->{{3.999251370373651*^9, 3.999251406850958*^9}, 
+   3.999251466793285*^9, 3.99925157348386*^9, 3.99925373486922*^9},
+ CellLabel->
+  "Out[6041]=",ExpressionUUID->"f78ef2e1-b0da-43fc-bbb4-19cec6d3274d"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+},
+WindowSize->{808, 911},
+WindowMargins->{{Automatic, 380}, {Automatic, 0}},
+FrontEndVersion->"15.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
+StyleDefinitions->"Default.nb",
+ExpressionUUID->"52955d86-8144-4109-ab1c-cbc1aa1f36be"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[576, 22, 95, 0, 96, "Title",ExpressionUUID->"4b32ec66-9b2b-4d9d-a278-e7a25824c03f"],
+Cell[674, 24, 838, 11, 164, "Text",ExpressionUUID->"53d1be7a-a63c-4a90-9b89-08e0b814194c"],
+Cell[CellGroupData[{
+Cell[1537, 39, 78, 0, 66, "Section",ExpressionUUID->"5d988c4e-9234-48be-b61a-6b75107e748c"],
+Cell[CellGroupData[{
+Cell[1640, 43, 287, 8, 98, "Input",ExpressionUUID->"08dbf5e5-9e48-48bf-96d6-d1623153cea0"],
+Cell[CellGroupData[{
+Cell[1952, 55, 233, 4, 23, "Print",ExpressionUUID->"f08fd372-28b3-41c6-aff9-1f274bff3e95"],
+Cell[2188, 61, 207, 4, 23, "Print",ExpressionUUID->"d9ea2b9e-4cd7-425d-a9c8-9ba52474ae06"],
+Cell[2398, 67, 214, 4, 23, "Print",ExpressionUUID->"c3326cb1-e778-40c8-b8ee-9a99c5016d72"],
+Cell[2615, 73, 228, 4, 23, "Print",ExpressionUUID->"4590e7f8-9be0-47eb-876a-932a002926b2"],
+Cell[2846, 79, 221, 4, 23, "Print",ExpressionUUID->"504f0ede-6068-408d-946e-5f5fa10e3de2"],
+Cell[3070, 85, 228, 4, 23, "Print",ExpressionUUID->"4f33b617-5afd-4fb6-95d4-a981ac8b8c2f"],
+Cell[3301, 91, 233, 4, 23, "Print",ExpressionUUID->"632ec073-7a3f-4233-b61f-ff90c96c16b6"],
+Cell[3537, 97, 205, 4, 23, "Print",ExpressionUUID->"f4149382-3f0f-4f23-a495-e5c7a5ec91ab"],
+Cell[3745, 103, 267, 5, 23, "Print",ExpressionUUID->"19fb939f-b365-4024-9764-823ebb69058c"],
+Cell[4015, 110, 241, 4, 23, "Print",ExpressionUUID->"89fae4a3-e9e4-485c-89b1-4349cbe34d56"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[4317, 121, 91, 0, 66, "Section",ExpressionUUID->"fe1991ce-a4c1-4b83-a535-bac6bc074798"],
+Cell[4411, 123, 2787, 75, 1156, "Input",ExpressionUUID->"9b672565-e99b-4bd7-8120-b28311798aa4"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[7235, 203, 84, 0, 66, "Section",ExpressionUUID->"f01a86f4-8b5b-4364-9b5c-06dd7bb51632"],
+Cell[CellGroupData[{
+Cell[7344, 207, 938, 26, 410, "Input",ExpressionUUID->"b63b5a30-6244-4b02-8473-4eb4fc385487"],
+Cell[8285, 235, 617, 13, 67, "Output",ExpressionUUID->"7610a1e7-669e-4386-b643-b2569ff908a5"],
+Cell[8905, 250, 539, 12, 47, "Output",ExpressionUUID->"af4893f9-94f8-45d8-bda0-ac88ea2f0b71"],
+Cell[9447, 264, 580, 13, 67, "Output",ExpressionUUID->"73503d71-ff7e-41e2-a4b1-688e5cb671ac"],
+Cell[10030, 279, 706, 15, 67, "Output",ExpressionUUID->"0e45b6d7-7a92-45e3-bb1a-d57354f5dadf"]
+}, Open  ]],
+Cell[10751, 297, 176, 4, 29, "Input",ExpressionUUID->"18bfcb31-3134-4936-a778-53e9187e405a"],
+Cell[10930, 303, 489, 11, 29, "Input",ExpressionUUID->"09fa532f-8ca3-43f9-81c3-7113c8fb2ee0"],
+Cell[11422, 316, 265, 5, 29, "Input",ExpressionUUID->"425e6c3b-d735-47e8-96fe-2a8620a29620"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[11724, 326, 87, 0, 66, "Section",ExpressionUUID->"0010c6e2-ebd8-43c9-a225-5fdbc9fb7600"],
+Cell[11814, 328, 641, 16, 220, "Input",ExpressionUUID->"8bdb777d-59ab-4663-b431-efa5a0cfb5a0"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[12492, 349, 79, 0, 66, "Section",ExpressionUUID->"b7e4c1a2-6d18-4a3e-9c4a-1a2d0e5c4e11"],
+Cell[12574, 351, 363, 5, 77, "Text",ExpressionUUID->"c8f2a9b0-1e4d-4c55-9a10-7d6e2a11aa01"],
+Cell[12940, 358, 456, 12, 116, "Input",ExpressionUUID->"d4a8e1f0-2b91-4e55-8c17-6a0c9d77e221"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[13433, 375, 153, 3, 66, "Section",ExpressionUUID->"518bb820-e93e-45fc-a22d-bb6290dabbfb"],
+Cell[CellGroupData[{
+Cell[13611, 382, 266, 6, 29, "Input",ExpressionUUID->"3d8b5ab8-451d-45cc-90be-e08228ce9e05"],
+Cell[13880, 390, 720, 18, 47, "Output",ExpressionUUID->"8d9d3803-a979-4c4c-aeed-2f9eebd1620f"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[14637, 413, 485, 12, 29, "Input",ExpressionUUID->"986eb90c-2fd2-478a-b0f4-d5a2ae91bb72"],
+Cell[15125, 427, 9892, 259, 133, "Output",ExpressionUUID->"e84b556f-702c-4000-9bae-0029fb13a06f"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[25054, 691, 445, 11, 29, "Input",ExpressionUUID->"3e78955a-7aa8-4890-af41-5c3df5e01b70"],
+Cell[25502, 704, 4626, 118, 96, "Output",ExpressionUUID->"f78ef2e1-b0da-43fc-bbb4-19cec6d3274d"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+}
+]
+*)
+
+(* End of internal cache information *)
+

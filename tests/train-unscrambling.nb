@@ -1,0 +1,229 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Wolfram 15.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       154,          7]
+NotebookDataLength[      7156,        219]
+NotebookOptionsPosition[      5806,        186]
+NotebookOutlinePosition[      6198,        202]
+CellTagsIndexPosition[      6155,        199]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell["Train the unscrambler", "Title",ExpressionUUID->"9394847e-fc2a-4cc9-b49e-2a979cd6f8f4"],
+
+Cell["\<\
+Edit only the parameters in the first input cell. The trained net is written \
+to tests/unscramble-net.wlnet inside hepcatDirectory. From a terminal:
+
+wolframscript -code \
+'UsingFrontEnd[NotebookEvaluate[\"/path/to/train-unscrambling.nb\", \
+EvaluationElements -> \"All\"]]'\
+\>", "Text",ExpressionUUID->"cfe808c0-0bfc-431a-83fe-5464c5e9e6a8"],
+
+Cell[CellGroupData[{
+
+Cell["Parameters", "Section",ExpressionUUID->"40a28c1e-7b6d-4739-8677-ff82c87b0ac9"],
+
+Cell["\<\
+(* Set these before running. *)
+hepcatDirectory = \"/Users/neil/code/hepcat\";
+
+(* How many of the known amplitudes below to train on, from the front of the \
+list. *)
+nAmplitudes = 2;
+
+(* Scrambles of each amplitude, and how many identities are applied in each \
+scramble. *)
+nScrambles = 2;
+nSteps = 4;
+
+(* Each learning round guesses this many identities, then keeps the attempt \
+only if the expression got simpler. *)
+episodeLength = 4;
+nRounds = 2;
+
+(* Fresh scrambles per amplitude, used only to report whether the trained net \
+makes them simpler. *)
+nHoldOut = 1;
+
+(* CPU kernels. $ProcessorCount uses every core the license allows. *)
+nKernels = $ProcessorCount;
+\
+\>", "Input",
+ CellChangeTimes->{
+  3.999265308713935*^9},ExpressionUUID->"ef089402-2cfd-453a-8595-\
+c14b35fbebb7"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Load", "Section",ExpressionUUID->"db49dacf-a3be-4e38-8e3c-3ea3de6bb87e"],
+
+Cell["\<\
+$HEPCATpath = hepcatDirectory <> \"/source/\";
+Get[$HEPCATpath <> \"HEPCAT.wl\"];
+Get[hepcatDirectory <> \"/tests/unscrambling.wl\"];
+\
+\>", "Input",ExpressionUUID->"1aff748e-3159-40f6-88af-2fe19727aabe"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Known amplitudes", "Section",ExpressionUUID->"eca0ca6d-991e-47c6-b74a-edaf730dc5ed"],
+
+Cell["\<\
+ang[k_, i_, j_] := SpinorChain[Spinor[k, \"Angle\", i], Spinor[k, \"Angle\", \
+j]];
+sq[k_, i_, j_] := SpinorChain[Spinor[k, \"Square\", i], Spinor[k, \"Square\", \
+j]];
+ins[k_, i_, p_, j_] := SpinorChain[Spinor[k, \"Square\", i], Mom[p], \
+Spinor[k, \"Angle\", j]];
+
+knownAmplitudes = {
+  (* Four-fermion photon, S channel. *)
+  {
+    {Mass[1] -> Me, Mass[2] -> Me, Mass[3] -> Mm, Mass[4] -> Mm,
+      Mass[Multiparticle[1, 2]] -> 0, Mass[Multiparticle[3, 4]] -> 0},
+    -2*EE^2*(
+      ang[\"Spin\", 1, 3]*sq[\"Spin\", 2, 4] + ang[\"Spin\", 1, \
+4]*sq[\"Spin\", 2, 3] +
+      ang[\"Spin\", 2, 3]*sq[\"Spin\", 1, 4] + ang[\"Spin\", 2, \
+4]*sq[\"Spin\", 1, 3]
+    )/PropDen[Mom[Multiparticle[1, 2]], 0]
+  },
+  (* One momentum insertion, so momentum conservation can fire. *)
+  {
+    {Mass[1] -> MW, Mass[2] -> MW, Mass[3] -> MW, Mass[4] -> MW},
+    ins[\"Spin\", 1, 2, 3]*ang[\"Spin\", 1, 4]
+  },
+  (* Two angle brackets, so Schouten can fire. *)
+  {
+    {Mass[1] -> Me, Mass[2] -> Me, Mass[3] -> Me, Mass[4] -> Me},
+    ang[\"Spin\", 1, 2]*ang[\"Spin\", 3, 4]
+  },
+  (* Internal Z on (1,3), already on shell. *)
+  {
+    {Mass[1] -> MW, Mass[2] -> MW, Mass[3] -> MW, Mass[4] -> MW,
+      Mass[Multiparticle[1, 3]] -> MZ, Mass[Multiparticle[2, 4]] -> MZ},
+    (MZ^2/2 - MW^2)*ang[\"Spin\", 2, 4]
+  },
+  (* Two square brackets. *)
+  {
+    {Mass[1] -> Me, Mass[2] -> Me, Mass[3] -> Me, Mass[4] -> Me},
+    sq[\"Spin\", 1, 2]*sq[\"Spin\", 3, 4]
+  },
+  (* Internal Z on (1,2), already on shell. *)
+  {
+    {Mass[1] -> Me, Mass[2] -> Me, Mass[3] -> Mm, Mass[4] -> Mm,
+      Mass[Multiparticle[1, 2]] -> MZ, Mass[Multiparticle[3, 4]] -> MZ},
+    (MZ^2/2 - Me^2)*ang[\"Spin\", 1, 3]*sq[\"Spin\", 2, 4]
+  },
+  (* A mass insertion is already present, and leg 2 is massless. *)
+  {
+    {Mass[1] -> MW, Mass[2] -> 0, Mass[3] -> Mm, Mass[4] -> Me},
+    ins[\"Spin\", 1, 1, 3]*ang[\"Spin\", 2, 4]
+  },
+  (* Internal Z on (1,4). *)
+  {
+    {Mass[1] -> MW, Mass[2] -> MW, Mass[3] -> MW, Mass[4] -> MW,
+      Mass[Multiparticle[1, 4]] -> MZ, Mass[Multiparticle[2, 3]] -> MZ},
+    (MZ^2/2 - MW^2)*sq[\"Spin\", 1, 3]
+  },
+  (* Two fermion channels. *)
+  {
+    {Mass[1] -> Me, Mass[2] -> Me, Mass[3] -> Mm, Mass[4] -> Mm,
+      Mass[Multiparticle[1, 2]] -> 0, Mass[Multiparticle[3, 4]] -> 0},
+    ang[\"Spin\", 1, 3]*sq[\"Spin\", 2, 4] + ang[\"Spin\", 1, 4]*sq[\"Spin\", \
+2, 3]
+  },
+  (* Higgs-mass factor in front of two angle brackets. *)
+  {
+    {Mass[1] -> MW, Mass[2] -> MW, Mass[3] -> MW, Mass[4] -> MW,
+      Mass[Multiparticle[1, 2]] -> MH, Mass[Multiparticle[3, 4]] -> MH},
+    MH*ang[\"Spin\", 1, 3]*ang[\"Spin\", 2, 4]
+  }
+};
+
+If[nAmplitudes > Length[knownAmplitudes],
+  Print[\"nAmplitudes is larger than the list of known amplitudes. Using all \
+\", Length[knownAmplitudes], \".\"];
+  nAmplitudes = Length[knownAmplitudes]
+];
+trainingAmplitudes = Take[knownAmplitudes, nAmplitudes];
+\
+\>", "Input",ExpressionUUID->"54484d36-b7d6-46be-baee-44ec7be3b474"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Train", "Section",ExpressionUUID->"4a30c803-2f43-4599-8da5-e0cb3583f4bd"],
+
+Cell["\<\
+report = TrainUnscrambleNet[trainingAmplitudes,
+  Steps -> nSteps,
+  Scrambles -> nScrambles,
+  HoldOut -> nHoldOut,
+  MaxTrainingRounds -> nRounds,
+  EpisodeLength -> episodeLength,
+  Kernels -> nKernels
+];
+Print[report];
+\
+\>", "Input",ExpressionUUID->"a947d9a3-8e7b-4272-b240-2bc1870c6535"]
+}, Open  ]]
+}, Open  ]]
+},
+WindowSize->{808, 911},
+WindowMargins->{{12, Automatic}, {Automatic, 24}},
+FrontEndVersion->"15.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
+StyleDefinitions->"Default.nb",
+ExpressionUUID->"f7e60da8-52f3-4f50-83ab-7cd3e1673724"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[576, 22, 93, 0, 96, "Title",ExpressionUUID->"9394847e-fc2a-4cc9-b49e-2a979cd6f8f4"],
+Cell[672, 24, 354, 7, 121, "Text",ExpressionUUID->"cfe808c0-0bfc-431a-83fe-5464c5e9e6a8"],
+Cell[CellGroupData[{
+Cell[1051, 35, 84, 0, 66, "Section",ExpressionUUID->"40a28c1e-7b6d-4739-8677-ff82c87b0ac9"],
+Cell[1138, 37, 800, 28, 358, "Input",ExpressionUUID->"ef089402-2cfd-453a-8595-c14b35fbebb7"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[1975, 70, 78, 0, 66, "Section",ExpressionUUID->"db49dacf-a3be-4e38-8e3c-3ea3de6bb87e"],
+Cell[2056, 72, 214, 5, 81, "Input",ExpressionUUID->"1aff748e-3159-40f6-88af-2fe19727aabe"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[2307, 82, 90, 0, 66, "Section",ExpressionUUID->"eca0ca6d-991e-47c6-b74a-edaf730dc5ed"],
+Cell[2400, 84, 2956, 80, 1260, "Input",ExpressionUUID->"54484d36-b7d6-46be-baee-44ec7be3b474"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[5393, 169, 79, 0, 70, "Section",ExpressionUUID->"4a30c803-2f43-4599-8da5-e0cb3583f4bd"],
+Cell[5475, 171, 303, 11, 70, "Input",ExpressionUUID->"a947d9a3-8e7b-4272-b240-2bc1870c6535"]
+}, Open  ]]
+}, Open  ]]
+}
+]
+*)
+
+(* End of internal cache information *)
+
