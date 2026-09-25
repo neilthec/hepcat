@@ -162,7 +162,11 @@ For the next training run, request native threads before Wolfram starts:
 python3 /Users/neil/code/hepcat/tests/train-unscrambling.py --threads 4 --kernels 4
 ```
 
-The launcher runs the same training notebook, with its existing parameters,
+The launcher evaluates the same notebook's text Input cells in order, with its existing parameters,
+using `train-unscrambling.wl` and `wolframscript -file`. No notebook front end
+or display server is needed. The repository root is derived from the runner's
+location; interactive notebook evaluation uses the notebook's location instead.
+The launcher
 and sets `OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS`, and `MKL_NUM_THREADS`.
 It leaves the MXNet operator scheduler at one worker to avoid multiplying
 simultaneous thread pools. `--kernels` overrides the notebook's worker count.
@@ -320,6 +324,55 @@ and owned-worker cleanup. A small local run took 6.83 s overall, with 2.10 s
 training and 1.46 s validation. These are smoke-test timings, not a large-data
 benchmark or a measure of learned simplification quality. Tests do not replace
 the user's saved models. The supervisor kills timed-out test kernels.
+
+## Linux CPU server
+
+On the Mac, commit the launcher changes and push the `factorization` branch
+before cloning on the server. On the server:
+
+```sh
+mkdir -p ~/code
+cd ~/code
+git clone --branch factorization https://github.com/neilthec/hepcat.git
+cd hepcat
+python3 --version
+wolframscript -code 'Print[{$Version, $ProcessorCount, $MaxLicenseSubprocesses}]'
+nproc
+free -h
+```
+
+For an existing checkout, use `git switch factorization` and `git pull --ff-only`
+after checking `git status`. Do not clone inside another copy of the repository.
+If `wolframscript` is not on PATH, pass its installed absolute path with
+`--wolframscript /path/to/wolframscript`.
+
+First test with `--threads 4 --kernels 2 --amplitudes 1 --scrambles 1 --steps 1
+--rounds 1 --holdout 1 --model-directory ~/hepcat-runs/smoke`.
+Once this passes, the following is a capacity experiment, not a promise of
+64-core utilization or optimum performance. It requires at least 63 available
+parallel-kernel license seats and sufficient RAM:
+
+```sh
+time python3 tests/train-unscrambling.py --threads 64 --kernels 63 --worker-threads 1 \
+  --amplitudes 4 --scrambles 96 --steps 5 --rounds 2 --holdout 16 --batch-size 8 \
+  --model-directory ~/hepcat-runs/server-01
+```
+
+Generation has 388 independent jobs; validation has 64. The 63 workers leave
+one CPU for coordination during those stages. During NN optimization the
+workers are idle, and the coordinator requests up to 64 native threads.
+Worker thread settings are requests, not OS affinity limits; this is not a
+hard 64-CPU resource cap. Use fewer kernels if the license or RAM requires it.
+Compare training time with `--threads 8`, `16`, `32`, and `64` on identical
+data and batch size: this small recurrent network may run faster with fewer
+threads. More workers also multiply memory consumption and startup cost.
+Monitor with `top`/`htop`, and run only one benchmark at a time. A persistent
+terminal session such as tmux avoids losing the run when SSH disconnects.
+
+This is single-host execution. A future Slurm allocation needs the appropriate
+CPU/memory request and, for multi-node symbolic work, an explicitly connected
+remote kernel pool. Neural optimization is not currently distributed across
+nodes. These server settings have not been benchmarked on Linux here.
 
 ## Paper map and next steps
 

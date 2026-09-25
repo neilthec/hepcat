@@ -1,6 +1,5 @@
-"""Launch notebook training with explicit native CPU thread settings."""
+"""Run notebook training inputs headlessly with explicit CPU and data settings."""
 import argparse
-import json
 import os
 import platform
 from pathlib import Path
@@ -23,10 +22,7 @@ def training_environment(threads, base):
 
 
 def notebook_command(executable, notebook):
-    # Wolfram string syntax accepts the JSON quoting used for this path.
-    path = json.dumps(str(notebook), ensure_ascii=True)
-    return [executable, "-code",
-            f'UsingFrontEnd[NotebookEvaluate[{path}, EvaluationElements -> "All"]]']
+    return [executable, "-file", str(notebook.with_suffix(".wl"))]
 
 
 def main(argv=None):
@@ -43,6 +39,7 @@ def main(argv=None):
         "holdout": "fresh validation scrambles per amplitude (0 disables validation)",
         "episode-length": "maximum identity applications per validation attempt",
         "batch-size": "training states per optimizer batch",
+        "worker-threads": "native threads per symbolic/validation worker (normally 1 on Linux)",
     }
     for name, help_text in controls.items():
         parser.add_argument(f"--{name}", type=int, help=help_text + "; default: notebook setting")

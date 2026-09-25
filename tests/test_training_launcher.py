@@ -17,17 +17,18 @@ class LauncherTests(unittest.TestCase):
                 patch.object(launcher.os, "execvpe") as execute, contextlib.redirect_stdout(io.StringIO()):
             launcher.main(["--threads", "4", "--scrambles", "12", "--steps", "5",
                            "--rounds", "3", "--holdout", "0", "--amplitudes", "6",
-                           "--episode-length", "8", "--batch-size", "2", "--model-directory", "/tmp/hepcat-test"])
+                           "--episode-length", "8", "--batch-size", "2", "--worker-threads", "1",
+                           "--model-directory", "/tmp/hepcat-test"])
             env = execute.call_args.args[2]
             for key, value in {"SCRAMBLES": "12", "STEPS": "5", "ROUNDS": "3", "HOLDOUT": "0",
-                               "AMPLITUDES": "6", "EPISODE_LENGTH": "8", "BATCH_SIZE": "2",
+                               "AMPLITUDES": "6", "EPISODE_LENGTH": "8", "BATCH_SIZE": "2", "WORKER_THREADS": "1",
                                "MODEL_DIRECTORY": str(Path("/tmp/hepcat-test").resolve())}.items():
                 self.assertEqual(env["HEPCAT_TRAIN_" + key], value)
 
     def test_invalid_data_controls(self):
         for option, value in [("scrambles", "0"), ("rounds", "0"), ("amplitudes", "0"),
                               ("steps", "-1"), ("holdout", "-1"), ("batch-size", "0"),
-                              ("episode-length", "0")]:
+                              ("episode-length", "0"), ("worker-threads", "0")]:
             with self.subTest(option=option), contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
                 launcher.main(["--threads", "4", "--" + option, value, "--dry-run"])
 
@@ -54,8 +55,7 @@ class LauncherTests(unittest.TestCase):
 
     def test_quoted_path(self):
         command = launcher.notebook_command("wolframscript", Path('/tmp/a "quoted" name.nb'))
-        self.assertEqual(command[:2], ["wolframscript", "-code"])
-        self.assertIn(r'a \"quoted\" name.nb', command[2])
+        self.assertEqual(command, ["wolframscript", "-file", '/tmp/a "quoted" name.wl'])
 
     def test_invalid_threads(self):
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
@@ -74,7 +74,7 @@ class LauncherTests(unittest.TestCase):
             self.assertEqual(executable, command[0])
             self.assertEqual(env["OMP_NUM_THREADS"], "4")
             self.assertEqual(env["HEPCAT_TRAIN_KERNELS"], "2")
-            self.assertIn("train-unscrambling.nb", command[2])
+            self.assertIn("train-unscrambling.wl", command[2])
 
 
 if __name__ == "__main__":

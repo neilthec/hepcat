@@ -30,6 +30,7 @@ check["failed run is explicit", StringStartsQ[trainingRunSummary[$Failed, settin
 notebook = Get[FileNameJoin[{root, "tests", "train-unscrambling.nb"}]];
 inputs = Cases[notebook, Cell[s_String, "Input", ___] :> s, Infinity];
 SetEnvironment[{"HEPCAT_TRAIN_SCRAMBLES" -> "12", "HEPCAT_TRAIN_ROUNDS" -> "3",
+  "HEPCAT_TRAIN_ROOT" -> root,
   "HEPCAT_TRAIN_BATCH_SIZE" -> "2", "HEPCAT_TRAIN_AMPLITUDES" -> "6"}];
 ToExpression[First[inputs]];
 check["notebook loads overrides", {nScrambles, nRounds, trainingBatchSize, nAmplitudes, nHoldOut} === {12, 3, 2, 6, 0}];

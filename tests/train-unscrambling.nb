@@ -37,7 +37,8 @@ Cell["Parameters", "Section",ExpressionUUID->"40a28c1e-7b6d-4739-8677-ff82c87b0a
 
 Cell["\<\
 (* Set these before running. *)
-hepcatDirectory = \"/Users/neil/code/hepcat\";
+hepcatDirectory = Replace[Environment[\"HEPCAT_TRAIN_ROOT\"],
+  Except[_String] :> DirectoryName[NotebookDirectory[]]];
 Get[hepcatDirectory <> \"/tests/training-notebook-helpers.wl\"];
 
 (* How many of the known amplitudes below to train on, from the front of the \
@@ -60,7 +61,7 @@ nHoldOut = trainingIntegerSetting[\"HOLDOUT\", 1];
 
 (* Independent data-generation and validation workers. The launcher can override this count. *)
 nKernels = trainingIntegerSetting[\"KERNELS\", 2];
-workerThreads = 1;
+workerThreads = trainingIntegerSetting[\"WORKER_THREADS\", 1];
 (* Increase after comparing training time and memory with the same data. *)
 trainingBatchSize = trainingIntegerSetting[\"BATCH_SIZE\", 1];
 trainingDevice = \"CPU\";
