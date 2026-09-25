@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       154,          7]
-NotebookDataLength[      7156,        219]
-NotebookOptionsPosition[      5806,        186]
-NotebookOutlinePosition[      6198,        202]
-CellTagsIndexPosition[      6155,        199]
+NotebookDataLength[      7432,        221]
+NotebookOptionsPosition[      6082,        188]
+NotebookOutlinePosition[      6474,        204]
+CellTagsIndexPosition[      6431,        201]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -24,7 +24,7 @@ Cell["Train the unscrambler", "Title",ExpressionUUID->"9394847e-fc2a-4cc9-b49e-2
 
 Cell["\<\
 Edit only the parameters in the first input cell. The trained net is written \
-to tests/unscramble-net.wlnet inside hepcatDirectory. From a terminal:
+to tests/unscramble-shared-v3.wlnet inside hepcatDirectory. The full state is encoded once per candidate group, in both training and inference. Older weights are preserved; retraining is required. From a terminal:
 
 wolframscript -code \
 'UsingFrontEnd[NotebookEvaluate[\"/path/to/train-unscrambling.nb\", \
@@ -38,31 +38,41 @@ Cell["Parameters", "Section",ExpressionUUID->"40a28c1e-7b6d-4739-8677-ff82c87b0a
 Cell["\<\
 (* Set these before running. *)
 hepcatDirectory = \"/Users/neil/code/hepcat\";
+Get[hepcatDirectory <> \"/tests/training-notebook-helpers.wl\"];
 
 (* How many of the known amplitudes below to train on, from the front of the \
 list. *)
-nAmplitudes = 2;
+nAmplitudes = trainingIntegerSetting[\"AMPLITUDES\", 4];
 
 (* Scrambles of each amplitude, and how many identities are applied in each \
 scramble. *)
-nScrambles = 2;
-nSteps = 4;
+nScrambles = trainingIntegerSetting[\"SCRAMBLES\", 4];
+nSteps = trainingIntegerSetting[\"STEPS\", 5];
 
-(* Each learning round guesses this many identities, then keeps the attempt \
-only if the expression got simpler. *)
-episodeLength = 4;
-nRounds = 2;
+(* Maximum identities per holdout attempt. Training uses reverse scrambling \
+trajectories to label legal candidate edits. *)
+episodeLength = trainingIntegerSetting[\"EPISODE_LENGTH\", 4];
+nRounds = trainingIntegerSetting[\"ROUNDS\", 2];
 
 (* Fresh scrambles per amplitude, used only to report whether the trained net \
 makes them simpler. *)
-nHoldOut = 1;
+nHoldOut = trainingIntegerSetting[\"HOLDOUT\", 1];
 
-(* CPU kernels. $ProcessorCount uses every core the license allows. *)
-nKernels = $ProcessorCount;
+(* Independent data-generation and validation workers. The launcher can override this count. *)
+nKernels = trainingIntegerSetting[\"KERNELS\", 2];
+workerThreads = 1;
+(* Increase after comparing training time and memory with the same data. *)
+trainingBatchSize = trainingIntegerSetting[\"BATCH_SIZE\", 1];
+trainingDevice = \"CPU\";
+modelOverride = Environment[\"HEPCAT_TRAIN_MODEL_DIRECTORY\"];
+modelDirectory = If[StringQ[modelOverride] && StringLength[modelOverride] > 0, modelOverride, Automatic];
+dataCacheDirectory = hepcatDirectory <> \"/tests/.unscramble-cache\";
 \
 \>", "Input",
  CellChangeTimes->{
-  3.999265308713935*^9},ExpressionUUID->"ef089402-2cfd-453a-8595-\
+  3.999265308713935*^9, {3.999342515036016*^9, 3.9993425158433113`*^9}, {
+   3.9993425489871063`*^9, 3.999342556044286*^9}, {3.999342649884529*^9, 
+   3.999342649946834*^9}},ExpressionUUID->"ef089402-2cfd-453a-8595-\
 c14b35fbebb7"]
 }, Open  ]],
 
@@ -176,9 +186,15 @@ report = TrainUnscrambleNet[trainingAmplitudes,
   HoldOut -> nHoldOut,
   MaxTrainingRounds -> nRounds,
   EpisodeLength -> episodeLength,
-  Kernels -> nKernels
+  Kernels -> nKernels,
+  \"WorkerThreads\" -> workerThreads,
+  \"TrainingBatchSize\" -> trainingBatchSize,
+  TargetDevice -> trainingDevice,
+  \"DataCacheDirectory\" -> dataCacheDirectory,
+  \"ModelDirectory\" -> modelDirectory
 ];
-Print[report];
+Print[trainingRunSummary[report, <|\"Amplitudes\" -> nAmplitudes,
+  \"Scrambles\" -> nScrambles, \"Steps\" -> nSteps, \"Rounds\" -> nRounds|>]];
 \
 \>", "Input",ExpressionUUID->"a947d9a3-8e7b-4272-b240-2bc1870c6535"]
 }, Open  ]]
@@ -203,22 +219,22 @@ CellTagsIndex->{}
 Notebook[{
 Cell[CellGroupData[{
 Cell[576, 22, 93, 0, 96, "Title",ExpressionUUID->"9394847e-fc2a-4cc9-b49e-2a979cd6f8f4"],
-Cell[672, 24, 354, 7, 121, "Text",ExpressionUUID->"cfe808c0-0bfc-431a-83fe-5464c5e9e6a8"],
+Cell[672, 24, 497, 7, 143, "Text",ExpressionUUID->"cfe808c0-0bfc-431a-83fe-5464c5e9e6a8"],
 Cell[CellGroupData[{
-Cell[1051, 35, 84, 0, 66, "Section",ExpressionUUID->"40a28c1e-7b6d-4739-8677-ff82c87b0ac9"],
-Cell[1138, 37, 800, 28, 358, "Input",ExpressionUUID->"ef089402-2cfd-453a-8595-c14b35fbebb7"]
+Cell[1194, 35, 84, 0, 66, "Section",ExpressionUUID->"40a28c1e-7b6d-4739-8677-ff82c87b0ac9"],
+Cell[1281, 37, 933, 30, 358, "Input",ExpressionUUID->"ef089402-2cfd-453a-8595-c14b35fbebb7"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[1975, 70, 78, 0, 66, "Section",ExpressionUUID->"db49dacf-a3be-4e38-8e3c-3ea3de6bb87e"],
-Cell[2056, 72, 214, 5, 81, "Input",ExpressionUUID->"1aff748e-3159-40f6-88af-2fe19727aabe"]
+Cell[2251, 72, 78, 0, 66, "Section",ExpressionUUID->"db49dacf-a3be-4e38-8e3c-3ea3de6bb87e"],
+Cell[2332, 74, 214, 5, 81, "Input",ExpressionUUID->"1aff748e-3159-40f6-88af-2fe19727aabe"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[2307, 82, 90, 0, 66, "Section",ExpressionUUID->"eca0ca6d-991e-47c6-b74a-edaf730dc5ed"],
-Cell[2400, 84, 2956, 80, 1260, "Input",ExpressionUUID->"54484d36-b7d6-46be-baee-44ec7be3b474"]
+Cell[2583, 84, 90, 0, 66, "Section",ExpressionUUID->"eca0ca6d-991e-47c6-b74a-edaf730dc5ed"],
+Cell[2676, 86, 2956, 80, 1260, "Input",ExpressionUUID->"54484d36-b7d6-46be-baee-44ec7be3b474"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[5393, 169, 79, 0, 70, "Section",ExpressionUUID->"4a30c803-2f43-4599-8da5-e0cb3583f4bd"],
-Cell[5475, 171, 303, 11, 70, "Input",ExpressionUUID->"a947d9a3-8e7b-4272-b240-2bc1870c6535"]
+Cell[5669, 171, 79, 0, 70, "Section",ExpressionUUID->"4a30c803-2f43-4599-8da5-e0cb3583f4bd"],
+Cell[5751, 173, 303, 11, 70, "Input",ExpressionUUID->"a947d9a3-8e7b-4272-b240-2bc1870c6535"]
 }, Open  ]]
 }, Open  ]]
 }
@@ -226,4 +242,3 @@ Cell[5475, 171, 303, 11, 70, "Input",ExpressionUUID->"a947d9a3-8e7b-4272-b240-2b
 *)
 
 (* End of internal cache information *)
-
