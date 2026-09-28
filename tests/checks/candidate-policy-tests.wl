@@ -1,5 +1,5 @@
 (* Symbolic tests only: never starts the neural backend or writes model files. *)
-root = DirectoryName[DirectoryName[$InputFileName]];
+root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{Global`$HEPCATpath, "HEPCAT.wl"}]];
 Get[FileNameJoin[{root, "tests", "unscrambling.wl"}]];
@@ -70,7 +70,7 @@ rows = Block[{Unscrambling`Private`$useMomentumConservation = False},
   Unscrambling`Private`trainingRows[scr["Trajectory"][[1, "After"]], sixRules, amp]];
 check["reverse supervised rows", rows =!= {} && MemberQ[First[rows]["Target"], {1.}] && MemberQ[First[rows]["Target"], {0.}]];
 check["training input not truncated", AllTrue[Lookup[rows, "State"], Length[#] > 64 &]];
-check["versioned model files", StringContainsQ[Unscrambling`Private`modelPaths["tmp"]["Net"], "shared-v3"]];
+check["current model files", FileNameTake[Unscrambling`Private`modelPaths["tmp"]["Net"]] === "unscramble.wlnet"];
 missingModelDirectory = CreateDirectory[];
 check["missing model rejected", !Unscrambling`Private`loadUnscrambleModel[missingModelDirectory]];
 DeleteDirectory[missingModelDirectory];

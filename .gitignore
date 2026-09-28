@@ -1,3 +1,7 @@
 /papers/
 /Papers/
 /tests/.unscramble-cache/
+/tests/checks/__pycache__/
+/tests/training.log
+/tests/training-checkpoint.m
+/tests/validation-results.m

@@ -1,5 +1,5 @@
 (* Graph, encoding, and call-count tests without native numerical execution. *)
-root = DirectoryName[DirectoryName[$InputFileName]];
+root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
 Get[FileNameJoin[{root, "tests", "unscrambling.wl"}]];

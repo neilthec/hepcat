@@ -5,6 +5,47 @@ import platform
 from pathlib import Path
 import shlex
 import shutil
+import signal
+import subprocess
+import tempfile
+import time
+
+
+def supervise(command, env, validation_timeout=1800, run_timeout=172800):
+    """Bound native stalls outside Wolfram, including parallel model installation."""
+    with tempfile.TemporaryDirectory(prefix="hepcat-status-") as directory:
+        stage = Path(directory) / "stage"
+        env = dict(env, HEPCAT_TRAIN_STAGE_FILE=str(stage))
+        process = subprocess.Popen(command, env=env, start_new_session=True)
+        started = time.monotonic()
+        validation_started = None
+        previous = None
+        try:
+            while process.poll() is None:
+                current = stage.read_text().strip() if stage.exists() else "Starting Wolfram"
+                now = time.monotonic()
+                if current != previous:
+                    print(f"Stage: {current}", flush=True)
+                    previous = current
+                if current == "Validation" and validation_started is None:
+                    validation_started = now
+                if now - started >= run_timeout or (validation_started is not None and
+                        now - validation_started >= validation_timeout):
+                    print("TIMEOUT: stopping this run's process group. Any saved model is retained; "
+                          "validation is incomplete.", flush=True)
+                    return 124
+                time.sleep(0.2)
+            return process.returncode
+        finally:
+            # Also clean up descendants if the launcher exits before its kernels.
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+                time.sleep(1)
+                process.poll()
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            process.wait()
 
 
 def training_environment(threads, base):
@@ -30,6 +71,10 @@ def main(argv=None):
     parser.add_argument("--threads", type=int, required=True,
                         help="native CPU threads per operator (OpenMP minimum 4 on Apple silicon)")
     parser.add_argument("--wolframscript", default="wolframscript")
+    parser.add_argument("--validation-timeout", type=int, default=1800,
+                        help="external validation-stage deadline in seconds (default 1800)")
+    parser.add_argument("--run-timeout", type=int, default=172800,
+                        help="external whole-run deadline in seconds (default 48 hours)")
     parser.add_argument("--kernels", type=int, help="independent data-generation and validation workers")
     controls = {
         "amplitudes": "known amplitudes to use from the notebook's list",
@@ -46,6 +91,8 @@ def main(argv=None):
     parser.add_argument("--model-directory", type=Path, help="save this run's model in a separate directory")
     parser.add_argument("--dry-run", action="store_true", help="print configuration without starting Wolfram")
     args = parser.parse_args(argv)
+    if args.validation_timeout < 1 or args.run_timeout < 1:
+        parser.error("timeouts must be positive seconds")
     if args.threads < 1:
         parser.error("--threads must be a positive integer")
     if args.kernels is not None and args.kernels < 1:
@@ -80,8 +127,7 @@ def main(argv=None):
     print(shlex.join(command), flush=True)
     if args.dry_run:
         return 0
-    # Replace this process, retaining terminal signals and the command's exit status.
-    os.execvpe(command[0], command, env)
+    return supervise(command, env, args.validation_timeout, args.run_timeout)
 
 
 if __name__ == "__main__":

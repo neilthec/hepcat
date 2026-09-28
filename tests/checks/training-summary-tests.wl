@@ -1,4 +1,4 @@
-root = DirectoryName[DirectoryName[$InputFileName]];
+root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Get[FileNameJoin[{root, "tests", "training-notebook-helpers.wl"}]];
 checks = 0; failures = {};
 check[name_, value_] := (checks++; If[!TrueQ[value], AppendTo[failures, name]]);

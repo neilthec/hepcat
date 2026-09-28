@@ -1,5 +1,5 @@
-(* Run with WolframKernel -script tests/schouten-tests.wl. No training or writes. *)
-root = DirectoryName[DirectoryName[$InputFileName]];
+(* Run with WolframKernel -script tests/checks/schouten-tests.wl. No training or writes. *)
+root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{Global`$HEPCATpath, "HEPCAT.wl"}]];
 Get[FileNameJoin[{root, "tests", "unscrambling.wl"}]];

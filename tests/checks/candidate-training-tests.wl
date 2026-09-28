@@ -1,6 +1,6 @@
 (* Training orchestration / checkpoint tests. The optimizer and inference
    scores are stubbed; this does not claim a successful numerical NN run. *)
-root = DirectoryName[DirectoryName[$InputFileName]];
+root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
 Get[FileNameJoin[{root, "tests", "unscrambling.wl"}]];
@@ -43,13 +43,13 @@ Block[{Unscrambling`Private`trainCandidateNetwork, Unscrambling`Private`scoreCan
     NumberQ[#] && # >= 0 &]];
   check["reverse labels collected", report["ReverseSteps"] > 0];
   check["holdout executed", report["HoldoutScrambles"] === 1];
-  check["saved versioned net", FileExistsQ[report["ModelPath"]]];
+  check["saved current net", FileExistsQ[report["ModelPath"]]];
   Unscrambling`Private`$modelNet = None; Unscrambling`Private`$loadedModelDirectory = None;
   check["model reload", Unscrambling`Private`loadUnscrambleModel[temp]];
   trace = UnscrambleTrace[pair, "ModelDirectory" -> temp, "MaxSteps" -> 1, "Attempts" -> 1,
     "MomentumConservation" -> False];
   check["loaded model used by inference", trace["ModelLoaded"] && Length[trace["Trace"]] === 1];
-  Put[<|"Version" -> 2, "Encoding" -> "FullFormUTF8"|>, Unscrambling`Private`modelPaths[temp]["Metadata"]];
+  Put[<|"Encoding" -> "UnsupportedEncoding"|>, Unscrambling`Private`modelPaths[temp]["Metadata"]];
   Unscrambling`Private`$modelNet = None; Unscrambling`Private`$loadedModelDirectory = None;
   check["incompatible metadata rejected", !Unscrambling`Private`loadUnscrambleModel[temp]];
 ];

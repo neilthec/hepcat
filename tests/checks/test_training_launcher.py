@@ -4,9 +4,11 @@ import importlib.util
 import io
 from pathlib import Path
 import unittest
+import os
+import sys
 from unittest.mock import patch
 
-spec = importlib.util.spec_from_file_location("launcher", Path(__file__).with_name("train-unscrambling.py"))
+spec = importlib.util.spec_from_file_location("launcher", Path(__file__).resolve().parents[1] / "train-unscrambling.py")
 launcher = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(launcher)
 
@@ -14,12 +16,12 @@ spec.loader.exec_module(launcher)
 class LauncherTests(unittest.TestCase):
     def test_data_controls_reach_notebook_environment(self):
         with patch.object(launcher.shutil, "which", return_value="/bin/wolframscript"), \
-                patch.object(launcher.os, "execvpe") as execute, contextlib.redirect_stdout(io.StringIO()):
+                patch.object(launcher, "supervise") as execute, contextlib.redirect_stdout(io.StringIO()):
             launcher.main(["--threads", "4", "--scrambles", "12", "--steps", "5",
                            "--rounds", "3", "--holdout", "0", "--amplitudes", "6",
                            "--episode-length", "8", "--batch-size", "2", "--worker-threads", "1",
                            "--model-directory", "/tmp/hepcat-test"])
-            env = execute.call_args.args[2]
+            env = execute.call_args.args[1]
             for key, value in {"SCRAMBLES": "12", "STEPS": "5", "ROUNDS": "3", "HOLDOUT": "0",
                                "AMPLITUDES": "6", "EPISODE_LENGTH": "8", "BATCH_SIZE": "2", "WORKER_THREADS": "1",
                                "MODEL_DIRECTORY": str(Path("/tmp/hepcat-test").resolve())}.items():
@@ -62,19 +64,34 @@ class LauncherTests(unittest.TestCase):
             launcher.main(["--threads", "0", "--dry-run"])
 
     def test_dry_run_does_not_start_process(self):
-        with patch.object(launcher.os, "execvpe") as execute, contextlib.redirect_stdout(io.StringIO()):
+        with patch.object(launcher, "supervise") as execute, contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(launcher.main(["--threads", "4", "--dry-run"]), 0)
             execute.assert_not_called()
 
     def test_exec_receives_environment(self):
         with patch.object(launcher.shutil, "which", return_value="/bin/wolframscript"), \
-                patch.object(launcher.os, "execvpe") as execute, contextlib.redirect_stdout(io.StringIO()):
+                patch.object(launcher, "supervise") as execute, contextlib.redirect_stdout(io.StringIO()):
             launcher.main(["--threads", "4", "--kernels", "2"])
-            executable, command, env = execute.call_args.args
-            self.assertEqual(executable, command[0])
+            command, env, _, _ = execute.call_args.args
+            self.assertEqual("/bin/wolframscript", command[0])
             self.assertEqual(env["OMP_NUM_THREADS"], "4")
             self.assertEqual(env["HEPCAT_TRAIN_KERNELS"], "2")
             self.assertIn("train-unscrambling.wl", command[2])
+
+    def test_external_validation_deadline(self):
+        code = "import os,time; from pathlib import Path; Path(os.environ['HEPCAT_TRAIN_STAGE_FILE']).write_text('Validation'); time.sleep(30)"
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(launcher.supervise([sys.executable, "-c", code], os.environ,
+                                              validation_timeout=0.3, run_timeout=5), 124)
+
+    def test_external_run_deadline(self):
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(launcher.supervise([sys.executable, "-c", "import time; time.sleep(30)"],
+                                              os.environ, run_timeout=0.3), 124)
+
+    def test_child_exit_status(self):
+        with contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(launcher.supervise([sys.executable, "-c", "raise SystemExit(7)"], os.environ), 7)
 
 
 if __name__ == "__main__":

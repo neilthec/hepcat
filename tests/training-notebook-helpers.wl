@@ -1,3 +1,8 @@
+(* ::Package:: *)
+
+(* ::Subsection::Closed:: *)
+(*Training Settings and Report Formatting*)
+
 (* Notebook/launcher presentation helpers, independent of the physics package. *)
 BeginPackage["HEPCATTrainingNotebook`"];
 trainingIntegerSetting::usage = "trainingIntegerSetting[name, default] reads an integer launcher override.";

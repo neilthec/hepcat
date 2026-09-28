@@ -1,5 +1,5 @@
 (* Exercise the notebook's sample and seeded call without the neural backend. *)
-root = DirectoryName[DirectoryName[$InputFileName]];
+root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{Global`$HEPCATpath, "HEPCAT.wl"}]];
 Get[FileNameJoin[{root, "tests", "unscrambling.wl"}]];

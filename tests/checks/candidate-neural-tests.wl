@@ -1,6 +1,6 @@
 (* Optional native-backend smoke test. Use run-wolfram-tests.py --neural
    so a stalled native call is terminated outside the Wolfram kernel. *)
-root = DirectoryName[DirectoryName[$InputFileName]];
+root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
 Get[FileNameJoin[{root, "tests", "unscrambling.wl"}]];
@@ -15,4 +15,10 @@ trained = Block[{Unscrambling`Private`$trainingBatchSize = 2}, Unscrambling`Priv
 If[!MatchQ[trained, _NetChain | _NetGraph], Quit[1]];
 values = trained[#, TargetDevice -> "CPU"] & /@ inputs;
 Print[<|"VariableLengthInference" -> values, "Training" -> Head[trained]|>];
-Quit[If[Dimensions /@ values === {{2, 1}, {3, 1}} && VectorQ[Flatten[values], NumericQ], 0, 1]];
+If[Dimensions /@ values =!= {{2, 1}, {3, 1}} || !VectorQ[Flatten[values], NumericQ], Quit[1]];
+Print["Loading the current model from the default notebook directory"];
+If[!Unscrambling`Private`loadUnscrambleModel[
+    Unscrambling`Private`resolveModelDirectory[Automatic]], Quit[1]];
+currentScores = Unscrambling`Private`$modelNet[First[inputs], TargetDevice -> "CPU"];
+Print[<|"CurrentModelScores" -> currentScores|>];
+Quit[If[Dimensions[currentScores] === {2, 1} && VectorQ[Flatten[currentScores], NumericQ], 0, 1]];
