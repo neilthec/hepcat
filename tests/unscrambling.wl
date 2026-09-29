@@ -325,7 +325,7 @@ kinematicMoves[expr_, massRules_List] := Module[
   exts = externalIndices[massRules];
   Do[
     Module[{legs = internalPairs[massRules][[r, 1]], m = internalPairs[massRules][[r, 2]],
-        ma, mb, shell, dot, sk, coef, rest, subtract, insert},
+        ma, mb, shell, dot, sk, coef, rest, subtract, insert, q},
       ma = massValue[massRules, legs[[1]]];
       mb = massValue[massRules, legs[[2]]];
       If[ma =!= Missing["Mass"] && mb =!= Missing["Mass"],
@@ -333,7 +333,8 @@ kinematicMoves[expr_, massRules_List] := Module[
         dot = orderedDot @@ legs;
         Do[
           sk = keys[[g]]; coef = groups[sk];
-          If[MemberQ[factorsOf[sk], dot] && ! samePoly[shell, dot],
+          If[AnyTrue[factorsOf[sk], # === dot ||
+              MatchQ[#, Power[base_, power_Integer?Positive] /; base === dot] &],
             rest = sk/dot;
             subtract = expandAmplitude[coef*sk];
             insert = expandAmplitude[coef*shell*rest];
@@ -341,6 +342,15 @@ kinematicMoves[expr_, massRules_List] := Module[
               AppendTo[moves, <|"Name" -> "OnShell", "Subtract" -> subtract, "Insert" -> insert,
                 "Legs" -> Sort[legs]|>]
             ]
+          ];
+          (* Expand a scalar coefficient back into this diagram's on-shell dot product.
+             PropDen remains a structural factor and is never rewritten. *)
+          q = shellQuotient[coef, shell];
+          If[q =!= None && !samePoly[q, 0],
+            subtract = expandAmplitude[coef*sk];
+            insert = expandAmplitude[q*dot*sk];
+            AppendTo[moves, <|"Name" -> "OnShell", "Subtract" -> subtract,
+              "Insert" -> insert, "Legs" -> Sort[legs]|>]
           ],
           {g, Length[keys]}
         ]
@@ -476,6 +486,43 @@ chainMoves[expr_, massRules_] := Module[{moves = {}, mons, chains, c, xs, ps, m,
   moves
 ];
 
+(* Interior Clifford identities preserve both endpoint spinors and their indices.
+   Reverse square insertions are limited to the start of a chain, one per
+   massive external leg, rather than every possible insertion site. *)
+interiorChainMoves[expr_, rules_] := Module[
+  {moves = {}, mons = monomialsOf[expr], chains, c, xs, ps, short, rhs, square, mass, leg, swapped},
+  Do[
+    chains = DeleteDuplicates[Select[chainsIn[mons[[t]]], validChainQ]];
+    Do[
+      c = chains[[k]]; xs = List @@ c; ps = Drop[Rest[xs], -1];
+      Do[
+        short = SpinorChain @@ Join[Take[xs, j], Drop[xs, j + 2]];
+        If[ps[[j]] === ps[[j + 1]],
+          leg = ps[[j, 1]];
+          mass = If[IntegerQ[leg], massValue[rules, leg],
+            If[MatchQ[leg, Multiparticle[_Integer, _Integer]], lineMass[rules, Sequence @@ leg], None]];
+          square = If[MissingQ[mass] || mass === None, Mom[leg]^2, mass^2];
+          rhs = square short;
+          AppendTo[moves, <|"Name" -> "ChainSquare", "Subtract" -> mons[[t]],
+            "Insert" -> Expand[mons[[t]]/c*rhs], "Site" -> {t, k, j}, "Direction" -> "Contract"|>],
+          swapped = ReplacePart[c, {j + 1 -> ps[[j + 1]], j + 2 -> ps[[j]]}];
+          rhs = 2 orderedDot[ps[[j, 1]], ps[[j + 1, 1]]] short - swapped;
+          AppendTo[moves, <|"Name" -> "Anticommutation", "Subtract" -> mons[[t]],
+            "Insert" -> Expand[mons[[t]]/c*rhs], "Site" -> {t, k, j}|>]
+        ], {j, Length[ps] - 1}];
+      (* Do not nest inverse square insertions in a chain already containing one. *)
+      If[AnyTrue[Partition[ps, 2, 1], #[[1]] === #[[2]] &], Continue[]];
+      Do[
+        mass = massValue[rules, leg];
+        If[MissingQ[mass] || TrueQ[mass == 0], Continue[]];
+        rhs = (SpinorChain @@ Join[Take[xs, 1], {Mom[leg], Mom[leg]}, Rest[xs]])/mass^2;
+        AppendTo[moves, <|"Name" -> "ChainSquare", "Subtract" -> mons[[t]],
+          "Insert" -> Expand[mons[[t]]/c*rhs], "Site" -> {t, k, leg}, "Direction" -> "Expand"|>],
+        {leg, externalIndices[rules]}],
+      {k, Length[chains]}], {t, Length[mons]}];
+  moves
+];
+
 applyCandidate[expr_, cand_Association] :=
   If[cand["Name"] === "Stop", expr, canonicalChains[expr - cand["Subtract"] + cand["Insert"]]];
 
@@ -484,7 +531,7 @@ legalMoves[expr_, massRules_List] := Module[{legacy, moves},
     MemberQ[If[TrueQ[$useMomentumConservation],
       {"MomentumConservation", "MomentumSquare", "OnShell"},
       {"MomentumSquare", "OnShell"}], #["Name"]] &];
-  moves = Join[chainMoves[expr, massRules], SchoutenCandidates[expr], legacy];
+  moves = Join[chainMoves[expr, massRules], interiorChainMoves[expr, massRules], SchoutenCandidates[expr], legacy];
   moves = Select[moves, !samePoly[applyCandidate[expr, #], expr] &];
   Append[DeleteDuplicatesBy[moves, {#["Name"], #["Subtract"], #["Insert"]} &], stopMove[]]
 ];
@@ -729,16 +776,26 @@ pipelineSourceFiles[root_] := Join[Sort[FileNames["*.wl", FileNameJoin[{root, "s
   FileNameJoin[{root, "tests", #}] & /@ {"unscrambling.wl"}];
 pipelineFingerprint[root_] := Hash[FileHash[#, "SHA256"] & /@ pipelineSourceFiles[root], "SHA256"];
 
+trainingLegPermutation[pair_, index_, seed_] := Module[{legs = Keys[stateLegIDs[pair[[2]], pair[[1]]]]},
+  AssociationThread[legs, If[seed === 0, legs,
+    BlockRandom[SeedRandom[Hash[{pair, index, seed, "TrainingLegPermutation"}, "SHA256"]]; RandomSample[legs]]]]
+];
+
 makeTrainingJobs[amplitudes_, steps_, count_] := MapIndexed[Join[#1, <|"Order" -> First[#2]|>] &,
   Flatten[MapIndexed[Function[{pair, index},
-    Table[<|"Mode" -> If[seed === 0, "Original", "Scramble"], "Pair" -> pair,
-      "AmplitudeIndex" -> First[index], "Seed" -> seed, "Steps" -> steps|>, {seed, 0, count}]], amplitudes], 1]];
+    Table[With[{ids = trainingLegPermutation[pair, First[index], seed]},
+      <|"Mode" -> If[seed === 0, "Original", "Scramble"], "Pair" -> relabelLegs[pair, ids],
+        "LegPermutation" -> ids, "AmplitudeIndex" -> First[index], "Seed" -> seed, "Steps" -> steps|>],
+      {seed, 0, count}]], amplitudes], 1]];
 makeValidationJobs[amplitudes_, steps_, count_, hold_, episode_] := MapIndexed[Join[#1, <|"Order" -> First[#2]|>] &,
   Flatten[MapIndexed[Function[{pair, index},
     Table[<|"Mode" -> "Validate", "Pair" -> pair, "AmplitudeIndex" -> First[index],
       "Seed" -> count + seed, "Steps" -> steps, "Episode" -> episode|>, {seed, hold}]], amplitudes], 1]];
 
-generationJob[job_] := Module[{pair = job["Pair"], scr, batches, targets, skipped},
+generationJob[job_] := Block[{
+  $onShellChannels = Replace[$onShellChannels, channels_List :>
+    Map[Lookup[Lookup[job, "LegPermutation", <||>], #, #] &, channels, {2}]]},
+ Module[{pair = job["Pair"], scr, batches, targets, skipped},
   If[job["Mode"] === "Original",
     Return[<|"Rows" -> trainingRows[canonicalChains[pair[[2]] /. pair[[1]]], pair[[1]], pair[[2]] /. pair[[1]]],
       "Targets" -> 0, "Skipped" -> 0|>]];
@@ -746,7 +803,11 @@ generationJob[job_] := Module[{pair = job["Pair"], scr, batches, targets, skippe
   (* Collect once instead of repeatedly copying the growing dataset with Join. *)
   batches = trainingRows[#["After"], pair[[1]], #["Before"]] & /@ Reverse[scr["Trajectory"]];
   targets = Length[batches]; skipped = Count[batches, {}];
-  <|"Rows" -> Flatten[batches, 1], "Targets" -> targets, "Skipped" -> skipped|>
+  (* Teach Stop in the same numbering as the reverse trajectory. *)
+  <|"Rows" -> Join[Flatten[batches, 1],
+      trainingRows[canonicalChains[pair[[2]] /. pair[[1]]], pair[[1]], pair[[2]] /. pair[[1]]]],
+    "Targets" -> targets, "Skipped" -> skipped|>
+ ]
 ];
 
 validationJob[job_] := Module[{pair = job["Pair"], scr, trace, got},

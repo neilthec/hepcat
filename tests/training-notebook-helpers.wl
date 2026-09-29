@@ -6,11 +6,17 @@
 (* Notebook/launcher presentation helpers, independent of the physics package. *)
 BeginPackage["HEPCATTrainingNotebook`"];
 trainingIntegerSetting::usage = "trainingIntegerSetting[name, default] reads an integer launcher override.";
+trainingAmplitudeSetting::usage = "trainingAmplitudeSetting[] reads the amplitude count or all (the default).";
 trainingRunSummary::usage = "trainingRunSummary[report, settings] formats the training report as readable text.";
 Begin["`Private`"];
 
 trainingIntegerSetting[name_String, default_Integer] := Module[{value = Environment["HEPCAT_TRAIN_" <> name]},
   If[StringQ[value] && StringMatchQ[value, DigitCharacter ..], FromDigits[value], default]
+];
+
+trainingAmplitudeSetting[] := Module[{value = Environment["HEPCAT_TRAIN_AMPLITUDES"]},
+  If[StringQ[value] && StringMatchQ[value, DigitCharacter ..] && FromDigits[value] > 0,
+    FromDigits[value], All]
 ];
 
 trainingRunSummary[report_, settings_Association] := Module[{number, duration, rate, count, hold},

@@ -77,7 +77,7 @@ def main(argv=None):
                         help="external whole-run deadline in seconds (default 48 hours)")
     parser.add_argument("--kernels", type=int, help="independent data-generation and validation workers")
     controls = {
-        "amplitudes": "known amplitudes to use from the notebook's list",
+        "amplitudes": "number of reference amplitudes, or all",
         "scrambles": "training scrambles per amplitude",
         "steps": "identity applications per scramble (depth)",
         "rounds": "maximum training passes through the data",
@@ -87,7 +87,8 @@ def main(argv=None):
         "worker-threads": "native threads per symbolic/validation worker (normally 1 on Linux)",
     }
     for name, help_text in controls.items():
-        parser.add_argument(f"--{name}", type=int, help=help_text + "; default: notebook setting")
+        value_type = (lambda value: "all" if value.lower() == "all" else int(value)) if name == "amplitudes" else int
+        parser.add_argument(f"--{name}", type=value_type, help=help_text + "; default: notebook setting")
     parser.add_argument("--model-directory", type=Path, help="save this run's model in a separate directory")
     parser.add_argument("--dry-run", action="store_true", help="print configuration without starting Wolfram")
     args = parser.parse_args(argv)
@@ -100,7 +101,7 @@ def main(argv=None):
     for name in controls:
         value = getattr(args, name.replace("-", "_"))
         minimum = 0 if name in ("steps", "holdout") else 1
-        if value is not None and value < minimum:
+        if value is not None and value != "all" and value < minimum:
             parser.error(f"--{name} must be an integer >= {minimum}")
     notebook = Path(__file__).resolve().with_suffix(".nb")
     if not notebook.is_file():

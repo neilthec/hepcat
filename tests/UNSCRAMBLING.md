@@ -3,11 +3,19 @@
 ## Files
 
 - `unscrambling.nb`: interactive experiments.
+- `SM-4-point-unscramble-test.nb`: diagram-to-reference benchmark for the 73
+  cases in the old SM test notebook, without its process-specific rewrites.
+  Uses all-ingoing particle lists and green PASS/red other statuses. Tests all
+  24 label permutations by default (3,552 checks). Set
+  `particlePermutations = {Range[4]}` for identity-only runs. A permutation maps
+  old labels to new labels in inputs, mass rules, and references together.
 - `unscrambling.wl`: the complete package, with foldable sections for identities,
   candidates, encoding, neural scoring, training, and inference.
 - `unscramble.wlnet` and `unscramble.m`: the current network and metadata.
   Training replaces these files by default. Git keeps their history.
-- `train-unscrambling.nb`: training parameters and starting amplitudes.
+- `train-unscrambling.nb`: training parameters and corpus selection.
+- `training-amplitudes.wl`: the reference corpus copied from both SM notebooks,
+  with external mass rules and source references.
 - `train-unscrambling.py` and `train-unscrambling.wl`: supervised headless entry points.
 - `training-notebook-helpers.wl`: settings and readable report formatting.
 - `checks/`: automated regression tests and their runner.
@@ -42,6 +50,22 @@ edits; it does not invent transformations. Candidates include generalized
 Schouten, endpoint mass identities, momentum conservation, and momentum-square
 and on-shell identities. Coverage is extensible, not exhaustive.
 
+Interior chains also support `ChainSquare` (two adjacent identical momenta)
+and `Anticommutation` (swap adjacent distinct momenta and generate the shorter
+dot-product term). These preserve endpoint chirality and little-group indices
+and act on one chain factor at a time, including positive powers. External
+squares use supplied masses; internal squares use masses only for enabled
+on-shell channels, otherwise retaining the momentum square.
+
+Reverse square insertion uses nonzero-mass external legs at the start of a
+chain, and only when that chain has no adjacent repeated momenta. This bounds
+the inverse sites and avoids division by zero. Anticommutation reverses through
+another swap plus cancellation. Scrambling and inference share these moves;
+training still checks that each reverse target is reachable. The current model
+can score the new serialized edits, but has not been trained on these move
+types yet. Retraining is required to learn their use; old generation caches
+are invalidated by the source fingerprint. Search limits are unchanged.
+
 `SchoutenRewrite[c1, c2, {m, n}]` implements Decay Rates, Appendix B, Eq. (B11).
 The split integers count preceding momentum insertions. Incompatible chirality
 returns `$Failed`; endpoint spin indices and momentum order are preserved.
@@ -73,6 +97,21 @@ returns complete `"State"` and `"Candidate"` sequences; decode either with
 
 ## Training
 
+The corpus contains 195 distinct amplitude/mass-rule pairs from 337 explicit
+reference occurrences in `SM-4-point.nb` and `SM-4-point-test.nb`. The latter
+contributes references for 73 named cases. Entries include individual channels,
+channel sums, helicity choices, and alternative forms, not 195 different physical
+processes. Exact duplicates share source references. Scalar references are kept.
+Original mass/coupling conventions are preserved, including `Mt` versus `Mtp`;
+copying the corpus is not an independent physics validation. No additional
+internal on-shell assumptions are imposed. Diagram-only comparisons and unfinished
+derivations without an explicit reference formula are not new training targets.
+
+`--amplitudes all` selects the complete corpus and is also the notebook default.
+A positive integer selects the first N entries. The current saved network does
+not change until another training run completes. Larger expressions can cost
+much more than the old toy seeds, so timing must be measured again.
+
 Edit the first input cell of `train-unscrambling.nb`, or use the launcher from
 the repository root (an absolute script path also works):
 
@@ -84,6 +123,26 @@ python3 tests/train-unscrambling.py --threads 4 --kernels 2 \
 The launcher evaluates notebook text Input cells without a front end. Other
 controls include `--episode-length`, `--batch-size`, and `--worker-threads`.
 `--dry-run` prints configuration without starting Wolfram.
+
+### Particle Numbering
+
+The encoding sorts particle labels and maps them to consecutive integers. This
+handles sparse labels but is not invariant under arbitrary label permutations.
+Each training scramble now receives a deterministic random permutation of its
+particle labels before its trajectory is generated, including a relabeled Stop
+example. Spinors, momenta, invariants, external/internal mass rules, and explicit
+on-shell channel settings are relabeled together, never bare integer coefficients
+or spin indices. Seeds are independent of worker assignment and do not change
+the caller's random state. Original jobs retain the input numbering; job metadata
+records each permutation. Source fingerprints invalidate pre-augmentation caches.
+This is a change of notation, not a physical crossing operation
+or an extra fermion sign. Four legs permit 24 permutations, but adding all of
+them as stored examples multiplies training cost and can overweight duplicates.
+Current holdouts retain their original numbering and still test fresh scrambles
+of the same starting amplitudes. For unseen-process evaluation, split by starting
+process before augmentation to avoid leakage. The separate diagram benchmark
+now tests all 24 label permutations. Augmentation encourages
+robustness; it does not guarantee mathematical permutation equivariance.
 
 Training learns reverse scramble trajectories. Predecessors are positive targets
 only when legal candidates can reach them; unreachable steps are skipped and

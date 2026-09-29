@@ -14,6 +14,12 @@ spec.loader.exec_module(launcher)
 
 
 class LauncherTests(unittest.TestCase):
+    def test_all_amplitudes(self):
+        with patch.object(launcher.shutil, "which", return_value="/bin/wolframscript"), \
+                patch.object(launcher, "supervise") as execute, contextlib.redirect_stdout(io.StringIO()):
+            launcher.main(["--threads", "4", "--amplitudes", "all"])
+            self.assertEqual(execute.call_args.args[1]["HEPCAT_TRAIN_AMPLITUDES"], "all")
+
     def test_data_controls_reach_notebook_environment(self):
         with patch.object(launcher.shutil, "which", return_value="/bin/wolframscript"), \
                 patch.object(launcher, "supervise") as execute, contextlib.redirect_stdout(io.StringIO()):

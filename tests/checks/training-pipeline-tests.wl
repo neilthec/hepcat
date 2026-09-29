@@ -10,6 +10,34 @@ settings = <|"OnShellChannels" -> Automatic, "MomentumConservation" -> False,
   "JobTimeLimit" -> 10, "ValidationTimeLimit" -> 1|>;
 jobs = Unscrambling`Private`makeTrainingJobs[{pair, pair}, 2, 2];
 check["independent original and scramble jobs", Length[jobs] === 6 && Lookup[jobs, "Seed"] === {0, 1, 2, 0, 1, 2}];
+check["original numbering retained", jobs[[1, "Pair"]] === pair];
+check["permutations deterministic", jobs === Unscrambling`Private`makeTrainingJobs[{pair, pair}, 2, 2]];
+check["permutations are bijections", AllTrue[jobs,
+  Sort[Keys[#["LegPermutation"]]] === Sort[Values[#["LegPermutation"]]] &]];
+manyJobs = Unscrambling`Private`makeTrainingJobs[{pair}, 1, 24];
+check["training has label diversity", Length[DeleteDuplicates[Lookup[manyJobs, "LegPermutation"]]] > 1];
+check["permuting jobs preserves caller random stream",
+  BlockRandom[SeedRandom[77]; Unscrambling`Private`makeTrainingJobs[{pair}, 1, 3]; RandomInteger[100000]] ===
+  BlockRandom[SeedRandom[77]; RandomInteger[100000]]];
+indexedPair = {{Mass[10] -> Me, Mass[20] -> Mm, Mass[30] -> MW,
+    Mass[Multiparticle[10, 20]] -> MZ},
+  7 SpinorChain[Spinor["Spin", "Angle", 10, 2], Mom[20], Spinor["Spin", "Square", 30, 1]]^2 +
+    MomProd[10, 20] Mandelstahm[20, 30]/PropDen[Mom[Multiparticle[10, 20]], MZ]};
+ids = <|10 -> 30, 20 -> 10, 30 -> 20|>;
+relabeled = Unscrambling`Private`relabelLegs[indexedPair, ids];
+check["consistent typed relabeling", relabeled === {
+  {Mass[30] -> Me, Mass[10] -> Mm, Mass[20] -> MW, Mass[Multiparticle[30, 10]] -> MZ},
+  7 SpinorChain[Spinor["Spin", "Angle", 30, 2], Mom[10], Spinor["Spin", "Square", 20, 1]]^2 +
+    MomProd[30, 10] Mandelstahm[10, 20]/PropDen[Mom[Multiparticle[30, 10]], MZ]}];
+check["relabeling round trip", Unscrambling`Private`relabelLegs[relabeled,
+  AssociationThread[Values[ids], Keys[ids]]] === indexedPair];
+Block[{Unscrambling`Private`$onShellChannels = {{10, 20}}, Unscrambling`Private`trainingRows},
+  Unscrambling`Private`trainingRows[___] := {Unscrambling`Private`$onShellChannels};
+  conditionResult = Unscrambling`Private`generationJob[<|"Pair" -> relabeled,
+    "Mode" -> "Original", "LegPermutation" -> ids|>];
+  check["explicit channels follow permutation", conditionResult["Rows"] === {{{30, 10}}}];
+  check["channel settings restored", Unscrambling`Private`$onShellChannels === {{10, 20}}];
+];
 chunks = Unscrambling`Private`partitionTrainingJobs[jobs, 2];
 check["partition loses no jobs", SortBy[Flatten[chunks, 1], #["Order"] &] === jobs];
 check["both workers assigned work", AllTrue[chunks, Length[#] > 0 &]];
@@ -17,6 +45,12 @@ serial = Unscrambling`Private`mapTrainingJobs[jobs, {}, settings];
 again = Unscrambling`Private`mapTrainingJobs[jobs, {}, settings];
 check["generation deterministic", Lookup[serial, "Result"] === Lookup[again, "Result"]];
 check["all generation jobs succeed", Unscrambling`Private`validJobResultsQ[serial]];
+zeroStepJobs = Unscrambling`Private`makeTrainingJobs[{pair}, 0, 1];
+zeroStepResult = Last[Unscrambling`Private`mapTrainingJobs[zeroStepJobs, {}, settings]]["Result"];
+check["relabeled originals supply Stop examples", Length[zeroStepResult["Rows"]] === 1 &&
+  Count[First[zeroStepResult["Rows"]]["Target"], {1.} | {1}] === 1];
+check["holdouts keep original numbering", AllTrue[
+  Unscrambling`Private`makeValidationJobs[{pair}, 1, 2, 3, 2], #["Pair"] === pair &]];
 check["job timing recorded", AllTrue[serial, #["CPUSeconds"] >= 0 && #["WallSeconds"] >= 0 &]];
 cache = CreateDirectory[];
 first = Unscrambling`Private`cachedTrainingJobs[jobs, {}, settings, cache, 123];

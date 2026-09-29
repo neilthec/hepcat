@@ -34,6 +34,26 @@ SetEnvironment[{"HEPCAT_TRAIN_SCRAMBLES" -> "12", "HEPCAT_TRAIN_ROUNDS" -> "3",
   "HEPCAT_TRAIN_BATCH_SIZE" -> "2", "HEPCAT_TRAIN_AMPLITUDES" -> "6"}];
 ToExpression[First[inputs]];
 check["notebook loads overrides", {nScrambles, nRounds, trainingBatchSize, nAmplitudes, nHoldOut} === {12, 3, 2, 6, 0}];
+SetEnvironment["HEPCAT_TRAIN_AMPLITUDES" -> "all"];
+check["all amplitude setting", trainingAmplitudeSetting[] === All];
+ToExpression[First[inputs]];
+ToExpression[inputs[[3]]];
+check["notebook selects complete corpus", nAmplitudes === 195 && Length[trainingAmplitudes] === 195];
+check["exact pairs deduplicated", DuplicateFreeQ[knownAmplitudes]];
+check["external mass rules retained", AllTrue[knownAmplitudes,
+  MatchQ[#[[1]], {Mass[1] -> _, Mass[2] -> _, Mass[3] -> _, Mass[4] -> _}] &]];
+corpusSources = Flatten[Lookup[amplitudeCatalog, "Sources"]];
+check["both notebook reference collections retained", Length[corpusSources] === 337 &&
+  Count[corpusSources, s_String /; StringStartsQ[s, "SM-4-point.nb / "]] === 189 &&
+  Count[corpusSources, s_String /; StringStartsQ[s, "SM-4-point-test.nb / "]] === 148];
+check["main-only ZZWW channels retained", MemberQ[corpusSources, "SM-4-point.nb / input 1103 / target 1"] &&
+  MemberQ[corpusSources, "SM-4-point.nb / input 1112 / target 1"]];
+check["no unresolved reference functions", FreeQ[knownAmplitudes,
+  s_Symbol /; StringMatchQ[SymbolName[s], "amp*Tested*" | "spPr" | "rsp"]]];
+check["no failed reference evaluations", FreeQ[knownAmplitudes, $Failed | $Aborted | Indeterminate | ComplexInfinity]];
+nAmplitudes = 6;
+ToExpression[inputs[[3]]];
+check["numeric subset still works", Length[trainingAmplitudes] === 6];
 check["notebook prints readable summary", StringContainsQ[Last[inputs], "Print[trainingRunSummary["] && !StringContainsQ[Last[inputs], "Print[report]"]];
 Print[summary];
 Print[<|"Checks" -> checks, "Failed" -> Length[failures], "Failures" -> failures|>];
