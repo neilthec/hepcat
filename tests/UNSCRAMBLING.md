@@ -230,6 +230,13 @@ actual numerical training and inference; `--parallel` tests real workers. Tests
 use temporary model directories and do not replace the current trained model.
 # Choosing a Policy
 
+Training prints progress every 30 seconds and at each completed round: completed
+batches, percent, round, loss, elapsed minutes and an estimated time remaining.
+The estimate can change as batch costs vary. The latest values are saved in
+`training-progress.m` (scorer) or `move-training-progress.m` (move predictor).
+These are progress snapshots, not resumable model checkpoints. The printed
+Wolfram memory figure is managed memory, not total process resident memory.
+
 The existing `"CandidateScorer"` remains the default. The experimental
 `"ReverseMoves"` policy reads only the current expression and mass/condition
 packet, then predicts a slot in the deterministic legal-move list. It has no

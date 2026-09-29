@@ -59,6 +59,11 @@ check["public training pipeline", AssociationQ[report] && report["PolicyMethod"]
   report["ReverseSteps"] > 0 && report["HoldoutScrambles"] === 1];
 check["scorer model not overwritten", !FileExistsQ[FileNameJoin[{dir, "unscramble.wlnet"}]]];
 check["separate validation report", FileExistsQ[FileNameJoin[{dir, "move-validation-results.m"}]]];
+progress = Get[FileNameJoin[{dir, "move-training-progress.m"}]];
+check["progress includes completed batches and loss", AssociationQ[progress] &&
+  progress["AbsoluteBatch"] > 0 && NumericQ[progress["BatchLoss"]] &&
+  progress["AbsoluteBatch"] === progress["TotalBatches"]];
+check["progress snapshot excludes large arrays", FreeQ[Keys[progress], "Net" | "Weights" | "BatchData"]];
 DeleteDirectory[dir, DeleteContents -> True];
 Print[<|"Checks" -> checks, "Failed" -> Length[failures], "Failures" -> failures|>];
 Quit[If[failures === {}, 0, 1]];

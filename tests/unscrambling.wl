@@ -812,12 +812,45 @@ variableWidthPolicy[net_] := Module[{paths = Information[net, "ArraysPositionLis
     NetReplacePart[makePolicy[], Map[# -> NetExtract[net, #] &, paths]]]
 ];
 
-trainCandidateNetwork[rows_, rounds_] := Module[{trained, batch = prepareTrainingBatch[rows]},
+progressNumber[value_] := If[NumberQ[value], ToString[NumberForm[N[value], {10, 3}]], "pending"];
+
+reportTrainingProgress[progress_Association, total_] := Module[{status, done, elapsed, remaining, keys},
+  done = Lookup[progress, "AbsoluteBatch", 0];
+  elapsed = Lookup[progress, "TimeElapsed", 0];
+  remaining = Lookup[progress, "TimeRemaining", Missing["NotAvailable"]];
+  keys = Intersection[Keys[progress], {"AbsoluteBatch", "Batch", "BatchesPerRound", "Round",
+      "TotalRounds", "BatchLoss", "RoundLoss", "TimeElapsed", "TimeRemaining"}];
+  (* Evaluate NetTrain's delayed properties while the callback is active. *)
+  status = Join[AssociationThread[keys, Lookup[progress, #] & /@ keys],
+    <|"TotalBatches" -> total, "Timestamp" -> DateString["ISODateTime"],
+      "WolframMemoryBytes" -> MemoryInUse[]|>];
+  Print[status["Timestamp"], " NN progress: ", done, "/", total, " batches (",
+    progressNumber[100. done/Max[1, total]], "%); round ", progressNumber[Lookup[progress, "Round", 0]],
+    "/", Lookup[progress, "TotalRounds", "?"], "; batch loss ",
+    progressNumber[Lookup[progress, "BatchLoss", Missing[]]], "; elapsed ",
+    progressNumber[elapsed/60.], " min; remaining estimate ",
+    progressNumber[If[NumberQ[remaining], remaining/60., remaining]], " min; Wolfram memory ",
+    progressNumber[status["WolframMemoryBytes"]/2.^30], " GiB"];
+  If[StringQ[$trainingProgressFile], Put[status, $trainingProgressFile]];
+];
+
+$trainingProgressFile = None;
+
+trainCandidateNetwork[rows_, rounds_] := Module[{trained, batch = prepareTrainingBatch[rows], total, callback},
+  total = rounds Ceiling[Length[rows]/$trainingBatchSize];
+  callback = Function[progress, reportTrainingProgress[progress, total]];
+  Print["NN training: ", Length[rows], " states; ", rounds, " rounds; batch size ",
+    $trainingBatchSize, "; ", total, " planned batches; encoded dataset ",
+    progressNumber[ByteCount[batch["Rows"]]/2.^30], " GiB"];
   (* NetTrain permits only the first input dimension to vary. Fix the byte
      width to this dataset's longest edit, padding only, never truncating. *)
   trained = NetTrain[NetInitialize[batch["Net"], RandomSeeding -> 1], batch["Rows"],
     MaxTrainingRounds -> rounds, BatchSize -> $trainingBatchSize, TargetDevice -> $trainingTargetDevice,
-    TrainingProgressReporting -> None, Method -> {"ADAM", "LearningRate" -> 0.001}];
+    TrainingProgressReporting -> None,
+    TrainingProgressFunction -> {{callback, "Interval" -> Quantity[30, "Seconds"]},
+      {callback, "Interval" -> Quantity[1, "Rounds"]}},
+    Method -> {"ADAM", "LearningRate" -> 0.001}];
+  Print[If[MatchQ[trained, _NetGraph], "NN training finished.", "NN training failed."]];
   If[MatchQ[trained, _NetGraph],
     variableWidthPolicy[NetExtract[trained, "Policy"]], $Failed]
 ];
@@ -1079,8 +1112,11 @@ runTrainingPipeline[amplitudes_, jobs_, workers_, settings_, cache_, fingerprint
   generated = KeyDrop[#, "Result"] & /@ generated;
   If[rows === {} || targets === skipped, Message[TrainUnscrambleNet::nodata]; Return[$Failed]];
   trainingStage["NN training"];
+  If[!DirectoryQ[dir], CreateDirectory[dir, CreateIntermediateDirectories -> True]];
   trainingCPU = TimeUsed[];
-  {trainingSeconds, net} = AbsoluteTiming[trainCandidateNetwork[rows, rounds]];
+  {trainingSeconds, net} = AbsoluteTiming[Block[{$trainingProgressFile = FileNameJoin[{dir,
+      If[$policyMethod === "ReverseMoves", "move-training-progress.m", "training-progress.m"]}]},
+    trainCandidateNetwork[rows, rounds]]];
   trainingCPU = TimeUsed[] - trainingCPU;
   If[!MatchQ[net, _NetChain | _NetGraph], Return[$Failed]];
   $modelNet = net; $loadedModelDirectory = dir; $loadedPolicyMethod = $policyMethod;
