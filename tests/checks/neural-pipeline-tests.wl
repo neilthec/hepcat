@@ -31,6 +31,18 @@ If[AssociationQ[report],
     <|"State" -> Range[10], "Candidates" -> {{1, 2, 3}, {257, 4, 5}}|>, TargetDevice -> "CPU"];
   check["reloaded model produces numerical scores", Dimensions[values] === {2, 1} && VectorQ[Flatten[values], NumericQ]];
 ];
+scorerHash = FileHash[FileNameJoin[{directory, "unscramble.wlnet"}], "SHA256"];
+moveReport = TrainUnscrambleNet[{pair}, "PolicyMethod" -> "ReverseMoves",
+  Steps -> 1, Scrambles -> 1, HoldOut -> 1, MaxTrainingRounds -> 1, EpisodeLength -> 2,
+  Kernels -> 2, "TrainingBatchSize" -> 2, "ModelDirectory" -> directory];
+check["move pipeline with workers", AssociationQ[moveReport] && moveReport["ReverseSteps"] > 0 &&
+  AllTrue[moveReport["ValidationJobs"], TrueQ[#["Success"]] &]];
+check["move workers closed", Kernels[] === before];
+check["scorer weights preserved", FileHash[FileNameJoin[{directory, "unscramble.wlnet"}], "SHA256"] === scorerHash];
+Do[
+  trace = UnscrambleTrace[pair, "PolicyMethod" -> method, "ModelDirectory" -> directory, "MaxSteps" -> 1];
+  check["switching methods loads correct model", TrueQ[trace["ModelLoaded"]] && !TrueQ[trace["ScoringFailed"]]],
+  {method, {"CandidateScorer", "ReverseMoves", "CandidateScorer"}}];
 DeleteDirectory[directory, DeleteContents -> True];
 Print[<|"Checks" -> checks, "Failed" -> Length[failures], "Failures" -> failures|>];
 Quit[If[failures === {}, 0, 1]];

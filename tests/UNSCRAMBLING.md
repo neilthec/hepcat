@@ -91,6 +91,20 @@ dataset's longest edit and restores variable-width inference afterward. Runtime
 and memory grow with expression length and candidate count. Higher-point inputs
 are supported, but generalization must still be measured.
 
+`TrainUnscrambleNet[..., "MaskPadding" -> True]` enables an experimental masked
+candidate GRU. Reserved token 257 leaves the hidden state unchanged, before and
+after training. Its fixed mask is not learned. This mode requires retraining;
+it does not modify existing models, which remain loadable. The metadata records
+the encoder architecture in the same current model files.
+
+Masking is a correctness option, not yet a speed optimization: the explicit
+recurrent implementation is slower on the initial real-data benchmark, so the
+default remains False. Training still uses one uninterrupted NetTrain call and
+fixed edit width, preserving optimizer state. Variable-width bucket training is
+not enabled: the masked fold hit a backend error with varying sequence lengths,
+and separate calls per bucket would reset Adam state. Numerical padding,
+training, and serialization checks run with `run-wolfram-tests.py --neural`.
+
 `UnscrambleCandidates[pair]` exposes legal edits. `UnscrambleEncoding[pair, edit]`
 returns complete `"State"` and `"Candidate"` sequences; decode either with
 `FromCharacterCode[sequence - 1, "UTF8"]`.
@@ -214,3 +228,38 @@ identities, encoding, candidate generation, checkpoint loading, inference limits
 cache behavior, and worker ownership. Some use stubbed scoring. `--neural` tests
 actual numerical training and inference; `--parallel` tests real workers. Tests
 use temporary model directories and do not replace the current trained model.
+# Choosing a Policy
+
+The existing `"CandidateScorer"` remains the default. The experimental
+`"ReverseMoves"` policy reads only the current expression and mass/condition
+packet, then predicts a slot in the deterministic legal-move list. It has no
+candidate-expression encoder. Symbolic candidate construction is still used
+to enumerate legal moves; this prototype does not remove that cost.
+
+Both methods currently learn from recorded reverse scramble trajectories.
+The difference is the network input and output, not a new source of labels.
+Every positive action is checked to reach the preceding expression. Unreachable
+reverse steps are skipped and reported; original states teach Stop. Multiple
+legal actions that reach the same target are all positive labels.
+
+```wolfram
+report = TrainUnscrambleNet[trainingAmplitudes,
+  "PolicyMethod" -> "ReverseMoves", Steps -> 3, Scrambles -> 2,
+  MaxTrainingRounds -> 2, HoldOut -> 1, Kernels -> 1];
+UnscrambleSpinorAmplitudes[pair, "PolicyMethod" -> "ReverseMoves"]
+UnscrambleTrace[pair, "PolicyMethod" -> "CandidateScorer"]
+```
+
+The shell launcher also accepts `--policy-method ReverseMoves`. Model files
+are `unscramble-moves.wlnet` and `unscramble-moves.m`; the scorer continues to
+use `unscramble.wlnet` and `unscramble.m`. Move-policy checkpoint and validation
+reports also have separate filenames. No automatic ensemble is enabled.
+
+This first move predictor has 512 output slots. Lists exceeding that limit fail
+explicitly, never truncate. Unused slots are excluded from training loss and
+inference selection. Slots depend on legal-move ordering, not universal identity
+names, which may make generalization harder. Move metadata pins the implementation
+source hash so changed action semantics cannot silently reuse incompatible weights.
+After changing `unscrambling.wl`, retrain this experimental model. The old scorer
+has no new source-hash restriction. Larger-corpus quality and speed remain to be
+measured; passing smoke tests is not evidence of improved simplification.

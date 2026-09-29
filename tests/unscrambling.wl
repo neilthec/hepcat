@@ -25,6 +25,8 @@ SchoutenCandidates::usage = "SchoutenCandidates[expr] returns exact generalized 
 UnscrambleTrace::usage = "UnscrambleTrace[{massRules, amplitude}] runs the trained policy and returns its guesses, changed expressions, complexity scores and accepted checkpoints, together with Result.";
 UnscrambleCandidates::usage = "UnscrambleCandidates[{massRules, amplitude}] lists legal concrete edits and Stop for the canonicalized expression. Supports arbitrary integer leg labels. Options: OnShellChannels (default Automatic, inferred from internal mass rules), MomentumConservation (default True), both string keys.";
 UnscrambleEncoding::usage = "UnscrambleEncoding[{massRules, amplitude}, candidate] returns an association with State and Candidate UTF-8 byte-ID sequences for the candidate policy. Both are complete; no truncation or learned vocabulary cutoff is applied.";
+TrainUnscrambleNet::usage = TrainUnscrambleNet::usage <> " PolicyMethod -> ReverseMoves (string keys and values) trains an experimental state-only reverse-action predictor in separate unscramble-moves model files; CandidateScorer is the default.";
+UnscrambleSpinorAmplitudes::usage = UnscrambleSpinorAmplitudes::usage <> " The string option PolicyMethod selects CandidateScorer (default) or ReverseMoves, each with separate model files.";
 
 Begin["`Private`"];
 
@@ -431,7 +433,7 @@ Options[UnscrambleCandidates] = {"OnShellChannels" -> Automatic, "MomentumConser
 Options[ComplicateAmplitude] = Join[{RandomSeed -> Automatic, "RecordSteps" -> False}, Options[UnscrambleCandidates]];
 Options[UnscrambleSpinorAmplitudes] = Join[
   {"MaxSteps" -> 12, "Attempts" -> 5, "MaxStagnantSteps" -> 3,
-    "TimeLimit" -> 60, "ModelDirectory" -> Automatic}, Options[UnscrambleCandidates]];
+    "TimeLimit" -> 60, "ModelDirectory" -> Automatic, "PolicyMethod" -> "CandidateScorer"}, Options[UnscrambleCandidates]];
 Options[UnscrambleTrace] = Options[UnscrambleSpinorAmplitudes];
 
 
@@ -604,17 +606,52 @@ UnscrambleEncoding[pair:{rules_List, amp_}, cand_Association, opts:OptionsPatter
 (* ::Subsection::Closed:: *)
 (*Neural Network*)
 
+$maskCandidatePadding = False;
+$policyMethod = "CandidateScorer";
+$moveSlots = 512;
+
+(* The experimental policy predicts slots in the deterministic legal move list.
+   Only the current state enters the net. Never truncate an overflowing list. *)
+makeMovePolicy[] := NetGraph[<|"StateEncoder" -> makeEncoder[256],
+  "Actions" -> NetChain[{LinearLayer[128], Ramp, LinearLayer[$moveSlots],
+    LogisticSigmoid, ReshapeLayer[{$moveSlots, 1}]}]|>,
+  {NetPort["State"] -> "StateEncoder" -> "Actions"}];
+
+moveFeatures[expr_, rules_] := <|"State" -> stateFeature[expr, rules, stateLegIDs[expr, rules]]|>;
+policyArchitecture[] := If[$policyMethod === "ReverseMoves", "ReverseMoveSlots",
+  If[TrueQ[$maskCandidatePadding], "MaskedSharedStateGRU", "SharedStateGRU"]];
+
 makeEncoder[classes_, width_:"Varying"] := NetChain[{
   EmbeddingLayer[24, classes], GatedRecurrentLayer[64], SequenceLastLayer[]
 }, "Input" -> {width}];
 
+makeMaskedEncoder[width_:"Varying"] := Module[{gru, cell},
+  (* Unfold requires initialized dimensions; use the training pipeline's fixed seed. *)
+  gru = NetUnfold[NetInitialize[GatedRecurrentLayer[64,
+    "Input" -> {"Varying", 24}], RandomSeeding -> 1]];
+  cell = NetGraph[<|"Embed" -> EmbeddingLayer[24, 257],
+    "Mask" -> EmbeddingLayer[64, 257,
+      "Weights" -> Join[ConstantArray[1., {256, 64}], {ConstantArray[0., 64]}],
+      LearningRateMultipliers -> None],
+    "GRU" -> gru, "Choose" -> ThreadingLayer[#1 #2 + (1 - #1) #3 &]|>,
+    {NetPort["Input"] -> "Embed" -> NetPort["GRU", "Input"],
+      NetPort["Input"] -> "Mask", NetPort["State"] -> NetPort["GRU", "State1"],
+      {"Mask", NetPort["GRU", "Output"], NetPort["State"]} -> "Choose",
+      "Choose" -> NetPort["Output"], NetPort["GRU", "OutState1"] -> None}];
+  (* Padding freezes the recurrent state, including after learned biases change. *)
+  NetChain[{NetFoldOperator[cell, {"Output" -> "State"}], SequenceLastLayer[]},
+    "Input" -> {width, Restricted["Integer", 257]}]
+];
+
 makePolicy[width_:"Varying"] := Module[{head},
+  If[$policyMethod === "ReverseMoves", Return[makeMovePolicy[]]];
   head = NetGraph[<|"Join" -> CatenateLayer[],
     "Score" -> NetChain[{LinearLayer[32], Ramp, LinearLayer[1], LogisticSigmoid}]|>,
     {{NetPort["State"], NetPort["Candidate"]} -> "Join" -> "Score"},
     "State" -> 64, "Candidate" -> 64];
   NetGraph[<|"StateEncoder" -> makeEncoder[256],
-    "CandidateEncoder" -> NetMapOperator[makeEncoder[257, width]],
+    "CandidateEncoder" -> NetMapOperator[If[TrueQ[$maskCandidatePadding],
+      makeMaskedEncoder[width], makeEncoder[257, width]]],
     "Scorer" -> NetMapThreadOperator[head, <|"Candidate" -> 1|>]|>,
     {NetPort["State"] -> "StateEncoder" -> NetPort["Scorer", "State"],
       NetPort["Candidates"] -> "CandidateEncoder" -> NetPort["Scorer", "Candidate"]}]
@@ -624,24 +661,29 @@ makePolicy[width_:"Varying"] := Module[{head},
 (* ::Subsection::Closed:: *)
 (*Current Model Files*)
 
-modelPaths[dir_] := <|
-  "Net" -> FileNameJoin[{dir, "unscramble.wlnet"}],
-  "Metadata" -> FileNameJoin[{dir, "unscramble.m"}]
-|>;
+modelPaths[dir_] := With[{stem = If[$policyMethod === "ReverseMoves", "unscramble-moves", "unscramble"]},
+  <|"Net" -> FileNameJoin[{dir, stem <> ".wlnet"}],
+    "Metadata" -> FileNameJoin[{dir, stem <> ".m"}]|>];
 resolveModelDirectory[Automatic] := $modelDirectory;
 resolveModelDirectory[dir_String] := ExpandFileName[dir];
 
 loadUnscrambleModel[dir_] := Module[{paths, meta, net},
-  If[$loadedModelDirectory === dir && MatchQ[$modelNet, _NetChain | _NetGraph], Return[True]];
+  If[$loadedModelDirectory === dir && $loadedPolicyMethod === $policyMethod &&
+      MatchQ[$modelNet, _NetChain | _NetGraph], Return[True]];
   paths = modelPaths[dir];
   If[!AllTrue[Values[paths], FileExistsQ], Return[False]];
   meta = Get[paths["Metadata"]];
   If[!AssociationQ[meta] ||
       Lookup[meta, "Encoding", None] =!= "SplitFullFormUTF8" ||
-      Lookup[meta, "Architecture", None] =!= "SharedStateGRU", Return[False]];
+      !MemberQ[If[$policyMethod === "ReverseMoves", {"ReverseMoveSlots"},
+        {"SharedStateGRU", "MaskedSharedStateGRU"}], Lookup[meta, "Architecture", None]], Return[False]];
+  If[$policyMethod === "ReverseMoves" &&
+      (Lookup[meta, "MoveSlots", None] =!= $moveSlots ||
+       Lookup[meta, "MoveSourceHash", None] =!= FileHash[FileNameJoin[{$modelDirectory, "unscrambling.wl"}], "SHA256"]),
+    Return[False]];
   net = Import[paths["Net"]];
   If[!MatchQ[net, _NetChain | _NetGraph], Return[False]];
-  $modelNet = net; $loadedModelDirectory = dir;
+  $modelNet = net; $loadedModelDirectory = dir; $loadedPolicyMethod = $policyMethod;
   True
 ];
 
@@ -650,7 +692,12 @@ loadUnscrambleModel[dir_] := Module[{paths, meta, net},
 (*Candidate Scoring*)
 
 scoreCandidates[expr_, rules_, cands_] := Module[{scores},
-  scores = Flatten[$modelNet[groupFeatures[expr, rules, cands], TargetDevice -> "CPU"]];
+  If[$policyMethod === "ReverseMoves",
+    If[Length[cands] > $moveSlots, Message[TrainUnscrambleNet::slots, Length[cands], $moveSlots]; Return[$Failed]];
+    scores = Flatten[$modelNet[moveFeatures[expr, rules], TargetDevice -> "CPU"]];
+    If[Length[scores] =!= $moveSlots, Return[$Failed]];
+    scores = Take[scores, Length[cands]],
+    scores = Flatten[$modelNet[groupFeatures[expr, rules, cands], TargetDevice -> "CPU"]]];
   If[Length[scores] =!= Length[cands] || !VectorQ[scores, NumericQ], $Failed, scores]
 ];
 
@@ -707,8 +754,14 @@ ComplicateAmplitude[pair:{_List, _}, nSteps_Integer:5, OptionsPattern[]] :=
 
 trainingRows[expr_, rules_, target_] := Module[{cands, labels, canonicalTarget = canonicalChains[target]},
   cands = legalMoves[expr, rules];
+  If[$policyMethod === "ReverseMoves" && Length[cands] > $moveSlots,
+    Message[TrainUnscrambleNet::slots, Length[cands], $moveSlots]; Return[$Failed]];
   labels = Boole[samePoly[applyCandidate[expr, #], canonicalTarget]] & /@ cands;
   If[!MemberQ[labels, 1], Return[{}]];
+  If[$policyMethod === "ReverseMoves", Return[{Join[moveFeatures[expr, rules],
+    <|"Target" -> List /@ N[PadRight[labels, $moveSlots]],
+      "Weights" -> List /@ PadRight[balanceWeights[labels], $moveSlots, 0.],
+      "ActionCount" -> Length[cands]|>]}]];
   {Join[groupFeatures[expr, rules, cands], <|"Target" -> List /@ N[labels],
     "Weights" -> List /@ balanceWeights[labels]|>]}
 ];
@@ -726,22 +779,27 @@ Options[TrainUnscrambleNet] = Join[
   {Steps -> 8, Scrambles -> 20, HoldOut -> 2, MaxTrainingRounds -> 6,
     EpisodeLength -> 12, Kernels -> 1, TargetDevice -> "CPU", "ModelDirectory" -> Automatic,
     "DataCacheDirectory" -> None, "WorkerRoot" -> Automatic,
-    "WorkerThreads" -> 1, "TrainingBatchSize" -> 1,
+    "WorkerThreads" -> 1, "TrainingBatchSize" -> 1, "MaskPadding" -> False, "PolicyMethod" -> "CandidateScorer",
     "JobTimeLimit" -> 300, "ValidationTimeLimit" -> 60}, Options[UnscrambleCandidates]];
 TrainUnscrambleNet::kernels = "Kernels must be a positive integer, Automatic, or a nonempty list of connected kernel objects. Worker startup or initialization failed.";
 TrainUnscrambleNet::nodata = "No reversible training examples were generated. No model was saved.";
 TrainUnscrambleNet::options = "Steps, HoldOut must be nonnegative integers; Scrambles, MaxTrainingRounds, EpisodeLength must be positive integers.";
 TrainUnscrambleNet::save = "Could not save the candidate model in `1`.";
+TrainUnscrambleNet::mask = "MaskPadding must be True or False.";
+TrainUnscrambleNet::method = "PolicyMethod must be CandidateScorer or ReverseMoves. MaskPadding applies only to CandidateScorer.";
+TrainUnscrambleNet::slots = "The legal move list has `1` entries, exceeding the ReverseMoves limit of `2`. No moves were truncated.";
 
 makeTrainingPolicy[width_:"Varying"] := NetGraph[<|"Policy" -> makePolicy[width],
   "WeightedPrediction" -> ThreadingLayer[Times], "WeightedTarget" -> ThreadingLayer[Times],
-  "Loss" -> MeanSquaredLossLayer[]|>, {
+  "Loss" -> MeanSquaredLossLayer[]|>, Join[{
   NetPort["State"] -> NetPort["Policy", "State"],
-  NetPort["Candidates"] -> NetPort["Policy", "Candidates"],
   {"Policy", NetPort["Weights"]} -> "WeightedPrediction" -> NetPort["Loss", "Input"],
-  {NetPort["Target"], NetPort["Weights"]} -> "WeightedTarget" -> NetPort["Loss", "Target"]}];
+  {NetPort["Target"], NetPort["Weights"]} -> "WeightedTarget" -> NetPort["Loss", "Target"]},
+  If[$policyMethod === "ReverseMoves", {}, {NetPort["Candidates"] -> NetPort["Policy", "Candidates"]}]]];
 
 prepareTrainingBatch[rows_] := Module[{width, padded, net},
+  If[$policyMethod === "ReverseMoves", Return[<|"Net" -> makeTrainingPolicy[],
+    "Rows" -> (KeyDrop[#, "ActionCount"] & /@ rows), "Width" -> 0|>]];
   width = Max[Length /@ Flatten[Lookup[rows, "Candidates"], 1]];
   padded = (Join[#, <|"Candidates" -> (PadLeft[#, width, 257] & /@ #["Candidates"])|>] &) /@ rows;
   net = makeTrainingPolicy[width];
@@ -749,7 +807,9 @@ prepareTrainingBatch[rows_] := Module[{width, padded, net},
 ];
 
 variableWidthPolicy[net_] := Module[{paths = Information[net, "ArraysPositionList"]},
-  NetReplacePart[makePolicy[], Map[# -> NetExtract[net, #] &, paths]]
+  If[$policyMethod === "ReverseMoves", Return[net]];
+  Block[{$maskCandidatePadding = !FreeQ[paths, "Mask"]},
+    NetReplacePart[makePolicy[], Map[# -> NetExtract[net, #] &, paths]]]
 ];
 
 trainCandidateNetwork[rows_, rounds_] := Module[{trained, batch = prepareTrainingBatch[rows]},
@@ -824,11 +884,11 @@ validationJob[job_] := Module[{pair = job["Pair"], scr, trace, got},
 
 evaluateTrainingJob[job_, settings_] := Block[
   {$onShellChannels = settings["OnShellChannels"], $useMomentumConservation = settings["MomentumConservation"],
-    $timeLimit = settings["ValidationTimeLimit"]},
+    $timeLimit = settings["ValidationTimeLimit"], $policyMethod = Lookup[settings, "PolicyMethod", "CandidateScorer"]},
   Module[{start = AbsoluteTime[], cpu = TimeUsed[], result},
     result = TimeConstrained[If[job["Mode"] === "Validate", validationJob[job], generationJob[job]],
       settings["JobTimeLimit"], $Failed];
-    <|"Order" -> job["Order"], "Success" -> AssociationQ[result], "Result" -> result,
+    <|"Order" -> job["Order"], "Success" -> (AssociationQ[result] && FreeQ[result, $Failed]), "Result" -> result,
       "WallSeconds" -> (AbsoluteTime[] - start), "CPUSeconds" -> (TimeUsed[] - cpu), "Worker" -> $KernelID|>
   ]
 ];
@@ -960,19 +1020,24 @@ cachedTrainingJobs[jobs_, workers_, settings_, cache_, fingerprint_] := Module[
 (*Training Pipeline*)
 
 installValidationModel[{}, _, _] := True;
-installValidationModel[workers_, net_, directory_] := With[{model = net, dir = directory},
-  ParallelEvaluate[$modelNet = model; $loadedModelDirectory = dir; True, workers, DistributedContexts -> None] ===
+installValidationModel[workers_, net_, directory_] := With[{model = net, dir = directory, method = $policyMethod},
+  ParallelEvaluate[$modelNet = model; $loadedModelDirectory = dir; $loadedPolicyMethod = method; True, workers, DistributedContexts -> None] ===
     ConstantArray[True, Length[workers]]
 ];
 
 TrainUnscrambleNet[amplitudes_List, OptionsPattern[]] := Block[
   {$onShellChannels = normalizeOnShellChannels[OptionValue["OnShellChannels"]],
     $useMomentumConservation = OptionValue["MomentumConservation"], $trainingBatchSize = OptionValue["TrainingBatchSize"],
-    $trainingTargetDevice = OptionValue[TargetDevice]},
+    $trainingTargetDevice = OptionValue[TargetDevice], $maskCandidatePadding = OptionValue["MaskPadding"],
+    $policyMethod = OptionValue["PolicyMethod"]},
   Module[{steps = OptionValue[Steps], count = OptionValue[Scrambles], hold = OptionValue[HoldOut],
       rounds = OptionValue[MaxTrainingRounds], episode = OptionValue[EpisodeLength], root = DirectoryName[$modelDirectory],
       workerRoot, cache = OptionValue["DataCacheDirectory"], settings, fingerprint, jobs,
       dir = resolveModelDirectory[OptionValue["ModelDirectory"]], workerThreads = OptionValue["WorkerThreads"]},
+    If[!MemberQ[{True, False}, $maskCandidatePadding], Message[TrainUnscrambleNet::mask]; Return[$Failed]];
+    If[!MemberQ[{"CandidateScorer", "ReverseMoves"}, $policyMethod] ||
+        ($policyMethod === "ReverseMoves" && TrueQ[$maskCandidatePadding]),
+      Message[TrainUnscrambleNet::method]; Return[$Failed]];
     If[!AllTrue[{steps, hold}, IntegerQ[#] && # >= 0 &] ||
         !AllTrue[{count, rounds, episode}, IntegerQ[#] && # > 0 &], Message[TrainUnscrambleNet::options]; Return[$Failed]];
     If[!MemberQ[{"CPU", "GPU", "CUDA"}, $trainingTargetDevice] &&
@@ -985,6 +1050,7 @@ TrainUnscrambleNet[amplitudes_List, OptionsPattern[]] := Block[
     workerRoot = Replace[OptionValue["WorkerRoot"], Automatic -> root];
     If[StringQ[cache], cache = ExpandFileName[cache]];
     settings = <|"OnShellChannels" -> $onShellChannels, "MomentumConservation" -> $useMomentumConservation,
+      "PolicyMethod" -> $policyMethod,
       "JobTimeLimit" -> OptionValue["JobTimeLimit"], "ValidationTimeLimit" -> OptionValue["ValidationTimeLimit"]|>;
     fingerprint = pipelineFingerprint[root]; jobs = makeTrainingJobs[amplitudes, steps, count];
     withTrainingWorkers[OptionValue[Kernels], workerRoot, workerThreads, fingerprint, Function[workers,
@@ -1017,28 +1083,31 @@ runTrainingPipeline[amplitudes_, jobs_, workers_, settings_, cache_, fingerprint
   {trainingSeconds, net} = AbsoluteTiming[trainCandidateNetwork[rows, rounds]];
   trainingCPU = TimeUsed[] - trainingCPU;
   If[!MatchQ[net, _NetChain | _NetGraph], Return[$Failed]];
-  $modelNet = net; $loadedModelDirectory = dir;
+  $modelNet = net; $loadedModelDirectory = dir; $loadedPolicyMethod = $policyMethod;
   If[!DirectoryQ[dir], CreateDirectory[dir, CreateIntermediateDirectories -> True]];
   paths = modelPaths[dir];
   If[Export[paths["Net"], net] === $Failed, Message[TrainUnscrambleNet::save, dir]; Return[$Failed]];
-  Put[<|"Encoding" -> "SplitFullFormUTF8", "Architecture" -> "SharedStateGRU",
+  Put[<|"Encoding" -> "SplitFullFormUTF8", "Architecture" -> policyArchitecture[],
+    "MoveSlots" -> $moveSlots,
+    "MoveSourceHash" -> FileHash[FileNameJoin[{$modelDirectory, "unscrambling.wl"}], "SHA256"],
     "OnShellChannels" -> $onShellChannels, "MomentumConservation" -> $useMomentumConservation|>, paths["Metadata"]];
   validationJobs = makeValidationJobs[amplitudes, steps, count, hold, episode];
   Put[<|"Status" -> "Model saved; validation pending", "ModelPath" -> paths["Net"],
     "TrainingSeconds" -> trainingSeconds, "TrainingCPUSeconds" -> trainingCPU,
     "TrainingStates" -> Length[rows], "ValidationCases" -> Length[validationJobs]|>,
-    FileNameJoin[{dir, "training-checkpoint.m"}]];
+    FileNameJoin[{dir, If[$policyMethod === "ReverseMoves", "move-training-checkpoint.m", "training-checkpoint.m"]}]];
   Print["Model saved: ", paths["Net"]];
   trainingStage["Validation"];
   {validationSeconds, validation} = AbsoluteTiming[
     If[validationJobs =!= {} && !installValidationModel[workers, net, dir], $Failed,
       mapTrainingJobs[validationJobs, workers, settings]]];
   If[!validJobResultsQ[validation], Message[TrainUnscrambleNet::job, "validation (model already saved)"]; Return[$Failed]];
-  Put[validation, FileNameJoin[{dir, "validation-results.m"}]];
+  Put[validation, FileNameJoin[{dir, If[$policyMethod === "ReverseMoves", "move-validation-results.m", "validation-results.m"]}]];
   trainingStage["Complete"];
-  candidateRows = Total[Length /@ Lookup[rows, "Target"]];
-  work = trainingWorkEstimate[rows];
-  <|"Kernels" -> Max[1, Length[workers]], "Starts" -> Length[amplitudes]*count,
+  candidateRows = If[$policyMethod === "ReverseMoves", Total[Lookup[rows, "ActionCount"]], Total[Length /@ Lookup[rows, "Target"]]];
+  work = If[$policyMethod === "ReverseMoves", <|"StateBytesPerEpoch" -> Total[Length /@ Lookup[rows, "State"]],
+    "EditBytesWithTrainingPadding" -> 0|>, trainingWorkEstimate[rows]];
+  <|"PolicyMethod" -> $policyMethod, "Kernels" -> Max[1, Length[workers]], "Starts" -> Length[amplitudes]*count,
     "TrainingStates" -> Length[rows], "TrainingRows" -> candidateRows, "TrainingBatchSize" -> $trainingBatchSize,
     "TrainingTargetDevice" -> $trainingTargetDevice,
     "ReverseSteps" -> targets - skipped, "SkippedReverseSteps" -> skipped,
@@ -1074,7 +1143,7 @@ trainingWorkEstimate[rows_] := Module[{counts, widths, width, stateBytes, edits}
 (* ::Subsection::Closed:: *)
 (*Unscrambling and Trace*)
 
-UnscrambleSpinorAmplitudes::nomodel = "No compatible unscramble.wlnet and unscramble.m found in `1`. Train with TrainUnscrambleNet.";
+UnscrambleSpinorAmplitudes::nomodel = "No compatible model for the selected PolicyMethod found in `1`. Train with TrainUnscrambleNet using the same PolicyMethod.";
 UnscrambleSpinorAmplitudes::scores = "The model did not return one numeric score per candidate.";
 UnscrambleSpinorAmplitudes::options = "MaxSteps must be a nonnegative integer; Attempts and MaxStagnantSteps must be positive integers; TimeLimit must be a positive number of seconds.";
 
@@ -1109,7 +1178,7 @@ runUnscramble[{rules_List, amplitude_}, record_, maxSteps_, attempts_, dir_] := 
       "Trial" -> trial, "Accepted" -> accepted, "After" -> checkpoint|>]];
     If[failed || stagnant >= $maxStagnantSteps, Break[]], {attempt, attempts}
   ], $timeLimit, reason = "TimeLimit"];
-  <|"Result" -> {rules, checkpoint}, "Trace" -> history, "Checkpoints" -> checkpoints,
+  <|"PolicyMethod" -> $policyMethod, "Result" -> {rules, checkpoint}, "Trace" -> history, "Checkpoints" -> checkpoints,
     "ModelLoaded" -> loaded, "ScoringFailed" -> failed, "TerminationReason" -> reason,
     "StagnantSteps" -> stagnant|>
 ];
@@ -1117,7 +1186,9 @@ runUnscramble[{rules_List, amplitude_}, record_, maxSteps_, attempts_, dir_] := 
 configuredRun[pair:{_List, _}, record_, OptionsPattern[UnscrambleTrace]] := Block[
   {$onShellChannels = normalizeOnShellChannels[OptionValue["OnShellChannels"]],
     $useMomentumConservation = OptionValue["MomentumConservation"],
-    $maxStagnantSteps = OptionValue["MaxStagnantSteps"], $timeLimit = OptionValue["TimeLimit"]},
+    $maxStagnantSteps = OptionValue["MaxStagnantSteps"], $timeLimit = OptionValue["TimeLimit"],
+    $policyMethod = OptionValue["PolicyMethod"]},
+  If[!MemberQ[{"CandidateScorer", "ReverseMoves"}, $policyMethod], Message[TrainUnscrambleNet::method]; Return[$Failed]];
   If[!IntegerQ[OptionValue["MaxSteps"]] || OptionValue["MaxSteps"] < 0 ||
       !IntegerQ[OptionValue["Attempts"]] || OptionValue["Attempts"] < 1 ||
       !IntegerQ[$maxStagnantSteps] || $maxStagnantSteps < 1 ||

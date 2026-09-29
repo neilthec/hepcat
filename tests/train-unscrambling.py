@@ -90,6 +90,8 @@ def main(argv=None):
         value_type = (lambda value: "all" if value.lower() == "all" else int(value)) if name == "amplitudes" else int
         parser.add_argument(f"--{name}", type=value_type, help=help_text + "; default: notebook setting")
     parser.add_argument("--model-directory", type=Path, help="save this run's model in a separate directory")
+    parser.add_argument("--policy-method", choices=("CandidateScorer", "ReverseMoves"),
+                        default="CandidateScorer", help="candidate scorer or experimental state-only move predictor")
     parser.add_argument("--dry-run", action="store_true", help="print configuration without starting Wolfram")
     args = parser.parse_args(argv)
     if args.validation_timeout < 1 or args.run_timeout < 1:
@@ -110,6 +112,7 @@ def main(argv=None):
     if not executable and not args.dry_run:
         parser.error(f"Executable not found: {args.wolframscript}")
     env = training_environment(args.threads, os.environ)
+    env["HEPCAT_TRAIN_POLICY_METHOD"] = args.policy_method
     if args.kernels is not None:
         env["HEPCAT_TRAIN_KERNELS"] = str(args.kernels)
     for name in controls:
@@ -121,6 +124,7 @@ def main(argv=None):
     command = notebook_command(executable or args.wolframscript, notebook)
     print(f"Native CPU threads requested: {args.threads}; symbolic workers: {args.kernels or 'notebook setting'}.", flush=True)
     print(f"Effective OpenMP threads: {env['OMP_NUM_THREADS']}", flush=True)
+    print(f"Policy method: {args.policy_method}", flush=True)
     for name in controls:
         value = env.get("HEPCAT_TRAIN_" + name.upper().replace("-", "_"))
         if value is not None:

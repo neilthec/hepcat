@@ -14,6 +14,15 @@ spec.loader.exec_module(launcher)
 
 
 class LauncherTests(unittest.TestCase):
+    def test_policy_method(self):
+        for method in ("CandidateScorer", "ReverseMoves"):
+            with patch.object(launcher.shutil, "which", return_value="/bin/wolframscript"), \
+                    patch.object(launcher, "supervise") as execute, contextlib.redirect_stdout(io.StringIO()):
+                launcher.main(["--threads", "4", "--policy-method", method])
+                self.assertEqual(execute.call_args.args[1]["HEPCAT_TRAIN_POLICY_METHOD"], method)
+        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            launcher.main(["--threads", "4", "--policy-method", "Unknown"])
+
     def test_all_amplitudes(self):
         with patch.object(launcher.shutil, "which", return_value="/bin/wolframscript"), \
                 patch.object(launcher, "supervise") as execute, contextlib.redirect_stdout(io.StringIO()):

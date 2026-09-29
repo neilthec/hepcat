@@ -29,6 +29,8 @@ def main():
             parser.error("--parallel needs --timeout >= 150 to allow worker startup and cleanup")
         tests.append("parallel-pipeline-tests.wl")
     if args.neural:
+        tests.append("move-policy-tests.wl")
+        tests.append("padding-tests.wl")
         tests.append("candidate-neural-tests.wl")
         if args.parallel:
             tests.append("neural-pipeline-tests.wl")
