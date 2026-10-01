@@ -8,9 +8,11 @@
    from zero. Source mass/coupling conventions are intentionally unchanged.
    These are channel references as well as channel sums, not 195 processes.
    Only external masses are supplied: no extra internal on-shell assumptions.
+   A separate synthetic five-point section supplies algebraic training fixtures,
+   not diagram-derived physical amplitudes. Its internal-channel rules are explicit.
 *)
 
-{
+Join[{
 (* ::Subsection::Closed:: *)
 (* Reference 1 *)
 <|"Name" -> "SM-4-point-test.nb / u U -> C c / A", 
@@ -3746,4 +3748,52 @@
      SpinorChain[Spinor["Spin", "Square", 2], Spinor["Spin", "Square", 4]]*
      SpinorChain[Spinor["Spin", "Square", 3], Mom[4], Spinor["Spin", "Angle", 1]])/
     (2*CW^3*MZ^3*Mandelstahm[1, 4])|>
-}
+},
+
+(* ::Subsection::Closed:: *)
+(* Synthetic Five-Point Algebraic Fixtures *)
+Module[{families, familyNames},
+  families = {{0, 0, 0, 0, 0}, {Me, Me, 0, 0, 0}, {Me, Me, Mm, Mm, 0},
+    {MW, MW, MW, MW, 0}, {Mh, MW, MZ, Me, Me}, {MW, MW, MZ, MZ, Mh}};
+  familyNames = {"Massless", "FermionPair", "TwoFermionPairs", "FourVectors",
+    "MixedMassive", "FiveMassive"};
+  Flatten[Table[Module[{masses = families[[family]], spinor, bracket, chain, expressions,
+      channelPairs, channelMasses, channelIndices, denominators, templateNames, externalRules},
+    spinor[type_, leg_] := Spinor[If[masses[[leg]] === 0, "Helicity", "Spin"], type, leg];
+    bracket[type_, left_, right_] := SpinorChain[spinor[type, left], spinor[type, right]];
+    chain[leftType_, left_, momenta_List, rightType_, right_] :=
+      SpinorChain @@ Join[{spinor[leftType, left]}, Mom /@ momenta, {spinor[rightType, right]}];
+    expressions = {
+      bracket["Angle", 1, 2] bracket["Angle", 3, 4] bracket["Square", 2, 5],
+      bracket["Square", 1, 2] bracket["Square", 3, 4] bracket["Angle", 1, 5],
+      chain["Angle", 1, {3}, "Square", 2] bracket["Angle", 4, 5],
+      chain["Square", 1, {2, 3}, "Square", 4] bracket["Angle", 2, 5],
+      chain["Angle", 1, {2, 5, 3}, "Square", 4],
+      MomProd[2, 5] bracket["Angle", 1, 3] bracket["Square", 2, 4] +
+        MomProd[3, 5] bracket["Angle", 1, 4] bracket["Square", 2, 3],
+      chain["Angle", 1, {Multiparticle[2, 3]}, "Square", 4] bracket["Angle", 2, 5],
+      (Mom[Multiparticle[2, 3]]^2 - Mass[2]^2 - Mass[3]^2)
+        bracket["Angle", 1, 4] bracket["Square", 2, 5]
+    };
+    channelPairs = {{1, 2}, {2, 3}, {4, 5}}; channelMasses = {0, MZ, Mh};
+    channelIndices = {{1}, {}, {2}, {3}, {1, 3}, {2}, {2, 3}, {2}};
+    denominators = {PropDen[Mom[Multiparticle[1, 2]], 0], 1,
+      PropDen[Mom[Multiparticle[2, 3]], MZ], PropDen[Mom[Multiparticle[4, 5]], Mh],
+      PropDen[Mom[Multiparticle[1, 2]], 0] PropDen[Mom[Multiparticle[4, 5]], Mh],
+      PropDen[Mom[Multiparticle[2, 3]], MZ],
+      PropDen[Mom[Multiparticle[2, 3]], MZ] PropDen[Mom[Multiparticle[4, 5]], Mh],
+      PropDen[Mom[Multiparticle[2, 3]], MZ]};
+    templateNames = {"AngleBracketProduct", "SquareBracketProduct", "OneMomentumChain",
+      "TwoMomentumChain", "ThreeMomentumChain", "DotProductSum", "InternalMomentumChain",
+      "InternalMomentumSquare"};
+    externalRules = Thread[(Mass /@ Range[5]) -> masses];
+    Table[With[{name = "Synthetic5Point / " <> familyNames[[family]] <> " / " <> templateNames[[template]]},
+      <|"Name" -> name, "Sources" -> {name}, "Synthetic" -> True, "ExternalLegCount" -> 5,
+        "Family" -> "Synthetic5Point / " <> familyNames[[family]], "Template" -> templateNames[[template]],
+        "Masses" -> Join[externalRules,
+          (Mass[Multiparticle @@ channelPairs[[#]]] -> channelMasses[[#]] & /@ channelIndices[[template]])],
+        "Amplitude" -> (-1)^(family + template) (family + template) EE^3
+          expressions[[template]]/((1 + Mod[template, 3]) denominators[[template]])|>],
+      {template, Length[expressions]}]
+  ], {family, Length[families]}], 1]
+]]

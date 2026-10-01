@@ -24,7 +24,7 @@ Cell["Train the unscrambler", "Title",ExpressionUUID->"9394847e-fc2a-4cc9-b49e-2
 
 Cell["\<\
 Edit only the parameters in the first input cell. The trained net is written \
-to tests/unscramble.wlnet inside hepcatDirectory. The full state is encoded once per candidate group, in both training and inference. Training replaces the current model; Git keeps its history. From a terminal:
+to tests/unscramble.wlnet inside hepcatDirectory. The full state is encoded once per candidate group, in both training and inference. Training replaces the candidate scorer model; Git keeps its history. From a terminal:
 
 python3 /path/to/hepcat/tests/train-unscrambling.py --threads 4 --kernels 2\
 \>", "Text",ExpressionUUID->"cfe808c0-0bfc-431a-83fe-5464c5e9e6a8"],

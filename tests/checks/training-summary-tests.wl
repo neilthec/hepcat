@@ -38,14 +38,76 @@ SetEnvironment["HEPCAT_TRAIN_AMPLITUDES" -> "all"];
 check["all amplitude setting", trainingAmplitudeSetting[] === All];
 ToExpression[First[inputs]];
 ToExpression[inputs[[3]]];
-check["notebook selects complete corpus", nAmplitudes === 195 && Length[trainingAmplitudes] === 195];
+check["notebook selects complete corpus", nAmplitudes === 243 && Length[trainingAmplitudes] === 243];
 check["exact pairs deduplicated", DuplicateFreeQ[knownAmplitudes]];
-check["external mass rules retained", AllTrue[knownAmplitudes,
+check["reference external mass rules retained", AllTrue[Take[knownAmplitudes, 195],
   MatchQ[#[[1]], {Mass[1] -> _, Mass[2] -> _, Mass[3] -> _, Mass[4] -> _}] &]];
 corpusSources = Flatten[Lookup[amplitudeCatalog, "Sources"]];
-check["both notebook reference collections retained", Length[corpusSources] === 337 &&
+check["both notebook reference collections retained", Length[corpusSources] === 385 &&
   Count[corpusSources, s_String /; StringStartsQ[s, "SM-4-point.nb / "]] === 189 &&
   Count[corpusSources, s_String /; StringStartsQ[s, "SM-4-point-test.nb / "]] === 148];
+syntheticFivePoint = Drop[amplitudeCatalog, 195];
+Get[FileNameJoin[{root, "tests", "unscrambling.wl"}]];
+check["synthetic five-point provenance is explicit", Length[syntheticFivePoint] === 48 &&
+  AllTrue[syntheticFivePoint, TrueQ[#["Synthetic"]] && #["ExternalLegCount"] === 5 &&
+    StringStartsQ[#["Name"], "Synthetic5Point / "] &]];
+check["synthetic five-point external mass rules", AllTrue[syntheticFivePoint,
+  Cases[#["Masses"], HoldPattern[Mass[i_Integer] -> _] :> i] === Range[5] &]];
+check["synthetic five-point labels occur in numerators", AllTrue[syntheticFivePoint,
+  Keys[Unscrambling`Private`stateLegIDs[#["Amplitude"] /. _PropDen -> 1, {}]] === Range[5] &]];
+check["synthetic five-point chains have legal chirality", AllTrue[syntheticFivePoint,
+  AllTrue[Cases[#["Amplitude"], _SpinorChain, Infinity], Unscrambling`Private`validChainQ] &]];
+check["synthetic five-point mass families are diverse",
+  Sort[Values[Counts[Lookup[syntheticFivePoint, "Family"]]]] === ConstantArray[8, 6]];
+check["synthetic five-point algebraic templates are diverse",
+  Sort[Values[Counts[Lookup[syntheticFivePoint, "Template"]]]] === ConstantArray[6, 8]];
+(* Check real legal moves and teacher labels without constructing or training a net. *)
+syntheticMoveAudit = TimeConstrained[Module[
+  {pairs = Lookup[syntheticFivePoint, {"Masses", "Amplitude"}], families = {},
+    starts = {}, steps = {}, scrambles = {}, before, rules, legal, trajectory,
+    labels, rows, row, reachable, exact, count},
+  Do[
+    rules = pairs[[i, 1]];
+    before = Unscrambling`Private`canonicalChains[pairs[[i, 2]] /. rules];
+    legal = Unscrambling`Private`legalMoves[before, rules];
+    families = Union[families, Lookup[legal, "Name"]];
+    AppendTo[starts, Count[Lookup[legal, "Name"], Except["Stop"]] > 0];
+    trajectory = Unscrambling`Private`scramblePair[pairs[[i]], 3, 1000 + i, True]["Trajectory"];
+    AppendTo[scrambles, Length[trajectory]];
+    Do[
+      legal = Unscrambling`Private`legalMoves[step["After"], rules];
+      count = Length[legal];
+      labels = Boole[Unscrambling`Private`samePoly[
+        Unscrambling`Private`applyCandidate[step["After"], #], step["Before"]]] & /@ legal;
+      reachable = MemberQ[labels, 1];
+      rows = Block[{Unscrambling`Private`$policyMethod = "ReverseMoves"},
+        Unscrambling`Private`trainingRows[step["After"], rules, step["Before"]]];
+      exact = If[reachable,
+        If[MatchQ[rows, {_Association}], row = First[rows];
+          row["ActionCount"] === count &&
+          row["Target"] === N[PadRight[labels, Unscrambling`Private`$moveSlots]/Total[labels]] &&
+          row["LegalMask"] === N[PadRight[ConstantArray[1, count], Unscrambling`Private`$moveSlots]], False],
+        rows === {}];
+      AppendTo[steps, <|"Reference" -> i, "Reachable" -> reachable, "ExactLabel" -> exact|>],
+      {step, trajectory}],
+    {i, Length[pairs]}];
+  <|"MoveFamilies" -> families, "NonStopStarts" -> starts, "ScrambleSteps" -> scrambles,
+    "RecordedSteps" -> Length[steps], "ReachableSteps" -> Count[Lookup[steps, "Reachable"], True],
+    "SkippedSteps" -> Count[Lookup[steps, "Reachable"], False],
+    "EveryReferenceHasLabels" -> Sort[DeleteDuplicates[Lookup[Select[steps, TrueQ[#["Reachable"]] &], "Reference"]]] === Range[Length[pairs]],
+    "ExactTeacherLabels" -> AllTrue[Lookup[steps, "ExactLabel"], TrueQ]|>
+], 60, $Failed];
+check["synthetic five-point move audit finishes within one minute", AssociationQ[syntheticMoveAudit]];
+If[AssociationQ[syntheticMoveAudit],
+  check["synthetic five-point starts have non-stop actions", And @@ syntheticMoveAudit["NonStopStarts"]];
+  check["synthetic five-point starts cover all move families",
+    syntheticMoveAudit["MoveFamilies"] === Sort[{"Schouten", "Stop", "MomentumConservation",
+      "Anticommutation", "MomentumSquare", "OnShell", "Mass", "ChainSquare"}]];
+  check["synthetic five-point three-step scrambles complete", syntheticMoveAudit["ScrambleSteps"] === ConstantArray[3, 48]];
+  check["synthetic five-point teacher labels exactly match legal moves", syntheticMoveAudit["ExactTeacherLabels"]];
+  check["synthetic five-point references supply reachable teacher labels", syntheticMoveAudit["EveryReferenceHasLabels"]];
+  Print[KeyDrop[syntheticMoveAudit, {"NonStopStarts", "ScrambleSteps"}]]
+];
 check["main-only ZZWW channels retained", MemberQ[corpusSources, "SM-4-point.nb / input 1103 / target 1"] &&
   MemberQ[corpusSources, "SM-4-point.nb / input 1112 / target 1"]];
 check["no unresolved reference functions", FreeQ[knownAmplitudes,

@@ -26,7 +26,8 @@ UnscrambleTrace::usage = "UnscrambleTrace[{massRules, amplitude}] runs the train
 UnscrambleCandidates::usage = "UnscrambleCandidates[{massRules, amplitude}] lists legal concrete edits and Stop for the canonicalized expression. Supports arbitrary integer leg labels. Options: OnShellChannels (default Automatic, inferred from internal mass rules), MomentumConservation (default True), both string keys.";
 UnscrambleEncoding::usage = "UnscrambleEncoding[{massRules, amplitude}, candidate] returns an association with State and Candidate UTF-8 byte-ID sequences for the candidate policy. Both are complete; no truncation or learned vocabulary cutoff is applied.";
 TrainUnscrambleNet::usage = TrainUnscrambleNet::usage <> " PolicyMethod -> ReverseMoves (string keys and values) trains an experimental state-only reverse-action predictor in separate unscramble-moves model files; CandidateScorer is the default.";
-UnscrambleSpinorAmplitudes::usage = UnscrambleSpinorAmplitudes::usage <> " The string option PolicyMethod selects CandidateScorer (default) or ReverseMoves, each with separate model files.";
+UnscrambleSpinorAmplitudes::usage = UnscrambleSpinorAmplitudes::usage <> " The string option Model selects CandidateScorer (scores symbolic legal edits) or CompactActions (scores compact legal-edit features). Model -> Automatic preserves PolicyMethod selection; ModelDirectory chooses a directory containing the selected model files.";
+UnscrambleTrace::usage = UnscrambleTrace::usage <> " Supports the same Model and ModelDirectory options as UnscrambleSpinorAmplitudes.";
 
 Begin["`Private`"];
 
@@ -418,6 +419,7 @@ kinematicMoves[expr_, massRules_List] := Module[
 (*Policy Settings*)
 
 $modelNet = None;
+$compactWeights = None;
 $loadedModelDirectory = None;
 $onShellChannels = Automatic;
 $useMomentumConservation = True;
@@ -433,7 +435,8 @@ Options[UnscrambleCandidates] = {"OnShellChannels" -> Automatic, "MomentumConser
 Options[ComplicateAmplitude] = Join[{RandomSeed -> Automatic, "RecordSteps" -> False}, Options[UnscrambleCandidates]];
 Options[UnscrambleSpinorAmplitudes] = Join[
   {"MaxSteps" -> 12, "Attempts" -> 5, "MaxStagnantSteps" -> 3,
-    "TimeLimit" -> 60, "ModelDirectory" -> Automatic, "PolicyMethod" -> "CandidateScorer"}, Options[UnscrambleCandidates]];
+    "TimeLimit" -> 60, "Model" -> Automatic, "ModelDirectory" -> Automatic,
+    "PolicyMethod" -> "CandidateScorer"}, Options[UnscrambleCandidates]];
 Options[UnscrambleTrace] = Options[UnscrambleSpinorAmplitudes];
 
 
@@ -604,6 +607,161 @@ UnscrambleEncoding[pair:{rules_List, amp_}, cand_Association, opts:OptionsPatter
 
 
 (* ::Subsection::Closed:: *)
+(*Compact Action Features*)
+
+compactActionFeatureWidth = 146;
+compactActionFeatureSchema = <|
+  "Encoding" -> "StructuredLegalEdit", "Width" -> compactActionFeatureWidth,
+  "Operations" -> {"Mass", "ChainSquare", "Anticommutation", "Schouten",
+    "MomentumConservation", "MomentumSquare", "OnShell", "Stop"},
+  "Blocks" -> <|"Operation" -> 8, "Direction" -> 3, "SiteKind" -> 7,
+    "SiteCoordinates" -> 8, "ExplicitLegRoles" -> 28, "SchoutenSplits" -> 4,
+    "FocusedChains" -> 54, "LocalSummaries" -> 30, "RewriteMarkers" -> 4|>,
+  "MaximumExternalLegs" -> 4, "ParticleLabels" -> "ExistingStateLegIDs",
+  "WholeResultExpression" -> False, "CandidateIndex" -> False,
+  "Lossy" -> True|>;
+compactActionFeatures::arity = "Compact four-point features support at most four external particle IDs, not `1`.";
+compactActionFeatures::invalid = "A legal-edit descriptor is invalid or has an unsupported identity family.";
+
+compactCount[x_] := Log[1. + Max[0., N[x]]];
+compactOneHot[value_, choices_List] := N[Boole[# === value] & /@ choices];
+compactMomLeg[Mom[leg_]] := leg;
+compactMomLeg[_] := None;
+compactLegList[leg_Integer] := {leg};
+compactLegList[Multiparticle[legs__Integer]] := {legs};
+compactLegList[_] := {};
+compactLegVector[leg_, ids_, count_] := Module[{legs},
+  legs = Sort[DeleteDuplicates[Lookup[ids, #, #] & /@ compactLegList[leg]]];
+  If[legs === {}, Return[ConstantArray[0., 7]]];
+  Join[N[Boole[MemberQ[legs, #]] & /@ Range[4]],
+    {compactCount[Length[legs]], N[Min[legs]/Max[1, count]], N[Max[legs]/Max[1, count]]}]
+];
+compactLegBits[leg_, ids_] := N[Boole[MemberQ[
+    Lookup[ids, #, #] & /@ compactLegList[leg], #]] & /@ Range[4]];
+compactMassiveLeg[leg_, rules_] := With[{mass = massValue[rules, leg]},
+  N[Boole[!MissingQ[mass] && mass =!= 0]]];
+compactChirality[spinor_] := Switch[spinorType[spinor], "Angle", -1., "Square", 1., _, 0.];
+
+(* An anchor is a split between momenta: anchor j exposes momenta j and j+1. *)
+compactChainVector[None, _, _, _, _] := ConstantArray[0., 27];
+compactChainVector[chain_, anchor_, ids_, rules_, count_] := Module[
+  {xs, momenta, n, split, before, after, left, right},
+  If[!validChainQ[chain] || !IntegerQ[anchor], Return[$Failed]];
+  xs = List @@ chain; momenta = Drop[Rest[xs], -1]; n = Length[momenta];
+  split = Min[n, Max[0, anchor]];
+  before = If[split > 0, compactMomLeg[momenta[[split]]], None];
+  after = If[split < n, compactMomLeg[momenta[[split + 1]]], None];
+  left = spinorLeg[First[xs]]; right = spinorLeg[Last[xs]];
+  Join[{1., compactMassiveLeg[left, rules], compactMassiveLeg[right, rules],
+      compactChirality[First[xs]], compactChirality[Last[xs]]},
+    compactLegBits[left, ids], compactLegBits[right, ids],
+    {compactCount[n], compactCount[split], N[split/Max[1, n]]},
+    compactLegBits[before, ids], compactLegBits[after, ids],
+    {N[Boole[left === right]], N[Boole[before =!= None && before === after]], N[Mod[n, 2]]}]
+];
+
+compactNumericFactor[coefficient_] := Module[{factor},
+  factor = Times @@ Select[factorsOf[coefficient], NumberQ];
+  If[TrueQ[Im[N[factor]] == 0], N[Re[factor]], 0.]
+];
+compactLocalSummary[expr_, count_] := Module[
+  {terms, chains, lengths, coefficients, numbers, symbols, factors, powers, legs, denominator},
+  terms = monomialsOf[expr];
+  chains = Flatten[chainsIn /@ terms]; lengths = Max[0, Length[#] - 2] & /@ chains;
+  coefficients = First[splitMon[#]] & /@ terms;
+  numbers = compactNumericFactor /@ coefficients;
+  symbols = Length[Cases[{#}, s_Symbol /; Context[s] =!= "System`", Infinity]] & /@ coefficients;
+  factors = Length[factorsOf[#]] & /@ coefficients;
+  powers = Flatten[Cases[{#}, Power[_, exponent_Integer] :> Abs[exponent], Infinity] & /@ coefficients];
+  legs = Keys[stateLegIDs[expr, {}]]; denominator = Max[1, Length[terms]];
+  {compactCount[Length[terms]], compactCount[Length[chains]], compactCount[Total[lengths]],
+    compactCount[Max[Join[{0}, lengths]]], compactCount[Count[{expr}, _MomProd, Infinity]],
+    compactCount[Count[{expr}, Power[Mom[_Multiparticle], 2], Infinity]],
+    compactCount[Count[{expr}, _PropDen, Infinity]], compactCount[LeafCount[expr]],
+    N[Count[numbers, _?Negative]/denominator], N[Count[coefficients, _?NumberQ]/denominator],
+    compactCount[Total[Abs[numbers]]], compactCount[Total[factors]/denominator],
+    compactCount[Total[symbols]/denominator], compactCount[Max[Join[{0}, powers]]],
+    N[Length[legs]/Max[1, count]]}
+];
+
+compactActionVector[expr_, rules_, candidate_, ids_, terms_, termAddresses_] := Module[
+  {name, direction, site, siteKind, term = 0, chainIndex = 0, position = 0, side = 0,
+    chains = {}, anchors = {0, 0}, chain, momenta, expanded = None, conserved = None,
+    legs, splits, affected, sourceTerms, before, after, count = Length[ids], coords, focused},
+  name = Lookup[candidate, "Name", None]; direction = Lookup[candidate, "Direction", ""];
+  If[!MemberQ[compactActionFeatureSchema["Operations"], name], Return[$Failed]];
+  site = Lookup[candidate, "Site", {}]; splits = Lookup[candidate, "Splits", {}];
+  legs = Lookup[candidate, "Legs", {}];
+  If[!ListQ[site] || !ListQ[splits] || !ListQ[legs], Return[$Failed]];
+  sourceTerms = monomialsOf[candidate["Subtract"]];
+  affected = DeleteCases[Lookup[termAddresses, #, 0] & /@ sourceTerms, 0];
+  If[Length[site] === 3,
+    {term, chainIndex, position} = site;
+    If[!IntegerQ[term] || !(1 <= term <= Length[terms]) || !IntegerQ[chainIndex], Return[$Failed]];
+    chains = Select[chainsIn[terms[[term]]], validChainQ];
+    If[MemberQ[{"ChainSquare", "Anticommutation"}, name], chains = DeleteDuplicates[chains]];
+    If[!(1 <= chainIndex <= Length[chains]), Return[$Failed]];
+    chain = chains[[chainIndex]]; chains = {chain}; momenta = Drop[Rest[List @@ chain], -1];
+    Switch[name,
+      "Mass", siteKind = "MassEndpoint"; side = position;
+        If[!MemberQ[{1, -1}, side], Return[$Failed]];
+        anchors[[1]] = If[side === 1, 0, Length[momenta]]; position = 0,
+      "ChainSquare", If[direction === "Expand",
+        siteKind = "ChainExpansion"; expanded = position; position = 0,
+        siteKind = "Interior"; anchors[[1]] = position],
+      "Anticommutation", siteKind = "Interior"; anchors[[1]] = position,
+      "MomentumConservation", siteKind = "ChainMomentum"; anchors[[1]] = position;
+        If[!IntegerQ[position] || !(1 <= position <= Length[momenta]), Return[$Failed]];
+        conserved = compactMomLeg[momenta[[position]]],
+      _, Return[$Failed]],
+    If[site =!= {}, Return[$Failed]];
+    siteKind = Which[name === "Stop", "Stop", name === "Schouten", "Schouten", True, "Kinematic"];
+    If[name === "Schouten",
+      chains = Lookup[candidate, "Chains", {}];
+      If[Length[chains] =!= 2 || Length[splits] =!= 2 || !VectorQ[splits, IntegerQ], Return[$Failed]];
+      anchors = splits];
+    conserved = Lookup[candidate, "Momentum", None];
+    If[affected =!= {}, term = Min[affected]]
+  ];
+  If[name =!= "Schouten", splits = {0, 0}];
+  chains = PadRight[chains, 2, None];
+  focused = MapThread[compactChainVector[#1, #2, ids, rules, count] &, {chains, anchors}];
+  If[!FreeQ[focused, $Failed], Return[$Failed]];
+  before = compactLocalSummary[candidate["Subtract"], count];
+  after = compactLocalSummary[candidate["Insert"], count];
+  coords = {compactCount[term], N[term/Max[1, Length[terms]]], compactCount[chainIndex],
+    N[chainIndex/Max[1, Length[chainsIn[If[term > 0, terms[[term]], 0]]]]],
+    compactCount[position], N[position/Max[1, If[chains[[1]] === None, 0, Length[chains[[1]]] - 2]]],
+    N[Boole[side === 1]], N[Boole[side === -1]]};
+  Join[compactOneHot[name, compactActionFeatureSchema["Operations"]],
+    compactOneHot[direction, {"", "Contract", "Expand"}],
+    compactOneHot[siteKind, {"Stop", "MassEndpoint", "Interior", "ChainExpansion",
+      "ChainMomentum", "Schouten", "Kinematic"}], coords,
+    Flatten[compactLegVector[#, ids, count] & /@ {expanded, conserved,
+      If[Length[legs] >= 1, legs[[1]], None], If[Length[legs] >= 2, legs[[2]], None]}],
+    {compactCount[splits[[1]]], compactCount[splits[[2]]],
+      N[splits[[1]]/Max[1, If[chains[[1]] === None, 0, Length[chains[[1]]] - 2]]],
+      N[splits[[2]]/Max[1, If[chains[[2]] === None, 0, Length[chains[[2]]] - 2]]]},
+    Flatten[focused], before, after,
+    N[Boole[!FreeQ[#, _MomProd]] & /@ {candidate["Subtract"], candidate["Insert"]}],
+    N[Boole[!FreeQ[#, Power[Mom[_Multiparticle], 2]]] & /@
+      {candidate["Subtract"], candidate["Insert"]}]]
+];
+
+compactActionFeatures[expr_, rules_, candidates_List] := Module[{ids, terms, addresses, matrix},
+  ids = stateLegIDs[expr, rules];
+  If[Length[ids] > 4, Message[compactActionFeatures::arity, Length[ids]]; Return[$Failed]];
+  terms = monomialsOf[expr]; addresses = AssociationThread[terms, Range[Length[terms]]];
+  matrix = compactActionVector[expr, rules, #, ids, terms, addresses] & /@ candidates;
+  If[!FreeQ[matrix, $Failed] || !AllTrue[matrix,
+      Length[#] === compactActionFeatureWidth && VectorQ[#, NumberQ] &&
+        AllTrue[#, TrueQ[Im[#] == 0 && Abs[#] < Infinity] &] &],
+    Message[compactActionFeatures::invalid]; Return[$Failed]];
+  N[matrix]
+];
+
+
+(* ::Subsection::Closed:: *)
 (*Neural Network*)
 
 $maskCandidatePadding = False;
@@ -612,9 +770,19 @@ $moveSlots = 512;
 
 (* The experimental policy predicts slots in the deterministic legal move list.
    Only the current state enters the net. Never truncate an overflowing list. *)
-makeMovePolicy[] := NetGraph[<|"StateEncoder" -> makeEncoder[256],
-  "Actions" -> NetChain[{LinearLayer[128], Ramp, LinearLayer[$moveSlots],
-    LogisticSigmoid, ReshapeLayer[{$moveSlots, 1}]}]|>,
+(* Pool local features across the whole packet; a shared suffix must not erase
+   differences in earlier expression bytes. Keep the scorer's GRU unchanged. *)
+makeMoveEncoder[] := NetGraph[<|
+  "Embed" -> EmbeddingLayer[24, 256],
+  "Local" -> NetChain[{ConvolutionLayer[64, {5}, PaddingSize -> 2, Interleaving -> True], Ramp,
+    ConvolutionLayer[64, {5}, PaddingSize -> 2, Interleaving -> True], Ramp}],
+  "Mean" -> AggregationLayer[Mean, 1], "Max" -> AggregationLayer[Max, 1],
+  "Join" -> CatenateLayer[]|>,
+  {NetPort["Input"] -> "Embed" -> "Local", "Local" -> {"Mean", "Max"},
+    {"Mean", "Max"} -> "Join"}, "Input" -> {"Varying"}];
+
+makeMovePolicy[] := NetGraph[<|"StateEncoder" -> makeMoveEncoder[],
+  "Actions" -> NetChain[{LinearLayer[128], Ramp, LinearLayer[$moveSlots]}]|>,
   {NetPort["State"] -> "StateEncoder" -> "Actions"}];
 
 moveFeatures[expr_, rules_] := <|"State" -> stateFeature[expr, rules, stateLegIDs[expr, rules]]|>;
@@ -658,32 +826,396 @@ makePolicy[width_:"Varying"] := Module[{head},
 ];
 
 
-(* ::Subsection::Closed:: *)
-(*Current Model Files*)
+compactParticleUnitLayer[n_] := FunctionLayer[#/Sqrt[Total[#^2] + 1.*^-12] &, "Input" -> n];
 
-modelPaths[dir_] := With[{stem = If[$policyMethod === "ReverseMoves", "unscramble-moves", "unscramble"]},
+compactParticleStateEncoder[] := NetGraph[<|
+  "Embed" -> EmbeddingLayer[24, 256],
+  "Local" -> NetChain[{ConvolutionLayer[64, {5}, PaddingSize -> 2, Interleaving -> True], Ramp,
+    ConvolutionLayer[64, {5}, PaddingSize -> 2, Interleaving -> True], Ramp}],
+  "Mean" -> AggregationLayer[Mean, 1], "Max" -> AggregationLayer[Max, 1],
+  "MeanUnit" -> compactParticleUnitLayer[64], "MaxUnit" -> compactParticleUnitLayer[64],
+  "Join" -> CatenateLayer[]|>,
+  {NetPort["Input"] -> "Embed" -> "Local", "Local" -> {"Mean", "Max"},
+    "Mean" -> "MeanUnit", "Max" -> "MaxUnit", {"MeanUnit", "MaxUnit"} -> "Join"},
+  "Input" -> {"Varying"}];
+
+compactParticleMaskWeights[] := Table[N[Boole[147 <= j <= 149]], {64}, {j, 166}];
+
+(* Mask after the token transform, so trained biases cannot affect padding. *)
+compactParticleEncoder[tokens_:"Varying"] := NetGraph[<|
+  "Tokens" -> NetMapOperator[NetChain[{LinearLayer[64], Ramp}]],
+  "Mask" -> NetMapOperator[LinearLayer[64, "Weights" -> compactParticleMaskWeights[],
+    "Biases" -> ConstantArray[0., 64], LearningRateMultipliers -> None]],
+  "Masked" -> ThreadingLayer[Times], "Sum" -> AggregationLayer[Total, 1],
+  "Count" -> AggregationLayer[Total, 1],
+  "Mean" -> ThreadingLayer[#1/Max[#2, 1.] &], "Max" -> AggregationLayer[Max, 1],
+  "MeanUnit" -> compactParticleUnitLayer[64], "MaxUnit" -> compactParticleUnitLayer[64],
+  "Join" -> CatenateLayer[]|>,
+  {NetPort["Input"] -> {"Tokens", "Mask"}, {"Tokens", "Mask"} -> "Masked",
+    "Masked" -> {"Sum", "Max"}, "Mask" -> "Count",
+    {"Sum", "Count"} -> "Mean" -> "MeanUnit", "Max" -> "MaxUnit",
+    {"MeanUnit", "MaxUnit"} -> "Join"}, "Input" -> {tokens, 166}];
+
+compactParticlePolicy[count_, tokens_Integer?Positive] := Module[{head},
+  head = NetGraph[<|"Join" -> CatenateLayer[],
+    "Score" -> NetChain[{LinearLayer[64], Ramp, LinearLayer[1], PartLayer[1]}]|>,
+    {{NetPort["State"], NetPort["Candidate"]} -> "Join" -> "Score"},
+    "State" -> 128, "Candidate" -> 128];
+  NetGraph[<|"StateEncoder" -> compactParticleStateEncoder[],
+    "CandidateEncoder" -> NetMapOperator[compactParticleEncoder[tokens]],
+    "Scorer" -> NetMapThreadOperator[head, <|"Candidate" -> 1|>]|>,
+    {NetPort["State"] -> "StateEncoder" -> NetPort["Scorer", "State"],
+      NetPort["Candidates"] -> "CandidateEncoder" -> NetPort["Scorer", "Candidate"]},
+    "Candidates" -> {count, tokens, 166}]
+];
+compactParticlePolicy[___] := $Failed;
+
+compactParticleTrainer[count_Integer?Positive, tokens_Integer?Positive] := NetGraph[<|
+  "Policy" -> compactParticlePolicy[count, tokens],
+  "Mask" -> ThreadingLayer[If[#2 > 0., #1, -1.*^30] &],
+  "Probabilities" -> SoftmaxLayer[], "Loss" -> CrossEntropyLossLayer["Probabilities"]|>,
+  {NetPort["State"] -> NetPort["Policy", "State"],
+    NetPort["Candidates"] -> NetPort["Policy", "Candidates"],
+    {"Policy", NetPort["LegalMask"]} -> "Mask" -> "Probabilities" -> NetPort["Loss", "Input"],
+    NetPort["Target"] -> NetPort["Loss", "Target"]},
+  "Candidates" -> {count, tokens, 166}, "LegalMask" -> count, "Target" -> count];
+compactParticleTrainer[___] := $Failed;
+
+variableCompactParticlePolicy[net_NetGraph, tokens_:Automatic] := Module[{shape, tokenCount, policy},
+  shape = Lookup[Information[net, "InputPorts"], "Candidates", None];
+  If[!MatchQ[shape, {_, _Integer?Positive, 166}], Return[$Failed]];
+  tokenCount = If[tokens === Automatic, shape[[2]], tokens];
+  If[!IntegerQ[tokenCount] || tokenCount <= 0, Return[$Failed]];
+  policy = compactParticlePolicy["Varying", tokenCount];
+  NetReplacePart[policy, (# -> NetExtract[net, #] & /@ Information[net, "ArraysPositionList"])]
+];
+variableCompactParticlePolicy[___] := $Failed;
+
+
+(* ::Subsection::Closed:: *)
+(*Compact Policy Evaluation*)
+
+(* Evaluate the saved compact network arrays without the native neural runtime. *)
+compactPolicyArrays[net_NetGraph] := Module[{paths, dimensions, arrays},
+  paths = <|"Embedding" -> {"StateEncoder", "Embed", "Weights"},
+    "Conv1Weights" -> {"StateEncoder", "Local", 1, "Weights"},
+    "Conv1Biases" -> {"StateEncoder", "Local", 1, "Biases"},
+    "Conv2Weights" -> {"StateEncoder", "Local", 3, "Weights"},
+    "Conv2Biases" -> {"StateEncoder", "Local", 3, "Biases"},
+    "HiddenWeights" -> {"Scorer", "Net", "Score", 1, "Weights"},
+    "HiddenBiases" -> {"Scorer", "Net", "Score", 1, "Biases"},
+    "OutputWeights" -> {"Scorer", "Net", "Score", 3, "Weights"},
+    "OutputBiases" -> {"Scorer", "Net", "Score", 3, "Biases"}|>;
+  dimensions = <|"Embedding" -> {256, 24}, "Conv1Weights" -> {64, 24, 5},
+    "Conv1Biases" -> {64}, "Conv2Weights" -> {64, 64, 5}, "Conv2Biases" -> {64},
+    "HiddenWeights" -> {64, 274}, "HiddenBiases" -> {64},
+    "OutputWeights" -> {1, 64}, "OutputBiases" -> {1}|>;
+  arrays = Quiet[Check[Map[Developer`ToPackedArray[N[Normal[NetExtract[net, #]]]] &, paths], $Failed]];
+  If[arrays === $Failed || !AllTrue[Keys[paths],
+      Dimensions[arrays[#]] === dimensions[#] &&
+        VectorQ[Flatten[arrays[#]], NumberQ] &&
+        AllTrue[MinMax[Flatten[arrays[#]]], TrueQ[Im[#] == 0 && Abs[#] < Infinity] &] &], Return[$Failed]];
+  arrays
+];
+compactPolicyArrays[_] := $Failed;
+
+compactPortableConvolution[input_, weights_, biases_] := Module[{count, padded, output},
+  count = Length[input];
+  padded = Join[ConstantArray[0., {2, Length[First[input]]}], input,
+    ConstantArray[0., {2, Length[First[input]]}]];
+  output = Total[Table[
+    padded[[Range[count] + offset - 1]] . Transpose[weights[[All, All, offset]]],
+    {offset, 5}]];
+  Ramp[(# + biases) & /@ output]
+];
+
+compactPolicyScores[arrays_Association, input_Association] := Module[
+  {state, candidates, encoded, mean, maximum, stateVector, weights, stateProjection, hidden, scores},
+  state = Lookup[input, "State", None]; candidates = Lookup[input, "Candidates", None];
+  If[!VectorQ[state, IntegerQ] || state === {} || Min[state] < 1 || Max[state] > 256 ||
+      !MatrixQ[candidates, NumberQ] || Length[candidates] < 1 || Dimensions[candidates][[2]] =!= 146,
+    Return[$Failed]];
+  candidates = Developer`ToPackedArray[N[candidates]];
+  If[!AllTrue[MinMax[Flatten[candidates]], TrueQ[Im[#] == 0 && Abs[#] < Infinity] &], Return[$Failed]];
+  encoded = arrays["Embedding"][[state]];
+  encoded = compactPortableConvolution[encoded, arrays["Conv1Weights"], arrays["Conv1Biases"]];
+  encoded = compactPortableConvolution[encoded, arrays["Conv2Weights"], arrays["Conv2Biases"]];
+  mean = Mean[encoded]; maximum = Max /@ Transpose[encoded];
+  stateVector = Join[mean/Sqrt[Total[mean^2] + 1.*^-12],
+    maximum/Sqrt[Total[maximum^2] + 1.*^-12]];
+  weights = arrays["HiddenWeights"];
+  stateProjection = weights[[All, 1 ;; 128]] . stateVector + arrays["HiddenBiases"];
+  hidden = candidates . Transpose[weights[[All, 129 ;; 274]]];
+  hidden = Ramp[(# + stateProjection) & /@ hidden];
+  scores = hidden . First[arrays["OutputWeights"]] + First[arrays["OutputBiases"]];
+  If[VectorQ[scores, NumberQ] &&
+      AllTrue[MinMax[scores], TrueQ[Im[#] == 0 && Abs[#] < Infinity] &], scores, $Failed]
+];
+compactPolicyScores[___] := $Failed;
+
+compactParticlePolicyArrays[net_NetGraph] := Module[{paths, dimensions, arrays},
+  paths = <|"Embedding" -> {"StateEncoder", "Embed", "Weights"},
+    "Conv1Weights" -> {"StateEncoder", "Local", 1, "Weights"},
+    "Conv1Biases" -> {"StateEncoder", "Local", 1, "Biases"},
+    "Conv2Weights" -> {"StateEncoder", "Local", 3, "Weights"},
+    "Conv2Biases" -> {"StateEncoder", "Local", 3, "Biases"},
+    "TokenWeights" -> {"CandidateEncoder", "Net", "Tokens", "Net", 1, "Weights"},
+    "TokenBiases" -> {"CandidateEncoder", "Net", "Tokens", "Net", 1, "Biases"},
+    "TokenMaskWeights" -> {"CandidateEncoder", "Net", "Mask", "Net", "Weights"},
+    "TokenMaskBiases" -> {"CandidateEncoder", "Net", "Mask", "Net", "Biases"},
+    "HiddenWeights" -> {"Scorer", "Net", "Score", 1, "Weights"},
+    "HiddenBiases" -> {"Scorer", "Net", "Score", 1, "Biases"},
+    "OutputWeights" -> {"Scorer", "Net", "Score", 3, "Weights"},
+    "OutputBiases" -> {"Scorer", "Net", "Score", 3, "Biases"}|>;
+  dimensions = <|"Embedding" -> {256, 24}, "Conv1Weights" -> {64, 24, 5},
+    "Conv1Biases" -> {64}, "Conv2Weights" -> {64, 64, 5}, "Conv2Biases" -> {64},
+    "TokenWeights" -> {64, 166}, "TokenBiases" -> {64},
+    "TokenMaskWeights" -> {64, 166}, "TokenMaskBiases" -> {64},
+    "HiddenWeights" -> {64, 256}, "HiddenBiases" -> {64},
+    "OutputWeights" -> {1, 64}, "OutputBiases" -> {1}|>;
+  arrays = Quiet[Check[Map[Developer`ToPackedArray[N[Normal[NetExtract[net, #]]]] &, paths], $Failed]];
+  If[arrays === $Failed || !AllTrue[Keys[paths],
+      Dimensions[arrays[#]] === dimensions[#] &&
+        VectorQ[Flatten[arrays[#]], NumberQ] &&
+        AllTrue[MinMax[Flatten[arrays[#]]], TrueQ[Im[#] == 0 && Abs[#] < Infinity] &] &] ||
+      arrays["TokenMaskWeights"] =!= compactParticleMaskWeights[] ||
+      arrays["TokenMaskBiases"] =!= ConstantArray[0., 64], Return[$Failed]];
+  arrays
+];
+compactParticlePolicyArrays[_] := $Failed;
+
+compactParticlePolicyScores[arrays_Association, input_Association] := Module[
+  {state, candidates, dimensions, encoded, mean, maximum, stateVector, candidateVectors,
+    weights, stateProjection, hidden, scores},
+  state = Lookup[input, "State", None]; candidates = Lookup[input, "Candidates", None];
+  dimensions = Dimensions[candidates];
+  If[!VectorQ[state, IntegerQ] || state === {} || Min[state] < 1 || Max[state] > 256 ||
+      Length[dimensions] =!= 3 || dimensions[[1]] < 1 || dimensions[[2]] < 1 ||
+      dimensions[[3]] =!= 166 || !ArrayQ[candidates, 3, NumberQ], Return[$Failed]];
+  candidates = Developer`ToPackedArray[N[candidates]];
+  If[!AllTrue[MinMax[Flatten[candidates]], TrueQ[Im[#] == 0 && Abs[#] < Infinity] &], Return[$Failed]];
+  encoded = arrays["Embedding"][[state]];
+  encoded = compactPortableConvolution[encoded, arrays["Conv1Weights"], arrays["Conv1Biases"]];
+  encoded = compactPortableConvolution[encoded, arrays["Conv2Weights"], arrays["Conv2Biases"]];
+  mean = Mean[encoded]; maximum = Max /@ Transpose[encoded];
+  stateVector = Join[mean/Sqrt[Total[mean^2] + 1.*^-12],
+    maximum/Sqrt[Total[maximum^2] + 1.*^-12]];
+  candidateVectors = Map[Function[candidate, Module[{mask, values, tokenMean, tokenMax},
+    mask = Total[Transpose[candidate[[All, 147 ;; 149]]]];
+    If[!AllTrue[mask, TrueQ[# == 0. || # == 1.] &], Return[$Failed]];
+    values = Ramp[(# + arrays["TokenBiases"]) & /@
+      (candidate . Transpose[arrays["TokenWeights"]])];
+    values = MapThread[#1 #2 &, {values, mask}];
+    tokenMean = Total[values]/Max[Total[mask], 1.]; tokenMax = Max /@ Transpose[values];
+    Join[tokenMean/Sqrt[Total[tokenMean^2] + 1.*^-12],
+      tokenMax/Sqrt[Total[tokenMax^2] + 1.*^-12]]
+  ]], candidates];
+  If[!FreeQ[candidateVectors, $Failed], Return[$Failed]];
+  weights = arrays["HiddenWeights"];
+  stateProjection = weights[[All, 1 ;; 128]] . stateVector + arrays["HiddenBiases"];
+  hidden = candidateVectors . Transpose[weights[[All, 129 ;; 256]]];
+  hidden = Ramp[(# + stateProjection) & /@ hidden];
+  scores = hidden . First[arrays["OutputWeights"]] + First[arrays["OutputBiases"]];
+  If[VectorQ[scores, NumberQ] &&
+      AllTrue[MinMax[scores], TrueQ[Im[#] == 0 && Abs[#] < Infinity] &], scores, $Failed]
+];
+compactParticlePolicyScores[___] := $Failed;
+
+
+(* ::Subsection::Closed:: *)
+(*Particle-Aware Compact Features*)
+
+compactParticleFeatureWidth = 166;
+compactParticleFeatureSchema = <|
+  "Encoding" -> "ParticleRoleTokens", "Width" -> compactParticleFeatureWidth,
+  "OverviewWidth" -> 146, "TokenKinds" -> {"Overview", "LegRole", "ChainElement"},
+  "RoleCount" -> 12,
+  "Coordinates" -> {"CanonicalParticleID", "SubsetSize", "ChainPosition", "ChainLength", "ParticleCount"},
+  "MaximumExternalLegs" -> Infinity, "ParticleLabels" -> "ExistingStateLegIDs",
+  "MomentumSubsets" -> "EveryMember", "FocusedChains" -> "CompleteOrderedMomenta",
+  "Padding" -> "ZeroTokensMaskedBeforePooling", "WholeResultExpression" -> False,
+  "CandidateIndex" -> False, "LossyLocalSummaries" -> True|>;
+compactParticleFeatures::invalid = "A particle-aware legal-edit descriptor is invalid.";
+
+compactParticleToken[kind_, role_, particle_, size_, position_, length_, count_] :=
+  Join[ConstantArray[0., 146], compactOneHot[kind, {"Overview", "LegRole", "ChainElement"}],
+    compactOneHot[role, Range[12]], N[{particle, size, position, length, count}]];
+
+compactParticleLegTokens[leg_, kind_, role_, position_, length_, ids_] := Module[{members},
+  members = Sort[DeleteDuplicates[compactLegList[leg]]];
+  If[members === {}, Return[{compactParticleToken[kind, role, 0, 0, position, length, Length[ids]]}]];
+  If[!AllTrue[members, KeyExistsQ[ids, #] &], Return[$Failed]];
+  compactParticleToken[kind, role, ids[#], Length[members], position, length, Length[ids]] & /@ members
+];
+
+(* Local statistics remain small; particle membership and chain order live in
+   separate tokens, not in a fixed four- or five-particle one-hot vector. *)
+compactParticleOverview[expr_, rules_, candidate_, ids_, terms_, addresses_] :=
+  Block[{compactLegBits, compactLegVector},
+    compactLegBits[_, _] := ConstantArray[0., 4];
+    compactLegVector[leg_, labels_, count_] := Module[{members},
+      members = Sort[DeleteDuplicates[Lookup[labels, #, #] & /@ compactLegList[leg]]];
+      Join[ConstantArray[0., 4], If[members === {}, ConstantArray[0., 3],
+        {compactCount[Length[members]], N[Min[members]/Max[1, count]], N[Max[members]/Max[1, count]]}]]
+    ];
+    compactActionVector[expr, rules, candidate, ids, terms, addresses]
+  ];
+
+compactParticleAction[expr_, rules_, candidate_, ids_, terms_, addresses_] := Module[
+  {overview, site, name, chains = {}, termChains, expanded = None, conserved = None,
+    legs, roles, tokens, parts, xs, momenta, left, right, index, position},
+  overview = compactParticleOverview[expr, rules, candidate, ids, terms, addresses];
+  If[overview === $Failed, Return[$Failed]];
+  name = candidate["Name"]; site = Lookup[candidate, "Site", {}];
+  legs = Lookup[candidate, "Legs", {}];
+  If[Length[site] === 3,
+    termChains = Select[chainsIn[terms[[site[[1]]]]], validChainQ];
+    If[MemberQ[{"ChainSquare", "Anticommutation"}, name], termChains = DeleteDuplicates[termChains]];
+    chains = {termChains[[site[[2]]]]};
+    If[name === "ChainSquare" && Lookup[candidate, "Direction", ""] === "Expand", expanded = site[[3]]];
+    If[name === "MomentumConservation",
+      conserved = compactMomLeg[(List @@ First[chains])[[site[[3]] + 1]]]],
+    If[name === "Schouten", chains = Lookup[candidate, "Chains", {}]];
+    conserved = Lookup[candidate, "Momentum", None]
+  ];
+  roles = {expanded, conserved, If[Length[legs] >= 1, legs[[1]], None],
+    If[Length[legs] >= 2, legs[[2]], None]};
+  tokens = {Join[overview, compactOneHot["Overview", {"Overview", "LegRole", "ChainElement"}],
+    ConstantArray[0., 12], N[{0, 0, 0, 0, Length[ids]}]]};
+  Do[
+    parts = compactParticleLegTokens[roles[[index]], "LegRole", index, 0, 0, ids];
+    If[parts === $Failed, Return[$Failed]]; tokens = Join[tokens, parts],
+    {index, Length[roles]}];
+  Do[
+    xs = List @@ chains[[index]]; momenta = Drop[Rest[xs], -1];
+    left = spinorLeg[First[xs]]; right = spinorLeg[Last[xs]];
+    parts = Join[
+      compactParticleLegTokens[left, "ChainElement", 5 + 3 (index - 1), 0, Length[momenta], ids],
+      compactParticleLegTokens[right, "ChainElement", 6 + 3 (index - 1), Length[momenta] + 1, Length[momenta], ids]];
+    Do[
+      parts = Join[parts, compactParticleLegTokens[compactMomLeg[momenta[[position]]],
+        "ChainElement", 7 + 3 (index - 1), position, Length[momenta], ids]],
+      {position, Length[momenta]}];
+    If[!FreeQ[parts, $Failed], Return[$Failed]]; tokens = Join[tokens, parts],
+    {index, Length[chains]}];
+  If[!MatrixQ[tokens, NumberQ] || Dimensions[tokens][[2]] =!= compactParticleFeatureWidth ||
+      !AllTrue[Flatten[tokens], TrueQ[Im[#] == 0 && Abs[#] < Infinity] &], Return[$Failed]];
+  N[tokens]
+];
+
+compactParticleFeatures[expr_, rules_, candidates_List] := Module[{ids, terms, addresses, descriptors, length},
+  If[candidates === {}, Return[$Failed]];
+  ids = stateLegIDs[expr, rules]; terms = monomialsOf[expr];
+  addresses = AssociationThread[terms, Range[Length[terms]]];
+  descriptors = compactParticleAction[expr, rules, #, ids, terms, addresses] & /@ candidates;
+  If[!FreeQ[descriptors, $Failed], Message[compactParticleFeatures::invalid]; Return[$Failed]];
+  length = Max[Length /@ descriptors];
+  Developer`ToPackedArray[PadRight[#, {length, compactParticleFeatureWidth}, 0.] & /@ descriptors]
+];
+
+
+(* ::Subsection::Closed:: *)
+(*Model Files*)
+
+(* Pin the legal identities and encodings, not unrelated notebook or training code. *)
+compactSourceSection[text_String, first_String, last_String] := Module[
+  {lines, starts, ends, body},
+  lines = StringSplit[StringReplace[text, "\r\n" -> "\n"], "\n", All];
+  starts = Flatten[Position[lines, first, {1}]];
+  ends = Flatten[Position[lines, last, {1}]];
+  If[Length[starts] =!= 1 || Length[ends] =!= 1 || First[starts] >= First[ends], Return[$Failed]];
+  body = StringTrim[StringRiffle[Take[lines, {First[starts] + 1, First[ends] - 1}], "\n"]];
+  If[StringEndsQ[body, "(* ::Subsection::Closed:: *)"],
+    body = StringTrim[StringDrop[body, -StringLength["(* ::Subsection::Closed:: *)"]]]];
+  body
+];
+compactCoreSourceFingerprint[source_String] := Module[{blocks},
+  blocks = <|
+    "LegalMath" -> compactSourceSection[source, "(*Generalized Schouten Identities*)", "(*Policy Settings*)"],
+    "LegalEditsAndStateEncoding" -> compactSourceSection[source, "(*Legal Candidate Edits*)", "(*Compact Action Features*)"],
+    "CompactActionEncoding" -> compactSourceSection[source, "(*Compact Action Features*)", "(*Neural Network*)"]|>;
+  If[MemberQ[Values[blocks], $Failed], $Failed, IntegerString[Hash[blocks, "SHA256"], 16, 64]]
+];
+$compactSourceFingerprint = Module[{stream, source},
+  stream = OpenRead[FileNameJoin[{$modelDirectory, "unscrambling.wl"}], BinaryFormat -> True];
+  source = FromCharacterCode[BinaryReadList[stream, "Byte"], "UTF8"]; Close[stream];
+  If[StringQ[source], compactCoreSourceFingerprint[source], $Failed]
+];
+compactModelCompatibleQ[meta_Association] :=
+  Lookup[meta, "Encoding", None] === "StateUTF8AndNumericActions" &&
+  Lookup[meta, "Architecture", None] === "CompactReverseMoveActions" &&
+  Lookup[meta, "DescriptorEncoding", None] === "CompactStructuredActions" &&
+  Lookup[meta, "DescriptorFeatureWidth", None] === compactActionFeatureWidth &&
+  Lookup[meta, "CompactFeatureSchema", None] === compactActionFeatureSchema &&
+  Lookup[meta, "Objective", None] === "LegalMoveCrossEntropy" &&
+  Lookup[meta, "ReadoutNormalization", None] === "SeparateMeanMaxL2" &&
+  Lookup[meta, "ReadoutSquaredNormEpsilon", None] === 1.*^-12 &&
+  Lookup[meta, "RuntimeCoreSourceEncoding", None] === "SectionedLegalMathAndCompactActions" &&
+  StringQ[$compactSourceFingerprint] &&
+  Lookup[meta, "RuntimeCoreSourceSHA256", None] === $compactSourceFingerprint;
+
+$compactDescriptorEncoding = None;
+$compactParticleSourceFingerprint = Module[{stream, source, tokens},
+  stream = OpenRead[FileNameJoin[{$modelDirectory, "unscrambling.wl"}], BinaryFormat -> True];
+  source = FromCharacterCode[BinaryReadList[stream, "Byte"], "UTF8"]; Close[stream];
+  tokens = compactSourceSection[source, "(*Particle-Aware Compact Features*)", "(*Model Files*)"];
+  If[StringQ[$compactSourceFingerprint] && StringQ[tokens],
+    IntegerString[Hash[{$compactSourceFingerprint, tokens}, "SHA256"], 16, 64], $Failed]
+];
+compactParticleModelCompatibleQ[meta_Association] :=
+  Lookup[meta, "Encoding", None] === "StateUTF8AndNumericActions" &&
+  Lookup[meta, "Architecture", None] === "CompactParticleActions" &&
+  Lookup[meta, "DescriptorEncoding", None] === "ParticleRoleTokens" &&
+  Lookup[meta, "DescriptorFeatureWidth", None] === compactParticleFeatureWidth &&
+  Lookup[meta, "CompactFeatureSchema", None] === compactParticleFeatureSchema &&
+  Lookup[meta, "Objective", None] === "LegalMoveCrossEntropy" &&
+  Lookup[meta, "ReadoutNormalization", None] === "SeparateMeanMaxL2" &&
+  Lookup[meta, "ReadoutSquaredNormEpsilon", None] === 1.*^-12 &&
+  IntegerQ[Lookup[meta, "NativeTokenCount", None]] && meta["NativeTokenCount"] > 0 &&
+  Lookup[meta, "RuntimeEvaluation", None] === "PortableVariableParticleTokens" &&
+  Lookup[meta, "RuntimeCoreSourceEncoding", None] === "SectionedLegalMathAndParticleTokens" &&
+  StringQ[$compactParticleSourceFingerprint] &&
+  Lookup[meta, "RuntimeCoreSourceSHA256", None] === $compactParticleSourceFingerprint;
+
+modelPaths[dir_] := With[{stem = Switch[$policyMethod,
+    "CompactActions", "unscramble-compact", "ReverseMoves", "unscramble-moves", _, "unscramble"]},
   <|"Net" -> FileNameJoin[{dir, stem <> ".wlnet"}],
     "Metadata" -> FileNameJoin[{dir, stem <> ".m"}]|>];
 resolveModelDirectory[Automatic] := $modelDirectory;
 resolveModelDirectory[dir_String] := ExpandFileName[dir];
 
-loadUnscrambleModel[dir_] := Module[{paths, meta, net},
+loadUnscrambleModel[dir_] := Module[{paths, meta, net, arrays = None, encoding = None, ports},
   If[$loadedModelDirectory === dir && $loadedPolicyMethod === $policyMethod &&
+      ($policyMethod =!= "CompactActions" || AssociationQ[$compactWeights]) &&
       MatchQ[$modelNet, _NetChain | _NetGraph], Return[True]];
   paths = modelPaths[dir];
   If[!AllTrue[Values[paths], FileExistsQ], Return[False]];
   meta = Get[paths["Metadata"]];
-  If[!AssociationQ[meta] ||
-      Lookup[meta, "Encoding", None] =!= "SplitFullFormUTF8" ||
-      !MemberQ[If[$policyMethod === "ReverseMoves", {"ReverseMoveSlots"},
-        {"SharedStateGRU", "MaskedSharedStateGRU"}], Lookup[meta, "Architecture", None]], Return[False]];
+  If[!AssociationQ[meta], Return[False]];
+  If[$policyMethod === "CompactActions",
+    encoding = Lookup[meta, "DescriptorEncoding", None];
+    If[!If[encoding === "ParticleRoleTokens", compactParticleModelCompatibleQ[meta],
+        compactModelCompatibleQ[meta]], Return[False]],
+    If[Lookup[meta, "Encoding", None] =!= "SplitFullFormUTF8" ||
+        !MemberQ[If[$policyMethod === "ReverseMoves", {"ReverseMoveSlots"},
+          {"SharedStateGRU", "MaskedSharedStateGRU"}], Lookup[meta, "Architecture", None]], Return[False]]];
   If[$policyMethod === "ReverseMoves" &&
       (Lookup[meta, "MoveSlots", None] =!= $moveSlots ||
+       Lookup[meta, "Objective", None] =!= "LegalMoveCrossEntropy" ||
        Lookup[meta, "MoveSourceHash", None] =!= FileHash[FileNameJoin[{$modelDirectory, "unscrambling.wl"}], "SHA256"]),
     Return[False]];
   net = Import[paths["Net"]];
   If[!MatchQ[net, _NetChain | _NetGraph], Return[False]];
+  If[$policyMethod === "CompactActions",
+    ports = <|"State" -> {"Varying", Restricted["Integer", 256]},
+      "Candidates" -> If[encoding === "ParticleRoleTokens",
+        {"Varying", meta["NativeTokenCount"], compactParticleFeatureWidth}, {"Varying", compactActionFeatureWidth}]|>;
+    If[Information[net, "InputPorts"] =!= ports ||
+        Information[net, "OutputPorts"] =!= <|"Output" -> {"Varying"}|>, Return[False]];
+    arrays = If[encoding === "ParticleRoleTokens", compactParticlePolicyArrays[net], compactPolicyArrays[net]];
+    If[arrays === $Failed, Return[False]]];
   $modelNet = net; $loadedModelDirectory = dir; $loadedPolicyMethod = $policyMethod;
+  $compactWeights = arrays; $compactDescriptorEncoding = encoding;
   True
 ];
 
@@ -691,12 +1223,21 @@ loadUnscrambleModel[dir_] := Module[{paths, meta, net},
 (* ::Subsection::Closed:: *)
 (*Candidate Scoring*)
 
-scoreCandidates[expr_, rules_, cands_] := Module[{scores},
-  If[$policyMethod === "ReverseMoves",
+scoreCandidates[expr_, rules_, cands_] := Module[{scores, features},
+  Which[
+    $policyMethod === "CompactActions",
+    features = If[$compactDescriptorEncoding === "ParticleRoleTokens",
+      compactParticleFeatures[expr, rules, cands], compactActionFeatures[expr, rules, cands]];
+    If[features === $Failed, Return[$Failed]];
+    scores = If[$compactDescriptorEncoding === "ParticleRoleTokens", compactParticlePolicyScores, compactPolicyScores][$compactWeights,
+      <|"State" -> stateFeature[expr, rules, stateLegIDs[expr, rules]],
+        "Candidates" -> Developer`ToPackedArray[features]|>],
+    $policyMethod === "ReverseMoves",
     If[Length[cands] > $moveSlots, Message[TrainUnscrambleNet::slots, Length[cands], $moveSlots]; Return[$Failed]];
     scores = Flatten[$modelNet[moveFeatures[expr, rules], TargetDevice -> "CPU"]];
     If[Length[scores] =!= $moveSlots, Return[$Failed]];
     scores = Take[scores, Length[cands]],
+    True,
     scores = Flatten[$modelNet[groupFeatures[expr, rules, cands], TargetDevice -> "CPU"]]];
   If[Length[scores] =!= Length[cands] || !VectorQ[scores, NumericQ], $Failed, scores]
 ];
@@ -705,7 +1246,7 @@ selectCandidate[expr_, rules_, sample_] := Module[{cands, scores, probs, idx},
   cands = legalMoves[expr, rules];
   scores = scoreCandidates[expr, rules, cands];
   If[scores === $Failed, Return[$Failed]];
-  probs = Exp[(scores - Max[scores])/0.2];
+  probs = Exp[(scores - Max[scores])/If[MemberQ[{"ReverseMoves", "CompactActions"}, $policyMethod], 1., 0.2]];
   idx = If[TrueQ[sample], RandomChoice[probs -> Range[Length[cands]]], First[Ordering[scores, -1]]];
   <|"Candidate" -> cands[[idx]], "Index" -> idx, "Count" -> Length[cands], "Score" -> scores[[idx]]|>
 ];
@@ -759,8 +1300,8 @@ trainingRows[expr_, rules_, target_] := Module[{cands, labels, canonicalTarget =
   labels = Boole[samePoly[applyCandidate[expr, #], canonicalTarget]] & /@ cands;
   If[!MemberQ[labels, 1], Return[{}]];
   If[$policyMethod === "ReverseMoves", Return[{Join[moveFeatures[expr, rules],
-    <|"Target" -> List /@ N[PadRight[labels, $moveSlots]],
-      "Weights" -> List /@ PadRight[balanceWeights[labels], $moveSlots, 0.],
+    <|"Target" -> N[PadRight[labels, $moveSlots]/Total[labels]],
+      "LegalMask" -> N[PadRight[ConstantArray[1, Length[cands]], $moveSlots]],
       "ActionCount" -> Length[cands]|>]}]];
   {Join[groupFeatures[expr, rules, cands], <|"Target" -> List /@ N[labels],
     "Weights" -> List /@ balanceWeights[labels]|>]}
@@ -789,7 +1330,20 @@ TrainUnscrambleNet::mask = "MaskPadding must be True or False.";
 TrainUnscrambleNet::method = "PolicyMethod must be CandidateScorer or ReverseMoves. MaskPadding applies only to CandidateScorer.";
 TrainUnscrambleNet::slots = "The legal move list has `1` entries, exceeding the ReverseMoves limit of `2`. No moves were truncated.";
 
-makeTrainingPolicy[width_:"Varying"] := NetGraph[<|"Policy" -> makePolicy[width],
+(* Replace illegal logits before softmax so they receive no probability or
+   gradient. Targets share probability among all equivalent reverse moves. *)
+makeMoveTrainingPolicy[] := NetGraph[<|"Policy" -> makeMovePolicy[],
+  "Mask" -> ThreadingLayer[If[#2 > 0., #1, -1.*^30] &],
+  "Probabilities" -> SoftmaxLayer[], "Loss" -> CrossEntropyLossLayer["Probabilities"]|>,
+  {NetPort["State"] -> NetPort["Policy", "State"],
+    {"Policy", NetPort["LegalMask"]} -> "Mask" -> "Probabilities" -> NetPort["Loss", "Input"],
+    NetPort["Target"] -> NetPort["Loss", "Target"]},
+  "LegalMask" -> $moveSlots, "Target" -> $moveSlots];
+
+makeTrainingPolicy[width_:"Varying"] := If[$policyMethod === "ReverseMoves",
+  makeMoveTrainingPolicy[], makeScorerTrainingPolicy[width]];
+
+makeScorerTrainingPolicy[width_:"Varying"] := NetGraph[<|"Policy" -> makePolicy[width],
   "WeightedPrediction" -> ThreadingLayer[Times], "WeightedTarget" -> ThreadingLayer[Times],
   "Loss" -> MeanSquaredLossLayer[]|>, Join[{
   NetPort["State"] -> NetPort["Policy", "State"],
@@ -836,7 +1390,14 @@ reportTrainingProgress[progress_Association, total_] := Module[{status, done, el
 
 $trainingProgressFile = None;
 
-trainCandidateNetwork[rows_, rounds_] := Module[{trained, batch = prepareTrainingBatch[rows], total, callback},
+moveTrainingAccuracy[net_, rows_] := Module[{correct, scores},
+  correct = Count[Map[Function[row,
+    scores = Take[Flatten[net[KeyTake[row, {"State"}], TargetDevice -> $trainingTargetDevice]], row["ActionCount"]];
+    TrueQ[row["Target"][[First[Ordering[scores, -1]]]] > 0]], rows], True];
+  <|"Correct" -> correct, "States" -> Length[rows], "Accuracy" -> N[correct/Length[rows]]|>
+];
+
+trainCandidateNetwork[rows_, rounds_] := Module[{trained, batch = prepareTrainingBatch[rows], total, callback, policy, accuracy},
   total = rounds Ceiling[Length[rows]/$trainingBatchSize];
   callback = Function[progress, reportTrainingProgress[progress, total]];
   Print["NN training: ", Length[rows], " states; ", rounds, " rounds; batch size ",
@@ -851,8 +1412,13 @@ trainCandidateNetwork[rows_, rounds_] := Module[{trained, batch = prepareTrainin
       {callback, "Interval" -> Quantity[1, "Rounds"]}},
     Method -> {"ADAM", "LearningRate" -> 0.001}];
   Print[If[MatchQ[trained, _NetGraph], "NN training finished.", "NN training failed."]];
-  If[MatchQ[trained, _NetGraph],
-    variableWidthPolicy[NetExtract[trained, "Policy"]], $Failed]
+  If[!MatchQ[trained, _NetGraph], Return[$Failed]];
+  policy = variableWidthPolicy[NetExtract[trained, "Policy"]];
+  If[$policyMethod === "ReverseMoves",
+    accuracy = moveTrainingAccuracy[policy, rows];
+    Print["Training move accuracy: ", accuracy["Correct"], "/", accuracy["States"],
+      " (", progressNumber[100. accuracy["Accuracy"]], "%). This is training data, not validation."]];
+  policy
 ];
 
 (* Independent deterministic jobs; only the coordinator writes model files. *)
@@ -1123,10 +1689,11 @@ runTrainingPipeline[amplitudes_, jobs_, workers_, settings_, cache_, fingerprint
   If[!DirectoryQ[dir], CreateDirectory[dir, CreateIntermediateDirectories -> True]];
   paths = modelPaths[dir];
   If[Export[paths["Net"], net] === $Failed, Message[TrainUnscrambleNet::save, dir]; Return[$Failed]];
-  Put[<|"Encoding" -> "SplitFullFormUTF8", "Architecture" -> policyArchitecture[],
+  Put[Join[<|"Encoding" -> "SplitFullFormUTF8", "Architecture" -> policyArchitecture[],
     "MoveSlots" -> $moveSlots,
     "MoveSourceHash" -> FileHash[FileNameJoin[{$modelDirectory, "unscrambling.wl"}], "SHA256"],
-    "OnShellChannels" -> $onShellChannels, "MomentumConservation" -> $useMomentumConservation|>, paths["Metadata"]];
+    "OnShellChannels" -> $onShellChannels, "MomentumConservation" -> $useMomentumConservation|>,
+    If[$policyMethod === "ReverseMoves", <|"Objective" -> "LegalMoveCrossEntropy"|>, <||>]], paths["Metadata"]];
   validationJobs = makeValidationJobs[amplitudes, steps, count, hold, episode];
   Put[<|"Status" -> "Model saved; validation pending", "ModelPath" -> paths["Net"],
     "TrainingSeconds" -> trainingSeconds, "TrainingCPUSeconds" -> trainingCPU,
@@ -1179,7 +1746,10 @@ trainingWorkEstimate[rows_] := Module[{counts, widths, width, stateBytes, edits}
 (* ::Subsection::Closed:: *)
 (*Unscrambling and Trace*)
 
-UnscrambleSpinorAmplitudes::nomodel = "No compatible model for the selected PolicyMethod found in `1`. Train with TrainUnscrambleNet using the same PolicyMethod.";
+UnscrambleSpinorAmplitudes::nomodel = "No compatible model files for the selected model were found in `1`.";
+UnscrambleSpinorAmplitudes::model = "Model must be Automatic, CandidateScorer, or CompactActions (string values).";
+UnscrambleSpinorAmplitudes::method = "PolicyMethod must be CandidateScorer, ReverseMoves, or CompactActions (string values).";
+UnscrambleSpinorAmplitudes::directory = "ModelDirectory must be Automatic or a directory path string.";
 UnscrambleSpinorAmplitudes::scores = "The model did not return one numeric score per candidate.";
 UnscrambleSpinorAmplitudes::options = "MaxSteps must be a nonnegative integer; Attempts and MaxStagnantSteps must be positive integers; TimeLimit must be a positive number of seconds.";
 
@@ -1193,7 +1763,7 @@ runUnscramble[{rules_List, amplitude_}, record_, maxSteps_, attempts_, dir_] := 
   If[!loaded, Message[UnscrambleSpinorAmplitudes::nomodel, dir];
     Return[<|"Result" -> {rules, amplitude}, "Trace" -> {}, "Checkpoints" -> {}, "ModelLoaded" -> False|>]];
   Do[
-    before = checkpoint; trial = checkpoint; reason = "StepLimit";
+    before = checkpoint; trial = checkpoint; stagnant = 0; reason = "StepLimit";
     Do[
       selection = selectCandidate[trial, rules, attempt > 1];
       If[selection === $Failed, Message[UnscrambleSpinorAmplitudes::scores]; failed = True; reason = "ScoringFailed"; Break[]];
@@ -1212,7 +1782,7 @@ runUnscramble[{rules_List, amplitude_}, record_, maxSteps_, attempts_, dir_] := 
     accepted = expressionComplexity[checkpoint] < expressionComplexity[before];
     If[TrueQ[record], AppendTo[checkpoints, <|"Attempt" -> attempt, "Before" -> before,
       "Trial" -> trial, "Accepted" -> accepted, "After" -> checkpoint|>]];
-    If[failed || stagnant >= $maxStagnantSteps, Break[]], {attempt, attempts}
+    If[failed, Break[]], {attempt, attempts}
   ], $timeLimit, reason = "TimeLimit"];
   <|"PolicyMethod" -> $policyMethod, "Result" -> {rules, checkpoint}, "Trace" -> history, "Checkpoints" -> checkpoints,
     "ModelLoaded" -> loaded, "ScoringFailed" -> failed, "TerminationReason" -> reason,
@@ -1223,8 +1793,13 @@ configuredRun[pair:{_List, _}, record_, OptionsPattern[UnscrambleTrace]] := Bloc
   {$onShellChannels = normalizeOnShellChannels[OptionValue["OnShellChannels"]],
     $useMomentumConservation = OptionValue["MomentumConservation"],
     $maxStagnantSteps = OptionValue["MaxStagnantSteps"], $timeLimit = OptionValue["TimeLimit"],
-    $policyMethod = OptionValue["PolicyMethod"]},
-  If[!MemberQ[{"CandidateScorer", "ReverseMoves"}, $policyMethod], Message[TrainUnscrambleNet::method]; Return[$Failed]];
+    $policyMethod = Switch[OptionValue["Model"], Automatic, OptionValue["PolicyMethod"],
+      "CandidateScorer" | "Current", "CandidateScorer", "CompactActions", "CompactActions", _, $Failed]},
+  If[$policyMethod === $Failed, Message[UnscrambleSpinorAmplitudes::model]; Return[$Failed]];
+  If[!MemberQ[{"CandidateScorer", "ReverseMoves", "CompactActions"}, $policyMethod],
+    Message[UnscrambleSpinorAmplitudes::method]; Return[$Failed]];
+  If[!MatchQ[OptionValue["ModelDirectory"], Automatic | _String],
+    Message[UnscrambleSpinorAmplitudes::directory]; Return[$Failed]];
   If[!IntegerQ[OptionValue["MaxSteps"]] || OptionValue["MaxSteps"] < 0 ||
       !IntegerQ[OptionValue["Attempts"]] || OptionValue["Attempts"] < 1 ||
       !IntegerQ[$maxStagnantSteps] || $maxStagnantSteps < 1 ||
@@ -1233,9 +1808,10 @@ configuredRun[pair:{_List, _}, record_, OptionsPattern[UnscrambleTrace]] := Bloc
   runUnscramble[pair, record, OptionValue["MaxSteps"], OptionValue["Attempts"],
     resolveModelDirectory[OptionValue["ModelDirectory"]]]
 ];
-UnscrambleTrace[pair:{_List, _}, opts:OptionsPattern[]] := configuredRun[pair, True, opts];
+UnscrambleTrace[pair:{_List, _}, opts:OptionsPattern[]] :=
+  configuredRun[pair, True, opts, Sequence @@ Options[UnscrambleTrace]];
 UnscrambleSpinorAmplitudes[pair:{_List, _}, opts:OptionsPattern[]] := Module[{result},
-  result = configuredRun[pair, False, opts];
+  result = configuredRun[pair, False, opts, Sequence @@ Options[UnscrambleSpinorAmplitudes]];
   If[AssociationQ[result], result["Result"], $Failed]
 ];
 

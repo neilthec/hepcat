@@ -23,7 +23,7 @@ def main():
     tests = ["schouten-tests.wl", "candidate-policy-tests.wl", "candidate-training-tests.wl",
              "notebook-scrambling-tests.wl", "inference-limits-tests.wl", "shared-state-tests.wl",
              "training-pipeline-tests.wl", "training-summary-tests.wl", "diagram-unscramble-tests.wl",
-             "interior-chain-tests.wl"]
+             "interior-chain-tests.wl", "particle-compact-tests.wl"]
     if args.parallel:
         if args.timeout < 150:
             parser.error("--parallel needs --timeout >= 150 to allow worker startup and cleanup")

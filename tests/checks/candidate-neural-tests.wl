@@ -16,9 +16,9 @@ If[!MatchQ[trained, _NetChain | _NetGraph], Quit[1]];
 values = trained[#, TargetDevice -> "CPU"] & /@ inputs;
 Print[<|"VariableLengthInference" -> values, "Training" -> Head[trained]|>];
 If[Dimensions /@ values =!= {{2, 1}, {3, 1}} || !VectorQ[Flatten[values], NumericQ], Quit[1]];
-Print["Loading the current model from the default notebook directory"];
+Print["Loading the candidate scorer model from the default notebook directory"];
 If[!Unscrambling`Private`loadUnscrambleModel[
     Unscrambling`Private`resolveModelDirectory[Automatic]], Quit[1]];
-currentScores = Unscrambling`Private`$modelNet[First[inputs], TargetDevice -> "CPU"];
-Print[<|"CurrentModelScores" -> currentScores|>];
-Quit[If[Dimensions[currentScores] === {2, 1} && VectorQ[Flatten[currentScores], NumericQ], 0, 1]];
+candidateScores = Unscrambling`Private`$modelNet[First[inputs], TargetDevice -> "CPU"];
+Print[<|"CandidateScorerModelScores" -> candidateScores|>];
+Quit[If[Dimensions[candidateScores] === {2, 1} && VectorQ[Flatten[candidateScores], NumericQ], 0, 1]];

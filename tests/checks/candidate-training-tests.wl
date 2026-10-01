@@ -43,7 +43,7 @@ Block[{Unscrambling`Private`trainCandidateNetwork, Unscrambling`Private`scoreCan
     NumberQ[#] && # >= 0 &]];
   check["reverse labels collected", report["ReverseSteps"] > 0];
   check["holdout executed", report["HoldoutScrambles"] === 1];
-  check["saved current net", FileExistsQ[report["ModelPath"]]];
+  check["saved candidate scorer net", FileExistsQ[report["ModelPath"]]];
   Unscrambling`Private`$modelNet = None; Unscrambling`Private`$loadedModelDirectory = None;
   check["model reload", Unscrambling`Private`loadUnscrambleModel[temp]];
   trace = UnscrambleTrace[pair, "ModelDirectory" -> temp, "MaxSteps" -> 1, "Attempts" -> 1,

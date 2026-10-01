@@ -9,10 +9,14 @@
   24 label permutations by default (3,552 checks). Set
   `particlePermutations = {Range[4]}` for identity-only runs. A permutation maps
   old labels to new labels in inputs, mass rules, and references together.
+  Set `unscrambleModel` at the top to `"CandidateScorer"` or `"CompactActions"`
+  to select the network for all diagrams, channel sums, and permutations.
 - `unscrambling.wl`: the complete package, with foldable sections for identities,
   candidates, encoding, neural scoring, training, and inference.
-- `unscramble.wlnet` and `unscramble.m`: the current network and metadata.
+- `unscramble.wlnet` and `unscramble.m`: the candidate scorer network and metadata.
   Training replaces these files by default. Git keeps their history.
+- `unscramble-compact.wlnet` and `unscramble-compact.m`: the new compact
+  legal-action network and metadata, kept separately for comparison.
 - `train-unscrambling.nb`: training parameters and corpus selection.
 - `training-amplitudes.wl`: the reference corpus copied from both SM notebooks,
   with external mass rules and source references.
@@ -36,11 +40,72 @@ trace["Checkpoints"]
 trace["TerminationReason"]
 ```
 
+Choose either model explicitly:
+
+```wolfram
+UnscrambleSpinorAmplitudes[pair, "Model" -> "CandidateScorer"]
+UnscrambleSpinorAmplitudes[pair, "Model" -> "CompactActions"]
+UnscrambleTrace[pair, "Model" -> "CompactActions"]
+```
+
+`"CandidateScorer"` scores legal edits using the original expression and their
+symbolic before/after edit fragments. `"CompactActions"` uses the new network
+trained on reverse scramble trajectories. The compact network reads each state
+once and scores legal edits without the state-only predictor's 512-action limit.
+New training uses variable-length numerical edit tokens: every member of a
+momentum subset and every ordered momentum in the focused chains is represented,
+including particle 5. There is no fixed external-particle ceiling. Arbitrary
+integer labels are normalized consistently with the state encoding, and zero
+padding is masked before pooling. This removes a representation restriction;
+it does not establish that a trained model generalizes to unseen higher-point
+amplitudes.
+
+The installed compact weights now use particle tokens. They are a short,
+fresh-weight pilot trained for 20 rounds on 187 expression states, not a
+replacement quality benchmark for the longer four-point training. Reload the
+package after replacing weights. Older four-point compact weights remain
+loadable with their original 146-number descriptors through `"ModelDirectory"`;
+reloading them does not change their encoding. Both formats use the same
+`"CompactActions"` selector and filenames.
+Metadata selects the appropriate encoder and checks the legal-identity and
+encoding source sections for compatibility.
+Wolfram's compiled checkpoint has a fixed token axis for training, recorded as
+`NativeTokenCount`. Everyday particle-token inference uses the shared saved
+weights with variable token and action counts; it does not truncate to that
+training shape. Native/portable agreement is also checked with enlarged padding.
+Compact inference evaluates the saved weights using packed CPU matrix
+operations, avoiding the native convolution runtime that stalled on this Mac.
+The numerical path was checked against the original server network.
+
+`training-amplitudes.wl` contains the 195 original notebook references plus
+48 synthetic five-point algebraic fixtures. The added examples span six mass
+families and eight templates: bracket products, one- to three-momentum chains,
+dot-product sums, and internal momentum chains/squares. They are identity
+training fixtures, not assertions about physical Standard Model amplitudes.
+Their five external labels all occur in the expressions; optional internal
+on-shell channel rules are explicit. Existing particle-permutation augmentation
+also applies to these examples.
+
+The package default remains `"Model" -> Automatic`, which preserves the
+existing `"PolicyMethod"` option. An explicit model name takes precedence over
+`"PolicyMethod"`. `"ModelDirectory"` works with either choice. There is no
+automatic fallback or ensemble, and switching models loads the selected
+weights even within the same Mathematica session.
+
+The Load cell in `unscrambling.nb` sets `unscrambleModel = "CompactActions"`
+for its experiments. Change that line to `"CandidateScorer"` and reevaluate
+the cell to compare. `SetOptions` can also set either function's default independently:
+
+```wolfram
+SetOptions[UnscrambleSpinorAmplitudes, "Model" -> "CompactActions"];
+SetOptions[UnscrambleTrace, "Model" -> "CompactActions"];
+```
+
 Input and output are `{massRules, amplitude}`. Inference retains every strict
 complexity improvement. Defaults are `"MaxSteps" -> 12`, `"Attempts" -> 5`,
 `"MaxStagnantSteps" -> 3`, and `"TimeLimit" -> 60`. The first attempt is greedy;
-later attempts sample scores. Stagnation carries across attempts and resets on
-improvement. Initial normalization precedes the time budget. Wolfram's internal
+later attempts sample scores. Stagnation resets at the start of each attempt and
+on improvement. Initial normalization precedes the time budget. Wolfram's internal
 time constraint cannot reliably interrupt a stuck native library.
 
 ## Identities and Network
@@ -61,7 +126,7 @@ Reverse square insertion uses nonzero-mass external legs at the start of a
 chain, and only when that chain has no adjacent repeated momenta. This bounds
 the inverse sites and avoids division by zero. Anticommutation reverses through
 another swap plus cancellation. Scrambling and inference share these moves;
-training still checks that each reverse target is reachable. The current model
+training still checks that each reverse target is reachable. The candidate scorer
 can score the new serialized edits, but has not been trained on these move
 types yet. Retraining is required to learn their use; old generation caches
 are invalidated by the source fingerprint. Search limits are unchanged.
@@ -78,7 +143,7 @@ rules. `"MomentumConservation" -> True` enables momentum conservation. Use
 matching physical assumptions for training and inference. Disabling on-shell
 conditions changes legal identities, not just performance.
 
-The shared-state network encodes the full expression, mass rules, and conditions
+The candidate scorer encodes the full expression, mass rules, and conditions
 once, then scores each encoded edit against that state. UTF-8 FullForm encoding
 preserves heads, argument order, coefficients, denominators, powers, and spin
 indices. Particle labels are normalized only in particle positions. There is
@@ -95,7 +160,7 @@ are supported, but generalization must still be measured.
 candidate GRU. Reserved token 257 leaves the hidden state unchanged, before and
 after training. Its fixed mask is not learned. This mode requires retraining;
 it does not modify existing models, which remain loadable. The metadata records
-the encoder architecture in the same current model files.
+the encoder architecture in `unscramble.wlnet` and `unscramble.m`.
 
 Masking is a correctness option, not yet a speed optimization: the explicit
 recurrent implementation is slower on the initial real-data benchmark, so the
@@ -208,6 +273,12 @@ group without deleting saved models. This contains native stalls; it does not
 repair their cause. These external limits do not apply to direct notebook or
 direct `wolframscript` execution.
 
+Inference applies `"MaxStagnantSteps"` separately to each attempt. A stalled
+attempt ends, then the next attempt starts from the best checkpoint with a fresh
+counter. The first attempt is greedy and later attempts sample moves. Total work
+is bounded by `"Attempts"`, `"MaxSteps"` per attempt, and the overall `"TimeLimit"`;
+scoring failures stop all attempts.
+
 `training-checkpoint.m` is saved before validation. It records training statistics,
 not resumable optimizer state. `validation-results.m` is written after validation
 completes. A validation timeout leaves quality assessment incomplete even when
@@ -236,12 +307,27 @@ The estimate can change as batch costs vary. The latest values are saved in
 `training-progress.m` (scorer) or `move-training-progress.m` (move predictor).
 These are progress snapshots, not resumable model checkpoints. The printed
 Wolfram memory figure is managed memory, not total process resident memory.
+The move predictor also prints its exact training-set move accuracy after
+training. This is not holdout accuracy; a small loss alone does not establish
+that it chooses the recorded reverse moves.
 
 The existing `"CandidateScorer"` remains the default. The experimental
 `"ReverseMoves"` policy reads only the current expression and mass/condition
 packet, then predicts a slot in the deterministic legal-move list. It has no
 candidate-expression encoder. Symbolic candidate construction is still used
 to enumerate legal moves; this prototype does not remove that cost.
+
+The move encoder uses two local convolution layers, then mean and maximum
+aggregation across the whole byte sequence. No expression bytes are truncated.
+This avoids relying only on a final recurrent state, which lost earlier
+differences in the four-state diagnostic. The scorer retains its existing GRU
+encoders and balanced squared-error objective.
+
+The move predictor outputs logits and trains with categorical cross-entropy.
+Softmax normalization includes only legal slots; illegal slots receive no
+probability or gradient. Equivalent reverse actions share the target probability
+equally. Inference takes the highest legal logit, or samples the legal softmax on
+later attempts. Its metadata records `"Objective" -> "LegalMoveCrossEntropy"`.
 
 Both methods currently learn from recorded reverse scramble trajectories.
 The difference is the network input and output, not a new source of labels.
@@ -267,6 +353,7 @@ explicitly, never truncate. Unused slots are excluded from training loss and
 inference selection. Slots depend on legal-move ordering, not universal identity
 names, which may make generalization harder. Move metadata pins the implementation
 source hash so changed action semantics cannot silently reuse incompatible weights.
-After changing `unscrambling.wl`, retrain this experimental model. The old scorer
+After changing `unscrambling.wl`, retrain this experimental model. Older move
+weights are incompatible with this encoder and objective. The old scorer
 has no new source-hash restriction. Larger-corpus quality and speed remain to be
 measured; passing smoke tests is not evidence of improved simplification.

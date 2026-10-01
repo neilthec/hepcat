@@ -9,6 +9,7 @@ check["same process and reference coverage", Length[ubCases] === 73 && Total[Len
 check["all references resolve", And @@ Flatten[Table[
   !MissingQ[ubReference[test["SourceName"], channel]], {test, ubCases}, {channel, test["Channels"]}]]];
 check["all permutations enabled", particlePermutations === Permutations[Range[4]]];
+check["compact model selected by default", unscrambleModel === "CompactActions"];
 check["all ingoing labels", AllTrue[ubCases, #["Name"] === StringRiffle[#["Particles"], ", "] &]];
 check["status colors", ubStatus["PASS"] === Style["PASS", Bold, Darker[Green]] &&
   ubStatus["Unresolved"] === Style["Unresolved", Bold, Red]];
@@ -58,6 +59,30 @@ Block[{ubSolve},
     Last[sentPairs][[1]] === Thread[(Mass /@ Range[4]) -> ubCases[[2, "Masses"]]]];
   ubSolve[p_] := $Failed;
   check["solver failure not accepted", FailureQ[ubSimplifyDiagrams[photon, test["Masses"]]]];
+];
+Block[{UnscrambleTrace, unscrambleModel},
+  Clear[UnscrambleTrace];
+  sentModelOptions = {};
+  UnscrambleTrace[p_, opts___Rule] := (AppendTo[sentModelOptions, Association[{opts}]];
+    <|"Result" -> p, "ModelLoaded" -> True, "ScoringFailed" -> False,
+      "TerminationReason" -> "Test"|>);
+  Do[
+    unscrambleModel = choice;
+    sentModelOptions = {};
+    selectedSolved = ubSimplifyDiagrams[photon, test["Masses"]];
+    check[choice <> " used for single-group diagrams", AssociationQ[selectedSolved] &&
+      Length[sentModelOptions] === Length[selectedSolved["Pieces"]] &&
+      AllTrue[sentModelOptions, Lookup[#, "Model"] === choice &]];
+    check[choice <> " preserves solver limits and model directory", AllTrue[sentModelOptions,
+      Lookup[#, {"MaxSteps", "Attempts", "TimeLimit", "ModelDirectory"}] ===
+        {maxSteps, attempts, solverSeconds, FileNameJoin[{hepcatDirectory, "tests"}]} &]];
+    sentModelOptions = {};
+    selectedSolved = ubSimplifyDiagrams[multiDiagrams, ubCases[[2, "Masses"]], permutation];
+    check[choice <> " used for every permuted piece and channel sum", AssociationQ[selectedSolved] &&
+      Length[sentModelOptions] === Length[selectedSolved["Pieces"]] + 1 &&
+      AllTrue[sentModelOptions, Lookup[#, "Model"] === choice &]],
+    {choice, {"CandidateScorer", "CompactActions"}}
+  ];
 ];
 check["missing diagrams not zero success", ubResult[test, First[test["Channels"]], {}]["Status"] === "MissingDiagrams"];
 Block[{ubResult, ubCases = {First[ubCases]}, particlePermutations = Permutations[Range[4]], Print},
