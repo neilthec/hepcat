@@ -37,7 +37,89 @@ check["notebook loads overrides", {nScrambles, nRounds, trainingBatchSize, nAmpl
 SetEnvironment["HEPCAT_TRAIN_AMPLITUDES" -> "all"];
 check["all amplitude setting", trainingAmplitudeSetting[] === All];
 ToExpression[First[inputs]];
+ToExpression[inputs[[2]]];
 ToExpression[inputs[[3]]];
+check["notebook loads all fifteen curated channels without failures",
+  Unscrambling`Private`validSimplificationRoutesQ[simplificationRoutes] &&
+    Length[simplificationRoutes] === 15 && DuplicateFreeQ[Lookup[simplificationRoutes, "Name"]] &&
+    AllTrue[simplificationRoutes, Length[#["States"]] > 1 &] &&
+    FreeQ[simplificationRoutes, $Failed]];
+check["handwritten Z identities are decomposed into atomic teaching steps",
+  Length[First[simplificationRoutes]["States"]] === 97 &&
+    Counts[First[simplificationRoutes]["Identities"]] ===
+      <|"MomentumSum" -> 12, "Mass" -> 52, "Schouten" -> 16,
+        "Anticommutation" -> 4, "OnShell" -> 4, "MomentumConservation" -> 8|>];
+check["handwritten eeZh channels retain their individual elementary paths",
+  Length /@ Lookup[Take[simplificationRoutes, {2, 4}], "States"] === {53, 11, 5} &&
+    (Counts[#["Identities"]] &) /@ Take[simplificationRoutes, {2, 4}] === {
+      <|"MomentumSum" -> 6, "Mass" -> 26, "Schouten" -> 8,
+        "Anticommutation" -> 2, "OnShell" -> 2, "MomentumConservation" -> 8|>,
+      <|"MomentumSum" -> 2, "Mass" -> 6, "MomentumConservation" -> 2|>,
+      <|"MomentumSum" -> 2, "Mass" -> 2|>}];
+check["eeZZ electron channels each teach two splits and two mass contractions",
+  Length /@ Lookup[Take[simplificationRoutes, {5, 6}], "States"] === {5, 5} &&
+    (Counts[#["Identities"]] &) /@ Take[simplificationRoutes, {5, 6}] ===
+      ConstantArray[<|"MomentumSum" -> 2, "Mass" -> 2|>, 2]];
+eewwRoute = SelectFirst[simplificationRoutes, #["Name"] === "e, E, W-, W+ / Z exchange" &, $Failed];
+check["eeWW Z exchange retains its full elementary simplification route",
+  AssociationQ[eewwRoute] && Length[eewwRoute["States"]] === 303 &&
+    Counts[eewwRoute["Identities"]] ===
+      <|"MomentumSum" -> 32, "Mass" -> 172, "Schouten" -> 40,
+        "Anticommutation" -> 8, "OnShell" -> 8, "MomentumConservation" -> 42|>];
+chargedCurrentRoutes = Select[simplificationRoutes,
+  MemberQ[{"ne, E, W-, h / W+ exchange", "u, D, W-, h / W+ exchange"}, #["Name"]] &];
+check["charged-current channels retain their complete elementary routes",
+  Length /@ Lookup[chargedCurrentRoutes, "States"] === {19, 27} &&
+    (Counts[#["Identities"]] &) /@ chargedCurrentRoutes === {
+      <|"MomentumSum" -> 3, "Mass" -> 8, "Schouten" -> 3, "Anticommutation" -> 1,
+        "OnShell" -> 1, "MomentumConservation" -> 2|>,
+      <|"MomentumSum" -> 3, "Mass" -> 13, "Schouten" -> 4, "Anticommutation" -> 1,
+        "OnShell" -> 1, "MomentumConservation" -> 4|>}];
+zhwwRoute = SelectFirst[simplificationRoutes, #["Name"] === "Z, h, W-, W+ / Z exchange" &, $Failed];
+check["bosonic Z exchange retains its full route and the source's accepted sign",
+  AssociationQ[zhwwRoute] && Length[zhwwRoute["States"]] === 173 &&
+    zhwwRoute["TemplateSign"] === -1 && Counts[zhwwRoute["Identities"]] ===
+      <|"MomentumSum" -> 16, "Mass" -> 108, "MomentumConservation" -> 28,
+        "Schouten" -> 12, "Anticommutation" -> 4, "OnShell" -> 4|>];
+newCuratedRoutes = Take[simplificationRoutes, {11, 15}];
+check["new curated channels follow the original ten in their declared order",
+  Lookup[newCuratedRoutes, "Name"] === {
+    "u, D, T, b / W+ exchange", "E, ne, Z, W- / W+ exchange",
+    "U, d, Z, W+ / W+ exchange", "Z, h, W-, W+ / T-channel W exchange",
+    "Z, h, W-, W+ / U-channel W exchange"}];
+check["four-fermion W exchange retains every elementary teaching step",
+  Length[newCuratedRoutes[[1]]["States"]] === 25 &&
+    Counts[newCuratedRoutes[[1]]["Identities"]] ===
+      <|"MomentumSum" -> 3, "Mass" -> 13, "Schouten" -> 4,
+        "Anticommutation" -> 1, "OnShell" -> 1, "MomentumConservation" -> 2|>];
+check["charged-current ZW channels retain their complete elementary routes",
+  Length /@ Lookup[Take[newCuratedRoutes, {2, 3}], "States"] === {110, 156} &&
+    (Counts[#["Identities"]] &) /@ Take[newCuratedRoutes, {2, 3}] === {
+      <|"MomentumSum" -> 16, "Mass" -> 58, "Schouten" -> 14,
+        "Anticommutation" -> 4, "OnShell" -> 4, "MomentumConservation" -> 13|>,
+      <|"MomentumSum" -> 16, "Mass" -> 86, "Schouten" -> 24,
+        "Anticommutation" -> 4, "OnShell" -> 4, "MomentumConservation" -> 21|>}];
+check["bosonic W channels retain their routes and the source's accepted sign",
+  Length /@ Lookup[Take[newCuratedRoutes, {4, 5}], "States"] === {73, 73} &&
+    Lookup[Take[newCuratedRoutes, {4, 5}], "TemplateSign"] === {-1, -1} &&
+    (Counts[#["Identities"]] &) /@ Take[newCuratedRoutes, {4, 5}] === ConstantArray[
+      <|"MomentumSum" -> 16, "Mass" -> 36, "Schouten" -> 12,
+        "Anticommutation" -> 4, "OnShell" -> 4|>, 2]];
+allCuratedJobs = Unscrambling`Private`makeSimplificationRouteJobs[simplificationRoutes, All];
+check["fifteen curated channels each receive all twenty-four particle permutations",
+  Length[allCuratedJobs] === 360 &&
+    Sort[Values[Counts[Lookup[allCuratedJobs, "Name"]]]] === ConstantArray[24, 15] &&
+    DuplicateFreeQ[Lookup[allCuratedJobs, {"Name", "LegPermutation"}]]];
+independentRoutes = Block[{ReduceSpinorProducts, UnscrambleSpinorAmplitudes, spPr, rsp,
+    mReplacments = {Mass[1] -> 999}},
+  Clear[ReduceSpinorProducts, UnscrambleSpinorAmplitudes, spPr, rsp];
+  ReduceSpinorProducts[___] := $Failed;
+  UnscrambleSpinorAmplitudes[___] := $Failed;
+  spPr[___] := $Failed; rsp[___] := $Failed;
+  trainingSimplificationRoutes
+];
+check["curated recipe does not depend on the NN, legacy reducer, or notebook globals",
+  independentRoutes === simplificationRoutes];
 check["notebook selects complete corpus", nAmplitudes === 243 && Length[trainingAmplitudes] === 243];
 check["exact pairs deduplicated", DuplicateFreeQ[knownAmplitudes]];
 check["reference external mass rules retained", AllTrue[Take[knownAmplitudes, 195],
@@ -47,7 +129,6 @@ check["both notebook reference collections retained", Length[corpusSources] === 
   Count[corpusSources, s_String /; StringStartsQ[s, "SM-4-point.nb / "]] === 189 &&
   Count[corpusSources, s_String /; StringStartsQ[s, "SM-4-point-test.nb / "]] === 148];
 syntheticFivePoint = Drop[amplitudeCatalog, 195];
-Get[FileNameJoin[{root, "tests", "unscrambling.wl"}]];
 check["synthetic five-point provenance is explicit", Length[syntheticFivePoint] === 48 &&
   AllTrue[syntheticFivePoint, TrueQ[#["Synthetic"]] && #["ExternalLegCount"] === 5 &&
     StringStartsQ[#["Name"], "Synthetic5Point / "] &]];
@@ -102,7 +183,7 @@ If[AssociationQ[syntheticMoveAudit],
   check["synthetic five-point starts have non-stop actions", And @@ syntheticMoveAudit["NonStopStarts"]];
   check["synthetic five-point starts cover all move families",
     syntheticMoveAudit["MoveFamilies"] === Sort[{"Schouten", "Stop", "MomentumConservation",
-      "Anticommutation", "MomentumSquare", "OnShell", "Mass", "ChainSquare"}]];
+      "Anticommutation", "MomentumSquare", "MomentumSum", "OnShell", "Mass", "ChainSquare"}]];
   check["synthetic five-point three-step scrambles complete", syntheticMoveAudit["ScrambleSteps"] === ConstantArray[3, 48]];
   check["synthetic five-point teacher labels exactly match legal moves", syntheticMoveAudit["ExactTeacherLabels"]];
   check["synthetic five-point references supply reachable teacher labels", syntheticMoveAudit["EveryReferenceHasLabels"]];

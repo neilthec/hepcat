@@ -565,11 +565,11 @@ amp
 
 
 (* ::Subsubsection::Closed:: *)
-(*ExpandXFactors[expr_]*)
+(*ExpandXFactors[expr,n]*)
 
 
 (* ::Input::Initialization:: *)
-ExpandXFactors[expr_,n_]:=Module[{newExp,particleIndices,missingXReplacement,missingXTildeReplacement,XiN=10},
+expandExternalXFactors[expr_,n_]:=Module[{particleIndices,missingXReplacement,missingXTildeReplacement,XiN=10},
 particleIndices[term_]:=Which[
   IntegerQ[term],{term},
   MatchQ[term,Multiparticle[__]],List @@ term,
@@ -582,10 +582,7 @@ missingXTildeReplacement[l_,j_]:=  SpinorChain[Spinor["Xi","Square",XiN],Mom[j],
   SpinorChain[Spinor["Helicity","Square",l],Mom[XiN],Mom[j],Spinor["Helicity","Square",l]]/Mass[j]/PropDen[Mom[Multiparticle[l,XiN]],Mass[XiN++]];
 missingXTildeReplacement[l_,j_]:=  SpinorChain[Spinor["Helicity","Angle",l],Mom[XiN],Mom[j],Spinor["Helicity","Angle",l]]/Mass[j]/PropDen[Mom[Multiparticle[l,XiN]],Mass[XiN++]];*)
 
-newExp=expr/.{xFactor[i_,j_]xTildeFactor[k_,l_]SpinorChain[Spinor["Spin","Angle",i_],Spinor["Spin","Angle",j_]]SpinorChain[Spinor["Spin","Square",k_],Spinor["Spin","Square",l_]]+xFactor[k_,l_]xTildeFactor[i_,j_]SpinorChain[Spinor["Spin","Angle",k_],Spinor["Spin","Angle",l_]]SpinorChain[Spinor["Spin","Square",i_],Spinor["Spin","Square",j_]]:>SpinorChain[Spinor["Spin","Angle",i],Spinor["Spin","Angle",k]]SpinorChain[Spinor["Spin","Square",j],Spinor["Spin","Square",l]]+SpinorChain[Spinor["Spin","Angle",i],Spinor["Spin","Angle",l]]SpinorChain[Spinor["Spin","Square",j],Spinor["Spin","Square",k]]+SpinorChain[Spinor["Spin","Square",i],Spinor["Spin","Square",k]]SpinorChain[Spinor["Spin","Angle",j],Spinor["Spin","Angle",l]]+SpinorChain[Spinor["Spin","Square",i],Spinor["Spin","Square",l]]SpinorChain[Spinor["Spin","Angle",j],Spinor["Spin","Angle",k]],
-xFactor[i_,j_]xTildeFactor[k_,l_]SpinorChain[Spinor["Spin","Angle",i_],Spinor["Spin","Angle",j_]]^2SpinorChain[Spinor["Spin","Square",k_],Spinor["Spin","Square",l_]]:>-(SpinorChain[Spinor["Spin","Angle",j],Spinor["Spin","Angle",i]]+SpinorChain[Spinor["Spin","Square",j],Spinor["Spin","Square",i]])(SpinorChain[Spinor["Spin","Angle",k],Spinor["Spin","Angle",j]]SpinorChain[Spinor["Spin","Square",l],Spinor["Spin","Square",i]]+SpinorChain[Spinor["Spin","Angle",k],Spinor["Spin","Angle",i]]SpinorChain[Spinor["Spin","Square",l],Spinor["Spin","Square",j]]+SpinorChain[Spinor["Spin","Angle",l],Spinor["Spin","Angle",j]]SpinorChain[Spinor["Spin","Square",k],Spinor["Spin","Square",i]]+SpinorChain[Spinor["Spin","Angle",l],Spinor["Spin","Angle",i]]SpinorChain[Spinor["Spin","Square",k],Spinor["Spin","Square",j]])-1/Mass[3] SpinorChain[Spinor["Spin","Angle",j],Spinor["Spin","Angle",i]]SpinorChain[Spinor["Spin","Square",j],Spinor["Spin","Square",i]](SpinorChain[Spinor["Spin","Square",k],Mom[j],Spinor["Spin","Angle",l]]+SpinorChain[Spinor["Spin","Square",l],Mom[j],Spinor["Spin","Angle",k]])-xFactor[k,l]xTildeFactor[i,j]SpinorChain[Spinor["Spin","Angle",k],Spinor["Spin","Angle",l]]SpinorChain[Spinor["Spin","Square",i],Spinor["Spin","Square",j]]^2
-};
-newExp/.{
+expr/.{
 xFactor[i_,j_]:>Module[
   {allIndices,missingIndex},
   allIndices=Union@Join[particleIndices[i],particleIndices[j]];
@@ -601,10 +598,17 @@ xTildeFactor[i_,j_]:>Module[
   missingIndex=Complement[Range[n],allIndices];
   If[Length[missingIndex]===1,
     missingXTildeReplacement[First[missingIndex],j],
-    xFactor[i,j]
+    xTildeFactor[i,j]
   ]
 ]
 }
+];
+
+ExpandXFactors[expr_,n_]:=Module[{newExp},
+newExp=expr/.{xFactor[i_,j_]xTildeFactor[k_,l_]SpinorChain[Spinor["Spin","Angle",i_],Spinor["Spin","Angle",j_]]SpinorChain[Spinor["Spin","Square",k_],Spinor["Spin","Square",l_]]+xFactor[k_,l_]xTildeFactor[i_,j_]SpinorChain[Spinor["Spin","Angle",k_],Spinor["Spin","Angle",l_]]SpinorChain[Spinor["Spin","Square",i_],Spinor["Spin","Square",j_]]:>SpinorChain[Spinor["Spin","Angle",i],Spinor["Spin","Angle",k]]SpinorChain[Spinor["Spin","Square",j],Spinor["Spin","Square",l]]+SpinorChain[Spinor["Spin","Angle",i],Spinor["Spin","Angle",l]]SpinorChain[Spinor["Spin","Square",j],Spinor["Spin","Square",k]]+SpinorChain[Spinor["Spin","Square",i],Spinor["Spin","Square",k]]SpinorChain[Spinor["Spin","Angle",j],Spinor["Spin","Angle",l]]+SpinorChain[Spinor["Spin","Square",i],Spinor["Spin","Square",l]]SpinorChain[Spinor["Spin","Angle",j],Spinor["Spin","Angle",k]],
+xFactor[i_,j_]xTildeFactor[k_,l_]SpinorChain[Spinor["Spin","Angle",i_],Spinor["Spin","Angle",j_]]^2SpinorChain[Spinor["Spin","Square",k_],Spinor["Spin","Square",l_]]:>-(SpinorChain[Spinor["Spin","Angle",j],Spinor["Spin","Angle",i]]+SpinorChain[Spinor["Spin","Square",j],Spinor["Spin","Square",i]])(SpinorChain[Spinor["Spin","Angle",k],Spinor["Spin","Angle",j]]SpinorChain[Spinor["Spin","Square",l],Spinor["Spin","Square",i]]+SpinorChain[Spinor["Spin","Angle",k],Spinor["Spin","Angle",i]]SpinorChain[Spinor["Spin","Square",l],Spinor["Spin","Square",j]]+SpinorChain[Spinor["Spin","Angle",l],Spinor["Spin","Angle",j]]SpinorChain[Spinor["Spin","Square",k],Spinor["Spin","Square",i]]+SpinorChain[Spinor["Spin","Angle",l],Spinor["Spin","Angle",i]]SpinorChain[Spinor["Spin","Square",k],Spinor["Spin","Square",j]])-1/Mass[3] SpinorChain[Spinor["Spin","Angle",j],Spinor["Spin","Angle",i]]SpinorChain[Spinor["Spin","Square",j],Spinor["Spin","Square",i]](SpinorChain[Spinor["Spin","Square",k],Mom[j],Spinor["Spin","Angle",l]]+SpinorChain[Spinor["Spin","Square",l],Mom[j],Spinor["Spin","Angle",k]])-xFactor[k,l]xTildeFactor[i,j]SpinorChain[Spinor["Spin","Angle",k],Spinor["Spin","Angle",l]]SpinorChain[Spinor["Spin","Square",i],Spinor["Spin","Square",j]]^2
+};
+expandExternalXFactors[newExp,n]
 ];
 
 
@@ -836,8 +840,8 @@ buildModelData[model_] := Module[
 CreateDiagrams::usage = "CreateDiagrams[p1, p2, ..., model] generates tree-level constructive Feynman diagrams for the process with external particles p1, p2, ... in a HEPCAT model.";
 CreateArrowDiagram::usage = "CreateArrowDiagram[diag] draws a labeled tree diagram. Options: \"ShowVertexExpressions\", \"ShowPropagatorExpressions\".";
 CreateArrowDiagrams::usage = "CreateArrowDiagrams[{diag1, diag2, ...}] draws a list of diagrams.";
-diagramAmplitude::usage = "diagramAmplitude[diag] returns the constructive amplitude of a single diagram, including propagator and spin-index structure.";
-diagramAmplitudes::usage = "diagramAmplitudes[{diag1, diag2, ...}] returns {{massRules, amplitude}, ...}. A pair of diagrams that differ only by the helicity of one internal massless spin-1 line is returned as one entry: the two 3-point vertex factors times the simplified 4-point kinematic form. massRules replaces Mass[i] for every external leg, then Mass[Multiparticle[...]] for both ends of every internal line.";
+diagramAmplitude::usage = "diagramAmplitude[diag] returns the constructive amplitude of a single diagram, including propagator and spin-index structure, with external x factors expanded into reference-spinor chains and the diagram's known mass rules applied.";
+diagramAmplitudes::usage = "diagramAmplitudes[{diag1, diag2, ...}] returns {{massRules, amplitude}, ...}, with external x factors expanded into reference-spinor chains and each diagram's known mass rules already applied to its amplitude. A supported four-point pair that differs only by the helicity of one internal massless spin-1 line is returned as one entry: the two 3-point vertex factors times the simplified kinematic form. Unsupported pairs retain both diagram contributions. massRules replaces Mass[i] for every external leg, then Mass[Multiparticle[...]] for both ends of every internal line.";
 
 
 
@@ -1379,7 +1383,8 @@ diagramAmplitude[diag_] := Module[
   propagatorFactors = Lookup[Values[processed["Propagators"]], "Factor", 1];
   amp = diagramFermionSign[diag] *
     Times @@ Join[Values[vertexExpr], propagatorFactors]/I;
-  alignInternalMultiparticles[amp]
+  expandExternalXFactors[alignInternalMultiparticles[amp], Length[Lookup[diag, "ExternalParticles", {}]]] /.
+    diagramMassReplacements[diag]
 ];
 
 (* External Mass[i] rules in leg order, then both complementary
@@ -1520,8 +1525,10 @@ masslessSpin1PairKey[diag_] := Module[{edge},
 
 masslessSpin1PairAmplitude[diag_] := Module[
   {ends, fa, fb, a, b, c, d, kinds, sA, sB, generic, particles},
+  If[Length[Lookup[diag, "ExternalParticles", {}]] =!= 4,
+    Return[Missing["UnsupportedMasslessSpin1"]]];
   ends = SortBy[vertexMatterEnds[diag], Min[#["Index"]] &];
-  If[Length[ends] =!= 2, Return[diagramAmplitude[diag]]];
+  If[Length[ends] =!= 2, Return[Missing["UnsupportedMasslessSpin1"]]];
   sA = ends[[1, "Spin2"]];
   sB = ends[[2, "Spin2"]];
   (* Fermions occupy (a,b) when one vertex is a fermion current. *)
@@ -1541,11 +1548,11 @@ masslessSpin1PairAmplitude[diag_] := Module[
       fourVectorMasslessVector[a, b, c, d, kinds],
     True, Missing["UnsupportedMasslessSpin1"]
   ];
-  If[MissingQ[generic], Return[diagramAmplitude[diag]]];
-  diagramFermionSign[diag]*fa*fb*generic
+  If[MissingQ[generic], Return[generic]];
+  diagramFermionSign[diag]*fa*fb*generic /. diagramMassReplacements[diag]
 ];
 
-diagramAmplitudes[diags_List] := Module[{n, used, out, i, key, j},
+diagramAmplitudes[diags_List] := Module[{n, used, out, i, key, j, paired},
   n = Length[diags];
   used = ConstantArray[False, n];
   out = {};
@@ -1558,8 +1565,13 @@ diagramAmplitudes[diags_List] := Module[{n, used, out, i, key, j},
         !used[[#]] && masslessSpin1PairKey[diags[[#]]] === key &, None];
       If[j === None,
         AppendTo[out, {diagramMassReplacements[diags[[i]]], diagramAmplitude[diags[[i]]]}],
-        used[[j]] = True;
-        AppendTo[out, {diagramMassReplacements[diags[[i]]], masslessSpin1PairAmplitude[diags[[i]]]}]
+        paired = masslessSpin1PairAmplitude[diags[[i]]];
+        (* Consume the partner only when the shortcut evaluates the full pair. *)
+        If[MissingQ[paired],
+          AppendTo[out, {diagramMassReplacements[diags[[i]]], diagramAmplitude[diags[[i]]]}],
+          used[[j]] = True;
+          AppendTo[out, {diagramMassReplacements[diags[[i]]], paired}]
+        ]
       ]
     ],
     {i, n}

@@ -102,11 +102,63 @@ SetOptions[UnscrambleTrace, "Model" -> "CompactActions"];
 ```
 
 Input and output are `{massRules, amplitude}`. Inference retains every strict
-complexity improvement. Defaults are `"MaxSteps" -> 12`, `"Attempts" -> 5`,
-`"MaxStagnantSteps" -> 3`, and `"TimeLimit" -> 60`. The first attempt is greedy;
-later attempts sample scores. Stagnation resets at the start of each attempt and
-on improvement. Initial normalization precedes the time budget. Wolfram's internal
+complexity improvement. Defaults are `"MaxSteps" -> Infinity`, `"Attempts" -> 5`,
+`"MaxStagnantSteps" -> 10`, `"TimeLimit" -> 60`, and `"Kernels" -> Automatic`. Productive attempts no longer
+end at a fixed step count; a nonnegative finite `"MaxSteps"` is still available
+for controlled tests. In parallel mode each kernel explores one route. Every
+strict new global best cancels all outstanding edits and restarts every route
+from that expression, including routes whose attempts had already finished.
+Opening moves use different NN-ranked non-Stop choices where possible; subsequent
+choices use independent random streams. One route follows the greedy policy on
+its first attempt. Sampled routes span cautious to exploratory temperatures
+(0.5 to 2 times the selected policy's sampling scale), not just different opening moves.
+Each route avoids returning to its own previously visited states during an attempt,
+including immediate undo moves. Those histories reset on a fresh attempt or group restart.
+Routes share counts of explored state/move pairs: sampling gently downweights repeated
+choices, and a duplicate choice already explored by another route is retried at most
+three times. Rejected choices do not consume edit or stagnation limits, but do consume
+wall time. Overlap is allowed when choices are scarce or retries are exhausted;
+reaching another route's state by itself is not forbidden. No hard top-k filter
+removes lower-ranked legal choices. If only one edit exists, routes can share that
+edit and diverge when more choices become available. Stagnation resets at the start of each attempt and
+on improvement. Changed, score-neutral `MomentumSum` splits neither increment
+nor reset the counter: unpacking a composite momentum is not a stalled edit.
+Neutral collection, no-op moves, and other non-improving edits still count.
+Parallel `"TimeLimit"` includes normalization, model loading, worker startup,
+and all group restarts. Cleanup may take additional time. Wolfram's internal
 time constraint cannot reliably interrupt a stuck native library.
+
+`"Kernels" -> Automatic` uses all available local logical CPUs, limited by the
+remaining parallel-kernel license capacity. On Linux the CPU count honors process
+affinity; on macOS it uses the available logical CPU count. If the operating-system
+query is unavailable, it falls back to Wolfram's `$ProcessorCount`.
+Use `"Kernels" -> 2` or another positive integer to reduce concurrency;
+`"Kernels" -> 1` retains the original sequential attempts. These are separate
+Wolfram kernels, not the native numerical thread count of one kernel. Inference
+launches and closes its own pool without sending work to or interrupting kernels
+already connected by the caller. Explicit counts above available capacity are
+reduced with a message. Each worker loads the selected model once, so more workers
+also use more memory. `RandomSeed -> integer` fixes route random choices, but
+asynchronous completion order can still change which improvement is adopted first.
+
+```wolfram
+result = UnscrambleSpinorAmplitudes[pair,
+  "Model" -> "CompactActions", "Kernels" -> Automatic,
+  "MaxStagnantSteps" -> 100, "TimeLimit" -> 600];
+```
+
+`"ProgressReporting" -> Automatic` displays one temporary live panel in
+Mathematica notebooks, without accumulating print cells. Parallel mode shows
+the shared best term counts and complexity, group restart count, elapsed time,
+and a row per route with its kernel ID, state, attempt, greedy/temperature setting,
+total edits, skipped duplicate/loop choices, current terms and complexity,
+patience counter, and accumulated edit wall time. Sequential
+mode shows the original attempt, current/best counts, neutral splits, and elapsed time.
+The display reads cached numbers rather than repeatedly traversing an amplitude. Use
+`"ProgressReporting" -> False` to disable it or `True` to request it explicitly.
+Headless runs remain silent. `UnscrambleTrace` also returns these final metrics
+under `"Progress"`. The two unscrambling notebooks expose `maxSteps`,
+`maxStagnantSteps`, and `liveProgress` together in their setup cells.
 
 ## Identities and Network
 
@@ -130,6 +182,55 @@ training still checks that each reverse target is reachable. The candidate score
 can score the new serialized edits, but has not been trained on these move
 types yet. Retraining is required to learn their use; old generation caches
 are invalidated by the source fingerprint. Search limits are unchanged.
+
+`MomentumSum` edits split a composite momentum inside a chain, introduce
+`p_a = P_{a,b} - p_b`, or collect matching chain terms back into a composite
+momentum. Larger subsets split recursively, without enumerating every subset.
+Explicit sums and scalar multiples in momentum slots distribute multilinearly,
+preserving the order of the other insertions. These are momentum definitions,
+not on-shell assumptions, so they work with momentum conservation disabled.
+Propagator arguments and inverse spinor chains are not rewritten.
+
+The complexity score counts the terms implicit in composite momentum slots.
+A chain with `Mom[Multiparticle[1,3]]` counts as two expanded chain terms;
+two independent two-member slots count as four. The count also weights the
+momentum insertions and spectator factors repeated in those implicit terms.
+It uses arithmetic branch counts, without constructing the expanded amplitude.
+Splitting alone is therefore score-neutral unless it exposes like-term
+collection or cancellation; subsequent contractions can lower the score sooner.
+Complete `PropDen` factors remain opaque to this score. Changed, equal-score
+`MomentumSum` splits are exempt from `"MaxStagnantSteps"`; other equal-score
+edits still consume patience. This changes checkpoint acceptance and search
+control, not the neural weights or edit
+features; existing CompactActions models remain loadable without retraining.
+
+Identical endpoint spinors in a two-spinor bracket normalize to zero, including
+zeros produced by Schouten. Endpoints must match completely: different
+little-group indices on the same particle are not discarded.
+
+Scalar momentum conservation now supports any number of external legs:
+`p_i . p_j = -m_i^2 - Sum[p_i . p_k, k != i,j]`. Complete scalar rows can
+also be collected. Internal on-shell mass rules can name any distinct subset
+of two or more particles. The corresponding numerator square can be expanded
+into external masses and pairwise products, collected again, or replaced with
+the enabled internal mass squared. `"OnShellChannels" -> {}` disables these
+internal on-shell replacements without disabling algebraic sum expansions.
+
+Even-length `SpinorTrace` factors support momentum linearity, composite
+splitting/collection, adjacent contraction, anticommutation, momentum
+conservation, and two-momentum trace/scalar-product conversion. Empty chiral
+traces normalize to two. Boundary contractions preserve trace chirality;
+odd-length traces are left unsupported. All these operations treat complete
+`PropDen` expressions as opaque. Hats and Zetas are deliberately outside this
+extension. The new trace and subset descriptors keep the existing feature
+widths, but existing weights have not been trained on this added coverage.
+
+The same moves generate scrambles and exact reverse training targets. Compact
+descriptors reuse the existing momentum-rewrite feature block, retaining the
+146/166 input widths. The known earlier compact models remain loadable, but
+their weights have not learned these new moves. New training uses a new source
+fingerprint and regenerates cached examples. A running isolated training job
+continues using its snapshot; it does not pick up these changes mid-run.
 
 `SchoutenRewrite[c1, c2, {m, n}]` implements Decay Rates, Appendix B, Eq. (B11).
 The split integers count preceding momentum insertions. Incompatible chirality
@@ -229,6 +330,235 @@ reported. Originals supply Stop examples. Loss weights balance positive and
 negative labels. One batch item is a full state and its candidate set. Neural
 optimization runs on the coordinator, not on every worker.
 
+### Curated Simplification Routes
+
+`training-amplitudes.wl` also defines `trainingSimplificationRoutes`, separately
+from its returned reference catalog. Seeds generate random reverse-scramble
+examples; curated routes provide worked difficult-to-simple examples. The
+training run combines their rows only after both kinds of jobs are generated.
+The first worked route is the actual `e, E, M, m` Z-exchange numerator, based on
+the handwritten derivation at the end of `SM-4-point-unscramble-test.nb`.
+Its 96 edits cover composite splitting, mass contractions, both handwritten
+Schouten blocks, anticommutation, numerator on-shell identities, and momentum
+conservation. The short notebook derivation batches many of these operations.
+Regression checks compare its first state to `diagramAmplitudes` followed by
+`ReduceSpinContractions`, and its final state directly to the reference with
+the electroweak convention `MW == MZ CW`. That scalar convention is only a
+comparison substitution, not a training action. Every state keeps the original
+propagator.
+
+Three further routes cover `e, E, Z, h`: Z exchange (52 edits), electron
+exchange in `(1, 3)` (10 edits), and electron exchange in `(1, 4)` (4 edits).
+Their initial states are checked against freshly generated diagrams with
+`ReduceSpinContractions`, and their endpoints against the accepted channel
+references. These endpoints can retain useful single-particle momentum chains.
+The final angle Schouten identity uses the sign consistent with bracket
+antisymmetry: `<23>[341> = <13>[342> + <21>[343>`. The source notebook is not
+modified.
+
+Two routes cover the electron exchanges for `e, E, Z, Z`, matching the separate
+`ampffZZfTTested` and `ampffZZfUTested` targets in `SM-4-point-test.nb`. Each has
+four edits: split the two composite momentum chains, then contract their
+leg-3 or leg-4 momenta against the endpoint spinors. The remaining leg-1
+insertions belong to the accepted final expressions and are retained. The
+Higgs channel already agrees at the diagram boundary and needs no worked
+route. Initial canonical normalization applies the accompanying mass rules,
+including scalar internal masses reintroduced by `ReduceSpinContractions`;
+it never puts the propagator denominator on shell. All 192 new transitions
+across all 24 label permutations are checked against complete legal move sets.
+
+Writing `y[i,q,j] = <i|p_q|j]`, the `(1,3)` channel uses these four edits:
+
+1. `y[3,Multiparticle[1,3],4] -> y[3,1,4] + y[3,3,4]`.
+2. `y[4,Multiparticle[1,3],3] -> y[4,1,3] + y[4,3,3]`.
+3. `y[3,3,4] -> MZ [34]`.
+4. `y[4,3,3] -> MZ <34>`.
+
+The `(1,4)` channel uses:
+
+1. `y[3,Multiparticle[1,4],4] -> y[3,1,4] + y[3,4,4]`.
+2. `y[4,Multiparticle[1,4],3] -> y[4,1,3] + y[4,4,3]`.
+3. `y[3,4,4] -> -MZ <34>`.
+4. `y[4,4,3] -> -MZ [34]`.
+
+These are numerator edits in the full expression, with its scalar coefficients
+and propagator carried unchanged. Canonical normalization can order the two
+equivalent split edits differently; every recorded intermediate state remains
+an individual legal candidate application.
+
+The `e, E, W-, W+` Z-exchange channel supplies a genuinely unresolved diagram
+example: the current CompactActions model retained complexity 376 under a
+60-second, single-worker test, while the accepted reference has complexity 22.
+Its reconstructed route has 302 elementary edits and four stages:
+
+1. Split 32 composite insertions and apply 40 endpoint mass contractions:
+   complexity `376 -> 216`.
+2. Apply 8 Schouten, 8 anticommutation, 16 mass, and 8 numerator on-shell edits:
+   complexity temporarily rises to `232`. Here `p1.p2 = (MZ^2 - 2 Me^2)/2`.
+3. Transfer remaining insertions towards a `p3` chain between the fermion legs,
+   using 42 momentum-conservation, 16 Schouten, and 100 mass edits:
+   complexity reaches `182`.
+4. Apply 16 locally neutral Schouten rewrites and their 16 endpoint mass
+   contractions, exposing distant cancellations: complexity reaches `22`.
+
+The basis preference is a deterministic choice inside this particular teacher
+recipe, not a change to inference scoring or expression complexity. The full
+route begins at a freshly checked diagram boundary and ends exactly at
+`ampffWWZTested`, without a trained network, a black-box spinor reducer, or an
+electroweak coupling substitution. Its original `PropDen` survives every edit.
+
+Two further routes cover W exchange for `ne, E, W-, h` and `u, D, W-, h`.
+Both use the `ampffWhWTested` reference in `SM-4-point-test.nb`, with the
+appropriate massless-neutrino or massive-quark spinors. The present model
+missed their endpoints in seeded single-worker checks: the neutrino case
+reached complexity 29 within 30 seconds, and the quark case selected Stop
+at 21. Their accepted endpoints have complexities 6 and 11, respectively.
+The recorded routes have 18 and 26 elementary edits:
+
+1. Split the composite momenta and contract endpoint insertions.
+2. Apply Schouten to join the remaining momentum-chain product, then
+   anticommutation and mass contractions.
+3. Use `p1.p2 = (MW^2 - m1^2 - m2^2)/2` in the numerator only.
+4. Use Schouten, momentum conservation, and endpoint contractions to expose
+   the cancellations and leave the reference's `p4` insertion.
+
+The quark route temporarily reaches complexity 59 and takes 17 edits before
+beating its earlier best complexity. These intermediate states teach non-Stop
+actions even when an immediate complexity decrease is unavailable; this does
+not change inference's patience setting. Every original edge is checked
+against the public candidate set, and every application is replayed under all
+24 particle permutations. Both endpoints match their notebook references
+exactly, with the original propagator unchanged.
+
+The bosonic `Z, h, W-, W+` Z-exchange channel adds 172 elementary edits,
+reducing complexity `188 -> 14`. Its source helper `simplifyZhWWChannel`
+eliminates `p2`, contracts mass insertions, and applies two Schouten identities.
+The recipe decomposes those operations into 16 composite splits, 108 mass
+contractions, 28 momentum-conservation edits, 12 Schouten edits, 4
+anticommutations, and 4 numerator on-shell edits. The last four use
+`p3.p4 = (MZ^2 - 2 MW^2)/2`, justified by the diagram's accompanying mass
+rules. No propagator is put on shell. The original notebook explicitly accepts
+this channel as `PASS (opposite overall sign)`: the route preserves the fresh
+diagram's sign and ends at `-ampZhWWSTested`, with `"TemplateSign" -> -1`
+recording that comparison convention. It never applies a sign-changing edit.
+All 24 label permutations replay the 172 edits with unchanged propagators.
+Fresh diagram comparisons sometimes use the complementary orientation of
+the same internal cut (`q -> -q`); this is normalized only for comparison,
+never by altering a recorded state or adding an on-shell denominator rule.
+
+Five additional paths target channels the current CompactActions model did not
+finish in bounded 25-30 second probes:
+
+- `u, D, T, b`, internal W exchange: 24 edits, complexity `37 -> 5`.
+- `E, ne, Z, W-`, internal W exchange: 109 edits, complexity `188 -> 11`.
+- `U, d, Z, W+`, internal W exchange: 155 edits, complexity `188 -> 13`.
+- `Z, h, W-, W+`, T- and U-channel W exchange: 72 edits each, complexity `188 -> 19`.
+
+These paths use composite-momentum splits, mass contractions, Schouten,
+anticommutation, and numerator on-shell identities; the fermion paths also use
+momentum conservation. They begin at freshly generated diagram amplitudes plus
+`ReduceSpinContractions`, and their endpoints are checked independently against
+the reference notebook. The two bosonic W channels retain its explicitly accepted
+opposite overall sign, recorded as `"TemplateSign" -> -1`, without any sign-changing
+edit. No new process has an external photon or gluon. Every recorded propagator
+is unchanged throughout its path. All 24 particle-label permutations regenerate
+the corresponding legal identities, rather than only replaying relabeled edits;
+the unpermuted paths are also checked against complete public candidate boards.
+
+With `"RoutePermutations" -> All`, the fifteen routes supply 360 route jobs,
+alongside the independently generated random scrambles.
+Further successful hand or teacher routes can join this list.
+
+The larger isolated server run stores the training descriptors as lossless
+zero-background sparse arrays, restoring one packed dense row at a time for
+the network. This changes storage only, not legal choices, targets, labels,
+or the trained model architecture. It retains all route permutations without
+keeping every mostly-zero dense tensor in memory. Full legal-board route
+validation remains mandatory before neural training starts.
+
+The route builder records elementary identities, not calls to `Collect`,
+`Simplify`, `ReduceSpinorProducts`, or a trained network. Notebook shorthand
+such as `rsp` can hide additional reductions; these must also become individual
+legal edits. Ordinary expansion and collection of identical polynomial terms
+are the same canonical normalization used by every training state. The worked
+route is training data, not an independent validation case.
+
+Pass `"SimplificationRoutes" -> trainingSimplificationRoutes` to
+`TrainUnscrambleNet`. The training notebook enables it by default; set
+`simplificationRoutes = {}` after loading the catalog to disable it. Each route
+is an association with `"Name"`, `"Masses"`, and `"States"` ordered from difficult
+input to accepted endpoint. Optional `"OnShellChannels"` and
+`"MomentumConservation"` override the training conditions for that route.
+
+Every adjacent state must be the normalized result of one current legal edit.
+Malformed, illegal, or timed-out curated routes fail the job instead of silently
+dropping their labels. Temporary complexity growth is allowed, and only the
+final state receives Stop. If a random-scramble reference teaches Stop at a
+curated intermediate state, the curated non-Stop target takes priority.
+States, mass rules, and explicit channels are permuted together; route contents
+and conditions participate in the existing job-cache keys.
+`"RoutePermutations" -> All` enumerates every particle-label permutation:
+24 for a four-particle route and 120 for a five-particle route. Exhaustive
+augmentation is limited to five particles to avoid unbounded factorial growth;
+larger routes can use an integer sampling count. Integer values preserve the
+existing seeded sampling: `4` draws four relabelings plus the original numbering,
+independently of `Scrambles`, and duplicate permutations are removed. Set it to
+zero for original numbering only. These generated permutations and random
+scrambles are not added to the source catalog. Optional job caching and exported
+run datasets
+are separate from the curated source recipes. A route endpoint's Stop target is
+also suppressed if another curated route teaches a legal continuation from
+that same state.
+
+The operational CompactActions particle-token runner uses the same verification
+and route jobs. It defaults to the catalog's routes with four extra label
+permutations. `UseSimplificationRoutes: false` disables them in its JSON config;
+`RoutePermutations: "All"` enables exhaustive coverage, while an integer keeps
+seeded sampling. `CuratedTrainingFraction: 0.2` targets approximately 20% curated
+updates using finite epochs that retain every broad and curated row. Only the
+underweighted category is repeated; the unpadded corpus tensors are not copied.
+Progress and checkpoint metadata report the sampling plan and completed-update
+counts, rather than counting prefetched examples. Before-and-after route reports
+measure teacher choices by channel, label permutation, path phase, and the later Z-path
+suffix. These are training-route diagnostics, not independent validation.
+A route overlapping a
+heldout external-mass family is rejected before training, and rejected curated
+rows cannot be hidden by the ordinary random-data rejection allowance.
+Long curated jobs have a separate `RouteJobSeconds` limit of 600 seconds;
+`RowSeconds` now bounds each state's canonicalization and each complete
+verification/encoding step, not just encoding after the whole route was checked.
+Rows are encoded immediately after full legal-board verification, releasing that
+board before the next step instead of retaining every board for the entire path.
+No-op filtering checks the exact local edit delta rather than rebuilding the
+whole amplitude for each candidate; candidate order and all legal targets stay
+unchanged. Per-worker `route-progress` files and completed-row log entries identify
+the route, label permutation, step, and phase. A timeout reports that exact
+location and rejects the whole job, never a silently shortened path.
+The handwritten Z path exposes more legal choices than the former 512-action
+data limit: a checked relabeling reaches 775. The compact runner now defaults
+to `MaxActions: 1024`; older JSON configurations with smaller explicit limits
+must also be increased. A rejected curated row still fails the run.
+
+Worked routes can temporarily increase complexity. Inference's default ten
+stagnant steps can still terminate before a later improvement. The saved Z
+plateau at complexity 84 is state 29 of the 97-state teacher route. Its known
+68-edit continuation reaches complexity 16, but first rises to 182 and needs
+55 non-improving edits before beating 84. This particular route therefore needs
+at least `"MaxStagnantSteps" -> 56`; `80` gives it some room. This is not a bound
+on every possible simplification path. Use sufficient `"TimeLimit"` as well;
+`"MaxSteps"` defaults to `Infinity`, but time and learned Stop decisions can
+still end an attempt. Neutral composite splits do not consume patience.
+Increasing patience does not guarantee the model chooses the teacher path;
+having the route in the corpus does not mean the installed weights have been
+retrained on it, nor does it establish the shortest possible reduction.
+
+The full legacy `ReduceSpinorProducts` is not automatic NN preprocessing. It
+forcibly splits composite momenta, traverses arbitrary expression heads, and
+uses mass-square identities without consulting `OnShellChannels`. A future
+preprocessing pass should instead use bounded, option-aware legal contractions
+and protect entire propagators. Training already exposes these identities as
+actions, without silently simplifying the teaching input first.
+
 Holdouts are fresh scrambles of the SAME starting amplitudes, not unseen
 processes. Reports distinguish simplification from recovery of the original
 polynomial form. `--holdout 0` disables validation.
@@ -273,11 +603,18 @@ group without deleting saved models. This contains native stalls; it does not
 repair their cause. These external limits do not apply to direct notebook or
 direct `wolframscript` execution.
 
-Inference applies `"MaxStagnantSteps"` separately to each attempt. A stalled
+Sequential inference (`"Kernels" -> 1`) applies `"MaxStagnantSteps"` separately to each attempt. A stalled
 attempt ends, then the next attempt starts from the best checkpoint with a fresh
 counter. The first attempt is greedy and later attempts sample moves. Total work
-is bounded by `"Attempts"`, `"MaxSteps"` per attempt, and the overall `"TimeLimit"`;
-scoring failures stop all attempts.
+is bounded by `"Attempts"` and the overall `"TimeLimit"`, plus `"MaxSteps"` per
+attempt when a finite cap is supplied. Non-improving attempts end after
+`"MaxStagnantSteps"`; model Stop and scoring failures also terminate search.
+Parallel mode has the same per-route attempt limits, but any new global best
+restarts the entire group with fresh attempt and patience counters. The overall
+clock does not restart. Late replies from a previous generation are discarded;
+the return value remains the best expression even if timeout interrupts an
+uphill route. `UnscrambleTrace` includes route/kernel/generation identifiers on
+edits, global improvement checkpoints, and final `"Routes"` and `"Restarts"`.
 
 `training-checkpoint.m` is saved before validation. It records training statistics,
 not resumable optimizer state. `validation-results.m` is written after validation

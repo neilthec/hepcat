@@ -3,12 +3,84 @@ root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
 Get[FileNameJoin[{root, "tests", "unscrambling.wl"}]];
+SetOptions[UnscrambleTrace, "Kernels" -> 1];
+SetOptions[UnscrambleSpinorAmplitudes, "Kernels" -> 1];
 checks = 0; failures = {};
 check[name_, value_] := (checks++; If[!TrueQ[value], AppendTo[failures, name]]);
 ang[i_, j_] := SpinorChain[Spinor["Helicity", "Angle", i], Spinor["Helicity", "Angle", j]];
 rules = Table[Mass[i] -> 0, {i, 4}];
 amp = ang[1, 2] ang[3, 4];
 pair = {rules, amp};
+(* Compare the optimized filter with the full-expression application oracle. *)
+fullApplicationLegalMoves[expression_, massRules_List] := Module[{legacy, moves},
+  legacy = Select[Unscrambling`Private`kinematicMoves[expression, massRules],
+    MemberQ[If[TrueQ[Unscrambling`Private`$useMomentumConservation],
+      {"MomentumConservation", "MomentumSquare", "OnShell"},
+      {"MomentumSquare", "OnShell"}], #["Name"]] &];
+  moves = Join[Unscrambling`Private`chainMoves[expression, massRules],
+    Unscrambling`Private`interiorChainMoves[expression, massRules],
+    Unscrambling`Private`momentumSumMoves[expression, massRules],
+    Unscrambling`Private`traceMoves[expression, massRules], SchoutenCandidates[expression], legacy];
+  moves = Select[moves,
+    !Unscrambling`Private`samePoly[Unscrambling`Private`applyCandidate[expression, #], expression] &];
+  Append[DeleteDuplicatesBy[moves, {#["Name"], #["Subtract"], #["Insert"]} &],
+    Unscrambling`Private`stopMove[]]
+];
+localFilterRules = {Mass[1] -> Me, Mass[2] -> Me, Mass[3] -> MW, Mass[4] -> MW,
+  Mass[Multiparticle[1, 2]] -> MZ, Mass[Multiparticle[1, 2, 3]] -> MH};
+localFilterLinear = SpinorChain[Spinor["Spin", "Angle", 1], Mom[1] + 2 Mom[2],
+  Mom[3] - Mom[4], Spinor["Spin", "Angle", 2]];
+localFilterOpaque = PropDen[Mom[Multiparticle[3, 1]], Mass[1] + localFilterLinear];
+localFilterFixtures = {
+  {"canonical", Unscrambling`Private`canonicalChains[amp]},
+  {"reversed chain", ang[2, 1] ang[3, 4]},
+  {"factored polynomial", (Me + MW) (amp + ang[1, 3] ang[2, 4])},
+  {"linear momentum slots", localFilterLinear + amp},
+  {"composite momentum", SpinorChain[Spinor["Spin", "Angle", 1],
+    Mom[Multiparticle[3, 1, 2]], Spinor["Spin", "Square", 2]] + Mom[Multiparticle[1, 2]]^2 amp},
+  {"linear trace", SpinorTrace[Mom[1] + Mom[2], Mom[3] - Mom[4]] + MomProd[1, 2] amp},
+  {"opaque propagator", (localFilterLinear + amp)/localFilterOpaque}
+};
+Do[
+  Block[{Unscrambling`Private`$useMomentumConservation = conservation,
+      Unscrambling`Private`$onShellChannels = channels},
+    Do[
+      localFilterExpression = fixture[[2]];
+      localFilterActual = Unscrambling`Private`legalMoves[localFilterExpression, localFilterRules];
+      localFilterExpected = fullApplicationLegalMoves[localFilterExpression, localFilterRules];
+      localFilterSuffix = fixture[[1]] <> " conservation " <> ToString[conservation] <>
+        " channels " <> ToString[channels];
+      check["local filter preserves complete ordered board " <> localFilterSuffix,
+        localFilterActual === localFilterExpected];
+      localFilterCorrection = Unscrambling`Private`canonicalChains[localFilterExpression] - localFilterExpression;
+      localFilterProbes = Join[Most[localFilterExpected], {
+        <|"Name" -> "Probe", "Subtract" -> 0, "Insert" -> 0|>,
+        <|"Name" -> "Probe", "Subtract" -> localFilterExpression,
+          "Insert" -> Unscrambling`Private`canonicalChains[localFilterExpression]|>}];
+      check["local delta agrees with full application " <> localFilterSuffix,
+        AllTrue[localFilterProbes,
+          Unscrambling`Private`samePoly[Unscrambling`Private`applyCandidate[localFilterExpression, #],
+            localFilterExpression] === Unscrambling`Private`samePoly[
+            Unscrambling`Private`canonicalChains[#["Insert"] - #["Subtract"]] + localFilterCorrection, 0] &]],
+      {fixture, localFilterFixtures}]
+  ], {conservation, {True, False}}, {channels, {Automatic, {}}}];
+Block[{Unscrambling`Private`chainMoves, Unscrambling`Private`interiorChainMoves,
+    Unscrambling`Private`momentumSumMoves, Unscrambling`Private`traceMoves,
+    Unscrambling`SchoutenCandidates, Unscrambling`Private`kinematicMoves},
+  Unscrambling`Private`chainMoves[_, _] := {
+    <|"Name" -> "Probe", "Subtract" -> amp, "Insert" -> 2 amp, "Site" -> {1, 1, 1}|>,
+    <|"Name" -> "Probe", "Subtract" -> amp, "Insert" -> 2 amp, "Site" -> {1, 1, 2}|>,
+    <|"Name" -> "Probe", "Subtract" -> amp, "Insert" -> amp|>};
+  Unscrambling`Private`interiorChainMoves[_, _] := {};
+  Unscrambling`Private`momentumSumMoves[_, _] := {};
+  Unscrambling`Private`traceMoves[_, _] := {};
+  Unscrambling`SchoutenCandidates[_] := {};
+  Unscrambling`Private`kinematicMoves[_, _] := {};
+  localFilterDeduplicated = Unscrambling`Private`legalMoves[amp, rules];
+  check["local filter retains first duplicate metadata and final Stop",
+    localFilterDeduplicated === {First[Unscrambling`Private`chainMoves[amp, rules]],
+      Unscrambling`Private`stopMove[]}];
+];
 dir = CreateDirectory[];
 check["default named model is automatic", ("Model" /. Options[UnscrambleSpinorAmplitudes]) === Automatic &&
   ("Model" /. Options[UnscrambleTrace]) === Automatic];

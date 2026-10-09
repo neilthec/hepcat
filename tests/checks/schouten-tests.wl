@@ -3,6 +3,8 @@ root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{Global`$HEPCATpath, "HEPCAT.wl"}]];
 Get[FileNameJoin[{root, "tests", "unscrambling.wl"}]];
+SetOptions[UnscrambleTrace, "Kernels" -> 1];
+SetOptions[UnscrambleSpinorAmplitudes, "Kernels" -> 1];
 
 failures = {};
 checks = 0;

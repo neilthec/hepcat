@@ -4,6 +4,8 @@ root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
 Get[FileNameJoin[{root, "tests", "unscrambling.wl"}]];
+SetOptions[UnscrambleTrace, "Kernels" -> 1];
+SetOptions[UnscrambleSpinorAmplitudes, "Kernels" -> 1];
 checks = 0; failures = {};
 check[name_, result_] := (checks++; If[!TrueQ[result], AppendTo[failures, name]]);
 ang[i_, j_] := SpinorChain[Spinor["Spin", "Angle", i], Spinor["Spin", "Angle", j]];
