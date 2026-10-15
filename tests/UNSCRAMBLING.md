@@ -22,6 +22,8 @@
   with external mass rules and source references.
 - `train-unscrambling.py` and `train-unscrambling.wl`: supervised headless entry points.
 - `training-notebook-helpers.wl`: settings and readable report formatting.
+- `training/`: compact particle training modules for isolated run snapshots:
+  `compact-run.wl`, `compact-data.wl`, and `compact-fit.wl`.
 - `checks/`: automated regression tests and their runner.
 
 ## Mathematica
@@ -167,6 +169,13 @@ edits; it does not invent transformations. Candidates include generalized
 Schouten, endpoint mass identities, momentum conservation, and momentum-square
 and on-shell identities. Coverage is extensible, not exhaustive.
 
+Momentum conservation acts on one linear momentum slot at a time. Collection
+extracts one positive chain or trace factor and leaves the remaining factors
+unchanged; it never treats a whole square or inverse chain as linear. Scalar
+rows such as `MomProd[1,1] + MomProd[1,2] + MomProd[1,3] + MomProd[1,4] = 0`
+remain supported, with the diagonal product supplied by the external mass rule.
+The same identities use the complete external-leg list for higher-point inputs.
+
 Interior chains also support `ChainSquare` (two adjacent identical momenta)
 and `Anticommutation` (swap adjacent distinct momenta and generate the shorter
 dot-product term). These preserve endpoint chirality and little-group indices
@@ -215,6 +224,17 @@ of two or more particles. The corresponding numerator square can be expanded
 into external masses and pairwise products, collected again, or replaced with
 the enabled internal mass squared. `"OnShellChannels" -> {}` disables these
 internal on-shell replacements without disabling algebraic sum expansions.
+
+With at least four external legs and all external masses known, the scalar
+`ScalarComplement` identity also replaces a positive numerator factor using
+`2 p_i.p_j = Sum[m_k^2, k in C] - m_i^2 - m_j^2 +
+2 Sum[p_k.p_l, {k,l} in Subsets[C,{2}]]`, where `C` is the complement of
+`{i,j}` among the external labels. This follows from momentum conservation
+for any number of external particles, not just four. It does not impose an
+internal on-shell condition, enter a `PropDen`, or rewrite an inverse dot
+product. The move is available for inference and curated teaching paths, but
+is excluded from random scrambling because its expanded complement need not
+have a single-edit inverse.
 
 Even-length `SpinorTrace` factors support momentum linearity, composite
 splitting/collection, adjacent contraction, anticommutation, momentum
@@ -460,12 +480,53 @@ momentum conservation. They begin at freshly generated diagram amplitudes plus
 `ReduceSpinContractions`, and their endpoints are checked independently against
 the reference notebook. The two bosonic W channels retain its explicitly accepted
 opposite overall sign, recorded as `"TemplateSign" -> -1`, without any sign-changing
-edit. No new process has an external photon or gluon. Every recorded propagator
+edit. These five paths have no external photon or gluon. Every recorded propagator
 is unchanged throughout its path. All 24 particle-label permutations regenerate
 the corresponding legal identities, rather than only replaying relabeled edits;
 the unpermuted paths are also checked against complete public candidate boards.
 
-With `"RoutePermutations" -> All`, the fifteen routes supply 360 route jobs,
+Six photon paths reproduce the notebook's electron-exchange derivations:
+
+- `e, E, A.+, A.+`, electron `(1,3)` and `(1,4)` exchange: 7 elementary edits each.
+- `e, E, A.+, A.+`, the channel sum: 4 elementary edits.
+- `e, E, A.+, A.-`, electron `(1,3)` exchange: 19 elementary edits.
+- `e, E, A.+, A.-`, electron `(1,4)` exchange: 18 elementary edits.
+- `e, E, A.+, A.-`, the channel sum: 14 elementary edits.
+
+Their reference-spinor gauge choices are explicit preparation after
+`ReduceSpinContractions`, not learned simplification steps. For opposite
+helicities, the chosen references are angle leg 4 and square leg 3. For both
+helicity choices, the individual T and U paths use only their respective
+numerator on-shell cuts,
+`{{1,3},{2,4}}` and `{{1,4},{2,3}}`. The subsequent sum path begins at those
+channel endpoints with only external mass rules and `"OnShellChannels" -> {}`.
+Internal numerator on-shell conditions belong to individual diagrams, not their
+combined sum. Simplify each diagram with its own mass rules before combining;
+use only external mass rules and disable internal shells when simplifying the sum.
+It combines the rational terms exactly, uses the off-shell propagator
+numerator identity and generic `ScalarComplement` relation, then finishes
+with momentum conservation and massless endpoint contractions. The original
+T and U `PropDen` factors remain off shell throughout every recorded state.
+All six paths receive all 24 particle-label permutations, adding 144 route jobs.
+
+The handwritten `u, U, C, c` Z-exchange path adds 96 elementary edits, with
+complexity `148 -> 16`. It uses the same four-fermion identities as the lepton
+path, but records the up/charm masses and quark couplings in every state.
+Its starting expression is checked against fresh `diagramAmplitudes` plus
+`ReduceSpinContractions`; its endpoint has no momentum insertions and agrees
+with the notebook reference. The Z `PropDen` remains off shell throughout.
+All 24 particle-label permutations are included in training.
+
+The handwritten `e, E, h, h` electron-exchange T and U channels each add four
+elementary edits: two composite-momentum splits and two endpoint mass
+contractions. Each path starts at fresh `diagramAmplitudes` plus
+`ReduceSpinContractions`, reduces complexity `22 -> 12`, and retains the
+single-momentum insertions present in the known channel result. Their endpoints
+also reproduce the notebook's summed electron-exchange reference without a
+spinor reducer. Each channel keeps its own off-shell `PropDen` throughout and
+receives all 24 particle-label permutations, adding 48 route jobs.
+
+With `"RoutePermutations" -> All`, the twenty-four routes supply 576 route jobs,
 alongside the independently generated random scrambles.
 Further successful hand or teacher routes can join this list.
 
@@ -538,6 +599,62 @@ The handwritten Z path exposes more legal choices than the former 512-action
 data limit: a checked relabeling reaches 775. The compact runner now defaults
 to `MaxActions: 1024`; older JSON configurations with smaller explicit limits
 must also be increased. A rejected curated row still fails the run.
+
+### Model-Guided Training Preparation
+
+The compact runner is now checked in under `training/`. The isolated server
+snapshot stages these modules as `compact-scale-run.wl`, `compact-scale-data.wl`,
+and `compact-scale-training.wl`; the older notebook launcher still trains
+CandidateScorer or ReverseMoves. A running snapshot is never modified by local
+edits. These preparation changes preserve the current network architecture,
+encoder, and installed model files.
+
+`ModelGuidanceEnabled: true` requires compatible warm-start policy and metadata
+files. For up to `FullBoardGuidanceStatesPerRoute` selected states per permuted
+curated route, preparation scores **every legal candidate**, not just the
+retained training pool. All teacher positives and Stop remain mandatory.
+`HardNegativeCount` reserves part of the remaining pool for high-scoring
+nonteacher alternatives; deterministic hash sampling fills the rest. These
+alternatives remain in update subsets while budget permits. They are legal
+identities, not mathematically invalid operations. A missing teacher label does
+not establish that an alternative is unhelpful.
+
+Small proof records retain the expression, masses, channel conditions, teacher
+keys, and full-board signature. `full-board-teacher-before.json` and
+`full-board-teacher-after.json` re-enumerate and verify identical full boards for
+a deterministic, bounded representative state set (`FullBoardAuditMaxStates`).
+They report teacher rank, probability, margin, selected states, and available
+state count. Existing sampled-pool diagnostics remain separate. Successful
+instrumentation does not require the teacher to rank first, and these are
+training diagnostics rather than independent generalization tests.
+
+Learner recovery starts only from training-route states, never heldout inputs.
+The warm model takes up to `RecoveryRolloutSteps` legal moves. If it leaves the
+recorded path, a bounded search must find a bridge into a known route and verify
+every elementary step through the same endpoint. Only that proven recovery
+continuation becomes training data. Premature Stop, nonfinite scores, illegal
+edges, cycles, oversized expressions, and timeouts produce no partial rows or
+confidence-based pseudo-labels. The bridge excludes previously visited learner
+states, matching inference's loop avoidance rather than teaching an immediate
+undo that inference would reject. Mass and channel conditions stay with their
+diagram, and propagator arguments remain opaque. The report is
+`learner-recovery.json`; verified jobs are also saved in WXF.
+
+Recovery is capped by `RecoveryMaxJobs` and `RecoveryTotalSeconds`, as well as
+per-attempt `GuidanceSeconds`, depth, beam width, and node limits. Deferred
+attempts are reported; the original random and curated data remain intact.
+Augmentation happens before dataset merging, heldout-overlap checks, and hash
+publication. Defaults keep guidance disabled; the next isolated-run staging
+preset enables it with four guided states per route, 32 hard alternatives,
+48 repeated audit states, and at most 48 recovery jobs within 30 minutes.
+
+`OptimizeSimplificationRoutes: true` enables bounded reordering of existing
+elementary identities **before** particle permutations. It preserves the exact
+endpoint, masses, identity names, and rewrite directions. It accepts a new order
+only when peak complexity, total path complexity, and the longest non-improving
+streak do not increase and at least one improves. Otherwise it returns the exact
+original route. It creates no compound actions and changes no legal identity.
+Bounds and outcomes are saved in `route-optimization.json`.
 
 Worked routes can temporarily increase complexity. Inference's default ten
 stagnant steps can still terminate before a later improvement. The saved Z

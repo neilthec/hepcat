@@ -1,0 +1,2411 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Wolfram 15.0' *)
+
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       154,          7]
+NotebookDataLength[     59511,       1457]
+NotebookOptionsPosition[     57064,       1409]
+NotebookOutlinePosition[     57454,       1425]
+CellTagsIndexPosition[     57411,       1422]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell["Setup", "Section",ExpressionUUID->"c4c733f3-3b2d-4214-a9d4-a91964aecafb"],
+
+Cell["HEPCATBasePath = \"~/code/hepcat\";", "Input",
+ CellLabel->"In[62]:=",ExpressionUUID->"097794f3-8049-4c2f-9af2-dde9a80dcb47"],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+$HEPCATpath = HEPCATBasePath <> \"/source/\";
+Get[$HEPCATpath <> \"HEPCAT.wl\"]\
+\>", "Input",
+ CellLabel->"In[63]:=",ExpressionUUID->"df5f9694-bf8c-46c0-9439-f51acde5e4ca"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData["\<\"----------HEPCAT----------\"\>"], "Print",
+ CellChangeTimes->{3.997455515511578*^9, 3.997524367096908*^9, 
+  3.997887731715755*^9, 3.997888671235661*^9, 3.9978887863085327`*^9, 
+  3.9979683859484386`*^9, 3.9979726749943523`*^9, 3.9980539393235292`*^9, 
+  3.998406910109043*^9, 3.998667016731909*^9, 3.999004895654704*^9, 
+  3.999010269335404*^9, 3.9990126541883717`*^9, 3.9990882151270723`*^9, 
+  4.000998242766831*^9},
+ CellLabel->
+  "During evaluation of \
+In[63]:=",ExpressionUUID->"01418b47-02df-4b3e-ad61-34039becdc2e"],
+
+Cell[BoxData["\<\"\"\>"], "Print",
+ CellChangeTimes->{3.997455515511578*^9, 3.997524367096908*^9, 
+  3.997887731715755*^9, 3.997888671235661*^9, 3.9978887863085327`*^9, 
+  3.9979683859484386`*^9, 3.9979726749943523`*^9, 3.9980539393235292`*^9, 
+  3.998406910109043*^9, 3.998667016731909*^9, 3.999004895654704*^9, 
+  3.999010269335404*^9, 3.9990126541883717`*^9, 3.9990882151270723`*^9, 
+  4.000998242767509*^9},
+ CellLabel->
+  "During evaluation of \
+In[63]:=",ExpressionUUID->"682a9e77-c4d3-49b2-90b5-4815994f02ee"],
+
+Cell[BoxData["\<\"Version: \"\>"], "Print",
+ CellChangeTimes->{3.997455515511578*^9, 3.997524367096908*^9, 
+  3.997887731715755*^9, 3.997888671235661*^9, 3.9978887863085327`*^9, 
+  3.9979683859484386`*^9, 3.9979726749943523`*^9, 3.9980539393235292`*^9, 
+  3.998406910109043*^9, 3.998667016731909*^9, 3.999004895654704*^9, 
+  3.999010269335404*^9, 3.9990126541883717`*^9, 3.9990882151270723`*^9, 
+  4.000998242768085*^9},
+ CellLabel->
+  "During evaluation of \
+In[63]:=",ExpressionUUID->"aaffabea-0e59-499b-9667-2bc5f2317302"],
+
+Cell[BoxData["\<\"Authors: N. Christensen\"\>"], "Print",
+ CellChangeTimes->{3.997455515511578*^9, 3.997524367096908*^9, 
+  3.997887731715755*^9, 3.997888671235661*^9, 3.9978887863085327`*^9, 
+  3.9979683859484386`*^9, 3.9979726749943523`*^9, 3.9980539393235292`*^9, 
+  3.998406910109043*^9, 3.998667016731909*^9, 3.999004895654704*^9, 
+  3.999010269335404*^9, 3.9990126541883717`*^9, 3.9990882151270723`*^9, 
+  4.000998242768547*^9},
+ CellLabel->
+  "During evaluation of \
+In[63]:=",ExpressionUUID->"7b5f5e5d-7b03-4c8d-8c3a-7ef4228e4a40"],
+
+Cell[BoxData["\<\"Please cite: ...\"\>"], "Print",
+ CellChangeTimes->{3.997455515511578*^9, 3.997524367096908*^9, 
+  3.997887731715755*^9, 3.997888671235661*^9, 3.9978887863085327`*^9, 
+  3.9979683859484386`*^9, 3.9979726749943523`*^9, 3.9980539393235292`*^9, 
+  3.998406910109043*^9, 3.998667016731909*^9, 3.999004895654704*^9, 
+  3.999010269335404*^9, 3.9990126541883717`*^9, 3.9990882151270723`*^9, 
+  4.000998242768948*^9},
+ CellLabel->
+  "During evaluation of \
+In[63]:=",ExpressionUUID->"2581f7f8-9485-4a12-992f-563dc26b9e47"],
+
+Cell[BoxData["\<\"Contributions by: ...\"\>"], "Print",
+ CellChangeTimes->{3.997455515511578*^9, 3.997524367096908*^9, 
+  3.997887731715755*^9, 3.997888671235661*^9, 3.9978887863085327`*^9, 
+  3.9979683859484386`*^9, 3.9979726749943523`*^9, 3.9980539393235292`*^9, 
+  3.998406910109043*^9, 3.998667016731909*^9, 3.999004895654704*^9, 
+  3.999010269335404*^9, 3.9990126541883717`*^9, 3.9990882151270723`*^9, 
+  4.000998242769351*^9},
+ CellLabel->
+  "During evaluation of \
+In[63]:=",ExpressionUUID->"70481794-f746-43c0-9df4-fb9229ca4e52"],
+
+Cell[BoxData["\<\"Instructions can be found...\"\>"], "Print",
+ CellChangeTimes->{3.997455515511578*^9, 3.997524367096908*^9, 
+  3.997887731715755*^9, 3.997888671235661*^9, 3.9978887863085327`*^9, 
+  3.9979683859484386`*^9, 3.9979726749943523`*^9, 3.9980539393235292`*^9, 
+  3.998406910109043*^9, 3.998667016731909*^9, 3.999004895654704*^9, 
+  3.999010269335404*^9, 3.9990126541883717`*^9, 3.9990882151270723`*^9, 
+  4.0009982427697287`*^9},
+ CellLabel->
+  "During evaluation of \
+In[63]:=",ExpressionUUID->"5c12b2d7-c130-48a9-886d-4f0d0cb924da"],
+
+Cell[BoxData["\<\"\"\>"], "Print",
+ CellChangeTimes->{3.997455515511578*^9, 3.997524367096908*^9, 
+  3.997887731715755*^9, 3.997888671235661*^9, 3.9978887863085327`*^9, 
+  3.9979683859484386`*^9, 3.9979726749943523`*^9, 3.9980539393235292`*^9, 
+  3.998406910109043*^9, 3.998667016731909*^9, 3.999004895654704*^9, 
+  3.999010269335404*^9, 3.9990126541883717`*^9, 3.9990882151270723`*^9, 
+  4.000998242770123*^9},
+ CellLabel->
+  "During evaluation of \
+In[63]:=",ExpressionUUID->"d89e3d13-d9f0-4ae6-9847-b158df85f86d"],
+
+Cell[BoxData["\<\"We welcome contributors.  Please contact Neil if \
+interested.\"\>"], "Print",
+ CellChangeTimes->{3.997455515511578*^9, 3.997524367096908*^9, 
+  3.997887731715755*^9, 3.997888671235661*^9, 3.9978887863085327`*^9, 
+  3.9979683859484386`*^9, 3.9979726749943523`*^9, 3.9980539393235292`*^9, 
+  3.998406910109043*^9, 3.998667016731909*^9, 3.999004895654704*^9, 
+  3.999010269335404*^9, 3.9990126541883717`*^9, 3.9990882151270723`*^9, 
+  4.000998242770496*^9},
+ CellLabel->
+  "During evaluation of \
+In[63]:=",ExpressionUUID->"8edf51a9-d65e-41a6-b9d7-c2dab235fa58"],
+
+Cell[BoxData["\<\"------------------------------------\"\>"], "Print",
+ CellChangeTimes->{3.997455515511578*^9, 3.997524367096908*^9, 
+  3.997887731715755*^9, 3.997888671235661*^9, 3.9978887863085327`*^9, 
+  3.9979683859484386`*^9, 3.9979726749943523`*^9, 3.9980539393235292`*^9, 
+  3.998406910109043*^9, 3.998667016731909*^9, 3.999004895654704*^9, 
+  3.999010269335404*^9, 3.9990126541883717`*^9, 3.9990882151270723`*^9, 
+  4.000998242770895*^9},
+ CellLabel->
+  "During evaluation of \
+In[63]:=",ExpressionUUID->"f495d4ca-7017-4c9b-ae00-6741c13698c1"]
+}, Open  ]]
+}, Open  ]],
+
+Cell["sm = ReadModel[HEPCATBasePath <> \"/models\", 1];", "Input",
+ CellLabel->"In[65]:=",ExpressionUUID->"147ea4f8-3576-4657-bcf6-a49753e6359a"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Amplitudes", "Section",
+ CellChangeTimes->{{4.000998368239195*^9, 
+  4.000998369663835*^9}},ExpressionUUID->"8799675d-8e9c-450f-b50d-\
+e2eeb8b2964d"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"mReplacments", "=", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{
+      RowBox[{"Mass", "[", "1", "]"}], "->", "Me"}], ",", 
+     RowBox[{
+      RowBox[{"Mass", "[", "2", "]"}], "->", "Me"}], ",", 
+     RowBox[{
+      RowBox[{"Mass", "[", "3", "]"}], "->", "0"}], ",", 
+     RowBox[{
+      RowBox[{"Mass", "[", "4", "]"}], "->", "0"}], ",", 
+     RowBox[{
+      RowBox[{"Mass", "[", "5", "]"}], "->", "0"}]}], "}"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"diags", "=", 
+   RowBox[{"CreateDiagrams", "[", 
+    RowBox[{"\"\<e\>\"", ",", "\"\<E\>\"", ",", "\"\<A.+\>\"", 
+     ",", "\"\<A.+\>\"", ",", "\"\<A.+\>\"", ",", "sm"}], "]"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{"Length", "[", "diags", "]"}]}], "Input",
+ CellChangeTimes->{{3.999869433133078*^9, 3.999869443602309*^9}, {
+  3.999957765681377*^9, 3.999957768296359*^9}, {4.000386705460668*^9, 
+  4.000386706554904*^9}, {4.0003877964842253`*^9, 4.000387799927321*^9}, {
+  4.0005498536977453`*^9, 4.000549855606698*^9}, {4.0005635524708147`*^9, 
+  4.000563576015695*^9}, {4.000816553828974*^9, 4.000816558189315*^9}, {
+  4.000825584519175*^9, 4.0008255847520313`*^9}, {4.000907429930929*^9, 
+  4.000907437930031*^9}, {4.000908641449956*^9, 4.0009086522868137`*^9}, {
+  4.0009119991334457`*^9, 4.00091201616654*^9}, {4.000997202912911*^9, 
+  4.00099721029171*^9}, {4.0009980381555157`*^9, 4.000998086546803*^9}},
+ CellLabel->"In[66]:=",ExpressionUUID->"c748d386-fc28-40f3-821a-61fe1769941c"],
+
+Cell[BoxData["6"], "Output",
+ CellChangeTimes->{
+  3.9998694447925367`*^9, 3.999870513703361*^9, 3.999874380051963*^9, 
+   3.999874565148284*^9, 3.999957639639812*^9, 4.000386706942713*^9, 
+   4.0003878007902527`*^9, 4.000549856927321*^9, {4.00056352996019*^9, 
+   4.000563576463271*^9}, 4.00056785135954*^9, 4.000816559419606*^9, 
+   4.000825522181378*^9, 4.000825585254972*^9, 4.0009075148745604`*^9, 
+   4.000908653703505*^9, 4.000912016912798*^9, 4.000997211482398*^9, {
+   4.0009980508142147`*^9, 4.0009980869286613`*^9}, 4.00099837273982*^9},
+ CellLabel->"Out[68]=",ExpressionUUID->"76a1a989-dd9d-4cc0-83d8-b02863cee746"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"CreateArrowDiagrams", "[", "diags", "]"}]], "Input",
+ CellChangeTimes->{{4.0005498920581083`*^9, 4.000549896944214*^9}, {
+  4.000550692060648*^9, 4.0005507180501213`*^9}, {4.000563506998333*^9, 
+  4.000563513267449*^9}},
+ CellLabel->"In[69]:=",ExpressionUUID->"26f97204-7353-4430-a236-3624ee3ddf68"],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+   GraphicsBox[{{
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{0., 0.7545123315097024}, {0.8300298685376823, 
+        1.1292334013104985`}}], 
+       ArrowBox[{{0.3237116487296961, 0.9006535487320129}, {
+        0.5063182198079862, 0.9830921840881881}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{0.23633296204030185`, 1.8118457026889796`}, {
+        0.8300298685376823, 1.1292334013104985`}}], 
+       ArrowBox[{{0.46787475557428027`, 1.545626905151372}, {
+        0.5984880750037039, 1.3954521988481061`}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{0.8300298685376823, 1.1292334013104985`}, {2.016080005017239,
+         0.8635535070312234}}], 
+       ArrowBox[{{1.553520451790212, 0.9671686658001407}, {
+        1.2925894217647096`, 1.0256182425415812`}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{2.0180141100032816`, 0.}, {2.016080005017239, 
+        0.8635535070312234}}], 
+       ArrowBox[{{2.017259809058725, 0.3367858677421771}, {
+        2.0168343059617957`, 0.5267676392890462}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{2.016080005017239, 0.8635535070312234}, {3.202204764160019, 
+        1.1290743981380191`}}], 
+       ArrowBox[{{2.7396161080943346`, 1.0255212506063687`}, {
+        2.478668661082923, 0.9671066545628737}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{3.797622415885749, 1.81087213731516}, {3.202204764160019, 
+        1.1290743981380191`}}], 
+       ArrowBox[{{3.5654095317127146`, 1.544971019036075}, {
+        3.4344176483330537`, 1.394975516417104}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{4.0348612311702645`, 0.7561274627488878}, {3.202204764160019,
+         1.1290743981380191`}}], 
+       ArrowBox[{{3.710125209036269, 0.9015767675506491}, {
+        3.5269407862940145`, 0.9836250933362579}}]}}, {
+      {RGBColor[0, 0, 1], InsetBox[
+        StyleBox["\<\"E\"\>",
+         StripOnInput->False,
+         FontSize->14], {1.4492853709527191, 1.1134915511792132}]}, 
+      {RGBColor[0, 0, 1], InsetBox[
+        StyleBox["\<\"E\"\>",
+         StripOnInput->False,
+         FontSize->14], {2.582928469871996, 1.1134157487930019}]}}, 
+     {GrayLevel[0], 
+      DiskBox[{{0.8300298685376823, 1.1292334013104985`}, {2.016080005017239, 
+       0.8635535070312234}, {3.202204764160019, 1.1290743981380191`}}, 
+       0.03]}, {InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"e\"\>", "1"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[0]], {-0.10937095233107282, 0.7051362767240656}],
+       InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"E\"\>", "2"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[0]], {3.87655618351588, 1.9012572042660254}], 
+      InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"A.+\"\>", "3"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[0]], {0.15758237790599233, 1.9023904181532463}], 
+      InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"A.+\"\>", "4"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[0]], {2.018282873912312, -0.11999969902446089}], 
+      InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"A.+\"\>", "5"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[
+         0]], {4.1443777044904175, 0.7070750206943255}]}, {}},
+    ImagePadding->50,
+    ImageSize->500,
+    PlotRange->All], ",", 
+   GraphicsBox[{{
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{0.23570871015093853`, 1.8107734334949739`}, {
+        0.8321632405861383, 1.1291590008038543`}}], 
+       ArrowBox[{{0.4683259770206665, 1.5449438047454374`}, {
+        0.5995459737164104, 1.3949886295533909`}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{0., 0.7559651560308278}, {0.8321632405861383, 
+        1.1291590008038543`}}], 
+       ArrowBox[{{0.32454366382859395`, 0.9015107554923082}, {
+        0.5076195767575444, 0.983613401342374}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{0.8321632405861383, 1.1291590008038543`}, {2.017306591704677,
+         0.8631772992181289}}], 
+       ArrowBox[{{1.5551006847684468`, 0.9669101628365617}, {
+        1.2943691475223682`, 1.0254261371854214`}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{2.0171224991008407`, 0.}, {2.017306591704677, 
+        0.8631772992181289}}], 
+       ArrowBox[{{2.0171942952163366`, 0.3366391466950703}, {
+        2.0172347955891805`, 0.5265381525230586}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{2.017306591704677, 0.8631772992181289}, {3.2032369870642516`,
+         1.1288912624449818`}}], 
+       ArrowBox[{{2.7407241328740177`, 1.0252628167865092`}, {
+        2.479819445894911, 0.9668057448766016}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{4.034875818458698, 0.7556363346468705}, {3.2032369870642516`,
+         1.1288912624449818`}}], 
+       ArrowBox[{{3.7105366742148633`, 0.9012057564881338}, {
+        3.5275761313080856`, 0.9833218406037184}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{3.797427758977152, 1.8118615898605341`}, {
+        3.2032369870642516`, 1.1288912624449818`}}], 
+       ArrowBox[{{3.5656933579311207`, 1.5455031621684687`}, {
+        3.4349713881102826`, 1.395249690137047}}]}}, {
+      {RGBColor[0, 0, 1], InsetBox[
+        StyleBox["\<\"E\"\>",
+         StripOnInput->False,
+         FontSize->14], {1.4510128497900858, 1.1132555968332956}]}, 
+      {RGBColor[0, 0, 1], InsetBox[
+        StyleBox["\<\"E\"\>",
+         StripOnInput->False,
+         FontSize->14], {2.584035630191253, 1.1131310952664002}]}}, 
+     {GrayLevel[0], 
+      DiskBox[{{0.8321632405861383, 1.1291590008038543`}, {2.017306591704677, 
+       0.8631772992181289}, {3.2032369870642516`, 1.1288912624449818`}}, 
+       0.03]}, {InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"e\"\>", "1"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[0]], {0.1566850130230064, 1.9010798856024111}], 
+      InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"E\"\>", "2"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[0]], {4.144354749658963, 0.7065001603630751}], 
+      InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"A.+\"\>", "3"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[0]], {-0.10949349764709146, 0.7068614497246194}],
+       InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"A.+\"\>", "4"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[0]], {3.87619211337043, 1.9023943269063681}], 
+      InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"A.+\"\>", "5"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[
+         0]], {2.0170969063147726, -0.11999999727087207}]}, {}},
+    ImagePadding->50,
+    ImageSize->500,
+    PlotRange->All], ",", 
+   GraphicsBox[{{
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{0.23634766391672857`, 1.812228900860636}, {
+        0.8302821998981444, 1.1292043376169723`}}], 
+       ArrowBox[{{0.46798213294948077`, 1.5458493211956073`}, {
+        0.5986477308653922, 1.395583917282001}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{0., 0.7550771550498829}, {0.8302821998981444, 
+        1.1292043376169723`}}], 
+       ArrowBox[{{0.32381005796027634`, 0.9009867562510477}, {
+        0.5064721419378682, 0.9832947364158074}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{0.8302821998981444, 1.1292043376169723`}, {2.016158629537829,
+         0.8635828509253161}}], 
+       ArrowBox[{{1.553666821978352, 0.967175230735062}, {1.2927740074576215`,
+         1.0256119578072262`}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{2.0178954167728396`, 0.}, {2.016158629537829, 
+        0.8635828509253161}}], 
+       ArrowBox[{{2.0172180697511854`, 0.33679731186087325`}, {
+        2.016835976559483, 0.5267855390644428}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{2.016158629537829, 0.8635828509253161}, {3.2019201271994597`,
+         1.1294039204277608`}}], 
+       ArrowBox[{{2.7394731431114234`, 1.0257337033218075`}, {
+        2.4786056136258647`, 0.9672530680312695}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{3.797747670922294, 1.811268474164093}, {3.2019201271994597`, 
+        1.1294039204277608`}}], 
+       ArrowBox[{{3.565374928870389, 1.5453412982069232`}, {
+        3.4342928692513652`, 1.3953310963849304`}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{4.034318978572253, 0.7562889974270172}, {3.2019201271994597`,
+         1.1294039204277608`}}], 
+       ArrowBox[{{3.7096834265368637`, 0.9018038173973073}, {
+        3.526555679234849, 0.9838891004574708}}]}}, {
+      {RGBColor[0, 0, 1], InsetBox[
+        StyleBox["\<\"E\"\>",
+         StripOnInput->False,
+         FontSize->14], {1.4494490157004785, 1.113492101906815}]}, 
+      {RGBColor[0, 0, 1], InsetBox[
+        StyleBox["\<\"E\"\>",
+         StripOnInput->False,
+         FontSize->14], {2.582789589901333, 1.1135871455675823}]}}, 
+     {GrayLevel[0], 
+      DiskBox[{{0.8302821998981444, 1.1292043376169723`}, {2.016158629537829, 
+       0.8635828509253161}, {3.2019201271994597`, 1.1294039204277608`}}, 
+       0.03]}, {InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"e\"\>", "1"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[0]], {0.15760620807308662, 1.9027815547788056}], 
+      InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"E\"\>", "2"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[0]], {3.8767078651265536, 1.9016304558335186}], 
+      InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"A.+\"\>", "3"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[0]], {2.018136753254329, -0.11999975731934921}], 
+      InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"A.+\"\>", "4"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[0]], {-0.1094059019734895, 0.7057785890122464}], 
+      InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"A.+\"\>", "5"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[
+         0]], {4.143821540604169, 0.7072055082636901}]}, {}},
+    ImagePadding->50,
+    ImageSize->500,
+    PlotRange->All], ",", 
+   GraphicsBox[{{
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{0.23676323702842406`, 1.8101393680756344`}, {
+        0.8321730616203549, 1.1283406419210151`}}], 
+       ArrowBox[{{0.46897306861927707`, 1.5442378648753328`}, {
+        0.5999632300295019, 1.3942421451213167`}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{0., 0.7541591789986938}, {0.8321730616203549, 
+        1.1283406419210151`}}], 
+       ArrowBox[{{0.3245474940319384, 0.900089949538399}, {0.5076255675884165,
+         0.9824098713813098}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{0.8321730616203549, 1.1283406419210151`}, {2.01890451479754, 
+        0.8631928986788568}}], 
+       ArrowBox[{{1.5560792480584378`, 0.9666005185432985}, {
+        1.294998328359457, 1.0249330220565733`}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{2.0172257139392067`, 0.}, {2.01890451479754, 
+        0.8631928986788568}}], 
+       ArrowBox[{{2.017880446273957, 0.33664523048475414`}, {2.01824978246279,
+         0.5265476681941027}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{2.01890451479754, 0.8631928986788568}, {3.205000427635841, 
+        1.1285107255239684`}}], 
+       ArrowBox[{{2.7424230216289036`, 1.0250367730543748`}, {
+        2.4814819208044776`, 0.9666668511484503}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{4.034499170653197, 0.7531462228215995}, {3.205000427635841, 
+        1.1285107255239684`}}], 
+       ArrowBox[{{3.710994660876428, 0.8995383788755233}, {3.52850493741261, 
+        0.9821185694700445}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{3.7991476802812683`, 1.8105514161192384`}, {
+        3.205000427635841, 1.1285107255239684`}}], 
+       ArrowBox[{{3.5674302517495513`, 1.544555546787083}, {
+        3.4367178561675575`, 1.3945065948561237`}}]}}, {
+      {RGBColor[0, 0, 1], InsetBox[
+        StyleBox["\<\"E\"\>",
+         StripOnInput->False,
+         FontSize->14], {1.4517048709013072, 1.1128792637262848}]}, 
+      {RGBColor[0, 0, 1], InsetBox[
+        StyleBox["\<\"E\"\>",
+         StripOnInput->False,
+         FontSize->14], {2.585757041950034, 1.1129577448526426}]}}, 
+     {GrayLevel[0], 
+      DiskBox[{{0.8321730616203549, 1.1283406419210151`}, {2.01890451479754, 
+       0.8631928986788568}, {3.205000427635841, 1.1285107255239684`}}, 
+       0.03]}, {InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"e\"\>", "1"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[0]], {0.15783012290283766, 1.9005250057313878}], 
+      InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"E\"\>", "2"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[0]], {4.143826425274221, 0.7036734889469716}], 
+      InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"A.+\"\>", "3"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[0]], {3.8779698042337607, 1.9010338606906463}], 
+      InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"A.+\"\>", "4"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[0]], {-0.10944516430578428, 0.704947838739767}], 
+      InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"A.+\"\>", "5"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[
+         0]], {2.0169923295794625, -0.11999977304870467}]}, {}},
+    ImagePadding->50,
+    ImageSize->500,
+    PlotRange->All], ",", 
+   GraphicsBox[{{
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{0.235498443074875, 1.812170875076709}, {0.829896269766145, 
+        1.129827199066578}}], 
+       ArrowBox[{{0.46731359548447027`, 1.5460568414327578`}, {
+        0.5980811173565497, 1.3959412327105292`}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{0., 0.754724125861328}, {0.829896269766145, 
+        1.129827199066578}}], 
+       ArrowBox[{{0.32365954520879653`, 0.9010143244113755}, {
+        0.5062367245573485, 0.9835370005165305}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{0.829896269766145, 1.129827199066578}, {2.0157383354296043`, 
+        0.8637651523813056}}], 
+       ArrowBox[{{1.5532599298208551`, 0.9675293505885619}, {
+        1.292374675374894, 1.026063000859322}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{2.017490516989534, 0.}, {2.0157383354296043`, 
+        0.8637651523813056}}], 
+       ArrowBox[{{2.0168071661811613`, 0.33686840942870916`}, {
+        2.016421686237977, 0.5268967429525964}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{2.0157383354296043`, 0.8637651523813056}, {3.201515711789435,
+         1.1295367020562468`}}], 
+       ArrowBox[{{2.739062535009101, 1.0258857976830198`}, {
+        2.4781915122099387`, 0.9674160567545327}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{3.7972153061449756`, 1.811553391443582}, {3.201515711789435, 
+        1.1295367020562468`}}], 
+       ArrowBox[{{3.5648924643463147`, 1.5455668825825213`}, {
+        3.433838553588096, 1.3955232109173075`}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{4.033649766113561, 0.7561600654619194}, {3.201515711789435, 
+        1.1295367020562468`}}], 
+       ArrowBox[{{3.7091174849271518`, 0.901776953733707}, {3.526047992975844,
+         0.9839198137844591}}]}}, {
+      {RGBColor[0, 0, 1], InsetBox[
+        StyleBox["\<\"E\"\>",
+         StripOnInput->False,
+         FontSize->14], {1.4490880479304367, 1.1138852355872428}]}, 
+      {RGBColor[0, 0, 1], InsetBox[
+        StyleBox["\<\"E\"\>",
+         StripOnInput->False,
+         FontSize->14], {2.582382225922393, 1.1137458058188319}]}}, 
+     {GrayLevel[0], 
+      DiskBox[{{0.829896269766145, 1.129827199066578}, {2.0157383354296043`, 
+       0.8637651523813056}, {3.201515711789435, 1.1295367020562468`}}, 
+       0.03]}, {InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"e\"\>", "1"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[0]], {0.1566773268424036, 1.902654197495082}], 
+      InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"E\"\>", "2"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[0]], {3.876155894824487, 1.9019325010814412}], 
+      InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"A.+\"\>", "3"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[0]], {2.0177339412050195, -0.11999975310245982}],
+       InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"A.+\"\>", "4"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[0]], {4.143133639139966, 0.7070349034048014}], 
+      InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"A.+\"\>", "5"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[
+         0]], {-0.10934908509236763, 0.705299662389661}]}, {}},
+    ImagePadding->50,
+    ImageSize->500,
+    PlotRange->All], ",", 
+   GraphicsBox[{{
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{0.23602073201474583`, 1.8121498736493966`}, {
+        0.8303073632719737, 1.1304566085788947`}}], 
+       ArrowBox[{{0.46779251820506473`, 1.546289500271901}, {
+        0.5985355770816548, 1.3963169819563905`}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{0., 0.7565452411963791}, {0.8303073632719737, 
+        1.1304566085788947`}}], 
+       ArrowBox[{{0.32381987167606974`, 0.9023706744755602}, {
+        0.506487491595904, 0.9846311752997137}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{0.8303073632719737, 1.1304566085788947`}, {
+        2.0160631213766393`, 0.8640207842698818}}], 
+       ArrowBox[{{1.5536183757158197`, 0.9679307557503968}, {
+        1.2927521089327934`, 1.0265466370983796`}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{2.0171417515106485`, 0.}, {2.0160631213766393`, 
+        0.8640207842698818}}], 
+       ArrowBox[{{2.016721085758385, 0.33696810586525394`}, {
+        2.0164837871289025`, 0.5270526784046279}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{2.0160631213766393`, 0.8640207842698818}, {3.201838209617308,
+         1.1300854476206659`}}], 
+       ArrowBox[{{2.739385925203447, 1.02632022891386}, {2.4785154057905, 
+        0.9677860029766876}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{4.033902096636847, 0.7567188986813121}, {3.201838209617308, 
+        1.1300854476206659`}}], 
+       ArrowBox[{{3.7093971806992267`, 0.90233185276766}, {
+        3.5263431255549285`, 0.9844724935343179}}]}, 
+      {GrayLevel[0], Thickness[Large], 
+       LineBox[{{3.7979797499749535`, 1.8122798668245805`}, {
+        3.201838209617308, 1.1300854476206659`}}], 
+       ArrowBox[{{3.565484549235472, 1.5462240433350538`}, {3.43433341035679, 
+        1.3961412711101926`}}]}}, {
+      {RGBColor[0, 0, 1], InsetBox[
+        StyleBox["\<\"E\"\>",
+         StripOnInput->False,
+         FontSize->14], {1.4494929444753184, 1.1143194583263063}]}, 
+      {RGBColor[0, 0, 1], InsetBox[
+        StyleBox["\<\"E\"\>",
+         StripOnInput->False,
+         FontSize->14], {2.5826782614130326, 1.114141803629653}]}}, 
+     {GrayLevel[0], 
+      DiskBox[{{0.8303073632719737, 1.1304566085788947`}, {
+       2.0160631213766393`, 0.8640207842698818}, {3.201838209617308, 
+       1.1300854476206659`}}, 0.03]}, {InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"e\"\>", "1"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[0]], {0.15716526649731902, 1.902603262519189}], 
+      InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"E\"\>", "2"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[0]], {4.1433849181153715, 0.7075913931360317}], 
+      InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"A.+\"\>", "3"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[0]], {3.8769418784034944, 1.9026401582917654}], 
+      InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"A.+\"\>", "4"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[0]], {2.0172915575310326, -0.11999990649228129}],
+       InsetBox[
+       StyleBox[
+        SubscriptBox["\<\"A.+\"\>", "5"],
+        StripOnInput->False,
+        LineColor->GrayLevel[0],
+        FrontFaceColor->GrayLevel[0],
+        BackFaceColor->GrayLevel[0],
+        GraphicsColor->GrayLevel[0],
+        FontSize->14,
+        FontColor->GrayLevel[
+         0]], {-0.10941711103914571, 0.7072715584453683}]}, {}},
+    ImagePadding->50,
+    ImageSize->500,
+    PlotRange->All]}], "}"}]], "Output",
+ CellChangeTimes->{{4.000563513856845*^9, 4.000563577596239*^9}, 
+   4.0005678522680283`*^9, 4.000816561264964*^9, 4.000825522903945*^9, 
+   4.000825586405925*^9, 4.0009075156806383`*^9, 4.0009120181511917`*^9, 
+   4.000997213407399*^9, 4.000998088280094*^9, 4.000998373789709*^9},
+ CellLabel->"Out[69]=",ExpressionUUID->"f38dbe18-b7ce-424c-a881-48077002e3ae"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"amps", "=", 
+  RowBox[{"ReduceSpinContractions", "[", 
+   RowBox[{"diagramAmplitudes", "[", "diags", "]"}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.99986950802459*^9, 3.999869529602919*^9}, {
+  4.000997247857242*^9, 4.000997249171118*^9}},
+ CellLabel->"In[70]:=",ExpressionUUID->"4823f631-f5d1-4224-af06-c00da52b68bb"],
+
+Cell[BoxData[
+ RowBox[{"{", 
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{
+        SubscriptBox["M", "1"], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", "2"], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", "3"], "\[Rule]", "0"}], ",", 
+       RowBox[{
+        SubscriptBox["M", "4"], "\[Rule]", "0"}], ",", 
+       RowBox[{
+        SubscriptBox["M", "5"], "\[Rule]", "0"}], ",", 
+       RowBox[{
+        SubscriptBox["M", 
+         RowBox[{"1", ",", "3"}]], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", 
+         RowBox[{"2", ",", "4", ",", "5"}]], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", 
+         RowBox[{"2", ",", "5"}]], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", 
+         RowBox[{"1", ",", "3", ",", "4"}]], "\[Rule]", "Me"}]}], "}"}], ",", 
+     
+     RowBox[{"-", 
+      FractionBox[
+       RowBox[{"2", " ", 
+        SqrtBox["2"], " ", 
+        SuperscriptBox["EE", "3"], " ", 
+        SubscriptBox["M", 
+         RowBox[{"1", ",", "3"}]], " ", 
+        SubscriptBox["M", 
+         RowBox[{"2", ",", "5"}]], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+          TemplateBox[{
+            StyleBox["2", Bold, StripOnInput -> False], 
+            "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "10"]}, "RowDefault"], "\"|\"", 
+          SubscriptBox["p", 
+           RowBox[{"2", ",", "4", ",", "5"}]], "\"|\"", 
+          TemplateBox[{"3", "\"]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "11"]}, "RowDefault"], "\"|\"", 
+          SubscriptBox["p", 
+           RowBox[{"2", ",", "5"}]], "\"|\"", 
+          TemplateBox[{"4", "\"]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "12"]}, "RowDefault"], "\"|\"", 
+          SubscriptBox["p", "2"], "\"|\"", 
+          TemplateBox[{"5", "\"]\""}, "RowDefault"]},
+         "RowDefault"]}], 
+       RowBox[{
+        SuperscriptBox["Me", "3"], " ", 
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"-", 
+           SuperscriptBox["Me", "2"]}], "+", 
+          SubsuperscriptBox["p", 
+           RowBox[{"1", ",", "3"}], "2"]}], ")"}], " ", 
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"-", 
+           SuperscriptBox["Me", "2"]}], "+", 
+          SubsuperscriptBox["p", 
+           RowBox[{"1", ",", "3", ",", "4"}], "2"]}], ")"}], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "10"]}, "RowDefault"], 
+          TemplateBox[{"3", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "11"]}, "RowDefault"], 
+          TemplateBox[{"4", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "12"]}, "RowDefault"], 
+          TemplateBox[{"5", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"]}]]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{
+        SubscriptBox["M", "1"], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", "2"], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", "3"], "\[Rule]", "0"}], ",", 
+       RowBox[{
+        SubscriptBox["M", "4"], "\[Rule]", "0"}], ",", 
+       RowBox[{
+        SubscriptBox["M", "5"], "\[Rule]", "0"}], ",", 
+       RowBox[{
+        SubscriptBox["M", 
+         RowBox[{"1", ",", "3"}]], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", 
+         RowBox[{"2", ",", "4", ",", "5"}]], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", 
+         RowBox[{"2", ",", "4"}]], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", 
+         RowBox[{"1", ",", "3", ",", "5"}]], "\[Rule]", "Me"}]}], "}"}], ",", 
+     
+     RowBox[{"-", 
+      FractionBox[
+       RowBox[{"2", " ", 
+        SqrtBox["2"], " ", 
+        SuperscriptBox["EE", "3"], " ", 
+        SubscriptBox["M", 
+         RowBox[{"1", ",", "3"}]], " ", 
+        SubscriptBox["M", 
+         RowBox[{"2", ",", "4"}]], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+          TemplateBox[{
+            StyleBox["2", Bold, StripOnInput -> False], 
+            "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "10"]}, "RowDefault"], "\"|\"", 
+          SubscriptBox["p", 
+           RowBox[{"2", ",", "4", ",", "5"}]], "\"|\"", 
+          TemplateBox[{"3", "\"]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "11"]}, "RowDefault"], "\"|\"", 
+          SubscriptBox["p", 
+           RowBox[{"2", ",", "4"}]], "\"|\"", 
+          TemplateBox[{"5", "\"]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "12"]}, "RowDefault"], "\"|\"", 
+          SubscriptBox["p", "2"], "\"|\"", 
+          TemplateBox[{"4", "\"]\""}, "RowDefault"]},
+         "RowDefault"]}], 
+       RowBox[{
+        SuperscriptBox["Me", "3"], " ", 
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"-", 
+           SuperscriptBox["Me", "2"]}], "+", 
+          SubsuperscriptBox["p", 
+           RowBox[{"1", ",", "3"}], "2"]}], ")"}], " ", 
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"-", 
+           SuperscriptBox["Me", "2"]}], "+", 
+          SubsuperscriptBox["p", 
+           RowBox[{"1", ",", "3", ",", "5"}], "2"]}], ")"}], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "10"]}, "RowDefault"], 
+          TemplateBox[{"3", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "11"]}, "RowDefault"], 
+          TemplateBox[{"5", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "12"]}, "RowDefault"], 
+          TemplateBox[{"4", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"]}]]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{
+        SubscriptBox["M", "1"], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", "2"], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", "3"], "\[Rule]", "0"}], ",", 
+       RowBox[{
+        SubscriptBox["M", "4"], "\[Rule]", "0"}], ",", 
+       RowBox[{
+        SubscriptBox["M", "5"], "\[Rule]", "0"}], ",", 
+       RowBox[{
+        SubscriptBox["M", 
+         RowBox[{"1", ",", "4"}]], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", 
+         RowBox[{"2", ",", "3", ",", "5"}]], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", 
+         RowBox[{"2", ",", "5"}]], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", 
+         RowBox[{"1", ",", "3", ",", "4"}]], "\[Rule]", "Me"}]}], "}"}], ",", 
+     
+     RowBox[{"-", 
+      FractionBox[
+       RowBox[{"2", " ", 
+        SqrtBox["2"], " ", 
+        SuperscriptBox["EE", "3"], " ", 
+        SubscriptBox["M", 
+         RowBox[{"1", ",", "4"}]], " ", 
+        SubscriptBox["M", 
+         RowBox[{"2", ",", "5"}]], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+          TemplateBox[{
+            StyleBox["2", Bold, StripOnInput -> False], 
+            "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "10"]}, "RowDefault"], "\"|\"", 
+          SubscriptBox["p", 
+           RowBox[{"2", ",", "3", ",", "5"}]], "\"|\"", 
+          TemplateBox[{"4", "\"]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "11"]}, "RowDefault"], "\"|\"", 
+          SubscriptBox["p", 
+           RowBox[{"2", ",", "5"}]], "\"|\"", 
+          TemplateBox[{"3", "\"]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "12"]}, "RowDefault"], "\"|\"", 
+          SubscriptBox["p", "2"], "\"|\"", 
+          TemplateBox[{"5", "\"]\""}, "RowDefault"]},
+         "RowDefault"]}], 
+       RowBox[{
+        SuperscriptBox["Me", "3"], " ", 
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"-", 
+           SuperscriptBox["Me", "2"]}], "+", 
+          SubsuperscriptBox["p", 
+           RowBox[{"1", ",", "4"}], "2"]}], ")"}], " ", 
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"-", 
+           SuperscriptBox["Me", "2"]}], "+", 
+          SubsuperscriptBox["p", 
+           RowBox[{"1", ",", "3", ",", "4"}], "2"]}], ")"}], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "10"]}, "RowDefault"], 
+          TemplateBox[{"4", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "11"]}, "RowDefault"], 
+          TemplateBox[{"3", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "12"]}, "RowDefault"], 
+          TemplateBox[{"5", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"]}]]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{
+        SubscriptBox["M", "1"], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", "2"], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", "3"], "\[Rule]", "0"}], ",", 
+       RowBox[{
+        SubscriptBox["M", "4"], "\[Rule]", "0"}], ",", 
+       RowBox[{
+        SubscriptBox["M", "5"], "\[Rule]", "0"}], ",", 
+       RowBox[{
+        SubscriptBox["M", 
+         RowBox[{"1", ",", "4"}]], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", 
+         RowBox[{"2", ",", "3", ",", "5"}]], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", 
+         RowBox[{"2", ",", "3"}]], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", 
+         RowBox[{"1", ",", "4", ",", "5"}]], "\[Rule]", "Me"}]}], "}"}], ",", 
+     
+     RowBox[{"-", 
+      FractionBox[
+       RowBox[{"2", " ", 
+        SqrtBox["2"], " ", 
+        SuperscriptBox["EE", "3"], " ", 
+        SubscriptBox["M", 
+         RowBox[{"1", ",", "4"}]], " ", 
+        SubscriptBox["M", 
+         RowBox[{"2", ",", "3"}]], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+          TemplateBox[{
+            StyleBox["2", Bold, StripOnInput -> False], 
+            "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "10"]}, "RowDefault"], "\"|\"", 
+          SubscriptBox["p", 
+           RowBox[{"2", ",", "3", ",", "5"}]], "\"|\"", 
+          TemplateBox[{"4", "\"]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "11"]}, "RowDefault"], "\"|\"", 
+          SubscriptBox["p", 
+           RowBox[{"2", ",", "3"}]], "\"|\"", 
+          TemplateBox[{"5", "\"]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "12"]}, "RowDefault"], "\"|\"", 
+          SubscriptBox["p", "2"], "\"|\"", 
+          TemplateBox[{"3", "\"]\""}, "RowDefault"]},
+         "RowDefault"]}], 
+       RowBox[{
+        SuperscriptBox["Me", "3"], " ", 
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"-", 
+           SuperscriptBox["Me", "2"]}], "+", 
+          SubsuperscriptBox["p", 
+           RowBox[{"1", ",", "4"}], "2"]}], ")"}], " ", 
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"-", 
+           SuperscriptBox["Me", "2"]}], "+", 
+          SubsuperscriptBox["p", 
+           RowBox[{"1", ",", "4", ",", "5"}], "2"]}], ")"}], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "10"]}, "RowDefault"], 
+          TemplateBox[{"4", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "11"]}, "RowDefault"], 
+          TemplateBox[{"5", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "12"]}, "RowDefault"], 
+          TemplateBox[{"3", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"]}]]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{
+        SubscriptBox["M", "1"], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", "2"], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", "3"], "\[Rule]", "0"}], ",", 
+       RowBox[{
+        SubscriptBox["M", "4"], "\[Rule]", "0"}], ",", 
+       RowBox[{
+        SubscriptBox["M", "5"], "\[Rule]", "0"}], ",", 
+       RowBox[{
+        SubscriptBox["M", 
+         RowBox[{"1", ",", "5"}]], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", 
+         RowBox[{"2", ",", "3", ",", "4"}]], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", 
+         RowBox[{"2", ",", "4"}]], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", 
+         RowBox[{"1", ",", "3", ",", "5"}]], "\[Rule]", "Me"}]}], "}"}], ",", 
+     
+     RowBox[{"-", 
+      FractionBox[
+       RowBox[{"2", " ", 
+        SqrtBox["2"], " ", 
+        SuperscriptBox["EE", "3"], " ", 
+        SubscriptBox["M", 
+         RowBox[{"1", ",", "5"}]], " ", 
+        SubscriptBox["M", 
+         RowBox[{"2", ",", "4"}]], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+          TemplateBox[{
+            StyleBox["2", Bold, StripOnInput -> False], 
+            "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "10"]}, "RowDefault"], "\"|\"", 
+          SubscriptBox["p", 
+           RowBox[{"2", ",", "3", ",", "4"}]], "\"|\"", 
+          TemplateBox[{"5", "\"]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "11"]}, "RowDefault"], "\"|\"", 
+          SubscriptBox["p", 
+           RowBox[{"2", ",", "4"}]], "\"|\"", 
+          TemplateBox[{"3", "\"]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "12"]}, "RowDefault"], "\"|\"", 
+          SubscriptBox["p", "2"], "\"|\"", 
+          TemplateBox[{"4", "\"]\""}, "RowDefault"]},
+         "RowDefault"]}], 
+       RowBox[{
+        SuperscriptBox["Me", "3"], " ", 
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"-", 
+           SuperscriptBox["Me", "2"]}], "+", 
+          SubsuperscriptBox["p", 
+           RowBox[{"1", ",", "5"}], "2"]}], ")"}], " ", 
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"-", 
+           SuperscriptBox["Me", "2"]}], "+", 
+          SubsuperscriptBox["p", 
+           RowBox[{"1", ",", "3", ",", "5"}], "2"]}], ")"}], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "10"]}, "RowDefault"], 
+          TemplateBox[{"5", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "11"]}, "RowDefault"], 
+          TemplateBox[{"3", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "12"]}, "RowDefault"], 
+          TemplateBox[{"4", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"]}]]}]}], "}"}], ",", 
+   RowBox[{"{", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+       RowBox[{
+        SubscriptBox["M", "1"], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", "2"], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", "3"], "\[Rule]", "0"}], ",", 
+       RowBox[{
+        SubscriptBox["M", "4"], "\[Rule]", "0"}], ",", 
+       RowBox[{
+        SubscriptBox["M", "5"], "\[Rule]", "0"}], ",", 
+       RowBox[{
+        SubscriptBox["M", 
+         RowBox[{"1", ",", "5"}]], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", 
+         RowBox[{"2", ",", "3", ",", "4"}]], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", 
+         RowBox[{"2", ",", "3"}]], "\[Rule]", "Me"}], ",", 
+       RowBox[{
+        SubscriptBox["M", 
+         RowBox[{"1", ",", "4", ",", "5"}]], "\[Rule]", "Me"}]}], "}"}], ",", 
+     
+     RowBox[{"-", 
+      FractionBox[
+       RowBox[{"2", " ", 
+        SqrtBox["2"], " ", 
+        SuperscriptBox["EE", "3"], " ", 
+        SubscriptBox["M", 
+         RowBox[{"1", ",", "5"}]], " ", 
+        SubscriptBox["M", 
+         RowBox[{"2", ",", "3"}]], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], 
+          TemplateBox[{
+            StyleBox["2", Bold, StripOnInput -> False], 
+            "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "10"]}, "RowDefault"], "\"|\"", 
+          SubscriptBox["p", 
+           RowBox[{"2", ",", "3", ",", "4"}]], "\"|\"", 
+          TemplateBox[{"5", "\"]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "11"]}, "RowDefault"], "\"|\"", 
+          SubscriptBox["p", 
+           RowBox[{"2", ",", "3"}]], "\"|\"", 
+          TemplateBox[{"4", "\"]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "12"]}, "RowDefault"], "\"|\"", 
+          SubscriptBox["p", "2"], "\"|\"", 
+          TemplateBox[{"3", "\"]\""}, "RowDefault"]},
+         "RowDefault"]}], 
+       RowBox[{
+        SuperscriptBox["Me", "3"], " ", 
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"-", 
+           SuperscriptBox["Me", "2"]}], "+", 
+          SubsuperscriptBox["p", 
+           RowBox[{"1", ",", "5"}], "2"]}], ")"}], " ", 
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"-", 
+           SuperscriptBox["Me", "2"]}], "+", 
+          SubsuperscriptBox["p", 
+           RowBox[{"1", ",", "4", ",", "5"}], "2"]}], ")"}], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "10"]}, "RowDefault"], 
+          TemplateBox[{"5", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "11"]}, "RowDefault"], 
+          TemplateBox[{"4", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", 
+        TemplateBox[{
+          TemplateBox[{"\"\[LeftAngleBracket]\"", 
+            SubscriptBox["\[Xi]", "12"]}, "RowDefault"], 
+          TemplateBox[{"3", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"]}]]}]}], "}"}]}], "}"}]], "Output",
+ CellChangeTimes->{
+  3.9998694471355057`*^9, {3.9998695141999397`*^9, 3.9998695299384613`*^9}, 
+   3.999870515348917*^9, 3.999874567498063*^9, 3.999957640643375*^9, 
+   4.000386709328883*^9, 4.000387802169077*^9, 4.000549858924406*^9, 
+   4.0005635417222548`*^9, 4.000567855382249*^9, 4.0008165796776667`*^9, 
+   4.0008255240509*^9, 4.000825588235268*^9, 4.00090814406458*^9, 
+   4.000912029188136*^9, {4.00099722157732*^9, 4.00099724986001*^9}, 
+   4.000998093714715*^9, 4.000998375030867*^9},
+ CellLabel->"Out[70]=",ExpressionUUID->"8e77ef43-cb24-48cb-af60-1ec1784210aa"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{Cell["Identity Simplification", "Section"], 
+   Cell["No neural network is used below. Each diagram is reduced with its own two internal \
+numerator mass-shell conditions before the diagrams are summed. Original propagator denominators \
+stay off shell throughout. All particles are ingoing.", "Text"], 
+   Cell[CellGroupData[{Cell["Definitions", "Subsection"], Cell["ClearAll[q5Angle, q5Square, \
+q5Mixed, q5K, q5A, q5B, q5Route];\nq5Angle[i_, j_] := ReduceSpinorProducts[SpinorChain[\n  \
+Spinor[\"Helicity\", \"Angle\", i], Spinor[\"Helicity\", \"Angle\", j]]];\nq5Square[i_, j_] := \
+ReduceSpinorProducts[SpinorChain[\n  Spinor[\"Helicity\", \"Square\", i], Spinor[\"Helicity\", \
+\"Square\", j]]];\nq5Mixed[i_, p_, j_] := ReduceSpinorProducts[SpinorChain[\n  Spinor[\"Helicity\", \
+\"Angle\", i], Mom[p], Spinor[\"Helicity\", \"Square\", j]]];\nq5K[i_] := \
+SpinorChain[Spinor[\"Helicity\", \"Square\", i], Mom[1], Mom[2],\n  Spinor[\"Helicity\", \
+\"Square\", i]];\nq5A[i_] := PropDen[Mom[Multiparticle[1, i]], Me];\nq5B[i_] := \
+PropDen[Mom[Multiparticle[2, i]], Me];\n\nq5Route[pair_] := Module[{massRules = First[pair], raw, \
+order, aa, bb, cc,\n    references, referenceState, conserved, contracted, determinant, shell,\n    \
+auxiliaryDenominators, result, product, determinantRule, stages},\n  raw = \
+ReduceSpinContractions[Last[pair]] /. massRules;\n  order = Table[First[Cases[raw,\n    \
+SpinorChain[Spinor[\"Xi\", \"Angle\", 9 + v], Mom[_],\n      Spinor[\"Helicity\", \"Square\", \
+photon_]] :> photon, Infinity]], {v, 3}];\n  {aa, bb, cc} = order;\n  references = {Spinor[\"Xi\", \
+\"Angle\", 10] -> Spinor[\"Helicity\", \"Angle\", bb],\n    Spinor[\"Xi\", \"Angle\", 11] -> \
+Spinor[\"Helicity\", \"Angle\", aa]};\n  referenceState = raw /. references /. {\n    \
+SpinorChain[Spinor[\"Xi\", \"Angle\", 12], tail__] :>\n      SpinorChain[Spinor[\"Helicity\", \
+\"Square\", cc], Mom[1], tail]};\n  conserved = referenceState /. {\n    \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", bb], Mom[_Multiparticle],\n        Spinor[\"Helicity\", \
+\"Square\", aa]] :>\n      -SpinorChain[Spinor[\"Helicity\", \"Angle\", bb], Mom[1] + Mom[aa],\n    \
+    Spinor[\"Helicity\", \"Square\", aa]],\n    SpinorChain[Spinor[\"Helicity\", \"Angle\", aa], \
+Mom[_Multiparticle],\n        Spinor[\"Helicity\", \"Square\", bb]] :>\n      \
+-SpinorChain[Spinor[\"Helicity\", \"Angle\", aa], Mom[1] + Mom[aa] + Mom[bb],\n        \
+Spinor[\"Helicity\", \"Square\", bb]]};\n  contracted = ReduceSpinorProducts[conserved] /. \
+massRules;\n  product = q5Mixed[bb, 1, aa] q5Mixed[aa, 1, bb];\n  determinantRule = With[{lhs = \
+product,\n      rhs = Me^2 q5Angle[aa, bb] q5Square[aa, bb] +\n        q5Mixed[aa, 1, aa] \
+q5Mixed[bb, 1, bb]}, lhs -> rhs];\n  determinant = Expand[contracted /. determinantRule];\n  shell \
+= Factor[determinant /. q5Mixed[aa, 1, aa] -> 0];\n  (* Only auxiliary spinor denominators are \
+converted. Original PropDen\n     factors remain opaque and off shell. *)\n  auxiliaryDenominators \
+= shell /.\n    q5Mixed[cc, 1, cc] -> q5A[cc] /.\n    With[{angle = q5Angle @@ Sort[{aa, bb}], \
+square = q5Square @@ Sort[{aa, bb}], den = q5A[bb]},\n      Power[angle, -1] -> square/den];\n  \
+result = Factor[auxiliaryDenominators /.\n    PropDen[Mom[Multiparticle @@ Sort[{1, aa, bb}]], Me] \
+-> q5B[cc]];\n  stages = <|\"Raw\" -> raw, \"ReferenceSpinors\" -> referenceState,\n    \
+\"MomentumConservation\" -> conserved, \"MasslessEndpointContractions\" -> contracted,\n    \
+\"DeterminantSchouten\" -> determinant, \"FirstInternalOnShell\" -> shell,\n    \
+\"SecondInternalOnShellAndAuxiliaryDenominators\" -> auxiliaryDenominators,\n    \
+\"ComplementaryPropagatorMomentum\" -> result|>;\n  <|\"PhotonOrder\" -> order, \"MassRules\" -> \
+massRules,\n    \"NumeratorShells\" -> {Multiparticle[1, aa], Multiparticle[2, cc]},\n    \
+\"Stages\" -> stages, \"Result\" -> result|>\n];", "Input"]}, Closed]], 
+   Cell["Six Photon Orderings", "Subsection"], Cell["For an ordering (a,b,c), the internal momenta \
+are p1+pa and -(p2+pc). Their numerator conditions are (p1+pa)^2=Me^2 and (p2+pc)^2=Me^2. A_i \
+denotes PropDen[p1+pi,Me], B_i denotes PropDen[p2+pi,Me], and K_i denotes [i|p1 p2|i]. These A_i \
+and B_i are never set to zero.", "Text"], Cell["q5Input = diagramAmplitudes[diags];\nq5Routes = \
+q5Route /@ q5Input;\nGrid[Prepend[({#[\"PhotonOrder\"], #[\"NumeratorShells\"], #[\"Result\"]} & /@ \
+q5Routes),\n  {\"Photon Order\", \"Numerator Shells\", \"Reduced Diagram\"}], Alignment -> Left]", 
+    "Input"], Cell["The determinant form of Schouten gives <b|p1|a]<a|p1|b] - <a|p1|a]<b|p1|b] = \
+Me^2 <ab>[ab]. The first internal shell removes <a|p1|a]. The second internal shell gives \
+<ab>[ab]=2 p1.pb. Choosing the third reference spinor to be [c|p1 gives K_c/(2 p1.pc). This removes \
+all reference spinors. Only the auxiliary reference denominators are rewritten; the original \
+diagram propagators are untouched.", "Text"], 
+   Cell[CellGroupData[{Cell["Detailed Route", "Subsection"], Cell["q5Example = \
+1;\nq5Routes[[q5Example]][\"PhotonOrder\"]\nGrid[KeyValueMap[{#1, #2} &, \
+q5Routes[[q5Example]][\"Stages\"]], Alignment -> Left]", "Input"]}, Closed]], 
+   Cell["Combined Result", "Subsection"], Cell["The two orders with the same rightmost photon give \
+the same reduced expression. Their six contributions therefore combine into the three terms below. \
+q5Final is the factored result; q5FinalCommon is the same result as one rational fraction.", 
+    "Text"], Cell[CellGroupData[{Cell["q5Spin =SpinorChain[Spinor[\"Spin\", \"Angle\", 1], \
+Spinor[\"Spin\", \"Angle\", 2]];\nq5Final = 4 Sqrt[2] EE^3 Me q5Spin/(q5A[3] q5A[4] q5A[5]) *\n  \
+(q5Square[4, 5]^2 q5K[3]/q5B[3] + q5Square[3, 5]^2 q5K[4]/q5B[4] +\n    q5Square[3, 4]^2 \
+q5K[5]/q5B[5]);\nq5FinalCommon = Together[q5Final];\nq5Final", "Input"], 
+      Cell[BoxData[FractionBox[RowBox[{"4", " ", SqrtBox["2"], " ", SuperscriptBox["EE", "3"], " ", 
+           "Me", " ", TemplateBox[{TemplateBox[{"\"〈\"", StyleBox["1", Bold, StripOnInput -> 
+                 False]}, "RowDefault"], TemplateBox[{StyleBox["2", Bold, StripOnInput -> False], 
+               "\"〉\""}, "RowDefault"]}, "RowDefault"], " ", 
+           RowBox[{"(", RowBox[{FractionBox[RowBox[{SuperscriptBox[TemplateBox[{TemplateBox[
+                      {"\"[\"", "4"}, "RowDefault"], TemplateBox[{"5", "\"]\""}, "RowDefault"]}, 
+                    "RowDefault"], "2"], " ", TemplateBox[{TemplateBox[{"\"[\"", "3"}, 
+                     "RowDefault"], "\"|\"", SubscriptBox["p", "1"], SubscriptBox["p", "2"], 
+                    "\"|\"", TemplateBox[{"3", "\"]\""}, "RowDefault"]}, "RowDefault"]}], 
+                RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", SubsuperscriptBox["p", 
+                   RowBox[{"2", ",", "3"}], "2"]}]], "+", FractionBox[RowBox[{SuperscriptBox[
+                   TemplateBox[{TemplateBox[{"\"[\"", "3"}, "RowDefault"], TemplateBox[
+                      {"5", "\"]\""}, "RowDefault"]}, "RowDefault"], "2"], " ", TemplateBox[
+                   {TemplateBox[{"\"[\"", "4"}, "RowDefault"], "\"|\"", SubscriptBox["p", "1"], 
+                    SubscriptBox["p", "2"], "\"|\"", TemplateBox[{"4", "\"]\""}, "RowDefault"]}, 
+                   "RowDefault"]}], RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", 
+                  SubsuperscriptBox["p", RowBox[{"2", ",", "4"}], "2"]}]], "+", FractionBox[
+                RowBox[{SuperscriptBox[TemplateBox[{TemplateBox[{"\"[\"", "3"}, "RowDefault"], 
+                     TemplateBox[{"4", "\"]\""}, "RowDefault"]}, "RowDefault"], "2"], " ", 
+                  TemplateBox[{TemplateBox[{"\"[\"", "5"}, "RowDefault"], "\"|\"", SubscriptBox[
+                     "p", "1"], SubscriptBox["p", "2"], "\"|\"", TemplateBox[{"5", "\"]\""}, 
+                     "RowDefault"]}, "RowDefault"]}], RowBox[{RowBox[{"-", SuperscriptBox["Me", 
+                     "2"]}], "+", SubsuperscriptBox["p", RowBox[{"2", ",", "5"}], "2"]}]]}], 
+             ")"}]}], RowBox[{RowBox[{"(", RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", 
+               SubsuperscriptBox["p", RowBox[{"1", ",", "3"}], "2"]}], ")"}], " ", 
+           RowBox[{"(", RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", SubsuperscriptBox[
+                "p", RowBox[{"1", ",", "4"}], "2"]}], ")"}], " ", 
+           RowBox[{"(", RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", SubsuperscriptBox[
+                "p", RowBox[{"1", ",", "5"}], "2"]}], ")"}]}]]], "Output"]}, Open]], 
+   Cell["q5RouteChecks =Map[Function[route, With[{aa = route[\"PhotonOrder\"][[1]],\n    bb = \
+route[\"PhotonOrder\"][[2]], cc = route[\"PhotonOrder\"][[3]]},\n  Together[route[\"Result\"] - 2 \
+Sqrt[2] EE^3 Me q5Spin q5Square[aa, bb]^2 q5K[cc]/\n    (q5A[3] q5A[4] q5A[5] q5B[cc])] === 0]], \
+q5Routes];\nq5SumCheck = Together[Total[Lookup[q5Routes, \"Result\"]] - q5Final] === \
+0;\n<|\"SixRoutes\" -> q5RouteChecks, \"Sum\" -> q5SumCheck,\n  \"NoReferenceSpinors\" -> \
+FreeQ[q5Final, Spinor[\"Xi\", ___]],\n  \"NoInversePhotonAngleBrackets\" -> \
+FreeQ[Denominator[Together[q5Final]],\n    SpinorChain[Spinor[\"Helicity\", \"Angle\", _], \
+Spinor[\"Helicity\", \"Angle\", _]]]|>", "Input"], 
+   Cell[CellGroupData[{Cell["Independent Algebraic Checks", "Subsection"], 
+      Cell["This check uses arbitrary two-component spinors and exact algebra. It proves reference \
+independence with both internal numerator shells, and proves equality of the final form with its \
+p1/p2-reflected representation using external shells alone. The original PropDen factors cancel out \
+of these numerator checks and are not evaluated. Separately, 94 nondegenerate exact checks of the \
+actual six generated diagrams passed, with four masses and independently varied references. These \
+are checks of the stated constructive numerator prescription, not a separate comparison with \
+off-shell Feynman matrix elements.", "Text"], Cell["ClearAll[q5VerifyIdentities];\nq5VerifyIdentiti\
+es[] := Module[{eps, adj, la, lb, lc, ta, tb, tc, p1, p2,\n    pa, pb, pc, ad, bd, kin, weights, \
+endpoint, externalRule, cutRules,\n    cutExternalRule, rawProduct, reducedProduct, check, a, b, d, \
+m, u, v,\n    r, s, t, w, z1, z2, z3, z4, z5, z6},\n  eps = {{0, 1}, {-1, 0}};\n  adj[p_] := \
+{{p[[2, 2]], -p[[1, 2]]}, {-p[[2, 1]], p[[1, 1]]}};\n  la = {1, 0}; lb = {0, 1}; lc = {u, v};\n  ta \
+= {1, 0}; tb = {r, s}; tc = {t, w};\n  p1 = {{a, b}, {d, (m^2 + b d)/a}};\n  pa = -Outer[Times, la, \
+ta.eps];\n  pb = -Outer[Times, lb, tb.eps];\n  pc = -Outer[Times, lc, tc.eps];\n  p2 = -p1 - pa - \
+pb - pc;\n  externalRule = First[Solve[Det[p2] == m^2, t]];\n  ad = {Det[p1 + pa] - m^2, Det[p1 + \
+pb] - m^2, Det[p1 + pc] - m^2};\n  bd = {Det[p2 + pa] - m^2, Det[p2 + pb] - m^2, Det[p2 + pc] - \
+m^2};\n  kin = (-#.eps.adj[p1].p2.# &) /@ {ta, tb, tc};\n  weights = {(-tb.eps.tc)^2, \
+(-ta.eps.tc)^2, (-ta.eps.tb)^2};\n  endpoint = Total[Table[weights[[i]] kin[[i]] *\n    ((Times @@ \
+Delete[bd, i]) - (Times @@ Delete[ad, i])), {i, 3}]];\n  cutRules = {d -> 0, r -> -(b - 1) s/a};\n  \
+cutExternalRule = First[Solve[\n    Together[(Det[p2] - m^2) /. cutRules] == 0, t]];\n  rawProduct \
+= -({z1, z2}.eps.p1.ta)/({z1, z2}.eps.la) *\n    ({z3, z4}.eps.(p2 + pc).tb)/({z3, z4}.eps.lb) *\n  \
+  ({z5, z6}.eps.p2.tc)/({z5, z6}.eps.lc);\n  reducedProduct = -m^2 weights[[3]] kin[[3]]/(ad[[2]] \
+ad[[3]]);\n  check[x_] := Together[x /. cutRules /. cutExternalRule] === 0;\n  \
+<|\"ExternalMassShells\" ->\n      AllTrue[Together[{Det[p1] - m^2, Det[p2] - m^2} /. \
+externalRule], # === 0 &],\n    \"BothInternalNumeratorShells\" ->\n      (check[ad[[1]]] && \
+check[bd[[3]]]),\n    \"ArbitraryReferenceSpinors\" -> check[rawProduct - reducedProduct],\n    \
+\"ReflectedFinalForm\" -> (Together[endpoint /. externalRule] === 0)|>\n];\nq5VerifyIdentities[]", 
+       "Input"]}, Closed]]}, Open]],
+
+Cell[CellGroupData[{Cell["Cyclic Reference Spinors", "Section"], 
+   Cell["This is a separate derivation. The earlier sections and q5Final are unchanged. Evaluate \
+Setup and the preceding Definitions first. For photon order (a,b,c), choose \
+(Xi10,Xi11,Xi12)=(b,c,a). Thus the first diagram uses exactly (4,5,3). None of these reference \
+spinors contains a momentum insertion.", "Text"], 
+   Cell[CellGroupData[{Cell["Cyclic Route Definitions", "Subsection"], 
+      Cell["ClearAll[q5CyclicRoute];\nq5CyclicRoute[pair_] := Module[{raw, massRules = First[pair], \
+order, aa, bb, cc,\n    referenceState, referenceSchouten, internalReferenceCondition, \
+equivalentReference,\n    conserved, contracted, product, determinant, firstShell, result, stages, \
+qq},\n  raw = ReduceSpinContractions[Last[pair]] /. massRules;\n  order = Table[First[Cases[raw,\n  \
+  SpinorChain[Spinor[\"Xi\", \"Angle\", 9 + v], Mom[_],\n      Spinor[\"Helicity\", \"Square\", \
+photon_]] :> photon, Infinity]], {v, 3}];\n  {aa, bb, cc} = order;\n  qq = Multiparticle @@ \
+Sort[{2, cc}];\n  referenceState = raw /. Thread[Table[Spinor[\"Xi\", \"Angle\", 9 + v], {v, 3}] \
+->\n    (Spinor[\"Helicity\", \"Angle\", #] & /@ {bb, cc, aa})];\n  referenceSchouten = \
+referenceState /.\n    SpinorChain[Spinor[\"Helicity\", \"Angle\", cc], Mom[qq],\n      \
+Spinor[\"Helicity\", \"Square\", bb]] ->\n      (q5Angle[cc, bb]/q5Angle[aa, bb] *\n        \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", aa], Mom[qq],\n          Spinor[\"Helicity\", \
+\"Square\", bb]] -\n       q5Angle[cc, aa]/q5Angle[aa, bb] *\n        \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", bb], Mom[qq],\n          Spinor[\"Helicity\", \
+\"Square\", bb]]);\n  internalReferenceCondition = Expand[referenceSchouten /.\n    \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", bb], Mom[qq],\n      Spinor[\"Helicity\", \"Square\", \
+bb]] -> q5A[aa] - q5B[cc]];\n  equivalentReference = referenceSchouten /.\n    \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", bb], Mom[qq],\n      Spinor[\"Helicity\", \"Square\", \
+bb]] -> 0;\n  conserved = equivalentReference /. {\n    SpinorChain[Spinor[\"Helicity\", \"Angle\", \
+bb], Mom[_Multiparticle],\n        Spinor[\"Helicity\", \"Square\", aa]] :>\n      \
+-SpinorChain[Spinor[\"Helicity\", \"Angle\", bb], Mom[1] + Mom[aa],\n        Spinor[\"Helicity\", \
+\"Square\", aa]],\n    SpinorChain[Spinor[\"Helicity\", \"Angle\", aa], Mom[qq],\n        \
+Spinor[\"Helicity\", \"Square\", bb]] :>\n      -SpinorChain[Spinor[\"Helicity\", \"Angle\", aa], \
+Mom[1] + Mom[aa] + Mom[bb],\n        Spinor[\"Helicity\", \"Square\", bb]]};\n  contracted = \
+Expand[conserved /. chain_SpinorChain :> ReduceSpinorProducts[chain]] /. massRules;\n  product = \
+q5Mixed[bb, 1, aa] q5Mixed[aa, 1, bb];\n  determinant = Expand[contracted /. With[{lhs = product,\n \
+     rhs = Me^2 q5Angle[aa, bb] q5Square[aa, bb] +\n        q5Mixed[aa, 1, aa] q5Mixed[bb, 1, bb]}, \
+lhs -> rhs]];\n  firstShell = Factor[determinant /. q5Mixed[aa, 1, aa] -> 0];\n  result = \
+Factor[firstShell /.\n    PropDen[Mom[Multiparticle @@ Sort[{1, aa, bb}]], Me] -> q5B[cc]];\n  \
+stages = <|\"Raw\" -> raw, \"CyclicReferenceSpinors\" -> referenceState,\n    \"ReferenceSchouten\" \
+-> referenceSchouten,\n    \"ReferenceChangeRemainderBeforeCut\" -> internalReferenceCondition,\n   \
+ \"BothInternalShellsForReferenceChange\" -> equivalentReference,\n    \"MomentumConservation\" -> \
+conserved, \"MasslessEndpointContractions\" -> contracted,\n    \"DeterminantSchouten\" -> \
+determinant, \"FirstInternalNumeratorShell\" -> firstShell,\n    \
+\"ComplementaryPropagatorMomentum\" -> result|>;\n  <|\"PhotonOrder\" -> order, \"References\" -> \
+{bb, cc, aa},\n    \"NumeratorShells\" -> {Multiparticle[1, aa], Multiparticle[2, cc]},\n    \
+\"Stages\" -> stages, \"Result\" -> result|>\n];", "Input"]}, Closed]], 
+   Cell["q5CyclicInput = diagramAmplitudes[diags];\nq5CyclicRoutes = q5CyclicRoute /@ \
+q5CyclicInput;\nq5CyclicRoutes[[1]][\"References\"]", "Input"], 
+   Cell["The middle reference is changed using the two-dimensional Schouten identity. For Q=p2+pc, \
+Y(c,Q,b) = <cb> Y(a,Q,b)/<ab> - <ca> Y(b,Q,b)/<ab>. External equal-mass shells and momentum \
+conservation give Y(b,Q,b)=A_a-B_c. Both internal numerator shells therefore remove the second \
+term. This step does not set either original propagator denominator to zero.", "Text"], 
+   Cell["Conservation and massless endpoint contractions then leave the product <b|p1|a]<a|p1|b]. \
+Its determinant-Schouten identity and the first internal numerator shell reduce the diagram to the \
+expression below. In particular, the first ordering gives [34]<3|p2|5]/(<34><35>A_3 B_5), \
+multiplied by 2 Sqrt[2] EE^3 Me <bold1 bold2>.", "Text"], 
+   Cell[CellGroupData[{Cell["q5CyclicRoutes[[1]][\"Result\"]", "Input"], 
+      Cell[BoxData[FractionBox[RowBox[{"2", " ", SqrtBox["2"], " ", SuperscriptBox["EE", "3"], " ", 
+           "Me", " ", TemplateBox[{TemplateBox[{"\"[\"", "3"}, "RowDefault"], 
+             TemplateBox[{"4", "\"]\""}, "RowDefault"]}, "RowDefault"], " ", 
+           TemplateBox[{TemplateBox[{"\"〈\"", StyleBox["1", Bold, StripOnInput -> False]}, 
+              "RowDefault"], TemplateBox[{StyleBox["2", Bold, StripOnInput -> False], "\"〉\""}, 
+              "RowDefault"]}, "RowDefault"], " ", TemplateBox[{TemplateBox[{"\"[\"", "5"}, 
+              "RowDefault"], "\"|\"", SubscriptBox["p", "2"], "\"|\"", TemplateBox[
+              {"3", "\"〉\""}, "RowDefault"]}, "RowDefault"]}], 
+         RowBox[{RowBox[{"(", RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", 
+               SubsuperscriptBox["p", RowBox[{"1", ",", "3"}], "2"]}], ")"}], " ", 
+           RowBox[{"(", RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", SubsuperscriptBox[
+                "p", RowBox[{"2", ",", "5"}], "2"]}], ")"}], " ", TemplateBox[
+            {TemplateBox[{"\"〈\"", "3"}, "RowDefault"], TemplateBox[{"4", "\"〉\""}, 
+              "RowDefault"]}, "RowDefault"], " ", TemplateBox[{TemplateBox[{"\"〈\"", "3"}, 
+              "RowDefault"], TemplateBox[{"5", "\"〉\""}, "RowDefault"]}, "RowDefault"]}]]], 
+       "Output"]}, Open]], Cell[CellGroupData[{Cell["All Six Routes", "Subsection"], 
+      Cell["Grid[Prepend[({#[\"PhotonOrder\"], #[\"References\"], #[\"Result\"]} & /@ \
+q5CyclicRoutes),\n  {\"Photon Order\", \"References\", \"Reduced Diagram\"}], Alignment -> \
+Left]\nq5CyclicExample = 1;\nGrid[KeyValueMap[{#1, #2} &, \
+q5CyclicRoutes[[q5CyclicExample]][\"Stages\"]], Alignment -> Left]", "Input"]}, Closed]]}, Open]],
+
+Cell[CellGroupData[{Cell["Cyclic Sum and Pole Cancellation", "Section"], 
+   Cell["Sum the six inverse-angle expressions before applying further identities. No internal \
+shell condition is imposed on this combined sum. External shells, conservation, Schouten, and \
+K_c=[ac]<a|p2|c]+[bc]<b|p2|c] cancel the inverse photon-angle poles. The cancellation involves the \
+complete sum, not each pair of orders separately.", "Text"], 
+   Cell["q5CyclicSum = Total[Lookup[q5CyclicRoutes, \"Result\"]];\nq5CyclicSum", "Input"], 
+   Cell[CellGroupData[{Cell["q5CyclicSpin = SpinorChain[Spinor[\"Spin\", \"Angle\", 1], \
+Spinor[\"Spin\", \"Angle\", 2]];\nq5CyclicSum = Total[Lookup[q5CyclicRoutes, \
+\"Result\"]];\nq5CyclicFinal = 2 Sqrt[2] EE^3 Me q5CyclicSpin/(q5A[3] q5A[4] q5A[5]) *\n  \
+(q5Square[4, 5]^2 q5K[3]/q5B[3] + q5Square[3, 5]^2 q5K[4]/q5B[4] +\n    q5Square[3, 4]^2 \
+q5K[5]/q5B[5]);\nq5CyclicFinalCommon = Together[q5CyclicFinal];\nq5CyclicFinal", "Input"], 
+      Cell[BoxData[FractionBox[RowBox[{"2", " ", SqrtBox["2"], " ", SuperscriptBox["EE", "3"], " ", 
+           "Me", " ", TemplateBox[{TemplateBox[{"\"〈\"", StyleBox["1", Bold, StripOnInput -> 
+                 False]}, "RowDefault"], TemplateBox[{StyleBox["2", Bold, StripOnInput -> False], 
+               "\"〉\""}, "RowDefault"]}, "RowDefault"], " ", 
+           RowBox[{"(", RowBox[{FractionBox[RowBox[{SuperscriptBox[TemplateBox[{TemplateBox[
+                      {"\"[\"", "4"}, "RowDefault"], TemplateBox[{"5", "\"]\""}, "RowDefault"]}, 
+                    "RowDefault"], "2"], " ", TemplateBox[{TemplateBox[{"\"[\"", "3"}, 
+                     "RowDefault"], "\"|\"", SubscriptBox["p", "1"], SubscriptBox["p", "2"], 
+                    "\"|\"", TemplateBox[{"3", "\"]\""}, "RowDefault"]}, "RowDefault"]}], 
+                RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", SubsuperscriptBox["p", 
+                   RowBox[{"2", ",", "3"}], "2"]}]], "+", FractionBox[RowBox[{SuperscriptBox[
+                   TemplateBox[{TemplateBox[{"\"[\"", "3"}, "RowDefault"], TemplateBox[
+                      {"5", "\"]\""}, "RowDefault"]}, "RowDefault"], "2"], " ", TemplateBox[
+                   {TemplateBox[{"\"[\"", "4"}, "RowDefault"], "\"|\"", SubscriptBox["p", "1"], 
+                    SubscriptBox["p", "2"], "\"|\"", TemplateBox[{"4", "\"]\""}, "RowDefault"]}, 
+                   "RowDefault"]}], RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", 
+                  SubsuperscriptBox["p", RowBox[{"2", ",", "4"}], "2"]}]], "+", FractionBox[
+                RowBox[{SuperscriptBox[TemplateBox[{TemplateBox[{"\"[\"", "3"}, "RowDefault"], 
+                     TemplateBox[{"4", "\"]\""}, "RowDefault"]}, "RowDefault"], "2"], " ", 
+                  TemplateBox[{TemplateBox[{"\"[\"", "5"}, "RowDefault"], "\"|\"", SubscriptBox[
+                     "p", "1"], SubscriptBox["p", "2"], "\"|\"", TemplateBox[{"5", "\"]\""}, 
+                     "RowDefault"]}, "RowDefault"]}], RowBox[{RowBox[{"-", SuperscriptBox["Me", 
+                     "2"]}], "+", SubsuperscriptBox["p", RowBox[{"2", ",", "5"}], "2"]}]]}], 
+             ")"}]}], RowBox[{RowBox[{"(", RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", 
+               SubsuperscriptBox["p", RowBox[{"1", ",", "3"}], "2"]}], ")"}], " ", 
+           RowBox[{"(", RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", SubsuperscriptBox[
+                "p", RowBox[{"1", ",", "4"}], "2"]}], ")"}], " ", 
+           RowBox[{"(", RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", SubsuperscriptBox[
+                "p", RowBox[{"1", ",", "5"}], "2"]}], ")"}]}]]], "Output"]}, Open]], 
+   Cell[TextData[{StyleBox["Factor-of-Two Discrepancy", FontWeight -> "Bold"], "\nThe cyclic result \
+is exactly q5Final/2, not q5Final. Its spurious poles cancel, but it is not the same off-shell \
+function as the earlier physical-reference result. Both results are retained. No normalization has \
+been adjusted to force agreement."}], "Text"], Cell["q5CyclicRouteChecks = Map[Function[route, \
+With[{aa = route[\"PhotonOrder\"][[1]],\n    bb = route[\"PhotonOrder\"][[2]], cc = \
+route[\"PhotonOrder\"][[3]]},\n  Together[route[\"Result\"] - 2 Sqrt[2] EE^3 Me q5CyclicSpin *\n    \
+q5Square[aa, bb] q5Mixed[aa, 2, cc]/\n    (q5Angle[aa, bb] q5Angle[aa, cc] q5A[aa] q5B[cc])] === \
+0]], q5CyclicRoutes];\n<|\"SixCyclicRoutes\" -> q5CyclicRouteChecks,\n  \"EqualToPreviousResult\" \
+-> (Together[q5CyclicFinal - q5Final] === 0),\n  \"EqualToHalfPreviousResult\" -> \
+(Together[q5CyclicFinal - q5Final/2] === 0)|>", "Input"], 
+   Cell[CellGroupData[{Cell["Exact Pole-Cancellation Proof", "Subsection"], 
+      Cell["The check below uses generic symbolic two-component spinors with only the external \
+equal-mass conditions and momentum conservation. It proves the six-term cyclic sum equals the new \
+three-term expression. It also verifies the exact discarded remainder of each of the six diagrams. \
+EqualToPreviousResult is expected to be False; EqualsHalfPreviousResult is expected to be True.", 
+       "Text"], Cell["ClearAll[q5VerifyCyclic];\nq5VerifyCyclic[] := Module[{eps, adj, lam, til, \
+pm, p1, p2, extRule, angle,\n    square, y, ad, bd, kin, orders, summands, physical, rawProducts, \
+remainders,\n    reducedProducts, fullDenominator, checkExternal, sumCheck, remainderChecks,\n    \
+a, b, d, m, u, v, r, s, t, w},\n  eps = {{0, 1}, {-1, 0}};\n  adj[p_] := {{p[[2, 2]], -p[[1, 2]]}, \
+{-p[[2, 1]], p[[1, 1]]}};\n  lam[3] = {1, 0}; lam[4] = {0, 1}; lam[5] = {u, v};\n  til[3] = {1, 0}; \
+til[4] = {r, s}; til[5] = {t, w};\n  pm[i_] := Outer[Times, lam[i], til[i]];\n  p1 = {{a, b}, {d, \
+(m^2 + b d)/a}};\n  p2 = -p1 - Total[pm /@ {3, 4, 5}];\n  extRule = First[Solve[Det[p2] == m^2, \
+t]];\n  angle[i_, j_] := -lam[i].eps.lam[j];\n  square[i_, j_] := til[i].eps.til[j];\n  y[i_, p_, \
+j_] := -lam[i].eps.p.eps.til[j];\n  ad[i_] := Det[p1 + pm[i]] - m^2;\n  bd[i_] := Det[p2 + pm[i]] - \
+m^2;\n  kin[i_] := til[i].adj[p1].p2.eps.til[i];\n  orders = Permutations[{3, 4, 5}];\n  summands = \
+Function[ord, With[{aa = ord[[1]], bb = ord[[2]], cc = ord[[3]]},\n    square[aa, bb] y[aa, p2, \
+cc]/\n      (angle[aa, bb] angle[aa, cc] ad[aa] bd[cc])]] /@ orders;\n  physical = \
+Total[Function[cc, With[{pair = Complement[{3, 4, 5}, {cc}]},\n    (square @@ pair)^2 \
+kin[cc]/bd[cc]]] /@ {3, 4, 5}]/\n    (ad[3] ad[4] ad[5]);\n  rawProducts = Function[ord, With[{aa = \
+ord[[1]], bb = ord[[2]], cc = ord[[3]]},\n    -y[bb, p1, aa]/angle[bb, aa] * y[cc, p2 + pm[cc], \
+bb]/angle[cc, bb] *\n      y[aa, p2, cc]/angle[aa, cc]]] /@ orders;\n  reducedProducts = \
+Function[ord, With[{aa = ord[[1]], bb = ord[[2]], cc = ord[[3]]},\n    -m^2 square[aa, bb] y[aa, \
+p2, cc]/(angle[aa, bb] angle[aa, cc])]] /@ orders;\n  remainders = Function[ord, With[{aa = \
+ord[[1]], bb = ord[[2]], cc = ord[[3]]},\n    y[aa, p2, cc] * (angle[aa, cc] y[bb, p1, aa] (bd[cc] \
+- ad[aa]) -\n      angle[bb, cc] ad[aa] ad[bb])/\n      (angle[aa, bb]^2 angle[aa, cc] angle[bb, \
+cc])]] /@ orders;\n  checkExternal[x_] := Together[x /. extRule] === 0;\n  fullDenominator = Times \
+@@ Join[ad /@ {3, 4, 5}, bd /@ {3, 4, 5}];\n  sumCheck = checkExternal[(Total[summands] - physical) \
+fullDenominator];\n  remainderChecks = checkExternal /@ (rawProducts - reducedProducts - \
+remainders);\n  <|\"ExternalMassShells\" -> (checkExternal[Det[p1] - m^2] &&\n      \
+checkExternal[Det[p2] - m^2]),\n    \"CyclicSumEqualsNewPhysicalPoleForm\" -> sumCheck,\n    \
+\"SpuriousAnglePolesCancel\" -> sumCheck,\n    \"ExactDiscardedRemainders\" -> remainderChecks,\n   \
+ \"MatchesPreviousResult\" -> checkExternal[Total[summands] - 2 physical],\n    \
+\"EqualsHalfPreviousResult\" -> sumCheck|>\n];\nq5CyclicProof = q5VerifyCyclic[];\nq5CyclicProof", 
+       "Input"]}, Closed]]}, Open]],
+
+Cell[CellGroupData[{Cell["Reference Choice and Off-Shell Completion", "Section"], 
+   Cell["Let P_abc denote the original product of the three reference-spinor ratios, before the \
+overall factor -2 Sqrt[2] EE^3 <bold1 bold2>/(Me A_a B_c). The exact identity is P_abc = -Me^2 \
+[ab]<a|p2|c]/(<ab><ac>) + R_abc, with the remainder below. This identity is verified under external \
+shells without putting the internal lines on shell.", "Text"], 
+   Cell[CellGroupData[{Cell["ClearAll[q5CyclicRemainder];\nq5CyclicRemainder[aa_, bb_, cc_] := \
+q5Mixed[aa, 2, cc] *\n  (q5Angle[aa, cc] q5Mixed[bb, 1, aa] (q5B[cc] - q5A[aa]) -\n    q5Angle[bb, \
+cc] q5A[aa] q5A[bb])/\n  (q5Angle[aa, bb]^2 q5Angle[aa, cc] q5Angle[bb, cc]);\nq5CyclicRemainder[3, \
+4, 5]", "Input"]}, Open]], Cell["R_abc vanishes when both internal numerator conditions A_a=B_c=0 \
+hold. However, dividing it by the off-shell original propagators A_a B_c produces terms with a \
+single propagator or no original propagators. These terms need not vanish in the full amplitude. \
+This is why reference independence on an individual double cut does not by itself determine a \
+unique amplitude away from the cut. The factor-of-two discrepancy is unresolved physically; an \
+independent amplitude or factorization check is needed to choose the completion, rather than \
+multiplying one result by two.", "Text"], Cell["Independent exact checks of all six generated \
+diagrams, at four masses, passed for the cyclic reference choice and its reduced numerator. \
+Original PropDen factors were kept opaque. These 24 cut checks validate the identities but do not \
+decide the off-shell completion or its normalization.", "Text"]}, Open]],
+
+Cell[CellGroupData[{Cell["Common Reference Spinor", "Section"], 
+   Cell["Use one arbitrary angle reference Xi for all three photons in every diagram. Require <Xi \
+3>, <Xi 4>, and <Xi 5> to be nonzero. This section is independent of the earlier reference \
+prescriptions and preserves both previous results. Evaluate Setup and the preceding Identity \
+Simplification definitions first.", "Text"], 
+   Cell[CellGroupData[{Cell["Common-Reference Route Definitions", "Subsection"], 
+      Cell["ClearAll[q5CommonXi, q5Z, q5CommonY, q5CommonRoute];\nq5CommonXi = Spinor[\"Xi\", \
+\"Angle\", 0];\nq5Z[i_] := SpinorChain[q5CommonXi, Spinor[\"Helicity\", \"Angle\", \
+i]];\nq5CommonY[p_, i_] := SpinorChain[q5CommonXi, Mom[p],\n  Spinor[\"Helicity\", \"Square\", \
+i]];\nq5CommonRoute[pair_] := Module[{raw, refs, order, a, b, c, u, v, y,\n    f, f0, delta, \
+commonProduct, cyclicProduct, remainder, spin, reduced, stages},\n  raw = \
+ReduceSpinContractions[Last[pair]] /. First[pair];\n  order = Table[First[Cases[raw,\n    \
+SpinorChain[Spinor[\"Xi\", \"Angle\", 9 + n], Mom[_],\n      Spinor[\"Helicity\", \"Square\", i_]] \
+:> i, Infinity]], {n, 3}];\n  {a, b, c} = order;\n  refs = raw /. Spinor[\"Xi\", \"Angle\", _] -> \
+q5CommonXi;\n  u = q5Mixed[b, 1, a]; v = q5Mixed[a, 1, b]; y = q5Mixed[a, 2, c];\n  f = \
+{-q5CommonY[1, a]/q5Z[a],\n    (q5CommonY[2, b] + q5Z[c] q5Square[c, b])/q5Z[b],\n    q5CommonY[2, \
+c]/q5Z[c]};\n  f0 = {u/q5Angle[a, b], -v/q5Angle[a, b], y/q5Angle[a, c]};\n  delta = {-q5Z[b] \
+q5A[a]/(q5Angle[a, b] q5Z[a]),\n    -q5Z[a] (q5A[a] - q5B[c])/(q5Angle[a, b] q5Z[b]),\n    -q5Z[a] \
+q5B[c]/(q5Angle[a, c] q5Z[c])};\n  commonProduct = Times @@ f;\n  cyclicProduct = -Me^2 q5Square[a, \
+b] y/(q5Angle[a, b] q5Angle[a, c]);\n  remainder = delta[[1]] f[[2]] f[[3]] + f0[[1]] delta[[2]] \
+f[[3]] +\n    f0[[1]] f0[[2]] delta[[3]] -\n    q5A[a] q5A[b] y/(q5Angle[a, b]^2 q5Angle[a, c]);\n  \
+spin = SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Spinor[\"Spin\", \"Angle\", 2]];\n  reduced = 2 \
+Sqrt[2] EE^3 Me spin q5Square[a, b] y/\n    (q5Angle[a, b] q5Angle[a, c] q5A[a] q5B[c]);\n  stages \
+= <|\"RawCommonReference\" -> refs,\n    \"ConservationAndMasslessEndpoints\" -> f,\n    \
+\"ReferenceChangeTerms\" -> delta,\n    \"OnCutFactors\" -> f0,\n    \"DeterminantSchouten\" -> (u \
+v == Me^2 q5Angle[a, b] q5Square[a, b] +\n      q5A[a] q5A[b]),\n    \"OnCutProduct\" -> \
+cyclicProduct,\n    \"ExactRemainder\" -> remainder,\n    \"ReducedDiagram\" -> reduced|>;\n  \
+<|\"PhotonOrder\" -> order, \"CommonReference\" -> q5CommonXi,\n    \"NumeratorShells\" -> \
+{Multiparticle[1, a], Multiparticle[2, c]},\n    \"Raw\" -> refs, \"Product\" -> commonProduct, \
+\"Result\" -> reduced,\n    \"Remainder\" -> remainder, \"Stages\" -> stages|>\n];", "Input"]}, 
+     Closed]], Cell["Six Diagrams With One Xi", "Subsection"], 
+   Cell["q5CommonInput = diagramAmplitudes[diags];\nq5CommonRoutes = q5CommonRoute /@ \
+q5CommonInput;\nq5CommonRawSum = Total[Lookup[q5CommonRoutes, \"Raw\"]];\nq5CommonReducedSum = \
+Total[Lookup[q5CommonRoutes, \"Result\"]];\nGrid[Prepend[({#[\"PhotonOrder\"], \
+#[\"CommonReference\"], #[\"Result\"]} & /@ q5CommonRoutes),\n  {\"Photon Order\", \"Common Xi\", \
+\"Reduced Diagram\"}], Alignment -> Left]", "Input"], 
+   Cell[CellGroupData[{Cell["Detailed Numerator Route", "Subsection"], 
+      Cell["Define zeta_i=<Xi i>, U=<b|p1|a], V=<a|p1|b], Y=<a|p2|c], and Q=p2+pc. Conservation and \
+massless endpoint contractions give F1=-<Xi|p1|a]/zeta_a, F2=<Xi|Q|b]/zeta_b, F3=<Xi|p2|c]/zeta_c. \
+Their product is the original numerator ratio P_abc. The original propagators remain A_a B_c.", 
+       "Text"], Cell["Schouten gives F=C+delta with C={U/<ab>,-V/<ab>,Y/<ac>} and delta={-zeta_b \
+A_a/(<ab> zeta_a), zeta_a(B_c-A_a)/(<ab> zeta_b), -zeta_a B_c/(<ac> zeta_c)}. Each delta vanishes \
+on this diagram's two internal numerator shells. Determinant-Schouten gives UV=Me^2<ab>[ab]+A_a \
+A_b. Thus P_abc=-Me^2[ab]Y/(<ab><ac>)+R_abc.", "Text"], Cell["The exact remainder is displayed \
+without expanding its products: R_abc=-A_a A_b Y/(<ab>^2<ac>)+delta1 F2 F3+C1 delta2 F3+C1 C2 \
+delta3. Every term carries A_a or B_c, so it vanishes on that diagram's double cut. Do not set \
+either original propagator to zero. We keep the remainder until checking its contribution to the \
+complete sum.", "Text"], Cell["q5CommonExample = 1;\nGrid[KeyValueMap[{#1, #2} &, \
+q5CommonRoutes[[q5CommonExample]][\"Stages\"]],\n  Alignment -> Left]", "Input"]}, Closed]], 
+   Cell["Reference Cancellation And Equivalence", "Subsection"], 
+   Cell["The cancellation is proved for a generic symbolic common Xi=(alpha,beta), not for a single \
+numerical choice. In the same generic chart as the earlier equality proof, lambda3=(1,0), \
+lambda4=(0,1), lambda5=(1,1), so Z_ref=zeta3 zeta4 zeta5=alpha beta(alpha-beta). Let D=A3 A4 A5 B3 \
+B4 B5 and N_H=[45]^2 K3 B4 B5+[35]^2 K4 B3 B5+[34]^2 K5 B3 B4.", "Text"], 
+   Cell["Define V_i=<Xi|p1|i] and W_i=<Xi|p2|i]. The positive numerator is N_common=Sum[V_a (W_b+zeta_c[cb]) W_c A_b A_c B_a B_b, all six orders]. The minus signs in P_abc and the diagram prefactor cancel, so M_raw_common=2 Sqrt[2] EE^3 <bold1 bold2> N_common/(Me Z_ref D).", "Text"],
+   Cell["After clearing D and Z_ref, the raw common-reference numerator obeys N_common=Me^2 Z_ref \
+N_H using only the external equal-mass condition E=det(p2)-det(p1)=0 and conservation. \
+Equivalently, its alpha^3 and beta^3 coefficients vanish, its alpha^2 beta coefficient is Me^2 N_H, \
+and its alpha beta^2 coefficient is -Me^2 N_H. The exact four coefficient checks below prove the \
+entire reference polynomial cancels. This manipulates the cleared polynomial; it does not evaluate \
+singular reference choices in individual diagrams.", "Text"], Cell["Independently, the exact \
+retained remainders satisfy Sum[R_abc/(A_a B_c), all six orders]=0 for this common reference. The \
+unreduced common-reference sum and the sum of the scoped numerator reductions are therefore the \
+same off-shell rational expression. No internal condition is imposed on the combined sum. In \
+contrast, dropping only part of a diagram's cut remainder need not preserve this cancellation.", 
+    "Text"], Cell[CellGroupData[{Cell["Generic Exact Algebra", "Subsection"], 
+      Cell["ClearAll[q5VerifyCommonReference];\nq5VerifyCommonReference[] := Module[{j, l, adj, \
+lam, til, pm, an, sq, yy,\n    aa, bb, kc, rho, zeta, vxi, wxi, vars, ext, reduce, orders, nh, \
+nc,\n    zref, mass2, difference, factorCoefficients, localChecks, remainderNumerator,\n    \
+cyclicNumerator, localRemainder, cutVars, cutBasis, cutChecks,\n    alpha, beta, u, v, w, z, r, s, \
+t},\n  j = {{0, -1}, {1, 0}}; l = -j;\n  adj[p_] := {{p[[2, 2]], -p[[1, 2]]}, {-p[[2, 1]], p[[1, \
+1]]}};\n  lam[3] = {1, 0}; lam[4] = {0, 1}; lam[5] = {1, 1};\n  til[3] = {1, 0}; til[4] = {0, r}; \
+til[5] = {s, t};\n  pm[1] = {{u, v}, {w, z}};\n  Do[pm[i] = Outer[Times, lam[i], til[i]], {i, 3, \
+5}];\n  pm[2] = -pm[1] - Total[pm /@ {3, 4, 5}];\n  an[a_, b_] := lam[a].j.lam[b];\n  sq[a_, b_] := \
+til[a].l.til[b];\n  yy[a_, p_, b_] := lam[a].j.pm[p].l.til[b];\n  aa[i_] := Expand[Det[pm[1] + \
+pm[i]] - Det[pm[1]]];\n  bb[i_] := Expand[Det[pm[2] + pm[i]] - Det[pm[2]]];\n  kc[i_] := \
+til[i].adj[pm[1]].pm[2].l.til[i];\n  rho = {alpha, beta};\n  zeta[i_] := rho.j.lam[i];\n  vxi[i_] \
+:= rho.j.pm[1].l.til[i];\n  wxi[i_] := rho.j.pm[2].l.til[i];\n  vars = {z, w, v, u, t, s, r, beta, \
+alpha};\n  ext = Expand[Det[pm[2]] - Det[pm[1]]];\n  mass2 = Det[pm[1]];\n  reduce[p_] := \
+Last[PolynomialReduce[Expand[p], {ext}, vars]];\n  orders = Permutations[{3, 4, 5}];\n  nh = \
+Expand[Total[Function[c, With[{ab = Complement[{3, 4, 5}, {c}]},\n    (sq @@ ab)^2 kc[c] Times @@ \
+(bb /@ ab)]] /@ {3, 4, 5}]];\n  nc = Expand[Total[Function[ord, With[{a = ord[[1]], b = ord[[2]], c \
+= ord[[3]]},\n    vxi[a] (wxi[b] + zeta[c] sq[c, b]) wxi[c] *\n      aa[b] aa[c] bb[a] bb[b]]] /@ \
+orders]];\n  zref = Times @@ (zeta /@ {3, 4, 5});\n  difference = reduce[nc - mass2 zref nh];\n  \
+factorCoefficients = Table[\n    reduce[Coefficient[Coefficient[nc - mass2 zref nh, alpha, k], \
+beta, 3 - k]] === 0,\n    {k, 0, 3}];\n  localChecks = Function[ord, With[{a = ord[[1]], b = \
+ord[[2]], c = ord[[3]]},\n    Module[{f, f0, delta, numerator, product, target, remainder},\n      \
+f = {-vxi[a]/zeta[a],\n        (wxi[b] + zeta[c] sq[c, b])/zeta[b], wxi[c]/zeta[c]};\n      f0 = \
+{yy[b, 1, a]/an[a, b], -yy[a, 1, b]/an[a, b], yy[a, 2, c]/an[a, c]};\n      delta = {-zeta[b] \
+aa[a]/(an[a, b] zeta[a]),\n        zeta[a] (bb[c] - aa[a])/(an[a, b] zeta[b]),\n        -zeta[a] \
+bb[c]/(an[a, c] zeta[c])};\n      numerator[x_] := Numerator[Together[x]];\n      product = Times \
+@@ f;\n      target = -mass2 sq[a, b] yy[a, 2, c]/(an[a, b] an[a, c]);\n      remainder = \
+delta[[1]] f[[2]] f[[3]] + f0[[1]] delta[[2]] f[[3]] +\n        f0[[1]] f0[[2]] delta[[3]] - aa[a] \
+aa[b] yy[a, 2, c]/(an[a, b]^2 an[a, c]);\n      <|\"Order\" -> ord,\n        \
+\"ThreeReferenceIdentities\" -> (reduce[numerator[#]] === 0 & /@ (f - f0 - delta)),\n        \
+\"DeterminantSchouten\" -> (reduce[yy[b, 1, a] yy[a, 1, b] -\n          mass2 an[a, b] sq[a, b] - \
+aa[a] aa[b]] === 0),\n        \"ExactRemainderIdentity\" -> (reduce[numerator[product - target - \
+remainder]] === 0)|>\n    ]]] /@ orders;\n  cyclicNumerator = Together[Total[Function[ord,\n    \
+With[{a = ord[[1]], b = ord[[2]], c = ord[[3]]},\n      -mass2 sq[a, b] yy[a, 2, c]/(an[a, b] an[a, \
+c] aa[a] bb[c])]] /@ orders] *\n      Times @@ Join[aa /@ {3, 4, 5}, bb /@ {3, 4, 5}]];\n  \
+remainderNumerator = reduce[-nc - zref cyclicNumerator];\n  <|\"ExternalEqualMassCondition\" -> \
+ext,\n    \"ReferenceComponents\" -> {alpha, beta},\n    \"ReferenceDenominator\" -> zref,\n    \
+\"FourReferenceCoefficientChecks\" -> factorCoefficients,\n    \"SixDiagramIdentityChecks\" -> \
+localChecks,\n    \"RetainedRemaindersCancelInFullSum\" -> (remainderNumerator === 0),\n    \
+\"RawCommonSumEqualsThreeTermH\" -> (difference === 0),\n    \
+\"CommonEqualsCyclicIncludingNormalization\" -> (difference === 0),\n    \
+\"CommonEqualsHalfMomentumReferenceResult\" -> (difference === 0),\n    \
+\"InternalConditionsInGlobalSumProof\" -> None|>\n];\nq5CommonProof = \
+q5VerifyCommonReference[];\nKeyTake[q5CommonProof, {\"FourReferenceCoefficientChecks\", \
+\"RetainedRemaindersCancelInFullSum\", \"RawCommonSumEqualsThreeTermH\", \
+\"CommonEqualsCyclicIncludingNormalization\", \"CommonEqualsHalfMomentumReferenceResult\", \
+\"InternalConditionsInGlobalSumProof\"}]", "Input"], 
+      Cell[BoxData[RowBox[{"", RowBox[{RowBox[{"\"FourReferenceCoefficientChecks\"", "", 
+              RowBox[{"{", RowBox[{"True", ",", "True", ",", "True", ",", "True"}], "}"}]}], ",", 
+            RowBox[{"\"RetainedRemaindersCancelInFullSum\"", "", "True"}], ",", 
+            RowBox[{"\"RawCommonSumEqualsThreeTermH\"", "", "True"}], ",", 
+            RowBox[{"\"CommonEqualsCyclicIncludingNormalization\"", "", "True"}], ",", 
+            RowBox[{"\"CommonEqualsHalfMomentumReferenceResult\"", "", "True"}], ",", 
+            RowBox[{"\"InternalConditionsInGlobalSumProof\"", "", "None"}]}], ""}]], 
+       "Output"]}, Closed]], Cell["Compact Result", "Subsection"], 
+   Cell[CellGroupData[{Cell["q5CommonSpin = SpinorChain[Spinor[\"Spin\", \"Angle\", 1], \
+Spinor[\"Spin\", \"Angle\", 2]];\nq5CommonFinal = 2 Sqrt[2] EE^3 Me q5CommonSpin/(q5A[3] q5A[4] \
+q5A[5]) *\n  (q5Square[4, 5]^2 q5K[3]/q5B[3] + q5Square[3, 5]^2 q5K[4]/q5B[4] +\n    q5Square[3, \
+4]^2 q5K[5]/q5B[5]);\nq5CommonFinal", "Input"], 
+      Cell[BoxData[FractionBox[RowBox[{"2", " ", SqrtBox["2"], " ", SuperscriptBox["EE", "3"], " ", 
+           "Me", " ", TemplateBox[{TemplateBox[{"\"〈\"", StyleBox["1", Bold, StripOnInput -> 
+                 False]}, "RowDefault"], TemplateBox[{StyleBox["2", Bold, StripOnInput -> False], 
+               "\"〉\""}, "RowDefault"]}, "RowDefault"], " ", 
+           RowBox[{"(", RowBox[{FractionBox[RowBox[{SuperscriptBox[TemplateBox[{TemplateBox[
+                      {"\"[\"", "4"}, "RowDefault"], TemplateBox[{"5", "\"]\""}, "RowDefault"]}, 
+                    "RowDefault"], "2"], " ", TemplateBox[{TemplateBox[{"\"[\"", "3"}, 
+                     "RowDefault"], "\"|\"", SubscriptBox["p", "1"], SubscriptBox["p", "2"], 
+                    "\"|\"", TemplateBox[{"3", "\"]\""}, "RowDefault"]}, "RowDefault"]}], 
+                RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", SubsuperscriptBox["p", 
+                   RowBox[{"2", ",", "3"}], "2"]}]], "+", FractionBox[RowBox[{SuperscriptBox[
+                   TemplateBox[{TemplateBox[{"\"[\"", "3"}, "RowDefault"], TemplateBox[
+                      {"5", "\"]\""}, "RowDefault"]}, "RowDefault"], "2"], " ", TemplateBox[
+                   {TemplateBox[{"\"[\"", "4"}, "RowDefault"], "\"|\"", SubscriptBox["p", "1"], 
+                    SubscriptBox["p", "2"], "\"|\"", TemplateBox[{"4", "\"]\""}, "RowDefault"]}, 
+                   "RowDefault"]}], RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", 
+                  SubsuperscriptBox["p", RowBox[{"2", ",", "4"}], "2"]}]], "+", FractionBox[
+                RowBox[{SuperscriptBox[TemplateBox[{TemplateBox[{"\"[\"", "3"}, "RowDefault"], 
+                     TemplateBox[{"4", "\"]\""}, "RowDefault"]}, "RowDefault"], "2"], " ", 
+                  TemplateBox[{TemplateBox[{"\"[\"", "5"}, "RowDefault"], "\"|\"", SubscriptBox[
+                     "p", "1"], SubscriptBox["p", "2"], "\"|\"", TemplateBox[{"5", "\"]\""}, 
+                     "RowDefault"]}, "RowDefault"]}], RowBox[{RowBox[{"-", SuperscriptBox["Me", 
+                     "2"]}], "+", SubsuperscriptBox["p", RowBox[{"2", ",", "5"}], "2"]}]]}], 
+             ")"}]}], RowBox[{RowBox[{"(", RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", 
+               SubsuperscriptBox["p", RowBox[{"1", ",", "3"}], "2"]}], ")"}], " ", 
+           RowBox[{"(", RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", SubsuperscriptBox[
+                "p", RowBox[{"1", ",", "4"}], "2"]}], ")"}], " ", 
+           RowBox[{"(", RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", SubsuperscriptBox[
+                "p", RowBox[{"1", ",", "5"}], "2"]}], ")"}]}]]], "Output"]}, Open]], 
+   Cell["The common reference cancels completely. The final result has the same three physical-pole \
+terms as q5CyclicFinal, including its coefficient, and is q5Final/2. No rescaling is used. This is \
+a simpler reference-cancellation derivation, but no genuinely shorter final rational form was \
+found. Combining the three terms with Together produces a larger numerator rather than a useful \
+simplification.", "Text"], Cell[CellGroupData[{Cell["<|\"RawCommonReferenceProof\" -> \
+q5CommonProof[\"RawCommonSumEqualsThreeTermH\"],\n  \"CommonEqualsCyclic\" -> \
+(Together[q5CommonFinal - q5CyclicFinal] === 0),\n  \"TwiceCommonEqualsMomentumReference\" -> \
+(Together[2 q5CommonFinal - q5Final] === 0)|>", "Input"], 
+      Cell[BoxData[RowBox[{"", RowBox[{RowBox[{"\"RawCommonReferenceProof\"", "", "True"}], 
+            ",", RowBox[{"\"CommonEqualsCyclic\"", "", "True"}], ",", 
+            RowBox[{"\"TwiceCommonEqualsMomentumReference\"", "", "True"}]}], ""}]], 
+       "Output"]}, Open]], Cell[CellGroupData[{Cell["Checks Against The Generated Diagrams", 
+       "Subsection"], Cell["The checks below use the actual diagramAmplitudes output. There are 72 \
+exact per-diagram double-cut checks (six orders, four masses, three regular common references) with \
+original PropDen factors kept opaque, plus 12 exact full-sum checks on external-shell kinematics \
+with every original propagator nonzero. These checks validate the common-reference calculation; \
+they are not an independent Feynman normalization calculation.", "Text"], 
+      Cell["ClearAll[q5CheckCommonGeneratedDiagrams];\nq5CheckCommonGeneratedDiagrams[amps_List] := \
+Module[{jj, kk, adj, outer, perp, pl, angle, square, mixed,\n    angleEndpoint, rawEval, reference, \
+lam, til, Den, checks, raw, order, a, b, c, mass,\n    q1, q2, den, reduced, actual, zeta, vxi, \
+wxi, formula, uncutChecks,\n    q5SampleR, q5SampleS, q5SampleU, q5SampleV, q5SampleW, q5SampleZ, \
+q5SampleT,\n    av, bv, kin, h, denRules, sum, summary},\njj = {{0, -1}, {1, 0}}; kk = \
+-jj;\nadj[p_] := {{p[[2, 2]], -p[[1, 2]]}, {-p[[2, 1]], p[[1, 1]]}};\nouter[u_, v_] := Outer[Times, \
+u, v];\nperp[u_] := {-u[[2]], u[[1]]};\npl[Multiparticle[x__]] := Total[pl /@ {x}];\nangle[a_, b_] \
+:= lam[a].jj.lam[b];\nsquare[a_, b_] := til[a].kk.til[b];\nmixed[a_, p_, b_] := \
+lam[a].jj.pl[p].kk.til[b];\nangleEndpoint[Spinor[\"Xi\", \"Angle\", _]] := \
+reference;\nangleEndpoint[Spinor[\"Helicity\", \"Angle\", i_]] := lam[i];\nrawEval[expr_] := expr \
+/. {\n  PropDen[p_, mass_] :> Den[p, mass],\n  SpinorChain[Spinor[\"Spin\", \"Angle\", 1], \
+Spinor[\"Spin\", \"Angle\", 2]] -> 1,\n  SpinorChain[x : Spinor[_, \"Angle\", _], Mom[p_], \
+Spinor[\"Helicity\", \"Square\", i_]] :>\n    angleEndpoint[x].jj.pl[p].kk.til[i],\n  SpinorChain[x \
+: Spinor[_, \"Angle\", _], Spinor[\"Helicity\", \"Angle\", i_]] :>\n    \
+angleEndpoint[x].jj.lam[i]};\nchecks = {};\nDo[\n  raw = ReduceSpinContractions[amps[[index, 2]]] \
+/. amps[[index, 1]];\n  order = Table[First[Cases[raw,\n    SpinorChain[Spinor[\"Xi\", \"Angle\", 9 \
++ n], Mom[_], Spinor[\"Helicity\", \"Square\", photon_]] :> photon,\n    Infinity]], {n, 3}];\n  \
+{a, b, c} = order;\n  Do[\n    mass = sample;\n    lam[3] = {1, sample + 1}; lam[4] = {sample + 2, \
+1}; lam[5] = {2, 2 sample + 3};\n    pl[1] = {{sample + 1, sample - 2}, {sample + 2,\n      (mass^2 \
++ (sample - 2) (sample + 2))/(sample + 1)}};\n    til[a] = (sample + 2) perp[adj[pl[1]].lam[a]];\n  \
+  pl[a] = outer[lam[a], til[a]];\n    q1 = pl[1] + pl[a];\n    til[b] = (sample - 5) \
+perp[adj[q1].lam[b]];\n    pl[b] = outer[lam[b], til[b]];\n    q2 = -q1 - pl[b];\n    til[c] = \
+(sample + 3) perp[adj[q2].lam[c]];\n    pl[c] = outer[lam[c], til[c]];\n    pl[2] = q2 - pl[c];\n   \
+ den = Times @@ DeleteDuplicates[Cases[raw, _PropDen, Infinity]];\n    reduced = 2 Sqrt[2] mass \
+square[a, b] mixed[a, 2, c]/\n      (angle[a, b] angle[a, c] den) /. PropDen -> Den /. Me -> \
+mass;\n    Do[\n      reference = vector;\n      actual = rawEval[raw /. {Me -> mass, EE -> 1}];\n  \
+    zeta[i_] := reference.jj.lam[i];\n      vxi[i_] := reference.jj.pl[1].kk.til[i];\n      wxi[i_] \
+:= reference.jj.pl[2].kk.til[i];\n      formula = 2 Sqrt[2]/mass * vxi[a] (wxi[b] + zeta[c] \
+square[c, b]) wxi[c]/\n        (zeta[a] zeta[b] zeta[c] den) /. PropDen -> Den /. Me -> mass;\n     \
+ AppendTo[checks, <|\"Order\" -> order, \"Mass\" -> mass, \"Reference\" -> reference,\n        \
+\"Shells\" -> ({Det[pl[1]], Det[pl[2]], Det[q1], Det[q2]} === ConstantArray[mass^2, 4]),\n        \
+\"RegularReference\" -> AllTrue[zeta /@ {3, 4, 5}, # != 0 &],\n        \"RawFormula\" -> \
+(Together[actual - formula] === 0),\n        \"OnCutReducedDiagram\" -> (Together[actual - reduced] \
+=== 0)|>],\n      {vector, {{17, 29}, {31, 43}, {47, 53}}}],\n    {sample, 1, 4}], {index, \
+6}];\nuncutChecks = {};\nDo[\n  mass = sample;\n  lam[3] = {1, 0}; lam[4] = {0, 1}; lam[5] = {1, \
+1};\n  q5SampleR = sample + 3; q5SampleS = sample + 1; q5SampleU = sample + 2;\n  q5SampleV = \
+sample - 3; q5SampleW = sample + 1;\n  q5SampleZ = (mass^2 + q5SampleV q5SampleW)/q5SampleU;\n  \
+q5SampleT = -(q5SampleR (1 + q5SampleS + q5SampleU) +\n    q5SampleS (q5SampleZ - q5SampleV) + \
+q5SampleZ)/(1 + q5SampleU - q5SampleW);\n  til[3] = {1, 0}; til[4] = {0, q5SampleR}; til[5] = \
+{q5SampleS, q5SampleT};\n  pl[1] = {{q5SampleU, q5SampleV}, {q5SampleW, q5SampleZ}};\n  Do[pl[i] = \
+outer[lam[i], til[i]], {i, 3, 5}];\n  pl[2] = -pl[1] - Total[pl /@ {3, 4, 5}];\n  av[i_] := \
+Det[pl[1] + pl[i]] - mass^2;\n  bv[i_] := Det[pl[2] + pl[i]] - mass^2;\n  kin[i_] := \
+til[i].adj[pl[1]].pl[2].kk.til[i];\n  h = Total[Function[c, With[{ab = Complement[{3, 4, 5}, \
+{c}]},\n    (square @@ ab)^2 kin[c]/bv[c]]] /@ {3, 4, 5}]/(av[3] av[4] av[5]);\n  denRules = \
+Den[Mom[Multiparticle[x__]], Me] :> Det[Total[pl /@ {x}]] - mass^2;\n  Do[\n    reference = \
+vector;\n    sum = Total[rawEval[ReduceSpinContractions[#[[2]]] /. #[[1]] /. EE -> 1] & /@ amps] \
+/.\n      denRules /. Me -> mass;\n    AppendTo[uncutChecks, <|\"Mass\" -> mass, \"Reference\" -> \
+reference,\n      \"ExternalShells\" -> ({Det[pl[1]], Det[pl[2]]} === {mass^2, mass^2}),\n      \
+\"AllOriginalPropagatorsNonzero\" -> AllTrue[Join[av /@ {3, 4, 5}, bv /@ {3, 4, 5}], # != 0 &],\n   \
+   \"RawSumEqualsCompactResult\" -> (Together[sum - 2 Sqrt[2] mass h] === 0)|>],\n    {vector, \
+{{17, 29}, {31, 43}, {47, 53}}}], {sample, 1, 4}];\nsummary = <|\"ExactCutChecks\" -> \
+Length[checks], \"ExactUncutSumChecks\" -> Length[uncutChecks],\n  \"AllPass\" -> AllTrue[checks, \
+#[\"Shells\"] && #[\"RegularReference\"] &&\n    #[\"RawFormula\"] && #[\"OnCutReducedDiagram\"] &] \
+&&\n    AllTrue[uncutChecks, #[\"ExternalShells\"] && #[\"AllOriginalPropagatorsNonzero\"] &&\n     \
+ #[\"RawSumEqualsCompactResult\"] &], \"Details\" -> checks, \"UncutDetails\" -> \
+uncutChecks|>;\n\nsummary\n];\nq5CommonActualChecks = \
+q5CheckCommonGeneratedDiagrams[q5CommonInput];\nKeyTake[q5CommonActualChecks, {\"ExactCutChecks\", \
+\"ExactUncutSumChecks\", \"AllPass\"}]", "Input"], 
+      Cell[BoxData[RowBox[{"", RowBox[{RowBox[{"\"ExactCutChecks\"", "", "72"}], ",", 
+            RowBox[{"\"ExactUncutSumChecks\"", "", "12"}], ",", 
+            RowBox[{"\"AllPass\"", "", "True"}]}], ""}]], "Output"]}, Closed]]}, Open]]
+,
+Cell[CellGroupData[{Cell["Mixed Helicity: e, E, A.+, A.+, A.-", "Section"], 
+   Cell["All momenta are ingoing. Photons 3 and 4 have positive helicity; photon 5 has negative \
+helicity. This section preserves the earlier all-plus results. The compact physical QED amplitude \
+below is not identical to the arbitrary-reference raw constructive sum: that sum has a \
+reference-dependent off-shell continuation in this helicity sector. We retain the on-shell \
+numerator residues, keep every original PropDen off shell, and fix the full completion \
+independently with ordinary QED diagrams.", "Text"], 
+   Cell[CellGroupData[{Cell["Generate The Six Mixed Diagrams", "Subsection"], 
+      Cell["q5MixedModel = ReadModel[FileNameJoin[{DirectoryName[$HEPCATpath], \"models\"}], \
+1];\nq5MixedDiagrams = CreateDiagrams[\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \
+q5MixedModel];\nq5MixedInput = diagramAmplitudes[q5MixedDiagrams];\nq5MixedRaw = \
+(ReduceSpinContractions[Last[#]] /. First[#] &) /@ q5MixedInput;\n<|\"DiagramCount\" -> \
+Length[q5MixedRaw], \"RawLeafCounts\" -> (LeafCount /@ q5MixedRaw)|>", "Input"], 
+      Cell[BoxData[RowBox[{"", RowBox[{RowBox[{"\"DiagramCount\"", "", "6"}], ",", 
+            RowBox[{"\"RawLeafCounts\"", "", RowBox[{"{", RowBox[{"114", ",", "118", ",", "114", 
+                  ",", "118", ",", "114", ",", "114"}], "}"}]}]}], ""}]], "Output"]}, Closed]], 
+   Cell[CellGroupData[{Cell["Definitions And Both Final Forms", "Subsection"], 
+      Cell["U=<bold1 bold2>, V=<bold1 5><bold2 5>, Fi=<5|p1|i], Gi=<5|p2|i], Ki=[i|p1 p2|i], \
+L=<5|p1 p2|5>, Ai=(p1+ki)^2-Me^2, Bi=(p2+ki)^2-Me^2. All six Ai,Bi remain off-shell propagators. \
+The spurious formula uses Gamma=<53><54>, Dij=[i|p1(ki+k5)|j], Cij=1+Ai/A5+Bj/B5, and S=(p1+p2)^2. \
+The two ordered pairs are (3,4) and (4,3).", "Text"], Cell["ClearAll[q5MPSpinor, q5MPAngle, \
+q5MPSquare, q5MPF, q5MPG, q5MPK,\n  q5MPL, q5MPA, q5MPB, q5MPD, q5MPC, q5MPS, q5MPGap,\n  q5MPU, \
+q5MPV, q5MPSeed, q5MPCompletion, q5MixedSpurious,\n  q5MixedFinal, \
+q5MPPhysicalDenominators];\nq5MPSpinor[i_, chirality_] := Spinor[If[MemberQ[{1, 2}, i], \"Spin\", \
+\"Helicity\"], chirality, i];\nq5MPAngle[i_, j_] := SpinorChain[q5MPSpinor[i, \"Angle\"], \
+q5MPSpinor[j, \"Angle\"]];\nq5MPSquare[i_, j_] := SpinorChain[q5MPSpinor[i, \"Square\"], \
+q5MPSpinor[j, \"Square\"]];\nq5MPF[i_] := SpinorChain[q5MPSpinor[5, \"Angle\"], Mom[1], \
+q5MPSpinor[i, \"Square\"]];\nq5MPG[i_] := SpinorChain[q5MPSpinor[5, \"Angle\"], Mom[2], \
+q5MPSpinor[i, \"Square\"]];\nq5MPK[i_] := SpinorChain[q5MPSpinor[i, \"Square\"], Mom[1], Mom[2], \
+q5MPSpinor[i, \"Square\"]];\nq5MPL = SpinorChain[q5MPSpinor[5, \"Angle\"], Mom[1], Mom[2], \
+q5MPSpinor[5, \"Angle\"]];\nq5MPA[i_] := PropDen[Mom[Multiparticle[1, i]], Me];\nq5MPB[i_] := \
+PropDen[Mom[Multiparticle[2, i]], Me];\nq5MPD[i_, j_] := SpinorChain[q5MPSpinor[i, \"Square\"], \
+Mom[1],\n  Mom[Multiparticle[i, 5]], q5MPSpinor[j, \"Square\"]];\nq5MPC[i_, j_] := 1 + \
+q5MPA[i]/q5MPA[5] + q5MPB[j]/q5MPB[5];\nq5MPS = 2 (MomProd[3, 4] + MomProd[3, 5] + MomProd[4, \
+5]);\nq5MPGap = q5MPAngle[5, 3] q5MPAngle[5, 4];\nq5MPU = q5MPAngle[1, 2];\nq5MPV = q5MPAngle[1, 5] \
+q5MPAngle[2, 5];\nq5MPSeed = 2 Sqrt[2] EE^3/Me Total[Function[ord,\n    With[{i = ord[[1]], j = \
+ord[[2]]},\n      q5MPC[i, j] q5MPF[i] q5MPG[j]/(q5MPA[i] q5MPB[j] q5MPGap) *\n        (q5MPV - \
+q5MPU q5MPF[i] q5MPG[j]/q5MPD[i, j])]] /@ {{3, 4}, {4, 3}}];\nq5MPCompletion = -2 Sqrt[2] EE^3 Me \
+q5MPU Total[Function[ord,\n    With[{i = ord[[1]], j = ord[[2]]},\n      q5MPC[i, j] q5MPSquare[i, \
+j]^4/\n        (q5MPS q5MPSquare[i, 5] q5MPSquare[5, j] q5MPD[i, j])]] /@ {{3, 4}, {4, \
+3}}];\nq5MixedSpurious = q5MPSeed + q5MPCompletion;\nq5MixedFinal = 2 Sqrt[2] EE^3/(Me q5MPA[3] \
+q5MPA[4] q5MPA[5]) *\n  (q5MPF[3] q5MPK[4] (q5MPU q5MPF[3] - q5MPV q5MPSquare[3, 5])/q5MPB[4] +\n   \
+q5MPF[4] q5MPK[3] (q5MPU q5MPF[4] - q5MPV q5MPSquare[4, 5])/q5MPB[3] +\n   Me^2 q5MPSquare[3, 4]^2 \
+(q5MPU q5MPL + q5MPV (q5MPA[5] + q5MPB[5]))/q5MPB[5]);\nq5MPPhysicalDenominators = Join[q5MPA /@ \
+{3, 4, 5}, q5MPB /@ {3, 4, 5}];", "Input"]}, Closed]], Cell["Three Terms With Physical Poles Only", 
+    "Subsection"], Cell["q5MixedFinal is the most compact form found: three additive terms, \
+manifest 3<->4 Bose symmetry, and no reference-spinor or photon-collinear denominator factors. \
+There is no claim that three terms is an absolute minimum. Me is nonzero; no massless \
+charged-particle limit is taken.", "Text"], 
+   Cell[CellGroupData[{Cell["q5MixedFinal", "Input"], 
+      Cell[BoxData[FractionBox[RowBox[{"2", " ", SqrtBox["2"], " ", SuperscriptBox["EE", "3"], " ", 
+           RowBox[{"(", RowBox[{FractionBox[RowBox[{SuperscriptBox["Me", "2"], " ", SuperscriptBox[
+                   TemplateBox[{TemplateBox[{"\"[\"", "3"}, "RowDefault"], TemplateBox[
+                      {"4", "\"]\""}, "RowDefault"]}, "RowDefault"], "2"], " ", RowBox[
+                   {"(", RowBox[{RowBox[{RowBox[{"(", RowBox[{RowBox[{"(", RowBox[{RowBox[{"-", 
+                                 SuperscriptBox["Me", "2"]}], "+", SubsuperscriptBox["p", RowBox[
+                                 {"1", ",", "5"}], "2"]}], ")"}], "+", RowBox[{"(", RowBox[
+                               {RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", SubsuperscriptBox[
+                                 "p", RowBox[{"2", ",", "5"}], "2"]}], ")"}]}], ")"}], " ", 
+                        TemplateBox[{TemplateBox[{"\"〈\"", StyleBox["1", Bold, StripOnInput -> 
+                              False]}, "RowDefault"], TemplateBox[{"5", "\"〉\""}, "RowDefault"]}, 
+                         "RowDefault"], " ", TemplateBox[{TemplateBox[{"\"〈\"", StyleBox["2", 
+                             Bold, StripOnInput -> False]}, "RowDefault"], TemplateBox[{"5", 
+                            "\"〉\""}, "RowDefault"]}, "RowDefault"]}], "+", RowBox[
+                       {TemplateBox[{TemplateBox[{"\"〈\"", StyleBox["1", Bold, StripOnInput -> 
+                              False]}, "RowDefault"], TemplateBox[{StyleBox["2", Bold, 
+                             StripOnInput -> False], "\"〉\""}, "RowDefault"]}, "RowDefault"], 
+                        " ", TemplateBox[{TemplateBox[{"\"〈\"", "5"}, "RowDefault"], "\"|\"", 
+                          SubscriptBox["p", "1"], SubscriptBox["p", "2"], "\"|\"", TemplateBox[
+                           {"5", "\"〉\""}, "RowDefault"]}, "RowDefault"]}]}], ")"}]}], 
+                RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", SubsuperscriptBox["p", 
+                   RowBox[{"2", ",", "5"}], "2"]}]], "+", FractionBox[RowBox[
+                 {TemplateBox[{TemplateBox[{"\"〈\"", "5"}, "RowDefault"], "\"|\"", SubscriptBox[
+                     "p", "1"], "\"|\"", TemplateBox[{"4", "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                  " ", RowBox[{"(", RowBox[{RowBox[{RowBox[{"-", TemplateBox[{TemplateBox[{"\"[\"", 
+                              "4"}, "RowDefault"], TemplateBox[{"5", "\"]\""}, "RowDefault"]}, 
+                           "RowDefault"]}], " ", TemplateBox[{TemplateBox[{"\"〈\"", StyleBox["1", 
+                             Bold, StripOnInput -> False]}, "RowDefault"], TemplateBox[{"5", 
+                            "\"〉\""}, "RowDefault"]}, "RowDefault"], " ", TemplateBox[
+                         {TemplateBox[{"\"〈\"", StyleBox["2", Bold, StripOnInput -> False]}, 
+                           "RowDefault"], TemplateBox[{"5", "\"〉\""}, "RowDefault"]}, 
+                         "RowDefault"]}], "+", RowBox[{TemplateBox[{TemplateBox[{"\"〈\"", 
+                            StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                           {StyleBox["2", Bold, StripOnInput -> False], "\"〉\""}, "RowDefault"]}, 
+                         "RowDefault"], " ", TemplateBox[{TemplateBox[{"\"〈\"", "5"}, 
+                           "RowDefault"], "\"|\"", SubscriptBox["p", "1"], "\"|\"", TemplateBox[
+                           {"4", "\"]\""}, "RowDefault"]}, "RowDefault"]}]}], ")"}], " ", 
+                  TemplateBox[{TemplateBox[{"\"[\"", "3"}, "RowDefault"], "\"|\"", SubscriptBox[
+                     "p", "1"], SubscriptBox["p", "2"], "\"|\"", TemplateBox[{"3", "\"]\""}, 
+                     "RowDefault"]}, "RowDefault"]}], RowBox[{RowBox[{"-", SuperscriptBox["Me", 
+                     "2"]}], "+", SubsuperscriptBox["p", RowBox[{"2", ",", "3"}], "2"]}]], "+", 
+               FractionBox[RowBox[{TemplateBox[{TemplateBox[{"\"〈\"", "5"}, "RowDefault"], 
+                    "\"|\"", SubscriptBox["p", "1"], "\"|\"", TemplateBox[{"3", "\"]\""}, 
+                     "RowDefault"]}, "RowDefault"], " ", RowBox[{"(", RowBox[
+                     {RowBox[{RowBox[{"-", TemplateBox[{TemplateBox[{"\"[\"", "3"}, "RowDefault"], 
+                            TemplateBox[{"5", "\"]\""}, "RowDefault"]}, "RowDefault"]}], " ", 
+                        TemplateBox[{TemplateBox[{"\"〈\"", StyleBox["1", Bold, StripOnInput -> 
+                              False]}, "RowDefault"], TemplateBox[{"5", "\"〉\""}, "RowDefault"]}, 
+                         "RowDefault"], " ", TemplateBox[{TemplateBox[{"\"〈\"", StyleBox["2", 
+                             Bold, StripOnInput -> False]}, "RowDefault"], TemplateBox[{"5", 
+                            "\"〉\""}, "RowDefault"]}, "RowDefault"]}], "+", RowBox[
+                       {TemplateBox[{TemplateBox[{"\"〈\"", StyleBox["1", Bold, StripOnInput -> 
+                              False]}, "RowDefault"], TemplateBox[{StyleBox["2", Bold, 
+                             StripOnInput -> False], "\"〉\""}, "RowDefault"]}, "RowDefault"], 
+                        " ", TemplateBox[{TemplateBox[{"\"〈\"", "5"}, "RowDefault"], "\"|\"", 
+                          SubscriptBox["p", "1"], "\"|\"", TemplateBox[{"3", "\"]\""}, 
+                           "RowDefault"]}, "RowDefault"]}]}], ")"}], " ", TemplateBox[
+                   {TemplateBox[{"\"[\"", "4"}, "RowDefault"], "\"|\"", SubscriptBox["p", "1"], 
+                    SubscriptBox["p", "2"], "\"|\"", TemplateBox[{"4", "\"]\""}, "RowDefault"]}, 
+                   "RowDefault"]}], RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", 
+                  SubsuperscriptBox["p", RowBox[{"2", ",", "4"}], "2"]}]]}], ")"}]}], 
+         RowBox[{"Me", " ", RowBox[{"(", RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", 
+               SubsuperscriptBox["p", RowBox[{"1", ",", "3"}], "2"]}], ")"}], " ", 
+           RowBox[{"(", RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", SubsuperscriptBox[
+                "p", RowBox[{"1", ",", "4"}], "2"]}], ")"}], " ", 
+           RowBox[{"(", RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", SubsuperscriptBox[
+                "p", RowBox[{"1", ",", "5"}], "2"]}], ")"}]}]]], "Output"]}, Open]], 
+   Cell[CellGroupData[{Cell["Equivalent Form With Spurious Poles", "Subsection"], 
+      Cell["q5MPSeed is residue compatible but incomplete. q5MPCompletion is the cut-invisible U \
+correction needed by the physical amplitude. q5MixedSpurious is their sum. Its apparent Dij, S, \
+angle-reference, and square-bracket poles cancel exactly. This is not a factor-of-two relation.", 
+       "Text"], Cell["q5MixedSpurious", "Input"], 
+      Cell[BoxData[RowBox[{FractionBox[RowBox[{"2", " ", SqrtBox["2"], " ", SuperscriptBox["EE", 
+              "3"], " ", RowBox[{"(", RowBox[{FractionBox[RowBox[{RowBox[{"(", RowBox[{"1", "+", 
+                        FractionBox[RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", 
+                           SubsuperscriptBox["p", RowBox[{"1", ",", "3"}], "2"]}], RowBox[
+                          {RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", SubsuperscriptBox["p", 
+                            RowBox[{"1", ",", "5"}], "2"]}]], "+", FractionBox[RowBox[
+                          {RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", SubsuperscriptBox["p", 
+                            RowBox[{"2", ",", "4"}], "2"]}], RowBox[{RowBox[{"-", SuperscriptBox[
+                              "Me", "2"]}], "+", SubsuperscriptBox["p", RowBox[{"2", ",", "5"}], 
+                            "2"]}]]}], ")"}], " ", TemplateBox[{TemplateBox[{"\"〈\"", "5"}, 
+                       "RowDefault"], "\"|\"", SubscriptBox["p", "1"], "\"|\"", TemplateBox[
+                       {"3", "\"]\""}, "RowDefault"]}, "RowDefault"], " ", TemplateBox[
+                     {TemplateBox[{"\"〈\"", "5"}, "RowDefault"], "\"|\"", SubscriptBox["p", "2"], 
+                      "\"|\"", TemplateBox[{"4", "\"]\""}, "RowDefault"]}, "RowDefault"], " ", 
+                    RowBox[{"(", RowBox[{RowBox[{TemplateBox[{TemplateBox[{"\"〈\"", StyleBox["1", 
+                               Bold, StripOnInput -> False]}, "RowDefault"], TemplateBox[{"5", 
+                              "\"〉\""}, "RowDefault"]}, "RowDefault"], " ", TemplateBox[
+                           {TemplateBox[{"\"〈\"", StyleBox["2", Bold, StripOnInput -> False]}, 
+                             "RowDefault"], TemplateBox[{"5", "\"〉\""}, "RowDefault"]}, 
+                           "RowDefault"]}], "-", FractionBox[RowBox[{TemplateBox[{TemplateBox[
+                              {"\"〈\"", StyleBox["1", Bold, StripOnInput -> False]}, 
+                              "RowDefault"], TemplateBox[{StyleBox["2", Bold, StripOnInput -> 
+                                 False], "\"〉\""}, "RowDefault"]}, "RowDefault"], " ", 
+                           TemplateBox[{TemplateBox[{"\"〈\"", "5"}, "RowDefault"], "\"|\"", 
+                             SubscriptBox["p", "1"], "\"|\"", TemplateBox[{"3", "\"]\""}, 
+                              "RowDefault"]}, "RowDefault"], " ", TemplateBox[{TemplateBox[
+                              {"\"〈\"", "5"}, "RowDefault"], "\"|\"", SubscriptBox["p", "2"], 
+                             "\"|\"", TemplateBox[{"4", "\"]\""}, "RowDefault"]}, "RowDefault"]}], 
+                         TemplateBox[{TemplateBox[{"\"[\"", "3"}, "RowDefault"], "\"|\"", 
+                           SubscriptBox["p", "1"], SubscriptBox["p", RowBox[{"3", ",", "5"}]], 
+                           "\"|\"", TemplateBox[{"4", "\"]\""}, "RowDefault"]}, "RowDefault"]]}], 
+                      ")"}]}], RowBox[{RowBox[{"(", RowBox[{RowBox[{"-", SuperscriptBox["Me", 
+                           "2"]}], "+", SubsuperscriptBox["p", RowBox[{"1", ",", "3"}], "2"]}], 
+                      ")"}], " ", RowBox[{"(", RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], 
+                        "+", SubsuperscriptBox["p", RowBox[{"2", ",", "4"}], "2"]}], ")"}], " ", 
+                    TemplateBox[{TemplateBox[{"\"〈\"", "5"}, "RowDefault"], TemplateBox[
+                       {"3", "\"〉\""}, "RowDefault"]}, "RowDefault"], " ", TemplateBox[
+                     {TemplateBox[{"\"〈\"", "5"}, "RowDefault"], TemplateBox[{"4", "\"〉\""}, 
+                       "RowDefault"]}, "RowDefault"]}]], "+", FractionBox[RowBox[
+                   {RowBox[{"(", RowBox[{"1", "+", FractionBox[RowBox[{RowBox[{"-", SuperscriptBox[
+                              "Me", "2"]}], "+", SubsuperscriptBox["p", RowBox[{"1", ",", "4"}], 
+                            "2"]}], RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", 
+                           SubsuperscriptBox["p", RowBox[{"1", ",", "5"}], "2"]}]], "+", 
+                        FractionBox[RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", 
+                           SubsuperscriptBox["p", RowBox[{"2", ",", "3"}], "2"]}], RowBox[
+                          {RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", SubsuperscriptBox["p", 
+                            RowBox[{"2", ",", "5"}], "2"]}]]}], ")"}], " ", TemplateBox[
+                     {TemplateBox[{"\"〈\"", "5"}, "RowDefault"], "\"|\"", SubscriptBox["p", "1"], 
+                      "\"|\"", TemplateBox[{"4", "\"]\""}, "RowDefault"]}, "RowDefault"], " ", 
+                    TemplateBox[{TemplateBox[{"\"〈\"", "5"}, "RowDefault"], "\"|\"", SubscriptBox[
+                       "p", "2"], "\"|\"", TemplateBox[{"3", "\"]\""}, "RowDefault"]}, 
+                     "RowDefault"], " ", RowBox[{"(", RowBox[{RowBox[{TemplateBox[{TemplateBox[
+                             {"\"〈\"", StyleBox["1", Bold, StripOnInput -> False]}, 
+                             "RowDefault"], TemplateBox[{"5", "\"〉\""}, "RowDefault"]}, 
+                           "RowDefault"], " ", TemplateBox[{TemplateBox[{"\"〈\"", StyleBox["2", 
+                               Bold, StripOnInput -> False]}, "RowDefault"], TemplateBox[{"5", 
+                              "\"〉\""}, "RowDefault"]}, "RowDefault"]}], "-", FractionBox[
+                         RowBox[{TemplateBox[{TemplateBox[{"\"〈\"", StyleBox["1", Bold, 
+                                StripOnInput -> False]}, "RowDefault"], TemplateBox[{StyleBox["2", 
+                                Bold, StripOnInput -> False], "\"〉\""}, "RowDefault"]}, 
+                            "RowDefault"], " ", TemplateBox[{TemplateBox[{"\"〈\"", "5"}, 
+                              "RowDefault"], "\"|\"", SubscriptBox["p", "1"], "\"|\"", TemplateBox[
+                              {"4", "\"]\""}, "RowDefault"]}, "RowDefault"], " ", TemplateBox[
+                            {TemplateBox[{"\"〈\"", "5"}, "RowDefault"], "\"|\"", SubscriptBox[
+                              "p", "2"], "\"|\"", TemplateBox[{"3", "\"]\""}, "RowDefault"]}, 
+                            "RowDefault"]}], TemplateBox[{TemplateBox[{"\"[\"", "4"}, 
+                            "RowDefault"], "\"|\"", SubscriptBox["p", "1"], SubscriptBox["p", 
+                            RowBox[{"4", ",", "5"}]], "\"|\"", TemplateBox[{"3", "\"]\""}, 
+                            "RowDefault"]}, "RowDefault"]]}], ")"}]}], RowBox[
+                   {RowBox[{"(", RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", 
+                        SubsuperscriptBox["p", RowBox[{"1", ",", "4"}], "2"]}], ")"}], " ", 
+                    RowBox[{"(", RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", 
+                        SubsuperscriptBox["p", RowBox[{"2", ",", "3"}], "2"]}], ")"}], " ", 
+                    TemplateBox[{TemplateBox[{"\"〈\"", "5"}, "RowDefault"], TemplateBox[
+                       {"3", "\"〉\""}, "RowDefault"]}, "RowDefault"], " ", TemplateBox[
+                     {TemplateBox[{"\"〈\"", "5"}, "RowDefault"], TemplateBox[{"4", "\"〉\""}, 
+                       "RowDefault"]}, "RowDefault"]}]]}], ")"}]}], "Me"], "-", 
+          RowBox[{"2", " ", SqrtBox["2"], " ", SuperscriptBox["EE", "3"], " ", "Me", " ", 
+            TemplateBox[{TemplateBox[{"\"〈\"", StyleBox["1", Bold, StripOnInput -> False]}, 
+               "RowDefault"], TemplateBox[{StyleBox["2", Bold, StripOnInput -> False], "\"〉\""}, 
+               "RowDefault"]}, "RowDefault"], " ", RowBox[{"(", RowBox[{FractionBox[
+                 RowBox[{RowBox[{"(", RowBox[{"1", "+", FractionBox[RowBox[{RowBox[{"-", 
+                            SuperscriptBox["Me", "2"]}], "+", SubsuperscriptBox["p", RowBox[
+                            {"1", ",", "3"}], "2"]}], RowBox[{RowBox[{"-", SuperscriptBox["Me", 
+                             "2"]}], "+", SubsuperscriptBox["p", RowBox[{"1", ",", "5"}], "2"]}]], 
+                       "+", FractionBox[RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", 
+                          SubsuperscriptBox["p", RowBox[{"2", ",", "4"}], "2"]}], RowBox[
+                         {RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", SubsuperscriptBox["p", 
+                           RowBox[{"2", ",", "5"}], "2"]}]]}], ")"}], " ", SuperscriptBox[
+                    TemplateBox[{TemplateBox[{"\"[\"", "3"}, "RowDefault"], TemplateBox[
+                       {"4", "\"]\""}, "RowDefault"]}, "RowDefault"], "4"]}], RowBox[
+                  {"2", " ", RowBox[{"(", RowBox[{RowBox[{SubscriptBox["p", "3"], ".", SubscriptBox[
+                          "p", "4"]}], "+", RowBox[{SubscriptBox["p", "3"], ".", SubscriptBox["p", 
+                          "5"]}], "+", RowBox[{SubscriptBox["p", "4"], ".", SubscriptBox["p", 
+                          "5"]}]}], ")"}], " ", TemplateBox[{TemplateBox[{"\"[\"", "3"}, 
+                      "RowDefault"], TemplateBox[{"5", "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                   " ", TemplateBox[{TemplateBox[{"\"[\"", "5"}, "RowDefault"], TemplateBox[
+                      {"4", "\"]\""}, "RowDefault"]}, "RowDefault"], " ", TemplateBox[
+                    {TemplateBox[{"\"[\"", "3"}, "RowDefault"], "\"|\"", SubscriptBox["p", "1"], 
+                     SubscriptBox["p", RowBox[{"3", ",", "5"}]], "\"|\"", TemplateBox[
+                      {"4", "\"]\""}, "RowDefault"]}, "RowDefault"]}]], "+", FractionBox[
+                 RowBox[{RowBox[{"(", RowBox[{"1", "+", FractionBox[RowBox[{RowBox[{"-", 
+                            SuperscriptBox["Me", "2"]}], "+", SubsuperscriptBox["p", RowBox[
+                            {"1", ",", "4"}], "2"]}], RowBox[{RowBox[{"-", SuperscriptBox["Me", 
+                             "2"]}], "+", SubsuperscriptBox["p", RowBox[{"1", ",", "5"}], "2"]}]], 
+                       "+", FractionBox[RowBox[{RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", 
+                          SubsuperscriptBox["p", RowBox[{"2", ",", "3"}], "2"]}], RowBox[
+                         {RowBox[{"-", SuperscriptBox["Me", "2"]}], "+", SubsuperscriptBox["p", 
+                           RowBox[{"2", ",", "5"}], "2"]}]]}], ")"}], " ", SuperscriptBox[
+                    TemplateBox[{TemplateBox[{"\"[\"", "4"}, "RowDefault"], TemplateBox[
+                       {"3", "\"]\""}, "RowDefault"]}, "RowDefault"], "4"]}], RowBox[
+                  {"2", " ", RowBox[{"(", RowBox[{RowBox[{SubscriptBox["p", "3"], ".", SubscriptBox[
+                          "p", "4"]}], "+", RowBox[{SubscriptBox["p", "3"], ".", SubscriptBox["p", 
+                          "5"]}], "+", RowBox[{SubscriptBox["p", "4"], ".", SubscriptBox["p", 
+                          "5"]}]}], ")"}], " ", TemplateBox[{TemplateBox[{"\"[\"", "4"}, 
+                      "RowDefault"], TemplateBox[{"5", "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                   " ", TemplateBox[{TemplateBox[{"\"[\"", "5"}, "RowDefault"], TemplateBox[
+                      {"3", "\"]\""}, "RowDefault"]}, "RowDefault"], " ", TemplateBox[
+                    {TemplateBox[{"\"[\"", "4"}, "RowDefault"], "\"|\"", SubscriptBox["p", "1"], 
+                     SubscriptBox["p", RowBox[{"4", ",", "5"}]], "\"|\"", TemplateBox[
+                      {"3", "\"]\""}, "RowDefault"]}, "RowDefault"]}]]}], ")"}]}]}]], "Output"]}, 
+     Closed]], Cell[CellGroupData[{Cell["From Scoped Numerator Shells To A Complete Amplitude", 
+       "Subsection"], Cell["For each positive order (i,j), group (i,5,j), (5,i,j), (i,j,5), whose \
+original denominators are Ai Bj, A5 Bj, Ai B5. Their reciprocal sum is Cij/(Ai Bj), without any \
+on-shell substitution. After stripping the common factor 2 Sqrt[2] EE^3, the universal numerator \
+n=Fi Gj/(Me Gamma) (V-U Fi Gj/Dij) matches each actual diagram on its own two internal numerator \
+shells. Generic two-component checks \
+passed for all six diagrams and all four independent massive-spin components.", "Text"], 
+      Cell["Dij=Ai[ij]+Fi[5j]=Bj[ij]+Gj[i5] explains the distinct three-point-current limits. The \
+original denominators are kept opaque during these checks. The completion numerator carries Ai Bj \
+when written over that pair's propagators, so it is invisible on the relevant double cuts. Matching \
+those residues alone cannot determine this additional off-shell information. It was fixed and \
+checked with the independent full Dirac calculation below, not by imposing internal cuts on a \
+combined sum.", "Text"]}, Closed]], 
+   Cell[CellGroupData[{Cell["Explicit Cancellation Of The Spurious Poles", "Subsection"], 
+      Cell["For one ordered pair put x=Fi Gj, b=[ij], h=[i5][5j], A=Ai, B=Bj, D=Dij, T=[i|p1 k5|j]. \
+The two elementary identities are S x-L D=-Me^2 Gamma b^2 and A B b^2+D(T-b B)=h x. They require \
+only external shells and conservation. The U coefficient R=-x^2/(A B Gamma D)-Me^2 b^4/(S h D) \
+therefore becomes -x L/(A B Gamma S)+Me^2 b^2(T-b B)/(A B S h): D cancels explicitly before the two \
+orders are added.", "Text"], Cell["The remaining two scalar sums are: Sum[Cij Rij]=(F3^2 K4/B4+F4^2 \
+K3/B3+Me^2[34]^2 L/B5)/(A3 A4 A5), and Sum[Cij Fi Gj/(Ai Bj \
+Gamma)]=(-F3[35]K4/B4-F4[45]K3/B3+Me^2[34]^2(A5+B5)/B5)/(A3 A4 A5). Their right sides have physical \
+poles only. Multiplying by U,V respectively and adding gives q5MixedFinal.", "Text"], 
+      Cell["A hand proof of both sums is included in Section 10 of the PDF. It uses the generic \
+chart lambda3=(1,0), lambda4=(0,1), lambda5=(1,1), tilde3=(1,0), tilde4=(0,r), tilde5=(s,t), \
+p1={{u,v},{w,z}}, p2=-p1-Sum[ki]. The sole remaining shell equation is E=r+ru+rs-vs+t+ut-wt+z+sz=0, \
+with Me^2=uz-vw. The code below independently clears denominators and tests polynomial remainders \
+modulo E. No internal shell is used in this equality proof.", "Text"], 
+      Cell["ClearAll[q5MPVerifyEquality];\nq5MPVerifyEquality[] := Module[\n  {j = {{0, -1}, {1, \
+0}}, eps, adj, la, ti, p, an, sq, f, g, a, b,\n   d, t, c, k, ell, mass2, s, gap, closure, zero, u, \
+v, w, z, r, x, y,\n   orders = {{3, 4}, {4, 3}}, localChecks, spuriousU, regularU, spuriousV,\n   \
+compactU, compactV, aa, bose, swap},\n  eps = -j;\n  adj[q_] := {{q[[2, 2]], -q[[1, 2]]}, {-q[[2, \
+1]], q[[1, 1]]}};\n  la[3] = {1, 0}; la[4] = {0, 1}; la[5] = {1, 1};\n  ti[3] = {1, 0}; ti[4] = {0, \
+r}; ti[5] = {x, y};\n  p[1] = {{u, v}, {w, z}};\n  Do[p[i] = Outer[Times, la[i], ti[i]], {i, {3, 4, \
+5}}];\n  p[2] = -p[1] - Total[p /@ {3, 4, 5}];\n  mass2 = Det[p[1]]; closure = Expand[Det[p[2]] - \
+mass2];\n  zero[q_] := Last[PolynomialReduce[Expand[Numerator[Together[q]]],\n      {closure}, {z, \
+w, v, u, y, x, r}]] === 0;\n  an[i_, h_] := la[i].j.la[h]; sq[i_, h_] := ti[i].eps.ti[h];\n  f[i_] \
+:= la[5].j.p[1].eps.ti[i];\n  g[i_] := la[5].j.p[2].eps.ti[i];\n  a[i_] := ti[i].adj[p[1]].la[i]; \
+b[i_] := ti[i].adj[p[2]].la[i];\n  d[i_, h_] := ti[i].adj[p[1]].(p[i] + p[5]).eps.ti[h];\n  t[i_, \
+h_] := ti[i].adj[p[1]].p[5].eps.ti[h];\n  c[i_, h_] := 1 + a[i]/a[5] + b[h]/b[5];\n  k[i_] := \
+ti[i].adj[p[1]].p[2].eps.ti[i];\n  ell = la[5].j.p[1].adj[p[2]].la[5];\n  s = Det[p[1] + p[2]]; gap \
+= an[5, 3] an[5, 4];\n  localChecks = Function[ord, With[{i = ord[[1]], h = ord[[2]]},\n      \
+<|\"Order\" -> ord,\n        \"DLeft\" -> zero[d[i, h] - a[i] sq[i, h] - f[i] sq[5, h]],\n        \
+\"DRight\" -> zero[d[i, h] - b[h] sq[i, h] - g[h] sq[i, 5]],\n        \"PoleRemovalIdentity\" -> \
+zero[s f[i] g[h] - ell d[i, h] +\n          mass2 gap sq[i, h]^2],\n        \"ProductIdentity\" -> \
+zero[a[i] b[h] sq[i, h]^2 +\n          d[i, h] (t[i, h] - sq[i, h] b[h]) -\n          sq[i, 5] \
+sq[5, h] f[i] g[h]]|>]] /@ orders;\n  spuriousU = Total[Function[ord, With[{i = ord[[1]], h = \
+ord[[2]]},\n      c[i, h] (-f[i]^2 g[h]^2/(a[i] b[h] gap d[i, h]) -\n        mass2 sq[i, h]^4/(s \
+sq[i, 5] sq[5, h] d[i, h]))]] /@ orders];\n  regularU = Total[Function[ord, With[{i = ord[[1]], h = \
+ord[[2]]},\n      c[i, h] (-f[i] g[h] ell/(a[i] b[h] gap s) +\n        mass2 sq[i, h]^2 (t[i, h] - \
+sq[i, h] b[h])/\n          (a[i] b[h] sq[i, 5] sq[5, h] s))]] /@ orders];\n  spuriousV = \
+Total[Function[ord, With[{i = ord[[1]], h = ord[[2]]},\n      c[i, h] f[i] g[h]/(a[i] b[h] gap)]] \
+/@ orders];\n  aa = a[3] a[4] a[5];\n  compactU = (f[3]^2 k[4]/b[4] + f[4]^2 k[3]/b[3] +\n      \
+mass2 sq[3, 4]^2 ell/b[5])/aa;\n  compactV = (-f[3] sq[3, 5] k[4]/b[4] - f[4] sq[4, 5] k[3]/b[3] \
++\n      mass2 sq[3, 4]^2 (a[5] + b[5])/b[5])/aa;\n  <|\"ExternalClosure\" -> closure,\n    \
+\"InternalConditionsUsedInEqualityProof\" -> {},\n    \"LocalIdentities\" -> localChecks,\n    \
+\"RemoveDPoles\" -> zero[spuriousU - regularU],\n    \"UEqualsThreeTermForm\" -> zero[regularU - \
+compactU],\n    \"VEqualsThreeTermForm\" -> zero[spuriousV - compactV],\n    \
+\"FullEqualityForArbitraryMassiveSpins\" ->\n      (zero[spuriousU - compactU] && zero[spuriousV - \
+compactV])|>\n];\nq5MixedEqualityProof = q5MPVerifyEquality[];\nq5MixedEqualityProof", "Input"], 
+      Cell[BoxData[RowBox[{"", RowBox[{RowBox[{"\"ExternalClosure\"", "", 
+              RowBox[{"r$17183", "+", RowBox[{"r$17183", " ", "u$17183"}], "+", 
+                RowBox[{"r$17183", " ", "x$17183"}], "-", RowBox[{"v$17183", " ", "x$17183"}], "+", 
+                "y$17183", "+", RowBox[{"u$17183", " ", "y$17183"}], "-", RowBox[{"w$17183", " ", 
+                  "y$17183"}], "+", "z$17183", "+", RowBox[{"x$17183", " ", "z$17183"}]}]}], ",", 
+            RowBox[{"\"InternalConditionsUsedInEqualityProof\"", "", RowBox[{"{", "}"}]}], ",", 
+            RowBox[{"\"LocalIdentities\"", "", RowBox[{"{", RowBox[{RowBox[{"", 
+                    RowBox[{RowBox[{"\"Order\"", "", RowBox[{"{", RowBox[{"3", ",", "4"}], 
+                          "}"}]}], ",", RowBox[{"\"DLeft\"", "", "True"}], ",", RowBox[
+                       {"\"DRight\"", "", "True"}], ",", RowBox[{"\"PoleRemovalIdentity\"", 
+                        "", "True"}], ",", RowBox[{"\"ProductIdentity\"", "", "True"}]}], 
+                    ""}], ",", RowBox[{"", RowBox[{RowBox[{"\"Order\"", "", RowBox[
+                         {"{", RowBox[{"4", ",", "3"}], "}"}]}], ",", RowBox[{"\"DLeft\"", "", 
+                        "True"}], ",", RowBox[{"\"DRight\"", "", "True"}], ",", RowBox[
+                       {"\"PoleRemovalIdentity\"", "", "True"}], ",", RowBox[
+                       {"\"ProductIdentity\"", "", "True"}]}], ""}]}], "}"}]}], ",", 
+            RowBox[{"\"RemoveDPoles\"", "", "True"}], ",", RowBox[{"\"UEqualsThreeTermForm\"", 
+              "", "True"}], ",", RowBox[{"\"VEqualsThreeTermForm\"", "", "True"}], ",", 
+            RowBox[{"\"FullEqualityForArbitraryMassiveSpins\"", "", "True"}]}], ""}]], 
+       "Output"]}, Closed]], Cell[CellGroupData[{Cell["Independent Six-Diagram Dirac Verification", 
+       "Subsection"], Cell["This self-contained exact matrix calculation evaluates the six ordinary \
+QED diagrams with p1-based references. These references have only physical Ai denominators. All \
+four external massive-spin tensor entries agree with q5MixedFinal. The negative-helicity \
+polarization phase is calibrated uniformly to the HEPCAT double-cut residues. The code states its \
+phase explicitly and uses no model, scratch files, neural net, or internal cut conditions.", 
+       "Text"], Cell["ClearAll[q5MPVerifyDirac];\nq5MPVerifyDirac[] := Module[\n  {jform, lform, \
+adj, slash, lambda, tilde, photons, p1, p2, massSquared,\n   externalClosure, a, b, aProduct, \
+bProduct, physicalDenominator,\n   polarizationNumerator, leftScaled, rightScaled, \
+diracNumerator,\n   diracMassReduced, f, kchain, angleChain, square, compactU, compactV,\n   \
+externalV, compactCleared, numerator, remainder, spinChecks,\n   u, v, w, z, r, s, t, m, ii, jj},\n \
+ jform = {{0, -1}, {1, 0}};\n  lform = -jform;\n  adj[p_] := {{p[[2, 2]], -p[[1, 2]]}, {-p[[2, 1]], \
+p[[1, 1]]}};\n  slash[p_] := ArrayFlatten[{\n    {ConstantArray[0, {2, 2}], p},\n    {adj[p], \
+ConstantArray[0, {2, 2}]}}];\n  lambda = <|3 -> {1, 0}, 4 -> {0, 1}, 5 -> {1, 1}|>;\n  tilde = <|3 \
+-> {1, 0}, 4 -> {0, r}, 5 -> {s, t}|>;\n  photons = AssociationThread[{3, 4, 5},\n    \
+Table[Outer[Times, lambda[h], tilde[h]], {h, {3, 4, 5}}]];\n  p1 = {{u, v}, {w, z}};\n  p2 = -p1 - \
+Total[Values[photons]];\n  massSquared = Det[p1];\n  externalClosure = Expand[Det[p2] - \
+massSquared];\n  a[h_] := Expand[Det[p1 + photons[h]] - massSquared];\n  b[h_] := Expand[Det[p2 + \
+photons[h]] - Det[p2]];\n  aProduct = Times @@ (a /@ {3, 4, 5});\n  bProduct = Times @@ (b /@ {3, \
+4, 5});\n  physicalDenominator = aProduct bProduct;\n\n  (* Divide these matrices by A_h and \
+multiply by Sqrt[2] to obtain\n     the polarization matrices in the stated Dirac convention. *)\n  \
+polarizationNumerator[h_] := If[h === 5,\n    -Outer[Times, lambda[h], lambda[h].jform.p1],\n    \
+-p1.lform.Outer[Times, tilde[h], tilde[h]]];\n  leftScaled = Join[m jform, \
+Transpose[lform.adj[p1]], 2];\n  rightScaled = Join[m IdentityMatrix[2], -adj[p2]];\n\n  (* The two \
+scaled external blocks are m times the ordinary external\n     Dirac spinors. Each term's original \
+propagators remain A_a B_c. *)\n  diracNumerator = Total[Map[Function[order,\n    With[{aa = \
+order[[1]], bb = order[[2]], cc = order[[3]]},\n      \
+leftScaled.slash[polarizationNumerator[aa]].\n        (slash[p1 + photons[aa]] + m \
+IdentityMatrix[4]).\n        slash[polarizationNumerator[bb]].\n        (slash[p1 + photons[aa] + \
+photons[bb]] + m IdentityMatrix[4]).\n        slash[polarizationNumerator[cc]].rightScaled *\n      \
+  a[bb] a[cc] b[aa] b[bb]]], Permutations[{3, 4, 5}]]];\n  diracMassReduced = Map[\n    \
+Cancel[PolynomialRemainder[Expand[#], m^2 - massSquared, m]/m] &,\n    diracNumerator, {2}];\n\n  \
+f[h_] := lambda[5].jform.p1.lform.tilde[h];\n  kchain[h_] := tilde[h].adj[p1].p2.lform.tilde[h];\n  \
+angleChain = lambda[5].jform.p1.adj[p2].lambda[5];\n  square[h_, q_] := tilde[h].lform.tilde[q];\n  \
+compactU = (f[3]^2 kchain[4]/b[4] + f[4]^2 kchain[3]/b[3] +\n    massSquared square[3, 4]^2 \
+angleChain/b[5])/aProduct;\n  compactV = (-f[3] kchain[4] square[3, 5]/b[4] -\n    f[4] kchain[3] \
+square[4, 5]/b[3] +\n    massSquared square[3, 4]^2 (a[5] + b[5])/b[5])/aProduct;\n  externalV = \
+Outer[Times, lambda[5].jform, lambda[5].jform];\n  compactCleared = aProduct physicalDenominator \
+*\n    (compactU jform + compactV externalV);\n\n  (* The plus sign below tests Compact = -Dirac. \
+This is the one global\n     phase fixed by the independent HEPCAT double-cut calibration. *)\n  \
+spinChecks = Table[\n    numerator = Numerator[Together[\n      diracMassReduced[[ii, jj]] + \
+compactCleared[[ii, jj]]]];\n    remainder = Last[PolynomialReduce[Expand[numerator],\n      \
+{externalClosure}, {z, w, v, u, t, s, r}]];\n    remainder === 0, {ii, 2}, {jj, 2}];\n  \
+<|\"FourIndependentSpinComponents\" -> spinChecks,\n    \"AllPass\" -> And @@ \
+Flatten[spinChecks],\n    \"ExternalConditions\" ->\n      \"p1+p2+k3+k4+k5=0; m^2=det(p1); \
+det(p2)-det(p1)=0\",\n    \"InternalCutConditionsUsed\" -> None,\n    \
+\"ClearedDenominatorConvention\" ->\n      \"D=A3 A4 A5 B3 B4 B5. With N_D built from the scaled \
+external blocks, M_Dirac=2 Sqrt[2] e^3 N_D/(m^2 (A3 A4 A5) D). After reducing m^2=det(p1), the \
+polynomial tested is N_D/m+(A3 A4 A5)D(c_U J+c_V V5). No internal A_i or B_i is set to zero.\",\n   \
+ \"PhaseConvention\" ->\n      \"The displayed compact HEPCAT result equals minus the Dirac sum \
+with these polarization matrices. Reversing the negative-helicity polarization sign gives direct \
+equality. This phase is fixed by the separate HEPCAT double-cut calibration.\",\n    \
+\"ProofMethod\" ->\n      \"Exact rational numerator clearing and polynomial reduction by the \
+single external equal-mass condition, for all four independent massive-spin \
+components.\"|>\n];\nq5MixedDiracProof = q5MPVerifyDirac[];\nq5MixedDiracProof", "Input"], 
+      Cell[BoxData[RowBox[{"", RowBox[{RowBox[{"\"FourIndependentSpinComponents\"", "", 
+              RowBox[{"{", RowBox[{RowBox[{"{", RowBox[{"True", ",", "True"}], "}"}], ",", 
+                  RowBox[{"{", RowBox[{"True", ",", "True"}], "}"}]}], "}"}]}], ",", 
+            RowBox[{"\"AllPass\"", "", "True"}], ",", RowBox[{"\"ExternalConditions\"", "", 
+              "\"p1+p2+k3+k4+k5=0; m^2=det(p1); det(p2)-det(p1)=0\""}], ",", 
+            RowBox[{"\"InternalCutConditionsUsed\"", "", "None"}], ",", 
+            RowBox[{"\"ClearedDenominatorConvention\"", "", "\"D=A3 A4 A5 B3 B4 B5. With N_D \
+built from the scaled external blocks, M_Dirac=2 Sqrt[2] e^3 N_D/(m^2 (A3 A4 A5) D). After reducing \
+m^2=det(p1), the polynomial tested is N_D/m+(A3 A4 A5)D(c_U J+c_V V5). No internal A_i or B_i is \
+set to zero.\""}], ",", RowBox[{"\"PhaseConvention\"", "", "\"The displayed compact HEPCAT \
+result equals minus the Dirac sum with these polarization matrices. Reversing the negative-helicity \
+polarization sign gives direct equality. This phase is fixed by the separate HEPCAT double-cut \
+calibration.\""}], ",", RowBox[{"\"ProofMethod\"", "", "\"Exact rational numerator clearing and \
+polynomial reduction by the single external equal-mass condition, for all four independent \
+massive-spin components.\""}]}], ""}]], "Output"]}, Closed]], 
+   Cell[CellGroupData[{Cell["Raw Reference Dependence: A Concrete Counterexample", "Subsection"], 
+      Cell["Take Me=1, photon spinors as in the chart with r=4,s=2,t=-25/2, p1={{3,-2},{2,-1}}, \
+p2={{-6,29/2},{-4,19/2}}. Both determinants are 1. The original propagators are A={-1,12,-21/2}, \
+B={19/2,-24,15}, all nonzero. With both positive references lambda5 and negative square reference \
+(1,chi), the actual raw T11 for massive angle components (1,0),(1,0) and their Dirac square \
+partners is -32 Sqrt[2] EE^3(2865+772 chi)/(665(25+4 chi)). Its difference from chi=0 is -7168 \
+Sqrt[2] EE^3 chi/(475(25+4 chi)), not zero. The reference is regular away from chi=-25/4.", 
+       "Text"], Cell["This is an obstruction to treating the raw constructive sum as a \
+gauge-independent off-shell amplitude, not a failure of the scoped on-shell identities. The seed, \
+raw sum, and completed physical expression are distinct objects. No package source was changed for \
+this derivation.", "Text"]}, Closed]], Cell["At a spurious zero in q5MixedSpurious, evaluate \
+q5MixedFinal instead of substituting into individual divergent summands. The complete derivation, \
+including the short coefficient-by-coefficient proof, is in QED-5-point-reference-derivations.pdf. \
+The factored form was also cross-checked against Das and Zeng, arXiv:2608.18218v1, Eqs. (44), (45), \
+(75), with labels (1,2,3,4,5)_paper=(1,3,5,4,2)_here and the phase fixed by HEPCAT residues.", 
+    "Text"]}, Open]]
+},
+WindowSize->{808, 911},
+WindowMargins->{{4, Automatic}, {Automatic, 4}},
+FrontEndVersion->"15.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
+StyleDefinitions->"Default.nb",
+ExpressionUUID->"e869c9ed-368b-4574-8a20-43c29e28816e"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[576, 22, 79, 0, 66, "Section",ExpressionUUID->"c4c733f3-3b2d-4214-a9d4-a91964aecafb"],
+Cell[658, 24, 131, 1, 29, "Input",ExpressionUUID->"097794f3-8049-4c2f-9af2-dde9a80dcb47"],
+Cell[CellGroupData[{
+Cell[814, 29, 183, 4, 46, "Input",ExpressionUUID->"df5f9694-bf8c-46c0-9439-f51acde5e4ca"],
+Cell[CellGroupData[{
+Cell[1022, 37, 542, 9, 23, "Print",ExpressionUUID->"01418b47-02df-4b3e-ad61-34039becdc2e"],
+Cell[1567, 48, 516, 9, 23, "Print",ExpressionUUID->"682a9e77-c4d3-49b2-90b5-4815994f02ee"],
+Cell[2086, 59, 525, 9, 23, "Print",ExpressionUUID->"aaffabea-0e59-499b-9667-2bc5f2317302"],
+Cell[2614, 70, 539, 9, 23, "Print",ExpressionUUID->"7b5f5e5d-7b03-4c8d-8c3a-7ef4228e4a40"],
+Cell[3156, 81, 532, 9, 23, "Print",ExpressionUUID->"2581f7f8-9485-4a12-992f-563dc26b9e47"],
+Cell[3691, 92, 537, 9, 23, "Print",ExpressionUUID->"70481794-f746-43c0-9df4-fb9229ca4e52"],
+Cell[4231, 103, 546, 9, 23, "Print",ExpressionUUID->"5c12b2d7-c130-48a9-886d-4f0d0cb924da"],
+Cell[4780, 114, 516, 9, 23, "Print",ExpressionUUID->"d89e3d13-d9f0-4ae6-9847-b158df85f86d"],
+Cell[5299, 125, 578, 10, 23, "Print",ExpressionUUID->"8edf51a9-d65e-41a6-b9d7-c2dab235fa58"],
+Cell[5880, 137, 552, 9, 23, "Print",ExpressionUUID->"f495d4ca-7017-4c9b-ae00-6741c13698c1"]
+}, Open  ]]
+}, Open  ]],
+Cell[6459, 150, 145, 1, 29, "Input",ExpressionUUID->"147ea4f8-3576-4657-bcf6-a49753e6359a"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[6641, 156, 155, 3, 66, "Section",ExpressionUUID->"8799675d-8e9c-450f-b50d-e2eeb8b2964d"],
+Cell[CellGroupData[{
+Cell[6821, 163, 1500, 30, 70, "Input",ExpressionUUID->"c748d386-fc28-40f3-821a-61fe1769941c"],
+Cell[8324, 195, 627, 9, 33, "Output",ExpressionUUID->"76a1a989-dd9d-4cc0-83d8-b02863cee746"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[8988, 209, 323, 5, 29, "Input",ExpressionUUID->"26f97204-7353-4430-a236-3624ee3ddf68"],
+Cell[9314, 216, 25615, 613, 1968, "Output",ExpressionUUID->"f38dbe18-b7ce-424c-a881-48077002e3ae"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[34966, 834, 343, 6, 29, "Input",ExpressionUUID->"4823f631-f5d1-4224-af06-c00da52b68bb"],
+Cell[35312, 842, 21724, 563, 476, "Output",ExpressionUUID->"8e77ef43-cb24-48cb-af60-1ec1784210aa"]
+}, Open  ]]
+}, Open  ]]
+}
+]
+*)

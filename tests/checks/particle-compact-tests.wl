@@ -86,6 +86,69 @@ protectedDenominator = PropDen[Mom[Multiparticle[1, 2]], Mass[1],
   ang[1, 1], SpinorTrace[Mom[1], Mom[1]], MomProd[1, 2]];
 check["normalization never descends into PropDen", Unscrambling`Private`canonicalAmplitude[
   protectedDenominator, rules] === protectedDenominator];
+(* Every mass family and relabeling must keep both internal-square inverses. *)
+Module[{squareCatalog, squareFixture, squareFixtures, squarePair, squarePermutations, squareAudit,
+    squareOpaque, squareNormalized},
+  squareCatalog = Get[FileNameJoin[{root, "tests", "training-amplitudes.wl"}]];
+  squareFixture = squareCatalog[[203]];
+  check["five-point square regression uses fixture 203", squareFixture["Name"] ===
+    "Synthetic5Point / Massless / InternalMomentumSquare"];
+  squareFixtures = squareCatalog[[{203, 211, 219, 227, 235, 243}]];
+  check["all six synthetic mass families have internal-square fixtures",
+    Length[DeleteDuplicates[Lookup[squareFixtures, "Family"]]] === 6 &&
+      AllTrue[squareFixtures, #["Template"] === "InternalMomentumSquare" &]];
+  squarePermutations = AssociationThread[Range[5], #] & /@ Permutations[Range[5]];
+  squareAudit = Flatten[Table[
+    squarePair = Lookup[squareFixture, {"Masses", "Amplitude"}];
+    Map[Function[permutation, Module[
+      {pair, start, forward, denominator, outcomes, offShellStart, offShellMoves, familyLabel},
+    familyLabel = squareFixture["Family"] <> " / " <> ToString[Values[permutation]];
+    pair = Unscrambling`Private`relabelLegs[squarePair, permutation];
+    start = Unscrambling`Private`canonicalAmplitude[pair[[2]], pair[[1]]];
+    denominator = DeleteDuplicates[Cases[start, _PropDen, Infinity]];
+    forward = Select[UnscrambleCandidates[pair, "MomentumConservation" -> False],
+      MemberQ[{"MomentumSquare", "OnShell"}, #["Name"]] &];
+    check["two internal-square edits " <> familyLabel,
+      Length[forward] === 2 && Sort[Lookup[forward, "Name"]] === {"MomentumSquare", "OnShell"}];
+    check["internal-square normalization idempotent " <> familyLabel,
+      Unscrambling`Private`canonicalAmplitude[start, pair[[1]]] === start];
+    check["propagator ordering retained " <> familyLabel, denominator ===
+      DeleteDuplicates[Cases[pair[[2]], _PropDen, Infinity]]];
+    outcomes = Map[Function[move, Module[{next, reverse, label},
+      next = Unscrambling`Private`applyCandidate[start, move];
+      reverse = UnscrambleCandidates[{pair[[1]], next}, "MomentumConservation" -> False];
+      label = familyLabel <> " / " <> move["Name"];
+      check["internal-square exact legal inverse " <> label, AnyTrue[reverse,
+        #["Name"] =!= "Stop" && Unscrambling`Private`applyCandidate[next, #] === start &]];
+      check["internal-square result normalization idempotent " <> label,
+        Unscrambling`Private`canonicalAmplitude[next, pair[[1]]] === next];
+      check["internal-square edits preserve opaque propagators " <> label,
+        DeleteDuplicates[Cases[next, _PropDen, Infinity]] === denominator];
+      If[move["Name"] === "OnShell",
+        offShellMoves = UnscrambleCandidates[{pair[[1]], next}, "MomentumConservation" -> False,
+          "OnShellChannels" -> {}];
+        check["internal-square inverse respects channel filter " <> label, !AnyTrue[offShellMoves,
+          #["Name"] =!= "Stop" && Unscrambling`Private`applyCandidate[next, #] === start &]]];
+      {move["Name"], next}
+    ]], forward];
+    offShellStart = UnscrambleCandidates[pair, "MomentumConservation" -> False, "OnShellChannels" -> {}];
+    check["internal-square contraction respects channel filter " <> familyLabel,
+      FreeQ[Lookup[offShellStart, "Name"], "OnShell"]];
+    Length[outcomes]
+  ]], squarePermutations], {squareFixture, squareFixtures}], 1];
+  check["all six families, 720 particle permutations, and 1440 square branches checked",
+    Length[squareAudit] === 720 && Total[squareAudit] === 1440];
+  squareOpaque = PropDen[Mom[Multiparticle[5, 2, 1]], Mass[Multiparticle[5, 2, 1]],
+    Mom[Multiparticle[4, 3]]^2];
+  squareNormalized = Unscrambling`Private`canonicalChains[
+    Mom[Multiparticle[5, 2, 1]]^2/squareOpaque];
+  check["standalone numerator momentum sorts all integer labels", squareNormalized ===
+    Mom[Multiparticle[1, 2, 5]]^2/squareOpaque];
+  check["standalone numerator sorting leaves every propagator argument untouched",
+    Cases[squareNormalized, _PropDen, Infinity] === {squareOpaque}];
+  check["standalone numerator sorting is idempotent",
+    Unscrambling`Private`canonicalChains[squareNormalized] === squareNormalized];
+];
 check["empty chiral trace is two", Unscrambling`Private`canonicalChains[SpinorTrace[]] === 2];
 oddTrace = SpinorTrace[Mom[1], Mom[2], Mom[3]];
 check["odd trace is left unsupported", Unscrambling`Private`canonicalChains[oddTrace] === oddTrace &&
@@ -206,6 +269,112 @@ Do[
 check["portable scorer rejects wrong token width", portableScores[portableCandidates[[All, All, 1 ;; 165]]] === $Failed];
 invalidTokens = portableCandidates; invalidTokens[[1, 1, 1]] = Infinity;
 check["portable scorer rejects nonfinite tokens", portableScores[invalidTokens] === $Failed];
+
+(* Chunk boundaries do not change raw scores or global action selection. *)
+encodedPortableState = Unscrambling`Private`compactPolicyStateVector[portableArrays, portableState];
+Do[
+  chunkScores = Flatten[Unscrambling`Private`compactParticleCandidateScores[
+      portableArrays, encodedPortableState, #] & /@ Partition[portableCandidates, UpTo[batch]]];
+  check["particle candidate chunks preserve raw scores " <> ToString[batch],
+    Length[chunkScores] === Length[baseScores] && Max[Abs[chunkScores - baseScores]] < 1.*^-12],
+  {batch, {1, 2, 128}}];
+reorderedScores = Unscrambling`Private`compactParticleCandidateScores[
+  portableArrays, encodedPortableState, portableCandidates[[{3, 1, 2}]]];
+check["encoded-state candidate scorer is order equivariant",
+  Max[Abs[reorderedScores - baseScores[[{3, 1, 2}]]]] < 1.*^-12];
+check["encoded-state candidate scorer ignores token padding", Max[Abs[
+  Unscrambling`Private`compactParticleCandidateScores[portableArrays, encodedPortableState,
+    PadLeft[portableCandidates, {3, 9, 166}, 0.]] - baseScores]] < 1.*^-12];
+
+boardState = Unscrambling`Private`stateFeature[amp, rules, Unscrambling`Private`stateLegIDs[amp, rules]];
+wholeBoardScores = Unscrambling`Private`compactParticlePolicyScores[portableArrays,
+  <|"State" -> boardState, "Candidates" -> features|>];
+chunkBoardScores[batch_] := Block[{Unscrambling`Private`$policyMethod = "CompactActions",
+    Unscrambling`Private`$compactDescriptorEncoding = "ParticleRoleTokens",
+    Unscrambling`Private`$compactWeights = portableArrays, Unscrambling`Private`$candidateBatchSize = batch},
+  Unscrambling`Private`scoreCandidates[amp, rules, candidates]];
+Do[
+  chunkScores = chunkBoardScores[batch];
+  check["chunked board scores preserve every action " <> ToString[batch],
+    VectorQ[chunkScores, NumberQ] && Length[chunkScores] === Length[candidates] &&
+      Max[Abs[chunkScores - wholeBoardScores]] < 1.*^-12];
+  wholeProbabilities = Exp[wholeBoardScores - Max[wholeBoardScores]];
+  wholeProbabilities /= Total[wholeProbabilities];
+  chunkProbabilities = Exp[chunkScores - Max[chunkScores]];
+  chunkProbabilities /= Total[chunkProbabilities];
+  check["chunked board retains global probabilities " <> ToString[batch],
+    Max[Abs[wholeProbabilities - chunkProbabilities]] < 1.*^-12],
+  {batch, {1, 3, 128}}];
+chunkSelection[batch_, sampled_, seed_] := Block[{Unscrambling`Private`$policyMethod = "CompactActions",
+    Unscrambling`Private`$compactDescriptorEncoding = "ParticleRoleTokens",
+    Unscrambling`Private`$compactWeights = portableArrays, Unscrambling`Private`$candidateBatchSize = batch},
+  BlockRandom[SeedRandom[seed]; Unscrambling`Private`selectCandidate[amp, rules, sampled]["Index"]]];
+check["chunking retains global greedy choice", chunkSelection[1, False, 1] ===
+  chunkSelection[Length[candidates], False, 1]];
+check["chunking retains seeded global sampling", AllTrue[Range[3],
+  chunkSelection[1, True, #] === chunkSelection[Length[candidates], True, #] &]];
+
+DownValues[savedStateVector] = DownValues[Unscrambling`Private`compactPolicyStateVector] /.
+  Unscrambling`Private`compactPolicyStateVector -> savedStateVector;
+DownValues[savedParticleFeatures] = DownValues[Unscrambling`Private`compactParticleFeatures] /.
+  Unscrambling`Private`compactParticleFeatures -> savedParticleFeatures;
+stateEncodingCalls = 0; featureChunkSizes = {};
+Block[{Unscrambling`Private`$policyMethod = "CompactActions",
+    Unscrambling`Private`$compactDescriptorEncoding = "ParticleRoleTokens",
+    Unscrambling`Private`$compactWeights = portableArrays, Unscrambling`Private`$candidateBatchSize = 3,
+    Unscrambling`Private`compactPolicyStateVector = Function[{weights, bytes},
+      stateEncodingCalls++; savedStateVector[weights, bytes]],
+    Unscrambling`Private`compactParticleFeatures = Function[{expression, masses, board},
+      AppendTo[featureChunkSizes, Length[board]]; savedParticleFeatures[expression, masses, board]]},
+  instrumentedScores = Unscrambling`Private`scoreCandidates[amp, rules, candidates]];
+check["compact board encodes the expression once", stateEncodingCalls === 1 &&
+  Max[Abs[instrumentedScores - wholeBoardScores]] < 1.*^-12];
+check["compact descriptors are built only for bounded chunks", Length[featureChunkSizes] === Ceiling[Length[candidates]/3] &&
+  Total[featureChunkSizes] === Length[candidates] && Max[featureChunkSizes] <= 3];
+Clear[savedStateVector, savedParticleFeatures];
+
+BlockRandom[SeedRandom[52]; legacyArrays = Join[KeyDrop[portableArrays,
+    {"TokenWeights", "TokenBiases", "TokenMaskWeights", "TokenMaskBiases"}],
+    <|"HiddenWeights" -> RandomReal[{-0.1, 0.1}, {64, 274}]|>]];
+legacyFeatures = Unscrambling`Private`compactActionFeatures[fourAmp, fourRules, fourCandidates];
+legacyState = Unscrambling`Private`stateFeature[fourAmp, fourRules,
+  Unscrambling`Private`stateLegIDs[fourAmp, fourRules]];
+legacyWholeScores = Unscrambling`Private`compactPolicyScores[legacyArrays,
+  <|"State" -> legacyState, "Candidates" -> legacyFeatures|>];
+Do[
+  legacyChunkScores = Block[{Unscrambling`Private`$policyMethod = "CompactActions",
+      Unscrambling`Private`$compactDescriptorEncoding = "CompactStructuredActions",
+      Unscrambling`Private`$compactWeights = legacyArrays, Unscrambling`Private`$candidateBatchSize = batch},
+    Unscrambling`Private`scoreCandidates[fourAmp, fourRules, fourCandidates]];
+  check["legacy four-point scores survive chunking " <> ToString[batch],
+    VectorQ[legacyChunkScores, NumberQ] && Length[legacyChunkScores] === Length[fourCandidates] &&
+      Max[Abs[legacyChunkScores - legacyWholeScores]] < 1.*^-12],
+  {batch, {1, 3, 128}}];
+check["candidate batch option defaults to 128", Lookup[Association[Options[UnscrambleTrace]], "CandidateBatchSize"] === 128];
+Block[{Unscrambling`Private`loadUnscrambleModel, Unscrambling`Private`withInferenceWorkers},
+  Unscrambling`Private`loadUnscrambleModel[_] := True;
+  Unscrambling`Private`withInferenceWorkers[_, _, settings_, _, _] := (forwardedSettings = settings; True);
+  forwardedTrace = UnscrambleTrace[{rules, amp}, "Model" -> "CompactActions", "Kernels" -> 2,
+    "CandidateBatchSize" -> 7, "MaxSteps" -> 1, "Attempts" -> 1, "ProgressReporting" -> False];
+  check["parallel inference forwards candidate batch size", forwardedSettings["CandidateBatchSize"] === 7 &&
+    forwardedTrace["Progress"]["CandidateBatchSize"] === 7];
+];
+Block[{Unscrambling`Private`inferenceSend = Function[{worker, expression},
+      workerInitialization = HoldComplete[expression]; True, HoldAll],
+    Unscrambling`Private`inferenceReceive = Function[{tickets, seconds},
+      <|"Ready" -> True, "Handle" -> First[tickets], "Result" -> <|"Initialized" -> True|>|>]},
+  workersInitialized = Unscrambling`Private`initializeInferenceWorkers[{"TestWorker"},
+    FileNameJoin[{root, "tests"}], <|"CandidateBatchSize" -> 7|>, 2];
+  forwardedBatches = Cases[workerInitialization,
+    HoldPattern[Set[Unscrambling`Private`$candidateBatchSize, value_]] :> value, Infinity];
+  check["worker bootstrap applies candidate batch size", TrueQ[workersInitialized] && forwardedBatches === {7}];
+];
+Do[
+  check["invalid candidate batch option is rejected " <> ToString[invalid], Quiet[
+    UnscrambleTrace[{rules, amp}, "CandidateBatchSize" -> invalid, "Kernels" -> 1,
+      "MaxSteps" -> 0, "ProgressReporting" -> False], UnscrambleSpinorAmplitudes::batchsize] === $Failed],
+  {invalid, {0, -1, 1.5, Infinity, "128"}}];
+
 metadata = <|"Encoding" -> "StateUTF8AndNumericActions", "Architecture" -> "CompactParticleActions",
   "DescriptorEncoding" -> "ParticleRoleTokens", "DescriptorFeatureWidth" -> 166,
   "CompactFeatureSchema" -> Unscrambling`Private`compactParticleFeatureSchema,
@@ -215,9 +384,19 @@ metadata = <|"Encoding" -> "StateUTF8AndNumericActions", "Architecture" -> "Comp
   "RuntimeCoreSourceEncoding" -> "SectionedLegalMathAndParticleTokens",
   "RuntimeCoreSourceSHA256" -> Unscrambling`Private`$compactParticleSourceFingerprint|>;
 check["particle metadata accepted", Unscrambling`Private`compactParticleModelCompatibleQ[metadata]];
+check["sampled legal-move training metadata accepted", Unscrambling`Private`compactParticleModelCompatibleQ[
+  Join[metadata, <|"Objective" -> "SampledLegalMoveCrossEntropy"|>]]];
+check["unsupported particle objective rejected", !Unscrambling`Private`compactParticleModelCompatibleQ[
+  Join[metadata, <|"Objective" -> "UnknownLoss"|>]]];
 check["known earlier particle model remains compatible", Unscrambling`Private`compactParticleModelCompatibleQ[
   Join[metadata, <|"RuntimeCoreSourceSHA256" ->
     "62ed48a7d3049905b07fd3cc4a28b2c05dc8d89d1a820440ca8e4bae4cde773a"|>]]];
+check["pre-photon particle model remains encoder compatible", Unscrambling`Private`compactParticleModelCompatibleQ[
+  Join[metadata, <|"RuntimeCoreSourceSHA256" ->
+    "3b8907fa37e66726effa44cb64234697978c90a5af9d7c2d0c43d6119e149404"|>]]];
+check["pre-conservation-fix particle model remains encoder compatible", Unscrambling`Private`compactParticleModelCompatibleQ[
+  Join[metadata, <|"RuntimeCoreSourceSHA256" ->
+    "ed0befdddb5f95f968e9b6abac4f1828495d18ce60b975fe5d4cedf62f37c615"|>]]];
 check["particle metadata rejects old descriptor", !Unscrambling`Private`compactParticleModelCompatibleQ[
   Join[metadata, <|"DescriptorEncoding" -> "CompactStructuredActions"|>]]];
 check["particle metadata rejects changed core", !Unscrambling`Private`compactParticleModelCompatibleQ[
@@ -241,7 +420,12 @@ If[AllTrue[FileNameJoin[{root, "tests", #}] & /@ {"unscramble-compact.m", "unscr
         traceSubset, subsetRules, installedBoard], 15, $Failed];
       check["installed portable scorer accepts new legal trace features", VectorQ[installedScores, NumberQ] &&
         Length[installedScores] === Length[installedBoard] &&
-        AllTrue[installedScores, TrueQ[Im[#] == 0 && Abs[#] < Infinity] &]]]]];
+        AllTrue[installedScores, TrueQ[Im[#] == 0 && Abs[#] < Infinity] &]];
+      installedChunkScores = TimeConstrained[Block[{Unscrambling`Private`$candidateBatchSize = 1},
+        Unscrambling`Private`scoreCandidates[traceSubset, subsetRules, installedBoard]], 15, $Failed];
+      check["installed old model preserves scores in single-action chunks",
+        VectorQ[installedChunkScores, NumberQ] && Length[installedChunkScores] === Length[installedScores] &&
+          Max[Abs[installedChunkScores - installedScores]] < 1.*^-10]]]];
 
 (* Independent Weyl matrices catch chirality errors that the legacy reducer shares. *)
 Module[{traceMatrixVectors, traceMatrixVector, traceMatrixDot, traceMatrixSigma,

@@ -424,6 +424,22 @@ sps=Sort[DeleteDuplicates[Cases[amp,SpinorChain[__],Infinity]]];
 
 
 (* ::Subsubsection::Closed:: *)
+(*applyToNumerator*)
+
+
+(* ::Input::Initialization:: *)
+ConstructiveDiagrams`applyToNumerator::usage = "applyToNumerator[expr, rules] applies replacement rules only to the numerator of each existing additive term, leaving its denominator unchanged. It does not expand terms or combine them into a common denominator.";
+
+Begin["ConstructiveDiagrams`Private`"];
+ConstructiveDiagrams`applyToNumerator[expr_, rules_] := Module[{terms},
+  terms = If[Head[expr] === Plus, List @@ expr, {expr}];
+  Total[(With[{fraction = NumeratorDenominator[#]},
+    (First[fraction] /. rules)/Last[fraction]] &) /@ terms]
+];
+End[];
+
+
+(* ::Subsubsection::Closed:: *)
 (*Rules to determine whether a head is Spinor or SpinorHat, Mom or MomHat, or MomProd or MomProdHat12.*)
 
 

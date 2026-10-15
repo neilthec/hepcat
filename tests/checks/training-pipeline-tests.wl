@@ -368,5 +368,413 @@ Block[{Unscrambling`Private`trainingKernelSnapshot, Unscrambling`Private`launchT
 work = Unscrambling`Private`trainingWorkEstimate[Flatten[Lookup[Lookup[serial, "Result"], "Rows"], 1]];
 check["shared state saves encoding work", work["StateBytesPerEpoch"] < work["StateBytesWithoutSharing"]];
 check["padding overhead reported", work["EditBytesWithoutPadding"] <= work["EditBytesWithTrainingPadding"]];
+
+(* Massless completeness and off-shell common-denominator algebra support the
+   two-photon route without treating a propagator as an on-shell numerator. *)
+photonMasses = {Mass[1] -> Me, Mass[2] -> Me, Mass[3] -> 0, Mass[4] -> 0};
+photonSquare[i_, j_] := SpinorChain[Spinor["Helicity", "Square", i], Spinor["Helicity", "Square", j]];
+photonSandwich[side_, i_, p_, j_] := SpinorChain[Spinor["Helicity", side, i], Mom[p],
+  Spinor["Helicity", If[side === "Angle", "Square", "Angle"], j]];
+photonEdits[expr_, identity_, masses_: photonMasses] := Select[
+  Unscrambling`Private`helicityInvariantMoves[Unscrambling`Private`canonicalChains[expr], masses],
+  Lookup[#, "Identity", None] === identity &];
+Do[
+  photonState = Unscrambling`Private`canonicalChains[7 photonSandwich[side, 3, 2, 3]];
+  photonMoves = photonEdits[photonState, "HelicityTrace"];
+  check["closed massless sandwich exact " <> side, Length[photonMoves] === 1 &&
+    Unscrambling`Private`samePoly[Unscrambling`Private`applyCandidate[photonState, First[photonMoves]],
+      14 MomProd[2, 3]]],
+  {side, {"Angle", "Square"}}];
+photonState = Unscrambling`Private`canonicalChains[photonSandwich["Angle", 3, 2, 3]^2];
+photonMoves = photonEdits[photonState, "HelicityTrace"];
+check["closed sandwich reduces one positive factor at a time", photonMoves =!= {} &&
+  Unscrambling`Private`samePoly[Unscrambling`Private`applyCandidate[photonState, First[photonMoves]],
+    2 MomProd[2, 3] photonSandwich["Angle", 3, 2, 3]]];
+check["reciprocal sandwich is not a positive contraction", photonEdits[
+  1/photonSandwich["Angle", 3, 2, 3], "HelicityTrace"] === {}];
+check["different massless endpoints are not a closed trace", photonEdits[
+  photonSandwich["Angle", 3, 2, 4], "HelicityTrace"] === {}];
+check["massive spin endpoints are not helicity traces", photonEdits[
+  SpinorChain[Spinor["Spin", "Angle", 1], Mom[2], Spinor["Spin", "Square", 1]],
+  "HelicityTrace"] === {}];
+check["nonzero mass helicity fixture is rejected", photonEdits[
+  photonSandwich["Angle", 1, 2, 1], "HelicityTrace"] === {}];
+check["unknown endpoint mass is rejected", photonEdits[
+  photonSandwich["Angle", 9, 2, 9], "HelicityTrace"] === {}];
+photonMoves = photonEdits[photonSandwich["Angle", 3, 3, 3], "HelicityTrace"];
+check["own massless momentum does not introduce an unreduced self dot", AllTrue[photonMoves,
+  Unscrambling`Private`samePoly[#["Insert"], 0] &]];
+check["nonzero endpoint indices are not implicitly contracted", photonEdits[
+  SpinorChain[Spinor["Helicity", "Angle", 3, 1], Mom[2], Spinor["Helicity", "Square", 3, 2]],
+  "HelicityTrace"] === {}];
+photonState = 6 MomProd[3, 4];
+photonMoves = photonEdits[photonState, "MasslessBracket"];
+check["massless invariant expands to opposite ordered brackets", AnyTrue[photonMoves,
+  Unscrambling`Private`samePoly[Unscrambling`Private`applyCandidate[photonState, #],
+    Unscrambling`Private`canonicalChains[3 ang[3, 4] photonSquare[4, 3]]] &]];
+photonState = Unscrambling`Private`canonicalChains[3 ang[3, 4] photonSquare[4, 3]];
+photonMoves = photonEdits[photonState, "MasslessBracket"];
+check["massless bracket pair contracts to invariant", AnyTrue[photonMoves,
+  Unscrambling`Private`samePoly[Unscrambling`Private`applyCandidate[photonState, #], 6 MomProd[3, 4]] &]];
+check["massive invariant does not acquire massless bracket identity",
+  photonEdits[MomProd[1, 3], "MasslessBracket"] === {}];
+check["inverse invariant is not expanded", photonEdits[1/MomProd[3, 4], "MasslessBracket"] === {}];
+photonDt = PropDen[Mom[Multiparticle[1, 3]], Me];
+photonDu = PropDen[Mom[Multiparticle[1, 4]], Me];
+photonState = ang[3, 4]/photonDt + 2 ang[3, 4]/photonDu;
+photonMoves = Unscrambling`Private`propagatorNumeratorMoves[photonState, photonMasses];
+photonSubsetSquare[ii_List] := Total[(Mass[#] /. photonMasses)^2 & /@ ii] +
+  2 Total[(MomProd @@ Sort[#]) & /@ Subsets[ii, {2}]];
+photonOffShell[expr_] := expr /. {
+  HoldPattern[PropDen[Mom[Multiparticle[ii__Integer]], m_]] :> photonSubsetSquare[{ii}] - m^2,
+  HoldPattern[Mom[Multiparticle[ii__Integer]]^2] :> photonSubsetSquare[{ii}]};
+check["common-denominator numerator moves are available", photonMoves =!= {}];
+check["propagator numerator moves are off-shell rational identities", AllTrue[photonMoves,
+  Together[photonOffShell[Unscrambling`Private`applyCandidate[photonState, #] - photonState]] === 0 &]];
+check["common-denominator moves retain both original propagator atoms", AllTrue[photonMoves,
+  With[{result = Unscrambling`Private`applyCandidate[photonState, #]},
+    !FreeQ[result, photonDt] && !FreeQ[result, photonDu] &&
+      Sort[DeleteDuplicates[Cases[result, _PropDen, Infinity]]] === Sort[{photonDt, photonDu}]] &]];
+check["one pole is not needlessly recombined", Unscrambling`Private`propagatorNumeratorMoves[
+  ang[3, 4]/photonDt, photonMasses] === {}];
+check["width-dependent propagators are not given the zero-width numerator identity",
+  Unscrambling`Private`propagatorNumeratorMoves[
+    ang[3, 4]/PropDen[Mom[Multiparticle[1, 3]], Me, width] +
+      ang[3, 4]/PropDen[Mom[Multiparticle[1, 4]], Me, width], photonMasses] === {}];
+check["mixed width groups remain unchanged unless every numerator pole is supported",
+  Unscrambling`Private`propagatorNumeratorMoves[
+    ang[3, 4]/photonDt + ang[3, 4]/PropDen[Mom[Multiparticle[1, 4]], Me, width],
+    photonMasses] === {}];
+check["unknown external masses do not produce an off-shell numerator",
+  Unscrambling`Private`propagatorNumeratorMoves[
+    ang[3, 4]/PropDen[Mom[Multiparticle[1, 9]], Me] +
+      ang[3, 4]/PropDen[Mom[Multiparticle[1, 10]], Me], photonMasses] === {}];
+Do[
+  photonIds = AssociationThread[Range[4], permutation];
+  photonPermuted = Unscrambling`Private`relabelLegs[{photonMasses,
+    photonSandwich["Angle", 3, 2, 3]}, photonIds];
+  photonMoves = photonEdits[photonPermuted[[2]], "HelicityTrace", photonPermuted[[1]]];
+  photonExpected = Unscrambling`Private`relabelLegs[2 MomProd[2, 3], photonIds] /.
+    MomProd[i_Integer, j_Integer] :> MomProd @@ Sort[{i, j}];
+  check["massless completeness follows sparse labels " <> ToString[permutation],
+    Length[photonMoves] === 1 && Unscrambling`Private`samePoly[
+      Unscrambling`Private`applyCandidate[photonPermuted[[2]], First[photonMoves]], photonExpected]],
+  {permutation, {{1, 2, 3, 4}, {4, 3, 2, 1}, {10, 30, 20, 40}}}];
+photonEncodingCases = {
+  {photonSandwich["Angle", 3, 2, 3], photonEdits[photonSandwich["Angle", 3, 2, 3], "HelicityTrace"]},
+  {MomProd[3, 4], photonEdits[MomProd[3, 4], "MasslessBracket"]},
+  {ang[3, 4]/photonDt + 2 ang[3, 4]/photonDu,
+    Unscrambling`Private`propagatorNumeratorMoves[ang[3, 4]/photonDt + 2 ang[3, 4]/photonDu, photonMasses]}};
+Do[
+  photonFeatures = Unscrambling`Private`compactParticleFeatures[
+    Unscrambling`Private`canonicalChains[fixture[[1]]], photonMasses, fixture[[2]]];
+  check["new identity particle descriptors encode " <> ToString[index],
+    ArrayQ[photonFeatures, 3, NumberQ] && Last[Dimensions[photonFeatures]] === 166],
+  {index, Length[photonEncodingCases]}, {fixture, {photonEncodingCases[[index]]}}];
+photonForwardOnly = photonEdits[photonSandwich["Angle", 3, 2, 3], "HelicityTrace"];
+photonPropagatorOnly = Unscrambling`Private`propagatorNumeratorMoves[
+  ang[3, 4]/photonDt + 2 ang[3, 4]/photonDu, photonMasses];
+check["forward-only curated identities are excluded from random scrambling",
+  photonForwardOnly =!= {} && photonPropagatorOnly =!= {} && AllTrue[
+    Join[photonForwardOnly, photonPropagatorOnly],
+    Lookup[#, "ScrambleEligible", True] === False &]];
+check["forward-only identities remain legal during inference", AnyTrue[
+  UnscrambleCandidates[{photonMasses, photonSandwich["Angle", 3, 2, 3]}],
+  Lookup[#, "Identity", None] === "HelicityTrace" &] && AnyTrue[
+  UnscrambleCandidates[{photonMasses, ang[3, 4]/photonDt + 2 ang[3, 4]/photonDu}],
+  Lookup[#, "Identity", None] === "PropagatorNumerator" &]];
+photonEligible = photonEdits[MomProd[3, 4], "MasslessBracket"];
+Block[{Unscrambling`Private`legalMoves},
+  Unscrambling`Private`legalMoves[_, _] := photonForwardOnly;
+  photonScramble = ComplicateAmplitude[{photonMasses, photonSandwich["Angle", 3, 2, 3]}, 3,
+    RandomSeed -> 123, "RecordSteps" -> True];
+  check["scramble stops cleanly when only one-way edits remain",
+    photonScramble["Steps"] === 0 && photonScramble["Trajectory"] === {} &&
+      photonScramble["Expression"] === photonScramble["Original"]];
+  Unscrambling`Private`legalMoves[_, _] := Join[photonForwardOnly, photonEligible];
+  photonScramble = ComplicateAmplitude[{photonMasses, MomProd[3, 4]}, 1,
+    RandomSeed -> 123, "RecordSteps" -> True];
+  check["scramble still samples the reversible identity beside excluded edits",
+    photonScramble["Steps"] === 1 && Length[photonScramble["Trajectory"]] === 1 &&
+      photonScramble["Trajectory"][[1, "Candidate", "Identity"]] === "MasslessBracket"];
+];
+(* Numerator-only substitutions act on existing summands without expanding. *)
+numeratorDt = s - mass^2;
+numeratorDu = t - mass^2;
+check["numerator substitutions do not combine separate poles",
+  ConstructiveDiagrams`applyToNumerator[a/numeratorDt + b/numeratorDu,
+    {s -> mass^2, t -> mass^2}] === a/numeratorDt + b/numeratorDu];
+check["matching numerator and denominator symbols only changes numerator",
+  ConstructiveDiagrams`applyToNumerator[x^2/(x + y), x -> z] === z^2/(x + y)];
+check["factored numerator sums remain factored",
+  ConstructiveDiagrams`applyToNumerator[c (x + y)/p,
+    {x -> u, y -> v, p -> 0}] === c (u + v)/p];
+check["rules can match a whole unexpanded numerator sum",
+  ConstructiveDiagrams`applyToNumerator[(x + y)/p, x + y -> z] === z/p];
+check["polynomial numerator powers are not expanded to expose new matches",
+  ConstructiveDiagrams`applyToNumerator[(x + y)^2/p, x^2 -> z] ===
+    (x + y)^2/p];
+check["whole numerator identities apply to each existing top-level term",
+  ConstructiveDiagrams`applyToNumerator[(x + y)^2/p + (x + y)/q,
+    x + y -> z] === z^2/p + z/q];
+check["rational numerical denominators are preserved",
+  ConstructiveDiagrams`applyToNumerator[3 x/7 + 2 y/5, {x -> u, y -> v}] ===
+    3 u/7 + 2 v/5];
+check["numerator powers are replaced without touching denominator powers",
+  ConstructiveDiagrams`applyToNumerator[x^3/(x + y)^2, x -> z] === z^3/(x + y)^2];
+check["denominator-free expressions accept numerator identities",
+  ConstructiveDiagrams`applyToNumerator[x^2 + y, x -> z] === z^2 + y];
+check["zero has an ordinary zero numerator",
+  ConstructiveDiagrams`applyToNumerator[0, x -> z] === 0];
+check["delayed numerator rules are supported",
+  ConstructiveDiagrams`applyToNumerator[MomProd[1, 2]/p + MomProd[2, 3]/q,
+    MomProd[i_, j_] :> i + j] === 3/p + 5/q];
+numeratorFactored = (x + y) (u + v)/(p + q);
+check["empty numerator rules preserve the exact factored expression",
+  ConstructiveDiagrams`applyToNumerator[numeratorFactored, {}] === numeratorFactored];
+check["identities matching a whole denominator atom never apply to it",
+  ConstructiveDiagrams`applyToNumerator[x/f[x], f[_] -> 0] === x/f[x]];
+numeratorPropagator = PropDen[Mom[Multiparticle[1, 3]], Mass[1] + Mass[2]];
+numeratorMomentum = Mom[Multiparticle[1, 3]];
+check["composite momentum substitutions keep propagator contents unchanged",
+  ConstructiveDiagrams`applyToNumerator[numeratorMomentum/numeratorPropagator^2,
+    Mom[Multiparticle[i_, j_]] :> Mom[i] + Mom[j]] ===
+    (Mom[1] + Mom[3])/numeratorPropagator^2];
+check["numerator mass substitutions do not put propagators on shell",
+  ConstructiveDiagrams`applyToNumerator[Mass[1] numeratorMomentum/numeratorPropagator,
+    {Mass[_] -> Me, Mom[Multiparticle[i_, j_]] :> Mom[i] + Mom[j]}] ===
+    Me (Mom[1] + Mom[3])/numeratorPropagator];
+check["inverse sum contents are not expanded into new denominator factors",
+  ConstructiveDiagrams`applyToNumerator[x/((p + q)^2 (r + s)),
+    {p -> 0, q -> 0, r -> 0, s -> 0}] === x/((p + q)^2 (r + s))];
+check["numerator API has the public package context",
+  Context[ConstructiveDiagrams`applyToNumerator] === "ConstructiveDiagrams`"];
+check["numerator API is protected after package loading",
+  MemberQ[Attributes[ConstructiveDiagrams`applyToNumerator], Protected]];
+Global`applyToNumerator[_, _] := "notebook helper";
+Quiet[Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]]];
+check["package reload retains its public numerator implementation",
+  ConstructiveDiagrams`applyToNumerator[x/p + y/q, {x -> u, y -> v}] === u/p + v/q];
+check["package reload does not alter an existing notebook helper",
+  Global`applyToNumerator[x/p, {}] === "notebook helper"];
+check["package reload restores numerator API protection",
+  MemberQ[Attributes[ConstructiveDiagrams`applyToNumerator], Protected]];
+ClearAll[Global`applyToNumerator];
+
+complementEdits[expr_, rules_List] := Block[{Unscrambling`Private`$useMomentumConservation = True},
+  Select[Unscrambling`Private`scalarMomentumConservationMoves[expr, rules],
+    Lookup[#, "Identity", None] === "ScalarComplement" &]];
+complementFourMasses = {Mass[1] -> Me, Mass[2] -> Me, Mass[3] -> 0, Mass[4] -> 0};
+complementState = MomProd[1, 2];
+complementMoves = complementEdits[complementState, complementFourMasses];
+check["complementary invariant is exact for four external particles", Length[complementMoves] === 1 &&
+  First[complementMoves]["Name"] === "MomentumConservation" &&
+  First[complementMoves]["Legs"] === {1, 2} && Unscrambling`Private`samePoly[
+    First[complementMoves]["Insert"], MomProd[3, 4] - Me^2]];
+check["complementary invariant does not require internal on-shell channels", Block[
+  {Unscrambling`Private`$onShellChannels = {}},
+  complementEdits[complementState, complementFourMasses] === complementMoves]];
+complementFiveMasses = {Mass[1] -> m1, Mass[2] -> m2, Mass[3] -> m3,
+  Mass[4] -> m4, Mass[5] -> m5};
+complementMoves = complementEdits[complementState, complementFiveMasses];
+complementExpected = (m3^2 + m4^2 + m5^2 - m1^2 - m2^2)/2 +
+  MomProd[3, 4] + MomProd[3, 5] + MomProd[4, 5];
+check["five-particle complementary invariant includes every pair in its momentum sum",
+  Length[complementMoves] === 1 && Unscrambling`Private`samePoly[
+    First[complementMoves]["Insert"], complementExpected]];
+complementPermutation = AssociationThread[Range[5], {10, 30, 40, 50, 80}];
+complementPermutedMasses = Unscrambling`Private`relabelLegs[complementFiveMasses, complementPermutation];
+complementPermutedState = Unscrambling`Private`relabelLegs[complementState, complementPermutation];
+complementMoves = complementEdits[complementPermutedState, complementPermutedMasses];
+check["complementary invariant supports sparse higher-point labels", Length[complementMoves] === 1 &&
+  First[complementMoves]["Legs"] === {10, 30} && Unscrambling`Private`samePoly[
+    First[complementMoves]["Insert"], Unscrambling`Private`relabelLegs[
+      complementExpected, complementPermutation]]];
+complementPropagator = PropDen[Mom[Multiparticle[1, 3]], Me];
+complementPowered = 3 MomProd[1, 2]^2 ang[1, 2]/complementPropagator^2;
+complementMoves = complementEdits[complementPowered, complementFourMasses];
+check["complementary invariant replaces one positive dot factor and preserves powers",
+  Length[complementMoves] === 1 && Unscrambling`Private`samePoly[
+    First[complementMoves]["Insert"],
+    3 MomProd[1, 2] (MomProd[3, 4] - Me^2) ang[1, 2]/complementPropagator^2]];
+check["complementary invariant does not rewrite inverse dot factors",
+  complementEdits[1/MomProd[1, 2], complementFourMasses] === {}];
+check["complementary invariant does not enter propagator contents", complementEdits[
+  1/PropDen[MomProd[1, 2] + Mom[Multiparticle[1, 3]], Me], complementFourMasses] === {}];
+check["complementary invariant retains opaque propagator atoms", AllTrue[complementMoves,
+  DeleteDuplicates[Cases[#["Insert"], _PropDen, Infinity]] === {complementPropagator} &]];
+check["complementary invariant skips unknown external masses", complementEdits[
+  complementState, ReplacePart[complementFourMasses, 4 -> (Mass[4] -> Missing["Mass"])]] === {}];
+check["complementary invariant skips dots outside the external mass list", complementEdits[
+  MomProd[1, 9], complementFourMasses] === {}];
+check["complementary invariant respects disabled momentum conservation", Block[
+  {Unscrambling`Private`$useMomentumConservation = False},
+  Unscrambling`Private`scalarMomentumConservationMoves[complementState, complementFourMasses] === {}]];
+complementMoves = complementEdits[complementPermutedState, complementPermutedMasses];
+complementFeatures = Unscrambling`Private`compactParticleFeatures[
+  complementPermutedState, complementPermutedMasses, complementMoves];
+check["complementary invariant retains the existing particle descriptor width",
+  ArrayQ[complementFeatures, 3, NumberQ] && Last[Dimensions[complementFeatures]] === 166];
+check["complementary invariant is available through the public candidate board", AnyTrue[
+  UnscrambleCandidates[{complementFourMasses, complementState}, "OnShellChannels" -> {},
+    "MomentumConservation" -> True], Lookup[#, "Identity", None] === "ScalarComplement" &]];
+check["complementary invariants are excluded from random scrambling",
+  complementMoves =!= {} && AllTrue[complementMoves,
+    Lookup[#, "ScrambleEligible", True] === False &]];
+Block[{Unscrambling`Private`legalMoves},
+  Unscrambling`Private`legalMoves[_, _] := complementMoves;
+  complementScramble = ComplicateAmplitude[{complementPermutedMasses, complementPermutedState}, 3,
+    RandomSeed -> 123, "RecordSteps" -> True];
+  check["random scrambling skips a complementary-invariant-only board",
+    complementScramble["Steps"] === 0 && complementScramble["Trajectory"] === {} &&
+      complementScramble["Expression"] === complementScramble["Original"]];
+];
+(* Momentum conservation is linear in one chain/trace momentum slot, not in
+   a power or reciprocal of the complete chain. Dot-product rows are linear. *)
+conservationClosed[i_] := SpinorChain[Spinor["Helicity", "Angle", 4], Mom[i],
+  Spinor["Helicity", "Square", 4]];
+conservationMasslessRules = Table[Mass[i] -> 0, {i, 4}];
+conservationCollected[expr_, rules_List] := Block[
+  {Unscrambling`Private`$useMomentumConservation = True,
+    Unscrambling`Private`$onShellChannels = {}},
+  Select[Unscrambling`Private`kinematicMoves[Unscrambling`Private`canonicalChains[expr], rules],
+    #["Name"] === "MomentumConservation" && KeyExistsQ[#, "Momentum"] &]];
+conservationSquaredSum = Total[conservationClosed[#]^2 & /@ {1, 2, 3}];
+conservationInverseSum = Total[1/conservationClosed[#] & /@ {1, 2, 3}];
+check["conservation collection rejects squared whole-chain contexts",
+  conservationCollected[conservationSquaredSum, conservationMasslessRules] === {}];
+check["conservation collection rejects reciprocal whole-chain contexts",
+  conservationCollected[conservationInverseSum, conservationMasslessRules] === {}];
+conservationSquaredMoves = UnscrambleCandidates[
+  {conservationMasslessRules, conservationSquaredSum}, "OnShellChannels" -> {}];
+check["public candidates omit the false sum-of-squared-chains identity", !AnyTrue[
+  conservationSquaredMoves, #["Name"] === "MomentumConservation" &&
+    Unscrambling`Private`samePoly[#["Subtract"], conservationSquaredSum] &&
+    Unscrambling`Private`samePoly[#["Insert"], -conservationClosed[4]^2] &]];
+check["public candidates omit the false sum-of-reciprocal-chains identity", !AnyTrue[
+  UnscrambleCandidates[{conservationMasslessRules, conservationInverseSum}, "OnShellChannels" -> {}],
+  #["Name"] === "MomentumConservation" &&
+    Unscrambling`Private`samePoly[#["Subtract"], conservationInverseSum] &&
+    Unscrambling`Private`samePoly[#["Insert"], -1/conservationClosed[4]] &]];
+conservationMomenta = {{1, 0, 0, 1}, {1, 0, 0, -1}, {-1, -1, 0, 0}, {-1, 1, 0, 0}};
+conservationDot[a_, b_] := a[[1]] b[[1]] - Rest[a].Rest[b];
+conservationNumericalChains = Table[conservationClosed[i] ->
+  2 conservationDot[conservationMomenta[[4]], conservationMomenta[[i]]], {i, 4}];
+conservationNumericalValue[expr_] := expr /. HoldPattern[
+    SpinorChain[Spinor["Helicity", "Angle", 4], Mom[label_], Spinor["Helicity", "Square", 4]]] :>
+  2 conservationDot[conservationMomenta[[4]],
+    If[IntegerQ[label], conservationMomenta[[label]],
+      Total[conservationMomenta[[List @@ label]]]]];
+check["nonlinear regression fixture conserves all-ingoing massless momenta",
+  Total[conservationMomenta] === {0, 0, 0, 0} &&
+    (conservationDot[#, #] & /@ conservationMomenta) === {0, 0, 0, 0}];
+check["independent physical fixture distinguishes linear and squared conservation",
+  (Total[conservationClosed /@ Range[4]] /. conservationNumericalChains) === 0 &&
+    (conservationSquaredSum /. conservationNumericalChains) === 24 &&
+    (-conservationClosed[4]^2 /. conservationNumericalChains) === 0];
+conservationScramble = ComplicateAmplitude[{conservationMasslessRules, conservationSquaredSum}, 1,
+  RandomSeed -> 18, "RecordSteps" -> True, "OnShellChannels" -> {}];
+check["former failing random seed now preserves the physical amplitude",
+  Length[conservationScramble["Trajectory"]] === 1 &&
+    Simplify[conservationNumericalValue[conservationScramble["Expression"]]] === 24];
+
+conservationChain[i_] := SpinorChain[Spinor["Spin", "Angle", 1], Mom[i],
+  Spinor["Spin", "Square", 2]];
+conservationTrace[i_] := SpinorTrace[Mom[1], Mom[i]];
+conservationFactor = 13 SpinorChain[Spinor["Spin", "Angle", 1], Spinor["Spin", "Angle", 2]];
+conservationDenominator = PropDen[Mom[Multiparticle[1, 2]], MZ];
+conservationSharedChain = conservationChain[1] Total[conservationChain /@ {1, 2, 3}];
+conservationMoves = conservationCollected[conservationSharedChain, complementFourMasses];
+check["linear collection preserves a shared positive chain multiplier",
+  AnyTrue[conservationMoves, Unscrambling`Private`samePoly[
+    #["Insert"], -conservationChain[1] conservationChain[4]] &]];
+conservationSharedTrace = conservationTrace[1] Total[conservationTrace /@ {1, 2, 3}];
+conservationMoves = conservationCollected[conservationSharedTrace, complementFourMasses];
+check["linear collection preserves a shared positive trace multiplier",
+  AnyTrue[conservationMoves, Unscrambling`Private`samePoly[
+    #["Insert"], -conservationTrace[1] conservationTrace[4]] &]];
+Do[
+  conservationRules = Take[complementFiveMasses, legCount];
+  conservationIDs = AssociationThread[Range[legCount], labels];
+  conservationPermutedRules = Unscrambling`Private`relabelLegs[conservationRules, conservationIDs];
+  conservationLinear = conservationFactor/conservationDenominator*
+    Total[conservationChain /@ Range[legCount - 1]];
+  conservationExpected = -conservationFactor/conservationDenominator*conservationChain[legCount];
+  conservationMoves = conservationCollected[
+    Unscrambling`Private`relabelLegs[conservationLinear, conservationIDs], conservationPermutedRules];
+  conservationSuffix = " n=" <> ToString[legCount] <> " labels=" <> ToString[labels];
+  check["linear chain sums retain conservation collection" <> conservationSuffix,
+    AnyTrue[conservationMoves, Unscrambling`Private`samePoly[#["Insert"],
+      Unscrambling`Private`canonicalChains[
+        Unscrambling`Private`relabelLegs[conservationExpected, conservationIDs]]] &]];
+  conservationLinear = conservationFactor/conservationDenominator*
+    Total[conservationTrace /@ Range[legCount - 1]];
+  conservationExpected = -conservationFactor/conservationDenominator*conservationTrace[legCount];
+  conservationMoves = conservationCollected[
+    Unscrambling`Private`relabelLegs[conservationLinear, conservationIDs], conservationPermutedRules];
+  check["linear trace sums retain conservation collection" <> conservationSuffix,
+    AnyTrue[conservationMoves, Unscrambling`Private`samePoly[#["Insert"],
+      Unscrambling`Private`canonicalChains[
+        Unscrambling`Private`relabelLegs[conservationExpected, conservationIDs]]] &]];
+  conservationAnchor = conservationIDs[1];
+  conservationRow = m1^2 + Total[MomProd[1, #] & /@ Range[2, legCount]];
+  conservationRowState = Unscrambling`Private`relabelLegs[
+    conservationFactor conservationRow/conservationDenominator, conservationIDs];
+  conservationRowMoves = Block[{Unscrambling`Private`$useMomentumConservation = True,
+      Unscrambling`Private`$onShellChannels = {}},
+    Select[Unscrambling`Private`scalarMomentumConservationMoves[
+      conservationRowState, conservationPermutedRules],
+      Lookup[#, "Identity", None] === "ScalarRow" && #["Legs"] === {conservationAnchor} &]];
+  check["complete dot-product row still contracts to zero" <> conservationSuffix,
+    conservationRowMoves =!= {} && AllTrue[conservationRowMoves,
+      Unscrambling`Private`applyCandidate[conservationRowState, #] === 0 &]];
+  conservationRowSource = Unscrambling`Private`relabelLegs[
+    -conservationFactor m1^2/conservationDenominator, conservationIDs];
+  conservationRowExpected = Unscrambling`Private`relabelLegs[
+    conservationFactor Total[MomProd[1, #] & /@ Range[2, legCount]]/conservationDenominator,
+    conservationIDs];
+  conservationRowMoves = Block[{Unscrambling`Private`$useMomentumConservation = True,
+      Unscrambling`Private`$onShellChannels = {}},
+    Select[Unscrambling`Private`scalarMomentumConservationMoves[
+      conservationRowSource, conservationPermutedRules],
+      Lookup[#, "Identity", None] === "ScalarRowExpand" && #["Legs"] === {conservationAnchor} &]];
+  check["dot-product row expansion keeps every external momentum" <> conservationSuffix,
+    AnyTrue[conservationRowMoves, Unscrambling`Private`samePoly[
+      #["Insert"], conservationRowExpected] &]];
+  check["row identities preserve opaque propagator atoms" <> conservationSuffix,
+    conservationRowMoves =!= {} && AllTrue[conservationRowMoves,
+      DeleteDuplicates[Cases[#["Insert"], _PropDen, Infinity]] ===
+        {Unscrambling`Private`relabelLegs[conservationDenominator, conservationIDs]} &]],
+  {legCount, {4, 5}}, {labels, {Range[legCount], Take[{40, 10, 80, 20, 50}, legCount]}}];
+
+conservationSquareState = conservationClosed[1]^2;
+conservationSquareInitial = conservationSquareState;
+conservationSquareMoves[state_] := Block[{Unscrambling`Private`$useMomentumConservation = True},
+  Select[Unscrambling`Private`chainMoves[state, conservationMasslessRules],
+    #["Name"] === "MomentumConservation" && With[{site = #["Site"]},
+      Unscrambling`Private`chainsIn[Unscrambling`Private`monomialsOf[state][[site[[1]]]]][[
+        site[[2]], site[[3]] + 1]] === Mom[1]] &]];
+conservationMoves = conservationSquareMoves[conservationSquareState];
+check["squared chains keep legitimate single-slot conservation edits", conservationMoves =!= {}];
+If[conservationMoves =!= {},
+  conservationSquareState = Unscrambling`Private`applyCandidate[
+    conservationSquareState, First[conservationMoves]]];
+check["first conservation edit of a square keeps the unedited factor",
+  Unscrambling`Private`samePoly[conservationSquareState,
+    -conservationClosed[1] Total[conservationClosed /@ {2, 3, 4}]]];
+Do[
+  conservationMoves = conservationSquareMoves[conservationSquareState];
+  If[conservationMoves === {}, Break[]];
+  conservationSquareState = Unscrambling`Private`applyCandidate[
+    conservationSquareState, First[conservationMoves]], {3}];
+check["successive slot conservation edits retain all square cross terms",
+  Unscrambling`Private`samePoly[conservationSquareState,
+    Expand[Total[conservationClosed /@ {2, 3, 4}]^2]]];
+check["squared slot conservation preserves the physical amplitude at both endpoints",
+  (conservationSquareInitial /. conservationNumericalChains) === 4 &&
+    (conservationSquareState /. conservationNumericalChains) === 4];
+check["conservation fix still respects disabled momentum conservation", FreeQ[
+  Lookup[UnscrambleCandidates[{conservationMasslessRules, conservationSquaredSum},
+    "MomentumConservation" -> False, "OnShellChannels" -> {}], "Name"], "MomentumConservation"]];
 Print[<|"Checks" -> checks, "Failed" -> Length[failures], "Failures" -> failures|>];
 Quit[If[failures === {}, 0, 1]];

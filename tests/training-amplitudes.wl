@@ -16,14 +16,19 @@
 (* Curated Simplification Routes *)
 
 (* Evaluated only by training, not by readers of the reference catalog below.
-   The e, E, M, m and e, E, Z, h routes follow the handwritten derivations in
-   SM-4-point-unscramble-test.nb, decomposing its reducer calls into legal edits.
+   The e, E, M, m and u, U, C, c Z routes and the e, E, h, h and e, E, Z, h
+   routes follow the handwritten derivations in SM-4-point-unscramble-test.nb,
+   decomposing its reducer calls into legal edits.
    The e, E, Z, Z routes reconstruct the channel targets in SM-4-point-test.nb.
    The e, E, W-, W+ Z route also decomposes its legacy standard-form reduction.
    Charged-current four-fermion, W/h, and Z/W routes reconstruct the same notebook's
    channel simplifications, as do all three bosonic Z/h/W/W channels. The bosonic
    routes preserve the notebook's explicitly accepted overall-sign convention.
-   Each starts at diagramAmplitudes plus ReduceSpinContractions. No trained net,
+   Both photon-pair helicities follow the handwritten derivations, with
+   reference-spinor choices explicitly separated from the learned edits.
+   Both helicity choices have two channel-local paths followed by an external-
+   shell-only channel-sum path. All paths originate at diagramAmplitudes plus
+   ReduceSpinContractions. No trained net,
    notebook globals, or black-box spinor reducer are used to build the route.
    MW == MZ CW is only an endpoint comparison convention, never a route edit. *)
 trainingSimplificationRoutes::build = "Could not construct a curated simplification route using the current legal identities.";
@@ -119,6 +124,65 @@ trainingFourFermionZRoute[] := Module[
     "Sources" -> {"SM-4-point-unscramble-test.nb / handwritten e, E, M, m Z derivation"},
     "Identities" -> identities,
     "OnShellChannels" -> Automatic, "MomentumConservation" -> True|>}
+];
+
+(* ::Subsection::Closed:: *)
+(* Up and Charm Z Exchange *)
+
+trainingUpCharmZRoute[] := Module[{routes, route},
+  routes = trainingFourFermionZRoute[];
+  If[routes === $Failed, Return[$Failed]];
+  (* The handwritten quark derivation uses the same elementary identities,
+     with its masses and couplings substituted in every intermediate state. *)
+  route = First[routes] /. {Me -> Mu, Mm -> Mc, gLe -> gLu, gRe -> gRu};
+  {Join[route, <|"Name" -> "u, U, C, c / Z exchange",
+    "Sources" -> {"SM-4-point-unscramble-test.nb / handwritten u, U, C, c Z derivation"}|>]}
+];
+
+(* ::Subsection::Closed:: *)
+(* Electron, Positron, Two Higgs Bosons *)
+
+trainingElectronHHElectronRoutes[] := Module[
+ {a, s, y, leg, momentum, denominator, masses, state, states, identities,
+  expected, record, walk, choices, routeBuilt, routes = {}},
+ If[!MemberQ[$Packages, "Unscrambling`"], Message[trainingSimplificationRoutes::build]; Return[$Failed]];
+ a[i_, j_] := SpinorChain[Spinor["Spin", "Angle", i], Spinor["Spin", "Angle", j]];
+ s[i_, j_] := SpinorChain[Spinor["Spin", "Square", i], Spinor["Spin", "Square", j]];
+ y[i_, q_, j_] := SpinorChain[Spinor["Spin", "Angle", i], Mom[q], Spinor["Spin", "Square", j]];
+ record[candidate_] := (state = Unscrambling`Private`applyCandidate[state, candidate];
+  AppendTo[states, state]; AppendTo[identities, candidate["Name"]]);
+ walk[generate_, select_, limit_] := (
+  Do[choices = Select[generate[], select]; If[choices === {}, Break[]]; record[First[choices]], {limit}];
+  If[choices =!= {} && AnyTrue[generate[], select], Throw[$Failed]]);
+ Do[
+  momentum = Multiparticle[1, leg]; denominator = PropDen[Mom[momentum], Me];
+  masses = {Mass[1] -> Me, Mass[2] -> Me, Mass[3] -> Mh, Mass[4] -> Mh,
+   Mass[momentum] -> Me, Mass[Multiparticle[2, 7 - leg]] -> Me};
+  state = Unscrambling`Private`canonicalAmplitude[-EE^2 Me^2/(4 MW^2 SW^2 denominator)*
+   (Me (a[1, 2] + s[1, 2]) + y[1, momentum, 2] + y[2, momentum, 1]), masses];
+  states = {state}; identities = {};
+  routeBuilt = Catch[Block[{Unscrambling`Private`$onShellChannels = Automatic,
+    Unscrambling`Private`$useMomentumConservation = True},
+   walk[Function[Unscrambling`Private`momentumSumMoves[state, masses]],
+    Function[Lookup[#, "Identity", None] === "Split"], 10];
+   walk[Function[Unscrambling`Private`chainMoves[state, masses]],
+    Function[#["Name"] === "Mass" && #["Direction"] === "Contract"], 10];
+   True
+  ]];
+  expected = -EE^2 Me^2/(4 MW^2 SW^2 denominator)*
+   (2 Me (a[1, 2] + s[1, 2]) + y[1, leg, 2] + y[2, leg, 1]);
+  If[routeBuilt =!= True || Length[states] =!= 5 ||
+    Counts[identities] =!= <|"MomentumSum" -> 2, "Mass" -> 2|> ||
+    !AllTrue[states, DeleteDuplicates[Cases[#, _PropDen, Infinity]] === {denominator} &] ||
+    !Unscrambling`Private`samePoly[state, Unscrambling`Private`canonicalChains[expected]],
+   Message[trainingSimplificationRoutes::build]; Return[$Failed]];
+  AppendTo[routes, <|"Name" -> "e, E, h, h / electron (1, " <> ToString[leg] <> ") exchange",
+   "Masses" -> masses, "States" -> states, "Identities" -> identities,
+   "Sources" -> {"SM-4-point-unscramble-test.nb / handwritten e, E, h, h " <>
+     If[leg === 3, "T", "U"] <> "-channel derivation"},
+   "OnShellChannels" -> Automatic, "MomentumConservation" -> True|>],
+ {leg, {3, 4}}];
+ routes
 ];
 
 (* ::Subsection::Closed:: *)
@@ -928,12 +992,364 @@ trainingZhWWWRoutes[] := Module[
     "diagramAmplitudes plus ReduceSpinContractions; crossed T-channel legal identities"}|>]}
 ];
 
+(* ::Subsection::Closed:: *)
+(* Electron, Positron, Two Positive-Helicity Photons *)
+
+trainingElectronPhotonPairRoute[] := Module[
+ {a, s, y, masses, externalMasses, dt, du, raw, state, states, identities, expected,
+  record, walk, choices, routeBuilt, preparation, channels, photon, routes = {}},
+ If[!MemberQ[$Packages, "Unscrambling`"], Message[trainingSimplificationRoutes::build]; Return[$Failed]];
+ a[i_, j_] := SpinorChain[Spinor["Helicity", "Angle", i], Spinor["Helicity", "Angle", j]];
+ s[i_, j_] := SpinorChain[Spinor["Helicity", "Square", i], Spinor["Helicity", "Square", j]];
+ y[i_, q_, j_] := SpinorChain[Spinor["Helicity", "Angle", i], Mom[q], Spinor["Helicity", "Square", j]];
+ dt = PropDen[Mom[Multiparticle[1, 3]], Me]; du = PropDen[Mom[Multiparticle[1, 4]], Me];
+ externalMasses = {Mass[1] -> Me, Mass[2] -> Me, Mass[3] -> 0, Mass[4] -> 0};
+ (* Xi is an auxiliary reference spinor, not an external particle. Apply
+    ReduceSpinContractions first, then these nonsingular gauge choices.
+    Reference choices prepare the two diagrams; they are not NN moves. *)
+ preparation = <|"Electron13" -> {Spinor["Xi", "Angle", 10] -> Spinor["Helicity", "Angle", 4],
+    Spinor["Xi", "Angle", 11] -> Spinor["Helicity", "Angle", 3]},
+   "Electron14" -> {Spinor["Xi", "Angle", 10] -> Spinor["Helicity", "Angle", 3],
+    Spinor["Xi", "Angle", 11] -> Spinor["Helicity", "Angle", 4]}|>;
+ raw = 2 EE^2 SpinorChain[Spinor["Spin", "Angle", 1], Spinor["Spin", "Angle", 2]]/(Me a[3, 4]^2)*
+   {y[3, 2, 4] y[4, Multiparticle[2, 4], 3]/dt,
+    y[3, Multiparticle[2, 3], 4] y[4, 2, 3]/du};
+ record[candidate_] := (state = Unscrambling`Private`applyCandidate[state, candidate];
+  AppendTo[states, state]; AppendTo[identities, candidate["Name"]]);
+ walk[generate_, select_, limit_] := (
+  Do[choices = Select[generate[], select]; If[choices === {}, Break[]]; record[First[choices]], {limit}];
+  If[choices =!= {} && AnyTrue[generate[], select], Throw[$Failed]]);
+ Do[
+  photon = If[index === 1, 3, 4];
+  channels = If[index === 1, {{1, 3}, {2, 4}}, {{1, 4}, {2, 3}}];
+  masses = Join[externalMasses, (Mass[Multiparticle @@ #] -> Me & /@ channels)];
+  state = Unscrambling`Private`canonicalAmplitude[raw[[index]], masses];
+  states = {state}; identities = {};
+  routeBuilt = Catch[Block[{Unscrambling`Private`$onShellChannels = channels,
+     Unscrambling`Private`$useMomentumConservation = True},
+   walk[Function[Unscrambling`Private`momentumSumMoves[state, masses]],
+    Function[Lookup[#, "Identity", None] === "Split"], 10];
+   walk[Function[Unscrambling`Private`chainMoves[state, masses]],
+    Function[#["Name"] === "Mass" && #["Direction"] === "Contract"], 10];
+   walk[Function[Unscrambling`SchoutenCandidates[state]],
+    Function[#["Splits"] === {0, 0} && AllTrue[#["Chains"],
+      Length[#] === 3 && #[[2]] === Mom[2] &&
+       Sort[Unscrambling`Private`spinorLeg /@ {First[#], Last[#]}] === {3, 4} &]], 10];
+   walk[Function[Unscrambling`Private`interiorChainMoves[state, masses]],
+    Function[#["Name"] === "ChainSquare" && #["Direction"] === "Contract"], 10];
+   walk[Function[Unscrambling`Private`helicityInvariantMoves[state, masses]],
+    Function[#["Identity"] === "HelicityTrace"], 10];
+   walk[Function[Unscrambling`Private`kinematicMoves[state, masses]],
+    Function[#["Name"] === "OnShell" && !FreeQ[#["Subtract"], MomProd @@ channels[[2]]]], 10];
+   True
+  ]];
+  expected = 2 EE^2 Me SpinorChain[Spinor["Spin", "Angle", 1], Spinor["Spin", "Angle", 2]]*
+    s[3, 4]/(a[3, 4] If[index === 1, dt, du]);
+  If[routeBuilt =!= True || Length[states] < 2 || !Unscrambling`Private`samePoly[state, expected] ||
+     !AllTrue[states, DeleteDuplicates[Cases[#, _PropDen, Infinity]] === {If[index === 1, dt, du]} &],
+   Message[trainingSimplificationRoutes::build]; Return[$Failed]];
+  AppendTo[routes, <|"Name" -> "e, E, A.+, A.+ / electron (1, " <> ToString[photon] <> ") exchange",
+    "Masses" -> masses, "States" -> states, "Identities" -> identities,
+    "ReferenceSpinorPreparation" -> preparation,
+    "Sources" -> {"SM-4-point-unscramble-test.nb / handwritten e, E, A.+, A.+ derivation"},
+    "OnShellChannels" -> channels, "MomentumConservation" -> True|>],
+  {index, 2}];
+ (* Each diagram's numerator shell ends before its result enters the sum.
+    Common-denominator algebra uses only external shells and conservation. *)
+ masses = externalMasses;
+ state = Unscrambling`Private`canonicalAmplitude[Total[Last /@ Lookup[routes, "States"]], masses];
+ states = {state}; identities = {};
+ routeBuilt = Catch[Block[{Unscrambling`Private`$onShellChannels = {},
+    Unscrambling`Private`$useMomentumConservation = True},
+  walk[Function[Unscrambling`Private`propagatorNumeratorMoves[state, masses]], Function[True], 10];
+  walk[Function[Unscrambling`Private`scalarMomentumConservationMoves[state, masses]],
+   Function[Lookup[#, "Identity", None] === "ScalarDot" && #["Legs"] === {1, 4}], 10];
+  walk[Function[Unscrambling`Private`scalarMomentumConservationMoves[state, masses]],
+   Function[Lookup[#, "Identity", None] === "ScalarComplement" && #["Legs"] === {1, 2}], 10];
+  walk[Function[Unscrambling`Private`helicityInvariantMoves[state, masses]],
+   Function[#["Identity"] === "MasslessBracket" && #["Direction"] === "Expand"], 10];
+ True
+ ]];
+ expected = 2 EE^2 Me SpinorChain[Spinor["Spin", "Angle", 1], Spinor["Spin", "Angle", 2]]*
+  s[3, 4]^2/(dt du);
+ If[routeBuilt =!= True || Length[states] < 2 || !Unscrambling`Private`samePoly[state, expected] ||
+    !AllTrue[states, Sort[DeleteDuplicates[Cases[#, _PropDen, Infinity]]] === Sort[{dt, du}] &],
+  Message[trainingSimplificationRoutes::build]; Return[$Failed]];
+ Append[routes, <|"Name" -> "e, E, A.+, A.+ / electron exchange sum", "Masses" -> masses,
+   "States" -> states, "Identities" -> identities,
+   "Sources" -> {"SM-4-point-unscramble-test.nb / handwritten e, E, A.+, A.+ derivation"},
+   "OnShellChannels" -> {}, "MomentumConservation" -> True|>]
+];
+
+(* ::Subsection::Closed:: *)
+(* Electron, Positron, Opposite-Helicity Photons *)
+
+trainingElectronOppositePhotonRoutes[] := Module[
+ {br, atom, y, dt, du, externalMasses, preparation, raw, masses, state, states,
+  identities, record, walk, chainAt, choices, built, routes = {}, expected,
+  photon, partner, initialChain, antiChain, conservedChain, handIdentity, channels},
+ If[!MemberQ[$Packages, "Unscrambling`"], Message[trainingSimplificationRoutes::build]; Return[$Failed]];
+ br[text_] := Unscrambling`Private`canonicalChains[ConvertStringAmplitude[text, {Me, Me, 0, 0}]];
+ atom[text_] := First[Cases[{br[text]}, _SpinorChain, Infinity]];
+ y[i_, q_, j_] := SpinorChain[Spinor["Helicity", "Angle", i], Mom[q], Spinor["Helicity", "Square", j]];
+ dt = PropDen[Mom[Multiparticle[1, 3]], Me]; du = PropDen[Mom[Multiparticle[1, 4]], Me];
+ externalMasses = {Mass[1] -> Me, Mass[2] -> Me, Mass[3] -> 0, Mass[4] -> 0};
+ (* Gauge preparation follows ReduceSpinContractions, before any learnable move. *)
+ preparation = {Spinor["Xi", "Angle", 10] -> Spinor["Helicity", "Angle", 4],
+  Spinor["Xi", "Square", 11] -> Spinor["Helicity", "Square", 3]};
+ raw = {
+  2 EE^2 y[4, 2, 3] y[4, Multiparticle[2, 4], 3]*
+    SpinorChain[Spinor["Spin", "Angle", 1], Mom[Multiparticle[1, 3]], Spinor["Spin", "Square", 2]]/
+    (Me^2 dt br["<34>[34]"]),
+  2 EE^2 y[4, 2, 3] y[4, Multiparticle[2, 3], 3]*
+    SpinorChain[Spinor["Spin", "Angle", 2], Mom[Multiparticle[1, 4]], Spinor["Spin", "Square", 1]]/
+    (Me^2 du br["<34>[34]"])};
+ record[candidate_] := (state = Unscrambling`Private`applyCandidate[state, candidate];
+  AppendTo[states, state]; AppendTo[identities, candidate["Name"]]);
+ walk[generate_, select_, limit_] := (
+  Do[choices = Select[generate[], select]; If[choices === {}, Break[]]; record[First[choices]], {limit}];
+  If[choices =!= {} && AnyTrue[generate[], select], Throw[$Failed]]);
+ chainAt[candidate_, unique_:False] := Module[{chains},
+  chains = Select[Unscrambling`Private`chainsIn[
+     Unscrambling`Private`monomialsOf[state][[candidate["Site"][[1]]]]], Unscrambling`Private`validChainQ];
+  If[unique, chains = DeleteDuplicates[chains]];
+  chains[[candidate["Site"][[2]]]]];
+ Do[
+  photon = If[index === 1, 3, 4]; partner = If[index === 1, 4, 3];
+  channels = Sort /@ {{1, photon}, {2, partner}};
+  masses = Join[externalMasses, (Mass[Multiparticle @@ #] -> Me & /@ channels)];
+  state = Unscrambling`Private`canonicalAmplitude[raw[[index]], masses];
+  states = {state}; identities = {};
+  initialChain = atom[If[index === 1, "<132]", "<241]"]];
+  antiChain = atom[If[index === 1, "<1324>", "[1423]"]];
+  conservedChain = atom[If[index === 1, "<1234>", "[1243]"]];
+  handIdentity = If[index === 1,
+   {br["[23][124>"], br["-<423][12]+<422][13]"]},
+   {br["<24>[321>"], br["<14>[322>-<12>[324>"]}];
+  built = Catch[Block[{Unscrambling`Private`$onShellChannels = channels,
+    Unscrambling`Private`$useMomentumConservation = True},
+   walk[Function[Unscrambling`Private`momentumSumMoves[state, masses]],
+    Function[Lookup[#, "Identity", None] === "Split"], 30];
+   walk[Function[Unscrambling`Private`chainMoves[state, masses]],
+    Function[#["Name"] === "Mass" && #["Direction"] === "Contract"], 30];
+   walk[Function[Unscrambling`SchoutenCandidates[state]],
+    Function[Sort[#["Chains"]] === Sort[{initialChain, atom["[324>"]}] &&
+     #["Splits"] === If[index === 1, {1, 1}, {0, 0}]], 5];
+   walk[Function[Unscrambling`Private`chainMoves[state, masses]],
+    Function[#["Name"] === "Mass" && #["Direction"] === "Contract"], 30];
+   walk[Function[Unscrambling`Private`interiorChainMoves[state, masses]],
+    Function[#["Name"] === "Anticommutation" && chainAt[#, True] === antiChain], 5];
+   walk[Function[Unscrambling`Private`scalarMomentumConservationMoves[state, masses]],
+    Function[Lookup[#, "Identity", None] === "ScalarDot" && #["Legs"] === {2, photon}], 10];
+   walk[Function[Unscrambling`Private`kinematicMoves[state, masses]],
+    Function[#["Name"] === "OnShell" && !FreeQ[#["Subtract"], MomProd @@ Sort[{2, partner}]] &&
+     FreeQ[#["Insert"], MomProd @@ Sort[{2, partner}]]], 10];
+   walk[Function[Unscrambling`Private`chainMoves[state, masses]],
+    Function[#["Name"] === "MomentumConservation" && chainAt[#] === conservedChain &&
+     (List @@ chainAt[#])[[#["Site"][[3]] + 1]] === Mom[photon]], 10];
+   walk[Function[Unscrambling`Private`chainMoves[state, masses]],
+    Function[#["Name"] === "Mass" && #["Direction"] === "Contract"], 30];
+   walk[Function[Unscrambling`Private`interiorChainMoves[state, masses]],
+    Function[#["Name"] === "ChainSquare" && #["Direction"] === "Contract"], 30];
+   walk[Function[Unscrambling`Private`interiorChainMoves[state, masses]],
+    Function[#["Name"] === "Anticommutation" && With[{chain = List @@ chainAt[#, True]},
+     Length[chain] === 4 && chain[[2]] =!= Mom[Unscrambling`Private`spinorLeg[First[chain]]] &&
+      chain[[3]] =!= Mom[Unscrambling`Private`spinorLeg[Last[chain]]] &&
+      (chain[[3]] === Mom[Unscrambling`Private`spinorLeg[First[chain]]] ||
+       chain[[2]] === Mom[Unscrambling`Private`spinorLeg[Last[chain]]])]], 30];
+   walk[Function[Unscrambling`Private`chainMoves[state, masses]],
+    Function[#["Name"] === "Mass" && #["Direction"] === "Contract"], 30];
+   walk[Function[Unscrambling`SchoutenCandidates[state]],
+    Function[Unscrambling`Private`samePoly[#["Insert"],
+     Together[#["Subtract"]/First[handIdentity]] Last[handIdentity]]], 10];
+   walk[Function[Unscrambling`Private`chainMoves[state, masses]],
+    Function[#["Name"] === "Mass" && #["Direction"] === "Contract"], 30];
+   True
+  ]];
+  expected = 2 EE^2 br["[13]<24>+[23]<14>"] br["[324>"]/(br["<34>[34]"] If[index === 1, dt, du]);
+  If[built =!= True || Length[states] < 2 || !Unscrambling`Private`samePoly[state, expected] ||
+     !AllTrue[states, DeleteDuplicates[Cases[#, _PropDen, Infinity]] === {If[index === 1, dt, du]} &],
+   Message[trainingSimplificationRoutes::build]; Return[$Failed]];
+  AppendTo[routes, <|"Name" -> "e, E, A.+, A.- / electron (1, " <> ToString[photon] <> ") exchange",
+   "Masses" -> masses, "States" -> states, "Identities" -> identities,
+   "ReferenceSpinorPreparation" -> preparation, "OnShellChannels" -> channels,
+   "MomentumConservation" -> True,
+   "Sources" -> {"SM-4-point-unscramble-test.nb / handwritten e, E, A.+, A.- derivation"}|>],
+  {index, 2}];
+ (* Channel-local numerator assumptions end here. The sum uses only external
+    mass shells and momentum conservation, with both propagators off shell. *)
+ masses = externalMasses; state = Unscrambling`Private`canonicalAmplitude[Total[Last /@ Lookup[routes, "States"]], masses];
+ states = {state}; identities = {};
+ built = Catch[Block[{Unscrambling`Private`$onShellChannels = {},
+   Unscrambling`Private`$useMomentumConservation = True},
+  walk[Function[Unscrambling`Private`propagatorNumeratorMoves[state, masses]], Function[True], 10];
+  walk[Function[Unscrambling`Private`scalarMomentumConservationMoves[state, masses]],
+   Function[Lookup[#, "Identity", None] === "ScalarDot" && #["Legs"] === {1, 4}], 10];
+  walk[Function[Unscrambling`Private`scalarMomentumConservationMoves[state, masses]],
+   Function[Lookup[#, "Identity", None] === "ScalarComplement" && #["Legs"] === {1, 2}], 10];
+  walk[Function[Unscrambling`Private`helicityInvariantMoves[state, masses]],
+   Function[#["Identity"] === "MasslessBracket" && #["Direction"] === "Expand"], 10];
+  walk[Function[Unscrambling`Private`chainMoves[state, masses]],
+   Function[#["Name"] === "MomentumConservation" && !FreeQ[#["Subtract"], y[4, 2, 3]]], 10];
+  walk[Function[Unscrambling`Private`chainMoves[state, masses]],
+   Function[#["Name"] === "Mass" && #["Direction"] === "Contract"], 10];
+  True
+ ]];
+ expected = -2 EE^2 br["[13]<24>+[23]<14>"] br["[314>"]/(dt du);
+ If[built =!= True || !Unscrambling`Private`samePoly[state, expected] ||
+    !AllTrue[states, Sort[DeleteDuplicates[Cases[#, _PropDen, Infinity]]] === Sort[{dt, du}] &],
+  Message[trainingSimplificationRoutes::build]; Return[$Failed]];
+ Append[routes, <|"Name" -> "e, E, A.+, A.- / electron exchange sum", "Masses" -> masses,
+  "States" -> states, "Identities" -> identities, "OnShellChannels" -> {}, "MomentumConservation" -> True,
+  "Sources" -> {"SM-4-point-unscramble-test.nb / handwritten e, E, A.+, A.- derivation"}|>]
+];
+
 trainingSimplificationRoutes := Module[{routes},
   routes = {trainingFourFermionZRoute[], trainingElectronZHZRoute[],
    trainingElectronZHElectronRoutes[], trainingElectronZZElectronRoutes[], trainingElectronWWZRoute[],
    trainingChargedCurrentWhWRoutes[], trainingZhWWZRoute[], trainingFourFermionWRoute[],
-   trainingChargedCurrentZWWRoutes[], trainingZhWWWRoutes[]};
+   trainingChargedCurrentZWWRoutes[], trainingZhWWWRoutes[], trainingElectronPhotonPairRoute[],
+   trainingElectronOppositePhotonRoutes[], trainingUpCharmZRoute[], trainingElectronHHElectronRoutes[]};
   If[MemberQ[routes, $Failed], $Failed, Join @@ routes]
+];
+
+(* Optional preprocessing for future training. Every scheduled step is a fresh
+   legal candidate with an existing teacher delta; no compound edit is formed.
+   A failed, bounded, or non-improving attempt returns the original route. *)
+trainingOptimizeSimplificationRoutes[routes_List, options_Association:<||>] := Module[
+ {settings = Join[<|"Seconds" -> 180, "TotalSeconds" -> 600, "MaxStates" -> 256,
+    "MaxCandidates" -> 4096, "MaxExpressionSize" -> 100000,
+    "PreserveDirections" -> True|>, options], started = AbsoluteTime[],
+  optimize, results, invalid, summary, metric, props, validSettings},
+ validSettings = AllTrue[Lookup[settings, {"Seconds", "TotalSeconds"}],
+    NumberQ[#] && TrueQ[0 < # < Infinity] &] &&
+   AllTrue[Lookup[settings, {"MaxStates", "MaxCandidates", "MaxExpressionSize"}],
+    IntegerQ[#] && # > 0 &] && MemberQ[{True, False}, settings["PreserveDirections"]];
+ invalid[route_, reason_] := <|"Route" -> route, "Report" ->
+   <|"Name" -> If[AssociationQ[route], Lookup[route, "Name", "Unnamed route"], "Unnamed route"], "Applied" -> False,
+     "Reason" -> reason|>|>;
+ If[!validSettings, Return[<|"Routes" -> routes,
+   "Reports" -> (invalid[#, "InvalidOptions"]["Report"] & /@ routes), "Options" -> settings|>]];
+ If[routes === {}, Return[<|"Routes" -> {}, "Reports" -> {}, "Options" -> settings|>]];
+ If[!MemberQ[$Packages, "Unscrambling`"], Return[<|"Routes" -> routes,
+   "Reports" -> (invalid[#, "UnscramblingUnavailable"]["Report"] & /@ routes), "Options" -> settings|>]];
+ props[expr_] := Sort[DeleteDuplicates[Cases[expr, _PropDen, Infinity]]];
+ summary[states_] := Module[{scores = Unscrambling`Private`expressionComplexity /@ states,
+    best, streak = 0, maximum = 0, improving = {}},
+   best = First[scores];
+   Do[If[scores[[i + 1]] < best,
+     best = scores[[i + 1]]; streak = 0; AppendTo[improving, i],
+     streak++; maximum = Max[maximum, streak]], {i, Length[scores] - 1}];
+   <|"Steps" -> Length[states] - 1, "InitialComplexity" -> First[scores],
+    "FinalComplexity" -> Last[scores], "PeakComplexity" -> Max[scores],
+    "MaximumNonImprovingStreak" -> maximum,
+    "FirstImprovingEdit" -> If[improving === {}, Null, First[improving]],
+    "ComplexityTotal" -> Total[scores]|>
+ ];
+ metric[report_] := Lookup[report,
+   {"MaximumNonImprovingStreak", "PeakComplexity", "ComplexityTotal"}];
+ optimize[route_] := Module[
+   {attemptStarted = AbsoluteTime[], budget, outcome, tag = Unique[], fail,
+    states, rules, names, count, deltas, deltaKeys, witnesses, originalProps,
+    candidates, choices, move, stepDelta, stepKey, state, next, pending,
+    reorderedStates, reorderedMoves = {}, order = {}, match, chosen, originalMoves,
+    baseline, result, directedChanges, report, enumerate, matches, bounded},
+   If[!AssociationQ[route] || !ListQ[Lookup[route, "Masses", None]] ||
+      !ListQ[Lookup[route, "States", None]] || Length[route["States"]] < 2,
+     Return[invalid[route, "InvalidRoute"]]];
+   If[Length[route["States"]] > settings["MaxStates"],
+     Return[invalid[route, "StateLimit"]]];
+   budget = Min[settings["Seconds"], settings["TotalSeconds"] - (AbsoluteTime[] - started)];
+   If[!TrueQ[budget > 0], Return[invalid[route, "TotalTimeLimit"]]];
+   fail[reason_] := Throw[reason, tag];
+   bounded[expr_] := If[LeafCount[expr] > settings["MaxExpressionSize"], fail["ExpressionSizeLimit"]];
+   enumerate[expr_] := Module[{board},
+     bounded[expr]; board = Unscrambling`Private`legalMoves[expr, rules];
+     If[!ListQ[board] || Length[board] > settings["MaxCandidates"], fail["CandidateLimit"]]; board
+   ];
+   matches[candidate_, index_] := candidate["Name"] =!= "Stop" &&
+     candidate["Name"] === names[[index]] &&
+     (!settings["PreserveDirections"] || Lookup[candidate, "Direction", ""] ===
+       Lookup[witnesses[[index]], "Direction", ""]) &&
+     Hash[Unscrambling`Private`canonicalChains[candidate["Insert"] - candidate["Subtract"]],
+       "SHA256"] === deltaKeys[[index]] &&
+     Unscrambling`Private`samePoly[
+       Unscrambling`Private`canonicalChains[candidate["Insert"] - candidate["Subtract"]], deltas[[index]]];
+   outcome = TimeConstrained[Catch[
+     rules = route["Masses"];
+     If[!Unscrambling`Private`validSimplificationRoutesQ[{route}], fail["InvalidRoute"]];
+     Scan[bounded, route["States"]];
+     states = Unscrambling`Private`canonicalAmplitude[#, rules] & /@ route["States"];
+     count = Length[states] - 1;
+     names = Lookup[route, "Identities", ConstantArray[None, count]];
+     If[!ListQ[names] || Length[names] =!= count, fail["InvalidIdentities"]];
+     originalMoves = Lookup[route, "Moves", ConstantArray[<||>, count]];
+     If[!ListQ[originalMoves] || Length[originalMoves] =!= count || !AllTrue[originalMoves, AssociationQ],
+       fail["InvalidMoves"]];
+     originalProps = props[First[states]];
+     If[!AllTrue[states, props[#] === originalProps &], fail["ChangingPropagators"]];
+     deltas = Unscrambling`Private`canonicalChains /@ Differences[states];
+     deltaKeys = Hash[#, "SHA256"] & /@ deltas;
+     Block[{Unscrambling`Private`$onShellChannels = Unscrambling`Private`normalizeOnShellChannels[
+        Lookup[route, "OnShellChannels", Automatic]],
+       Unscrambling`Private`$useMomentumConservation = Lookup[route, "MomentumConservation", True]},
+      witnesses = Table[
+        candidates = enumerate[states[[i]]];
+        (* A transition may also expand an oppositely signed term. Prefer its
+           contraction witness unless the caller supplied a directed edit. *)
+        move = SelectFirst[SortBy[candidates, Boole[Lookup[#, "Direction", ""] === "Expand"] &],
+          #["Name"] =!= "Stop" &&
+          (names[[i]] === None || #["Name"] === names[[i]]) &&
+          (!KeyExistsQ[originalMoves[[i]], "Direction"] || Lookup[#, "Direction", ""] ===
+            originalMoves[[i]]["Direction"]) &&
+          Unscrambling`Private`samePoly[
+            Unscrambling`Private`canonicalChains[#["Insert"] - #["Subtract"]], deltas[[i]]] &&
+          Unscrambling`Private`samePoly[Unscrambling`Private`applyCandidate[states[[i]], #], states[[i + 1]]] &,
+          None];
+        If[move === None, fail["IllegalOriginalStep"]]; move, {i, count}];
+      names = Lookup[witnesses, "Name"];
+      pending = Range[count]; state = First[states]; reorderedStates = {state};
+      Do[
+        candidates = enumerate[state]; choices = {};
+        Do[If[candidate["Name"] === "Stop", Continue[]];
+          stepDelta = Unscrambling`Private`canonicalChains[candidate["Insert"] - candidate["Subtract"]];
+          stepKey = Hash[stepDelta, "SHA256"];
+          match = SelectFirst[pending, names[[#]] === candidate["Name"] &&
+            deltaKeys[[#]] === stepKey && matches[candidate, #] &, None];
+          If[match =!= None,
+            next = Unscrambling`Private`applyCandidate[state, candidate]; bounded[next];
+            If[props[next] === originalProps,
+              AppendTo[choices, {Unscrambling`Private`expressionComplexity[next], match, candidate, next}]]],
+          {candidate, candidates}];
+        If[choices === {}, fail["NoCompleteOrdering"]];
+        chosen = First[SortBy[choices, {First, #[[2]] &}]];
+        state = chosen[[4]]; AppendTo[reorderedStates, state]; AppendTo[reorderedMoves, chosen[[3]]];
+        AppendTo[order, chosen[[2]]]; pending = DeleteCases[pending, chosen[[2]]], {count}];
+      If[pending =!= {} || Sort[order] =!= Range[count] ||
+         !Unscrambling`Private`samePoly[state, Last[states]], fail["EndpointMismatch"]];
+     ];
+     baseline = summary[states]; result = summary[reorderedStates];
+     directedChanges = Count[MapThread[UnsameQ,
+       {Lookup[witnesses[[order]], "Direction", ""], Lookup[reorderedMoves, "Direction", ""]}], True];
+     report = <|"Name" -> route["Name"], "Applied" -> False,
+       "Reason" -> "NoImprovement", "Original" -> baseline, "Result" -> result,
+       "Order" -> order, "DirectedRewriteChanges" -> directedChanges,
+       "EveryStepLegal" -> True, "ExactEndpoint" -> True, "MassRulesUnchanged" -> True,
+       "PropagatorsUnchanged" -> True|>;
+     If[!TrueQ[And @@ MapThread[LessEqual, {metric[result], metric[baseline]}]] || metric[result] === metric[baseline],
+       <|"Route" -> route, "Report" -> report|>,
+       <|"Route" -> Join[route, <|"States" -> reorderedStates|>,
+          If[KeyExistsQ[route, "Identities"], <|"Identities" -> Lookup[reorderedMoves, "Name"]|>, <||>],
+          If[KeyExistsQ[route, "Moves"], <|"Moves" -> reorderedMoves|>, <||>]],
+         "Report" -> Join[report, <|"Applied" -> True, "Reason" -> "ImprovedOrdering"|>]|>], tag],
+     budget, "TimeLimit"];
+   If[!AssociationQ[outcome], outcome = invalid[route,
+     If[StringQ[outcome], outcome, "OptimizationFailure"]]];
+   Join[outcome, <|"Report" -> Join[outcome["Report"],
+     <|"Seconds" -> N[AbsoluteTime[] - attemptStarted]|>]|>]
+ ];
+ results = optimize /@ routes;
+ <|"Routes" -> Lookup[results, "Route"], "Reports" -> Lookup[results, "Report"], "Options" -> settings|>
 ];
 
 (* ::Section::Closed:: *)

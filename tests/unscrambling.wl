@@ -27,7 +27,7 @@ UnscrambleCandidates::usage = "UnscrambleCandidates[{massRules, amplitude}] list
 UnscrambleEncoding::usage = "UnscrambleEncoding[{massRules, amplitude}, candidate] returns an association with State and Candidate UTF-8 byte-ID sequences for the candidate policy. Both are complete; no truncation or learned vocabulary cutoff is applied.";
 TrainUnscrambleNet::usage = TrainUnscrambleNet::usage <> " PolicyMethod -> ReverseMoves (string keys and values) trains an experimental state-only reverse-action predictor in separate unscramble-moves model files; CandidateScorer is the default.";
 TrainUnscrambleNet::usage = TrainUnscrambleNet::usage <> " SimplificationRoutes supplies curated associations with Name, Masses and States ordered from an input to its simplified endpoint. Every adjacent state must be one legal edit; temporary complexity growth is allowed. These routes are combined with random scramble targets.";
-UnscrambleSpinorAmplitudes::usage = UnscrambleSpinorAmplitudes::usage <> " The string option Model selects CandidateScorer (scores symbolic legal edits) or CompactActions (scores compact legal-edit features). Model -> Automatic preserves PolicyMethod selection; ModelDirectory chooses a directory containing the selected model files.";
+UnscrambleSpinorAmplitudes::usage = UnscrambleSpinorAmplitudes::usage <> " The string option Model selects CandidateScorer (scores symbolic legal edits) or CompactActions (scores compact legal-edit features). Model -> Automatic preserves PolicyMethod selection; ModelDirectory chooses a directory containing the selected model files. CandidateBatchSize (default 128) bounds compact candidate-feature batches without changing global selection.";
 UnscrambleTrace::usage = UnscrambleTrace::usage <> " Supports the same Model and ModelDirectory options as UnscrambleSpinorAmplitudes.";
 UnscrambleSpinorAmplitudes::usage = UnscrambleSpinorAmplitudes::usage <> " MaxSteps defaults to Infinity; MaxStagnantSteps defaults to 10. Score-neutral MomentumSum splits do not consume stagnation patience. ProgressReporting -> Automatic shows live term counts in notebooks; False disables the display. TimeLimit remains an overall safety limit.";
 UnscrambleTrace::usage = UnscrambleTrace::usage <> " Progress contains the final term counts, complexity, step count and elapsed seconds.";
@@ -121,7 +121,8 @@ linearTrace[t_SpinorTrace] := Module[{parts},
   Total[(Times @@ #[[All, 1]])*If[# === {}, 2, SpinorTrace @@ #[[All, 2]]] & /@ Tuples[parts]]
 ];
 canonicalChains[expr_] := withProtectedPropagators[expr,
-  Function[body, Expand[body /. {c_SpinorChain :> linearChain[c], t_SpinorTrace :> linearTrace[t]}]]];
+  Function[body, Expand[body /. {c_SpinorChain :> linearChain[c], t_SpinorTrace :> linearTrace[t],
+    Mom[Multiparticle[ii__Integer]] :> Mom[Multiparticle @@ Sort[{ii}]]}]]];
 canonicalAmplitude[expr_, rules_] := canonicalChains[
   withProtectedPropagators[expr, Function[body, body /. rules]]];
 
@@ -385,9 +386,10 @@ momentumSquareMoves[expr_, massRules_List] := Module[{moves = {}, groups, keys, 
         Module[{shell2 = Expand[bigM^2 - mi^2 - mj^2], q},
           Do[
             sk = keys[[g]]; coef = groups[sk];
-            If[FreeQ[sk, Mom[Multiparticle[__]]] && FreeQ[sk, dot],
+            If[withProtectedPropagators[sk, Function[body,
+                FreeQ[body, Mom[Multiparticle[__]]] && FreeQ[body, dot]]],
               q = shellQuotient[coef, shell2];
-              If[q =!= None && Expand[q] =!= 0 && ! FreeQ[coef, bigM],
+              If[q =!= None && Expand[q] =!= 0,
                 subtract = expandAmplitude[coef*sk];
                 insert = expandAmplitude[q*kin*sk];
                 If[! samePoly[subtract, insert],
@@ -449,7 +451,7 @@ subsetMomentumSquareMoves[expr_, rules_List] := Module[
 
 scalarMomentumConservationMoves[expr_, rules_List] := Module[
   {moves = {}, groups = groupsOf[expr], exts = externalIndices[rules], dots,
-   legs, mass, rhs, subtract, insert, scale, row},
+   legs, mass, rhs, subtract, insert, scale, row, complement},
   If[!TrueQ[$useMomentumConservation] || Length[exts] < 2, Return[{}]];
   dots = Cases[numeratorScalarAtoms[groups], d:MomProd[i_Integer, j_Integer] /;
     i =!= j && MemberQ[exts, i] && MemberQ[exts, j] :> d];
@@ -464,6 +466,21 @@ scalarMomentumConservationMoves[expr_, rules_List] := Module[
           "Subtract" -> subtract, "Insert" -> insert, "Legs" -> {anchor, First[DeleteCases[legs, anchor]]},
           "Identity" -> "ScalarDot"|>]]], {sk, Keys[groups]}],
       {anchor, legs}], {dot, dots}];
+  (* The square of a pair equals the square of its complementary external
+     momentum sum. Only external masses enter this off-shell relation. *)
+  If[Length[exts] >= 4 && AllTrue[exts, !MissingQ[massValue[rules, #]] &],
+    Do[
+      legs = Sort[List @@ dot]; complement = Complement[exts, legs];
+      rhs = (Total[massValue[rules, #]^2 & /@ complement] -
+          Total[massValue[rules, #]^2 & /@ legs])/2 +
+        Total[orderedDot @@ # & /@ Subsets[complement, {2}]];
+      Do[If[scalarFactorPresentQ[sk, dot],
+        subtract = expandAmplitude[groups[sk] sk];
+        insert = expandAmplitude[groups[sk] sk/dot rhs];
+        If[!samePoly[subtract, insert], AppendTo[moves, <|"Name" -> "MomentumConservation",
+          "Subtract" -> subtract, "Insert" -> insert, "Legs" -> legs,
+          "Identity" -> "ScalarComplement", "ScrambleEligible" -> False|>]]], {sk, Keys[groups]}],
+      {dot, dots}]];
   Do[
     mass = massValue[rules, anchor]; row = Total[orderedDot[anchor, #] & /@ DeleteCases[exts, anchor]];
     moves = Join[moves, scalarRelationMoves[groups, row, -mass^2,
@@ -474,6 +491,80 @@ scalarMomentumConservationMoves[expr_, rules_List] := Module[
         "Subtract" -> expandAmplitude[groups[sk] sk], "Insert" -> expandAmplitude[scale row sk],
         "Legs" -> {anchor}, "Identity" -> "ScalarRowExpand"|>]], {sk, Keys[groups]}]],
     {anchor, exts}];
+  moves
+];
+
+(* Massless helicity completeness: <i|p_j|i] = 2 p_i.p_j and
+   <ij>[ji] = 2 p_i.p_j. Inverse brackets remain ordinary rational factors. *)
+helicityInvariantMoves[expr_, rules_List] := Module[
+  {moves = {}, mons = monomialsOf[expr], massless, chain, xs, dot, product, chains, rest},
+  massless = Select[externalIndices[rules], TrueQ[massValue[rules, #] === 0] &];
+  Do[
+    chains = chainsIn[mon];
+    Do[
+      xs = List @@ chain;
+      If[Length[xs] === 3 && validChainQ[chain] &&
+          MatchQ[First[xs], Spinor["Helicity", "Angle" | "Square", _Integer]] &&
+          Last[xs] === flipSpinor[First[xs]] && MemberQ[massless, spinorLeg[First[xs]]] &&
+          MatchQ[xs[[2]], Mom[_Integer]],
+        dot = If[spinorLeg[First[xs]] === xs[[2, 1]], 0,
+          orderedDot[spinorLeg[First[xs]], xs[[2, 1]]] /. rules];
+        AppendTo[moves, <|"Name" -> "MomentumSquare", "Identity" -> "HelicityTrace",
+          "Direction" -> "Contract", "ScrambleEligible" -> False, "Subtract" -> mon,
+          "Insert" -> canonicalChains[mon/chain*2 dot],
+          "Legs" -> {spinorLeg[First[xs]], xs[[2, 1]]}|>]],
+      {chain, DeleteDuplicates[chains]}];
+    Do[
+      dot = orderedDot @@ pair;
+      product = canonicalChains[bracket["Helicity", "Angle", pair[[1]], pair[[2]]]*
+        bracket["Helicity", "Square", pair[[2]], pair[[1]]]];
+      If[scalarFactorPresentQ[mon, dot],
+        AppendTo[moves, <|"Name" -> "MomentumSquare", "Identity" -> "MasslessBracket",
+          "Direction" -> "Expand", "Subtract" -> mon,
+          "Insert" -> canonicalChains[mon/dot*product/2], "Legs" -> pair|>]];
+      If[AllTrue[Cases[product, _SpinorChain, Infinity], MemberQ[chains, #] &],
+        rest = Cancel[mon/product];
+        AppendTo[moves, <|"Name" -> "MomentumSquare", "Identity" -> "MasslessBracket",
+          "Direction" -> "Contract", "Subtract" -> mon,
+          "Insert" -> canonicalChains[rest*2 dot], "Legs" -> pair|>]],
+      {pair, Subsets[massless, {2}]}],
+    {mon, mons}];
+  moves
+];
+
+(* Common-denominator algebra can introduce a propagator in the numerator.
+   Expand that numerator factor off shell; never rewrite the denominator. *)
+propagatorNumeratorMoves[expr_, rules_List] := Module[
+  {moves = {}, groups = groupsOf[expr], buckets, terms, props, tokens, fraction, num, den,
+   legs, masses, value, insert, subtract, replacements, usedLegs, valid},
+  buckets = GroupBy[Keys[groups], # /. _PropDen -> 1 &];
+  Do[
+    terms = (groups[#] # &) /@ keys;
+    props = DeleteDuplicates[Cases[terms, _PropDen, Infinity]];
+    If[Length[props] < 2, Continue[]];
+    tokens = Table[Unique["numeratorPropagator"], {Length[props]}];
+    subtract = Total[terms];
+    fraction = Together[subtract /. Thread[props -> tokens]];
+    {num, den} = NumeratorDenominator[fraction];
+    replacements = {}; usedLegs = {}; valid = True;
+    Do[
+      If[FreeQ[num, tokens[[i]]], Continue[]];
+      If[!PolynomialQ[num, {tokens[[i]]}] ||
+          !MatchQ[props[[i]], PropDen[Mom[_Integer | Multiparticle[__Integer]], _]],
+        valid = False; Break[]];
+      legs = Replace[props[[i, 1, 1]], {j_Integer :> {j}, Multiparticle[ii__Integer] :> {ii}}];
+      If[!DuplicateFreeQ[legs], valid = False; Break[]];
+      masses = massValue[rules, #] & /@ legs;
+      If[AnyTrue[masses, MissingQ], valid = False; Break[]];
+      value = Total[masses^2] + 2 Total[orderedDot @@ # & /@ Subsets[legs, {2}]] - props[[i, 2]]^2;
+      AppendTo[replacements, tokens[[i]] -> value]; usedLegs = Union[usedLegs, legs],
+      {i, Length[props]}];
+    If[valid && replacements =!= {},
+      insert = canonicalChains[((num /. replacements)/den) /. Thread[tokens -> props]];
+      If[!samePoly[subtract, insert], AppendTo[moves, <|"Name" -> "MomentumSquare",
+        "Identity" -> "PropagatorNumerator", "ScrambleEligible" -> False, "Subtract" -> subtract,
+        "Insert" -> insert, "Legs" -> usedLegs|>]]],
+    {keys, Values[buckets]}];
   moves
 ];
 
@@ -530,25 +621,21 @@ kinematicMoves[expr_, massRules_List] := Module[
   ];
   buckets = <||>;
   Do[
-    Module[{sk = keys[[g]], nMoms, count, which, template, propagators, tokens, masked, restore},
-      propagators = DeleteDuplicates[Cases[sk, _PropDen, {0, Infinity}]];
-      tokens = Table[Unique["propagator"], {Length[propagators]}];
-      masked = sk /. Thread[propagators -> tokens]; restore = Thread[tokens -> propagators];
-      nMoms = Length[Cases[masked, Mom[_Integer], Infinity]];
+    Module[{sk = keys[[g]], slots, offset, which, template},
+      (* Extract one positive chain or trace factor before replacing a slot.
+         Any remaining copies stay in the template, so a square itself is
+         never treated as linear. Inverse factors are not selected. *)
       Do[
-        count = 0; which = 0;
-        template = (masked /. Mom[ii_Integer] :> (
-          count++;
-          If[count === n,
-            which = ii; momentumPlaceholder,
-            Mom[ii]
-          ]
-        )) /. restore;
-        If[MemberQ[exts, which],
-          buckets[template] = Append[Lookup[buckets, template, {}], {which, groups[sk], sk}]
-        ],
-        {n, nMoms}
-      ]
+        If[!validChainQ[factor] && !validTraceQ[factor], Continue[]];
+        slots = momentumSlots[factor]; offset = momentumSlotOffset[factor];
+        Do[
+          If[!MatchQ[slots[[n]], Mom[_Integer]], Continue[]];
+          which = slots[[n, 1]];
+          If[!IntegerQ[which] || !MemberQ[exts, which], Continue[]];
+          template = sk/factor*ReplacePart[factor, n + offset -> momentumPlaceholder];
+          buckets[template] = Append[Lookup[buckets, template, {}], {which, groups[sk], sk}],
+          {n, Length[slots]}],
+        {factor, DeleteDuplicates[Join[chainsIn[sk], tracesIn[sk]]]}]
     ],
     {g, Length[keys]}
   ];
@@ -596,6 +683,7 @@ $onShellChannels = Automatic;
 $useMomentumConservation = True;
 $maxStagnantSteps = 10;
 $timeLimit = 60;
+$candidateBatchSize = 128;
 $progressReporting = Automatic;
 $trainingBatchSize = 1;
 $trainingTargetDevice = "CPU";
@@ -608,6 +696,7 @@ Options[ComplicateAmplitude] = Join[{RandomSeed -> Automatic, "RecordSteps" -> F
 Options[UnscrambleSpinorAmplitudes] = Join[
   {"MaxSteps" -> Infinity, "Attempts" -> 5, "MaxStagnantSteps" -> 10,
     "TimeLimit" -> 60, "Model" -> Automatic, "ModelDirectory" -> Automatic,
+    "CandidateBatchSize" -> 128,
     "PolicyMethod" -> "CandidateScorer", "ProgressReporting" -> Automatic,
     "Kernels" -> Automatic, RandomSeed -> Automatic}, Options[UnscrambleCandidates]];
 Options[UnscrambleTrace] = Options[UnscrambleSpinorAmplitudes];
@@ -837,7 +926,9 @@ legalMoves[expr_, massRules_List] := Module[{legacy, moves, normalizationDelta},
       {"MomentumConservation", "MomentumSquare", "OnShell"},
       {"MomentumSquare", "OnShell"}], #["Name"]] &];
   moves = Join[chainMoves[expr, massRules], interiorChainMoves[expr, massRules],
-    momentumSumMoves[expr, massRules], traceMoves[expr, massRules], SchoutenCandidates[expr], legacy];
+    momentumSumMoves[expr, massRules], traceMoves[expr, massRules],
+    helicityInvariantMoves[expr, massRules], propagatorNumeratorMoves[expr, massRules],
+    SchoutenCandidates[expr], legacy];
   moves = DeleteDuplicatesBy[moves, {#["Name"], #["Subtract"], #["Insert"]} &];
   (* Canonicalization is linear, so unchanged edits need only their local delta.
      Include the input correction for callers supplying noncanonical states. *)
@@ -1257,27 +1348,40 @@ compactPortableConvolution[input_, weights_, biases_] := Module[{count, padded, 
   Ramp[(# + biases) & /@ output]
 ];
 
-compactPolicyScores[arrays_Association, input_Association] := Module[
-  {state, candidates, encoded, mean, maximum, stateVector, weights, stateProjection, hidden, scores},
-  state = Lookup[input, "State", None]; candidates = Lookup[input, "Candidates", None];
-  If[!VectorQ[state, IntegerQ] || state === {} || Min[state] < 1 || Max[state] > 256 ||
-      !MatrixQ[candidates, NumberQ] || Length[candidates] < 1 || Dimensions[candidates][[2]] =!= 146,
-    Return[$Failed]];
-  candidates = Developer`ToPackedArray[N[candidates]];
-  If[!AllTrue[MinMax[Flatten[candidates]], TrueQ[Im[#] == 0 && Abs[#] < Infinity] &], Return[$Failed]];
+compactPolicyStateVector[arrays_Association, state_] := Module[{encoded, mean, maximum, vector},
+  If[!VectorQ[state, IntegerQ] || state === {} || Min[state] < 1 || Max[state] > 256, Return[$Failed]];
   encoded = arrays["Embedding"][[state]];
   encoded = compactPortableConvolution[encoded, arrays["Conv1Weights"], arrays["Conv1Biases"]];
   encoded = compactPortableConvolution[encoded, arrays["Conv2Weights"], arrays["Conv2Biases"]];
   mean = Mean[encoded]; maximum = Max /@ Transpose[encoded];
-  stateVector = Join[mean/Sqrt[Total[mean^2] + 1.*^-12],
+  vector = Join[mean/Sqrt[Total[mean^2] + 1.*^-12],
     maximum/Sqrt[Total[maximum^2] + 1.*^-12]];
+  If[VectorQ[vector, NumberQ] && Length[vector] === 128 &&
+      AllTrue[MinMax[vector], TrueQ[Im[#] == 0 && Abs[#] < Infinity] &], vector, $Failed]
+];
+compactPolicyStateVector[___] := $Failed;
+
+compactPolicyCandidateScores[arrays_Association, stateVector_List, candidates_] := Module[
+  {features, weights, stateProjection, hidden, scores},
+  If[Length[stateVector] =!= 128 || !VectorQ[stateVector, NumberQ] ||
+      !MatrixQ[candidates, NumberQ] || Length[candidates] < 1 || Dimensions[candidates][[2]] =!= 146,
+    Return[$Failed]];
+  features = Developer`ToPackedArray[N[candidates]];
+  If[!AllTrue[MinMax[Flatten[features]], TrueQ[Im[#] == 0 && Abs[#] < Infinity] &], Return[$Failed]];
   weights = arrays["HiddenWeights"];
   stateProjection = weights[[All, 1 ;; 128]] . stateVector + arrays["HiddenBiases"];
-  hidden = candidates . Transpose[weights[[All, 129 ;; 274]]];
+  hidden = features . Transpose[weights[[All, 129 ;; 274]]];
   hidden = Ramp[(# + stateProjection) & /@ hidden];
   scores = hidden . First[arrays["OutputWeights"]] + First[arrays["OutputBiases"]];
   If[VectorQ[scores, NumberQ] &&
       AllTrue[MinMax[scores], TrueQ[Im[#] == 0 && Abs[#] < Infinity] &], scores, $Failed]
+];
+compactPolicyCandidateScores[___] := $Failed;
+
+compactPolicyScores[arrays_Association, input_Association] := Module[{stateVector},
+  stateVector = compactPolicyStateVector[arrays, Lookup[input, "State", None]];
+  If[stateVector === $Failed, Return[$Failed]];
+  compactPolicyCandidateScores[arrays, stateVector, Lookup[input, "Candidates", None]]
 ];
 compactPolicyScores[___] := $Failed;
 
@@ -1312,22 +1416,15 @@ compactParticlePolicyArrays[net_NetGraph] := Module[{paths, dimensions, arrays},
 ];
 compactParticlePolicyArrays[_] := $Failed;
 
-compactParticlePolicyScores[arrays_Association, input_Association] := Module[
-  {state, candidates, dimensions, encoded, mean, maximum, stateVector, candidateVectors,
+compactParticleCandidateScores[arrays_Association, stateVector_List, candidates_] := Module[
+  {features, dimensions, candidateVectors,
     weights, stateProjection, hidden, scores},
-  state = Lookup[input, "State", None]; candidates = Lookup[input, "Candidates", None];
   dimensions = Dimensions[candidates];
-  If[!VectorQ[state, IntegerQ] || state === {} || Min[state] < 1 || Max[state] > 256 ||
+  If[Length[stateVector] =!= 128 || !VectorQ[stateVector, NumberQ] ||
       Length[dimensions] =!= 3 || dimensions[[1]] < 1 || dimensions[[2]] < 1 ||
       dimensions[[3]] =!= 166 || !ArrayQ[candidates, 3, NumberQ], Return[$Failed]];
-  candidates = Developer`ToPackedArray[N[candidates]];
-  If[!AllTrue[MinMax[Flatten[candidates]], TrueQ[Im[#] == 0 && Abs[#] < Infinity] &], Return[$Failed]];
-  encoded = arrays["Embedding"][[state]];
-  encoded = compactPortableConvolution[encoded, arrays["Conv1Weights"], arrays["Conv1Biases"]];
-  encoded = compactPortableConvolution[encoded, arrays["Conv2Weights"], arrays["Conv2Biases"]];
-  mean = Mean[encoded]; maximum = Max /@ Transpose[encoded];
-  stateVector = Join[mean/Sqrt[Total[mean^2] + 1.*^-12],
-    maximum/Sqrt[Total[maximum^2] + 1.*^-12]];
+  features = Developer`ToPackedArray[N[candidates]];
+  If[!AllTrue[MinMax[Flatten[features]], TrueQ[Im[#] == 0 && Abs[#] < Infinity] &], Return[$Failed]];
   candidateVectors = Map[Function[candidate, Module[{mask, values, tokenMean, tokenMax},
     mask = Total[Transpose[candidate[[All, 147 ;; 149]]]];
     If[!AllTrue[mask, TrueQ[# == 0. || # == 1.] &], Return[$Failed]];
@@ -1337,7 +1434,7 @@ compactParticlePolicyScores[arrays_Association, input_Association] := Module[
     tokenMean = Total[values]/Max[Total[mask], 1.]; tokenMax = Max /@ Transpose[values];
     Join[tokenMean/Sqrt[Total[tokenMean^2] + 1.*^-12],
       tokenMax/Sqrt[Total[tokenMax^2] + 1.*^-12]]
-  ]], candidates];
+  ]], features];
   If[!FreeQ[candidateVectors, $Failed], Return[$Failed]];
   weights = arrays["HiddenWeights"];
   stateProjection = weights[[All, 1 ;; 128]] . stateVector + arrays["HiddenBiases"];
@@ -1346,6 +1443,13 @@ compactParticlePolicyScores[arrays_Association, input_Association] := Module[
   scores = hidden . First[arrays["OutputWeights"]] + First[arrays["OutputBiases"]];
   If[VectorQ[scores, NumberQ] &&
       AllTrue[MinMax[scores], TrueQ[Im[#] == 0 && Abs[#] < Infinity] &], scores, $Failed]
+];
+compactParticleCandidateScores[___] := $Failed;
+
+compactParticlePolicyScores[arrays_Association, input_Association] := Module[{stateVector},
+  stateVector = compactPolicyStateVector[arrays, Lookup[input, "State", None]];
+  If[stateVector === $Failed, Return[$Failed]];
+  compactParticleCandidateScores[arrays, stateVector, Lookup[input, "Candidates", None]]
 ];
 compactParticlePolicyScores[___] := $Failed;
 
@@ -1504,7 +1608,7 @@ compactParticleModelCompatibleQ[meta_Association] :=
   Lookup[meta, "DescriptorEncoding", None] === "ParticleRoleTokens" &&
   Lookup[meta, "DescriptorFeatureWidth", None] === compactParticleFeatureWidth &&
   Lookup[meta, "CompactFeatureSchema", None] === compactParticleFeatureSchema &&
-  Lookup[meta, "Objective", None] === "LegalMoveCrossEntropy" &&
+  MemberQ[{"LegalMoveCrossEntropy", "SampledLegalMoveCrossEntropy"}, Lookup[meta, "Objective", None]] &&
   Lookup[meta, "ReadoutNormalization", None] === "SeparateMeanMaxL2" &&
   Lookup[meta, "ReadoutSquaredNormEpsilon", None] === 1.*^-12 &&
   IntegerQ[Lookup[meta, "NativeTokenCount", None]] && meta["NativeTokenCount"] > 0 &&
@@ -1515,7 +1619,11 @@ compactParticleModelCompatibleQ[meta_Association] :=
     "62ed48a7d3049905b07fd3cc4a28b2c05dc8d89d1a820440ca8e4bae4cde773a",
     "76ba389ad5345681abba758755754a20e48d9c91144c3e2cbe78533f8bd121d2",
     (* Local-delta no-op checks preserve this earlier model's complete boards. *)
-    "2efe34e2701e18b9d95f66dff1a398ed13e94ca6c52647ed4ba0cb9cc29561f3"},
+    "2efe34e2701e18b9d95f66dff1a398ed13e94ca6c52647ed4ba0cb9cc29561f3",
+    (* Photon identities expand legal boards without changing state or action encoders. *)
+    "3b8907fa37e66726effa44cb64234697978c90a5af9d7c2d0c43d6119e149404",
+    (* The linear-conservation correction removes invalid edits; encodings are unchanged. *)
+    "ed0befdddb5f95f968e9b6abac4f1828495d18ce60b975fe5d4cedf62f37c615"},
     Lookup[meta, "RuntimeCoreSourceSHA256", None]];
 
 modelPaths[dir_] := With[{stem = Switch[$policyMethod,
@@ -1564,15 +1672,28 @@ loadUnscrambleModel[dir_] := Module[{paths, meta, net, arrays = None, encoding =
 (* ::Subsection::Closed:: *)
 (*Candidate Scoring*)
 
-scoreCandidates[expr_, rules_, cands_] := Module[{scores, features},
+scoreCompactCandidateChunks[expr_, rules_, cands_List] := Module[
+  {stateVector, chunks, featureFunction, scoreFunction, features, scores, batches},
+  If[cands === {} || !IntegerQ[$candidateBatchSize] || $candidateBatchSize < 1, Return[$Failed]];
+  stateVector = compactPolicyStateVector[$compactWeights, stateFeature[expr, rules, stateLegIDs[expr, rules]]];
+  If[stateVector === $Failed, Return[$Failed]];
+  featureFunction = If[$compactDescriptorEncoding === "ParticleRoleTokens", compactParticleFeatures, compactActionFeatures];
+  scoreFunction = If[$compactDescriptorEncoding === "ParticleRoleTokens", compactParticleCandidateScores, compactPolicyCandidateScores];
+  chunks = Partition[cands, UpTo[$candidateBatchSize]];
+  batches = Map[Function[chunk,
+    features = featureFunction[expr, rules, chunk];
+    If[features === $Failed, Return[$Failed, Module]];
+    scores = scoreFunction[$compactWeights, stateVector, features];
+    If[scores === $Failed || Length[scores] =!= Length[chunk], Return[$Failed, Module]];
+    scores
+  ], chunks];
+  Flatten[batches]
+];
+
+scoreCandidates[expr_, rules_, cands_] := Module[{scores},
   Which[
     $policyMethod === "CompactActions",
-    features = If[$compactDescriptorEncoding === "ParticleRoleTokens",
-      compactParticleFeatures[expr, rules, cands], compactActionFeatures[expr, rules, cands]];
-    If[features === $Failed, Return[$Failed]];
-    scores = If[$compactDescriptorEncoding === "ParticleRoleTokens", compactParticlePolicyScores, compactPolicyScores][$compactWeights,
-      <|"State" -> stateFeature[expr, rules, stateLegIDs[expr, rules]],
-        "Candidates" -> Developer`ToPackedArray[features]|>],
+    scores = scoreCompactCandidateChunks[expr, rules, cands],
     $policyMethod === "ReverseMoves",
     If[Length[cands] > $moveSlots, Message[TrainUnscrambleNet::slots, Length[cands], $moveSlots]; Return[$Failed]];
     scores = Flatten[$modelNet[moveFeatures[expr, rules], TargetDevice -> "CPU"]];
@@ -1616,14 +1737,15 @@ expressionTermCounts[expr_] := withProtectedPropagators[expr, Function[body,
     "ExpandedTerms" -> Total[momentumBranchCount[
       Flatten[momentumSlots /@ Join[chainsIn[#], tracesIn[#]], 1]] & /@ mons]|>]]];
 
-(* Scrambling and inference share exactly the same candidate vocabulary. *)
+(* Random scrambles use the reversible subset of the inference vocabulary. *)
 scramblePair[{rules_List, amp_}, n_, seed_, record_] := Module[
   {original = canonicalAmplitude[amp, rules], expr, moves, pick, next, history = {}},
   expr = original;
   BlockRandom[
     If[IntegerQ[seed], SeedRandom[seed]];
     Do[
-      moves = Select[legalMoves[expr, rules], #["Name"] =!= "Stop" &];
+      moves = Select[legalMoves[expr, rules],
+        #["Name"] =!= "Stop" && TrueQ[Lookup[#, "ScrambleEligible", True]] &];
       If[moves === {}, Break[]];
       pick = RandomChoice[moves]; next = applyCandidate[expr, pick];
       AppendTo[history, <|"Before" -> expr, "After" -> next, "Candidate" -> pick|>];
@@ -1848,6 +1970,214 @@ makeSimplificationRouteJobs[routes_, count_] := Module[{jobs},
 
 trainingJobChannels[job_] := Replace[normalizeOnShellChannels[Lookup[job, "OnShellChannels", $onShellChannels]],
   channels_List :> normalizeOnShellChannels[Map[Lookup[Lookup[job, "LegPermutation", <||>], #, #] &, channels, {2}]]];
+
+(* ::Subsection::Closed:: *)
+(*Model-Guided Training Preparation*)
+
+trainingFiniteScoresQ[scores_, count_Integer] := ListQ[scores] && Length[scores] === count &&
+  AllTrue[scores, NumberQ[#] && TrueQ[Im[#] == 0 && Abs[#] < Infinity] &];
+
+(* Encode the state once; full-board audits never require whole-result encoding. *)
+trainingCompactCandidateScores[weights_Association, expression_, rules_List, candidates_List,
+    batch_Integer:128] := Module[{state, scores},
+  If[batch < 1 || candidates === {}, Return[$Failed]];
+  state = compactPolicyStateVector[weights, stateFeature[expression, rules, stateLegIDs[expression, rules]]];
+  If[state === $Failed, Return[$Failed]];
+  scores = Flatten[Map[Function[chunk, Module[{features},
+    features = compactParticleFeatures[expression, rules, chunk];
+    If[features === $Failed, $Failed, compactParticleCandidateScores[weights, state, features]]]],
+    Partition[candidates, UpTo[batch]]]];
+  If[trainingFiniteScoresQ[scores, Length[candidates]], scores, $Failed]
+];
+trainingCompactCandidateScores[___] := $Failed;
+
+trainingFullBoardAudit[candidates_List, labels_List, scores_List] := Module[
+  {positive, alternative, best, other, probabilities, top},
+  If[candidates === {} || !trainingFiniteScoresQ[scores, Length[candidates]] ||
+      Length[labels] =!= Length[candidates] || !AllTrue[labels, MemberQ[{0, 1}, #] &] ||
+      Total[labels] == 0 || !AllTrue[candidates, AssociationQ],
+    Return[<|"Passed" -> False, "Reason" -> "InvalidFullBoardAudit"|>]];
+  positive = Flatten[Position[labels, 1]]; alternative = Complement[Range[Length[labels]], positive];
+  best = Max[scores[[positive]]]; other = If[alternative === {}, Null, Max[scores[[alternative]]]];
+  probabilities = Exp[scores - Max[scores]]; probabilities /= Total[probabilities];
+  top = First[Ordering[scores, -1]];
+  <|"Passed" -> True, "Scope" -> "FullLegalBoard", "FullActionCount" -> Length[candidates],
+    "TeacherCount" -> Length[positive], "TeacherRank" -> 1 + Count[scores, value_ /; value > best],
+    "TeacherProbability" -> Total[probabilities[[positive]]],
+    "TeacherMargin" -> If[other === Null, Null, best - other],
+    "TopChoiceTeacher" -> MemberQ[positive, top], "TopChoiceIdentity" -> candidates[[top]]["Name"]|>
+];
+trainingFullBoardAudit[___] := <|"Passed" -> False, "Reason" -> "InvalidFullBoardAudit"|>;
+
+trainingContinuationDefaults = <|"MaxAttempts" -> 2, "RolloutSteps" -> 2, "MaxDepth" -> 2,
+  "BeamWidth" -> 4, "MaxNodes" -> 32, "MaxCandidatesPerNode" -> 256,
+  "Seconds" -> 120, "StepTimeLimit" -> 30, "MaxExpressionLeaves" -> 20000,
+  "OnShellChannels" -> Automatic, "MomentumConservation" -> True, "AnchorSteps" -> Automatic,
+  "ForbiddenStates" -> {}|>;
+trainingContinuationOptionsQ[settings_] := AllTrue[Lookup[settings,
+  {"MaxAttempts", "RolloutSteps", "MaxDepth", "BeamWidth", "MaxNodes", "MaxCandidatesPerNode", "MaxExpressionLeaves"}],
+    IntegerQ[#] && # > 0 &] && AllTrue[Lookup[settings, {"Seconds", "StepTimeLimit"}],
+    NumberQ[#] && TrueQ[Im[#] == 0 && 0 < # < Infinity] &] &&
+  MemberQ[{True, False}, settings["MomentumConservation"]] &&
+  ListQ[settings["ForbiddenStates"]] && FreeQ[settings["ForbiddenStates"], $Failed | _Missing] &&
+  (settings["OnShellChannels"] === Automatic || MatchQ[settings["OnShellChannels"], {{_Integer ..} ...}]);
+trainingContinuationKey[state_] := Hash[canonicalChains[state], "SHA256"];
+
+trainingVerifyContinuation[states_List, rules_List, settings_Association] := Module[{job, verified, normalized},
+  If[!trainingContinuationOptionsQ[settings] || Length[states] < 2 || !FreeQ[states, $Failed | _Missing] ||
+      !AllTrue[states, LeafCount[#] <= settings["MaxExpressionLeaves"] &],
+    Return[<|"Passed" -> False, "Reason" -> "InvalidOrCyclicContinuation"|>]];
+  verified = Block[{$onShellChannels = settings["OnShellChannels"],
+      $useMomentumConservation = settings["MomentumConservation"]},
+    TimeConstrained[
+      normalized = canonicalAmplitude[#, rules] & /@ states;
+      If[!DuplicateFreeQ[trainingContinuationKey /@ normalized] ||
+          !AllTrue[normalized, LeafCount[#] <= settings["MaxExpressionLeaves"] &],
+        Return[<|"Passed" -> False, "Reason" -> "InvalidOrCyclicContinuation"|>, Module]];
+      job = <|"Name" -> "Learner recovery", "Pair" -> {rules, First[normalized]}, "States" -> normalized|>;
+      verifiedSimplificationRoute[job, <|"StepTimeLimit" -> settings["StepTimeLimit"],
+      "RowFunction" -> Function[{state, target, candidates, labels, step},
+        <|"Identity" -> candidates[[First[FirstPosition[labels, 1]]]]["Name"]|>]|>],
+      settings["Seconds"], $Failed]];
+  If[verified === $Failed, <|"Passed" -> False, "Reason" -> "UnverifiedContinuation"|>,
+    <|"Passed" -> True, "States" -> verified["States"],
+      "RouteIdentities" -> Most[Lookup[verified["Rows"], "Identity"]], "EndpointVerified" -> True|>]
+];
+
+(* Search only a bounded bridge. The known suffix still has to pass the same
+   streaming legal-edge verifier as the original curated route. *)
+trainingRecoverContinuation[pair:{rules_List, _}, anchors_List, scorer_, options_Association:<||>] := Module[
+  {settings = Join[trainingContinuationDefaults, options], result},
+  If[!trainingContinuationOptionsQ[settings] || anchors === {} ||
+      !FreeQ[anchors, $Failed | _Missing], Return[<|"Passed" -> False, "Reason" -> "InvalidRecoveryOptions"|>]];
+  result = TimeConstrained[Block[{$onShellChannels = settings["OnShellChannels"],
+      $useMomentumConservation = settings["MomentumConservation"]}, Module[
+    {known, frontier, visited = <||>, nodes = 0, expression, path, depth, candidates, scores,
+      selected, next, key, matches, states, proof, children, deltas, candidateDelta, targetIndices,
+      test, tag = Unique[], denominatorSet, forbidden},
+    known = canonicalAmplitude[#, rules] & /@ anchors;
+    expression = canonicalAmplitude[pair[[2]], rules];
+    forbidden = trainingContinuationKey[canonicalAmplitude[#, rules]] & /@ settings["ForbiddenStates"];
+    If[!AllTrue[Prepend[known, expression], LeafCount[#] <= settings["MaxExpressionLeaves"] &],
+      Return[<|"Passed" -> False, "Reason" -> "RecoveryExpressionLimit"|>, Module]];
+    denominatorSet = DeleteDuplicates[Cases[expression, _PropDen, Infinity]];
+    frontier = {<|"Expression" -> expression, "States" -> {expression}|>};
+    Catch[Do[
+      children = {};
+      Do[
+        If[nodes >= settings["MaxNodes"], Throw[<|"Passed" -> False, "Reason" -> "RecoveryNodeLimit",
+          "VisitedNodes" -> nodes|>, tag]];
+        expression = node["Expression"]; path = node["States"]; key = trainingContinuationKey[expression];
+        If[KeyExistsQ[visited, key], Continue[]]; visited[key] = True; nodes++;
+        test[index_, bridge_] := Module[{candidateStates, verified},
+          candidateStates = Join[bridge, Drop[known, index]];
+          If[Length[candidateStates] < 2, Return[False]];
+          If[Intersection[trainingContinuationKey /@ candidateStates, forbidden] =!= {}, Return[False]];
+          If[!AllTrue[candidateStates, LeafCount[#] <= settings["MaxExpressionLeaves"] &], Return[False]];
+          If[!AllTrue[candidateStates, Complement[DeleteDuplicates[Cases[#, _PropDen, Infinity]],
+              denominatorSet] === {} &], Return[False]];
+          verified = trainingVerifyContinuation[candidateStates, rules, settings];
+          If[TrueQ[verified["Passed"]], Throw[Join[verified, <|"ReachedAnchorIndex" -> index,
+            "BridgeSteps" -> Length[bridge] - 1, "VisitedNodes" -> nodes|>], tag]]; False
+        ];
+        matches = Reverse[Flatten[Position[trainingContinuationKey /@ known, key]]];
+        Do[If[samePoly[expression, known[[index]]], test[index, path]], {index, matches}];
+        If[depth >= settings["MaxDepth"], Continue[]];
+        candidates = legalMoves[expression, rules];
+        If[candidates === {}, Continue[]];
+        (* Match a one-edit rejoin using deltas before constructing trial results. *)
+        deltas = GroupBy[Range[Length[known]], trainingContinuationKey[known[[#]] - expression] &];
+        Do[If[candidate["Name"] === "Stop", Continue[]];
+          candidateDelta = canonicalChains[candidate["Insert"] - candidate["Subtract"]];
+          targetIndices = Reverse[Lookup[deltas, trainingContinuationKey[candidateDelta], {}]];
+          If[targetIndices === {}, Continue[]];
+          next = applyCandidate[expression, candidate];
+          If[MemberQ[forbidden, trainingContinuationKey[next]], Continue[]];
+          Do[If[samePoly[next, known[[index]]], test[index, Append[path, next]]], {index, targetIndices}],
+          {candidate, candidates}];
+        scores = scorer[expression, rules, candidates];
+        If[!trainingFiniteScoresQ[scores, Length[candidates]],
+          Throw[<|"Passed" -> False, "Reason" -> "RecoveryScoringFailed", "VisitedNodes" -> nodes|>, tag]];
+        selected = Take[SortBy[Range[Length[candidates]], {-scores[[#]],
+            Hash[KeyTake[candidates[[#]], {"Name", "Subtract", "Insert"}], "SHA256"]} &],
+          UpTo[settings["MaxCandidatesPerNode"]]];
+        Do[If[candidates[[index]]["Name"] === "Stop", Continue[]];
+          next = applyCandidate[expression, candidates[[index]]];
+          key = trainingContinuationKey[next];
+          If[LeafCount[next] > settings["MaxExpressionLeaves"] || KeyExistsQ[visited, key] ||
+              MemberQ[forbidden, key] || MemberQ[trainingContinuationKey /@ path, key], Continue[]];
+          AppendTo[children, <|"Expression" -> next, "States" -> Append[path, next], "Score" -> scores[[index]]|>],
+          {index, selected}],
+        {node, frontier}];
+      frontier = Take[DeleteDuplicatesBy[SortBy[children,
+          {expressionComplexity[#["Expression"]], -Lookup[#, "Score", 0.], trainingContinuationKey[#["Expression"]]} &],
+        trainingContinuationKey[#["Expression"]] &], UpTo[settings["BeamWidth"]]];
+      If[frontier === {}, Break[]], {depth, 0, settings["MaxDepth"]}];
+      <|"Passed" -> False, "Reason" -> "NoVerifiedRejoin", "VisitedNodes" -> nodes|>, tag]
+  ]], settings["Seconds"], <|"Passed" -> False, "Reason" -> "RecoveryTimeout"|>];
+  result
+];
+trainingRecoverContinuation[___] := <|"Passed" -> False, "Reason" -> "InvalidRecoveryInput"|>;
+
+trainingLearnerRecoveryExamples[job_Association, scorer_, options_Association:<||>] := Module[
+  {settings, original, steps, routes = {}, reports = {}, attempt, result, started},
+  settings = Join[trainingContinuationDefaults, <|"OnShellChannels" -> trainingJobChannels[job],
+    "MomentumConservation" -> Lookup[job, "MomentumConservation", True]|>, options];
+  If[Lookup[job, "Mode", None] =!= "SimplificationRoute" ||
+      !MemberQ[{"Training", "Train"}, Lookup[job, "Kind", None]] ||
+      !MatchQ[Lookup[job, "Pair", None], {_List, _}] || !ListQ[Lookup[job, "States", None]] ||
+      Length[job["States"]] < 2 || !trainingContinuationOptionsQ[settings],
+    Return[<|"Routes" -> {}, "Reports" -> {<|"Passed" -> False, "Reason" -> "InvalidRecoverySource"|>}|>]];
+  original = job["States"];
+  steps = settings["AnchorSteps"];
+  If[steps === Automatic, steps = DeleteDuplicates[Round[Subdivide[1, Length[original] - 1,
+    Max[1, settings["MaxAttempts"] - 1]]]]];
+  If[!ListQ[steps] || !AllTrue[steps, IntegerQ[#] && 1 <= # < Length[original] &],
+    Return[<|"Routes" -> {}, "Reports" -> {<|"Passed" -> False, "Reason" -> "InvalidRecoveryAnchors"|>}|>]];
+  Do[started = AbsoluteTime[];
+    result = TimeConstrained[Block[{$onShellChannels = settings["OnShellChannels"],
+        $useMomentumConservation = settings["MomentumConservation"]}, Module[
+      {state, next, candidates, scores, index, expected, continuation, witness, sourceStep, chosen, learnerVisited},
+      state = canonicalAmplitude[original[[anchor]], job["Pair"][[1]]];
+      learnerVisited = {state};
+      witness = <|"Passed" -> False, "Reason" -> "StayedOnTeacherPath"|>;
+      Do[
+        sourceStep = anchor + step - 1;
+        If[sourceStep >= Length[original], Break[]];
+        candidates = legalMoves[state, job["Pair"][[1]]]; scores = scorer[state, job["Pair"][[1]], candidates];
+        If[!trainingFiniteScoresQ[scores, Length[candidates]],
+          witness = <|"Passed" -> False, "Reason" -> "LearnerScoringFailed"|>; Break[]];
+        index = First[Ordering[scores, -1]]; chosen = candidates[[index]];
+        If[chosen["Name"] === "Stop", witness = <|"Passed" -> False,
+          "Reason" -> "PrematureLearnerStop", "SourceStep" -> sourceStep|>; Break[]];
+        next = applyCandidate[state, chosen]; expected = canonicalAmplitude[original[[sourceStep + 1]], job["Pair"][[1]]];
+        If[LeafCount[next] > settings["MaxExpressionLeaves"],
+          witness = <|"Passed" -> False, "Reason" -> "LearnerExpressionLimit"|>; Break[]];
+        If[samePoly[next, expected], state = next; AppendTo[learnerVisited, next]; Continue[]];
+        continuation = trainingRecoverContinuation[{job["Pair"][[1]], next}, Drop[original, sourceStep - 1],
+          scorer, Join[settings, <|"ForbiddenStates" -> Join[settings["ForbiddenStates"], learnerVisited],
+            "Seconds" -> Max[0.001, settings["Seconds"] - (AbsoluteTime[] - started)]|>]];
+        witness = Join[KeyDrop[continuation, {"States", "RouteIdentities"}],
+          <|"SourceStep" -> sourceStep, "LearnerIdentity" -> chosen["Name"]|>];
+        If[TrueQ[continuation["Passed"]],
+          witness = Join[witness, <|"Route" -> Join[job,
+            <|"Name" -> job["Name"] <> " / learner recovery " <> ToString[anchor],
+              "ReferenceName" -> Lookup[job, "ReferenceName", job["Name"]],
+              "Pair" -> {job["Pair"][[1]], First[continuation["States"]]},
+              "States" -> continuation["States"], "RouteIdentities" -> continuation["RouteIdentities"],
+              "Steps" -> Length[continuation["States"]] - 1, "ModelRecovery" -> True,
+              "Curated" -> True, "RecoverySourceStep" -> sourceStep,
+              "EndpointVerified" -> True|>]|>]]; Break[], {step, settings["RolloutSteps"]}]; witness
+    ]], settings["Seconds"], <|"Passed" -> False, "Reason" -> "LearnerRecoveryTimeout"|>];
+    If[TrueQ[Lookup[result, "Passed", False]] && AssociationQ[Lookup[result, "Route", None]],
+      AppendTo[routes, result["Route"]]];
+    AppendTo[reports, Join[KeyDrop[result, "Route"], <|"AnchorStep" -> anchor,
+      "Seconds" -> N[AbsoluteTime[] - started]|>]],
+    {anchor, Take[steps, UpTo[settings["MaxAttempts"]]]}];
+  <|"Routes" -> routes, "Reports" -> reports|>
+];
+trainingLearnerRecoveryExamples[___] := <|"Routes" -> {},
+  "Reports" -> {<|"Passed" -> False, "Reason" -> "InvalidRecoverySource"|>}|>;
 
 (* Streaming consumers encode a verified edge immediately, rather than keeping
    hundreds of full candidate boards alive until the entire path is checked. *)
@@ -2185,6 +2515,7 @@ initializeInferenceWorkers[workers_List, dir_String, settings_Association, secon
       Unscrambling`Private`$policyMethod = Lookup[config, "PolicyMethod", "CandidateScorer"];
       Unscrambling`Private`$onShellChannels = Lookup[config, "OnShellChannels", Automatic];
       Unscrambling`Private`$useMomentumConservation = Lookup[config, "MomentumConservation", True];
+      Unscrambling`Private`$candidateBatchSize = Lookup[config, "CandidateBatchSize", 128];
       loaded = Unscrambling`Private`loadUnscrambleModel[modelDirectory];
       <|"RequestID" -> requestID, "Initialized" -> TrueQ[loaded], "WorkerID" -> $KernelID|>
     ]] === $Failed, initialized = False]
@@ -2474,6 +2805,7 @@ UnscrambleSpinorAmplitudes::method = "PolicyMethod must be CandidateScorer, Reve
 UnscrambleSpinorAmplitudes::directory = "ModelDirectory must be Automatic or a directory path string.";
 UnscrambleSpinorAmplitudes::scores = "The model did not return one numeric score per candidate.";
 UnscrambleSpinorAmplitudes::options = "MaxSteps must be Infinity or a nonnegative integer; Attempts and MaxStagnantSteps must be positive integers; TimeLimit must be a positive number of seconds.";
+UnscrambleSpinorAmplitudes::batchsize = "CandidateBatchSize must be a positive integer.";
 UnscrambleSpinorAmplitudes::progress = "ProgressReporting must be Automatic, True, or False.";
 UnscrambleSpinorAmplitudes::kernels = "Kernels must be Automatic or a positive integer specifying local inference workers.";
 UnscrambleSpinorAmplitudes::kernellimit = "Requested `1` inference workers; using `2` available local workers.";
@@ -2530,7 +2862,8 @@ runUnscramble[{rules_List, amplitude_}, record_, maxSteps_, attempts_, dir_] := 
     "CurrentTerms" -> currentCounts["Terms"], "BestTerms" -> bestCounts["Terms"],
     "CurrentExpandedTerms" -> currentCounts["ExpandedTerms"], "BestExpandedTerms" -> bestCounts["ExpandedTerms"],
     "CurrentComplexity" -> bestScore, "BestComplexity" -> bestScore,
-    "StagnantSteps" -> 0, "MaxStagnantSteps" -> $maxStagnantSteps, "NeutralSplits" -> 0|>;
+    "StagnantSteps" -> 0, "MaxStagnantSteps" -> $maxStagnantSteps, "NeutralSplits" -> 0,
+    "CandidateBatchSize" -> $candidateBatchSize|>;
   withUnscrambleProgress[TimeConstrained[
   loaded = loadUnscrambleModel[dir];
   If[!loaded, Message[UnscrambleSpinorAmplitudes::nomodel, dir];
@@ -2605,7 +2938,8 @@ runParallelUnscramble[{rules_List, amplitude_}, record_, maxSteps_, attempts_, d
     "RequestedWorkers" -> spec, "Attempts" -> attempts, "Steps" -> 0, "Restarts" -> 0,
     "Generation" -> generation, "MaxStagnantSteps" -> $maxStagnantSteps,
     "BestTerms" -> 0, "BestExpandedTerms" -> 0, "BestComplexity" -> Null,
-    "Routes" -> {}, "NeutralSplits" -> 0, "DuplicateAvoided" -> 0, "LoopAvoided" -> 0|>;
+    "Routes" -> {}, "NeutralSplits" -> 0, "DuplicateAvoided" -> 0, "LoopAvoided" -> 0,
+    "CandidateBatchSize" -> $candidateBatchSize|>;
   refresh[stage_] := (progress = Join[progress, <|"Stage" -> stage, "Workers" -> Length[workers],
     "Generation" -> generation, "Restarts" -> restarts, "Steps" -> totalSteps,
     "BestTerms" -> bestCounts["Terms"], "BestExpandedTerms" -> bestCounts["ExpandedTerms"],
@@ -2739,7 +3073,7 @@ runParallelUnscramble[{rules_List, amplitude_}, record_, maxSteps_, attempts_, d
     outcome
   ];
   settings = <|"PolicyMethod" -> $policyMethod, "OnShellChannels" -> $onShellChannels,
-    "MomentumConservation" -> $useMomentumConservation|>;
+    "MomentumConservation" -> $useMomentumConservation, "CandidateBatchSize" -> $candidateBatchSize|>;
   seed = If[IntegerQ[seedSpec], seedSpec, RandomInteger[{0, 2^31 - 1}]];
   withUnscrambleProgress[
     CheckAbort[
@@ -2771,6 +3105,7 @@ configuredRun[pair:{_List, _}, record_, OptionsPattern[UnscrambleTrace]] := Bloc
   {$onShellChannels = normalizeOnShellChannels[OptionValue["OnShellChannels"]],
     $useMomentumConservation = OptionValue["MomentumConservation"],
     $maxStagnantSteps = OptionValue["MaxStagnantSteps"], $timeLimit = OptionValue["TimeLimit"],
+    $candidateBatchSize = OptionValue["CandidateBatchSize"],
     $progressReporting = OptionValue["ProgressReporting"],
     $policyMethod = Switch[OptionValue["Model"], Automatic, OptionValue["PolicyMethod"],
       "CandidateScorer" | "Current", "CandidateScorer", "CompactActions", "CompactActions", _, $Failed]},
@@ -2779,6 +3114,8 @@ configuredRun[pair:{_List, _}, record_, OptionsPattern[UnscrambleTrace]] := Bloc
     Message[UnscrambleSpinorAmplitudes::method]; Return[$Failed]];
   If[!MatchQ[OptionValue["ModelDirectory"], Automatic | _String],
     Message[UnscrambleSpinorAmplitudes::directory]; Return[$Failed]];
+  If[!IntegerQ[$candidateBatchSize] || $candidateBatchSize < 1,
+    Message[UnscrambleSpinorAmplitudes::batchsize]; Return[$Failed]];
   If[!TrueQ[OptionValue["MaxSteps"] === Infinity ||
         (IntegerQ[OptionValue["MaxSteps"]] && OptionValue["MaxSteps"] >= 0)] ||
       !IntegerQ[OptionValue["Attempts"]] || OptionValue["Attempts"] < 1 ||

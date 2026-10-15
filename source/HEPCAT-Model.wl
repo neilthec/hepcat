@@ -763,7 +763,8 @@ UnHatSpinors[amp_]:=amp/.SpinorHat[a__]:>Spinor[a]
    be used in the same notebook without shared state. *)
 
 buildModelData[model_] := Module[
-  {names, nameQ, anti, mass, spin2, rank, vertices, bySorted, combineLookup},
+  {names, nameQ, anti, mass, spin2, rank, vertices, bySorted, combineLookup,
+   helicities, internalSpecies, currentVertices, currentBySorted},
   names = DeleteDuplicates @ Flatten[model[[1, All, {2, 3}]]];
   nameQ = AssociationThread[names, True];
   anti = Association @ Flatten[
@@ -778,6 +779,17 @@ buildModelData[model_] := Module[
     {#[[2]] -> #[[5]], #[[3]] -> #[[5]]} & /@ model[[1]],
     1
   ];
+  helicities = Association @ Select[
+    {"A" -> {"A.+", "A.-"}, "G" -> {"G.+", "G.-"}},
+    Function[pair, With[{ps = Last[pair]},
+      AllTrue[ps, KeyExistsQ[nameQ, #] && Lookup[mass, #] === 0 &&
+          Lookup[spin2, #] === 2 &] && Lookup[anti, ps[[1]]] === ps[[2]] &&
+        Lookup[anti, ps[[2]]] === ps[[1]] && !KeyExistsQ[nameQ, First[pair]]]]
+  ];
+  internalSpecies = Association @ Flatten @ KeyValueMap[
+    Function[{p, hs}, (# -> p & /@ hs)], helicities];
+  KeyValueMap[Function[{p, hs},
+    AppendTo[names, p]; anti[p] = p; mass[p] = 0; spin2[p] = 2], helicities];
   rank = AssociationThread[names, Range @ Length[names]];
   vertices = DeleteCases[
     Map[
@@ -801,17 +813,24 @@ buildModelData[model_] := Module[
     Nothing
   ];
   bySorted = GroupBy[vertices, #["Sorted"] &];
+  (* Only internal currents use generic vector names. Keep exact model rows
+     for attachment, where external helicities and shared-edge choices agree. *)
+  currentVertices = Flatten @ Map[Function[row,
+    Map[Function[ps, Join[row, <|"CurrentParticles" -> ps|>]],
+      Tuples[If[KeyExistsQ[internalSpecies, #], {#, internalSpecies[#]}, {#}] & /@
+        row["Particles"]]]], vertices];
+  currentBySorted = GroupBy[currentVertices, Sort[#["CurrentParticles"]] &];
   combineLookup = Merge[
     Flatten[
       Table[
-        Module[{ps = vertices[[j, "Particles"]], nv},
+        Module[{ps = currentVertices[[j, "CurrentParticles"]], nv},
           nv = Length[ps];
           Table[
-            {nv - 1, Sort[Delete[ps, i]]} -> {ps[[i]]},
+            {nv - 1, Sort[Delete[ps, i]]} -> {Lookup[internalSpecies, ps[[i]], ps[[i]]]},
             {i, nv}
           ]
         ],
-        {j, Length[vertices]}
+        {j, Length[currentVertices]}
       ],
       1
     ],
@@ -825,6 +844,9 @@ buildModelData[model_] := Module[
     "Rank" -> rank,
     "Vertices" -> vertices,
     "BySorted" -> bySorted,
+    "CurrentBySorted" -> currentBySorted,
+    "InternalSpecies" -> internalSpecies,
+    "InternalHelicities" -> helicities,
     "CombineLookup" -> combineLookup,
     "Valences" -> Sort @ DeleteDuplicates[vertices[[All, "Valence"]]]
   |>
@@ -837,11 +859,11 @@ buildModelData[model_] := Module[
 
 
 (* ::Input::Initialization:: *)
-CreateDiagrams::usage = "CreateDiagrams[p1, p2, ..., model] generates tree-level constructive Feynman diagrams for the process with external particles p1, p2, ... in a HEPCAT model.";
+CreateDiagrams::usage = "CreateDiagrams[p1, p2, ..., model] generates tree-level constructive Feynman diagrams. Each internal photon or gluon is one generic line containing both allowed helicities; external helicities remain fixed.";
 CreateArrowDiagram::usage = "CreateArrowDiagram[diag] draws a labeled tree diagram. Options: \"ShowVertexExpressions\", \"ShowPropagatorExpressions\".";
 CreateArrowDiagrams::usage = "CreateArrowDiagrams[{diag1, diag2, ...}] draws a list of diagrams.";
-diagramAmplitude::usage = "diagramAmplitude[diag] returns the constructive amplitude of a single diagram, including propagator and spin-index structure, with external x factors expanded into reference-spinor chains and the diagram's known mass rules applied.";
-diagramAmplitudes::usage = "diagramAmplitudes[{diag1, diag2, ...}] returns {{massRules, amplitude}, ...}, with external x factors expanded into reference-spinor chains and each diagram's known mass rules already applied to its amplitude. A supported four-point pair that differs only by the helicity of one internal massless spin-1 line is returned as one entry: the two 3-point vertex factors times the simplified kinematic form. Unsupported pairs retain both diagram contributions. massRules replaces Mass[i] for every external leg, then Mass[Multiparticle[...]] for both ends of every internal line.";
+diagramAmplitude::usage = "diagramAmplitude[diag] returns the constructive amplitude, summing the correlated helicities of every internal photon/gluon, including propagator and spin-index structure, with external x factors expanded and known mass rules applied.";
+diagramAmplitudes::usage = "diagramAmplitudes[diagrams] returns {{massRules, amplitude}, ...}, one entry per generated diagram. Internal photon/gluon helicities are summed inside each amplitude. Supported four-point vector exchanges use the simplified kinematic form. Legacy helicity-resolved four-point diagram lists are also accepted. Known mass rules are applied to the amplitude and returned for external legs and both ends of every internal line.";
 
 
 
@@ -976,7 +998,7 @@ diagramKey[curr_] := Sort @ KeyValueMap[
 (*Recursive generation*)
 
 generateRawDiagrams[ext_List, md_] := Module[
-  {n, fullExternals, startCurrents, combineLookup, fuse, collected},
+  {n, fullExternals, startCurrents, combineLookup, fuse, collected, seen = <||>},
   n = Length[ext];
   If[n < 3, Return[{}]];
   fullExternals = Range[n];
@@ -985,21 +1007,24 @@ generateRawDiagrams[ext_List, md_] := Module[
   collected = First[
     Reap[
       fuse[currents_, nextId_] := Module[
-        {nc, parts, distPos, distinguished, others, subsets, chosen, remaining, lefts},
+        {nc, parts, ConstructiveDiagrams`Private`state, subsets, chosen, remaining, lefts},
+        (* Different construction orders can reach the same current forest.
+           Keep all subsets, including trees with leg 1 at a middle vertex. *)
+        ConstructiveDiagrams`Private`state =
+          Sort[({#["Particle"], #["Externals"], diagramKey[#]} & /@ currents)];
+        If[KeyExistsQ[seen, ConstructiveDiagrams`Private`state], Return[]];
+        AssociateTo[seen, ConstructiveDiagrams`Private`state -> True];
         nc = Length[currents];
         parts = currents[[All, "Particle"]];
-        If[Lookup[md["BySorted"], Key[Sort[parts]], {}] =!= {},
+        If[Lookup[md["CurrentBySorted"], Key[Sort[parts]], {}] =!= {},
           Sow[glueCurrents[currents, None, nextId, fullExternals, md], "diag"]
         ];
         If[nc <= 3, Return[]];
-        distPos = First @ Ordering[Min /@ currents[[All, "Externals"]]];
-        distinguished = currents[[distPos]];
-        others = Delete[currents, distPos];
         Do[
-          subsets = Subsets[Range @ Length[others], {k}];
+          subsets = Subsets[Range[nc], {k}];
           Do[
-            chosen = Prepend[others[[subsets[[si]]]], distinguished];
-            remaining = others[[Complement[Range @ Length[others], subsets[[si]]]]];
+            chosen = currents[[subsets[[si]]]];
+            remaining = currents[[Complement[Range[nc], subsets[[si]]]]];
             lefts = Lookup[
               combineLookup,
               Key[{Length[chosen], Sort[chosen[[All, "Particle"]]]}],
@@ -1014,7 +1039,7 @@ generateRawDiagrams[ext_List, md_] := Module[
             ],
             {si, Length[subsets]}
           ],
-          {k, 1, nc - 3}
+          {k, Select[md["Valences"] - 1, 2 <= # <= nc - 2 &]}
         ]
       ];
       fuse[startCurrents, n + 1];,
@@ -1044,8 +1069,13 @@ replaceVertexIndices[expr_, slotRules_Association] := expr /. {
 
 legParticles[legs_List] := Map[#["Particle"] &, legs];
 
-vertexRowMatches[incidentLegs_List, rowParticles_List] :=
-  Select[Permutations[incidentLegs], legParticles[#] === rowParticles &];
+vertexRowMatches[incidentLegs_List, rowParticles_List, internalSpecies_: <||>] :=
+  Select[Permutations[incidentLegs],
+    And @@ MapThread[Function[{ConstructiveDiagrams`Private`leg, p},
+      ConstructiveDiagrams`Private`leg["Particle"] === p ||
+        (ConstructiveDiagrams`Private`leg["Kind"] === "Internal" &&
+          Lookup[internalSpecies, p, p] === ConstructiveDiagrams`Private`leg["Particle"])],
+      {#, rowParticles}] &];
 
 vertexIncidentLegData[vertex_, neighbors_List, extMap_, edgeLabels_, edgeIndices_, leafSet_] :=
   Map[
@@ -1070,31 +1100,54 @@ vertexIncidentLegData[vertex_, neighbors_List, extMap_, edgeLabels_, edgeIndices
     neighbors
   ];
 
-vertexStructureInstances[vertex_, incidentLegs_, md_] := Module[
+vertexStructureInstances[vertex_, incidentLegs_, md_, orientations_: <||>] := Module[
   {sorted, rows},
   sorted = Sort[legParticles[incidentLegs]];
-  rows = Lookup[md["BySorted"], Key[sorted], {}];
+  rows = DeleteDuplicatesBy[Lookup[md["CurrentBySorted"], Key[sorted], {}], #["Row"] &];
   Flatten[
     Map[
       Function[row,
         Map[
           Function[ordered,
-            <|
-              "Vertex" -> vertex,
-              "IncidentLegs" -> ordered,
-              "ModelRow" -> row["Row"],
-              "SlotRules" -> AssociationThread[Range @ Length[ordered], Map[#["Index"] &, ordered]],
-              "Expression" -> replaceVertexIndices[row["Expression"],
-                AssociationThread[Range @ Length[ordered], Map[#["Index"] &, ordered]]]
-            |>
+            Module[{resolved, ConstructiveDiagrams`Private`choices},
+              resolved = MapThread[Join[#1, <|"Particle" -> #2|>] &,
+                {ordered, row["Particles"]}];
+              ConstructiveDiagrams`Private`choices = Association @ MapThread[
+                Function[{ConstructiveDiagrams`Private`leg, p},
+                If[ConstructiveDiagrams`Private`leg["Kind"] === "Internal" &&
+                    KeyExistsQ[md["InternalHelicities"], ConstructiveDiagrams`Private`leg["Particle"]],
+                  ConstructiveDiagrams`Private`leg["Source"] ->
+                    If[vertex === orientations[ConstructiveDiagrams`Private`leg["Source"]]["ParticleVertex"],
+                  p, Lookup[md["Anti"], p, p]], Nothing]], {ordered, row["Particles"]}];
+              <|
+                "Vertex" -> vertex,
+                "IncidentLegs" -> resolved,
+                "InternalHelicities" -> ConstructiveDiagrams`Private`choices,
+                "ModelRow" -> row["Row"],
+                "SlotRules" -> AssociationThread[Range @ Length[ordered], Map[#["Index"] &, ordered]],
+                "Expression" -> replaceVertexIndices[row["Expression"],
+                  AssociationThread[Range @ Length[ordered], Map[#["Index"] &, ordered]]]
+              |>
+            ]
           ],
-          vertexRowMatches[incidentLegs, row["Particles"]]
+          vertexRowMatches[incidentLegs, row["Particles"], md["InternalSpecies"]]
         ]
       ],
       rows
     ],
     1
   ]
+];
+
+compatibleHelicities[a_Association, b_Association] :=
+  AllTrue[Intersection[Keys[a], Keys[b]], a[#] === b[#] &];
+
+diagramHelicityAssignments[structures_Association] := Fold[
+  Function[{assignments, ConstructiveDiagrams`Private`choices}, DeleteDuplicates @ Flatten[
+    Table[If[compatibleHelicities[a, b], KeySort[Join[a, b]], Nothing],
+      {a, assignments}, {b, ConstructiveDiagrams`Private`choices}], 1]],
+  {<||>},
+  (DeleteDuplicates[Lookup[#, "InternalHelicities", <||>]] & /@ Values[structures])
 ];
 
 internalPropagatorData[edgeLabels_, edgeIndices_, edgeOrientation_, md_] :=
@@ -1125,7 +1178,7 @@ internalPropagatorData[edgeLabels_, edgeIndices_, edgeOrientation_, md_] :=
   ];
 
 attachFeynmanRules[raw_, ext_List, md_] := Module[
-  {n, tags, extMap, leafVerts, graph, adj, incident, structures, props, v, nbrs},
+  {n, tags, extMap, leafVerts, graph, adj, incident, structures, props, assignments, sumEdges},
   n = Length[ext];
   tags = tagParticles[ext];
   extMap = AssociationThread[Range[n], tags];
@@ -1145,11 +1198,14 @@ attachFeynmanRules[raw_, ext_List, md_] := Module[
     raw["InternalVertices"]
   ];
   structures = AssociationMap[
-    vertexStructureInstances[#, incident[#], md] &,
+    vertexStructureInstances[#, incident[#], md, raw["EdgeOrientation"]] &,
     raw["InternalVertices"]
   ];
   If[!AllTrue[Values[structures], Length[#] > 0 &], Return[Nothing]];
+  assignments = diagramHelicityAssignments[structures];
+  If[assignments === {}, Return[Nothing]];
   props = internalPropagatorData[raw["EdgeLabels"], raw["EdgeIndices"], raw["EdgeOrientation"], md];
+  sumEdges = Select[Keys[props], KeyExistsQ[md["InternalHelicities"], props[#, "Particle"]] &];
   <|
     "Graph" -> graph,
     "ExternalParticles" -> ext,
@@ -1171,6 +1227,9 @@ attachFeynmanRules[raw_, ext_List, md_] := Module[
     "InternalEdgeIndices" -> raw["EdgeIndices"],
     "IncidentLegData" -> incident,
     "VertexStructures" -> structures,
+    "HelicitySumEdges" -> sumEdges,
+    "HelicityAssignments" -> assignments,
+    "InternalHelicities" -> md["InternalHelicities"],
     "Propagators" -> props,
     "Masses" -> md["Mass"]
   |>
@@ -1187,6 +1246,8 @@ CreateDiagrams[externalParticles___String, model_] := Module[
   {ext = {externalParticles}, md, raw},
   If[Length[ext] < 3, Return[{}]];
   md = buildModelData[model];
+  If[!AllTrue[ext, MemberQ[md["Names"], #] && !KeyExistsQ[md["InternalHelicities"], #] &],
+    Return[{}]];
   raw = generateRawDiagrams[ext, md];
   DeleteCases[attachFeynmanRules[#, ext, md] & /@ raw, Nothing]
 ];
@@ -1272,7 +1333,7 @@ preferredInternalMultiparticle[mp1_Multiparticle, mp2_Multiparticle] :=
 (* Same dummy index on complementary Multiparticles: rewrite one side
    onto the other by momentum conservation. Angle spinors pick up a
    minus, pulled outside SpinorChain; Square spinors do not. *)
-alignInternalMultiparticles[expr_] := Module[
+alignInternalMultiparticles[expr_, edgePartitions_: Automatic] := Module[
   {byIndex, result},
   byIndex = GroupBy[
     Cases[expr, Spinor[__, mp_Multiparticle, idx_Symbol] :> {idx, mp}, Infinity],
@@ -1298,8 +1359,9 @@ alignInternalMultiparticles[expr_] := Module[
      index). Pair complementary partitions the same way. *)
   result = Module[{mps, pairs},
     mps = DeleteDuplicates @ Cases[result, Spinor[_, _, mp_Multiparticle] :> mp, Infinity];
-    pairs = Select[Subsets[mps, {2}],
-      Sort[Join[List @@ #[[1]], List @@ #[[2]]]] === Range[4] &];
+    pairs = If[edgePartitions === Automatic,
+      Select[Subsets[mps, {2}], Sort[Join[List @@ #[[1]], List @@ #[[2]]]] === Range[4] &],
+      Select[edgePartitions, Length[#] === 2 && AllTrue[#, MemberQ[mps, #] &] &]];
     Fold[
       Function[{cur, pair},
         Module[{keep, drop},
@@ -1319,11 +1381,13 @@ alignInternalMultiparticles[expr_] := Module[
 ];
 
 makeDiagramSpinIndicesExplicit[diag_] := Module[
-  {newVertexStructures = diag["VertexStructures"], spinIndices = <||>},
+  {newVertexStructures = diag["VertexStructures"], spinIndices = <||>, nextIndex = 1},
   KeyValueMap[
     Function[{edge, pdata},
       Module[{inds, mpOf},
-        inds = spinIndexSymbols[Lookup[pdata, "Spin2", 0]];
+        inds = If[pdata["Mass"] === 0, {},
+          Table[Symbol["ConstructiveDiagrams`i" <> ToString[nextIndex++]],
+            {Length[spinIndexSymbols[Lookup[pdata, "Spin2", 0]]]}]];
         spinIndices[edge] = inds;
         If[inds === {} || pdata["Mass"] === 0, Return[]];
         mpOf[v_] := diag["InternalEdgeIndices"][edge][v];
@@ -1337,7 +1401,14 @@ makeDiagramSpinIndicesExplicit[diag_] := Module[
                 -1 -> Module[{vs = Last[list], expr},
                   expr = MakeIndicesExplicit[vs["Expression"], mpOf[v], inds];
                   If[v === pdata["AntiparticleVertex"],
-                    expr = expr /. "Upper" -> "Lower"
+                    expr = expr /. {
+                      Spinor["Spin", "Upper", type_, mp_, idx_] /;
+                          mp === mpOf[v] && MemberQ[inds, idx] :>
+                        Spinor["Spin", "Lower", type, mp, idx],
+                      SpinorHat["Spin", "Upper", type_, mp_, idx_] /;
+                          mp === mpOf[v] && MemberQ[inds, idx] :>
+                        SpinorHat["Spin", "Lower", type, mp, idx]
+                    }
                   ];
                   Join[vs, <|"Expression" -> expr|>]
                 ]
@@ -1360,9 +1431,47 @@ symmetrizeMassiveSpin1Indices[expr_, inds_List] :=
     (expr + (expr /. Thread[inds -> Reverse[inds]]))/2
   ];
 
-diagramAmplitude[diag_] := Module[
-  {processed, vertexExpr, propagatorFactors, amp},
-  processed = makeDiagramSpinIndicesExplicit[diag];
+(* Resolve a correlated edge assignment without generating another topology.
+   Keep row/permutation order so each vertex uses the same Last convention. *)
+resolveDiagramHelicities[diag_, assignment_Association] := Module[
+  {structures, labels, orientations, props, incident, data},
+  structures = Map[Select[#, Function[vs,
+    AllTrue[Normal @ Lookup[vs, "InternalHelicities", <||>],
+      Lookup[assignment, First[#], None] === Last[#] &]]] &, diag["VertexStructures"]];
+  labels = Association @ KeyValueMap[Function[{edge, lab}, edge ->
+    If[!KeyExistsQ[assignment, edge], lab,
+      With[{orient = diag["InternalEdgeOrientation"][edge], h = assignment[edge],
+          hs = diag["InternalHelicities"][diag["Propagators"][edge, "Particle"]]},
+        Association @ KeyValueMap[Function[{v, p},
+          v -> If[v === orient["ParticleVertex"], h, First @ DeleteCases[hs, h]]], lab]]]],
+    diag["InternalEdgeLabels"]];
+  orientations = Association @ KeyValueMap[Function[{edge, orient}, edge ->
+    If[!KeyExistsQ[assignment, edge], orient,
+      With[{hs = diag["InternalHelicities"][diag["Propagators"][edge, "Particle"]],
+          swap = assignment[edge] =!= First[diag["InternalHelicities"][diag["Propagators"][edge, "Particle"]]]},
+        Join[orient, <|"Particle" -> First[hs], "Antiparticle" -> Last[hs],
+          "ParticleVertex" -> orient[If[swap, "AntiparticleVertex", "ParticleVertex"]],
+          "AntiparticleVertex" -> orient[If[swap, "ParticleVertex", "AntiparticleVertex"]]|>]]]],
+    diag["InternalEdgeOrientation"]];
+  props = Association @ KeyValueMap[Function[{edge, ConstructiveDiagrams`Private`prop},
+    edge -> Join[ConstructiveDiagrams`Private`prop, orientations[edge]]],
+    diag["Propagators"]];
+  incident = Association @ KeyValueMap[Function[{v, legs},
+    v -> Map[Function[ConstructiveDiagrams`Private`leg,
+      If[ConstructiveDiagrams`Private`leg["Kind"] === "Internal" &&
+          KeyExistsQ[assignment, ConstructiveDiagrams`Private`leg["Source"]],
+        Join[ConstructiveDiagrams`Private`leg,
+          <|"Particle" -> labels[ConstructiveDiagrams`Private`leg["Source"]][v]|>],
+        ConstructiveDiagrams`Private`leg]], legs]], diag["IncidentLegData"]];
+  data = Association @ KeyValueMap[Function[{edge, orient},
+    edge -> Join[orient, <|"EndpointLabels" -> labels[edge]|>]], orientations];
+  Join[KeyDrop[diag, {"HelicitySumEdges", "HelicityAssignments"}],
+    <|"VertexStructures" -> structures, "InternalEdgeLabels" -> labels,
+      "InternalEdgeOrientation" -> orientations, "InternalEdgeData" -> data,
+      "IncidentLegData" -> incident, "Propagators" -> props|>]
+];
+
+diagramVertexExpressions[processed_] := Module[{vertexExpr},
   vertexExpr = Association @ KeyValueMap[
     #1 -> Replace[#2, {{} :> 1, list_List :> Lookup[Last[list], "Expression", 1]}] &,
     processed["VertexStructures"]
@@ -1380,11 +1489,33 @@ diagramAmplitude[diag_] := Module[
     ],
     Lookup[processed, "Propagators", <||>]
   ];
+  vertexExpr
+];
+
+helicityResolvedDiagramAmplitude[diag_] := Module[
+  {processed, vertexExpr, propagatorFactors, amp},
+  processed = makeDiagramSpinIndicesExplicit[diag];
+  vertexExpr = diagramVertexExpressions[processed];
   propagatorFactors = Lookup[Values[processed["Propagators"]], "Factor", 1];
   amp = diagramFermionSign[diag] *
     Times @@ Join[Values[vertexExpr], propagatorFactors]/I;
-  expandExternalXFactors[alignInternalMultiparticles[amp], Length[Lookup[diag, "ExternalParticles", {}]]] /.
+  expandExternalXFactors[alignInternalMultiparticles[amp, Values /@ Values[diag["InternalEdgeIndices"]]],
+      Length[Lookup[diag, "ExternalParticles", {}]]] /.
     diagramMassReplacements[diag]
+];
+
+diagramAmplitude[diag_] := Module[{assignments, resolved, paired},
+  If[Lookup[diag, "HelicitySumEdges", {}] === {},
+    Return[helicityResolvedDiagramAmplitude[diag]]];
+  assignments = Lookup[diag, "HelicityAssignments", {}];
+  If[Length[assignments] =!= 2 || Length[Lookup[diag, "ExternalParticles", {}]] =!= 4,
+    paired = genericFermionCurrentAmplitude[diag];
+    If[!MissingQ[paired], Return[paired]];
+    Return[Total[helicityResolvedDiagramAmplitude[resolveDiagramHelicities[diag, #]] & /@
+      assignments]]];
+  resolved = resolveDiagramHelicities[diag, #] & /@ assignments;
+  paired = genericMasslessSpin1Amplitude[diag, resolved];
+  If[MissingQ[paired], Total[helicityResolvedDiagramAmplitude /@ resolved], paired]
 ];
 
 (* External Mass[i] rules in leg order, then both complementary
@@ -1537,6 +1668,11 @@ masslessSpin1PairAmplitude[diag_] := Module[
   {c, d} = ends[[2, "Index"]];
   particles = Join[ends[[1, "Particle"]], ends[[2, "Particle"]]];
   kinds = spinKindOf[diag, #] & /@ particles;
+  (* The massive-vector formulas divide by matter masses, not by the
+     exchange mass. Massless external gluons need the exact helicity sum. *)
+  If[AnyTrue[Range[Length[particles]],
+      Lookup[diag["Spin2"], particles[[#]], 0] === 2 && kinds[[#]] === "Helicity" &],
+    Return[Missing["UnsupportedMasslessSpin1"]]];
   fa = ends[[1, "Factor"]];
   fb = ends[[2, "Factor"]];
   generic = Which[
@@ -1552,17 +1688,104 @@ masslessSpin1PairAmplitude[diag_] := Module[
   diagramFermionSign[diag]*fa*fb*generic /. diagramMassReplacements[diag]
 ];
 
+genericMasslessSpin1Amplitude[diag_, resolved_List] := Module[{edges, edge, hs, ends},
+  edges = Lookup[diag, "HelicitySumEdges", {}];
+  If[Length[edges] =!= 1 || Length[resolved] =!= 2 ||
+      Length[Lookup[diag, "ExternalParticles", {}]] =!= 4,
+    Return[Missing["UnsupportedMasslessSpin1"]]];
+  edge = First[edges];
+  hs = diag["InternalHelicities"][diag["Propagators"][edge, "Particle"]];
+  If[Sort[Lookup[diag["HelicityAssignments"], edge]] =!= Sort[hs],
+    Return[Missing["IncompleteMasslessSpin1"]]];
+  If[!AllTrue[resolved, AllTrue[Values[#["VertexStructures"]],
+      Length[Last[#]["IncidentLegs"]] === 3 && Last[Last[#]["IncidentLegs"]]["Source"] === edge &] &],
+    Return[Missing["UnsupportedMasslessSpin1"]]];
+  ends = SortBy[vertexMatterEnds[#], Min[#["Index"]] &] & /@ resolved;
+  If[ends[[1]] =!= ends[[2]], Return[Missing["UnequalHelicityCouplings"]]];
+  masslessSpin1PairAmplitude[First[resolved]]
+];
+
+standardFermionVectorVertexQ[vs_] := MatchQ[vs["ModelRow"][[-1]],
+  xFactor[1, 2] SpinorChain[Spinor["Spin" | "Helicity", "Angle", 1],
+    Spinor["Spin" | "Helicity", "Angle", 2]] |
+  xTildeFactor[1, 2] SpinorChain[Spinor["Spin" | "Helicity", "Square", 1],
+    Spinor["Spin" | "Helicity", "Square", 2]]];
+
+diagramMatterSpinor[processed_, ConstructiveDiagrams`Private`leg_, vertex_, chirality_] :=
+  Module[{ConstructiveDiagrams`Private`prop, inds, kind},
+  kind = spinKindOf[processed, ConstructiveDiagrams`Private`leg["Particle"]];
+  If[ConstructiveDiagrams`Private`leg["Kind"] === "External" || kind === "Helicity",
+    Return[Spinor[kind, chirality, ConstructiveDiagrams`Private`leg["Index"]]]];
+  ConstructiveDiagrams`Private`prop = processed["Propagators"][ConstructiveDiagrams`Private`leg["Source"]];
+  inds = processed["SpinIndices"][ConstructiveDiagrams`Private`leg["Source"]];
+  Spinor["Spin", If[vertex === ConstructiveDiagrams`Private`prop["AntiparticleVertex"], "Lower", "Upper"],
+    chirality, ConstructiveDiagrams`Private`leg["Index"], First[inds]]
+];
+
+(* Sew disjoint fermion currents locally. The same four-spinor tensor is
+   valid for composite matter labels; explicit spin indices are spectators.
+   Other vertices (notably shared three-gluon vertices) use the exact sum. *)
+genericFermionCurrentAmplitude[diag_] := Module[
+  {edges, vertices, locals, hs, processed, vertexExpr, factors, ends, legs,
+   angle, square, current, amp},
+  edges = Lookup[diag, "HelicitySumEdges", {}];
+  vertices = Keys[diag["InternalEdgeLabels"][#]] & /@ edges;
+  If[edges === {} || !DuplicateFreeQ[Flatten[vertices]] ||
+      Length[diag["HelicityAssignments"]] =!= 2^Length[edges],
+    Return[Missing["UnsupportedMasslessSpin1"]]];
+  Do[
+    hs = diag["InternalHelicities"][diag["Propagators"][edges[[i]], "Particle"]];
+    Do[
+      locals = Last /@ GatherBy[diag["VertexStructures"][v], #["InternalHelicities"] &];
+      If[Length[locals] =!= 2 ||
+          Sort[Lookup[Lookup[locals, "InternalHelicities"], edges[[i]]]] =!= Sort[hs] ||
+          !AllTrue[locals, Length[#["IncidentLegs"]] === 3 &&
+            Last[#["IncidentLegs"]]["Source"] === edges[[i]] &&
+            (Lookup[diag["Spin2"], #, 0] & /@ Take[legParticles[#["IncidentLegs"]], 2]) === {1, 1} &&
+            (SameQ @@ (Lookup[diag["Masses"], #] & /@ Take[legParticles[#["IncidentLegs"]], 2])) &&
+            standardFermionVectorVertexQ[#] &] ||
+          Length[DeleteDuplicates[({Take[#["IncidentLegs"], 2], #["ModelRow"][[-2]]} & /@ locals)]] =!= 1,
+        Return[Missing["UnsupportedMasslessSpin1"]]],
+      {v, vertices[[i]]}],
+    {i, Length[edges]}];
+  processed = makeDiagramSpinIndicesExplicit[
+    resolveDiagramHelicities[diag, First[diag["HelicityAssignments"]]]];
+  vertexExpr = diagramVertexExpressions[processed];
+  factors = Association @ KeyValueMap[#1 -> #2["Factor"] &, processed["Propagators"]];
+  Do[
+    ends = Last[processed["VertexStructures"][#]] & /@ vertices[[i]];
+    legs = Join @@ (Take[#["IncidentLegs"], 2] & /@ ends);
+    angle = MapThread[diagramMatterSpinor[processed, #1, #2, "Angle"] &,
+      {legs, Flatten[ConstantArray[#, 2] & /@ vertices[[i]]]}];
+    square = MapThread[diagramMatterSpinor[processed, #1, #2, "Square"] &,
+      {legs, Flatten[ConstantArray[#, 2] & /@ vertices[[i]]]}];
+    current = SpinorChain[angle[[1]], angle[[4]]] SpinorChain[square[[2]], square[[3]]] +
+      SpinorChain[angle[[1]], angle[[3]]] SpinorChain[square[[2]], square[[4]]] +
+      SpinorChain[angle[[2]], angle[[4]]] SpinorChain[square[[1]], square[[3]]] +
+      SpinorChain[angle[[2]], angle[[3]]] SpinorChain[square[[1]], square[[4]]];
+    vertexExpr[vertices[[i, 1]]] = -I (Times @@ (#["ModelRow"][[-2]] & /@ ends)) current/
+      PropDen[Mom[processed["Propagators"][edges[[i]], "Index"]], 0];
+    vertexExpr[vertices[[i, 2]]] = 1;
+    factors[edges[[i]]] = 1,
+    {i, Length[edges]}];
+  amp = diagramFermionSign[diag] (Times @@ Join[Values[vertexExpr], Values[factors]])/I;
+  expandExternalXFactors[alignInternalMultiparticles[amp, Values /@ Values[diag["InternalEdgeIndices"]]],
+    Length[diag["ExternalParticles"]]] /. diagramMassReplacements[diag]
+];
+
 diagramAmplitudes[diags_List] := Module[{n, used, out, i, key, j, paired},
   n = Length[diags];
   used = ConstantArray[False, n];
   out = {};
   Do[
     If[used[[i]], Continue[]];
-    key = masslessSpin1PairKey[diags[[i]]];
+    key = If[Lookup[diags[[i]], "HelicitySumEdges", {}] === {},
+      masslessSpin1PairKey[diags[[i]]], None];
     If[key === None,
       AppendTo[out, {diagramMassReplacements[diags[[i]]], diagramAmplitude[diags[[i]]]}],
       j = SelectFirst[Range[i + 1, n],
-        !used[[#]] && masslessSpin1PairKey[diags[[#]]] === key &, None];
+        !used[[#]] && Lookup[diags[[#]], "HelicitySumEdges", {}] === {} &&
+          masslessSpin1PairKey[diags[[#]]] === key &, None];
       If[j === None,
         AppendTo[out, {diagramMassReplacements[diags[[i]]], diagramAmplitude[diags[[i]]]}],
         paired = masslessSpin1PairAmplitude[diags[[i]]];
@@ -1602,6 +1825,8 @@ arrowDirectionData[edge_, internalEdgeLabels_Association, particleToPrint_: Auto
   {lab, ends, printedParticle, targetVertex, sourceVertex},
   lab = Lookup[internalEdgeLabels, edge, Missing["NotFound"]];
   If[MissingQ[lab] || !AssociationQ[lab], Return[Missing["NotAvailable"]]];
+  If[MemberQ[{"A", "G"}, First[Values[lab]]] && Length[DeleteDuplicates[Values[lab]]] === 1,
+    Return[Missing["NotAvailable"]]];
   ends = List @@ edge;
   printedParticle = Replace[particleToPrint, Automatic :> First[DeleteDuplicates[Values[lab]]]];
   targetVertex = SelectFirst[ends, Lookup[lab, #, None] === printedParticle &, Missing["NotFound"]];
@@ -1718,6 +1943,9 @@ CreateArrowDiagram[diag_, OptionsPattern[]] := Module[
           exprList = Lookup[vertexStructures, v, {}];
           shownExpr = Which[
             exprList === {}, Missing["NotAvailable"],
+            Length[DeleteDuplicates[Lookup[exprList, "InternalHelicities", <||>]]] > 1,
+              Grid[({#["InternalHelicities"], TraditionalForm[#["Expression"]]} & /@
+                (Last /@ GatherBy[exprList, Lookup[#, "InternalHelicities", <||>] &]))],
             KeyExistsQ[First[exprList], "Factor"], First[exprList]["Factor"],
             KeyExistsQ[First[exprList], "Expression"], First[exprList]["Expression"],
             True, Missing["NotAvailable"]
@@ -1743,3 +1971,11 @@ CreateArrowDiagram[diag_, OptionsPattern[]] := Module[
 Options[CreateArrowDiagrams] = Options[CreateArrowDiagram];
 CreateArrowDiagrams[diags_List, opts : OptionsPattern[CreateArrowDiagram]] :=
   CreateArrowDiagram[#, opts] & /@ diags;
+
+(* Remove temporary symbols exposed by the earlier diagram implementation,
+   so reloading into an existing notebook also removes its shadow warnings. *)
+Scan[Remove[#] &, Flatten[Names /@ {
+  "ConstructiveDiagrams`state", "ConstructiveDiagrams`state$*",
+  "ConstructiveDiagrams`leg", "ConstructiveDiagrams`leg$*",
+  "ConstructiveDiagrams`choices", "ConstructiveDiagrams`choices$*",
+  "ConstructiveDiagrams`prop", "ConstructiveDiagrams`prop$*"}]];

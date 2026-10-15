@@ -39,9 +39,9 @@ check["all amplitude setting", trainingAmplitudeSetting[] === All];
 ToExpression[First[inputs]];
 ToExpression[inputs[[2]]];
 ToExpression[inputs[[3]]];
-check["notebook loads all fifteen curated channels without failures",
+check["notebook loads all twenty-four curated channels without failures",
   Unscrambling`Private`validSimplificationRoutesQ[simplificationRoutes] &&
-    Length[simplificationRoutes] === 15 && DuplicateFreeQ[Lookup[simplificationRoutes, "Name"]] &&
+    Length[simplificationRoutes] === 24 && DuplicateFreeQ[Lookup[simplificationRoutes, "Name"]] &&
     AllTrue[simplificationRoutes, Length[#["States"]] > 1 &] &&
     FreeQ[simplificationRoutes, $Failed]];
 check["handwritten Z identities are decomposed into atomic teaching steps",
@@ -105,11 +105,94 @@ check["bosonic W channels retain their routes and the source's accepted sign",
     (Counts[#["Identities"]] &) /@ Take[newCuratedRoutes, {4, 5}] === ConstantArray[
       <|"MomentumSum" -> 16, "Mass" -> 36, "Schouten" -> 12,
         "Anticommutation" -> 4, "OnShell" -> 4|>, 2]];
+photonCuratedRoutes = Take[simplificationRoutes, {16, 21}];
+check["photon routes follow the original fifteen in their declared order",
+  Lookup[photonCuratedRoutes, "Name"] === {
+    "e, E, A.+, A.+ / electron (1, 3) exchange",
+    "e, E, A.+, A.+ / electron (1, 4) exchange",
+    "e, E, A.+, A.+ / electron exchange sum",
+    "e, E, A.+, A.- / electron (1, 3) exchange",
+    "e, E, A.+, A.- / electron (1, 4) exchange",
+    "e, E, A.+, A.- / electron exchange sum"}];
+check["photon paths retain their elementary state and identity counts",
+  Length /@ Lookup[photonCuratedRoutes, "States"] === {8, 8, 5, 20, 19, 15} &&
+    (Counts[#["Identities"]] &) /@ photonCuratedRoutes === {
+      <|"MomentumSum" -> 1, "Mass" -> 1, "Schouten" -> 1, "ChainSquare" -> 1,
+        "MomentumSquare" -> 2, "OnShell" -> 1|>,
+      <|"MomentumSum" -> 1, "Mass" -> 1, "Schouten" -> 1, "ChainSquare" -> 1,
+        "MomentumSquare" -> 2, "OnShell" -> 1|>,
+      <|"MomentumSquare" -> 2, "MomentumConservation" -> 2|>,
+      <|"MomentumSum" -> 3, "Mass" -> 8, "Schouten" -> 2, "Anticommutation" -> 2,
+        "MomentumConservation" -> 2, "OnShell" -> 1, "ChainSquare" -> 1|>,
+      <|"MomentumSum" -> 3, "Mass" -> 7, "Schouten" -> 2, "Anticommutation" -> 2,
+        "MomentumConservation" -> 2, "OnShell" -> 1, "ChainSquare" -> 1|>,
+      <|"MomentumSquare" -> 4, "MomentumConservation" -> 6, "Mass" -> 4|>}];
+check["photon gauge choices are preparation rather than recorded identities",
+  AllTrue[photonCuratedRoutes[[{1, 2, 4, 5}]], KeyExistsQ[#, "ReferenceSpinorPreparation"] &] &&
+    FreeQ[Lookup[photonCuratedRoutes, "States"], Spinor["Xi", ___]] &&
+    FreeQ[Lookup[photonCuratedRoutes, "Identities"], "ReferenceSpinorPreparation"]];
+check["both photon sums begin at their individual channel endpoints",
+  AllTrue[{3, 6}, Function[index,
+    Unscrambling`Private`samePoly[First[photonCuratedRoutes[[index]]["States"]],
+      Last[photonCuratedRoutes[[index - 2]]["States"]] +
+      Last[photonCuratedRoutes[[index - 1]]["States"]]]]]];
+check["photon paths keep channel-local numerator shells separate from the sum",
+  Lookup[photonCuratedRoutes, "OnShellChannels"] ===
+    {{{1, 3}, {2, 4}}, {{1, 4}, {2, 3}}, {}, {{1, 3}, {2, 4}}, {{1, 4}, {2, 3}}, {}} &&
+    AllTrue[photonCuratedRoutes[[{3, 6}]],
+      #["Masses"] === {Mass[1] -> Me, Mass[2] -> Me, Mass[3] -> 0, Mass[4] -> 0} &&
+        FreeQ[#["Identities"], "OnShell"] &]];
+check["photon paths preserve every off-shell propagator",
+  AllTrue[photonCuratedRoutes, Function[route, With[
+    {propagators = Sort[DeleteDuplicates[Cases[First[route["States"]], _PropDen, Infinity]]]},
+    AllTrue[route["States"], Sort[DeleteDuplicates[Cases[#, _PropDen, Infinity]]] === propagators &]]]]];
 allCuratedJobs = Unscrambling`Private`makeSimplificationRouteJobs[simplificationRoutes, All];
-check["fifteen curated channels each receive all twenty-four particle permutations",
-  Length[allCuratedJobs] === 360 &&
-    Sort[Values[Counts[Lookup[allCuratedJobs, "Name"]]]] === ConstantArray[24, 15] &&
+check["twenty-four curated channels each receive all twenty-four particle permutations",
+  Length[allCuratedJobs] === 576 &&
+    Sort[Values[Counts[Lookup[allCuratedJobs, "Name"]]]] === ConstantArray[24, 24] &&
     DuplicateFreeQ[Lookup[allCuratedJobs, {"Name", "LegPermutation"}]]];
+quarkZCuratedRoute = SelectFirst[simplificationRoutes, #["Name"] === "u, U, C, c / Z exchange" &];
+quarkZCuratedJobs = Select[allCuratedJobs, #["Name"] === quarkZCuratedRoute["Name"] &];
+check["quark Z path records the full handwritten chain with its own masses and couplings",
+  simplificationRoutes[[22]] === quarkZCuratedRoute &&
+    Length[quarkZCuratedRoute["States"]] === 97 &&
+    quarkZCuratedRoute["Identities"] === First[simplificationRoutes]["Identities"] &&
+    quarkZCuratedRoute["States"] === (First[simplificationRoutes]["States"] /.
+      {Me -> Mu, Mm -> Mc, gLe -> gLu, gRe -> gRu}) &&
+    quarkZCuratedRoute["Masses"] === {Mass[1] -> Mu, Mass[2] -> Mu,
+      Mass[3] -> Mc, Mass[4] -> Mc, Mass[Multiparticle[1, 2]] -> MZ,
+      Mass[Multiparticle[3, 4]] -> MZ} &&
+    FreeQ[quarkZCuratedRoute["States"], Me | Mm | gLe | gRe]];
+check["quark Z path teaches all twenty-four label permutations",
+  Length[quarkZCuratedJobs] === 24 && DuplicateFreeQ[Lookup[quarkZCuratedJobs, "LegPermutation"]] &&
+    AllTrue[quarkZCuratedJobs, #["Steps"] === 96 && #["Pair"][[2]] === First[#["States"]] &]];
+eehhCuratedRoutes = Take[simplificationRoutes, -2];
+eehhCuratedJobs = Select[allCuratedJobs, MemberQ[Lookup[eehhCuratedRoutes, "Name"], #["Name"]] &];
+check["both handwritten eeHH electron channels retain their individual atomic paths",
+  Lookup[eehhCuratedRoutes, "Name"] === {
+    "e, E, h, h / electron (1, 3) exchange", "e, E, h, h / electron (1, 4) exchange"} &&
+    Length /@ Lookup[eehhCuratedRoutes, "States"] === {5, 5} &&
+    Lookup[eehhCuratedRoutes, "Identities"] === ConstantArray[{"MomentumSum", "MomentumSum", "Mass", "Mass"}, 2]];
+check["both eeHH channels teach all twenty-four label permutations",
+  Length[eehhCuratedJobs] === 48 &&
+    Sort[Values[Counts[Lookup[eehhCuratedJobs, "Name"]]]] === {24, 24} &&
+    AllTrue[eehhCuratedJobs, #["Steps"] === 4 && #["Pair"][[2]] === First[#["States"]] &]];
+check["eeHH paths resolve all mass rules and preserve their individual propagators",
+  AllTrue[eehhCuratedRoutes, Function[route,
+    FreeQ[route["States"], _Mass] && With[
+      {poles = DeleteDuplicates[Cases[First[route["States"]], _PropDen, Infinity]]},
+      Length[poles] === 1 && AllTrue[route["States"], DeleteDuplicates[Cases[#, _PropDen, Infinity]] === poles &]]]]];
+photonCuratedJobs = Select[allCuratedJobs, MemberQ[Lookup[photonCuratedRoutes, "Name"], #["Name"]] &];
+check["all photon paths integrate twenty-four permutations with the expected steps",
+  Length[photonCuratedJobs] === 144 &&
+    (Lookup[#, "Steps"] & /@ GatherBy[photonCuratedJobs, #["Name"] &]) ===
+      (ConstantArray[#, 24] & /@ {7, 7, 4, 19, 18, 14}) &&
+    AllTrue[photonCuratedJobs, #["Pair"][[2]] === First[#["States"]] &]];
+check["photon job permutations preserve the relabeled numerator shell cuts",
+  AllTrue[photonCuratedJobs, Function[job,
+    Unscrambling`Private`trainingJobChannels[job] ===
+      Unscrambling`Private`normalizeOnShellChannels[
+        Map[Lookup[job["LegPermutation"], #] &, job["OnShellChannels"], {2}]]]]];
 independentRoutes = Block[{ReduceSpinorProducts, UnscrambleSpinorAmplitudes, spPr, rsp,
     mReplacments = {Mass[1] -> 999}},
   Clear[ReduceSpinorProducts, UnscrambleSpinorAmplitudes, spPr, rsp];

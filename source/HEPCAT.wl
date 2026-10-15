@@ -37,7 +37,7 @@ Protect[nice,lnice,TeX,lTeX,Spinor,rr,Multiparticle,MultiparticleDiff,Particle,H
 Protect[xFactor,xTildeFactor,MomProd,MomProdHat1,MomProdHat12,MomProdHat2,Output,PropDen,Coupling];
 Protect[ReverseSequence,ReduceSpinContractions,ReduceSpinorProducts,SpinorChainReduced,SpinorTraceReduced];
 Protect[ConvertStringAmplitude];
-Protect[SimplifySpinorProducts,ReduceXFactorsP,ReduceXFactorsM];
+Protect[SimplifySpinorProducts,ReduceXFactorsP,ReduceXFactorsM,ConstructiveDiagrams`applyToNumerator];
 Protect[ExtractEnergy,ExtractEnergy1,ExtractEnergy2,rSpinor,ExpandSummation];
 Protect[ReverseMomentum,MomProdL,MomProdR,ExpandSummation,ChooseSpinIndices,ChooseSpinIndex,MakeIndicesExplicit,SymmetrizeSpins,SymmetrizeSpin];
 Protect[SquareAmplitude,ReadModel,ReadVariables,ReadFunctions,ReadParticles,ParticleMass,ReadVertices,ConvertVertex];
