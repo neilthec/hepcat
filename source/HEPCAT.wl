@@ -47,4 +47,5 @@ Protect[CreateRandomMassFactor,CreateRandomConstructiveAmplitudeTerm,AddRandomCo
 Protect[RandomDeleteSpinorProduct,RandomAddSpinorProduct,RandomChangeCoefficientSpinorProduct,MateConstructiveAmplitudes,MakeNRandomChanges];
 Protect[FindAmp];
 Protect[CreateDiagrams,CreateArrowDiagram,CreateArrowDiagrams,diagramAmplitude,diagramAmplitudes];
+Protect[SchoutenRewrite,SchoutenCandidates,SpinorIdentityCandidates,ApplySpinorIdentity,SpinorExpressionComplexity,ComplicateAmplitude];
 EndPackage[]

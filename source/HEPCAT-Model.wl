@@ -1973,9 +1973,12 @@ CreateArrowDiagrams[diags_List, opts : OptionsPattern[CreateArrowDiagram]] :=
   CreateArrowDiagram[#, opts] & /@ diags;
 
 (* Remove temporary symbols exposed by the earlier diagram implementation,
-   so reloading into an existing notebook also removes its shadow warnings. *)
-Scan[Remove[#] &, Flatten[Names /@ {
+   so reloading into an existing notebook also removes its shadow warnings.
+   Names can abbreviate the context, and removing a symbol can release its
+   temporary locals. Qualify names and check they still exist before Remove. *)
+Scan[If[Names[#] =!= {}, Remove[#]] &, DeleteDuplicates[
+  ("ConstructiveDiagrams`" <> Last[StringSplit[#, "`"]] &) /@ Flatten[Names /@ {
   "ConstructiveDiagrams`state", "ConstructiveDiagrams`state$*",
   "ConstructiveDiagrams`leg", "ConstructiveDiagrams`leg$*",
   "ConstructiveDiagrams`choices", "ConstructiveDiagrams`choices$*",
-  "ConstructiveDiagrams`prop", "ConstructiveDiagrams`prop$*"}]];
+  "ConstructiveDiagrams`prop", "ConstructiveDiagrams`prop$*"}]]];

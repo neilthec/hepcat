@@ -2350,3 +2350,984 @@ ampHC=Conjugate[ampHC];(*Print[ampHC];*)
 
 ampHC ampInd/.{ConstructiveAmplitude[coupl_,numer_,denom_]->coupl numer/denom}
 ];
+(* ::Section::Closed:: *)
+(*Symbolic Spinor Identities*)
+
+(* ::Subsection::Closed:: *)
+(*Public Functions*)
+
+SchoutenRewrite::usage = "SchoutenRewrite[c1, c2, {m, n}] rewrites two spinor chains by generalized Schouten. The split counts momenta before each split; invalid chiralities or splits return $Failed.";
+SchoutenCandidates::usage = "SchoutenCandidates[expr] lists exact generalized Schouten edits with Name, Subtract, Insert, Chains and Splits. No internal on-shell condition is assumed.";
+SpinorIdentityCandidates::usage = "SpinorIdentityCandidates[{massRules, expr}] lists exact symbolic identity edits. OnShellChannels -> Automatic uses that diagram's internal mass rules; use an empty list for a combined amplitude. MomentumConservation defaults to True. Both option names are strings. PropDen factors remain opaque.";
+ApplySpinorIdentity::usage = "ApplySpinorIdentity[{massRules, expr}, edit, opts] applies a currently legal identity edit and returns the resulting expression. The input is canonicalized exactly as in SpinorIdentityCandidates, using the same options. Invalid or stale edits return $Failed.";
+SpinorExpressionComplexity::usage = "SpinorExpressionComplexity[expr] measures terms, momentum insertions and momentum products, including the branches implicit in composite momentum slots. PropDen factors remain opaque.";
+ComplicateAmplitude::usage = "ComplicateAmplitude[{massRules, expr}, nSteps, opts] applies random reversible symbolic identities. RandomSeed controls reproducibility and the string option RecordSteps -> True retains Trajectory. It uses the same diagram-local OnShellChannels and MomentumConservation options as SpinorIdentityCandidates.";
+ApplySpinorIdentity::edit = "The supplied edit is not legal for this expression and its current on-shell and momentum-conservation options.";
+ApplySpinorIdentity::args = "Expected {massRules, expression}, an identity-edit association, and optional identity settings.";
+
+Begin["ConstructiveDiagrams`Private`"];
+
+(* ::Subsection::Closed:: *)
+(*Generalized Schouten Identities*)
+
+spinorType[Spinor[_, t: ("Angle" | "Square"), __]] := t;
+spinorType[Spinor[_, _, t: ("Angle" | "Square"), __]] := t;
+spinorType[_] := None;
+spinorLeg[Spinor[_, "Angle" | "Square", i_, ___]] := i;
+spinorLeg[Spinor[_, _, "Angle" | "Square", i_, ___]] := i;
+
+validChainQ[c_SpinorChain] := Module[{xs = List @@ c, l, r},
+  If[Length[xs] < 2, Return[False]];
+  l = spinorType[First[xs]]; r = spinorType[Last[xs]];
+  MemberQ[{"Angle", "Square"}, l] && MemberQ[{"Angle", "Square"}, r] &&
+    AllTrue[Drop[Rest[xs], -1], MatchQ[#, _Mom] &] &&
+    SameQ[l === r, EvenQ[Length[xs] - 2]]
+];
+validChainQ[_] := False;
+
+SchoutenRewrite[c1_, c2_, {m_Integer, n_Integer}] := Module[
+  {u, v, p, q, leftP, rightP, leftQ, rightQ, chains, sign},
+  If[!validChainQ[c1] || !validChainQ[c2], Return[$Failed]];
+  u = List @@ c1; v = List @@ c2;
+  p = Drop[Rest[u], -1]; q = Drop[Rest[v], -1];
+  If[! (0 <= m <= Length[p] && 0 <= n <= Length[q]), Return[$Failed]];
+  leftP = Reverse[Take[p, m]]; rightP = Drop[p, m];
+  leftQ = Take[q, n]; rightQ = Reverse[Drop[q, n]];
+  chains = {
+    SpinorChain @@ Join[{Last[v]}, rightQ, rightP, {Last[u]}],
+    SpinorChain @@ Join[{First[v]}, leftQ, leftP, {First[u]}],
+    SpinorChain @@ Join[{Last[v]}, rightQ, leftP, {First[u]}],
+    SpinorChain @@ Join[{First[v]}, leftQ, rightP, {Last[u]}]
+  };
+  If[!AllTrue[chains, validChainQ], Return[$Failed]];
+  sign = (-1)^(m + Length[q] - n);
+  sign*(chains[[1]]*chains[[2]] - chains[[3]]*chains[[4]])
+];
+SchoutenRewrite[___] := $Failed;
+
+(* Eq. (A28): reversal contributes (-1)^(number of momenta + 1). *)
+canonicalChain[c_SpinorChain] := Module[{rev = Reverse[c]},
+  If[validChainQ[c] && Length[c] === 2 && First[c] === Last[c], Return[0]];
+  If[validChainQ[c] && !OrderedQ[{c, rev}], (-1)^(Length[c] - 1)*rev, c]
+];
+(* Treat propagators as opaque, including when they contain other algebraic heads. *)
+withProtectedPropagators[expr_, function_] := Module[{denominators, tokens},
+  denominators = DeleteDuplicates[Cases[{expr}, _PropDen, Infinity]];
+  If[denominators === {}, Return[function[expr]]];
+  tokens = Table[Unique["propagator"], {Length[denominators]}];
+  function[expr /. Thread[denominators -> tokens]] /. Thread[tokens -> denominators]
+];
+(* Distribute only momentum slots, never arguments of a propagator or another head. *)
+linearMomentumTerms[arg_] := Module[{terms = monomialsOf[arg], factors, momenta, coefficient, out = {}},
+  If[arg === 0, Return[{}]];
+  Do[
+    factors = factorsOf[term]; momenta = Select[factors, MatchQ[#, _Mom] &];
+    If[Length[momenta] =!= 1, Return[$Failed]];
+    coefficient = term/First[momenta];
+    If[!FreeQ[coefficient, _Mom | _SpinorChain | _Spinor], Return[$Failed]];
+    AppendTo[out, {coefficient, First[momenta] /. Mom[Multiparticle[ii__Integer]] :>
+      Mom[Multiparticle @@ Sort[{ii}]]}], {term, terms}];
+  out
+];
+linearChain[c_SpinorChain] := Module[{xs = List @@ c, parts},
+  If[Length[xs] < 2 || !MemberQ[{"Angle", "Square"}, spinorType[First[xs]]] ||
+      !MemberQ[{"Angle", "Square"}, spinorType[Last[xs]]] ||
+      SameQ[spinorType[First[xs]], spinorType[Last[xs]]] =!= EvenQ[Length[xs] - 2], Return[c]];
+  parts = linearMomentumTerms /@ Drop[Rest[xs], -1];
+  If[!FreeQ[parts, $Failed], Return[c]];
+  Total[(Times @@ #[[All, 1]])*canonicalChain[
+      SpinorChain @@ Join[{First[xs]}, #[[All, 2]], {Last[xs]}]] & /@ Tuples[parts]]
+];
+validTraceQ[t_SpinorTrace] := EvenQ[Length[t]] && AllTrue[List @@ t, MatchQ[#, _Mom] &];
+validTraceQ[_] := False;
+linearTrace[t_SpinorTrace] := Module[{parts},
+  If[OddQ[Length[t]], Return[t]];
+  parts = linearMomentumTerms /@ List @@ t;
+  If[!FreeQ[parts, $Failed], Return[t]];
+  Total[(Times @@ #[[All, 1]])*If[# === {}, 2, SpinorTrace @@ #[[All, 2]]] & /@ Tuples[parts]]
+];
+canonicalChains[expr_] := withProtectedPropagators[expr,
+  Function[body, Expand[body /. {c_SpinorChain :> linearChain[c], t_SpinorTrace :> linearTrace[t],
+    Mom[Multiparticle[ii__Integer]] :> Mom[Multiparticle @@ Sort[{ii}]]}]]];
+canonicalAmplitude[expr_, rules_] := canonicalChains[
+  withProtectedPropagators[expr, Function[body, body /. rules]]];
+
+SchoutenCandidates[expr_] := Module[{moves = {}, mons, chains, rhs, sub, ins, mon, i, j, m, n},
+  mons = monomialsOf[expr];
+  Do[
+    chains = Select[chainsIn[mon], validChainQ];
+    Do[
+      rhs = SchoutenRewrite[chains[[i]], chains[[j]], {m, n}];
+      If[rhs === $Failed, Continue[]];
+      sub = mon;
+      ins = canonicalChains[mon/(chains[[i]]*chains[[j]])*rhs];
+      If[!samePoly[canonicalChains[sub], ins],
+        AppendTo[moves, <|"Name" -> "Schouten", "Subtract" -> sub,
+          "Insert" -> ins, "Chains" -> chains[[{i, j}]], "Splits" -> {m, n}|>]
+      ],
+      {i, Length[chains]}, {j, i + 1, Length[chains]},
+      {m, 0, Length[chains[[i]]] - 2}, {n, 0, Length[chains[[j]]] - 2}
+    ],
+    {mon, mons}
+  ];
+  DeleteDuplicatesBy[moves, {#["Subtract"], #["Insert"]} &]
+];
+
+
+
+(* ::Subsection::Closed:: *)
+(*Expression Structure*)
+
+expandAmplitude[expr_] := Expand[expr];
+
+externalIndices[massRules_List] := Sort @ Cases[massRules, HoldPattern[Mass[i_Integer] -> _] :> i];
+
+massValue[massRules_List, i_] := Replace[Mass[i], Join[massRules, {_ -> Missing["Mass"]}]];
+
+monomialsOf[expr_] := Module[{ex = expandAmplitude[expr]},
+  Which[
+    ex === 0, {},
+    Head[ex] === Plus, List @@ ex,
+    True, {ex}
+  ]
+];
+
+factorsOf[mon_] := If[Head[mon] === Times, List @@ mon, {mon}];
+
+chainPairQ[SpinorChain[Spinor[_, _, _], Spinor[_, _, _]]] := True;
+chainPairQ[_] := False;
+chainKind[SpinorChain[Spinor[k_, _, _], ___]] := k;
+chainType[SpinorChain[Spinor[_, tp_, _], Spinor[_, tp_, _]]] := tp;
+chainEnds[SpinorChain[Spinor[_, _, i_], Spinor[_, _, j_]]] := {i, j};
+threeChainQ[SpinorChain[Spinor[_, _, _], Mom[_], Spinor[_, _, _]]] := True;
+threeChainQ[_] := False;
+
+chainsIn[mon_] := Module[{factors = factorsOf[mon], out = {}, i},
+  Do[
+    Which[
+      MatchQ[factors[[i]], _SpinorChain], AppendTo[out, factors[[i]]],
+      MatchQ[factors[[i]], Power[_SpinorChain, _Integer?Positive]],
+        Do[AppendTo[out, factors[[i, 1]]], {factors[[i, 2]]}]
+    ],
+    {i, Length[factors]}
+  ];
+  out
+];
+
+tracesIn[mon_] := Flatten[Function[factor, Which[
+    MatchQ[factor, _SpinorTrace], {factor},
+    MatchQ[factor, Power[_SpinorTrace, _Integer?Positive]], ConstantArray[factor[[1]], factor[[2]]],
+    True, {}]] /@ factorsOf[mon]];
+momentumSlots[c_SpinorChain] := Drop[Rest[List @@ c], -1];
+momentumSlots[t_SpinorTrace] := List @@ t;
+momentumSlotOffset[c_SpinorChain] := 1;
+momentumSlotOffset[t_SpinorTrace] := 0;
+traceMetadata[t_SpinorTrace] := <|"Trace" -> t|>;
+traceMetadata[_] := <||>;
+
+bracket[kind_, tp_, a_, b_] := SpinorChain[Spinor[kind, tp, a], Spinor[kind, tp, b]];
+three[kind_, t1_, a_, p_, t2_, b_] :=
+  SpinorChain[Spinor[kind, t1, a], Mom[p], Spinor[kind, t2, b]];
+
+(* <ij><kl> = <ik><jl> - <il><jk>, and the same for square brackets.
+   Checked against ReduceSpinorProducts. *)
+schoutenSum[kind_, tp_, i_, j_, k_, l_] :=
+  bracket[kind, tp, i, k]*bracket[kind, tp, j, l] -
+  bracket[kind, tp, i, l]*bracket[kind, tp, j, k];
+
+(* A bracket times a one-momentum chain. The contracted spinor is the chain
+   end of the same chirality as the bracket. This is the epsilon identity
+   <ab>(v·d) = <db>(v·a) - <da>(v·b). *)
+schoutenChainSum[br_, sc_] := Module[{kind, a, b, c, p, d, tb, t1, t2},
+  kind = chainKind[br];
+  {a, b} = chainEnds[br];
+  tb = chainType[br];
+  t1 = sc[[1, 2]];
+  t2 = sc[[3, 2]];
+  c = sc[[1, 3]];
+  p = sc[[2, 1]];
+  d = sc[[3, 3]];
+  Which[
+    tb === "Angle" && t1 === "Square" && t2 === "Angle",
+      bracket[kind, "Angle", d, b]*three[kind, "Square", c, p, "Angle", a] -
+      bracket[kind, "Angle", d, a]*three[kind, "Square", c, p, "Angle", b],
+    tb === "Square" && t1 === "Square" && t2 === "Angle",
+      bracket[kind, "Square", c, b]*three[kind, "Square", a, p, "Angle", d] -
+      bracket[kind, "Square", c, a]*three[kind, "Square", b, p, "Angle", d],
+    tb === "Angle" && t1 === "Angle" && t2 === "Square",
+      bracket[kind, "Angle", c, b]*three[kind, "Angle", a, p, "Square", d] -
+      bracket[kind, "Angle", c, a]*three[kind, "Angle", b, p, "Square", d],
+    tb === "Square" && t1 === "Angle" && t2 === "Square",
+      bracket[kind, "Square", d, b]*three[kind, "Angle", c, p, "Square", a] -
+      bracket[kind, "Square", d, a]*three[kind, "Angle", c, p, "Square", b],
+    True, $Failed
+  ]
+];
+
+structureQ[SpinorChain[__]] := True;
+structureQ[SpinorTrace[___]] := True;
+structureQ[MomProd[__]] := True;
+structureQ[Mom[Multiparticle[__]]] := True;
+structureQ[PropDen[__]] := True;
+structureQ[Mandelstahm[__]] := True;
+structureQ[Power[f_, _]] := structureQ[f];
+structureQ[_] := False;
+
+splitMon[mon_] := Module[{factors = factorsOf[mon], skeleton},
+  skeleton = Times @@ Select[factors, structureQ];
+  {Times @@ Select[factors, ! structureQ[#] &], skeleton}
+];
+
+groupsOf[expr_] := Module[{groups = <||>, mons, pair, i},
+  mons = monomialsOf[expr];
+  Do[
+    pair = splitMon[mons[[i]]];
+    groups[pair[[2]]] = Lookup[groups, pair[[2]], 0] + pair[[1]],
+    {i, Length[mons]}
+  ];
+  groups
+];
+
+
+(* ::Subsection::Closed:: *)
+(*Mass Rules and On-Shell Conditions*)
+
+knownInternalChannels[massRules_List] := Select[Cases[massRules,
+  HoldPattern[Mass[Multiparticle[ii__Integer]] -> m_] :> {Sort[{ii}], m}],
+  Length[#[[1]]] >= 2 && DuplicateFreeQ[#[[1]]] &];
+internalChannels[massRules_List] := Select[knownInternalChannels[massRules],
+  $onShellChannels === Automatic || MemberQ[$onShellChannels, #[[1]]] &];
+internalPairs[massRules_List] := Select[internalChannels[massRules], Length[#[[1]]] === 2 &];
+
+shellOf[m_, ma_, mb_] := Expand[(m^2 - ma^2 - mb^2)/2];
+
+(* coef = shell * quotient, with quotient free of the shell's variables. *)
+shellQuotient[coef_, shell_] := Module[{vars, num, den, red},
+  If[shell === 0, Return[None]];
+  vars = Variables[shell];
+  If[vars === {},
+    Return[If[Expand[coef - shell] === 0, 1, None]]
+  ];
+  {num, den} = NumeratorDenominator[Together[coef]];
+  If[! PolynomialQ[num, vars] || ! PolynomialQ[Expand[den], vars] || ! PolynomialQ[shell, vars],
+    Return[None]
+  ];
+  red = PolynomialReduce[num, {shell}, vars];
+  If[Expand[red[[2]]] =!= 0, None, Together[red[[1, 1]]/den]]
+];
+
+orderedDot[a_, b_] := MomProd @@ Sort[{a, b}];
+
+lineMass[massRules_List, legs_List] := Module[{found},
+  found = SelectFirst[internalChannels[massRules], #[[1]] === Sort[legs] &];
+  If[MissingQ[found], None, found[[2]]]
+];
+lineMass[massRules_List, i_Integer, j_Integer] := lineMass[massRules, {i, j}];
+momentumMass[rules_List, leg_Integer] := massValue[rules, leg];
+momentumMass[rules_List, leg_Multiparticle] := lineMass[rules, List @@ leg];
+momentumMass[_, _] := None;
+
+scalarFactorPresentQ[sk_, atom_] := AnyTrue[factorsOf[sk], Function[factor,
+  With[{f = If[MatchQ[factor, Power[_, _Integer?Positive]], List @@ factor, {factor, 1}],
+      a = If[MatchQ[atom, Power[_, _Integer?Positive]], List @@ atom, {atom, 1}]},
+    f[[1]] === a[[1]] && f[[2]] >= a[[2]]]]];
+numeratorScalarAtoms[groups_] := DeleteDuplicates[Flatten[
+  (Function[factor, If[MatchQ[factor, Power[_, _Integer?Positive]], factor[[1]], factor]] /@
+    factorsOf[#]) & /@ Keys[groups]]];
+scalarRelationContexts[groups_, atoms_List] := DeleteDuplicates[Flatten[Table[
+  If[scalarFactorPresentQ[sk, atom], {sk/atom}, {}], {sk, Keys[groups]}, {atom, atoms}], 2]];
+
+(* Match complete scalar relations in a shared numerator context. Structural
+   factors, including entire propagators, never participate in the relation. *)
+scalarRelationMoves[groups_, lhs_, rhs_, name_, legs_, identity_] := Module[
+  {wanted = groupsOf[lhs], atoms, contexts, pivot, scale, moves = {}, subtract, insert},
+  atoms = DeleteCases[Keys[wanted], 1];
+  If[atoms === {}, Return[{}]];
+  contexts = scalarRelationContexts[groups, atoms]; pivot = First[atoms];
+  Do[
+    scale = Lookup[groups, context pivot, 0]/wanted[pivot];
+    If[samePoly[scale, 0] || !AllTrue[Keys[wanted],
+        samePoly[Lookup[groups, context #, 0], scale wanted[#]] &], Continue[]];
+    subtract = expandAmplitude[scale lhs context]; insert = expandAmplitude[scale rhs context];
+    If[!samePoly[subtract, insert], AppendTo[moves, <|"Name" -> name,
+      "Subtract" -> subtract, "Insert" -> insert, "Legs" -> legs, "Identity" -> identity|>]],
+    {context, contexts}];
+  moves
+];
+
+(* 2 p_i·p_j = (p_i+p_j)^2 - m_i^2 - m_j^2, written Mom[Multiparticle[i,j]]^2
+   so Expand does not turn the square into ordinary products. An internal
+   line also has (p_i+p_j)^2 = M^2. *)
+
+(* ::Subsection::Closed:: *)
+(*Momentum-Square Identities*)
+
+momentumSquareMoves[expr_, massRules_List] := Module[{moves = {}, groups, keys, exts, atoms, pairs, pair, g},
+  groups = groupsOf[expr];
+  keys = Keys[groups];
+  exts = externalIndices[massRules];
+  atoms = numeratorScalarAtoms[groups];
+  pairs = DeleteDuplicates[Join[Cases[atoms, MomProd[i_Integer, j_Integer] /; i =!= j :> Sort[{i, j}]],
+    Cases[atoms, Mom[Multiparticle[i_Integer, j_Integer]] :> Sort[{i, j}]],
+    First /@ internalPairs[massRules]]];
+  Do[
+    Module[{i = pair[[1]], j = pair[[2]], mi, mj, mp2, dot, kin, bigM, sk, coef, rest, subtract, insert},
+      mi = massValue[massRules, i];
+      mj = massValue[massRules, j];
+      If[mi === Missing["Mass"] || mj === Missing["Mass"], Continue[]];
+      mp2 = Mom[Multiparticle[i, j]]^2;
+      dot = orderedDot[i, j];
+      kin = mp2 - mi^2 - mj^2;
+      bigM = lineMass[massRules, i, j];
+      Do[
+        sk = keys[[g]]; coef = groups[sk];
+        If[MemberQ[factorsOf[sk], dot],
+          rest = sk/dot;
+          subtract = expandAmplitude[coef*sk];
+          insert = expandAmplitude[coef*rest*kin/2];
+          If[! samePoly[subtract, insert],
+            AppendTo[moves, <|"Name" -> "MomentumSquare", "Subtract" -> subtract,
+              "Insert" -> insert, "Legs" -> {i, j}|>]
+          ]
+        ];
+        If[MemberQ[factorsOf[sk], mp2],
+          rest = sk/mp2;
+          subtract = expandAmplitude[coef*sk];
+          insert = expandAmplitude[coef*rest*(2*dot + mi^2 + mj^2)];
+          If[! samePoly[subtract, insert],
+            AppendTo[moves, <|"Name" -> "MomentumSquare", "Subtract" -> subtract,
+              "Insert" -> insert, "Legs" -> {i, j}|>]
+          ];
+          If[bigM =!= None && ! (bigM === 0 && mi === 0 && mj === 0),
+            insert = expandAmplitude[coef*rest*bigM^2];
+            If[! samePoly[subtract, insert],
+              AppendTo[moves, <|"Name" -> "OnShell", "Subtract" -> subtract,
+                "Insert" -> insert, "Legs" -> {i, j}, "Mass" -> bigM|>]
+            ]
+          ]
+        ],
+        {g, Length[keys]}
+      ];
+      If[bigM =!= None,
+        Module[{shell2 = Expand[bigM^2 - mi^2 - mj^2], q},
+          Do[
+            sk = keys[[g]]; coef = groups[sk];
+            If[withProtectedPropagators[sk, Function[body,
+                FreeQ[body, Mom[Multiparticle[__]]] && FreeQ[body, dot]]],
+              q = shellQuotient[coef, shell2];
+              If[q =!= None && Expand[q] =!= 0,
+                subtract = expandAmplitude[coef*sk];
+                insert = expandAmplitude[q*kin*sk];
+                If[! samePoly[subtract, insert],
+                  AppendTo[moves, <|"Name" -> "MomentumSquare", "Subtract" -> subtract,
+                    "Insert" -> insert, "Legs" -> {i, j}|>]
+                ]
+              ]
+            ],
+            {g, Length[keys]}
+          ]
+        ]
+      ]
+    ],
+    {pair, pairs}
+  ];
+  Join[moves, subsetMomentumSquareMoves[expr, massRules]]
+];
+
+subsetMomentumSquareMoves[expr_, rules_List] := Module[
+  {moves = {}, groups = groupsOf[expr], subsets, present, legs, label, square, masses,
+   value, dots, mass, subtract, insert, rest, scale, coef},
+  present = DeleteDuplicates[Cases[numeratorScalarAtoms[groups],
+    Mom[q:Multiparticle[ii__Integer]] /; Length[{ii}] >= 3 && DuplicateFreeQ[{ii}] :> {q, Sort[{ii}]}]];
+  subsets = DeleteDuplicates[Join[present,
+    ({Multiparticle @@ #[[1]], #[[1]]} &) /@ Select[knownInternalChannels[rules], Length[#[[1]]] >= 3 &]]];
+  Do[
+    {label, legs} = subset; square = Mom[label]^2;
+    masses = massValue[rules, #] & /@ legs; mass = lineMass[rules, legs];
+    dots = orderedDot @@ # & /@ Subsets[legs, {2}];
+    value = If[AnyTrue[masses, MissingQ], None, Total[masses^2] + 2 Total[dots]];
+    Do[
+      coef = groups[sk];
+      If[scalarFactorPresentQ[sk, square],
+        rest = sk/square; subtract = expandAmplitude[coef sk];
+        If[value =!= None, AppendTo[moves, <|"Name" -> "MomentumSquare", "Subtract" -> subtract,
+          "Insert" -> expandAmplitude[coef rest value], "Legs" -> legs,
+          "Identity" -> "ExpandSubset"|>]];
+        If[mass =!= None, AppendTo[moves, <|"Name" -> "OnShell", "Subtract" -> subtract,
+          "Insert" -> expandAmplitude[coef rest mass^2], "Legs" -> legs,
+          "Mass" -> mass, "Identity" -> "SubsetSquare"|>]]];
+      If[mass =!= None && !TrueQ[mass == 0] && !FreeQ[coef, mass],
+        scale = shellQuotient[coef, mass^2];
+        If[scale =!= None && !samePoly[scale, 0],
+          AppendTo[moves, <|"Name" -> "OnShell", "Subtract" -> expandAmplitude[coef sk],
+            "Insert" -> expandAmplitude[scale square sk], "Legs" -> legs,
+            "Mass" -> mass, "Identity" -> "ExpandSubsetMass"|>];
+          If[value =!= None, AppendTo[moves, <|"Name" -> "OnShell", "Subtract" -> expandAmplitude[coef sk],
+            "Insert" -> expandAmplitude[scale value sk], "Legs" -> legs,
+            "Mass" -> mass, "Identity" -> "ExpandSubsetMassValue"|>]]]],
+      {sk, Keys[groups]}];
+    If[value =!= None,
+      moves = Join[moves, scalarRelationMoves[groups, value, square,
+        "MomentumSquare", legs, "CollectSubset"]];
+      If[mass =!= None, moves = Join[moves, scalarRelationMoves[groups, value, mass^2,
+        "OnShell", legs, "SubsetInvariant"]]]],
+    {subset, subsets}];
+  moves
+];
+
+scalarMomentumConservationMoves[expr_, rules_List] := Module[
+  {moves = {}, groups = groupsOf[expr], exts = externalIndices[rules], dots,
+   legs, mass, rhs, subtract, insert, scale, row, complement},
+  If[!TrueQ[$useMomentumConservation] || Length[exts] < 2, Return[{}]];
+  dots = Cases[numeratorScalarAtoms[groups], d:MomProd[i_Integer, j_Integer] /;
+    i =!= j && MemberQ[exts, i] && MemberQ[exts, j] :> d];
+  Do[
+    legs = List @@ dot;
+    Do[
+      mass = massValue[rules, anchor];
+      rhs = -mass^2 - Total[orderedDot[anchor, #] & /@ Complement[exts, legs]];
+      Do[If[scalarFactorPresentQ[sk, dot],
+        subtract = expandAmplitude[groups[sk] sk]; insert = expandAmplitude[groups[sk] sk/dot rhs];
+        If[!samePoly[subtract, insert], AppendTo[moves, <|"Name" -> "MomentumConservation",
+          "Subtract" -> subtract, "Insert" -> insert, "Legs" -> {anchor, First[DeleteCases[legs, anchor]]},
+          "Identity" -> "ScalarDot"|>]]], {sk, Keys[groups]}],
+      {anchor, legs}], {dot, dots}];
+  (* The square of a pair equals the square of its complementary external
+     momentum sum. Only external masses enter this off-shell relation. *)
+  If[Length[exts] >= 4 && AllTrue[exts, !MissingQ[massValue[rules, #]] &],
+    Do[
+      legs = Sort[List @@ dot]; complement = Complement[exts, legs];
+      rhs = (Total[massValue[rules, #]^2 & /@ complement] -
+          Total[massValue[rules, #]^2 & /@ legs])/2 +
+        Total[orderedDot @@ # & /@ Subsets[complement, {2}]];
+      Do[If[scalarFactorPresentQ[sk, dot],
+        subtract = expandAmplitude[groups[sk] sk];
+        insert = expandAmplitude[groups[sk] sk/dot rhs];
+        If[!samePoly[subtract, insert], AppendTo[moves, <|"Name" -> "MomentumConservation",
+          "Subtract" -> subtract, "Insert" -> insert, "Legs" -> legs,
+          "Identity" -> "ScalarComplement", "ScrambleEligible" -> False|>]]], {sk, Keys[groups]}],
+      {dot, dots}]];
+  Do[
+    mass = massValue[rules, anchor]; row = Total[orderedDot[anchor, #] & /@ DeleteCases[exts, anchor]];
+    moves = Join[moves, scalarRelationMoves[groups, row, -mass^2,
+      "MomentumConservation", {anchor}, "ScalarRow"]];
+    If[!TrueQ[mass == 0], Do[
+      scale = shellQuotient[groups[sk], -mass^2];
+      If[scale =!= None && !samePoly[scale, 0], AppendTo[moves, <|"Name" -> "MomentumConservation",
+        "Subtract" -> expandAmplitude[groups[sk] sk], "Insert" -> expandAmplitude[scale row sk],
+        "Legs" -> {anchor}, "Identity" -> "ScalarRowExpand"|>]], {sk, Keys[groups]}]],
+    {anchor, exts}];
+  moves
+];
+
+(* Massless helicity completeness: <i|p_j|i] = 2 p_i.p_j and
+   <ij>[ji] = 2 p_i.p_j. Inverse brackets remain ordinary rational factors. *)
+helicityInvariantMoves[expr_, rules_List] := Module[
+  {moves = {}, mons = monomialsOf[expr], massless, chain, xs, dot, product, chains, rest},
+  massless = Select[externalIndices[rules], TrueQ[massValue[rules, #] === 0] &];
+  Do[
+    chains = chainsIn[mon];
+    Do[
+      xs = List @@ chain;
+      If[Length[xs] === 3 && validChainQ[chain] &&
+          MatchQ[First[xs], Spinor["Helicity", "Angle" | "Square", _Integer]] &&
+          Last[xs] === flipSpinor[First[xs]] && MemberQ[massless, spinorLeg[First[xs]]] &&
+          MatchQ[xs[[2]], Mom[_Integer]],
+        dot = If[spinorLeg[First[xs]] === xs[[2, 1]], 0,
+          orderedDot[spinorLeg[First[xs]], xs[[2, 1]]] /. rules];
+        AppendTo[moves, <|"Name" -> "MomentumSquare", "Identity" -> "HelicityTrace",
+          "Direction" -> "Contract", "ScrambleEligible" -> False, "Subtract" -> mon,
+          "Insert" -> canonicalChains[mon/chain*2 dot],
+          "Legs" -> {spinorLeg[First[xs]], xs[[2, 1]]}|>]],
+      {chain, DeleteDuplicates[chains]}];
+    Do[
+      dot = orderedDot @@ pair;
+      product = canonicalChains[bracket["Helicity", "Angle", pair[[1]], pair[[2]]]*
+        bracket["Helicity", "Square", pair[[2]], pair[[1]]]];
+      If[scalarFactorPresentQ[mon, dot],
+        AppendTo[moves, <|"Name" -> "MomentumSquare", "Identity" -> "MasslessBracket",
+          "Direction" -> "Expand", "Subtract" -> mon,
+          "Insert" -> canonicalChains[mon/dot*product/2], "Legs" -> pair|>]];
+      If[AllTrue[Cases[product, _SpinorChain, Infinity], MemberQ[chains, #] &],
+        rest = Cancel[mon/product];
+        AppendTo[moves, <|"Name" -> "MomentumSquare", "Identity" -> "MasslessBracket",
+          "Direction" -> "Contract", "Subtract" -> mon,
+          "Insert" -> canonicalChains[rest*2 dot], "Legs" -> pair|>]],
+      {pair, Subsets[massless, {2}]}],
+    {mon, mons}];
+  moves
+];
+
+(* Common-denominator algebra can introduce a propagator in the numerator.
+   Expand that numerator factor off shell; never rewrite the denominator. *)
+propagatorNumeratorMoves[expr_, rules_List] := Module[
+  {moves = {}, groups = groupsOf[expr], buckets, terms, props, tokens, fraction, num, den,
+   legs, masses, value, insert, subtract, replacements, usedLegs, valid},
+  buckets = GroupBy[Keys[groups], # /. _PropDen -> 1 &];
+  Do[
+    terms = (groups[#] # &) /@ keys;
+    props = DeleteDuplicates[Cases[terms, _PropDen, Infinity]];
+    If[Length[props] < 2, Continue[]];
+    tokens = Table[Unique["numeratorPropagator"], {Length[props]}];
+    subtract = Total[terms];
+    fraction = Together[subtract /. Thread[props -> tokens]];
+    {num, den} = NumeratorDenominator[fraction];
+    replacements = {}; usedLegs = {}; valid = True;
+    Do[
+      If[FreeQ[num, tokens[[i]]], Continue[]];
+      If[!PolynomialQ[num, {tokens[[i]]}] ||
+          !MatchQ[props[[i]], PropDen[Mom[_Integer | Multiparticle[__Integer]], _]],
+        valid = False; Break[]];
+      legs = Replace[props[[i, 1, 1]], {j_Integer :> {j}, Multiparticle[ii__Integer] :> {ii}}];
+      If[!DuplicateFreeQ[legs], valid = False; Break[]];
+      masses = massValue[rules, #] & /@ legs;
+      If[AnyTrue[masses, MissingQ], valid = False; Break[]];
+      value = Total[masses^2] + 2 Total[orderedDot @@ # & /@ Subsets[legs, {2}]] - props[[i, 2]]^2;
+      AppendTo[replacements, tokens[[i]] -> value]; usedLegs = Union[usedLegs, legs],
+      {i, Length[props]}];
+    If[valid && replacements =!= {},
+      insert = canonicalChains[((num /. replacements)/den) /. Thread[tokens -> props]];
+      If[!samePoly[subtract, insert], AppendTo[moves, <|"Name" -> "MomentumSquare",
+        "Identity" -> "PropagatorNumerator", "ScrambleEligible" -> False, "Subtract" -> subtract,
+        "Insert" -> insert, "Legs" -> usedLegs|>]]],
+    {keys, Values[buckets]}];
+  moves
+];
+
+
+ComplicateAmplitude[pair:{_List, _}, nSteps_Integer, seed_Integer] :=
+  ComplicateAmplitude[pair, nSteps, RandomSeed -> seed];
+
+samePoly[a_, b_] := expandAmplitude[a - b] === 0;
+
+
+
+(* ::Subsection::Closed:: *)
+(*Kinematic Identities*)
+
+kinematicMoves[expr_, massRules_List] := Module[
+  {moves = {}, groups, keys, exts, buckets, r, g, n, momentumPlaceholder = Unique["conservedMomentum"]},
+  groups = groupsOf[expr];
+  keys = Keys[groups];
+  exts = externalIndices[massRules];
+  Do[
+    Module[{legs = internalPairs[massRules][[r, 1]], m = internalPairs[massRules][[r, 2]],
+        ma, mb, shell, dot, sk, coef, rest, subtract, insert, q},
+      ma = massValue[massRules, legs[[1]]];
+      mb = massValue[massRules, legs[[2]]];
+      If[ma =!= Missing["Mass"] && mb =!= Missing["Mass"],
+        shell = shellOf[m, ma, mb];
+        dot = orderedDot @@ legs;
+        Do[
+          sk = keys[[g]]; coef = groups[sk];
+          If[AnyTrue[factorsOf[sk], # === dot ||
+              MatchQ[#, Power[base_, power_Integer?Positive] /; base === dot] &],
+            rest = sk/dot;
+            subtract = expandAmplitude[coef*sk];
+            insert = expandAmplitude[coef*shell*rest];
+            If[! samePoly[subtract, insert],
+              AppendTo[moves, <|"Name" -> "OnShell", "Subtract" -> subtract, "Insert" -> insert,
+                "Legs" -> Sort[legs]|>]
+            ]
+          ];
+          (* Expand a scalar coefficient back into this diagram's on-shell dot product.
+             PropDen remains a structural factor and is never rewritten. *)
+          q = shellQuotient[coef, shell];
+          If[q =!= None && !samePoly[q, 0],
+            subtract = expandAmplitude[coef*sk];
+            insert = expandAmplitude[q*dot*sk];
+            AppendTo[moves, <|"Name" -> "OnShell", "Subtract" -> subtract,
+              "Insert" -> insert, "Legs" -> Sort[legs]|>]
+          ],
+          {g, Length[keys]}
+        ]
+      ]
+    ],
+    {r, Length[internalPairs[massRules]]}
+  ];
+  buckets = <||>;
+  Do[
+    Module[{sk = keys[[g]], slots, offset, which, template},
+      (* Extract one positive chain or trace factor before replacing a slot.
+         Any remaining copies stay in the template, so a square itself is
+         never treated as linear. Inverse factors are not selected. *)
+      Do[
+        If[!validChainQ[factor] && !validTraceQ[factor], Continue[]];
+        slots = momentumSlots[factor]; offset = momentumSlotOffset[factor];
+        Do[
+          If[!MatchQ[slots[[n]], Mom[_Integer]], Continue[]];
+          which = slots[[n, 1]];
+          If[!IntegerQ[which] || !MemberQ[exts, which], Continue[]];
+          template = sk/factor*ReplacePart[factor, n + offset -> momentumPlaceholder];
+          buckets[template] = Append[Lookup[buckets, template, {}], {which, groups[sk], sk}],
+          {n, Length[slots]}],
+        {factor, DeleteDuplicates[Join[chainsIn[sk], tracesIn[sk]]]}]
+    ],
+    {g, Length[keys]}
+  ];
+  KeyValueMap[
+    Function[{template, entries},
+      Module[{byMom, present, missing, alpha, skJ, subtract, insert},
+        byMom = <||>;
+        Do[
+          byMom[entries[[n, 1]]] = {entries[[n, 2]], entries[[n, 3]]},
+          {n, Length[entries]}
+        ];
+        present = Keys[byMom];
+        missing = Complement[exts, present];
+        If[Length[missing] === 1 && Length[present] === Length[exts] - 1 && Length[exts] >= 2,
+          alpha = byMom[present[[1]]][[1]];
+          If[AllTrue[present, samePoly[byMom[#][[1]], alpha] &],
+            skJ = template /. momentumPlaceholder -> Mom[missing[[1]]];
+            subtract = expandAmplitude[Total[alpha*Table[byMom[present[[n]]][[2]], {n, Length[present]}]]];
+            insert = expandAmplitude[-alpha*skJ];
+            If[! samePoly[subtract, insert],
+              AppendTo[moves, <|"Name" -> "MomentumConservation", "Subtract" -> subtract,
+                "Insert" -> insert, "Momentum" -> missing[[1]]|>]
+            ]
+          ]
+        ]
+      ]
+    ],
+    buckets
+  ];
+  Do[AppendTo[moves, sq], {sq, momentumSquareMoves[expr, massRules]}];
+  moves = Join[moves, scalarMomentumConservationMoves[expr, massRules]];
+  DeleteDuplicatesBy[moves, {#["Name"], expandAmplitude[#["Subtract"]], expandAmplitude[#["Insert"]]} &]
+];
+
+(* ::Subsection::Closed:: *)
+(*Diagram-Local Identity Settings*)
+
+$onShellChannels = Automatic;
+$useMomentumConservation = True;
+
+normalizeOnShellChannels[Automatic] := Automatic;
+normalizeOnShellChannels[channels_List] := Sort /@ channels;
+
+Options[SpinorIdentityCandidates] = {"OnShellChannels" -> Automatic, "MomentumConservation" -> True};
+Options[ComplicateAmplitude] = Join[{RandomSeed -> Automatic, "RecordSteps" -> False}, Options[SpinorIdentityCandidates]];
+Options[ApplySpinorIdentity] = Options[SpinorIdentityCandidates];
+
+(* ::Subsection::Closed:: *)
+(*Legal Identity Edits*)
+
+stopMove[] := <|"Name" -> "Stop", "Subtract" -> 0, "Insert" -> 0|>;
+
+(* Relate both endpoints to their own momenta without changing the other
+   endpoint's massive/massless kind or little-group indices. *)
+flipSpinor[s_Spinor] := s /. {"Angle" -> "Square", "Square" -> "Angle"};
+chainMoves[expr_, massRules_] := Module[{moves = {}, mons, chains, c, xs, ps, m, rhs, others, t, k, side, j},
+  mons = monomialsOf[expr];
+  Do[
+    chains = Select[chainsIn[mons[[t]]], validChainQ];
+    Do[
+      c = chains[[k]]; xs = List @@ c; ps = Drop[Rest[xs], -1];
+      Do[
+        m = massValue[massRules, spinorLeg[xs[[side]]]];
+        If[!MissingQ[m] && m =!= 0,
+          rhs = If[side === 1,
+            (SpinorChain @@ Join[{flipSpinor[First[xs]], Mom[spinorLeg[First[xs]]]}, ps, {Last[xs]}])/m,
+            -(SpinorChain @@ Join[{First[xs]}, ps, {Mom[spinorLeg[Last[xs]]], flipSpinor[Last[xs]]}])/m];
+          AppendTo[moves, <|"Name" -> "Mass", "Subtract" -> mons[[t]],
+            "Insert" -> Expand[mons[[t]]/c*rhs], "Site" -> {t, k, side}, "Direction" -> "Expand"|>]
+        ];
+        If[ps === {}, Continue[]];
+        If[If[side === 1, First[ps], Last[ps]] === Mom[spinorLeg[xs[[side]]]],
+          m = massValue[massRules, spinorLeg[xs[[side]]]];
+          If[!MissingQ[m],
+            rhs = If[side === 1,
+              m*(SpinorChain @@ Join[{flipSpinor[First[xs]]}, Rest[ps], {Last[xs]}]),
+              -m*(SpinorChain @@ Join[{First[xs]}, Most[ps], {flipSpinor[Last[xs]]}])];
+            AppendTo[moves, <|"Name" -> "Mass", "Subtract" -> mons[[t]],
+              "Insert" -> Expand[mons[[t]]/c*rhs], "Site" -> {t, k, side}, "Direction" -> "Contract"|>]
+          ]
+        ], {side, {1, -1}}
+      ];
+      If[TrueQ[$useMomentumConservation],
+        Do[
+          If[!MemberQ[externalIndices[massRules], ps[[j, 1]]], Continue[]];
+          others = DeleteCases[externalIndices[massRules], ps[[j, 1]]];
+          If[others === {}, Continue[]];
+          rhs = -Total[ReplacePart[c, j + 1 -> Mom[#]] & /@ others];
+          AppendTo[moves, <|"Name" -> "MomentumConservation", "Subtract" -> mons[[t]],
+            "Insert" -> Expand[mons[[t]]/c*rhs], "Site" -> {t, k, j}|>],
+          {j, Length[ps]}
+        ]
+      ], {k, Length[chains]}
+    ], {t, Length[mons]}
+  ];
+  moves
+];
+
+(* Interior Clifford identities preserve both endpoint spinors and their indices.
+   Reverse square insertions are limited to the start of a chain, one per
+   massive external leg, rather than every possible insertion site. *)
+interiorChainMoves[expr_, rules_] := Module[
+  {moves = {}, mons = monomialsOf[expr], chains, c, xs, ps, short, rhs, square, mass, leg, swapped},
+  Do[
+    chains = DeleteDuplicates[Select[chainsIn[mons[[t]]], validChainQ]];
+    Do[
+      c = chains[[k]]; xs = List @@ c; ps = Drop[Rest[xs], -1];
+      Do[
+        short = SpinorChain @@ Join[Take[xs, j], Drop[xs, j + 2]];
+        If[ps[[j]] === ps[[j + 1]],
+          leg = ps[[j, 1]];
+          mass = momentumMass[rules, leg];
+          square = If[MissingQ[mass] || mass === None, Mom[leg]^2, mass^2];
+          rhs = square short;
+          AppendTo[moves, <|"Name" -> "ChainSquare", "Subtract" -> mons[[t]],
+            "Insert" -> Expand[mons[[t]]/c*rhs], "Site" -> {t, k, j}, "Direction" -> "Contract"|>],
+          swapped = ReplacePart[c, {j + 1 -> ps[[j + 1]], j + 2 -> ps[[j]]}];
+          rhs = 2 (orderedDot[ps[[j, 1]], ps[[j + 1, 1]]] /. rules) short - swapped;
+          AppendTo[moves, <|"Name" -> "Anticommutation", "Subtract" -> mons[[t]],
+            "Insert" -> Expand[mons[[t]]/c*rhs], "Site" -> {t, k, j}|>]
+        ], {j, Length[ps] - 1}];
+      (* Do not nest inverse square insertions in a chain already containing one. *)
+      If[AnyTrue[Partition[ps, 2, 1], #[[1]] === #[[2]] &], Continue[]];
+      Do[
+        mass = massValue[rules, leg];
+        If[MissingQ[mass] || TrueQ[mass == 0], Continue[]];
+        rhs = (SpinorChain @@ Join[Take[xs, 1], {Mom[leg], Mom[leg]}, Rest[xs]])/mass^2;
+        AppendTo[moves, <|"Name" -> "ChainSquare", "Subtract" -> mons[[t]],
+          "Insert" -> Expand[mons[[t]]/c*rhs], "Site" -> {t, k, leg}, "Direction" -> "Expand"|>],
+        {leg, externalIndices[rules]}],
+      {k, Length[chains]}], {t, Length[mons]}];
+  moves
+];
+
+(* A composite momentum is a sum, independently of momentum conservation or
+   on-shell assumptions. Binary collection supplies reverse identity edits. *)
+momentumMembers[i_Integer] := {i};
+momentumMembers[Multiparticle[ii__Integer]] := With[{members = {ii}},
+  If[Length[members] >= 2 && DuplicateFreeQ[members], Sort[members], {}]];
+momentumMembers[_] := {};
+momentumLabel[{i_}] := i;
+momentumLabel[ii_List] := Multiparticle @@ Sort[ii];
+
+momentumSumMoves[expr_, rules_] := Module[
+  {moves = {}, mons = monomialsOf[expr], exts = externalIndices[rules], buckets = <||>,
+    hole = Unique["momentumSlot"], chains, c, ps, offset, members, rhs, pair, split, template, coefficient},
+  Do[
+    chains = Join[DeleteDuplicates[Select[chainsIn[mons[[t]]], validChainQ]],
+      DeleteDuplicates[Select[tracesIn[mons[[t]]], validTraceQ]]];
+    Do[
+      c = chains[[k]]; ps = momentumSlots[c]; offset = momentumSlotOffset[c];
+      Do[
+        members = momentumMembers[ps[[j, 1]]];
+        If[members === {}, Continue[]];
+        If[Length[members] >= 2,
+          rhs = ReplacePart[c, j + offset -> Mom[First[members]]] +
+            ReplacePart[c, j + offset -> Mom[momentumLabel[Rest[members]]]];
+          AppendTo[moves, Join[<|"Name" -> "MomentumSum", "Direction" -> "Expand",
+            "Subtract" -> mons[[t]], "Insert" -> canonicalChains[mons[[t]]/c*rhs],
+            "Site" -> {t, k, j}, "Legs" -> {ps[[j, 1]]}, "Identity" -> "Split"|>, traceMetadata[c]]],
+          If[MemberQ[exts, First[members]],
+            Do[
+              pair = momentumLabel[{First[members], other}];
+              rhs = ReplacePart[c, j + offset -> Mom[pair]] - ReplacePart[c, j + offset -> Mom[other]];
+              AppendTo[moves, Join[<|"Name" -> "MomentumSum", "Direction" -> "Expand",
+                "Subtract" -> mons[[t]], "Insert" -> canonicalChains[mons[[t]]/c*rhs],
+                "Site" -> {t, k, j}, "Legs" -> {pair, other}, "Identity" -> "Introduce"|>, traceMetadata[c]]],
+              {other, Complement[exts, members]}]]];
+        split = splitMon[mons[[t]]];
+        template = splitMon[canonicalChains[split[[2]]/c*ReplacePart[c, j + offset -> Mom[hole]]]];
+        coefficient = split[[1]] template[[1]];
+        buckets[template[[2]]] = Append[Lookup[buckets, template[[2]], {}],
+          {ps[[j, 1]], coefficient, mons[[t]]}],
+        {j, Length[ps]}], {k, Length[chains]}], {t, Length[mons]}];
+  KeyValueMap[Function[{context, entries}, Module[
+    {byMomentum, labels, a, b, ma, mb, ca, cb, target, signs, scales, subtract},
+    byMomentum = GroupBy[DeleteDuplicates[entries], First]; labels = Keys[byMomentum];
+    Do[
+      a = labels[[i]]; b = labels[[j]];
+      ma = momentumMembers[a]; mb = momentumMembers[b];
+      ca = Total[byMomentum[a][[All, 2]]]; cb = Total[byMomentum[b][[All, 2]]];
+      target = None;
+      If[Intersection[ma, mb] === {}, target = momentumLabel[Join[ma, mb]]; signs = {1, 1}];
+      If[Complement[mb, ma] === {} && Length[ma] > Length[mb],
+        target = momentumLabel[Complement[ma, mb]]; signs = {1, -1}];
+      If[Complement[ma, mb] === {} && Length[mb] > Length[ma],
+        target = momentumLabel[Complement[mb, ma]]; signs = {-1, 1}];
+      If[target =!= None,
+        (* Collect a shared portion even when another term has changed one coefficient. *)
+        scales = DeleteDuplicates[{signs[[1]] ca, signs[[2]] cb}];
+        Do[
+          subtract = canonicalChains[scale*((signs[[1]] context /. Mom[hole] -> Mom[a]) +
+            (signs[[2]] context /. Mom[hole] -> Mom[b]))];
+          AppendTo[moves, <|"Name" -> "MomentumSum", "Direction" -> "Contract",
+            "Subtract" -> subtract, "Insert" -> canonicalChains[scale*(context /. Mom[hole] -> Mom[target])],
+            "Legs" -> {a, b}, "Momentum" -> target, "Identity" -> "Collect"|>], {scale, scales}]],
+      {i, Length[labels]}, {j, i + 1, Length[labels]}]]], buckets];
+  moves
+];
+
+(* Trace moves use the same Clifford algebra, with no external spinor endpoints. *)
+traceMoves[expr_, rules_] := Module[
+  {moves = {}, mons = monomialsOf[expr], traces, trace, ps, short, swapped, rhs, mass, square, leg, dots},
+  Do[
+    traces = DeleteDuplicates[Select[tracesIn[mons[[t]]], validTraceQ]];
+    Do[
+      trace = traces[[k]]; ps = List @@ trace;
+      Do[
+        short = SpinorTrace @@ Join[Take[ps, j - 1], Drop[ps, j + 1]];
+        If[ps[[j]] === ps[[j + 1]],
+          mass = momentumMass[rules, ps[[j, 1]]];
+          square = If[MissingQ[mass] || mass === None, ps[[j]]^2, mass^2];
+          rhs = square short;
+          AppendTo[moves, <|"Name" -> "ChainSquare", "Identity" -> "TraceSquare", "Direction" -> "Contract",
+            "Subtract" -> mons[[t]], "Insert" -> canonicalChains[mons[[t]]/trace*rhs],
+            "Trace" -> trace, "Site" -> {t, k, j}|>],
+          swapped = ReplacePart[trace, {j -> ps[[j + 1]], j + 1 -> ps[[j]]}];
+          rhs = 2 (orderedDot[ps[[j, 1]], ps[[j + 1, 1]]] /. rules) short - swapped;
+          AppendTo[moves, <|"Name" -> "Anticommutation", "Identity" -> "TraceAnticommutation",
+            "Subtract" -> mons[[t]], "Insert" -> canonicalChains[mons[[t]]/trace*rhs],
+            "Trace" -> trace, "Site" -> {t, k, j}|>]
+        ], {j, Length[ps] - 1}];
+      If[Length[ps] > 2 && First[ps] === Last[ps],
+        mass = momentumMass[rules, First[ps][[1]]];
+        square = If[MissingQ[mass] || mass === None, First[ps]^2, mass^2];
+        (* Crossing the trace boundary flips chirality; one rotation restores it. *)
+        rhs = square (SpinorTrace @@ RotateLeft[Most[Rest[ps]]]);
+        AppendTo[moves, <|"Name" -> "ChainSquare", "Identity" -> "TraceCyclicSquare", "Direction" -> "Contract",
+          "Subtract" -> mons[[t]], "Insert" -> canonicalChains[mons[[t]]/trace*rhs],
+          "Trace" -> trace, "Site" -> {t, k, 0}|>]];
+      If[Length[ps] === 2 && First[ps] =!= Last[ps],
+        AppendTo[moves, <|"Name" -> "MomentumSquare", "Identity" -> "TracePair", "Direction" -> "Contract",
+          "Subtract" -> mons[[t]], "Insert" -> canonicalChains[mons[[t]]/trace*2*((orderedDot @@ (First /@ ps)) /. rules)],
+          "Trace" -> trace, "Site" -> {t, k, 1}, "Legs" -> (First /@ ps)|>]];
+      If[TrueQ[$useMomentumConservation],
+        Do[
+          leg = ps[[j, 1]];
+          If[!MemberQ[externalIndices[rules], leg], Continue[]];
+          rhs = -Total[ReplacePart[trace, j -> Mom[#]] & /@ Complement[externalIndices[rules], {leg}]];
+          AppendTo[moves, <|"Name" -> "MomentumConservation", "Identity" -> "TraceConservation",
+            "Subtract" -> mons[[t]], "Insert" -> canonicalChains[mons[[t]]/trace*rhs],
+            "Trace" -> trace, "Site" -> {t, k, j}, "Momentum" -> leg|>], {j, Length[ps]}]];
+      If[!AnyTrue[Partition[ps, 2, 1], #[[1]] === #[[2]] &],
+        Do[
+          mass = massValue[rules, leg];
+          If[MissingQ[mass] || TrueQ[mass == 0], Continue[]];
+          rhs = (SpinorTrace @@ Join[{Mom[leg], Mom[leg]}, ps])/mass^2;
+          AppendTo[moves, <|"Name" -> "ChainSquare", "Identity" -> "TraceSquare", "Direction" -> "Expand",
+            "Subtract" -> mons[[t]], "Insert" -> canonicalChains[mons[[t]]/trace*rhs],
+            "Trace" -> trace, "Site" -> {t, k, leg}|>], {leg, externalIndices[rules]}]],
+      {k, Length[traces]}];
+    dots = DeleteDuplicates[Cases[factorsOf[mons[[t]]],
+      dot_MomProd :> dot, {1}] ~Join~ Cases[factorsOf[mons[[t]]],
+        Power[dot_MomProd, _Integer?Positive] :> dot, {1}]];
+    Do[
+      rhs = (SpinorTrace @@ (Mom /@ (List @@ dot)))/2;
+      AppendTo[moves, <|"Name" -> "MomentumSquare", "Identity" -> "TracePair", "Direction" -> "Expand",
+        "Subtract" -> mons[[t]], "Insert" -> canonicalChains[mons[[t]]/dot*rhs], "Legs" -> (List @@ dot)|>],
+      {dot, dots}], {t, Length[mons]}];
+  moves
+];
+
+applyCandidate[expr_, cand_Association] :=
+  If[cand["Name"] === "Stop", expr, canonicalChains[expr - cand["Subtract"] + cand["Insert"]]];
+
+legalMoves[expr_, massRules_List] := Module[{legacy, moves, normalizationDelta},
+  legacy = Select[kinematicMoves[expr, massRules],
+    MemberQ[If[TrueQ[$useMomentumConservation],
+      {"MomentumConservation", "MomentumSquare", "OnShell"},
+      {"MomentumSquare", "OnShell"}], #["Name"]] &];
+  moves = Join[chainMoves[expr, massRules], interiorChainMoves[expr, massRules],
+    momentumSumMoves[expr, massRules], traceMoves[expr, massRules],
+    helicityInvariantMoves[expr, massRules], propagatorNumeratorMoves[expr, massRules],
+    SchoutenCandidates[expr], legacy];
+  moves = DeleteDuplicatesBy[moves, {#["Name"], #["Subtract"], #["Insert"]} &];
+  (* Canonicalization is linear, so unchanged edits need only their local delta.
+     Include the input correction for callers supplying noncanonical states. *)
+  normalizationDelta = canonicalChains[expr] - expr;
+  moves = Select[moves,
+    !samePoly[canonicalChains[#["Insert"] - #["Subtract"]] + normalizationDelta, 0] &];
+  Append[moves, stopMove[]]
+];
+
+SpinorIdentityCandidates[{massRules_List, amplitude_}, OptionsPattern[]] :=
+  Block[{$onShellChannels = normalizeOnShellChannels[OptionValue["OnShellChannels"]],
+      $useMomentumConservation = OptionValue["MomentumConservation"]},
+    Select[legalMoves[canonicalAmplitude[amplitude, massRules], massRules], #["Name"] =!= "Stop" &]
+  ];
+
+ApplySpinorIdentity[pair:{massRules_List, amplitude_}, edit_Association, OptionsPattern[]] := Module[
+  {state, candidates, key},
+  key = Lookup[edit, {"Name", "Subtract", "Insert"}, Missing["InvalidEdit"]];
+  If[!FreeQ[key, _Missing] || First[key] === "Stop",
+    Message[ApplySpinorIdentity::edit]; Return[$Failed]];
+  state = canonicalAmplitude[amplitude, massRules];
+  candidates = SpinorIdentityCandidates[pair,
+    "OnShellChannels" -> OptionValue["OnShellChannels"],
+    "MomentumConservation" -> OptionValue["MomentumConservation"]];
+  If[!AnyTrue[candidates, Lookup[#, {"Name", "Subtract", "Insert"}] === key &],
+    Message[ApplySpinorIdentity::edit]; Return[$Failed]];
+  applyCandidate[state, edit]
+];
+ApplySpinorIdentity[___] := (Message[ApplySpinorIdentity::args]; $Failed);
+
+(* ::Subsection::Closed:: *)
+(*Typed Particle Relabeling*)
+
+relabelLegs[expr_, ids_Association] := Module[{idx},
+  idx[i_Integer] := Lookup[ids, i, i];
+  idx[Multiparticle[ii__]] := Multiparticle @@ (idx /@ {ii});
+  idx[x_] := x;
+  expr /. {
+    Spinor[k_, t: ("Angle" | "Square"), i_, rest___] :> Spinor[k, t, idx[i], rest],
+    Spinor[k_, ud_, t: ("Angle" | "Square"), i_, rest___] :> Spinor[k, ud, t, idx[i], rest],
+    Mom[i_] :> Mom[idx[i]], Mass[i_] :> Mass[idx[i]],
+    MomProd[i_, j_] :> MomProd[idx[i], idx[j]],
+    Mandelstahm[i_, j_] :> Mandelstahm[idx[i], idx[j]]
+  }
+];
+
+(* ::Subsection::Closed:: *)
+(*Complexity and Random Identity Checks*)
+
+SpinorExpressionComplexity[expr_] := expressionComplexity[expr];
+complexityMomentumMultiplicity[Mom[label_]] := Max[1, Length[momentumMembers[label]]];
+complexityMomentumMultiplicity[_] := 1;
+momentumBranchCount[slots_List] := Times @@ (complexityMomentumMultiplicity /@ slots);
+
+(* Count the branches hidden in composite slots without constructing them.
+   A product's slots multiply branch counts, including repeated chain factors. *)
+monomialComplexity[mon_] := Module[{slots, branches},
+  slots = Flatten[momentumSlots /@ Join[chainsIn[mon], tracesIn[mon]], 1];
+  branches = momentumBranchCount[slots];
+  branches*(1 + 4*Length[slots] + 4*Count[{mon}, _MomProd, Infinity] +
+    2*Count[{mon}, Power[Mom[Multiparticle[__]], 2], Infinity])
+];
+expressionComplexity[expr_] := withProtectedPropagators[expr,
+  Function[body, Total[monomialComplexity /@ monomialsOf[body]]]];
+expressionTermCounts[expr_] := withProtectedPropagators[expr, Function[body,
+  With[{mons = monomialsOf[body]}, <|"Terms" -> Length[mons],
+    "ExpandedTerms" -> Total[momentumBranchCount[
+      Flatten[momentumSlots /@ Join[chainsIn[#], tracesIn[#]], 1]] & /@ mons]|>]]];
+
+(* Random scrambles use only reversible symbolic edits. *)
+scramblePair[{rules_List, amp_}, n_, seed_, record_] := Module[
+  {original = canonicalAmplitude[amp, rules], expr, moves, pick, next, history = {}},
+  expr = original;
+  BlockRandom[
+    If[IntegerQ[seed], SeedRandom[seed]];
+    Do[
+      moves = Select[legalMoves[expr, rules],
+        #["Name"] =!= "Stop" && TrueQ[Lookup[#, "ScrambleEligible", True]] &];
+      If[moves === {}, Break[]];
+      pick = RandomChoice[moves]; next = applyCandidate[expr, pick];
+      AppendTo[history, <|"Before" -> expr, "After" -> next, "Candidate" -> pick|>];
+      expr = next, {n}
+    ]
+  ];
+  Join[<|"MassRules" -> rules, "Original" -> original, "Expression" -> expr, "Steps" -> Length[history]|>,
+    If[TrueQ[record], <|"Trajectory" -> history|>, <||>]]
+];
+
+ComplicateAmplitude[pair:{_List, _}, nSteps_Integer:5, OptionsPattern[]] :=
+  Block[{$onShellChannels = normalizeOnShellChannels[OptionValue["OnShellChannels"]],
+      $useMomentumConservation = OptionValue["MomentumConservation"]},
+    scramblePair[pair, Max[0, nSteps], OptionValue[RandomSeed], OptionValue["RecordSteps"]]
+  ];
+
+End[];

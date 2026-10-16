@@ -13,28 +13,12 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--kernel", default=shutil.which("WolframKernel") or
                         "/Applications/Wolfram.app/Contents/MacOS/WolframKernel")
-    parser.add_argument("--timeout", type=float, default=60)
-    parser.add_argument("--neural", action="store_true", help="also exercise numerical NN training/inference")
-    parser.add_argument("--parallel", action="store_true", help="also launch two owned symbolic test workers")
+    parser.add_argument("--timeout", type=float, default=300)
     args = parser.parse_args()
     if args.timeout <= 0:
         parser.error("--timeout must be positive")
     directory = Path(__file__).resolve().parent
-    tests = ["schouten-tests.wl", "candidate-policy-tests.wl", "candidate-training-tests.wl",
-             "notebook-scrambling-tests.wl", "inference-limits-tests.wl", "shared-state-tests.wl",
-             "training-pipeline-tests.wl", "training-summary-tests.wl", "diagram-unscramble-tests.wl",
-             "interior-chain-tests.wl", "particle-compact-tests.wl",
-             "route-ordering-tests.wl", "training-guidance-tests.wl", "compact-training-runtime-tests.wl"]
-    if args.parallel:
-        if args.timeout < 150:
-            parser.error("--parallel needs --timeout >= 150 to allow worker startup and cleanup")
-        tests.append("parallel-pipeline-tests.wl")
-    if args.neural:
-        tests.append("move-policy-tests.wl")
-        tests.append("padding-tests.wl")
-        tests.append("candidate-neural-tests.wl")
-        if args.parallel:
-            tests.append("neural-pipeline-tests.wl")
+    tests = ["spinor-identity-tests.wl", "diagram-tests.wl", "simplification-path-tests.wl"]
     env = dict(os.environ)
     for name in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "MXNET_CPU_WORKER_NTHREADS"):
         env[name] = "1"
