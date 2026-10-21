@@ -48,4 +48,5 @@ Protect[RandomDeleteSpinorProduct,RandomAddSpinorProduct,RandomChangeCoefficient
 Protect[FindAmp];
 Protect[CreateDiagrams,CreateArrowDiagram,CreateArrowDiagrams,diagramAmplitude,diagramAmplitudes];
 Protect[SchoutenRewrite,SchoutenCandidates,SpinorIdentityCandidates,ApplySpinorIdentity,SpinorExpressionComplexity,ComplicateAmplitude];
+Protect[DiagramAmplitudeRecords,PhysicalPoleResidue,CheckPhysicalResidues];
 EndPackage[]

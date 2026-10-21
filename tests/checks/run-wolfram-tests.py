@@ -18,7 +18,9 @@ def main():
     if args.timeout <= 0:
         parser.error("--timeout must be positive")
     directory = Path(__file__).resolve().parent
-    tests = ["spinor-identity-tests.wl", "diagram-tests.wl", "simplification-path-tests.wl"]
+    tests = ["spinor-identity-tests.wl", "diagram-tests.wl",
+             "simplification-path-tests.wl", "physical-residue-tests.wl",
+             "spurious-pole-tests.wl", "qed-five-point-simplification-tests.wl"]
     env = dict(os.environ)
     for name in ("OMP_NUM_THREADS", "OPENBLAS_NUM_THREADS", "MKL_NUM_THREADS", "MXNET_CPU_WORKER_NTHREADS"):
         env[name] = "1"

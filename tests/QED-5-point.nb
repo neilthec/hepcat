@@ -2352,7 +2352,46 @@ q5MixedFinal instead of substituting into individual divergent summands. The com
 including the short coefficient-by-coefficient proof, is in QED-5-point-reference-derivations.pdf. \
 The factored form was also cross-checked against Das and Zeng, arXiv:2608.18218v1, Eqs. (44), (45), \
 (75), with labels (1,2,3,4,5)_paper=(1,3,5,4,2)_here and the phase fixed by HEPCAT residues.", 
-    "Text"]}, Open]]
+    "Text"]}, Open]],
+Cell[CellGroupData[{
+  Cell["Five-Point Identity Routes and Physical Residues", "Section"],
+  Cell["This section can be evaluated independently. It preserves all earlier results. The diagrams use the QED three-point model (2); factorization uses the existing model with known four-point amplitudes (3). All momenta are ingoing. These are explicit QED identity routes, not a new automatic simplifier.", "Text"],
+  Cell["q5IdentityExampleDirectory = NotebookDirectory[];\n$HEPCATpath = FileNameJoin[{ParentDirectory[q5IdentityExampleDirectory], \"source\"}];\nGet[FileNameJoin[{$HEPCATpath, \"HEPCAT.wl\"}]];\nGet[FileNameJoin[{q5IdentityExampleDirectory, \"QED-5-point-residues.wl\"}]];\nq5IdentityVertexModel = ReadModel[FileNameJoin[{ParentDirectory[q5IdentityExampleDirectory], \"models\"}], 2];\nq5IdentityAmplitudeModel = ReadModel[FileNameJoin[{ParentDirectory[q5IdentityExampleDirectory], \"models\"}], 3];", "Input"],
+
+  Cell["Four Fermions and One Positive-Helicity Photon", "Subsection"],
+  Cell["Generate the eight diagrams for e, E, E, e, A.+. The helper retains their actual amplitudes and each intermediate expression.", "Text"],
+  Cell["q5FourFermionExampleParticles = {\"e\", \"E\", \"E\", \"e\", \"A.+\"};\nq5FourFermionExampleDiagrams = CreateDiagrams[q5FourFermionExampleParticles, q5IdentityVertexModel];\nq5FourFermionExampleRoute = q5FourFermionPhotonRoute[q5FourFermionExampleDiagrams];\nLength[q5FourFermionExampleDiagrams]", "Input"],
+
+  Cell["One Diagram, Step by Step", "Subsubsection"],
+  Cell["First contract the internal spin indices and use the external Dirac equations and Fierz identities. Schouten then separates the numerator into a retained part and a multiple of this diagram's electron on-shell condition. Only that numerator multiple is removed. The electron and photon denominators remain off shell and are not canceled. This is a diagram-local representative choice, not an identity equating the original off-shell raw sum to the final sum.", "Text"],
+  Cell["q5FourFermionExampleStep = First[q5FourFermionExampleRoute[\"Routes\"]];\nGrid[({#[[1]], (nice[#[[2]]] /. nice[parameter_Symbol] :> parameter)} & /@ {\n  {\"Generated diagram\", q5FourFermionExampleStep[\"OriginalExpression\"]},\n  {\"Dirac and Fierz identities\", q5FourFermionExampleStep[\"DiracReduced\"]},\n  {\"Removed numerator multiple\", q5FourFermionExampleStep[\"RemovedNumeratorMultiple\"]},\n  {\"Selected representative\", q5FourFermionExampleStep[\"NumeratorRepresentative\"]}}),\n  Alignment -> Left]", "Input"],
+  Cell["Here is the Schouten identity used in that step. Its last term contains this diagram's electron numerator on-shell factor.", "Text"],
+  Cell["Row[Riffle[(nice /@ (List @@ q5FourFermionExampleStep[\"SchoutenIdentity\"])) /. nice[parameter_Symbol] :> parameter, \" = \"]]", "Input"],
+
+  Cell["Pair the Photon Attachments", "Subsubsection"],
+  Cell["Add the two attachments to the same electron-positron pair. The difference of their reference-spinor ratios is the following reference-free momentum-chain expression. This identity uses only external shells, not internal on-shell conditions on the sum.", "Text"],
+  Cell["q5FourFermionExamplePair = First[q5FourFermionExampleRoute[\"PairedCurrents\"]];\nRow[Riffle[(nice /@ (List @@ q5FourFermionExamplePair[\"SoftIdentity\"])) /. nice[parameter_Symbol] :> parameter, \" = \"]]", "Input"],
+  Cell["The complete result below contains only physical electron and photon propagators. Every angle and square bracket is displayed directly.", "Text"],
+  Cell["q5FourFermionExampleAmplitude = q5FourFermionExampleRoute[\"Final\"];\n(q5FourFermionExampleAmplitude // nice) /. nice[parameter_Symbol] :> parameter", "Input"],
+
+  Cell["Check All Poles", "Subsubsection"],
+  Cell["Use the usual factorization channels from model 3. The checker compares their physical residues and automatically discovers any other apparent denominator poles to test for cancellation in the same report. This final form has only physical denominators. For a negative-helicity external photon, exchange angle and square spinors and obtain the corresponding channels independently.", "Text"],
+  Cell["q5FourFermionExampleChannels = FactorizationAmplitudeChannels[\n  q5FourFermionExampleParticles, q5IdentityAmplitudeModel];\nCheckPhysicalResidues[q5FourFermionExampleAmplitude,\n  q5FourFermionExampleChannels, q5IdentityAmplitudeModel,\n  \"ParameterRules\" -> {Me -> 1, EE -> 1}]", "Input"],
+  Cell["q5FourFermionNegativeParticles = ReplacePart[q5FourFermionExampleParticles, 5 -> \"A.-\"];\nq5FourFermionNegativeAmplitude = q5FourFermionExampleAmplitude /.\n  Spinor[type_, kind : (\"Angle\" | \"Square\"), rest___] :>\n    Spinor[type, If[kind === \"Angle\", \"Square\", \"Angle\"], rest];\nCheckPhysicalResidues[q5FourFermionNegativeAmplitude,\n  FactorizationAmplitudeChannels[q5FourFermionNegativeParticles, q5IdentityAmplitudeModel],\n  q5IdentityAmplitudeModel, \"ParameterRules\" -> {Me -> 1, EE -> 1}]", "Input"],
+
+  Cell["Mixed Photon Helicities: e, E, A.+, A.+, A.-", "Subsection"],
+  Cell["The same helper file also contains the explicit mixed-helicity reconstruction discussed above. Start with the six actual diagram amplitudes, rather than substituting a pre-existing final expression.", "Text"],
+  Cell["q5MixedExampleParticles = {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\"};\nq5MixedExampleDiagrams = CreateDiagrams[q5MixedExampleParticles, q5IdentityVertexModel];\nq5MixedExampleInput = diagramAmplitudes[q5MixedExampleDiagrams];\nq5MixedExampleRoute = qedFivePointMixedRoute[q5MixedExampleInput];\nLength[q5MixedExampleDiagrams]", "Input"],
+  Cell["Each diagram first acquires its seed numerator using its own internal shells. The displayed local completion is another allowed numerator representative: it vanishes because it contains the indicated on-shell factor of that same diagram. This choice is explicit. It is not an ordinary off-shell identity on the raw sum. The subsequent cancellation of spurious denominators uses only external shells and momentum conservation; the earlier independent current calculation and the residue checks select the physical completion.", "Text"],
+  Cell["Grid[({#[[1]], (nice[#[[2]]] /. nice[parameter_Symbol] :> parameter)} & /@ {\n  {\"Generated diagram\", First[q5MixedExampleRoute[\"RawDiagrams\"]]},\n  {\"Seed numerator\", First[q5MixedExampleRoute[\"LocalSeedNumerators\"]]},\n  {\"Added numerator multiple\", First[q5MixedExampleRoute[\"LocalCompletionNumerators\"]]},\n  {\"Its on-shell factor\", First[q5MixedExampleRoute[\"OnShellFactorUsed\"]]}}),\n  Alignment -> Left]", "Input"],
+  Cell["q5MixedExampleAmplitude = q5MixedExampleRoute[\"Final\"];\n(q5MixedExampleAmplitude // nice) /. nice[parameter_Symbol] :> parameter", "Input"],
+  Cell["q5MixedExampleChannels = FactorizationAmplitudeChannels[\n  q5MixedExampleParticles, q5IdentityAmplitudeModel];\nCheckPhysicalResidues[q5MixedExampleAmplitude,\n  q5MixedExampleChannels, q5IdentityAmplitudeModel,\n  \"ParameterRules\" -> {Me -> 1, EE -> 1}]", "Input"],
+  Cell[CellGroupData[{
+    Cell["Optional Exact Local Checks", "Subsubsection"],
+    Cell["This checks all six mixed-helicity diagrams, four masses and all four independent massive-spin components. The original propagators are stripped only for the numerator comparisons and are never put on shell as denominators.", "Text"],
+    Cell["KeyDrop[qedFivePointMixedLocalChecks[q5MixedExampleRoute], \"Details\"]", "Input"]
+  }, Closed]]
+}, Open]]
 },
 WindowSize->{808, 911},
 WindowMargins->{{4, Automatic}, {Automatic, 4}},

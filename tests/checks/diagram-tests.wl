@@ -459,6 +459,78 @@ check["resolved photon components retain the internal x-factor obstruction",
 check["paired photon matches the manual reference using ordinary algebra",
   FreeQ[photonPairedSum, _xFactor | _xTildeFactor] &&
     Expand[ExtractMandelstahm[photonPairedSum] - photonReference] === 0];
+
+qedSignModel = ReadModel[FileNameJoin[{root, "models"}], 2];
+(* Independent Wick check: follow graph paths, not the helper's port graph.
+   For e/E lines the sign is the determinant parity of positron partners. *)
+qedWickSign[diag_] := Module[{electrons, positrons, partnerOrder, path},
+  electrons = Flatten[Position[diag["ExternalParticles"], "e", {1}]];
+  positrons = Flatten[Position[diag["ExternalParticles"], "E", {1}]];
+  partnerOrder = Table[SelectFirst[positrons, Function[positron,
+    path = Partition[FindShortestPath[diag["Graph"], electron, positron], 2, 1];
+    AllTrue[path, Function[ends, With[{edge = UndirectedEdge @@ Sort[ends]},
+      !KeyExistsQ[diag["Propagators"], edge] ||
+        diag["Propagators"][edge, "Spin2"] === 1]]]]], {electron, electrons}];
+  If[!AllTrue[partnerOrder, IntegerQ], Return[$Failed]];
+  Signature[Ordering[partnerOrder]]
+];
+Do[
+  signDiagrams = CreateDiagrams[signParticles, qedSignModel];
+  check["four-point identical-fermion Wick parity " <> ToString[signParticles, InputForm],
+    Length[signDiagrams] === 2 && AllTrue[signDiagrams,
+      ConstructiveDiagrams`diagramFermionSign[#] === qedWickSign[#] &]],
+  {signParticles, DeleteDuplicates[Permutations[{"e", "E", "e", "E"}]]}
+];
+Do[
+  signDiagrams = CreateDiagrams[signParticles, ubModel];
+  check["distinct-flavor four-point normalization unchanged " <> ToString[signParticles, InputForm],
+    signDiagrams =!= {} && AllTrue[signDiagrams,
+      ConstructiveDiagrams`diagramFermionSign[#] === 1 &]],
+  {signParticles, Permutations[{"e", "E", "M", "m"}]}
+];
+Do[
+  signDiagrams = CreateDiagrams[signParticles, qedSignModel];
+  check["photon attachments retain fermion matching parity " <> ToString[signParticles, InputForm],
+    Length[signDiagrams] === 8 && AllTrue[signDiagrams,
+      ConstructiveDiagrams`diagramFermionSign[#] === qedWickSign[#] &]];
+  signGroups = GatherBy[signDiagrams,
+    Sort[Sort /@ ConstructiveDiagrams`diagramFermionLines[#]] &];
+  check["all four attachments in each pairing have the same exchange parity " <>
+      ToString[signParticles, InputForm],
+    Length[signGroups] === 2 && Length /@ signGroups === {4, 4} &&
+      AllTrue[signGroups, Length[DeleteDuplicates[
+        ConstructiveDiagrams`diagramFermionSign /@ #]] === 1 &]];
+  check["fermion parity does not depend on vertex association order " <>
+      ToString[signParticles, InputForm],
+    AllTrue[signDiagrams, ConstructiveDiagrams`diagramFermionSign[#] ===
+      ConstructiveDiagrams`diagramFermionSign[Join[#, <|"VertexStructures" ->
+        Association[Reverse[Normal[#["VertexStructures"]]]]|>]] &]];
+  check["fermion parity multiplies a whole diagram exactly once " <>
+      ToString[signParticles, InputForm],
+    AllTrue[signDiagrams, Function[diag,
+      diagramAmplitude[diag] === ConstructiveDiagrams`diagramFermionSign[diag] *
+        Block[{ConstructiveDiagrams`diagramFermionSign},
+          ConstructiveDiagrams`diagramFermionSign[_] := 1;
+          diagramAmplitude[diag]]]]],
+  {signParticles, {{"e", "E", "E", "e", "A.+"},
+    {"e", "E", "E", "e", "A.-"}, {"e", "E", "e", "E", "A.+"},
+    {"e", "E", "e", "E", "A.-"}, {"A.+", "E", "e", "e", "E"},
+    {"e", "A.-", "E", "E", "e"}}}
+];
+sixFermionDiagrams = CreateDiagrams[{"e", "E", "e", "E", "e", "E"}, qedSignModel];
+check["six-fermion trees use all six matching determinant signs",
+  Length[sixFermionDiagrams] === 36 &&
+    Length[DeleteDuplicates[Sort[Sort /@ ConstructiveDiagrams`diagramFermionLines[#]] & /@
+      sixFermionDiagrams]] === 6 && AllTrue[sixFermionDiagrams,
+      ConstructiveDiagrams`diagramFermionSign[#] === qedWickSign[#] &]];
+Do[
+  singleLineDiagrams = CreateDiagrams[Join[{"e", "E"}, photonHelicities], qedSignModel];
+  check["one fermion line acquires no exchange sign " <> ToString[photonHelicities, InputForm],
+    Length[singleLineDiagrams] === 6 && AllTrue[singleLineDiagrams,
+      ConstructiveDiagrams`diagramFermionSign[#] === 1 &]],
+  {photonHelicities, Tuples[{"A.+", "A.-"}, 3]}
+];
+
 obsoleteDiagramTemporaryPatterns = {"ConstructiveDiagrams`state", "ConstructiveDiagrams`state$*",
   "ConstructiveDiagrams`leg", "ConstructiveDiagrams`leg$*",
   "ConstructiveDiagrams`choices", "ConstructiveDiagrams`choices$*",

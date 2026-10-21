@@ -492,25 +492,38 @@ partitions
 
 
 (* ::Input::Initialization:: *)
-LookupAmplitude[taggedParticles_List,model_,rightSide_,{i1_,i2_,i3_,i4_}]:=Module[{amp=0,i,j,k,replacements,doubleSpin,indices,buildReplacements},
+ConstructiveDiagrams`Private`amplitudeParticleLabelRules[tagged_List,row_List]:=Module[
+  {used={},rules={},particles=Drop[row,-2]},
+  Do[Do[
+    If[tagged[[k,1]]===particles[[j]]&&!MemberQ[used,k],
+      AppendTo[rules,j->tagged[[k,2]]];AppendTo[used,k];Break[]],
+    {k,Length[tagged]}],{j,Length[particles]}];
+  rules
+];
+
+LookupAmplitude[taggedParticles_List,model_,rightSide_,{i1_,i2_,i3_,i4_}]:=Module[{amp=0,i,j,k,replacements,doubleSpin,indices,buildReplacements,relabelIndex,relabelExpression},
 (*Helper function*)
-buildReplacements[i_]:=Module[{used={},particleList},
-replacements={};
-particleList=model[[2,i]];
-Do[
- Do[
-If[
-taggedParticles[[k,1]]===particleList[[j]]&&! MemberQ[used,k],
-AppendTo[replacements,j->taggedParticles[[k,2]]];
-AppendTo[used,k];
-Break[]
-],
-{k,Length[taggedParticles]}
-],
-{j,Length[particleList]-2}
-];
-replacements
-];
+relabelIndex[index_Integer]:=index/.replacements;
+relabelIndex[Multiparticle[labels___]]:=Multiparticle@@Flatten[
+  (relabelIndex/@{labels})/.Multiparticle->List];
+relabelIndex[index_]:=index;
+(* Only particle-label positions are changed, not coefficients, powers or spin indices. *)
+relabelExpression[expression_]:=expression/.{
+  head:(Spinor|SpinorHat)[type:Except["Xi"],position:("Upper"|"Lower"),kind:("Angle"|"Square"),label_,spin_]:>
+    Head[head][type,position,kind,relabelIndex[label],spin],
+  head:(Spinor|SpinorHat)[type:Except["Xi"],kind:("Angle"|"Square"),label_,rest___]:>
+    Head[head][type,kind,relabelIndex[label],rest],
+  Mom[label_]:>Mom[relabelIndex[label]],
+  MomHat[label_]:>MomHat[relabelIndex[label]],
+  MomQ[label_]:>MomQ[relabelIndex[label]],
+  Mass[label_]:>Mass[relabelIndex[label]],
+  MomProd[a_,b_]:>MomProd[relabelIndex[a],relabelIndex[b]],
+  Mandelstahm[a_,b_]:>Mandelstahm[relabelIndex[a],relabelIndex[b]],
+  xFactor[labels___]:>xFactor@@(relabelIndex/@{labels}),
+  xTildeFactor[labels___]:>xTildeFactor@@(relabelIndex/@{labels})
+};
+buildReplacements[i_]:=ConstructiveDiagrams`Private`amplitudeParticleLabelRules[
+  taggedParticles,model[[2,i]]];
 (*End helper function*)
 
 (*Find the amp*)(*Print[taggedParticles];*)
@@ -524,16 +537,7 @@ If[taggedParticles[[k,1]]===model[[2,i,j]],AppendTo[replacements,j->taggedPartic
 ,{k,1,Length[taggedParticles]},{j,1,Length[model[[2,i]]]-2}];*)
 replacements=buildReplacements[i];
 (*Print[replacements];*)
-amp=model[[2,i,-2]]model[[2,i,-1]]/.{
-SpinorChain[args__]:>SpinorChain@@(List[args]/.replacements),
-PropDen[args__]:>PropDen@@(List[args]/.replacements),
-xFactor[args__]:>xFactor@@(List[args]/.replacements),
-xTildeFactor[args__]:>xTildeFactor@@(List[args]/.replacements)
-}/.{
-Multiparticle[Multiparticle[a__],b_]:>Multiparticle[a,b],
-Multiparticle[a_,Multiparticle[b__]]:>Multiparticle[a,b],
-Multiparticle[Multiparticle[a__],Multiparticle[b__]]:>Multiparticle[a,b]
-};
+amp=relabelExpression[model[[2,i,-2]]model[[2,i,-1]]];
 ];
 (*Print[Sort[DeleteCases[Flatten[taggedParticles],_Integer]]];
 Print[Sort[DeleteCases[Drop[model[[2,i]],-2],""]]];*)
@@ -621,6 +625,9 @@ expandExternalXFactors[newExp,n]
 
 
 (* ::Input::Initialization:: *)
+DownValues[FactorizationAmplitudeChannels] = {};
+Options[FactorizationAmplitudeChannels] = {};
+FactorizationAmplitudeChannels::usage = "FactorizationAmplitudeChannels[particles, model] returns one row for each nonzero factorization channel: the external masses, channel momentum combination, exchanged mass, and sewn product of lower-point amplitudes divided by z and the propagator denominator. Amplitudes absent from the supplied model are zero.";
 FactorizationAmplitudeChannels[particles_List,model_]:=Module[{partitions,j,i,k,channel,momenta1,momenta2,amp1,amp2,amp12A,amp12B,amplitude={},masses={},xFactorReverseProtect,xFactorReverseProtectInverse,Multipart,XiN=1,massReplacements={}},
 (*Create replacement lists that protect the xFactor*)
 xFactorReverseProtect={xFactor[a___,Multiparticle[b__],c___]:>xFactor[a,Multipart[b],c],xTildeFactor[a___,Multiparticle[b__],c___]:>xTildeFactor[a,Multipart[b],c]};
@@ -642,7 +649,7 @@ channel[[2]]=Append[channel[[2]],{model[[1,j,3]],momenta2}];
 amp1=ReverseMomentum[LookupAmplitude[channel[[1]],model,False,{i1,i2,i3,i4}],momenta1]//.xFactorReverseProtect/.momenta1->momenta2//.xFactorReverseProtectInverse;
 If[amp1=!=0,amp2=LookupAmplitude[channel[[2]],model,True,{i1,i2,i3,i4}]];
 If[amp1=!=0&&amp2=!=0,(*Print[amp1];Print[amp2];*)
-amp12A=ReduceSpinContractions[amp1 amp2]/.{
+amp12A=ConstructiveDiagrams`Private`factorizationExternalFermionSign[channel,model] ReduceSpinContractions[amp1 amp2]/.{
 Mass[momenta1]->model[[1,j,6]],
 SpinorChain[a__,Mom[Multiparticle[parts__]],b__]:>SpinorChain[a,Total[Mom/@{parts}],b]
 };];(*Print[amp12A];*)
@@ -656,7 +663,7 @@ channel[[2]]=Append[channel[[2]],{model[[1,j,2]],momenta2}];
 amp1=ReverseMomentum[LookupAmplitude[channel[[1]],model,False,{i1,i2,i3,i4}],momenta1]//.xFactorReverseProtect/.momenta1->momenta2//.xFactorReverseProtectInverse;
 If[amp1=!=0,amp2=LookupAmplitude[channel[[2]],model,True,{i1,i2,i3,i4}]];
 If[amp1=!=0&&amp2=!=0,(*Print[amp1];Print[amp2];*)
-amp12B=ReduceSpinContractions[amp1 amp2]/.{
+amp12B=ConstructiveDiagrams`Private`factorizationExternalFermionSign[channel,model] ReduceSpinContractions[amp1 amp2]/.{
 Mass[momenta1]->model[[1,j,6]],
 SpinorChain[a__,Mom[Multiparticle[parts__]],b__]:>SpinorChain[a,Total[Mom/@{parts}],b]
 };];(*Print[amp12B];*)
@@ -664,6 +671,7 @@ SpinorChain[a__,Mom[Multiparticle[parts__]],b__]:>SpinorChain[a,Total[Mom/@{part
 (*Combine*)
 (*I think it will be better to rewrite models to have separate lines for internal photons where there are 4-point vertices and no x factors and external photons.  Using the x factors (or their replacements) just create unecessary complications when they always simplify to the same thing based on the spin of the particles on the ends.*)
 If[amp12A=!=0||amp12B=!=0,
+massReplacements={};
 Do[AppendTo[massReplacements,Mass[j]->masses[[j]]],{j,1,Length[masses]}];
 AppendTo[massReplacements,Mass[momenta2]->model[[1,j,6]]];
 AppendTo[massReplacements,Mass[momenta1]->model[[1,j,6]]];
@@ -674,6 +682,50 @@ AppendTo[amplitude,Flatten[{masses,momenta2,model[[1,j,6]],ExpandXFactors[Simpli
 ,{j,1,Length[model[[1]]]},{i,1,Length[partitions]}];
 amplitude/.massReplacements
 ]
+
+
+Begin["`Private`"];
+
+canonicalPhysicalCut[legs_List, externalLegs_List] := Module[{cut, complement},
+  If[!AllTrue[legs, MemberQ[externalLegs, #] &], Return[$Failed]];
+  cut = Sort[DeleteDuplicates[legs]];
+  complement = Complement[externalLegs, cut];
+  First[SortBy[{cut, complement}, {Length[#], #} &]]
+];
+
+physicalAmplitudeParticles[row_List] := DeleteCases[Drop[row, -2], ""];
+
+physicalParticleMass[particle_, particleRows_List] := Module[{masses},
+  masses = DeleteDuplicates[Cases[particleRows,
+    row_List /; MemberQ[row[[{2, 3}]], particle] :> row[[6]]]];
+  If[Length[masses] === 1, First[masses], Missing["UnknownParticleMass", particle]]
+];
+
+(* Keep external exchange parity and the Wick sign from moving the two
+   internal fermion ports adjacent before contracting the model-row words. *)
+factorizationExternalFermionSign[channel_List, model_List] := Module[
+  {species, words, orders, rows, row, rules, internalPositions, contractionSign},
+  species = DeleteDuplicates[Flatten[Cases[model[[1]],
+    item_List /; item[[5]] === 1 :> item[[{2, 3}]]]]];
+  words = Map[Function[tagged,
+    rows = Select[model[[2]],
+      Sort[physicalAmplitudeParticles[#]] === Sort[tagged[[All, 1]]] &];
+    If[rows === {}, Return[{}]];
+    row = Last[rows];
+    rules = amplitudeParticleLabelRules[tagged, row];
+    Select[MapIndexed[{#1, First[#2] /. rules} &, Drop[row, -2]],
+      MemberQ[species, First[#]] &]
+  ], channel];
+  words = Flatten[words, 1];
+  internalPositions = Flatten[Position[words, {_, _Multiparticle}, {1}]];
+  contractionSign = If[Length[internalPositions] === 2,
+    (-1)^(internalPositions[[2]] - internalPositions[[1]] - 1), 1];
+  orders = Table[Cases[words, {particle, label_Integer} :> label], {particle, species}];
+  contractionSign Times @@ (Signature[Ordering[#]] & /@ orders)
+];
+
+
+End[];
 
 
 (* ::Subsubsection::Closed:: *)
@@ -1285,27 +1337,53 @@ diagramChannel[diag_] := Module[{props, parts},
   ]
 ];
 
-(* Identical-fermion exchange: T is the 2<->3 crossing of S, U is 2<->4.
-   Apply Signature[perm] only when that permutation leaves the labelled
-   external state unchanged and moves at least one fermion. *)
-identicalFermionPermQ[ext_List, perm_List, spin2_Association] :=
-  And @@ Table[
-    ext[[i]] === ext[[perm[[i]]]] &&
-      (i === perm[[i]] || Lookup[spin2, ext[[i]], 0] === 1),
-    {i, Length[ext]}
-  ];
-
-diagramFermionSign[diag_] := Module[{ext, spin2, ch, perm},
+(* Trace fermion ports before a vector exchange is replaced by its local
+   four-spinor tensor. Boson attachments do not change the endpoint matching.
+   Vertex port order fixes line direction, independently of graph vertex IDs. *)
+diagramFermionLines[diag_] := Module[
+  {ext, spin2, leaves, ports, edges, graph, components, lines, ends,
+   firstVertex, firstPort},
   ext = Lookup[diag, "ExternalParticles", {}];
   spin2 = Lookup[diag, "Spin2", <||>];
-  If[Length[ext] =!= 4, Return[1]];
-  ch = diagramChannel[diag];
-  perm = Switch[ch,
-    "T", {1, 3, 2, 4},
-    "U", {1, 4, 3, 2},
-    _, {1, 2, 3, 4}
-  ];
-  If[identicalFermionPermQ[ext, perm, spin2], Signature[perm], 1]
+  leaves = Select[Range[Length[ext]], OddQ[Lookup[spin2, ext[[#]], 0]] &];
+  If[leaves === {}, Return[{}]];
+  ports = Association @ KeyValueMap[Function[{vertex, structures},
+    vertex -> Select[Last[structures]["IncidentLegs"],
+      OddQ[Lookup[spin2, #["Particle"], 0]] &]],
+    Lookup[diag, "VertexStructures", <||>]];
+  If[!AllTrue[Values[ports], Length[#] === 0 || Length[#] === 2 &],
+    Return[Missing["NonBilinearFermionVertex"]]];
+  edges = DeleteDuplicates @ Flatten @ KeyValueMap[Function[{vertex, legs},
+    If[#["Kind"] === "External", UndirectedEdge @@ Sort[{vertex, #["Source"]}],
+      #["Source"]] & /@ legs], ports];
+  graph = Graph[edges];
+  components = ConnectedComponents[graph];
+  lines = Table[
+    ends = Sort[Intersection[component, leaves]];
+    If[Length[ends] =!= 2, Return[Missing["OpenFermionLine"]]];
+    firstVertex = First[AdjacencyList[graph, First[ends]]];
+    firstPort = First[ports[firstVertex]];
+    If[firstPort["Kind"] === "External" && firstPort["Source"] === First[ends],
+      ends, Reverse[ends]],
+    {component, components}];
+  If[Sort[Flatten[lines]] =!= leaves, Return[Missing["IncompleteFermionLines"]]];
+  SortBy[lines, {ext[[#[[1]]]], ext[[#[[2]]]], Min[#]} &]
+];
+
+diagramAmplitude::fermion = "Cannot determine fermion exchange parity: `1`. Fermion vertices must provide an unambiguous pair of ordered fermion ports.";
+
+(* The local spinor amplitudes already include their own ordering signs.
+   Only permutations within identical external species remain to be applied.
+   Adjacent reference pairs reproduce the established four-point convention. *)
+diagramFermionSign[diag_] := Module[{ext, spin2, fermions, lines, order},
+  ext = Lookup[diag, "ExternalParticles", {}];
+  spin2 = Lookup[diag, "Spin2", <||>];
+  fermions = Select[Range[Length[ext]], OddQ[Lookup[spin2, ext[[#]], 0]] &];
+  If[DuplicateFreeQ[ext[[fermions]]], Return[1]];
+  lines = diagramFermionLines[diag];
+  If[MissingQ[lines], Message[diagramAmplitude::fermion, First[lines]]; Return[$Failed]];
+  order = GroupBy[Flatten[lines], ext[[#]] &];
+  Times @@ (Signature[Ordering[#]] & /@ Values[order])
 ];
 
 (* Massless spin-1 exchange (photon/gluon) needs an extra minus relative
@@ -1982,3 +2060,1386 @@ Scan[If[Names[#] =!= {}, Remove[#]] &, DeleteDuplicates[
   "ConstructiveDiagrams`leg", "ConstructiveDiagrams`leg$*",
   "ConstructiveDiagrams`choices", "ConstructiveDiagrams`choices$*",
   "ConstructiveDiagrams`prop", "ConstructiveDiagrams`prop$*"}]]];
+
+(* ::Section::Closed:: *)
+(*Physical Residue Diagnostics*)
+
+(* ::Subsection::Closed:: *)
+(*Public Functions*)
+
+DiagramAmplitudeRecords::usage = "DiagramAmplitudeRecords[diagrams] retains each diagram's original expression, physical propagators, numerator conditions and mass rules. The string option SimplificationFunction accepts a function on {massRules, expression}; its default is Identity. NumeratorOnShellChannels declares any internal conditions used by that function; no internal-shell simplification is applied automatically.";
+PhysicalPoleResidue::usage = "PhysicalPoleResidue[expression, channel] extracts a pole coefficient. A list of channels extracts a compatible multiple-pole coefficient. Without a coherent KinematicMap the result is only FORMAL. A map f[expression, channels, poleVariables] must evaluate all spinors, momenta and propagators consistently near the selected cuts. KinematicKind distinguishes Sample from Symbolic charts. No internal on-shell condition is inferred from diagram mass rules.";
+CheckPhysicalResidues::usage = "CheckPhysicalResidues[diagramAmplitudes, channels, model] checks physical residues against the ordinary rows returned by FactorizationAmplitudeChannels, automatically discovers apparent denominator poles, and reports both kinds together. Only the supplied channels certify physical poles; equivalent scalar invariants and massless bracket factors are recognized using external mass shells and momentum conservation. Other supported poles are tested for cancellation in the full summed amplitude while known physical propagators remain nonzero. Unsupported denominator structures remain UNRESOLVED. The physical comparison applies the sewing factor -1 from (i A_L)(i A_R)(i/PropDen)/i. PASS means sampled agreement or finiteness; Opp Sign means physical residues agree only with opposite signs; FAIL means disagreement or a surviving singularity. Output -> \"Residues\" shows one visible row per sample, including residues or leading divergent coefficients, pole orders and finite limits; \"Summary\" returns combined counts; \"Details\" includes PoleDiscovery, PhysicalSummary, SpuriousSummary and all diagnostics. SpuriousPoles -> Automatic is the default; an explicit list overrides discovery; {} requests the legacy physical-only report. Samples, RandomSeed, ParameterRules and TimeConstraint control the comparisons. These sampled checks are not a generic analytic proof. Inputs remain unchanged and no amplitude correction is added.";
+DiagramAmplitudeRecords::args = "Expected a list of diagram associations and valid diagram-local simplification options.";
+PhysicalPoleResidue::args = "Expected channel associations with Cut, Complement, Mass and ExternalLegs, and valid diagnostic options.";
+CheckPhysicalResidues::args = "Expected diagram amplitudes, the ordinary channel rows returned by FactorizationAmplitudeChannels, a model, and valid comparison options.";
+CheckPhysicalResidues::input = "`1`";
+
+Begin["ConstructiveDiagrams`Private`"];
+
+(* ::Subsection::Closed:: *)
+(*Channel Metadata*)
+
+residueChannelKey[channel_Association] := {channel["Cut"], channel["Mass"]};
+residueChannelQ[channel_] := AssociationQ[channel] &&
+  AllTrue[{"Cut", "Complement", "Mass", "ExternalLegs"}, KeyExistsQ[channel, #] &] &&
+  MatchQ[channel["ExternalLegs"], {__Integer}] &&
+  MatchQ[channel["Cut"], {__Integer}] && MatchQ[channel["Complement"], {__Integer}] &&
+  DuplicateFreeQ[channel["ExternalLegs"]] && DuplicateFreeQ[channel["Cut"]] &&
+  DuplicateFreeQ[channel["Complement"]] &&
+  Intersection[channel["Cut"], channel["Complement"]] === {} &&
+  Union[channel["Cut"], channel["Complement"]] === Sort[channel["ExternalLegs"]];
+
+residueNormalizeChannel[channel_Association] := Module[{cut, external},
+  external = Sort[channel["ExternalLegs"]];
+  cut = canonicalPhysicalCut[channel["Cut"], external];
+  Join[channel, <|"Cut" -> cut, "Complement" -> Complement[external, cut],
+    "ExternalLegs" -> external,
+    "Propagator" -> PropDen[Mom[Multiparticle @@ cut], channel["Mass"]]|>]
+];
+
+residueExternalMassSignature[channel_Association] := Module[{rules, masses, matches},
+  rules = Lookup[channel, "ExternalMassRules", Missing["ExternalMassRules"]];
+  If[!ListQ[rules] || !AllTrue[rules, MatchQ[#, _Rule] &],
+    Return[Missing["ExternalMassRules"]]];
+  masses = Map[Function[leg,
+    matches = Select[rules, First[#] === Mass[leg] &];
+    If[Length[matches] === 1, Last[First[matches]], Missing["ExternalMass", leg]]
+  ], Sort[channel["ExternalLegs"]]];
+  If[!FreeQ[masses, _Missing], Missing["ExternalMassRules"],
+    {Sort[channel["ExternalLegs"]], masses}]
+];
+
+residueSameProcessQ[items_List] := items === {} || Length[DeleteDuplicates[
+  DeleteMissing[Lookup[items, "ExternalParticles", Missing["ExternalParticles"]]]]] <= 1;
+
+residueMomentumLegs[index_Integer] := {index};
+residueMomentumLegs[Multiparticle[legs__Integer]] := Sort[{legs}];
+residueMomentumLegs[_] := $Failed;
+residueMomentumLegsFromExpression[momentum_] := Module[{terms, indices, sign},
+  terms = If[Head[momentum] === Plus, List @@ momentum, {momentum}];
+  sign = Which[AllTrue[terms, MatchQ[#, Mom[_]] &], 1,
+    AllTrue[terms, MatchQ[#, -Mom[_]] &], -1, True, Return[$Failed]];
+  indices = residueMomentumLegs /@ (terms /. If[sign === 1,
+    Mom[index_] :> index, -Mom[index_] :> index]);
+  If[MemberQ[indices, $Failed], $Failed, Sort[Flatten[indices]]]
+];
+
+residuePropagatorKey[PropDen[momentum_, mass_], external_List] := Module[{legs},
+  legs = residueMomentumLegsFromExpression[momentum];
+  If[legs === $Failed || !DuplicateFreeQ[legs] || legs === {} ||
+      Complement[legs, external] =!= {} || Length[legs] === Length[external],
+    Missing["UnsupportedPropagator"], {canonicalPhysicalCut[legs, external], mass}]
+];
+residuePropagatorKey[_, _] := Missing["UnsupportedPropagator"];
+
+residueCanonicalPropagators[expr_, external_List] := expr /. p_PropDen :>
+  With[{key = residuePropagatorKey[p, external]},
+    If[MissingQ[key], p, PropDen[Mom[Multiparticle @@ First[key]], Last[key]]]];
+
+(* Adapt the user's compact rows; never regenerate or sew factorization channels. *)
+residueAmplitudePairQ[pair_] := MatchQ[pair, {_List, _}] &&
+  AllTrue[First[pair], MatchQ[#, _Rule] &];
+
+residueSimpleChannel[cut_List, mass_, external_List, massRules_List, model_List] :=
+  residueNormalizeChannel[<|"Cut" -> cut,
+    "Complement" -> Complement[external, cut], "ExternalLegs" -> external,
+    "ExternalMassRules" -> massRules, "Mass" -> mass,
+    "InternalParticle" -> DeleteDuplicates[Flatten[Cases[model[[1]],
+      row_List /; row[[6]] === mass :> row[[{2, 3}]]]]]|>];
+
+residueSimpleInputs[amplitudes_, channelRows_List, model_List] := Module[
+  {pairs, expressions, providedRules, externalRules, external, masses, n,
+   targets = {}, records = {}, channel, cut, mass, rowExpression, numerator,
+   propagator, contour, candidate, keys, key, particleMasses, pairRules},
+  If[Length[model] < 2 || !ListQ[model[[1]]] || !ListQ[model[[2]]] ||
+      !AllTrue[model[[1]], ListQ[#] && Length[#] >= 6 &],
+    Return[Failure["InvalidModel", <|"MessageTemplate" -> "The particle model is invalid."|>]]];
+  pairs = Which[
+    residueAmplitudePairQ[amplitudes], {amplitudes},
+    ListQ[amplitudes] && AllTrue[amplitudes, residueAmplitudePairQ], amplitudes,
+    !ListQ[amplitudes], {{{}, amplitudes}},
+    True, Return[Failure["InvalidAmplitudes", <|
+      "MessageTemplate" -> "Supply an expression or the mass-rule/expression pairs from diagramAmplitudes."|>]]
+  ];
+  If[!AllTrue[channelRows, ListQ[#] && Length[#] >= 7 &&
+      MatchQ[#[[-3]], Multiparticle[__Integer]] &],
+    Return[Failure["InvalidChannels", <|
+      "MessageTemplate" -> "Supply the ordinary rows from FactorizationAmplitudeChannels."|>]]];
+  providedRules = Map[Function[pair,
+    Select[First[pair], MatchQ[First[#], Mass[_Integer]] &]], pairs];
+  If[channelRows =!= {},
+    n = Length[First[channelRows]] - 3;
+    masses = Take[First[channelRows], n];
+    If[!AllTrue[channelRows, Length[#] === n + 3 && Take[#, n] === masses &],
+      Return[Failure["InconsistentMasses", <|
+        "MessageTemplate" -> "All channel rows must describe the same external masses."|>]]];
+    external = Range[n]; externalRules = Thread[Mass /@ external -> masses],
+    externalRules = If[providedRules === {}, {},
+      DeleteDuplicates[Flatten[providedRules, 1]]];
+    external = Sort[Cases[externalRules, HoldPattern[Rule[Mass[leg_Integer], _]] :> leg]];
+    If[!DuplicateFreeQ[external] || (external =!= {} && external =!= Range[Max[external]]),
+      Return[Failure["InconsistentMasses", <|
+        "MessageTemplate" -> "Diagram mass rules must consistently specify every external leg."|>]]];
+    externalRules = SortBy[externalRules, First[#][[1]] &]
+  ];
+  If[!AllTrue[Flatten[providedRules, 1],
+      MemberQ[external, First[#][[1]]] && (First[#] /. externalRules) === Last[#] &],
+    Return[Failure["InconsistentMasses", <|
+      "MessageTemplate" -> "Diagram and factorization external masses disagree."|>]]];
+  expressions = Map[Function[pair,
+    ReduceSpinContractions[Last[pair]] /. Join[First[pair], externalRules]], pairs];
+  If[!FreeQ[expressions, _Failure | _Missing | $Failed | $Aborted | $TimedOut],
+    Return[Failure["InvalidAmplitudes", <|"MessageTemplate" -> "An amplitude calculation failed."|>]]];
+  If[external === {} && !TrueQ[Total[expressions] === 0],
+    Return[Failure["ExternalMassesRequired", <|
+      "MessageTemplate" -> "With no channel rows, supply the diagramAmplitudes mass-rule/expression pairs so the external masses are known."|>]]];
+  targets = Map[Function[row,
+    cut = List @@ row[[-3]]; mass = row[[-2]];
+    If[!DuplicateFreeQ[cut] || Length[cut] < 2 || Length[cut] > Length[external] - 2 ||
+        Complement[cut, external] =!= {},
+      Failure["InvalidCut", <|"MessageTemplate" -> "A channel has invalid external momentum labels."|>],
+    channel = residueSimpleChannel[cut, mass, external, externalRules, model];
+    propagator = PropDen[Mom[row[[-3]]], mass];
+    rowExpression = row[[-1]];
+    contour = If[FreeQ[rowExpression, ConstructiveDiagrams`z], 1, ConstructiveDiagrams`z];
+    numerator = Cancel[contour propagator rowExpression];
+    If[!FreeQ[numerator, ConstructiveDiagrams`z | _MomHat | _SpinorHat] ||
+        !residueFiniteQ[numerator],
+      Failure["InvalidChannelExpression", <|
+        "MessageTemplate" -> "Use unshifted channel expressions with at most the original 1/z contour factor."|>],
+    (* Convert the sewn product to the same stripped-amplitude convention as
+       diagramAmplitude: (i A_L)(i A_R)(i/PropDen)/i = -A_L A_R/PropDen. *)
+    Join[channel, <|"Complete" -> True, "StateSum" -> -numerator,
+      "SewingFactor" -> -1, "ChannelExpression" -> rowExpression,
+      "ContourFactor" -> contour|>]]]
+  ], channelRows];
+  If[AnyTrue[targets, FailureQ], Return[SelectFirst[targets, FailureQ]]];
+  particleMasses = DeleteDuplicates[model[[1, All, 6]]];
+  Do[
+    pairRules = First[pairs[[i]]];
+    candidate = DeleteDuplicates[Cases[expressions[[i]], _PropDen, Infinity]];
+    keys = DeleteMissing[residuePropagatorKey[#, external] & /@ candidate];
+    candidate = residueSimpleChannel[First[#], Last[#], external, externalRules, model] & /@
+      DeleteDuplicates[keys];
+    AppendTo[records, <|"DiagramIndex" -> i, "MassRules" -> pairRules,
+      "ExternalMassRules" -> externalRules, "OriginalExpression" -> Last[pairs[[i]]],
+      "Expression" -> expressions[[i]], "PhysicalPropagators" -> candidate|>];
+    Do[
+      key = residueChannelKey[channel];
+      If[!MemberQ[residueChannelKey /@ targets, key],
+        AppendTo[targets, Join[channel,
+          If[MemberQ[particleMasses, channel["Mass"]],
+            <|"Complete" -> True, "StateSum" -> 0,
+              "Diagnostics" -> {"This pole is absent from the supplied factorization channels; its expected residue is zero."}|>,
+            <|"Complete" -> False, "StateSum" -> Missing["UnknownExchangeMass"],
+              "Diagnostics" -> {"This propagator mass is absent from the supplied particle model."}|>]]]],
+      {channel, candidate}],
+    {i, Length[pairs]}];
+  <|"Expression" -> Total[expressions], "Targets" -> targets, "Records" -> records|>
+];
+
+diagramPhysicalChannels[diagram_Association] := Module[{external, rules},
+  external = Range[Length[diagram["ExternalParticles"]]];
+  rules = diagramMassReplacements[diagram];
+  KeyValueMap[Function[{edge, data}, Module[{legs},
+    legs = residueMomentumLegs[data["Index"]];
+    residueNormalizeChannel[<|"Cut" -> legs, "Complement" -> Complement[external, legs],
+      "ExternalLegs" -> external, "ExternalParticles" -> diagram["ExternalParticles"],
+      "Mass" -> data["Mass"],
+      "InternalParticle" -> data["Particle"], "Spin2" -> Lookup[data, "Spin2", 0],
+      "Edge" -> edge, "MomentumIndex" -> data["Index"],
+      "ExternalMassRules" -> Select[rules, MatchQ[First[#], Mass[_Integer]] &]|>]
+  ]], Lookup[diagram, "Propagators", <||>]]
+];
+
+(* ::Subsection::Closed:: *)
+(*Diagram Amplitude Records*)
+
+Options[DiagramAmplitudeRecords] = {"SimplificationFunction" -> Identity,
+  "NumeratorOnShellChannels" -> {}};
+diagramAmplitudeRecord[diagram_, index_, function_, declared_] := Module[
+    {pair, transformed, channels, physicalDenominator, conditions, externalRules},
+    pair = First[diagramAmplitudes[{diagram}]];
+    transformed = withProtectedPropagators[Last[pair],
+      Function[protected, function[{First[pair], protected}]]];
+    If[!MatchQ[transformed, {_List, _}] || First[transformed] =!= First[pair],
+      Return[Failure["InvalidSimplification", <|"DiagramIndex" -> index,
+        "MessageTemplate" -> "The simplification function must retain the diagram's mass rules."|>]]];
+    channels = diagramPhysicalChannels[diagram];
+    physicalDenominator = Times @@ Lookup[channels, "Propagator", {}];
+    externalRules = Select[First[pair], MatchQ[First[#], Mass[_Integer]] &];
+    conditions = (PropDen[Mom[Multiparticle @@ #["Cut"]], #["Mass"]] == 0) & /@ channels;
+    <|"DiagramIndex" -> index, "Diagram" -> diagram,
+      "ExternalParticles" -> diagram["ExternalParticles"],
+      "MassRules" -> First[pair], "ExternalMassRules" -> externalRules,
+      "OriginalExpression" -> Last[pair], "Expression" -> Last[transformed],
+      "OriginalNumerator" -> residueCanonicalPropagators[Last[pair],
+        Range[Length[diagram["ExternalParticles"]]]] physicalDenominator,
+      "Numerator" -> residueCanonicalPropagators[Last[transformed],
+        Range[Length[diagram["ExternalParticles"]]]] physicalDenominator,
+      "PhysicalDenominator" -> physicalDenominator,
+      "PhysicalPropagators" -> channels,
+      "ConstructionOnShellConditions" -> conditions,
+      "DeclaredSimplificationOnShellChannels" -> declared,
+      "NumeratorOnShellConditions" -> conditions,
+      "DenominatorsKeptOffShell" -> True|>
+];
+DiagramAmplitudeRecords[diagrams_List, OptionsPattern[]] := Module[
+  {function = OptionValue["SimplificationFunction"], declared = OptionValue["NumeratorOnShellChannels"]},
+  If[!AllTrue[diagrams, AssociationQ[#] && KeyExistsQ[#, "ExternalParticles"] &&
+      KeyExistsQ[#, "Propagators"] &] || !ListQ[declared],
+    Message[DiagramAmplitudeRecords::args]; Return[$Failed]];
+  MapIndexed[diagramAmplitudeRecord[#1, First[#2], function, declared] &, diagrams]
+];
+
+(* ::Subsection::Closed:: *)
+(*Pole Restriction and Kinematic Checks*)
+
+residueExactZero[expr_] := If[ListQ[expr], AllTrue[expr, residueExactZero],
+  TrueQ[Cancel[Together[expr]] === 0]];
+residueFiniteQ[expr_] := FreeQ[expr, Indeterminate | ComplexInfinity | _DirectedInfinity |
+  _Missing | _Failure | _ConditionalExpression | $Failed | $Aborted | $TimedOut];
+residueUnmappedQ[expr_] := !FreeQ[expr,
+  _SpinorChain | _Spinor | _Mom | _MomProd | _PropDen | _Mass | _xFactor | _xTildeFactor |
+  _Mandelstahm | _MandelstahmHat | _MomHat | _MomQ | _SpinorHat |
+  _SpinorChainReduced | _SpinorTrace | _SpinorTraceReduced |
+  _MomProdHat1 | _MomProdHat12 | _MomProdHat2 | _MomProdL | _MomProdR |
+  _rSpinor | _SpinSpinorHat | _HelicitySpinorHat];
+
+(* A normal-crossing tree residue must be regular after its pole factors
+   have been removed. Do not substitute zero into a surviving denominator. *)
+residueRegularRestriction[expr_, variables_List] := Module[{rational, value},
+  rational = Cancel[Together[expr]];
+  If[!PolynomialQ[Numerator[rational], variables] ||
+      !PolynomialQ[Denominator[rational], variables], Return[Missing["NonRationalKinematics"]]];
+  If[residueExactZero[Denominator[rational] /. Thread[variables -> 0]],
+    Return[Missing["HigherOrderOrSingularPole"]]];
+  value = Cancel[Together[rational /. Thread[variables -> 0]]];
+  If[residueFiniteQ[value], value, Missing["HigherOrderOrSingularPole"]]
+];
+
+residueStructuralCoefficient[expr_, channels_List, variables_List] := Module[
+  {external = First[channels]["ExternalLegs"], canonical},
+  If[!residueFiniteQ[expr], Return[Missing["InvalidExpression"]]];
+  canonical = residueCanonicalPropagators[expr, external] /.
+    Thread[Lookup[channels, "Propagator"] -> variables];
+  residueRegularRestriction[canonical Times @@ variables, variables]
+];
+
+residueKinematicChecks[map_, channels_List, variables_List, uncut_List] := Module[
+  {external, massRules, coordinateChecks, shellChecks, conservation, uncutChecks,
+   mapped, momenta, momentumTable, momentum, mappedMass, invariant},
+  external = First[channels]["ExternalLegs"];
+  massRules = Lookup[First[channels], "ExternalMassRules", {}];
+  If[!AllTrue[external, !FreeQ[massRules, HoldPattern[Mass[#]] ] &],
+    Return[<|"Valid" -> False, "Diagnostics" -> {"External masses must be supplied for every leg."}|>]];
+  momenta = map[Mom[#], channels, variables] & /@ external;
+  If[!AllTrue[momenta, MatrixQ[#] && Dimensions[#] === {2, 2} &&
+      !residueUnmappedQ[#] && residueFiniteQ[#] &],
+    Return[<|"Valid" -> False, "Diagnostics" -> {
+      "KinematicMap must provide a finite two-by-two momentum matrix for every external leg."}|>]];
+  momentumTable = AssociationThread[external, momenta];
+  momentum[legs_] := Total[Lookup[momentumTable, legs]];
+  mappedMass[mass_] := map[mass, channels, variables];
+  invariant[legs_, mass_] := Det[momentum[legs]] - mappedMass[mass]^2;
+  coordinateChecks = MapThread[Function[{channel, variable},
+    AllTrue[{channel["Cut"], channel["Complement"]},
+      residueExactZero[map[PropDen[Mom[Multiparticle @@ #], channel["Mass"]],
+        channels, variables] - variable] &&
+      residueExactZero[invariant[#, channel["Mass"]] - variable] &]], {channels, variables}];
+  shellChecks = (residueExactZero[map[PropDen[Mom[#], Mass[#] /. massRules],
+    channels, variables]] && residueExactZero[invariant[{#}, Mass[#] /. massRules]] &) /@ external;
+  conservation = residueExactZero[Total[momenta]] &&
+    residueExactZero[map[Total[Mom /@ external], channels, variables] - Total[momenta]];
+  uncutChecks = Map[Function[channel,
+    mapped = residueRegularRestriction[map[channel["Propagator"], channels, variables], variables];
+    !MissingQ[mapped] && !residueExactZero[mapped] && !residueUnmappedQ[mapped] &&
+      residueExactZero[map[channel["Propagator"], channels, variables] -
+        invariant[channel["Cut"], channel["Mass"]]]], uncut];
+  <|"Valid" -> (And @@ Join[coordinateChecks, shellChecks, {conservation}, uncutChecks]),
+    "CutCoordinates" -> coordinateChecks, "ExternalMassShells" -> shellChecks,
+    "MomentumConservation" -> conservation, "UncutChannelsRemainGeneric" -> uncutChecks,
+    "MomentumMatricesValidated" -> True, "SpinorEvaluation" -> "SuppliedByKinematicMap",
+    "Diagnostics" -> {}|>
+];
+
+residueOnChart[expr_, channels_List, variables_List, map_, active_List] := Module[{mapped},
+  mapped = map[expr, channels, variables];
+  If[residueUnmappedQ[mapped] || !residueFiniteQ[mapped],
+    Return[Missing["IncompleteKinematicMap"]]];
+  residueRegularRestriction[mapped Times @@ variables[[active]], variables]
+];
+
+(* ::Subsection::Closed:: *)
+(*Automatic Rational Cut Kinematics*)
+
+residueAdjugate[p_] := {{p[[2, 2]], -p[[1, 2]]}, {-p[[2, 1]], p[[1, 1]]}};
+residueRandomNonzero[] := RandomChoice[DeleteCases[Range[-7, 7], 0]];
+residueRandomShell[mass_] := Module[{a, b, c},
+  {a, b, c} = Table[residueRandomNonzero[], {3}];
+  {{a, b}, {c, (mass^2 + b c)/a}}
+];
+
+(* Fixing the first row makes both two-body mass-shell equations linear
+   in the second row. No square roots or process-specific kinematics occur. *)
+residueSplitTwoBody[total_, firstMass_, secondMass_, transpose_] := Module[
+  {r = If[TrueQ[transpose], Transpose[total], total], a, b, k, x, y, p},
+  If[residueExactZero[r[[1, 1]]], Return[Failure["SingularChartPivot", <||>]]];
+  {a, b} = Table[residueRandomNonzero[], {2}];
+  If[residueExactZero[a r[[1, 2]] - b r[[1, 1]]],
+    Return[Failure["SingularChartPivot", <||>]]];
+  k = Det[r] + firstMass^2 - secondMass^2;
+  x = Cancel[(firstMass^2 r[[1, 1]] -
+      a (k - r[[2, 2]] a + r[[2, 1]] b))/(a r[[1, 2]] - b r[[1, 1]])];
+  y = Cancel[(k - r[[2, 2]] a + r[[2, 1]] b + r[[1, 2]] x)/r[[1, 1]]];
+  p = {{a, b}, {x, y}};
+  If[TrueQ[transpose], p = Transpose[p]];
+  {p, total - p}
+];
+
+residueSplitCutSide[legs_List, total_, masses_Association, transpose_] := Module[
+  {chosen, remainder, pair},
+  If[Length[legs] < 2, Return[Failure["CutNeedsTwoExternalLegs", <||>]]];
+  chosen = residueRandomShell[masses[#]] & /@ Drop[legs, -2];
+  remainder = total - If[chosen === {}, ConstantArray[0, {2, 2}], Total[chosen]];
+  pair = residueSplitTwoBody[remainder, masses[legs[[-2]]], masses[Last[legs]], transpose];
+  If[FailureQ[pair], pair, AssociationThread[legs, Join[chosen, pair]]]
+];
+
+residueChartMomentum[index_Integer, chart_] := Lookup[chart["Momenta"], index,
+  Missing["UnknownExternalLeg", index]];
+residueChartMomentum[Multiparticle[legs__], chart_] :=
+  Total[residueChartMomentum[#, chart] & /@ {legs}];
+residueChartMomentum[_, _] := Missing["UnsupportedMomentum"];
+residueChartMomentumExpression[Mom[index_], chart_] := residueChartMomentum[index, chart];
+residueChartMomentumExpression[sum_Plus, chart_] :=
+  Total[residueChartMomentumExpression[#, chart] & /@ List @@ sum];
+residueChartMomentumExpression[Times[c_?NumericQ, momentum_], chart_] :=
+  c residueChartMomentumExpression[momentum, chart];
+residueChartMomentumExpression[_, _] := Missing["UnsupportedMomentum"];
+
+residueChartReference[kind_, index_, chart_] := Module[
+  {hash, vectors, vector, trial, overrides, override,
+   result = Missing["NoRegularReferenceSpinor"]},
+  overrides = Lookup[chart, "ReferenceOverrides", <||>];
+  override = Lookup[Lookup[overrides, kind, <||>], index, Missing["NoOverride"]];
+  If[!MissingQ[override], Return[If[MatchQ[override, {_, _}] &&
+      residueFiniteQ[override], override, Missing["InvalidReferenceOverride"]]]];
+  hash = Hash[{chart["ReferenceSeed"], kind, index}, "CRC32"];
+  vectors = Values[chart[kind]] /. chart["PoleVariable"] -> 0;
+  If[!residueFiniteQ[vectors], Return[Missing["SingularExternalSpinorChart"]]];
+  Do[
+    vector = {1 + Mod[hash + 499 trial, 1009],
+      1 + Mod[Quotient[hash, 1009] + 503 trial, 1013]};
+    If[AllTrue[vectors, !residueExactZero[Det[{vector, #}]] &], result = vector; Break[]],
+    {trial, 0, 15}];
+  result
+];
+residueChartSpinor[Spinor["Xi", kind : ("Angle" | "Square"), index_, ___], chart_] :=
+  residueChartReference[kind, index, chart];
+residueChartSpinor[Spinor["Helicity", kind : ("Angle" | "Square"), index_Integer, ___], chart_] :=
+  Lookup[chart[kind], index, Missing["UnknownExternalLeg", index]];
+(* A cut photon has a rank-one momentum matrix. Assign its spinors only on
+   that selected massless cut, never to an arbitrary off-shell composite. *)
+residueChartSpinor[Spinor["Helicity", kind : ("Angle" | "Square"),
+    index_Multiparticle, ___], chart_] := Module[{legs, momentum, pivot, row, column},
+  legs = residueMomentumLegs[index];
+  If[!TrueQ[Lookup[chart, "AllowCutSpinors", False]] ||
+      !residueExactZero[Lookup[chart, "CutMass", Missing["NoCutMass"]]] ||
+      !MemberQ[Lookup[chart, {"Cut", "Complement"}, {}], legs],
+    Return[Missing["UnsupportedOffShellCompositeSpinor"]]];
+  momentum = Cancel[Together[residueChartMomentum[index, chart] /.
+      chart["PoleVariable"] -> 0]];
+  If[!MatrixQ[momentum] || !residueFiniteQ[momentum] ||
+      !residueExactZero[Det[momentum]], Return[Missing["InvalidMasslessCutMomentum"]]];
+  pivot = SelectFirst[Tuples[Range[2], 2],
+    !residueExactZero[Extract[momentum, #]] &, Missing["ZeroCutMomentum"]];
+  If[MissingQ[pivot], Return[pivot]];
+  {row, column} = pivot;
+  If[kind === "Angle", momentum[[All, column]],
+    momentum[[row, All]]/momentum[[row, column]]]
+];
+residueChartSpinor[Spinor["Spin", kind : ("Angle" | "Square"), index_Integer], chart_] :=
+  Lookup[chart[kind], index, Missing["UnknownExternalLeg", index]];
+residueChartSpinor[Spinor["Spin", position : ("Upper" | "Lower"),
+    kind : ("Angle" | "Square"), index_Integer, spin : (-1/2 | 1/2)], chart_] :=
+  Module[{basis = Lookup[chart[kind <> "Basis"], index, Missing["UnknownMassiveLeg"]], column},
+    If[MissingQ[basis], Return[basis]];
+    column = If[spin === -1/2, 1, 2];
+    If[position === "Upper", basis[[All, column]],
+      If[column === 1, basis[[All, 2]], -basis[[All, 1]]]]
+  ];
+residueChartSpinor[_, _] := Missing["UnsupportedSpinor"];
+
+residueChartChain[chain_SpinorChain, chart_] := Module[
+  {parts = List @@ chain, first, last, kind, row, matrices, endpoint, momentum, j, l},
+  If[Length[parts] < 2 || Head[First[parts]] =!= Spinor || Head[Last[parts]] =!= Spinor,
+    Return[Missing["UnsupportedSpinorChain"]]];
+  first = First[parts]; last = Last[parts];
+  kind = first[[If[Length[first] === 5, 3, 2]]];
+  j = {{0, -1}, {1, 0}}; l = -j;
+  row = residueChartSpinor[first, chart];
+  endpoint = residueChartSpinor[last, chart];
+  If[!FreeQ[{row, endpoint}, _Missing], Return[Missing["UnsupportedSpinor"]]];
+  If[kind === "Angle", row = row.j];
+  matrices = MapIndexed[Function[{insertion, position},
+    momentum = residueChartMomentumExpression[insertion, chart];
+    If[!MatrixQ[momentum], Missing["UnsupportedMomentum"],
+      If[OddQ[First[position]] === (kind === "Angle"), momentum, residueAdjugate[momentum]]]],
+    parts[[2 ;; -2]]];
+  If[!FreeQ[matrices, _Missing], Return[Missing["UnsupportedMomentum"]]];
+  Fold[Dot, row, matrices].If[last[[If[Length[last] === 5, 3, 2]]] === "Square",
+    l.endpoint, endpoint]
+];
+
+residueChartTrace[trace_SpinorTrace, chart_] := Module[{matrices},
+  If[OddQ[Length[trace]], Return[Missing["UnsupportedOddSpinorTrace"]]];
+  matrices = MapIndexed[Function[{insertion, position},
+    With[{p = residueChartMomentumExpression[insertion, chart]},
+      If[MatrixQ[p], If[OddQ[First[position]], p, residueAdjugate[p]],
+        Missing["UnsupportedMomentum"]]]], List @@ trace];
+  If[!FreeQ[matrices, _Missing], Return[Missing["UnsupportedMomentum"]]];
+  Tr[Fold[Dot, IdentityMatrix[2], matrices]]
+];
+
+residueChartValue[value_, tag_] := If[residueFiniteQ[value], value,
+  Throw[Missing["UnsupportedKinematicStructure"], tag]];
+
+residueExpandCutXFactors[expr_, chart_] := Module[{indices, expand},
+  If[FreeQ[expr, _xFactor | _xTildeFactor], Return[expr]];
+  indices = DeleteDuplicates[Cases[expr,
+    Spinor["Helicity", _, index_Multiparticle, ___] :> index, Infinity]];
+  expand[head_, i_, j_] := Module[{legs, index, sign, kind, other, reference,
+      firstLegs, secondLegs, mass},
+    firstLegs = residueMomentumLegs[i]; secondLegs = residueMomentumLegs[j];
+    If[!ListQ[firstLegs] || !ListQ[secondLegs],
+      Return[Missing["UnsupportedInternalXFactor"]]];
+    legs = Sort[Join[firstLegs, secondLegs]];
+    If[!TrueQ[Lookup[chart, "AllowCutSpinors", False]] ||
+        !residueExactZero[Lookup[chart, "CutMass", Missing["NoCutMass"]]] ||
+        !MemberQ[Lookup[chart, {"Cut", "Complement"}, {}], legs],
+      Return[Missing["UnsupportedInternalXFactor"]]];
+    index = SelectFirst[indices, MemberQ[{legs,
+        Complement[Keys[chart["Momenta"]], legs]}, residueMomentumLegs[#]] &,
+      Missing["MissingCutPhotonSpinor"]];
+    If[MissingQ[index], Return[index]];
+    sign = If[residueMomentumLegs[index] === legs, -1, 1];
+    kind = If[head === xFactor, "Angle", "Square"];
+    other = If[kind === "Angle", "Square", "Angle"];
+    mass = Lookup[chart["Masses"], j, Missing["UnsupportedXFactorMass"]];
+    If[MissingQ[mass] || residueExactZero[mass], Return[Missing["UnsupportedXFactorMass"]]];
+    reference = Spinor["Xi", kind, "CutPhoton"];
+    sign SpinorChain[reference, Mom[j], Spinor["Helicity", other, index]]/
+      (mass SpinorChain[reference, Spinor["Helicity", kind, index]])
+  ];
+  expr /. {xFactor[i_, j_] :> expand[xFactor, i, j],
+    xTildeFactor[i_, j_] :> expand[xTildeFactor, i, j]}
+];
+residueEvaluateChart[expr_, chart_, parameterRules_List] := Module[{mapped, momentum, tag = Unique[]},
+  Catch[
+  mapped = expr /. Mass[index_Integer] :> residueChartValue[
+    Lookup[chart["Masses"], index, Missing["UnknownExternalMass", index]], tag];
+  mapped = mapped /. parameterRules;
+  mapped = residueChartValue[residueExpandCutXFactors[mapped, chart], tag];
+  mapped = mapped /. chain_SpinorChain :> With[{value = residueChartChain[chain, chart]},
+    If[!residueFiniteQ[value], Throw[Missing["UnsupportedSpinorChain"], tag], value]];
+  mapped = mapped /. trace_SpinorTrace :> With[{value = residueChartTrace[trace, chart]},
+    If[!residueFiniteQ[value], Throw[Missing["UnsupportedSpinorTrace"], tag], value]];
+  mapped = mapped /. {
+    PropDen[p_, mass_] :> With[{matrix = residueChartMomentumExpression[p, chart]},
+      If[MatrixQ[matrix], Det[matrix] - mass^2, Throw[Missing["UnsupportedMomentum"], tag]]],
+    MomProd[i_, j_] :> With[{p = residueChartMomentum[i, chart], q = residueChartMomentum[j, chart]},
+      If[MatrixQ[p] && MatrixQ[q], (Det[p + q] - Det[p] - Det[q])/2,
+        Throw[Missing["UnsupportedMomentum"], tag]]],
+    Mandelstahm[i_, j_] :> With[{p = residueChartMomentum[i, chart], q = residueChartMomentum[j, chart]},
+      If[MatrixQ[p] && MatrixQ[q], Det[p + q], Throw[Missing["UnsupportedMomentum"], tag]]]};
+  mapped = mapped /. Mom[index_] :> residueChartValue[residueChartMomentum[index, chart], tag];
+  mapped /. parameterRules, tag]
+];
+
+residueAutomaticChart[channel_Association, sample_Integer, seed_Integer, parameterRules_List] :=
+  BlockRandom[Module[{external, cut, complement, massRules, masses, pole, cutMomentum,
+    left, right, momenta, angle, square, angleBasis, squareBasis, basis, references,
+    vector, mass, p, chart, spinVectors, masslessScales, scale, attempt,
+    result = Failure["NoRegularRationalChart", <||>], branches},
+    external = channel["ExternalLegs"]; cut = channel["Cut"];
+    complement = channel["Complement"];
+    massRules = Lookup[channel, "ExternalMassRules", {}];
+    masses = AssociationThread[external, (Mass /@ external /. massRules) /. parameterRules];
+    If[!FreeQ[Values[masses], _Mass] || Min[Length[cut], Length[complement]] < 2,
+      Return[Failure["InvalidCutMassMetadata", <||>]]];
+    SeedRandom[Hash[{seed, sample, cut, channel["Mass"]}, "CRC32"]];
+    pole = Unique["automaticCut"];
+    branches = {OddQ[sample], OddQ[Quotient[sample - 1, 2]]};
+    Do[
+      cutMomentum = residueRandomShell[Sqrt[(channel["Mass"] /. parameterRules)^2 + pole]];
+      left = residueSplitCutSide[cut, cutMomentum, masses, branches[[1]]];
+      right = residueSplitCutSide[complement, -cutMomentum, masses, branches[[2]]];
+      If[FailureQ[left] || FailureQ[right], Continue[]];
+      momenta = Join[left, right];
+      angle = <||>; square = <||>; angleBasis = <||>; squareBasis = <||>; spinVectors = <||>;
+      masslessScales = <||>;
+      Do[
+        p = momenta[leg]; mass = masses[leg];
+        If[residueExactZero[mass],
+          If[residueExactZero[p[[1, 1]]], Break[]];
+          scale = residueRandomNonzero[]/residueRandomNonzero[];
+          AssociateTo[masslessScales, leg -> scale];
+          AssociateTo[angle, leg -> (scale p[[All, 1]])];
+          AssociateTo[square, leg -> ({1, p[[1, 2]]/p[[1, 1]]}/scale)],
+          basis = residueRandomShell[Sqrt[mass]];
+          vector = Table[residueRandomNonzero[], {2}];
+          AssociateTo[spinVectors, leg -> vector];
+          AssociateTo[angleBasis, leg -> basis];
+          AssociateTo[squareBasis, leg -> ({{0, 1}, {-1, 0}}.residueAdjugate[p].basis/mass)];
+          AssociateTo[angle, leg -> (basis.vector)];
+          AssociateTo[square, leg -> (squareBasis[leg].vector)]
+        ], {leg, external}];
+      If[Length[angle] =!= Length[external], Continue[]];
+      references = <|"Angle" -> Table[residueRandomNonzero[], {2}],
+        "Square" -> Table[residueRandomNonzero[], {2}]|>;
+      chart = <|"Momenta" -> momenta, "Angle" -> angle, "Square" -> square,
+        "AngleBasis" -> angleBasis, "SquareBasis" -> squareBasis,
+        "References" -> references, "Masses" -> masses, "PoleVariable" -> pole,
+        "ExternalSpinVectors" -> spinVectors, "MasslessBranchChoices" -> branches,
+        "MasslessLittleGroupScales" -> masslessScales,
+        "Cut" -> cut, "Complement" -> complement,
+        "CutMass" -> (channel["Mass"] /. parameterRules),
+        "AllowCutSpinors" -> True,
+        "ReferenceSeed" -> RandomInteger[{1, 10^9}]|>;
+      If[!AllTrue[Values[momenta],
+          residueFiniteQ[Cancel[Together[# /. pole -> 0]]] &], Continue[]];
+      result = With[{saved = chart, originalPole = pole, rules = parameterRules},
+        <|"Map" -> Function[{expression, channels, variables},
+            If[Length[channels] =!= 1 || Length[variables] =!= 1,
+              Missing["AutomaticMultipleCutChartNotImplemented"],
+              residueEvaluateChart[expression, saved /. originalPole -> First[variables], rules]]],
+          "Chart" -> saved, "ParameterRules" -> rules,
+          "Method" -> "AutomaticRationalCutChart", "Scope" -> "ExactRationalSample",
+          "Sample" -> sample, "RandomSeed" -> seed|>];
+      Break[], {attempt, 12}];
+    result
+  ]];
+
+(* ::Subsection::Closed:: *)
+(*Single and Multiple Residues*)
+
+Options[PhysicalPoleResidue] = {"KinematicMap" -> Automatic, "KinematicKind" -> "Sample",
+  "TimeConstraint" -> 30, "UncutChannels" -> {}};
+PhysicalPoleResidue[expr_, channel_Association, opts : OptionsPattern[]] :=
+  PhysicalPoleResidue[expr, {channel}, opts];
+PhysicalPoleResidue[expr_, input_List, OptionsPattern[]] := Module[
+  {channels, variables, structural, map = OptionValue["KinematicMap"],
+   kind = OptionValue["KinematicKind"], seconds = OptionValue["TimeConstraint"],
+   uncut = OptionValue["UncutChannels"], result, signatures},
+  If[input === {} || !AllTrue[input, residueChannelQ] ||
+      !MemberQ[{"Sample", "Symbolic"}, kind] ||
+      !(seconds === Infinity || TrueQ[NumericQ[seconds] && seconds > 0]) ||
+      !ListQ[uncut] || !AllTrue[uncut, residueChannelQ],
+    Message[PhysicalPoleResidue::args]; Return[$Failed]];
+  channels = residueNormalizeChannel /@ input;
+  If[Length[DeleteDuplicates[residueChannelKey /@ channels]] =!= Length[channels] ||
+      !(SameQ @@ (Sort /@ Lookup[Join[channels, uncut], "ExternalLegs"])),
+    Message[PhysicalPoleResidue::args]; Return[$Failed]];
+  signatures = DeleteMissing[residueExternalMassSignature /@ Join[channels, uncut]];
+  If[Length[DeleteDuplicates[signatures]] > 1 || !residueSameProcessQ[Join[channels, uncut]],
+    Message[PhysicalPoleResidue::args]; Return[$Failed]];
+  uncut = Select[residueNormalizeChannel /@ uncut,
+    !MemberQ[residueChannelKey /@ channels, residueChannelKey[#]] &];
+  variables = Table[Unique["physicalPole"], {Length[channels]}];
+  result = TimeConstrained[Module[{checks, value},
+    structural = residueStructuralCoefficient[expr, channels, variables];
+    If[map === Automatic, Return[<|"Status" -> "FORMAL",
+      "StructuralCoefficient" -> structural, "PhysicalResidue" -> Missing["KinematicsRequired"],
+      "Channels" -> channels, "Method" -> "OpaquePropagatorCoefficient",
+      "Diagnostics" -> {"No physical cut or numerator kinematics has been imposed."}|>]];
+    checks = residueKinematicChecks[map, channels, variables, uncut];
+    If[!TrueQ[checks["Valid"]], Return[<|"Status" -> "UNRESOLVED",
+      "StructuralCoefficient" -> structural, "PhysicalResidue" -> Missing["InvalidKinematics"],
+      "Channels" -> channels, "KinematicChecks" -> checks,
+      "Diagnostics" -> {"The chart must preserve all external shells, momentum conservation and the selected pole coordinates without imposing extra known cuts."}|>]];
+    value = residueOnChart[expr, channels, variables, map, Range[Length[channels]]];
+    <|"Status" -> If[MissingQ[value], "UNRESOLVED", "PASS"],
+      "StructuralCoefficient" -> structural, "PhysicalResidue" -> value,
+      "Channels" -> channels, "KinematicChecks" -> checks,
+      "Method" -> If[kind === "Symbolic", "ExactOnProvidedChart", "SampledChart"],
+      "Scope" -> "ProvidedKinematicChart", "PoleVariables" -> variables,
+      "Diagnostics" -> If[MissingQ[value], {value}, {}]|>
+  ], seconds, <|"Status" -> "UNRESOLVED", "PhysicalResidue" -> Missing["Timeout"],
+    "Diagnostics" -> {"The residue calculation exceeded TimeConstraint."}|>];
+  result
+];
+
+(* ::Subsection::Closed:: *)
+(*Channel Reports*)
+
+DownValues[CheckPhysicalResidues] = {};
+Options[CheckPhysicalResidues] = Join[Options[PhysicalPoleResidue], {
+  "Tolerance" -> 10^-10, "Samples" -> 4, "RandomSeed" -> 1729,
+  "ParameterRules" -> {}, "Output" -> "Table", "SpuriousPoles" -> Automatic}];
+
+residueComparisonZeroQ[value_, kind_, tolerance_] := value === 0 ||
+  (kind === "Sample" && NumericQ[value] && !FreeQ[value, _Real] &&
+    residueFiniteQ[value] && TrueQ[Abs[N[value]] <= tolerance]);
+
+residueComparisonBase[expr_, channel_, records_, targets_] := Module[
+  {matching, indices, lower, expected},
+  matching = Select[targets,
+    residueChannelKey[residueNormalizeChannel[#]] === residueChannelKey[channel] &];
+  indices = Lookup[Select[records, AnyTrue[#["PhysicalPropagators"],
+    residueChannelKey[#] === residueChannelKey[channel] &] &], "DiagramIndex", {}];
+  lower = Flatten[Lookup[matching, "LowerAmplitudes", {}], 1];
+  expected = If[matching =!= {} && AllTrue[matching,
+      TrueQ[Lookup[#, "Complete", False]] &&
+        !MissingQ[Lookup[#, "StateSum", Missing["NoStateSum"]]] &],
+    Total[Lookup[matching, "StateSum"]], Missing["IncompleteLowerAmplitudes"]];
+  <|"Cut" -> channel["Cut"], "Complement" -> channel["Complement"],
+    "Mass" -> channel["Mass"], "Propagator" -> channel["Propagator"],
+    "CutCondition" -> (channel["Propagator"] == 0),
+    "InternalParticles" -> DeleteDuplicates[Flatten[Join[
+      Lookup[matching, "InternalParticle", {}], Lookup[matching, "InternalAntiparticle", {}]]]],
+    "DiagramIndices" -> indices, "FactorizationChannels" -> matching,
+    "LowerAmplitudes" -> lower, "ExpectedStateSum" -> expected,
+    "CandidateExpression" -> expr|>
+];
+
+residueCheckChannel[expr_, channel_, records_, targets_, channels_, map_, kind_,
+    seconds_, tolerance_, uncut_] := Module[
+    {matching, base, calculation, value, residual, oppositeResidual, matchingSigns,
+     expected, indices, variables, status},
+    matching = Select[targets, residueChannelKey[residueNormalizeChannel[#]] === residueChannelKey[channel] &];
+    indices = Lookup[Select[records, AnyTrue[#["PhysicalPropagators"],
+      residueChannelKey[#] === residueChannelKey[channel] &] &], "DiagramIndex", {}];
+    base = residueComparisonBase[expr, channel, records, targets];
+    If[matching === {} || !AllTrue[matching, TrueQ[Lookup[#, "Complete", False]] &&
+        !MissingQ[Lookup[#, "StateSum", Missing["NoStateSum"]]] &],
+      Return[Join[base, <|"Status" -> "UNRESOLVED",
+        "CalculatedResidue" -> Missing["NotCompared"], "ExpectedResidue" -> Missing["IncompleteLowerAmplitudes"],
+        "Difference" -> Missing["NotCompared"],
+        "Diagnostics" -> {"A physical channel is missing or its lower-amplitude calculation failed."}|>]]];
+    expected = Total[Lookup[matching, "StateSum"]];
+    calculation = PhysicalPoleResidue[expr, channel, "KinematicMap" -> map,
+      "KinematicKind" -> kind, "TimeConstraint" -> seconds,
+      "UncutChannels" -> DeleteDuplicatesBy[Join[channels, uncut], residueChannelKey]];
+    If[calculation === $Failed, Return[Join[base, <|"Status" -> "UNRESOLVED",
+      "Diagnostics" -> {"Invalid residue options."}|>]]];
+    If[calculation["Status"] === "FORMAL", Return[Join[base, <|"Status" -> "FORMAL",
+      "CalculatedResidue" -> calculation["StructuralCoefficient"], "ExpectedResidue" -> expected,
+      "Difference" -> Missing["KinematicsRequired"], "Method" -> calculation["Method"],
+      "ResidueCalculation" -> calculation,
+      "Diagnostics" -> calculation["Diagnostics"]|>]]];
+    If[calculation["Status"] =!= "PASS", Return[Join[base, <|"Status" -> "UNRESOLVED",
+      "CalculatedResidue" -> calculation["PhysicalResidue"], "ExpectedResidue" -> expected,
+      "Difference" -> Missing["NotCompared"], "ResidueCalculation" -> calculation,
+      "Diagnostics" -> calculation["Diagnostics"]|>]]];
+    variables = calculation["PoleVariables"];
+    value = TimeConstrained[residueOnChart[expected, calculation["Channels"], variables, map, {}],
+      seconds, Missing["Timeout"]];
+    If[MissingQ[value], Return[Join[base, <|"Status" -> "UNRESOLVED",
+      "CalculatedResidue" -> calculation["PhysicalResidue"], "ExpectedResidue" -> value,
+      "Difference" -> Missing["NotCompared"], "Diagnostics" -> {value}|>]]];
+    residual = TimeConstrained[Cancel[Together[calculation["PhysicalResidue"] - value]],
+      seconds, Missing["Timeout"]];
+    oppositeResidual = TimeConstrained[Cancel[Together[calculation["PhysicalResidue"] + value]],
+      seconds, Missing["Timeout"]];
+    matchingSigns = Pick[{1, -1},
+      residueComparisonZeroQ[#, kind, tolerance] & /@ {residual, oppositeResidual}];
+    status = Which[MemberQ[matchingSigns, 1], "PASS",
+      !residueFiniteQ[residual] || !residueFiniteQ[oppositeResidual], "UNRESOLVED",
+      MemberQ[matchingSigns, -1], "Opp Sign",
+      residueFiniteQ[residual] && (NumericQ[residual] || kind === "Symbolic"), "FAIL", True, "UNRESOLVED"];
+    Join[base, <|"Status" -> status, "CalculatedResidue" -> calculation["PhysicalResidue"],
+      "ExpectedResidue" -> value, "Difference" -> residual,
+      "OppositeSignDifference" -> oppositeResidual, "MatchingSigns" -> matchingSigns,
+      "CandidatePoleCoefficient" -> calculation["StructuralCoefficient"],
+      "ResidueCalculation" -> calculation,
+      "Method" -> calculation["Method"], "Scope" -> calculation["Scope"],
+      "KinematicChecks" -> calculation["KinematicChecks"],
+      "Diagnostics" -> Which[status === "Opp Sign",
+        {"The calculated residue is the negative of the expected sewn residue in the diagram amplitude convention."},
+        !residueFiniteQ[residual], {residual},
+        !residueFiniteQ[oppositeResidual], {oppositeResidual}, True, {}]|>]
+];
+
+residueReportTable[rows_List] := Dataset[KeyTake[#, {"Cut", "Mass", "Status"}] & /@ rows];
+residueReportResidues[rows_List] := Dataset[Flatten[Function[row,
+  With[{samples = Lookup[row, "Samples", {}]},
+    If[ListQ[samples] && samples =!= {},
+      MapIndexed[Join[KeyTake[row, {"Cut", "Mass"}],
+        <|"Sample" -> Lookup[#1, "SampleIndex", First[#2]],
+          "Status" -> row["Status"]|>,
+        KeyTake[#1, {"CalculatedResidue", "ExpectedResidue", "Difference"}]] &,
+        samples],
+      {Join[KeyTake[row, {"Cut", "Mass"}], <|"Sample" -> 1|>,
+        KeyTake[row, {"Status", "CalculatedResidue", "ExpectedResidue", "Difference"}]]}]]
+  ] /@ rows, 1], MaxItems -> {All, All}];
+
+residueAutomaticComparison[expr_, channel_, records_, targets_, channels_,
+    seconds_, tolerance_, uncut_, samples_, seed_, rules_] := Module[
+  {base, results = {}, chart, result, status, sample, attempt, completed,
+   resolved, matchingSigns},
+  base = residueComparisonBase[expr, channel, records, targets];
+  If[MissingQ[base["ExpectedStateSum"]], Return[Join[base, <|
+    "Status" -> "UNRESOLVED", "CalculatedResidue" -> Missing["NotCompared"],
+    "ExpectedResidue" -> base["ExpectedStateSum"], "Difference" -> Missing["NotCompared"],
+    "Samples" -> {}, "Diagnostics" -> {
+      "A physical channel is missing or its lower-amplitude calculation failed."}|>]]];
+  completed = TimeConstrained[
+    Do[
+      result = <|"Status" -> "UNRESOLVED", "Diagnostics" -> {"No regular cut chart was found."}|>;
+      Do[
+        chart = residueAutomaticChart[channel, sample + attempt - 1,
+          seed + 104729 (attempt - 1), rules];
+        If[FailureQ[chart],
+          result = <|"Status" -> "UNRESOLVED", "Diagnostics" -> {chart}|>,
+          result = residueCheckChannel[expr, channel, records, targets, channels,
+            chart["Map"], "Sample", seconds, tolerance, uncut];
+          result = Join[KeyDrop[result, {"CandidateExpression", "LowerAmplitudes",
+              "FactorizationChannels", "ExpectedStateSum"}], <|
+            "SampleIndex" -> sample, "ChartSampleIndex" -> chart["Sample"], "Attempt" -> attempt,
+            "Kinematics" -> chart["Chart"], "ParameterRules" -> chart["ParameterRules"],
+            "Method" -> "AutomaticRationalCutChart", "Scope" -> "ExactOnProvidedRationalSample"|>]
+        ];
+        If[MemberQ[{"PASS", "Opp Sign", "FAIL"}, result["Status"]], Break[]],
+        {attempt, 12}];
+      AppendTo[results, result],
+      {sample, samples}]; True,
+    seconds, False];
+  resolved = Select[results, MemberQ[{"PASS", "Opp Sign"}, #["Status"]] &];
+  (* A zero/zero sample allows both signs; nonzero samples must share one sign. *)
+  matchingSigns = Fold[Intersection, {1, -1}, Lookup[resolved, "MatchingSigns", {}]];
+  status = Which[AnyTrue[results, #["Status"] === "FAIL" &] || matchingSigns === {}, "FAIL",
+    TrueQ[completed] && Length[results] === samples &&
+      Length[resolved] === samples,
+      If[MemberQ[matchingSigns, 1], "PASS", "Opp Sign"], True, "UNRESOLVED"];
+  Join[base, <|"Status" -> status,
+    "CalculatedResidue" -> Lookup[results, "CalculatedResidue", Missing["NotCompared"]],
+    "ExpectedResidue" -> Lookup[results, "ExpectedResidue", Missing["NotCompared"]],
+    "Difference" -> Lookup[results, "Difference", Missing["NotCompared"]],
+    "OppositeSignDifference" -> Lookup[results, "OppositeSignDifference", Missing["NotCompared"]],
+    "MatchingSigns" -> matchingSigns,
+    "Samples" -> results, "RequestedSamples" -> samples, "CompletedSamples" -> Length[results],
+    "Method" -> "AutomaticRationalCutCharts", "Scope" -> "SampledAgreementOnly",
+    "Diagnostics" -> Join[If[TrueQ[completed], {}, {"The channel comparison exceeded TimeConstraint."}],
+      Switch[status,
+        "PASS", {"Agreement at the recorded exact samples is not a generic analytic proof."},
+        "Opp Sign", {"At the recorded samples the calculated residue is consistently the negative of the expected sewn residue in the diagram amplitude convention. This is not a generic analytic proof."},
+        "FAIL", Join[If[matchingSigns === {},
+          {"The nonzero samples do not agree with one consistent sign."}, {}],
+          Flatten[Lookup[Select[results, #["Status"] =!= "PASS" &], "Diagnostics", {}], 1]],
+        _, Flatten[Lookup[Select[results, #["Status"] =!= "PASS" &], "Diagnostics", {}], 1]]]|>]
+];
+
+residueCheckReport[expr_, targets_List, records_List,
+    opts : OptionsPattern[CheckPhysicalResidues]] := Module[
+  {map = OptionValue[CheckPhysicalResidues, {opts}, "KinematicMap"],
+   kind = OptionValue[CheckPhysicalResidues, {opts}, "KinematicKind"],
+   seconds = OptionValue[CheckPhysicalResidues, {opts}, "TimeConstraint"],
+   tolerance = OptionValue[CheckPhysicalResidues, {opts}, "Tolerance"],
+   uncut = OptionValue[CheckPhysicalResidues, {opts}, "UncutChannels"],
+   samples = OptionValue[CheckPhysicalResidues, {opts}, "Samples"],
+   seed = OptionValue[CheckPhysicalResidues, {opts}, "RandomSeed"],
+   rules = OptionValue[CheckPhysicalResidues, {opts}, "ParameterRules"],
+   physical, channels, allChannels,
+   signatures, rows, unmatched, external},
+  If[!ListQ[records] || !AllTrue[records, AssociationQ[#] &&
+      ListQ[Lookup[#, "PhysicalPropagators", None]] &&
+      AllTrue[#["PhysicalPropagators"], residueChannelQ] &] ||
+      !AllTrue[targets, residueChannelQ] || !ListQ[uncut] || !AllTrue[uncut, residueChannelQ] ||
+      !MemberQ[{"Sample", "Symbolic"}, kind] ||
+      !(seconds === Infinity || TrueQ[NumericQ[seconds] && seconds > 0]) ||
+      !TrueQ[NumericQ[tolerance] && 0 <= tolerance < Infinity] ||
+      !IntegerQ[samples] || samples < 1 || !IntegerQ[seed] || !ListQ[rules] ||
+      !AllTrue[rules, MatchQ[#, _Rule] && Head[First[#]] === Symbol &&
+        !residueUnmappedQ[Last[#]] &],
+    Message[CheckPhysicalResidues::args]; Return[$Failed]];
+  physical = Flatten[Lookup[records, "PhysicalPropagators", {}], 1];
+  allChannels = Join[physical, targets, uncut];
+  signatures = residueExternalMassSignature /@ allChannels;
+  If[AnyTrue[signatures, MissingQ] || Length[DeleteDuplicates[signatures]] > 1 ||
+      !residueSameProcessQ[Join[records, allChannels]],
+    Message[CheckPhysicalResidues::args]; Return[$Failed]];
+  channels = DeleteDuplicatesBy[residueNormalizeChannel /@ Join[physical, targets], residueChannelKey];
+  rows = If[map === Automatic,
+    residueAutomaticComparison[expr, #, records, targets, channels, seconds,
+      tolerance, uncut, samples, seed, rules] & /@ channels,
+    residueCheckChannel[expr, #, records, targets, channels, map, kind,
+      seconds, tolerance, uncut] & /@ channels];
+  external = If[allChannels === {}, {}, First[allChannels]["ExternalLegs"]];
+  unmatched = Select[DeleteDuplicates[Cases[expr, _PropDen, Infinity]],
+    !MemberQ[residueChannelKey /@ channels, residuePropagatorKey[#, external]] &];
+  <|"Channels" -> rows, "Table" -> residueReportTable[rows],
+    "Summary" -> Counts[Lookup[rows, "Status", {}]],
+    "FactorizationChannels" -> targets, "ExpressionUnchanged" -> expr,
+    "UnmatchedPropagators" -> unmatched,
+    "CompatibleDoubleCuts" -> DeleteDuplicates[Flatten[
+      Subsets[residueChannelKey /@ #["PhysicalPropagators"], {2}] & /@ records, 1]],
+    "Scope" -> If[map === Automatic, "AutomaticExactRationalSamples", "ProvidedKinematicCharts"],
+    "RandomSeed" -> seed, "ParameterRules" -> rules,
+    "Diagnostics" -> Join[If[channels === {}, {"No factorization channels were supplied; no comparison was performed."}, {}],
+      If[unmatched === {}, {}, {"Unmatched explicit propagators are listed separately; their physical or reference origin has not been inferred."}]]|>
+];
+
+CheckPhysicalResidues[amplitudes_, channelRows_List, model_List,
+    opts : OptionsPattern[]] := Module[
+  {output = OptionValue["Output"], factors = OptionValue["SpuriousPoles"],
+   inputs, report, physical, spurious, combined, externalRules, external,
+   automatic, targets, records, keys, discovery = {}, candidates, check,
+   seconds = OptionValue["TimeConstraint"]},
+  If[!MemberQ[{"Table", "Residues", "Summary", "Details"}, output] ||
+      !(factors === Automatic || ListQ[factors]),
+    Message[CheckPhysicalResidues::args]; Return[$Failed]];
+  inputs = residueSimpleInputs[amplitudes, channelRows, model];
+  If[FailureQ[inputs],
+    Message[CheckPhysicalResidues::input, inputs["MessageTemplate"]]; Return[$Failed]];
+  If[inputs === $Failed,
+    Message[CheckPhysicalResidues::args]; Return[$Failed]];
+  automatic = factors === Automatic;
+  targets = inputs["Targets"]; records = inputs["Records"];
+  If[automatic,
+    (* Only supplied factorization channels certify physical poles.
+       Candidate-only denominators are checked separately for finiteness. *)
+    targets = Select[targets, KeyExistsQ[#, "ChannelExpression"] &];
+    keys = residueChannelKey /@ targets;
+    records = Map[Function[record, Join[record, <|"PhysicalPropagators" ->
+      Select[record["PhysicalPropagators"], MemberQ[keys, residueChannelKey[#]] &]|>]], records]
+  ];
+  report = residueCheckReport[inputs["Expression"], targets, records, opts];
+  If[report === $Failed, Return[$Failed]];
+  If[automatic || factors =!= {},
+    physical = DeleteDuplicatesBy[residueNormalizeChannel /@ Join[
+      If[automatic, targets, inputs["Targets"]],
+      If[automatic, {}, Flatten[Lookup[inputs["Records"], "PhysicalPropagators", {}], 1]],
+      OptionValue["UncutChannels"]], residueChannelKey];
+    If[automatic,
+      discovery = TimeConstrained[
+        poleDiscoverDenominators[inputs["Expression"], physical, inputs["Records"]],
+        seconds, Missing["PoleDiscoveryTimeout"]];
+      If[!ListQ[discovery], discovery = {<|"Factor" -> Missing["UndiscoveredDenominators"],
+        "CanonicalFactor" -> Missing["UndiscoveredDenominators"],
+        "Classification" -> "Unclassified", "Multiplicity" -> Missing["NotDetermined"],
+        "PhysicalChannels" -> {}, "Diagnostics" -> {
+          "Denominator discovery could not be completed within TimeConstraint."}|>}]
+    ];
+    If[physical === {} && inputs["Records"] =!= {},
+      externalRules = Lookup[First[inputs["Records"]], "ExternalMassRules", {}];
+      external = Sort[Cases[externalRules, HoldPattern[Rule[Mass[leg_Integer], _]] :> leg]];
+      If[Length[external] >= 4,
+        (* A process without physical poles still supplies external kinematics.
+           This chart descriptor deliberately has no physical Propagator. *)
+        physical = {<|"ExternalLegs" -> external, "ExternalMassRules" -> externalRules,
+          "Cut" -> Take[external, 2], "Complement" -> Drop[external, 2], "Mass" -> 0,
+          "KinematicMetadataOnly" -> True|>}]
+    ];
+    spurious = If[automatic,
+      candidates = Select[discovery, #["Classification"] =!= "Physical" &];
+      Map[Function[candidate,
+        check = If[candidate["Classification"] === "Spurious",
+          First[spuriousCheckReport[inputs["Expression"],
+            {candidate["CanonicalFactor"]}, physical, opts]],
+          <|"Type" -> "Unclassified", "Status" -> "UNRESOLVED", "Samples" -> {},
+            "Diagnostics" -> Join[Lookup[candidate, "Diagnostics", {}], {
+              "This denominator could not be classified reliably from the supplied physical channels."}]|>];
+        Join[check, <|"Pole" -> candidate["Factor"],
+          "CanonicalFactor" -> candidate["CanonicalFactor"], "Discovery" -> candidate|>]
+      ], candidates],
+      spuriousCheckReport[inputs["Expression"], factors, physical, opts]];
+    combined = Join[
+      (Join[#, <|"Type" -> "Physical", "Pole" -> #["CutCondition"]|>] & /@ report["Channels"]),
+      (Join[#, <|"Pole" -> If[MissingQ[#["Pole"]], #["Pole"], #["Pole"] == 0]|>] & /@ spurious)];
+    report = Join[report, <|"SpuriousChecks" -> spurious,
+      "Checks" -> combined, "PoleDiscovery" -> discovery,
+      "AutomaticPoleDiscovery" -> automatic,
+      "PhysicalSummary" -> report["Summary"],
+      "SpuriousSummary" -> Counts[Lookup[spurious, "Status", {}]],
+      "Summary" -> Counts[Lookup[combined, "Status", {}]],
+      "Table" -> Dataset[KeyTake[#, {"Type", "Pole", "Status"}] & /@ combined],
+      "SpuriousTable" -> spuriousReportSamples[spurious],
+      "Diagnostics" -> If[automatic, report["Diagnostics"] /. {
+        "No factorization channels were supplied; no comparison was performed." ->
+          "No physical factorization channels were supplied.",
+        "Unmatched explicit propagators are listed separately; their physical or reference origin has not been inferred." ->
+          "Denominators absent from the physical channels are classified in PoleDiscovery and checked separately for cancellation."},
+        report["Diagnostics"]]|>]
+  ];
+  Switch[output,
+    "Table", report["Table"],
+    "Residues", If[factors === {}, residueReportResidues[report["Channels"]],
+      residueUnifiedSamples[report["Channels"], report["SpuriousChecks"]]],
+    "Summary", report["Summary"],
+    "Details", report]
+];
+
+(* ::Subsection::Closed:: *)
+(*Apparent Denominator Discovery*)
+
+poleKinematicFactorQ[expression_] := residueUnmappedQ[expression /. _Mass -> 1];
+
+poleDiscoveryMetadata[channels_List, records_List] := Module[
+  {candidates, rules, external, result = Missing["ExternalMassMetadata"]},
+  candidates = Join[channels, records, Flatten[Lookup[records, "PhysicalPropagators", {}], 1]];
+  Do[
+    rules = Lookup[candidate, "ExternalMassRules", {}];
+    external = Sort[Cases[rules, HoldPattern[Mass[i_Integer] -> _] :> i]];
+    If[external =!= {} && DuplicateFreeQ[external],
+      result = <|"ExternalLegs" -> external, "ExternalMassRules" -> rules|>; Break[]],
+    {candidate, candidates}];
+  result
+];
+
+(* Only external mass shells and momentum conservation enter this linear
+   Gram representation. No diagram-local internal mass rules are used. *)
+poleScalarForm[expression_, metadata_Association] := Module[
+  {external = metadata["ExternalLegs"], masses, independent, dependent, pairs,
+   pivot, relation, dot, indexDot, momentumDot, chainScalar, result},
+  masses = AssociationThread[external, Mass /@ external /. metadata["ExternalMassRules"]];
+  If[Length[external] < 3, Return[Missing["InsufficientExternalMetadata"]]];
+  independent = Most[external]; dependent = Last[external];
+  dot[i_, j_] := Which[
+    i === dependent && j === dependent,
+      Total[Flatten[Table[dot[a, b], {a, independent}, {b, independent}]]],
+    i === dependent, -Total[dot[#, j] & /@ independent],
+    j === dependent, -Total[dot[i, #] & /@ independent],
+    i === j && KeyExistsQ[masses, i], masses[i]^2,
+    ContainsAll[independent, {i, j}], poleGram @@ Sort[{i, j}],
+    True, Missing["UnknownExternalMomentum"]];
+  indexDot[i_, j_] := With[{left = residueMomentumLegs[i], right = residueMomentumLegs[j]},
+    If[left === $Failed || right === $Failed, Missing["UnsupportedMomentumIndex"],
+      Total[Flatten[Outer[dot, left, right]]]]];
+  momentumDot[p_] := With[{legs = residueMomentumLegsFromExpression[p]},
+    If[legs === $Failed, Missing["UnsupportedMomentumExpression"],
+      Total[Flatten[Outer[dot, legs, legs]]]]];
+  chainScalar[chain_SpinorChain] := Module[{first, last, middle, leg, momentum},
+    If[Length[chain] =!= 3, Return[chain]];
+    {first, middle, last} = List @@ chain;
+    If[!MatchQ[first, Spinor["Helicity" | "Spin", "Angle" | "Square", _Integer]] ||
+        !MatchQ[last, Spinor["Helicity" | "Spin", "Angle" | "Square", _Integer]] ||
+        first[[3]] =!= last[[3]] || first[[2]] === last[[2]] ||
+        !KeyExistsQ[masses, first[[3]]] || !residueExactZero[masses[first[[3]]]], Return[chain]];
+    leg = first[[3]]; momentum = residueMomentumLegsFromExpression[middle];
+    If[momentum === $Failed, chain, 2 Total[dot[leg, #] & /@ momentum]]
+  ];
+  result = expression /. chain_SpinorChain :> chainScalar[chain];
+  result = result /. {
+    MomProd[i_, j_] :> indexDot[i, j],
+    Mandelstahm[i_, j_] :> indexDot[i, i] + indexDot[j, j] + 2 indexDot[i, j],
+    PropDen[p_, mass_] :> momentumDot[p] - mass^2};
+  result = result /. metadata["ExternalMassRules"];
+  If[poleKinematicFactorQ[result] || !FreeQ[result, _Missing],
+    Return[Missing["NotAScalarInvariant"]]];
+  pairs = Subsets[independent, {2}];
+  If[pairs =!= {},
+    pivot = poleGram @@ Last[pairs];
+    relation = (masses[dependent]^2 - Total[(masses[#]^2 &) /@ independent])/2 -
+      Total[(poleGram @@ # &) /@ Most[pairs]];
+    result = result /. pivot -> relation];
+  Expand[result]
+];
+poleScalarForm[_, _] := Missing["ExternalMassMetadata"];
+
+poleScalarProportionalQ[first_, second_] := Module[{ratio},
+  If[MissingQ[first] || MissingQ[second] || residueExactZero[second], Return[False]];
+  ratio = Cancel[Together[first/second]];
+  FreeQ[ratio, _poleGram] && !residueExactZero[ratio]
+];
+
+poleFactorLegs[factor_] := DeleteDuplicates[Flatten[Join[
+  Cases[factor, HoldPattern[MomProd[i_, j_]] :>
+    {residueMomentumLegs[i], residueMomentumLegs[j]}, {0, Infinity}],
+  Cases[factor, HoldPattern[Mandelstahm[i_, j_]] :>
+    {residueMomentumLegs[i], residueMomentumLegs[j]}, {0, Infinity}],
+  Cases[factor, HoldPattern[Mom[i_]] :> residueMomentumLegs[i], {0, Infinity}],
+  Cases[factor, HoldPattern[Spinor[_, _, i_Integer]] :> {i}, {0, Infinity}]]]];
+
+poleInferredScalarPropagator[factor_, scalar_, metadata_Association] := Module[
+  {external = metadata["ExternalLegs"], legs, invariant, variables, variable,
+   scale, constant, massSquared, mass},
+  If[MissingQ[scalar] || residueExactZero[scalar], Return[Missing["NoScalarPole"]]];
+  legs = Sort[poleFactorLegs[factor]];
+  If[MemberQ[legs, $Failed] || !ContainsAll[external, legs] ||
+      Min[Length[legs], Length[Complement[external, legs]]] < 2,
+    Return[Missing["NoSingleInvariantCut"]]];
+  legs = canonicalPhysicalCut[legs, external];
+  invariant = poleScalarForm[PropDen[Mom[Multiparticle @@ legs], 0], metadata];
+  If[MissingQ[invariant], Return[invariant]];
+  variables = DeleteDuplicates[Cases[invariant, _poleGram, {0, Infinity}]];
+  variable = SelectFirst[variables, !residueExactZero[Coefficient[invariant, #]] &,
+    Missing["ConstantInvariant"]];
+  If[MissingQ[variable], Return[variable]];
+  scale = Cancel[Together[Coefficient[scalar, variable]/Coefficient[invariant, variable]]];
+  If[!FreeQ[scale, _poleGram] || residueExactZero[scale], Return[Missing["NotAffineInvariant"]]];
+  constant = Cancel[Together[scalar - scale invariant]];
+  If[!FreeQ[constant, _poleGram], Return[Missing["NotAffineInvariant"]]];
+  massSquared = Cancel[Together[-constant/scale]];
+  mass = If[MatchQ[massSquared, Power[_, 2]], First[massSquared], Sqrt[massSquared]];
+  PropDen[Mom[Multiparticle @@ legs], mass]
+];
+poleInferredScalarPropagator[_, _, _] := Missing["ExternalMassMetadata"];
+
+poleClassifyFactor[factor_, power_, channels_List, metadata_] := Module[
+  {canonical = factor, classification = "Unclassified", matches = {}, diagnostics = {},
+   scalar, channelScalar, key, parts, pair, masses, inferred},
+  scalar = poleScalarForm[factor, metadata];
+  matches = Select[channels, Function[channel,
+    poleScalarProportionalQ[scalar, poleScalarForm[channel["Propagator"], metadata]]]];
+  If[matches =!= {},
+    canonical = First[matches]["Propagator"]; classification = "Physical",
+    Which[
+      Head[factor] === PropDen && AssociationQ[metadata],
+        key = residuePropagatorKey[factor, metadata["ExternalLegs"]];
+        If[!MissingQ[key], canonical = PropDen[Mom[Multiparticle @@ First[key]], Last[key]];
+          classification = "Spurious"],
+      MatchQ[factor, SpinorChain[_Spinor, _Spinor]],
+        parts = List @@ factor;
+        If[AllTrue[parts, MatchQ[#, Spinor["Xi" | "Helicity" | "Spin",
+              "Angle" | "Square", _Integer]] &] && parts[[1, 2]] === parts[[2, 2]],
+          canonical = SpinorChain @@ Sort[parts]; classification = "Spurious";
+          If[AssociationQ[metadata] && FreeQ[parts, Spinor["Xi", __]],
+            pair = Sort[#[[3]] & /@ parts];
+            masses = Mass /@ pair /. metadata["ExternalMassRules"];
+            If[DuplicateFreeQ[pair] && ContainsAll[metadata["ExternalLegs"], pair] &&
+                AllTrue[masses, residueExactZero],
+              key = canonicalPhysicalCut[pair, metadata["ExternalLegs"]];
+              matches = Select[channels, #["Cut"] === key && residueExactZero[#["Mass"]] &];
+              If[matches =!= {}, classification = "Physical"]]]],
+      !MissingQ[scalar],
+        inferred = poleInferredScalarPropagator[factor, scalar, metadata];
+        If[!MissingQ[inferred], canonical = inferred; classification = "Spurious"]
+    ]
+  ];
+  If[!IntegerQ[power], classification = "Unclassified";
+    AppendTo[diagnostics, "A noninteger or symbolic denominator power requires a branch-sensitive check."]];
+  If[!MissingQ[scalar] && residueExactZero[scalar], classification = "Unclassified";
+    AppendTo[diagnostics, "This denominator vanishes identically under the external mass shells and momentum conservation."]];
+  If[classification === "Unclassified" && diagnostics === {},
+    diagnostics = {"This apparent denominator could not be identified with a supplied physical channel or a supported spurious-pole factor."}];
+  <|"Factor" -> factor, "CanonicalFactor" -> canonical,
+    "Classification" -> classification, "Multiplicity" -> power,
+    "PhysicalChannels" -> (residueChannelKey /@ matches), "Diagnostics" -> diagnostics|>
+];
+
+poleDiscoverDenominators[expr_, channels_List, records_List] := Module[
+  {physical, metadata, scanExpressions, denominators, pieces, rows, groups,
+   factorPieces, candidateFactorQ},
+  physical = residueNormalizeChannel /@ Select[channels,
+    residueChannelQ[#] && !TrueQ[Lookup[#, "KinematicMetadataOnly", False]] &];
+  metadata = poleDiscoveryMetadata[channels, records];
+  candidateFactorQ[factor_] := poleKinematicFactorQ[factor] ||
+    (AssociationQ[metadata] && !FreeQ[factor, Mass[_Integer]] &&
+      residueExactZero[factor /. metadata["ExternalMassRules"]]);
+  scanExpressions = Join[{expr}, Flatten[Function[record,
+    {Lookup[record, "Expression", 0], Lookup[record, "OriginalExpression", 0]} /.
+      Lookup[record, "MassRules", {}]] /@ records, 1]];
+  denominators = Join[Cases[scanExpressions, Power[base_, exponent_] /;
+      candidateFactorQ[base] &&
+      !(NumericQ[exponent] && TrueQ[exponent >= 0]) :> {base, -exponent}, {0, Infinity}],
+    Cases[scanExpressions, reciprocal : ((Csc | Sec | Cot | Csch | Sech | Coth)[argument_]) /;
+        poleKinematicFactorQ[argument] :>
+      {Switch[Head[reciprocal], Csc, Sin[argument], Sec, Cos[argument], Cot, Tan[argument],
+        Csch, Sinh[argument], Sech, Cosh[argument], Coth, Tanh[argument]], 1}, {0, Infinity}]];
+  factorPieces[base_, power_] := Module[{factored, factors},
+    factored = If[IntegerQ[power],
+      Quiet[Check[TimeConstrained[Factor[base, Extension -> Automatic], 2, base], base]], base];
+    factors = If[Head[factored] === Times, List @@ factored, {factored}];
+    Select[Map[Function[factor, If[Head[factor] === Power,
+      {factor[[1]], power factor[[2]]}, {factor, power}]],
+      Select[factors, candidateFactorQ]],
+      !(NumericQ[Last[#]] && TrueQ[Last[#] <= 0]) &]
+  ];
+  pieces = Flatten[(factorPieces @@ # &) /@ denominators, 1];
+  pieces = Select[pieces, Function[piece,
+    With[{scalar = poleScalarForm[First[piece], metadata]},
+      MissingQ[scalar] || !FreeQ[scalar, _poleGram] || residueExactZero[scalar]]]];
+  rows = (poleClassifyFactor[#[[1]], #[[2]], physical, metadata] &) /@ pieces;
+  groups = GatherBy[rows, #["CanonicalFactor"] &];
+  Map[Function[group, Join[First[group], <|
+    "Multiplicity" -> If[AllTrue[Lookup[group, "Multiplicity"], NumericQ],
+      Max[Lookup[group, "Multiplicity"]], Missing["SymbolicPower"]],
+    "ApparentForms" -> DeleteDuplicates[Lookup[group, "Factor"]],
+    "Classification" -> If[MemberQ[Lookup[group, "Classification"], "Unclassified"],
+      "Unclassified", First[group]["Classification"]],
+    "Diagnostics" -> DeleteDuplicates[Flatten[Lookup[group, "Diagnostics"]]]|>]], groups]
+];
+
+(* ::Subsection::Closed:: *)
+(*Spurious-Pole Finiteness Checks*)
+
+residueUnifiedSamples[physical_List, spurious_List] := Module[{physicalRows, spuriousRows},
+  physicalRows = Flatten[Map[Function[row, Module[{samples},
+    samples = Lookup[row, "Samples", {}];
+    If[samples === {}, samples = {row}];
+    MapIndexed[Function[{sample, index}, <|"Type" -> "Physical",
+      "Pole" -> row["CutCondition"], "Sample" -> Lookup[sample, "SampleIndex", First[index]],
+      "Status" -> row["Status"],
+      "Calculated" -> Lookup[sample, "CalculatedResidue", Missing["NotCompared"]],
+      "Expected" -> Lookup[sample, "ExpectedResidue", Missing["NotCompared"]],
+      "Difference" -> Lookup[sample, "Difference", Missing["NotCompared"]],
+      "PoleOrder" -> 1, "Limit" -> Missing["NotApplicable"]|>], samples]
+  ]], physical], 1];
+  spuriousRows = Flatten[Map[Function[row, Module[{samples},
+    samples = Lookup[row, "Samples", {}];
+    If[samples === {}, samples = {<|"Status" -> "UNRESOLVED"|>}];
+    MapIndexed[Function[{sample, index}, Module[{order, coefficient, resolved},
+      order = Lookup[sample, "PoleOrder", Missing["NotCompared"]];
+      resolved = MemberQ[{"PASS", "FAIL"}, Lookup[sample, "Status", "UNRESOLVED"]];
+      coefficient = If[!resolved, Missing["NotCompared"],
+        If[TrueQ[order > 0], Lookup[sample, "LeadingCoefficient", Missing["NotCompared"]], 0]];
+      <|"Type" -> Lookup[row, "Type", "Spurious"],
+        "Pole" -> If[MissingQ[row["Pole"]], row["Pole"], row["Pole"] == 0],
+        "Sample" -> Lookup[sample, "Sample", First[index]], "Status" -> row["Status"],
+        "Calculated" -> coefficient, "Expected" -> 0, "Difference" -> coefficient,
+        "PoleOrder" -> order, "Limit" -> Lookup[sample, "Limit", Missing["NotCompared"]]|>
+    ]], samples]
+  ]], spurious], 1];
+  Dataset[Join[physicalRows, spuriousRows], MaxItems -> {All, All}]
+];
+
+spuriousReportSamples[rows_List] := Dataset[Flatten[Function[row,
+  With[{samples = Lookup[row, "Samples", {}]},
+    If[samples === {},
+      {<|"Pole" -> (row["Pole"] == 0), "Sample" -> Missing["NotSampled"],
+        "Status" -> row["Status"], "Limit" -> Missing["NotSampled"],
+        "PoleOrder" -> Missing["NotSampled"]|>},
+      (Join[<|"Pole" -> (row["Pole"] == 0)|>,
+        KeyTake[#, {"Sample", "Status", "Limit", "PoleOrder"}]] & /@ samples)]]
+  ] /@ rows, 1], MaxItems -> {All, All}];
+
+spuriousLaurentData[value_, variable_] := Module[
+  {rational, numerator, denominator, numeratorRules, denominatorRules,
+   numeratorOrder, denominatorOrder, order, leading},
+  If[!residueFiniteQ[value] || residueUnmappedQ[value],
+    Return[Missing["IncompleteKinematicEvaluation"]]];
+  rational = Cancel[Together[value], Extension -> Automatic];
+  If[rational === 0, Return[<|"Order" -> Infinity, "LeadingCoefficient" -> 0,
+    "Limit" -> 0|>]];
+  numerator = Numerator[rational]; denominator = Denominator[rational];
+  If[!PolynomialQ[numerator, variable] || !PolynomialQ[denominator, variable] ||
+      !AllTrue[Join[CoefficientList[numerator, variable],
+        CoefficientList[denominator, variable]], NumericQ],
+    Return[Missing["NonRationalOrUnspecifiedParameters"]]];
+  numeratorRules = Select[CoefficientRules[numerator, {variable}],
+    !residueExactZero[Last[#]] &];
+  denominatorRules = Select[CoefficientRules[denominator, {variable}],
+    !residueExactZero[Last[#]] &];
+  If[numeratorRules === {} || denominatorRules === {},
+    Return[Missing["IndeterminateLaurentOrder"]]];
+  numeratorOrder = Min[First[First[#]] & /@ numeratorRules];
+  denominatorOrder = Min[First[First[#]] & /@ denominatorRules];
+  order = numeratorOrder - denominatorOrder;
+  leading = Cancel[Coefficient[numerator, variable, numeratorOrder]/
+    Coefficient[denominator, variable, denominatorOrder], Extension -> Automatic];
+  <|"Order" -> order, "LeadingCoefficient" -> leading,
+    "Limit" -> Which[order > 0, 0, order === 0, leading,
+      True, Missing["Divergent"]]|>
+];
+
+spuriousPoleSpecification[factor_, metadata_] := Module[
+  {parts, first, last, kind, external, masses, reference, leg, pair, cut, mass,
+   masslessPairSides},
+  external = metadata["ExternalLegs"];
+  masses = AssociationThread[external, Mass /@ external /.
+    metadata["ExternalMassRules"]];
+  If[MatchQ[factor, PropDen[_, _]],
+    pair = residueMomentumLegsFromExpression[First[factor]];
+    mass = Last[factor];
+    If[pair === $Failed || !DuplicateFreeQ[pair] ||
+        !ContainsAll[external, pair] || !NumericQ[mass],
+      Return[Missing["UnsupportedInvariantSpuriousFactor"]]];
+    cut = canonicalPhysicalCut[pair, external];
+    If[Min[Length[cut], Length[Complement[external, cut]]] < 2,
+      Return[Missing["InvariantCutNeedsTwoLegsPerSide"]]];
+    masslessPairSides = Map[residueExactZero[mass] && Length[#] === 2 &&
+      AllTrue[Lookup[masses, #], residueExactZero] &,
+      {cut, Complement[external, cut]}];
+    Return[<|"Kind" -> "Invariant", "Mode" -> "Invariant", "Cut" -> cut,
+      "Mass" -> mass, "MasslessPairSides" -> masslessPairSides,
+      "Propagator" -> PropDen[Mom[Multiparticle @@ cut], mass]|>]];
+  If[!MatchQ[factor, SpinorChain[_Spinor, _Spinor]],
+    Return[Missing["UnsupportedSpuriousFactor"]]];
+  parts = List @@ factor; first = First[parts]; last = Last[parts];
+  If[!AllTrue[parts, MatchQ[#, Spinor["Xi" | "Helicity" | "Spin",
+        "Angle" | "Square", _Integer]] &] || first[[2]] =!= last[[2]],
+    Return[Missing["UnsupportedSpuriousFactor"]]];
+  kind = first[[2]];
+  If[Count[parts, Spinor["Xi", __]] === 1,
+    reference = SelectFirst[parts, First[#] === "Xi" &];
+    leg = SelectFirst[parts, First[#] =!= "Xi" &][[3]];
+    If[!MemberQ[external, leg], Return[Missing["UnknownExternalLeg"]]];
+    Return[<|"Kind" -> kind, "Reference" -> reference[[3]], "Leg" -> leg,
+      "Mode" -> "ReferenceBracket"|>]];
+  If[!FreeQ[parts, Spinor["Xi", __]], Return[Missing["UnsupportedSpuriousFactor"]]];
+  pair = Sort[#[[3]] & /@ parts];
+  If[!DuplicateFreeQ[pair] || !ContainsAll[external, pair] ||
+      !AllTrue[Lookup[masses, pair], residueExactZero],
+    Return[Missing["ExternalPairMustBeMassless"]]];
+  <|"Kind" -> kind, "Cut" -> pair, "Mode" -> "MasslessBracket"|>
+];
+
+spuriousPhysicalGenericQ[expr_, channels_, chart_, rules_] := Module[
+  {propagators, values, variable = chart["PoleVariable"], data},
+  (* A PropDen in the candidate may itself be the suspected spurious pole.
+     Only supplied physical channels, not notation alone, identify guards. *)
+  propagators = DeleteDuplicates[Lookup[Select[channels,
+    !TrueQ[Lookup[#, "KinematicMetadataOnly", False]] &], "Propagator", {}]];
+  values = residueEvaluateChart[#, chart, rules] & /@ propagators;
+  AllTrue[values, Function[value,
+    data = spuriousLaurentData[value, variable];
+    AssociationQ[data] && data["Order"] === 0 &&
+      !residueExactZero[data["Limit"]]]]
+];
+
+spuriousAutomaticChart[spec_, metadata_, sample_, seed_, rules_] := Module[
+  {channel, chartResult, chart, variable, reference, perturbation, base, external,
+   factor, factorData, conjugateData, attempts, pair, chartSample,
+   found = Missing["NoChart"]},
+  external = metadata["ExternalLegs"];
+  If[Length[external] < 4, Return[Failure["NeedsAtLeastFourExternalLegs", <||>]]];
+  If[spec["Mode"] === "Invariant",
+    pair = spec["Cut"];
+    channel = Join[metadata, <|"Cut" -> pair,
+      "Complement" -> Complement[external, pair], "Mass" -> spec["Mass"],
+      "Propagator" -> spec["Propagator"]|>];
+    (* The second chart-orientation bit changes every two samples. When
+       only the complement is a massless pair, vary that bit directly. *)
+    chartSample = If[Lookup[spec, "MasslessPairSides", {}] === {False, True},
+      2 sample - 1, sample];
+    chartResult = residueAutomaticChart[channel, chartSample, seed, rules];
+    If[FailureQ[chartResult], Return[chartResult]];
+    Return[Join[chartResult["Chart"], <|"AllowCutSpinors" -> False|>]]
+  ];
+  If[spec["Mode"] === "MasslessBracket",
+    pair = spec["Cut"];
+    channel = Join[metadata, <|"Cut" -> pair,
+      "Complement" -> Complement[external, pair], "Mass" -> 0,
+      "Propagator" -> PropDen[Mom[Multiparticle @@ pair], 0]|>];
+    (* The two complex collinear branches are different. Select the branch
+       where the requested bracket, not its conjugate, vanishes linearly. *)
+    Do[
+      chartResult = residueAutomaticChart[channel, 2 sample + attempts, seed, rules];
+      If[FailureQ[chartResult], Continue[]];
+      chart = Join[chartResult["Chart"], <|"AllowCutSpinors" -> False|>];
+      variable = chart["PoleVariable"];
+      factor = SpinorChain @@ (Spinor["Helicity", spec["Kind"], #] & /@ pair);
+      factorData = spuriousLaurentData[residueEvaluateChart[factor, chart, rules], variable];
+      factor = SpinorChain @@ (Spinor["Helicity",
+        If[spec["Kind"] === "Angle", "Square", "Angle"], #] & /@ pair);
+      conjugateData = spuriousLaurentData[residueEvaluateChart[factor, chart, rules], variable];
+      If[AssociationQ[factorData] && factorData["Order"] === 1 &&
+          AssociationQ[conjugateData] && conjugateData["Order"] === 0,
+        found = chart; Break[]],
+      {attempts, 0, 7}];
+    If[AssociationQ[found], Return[found]];
+    Return[Failure["NoTransverseMasslessBracketChart", <||>]]
+  ];
+  channel = metadata;
+  If[Min[Length[channel["Cut"]], Length[channel["Complement"]]] < 2,
+    channel = Join[channel, <|"Cut" -> Take[external, 2],
+      "Complement" -> Drop[external, 2], "Mass" -> 0|>]];
+  chartResult = residueAutomaticChart[channel, sample, seed, rules];
+  If[FailureQ[chartResult], Return[chartResult]];
+  chart = chartResult["Chart"];
+  (* Freeze the auxiliary physical-cut coordinate away from zero. Only the
+     reference spinor is varied in this chart, never an internal mass shell. *)
+  base = chart /. chart["PoleVariable"] -> (11 + sample);
+  variable = Unique["referencePole"];
+  reference = residueChartSpinor[Spinor["Spin", spec["Kind"], spec["Leg"]], base];
+  If[!VectorQ[reference, NumericQ] || AllTrue[reference, residueExactZero],
+    Return[Failure["InvalidExternalReferenceTarget", <||>]]];
+  perturbation = If[!residueExactZero[reference[[1]]], {0, 1}, {1, 0}];
+  Join[base, <|"PoleVariable" -> variable, "AllowCutSpinors" -> False,
+    "ReferenceOverrides" -> Association[spec["Kind"] ->
+      Association[spec["Reference"] -> reference + variable perturbation]]|>]
+];
+
+spuriousCheckOne[expr_, factor_, channels_, seconds_, samples_, seed_, rules_, map_] := Module[
+  {base, metadata, specification, results = {}, completed, chart, variable,
+   factorData, amplitudeData, result, status, attempt, coincident = False,
+   effectiveSamples, minimumSamples, retryStride, branchDiagnostics = {}},
+  base = <|"Type" -> "Spurious", "Pole" -> factor, "Status" -> "UNRESOLVED",
+    "Scope" -> "SampledFinitenessOnly", "UserRequestedSamples" -> samples,
+    "RequestedSamples" -> samples, "BranchCoverageDiagnostics" -> {}|>;
+  If[map =!= Automatic, Return[Join[base, <|"Samples" -> {},
+    "CompletedSamples" -> 0, "Diagnostics" -> {
+      "Automatic spurious-pole charts do not reuse a supplied physical-cut KinematicMap."}|>]]];
+  If[channels === {} || !AllTrue[channels, residueChannelQ] ||
+      AnyTrue[residueExternalMassSignature /@ channels, MissingQ] ||
+      Length[DeleteDuplicates[residueExternalMassSignature /@ channels]] =!= 1,
+    Return[Join[base, <|"Samples" -> {}, "CompletedSamples" -> 0,
+      "Diagnostics" -> {"Consistent external mass metadata is required for spurious-pole sampling."}|>]]];
+  metadata = First[channels];
+  specification = spuriousPoleSpecification[factor /. rules, Join[metadata,
+    <|"ExternalMassRules" -> (metadata["ExternalMassRules"] /. rules)|>]];
+  If[MissingQ[specification], Return[Join[base, <|"Samples" -> {},
+    "CompletedSamples" -> 0, "Diagnostics" -> {
+      "This spurious factor is unsupported; use a massless angle/square pair, an external/reference bracket, or a quadratic PropDen invariant."}|>]]];
+  minimumSamples = If[specification["Mode"] === "Invariant",
+    Switch[Count[specification["MasslessPairSides"], True], 1, 2, 2, 4, _, 1], 1];
+  effectiveSamples = Max[samples, minimumSamples];
+  If[effectiveSamples > samples,
+    branchDiagnostics = {"Samples increased from " <> ToString[samples] <> " to " <>
+      ToString[effectiveSamples] <> If[minimumSamples === 4,
+        " to cover all four complex branch combinations of the two massless pairs.",
+        " to cover both complex branches of the massless pair invariant."]}];
+  base = Join[base, <|"RequestedSamples" -> effectiveSamples,
+    "BranchCoverageDiagnostics" -> branchDiagnostics|>];
+  (* Retrying a singular chart must not change the branch being tested. *)
+  retryStride = If[specification["Mode"] === "Invariant",
+    4 Ceiling[effectiveSamples/4], effectiveSamples];
+  completed = TimeConstrained[
+    Do[
+      result = Missing["NoRegularSample"];
+      Do[
+        chart = spuriousAutomaticChart[specification, metadata,
+          sample + retryStride attempt, seed, rules];
+        If[FailureQ[chart], Continue[]];
+        variable = chart["PoleVariable"];
+        factorData = spuriousLaurentData[residueEvaluateChart[factor, chart, rules], variable];
+        If[!AssociationQ[factorData] || factorData["Order"] =!= 1, Continue[]];
+        If[!spuriousPhysicalGenericQ[expr, channels, chart, rules],
+          coincident = True; Continue[]];
+        amplitudeData = spuriousLaurentData[residueEvaluateChart[expr, chart, rules], variable];
+        If[!AssociationQ[amplitudeData], Continue[]];
+        result = <|"Sample" -> sample, "Status" -> If[amplitudeData["Order"] < 0, "FAIL", "PASS"],
+          "PoleOrder" -> Max[0, -amplitudeData["Order"]],
+          "LaurentOrder" -> amplitudeData["Order"],
+          "LeadingCoefficient" -> amplitudeData["LeadingCoefficient"],
+          "Limit" -> amplitudeData["Limit"], "SampleValues" -> amplitudeData["Limit"],
+          "Chart" -> chart|>;
+        Break[], {attempt, 0, 5}];
+      If[MissingQ[result], result = <|"Sample" -> sample, "Status" -> "UNRESOLVED"|>];
+      AppendTo[results, result], {sample, effectiveSamples}]; True,
+    seconds, False];
+  status = Which[AnyTrue[results, #["Status"] === "FAIL" &], "FAIL",
+    TrueQ[completed] && Length[results] === effectiveSamples &&
+      AllTrue[results, #["Status"] === "PASS" &], "PASS", True, "UNRESOLVED"];
+  Join[base, <|"Status" -> status, "Samples" -> results,
+    "CompletedSamples" -> Length[results],
+    "PoleOrder" -> If[results === {}, Missing["NotSampled"],
+      Max[Lookup[results, "PoleOrder", 0]]],
+    "Limit" -> Lookup[results, "Limit", Missing["NotSampled"]],
+    "SampleValues" -> Lookup[results, "SampleValues", Missing["NotSampled"]],
+    "Method" -> "ExactTransverseLaurentCharts",
+    "Diagnostics" -> Join[
+      branchDiagnostics,
+      If[TrueQ[completed], {}, {"The spurious-pole check exceeded TimeConstraint."}],
+      If[status === "PASS", {"No negative Laurent powers survive in the full summed amplitude at the recorded exact samples. This is not a generic analytic proof."}, {}],
+      If[status === "FAIL", {"A negative Laurent power survives in the full summed amplitude at a recorded sample."}, {}],
+      If[status === "UNRESOLVED" && coincident,
+        {"A regular sample could not be obtained while keeping every physical propagator away from zero; the proposed pole may coincide with a physical pole."}, {}],
+      If[status === "UNRESOLVED" && !coincident && TrueQ[completed],
+        {"No complete finite rational Laurent evaluation was available for every requested sample; unsupported expression structures or unspecified parameters may remain."}, {}]]|>]
+];
+
+spuriousCheckReport[expr_, factors_List, targets_List,
+    opts : OptionsPattern[CheckPhysicalResidues]] := Module[
+  {seconds = OptionValue[CheckPhysicalResidues, {opts}, "TimeConstraint"],
+   samples = OptionValue[CheckPhysicalResidues, {opts}, "Samples"],
+   seed = OptionValue[CheckPhysicalResidues, {opts}, "RandomSeed"],
+   rules = OptionValue[CheckPhysicalResidues, {opts}, "ParameterRules"],
+   map = OptionValue[CheckPhysicalResidues, {opts}, "KinematicMap"]},
+  spuriousCheckOne[expr, #, targets, seconds, samples, seed, rules, map] & /@
+    DeleteDuplicates[factors]
+];
+
+End[];
