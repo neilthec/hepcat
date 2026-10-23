@@ -93,7 +93,8 @@ The regression runner already starts each suite in a fresh kernel.
 ## Feynman Benchmark
 
 `feynman-tests.wl` covers the independent CalcHEP backend in
-`source/HEPCAT-Feynman.wl`. It imports all 125 stock SM rules, checks safe
+`source/HEPCAT-Feynman.wl`. It imports all 139 local SM rules, including the
+fourteen added light-fermion Higgs/Goldstone rules, checks safe
 ordered-gamma parsing and ordinary amplitude-pair output, and verifies the
 unitary-gauge longitudinal numerator and exclusion of Goldstone/ghost exchange.
 The four-gluon auxiliary represents a contact interaction, never a pole.
@@ -106,10 +107,11 @@ Whole-amplitude QED and nonabelian Ward checks exercise the vertex, propagator
 and momentum conventions together. Malformed tensor slots and unsupported
 structures must return explicit failures.
 
-This is not a complete numerical benchmark grid for every SM process. The raw
-model has zero electron, muon, up and down masses. Restoring those masses needs
-their Yukawa sector as well; the tests do not bless changing masses alone in
-a full SM model. Running-quark-mass functions are imported symbolically.
+This is not a complete numerical benchmark grid for every SM process. The local
+SM restores electron, muon, up and down masses together with their Higgs and
+Goldstone couplings. Tests compare the four massive Higgs vertices with the
+constructive model and check massive-electron photon Ward identities.
+Running-quark-mass functions for other flavors are imported symbolically.
 
 `CheckAmplitudes` is the canonical combined checker; `CheckPhysicalResidues`
 remains a compatibility name. The opt-in `"FeynmanAmplitudes"` comparison uses

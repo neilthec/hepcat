@@ -160,8 +160,11 @@ massive-QED Feynman model 2. Each model retains its own mass and charge
 definitions, with matching numerical values for this example; the checker
 uses the supplied `"FeynmanModel"` for the benchmark's parameters rather than
 identifying the two models' parameter objects or changing either model.
-The stock imported SM otherwise keeps a massless electron and must not be
-compared silently with a massive-electron constructive amplitude.
+The local SM Feynman model 1 also restores electron, muon, up- and down-quark
+masses with their matching Higgs/Goldstone rules. Its light-quark defaults
+match constructive models 1, 4 and 5; see `model_feynman/README.md` for their
+PDG source and mass-scheme convention. Match the supplied numerical parameters
+before comparing amplitudes from different models.
 
 The notebook explicitly simplifies the five-point diagrams before checking
 them. It contracts spin indices, replaces composite momenta inside spinor

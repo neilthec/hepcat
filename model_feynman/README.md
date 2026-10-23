@@ -1,9 +1,11 @@
 # CalcHEP Models
 
-The four `*1.mdl` files are unchanged copies of stock model 1, named `SM`, from
+The four `*1.mdl` files originate from stock model 1, named `SM`, from
 `/Users/neil/code/CalcHEP/calchep_3.9.0/models/`. They contain particles,
-Lagrangian vertices, parameters and dependent functions. Models 2 and 3 in
-that installation add effective Higgs interactions and are not this baseline.
+Lagrangian vertices, parameters and dependent functions. The local version
+restores electron, muon, up- and down-quark masses and their Higgs/Goldstone
+couplings as described below. Models 2 and 3 in that installation add effective
+Higgs interactions and are not this baseline.
 
 These are raw CalcHEP Feynman-rule files, not HEPCAT constructive amplitude
 tables. `ReadModel` recognizes `lgrng1.mdl` and returns
@@ -26,14 +28,13 @@ models can have the same parameter names with different values.
 
 ## Use
 
-After loading HEPCAT, a simple massless-electron example is:
+After loading HEPCAT, a simple massive-electron example is:
 
 ```wolfram
 model = ReadModel[FileNameJoin[{hepcatDirectory, "model_feynman"}], 1];
 diagrams = CreateDiagrams[{"e", "E", "A.+", "A.-"}, model];
 feynmanPairs = diagramAmplitudes[diagrams];
-spinorPairs = FeynmanToSpinorProducts[feynmanPairs,
-  "FermionHelicities" -> {1 -> -1/2, 2 -> 1/2}];
+spinorPairs = FeynmanToSpinorProducts[feynmanPairs];
 amplitude = Total[Last /@ spinorPairs];
 ```
 
@@ -55,26 +56,37 @@ contact interaction with a constant propagator, not an additional physical pole.
 
 ## Light Fermions
 
-The imported model has zero electron, muon, up and down masses. Local working
-copies with `Me` and `Mm` were also found, but their vertex tables do not include
-the corresponding Yukawa sector. They must not be used as a complete massive SM.
+The local SM uses the following fixed defaults, in GeV:
 
-When restoring these masses, add all of the following together:
+| Parameter | Value | Convention |
+| --- | --- | --- |
+| `Me` | `0.0005` | Existing constructive-model electron value. |
+| `Mm` | `0.105` | Existing constructive-model muon value. |
+| `Mu` | `0.00216` | MSbar mass at 2 GeV. |
+| `Md` | `0.00470` | MSbar mass at 2 GeV. |
 
-- Particle mass entries and numerical parameter definitions.
-- Higgs Yukawa couplings for every newly massive fermion.
-- Neutral and charged Goldstone couplings when using Feynman gauge.
-- Tests relating the masses, Yukawa couplings and gauge-current divergences.
+The quark defaults are the central values in the
+[PDG 2026 quark summary](https://pdg.lbl.gov/2026/tables/rpp2026-sum-quarks.pdf).
+The same `Mu`/`Md` values were added to constructive models 1, 4 and 5, whose
+particle tables and Higgs amplitudes already treated these quarks as massive
+but previously omitted their numerical definitions. These are fixed input
+defaults, not pole-mass measurements or automatic QCD evolution with `Q`.
 
-Do not change only the particle masses. Prefer generating the full vertex set
-from a consistent Lagrangian rather than selectively patching individual rules.
+For each restored charged fermion, the scalar Higgs rule is
+`-EE*mass/(2*MW*SW)`, with Lorentz part `1`, exactly as in the existing massive
+generations. Matching neutral and charged Goldstone rules are retained in the
+raw tables for consistency; unitary-gauge tree generation excludes them.
+Neutrinos remain massless, matching the constructive models.
+Tests cover the mass definitions, Yukawa relations, the massive three-point
+vertices, Higgs exchange and electromagnetic/color Ward identities.
 Running-quark-mass functions in `func1.mdl` are external CalcHEP functions;
 symbolic import does not provide their numerical implementation.
 
 ## Gauge and Scope
 
-The copied source uses Feynman gauge. All 125 raw vertices, including Goldstone
-and ghost rows, remain unchanged in these files. The HEPCAT backend uses the
+The original source uses Feynman gauge. Its 125 raw vertices remain, and the
+local massive-light-fermion extension adds fourteen Higgs/Goldstone rows,
+giving 139. The HEPCAT backend uses the
 requested **unitary gauge** for massive W and Z lines, including the longitudinal
 propagator numerator. It excludes Goldstone and ghost fields from physical tree
 generation. This is not Feynman-gauge propagation with missing scalar diagrams.
@@ -111,6 +123,6 @@ arXiv:1207.6082. The supplied model source is generated with LanHEP.
 
 CalcHEP's local `help/s_mdl_3.txt`, `help/s_mdl_4.txt` and
 `model_src/sm.inc` document the particle fields, ordered fermion rules, implicit
-color structures and gauge choices. Preserve this attribution and the raw model
-files. No explicit license file was found in this local installation; confirm
+color structures and gauge choices. Preserve this attribution and document
+local model changes. No explicit license file was found in this local installation; confirm
 redistribution terms before publishing the imported files as a separate bundle.

@@ -169,11 +169,103 @@ ffCheck["derived dependencies retain their own model's parameter identity",
 ffStockModel = ReadModel[FileNameJoin[{ffRoot, "model_feynman"}], 1];
 ffCheck["the complete copied SM parses as Feynman rules",
   MatchQ[ffStockModel, FeynmanModel[_List, _List, _List, _List]] &&
-    Length[ffStockModel[[2]]] === 125];
+    Length[ffStockModel[[2]]] === 139];
 ffConstructiveModel = ReadModel[FileNameJoin[{ffRoot, "models"}], 2];
+ffConstructiveSM = ReadModel[FileNameJoin[{ffRoot, "models"}], 1];
 ffCheck["constructive models retain their original four-list representation",
   MatchQ[ffConstructiveModel, {_List, _List, _List, _List}] &&
     Head[ffConstructiveModel] === List];
+ffLightFermions = {{"e", "E", "Me"}, {"m", "M", "Mm"},
+  {"u", "U", "Mu"}, {"d", "D", "Md"}};
+ffLightMasses = Association[Table[
+  ffLightFermion[[1]] -> SelectFirst[ffStockModel[[1]],
+    #[[2]] === ffLightFermion[[1]] &][[6]], {ffLightFermion, ffLightFermions}]];
+ffStockCharge = ModelParameter[ffStockModel, "EE"];
+ffStockWMass = ModelParameter[ffStockModel, "MW"];
+ffStockWeakSine = ModelParameter[ffStockModel, "SW"];
+ffHiggsParameterNames[expression_] := expression /.
+  parameter_ModelParameter :> ModelParameter[ModelParameterName[parameter], "Higgs-regression", "Real"];
+Do[
+  {ffLightParticle, ffLightAntiparticle, ffLightMassName} = ffLightFermion;
+  ffLightMass = ffLightMasses[ffLightParticle];
+  ffLightConstructiveMass = SelectFirst[ffConstructiveSM[[1]],
+    #[[2]] === ffLightParticle &][[6]];
+  ffCheck["the SM light fermion has its constructive-model mass parameter " <> ffLightParticle,
+    MatchQ[ffLightMass, ModelParameter[_String, _String, "Real"]] &&
+      ModelParameterName[ffLightMass] === ffLightMassName &&
+      ModelParameterName[ffLightConstructiveMass] === ffLightMassName];
+  ffCheck["SM light-mass reading creates no per-parameter global symbol " <> ffLightMassName,
+    Names["ConstructiveDiagrams`" <> ffLightMassName] === {}];
+  ffLightHiggsRows = Select[ffStockModel[[2]],
+    Take[#, 4] === {ffLightAntiparticle, ffLightParticle, "h", ""} &];
+  ffCheck["the SM light-fermion Higgs coupling uses the same mass and Yukawa normalization " <>
+      ffLightParticle,
+    Length[ffLightHiggsRows] === 1 && Last[First[ffLightHiggsRows]] === 1 &&
+      Together[First[ffLightHiggsRows][[-2]] +
+        ffStockCharge ffLightMass/(2 ffStockWMass ffStockWeakSine)] === 0];
+  ffLightHiggsDiagrams = CreateDiagrams[{ffLightParticle, ffLightAntiparticle, "h"}, ffStockModel];
+  ffLightHiggsPairs = diagramAmplitudes[ffLightHiggsDiagrams];
+  ffLightHiggsSpinors = FeynmanToSpinorProducts[ffLightHiggsPairs];
+  ffCheck["the massive light-fermion Higgs vertex generates a nonzero spinor amplitude without helicities " <>
+      ffLightParticle,
+    Length[ffLightHiggsDiagrams] === 1 && ffFiniteQ[ffLightHiggsSpinors] &&
+      Last[First[ffLightHiggsSpinors]] =!= 0 &&
+      FreeQ[ffLightHiggsSpinors, _DiracChain | _DiracWord] &&
+      (Mass[1] /. First[First[ffLightHiggsPairs]]) === ffLightMass &&
+      (Mass[2] /. First[First[ffLightHiggsPairs]]) === ffLightMass];
+  ffLightConstructiveHiggs = SelectFirst[ffConstructiveSM[[2]],
+    Take[#, 4] === {ffLightParticle, ffLightAntiparticle, "h", ""} &];
+  ffCheck["the Feynman light-fermion Higgs amplitude agrees with the constructive vertex " <>
+      ffLightParticle,
+    Expand[ffHiggsParameterNames[Last[First[ffLightHiggsSpinors]] /. _ColorDelta -> 1] -
+      ffHiggsParameterNames[Times @@ ffLightConstructiveHiggs[[-2 ;; -1]]]] === 0],
+  {ffLightFermion, ffLightFermions}];
+Do[
+  ffCheck["the imported light-fermion mass value matches the constructive model " <> ffMassValueCase[[1]],
+    (ModelParameter[ffStockModel, ffMassValueCase[[1]]] /. ModelParameterRules[ffStockModel]) ===
+      (ModelParameter[ffConstructiveSM, ffMassValueCase[[1]]] /.
+        ModelParameterRules[ffConstructiveSM]) === ffMassValueCase[[2]]],
+  {ffMassValueCase, {{"Me", 1/2000}, {"Mm", 21/200},
+    {"Mu", 27/12500}, {"Md", 47/10000}}}];
+ffGoldstoneCommon = I ffStockCharge/(2 ffStockWMass ffStockWeakSine);
+ffChargedGoldstoneCommon = I ffStockCharge Sqrt[2]/(4 ffStockWMass ffStockWeakSine);
+ffGoldstoneCases = {
+  {{"E", "e", "Z.f", ""}, ffGoldstoneCommon ffLightMasses["e"] DiracWord[DiracGamma5]},
+  {{"M", "m", "Z.f", ""}, ffGoldstoneCommon ffLightMasses["m"] DiracWord[DiracGamma5]},
+  {{"D", "d", "Z.f", ""}, ffGoldstoneCommon ffLightMasses["d"] DiracWord[DiracGamma5]},
+  {{"U", "u", "Z.f", ""}, -ffGoldstoneCommon ffLightMasses["u"] DiracWord[DiracGamma5]},
+  {{"E", "ne", "W-.f", ""}, ffChargedGoldstoneCommon ffLightMasses["e"]
+    (1 - DiracWord[DiracGamma5])},
+  {{"Ne", "e", "W+.f", ""}, -ffChargedGoldstoneCommon ffLightMasses["e"]
+    (1 + DiracWord[DiracGamma5])},
+  {{"M", "nm", "W-.f", ""}, ffChargedGoldstoneCommon ffLightMasses["m"]
+    (1 - DiracWord[DiracGamma5])},
+  {{"Nm", "m", "W+.f", ""}, -ffChargedGoldstoneCommon ffLightMasses["m"]
+    (1 + DiracWord[DiracGamma5])},
+  {{"D", "u", "W-.f", ""}, ffChargedGoldstoneCommon
+    (ffLightMasses["d"] (1 - DiracWord[DiracGamma5]) -
+      ffLightMasses["u"] (1 + DiracWord[DiracGamma5]))},
+  {{"U", "d", "W+.f", ""}, -ffChargedGoldstoneCommon
+    (ffLightMasses["d"] (1 + DiracWord[DiracGamma5]) -
+      ffLightMasses["u"] (1 - DiracWord[DiracGamma5]))}};
+Do[
+  ffGoldstoneRows = Select[ffStockModel[[2]], Take[#, 4] === First[ffGoldstoneCase] &];
+  ffCheck["the raw model keeps the matching mass-dependent Goldstone rule " <>
+      ToString[First[ffGoldstoneCase], InputForm],
+    Length[ffGoldstoneRows] === 1 &&
+      Expand[Times @@ First[ffGoldstoneRows][[-2 ;; -1]] - Last[ffGoldstoneCase]] === 0],
+  {ffGoldstoneCase, ffGoldstoneCases}];
+ffLightHiggsExchangeDiagrams = Select[
+  CreateDiagrams[{"e", "E", "M", "m"}, ffStockModel],
+  MemberQ[Lookup[Values[#["Propagators"]], "Particle"], "h"] &];
+ffLightHiggsExchangePairs = diagramAmplitudes[ffLightHiggsExchangeDiagrams];
+ffCheck["the massive SM now generates the electron-muon Higgs-exchange channel",
+  Length[ffLightHiggsExchangeDiagrams] === 1 && ffFiniteQ[ffLightHiggsExchangePairs] &&
+    !FreeQ[ffLightHiggsExchangePairs, PropDen[Mom[_Multiparticle], _ModelParameter]] &&
+    !FreeQ[ffLightHiggsExchangePairs, ffLightMasses["e"]] &&
+    !FreeQ[ffLightHiggsExchangePairs, ffLightMasses["m"]]];
+ffCheck["massive SM Higgs exchange carries only external shell rules",
+  AllTrue[ffLightHiggsExchangePairs, FreeQ[First[#], Mass[_Multiparticle]] &]];
 ffCheck["Feynman rules cannot silently use constructive factorization sewing",
   FailureQ[FactorizationAmplitudeChannels[{"e", "E", "A", "A"}, ffModel]]];
 ffMalformedManualModels = {
@@ -707,6 +799,13 @@ ffColorValue[expr_, externalRules_] := Total[ffColorTerm[#, externalRules] & /@
 ffWardChannel = <|"Cut" -> {1, 2}, "Complement" -> {3, 4}, "Mass" -> 0,
   "ExternalLegs" -> Range[4], "ExternalMassRules" -> Thread[(Mass /@ Range[4]) -> 0],
   "Propagator" -> PropDen[Mom[Multiparticle[1, 2]], 0]|>;
+(* Keep this zero-mass chart as an explicit fixture, including zero Yukawas. *)
+ffWardModel = ffStockModel /. Thread[Values[ffLightMasses] -> 0];
+ffCheck["the massless Ward fixture also removes its light-fermion Yukawa couplings",
+  AllTrue[ffLightFermions, Function[fermion,
+    SelectFirst[ffWardModel[[1]], #[[2]] === fermion[[1]] &][[6]] === 0 &&
+      SelectFirst[ffWardModel[[2]],
+        Take[#, 4] === {fermion[[2]], fermion[[1]], "h", ""} &][[-2]] === 0]]];
 ffWardParameterRules = ModelParameterRules[ffStockModel,
   {ModelParameter[ffStockModel, "GG"] -> 1, ModelParameter[ffStockModel, "EE"] -> 1}];
 ffWardChartReport = ConstructiveDiagrams`Private`residueAutomaticChart[
@@ -714,7 +813,7 @@ ffWardChartReport = ConstructiveDiagrams`Private`residueAutomaticChart[
 ffWardChart = ffWardChartReport["Chart"] /.
   ffWardChartReport["Chart"]["PoleVariable"] -> 7;
 Do[
-  ffWardDiagrams = CreateDiagrams[ffWardParticles, ffStockModel];
+  ffWardDiagrams = CreateDiagrams[ffWardParticles, ffWardModel];
   ffWardAmplitude = Total[Last /@ diagramAmplitudes[ffWardDiagrams]];
   ffWardColorRules = If[First[ffWardParticles] === "u",
     {ColorIndex[1] -> 1, ColorIndex[2] -> 2, ColorIndex[3] -> 1, ColorIndex[4] -> 3},
@@ -788,6 +887,26 @@ Do[
       ToString[{ffProcessIndex, ffSpin1, ffSpin2}],
     Together[ffPhysicalFourWrongSlash - ffPhysicalFourExpected] =!= 0],
   {ffProcessIndex, 2}, {ffSpin1, 2}, {ffSpin2, 2}];
+
+(* Check the massive stock model too, without altering its particle table. *)
+ffMassiveWardPairs = diagramAmplitudes[
+  CreateDiagrams[{"e", "E", "A.+", "A.-"}, ffStockModel]];
+ffMassiveWardRules = ModelParameterRules[ffStockModel, {"Me" -> 1, "EE" -> 1}];
+Do[
+  ffMassiveWardRaw = Total[Last /@ ffMassiveWardPairs] /.
+    PolarizationVector[ffMassiveWardLeg, index_, 0, _] :>
+      LorentzMomentum[Mom[ffMassiveWardLeg], index];
+  ffMassiveWardSpinors = FeynmanToSpinorProducts[ffMassiveWardRaw,
+    "ReduceSpinorProducts" -> False];
+  Do[
+    ffMassiveWardChart = prFourPointChart[{1, 3}, 1, ffSpin1, ffSpin2];
+    ffCheck["the massive stock electron amplitude satisfies its photon Ward identity " <>
+        ToString[{ffMassiveWardLeg, ffSpin1, ffSpin2}],
+      ffFiniteQ[ffMassiveWardSpinors] &&
+        Together[prMapOnChart[ffMassiveWardSpinors /. ffMassiveWardRules,
+          ffMassiveWardChart]] === 0],
+    {ffSpin1, 2}, {ffSpin2, 2}],
+  {ffMassiveWardLeg, {3, 4}}];
 
 DeleteDirectory[ffTemporaryDirectory, DeleteContents -> True];
 ffCheck["temporary Feynman model files are removed", !DirectoryQ[ffTemporaryDirectory]];

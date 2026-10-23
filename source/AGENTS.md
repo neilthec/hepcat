@@ -95,9 +95,8 @@ feynmanModel = ReadModel[FileNameJoin[{hepcatDirectory, "model_feynman"}], 1];
 feynmanDiagrams = CreateDiagrams[{"e", "E", "A.+", "A.-"}, feynmanModel];
 feynmanPairs = diagramAmplitudes[feynmanDiagrams];
 spinorPairs = FeynmanToSpinorProducts[feynmanPairs,
-  "FermionHelicities" -> {1 -> -1/2, 2 -> 1/2}];
+  "TimeConstraint" -> 60];
 preparedFeynman = PrepareAmplitudes[feynmanPairs, feynmanModel,
-  "FermionHelicities" -> {1 -> -1/2, 2 -> 1/2},
   "ReferenceSpinors" -> "IndependentXi"];
 ```
 
@@ -116,8 +115,11 @@ tree generation uses the user's chosen unitary W/Z gauge, with the appropriate
 longitudinal propagator numerator, and excludes Goldstones and ghosts. It does
 not discard Goldstone exchange while retaining a Feynman-gauge massive-vector
 propagator. Majorana and unsupported higher-spin cases return `Failure`.
-The source model has zero e, muon, u and d masses; restoring these requires the
-complete corresponding Yukawa sector, not masses alone. External running-mass
+The local SM restores e, muon, u and d masses together with their Higgs and
+Goldstone couplings, matching the existing massive-generation rules.
+The light-quark defaults are fixed MSbar inputs at 2 GeV, shared with the
+constructive model files, not automatic running or pole-mass measurements.
+Neutrinos remain massless. External running-mass
 functions such as `MbEff` are imported symbolically, not implemented numerically.
 
 Raw Feynman vertices are not complete lower-point amplitudes. Continue to use
