@@ -4,6 +4,15 @@
 (*Begin Package*)
 
 
+Module[{sourceDirectory = Global`$HEPCATpath, sourceFiles, missingFiles},
+sourceFiles = If[StringQ[sourceDirectory],
+  FileNameJoin[{sourceDirectory, #}] & /@ {"HEPCAT-Base.wl", "HEPCAT-Model.wl", "HEPCAT-Feynman.wl"}, {}];
+missingFiles = Select[sourceFiles, !FileExistsQ[#] || DirectoryQ[#] &];
+If[!StringQ[sourceDirectory] || missingFiles =!= {},
+  Message[Get::noopen, If[StringQ[sourceDirectory], StringRiffle[missingFiles, ", "],
+    "the source directory specified by Global`$HEPCATpath"]];
+  Return[$Failed]];
+
 BeginPackage["ConstructiveDiagrams`"];
 Unprotect @@ Names["ConstructiveDiagrams`*"];
 ClearAll @@ Names["ConstructiveDiagrams`*"];
@@ -24,29 +33,36 @@ Begin["ConstructiveDiagrams`"];
 (*Load code*)
 
 
-Get[ToFileName[Global`$HEPCATpath,"HEPCAT-Base.wl"]];
-Get[ToFileName[Global`$HEPCATpath,"HEPCAT-Model.wl"]];
+Scan[Get, sourceFiles];
 
 
 (* ::Subsection::Closed:: *)
 (*End Package*)
 
 
-End[]
-Protect[nice,lnice,TeX,lTeX,Spinor,rr,Multiparticle,MultiparticleDiff,Particle,HelicitySpinorHat,SpinSpinorHat,sigma,delta,SpinorChain,Mom,Mass,SpinorTrace];
-Protect[xFactor,xTildeFactor,MomProd,MomProdHat1,MomProdHat12,MomProdHat2,Output,PropDen,Coupling];
-Protect[ReverseSequence,ReduceSpinContractions,ReduceSpinorProducts,SpinorChainReduced,SpinorTraceReduced];
-Protect[ConvertStringAmplitude];
-Protect[SimplifySpinorProducts,ReduceXFactorsP,ReduceXFactorsM,ConstructiveDiagrams`applyToNumerator];
-Protect[ExtractEnergy,ExtractEnergy1,ExtractEnergy2,rSpinor,ExpandSummation];
-Protect[ReverseMomentum,MomProdL,MomProdR,ExpandSummation,ChooseSpinIndices,ChooseSpinIndex,MakeIndicesExplicit,SymmetrizeSpins,SymmetrizeSpin];
-Protect[SquareAmplitude,ReadModel,ReadVariables,ReadFunctions,ReadParticles,ParticleMass,ReadVertices,ConvertVertex];
-Protect[SChannelDiagram,SChannelDiagram,UChannelDiagram,TChannelDiagram,ConstructiveDiagram]; 
-Protect[CompareAmpToSquaredAmp,DeleteRandomConstructiveAmplitude,CheckLengthConstructive,CheckNumberOfSpinors,CreateRandomConstructiveSpinorProduct];
-Protect[CreateRandomMassFactor,CreateRandomConstructiveAmplitudeTerm,AddRandomConstructiveAmplitudeTerm,CreateInitialRandomPopulationConstructiveAmplitudes];
-Protect[RandomDeleteSpinorProduct,RandomAddSpinorProduct,RandomChangeCoefficientSpinorProduct,MateConstructiveAmplitudes,MakeNRandomChanges];
-Protect[FindAmp];
-Protect[CreateDiagrams,CreateArrowDiagram,CreateArrowDiagrams,diagramAmplitude,diagramAmplitudes];
-Protect[SchoutenRewrite,SchoutenCandidates,SpinorIdentityCandidates,ApplySpinorIdentity,SpinorExpressionComplexity,ComplicateAmplitude];
-Protect[DiagramAmplitudeRecords,PhysicalPoleResidue,CheckPhysicalResidues];
+End[];
+(* Resolve names after BeginPackage, not while the enclosing Module is parsed. *)
+Protect @@ (ToExpression /@ {
+  "nice", "lnice", "TeX", "lTeX", "Spinor", "rr", "Multiparticle", "MultiparticleDiff",
+  "Particle", "HelicitySpinorHat", "SpinSpinorHat", "sigma", "delta", "SpinorChain", "Mom", "Mass", "SpinorTrace",
+  "xFactor", "xTildeFactor", "MomProd", "MomProdHat1", "MomProdHat12", "MomProdHat2", "Output", "PropDen", "Coupling",
+  "ReverseSequence", "ReduceSpinContractions", "ReduceSpinorProducts", "SpinorChainReduced", "SpinorTraceReduced",
+  "ConvertStringAmplitude", "SimplifySpinorProducts", "ReduceXFactorsP", "ReduceXFactorsM", "ConstructiveDiagrams`applyToNumerator",
+  "ExtractEnergy", "ExtractEnergy1", "ExtractEnergy2", "rSpinor", "ExpandSummation",
+  "ReverseMomentum", "MomProdL", "MomProdR", "ChooseSpinIndices", "ChooseSpinIndex", "MakeIndicesExplicit", "SymmetrizeSpins", "SymmetrizeSpin",
+  "SquareAmplitude", "ReadModel", "ReadVariables", "ReadFunctions", "ReadParticles", "ParticleMass", "ReadVertices", "ConvertVertex",
+  "SChannelDiagram", "UChannelDiagram", "TChannelDiagram", "ConstructiveDiagram",
+  "CompareAmpToSquaredAmp", "DeleteRandomConstructiveAmplitude", "CheckLengthConstructive", "CheckNumberOfSpinors", "CreateRandomConstructiveSpinorProduct",
+  "CreateRandomMassFactor", "CreateRandomConstructiveAmplitudeTerm", "AddRandomConstructiveAmplitudeTerm", "CreateInitialRandomPopulationConstructiveAmplitudes",
+  "RandomDeleteSpinorProduct", "RandomAddSpinorProduct", "RandomChangeCoefficientSpinorProduct", "MateConstructiveAmplitudes", "MakeNRandomChanges", "FindAmp",
+  "CreateDiagrams", "CreateArrowDiagram", "CreateArrowDiagrams", "diagramAmplitude", "diagramAmplitudes",
+  "SchoutenRewrite", "SchoutenCandidates", "SpinorIdentityCandidates", "ApplySpinorIdentity", "SpinorExpressionComplexity", "ComplicateAmplitude",
+  "DiagramAmplitudeRecords", "PhysicalPoleResidue", "CheckPhysicalResidues",
+  "PrepareDiagramAmplitudes", "CompleteFactorization", "CompleteHighEnergy",
+  "FeynmanModel", "DiracWord", "DiracGamma", "DiracGamma5", "DiracSlash",
+  "LorentzIndex", "LorentzMetric", "LorentzMomentum", "LorentzScalarProduct", "DiracChain", "FermionBar", "FermionKet",
+  "PolarizationVector", "ColorDelta", "ColorGenerator", "ColorStructure", "ColorIndex",
+  "FeynmanToSpinorProducts", "VectorSpinIndex"
+});
 EndPackage[]
+]

@@ -2,6 +2,7 @@
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
+SetOptions[CheckPhysicalResidues, "HighEnergyCheck" -> False, "ReferenceCheck" -> False];
 If[DownValues[PhysicalPoleResidue] === {} || DownValues[CheckPhysicalResidues] === {},
   Print["Physical-residue APIs did not load."]; Quit[1]];
 Get[FileNameJoin[{root, "tests", "QED-5-point-residues.wl"}]];
@@ -453,7 +454,7 @@ prMockAutomaticSignReport[samples_List] := Module[{nextSample = 0},
       samples[[Min[++nextSample, Length[samples]]]];
     ConstructiveDiagrams`Private`residueAutomaticComparison[0,
       First[prScalarTargets], {}, prScalarTargets, prScalarTargets,
-      15, 10^-10, {}, Length[samples], 1729, {}]
+      15, 10^-10, {}, Length[samples], 1729, {scalarMass -> 1}]
   ]
 ];
 prSameSample = prSignSample[2, 2, {1}];
@@ -484,7 +485,7 @@ prIncompleteSignReport = Block[
   ConstructiveDiagrams`Private`residueCheckChannel[___] := prOppositeSample;
   ConstructiveDiagrams`Private`residueAutomaticComparison[0,
     First[prScalarTargets], {}, prScalarTargets, prScalarTargets,
-    0.2, 10^-10, {}, 2, 1729, {}]
+    0.2, 10^-10, {}, 2, 1729, {scalarMass -> 1}]
 ];
 check["one opposite-sign sample followed by a sampling timeout remains unresolved",
   prIncompleteSignReport["Status"] === "UNRESOLVED" &&
@@ -581,6 +582,21 @@ Do[
   {option, {"Samples" -> 0, "Samples" -> 1/2, "RandomSeed" -> "seed",
     "ParameterRules" -> None, "ParameterRules" -> {Me :> 1}}}
 ];
+check["the public checker rejects an unrecognized option instead of silently ignoring it",
+  Quiet[CheckPhysicalResidues[prH, prChannels, prFixtureModel,
+    "UnknownDiagnosticOption" -> True]] === $Failed];
+check["single-channel residue extraction rejects an unrecognized option",
+  Quiet[PhysicalPoleResidue[0, prTestTarget,
+    "UnknownDiagnosticOption" -> True]] === $Failed];
+check["multi-channel residue extraction rejects an unrecognized option",
+  Quiet[PhysicalPoleResidue[0, {prTestTarget},
+    "UnknownDiagnosticOption" -> True]] === $Failed];
+check["strict option validation retains ordinary nested option-list syntax",
+  PhysicalPoleResidue[0, prTestTarget,
+    {"KinematicKind" -> "Symbolic", "TimeConstraint" -> 5}]["Status"] === "FORMAL" &&
+    CheckPhysicalResidues[{{Thread[(Mass /@ Range[4]) -> ConstantArray[0, 4]], 0}},
+      {}, prModel, {"SpuriousPoles" -> {}, "HighEnergyCheck" -> False,
+        "ReferenceCheck" -> False, "Output" -> "Summary"}] === <||>];
 prUnknownFactorReport = prDetailedReport[prUnknownFactor prH,
   {prTestTarget}, "KinematicMap" -> prMap[1, 2], "TimeConstraint" -> 15];
 check["an undecided symbolic normalization difference is not a false sample pass or failure",
@@ -667,6 +683,74 @@ check["automatic spinor map preserves the empty trace",
   prGenericSpinorZero[SpinorTrace[] - 2]];
 check["automatic spinor map evaluates Mandelstahm invariants coherently",
   prGenericSpinorZero[Mandelstahm[1, 2] - Mass[1]^2 - Mass[2]^2 - 2 MomProd[1, 2]]];
+(* MomentumSquare edits emit scalar Mom[...]^2. These must be evaluated
+   before a bare momentum is mapped to its two-by-two matrix. *)
+check["automatic chart evaluates an external momentum square as its mass squared",
+  prGenericSpinorZero[Mom[1]^2 - Mass[1]^2]];
+check["automatic chart evaluates a massless composite momentum square as a scalar invariant",
+  prGenericSpinorZero[Mom[Multiparticle[3, 4]]^2 - 2 MomProd[3, 4]]];
+check["automatic chart evaluates higher-multiplicity momentum squares without internal shells",
+  prGenericSpinorZero[Mom[Multiparticle[3, 4, 5]]^2 -
+    2 (MomProd[3, 4] + MomProd[3, 5] + MomProd[4, 5])]];
+Do[
+  check["automatic chart preserves an even external momentum power " <>
+    ToString[prInvariantPower],
+    prGenericSpinorZero[Mom[1]^prInvariantPower - Mass[1]^prInvariantPower]];
+  check["automatic chart preserves an even composite momentum power " <>
+    ToString[prInvariantPower],
+    prGenericSpinorZero[Mom[Multiparticle[3, 4]]^prInvariantPower -
+      (2 MomProd[3, 4])^(prInvariantPower/2)]],
+  {prInvariantPower, {4, 6, -2, -4}}];
+check["scalar momentum powers do not change bare momentum matrix evaluation",
+  MatrixQ[ConstructiveDiagrams`Private`residueEvaluateChart[Mom[1],
+    prGenericSpinorChart["Chart"], {Me -> 1, EE -> 1}],
+    Function[value, FreeQ[value, _Mom]]]];
+prUnknownInvariant = ConstructiveDiagrams`Private`residueEvaluateChart[
+  Mom[Multiparticle[3, 99]]^2, prGenericSpinorChart["Chart"], {Me -> 1, EE -> 1}];
+check["an unknown leg inside a scalar momentum square remains unresolved",
+  !ConstructiveDiagrams`Private`residueFiniteQ[prUnknownInvariant] &&
+    !FreeQ[prUnknownInvariant, _Missing]];
+prInvariantTarget = First[prElectronTargets];
+prInvariantResidue = PhysicalPoleResidue[
+  Mom[Multiparticle[3, 4]]^2/prInvariantTarget["Propagator"],
+  prInvariantTarget, "KinematicMap" -> prGenericSpinorChart["Map"],
+  "KinematicKind" -> "Symbolic", "TimeConstraint" -> 15];
+prInvariantDotResidue = PhysicalPoleResidue[
+  2 MomProd[3, 4]/prInvariantTarget["Propagator"], prInvariantTarget,
+  "KinematicMap" -> prGenericSpinorChart["Map"],
+  "KinematicKind" -> "Symbolic", "TimeConstraint" -> 15];
+check["public residue extraction accepts the scalar momentum-square form of a numerator",
+  prInvariantResidue["Status"] === "PASS" &&
+    prInvariantDotResidue["Status"] === "PASS" &&
+    prZero[prInvariantResidue["PhysicalResidue"] -
+      prInvariantDotResidue["PhysicalResidue"]]];
+prInvariantReport = CheckPhysicalResidues[
+  prH (Mom[1]^2/Me^2 + Mom[Multiparticle[3, 4]]^2/(2 MomProd[3, 4]) - 1),
+  prChannels, prFixtureModel, "ParameterRules" -> {Me -> 1, EE -> 1},
+  "Samples" -> 1, "SpuriousPoles" -> {}, "TimeConstraint" -> 30,
+  "Output" -> "Details"];
+check["the public checker accepts equivalent external and composite momentum-square numerators",
+  Counts[Lookup[prInvariantReport["Channels"], "Status"]] === <|"PASS" -> 6|>];
+prExternalSquareInput = Mom[Multiparticle[1, 3, 4]]^2/
+  prInvariantTarget["Propagator"];
+prExternalSquareReduced = ConstructiveDiagrams`Private`completionExternalReduce[
+  prExternalSquareInput, prInvariantTarget["ExternalMassRules"]];
+check["completion cleanup preserves Lorentz squares instead of multiplying bare vector momenta",
+  !FreeQ[prExternalSquareReduced, HoldPattern[Power[_Mom, 2]]] &&
+    FreeQ[prExternalSquareReduced, HoldPattern[Times[___, _Mom, _Mom, ___]]]];
+prExternalSquareChart = prGenericSpinorChart["Chart"] /.
+  prGenericSpinorChart["Chart"]["PoleVariable"] -> 7;
+prExternalSquareValues = ConstructiveDiagrams`Private`residueEvaluateChart[
+    #, prExternalSquareChart, {Me -> 1, EE -> 1}] & /@
+  {prExternalSquareInput, prExternalSquareReduced,
+    (Mass[2]^2 + 2 MomProd[2, 5])/prInvariantTarget["Propagator"]};
+check["completion cleanup preserves the scalar invariant and its conservation complement away from cuts",
+  AllTrue[prExternalSquareValues, !ListQ[#] &&
+      FreeQ[#, _Missing | Indeterminate | ComplexInfinity | DirectedInfinity[_]] &] &&
+    prZero[prExternalSquareValues[[1]] - prExternalSquareValues[[2]]] &&
+    prZero[prExternalSquareValues[[1]] - prExternalSquareValues[[3]]] &&
+    ConstructiveDiagrams`Private`residueEvaluateChart[
+      prInvariantTarget["Propagator"], prExternalSquareChart, {Me -> 1, EE -> 1}] === 7];
 check["automatic spinor map preserves momentum anticommutation",
   prGenericSpinorZero[
     SpinorChain[prGenericAngle3, Mom[1], Mom[2], prGenericAngle4] +
@@ -947,4 +1031,5 @@ check["the sewn photon helicity sum has no internal little-group scale dependenc
 Print[<|"Checks" -> checks, "Failed" -> Length[failures],
   "Failures" -> failures, "ExactSinglePoleComponents" -> Length[prRows],
   "ValidationScope" -> "ExactOnProvidedRationalSampleCharts"|>];
+Print["HEPCAT_TEST_COMPLETED:physical-residue-tests.wl"];
 Quit[If[failures === {}, 0, 1]];

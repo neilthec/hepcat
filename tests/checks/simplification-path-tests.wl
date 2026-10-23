@@ -714,4 +714,5 @@ Do[
     AssociationQ[verifiedRoute[route]]],
   {route, allCuratedRoutes}];
 Print[<|"Checks" -> checks, "Failed" -> Length[failures], "Failures" -> failures|>];
+Print["HEPCAT_TEST_COMPLETED:simplification-path-tests.wl"];
 Quit[If[failures === {}, 0, 1]];

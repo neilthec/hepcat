@@ -2,6 +2,7 @@
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
+SetOptions[CheckPhysicalResidues, "HighEnergyCheck" -> False, "ReferenceCheck" -> False];
 Get[FileNameJoin[{root, "tests", "QED-5-point-residues.wl"}]];
 checks = 0; failures = {};
 check[name_, value_] := (checks++; If[!TrueQ[value], AppendTo[failures, name];
@@ -294,4 +295,5 @@ check["a metadata-only chart descriptor does not invent a physical pole guard",
 
 Print[checks, " spurious-pole checks; ", Length[failures], " failures."];
 If[failures =!= {}, Print[failures]; Quit[1]];
+Print["HEPCAT_TEST_COMPLETED:spurious-pole-tests.wl"];
 Quit[0];

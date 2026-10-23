@@ -6,6 +6,34 @@ ubModel = ReadModel[FileNameJoin[{root, "models"}], 1];
 ubCatalog = Get[FileNameJoin[{root, "tests", "simplification-paths.wl"}]];
 checks = 0; failures = {};
 check[name_, value_] := (checks++; If[!TrueQ[value], AppendTo[failures, name]]);
+vertexSlotRules = <|1 -> 7, 2 -> Multiparticle[3, 4], 3 -> 5|>;
+vertexRelabelCases = {
+  {Spinor["Spin", "Upper", "Angle", 1, 2], Spinor["Spin", "Upper", "Angle", 7, 2]},
+  {SpinorHat["Spin", "Lower", "Square", 2, 3],
+    SpinorHat["Spin", "Lower", "Square", Multiparticle[3, 4], 3]},
+  {Spinor["Xi", "Angle", 1], Spinor["Xi", "Angle", 1]},
+  {Mom[1], Mom[7]}, {MomHat[2], MomHat[Multiparticle[3, 4]]}, {MomQ[3], MomQ[5]},
+  {Mom[Multiparticle[1, 2]], Mom[Multiparticle[7, 3, 4]]},
+  {Mass[Multiparticle[1, 2]], Mass[Multiparticle[7, 3, 4]]},
+  {MomProd[1, 2], MomProd[7, Multiparticle[3, 4]]},
+  {Mandelstahm[1, 3], Mandelstahm[7, 5]},
+  {xFactor[1, 2] xTildeFactor[3, 1],
+    xFactor[7, Multiparticle[3, 4]] xTildeFactor[5, 7]}};
+Do[
+  check["diagram vertex relabels only typed particle positions " <> ToString[vertexCaseIndex],
+    ConstructiveDiagrams`replaceVertexIndices[vertexRelabelCases[[vertexCaseIndex, 1]],
+      vertexSlotRules] === vertexRelabelCases[[vertexCaseIndex, 2]]],
+  {vertexCaseIndex, Length[vertexRelabelCases]}];
+vertexMomentumModel = {
+  MapIndexed[{#1, #1, #1, First[#2], 0, vertexMass[First[#2]], "0", 1, "", #1, #1} &,
+    {"a", "b", "c", "d"}],
+  {{"a", "b", "c", "d", 2, MomProd[1, 2]^2 + 3 Mass[1]^2}}, {}, {}};
+vertexMomentumDiagrams = CreateDiagrams[{"b", "d", "a", "c"}, vertexMomentumModel];
+check["permuted derivative contact generates exactly one diagram",
+  Length[vertexMomentumDiagrams] === 1];
+check["diagram amplitude relabels momenta and masses without changing coefficients or powers",
+  Last[First[diagramAmplitudes[vertexMomentumDiagrams]]] ===
+    2 (MomProd[3, 1]^2 + 3 vertexMass[1]^2)];
 ubMediator[d_] := Module[{props = Values[d["Propagators"]], particle},
   If[props === {}, Return["contact"]];
   particle = First[props]["Particle"];
@@ -562,4 +590,5 @@ Block[{Global`state = "notebook state", Global`leg = "notebook leg",
     {reloadIndex, 2}]
 ];
 Print[<|"Checks" -> checks, "Failed" -> Length[failures], "Failures" -> failures|>];
+Print["HEPCAT_TEST_COMPLETED:diagram-tests.wl"];
 Quit[If[failures === {}, 0, 1]];

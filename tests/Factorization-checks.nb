@@ -136,7 +136,11 @@ checker multiplies its expression by -z and its selected PropDen, once. The \
 minus follows from (i A_L)(i A_R)(i/PropDen)/i = -A_L A_R/PropDen. Neither \
 the supplied channel rows nor the candidate amplitude is changed. \
 Reload Setup and reevaluate the examples to update saved outputs. Keep Me \
-and EE symbolic; ParameterRules below supplies their test values.\
+and EE symbolic; numerical checks use the supplied model's parameter values \
+and derived functions by default. Earlier saved outputs may use different \
+test values. An optional ParameterRules list overrides model defaults for \
+one calculation and recomputes dependent functions, without global numerical \
+assignments.\
 \>", "Text",ExpressionUUID->"84d972cc-6d04-4084-9f0b-fc6652521be4"]
 }, Open  ]],
 
@@ -177,8 +181,7 @@ Cell[CellGroupData[{
 
 Cell["\<\
 CheckPhysicalResidues[
-  fourPointDiagramAmplitudes, fourPointChannels, qedDiagramModel,
-  \"ParameterRules\" -> {Me -> 1, EE -> 1}]\
+  fourPointDiagramAmplitudes, fourPointChannels, qedDiagramModel]\
 \>", "Input",
  CellLabel->"In[72]:=",ExpressionUUID->"fab001d3-19f8-41e5-a190-c77a346195d3"],
 
@@ -1279,8 +1282,7 @@ Cell[CellGroupData[{
 
 Cell["\<\
 CheckPhysicalResidues[
-  fivePointSimplifiedAmplitude, fivePointChannels, qedFactorizationModel,
-  \"ParameterRules\" -> {Me -> 1, EE -> 1}]\
+  fivePointSimplifiedAmplitude, fivePointChannels, qedFactorizationModel]\
 \>", "Input",
  CellLabel->"In[87]:=",ExpressionUUID->"a192a66c-5293-463c-8683-27e8ed0d69c3"],
 
@@ -2296,8 +2298,7 @@ Cell[CellGroupData[{
 
 Cell["\<\
 CheckPhysicalResidues[
-  physicalPoleAmplitude, fivePointChannels, qedFactorizationModel,
-  \"ParameterRules\" -> {Me -> 1, EE -> 1}]\
+  physicalPoleAmplitude, fivePointChannels, qedFactorizationModel]\
 \>", "Input",
  CellLabel->"In[92]:=",ExpressionUUID->"ae2d6f31-3d64-45fd-8d97-189eb6ae8fc7"],
 
@@ -3293,8 +3294,7 @@ Cell[CellGroupData[{
 
 Cell["\<\
 CheckPhysicalResidues[
-  spuriousPoleAmplitude, fivePointChannels, qedFactorizationModel,
-  \"ParameterRules\" -> {Me -> 1, EE -> 1}]\
+  spuriousPoleAmplitude, fivePointChannels, qedFactorizationModel]\
 \>", "Input",
  CellChangeTimes->{{4.001501238840817*^9, 4.0015012403079357`*^9}},
  CellLabel->"In[95]:=",ExpressionUUID->"033a94b4-a44a-4238-88a6-5d07097864fd"],
@@ -4434,8 +4434,7 @@ Cell[CellGroupData[{
 
 Cell["\<\
 CheckPhysicalResidues[
-  oldPermutationAmplitude, fivePointChannels, qedFactorizationModel,
-  \"ParameterRules\" -> {Me -> 1, EE -> 1}]\
+  oldPermutationAmplitude, fivePointChannels, qedFactorizationModel]\
 \>", "Input",
  CellLabel->"In[98]:=",ExpressionUUID->"a3f482a3-5a3b-4489-b0ac-c50302784ea1"],
 
@@ -6023,7 +6022,8 @@ qedFivePointHelicities = Tuples[{\"A.+\", \"A.-\"}, 3];\
 Cell["\<\
 Check every completed expression. Results and the original channel rows are \
 retained in qedFivePointCompleted, indexed by the process name. The summary \
-distinguishes physical residues from automatically discovered spurious poles. \
+distinguishes physical residues, spurious poles, high-energy behavior, and \
+reference independence. \
 None means no apparent spurious denominator remains in that expression. PASS \
 remains a sampled check, not an analytic proof.\
 \>", "Text",ExpressionUUID->"1cbda5d5-2790-4154-b806-e389fe3fc076"],
@@ -6041,7 +6041,6 @@ qedFivePointCompleted = Association@Table[
         \"Channels\" -> channels,
         \"Report\" -> CheckPhysicalResidues[
           amplitude, channels, qedFactorizationModel,
-          \"ParameterRules\" -> {Me -> 1, EE -> 1},
           \"Output\" -> \"Details\"]|>]],
   {helicities, qedFivePointHelicities}];
 
@@ -6051,7 +6050,11 @@ qedCheckSummary[cases_Association] := Dataset[
   KeyValueMap[Function[{name, result}, <|\"Process\" -> name,
     \"Physical\" -> qedStatusCounts[result[\"Report\"][\"PhysicalSummary\"]],
     \"Spurious\" -> \
-qedStatusCounts[result[\"Report\"][\"SpuriousSummary\"]]|>], cases]];
+qedStatusCounts[result[\"Report\"][\"SpuriousSummary\"]],
+    \"High Energy\" -> qedStatusCounts[
+      Lookup[result[\"Report\"], \"HighEnergySummary\", <||>]],
+    \"References\" -> qedStatusCounts[
+      Lookup[result[\"Report\"], \"ReferenceSummary\", <||>]]|>], cases]];
 qedCheckSummary[qedFivePointCompleted]\
 \>", "Input",
  CellLabel->
@@ -6818,7 +6821,6 @@ qedFivePointPrepared = Association@Table[
           \"Channels\" -> completed[\"Channels\"],
           \"Report\" -> CheckPhysicalResidues[
             amplitude, completed[\"Channels\"], qedFactorizationModel,
-            \"ParameterRules\" -> {Me -> 1, EE -> 1},
             \"Output\" -> \"Details\"]|>]]],
   {name, Keys[qedFivePointCompleted]}];
 qedCheckSummary[qedFivePointPrepared]\
@@ -8894,7 +8896,6 @@ qedFourFermionPositiveAmplitude,
           \"Amplitude\" -> amplitude, \"Channels\" -> channels,
           \"Report\" -> CheckPhysicalResidues[
             amplitude, channels, qedFactorizationModel,
-            \"ParameterRules\" -> {Me -> 1, EE -> 1},
             \"Output\" -> \"Details\"]|>]]],
   {helicity, {\"A.+\", \"A.-\"}}];
 qedCheckSummary[qedFourFermionPhoton]\
@@ -9446,7 +9447,7 @@ Cell["\<\
 mixedPhotonCase = qedFivePointCompleted[\"e, E, A.+, A.+, A.-\"];
 CheckPhysicalResidues[
   mixedPhotonCase[\"Amplitude\"], mixedPhotonCase[\"Channels\"],
-  qedFactorizationModel, \"ParameterRules\" -> {Me -> 1, EE -> 1},
+  qedFactorizationModel,
   \"Output\" -> \"Residues\"]\
 \>", "Input",
  CellLabel->
@@ -12955,8 +12956,7 @@ Cell[CellGroupData[{
 
 Cell["\<\
 CheckPhysicalResidues[
-  spuriousPoleAmplitude, fivePointChannels, qedFactorizationModel,
-  \"ParameterRules\" -> {Me -> 1, EE -> 1}]\
+  spuriousPoleAmplitude, fivePointChannels, qedFactorizationModel]\
 \>", "Input",
  CellLabel->
   "In[141]:=",ExpressionUUID->"9692a24a-6845-4cb3-8e85-3311e2d104d1"],
@@ -13857,11 +13857,14 @@ Cell["\<\
 qedAllPoleSummary = Table[
   With[{report = CheckPhysicalResidues[
       form[[2]], fivePointChannels, qedFactorizationModel,
-      \"ParameterRules\" -> {Me -> 1, EE -> 1},
       \"Output\" -> \"Details\"]},
     <|\"Form\" -> form[[1]],
       \"Physical\" -> qedStatusCounts[report[\"PhysicalSummary\"]],
-      \"Spurious\" -> qedStatusCounts[report[\"SpuriousSummary\"]]|>],
+      \"Spurious\" -> qedStatusCounts[report[\"SpuriousSummary\"]],
+      \"High Energy\" -> qedStatusCounts[
+        Lookup[report, \"HighEnergySummary\", <||>]],
+      \"References\" -> qedStatusCounts[
+        Lookup[report, \"ReferenceSummary\", <||>]]|>],
   {form, {{\"H\", physicalPoleAmplitude}, {\"S2\", spuriousPoleAmplitude},
     {\"OldPermutation\", oldPermutationAmplitude}}}];
 Dataset[qedAllPoleSummary]\
@@ -14442,7 +14445,7 @@ Cell["\<\
 qedMixedSpuriousReport = CheckPhysicalResidues[
   qedFivePointMixedAmplitude,
   qedFivePointCompleted[\"e, E, A.+, A.+, A.-\"][\"Channels\"],
-  qedFactorizationModel, \"ParameterRules\" -> {Me -> 1, EE -> 1},
+  qedFactorizationModel,
   \"Samples\" -> 2, \"Output\" -> \"Details\"];
 qedMixedSpuriousReport[\"Table\"]
 \
@@ -15195,7 +15198,7 @@ Cell["\<\
 qedFermionSpuriousReport = CheckPhysicalResidues[
   qedFourFermionPositiveAmplitude,
   qedFourFermionPhoton[\"e, E, e, E, A.+\"][\"Channels\"],
-  qedFactorizationModel, \"ParameterRules\" -> {Me -> 1, EE -> 1},
+  qedFactorizationModel,
   \"Samples\" -> 2, \"Output\" -> \"Details\"];
 qedFermionSpuriousReport[\"Table\"]
 \
@@ -16041,7 +16044,6 @@ Cell[CellGroupData[{
 Cell["\<\
 CheckPhysicalResidues[
   fivePointSimplifiedAmplitude, fivePointChannels, qedFactorizationModel,
-  \"ParameterRules\" -> {Me -> 1, EE -> 1},
   \"Output\" -> \"Residues\"]\
 \>", "Input",
  CellLabel->
@@ -20920,6 +20922,23 @@ For another process, use the same three inputs: diagram amplitudes, \
 factorization channels and the model containing the known lower-point \
 amplitudes.\
 \>", "Text",ExpressionUUID->"6689c81a-6bd1-4b51-9ee8-aed8150a897c"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+Cell["High-Energy Behavior", "Section"],
+Cell["The ordinary report now includes the high-energy test. For five external particles, the default renormalizable-tree bound is E^(-1): the amplitude must fall at least as 1/E. Masses and couplings stay fixed. The test expands the full sum with conserved, on-shell external momenta, including all implicit massive spin components. Results hold at the recorded scattering shapes, not every possible direction.", "Text"],
+Cell["qedHighEnergyReport = CheckPhysicalResidues[\n  physicalPoleAmplitude, fivePointChannels, qedFactorizationModel,\n  \"Output\" -> \"Details\"];\nqedHighEnergyReport[\"Table\"]", "Input"],
+Cell["qedHighEnergyReport[\"HighEnergyTable\"]", "Input"],
+Cell["Use \"Output\" -> \"HighEnergy\" for just the energy sample table, or inspect qedHighEnergyReport[\"HighEnergyCheck\"] for exact coefficients and kinematics. \"HighEnergyBound\" -> exponent changes the assumed bound. \"HighEnergyCheck\" -> False turns this diagnostic off. \"HighEnergyTimeConstraint\" increases its separate time allowance. No amplitude correction or new vertex is added.", "Text"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+Cell["Reference Independence", "Section"],
+Cell["The same report now checks the arbitrary Xi reference spinors of external massless particles. It varies all distinct reference labels together while holding physical momenta and external spin states fixed, away from the physical poles. H has no explicit Xi, so its reference result records NoExplicitReferences, not a Ward-identity proof. The reports above also test the prepared diagram expressions that still contain Xi.", "Text"],
+Cell["qedHighEnergyReport[\"ReferenceTable\"]", "Input"],
+Cell["For a reference-bearing prepared diagram sum, inspect its saved report:", "Text"],
+Cell["First[Values[qedFivePointPrepared]][\"Report\"][\"ReferenceTable\"]", "Input"],
+Cell["Use \"Output\" -> \"References\" to request only this view. \"ReferenceSamples\" changes the number of kinematic points; \"ReferenceTimeConstraint\" changes its separate time allowance. \"ReferenceCheck\" -> False disables it. Inspect the report's \"ReferenceCheck\" for reference labels and scope. A shared Xi remains a shared choice; distinct labels are never silently merged to obtain PASS.", "Text"]
 }, Open  ]]
 }, Open  ]]
 },

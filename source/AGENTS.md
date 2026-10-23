@@ -11,6 +11,8 @@ merely a checker for whether two supplied expressions are equal. Tasks include:
 
 Read and execute the tools, preserve the reasoning and intermediate expressions,
 and state each step's assumptions. Do not use em dashes.
+Show ordinary Mathematica expressions. Do not add `// nice` or `nice[...]`
+formatting unless the user explicitly requests it.
 
 This file is in `source/`. For tasks started elsewhere in the repository,
 explicitly read `source/AGENTS.md` before using this workflow. All paths below
@@ -20,12 +22,17 @@ are relative to the repository root, not to this file.
 
 - `tests/SIMPLIFICATION.md`: practical guide to identities, on-shell scope,
   worked derivations, and the current checker API. Read this first.
-- `source/HEPCAT.wl`: package loader; loads both source files below.
+- `source/HEPCAT.wl`: package loader; loads the three source files below.
 - `source/HEPCAT-Base.wl`: spinor algebra, `ReduceSpinContractions`,
   `ReduceSpinorProducts`, `SimplifySpinorProducts`, `applyToNumerator`, and the
   section **Symbolic Spinor Identities** containing explicit identity edits.
 - `source/HEPCAT-Model.wl`: model loading, diagram construction, factorization,
-  and **Physical Residue Diagnostics**, including automatic spurious-pole checks.
+  and **Physical Residue Diagnostics**, including spurious-pole, high-energy,
+  and reference-independence checks; separate bounded preparation and
+  amplitude-completion stages are also defined here.
+- `source/HEPCAT-Feynman.wl`: CalcHEP model parsing, unitary-gauge tree
+  amplitudes and exact Feynman-to-spinor conversion. See
+  `model_feynman/README.md` for the imported SM's scope and usage.
 - `tests/simplification-paths.wl`: curated four-point identity sequences.
 - `tests/SM-4-point-simplification-test.nb`, `tests/QED-5-point.nb`, and
   `tests/Factorization-checks.nb`: worked examples and user-facing usage.
@@ -72,6 +79,46 @@ pairs = diagramAmplitudes[diagrams];
 `pairs` contains `{massRules, expression}` for each diagram. Use the plural
 `diagramAmplitudes` public entry point for complete diagram calculations.
 `CreateArrowDiagrams[diagrams]` displays the diagrams.
+
+## Independent Feynman Benchmark
+
+`ReadModel` also recognizes a CalcHEP `lgrng*.mdl` model and returns
+`FeynmanModel[particles, vertices, variables, functions]`, not the constructive
+model's four-element list. The four parts keep their positional organization.
+Use the same `CreateDiagrams` and `diagramAmplitudes` entry points; the explicit
+model head selects Feynman tensors and ordered Dirac chains. For example:
+
+```wolfram
+feynmanModel = ReadModel[FileNameJoin[{hepcatDirectory, "model_feynman"}], 1];
+feynmanDiagrams = CreateDiagrams[{"e", "E", "A.+", "A.-"}, feynmanModel];
+feynmanPairs = diagramAmplitudes[feynmanDiagrams];
+spinorPairs = FeynmanToSpinorProducts[feynmanPairs,
+  "FermionHelicities" -> {1 -> -1/2, 2 -> 1/2}];
+```
+
+Keep this benchmark separate from diagram-local constructive numerator choices.
+All momenta are ingoing; internal Feynman numerators and denominators remain
+off shell. Conversion uses the paper's external-spinor conventions and ordinary
+algebra only. Do not add internal-shell substitutions or adjust a sign to force
+agreement. Massless Dirac external fermions require explicit helicities.
+Massive vectors retain two symmetric `VectorSpinIndex[leg, slot]` labels.
+Explicit color tensors use repeated-index sums and are not automatically summed
+over external colors. The `G.t` tensor auxiliary has a constant propagator
+encoding the four-gluon contact interaction; it is not a physical pole.
+
+The copied SM files preserve all raw rules, including unphysical rows. Physical
+tree generation uses the user's chosen unitary W/Z gauge, with the appropriate
+longitudinal propagator numerator, and excludes Goldstones and ghosts. It does
+not discard Goldstone exchange while retaining a Feynman-gauge massive-vector
+propagator. Majorana and unsupported higher-spin cases return `Failure`.
+The source model has zero e, muon, u and d masses; restoring these requires the
+complete corresponding Yukawa sector, not masses alone. External running-mass
+functions such as `MbEff` are imported symbolically, not implemented numerically.
+
+Raw Feynman vertices are not complete lower-point amplitudes. Continue to use
+the constructive model containing known lower-point amplitudes for
+`FactorizationAmplitudeChannels` and the checker. The Feynman result is an
+independent off-cut benchmark, not replacement factorization data.
 
 ## Simplify, Explore, and Derive
 
@@ -153,6 +200,15 @@ using it. Ask about uncertain conventions; do not silently invent a rule.
   external mass rules and pass `"OnShellChannels" -> {}` to both identity calls.
   Momentum-conservation identities are enabled by default; the option
   `"MomentumConservation" -> False` disables them independently.
+- `ReduceSpinorProducts` itself has no momentum-conservation assumption. Its
+  multilinearity, long-chain reversal, Clifford and trace reductions use
+  ordinary spinor algebra and external mass identities. Preserve explicit spin
+  indices and chiral trace ordering; do not introduce inverse rewrite pairs.
+- A standalone scalar `Mom[label]^2` means the Lorentz invariant, evaluated
+  as the determinant of the two-by-two momentum matrix, not its componentwise
+  square. During completion's external reduction, expand composite momenta
+  only in typed chain and trace insertion positions. Do not globally turn a
+  scalar composite square into a commuting polynomial in bare `Mom` objects.
 - A numerator change that vanishes on a diagram's cuts can change its off-cut
   continuation and the single-pole residues of the full sum. Record that change
   and any off-cut remainder explicitly. Do not label it an ordinary off-cut
@@ -186,15 +242,22 @@ to force a comparison to pass. Respect the specified theory's vertex content.
 ```wolfram
 channels = FactorizationAmplitudeChannels[particles, factorizationModel];
 report = CheckPhysicalResidues[finalAmplitude, channels, factorizationModel,
-  "ParameterRules" -> {Me -> 1, EE -> 1}, "Output" -> "Details"];
+  "Output" -> "Details"];
 report["Table"]
 ```
 
-Use appropriate parameter values for the theory. The same checker also accepts
-diagram pairs directly. Its default table combines physical-residue checks and
-automatically discovered spurious-pole checks; no user pole list is required.
-Request `"Residues"` for visible sample values, `"Summary"` for counts, or
-`"Details"` for assumptions, charts, denominator discovery, and diagnostics.
+Numerical checks and completion use the supplied model's parameter values and
+derived functions by default (`"ParameterRules" -> Automatic`). The symbolic
+amplitude and model remain unchanged. For an optional parameter study, explicit
+rules such as `"ParameterRules" -> {Me -> 1, EE -> 1}` override the model
+defaults locally and dependent model functions are recomputed. Use
+theory-consistent values; do not assign model symbols numerical values globally.
+The same checker also accepts
+diagram pairs directly. Its default table combines physical-residue checks,
+automatically discovered spurious poles, high-energy growth and explicit Xi
+reference independence; no user pole list is required. Request `"Residues"`
+for visible pole samples, `"HighEnergy"` for energy samples, `"References"`
+for reference comparisons, `"Summary"` for counts, or `"Details"` for the full report.
 
 - `PASS` means agreement or finiteness at the recorded samples, not a general
   analytic proof. Vary reproducible samples and parameters as supplementary
@@ -207,11 +270,200 @@ Request `"Residues"` for visible sample values, `"Summary"` for counts, or
 - No discovered spurious denominator does not prove regularity everywhere.
   Check equivalence of reference choices using external identities, without
   internal shell assumptions on the complete amplitude.
+- The default high-energy bound `E^(4-n)` is the renormalizable-tree hypothesis,
+  not an inference about the model. Change `"HighEnergyBound"` for other theory
+  assumptions or use `"HighEnergyCheck" -> False`. The exact energy expansion
+  uses fixed masses, conserved real momenta and physical massive spin bases,
+  including longitudinal states, at sampled generic kinematic shapes. It does
+  not rescale masses, reuse arbitrary residue spin projections, or impose
+  internal on-shell conditions. Unsupported cases and timeouts are UNRESOLVED.
+  Inspect `report["HighEnergyCheck"]` for scope and series coefficients. Passing
+  an upper growth bound does not determine acceptable-growth contact couplings
+  or replace a Ward identity or reference-independence check.
+- Reference independence varies all literal Xi labels simultaneously at
+  conserved external on-shell kinematics away from physical cuts, with momenta
+  and external physical spin states fixed. It uses symbolic reference
+  coordinates at sampled momenta, not only uniform rescalings. Inspect
+  `report["ReferenceCheck"]` for shared-reference scope and unsupported cases;
+  use `"ReferenceCheck" -> False` to disable it. No explicit Xi gives scope
+  `"NoExplicitReferences"`, not a Ward-identity proof. A shared Xi tests the
+  shared choice only; never merge or relabel references to force agreement.
+  Unexpanded x factors and unresolved calculations must not become PASS.
 - `PhysicalPoleResidue` without a coherent kinematic map extracts only a
   `FORMAL` coefficient. Automatic simultaneous-cut charts are not implemented;
   multiple-pole checks require a suitable custom map. Read the guide first.
 - These diagnostics do not automatically repair an amplitude or establish
   uniqueness. Do not modify the checker, model, or signs merely to obtain PASS.
+
+## Bounded Amplitude Construction
+
+The checker is still read-only. Use the three separate construction functions
+when amplitude completion, rather than diagnosis alone, is requested:
+
+```wolfram
+prepared = PrepareDiagramAmplitudes[pairs, diagramModel];
+channels = FactorizationAmplitudeChannels[particles, factorizationModel];
+factorizedAmplitude = CompleteFactorization[prepared, channels, factorizationModel];
+completedAmplitude = If[FailureQ[factorizedAmplitude] || factorizedAmplitude === $Failed,
+  factorizedAmplitude,
+  CompleteHighEnergy[factorizedAmplitude, channels, factorizationModel]];
+```
+
+Run the final stage only after inspecting a successful factorization stage.
+`PrepareDiagramAmplitudes` returns only the prepared `{massRules, expression}`
+pairs by default. Use `"ReturnDetails" -> True` to request the original inputs,
+reference assignments and reduction history; this option defaults to `False`.
+It applies `ReduceSpinContractions`, selects `"ReferenceSpinors"`, then calls
+`ReduceSpinorProducts` on the whole diagram expression while protecting physical
+propagators. Ordinary external spinor identities may simplify auxiliary
+denominators. Only external mass replacements are global; internal mass and
+on-shell replacements remain numerator-only. Reference selection defaults to
+`Automatic`: optimize eligible other-massless-particle assignments where available,
+with physical momentum-insertion fallback for each remaining reference outside
+that diagram's own cuts. `"AllSpurious"` and `"AllPhysical"` optimize only their
+respective eligible assignments; `"Mixed"` pools both kinds per external reference
+and may select a mixture or only one kind. `"Cyclic"` and `"ReverseCyclic"` retain
+fixed, reproducible choices without assignment optimization. `"Xi"` (one common
+generic Xi0), `"IndependentXi"` (one per external particle), and `None` (unchanged)
+make the other choices explicit. The details record assignments and unavailable
+choices are PARTIAL, not silently accepted. Supply the complete diagram set when choosing
+physical references, so alternative physical channels can be identified.
+Optimized modes rank reduced complete diagram expressions by complexity, term
+count and expression size. The default `"MaxReferenceChoices" -> 64` bounds tested
+assignments per diagram. `"ReferenceTimeConstraint" -> Automatic` uses the smaller
+of five seconds and one third of the remaining per-diagram time. Explicit positive
+values or `Infinity` remain subject to the shared diagram deadline. Progress shows
+choices tried, the budgeted total and the best complexity. The optional reference
+details retain counts, `"Exhaustive"` and `"StopReason"` within `"Search"`, sorted
+`"Alternatives"` with assignments, reduced expressions and ranks, and the winning
+`"ReducedExpression"`/`"ReducedRank"` alongside its raw `"Expression"`.
+A choice cap or reference subbudget may return a valid best-tested winner without
+establishing a global minimum; an overall diagram timeout remains PARTIAL.
+Preparation does not use factorization to select references, and the smallest
+prepared seed is not guaranteed to complete fastest.
+With `"InternalOnShell" -> True`, preparation directly converts known
+two-particle numerator scalar products to masses before and after `ReduceSpinorProducts`,
+using only that diagram's mass rules. Two-leg complements may be used when
+momentum conservation is enabled. Unknown pair invariants and denominator
+factors remain unchanged. This direct reduction runs even at `"MaxSteps" -> 0`.
+The additional bounded, strictly improving identity search also
+uses only that diagram's internal mass rules. This additional search is
+distinct from `ReduceSpinorProducts` itself. Preserve the original pairs and
+the preparation details when studying numerator and reference choices. Use
+`"ReferenceSpinors" -> None` to preserve literal references for comparisons;
+the checker itself never merges them. `"InternalOnShell" -> False` disables
+both the direct invariant reduction and the extra shell edits. `"MaxSteps" -> 0`
+disables only the identity search, retaining reference selection, the basic
+reductions and the direct invariant reduction. The default
+preparation limits are 12 identity steps, 64 inspected candidates per step
+and 20 seconds per diagram. Partial preparation retains the last completed
+expression and its stop reason.
+Preparation's conservation search tries consistent whole-numerator momentum
+eliminations and composite complements, using only the declared external mass
+labels. Reduce a complete trial before comparing its full-expression rank;
+temporary expansion is allowed, but every accepted step must strictly improve
+the rank. These trials share the existing limits with local edits and are disabled
+by `"MomentumConservation" -> False`. Conservation and internal-shell substitutions
+protect all inverse factors; the subsequent ordinary whole-expression spinor
+reduction may simplify auxiliary denominators. Do not move this process-dependent search into
+`ReduceSpinorProducts` or install persistent momentum-conservation rules.
+
+`CompleteFactorization` builds a bounded correction space from actual input
+and sewn-channel expressions, or an explicit `"CorrectionBasis"`, and solves all
+physical channels simultaneously. `"ChannelReferences" -> Automatic` also
+tries recorded preparation assignments, when supplied in preparation details,
+and cyclic and physical-reference alternatives for sewn channels. The prepared
+diagram expressions are not changed. Additional channel continuations enter
+the automatic space only after exact sampled checks preserve their selected
+cut residue; this is not an off-cut equality claim or a generic proof.
+Automatic completion first tries a compact physical-reference channel space:
+apply ordinary external-shell and conservation reductions to each whole accepted
+channel continuation before splitting into terms. Verify the reduced whole
+expression on its selected cut, then retain both raw and reduced terms. Add
+one grouped pole-bearing input expression per diagram. Explicit additive input
+terms without a physical `PropDen` denominator remain in the seed, not in these
+cancellation directions; do not claim this separates hidden contact content.
+No known final amplitude or independent contact interaction enters the space.
+If unavailable, or unsuccessful with time remaining, try the existing literal
+termwise space. Attempts share the stage deadline and correction-term cap;
+do not silently discard excess directions. `"ChannelReferences" -> None`
+retains the literal-only behavior, and an explicit `"CorrectionBasis"` retains
+the supplied-space behavior after normalization.
+New continuations with uncanceled higher-order physical propagator powers are
+recorded but not admitted: the current correction fitter supports regular
+simple-pole residues. This is a solver limit, not a restriction on the theory;
+raw input and channel sources are retained. Contributions from different
+exchanged species at the same cut and mass are summed before fitting, with
+incomplete channel data still reported as incomplete.
+Do not independently add each discrepancy divided by its pole: shared poles
+can be double counted. Preserve the
+ordinary-amplitude default: `"ReturnDetails" -> False`. Request
+`"ReturnDetails" -> True` only when a full report is useful; the legacy
+`"Output" -> "Details"` remains supported. A completed factorization stage
+does not assert that spurious, high-energy or reference checks have passed.
+
+Failed validation comparisons supply additional exact equations on the same
+saved cut charts, with coherent massive-spin components. The simultaneous
+system is refitted, then checked with fresh seeds. `"MaxRefinements" -> 3`
+bounds these retries after the initial fit; zero disables feedback. Evaluate
+feedback on the original sparse correction components before substituting the
+saved fit, rather than expanding and reevaluating its dense affine family.
+Exact common algebraic units may be removed from matrix columns and the right-hand
+side for rational elimination; restore the original coefficient and free-variable
+scales in solution rules. Do not replace this with an approximate fit. Ordinary
+external-shell and conservation identities remove only provably zero
+correction directions. Retain every unproved or genuinely residue-invisible
+direction for later constraints. Typed `PropDen` poles are checked throughout
+the correction family, including poles hidden by setting free parameters to
+zero. Established zero-residue obligations remain checked after a pole leaves
+the selected candidate; internal validation rows retain those obligations
+without changing the user's channels, model or vertex content.
+The optional details expose
+`"RefinementHistory"` and `"ChannelContinuations"`, including their verification
+scope. `"CorrectionSpace"` is `"ReducedChannels"`, `"LiteralTerms"`,
+`"SuppliedTerms"` or `"NotRequired"` when the input already passes.
+`"ReducedChannelSpace"` retains the compact sources, basis
+and selected-cut checks. `"CorrectionSpaceAttempts"` records a compact attempt
+followed by literal fallback when that occurs. Neither retries nor alternative
+references make the bounded space universal; unresolved limits and inconsistent
+equations remain visible.
+
+For difficult cases, explicitly request the factorization report and pass it
+to `CompleteHighEnergy` after checking its `"Status"`. Its `"FamilyAmplitude"`,
+`"RemainingBasis"` and `"FreeParameters"` retain the full fitted correction
+freedom. An ordinary amplitude is one representative; the next stage can
+search directions from its surviving terms but cannot generally recover
+discarded directions. There is no hidden cache or expression metadata.
+
+`CompleteHighEnergy` constrains the retained family, or supplied bounded
+directions, using high-energy growth, physical residues, spurious poles and
+explicit reference independence together. It rechecks physical constraints
+rather than assuming that an added correction is residue preserving. No
+unrestricted contact basis or new independent QED interaction is inferred.
+Respect the specified theory and report insufficient correction spaces or
+unfixed directions honestly. The default bound remains the renormalizable
+tree hypothesis `E^(4-n)` and can be overridden.
+
+Both completion stages default to 64 correction terms and a 60-second stage
+limit. They fit exact equations on sampled kinematics and validate independently;
+they are not generic symbolic reconstruction or uniqueness proofs. Use
+`"ValidationParameterRules" -> {rules1, rules2, ...}` for additional
+theory-consistent parameter assignments. Automatic mass-rescaled validation
+is used only when the model has no declared parameter relations; otherwise
+only the supplied assignment is checked. Mass and coupling dependence is
+not established merely by testing one numeric assignment.
+
+With ordinary output, `CompleteFactorization` returns the amplitude on success
+or a compact `Failure["IncompleteAmplitude", ...]` when unresolved, without
+embedding the candidate or report. Request `"ReturnDetails" -> True` to inspect
+its candidates, equations, diagnostics and validation. `CompleteHighEnergy`
+is unchanged: its ordinary incomplete failure retains the candidate and report,
+and `"Output" -> "Details"` returns that report directly. Never turn a retained
+unresolved candidate into a claimed physical result. All three stages
+support `"ProgressReporting" -> False` and a `"ProgressFunction"` callback;
+callbacks receive associations when progress reporting is enabled. An
+all-in-one wrapper has not yet been introduced. See `tests/SIMPLIFICATION.md`
+for the full staged example and scope limitations.
 
 ## Preserve Work and Verify Changes
 
@@ -230,5 +482,20 @@ python3 tests/checks/run-wolfram-tests.py --timeout 300
 
 The runner accepts `--kernel /absolute/path/to/WolframKernel`. Report the checks
 actually executed, failures, and limitations. Do not claim verification based
-only on reading code. Do not start training, use the server, switch branches,
-commit, or push unless requested.
+only on reading code. Do not start training, use the server, or switch branches
+unless requested.
+
+The user has requested that every completed improvement be committed and pushed.
+After verifying a change, review the pending diff, commit the relevant work on
+the current branch, and push to its configured upstream. Preserve unrelated
+user edits; never force-push. Report the commit and any verification or push
+limitations. This standing instruction does not authorize publishing private
+files, credentials, research papers or unrelated artifacts.
+
+The default includes four legacy suites covering the original package and
+algebra/model/export tools. Read `tests/checks/README.md` for their inventory
+and known pre-existing issues. Known failures are printed separately, not
+counted as passes; `--strict-known-issues` makes them fail the run. Never add a
+new regression to the known list just to obtain a successful run. Use repeated
+`--suite` options for focused verification. The Python runner tests are
+`python3 -m unittest discover -s tests/checks -p test_runner.py`.

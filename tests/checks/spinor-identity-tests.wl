@@ -1008,5 +1008,35 @@ check["loading HEPCAT does not load a neural package",
   Names["Unscrambling`*"] === {} &&
     Names["ConstructiveDiagrams`TrainUnscrambleNet"] === {} &&
     Names["ConstructiveDiagrams`UnscrambleSpinorAmplitudes"] === {}];
+(* A degenerate Schouten split must not rewrite a product into itself. *)
+degenerateSchoutenResults = {};
+Do[
+  degenerateSchoutenInput = SpinorChain[Spinor[kind, chirality, 2],
+      Spinor["Helicity", chirality, 5]] *
+    SpinorChain[Spinor["Helicity", chirality, 5], Mom[1], Mom[2],
+      Spinor["Helicity", chirality, 5]];
+  degenerateSchoutenReduced = TimeConstrained[
+    ReduceSpinorProducts[degenerateSchoutenInput], 3, $TimedOut];
+  AppendTo[degenerateSchoutenResults, degenerateSchoutenReduced];
+  check[{"degenerate Schouten terminates", kind, chirality},
+    degenerateSchoutenReduced =!= $TimedOut &&
+      FreeQ[degenerateSchoutenReduced, _SpinorChainReduced] &&
+      numeric[degenerateSchoutenInput - degenerateSchoutenReduced] === 0],
+  {kind, {"Spin", "Helicity"}}, {chirality, {"Angle", "Square"}}];
+check["all degenerate Schouten regressions completed", Length[degenerateSchoutenResults] === 4];
+degenerateSandwichResults = {};
+Do[
+  degenerateSandwichInput = SpinorChain[Spinor[kind, "Square", 4], Mom[2],
+      Spinor["Helicity", "Angle", 5]] *
+    SpinorChain[Spinor["Helicity", "Angle", 5], Mom[2], Mom[4],
+      Spinor["Helicity", "Angle", 5]];
+  degenerateSandwichReduced = TimeConstrained[
+    ReduceSpinorProducts[degenerateSandwichInput], 3, $TimedOut];
+  AppendTo[degenerateSandwichResults, degenerateSandwichReduced];
+  check[{"degenerate mixed sandwich terminates", kind},
+    degenerateSandwichReduced === degenerateSandwichInput],
+  {kind, {"Spin", "Helicity"}}];
+check["all degenerate mixed sandwich regressions completed", Length[degenerateSandwichResults] === 2];
 Print[<|"Checks" -> checks, "Failed" -> Length[failures], "Failures" -> failures|>];
+Print["HEPCAT_TEST_COMPLETED:spinor-identity-tests.wl"];
 Quit[If[failures === {}, 0, 1]];

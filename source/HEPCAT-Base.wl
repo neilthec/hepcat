@@ -521,7 +521,7 @@ SpinorChain[sHead_["Helicity","Angle",pN_],b__]^pow_ SpinorChain[sHead_["Helicit
 SpinorChain[b__,sHead_["Helicity","Angle",pN_]]^pow_ SpinorChain[d__,sHead_["Helicity","Square",pN_]]^pow_/;spinorHeadQ[sHead]:>(-1)^(pow Length[List[d]]) SpinorChain[b,momHead[sHead][pN],ReverseSequence[d]]^pow,
 
 SpinorChain[sHead_["Helicity","Square",pN_],b__]^pow_ SpinorChain[sHead_["Helicity","Angle",pN_],d__]/;(pow>0&&spinorHeadQ[sHead]):>
-SpinorChain[sHead["Helicity","Square",pN],b]^(pow-1)Length[List[d]] SpinorChain[ReverseSequence[d],momHead[sHead][pN],b],
+SpinorChain[sHead["Helicity","Square",pN],b]^(pow-1)(-1)^Length[List[d]] SpinorChain[ReverseSequence[d],momHead[sHead][pN],b],
 SpinorChain[sHead_["Helicity","Square",pN_],b__]SpinorChain[sHead_["Helicity","Angle",pN_],d__]^pow_/;(pow>0&&spinorHeadQ[sHead]):>
 SpinorChain[sHead["Helicity","Angle",pN],d]^(pow-1)(-1)^Length[List[d]] SpinorChain[ReverseSequence[d],momHead[sHead][pN],b],
 
@@ -575,7 +575,79 @@ res
 
 
 (* ::Input::Initialization:: *)
-ReduceSpinorProducts[amp_]:=Expand[Expand[Expand[amp//.{SpinorChain[a___]:>SpinorChainReduced[a],SpinorTrace[a___]:>SpinorTraceReduced[a]}]]]//.{SpinorChainReduced[a___]:>SpinorChain[a],SpinorTraceReduced[a___]:>SpinorTrace[a]}
+ReduceSpinorProducts::usage = "ReduceSpinorProducts[expr] applies ordinary spinor algebra, multilinearity, chain reversal, Clifford contractions and external-particle mass identities. It does not infer momentum conservation or impose a composite internal momentum's mass shell. PropDen factors remain unchanged.";
+SpinorChainReduced; SpinorTraceReduced;
+
+Begin["ConstructiveDiagrams`Private`"];
+
+rspSpinorType[sHead_[_, type:("Angle"|"Square"), _, ___]] /; spinorHeadQ[sHead] := type;
+rspSpinorType[sHead_[_, _, type:("Angle"|"Square"), _, ___]] /; spinorHeadQ[sHead] := type;
+rspSpinorType[_] := None;
+rspSpinorLeg[sHead_[_, "Angle"|"Square", leg_, ___]] /; spinorHeadQ[sHead] := leg;
+rspSpinorLeg[sHead_[_, _, "Angle"|"Square", leg_, ___]] /; spinorHeadQ[sHead] := leg;
+rspFlipSpinor[s_] := ReplacePart[s, If[MemberQ[{"Angle", "Square"}, s[[2]]], 2, 3] ->
+  If[rspSpinorType[s] === "Angle", "Square", "Angle"]];
+rspMomentumLabels[Multiparticle[items___]] := Flatten[rspMomentumLabels /@ {items}, 1];
+rspMomentumLabels[label_] := {label};
+rspScalarQ[value_] := FreeQ[value, _Spinor|_SpinorHat|_SpinorChain|_SpinorChainReduced|
+  _SpinorTrace|_SpinorTraceReduced|_Mom|_MomHat|_MomQ|_SpinorZ|_SpinorEps|
+  _sigma|_colorT|_colorTrace|_Dot|_NonCommutativeMultiply];
+
+(* Normalize only typed momentum slots, before a composite can meet a mass rule. *)
+rspLinearMomentumTerms[arg_] := Module[{expanded = Expand[arg], factors, momenta, coefficient, terms = {}},
+  If[expanded === 0, Return[{}]];
+  Do[
+    factors = If[Head[term] === Times, List @@ term, {term}];
+    momenta = Select[factors, MatchQ[#, _Mom|_MomHat] &];
+    If[Length[momenta] =!= 1, Return[$Failed]];
+    coefficient = term/First[momenta];
+    If[!rspScalarQ[coefficient], Return[$Failed]];
+    terms = Join[terms, ({coefficient, Head[First[momenta]][#]} & /@
+      rspMomentumLabels[First[momenta][[1]]])],
+    {term, If[Head[expanded] === Plus, List @@ expanded, {expanded}]}];
+  terms
+];
+rspLinearChain[chain_SpinorChain] := Module[{parts = List @@ chain, slots, choices},
+  If[Length[parts] < 2 || rspSpinorType[First[parts]] === None ||
+      rspSpinorType[Last[parts]] === None, Return[chain]];
+  slots = DeleteCases[Drop[Rest[parts], -1], 1];
+  If[SameQ[rspSpinorType[First[parts]], rspSpinorType[Last[parts]]] =!= EvenQ[Length[slots]], Return[chain]];
+  choices = rspLinearMomentumTerms /@ slots;
+  If[!FreeQ[choices, $Failed], Return[chain]];
+  Total[(Times @@ (First /@ #)) (SpinorChain @@
+    Join[{First[parts]}, Last /@ #, {Last[parts]}]) & /@ Tuples[choices]]
+];
+rspLinearTrace[trace_SpinorTrace] := Module[{choices},
+  If[OddQ[Length[trace]], Return[trace]];
+  choices = rspLinearMomentumTerms /@ List @@ trace;
+  If[!FreeQ[choices, $Failed], Return[trace]];
+  Total[(Times @@ (First /@ #)) (SpinorTrace @@ (Last /@ #)) & /@ Tuples[choices]]
+];
+rspReverseChainQ[left_, momenta_List, right_] := Module[{lt = rspSpinorType[left], rt = rspSpinorType[right]},
+  If[lt === None || rt === None || !AllTrue[momenta, MatchQ[#, _Mom|_MomHat] &] ||
+      SameQ[lt, rt] =!= EvenQ[Length[momenta]], Return[False]];
+  If[OddQ[Length[momenta]], lt === "Angle" && rt === "Square",
+    TrueQ[rspSpinorLeg[right] < rspSpinorLeg[left]]]
+];
+rspCommonScalarContent[expression_Plus] := Module[{atoms},
+  atoms = DeleteDuplicates[Cases[expression, _SpinorChain|_SpinorTrace, Infinity]];
+  If[atoms === {} || !PolynomialQ[expression, atoms], expression,
+    FactorTerms[expression, atoms]]
+];
+rspCommonScalarContent[expression_] := expression;
+
+ReduceSpinorProducts[amp_] := ConstructiveDiagrams`Private`withProtectedPropagators[amp,
+  Function[body, Module[{linear},
+    linear = body /. {c_SpinorChain :> ConstructiveDiagrams`Private`rspLinearChain[c],
+      t_SpinorTrace :> ConstructiveDiagrams`Private`rspLinearTrace[t]};
+    (* Unit-coefficient Schouten rules also apply after a common scalar is removed. *)
+    linear = ConstructiveDiagrams`Private`rspCommonScalarContent[linear];
+    Expand[Expand[Expand[linear /. {SpinorChain[a___] :> SpinorChainReduced[a],
+      SpinorTrace[a___] :> SpinorTraceReduced[a]}]]] /.
+      {SpinorChainReduced[a___] :> SpinorChain[a], SpinorTraceReduced[a___] :> SpinorTrace[a]}
+  ]]];
+
+End[];
 
 
 (* ::Subsubsection::Closed:: *)
@@ -599,6 +671,15 @@ SpinorChainReduced[sHead_[sh1_,tp_,p1_],mHead_[p5_],mHead_[p6_],sHead_[sh2_,tp_,
 SpinorChainReduced[sHead_[sh1_,tp_,p1_],mHead_[p5_],mHead_[p6_],sHead_[sh2_,tp_,p2_]]/;(p6<p5&&p6!=p2&&p5!=p1&&spinorHeadQ[sHead]&&momHeadQ[mHead]):=2momProdHead[sHead][p5,p6]SpinorChainReduced[sHead[sh1,tp,p1],sHead[sh2,tp,p2]]-SpinorChainReduced[sHead[sh1,tp,p1],mHead[p6],mHead[p5],sHead[sh2,tp,p2]];
 (*[\[Zeta]2|p1p3|2] = - [2|p3p1|\[Zeta]2]*)
 SpinorChainReduced[sHead_["Zeta",sa_,p2_],mHead_[p1_],mHead_[p3_],sHead_["Helicity",sa_,p2_]]/;(spinorHeadQ[sHead]&&momHeadQ[mHead]):=-SpinorChainReduced[sHead["Helicity",sa,p2],mHead[p3],mHead[p1],sHead["Zeta",sa,p2]];
+
+(* Reversal changes only orientation, never spin-index variance or labels. *)
+Begin["ConstructiveDiagrams`Private`"];
+SpinorChainReduced[left_, momenta___, right_] /;
+  ConstructiveDiagrams`Private`rspReverseChainQ[left, {momenta}, right] :=
+  (-1)^(Length[{momenta}] + 1) (SpinorChainReduced @@ Reverse[{left, momenta, right}]);
+SpinorChainReduced[s_, s_] /;
+  ConstructiveDiagrams`Private`rspSpinorType[s] =!= None := 0;
+End[];
 
 
 (* ::Input::Initialization:: *)
@@ -633,6 +714,24 @@ SpinorChainReduced[sHead_["Spin",ul_,"Angle",b_,J_],mHead_[b_],a__]/;(spinorHead
 SpinorChainReduced[sHead_["Spin","Square",b_],mHead_[b_],a__]/;(spinorHeadQ[sHead]&&momHeadQ[mHead]):=Mass[b]SpinorChainReduced[sHead["Spin","Angle",b],a];
 SpinorChainReduced[sHead_["Spin",ul_,"Square",b_,J_],mHead_[b_],a__]/;(spinorHeadQ[sHead]&&momHeadQ[mHead]):=Mass[b]SpinorChainReduced[sHead["Spin",ul,"Angle",b,J],a];
 
+(* The same endpoint equations hold with an explicit spin index. *)
+Begin["ConstructiveDiagrams`Private`"];
+SpinorChainReduced[a__, mHead_[leg_], endpoint_] /;
+  (momHeadQ[mHead] && Length[endpoint] > 3 &&
+    ConstructiveDiagrams`Private`rspSpinorType[endpoint] =!= None &&
+    ConstructiveDiagrams`Private`rspSpinorLeg[endpoint] === leg &&
+    MemberQ[{"Spin", "Helicity"}, endpoint[[1]]]) :=
+  If[endpoint[[1]] === "Helicity", 0,
+    -Mass[leg] SpinorChainReduced[a, ConstructiveDiagrams`Private`rspFlipSpinor[endpoint]]];
+SpinorChainReduced[endpoint_, mHead_[leg_], a__] /;
+  (momHeadQ[mHead] && Length[endpoint] > 3 &&
+    ConstructiveDiagrams`Private`rspSpinorType[endpoint] =!= None &&
+    ConstructiveDiagrams`Private`rspSpinorLeg[endpoint] === leg &&
+    MemberQ[{"Spin", "Helicity"}, endpoint[[1]]]) :=
+  If[endpoint[[1]] === "Helicity", 0,
+    Mass[leg] SpinorChainReduced[ConstructiveDiagrams`Private`rspFlipSpinor[endpoint], a]];
+End[];
+
 
 (* ::Subsubsection::Closed:: *)
 (*Forms with \[Zeta]*)
@@ -664,10 +763,40 @@ SpinorChainReduced[sHead_["Zeta","Square",p2_],mHead_[p2_],aa__]:=SpinorChainRed
 (* ::Input::Initialization:: *)
 (*<p1|...p2p1... = *)
 SpinorChainReduced[a___,mHead_[pN_],mHead_[pN_],b___]/;(momHeadQ[mHead]):=Mass[pN]^2 SpinorChainReduced[a,b];
-SpinorChainReduced[a___,mHead_[pN_],mHead_[pM_],b___,mHead_[pN_],c___]/;(pM!=pN&&momHeadQ[mHead]):=2momProdHead[mHead][pN,pM]SpinorChainReduced[a,b,mHead[pN],c]-SpinorChainReduced[a,mHead[pM],mHead[pN],b,mHead[pN],c];
+Begin["ConstructiveDiagrams`Private`"];
+(* Contract a matched pair in one step. Every resulting word is shorter, so
+   two interlaced repeated momenta cannot undo each other's anticommutations. *)
+rspRepeatedMomentum[prefix_List, head_, label_, middle_List, suffix_List] := Module[
+  {length = Length[middle], short},
+  short[parts_List] := SpinorChainReduced @@ Join[prefix, parts, suffix];
+  Total[Table[2 (-1)^(j - 1) momProdHead[head][label, middle[[j, 1]]]
+      short[Append[Delete[middle, j], head[label]]], {j, length}]] +
+    (-1)^length momProdHead[head][label, label] short[middle]
+];
+SpinorChainReduced[a___, mHead_[pN_], b__, mHead_[pN_], c___] /;
+  (momHeadQ[mHead] && AllTrue[{b}, Head[#] === mHead &]) :=
+  rspRepeatedMomentum[{a}, mHead, pN, {b}, {c}];
+End[];
 
 SpinorChainReduced[a___,mHead_[pN_],mHead_[pM_],b___,sHead_[sh_,ul_,pN_]]/;(pM!=pN&&spinorHeadQ[sHead]&&momHeadQ[mHead]):=2momProdHead[sHead][pN,pM]SpinorChainReduced[a,b,sHead[sh,ul,pN]]-SpinorChainReduced[a,mHead[pM],mHead[pN],b,sHead[sh,ul,pN]];
 SpinorChainReduced[sHead_[sh_,ul_,pN_],b___,mHead_[pM_],mHead_[pN_],a___]/;(pM!=pN&&spinorHeadQ[sHead]&&momHeadQ[mHead]):=2momProdHead[sHead][pM,pN]SpinorChainReduced[sHead[sh,ul,pN],b,a]-SpinorChainReduced[sHead[sh,ul,pN],b,mHead[pN],mHead[pM],a];
+
+Begin["ConstructiveDiagrams`Private`"];
+SpinorChainReduced[a___, mHead_[pN_], mHead_[pM_], b___, endpoint_] /;
+  (pM =!= pN && momHeadQ[mHead] && Length[endpoint] > 3 &&
+    ConstructiveDiagrams`Private`rspSpinorType[endpoint] =!= None &&
+    ConstructiveDiagrams`Private`rspSpinorLeg[endpoint] === pN &&
+    MemberQ[{"Spin", "Helicity"}, endpoint[[1]]]) :=
+  2 momProdHead[mHead][pN, pM] SpinorChainReduced[a, b, endpoint] -
+    SpinorChainReduced[a, mHead[pM], mHead[pN], b, endpoint];
+SpinorChainReduced[endpoint_, b___, mHead_[pM_], mHead_[pN_], a___] /;
+  (pM =!= pN && momHeadQ[mHead] && Length[endpoint] > 3 &&
+    ConstructiveDiagrams`Private`rspSpinorType[endpoint] =!= None &&
+    ConstructiveDiagrams`Private`rspSpinorLeg[endpoint] === pN &&
+    MemberQ[{"Spin", "Helicity"}, endpoint[[1]]]) :=
+  2 momProdHead[mHead][pM, pN] SpinorChainReduced[endpoint, b, a] -
+    SpinorChainReduced[endpoint, b, mHead[pN], mHead[pM], a];
+End[];
 
 (*Test*)
 (*nice[SpinorChainReduced[Spinor["Spin","Square",4],Mom[1],Mom[2],Mom[4],Mom[1],Mom[3],Spinor["Spin","Angle",1]]/.SpinorChainReduced->SpinorChain]*)
@@ -765,7 +894,8 @@ Unprotect[Times];
 (*<12><3|p1p2|3> = <3|p2p1|2><31> - <3|p2p1|1><32>*)
 SpinorChainReduced[sHead_[sh1_,an_,p1_],sHead_[sh2_,an_,p2_]]SpinorChainReduced[sHead_[sh3_,an_,p3_],mHead_[p1_],mHead_[p2_],sHead_[sh3_,an_,p3_]]/;(spinorHeadQ[sHead]&&momHeadQ[mHead]):=SpinorChainReduced[sHead[sh3,an,p3],mHead[p2],mHead[p1],sHead[sh2,an,p2]]SpinorChainReduced[sHead[sh3,an,p3],sHead[sh1,an,p1]]-SpinorChainReduced[sHead[sh3,an,p3],mHead[p2],mHead[p1],sHead[sh1,an,p1]]SpinorChainReduced[sHead[sh3,an,p3],sHead[sh2,an,p2]];
 (*<24><3|p1p2|3> = <34><3|p1p2|2> - <32><3|p1p2|4>*)
-SpinorChainReduced[sHead_[sh2_,an_,p2_],sHead_[sh4_,an_,p4_]]SpinorChainReduced[sHead_[sh3_,an_,p3_],mHead_[p1_],mHead_[p2_],sHead_[sh3_,an_,p3_]]/;(spinorHeadQ[sHead]&&momHeadQ[mHead]):=SpinorChainReduced[sHead[sh3,an,p3],sHead[sh4,an,p4]]SpinorChainReduced[sHead[sh3,an,p3],mHead[p1],mHead[p2],sHead[sh2,an,p2]]-SpinorChainReduced[sHead[sh3,an,p3],sHead[sh2,an,p2]]SpinorChainReduced[sHead[sh3,an,p3],mHead[p1],mHead[p2],sHead[sh4,an,p4]];
+(* Coinciding p4 and p3 return the original product after antisymmetry. *)
+SpinorChainReduced[sHead_[sh2_,an_,p2_],sHead_[sh4_,an_,p4_]]SpinorChainReduced[sHead_[sh3_,an_,p3_],mHead_[p1_],mHead_[p2_],sHead_[sh3_,an_,p3_]]/;(p4=!=p3&&spinorHeadQ[sHead]&&momHeadQ[mHead]):=SpinorChainReduced[sHead[sh3,an,p3],sHead[sh4,an,p4]]SpinorChainReduced[sHead[sh3,an,p3],mHead[p1],mHead[p2],sHead[sh2,an,p2]]-SpinorChainReduced[sHead[sh3,an,p3],sHead[sh2,an,p2]]SpinorChainReduced[sHead[sh3,an,p3],mHead[p1],mHead[p2],sHead[sh4,an,p4]];
 (*[12]<3|p1p2|3><4|p1p2|4> = - <3|p2|2]<3|p1|1]<4|p1p2|4> + <3|p2|1]<3|p1|2]<4|p1p2|4>*)
 (*                         = - <3|p2|2]<3|p1|1]<4|p1p2|4> + <3|p2|1](<4|p2|2]<4|p1p1|3> - <4|p2p1|3><4|p1|2])*)
 SpinorChainReduced[sHead_[sh1_,sq_,p1_],sHead_[sh2_,sq_,p2_]]SpinorChainReduced[sHead_[sh3_,an_,p3_],mHead_[p1_],mHead_[p2_],sHead_[sh3_,an_,p3_]]SpinorChainReduced[sHead_[sh4_,an_,p4_],mHead_[p1_],mHead_[p2_],sHead_[sh4_,an_,p4_]]/;(sq=!=an&&spinorHeadQ[sHead]&&momHeadQ[mHead]):=-SpinorChainReduced[sHead[sh3,an,p3],mHead[p2],sHead[sh2,sq,p2]]SpinorChainReduced[sHead[sh3,an,p3],mHead[p1],sHead[sh1,sq,p1]]SpinorChainReduced[sHead[sh4,an,p4],mHead[p1],mHead[p2],sHead[sh4,an,p4]]+SpinorChainReduced[sHead[sh3,an,p3],mHead[p2],sHead[sh1,sq,p1]]SpinorChainReduced[sHead[sh4,an,p4],mHead[p2],sHead[sh2,sq,p2]]SpinorChainReduced[sHead[sh4,an,p4],mHead[p1],mHead[p1],sHead[sh3,an,p3]]-SpinorChainReduced[sHead[sh3,an,p3],mHead[p2],sHead[sh1,sq,p1]]SpinorChainReduced[sHead[sh4,an,p4],mHead[p2],mHead[p1],sHead[sh3,an,p3]]SpinorChainReduced[sHead[sh4,an,p4],mHead[p1],sHead[sh2,sq,p2]];
@@ -806,7 +936,8 @@ Unprotect[Times];
 (*[2|p1|3>[4|p1p2|4]=[4|p2p1p1|3>[42]-[4|p2p1|2][4|p1|3>*)
 SpinorChainReduced[sHead_[sh2_,sq_,p2_],mHead_[p1_],sHead_[sh3_,an_,p3_]]SpinorChainReduced[sHead_[sh4_,sq_,p4_],mHead_[p1_],mHead_[p2_],sHead_[sh4_,sq_,p4_]]/;(spinorHeadQ[sHead]&&momHeadQ[mHead]):=SpinorChainReduced[sHead[sh4,sq,p4],mHead[p2],mHead[p1],mHead[p1],sHead[sh3,an,p3]]SpinorChainReduced[sHead[sh4,sq,p4],sHead[sh2,sq,p2]]-SpinorChainReduced[sHead[sh4,sq,p4],mHead[p2],mHead[p1],sHead[sh2,sq,p2]]SpinorChainReduced[sHead[sh4,sq,p4],mHead[p1],sHead[sh3,an,p3]];
 (*[2|p1|3><4|p1p2|4> = - <4|p2p1|3><4|p1|2] + <4|p2p1p1|2]<43>*)
-SpinorChainReduced[sHead_[sh2_,sq_,p2_],mHead_[p1_],sHead_[sh3_,an_,p3_]]SpinorChainReduced[sHead_[sh4_,an_,p4_],mHead_[p1_],mHead_[p2_],sHead_[sh4_,an_,p4_]]/;(spinorHeadQ[sHead]&&momHeadQ[mHead]):=-SpinorChainReduced[sHead[sh4,an,p4],mHead[p2],mHead[p1],sHead[sh3,an,p3]]SpinorChainReduced[sHead[sh4,an,p4],mHead[p1],sHead[sh2,sq,p2]]+SpinorChainReduced[sHead[sh4,an,p4],mHead[p2],mHead[p1],mHead[p1],sHead[sh2,sq,p2]]SpinorChainReduced[sHead[sh4,an,p4],sHead[sh3,an,p3]];
+(* With p3 == p4, reversal turns the first term back into the input. *)
+SpinorChainReduced[sHead_[sh2_,sq_,p2_],mHead_[p1_],sHead_[sh3_,an_,p3_]]SpinorChainReduced[sHead_[sh4_,an_,p4_],mHead_[p1_],mHead_[p2_],sHead_[sh4_,an_,p4_]]/;(p3=!=p4&&spinorHeadQ[sHead]&&momHeadQ[mHead]):=-SpinorChainReduced[sHead[sh4,an,p4],mHead[p2],mHead[p1],sHead[sh3,an,p3]]SpinorChainReduced[sHead[sh4,an,p4],mHead[p1],sHead[sh2,sq,p2]]+SpinorChainReduced[sHead[sh4,an,p4],mHead[p2],mHead[p1],mHead[p1],sHead[sh2,sq,p2]]SpinorChainReduced[sHead[sh4,an,p4],sHead[sh3,an,p3]];
 Protect[Times];
 
 
@@ -976,7 +1107,9 @@ SpinorTraceReduced[a___,mHead_[Multiparticle[b_,c_]],d___]/;(momHeadQ[mHead]):=S
 SpinorTraceReduced[a___,mHead_[Multiparticle[b_,c_,ee_]],d___]/;(momHeadQ[mHead]):=SpinorTraceReduced[a,mHead[b],d]+SpinorTraceReduced[a,mHead[c],d]+SpinorTraceReduced[a,mHead[ee],d];
 
 SpinorTraceReduced[a___,mHead_[b_],mHead_[b_],c___]/;(momHeadQ[mHead]):=Mass[b]^2 SpinorTraceReduced[a,c];
-SpinorTraceReduced[mHead_[b_],a___,c___,mHead_[b_]]/;(momHeadQ[mHead]):=Mass[b]^2 SpinorTraceReduced[a,c];
+(* Moving a boundary square past the trace origin flips the alternating chirality. *)
+SpinorTraceReduced[mHead_[b_],a___,mHead_[b_]]/;(momHeadQ[mHead]&&EvenQ[Length[{a}]]):=
+  Mass[b]^2 (SpinorTraceReduced @@ RotateLeft[{a}]);
 
 SpinorTraceReduced[a___,mHead_[p1_],mHead_[p2_],c___]/;(p2<p1&&momHeadQ[mHead]):=2momProdHead[mHead][p1,p2]SpinorTraceReduced[a,c]-SpinorTraceReduced[a,mHead[p2],mHead[p1],c];
 
@@ -1797,28 +1930,37 @@ res
 
 
 (* ::Input::Initialization:: *)
-ReverseMomentum[amp_,pi_]:=amp/.{
-MomProd[pi,pj_]:>-MomProdL[pi,pj],
-MomProd[pj_,pi]:>-MomProdR[pj,pi],
-MomProdR[pi,pj_]:>-MomProdLR[pi,pj],
-MomProdL[pj_,pi]:>-MomProdLR[pj,pi],
-SpinorChain[a__,Mom[pi],b__]:>-SpinorChain[a,MomR[pi],b],
-SpinorChain[Spinor["Helicity","Angle",pi],a__]:>-SpinorChain[HelicitySpinorR["Angle",pi],a],
-SpinorChain[a__,Spinor["Helicity","Angle",pi]]:>-SpinorChain[a,HelicitySpinorR["Angle",pi]],
-SpinorChain[Spinor["Spin","Angle",pi],a__]:>-SpinorChain[SpinSpinorR["Angle",pi],a],
-SpinorChain[a__,Spinor["Spin","Angle",pi]]:>-SpinorChain[a,SpinSpinorR["Angle",pi]],
-SpinorChain[Spinor["Spin",ul_,"Angle",pi,ii_],a__]:>-SpinorChain[SpinSpinorR[ul,"Angle",pi,ii],a],
-SpinorChain[a__,Spinor["Spin",ul_,"Angle",pi,ii_]]:>-SpinorChain[a,SpinSpinorR[ul,"Angle",pi,ii]],
-PropDen[a__+Mom[pi],b__]:>PropDen[a-MomR[pi],b],
-PropDen[a__-Mom[pi],b__]:>PropDen[a+MomR[pi],b]
-}/.{
-MomProdL[ps__]:>MomProd[ps],
-MomProdR[ps__]:>MomProd[ps],
-MomProdLR[ps__]:>MomProd[ps],
-MomR[ps_]:>Mom[ps],
-HelicitySpinorR[st__]:>Spinor["Helicity",st],
-SpinSpinorR[st__]:>Spinor["Spin",st]
-}
+Begin["ConstructiveDiagrams`Private`"];
+
+crossingMomentum[arg_, leg_] := arg /. Mom[label_] :> If[Head[label] === Multiparticle &&
+    MemberQ[rspMomentumLabels[label], leg],
+  Total[If[# === leg, -Mom[#], Mom[#]] & /@ rspMomentumLabels[label]],
+  If[label === leg, -Mom[label], Mom[label]]];
+crossingMomentumChoices[Mom[label_], leg_] := If[Head[label] === Multiparticle &&
+    MemberQ[rspMomentumLabels[label], leg],
+  {If[# === leg, -1, 1], Mom[#]} & /@ rspMomentumLabels[label],
+  {{If[label === leg, -1, 1], Mom[label]}}];
+crossingMomentumChoices[arg_, leg_] := {{1, crossingMomentum[arg, leg]}};
+crossingChain[chain_SpinorChain, leg_] := Module[{parts = List @@ chain, choices},
+  choices = MapIndexed[Function[{part, position},
+    If[MemberQ[{1, Length[parts]}, First[position]] && MatchQ[part, _Spinor] &&
+        MemberQ[{"Spin", "Helicity"}, part[[1]]] &&
+        rspSpinorType[part] === "Angle" && rspSpinorLeg[part] === leg,
+      {{-1, part}}, crossingMomentumChoices[part, leg]]], parts];
+  Total[(Times @@ (First /@ #)) (SpinorChain @@ (Last /@ #)) & /@ Tuples[choices]]
+];
+crossingTrace[trace_SpinorTrace, leg_] := Total[
+  (Times @@ (First /@ #)) (SpinorTrace @@ (Last /@ #)) & /@
+    Tuples[crossingMomentumChoices[#, leg] & /@ List @@ trace]];
+
+ReverseMomentum[amp_, leg_] := amp /. {
+  chain_SpinorChain :> crossingChain[chain, leg],
+  trace_SpinorTrace :> crossingTrace[trace, leg],
+  PropDen[momentum_, rest___] :> PropDen[crossingMomentum[momentum, leg], rest],
+  MomProd[a_, b_] :> If[a === leg, -1, 1] If[b === leg, -1, 1] MomProd[a, b]
+};
+
+End[];
 
 
 (* ::Subsubsection::Closed:: *)
@@ -1826,29 +1968,25 @@ SpinSpinorR[st__]:>Spinor["Spin",st]
 
 
 (* ::Input::Initialization:: *)
-PermuteParticles[amp_,plist_List]:=Module[{pTmp,ampNew=amp},
-ampNew=ampNew//.{
-Mom[plist[[-1]]]:>Mom[pTmp],
-MomProd[a___,plist[[-1]],b___]:>MomProd[a,pTmp,b],
-SpinorChain[a___,Spinor[b__,plist[[-1]]],c___]:>SpinorChain[a,Spinor[b,pTmp],c],
-Mandelstahm[a___,plist[[-1]],b___]:>Mandelstahm[a,pTmp,b]
-};
-Do[
-ampNew=ampNew//.{
-Mom[plist[[i]]]:>Mom[plist[[i+1]]],
-MomProd[a___,plist[[i]],b___]:>MomProd[a,plist[[i+1]],b],
-SpinorChain[a___,Spinor[b__,plist[[i]]],c___]:>SpinorChain[a,Spinor[b,plist[[i+1]]],c],
-Mandelstahm[a___,plist[[i]],b___]:>Mandelstahm[a,plist[[i+1]],b]
-};
-,{i,Length[plist]-1,1,-1}];
-ampNew=ampNew//.{
-Mom[pTmp]:>Mom[plist[[1]]],
-MomProd[a___,pTmp,b___]:>MomProd[a,plist[[1]],b],
-SpinorChain[a___,Spinor[b__,pTmp],c___]:>SpinorChain[a,Spinor[b,plist[[1]]],c],
-Mandelstahm[a___,pTmp,b___]:>Mandelstahm[a,plist[[1]],b]
-};
-ampNew
+Begin["ConstructiveDiagrams`Private`"];
+ConstructiveDiagrams`PermuteParticles[amp_, particles_List] := Module[{labels, index},
+  If[Length[particles] < 2, Return[amp]];
+  labels = AssociationThread[particles, RotateLeft[particles]];
+  index[Multiparticle[parts___]] := Multiparticle @@ (index /@ {parts});
+  index[label_] := Lookup[labels, label, label];
+  amp /. {
+    Spinor[kind:("Spin"|"Helicity"|"Zeta"), type:("Angle"|"Square"), label_, rest___] :>
+      Spinor[kind, type, index[label], rest],
+    Spinor[kind:("Spin"|"Helicity"|"Zeta"), variance_, type:("Angle"|"Square"), label_, rest___] :>
+      Spinor[kind, variance, type, index[label], rest],
+    Mom[label_] :> Mom[index[label]], Mass[label_] :> Mass[index[label]],
+    MomProd[a_, b_] :> MomProd[index[a], index[b]],
+    Mandelstahm[parts___] :> Mandelstahm @@ (index /@ {parts}),
+    xFactor[parts___] :> xFactor @@ (index /@ {parts}),
+    xTildeFactor[parts___] :> xTildeFactor @@ (index /@ {parts})
+  }
 ];
+End[];
 
 
 (* ::Subsubsection::Closed:: *)
@@ -2004,26 +2142,29 @@ res
 
 
 (* ::Input::Initialization:: *)
-SymmetrizeSpin[amp_,part_,indices_]:=Module[{tmp,replacementRules={}},
+SymmetrizeSpin[amp_,part_,indices_]:=Module[{tmp,replacementRules={},indexPermutations,normalization},
+indexPermutations=If[2<=Length[indices]<=4,Permutations[indices],{{}}];
+(* Equal index labels remove duplicate permutations, but not their total weight. *)
+normalization=1/Length[indexPermutations];
 (*Print["Reminder: SymmetrizeSpin only works on implicit indices."];*)
 Which[
 (*Spin 2*)
 Length[indices]==4,
 replacementRules={
-SpinorChain[Spinor["Spin",type1_,part],b1___,Spinor["Spin",type2_,part]]SpinorChain[Spinor["Spin",type3_,part],b2___,Spinor["Spin",type4_,part]]:>(1/24 SpinorChain[Spinor["Spin","Upper",type1,part,#[[1]]],b1,Spinor["Spin","Upper",type2,part,#[[2]]]]SpinorChain[Spinor["Spin","Upper",type3,part,#[[3]]],b2,Spinor["Spin","Upper",type4,part,#[[4]]]]&/@Permutations[indices]/.List->Plus),
-SpinorChain[Spinor["Spin",type1_,part],b___,Spinor["Spin",type2_,part]]SpinorChain[a3___,Spinor["Spin",type3_,part],b3___]SpinorChain[a4___,Spinor["Spin",type4_,part],b4___]:>(1/24 SpinorChain[Spinor["Spin","Upper",type1,part,#[[1]]],b,Spinor["Spin","Upper",type2,part,#[[2]]]]SpinorChain[a3,Spinor["Spin","Upper",type3,part,#[[3]]],b3]SpinorChain[a4,Spinor["Spin","Upper",type4,part,#[[4]]],b4]&/@Permutations[indices]/.List->Plus),
-SpinorChain[a1___,Spinor["Spin",type1_,part],b1___]SpinorChain[a2___,Spinor["Spin",type2_,part],b2___]SpinorChain[a3___,Spinor["Spin",type3_,part],b3___]SpinorChain[a4___,Spinor["Spin",type4_,part],b4___]:>(1/24 SpinorChain[a1,Spinor["Spin","Upper",type1,part,#[[1]]],b1]SpinorChain[a2,Spinor["Spin","Upper",type2,part,#[[2]]],b2]SpinorChain[a3,Spinor["Spin","Upper",type3,part,#[[3]]],b3]SpinorChain[a4,Spinor["Spin","Upper",type4,part,#[[4]]],b4]&/@Permutations[indices]/.List->Plus)};,
+SpinorChain[Spinor["Spin",type1_,part],b1___,Spinor["Spin",type2_,part]]SpinorChain[Spinor["Spin",type3_,part],b2___,Spinor["Spin",type4_,part]]:>(normalization SpinorChain[Spinor["Spin","Upper",type1,part,#[[1]]],b1,Spinor["Spin","Upper",type2,part,#[[2]]]]SpinorChain[Spinor["Spin","Upper",type3,part,#[[3]]],b2,Spinor["Spin","Upper",type4,part,#[[4]]]]&/@indexPermutations/.List->Plus),
+SpinorChain[Spinor["Spin",type1_,part],b___,Spinor["Spin",type2_,part]]SpinorChain[a3___,Spinor["Spin",type3_,part],b3___]SpinorChain[a4___,Spinor["Spin",type4_,part],b4___]:>(normalization SpinorChain[Spinor["Spin","Upper",type1,part,#[[1]]],b,Spinor["Spin","Upper",type2,part,#[[2]]]]SpinorChain[a3,Spinor["Spin","Upper",type3,part,#[[3]]],b3]SpinorChain[a4,Spinor["Spin","Upper",type4,part,#[[4]]],b4]&/@indexPermutations/.List->Plus),
+SpinorChain[a1___,Spinor["Spin",type1_,part],b1___]SpinorChain[a2___,Spinor["Spin",type2_,part],b2___]SpinorChain[a3___,Spinor["Spin",type3_,part],b3___]SpinorChain[a4___,Spinor["Spin",type4_,part],b4___]:>(normalization SpinorChain[a1,Spinor["Spin","Upper",type1,part,#[[1]]],b1]SpinorChain[a2,Spinor["Spin","Upper",type2,part,#[[2]]],b2]SpinorChain[a3,Spinor["Spin","Upper",type3,part,#[[3]]],b3]SpinorChain[a4,Spinor["Spin","Upper",type4,part,#[[4]]],b4]&/@indexPermutations/.List->Plus)};,
 (*Spin 3/2*)
 Length[indices]==3,
 replacementRules={
-SpinorChain[Spinor["Spin",type1_,part],c___,Spinor["Spin",type2_,part]]SpinorChain[a3___,Spinor["Spin",type3_,part],b3___]:>(1/6 SpinorChain[Spinor["Spin","Upper",type1,part,#[[1]]],c,Spinor["Spin","Upper",type2,part,#[[2]]]]SpinorChain[a3,Spinor["Spin","Upper",type3,part,#[[3]]],b3]&/@Permutations[indices]/.List->Plus),
-SpinorChain[a1___,Spinor["Spin",type1_,part],b1___]SpinorChain[a2___,Spinor["Spin",type2_,part],b2___]SpinorChain[a3___,Spinor["Spin",type3_,part],b3___]:>(1/6 SpinorChain[a1,Spinor["Spin","Upper",type1,part,#[[1]]],b1]SpinorChain[a2,Spinor["Spin","Upper",type2,part,#[[2]]],b2]SpinorChain[a3,Spinor["Spin","Upper",type3,part,#[[3]]],b3]&/@Permutations[indices]/.List->Plus)};,
+SpinorChain[Spinor["Spin",type1_,part],c___,Spinor["Spin",type2_,part]]SpinorChain[a3___,Spinor["Spin",type3_,part],b3___]:>(normalization SpinorChain[Spinor["Spin","Upper",type1,part,#[[1]]],c,Spinor["Spin","Upper",type2,part,#[[2]]]]SpinorChain[a3,Spinor["Spin","Upper",type3,part,#[[3]]],b3]&/@indexPermutations/.List->Plus),
+SpinorChain[a1___,Spinor["Spin",type1_,part],b1___]SpinorChain[a2___,Spinor["Spin",type2_,part],b2___]SpinorChain[a3___,Spinor["Spin",type3_,part],b3___]:>(normalization SpinorChain[a1,Spinor["Spin","Upper",type1,part,#[[1]]],b1]SpinorChain[a2,Spinor["Spin","Upper",type2,part,#[[2]]],b2]SpinorChain[a3,Spinor["Spin","Upper",type3,part,#[[3]]],b3]&/@indexPermutations/.List->Plus)};,
 (*Spin 1*)
 Length[indices]==2,
 replacementRules={
-SpinorChain[Spinor["Spin",type1_,part],d___,Spinor["Spin",type2_,part]]:>(1/2 SpinorChain[Spinor["Spin","Upper",type1,part,#[[1]]],d,Spinor["Spin","Upper",type2,part,#[[2]]]]&/@Permutations[indices]/.List->Plus),
-SpinorChain[b___,Spinor["Spin",type1_,part],d___]SpinorChain[e___,Spinor["Spin",type2_,part],f___]:> (1/2 SpinorChain[b,Spinor["Spin","Upper",type1,part,#[[1]]],d]SpinorChain[e,Spinor["Spin","Upper",type2,part,#[[2]]],f]&/@Permutations[indices]/.List->Plus),
-SpinorChain[b___,Spinor["Spin",type_,part],d___]^2:> (1/2 SpinorChain[b,Spinor["Spin","Upper",type,part,#[[1]]],d]SpinorChain[b,Spinor["Spin","Upper",type,part,#[[2]]],d]&/@Permutations[indices]/.List->Plus)
+SpinorChain[Spinor["Spin",type1_,part],d___,Spinor["Spin",type2_,part]]:>(normalization SpinorChain[Spinor["Spin","Upper",type1,part,#[[1]]],d,Spinor["Spin","Upper",type2,part,#[[2]]]]&/@indexPermutations/.List->Plus),
+SpinorChain[b___,Spinor["Spin",type1_,part],d___]SpinorChain[e___,Spinor["Spin",type2_,part],f___]:> (normalization SpinorChain[b,Spinor["Spin","Upper",type1,part,#[[1]]],d]SpinorChain[e,Spinor["Spin","Upper",type2,part,#[[2]]],f]&/@indexPermutations/.List->Plus),
+SpinorChain[b___,Spinor["Spin",type_,part],d___]^2:> (normalization SpinorChain[b,Spinor["Spin","Upper",type,part,#[[1]]],d]SpinorChain[b,Spinor["Spin","Upper",type,part,#[[2]]],d]&/@indexPermutations/.List->Plus)
 };,
 (* Spin 1/2*)
 Length[indices]==1,
