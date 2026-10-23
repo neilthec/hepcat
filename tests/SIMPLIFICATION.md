@@ -54,7 +54,7 @@ recognized too. This adds no inverse Schouten rewrite or denominator combination
 This function neither infers the external-particle list nor assumes momentum
 conservation. Expanding a composite momentum does not put it on an internal
 mass shell. Keep process-dependent conservation and diagram-local internal
-shell reductions in `PrepareDiagramAmplitudes` instead.
+shell reductions in `PrepareAmplitudes` instead.
 
 ## On-Shell Scope
 
@@ -489,20 +489,37 @@ The three construction stages are separate from `CheckPhysicalResidues`.
 The checker still only checks its input; it never changes an amplitude.
 There is not yet an all-in-one process constructor.
 
-### 1. Prepare the Diagrams
+### 1. Prepare the Diagrams and Channels
 
 ```wolfram
 particles = {"e", "E", "A.+", "A.+", "A.+"};
 qedDiagramModel = ReadModel[FileNameJoin[{hepcatDirectory, "models"}], 2];
 qedFactorizationModel = ReadModel[FileNameJoin[{hepcatDirectory, "models"}], 3];
 pairs = diagramAmplitudes[CreateDiagrams[particles, qedDiagramModel]];
-prepared = PrepareDiagramAmplitudes[pairs, qedDiagramModel];
+prepared = PrepareAmplitudes[pairs, qedDiagramModel];
 channels = FactorizationAmplitudeChannels[particles, qedFactorizationModel];
+preparedChannels = PrepareAmplitudes[channels, qedFactorizationModel];
 ```
 
-`PrepareDiagramAmplitudes` returns only the prepared mass-rule/expression pairs,
-in the same structure as `diagramAmplitudes`. Original inputs and reduction
-history are omitted unless `"ReturnDetails" -> True` is requested.
+`PrepareAmplitudes` recognizes each element's format: diagram pairs
+`{massRules, expression}`, or compact factorization rows
+`{mass1, ..., massN, Multiparticle[...], internalMass, expression}`.
+It returns the same format, preserving the metadata and replacing only the
+expression. Original inputs and reduction history are omitted unless
+`"ReturnDetails" -> True` is requested. `PrepareDiagramAmplitudes` remains
+available as a compatibility name.
+
+For a factorization row, only its declared cut is an internal on-shell
+condition. Its momentum-conservation complement describes the same cut, not
+an additional assumption. Other propagators inside the lower-point amplitudes
+stay off shell. Physical denominators, the sewing sign and `z` are preserved.
+Preparation preserves the selected-cut residue; it need not preserve the
+channel's continuation away from that pole. Keep `channels` as the original
+input and use `preparedChannels` for the reduced continuation. Completion does
+not automatically add the original forms back as extra correction directions.
+To retain that fallback, pass `"AlternativeChannels" -> channels`: completion
+tries the prepared channels first and consults the originals only if needed.
+
 It applies `ReduceSpinContractions`, makes the selected
 reference-spinor replacements, then calls `ReduceSpinorProducts` with physical
 propagators protected. With `"InternalOnShell" -> True`, it replaces
@@ -537,7 +554,7 @@ Choose the references with `"ReferenceSpinors"`:
 For example:
 
 ```wolfram
-preparationDetails = PrepareDiagramAmplitudes[pairs, qedDiagramModel,
+preparationDetails = PrepareAmplitudes[pairs, qedDiagramModel,
   "ReferenceSpinors" -> "AllPhysical", "ReturnDetails" -> True];
 preparationDetails["DiagramReports"][[1]]["ReferenceSpinors"]
 ```
@@ -622,7 +639,8 @@ disable both local conservation edits and these whole-numerator alternatives.
 
 ```wolfram
 factorizedAmplitude = CompleteFactorization[
-  prepared, channels, qedFactorizationModel]
+  prepared, preparedChannels, qedFactorizationModel,
+  "AlternativeChannels" -> channels]
 ```
 
 The default result is the completed amplitude, not a report.
@@ -636,6 +654,11 @@ simultaneously. It does not independently add one residue discrepancy divided
 by each propagator, which could double count shared pole contributions.
 Its automatic correction directions come from the actual input and sewn
 channel expressions, subject to `"MaxCorrectionTerms" -> 64`.
+The opt-in `"AlternativeChannels"` list supplies additional continuations only
+after the prepared-channel solve fails. Each alternative's grouped selected-cut
+residue must agree before its correction directions are admitted; the prepared
+channels remain authoritative. Both attempts share the stage's correction-term
+and time limits. The default `{}` does not retain or reintroduce original inputs.
 `"ChannelReferences" -> Automatic` supplements the raw channel expressions
 with bounded alternative reference choices: recorded preparation assignments
 when available, cyclic choices and physical momentum-insertion choices.

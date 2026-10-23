@@ -61,6 +61,11 @@ steps, disabled conservation and protected reciprocal factors.
 Preparation also tests ordinary whole-expression reduction of reciprocal
 spinor chains and bracket factors, independently of numerator-only internal
 on-shell substitutions.
+`PrepareAmplitudes` accepts both diagram pairs and compact factorization rows.
+Its channel tests check preserved row metadata and propagators, numerator-only
+selected-cut shell conditions, and protection of unrelated internal channels.
+Completion can retain originals with the opt-in `"AlternativeChannels"` fallback,
+certified on the selected cuts and considered only after the prepared-first fit.
 Exact coefficient-refinement tests include heavily scaled rows, algebraic
 right-hand sides, retained free coefficients and late contradictions.
 

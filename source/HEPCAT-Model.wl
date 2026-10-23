@@ -4049,6 +4049,8 @@ Begin["ConstructiveDiagrams`"];
 
 CompleteFactorization::usage = "CompleteFactorization[amplitudes, channels, model] constructs a bounded linear correction from the supplied diagram expressions and sewn channel expressions, solving all physical residues simultaneously. It accepts ordinary amplitude pairs, a prepared-expression report, or an expression. CorrectionBasis supplies correction directions; Automatic uses the input and channel expressions, not a universal amplitude ansatz. ChannelReferences -> Automatic constructs bounded alternative reference continuations, checking each on its selected cut. Automatic completion first tries externally reduced whole physical-reference channels and grouped pole-bearing input terms, then falls back to literal input and channel terms within the same term and time limits. Explicit pole-free input terms are retained, not added as cancellation directions in the first attempt. ChannelReferences -> None keeps only the literal correction space. Recorded preparation references are tried when available. Failed independent validation samples supply further exact equations, up to MaxRefinements -> 3, with fresh subsequent validation. Only proven algebraically zero directions are discarded; other residue-preserving directions remain available to CompleteHighEnergy. These sampled checks are not a generic analytic reconstruction or uniqueness proof. ReturnDetails -> False is the default: successful completion returns only the updated amplitude. ReturnDetails -> True retains the candidate, correction, affine family, CorrectionSpace, ChannelContinuations, RefinementHistory and validation, and takes precedence over Output. Output -> \"Details\" remains available for existing code. Unresolved completion normally returns a concise Failure[\"IncompleteAmplitude\", ...], without an unchecked candidate or embedded report. ParameterRules -> Automatic uses the supplied model's variables and dependent functions; an explicit rule list overrides selected parameters. Numerical substitutions affect the checks and fitting only, not the returned symbolic amplitude. No new interactions are inferred.";
 CompleteFactorization::args = "Expected amplitude pairs or an expression, ordinary factorization channels, a model and valid bounded-completion options.";
+CompleteFactorization::usage = CompleteFactorization::usage <>
+  " AlternativeChannels -> {} optionally supplies original or alternative compact channel rows. Only after automatic completion fails are their selected residues checked against the supplied channels and their correction directions tried within the remaining term and time budgets. The supplied channels remain the targets for fitting and independent validation; alternatives never replace them. AlternativeChannelFallback in the details records the checks and result.";
 
 Begin["ConstructiveDiagrams`Private`"];
 
@@ -4093,8 +4095,11 @@ completionProgress[callback_, enabled_, event_Association] := Module[{text},
   If[KeyExistsQ[event, "Operation"], text = text <> ": " <> ToString[event["Operation"]]];
   If[KeyExistsQ[event, "Phase"], text = text <> ": " <> ToString[event["Phase"]]];
   If[KeyExistsQ[event, "Status"], text = text <> "; " <> ToString[event["Status"]]];
+  If[KeyExistsQ[event, "Item"] && KeyExistsQ[event, "Items"],
+    text = text <> If[Lookup[event, "InputType", "Diagram"] === "FactorizationChannel", "; channel ", "; diagram "] <>
+      ToString[event["Item"]] <> "/" <> ToString[event["Items"]],
   If[KeyExistsQ[event, "Diagram"] && KeyExistsQ[event, "Diagrams"],
-    text = text <> "; diagram " <> ToString[event["Diagram"]] <> "/" <> ToString[event["Diagrams"]]];
+    text = text <> "; diagram " <> ToString[event["Diagram"]] <> "/" <> ToString[event["Diagrams"]]]];
   If[KeyExistsQ[event, "Completed"] && KeyExistsQ[event, "Total"],
     text = text <> ": " <> ToString[event["Completed"]] <> "/" <> ToString[event["Total"]]];
   If[!KeyExistsQ[event, "Completed"] && KeyExistsQ[event, "Current"] && KeyExistsQ[event, "Total"],
@@ -4667,9 +4672,59 @@ completionReducedChannelBasis[normalized_Association, references_Association,
     "Verification" -> checks, "Scope" -> "ReducedPhysicalChannelsWithGroupedPoleBearingInputs"|>
 ];
 
+(* Alternative representations contribute directions, never new residue targets. *)
+completionAlternativeChannelBasis[input_, normalized_Association, rows_List,
+    model_List, rules_List, seed_Integer, limit_Integer, references_] := Module[
+  {alternate, external, keys, targets, supplied, matched, checks = {}, verification,
+   effective, continuations, reduced, basis, tag = Unique["alternativeChannels"]},
+  Catch[
+  alternate = completionNormalizeInput[input, rows, model];
+  If[!AssociationQ[alternate] || FailureQ[alternate] ||
+      alternate["ExternalMassRules"] =!= normalized["ExternalMassRules"],
+    Throw[<|"Status" -> "UNRESOLVED", "Diagnostics" -> {
+      "Alternative channels must describe the same external masses as the supplied channels."}|>, tag]];
+  external = Cases[normalized["ExternalMassRules"], HoldPattern[Mass[i_Integer] -> _] :> i];
+  keys = DeleteDuplicates[({canonicalPhysicalCut[List @@ #[[-3]], external], #[[-2]]} &) /@ rows];
+  targets = completionTargets[normalized["Targets"]];
+  supplied = Select[completionTargets[alternate["Targets"]],
+    MemberQ[keys, residueChannelKey[#]] &];
+  Do[
+    matched = SelectFirst[targets, residueChannelKey[#] === residueChannelKey[channel] &,
+      Missing["UnknownAlternativeChannel"]];
+    If[MissingQ[matched] || !TrueQ[Lookup[matched, "Complete", False]] ||
+        !TrueQ[Lookup[channel, "Complete", False]],
+      Throw[<|"Status" -> "UNRESOLVED", "Verification" -> checks, "Diagnostics" -> {
+        "An alternative channel has no complete matching supplied residue target."}|>, tag]];
+    verification = completionContinuationCheck[matched["StateSum"]/matched["Propagator"],
+      channel["StateSum"]/channel["Propagator"], matched, targets, rules, seed];
+    AppendTo[checks, <|"Cut" -> channel["Cut"], "Mass" -> channel["Mass"],
+      "Verification" -> verification|>];
+    If[verification["Status"] =!= "PASS",
+      Throw[<|"Status" -> "UNRESOLVED", "Verification" -> checks, "Diagnostics" -> {
+        "Alternative channels did not preserve the supplied selected residues at the exact samples."}|>, tag]],
+    {channel, supplied}];
+  effective = Join[normalized, <|"Targets" -> Map[Function[channel,
+    SelectFirst[supplied, residueChannelKey[#] === residueChannelKey[channel] &, channel]], targets]|>];
+  continuations = If[references === Automatic,
+    completionChannelContinuations[effective, model, rules, seed],
+    <|"Sources" -> (#["StateSum"]/#["Propagator"] & /@ supplied), "Variants" -> {}|>];
+  reduced = If[references === Automatic,
+    completionReducedChannelBasis[effective, continuations, limit, rules, seed],
+    Missing["NotRequested"]];
+  basis = If[AssociationQ[reduced], reduced["Basis"],
+    completionAutomaticBasis[effective, limit, continuations]];
+  If[!ListQ[basis], Throw[<|"Status" -> "UNRESOLVED", "Verification" -> checks,
+    "Diagnostics" -> {"Alternative channel directions exceed MaxCorrectionTerms."}|>, tag]];
+  <|"Status" -> "COMPLETE", "Basis" -> basis, "Verification" -> checks,
+    "ChannelContinuations" -> continuations, "ReducedChannelSpace" -> reduced,
+    "Scope" -> "ExactSampledSelectedCutEquivalenceWithUnchangedResidueTargets",
+    "Diagnostics" -> {}|>, tag]
+];
+
 Options[CompleteFactorization] = {"CorrectionBasis" -> Automatic,
   "ParameterRules" -> Automatic, "Samples" -> 4, "ValidationSamples" -> 4,
   "ValidationParameterRules" -> Automatic, "ChannelReferences" -> Automatic,
+  "AlternativeChannels" -> {},
   "MaxRefinements" -> 3,
   "RandomSeed" -> 1729, "TimeConstraint" -> 60, "MaxCorrectionTerms" -> 64,
   "ProgressReporting" -> True, "ProgressFunction" -> Automatic,
@@ -4678,7 +4733,8 @@ Options[CompleteFactorization] = {"CorrectionBasis" -> Automatic,
 CompleteFactorization[input_, channelRows_List, model_List, opts : OptionsPattern[]] := Module[
   {output = OptionValue["Output"], details = OptionValue["ReturnDetails"],
    basisOption = OptionValue["CorrectionBasis"],
-   references = OptionValue["ChannelReferences"], refinements = OptionValue["MaxRefinements"],
+   references = OptionValue["ChannelReferences"], alternatives = OptionValue["AlternativeChannels"],
+   refinements = OptionValue["MaxRefinements"],
    rules = residueParameterRules[model, OptionValue["ParameterRules"]], samples = OptionValue["Samples"],
    validationSamples = OptionValue["ValidationSamples"], seed = OptionValue["RandomSeed"],
    validationRules = OptionValue["ValidationParameterRules"], validationSets, validationReports = {},
@@ -4690,12 +4746,13 @@ CompleteFactorization[input_, channelRows_List, model_List, opts : OptionsPatter
    trial, allEquations = {}, allSamples = {}, feedback = <||>, roundReports, round,
    validationSeed, validationCount, familyPass, zeroFree, cleaned, cleanup, fastPath,
    reducedChannels = Missing["NotRequested"], space = "NotRequired", fallbackBasis,
-   fallbackReport, fallbackOptions, remainingSeconds, attemptSummary},
+   fallbackReport, fallbackOptions, remainingSeconds, attemptSummary, alternativeSpace},
   If[!MemberQ[{"Expression", "Details"}, output] || !MemberQ[{True, False}, details] ||
       !(basisOption === Automatic || ListQ[basisOption]) || !completionParameterRulesQ[rules] ||
       !IntegerQ[samples] || samples < 1 ||
       !IntegerQ[validationSamples] || validationSamples < 1 || !IntegerQ[seed] ||
       !MemberQ[{Automatic, None}, references] || !IntegerQ[refinements] || refinements < 0 ||
+      !ListQ[alternatives] || !AllTrue[alternatives, preparationChannelQ] ||
       !(validationRules === Automatic || (ListQ[validationRules] &&
         AllTrue[validationRules, completionParameterRulesQ])) ||
       !(seconds === Infinity || TrueQ[NumericQ[seconds] &&
@@ -4885,7 +4942,7 @@ CompleteFactorization[input_, channelRows_List, model_List, opts : OptionsPatter
           (seconds === Infinity || seconds - (AbsoluteTime[] - start) > 0.01),
         completionProgress[callback, enabled, <|"Stage" -> "Trying literal channel correction terms"|>];
         fallbackOptions = Join[Association[Options[CompleteFactorization]], Association[{opts}],
-          <|"CorrectionBasis" -> fallbackBasis, "ReturnDetails" -> True,
+          <|"CorrectionBasis" -> fallbackBasis, "AlternativeChannels" -> {}, "ReturnDetails" -> True,
             "TimeConstraint" -> If[seconds === Infinity, Infinity,
               Max[0.000001, seconds - (AbsoluteTime[] - start)]]|>];
         attemptSummary = KeyTake[report, {"Status", "CorrectionSpace", "Diagnostics", "ElapsedTime"}];
@@ -4898,6 +4955,33 @@ CompleteFactorization[input_, channelRows_List, model_List, opts : OptionsPatter
             "ReducedChannelSpace" -> reducedChannels, "ChannelContinuations" -> continuations,
             "ElapsedTime" -> AbsoluteTime[] - start|>];
           status = report["Status"]]]]];
+  If[status =!= "COMPLETE" && basisOption === Automatic && alternatives =!= {},
+    remainingSeconds = If[seconds === Infinity, Infinity, seconds - (AbsoluteTime[] - start)];
+    If[remainingSeconds > 0.01,
+      completionProgress[callback, enabled, <|"Stage" -> "Checking alternative channel representations"|>];
+      alternativeSpace = TimeConstrained[completionAlternativeChannelBasis[input, normalized,
+        alternatives, model, rules, seed, limit, references],
+        remainingSeconds, <|"Status" -> "UNRESOLVED", "Diagnostics" -> {
+          "Alternative channel preparation exceeded the remaining TimeConstraint."}|>];
+      report = Join[report, <|"AlternativeChannelFallback" -> alternativeSpace|>];
+      If[alternativeSpace["Status"] === "COMPLETE" &&
+          (seconds === Infinity || seconds - (AbsoluteTime[] - start) > 0.01),
+        completionProgress[callback, enabled, <|"Stage" -> "Trying verified alternative channel directions"|>];
+        fallbackOptions = Join[Association[Options[CompleteFactorization]], Association[{opts}],
+          <|"CorrectionBasis" -> alternativeSpace["Basis"], "AlternativeChannels" -> {},
+            "ReturnDetails" -> True, "TimeConstraint" -> If[seconds === Infinity, Infinity,
+              Max[0.000001, seconds - (AbsoluteTime[] - start)]]|>];
+        attemptSummary = KeyTake[report, {"Status", "CorrectionSpace", "Diagnostics", "ElapsedTime"}];
+        fallbackReport = CompleteFactorization[input, channelRows, model,
+          Sequence @@ Normal[fallbackOptions]];
+        If[AssociationQ[fallbackReport],
+          report = Join[fallbackReport, <|"CorrectionSpace" -> "AlternativeChannels",
+            "AlternativeChannelFallback" -> alternativeSpace,
+            "CorrectionSpaceAttempts" -> Join[Lookup[report, "CorrectionSpaceAttempts", {attemptSummary}],
+              {KeyTake[fallbackReport, {"Status", "Diagnostics", "ElapsedTime"}]}],
+            "ElapsedTime" -> AbsoluteTime[] - start|>];
+          status = report["Status"]]]]];
+  report = Join[report, <|"ElapsedTime" -> AbsoluteTime[] - start|>];
   completionProgress[callback, enabled, <|"Stage" -> "Factorization " <> status,
     "Elapsed" -> report["ElapsedTime"], "Unknowns" -> If[ListQ[report["CorrectionBasis"]],
       Length[report["CorrectionBasis"]], Length[unknowns]]|>];
@@ -4910,22 +4994,26 @@ End[];
 
 
 (* ::Section::Closed:: *)
-(*Diagram Amplitude Preparation*)
+(*Amplitude Preparation*)
 
 Begin["ConstructiveDiagrams`"];
 
-PrepareDiagramAmplitudes::usage = "PrepareDiagramAmplitudes[pairs, model] returns prepared {massRules, expression} pairs. Each diagram is prepared independently by ReduceSpinContractions, ReferenceSpinors replacement and ReduceSpinorProducts with physical propagators protected. AllSpurious compares eligible other-massless-particle references, AllPhysical compares momentum-insertion references giving physical poles outside that diagram's own cuts, and Mixed compares both types per external leg. Automatic optimizes spurious references where available, otherwise physical references. Cyclic and ReverseCyclic retain fixed reproducible spurious choices; Xi uses one common Xi0, IndependentXi one generic reference per external particle, and None retains input references. The best completed trial is ranked after ordinary spinor reduction and diagram-local numerator-shell reductions. MaxReferenceChoices -> 64 bounds trials; ReferenceTimeConstraint -> Automatic uses at most five seconds and one third of the remaining per-diagram TimeConstraint, shared with subsequent preparation. This is a bounded finite-reference search, not a global-minimum claim. ReturnDetails -> False is the default; True exposes inputs, assignments, tested alternatives, search limits, reductions and diagnostics. InternalOnShell -> True reduces known numerator scalar products using only that diagram's mass rules, including two-leg complements when MomentumConservation is True, before and after spinor reduction even at MaxSteps -> 0. False disables these internal-shell reductions and edits. Unknown invariants and denominators are not put on shell. A bounded improving identity search follows. Output -> \"Expression\" returns the prepared sum; \"Amplitudes\" returns pairs; \"Details\" and ReturnDetails -> True request diagnostics. ReturnDetails takes precedence. Unavailable reference choices or an overall timeout remain PARTIAL. ProgressReporting, ProgressFunction, MaxSteps, MaxCandidates and MomentumConservation control preparation. No model vertices or factorization corrections are added.";
-PrepareDiagramAmplitudes::args = "Expected a list of {massRules, expression} pairs, a model, and valid preparation options.";
-PrepareDiagramAmplitudes::usage = PrepareDiagramAmplitudes::usage <>
-  " Ordinary ReduceSpinorProducts acts on the whole expression, including auxiliary denominators, with PropDen protected. Only external mass replacements act globally; internal replacements remain numerator-only. With MomentumConservation -> True, the bounded identity search also tries consistent whole-numerator external momentum eliminations and composite complements. Each trial is reduced before a strictly improving whole-expression rank is required. These trials use only declared external mass labels, share MaxSteps, MaxCandidates and the per-diagram time limit, and protect inverse factors from conservation and internal-shell substitutions. MomentumConservation -> False disables them.";
+PrepareAmplitudes::usage = "PrepareAmplitudes[items, model] prepares diagram amplitude pairs or compact factorization-channel rows, preserving their input formats. Each element is prepared independently by ReduceSpinContractions, ReferenceSpinors replacement and ReduceSpinorProducts with physical propagators protected. AllSpurious compares eligible other-massless-particle references, AllPhysical compares momentum-insertion references giving physical poles outside that element's own cuts, and Mixed compares both types per external leg. Automatic optimizes spurious references where available, otherwise physical references. Cyclic and ReverseCyclic retain fixed reproducible spurious choices; Xi uses one common Xi0, IndependentXi one generic reference per external particle, and None retains input references. The best completed trial is ranked after ordinary spinor reduction and diagram-local numerator-shell reductions. MaxReferenceChoices -> 64 bounds trials; ReferenceTimeConstraint -> Automatic uses at most five seconds and one third of the remaining per-element TimeConstraint, shared with subsequent preparation. This is a bounded finite-reference search, not a global-minimum claim. ReturnDetails -> False is the default; True exposes inputs, assignments, tested alternatives, search limits, reductions and diagnostics. InternalOnShell -> True reduces known numerator scalar products using only that element's mass rules, including two-leg complements when MomentumConservation is True, before and after spinor reduction even at MaxSteps -> 0. False disables these internal-shell reductions and edits. Unknown invariants and denominators are not put on shell. A bounded improving identity search follows. Output -> \"Expression\" returns the prepared sum; \"Amplitudes\" preserves input formats; \"Details\" and ReturnDetails -> True request diagnostics. ReturnDetails takes precedence. Unavailable reference choices or an overall timeout remain PARTIAL. ProgressReporting, ProgressFunction, MaxSteps, MaxCandidates and MomentumConservation control preparation. No model vertices or factorization corrections are added.";
+PrepareAmplitudes::args = "Expected diagram {massRules, expression} pairs or compact factorization-channel rows, a model, and valid preparation options. All elements must declare consistent external masses.";
+PrepareAmplitudes::usage = PrepareAmplitudes::usage <>
+  " Ordinary ReduceSpinorProducts acts on the whole expression, including auxiliary denominators, with PropDen protected. Only external mass replacements act globally; internal replacements remain numerator-only. With MomentumConservation -> True, the bounded identity search also tries consistent whole-numerator external momentum eliminations and composite complements. Each trial is reduced before a strictly improving whole-expression rank is required. These trials use only declared external mass labels, share MaxSteps, MaxCandidates and the per-element time limit, and protect inverse factors from conservation and internal-shell substitutions. MomentumConservation -> False disables them.";
+PrepareAmplitudes::usage = PrepareAmplitudes::usage <>
+  " Input elements are detected individually: diagram {massRules, expression} pairs or compact factorization rows {m1, ..., mn, Multiparticle[cut], exchangedMass, expression}. The default output preserves each input element's format and metadata. Factorization rows supply only external shells and their selected cut; other propagators do not introduce shell assumptions. Channel 1/z factors and sewing signs are unchanged. Cut-only reductions preserve the selected residue, not an off-cut identity. Details add InputType, ElementTypes, ItemReports and ChannelReports.";
+PrepareDiagramAmplitudes::usage = "PrepareDiagramAmplitudes is a compatibility alias for PrepareAmplitudes. Use PrepareAmplitudes for both diagram amplitude pairs and compact factorization-channel rows.";
 
-Options[PrepareDiagramAmplitudes] = {
+Options[PrepareAmplitudes] = {
   "ReferenceSpinors" -> Automatic,
   "MaxReferenceChoices" -> 64, "ReferenceTimeConstraint" -> Automatic,
   "InternalOnShell" -> True, "MaxSteps" -> 12, "MaxCandidates" -> 64,
   "TimeConstraint" -> 20, "MomentumConservation" -> True,
   "ProgressReporting" -> True, "ProgressFunction" -> Automatic,
   "ReturnDetails" -> False, "Output" -> "Amplitudes"};
+Options[PrepareDiagramAmplitudes] = Options[PrepareAmplitudes];
 
 Begin["ConstructiveDiagrams`Private`"];
 
@@ -4938,6 +5026,28 @@ preparationPairQ[pair_] := MatchQ[pair, {_List, _}] &&
   residueFiniteQ[Last[pair]] && AllTrue[First[pair],
     MatchQ[#, HoldPattern[Mass[_Integer | Multiparticle[__Integer]] -> _]] &&
       residueFiniteQ[Last[#]] &];
+
+preparationChannelQ[row_] := Module[{n, cut},
+  If[!ListQ[row] || Length[row] < 7 || !MatchQ[row[[-3]], Multiparticle[__Integer]], Return[False]];
+  n = Length[row] - 3; cut = List @@ row[[-3]];
+  residueFiniteQ[row] && DuplicateFreeQ[cut] && 2 <= Length[cut] <= n - 2 &&
+    AllTrue[cut, 1 <= # <= n &] &&
+    AllTrue[Join[Take[row, n], {row[[-2]]}], FreeQ[#,
+      _List | _Rule | _RuleDelayed | _Multiparticle | _Mom | _Spinor | _SpinorChain | _PropDen] &]
+];
+
+preparationInputType[item_] := Which[
+  preparationPairQ[item], "Diagram",
+  preparationChannelQ[item], "FactorizationChannel",
+  True, $Failed];
+
+preparationInputPair[item_, "Diagram"] := item;
+preparationInputPair[row_, "FactorizationChannel"] := {
+  Join[Thread[(Mass /@ Range[Length[row] - 3]) -> Drop[row, -3]],
+    {Mass[row[[-3]]] -> row[[-2]]}], row[[-1]]};
+
+preparationOutputItem[item_, "Diagram", expression_] := {First[item], expression};
+preparationOutputItem[row_, "FactorizationChannel", expression_] := ReplacePart[row, -1 -> expression];
 
 preparationMassKey[Mass[Multiparticle[legs__Integer]]] := Mass[Multiparticle @@ Sort[{legs}]];
 preparationMassKey[key_] := key;
@@ -5115,7 +5225,13 @@ preparationReferences[expr_, rules_List, model_List, pairs_List, requested_, for
       {{First[item], Last[item]}, {Complement[external, First[item]], Last[item]}}] /@
       knownInternalChannels[rs], 1];
     inventory = DeleteDuplicates[Flatten[pairChannels[First[#]] & /@ pairs, 1]];
-    own = pairChannels[rules];
+    (* Existing uncut propagators exclude reference choices too, but must not
+       become numerator-shell assumptions or certify additional physical poles. *)
+    own = DeleteDuplicates[Join[pairChannels[rules], Flatten[Function[prop,
+      With[{propKey = residuePropagatorKey[prop, external]},
+        If[MissingQ[propKey], {}, {propKey,
+          {Complement[external, First[propKey]], Last[propKey]}}]]] /@
+        DeleteDuplicates[Cases[expr, _PropDen, {0, Infinity}]], 1]]];
     physicalQ[a_, b_] := AnyTrue[inventory,
       First[#] === Sort[{a, b}] && compatibleMassQ[Last[#], Mass[b] /. massRules] &];
     ownQ[a_, b_] := AnyTrue[own,
@@ -5296,7 +5412,7 @@ preparationReferenceSearch[expr_, rules_List, model_List, pairs_List, requested_
     "Diagnostics" -> Join[Lookup[best, "Diagnostics", {}], diagnostics]|>]
 ];
 
-preparationOneDiagram[pair_, index_, count_, options_Association, model_, pairs_] := Module[
+preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pairs_, kind_] := Module[
   {rules = preparationCanonicalMassRules[First[pair]], original = Last[pair], expression = Last[pair],
    reductions = {}, history = {}, diagnostics = {}, channels, shellOptions, dotRules,
    started = AbsoluteTime[], outcome, stage = "Starting", stop = "MaxSteps",
@@ -5304,7 +5420,9 @@ preparationOneDiagram[pair_, index_, count_, options_Association, model_, pairs_
    generated = 0, inspected = 0, event, reduceInvariants, before, after, identityStageComplete = False,
    invalid = False, referenceFailure = False, referenceReport = <||>,
    referenceSeconds, referenceFallback = None, referenceInput,
-   failureTag = Unique["preparationFailure"]},
+   failureTag = Unique["preparationFailure"], progressMetadata},
+  progressMetadata = Join[<|"Item" -> index, "Items" -> count, "InputType" -> kind|>,
+    If[kind === "Diagram", <|"Diagram" -> index, "Diagrams" -> count|>, <||>]];
   channels = If[TrueQ[options["InternalOnShell"]],
     First /@ knownInternalChannels[rules], {}];
   dotRules = If[TrueQ[options["InternalOnShell"]],
@@ -5312,10 +5430,10 @@ preparationOneDiagram[pair_, index_, count_, options_Association, model_, pairs_
   shellOptions = {"OnShellChannels" -> channels,
     "MomentumConservation" -> options["MomentumConservation"]};
   event[label_] := completionProgress[options["ProgressFunction"], options["ProgressReporting"],
-    <|"Stage" -> "Preparation", "Operation" -> label, "Diagram" -> index,
-    "Diagrams" -> count, "Elapsed" -> AbsoluteTime[] - started,
+    Join[progressMetadata, <|"Stage" -> "Preparation", "Operation" -> label,
+    "Elapsed" -> AbsoluteTime[] - started,
     "Complexity" -> First[preparationRank[expression]],
-    "Terms" -> preparationRank[expression][[2]], "IdentitySteps" -> Length[history]|>];
+    "Terms" -> preparationRank[expression][[2]], "IdentitySteps" -> Length[history]|>]];
   reduceInvariants[phase_] := If[TrueQ[options["InternalOnShell"]],
     stage = "InternalInvariantReduction";
     before = expression;
@@ -5348,8 +5466,8 @@ preparationOneDiagram[pair_, index_, count_, options_Association, model_, pairs_
       Function[update,
         If[KeyExistsQ[update, "BestReference"], referenceFallback = update["BestReference"]];
         completionProgress[options["ProgressFunction"], options["ProgressReporting"],
-          Join[<|"Stage" -> "Preparation", "Operation" -> "Choosing references",
-            "Diagram" -> index, "Diagrams" -> count, "Elapsed" -> AbsoluteTime[] - started,
+          Join[progressMetadata, <|"Stage" -> "Preparation", "Operation" -> "Choosing references",
+            "Elapsed" -> AbsoluteTime[] - started,
             "Complexity" -> First[preparationRank[expression]],
             "Terms" -> preparationRank[expression][[2]]|>, KeyDrop[update, "BestReference"]]]]];
     If[!AssociationQ[referenceReport] || referenceReport["Status"] =!= "COMPLETE",
@@ -5424,7 +5542,7 @@ preparationOneDiagram[pair_, index_, count_, options_Association, model_, pairs_
     AppendTo[diagnostics, Which[invalid,
       "An invalid result was rejected during " <> stage, referenceFailure,
       "The requested reference-spinor selection was not applied", True,
-      "The per-diagram time limit was reached during " <> stage] <>
+      "The per-element time limit was reached during " <> stage] <>
         "; the last completed expression is retained."]];
   If[TrueQ[outcome] && stop === "MaxSteps" && options["MaxSteps"] > 0,
     AppendTo[diagnostics, "The bounded identity search reached MaxSteps; this is not a claim of minimality."]];
@@ -5433,7 +5551,9 @@ preparationOneDiagram[pair_, index_, count_, options_Association, model_, pairs_
   event[Which[TrueQ[outcome], "Prepared", referenceFailure, "Reference choice unavailable",
     invalid, "Invalid reduction retained previous state",
     True, "Time limit reached"]];
-  <|"DiagramIndex" -> index, "Status" -> If[TrueQ[outcome], "PREPARED", "PARTIAL"],
+  Join[<|"ItemIndex" -> index, "InputType" -> kind|>,
+    If[kind === "Diagram", <|"DiagramIndex" -> index|>, <||>],
+  <|"Status" -> If[TrueQ[outcome], "PREPARED", "PARTIAL"],
     "MassRules" -> First[pair], "ExternalMassRules" -> preparationExternalRules[rules],
     "OriginalExpression" -> original, "PreparedExpression" -> expression,
     "InternalOnShellChannels" -> channels,
@@ -5444,13 +5564,19 @@ preparationOneDiagram[pair_, index_, count_, options_Association, model_, pairs_
     "Reductions" -> reductions, "IdentitySteps" -> history,
     "GeneratedCandidates" -> generated, "InspectedCandidates" -> inspected,
     "IdentitySearchCompleted" -> identityStageComplete, "StopReason" -> stop,
-    "ElapsedTime" -> AbsoluteTime[] - started, "Diagnostics" -> diagnostics|>
+    "ElapsedTime" -> AbsoluteTime[] - started, "Diagnostics" -> diagnostics|>]
 ];
 
-PrepareDiagramAmplitudes[pairs_List, model_List, opts : OptionsPattern[]] := Module[
-  {options, reports, prepared, external, diagnostics, details, output = OptionValue["Output"]},
+PrepareAmplitudes[items_List, model_List, opts : OptionsPattern[]] := Module[
+  {options, reports, prepared, external, diagnostics, details, types, pairs, inputType,
+   output = OptionValue["Output"]},
+  types = preparationInputType /@ items;
+  If[MemberQ[types, $Failed], Message[PrepareAmplitudes::args]; Return[$Failed]];
+  pairs = MapThread[preparationInputPair, {items, types}];
+  inputType = Which[types === {} || AllTrue[types, # === "Diagram" &], "Diagrams",
+    AllTrue[types, # === "FactorizationChannel" &], "FactorizationChannels", True, "Mixed"];
   options = Association[Map[Function[name, name -> OptionValue[name]],
-    First /@ Options[PrepareDiagramAmplitudes]]];
+    First /@ Options[PrepareAmplitudes]]];
   If[!AllTrue[pairs, preparationPairQ] ||
       !AllTrue[pairs, preparationMassRulesConsistentQ[First[#]] &] || !preparationModelQ[model] ||
       !MemberQ[{Automatic, None, "AllSpurious", "AllPhysical", "Mixed", "Xi", "Cyclic",
@@ -5469,26 +5595,34 @@ PrepareDiagramAmplitudes[pairs_List, model_List, opts : OptionsPattern[]] := Mod
       !MemberQ[{"Amplitudes", "Expression", "Details"}, output] ||
       !(MemberQ[{Automatic, None}, options["ProgressFunction"]] ||
         MatchQ[options["ProgressFunction"], _Function | _Symbol]) ||
-      Complement[First /@ {opts}, First /@ Options[PrepareDiagramAmplitudes]] =!= {},
-    Message[PrepareDiagramAmplitudes::args]; Return[$Failed]];
+      Complement[First /@ {opts}, First /@ Options[PrepareAmplitudes]] =!= {},
+    Message[PrepareAmplitudes::args]; Return[$Failed]];
   external = preparationExternalRules /@ (preparationCanonicalMassRules /@ First /@ pairs);
   If[external =!= {} && !AllTrue[Rest[external], preparationExternalRulesAgreeQ[First[external], #] &],
-    Message[PrepareDiagramAmplitudes::args]; Return[$Failed]];
-  reports = MapIndexed[preparationOneDiagram[#1, First[#2], Length[pairs], options, model, pairs] &, pairs];
-  prepared = {#["MassRules"], #["PreparedExpression"]} & /@ reports;
+    Message[PrepareAmplitudes::args]; Return[$Failed]];
+  reports = MapIndexed[Function[{pair, position}, With[{i = First[position]},
+    Join[preparationOneAmplitude[pair, i, Length[pairs], options, model, pairs, types[[i]]],
+      If[types[[i]] === "FactorizationChannel",
+        <|"Channel" -> items[[i, -3]], "Cut" -> List @@ items[[i, -3]], "Mass" -> items[[i, -2]]|>, <||>]]]], pairs];
+  prepared = MapThread[preparationOutputItem[#1, #2, #3["PreparedExpression"]] &, {items, types, reports}];
   If[!TrueQ[options["ReturnDetails"]],
     Switch[output, "Amplitudes", Return[prepared],
       "Expression", Return[Total[Last /@ prepared]]]];
   diagnostics = DeleteDuplicates[Flatten[Lookup[reports, "Diagnostics", {}], 1]];
   details = <|"Status" -> If[AnyTrue[reports, #["Status"] === "PARTIAL" &], "PARTIAL", "PREPARED"],
-    "OriginalAmplitudes" -> pairs, "PreparedAmplitudes" -> prepared,
+    "InputType" -> inputType, "ElementTypes" -> types,
+    "OriginalAmplitudes" -> items, "PreparedAmplitudes" -> prepared,
     "Amplitude" -> Total[Last /@ prepared],
     "ExternalMassRules" -> If[external === {}, {}, First[external]],
-    "DiagramReports" -> reports, "Model" -> model, "Options" -> options,
+    "ItemReports" -> reports,
+    "DiagramReports" -> Select[reports, #["InputType"] === "Diagram" &],
+    "ChannelReports" -> Select[reports, #["InputType"] === "FactorizationChannel" &],
+    "Model" -> model, "Options" -> options,
     "Diagnostics" -> diagnostics|>;
   details
 ];
-PrepareDiagramAmplitudes[___] := (Message[PrepareDiagramAmplitudes::args]; $Failed);
+PrepareAmplitudes[___] := (Message[PrepareAmplitudes::args]; $Failed);
+PrepareDiagramAmplitudes[args___] := PrepareAmplitudes[args];
 
 End[];
 End[];

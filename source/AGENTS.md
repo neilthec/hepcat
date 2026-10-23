@@ -301,17 +301,32 @@ The checker is still read-only. Use the three separate construction functions
 when amplitude completion, rather than diagnosis alone, is requested:
 
 ```wolfram
-prepared = PrepareDiagramAmplitudes[pairs, diagramModel];
+prepared = PrepareAmplitudes[pairs, diagramModel];
 channels = FactorizationAmplitudeChannels[particles, factorizationModel];
-factorizedAmplitude = CompleteFactorization[prepared, channels, factorizationModel];
+preparedChannels = PrepareAmplitudes[channels, factorizationModel];
+factorizedAmplitude = CompleteFactorization[prepared, preparedChannels,
+  factorizationModel, "AlternativeChannels" -> channels];
 completedAmplitude = If[FailureQ[factorizedAmplitude] || factorizedAmplitude === $Failed,
   factorizedAmplitude,
   CompleteHighEnergy[factorizedAmplitude, channels, factorizationModel]];
 ```
 
 Run the final stage only after inspecting a successful factorization stage.
-`PrepareDiagramAmplitudes` returns only the prepared `{massRules, expression}`
-pairs by default. Use `"ReturnDetails" -> True` to request the original inputs,
+`PrepareAmplitudes` detects each element: diagram `{massRules, expression}`
+pairs or compact factorization rows `{m1, ..., mn, Multiparticle[cut], mass, expression}`.
+It preserves the input format and metadata by default. Channel preparation
+derives only external mass rules and its declared cut, never shells for other
+propagators inside the lower-point amplitudes. The channel's contour factor
+and sewing sign remain unchanged. Cut-only reductions preserve its selected
+residue, not its off-cut continuation. Keep original rows available for later
+validation or alternative correction spaces. `"AlternativeChannels" -> channels`
+explicitly enables a fallback to their correction directions only if completion
+with the prepared rows fails. The original selected residues are checked against
+the prepared targets first; fitting and validation still use the prepared targets.
+This fallback shares the remaining time and term limits. Original rows are not
+automatically added when the option is omitted. Mixed formats require consistent
+external masses. `PrepareDiagramAmplitudes` is a thin compatibility alias,
+not another implementation. Use `"ReturnDetails" -> True` to request the original inputs,
 reference assignments and reduction history; this option defaults to `False`.
 It applies `ReduceSpinContractions`, selects `"ReferenceSpinors"`, then calls
 `ReduceSpinorProducts` on the whole diagram expression while protecting physical
