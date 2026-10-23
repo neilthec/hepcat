@@ -16,6 +16,8 @@ If[!MemberQ[$Packages, "ConstructiveDiagrams`"] ||
    the known four-point amplitudes needed for five-point factorization. *)
 prModel = ReadModel[FileNameJoin[{prRoot, "models"}], 2];
 prFixtureModel = ReadModel[FileNameJoin[{prRoot, "models"}], 3];
+prElectronMass = ModelParameter[prModel, "Me"];
+prElectricCharge = ModelParameter[prModel, "EE"];
 prAngle[i_, j_] := SpinorChain[Spinor["Helicity", "Angle", i],
   Spinor["Helicity", "Angle", j]];
 prSquare[i_, j_] := SpinorChain[Spinor["Helicity", "Square", i],
@@ -26,9 +28,9 @@ prMixed[i_, p_, j_] := SpinorChain[Spinor["Helicity", "Angle", i], Mom[p],
   Spinor["Helicity", "Square", j]];
 prK[i_] := SpinorChain[Spinor["Helicity", "Square", i], Mom[1], Mom[2],
   Spinor["Helicity", "Square", i]];
-prDen[i_, j_] := PropDen[Mom[Multiparticle @@ Sort[{i, j}]], Me];
+prDen[i_, j_] := PropDen[Mom[Multiparticle @@ Sort[{i, j}]], prElectronMass];
 prPhotons = {3, 4, 5};
-prPrefactor = 2 Sqrt[2] EE^3 Me prSpinAngle[1, 2];
+prPrefactor = 2 Sqrt[2] prElectricCharge^3 prElectronMass prSpinAngle[1, 2];
 prH = prPrefactor Total[Function[c, With[{ab = Complement[prPhotons, {c}]},
       prSquare @@ ab]^2 prK[c]/prDen[2, c]] /@ prPhotons]/
   (Times @@ (prDen[1, #] & /@ prPhotons));
@@ -51,7 +53,7 @@ prTargets = ConstructiveDiagrams`Private`residueSimpleInputs[
   0, prChannels, prFixtureModel]["Targets"];
 prElectronTargets = Select[prTargets,
   Length[#["Cut"]] === 2 && Count[#["Cut"], 1 | 2] === 1 &&
-    Count[#["Cut"], 3 | 4 | 5] === 1 && #["Mass"] === Me &];
+    Count[#["Cut"], 3 | 4 | 5] === 1 && #["Mass"] === prElectronMass &];
 prJ = {{0, -1}, {1, 0}}; prL = -prJ;
 prAdj[p_] := {{p[[2, 2]], -p[[1, 2]]}, {-p[[2, 1]], p[[1, 1]]}};
 prZero[expr_] := AllTrue[Flatten[{expr}], Together[#] === 0 &];
@@ -105,7 +107,7 @@ prMapOnChart[expr_, chart_] := Module[{mapped},
     MomProd[i_, j_] :> (Det[prMomentum[i, chart] + prMomentum[j, chart]] -
       Det[prMomentum[i, chart]] - Det[prMomentum[j, chart]])/2};
   mapped = mapped /. Mom[index_] :> prMomentum[index, chart];
-  mapped /. {Me -> 1, EE -> 1}
+  mapped /. {prElectronMass -> 1, prElectricCharge -> 1}
 ];
 prMap[spin1_Integer, spin2_Integer][expr_, cuts_List, variables_List] :=
   prMapOnChart[expr, prChart[First[cuts]["Cut"], First[variables], spin1, spin2]];
@@ -159,7 +161,7 @@ prFourPointChannels = FactorizationAmplitudeChannels[
 prFourPointTargets = Select[
   ConstructiveDiagrams`Private`residueSimpleInputs[
     0, prFourPointChannels, prModel]["Targets"],
-  #["Mass"] === Me && MemberQ[#["Cut"], 1] &&
+  #["Mass"] === prElectronMass && MemberQ[#["Cut"], 1] &&
     Count[#["Cut"], 3 | 4] === 1 &];
 prFourPointAmplitude = Times @@ prA4Row[[-2 ;; -1]];
 prUncutChannels[target_] := Select[prElectronTargets,
@@ -255,7 +257,7 @@ qedFivePointMixedRoute[pairs_List] := Module[
    referenceGap, raw, numerators, localSeed, seed,
    completionNumerator, completionNumerators, completedNumerators,
    completion, completed, final, denominator, photonOrder, onShellFactors,
-   referenceHelicities, expectedMasses = {Me, Me, 0, 0, 0},
+   referenceHelicities, expectedMasses = {prElectronMass, prElectronMass, 0, 0, 0},
    expectedPairs, expectedRaw, canonicalReferences},
   If[Length[pairs] =!= 6 || !AllTrue[pairs,
       MatchQ[#, {_List, _}] && AllTrue[First[#], MatchQ[#, _Rule] &] &&
@@ -269,8 +271,8 @@ qedFivePointMixedRoute[pairs_List] := Module[
   firstChain[i_] := SpinorChain[spinor[5, "Angle"], Mom[1], spinor[i, "Square"]];
   secondChain[i_] := SpinorChain[spinor[5, "Angle"], Mom[2], spinor[i, "Square"]];
   doubleChain[i_] := SpinorChain[spinor[i, "Square"], Mom[1], Mom[2], spinor[i, "Square"]];
-  firstDen[i_] := PropDen[Mom[Multiparticle @@ Sort[{1, i}]], Me];
-  secondDen[i_] := PropDen[Mom[Multiparticle @@ Sort[{2, i}]], Me];
+  firstDen[i_] := PropDen[Mom[Multiparticle @@ Sort[{1, i}]], prElectronMass];
+  secondDen[i_] := PropDen[Mom[Multiparticle @@ Sort[{2, i}]], prElectronMass];
   mixedDen[i_, j_] := SpinorChain[spinor[i, "Square"], Mom[1],
     Mom[Multiparticle @@ Sort[{i, 5}]], spinor[j, "Square"]];
   firstAngle = angle[1, 2];
@@ -287,8 +289,8 @@ qedFivePointMixedRoute[pairs_List] := Module[
       "MessageTemplate" -> "The mixed route requires positive photons 3,4 and a negative photon 5."|>]]];
   photonOrder[expression_] := Module[{propagators, a, c},
     propagators = DeleteDuplicates[Cases[expression, _PropDen, Infinity]];
-    a = Cases[propagators, PropDen[Mom[Multiparticle[1, i_Integer]], Me] :> i];
-    c = Cases[propagators, PropDen[Mom[Multiparticle[1, i_Integer, j_Integer]], Me] :>
+    a = Cases[propagators, PropDen[Mom[Multiparticle[1, i_Integer]], prElectronMass] :> i];
+    c = Cases[propagators, PropDen[Mom[Multiparticle[1, i_Integer, j_Integer]], prElectronMass] :>
       First[Complement[{3, 4, 5}, {i, j}]]];
     If[Length[a] =!= 1 || Length[c] =!= 1, Return[$Failed]];
     {First[a], First[Complement[{3, 4, 5}, {First[a], First[c]}]], First[c]}
@@ -310,13 +312,13 @@ qedFivePointMixedRoute[pairs_List] := Module[
       "MessageTemplate" -> "This worked route accepts the standard model-2 raw diagrams, not arbitrary altered numerators."|>]]];
   localSeed[order_] := With[{ij = DeleteCases[order, 5]},
     With[{i = ij[[1]], j = ij[[2]]},
-      2 Sqrt[2] EE^3 firstChain[i] secondChain[j]/(Me referenceGap) *
+      2 Sqrt[2] prElectricCharge^3 firstChain[i] secondChain[j]/(prElectronMass referenceGap) *
         (pairAngle - firstAngle firstChain[i] secondChain[j]/mixedDen[i, j])]];
   numerators = localSeed[photonOrder[#]] & /@ raw;
   seed = Total[MapThread[#1/denominator[#2] &, {numerators, raw}]];
   completionNumerator[order_] := With[{ij = DeleteCases[order, 5]},
     With[{i = ij[[1]], j = ij[[2]]},
-      -2 Sqrt[2] EE^3 Me firstAngle square[i, j]^4 firstDen[i] secondDen[j]/
+      -2 Sqrt[2] prElectricCharge^3 prElectronMass firstAngle square[i, j]^4 firstDen[i] secondDen[j]/
         (photonInvariant square[i, 5] square[5, j] mixedDen[i, j])]];
   completionNumerators = completionNumerator[photonOrder[#]] & /@ raw;
   completedNumerators = numerators + completionNumerators;
@@ -325,12 +327,12 @@ qedFivePointMixedRoute[pairs_List] := Module[
   onShellFactors[order_] := With[{ij = DeleteCases[order, 5]},
     Intersection[{firstDen[First[ij]], secondDen[Last[ij]]},
       {firstDen[First[order]], secondDen[Last[order]]}]];
-  final = 2 Sqrt[2] EE^3/(Me firstDen[3] firstDen[4] firstDen[5]) *
+  final = 2 Sqrt[2] prElectricCharge^3/(prElectronMass firstDen[3] firstDen[4] firstDen[5]) *
     (firstChain[3] doubleChain[4] *
         (firstAngle firstChain[3] - pairAngle square[3, 5])/secondDen[4] +
      firstChain[4] doubleChain[3] *
         (firstAngle firstChain[4] - pairAngle square[4, 5])/secondDen[3] +
-     Me^2 square[3, 4]^2 *
+     prElectronMass^2 square[3, 4]^2 *
         (firstAngle SpinorChain[spinor[5, "Angle"], Mom[1], Mom[2], spinor[5, "Angle"]] +
           pairAngle (firstDen[5] + secondDen[5]))/secondDen[5]);
   <|"InputDiagrams" -> pairs, "RawDiagrams" -> raw,
@@ -375,9 +377,9 @@ qedFivePointMixedLocalChecks[route_Association] := Module[
     Fold[Dot, left, matrices].right
   ];
   evaluate[e_] := Together[e /. x_SpinorChain :> matrixChain[x] /.
-    {PropDen[Mom[q_], Me] :> Det[momentum[q]] - mass^2,
+    {PropDen[Mom[q_], prElectronMass] :> Det[momentum[q]] - mass^2,
      MomProd[i_, h_] :> (Det[momentum[i] + momentum[h]] -
-       Det[momentum[i]] - Det[momentum[h]])/2} /. {Me -> mass, EE -> 1}];
+       Det[momentum[i]] - Det[momentum[h]])/2} /. {prElectronMass -> mass, prElectricCharge -> 1}];
   Do[
     order = route["PhotonOrders"][[index]]; {a, b, c} = order;
     Do[
@@ -513,7 +515,7 @@ q5FourFermionInsertion[emitter_, partner_, c_, d_] :=
   q5FourFermionBracket["Angle", partner, d] q5FourFermionBracket["Square", 5, c] +
   q5FourFermionBracket["Angle", partner, c] q5FourFermionBracket["Square", 5, d];
 q5FourFermionElectronPropagator[i_] :=
-  PropDen[Mom[Multiparticle @@ Sort[{i, 5}]], Me];
+  PropDen[Mom[Multiparticle @@ Sort[{i, 5}]], prElectronMass];
 q5FourFermionPhotonPropagator[c_, d_] :=
   PropDen[Mom[Multiparticle @@ Sort[{c, d}]], 0];
 
@@ -569,17 +571,17 @@ q5FourFermionPhotonRoute[diagrams_List] := Module[
     raw = original /. referenceRules /. propagatorRules;
     referenceDenominator = SpinorChain[reference, q5FourFermionAngle[5]];
     referenceMomentum = SpinorChain[reference, Mom[emittingLeg], q5FourFermionSquare[5]];
-    denominator = Me photon electron referenceDenominator;
+    denominator = prElectronMass photon electron referenceDenominator;
     numerator = prefactor sign endpointSign
-      (Me current + q5FourFermionBracket["Angle", emittingLeg, 5] insertion)
+      (prElectronMass current + q5FourFermionBracket["Angle", emittingLeg, 5] insertion)
         referenceMomentum;
-    retainedNumerator = prefactor sign endpointSign Me (
+    retainedNumerator = prefactor sign endpointSign prElectronMass (
       current referenceMomentum + q5FourFermionBracket["Square", emittingLeg, 5]
         insertion referenceDenominator);
     removedCoefficient = prefactor sign endpointSign insertion
       SpinorChain[q5FourFermionAngle[emittingLeg], reference];
     removedNumerator = electron removedCoefficient;
-    remainder = removedCoefficient/(Me photon referenceDenominator);
+    remainder = removedCoefficient/(prElectronMass photon referenceDenominator);
     AppendTo[routes, <|"DiagramIndex" -> i, "FermionLines" -> (orient /@ lines),
       "RadiatingPair" -> pair, "SpectatorPair" -> spectator,
       "EmittingLeg" -> emittingLeg, "FermionSign" -> sign,
@@ -597,7 +599,7 @@ q5FourFermionPhotonRoute[diagrams_List] := Module[
       "PhotonPropagator" -> photon,
       "SchoutenIdentity" -> Inactive[Equal][
         q5FourFermionBracket["Angle", emittingLeg, 5] referenceMomentum,
-        Me referenceDenominator q5FourFermionBracket["Square", emittingLeg, 5] +
+        prElectronMass referenceDenominator q5FourFermionBracket["Square", emittingLeg, 5] +
           electron SpinorChain[q5FourFermionAngle[emittingLeg], reference]]|>],
     {i, Length[diagrams]}];
   groups = GatherBy[routes, {#["RadiatingPair"], #["SpectatorPair"]} &];

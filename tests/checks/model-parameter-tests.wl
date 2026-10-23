@@ -106,11 +106,11 @@ check["explicit empty checker overrides have the same model-backed meaning as Au
   mpAllPass[mpQEDEmpty] &&
     mpQEDEmpty["ParameterRules"] === mpQEDDefault["ParameterRules"]];
 mpQEDPartial = mpCheck[prFourPointAmplitude, prFourPointChannels, prModel,
-  "ParameterRules" -> {EE -> 1}];
+  "ParameterRules" -> {prElectricCharge -> 1}];
 check["a QED coupling override does not require repeating the model's electron mass",
-  mpAllPass[mpQEDPartial] && (EE /. mpQEDPartial["ParameterRules"]) === 1 &&
-    (Me /. mpQEDPartial["ParameterRules"]) ===
-      (Me /. mpQEDDefault["ParameterRules"])];
+  mpAllPass[mpQEDPartial] && (prElectricCharge /. mpQEDPartial["ParameterRules"]) === 1 &&
+    (prElectronMass /. mpQEDPartial["ParameterRules"]) ===
+      (prElectronMass /. mpQEDDefault["ParameterRules"])];
 mpXi = Spinor["Xi", "Angle", 71];
 mpXiBracket = (SpinorChain[mpXi, Spinor["Spin", "Angle", 2]] *
     SpinorChain[Spinor["Spin", "Angle", 1], Spinor["Helicity", "Angle", 3]] -

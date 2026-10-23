@@ -1,6 +1,6 @@
-# CalcHEP Standard Model
+# CalcHEP Models
 
-The four `.mdl` files are unchanged copies of stock model 1, named `SM`, from
+The four `*1.mdl` files are unchanged copies of stock model 1, named `SM`, from
 `/Users/neil/code/CalcHEP/calchep_3.9.0/models/`. They contain particles,
 Lagrangian vertices, parameters and dependent functions. Models 2 and 3 in
 that installation add effective Higgs interactions and are not this baseline.
@@ -11,6 +11,18 @@ tables. `ReadModel` recognizes `lgrng1.mdl` and returns
 the usual positional organization, but the explicit head distinguishes
 Feynman rules from constructive amplitudes. Existing `amps*.mdl` models still
 return the original four-element list.
+
+The four `*2.mdl` files define a separate, minimal QED benchmark containing a
+massive electron, its antiparticle, a photon and the electron-photon vertex.
+Its defaults are `Me = 0.0005` and `EE = 0.31333`. This is pure QED, not a
+mass-patched Standard Model with missing Higgs couplings. Load it with
+`ReadModel[FileNameJoin[{hepcatDirectory, "model_feynman"}], 2]`.
+
+Parameters and derived functions belong to the returned model. Importing does
+not create global symbols or assign numerical values to names such as `EE`.
+Use `ModelParameter[model, "EE"]` to obtain its symbolic reference and
+`ModelParameterRules[model]` for locally resolved numerical rules. Independent
+models can have the same parameter names with different values.
 
 ## Use
 

@@ -34,9 +34,9 @@ check["all preparation and completion stages enable progress reporting by defaul
     ("ProgressReporting" /. Options[#]) === True &]];
 
 (* Preparation retains diagram-local assumptions and off-shell denominators. *)
-acRules = {Mass[1] -> Me, Mass[2] -> Me, Mass[3] -> 0, Mass[4] -> 0,
-  Mass[Multiparticle[1, 3]] -> Me};
-acDen = PropDen[Mom[Multiparticle[1, 3]], Me];
+acRules = {Mass[1] -> prElectronMass, Mass[2] -> prElectronMass, Mass[3] -> 0, Mass[4] -> 0,
+  Mass[Multiparticle[1, 3]] -> prElectronMass};
+acDen = PropDen[Mom[Multiparticle[1, 3]], prElectronMass];
 acDiracPair = {acRules, SpinorChain[Spinor["Spin", "Angle", 1], Mom[1],
   Spinor["Spin", "Square", 2]]/acDen};
 acSavedPair = acDiracPair; acSavedModel = prModel;
@@ -46,7 +46,7 @@ acPrepared = PrepareAmplitudes[{acDiracPair}, prModel,
   "ProgressFunction" -> (AppendTo[acPrepEvents, #] &), "Output" -> "Details"];
 check["preparation reduces an actual external Dirac chain before identity search",
   acPrepared["Status"] === "PREPARED" && acPrepared["Amplitude"] ===
-    Me SpinorChain[Spinor["Spin", "Square", 1], Spinor["Spin", "Square", 2]]/acDen];
+    prElectronMass SpinorChain[Spinor["Spin", "Square", 1], Spinor["Spin", "Square", 2]]/acDen];
 check["preparation retains original amplitudes and the supplied model",
   acPrepared["OriginalAmplitudes"] === {acSavedPair} &&
     acDiracPair === acSavedPair && prModel === acSavedModel];
@@ -106,9 +106,9 @@ acReferenceRatio[kind_, id_, leg_, momentum_] := SpinorChain[
   Spinor["Xi", kind, id], Mom[momentum],
   Spinor["Helicity", If[kind === "Angle", "Square", "Angle"], leg]]/
     SpinorChain[Spinor["Xi", kind, id], Spinor["Helicity", kind, leg]];
-acReferenceRules = {Mass[1] -> Me, Mass[2] -> Me,
+acReferenceRules = {Mass[1] -> prElectronMass, Mass[2] -> prElectronMass,
   Mass[3] -> 0, Mass[4] -> 0, Mass[5] -> 0,
-  Mass[Multiparticle[1, 3]] -> Me};
+  Mass[Multiparticle[1, 3]] -> prElectronMass};
 acReferenceRaw = acReferenceRatio["Angle", 10, 5, 1] *
   acReferenceRatio["Angle", 11, 3, 1] acReferenceRatio["Square", 12, 4, 2]/acDen;
 acReferencePair = {acReferenceRules, acReferenceRaw};
@@ -173,10 +173,10 @@ check["a massless bracket belonging to a certified physical channel is not calle
 (* Physical reference choices are certified by other supplied diagram cuts. *)
 acReferenceExternal = Take[acRules, 4];
 acReferencePhysicalPairs = {
-  {Append[acReferenceExternal, Mass[Multiparticle[1, 3]] -> Me],
+  {Append[acReferenceExternal, Mass[Multiparticle[1, 3]] -> prElectronMass],
     acReferenceRatio["Angle", 31, 3, 1]/acDen},
-  {Append[acReferenceExternal, Mass[Multiparticle[1, 4]] -> Me],
-    acReferenceRatio["Square", 32, 4, 1]/PropDen[Mom[Multiparticle[1, 4]], Me]}};
+  {Append[acReferenceExternal, Mass[Multiparticle[1, 4]] -> prElectronMass],
+    acReferenceRatio["Square", 32, 4, 1]/PropDen[Mom[Multiparticle[1, 4]], prElectronMass]}};
 acReferencePhysical = acReferencePrepare[acReferencePhysicalPairs, "AllPhysical"];
 acPhysicalAssignments = Flatten[Lookup[
   Lookup[acReferencePhysical["DiagramReports"], "ReferenceSpinors"], "Assignments"], 1];
@@ -196,21 +196,21 @@ check["only the newly inserted auxiliary self-sandwiches become certified physic
   And @@ MapThread[Function[{pair, auxiliary},
       !FreeQ[Last[pair], auxiliary]],
     {acReferencePhysical["PreparedAmplitudes"],
-      {PropDen[Mom[Multiparticle[2, 3]], Me], PropDen[Mom[Multiparticle[2, 4]], Me]}}] &&
+      {PropDen[Mom[Multiparticle[2, 3]], prElectronMass], PropDen[Mom[Multiparticle[2, 4]], prElectronMass]}}] &&
     And @@ MapThread[Function[{pair, originalDenominator}, !FreeQ[Last[pair], originalDenominator]],
       {acReferencePhysical["PreparedAmplitudes"],
-        {acDen, PropDen[Mom[Multiparticle[1, 4]], Me]}}]];
+        {acDen, PropDen[Mom[Multiparticle[1, 4]], prElectronMass]}}]];
 acReferenceUncertified = acReferencePrepare[{First[acReferencePhysicalPairs]}, "AllPhysical"];
 check["unsupported physical reference choices remain partial instead of inventing a pole",
   acReferenceUncertified["Status"] === "PARTIAL" &&
     First[acReferenceUncertified["DiagramReports"]]["ReferenceSpinors"]["Status"] === "UNRESOLVED"];
-acReferenceSingleExternal = Join[Thread[(Mass /@ Range[4]) -> ConstantArray[Me, 4]],
+acReferenceSingleExternal = Join[Thread[(Mass /@ Range[4]) -> ConstantArray[prElectronMass, 4]],
   {Mass[5] -> 0}];
 acReferenceSinglePairs = {
-  {Append[acReferenceSingleExternal, Mass[Multiparticle[1, 5]] -> Me],
-    acReferenceRatio["Angle", 41, 5, 3]/PropDen[Mom[Multiparticle[1, 5]], Me]},
-  {Append[acReferenceSingleExternal, Mass[Multiparticle[2, 5]] -> Me],
-    acReferenceRatio["Square", 42, 5, 4]/PropDen[Mom[Multiparticle[2, 5]], Me]}};
+  {Append[acReferenceSingleExternal, Mass[Multiparticle[1, 5]] -> prElectronMass],
+    acReferenceRatio["Angle", 41, 5, 3]/PropDen[Mom[Multiparticle[1, 5]], prElectronMass]},
+  {Append[acReferenceSingleExternal, Mass[Multiparticle[2, 5]] -> prElectronMass],
+    acReferenceRatio["Square", 42, 5, 4]/PropDen[Mom[Multiparticle[2, 5]], prElectronMass]}};
 acReferenceSingle = acReferencePrepare[acReferenceSinglePairs, Automatic];
 check["Automatic falls back to certified physical references when only one external leg is massless",
   acReferenceSingle["Status"] === "PREPARED" &&
@@ -297,13 +297,13 @@ check["different Xi labels and chiralities for one photon share one reference ch
     acReferenceSearch[acOptimizedSharedLeg]["AvailableChoices"] === 2];
 
 acOptimizedPhysicalExternal = Join[
-  Thread[(Mass /@ Range[4]) -> ConstantArray[Me, 4]], {Mass[5] -> 0}];
-acOptimizedPhysicalDen = PropDen[Mom[Multiparticle[1, 5]], Me];
+  Thread[(Mass /@ Range[4]) -> ConstantArray[prElectronMass, 4]], {Mass[5] -> 0}];
+acOptimizedPhysicalDen = PropDen[Mom[Multiparticle[1, 5]], prElectronMass];
 acOptimizedPhysicalPair = {
-  Append[acOptimizedPhysicalExternal, Mass[Multiparticle[1, 5]] -> Me],
+  Append[acOptimizedPhysicalExternal, Mass[Multiparticle[1, 5]] -> prElectronMass],
   (1 + acReferenceRatio["Angle", 62, 5, 3])/acOptimizedPhysicalDen};
 acOptimizedPhysicalPairs = Join[{acOptimizedPhysicalPair}, Table[{
-  Append[acOptimizedPhysicalExternal, Mass[Multiparticle[leg, 5]] -> Me], 1}, {leg, {2, 3}}]];
+  Append[acOptimizedPhysicalExternal, Mass[Multiparticle[leg, 5]] -> prElectronMass], 1}, {leg, {2, 3}}]];
 acOptimizedPhysical = acReferencePrepare[acOptimizedPhysicalPairs, "AllPhysical"];
 acOptimizedPhysicalLimited = acReferencePrepare[acOptimizedPhysicalPairs, "AllPhysical",
   "MaxReferenceChoices" -> 1];
@@ -325,7 +325,7 @@ acOptimizedMixedPair = {acReferenceRules,
   (1 + acReferenceWeightA acOptimizedSpuriousRatio +
     acReferenceWeightB acOptimizedMixedRatio)/acDen};
 acOptimizedMixedPairs = Join[{acOptimizedMixedPair}, Table[{
-  Append[Take[acReferenceRules, 5], Mass[Multiparticle[2, leg]] -> Me], 1}, {leg, {3, 4}}]];
+  Append[Take[acReferenceRules, 5], Mass[Multiparticle[2, leg]] -> prElectronMass], 1}, {leg, {3, 4}}]];
 acOptimizedMixed = acReferencePrepare[acOptimizedMixedPairs, "Mixed"];
 acOptimizedMixedSpurious = acReferencePrepare[acOptimizedMixedPairs, "AllSpurious"];
 acOptimizedMixedPhysical = acReferencePrepare[acOptimizedMixedPairs, "AllPhysical"];
@@ -347,7 +347,7 @@ check["Mixed also permits an all-physical winner when no spurious partner exists
     First[acReferenceAssignments[acOptimizedAllPhysicalMixed]]["Mode"] === "AllPhysical"];
 acOptimizedPhysicalCompetitionPairs = {
   {acReferenceRules, (1 + acReferenceRatio["Angle", 66, 3, 2])/acDen},
-  {Append[Take[acReferenceRules, 5], Mass[Multiparticle[2, 3]] -> Me], 1}};
+  {Append[Take[acReferenceRules, 5], Mass[Multiparticle[2, 3]] -> prElectronMass], 1}};
 acOptimizedPhysicalCompetition = acReferencePrepare[acOptimizedPhysicalCompetitionPairs, "Mixed"];
 check["Mixed can prefer an all-physical winner even when spurious partners are available",
   First[acOptimizedPhysicalCompetition["DiagramReports"]]["PreparedExpression"] === 1/acDen &&
@@ -476,10 +476,10 @@ check["external rule order is immaterial while different diagrams retain their d
     First /@ acReorderedLocalPrepared === First /@ acReorderedLocalPairs];
 
 (* Declared pair masses determine scalar products without a heuristic search. *)
-acDotExternal = {Mass[1] -> Me, Mass[2] -> Me,
+acDotExternal = {Mass[1] -> prElectronMass, Mass[2] -> prElectronMass,
   Mass[3] -> 0, Mass[4] -> 0, Mass[5] -> 0};
-acDotRules = Append[acDotExternal, Mass[Multiparticle[2, 5]] -> Me];
-acDotDen = PropDen[Mom[Multiparticle[2, 5]], Me];
+acDotRules = Append[acDotExternal, Mass[Multiparticle[2, 5]] -> prElectronMass];
+acDotDen = PropDen[Mom[Multiparticle[2, 5]], prElectronMass];
 acDotPair = {acDotRules, (3 + MomProd[2, 5])/acDotDen};
 acDotPrepared = PrepareAmplitudes[{acDotPair}, prModel,
   "MaxSteps" -> 0, "ProgressReporting" -> False, "ReturnDetails" -> True];
@@ -495,28 +495,28 @@ acDotReverse = PrepareAmplitudes[{{acDotRules,
 check["the reversed scalar-product ordering uses the same known pair mass",
   Last[First[acDotReverse]] === 3/acDotDen];
 acDotReverseMass = PrepareAmplitudes[{{
-    Append[acDotExternal, Mass[Multiparticle[5, 2]] -> Me], Last[acDotPair]}}, prModel,
+    Append[acDotExternal, Mass[Multiparticle[5, 2]] -> prElectronMass], Last[acDotPair]}}, prModel,
   "MaxSteps" -> 0, "ProgressReporting" -> False];
 check["reversed particle order in a declared pair mass is recognized",
   Last[First[acDotReverseMass]] === 3/acDotDen];
 acDotLocalPairs = Table[{
     Append[acDotExternal, Mass[Multiparticle[2, 5]] -> mass],
     (3 + MomProd[2, 5])/PropDen[Mom[Multiparticle[2, 5]], mass]},
-  {mass, {Me, 2 Me}}];
+  {mass, {prElectronMass, 2 prElectronMass}}];
 acDotLocal = PrepareAmplitudes[acDotLocalPairs, prModel,
   "MaxSteps" -> 0, "ProgressReporting" -> False];
 check["identical scalar products use only each diagram's own symbolic internal mass",
   And @@ MapThread[acZero[#1 - #2] &,
     {Last /@ acDotLocal, {3/acDotDen,
-      (3 + 3 Me^2/2)/PropDen[Mom[Multiparticle[2, 5]], 2 Me]}}]];
+      (3 + 3 prElectronMass^2/2)/PropDen[Mom[Multiparticle[2, 5]], 2 prElectronMass]}}]];
 acDotUnknownPair = {acDotRules, (3 + MomProd[2, 4])/acDotDen};
 acDotUnknown = PrepareAmplitudes[{acDotUnknownPair}, prModel,
   "MaxSteps" -> 0, "ProgressReporting" -> False];
 check["unknown pair masses are neither assumed nor introduced into the expression",
   acZero[Last[First[acDotUnknown]] - Last[acDotUnknownPair]] &&
     FreeQ[Last[First[acDotUnknown]], Mass[_Multiparticle]]];
-acDotComplementRules = Append[acDotExternal, Mass[Multiparticle[1, 3, 4]] -> Me];
-acDotComplementDen = PropDen[Mom[Multiparticle[1, 3, 4]], Me];
+acDotComplementRules = Append[acDotExternal, Mass[Multiparticle[1, 3, 4]] -> prElectronMass];
+acDotComplementDen = PropDen[Mom[Multiparticle[1, 3, 4]], prElectronMass];
 acDotComplementPair = {acDotComplementRules, (3 + MomProd[2, 5])/acDotComplementDen};
 acDotComplement = PrepareAmplitudes[{acDotComplementPair}, prModel,
   "MaxSteps" -> 0, "ProgressReporting" -> False];
@@ -527,9 +527,9 @@ acDotComplementOff = PrepareAmplitudes[{acDotComplementPair}, prModel,
 check["disabling momentum conservation disables inferred complementary pair masses",
   acZero[Last[First[acDotComplementOff]] - Last[acDotComplementPair]]];
 acDotTripleRules = Append[Append[acDotExternal, Mass[6] -> 0],
-  Mass[Multiparticle[1, 2, 3]] -> Me];
+  Mass[Multiparticle[1, 2, 3]] -> prElectronMass];
 acDotTriplePair = {acDotTripleRules,
-  (3 + MomProd[2, 5])/PropDen[Mom[Multiparticle[1, 2, 3]], Me]};
+  (3 + MomProd[2, 5])/PropDen[Mom[Multiparticle[1, 2, 3]], prElectronMass]};
 acDotTriple = PrepareAmplitudes[{acDotTriplePair}, prModel,
   "MaxSteps" -> 0, "ProgressReporting" -> False];
 check["a three-particle cut and three-particle complement do not determine an individual pair",
@@ -605,21 +605,21 @@ Do[
     prModel, "ReferenceSpinors" -> None, "InternalOnShell" -> False, "MaxSteps" -> 0,
     "ProgressReporting" -> False];
   check["external Dirac identities reduce a reciprocal chain " <> acWholeKind,
-    Last[First[acWholeDiracPrepared]] === -1/(Me acDen acWholeDiracBracket)],
+    Last[First[acWholeDiracPrepared]] === -1/(prElectronMass acDen acWholeDiracBracket)],
   {acWholeKind, {"Angle", "Square"}}];
 acWholeTracePrepared = PrepareAmplitudes[{{acRules,
     1/(acDen SpinorTrace[Mom[1], Mom[1]])}}, prModel,
   "ReferenceSpinors" -> None, "InternalOnShell" -> False, "MaxSteps" -> 0,
   "ProgressReporting" -> False];
 check["ordinary trace identities reduce a reciprocal trace without touching its physical pole",
-  Last[First[acWholeTracePrepared]] === 1/(2 Me^2 acDen)];
+  Last[First[acWholeTracePrepared]] === 1/(2 prElectronMass^2 acDen)];
 acWholeShellDirac = SpinorChain[Spinor["Spin", "Square", 1], Mom[2],
   Spinor["Spin", "Angle", 2]];
 acWholeShellPrepared = PrepareAmplitudes[{{acDotRules,
     (3 + MomProd[2, 5])/(acDotDen (5 + MomProd[2, 5]) acWholeShellDirac)}}, prModel,
   "ReferenceSpinors" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False];
 check["ordinary denominator spinor reduction does not apply an internal scalar shell there",
-  Last[First[acWholeShellPrepared]] === -3/(Me acDotDen (5 + MomProd[2, 5])
+  Last[First[acWholeShellPrepared]] === -3/(prElectronMass acDotDen (5 + MomProd[2, 5])
     SpinorChain[Spinor["Spin", "Square", 1], Spinor["Spin", "Square", 2]])];
 acKnownNumeratorDotCount[pair_] := Module[{declared, external, known, terms},
   external = Sort[Cases[First[pair], HoldPattern[Mass[i_Integer] -> _] :> i]];
@@ -788,13 +788,13 @@ check["channel rows are returned directly by default rather than converted to di
         acChannelPrepared["Amplitude"]];
 acExistingPoleXi = Spinor["Xi", "Angle", 5];
 acExistingPolePhoton = Spinor["Helicity", "Angle", 5];
-acExistingPole13 = PropDen[Mom[Multiparticle[1, 3]], Me];
-acExistingPole25 = PropDen[Mom[Multiparticle[2, 5]], Me];
+acExistingPole13 = PropDen[Mom[Multiparticle[1, 3]], prElectronMass];
+acExistingPole25 = PropDen[Mom[Multiparticle[2, 5]], prElectronMass];
 acExistingPoleSource = SpinorChain[acExistingPoleXi, Spinor["Spin", "Angle", 1]]/
   (SpinorChain[acExistingPoleXi, acExistingPolePhoton] acExistingPole13 acExistingPole25);
 acExistingPoleRows = {
-  {Me, Me, 0, 0, 0, Multiparticle[1, 3], Me, acExistingPoleSource},
-  {Me, Me, 0, 0, 0, Multiparticle[2, 5], Me, 0}};
+  {prElectronMass, prElectronMass, 0, 0, 0, Multiparticle[1, 3], prElectronMass, acExistingPoleSource},
+  {prElectronMass, prElectronMass, 0, 0, 0, Multiparticle[2, 5], prElectronMass, 0}};
 acExistingPolePrepared = PrepareAmplitudes[acExistingPoleRows, prModel,
   "ReferenceSpinors" -> "AllPhysical", "MaxSteps" -> 0,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
@@ -813,7 +813,7 @@ acChannelContourPrepared = PrepareAmplitudes[{acChannelContourRow}, acMasslessSc
 check["preparation does not strip the channel contour factor or add a sewing sign",
   acZero[ConstructiveDiagrams`z Last[First[acChannelContourPrepared]] - acChannelExpected] &&
     !FreeQ[Last[First[acChannelContourPrepared]], ConstructiveDiagrams`z]];
-acDiracChannelRow = {Me, Me, 0, 0, Multiparticle[1, 3], Me, Last[acDiracPair]};
+acDiracChannelRow = {prElectronMass, prElectronMass, 0, 0, Multiparticle[1, 3], prElectronMass, Last[acDiracPair]};
 acDiracChannelPrepared = PrepareAmplitudes[{acDiracChannelRow}, prModel,
   "ReferenceSpinors" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False];
 check["compact channels also receive ordinary external Dirac identities",
@@ -1156,7 +1156,7 @@ check["a forbidden physical pole appearing only in an explicit correction basis 
 (* Known QED trees and one genuinely missing pole contribution. *)
 Print["Checking existing QED amplitudes and a missing physical pole."];
 acQEDFour = acFactor[prFourPointAmplitude, prFourPointChannels, prModel,
-  "ParameterRules" -> {Me -> 1, EE -> 1}];
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}];
 check["an already correct physical QED four-point amplitude is not changed",
   acQEDFour["Status"] === "COMPLETE" && acQEDFour["Correction"] === 0 &&
     acZero[acQEDFour["Amplitude"] - prFourPointAmplitude]];
@@ -1166,22 +1166,22 @@ SetOptions[CheckPhysicalResidues,
   "KinematicMap" -> acHostileMap, "KinematicKind" -> "Symbolic",
   "Tolerance" -> 1000000];
 acIsolatedFactor = acFactor[prFourPointAmplitude, prFourPointChannels, prModel,
-  "ParameterRules" -> {Me -> 1, EE -> 1}, "Samples" -> 1, "ValidationSamples" -> 1];
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "Samples" -> 1, "ValidationSamples" -> 1];
 SetOptions[CheckPhysicalResidues, Sequence @@ acSavedCheckerOptions];
 check["completion validation does not inherit custom checker maps or kinematic modes",
   acCustomMapUses === 0 && acIsolatedFactor["Status"] === "COMPLETE" &&
     acPhysicalPass[acIsolatedFactor["ValidationReport"]]];
 acQEDFive = acFactor[prH, prChannels, prFixtureModel,
-  "ParameterRules" -> {Me -> 1, EE -> 1}];
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}];
 check["an already correct physical QED five-point amplitude is not changed",
   acQEDFive["Status"] === "COMPLETE" && acQEDFive["Correction"] === 0 &&
     acZero[acQEDFive["Amplitude"] - prH]];
 acQEDMissingPole = First[prFourPointTargets]["StateSum"]/
   First[prFourPointTargets]["Propagator"];
 acQEDRepair = acFactor[prFourPointAmplitude - acQEDMissingPole,
-  prFourPointChannels, prModel, "ParameterRules" -> {Me -> 1, EE -> 1}];
+  prFourPointChannels, prModel, "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}];
 acQEDRepairHeldOut = acCheck[acQEDRepair["Amplitude"], prFourPointChannels, prModel,
-  {Me -> 2, EE -> 3}, 7919];
+  {prElectronMass -> 2, prElectricCharge -> 3}, 7919];
 check["a missing QED pole is repaired using the supplied channels rather than a known-answer basis",
   acQEDRepair["Status"] === "COMPLETE" && acPhysicalPass[acQEDRepairHeldOut]];
 check["QED fitting and held-out validation retain separate sample information",
@@ -1209,16 +1209,16 @@ acQEDPipelinePrepared = PrepareAmplitudes[acQEDCommonPairs, prModel,
 acQEDPipelinePairs = PrepareAmplitudes[acQEDCommonPairs, prModel,
   "ReferenceSpinors" -> "Xi", "ProgressReporting" -> False];
 acQEDPlainFactor = acFactor[acQEDPipelinePairs, prFourPointChannels, prModel,
-  "ParameterRules" -> {Me -> 1, EE -> 1}];
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}];
 check["ordinary prepared pairs feed factorization completion without extracting report fields",
   ListQ[acQEDPipelinePairs] && AllTrue[acQEDPipelinePairs, MatchQ[#, {_List, _}] &] &&
     acZero[Total[Last /@ acQEDPipelinePairs] - acQEDPipelinePrepared["Amplitude"]] &&
     acQEDPlainFactor["Status"] === "COMPLETE" &&
     acPhysicalPass[acQEDPlainFactor["ValidationReport"]]];
 acQEDPipelineFactor = acFactor[acQEDPipelinePrepared, prFourPointChannels, prModel,
-  "ParameterRules" -> {Me -> 1, EE -> 1}];
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}];
 acQEDPipelineComplete = acEnergy[acQEDPipelineFactor, prFourPointChannels, prModel,
-  "ParameterRules" -> {Me -> 1, EE -> 1}];
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}];
 check["the full pipeline prepares actual QED diagramAmplitudes output",
   acQEDPipelinePrepared["Status"] === "PREPARED" &&
     Length[acQEDPipelinePrepared["PreparedAmplitudes"]] === 2];
@@ -1268,7 +1268,7 @@ check["additional reference continuations are independently certified on their o
         AllTrue[#["Verification"]["Samples"], #["ResidueDifference"] === 0 &] &]];
 acQEDFiveFinalCheck = CheckPhysicalResidues[acQEDFiveCompleted["Amplitude"],
   prChannels, prFixtureModel, "Samples" -> 3, "HighEnergySamples" -> 3,
-  "RandomSeed" -> 11617, "ParameterRules" -> {Me -> 2, EE -> 3},
+  "RandomSeed" -> 11617, "ParameterRules" -> {prElectronMass -> 2, prElectricCharge -> 3},
   "Output" -> "Details", "TimeConstraint" -> 60];
 check["the generated five-point result passes every independent final check at new parameters",
   acAllPass[acQEDFiveFinalCheck] &&
@@ -1298,10 +1298,10 @@ check["Mixed prepares all six real QED diagrams without changing their mass assu
 acQEDMixedCompleted = acFactor[acQEDMixedPrepared, prChannels, prFixtureModel,
   "Samples" -> 1, "ValidationSamples" -> 1,
   "MaxCorrectionTerms" -> 128, "TimeConstraint" -> 180,
-  "ParameterRules" -> {Me -> 1, EE -> 1}];
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}];
 acQEDMixedFinalCheck = CheckPhysicalResidues[acQEDMixedCompleted["Amplitude"],
   prChannels, prFixtureModel, "Samples" -> 3, "HighEnergySamples" -> 2,
-  "RandomSeed" -> 11617, "ParameterRules" -> {Me -> 2, EE -> 3},
+  "RandomSeed" -> 11617, "ParameterRules" -> {prElectronMass -> 2, prElectricCharge -> 3},
   "Output" -> "Details", "TimeConstraint" -> 60];
 check["the Mixed pipeline completes and passes all final checks at independent parameters",
   acQEDMixedCompleted["Status"] === "COMPLETE" &&
@@ -1328,7 +1328,7 @@ acMixedHelicitySaved = acMixedHelicityPrepared;
 acMixedHelicityCompleted = acFactor[acMixedHelicityPrepared, acMixedHelicityChannels,
   prFixtureModel, "Samples" -> 1, "ValidationSamples" -> 1,
   "MaxCorrectionTerms" -> 128, "TimeConstraint" -> 180,
-  "ParameterRules" -> {Me -> 1, EE -> 1}];
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}];
 check["mixed helicities complete automatically with old cyclic choices and scalar momentum squares",
   acMixedHelicityCompleted["Status"] === "COMPLETE" &&
     acMixedHelicityCompleted["CorrectionSpace"] === "ReducedChannels" &&
@@ -1339,7 +1339,7 @@ check["whole-channel reductions are checked before their correction terms are ad
   With[{rows = acMixedHelicityCompleted["ReducedChannelSpace"]["Verification"]},
     rows =!= {} && AllTrue[rows, #["Verification"]["Status"] === "PASS" &]]];
 acMixedHelicityFinalCheck = CheckPhysicalResidues[acMixedHelicityCompleted["Amplitude"],
-  acMixedHelicityChannels, prFixtureModel, "ParameterRules" -> {Me -> 2, EE -> 3},
+  acMixedHelicityChannels, prFixtureModel, "ParameterRules" -> {prElectronMass -> 2, prElectricCharge -> 3},
   "Samples" -> 3, "HighEnergySamples" -> 2, "RandomSeed" -> 11617,
   "TimeConstraint" -> 90, "Output" -> "Details"];
 check["mixed helicities pass every final check at independent masses, coupling and momenta",
@@ -1387,7 +1387,7 @@ check["original channel alternatives are certified before expanding the reduced 
       #["Verification"]["Status"] === "PASS" &] &&
     Length[acPreparedChannelCompletion["CorrectionBasis"]] <= 128];
 acPreparedChannelHeldOut = acCheck[acPreparedChannelCompletion["Amplitude"],
-  prChannels, prFixtureModel, {Me -> 2, EE -> 3}, 11617];
+  prChannels, prFixtureModel, {prElectronMass -> 2, prElectricCharge -> 3}, 11617];
 check["completion using prepared channels also passes the original channels at independent parameters",
   acPhysicalPass[acPreparedChannelHeldOut]];
 acMixedPreparedChannels = PrepareAmplitudes[acMixedHelicityChannels, prFixtureModel,
@@ -1440,7 +1440,7 @@ acContactNormalized = ConstructiveDiagrams`Private`completionNormalizeInput[
   acMixedHelicityChannels, prFixtureModel];
 acContactCompact = ConstructiveDiagrams`Private`completionReducedChannelBasis[
   acContactNormalized, acMixedHelicityCompleted["ChannelContinuations"], 128,
-  {Me -> 1, EE -> 1}, 1729];
+  {prElectronMass -> 1, prElectricCharge -> 1}, 1729];
 check["compact channel construction does not include a known pole-free input as a cancellation direction",
   AssociationQ[acContactCompact] && FreeQ[acContactCompact["Basis"], acPreservedContact]];
 
@@ -1450,7 +1450,7 @@ acCompactFallback = Block[
   acFactor[prH/2, prChannels, prFixtureModel,
     "Samples" -> 2, "ValidationSamples" -> 1,
     "MaxCorrectionTerms" -> 128, "TimeConstraint" -> 90,
-    "ParameterRules" -> {Me -> 1, EE -> 1}]];
+    "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}]];
 check["an insufficient compact strategy falls back to the retained literal channel terms",
   acCompactFallback["Status"] === "COMPLETE" &&
     acCompactFallback["CorrectionSpace"] === "LiteralTerms" &&
@@ -1473,7 +1473,7 @@ check["compact completion uses verified channel structures rather than silently 
 acQEDDistinct = prPreparedDiagramSum[DiagramAmplitudeRecords[
   CreateDiagrams[{"e", "E", "A.+", "A.+"}, prModel]]];
 acQEDDistinctCompletion = acEnergy[acQEDDistinct, prFourPointChannels, prModel,
-  "ParameterRules" -> {Me -> 1, EE -> 1}, "Samples" -> 1,
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "Samples" -> 1,
   "ValidationSamples" -> 1];
 check["uniquely fixed zero corrections retain a raw diagram's failed reference report",
   acQEDDistinctCompletion["Status"] === "UNRESOLVED" &&
@@ -1481,7 +1481,7 @@ check["uniquely fixed zero corrections retain a raw diagram's failed reference r
     acQEDDistinctCompletion["PhysicalLinearSystem"]["FreeParameters"] === {} &&
     acQEDDistinctCompletion["BeforeReport"]["ReferenceCheck"]["Status"] === "FAIL"];
 acQEDNormalization = acEnergy[prFourPointAmplitude/2, prFourPointChannels, prModel,
-  "CorrectionBasis" -> {prFourPointAmplitude}, "ParameterRules" -> {Me -> 1, EE -> 1}];
+  "CorrectionBasis" -> {prFourPointAmplitude}, "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}];
 check["a uniquely fixed nonzero correction survives all remaining zero-unknown checks",
   acQEDNormalization["Status"] === "COMPLETE" &&
     acZero[acQEDNormalization["Amplitude"] - prFourPointAmplitude] &&
@@ -1489,10 +1489,10 @@ check["a uniquely fixed nonzero correction survives all remaining zero-unknown c
     acAllPass[acQEDNormalization["AfterReport"]]];
 acCompletionEvents = {};
 acLiveFactor = acFactor[prFourPointAmplitude, prFourPointChannels, prModel,
-  "ParameterRules" -> {Me -> 1, EE -> 1}, "Samples" -> 1, "ValidationSamples" -> 1,
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "Samples" -> 1, "ValidationSamples" -> 1,
   "ProgressReporting" -> True, "ProgressFunction" -> (AppendTo[acCompletionEvents, #] &)];
 acLiveEnergy = acEnergy[acLiveFactor, prFourPointChannels, prModel,
-  "ParameterRules" -> {Me -> 1, EE -> 1}, "Samples" -> 1, "ValidationSamples" -> 1,
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "Samples" -> 1, "ValidationSamples" -> 1,
   "ProgressReporting" -> True, "ProgressFunction" -> (AppendTo[acCompletionEvents, #] &)];
 check["both completion stages expose structured progress callbacks",
   acLiveFactor["Status"] === "COMPLETE" && acLiveEnergy["Status"] === "COMPLETE" &&
@@ -1500,7 +1500,7 @@ check["both completion stages expose structured progress callbacks",
     AnyTrue[acCompletionEvents, StringContainsQ[#["Stage"], "factorization", IgnoreCase -> True] &] &&
     MemberQ[Lookup[acCompletionEvents, "Stage"], "HighEnergy"]];
 acDefaultFactor = CompleteFactorization[prFourPointAmplitude, prFourPointChannels, prModel,
-  "ParameterRules" -> {Me -> 1, EE -> 1}, "Samples" -> 1,
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "Samples" -> 1,
   "ValidationSamples" -> 1, "ProgressReporting" -> False];
 check["the default successful factorization output is an ordinary expression",
   !AssociationQ[acDefaultFactor] && !FailureQ[acDefaultFactor] &&
@@ -1509,13 +1509,13 @@ check["factorization diagnostics are disabled by default without changing expres
   ("ReturnDetails" /. Options[CompleteFactorization]) === False &&
     ("Output" /. Options[CompleteFactorization]) === "Expression"];
 acFactorFalse = CompleteFactorization[prFourPointAmplitude, prFourPointChannels, prModel,
-  "ParameterRules" -> {Me -> 1, EE -> 1}, "Samples" -> 1, "ValidationSamples" -> 1,
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "Samples" -> 1, "ValidationSamples" -> 1,
   "ProgressReporting" -> False, "ReturnDetails" -> False];
 check["ReturnDetails False keeps a successfully validated factorization result plain",
   !AssociationQ[acFactorFalse] && !FailureQ[acFactorFalse] &&
     acZero[acFactorFalse - acDefaultFactor]];
 acFactorDetails = CompleteFactorization[prFourPointAmplitude, prFourPointChannels, prModel,
-  "ParameterRules" -> {Me -> 1, EE -> 1}, "Samples" -> 1, "ValidationSamples" -> 1,
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "Samples" -> 1, "ValidationSamples" -> 1,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
 check["ReturnDetails True exposes the factorization candidate, constraints and validation history",
   AssociationQ[acFactorDetails] && acFactorDetails["Status"] === "COMPLETE" &&
@@ -1523,7 +1523,7 @@ check["ReturnDetails True exposes the factorization candidate, constraints and v
     ContainsAll[Keys[acFactorDetails], {"InitialReport", "ValidationReport", "ConstraintData"}]];
 acFactorDetailsOverride = CompleteFactorization[
   prFourPointAmplitude, prFourPointChannels, prModel,
-  "ParameterRules" -> {Me -> 1, EE -> 1}, "Samples" -> 1, "ValidationSamples" -> 1,
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "Samples" -> 1, "ValidationSamples" -> 1,
   "ProgressReporting" -> False, "ReturnDetails" -> True, "Output" -> "Expression"];
 check["ReturnDetails True overrides the legacy factorization Expression output choice",
   AssociationQ[acFactorDetailsOverride] && acFactorDetailsOverride["Status"] === "COMPLETE"];
@@ -1531,7 +1531,7 @@ check["legacy factorization Output Details remains supported",
   AssociationQ[acQEDFour] && acQEDFour["Status"] === "COMPLETE" &&
     acZero[acQEDFour["Amplitude"] - acDefaultFactor]];
 acPlainFinal = CompleteHighEnergy[acDefaultFactor, prFourPointChannels, prModel,
-  "ParameterRules" -> {Me -> 1, EE -> 1}, "Samples" -> 1,
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "Samples" -> 1,
   "ValidationSamples" -> 1, "ProgressReporting" -> False];
 check["a plain factorization result feeds final completion without extracting report fields",
   !AssociationQ[acPlainFinal] && !FailureQ[acPlainFinal] &&
@@ -1669,7 +1669,7 @@ acRightMassFit = acEnergy[{acMassiveExternal, 7 + acScalarMass^2 MomProd[1, 2]},
 check["a basis with the correct analytic mass dependence survives independent validation",
   acRightMassFit["Status"] === "COMPLETE" && acRightMassFit["Amplitude"] === 7];
 acQEDComplete = acEnergy[prH, prChannels, prFixtureModel,
-  "ParameterRules" -> {Me -> 1, EE -> 1}];
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}];
 check["a complete QED amplitude passes the final stage unchanged",
   acQEDComplete["Status"] === "COMPLETE" &&
     acZero[acQEDComplete["Amplitude"] - prH] && acQEDComplete["Correction"] === 0];
@@ -1683,13 +1683,19 @@ check["acceptable-growth contact freedom is honestly underdetermined",
   acUnder["Status"] === "UNDERDETERMINED" && acUnder["FreeParameters"] =!= {} &&
     acAllPass[acUnder["AfterReport"]]];
 Get[FileNameJoin[{root, "tests", "simplification-paths.wl"}]];
+acSMModel = ReadModel[FileNameJoin[{root, "models"}], 1];
+acSMReferenceParameters = {Mh -> ModelParameter[acSMModel, "Mh"],
+  MZ -> ModelParameter[acSMModel, "MZ"], MW -> ModelParameter[acSMModel, "MW"],
+  SW -> ModelParameter[acSMModel, "SW"], CW -> ModelParameter[acSMModel, "CW"],
+  EE -> ModelParameter[acSMModel, "EE"]};
 acSMRows = Select[simplificationReferences,
-  StringStartsQ[#["Name"], "SM-4-point-test.nb / h h -> Z Z / "] &];
+  StringStartsQ[#["Name"], "SM-4-point-test.nb / h h -> Z Z / "] &] /.
+    acSMReferenceParameters;
 acSMFull = Total[Lookup[acSMRows, "Amplitude"]];
 acSMContact = SelectFirst[acSMRows, StringEndsQ[#["Name"], "contact"] &]["Amplitude"];
-acSMModel = ReadModel[FileNameJoin[{root, "models"}], 1];
 acSMChannels = FactorizationAmplitudeChannels[{"h", "h", "Z", "Z"}, acSMModel];
-acSMRules = {Mh -> 3, MZ -> 1, MW -> 4/5, SW -> 3/5, CW -> 4/5, EE -> 1};
+acSMRules = {"Mh" -> 3, "MZ" -> 1, "MW" -> 4/5,
+  "SW" -> 3/5, "CW" -> 4/5, "EE" -> 1};
 acSMRepair = acEnergy[acSMFull - acSMContact, acSMChannels, acSMModel,
   "CorrectionBasis" -> {acSMContact}, "ParameterRules" -> acSMRules];
 check["the known SM contact is recovered by cancelling longitudinal high-energy growth",
@@ -1699,7 +1705,8 @@ check["the SM contact repair preserves all three independently known factorizati
   acAllPass[acSMRepair["AfterReport"]] &&
     acSMRepair["AfterReport"]["PhysicalSummary"] === <|"PASS" -> 3|>];
 acSMHeldOut = CheckPhysicalResidues[acSMRepair["Amplitude"], acSMChannels, acSMModel,
-  "ParameterRules" -> {Mh -> 5, MZ -> 2, MW -> 8/5, SW -> 3/5, CW -> 4/5, EE -> 2},
+  "ParameterRules" -> {"Mh" -> 5, "MZ" -> 2, "MW" -> 8/5,
+    "SW" -> 3/5, "CW" -> 4/5, "EE" -> 2},
   "Samples" -> 3, "HighEnergySamples" -> 3, "RandomSeed" -> 8191,
   "Output" -> "Details", "TimeConstraint" -> 30];
 check["the SM repair survives held-out masses, coupling, momenta and vector polarizations",
@@ -1716,13 +1723,13 @@ check["default incomplete high-energy completion returns an inspectable failure"
   FailureQ[acEnergyFailure] && acEnergyFailure[[1]] === "IncompleteAmplitude" &&
     KeyExistsQ[acEnergyFailure[[2]], "Report"]];
 acOld = acEnergy[prOldPermutation, prChannels, prFixtureModel,
-  "ParameterRules" -> {Me -> 1, EE -> 1}, "Samples" -> 1,
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "Samples" -> 1,
   "ValidationSamples" -> 1, "TimeConstraint" -> 20];
 check["the old permutation formula cannot be called complete while any check fails",
   If[acOld["Status"] === "COMPLETE", acAllPass[acOld["AfterReport"]],
     MemberQ[{"UNRESOLVED", "UNDERDETERMINED"}, acOld["Status"]]]];
 acEnergyTimed = acEnergy[prH, prChannels, prFixtureModel,
-  "ParameterRules" -> {Me -> 1, EE -> 1}, "TimeConstraint" -> 0.000001];
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "TimeConstraint" -> 0.000001];
 check["high-energy timeouts retain the supplied amplitude and mandatory diagnostic fields",
   acEnergyTimed["Status"] === "UNRESOLVED" &&
     acZero[acEnergyTimed["Amplitude"] - prH] &&

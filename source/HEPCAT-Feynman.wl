@@ -52,7 +52,8 @@ feynmanDot[a_, b_] := Which[
 ];
 
 feynmanIdentifierQ[name_String] := StringMatchQ[name, RegularExpression["[A-Za-z_][A-Za-z_0-9]*"]];
-feynmanParameterSymbol[name_String] := Symbol["ConstructiveDiagrams`" <> name];
+feynmanParameter[name_String, scope_String] :=
+  ConstructiveDiagrams`ModelParameter[name, scope, "Real"];
 
 (* Decimal and scientific notation are read exactly, without evaluating input text. *)
 feynmanNumber[text_String] := Module[{parts, mantissa, exponent = 0, point, digits, scale = 0, sign = 1},
@@ -67,10 +68,10 @@ feynmanNumber[text_String] := Module[{parts, mantissa, exponent = 0, point, digi
   FromDigits[digits] 10^(exponent - scale)
 ];
 
-parseFeynmanExpression[input_String] := Module[
+parseFeynmanExpression[input_String, scope_String : "StandaloneFeynmanExpression"] := Module[
   {text, tokens, joined, position = 1,
    tag = Unique["FeynmanParser"], peek, take, expect, fail, identifier, call,
-   primary, dot, power, unary, product, sum, result, scalarFunctions},
+   primary, dot, power, unary, product, sum, result, scalarFunctions, externalFunctions},
   fail[reason_] := Throw[Failure["InvalidFeynmanExpression",
     <|"Expression" -> input, "Reason" -> reason, "Token" -> position|>], tag];
   text = StringTrim[If[StringContainsQ[input, "%"],
@@ -78,9 +79,8 @@ parseFeynmanExpression[input_String] := Module[
   scalarFunctions = <|"sqrt" -> Sqrt, "sin" -> Sin, "cos" -> Cos,
     "tan" -> Tan, "asin" -> ArcSin, "acos" -> ArcCos, "atan" -> ArcTan,
     "exp" -> Exp, "log" -> Log, "abs" -> Abs, "fabs" -> Abs, "cabs" -> Abs,
-    "pow" -> Power, "initQCD5" -> feynmanParameterSymbol["initQCD5"],
-    "MbEff" -> feynmanParameterSymbol["MbEff"], "McEff" -> feynmanParameterSymbol["McEff"],
-    "MqEff" -> feynmanParameterSymbol["MqEff"]|>;
+    "pow" -> Power|>;
+  externalFunctions = <|"initQCD5" -> 4, "MbEff" -> 1, "McEff" -> 1, "MqEff" -> 2|>;
   tokens = StringCases[text, RegularExpression[
     "(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?|[A-Za-z_][A-Za-z_0-9]*|[+*/^(),.\\-]"]];
   joined = StringJoin[tokens];
@@ -98,7 +98,7 @@ parseFeynmanExpression[input_String] := Module[
     StringMatchQ[name, RegularExpression["m[1-9][0-9]*"]], LorentzIndex[FromDigits[StringDrop[name, 1]]],
     StringMatchQ[name, RegularExpression["M[1-9][0-9]*"]], LorentzIndex[FromDigits[StringDrop[name, 1]], 2],
     StringMatchQ[name, RegularExpression["[pmM][0-9]+"]], fail["Invalid momentum or Lorentz slot number."],
-    feynmanIdentifierQ[name], feynmanParameterSymbol[name],
+    feynmanIdentifierQ[name], feynmanParameter[name, scope],
     True, fail["Invalid identifier."]
   ];
   call[name_, arguments_] := Which[
@@ -107,9 +107,12 @@ parseFeynmanExpression[input_String] := Module[
     name === "G" && Length[arguments] === 1 && MatchQ[First[arguments], _Mom],
       DiracWord[DiracSlash[First[arguments]]],
     KeyExistsQ[scalarFunctions, name] &&
-        Length[arguments] === Switch[name, "initQCD5", 4, "MqEff" | "pow", 2, _, 1] &&
+        Length[arguments] === If[name === "pow", 2, 1] &&
         FreeQ[arguments, _DiracWord | _Mom | _LorentzIndex],
       Lookup[scalarFunctions, name] @@ arguments,
+    KeyExistsQ[externalFunctions, name] && Length[arguments] === externalFunctions[name] &&
+        FreeQ[arguments, _DiracWord | _Mom | _LorentzIndex],
+      ConstructiveDiagrams`ModelFunction[name, scope, arguments],
     True, fail["Unsupported function or function arguments: " <> name <> "."]
   ];
   primary[] := Module[{token = take[], value, arguments = {}},
@@ -171,13 +174,6 @@ feynmanTableRows[file_String] := Module[{stream, line, lineNumber = 0, rows = {}
   Close[stream]; rows
 ];
 
-feynmanRegisterParameter[name_String] := Module[{symbol = feynmanParameterSymbol[name]},
-  PlainText[symbol] = name; SPINAS[symbol] = name;
-  Unprotect[TeX]; TeX[symbol] = name; Protect[TeX];
-  Unprotect[Conjugate]; With[{s = symbol}, Conjugate[s] = s]; Protect[Conjugate];
-  symbol
-];
-
 feynmanVertexSlotsQ[row_List, particles_List] := Module[
   {names = DeleteCases[Drop[row, -2], ""], ranks, indices, momenta, terms, rank},
   rank[name_] := Module[{field},
@@ -205,20 +201,21 @@ feynmanVertexSlotsQ[row_List, particles_List] := Module[
 
 readFeynmanModel[dir_String, number_] := Module[
   {paths, tables, particles = {}, vertices = {}, variables = {}, functions = {},
-   tag = Unique["FeynmanModelReader"], row, fields, parse, parameter, value, comment, expression, fail},
+   tag = Unique["FeynmanModelReader"], row, fields, parse, parameter, value, comment, expression, fail,
+   scope = modelParameterScope[dir, number]},
   paths = AssociationThread[{"Particles", "Vertices", "Variables", "Functions"},
     FileNameJoin[{dir, # <> ToString[number] <> ".mdl"}] & /@ {"prtcls", "lgrng", "vars", "func"}];
   tables = Map[feynmanTableRows, paths];
   If[AnyTrue[Values[tables], FailureQ], Return[First[Select[Values[tables], FailureQ]]]];
   fail[file_, entry_, reason_] := Throw[Failure["InvalidFeynmanModel",
     <|"File" -> paths[file], "Line" -> entry["Line"], "Reason" -> reason|>], tag];
-  parse[text_, file_, entry_] := Module[{parsed = parseFeynmanExpression[text]},
+  parse[text_, file_, entry_] := Module[{parsed = parseFeynmanExpression[text, scope]},
     If[FailureQ[parsed], fail[file, entry, parsed]]; parsed];
   Catch[
     Do[fields = row["Fields"];
       If[Length[fields] >= 2 && StringTrim[fields[[1]]] === "Name", Continue[]];
       If[Length[fields] < 2 || !feynmanIdentifierQ[fields[[1]]], fail["Variables", row, "Invalid parameter row."]];
-      parameter = feynmanRegisterParameter[fields[[1]]];
+      parameter = feynmanParameter[fields[[1]], scope];
       value = parse[fields[[2]], "Variables", row];
       If[!FreeQ[value, _DiracWord | _LorentzMetric | _LorentzMomentum | _LorentzScalarProduct | _MomProd],
         fail["Variables", row, "A model parameter must be scalar."]];
@@ -227,7 +224,7 @@ readFeynmanModel[dir_String, number_] := Module[
     Do[fields = row["Fields"];
       If[Length[fields] >= 2 && StringTrim[fields[[1]]] === "Name", Continue[]];
       If[Length[fields] < 2 || !feynmanIdentifierQ[fields[[1]]], fail["Functions", row, "Invalid derived-parameter row."]];
-      parameter = feynmanRegisterParameter[fields[[1]]];
+      parameter = feynmanParameter[fields[[1]], scope];
       expression = StringPosition[fields[[2]], "%"];
       comment = If[expression === {}, "", StringTrim[StringDrop[fields[[2]], First[First[expression]]]]];
       value = parse[fields[[2]], "Functions", row];
@@ -239,7 +236,8 @@ readFeynmanModel[dir_String, number_] := Module[
       If[Length[fields] =!= 11, fail["Particles", row, "Expected eleven particle fields."]];
       Do[fields[[index]] = parse[fields[[index]], "Particles", row], {index, {4, 5, 6, 8}}];
       If[!AllTrue[fields[[{4, 5, 8}]], IntegerQ], fail["Particles", row, "Particle number, doubled spin and color must be integers."]];
-      If[!MatchQ[fields[[6]], 0 | _Symbol], fail["Particles", row, "A particle mass must be a parameter name or zero."]];
+      If[!MatchQ[fields[[6]], 0 | ConstructiveDiagrams`ModelParameter[_String, _String, _String]],
+        fail["Particles", row, "A particle mass must be a parameter name or zero."]];
       AppendTo[particles, fields], {row, tables["Particles"]}];
     If[particles === {}, Throw[Failure["InvalidFeynmanModel", <|"File" -> paths["Particles"],
       "Reason" -> "The particle table contains no particles."|>], tag]];
@@ -585,6 +583,12 @@ Options[FeynmanToSpinorProducts] = {"FermionHelicities" -> {}, "ReferenceSpinors
 Begin["ConstructiveDiagrams`Private`"];
 
 Clear[fwBilinear, fwTrace, fwMomentum, fwSigma, fwEpsilon];
+feynmanRawExpressionQ[expression_] := !FreeQ[expression,
+  _DiracChain | _DiracWord | _DiracGamma | _DiracSlash | DiracGamma5 |
+    _FermionBar | _FermionKet | _PolarizationVector | _LorentzMetric |
+    _LorentzMomentum | _LorentzScalarProduct];
+feynmanExternalMassRules[rules_List] := Select[rules,
+  MatchQ[#, HoldPattern[Mass[_Integer] -> _]] &];
 fwType[s_Spinor] := s[[If[Length[s] === 5, 3, 2]]];
 fwFailure[reason_, data_: <||>] := Throw[Failure["FeynmanToSpinorProducts", Join[
   <|"MessageTemplate" -> reason|>, data]], fwConversionTag];

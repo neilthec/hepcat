@@ -22,7 +22,9 @@ are relative to the repository root, not to this file.
 
 - `tests/SIMPLIFICATION.md`: practical guide to identities, on-shell scope,
   worked derivations, and the current checker API. Read this first.
-- `source/HEPCAT.wl`: package loader; loads the three source files below.
+- `source/HEPCAT.wl`: package loader; loads the four source files below.
+- `source/HEPCAT-Parameters.wl`: inert model-local parameters and functions,
+  parameter lookup, local numerical rules and generic parameter formatting.
 - `source/HEPCAT-Base.wl`: spinor algebra, `ReduceSpinContractions`,
   `ReduceSpinorProducts`, `SimplifySpinorProducts`, `applyToNumerator`, and the
   section **Symbolic Spinor Identities** containing explicit identity edits.
@@ -94,6 +96,9 @@ feynmanDiagrams = CreateDiagrams[{"e", "E", "A.+", "A.-"}, feynmanModel];
 feynmanPairs = diagramAmplitudes[feynmanDiagrams];
 spinorPairs = FeynmanToSpinorProducts[feynmanPairs,
   "FermionHelicities" -> {1 -> -1/2, 2 -> 1/2}];
+preparedFeynman = PrepareAmplitudes[feynmanPairs, feynmanModel,
+  "FermionHelicities" -> {1 -> -1/2, 2 -> 1/2},
+  "ReferenceSpinors" -> "IndependentXi"];
 ```
 
 Keep this benchmark separate from diagram-local constructive numerator choices.
@@ -119,6 +124,18 @@ Raw Feynman vertices are not complete lower-point amplitudes. Continue to use
 the constructive model containing known lower-point amplitudes for
 `FactorizationAmplitudeChannels` and the checker. The Feynman result is an
 independent off-cut benchmark, not replacement factorization data.
+`PrepareAmplitudes` also accepts a `FeynmanModel` and converts raw tensors before
+ordinary spinor reduction. Feynman pairs contain only external mass rules, and
+preparation never infers internal shell assumptions from their propagators.
+For a Feynman model the effective default is `"MaxSteps" -> 0`: conversion and
+ordinary reductions still run, while expensive identity-route enumeration is
+opt-in. Explicit positive `"MaxSteps"` enables that search; its candidate
+generation is eager and may exceed the useful budget on long chains.
+All diagrams must use the same reference choice for each external gauge leg:
+individual Feynman diagrams are gauge dependent. The default uses a shared
+fixed massless-particle cycle where possible, not independent per-diagram
+reference optimization. Shared physical/mixed-reference optimization is not yet
+implemented; those explicit Feynman modes report `PARTIAL`.
 
 ## Simplify, Explore, and Derive
 
@@ -234,6 +251,16 @@ cubic diagram model and suffices for four-point factorization; model 3 includes
 the four-point amplitudes needed for five-point factorization. For other
 processes, inspect the model rather than assuming these example choices apply.
 
+Model parameters are inert data stored in the model, not globally assigned
+symbols. Use `ModelParameter[model, "Me"]` to retrieve a parameter,
+`ModelParameterName[parameter]` for its name, and `ModelParameterRules[model]`
+for local numerical substitutions and resolved dependent functions. Preserve
+these scoped objects in derived expressions. Do not create symbols or install
+per-parameter formatting definitions, assign global masses/couplings, or identify
+two parameters solely because they display the same name. For local studies,
+string overrides such as `"ParameterRules" -> {"Me" -> 1}` are interpreted only
+against the explicitly supplied model. Keep each model alongside its amplitudes.
+
 The factorization model is authoritative: amplitudes absent from it count as
 zero. Ensure the user supplied the intended lower-point data. Do not fabricate
 zero rows, insert fitted amplitudes, or add independent QED contact interactions
@@ -241,15 +268,32 @@ to force a comparison to pass. Respect the specified theory's vertex content.
 
 ```wolfram
 channels = FactorizationAmplitudeChannels[particles, factorizationModel];
-report = CheckPhysicalResidues[finalAmplitude, channels, factorizationModel,
+report = CheckAmplitudes[finalAmplitude, channels, factorizationModel,
   "Output" -> "Details"];
 report["Table"]
 ```
 
+To compare against an independent Feynman result as well, add
+`"FeynmanAmplitudes" -> preparedFeynman` and `"FeynmanModel" -> feynmanModel`.
+Each expression obtains numerical parameters from its own model.
+The same table then includes a full
+off-cut comparison, not just agreement of residues. `"Output" -> "Feynman"`
+shows amplitude samples, and `report["FeynmanCheck"]` retains the diagnostic data.
+No sign or normalization is fitted. Match external masses, ordering, helicities
+and parameter conventions between models. Only external shells and conservation
+are used. Identically printed model parameters remain model-local data; matching
+names do not identify parameters or overwrite their values. Use explicitly
+consistent model files for the comparison, never fit or rename parameters to
+force agreement. Every evaluated
+internal propagator stays nonzero. Samples compare all
+implicit massive-spin coefficients and independently chosen explicit Xi references
+for the two full sums. `PASS` is sampled agreement, not an analytic equality proof.
+`CheckPhysicalResidues` remains a compatibility alias for `CheckAmplitudes`.
+
 Numerical checks and completion use the supplied model's parameter values and
 derived functions by default (`"ParameterRules" -> Automatic`). The symbolic
 amplitude and model remain unchanged. For an optional parameter study, explicit
-rules such as `"ParameterRules" -> {Me -> 1, EE -> 1}` override the model
+rules such as `"ParameterRules" -> {"Me" -> 1, "EE" -> 1}` override the model
 defaults locally and dependent model functions are recomputed. Use
 theory-consistent values; do not assign model symbols numerical values globally.
 The same checker also accepts

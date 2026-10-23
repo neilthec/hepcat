@@ -59,7 +59,7 @@ check["the radiating-current result has no auxiliary spinor denominators",
   qftNoAuxiliaryDenominatorsQ[qftRoute["Final"]]];
 qftPhysicalPropagators = Join[
   PropDen[Mom[Multiparticle @@ #], 0] & /@ {{1, 2}, {1, 3}, {2, 4}, {3, 4}},
-  PropDen[Mom[Multiparticle[#, 5]], Me] & /@ Range[4]];
+  PropDen[Mom[Multiparticle[#, 5]], prElectronMass] & /@ Range[4]];
 check["the final radiation amplitude contains only its eight physical poles",
   Sort[DeleteDuplicates[Cases[qftRoute["Final"], _PropDen, Infinity]]] ===
     Sort[qftPhysicalPropagators]];
@@ -76,9 +76,9 @@ qftTargets = ConstructiveDiagrams`Private`residueSimpleInputs[
   0, qftChannels, qftFactorizationModel]["Targets"];
 qftMap[expression_, chart_, value_] := Together[
   ConstructiveDiagrams`Private`residueEvaluateChart[expression, chart,
-    {Me -> 1, EE -> 1}] /. chart["PoleVariable"] -> value];
+    {prElectronMass -> 1, prElectricCharge -> 1}] /. chart["PoleVariable"] -> value];
 qftAuto = ConstructiveDiagrams`Private`residueAutomaticChart[
-  First[qftTargets], 2, 9839, {Me -> 1, EE -> 1}];
+  First[qftTargets], 2, 9839, {prElectronMass -> 1, prElectricCharge -> 1}];
 qftChart = qftAuto["Chart"];
 Do[
   qftLocal = qftRoute["Routes"][[qftIndex]];
@@ -88,9 +88,9 @@ Do[
     qftMap[qftLocal["DiracReduced"] - qftLocal["NumeratorRepresentative"] -
       qftLocal["OffCutRemainder"], qftChart, 1] === 0];
   qftCut = Sort[List @@ qftLocal["ElectronPropagator"][[1, 1]]];
-  qftTarget = SelectFirst[qftTargets, #["Cut"] === qftCut && #["Mass"] === Me &];
+  qftTarget = SelectFirst[qftTargets, #["Cut"] === qftCut && #["Mass"] === prElectronMass &];
   qftCutChart = ConstructiveDiagrams`Private`residueAutomaticChart[
-    qftTarget, 2, 5817, {Me -> 1, EE -> 1}]["Chart"];
+    qftTarget, 2, 5817, {prElectronMass -> 1, prElectricCharge -> 1}]["Chart"];
   check["the representative change vanishes on that diagram's electron cut " <>
       ToString[qftIndex],
     qftMap[qftLocal["UnreducedNumerator"] - qftLocal["RetainedNumerator"],
@@ -115,20 +115,20 @@ Do[
   qftChannels = FactorizationAmplitudeChannels[qftCase[[1]], qftFactorizationModel];
   qftReport = CheckPhysicalResidues[qftCase[[2]], qftChannels, qftFactorizationModel,
     "Samples" -> 2, "RandomSeed" -> 8091,
-    "ParameterRules" -> {Me -> 1, EE -> 1}, "Output" -> "Details"];
+    "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "Output" -> "Details"];
   check["all eight physical residues agree " <> ToString[qftCase[[1]], InputForm],
     Length[qftChannels] === 8 && qftReport["Summary"] === <|"PASS" -> 8|>],
   {qftCase, qftCases}];
 qftMassReport = CheckPhysicalResidues[qftRoute["Final"],
   FactorizationAmplitudeChannels[qftParts, qftFactorizationModel], qftFactorizationModel,
   "Samples" -> 2, "RandomSeed" -> 9812,
-  "ParameterRules" -> {Me -> 3/7, EE -> 2}, "Output" -> "Summary"];
+  "ParameterRules" -> {prElectronMass -> 3/7, prElectricCharge -> 2}, "Output" -> "Summary"];
 check["the radiation residue agreement is not confined to unit mass or coupling",
   qftMassReport === <|"PASS" -> 8|>];
 qftSpuriousReport = CheckPhysicalResidues[qftRoute["Final"],
   FactorizationAmplitudeChannels[qftParts, qftFactorizationModel], qftFactorizationModel,
   "Samples" -> 2, "RandomSeed" -> 137,
-  "ParameterRules" -> {Me -> 1, EE -> 1}, "Output" -> "Details",
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "Output" -> "Details",
   "SpuriousPoles" -> {SpinorChain[Spinor["Xi", "Angle", 10],
     Spinor["Helicity", "Angle", 5]]}];
 check["the original photon reference bracket has a finite limit",
@@ -172,7 +172,7 @@ check["the mixed final form is reference free with physical denominators only",
 qftMixedReport = CheckPhysicalResidues[qftMixedRoute["Final"],
   FactorizationAmplitudeChannels[qftMixedParts, qftFactorizationModel],
   qftFactorizationModel, "Samples" -> 3, "RandomSeed" -> 5817,
-  "ParameterRules" -> {Me -> 2, EE -> 1}, "Output" -> "Summary"];
+  "ParameterRules" -> {prElectronMass -> 2, prElectricCharge -> 1}, "Output" -> "Summary"];
 check["all six mixed-helicity physical residues agree",
   qftMixedReport === <|"PASS" -> 6|>];
 qftMixedProof = qedFivePointMixedEqualityChecks[];

@@ -47,13 +47,28 @@ ffCheck["ReadModel recognizes a raw EOF-terminated CalcHEP Lagrangian model",
 ffCheck["raw Feynman files are closed after reading", Streams[] === ffOriginalStreams];
 ffCheck["Feynman model reading is idempotent", ReadModel[ffTemporaryDirectory, 91] === ffModel];
 Do[
-  ffModelSymbol = Symbol["ConstructiveDiagrams`" <> ffSymbolName];
-  ffCheck["model parameters do not acquire numerical OwnValues " <> ffSymbolName,
-    With[{symbol = ffModelSymbol}, OwnValues[symbol] === {}]],
+  ffCheck["model parameters remain scoped data without per-name symbols " <> ffSymbolName,
+    MatchQ[ModelParameter[ffModel, ffSymbolName], ModelParameter[ffSymbolName, _String, "Real"]] &&
+      Names["ConstructiveDiagrams`" <> ffSymbolName] === {}],
   {ffSymbolName, {"ffCharge", "ffScalarMass", "ffVectorMass", "ffDerived"}}];
+ffChargeParameter = ModelParameter[ffModel, "ffCharge"];
+ffScalarMassParameter = ModelParameter[ffModel, "ffScalarMass"];
+ffVectorMassParameter = ModelParameter[ffModel, "ffVectorMass"];
+ffTripleParameter = ModelParameter[ffModel, "ffTriple"];
+ffQuarticParameter = ModelParameter[ffModel, "ffQuartic"];
+ffDerivedParameter = ModelParameter[ffModel, "ffDerived"];
 ffCheck["Feynman particle mass entries remain symbolic",
-  ffModel[[1, 4, 6]] === ConstructiveDiagrams`ffScalarMass &&
-    ffModel[[1, 5, 6]] === ConstructiveDiagrams`ffVectorMass];
+  ffModel[[1, 4, 6]] === ffScalarMassParameter &&
+    ffModel[[1, 5, 6]] === ffVectorMassParameter];
+ffCheck["declared and derived Feynman parameters resolve only through their model",
+  ({ffChargeParameter, ffDerivedParameter} /. ModelParameterRules[ffModel]) === {2/3, 8/9}];
+ffCheck["real model parameter conjugation is generic inert-data behavior",
+  Conjugate[ffChargeParameter] === ffChargeParameter];
+ffCheck["an unrelated global parameter value cannot affect a model read",
+  Block[{Global`ffCharge = 123},
+    ReadModel[ffTemporaryDirectory, 91] === ffModel &&
+      Global`ffCharge === 123 &&
+      (ffChargeParameter /. ModelParameterRules[ffModel]) === 2/3]];
 
 (* Parsing is deliberately checked without evaluating CalcHEP text as Wolfram code. *)
 ffParserCases = {
@@ -79,6 +94,13 @@ Do[
   {ffParserCase, ffParserCases}];
 ffCheck["gamma multiplication is not commutative",
   ffParse["G(m3)*G5"] =!= ffParse["G5*G(m3)"]];
+ffCheck["standalone Feynman parameters retain an explicit data scope",
+  ffParse["ffCharge", "parser-regression"] ===
+    ModelParameter["ffCharge", "parser-regression", "Real"]];
+ffCheck["external CalcHEP functions are retained without creating or evaluating function symbols",
+  ffParse["MqEff(2,3)", "parser-regression"] ===
+    ModelFunction["MqEff", "parser-regression", {2, 3}] &&
+    Names["ConstructiveDiagrams`MqEff"] === {}];
 Do[
   ffCheck["malformed or unsupported Feynman expression is explicit " <> ffBadText,
     FailureQ[ffParse[ffBadText]]],
@@ -124,6 +146,25 @@ ffCheck["a model with no derived-parameter rows is valid",
   MatchQ[ReadModel[ffTemporaryDirectory, 91], FeynmanModel[_List, _List, _List, {}]]];
 ffWrite["func91.mdl", {"Feynman regression fixture", "Name | Expression",
   "ffDerived | 2*ffCharge^2 % derived fixture"}];
+Do[CopyFile[FileNameJoin[{ffTemporaryDirectory, ffStem <> "91.mdl"}],
+  FileNameJoin[{ffTemporaryDirectory, ffStem <> "96.mdl"}]],
+  {ffStem, {"prtcls", "func", "lgrng"}}];
+ffWrite["vars96.mdl", {"Independent Feynman parameter fixture", "Name | Value | Comment",
+  "ffCharge | 5/7 | different charge", "ffScalarMass | 3 | scalar mass",
+  "ffVectorMass | 5 | vector mass", "ffYukawa | 1/7 | scalar coupling",
+  "ffTriple | 1/11 | cubic scalar coupling", "ffQuartic | 1/13 | quartic coupling"}];
+ffOtherModel = ReadModel[ffTemporaryDirectory, 96];
+ffOtherChargeParameter = ModelParameter[ffOtherModel, "ffCharge"];
+ffCheck["two models can own distinct parameters with the same displayed name",
+  ffOtherChargeParameter =!= ffChargeParameter &&
+    ModelParameterName[ffOtherChargeParameter] === ModelParameterName[ffChargeParameter] === "ffCharge"];
+ffCheck["a second Feynman model cannot replace the first model's parameter values",
+  (ffChargeParameter /. ModelParameterRules[ffModel]) === 2/3 &&
+    (ffOtherChargeParameter /. ModelParameterRules[ffOtherModel]) === 5/7 &&
+    (ffChargeParameter /. ModelParameterRules[ffOtherModel]) === ffChargeParameter];
+ffCheck["derived dependencies retain their own model's parameter identity",
+  (ModelParameter[ffOtherModel, "ffDerived"] /. ModelParameterRules[ffOtherModel]) === 50/49 &&
+    (ffDerivedParameter /. ModelParameterRules[ffModel]) === 8/9];
 
 ffStockModel = ReadModel[FileNameJoin[{ffRoot, "model_feynman"}], 1];
 ffCheck["the complete copied SM parses as Feynman rules",
@@ -188,8 +229,8 @@ ffCheck["cubic scalar exchanges coexist with the actual quartic contact",
 ffCheck["scalar Feynman amplitudes do not invent fermion or polarization factors",
   ffFiniteQ[ffScalarPairs] && FreeQ[ffScalarPairs, _DiracChain | _PolarizationVector]];
 ffCheck["scalar tree amplitudes retain the vertex and propagator i-factor normalization",
-  Together[Total[Last /@ ffScalarPairs] + ConstructiveDiagrams`ffQuartic +
-    ConstructiveDiagrams`ffTriple^2 Total[1/PropDen[Mom[#], ConstructiveDiagrams`ffScalarMass] & /@
+  Together[Total[Last /@ ffScalarPairs] + ffQuarticParameter +
+    ffTripleParameter^2 Total[1/PropDen[Mom[#], ffScalarMassParameter] & /@
       {Multiparticle[1, 2], Multiparticle[1, 3], Multiparticle[1, 4]}]] === 0];
 ffVectorDiagrams = CreateDiagrams[{"e", "E", "e", "E"}, ffModel];
 ffZDiagrams = Select[ffVectorDiagrams,
@@ -245,10 +286,11 @@ Do[CopyFile[FileNameJoin[{ffTemporaryDirectory, ffStem <> "91.mdl"}],
 ffOddDerivativeModel = ReadModel[ffTemporaryDirectory, 94];
 ffOddDerivativePairs = diagramAmplitudes[CreateDiagrams[{"A.+", "a", "b"}, ffOddDerivativeModel]];
 ffOddDerivativeExpression = Last[First[ffOddDerivativePairs]];
+ffOddChargeParameter = ModelParameter[ffOddDerivativeModel, "ffCharge"];
 ffOddDerivativeIndex = First[Cases[ffOddDerivativeExpression,
   PolarizationVector[1, index_, 0, 1] :> index, Infinity]];
 ffCheck["CalcHEP's outgoing derivative momenta are reversed for HEPCAT's incoming legs",
-  Expand[ffOddDerivativeExpression + ConstructiveDiagrams`ffCharge
+  Expand[ffOddDerivativeExpression + ffOddChargeParameter
     PolarizationVector[1, ffOddDerivativeIndex, 0, 1]
     (LorentzMomentum[Mom[2], ffOddDerivativeIndex] -
       LorentzMomentum[Mom[3], ffOddDerivativeIndex])] === 0];
@@ -265,6 +307,7 @@ ffWrite["func95.mdl", {"Internal derivative fixture", "Name | Expression"}];
 ffWrite["lgrng95.mdl", {"Internal derivative fixture", "P1 | P2 | P3 | P4 | Factor | Lorentz part",
   "phi | a | a | | ffPhiCharge | p1.p1"}];
 ffPhiModel = ReadModel[ffTemporaryDirectory, 95];
+ffPhiMassParameter = ModelParameter[ffPhiModel, "ffPhiMass"];
 ffCheck["an internal derivative slot retains its raw momentum-square identity",
   ffPhiModel[[2, 1, -1]] === LorentzScalarProduct[Mom[1], Mom[1]]];
 ffPhiDiagrams = CreateDiagrams[{"a", "a", "a", "a"}, ffPhiModel];
@@ -272,7 +315,7 @@ ffPhiPairs = diagramAmplitudes[ffPhiDiagrams];
 ffCheck["the internal derivative fixture generates all three scalar exchanges",
   Length[ffPhiDiagrams] === 3 && ffFiniteQ[ffPhiPairs]];
 ffCheck["an exchanged scalar mass occurs only in physical propagators, never its derivative numerator",
-  AllTrue[ffPhiPairs, FreeQ[Last[#] /. _PropDen -> 1, ConstructiveDiagrams`ffPhiMass] &&
+  AllTrue[ffPhiPairs, FreeQ[Last[#] /. _PropDen -> 1, ffPhiMassParameter] &&
     FreeQ[Last[#], _LorentzScalarProduct | Mass[_Multiparticle]] &]];
 ffPhiMomenta = <|1 -> {{5, 0}, {0, 9/5}}, 2 -> {{9/5, 0}, {0, 5}},
   3 -> -{{17/5, 8/5}, {8/5, 17/5}}, 4 -> -{{17/5, -8/5}, {-8/5, 17/5}}|>;
@@ -347,9 +390,7 @@ ffNumericSpinorExpression[expr_] := (expr /. {chain_SpinorChain :> ffNumericChai
     Det[ffNumericMomentum[Mom[a]]] - Det[ffNumericMomentum[Mom[b]]])/2};
 Block[{ffMomenta = ffPhiMomenta},
   Do[
-    ffPhiExpression = Last[ffPhiPairs[[ffPhiIndex]]] /.
-      {ConstructiveDiagrams`ffPhiMass -> 7, ConstructiveDiagrams`ffScalarMass -> 3,
-        ConstructiveDiagrams`ffPhiCharge -> 2};
+    ffPhiExpression = Last[ffPhiPairs[[ffPhiIndex]]] /. ModelParameterRules[ffPhiModel];
     ffPhiCut = First[Cases[ffPhiExpression, PropDen[Mom[cut_], _] :> cut, Infinity]];
     ffPhiInvariant = Det[ffNumericMomentum[Mom[ffPhiCut]]];
     ffCheck["an off-shell internal scalar square produces q^4, not the exchanged mass^4 " <> ToString[ffPhiIndex],
@@ -531,9 +572,9 @@ Do[
       First /@ ffBenchmarkSpinorPairs === First /@ ffBenchmarkPairs];
   Do[
     ffBenchmarkExpression = Last[ffBenchmarkPairs[[ffDiagramIndex]]] /.
-      {ConstructiveDiagrams`ffCharge -> 2/3, ffBenchmarkMass -> 7/5};
+      {ffChargeParameter -> 2/3, ffBenchmarkMass -> 7/5};
     ffBenchmarkSpinorExpression = Last[ffBenchmarkSpinorPairs[[ffDiagramIndex]]] /.
-      {ConstructiveDiagrams`ffCharge -> 2/3, ffBenchmarkMass -> 7/5};
+      {ffChargeParameter -> 2/3, ffBenchmarkMass -> 7/5};
     ffCheck["QED diagram spinor conversion agrees with independent off-cut four-component tensors " <>
         ToString[{Length[ffBenchmarkParticles], ffDiagramIndex}],
       ffFiniteQ[ffBenchmarkSpinorExpression] &&
@@ -666,8 +707,10 @@ ffColorValue[expr_, externalRules_] := Total[ffColorTerm[#, externalRules] & /@
 ffWardChannel = <|"Cut" -> {1, 2}, "Complement" -> {3, 4}, "Mass" -> 0,
   "ExternalLegs" -> Range[4], "ExternalMassRules" -> Thread[(Mass /@ Range[4]) -> 0],
   "Propagator" -> PropDen[Mom[Multiparticle[1, 2]], 0]|>;
+ffWardParameterRules = ModelParameterRules[ffStockModel,
+  {ModelParameter[ffStockModel, "GG"] -> 1, ModelParameter[ffStockModel, "EE"] -> 1}];
 ffWardChartReport = ConstructiveDiagrams`Private`residueAutomaticChart[
-  ffWardChannel, 1, 9317, {GG -> 1, EE -> 1}];
+  ffWardChannel, 1, 9317, ffWardParameterRules];
 ffWardChart = ffWardChartReport["Chart"] /.
   ffWardChartReport["Chart"]["PoleVariable"] -> 7;
 Do[
@@ -684,18 +727,20 @@ Do[
     ffCheck["the complete Feynman amplitude satisfies its Ward identity " <>
         ToString[{ffWardParticles, ffWardLeg}, InputForm],
       ffFiniteQ[ffWardSpinors] && Together[ConstructiveDiagrams`Private`residueEvaluateChart[
-        ffColorValue[ffWardSpinors, ffWardColorRules], ffWardChart, {GG -> 1, EE -> 1}]] === 0],
+        ffColorValue[ffWardSpinors, ffWardColorRules], ffWardChart, ffWardParameterRules]] === 0],
     {ffWardLeg, If[First[ffWardParticles] === "G.+", Range[4], {3, 4}]}],
   {ffWardParticles, {{"e", "E", "A.+", "A.-"}, {"u", "U", "G.+", "G.-"},
     {"G.+", "G.+", "G.+", "G.+"}}}];
 
 (* Derive complete QED amplitudes before loading any known target formula. *)
-ffPhysicalQED = ffStockModel;
-ffPhysicalQED[[1]] = Select[ffStockModel[[1]], MemberQ[{"A", "e"}, #[[2]]] &];
-ffPhysicalQED[[2]] = Select[ffStockModel[[2]],
-  Sort[DeleteCases[Drop[#, -2], ""]] === Sort[{"E", "e", "A"}] &];
-ffElectronRow = First[FirstPosition[ffPhysicalQED[[1, All, 2]], "e"]];
-ffPhysicalQED[[1, ffElectronRow, 6]] = Me;
+ffPhysicalQED = ReadModel[FileNameJoin[{ffRoot, "model_feynman"}], 2];
+ffPhysicalParameterRules = ModelParameterRules[ffPhysicalQED,
+  {ModelParameter[ffPhysicalQED, "Me"] -> 1, ModelParameter[ffPhysicalQED, "EE"] -> 1}];
+ffCheck["the independent massive-electron QED benchmark is a model, not a patched SM",
+  MatchQ[ffPhysicalQED, FeynmanModel[_List, _List, _List, {}]] &&
+    Length[ffPhysicalQED[[1]]] === 2 && Length[ffPhysicalQED[[2]]] === 1 &&
+    (ModelParameter[ffPhysicalQED, "Me"] /. ModelParameterRules[ffPhysicalQED]) === 1/2000 &&
+    (ModelParameter[ffPhysicalQED, "EE"] /. ModelParameterRules[ffPhysicalQED]) === 31333/100000];
 ffPhysicalFiveDiagrams = CreateDiagrams[{"e", "E", "A.+", "A.+", "A.+"}, ffPhysicalQED];
 ffPhysicalFivePairs = diagramAmplitudes[ffPhysicalFiveDiagrams];
 ffPhysicalFiveConverted = FeynmanToSpinorProducts[ffPhysicalFivePairs,
@@ -713,7 +758,8 @@ ffCheck["the physical five-point benchmark is independently generated from six d
 Get[FileNameJoin[{ffRoot, "tests", "QED-5-point-residues.wl"}]];
 Do[
   ffPhysicalChart = prDoubleChart[ffPhysicalPoint[[1]], ffPhysicalPoint[[2]], ffSpin1, ffSpin2];
-  ffPhysicalValue = Cancel[Together[prMapOnChart[ffPhysicalFiveAmplitude, ffPhysicalChart]]];
+  ffPhysicalValue = Cancel[Together[prMapOnChart[
+    ffPhysicalFiveAmplitude /. ffPhysicalParameterRules, ffPhysicalChart]]];
   ffPhysicalKnownValue = Cancel[Together[prMapOnChart[prH, ffPhysicalChart]]];
   ffCheck["complete five-point Feynman QED agrees with the independently known H form " <>
       ToString[{ffPhysicalPoint, ffSpin1, ffSpin2}],
@@ -729,11 +775,12 @@ Do[
   ffPhysicalFourTarget = Times @@ ffPhysicalFourRow[[-2 ;; -1]];
   ffPhysicalFourChart = prFourPointChart[{1, 3}, 1, ffSpin1, ffSpin2];
   ffPhysicalFourValue = Cancel[Together[prMapOnChart[
-    ffPhysicalFourAmplitudes[[ffProcessIndex]], ffPhysicalFourChart]]];
+    ffPhysicalFourAmplitudes[[ffProcessIndex]] /. ffPhysicalParameterRules, ffPhysicalFourChart]]];
   ffPhysicalFourExpected = Cancel[Together[prMapOnChart[ffPhysicalFourTarget, ffPhysicalFourChart]]];
   ffPhysicalFourWrongSlash = Cancel[Together[prMapOnChart[
-    ffPhysicalFourAmplitudes[[ffProcessIndex]] /. SpinorChain[parts___] :>
-      (-1)^Count[{parts}, Mom[_Multiparticle]] SpinorChain[parts], ffPhysicalFourChart]]];
+    (ffPhysicalFourAmplitudes[[ffProcessIndex]] /. ffPhysicalParameterRules) /.
+      SpinorChain[parts___] :> (-1)^Count[{parts}, Mom[_Multiparticle]] SpinorChain[parts],
+    ffPhysicalFourChart]]];
   ffCheck["complete four-point Feynman QED agrees with the known model amplitude " <>
       ToString[{ffProcessIndex, ffSpin1, ffSpin2}],
     Together[ffPhysicalFourValue - ffPhysicalFourExpected] === 0];

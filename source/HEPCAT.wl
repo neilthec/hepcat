@@ -6,7 +6,7 @@
 
 Module[{sourceDirectory = Global`$HEPCATpath, sourceFiles, missingFiles},
 sourceFiles = If[StringQ[sourceDirectory],
-  FileNameJoin[{sourceDirectory, #}] & /@ {"HEPCAT-Base.wl", "HEPCAT-Model.wl", "HEPCAT-Feynman.wl"}, {}];
+  FileNameJoin[{sourceDirectory, #}] & /@ {"HEPCAT-Base.wl", "HEPCAT-Parameters.wl", "HEPCAT-Model.wl", "HEPCAT-Feynman.wl"}, {}];
 missingFiles = Select[sourceFiles, !FileExistsQ[#] || DirectoryQ[#] &];
 If[!StringQ[sourceDirectory] || missingFiles =!= {},
   Message[Get::noopen, If[StringQ[sourceDirectory], StringRiffle[missingFiles, ", "],
@@ -51,13 +51,14 @@ Protect @@ (ToExpression /@ {
   "ExtractEnergy", "ExtractEnergy1", "ExtractEnergy2", "rSpinor", "ExpandSummation",
   "ReverseMomentum", "MomProdL", "MomProdR", "ChooseSpinIndices", "ChooseSpinIndex", "MakeIndicesExplicit", "SymmetrizeSpins", "SymmetrizeSpin",
   "SquareAmplitude", "ReadModel", "ReadVariables", "ReadFunctions", "ReadParticles", "ParticleMass", "ReadVertices", "ConvertVertex",
+  "ModelParameter", "ModelFunction", "ModelParameterName", "ModelParameterRules",
   "SChannelDiagram", "UChannelDiagram", "TChannelDiagram", "ConstructiveDiagram",
   "CompareAmpToSquaredAmp", "DeleteRandomConstructiveAmplitude", "CheckLengthConstructive", "CheckNumberOfSpinors", "CreateRandomConstructiveSpinorProduct",
   "CreateRandomMassFactor", "CreateRandomConstructiveAmplitudeTerm", "AddRandomConstructiveAmplitudeTerm", "CreateInitialRandomPopulationConstructiveAmplitudes",
   "RandomDeleteSpinorProduct", "RandomAddSpinorProduct", "RandomChangeCoefficientSpinorProduct", "MateConstructiveAmplitudes", "MakeNRandomChanges", "FindAmp",
   "CreateDiagrams", "CreateArrowDiagram", "CreateArrowDiagrams", "diagramAmplitude", "diagramAmplitudes",
   "SchoutenRewrite", "SchoutenCandidates", "SpinorIdentityCandidates", "ApplySpinorIdentity", "SpinorExpressionComplexity", "ComplicateAmplitude",
-  "DiagramAmplitudeRecords", "PhysicalPoleResidue", "CheckPhysicalResidues",
+  "DiagramAmplitudeRecords", "PhysicalPoleResidue", "CheckAmplitudes", "CheckPhysicalResidues",
   "PrepareAmplitudes", "PrepareDiagramAmplitudes", "CompleteFactorization", "CompleteHighEnergy",
   "FeynmanModel", "DiracWord", "DiracGamma", "DiracGamma5", "DiracSlash",
   "LorentzIndex", "LorentzMetric", "LorentzMomentum", "LorentzScalarProduct", "DiracChain", "FermionBar", "FermionKet",

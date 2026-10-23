@@ -2,7 +2,10 @@
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
-ubModel = ReadModel[FileNameJoin[{root, "models"}], 1];
+(* Curated paths use legacy symbols; bind this independent test fixture only. *)
+ubLegacyFixtureModel[model_] := model /. ((# -> Symbol["Global`" <> ModelParameterName[#]]) & /@
+  DeleteDuplicates[Cases[model, _ModelParameter, Infinity]]);
+ubModel = ubLegacyFixtureModel[ReadModel[FileNameJoin[{root, "models"}], 1]];
 ubCatalog = Get[FileNameJoin[{root, "tests", "simplification-paths.wl"}]];
 checks = 0; failures = {};
 check[name_, value_] := (checks++; If[!TrueQ[value], AppendTo[failures, name]]);

@@ -198,7 +198,7 @@ riQEDAngle12 = (
 riQEDWithReference = prH /. prSpinAngle[1, 2] -> riQEDAngle12;
 riQEDReport = ConstructiveDiagrams`Private`referenceCheckReport[
   riQEDWithReference, KeyTake[First[prTargets], {"ExternalLegs", "ExternalMassRules"}],
-  prTargets, 2, 1729, {Me -> 1, EE -> 1}, 30];
+  prTargets, 2, 1729, {prElectronMass -> 1, prElectricCharge -> 1}, 30];
 check["the complete physical five-point QED amplitude passes in a nontrivial Xi representation",
   !FreeQ[riQEDWithReference, Spinor["Xi", ___]] &&
     riQEDReport["Status"] === "PASS" && riQEDReport["References"] === {71} &&
@@ -213,20 +213,20 @@ riQEDFourCommon = riQEDFourRaw /.
 riQEDFourReport = ConstructiveDiagrams`Private`referenceCheckReport[
   riQEDFourCommon,
   KeyTake[First[prFourPointTargets], {"ExternalLegs", "ExternalMassRules"}],
-  prFourPointTargets, 2, 1729, {Me -> 1, EE -> 1}, 30];
+  prFourPointTargets, 2, 1729, {prElectronMass -> 1, prElectricCharge -> 1}, 30];
 check["actual all-plus four-point QED diagrams pass for an explicitly chosen common Xi",
   riQEDFourReport["Status"] === "PASS" && riQEDFourReport["References"] === {0}];
 riQEDFourRawReport = ConstructiveDiagrams`Private`referenceCheckReport[
   riQEDFourRaw,
   KeyTake[First[prFourPointTargets], {"ExternalLegs", "ExternalMassRules"}],
-  prFourPointTargets, 1, 1729, {Me -> 1, EE -> 1}, 30];
+  prFourPointTargets, 1, 1729, {prElectronMass -> 1, prElectricCharge -> 1}, 30];
 check["the same raw diagrams with distinct photon references are not silently merged",
   riQEDFourRawReport["Status"] === "FAIL" &&
     Sort[riQEDFourRawReport["References"]] === {3, 4}];
 riRawQEDFive = prPreparedDiagramSum[prDiagramRecords[]];
 riRawQEDReport = ConstructiveDiagrams`Private`referenceCheckReport[
   riRawQEDFive, KeyTake[First[prTargets], {"ExternalLegs", "ExternalMassRules"}],
-  prTargets, 1, 1729, {Me -> 1, EE -> 1}, 30];
+  prTargets, 1, 1729, {prElectronMass -> 1, prElectricCharge -> 1}, 30];
 check["the known unfinished raw five-point continuation remains an honest negative control",
   riRawQEDReport["Status"] === "FAIL" &&
     Sort[riRawQEDReport["References"]] === {3, 4, 5}];

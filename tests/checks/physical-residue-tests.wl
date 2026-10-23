@@ -33,10 +33,10 @@ prCubicOnlyChannels = FactorizationAmplitudeChannels[prParticles, prModel];
 check["absent higher-point amplitudes contribute no original factorization rows",
   prCubicOnlyChannels === {}];
 prCubicOnlyReport = CheckPhysicalResidues[
-  {{Thread[(Mass /@ Range[5]) -> {Me, Me, 0, 0, 0}], prH}},
+  {{Thread[(Mass /@ Range[5]) -> {prElectronMass, prElectronMass, 0, 0, 0}], prH}},
   prCubicOnlyChannels, prModel,
   "Output" -> "Details", "Samples" -> 1,
-  "ParameterRules" -> {Me -> 1, EE -> 1}, "TimeConstraint" -> 20];
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "TimeConstraint" -> 20];
 check["poles absent from supplied factorization data are exposed as spurious failures",
   prCubicOnlyReport["Channels"] === {} &&
     prCubicOnlyReport["PhysicalSummary"] === <||> &&
@@ -80,10 +80,10 @@ Do[
   prStoredDiagramAmplitude = prPreparedDiagramSum[prStoredDiagramRecords];
   prStoredReport = CheckPhysicalResidues[prStoredAmplitude,
     prStoredChannels, prModel, "Output" -> "Details", "Samples" -> 2,
-    "ParameterRules" -> {Me -> 1, EE -> 1}, "TimeConstraint" -> 30];
+    "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "TimeConstraint" -> 30];
   prStoredDiagramReport = CheckPhysicalResidues[prStoredDiagramAmplitude,
     prStoredChannels, prModel, "Output" -> "Details", "Samples" -> 2,
-    "ParameterRules" -> {Me -> 1, EE -> 1}, "TimeConstraint" -> 30];
+    "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "TimeConstraint" -> 30];
   prStoredLabel = ToString[prStoredParticles, InputForm];
   check["stored QED4 amplitude agrees with cubic sewing " <> prStoredLabel,
     Length[prStoredChannels] === 2 && prStoredReport["PhysicalSummary"] === <|"PASS" -> 2|>];
@@ -127,10 +127,10 @@ check["supplied-map displayed residue values remain exact and match the details"
     (prUnifiedResidueValues /@ prPublicDetails["Channels"])];
 prAutomaticResidueDetails = CheckPhysicalResidues[prH, prChannels, prFixtureModel,
   "Output" -> "Details", "Samples" -> 2, "RandomSeed" -> 1729,
-  "ParameterRules" -> {Me -> 1, EE -> 1}, "TimeConstraint" -> 20];
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "TimeConstraint" -> 20];
 prAutomaticResidueDisplay = CheckPhysicalResidues[prH, prChannels, prFixtureModel,
   "Output" -> "Residues", "Samples" -> 2, "RandomSeed" -> 1729,
-  "ParameterRules" -> {Me -> 1, EE -> 1}, "TimeConstraint" -> 20];
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "TimeConstraint" -> 20];
 prAutomaticResidueRows = Normal[prAutomaticResidueDisplay];
 check["automatic residue display shows every cut sample as a separate row",
   Head[prAutomaticResidueDisplay] === Dataset && Length[prAutomaticResidueRows] === 12 &&
@@ -163,7 +163,7 @@ check["summary output returns only status counts",
   CheckPhysicalResidues[prH, prChannels, prFixtureModel,
     "Output" -> "Summary", "KinematicMap" -> prMap[1, 2], "TimeConstraint" -> 15] ===
       <|"PASS" -> 6|>];
-prAmplitudePair = {Thread[(Mass /@ Range[5]) -> {Me, Me, 0, 0, 0}], prH};
+prAmplitudePair = {Thread[(Mass /@ Range[5]) -> {prElectronMass, prElectronMass, 0, 0, 0}], prH};
 prPairsReport = CheckPhysicalResidues[{prAmplitudePair}, prChannels, prFixtureModel,
   "Output" -> "Details", "KinematicMap" -> prMap[1, 2], "TimeConstraint" -> 15];
 check["ordinary diagram mass-rule expression pairs can be passed directly",
@@ -199,7 +199,7 @@ check["the checker uses the user's supplied channel expression rather than rebui
 Do[
   check["malformed public input is rejected " <> ToString[bad, InputForm],
     Quiet[CheckPhysicalResidues[prH, bad, prFixtureModel]] === $Failed],
-  {bad, {{None}, {<|"Cut" -> {1, 3}, "Mass" -> Me|>},
+  {bad, {{None}, {<|"Cut" -> {1, 3}, "Mass" -> prElectronMass|>},
     {ReplacePart[First[prChannels], -3 -> Multiparticle[1, 99]]},
     {ReplacePart[First[prChannels],
       -1 -> Last[First[prChannels]]/ConstructiveDiagrams`z]}}}
@@ -297,15 +297,15 @@ prTestTarget = First[Select[prElectronTargets, #["Cut"] === {1, 3} &]];
 prOtherTarget = First[Select[prElectronTargets, #["Cut"] === {2, 5} &]];
 prD13 = prTestTarget["Propagator"];
 prD25 = prOtherTarget["Propagator"];
-prComplementDen = PropDen[Mom[Multiparticle[2, 4, 5]], Me];
+prComplementDen = PropDen[Mom[Multiparticle[2, 4, 5]], prElectronMass];
 check["complementary physical channels share one formal pole",
   PhysicalPoleResidue[4/prD13 + 5/prComplementDen + 7, prTestTarget][
     "StructuralCoefficient"] === 9];
 check["signed momentum sums identify the same pole",
-  PhysicalPoleResidue[3/PropDen[-Mom[1] - Mom[3], Me], prTestTarget][
+  PhysicalPoleResidue[3/PropDen[-Mom[1] - Mom[3], prElectronMass], prTestTarget][
     "StructuralCoefficient"] === 3];
 check["different exchange masses are not merged",
-  PhysicalPoleResidue[1/PropDen[Mom[Multiparticle[1, 3]], Me + 1], prTestTarget][
+  PhysicalPoleResidue[1/PropDen[Mom[Multiparticle[1, 3]], prElectronMass + 1], prTestTarget][
     "StructuralCoefficient"] === 0];
 check["the full sum is canceled before extracting a residue",
   PhysicalPoleResidue[1/prD13^2 - 1/prComplementDen^2 + 3/prD13,
@@ -327,7 +327,7 @@ check["kinematic mapping discovers poles hidden in a spinor denominator",
   prHiddenPole["StructuralCoefficient"] === 0 &&
     prHiddenPole["Status"] === "PASS" && prHiddenPole["PhysicalResidue"] === 1];
 check["unmapped Mandelstahm invariants cannot yield a physical pass",
-  PhysicalPoleResidue[1/(Mandelstahm[1, 3] - Me^2), prTestTarget,
+  PhysicalPoleResidue[1/(Mandelstahm[1, 3] - prElectronMass^2), prTestTarget,
     "KinematicMap" -> prMap[1, 2]]["Status"] === "UNRESOLVED"];
 Do[
   prErrorMap[expr_, cuts_, vars_] := If[expr === prUnknownAmplitude, error,
@@ -507,7 +507,7 @@ check["factorization mass substitutions are local to each exchanged species",
       -firstExchangeCoupling^2 firstExchangeMass^2,
       -secondExchangeCoupling^2 secondExchangeMass^2] &]];
 prSuppliedTargets = Select[prAdaptedTargets[prParticles, prFixtureModel],
-  #["Mass"] === Me && Count[#["Cut"], 1 | 2] === 1 &&
+  #["Mass"] === prElectronMass && Count[#["Cut"], 1 | 2] === 1 &&
     Count[#["Cut"], 3 | 4 | 5] === 1 &];
 check["supplied higher-point amplitudes are trusted without completeness metadata",
   Length[prSuppliedTargets] === 6 &&
@@ -580,7 +580,7 @@ Do[
   check["invalid general checker option is rejected " <> ToString[option, InputForm],
     Quiet[prDetailedReport[0, {prSixScalarTarget}, option]] === $Failed],
   {option, {"Samples" -> 0, "Samples" -> 1/2, "RandomSeed" -> "seed",
-    "ParameterRules" -> None, "ParameterRules" -> {Me :> 1}}}
+    "ParameterRules" -> None, "ParameterRules" -> {prElectronMass :> 1}}}
 ];
 check["the public checker rejects an unrecognized option instead of silently ignoring it",
   Quiet[CheckPhysicalResidues[prH, prChannels, prFixtureModel,
@@ -670,10 +670,10 @@ Do[
 ];
 
 prGenericSpinorChart = ConstructiveDiagrams`Private`residueAutomaticChart[
-  First[prElectronTargets], 1, 512, {Me -> 1, EE -> 1}];
+  First[prElectronTargets], 1, 512, {prElectronMass -> 1, prElectricCharge -> 1}];
 prGenericSpinorZero[expression_] := ConstructiveDiagrams`Private`residueExactZero[
   ConstructiveDiagrams`Private`residueEvaluateChart[expression,
-    prGenericSpinorChart["Chart"], {Me -> 1, EE -> 1}]];
+    prGenericSpinorChart["Chart"], {prElectronMass -> 1, prElectricCharge -> 1}]];
 prGenericAngle3 = Spinor["Helicity", "Angle", 3];
 prGenericAngle4 = Spinor["Helicity", "Angle", 4];
 prGenericSquare3 = Spinor["Helicity", "Square", 3];
@@ -703,10 +703,10 @@ Do[
   {prInvariantPower, {4, 6, -2, -4}}];
 check["scalar momentum powers do not change bare momentum matrix evaluation",
   MatrixQ[ConstructiveDiagrams`Private`residueEvaluateChart[Mom[1],
-    prGenericSpinorChart["Chart"], {Me -> 1, EE -> 1}],
+    prGenericSpinorChart["Chart"], {prElectronMass -> 1, prElectricCharge -> 1}],
     Function[value, FreeQ[value, _Mom]]]];
 prUnknownInvariant = ConstructiveDiagrams`Private`residueEvaluateChart[
-  Mom[Multiparticle[3, 99]]^2, prGenericSpinorChart["Chart"], {Me -> 1, EE -> 1}];
+  Mom[Multiparticle[3, 99]]^2, prGenericSpinorChart["Chart"], {prElectronMass -> 1, prElectricCharge -> 1}];
 check["an unknown leg inside a scalar momentum square remains unresolved",
   !ConstructiveDiagrams`Private`residueFiniteQ[prUnknownInvariant] &&
     !FreeQ[prUnknownInvariant, _Missing]];
@@ -725,8 +725,8 @@ check["public residue extraction accepts the scalar momentum-square form of a nu
     prZero[prInvariantResidue["PhysicalResidue"] -
       prInvariantDotResidue["PhysicalResidue"]]];
 prInvariantReport = CheckPhysicalResidues[
-  prH (Mom[1]^2/Me^2 + Mom[Multiparticle[3, 4]]^2/(2 MomProd[3, 4]) - 1),
-  prChannels, prFixtureModel, "ParameterRules" -> {Me -> 1, EE -> 1},
+  prH (Mom[1]^2/prElectronMass^2 + Mom[Multiparticle[3, 4]]^2/(2 MomProd[3, 4]) - 1),
+  prChannels, prFixtureModel, "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1},
   "Samples" -> 1, "SpuriousPoles" -> {}, "TimeConstraint" -> 30,
   "Output" -> "Details"];
 check["the public checker accepts equivalent external and composite momentum-square numerators",
@@ -741,7 +741,7 @@ check["completion cleanup preserves Lorentz squares instead of multiplying bare 
 prExternalSquareChart = prGenericSpinorChart["Chart"] /.
   prGenericSpinorChart["Chart"]["PoleVariable"] -> 7;
 prExternalSquareValues = ConstructiveDiagrams`Private`residueEvaluateChart[
-    #, prExternalSquareChart, {Me -> 1, EE -> 1}] & /@
+    #, prExternalSquareChart, {prElectronMass -> 1, prElectricCharge -> 1}] & /@
   {prExternalSquareInput, prExternalSquareReduced,
     (Mass[2]^2 + 2 MomProd[2, 5])/prInvariantTarget["Propagator"]};
 check["completion cleanup preserves the scalar invariant and its conservation complement away from cuts",
@@ -750,7 +750,7 @@ check["completion cleanup preserves the scalar invariant and its conservation co
     prZero[prExternalSquareValues[[1]] - prExternalSquareValues[[2]]] &&
     prZero[prExternalSquareValues[[1]] - prExternalSquareValues[[3]]] &&
     ConstructiveDiagrams`Private`residueEvaluateChart[
-      prInvariantTarget["Propagator"], prExternalSquareChart, {Me -> 1, EE -> 1}] === 7];
+      prInvariantTarget["Propagator"], prExternalSquareChart, {prElectronMass -> 1, prElectricCharge -> 1}] === 7];
 check["automatic spinor map preserves momentum anticommutation",
   prGenericSpinorZero[
     SpinorChain[prGenericAngle3, Mom[1], Mom[2], prGenericAngle4] +
@@ -786,7 +786,7 @@ check["distinct explicit reference labels remain distinct in automatic evaluatio
     Spinor["Xi", "Angle", 11]]]];
 
 prFullPilot = q5FullResidueReport["Samples" -> 4,
-  "ParameterRules" -> {Me -> 1, EE -> 1}, "TimeConstraint" -> 20];
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "TimeConstraint" -> 20];
 prFullReports = prFullPilot["Reports"];
 check["pilot retains the original diagrams and its explicit reference assignments",
   Length[prFullPilot["DiagramRecords"]] === 6 &&
@@ -811,7 +811,7 @@ Do[
 ];
 check["distinct-reference raw diagrams expose an electron-pole continuation failure",
   AnyTrue[prFullReports["ActualDiagrams"]["Channels"],
-    #["Mass"] === Me && Count[#["Cut"], 1 | 2] === 1 &&
+    #["Mass"] === prElectronMass && Count[#["Cut"], 1 | 2] === 1 &&
       Count[#["Cut"], 3 | 4 | 5] === 1 && #["Status"] === "FAIL" &]];
 check["the passing common-reference diagram expression is an explicit saved substitution",
   prFullPilot["Amplitudes"]["CommonReferenceDiagrams"] ===
@@ -898,14 +898,14 @@ check["the two internal photon helicities combine before residue evaluation",
 prFourFermionAmplitude = Total[(ReduceSpinContractions[Last[#]] /. First[#]) & /@
   diagramAmplitudes[CreateDiagrams[{"e", "E", "e", "E"}, prModel]]];
 prFourFermionReport = prDetailedReport[prFourFermionAmplitude, prFourFermionTargets,
-  "Samples" -> 2, "ParameterRules" -> {Me -> 1, EE -> 1}, "TimeConstraint" -> 30];
+  "Samples" -> 2, "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "TimeConstraint" -> 30];
 check["identical-four-fermion diagrams and channels agree with the physical sewing phase",
   prFourFermionReport["Summary"] === <|"PASS" -> 2|> &&
     AllTrue[prFourFermionReport["Channels"],
       AllTrue[#["Samples"], Together[#["CalculatedResidue"] - #["ExpectedResidue"]] === 0 &] &]];
 prAllFourFermionReport = prDetailedReport[prFourFermionAmplitude,
   prAllFourFermionTargets, "Samples" -> 1,
-  "ParameterRules" -> {Me -> 1, EE -> 1}, "TimeConstraint" -> 30];
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "TimeConstraint" -> 30];
 check["plain QED model checks its two nonzero four-point channels without explicit zero rows",
   Length[prAllFourFermionTargets] === 2 &&
     prAllFourFermionReport["Summary"] === <|"PASS" -> 2|>];
@@ -918,7 +918,8 @@ prMixedPhotonDiagrams = Select[CreateDiagrams[{"e", "E", "m", "M"}, prMixedModel
 prMixedPhotonAmplitude = Total[(ReduceSpinContractions[Last[#]] /. First[#]) & /@
   diagramAmplitudes[prMixedPhotonDiagrams]];
 prMixedPhotonReport = prDetailedReport[prMixedPhotonAmplitude, prMixedTargets,
-  "Samples" -> 2, "ParameterRules" -> {Me -> 1, Mm -> 2, EE -> 1}, "TimeConstraint" -> 30];
+  "Samples" -> 2, "ParameterRules" -> ModelParameterRules[prMixedModel,
+    {"Me" -> 1, "Mm" -> 2, "EE" -> 1}], "TimeConstraint" -> 30];
 check["nonidentical massive four-fermion photon residues agree without x factors",
   Length[prMixedTargets] === 1 && FreeQ[First[prMixedTargets]["StateSum"], _xFactor | _xTildeFactor] &&
     prMixedPhotonReport["Summary"] === <|"PASS" -> 1|> &&
@@ -950,11 +951,11 @@ Do[
   prFiveFermionChannels = FactorizationAmplitudeChannels[particles, prFixtureModel];
   prFiveFermionTargets = ConstructiveDiagrams`Private`residueSimpleInputs[
     0, prFiveFermionChannels, prFixtureModel]["Targets"];
-  prFiveElectronTargets = Select[prFiveFermionTargets, #["Mass"] === Me &];
+  prFiveElectronTargets = Select[prFiveFermionTargets, #["Mass"] === prElectronMass &];
   prFiveFermionAmplitude = Total[(ReduceSpinContractions[Last[#]] /. First[#]) & /@
     diagramAmplitudes[CreateDiagrams[particles, prModel]]];
   prFiveElectronReport = prDetailedReport[prFiveFermionAmplitude, prFiveElectronTargets,
-    "Samples" -> 2, "ParameterRules" -> {Me -> 1, EE -> 1}, "TimeConstraint" -> 30];
+    "Samples" -> 2, "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "TimeConstraint" -> 30];
   check["five-point four-fermion electron cuts agree after graph and Wick sign repairs " <>
     ToString[particles, InputForm], Length[prFiveElectronTargets] === 4 &&
       prFiveElectronReport["Summary"] === <|"PASS" -> 4|> &&
@@ -966,7 +967,7 @@ Do[
 prPhotonTargets = Select[prFiveFermionTargets, #["Mass"] === 0 &];
 prPhotonTarget = SelectFirst[prPhotonTargets, #["Cut"] === {1, 2} &];
 prPhotonAutomatic = ConstructiveDiagrams`Private`residueAutomaticChart[
-  prPhotonTarget, 2, 1729, {Me -> 1, EE -> 1}];
+  prPhotonTarget, 2, 1729, {prElectronMass -> 1, prElectricCharge -> 1}];
 prPhotonChart = prPhotonAutomatic["Chart"];
 prPhotonCut = Multiparticle @@ prPhotonTarget["Cut"];
 prPhotonComplement = Multiparticle @@ prPhotonTarget["Complement"];
@@ -985,7 +986,7 @@ check["complementary cut momentum reverses the angle spinor but not the square s
 check["unselected composite spinors are not silently put on shell",
   MissingQ[prCutSpinor["Angle", Multiparticle[1, 5]]]];
 prMassiveAutomatic = ConstructiveDiagrams`Private`residueAutomaticChart[
-  First[prFiveElectronTargets], 2, 1729, {Me -> 1, EE -> 1}];
+  First[prFiveElectronTargets], 2, 1729, {prElectronMass -> 1, prElectricCharge -> 1}];
 check["the photon map does not assign massless spinors to a massive internal cut",
   MissingQ[ConstructiveDiagrams`Private`residueChartSpinor[
     Spinor["Helicity", "Angle", Multiparticle @@ First[prFiveElectronTargets]["Cut"]],
@@ -994,9 +995,9 @@ prPhotonEndpointFactor = SpinorChain[Spinor["Helicity", "Angle", prPhotonCut],
   Spinor["Helicity", "Angle", 5]]^2;
 prCutXValue[head_] := Module[{value, endpoint},
   value = ConstructiveDiagrams`Private`residueEvaluateChart[
-    head[1, 2] prPhotonEndpointFactor, prPhotonChart, {Me -> 1, EE -> 1}];
+    head[1, 2] prPhotonEndpointFactor, prPhotonChart, {prElectronMass -> 1, prElectricCharge -> 1}];
   endpoint = ConstructiveDiagrams`Private`residueEvaluateChart[
-    prPhotonEndpointFactor, prPhotonChart, {Me -> 1, EE -> 1}];
+    prPhotonEndpointFactor, prPhotonChart, {prElectronMass -> 1, prElectricCharge -> 1}];
   Cancel[Together[value/endpoint]] /. prPhotonPole -> 0
 ];
 prCutX = prCutXValue[xFactor]; prCutXTilde = prCutXValue[xTildeFactor];
@@ -1013,7 +1014,7 @@ prPhotonReferenceValue[angle_, square_] := Module[{chart},
   chart = Join[prPhotonChart, <|"ReferenceOverrides" -> <|
     "Angle" -> <|"CutPhoton" -> angle|>, "Square" -> <|"CutPhoton" -> square|>|>|>];
   Cancel[Together[ConstructiveDiagrams`Private`residueEvaluateChart[
-    prPhotonTarget["StateSum"], chart, {Me -> 1, EE -> 1}]]] /. prPhotonPole -> 0
+    prPhotonTarget["StateSum"], chart, {prElectronMass -> 1, prElectricCharge -> 1}]]] /. prPhotonPole -> 0
 ];
 check["sewn internal-photon targets are independent of their auxiliary x references",
   prZero[prPhotonReferenceValue[{1, 2}, {3, 5}] -

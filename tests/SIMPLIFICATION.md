@@ -93,7 +93,10 @@ are ordinary assertions now and fail the normal run if a bug returns.
 Use `--suite legacy-algebra-tests.wl` for a focused run, and run the runner's
 own tests with `python3 -m unittest discover -s tests/checks -p test_runner.py`.
 
-## Physical-Residue Diagnostics
+## Amplitude Checks
+
+`CheckAmplitudes` is the general checker. `CheckPhysicalResidues` remains a
+compatibility name with the same options and behavior.
 
 `tests/Factorization-checks.nb` is a short, self-contained walkthrough with
 four- and five-point QED. Each example uses the ordinary diagram amplitudes,
@@ -103,7 +106,7 @@ the original compact factorization channels and the model:
 diagrams = CreateDiagrams[particles, diagramModel];
 amplitudes = diagramAmplitudes[diagrams];
 channels = FactorizationAmplitudeChannels[particles, factorizationModel];
-CheckPhysicalResidues[amplitudes, channels, factorizationModel]
+CheckAmplitudes[amplitudes, channels, factorizationModel]
 ```
 
 The normal checker output combines physical poles, apparent spurious poles,
@@ -121,6 +124,44 @@ then compares the summed amplitude. A prepared expression can be supplied
 instead. It does not call `ReduceSpinorProducts` or impose internal on-shell
 conditions on the candidate. The supplied factorization channels are used
 directly; the checker does not sew a second set of lower-point amplitudes.
+
+### Independent Feynman Comparison
+
+Supply a separately calculated, spinor-converted Feynman amplitude to add an
+off-cut equality test to the same report:
+
+```wolfram
+feynmanPairs = diagramAmplitudes[CreateDiagrams[particles, qedFeynmanModel]];
+preparedFeynman = PrepareAmplitudes[feynmanPairs, qedFeynmanModel,
+  "ReferenceSpinors" -> "IndependentXi", "MaxSteps" -> 0];
+CheckAmplitudes[finalAmplitude, channels, factorizationModel,
+  "FeynmanAmplitudes" -> preparedFeynman,
+  "FeynmanModel" -> qedFeynmanModel]
+```
+
+The candidate and Feynman amplitude must use the same particles, external
+ordering, helicities, masses and couplings. This comparison uses external
+on-shell kinematics away from physical and spurious poles, not the
+factorization cuts. No additional overall sign or normalization is fitted.
+Each external photon or gluon must use the same reference in every Feynman
+diagram; individual diagrams are not gauge invariant. `"IndependentXi"` retains
+one generic reference per external particle, fixed across the entire sum.
+`"MaxSteps" -> 0` keeps exact conversion and ordinary spinor reduction but skips
+the optional identity search: an independently checkable benchmark need not be
+individually minimized diagram by diagram.
+`"Output" -> "Feynman"` requests its numerical comparison details.
+`"FeynmanSamples" -> Automatic` uses `"Samples"`; `"FeynmanTimeConstraint" -> Automatic`
+uses the ordinary `"TimeConstraint"`.
+Without `"FeynmanAmplitudes"`, no Feynman benchmark is generated or run.
+
+`tests/QED-5-point-construction.nb` constructs this benchmark independently for
+the all-plus and mixed-helicity three-photon cases. It reads the separate
+massive-QED Feynman model 2. Each model retains its own mass and charge
+definitions, with matching numerical values for this example; the checker
+uses the supplied `"FeynmanModel"` for the benchmark's parameters rather than
+identifying the two models' parameter objects or changing either model.
+The stock imported SM otherwise keeps a massless electron and must not be
+compared silently with a massive-electron constructive amplitude.
 
 The notebook explicitly simplifies the five-point diagrams before checking
 them. It contracts spin indices, replaces composite momenta inside spinor
@@ -170,9 +211,25 @@ Neither the symbolic amplitude nor the model is assigned numerical values
 globally. For an optional parameter study, override only the desired values:
 
 ```wolfram
-CheckPhysicalResidues[amplitudes, channels, factorizationModel,
-  "ParameterRules" -> {Me -> 1, EE -> 1}]
+CheckAmplitudes[amplitudes, channels, factorizationModel,
+  "ParameterRules" -> {"Me" -> 1, "EE" -> 1}]
 ```
+
+Readers keep parameters as inert model-local data, not per-name global symbols.
+`ModelParameter[model, "Me"]` retrieves a symbolic parameter, and
+`ModelParameterName[parameter]` gives its display name. `ModelParameterRules[model]`
+returns the model's numerical values and resolved dependent functions without
+assigning anything globally. For example:
+
+```wolfram
+electronMass = ModelParameter[diagramModel, "Me"];
+electronMass /. ModelParameterRules[diagramModel]
+```
+
+The parameter still displays as `Me` inside amplitudes. Models with different
+parameter data retain distinct parameter objects even when their printed names
+coincide. Keep the model with its expressions; do not merge parameters by name
+or assign `Me = ...` or `EE = ...` to configure a model.
 
 Explicit rules overlay the model defaults locally, and dependent model
 functions are recomputed. Choose values consistent with the theory. Missing
@@ -189,7 +246,7 @@ particle. The checker does not silently reinterpret diagram-local Xi counters.
 Use `"Output"` to choose how much to display:
 
 ```wolfram
-CheckPhysicalResidues[amplitudes, channels, factorizationModel,
+CheckAmplitudes[amplitudes, channels, factorizationModel,
   "Output" -> "Residues"]
 ```
 
@@ -219,7 +276,7 @@ with `"HighEnergyCheck" -> False`. This diagnostic does not determine an
 allowed constant contact coupling such as the four-Higgs coupling.
 
 ```wolfram
-report = CheckPhysicalResidues[amplitudes, channels, factorizationModel,
+report = CheckAmplitudes[amplitudes, channels, factorizationModel,
   "Output" -> "Details"];
 report["Table"]
 report["HighEnergyTable"]
@@ -269,7 +326,7 @@ poles, not on the individual factorization cuts. No internal on-shell
 identities are imposed.
 
 ```wolfram
-report = CheckPhysicalResidues[amplitudes, channels, factorizationModel,
+report = CheckAmplitudes[amplitudes, channels, factorizationModel,
   "Output" -> "Details"];
 report["ReferenceTable"]
 report["ReferenceCheck"]
@@ -435,7 +492,7 @@ The ordinary call checks physical residues and discovers apparent spurious
 denominator poles automatically. No pole list is required:
 
 ```wolfram
-CheckPhysicalResidues[amplitude, channels, factorizationModel]
+CheckAmplitudes[amplitude, channels, factorizationModel]
 ```
 
 The compact table has `Type`, `Pole` and `Status` columns for both kinds of
@@ -485,7 +542,7 @@ coincident physical poles and timeouts.
 
 ## Preparing and Completing an Amplitude
 
-The three construction stages are separate from `CheckPhysicalResidues`.
+The three construction stages are separate from `CheckAmplitudes`.
 The checker still only checks its input; it never changes an amplitude.
 There is not yet an all-in-one process constructor.
 
@@ -508,6 +565,22 @@ It returns the same format, preserving the metadata and replacing only the
 expression. Original inputs and reduction history are omitted unless
 `"ReturnDetails" -> True` is requested. `PrepareDiagramAmplitudes` remains
 available as a compatibility name.
+
+For a `FeynmanModel`, diagram pairs can be passed directly: preparation first
+converts their tensors and ordered Dirac chains to spinor products. Internal
+Feynman numerators and denominators remain off shell throughout; only external
+shell identities and ordinary algebra are used. No diagram-local internal-shell
+substitutions are made merely because the pairs list propagator masses.
+Prepared Feynman pairs carry external mass rules only, avoiding accidental
+reuse of internal propagator masses as constructive shell assumptions.
+Feynman inputs default to `"MaxSteps" -> 0` when omitted; a positive value opts
+into identity search, while constructive inputs keep their default of 12.
+Feynman reference choices are shared across the entire diagram list.
+`Automatic`, `"AllSpurious"`, `"Cyclic"` and `"ReverseCyclic"` use a fixed
+consistent massless-particle cycle rather than optimizing each diagram
+independently. `"Xi"`, `"IndependentXi"` and `None` are also supported.
+`"AllPhysical"` and `"Mixed"` remain explicitly `"PARTIAL"` for Feynman inputs
+until a safe whole-amplitude reference search is available.
 
 For a factorization row, only its declared cut is an internal on-shell
 condition. Its momentum-conservation complement describes the same cut, not
@@ -748,7 +821,7 @@ finalAmplitude = If[FailureQ[factorizedAmplitude] || factorizedAmplitude === $Fa
   CompleteHighEnergy[
     factorizedAmplitude, channels, qedFactorizationModel]];
 If[FailureQ[finalAmplitude] || finalAmplitude === $Failed, finalAmplitude,
-  CheckPhysicalResidues[finalAmplitude, channels, qedFactorizationModel]]
+  CheckAmplitudes[finalAmplitude, channels, qedFactorizationModel]]
 ```
 
 Run this stage after factorization completion succeeds. It uses bounded
@@ -791,7 +864,7 @@ parameter-rule lists, for example:
 
 ```wolfram
 "ValidationParameterRules" -> {
-  {Me -> 2, EE -> 1}, {Me -> 3, EE -> 2}}
+  {"Me" -> 2, "EE" -> 1}, {"Me" -> 3, "EE" -> 2}}
 ```
 
 The fitting assignment is always included. With `Automatic`, an additional

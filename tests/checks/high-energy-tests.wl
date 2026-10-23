@@ -139,17 +139,17 @@ check["asking for a disabled high-energy display returns no rows",
 heQEDFour = ConstructiveDiagrams`Private`highEnergyCheckReport[
   prFourPointAmplitude, KeyTake[First[prFourPointTargets],
     {"ExternalLegs", "ExternalMassRules"}], 2, 1729,
-  {Me -> 1, EE -> 1}, 30, Automatic];
+  {prElectronMass -> 1, prElectricCharge -> 1}, 30, Automatic];
 check["the known four-point QED amplitude obeys its physical-spin bound",
   AssociationQ[heQEDFour] && heQEDFour["Status"] === "PASS"];
 heQEDH = ConstructiveDiagrams`Private`highEnergyCheckReport[
   prH, KeyTake[First[prTargets], {"ExternalLegs", "ExternalMassRules"}],
-  2, 1729, {Me -> 1, EE -> 1}, 30, Automatic];
+  2, 1729, {prElectronMass -> 1, prElectricCharge -> 1}, 30, Automatic];
 check["the reference-free H amplitude has allowed five-point falloff",
   AssociationQ[heQEDH] && heQEDH["Status"] === "PASS"];
 heQEDS2 = ConstructiveDiagrams`Private`highEnergyCheckReport[
   prS2, KeyTake[First[prTargets], {"ExternalLegs", "ExternalMassRules"}],
-  2, 1729, {Me -> 1, EE -> 1}, 45, Automatic];
+  2, 1729, {prElectronMass -> 1, prElectricCharge -> 1}, 45, Automatic];
 check["the equivalent spurious-pole S2 form has the same allowed falloff",
   AssociationQ[heQEDS2] && heQEDS2["Status"] === "PASS"];
 
@@ -171,7 +171,7 @@ check["three-point real fixed-angle kinematics are not silently fabricated",
   AssociationQ[heThreePoint] && heThreePoint["Status"] === "UNRESOLVED"];
 heQEDMetadata = KeyTake[First[prTargets], {"ExternalLegs", "ExternalMassRules"}];
 heChart = ConstructiveDiagrams`Private`highEnergyAutomaticChart[
-  prH, heQEDMetadata, 1, 1729, {Me -> 1, EE -> 1}];
+  prH, heQEDMetadata, 1, 1729, {prElectronMass -> 1, prElectricCharge -> 1}];
 check["high-energy kinematics retain the exact fixed physical masses",
   AssociationQ[heChart] && heChart["Masses"] ===
     <|1 -> 1, 2 -> 1, 3 -> 0, 4 -> 0, 5 -> 0|>];
@@ -199,14 +199,14 @@ check["coherent massive spin variables retain every physical-spin coefficient",
   Length[heChart["SpinVariables"]] === 2 &&
     Keys[heChart["ExternalSpinVectors"]] === {1, 2}];
 heSecondChart = ConstructiveDiagrams`Private`highEnergyAutomaticChart[
-  prH, heQEDMetadata, 1, 1729, {Me -> 1, EE -> 1}];
+  prH, heQEDMetadata, 1, 1729, {prElectronMass -> 1, prElectricCharge -> 1}];
 check["fixed seeds reproduce the same generic fixed-angle geometry",
   heChart["OutgoingSpatialDirections"] === heSecondChart["OutgoingSpatialDirections"]];
 heReferenceRatio = SpinorChain[Spinor["Xi", "Angle", 71],
   Spinor["Helicity", "Angle", 3]]/
     SpinorChain[Spinor["Xi", "Angle", 71], Spinor["Helicity", "Angle", 4]];
 heReference = ConstructiveDiagrams`Private`highEnergyCheckReport[
-  heReferenceRatio, heQEDMetadata, 2, 1729, {Me -> 1}, 20, 0];
+  heReferenceRatio, heQEDMetadata, 2, 1729, {prElectronMass -> 1}, 20, 0];
 check["fixed reference spinors remain usable along the high-energy family",
   AssociationQ[heReference] && heReference["Status"] === "PASS"];
 heHeavyMetadata = <|"ExternalLegs" -> Range[4],

@@ -53,20 +53,23 @@ result
 
 
 (* ::Input::Initialization:: *)
-ReadVariables[file_]:=Module[{rows,variableList={},line},
+ReadVariables[file_]:=Module[{rows,variableList={},line,scope,parsed,tag=Unique["modelVariables"]},
 rows=ConstructiveDiagrams`Private`readModelRows[file];
 If[FailureQ[rows],Return[rows]];
+scope=ConstructiveDiagrams`Private`modelParameterScope[file];
+Catch[
 Do[
-If[Length[line]==3&&!StringContainsQ[line[[1]],RegularExpression["Name"]],
-PlainText[ToExpression[line[[1]]]]=line[[1]];
-SPINAS[ToExpression[line[[1]]]]=line[[1]];
-Unprotect[TeX];TeX[ToExpression[line[[1]]]]=line[[1]];Protect[TeX];
-Do[line[[ii]]=ToExpression[line[[ii]]];,{ii,1,2}];
-Unprotect[Conjugate];Conjugate[line[[1]]]=line[[1]];Protect[Conjugate];
+If[Length[line]==3&&line[[1]]=!="Name",
+If[!StringMatchQ[line[[1]],RegularExpression["[A-Za-z_][A-Za-z_0-9]*"]],
+Throw[Failure["InvalidModelParameter",<|"File"->file,"Name"->line[[1]]|>],tag]];
+parsed=ConstructiveDiagrams`Private`parseModelExpression[line[[2]],scope];
+If[FailureQ[parsed],Throw[parsed,tag]];
+line[[1]]=ModelParameter[line[[1]],scope,"Real"];
+line[[2]]=parsed;
 AppendTo[variableList,line];
 ];
 ,{line,rows}];
-variableList
+variableList,tag]
 ]
 
 
@@ -75,24 +78,26 @@ variableList
 
 
 (* ::Input::Initialization:: *)
-ReadFunctions[file_]:=Module[{rows,functionList={},line,rside},
+ReadFunctions[file_]:=Module[{rows,functionList={},line,rside,scope,parsed,tag=Unique["modelFunctions"]},
 rows=ConstructiveDiagrams`Private`readModelRows[file];
 If[FailureQ[rows],Return[rows]];
+scope=ConstructiveDiagrams`Private`modelParameterScope[file];
+Catch[
 Do[
-If[Length[line]==2&&!StringContainsQ[line[[1]],RegularExpression["Name"]],
-PlainText[ToExpression[line[[1]]]]=line[[1]];
-SPINAS[ToExpression[line[[1]]]]=line[[1]];
-Unprotect[TeX];TeX[ToExpression[line[[1]]]]=line[[1]];Protect[TeX];
-line[[1]]=ToExpression[line[[1]]];
-Unprotect[Conjugate];
-Conjugate[line[[1]]]=line[[1]];Protect[Conjugate];
+If[Length[line]==2&&line[[1]]=!="Name",
+If[!StringMatchQ[line[[1]],RegularExpression["[A-Za-z_][A-Za-z_0-9]*"]],
+Throw[Failure["InvalidModelParameter",<|"File"->file,"Name"->line[[1]]|>],tag]];
+line[[1]]=ModelParameter[line[[1]],scope,"Real"];
 rside=StringTrim[StringSplit[line[[2]],"%"]];
-line[[2]]=ToExpression[rside[[1]]];
+If[rside==={},Throw[Failure["InvalidModelExpression",<|"File"->file|>],tag]];
+parsed=ConstructiveDiagrams`Private`parseModelExpression[rside[[1]],scope];
+If[FailureQ[parsed],Throw[parsed,tag]];
+line[[2]]=parsed;
 If[Length[rside]==2,AppendTo[line,rside[[2]]],AppendTo[line,""]];
 AppendTo[functionList,line];
 ];
 ,{line,rows}];
-functionList
+functionList,tag]
 ]
 
 
@@ -101,17 +106,19 @@ functionList
 
 
 (* ::Input::Initialization:: *)
-ReadParticles[file_]:=Module[{rows,particleList={},line},
+ReadParticles[file_]:=Module[{rows,particleList={},line,scope,parsed,tag=Unique["modelParticles"]},
 rows=ConstructiveDiagrams`Private`readModelRows[file];
 If[FailureQ[rows],Return[rows]];
+scope=ConstructiveDiagrams`Private`modelParameterScope[file];
+Catch[
 Do[
 If[Length[line]==11&&!StringContainsQ[line[[1]],RegularExpression["Full\\s*Name"]],
-Do[line[[ii]]=ToExpression[line[[ii]]];,{ii,4,6}];
-line[[8]]=ToExpression[line[[8]]];
+Do[parsed=ConstructiveDiagrams`Private`parseModelExpression[line[[ii]],scope];
+If[FailureQ[parsed],Throw[parsed,tag]];line[[ii]]=parsed;,{ii,{4,5,6,8}}];
 AppendTo[particleList,line];
 ];
 ,{line,rows}];
-particleList
+particleList,tag]
 ]
 
 
@@ -130,36 +137,43 @@ res
 
 
 (* ::Input::Initialization:: *)
-ReadAmplitudes[file_,particleList_]:=Module[{rows,amplitudeList={},line},
+ReadAmplitudes[file_,particleList_]:=Module[{rows,amplitudeList={},line,scope,parsed,tag=Unique["modelAmplitudes"]},
 rows=ConstructiveDiagrams`Private`readModelRows[file];
 If[FailureQ[rows],Return[rows]];
+scope=ConstructiveDiagrams`Private`modelParameterScope[file];
+Catch[
 Do[
 If[Length[line]>=5&&line[[3]]!="P3"&&!StringContainsQ[line[[1]],"%"],
-line[[-2]]=ToExpression[line[[-2]]];
-line[[-1]]=ConvertAmplitude[line,particleList];
+parsed=ConstructiveDiagrams`Private`parseModelExpression[line[[-2]],scope];
+If[FailureQ[parsed],Throw[parsed,tag]];line[[-2]]=parsed;
+parsed=ConvertAmplitude[line,particleList,scope];
+If[FailureQ[parsed],Throw[parsed,tag]];line[[-1]]=parsed;
 AppendTo[amplitudeList,line];
 ];
 ,{line,rows}];
 (*AddOppositeHelicityAmplitudes[amplitudeList]*)
-amplitudeList
+amplitudeList,tag]
 ]
 
 
 (* ::Input::Initialization:: *)
-ConvertAmplitude[line_,particleList_]:=Module[{masses={},res,SpinHelicity},
+ConvertAmplitude[line_,particleList_,scope_:Automatic]:=Module[{masses={},res,SpinHelicity,parameterScope},
+parameterScope=If[scope===Automatic,FirstCase[particleList,
+ModelParameter[_String,s_String,_String]:>s,"StandaloneConstructiveAmplitude",Infinity],scope];
+If[!StringQ[parameterScope],Return[Failure["InvalidModelParameterScope",<||>]]];
 SpinHelicity[mass_]:=If[mass===0,"Helicity","Spin"];
 Do[AppendTo[masses,ParticleMass[line[[ii]],particleList]],{ii,1,Length[line]-2}];
 (*If[line[[4]]=!="",AppendTo[masses,ParticleMass[line[[4]],particleList]]];*)
 res=StringReplace[line[[-1]],{
 RegularExpression["x(\\d)(\\d)"]:>"xFactor[$1,$2]",
 RegularExpression["xt(\\d)(\\d)"]:>"xTildeFactor[$1,$2]",
-RegularExpression["<(\\d)(\\d)>"]:>"SpinorChain[Spinor[\""<>SpinHelicity[masses[[ToExpression["$1"]]]]<>"\",\"Angle\",$1],Spinor[\""<>SpinHelicity[masses[[ToExpression["$2"]]]]<>"\",\"Angle\",$2]]",
-RegularExpression["\[(\\d)(\\d)\]"]:>"SpinorChain[Spinor[\""<>SpinHelicity[masses[[ToExpression["$1"]]]]<>"\",\"Square\",$1],Spinor[\""<>SpinHelicity[masses[[ToExpression["$2"]]]]<>"\",\"Square\",$2]]",
-RegularExpression["\[(\\d)(\\d)(\\d)>"]:>"SpinorChain[Spinor[\""<>SpinHelicity[masses[[ToExpression["$1"]]]]<>"\",\"Square\",$1],Mom[$2],Spinor[\""<>SpinHelicity[masses[[ToExpression["$3"]]]]<>"\",\"Angle\",$3]]",
+RegularExpression["<(\\d)(\\d)>"]:>"SpinorChain[Spinor[\""<>SpinHelicity[masses[[FromDigits["$1"]]]]<>"\",\"Angle\",$1],Spinor[\""<>SpinHelicity[masses[[FromDigits["$2"]]]]<>"\",\"Angle\",$2]]",
+RegularExpression["\[(\\d)(\\d)\]"]:>"SpinorChain[Spinor[\""<>SpinHelicity[masses[[FromDigits["$1"]]]]<>"\",\"Square\",$1],Spinor[\""<>SpinHelicity[masses[[FromDigits["$2"]]]]<>"\",\"Square\",$2]]",
+RegularExpression["\[(\\d)(\\d)(\\d)>"]:>"SpinorChain[Spinor[\""<>SpinHelicity[masses[[FromDigits["$1"]]]]<>"\",\"Square\",$1],Mom[$2],Spinor[\""<>SpinHelicity[masses[[FromDigits["$3"]]]]<>"\",\"Angle\",$3]]",
 RegularExpression["s(\\d)(\\d)-([a-zA-Z0-9]+)\\^2"]:>"PropDen[Mom[Multiparticle[$1,$2]],$3]",
 RegularExpression["s(\\d)(\\d)"]:>"PropDen[Mom[Multiparticle[$1,$2]],0]"
 }];
-ToExpression[res]
+ConstructiveDiagrams`Private`parseModelExpression[res,parameterScope]
 ];
 
 
@@ -186,7 +200,7 @@ If[containsHelicity,
 amplitude={};
 Do[AppendTo[amplitude,StringReplace[vertices[[i,j]],{".+"->".-",".-"->".+"}]],{j,1,Length[vertices[[i]]]-2}];
 AppendTo[amplitude,vertices[[i,-2]]];
-AppendTo[amplitude,vertices[[i,-1]]/.{xFactor[a__]:>xTildeFactor[a],xTildeFactor[a__]:>xFactor[a],"Angle"->"Square","Square"->"Angle"}];
+AppendTo[amplitude,vertices[[i,-1]]/.{xFactor[a__]:>xTildeFactor[a],xTildeFactor[a__]:>xFactor[a],spinor_Spinor:>(spinor/.{"Angle"->"Square","Square"->"Angle"})}];
 AppendTo[newVertices,amplitude];
 ];
 ,{i,1,Length[vertices]}];
@@ -1647,6 +1661,7 @@ diagramMassReplacements[diag_] := Module[{ext, masses, externalRules, internalRu
     Mass[i] -> Lookup[masses, ext[[i]], Missing["MassNotFound", ext[[i]]]],
     {i, Length[ext]}
   ];
+  If[Lookup[diag, "AmplitudeType", None] === "Feynman", Return[externalRules]];
   internalRules = Flatten @ KeyValueMap[
     Function[{edge, pdata},
       Module[{mass, mps},
@@ -2115,11 +2130,16 @@ Scan[If[Names[#] =!= {}, Remove[#]] &, DeleteDuplicates[
 
 DiagramAmplitudeRecords::usage = "DiagramAmplitudeRecords[diagrams] retains each diagram's original expression, physical propagators, numerator conditions and mass rules. The string option SimplificationFunction accepts a function on {massRules, expression}; its default is Identity. NumeratorOnShellChannels declares any internal conditions used by that function; no internal-shell simplification is applied automatically.";
 PhysicalPoleResidue::usage = "PhysicalPoleResidue[expression, channel] extracts a pole coefficient. A list of channels extracts a compatible multiple-pole coefficient. Without a coherent KinematicMap the result is only FORMAL. A map f[expression, channels, poleVariables] must evaluate all spinors, momenta and propagators consistently near the selected cuts. KinematicKind distinguishes Sample from Symbolic charts. No internal on-shell condition is inferred from diagram mass rules.";
-CheckPhysicalResidues::usage = "CheckPhysicalResidues[diagramAmplitudes, channels, model] checks physical residues against the ordinary rows returned by FactorizationAmplitudeChannels, automatically discovers apparent denominator poles, and tests high-energy growth and explicit Xi reference-spinor independence of the complete summed amplitude. Only supplied channels certify physical poles; other supported denominator poles are tested for cancellation while physical propagators remain nonzero. The physical comparison applies the sewing factor -1 from (i A_L)(i A_R)(i/PropDen)/i. HighEnergyCheck -> Automatic enables exact high-energy expansions at sampled real, fixed-angle, momentum-conserving kinematics with external masses and couplings held fixed. HighEnergyBound -> Automatic assumes the renormalizable-tree bound E^(4-n); a numerical exponent overrides it, and HighEnergyCheck -> False disables this diagnostic. HighEnergySamples and HighEnergyTimeConstraint control the energy test. ReferenceCheck -> Automatic varies all literal Xi labels simultaneously at sampled conserved external kinematics away from physical poles, holding momenta and external spin states fixed. ReferenceSamples and ReferenceTimeConstraint control this test; ReferenceCheck -> False disables it. An expression without explicit reference spinors has no explicit Xi dependence; this is not a Ward-identity proof. ParameterRules -> Automatic uses numerical variables and dependent functions from the supplied model. An explicit rule list overrides selected model parameters; dependent functions are recomputed. Numerical values are used only for checking, leaving the amplitude symbolic. PASS denotes agreement, finiteness, acceptable growth or reference independence at the recorded kinematic samples, not a generic analytic proof. Opp Sign applies only to physical residues. Unsupported calculations and timeouts remain UNRESOLVED. Output -> \"HighEnergy\" shows energy samples, \"References\" shows reference comparisons, \"Residues\" shows physical and spurious-pole samples, \"Summary\" returns combined counts and \"Details\" retains all diagnostics. SpuriousPoles -> Automatic discovers denominators; a list overrides discovery and {} disables spurious checks. Set SpuriousPoles -> {}, HighEnergyCheck -> False and ReferenceCheck -> False for the legacy physical-only report. Samples, RandomSeed, ParameterRules and TimeConstraint control pole comparisons. Inputs remain unchanged and no amplitude correction or new interaction is added.";
+CheckAmplitudes::usage = "CheckAmplitudes[diagramAmplitudes, channels, model] checks physical residues against the ordinary rows returned by FactorizationAmplitudeChannels, automatically discovers apparent denominator poles, and tests high-energy growth and explicit Xi reference-spinor independence of the complete summed amplitude. Only supplied channels certify physical poles; other supported denominator poles are tested for cancellation while physical propagators remain nonzero. The physical comparison applies the sewing factor -1 from (i A_L)(i A_R)(i/PropDen)/i. HighEnergyCheck -> Automatic enables exact high-energy expansions at sampled real, fixed-angle, momentum-conserving kinematics with external masses and couplings held fixed. HighEnergyBound -> Automatic assumes the renormalizable-tree bound E^(4-n); a numerical exponent overrides it, and HighEnergyCheck -> False disables this diagnostic. HighEnergySamples and HighEnergyTimeConstraint control the energy test. ReferenceCheck -> Automatic varies all literal Xi labels simultaneously at sampled conserved external kinematics away from physical poles, holding momenta and external spin states fixed. ReferenceSamples and ReferenceTimeConstraint control this test; ReferenceCheck -> False disables it. An expression without explicit reference spinors has no explicit Xi dependence; this is not a Ward-identity proof. ParameterRules -> Automatic uses numerical variables and dependent functions from the supplied model. An explicit rule list overrides selected model parameters; dependent functions are recomputed. Numerical values are used only for checking, leaving the amplitude symbolic. PASS denotes agreement, finiteness, acceptable growth or reference independence at the recorded kinematic samples, not a generic analytic proof. Opp Sign diagnoses an overall opposite sign in physical residues or a supplied Feynman comparison. Unsupported calculations and timeouts remain UNRESOLVED. Output -> \"HighEnergy\" shows energy samples, \"References\" shows reference comparisons, \"Residues\" shows physical and spurious-pole samples, \"Summary\" returns combined counts and \"Details\" retains all diagnostics. SpuriousPoles -> Automatic discovers denominators; a list overrides discovery and {} disables spurious checks. Set SpuriousPoles -> {}, HighEnergyCheck -> False and ReferenceCheck -> False for the legacy physical-only report. Samples, RandomSeed, ParameterRules and TimeConstraint control pole comparisons. Inputs remain unchanged and no amplitude correction or new interaction is added.";
 DiagramAmplitudeRecords::args = "Expected a list of diagram associations and valid diagram-local simplification options.";
 PhysicalPoleResidue::args = "Expected channel associations with Cut, Complement, Mass and ExternalLegs, and valid diagnostic options.";
-CheckPhysicalResidues::args = "Expected diagram amplitudes, the ordinary channel rows returned by FactorizationAmplitudeChannels, a model, and valid comparison options.";
-CheckPhysicalResidues::input = "`1`";
+CheckAmplitudes::args = "Expected diagram amplitudes, the ordinary channel rows returned by FactorizationAmplitudeChannels, a model, and valid comparison options.";
+CheckAmplitudes::input = "`1`";
+CheckAmplitudes::usage = CheckAmplitudes::usage <>
+  " FeynmanAmplitudes -> None optionally supplies an independent full Feynman amplitude, a mass-rule/expression pair, or a list of pairs. The full sums are compared at common conserved external on-shell momenta away from all internal propagator poles, with no internal-shell substitutions and no sewing sign or normalization fitted to the benchmark. Explicit Xi references vary independently between the two full sums. FeynmanSamples -> Automatic uses Samples and FeynmanTimeConstraint -> Automatic uses TimeConstraint. Output -> \"Feynman\" shows visible amplitude samples; Details includes FeynmanCheck. PASS and Opp Sign are sampled comparisons of all implicit massive-spin components, not generic analytic proofs. Raw supported Feynman tensors are converted automatically; use PrepareAmplitudes with FermionHelicities first when massless Dirac helicities must be supplied.";
+CheckPhysicalResidues::usage = "CheckPhysicalResidues is a compatibility alias for CheckAmplitudes, which checks physical residues, spurious poles, high-energy growth, reference independence and optional full Feynman-amplitude agreement.";
+CheckAmplitudes::usage = CheckAmplitudes::usage <>
+  " Supply FeynmanModel -> benchmarkModel when the benchmark comes from a separate model. Its numerical parameters are resolved only from that model; Automatic uses the third argument's model. Missing benchmark definitions remain UNRESOLVED rather than borrowing candidate values. ParameterRules may use string names such as \"Me\" -> 1 for local overrides.";
 
 Begin["ConstructiveDiagrams`Private`"];
 
@@ -2516,6 +2536,11 @@ residueChartSpinor[Spinor["Spin", position : ("Upper" | "Lower"),
     If[position === "Upper", basis[[All, column]],
       If[column === 1, basis[[All, 2]], -basis[[All, 1]]]]
   ];
+(* Coherent evaluation uses one spin variable for both symmetric vector slots. *)
+residueChartSpinor[Spinor["Spin", "Upper", kind : ("Angle" | "Square"),
+    index_Integer, ConstructiveDiagrams`VectorSpinIndex[leg_Integer, 1 | 2]], chart_] /;
+    TrueQ[Lookup[chart, "CoherentVectorSpinIndices", False]] && index === leg :=
+  Lookup[chart[kind], index, Missing["UnknownMassiveLeg", index]];
 residueChartSpinor[_, _] := Missing["UnsupportedSpinor"];
 
 residueChartChain[chain_SpinorChain, chart_] := Module[
@@ -2621,7 +2646,8 @@ residueAutomaticChart[channel_Association, sample_Integer, seed_Integer, paramet
     masses = AssociationThread[external, (Mass /@ external /. massRules) /. parameterRules];
     If[!FreeQ[Values[masses], _Mass] || Min[Length[cut], Length[complement]] < 2,
       Return[Failure["InvalidCutMassMetadata", <||>]]];
-    SeedRandom[Hash[{seed, sample, cut, channel["Mass"]}, "CRC32"]];
+    (* Storage scopes and parameter names must not change sampled kinematics. *)
+    SeedRandom[Hash[{seed, sample, cut, channel["Mass"] /. parameterRules}, "CRC32"]];
     pole = Unique["automaticCut"];
     branches = {OddQ[sample], OddQ[Quotient[sample - 1, 2]]};
     Do[
@@ -2727,15 +2753,34 @@ PhysicalPoleResidue[expr_, input_List, opts : OptionsPattern[]] := Module[
 (* ::Subsection::Closed:: *)
 (*Channel Reports*)
 
+modelParameterKeyQ[key_] := MatchQ[key, _Symbol | _ModelParameter];
+
+modelParameterOverrideRules[overrides_List, keys_List] := Module[
+  {result = {}, key, matches, name},
+  Do[
+    If[!MatchQ[rule, _Rule], Return[$Failed]];
+    key = First[rule];
+    If[StringQ[key] || Head[key] === Symbol,
+      name = If[StringQ[key], key, SymbolName[key]];
+      matches = Select[keys, Head[#] === ModelParameter && ModelParameterName[#] === name &];
+      If[Length[matches] > 1, Return[$Failed]];
+      If[matches =!= {}, key = First[matches]]];
+    If[!modelParameterKeyQ[key], Return[$Failed]];
+    AppendTo[result, key -> Last[rule]], {rule, overrides}];
+  result
+];
+
 residueParameterRules[model_List, overrides_] := Module[
-  {rows, definitions, pending, resolved = {}, available},
+  {rows, definitions, pending, resolved = {}, available, supplied},
   If[!(overrides === Automatic || ListQ[overrides] && AllTrue[overrides,
-      MatchQ[#, _Rule] && Head[First[#]] === Symbol &&
+      MatchQ[#, _Rule] && (modelParameterKeyQ[First[#]] || StringQ[First[#]]) &&
         residueFiniteQ[Last[#]] && !residueUnmappedQ[Last[#]] &]), Return[$Failed]];
   rows = If[Length[model] >= 4 && ListQ[model[[3]]] && ListQ[model[[4]]],
     Join[model[[4]], model[[3]]], {}];
-  rows = Select[rows, ListQ[#] && Length[#] >= 2 && Head[First[#]] === Symbol &];
-  definitions = DeleteDuplicatesBy[Join[Replace[overrides, Automatic -> {}],
+  rows = Select[rows, ListQ[#] && Length[#] >= 2 && modelParameterKeyQ[First[#]] &];
+  supplied = modelParameterOverrideRules[Replace[overrides, Automatic -> {}], First /@ rows];
+  If[supplied === $Failed, Return[$Failed]];
+  definitions = DeleteDuplicatesBy[Join[supplied,
     (First[#] -> #[[2]] & /@ rows)], First];
   (* Exactify before resolving dependencies so the cut charts retain exact shells.
      Only numeric definitions propagate; missing or cyclic ones stay unresolved. *)
@@ -2754,14 +2799,17 @@ residueNumericMassesQ[channel_, rules_List] := AllTrue[Append[
   (Mass /@ channel["ExternalLegs"] /. Lookup[channel, "ExternalMassRules", {}]) /. rules,
   channel["Mass"] /. rules], NumericQ[#] && residueFiniteQ[#] &];
 
-DownValues[CheckPhysicalResidues] = {};
-Options[CheckPhysicalResidues] = Join[Options[PhysicalPoleResidue], {
+DownValues[CheckAmplitudes] = {};
+Options[CheckAmplitudes] = Join[Options[PhysicalPoleResidue], {
   "Tolerance" -> 10^-10, "Samples" -> 4, "RandomSeed" -> 1729,
   "ParameterRules" -> Automatic, "Output" -> "Table", "SpuriousPoles" -> Automatic,
   "HighEnergyCheck" -> Automatic, "HighEnergyBound" -> Automatic,
   "HighEnergySamples" -> 3, "HighEnergyTimeConstraint" -> Automatic,
   "ReferenceCheck" -> Automatic, "ReferenceSamples" -> 3,
-  "ReferenceTimeConstraint" -> Automatic}];
+  "ReferenceTimeConstraint" -> Automatic,
+  "FeynmanAmplitudes" -> None, "FeynmanModel" -> Automatic, "FeynmanSamples" -> Automatic,
+  "FeynmanTimeConstraint" -> Automatic}];
+Options[CheckPhysicalResidues] = Options[CheckAmplitudes];
 
 residueComparisonZeroQ[value_, kind_, tolerance_] := value === 0 ||
   (kind === "Sample" && NumericQ[value] && !FreeQ[value, _Real] &&
@@ -2921,15 +2969,15 @@ residueAutomaticComparison[expr_, channel_, records_, targets_, channels_,
 ];
 
 residueCheckReport[expr_, targets_List, records_List,
-    opts : OptionsPattern[CheckPhysicalResidues]] := Module[
-  {map = OptionValue[CheckPhysicalResidues, {opts}, "KinematicMap"],
-   kind = OptionValue[CheckPhysicalResidues, {opts}, "KinematicKind"],
-   seconds = OptionValue[CheckPhysicalResidues, {opts}, "TimeConstraint"],
-   tolerance = OptionValue[CheckPhysicalResidues, {opts}, "Tolerance"],
-   uncut = OptionValue[CheckPhysicalResidues, {opts}, "UncutChannels"],
-   samples = OptionValue[CheckPhysicalResidues, {opts}, "Samples"],
-   seed = OptionValue[CheckPhysicalResidues, {opts}, "RandomSeed"],
-   rules = Replace[OptionValue[CheckPhysicalResidues, {opts}, "ParameterRules"], Automatic -> {}],
+    opts : OptionsPattern[CheckAmplitudes]] := Module[
+  {map = OptionValue[CheckAmplitudes, {opts}, "KinematicMap"],
+   kind = OptionValue[CheckAmplitudes, {opts}, "KinematicKind"],
+   seconds = OptionValue[CheckAmplitudes, {opts}, "TimeConstraint"],
+   tolerance = OptionValue[CheckAmplitudes, {opts}, "Tolerance"],
+   uncut = OptionValue[CheckAmplitudes, {opts}, "UncutChannels"],
+   samples = OptionValue[CheckAmplitudes, {opts}, "Samples"],
+   seed = OptionValue[CheckAmplitudes, {opts}, "RandomSeed"],
+   rules = Replace[OptionValue[CheckAmplitudes, {opts}, "ParameterRules"], Automatic -> {}],
    physical, channels, allChannels,
    signatures, rows, unmatched, external},
   If[!ListQ[records] || !AllTrue[records, AssociationQ[#] &&
@@ -2940,15 +2988,15 @@ residueCheckReport[expr_, targets_List, records_List,
       !(seconds === Infinity || TrueQ[NumericQ[seconds] && seconds > 0]) ||
       !TrueQ[NumericQ[tolerance] && 0 <= tolerance < Infinity] ||
       !IntegerQ[samples] || samples < 1 || !IntegerQ[seed] || !ListQ[rules] ||
-      !AllTrue[rules, MatchQ[#, _Rule] && Head[First[#]] === Symbol &&
+      !AllTrue[rules, MatchQ[#, _Rule] && modelParameterKeyQ[First[#]] &&
         !residueUnmappedQ[Last[#]] &],
-    Message[CheckPhysicalResidues::args]; Return[$Failed]];
+    Message[CheckAmplitudes::args]; Return[$Failed]];
   physical = Flatten[Lookup[records, "PhysicalPropagators", {}], 1];
   allChannels = Join[physical, targets, uncut];
   signatures = residueExternalMassSignature /@ allChannels;
   If[AnyTrue[signatures, MissingQ] || Length[DeleteDuplicates[signatures]] > 1 ||
       !residueSameProcessQ[Join[records, allChannels]],
-    Message[CheckPhysicalResidues::args]; Return[$Failed]];
+    Message[CheckAmplitudes::args]; Return[$Failed]];
   channels = DeleteDuplicatesBy[residueNormalizeChannel /@ Join[physical, targets], residueChannelKey];
   rows = If[map === Automatic,
     residueAutomaticComparison[expr, #, records, targets, channels, seconds,
@@ -2970,7 +3018,7 @@ residueCheckReport[expr_, targets_List, records_List,
       If[unmatched === {}, {}, {"Unmatched explicit propagators are listed separately; their physical or reference origin has not been inferred."}]]|>
 ];
 
-CheckPhysicalResidues[amplitudes_, channelRows_List, model_List,
+CheckAmplitudes[amplitudes_, channelRows_List, model_List,
     opts : OptionsPattern[]] := Module[
   {output = OptionValue["Output"], factors = OptionValue["SpuriousPoles"],
    inputs, report, physical, spurious, combined, externalRules, external,
@@ -2984,10 +3032,14 @@ CheckPhysicalResidues[amplitudes_, channelRows_List, model_List,
    referenceEnabled = OptionValue["ReferenceCheck"],
    referenceSamples = OptionValue["ReferenceSamples"],
    referenceSeconds = OptionValue["ReferenceTimeConstraint"],
+   benchmark = OptionValue["FeynmanAmplitudes"], benchmarkReport,
+   benchmarkModel = OptionValue["FeynmanModel"], benchmarkParameters,
+   benchmarkSamples = OptionValue["FeynmanSamples"],
+   benchmarkSeconds = OptionValue["FeynmanTimeConstraint"],
    parameters = residueParameterRules[model, OptionValue["ParameterRules"]], numericOptions},
   If[parameters === $Failed ||
-      Complement[First /@ Flatten[{opts}], First /@ Options[CheckPhysicalResidues]] =!= {} ||
-      !MemberQ[{"Table", "Residues", "Summary", "Details", "HighEnergy", "References"}, output] ||
+      Complement[First /@ Flatten[{opts}], First /@ Options[CheckAmplitudes]] =!= {} ||
+      !MemberQ[{"Table", "Residues", "Summary", "Details", "HighEnergy", "References", "Feynman"}, output] ||
       !(factors === Automatic || ListQ[factors]) ||
       !MemberQ[{Automatic, True, False}, energyEnabled] ||
       !(energyBound === Automatic || TrueQ[NumericQ[energyBound] &&
@@ -2998,14 +3050,17 @@ CheckPhysicalResidues[amplitudes_, channelRows_List, model_List,
       !MemberQ[{Automatic, True, False}, referenceEnabled] ||
       !IntegerQ[referenceSamples] || referenceSamples < 1 ||
       !(referenceSeconds === Automatic || referenceSeconds === Infinity ||
-        TrueQ[NumericQ[referenceSeconds] && referenceSeconds > 0]),
-    Message[CheckPhysicalResidues::args]; Return[$Failed]];
+        TrueQ[NumericQ[referenceSeconds] && referenceSeconds > 0]) ||
+      !(benchmarkSamples === Automatic || IntegerQ[benchmarkSamples] && benchmarkSamples > 0) ||
+      !(benchmarkSeconds === Automatic || benchmarkSeconds === Infinity ||
+        TrueQ[NumericQ[benchmarkSeconds] && benchmarkSeconds > 0]),
+    Message[CheckAmplitudes::args]; Return[$Failed]];
   numericOptions = Join[{"ParameterRules" -> parameters}, {opts}];
   inputs = residueSimpleInputs[amplitudes, channelRows, model];
   If[FailureQ[inputs],
-    Message[CheckPhysicalResidues::input, inputs["MessageTemplate"]]; Return[$Failed]];
+    Message[CheckAmplitudes::input, inputs["MessageTemplate"]]; Return[$Failed]];
   If[inputs === $Failed,
-    Message[CheckPhysicalResidues::args]; Return[$Failed]];
+    Message[CheckAmplitudes::args]; Return[$Failed]];
   automatic = factors === Automatic;
   targets = inputs["Targets"]; records = inputs["Records"];
   If[automatic,
@@ -3132,6 +3187,33 @@ CheckPhysicalResidues[amplitudes_, channelRows_List, model_List,
             "ExpectedGrowth" -> Lookup[row, "ExpectedGrowth", ""]|>]]], combined],
         MaxItems -> {All, All}]|>]
   ];
+  If[benchmark =!= None,
+    benchmarkSamples = Replace[benchmarkSamples, Automatic -> OptionValue["Samples"]];
+    benchmarkSeconds = Replace[benchmarkSeconds, Automatic -> seconds];
+    benchmarkParameters = Which[benchmarkModel === Automatic, parameters,
+      MatchQ[benchmarkModel, FeynmanModel[_List, _List, _List, _List]],
+        residueParameterRules[List @@ benchmarkModel, OptionValue["ParameterRules"]],
+      MatchQ[benchmarkModel, {_List, _List, _List, _List}],
+        residueParameterRules[benchmarkModel, OptionValue["ParameterRules"]],
+      True, $Failed];
+    benchmarkReport = amplitudeFeynmanReport[inputs, benchmark, model, benchmarkSamples,
+      OptionValue["RandomSeed"], parameters, benchmarkParameters,
+      benchmarkSeconds, OptionValue["Tolerance"]];
+    combined = Join[Lookup[report, "Checks",
+      (Join[#, <|"Type" -> "Physical", "Pole" -> #["CutCondition"]|>] & /@ report["Channels"])],
+      {benchmarkReport}];
+    report = Join[report, <|"FeynmanCheck" -> benchmarkReport,
+      "FeynmanSummary" -> Counts[{benchmarkReport["Status"]}],
+      "FeynmanTable" -> Dataset[amplitudeFeynmanRows[benchmarkReport], MaxItems -> {All, All}],
+      "PhysicalSummary" -> Lookup[report, "PhysicalSummary", report["Summary"]],
+      "Checks" -> combined, "Summary" -> Counts[Lookup[combined, "Status", {}]],
+      "Table" -> Dataset[Map[Function[row,
+        Join[<|"Type" -> row["Type"], "Test" -> row["Pole"], "Status" -> row["Status"]|>,
+          If[energyEnabled === False, <||>, <|
+            "ObservedGrowth" -> Lookup[row, "ObservedGrowth", ""],
+            "ExpectedGrowth" -> Lookup[row, "ExpectedGrowth", ""]|>]]], combined],
+        MaxItems -> {All, All}]|>]
+  ];
   Switch[output,
     "Table", report["Table"],
     "Residues", If[factors === {}, residueReportResidues[report["Channels"]],
@@ -3139,8 +3221,14 @@ CheckPhysicalResidues[amplitudes_, channelRows_List, model_List,
     "Summary", report["Summary"],
     "HighEnergy", Lookup[report, "HighEnergyTable", Dataset[{}]],
     "References", Lookup[report, "ReferenceTable", Dataset[{}]],
+    "Feynman", Lookup[report, "FeynmanTable", Dataset[{}]],
     "Details", report]
 ];
+CheckAmplitudes[___] := (Message[CheckAmplitudes::args]; $Failed);
+CheckPhysicalResidues[amplitudes_, channels_List, model_List, opts : OptionsPattern[]] :=
+  CheckAmplitudes[amplitudes, channels, model,
+    Sequence @@ Normal[Join[Association[Options[CheckPhysicalResidues]], Association[{opts}]]]];
+CheckPhysicalResidues[args___] := CheckAmplitudes[args];
 
 referenceReportRows[report_Association] := Module[{samples = Lookup[report, "Samples", {}]},
   If[samples === {}, Return[{KeyTake[report, {"Status", "References", "Scope", "Diagnostics"}]}]];
@@ -3622,12 +3710,12 @@ spuriousCheckOne[expr_, factor_, channels_, seconds_, samples_, seed_, rules_, m
 ];
 
 spuriousCheckReport[expr_, factors_List, targets_List,
-    opts : OptionsPattern[CheckPhysicalResidues]] := Module[
-  {seconds = OptionValue[CheckPhysicalResidues, {opts}, "TimeConstraint"],
-   samples = OptionValue[CheckPhysicalResidues, {opts}, "Samples"],
-   seed = OptionValue[CheckPhysicalResidues, {opts}, "RandomSeed"],
-   rules = Replace[OptionValue[CheckPhysicalResidues, {opts}, "ParameterRules"], Automatic -> {}],
-   map = OptionValue[CheckPhysicalResidues, {opts}, "KinematicMap"]},
+    opts : OptionsPattern[CheckAmplitudes]] := Module[
+  {seconds = OptionValue[CheckAmplitudes, {opts}, "TimeConstraint"],
+   samples = OptionValue[CheckAmplitudes, {opts}, "Samples"],
+   seed = OptionValue[CheckAmplitudes, {opts}, "RandomSeed"],
+   rules = Replace[OptionValue[CheckAmplitudes, {opts}, "ParameterRules"], Automatic -> {}],
+   map = OptionValue[CheckAmplitudes, {opts}, "KinematicMap"]},
   spuriousCheckOne[expr, #, targets, seconds, samples, seed, rules, map] & /@
     DeleteDuplicates[factors]
 ];
@@ -4042,6 +4130,158 @@ referenceCheckReport[expr_, metadata_Association, physicalChannels_List,
 
 End[];
 
+(* ::Subsection::Closed:: *)
+(*Independent Full-Amplitude Comparison*)
+
+Begin["ConstructiveDiagrams`Private`"];
+
+amplitudeFeynmanInput[input_, externalRules_List, rules_List, benchmarkRules_List] := Module[
+  {value = input, pairs, provided, external, expression},
+  If[AssociationQ[value], value = Which[
+    KeyExistsQ[value, "PreparedAmplitudes"], value["PreparedAmplitudes"],
+    KeyExistsQ[value, "Amplitude"], {Lookup[value, "ExternalMassRules", {}], value["Amplitude"]},
+    True, Failure["InvalidFeynmanInput", <||>]]];
+  If[FailureQ[value] || value === $Failed, Return[Failure["InvalidFeynmanInput", <||>]]];
+  pairs = Which[residueAmplitudePairQ[value], {value},
+    ListQ[value] && AllTrue[value, residueAmplitudePairQ], value,
+    !ListQ[value], {{{}, value}}, True, Return[Failure["InvalidFeynmanInput", <||>]]];
+  external = Cases[externalRules, HoldPattern[Mass[i_Integer] -> _] :> i];
+  provided = Flatten[feynmanExternalMassRules[First[#]] & /@ pairs, 1];
+  If[!AllTrue[provided, MemberQ[external, First[#][[1]]] &&
+      residueExactZero[((First[#] /. externalRules) /. rules) -
+        (Last[#] /. benchmarkRules)] &],
+    Return[Failure["FeynmanExternalMassMismatch", <||>]]];
+  expression = Total[(Last[#] /. feynmanExternalMassRules[First[#]]) & /@ pairs];
+  expression = expression /. benchmarkRules /. (externalRules /. rules);
+  If[residueFiniteQ[expression], expression, Failure["InvalidFeynmanInput", <||>]]
+];
+
+amplitudeComparisonState[value_, variables_List, tolerance_] := Module[{numerator, coefficients, states},
+  If[!residueFiniteQ[value] || residueUnmappedQ[value], Return["Unknown"]];
+  numerator = Numerator[value];
+  If[!PolynomialQ[numerator, variables], Return["Unknown"]];
+  coefficients = If[variables === {}, {numerator}, Last /@ CoefficientRules[numerator, variables]];
+  states = If[residueComparisonZeroQ[#, "Sample", tolerance], "Zero", highEnergyZeroState[#]] & /@ coefficients;
+  Which[AllTrue[states, # === "Zero" &], "Zero",
+    MemberQ[states, "Nonzero"], "Nonzero", True, "Unknown"]
+];
+
+amplitudeComparisonOneSample[expression_, benchmark_, chart_Association, sample_Integer,
+    seed_Integer, attempt_Integer, rules_List, benchmarkRules_List, tolerance_] := BlockRandom[Module[
+  {assignments, candidateChart, benchmarkChart, candidate, expected, difference,
+   opposite, states, signs, variables = Lookup[chart, "SpinVariables", {}], base},
+  SeedRandom[Hash[{seed, sample, attempt, "FeynmanComparison"}, "CRC32"]];
+  assignments[value_] := Association[(# -> RandomChoice[DeleteCases[Range[-7, 7], 0], 4]) & /@
+    referenceExpressionMetadata[value]["References"]];
+  candidateChart = Join[chart, <|"ReferenceOverrides" -> referenceOverrideVectors[assignments[expression]]|>];
+  benchmarkChart = Join[chart, <|"ReferenceOverrides" -> referenceOverrideVectors[assignments[benchmark]]|>];
+  base = <|"Sample" -> sample, "Status" -> "UNRESOLVED", "Chart" -> chart,
+    "SpinVariables" -> variables, "MatchingSigns" -> {}, "Retryable" -> False,
+    "CandidateReferenceOverrides" -> candidateChart["ReferenceOverrides"],
+    "FeynmanReferenceOverrides" -> benchmarkChart["ReferenceOverrides"]|>;
+  candidate = Quiet[Check[Cancel[Together[residueEvaluateChart[
+    Rationalize[expression, 0], candidateChart, Rationalize[rules, 0]]]], $Failed]];
+  expected = Quiet[Check[Cancel[Together[residueEvaluateChart[
+    Rationalize[benchmark, 0], benchmarkChart, Rationalize[benchmarkRules, 0]]]], $Failed]];
+  If[!residueFiniteQ[candidate] || !residueFiniteQ[expected],
+    Return[Join[base, <|"Retryable" -> True, "Diagnostics" -> {
+      "The full amplitude or its Feynman benchmark was singular at this off-cut sample."}|>]]];
+  If[residueUnmappedQ[candidate] || residueUnmappedQ[expected],
+    Return[Join[base, <|"Diagnostics" -> {
+      "The full-amplitude comparison contains unsupported kinematic structures."}|>]]];
+  difference = Quiet[Check[Cancel[Together[candidate - expected]], $Failed]];
+  opposite = Quiet[Check[Cancel[Together[candidate + expected]], $Failed]];
+  states = amplitudeComparisonState[#, variables, tolerance] & /@ {difference, opposite};
+  signs = Pick[{1, -1}, states, "Zero"];
+  Join[base, <|"Status" -> Which[MemberQ[signs, 1], "PASS",
+      MemberQ[signs, -1], "Opp Sign", states === {"Nonzero", "Nonzero"}, "FAIL", True, "UNRESOLVED"],
+    "CalculatedAmplitude" -> candidate, "FeynmanAmplitude" -> expected,
+    "Difference" -> difference, "OppositeSignDifference" -> opposite, "MatchingSigns" -> signs,
+    "Diagnostics" -> Which[MemberQ[signs, 1], {}, MemberQ[signs, -1], {
+        "The full amplitudes have opposite signs; no sign has been changed or fitted."},
+      states === {"Nonzero", "Nonzero"}, {"An exact massive-spin coefficient disagrees at this off-cut sample."},
+      True, {"Some full-amplitude difference coefficients could not be resolved."}]|>]
+]];
+
+amplitudeFeynmanReport[inputs_Association, supplied_, model_List, samples_Integer,
+    seed_Integer, rules_List, benchmarkRules_, seconds_, tolerance_] := Module[
+  {expression = inputs["Expression"], metadata, externalRules, external, benchmark,
+   propagators, keys, channels, chart, frozen, parameter, validation,
+   results = {}, result, completed, resolved, signs, status, diagnostics = {},
+   tag = Unique["feynmanComparison"], base},
+  base = <|"Type" -> "Feynman", "Pole" -> "Full Feynman amplitude", "Status" -> "UNRESOLVED",
+    "Samples" -> {}, "RequestedSamples" -> samples, "CompletedSamples" -> 0,
+    "Method" -> "ExactSampledFullAmplitudeSpinPolynomialComparison",
+    "Scope" -> "SampledOffCutMomentaAllImplicitMassiveSpinComponents",
+    "InternalOnShell" -> False, "NormalizationFitted" -> False,
+    "ParameterRules" -> rules, "FeynmanParameterRules" -> benchmarkRules|>;
+  If[!ListQ[benchmarkRules], Return[Join[base, <|"Diagnostics" -> {
+    "FeynmanModel must be the model supplying the independent benchmark's parameter definitions."}|>]]];
+  Catch[
+  completed = TimeConstrained[
+    metadata = poleDiscoveryMetadata[inputs["Targets"], inputs["Records"]];
+    If[!AssociationQ[metadata], Throw[Join[base, <|"Diagnostics" -> {
+      "External mass rules are required for an off-cut Feynman comparison."}|>], tag]];
+    externalRules = metadata["ExternalMassRules"]; external = metadata["ExternalLegs"];
+    benchmark = amplitudeFeynmanInput[supplied, externalRules, rules, benchmarkRules];
+    If[FailureQ[benchmark], Throw[Join[base, <|"Diagnostics" -> {
+      If[benchmark[[1]] === "FeynmanExternalMassMismatch",
+        "The Feynman benchmark and candidate declare different external masses.",
+        "Supply a Feynman expression or mass-rule/expression pairs with no failed calculations."]}|>], tag]];
+    If[TrueQ[feynmanRawExpressionQ[benchmark]],
+      benchmark = ConstructiveDiagrams`FeynmanToSpinorProducts[benchmark, "ReduceSpinorProducts" -> False,
+        "TimeConstraint" -> seconds]];
+    If[FailureQ[benchmark] || !residueFiniteQ[benchmark], Throw[Join[base, <|"Diagnostics" -> {
+      "Feynman conversion did not finish. Prepare the diagrams first; specify FermionHelicities for massless Dirac fields."}|>], tag]];
+    If[!FreeQ[benchmark, _ModelParameter | _ModelFunction],
+      Throw[Join[base, <|"Diagnostics" -> {
+        "The Feynman model does not resolve every benchmark parameter. Its values are never borrowed from the candidate model."}|>], tag]];
+    propagators = DeleteDuplicates[Cases[{expression, benchmark}, _PropDen, Infinity]];
+    keys = residuePropagatorKey[#, external] & /@ propagators;
+    If[AnyTrue[keys, MissingQ], Throw[Join[base, <|"Diagnostics" -> {
+      "An internal propagator has an unsupported momentum, so a generic off-cut sample cannot be certified."}|>], tag]];
+    channels = DeleteDuplicatesBy[Join[inputs["Targets"],
+      (residueSimpleChannel[First[#], Last[#], external, externalRules, model] & /@ keys)], residueChannelKey];
+    Do[
+      result = <|"Sample" -> sample, "Status" -> "UNRESOLVED", "MatchingSigns" -> {},
+        "Diagnostics" -> {"No regular off-cut full-amplitude sample was available."}|>;
+      Do[
+        chart = highEnergyAutomaticChart[expression + benchmark, metadata,
+          sample + samples attempt, seed, rules];
+        If[FailureQ[chart], result = Join[result, <|"KinematicFailure" -> chart|>]; Continue[]];
+        parameter = chart["PoleVariable"];
+        validation = chart["KinematicChecks"]["ValidationParameter"];
+        frozen = Join[chart /. parameter -> validation,
+          <|"PoleVariable" -> Unique["unusedBenchmarkPole"], "SamplingParameter" -> validation,
+            "CoherentVectorSpinIndices" -> True|>];
+        If[!referencePhysicalGenericQ[frozen, channels, rules], Continue[]];
+        result = amplitudeComparisonOneSample[expression, benchmark, frozen, sample,
+          seed, attempt, rules, benchmarkRules, tolerance];
+        If[!TrueQ[Lookup[result, "Retryable", False]], Break[]], {attempt, 0, 5}];
+      AppendTo[results, KeyDrop[result, "Retryable"]], {sample, samples}]; True,
+    seconds, False];
+  resolved = Select[results, MemberQ[{"PASS", "Opp Sign"}, Lookup[#, "Status", None]] &];
+  signs = Fold[Intersection, {1, -1}, Lookup[resolved, "MatchingSigns", {}]];
+  status = Which[AnyTrue[results, Lookup[#, "Status", None] === "FAIL" &] || signs === {}, "FAIL",
+    TrueQ[completed] && Length[resolved] === samples,
+      If[MemberQ[signs, 1], "PASS", "Opp Sign"], True, "UNRESOLVED"];
+  diagnostics = Join[Flatten[Lookup[results, "Diagnostics", {}]],
+    If[TrueQ[completed], {}, {"The Feynman comparison exceeded its time limit."}], {
+      "The two complete sums use identical external momenta and spin bases, but independently sampled explicit Xi references. All evaluated internal propagators remain nonzero.",
+      "No internal on-shell conditions, sewing sign or fitted normalization are applied. PASS is sampled agreement of every coherent massive-spin coefficient, not a generic analytic proof."}];
+  Join[base, <|"Status" -> status, "Samples" -> results, "MatchingSigns" -> signs,
+    "CompletedSamples" -> Length[results], "FeynmanExpression" -> benchmark,
+    "Diagnostics" -> DeleteDuplicates[diagnostics]|>], tag]
+];
+
+amplitudeFeynmanRows[report_Association] := Module[{samples = Lookup[report, "Samples", {}]},
+  If[samples === {}, Return[{KeyTake[report, {"Status", "Scope", "Diagnostics"}]}]];
+  KeyTake[#, {"Sample", "Status", "CalculatedAmplitude", "FeynmanAmplitude",
+    "Difference", "OppositeSignDifference", "Diagnostics"}] & /@ samples
+];
+
+End[];
+
 (* ::Section::Closed:: *)
 (*Amplitude Completion*)
 
@@ -4058,7 +4298,7 @@ completionModelQ[model_] := MatchQ[model, {_List, _List, _List, _List}] &&
   AllTrue[model[[1]], ListQ[#] && Length[#] >= 6 &];
 
 completionParameterRulesQ[rules_] := ListQ[rules] && AllTrue[rules,
-  MatchQ[#, _Rule] && Head[First[#]] === Symbol &&
+  MatchQ[#, _Rule] && (modelParameterKeyQ[First[#]] || StringQ[First[#]]) &&
     residueFiniteQ[Last[#]] && !residueUnmappedQ[Last[#]] &];
 
 completionInputExpression[input_] := Which[
@@ -4128,9 +4368,9 @@ completionValidationRuleSets[model_List, overrides_, requested_] := Module[
       (residueParameterRules[model, Join[#, Replace[overrides, Automatic -> {}]]] & /@ requested),
       rules]]]];
   If[model[[4]] =!= {}, Return[{rules}]];
-  massSymbols = Select[DeleteDuplicates[model[[1, All, 6]]], Head[#] === Symbol &];
-  alternate = rules /. HoldPattern[Rule[symbol_Symbol, value_]] :>
-    Rule[symbol, If[MemberQ[massSymbols, symbol] && NumericQ[value], 2 value, value]];
+  massSymbols = Select[DeleteDuplicates[model[[1, All, 6]]], modelParameterKeyQ];
+  alternate = (First[#] -> If[MemberQ[massSymbols, First[#]] && NumericQ[Last[#]],
+    2 Last[#], Last[#]] &) /@ rules;
   DeleteDuplicates[{rules, alternate}]
 ];
 
@@ -4781,7 +5021,7 @@ CompleteFactorization[input_, channelRows_List, model_List, opts : OptionsPatter
     If[residueFiniteQ[reduced] && !FailureQ[reduced], reduced, value]];
   completionProgress[callback, enabled, <|"Stage" -> "Checking initial factorization"|>];
   finished = TimeConstrained[
-    initial = CheckPhysicalResidues[{normalized["ExternalMassRules"], original}, checkRows, model,
+    initial = CheckAmplitudes[{normalized["ExternalMassRules"], original}, checkRows, model,
       "ParameterRules" -> rules, "Samples" -> validationSamples,
       "RandomSeed" -> seed + 1000003, "TimeConstraint" -> seconds, "Tolerance" -> 0,
       "KinematicMap" -> Automatic, "KinematicKind" -> "Sample",
@@ -4792,7 +5032,7 @@ CompleteFactorization[input_, channelRows_List, model_List, opts : OptionsPatter
     If[fastPath,
       status = "COMPLETE";
       Do[
-        validation = CheckPhysicalResidues[{normalized["ExternalMassRules"], candidate},
+        validation = CheckAmplitudes[{normalized["ExternalMassRules"], candidate},
           checkRows, model, "ParameterRules" -> validationSet,
           "Samples" -> validationSamples, "RandomSeed" -> seed + 1000003,
           "TimeConstraint" -> seconds, "Tolerance" -> 0, "SpuriousPoles" -> {},
@@ -4864,7 +5104,7 @@ CompleteFactorization[input_, channelRows_List, model_List, opts : OptionsPatter
                 "Round" -> round, "Unknowns" -> Length[free],
                 "EquationCount" -> Length[allEquations]|>];
               Do[
-                validation = CheckPhysicalResidues[{normalized["ExternalMassRules"], candidate},
+                validation = CheckAmplitudes[{normalized["ExternalMassRules"], candidate},
                   checkRows, model, "ParameterRules" -> validationSet,
                   "Samples" -> validationCount, "RandomSeed" -> validationSeed,
                   "TimeConstraint" -> seconds, "Tolerance" -> 0, "SpuriousPoles" -> {},
@@ -5004,10 +5244,13 @@ PrepareAmplitudes::usage = PrepareAmplitudes::usage <>
   " Ordinary ReduceSpinorProducts acts on the whole expression, including auxiliary denominators, with PropDen protected. Only external mass replacements act globally; internal replacements remain numerator-only. With MomentumConservation -> True, the bounded identity search also tries consistent whole-numerator external momentum eliminations and composite complements. Each trial is reduced before a strictly improving whole-expression rank is required. These trials use only declared external mass labels, share MaxSteps, MaxCandidates and the per-element time limit, and protect inverse factors from conservation and internal-shell substitutions. MomentumConservation -> False disables them.";
 PrepareAmplitudes::usage = PrepareAmplitudes::usage <>
   " Input elements are detected individually: diagram {massRules, expression} pairs or compact factorization rows {m1, ..., mn, Multiparticle[cut], exchangedMass, expression}. The default output preserves each input element's format and metadata. Factorization rows supply only external shells and their selected cut; other propagators do not introduce shell assumptions. Channel 1/z factors and sewing signs are unchanged. Cut-only reductions preserve the selected residue, not an off-cut identity. Details add InputType, ElementTypes, ItemReports and ChannelReports.";
+PrepareAmplitudes::usage = PrepareAmplitudes::usage <>
+  " With a FeynmanModel, only diagram pairs are accepted. Raw Feynman tensors are converted to spinor products before reference replacement and reduction; FermionHelicities supplies the helicities of massless Dirac external fields. Feynman preparation defaults to ordinary reduction with effective MaxSteps -> 0 unless MaxSteps is supplied explicitly; eager identity-route generation for large chains is opt-in. Feynman preparation always keeps every internal numerator and denominator off shell, regardless of InternalOnShell, and returns external-only mass rules. Existing propagators supply a separate reference-choice inventory, never shell assumptions. All Feynman diagrams use the same reference assignment per external leg: Automatic uses a fixed massless-particle cycle, or independent generic Xi references when fewer than two massless particles are available. AllSpurious and cyclic choices are deterministic rather than optimized separately per diagram; Xi, IndependentXi and None retain their meanings. Shared AllPhysical and Mixed Feynman choices are not yet implemented and remain PARTIAL. Failed or timed-out conversion remains PARTIAL in details and returns Failure for ordinary output.";
 PrepareDiagramAmplitudes::usage = "PrepareDiagramAmplitudes is a compatibility alias for PrepareAmplitudes. Use PrepareAmplitudes for both diagram amplitude pairs and compact factorization-channel rows.";
 
 Options[PrepareAmplitudes] = {
   "ReferenceSpinors" -> Automatic,
+  "FermionHelicities" -> {},
   "MaxReferenceChoices" -> 64, "ReferenceTimeConstraint" -> Automatic,
   "InternalOnShell" -> True, "MaxSteps" -> 12, "MaxCandidates" -> 64,
   "TimeConstraint" -> 20, "MomentumConservation" -> True,
@@ -5047,7 +5290,16 @@ preparationInputPair[row_, "FactorizationChannel"] := {
     {Mass[row[[-3]]] -> row[[-2]]}], row[[-1]]};
 
 preparationOutputItem[item_, "Diagram", expression_] := {First[item], expression};
+preparationOutputItem[item_, "FeynmanDiagram", expression_] := {
+  feynmanExternalMassRules[First[item]], expression};
 preparationOutputItem[row_, "FactorizationChannel", expression_] := ReplacePart[row, -1 -> expression];
+
+(* This inventory controls references only, not numerator shell reductions. *)
+preparationFeynmanReferencePairs[pairs_List] := Map[Function[pair,
+  With[{external = Cases[First[pair], HoldPattern[Mass[i_Integer] -> _] :> i]},
+    {Join[First[pair], (Mass[Multiparticle @@ First[#]] -> Last[#] &) /@
+      DeleteDuplicates[DeleteMissing[residuePropagatorKey[#, external] & /@
+        Cases[Last[pair], _PropDen, {0, Infinity}]]]], Last[pair]}]], pairs];
 
 preparationMassKey[Mass[Multiparticle[legs__Integer]]] := Mass[Multiparticle @@ Sort[{legs}]];
 preparationMassKey[key_] := key;
@@ -5186,7 +5438,7 @@ preparationSearchCandidates[expr_, rules_List, shellOptions_List, conserve_, lim
 preparationReferenceChoices = {Automatic, "AllSpurious", "AllPhysical", "Mixed", "Xi", None,
   "ReverseCyclic", "IndependentXi", "Cyclic"};
 
-preparationReferences[expr_, rules_List, model_List, pairs_List, requested_, forced_List : {}] := Module[
+preparationReferences[expr_, rules_List, model_List, pairs_List, requested_, forced_List : {}, shared_ : False] := Module[
   {choice = Replace[requested, "Cyclic" -> "AllSpurious"], references, massRules,
    external, massless, inventory, own, associations = <||>, assignments = {},
    cycle, denominatorChains, tag = Unique["referenceFailure"], fail, key, legs,
@@ -5220,6 +5472,10 @@ preparationReferences[expr_, rules_List, model_List, pairs_List, requested_, for
       fail["An Xi occurs outside a supported spinor chain."]];
     external = Sort[Cases[massRules, HoldPattern[Mass[i_Integer] -> _] :> i]];
     massless = Select[external, TrueQ[(Mass[#] /. massRules) == 0] &];
+    If[TrueQ[shared] && MemberQ[{"AllPhysical", "Mixed"}, choice],
+      fail["Shared AllPhysical and Mixed reference choices are not yet supported for Feynman diagrams; use Automatic, AllSpurious, a cyclic choice, Xi, IndependentXi or None."]];
+    If[TrueQ[shared] && requested === Automatic,
+      choice = If[Length[massless] < 2, "IndependentXi", "FeynmanCyclic"]];
     compatibleMassQ[a_, b_] := residueExactZero[a^2 - b^2];
     pairChannels[rs_] := Flatten[Function[item,
       {{First[item], Last[item]}, {Complement[external, First[item]], Last[item]}}] /@
@@ -5257,6 +5513,7 @@ preparationReferences[expr_, rules_List, model_List, pairs_List, requested_, for
       legs = associations[referenceKey[ref]]; If[Length[legs] === 1, legs, {}]] /@
       SortBy[references, If[IntegerQ[referenceKey[#]], {0, referenceKey[#]},
         {1, ToString[referenceKey[#], InputForm]}] &]], massless]];
+    If[TrueQ[shared], cycle = massless];
     opposite["Angle"] := "Square"; opposite["Square"] := "Angle";
     choose[ref_, a_] := Module[{cacheKey = With[{r = ref, l = a}, HoldComplete[r, l]],
        at, options, spurious, physical, eligible, selected},
@@ -5267,9 +5524,11 @@ preparationReferences[expr_, rules_List, model_List, pairs_List, requested_, for
         options = Table[cycle[[1 + Mod[at - 1 + If[choice === "ReverseCyclic", -1, 1] step,
           Length[cycle]]]], {step, Length[cycle] - 1}];
         options = Select[options, Function[b, MemberQ[massless, b] &&
-          !AnyTrue[inventory, Function[item, First[item] === Sort[{a, b}] &&
-            compatibleMassQ[Last[item], 0]]]]];
-        spurious = (<|"Leg" -> a, "Mode" -> "AllSpurious", "Target" -> #|> &) /@ options;
+          (choice === "FeynmanCyclic" ||
+            !AnyTrue[inventory, Function[item, First[item] === Sort[{a, b}] &&
+              compatibleMassQ[Last[item], 0]]])]];
+        spurious = (<|"Leg" -> a, "Mode" -> If[choice === "FeynmanCyclic", "Cyclic", "AllSpurious"],
+          "Target" -> #|> &) /@ options;
         physical = {};
         If[MemberQ[{Automatic, "AllPhysical", "Mixed"}, choice],
           options = Select[DeleteCases[external, a], physicalQ[a, #] && !ownQ[a, #] &];
@@ -5348,13 +5607,14 @@ preparationReferenceTrial[expr_, rules_List, dotRules_List] := preparationReduce
   preparationSpinorProducts[preparationReduceDots[expr, dotRules], rules], dotRules];
 
 preparationReferenceSearch[expr_, rules_List, model_List, pairs_List, requested_,
-    limit_Integer, seconds_, dotRules_List, progress_] := Module[
+    limit_Integer, seconds_, dotRules_List, progress_, shared_ : False] := Module[
   {baseline, plan, selections, available, best, alternatives = {}, cache = <||>,
    started = AbsoluteTime[], tried = 0, completed = 0, value, row,
    remaining, trialSeconds, outcome, timedOut = False, stop, search, diagnostics = {},
    cacheKey, rank, reduced},
-  baseline = preparationReferences[expr, rules, model, pairs, requested];
+  baseline = preparationReferences[expr, rules, model, pairs, requested, {}, shared];
   If[baseline["Status"] =!= "COMPLETE" ||
+      TrueQ[shared] ||
       !MemberQ[{Automatic, "AllSpurious", "AllPhysical", "Mixed"}, requested] ||
       Lookup[baseline, "Choices", {}] === {}, Return[baseline]];
   plan = preparationReferenceSelections[baseline["Choices"], limit];
@@ -5368,7 +5628,7 @@ preparationReferenceSearch[expr_, rules_List, model_List, pairs_List, requested_
         Min[remaining, Max[0.01, seconds/Min[Length[selections], 8]]]];
       value = TimeConstrained[Module[{report},
         report = If[tried === 1, baseline,
-          preparationReferences[expr, rules, model, pairs, requested, selection]];
+          preparationReferences[expr, rules, model, pairs, requested, selection, shared]];
         If[report["Status"] =!= "COMPLETE", Return[$Failed]];
         cacheKey = With[{body = report["Expression"]}, HoldComplete[body]];
         reduced = If[KeyExistsQ[cache, cacheKey], cache[cacheKey],
@@ -5418,11 +5678,11 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
    started = AbsoluteTime[], outcome, stage = "Starting", stop = "MaxSteps",
    step, candidates, search, candidate, next, rank, best, bestRank, bestEdit,
    generated = 0, inspected = 0, event, reduceInvariants, before, after, identityStageComplete = False,
-   invalid = False, referenceFailure = False, referenceReport = <||>,
+   invalid = False, conversionFailure = False, referenceFailure = False, referenceReport = <||>,
    referenceSeconds, referenceFallback = None, referenceInput,
    failureTag = Unique["preparationFailure"], progressMetadata},
   progressMetadata = Join[<|"Item" -> index, "Items" -> count, "InputType" -> kind|>,
-    If[kind === "Diagram", <|"Diagram" -> index, "Diagrams" -> count|>, <||>]];
+    If[MemberQ[{"Diagram", "FeynmanDiagram"}, kind], <|"Diagram" -> index, "Diagrams" -> count|>, <||>]];
   channels = If[TrueQ[options["InternalOnShell"]],
     First /@ knownInternalChannels[rules], {}];
   dotRules = If[TrueQ[options["InternalOnShell"]],
@@ -5446,6 +5706,21 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
     event[stage]];
   event["Starting"];
   outcome = Catch[TimeConstrained[
+    If[kind === "FeynmanDiagram" && feynmanRawExpressionQ[expression],
+      stage = "FeynmanToSpinorProducts";
+      before = expression;
+      after = ConstructiveDiagrams`FeynmanToSpinorProducts[expression,
+        "FermionHelicities" -> options["FermionHelicities"],
+        "ReferenceSpinors" -> Automatic, "ReduceSpinorProducts" -> False,
+        "TimeConstraint" -> Infinity];
+      If[!residueFiniteQ[after], conversionFailure = True;
+        AppendTo[diagnostics, If[FailureQ[after], Lookup[after[[2]], "MessageTemplate",
+          "Feynman-to-spinor conversion failed."], "Feynman-to-spinor conversion failed."]];
+        Throw[False, failureTag]];
+      expression = after;
+      AppendTo[reductions, <|"Operation" -> stage, "Before" -> before,
+        "After" -> expression, "InternalOnShellIdentity" -> False|>];
+      event[stage]];
     stage = "ReduceSpinContractions";
     before = expression;
     after = preparationNumerators[expression,
@@ -5469,7 +5744,8 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
           Join[progressMetadata, <|"Stage" -> "Preparation", "Operation" -> "Choosing references",
             "Elapsed" -> AbsoluteTime[] - started,
             "Complexity" -> First[preparationRank[expression]],
-            "Terms" -> preparationRank[expression][[2]]|>, KeyDrop[update, "BestReference"]]]]];
+            "Terms" -> preparationRank[expression][[2]]|>, KeyDrop[update, "BestReference"]]]],
+      kind === "FeynmanDiagram"];
     If[!AssociationQ[referenceReport] || referenceReport["Status"] =!= "COMPLETE",
       referenceFailure = True;
       diagnostics = Join[diagnostics, Lookup[referenceReport, "Diagnostics", {
@@ -5537,9 +5813,11 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
     AppendTo[reductions, <|"Operation" -> "RetainedReferenceTrial", "Before" -> referenceInput,
       "After" -> expression, "InternalOnShellIdentity" -> TrueQ[options["InternalOnShell"]],
       "ReferenceChoice" -> options["ReferenceSpinors"]|>]];
-  If[!TrueQ[outcome], stop = Which[invalid, "InvalidReduction",
+  If[!TrueQ[outcome] && stage === "FeynmanToSpinorProducts", conversionFailure = True];
+  If[!TrueQ[outcome], stop = Which[conversionFailure, "FeynmanConversionFailed", invalid, "InvalidReduction",
       referenceFailure, "ReferenceChoiceUnavailable", True, "TimeConstraint"];
-    AppendTo[diagnostics, Which[invalid,
+    AppendTo[diagnostics, Which[conversionFailure,
+      "Feynman-to-spinor conversion did not complete", invalid,
       "An invalid result was rejected during " <> stage, referenceFailure,
       "The requested reference-spinor selection was not applied", True,
       "The per-element time limit was reached during " <> stage] <>
@@ -5549,10 +5827,11 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
   If[TrueQ[outcome] && stop === "NoImprovingIdentity",
     AppendTo[diagnostics, "No strictly improving edit was found in the inspected candidate subset; this is not a proof of minimality."]];
   event[Which[TrueQ[outcome], "Prepared", referenceFailure, "Reference choice unavailable",
+    conversionFailure, "Feynman conversion unavailable",
     invalid, "Invalid reduction retained previous state",
     True, "Time limit reached"]];
   Join[<|"ItemIndex" -> index, "InputType" -> kind|>,
-    If[kind === "Diagram", <|"DiagramIndex" -> index|>, <||>],
+    If[MemberQ[{"Diagram", "FeynmanDiagram"}, kind], <|"DiagramIndex" -> index|>, <||>],
   <|"Status" -> If[TrueQ[outcome], "PREPARED", "PARTIAL"],
     "MassRules" -> First[pair], "ExternalMassRules" -> preparationExternalRules[rules],
     "OriginalExpression" -> original, "PreparedExpression" -> expression,
@@ -5560,6 +5839,7 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
     "InternalOnShellConditions" -> ((PropDen[Mom[Multiparticle @@ First[#]], Last[#]] == 0) & /@
       Select[knownInternalChannels[rules], MemberQ[channels, First[#]] &]),
     "DenominatorsKeptOffShell" -> True,
+    "FeynmanConversionFailed" -> conversionFailure,
     "ReferenceSpinors" -> referenceReport,
     "Reductions" -> reductions, "IdentitySteps" -> history,
     "GeneratedCandidates" -> generated, "InspectedCandidates" -> inspected,
@@ -5567,8 +5847,9 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
     "ElapsedTime" -> AbsoluteTime[] - started, "Diagnostics" -> diagnostics|>]
 ];
 
-PrepareAmplitudes[items_List, model_List, opts : OptionsPattern[]] := Module[
+PrepareAmplitudes[items_List, model_, opts : OptionsPattern[]] := Module[
   {options, reports, prepared, external, diagnostics, details, types, pairs, inputType,
+   feynman = TrueQ[feynmanModelQ[model]], engineModel, referencePairs,
    output = OptionValue["Output"]},
   types = preparationInputType /@ items;
   If[MemberQ[types, $Failed], Message[PrepareAmplitudes::args]; Return[$Failed]];
@@ -5577,8 +5858,12 @@ PrepareAmplitudes[items_List, model_List, opts : OptionsPattern[]] := Module[
     AllTrue[types, # === "FactorizationChannel" &], "FactorizationChannels", True, "Mixed"];
   options = Association[Map[Function[name, name -> OptionValue[name]],
     First /@ Options[PrepareAmplitudes]]];
+  engineModel = If[feynman, List @@ model, model];
   If[!AllTrue[pairs, preparationPairQ] ||
-      !AllTrue[pairs, preparationMassRulesConsistentQ[First[#]] &] || !preparationModelQ[model] ||
+      !AllTrue[pairs, preparationMassRulesConsistentQ[First[#]] &] || !preparationModelQ[engineModel] ||
+      (feynman && !AllTrue[types, # === "Diagram" &]) ||
+      !(AssociationQ[options["FermionHelicities"]] ||
+        MatchQ[options["FermionHelicities"], {(_Rule | _RuleDelayed) ...}]) ||
       !MemberQ[{Automatic, None, "AllSpurious", "AllPhysical", "Mixed", "Xi", "Cyclic",
         "ReverseCyclic", "IndependentXi"}, options["ReferenceSpinors"]] ||
       !IntegerQ[options["MaxReferenceChoices"]] || options["MaxReferenceChoices"] < 1 ||
@@ -5597,15 +5882,25 @@ PrepareAmplitudes[items_List, model_List, opts : OptionsPattern[]] := Module[
         MatchQ[options["ProgressFunction"], _Function | _Symbol]) ||
       Complement[First /@ {opts}, First /@ Options[PrepareAmplitudes]] =!= {},
     Message[PrepareAmplitudes::args]; Return[$Failed]];
+  If[feynman,
+    pairs = {feynmanExternalMassRules[First[#]], Last[#]} & /@ pairs;
+    types = ConstantArray["FeynmanDiagram", Length[pairs]];
+    inputType = "FeynmanDiagrams";
+    If[!MemberQ[First /@ {opts}, "MaxSteps"], options["MaxSteps"] = 0];
+    options["InternalOnShell"] = False];
+  referencePairs = If[feynman, preparationFeynmanReferencePairs[pairs], pairs];
   external = preparationExternalRules /@ (preparationCanonicalMassRules /@ First /@ pairs);
   If[external =!= {} && !AllTrue[Rest[external], preparationExternalRulesAgreeQ[First[external], #] &],
     Message[PrepareAmplitudes::args]; Return[$Failed]];
   reports = MapIndexed[Function[{pair, position}, With[{i = First[position]},
-    Join[preparationOneAmplitude[pair, i, Length[pairs], options, model, pairs, types[[i]]],
+    Join[preparationOneAmplitude[pair, i, Length[pairs], options, engineModel, referencePairs, types[[i]]],
       If[types[[i]] === "FactorizationChannel",
         <|"Channel" -> items[[i, -3]], "Cut" -> List @@ items[[i, -3]], "Mass" -> items[[i, -2]]|>, <||>]]]], pairs];
   prepared = MapThread[preparationOutputItem[#1, #2, #3["PreparedExpression"]] &, {items, types, reports}];
   If[!TrueQ[options["ReturnDetails"]],
+    If[output =!= "Details" && AnyTrue[reports, TrueQ[#["FeynmanConversionFailed"]] &],
+      Return[Failure["FeynmanPreparation", <|"MessageTemplate" ->
+        "Feynman-to-spinor conversion did not complete. Supply massless-fermion helicities if needed, or request ReturnDetails -> True for diagnostics."|>]]];
     Switch[output, "Amplitudes", Return[prepared],
       "Expression", Return[Total[Last /@ prepared]]]];
   diagnostics = DeleteDuplicates[Flatten[Lookup[reports, "Diagnostics", {}], 1]];
@@ -5615,7 +5910,7 @@ PrepareAmplitudes[items_List, model_List, opts : OptionsPattern[]] := Module[
     "Amplitude" -> Total[Last /@ prepared],
     "ExternalMassRules" -> If[external === {}, {}, First[external]],
     "ItemReports" -> reports,
-    "DiagramReports" -> Select[reports, #["InputType"] === "Diagram" &],
+    "DiagramReports" -> Select[reports, MemberQ[{"Diagram", "FeynmanDiagram"}, #["InputType"]] &],
     "ChannelReports" -> Select[reports, #["InputType"] === "FactorizationChannel" &],
     "Model" -> model, "Options" -> options,
     "Diagnostics" -> diagnostics|>;
@@ -5860,7 +6155,7 @@ completionHEAllPassQ[report_] := AssociationQ[report] &&
   KeyExistsQ[report, "HighEnergyCheck"] && KeyExistsQ[report, "ReferenceCheck"];
 
 completionHECheck[expression_, normalized_Association, channels_List, model_List,
-    settings_Association, seed_Integer] := CheckPhysicalResidues[
+    settings_Association, seed_Integer] := CheckAmplitudes[
   {normalized["ExternalMassRules"], expression}, channels, model,
   "Output" -> "Details", "ParameterRules" -> settings["ParameterRules"],
   "Samples" -> settings["ValidationSamples"], "RandomSeed" -> seed,

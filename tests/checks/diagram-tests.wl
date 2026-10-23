@@ -2,7 +2,11 @@
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
-ubModel = ReadModel[FileNameJoin[{root, "models"}], 1];
+(* Bind imported parameter data to the legacy symbols of this reference fixture.
+   This test-only binding is not part of model reading or amplitude generation. *)
+ubLegacyFixtureModel[model_] := model /. ((# -> Symbol["Global`" <> ModelParameterName[#]]) & /@
+  DeleteDuplicates[Cases[model, _ModelParameter, Infinity]]);
+ubModel = ubLegacyFixtureModel[ReadModel[FileNameJoin[{root, "models"}], 1]];
 ubCatalog = Get[FileNameJoin[{root, "tests", "simplification-paths.wl"}]];
 checks = 0; failures = {};
 check[name_, value_] := (checks++; If[!TrueQ[value], AppendTo[failures, name]]);
@@ -488,7 +492,7 @@ check["paired photon matches the manual reference using ordinary algebra",
   FreeQ[photonPairedSum, _xFactor | _xTildeFactor] &&
     Expand[ExtractMandelstahm[photonPairedSum] - photonReference] === 0];
 
-qedSignModel = ReadModel[FileNameJoin[{root, "models"}], 2];
+qedSignModel = ubLegacyFixtureModel[ReadModel[FileNameJoin[{root, "models"}], 2]];
 (* Independent Wick check: follow graph paths, not the helper's port graph.
    For e/E lines the sign is the determinant parity of positron partners. *)
 qedWickSign[diag_] := Module[{electrons, positrons, partnerOrder, path},

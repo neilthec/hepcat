@@ -21,29 +21,44 @@ lmWrite[name_, rows_] := Export[FileNameJoin[{lmTemporaryDirectory, name}],
   StringRiffle[rows, "\n"] <> "\n", "Text"];
 lmWrite["vars91.mdl", {
   "Legacy regression fixture", "Name | Value | Comment",
-  "lmMass | 3/2 | fermion mass", "lmScalarMass | 2 | scalar mass",
-  "lmCharge | -1/3 | coupling", "lmScale | 0.125 | decimal input", "======"}];
+  "lmMassParameter | 3/2 | fermion mass", "lmScalarMassParameter | 2 | scalar mass",
+  "lmChargeParameter | -1/3 | coupling", "lmScaleParameter | 0.125 | decimal input", "======"}];
 lmWrite["func91.mdl", {
   "Legacy regression fixture", "Name | Expression",
-  "lmDerived | 2*lmCharge^2 % derived coupling",
-  "lmUncommented | Sqrt[lmMass^2+lmScalarMass^2]", "======"}];
+  "lmDerivedParameter | 2*lmChargeParameter^2 % derived coupling",
+  "lmUncommentedParameter | Sqrt[lmMassParameter^2+lmScalarMassParameter^2]", "======"}];
 lmWrite["prtcls91.mdl", {
   "Legacy regression fixture", "Full Name | P | aP | number | spin2 | mass | width | color | aux | LaTeX(A) | LaTeX(A+)",
-  "Legacy electron | le | lE | 101 | 1 | lmMass | 0 | 1 |   | e | E",
+  "Legacy electron | le | lE | 101 | 1 | lmMassParameter | 0 | 1 |   | e | E",
   "Legacy photon | LA.+ | LA.- | 102 | 2 | 0 | 0 | 1 |   | A | A",
-  "Legacy scalar | lh | lh | 103 | 0 | lmScalarMass | 0 | 1 |   | h | h",
+  "Legacy scalar | lh | lh | 103 | 0 | lmScalarMassParameter | 0 | 1 |   | h | h",
   "======"}];
 lmWrite["amps91.mdl", {
   "Legacy regression fixture", "P1 | P2 | P3 | P4 | Factor | Amplitude/Factor",
   "% ignored | le | lE | lh | 999 | <12>",
-  "le | lE | LA.+ |   | -Sqrt[2]*lmCharge | x12*<12>",
-  "le | lE | LA.- |   | -Sqrt[2]*lmCharge | xt12*[12]",
-  "le | lE | lh | lh | lmCharge^2 | [132>/(s13-lmMass^2)",
+  "le | lE | LA.+ |   | -Sqrt[2]*lmChargeParameter | x12*<12>",
+  "le | lE | LA.- |   | -Sqrt[2]*lmChargeParameter | xt12*[12]",
+  "le | lE | lh | lh | lmChargeParameter^2 | [132>/(s13-lmMassParameter^2)",
   "======"}];
+lmParameterScope = ConstructiveDiagrams`Private`modelParameterScope[lmTemporaryDirectory, 91];
+lmCheck["model scopes agree with and without a trailing directory separator",
+  ConstructiveDiagrams`Private`modelParameterScope[lmTemporaryDirectory <> "/", 91] === lmParameterScope];
+lmCheck["model scopes normalize a directory dot component",
+  ConstructiveDiagrams`Private`modelParameterScope[FileNameJoin[{lmTemporaryDirectory, "."}], 91] === lmParameterScope];
+lmCheck["model scopes agree for directory and sibling model-file entry points",
+  ConstructiveDiagrams`Private`modelParameterScope[FileNameJoin[{lmTemporaryDirectory, "prtcls91.mdl"}]] ===
+    lmParameterScope];
+{lmMassParameter, lmScalarMassParameter, lmChargeParameter, lmScaleParameter,
+  lmDerivedParameter, lmUncommentedParameter} =
+  (ModelParameter[#, lmParameterScope, "Real"] &) /@
+    {"lmMassParameter", "lmScalarMassParameter", "lmChargeParameter", "lmScaleParameter",
+      "lmDerivedParameter", "lmUncommentedParameter"};
+lmOwnValuesBefore = {OwnValues[lmMassParameter], OwnValues[lmChargeParameter],
+  OwnValues[lmDerivedParameter]};
 lmParticlesExpected = {
-  {"Legacy electron", "le", "lE", 101, 1, lmMass, "0", 1, "", "e", "E"},
+  {"Legacy electron", "le", "lE", 101, 1, lmMassParameter, "0", 1, "", "e", "E"},
   {"Legacy photon", "LA.+", "LA.-", 102, 2, 0, "0", 1, "", "A", "A"},
-  {"Legacy scalar", "lh", "lh", 103, 0, lmScalarMass, "0", 1, "", "h", "h"}};
+  {"Legacy scalar", "lh", "lh", 103, 0, lmScalarMassParameter, "0", 1, "", "h", "h"}};
 lmParticles = ReadParticles[FileNameJoin[{lmTemporaryDirectory, "prtcls91.mdl"}]];
 lmVariables = ReadVariables[FileNameJoin[{lmTemporaryDirectory, "vars91.mdl"}]];
 lmFunctions = ReadFunctions[FileNameJoin[{lmTemporaryDirectory, "func91.mdl"}]];
@@ -52,38 +67,42 @@ lmAmplitudes = ReadAmplitudes[
 lmCheck["particle reader preserves names, antiparticles and display columns",
   lmParticles === lmParticlesExpected];
 lmCheck["variable reader ignores headers and retains comments and exact values",
-  lmVariables === {{lmMass, 3/2, "fermion mass"},
-    {lmScalarMass, 2, "scalar mass"}, {lmCharge, -1/3, "coupling"},
-    {lmScale, 0.125, "decimal input"}}];
+  lmVariables === {{lmMassParameter, 3/2, "fermion mass"},
+    {lmScalarMassParameter, 2, "scalar mass"}, {lmChargeParameter, -1/3, "coupling"},
+    {lmScaleParameter, 1/8, "decimal input"}}];
 lmCheck["function reader separates optional percent comments",
-  lmFunctions === {{lmDerived, 2 lmCharge^2, "derived coupling"},
-    {lmUncommented, Sqrt[lmMass^2 + lmScalarMass^2], ""}}];
-lmCheck["readers do not assign numeric values to model symbols",
-  OwnValues[lmMass] === {} && OwnValues[lmCharge] === {} &&
-    OwnValues[lmDerived] === {}];
+  lmFunctions === {{lmDerivedParameter, 2 lmChargeParameter^2, "derived coupling"},
+    {lmUncommentedParameter, Sqrt[lmMassParameter^2 + lmScalarMassParameter^2], ""}}];
+lmCheck["readers do not modify user aliases for model parameter data",
+  {OwnValues[lmMassParameter], OwnValues[lmChargeParameter],
+    OwnValues[lmDerivedParameter]} === lmOwnValuesBefore];
+lmCheck["model parameters have compact output without exposing their scope",
+  ToString[lmChargeParameter] === "lmChargeParameter"];
+lmCheck["SPINAS parameter powers use names instead of scoped data constructors",
+  SPINAS[lmChargeParameter^2] === "lmChargeParameter*lmChargeParameter"];
 Do[
   lmCheck["model symbol plain text metadata " <> ToString[lmSymbol, InputForm],
-    PlainText[lmSymbol] === SymbolName[lmSymbol]];
+    PlainText[lmSymbol] === ModelParameterName[lmSymbol]];
   lmCheck["model symbol SPINAS metadata " <> ToString[lmSymbol, InputForm],
-    SPINAS[lmSymbol] === SymbolName[lmSymbol]];
+    SPINAS[lmSymbol] === ModelParameterName[lmSymbol]];
   lmCheck["model symbol TeX metadata " <> ToString[lmSymbol, InputForm],
-    TeX[lmSymbol] === SymbolName[lmSymbol]];
+    TeX[lmSymbol] === ModelParameterName[lmSymbol]];
   lmCheck["model variables and functions are real " <> ToString[lmSymbol, InputForm],
     Conjugate[lmSymbol] === lmSymbol],
-  {lmSymbol, {lmMass, lmScalarMass, lmCharge, lmScale, lmDerived, lmUncommented}}];
+  {lmSymbol, {lmMassParameter, lmScalarMassParameter, lmChargeParameter, lmScaleParameter, lmDerivedParameter, lmUncommentedParameter}}];
 lmCheck["amplitude reader skips comment rows and parses separate couplings",
   Length[lmAmplitudes] === 3 && lmAmplitudes[[All, -2]] ===
-    {-Sqrt[2] lmCharge, -Sqrt[2] lmCharge, lmCharge^2}];
+    {-Sqrt[2] lmChargeParameter, -Sqrt[2] lmChargeParameter, lmChargeParameter^2}];
 lmCheck["positive helicity model row converts x and massive angle bracket",
-  lmAmplitudes[[1]] === {"le", "lE", "LA.+", "", -Sqrt[2] lmCharge,
+  lmAmplitudes[[1]] === {"le", "lE", "LA.+", "", -Sqrt[2] lmChargeParameter,
     xFactor[1, 2] lmAngle[1, 2]}];
 lmCheck["negative helicity model row converts tilde x and square bracket",
-  lmAmplitudes[[2]] === {"le", "lE", "LA.-", "", -Sqrt[2] lmCharge,
+  lmAmplitudes[[2]] === {"le", "lE", "LA.-", "", -Sqrt[2] lmChargeParameter,
     xTildeFactor[1, 2] lmSquare[1, 2]}];
 lmCheck["four-point notation converts momentum insertion and massive propagator",
   lmAmplitudes[[3, -1]] ===
     SpinorChain[Spinor["Spin", "Square", 1], Mom[3], Spinor["Spin", "Angle", 2]]/
-      PropDen[Mom[Multiparticle[1, 3]], lmMass]];
+      PropDen[Mom[Multiparticle[1, 3]], lmMassParameter]];
 lmFixtureModel = ReadModel[lmTemporaryDirectory, 91];
 lmCheck["ReadModel assembles the four original reader results in order",
   lmFixtureModel === {lmParticles, lmAmplitudes, lmVariables, lmFunctions}];
@@ -131,7 +150,7 @@ lmCheck["temporary model fixture is removed", !DirectoryQ[lmTemporaryDirectory]]
 Do[
   lmCheck["particle and antiparticle mass lookup " <> First[lmCase],
     ParticleMass[First[lmCase], lmParticles] === Last[lmCase]],
-  {lmCase, {{"le", lmMass}, {"lE", lmMass}, {"lh", lmScalarMass},
+  {lmCase, {{"le", lmMassParameter}, {"lE", lmMassParameter}, {"lh", lmScalarMassParameter},
     {"LA.+", 0}, {"LA.-", 0}, {"", 0}, {"not-in-model", -1}}}];
 lmConversionParticles = {"le", "LA.+", "lE", "LA.-"};
 Do[
@@ -150,16 +169,16 @@ Do[
   {lmI, 4}, {lmJ, 4}];
 lmCheck["notation conversion preserves sums, coefficients, powers and both pole masses",
   ConvertAmplitude[Join[lmConversionParticles,
-    {1, "3*<12>^2/s24-2*[13]/(s13-lmMass^2)"}], lmParticles] ===
+    {1, "3*<12>^2/s24-2*[13]/(s13-lmMassParameter^2)"}], lmParticles] ===
       3 SpinorChain[Spinor["Spin", "Angle", 1], Spinor["Helicity", "Angle", 2]]^2/
         PropDen[Mom[Multiparticle[2, 4]], 0] -
-      2 lmSquare[1, 3]/PropDen[Mom[Multiparticle[1, 3]], lmMass]];
+      2 lmSquare[1, 3]/PropDen[Mom[Multiparticle[1, 3]], lmMassParameter]];
 lmCheck["notation conversion supports mixed endpoint momentum chains",
   ConvertAmplitude[Join[lmConversionParticles, {1, "[243>"}], lmParticles] ===
     SpinorChain[Spinor["Helicity", "Square", 2], Mom[4], Spinor["Spin", "Angle", 3]]];
-lmPositiveRow = {"le", "lE", "LA.+", "", lmCharge,
+lmPositiveRow = {"le", "lE", "LA.+", "", lmChargeParameter,
   xFactor[1, 2] lmAngle[1, 2] + xTildeFactor[1, 2] lmSquare[1, 2]};
-lmNegativeRow = {"le", "lE", "LA.-", "", lmCharge,
+lmNegativeRow = {"le", "lE", "LA.-", "", lmChargeParameter,
   xTildeFactor[1, 2] lmSquare[1, 2] + xFactor[1, 2] lmAngle[1, 2]};
 lmCheck["opposite-helicity generation flips brackets, x factors and particle suffix",
   AddOppositeHelicityAmplitudes[{lmPositiveRow}] === {lmPositiveRow, lmNegativeRow}];
@@ -167,12 +186,19 @@ lmCheck["opposite-helicity generation leaves helicity-free rows alone",
   AddOppositeHelicityAmplitudes[{lmAmplitudes[[3]]}] === {lmAmplitudes[[3]]}];
 lmCheck["opposite-helicity conversion is an involution for each appended row",
   Last[AddOppositeHelicityAmplitudes[{lmNegativeRow}]] === lmPositiveRow];
+lmParityParameter = ModelParameter["Angle", "ParityParameterFixture", "Real"];
+lmParityRow = {"le", "lE", "LA.+", "", lmParityParameter,
+  lmParityParameter xFactor[1, 2] lmAngle[1, 2]};
+lmCheck["opposite-helicity conversion preserves model parameter names and scalar factors",
+  Last[AddOppositeHelicityAmplitudes[{lmParityRow}]] ===
+    {"le", "lE", "LA.-", "", lmParityParameter,
+      lmParityParameter xTildeFactor[1, 2] lmSquare[1, 2]}];
 
 (* A spin-two internal state needs all four of the supplied sewing indices. *)
 lmTensorNumerator = lmAngle[1, 2] lmSquare[1, 2] *
   SpinorChain[Spinor["Spin", "Angle", 1], Mom[3], Mom[1], Spinor["Spin", "Angle", 2]] *
   SpinorChain[Spinor["Spin", "Square", 1], Mom[2], Mom[3], Spinor["Spin", "Square", 2]];
-lmTensorModel = {{{"Scalar", "s", "s", 201, 0, lmScalarMass, "0", 1, "", "s", "s"},
+lmTensorModel = {{{"Scalar", "s", "s", 201, 0, lmScalarMassParameter, "0", 1, "", "s", "s"},
     {"Tensor", "T", "T", 202, 4, lmTensorMass, "0", 1, "", "T", "T"}},
   {{"T", "T", "s", "", lmTensorCoupling, lmTensorNumerator}}, {}, {}};
 lmTensorCut = Multiparticle[3, 4];
@@ -206,7 +232,7 @@ Do[
   {lmN, 0, 8}];
 
 (* A hand-derived scalar cubic theory tests the old S/T/U sewing contract. *)
-lmScalarModel = {{{"Scalar", "s", "s", 201, 0, lmScalarMass, "0", 1, "", "s", "s"}},
+lmScalarModel = {{{"Scalar", "s", "s", 201, 0, lmScalarMassParameter, "0", 1, "", "s", "s"}},
   {{"s", "s", "s", "", lmCubic, 1}}, {}, {}};
 lmCheck["original three-point constructor returns the coupling",
   ConstructiveDiagram[{"s", "s", "s"}, lmScalarModel] === lmCubic];
@@ -217,7 +243,7 @@ lmCheck["original three-point constructor returns zero for an absent vertex",
   ConstructiveDiagram[{"s", "s", "s"}, lmNoVertices] === 0];
 Do[
   lmCut = lmLegacyCase[[1]]; lmFunction = lmLegacyCase[[2]];
-  lmExpected = -lmCubic^2/PropDen[Total[Mom /@ lmCut], lmScalarMass];
+  lmExpected = -lmCubic^2/PropDen[Total[Mom /@ lmCut], lmScalarMassParameter];
   lmCheck["legacy channel wrapper has the three-i sewing sign " <> ToString[lmCut],
     lmFunction["s", "s", "s", "s", "s", lmScalarModel] === lmExpected];
   lmCheck["legacy four-point constructor matches direct scalar sewing " <> ToString[lmCut],
@@ -229,12 +255,12 @@ Do[
 lmRawScalarChannels = FactorizationAmplitudeChannels[ConstantArray["s", 4], lmScalarModel];
 lmCheck["original factorization output consists of compact mass-cut-mass-expression rows",
   Length[lmRawScalarChannels] === 3 && AllTrue[lmRawScalarChannels,
-    Length[#] === 7 && Take[#, 4] === ConstantArray[lmScalarMass, 4] &&
+    Length[#] === 7 && Take[#, 4] === ConstantArray[lmScalarMassParameter, 4] &&
       MatchQ[#[[-3]], Multiparticle[_Integer, _Integer]] &&
-      #[[-2]] === lmScalarMass && FreeQ[#, _Association] &]];
+      #[[-2]] === lmScalarMassParameter && FreeQ[#, _Association] &]];
 lmCheck["raw scalar channel expression is the product over z and one propagator",
   AllTrue[lmRawScalarChannels,
-    Last[#] === lmCubic^2/(z PropDen[Mom[#[[-3]]], lmScalarMass]) &]];
+    Last[#] === lmCubic^2/(z PropDen[Mom[#[[-3]]], lmScalarMassParameter]) &]];
 lmCheck["cubic-only model has no five-point factorization without known four-point rows",
   FactorizationAmplitudeChannels[ConstantArray["s", 5], lmScalarModel] === {}];
 
@@ -285,12 +311,12 @@ lmCheck["distinct-row shell assumptions do not overwrite the original channels",
   lmInvariantChannels === lmInvariantChannelsBefore];
 
 (* Lookup must preserve the model's ordering and typed kinematic labels. *)
-lmLookupModel = {lmParticles, {{"le", "lE", "lh", "", lmCharge, lmAngle[1, 2]}}, {}, {}};
+lmLookupModel = {lmParticles, {{"le", "lE", "lh", "", lmChargeParameter, lmAngle[1, 2]}}, {}, {}};
 Do[
   lmTagged = { {"le", lmLabels[[1]]}, {"lE", lmLabels[[2]]}, {"lh", lmLabels[[3]]} };
   lmCheck["lookup relabels original ordered spinors " <> ToString[lmLabels],
     LookupAmplitude[lmTagged, lmLookupModel, False, {lmI1, lmI2, lmI3, lmI4}] ===
-      lmCharge lmAngle[lmLabels[[1]], lmLabels[[2]]]],
+      lmChargeParameter lmAngle[lmLabels[[1]], lmLabels[[2]]]],
   {lmLabels, Permutations[{1, 2, 3}]}];
 lmCheck["lookup of an amplitude absent from the model is zero",
   LookupAmplitude[{{"le", 1}, {"lE", 2}, {"LA.+", 3}}, lmLookupModel,
@@ -301,29 +327,29 @@ lmCheck["lookup recognizes scalar propagating particles without spin indices",
 lmCheck["lookup makes an internal particle spin index explicit and upper",
   LookupAmplitude[{{"lE", 2}, {"lh", 3}, {"le", Multiparticle[1, 4]}},
     lmLookupModel, False, {lmI1, lmI2, lmI3, lmI4}] ===
-      lmCharge SpinorChain[Spinor["Spin", "Upper", "Angle", Multiparticle[1, 4], lmI1],
+      lmChargeParameter SpinorChain[Spinor["Spin", "Upper", "Angle", Multiparticle[1, 4], lmI1],
         Spinor["Spin", "Angle", 2]]];
 lmCheck["lookup makes an internal antiparticle spin index explicit and lower",
   LookupAmplitude[{{"le", 1}, {"lh", 3}, {"lE", Multiparticle[2, 4]}},
     lmLookupModel, False, {lmI1, lmI2, lmI3, lmI4}] ===
-      lmCharge SpinorChain[Spinor["Spin", "Angle", 1],
+      lmChargeParameter SpinorChain[Spinor["Spin", "Angle", 1],
         Spinor["Spin", "Lower", "Angle", Multiparticle[2, 4], lmI1]]];
 Do[
   lmNamedParticles = {"le", "lE", "lh"}[[lmPermutation]];
   lmCheck["original three-point constructor relabels a spinor vertex " <> ToString[lmPermutation],
     ConstructiveDiagram[lmNamedParticles, lmLookupModel] ===
-      lmCharge lmAngle[First[First[Position[lmNamedParticles, "le"]]],
+      lmChargeParameter lmAngle[First[First[Position[lmNamedParticles, "le"]]],
         First[First[Position[lmNamedParticles, "lE"]]]]],
   {lmPermutation, Permutations[Range[3]]}];
 lmDistinctScalarModel = {
   MapIndexed[Function[{name, index}, {"Scalar " <> name, name, name, 300 + First[index], 0,
-    If[name === "s", lmScalarMass, lmMass], "0", 1, "", name, name}],
+    If[name === "s", lmScalarMassParameter, lmMassParameter], "0", 1, "", name, name}],
     {"a", "b", "c", "d", "s"}],
   {{"a", "b", "s", "", lmLeftCoupling, 1},
     {"c", "d", "s", "", lmRightCoupling, 1}}, {}, {}};
 lmCheck["distinct scalar sewing multiplies the two different cubic couplings",
   SChannelDiagram["a", "b", "c", "d", "s", lmDistinctScalarModel] ===
-    -lmLeftCoupling lmRightCoupling/PropDen[Mom[1] + Mom[2], lmScalarMass]];
+    -lmLeftCoupling lmRightCoupling/PropDen[Mom[1] + Mom[2], lmScalarMassParameter]];
 lmCheck["forbidden t channel does not invent a cubic vertex",
   TChannelDiagram["a", "b", "c", "d", "s", lmDistinctScalarModel] === 0];
 lmCheck["forbidden u channel does not invent a cubic vertex",
@@ -343,11 +369,11 @@ lmCheck["alternative momentum expansion separates ordinary and shift chains",
     z SpinorChain[SpinorHat["Spin", "Angle", 1], MomQ[2], SpinorHat["Spin", "Square", 3]]];
 lmPole = Multiparticle[1, 3];
 lmCheck["alternative propagator expansion preserves its two shifted roots",
-  ExpandMomHatAlt[PropDen[MomHat[lmPole], lmMass]] ===
-    PropDen[Mom[lmPole], lmMass] (z - zPlus[lmPole]) (z - zMinus[lmPole])/
+  ExpandMomHatAlt[PropDen[MomHat[lmPole], lmMassParameter]] ===
+    PropDen[Mom[lmPole], lmMassParameter] (z - zPlus[lmPole]) (z - zMinus[lmPole])/
       (zPlus[lmPole] zMinus[lmPole])];
 (* The contour helper must not depend on how its rational expression is arranged. *)
-lmResidueRows = {{lmMass, lmMass, lmMass, lmMass, lmPole, lmMass,
+lmResidueRows = {{lmMassParameter, lmMassParameter, lmMassParameter, lmMassParameter, lmPole, lmMassParameter,
   Together[lmA/(z - zPlus[lmPole]) + lmB/(z - zMinus[lmPole]) ]}};
 lmCheck["alternative contour reconstruction sums both simple residues with minus sign",
   Cancel[SumResiduesAlt[lmResidueRows] + lmA + lmB] === 0];
@@ -356,7 +382,7 @@ lmCheck["alternative contour reconstruction sums all channel rows",
 lmCheck["alternative contour reconstruction of no channels is zero", SumResiduesAlt[{}] === 0];
 
 lmResidueInput[expression_, pole_: lmPole] :=
-  {{lmMass, lmMass, lmMass, lmMass, pole, lmMass, expression}};
+  {{lmMassParameter, lmMassParameter, lmMassParameter, lmMassParameter, pole, lmMassParameter, expression}};
 lmPartialFractions = lmA/(z - zPlus[lmPole]) + lmB/(z - zMinus[lmPole]);
 lmResidueForms = {lmPartialFractions, Together[lmPartialFractions],
   Factor[Together[lmPartialFractions]], Expand[Together[lmPartialFractions]]};
@@ -380,7 +406,7 @@ lmCheck["distinct channel rows cancel and evaluate their own pole factors",
   Cancel[SumResiduesAlt[Join[lmResidueInput[lmPartialFractions],
     lmResidueInput[2 lmA/(z - zPlus[lmOtherPole]) +
       3 lmB/(z - zMinus[lmOtherPole]), lmOtherPole]]] + 3 lmA + 4 lmB] === 0];
-lmPhysicalDenominator = PropDen[Mom[Multiparticle[1, 2]], lmMass];
+lmPhysicalDenominator = PropDen[Mom[Multiparticle[1, 2]], lmMassParameter];
 lmCheck["shifted residues retain physical off-shell propagator factors",
   Module[{result = SumResiduesAlt[lmResidueInput[lmPartialFractions/lmPhysicalDenominator]]},
     Cancel[Together[result + (lmA + lmB)/lmPhysicalDenominator]] === 0 &&
@@ -389,7 +415,7 @@ lmCheck["shifted residue evaluation leaves its input rows unchanged",
   Module[{rows = lmResidueInput[lmPartialFractions], before},
     before = rows; SumResiduesAlt[rows]; rows === before]];
 
-If[lmChecks =!= 211,
+If[lmChecks =!= 217,
   AppendTo[lmFailures, "complete legacy model test inventory executed"]];
 Print[<|"Checks" -> lmChecks, "Failed" -> Length[lmFailures], "Failures" -> lmFailures|>];
 Print["HEPCAT_TEST_COMPLETED:legacy-model-tests.wl"];

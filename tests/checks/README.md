@@ -74,6 +74,22 @@ identity API, diagram generation and helicity sewing, curated Standard Model
 paths, worked five-point QED derivations, physical/spurious poles, high-energy
 behavior, reference independence, amplitude construction and model parameters.
 
+## Model Isolation
+
+`model-isolation-tests.wl` exercises both model readers with same-named
+parameters and different values, preserved user variables, local dependency
+resolution and overrides, stable parameter identities and serialization.
+Snapshots of conjugation and export definitions verify that reading models
+installs no per-parameter global rules. Real-domain metadata is explicit;
+undeclared-complex parameters keep their conjugation. Independent benchmark
+models supply their own numerical definitions, so different couplings are
+reported as disagreement rather than silently identified by name.
+
+After updating from the older readers, restart an interactive kernel once to
+clear the per-parameter metadata those readers previously installed. The new
+readers store parameter data in each model and do not install such definitions.
+The regression runner already starts each suite in a fresh kernel.
+
 ## Feynman Benchmark
 
 `feynman-tests.wl` covers the independent CalcHEP backend in
@@ -94,6 +110,14 @@ This is not a complete numerical benchmark grid for every SM process. The raw
 model has zero electron, muon, up and down masses. Restoring those masses needs
 their Yukawa sector as well; the tests do not bless changing masses alone in
 a full SM model. Running-quark-mass functions are imported symbolically.
+
+`CheckAmplitudes` is the canonical combined checker; `CheckPhysicalResidues`
+remains a compatibility name. The opt-in `"FeynmanAmplitudes"` comparison uses
+independently generated spinor amplitudes at external-shell points away from
+all poles, without fitting a sign or scale. `PrepareAmplitudes` converts raw
+Feynman diagram pairs automatically and does not apply their internal-shell
+mass rules. The construction notebook shows both the Feynman calculation and
+the comparison for the all-plus and mixed-helicity five-point QED examples.
 
 ## Factorization Completion
 

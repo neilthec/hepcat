@@ -9,7 +9,7 @@ check[name_, value_] := (checks++; If[!TrueQ[value], AppendTo[failures, name];
   Print["FAIL: ", name]]);
 spReport[expression_, factors_, opts___] :=
   ConstructiveDiagrams`Private`spuriousCheckReport[expression, factors, prTargets,
-    "Samples" -> 2, "ParameterRules" -> {Me -> 1, EE -> 1},
+    "Samples" -> 2, "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1},
     "TimeConstraint" -> 20, opts];
 spAngle34 = prAngle[3, 4]; spSquare34 = prSquare[3, 4];
 spXi3 = SpinorChain[Spinor["Xi", "Angle", 0], Spinor["Helicity", "Angle", 3]];
@@ -53,13 +53,13 @@ spPhysical = Join[First[prTargets], <|"Cut" -> {3, 4}, "Complement" -> {1, 2, 5}
   "Mass" -> 0, "Propagator" -> PropDen[Mom[Multiparticle[3, 4]], 0]|>];
 spCoincident = First[ConstructiveDiagrams`Private`spuriousCheckReport[
   1/spAngle34, {spAngle34}, Append[prTargets, spPhysical], "Samples" -> 1,
-  "ParameterRules" -> {Me -> 1, EE -> 1}, "TimeConstraint" -> 20]];
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "TimeConstraint" -> 20]];
 check["coincident physical poles are not mistaken for spurious failures",
   spCoincident["Status"] === "UNRESOLVED" &&
     AnyTrue[spCoincident["Diagnostics"], StringContainsQ[#, "physical pole"] &]];
 spTimed = First[ConstructiveDiagrams`Private`spuriousCheckReport[
   prS2, {spAngle34}, prTargets, "Samples" -> 100,
-  "ParameterRules" -> {Me -> 1, EE -> 1}, "TimeConstraint" -> 0.00001]];
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "TimeConstraint" -> 0.00001]];
 check["time limit is reported as unresolved", spTimed["Status"] === "UNRESOLVED"];
 spLaurent = ConstructiveDiagrams`Private`spuriousLaurentData[
   ((1 + Sqrt[2])^2 - (3 + 2 Sqrt[2]))/z^2 + 7, z];
@@ -86,14 +86,14 @@ check["every external mass shell is preserved throughout the Laurent chart",
       Det[spChart["Momenta"][#]] - spChart["Masses"][#]^2] &]];
 check["all physical propagators remain generic on the spurious pole",
   ConstructiveDiagrams`Private`spuriousPhysicalGenericQ[
-    prOldPermutation, prTargets, spChart, {Me -> 1, EE -> 1}]];
+    prOldPermutation, prTargets, spChart, {prElectronMass -> 1, prElectricCharge -> 1}]];
 spPublicDefault = CheckPhysicalResidues[prH, prChannels, prFixtureModel,
-  "Samples" -> 1, "ParameterRules" -> {Me -> 1, EE -> 1}];
+  "Samples" -> 1, "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}];
 check["default public table has one compact schema even without spurious poles",
   Head[spPublicDefault] === Dataset && AllTrue[Normal[spPublicDefault],
     Sort[Keys[#]] === Sort[{"Type", "Pole", "Status"}] && #["Type"] === "Physical" &]];
 spPublic = CheckPhysicalResidues[prS2, prChannels, prFixtureModel,
-  "Samples" -> 1, "ParameterRules" -> {Me -> 1, EE -> 1},
+  "Samples" -> 1, "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1},
   "SpuriousPoles" -> {spAngle34, spSquare34}, "Output" -> "Details"];
 check["public details preserve physical and spurious rows separately",
   Length[spPublic["Channels"]] === 6 && Length[spPublic["SpuriousChecks"]] === 2 &&
@@ -101,7 +101,7 @@ check["public details preserve physical and spurious rows separately",
     spPublic["SpuriousSummary"] === <|"PASS" -> 2|> &&
     spPublic["Summary"] === <|"PASS" -> 8|>];
 spPublicTable = CheckPhysicalResidues[prH, prChannels, prFixtureModel,
-  "Samples" -> 1, "ParameterRules" -> {Me -> 1, EE -> 1},
+  "Samples" -> 1, "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1},
   "SpuriousPoles" -> {spAngle34}];
 check["combined public table is compact and labels each pole type",
   Head[spPublicTable] === Dataset && Length[Normal[spPublicTable]] === 7 &&
@@ -109,7 +109,7 @@ check["combined public table is compact and labels each pole type",
     Counts[Lookup[Normal[spPublicTable], "Type"]] ===
       <|"Physical" -> 6, "Spurious" -> 1|>];
 spPublicResidues = CheckPhysicalResidues[prH, prChannels, prFixtureModel,
-  "Samples" -> 1, "ParameterRules" -> {Me -> 1, EE -> 1},
+  "Samples" -> 1, "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1},
   "SpuriousPoles" -> {spAngle34}, "Output" -> "Residues"];
 check["public residue view displays scalar spurious limits without collapsed lists",
   Head[spPublicResidues] === Dataset && Length[Normal[spPublicResidues]] === 7 &&
@@ -122,7 +122,7 @@ check["a finite spurious sample compares zero singular coefficient with zero",
     row["Calculated"] === 0 && row["Expected"] === 0 && row["Difference"] === 0 &&
       row["PoleOrder"] === 0 && NumericQ[row["Limit"]]]];
 spPublicUnsupported = CheckPhysicalResidues[prH, prChannels, prFixtureModel,
-  "Samples" -> 1, "ParameterRules" -> {Me -> 1, EE -> 1},
+  "Samples" -> 1, "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1},
   "SpuriousPoles" -> {MomProd[3, 4]}, "Output" -> "Details"];
 check["unsupported public spurious factors are explicitly unresolved",
   spPublicUnsupported["SpuriousSummary"] === <|"UNRESOLVED" -> 1|> &&
@@ -143,8 +143,8 @@ check["synthetic pair cuts reject cut-only x-factor expansion",
   !FreeQ[ConstructiveDiagrams`Private`residueExpandCutXFactors[
     xFactor[3, 4] spInternalPhoton, spPairChart], _Missing]];
 spNoPhysicalReport = CheckPhysicalResidues[
-  {Thread[(Mass /@ Range[5]) -> {Me, Me, 0, 0, 0}], 1/spAngle34^2},
-  {}, prModel, "Samples" -> 1, "ParameterRules" -> {Me -> 1},
+  {Thread[(Mass /@ Range[5]) -> {prElectronMass, prElectronMass, 0, 0, 0}], 1/spAngle34^2},
+  {}, prModel, "Samples" -> 1, "ParameterRules" -> {prElectronMass -> 1},
   "SpuriousPoles" -> {spAngle34}, "Output" -> "Details"];
 check["spurious tests can use external mass rules without any physical channels",
   spNoPhysicalReport["Channels"] === {} &&
@@ -160,7 +160,7 @@ check["an empty process cannot fabricate external kinematics for a spurious pass
    factorization rows, not candidate denominators, define the physical poles. *)
 spAutoDetails[expression_, channels_ : prChannels] := CheckPhysicalResidues[
   expression, channels, prFixtureModel, "Samples" -> 1,
-  "ParameterRules" -> {Me -> 1, EE -> 1}, "TimeConstraint" -> 20,
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "TimeConstraint" -> 20,
   "Output" -> "Details"];
 spAutoS2 = spAutoDetails[prS2];
 check["automatic spurious discovery is the public default",
@@ -187,12 +187,12 @@ check["a physical-pole-only form has no invented spurious checks",
 check["details make both families of checks inspectable",
   Length[spAutoS2["Checks"]] === 9 && Length[spAutoH["Checks"]] === 6];
 
-spExternalRules = Thread[(Mass /@ Range[5]) -> {Me, Me, 0, 0, 0}];
+spExternalRules = Thread[(Mass /@ Range[5]) -> {prElectronMass, prElectronMass, 0, 0, 0}];
 spAutoNoPhysical[expression_] := CheckPhysicalResidues[
   {spExternalRules, expression}, {}, prModel, "Samples" -> 2,
-  "ParameterRules" -> {Me -> 1, EE -> 1}, "TimeConstraint" -> 20,
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "TimeConstraint" -> 20,
   "Output" -> "Details"];
-spNested = spAutoNoPhysical[1/(Me^3 (spXi3 spXi4)^2)];
+spNested = spAutoNoPhysical[1/(prElectronMass^3 (spXi3 spXi4)^2)];
 spNestedDiscovered = Select[spNested["PoleDiscovery"],
   #["Classification"] === "Spurious" &];
 check["nested denominator products retain their multiplicities",
@@ -200,7 +200,7 @@ check["nested denominator products retain their multiplicities",
     Lookup[spNestedDiscovered, "Multiplicity"] === {2, 2} &&
     spNested["SpuriousSummary"] === <|"FAIL" -> 2|> &&
     Lookup[spNested["SpuriousChecks"], "PoleOrder"] === {2, 2}];
-spConstant = spAutoNoPhysical[1/Me^3];
+spConstant = spAutoNoPhysical[1/prElectronMass^3];
 check["inverse masses and numerical coefficients are not kinematic poles",
   spConstant["SpuriousChecks"] === {} &&
     !AnyTrue[spConstant["PoleDiscovery"],
@@ -218,7 +218,7 @@ check["unsupported momentum-chain denominator surfaces instead of disappearing",
     AnyTrue[spUnsupportedAuto["PoleDiscovery"],
       #["Classification"] === "Unclassified" && #["Diagnostics"] =!= {} &]];
 spUnsupportedValues = CheckPhysicalResidues[{spExternalRules, 1/spMixedChain}, {}, prModel,
-  "Samples" -> 1, "ParameterRules" -> {Me -> 1}, "Output" -> "Residues"];
+  "Samples" -> 1, "ParameterRules" -> {prElectronMass -> 1}, "Output" -> "Residues"];
 check["uncomputed spurious values remain missing rather than fabricated zeros",
   Head[spUnsupportedValues] === Dataset &&
     AllTrue[Normal[spUnsupportedValues], #["Status"] === "UNRESOLVED" &&
@@ -273,7 +273,7 @@ Do[
   {spBranch, {spAngle34, spSquare34}}];
 spPromotedBranch = First[ConstructiveDiagrams`Private`spuriousCheckReport[
   1/spAngle34, {spD34}, prTargets, "Samples" -> 1,
-  "ParameterRules" -> {Me -> 1, EE -> 1}, "TimeConstraint" -> 20]];
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "TimeConstraint" -> 20]];
 check["one requested invariant sample is promoted to cover both complex branches",
   spPromotedBranch["Status"] === "FAIL" &&
     spPromotedBranch["UserRequestedSamples"] === 1 &&
@@ -289,7 +289,7 @@ check["an explicitly requested physical propagator is not tested as a generic sp
 spMetadataOnly = Join[First[prTargets], <|"KinematicMetadataOnly" -> True|>];
 spMetadataResult = First[ConstructiveDiagrams`Private`spuriousCheckReport[
   1/spD34, {spD34}, {spMetadataOnly}, "Samples" -> 2,
-  "ParameterRules" -> {Me -> 1, EE -> 1}, "TimeConstraint" -> 20]];
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "TimeConstraint" -> 20]];
 check["a metadata-only chart descriptor does not invent a physical pole guard",
   spMetadataResult["Status"] === "FAIL"];
 
