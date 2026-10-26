@@ -390,6 +390,12 @@ descriptors for poles that must remain regular. A finite simple-pole limit produ
 invalid maps, unsupported singularities and higher-order poles remain
 `UNRESOLVED`.
 
+`"StructuralCoefficient" -> False` skips the additional formal calculation
+with opaque propagators. This does not change the physical residue or its
+kinematic checks. The low-level default remains `True`; mapped checker and
+completion calls skip this unused diagnostic to avoid expensive symbolic
+algebra before evaluating a large amplitude on its cut.
+
 Custom maps also work with the checker. Set
 `"KinematicKind" -> "Sample"` for a phase-space sample or `"Symbolic"` for a
 symbolic chart, and optionally `"TimeConstraint" -> 30`. A passing comparison
@@ -747,7 +753,8 @@ The default result is the completed amplitude, not a report.
 `"ReturnDetails" -> False` is the default; `True` requests the full report.
 The legacy `"Output" -> "Details"` also remains available. An unresolved
 ordinary call returns a compact `Failure` with guidance, without embedding
-the candidate or report.
+the candidate or report. Its short `"Reason"` also states the actual failure,
+such as exceeding the correction-term cap, rather than implying a timeout.
 
 `CompleteFactorization` solves all supported physical-channel constraints
 simultaneously. It does not independently add one residue discrepancy divided
@@ -762,6 +769,10 @@ and time limits. The default `{}` does not retain or reintroduce original inputs
 `"ChannelReferences" -> Automatic` supplements the raw channel expressions
 with bounded alternative reference choices: recorded preparation assignments
 when available, cyclic choices and physical momentum-insertion choices.
+Cyclic choices include intermediate simultaneous rotations when more than two
+massless reference particles are available, not just forward and reverse order.
+This search has a per-channel rotation limit of 16, with truncation recorded
+in the optional continuation diagnostics.
 It leaves the user's prepared diagrams unchanged. Preparation details are
 needed to recover the actual per-diagram assignments; ordinary amplitude
 pairs do not carry that history. Different choices are candidate continuations
@@ -771,12 +782,22 @@ kinematics before its terms are admitted. This is a bounded correction space,
 not an enumeration of all possible amplitudes or a proof of reference equivalence.
 
 With automatic channel references, completion first tries a compact space
-from accepted physical-reference continuations. It reduces each **whole channel
-expression before splitting it into additive terms**, using only external
+from accepted physical-reference continuations and complete sewn channels
+that already contain no reference spinors. In particular, a four-point-by-four-point
+channel at six points must not be omitted merely because no Xi replacement
+was needed. Unexpanded x factors and surviving spinors for a cut particle
+still require a continuation choice, even without an explicit Xi; they do not
+qualify as reference-free sources. Their target residues remain unchanged.
+It reduces each whole channel
+expression before splitting it into additive terms, using only external
 shell identities and momentum conservation. This can expose correction
 directions hidden inside momentum chains. Each reduced expression is checked
 against its source on that channel's cut before both its raw and reduced terms
-are admitted. The input also contributes one grouped pole-bearing expression
+are admitted. It also tries numerator-only reduction using that channel's
+selected internal mass shell. The off-cut difference is kept as one grouped
+correction direction only after checking that its selected residue vanishes.
+Other internal lines stay off shell, and all inverse factors remain protected
+during the selected-shell substitutions. The input also contributes one grouped pole-bearing expression
 per diagram, rather than every individual input term. Explicit input terms
 without a physical `PropDen` denominator remain in the seed and are not added
 as cancellation directions in this compact space. This is a structural
@@ -790,6 +811,47 @@ silent truncation of an oversized space. `"ChannelReferences" -> None` omits
 the additional continuations and compact-space attempt. An explicit
 `"CorrectionBasis"` still uses exactly the supplied directions, after ordinary
 normalization.
+
+For declared identical bosonic states, `"BoseSymmetryGroups"` can expand the
+available particle-label arrangements while reducing the number of independent
+grouped correction directions. For example, four positive-helicity photons on
+legs 3 through 6 use `"BoseSymmetryGroups" -> {{3, 4, 5, 6}}`. This averages
+both the seed and correction directions over all 24 typed permutations. The
+original input is retained in details, and the returned correction includes
+the change to the seed. Every original channel remains a separate held-out
+validation obligation. The option is not inferred from equal masses: the
+caller must group only identical species with identical external states,
+never fermions or opposite helicities. The default `{}` does no averaging.
+Groups must be disjoint, have equal declared masses and together have order
+at most 120. `"MaxCorrectionTerms"` applies after projection; automatic
+intermediate construction may grow by the permutation count, up to 4096
+directions unless the caller already requested a larger term limit.
+With automatic directions, this option first combines the available compact
+and literal channel spaces. It also tries individual terms from numerator
+reductions of accepted continuations on their selected cut, including
+spurious-reference choices. Each whole reduced source must preserve its own
+cut residue before being split. Only that channel's internal shell is used;
+other internal lines and inverse factors stay protected. Construction has a
+20-second budget and the same intermediate term cap. Exact formal linear dependencies are removed from
+the projected directions when a bounded five-second pruning pass finishes;
+this preserves their full span, not just their sampled residues. If pruning
+does not finish, all projected directions remain. The correction-term cap is
+checked afterward. Without declared groups, compact-then-literal behavior is
+unchanged.
+
+The six-point `e,E,A.+,A.+,A.+,A.+` section of
+`tests/QED-5-point-construction.nb` uses this declaration, `"Samples" -> 12`,
+`"ValidationSamples" -> 1`, `"MaxCorrectionTerms" -> 256`,
+`"MaxRefinements" -> 5` and a 1200-second allowance. A full run from its actual
+24 prepared diagrams completed in about 14 minutes, with 161 independent
+correction directions. All 14 physical channels and the retained affine
+family passed fresh exact coherent-spin checks at both the model mass and
+twice that mass. No answer or supplied correction basis entered the solve.
+The returned representative also agreed with an independent sum of all 24
+Feynman diagrams at three fresh off-cut samples, including every coherent
+massive-spin component. These sampled comparisons are not an analytic proof;
+automatic spurious-pole and high-energy diagnostics remain separate checks.
+
 The generator also records and rejects a new continuation whose physical
 propagators retain powers greater than one after ordinary cancellation. Its
 verification reason is `"UnsupportedHigherOrderPhysicalPoleContinuation"`:
@@ -811,12 +873,40 @@ system and validates with fresh seeds. `"MaxRefinements" -> 3` allows at most
 three such retries after the initial fit; zero disables feedback. Feedback
 evaluates the original sparse correction directions before applying fitted
 coefficient rules, avoiding unnecessary expansion of a dense fitted family.
+Held-out validation also restricts each original component before inserting
+the fitted coefficients, then checks both the selected amplitude and every
+surviving free direction. It reuses those same exact restrictions for feedback
+instead of mapping a large common-denominator candidate a second time.
+On internally generated coherent cut charts, supported simple typed-pole terms
+can use direct cut evaluation after checking finite primitives and nonzero
+inverse bases. Hidden singular brackets or invariants, higher poles, unsupported
+structures and cut-only spinors fall back to the full mapped restriction.
+Additive full-map caching also falls back to the whole component when singular
+terms can cancel. Implicit x factors keep their whole-component spinor inventory,
+and custom maps keep whole-expression evaluation. Every correction component
+is still checked, including those assigned zero coefficients; these optimizations
+do not change the residue equations or bypass kinematic validation.
+Each refit solves all accumulated original equations together. It does not
+substitute a large intermediate solution into the new rows, which can cause
+severe exact-fraction growth at higher multiplicity. The progress display
+separately identifies equation construction, exact solving and validation.
 Shared exact algebraic units in matrix columns and the right-hand side can
 be scaled out during linear elimination and restored afterward. Neither
 optimization changes the exact equations or the meaning of free parameters.
+For large rational systems, modular arithmetic can select a smaller square
+block. The solve remains exact: every original equation must certify both
+the particular solution and the full independent free family. Failed block
+certificates fall back to ordinary exact row reduction. Modular rank alone
+does not establish consistency or inconsistency.
+The symbolic amplitude and free directions are constructed only after sparse
+validation succeeds, retaining factored linear combinations rather than first
+expanding a large affine family.
 Algebraic cleanup uses external mass shells and momentum conservation only, removing
 directions only when they reduce exactly to zero. Unproved or genuinely
 residue-invisible directions remain in the affine family for the next stage.
+The optional final external reduction has one shared two-second budget and
+replaces the validated result only if the whole cleanup finishes. A cosmetic
+timeout retains the already validated amplitude and family.
 Typed `PropDen` poles are checked across that family, including poles hidden
 in its zero-parameter representative. Established zero-residue obligations
 remain checked even after the selected candidate loses the pole. Internal
@@ -831,11 +921,15 @@ When requested, the details retain `"Amplitude"`, `"Correction"`,
 fit equations and validation reports. `"RefinementHistory"` records the fit and
 validation rounds; `"ChannelContinuations"` records proposed references and
 their selected-cut verification. `"CorrectionSpace"` identifies
-`"ReducedChannels"`, `"LiteralTerms"` or `"SuppliedTerms"`, with `"NotRequired"`
+`"ReducedChannels"`, `"LiteralTerms"`, `"BoseChannelUnion"`,
+`"BoseSelectedChannelUnion"` or `"SuppliedTerms"`, with `"NotRequired"`
 when the input already passes without a correction space;
 `"ReducedChannelSpace"` retains the compact sources, directions and selected-cut
-checks. `"CorrectionSpaceAttempts"` records the attempts when a compact fit
-falls back to the literal space. These are opt-in details, not additional
+checks. `"SelectedChannelSpace"` retains the selected-cut atomic sources and
+their certifications. `"CorrectionSpaceAttempts"` records the attempts when a compact fit
+falls back to the literal space, including each attempt's refinement history
+so an inconsistent system is distinguishable from a later fallback timeout.
+These are opt-in details, not additional
 ordinary output. A `"COMPLETE"` factorization stage means its selected
 representative passed the physical checks at the recorded samples, not that
 the full amplitude already satisfies all four final tests.
@@ -973,6 +1067,6 @@ mixed-helicity and four-fermion diagram derivations and their checked parity
 transforms. The regression suite compares the saved rows with independent
 Feynman calculations, other particle orderings and nonunit mass/coupling
 values. Model 2 stays cubic for diagram generation. Model 3 now supplies both
-three-by-five and four-by-four sewings at six points; availability of these
-channels is not yet construction or validation of a complete six-point
-amplitude.
+three-by-five and four-by-four sewings at six points. The all-plus six-point
+notebook section exercises their simultaneous completion as described above;
+this does not establish every other six-point process or helicity assignment.

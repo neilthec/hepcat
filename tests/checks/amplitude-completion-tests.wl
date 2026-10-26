@@ -32,6 +32,27 @@ acCanonical[expression_, n_] :=
 check["all preparation and completion stages enable progress reporting by default",
   AllTrue[{PrepareAmplitudes, CompleteFactorization, CompleteHighEnergy},
     ("ProgressReporting" /. Options[#]) === True &]];
+acFormalBasis = {acFormalX + acFormalY, acFormalX - acFormalY,
+  2 acFormalX, acFormalX, 3 (acFormalX + acFormalY)};
+check["formal basis pruning removes only exact constant linear dependencies",
+  ConstructiveDiagrams`Private`completionIndependentBasis[acFormalBasis] ===
+    Take[acFormalBasis, 2]];
+acUnprovedPhysicalBasis = {MomProd[1, 2],
+  (Mandelstahm[1, 2] - Mass[1]^2 - Mass[2]^2)/2};
+check["formal pruning does not infer unstated physical identities between distinct monomials",
+  ConstructiveDiagrams`Private`completionIndependentBasis[acUnprovedPhysicalBasis] ===
+    acUnprovedPhysicalBasis];
+acRealPrecisionBasis = {1. acFormalX, 1. acFormalY, 1. (acFormalX + acFormalY)};
+check["formal pruning retains every direction when real coefficients are inexact",
+  ConstructiveDiagrams`Private`completionIndependentBasis[acRealPrecisionBasis] ===
+    acRealPrecisionBasis];
+acComplexPrecisionBasis = {(1. + I) acFormalX, (1. + I) acFormalY,
+  (1. + I) (acFormalX + acFormalY)};
+check["formal pruning retains every direction when atomic complex coefficients are inexact",
+  ConstructiveDiagrams`Private`completionIndependentBasis[acComplexPrecisionBasis] ===
+    acComplexPrecisionBasis];
+check["Bose projection remains opt-in rather than inferred from equal masses",
+  ("BoseSymmetryGroups" /. Options[CompleteFactorization]) === {}];
 
 (* Preparation retains diagram-local assumptions and off-shell denominators. *)
 acRules = {Mass[1] -> prElectronMass, Mass[2] -> prElectronMass, Mass[3] -> 0, Mass[4] -> 0,
@@ -1327,6 +1348,125 @@ check["an invalid shared chart cannot bypass kinematic validation",
     {acBatchA}, acBatchTarget, prFourPointTargets,
     <|"Map" -> Function[{expression, channels, poles}, 0]|>, 10]["Status"] === "UNRESOLVED"];
 
+(* Exact modular-block solver certificates. *)
+acBlockZero[value_] := AllTrue[Flatten[{value}],
+  RootReduce[Expand[Together[#]]] === 0 &];
+acBlockCertificate[result_, matrix_, constant_] := Module[
+  {rows, width = Length[First[matrix]], pivots, free, point, null},
+  If[!AssociationQ[result] || !KeyExistsQ[result, "ReducedRows"], Return[False]];
+  rows = Select[result["ReducedRows"], AnyTrue[Most[#], # =!= 0 &] &];
+  If[!AllTrue[rows, Length[#] === width + 1 &], Return[False]];
+  pivots = Map[Function[row, SelectFirst[Range[width], row[[#]] =!= 0 &, Missing[]]], rows];
+  If[!FreeQ[pivots, _Missing] || !DuplicateFreeQ[pivots] ||
+      Length[pivots] =!= result["Rank"], Return[False]];
+  free = Complement[Range[width], pivots];
+  point = ReplacePart[ConstantArray[0, width], Thread[pivots -> (Last /@ rows)]];
+  null = If[free === {}, {}, Transpose[Map[Function[column,
+    ReplacePart[UnitVector[width, column], Thread[pivots -> -rows[[All, column]]]]], free]]];
+  acBlockZero[matrix.point + constant] &&
+    If[free === {}, True, acBlockZero[matrix.null] &&
+      null[[free, All]] === IdentityMatrix[Length[free]] &&
+      point[[free]] === ConstantArray[0, Length[free]]]
+];
+acBlockBase = {{1, 0, 0, 2, 0, -3}, {0, 1, 0, -1, 0, 4},
+  {0, 0, 1, 5, 0, 2}};
+acBlockMatrix = Join[acBlockBase, {2 acBlockBase[[1]] - acBlockBase[[2]],
+  acBlockBase[[2]] + acBlockBase[[3]], ConstantArray[0, 6],
+  Total[acBlockBase], 3 acBlockBase[[1]] + 2 acBlockBase[[3]]}];
+acBlockConstant = -acBlockMatrix.{2, -3, 5, 0, 0, 0};
+acBlockResult = ConstructiveDiagrams`Private`completionExactBlockReduce[
+  acBlockMatrix, acBlockConstant];
+check["modular block reduction certifies every row of a rank-deficient rectangular system",
+  AssociationQ[acBlockResult] && acBlockResult["Rank"] === 3 &&
+    acBlockResult["CheckedRows"] === Length[acBlockMatrix] &&
+    acBlockCertificate[acBlockResult, acBlockMatrix, acBlockConstant]];
+check["block nullspaces preserve an unconstrained zero column in original free coordinates",
+  AssociationQ[acBlockResult] &&
+    acBlockZero[acBlockMatrix.UnitVector[6, 5]] &&
+    acBlockCertificate[acBlockResult, acBlockMatrix, acBlockConstant]];
+acBlockRationalMatrix = MapIndexed[#1/(2 + First[#2]) &, acBlockMatrix, {2}];
+acBlockRationalConstant = -acBlockRationalMatrix.{2, -3, 5, 0, 0, 0};
+acBlockRationalResult = ConstructiveDiagrams`Private`completionExactBlockReduce[
+  acBlockRationalMatrix, acBlockRationalConstant];
+check["rational denominator clearing preserves the particular solution and full nullspace",
+  acBlockCertificate[acBlockRationalResult, acBlockRationalMatrix, acBlockRationalConstant]];
+check["an inconsistent extra row cannot be accepted through modular pivot selection",
+  MissingQ[ConstructiveDiagrams`Private`completionExactBlockReduce[
+    Append[acBlockMatrix, First[acBlockMatrix]], Append[acBlockConstant, First[acBlockConstant] + 1]]]];
+check["an unlucky prime with a rank drop falls back instead of certifying a false nullspace",
+  MissingQ[ConstructiveDiagrams`Private`completionExactBlockReduce[
+    {{5, 0}, {0, 1}, {5, 1}}, {-10, -3, -13}, 5]]];
+check["a rank-preserving bad prime cannot return duplicate rational leading pivots",
+  MissingQ[ConstructiveDiagrams`Private`completionExactBlockReduce[
+    {{5, 1, 0}, {5, 0, 1}}, {0, 0}, 5]]];
+acBlockBadPrimeVariables = Table[Unique["acBlockBadPrimeCoefficient"], {64}];
+acBlockBadPrimeMatrix = PadRight[{{2147483647, 1, 0}, {2147483647, 0, 1}}, {2, 64}];
+acBlockBadPrimeConstant = -acBlockBadPrimeMatrix.Join[{2, -3, 5}, ConstantArray[0, 61]];
+acBlockBadPrimeFit = ConstructiveDiagrams`Private`completionSolveLinear[
+  acBlockBadPrimeMatrix.acBlockBadPrimeVariables + acBlockBadPrimeConstant,
+  acBlockBadPrimeVariables];
+acBlockBadPrimeFamily = acBlockBadPrimeVariables /. acBlockBadPrimeFit["SolutionRules"];
+acBlockBadPrimeFree = acBlockBadPrimeFit["FreeParameters"];
+acBlockBadPrimeParticular = acBlockBadPrimeFamily /. Thread[acBlockBadPrimeFree -> 0];
+acBlockBadPrimeNullspace = Transpose[Coefficient[acBlockBadPrimeFamily, #] & /@ acBlockBadPrimeFree];
+check["a rank-preserving modular pivot mismatch uses the exact native solver fallback",
+  acBlockBadPrimeFit["Status"] === "UNDERDETERMINED" && acBlockBadPrimeFit["Rank"] === 2 &&
+    Length[acBlockBadPrimeFree] === 62 &&
+    acBlockZero[acBlockBadPrimeMatrix.acBlockBadPrimeParticular + acBlockBadPrimeConstant] &&
+    acBlockZero[acBlockBadPrimeMatrix.acBlockBadPrimeNullspace] &&
+    acBlockBadPrimeFamily[[Flatten[FirstPosition[acBlockBadPrimeVariables, #] & /@
+      acBlockBadPrimeFree]]] === acBlockBadPrimeFree];
+acBlockWideBase = MapThread[Join, {IdentityMatrix[4],
+  Table[(3 i + 2 j)/(i + j + 1), {i, 4}, {j, 66}]}];
+acBlockWideMatrix = Join[acBlockWideBase, {acBlockWideBase[[1]] + acBlockWideBase[[2]],
+  3 acBlockWideBase[[3]] - acBlockWideBase[[4]], Total[acBlockWideBase]}];
+acBlockWideConstant = -acBlockWideMatrix.Join[{2, -1, 3, -5}, ConstantArray[0, 66]];
+acBlockWideResult = ConstructiveDiagrams`Private`completionExactBlockReduce[
+  acBlockWideMatrix, acBlockWideConstant];
+check["more than fifty right-hand columns retain exact particular and nullspace certificates",
+  AssociationQ[acBlockWideResult] && acBlockWideResult["Rank"] === 4 &&
+    Length[First[acBlockWideMatrix]] - acBlockWideResult["Rank"] + 1 > 50 &&
+    acBlockCertificate[acBlockWideResult, acBlockWideMatrix, acBlockWideConstant]];
+acBlockWideVariables = Table[Unique["acBlockCoefficient"], {70}];
+acBlockColumnUnits = Sqrt[Prime /@ Range[70]];
+acBlockScaledMatrix = (# acBlockColumnUnits &) /@ acBlockWideMatrix;
+acBlockScaledConstant = Sqrt[2] acBlockWideConstant;
+acBlockScaledFit = ConstructiveDiagrams`Private`completionSolveLinear[
+  acBlockScaledMatrix.acBlockWideVariables + acBlockScaledConstant, acBlockWideVariables];
+acBlockScaledFamily = acBlockWideVariables /. acBlockScaledFit["SolutionRules"];
+acBlockScaledFree = acBlockScaledFit["FreeParameters"];
+acBlockScaledParticular = acBlockScaledFamily /. Thread[acBlockScaledFree -> 0];
+acBlockScaledNullspace = Transpose[Coefficient[acBlockScaledFamily, #] & /@ acBlockScaledFree];
+check["the public exact solver restores all original column and right-hand-side units",
+  acBlockScaledFit["Status"] === "UNDERDETERMINED" && acBlockScaledFit["Rank"] === 4 &&
+    Length[acBlockScaledFree] === 66 &&
+    acBlockZero[acBlockScaledMatrix.acBlockScaledParticular + acBlockScaledConstant] &&
+    acBlockZero[acBlockScaledMatrix.acBlockScaledNullspace]];
+check["restored block solutions retain identity coordinates for the original free parameters",
+  (acBlockScaledFamily[[Flatten[FirstPosition[acBlockWideVariables, #] & /@ acBlockScaledFree]]]) ===
+    acBlockScaledFree];
+acBlockAlgebraicMatrix = {{1, Sqrt[2], 3}, {Sqrt[3], 1, -1},
+  {1 + Sqrt[3], 1 + Sqrt[2], 2}};
+acBlockAlgebraicConstant = -acBlockAlgebraicMatrix.{2, -1, 0};
+check["nonrational algebraic matrices decline the modular helper without an approximate fit",
+  MissingQ[ConstructiveDiagrams`Private`completionExactBlockReduce[
+    acBlockAlgebraicMatrix, acBlockAlgebraicConstant]]];
+acBlockAlgebraicVariables = {acBlockX, acBlockY, acBlockZ};
+acBlockAlgebraicFit = ConstructiveDiagrams`Private`completionSolveLinear[
+  acBlockAlgebraicMatrix.acBlockAlgebraicVariables + acBlockAlgebraicConstant,
+  acBlockAlgebraicVariables];
+acBlockAlgebraicFamily = acBlockAlgebraicVariables /. acBlockAlgebraicFit["SolutionRules"];
+acBlockAlgebraicFree = acBlockAlgebraicFit["FreeParameters"];
+acBlockAlgebraicParticular = acBlockAlgebraicFamily /. Thread[acBlockAlgebraicFree -> 0];
+acBlockAlgebraicNullspace = Transpose[Coefficient[acBlockAlgebraicFamily, #] & /@ acBlockAlgebraicFree];
+check["the native fallback still solves an exact nonrational algebraic system",
+  acBlockAlgebraicFit["Status"] === "UNDERDETERMINED" && acBlockAlgebraicFit["Rank"] === 2 &&
+    acBlockZero[acBlockAlgebraicMatrix.acBlockAlgebraicParticular + acBlockAlgebraicConstant] &&
+    acBlockZero[acBlockAlgebraicMatrix.acBlockAlgebraicNullspace]];
+check["inexact coefficients do not enter an exact modular certificate",
+  MissingQ[ConstructiveDiagrams`Private`completionExactBlockReduce[{{1., 2.}}, {3.}]]];
+(* End exact modular-block solver certificates. *)
+
 Print["Completing the four-fermion single-photon process from actual diagrams."];
 acFourFermionParticles = {"e", "E", "E", "e", "A.+"};
 acFourFermionPairs = diagramAmplitudes[CreateDiagrams[acFourFermionParticles, prModel]];
@@ -1642,6 +1782,68 @@ acAdaptivePair = {First[acAdaptiveTarget["Cut"]],
   First[Complement[Range[4], acAdaptiveTarget["Cut"]]]};
 acAdaptiveBasis = {1/acAdaptiveDen,
   (MomProd @@ acAdaptivePair)/acAdaptiveDen};
+acSparseNormalized = ConstructiveDiagrams`Private`completionNormalizeInput[
+  0, Take[acScalarFourChannels, 1], acScalarModel];
+acSparseRegular = (MomProd[1, 3] + MomProd[1, 4] + MomProd[2, 3])^8;
+acSparseTrial = acSparseU acAdaptiveTarget["StateSum"]/acAdaptiveDen +
+  acSparseV acSparseRegular;
+acSparseSolution = <|"SolutionRules" -> {acSparseU -> 1, acSparseV -> 1},
+  "FreeParameters" -> {}|>;
+acSparseDenseCandidate = Expand[acSparseTrial /. acSparseSolution["SolutionRules"]];
+DownValues[acSparseEvaluateDelegate] = DownValues[
+  ConstructiveDiagrams`Private`residueEvaluateChart] /.
+    HoldPattern[ConstructiveDiagrams`Private`residueEvaluateChart] -> acSparseEvaluateDelegate;
+acSparseMappedSizes = {}; acSparseMappedUnknowns = False;
+acSparseValidation = Block[
+  {ConstructiveDiagrams`Private`residueEvaluateChart = Function[{expression, chart, rules},
+    AppendTo[acSparseMappedSizes, LeafCount[expression]];
+    If[!FreeQ[expression, acSparseU | acSparseV], acSparseMappedUnknowns = True];
+    acSparseEvaluateDelegate[expression, chart, rules]]},
+  ConstructiveDiagrams`Private`completionSparseValidation[
+    acSparseTrial, {acSparseU, acSparseV}, acSparseSolution, {}, {},
+    acSparseNormalized, 2, 57013, acScalarRules, 15, Automatic, False]];
+check["held-out validation maps sparse components rather than the dense fitted candidate",
+  acSparseValidation["Report"]["Summary"] === <|"PASS" -> 1|> &&
+    acSparseValidation["FamilyPass"] && acSparseMappedSizes =!= {} &&
+    !acSparseMappedUnknowns &&
+    Max[acSparseMappedSizes] < LeafCount[acSparseDenseCandidate]];
+check["sparse held-out reports preserve exact feedback and validated chart metadata",
+  acSparseValidation["Feedback"]["Status"] === "COMPLETE" &&
+    Length[acSparseValidation["Feedback"]["Samples"]] === 2 &&
+    !FreeQ[acSparseValidation["Feedback"]["Equations"], acSparseU] &&
+    AllTrue[First[acSparseValidation["Report"]["Channels"]]["Samples"],
+      #["RandomSeed"] === 57013 && #["ParameterRules"] === acScalarRules &&
+        AssociationQ[#["Kinematics"]] && TrueQ[#["KinematicChecks"]["Valid"]] &]];
+acSparseFreeFailure = ConstructiveDiagrams`Private`completionSparseValidation[
+  acAdaptiveTarget["StateSum"]/acAdaptiveDen + acSparseU Last[acAdaptiveBasis],
+  {acSparseU}, <|"SolutionRules" -> {}, "FreeParameters" -> {acSparseU}|>,
+  {acSparseU}, {}, acSparseNormalized, 1, 57013, acScalarRules, 15, Automatic, False];
+check["a passing zero-free representative cannot hide a failing affine-family direction",
+  acSparseFreeFailure["Report"]["Summary"] === <|"PASS" -> 1|> &&
+    !acSparseFreeFailure["FamilyPass"] &&
+    acSparseFreeFailure["Feedback"]["Status"] === "COMPLETE" &&
+    !FreeQ[acSparseFreeFailure["Feedback"]["Equations"], acSparseU]];
+acSparseSingular = ConstructiveDiagrams`Private`completionSparseValidation[
+  acSparseU/acAdaptiveDen^2, {acSparseU},
+  <|"SolutionRules" -> {acSparseU -> 0}, "FreeParameters" -> {}|>, {}, {},
+  acSparseNormalized, 1, 57013, acScalarRules, 15, Automatic, False];
+check["sparse validation still rejects a singular correction direction before fitting it to zero",
+  acSparseSingular["Report"]["Summary"] === <|"UNRESOLVED" -> 1|> &&
+    acSparseSingular["Feedback"]["Status"] === "UNRESOLVED" &&
+    !acSparseSingular["FamilyPass"]];
+acSparseSpinNormalized = ConstructiveDiagrams`Private`completionNormalizeInput[
+  0, prFourPointChannels, prModel];
+acSparseSpinValidation = ConstructiveDiagrams`Private`completionSparseValidation[
+  acSparseU prFourPointAmplitude, {acSparseU},
+  <|"SolutionRules" -> {acSparseU -> 1}, "FreeParameters" -> {}|>, {}, {},
+  acSparseSpinNormalized, 1, 57013,
+  ModelParameterRules[prModel, {"Me" -> 1, "EE" -> 1}], 15, Automatic, False];
+check["sparse validation certifies every coherent massive-spin component on all supplied cuts",
+  acSparseSpinValidation["Report"]["Summary"] === <|"PASS" -> 2|> &&
+    acSparseSpinValidation["FamilyPass"] &&
+    AllTrue[Flatten[Lookup[acSparseSpinValidation["Report"]["Channels"], "Samples"]],
+      Length[#["SpinVariables"]] === 2 && TrueQ[#["KinematicChecks"]["Valid"]] &&
+        And @@ #["KinematicChecks"]["UncutChannelsRemainGeneric"] &]];
 acNoFeedback = acFactor[0, Take[acScalarFourChannels, 1], acScalarModel,
   "CorrectionBasis" -> acAdaptiveBasis, "ParameterRules" -> acScalarRules,
   "Samples" -> 1, "ValidationSamples" -> 1, "MaxRefinements" -> 0];
@@ -1673,6 +1875,37 @@ check["validation feedback retains the exact additional constraints for inspecti
       First[acAdaptiveHistory]["EquationCount"] &&
     AnyTrue[acAdaptive["ConstraintData"]["Fit"]["Samples"],
       KeyExistsQ[#, "RandomSeed"] && AssociationQ[Lookup[#, "Chart", None]] &]];
+acAdaptiveRedundant = acFactor[0, Take[acScalarFourChannels, 1], acScalarModel,
+  "CorrectionBasis" -> Join[acCubicCoupling^2 acAdaptiveBasis,
+    {acCubicCoupling^2 (1 + (MomProd @@ acAdaptivePair))/acAdaptiveDen, 1}],
+  "ParameterRules" -> acScalarRules, "Samples" -> 1, "ValidationSamples" -> 1];
+check["raw-equation refinement removes redundant freedom but retains a genuine local direction",
+  acAdaptiveRedundant["Status"] === "COMPLETE" &&
+    Length[acAdaptiveRedundant["RefinementHistory"]] >= 2 &&
+    Last[acAdaptiveRedundant["RefinementHistory"]]["RemovedZeroDirections"] >= 1 &&
+    acAdaptiveRedundant["RemainingBasis"] === {1} &&
+    Length[acAdaptiveRedundant["FreeParameters"]] === 1 &&
+    acZero[acAdaptiveRedundant["Amplitude"] -
+      acAdaptiveTarget["StateSum"]/acAdaptiveDen] &&
+    acPhysicalPass[acAdaptiveRedundant["ValidationReport"]]];
+
+(* Deliberately slow cosmetic work must not revoke already validated success. *)
+acCleanupDirections = Table[MomProd[1, 3]^power, {power, 0, 16}];
+acCleanupCalls = 0;
+acCleanupInterrupted = Block[
+  {ConstructiveDiagrams`Private`completionExternalReduce = Function[{value, massRules},
+    acCleanupCalls++; Pause[10]; value]},
+  acFactor[acScalarFour, acScalarFourChannels, acScalarModel,
+    "CorrectionBasis" -> acCleanupDirections, "ParameterRules" -> acScalarRules,
+    "Samples" -> 1, "ValidationSamples" -> 1, "TimeConstraint" -> 30]];
+check["interrupted optional cleanup preserves the validated candidate and complete affine family",
+  acCleanupCalls >= 1 && acCleanupInterrupted["Status"] === "COMPLETE" &&
+    acPhysicalPass[acCleanupInterrupted["ValidationReport"]] &&
+    Length[acCleanupInterrupted["FreeParameters"]] === Length[acCleanupDirections] &&
+    acCleanupInterrupted["RemainingBasis"] === acCleanupDirections &&
+    acZero[acCanonical[acCleanupInterrupted["Amplitude"] - acScalarFour, 4]] &&
+    acZero[acCleanupInterrupted["FamilyAmplitude"] - acCleanupInterrupted["Amplitude"] -
+      acCleanupInterrupted["FreeParameters"].acCleanupInterrupted["RemainingBasis"]]];
 acExplicitInsufficient = acFactor[0, Take[acScalarFourChannels, 1], acScalarModel,
   "CorrectionBasis" -> {(MomProd @@ acAdaptivePair)/acAdaptiveDen},
   "ParameterRules" -> acScalarRules, "Samples" -> 2, "ValidationSamples" -> 1];

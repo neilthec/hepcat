@@ -326,6 +326,64 @@ prHiddenPole = PhysicalPoleResidue[1/prMixed[3, 1, 3], prTestTarget,
 check["kinematic mapping discovers poles hidden in a spinor denominator",
   prHiddenPole["StructuralCoefficient"] === 0 &&
     prHiddenPole["Status"] === "PASS" && prHiddenPole["PhysicalResidue"] === 1];
+prWithStructural = PhysicalPoleResidue[3/prD13 + 7, prTestTarget,
+  "KinematicMap" -> prMap[1, 2], "UncutChannels" -> prUncutChannels[prTestTarget]];
+prWithoutStructural = PhysicalPoleResidue[3/prD13 + 7, prTestTarget,
+  "KinematicMap" -> prMap[1, 2], "UncutChannels" -> prUncutChannels[prTestTarget],
+  "StructuralCoefficient" -> False];
+check["formal structural coefficients remain enabled by default",
+  prWithStructural["StructuralCoefficient"] === 3];
+check["skipping a formal coefficient preserves the physical residue and chart checks",
+  prWithoutStructural["StructuralCoefficient"] === Missing["NotRequested"] &&
+    KeyTake[prWithoutStructural, {"Status", "PhysicalResidue", "KinematicChecks"}] ===
+      KeyTake[prWithStructural, {"Status", "PhysicalResidue", "KinematicChecks"}]];
+check["without a map skipping the coefficient cannot claim a physical result",
+  With[{result = PhysicalPoleResidue[3/prD13 + 7, prTestTarget,
+      "StructuralCoefficient" -> False]},
+    result["Status"] === "FORMAL" &&
+      result["StructuralCoefficient"] === Missing["NotRequested"] &&
+      result["PhysicalResidue"] === Missing["KinematicsRequired"]]];
+check["nonboolean structural coefficient requests are rejected",
+  Quiet[PhysicalPoleResidue[1/prD13, prTestTarget,
+    "StructuralCoefficient" -> Automatic]] === $Failed];
+check["the formal coefficient switch belongs to the standalone residue API",
+  MemberQ[First /@ Options[PhysicalPoleResidue], "StructuralCoefficient"]];
+check["mapped checker APIs do not advertise an ignored formal coefficient switch",
+  FreeQ[Join[Options[CheckAmplitudes], Options[CheckPhysicalResidues]],
+    HoldPattern["StructuralCoefficient" -> _]]];
+prStructuralCalls = 0;
+prStructuralProbe = Block[
+  {ConstructiveDiagrams`Private`residueStructuralCoefficient =
+    Function[{expression, channels, variables}, prStructuralCalls++; prBlockedStructural]},
+  {PhysicalPoleResidue[1/prD13, prTestTarget, "KinematicMap" -> prMap[1, 2],
+      "StructuralCoefficient" -> False],
+    PhysicalPoleResidue[1/prD13, prTestTarget, "KinematicMap" -> prMap[1, 2]]}];
+check["the opt-out never invokes structural preprocessing but the default still does",
+  prStructuralCalls === 1 &&
+    prStructuralProbe[[1]]["StructuralCoefficient"] === Missing["NotRequested"] &&
+    prStructuralProbe[[2]]["StructuralCoefficient"] === prBlockedStructural &&
+    AllTrue[prStructuralProbe, #["Status"] === "PASS" && #["PhysicalResidue"] === 1 &]];
+prSingularArithmeticMap[expression_, channels_, variables_] :=
+  If[expression === prSingularArithmeticExpression, 1/0,
+    prMap[1, 2][expression, channels, variables]];
+prSingularArithmeticResult = Check[
+  PhysicalPoleResidue[prSingularArithmeticExpression, prTestTarget,
+    "KinematicMap" -> prSingularArithmeticMap, "StructuralCoefficient" -> False],
+  prArithmeticMessageLeaked, {Power::infy, Infinity::indet}];
+check["a singular trial chart remains unresolved without arithmetic-message flooding",
+  AssociationQ[prSingularArithmeticResult] &&
+    prSingularArithmeticResult["Status"] === "UNRESOLVED" &&
+    prSingularArithmeticResult["PhysicalResidue"] === Missing["IncompleteKinematicMap"]];
+prChartWarning::visible = "An intentional unrelated chart warning.";
+prUnrelatedWarningMap[expression_, channels_, variables_] :=
+  If[expression === prUnrelatedWarningExpression,
+    Message[prChartWarning::visible]; 1/First[variables],
+    prMap[1, 2][expression, channels, variables]];
+check["singular-chart suppression does not hide unrelated diagnostic messages",
+  Quiet[Check[PhysicalPoleResidue[prUnrelatedWarningExpression, prTestTarget,
+      "KinematicMap" -> prUnrelatedWarningMap, "StructuralCoefficient" -> False],
+    prUnrelatedMessageObserved, {prChartWarning::visible}], prChartWarning::visible] ===
+      prUnrelatedMessageObserved];
 check["unmapped Mandelstahm invariants cannot yield a physical pass",
   PhysicalPoleResidue[1/(Mandelstahm[1, 3] - prElectronMass^2), prTestTarget,
     "KinematicMap" -> prMap[1, 2]]["Status"] === "UNRESOLVED"];

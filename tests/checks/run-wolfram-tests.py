@@ -21,6 +21,7 @@ TEST_SUITES = (
     "amplitude-check-tests.wl",
     "model-isolation-tests.wl",
     "plain-text-tests.wl", "model-export-tests.wl", "qed-model-export-tests.wl",
+    "six-point-completion-tests.wl",
 )
 
 

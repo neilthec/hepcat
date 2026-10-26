@@ -169,6 +169,42 @@ The opt-in `RefinementHistory` and `ChannelContinuations` reports make these
 steps inspectable. Passing sampled constraints is not a generic uniqueness
 theorem; correction-space and time limits must still report unresolved work.
 
+`six-point-completion-tests.wl` covers the reference-free four-by-four sewn
+channels that first occur in six-point electron/photon QED. They must enter
+the compact correction space even though they need no reference replacement.
+The suite also checks generic scalar channels, correction-term limits,
+higher-order-pole rejection, selected-channel-only numerator reductions,
+additional cyclic reference choices and concise failure reasons. The physical-residue
+suite separately verifies that skipping an optional formal coefficient leaves
+the mapped residue and kinematic validation unchanged.
+Focused completion tests also cover opt-in Bose projection, the compact/literal
+union, selected-cut atomic sources and exact formal-dependence pruning without changing the available span.
+The final correction cap applies after projection and pruning; a pruning timeout
+keeps all directions. The default without declared bosonic groups is unchanged.
+Automatic-chart simple-pole evaluation is compared with full mapped residues.
+Hidden inverse-bracket and invariant poles, higher-order cancellations, implicit
+x-factor context, zero-coefficient singular directions and custom maps exercise
+the conservative fallback paths rather than bypassing regularity checks.
+Large exact linear systems test the certified modular-block solver against
+every original row and every free direction, with rational denominators,
+redundant rectangular systems, many right-hand sides, algebraic scaling,
+unlucky primes, inconsistent rows and conservative native fallback. Optional
+cleanup must not invalidate a validated result, and dense affine families
+must not be expanded before sparse validation.
+
+The full six-point diagram-to-completion regression is deliberately opt-in.
+It generates the twenty-four electron/four-positive-photon diagrams, performs
+ordinary `AllSpurious` preparation, and derives corrections from the model's
+fourteen channels without a supplied final amplitude or correction basis.
+Completion must pass every held-out channel at both the model and doubled mass
+values, including the remaining affine family. Allow time for preparation in
+addition to the bounded 1200-second completion stage:
+
+```sh
+HEPCAT_TEST_FULL_SIX_POINT=1 python3 tests/checks/run-wolfram-tests.py \
+  --suite six-point-completion-tests.wl --timeout 1800
+```
+
 ## Repaired Legacy Bugs
 
 The five formerly expected-failure probes now run as ordinary regression

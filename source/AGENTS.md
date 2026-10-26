@@ -369,6 +369,10 @@ for reference comparisons, `"Summary"` for counts, or `"Details"` for the full r
 - `PhysicalPoleResidue` without a coherent kinematic map extracts only a
   `FORMAL` coefficient. Automatic simultaneous-cut charts are not implemented;
   multiple-pole checks require a suitable custom map. Read the guide first.
+  Its optional `"StructuralCoefficient" -> False` skips the formal opaque-pole
+  coefficient while retaining the mapped physical residue and kinematic checks.
+  Mapped checker and completion callers use this to avoid unnecessary symbolic
+  preprocessing; the direct public default remains `True`.
 - These diagnostics do not automatically repair an amplitude or establish
   uniqueness. Do not modify the checker, model, or signs merely to obtain PASS.
 
@@ -468,10 +472,20 @@ and cyclic and physical-reference alternatives for sewn channels. The prepared
 diagram expressions are not changed. Additional channel continuations enter
 the automatic space only after exact sampled checks preserve their selected
 cut residue; this is not an off-cut equality claim or a generic proof.
-Automatic completion first tries a compact physical-reference channel space:
+Automatic completion first tries a compact physical-reference channel space,
+including complete sewn channels that already contain no Xi spinors:
 apply ordinary external-shell and conservation reductions to each whole accepted
 channel continuation before splitting into terms. Verify the reduced whole
 expression on its selected cut, then retain both raw and reduced terms. Add
+only closed reference-free sources: unexpanded x factors and surviving spinors
+for internal cut particles do not qualify merely because no Xi is explicit.
+Those original target residues are retained unchanged. Add
+selected-cut numerator reductions only as grouped off-cut differences, using
+that channel's one internal mass rule, never the other source propagators'
+shell conditions. Protect inverse factors and verify the difference's selected
+residue before admission. Intermediate cyclic reference rotations are bounded
+and individually checked; forward and reverse choices alone do not exhaust
+the possibilities once there are more massless reference particles. Add
 one grouped pole-bearing input expression per diagram. Explicit additive input
 terms without a physical `PropDen` denominator remain in the seed, not in these
 cancellation directions; do not claim this separates hidden contact content.
@@ -481,6 +495,27 @@ termwise space. Attempts share the stage deadline and correction-term cap;
 do not silently discard excess directions. `"ChannelReferences" -> None`
 retains the literal-only behavior, and an explicit `"CorrectionBasis"` retains
 the supplied-space behavior after normalization.
+`"BoseSymmetryGroups" -> {}` is an opt-in declaration of identical bosonic
+external states, not an inference from equal masses. For four identical
+positive-helicity photons on legs 3--6, use `{{3, 4, 5, 6}}`. Average both the
+seed and each grouped correction direction, using typed particle permutations
+that preserve literal coefficients, Xi identifiers and numerical spin labels.
+Apply the correction-term cap after projection; retain the original input and
+all original residue targets. Never group fermions, different species or
+different helicities. The bounded group order is 120. This is an added physical
+symmetry constraint, not a replacement for independent channel validation.
+With automatic correction directions and declared Bose symmetry, combine the
+available compact and literal spaces before projection. Also try the individual
+terms of each accepted selected-cut numerator reduction, including spurious
+reference choices. Certify the whole reduced source on its own cut before
+splitting it; never apply the other internal propagators' shell conditions.
+This step is bounded by the construction cap and a 20-second budget. Exact formal-monomial
+linear dependencies may be removed without changing that projected span.
+This pruning has a five-second budget; an unfinished pass retains all directions.
+The ordinary `{}` default keeps compact-then-literal behavior. Intermediate
+construction grows with the permutation count, up to 4096 directions unless
+the requested correction cap is already larger; the final cap applies after
+projection and pruning.
 New continuations with uncanceled higher-order physical propagator powers are
 recorded but not admitted: the current correction fitter supports regular
 simple-pole residues. This is a solver limit, not a restriction on the theory;
@@ -500,9 +535,30 @@ system is refitted, then checked with fresh seeds. `"MaxRefinements" -> 3`
 bounds these retries after the initial fit; zero disables feedback. Evaluate
 feedback on the original sparse correction components before substituting the
 saved fit, rather than expanding and reevaluating its dense affine family.
+For internally generated coherent cut charts only, a simple typed-pole fast
+path may evaluate supported rational primitives directly on the cut after
+checking every primitive is finite and every inverse base is nonzero.
+Hidden singular denominators, higher poles, unsupported structures and cut-only
+spinors fall back to the full mapped restriction. Full-map additive caching
+must also fall back to the whole component when singular addends can cancel.
+Implicit x factors retain the whole component's cut-spinor inventory; arbitrary
+custom maps retain the original whole-expression path. Validate the kinematics
+once per chart, but check every component even if its fitted coefficient is zero.
+These are evaluation optimizations, not new on-shell identities or weaker tests.
+Refit all accumulated raw equations in the original unknowns each round;
+composing dense intermediate solution rules can cause severe fraction growth.
+Construct the fitted amplitude and free directions only after sparse validation
+succeeds; keep their linear combinations factored instead of expanding a dense
+family before checking it. Optional final external reduction has one shared two-second budget after
+validation, commits atomically, and cannot turn validated success into failure.
 Exact common algebraic units may be removed from matrix columns and the right-hand
 side for rational elimination; restore the original coefficient and free-variable
-scales in solution rules. Do not replace this with an approximate fit. Ordinary
+scales in solution rules. Large rational systems can select a square block using
+modular arithmetic, but must solve it exactly and certify every original row
+for the particular solution and the complete independent free family. Repair
+failed right-hand-side solves or fall back to ordinary exact row reduction;
+modular rank alone never proves consistency or inconsistency. Do not replace
+this with an approximate fit. Ordinary
 external-shell and conservation identities remove only provably zero
 correction directions. Retain every unproved or genuinely residue-invisible
 direction for later constraints. Typed `PropDen` poles are checked throughout
@@ -513,9 +569,11 @@ without changing the user's channels, model or vertex content.
 The optional details expose
 `"RefinementHistory"` and `"ChannelContinuations"`, including their verification
 scope. `"CorrectionSpace"` is `"ReducedChannels"`, `"LiteralTerms"`,
-`"SuppliedTerms"` or `"NotRequired"` when the input already passes.
+`"BoseChannelUnion"`, `"BoseSelectedChannelUnion"`, `"SuppliedTerms"` or
+`"NotRequired"` when the input already passes.
 `"ReducedChannelSpace"` retains the compact sources, basis
-and selected-cut checks. `"CorrectionSpaceAttempts"` records a compact attempt
+and selected-cut checks; `"SelectedChannelSpace"` retains the selected-cut
+atomic sources and their checks. `"CorrectionSpaceAttempts"` records a compact attempt
 followed by literal fallback when that occurs. Neither retries nor alternative
 references make the bounded space universal; unresolved limits and inconsistent
 equations remain visible.
@@ -546,8 +604,9 @@ only the supplied assignment is checked. Mass and coupling dependence is
 not established merely by testing one numeric assignment.
 
 With ordinary output, `CompleteFactorization` returns the amplitude on success
-or a compact `Failure["IncompleteAmplitude", ...]` when unresolved, without
-embedding the candidate or report. Request `"ReturnDetails" -> True` to inspect
+or a compact `Failure["IncompleteAmplitude", ...]` with a short failure reason
+when unresolved, without embedding the candidate or report.
+Request `"ReturnDetails" -> True` to inspect
 its candidates, equations, diagnostics and validation. `CompleteHighEnergy`
 is unchanged: its ordinary incomplete failure retains the candidate and report,
 and `"Output" -> "Details"` returns that report directly. Never turn a retained
