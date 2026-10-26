@@ -509,13 +509,24 @@ available compact and literal spaces before projection. Also try the individual
 terms of each accepted selected-cut numerator reduction, including spurious
 reference choices. Certify the whole reduced source on its own cut before
 splitting it; never apply the other internal propagators' shell conditions.
-This step is bounded by the construction cap and a 20-second budget. Exact formal-monomial
+This step is bounded by the construction cap and a 60-second budget. Exact formal-monomial
 linear dependencies may be removed without changing that projected span.
-This pruning has a five-second budget; an unfinished pass retains all directions.
+This pruning retains sparse matrices and has a 60-second budget; an unfinished
+pass retains all directions.
 The ordinary `{}` default keeps compact-then-literal behavior. Intermediate
-construction grows with the permutation count, up to 4096 directions unless
-the requested correction cap is already larger; the final cap applies after
-projection and pruning.
+individual source-space construction grows with the permutation count, up to
+4096 directions unless the requested correction cap is already larger. The
+compact, literal and selected-cut spaces may merge into a larger union, bounded
+by the sum of their source-space limits. The final cap applies after projection
+and pruning; neither a term cap nor the shared clock is a hard memory limit.
+If that full automatic Bose space still exceeds the requested cap, a named
+budget fallback may retain whole pole-bearing input diagrams plus every
+available channel atom, without splitting each input diagram into independent
+corrections. The full space remains unchanged whenever it fits. Report both
+sizes in `"CorrectionSpaceCandidates"`; do not truncate arbitrary directions
+or relax any target or affine-family validation. The fallback is
+`"BoseGroupedInputChannelUnion"`, and remains unresolved if it too exceeds
+the cap or cannot satisfy the constraints.
 New continuations with uncanceled higher-order physical propagator powers are
 recorded but not admitted: the current correction fitter supports regular
 simple-pole residues. This is a solver limit, not a restriction on the theory;
@@ -545,6 +556,16 @@ Implicit x factors retain the whole component's cut-spinor inventory; arbitrary
 custom maps retain the original whole-expression path. Validate the kinematics
 once per chart, but check every component even if its fitted coefficient is zero.
 These are evaluation optimizations, not new on-shell identities or weaker tests.
+Extract affine components in one coefficient-array pass rather than rescanning
+the trial once per unknown. Discover correction-space pole support from its
+typed propagator inventory; all original channel targets and zero-residue
+obligations remain, and every component is still restricted on each cut.
+Progress callbacks include individual successful factorization samples as well
+as completed channels, so a large channel does not appear idle for minutes.
+Already polynomial coherent-spin constraints keep their exact rational
+coefficients instead of combining every unknown into one denominator first.
+Rational dependence on spin or fitting variables still uses the full
+normalization path; the resulting linear matrix is always solved exactly.
 Refit all accumulated raw equations in the original unknowns each round;
 composing dense intermediate solution rules can cause severe fraction growth.
 Construct the fitted amplitude and free directions only after sparse validation
@@ -555,7 +576,10 @@ Exact common algebraic units may be removed from matrix columns and the right-ha
 side for rational elimination; restore the original coefficient and free-variable
 scales in solution rules. Large rational systems can select a square block using
 modular arithmetic, but must solve it exactly and certify every original row
-for the particular solution and the complete independent free family. Repair
+for a consistent particular solution and the complete independent free family.
+An original row with an exact nonzero constant residual and zero dependence
+on every free coordinate instead certifies inconsistency of the selected block
+and that original row. Repair
 failed right-hand-side solves or fall back to ordinary exact row reduction;
 modular rank alone never proves consistency or inconsistency. Do not replace
 this with an approximate fit. Ordinary
@@ -569,7 +593,7 @@ without changing the user's channels, model or vertex content.
 The optional details expose
 `"RefinementHistory"` and `"ChannelContinuations"`, including their verification
 scope. `"CorrectionSpace"` is `"ReducedChannels"`, `"LiteralTerms"`,
-`"BoseChannelUnion"`, `"BoseSelectedChannelUnion"`, `"SuppliedTerms"` or
+`"BoseChannelUnion"`, `"BoseSelectedChannelUnion"`, `"BoseGroupedInputChannelUnion"`, `"SuppliedTerms"` or
 `"NotRequired"` when the input already passes.
 `"ReducedChannelSpace"` retains the compact sources, basis
 and selected-cut checks; `"SelectedChannelSpace"` retains the selected-cut

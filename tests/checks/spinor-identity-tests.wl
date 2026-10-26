@@ -1037,6 +1037,101 @@ Do[
     degenerateSandwichReduced === degenerateSandwichInput],
   {kind, {"Spin", "Helicity"}}];
 check["all degenerate mixed sandwich regressions completed", Length[degenerateSandwichResults] === 2];
+
+(* Xi identifiers are independent spinors, even when they equal momentum labels. *)
+Module[{left, right, fixture, examples, results, spinors, spinorValues, matrices,
+    vector, valueChain, value, physical, expected, targetSpinor, epsilon, adjugate},
+  epsilon = {{0, 1}, {-1, 0}};
+  adjugate[matrix_] := {{matrix[[2, 2]], -matrix[[1, 2]]},
+    {-matrix[[2, 1]], matrix[[1, 1]]}};
+  Do[
+    left = SpinorChain[Spinor["Xi", "Angle", reference], Mom[3],
+      Spinor["Helicity", "Square", 4]];
+    right = SpinorChain[Spinor["Xi", "Angle", reference + 1], Mom[3],
+      Spinor["Helicity", "Square", 5]];
+    fixture = left right;
+    examples = {7 fixture, 3 left^2 right, 5 left right^2, 11 left/right,
+      13 fixture/PropDen[Mom[Multiparticle[1, 3]], xiTestMass]};
+    results = Block[{$RecursionLimit = 160},
+      TimeConstrained[ReduceSpinorProducts /@ examples, 3, $TimedOut]];
+    check[{"Xi-targeted Schouten products terminate", reference},
+      ListQ[results] && Length[results] === Length[examples] &&
+        FreeQ[results, _SpinorChainReduced | _SpinorTraceReduced]];
+    check[{"Xi-targeted Schouten products remain idempotent", reference},
+      ListQ[results] && Block[{$RecursionLimit = 160},
+        ReduceSpinorProducts /@ results] === results];
+    spinors = DeleteDuplicates[Cases[examples, _Spinor, Infinity]];
+    vector[spinor_] := Lookup[spinorValues, ToString[spinor, InputForm]];
+    valueChain[chain_SpinorChain] := Module[{parts = List @@ chain, angle, row},
+      angle = parts[[1, 2]] === "Angle";
+      row = vector[First[parts]].epsilon If[angle, 1, -1];
+      Do[row = row.If[angle, matrices[momentum[[1]]], adjugate[matrices[momentum[[1]]]]];
+        angle = !angle, {momentum, Drop[Rest[parts], -1]}];
+      row.vector[Last[parts]]];
+    value[expression_] := Expand[expression /. chain_SpinorChain :> valueChain[chain] /.
+      {_PropDen -> 7, Mass[3]^2 -> Det[matrices[3]],
+        MomProd[i_, j_] :> Tr[matrices[i].adjugate[matrices[j]]]/2}];
+    Do[
+      BlockRandom[SeedRandom[seed];
+        matrices = AssociationThread[{3, 5}, Table[
+          RandomInteger[{-4, 4}, {2, 2}] + I RandomInteger[{-3, 3}, {2, 2}], {2}]];
+        spinorValues = AssociationThread[ToString[#, InputForm] & /@ spinors,
+          Table[RandomInteger[{-5, 5}, 2] + I RandomInteger[{-3, 3}, 2],
+            {Length[spinors]}]]];
+      check[{"Xi-targeted Schouten preserves independent exact spinors", reference, seed},
+        ListQ[results] && And @@ MapThread[value[#1 - #2] === 0 &, {examples, results}]],
+      {seed, {4507, 7919}}],
+    {reference, {3, 13}}];
+
+  targetSpinor = Spinor["Helicity", "Angle", 3];
+  physical = SpinorChain[Spinor["Helicity", "Square", 4], Mom[3],
+      Spinor["Xi", "Angle", 7]] *
+    SpinorChain[Spinor["Xi", "Square", 8], Mom[5], targetSpinor];
+  expected = -SpinorChain[targetSpinor, Spinor["Xi", "Angle", 7]] *
+    SpinorChain[Spinor["Xi", "Square", 8], Mom[5], Mom[3],
+      Spinor["Helicity", "Square", 4]];
+  check["the physical-endpoint Schouten orientation still exposes its Dirac reduction",
+    Expand[ReduceSpinorProducts[physical] - ReduceSpinorProducts[expected]] === 0];
+];
+
+(* Recreate the old conditions in an existing kernel, without loading old code
+   or relying on a temporary fixture. Unrelated user product rules must survive. *)
+xiReloadGuardedRules = Select[DownValues[Times],
+  !FreeQ[#, HoldPattern[UnsameQ[_, "Xi"]]] && !FreeQ[#, _SpinorChainReduced] &];
+xiReloadOldRules = DeleteCases[xiReloadGuardedRules,
+  HoldPattern[UnsameQ[_, "Xi"]], Infinity];
+check["the reload regression reconstructs exactly the five obsolete product orientations",
+  Length[xiReloadGuardedRules] === 5 && Length[xiReloadOldRules] === 5 &&
+    FreeQ[xiReloadOldRules, HoldPattern[UnsameQ[_, "Xi"]]]];
+Unprotect[Times];
+DownValues[Times] = Join[xiReloadOldRules, DownValues[Times]];
+Global`xiReloadLeft[a_] Global`xiReloadRight[b_] := Global`xiReloadValue[a, b];
+Protect[Times];
+xiReloadBefore = Length[DownValues[Times]];
+Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
+check["package reload removes only the five obsolete unguarded product definitions",
+  Length[DownValues[Times]] === xiReloadBefore - 5 &&
+    Intersection[xiReloadOldRules, DownValues[Times]] === {}];
+check["package reload preserves unrelated user definitions on Times",
+  Global`xiReloadLeft[2] Global`xiReloadRight[3] === Global`xiReloadValue[2, 3]];
+xiReloadFixture = SpinorChain[Spinor["Xi", "Angle", 3], Mom[3],
+    Spinor["Helicity", "Square", 4]] *
+  SpinorChain[Spinor["Xi", "Angle", 4], Mom[3], Spinor["Helicity", "Square", 5]];
+xiReloadExpected = SpinorChain[Spinor["Helicity", "Square", 4], Mom[3],
+    Spinor["Xi", "Angle", 3]] *
+  SpinorChain[Spinor["Helicity", "Square", 5], Mom[3], Spinor["Xi", "Angle", 4]];
+check["the Xi product cycle is repaired in a reloaded existing kernel",
+  Block[{$RecursionLimit = 160},
+    TimeConstrained[ReduceSpinorProducts[xiReloadFixture], 3, $TimedOut]] === xiReloadExpected];
+xiReloadFirstRules = DownValues[Times];
+Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
+check["repeated package reloads neither duplicate product rules nor erase unrelated rules",
+  DownValues[Times] === xiReloadFirstRules &&
+    Global`xiReloadLeft[5] Global`xiReloadRight[7] === Global`xiReloadValue[5, 7] &&
+    MemberQ[Attributes[Times], Protected]];
+Unprotect[Times];
+Unset[Global`xiReloadLeft[a_] Global`xiReloadRight[b_]];
+Protect[Times];
 Print[<|"Checks" -> checks, "Failed" -> Length[failures], "Failures" -> failures|>];
 Print["HEPCAT_TEST_COMPLETED:spinor-identity-tests.wl"];
 Quit[If[failures === {}, 0, 1]];

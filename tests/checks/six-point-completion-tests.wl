@@ -337,6 +337,30 @@ check["empty Bose grouping is the identity",
   sixBoseEmpty["Order"] === 1 && sixBoseProject[Mom[3], sixBoseEmpty] === Mom[3]];
 check["four declared identical bosons give exactly twenty-four typed permutations",
   sixBosePlan["Order"] === 24 && Length[DeleteDuplicates[sixBosePlan["Permutations"]]] === 24];
+sixMixedParticles = {"e", "E", "A.+", "A.+", "A.+", "A.-"};
+sixMixedChannels = FactorizationAmplitudeChannels[sixMixedParticles, sixModel];
+sixMixedBosePlan = ConstructiveDiagrams`Private`completionBosePlan[{{3, 4, 5}}, sixBoseRules];
+check["three identical positive-helicity photons give exactly six declared permutations",
+  sixMixedBosePlan["Groups"] === {{3, 4, 5}} && sixMixedBosePlan["Order"] === 6 &&
+    Length[DeleteDuplicates[sixMixedBosePlan["Permutations"]]] === 6];
+sixMixedBoseState = {Mom[3], Mom[4], Mom[5], Mom[6],
+  Spinor["Helicity", "Angle", 6], Spinor["Helicity", "Square", 6]};
+sixMixedBoseImages = Fold[ConstructiveDiagrams`Private`completionBoseCycle,
+  sixMixedBoseState, #] & /@ sixMixedBosePlan["Permutations"];
+check["every mixed-helicity permutation fixes the negative-helicity leg while averaging the other three",
+  AllTrue[sixMixedBoseImages, Sort[Take[#, 3]] === (Mom /@ Range[3, 5]) &&
+    Drop[#, 3] === Drop[sixMixedBoseState, 3] &] &&
+    And @@ MapThread[Expand[#1 - #2] === 0 &,
+      {Take[Total[sixMixedBoseImages]/6, 3],
+        ConstantArray[Total[Mom /@ Range[3, 5]]/3, 3]}]];
+check["the mixed six-point QED model supplies all fourteen factorization channels",
+  Length[sixMixedChannels] === 14];
+check["equal photon masses do not infer an opposite-helicity Bose grouping",
+  (Mass /@ Range[3, 6] /. sixBoseRules) === {0, 0, 0, 0} &&
+    ("BoseSymmetryGroups" /. Options[CompleteFactorization]) === {} &&
+    sixBoseEmpty["Groups"] === {} && sixBoseEmpty["Order"] === 1 &&
+    ConstructiveDiagrams`Private`completionBoseProject[sixMixedBoseState, sixBoseEmpty] ===
+      sixMixedBoseState];
 check["Bose averaging preserves constants and has exact normalization",
   sixBoseProject[7] === 7 &&
     Expand[sixBoseProject[Mom[3]] - Total[Mom /@ Range[3, 6]]/4] === 0];
@@ -400,6 +424,78 @@ check["Bose averaging also acts on an already residue-correct seed before the fa
     sixBoseFastPath["OriginalExpression"] === sixBoseSeed &&
     ConstructiveDiagrams`Private`residueExactZero[
       sixBoseFastPath["Amplitude"] - sixScalarCompletion["Amplitude"]]];
+
+(* Keep the full automatic span when it fits; group whole input diagrams only
+   as an explicit, independently validated alternative to an exceeded cap. *)
+sixBudgetMassRules = Table[Mass[i] -> sixScalarMass, {i, 4}];
+sixBudgetAtoms = Table[MomProd[1, 2]^power/
+  PropDen[Mom[Multiparticle[1, 2]], sixScalarMass], {power, 1, 4}];
+sixBudgetInput = {{sixBudgetMassRules, Total[sixBudgetAtoms]}};
+sixBudgetPlan = ConstructiveDiagrams`Private`completionBosePlan[
+  {{1, 2, 3, 4}}, sixBudgetMassRules];
+sixBudgetProject[expression_] := Expand[ConstructiveDiagrams`Private`canonicalChains[
+  ConstructiveDiagrams`Private`residueCanonicalPropagators[
+    ConstructiveDiagrams`Private`completionBoseProject[expression, sixBudgetPlan], Range[4]]]];
+sixBudgetChannelAtoms = ConstructiveDiagrams`Private`completionAutomaticBasis[
+  sixScalarNormalized, 16, None];
+sixBudgetContains[basis_List, directions_List] := Length[
+  ConstructiveDiagrams`Private`completionIndependentBasis[
+    ConstructiveDiagrams`Private`completionNormalizeBasis[Join[basis, directions]]]] === Length[basis];
+sixBudgetReports = Association@Table[cap -> CompleteFactorization[
+  sixBudgetInput, sixScalarChannels, sixScalarModel,
+  "BoseSymmetryGroups" -> {{1, 2, 3, 4}}, "ParameterRules" -> sixScalarRules,
+  "ValidationParameterRules" -> {sixScalarRules,
+    {sixScalarMass -> 2, sixScalarCoupling -> 2}},
+  "Samples" -> 3, "ValidationSamples" -> 1, "MaxRefinements" -> 3,
+  "MaxCorrectionTerms" -> cap, "TimeConstraint" -> 45,
+  "ProgressReporting" -> False, "ReturnDetails" -> True], {cap, {8, 2, 1}}];
+sixBudgetFull = sixBudgetReports[8];
+sixBudgetGrouped = sixBudgetReports[2];
+sixBudgetTooSmall = sixBudgetReports[1];
+check["a fitting full Bose correction span is not replaced by the grouped budget alternative",
+  sixBudgetFull["Status"] === "COMPLETE" &&
+    sixBudgetFull["CorrectionSpace"] === "BoseSelectedChannelUnion" &&
+    Length[sixBudgetFull["CorrectionBasis"]] === 5 &&
+    sixBudgetFull["CorrectionSpaceCandidates"] === {}];
+check["the full Bose correction span retains every input and channel atom",
+  sixBudgetContains[sixBudgetFull["CorrectionBasis"],
+    sixBudgetProject /@ Join[sixBudgetAtoms, sixBudgetChannelAtoms]]];
+check["an exceeded full space tries a named grouped input space without silent truncation",
+  sixBudgetGrouped["Status"] === "COMPLETE" &&
+    sixBudgetGrouped["CorrectionSpace"] === "BoseGroupedInputChannelUnion" &&
+    Length[sixBudgetGrouped["CorrectionBasis"]] === 2 &&
+    sixBudgetGrouped["CorrectionSpaceCandidates"] === {
+      <|"CorrectionSpace" -> "BoseSelectedChannelUnion", "Terms" -> 5, "WithinLimit" -> False|>,
+      <|"CorrectionSpace" -> "BoseGroupedInputChannelUnion", "Terms" -> 2, "WithinLimit" -> True|>}];
+check["grouped budget directions retain the whole input diagram and every channel atom",
+  sixBudgetContains[sixBudgetGrouped["CorrectionBasis"],
+    sixBudgetProject /@ Join[{Total[sixBudgetAtoms]}, sixBudgetChannelAtoms]] &&
+    sixBudgetGrouped["OriginalExpression"] === Total[sixBudgetAtoms]];
+sixBudgetLastRound = Max[Lookup[sixBudgetGrouped["ValidationReports"], "Round", -1]];
+sixBudgetFinalReports = Select[sixBudgetGrouped["ValidationReports"],
+  Lookup[#, "Round", -1] === sixBudgetLastRound &];
+check["grouped budget completion validates every channel at both declared mass scales",
+  Length[sixBudgetFinalReports] === 2 &&
+    Length[DeleteDuplicates[Lookup[sixBudgetFinalReports, "ParameterRules"]]] === 2 &&
+    AllTrue[sixBudgetFinalReports, Function[entry,
+      Length[entry["Report"]["Channels"]] === 3 &&
+        AllTrue[entry["Report"]["Channels"], #["Status"] === "PASS" &]]]];
+check["independent mass validation cancels the full grouped scalar contamination",
+  ConstructiveDiagrams`Private`residueExactZero[
+    sixBudgetGrouped["Amplitude"] - sixScalarCompletion["Amplitude"]]];
+check["a still-oversized grouped space remains unresolved with both exact sizes recorded",
+  sixBudgetTooSmall["Status"] === "UNRESOLVED" &&
+    sixBudgetTooSmall["CorrectionSpaceCandidates"] === {
+      <|"CorrectionSpace" -> "BoseSelectedChannelUnion", "Terms" -> 5, "WithinLimit" -> False|>,
+      <|"CorrectionSpace" -> "BoseGroupedInputChannelUnion", "Terms" -> 2, "WithinLimit" -> False|>} &&
+    sixBudgetTooSmall["RefinementHistory"] === {} &&
+    sixBudgetTooSmall["ConstraintData"]["LinearSolution"] === <||>];
+sixBudgetOrdinaryFailure = ConstructiveDiagrams`Private`completionFormat[
+  sixBudgetTooSmall, "Expression", False];
+check["an oversized budget alternative cannot return an unchecked ordinary amplitude",
+  FailureQ[sixBudgetOrdinaryFailure] &&
+    !KeyExistsQ[sixBudgetOrdinaryFailure[[2]], "Amplitude"] &&
+    StringContainsQ[sixBudgetOrdinaryFailure[[2]]["MessageTemplate"], "MaxCorrectionTerms"]];
 
 If[Environment["HEPCAT_TEST_FULL_SIX_POINT"] === "1",
   Print["Preparing the actual six-point electron/four-photon diagrams."];

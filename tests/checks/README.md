@@ -53,6 +53,15 @@ relabeling, or idempotence; those supplement the fixed-result checks rather
 than replacing them. No test requires internal on-shell conditions inside
 `ReduceSpinorProducts`.
 
+Focused spinor-identity tests also cover reference-spinor Schouten cycles:
+an auxiliary Xi identifier may coincide with a physical momentum label without
+being its physical spinor. Weighted products, powers, reciprocal factors and
+distinct Xi identifiers must terminate and preserve independent exact complex
+two-component values. The physical-endpoint orientations that expose ordinary
+Dirac reductions remain enabled. Existing-kernel reload tests recreate the
+five obsolete product definitions and verify their targeted removal, repeated
+reload stability, and preservation of unrelated user definitions on `Times`.
+
 Automatic-reduction regressions also compare long and indexed chains,
 multilinear momentum slots and chiral traces with independent exact Weyl
 matrices at unconserved momenta. Preparation tests separately cover consistent
@@ -179,17 +188,33 @@ suite separately verifies that skipping an optional formal coefficient leaves
 the mapped residue and kinematic validation unchanged.
 Focused completion tests also cover opt-in Bose projection, the compact/literal
 union, selected-cut atomic sources and exact formal-dependence pruning without changing the available span.
-The final correction cap applies after projection and pruning; a pruning timeout
-keeps all directions. The default without declared bosonic groups is unchanged.
+The bounded pruning pass has a 60-second allowance; a timeout keeps every
+direction. The final correction cap applies after projection and pruning.
+When the full automatic Bose space fits, its complete span is retained. If it
+does not, an explicitly named grouped-input alternative keeps whole input
+diagrams and all available channel atoms. Both exact sizes and limit decisions
+are recorded, never silently truncated. Small scalar regressions verify the
+alternative at two mass scales and reject it when it still exceeds the cap.
+Cheap mixed-helicity tests check the fourteen-channel inventory and the
+six-element permutation group of three identical positive-helicity photons,
+leaving the negative-helicity photon fixed. Equal masses never infer a
+helicity grouping. The default without declared bosonic groups is unchanged.
 Automatic-chart simple-pole evaluation is compared with full mapped residues.
+Automatic affine components are extracted in one pass without changing their
+exact algebra, variable order or explicit zero directions. Opaque custom maps
+retain the legacy coefficient forms, and nonlinear inputs keep the conservative
+extraction path.
 Hidden inverse-bracket and invariant poles, higher-order cancellations, implicit
 x-factor context, zero-coefficient singular directions and custom maps exercise
 the conservative fallback paths rather than bypassing regularity checks.
 Large exact linear systems test the certified modular-block solver against
 every original row and every free direction, with rational denominators,
 redundant rectangular systems, many right-hand sides, algebraic scaling,
-unlucky primes, inconsistent rows and conservative native fallback. Optional
-cleanup must not invalidate a validated result, and dense affine families
+unlucky primes, inconsistent rows and conservative native fallback.
+Exact block contradictions require a nonzero constant residual with every
+free coefficient zero. Rank-preserving but nonleading modular pivot profiles
+still fall back to the native exact solver rather than assert inconsistency.
+Optional cleanup must not invalidate a validated result, and dense affine families
 must not be expanded before sparse validation.
 
 The full six-point diagram-to-completion regression is deliberately opt-in.

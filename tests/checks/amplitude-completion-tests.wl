@@ -37,6 +37,16 @@ acFormalBasis = {acFormalX + acFormalY, acFormalX - acFormalY,
 check["formal basis pruning removes only exact constant linear dependencies",
   ConstructiveDiagrams`Private`completionIndependentBasis[acFormalBasis] ===
     Take[acFormalBasis, 2]];
+acSparseFormalMonomials = Array[acSparseFormalAtom, 48];
+acSparseFormalBasis = Join[acSparseFormalMonomials,
+  Table[acSparseFormalMonomials[[i]] + acSparseFormalMonomials[[i + 1]], {i, 47}],
+  Table[(1/3 + 2 I/5) acSparseFormalMonomials[[i]] -
+    7 acSparseFormalMonomials[[i + 1]], {i, 47}]];
+check["sparse rectangular formal pruning preserves the exact rational complex span",
+  ConstructiveDiagrams`Private`completionIndependentBasis[acSparseFormalBasis] ===
+    acSparseFormalMonomials];
+check["an interrupted formal pruning pass retains every original direction",
+  ConstructiveDiagrams`Private`completionIndependentBasis[acFormalBasis, 0] === acFormalBasis];
 acUnprovedPhysicalBasis = {MomProd[1, 2],
   (Mandelstahm[1, 2] - Mass[1]^2 - Mass[2]^2)/2};
 check["formal pruning does not infer unstated physical identities between distinct monomials",
@@ -53,6 +63,76 @@ check["formal pruning retains every direction when atomic complex coefficients a
     acComplexPrecisionBasis];
 check["Bose projection remains opt-in rather than inferred from equal masses",
   ("BoseSymmetryGroups" /. Options[CompleteFactorization]) === {}];
+
+(* Automatic charts use a single affine pass; opaque custom maps retain the
+   exact legacy coefficient forms when that compatibility mode is requested. *)
+acComponentVariables = {acComponentA, acComponentB, Unique["acUnusedComponent"]};
+acComponentBracket = SpinorChain[Spinor["Spin", "Angle", 1],
+  Spinor["Spin", "Angle", 2]];
+acComponentChain = SpinorChain[Spinor["Helicity", "Square", 3], Mom[1],
+  Spinor["Helicity", "Angle", 4]];
+acComponentCoefficient = (acComponentCoupling + I acComponentOtherCoupling)
+  (acComponentBracket + 3 acComponentChain)/PropDen[Mom[Multiparticle[1, 3]], prElectronMass];
+acComponentTrial = (2 + 3 I) acComponentBracket +
+  (acComponentA - 2 acComponentB) acComponentCoefficient +
+  (acComponentA + acComponentB) SpinorTrace[Mom[1], Mom[2]];
+acComponentSaved = acComponentTrial;
+acComponentLegacy = Prepend[Coefficient[acComponentTrial, #] & /@ acComponentVariables,
+  acComponentTrial /. Thread[acComponentVariables -> 0]];
+acComponentFast = ConstructiveDiagrams`Private`completionLinearComponents[
+  acComponentTrial, acComponentVariables, False];
+check["single-pass affine extraction preserves complex factored spinor components exactly",
+  MapThread[Expand[#1 - #2] === 0 &, {acComponentFast, acComponentLegacy}] ===
+    ConstantArray[True, Length[acComponentLegacy]]];
+check["canonical affine trials preserve the legacy coefficient forms in the fast path",
+  With[{canonical = First[acComponentLegacy] + acComponentVariables.Rest[acComponentLegacy]},
+    ConstructiveDiagrams`Private`completionLinearComponents[
+      canonical, acComponentVariables, False] === acComponentLegacy]];
+check["single-pass affine components reconstruct the unchanged original trial",
+  acComponentTrial === acComponentSaved &&
+    Expand[acComponentTrial - First[acComponentFast] -
+      acComponentVariables.Rest[acComponentFast]] === 0];
+check["unused fitting variables retain explicit zero components in their original positions",
+  Length[acComponentFast] === Length[acComponentVariables] + 1 &&
+    Last[acComponentFast] === 0];
+check["single-pass extraction preserves the requested variable order",
+  ConstructiveDiagrams`Private`completionLinearComponents[acComponentTrial,
+    Reverse[acComponentVariables], False] === Prepend[Reverse[Rest[acComponentFast]],
+      First[acComponentFast]]];
+check["zero-variable trials bypass coefficient extraction without changing their form",
+  ConstructiveDiagrams`Private`completionLinearComponents[acComponentTrial, {}] ===
+    {acComponentTrial} &&
+  ConstructiveDiagrams`Private`completionLinearComponents[acComponentTrial, {}, False] ===
+    {acComponentTrial}];
+check["constant-only trials pad every declared fitting variable with zero",
+  ConstructiveDiagrams`Private`completionLinearComponents[
+    acComponentCoefficient, acComponentVariables, False] ===
+      Prepend[ConstantArray[0, Length[acComponentVariables]], acComponentCoefficient] &&
+    ConstructiveDiagrams`Private`completionLinearComponents[0, acComponentVariables, False] ===
+      ConstantArray[0, Length[acComponentVariables] + 1]];
+acComponentNonlinear = acComponentTrial + acComponentA^2 +
+  5 acComponentA acComponentB + acComponentB^3;
+check["nonlinear fitting expressions retain the conservative legacy extraction",
+  ConstructiveDiagrams`Private`completionLinearComponents[
+    acComponentNonlinear, acComponentVariables, False] ===
+      Prepend[Coefficient[acComponentNonlinear, #] & /@ acComponentVariables,
+        acComponentNonlinear /. Thread[acComponentVariables -> 0]]];
+acComponentNonpolynomial = Sin[acComponentA] + acComponentB acComponentCoefficient;
+check["failed polynomial extraction falls back to the unchanged legacy behavior",
+  Quiet[ConstructiveDiagrams`Private`completionLinearComponents[
+    acComponentNonpolynomial, acComponentVariables, False]] ===
+      Quiet[Prepend[Coefficient[acComponentNonpolynomial, #] & /@ acComponentVariables,
+        acComponentNonpolynomial /. Thread[acComponentVariables -> 0]]]];
+acComponentCustomMap = With[{special = acComponentLegacy[[2]]},
+  Function[{expression, channels, poles}, If[expression === special,
+    acComponentMapMarker, HoldComplete[expression]]]];
+acComponentPreserved = ConstructiveDiagrams`Private`completionLinearComponents[
+  acComponentTrial, acComponentVariables];
+check["custom maps retain the same exact component expressions in compatibility mode",
+  acComponentPreserved === acComponentLegacy &&
+  (acComponentCustomMap[#, {}, {}] & /@ acComponentPreserved) ===
+    (acComponentCustomMap[#, {}, {}] & /@ acComponentLegacy) &&
+    acComponentCustomMap[acComponentPreserved[[2]], {}, {}] === acComponentMapMarker];
 
 (* Preparation retains diagram-local assumptions and off-shell denominators. *)
 acRules = {Mass[1] -> prElectronMass, Mass[2] -> prElectronMass, Mass[3] -> 0, Mass[4] -> 0,
@@ -1390,15 +1470,41 @@ acBlockRationalResult = ConstructiveDiagrams`Private`completionExactBlockReduce[
   acBlockRationalMatrix, acBlockRationalConstant];
 check["rational denominator clearing preserves the particular solution and full nullspace",
   acBlockCertificate[acBlockRationalResult, acBlockRationalMatrix, acBlockRationalConstant]];
-check["an inconsistent extra row cannot be accepted through modular pivot selection",
-  MissingQ[ConstructiveDiagrams`Private`completionExactBlockReduce[
-    Append[acBlockMatrix, First[acBlockMatrix]], Append[acBlockConstant, First[acBlockConstant] + 1]]]];
+acBlockInconsistentMatrix = Append[acBlockMatrix, First[acBlockMatrix]];
+acBlockInconsistentConstant = Append[acBlockConstant, First[acBlockConstant] + 1];
+acBlockInconsistentResult = ConstructiveDiagrams`Private`completionExactBlockReduce[
+  acBlockInconsistentMatrix, acBlockInconsistentConstant];
+check["an exact constant residual with zero free coefficients certifies an inconsistent extra row",
+  AssociationQ[acBlockInconsistentResult] && acBlockInconsistentResult["Rank"] === 3 &&
+    acBlockInconsistentResult["ContradictionRow"] === Length[acBlockInconsistentMatrix] &&
+    Last[acBlockInconsistentResult["ReducedRows"]] === Join[ConstantArray[0, 6], {1}]];
+acBlockInconsistentVariables = Table[Unique["acBlockInconsistentCoefficient"], {64}];
+acBlockInconsistentFit = ConstructiveDiagrams`Private`completionSolveLinear[
+  PadRight[acBlockInconsistentMatrix, {Length[acBlockInconsistentMatrix], 64}].
+    acBlockInconsistentVariables + acBlockInconsistentConstant,
+  acBlockInconsistentVariables];
+check["the simultaneous solver reports a certified block contradiction as inconsistent",
+  acBlockInconsistentFit["Status"] === "INCONSISTENT" &&
+    acBlockInconsistentFit["Rank"] === 3 && acBlockInconsistentFit["SolutionRules"] === {}];
 check["an unlucky prime with a rank drop falls back instead of certifying a false nullspace",
   MissingQ[ConstructiveDiagrams`Private`completionExactBlockReduce[
     {{5, 0}, {0, 1}, {5, 1}}, {-10, -3, -13}, 5]]];
+check["a rank-dropping prime cannot underreport the coefficient rank of a certified contradiction",
+  MissingQ[ConstructiveDiagrams`Private`completionExactBlockReduce[
+    {{1, 0}, {0, 5}, {1, 0}}, {0, 0, 1}, 5]]];
+acBlockRankDropVariables = Table[Unique["acBlockRankDropCoefficient"], {64}];
+acBlockRankDropFit = ConstructiveDiagrams`Private`completionSolveLinear[
+  PadRight[{{1, 0}, {0, 2147483647}, {1, 0}}, {3, 64}].acBlockRankDropVariables + {0, 0, 1},
+  acBlockRankDropVariables];
+check["native fallback reports the exact coefficient rank for an inconsistent rank-dropping-prime system",
+  acBlockRankDropFit["Status"] === "INCONSISTENT" && acBlockRankDropFit["Rank"] === 2 &&
+    acBlockRankDropFit["SolutionRules"] === {}];
 check["a rank-preserving bad prime cannot return duplicate rational leading pivots",
   MissingQ[ConstructiveDiagrams`Private`completionExactBlockReduce[
     {{5, 1, 0}, {5, 0, 1}}, {0, 0}, 5]]];
+check["an exact contradiction still uses fallback when the prime gives nonleading rational pivots",
+  MissingQ[ConstructiveDiagrams`Private`completionExactBlockReduce[
+    {{5, 1, 0}, {5, 0, 1}, {10, 1, 1}}, {0, 0, 1}, 5]]];
 acBlockBadPrimeVariables = Table[Unique["acBlockBadPrimeCoefficient"], {64}];
 acBlockBadPrimeMatrix = PadRight[{{2147483647, 1, 0}, {2147483647, 0, 1}}, {2, 64}];
 acBlockBadPrimeConstant = -acBlockBadPrimeMatrix.Join[{2, -3, 5}, ConstantArray[0, 61]];
@@ -2059,6 +2165,314 @@ Do[
     acInvalid[Quiet[function[1]]]],
   {function, {CompleteFactorization, CompleteHighEnergy}}
 ];
+
+(* Propagator-only support discovery equivalence. *)
+acSupportModel = {{{"Scalar", "s", "s", 1, 0, acSupportMass, 0, 1, 1, "", ""}},
+  {{"s", "s", "s", "", acSupportCoupling, 1}}, {}, {}};
+acSupportRules = Table[Mass[i] -> acSupportMass, {i, 4}];
+acSupportChannels = FactorizationAmplitudeChannels[ConstantArray["s", 4], acSupportModel];
+acSupportOriginal[trial_, rows_List] := ConstructiveDiagrams`Private`residueSimpleInputs[
+  {acSupportRules, trial}, rows, acSupportModel];
+acSupportFast[trial_, rows_List] := ConstructiveDiagrams`Private`completionSupportInputs[
+  trial, acSupportRules, rows, acSupportModel];
+acSupportTargets[value_Association] := SortBy[value["Targets"],
+  ConstructiveDiagrams`Private`residueChannelKey];
+acSupportKeys[value_Association] := Sort[DeleteDuplicates[
+  ConstructiveDiagrams`Private`residueChannelKey /@
+    Flatten[Lookup[value["Records"], "PhysicalPropagators", {}], 1]]];
+acSupportSameQ[left_, right_] := AssociationQ[left] && AssociationQ[right] &&
+  acSupportTargets[left] === acSupportTargets[right] &&
+  acSupportKeys[left] === acSupportKeys[right];
+acSupportBaseTargets = acSupportOriginal[0, acSupportChannels]["Targets"];
+acSupportPole = First[acSupportBaseTargets]["Propagator"];
+acSupportOtherPole = Last[acSupportBaseTargets]["Propagator"];
+acSupportTrial = acSupportA (1 + MomProd[1, 2]^2)/acSupportPole +
+  acSupportB/acSupportOtherPole;
+acSupportSavedTrial = acSupportTrial; acSupportSavedModel = acSupportModel;
+acSupportStandard = acSupportFast[acSupportTrial, acSupportChannels];
+check["propagator-only support discovery preserves all supplied targets and physical pole keys",
+  acSupportSameQ[acSupportStandard, acSupportOriginal[acSupportTrial, acSupportChannels]]];
+acSupportMissingRows = Rest[acSupportChannels];
+acSupportMissing = acSupportFast[acSupportTrial, acSupportMissingRows];
+acSupportMissingTarget = SelectFirst[acSupportMissing["Targets"],
+  ConstructiveDiagrams`Private`residueChannelKey[#] ===
+    ConstructiveDiagrams`Private`residueChannelKey[First[acSupportBaseTargets]] &];
+check["propagator-only support discovery retains missing-channel zero-residue obligations",
+  acSupportSameQ[acSupportMissing, acSupportOriginal[acSupportTrial, acSupportMissingRows]] &&
+    acSupportMissingTarget["Complete"] === True && acSupportMissingTarget["StateSum"] === 0];
+acSupportUnknownTrial = acSupportTrial + acSupportC/
+  PropDen[Mom[Multiparticle[1, 3]], acSupportUnknownMass];
+acSupportUnknown = acSupportFast[acSupportUnknownTrial, acSupportChannels];
+acSupportUnknownTarget = SelectFirst[acSupportUnknown["Targets"],
+  #["Mass"] === acSupportUnknownMass &];
+check["an unknown exchange mass remains incomplete in propagator-only support discovery",
+  acSupportSameQ[acSupportUnknown, acSupportOriginal[acSupportUnknownTrial, acSupportChannels]] &&
+    acSupportUnknownTarget["Complete"] === False &&
+    acSupportUnknownTarget["StateSum"] === Missing["UnknownExchangeMass"]];
+acSupportComplementTrial = acSupportA/PropDen[Mom[Multiparticle[3, 4]], Mass[1]] +
+  acSupportB/PropDen[Mom[Multiparticle[2, 4]], Mass[2]];
+acSupportComplement = acSupportFast[acSupportComplementTrial, acSupportChannels];
+check["support discovery canonicalizes complement cuts and applies external mass rules identically",
+  acSupportSameQ[acSupportComplement,
+    acSupportOriginal[acSupportComplementTrial, acSupportChannels]] &&
+    acSupportKeys[acSupportComplement] ===
+      {{{1, 2}, acSupportMass}, {{1, 3}, acSupportMass}} &&
+    FreeQ[acSupportKeys[acSupportComplement], _Mass]];
+check["a pole-free support inventory preserves the supplied channel targets without inventing a pole",
+  acSupportSameQ[acSupportFast[acSupportA, acSupportChannels],
+    acSupportOriginal[acSupportA, acSupportChannels]] &&
+    acSupportKeys[acSupportFast[acSupportA, acSupportChannels]] === {}];
+acSupportInvalidTrials = {Failure["SupportFixture", <||>], Missing["SupportFixture"],
+  $Failed, $Aborted, $TimedOut, Indeterminate, ComplexInfinity, DirectedInfinity[1],
+  ConditionalExpression[acSupportTrial, acSupportCondition]};
+acSupportInvalidResults = ({acSupportFast[#, acSupportChannels],
+    acSupportOriginal[#, acSupportChannels]} &) /@ acSupportInvalidTrials;
+check["failed and missing trials retain the original failure instead of losing their markers",
+  AllTrue[Take[acSupportInvalidResults, 5], FailureQ[First[#]] && First[#] === Last[#] &]];
+check["nonfinite and conditional trials retain the original invalid result without stripping its expression",
+  AllTrue[Drop[acSupportInvalidResults, 5], Function[pair,
+    First[pair] === Last[pair] && (FailureQ[First[pair]] ||
+      (AssociationQ[First[pair]] &&
+        !ConstructiveDiagrams`Private`residueFiniteQ[First[pair]["Expression"]]))]]];
+check["support inventory discovery leaves the full trial and supplied model unchanged",
+  acSupportTrial === acSupportSavedTrial && acSupportModel === acSupportSavedModel];
+acSupportProgressInput = ConstructiveDiagrams`Private`completionNormalizeInput[
+  0, acSupportChannels, acSupportModel];
+acSupportProgressEvents = {};
+acSupportProgressConstraints = ConstructiveDiagrams`Private`completionResidueConstraints[
+  acSupportA Total[1/Lookup[acSupportProgressInput["Targets"], "Propagator"]],
+  {acSupportA}, acSupportProgressInput, 2, 9183,
+  {acSupportMass -> 1, acSupportCoupling -> 2}, 10,
+  (AppendTo[acSupportProgressEvents, #] &), True];
+acSupportSampleEvents = Select[acSupportProgressEvents,
+  Lookup[#, "Stage", ""] === "Factorization samples" &];
+check["factorization sample progress counts every sample and names its cut",
+  acSupportProgressConstraints["Status"] === "COMPLETE" &&
+    Lookup[acSupportSampleEvents, "Completed"] === Range[6] &&
+    Lookup[acSupportSampleEvents, "Total"] === ConstantArray[6, 6] &&
+    AllTrue[Lookup[acSupportSampleEvents, "Cut"],
+      MemberQ[Lookup[acSupportProgressInput["Targets"], "Cut"], #] &]];
+(* End propagator-only support discovery equivalence. *)
+
+(* Exact polynomial coefficient and linear-normalization shortcuts. *)
+acPolynomialZero[value_] := TrueQ[RootReduce[Cancel[Together[value]]] === 0];
+acPolynomialLegacyCoefficients[expression_, variables_List] := Module[{numerator},
+  numerator = Numerator[Cancel[Together[expression]]];
+  If[variables === {}, Return[{numerator}]];
+  If[!PolynomialQ[numerator, variables],
+    Return[Failure["NonPolynomialSpinDependence", <||>]]];
+  Last /@ CoefficientRules[Expand[numerator], variables]
+];
+acPolynomialLegacyRows[rows_List] :=
+  (Quiet[RootReduce[Numerator[Cancel[Together[#]]]]] &) /@ rows;
+acPolynomialUnknowns = {acPolynomialU, acPolynomialV, acPolynomialW};
+acPolynomialSpin = {acPolynomialS, acPolynomialT};
+acPolynomialExpression = (1/3 + I/7) (2 acPolynomialU + acPolynomialV - 5) acPolynomialS +
+  (2/5 - I/11) (acPolynomialV - acPolynomialW + 3) acPolynomialS acPolynomialT +
+  (4 acPolynomialU + 2 acPolynomialV - 10) acPolynomialT^2/13 +
+  3 (acPolynomialU - 4 + acPolynomialW/2)/17;
+acPolynomialDirect = ConstructiveDiagrams`Private`completionCoefficientEquations[
+  acPolynomialExpression, acPolynomialSpin];
+acPolynomialLegacy = acPolynomialLegacyCoefficients[acPolynomialExpression, acPolynomialSpin];
+acPolynomialScale = Denominator[Cancel[Together[acPolynomialExpression]]];
+check["direct spin-polynomial coefficients impose the same exact rational-complex constraints",
+  Length[acPolynomialDirect] === 4 && Length[acPolynomialLegacy] === 4 &&
+    AllTrue[acPolynomialDirect, PolynomialQ[#, acPolynomialUnknowns] &] &&
+    And @@ MapThread[acPolynomialZero[#1 acPolynomialScale - #2] &,
+      {acPolynomialDirect, acPolynomialLegacy}]];
+acPolynomialDirectFit = ConstructiveDiagrams`Private`completionSolveLinear[
+  acPolynomialDirect, acPolynomialUnknowns];
+acPolynomialLegacyFit = ConstructiveDiagrams`Private`completionSolveLinear[
+  acPolynomialLegacyRows[acPolynomialLegacy], acPolynomialUnknowns];
+acPolynomialDirectFamily = acPolynomialUnknowns /. acPolynomialDirectFit["SolutionRules"];
+acPolynomialLegacyFamily = acPolynomialUnknowns /. acPolynomialLegacyFit["SolutionRules"];
+check["polynomial row normalization preserves the full rational-complex affine solution",
+  acPolynomialDirectFit["Status"] === "UNDERDETERMINED" &&
+    acPolynomialLegacyFit["Status"] === "UNDERDETERMINED" &&
+    acPolynomialDirectFit["Rank"] === 2 && acPolynomialLegacyFit["Rank"] === 2 &&
+    acPolynomialDirectFit["FreeParameters"] === {acPolynomialW} &&
+    acPolynomialLegacyFit["FreeParameters"] === {acPolynomialW} &&
+    And @@ MapThread[acPolynomialZero[#1 - #2] &,
+      {acPolynomialDirectFamily, acPolynomialLegacyFamily}] &&
+    And @@ MapThread[acPolynomialZero[#1 - #2] &,
+      {acPolynomialDirectFamily, {4 - acPolynomialW/2, acPolynomialW - 3, acPolynomialW}}] &&
+    AllTrue[acPolynomialDirect /. acPolynomialDirectFit["SolutionRules"], acPolynomialZero]];
+acPolynomialRationalSpin = (acPolynomialU + acPolynomialV)/(1 + acPolynomialS) -
+  (acPolynomialU + acPolynomialV)/(1 + acPolynomialT);
+check["rational spin dependence retains the legacy cleared-numerator fallback",
+  ConstructiveDiagrams`Private`completionCoefficientEquations[
+    acPolynomialRationalSpin, acPolynomialSpin] ===
+      acPolynomialLegacyCoefficients[acPolynomialRationalSpin, acPolynomialSpin]];
+check["unsupported nonpolynomial spin dependence remains an explicit failure",
+  FailureQ[ConstructiveDiagrams`Private`completionCoefficientEquations[
+    Sin[acPolynomialS], {acPolynomialS}]]];
+check["an empty spin-variable list retains scalar numerator cancellation",
+  ConstructiveDiagrams`Private`completionCoefficientEquations[
+    (acPolynomialU^2 - 1)/(acPolynomialU - 1), {}] === {1 + acPolynomialU}];
+acPolynomialRationalEquation = (acPolynomialU^2 - 1)/(acPolynomialU - 1) - 3;
+acPolynomialRationalFit = ConstructiveDiagrams`Private`completionSolveLinear[
+  {acPolynomialRationalEquation}, {acPolynomialU}];
+check["nonpolynomial fitting rows still use exact cancellation before solving",
+  acPolynomialRationalFit["Status"] === "COMPLETE" &&
+    acPolynomialRationalFit["Rank"] === 1 &&
+    acPolynomialRationalFit["SolutionRules"] === {acPolynomialU -> 2} &&
+    acPolynomialZero[acPolynomialRationalEquation /. acPolynomialRationalFit["SolutionRules"]]];
+acPolynomialCancelledSpin = (acPolynomialU + acPolynomialV) (acPolynomialS + acPolynomialT) -
+  (acPolynomialU + acPolynomialV) acPolynomialS -
+  (acPolynomialU + acPolynomialV) acPolynomialT;
+acPolynomialCancelledRows = {(acPolynomialU + acPolynomialV) (1 + acPolynomialParameter) -
+  acPolynomialU - acPolynomialV - acPolynomialU acPolynomialParameter -
+  acPolynomialV acPolynomialParameter};
+acPolynomialCancelledFit = ConstructiveDiagrams`Private`completionSolveLinear[
+  acPolynomialCancelledRows, acPolynomialUnknowns];
+check["factored cancellation does not create a spin constraint or constrain a zero fitting row",
+  ConstructiveDiagrams`Private`completionCoefficientEquations[
+    acPolynomialCancelledSpin, acPolynomialSpin] === {} &&
+    acPolynomialCancelledFit["Status"] === "UNDERDETERMINED" &&
+    acPolynomialCancelledFit["Rank"] === 0 &&
+    acPolynomialCancelledFit["SolutionRules"] === {} &&
+    acPolynomialCancelledFit["FreeParameters"] === acPolynomialUnknowns];
+acPolynomialUnresolvedFit = ConstructiveDiagrams`Private`completionSolveLinear[
+  {acPolynomialParameter acPolynomialU + acPolynomialV - 1}, acPolynomialUnknowns];
+check["polynomial rows with unresolved parameters remain unresolved instead of receiving a numeric fit",
+  acPolynomialUnresolvedFit["Status"] === "UNRESOLVED" &&
+    acPolynomialUnresolvedFit["SolutionRules"] === {}];
+acPolynomialNonlinearFit = ConstructiveDiagrams`Private`completionSolveLinear[
+  {acPolynomialU acPolynomialV - 1}, acPolynomialUnknowns];
+check["already polynomial but nonlinear fitting rows are still rejected",
+  acPolynomialNonlinearFit["Status"] === "UNRESOLVED" &&
+    acPolynomialNonlinearFit["SolutionRules"] === {} &&
+    AnyTrue[acPolynomialNonlinearFit["Diagnostics"], StringContainsQ[#, "linearly"] &]];
+acPolynomialNonpolynomialFit = ConstructiveDiagrams`Private`completionSolveLinear[
+  {Sin[acPolynomialU]}, acPolynomialUnknowns];
+check["unsupported nonpolynomial fitting rows remain unresolved through the native normalization fallback",
+  acPolynomialNonpolynomialFit["Status"] === "UNRESOLVED" &&
+    acPolynomialNonpolynomialFit["SolutionRules"] === {}];
+acPolynomialEmptyUnknownZero = ConstructiveDiagrams`Private`completionSolveLinear[
+  {(acPolynomialU^2 - 1)/(acPolynomialU - 1) - acPolynomialU - 1}, {}];
+acPolynomialEmptyUnknownNonzero = ConstructiveDiagrams`Private`completionSolveLinear[{1/7}, {}];
+check["empty fitting-variable lists retain exact scalar cancellation and contradiction handling",
+  acPolynomialEmptyUnknownZero["Status"] === "COMPLETE" &&
+    acPolynomialEmptyUnknownZero["Rank"] === 0 &&
+    acPolynomialEmptyUnknownNonzero["Status"] === "INCONSISTENT" &&
+    acPolynomialEmptyUnknownNonzero["SolutionRules"] === {}];
+acPolynomialInvalidFits = (ConstructiveDiagrams`Private`completionSolveLinear[
+  {acPolynomialU/3 + #}, acPolynomialUnknowns] &) /@
+    {Indeterminate, ComplexInfinity, Missing["PolynomialEntry"]};
+check["nonfinite and missing polynomial coefficients remain unresolved without solution rules",
+  AllTrue[acPolynomialInvalidFits, #["Status"] === "UNRESOLVED" &&
+    #["SolutionRules"] === {} &]];
+acPolynomialAlgebraicZero = Sqrt[5 + 2 Sqrt[6]] - Sqrt[2] - Sqrt[3];
+acPolynomialAlgebraicRows = {
+  acPolynomialAlgebraicZero acPolynomialU + (1 + I) (acPolynomialV - 3)/7,
+  (Sqrt[2] + Sqrt[3]) (acPolynomialW + 1) + acPolynomialAlgebraicZero};
+acPolynomialAlgebraicFit = ConstructiveDiagrams`Private`completionSolveLinear[
+  acPolynomialAlgebraicRows, acPolynomialUnknowns];
+acPolynomialAlgebraicLegacyFit = ConstructiveDiagrams`Private`completionSolveLinear[
+  acPolynomialLegacyRows[acPolynomialAlgebraicRows], acPolynomialUnknowns];
+check["entrywise algebraic reduction preserves an exactly zero affine column and the full solution",
+  acPolynomialZero[acPolynomialAlgebraicZero] &&
+    acPolynomialAlgebraicFit["Status"] === "UNDERDETERMINED" &&
+    acPolynomialAlgebraicFit["Rank"] === 2 &&
+    acPolynomialAlgebraicFit["FreeParameters"] === {acPolynomialU} &&
+    And @@ MapThread[acPolynomialZero[#1 - #2] &,
+      {acPolynomialUnknowns /. acPolynomialAlgebraicFit["SolutionRules"],
+        acPolynomialUnknowns /. acPolynomialAlgebraicLegacyFit["SolutionRules"]}] &&
+    AllTrue[acPolynomialAlgebraicRows /. acPolynomialAlgebraicFit["SolutionRules"], acPolynomialZero]];
+acPolynomialAlgebraicCancelledFit = ConstructiveDiagrams`Private`completionSolveLinear[
+  {acPolynomialAlgebraicZero (acPolynomialU + 1)}, acPolynomialUnknowns];
+check["an exact algebraic zero row leaves every original fitting coefficient free",
+  acPolynomialAlgebraicCancelledFit["Status"] === "UNDERDETERMINED" &&
+    acPolynomialAlgebraicCancelledFit["Rank"] === 0 &&
+    acPolynomialAlgebraicCancelledFit["SolutionRules"] === {} &&
+    acPolynomialAlgebraicCancelledFit["FreeParameters"] === acPolynomialUnknowns];
+acPolynomialAlgebraicDegreeRow = acPolynomialU - 2 +
+  acPolynomialAlgebraicZero acPolynomialU acPolynomialV;
+acPolynomialAlgebraicDegreeFit = ConstructiveDiagrams`Private`completionSolveLinear[
+  {acPolynomialAlgebraicDegreeRow}, acPolynomialUnknowns];
+acPolynomialAlgebraicDegreeLegacyFit = ConstructiveDiagrams`Private`completionSolveLinear[
+  acPolynomialLegacyRows[{acPolynomialAlgebraicDegreeRow}], acPolynomialUnknowns];
+check["an apparent nonlinear algebraic degeneracy retains conservative legacy fallback handling",
+  acPolynomialZero[acPolynomialAlgebraicZero] &&
+    acPolynomialAlgebraicDegreeFit["Status"] === "UNRESOLVED" &&
+    KeyTake[acPolynomialAlgebraicDegreeFit, {"Status", "Rank", "SolutionRules", "FreeParameters"}] ===
+      KeyTake[acPolynomialAlgebraicDegreeLegacyFit,
+        {"Status", "Rank", "SolutionRules", "FreeParameters"}]];
+acPolynomialAffineRows = ConstructiveDiagrams`Private`completionCoefficientEquations[
+  acPolynomialExpression, acPolynomialSpin, acPolynomialUnknowns];
+acPolynomialAffineArrays = Normal /@ CoefficientArrays[
+  acPolynomialAffineRows, acPolynomialUnknowns];
+acPolynomialDirectArrays = Normal /@ CoefficientArrays[
+  acPolynomialDirect, acPolynomialUnknowns];
+acPolynomialLegacyArrays = Normal /@ CoefficientArrays[
+  acPolynomialLegacy, acPolynomialUnknowns];
+check["component-first spin extraction preserves exact affine matrices and legacy denominator-scaled constraints",
+  RootReduce[acPolynomialAffineArrays] === RootReduce[acPolynomialDirectArrays] &&
+    AllTrue[Flatten[acPolynomialLegacyArrays - acPolynomialScale acPolynomialAffineArrays],
+      acPolynomialZero]];
+acPolynomialAffineFit = ConstructiveDiagrams`Private`completionSolveLinear[
+  acPolynomialAffineRows, acPolynomialUnknowns];
+check["component-first spin extraction retains the same complete affine solution family",
+  acPolynomialAffineFit["Status"] === "UNDERDETERMINED" &&
+    acPolynomialAffineFit["Rank"] === 2 &&
+    acPolynomialAffineFit["FreeParameters"] === {acPolynomialW} &&
+    And @@ MapThread[acPolynomialZero[#1 - #2] &,
+      {acPolynomialUnknowns /. acPolynomialAffineFit["SolutionRules"], acPolynomialDirectFamily}]];
+acPolynomialFallbackExpressions = {
+  (acPolynomialU acPolynomialV - 1) acPolynomialS,
+  (acPolynomialU^2 - 1) acPolynomialT/(acPolynomialU - 1),
+  acPolynomialRationalSpin, acPolynomialU Sin[acPolynomialS]};
+check["component-first spin extraction preserves nonlinear and genuine rational-spin fallbacks",
+  AllTrue[acPolynomialFallbackExpressions, Function[expression,
+    ConstructiveDiagrams`Private`completionCoefficientEquations[
+      expression, acPolynomialSpin, acPolynomialUnknowns] ===
+      ConstructiveDiagrams`Private`completionCoefficientEquations[expression, acPolynomialSpin]]]];
+check["component-first spin extraction handles empty arguments, cancellations and unknown-independent polynomials",
+  ConstructiveDiagrams`Private`completionCoefficientEquations[
+    acPolynomialExpression, {}, acPolynomialUnknowns] ===
+      ConstructiveDiagrams`Private`completionCoefficientEquations[acPolynomialExpression, {}] &&
+    ConstructiveDiagrams`Private`completionCoefficientEquations[
+      acPolynomialExpression, acPolynomialSpin, {}] === acPolynomialDirect &&
+    ConstructiveDiagrams`Private`completionCoefficientEquations[
+      acPolynomialCancelledSpin, acPolynomialSpin, acPolynomialUnknowns] === {} &&
+    ConstructiveDiagrams`Private`completionCoefficientEquations[
+      5 acPolynomialS^2/7 + I acPolynomialT/11, acPolynomialSpin, acPolynomialUnknowns] ===
+      ConstructiveDiagrams`Private`completionCoefficientEquations[
+        5 acPolynomialS^2/7 + I acPolynomialT/11, acPolynomialSpin]];
+(* End exact polynomial coefficient and linear-normalization shortcuts. *)
+
+(* Private completion-helper reload migration. *)
+(* Reloading upgrades the changed private helper signatures without clearing
+   unrelated private definitions in the user's running kernel. *)
+ConstructiveDiagrams`Private`completionIndependentBasis[legacyBasis_List] :=
+  "LegacyOneArgumentPruning";
+ConstructiveDiagrams`Private`completionSelectedChannelBasis[legacyInput_Association,
+  legacyReferences_Association, legacyLimit_Integer, legacyRules_List,
+  legacySeed_Integer, legacySeconds_ : 20] := "LegacySelectedChannelBudget";
+ConstructiveDiagrams`Private`amplitudeCompletionReloadSentinel[value_] := value + 79;
+acReloadUnrelatedDefinitions = DownValues[
+  ConstructiveDiagrams`Private`amplitudeCompletionReloadSentinel];
+check["the reload regression installs the more-specific legacy pruning signature",
+  ConstructiveDiagrams`Private`completionIndependentBasis[acFormalBasis] ===
+    "LegacyOneArgumentPruning"];
+Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
+check["package reload replaces the stale one-argument pruning signature",
+  Length[DownValues[ConstructiveDiagrams`Private`completionIndependentBasis]] === 1 &&
+    ConstructiveDiagrams`Private`completionIndependentBasis[acFormalBasis] ===
+      Take[acFormalBasis, 2]];
+check["package reload replaces the old optional selected-channel budget and implementation",
+  Length[DownValues[ConstructiveDiagrams`Private`completionSelectedChannelBasis]] === 1 &&
+    ConstructiveDiagrams`Private`completionSelectedChannelBasis[
+      <|"Targets" -> {}, "ExternalMassRules" -> {}|>, <||>, 1, {}, 1] ===
+      Missing["NoSelectedChannelSources"] &&
+    Cases[DownValues[ConstructiveDiagrams`Private`completionSelectedChannelBasis],
+      HoldPattern[Verbatim[Optional][_, budget_]] :> budget, Infinity] === {60}];
+check["targeted completion-helper reload migration preserves unrelated private functions",
+  DownValues[ConstructiveDiagrams`Private`amplitudeCompletionReloadSentinel] ===
+    acReloadUnrelatedDefinitions &&
+    ConstructiveDiagrams`Private`amplitudeCompletionReloadSentinel[3] === 82];
+Remove[ConstructiveDiagrams`Private`amplitudeCompletionReloadSentinel];
+(* End private completion-helper reload migration. *)
 
 Print[checks, " amplitude-completion checks; ", Length[failures], " failures."];
 If[failures =!= {}, Print[failures]; Quit[1]];

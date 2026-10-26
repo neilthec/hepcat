@@ -824,20 +824,32 @@ caller must group only identical species with identical external states,
 never fermions or opposite helicities. The default `{}` does no averaging.
 Groups must be disjoint, have equal declared masses and together have order
 at most 120. `"MaxCorrectionTerms"` applies after projection; automatic
-intermediate construction may grow by the permutation count, up to 4096
-directions unless the caller already requested a larger term limit.
+individual source-space construction may grow by the permutation count, up to
+4096 directions unless the caller already requested a larger term limit.
+The three source spaces can form a larger merged union before projection;
+their limits bound the individual spaces, not the total merged count or memory.
 With automatic directions, this option first combines the available compact
 and literal channel spaces. It also tries individual terms from numerator
 reductions of accepted continuations on their selected cut, including
 spurious-reference choices. Each whole reduced source must preserve its own
 cut residue before being split. Only that channel's internal shell is used;
 other internal lines and inverse factors stay protected. Construction has a
-20-second budget and the same intermediate term cap. Exact formal linear dependencies are removed from
-the projected directions when a bounded five-second pruning pass finishes;
+60-second budget and the same intermediate term cap. Exact formal linear dependencies are removed from
+the projected directions when a bounded 60-second sparse pruning pass finishes;
 this preserves their full span, not just their sampled residues. If pruning
 does not finish, all projected directions remain. The correction-term cap is
 checked afterward. Without declared groups, compact-then-literal behavior is
 unchanged.
+
+When that full automatic Bose space exceeds the requested term cap, a
+budget fallback keeps each whole pole-bearing input diagram as a correction,
+alongside all available channel atoms, instead of splitting the inputs into
+individual terms. It never changes a full space that already fits. Details
+record both sizes in `"CorrectionSpaceCandidates"` and name the fallback
+`"BoseGroupedInputChannelUnion"`. This is a different bounded space, not an
+assertion that all discarded input atoms were dependent. Every original
+channel and free direction still has to pass fresh validation. An oversized
+or inconsistent fallback remains unresolved.
 
 The six-point `e,E,A.+,A.+,A.+,A.+` section of
 `tests/QED-5-point-construction.nb` uses this declaration, `"Samples" -> 12`,
@@ -886,6 +898,14 @@ terms can cancel. Implicit x factors keep their whole-component spinor inventory
 and custom maps keep whole-expression evaluation. Every correction component
 is still checked, including those assigned zero coefficients; these optimizations
 do not change the residue equations or bypass kinematic validation.
+Affine components are extracted in one coefficient-array pass. Physical-pole
+support is collected from the trial's typed propagators, without first reducing
+the whole affine spinor expression. Missing-channel zero-residue obligations
+and unknown exchanged masses receive the same treatment as before.
+Already polynomial coherent-spin equations retain exact rational coefficients
+instead of first combining all fitting coefficients into a common denominator.
+Rational spin dependence still uses the full cancellation path, and matrix
+elimination and validation remain exact.
 Each refit solves all accumulated original equations together. It does not
 substitute a large intermediate solution into the new rows, which can cause
 severe exact-fraction growth at higher multiplicity. The progress display
@@ -895,7 +915,10 @@ be scaled out during linear elimination and restored afterward. Neither
 optimization changes the exact equations or the meaning of free parameters.
 For large rational systems, modular arithmetic can select a smaller square
 block. The solve remains exact: every original equation must certify both
-the particular solution and the full independent free family. Failed block
+the consistent particular solution and the full independent free family.
+Alternatively, an original row whose exact residual is a nonzero constant
+independent of every free coordinate certifies inconsistency with the selected
+block. This is an exact contradiction, not a modular-rank test. Failed block
 certificates fall back to ordinary exact row reduction. Modular rank alone
 does not establish consistency or inconsistency.
 The symbolic amplitude and free directions are constructed only after sparse
@@ -922,7 +945,7 @@ fit equations and validation reports. `"RefinementHistory"` records the fit and
 validation rounds; `"ChannelContinuations"` records proposed references and
 their selected-cut verification. `"CorrectionSpace"` identifies
 `"ReducedChannels"`, `"LiteralTerms"`, `"BoseChannelUnion"`,
-`"BoseSelectedChannelUnion"` or `"SuppliedTerms"`, with `"NotRequired"`
+`"BoseSelectedChannelUnion"`, `"BoseGroupedInputChannelUnion"` or `"SuppliedTerms"`, with `"NotRequired"`
 when the input already passes without a correction space;
 `"ReducedChannelSpace"` retains the compact sources, directions and selected-cut
 checks. `"SelectedChannelSpace"` retains the selected-cut atomic sources and
@@ -1012,7 +1035,9 @@ All three functions report their current stage by default. Use
 `"ProgressFunction" -> (yourFunction[#] &)` to receive progress associations
 instead of the default display. Keep progress reporting enabled when using a
 callback. Preparation reports the diagram, operation, complexity and term
-count; completion reports constraint construction, solving and validation.
+count; completion reports individual factorization samples, completed channels,
+solving and validation. Sample progress includes the current cut and total
+number of successful sampled charts, before the channel is finished.
 Details retain the intermediate information without requiring bulky default
 output. These stages aim for a compact justified result in bounded time;
 neither a passing checker nor a local complexity minimum establishes that
