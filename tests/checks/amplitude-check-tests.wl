@@ -58,6 +58,9 @@ check["the optional Feynman view stays empty without a supplied benchmark",
 qaOne = qaReport[qaPair[1], {}, qaScalarModel, 1];
 check["identical complete expressions pass away from every internal cut",
   qaStatus[qaOne] === "PASS" && qaOne["FeynmanCheck"]["CompletedSamples"] === 2];
+check["a comparison without physical channels retains the real center-of-mass chart",
+  AllTrue[qaOne["FeynmanCheck"]["Samples"],
+    #["Chart"]["SamplingConstruction"] === "ExactRealCenterOfMassOffCut" &]];
 check["the Feynman comparison participates in the combined table and summary",
   qaOne["Summary"] === <|"PASS" -> 1|> && qaOne["FeynmanSummary"] === <|"PASS" -> 1|> &&
     Count[Lookup[qaOne["Checks"], "Type"], "Feynman"] === 1 &&
@@ -420,6 +423,101 @@ qaRegularDifferenceReport = qaReport[qaRegularDifference, First[qaKnownChannels]
   prModel, First[qaSpinorBenchmarks], "FeynmanModel" -> qaFeynmanModel, "Samples" -> 1];
 check["full Feynman comparisons detect a pole-regular change that all residue checks miss",
   qaAllPhysicalPass[qaRegularDifferenceReport] && qaStatus[qaRegularDifferenceReport] === "FAIL"];
+
+qaSingleChartPropagator = PropDen[Mom[Multiparticle[1, 3]], 0];
+qaSingleChartChannels = {{0, 0, 0, 0, Multiparticle[1, 3], 0, 0}};
+qaSingleChartReport = qaReport[qaPair[qaSingleChartPropagator - 3],
+  qaSingleChartChannels, qaScalarModel, 0,
+  "Samples" -> 1, "FeynmanSamples" -> 2];
+check["off-cut comparison does not mistake agreement on one frozen channel surface for equality",
+  qaStatus[qaSingleChartReport] === "FAIL"];
+check["repeated off-cut samples for one eligible channel use different rational coordinates",
+  Length[DeleteDuplicates[Lookup[
+    Lookup[qaSingleChartReport["FeynmanCheck"]["Samples"], "Chart"],
+    "SamplingParameter"]]] === 2];
+qaSingleChartTargets = ConstructiveDiagrams`Private`residueSimpleInputs[
+  qaPair[qaSingleChartPropagator - 3], qaSingleChartChannels, qaScalarModel]["Targets"];
+qaChartPreservesRandomState = BlockRandom[Module[{expected, actual, chart},
+  SeedRandom[20261026]; expected = RandomInteger[10^6, 6];
+  SeedRandom[20261026];
+  chart = ConstructiveDiagrams`Private`amplitudeRationalComparisonChart[
+    qaSingleChartTargets, 1, 1729, {}];
+  actual = RandomInteger[10^6, 6];
+  AssociationQ[chart] && expected === actual]];
+check["rational off-cut chart sampling preserves the caller's random state",
+  qaChartPreservesRandomState];
+
+(* Four massive external fermions make radical-valued numerical spin bases
+   unnecessarily costly. The full comparison can use rational complex charts,
+   but must still test every coherent spin coefficient away from every pole. *)
+Print["Checking independent four-fermion/photon Feynman amplitudes at model defaults."];
+qaFourFermionParticles = {"e", "E", "E", "e", "A.+"};
+qaFourFermionRaw = diagramAmplitudes[CreateDiagrams[
+  qaFourFermionParticles, qaFeynmanModel]];
+qaFourFermionReferenceModes = {"IndependentXi", "AllPhysical"};
+qaFourFermionPrepared = Table[PrepareAmplitudes[qaFourFermionRaw, qaFeynmanModel,
+  "ReferenceSpinors" -> mode, "MaxSteps" -> 0, "TimeConstraint" -> 90,
+  "ProgressReporting" -> False, "ReturnDetails" -> True],
+  {mode, qaFourFermionReferenceModes}];
+check["the four-fermion photon benchmark comes from all eight independent Feynman diagrams",
+  Length[qaFourFermionRaw] === 8 &&
+    AllTrue[qaFourFermionPrepared, #["Status"] === "PREPARED" &&
+      Length[#["PreparedAmplitudes"]] === 8 &&
+      #["Options"]["InternalOnShell"] === False &]];
+check["one external photon retains an independent reference or receives an all-physical reference",
+  Sort[DeleteDuplicates[Cases[qaFourFermionPrepared[[1]]["Amplitude"],
+      Spinor["Xi", _, id_] :> id, Infinity]]] === {5} &&
+    FreeQ[qaFourFermionPrepared[[2]]["Amplitude"], Spinor["Xi", ___]]];
+qaFourFermionRoute = q5FourFermionPhotonRoute[CreateDiagrams[
+  qaFourFermionParticles, prModel]];
+qaFourFermionFinal = qaFourFermionRoute["Final"];
+qaFourFermionChannels = FactorizationAmplitudeChannels[
+  qaFourFermionParticles, prFixtureModel];
+qaFourFermionNormalized = ConstructiveDiagrams`Private`residueSimpleInputs[
+  qaFourFermionFinal, qaFourFermionChannels, prFixtureModel];
+qaFourFermionRules = ModelParameterRules[prFixtureModel];
+qaFourFermionReports = Table[qaReport[qaFourFermionFinal, qaFourFermionChannels,
+  prFixtureModel, prepared["PreparedAmplitudes"], "FeynmanModel" -> qaFeynmanModel,
+  "ParameterRules" -> Automatic, "Samples" -> 1, "FeynmanSamples" -> 2,
+  "FeynmanTimeConstraint" -> 120, "TimeConstraint" -> 90],
+  {prepared, qaFourFermionPrepared}];
+Do[
+  qaFourFermionSamples = qaFourFermionReports[[i]]["FeynmanCheck"]["Samples"];
+  check["four-fermion/photon full amplitudes agree at model defaults with " <>
+      qaFourFermionReferenceModes[[i]],
+    qaStatus[qaFourFermionReports[[i]]] === "PASS" &&
+      qaAllPhysicalPass[qaFourFermionReports[[i]]] &&
+      Length[qaFourFermionSamples] === 2 &&
+      AllTrue[qaFourFermionSamples, #["Status"] === "PASS" &&
+        Length[#["SpinVariables"]] === 4 &&
+        #["Chart"]["SamplingConstruction"] === "ExactRationalComplexOffCut" &&
+        TrueQ[#["Chart"]["CoherentVectorSpinIndices"]] &&
+        !TrueQ[#["Chart"]["AllowCutSpinors"]] &]];
+  check["rational off-cut comparison conserves momentum and all four external masses with " <>
+      qaFourFermionReferenceModes[[i]],
+    AllTrue[qaFourFermionSamples, Function[sample, With[{chart = sample["Chart"]},
+      AllTrue[Flatten[Total[Values[chart["Momenta"]]]],
+        Cancel[Together[#]] === 0 &] &&
+      AllTrue[Range[5], Function[leg,
+        Cancel[Together[Det[chart["Momenta"][leg]] -
+          (Mass[leg]^2 /. qaFourFermionNormalized["Targets"][[1]]["ExternalMassRules"] /.
+            Rationalize[qaFourFermionRules, 0])]] === 0]]]]]];
+  check["rational comparison leaves every known physical propagator nonzero with " <>
+      qaFourFermionReferenceModes[[i]],
+    AllTrue[qaFourFermionSamples,
+      ConstructiveDiagrams`Private`referencePhysicalGenericQ[#["Chart"],
+        qaFourFermionNormalized["Targets"], qaFourFermionRules] &]],
+  {i, Length[qaFourFermionReports]}];
+qaFourFermionWrongRelative = qaFourFermionFinal -
+  2 First[qaFourFermionRoute["PairedCurrents"]]["Final"];
+qaFourFermionWrongSample = ConstructiveDiagrams`Private`amplitudeComparisonOneSample[
+  qaFourFermionWrongRelative,
+  qaFourFermionReports[[1]]["FeynmanCheck"]["FeynmanExpression"],
+  qaFourFermionReports[[1]]["FeynmanCheck"]["Samples"][[1]]["Chart"],
+  1, 1729, 0, qaFourFermionRules, ModelParameterRules[qaFeynmanModel], 10^-20];
+check["the rational four-fermion comparison rejects an incorrect relative fermion-pair sign",
+  qaFourFermionWrongSample["Status"] === "FAIL" &&
+    qaFourFermionWrongSample["MatchingSigns"] === {}];
 
 Print[checks, " amplitude-check checks; ", Length[failures], " failures."];
 If[failures =!= {}, Print[failures]; Quit[1]];

@@ -295,6 +295,11 @@ force agreement. Every evaluated
 internal propagator stays nonzero. Samples compare all
 implicit massive-spin coefficients and independently chosen explicit Xi references
 for the two full sums. `PASS` is sampled agreement, not an analytic equality proof.
+The rational-tree full comparison prefers exact rational complex external
+momenta, falling back to real center-of-mass samples when unavailable. All
+external shells, momentum conservation and nonzero physical propagators are
+still required. The separate high-energy test retains real scattering
+kinematics. Details record each chart's `SamplingConstruction`.
 `CheckPhysicalResidues` remains a compatibility alias for `CheckAmplitudes`.
 
 Numerical checks and completion use the supplied model's parameter values and

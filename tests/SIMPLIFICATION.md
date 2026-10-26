@@ -154,8 +154,18 @@ individually minimized diagram by diagram.
 uses the ordinary `"TimeConstraint"`.
 Without `"FeynmanAmplitudes"`, no Feynman benchmark is generated or run.
 
+For rational tree amplitudes, the comparison prefers exact rational complex
+momenta to avoid expensive square-root arithmetic, especially with several
+massive external particles. Every external mass shell and momentum conservation
+still holds, and every known physical propagator must be nonzero. If that
+construction is unavailable, real center-of-mass samples remain the fallback.
+The detailed sample chart records `"SamplingConstruction"`. These are sampled
+analytic comparisons, not physical phase-space probabilities; the separate
+high-energy test continues to use real scattering kinematics.
+
 `tests/QED-5-point-construction.nb` constructs this benchmark independently for
-the all-plus and mixed-helicity three-photon cases. It reads the separate
+the all-plus and mixed-helicity three-photon cases and the identical-four-fermion
+single-photon case. It reads the separate
 massive-QED Feynman model 2. Each model retains its own mass and charge
 definitions, with matching numerical values for this example; the checker
 uses the supplied `"FeynmanModel"` for the benchmark's parameters rather than
@@ -592,6 +602,12 @@ return `Failure` in ordinary output instead of silently retaining Xi spinors.
 After changing a reference choice, reevaluate both preparation and the checker.
 Previously computed amplitudes and reports do not update when the choice or
 package definitions change.
+
+For constructive diagrams with just one massless external leg, `Automatic`
+falls back to momentum-insertion references. Explicit `"AllSpurious"` cannot
+use that leg as its own reference and returns `Failure` rather than silently
+retaining Xi spinors. Request `"ReturnDetails" -> True` to inspect the retained
+partial expressions and the reason a reference choice is unavailable.
 
 For a factorization row, only its declared cut is an internal on-shell
 condition. Its momentum-conservation complement describes the same cut, not

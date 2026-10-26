@@ -119,13 +119,21 @@ independently generated spinor amplitudes at external-shell points away from
 all poles, without fitting a sign or scale. `PrepareAmplitudes` converts raw
 Feynman diagram pairs automatically and does not apply their internal-shell
 mass rules. The construction notebook shows both the Feynman calculation and
-the comparison for the all-plus and mixed-helicity five-point QED examples.
+the comparison for the all-plus and mixed-helicity five-point QED examples,
+and the identical-four-fermion single-photon process. Rational complex off-cut
+samples avoid costly radicals with four massive external fermions; tests verify
+every coherent-spin coefficient, external shells, momentum conservation,
+nonzero physical propagators and rejection of an incorrect relative pairing
+sign. A process without an eligible cut retains real center-of-mass sampling.
 
 ## Factorization Completion
 
 The completion suite includes the notebook's actual five-point QED
 `AllSpurious` diagram preparation followed by automatic completion, without
-supplying a known answer as a correction basis. It checks selected-cut
+supplying a known answer as a correction basis. It also completes the
+four-fermion/photon process, including recorded preparation references and an
+independent full Feynman comparison. It checks shared-chart residue evaluation
+without skipping component regularity, selected-cut
 certification of alternative sewn-channel reference choices, the final
 physical and spurious checks, bounded validation feedback on saved charts,
 fresh subsequent validation seeds, and preservation of genuine residue-free

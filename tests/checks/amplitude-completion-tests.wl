@@ -220,6 +220,12 @@ acReferenceSingleSpurious = acReferencePrepare[acReferenceSinglePairs, "AllSpuri
 check["AllSpurious with a single massless leg never creates a zero self-bracket",
   acReferenceSingleSpurious["Status"] === "PARTIAL" &&
     FreeQ[acReferenceSingleSpurious["Amplitude"], Indeterminate | ComplexInfinity | _DirectedInfinity]];
+check["an unavailable constructive reference choice cannot silently return unchanged Xi spinors",
+  FailureQ[PrepareAmplitudes[acReferenceSinglePairs, prModel,
+    "ReferenceSpinors" -> "AllSpurious", "ProgressReporting" -> False]] &&
+    FailureQ[PrepareAmplitudes[acReferenceSinglePairs, prModel,
+      "ReferenceSpinors" -> "AllSpurious", "Output" -> "Expression",
+      "ProgressReporting" -> False]]];
 check["unsupported reference choices are rejected before preparation",
   acInvalid[Quiet[PrepareAmplitudes[{acReferencePair}, prModel,
     "ReferenceSpinors" -> "Random", "ProgressReporting" -> False]]]];
@@ -1300,6 +1306,60 @@ Do[
       acQEDFeynmanCheck["FeynmanCheck"]["Status"] === "PASS" &&
       acQEDFeynmanCheck["FeynmanCheck"]["CompletedSamples"] === 2],
   {acReferenceMode, {"IndependentXi", "AllPhysical"}}];
+
+(* All correction components share one validated chart, but not regularity. *)
+acBatchTarget = First[prFourPointTargets];
+acBatchRules = ModelParameterRules[prModel, {"Me" -> 1, "EE" -> 1}];
+acBatchChart = ConstructiveDiagrams`Private`completionCutChart[acBatchTarget, 1, 1729, acBatchRules];
+acBatchPole = acBatchTarget["Propagator"];
+acBatchResidue = ConstructiveDiagrams`Private`completionLinearResidue[
+  {0, 1/acBatchPole, 3/acBatchPole}, {acBatchA, acBatchB},
+  acBatchTarget, prFourPointTargets, acBatchChart, 10];
+check["shared-chart correction evaluation retains every linear residue coefficient",
+  acBatchResidue["Status"] === "PASS" &&
+    acBatchResidue["PhysicalResidue"] === acBatchA + 3 acBatchB &&
+    TrueQ[acBatchResidue["KinematicChecks"]["Valid"]]];
+check["a later higher-order component cannot bypass the regularity check",
+  ConstructiveDiagrams`Private`completionLinearResidue[{0, 1/acBatchPole^2},
+    {acBatchA}, acBatchTarget, prFourPointTargets, acBatchChart, 10]["Status"] === "UNRESOLVED"];
+check["an invalid shared chart cannot bypass kinematic validation",
+  ConstructiveDiagrams`Private`completionLinearResidue[{0, 1/acBatchPole},
+    {acBatchA}, acBatchTarget, prFourPointTargets,
+    <|"Map" -> Function[{expression, channels, poles}, 0]|>, 10]["Status"] === "UNRESOLVED"];
+
+Print["Completing the four-fermion single-photon process from actual diagrams."];
+acFourFermionParticles = {"e", "E", "E", "e", "A.+"};
+acFourFermionPairs = diagramAmplitudes[CreateDiagrams[acFourFermionParticles, prModel]];
+acFourFermionPreparation = PrepareAmplitudes[acFourFermionPairs, prModel,
+  "ReferenceSpinors" -> Automatic, "MaxSteps" -> 0,
+  "ProgressReporting" -> False, "ReturnDetails" -> True];
+acFourFermionChannels = FactorizationAmplitudeChannels[acFourFermionParticles, prFixtureModel];
+check["single-photon preparation selects physical references for all eight diagrams",
+  acFourFermionPreparation["Status"] === "PREPARED" &&
+    Length[acFourFermionPreparation["PreparedAmplitudes"]] === 8 &&
+    FreeQ[acFourFermionPreparation["Amplitude"], Spinor["Xi", ___]]];
+acFourFermionFactorization = acFactor[acFourFermionPreparation, acFourFermionChannels,
+  prFixtureModel, "Samples" -> 3, "ValidationSamples" -> 1,
+  "MaxCorrectionTerms" -> 128, "TimeConstraint" -> 300];
+check["recorded references do not hide the physical correction space for four fermions",
+  acFourFermionFactorization["Status"] === "COMPLETE" &&
+    acFourFermionFactorization["CorrectionSpace"] === "ReducedChannels" &&
+    Length[acFourFermionFactorization["CorrectionBasis"]] <= 128 &&
+    acPhysicalPass[acFourFermionFactorization["ValidationReport"]]];
+acFourFermionEnergy = acEnergy[acFourFermionFactorization["Amplitude"], acFourFermionChannels,
+  prFixtureModel, "Samples" -> 1, "ValidationSamples" -> 1, "TimeConstraint" -> 180];
+check["four-fermion completion satisfies high-energy and reference requirements",
+  acFourFermionEnergy["Status"] === "COMPLETE" && acAllPass[acFourFermionEnergy["AfterReport"]]];
+acFourFermionFeynman = PrepareAmplitudes[diagramAmplitudes[
+    CreateDiagrams[acFourFermionParticles, acQEDFeynmanModel]], acQEDFeynmanModel,
+  "ReferenceSpinors" -> "AllPhysical", "MaxSteps" -> 0, "ProgressReporting" -> False];
+acFourFermionFinal = CheckAmplitudes[acFourFermionEnergy["Amplitude"],
+  acFourFermionChannels, prFixtureModel, "FeynmanAmplitudes" -> acFourFermionFeynman,
+  "FeynmanModel" -> acQEDFeynmanModel, "Samples" -> 2,
+  "TimeConstraint" -> 90, "Output" -> "Details"];
+check["the constructed four-fermion amplitude passes all eleven final checks",
+  acFourFermionFinal["Summary"] === <|"PASS" -> 11|> && acAllPass[acFourFermionFinal] &&
+    acFourFermionFinal["FeynmanCheck"]["CompletedSamples"] === 2];
 
 (* Mixed reference optimization must remain compatible with off-cut completion. *)
 Print["Checking optimized Mixed references through five-point completion."];
