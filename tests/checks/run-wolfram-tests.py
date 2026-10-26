@@ -20,6 +20,7 @@ TEST_SUITES = (
     "amplitude-completion-tests.wl", "model-parameter-tests.wl", "feynman-tests.wl",
     "amplitude-check-tests.wl",
     "model-isolation-tests.wl",
+    "plain-text-tests.wl", "model-export-tests.wl", "qed-model-export-tests.wl",
 )
 
 

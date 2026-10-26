@@ -206,13 +206,17 @@ TeX[Mandelstahm[i_,j_]]:="s_{"<>ToString[i]<>ToString[j]<>"}"
 
 (* ::Input::Initialization:: *)
 PlainText[ConstructiveAmplitude[coupl_,numer_,denom_]]:=PlainText[coupl numer/denom]
-PlainText[Multiparticle[a_,b_]]:="P_{"<>ToString[a]<>ToString[b]<>"} "
-PlainText[Multiparticle[a_,b_,c_]]:="P_{"<>ToString[a]<>ToString[b]<>ToString[c]<>"} "
+PlainText::usage = "PlainText[expression] writes readable spinor-bracket notation. PlainText[expression, \"Model\"] writes a model-readable expression, with explicit multiplication and typed forms where compact brackets would be ambiguous; in this mode unsupported or inexact objects return Failure rather than losing information.";
+PlainText[Multiparticle[a__]]:="P_{"<>ConstructiveDiagrams`Private`plainTextParticleLabels[{a}]<>"} "
 PlainText[Particle[a_]]:=ToString[a]
 PlainText[Spinor["Helicity","Angle",a_]]:=PlainText[a]<>">"
 lPlainText[Spinor["Helicity","Angle",a_]]:="<"<>PlainText[a]
 PlainText[Spinor["Helicity","Square",a_]]:=PlainText[a]<>"]"
 lPlainText[Spinor["Helicity","Square",a_]]:="["<>PlainText[a]
+PlainText[Spinor["Xi","Angle",a_]]:="xi_{"<>PlainText[a]<>"}>"
+lPlainText[Spinor["Xi","Angle",a_]]:="<xi_{"<>PlainText[a]<>"}"
+PlainText[Spinor["Xi","Square",a_]]:="xi_{"<>PlainText[a]<>"}]"
+lPlainText[Spinor["Xi","Square",a_]]:="[xi_{"<>PlainText[a]<>"}"
 PlainText[Spinor["Zeta","Angle",a_]]:="zeta_{"<>PlainText[a]<>"}>"
 lPlainText[Spinor["Zeta","Angle",a_]]:="<zeta_{"<>PlainText[a]<>"}"
 PlainText[Spinor["Zeta","Square",a_]]:="tzeta_{"<>PlainText[a]<>"}]"
@@ -232,14 +236,13 @@ lPlainText[Spinor["Spin","Upper","Square",a_,J_]]:="["<>PlainText[a]<>"^{"<>ToSt
 PlainText[sigma[i_]]:="sigma_{"<>ToString[i]<>"} "
 PlainText[delta]:="delta "
 PlainText[SpinorChain[a_,c_]]:=lPlainText[a]<>PlainText[c]
-PlainText[SpinorChain[a_,b__,c_]]:=lPlainText[a]<>((PlainText[#]&/@List[b])/.List[d__]:>d)<>PlainText[c]
-PlainText[SpinorTrace[a__]]:=" Tr("<>((PlainText[#]&/@List[a])/.List[b__]:>b)<>")"
+PlainText[SpinorChain[a_,b__,c_]]:=lPlainText[a]<>"|"<>StringRiffle[PlainText/@{b},"|"]<>"|"<>PlainText[c]
+PlainText[SpinorTrace[a__]]:="Tr("<>StringRiffle[PlainText/@{a},","]<>")"
 PlainText[xFactor[a_,b_]]:="x_{"<>ToString[a]<>ToString[b]<>"} "
 PlainText[xTildeFactor[a_,b_]]:="tx_{"<>ToString[a]<>ToString[b]<>"} "
-PlainText[Mass[Multiparticle[a__]]]:="M_{"<>ToString[a]<>"} "
+PlainText[Mass[Multiparticle[a__]]]:="M_{"<>ConstructiveDiagrams`Private`plainTextParticleLabels[{a}]<>"} "
 PlainText[Mass[a_]]:="M_{"<>ToString[a]<>"} "
-PlainText[Mom[Multiparticle[a_,b_]]]:="p_{"<>ToString[a]<>ToString[b]<>"} "
-PlainText[Mom[Multiparticle[a_,b_,c_]]]:="p_{"<>ToString[a]<>ToString[b]<>ToString[c]<>"} "
+PlainText[Mom[Multiparticle[a__]]]:="p_{"<>ConstructiveDiagrams`Private`plainTextParticleLabels[{a}]<>"} "
 PlainText[Mom[a_]]:=ToString[a]
 PlainText[MomProd[a_,b_]]:="p_{"<>ToString[a]<>"}.p_{"<>ToString[b]<>"} "
 PlainText[PropDen[p_,m_]]:="("<>PlainText[p]<>"^2-"<>PlainText[m]<>"^2 "<>")"
@@ -247,14 +250,87 @@ PlainText[PropDen[p_,m_,w_]]:="("<>PlainText[p]<>"^2-"<>PlainText[m]<>"^2+i"<>Pl
 PlainText[Coupling[a_]]:="g_{"<>ToString[a]<>"} "
 PlainText[Sqrt[a__]]:="sqrt("<>PlainText[a]<>")"
 (*PlainText[a_+b_]:="("<>PlainText[a]<>"+"<>PlainText[b]<>")"*)
-PlainText[Plus[a__]]:=a/.Plus->PlainTextPlus;
+PlainText[Plus[a__]]:=PlainTextPlus[a];
 PlainTextPlus[a__]:="("<>StringJoin[Riffle[PlainText[#]&/@List[a],"+"]]<>")";
-PlainText[a_*b_]:=PlainText[a]<>PlainText[b]
+PlainText[a_*b_]:=PlainText[a]<>"*"<>PlainText[b]
 PlainText[Rational[a_,b_]]:="("<>PlainText[a]<>")/("<>PlainText[b]<>") "
 PlainText[a_/b_]:="("<>PlainText[Numerator[a/b]]<>")/("<>PlainText[Denominator[a/b]]<>") "
-PlainText[a_^b_]:=PlainText[a]<>"^"<>ToString[b]<>" "
+PlainText[a_^b_]:=ConstructiveDiagrams`Private`plainTextPower[a,b]
 PlainText[a_/;NumberQ[a]]:=ToString[a]
 PlainText[Mandelstahm[i_,j_]]:="s"<>ToString[i]<>ToString[j]
+PlainText[a_Symbol]:=SymbolName[a]
+PlainText[a_String]:=a
+PlainText[expression_,"Model"]:=ConstructiveDiagrams`Private`amplitudeModelText[expression]
+
+Begin["ConstructiveDiagrams`Private`"];
+
+plainTextParticleLabels[labels_List] := If[AllTrue[labels, IntegerQ[#] && 0 <= # <= 9 &],
+  StringJoin[ToString /@ labels], StringRiffle[ToString /@ labels, ","]];
+
+plainTextPower[base_, exponent_] := Module[{left = PlainText[base], right = PlainText[exponent]},
+  If[MemberQ[{Plus, Times, Power, Rational, Complex}, Head[base]] || TrueQ[base < 0],
+    left = "(" <> left <> ")"];
+  If[!StringQ[right], right = ToString[exponent, InputForm]];
+  left <> "^" <> If[IntegerQ[exponent], right, "(" <> right <> ")"] <> " "
+];
+
+amplitudeModelText[expression_] := Module[
+  {tag = Unique["amplitudeText"], emit, fail, namePattern,
+   typedHeads, scalarHeads, compactChainQ, compactPropagatorQ, result},
+  namePattern = RegularExpression["[A-Za-z_][A-Za-z_0-9]*"];
+  typedHeads = {SpinorChain, Spinor, SpinorTrace, Mom, MomProd, Multiparticle,
+    Mass, PropDen, xFactor, xTildeFactor, Coupling, Mandelstahm, ConstructiveDiagrams`VectorSpinIndex};
+  scalarHeads = {Sin, Cos, Tan, ArcSin, ArcCos, ArcTan, Exp, Log, Abs};
+  fail[value_] := Throw[Failure["UnsupportedPlainText", <|
+    "MessageTemplate" -> "This object has no lossless model-text representation.",
+    "Object" -> value|>], tag];
+  compactChainQ[chain_] := Head[chain] === SpinorChain && Length[chain] >= 2 &&
+    AllTrue[{First[chain], Last[chain]}, MatchQ[#,
+      Spinor["Spin" | "Helicity", "Angle" | "Square", _Integer]] &] &&
+    AllTrue[Most[Rest[List @@ chain]], MatchQ[#, Mom[_Integer]] &] &&
+    AllTrue[Join[{chain[[1, 3]], chain[[-1, 3]]},
+      First /@ Most[Rest[List @@ chain]]], 1 <= # <= 9 &];
+  compactPropagatorQ[propagator_] := MatchQ[propagator,
+      PropDen[Mom[Multiparticle[_Integer, _Integer]],
+        _Integer | ConstructiveDiagrams`ModelParameter[_String, _String, "Real"]]] &&
+    AllTrue[List @@ propagator[[1, 1]], 1 <= # <= 9 &] &&
+    (!IntegerQ[propagator[[2]]] || propagator[[2]] >= 0);
+  emit[value_] := Which[
+    IntegerQ[value], ToString[value, InputForm],
+    Head[value] === Rational, "(" <> emit[Numerator[value]] <> "/" <> emit[Denominator[value]] <> ")",
+    Head[value] === Real, fail[value],
+    Head[value] === Complex, "(" <> emit[Re[value]] <> "+I*(" <> emit[Im[value]] <> "))",
+    value === Pi, "Pi",
+    StringQ[value] && StringFreeQ[value, {"\"", "\\", "|", "\t", "\n", "\r"}], "\"" <> value <> "\"",
+    MatchQ[value, ConstructiveDiagrams`ModelParameter[_String, _String, "Real"]],
+      If[StringMatchQ[value[[1]], namePattern] &&
+          !MemberQ[{"I", "i", "Pi", "Sqrt2"}, value[[1]]] &&
+          !StringMatchQ[value[[1]], RegularExpression["(?:x|xt|s)[0-9]{2}"]],
+        value[[1]], fail[value]],
+    MatchQ[value, ConstructiveDiagrams`ModelFunction[_String, _String, _List]],
+      If[MemberQ[{"initQCD5", "MbEff", "McEff", "MqEff"}, value[[1]]],
+        value[[1]] <> "(" <> StringRiffle[emit /@ value[[3]], ","] <> ")", fail[value]],
+    Head[value] === ConstructiveAmplitude, emit[Times @@ Take[List @@ value, 2]/value[[3]]],
+    Head[value] === Plus, "(" <> StringRiffle[emit /@ (List @@ value), "+"] <> ")",
+    Head[value] === Times, "(" <> StringRiffle[emit /@ (List @@ value), "*"] <> ")",
+    value === Sqrt[2], "Sqrt[2]",
+    Head[value] === Power, "(" <> emit[value[[1]]] <> ")^(" <> emit[value[[2]]] <> ")",
+    compactChainQ[value],
+      If[value[[1, 2]] === "Angle", "<", "["] <>
+        StringJoin[ToString /@ Join[{value[[1, 3]]},
+          First /@ Most[Rest[List @@ value]], {value[[-1, 3]]}]] <>
+        If[value[[-1, 2]] === "Angle", ">", "]"],
+    compactPropagatorQ[value],
+      If[value[[2]] === 0, "", "("] <> "s" <>
+        StringJoin[ToString /@ (List @@ value[[1, 1]])] <>
+        If[value[[2]] === 0, "", "-" <> emit[value[[2]]] <> "^2)"],
+    MemberQ[typedHeads, Head[value]] || MemberQ[scalarHeads, Head[value]],
+      SymbolName[Head[value]] <> "[" <> StringRiffle[emit /@ (List @@ value), ","] <> "]",
+    True, fail[value]];
+  Catch[result = emit[expression]; result, tag]
+];
+
+End[];
 
 
 (* ::Subsubsection::Closed:: *)

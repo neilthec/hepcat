@@ -923,3 +923,56 @@ Details retain the intermediate information without requiring bulky default
 output. These stages aim for a compact justified result in bounded time;
 neither a passing checker nor a local complexity minimum establishes that
 no simpler equivalent expression exists.
+
+## Saving Known Amplitudes
+
+`PlainText[amplitude]` produces display text with angle/square brackets and
+momentum insertions. Use `PlainText[amplitude, "Model"]` for reversible model
+syntax. The latter preserves exact arithmetic, model-local parameters,
+composite momenta, propagators and explicit spin indices. Ambiguous or
+unsupported objects return `Failure`; it does not turn arbitrary symbols into
+model parameters or silently round inexact numbers.
+
+After checking a complete amplitude, append it to the model containing the
+known lower-point amplitudes:
+
+```wolfram
+AppendModelAmplitudes[modelDirectory, 3, {{particles, finalAmplitude}}]
+factorizationModel = ReadModel[modelDirectory, 3];
+```
+
+For several amplitudes, supply several entries. Optional triples
+`{particles, factor, amplitudeOverFactor}` preserve the model's separate factor
+column. The writer checks every entry before making a single atomic update,
+keeps existing rows, adds a matching particle-column header for higher
+multiplicity, and writes before the final separator. Exact existing entries
+are skipped. A conflicting expression or ordering for an existing particle
+multiset returns `Failure` without changing the file. Model parameters must
+belong to the target model, not just have the same printed names. Reload the
+model after writing; an already loaded list does not update automatically.
+Writing an expression does not certify its physics or simplify it further.
+
+The current electron/photon QED model 3 includes all six independent nonzero
+five-point amplitudes: `e,E,+++`, `e,E,++-`, `e,E,+--`, `e,E,---`, and
+`e,E,E,e,A.+/-`. Photon permutations cover all eight ordered three-photon
+helicity assignments. Massive fermion spin dependence is retained, not fixed
+to one spin projection. Pure-photon and charge-violating five-point trees
+vanish and remain absent. This inventory is for the particles in the QED
+model, not additional lepton or quark flavors from the Standard Model.
+
+The checked diagram derivations can be reproduced and written as follows:
+
+```wolfram
+Get[FileNameJoin[{hepcatDirectory, "tests", "QED-5-point-residues.wl"}]];
+entries = qedFivePointModelAmplitudes[];
+AppendModelAmplitudes[modelDirectory, 3, entries]
+```
+
+That helper does not write files by itself. It uses the existing all-plus,
+mixed-helicity and four-fermion diagram derivations and their checked parity
+transforms. The regression suite compares the saved rows with independent
+Feynman calculations, other particle orderings and nonunit mass/coupling
+values. Model 2 stays cubic for diagram generation. Model 3 now supplies both
+three-by-five and four-by-four sewings at six points; availability of these
+channels is not yet construction or validation of a complete six-point
+amplitude.

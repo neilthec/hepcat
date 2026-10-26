@@ -51,7 +51,7 @@ Protect @@ (ToExpression /@ {
   "ExtractEnergy", "ExtractEnergy1", "ExtractEnergy2", "rSpinor", "ExpandSummation",
   "ReverseMomentum", "MomProdL", "MomProdR", "ChooseSpinIndices", "ChooseSpinIndex", "MakeIndicesExplicit", "SymmetrizeSpins", "SymmetrizeSpin",
   "SquareAmplitude", "ReadModel", "ReadVariables", "ReadFunctions", "ReadParticles", "ParticleMass", "ReadVertices", "ConvertVertex",
-  "ModelParameter", "ModelFunction", "ModelParameterName", "ModelParameterRules",
+  "ModelParameter", "ModelFunction", "ModelParameterName", "ModelParameterRules", "AppendModelAmplitudes",
   "SChannelDiagram", "UChannelDiagram", "TChannelDiagram", "ConstructiveDiagram",
   "CompareAmpToSquaredAmp", "DeleteRandomConstructiveAmplitude", "CheckLengthConstructive", "CheckNumberOfSpinors", "CreateRandomConstructiveSpinorProduct",
   "CreateRandomMassFactor", "CreateRandomConstructiveAmplitudeTerm", "AddRandomConstructiveAmplitudeTerm", "CreateInitialRandomPopulationConstructiveAmplitudes",

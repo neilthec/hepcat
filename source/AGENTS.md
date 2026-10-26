@@ -255,7 +255,8 @@ Use a vertex model for diagrams and a model containing complete known
 lower-point amplitudes for factorization. Do not treat a known four-point
 amplitude as a new diagram vertex. In the current QED examples, model 2 is the
 cubic diagram model and suffices for four-point factorization; model 3 includes
-the four-point amplitudes needed for five-point factorization. For other
+the complete four- and five-point electron/photon amplitudes needed for
+five- and six-point factorization. For other
 processes, inspect the model rather than assuming these example choices apply.
 
 Model parameters are inert data stored in the model, not globally assigned
@@ -272,6 +273,26 @@ The factorization model is authoritative: amplitudes absent from it count as
 zero. Ensure the user supplied the intended lower-point data. Do not fabricate
 zero rows, insert fitted amplitudes, or add independent QED contact interactions
 to force a comparison to pass. Respect the specified theory's vertex content.
+
+Save a verified amplitude with `AppendModelAmplitudes[directory, number,
+{{particles, amplitude}}]`. A batch may also use
+`{particles, factor, amplitudeOverFactor}` entries. The function reads the
+target model, validates its particles and model-local parameters, checks text
+round trips, and appends atomically before the final separator. Identical
+entries are skipped; conflicting particle multisets fail without overwriting.
+Reload `ReadModel` afterward. This is serialization, not a physics validation:
+run `CheckAmplitudes` first. Do not add the saved amplitudes to the cubic
+diagram model as new interactions.
+
+`PlainText[expression]` is human-readable display text.
+`PlainText[expression, "Model"]` is the unambiguous model-file form, retaining
+compact brackets where possible and using typed notation for general labels
+or explicit spin indices. Unsupported objects fail rather than lose data.
+The worked `qedFivePointModelAmplitudes[]` helper in
+`tests/QED-5-point-residues.wl` reproduces the six independent nonzero QED
+five-point rows; `tests/checks/qed-model-export-tests.wl` checks the reloaded
+entries, all eight ordered three-photon helicities, massive spins, independent
+Feynman amplitudes and availability of six-point sewing channels.
 
 ```wolfram
 channels = FactorizationAmplitudeChannels[particles, factorizationModel];

@@ -96,7 +96,8 @@ parseModelExpression[input_String, scope_String] := Module[
     "SpinorTrace" -> SpinorTrace, "Mom" -> Mom, "MomProd" -> MomProd,
     "Multiparticle" -> Multiparticle, "Mass" -> Mass, "PropDen" -> PropDen,
     "xFactor" -> xFactor, "xTildeFactor" -> xTildeFactor,
-    "Coupling" -> Coupling, "Mandelstahm" -> Mandelstahm|>;
+    "Coupling" -> Coupling, "Mandelstahm" -> Mandelstahm,
+    "VectorSpinIndex" -> ConstructiveDiagrams`VectorSpinIndex|>;
   peek[] := If[position <= Length[tokens], tokens[[position]], EndOfFile];
   take[] := Module[{token = peek[]}, position++; token];
   expect[token_] := If[take[] =!= token, fail["Expected " <> token <> "."]];

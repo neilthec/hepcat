@@ -157,22 +157,45 @@ amplitudeList,tag]
 
 
 (* ::Input::Initialization:: *)
-ConvertAmplitude[line_,particleList_,scope_:Automatic]:=Module[{masses={},res,SpinHelicity,parameterScope},
+ConvertAmplitude[line_,particleList_,scope_:Automatic]:=Module[
+{masses={},res,SpinHelicity,parameterScope,segments,compactIndices,compactPattern,
+ compactChain,convertSegment},
 parameterScope=If[scope===Automatic,FirstCase[particleList,
 ModelParameter[_String,s_String,_String]:>s,"StandaloneConstructiveAmplitude",Infinity],scope];
 If[!StringQ[parameterScope],Return[Failure["InvalidModelParameterScope",<||>]]];
 SpinHelicity[mass_]:=If[mass===0,"Helicity","Spin"];
 Do[AppendTo[masses,ParticleMass[line[[ii]],particleList]],{ii,1,Length[line]-2}];
 (*If[line[[4]]=!="",AppendTo[masses,ParticleMass[line[[4]],particleList]]];*)
-res=StringReplace[line[[-1]],{
-RegularExpression["x(\\d)(\\d)"]:>"xFactor[$1,$2]",
-RegularExpression["xt(\\d)(\\d)"]:>"xTildeFactor[$1,$2]",
-RegularExpression["<(\\d)(\\d)>"]:>"SpinorChain[Spinor[\""<>SpinHelicity[masses[[FromDigits["$1"]]]]<>"\",\"Angle\",$1],Spinor[\""<>SpinHelicity[masses[[FromDigits["$2"]]]]<>"\",\"Angle\",$2]]",
-RegularExpression["\[(\\d)(\\d)\]"]:>"SpinorChain[Spinor[\""<>SpinHelicity[masses[[FromDigits["$1"]]]]<>"\",\"Square\",$1],Spinor[\""<>SpinHelicity[masses[[FromDigits["$2"]]]]<>"\",\"Square\",$2]]",
-RegularExpression["\[(\\d)(\\d)(\\d)>"]:>"SpinorChain[Spinor[\""<>SpinHelicity[masses[[FromDigits["$1"]]]]<>"\",\"Square\",$1],Mom[$2],Spinor[\""<>SpinHelicity[masses[[FromDigits["$3"]]]]<>"\",\"Angle\",$3]]",
-RegularExpression["s(\\d)(\\d)-([a-zA-Z0-9]+)\\^2"]:>"PropDen[Mom[Multiparticle[$1,$2]],$3]",
-RegularExpression["s(\\d)(\\d)"]:>"PropDen[Mom[Multiparticle[$1,$2]],0]"
-}];
+(* Compact brackets must not consume typed arguments such as Mom[10],
+   quoted labels, or substrings of model parameter names. *)
+segments = StringCases[line[[-1]], RegularExpression["\"[^\"\\\\]*\"|[^\"]+"]];
+If[StringJoin[segments] =!= line[[-1]],
+  Return[Failure["InvalidModelExpression", <|"Expression" -> line[[-1]],
+    "Reason" -> "Unmatched quotes or unsupported quoted-string escapes."|>]]];
+segments = If[StringStartsQ[#, "\""], #, StringReplace[#,
+    RegularExpression["([A-Za-z_][A-Za-z_0-9]*)[ \\t\\r\\n]+\\["] -> "$1["]] & /@ segments;
+compactPattern = RegularExpression["(?<![A-Za-z_0-9])(<|\\[)([0-9]{2,})(>|\\])"];
+compactIndices = Flatten[Characters /@ Flatten[
+  StringCases[#, compactPattern -> "$2"] & /@
+    Select[segments, !StringStartsQ[#, "\""] &]]];
+If[!AllTrue[compactIndices, 1 <= FromDigits[#] <= Length[masses] &],
+  Return[Failure["InvalidAmplitudeParticleLabel", <|"Expression" -> line[[-1]]|>]]];
+compactChain[left_, digits_, right_] := Module[{labels = FromDigits /@ Characters[digits], endpoints},
+  endpoints = MapThread[Function[{label, kind},
+    "Spinor[\"" <> SpinHelicity[masses[[label]]] <> "\",\"" <> kind <> "\"," <>
+      ToString[label] <> "]"],
+    {{First[labels], Last[labels]},
+      {If[left === "<", "Angle", "Square"], If[right === ">", "Angle", "Square"]}}];
+  "SpinorChain[" <> StringRiffle[Join[{First[endpoints]},
+    ("Mom[" <> ToString[#] <> "]" & /@ Rest[Most[labels]]), {Last[endpoints]}], ","] <> "]"];
+convertSegment[text_] := If[StringStartsQ[text, "\""], text, StringReplace[text, {
+RegularExpression["(?<![A-Za-z_0-9])x(\\d)(\\d)(?![A-Za-z_0-9])"]:>"xFactor[$1,$2]",
+RegularExpression["(?<![A-Za-z_0-9])xt(\\d)(\\d)(?![A-Za-z_0-9])"]:>"xTildeFactor[$1,$2]",
+compactPattern :> compactChain["$1", "$2", "$3"],
+RegularExpression["(?<![A-Za-z_0-9])s(\\d)(\\d)-([a-zA-Z_][a-zA-Z_0-9]*|[0-9]+)\\^2(?![A-Za-z_0-9])"]:>"PropDen[Mom[Multiparticle[$1,$2]],$3]",
+RegularExpression["(?<![A-Za-z_0-9])s(\\d)(\\d)(?![A-Za-z_0-9])"]:>"PropDen[Mom[Multiparticle[$1,$2]],0]"
+}]];
+res = StringJoin[convertSegment /@ segments];
 ConstructiveDiagrams`Private`parseModelExpression[res,parameterScope]
 ];
 
@@ -206,6 +229,128 @@ AppendTo[newVertices,amplitude];
 ,{i,1,Length[vertices]}];
 newVertices
 ]
+
+
+(* ::Subsubsection::Closed:: *)
+(*Amplitude Writer*)
+
+
+AppendModelAmplitudes::usage = "AppendModelAmplitudes[directory, number, entries] appends complete constructive amplitudes to ampsN.mdl before its final separator, preserving existing entries. Each entry is {particles, amplitude}, or {particles, factor, amplitudeOverFactor}. The target ReadModel supplies particle and parameter declarations. Identical existing entries are skipped; conflicting entries for the same particle multiset return Failure. Every row is checked by reading it back before a single atomic file replacement. This writes supplied amplitudes, not a physics validation or new diagram vertices. It returns the file path and Added/Skipped counts. Reload ReadModel after writing.";
+AppendModelAmplitudes[directory_String, number_Integer, entries_List] :=
+  ConstructiveDiagrams`Private`appendModelAmplitudes[directory, number, entries];
+AppendModelAmplitudes[___] := Failure["InvalidModelAmplitudeExport", <|
+  "MessageTemplate" -> "Expected a model directory, integer model number and a list of amplitude entries."|>];
+
+Begin["`Private`"];
+
+modelExportEqualQ[a_, b_] := SameQ[a, b] || TrueQ[Quiet[Check[Together[a - b] === 0, False]]];
+
+appendModelAmplitudes[directory_String, number_Integer, entries_List] := Module[
+  {model, file, original, text, scope, declared, names, positions, separator,
+   prefix, suffix, newline, rows = {}, known, added = 0, skipped = 0,
+   entry, particles, factor, expression, references, foreign, factorText,
+   expressionText, readFactor, readExpression, existing, existingParticles,
+   body, headers, columns, currentColumns, temporary = None, stream, result,
+   tag = Unique["modelAmplitudeExport"]},
+  file = FileNameJoin[{ExpandFileName[directory], "amps" <> ToString[number] <> ".mdl"}];
+  original = Quiet[Check[BinaryReadList[file, "Byte"], $Failed]];
+  If[!ListQ[original], Return[Failure["ModelFileUnavailable", <|"File" -> file|>]]];
+  model = ReadModel[directory, number];
+  If[FailureQ[model], Return[model]];
+  If[!MatchQ[model, {_List, _List, _List, _List}], Return[
+    Failure["ConstructiveModelRequired", <|"File" -> file,
+      "MessageTemplate" -> "Complete spinor amplitudes must be written to a constructive ampsN.mdl model."|>]]];
+  text = Quiet[Check[FromCharacterCode[original, "UTF-8"], $Failed]];
+  If[!StringQ[text] || ToCharacterCode[text, "UTF-8"] =!= original,
+    Return[Failure["InvalidModelEncoding", <|"File" -> file|>]]];
+  positions = StringPosition[text, RegularExpression["(?m)^[^\\r\\n]*={6,}[^\\r\\n]*"]];
+  If[Length[positions] =!= 1, Return[Failure["InvalidModelSeparator", <|"File" -> file|>]]];
+  separator = First[positions];
+  prefix = StringTake[text, First[separator] - 1];
+  suffix = StringDrop[text, First[separator] - 1];
+  If[StringTrim[StringDrop[text, Last[separator]]] =!= "",
+    Return[Failure["TrailingModelData", <|"File" -> file,
+      "MessageTemplate" -> "The model contains data after its final separator."|>]]];
+  newline = If[StringContainsQ[text, "\r\n"], "\r\n", "\n"];
+  scope = modelParameterScope[file];
+  declared = DeleteDuplicates[First /@ Join[model[[3]], model[[4]]]];
+  names = DeleteDuplicates[Flatten[#[[{2, 3}]] & /@ model[[1]]]];
+  known = model[[2]];
+  headers = readModelRows[file];
+  If[FailureQ[headers], Return[headers]];
+  headers = Select[headers, Length[#] >= 5 && #[[3]] === "P3" &];
+  currentColumns = If[headers === {}, None, Length[Last[headers]] - 2];
+  result = Catch[
+    Do[
+      If[!MatchQ[entry, {_List, _} | {_List, _, _}],
+        Throw[Failure["InvalidModelAmplitudeEntry", <|"Entry" -> entry|>], tag]];
+      particles = First[entry];
+      If[Length[particles] < 3 || !AllTrue[particles,
+          StringQ[#] && # =!= "" && !StringContainsQ[#, {"|", "\r", "\n"}] &&
+            MemberQ[names, #] &],
+        Throw[Failure["UnknownAmplitudeParticles", <|"Particles" -> particles|>], tag]];
+      {factor, expression} = If[Length[entry] === 2, {1, Last[entry]}, Rest[entry]];
+      references = DeleteDuplicates[Cases[{factor, expression},
+        p_ModelParameter :> p, Infinity]];
+      foreign = Select[references, !MemberQ[declared, #] &];
+      If[foreign =!= {}, Throw[Failure["UndeclaredAmplitudeParameters", <|
+        "Particles" -> particles, "Parameters" -> foreign,
+        "MessageTemplate" -> "Amplitude parameters must belong to the target model; equal printed names do not identify different model scopes."|>], tag]];
+      factorText = PlainText[factor, "Model"];
+      expressionText = PlainText[expression, "Model"];
+      If[!StringQ[factorText] || !StringQ[expressionText] ||
+          AnyTrue[{factorText, expressionText},
+            StringQ[#] && StringContainsQ[#, {"|", "\r", "\n"}] &],
+        Throw[Failure["UnsupportedAmplitudeExport", <|"Particles" -> particles,
+          "Diagnostics" -> {factorText, expressionText}|>], tag]];
+      readFactor = parseModelExpression[factorText, scope];
+      readExpression = ConvertAmplitude[Join[particles, {factor, expressionText}], model[[1]], scope];
+      If[FailureQ[readFactor] || FailureQ[readExpression] ||
+          !SameQ[readFactor, factor] || !SameQ[readExpression, expression],
+        Throw[Failure["AmplitudeRoundTripFailed", <|"Particles" -> particles,
+          "Factor" -> factorText, "Expression" -> expressionText|>], tag]];
+      existing = Select[known, Sort[DeleteCases[Drop[#, -2], ""]] === Sort[particles] &];
+      If[existing =!= {},
+        existingParticles = DeleteCases[Drop[First[existing], -2], ""];
+        If[Length[existing] === 1 && existingParticles === particles &&
+            modelExportEqualQ[First[existing][[-2]] First[existing][[-1]], factor expression],
+          skipped++; Continue[],
+          Throw[Failure["DuplicateModelAmplitude", <|"Particles" -> particles,
+            "MessageTemplate" -> "The model already contains this particle multiset with a different ordering or expression. Existing amplitudes have not been overwritten."|>], tag]]];
+      columns = Max[4, Length[particles]];
+      If[columns =!= currentColumns,
+        AppendTo[rows, StringRiffle[Join["P" <> ToString[#] & /@ Range[columns],
+          {"Factor", "Amplitude/Factor"}], " | "]];
+        currentColumns = columns];
+      AppendTo[rows, StringRiffle[Join[PadRight[particles, columns, " "],
+        {factorText, expressionText}], " | "]];
+      AppendTo[known, Join[particles, {factor, expression}]];
+      added++,
+      {entry, entries}];
+    If[added === 0, Throw[<|"File" -> file, "Added" -> 0, "Skipped" -> skipped|>, tag]];
+    body = prefix <> StringRiffle[rows, newline] <> newline <> suffix;
+    temporary = FileNameJoin[{DirectoryName[file], "." <> FileNameTake[file] <>
+      "." <> CreateUUID[] <> ".tmp"}];
+    (* Truncating a copy retains the model's permissions during atomic replacement. *)
+    result = Quiet[Check[CopyFile[file, temporary], $Failed]];
+    If[result === $Failed,
+      Throw[Failure["ModelExportUnavailable", <|"File" -> file|>], tag]];
+    stream = Quiet[Check[OpenWrite[temporary, CharacterEncoding -> "UTF-8"], $Failed]];
+    If[!MatchQ[stream, _OutputStream],
+      Throw[Failure["ModelExportUnavailable", <|"File" -> file|>], tag]];
+    result = CheckAbort[Quiet[Check[WriteString[stream, body]; Close[stream]; True, $Failed]],
+      Quiet[Close[stream]]; If[FileExistsQ[temporary], DeleteFile[temporary]]; Abort[]];
+    If[result =!= True || Quiet[Check[BinaryReadList[file, "Byte"], $Failed]] =!= original,
+      Throw[Failure["ModelExportChanged", <|"File" -> file,
+        "MessageTemplate" -> "The model changed during export or the temporary file could not be written. No update was applied."|>], tag]];
+    result = Quiet[Check[RenameFile[temporary, file, OverwriteTarget -> True], $Failed]];
+    If[result === $Failed, Throw[Failure["ModelExportUnavailable", <|"File" -> file|>], tag]];
+    <|"File" -> file, "Added" -> added, "Skipped" -> skipped|>, tag];
+  If[StringQ[temporary] && FileExistsQ[temporary], Quiet[DeleteFile[temporary]]];
+  result
+];
+
+End[];
 
 
 (* ::Subsection::Closed:: *)

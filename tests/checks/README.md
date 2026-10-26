@@ -74,6 +74,28 @@ identity API, diagram generation and helicity sewing, curated Standard Model
 paths, worked five-point QED derivations, physical/spurious poles, high-energy
 behavior, reference independence, amplitude construction and model parameters.
 
+## Amplitude Text and Model Export
+
+`plain-text-tests.wl` checks readable display output and the separate
+`PlainText[expression, "Model"]` serialization mode. It covers exact powers,
+complex coefficients, compact brackets, general momentum chains, labels above
+9, composite momenta, physical propagators and explicit massive-spin indices.
+Model syntax rejects unsupported objects and unsafe row delimiters.
+
+`model-export-tests.wl` checks `AppendModelAmplitudes`: safe model-local
+parameters, complete batch validation, reader round trips, duplicate conflicts,
+idempotence, original row/newline preservation and atomic higher-multiplicity
+appends. Parser regressions keep legacy bracket notation separate from typed
+function arguments and reject malformed quotation marks.
+
+`qed-model-export-tests.wl` checks all six saved nonzero five-point amplitudes
+in the electron/photon QED model. It exercises all eight ordered three-photon
+helicities and both four-fermion radiation helicities, independent Feynman
+amplitudes with all massive-spin components, other fermion orderings and
+nonunit masses/couplings. Six-point channel inventories verify that the newly
+saved amplitudes are actually available for three-by-five sewing. The cubic
+diagram model is unchanged.
+
 ## Model Isolation
 
 `model-isolation-tests.wl` exercises both model readers with same-named

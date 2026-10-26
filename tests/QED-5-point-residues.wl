@@ -644,5 +644,36 @@ q5FourFermionPhotonRoute[diagrams_List] := Module[
     "DenominatorsKeptOffShell" -> True|>
 ];
 
+(* All independent nonzero five-point entries for the electron/photon model.
+   The opposite helicities use parity of the checked diagram derivations;
+   qed-model-export-tests.wl checks every ordered photon assignment against
+   independent Feynman diagrams before these entries are used at six points. *)
+qedFivePointModelAmplitudes[] := Module[
+  {mixed, radiation, dual, amplitudes, particles, factor, removeFactor},
+  mixed = qedFivePointMixedRoute[diagramAmplitudes[CreateDiagrams[
+    {"e", "E", "A.+", "A.+", "A.-"}, prModel]]];
+  If[FailureQ[mixed], Return[mixed]];
+  radiation = q5FourFermionPhotonRoute[CreateDiagrams[
+    {"e", "E", "E", "e", "A.+"}, prModel]];
+  If[FailureQ[radiation], Return[radiation]];
+  dual[expression_] := expression /.
+    Spinor[type_, kind : ("Angle" | "Square"), rest___] :>
+      Spinor[type, If[kind === "Angle", "Square", "Angle"], rest];
+  particles = {
+    {"e", "E", "A.+", "A.+", "A.+"},
+    {"e", "E", "A.+", "A.+", "A.-"},
+    {"e", "E", "A.+", "A.-", "A.-"},
+    {"e", "E", "A.-", "A.-", "A.-"},
+    {"e", "E", "E", "e", "A.+"},
+    {"e", "E", "E", "e", "A.-"}};
+  amplitudes = {prH, mixed["Final"],
+    PermuteParticles[dual[mixed["Final"]], {3, 4, 5}], dual[prH],
+    radiation["Final"], dual[radiation["Final"]]};
+  factor = 2 Sqrt[2] prElectricCharge^3;
+  removeFactor[sum_Plus] := removeFactor /@ sum;
+  removeFactor[term_] := term/factor;
+  MapThread[{#1, factor, removeFactor[#2]} &, {particles, amplitudes}]
+];
+
 <|"Amplitudes" -> <|"H" -> prH, "S2" -> prS2, "OldPermutation" -> prOldPermutation|>,
   "FactorizationTargets" -> prElectronTargets, "ReportFunction" -> q5ResidueReport|>
