@@ -294,12 +294,47 @@ check["all Feynman diagrams use one common reference assignment for each externa
     AllTrue[GatherBy[qaSharedFeynmanAssignments, #["Leg"] &],
       Length[DeleteDuplicates[Lookup[#, "Target"]]] === 1 &] &&
     FreeQ[qaSharedFeynman["Amplitude"], Spinor["Xi", ___]]];
+qaPhysicalProcessIndices = {1, 3, 4};
+qaPhysicalFeynman = Table[PrepareAmplitudes[qaSpinorBenchmarks[[i]], qaFeynmanModel,
+  "ReferenceSpinors" -> "AllPhysical", "MaxSteps" -> 0, "TimeConstraint" -> 90,
+  "ProgressReporting" -> False, "ReturnDetails" -> True], {i, qaPhysicalProcessIndices}];
+Do[With[{i = qaPhysicalProcessIndices[[j]]},
+  qaPhysicalAssignments = Flatten[Lookup[
+    Lookup[qaPhysicalFeynman[[j]]["ItemReports"], "ReferenceSpinors"], "Assignments"], 1];
+  check["shared physical Feynman references replace every Xi for process " <>
+      ToString[qaProcesses[[i]], InputForm],
+    qaPhysicalFeynman[[j]]["Status"] === "PREPARED" &&
+      Sort[DeleteDuplicates[Lookup[qaPhysicalAssignments, "Leg"]]] === Range[3, Length[qaProcesses[[i]]]] &&
+      AllTrue[qaPhysicalAssignments, #["Mode"] === "AllPhysical" &] &&
+      AllTrue[GatherBy[qaPhysicalAssignments, #["Leg"] &],
+        Length[DeleteDuplicates[Lookup[#, "Target"]]] === 1 &] &&
+      FreeQ[qaPhysicalFeynman[[j]]["Amplitude"], Spinor["Xi", ___]] &&
+      !FreeQ[qaPhysicalFeynman[[j]]["Amplitude"], _PropDen]];
+  check["shared physical Feynman references never declare internal shells for process " <>
+      ToString[qaProcesses[[i]], InputForm],
+    qaPhysicalFeynman[[j]]["Options"]["InternalOnShell"] === False &&
+      AllTrue[qaPhysicalFeynman[[j]]["ItemReports"],
+        #["InternalOnShellChannels"] === {} &&
+          AllTrue[#["Reductions"], !TrueQ[Lookup[#, "InternalOnShellIdentity", False]] &] &] &&
+      AllTrue[First /@ qaPhysicalFeynman[[j]]["PreparedAmplitudes"],
+        AllTrue[#, MatchQ[#, HoldPattern[Mass[_Integer] -> _]] &] &]]],
+  {j, Length[qaPhysicalFeynman]}];
 qaUnsupportedFeynmanReferences = PrepareAmplitudes[First[qaSpinorBenchmarks], qaFeynmanModel,
-  "ReferenceSpinors" -> "AllPhysical", "MaxSteps" -> 0,
+  "ReferenceSpinors" -> "Mixed", "MaxSteps" -> 0,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
-check["unimplemented shared physical Feynman references remain explicitly partial",
+check["unimplemented shared mixed Feynman references remain explicitly partial",
   qaUnsupportedFeynmanReferences["Status"] === "PARTIAL" &&
     qaUnsupportedFeynmanReferences["Diagnostics"] =!= {}];
+check["unsupported Feynman reference modes cannot silently return amplitudes with unchanged Xi",
+  FailureQ[PrepareAmplitudes[First[qaSpinorBenchmarks], qaFeynmanModel,
+    "ReferenceSpinors" -> "Mixed", "MaxSteps" -> 0, "ProgressReporting" -> False]]];
+qaIndependentFeynman = PrepareAmplitudes[qaSpinorBenchmarks[[3]], qaFeynmanModel,
+  "ReferenceSpinors" -> "IndependentXi", "MaxSteps" -> 0, "TimeConstraint" -> 90,
+  "ProgressReporting" -> False, "ReturnDetails" -> True];
+check["independent Feynman references survive ordinary preparation as distinct photon references",
+  qaIndependentFeynman["Status"] === "PREPARED" &&
+    Sort[DeleteDuplicates[Cases[qaIndependentFeynman["Amplitude"],
+      Spinor["Xi", _, id_] :> id, Infinity]]] === {3, 4, 5}];
 qaMasslessFeynmanModel = qaFeynmanModel;
 qaMasslessFeynmanModel[[1, qaElectronRow, 6]] = 0;
 qaMasslessFeynmanPairs = diagramAmplitudes[CreateDiagrams[
@@ -326,6 +361,35 @@ qaKnownMixed = qedFivePointMixedRoute[qaConstructiveMixedPairs]["Final"];
 qaKnownAmplitudes = Join[qaKnownFour, {prH, qaKnownMixed}];
 qaKnownChannels = FactorizationAmplitudeChannels[#, If[Length[#] === 4,
     prModel, prFixtureModel]] & /@ qaProcesses;
+qaPhysicalBenchmarkReports = Table[With[{i = qaPhysicalProcessIndices[[j]]},
+  qaReport[qaKnownAmplitudes[[i]], qaKnownChannels[[i]], prFixtureModel,
+    qaPhysicalFeynman[[j]]["PreparedAmplitudes"], "FeynmanModel" -> qaFeynmanModel,
+    "Samples" -> 1, "FeynmanSamples" -> 2, "FeynmanTimeConstraint" -> 120,
+    "TimeConstraint" -> 90]], {j, {2, 3}}];
+Do[With[{i = j + 2},
+  check["shared physical references preserve the full five-point QED amplitude " <>
+      ToString[qaProcesses[[i]], InputForm],
+    qaStatus[qaPhysicalBenchmarkReports[[j]]] === "PASS" &&
+      qaAllPhysicalPass[qaPhysicalBenchmarkReports[[j]]]]], {j, 2}];
+qaIndependentBenchmarkReports = Table[
+  qaReport[qaKnownAmplitudes[[3]], qaKnownChannels[[3]], prFixtureModel,
+    qaIndependentFeynman["PreparedAmplitudes"], "FeynmanModel" -> qaFeynmanModel,
+    "Samples" -> 1, "FeynmanSamples" -> 2, "FeynmanTimeConstraint" -> 120,
+    "TimeConstraint" -> 90, "RandomSeed" -> seed], {seed, {1729, 2026, 2718}}];
+Do[
+  check["ordinary preparation with independent Xi preserves all-plus QED at seed " <>
+      ToString[{1729, 2026, 2718}[[j]]],
+    qaStatus[qaIndependentBenchmarkReports[[j]]] === "PASS" &&
+      qaAllPhysicalPass[qaIndependentBenchmarkReports[[j]]]],
+  {j, Length[qaIndependentBenchmarkReports]}];
+qaIndependentDefaultBenchmark = qaReport[qaKnownAmplitudes[[3]], qaKnownChannels[[3]],
+  prFixtureModel, qaIndependentFeynman["PreparedAmplitudes"],
+  "FeynmanModel" -> qaFeynmanModel, "ParameterRules" -> Automatic,
+  "Samples" -> 2, "FeynmanSamples" -> 2, "FeynmanTimeConstraint" -> 120,
+  "TimeConstraint" -> 90];
+check["prepared independent Xi also preserve all-plus QED at model-default masses and couplings",
+  qaStatus[qaIndependentDefaultBenchmark] === "PASS" &&
+    qaAllPhysicalPass[qaIndependentDefaultBenchmark]];
 qaRawMassiveReport = qaReport[First[qaKnownFour], First[qaKnownChannels], prModel,
   First[qaRawBenchmarks], "FeynmanModel" -> qaFeynmanModel, "Samples" -> 1];
 check["supported raw massive Feynman tensors are converted by the full checker itself",

@@ -136,8 +136,13 @@ generation is eager and may exceed the useful budget on long chains.
 All diagrams must use the same reference choice for each external gauge leg:
 individual Feynman diagrams are gauge dependent. The default uses a shared
 fixed massless-particle cycle where possible, not independent per-diagram
-reference optimization. Shared physical/mixed-reference optimization is not yet
-implemented; those explicit Feynman modes report `PARTIAL`.
+reference optimization. `AllPhysical` uses a deterministic momentum-insertion
+reference per external leg, chosen from the shared process pole inventory and
+preferring massive external targets. Its reference poles may coincide with a
+diagram's propagators: no internal-shell identity is used. Shared `Mixed`
+references remain unimplemented and report `PARTIAL` in details. An unavailable
+requested reference choice returns `Failure` in ordinary output rather than
+silently retaining the Xi spinors.
 
 ## Simplify, Explore, and Derive
 

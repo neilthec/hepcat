@@ -1284,6 +1284,23 @@ acQEDFiveOffCutDifferences = Table[TimeConstrained[
 check["the reconstructed expression equals H on an external-shell chart away from both cuts",
   Flatten[acQEDFiveOffCutDifferences] === ConstantArray[0, 4]];
 
+(* Exercise the notebook's completed result, not only a supplied known answer. *)
+acQEDFeynmanModel = ReadModel[FileNameJoin[{root, "model_feynman"}], 2];
+acQEDFeynmanPairs = diagramAmplitudes[CreateDiagrams[prParticles, acQEDFeynmanModel]];
+Do[
+  acQEDFeynmanPrepared = PrepareAmplitudes[acQEDFeynmanPairs, acQEDFeynmanModel,
+    "ReferenceSpinors" -> acReferenceMode, "ProgressReporting" -> False,
+    "TimeConstraint" -> 60];
+  acQEDFeynmanCheck = CheckAmplitudes[acQEDFiveCompleted["Amplitude"],
+    prChannels, prFixtureModel, "FeynmanAmplitudes" -> acQEDFeynmanPrepared,
+    "FeynmanModel" -> acQEDFeynmanModel, "Samples" -> 2,
+    "TimeConstraint" -> 90, "Output" -> "Details"];
+  check["automatic all-plus completion agrees with the full Feynman benchmark using " <> acReferenceMode,
+    acAllPass[acQEDFeynmanCheck] &&
+      acQEDFeynmanCheck["FeynmanCheck"]["Status"] === "PASS" &&
+      acQEDFeynmanCheck["FeynmanCheck"]["CompletedSamples"] === 2],
+  {acReferenceMode, {"IndependentXi", "AllPhysical"}}];
+
 (* Mixed reference optimization must remain compatible with off-cut completion. *)
 Print["Checking optimized Mixed references through five-point completion."];
 acQEDMixedPrepared = PrepareAmplitudes[acQEDFivePairs, prModel,

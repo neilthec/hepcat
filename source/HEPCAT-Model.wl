@@ -5245,7 +5245,7 @@ PrepareAmplitudes::usage = PrepareAmplitudes::usage <>
 PrepareAmplitudes::usage = PrepareAmplitudes::usage <>
   " Input elements are detected individually: diagram {massRules, expression} pairs or compact factorization rows {m1, ..., mn, Multiparticle[cut], exchangedMass, expression}. The default output preserves each input element's format and metadata. Factorization rows supply only external shells and their selected cut; other propagators do not introduce shell assumptions. Channel 1/z factors and sewing signs are unchanged. Cut-only reductions preserve the selected residue, not an off-cut identity. Details add InputType, ElementTypes, ItemReports and ChannelReports.";
 PrepareAmplitudes::usage = PrepareAmplitudes::usage <>
-  " With a FeynmanModel, only diagram pairs are accepted. Raw Feynman tensors are converted to spinor products before reference replacement and reduction; FermionHelicities supplies the helicities of massless Dirac external fields. Feynman preparation defaults to ordinary reduction with effective MaxSteps -> 0 unless MaxSteps is supplied explicitly; eager identity-route generation for large chains is opt-in. Feynman preparation always keeps every internal numerator and denominator off shell, regardless of InternalOnShell, and returns external-only mass rules. Existing propagators supply a separate reference-choice inventory, never shell assumptions. All Feynman diagrams use the same reference assignment per external leg: Automatic uses a fixed massless-particle cycle, or independent generic Xi references when fewer than two massless particles are available. AllSpurious and cyclic choices are deterministic rather than optimized separately per diagram; Xi, IndependentXi and None retain their meanings. Shared AllPhysical and Mixed Feynman choices are not yet implemented and remain PARTIAL. Failed or timed-out conversion remains PARTIAL in details and returns Failure for ordinary output.";
+  " With a FeynmanModel, only diagram pairs are accepted. Raw Feynman tensors are converted to spinor products before reference replacement and reduction; FermionHelicities supplies the helicities of massless Dirac external fields. Feynman preparation defaults to ordinary reduction with effective MaxSteps -> 0 unless MaxSteps is supplied explicitly; eager identity-route generation for large chains is opt-in. Feynman preparation always keeps every internal numerator and denominator off shell, regardless of InternalOnShell, and returns external-only mass rules. Existing propagators supply a separate reference-choice inventory, never shell assumptions. All Feynman diagrams use the same reference assignment per external leg: Automatic uses a fixed massless-particle cycle, or independent generic Xi references when fewer than two massless particles are available. AllSpurious and cyclic choices are deterministic rather than optimized separately per diagram. AllPhysical uses deterministic momentum-insertion references from the shared process pole inventory, preferring massive external targets; its reference poles may coincide with a diagram's existing propagators. Xi, IndependentXi and None retain their meanings. Shared Mixed Feynman choices remain unimplemented and PARTIAL. Failed or timed-out conversion, or an unavailable requested reference choice, remains PARTIAL in details and returns Failure for ordinary output.";
 PrepareDiagramAmplitudes::usage = "PrepareDiagramAmplitudes is a compatibility alias for PrepareAmplitudes. Use PrepareAmplitudes for both diagram amplitude pairs and compact factorization-channel rows.";
 
 Options[PrepareAmplitudes] = {
@@ -5472,8 +5472,8 @@ preparationReferences[expr_, rules_List, model_List, pairs_List, requested_, for
       fail["An Xi occurs outside a supported spinor chain."]];
     external = Sort[Cases[massRules, HoldPattern[Mass[i_Integer] -> _] :> i]];
     massless = Select[external, TrueQ[(Mass[#] /. massRules) == 0] &];
-    If[TrueQ[shared] && MemberQ[{"AllPhysical", "Mixed"}, choice],
-      fail["Shared AllPhysical and Mixed reference choices are not yet supported for Feynman diagrams; use Automatic, AllSpurious, a cyclic choice, Xi, IndependentXi or None."]];
+    If[TrueQ[shared] && choice === "Mixed",
+      fail["Shared Mixed reference choices are not yet supported for Feynman diagrams; use Automatic, AllSpurious, AllPhysical, a cyclic choice, Xi, IndependentXi or None."]];
     If[TrueQ[shared] && requested === Automatic,
       choice = If[Length[massless] < 2, "IndependentXi", "FeynmanCyclic"]];
     compatibleMassQ[a_, b_] := residueExactZero[a^2 - b^2];
@@ -5531,7 +5531,10 @@ preparationReferences[expr_, rules_List, model_List, pairs_List, requested_, for
           "Target" -> #|> &) /@ options;
         physical = {};
         If[MemberQ[{Automatic, "AllPhysical", "Mixed"}, choice],
-          options = Select[DeleteCases[external, a], physicalQ[a, #] && !ownQ[a, #] &];
+          (* Feynman references may repeat a diagram's pole: no internal shell
+             identity is used, and the assignment must be shared across diagrams. *)
+          options = Select[DeleteCases[external, a],
+            physicalQ[a, #] && (TrueQ[shared] || !ownQ[a, #]) &];
           options = Join[Select[options, !MemberQ[massless, #] &], Select[options, MemberQ[massless, #] &]];
           physical = (<|"Leg" -> a, "Mode" -> "AllPhysical", "Target" -> #|> &) /@ options];
         eligible = Switch[choice,
@@ -5901,6 +5904,10 @@ PrepareAmplitudes[items_List, model_, opts : OptionsPattern[]] := Module[
     If[output =!= "Details" && AnyTrue[reports, TrueQ[#["FeynmanConversionFailed"]] &],
       Return[Failure["FeynmanPreparation", <|"MessageTemplate" ->
         "Feynman-to-spinor conversion did not complete. Supply massless-fermion helicities if needed, or request ReturnDetails -> True for diagnostics."|>]]];
+    If[feynman && output =!= "Details" &&
+        AnyTrue[reports, #["StopReason"] === "ReferenceChoiceUnavailable" &],
+      Return[Failure["FeynmanReferences", <|"MessageTemplate" ->
+        "The requested Feynman reference-spinor choice could not be applied. Request ReturnDetails -> True for diagnostics."|>]]];
     Switch[output, "Amplitudes", Return[prepared],
       "Expression", Return[Total[Last /@ prepared]]]];
   diagnostics = DeleteDuplicates[Flatten[Lookup[reports, "Diagnostics", {}], 1]];

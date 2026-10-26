@@ -582,8 +582,16 @@ Feynman reference choices are shared across the entire diagram list.
 `Automatic`, `"AllSpurious"`, `"Cyclic"` and `"ReverseCyclic"` use a fixed
 consistent massless-particle cycle rather than optimizing each diagram
 independently. `"Xi"`, `"IndependentXi"` and `None` are also supported.
-`"AllPhysical"` and `"Mixed"` remain explicitly `"PARTIAL"` for Feynman inputs
-until a safe whole-amplitude reference search is available.
+`"AllPhysical"` chooses deterministic momentum-insertion references from the
+shared process pole inventory, preferring massive external targets. Each
+external gauge leg uses the same target in every diagram, even if its reference
+pole already occurs in a particular diagram. No internal-shell assumption is
+introduced. `"Mixed"` remains explicitly `"PARTIAL"` in details until a safe
+whole-amplitude reference search is available. Unavailable requested references
+return `Failure` in ordinary output instead of silently retaining Xi spinors.
+After changing a reference choice, reevaluate both preparation and the checker.
+Previously computed amplitudes and reports do not update when the choice or
+package definitions change.
 
 For a factorization row, only its declared cut is an internal on-shell
 condition. Its momentum-conservation complement describes the same cut, not
