@@ -422,7 +422,8 @@ qedFivePointMixedEqualityChecks[] := Module[
   {j = {{0, -1}, {1, 0}}, eps, adj, la, ti, p, an, sq, f, g, a, b,
    d, t, c, k, ell, mass2, s, gap, closure, zero, u, v, w, z, r, x, y,
    orders = {{3, 4}, {4, 3}}, localChecks, spuriousU, regularU, spuriousV,
-   compactU, compactV, aProduct, removeDPoles, compareU, compareV},
+   compactU, compactV, aProduct, removeDPoles, compareU, compareV,
+   finalRegrouping},
   eps = -j;
   adj[q_] := {{q[[2, 2]], -q[[1, 2]]}, {-q[[2, 1]], q[[1, 1]]}};
   la[3] = {1, 0}; la[4] = {0, 1}; la[5] = {1, 1};
@@ -464,9 +465,16 @@ qedFivePointMixedEqualityChecks[] := Module[
   removeDPoles = zero[spuriousU - regularU];
   compareU = zero[regularU - compactU];
   compareV = zero[spuriousV - compactV];
+  (* Ordinary external identities regroup the three physical blocks into two.
+     The latter is a display alternative, not a lower-complexity replacement. *)
+  finalRegrouping = <|
+    "MomentumChain" -> zero[ell + an[3, 5] f[3] + an[4, 5] f[4]],
+    "PropagatorSum" -> zero[a[5] + b[5] - an[3, 5] sq[3, 5] -
+      an[4, 5] sq[4, 5]]|>;
   <|"LocalIdentities" -> localChecks, "RemoveDPoles" -> removeDPoles,
     "UEqualsThreeTermForm" -> compareU, "VEqualsThreeTermForm" -> compareV,
     "FullEquality" -> (removeDPoles && compareU && compareV),
+    "FinalRegroupingIdentities" -> finalRegrouping,
     "InternalShellConditions" -> {}|>
 ];
 

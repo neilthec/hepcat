@@ -433,7 +433,361 @@ check["ordinary per-factor cleanup exposes the compact Eq90 product without impo
     ReduceSpinorProducts[tpFiveFactoredReduced] === tpFiveFactoredReduced &&
     AllTrue[tpFiveOffCutCharts, tpEvaluate[tpFiveFactored - tpFiveFactoredReduced, #] === 0 &]];
 
-If[checks =!= 180, AppendTo[failures, {"UnexpectedCheckCount", checks, 180}]];
+(* Mixed helicities require the chirality-dual massless-endpoint contraction.
+   Its selected-shell remainder is retained by ordinary reduction. P and Q
+   are arbitrary, and the spectator spinor need not be a massless particle. *)
+tpOppositeKind["Angle"] := "Square";
+tpOppositeKind["Square"] := "Angle";
+tpOppositePair[kind_] := tpChain[kind, 3, 1, 2, 3] *
+  tpChain[tpOppositeKind[kind], 4, 1, 3, 4];
+tpMixedSandwich[kind_, momentum_] := SpinorChain[
+  tpSpin[tpOppositeKind[kind], 4], Mom[momentum], tpSpin[kind, 3]];
+tpOppositeIdentity[kind_] :=
+  2 MomProd[2, 3] tpMixedSandwich[kind, 1]^2 -
+  2 MomProd[1, 3] tpMixedSandwich[kind, 1] tpMixedSandwich[kind, 2];
+Do[
+  check[{"opposite-chirality sandwich identity on an independent exact chart", tpKind, tpIndex},
+    tpEvaluate[tpOppositePair[tpKind] - tpOppositeIdentity[tpKind], tpCharts[[tpIndex]]] === 0],
+  {tpKind, {"Angle", "Square"}}, {tpIndex, Length[tpCharts]}];
+Do[
+  tpOppositeReduced = ReduceSpinorProducts[tpOppositePair[tpKind]];
+  check[{"opposite-chirality reduction exposes the nonzero off-cut remainder", tpKind},
+    !FreeQ[tpOppositeReduced, MomProd[1, 3] | MomProd[3, 1]] &&
+      Count[tpOppositeReduced, _Mom, Infinity] < Count[tpOppositePair[tpKind], _Mom, Infinity] &&
+      AllTrue[Take[tpCharts, 8],
+        tpEvaluate[tpOppositePair[tpKind] - tpOppositeReduced, #] === 0 &]];
+  check[{"opposite-chirality reduction is idempotent", tpKind},
+    ReduceSpinorProducts[tpOppositeReduced] === tpOppositeReduced];
+  tpOppositeExplicit = tpOppositePair[tpKind] /.
+    tpSpin[tpOppositeKind[tpKind], 4] ->
+      Spinor["Spin", "Upper", tpOppositeKind[tpKind], 4, -1/2];
+  tpOppositeExplicitReduced = ReduceSpinorProducts[tpOppositeExplicit];
+  check[{"opposite-chirality reduction preserves explicit spectator-spin indices", tpKind},
+    !FreeQ[tpOppositeExplicitReduced,
+        Spinor["Spin", "Upper", tpOppositeKind[tpKind], 4, -1/2]] &&
+      AllTrue[Take[tpCharts, 8],
+        tpEvaluate[tpOppositeExplicit - tpOppositeExplicitReduced, #] === 0 &]];
+  Do[
+    tpOppositePowered = 7 tpChain[tpKind, 3, 1, 2, 3]^tpPowers[[1]] *
+      tpChain[tpOppositeKind[tpKind], 4, 1, 3, 4]^tpPowers[[2]];
+    tpOppositePoweredReduced = TimeConstrained[ReduceSpinorProducts[tpOppositePowered], 5, $TimedOut];
+    check[{"opposite-chirality positive powers terminate with exact value", tpKind, tpPowers},
+      tpOppositePoweredReduced =!= $TimedOut &&
+        AllTrue[Take[tpCharts, 8],
+          tpEvaluate[tpOppositePowered - tpOppositePoweredReduced, #] === 0 &]],
+    {tpPowers, {{2, 2}, {2, 3}}}],
+  {tpKind, {"Angle", "Square"}}];
+Do[
+  tpFirstOrder = If[tpReverseFirst === 0, {1, 2}, {2, 1}];
+  tpSecondOrder = If[tpReverseSecond === 0, {1, 3}, {3, 1}];
+  tpOppositeReversed = tpChain[tpKind, 3, tpFirstOrder[[1]], tpFirstOrder[[2]], 3] *
+    tpChain[tpOppositeKind[tpKind], 4, tpSecondOrder[[1]], tpSecondOrder[[2]], 4];
+  tpOppositeReversedReduced = ReduceSpinorProducts[tpOppositeReversed];
+  tpOppositeExpected = (-1)^(tpReverseFirst + tpReverseSecond) tpOppositeIdentity[tpKind];
+  check[{"both opposite-chirality momentum orders preserve their exact signs",
+      tpKind, tpReverseFirst, tpReverseSecond},
+    Count[tpOppositeReversedReduced, _Mom, Infinity] < Count[tpOppositeReversed, _Mom, Infinity] &&
+      ReduceSpinorProducts[tpOppositeReversedReduced] === tpOppositeReversedReduced &&
+      AllTrue[Take[tpCharts, 8],
+        tpEvaluate[tpOppositeReversed - tpOppositeReversedReduced, #] === 0 &&
+          tpEvaluate[tpOppositeReversed - tpOppositeExpected, #] === 0 &]],
+  {tpKind, {"Angle", "Square"}}, {tpReverseFirst, 0, 1}, {tpReverseSecond, 0, 1}];
+tpOppositeWithPole = ReduceSpinorProducts[tpOppositePair["Square"]/tpOpaque];
+check["the opposite-chirality contraction never cancels an original propagator or assumes its shell",
+  DeleteDuplicates[Cases[tpOppositeWithPole, _PropDen, Infinity]] === {tpOpaque} &&
+    !FreeQ[tpOppositeWithPole, MomProd[1, 3] | MomProd[3, 1]] &&
+    FreeQ[tpOppositeWithPole, Mass[_Multiparticle]]];
+
+(* The caller controls which numerator shell rules participate in ranking.
+   The three-argument helper remains an ordinary external-shell operation. *)
+tpScopeRules = Thread[Mass /@ Range[5] -> {tpMass, tpMass, 0, 0, 0}];
+tpScopeLeft = Spinor["Xi", "Angle", 70];
+tpScopeRight = Spinor["Xi", "Angle", 71];
+tpScopeBracket = SpinorChain[tpScopeLeft, tpScopeRight];
+tpScopeChain = SpinorChain[tpScopeLeft, Mom[Multiparticle[1, 3]],
+  Mom[Multiparticle[1, 3]], tpScopeRight];
+tpScopeDots = {MomProd[1, 3] -> 0, MomProd[3, 1] -> 0};
+tpScopeReduce[value_, dots_] := ConstructiveDiagrams`Private`preparationConservedMomentumChains[
+  value, tpScopeRules, True, dots];
+tpScopeOrdinary = tpScopeReduce[tpScopeChain, {}];
+check["per-chain preparation without authorized cuts retains its internal-shell remainder",
+  !FreeQ[tpScopeOrdinary, MomProd[1, 3] | MomProd[3, 1]] &&
+    Expand[tpScopeOrdinary - (tpMass^2 + 2 MomProd[1, 3]) tpScopeBracket] === 0];
+check["per-chain ranking may use only the numerator cuts supplied by its caller",
+  Expand[tpScopeReduce[tpScopeChain, tpScopeDots] - tpMass^2 tpScopeBracket] === 0];
+check["disabling momentum conservation preserves the helper input even when cuts are supplied",
+  ConstructiveDiagrams`Private`preparationConservedMomentumChains[
+    tpScopeChain, tpScopeRules, False, tpScopeDots] === tpScopeChain];
+tpScopeInverse = 1/(3 + tpScopeChain);
+check["per-chain authorized cuts leave unrelated inverse expressions opaque",
+  tpScopeReduce[tpScopeInverse, tpScopeDots] === tpScopeInverse];
+check["per-chain authorized cuts preserve original propagators exactly",
+  tpScopeReduce[(1 + tpScopeChain)/tpOpaque, tpScopeDots] ===
+    (1 + tpMass^2 tpScopeBracket)/tpOpaque];
+
+(* Exercise actual mixed-helicity diagrams before completion. These checks
+   compare numerators only on each original diagram's own two cuts. They do
+   not substitute the known completed amplitude for the diagram expressions. *)
+tpMixedParticles = {"e", "E", "A.+", "A.+", "A.-"};
+tpMixedRaw = diagramAmplitudes[CreateDiagrams[tpMixedParticles, tpModel]];
+tpMixedRawHash = Hash[tpMixedRaw, "SHA256"];
+tpMixedReport = TimeConstrained[PrepareAmplitudes[tpMixedRaw, tpModel,
+  "ReferenceSpinors" -> "AllPhysical", "MaxSteps" -> 0,
+  "ProgressReporting" -> False, "ReturnDetails" -> True,
+  "TimeConstraint" -> 20, "ReferenceTimeConstraint" -> 15], 120, $TimedOut];
+tpMixedOrder[pair_] := Module[{cuts = tpFiveCuts[pair], first, last},
+  first = First[FirstCase[cuts, {1, leg_Integer} :> {leg}]];
+  last = First[FirstCase[cuts, {2, leg_Integer} :> {leg}]];
+  {first, First[Complement[{3, 4, 5}, {first, last}]], last}];
+tpMixedChart[order_, sample_, spin1_, spin2_] := Module[
+  {j = {{0, -1}, {1, 0}}, eps, adj, perpendicular, angles, squares, momenta,
+   a, b, c, q1, q2, mass = sample},
+  eps = -j;
+  adj[p_] := {{p[[2, 2]], -p[[1, 2]]}, {-p[[2, 1]], p[[1, 1]]}};
+  perpendicular[v_] := {-v[[2]], v[[1]]};
+  {a, b, c} = order;
+  angles = <|3 -> {1, sample + 1}, 4 -> {sample + 2, 1}, 5 -> {2, 2 sample + 3}|>;
+  momenta = <|1 -> {{sample + 1, sample - 2},
+    {sample + 2, (mass^2 + (sample - 2) (sample + 2))/(sample + 1)}}|>;
+  squares = <|a -> (sample + 2) perpendicular[adj[momenta[1]].angles[a]]|>;
+  AssociateTo[momenta, a -> Outer[Times, angles[a], squares[a]]];
+  q1 = momenta[1] + momenta[a];
+  AssociateTo[squares, b -> (sample - 5) perpendicular[adj[q1].angles[b]]];
+  AssociateTo[momenta, b -> Outer[Times, angles[b], squares[b]]];
+  q2 = -q1 - momenta[b];
+  AssociateTo[squares, c -> (sample + 3) perpendicular[adj[q2].angles[c]]];
+  AssociateTo[momenta, {c -> Outer[Times, angles[c], squares[c]], 2 -> q2 - Outer[Times, angles[c], squares[c]]}];
+  AssociateTo[angles, {1 -> UnitVector[2, spin1], 2 -> UnitVector[2, spin2]}];
+  AssociateTo[squares, {1 -> eps.adj[momenta[1]].angles[1]/mass,
+    2 -> eps.adj[momenta[2]].angles[2]/mass}];
+  <|"Momenta" -> momenta, "Angle" -> angles, "Square" -> squares,
+    "PoleVariable" -> tpUnusedPole, "ReferenceSeed" -> 1,
+    "MassValue" -> mass, "Shells" ->
+      ({Det[momenta[1]], Det[momenta[2]], Det[q1], Det[q2]} === ConstantArray[mass^2, 4])|>
+];
+tpMixedEvaluate[expression_, chart_] := Together[
+  expression /. chain_SpinorChain :>
+      ConstructiveDiagrams`Private`residueChartChain[chain, chart] /.
+    PropDen[Mom[label_], mass_] :>
+      Det[ConstructiveDiagrams`Private`residueChartMomentum[label, chart]] - mass^2 /.
+    MomProd[a_, b_] :> With[
+      {p = ConstructiveDiagrams`Private`residueChartMomentum[a, chart],
+       q = ConstructiveDiagrams`Private`residueChartMomentum[b, chart]},
+      (Det[p + q] - Det[p] - Det[q])/2] /.
+    {tpMass -> chart["MassValue"], tpCharge -> 1}];
+tpMixedMiddleNegativeQ[pair_] := tpMixedOrder[pair][[2]] === 5;
+tpMixedOwnCutChecks[report_, index_] := Module[
+  {originalPoles, originalNumerator, preparedNumerator, chart, originalValue, preparedValue},
+  If[!AssociationQ[report], Return[{False}]];
+  originalPoles = Times @@ DeleteDuplicates[Cases[Last[tpMixedRaw[[index]]], _PropDen, Infinity]];
+  originalNumerator = Cancel[Together[originalPoles *
+    report["DiagramReports"][[index]]["ReferenceSpinors"]["Expression"]]];
+  preparedNumerator = Cancel[Together[originalPoles *
+    report["DiagramReports"][[index]]["PreparedExpression"]]];
+  Flatten[Table[
+    chart = tpMixedChart[tpMixedOrder[tpMixedRaw[[index]]], sample, spin1, spin2];
+    originalValue = tpMixedEvaluate[originalNumerator, chart];
+    preparedValue = tpMixedEvaluate[preparedNumerator, chart];
+    chart["Shells"] &&
+      FreeQ[{originalValue, preparedValue}, Indeterminate | ComplexInfinity | DirectedInfinity[_]] &&
+      Together[originalValue - preparedValue] === 0,
+    {sample, {1, 2}}, {spin1, 2}, {spin2, 2}]]
+];
+Do[
+  check[{"actual mixed physical-reference preparation is bounded and preserves every original cut", tpIndex},
+    AssociationQ[tpMixedReport] && Length[tpMixedReport["DiagramReports"]] === 6 &&
+      With[{row = tpMixedReport["DiagramReports"][[tpIndex]]},
+        row["Status"] === "PREPARED" &&
+          With[{expression = row["PreparedExpression"]},
+            expression =!= 0 && FreeQ[expression, _Mass | Spinor["Xi", ___]] &&
+              ConstructiveDiagrams`Private`expressionTermCounts[expression]["Terms"] <=
+                If[tpMixedMiddleNegativeQ[tpMixedRaw[[tpIndex]]], 3, 4] &&
+              SpinorExpressionComplexity[expression] <=
+                If[tpMixedMiddleNegativeQ[tpMixedRaw[[tpIndex]]], 63, 16] &&
+              ContainsAll[tpFiveCuts[{First[tpMixedRaw[[tpIndex]]], expression}],
+                tpFiveCuts[tpMixedRaw[[tpIndex]]]]]]];
+  tpMixedScopedChecks = tpMixedOwnCutChecks[tpMixedReport, tpIndex];
+  check[{"actual mixed prepared numerators agree on their own double cuts for all massive-spin components", tpIndex},
+    Length[tpMixedScopedChecks] === 8 && And @@ tpMixedScopedChecks],
+  {tpIndex, 6}];
+tpMixedSpuriousReport = TimeConstrained[PrepareAmplitudes[tpMixedRaw, tpModel,
+  "ReferenceSpinors" -> "AllSpurious", "MaxSteps" -> 0,
+  "ProgressReporting" -> False, "ReturnDetails" -> True,
+  "TimeConstraint" -> 20, "ReferenceTimeConstraint" -> 15], 120, $TimedOut];
+Do[
+  check[{"every actual mixed spurious-reference preparation keeps its compact factored winner", tpIndex},
+    AssociationQ[tpMixedSpuriousReport] && Length[tpMixedSpuriousReport["DiagramReports"]] === 6 &&
+      With[{row = tpMixedSpuriousReport["DiagramReports"][[tpIndex]]},
+        row["Status"] === "PREPARED" &&
+          Length[row["ReferenceSpinors"]["Assignments"]] === 3 &&
+          AllTrue[row["ReferenceSpinors"]["Assignments"], #["Mode"] === "AllSpurious" &] &&
+          With[{expression = row["PreparedExpression"]},
+            expression =!= 0 && FreeQ[expression, _Mass | Spinor["Xi", ___]] &&
+              ConstructiveDiagrams`Private`expressionTermCounts[expression]["Terms"] <=
+                If[tpMixedMiddleNegativeQ[tpMixedRaw[[tpIndex]]], 3, 2] &&
+              SpinorExpressionComplexity[expression] <=
+                If[tpMixedMiddleNegativeQ[tpMixedRaw[[tpIndex]]], 51, 30] &&
+              ContainsAll[tpFiveCuts[{First[tpMixedRaw[[tpIndex]]], expression}],
+                tpFiveCuts[tpMixedRaw[[tpIndex]]]]]]];
+  tpMixedScopedChecks = tpMixedOwnCutChecks[tpMixedSpuriousReport, tpIndex];
+  check[{"mixed spurious-reference winners preserve their same-reference numerators on each own double cut", tpIndex},
+    Length[tpMixedScopedChecks] === 8 && And @@ tpMixedScopedChecks],
+  {tpIndex, 6}];
+check["mixed preparation does not alter its retained original amplitude pairs",
+  Hash[tpMixedRaw, "SHA256"] === tpMixedRawHash];
+
+(* A complete external amplitude can be smaller than the reducer's normal
+   form. Keep that certified input available after mandatory validation;
+   raw spin sums and reference factors are never eligible incumbents. *)
+tpKnownSpin[kind_, leg_] := Spinor[If[MemberQ[{1, 2}, leg], "Spin", "Helicity"], kind, leg];
+tpKnownAngle[a_, b_] := SpinorChain[tpKnownSpin["Angle", a], tpKnownSpin["Angle", b]];
+tpKnownSquare[a_, b_] := SpinorChain[tpKnownSpin["Square", a], tpKnownSpin["Square", b]];
+tpKnownF[i_] := SpinorChain[tpKnownSpin["Angle", 5], Mom[1], tpKnownSpin["Square", i]];
+tpKnownK[i_] := SpinorChain[tpKnownSpin["Square", i], Mom[1], Mom[2], tpKnownSpin["Square", i]];
+tpKnownDen[a_, b_] := PropDen[Mom[Multiparticle @@ Sort[{a, b}]], tpMass];
+tpKnownA = tpKnownAngle[1, 2];
+tpKnownB = tpKnownAngle[1, 5] tpKnownAngle[2, 5];
+tpKnownCompleted = -tpVertexFactor^3/(tpMass tpKnownDen[1, 3] tpKnownDen[1, 4] tpKnownDen[1, 5]) *
+  (tpKnownF[3] tpKnownK[4] (tpKnownA tpKnownF[3] - tpKnownB tpKnownSquare[3, 5])/tpKnownDen[2, 4] +
+   tpKnownF[4] tpKnownK[3] (tpKnownA tpKnownF[4] - tpKnownB tpKnownSquare[4, 5])/tpKnownDen[2, 3] +
+   tpMass^2 tpKnownSquare[3, 4]^2 *
+    (tpKnownA SpinorChain[tpKnownSpin["Angle", 5], Mom[1], Mom[2], tpKnownSpin["Angle", 5]] +
+      tpKnownB (tpKnownDen[1, 5] + tpKnownDen[2, 5]))/tpKnownDen[2, 5]);
+check["the completed mixed fixture is the known seven-term expression of complexity seventy-one",
+  SpinorExpressionComplexity[tpKnownCompleted] === 71 &&
+    ConstructiveDiagrams`Private`expressionTermCounts[tpKnownCompleted]["Terms"] === 7];
+check["an already-contracted expression with only external spinors is eligible for best-form retention",
+  ConstructiveDiagrams`Private`preparationCompleteExternalInputQ[tpKnownCompleted, tpScopeRules]];
+tpIneligibleInputs = {
+  "actual raw mixed diagram" -> Last[First[tpMixedRaw]],
+  "unassigned reference" -> SpinorChain[Spinor["Xi", "Angle", 90], tpSpin["Angle", 3]],
+  "uncontracted spin index" -> SpinorChain[Spinor["Spin", "Upper", "Angle", 1, tpIndexLabel], tpSpin["Angle", 3]],
+  "internal spinor momentum" -> SpinorChain[Spinor["Spin", "Angle", Multiparticle[1, 3]], tpSpin["Angle", 3]],
+  "x factor" -> xFactor[1, 2],
+  "conjugate x factor" -> xTildeFactor[1, 2],
+  "hatted spinor" -> SpinorHat["Helicity", "Angle", 3],
+  "hatted momentum" -> SpinorChain[tpSpin["Square", 3], MomHat[1], tpSpin["Angle", 4]],
+  "first hatted scalar product" -> MomProdHat1[1, 3],
+  "second hatted scalar product" -> MomProdHat2[1, 3],
+  "twice hatted scalar product" -> MomProdHat12[1, 3],
+  "unresolved internal mass" -> Mass[Multiparticle[3, 1]] tpKnownAngle[1, 2],
+  "unresolved external masses" -> Mass[1] tpKnownAngle[1, 2]/Mass[2]^2,
+  "dummy spin epsilon" -> SpinorEps["Upper", tpIndexLabel, tpSecondIndexLabel],
+  "dummy spin transport" -> SpinorZ["Both", tpIndexLabel, tpSecondIndexLabel],
+  "auxiliary momentum" -> MomQ[1],
+  "unprocessed sigma tensor" -> sigma[tpIndexLabel],
+  "zeta reference" -> SpinorChain[Spinor["Zeta", "Angle", 90], tpSpin["Angle", 3]],
+  "unfinished reduced spinor chain" -> SpinorChainReduced[
+    tpSpin["Square", 3], Mom[1], Mom[2], tpSpin["Square", 3]],
+  "unfinished reduced trace" -> SpinorTraceReduced[Mom[1], Mom[2], Mom[3], Mom[4]],
+  "raw Feynman word" -> DiracChain[tpRawFeynmanWord],
+  "undeclared external spinor" -> SpinorChain[tpSpin["Angle", 99], tpSpin["Angle", 3]],
+  "malformed spinor arity" -> SpinorChain[Spinor["Spin", "Angle", 1, tpIndexLabel], tpSpin["Angle", 3]]};
+Do[
+  check[{"raw or auxiliary expressions cannot seed completed-form retention", First[tpIneligible]},
+    !ConstructiveDiagrams`Private`preparationCompleteExternalInputQ[Last[tpIneligible], tpScopeRules]],
+  {tpIneligible, tpIneligibleInputs}];
+tpKnownPreparation = TimeConstrained[PrepareAmplitudes[{{tpScopeRules, tpKnownCompleted}}, tpModel,
+  "ReferenceSpinors" -> None, "InternalOnShell" -> False, "MaxSteps" -> 0,
+  "TimeConstraint" -> 15, "ProgressReporting" -> False, "ReturnDetails" -> True], 20, $TimedOut];
+tpKnownRow = If[AssociationQ[tpKnownPreparation], First[tpKnownPreparation["DiagramReports"]], <||>];
+check["external-only preparation never replaces the known completed amplitude with a worse normal form",
+  AssociationQ[tpKnownPreparation] && tpKnownRow["Status"] === "PREPARED" &&
+    !ConstructiveDiagrams`Private`preparationBetterQ[
+      ConstructiveDiagrams`Private`preparationRank[tpKnownCompleted],
+      ConstructiveDiagrams`Private`preparationRank[tpKnownRow["PreparedExpression"]]]];
+check["retaining a completed input still runs spin contractions, reference assignment and ordinary reduction",
+  AssociationQ[tpKnownPreparation] &&
+    ContainsAll[Lookup[tpKnownRow["Reductions"], "Operation"],
+      {"ReduceSpinContractions", "ReferenceSpinors", "ReduceSpinorProducts"}] &&
+    tpKnownRow["ReferenceSpinors"]["Status"] === "COMPLETE" &&
+    TrueQ[tpKnownRow["OriginalCandidateEligible"]] && TrueQ[tpKnownRow["OriginalCandidateAdmitted"]]];
+check["restoring a better completed input is reported as selection rather than an internal-shell identity",
+  AssociationQ[tpKnownPreparation] &&
+    If[tpKnownRow["PreparedExpression"] === tpKnownCompleted,
+      AnyTrue[tpKnownRow["Reductions"],
+        Lookup[#, "Operation", None] === "RetainedBestCompletedCandidate" &&
+          Lookup[#, "SourceOperation", None] === "AlreadyContractedInput" &&
+          TrueQ[Lookup[#, "SelectionOnly", False]] &&
+          !TrueQ[Lookup[#, "InternalOnShellIdentity", True]] &],
+      ConstructiveDiagrams`Private`preparationBetterQ[
+        ConstructiveDiagrams`Private`preparationRank[tpKnownRow["PreparedExpression"]],
+        ConstructiveDiagrams`Private`preparationRank[tpKnownCompleted]]]];
+check["completed external preparation does not introduce internal numerator conditions",
+  AssociationQ[tpKnownPreparation] && tpKnownRow["InternalOnShellChannels"] === {} &&
+    tpKnownRow["InternalOnShellConditions"] === {}];
+check["every raw mixed diagram remains ineligible for the original-input incumbent",
+  AssociationQ[tpMixedReport] && AllTrue[tpMixedReport["DiagramReports"],
+    !TrueQ[#["OriginalCandidateEligible"]] && !TrueQ[#["OriginalCandidateAdmitted"]] &]];
+tpKnownMassPreparation = PrepareAmplitudes[{
+  {Append[tpScopeRules, Mass[Multiparticle[1, 3]] -> tpMass],
+    Mass[Multiparticle[3, 1]] tpKnownAngle[1, 2]}}, tpModel,
+  "ReferenceSpinors" -> None, "InternalOnShell" -> False, "MaxSteps" -> 0,
+  "ProgressReporting" -> False, "ReturnDetails" -> True];
+tpKnownMassRow = First[tpKnownMassPreparation["DiagramReports"]];
+check["best-form retention cannot restore an unresolved declared internal mass over ordinary replacement",
+  tpKnownMassRow["Status"] === "PREPARED" &&
+    !TrueQ[tpKnownMassRow["OriginalCandidateEligible"]] &&
+    !TrueQ[tpKnownMassRow["OriginalCandidateAdmitted"]] &&
+    tpKnownMassRow["PreparedExpression"] === tpMass tpKnownAngle[1, 2] &&
+    tpKnownMassRow["InternalOnShellChannels"] === {}];
+tpExternalMassPreparation = PrepareAmplitudes[{
+  {tpScopeRules, Mass[1] tpKnownAngle[1, 2]/Mass[2]^2}}, tpModel,
+  "ReferenceSpinors" -> None, "InternalOnShell" -> False, "MaxSteps" -> 0,
+  "ProgressReporting" -> False, "ReturnDetails" -> True];
+tpExternalMassRow = First[tpExternalMassPreparation["DiagramReports"]];
+check["best-form retention cannot undo external mass replacement in a numerator or denominator",
+  tpExternalMassRow["Status"] === "PREPARED" &&
+    !TrueQ[tpExternalMassRow["OriginalCandidateEligible"]] &&
+    !TrueQ[tpExternalMassRow["OriginalCandidateAdmitted"]] &&
+    FreeQ[tpExternalMassRow["PreparedExpression"], _Mass] &&
+    tpExternalMassRow["PreparedExpression"] === tpKnownAngle[1, 2]/tpMass &&
+    tpExternalMassRow["InternalOnShellChannels"] === {}];
+
+(* Inverse and unknown-power spinor factors must pass through ordinary
+   denominator reduction before they may compete as completed forms. *)
+tpInverseSeeds = Table[
+  tpOtherSeedKind = tpOppositeKind[tpSeedKind];
+  tpSeedChain = SpinorChain[Spinor["Spin", tpOtherSeedKind, 1], Mom[2],
+    Spinor["Spin", tpSeedKind, 2]];
+  <|"Name" -> ("reciprocal external Dirac chain " <> tpSeedKind),
+    "Expression" -> 1/(tpOpaque tpSeedChain),
+    "Expected" -> -1/(tpMass tpOpaque SpinorChain[
+      Spinor["Spin", tpOtherSeedKind, 1], Spinor["Spin", tpOtherSeedKind, 2]])|>,
+  {tpSeedKind, {"Angle", "Square"}}];
+AppendTo[tpInverseSeeds, <|"Name" -> "reciprocal trace",
+  "Expression" -> 1/(tpOpaque SpinorTrace[Mom[1], Mom[1]]),
+  "Expected" -> 1/(2 tpMass^2 tpOpaque)|>];
+tpUnknownSeedChain = SpinorChain[Spinor["Spin", "Square", 1], Mom[2],
+  Spinor["Spin", "Angle", 2]];
+tpUnknownSeedExpression = (3 + tpUnknownSeedChain^(-tpSeedExponent))^2/tpOpaque;
+AppendTo[tpInverseSeeds, <|"Name" -> "spinor factor with unknown exponent",
+  "Expression" -> tpUnknownSeedExpression,
+  "Expected" -> (ReduceSpinorProducts[tpUnknownSeedExpression] /. tpScopeRules)|>];
+Do[
+  tpInverseSeedPreparation = PrepareAmplitudes[{{tpScopeRules, tpInverseSeed["Expression"]}}, tpModel,
+    "ReferenceSpinors" -> None, "InternalOnShell" -> False, "MaxSteps" -> 0,
+    "TimeConstraint" -> 10, "ProgressReporting" -> False, "ReturnDetails" -> True];
+  tpInverseSeedRow = First[tpInverseSeedPreparation["DiagramReports"]];
+  check[{"raw inverse factors cannot bypass ordinary external normalization", tpInverseSeed["Name"]},
+    !ConstructiveDiagrams`Private`preparationCompleteExternalInputQ[
+      tpInverseSeed["Expression"], tpScopeRules] &&
+      tpInverseSeedRow["Status"] === "PREPARED" &&
+      !TrueQ[tpInverseSeedRow["OriginalCandidateEligible"]] &&
+      !TrueQ[tpInverseSeedRow["OriginalCandidateAdmitted"]] &&
+      FreeQ[tpInverseSeedRow["PreparedExpression"],
+        SpinorChain[___, _Mom, ___] | _SpinorTrace | _Mass] &&
+      Cancel[Together[tpInverseSeedRow["PreparedExpression"] - tpInverseSeed["Expected"]]] === 0 &&
+      DeleteDuplicates[Cases[tpInverseSeedRow["PreparedExpression"], _PropDen, Infinity]] === {tpOpaque} &&
+      tpInverseSeedRow["InternalOnShellChannels"] === {}],
+  {tpInverseSeed, tpInverseSeeds}];
+check["completed positive spinor powers and opaque physical propagator inverses remain eligible",
+  ConstructiveDiagrams`Private`preparationCompleteExternalInputQ[
+    tpKnownAngle[1, 2]^2/tpOpaque, tpScopeRules] &&
+    ConstructiveDiagrams`Private`preparationCompleteExternalInputQ[1/tpOpaque, tpScopeRules] &&
+    ConstructiveDiagrams`Private`preparationCompleteExternalInputQ[tpKnownCompleted, tpScopeRules]];
+
+If[checks =!= 346, AppendTo[failures, {"UnexpectedCheckCount", checks, 346}]];
 Print[ToString[checks] <> " thesis-preparation checks; " <> ToString[Length[failures]] <> " failures."];
 If[failures =!= {}, Print[failures]];
 Print["HEPCAT_TEST_COMPLETED:thesis-preparation-tests.wl"];

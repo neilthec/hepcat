@@ -184,6 +184,8 @@ check["the mixed spurious form equals the three-term form globally",
     qftMixedProof["VEqualsThreeTermForm"] && qftMixedProof["FullEquality"]];
 check["the mixed global equality uses no internal shell conditions",
   qftMixedProof["InternalShellConditions"] === {}];
+check["the optional two-block regrouping follows from ordinary external identities",
+  AllTrue[Values[qftMixedProof["FinalRegroupingIdentities"]], TrueQ]];
 
 Print[<|"Checks" -> checks, "Failed" -> Length[failures], "Failures" -> failures,
   "Scope" -> "Exact local identities, symbolic reference cancellation and sampled physical residues"|>];

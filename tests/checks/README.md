@@ -80,6 +80,9 @@ reference-generated pole cancellation while original diagram propagators
 remain off shell and protected.
 The five-point examples also exercise Eq. (90), both physical-reference
 choices, and ordinary chain reduction before multiplying spectator factors.
+Mixed-helicity examples additionally check the opposite-chirality sandwich
+contraction, authorized per-chain numerator cuts, exact diagram-local spin
+components, and retention of an already simpler completed external expression.
 `PrepareAmplitudes` accepts both diagram pairs and compact factorization rows.
 Its channel tests check preserved row metadata and propagators, numerator-only
 selected-cut shell conditions, and protection of unrelated internal channels.

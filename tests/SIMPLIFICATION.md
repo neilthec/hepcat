@@ -60,6 +60,16 @@ helicity spinor on leg `a`. In HEPCAT's conventions the ordinary identity is
   = 2 P^2 (p_a.Q) [ab]^2 + 2 (p_a.P) [ab] [b|P Q|a].
 ```
 
+The opposite-chirality product has the corresponding ordinary reduction
+
+```text
+[a|P Q|a] <b|P p_a|b>
+  = 2 (p_a.Q) <b|P|a]^2 - 2 (p_a.P) <b|P|a] <b|Q|a].
+```
+
+Its angle/square dual is supported too. This exposes useful contractions in
+mixed-helicity expressions while retaining the off-cut scalar-product term.
+
 The second term is retained: `ReduceSpinorProducts` does not set `p_a.P` to
 zero. Reversed diagonal momentum orders and positive integer powers are
 supported. The contraction reduces the number of chain momentum insertions
@@ -73,8 +83,10 @@ shell reductions in `PrepareAmplitudes` instead.
 
 During preparation, composite-momentum complements can be reduced inside
 individual numerator chains before expanding the complete product. Their
-quality is compared after ordinary external-shell reduction, so an equal-size
-complement can still be useful when its endpoint terms vanish. This remains
+quality is compared after ordinary external-shell reduction and the scalar
+shell rules explicitly enabled for that element's numerator. Thus an equal-size
+complement can still be useful when endpoint terms or allowed cut remainders
+vanish. Disabling internal shells supplies no such cut rules. This remains
 process-dependent preparation and is disabled with
 `"MomentumConservation" -> False`.
 The conserved and unmodified routes are compared after reducing the whole
@@ -83,6 +95,12 @@ and the main preparation stage retains the winning reduced reference trial.
 Ordinary reductions of individual chains are retained while the product is
 still factored, even when no conservation alternative improves that chain.
 This can expose a sandwich-pair contraction before expansion obscures it.
+Completed reference trials also compare a factored route: reduce each chain,
+apply only the enabled numerator dot rules, optionally contract the directed
+sandwich pairs, and cancel recorded auxiliary reference factors. The surrounding
+product need not undergo the older whole-product Schouten expansion. Ordinary
+and conserved routes compete after completion, so a factored candidate is kept
+only when the whole expression has a better rank.
 
 The five-point all-positive electron/three-photon example in the thesis proposal,
 Eq. (90), exercises this ordering. Both admissible physical reference choices
@@ -102,6 +120,15 @@ amplitude pairs; reference provenance and reduction records are optional details
 Known composite masses are looked up independently of particle-label order,
 without dropping repeated labels or inventing values for unknown masses. These
 diagram-local replacements remain restricted to protected numerator paths.
+
+Preparation retains its best completed candidate when a later normalization
+expands it into a more complex equivalent expression. An already-contracted,
+reference-free expression with ordinary external spinors can also compete as
+an input candidate, after contraction and reference stages have succeeded.
+Raw internal spin sums, unresolved references, auxiliary spinors and Feynman
+tensors cannot bypass those stages. Restoring a simpler candidate is recorded
+as `RetainedBestCompletedCandidate` in optional details; it does not change a
+partial stage into a success or assert a new shell identity.
 
 ## On-Shell Scope
 
@@ -515,7 +542,7 @@ the package, the model, or the checker:
 Get[FileNameJoin[{hepcatDirectory, "tests", "QED-5-point-residues.wl"}]];
 diagrams = CreateDiagrams[{"e", "E", "E", "e", "A.+"}, qedDiagramModel];
 route = q5FourFermionPhotonRoute[diagrams];
-route["Final"] // nice
+route["Final"]
 ```
 
 The four-fermion route retains each actual diagram, its exact Dirac
@@ -533,7 +560,7 @@ For `e,E,A.+,A.+,A.-`, use:
 pairs = diagramAmplitudes[CreateDiagrams[
   {"e", "E", "A.+", "A.+", "A.-"}, qedDiagramModel]];
 mixedRoute = qedFivePointMixedRoute[pairs];
-mixedRoute["Final"] // nice
+mixedRoute["Final"]
 ```
 
 This route exposes the six local seed numerators, the additional local
@@ -551,6 +578,41 @@ summed physical amplitude is checked against all channels. No independent
 QED contact interaction is introduced. These are worked five-point routes,
 not a new automatic simplifier for arbitrary processes, and no claim of
 an absolute shortest formula is made.
+
+The completed mixed amplitude was also compared with alternative ordinary
+identity forms, using no internal shell conditions on the sum:
+
+| Form | Complexity | Expanded monomials |
+| --- | ---: | ---: |
+| Existing three physical blocks | 71 | 7 |
+| Two regrouped physical blocks | 72 | 8 |
+| Momentum-free inner brackets | 89 | 9 |
+| Grouped completed spurious form | 186 | 18 |
+
+The three-block expression remains the best found by this comparison. The
+two-block alternative follows by substituting the two external identities
+
+```text
+<5|p1 p2|5> = -<35><5|p1|3] - <45><5|p1|4],
+t15 + t25 = <35>[35] + <45>[45].
+```
+
+They turn the charged-spin tensor in the third physical block into
+
+```text
+<12><5|p1 p2|5> + <15><25>(t15+t25)
+  = -<35>(<12><5|p1|3] - <15><25>[35])
+    -<45>(<12><5|p1|4] - <15><25>[45]).
+```
+
+Substitute this expression and collect the two parenthesized tensors in the
+first two blocks. No pole has been put on shell: the steps use momentum
+conservation, the massless external photon equations and ordinary spinor
+linearity. `qedFivePointMixedEqualityChecks[]["FinalRegroupingIdentities"]`
+checks the two identities by exact polynomial reduction on the external
+equal-mass kinematic variety. The two-block formula has fewer displayed
+groups but more expanded monomials, so it does not replace the default final
+expression. This bounded comparison is not a proof of global minimality.
 
 ### Automatic Physical and Spurious Checks
 
@@ -1165,6 +1227,13 @@ callback. Preparation reports the diagram, operation, complexity and term
 count; completion reports individual factorization samples, completed channels,
 solving and validation. Sample progress includes the current cut and total
 number of successful sampled charts, before the channel is finished.
+`Validating sparse factorization` is the component-wise implementation of the
+same physical residue check, not a different factorization law or a subset of
+channels. Its correction-coefficient counter reports the number of remaining
+free coefficients. It is zero during an initial check with no correction
+variables, and can also be zero after a nonzero correction has been fully
+determined. Channel agreement is established by the validation statuses, not
+by that counter.
 Details retain the intermediate information without requiring bulky default
 output. These stages aim for a compact justified result in bounded time;
 neither a passing checker nor a local complexity minimum establishes that

@@ -726,19 +726,25 @@ rspDiagonalSandwichData[chain_] := Module[{parts},
 
 rspSandwichPair[left_, right_] := Module[
   {a = rspDiagonalSandwichData[left], b = rspDiagonalSandwichData[right],
-   endpoint, other, leg, bracket, p, q, sign, tag = Unique["sandwichPair"]},
+   endpoint, other, leg, bracket, sameType, p, q, sign, gp, gq,
+   tag = Unique["sandwichPair"]},
   If[MissingQ[a] || MissingQ[b], Return[Missing["NoSandwichPair"]]];
   endpoint = First[a]; other = First[b]; leg = rspSpinorLeg[endpoint];
-  If[endpoint[[1]] =!= "Helicity" || !IntegerQ[leg] || endpoint === other ||
-      rspSpinorType[endpoint] =!= rspSpinorType[other], Return[Missing["NoSandwichPair"]]];
-  bracket = SpinorChain[endpoint, other];
+  If[endpoint[[1]] =!= "Helicity" || !IntegerQ[leg] || endpoint === other,
+    Return[Missing["NoSandwichPair"]]];
+  sameType = rspSpinorType[endpoint] === rspSpinorType[other];
+  If[sameType, bracket = SpinorChain[endpoint, other]];
   Catch[Do[
     {p, q} = first[[2]];
     If[MemberQ[{p, q}, Mom[leg]] || p === q, Continue[]];
     If[second[[2]] === {p, Mom[leg]},
       sign = first[[1]] second[[1]];
-      Throw[sign (2 MomProd[p[[1]], p[[1]]] MomProd[leg, q[[1]]] bracket^2 +
-        2 MomProd[leg, p[[1]]] bracket SpinorChain[other, p, q, endpoint]), tag]],
+      If[sameType,
+        Throw[sign (2 MomProd[p[[1]], p[[1]]] MomProd[leg, q[[1]]] bracket^2 +
+          2 MomProd[leg, p[[1]]] bracket SpinorChain[other, p, q, endpoint]), tag],
+        gp = SpinorChain[other, p, endpoint]; gq = SpinorChain[other, q, endpoint];
+        Throw[sign (2 MomProd[leg, q[[1]]] gp^2 -
+          2 MomProd[leg, p[[1]]] gp gq), tag]]],
     {first, {{1, a[[{2, 3}]]}, {-1, Reverse[a[[{2, 3}]]]}}},
     {second, {{1, b[[{2, 3}]]}, {-1, Reverse[b[[{2, 3}]]]}}}];
     Missing["NoSandwichPair"], tag]

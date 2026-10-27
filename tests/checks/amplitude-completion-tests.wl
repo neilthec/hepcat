@@ -742,17 +742,18 @@ acDotQEDPairs = diagramAmplitudes[CreateDiagrams[
 acDotQEDPrepared = PrepareAmplitudes[acDotQEDPairs, prModel,
   "ReferenceSpinors" -> "AllSpurious", "MaxSteps" -> 0,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
-acDotQEDBeforePairs = ({#["MassRules"],
-    ReduceSpinorProducts[#["ReferenceSpinors"]["Expression"]] /. #["MassRules"]} &) /@
-  acDotQEDPrepared["DiagramReports"];
+(* Optimized references may avoid producing these dots at all. The explicit
+   nonzero scalar-product fixtures above separately exercise their reduction. *)
 check["all six actual QED diagrams exhaust their declared-pair numerator scalar products",
   acDotQEDPrepared["Status"] === "PREPARED" &&
     Length[acDotQEDPrepared["PreparedAmplitudes"]] === 6 &&
-    Total[acKnownNumeratorDotCount /@ acDotQEDBeforePairs] > 0 &&
     Total[acKnownNumeratorDotCount /@ acDotQEDPrepared["PreparedAmplitudes"]] === 0];
-check["scalar-product preparation retains the original diagram inputs and mass-rule scope",
+check["scalar-product preparation retains original inputs, mass-rule scope and propagators",
   acDotQEDPrepared["OriginalAmplitudes"] === acDotQEDPairs &&
-    First /@ acDotQEDPrepared["PreparedAmplitudes"] === First /@ acDotQEDPairs];
+    First /@ acDotQEDPrepared["PreparedAmplitudes"] === First /@ acDotQEDPairs &&
+    And @@ MapThread[ContainsAll[DeleteDuplicates[Cases[Last[#1], _PropDen, Infinity]],
+        DeleteDuplicates[Cases[Last[#2], _PropDen, Infinity]]] &,
+      {acDotQEDPrepared["PreparedAmplitudes"], acDotQEDPairs}]];
 
 (* Momentum conservation belongs to preparation, with the complete declared leg
    set and strictly improving trials on the whole numerator. *)
@@ -1342,14 +1343,25 @@ acQEDFivePairs = diagramAmplitudes[CreateDiagrams[prParticles, prModel]];
 acQEDFivePrepared = PrepareAmplitudes[acQEDFivePairs, prModel,
   "ReferenceSpinors" -> "AllSpurious", "ProgressReporting" -> False];
 acQEDFiveSaved = acQEDFivePrepared;
+acQEDOffCutValue[expression_, chart_] := Together[prMapOnChart[
+  expression /. trace_SpinorTrace :>
+    ConstructiveDiagrams`Private`residueChartTrace[trace, chart], chart]];
 check["whole-expression cleanup leaves at most two compact terms per actual QED diagram",
   AllTrue[acQEDFivePrepared, Function[pair,
     If[Head[Last[pair]] === Plus, Length[Last[pair]], 1] <= 2 &&
       SpinorExpressionComplexity[Last[pair]] <= 18]]];
-check["actual prepared QED diagrams are fixed points of ordinary full-expression reduction",
-  AllTrue[acQEDFivePrepared, Function[pair,
-    (ReduceSpinorProducts[Last[pair]] /.
-      Cases[First[pair], HoldPattern[Mass[_Integer] -> _]]) === Last[pair]]]];
+acQEDFiveOrdinaryReduced = (ReduceSpinorProducts[Last[#]] /.
+    Cases[First[#], HoldPattern[Mass[_Integer] -> _]]) & /@ acQEDFivePrepared;
+acQEDFiveOrdinaryDifferences = MapThread[Last[#1] - #2 &,
+  {acQEDFivePrepared, acQEDFiveOrdinaryReduced}];
+acQEDFiveOrdinaryOffCut = Table[TimeConstrained[
+  acQEDOffCutValue[acOrdinaryDifference,
+    prDoubleChart[acOffCutQ, acOffCutR, acOrdinarySpin1, acOrdinarySpin2]], 10, $TimedOut],
+  {acOrdinaryDifference, acQEDFiveOrdinaryDifferences}, {acOrdinarySpin1, 2}, {acOrdinarySpin2, 2}];
+check["prepared QED diagrams retain a compact representative equivalent to ordinary full-expression reduction",
+  And @@ MapThread[SpinorExpressionComplexity[Last[#1]] <= SpinorExpressionComplexity[#2] &,
+    {acQEDFivePrepared, acQEDFiveOrdinaryReduced}] &&
+    Flatten[acQEDFiveOrdinaryOffCut] === ConstantArray[0, 4 Length[acQEDFivePrepared]]];
 check["the five-point regression starts from six actual AllSpurious prepared diagrams",
   Length[acQEDFivePrepared] === 6 &&
     FreeQ[acQEDFivePrepared, Spinor["Xi", ___]]];
@@ -1380,9 +1392,6 @@ acQEDFiveFinalCheck = CheckPhysicalResidues[acQEDFiveCompleted["Amplitude"],
 check["the generated five-point result passes every independent final check at new parameters",
   acAllPass[acQEDFiveFinalCheck] &&
     acQEDFiveFinalCheck["PhysicalSummary"] === <|"PASS" -> 6|>];
-acQEDOffCutValue[expression_, chart_] := Together[prMapOnChart[
-  expression /. trace_SpinorTrace :>
-    ConstructiveDiagrams`Private`residueChartTrace[trace, chart], chart]];
 (* q and r remain symbolic, so neither internal line is put on shell. *)
 acQEDFiveOffCutDifferences = Table[TimeConstrained[
   acQEDOffCutValue[acQEDFiveCompleted["Amplitude"] - prH,
@@ -1728,9 +1737,57 @@ Print["Checking mixed photon helicities from cyclic diagram preparation."];
 acMixedHelicityParticles = {"e", "E", "A.+", "A.+", "A.-"};
 acMixedHelicityPairs = diagramAmplitudes[CreateDiagrams[acMixedHelicityParticles, prModel]];
 acMixedHelicityChannels = FactorizationAmplitudeChannels[acMixedHelicityParticles, prFixtureModel];
-acMixedHelicityPrepared = PrepareAmplitudes[acMixedHelicityPairs, prModel,
+acMixedHelicityOrdinaryPrepared = PrepareAmplitudes[acMixedHelicityPairs, prModel,
   "ReferenceSpinors" -> "Cyclic", "MaxSteps" -> 0,
-  "ProgressReporting" -> False] /. MomProd[3, 4] -> Mom[Multiparticle[3, 4]]^2/2;
+  "ProgressReporting" -> False];
+(* Preparation may remove any particular dot product. Exercise scalar squares
+   with one that actually remains, using only the declared external masses. *)
+acMixedHelicityDotPrepared = acMixedHelicityOrdinaryPrepared;
+If[FreeQ[acMixedHelicityDotPrepared, _MomProd],
+  (* Clifford reversal exposes a numerator dot if the compact result has
+     removed them all. This introduces no inverse scalar momentum squares. *)
+  acMixedHelicityNumeratorChains = Flatten[
+    ConstructiveDiagrams`Private`chainsIn /@ Flatten[
+      ConstructiveDiagrams`Private`monomialsOf /@ (Last /@ acMixedHelicityDotPrepared)]];
+  acMixedHelicityOpenChain = FirstCase[acMixedHelicityNumeratorChains,
+    chain : SpinorChain[left_Spinor, Mom[a_Integer], Mom[b_Integer], right_Spinor] /;
+      left =!= right && a =!= b && ContainsAll[Range[5], {a, b}] :> chain,
+    Missing["NoOpenMomentumChain"]];
+  If[!MissingQ[acMixedHelicityOpenChain],
+    acMixedHelicityDotPrepared = Map[Function[pair, {First[pair],
+      ConstructiveDiagrams`Private`preparationNumerators[Last[pair],
+        Function[num, num /. acMixedHelicityOpenChain ->
+          (2 MomProd[acMixedHelicityOpenChain[[2, 1]], acMixedHelicityOpenChain[[3, 1]]] *
+            SpinorChain[First[acMixedHelicityOpenChain], Last[acMixedHelicityOpenChain]] -
+           SpinorChain[First[acMixedHelicityOpenChain], acMixedHelicityOpenChain[[3]],
+             acMixedHelicityOpenChain[[2]], Last[acMixedHelicityOpenChain]])]]}],
+      acMixedHelicityDotPrepared]]];
+acMixedHelicitySquareDot = SelectFirst[DeleteDuplicates[
+  Cases[Last /@ acMixedHelicityDotPrepared, _MomProd, Infinity]],
+  MatchQ[List @@ #, {_Integer, _Integer}] &&
+    First[#] =!= Last[#] && ContainsAll[Range[5], List @@ #] &,
+  Missing["NoDistinctExternalMomentumProduct"]];
+acMixedHelicityPrepared = If[MissingQ[acMixedHelicitySquareDot],
+  acMixedHelicityDotPrepared,
+  Map[Function[pair, {First[pair], Last[pair] /. acMixedHelicitySquareDot ->
+    ((Mom[Multiparticle @@ List @@ acMixedHelicitySquareDot]^2 -
+        Mass[First[acMixedHelicitySquareDot]]^2 - Mass[Last[acMixedHelicitySquareDot]]^2)/2 /.
+      ConstructiveDiagrams`Private`preparationExternalRules[First[pair]])}],
+    acMixedHelicityDotPrepared]];
+acMixedHelicityFixtureDifferences = Table[TimeConstrained[
+  MapThread[acQEDOffCutValue[(Last[#1] - Last[#2]) /.
+      Power[p_Mom, exponent_Integer?EvenQ] :>
+        Det[prMomentum[p[[1]], prDoubleChart[acOffCutQ, acOffCutR, i, j]]]^(exponent/2),
+      prDoubleChart[acOffCutQ, acOffCutR, i, j]] &,
+    {acMixedHelicityPrepared, acMixedHelicityOrdinaryPrepared}],
+  30, $TimedOut], {i, 2}, {j, 2}];
+check["the cyclic mixed-helicity scalar-square fixture retains exact off-cut equality",
+  !MissingQ[acMixedHelicitySquareDot] &&
+    !FreeQ[acMixedHelicityPrepared,
+      Mom[Multiparticle @@ List @@ acMixedHelicitySquareDot]^2] &&
+    FreeQ[acMixedHelicityPrepared, Power[_Mom, _Integer?Negative]] &&
+    Flatten[acMixedHelicityFixtureDifferences] ===
+      ConstantArray[0, 4 Length[acMixedHelicityOrdinaryPrepared]]];
 acMixedHelicitySaved = acMixedHelicityPrepared;
 acMixedHelicityCompleted = acFactor[acMixedHelicityPrepared, acMixedHelicityChannels,
   prFixtureModel, "Samples" -> 1, "ValidationSamples" -> 1,
@@ -1740,7 +1797,7 @@ check["mixed helicities complete automatically with old cyclic choices and scala
   acMixedHelicityCompleted["Status"] === "COMPLETE" &&
     acMixedHelicityCompleted["CorrectionSpace"] === "ReducedChannels" &&
     Length[acMixedHelicityCompleted["CorrectionBasis"]] <= 128 &&
-    !FreeQ[acMixedHelicitySaved, Mom[Multiparticle[3, 4]]^2] &&
+    !FreeQ[acMixedHelicitySaved, Mom[Multiparticle @@ List @@ acMixedHelicitySquareDot]^2] &&
     acMixedHelicityPrepared === acMixedHelicitySaved];
 check["whole-channel reductions are checked before their correction terms are admitted",
   With[{rows = acMixedHelicityCompleted["ReducedChannelSpace"]["Verification"]},
