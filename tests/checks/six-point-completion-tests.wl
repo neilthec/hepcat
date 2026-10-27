@@ -361,6 +361,14 @@ check["equal photon masses do not infer an opposite-helicity Bose grouping",
     sixBoseEmpty["Groups"] === {} && sixBoseEmpty["Order"] === 1 &&
     ConstructiveDiagrams`Private`completionBoseProject[sixMixedBoseState, sixBoseEmpty] ===
       sixMixedBoseState];
+check["mixed six-point channels retain eight three-by-five and six four-by-four sewings",
+  Length[sixMixedChannels] === 14 &&
+    Counts[Length[List @@ #[[-3]]] & /@ sixMixedChannels] === <|2 -> 8, 3 -> 6|>];
+check["changing one photon helicity does not change the external mass inventory",
+  AllTrue[sixMixedChannels, Take[#, 6] === Take[First[sixChannels], 6] &]];
+check["all six mixed four-by-four sewings are reference-free before continuation",
+  Length[Select[sixMixedChannels, Length[List @@ #[[-3]]] === 3 &]] === 6 &&
+    FreeQ[Select[sixMixedChannels, Length[List @@ #[[-3]]] === 3 &], Spinor["Xi", ___]]];
 check["Bose averaging preserves constants and has exact normalization",
   sixBoseProject[7] === 7 &&
     Expand[sixBoseProject[Mom[3]] - Total[Mom /@ Range[3, 6]]/4] === 0];
@@ -529,6 +537,66 @@ If[Environment["HEPCAT_TEST_FULL_SIX_POINT"] === "1",
   check["the full six-point affine family also passes its final independent validation",
     Lookup[sixFullCompletion, "RefinementHistory", {}] =!= {} &&
       Last[sixFullCompletion["RefinementHistory"]]["Status"] === "COMPLETE"];
+];
+
+(* This fresh end-to-end case is deliberately opt-in: its full automatic fit
+   costs much more than the structural probes above. No saved answer or cached
+   equations enter construction, and the Feynman result is generated only later. *)
+If[Environment["HEPCAT_TEST_FULL_MIXED_SIX_POINT"] === "1",
+  Print["Preparing twenty-four mixed-helicity six-point diagrams."];
+  sixMixedDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 2];
+  sixMixedRaw = diagramAmplitudes[CreateDiagrams[sixMixedParticles, sixMixedDiagramModel]];
+  sixMixedRawBefore = sixMixedRaw;
+  sixMixedPrepared = PrepareAmplitudes[sixMixedRaw, sixMixedDiagramModel,
+    "ReferenceSpinors" -> "AllSpurious", "MaxSteps" -> 12,
+    "ProgressReporting" -> False];
+  check["the mixed end-to-end regression prepares twenty-four actual diagrams",
+    ListQ[sixMixedPrepared] && Length[sixMixedPrepared] === 24 &&
+      FreeQ[sixMixedPrepared, Spinor["Xi", ___]] && sixMixedRaw === sixMixedRawBefore];
+  sixMixedCompletion = CompleteFactorization[sixMixedPrepared, sixMixedChannels, sixModel,
+    "BoseSymmetryGroups" -> {{3, 4, 5}}, "Samples" -> 28,
+    "ValidationSamples" -> 2, "RandomSeed" -> 1729,
+    "MaxCorrectionTerms" -> 1024, "MaxRefinements" -> 5,
+    "TimeConstraint" -> 7200, "ProgressReporting" -> False, "ReturnDetails" -> True];
+  check["mixed six-point diagrams complete through the public automatic algorithm",
+    AssociationQ[sixMixedCompletion] && sixMixedCompletion["Status"] === "COMPLETE"];
+  If[AssociationQ[sixMixedCompletion] && sixMixedCompletion["Status"] === "COMPLETE",
+    sixMixedLastRound = Max[Lookup[sixMixedCompletion["ValidationReports"], "Round", -1]];
+    sixMixedFinalReports = Select[sixMixedCompletion["ValidationReports"],
+      #["Round"] === sixMixedLastRound &];
+    check["the mixed result passes all channels at both model-mass assignments",
+      Length[sixMixedFinalReports] === 2 &&
+        Length[DeleteDuplicates[Lookup[sixMixedFinalReports, "ParameterRules"]]] === 2 &&
+        AllTrue[sixMixedFinalReports, Function[entry,
+          Length[entry["Report"]["Channels"]] === 14 &&
+            AllTrue[entry["Report"]["Channels"], #["Status"] === "PASS" &]]]];
+    check["the public mixed affine family passes independent validation",
+      sixMixedCompletion["RefinementHistory"] =!= {} &&
+        Last[sixMixedCompletion["RefinementHistory"]]["Status"] === "COMPLETE"];
+    sixMixedFeynmanModel = ReadModel[FileNameJoin[{root, "model_feynman"}], 2];
+    sixMixedFeynmanRaw = diagramAmplitudes[
+      CreateDiagrams[sixMixedParticles, sixMixedFeynmanModel]];
+    sixMixedFeynmanPrepared = PrepareAmplitudes[sixMixedFeynmanRaw, sixMixedFeynmanModel,
+      "ReferenceSpinors" -> "AllSpurious", "MaxSteps" -> 0,
+      "TimeConstraint" -> 120, "ProgressReporting" -> False];
+    check["the independent mixed Feynman benchmark retains twenty-four diagrams",
+      ListQ[sixMixedFeynmanPrepared] && Length[sixMixedFeynmanPrepared] === 24];
+    (* This probe certifies sampled off-cut agreement, not every optional check. *)
+    sixMixedFeynmanReport = CheckAmplitudes[sixMixedCompletion["Amplitude"],
+      sixMixedChannels, sixModel, "FeynmanAmplitudes" -> sixMixedFeynmanPrepared,
+      "FeynmanModel" -> sixMixedFeynmanModel, "FeynmanSamples" -> 3,
+      "FeynmanTimeConstraint" -> 240, "Samples" -> 1, "RandomSeed" -> 874031,
+      "SpuriousPoles" -> {}, "HighEnergyCheck" -> False, "ReferenceCheck" -> False,
+      "TimeConstraint" -> 90, "Output" -> "Details"];
+    check["the public mixed result agrees with independently generated Feynman diagrams off cut",
+      AssociationQ[sixMixedFeynmanReport] &&
+        sixMixedFeynmanReport["FeynmanCheck"]["Status"] === "PASS" &&
+        sixMixedFeynmanReport["FeynmanCheck"]["CompletedSamples"] === 3 &&
+        sixMixedFeynmanReport["FeynmanCheck"]["Scope"] ===
+          "SampledOffCutMomentaAllImplicitMassiveSpinComponents" &&
+        sixMixedFeynmanReport["FeynmanCheck"]["InternalOnShell"] === False &&
+        sixMixedFeynmanReport["FeynmanCheck"]["NormalizationFitted"] === False];
+  ];
 ];
 
 Print[checks, " six-point-completion checks; ", Length[failures], " failures."];

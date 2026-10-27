@@ -236,6 +236,24 @@ HEPCAT_TEST_FULL_SIX_POINT=1 python3 tests/checks/run-wolfram-tests.py \
   --suite six-point-completion-tests.wl --timeout 1800
 ```
 
+The mixed `e,E,A.+,A.+,A.+,A.-` case has separate inexpensive channel-layout
+checks and a separate optional full regression. Only photon legs 3, 4 and 5
+are Bose averaged. Its automatic correction space is larger, so allow for
+preparation, the 7200-second completion budget and independent Feynman checks:
+
+```sh
+HEPCAT_TEST_FULL_MIXED_SIX_POINT=1 python3 tests/checks/run-wolfram-tests.py \
+  --suite six-point-completion-tests.wl --timeout 9000
+```
+
+The actual mixed fit was verified from exact cut constraints collected in
+batches, with independent full-family residue validation at two mass scales,
+three off-cut Feynman comparisons, twelve automatically discovered spurious
+pole checks and an `E^-2` high-energy check. The fresh
+serial optional regression is a reproducibility test, not a claim that this
+long command has already been timed end to end. No cached rows or stored
+answer are used by the optional test.
+
 ## Repaired Legacy Bugs
 
 The five formerly expected-failure probes now run as ordinary regression

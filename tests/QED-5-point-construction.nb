@@ -5,7 +5,6 @@
 
 (* CreatedBy='Wolfram 15.0' *)
 
-(*CacheID: 234*)
 (* Internal cache information:
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
@@ -27252,7 +27251,41 @@ lastPathIsLeafHeader, TypeSystem`NestedGrid`PackagePrivate`headerHidden$ = And[
 }, Open  ]]
 }, Open  ]]
 }, Open  ]]
-}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+  Cell["e,E,A.+,A.+,A.+,A.-", "Chapter"],
+  Cell[CellGroupData[{
+    Cell["1. Choose the Process and References", "Section"],
+    Cell["particles = {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.-\"};\nreferenceChoice = \"AllSpurious\";", "Input"]
+  }, Open]],
+  Cell[CellGroupData[{
+    Cell["2. Generate the Diagrams", "Section"],
+    Cell["diagrams = CreateDiagrams[particles, diagramModel];\nrawAmplitudes = diagramAmplitudes[diagrams];\nLength[rawAmplitudes]", "Input"],
+    Cell[CellGroupData[{
+      Cell["View the diagrams", "Subsection"],
+      Cell["CreateArrowDiagrams[diagrams]", "Input"]
+    }, Closed]]
+  }, Open]],
+  Cell[CellGroupData[{
+    Cell["3. Prepare Each Diagram", "Section"],
+    Cell["preparation = PrepareAmplitudes[rawAmplitudes, diagramModel,\n  \"ReferenceSpinors\" -> referenceChoice];", "Input"]
+  }, Open]],
+  Cell[CellGroupData[{
+    Cell["4. Complete the Physical Residues", "Section"],
+    Cell["channels = FactorizationAmplitudeChannels[particles, factorizationModel];\nLength[channels]", "Input"],
+    Cell["There are 24 diagrams and 14 physical channels. Only legs 3, 4 and 5 have the same photon helicity, so leg 6 is not included in their Bose symmetry group. This mixed-helicity completion takes substantially longer than the earlier examples; the two-hour limit below is a budget, not a guaranteed finishing time. The independent Feynman amplitude is used only in the final check, never in the completion.", "Text"],
+    Cell["timeLimit = 7200;\nfactorization = CompleteFactorization[preparation, channels, factorizationModel,\n  \"BoseSymmetryGroups\" -> {{3, 4, 5}},\n  \"Samples\" -> 28, \"ValidationSamples\" -> 2, \"MaxRefinements\" -> 5,\n  \"RandomSeed\" -> 1729, \"MaxCorrectionTerms\" -> 1024,\n  \"TimeConstraint\" -> timeLimit];", "Input"]
+  }, Open]],
+  Cell[CellGroupData[{
+    Cell["5. Verify the Completed Amplitude", "Section"],
+    Cell["feynmanDiagrams = CreateDiagrams[particles, qedFeynmanModel];\nfeynmanPairs = diagramAmplitudes[feynmanDiagrams];\npreparedFeynman = PrepareAmplitudes[feynmanPairs, qedFeynmanModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\", \"MaxSteps\" -> 0];", "Input"],
+    Cell["Clear[constructedAmplitude, constructionChecks];\nIf[FailureQ[factorization] || factorization === $Failed,\n  factorization,\n  constructedAmplitude = factorization;\n  constructionChecks = CheckAmplitudes[\n    constructedAmplitude, channels, factorizationModel,\n    \"FeynmanAmplitudes\" -> preparedFeynman,\n    \"FeynmanModel\" -> qedFeynmanModel, \"FeynmanSamples\" -> 3,\n    \"Samples\" -> checkSamples, \"TimeConstraint\" -> timeLimit,\n    \"Output\" -> \"Details\"];\n  constructionChecks[\"Table\"]]", "Input"],
+    Cell[CellGroupData[{
+      Cell["Inspect the Completed Amplitude", "Subsection"],
+      Cell["constructedAmplitude", "Input"]
+    }, Closed]]
+  }, Open]]
+}, Open]]
 }, Open  ]]
 },
 WindowSize->{1010, 911},

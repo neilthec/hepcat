@@ -45,6 +45,36 @@ check["square-reference bracket poles are also sampled",
   First[spReport[1/spSquareXi3^2, {spSquareXi3}]]["PoleOrder"] === 2];
 check["unsupported factor is unresolved",
   First[spReport[1/spAngle34, {MomProd[3, 4]}]]["Status"] === "UNRESOLVED"];
+DownValues[spWarningEvaluateDelegate] = DownValues[
+  ConstructiveDiagrams`Private`residueEvaluateChart] /.
+    HoldPattern[ConstructiveDiagrams`Private`residueEvaluateChart] -> spWarningEvaluateDelegate;
+spSingularTrialCount = 0;
+spSingularTrialReport = Check[Block[
+  {ConstructiveDiagrams`Private`residueEvaluateChart = Function[{value, chart, rules},
+    If[value === spSingularTrialAmplitude,
+      spSingularTrialCount++;
+      Message[Power::infy, HoldForm[1/0]];
+      Message[Infinity::indet, HoldForm[0 ComplexInfinity]];
+      ComplexInfinity,
+      spWarningEvaluateDelegate[value, chart, rules]]]},
+  First[spReport[spSingularTrialAmplitude, {spAngle34}]]],
+  spUnexpectedSingularWarning, {Power::infy, Infinity::indet}];
+check["expected singular-trial warnings stay local without fabricating a finite pass",
+  AssociationQ[spSingularTrialReport] && spSingularTrialReport["Status"] === "UNRESOLVED" &&
+    spSingularTrialCount > 1 &&
+    AllTrue[spSingularTrialReport["Samples"], #["Status"] === "UNRESOLVED" &]];
+spUnrelatedTrialEvaluator::probe = "An unrelated trial-evaluator diagnostic.";
+spUnrelatedTrialReport = Missing["NotRun"];
+spUnrelatedTrialCaught = Block[{$Messages = {}}, Check[Block[
+  {ConstructiveDiagrams`Private`residueEvaluateChart = Function[{value, chart, rules},
+    If[value === spSingularTrialAmplitude,
+      Message[spUnrelatedTrialEvaluator::probe]; ComplexInfinity,
+      spWarningEvaluateDelegate[value, chart, rules]]]},
+  spUnrelatedTrialReport = First[spReport[spSingularTrialAmplitude, {spAngle34}]]],
+  spExpectedUnrelatedWarning, {spUnrelatedTrialEvaluator::probe}]];
+check["unrelated evaluator diagnostics are not silenced by singular-chart handling",
+  spUnrelatedTrialCaught === spExpectedUnrelatedWarning &&
+    AssociationQ[spUnrelatedTrialReport] && spUnrelatedTrialReport["Status"] === "UNRESOLVED"];
 check["massive angle pairs are not silently treated as massless collinear poles",
   First[spReport[1/prSpinAngle[1, 2], {prSpinAngle[1, 2]}]]["Status"] === "UNRESOLVED"];
 check["supplied physical maps are not silently reused as spurious charts",
@@ -239,6 +269,155 @@ check["an identically zero external-mass denominator is not silently discarded",
   With[{rows = ConstructiveDiagrams`Private`poleDiscoverDenominators[
       Mass[3]^-2, prTargets, {}]},
     Length[rows] === 1 && First[rows]["Classification"] === "Unclassified"]];
+
+(* Exact duplicates do not add a new apparent-pole obligation. Keep distinct
+   powers and source forms while avoiding repeated factor classification. *)
+spDedupPhysical = PropDen[Mom[Multiparticle[1, 3]], prElectronMass];
+spDedupPhysicalSum = PropDen[Mom[1] + Mom[3], prElectronMass];
+spDedupExpression = 1/spXi3 + 2/spXi3^3 + 1/(spXi3^2 - spXi4^2) +
+  1/(spXi3 - spXi4) + 1/(2 MomProd[1, 3]) +
+  1/spDedupPhysical + 1/spDedupPhysicalSum^2;
+spDedupRecord = <|"Expression" -> spDedupExpression,
+  "OriginalExpression" -> spDedupExpression, "MassRules" -> {}|>;
+spDedupMassRecord = <|"Expression" -> 1/(spXi3 + Mass[3]),
+  "OriginalExpression" -> 1/(spXi3 + Mass[3])^3, "MassRules" -> {Mass[3] -> 0}|>;
+spDedupMassRecordOther = <|"Expression" -> 1/(spXi3 + Mass[4]),
+  "OriginalExpression" -> 1/(spXi3 + Mass[4])^3, "MassRules" -> {Mass[4] -> 0}|>;
+spDedupInventory = ConstructiveDiagrams`Private`poleDiscoverDenominators[
+  spDedupExpression, prTargets, {spDedupRecord, spDedupMassRecord}];
+spRepeatedRecords = Join[ConstantArray[spDedupRecord, 40],
+  ConstantArray[spDedupMassRecord, 40], ConstantArray[spDedupMassRecordOther, 40]];
+spRepeatedInventory = ConstructiveDiagrams`Private`poleDiscoverDenominators[
+  spDedupExpression, prTargets, spRepeatedRecords];
+check["repeated expressions and records retain exactly the complete apparent-pole inventory",
+  spRepeatedInventory === spDedupInventory];
+check["record duplicates are removed only after their individual mass rules are applied",
+  ConstructiveDiagrams`Private`poleDiscoverDenominators[0, prTargets,
+    {spDedupMassRecord, spDedupMassRecordOther}] ===
+  ConstructiveDiagrams`Private`poleDiscoverDenominators[1/spXi3 + 1/spXi3^3, prTargets, {}]];
+spDedupXiRow = SelectFirst[spRepeatedInventory, MemberQ[#["ApparentForms"], spXi3] &];
+check["distinct denominator powers retain their existing maximum multiplicity",
+  spDedupXiRow["Multiplicity"] === 3];
+spDedupPhysicalRow = SelectFirst[spRepeatedInventory,
+  #["CanonicalFactor"] === spDedupPhysical &];
+check["canonical pole grouping retains every distinct original denominator form",
+  spDedupPhysicalRow["Classification"] === "Physical" &&
+    spDedupPhysicalRow["Multiplicity"] === 2 &&
+    ContainsAll[spDedupPhysicalRow["ApparentForms"],
+      {spDedupPhysical, spDedupPhysicalSum, MomProd[1, 3]}]];
+DownValues[spPoleClassifyDelegate] = DownValues[
+  ConstructiveDiagrams`Private`poleClassifyFactor] /.
+    HoldPattern[ConstructiveDiagrams`Private`poleClassifyFactor] -> spPoleClassifyDelegate;
+spPoleClassificationCalls = {};
+spCountedInventory = Block[
+  {ConstructiveDiagrams`Private`poleClassifyFactor = Function[{factor, power, channels, metadata},
+    AppendTo[spPoleClassificationCalls, {factor, power}];
+    spPoleClassifyDelegate[factor, power, channels, metadata]]},
+  ConstructiveDiagrams`Private`poleDiscoverDenominators[
+    spDedupExpression, prTargets, spRepeatedRecords]];
+check["each distinct factored base and power is classified once despite repeated input records",
+  spCountedInventory === spDedupInventory && spPoleClassificationCalls =!= {} &&
+    DuplicateFreeQ[spPoleClassificationCalls]];
+check["deduplication does not merge distinct powers before classification",
+  ContainsAll[spPoleClassificationCalls, {{spXi3, 1}, {spXi3, 3}}]];
+check["overlapping factorizations preserve all factors without repeated classification",
+  MemberQ[spPoleClassificationCalls, {spXi3 - spXi4, 1}] &&
+    MemberQ[spPoleClassificationCalls, {spXi3 + spXi4, 1}] &&
+    Count[spPoleClassificationCalls, {spXi3 - spXi4, 1}] === 1];
+spSymbolicPowerInventory = ConstructiveDiagrams`Private`poleDiscoverDenominators[
+  1/spXi3^spSymbolicPolePower + 1/spXi3^3, prTargets, {}];
+check["symbolic denominator powers retain their unresolved multiplicity and diagnostics",
+  Length[spSymbolicPowerInventory] === 1 &&
+    First[spSymbolicPowerInventory]["Multiplicity"] === Missing["SymbolicPower"] &&
+    First[spSymbolicPowerInventory]["Classification"] === "Unclassified" &&
+    First[spSymbolicPowerInventory]["Diagnostics"] =!= {}];
+
+(* Rank-one momentum factorization is an ordinary external massless identity,
+   used only to discover the zero sets of denominator factors. *)
+spFactorMetadata = <|"ExternalLegs" -> Range[6],
+  "ExternalMassRules" -> Thread[(Mass /@ Range[6]) ->
+    {prElectronMass, prElectronMass, 0, 0, 0, 0}]|>;
+spFactorChain[kind_, middle_List, right_, left_ : 3] := SpinorChain @@ Join[
+  {Spinor["Helicity", kind, left]}, Mom /@ middle,
+  {Spinor["Helicity", If[EvenQ[Length[middle]], kind,
+    If[kind === "Angle", "Square", "Angle"]], right]}];
+spFactorFixtures = Join[Flatten[Table[{
+    spFactorChain[kind, {4}, 5], spFactorChain[kind, {4, 5}, 6],
+    spFactorChain[kind, {6, 4}, 6]}, {kind, {"Angle", "Square"}}]],
+  {SpinorChain[Spinor["Xi", "Angle", 7], Mom[4],
+    Spinor["Helicity", "Square", 5]], SpinorTrace[Mom[3], Mom[4]]}];
+spFactoredFixtures = ConstructiveDiagrams`Private`poleExternalMasslessFactor[
+    #, spFactorMetadata] & /@ spFactorFixtures;
+check["external massless denominator factors obey exact ordinary spinor identities",
+  AllTrue[MapThread[ReduceSpinorProducts[ReduceSpinContractions[#1] - #2] /.
+      spFactorMetadata["ExternalMassRules"] &, {spFactoredFixtures, spFactorFixtures}],
+    # === 0 &]];
+check["both starting chiralities and coinciding endpoint labels factor into simple brackets",
+  AllTrue[Take[spFactoredFixtures, 6], FreeQ[#, chain_SpinorChain /; Length[chain] > 2] &] &&
+    Last[spFactoredFixtures] === 2 MomProd[3, 4]];
+spOneMomentum = First[spFactorFixtures];
+spTwoMomenta = spFactorFixtures[[2]];
+spFactorGuards = {
+  spFactorChain["Angle", {1}, 5], spFactorChain["Angle", {7}, 5],
+  SpinorChain[Spinor["Helicity", "Angle", 3], Mom[Multiparticle[4, 5]],
+    Spinor["Helicity", "Square", 6]],
+  SpinorChain[Spinor["Helicity", "Angle", 3], Mom[4] + Mom[5],
+    Spinor["Helicity", "Square", 6]],
+  SpinorChain[Spinor["Helicity", "Angle", 3], Mom[4],
+    Spinor["Helicity", "Angle", 5]],
+  SpinorChain[Spinor["UnknownKind", "Angle", 3], Mom[4],
+    Spinor["Helicity", "Square", 5]],
+  SpinorTrace[Mom[1], Mom[4]], SpinorTrace[Mom[3], Mom[4], Mom[5], Mom[6]]};
+check["massive missing composite and invalid-chirality factors stay unchanged",
+  (ConstructiveDiagrams`Private`poleExternalMasslessFactor[#, spFactorMetadata] & /@
+    spFactorGuards) === spFactorGuards];
+check["missing external metadata cannot authorize momentum factorization",
+  ConstructiveDiagrams`Private`poleExternalMasslessFactor[
+    spOneMomentum, Missing["ExternalMassMetadata"]] === spOneMomentum];
+check["internal mass replacements never authorize an external momentum factorization",
+  ConstructiveDiagrams`Private`poleExternalMasslessFactor[
+    spFactorChain["Angle", {7}, 5], Join[spFactorMetadata, <|"ExternalMassRules" ->
+      Append[spFactorMetadata["ExternalMassRules"], Mass[Multiparticle[3, 4]] -> 0]|>]] ===
+    spFactorChain["Angle", {7}, 5]];
+spFactorRecords = {<|"ExternalMassRules" -> spFactorMetadata["ExternalMassRules"]|>};
+spChainInventory = ConstructiveDiagrams`Private`poleDiscoverDenominators[
+  1/spTwoMomenta^3, {}, spFactorRecords];
+check["two massless momentum insertions expose all three bracket zero sets and powers",
+  Length[spChainInventory] === 3 &&
+    Lookup[spChainInventory, "Classification"] === ConstantArray["Spurious", 3] &&
+    Lookup[spChainInventory, "Multiplicity"] === {3, 3, 3}];
+Do[
+  spBranchInventory = ConstructiveDiagrams`Private`poleDiscoverDenominators[
+    spOneMomentum^-spBranchPower, {}, spFactorRecords];
+  check["branch-sensitive massless chains remain unresolved " <> ToString[spBranchPower],
+    Length[spBranchInventory] === 1 &&
+      First[spBranchInventory]["Factor"] === spOneMomentum &&
+      First[spBranchInventory]["Classification"] === "Unclassified" &&
+      First[spBranchInventory]["Diagnostics"] =!= {}],
+  {spBranchPower, {1/2, spSymbolicPolePower}}];
+Do[
+  spZeroFactorInventory = ConstructiveDiagrams`Private`poleDiscoverDenominators[
+    1/spZeroFactor, {}, spFactorRecords];
+  check["identically zero massless denominators are retained " <> ToString[spZeroFactor, InputForm],
+    Length[spZeroFactorInventory] === 1 &&
+      First[spZeroFactorInventory]["Classification"] === "Unclassified" &&
+      AnyTrue[First[spZeroFactorInventory]["Diagnostics"],
+        StringContainsQ[#, "vanishes identically"] &]],
+  {spZeroFactor, {spFactorChain["Angle", {3}, 4],
+    spFactorChain["Angle", {4, 4}, 5], SpinorTrace[Mom[3], Mom[3]]}}];
+spAutoFactoredChain = spAutoNoPhysical[1/spOneMomentum];
+check["automatic finiteness checks test every massless-chain bracket factor on the full amplitude",
+  spAutoFactoredChain["SpuriousSummary"] === <|"FAIL" -> 2|> &&
+    AllTrue[spAutoFactoredChain["SpuriousChecks"], #["PoleOrder"] === 1 &]];
+spAutoCancelledChain = spAutoNoPhysical[
+  (spOneMomentum + 7)/spOneMomentum - 7/spOneMomentum];
+check["massless-chain apparent poles cancel on the full sum without rewriting its amplitude",
+  spAutoCancelledChain["SpuriousSummary"] === <|"PASS" -> 2|>];
+spAutoTrace = spAutoNoPhysical[1/SpinorTrace[Mom[3], Mom[4]]^2];
+check["two-momentum traces use the scalar invariant checker and both complex branches",
+  spAutoTrace["SpuriousSummary"] === <|"FAIL" -> 1|> &&
+    First[spAutoTrace["SpuriousChecks"]]["PoleOrder"] === 2 &&
+    First[spAutoTrace["SpuriousChecks"]]["CompletedSamples"] >= 2];
 
 spMasslessPhysicalRow = ReplacePart[First[prChannels], {
   -3 -> Multiparticle[3, 4], -2 -> 0, -1 -> 0}];

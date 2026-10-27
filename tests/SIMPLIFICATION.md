@@ -524,10 +524,18 @@ physical zero-mass channel and is not automatically labeled spurious.
 Discovery examines reciprocal factors in the given expression and its
 individual diagram inputs without first combining their denominators. It
 ignores coupling-only and mass-only constants, factors compound denominators,
-deduplicates repeated poles and retains explicit denominator powers. The
+deduplicates exact denominator obligations before factoring and classification,
+and retains distinct forms and explicit denominator powers. The
 actual surviving pole order is determined by the Laurent check on the sum.
 Supported spurious factors include massless external brackets, external/Xi
-brackets and quadratic momentum invariants. Generic momentum chains,
+brackets and quadratic momentum invariants. At integer denominator powers,
+chains containing only explicitly massless external momentum insertions are
+factored into alternating angle/square brackets, and two-momentum traces of
+those legs are reduced to scalar products. This changes the denominator
+inventory only: limits still evaluate the original full amplitude. It uses
+no internal-shell assumptions. Unsupported chirality, massive or composite
+insertions, identically zero denominators and branch-sensitive powers remain
+visible rather than being discarded. Generic momentum chains,
 unclassified factors, noninteger powers and unavailable charts appear as
 `UNRESOLVED`, not as a guessed pass. This is not a complete symbolic
 classification of every possible denominator representation.
@@ -863,6 +871,31 @@ The returned representative also agreed with an independent sum of all 24
 Feynman diagrams at three fresh off-cut samples, including every coherent
 massive-spin component. These sampled comparisons are not an analytic proof;
 automatic spurious-pole and high-energy diagnostics remain separate checks.
+
+The following notebook chapter treats
+`e,E,A.+,A.+,A.+,A.-`. Its Bose group is only `{{3, 4, 5}}`:
+the negative-helicity photon on leg 6 must not be averaged with those legs.
+This example is substantially larger. Its automatic grouped-input/channel
+space has 902 directions within a 1024-direction cap. The notebook requests
+28 fitting samples per channel, two held-out validation samples and a
+7200-second completion allowance. That allowance is not a measured fresh-run
+time guarantee.
+
+The mixed-helicity construction was checked using exact cut charts gathered
+in batches and retained during solver diagnosis. The 1568-row system has
+certified rank 575, retaining 327 independent coefficient directions rather
+than discarding them. All 14 physical channels and the complete affine family
+passed two fresh coherent-spin samples at each of the model mass and twice
+that mass. The selected amplitude agreed with the independent sum of 24
+Feynman diagrams at three fresh off-cut points, and its exact sampled
+high-energy test gave `E^-2`. Automatic denominator discovery retained all 14
+physical poles and identified 12 apparent spurious poles; every spurious
+Laurent check passed, including both branches of scalar massless invariants.
+No Xi remains, so explicit reference variation is not applicable, rather than
+an independent proof of reference independence. No Feynman answer or supplied correction basis
+entered the fit. These are sampled checks, not an analytic uniqueness or
+global-minimality proof; the fresh serial 28-sample notebook run has not been
+timed end to end.
 
 The generator also records and rejects a new continuation whose physical
 propagators retain powers greater than one after ordinary cancellation. Its

@@ -3418,6 +3418,41 @@ poleDiscoveryMetadata[channels_List, records_List] := Module[
   result
 ];
 
+(* Resolve rank-one external massless momenta only in denominator discovery.
+   The full amplitude and every internal momentum remain unchanged. *)
+poleExternalMasslessFactor[expression_, metadata_Association] := Module[
+  {external = Lookup[metadata, "ExternalLegs", {}], rules, masslessQ, flip,
+   factorChain},
+  rules = Cases[Lookup[metadata, "ExternalMassRules", {}],
+    rule : HoldPattern[Mass[_Integer] -> _] :> rule];
+  masslessQ[leg_] := MemberQ[external, leg] && MemberQ[rules, Mass[leg] -> 0];
+  flip[kind_] := If[kind === "Angle", "Square", "Angle"];
+  factorChain[chain_SpinorChain] := Module[
+    {parts = List @@ chain, left, right, middle, kind, current, factors = {}, leg},
+    If[Length[parts] < 3, Return[chain]];
+    left = First[parts]; right = Last[parts]; middle = Rest[Most[parts]];
+    If[!AllTrue[{left, right}, MatchQ[#, Spinor["Xi" | "Helicity" | "Spin",
+          "Angle" | "Square", _Integer]] &] ||
+        !AllTrue[middle, MatchQ[#, Mom[_Integer]] && masslessQ[#[[1]]] &],
+      Return[chain]];
+    kind = left[[2]];
+    If[right[[2]] =!= If[EvenQ[Length[middle]], kind, flip[kind]], Return[chain]];
+    current = left;
+    Do[
+      leg = momentum[[1]];
+      AppendTo[factors, SpinorChain[current, Spinor["Helicity", kind, leg]]];
+      kind = flip[kind]; current = Spinor["Helicity", kind, leg],
+      {momentum, middle}];
+    AppendTo[factors, SpinorChain[current, right]];
+    If[AnyTrue[factors, First[#] === Last[#] &], 0, Times @@ factors]
+  ];
+  expression /. {
+    chain_SpinorChain :> factorChain[chain],
+    trace : SpinorTrace[Mom[i_Integer], Mom[j_Integer]] /;
+        masslessQ[i] && masslessQ[j] :> (ReduceSpinorProducts[trace] /. rules)}
+];
+poleExternalMasslessFactor[expression_, _] := expression;
+
 (* Only external mass shells and momentum conservation enter this linear
    Gram representation. No diagram-local internal mass rules are used. *)
 poleScalarForm[expression_, metadata_Association] := Module[
@@ -3511,6 +3546,8 @@ poleClassifyFactor[factor_, power_, channels_List, metadata_] := Module[
   {canonical = factor, classification = "Unclassified", matches = {}, diagnostics = {},
    scalar, channelScalar, key, parts, pair, masses, inferred},
   scalar = poleScalarForm[factor, metadata];
+  If[MissingQ[scalar] && TrueQ[poleExternalMasslessFactor[factor, metadata] === 0],
+    scalar = 0];
   matches = Select[channels, Function[channel,
     poleScalarProportionalQ[scalar, poleScalarForm[channel["Propagator"], metadata]]]];
   If[matches =!= {},
@@ -3558,26 +3595,29 @@ poleDiscoverDenominators[expr_, channels_List, records_List] := Module[
   candidateFactorQ[factor_] := poleKinematicFactorQ[factor] ||
     (AssociationQ[metadata] && !FreeQ[factor, Mass[_Integer]] &&
       residueExactZero[factor /. metadata["ExternalMassRules"]]);
-  scanExpressions = Join[{expr}, Flatten[Function[record,
+  scanExpressions = DeleteDuplicates[Join[{expr}, Flatten[Function[record,
     {Lookup[record, "Expression", 0], Lookup[record, "OriginalExpression", 0]} /.
-      Lookup[record, "MassRules", {}]] /@ records, 1]];
-  denominators = Join[Cases[scanExpressions, Power[base_, exponent_] /;
+      Lookup[record, "MassRules", {}]] /@ records, 1]]];
+  denominators = DeleteDuplicates[Join[Cases[scanExpressions, Power[base_, exponent_] /;
       candidateFactorQ[base] &&
       !(NumericQ[exponent] && TrueQ[exponent >= 0]) :> {base, -exponent}, {0, Infinity}],
     Cases[scanExpressions, reciprocal : ((Csc | Sec | Cot | Csch | Sech | Coth)[argument_]) /;
         poleKinematicFactorQ[argument] :>
       {Switch[Head[reciprocal], Csc, Sin[argument], Sec, Cos[argument], Cot, Tan[argument],
-        Csch, Sinh[argument], Sech, Cosh[argument], Coth, Tanh[argument]], 1}, {0, Infinity}]];
-  factorPieces[base_, power_] := Module[{factored, factors},
+        Csch, Sinh[argument], Sech, Cosh[argument], Coth, Tanh[argument]], 1}, {0, Infinity}]]];
+  factorPieces[base_, power_] := Module[{factored, factors, transformed},
+    transformed = If[IntegerQ[power], poleExternalMasslessFactor[base, metadata], base];
     factored = If[IntegerQ[power],
-      Quiet[Check[TimeConstrained[Factor[base, Extension -> Automatic], 2, base], base]], base];
+      Quiet[Check[TimeConstrained[Factor[transformed, Extension -> Automatic], 2,
+        transformed], transformed]], transformed];
+    If[TrueQ[factored === 0], Return[{{base, power}}]];
     factors = If[Head[factored] === Times, List @@ factored, {factored}];
     Select[Map[Function[factor, If[Head[factor] === Power,
       {factor[[1]], power factor[[2]]}, {factor, power}]],
       Select[factors, candidateFactorQ]],
       !(NumericQ[Last[#]] && TrueQ[Last[#] <= 0]) &]
   ];
-  pieces = Flatten[(factorPieces @@ # &) /@ denominators, 1];
+  pieces = DeleteDuplicates[Flatten[(factorPieces @@ # &) /@ denominators, 1]];
   pieces = Select[pieces, Function[piece,
     With[{scalar = poleScalarForm[First[piece], metadata]},
       MissingQ[scalar] || !FreeQ[scalar, _poleGram] || residueExactZero[scalar]]]];
@@ -3816,7 +3856,7 @@ spuriousCheckOne[expr_, factor_, channels_, seconds_, samples_, seed_, rules_, m
   (* Retrying a singular chart must not change the branch being tested. *)
   retryStride = If[specification["Mode"] === "Invariant",
     4 Ceiling[effectiveSamples/4], effectiveSamples];
-  completed = TimeConstrained[
+  completed = Quiet[TimeConstrained[
     Do[
       result = Missing["NoRegularSample"];
       Do[
@@ -3839,7 +3879,7 @@ spuriousCheckOne[expr_, factor_, channels_, seconds_, samples_, seed_, rules_, m
         Break[], {attempt, 0, 5}];
       If[MissingQ[result], result = <|"Sample" -> sample, "Status" -> "UNRESOLVED"|>];
       AppendTo[results, result], {sample, effectiveSamples}]; True,
-    seconds, False];
+    seconds, False], {Power::infy, Infinity::indet}];
   status = Which[AnyTrue[results, #["Status"] === "FAIL" &], "FAIL",
     TrueQ[completed] && Length[results] === effectiveSamples &&
       AllTrue[results, #["Status"] === "PASS" &], "PASS", True, "UNRESOLVED"];

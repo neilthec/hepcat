@@ -336,6 +336,13 @@ reference independence; no user pole list is required. Request `"Residues"`
 for visible pole samples, `"HighEnergy"` for energy samples, `"References"`
 for reference comparisons, `"Summary"` for counts, or `"Details"` for the full report.
 
+Automatic denominator discovery removes duplicate exact obligations before
+factoring and classification. At integer denominator powers it can expose
+bracket factors of chains built only from explicitly massless external momenta,
+and reduce their two-momentum traces. This affects only the inventory: the
+Laurent checks use the original summed amplitude. Do not add internal-shell
+assumptions or discard zero, unsupported or branch-sensitive denominators.
+
 - `PASS` means agreement or finiteness at the recorded samples, not a general
   analytic proof. Vary reproducible samples and parameters as supplementary
   evidence, and distinguish such tests from symbolic proofs.
