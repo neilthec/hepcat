@@ -2525,11 +2525,211 @@ check["component-first spin extraction handles empty arguments, cancellations an
         5 acPolynomialS^2/7 + I acPolynomialT/11, acPolynomialSpin]];
 (* End exact polynomial coefficient and linear-normalization shortcuts. *)
 
+(* The public completion clock also bounds its certified modular backend. *)
+acBudgetUnknowns = Array[Unique["acBudgetCoefficient"] &, 64];
+acBudgetEquations = Take[acBudgetUnknowns, 63] - Range[63];
+acBudgetSeen = {};
+acBudgetDefault = Block[{ConstructiveDiagrams`Private`completionCertifiedModularReduce =
+    Function[{matrix, constant, budget}, AppendTo[acBudgetSeen, budget]; Missing["TestNativeFallback"]]},
+  ConstructiveDiagrams`Private`completionSolveLinear[acBudgetEquations, acBudgetUnknowns]];
+check["two-argument linear solving retains the sixty-second modular default",
+  acBudgetSeen === {60} && acBudgetDefault["Status"] === "UNDERDETERMINED" &&
+    (Take[acBudgetUnknowns, 63] /. acBudgetDefault["SolutionRules"]) === Range[63] &&
+    acBudgetDefault["FreeParameters"] === Take[acBudgetUnknowns, -1]];
+acBudgetSeen = {};
+acBudgetExplicit = Block[{ConstructiveDiagrams`Private`completionCertifiedModularReduce =
+    Function[{matrix, constant, budget}, AppendTo[acBudgetSeen, budget]; Missing["TestNativeFallback"]]},
+  ConstructiveDiagrams`Private`completionSolveLinear[acBudgetEquations, acBudgetUnknowns, 137]];
+check["an explicit modular budget is forwarded without changing exact native fallback",
+  acBudgetSeen === {137} && acBudgetExplicit === acBudgetDefault];
+acBudgetRefined = Block[{ConstructiveDiagrams`Private`completionSolveLinear =
+    Function[{equations, unknowns, budget}, AppendTo[acBudgetSeen, budget];
+      <|"Status" -> "UNDERDETERMINED", "SolutionRules" -> {}, "FreeParameters" -> unknowns,
+        "Rank" -> 0, "Diagnostics" -> {}|>]},
+  ConstructiveDiagrams`Private`completionRefineLinear[
+    <|"SolutionRules" -> {}, "FreeParameters" -> acBudgetUnknowns, "Rank" -> 0|>, {}, 211]];
+check["linear refinement forwards its explicit backend budget",
+  Last[acBudgetSeen] === 211 && acBudgetRefined["Status"] === "UNDERDETERMINED"];
+acBudgetSeen = {};
+acBudgetInvalid = Block[{ConstructiveDiagrams`Private`completionCertifiedModularReduce =
+    Function[AppendTo[acBudgetSeen, "UnexpectedBackendCall"]; Missing["NotCalled"]]},
+  ConstructiveDiagrams`Private`completionSolveLinear[acBudgetEquations, acBudgetUnknowns, #] & /@
+    {0, -1, Infinity, "Invalid"}];
+check["exhausted or invalid modular budgets remain unresolved without launching a backend",
+  acBudgetSeen === {} && AllTrue[acBudgetInvalid, #["Status"] === "UNRESOLVED" &]];
+check["public completion forwards a finite remaining budget capped at nine hundred seconds",
+  !FreeQ[DownValues[CompleteFactorization],
+    HoldPattern[ConstructiveDiagrams`Private`completionSolveLinear[_, _, _]]]];
+acBudgetPublicExpression = First[Cases[DownValues[CompleteFactorization],
+  HoldPattern[ConstructiveDiagrams`Private`completionSolveLinear[_, _, budget_]] :>
+    HoldComplete[budget], Infinity]];
+acBudgetSecondsSymbol = First[Cases[acBudgetPublicExpression,
+  symbol_Symbol /; SymbolName[Unevaluated[symbol]] === "seconds" :> symbol, Infinity]];
+acBudgetStartSymbol = First[Cases[acBudgetPublicExpression,
+  symbol_Symbol /; SymbolName[Unevaluated[symbol]] === "start" :> symbol, Infinity]];
+acBudgetPublicValue[outer_, elapsed_] := ReleaseHold[acBudgetPublicExpression /.
+  {acBudgetSecondsSymbol -> outer, acBudgetStartSymbol -> 100 - elapsed,
+    HoldPattern[AbsoluteTime[]] -> 100}];
+check["public modular budget is bounded for infinite and long completion clocks",
+  acBudgetPublicValue[Infinity, 0] === 900 && acBudgetPublicValue[14400, 1] === 900];
+check["public modular budget cannot exceed the actual remaining completion clock",
+  acBudgetPublicValue[60, 17] === 43 && acBudgetPublicValue[60, 61] === 0];
+(* End modular backend budget forwarding. *)
+
+(* A selected multiparticle shell fixes a pair sum, never an individual pair. *)
+acCutDotRules = {Mass[1] -> acCutM1, Mass[2] -> acCutM2,
+  Mass[3] -> acCutM3, Mass[4] -> acCutM4};
+acCutDotProp = PropDen[Mom[Multiparticle[1, 2, 3]], acCutMass];
+acCutDotOtherProp = PropDen[Mom[Multiparticle[1, 4]], acCutOtherMass];
+acCutDotSum = MomProd[1, 2] + MomProd[1, 3] + MomProd[2, 3];
+acCutDotConstant = (acCutMass^2 - acCutM1^2 - acCutM2^2 - acCutM3^2)/2;
+acCutDotInverse = 1/(2 + MomProd[1, 2]);
+acCutDotInput = acCutDotSum/(acCutDotProp acCutDotOtherProp) +
+  MomProd[1, 4]/acCutDotOtherProp + acCutDotInverse;
+acCutDotTrials = ConstructiveDiagrams`Private`completionCutInvariantTrials[
+  acCutDotInput, {1, 2, 3}, acCutMass, acCutDotRules];
+acCutDotExpected = acCutDotConstant/(acCutDotProp acCutDotOtherProp) +
+  MomProd[1, 4]/acCutDotOtherProp + acCutDotInverse;
+check["a general three-particle shell offers each applicable scalar-invariant pivot",
+  Length[acCutDotTrials] === 3 &&
+    AllTrue[acCutDotTrials, #["Expression"] === acCutDotExpected &]];
+check["cut-invariant alternatives protect all inverse factors and both propagators",
+  AllTrue[acCutDotTrials, !FreeQ[#["Expression"], acCutDotInverse] &&
+    !FreeQ[#["Expression"], acCutDotProp] &&
+    !FreeQ[#["Expression"], acCutDotOtherProp] &]];
+check["cut-invariant alternatives do not impose an unselected channel shell",
+  AllTrue[acCutDotTrials, !FreeQ[#["Expression"], MomProd[1, 4]] &]];
+check["no invariant continuation is generated from an inverse-only occurrence",
+  ConstructiveDiagrams`Private`completionCutInvariantTrials[
+    acCutDotInverse, {1, 2, 3}, acCutMass, acCutDotRules] === {}];
+check["two-particle cuts need no optional general-cut continuation",
+  ConstructiveDiagrams`Private`completionCutInvariantTrials[
+    acCutDotInput, {1, 2}, acCutMass, acCutDotRules] === {}];
+check["unknown-sign powers remain protected in general cut-invariant trials",
+  ConstructiveDiagrams`Private`completionCutInvariantTrials[
+    MomProd[1, 2]^acCutUnknownPower, {1, 2, 3}, acCutMass, acCutDotRules] === {}];
+check["missing external masses and duplicate cut labels do not justify a continuation",
+  MissingQ[ConstructiveDiagrams`Private`completionCutInvariantTrials[
+    acCutDotInput, {1, 2, 3}, acCutMass, Take[acCutDotRules, 2]]] &&
+  MissingQ[ConstructiveDiagrams`Private`completionCutInvariantTrials[
+    acCutDotInput, {1, 2, 2}, acCutMass, acCutDotRules]]];
+acCutFourProp = PropDen[Mom[Multiparticle[1, 2, 3, 4]], acCutMass];
+acCutFourSum = Total[MomProd @@@ Subsets[{1, 2, 3, 4}, {2}]];
+acCutFourConstant = (acCutMass^2 - acCutM1^2 - acCutM2^2 - acCutM3^2 - acCutM4^2)/2;
+acCutFourTrials = ConstructiveDiagrams`Private`completionCutInvariantTrials[
+  acCutFourSum/acCutFourProp, {1, 2, 3, 4}, acCutMass, acCutDotRules];
+check["general cut-invariant continuations also cover four-particle cuts with arbitrary masses",
+  Length[acCutFourTrials] === 6 &&
+    AllTrue[acCutFourTrials, #["Expression"] === acCutFourConstant/acCutFourProp &]];
+check["the generated changes are selected-shell multiples rather than off-cut identities",
+  AllTrue[acCutDotTrials, #["Expression"] =!= acCutDotInput &&
+    Together[acCutDotInput - #["Expression"] -
+      (acCutDotSum - acCutDotConstant)/(acCutDotProp acCutDotOtherProp)] === 0 &]];
+acGeneralCutExternal = {Mass[1] -> 1, Mass[2] -> 1,
+  Mass[3] -> 0, Mass[4] -> 0, Mass[5] -> 0, Mass[6] -> 0};
+acGeneralCutProp = PropDen[Mom[Multiparticle[1, 3, 4]], 1];
+acGeneralCutSource = (MomProd[1, 3] + MomProd[3, 4])/acGeneralCutProp;
+acGeneralCutChannel = <|"Cut" -> {1, 3, 4}, "Mass" -> 1,
+  "ExternalLegs" -> Range[6], "ExternalMassRules" -> acGeneralCutExternal,
+  "Propagator" -> acGeneralCutProp, "Complete" -> True,
+  "StateSum" -> MomProd[1, 3] + MomProd[3, 4]|>;
+acGeneralCutNormalized = <|"Targets" -> {acGeneralCutChannel},
+  "ExternalMassRules" -> acGeneralCutExternal|>;
+acGeneralCutSaved = acGeneralCutNormalized;
+acGeneralCutSpace = ConstructiveDiagrams`Private`completionSelectedChannelBasis[
+  acGeneralCutNormalized, <|"Variants" -> {}|>, 64, {}, 1729, 20];
+check["selected-channel construction retains the original source and adds a genuine three-leg direction",
+  AssociationQ[acGeneralCutSpace] &&
+    AnyTrue[acGeneralCutSpace["Sources"], Together[# - acGeneralCutSource] === 0 &] &&
+    MemberQ[acGeneralCutSpace["Basis"], MomProd[1, 4]/acGeneralCutProp]];
+acGeneralCutChecks = Select[acGeneralCutSpace["Verification"],
+  #["Mode"] === "SelectedCutInvariantReduction" &];
+check["each whole general-cut continuation passes its selected residue before term splitting",
+  acGeneralCutChecks =!= {} && AllTrue[acGeneralCutChecks,
+    #["Verification"]["Status"] === "PASS" &&
+      Length[#["Verification"]["Samples"]] === 2 &] &&
+    acGeneralCutNormalized === acGeneralCutSaved];
+acGeneralCutLimited = ConstructiveDiagrams`Private`completionSelectedChannelBasis[
+  acGeneralCutNormalized, <|"Variants" -> {}|>, 2, {}, 1729, 20];
+check["the optional invariant term cap preserves the original space and records incomplete enumeration",
+  AssociationQ[acGeneralCutLimited] && Length[acGeneralCutLimited["Basis"]] === 2 &&
+    acGeneralCutLimited["ConstructionStatus"] === "PARTIAL" &&
+    AnyTrue[acGeneralCutLimited["Sources"], Together[# - acGeneralCutSource] === 0 &] &&
+    AnyTrue[acGeneralCutLimited["Diagnostics"],
+      AssociationQ[#] && Lookup[#, "Reason", None] === "CutInvariantCorrectionSpaceLimit" &]];
+acGeneralCutPartial = Block[
+  {ConstructiveDiagrams`Private`completionCutInvariantTrials = Function[
+    Pause[2]; {}]},
+  ConstructiveDiagrams`Private`completionSelectedChannelBasis[
+    acGeneralCutNormalized, <|"Variants" -> {}|>, 64, {}, 1729, 1]];
+check["an optional continuation timeout retains certified original directions with an explicit partial marker",
+  AssociationQ[acGeneralCutPartial] &&
+    acGeneralCutPartial["ConstructionStatus"] === "PARTIAL" &&
+    TrueQ[acGeneralCutPartial["OriginalSourcesComplete"]] &&
+    !TrueQ[acGeneralCutPartial["InvariantContinuationsComplete"]] &&
+    AnyTrue[acGeneralCutPartial["Sources"], Together[# - acGeneralCutSource] === 0 &] &&
+    acGeneralCutPartial["Diagnostics"] =!= {}];
+acGeneralCutOriginalLimit = ConstructiveDiagrams`Private`completionSelectedChannelBasis[
+  acGeneralCutNormalized, <|"Variants" -> {}|>, 1, {}, 1729, 20];
+check["original terms are cap-checked before any over-cap partial space can be retained",
+  FailureQ[acGeneralCutOriginalLimit] &&
+    First[acGeneralCutOriginalLimit] === "CorrectionSpaceLimit"];
+acGeneralCutMissing = Block[
+  {ConstructiveDiagrams`Private`completionCutInvariantTrials = Function[Missing["MissingExternalMass"]]},
+  ConstructiveDiagrams`Private`completionSelectedChannelBasis[
+    acGeneralCutNormalized, <|"Variants" -> {}|>, 64, {}, 1729, 20]];
+check["missing invariant input is reported as incomplete optional enumeration",
+  AssociationQ[acGeneralCutMissing] && acGeneralCutMissing["ConstructionStatus"] === "PARTIAL" &&
+    !TrueQ[acGeneralCutMissing["InvariantContinuationsComplete"]] &&
+    AnyTrue[acGeneralCutMissing["Diagnostics"],
+      AssociationQ[#] && Lookup[#, "Reason", None] === "CutInvariantEnumerationUnavailable" &]];
+acGeneralCutPoleCalls = 0;
+acGeneralCutUnknownPoles = Block[
+  {ConstructiveDiagrams`Private`completionHigherPhysicalPoles = Function[
+    acGeneralCutPoleCalls++;
+    If[acGeneralCutPoleCalls <= 2, {}, Failure["ClassificationUnavailable", <||>]]]},
+  ConstructiveDiagrams`Private`completionSelectedChannelBasis[
+    acGeneralCutNormalized, <|"Variants" -> {}|>, 64, {}, 1729, 20]];
+check["unresolved physical-pole classification marks the optional enumeration partial",
+  AssociationQ[acGeneralCutUnknownPoles] && acGeneralCutUnknownPoles["ConstructionStatus"] === "PARTIAL" &&
+    AnyTrue[acGeneralCutUnknownPoles["Diagnostics"], AssociationQ[#] &&
+      Lookup[#, "Reason", None] === "CutInvariantPoleClassificationUnavailable" &]];
+acGeneralCutVerificationCalls = 0;
+acGeneralCutUnknownVerification = Block[
+  {ConstructiveDiagrams`Private`completionContinuationCheck = Function[
+    acGeneralCutVerificationCalls++;
+    <|"Status" -> If[acGeneralCutVerificationCalls === 1, "PASS", "UNRESOLVED"],
+      "Samples" -> {}|>]},
+  ConstructiveDiagrams`Private`completionSelectedChannelBasis[
+    acGeneralCutNormalized, <|"Variants" -> {}|>, 64, {}, 1729, 20]];
+check["unresolved selected-residue verification cannot claim complete optional enumeration",
+  AssociationQ[acGeneralCutUnknownVerification] &&
+    acGeneralCutUnknownVerification["ConstructionStatus"] === "PARTIAL" &&
+    AnyTrue[acGeneralCutUnknownVerification["Diagnostics"], AssociationQ[#] &&
+      Lookup[#, "Reason", None] === "CutInvariantVerificationUnresolved" &]];
+acGeneralCutPoleCalls = 0;
+acGeneralCutRejectedPoles = Block[
+  {ConstructiveDiagrams`Private`completionHigherPhysicalPoles = Function[
+    acGeneralCutPoleCalls++; If[acGeneralCutPoleCalls <= 2, {}, {acGeneralCutProp}]]},
+  ConstructiveDiagrams`Private`completionSelectedChannelBasis[
+    acGeneralCutNormalized, <|"Variants" -> {}|>, 64, {}, 1729, 20]];
+check["known higher-order poles are explicitly rejected without pretending their classification was unresolved",
+  AssociationQ[acGeneralCutRejectedPoles] &&
+    acGeneralCutRejectedPoles["ConstructionStatus"] === "COMPLETE" &&
+    AnyTrue[acGeneralCutRejectedPoles["Diagnostics"], AssociationQ[#] &&
+      Lookup[#, "Status", None] === "REJECTED" &&
+      Lookup[#, "Reason", None] === "CutInvariantHigherOrderPhysicalPoles" &]];
+(* End general selected-cut invariant continuations. *)
+
 (* Private completion-helper reload migration. *)
 (* Reloading upgrades the changed private helper signatures without clearing
    unrelated private definitions in the user's running kernel. *)
 ConstructiveDiagrams`Private`completionIndependentBasis[legacyBasis_List] :=
   "LegacyOneArgumentPruning";
+ConstructiveDiagrams`Private`completionSolveLinear[legacyEquations_List, legacyUnknowns_List] :=
+  "LegacyTwoArgumentLinearSolver";
+ConstructiveDiagrams`Private`completionRefineLinear[legacyPrevious_Association, legacyEquations_List] :=
+  "LegacyTwoArgumentLinearRefinement";
 ConstructiveDiagrams`Private`completionSelectedChannelBasis[legacyInput_Association,
   legacyReferences_Association, legacyLimit_Integer, legacyRules_List,
   legacySeed_Integer, legacySeconds_ : 20] := "LegacySelectedChannelBudget";
@@ -2540,6 +2740,13 @@ check["the reload regression installs the more-specific legacy pruning signature
   ConstructiveDiagrams`Private`completionIndependentBasis[acFormalBasis] ===
     "LegacyOneArgumentPruning"];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
+check["package reload removes stale two-argument linear solver and refinement definitions",
+  Length[DownValues[ConstructiveDiagrams`Private`completionSolveLinear]] === 1 &&
+    Length[DownValues[ConstructiveDiagrams`Private`completionRefineLinear]] === 1 &&
+    ConstructiveDiagrams`Private`completionSolveLinear[{}, {acBudgetX}]["Status"] === "UNDERDETERMINED" &&
+    ConstructiveDiagrams`Private`completionRefineLinear[
+      <|"SolutionRules" -> {}, "FreeParameters" -> {acBudgetX}, "Rank" -> 0|>, {}]["Status"] ===
+        "UNDERDETERMINED"];
 check["package reload replaces the stale one-argument pruning signature",
   Length[DownValues[ConstructiveDiagrams`Private`completionIndependentBasis]] === 1 &&
     ConstructiveDiagrams`Private`completionIndependentBasis[acFormalBasis] ===

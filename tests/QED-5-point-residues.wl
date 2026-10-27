@@ -675,5 +675,185 @@ qedFivePointModelAmplitudes[] := Module[
   MapThread[{#1, factor, removeFactor[#2]} &, {particles, amplitudes}]
 ];
 
+(* A worked minimal-QED example, not a general amplitude bootstrap.
+   The [5,3> shift acts on every typed occurrence in the complete lower
+   amplitudes, including inverse factors and their internal propagators. *)
+qedBalancedSixPointShift[expression_, variable_Symbol] := Module[
+  {shiftSquare = 5, shiftAngle = 3, external = Range[6], rankOne = Unique["qedShiftQ"],
+   tag = Unique["qedShiftFailure"], fail, kind, opposite, helicity, members,
+   eta, twiceQDot, linearTerms, linearEta, linearTwiceQDot, endpointChoices,
+   momentumChoices, splitRankOne, shiftChain, shift},
+  fail[reason_, data_: <||>] := Throw[Failure[reason, data], tag];
+  kind[spinor_] := ConstructiveDiagrams`Private`rspSpinorType[spinor];
+  opposite[type_] := If[type === "Angle", "Square", "Angle"];
+  helicity[type_, leg_] := Spinor["Helicity", type, leg];
+  members[label_Integer] /; MemberQ[external, label] := {label};
+  members[label_Multiparticle] := Flatten[members /@ List @@ label];
+  members[label_] := fail["UnsupportedMomentumLabel", <|"Label" -> label|>];
+  eta[label_] := Count[members[label], shiftSquare] - Count[members[label], shiftAngle];
+  twiceQDot[label_] := Total[Function[leg,
+      If[MemberQ[{shiftSquare, shiftAngle}, leg], 0,
+        SpinorChain[helicity["Angle", shiftSquare], Mom[leg],
+          helicity["Square", shiftAngle]]]] /@ members[label]];
+  linearTerms[momentum_] := Module[{terms},
+    terms = ConstructiveDiagrams`Private`rspLinearMomentumTerms[momentum];
+    If[terms === $Failed || !AllTrue[terms,
+        MatchQ[Last[#], Mom[_Integer]] && MemberQ[external, Last[#][[1]]] &&
+          FreeQ[First[#], variable | rankOne] &],
+      fail["UnsupportedLinearMomentum", <|"Momentum" -> momentum|>]];
+    terms];
+  linearEta[momentum_] := Total[(First[#] eta[Last[#][[1]]]) & /@ linearTerms[momentum]];
+  linearTwiceQDot[momentum_] := Total[(First[#] twiceQDot[Last[#][[1]]]) & /@ linearTerms[momentum]];
+  endpointChoices[spinor_] := Which[
+    spinor === helicity["Square", shiftSquare],
+      {{1, spinor}, {variable, helicity["Square", shiftAngle]}},
+    spinor === helicity["Angle", shiftAngle],
+      {{1, spinor}, {-variable, helicity["Angle", shiftSquare]}},
+    MatchQ[spinor, Spinor["Xi", "Angle" | "Square", _Integer]], {{1, spinor}},
+    kind[spinor] =!= None && FreeQ[spinor, _SpinorHat], {{1, spinor}},
+    True, fail["UnsupportedSpinorEndpoint", <|"Spinor" -> spinor|>]];
+  momentumChoices[momentum_] := Flatten[Function[term,
+      Join[{{First[term], Last[term]}},
+        If[eta[Last[term][[1]]] === 0, {},
+          {{First[term] variable eta[Last[term][[1]]], rankOne}}]]] /@ linearTerms[momentum], 1];
+  splitRankOne[parts_List] := Module[{position, beforeKind, prefixEnd, suffixStart},
+    position = FirstPosition[parts, rankOne, Missing["NoShiftMomentum"]];
+    If[MissingQ[position], Return[SpinorChain @@ parts]];
+    position = First[position];
+    beforeKind = If[EvenQ[position - 2], kind[First[parts]], opposite[kind[First[parts]]]];
+    {prefixEnd, suffixStart} = If[beforeKind === "Angle",
+      {helicity["Angle", shiftSquare], helicity["Square", shiftAngle]},
+      {helicity["Square", shiftAngle], helicity["Angle", shiftSquare]}];
+    splitRankOne[Join[Take[parts, position - 1], {prefixEnd}]] *
+      splitRankOne[Join[{suffixStart}, Drop[parts, position]]]];
+  shiftChain[chain_SpinorChain] := Module[{parts = List @@ chain, slots, choices},
+    If[Length[parts] < 2 || kind[First[parts]] === None || kind[Last[parts]] === None,
+      fail["UnsupportedSpinorChain", <|"Chain" -> chain|>]];
+    slots = Rest[Most[parts]];
+    If[(kind[First[parts]] === kind[Last[parts]]) =!= EvenQ[Length[slots]],
+      fail["UnsupportedSpinorChainParity", <|"Chain" -> chain|>]];
+    choices = Join[{endpointChoices[First[parts]]}, momentumChoices /@ slots,
+      {endpointChoices[Last[parts]]}];
+    If[Times @@ (Length /@ choices) > 4096,
+      fail["ShiftChainExpansionLimit", <|"Limit" -> 4096|>]];
+    Total[(Times @@ (First /@ #)) splitRankOne[Last /@ #] & /@ Tuples[choices]]];
+  shift[value_] := Which[
+    AtomQ[value], value,
+    Head[value] === SpinorChain, shiftChain[value],
+    MatchQ[value, SpinorTrace[_, _]], shift[ReduceSpinorProducts[value]],
+    Head[value] === SpinorTrace,
+      fail["UnsupportedLongSpinorTrace", <|"Trace" -> value|>],
+    Head[value] === PropDen && MemberQ[{2, 3}, Length[value]],
+      value + variable linearEta[First[value]] linearTwiceQDot[First[value]],
+    Head[value] === MomProd && Length[value] === 2,
+      value + variable/2 (eta[value[[1]]] twiceQDot[value[[2]]] +
+        eta[value[[2]]] twiceQDot[value[[1]]]),
+    Head[value] === Mandelstahm && Length[value] === 2,
+      value + variable (eta[value[[1]]] + eta[value[[2]]]) *
+        (twiceQDot[value[[1]]] + twiceQDot[value[[2]]]),
+    MatchQ[value, Power[_Mom, 2]],
+      value + variable linearEta[First[value]] linearTwiceQDot[First[value]],
+    FreeQ[value, _Mom | _MomHat | _MomQ | _MomProd | _Mandelstahm |
+      _Spinor | _SpinorHat | _SpinorChain | _SpinorTrace | _PropDen |
+      _xFactor | _xTildeFactor], value,
+    MemberQ[{Plus, Times, Power}, Head[value]], Map[shift, value],
+    True, fail["UnsupportedShiftedStructure", <|"Expression" -> value|>]];
+  Catch[shift[expression], tag]
+];
+
+qedBalancedSixPointZeroBrackets[expression_] := expression /. HoldPattern[
+  SpinorChain[spinor : Spinor["Helicity", "Angle" | "Square", _Integer], same_]] /;
+    spinor === same :> 0;
+
+Options[qedBalancedSixPointAmplitude] = {"ReturnDetails" -> False,
+  "TimeConstraint" -> 120, "ProgressReporting" -> True, "ProgressFunction" -> Automatic};
+qedBalancedSixPointAmplitude[model_, OptionsPattern[]] := Module[
+  {particles = {"e", "E", "A.+", "A.+", "A.-", "A.-"}, external = Range[6],
+   seconds = OptionValue["TimeConstraint"], details = OptionValue["ReturnDetails"],
+   enabled = OptionValue["ProgressReporting"], callback = OptionValue["ProgressFunction"],
+   started = AbsoluteTime[], tag = Unique["qedBalancedSixPointFailure"], fail, emit,
+   variable = Unique["qedBalancedSixPointZ"], result},
+  If[!NumericQ[seconds] || !TrueQ[0 < seconds <= 120] ||
+      !MemberQ[{True, False}, details] || !MemberQ[{True, False}, enabled] ||
+      !(callback === Automatic || MatchQ[callback, _Function | _Symbol]),
+    Return[Failure["InvalidQEDExampleOptions", <|"MessageTemplate" ->
+      "Use a positive TimeConstraint no greater than 120 seconds and Boolean ReturnDetails/ProgressReporting."|>]]];
+  fail[reason_, data_: <||>] := Throw[Failure[reason, Join[<|
+    "MessageTemplate" -> "The worked balanced-helicity QED recursion could not be completed.",
+    "Reason" -> reason|>, data]], tag];
+  emit[completed_, cut_: None] := ConstructiveDiagrams`Private`completionProgress[callback, enabled,
+    <|"Stage" -> "QED six-point lower-amplitude recursion", "Completed" -> completed,
+      "Total" -> 8, "Cut" -> cut, "Elapsed" -> AbsoluteTime[] - started|>];
+  result = TimeConstrained[Catch[Module[
+    {channels, externalRules, normalized, targets, separated, expectedCuts,
+     rows = {}, target, cut, denominator, slope, root, assigned, shifted, term,
+     referenceMode, eta, amplitude},
+    If[!ListQ[model] || Length[model] =!= 4 || !AllTrue[model, ListQ] ||
+        !AllTrue[model[[1]], ListQ[#] && Length[#] >= 6 &],
+      fail["ExpectedConstructiveQEDModel"]];
+    emit[0];
+    channels = FactorizationAmplitudeChannels[particles, model];
+    If[!ListQ[channels] || Length[channels] =!= 14,
+      fail["ExpectedFourteenKnownPhysicalChannels"]];
+    externalRules = Thread[Mass /@ external -> Take[First[channels], 6]];
+    If[(Mass[1] /. externalRules) =!= (Mass[2] /. externalRules) ||
+        (Mass[1] /. externalRules) === 0 ||
+        !AllTrue[Range[3, 6], (Mass[#] /. externalRules) === 0 &],
+      fail["ExpectedOneMassiveElectronPairAndFourPhotons"]];
+    normalized = ConstructiveDiagrams`Private`residueSimpleInputs[
+      {externalRules, 0}, channels, model];
+    If[!AssociationQ[normalized], fail["ChannelNormalizationFailed"]];
+    targets = normalized["Targets"];
+    If[Length[targets] =!= 14 || !AllTrue[targets, TrueQ[Lookup[#, "Complete", False]] &],
+      fail["IncompleteLowerPointAmplitudes"]];
+    separated = Select[targets, Abs[Count[#["Cut"], 5] - Count[#["Cut"], 3]] === 1 &];
+    expectedCuts = Sort[{{1, 3}, {1, 5}, {2, 3}, {2, 5},
+      {1, 3, 4}, {1, 3, 6}, {1, 4, 5}, {1, 5, 6}}];
+    If[Length[separated] =!= 8 || Sort[Lookup[separated, "Cut"]] =!= expectedCuts,
+      fail["UnexpectedShiftedChannelInventory"]];
+    Do[
+      cut = target["Cut"]; eta = Count[cut, 5] - Count[cut, 3];
+      denominator = PropDen[Mom[Multiparticle @@ cut], target["Mass"]];
+      slope = eta Total[Function[leg, If[MemberQ[{3, 5}, leg], 0,
+          SpinorChain[Spinor["Helicity", "Angle", 5], Mom[leg],
+            Spinor["Helicity", "Square", 3]]]] /@ cut];
+      If[slope === 0, fail["IdenticallyDegenerateShiftChannel", <|"Cut" -> cut|>]];
+      root = -denominator/slope;
+      referenceMode = Which[MemberQ[{{1, 3}, {2, 3}}, cut], "PositivePhotonReference5",
+        MemberQ[{{1, 5}, {2, 5}}, cut], "NegativePhotonReference3", True, "XiFreeFourByFour"];
+      assigned = Switch[referenceMode,
+        "PositivePhotonReference5", target["StateSum"] /.
+          Spinor["Xi", "Angle", _Integer] -> Spinor["Helicity", "Angle", 5],
+        "NegativePhotonReference3", target["StateSum"] /.
+          Spinor["Xi", "Square", _Integer] -> Spinor["Helicity", "Square", 3],
+        _, target["StateSum"]];
+      If[!FreeQ[assigned, Spinor["Xi", ___]], fail["UnsupportedLowerAmplitudeReference", <|"Cut" -> cut|>]];
+      assigned = qedBalancedSixPointZeroBrackets[assigned];
+      shifted = qedBalancedSixPointZeroBrackets[qedBalancedSixPointShift[assigned, variable]];
+      If[FailureQ[shifted] || !ConstructiveDiagrams`Private`residueFiniteQ[shifted],
+        fail["UnsupportedShiftedLowerAmplitude", <|"Cut" -> cut, "Cause" -> shifted|>]];
+      term = qedBalancedSixPointZeroBrackets[(shifted /. variable -> root)/denominator];
+      If[!FreeQ[term, variable] || !ConstructiveDiagrams`Private`residueFiniteQ[term] || LeafCount[term] > 250000,
+        fail["IncompleteRecursionTerm", <|"Cut" -> cut|>]];
+      AppendTo[rows, <|"Cut" -> cut, "LowerPointMultiplicities" -> {Length[cut] + 1, 7 - Length[cut]},
+        "UnshiftedPropagator" -> denominator, "ShiftSlope" -> slope, "ShiftRoot" -> root,
+        "ReferenceMode" -> referenceMode, "StateSum" -> target["StateSum"],
+        "ReferenceAssignedStateSum" -> assigned, "ShiftedStateSum" -> shifted,
+        "ShiftVariable" -> variable, "RecursionTerm" -> term|>];
+      emit[Length[rows], cut], {target, separated}];
+    amplitude = Total[Lookup[rows, "RecursionTerm"]];
+    <|"Status" -> "CONSTRUCTED", "Particles" -> particles, "Amplitude" -> amplitude,
+      "ExternalMassRules" -> externalRules, "Channels" -> rows, "PhysicalTargetCount" -> 14,
+      "RecursionTermCount" -> 8, "Shift" -> "[5,3>: q=|5>[3|, p5(z)=p5+zq, p3(z)=p3-zq",
+      "ReferenceChoice" -> "Choose angle spinor 5 for the three-point positive photon and square spinor 3 for the three-point negative photon before shifting; four-by-four terms are Xi-free.",
+      "SewingMinusIncludedOnce" -> True, "NoFeynmanInput" -> True,
+      "BoundaryAtInfinity" -> "The minimal-QED hard-line argument is explained in the notebook; not a generic-model boundary theorem.",
+      "Scope" -> "A process-specific lower-amplitude recursion. CONSTRUCTED does not mean the independent checker has passed.",
+      "Elapsed" -> AbsoluteTime[] - started|>], tag], seconds,
+    Failure["QEDExampleTimeConstraint", <|"MessageTemplate" ->
+      "The balanced-helicity QED example exceeded its bounded construction time.", "TimeConstraint" -> seconds|>]];
+  If[FailureQ[result] || !AssociationQ[result], result, If[details, result, result["Amplitude"]]]
+];
+
 <|"Amplitudes" -> <|"H" -> prH, "S2" -> prS2, "OldPermutation" -> prOldPermutation|>,
   "FactorizationTargets" -> prElectronTargets, "ReportFunction" -> q5ResidueReport|>

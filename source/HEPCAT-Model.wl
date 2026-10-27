@@ -4940,11 +4940,16 @@ completionExactBlockReduce[matrix_List, constant_List, prime_: 2147483647] := Mo
   <|"ReducedRows" -> reduced, "Rank" -> rank, "CheckedRows" -> rows|>
 ];
 
-completionSolveLinear[equations_List, unknowns_List] := Module[
+DownValues[completionSolveLinear] = {};
+completionSolveLinear[equations_List, unknowns_List, modularSeconds_ : 60] := Module[
   {eqs, arrays, constant, matrix, augmented, reduced, n = Length[unknowns],
    pivots = {}, rules = {}, row, pivot, free, rank, entries, inconsistent = False,
    rightScale = 1, nonzeroConstant, candidateScale, scaledConstant, rationalQ,
    columnScales, column, scaledColumn, firstEntry, j, blockReduction},
+  If[!NumericQ[modularSeconds] || !TrueQ[0 < modularSeconds < Infinity],
+    Return[<|"Status" -> "UNRESOLVED", "SolutionRules" -> {},
+      "FreeParameters" -> unknowns, "Rank" -> 0, "Diagnostics" -> {
+        "The certified modular solve requires a positive finite remaining time budget."}|>]];
   (* Extract affine rows once. Repeated polynomial tests and common-denominator
      formation over hundreds of unknowns dominate otherwise sparse systems. *)
   eqs = DeleteDuplicates[DeleteCases[equations, 0]];
@@ -5005,7 +5010,7 @@ completionSolveLinear[equations_List, unknowns_List] := Module[
         If[ListQ[scaledConstant] && AllTrue[scaledConstant, rationalQ],
           rightScale = candidateScale; constant = scaledConstant]]]];
   augmented = MapThread[Append, {matrix, -constant}];
-  blockReduction = If[n >= 64, completionCertifiedModularReduce[matrix, constant],
+  blockReduction = If[n >= 64, completionCertifiedModularReduce[matrix, constant, modularSeconds],
     Missing["SmallLinearSystem"]];
   If[n >= 64 && !AssociationQ[blockReduction],
     blockReduction = completionExactBlockReduce[matrix, constant]];
@@ -5035,9 +5040,10 @@ completionSolveLinear[equations_List, unknowns_List] := Module[
     "Diagnostics" -> {}|>
 ];
 
-completionRefineLinear[previous_Association, equations_List] := Module[{extension},
+DownValues[completionRefineLinear] = {};
+completionRefineLinear[previous_Association, equations_List, modularSeconds_ : 60] := Module[{extension},
   extension = completionSolveLinear[equations /. previous["SolutionRules"],
-    previous["FreeParameters"]];
+    previous["FreeParameters"], modularSeconds];
   Join[extension, <|"Rank" -> previous["Rank"] + extension["Rank"],
     "SolutionRules" -> Join[previous["SolutionRules"] /. extension["SolutionRules"],
       extension["SolutionRules"]]|>]
@@ -5437,14 +5443,21 @@ completionNormalizeBasis[terms_List] := DeleteDuplicates[DeleteCases[Map[Functio
     numeric = Times @@ Select[factors, NumericQ];
     If[TrueQ[numeric === 0], 0, Cancel[term/numeric]]]], terms], 0]];
 
-(* Formal monomial dependence is an exact identity, not a sampled physical
-   relation. A bounded unsuccessful pruning pass retains every direction. *)
+(* Formal monomial dependence is exact, not a sampled physical relation.
+   Incremental Gaussian elimination avoids a large bulk row reduction. *)
+DownValues[completionGaussianRationalQ] = {};
+DownValues[completionLegacyIndependentBasis] = {};
+DownValues[completionGaussianIndependentBasis] = {};
 DownValues[completionIndependentBasis] = {};
-completionIndependentBasis[basis_List, seconds_ : 60] := TimeConstrained[Module[
+completionGaussianRationalQ[value_] := MatchQ[value, _Integer | _Rational] ||
+  (Head[value] === Complex && MatchQ[Re[value], _Integer | _Rational] && MatchQ[Im[value], _Integer | _Rational]);
+
+completionLegacyIndependentBasis[basis_List, seconds_] := TimeConstrained[Module[
   {terms, scalar, key, monomials, positions, columns, entries, matrix, reduced, pivots},
   If[Length[basis] < 2, Return[basis]];
   scalar[term_] := Times @@ Select[If[Head[term] === Times, List @@ term, {term}],
-    NumericQ[#] && Precision[#] === Infinity && residueFiniteQ[#] &];
+    NumericQ[#] && Precision[#] === Infinity &&
+      residueFiniteQ[#] &];
   key[term_] := Cancel[term/scalar[term]];
   terms = Map[Function[value, With[{expanded = Expand[value]},
     If[Head[expanded] === Plus, List @@ expanded, If[expanded === 0, {}, {expanded}]]]], basis];
@@ -5452,18 +5465,64 @@ completionIndependentBasis[basis_List, seconds_ : 60] := TimeConstrained[Module[
   monomials = DeleteDuplicates[key /@ Flatten[terms, 1]];
   If[monomials === {}, Return[{}]];
   positions = AssociationThread[monomials, Range[Length[monomials]]];
-  columns = Map[Function[column,
-    GroupBy[({Lookup[positions, key[#]], scalar[#]} &) /@ column, First -> Last, Total]], terms];
+  columns = Map[Function[column, GroupBy[
+    ({Lookup[positions, key[#]], scalar[#]} &) /@ column, First -> Last, Total]], terms];
   entries = Flatten[MapIndexed[Function[{column, index},
     KeyValueMap[({#1, First[index]} -> #2) &, column]], columns], 1];
   matrix = SparseArray[entries, {Length[monomials], Length[basis]}];
   reduced = RowReduce[matrix];
   positions = Cases[ArrayRules[reduced],
-    (HoldPattern[Rule[{row_Integer, column_Integer}, value_]] /; value =!= 0) :>
-      {row, column}];
-  pivots = Values[KeySort[GroupBy[positions, First -> Last, Min]]];
-  basis[[pivots]]
+    (HoldPattern[Rule[{row_Integer, column_Integer}, value_]] /; value =!= 0) :> {row, column}];
+  pivots = Values[KeySort[GroupBy[positions, First -> Last, Min]]]; basis[[pivots]]
 ], seconds, basis];
+
+completionGaussianIndependentBasis[basis_List] := Module[
+  {scalar, key, terms, positions = <||>, rowCount = 0, pivots = <||>, selected = {},
+   vector, value, row, pivot, coefficient, record, index = 0, tag = Unique["pruner"]},
+  Catch[
+    scalar[term_] := scalar[term] = Times @@ Select[If[Head[term] === Times, List @@ term, {term}],
+      NumericQ[#] && Precision[#] === Infinity &&
+        residueFiniteQ[#] &];
+    (* Memoized Cancel preserves the legacy formal-monomial convention. *)
+    key[term_] := key[term] = Cancel[term/scalar[term]];
+    Do[
+      index++;
+      terms = With[{expanded = Expand[expression]},
+        If[Head[expanded] === Plus, List @@ expanded, If[expanded === 0, {}, {expanded}]]];
+      If[!FreeQ[terms, number_?NumberQ /; Precision[number] =!= Infinity],
+        Throw[<|"Mode" -> "NoPruning", "Basis" -> basis|>, tag]];
+      If[!AllTrue[terms, completionGaussianRationalQ[scalar[#]] &],
+        Throw[<|"Mode" -> "LegacyExactFieldFallback"|>, tag]];
+      vector = <||>;
+      Do[
+        row = Lookup[positions, key[term], Missing["New"]];
+        If[MissingQ[row], rowCount++; row = rowCount; AssociateTo[positions, key[term] -> row]];
+        value = Lookup[vector, row, 0] + scalar[term];
+        If[value === 0, KeyDropFrom[vector, row], AssociateTo[vector, row -> value]],
+        {term, terms}];
+      While[Length[vector] > 0,
+        pivot = Min[Keys[vector]]; coefficient = vector[pivot];
+        If[KeyExistsQ[pivots, pivot],
+          record = pivots[pivot];
+          KeyValueMap[Function[{keyRow, factor},
+            value = Lookup[vector, keyRow, 0] - coefficient factor;
+            If[value === 0, KeyDropFrom[vector, keyRow], AssociateTo[vector, keyRow -> value]]], record],
+          AssociateTo[pivots, pivot -> Map[#/coefficient &, vector]];
+          AppendTo[selected, index]; vector = <||>]],
+      {expression, basis}];
+    <|"Mode" -> "ExactGaussianSparseColumns", "Basis" -> basis[[selected]],
+      "Indices" -> selected, "FormalRank" -> Length[selected]|>, tag]
+];
+
+completionIndependentBasis[basis_List, seconds_: 60] := Module[{started, result, remaining},
+  If[Length[basis] < 2 || !(seconds === Infinity ||
+      (NumericQ[seconds] && TrueQ[seconds > 0])), Return[basis]];
+  started = AbsoluteTime[];
+  result = TimeConstrained[completionGaussianIndependentBasis[basis], seconds, <|"Mode" -> "NoPruning", "Basis" -> basis|>];
+  If[Lookup[result, "Mode", None] === "LegacyExactFieldFallback",
+    remaining = If[seconds === Infinity, Infinity, seconds - (AbsoluteTime[] - started)];
+    If[remaining <= 0, basis, completionLegacyIndependentBasis[basis, remaining]], Lookup[result, "Basis", basis]]
+];
 
 completionRecordedReferenceTables[normalized_Association] := DeleteDuplicates[
   Select[(Lookup[Lookup[#, "ReferenceSpinors", <||>], "Assignments", {}] & /@
@@ -5770,6 +5829,28 @@ completionReducedChannelBasis[normalized_Association, references_Association,
     "Scope" -> "ReducedPhysicalAndReferenceFreeChannelsWithGroupedPoleBearingInputs"|>
 ];
 
+(* A selected cut fixes the sum of its pair invariants, not any one pair.
+   Each pivot defines a different numerator continuation away from that cut. *)
+completionCutInvariantTrials[expression_, cut_List, cutMass_, externalRules_List] := Module[
+  {rules, masses, pairs, products, constant, candidate, trials = {}, rule},
+  If[Length[cut] < 2 || !VectorQ[cut, IntegerQ[#] && # > 0 &] || !DuplicateFreeQ[cut],
+    Return[Missing["UnsupportedSelectedCut"]]];
+  If[Length[cut] === 2, Return[{}]];
+  rules = Cases[externalRules, rule : HoldPattern[Mass[_Integer] -> _] :> rule];
+  masses = (Mass /@ cut) /. rules;
+  If[!FreeQ[masses, _Mass], Return[Missing["MissingExternalMass"]]];
+  pairs = Subsets[Sort[cut], {2}]; products = orderedDot @@@ pairs;
+  constant = (cutMass^2 - Total[masses^2])/2;
+  Do[
+    rule = products[[index]] -> constant - Total[Delete[products, index]];
+    candidate = preparationReduceDots[expression, {rule}];
+    If[candidate =!= expression,
+      AppendTo[trials, <|"Cut" -> cut, "Mass" -> cutMass, "PivotPair" -> pairs[[index]],
+        "NumeratorRule" -> rule, "Expression" -> candidate|>]],
+    {index, Length[pairs]}];
+  trials
+];
+
 (* A broader optional space splits selected-cut-prepared channel numerators.
    Its certification preserves only that source's own residue, not its off-cut form. *)
 DownValues[completionSelectedChannelBasis] = {};
@@ -5778,7 +5859,8 @@ completionSelectedChannelBasis[normalized_Association, references_Association,
   {targets = completionTargets[normalized["Targets"]], external = normalized["ExternalMassRules"],
    externalLegs, variants, closedQ, source, channel, selectedRules, reduced,
    higherPoles, verification, checks = {}, sources = {}, terms = {}, split,
-   finished, tag = Unique["selectedChannelSpace"]},
+   originalSources = {}, originalFinished = False, invariantFinished = True,
+   proposals, proposalTerms, diagnostics = {}, finished, tag = Unique["selectedChannelSpace"]},
   closedQ[expression_] := FreeQ[expression, _xFactor | _xTildeFactor |
     (Spinor | SpinorHat)[_, ("Angle" | "Square"), _Multiparticle, ___] |
     (Spinor | SpinorHat)[_, ("Upper" | "Lower"), ("Angle" | "Square"), _Multiparticle, ___]];
@@ -5818,14 +5900,74 @@ completionSelectedChannelBasis[normalized_Association, references_Association,
         "Mode" -> "SelectedCutAtomicReduction", "SourceMode" -> variant["Mode"],
         "MassRules" -> selectedRules, "Verification" -> verification|>];
       If[verification["Status"] =!= "PASS", Continue[]];
-      AppendTo[sources, reduced];
-      terms = completionNormalizeBasis[Join[terms, split[reduced]]];
-      If[Length[terms] > limit, Throw[Failure["CorrectionSpaceLimit",
-        <|"Terms" -> Length[terms], "Limit" -> limit|>], tag]], {variant, variants}]; True,
+      proposalTerms = completionNormalizeBasis[Join[terms, split[reduced]]];
+      If[Length[proposalTerms] > limit, Throw[Failure["CorrectionSpaceLimit",
+        <|"Terms" -> Length[proposalTerms], "Limit" -> limit|>], tag]];
+      terms = proposalTerms; AppendTo[sources, reduced];
+      AppendTo[originalSources, <|"Expression" -> reduced, "Channel" -> channel,
+        "SourceMode" -> variant["Mode"]|>], {variant, variants}];
+    originalFinished = True;
+    (* Keep the original certified sources before spending the remaining
+       construction budget on optional general-cut continuations. *)
+    Do[
+      channel = originalSource["Channel"];
+      proposals = TimeConstrained[completionCutInvariantTrials[
+        originalSource["Expression"], channel["Cut"], channel["Mass"], external],
+        2, $TimedOut];
+      If[proposals === $TimedOut,
+        invariantFinished = False;
+        AppendTo[diagnostics, <|"Cut" -> channel["Cut"],
+          "Reason" -> "CutInvariantEnumerationTimeout"|>]; Continue[]];
+      If[!ListQ[proposals],
+        invariantFinished = False;
+        AppendTo[diagnostics, <|"Cut" -> channel["Cut"],
+          "Reason" -> "CutInvariantEnumerationUnavailable", "Result" -> proposals|>]; Continue[]];
+      Do[
+        reduced = TimeConstrained[preparationSpinorProducts[proposal["Expression"], external],
+          2, $TimedOut];
+        If[!residueFiniteQ[reduced],
+          invariantFinished = False;
+          AppendTo[diagnostics, <|"Cut" -> channel["Cut"],
+            "PivotPair" -> proposal["PivotPair"], "Reason" -> "CutInvariantReductionUnavailable"|>];
+          Continue[]];
+        higherPoles = completionHigherPhysicalPoles[reduced, targets, externalLegs];
+        If[!ListQ[higherPoles],
+          invariantFinished = False;
+          AppendTo[diagnostics, <|"Cut" -> channel["Cut"], "PivotPair" -> proposal["PivotPair"],
+            "Reason" -> "CutInvariantPoleClassificationUnavailable"|>]; Continue[]];
+        If[higherPoles =!= {},
+          AppendTo[diagnostics, <|"Cut" -> channel["Cut"], "PivotPair" -> proposal["PivotPair"],
+            "Status" -> "REJECTED", "Reason" -> "CutInvariantHigherOrderPhysicalPoles",
+            "HigherOrderPropagators" -> higherPoles|>]; Continue[]];
+        verification = completionContinuationCheck[originalSource["Expression"], reduced,
+          channel, targets, rules, seed];
+        If[!AssociationQ[verification], verification = <|"Status" -> "UNRESOLVED",
+          "Reason" -> "CutInvariantVerificationUnavailable"|>];
+        AppendTo[checks, <|"Cut" -> channel["Cut"], "Mass" -> channel["Mass"],
+          "Mode" -> "SelectedCutInvariantReduction", "SourceMode" -> originalSource["SourceMode"],
+          "PivotPair" -> proposal["PivotPair"], "NumeratorRule" -> proposal["NumeratorRule"],
+          "Verification" -> verification|>];
+        If[!MemberQ[{"PASS", "FAIL"}, Lookup[verification, "Status", None]],
+          invariantFinished = False;
+          AppendTo[diagnostics, <|"Cut" -> channel["Cut"], "PivotPair" -> proposal["PivotPair"],
+            "Reason" -> "CutInvariantVerificationUnresolved"|>]; Continue[]];
+        If[verification["Status"] =!= "PASS", Continue[]];
+        proposalTerms = completionNormalizeBasis[Join[terms, split[reduced]]];
+        If[Length[proposalTerms] > limit,
+          invariantFinished = False;
+          AppendTo[diagnostics, <|"Cut" -> channel["Cut"], "PivotPair" -> proposal["PivotPair"],
+            "Reason" -> "CutInvariantCorrectionSpaceLimit", "Terms" -> Length[proposalTerms],
+            "Limit" -> limit|>]; Continue[]];
+        terms = proposalTerms; AppendTo[sources, reduced], {proposal, proposals}],
+      {originalSource, originalSources}]; True,
       seconds, False];
-    If[!TrueQ[finished], Return[Missing["SelectedChannelSpaceTimeout"]]];
     If[sources === {}, Return[Missing["NoVerifiedSelectedChannels"]]];
     <|"Basis" -> terms, "Sources" -> DeleteDuplicates[sources], "Verification" -> checks,
+      "ConstructionStatus" -> If[TrueQ[finished && invariantFinished], "COMPLETE", "PARTIAL"],
+      "OriginalSourcesComplete" -> originalFinished,
+      "InvariantContinuationsComplete" -> TrueQ[finished && invariantFinished],
+      "Diagnostics" -> Join[diagnostics, If[TrueQ[finished], {}, {
+        "The selected-channel construction clock expired; only already certified directions are retained."}]],
       "Scope" -> "SelectedCutPreparedChannelTermsWithUnchangedTargets"|>, tag]
 ];
 
@@ -6068,7 +6210,9 @@ CompleteFactorization[input_, channelRows_List, model_List, opts : OptionsPatter
                 "EquationCount" -> Length[allEquations]|>];
               (* Refit the original sparse equations. Substituting a dense
                  partial solution into new rows causes large exact fractions. *)
-              solution = completionSolveLinear[allEquations, unknowns];
+              solution = completionSolveLinear[allEquations, unknowns,
+                If[seconds === Infinity, 900,
+                  Min[900, Max[0, seconds - (AbsoluteTime[] - start)]]]];
               If[!MemberQ[{"COMPLETE", "UNDERDETERMINED"}, solution["Status"]],
                 AppendTo[history, <|"Round" -> round, "FitSeed" -> seed,
                   "EquationCount" -> Length[allEquations], "Rank" -> solution["Rank"],

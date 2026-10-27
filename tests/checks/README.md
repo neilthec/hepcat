@@ -186,10 +186,21 @@ higher-order-pole rejection, selected-channel-only numerator reductions,
 additional cyclic reference choices and concise failure reasons. The physical-residue
 suite separately verifies that skipping an optional formal coefficient leaves
 the mapped residue and kinematic validation unchanged.
+It also covers the explicit balanced-helicity QED recursion example: fresh
+lower-point channels, all eight shifted products, reference assignment,
+propagator shifts, bounded failures, a fresh coherent-spin Feynman comparison
+and representative two- and three-particle residues. This example does not
+assert success of the separate automatic diagram-completion ansatz or
+silently certify unsupported spurious factors.
 Focused completion tests also cover opt-in Bose projection, the compact/literal
 union, selected-cut atomic sources and exact formal-dependence pruning without changing the available span.
-The bounded pruning pass has a 60-second allowance; a timeout keeps every
-direction. The final correction cap applies after projection and pruning.
+The bounded pruning pass has a 60-second allowance. Exact Gaussian-rational
+columns use incremental sparse elimination; other exact numeric fields keep
+the bounded legacy fallback. Tests cover typed left-to-right selection,
+complex and algebraic coefficients, infinite budgets, rational denominator
+normalization and atomic timeout fallback. Inexact input and unfinished
+pruning retain every original direction. The final correction cap applies
+after projection and pruning.
 When the full automatic Bose space fits, its complete span is retained. If it
 does not, an explicitly named grouped-input alternative keeps whole input
 diagrams and all available channel atoms. Both exact sizes and limit decisions

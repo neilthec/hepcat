@@ -842,12 +842,29 @@ reductions of accepted continuations on their selected cut, including
 spurious-reference choices. Each whole reduced source must preserve its own
 cut residue before being split. Only that channel's internal shell is used;
 other internal lines and inverse factors stay protected. Construction has a
-60-second budget and the same intermediate term cap. Exact formal linear dependencies are removed from
-the projected directions when a bounded 60-second sparse pruning pass finishes;
-this preserves their full span, not just their sampled residues. If pruning
-does not finish, all projected directions remain. The correction-term cap is
-checked afterward. Without declared groups, compact-then-literal behavior is
-unchanged.
+60-second budget and the same intermediate term cap. For a cut with three or
+more particles, a second bounded pass also uses
+`Sum[MomProd[i,j], i<j in cut] == (cutMass^2 - Sum[Mass[i]^2, i in cut])/2`.
+It tries each applicable pair as the numerator pivot, with arbitrary declared
+external and exchanged masses. Inverse factors and all propagators stay
+unchanged. Every whole alternative must preserve its selected residue before
+its atoms enter the correction space; no such identity is imposed globally on
+the final off-cut amplitude. Original certified reduced sources are retained.
+The second pass uses only the time remaining after their construction, with
+two-second per-source reduction limits. A construction timeout or an optional
+continuation exceeding the intermediate term cap retains only
+already certified directions and records `"ConstructionStatus" -> "PARTIAL"`,
+`"OriginalSourcesComplete"` and `"InvariantContinuationsComplete"` in
+`"SelectedChannelSpace"`; it does not drop any residue target or certify a fit.
+Exact formal linear
+dependencies are removed by a bounded 60-second pruning pass, preserving the
+full span rather than only sampled residues. Gaussian-rational coefficients
+use incremental sparse column elimination instead of a bulk row reduction.
+The original direction order and typed expressions are retained. Other exact
+numeric coefficient fields keep the existing bounded reduction as a fallback;
+inexact input is never pruned. A timeout retains every original direction,
+not a partially selected subset. The correction-term cap is checked afterward.
+Without declared groups, compact-then-literal behavior is unchanged.
 
 When that full automatic Bose space exceeds the requested term cap, a
 budget fallback keeps each whole pole-bearing input diagram as a correction,
@@ -896,6 +913,26 @@ an independent proof of reference independence. No Feynman answer or supplied co
 entered the fit. These are sampled checks, not an analytic uniqueness or
 global-minimality proof; the fresh serial 28-sample notebook run has not been
 timed end to end.
+
+The balanced-helicity chapter, `e,E,A.+,A.+,A.-,A.-`, uses a different,
+explicit construction. Its diagram/channel correction space still showed a
+consistency discrepancy after enlargement to 4055 directions. No exact fit
+was accepted. `qedBalancedSixPointAmplitude[factorizationModel]`, defined in
+`tests/QED-5-point-residues.wl`, instead regenerates the known lower-point
+channels and constructs eight shifted sewn products. This is a worked
+minimal-QED recursion, not a general replacement for `CompleteFactorization`.
+The notebook explains the `[5,3>` shift and its vanishing boundary term.
+The helper returns only the amplitude by default; `"ReturnDetails" -> True`
+retains the eight roots and intermediate expressions. It needs the complete
+lower-point model, not the cubic diagram model, and uses no Feynman input.
+
+The resulting Xi-free expression passed all 14 physical channels at two fresh
+exact coherent-spin samples each, three fresh independent-Xi Feynman
+comparisons, two exact high-energy samples with `E^-2` growth, and both
+supported bracket-pole checks. The automatic classifier still leaves 28
+composite denominator factors unclassified. Those obligations remain
+`UNRESOLVED`; these results are not a claim that every spurious pole has been
+automatically certified or that the expression is globally simplest.
 
 The generator also records and rejects a new continuation whose physical
 propagators retain powers greater than one after ordinary cancellation. Its
@@ -950,8 +987,12 @@ For large rational systems, a bounded CRT reconstruction is tried before the
 native exact solve. It uses up to eight compatible primes and a separate unused
 prime, then certifies every original equation for both the particular solution
 and the complete independent free family using exact integer arithmetic. Its
-60-second budget, failed reconstructions and unlucky primes leave the existing
-solver as the fallback. This is not an approximate fit or a modular-only test.
+attempt receives the time remaining in `CompleteFactorization`, capped at
+900 seconds; an infinite outer limit still uses that finite cap. Other private
+solver calls keep the 60-second default. Exhausted budgets remain unresolved.
+Failed reconstructions and unlucky primes leave the existing exact solver as
+the fallback, still within the overall completion clock. This is not an
+approximate fit or a modular-only test.
 For large rational systems, modular arithmetic can select a smaller square
 block. The solve remains exact: every original equation must certify both
 the consistent particular solution and the full independent free family.

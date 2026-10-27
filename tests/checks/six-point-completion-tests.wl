@@ -505,6 +505,134 @@ check["an oversized budget alternative cannot return an unchecked ordinary ampli
     !KeyExistsQ[sixBudgetOrdinaryFailure[[2]], "Amplitude"] &&
     StringContainsQ[sixBudgetOrdinaryFailure[[2]]["MessageTemplate"], "MaxCorrectionTerms"]];
 
+(* Pruning changes coordinates, never the formal correction span. *)
+sixPruneBasis = {sixPruneA (sixPruneX + sixPruneY),
+  sixPruneA (sixPruneX - sixPruneY), sixPruneA sixPruneX};
+check["Gaussian pruning keeps the first typed factored independent directions",
+  ConstructiveDiagrams`Private`completionIndependentBasis[sixPruneBasis] === Take[sixPruneBasis, 2]];
+check["exact complex multiples use the sparse Gaussian path",
+  ConstructiveDiagrams`Private`completionIndependentBasis[
+    {I sixPruneX + sixPruneY, 2 I sixPruneX + 2 sixPruneY, sixPruneX - sixPruneY}] ===
+      {I sixPruneX + sixPruneY, sixPruneX - sixPruneY}];
+check["zero and repeated directions retain deterministic first representatives",
+  ConstructiveDiagrams`Private`completionIndependentBasis[
+    {0, sixPruneX, sixPruneX, 2 sixPruneX, sixPruneX + sixPruneY, sixPruneY, 0}] ===
+      {sixPruneX, sixPruneX + sixPruneY}];
+check["approximate coefficients retain the complete unpruned input",
+  ConstructiveDiagrams`Private`completionIndependentBasis[{sixPruneX, 1. sixPruneX}] ===
+    {sixPruneX, 1. sixPruneX}];
+check["unsupported exact numeric coefficient fields retain the legacy fallback",
+  ConstructiveDiagrams`Private`completionGaussianIndependentBasis[
+    {Sqrt[2] sixPruneX, sixPruneX}]["Mode"] === "LegacyExactFieldFallback" &&
+  ConstructiveDiagrams`Private`completionIndependentBasis[
+    {Sqrt[2] sixPruneX, sixPruneX}] === {Sqrt[2] sixPruneX}];
+check["formal rational-denominator keys keep the legacy cancellation convention",
+  ConstructiveDiagrams`Private`completionIndependentBasis[
+    {sixPruneX/(sixPruneA - sixPruneB)^2,
+      sixPruneX/(sixPruneA^2 - 2 sixPruneA sixPruneB + sixPruneB^2), sixPruneY}] ===
+    {sixPruneX/(sixPruneA - sixPruneB)^2, sixPruneY}];
+check["an infinite budget supports both exact coefficient paths",
+  ConstructiveDiagrams`Private`completionIndependentBasis[{sixPruneX, 2 sixPruneX}, Infinity] === {sixPruneX} &&
+  ConstructiveDiagrams`Private`completionIndependentBasis[{Sqrt[2] sixPruneX, sixPruneX}, Infinity] === {Sqrt[2] sixPruneX}];
+check["a nonpositive pruning budget retains every direction",
+  ConstructiveDiagrams`Private`completionIndependentBasis[sixPruneBasis, 0] === sixPruneBasis &&
+  ConstructiveDiagrams`Private`completionIndependentBasis[sixPruneBasis, -1] === sixPruneBasis];
+sixPruneTimed = Block[{ConstructiveDiagrams`Private`completionGaussianRationalQ},
+  ConstructiveDiagrams`Private`completionGaussianRationalQ[value_] := (Pause[0.03]; True);
+  ConstructiveDiagrams`Private`completionIndependentBasis[{sixPruneX, sixPruneY}, 0.04]];
+check["a timeout discards any partial independent subset atomically",
+  sixPruneTimed === {sixPruneX, sixPruneY}];
+check["formal pruning never substitutes a physical momentum-product identity",
+  Length[ConstructiveDiagrams`Private`completionIndependentBasis[
+    {MomProd[1, 2], (Mandelstahm[1, 2] - Mass[1]^2 - Mass[2]^2)/2}]] === 2];
+check["all-zero input directions have the established empty-span result",
+  ConstructiveDiagrams`Private`completionIndependentBasis[{0, 0}] === {}];
+(* The balanced-helicity case is an explicit lower-amplitude recursion example,
+   not a claim that the bounded automatic correction space is universal. *)
+Get[FileNameJoin[{root, "tests", "QED-5-point-residues.wl"}]];
+sixBalancedParticles = {"e", "E", "A.+", "A.+", "A.-", "A.-"};
+sixBalancedEvents = {};
+sixBalancedExample = qedBalancedSixPointAmplitude[sixModel, "ReturnDetails" -> True,
+  "ProgressFunction" -> Function[event, AppendTo[sixBalancedEvents, event]]];
+check["the balanced worked example regenerates fourteen targets and eight recursion terms",
+  AssociationQ[sixBalancedExample] && sixBalancedExample["Status"] === "CONSTRUCTED" &&
+    sixBalancedExample["PhysicalTargetCount"] === 14 && Length[sixBalancedExample["Channels"]] === 8];
+check["the balanced example retains its model-local masses and no explicit reference spinors",
+  AssociationQ[sixBalancedExample] && FreeQ[sixBalancedExample["Amplitude"], Spinor["Xi", ___]] &&
+    (Mass[1] /. sixBalancedExample["ExternalMassRules"]) === ModelParameter[sixModel, "Me"] &&
+    TrueQ[sixBalancedExample["SewingMinusIncludedOnce"]] && TrueQ[sixBalancedExample["NoFeynmanInput"]]];
+check["the balanced constructor reports eight steps and defaults to an ordinary expression",
+  Lookup[sixBalancedEvents, "Completed"] === Range[0, 8] &&
+    qedBalancedSixPointAmplitude[sixModel, "ProgressReporting" -> False] === sixBalancedExample["Amplitude"]];
+check["the balanced example rejects incomplete lower-point data",
+  FailureQ[qedBalancedSixPointAmplitude[ReadModel[FileNameJoin[{root, "models"}], 2],
+    "ProgressReporting" -> False]]];
+sixBalancedZ = Unique["sixBalancedShiftTest"];
+sixBalancedDenominator = PropDen[Mom[Multiparticle[1, 5]], ModelParameter[sixModel, "Me"]];
+sixBalancedSlope = SpinorChain[Spinor["Helicity", "Angle", 5], Mom[1], Spinor["Helicity", "Square", 3]];
+check["the example shift traverses lower-amplitude inverse propagators",
+  qedBalancedSixPointShift[1/sixBalancedDenominator, sixBalancedZ] ===
+    1/(sixBalancedDenominator + sixBalancedZ sixBalancedSlope)];
+check["the example shift treats repeated typed momentum occurrences coherently",
+  qedBalancedSixPointShift[MomProd[5, 1] + MomProd[1, 3], sixBalancedZ] ===
+    MomProd[5, 1] + MomProd[1, 3]];
+check["the example shift rejects unsupported labels rather than dropping them",
+  FailureQ[qedBalancedSixPointShift[Mom[7]^2, sixBalancedZ]]];
+
+sixBalancedChannels = FactorizationAmplitudeChannels[sixBalancedParticles, sixModel];
+sixBalancedNormalized = ConstructiveDiagrams`Private`residueSimpleInputs[
+  {sixBalancedExample["ExternalMassRules"], sixBalancedExample["Amplitude"]}, sixBalancedChannels, sixModel];
+sixBalancedTargets = ConstructiveDiagrams`Private`completionTargets[sixBalancedNormalized["Targets"]];
+sixBalancedSelectedTargets = Select[sixBalancedTargets, MemberQ[{{1, 3}, {1, 3, 4}}, #["Cut"]] &];
+sixBalancedSelectedNormalized = Join[sixBalancedNormalized, <|"Targets" -> sixBalancedSelectedTargets|>];
+sixBalancedPoleProbe = ConstructiveDiagrams`Private`completionSparseValidation[
+  sixBalancedExample["Amplitude"], {}, <|"SolutionRules" -> {}, "FreeParameters" -> {}|>, {}, {},
+  sixBalancedSelectedNormalized, 1, 881371, ModelParameterRules[sixModel], 60, Automatic, False];
+check["the balanced example passes fresh coherent-spin two-leg and three-leg cuts",
+  AssociationQ[sixBalancedPoleProbe] && TrueQ[sixBalancedPoleProbe["FamilyPass"]] &&
+    Length[sixBalancedPoleProbe["Report"]["Channels"]] === 2 &&
+    AllTrue[sixBalancedPoleProbe["Report"]["Channels"], #["Status"] === "PASS" &]];
+
+(* Generated only after the constructive expression, and used only as a check. *)
+sixBalancedFeynmanModel = ReadModel[FileNameJoin[{root, "model_feynman"}], 2];
+sixBalancedFeynmanRaw = diagramAmplitudes[CreateDiagrams[sixBalancedParticles, sixBalancedFeynmanModel]];
+sixBalancedFeynmanPrepared = PrepareAmplitudes[sixBalancedFeynmanRaw, sixBalancedFeynmanModel,
+  "ReferenceSpinors" -> "AllSpurious", "MaxSteps" -> 0, "TimeConstraint" -> 60,
+  "ProgressReporting" -> False];
+sixBalancedFeynmanProbe = ConstructiveDiagrams`Private`amplitudeFeynmanReport[
+  sixBalancedNormalized, sixBalancedFeynmanPrepared, sixModel, 1, 881399,
+  ModelParameterRules[sixModel], ModelParameterRules[sixBalancedFeynmanModel], 60, 0];
+check["the balanced example agrees with an independent fresh Feynman point in every massive-spin component",
+  AssociationQ[sixBalancedFeynmanProbe] && sixBalancedFeynmanProbe["Status"] === "PASS" &&
+    sixBalancedFeynmanProbe["CompletedSamples"] === 1 &&
+    sixBalancedFeynmanProbe["InternalOnShell"] === False &&
+    sixBalancedFeynmanProbe["NormalizationFitted"] === False];
+
+If[Environment["HEPCAT_TEST_FULL_BALANCED_SIX_POINT"] === "1",
+  sixBalancedFullCheck = CheckAmplitudes[sixBalancedExample["Amplitude"], sixBalancedChannels, sixModel,
+    "FeynmanAmplitudes" -> sixBalancedFeynmanPrepared, "FeynmanModel" -> sixBalancedFeynmanModel,
+    "FeynmanSamples" -> 3, "Samples" -> 2, "HighEnergySamples" -> 2, "ReferenceSamples" -> 2,
+    "RandomSeed" -> 881417, "TimeConstraint" -> 600, "Output" -> "Details"];
+  check["the full balanced example passes all fourteen physical channels",
+    AssociationQ[sixBalancedFullCheck] && Length[sixBalancedFullCheck["Channels"]] === 14 &&
+      AllTrue[sixBalancedFullCheck["Channels"], #["Status"] === "PASS" &]];
+  check["the full balanced example passes three independent Feynman samples",
+    sixBalancedFullCheck["FeynmanCheck"]["Status"] === "PASS" &&
+      sixBalancedFullCheck["FeynmanCheck"]["CompletedSamples"] === 3];
+  check["the full balanced example passes its expected high-energy bound",
+    sixBalancedFullCheck["HighEnergyCheck"]["Status"] === "PASS"];
+  check["the full balanced example has no remaining external reference dependence",
+    sixBalancedFullCheck["ReferenceCheck"]["Status"] === "PASS"];
+  check["the two classified spurious bracket poles pass their sampled limits",
+    With[{rows = Select[sixBalancedFullCheck["SpuriousChecks"],
+        Lookup[Lookup[#, "Discovery", <||>], "Classification", None] === "Spurious" &]},
+      Length[rows] === 2 && AllTrue[rows, #["Status"] === "PASS" &]]];
+  check["unsupported discovered denominator factors stay unresolved instead of silently passing",
+    AllTrue[Select[sixBalancedFullCheck["SpuriousChecks"],
+      Lookup[Lookup[#, "Discovery", <||>], "Classification", None] === "Unclassified" &],
+      #["Status"] === "UNRESOLVED" &]];
+];
+
 If[Environment["HEPCAT_TEST_FULL_SIX_POINT"] === "1",
   Print["Preparing the actual six-point electron/four-photon diagrams."];
   sixFullDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 2];

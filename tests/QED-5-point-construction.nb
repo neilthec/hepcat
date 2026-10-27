@@ -27285,7 +27285,1101 @@ Cell[CellGroupData[{
       Cell["constructedAmplitude", "Input"]
     }, Closed]]
   }, Open]]
-}, Open]]
+}, Open]],
+Cell[CellGroupData[{Cell["e,E,A.+,A.+,A.-,A.-", "Chapter"],
+   Cell["For this balanced-helicity example, the bounded diagram-correction \
+search did not close the factorization constraints. The successful \
+construction below instead sews complete known lower-point QED amplitudes \
+with an explicitly justified [5,3> shift. It is a worked QED recursion, not a \
+new universal completion algorithm.", "Text"], Cell["Physical residues, \
+independent Feynman comparisons, the E^-2 high-energy test and the two simple \
+bracket-pole tests pass at the sampled points. The automatic pole classifier \
+still leaves 28 compound denominator factors unclassified. Their cancellation \
+is not claimed to be numerically certified: the final report must keep those \
+rows UNRESOLVED.", "Text"],
+   Cell[CellGroupData[{Cell["1. Diagrams and Preparation", "Section"],
+      Cell["particles = {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \
+\"A.-\"};\ndiagrams = CreateDiagrams[particles, diagramModel];\nrawAmplitudes \
+= diagramAmplitudes[diagrams];\nLength[rawAmplitudes]", "Input"],
+      Cell["Keep the original 24 diagram expressions for comparison. Preparation \
+in the next cell is optional and can be skipped to reproduce the compact \
+result quickly. The lower-amplitude construction in step 3 does not use the \
+prepared diagram expression as a fitted answer.", "Text"],
+      Cell["preparation = PrepareAmplitudes[rawAmplitudes, diagramModel,\n  \
+\"ReferenceSpinors\" -> \"AllSpurious\"];", "Input"],
+      Cell[CellGroupData[{Cell["View the diagrams", "Subsection"],
+         Cell["CreateArrowDiagrams[diagrams]", "Input"]}, Closed]]}, Open]],
+   Cell[CellGroupData[{Cell["2. Physical Factorization Channels", "Section"],
+      Cell["The factorization model already contains the complete three-, \
+four- and five-point amplitudes. All 14 physical channels remain targets, \
+including the six that do not separate the shifted photons.", "Text"],
+      Cell["channels = FactorizationAmplitudeChannels[particles, \
+factorizationModel];\nLength[channels]", "Input"]}, Open]],
+   Cell[CellGroupData[
+     {Cell["3. Construct from Eight Lower-Amplitude Products", "Section"],
+      Cell["The example helper chooses the reference spinors before shifting, \
+shifts the entire sewn lower-amplitude expressions, evaluates each of the \
+eight separated channels at its pole, and divides by that channel's original \
+physical propagator. The normalized sewn state sum already includes the \
+sewing minus sign, exactly once. No Feynman result or fitted correction \
+coefficients enter this construction.", "Text"], Cell["Get[FileNameJoin[{hepc\
+atDirectory, \"tests\", \"QED-5-point-residues.wl\"}]];\nconstructedAmplitude \
+= qedBalancedSixPointAmplitude[factorizationModel];", "Input"],
+      Cell[CellGroupData[
+        {Cell["Why the Eight Terms Reconstruct the Amplitude", "Subsection"],
+         Cell["Use q = |5>[3|, p5(z) = p5 + z q and p3(z) = p3 - z q. \
+Equivalently, |5](z) = |5] + z|3] and |3>(z) = |3> - z|5>. The other spinors \
+do not shift. Thus q^2 = q.p3 = q.p5 = 0: both shifted photons stay massless \
+and total momentum is conserved.", "Text"], Cell["Before shifting, choose \
+angle reference |5> for each positive-helicity photon and square reference \
+|3] for each negative-helicity photon. These are z independent. In \
+particular, the shifted polarization vectors for photons 3+ and 5- are both \
+proportional to q. Their reference denominators <53> and [53] are unchanged \
+because <55> = [33] = 0. In the sewn expressions this fixes the reference in \
+each three-by-five channel; the four-by-four products are already Xi free.",
+          "Text"], Cell["Every minimal-QED diagram has one electron line with \
+four photon insertions. Along the hard fermion segment joining the two \
+shifted photons, a propagator has numerator Pslash + z qslash + m and \
+denominator D0 + 2 z q.P. All other vertices and external polarizations are z \
+independent. If the shifted insertions are adjacent, qslash (Pslash + z \
+qslash + m) qslash = 2 q.P qslash, since qslash^2 = 0. Dividing by D0 + 2 z \
+q.P gives O(1/z). If they are separated, the leading qslash in each endpoint \
+propagator is killed by the adjacent shifted-photon qslash. Each endpoint \
+then supplies O(1/z), so those diagrams are at least O(1/z^2). Therefore \
+every one of the 24 minimal-QED diagrams vanishes at complex z infinity; no \
+boundary contribution is needed for this shift.", "Text"],
+         Cell["For a cut C, set eta_C = number of leg 5 in C minus number of \
+leg 3 in C. Its propagator is D_C(z) = D_C + z eta_C <5|P_C|3], so z_C = \
+-D_C/(eta_C <5|P_C|3]). Only cuts with eta_C nonzero give finite-z poles. \
+There are eight: {1,3}, {1,5}, {2,3}, {2,5}, {1,3,4}, {1,3,6}, {1,4,5}, \
+{1,5,6}.", "Text"], Cell["Cauchy's theorem applied to A(z)/z gives A(0) = \
+sum_C R_C(z_C)/D_C. Here R_C is the complete normalized product of the two \
+lower-point amplitudes summed over the internal spin. The minus from the \
+finite-z residue is canceled by z_C times the propagator slope; it is not \
+another sewing sign. The six nonseparated physical channels occur inside the \
+lower-point amplitudes in these eight terms. Adding them again as separate \
+terms would double count. The checker still tests all 14 channels \
+independently.", "Text"], Cell["This hard-line argument uses minimal QED and \
+the stated shift and references. It is not a proof for arbitrary interactions \
+or models. The numerical tests remain independent checks of the \
+implementation and conventions.", "Text"]}, Closed]],
+      Cell[CellGroupData[{Cell["Inspect the Eight Roots and Sewn States",
+          "Subsection"], Cell["recursionDetails = \
+qedBalancedSixPointAmplitude[factorizationModel,\n  \"ReturnDetails\" -> \
+True];\nKeyTake[#, {\"Cut\", \"ShiftRoot\", \"ReferenceMode\"}] & /@ \
+recursionDetails[\"Channels\"]", "Input"],
+         Cell["recursionDetails[\"Channels\"][[1]]", "Input"]}, Closed]],
+      Cell[CellGroupData[{Cell["Saved Constructed Amplitude", "Subsection"],
+         Cell["This is the same eight-term expression, retained explicitly \
+rather than through a temporary file or compressed cache. Me and EE are \
+obtained from the selected factorization model when the cell is evaluated, so \
+moving the repository does not hardcode an old model scope. It is called \
+constructed, not fully verified, because the unclassified denominator tests \
+remain unresolved.", "Text"], Cell["savedConstructedAmplitude = With[{\n  \
+qedSavedMass = ModelParameter[factorizationModel, \"Me\"],\n  qedSavedCharge \
+= ModelParameter[factorizationModel, \
+\"EE\"]},\n(-4*qedSavedCharge^4*(qedSavedMass*SpinorChain[Spinor[\"Helicity\"\
+, \"Square\", 3], \n      Spinor[\"Helicity\", \"Square\", \
+4]]*SpinorChain[Spinor[\"Spin\", \"Angle\", 1], \n      Spinor[\"Helicity\", \
+\"Angle\", 5]]*SpinorChain[Spinor[\"Spin\", \"Angle\", 2], \n      \
+Spinor[\"Helicity\", \"Angle\", 6]] + \
+qedSavedMass*SpinorChain[Spinor[\"Helicity\", \"Angle\", 6], \n      \
+Spinor[\"Helicity\", \"Angle\", 5]]*SpinorChain[Spinor[\"Spin\", \"Square\", \
+1], \n      Spinor[\"Helicity\", \"Square\", 4]]*SpinorChain[Spinor[\"Spin\", \
+\"Square\", 2], \n      Spinor[\"Helicity\", \"Square\", 3]] - \
+SpinorChain[Spinor[\"Spin\", \"Angle\", 1], \n      Spinor[\"Helicity\", \
+\"Angle\", 5]]*SpinorChain[Spinor[\"Spin\", \"Square\", 2], \n      \
+Spinor[\"Helicity\", \"Square\", 3]]*\n     (-((PropDen[Mom[Multiparticle[1, \
+4, 5]], qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", \n          \
+ 6], Spinor[\"Helicity\", \"Angle\", 5]]*SpinorChain[Spinor[\"Helicity\", \
+\"Square\", 3], \n          Spinor[\"Helicity\", \"Square\", \
+4]])/(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \n          \
+Spinor[\"Helicity\", \"Square\", 3]] + SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], Mom[4], \n          Spinor[\"Helicity\", \"Square\", 3]])) + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 6], Mom[1], \n       \
+Spinor[\"Helicity\", \"Square\", 4]] + SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 6], Mom[4], \n       Spinor[\"Helicity\", \"Square\", 4]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 6], Mom[5], \n       \
+Spinor[\"Helicity\", \"Square\", 4]]) - SpinorChain[Spinor[\"Spin\", \
+\"Angle\", 2], \n      Spinor[\"Helicity\", \"Angle\", \
+6]]*SpinorChain[Spinor[\"Spin\", \"Square\", 1], \n      Spinor[\"Helicity\", \
+\"Square\", 4]]*(SpinorChain[Spinor[\"Helicity\", \"Square\", 3], Mom[1], \n  \
+     Spinor[\"Helicity\", \"Angle\", 5]] + SpinorChain[Spinor[\"Helicity\", \
+\"Square\", 3], Mom[4], \n       Spinor[\"Helicity\", \"Angle\", 5]] + \
+SpinorChain[Spinor[\"Helicity\", \"Square\", 3], Mom[5], \n       \
+Spinor[\"Helicity\", \"Angle\", 5]]))*(SpinorChain[Spinor[\"Helicity\", \
+\"Square\", 3], Mom[1], \n     Spinor[\"Helicity\", \"Angle\", 6]] + \
+SpinorChain[Spinor[\"Helicity\", \"Square\", 3], Mom[4], \n     \
+Spinor[\"Helicity\", \"Angle\", 6]] + SpinorChain[Spinor[\"Helicity\", \
+\"Square\", 3], Mom[5], \n     Spinor[\"Helicity\", \"Angle\", \
+6]])*SpinorChain[Spinor[\"Helicity\", \"Square\", 4], Mom[1], \n    \
+Spinor[\"Helicity\", \"Angle\", 5]])/(PropDen[Mom[Multiparticle[1, 4]], \
+qedSavedMass]*\n   PropDen[Mom[Multiparticle[1, 4, 5]], \
+qedSavedMass]*PropDen[Mom[Multiparticle[1, 4, 5, 3]], \n    \
+qedSavedMass]*(PropDen[Mom[Multiparticle[1, 5]], qedSavedMass] - \n    \
+(PropDen[Mom[Multiparticle[1, 4, 5]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n       \
+Mom[1], Spinor[\"Helicity\", \"Square\", \
+3]])/(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n       Mom[1], \
+Spinor[\"Helicity\", \"Square\", 3]] + SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], \n       Mom[4], Spinor[\"Helicity\", \"Square\", 3]]))*\n   \
+(PropDen[Mom[Multiparticle[1, 4, 5, 6]], qedSavedMass] - \n    \
+(PropDen[Mom[Multiparticle[1, 4, 5]], qedSavedMass]*\n      \
+(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], Spinor[\"Helicity\", \
+\"Square\", 3]] + \n       SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \
+Mom[4], Spinor[\"Helicity\", \"Square\", 3]] + \n       \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[6], Spinor[\"Helicity\", \
+\"Square\", 3]]))/\n     (SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \
+Mom[1], Spinor[\"Helicity\", \"Square\", 3]] + \n      \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[4], Spinor[\"Helicity\", \
+\"Square\", 3]]))) - \n (4*qedSavedCharge^4*SpinorChain[Spinor[\"Helicity\", \
+\"Square\", 3], Mom[1], \n    Spinor[\"Helicity\", \"Angle\", \
+6]]*(SpinorChain[Spinor[\"Helicity\", \"Square\", 4], Mom[1], \n     \
+Spinor[\"Helicity\", \"Angle\", 5]] + SpinorChain[Spinor[\"Helicity\", \
+\"Square\", 4], Mom[3], \n     Spinor[\"Helicity\", \"Angle\", 5]] + \
+SpinorChain[Spinor[\"Helicity\", \"Square\", 4], Mom[6], \n     \
+Spinor[\"Helicity\", \"Angle\", \
+5]])*(qedSavedMass*SpinorChain[Spinor[\"Helicity\", \"Square\", 4], \n      \
+Spinor[\"Helicity\", \"Square\", 3]]*SpinorChain[Spinor[\"Spin\", \"Angle\", \
+1], \n      Spinor[\"Helicity\", \"Angle\", 6]]*SpinorChain[Spinor[\"Spin\", \
+\"Angle\", 2], \n      Spinor[\"Helicity\", \"Angle\", 5]] + \
+qedSavedMass*SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n      \
+Spinor[\"Helicity\", \"Angle\", 6]]*SpinorChain[Spinor[\"Spin\", \"Square\", \
+1], \n      Spinor[\"Helicity\", \"Square\", 3]]*SpinorChain[Spinor[\"Spin\", \
+\"Square\", 2], \n      Spinor[\"Helicity\", \"Square\", 4]] - \
+SpinorChain[Spinor[\"Spin\", \"Angle\", 1], \n      Spinor[\"Helicity\", \
+\"Angle\", 6]]*SpinorChain[Spinor[\"Spin\", \"Square\", 2], \n      \
+Spinor[\"Helicity\", \"Square\", 4]]*(SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], Mom[1], \n       Spinor[\"Helicity\", \"Square\", 3]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[3], \n       \
+Spinor[\"Helicity\", \"Square\", 3]] + SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], Mom[6], \n       Spinor[\"Helicity\", \"Square\", 3]]) - \
+SpinorChain[Spinor[\"Spin\", \"Angle\", 2], \n      Spinor[\"Helicity\", \
+\"Angle\", 5]]*SpinorChain[Spinor[\"Spin\", \"Square\", 1], \n      \
+Spinor[\"Helicity\", \"Square\", 3]]*((PropDen[Mom[Multiparticle[1, 3, 6]], \
+qedSavedMass]*\n        SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \
+Spinor[\"Helicity\", \"Angle\", 6]]*\n        \
+SpinorChain[Spinor[\"Helicity\", \"Square\", 4], Spinor[\"Helicity\", \
+\"Square\", 3]])/\n       (-SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \
+Mom[1], Spinor[\"Helicity\", \"Square\", 3]] - \n        \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[6], Spinor[\"Helicity\", \
+\"Square\", 3]]) + \n      SpinorChain[Spinor[\"Helicity\", \"Square\", 4], \
+Mom[1], Spinor[\"Helicity\", \"Angle\", 6]] + \n      \
+SpinorChain[Spinor[\"Helicity\", \"Square\", 4], Mom[3], Spinor[\"Helicity\", \
+\"Angle\", 6]] + \n      SpinorChain[Spinor[\"Helicity\", \"Square\", 4], \
+Mom[6], Spinor[\"Helicity\", \"Angle\", 6]])))/\n  \
+(PropDen[Mom[Multiparticle[1, 6]], qedSavedMass]*PropDen[Mom[Multiparticle[1, \
+3, 6]], \n    qedSavedMass]*PropDen[Mom[Multiparticle[1, 3, 6, 5]], \
+qedSavedMass]*\n   (PropDen[Mom[Multiparticle[1, 3]], qedSavedMass] + \n    \
+(PropDen[Mom[Multiparticle[1, 3, 6]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n       \
+Mom[1], Spinor[\"Helicity\", \"Square\", 3]])/\n     \
+(-SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \
+Spinor[\"Helicity\", \"Square\", 3]] - \n      \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[6], Spinor[\"Helicity\", \
+\"Square\", 3]]))*\n   (PropDen[Mom[Multiparticle[1, 3, 6, 4]], qedSavedMass] \
++ \n    (PropDen[Mom[Multiparticle[1, 3, 6]], qedSavedMass]*\n      \
+(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], Spinor[\"Helicity\", \
+\"Square\", 3]] + \n       SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \
+Mom[4], Spinor[\"Helicity\", \"Square\", 3]] + \n       \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[6], Spinor[\"Helicity\", \
+\"Square\", 3]]))/\n     (-SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \
+Mom[1], Spinor[\"Helicity\", \"Square\", 3]] - \n      \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[6], Spinor[\"Helicity\", \
+\"Square\", 3]]))) - \n \
+(4*qedSavedCharge^4*qedSavedMass^2*SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], \n     Spinor[\"Helicity\", \"Angle\", \
+6]]^2*SpinorChain[Spinor[\"Helicity\", \"Square\", 3], \n     \
+Spinor[\"Helicity\", \"Square\", 4]]^2*\n   ((PropDen[Mom[Multiparticle[1, 3, \
+4]], qedSavedMass]*\n      SpinorChain[Spinor[\"Helicity\", \"Square\", 3], \
+Spinor[\"Spin\", \"Square\", 2]]*\n      SpinorChain[Spinor[\"Spin\", \
+\"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 5]])/\n     \
+(-SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \
+Spinor[\"Helicity\", \"Square\", 3]] - \n      \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[4], Spinor[\"Helicity\", \
+\"Square\", 3]]) + \n    SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Mom[1], \
+Spinor[\"Spin\", \"Square\", 2]] + \n    SpinorChain[Spinor[\"Spin\", \
+\"Angle\", 1], Mom[3], Spinor[\"Spin\", \"Square\", 2]] + \n    \
+SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Mom[4], Spinor[\"Spin\", \
+\"Square\", 2]]))/\n  (PropDen[Mom[Multiparticle[1, 4]], \
+qedSavedMass]*PropDen[Mom[Multiparticle[1, 3, 4]], \n    \
+qedSavedMass]*PropDen[Mom[Multiparticle[1, 3, 4, 5]], qedSavedMass]*\n   \
+(PropDen[Mom[Multiparticle[1, 3]], qedSavedMass] + \n    \
+(PropDen[Mom[Multiparticle[1, 3, 4]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n       \
+Mom[1], Spinor[\"Helicity\", \"Square\", 3]])/\n     \
+(-SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \
+Spinor[\"Helicity\", \"Square\", 3]] - \n      \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[4], Spinor[\"Helicity\", \
+\"Square\", 3]]))*\n   (PropDen[Mom[Multiparticle[1, 3, 4, 6]], qedSavedMass] \
++ \n    (PropDen[Mom[Multiparticle[1, 3, 4]], qedSavedMass]*\n      \
+(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], Spinor[\"Helicity\", \
+\"Square\", 3]] + \n       SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \
+Mom[4], Spinor[\"Helicity\", \"Square\", 3]] + \n       \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[6], Spinor[\"Helicity\", \
+\"Square\", 3]]))/\n     (-SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \
+Mom[1], Spinor[\"Helicity\", \"Square\", 3]] - \n      \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[4], Spinor[\"Helicity\", \
+\"Square\", 3]]))) - \n \
+(4*qedSavedCharge^4*qedSavedMass^2*SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], \n     Spinor[\"Helicity\", \"Angle\", \
+6]]^2*SpinorChain[Spinor[\"Helicity\", \"Square\", 3], \n     \
+Spinor[\"Helicity\", \"Square\", 4]]^2*\n   (-((PropDen[Mom[Multiparticle[1, \
+5, 6]], qedSavedMass]*\n       SpinorChain[Spinor[\"Helicity\", \"Angle\", \
+5], Spinor[\"Spin\", \"Angle\", 2]]*\n       SpinorChain[Spinor[\"Spin\", \
+\"Square\", 1], Spinor[\"Helicity\", \"Square\", 3]])/\n      \
+(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], Spinor[\"Helicity\", \
+\"Square\", 3]] + \n       SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \
+Mom[6], Spinor[\"Helicity\", \"Square\", 3]])) + \n    \
+SpinorChain[Spinor[\"Spin\", \"Square\", 1], Mom[1], Spinor[\"Spin\", \
+\"Angle\", 2]] + \n    SpinorChain[Spinor[\"Spin\", \"Square\", 1], Mom[5], \
+Spinor[\"Spin\", \"Angle\", 2]] + \n    SpinorChain[Spinor[\"Spin\", \
+\"Square\", 1], Mom[6], Spinor[\"Spin\", \"Angle\", 2]]))/\n  \
+(PropDen[Mom[Multiparticle[1, 6]], qedSavedMass]*PropDen[Mom[Multiparticle[1, \
+5, 6]], \n    qedSavedMass]*PropDen[Mom[Multiparticle[1, 5, 6, 3]], \
+qedSavedMass]*\n   (PropDen[Mom[Multiparticle[1, 5]], qedSavedMass] - \n    \
+(PropDen[Mom[Multiparticle[1, 5, 6]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n       \
+Mom[1], Spinor[\"Helicity\", \"Square\", \
+3]])/(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n       Mom[1], \
+Spinor[\"Helicity\", \"Square\", 3]] + SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], \n       Mom[6], Spinor[\"Helicity\", \"Square\", 3]]))*\n   \
+(PropDen[Mom[Multiparticle[1, 5, 6, 4]], qedSavedMass] - \n    \
+(PropDen[Mom[Multiparticle[1, 5, 6]], qedSavedMass]*\n      \
+(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], Spinor[\"Helicity\", \
+\"Square\", 3]] + \n       SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \
+Mom[4], Spinor[\"Helicity\", \"Square\", 3]] + \n       \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[6], Spinor[\"Helicity\", \
+\"Square\", 3]]))/\n     (SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \
+Mom[1], Spinor[\"Helicity\", \"Square\", 3]] + \n      \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[6], Spinor[\"Helicity\", \
+\"Square\", 3]]))) + \n (4*qedSavedCharge^4*SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], Mom[2], \n    Spinor[\"Helicity\", \"Square\", \
+3]]*(qedSavedMass^2*PropDen[Mom[Multiparticle[1, 4]], \n      \
+qedSavedMass]*PropDen[Mom[Multiparticle[2, 3, 5]], qedSavedMass]*\n     \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Spinor[\"Helicity\", \
+\"Angle\", 6]]^2*\n     SpinorChain[Spinor[\"Spin\", \"Square\", 1], \
+Spinor[\"Helicity\", \"Square\", 4]]*\n     (PropDen[Mom[Multiparticle[2, 3, \
+6]], qedSavedMass] - \n      (PropDen[Mom[Multiparticle[2, 3]], \
+qedSavedMass]*(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          \
+Mom[2], Spinor[\"Helicity\", \"Square\", 3]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          Mom[6], \
+Spinor[\"Helicity\", \"Square\", 3]]))/SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], \n        Mom[2], Spinor[\"Helicity\", \"Square\", 3]])*\n     \
+(-((PropDen[Mom[Multiparticle[2, 3]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Square\", \n           3], \
+Spinor[\"Helicity\", \"Square\", 4]]*SpinorChain[Spinor[\"Spin\", \"Angle\", \
+2], \n          Spinor[\"Helicity\", \"Angle\", \
+5]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Angle\", 2], Mom[2], \n       Spinor[\"Helicity\", \"Square\", 4]] + \
+SpinorChain[Spinor[\"Spin\", \"Angle\", 2], Mom[3], \n       \
+Spinor[\"Helicity\", \"Square\", 4]]) + \
+qedSavedMass^2*PropDen[Mom[Multiparticle[2, 3, 5]], \n      \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \
+Spinor[\"Helicity\", \"Angle\", 6]]^2*\n     SpinorChain[Spinor[\"Spin\", \
+\"Square\", 1], Spinor[\"Helicity\", \"Square\", 4]]*\n     \
+(PropDen[Mom[Multiparticle[2, 3, 4]], qedSavedMass] - \n      \
+(PropDen[Mom[Multiparticle[2, 3]], \
+qedSavedMass]*(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          \
+Mom[2], Spinor[\"Helicity\", \"Square\", 3]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          Mom[4], \
+Spinor[\"Helicity\", \"Square\", 3]]))/SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], \n        Mom[2], Spinor[\"Helicity\", \"Square\", \
+3]])*(PropDen[Mom[Multiparticle[2, 3, 6]], \n       qedSavedMass] - \
+(PropDen[Mom[Multiparticle[2, 3]], qedSavedMass]*\n        \
+(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], Spinor[\"Helicity\", \
+\"Square\", 3]] + \n         SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \
+Mom[6], Spinor[\"Helicity\", \"Square\", 3]]))/\n       \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], Spinor[\"Helicity\", \
+\"Square\", 3]])*\n     (-((PropDen[Mom[Multiparticle[2, 3]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Square\", \n           3], \
+Spinor[\"Helicity\", \"Square\", 4]]*SpinorChain[Spinor[\"Spin\", \"Angle\", \
+2], \n          Spinor[\"Helicity\", \"Angle\", \
+5]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Angle\", 2], Mom[2], \n       Spinor[\"Helicity\", \"Square\", 4]] + \
+SpinorChain[Spinor[\"Spin\", \"Angle\", 2], Mom[3], \n       \
+Spinor[\"Helicity\", \"Square\", 4]]) - (PropDen[Mom[Multiparticle[2, 3, 4]], \
+qedSavedMass] - \n      (PropDen[Mom[Multiparticle[2, 3]], \
+qedSavedMass]*(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          \
+Mom[2], Spinor[\"Helicity\", \"Square\", 3]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          Mom[4], \
+Spinor[\"Helicity\", \"Square\", 3]]))/SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], \n        Mom[2], Spinor[\"Helicity\", \"Square\", \
+3]])*(PropDen[Mom[Multiparticle[2, 3, 6]], \n       qedSavedMass] - \
+(PropDen[Mom[Multiparticle[2, 3]], qedSavedMass]*\n        \
+(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], Spinor[\"Helicity\", \
+\"Square\", 3]] + \n         SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \
+Mom[6], Spinor[\"Helicity\", \"Square\", 3]]))/\n       \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], Spinor[\"Helicity\", \
+\"Square\", 3]])*\n     SpinorChain[Spinor[\"Helicity\", \"Square\", 4], \
+Mom[1], Spinor[\"Helicity\", \"Angle\", 6]]^2*\n     \
+(-((PropDen[Mom[Multiparticle[2, 3]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", \n           5], \
+Spinor[\"Spin\", \"Angle\", 2]]*SpinorChain[Spinor[\"Spin\", \"Square\", 1], \
+\n          Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Square\", 1], Mom[2], \n       Spinor[\"Spin\", \"Angle\", 2]] + \
+SpinorChain[Spinor[\"Spin\", \"Square\", 1], Mom[3], \n       \
+Spinor[\"Spin\", \"Angle\", 2]])*(SpinorChain[Spinor[\"Helicity\", \"Angle\", \
+5], Mom[1], Mom[2], \n       Spinor[\"Helicity\", \"Angle\", 5]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \n       Mom[3], \
+Spinor[\"Helicity\", \"Angle\", 5]]) - \n    PropDen[Mom[Multiparticle[2, 3, \
+5]], qedSavedMass]*\n     (PropDen[Mom[Multiparticle[2, 3, 4]], qedSavedMass] \
+- \n      (PropDen[Mom[Multiparticle[2, 3]], \
+qedSavedMass]*(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          \
+Mom[2], Spinor[\"Helicity\", \"Square\", 3]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          Mom[4], \
+Spinor[\"Helicity\", \"Square\", 3]]))/SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], \n        Mom[2], Spinor[\"Helicity\", \"Square\", \
+3]])*SpinorChain[Spinor[\"Helicity\", \"Square\", 4], \n       Mom[1], \
+Spinor[\"Helicity\", \"Angle\", 5]]^2*\n     (-((PropDen[Mom[Multiparticle[2, \
+3]], qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", \n           \
+5], Spinor[\"Spin\", \"Angle\", 2]]*SpinorChain[Spinor[\"Spin\", \"Square\", \
+1], \n          Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Square\", 1], Mom[2], \n       Spinor[\"Spin\", \"Angle\", 2]] + \
+SpinorChain[Spinor[\"Spin\", \"Square\", 1], Mom[3], \n       \
+Spinor[\"Spin\", \"Angle\", 2]])*(-((PropDen[Mom[Multiparticle[2, 3]], \
+qedSavedMass]*\n         SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \
+Spinor[\"Helicity\", \"Angle\", 6]]*\n         \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 6], Mom[1], Spinor[\"Helicity\", \
+\"Square\", 3]])/\n        SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \
+Mom[2], Spinor[\"Helicity\", \"Square\", 3]]) + \n      \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 6], Mom[1], Mom[2], \
+Spinor[\"Helicity\", \"Angle\", 6]] + \n      \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 6], Mom[1], Mom[3], \
+Spinor[\"Helicity\", \"Angle\", \n        6]]) - PropDen[Mom[Multiparticle[2, \
+3, 5]], qedSavedMass]*\n     SpinorChain[Spinor[\"Spin\", \"Square\", 1], \
+Spinor[\"Helicity\", \"Square\", 4]]*\n     (PropDen[Mom[Multiparticle[2, 3, \
+4]], qedSavedMass] - \n      (PropDen[Mom[Multiparticle[2, 3]], \
+qedSavedMass]*(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          \
+Mom[2], Spinor[\"Helicity\", \"Square\", 3]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          Mom[4], \
+Spinor[\"Helicity\", \"Square\", 3]]))/SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], \n        Mom[2], Spinor[\"Helicity\", \"Square\", 3]])*\n     \
+(-((PropDen[Mom[Multiparticle[2, 3]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Square\", \n           3], \
+Spinor[\"Helicity\", \"Square\", 4]]*SpinorChain[Spinor[\"Spin\", \"Angle\", \
+2], \n          Spinor[\"Helicity\", \"Angle\", \
+5]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Angle\", 2], Mom[2], \n       Spinor[\"Helicity\", \"Square\", 4]] + \
+SpinorChain[Spinor[\"Spin\", \"Angle\", 2], Mom[3], \n       \
+Spinor[\"Helicity\", \"Square\", 4]])*SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], Mom[4], \n      Mom[1], Spinor[\"Helicity\", \"Angle\", 5]]*\n \
+    (-((PropDen[Mom[Multiparticle[2, 3]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", \n           5], \
+Spinor[\"Helicity\", \"Angle\", 6]]*SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 6], Mom[1], \n          Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 6], Mom[1], \n       Mom[2], Spinor[\"Helicity\", \"Angle\", 6]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 6], \n       Mom[1], Mom[3], \
+Spinor[\"Helicity\", \"Angle\", 6]]) - \n    SpinorChain[Spinor[\"Spin\", \
+\"Square\", 1], Spinor[\"Helicity\", \"Square\", 4]]*\n     \
+(PropDen[Mom[Multiparticle[2, 3, 4]], qedSavedMass] - \n      \
+(PropDen[Mom[Multiparticle[2, 3]], \
+qedSavedMass]*(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          \
+Mom[2], Spinor[\"Helicity\", \"Square\", 3]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          Mom[4], \
+Spinor[\"Helicity\", \"Square\", 3]]))/SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], \n        Mom[2], Spinor[\"Helicity\", \"Square\", \
+3]])*(PropDen[Mom[Multiparticle[2, 3, 6]], \n       qedSavedMass] - \
+(PropDen[Mom[Multiparticle[2, 3]], qedSavedMass]*\n        \
+(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], Spinor[\"Helicity\", \
+\"Square\", 3]] + \n         SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \
+Mom[6], Spinor[\"Helicity\", \"Square\", 3]]))/\n       \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], Spinor[\"Helicity\", \
+\"Square\", 3]])*\n     (-((PropDen[Mom[Multiparticle[2, 3]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Square\", \n           3], \
+Spinor[\"Helicity\", \"Square\", 4]]*SpinorChain[Spinor[\"Spin\", \"Angle\", \
+2], \n          Spinor[\"Helicity\", \"Angle\", \
+5]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Angle\", 2], Mom[2], \n       Spinor[\"Helicity\", \"Square\", 4]] + \
+SpinorChain[Spinor[\"Spin\", \"Angle\", 2], Mom[3], \n       \
+Spinor[\"Helicity\", \"Square\", 4]])*(SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], Mom[1], \n       Mom[2], Spinor[\"Helicity\", \"Angle\", 5]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n       Mom[1], Mom[3], \
+Spinor[\"Helicity\", \"Angle\", 5]])*SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 6], \n      Mom[4], Mom[1], Spinor[\"Helicity\", \"Angle\", 6]] - \
+\n    qedSavedMass^2*PropDen[Mom[Multiparticle[2, 3, 5]], qedSavedMass]*\n    \
+ SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Spinor[\"Helicity\", \
+\"Angle\", 6]]^2*\n     (PropDen[Mom[Multiparticle[2, 3, 6]], qedSavedMass] - \
+\n      (PropDen[Mom[Multiparticle[2, 3]], \
+qedSavedMass]*(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          \
+Mom[2], Spinor[\"Helicity\", \"Square\", 3]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          Mom[6], \
+Spinor[\"Helicity\", \"Square\", 3]]))/SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], \n        Mom[2], Spinor[\"Helicity\", \"Square\", 3]])*\n     \
+(-((PropDen[Mom[Multiparticle[2, 3]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", \n           5], \
+Spinor[\"Spin\", \"Angle\", 2]]*SpinorChain[Spinor[\"Spin\", \"Square\", 1], \
+\n          Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Square\", 1], Mom[2], \n       Spinor[\"Spin\", \"Angle\", 2]] + \
+SpinorChain[Spinor[\"Spin\", \"Square\", 1], Mom[3], \n       \
+Spinor[\"Spin\", \"Angle\", 2]])*(-((PropDen[Mom[Multiparticle[2, 3]], \
+qedSavedMass]*\n         SpinorChain[Spinor[\"Helicity\", \"Square\", 3], \
+Spinor[\"Helicity\", \"Square\", 4]]*\n         \
+SpinorChain[Spinor[\"Helicity\", \"Square\", 4], Mom[1], Spinor[\"Helicity\", \
+\"Angle\", 5]])/\n        SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \
+Mom[2], Spinor[\"Helicity\", \"Square\", 3]]) + \n      \
+SpinorChain[Spinor[\"Helicity\", \"Square\", 4], Mom[1], Mom[2], \
+Spinor[\"Helicity\", \"Square\", \n        4]] + \
+SpinorChain[Spinor[\"Helicity\", \"Square\", 4], Mom[1], Mom[3], \n       \
+Spinor[\"Helicity\", \"Square\", \
+4]])))/(qedSavedMass^2*PropDen[Mom[Multiparticle[1, 4]], \n    \
+qedSavedMass]*PropDen[Mom[Multiparticle[1, 6]], qedSavedMass]*\n   \
+PropDen[Mom[Multiparticle[2, 3]], qedSavedMass]*PropDen[Mom[Multiparticle[2, \
+3, 5]], \n    qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \
+Spinor[\"Helicity\", \"Angle\", 3]]*\n   (PropDen[Mom[Multiparticle[1, 5]], \
+qedSavedMass] + \n    (PropDen[Mom[Multiparticle[2, 3]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n       \
+Mom[1], Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n      Mom[2], \
+Spinor[\"Helicity\", \"Square\", 3]])*\n   (PropDen[Mom[Multiparticle[2, 3, \
+4]], qedSavedMass] - \n    (PropDen[Mom[Multiparticle[2, 3]], \
+qedSavedMass]*(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n        \
+Mom[2], Spinor[\"Helicity\", \"Square\", 3]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n        Mom[4], \
+Spinor[\"Helicity\", \"Square\", 3]]))/SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], \n      Mom[2], Spinor[\"Helicity\", \"Square\", 3]])*\n   \
+(PropDen[Mom[Multiparticle[2, 3, 6]], qedSavedMass] - \n    \
+(PropDen[Mom[Multiparticle[2, 3]], \
+qedSavedMass]*(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n        \
+Mom[2], Spinor[\"Helicity\", \"Square\", 3]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n        Mom[6], \
+Spinor[\"Helicity\", \"Square\", 3]]))/SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], \n      Mom[2], Spinor[\"Helicity\", \"Square\", 3]])) + \n \
+(4*qedSavedCharge^4*(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], \
+\n     Spinor[\"Helicity\", \"Square\", 3]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[4], \n     \
+Spinor[\"Helicity\", \"Square\", 3]] + SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], Mom[5], \n     Spinor[\"Helicity\", \"Square\", 3]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[6], \n     \
+Spinor[\"Helicity\", \"Square\", 3]])*\n   \
+(qedSavedMass^2*PropDen[Mom[Multiparticle[2, 4]], qedSavedMass]*\n     \
+PropDen[Mom[Multiparticle[2, 6]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n       \
+Spinor[\"Helicity\", \"Angle\", 6]]^2*SpinorChain[Spinor[\"Spin\", \
+\"Square\", 2], \n      Spinor[\"Helicity\", \"Square\", \
+4]]*(PropDen[Mom[Multiparticle[2, 5]], qedSavedMass] + \n      \
+(PropDen[Mom[Multiparticle[1, 3]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n         \
+Mom[2], Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n        Mom[1], \
+Spinor[\"Helicity\", \"Square\", 3]])*\n     (-((PropDen[Mom[Multiparticle[1, \
+3]], qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Square\", \n           \
+3], Spinor[\"Helicity\", \"Square\", 4]]*SpinorChain[Spinor[\"Spin\", \
+\"Angle\", 1], \n          Spinor[\"Helicity\", \"Angle\", \
+5]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Angle\", 1], Mom[1], \n       Spinor[\"Helicity\", \"Square\", 4]] + \
+SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Mom[3], \n       \
+Spinor[\"Helicity\", \"Square\", 4]]) + \
+qedSavedMass^2*PropDen[Mom[Multiparticle[2, 6]], \n      \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \
+Spinor[\"Helicity\", \"Angle\", 6]]^2*\n     SpinorChain[Spinor[\"Spin\", \
+\"Square\", 2], Spinor[\"Helicity\", \"Square\", 4]]*\n     \
+(PropDen[Mom[Multiparticle[2, 5]], qedSavedMass] + \n      \
+(PropDen[Mom[Multiparticle[1, 3]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n         \
+Mom[2], Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n        Mom[1], \
+Spinor[\"Helicity\", \"Square\", 3]])*(PropDen[Mom[Multiparticle[1, 3, 4]], \
+\n       qedSavedMass] - (PropDen[Mom[Multiparticle[1, 3]], qedSavedMass]*\n  \
+      (SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \
+Spinor[\"Helicity\", \"Square\", 3]] + \n         \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[4], Spinor[\"Helicity\", \
+\"Square\", 3]]))/\n       SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \
+Mom[1], Spinor[\"Helicity\", \"Square\", 3]])*\n     \
+(-((PropDen[Mom[Multiparticle[1, 3]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Square\", \n           3], \
+Spinor[\"Helicity\", \"Square\", 4]]*SpinorChain[Spinor[\"Spin\", \"Angle\", \
+1], \n          Spinor[\"Helicity\", \"Angle\", \
+5]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Angle\", 1], Mom[1], \n       Spinor[\"Helicity\", \"Square\", 4]] + \
+SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Mom[3], \n       \
+Spinor[\"Helicity\", \"Square\", 4]]) + PropDen[Mom[Multiparticle[2, 4]], \
+qedSavedMass]*\n     PropDen[Mom[Multiparticle[2, 6]], qedSavedMass]*\n     \
+(-((PropDen[Mom[Multiparticle[1, 3]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", \n            5], \
+Spinor[\"Helicity\", \"Angle\", 6]]*SpinorChain[Spinor[\"Helicity\", \
+\"Square\", 4], \n           Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \n          \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Helicity\", \
+\"Square\", 4], Mom[1], \n        Spinor[\"Helicity\", \"Angle\", 6]] + \
+SpinorChain[Spinor[\"Helicity\", \"Square\", 4], Mom[3], \n        \
+Spinor[\"Helicity\", \"Angle\", 6]])^2*\n     \
+(-((PropDen[Mom[Multiparticle[1, 3]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Square\", \n           3], \
+Spinor[\"Spin\", \"Square\", 2]]*SpinorChain[Spinor[\"Spin\", \"Angle\", 1], \
+\n          Spinor[\"Helicity\", \"Angle\", \
+5]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Angle\", 1], Mom[1], \n       Spinor[\"Spin\", \"Square\", 2]] + \
+SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Mom[3], \n       Spinor[\"Spin\", \
+\"Square\", 2]])*(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \
+Mom[2], \n       Spinor[\"Helicity\", \"Angle\", 5]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[3], \n       Mom[2], \
+Spinor[\"Helicity\", \"Angle\", 5]]) + PropDen[Mom[Multiparticle[2, 4]], \
+qedSavedMass]*\n     (PropDen[Mom[Multiparticle[2, 5]], qedSavedMass] + \n    \
+  (PropDen[Mom[Multiparticle[1, 3]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n         \
+Mom[2], Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n        Mom[1], \
+Spinor[\"Helicity\", \"Square\", 3]])*\n     \
+(SpinorChain[Spinor[\"Helicity\", \"Square\", 4], Mom[1], \
+Spinor[\"Helicity\", \"Angle\", 5]] + \n       \
+SpinorChain[Spinor[\"Helicity\", \"Square\", 4], Mom[3], Spinor[\"Helicity\", \
+\"Angle\", 5]])^2*\n     (-((PropDen[Mom[Multiparticle[1, 3]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Square\", \n           3], \
+Spinor[\"Spin\", \"Square\", 2]]*SpinorChain[Spinor[\"Spin\", \"Angle\", 1], \
+\n          Spinor[\"Helicity\", \"Angle\", \
+5]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Angle\", 1], Mom[1], \n       Spinor[\"Spin\", \"Square\", 2]] + \
+SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Mom[3], \n       Spinor[\"Spin\", \
+\"Square\", 2]])*\n     (-((PropDen[Mom[Multiparticle[1, 3]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", \n           6], \
+Spinor[\"Helicity\", \"Angle\", 5]]*SpinorChain[Spinor[\"Helicity\", \
+\"Square\", 3], Mom[2], \n          Spinor[\"Helicity\", \"Angle\", \
+6]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 6], Mom[1], \n       Mom[2], Spinor[\"Helicity\", \"Angle\", 6]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 6], \n       Mom[3], Mom[2], \
+Spinor[\"Helicity\", \"Angle\", 6]]) - \n    PropDen[Mom[Multiparticle[2, \
+4]], qedSavedMass]*SpinorChain[Spinor[\"Spin\", \"Square\", 2], \n      \
+Spinor[\"Helicity\", \"Square\", 4]]*(PropDen[Mom[Multiparticle[2, 5]], \
+qedSavedMass] + \n      (PropDen[Mom[Multiparticle[1, 3]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n         \
+Mom[2], Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n        Mom[1], \
+Spinor[\"Helicity\", \"Square\", 3]])*\n     (-((PropDen[Mom[Multiparticle[1, \
+3]], qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Square\", \n           \
+3], Spinor[\"Helicity\", \"Square\", 4]]*SpinorChain[Spinor[\"Spin\", \
+\"Angle\", 1], \n          Spinor[\"Helicity\", \"Angle\", \
+5]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Angle\", 1], Mom[1], \n       Spinor[\"Helicity\", \"Square\", 4]] + \
+SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Mom[3], \n       \
+Spinor[\"Helicity\", \"Square\", 4]])*(SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], Mom[4], \n       Mom[1], Spinor[\"Helicity\", \"Angle\", 5]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n       Mom[4], Mom[3], \
+Spinor[\"Helicity\", \"Angle\", 5]])*\n     (-((PropDen[Mom[Multiparticle[1, \
+3]], qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", \n           \
+6], Spinor[\"Helicity\", \"Angle\", 5]]*SpinorChain[Spinor[\"Helicity\", \
+\"Square\", 3], Mom[2], \n          Spinor[\"Helicity\", \"Angle\", \
+6]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 6], Mom[1], \n       Mom[2], Spinor[\"Helicity\", \"Angle\", 6]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 6], \n       Mom[3], Mom[2], \
+Spinor[\"Helicity\", \"Angle\", 6]]) - \n    PropDen[Mom[Multiparticle[2, \
+4]], qedSavedMass]*PropDen[Mom[Multiparticle[2, 6]], qedSavedMass]*\n     \
+SpinorChain[Spinor[\"Spin\", \"Square\", 2], Spinor[\"Helicity\", \"Square\", \
+4]]*\n     (-((PropDen[Mom[Multiparticle[1, 3]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Square\", \n           3], \
+Spinor[\"Helicity\", \"Square\", 4]]*SpinorChain[Spinor[\"Spin\", \"Angle\", \
+1], \n          Spinor[\"Helicity\", \"Angle\", \
+5]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Angle\", 1], Mom[1], \n       Spinor[\"Helicity\", \"Square\", 4]] + \
+SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Mom[3], \n       \
+Spinor[\"Helicity\", \"Square\", 4]])*(SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], Mom[1], \n       Mom[2], Spinor[\"Helicity\", \"Angle\", 5]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n       Mom[3], Mom[2], \
+Spinor[\"Helicity\", \"Angle\", 5]])*\n     (-((PropDen[Mom[Multiparticle[1, \
+3]], qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", \n           \
+5], Spinor[\"Helicity\", \"Angle\", 6]]*SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 6], Mom[4], \n          Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 6], Mom[4], \n       Mom[1], Spinor[\"Helicity\", \"Angle\", 6]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 6], \n       Mom[4], Mom[3], \
+Spinor[\"Helicity\", \"Angle\", 6]]) + \n    \
+qedSavedMass^2*PropDen[Mom[Multiparticle[2, 6]], qedSavedMass]*\n     \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Spinor[\"Helicity\", \
+\"Angle\", 6]]^2*\n     (PropDen[Mom[Multiparticle[2, 5]], qedSavedMass] + \n \
+     (PropDen[Mom[Multiparticle[1, 3]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n         \
+Mom[2], Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n        Mom[1], \
+Spinor[\"Helicity\", \"Square\", 3]])*\n     (-((PropDen[Mom[Multiparticle[1, \
+3]], qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Square\", \n           \
+3], Spinor[\"Spin\", \"Square\", 2]]*SpinorChain[Spinor[\"Spin\", \"Angle\", \
+1], \n          Spinor[\"Helicity\", \"Angle\", \
+5]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Angle\", 1], Mom[1], \n       Spinor[\"Spin\", \"Square\", 2]] + \
+SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Mom[3], \n       Spinor[\"Spin\", \
+\"Square\", 2]])*\n     (-((PropDen[Mom[Multiparticle[1, 3]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Square\", \n           4], \
+Spinor[\"Helicity\", \"Square\", 3]]*SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], Mom[2], \n          Spinor[\"Helicity\", \"Square\", \
+4]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Helicity\", \
+\"Square\", 4], Mom[1], \n       Mom[2], Spinor[\"Helicity\", \"Square\", 4]] \
++ SpinorChain[Spinor[\"Helicity\", \"Square\", 4], \n       Mom[3], Mom[2], \
+Spinor[\"Helicity\", \"Square\", 4]])))/\n  \
+(qedSavedMass^2*PropDen[Mom[Multiparticle[1, 3]], qedSavedMass]*\n   \
+PropDen[Mom[Multiparticle[2, 4]], qedSavedMass]*PropDen[Mom[Multiparticle[2, \
+6]], qedSavedMass]*\n   PropDen[Mom[Multiparticle[1, 3, 5]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n    \
+Spinor[\"Helicity\", \"Angle\", 3]]*(PropDen[Mom[Multiparticle[2, 5]], \
+qedSavedMass] + \n    (PropDen[Mom[Multiparticle[1, 3]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n       \
+Mom[2], Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n      Mom[1], \
+Spinor[\"Helicity\", \"Square\", 3]])*\n   (PropDen[Mom[Multiparticle[1, 3, \
+4]], qedSavedMass] - \n    (PropDen[Mom[Multiparticle[1, 3]], \
+qedSavedMass]*(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n        \
+Mom[1], Spinor[\"Helicity\", \"Square\", 3]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n        Mom[4], \
+Spinor[\"Helicity\", \"Square\", 3]]))/SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], \n      Mom[1], Spinor[\"Helicity\", \"Square\", 3]])*\n   \
+(PropDen[Mom[Multiparticle[1, 3, 6]], qedSavedMass] - \n    \
+(PropDen[Mom[Multiparticle[1, 3]], \
+qedSavedMass]*(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n        \
+Mom[1], Spinor[\"Helicity\", \"Square\", 3]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n        Mom[6], \
+Spinor[\"Helicity\", \"Square\", 3]]))/SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], \n      Mom[1], Spinor[\"Helicity\", \"Square\", 3]])) + \n \
+(4*qedSavedCharge^4*SpinorChain[Spinor[\"Helicity\", \"Square\", 3], Mom[2], \
+\n    Spinor[\"Helicity\", \"Angle\", \
+5]]*(qedSavedMass^2*PropDen[Mom[Multiparticle[1, 6]], qedSavedMass]*\n     \
+PropDen[Mom[Multiparticle[2, 5, 3]], qedSavedMass]*\n     \
+SpinorChain[Spinor[\"Helicity\", \"Square\", 3], Spinor[\"Helicity\", \
+\"Square\", 4]]^2*\n     SpinorChain[Spinor[\"Spin\", \"Angle\", 1], \
+Spinor[\"Helicity\", \"Angle\", 6]]*\n     (PropDen[Mom[Multiparticle[2, 5, \
+4]], qedSavedMass] - \n      (PropDen[Mom[Multiparticle[2, 5]], \
+qedSavedMass]*(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          \
+Mom[2], Spinor[\"Helicity\", \"Square\", 3]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          Mom[4], \
+Spinor[\"Helicity\", \"Square\", 3]]))/SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], \n        Mom[2], Spinor[\"Helicity\", \"Square\", 3]])*\n     \
+(-((PropDen[Mom[Multiparticle[2, 5]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", \n           5], \
+Spinor[\"Helicity\", \"Angle\", 6]]*SpinorChain[Spinor[\"Spin\", \"Square\", \
+2], \n          Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Square\", 2], Mom[2], \n       Spinor[\"Helicity\", \"Angle\", 6]] + \
+SpinorChain[Spinor[\"Spin\", \"Square\", 2], Mom[5], \n       \
+Spinor[\"Helicity\", \"Angle\", 6]]) + \
+qedSavedMass^2*PropDen[Mom[Multiparticle[2, 5, 3]], \n      \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Square\", 3], \
+Spinor[\"Helicity\", \"Square\", 4]]^2*\n     SpinorChain[Spinor[\"Spin\", \
+\"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 6]]*\n     \
+(PropDen[Mom[Multiparticle[2, 5, 4]], qedSavedMass] - \n      \
+(PropDen[Mom[Multiparticle[2, 5]], \
+qedSavedMass]*(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          \
+Mom[2], Spinor[\"Helicity\", \"Square\", 3]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          Mom[4], \
+Spinor[\"Helicity\", \"Square\", 3]]))/SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], \n        Mom[2], Spinor[\"Helicity\", \"Square\", \
+3]])*(PropDen[Mom[Multiparticle[2, 5, 6]], \n       qedSavedMass] - \
+(PropDen[Mom[Multiparticle[2, 5]], qedSavedMass]*\n        \
+(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], Spinor[\"Helicity\", \
+\"Square\", 3]] + \n         SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \
+Mom[6], Spinor[\"Helicity\", \"Square\", 3]]))/\n       \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], Spinor[\"Helicity\", \
+\"Square\", 3]])*\n     (-((PropDen[Mom[Multiparticle[2, 5]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", \n           5], \
+Spinor[\"Helicity\", \"Angle\", 6]]*SpinorChain[Spinor[\"Spin\", \"Square\", \
+2], \n          Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Square\", 2], Mom[2], \n       Spinor[\"Helicity\", \"Angle\", 6]] + \
+SpinorChain[Spinor[\"Spin\", \"Square\", 2], Mom[5], \n       \
+Spinor[\"Helicity\", \"Angle\", 6]]) - \
+qedSavedMass^2*PropDen[Mom[Multiparticle[2, 5, 3]], \n      \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Square\", 3], \
+Spinor[\"Helicity\", \"Square\", 4]]^2*\n     (PropDen[Mom[Multiparticle[2, \
+5, 4]], qedSavedMass] - \n      (PropDen[Mom[Multiparticle[2, 5]], \
+qedSavedMass]*(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          \
+Mom[2], Spinor[\"Helicity\", \"Square\", 3]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          Mom[4], \
+Spinor[\"Helicity\", \"Square\", 3]]))/SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], \n        Mom[2], Spinor[\"Helicity\", \"Square\", 3]])*\n     \
+(-((PropDen[Mom[Multiparticle[2, 5]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Square\", \n           3], \
+Spinor[\"Spin\", \"Square\", 2]]*SpinorChain[Spinor[\"Spin\", \"Angle\", 1], \
+\n          Spinor[\"Helicity\", \"Angle\", \
+5]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Angle\", 1], Mom[2], \n       Spinor[\"Spin\", \"Square\", 2]] + \
+SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Mom[5], \n       Spinor[\"Spin\", \
+\"Square\", 2]])*\n     (-((PropDen[Mom[Multiparticle[2, 5]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", \n           5], \
+Spinor[\"Helicity\", \"Angle\", 6]]*SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 6], Mom[1], \n          Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 6], Mom[1], \n       Mom[2], Spinor[\"Helicity\", \"Angle\", 6]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 6], \n       Mom[1], Mom[5], \
+Spinor[\"Helicity\", \"Angle\", 6]]) - \n    (PropDen[Mom[Multiparticle[2, 5, \
+4]], qedSavedMass] - \n      (PropDen[Mom[Multiparticle[2, 5]], \
+qedSavedMass]*(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          \
+Mom[2], Spinor[\"Helicity\", \"Square\", 3]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          Mom[4], \
+Spinor[\"Helicity\", \"Square\", 3]]))/SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], \n        Mom[2], Spinor[\"Helicity\", \"Square\", \
+3]])*(PropDen[Mom[Multiparticle[2, 5, 6]], \n       qedSavedMass] - \
+(PropDen[Mom[Multiparticle[2, 5]], qedSavedMass]*\n        \
+(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], Spinor[\"Helicity\", \
+\"Square\", 3]] + \n         SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \
+Mom[6], Spinor[\"Helicity\", \"Square\", 3]]))/\n       \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], Spinor[\"Helicity\", \
+\"Square\", 3]])*\n     SpinorChain[Spinor[\"Helicity\", \"Angle\", 6], \
+Mom[1], Spinor[\"Helicity\", \"Square\", 4]]^2*\n     \
+(-((PropDen[Mom[Multiparticle[2, 5]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Square\", \n           3], \
+Spinor[\"Spin\", \"Square\", 2]]*SpinorChain[Spinor[\"Spin\", \"Angle\", 1], \
+\n          Spinor[\"Helicity\", \"Angle\", \
+5]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Angle\", 1], Mom[2], \n       Spinor[\"Spin\", \"Square\", 2]] + \
+SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Mom[5], \n       Spinor[\"Spin\", \
+\"Square\", 2]])*(SpinorChain[Spinor[\"Helicity\", \"Square\", 3], Mom[1], \
+Mom[2], \n       Spinor[\"Helicity\", \"Square\", 3]] + \
+SpinorChain[Spinor[\"Helicity\", \"Square\", 3], Mom[1], \n       Mom[5], \
+Spinor[\"Helicity\", \"Square\", 3]]) - \n    PropDen[Mom[Multiparticle[2, 5, \
+3]], qedSavedMass]*\n     (PropDen[Mom[Multiparticle[2, 5, 6]], qedSavedMass] \
+- \n      (PropDen[Mom[Multiparticle[2, 5]], \
+qedSavedMass]*(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          \
+Mom[2], Spinor[\"Helicity\", \"Square\", 3]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          Mom[6], \
+Spinor[\"Helicity\", \"Square\", 3]]))/SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], \n        Mom[2], Spinor[\"Helicity\", \"Square\", \
+3]])*SpinorChain[Spinor[\"Helicity\", \"Angle\", 6], \n       Mom[1], \
+Spinor[\"Helicity\", \"Square\", 3]]^2*\n     \
+(-((PropDen[Mom[Multiparticle[2, 5]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Square\", \n           3], \
+Spinor[\"Spin\", \"Square\", 2]]*SpinorChain[Spinor[\"Spin\", \"Angle\", 1], \
+\n          Spinor[\"Helicity\", \"Angle\", \
+5]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Angle\", 1], Mom[2], \n       Spinor[\"Spin\", \"Square\", 2]] + \
+SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Mom[5], \n       Spinor[\"Spin\", \
+\"Square\", 2]])*\n     (-((PropDen[Mom[Multiparticle[2, 5]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Square\", \n           3], \
+Spinor[\"Helicity\", \"Square\", 4]]*SpinorChain[Spinor[\"Helicity\", \
+\"Square\", 4], \n          Mom[1], Spinor[\"Helicity\", \"Angle\", \
+5]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n         Mom[2], \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Helicity\", \
+\"Square\", 4], \n       Mom[1], Mom[2], Spinor[\"Helicity\", \"Square\", 4]] \
++ \n      SpinorChain[Spinor[\"Helicity\", \"Square\", 4], Mom[1], Mom[5], \
+Spinor[\"Helicity\", \"Square\", \n        4]]) - \
+PropDen[Mom[Multiparticle[2, 5, 3]], qedSavedMass]*\n     \
+SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", \
+6]]*\n     (PropDen[Mom[Multiparticle[2, 5, 6]], qedSavedMass] - \n      \
+(PropDen[Mom[Multiparticle[2, 5]], \
+qedSavedMass]*(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          \
+Mom[2], Spinor[\"Helicity\", \"Square\", 3]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          Mom[6], \
+Spinor[\"Helicity\", \"Square\", 3]]))/SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], \n        Mom[2], Spinor[\"Helicity\", \"Square\", 3]])*\n     \
+(-((PropDen[Mom[Multiparticle[2, 5]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", \n           5], \
+Spinor[\"Helicity\", \"Angle\", 6]]*SpinorChain[Spinor[\"Spin\", \"Square\", \
+2], \n          Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Square\", 2], Mom[2], \n       Spinor[\"Helicity\", \"Angle\", 6]] + \
+SpinorChain[Spinor[\"Spin\", \"Square\", 2], Mom[5], \n       \
+Spinor[\"Helicity\", \"Angle\", 6]])*SpinorChain[Spinor[\"Helicity\", \
+\"Square\", 3], Mom[6], \n      Mom[1], Spinor[\"Helicity\", \"Square\", \
+3]]*\n     (-((PropDen[Mom[Multiparticle[2, 5]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Square\", \n           3], \
+Spinor[\"Helicity\", \"Square\", 4]]*SpinorChain[Spinor[\"Helicity\", \
+\"Square\", 4], \n          Mom[1], Spinor[\"Helicity\", \"Angle\", \
+5]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n         Mom[2], \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Helicity\", \
+\"Square\", 4], \n       Mom[1], Mom[2], Spinor[\"Helicity\", \"Square\", 4]] \
++ \n      SpinorChain[Spinor[\"Helicity\", \"Square\", 4], Mom[1], Mom[5], \
+Spinor[\"Helicity\", \"Square\", \n        4]]) - \
+SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", \
+6]]*\n     (PropDen[Mom[Multiparticle[2, 5, 4]], qedSavedMass] - \n      \
+(PropDen[Mom[Multiparticle[2, 5]], \
+qedSavedMass]*(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          \
+Mom[2], Spinor[\"Helicity\", \"Square\", 3]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n          Mom[4], \
+Spinor[\"Helicity\", \"Square\", 3]]))/SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], \n        Mom[2], Spinor[\"Helicity\", \"Square\", \
+3]])*(PropDen[Mom[Multiparticle[2, 5, 6]], \n       qedSavedMass] - \
+(PropDen[Mom[Multiparticle[2, 5]], qedSavedMass]*\n        \
+(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], Spinor[\"Helicity\", \
+\"Square\", 3]] + \n         SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \
+Mom[6], Spinor[\"Helicity\", \"Square\", 3]]))/\n       \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], Spinor[\"Helicity\", \
+\"Square\", 3]])*\n     (-((PropDen[Mom[Multiparticle[2, 5]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", \n           5], \
+Spinor[\"Helicity\", \"Angle\", 6]]*SpinorChain[Spinor[\"Spin\", \"Square\", \
+2], \n          Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Square\", 2], Mom[2], \n       Spinor[\"Helicity\", \"Angle\", 6]] + \
+SpinorChain[Spinor[\"Spin\", \"Square\", 2], Mom[5], \n       \
+Spinor[\"Helicity\", \"Angle\", 6]])*(SpinorChain[Spinor[\"Helicity\", \
+\"Square\", 3], Mom[1], \n       Mom[2], Spinor[\"Helicity\", \"Square\", 3]] \
++ SpinorChain[Spinor[\"Helicity\", \"Square\", 3], \n       Mom[1], Mom[5], \
+Spinor[\"Helicity\", \"Square\", 3]])*\n     SpinorChain[Spinor[\"Helicity\", \
+\"Square\", 4], Mom[6], Mom[1], Spinor[\"Helicity\", \"Square\", \n       \
+4]]))/(qedSavedMass^2*PropDen[Mom[Multiparticle[1, 4]], qedSavedMass]*\n   \
+PropDen[Mom[Multiparticle[1, 6]], qedSavedMass]*PropDen[Mom[Multiparticle[2, \
+5]], qedSavedMass]*\n   PropDen[Mom[Multiparticle[2, 5, 3]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Square\", 3], \n    \
+Spinor[\"Helicity\", \"Square\", 5]]*(PropDen[Mom[Multiparticle[1, 3]], \
+qedSavedMass] + \n    (PropDen[Mom[Multiparticle[2, 5]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n       \
+Mom[1], Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n      Mom[2], \
+Spinor[\"Helicity\", \"Square\", 3]])*\n   (PropDen[Mom[Multiparticle[2, 5, \
+4]], qedSavedMass] - \n    (PropDen[Mom[Multiparticle[2, 5]], \
+qedSavedMass]*(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n        \
+Mom[2], Spinor[\"Helicity\", \"Square\", 3]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n        Mom[4], \
+Spinor[\"Helicity\", \"Square\", 3]]))/SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], \n      Mom[2], Spinor[\"Helicity\", \"Square\", 3]])*\n   \
+(PropDen[Mom[Multiparticle[2, 5, 6]], qedSavedMass] - \n    \
+(PropDen[Mom[Multiparticle[2, 5]], \
+qedSavedMass]*(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n        \
+Mom[2], Spinor[\"Helicity\", \"Square\", 3]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n        Mom[6], \
+Spinor[\"Helicity\", \"Square\", 3]]))/SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], \n      Mom[2], Spinor[\"Helicity\", \"Square\", 3]])) + \n \
+(4*qedSavedCharge^4*(SpinorChain[Spinor[\"Helicity\", \"Square\", 3], Mom[2], \
+\n     Spinor[\"Helicity\", \"Angle\", 5]] + SpinorChain[Spinor[\"Helicity\", \
+\"Square\", 3], Mom[3], \n     Spinor[\"Helicity\", \"Angle\", 5]] + \
+SpinorChain[Spinor[\"Helicity\", \"Square\", 3], Mom[4], \n     \
+Spinor[\"Helicity\", \"Angle\", 5]] + SpinorChain[Spinor[\"Helicity\", \
+\"Square\", 3], Mom[6], \n     Spinor[\"Helicity\", \"Angle\", 5]])*\n   \
+(qedSavedMass^2*PropDen[Mom[Multiparticle[2, 4]], qedSavedMass]*\n     \
+PropDen[Mom[Multiparticle[2, 6]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Square\", 3], \n       \
+Spinor[\"Helicity\", \"Square\", 4]]^2*SpinorChain[Spinor[\"Spin\", \
+\"Angle\", 2], \n      Spinor[\"Helicity\", \"Angle\", \
+6]]*(PropDen[Mom[Multiparticle[2, 3]], qedSavedMass] + \n      \
+(PropDen[Mom[Multiparticle[1, 5]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n         \
+Mom[2], Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n        Mom[1], \
+Spinor[\"Helicity\", \"Square\", 3]])*\n     (-((PropDen[Mom[Multiparticle[1, \
+5]], qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", \n           \
+5], Spinor[\"Helicity\", \"Angle\", 6]]*SpinorChain[Spinor[\"Spin\", \
+\"Square\", 1], \n          Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Square\", 1], Mom[1], \n       Spinor[\"Helicity\", \"Angle\", 6]] + \
+SpinorChain[Spinor[\"Spin\", \"Square\", 1], Mom[5], \n       \
+Spinor[\"Helicity\", \"Angle\", 6]]) + \
+qedSavedMass^2*PropDen[Mom[Multiparticle[2, 4]], \n      \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Square\", 3], \
+Spinor[\"Helicity\", \"Square\", 4]]^2*\n     SpinorChain[Spinor[\"Spin\", \
+\"Angle\", 2], Spinor[\"Helicity\", \"Angle\", 6]]*\n     \
+(PropDen[Mom[Multiparticle[2, 3]], qedSavedMass] + \n      \
+(PropDen[Mom[Multiparticle[1, 5]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n         \
+Mom[2], Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n        Mom[1], \
+Spinor[\"Helicity\", \"Square\", 3]])*(PropDen[Mom[Multiparticle[1, 5, 6]], \
+\n       qedSavedMass] - (PropDen[Mom[Multiparticle[1, 5]], qedSavedMass]*\n  \
+      (SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \
+Spinor[\"Helicity\", \"Square\", 3]] + \n         \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[6], Spinor[\"Helicity\", \
+\"Square\", 3]]))/\n       SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \
+Mom[1], Spinor[\"Helicity\", \"Square\", 3]])*\n     \
+(-((PropDen[Mom[Multiparticle[1, 5]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", \n           5], \
+Spinor[\"Helicity\", \"Angle\", 6]]*SpinorChain[Spinor[\"Spin\", \"Square\", \
+1], \n          Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Square\", 1], Mom[1], \n       Spinor[\"Helicity\", \"Angle\", 6]] + \
+SpinorChain[Spinor[\"Spin\", \"Square\", 1], Mom[5], \n       \
+Spinor[\"Helicity\", \"Angle\", 6]]) + \
+qedSavedMass^2*PropDen[Mom[Multiparticle[2, 4]], \n      \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Square\", 3], \
+Spinor[\"Helicity\", \"Square\", 4]]^2*\n     (PropDen[Mom[Multiparticle[2, \
+3]], qedSavedMass] + \n      (PropDen[Mom[Multiparticle[1, 5]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n         \
+Mom[2], Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n        Mom[1], \
+Spinor[\"Helicity\", \"Square\", 3]])*\n     (-((PropDen[Mom[Multiparticle[1, \
+5]], qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", \n           \
+5], Spinor[\"Spin\", \"Angle\", 2]]*SpinorChain[Spinor[\"Spin\", \"Square\", \
+1], \n          Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Square\", 1], Mom[1], \n       Spinor[\"Spin\", \"Angle\", 2]] + \
+SpinorChain[Spinor[\"Spin\", \"Square\", 1], Mom[5], \n       \
+Spinor[\"Spin\", \"Angle\", 2]])*(-((PropDen[Mom[Multiparticle[1, 5]], \
+qedSavedMass]*\n         SpinorChain[Spinor[\"Helicity\", \"Angle\", 6], \
+Spinor[\"Helicity\", \"Angle\", 5]]*\n         \
+SpinorChain[Spinor[\"Helicity\", \"Square\", 3], Mom[2], Spinor[\"Helicity\", \
+\"Angle\", 6]])/\n        SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \
+Mom[1], Spinor[\"Helicity\", \"Square\", 3]]) + \n      \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 6], Mom[1], Mom[2], \
+Spinor[\"Helicity\", \"Angle\", 6]] + \n      \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 6], Mom[5], Mom[2], \
+Spinor[\"Helicity\", \"Angle\", \n        6]]) + PropDen[Mom[Multiparticle[2, \
+4]], qedSavedMass]*PropDen[Mom[Multiparticle[2, 6]], \n      \
+qedSavedMass]*(-((PropDen[Mom[Multiparticle[1, 5]], qedSavedMass]*\n          \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 6], Spinor[\"Helicity\", \
+\"Angle\", 5]]*\n          SpinorChain[Spinor[\"Helicity\", \"Square\", 3], \
+Spinor[\"Helicity\", \"Square\", 4]])/\n         \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], Spinor[\"Helicity\", \
+\"Square\", 3]]) + \n       SpinorChain[Spinor[\"Helicity\", \"Angle\", 6], \
+Mom[1], Spinor[\"Helicity\", \"Square\", 4]] + \n       \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 6], Mom[5], Spinor[\"Helicity\", \
+\"Square\", 4]])^2*\n     (-((PropDen[Mom[Multiparticle[1, 5]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", \n           5], \
+Spinor[\"Spin\", \"Angle\", 2]]*SpinorChain[Spinor[\"Spin\", \"Square\", 1], \
+\n          Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Square\", 1], Mom[1], \n       Spinor[\"Spin\", \"Angle\", 2]] + \
+SpinorChain[Spinor[\"Spin\", \"Square\", 1], Mom[5], \n       \
+Spinor[\"Spin\", \"Angle\", 2]])*(SpinorChain[Spinor[\"Helicity\", \
+\"Square\", 3], Mom[1], Mom[2], \n       Spinor[\"Helicity\", \"Square\", 3]] \
++ SpinorChain[Spinor[\"Helicity\", \"Square\", 3], Mom[5], \n       Mom[2], \
+Spinor[\"Helicity\", \"Square\", 3]]) + PropDen[Mom[Multiparticle[2, 6]], \
+qedSavedMass]*\n     (PropDen[Mom[Multiparticle[2, 3]], qedSavedMass] + \n    \
+  (PropDen[Mom[Multiparticle[1, 5]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n         \
+Mom[2], Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n        Mom[1], \
+Spinor[\"Helicity\", \"Square\", 3]])*\n     \
+(SpinorChain[Spinor[\"Helicity\", \"Angle\", 6], Mom[1], Spinor[\"Helicity\", \
+\"Square\", 3]] + \n       SpinorChain[Spinor[\"Helicity\", \"Angle\", 6], \
+Mom[5], Spinor[\"Helicity\", \"Square\", 3]])^2*\n     \
+(-((PropDen[Mom[Multiparticle[1, 5]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", \n           5], \
+Spinor[\"Spin\", \"Angle\", 2]]*SpinorChain[Spinor[\"Spin\", \"Square\", 1], \
+\n          Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Square\", 1], Mom[1], \n       Spinor[\"Spin\", \"Angle\", 2]] + \
+SpinorChain[Spinor[\"Spin\", \"Square\", 1], Mom[5], \n       \
+Spinor[\"Spin\", \"Angle\", 2]])*(-((PropDen[Mom[Multiparticle[1, 5]], \
+qedSavedMass]*\n         SpinorChain[Spinor[\"Helicity\", \"Square\", 4], \
+Spinor[\"Helicity\", \"Square\", 3]]*\n         \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[2], Spinor[\"Helicity\", \
+\"Square\", 4]])/\n        SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \
+Mom[1], Spinor[\"Helicity\", \"Square\", 3]]) + \n      \
+SpinorChain[Spinor[\"Helicity\", \"Square\", 4], Mom[1], Mom[2], \
+Spinor[\"Helicity\", \"Square\", \n        4]] + \
+SpinorChain[Spinor[\"Helicity\", \"Square\", 4], Mom[5], Mom[2], \n       \
+Spinor[\"Helicity\", \"Square\", 4]]) - PropDen[Mom[Multiparticle[2, 6]], \
+qedSavedMass]*\n     SpinorChain[Spinor[\"Spin\", \"Angle\", 2], \
+Spinor[\"Helicity\", \"Angle\", 6]]*\n     (PropDen[Mom[Multiparticle[2, 3]], \
+qedSavedMass] + \n      (PropDen[Mom[Multiparticle[1, 5]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n         \
+Mom[2], Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n        Mom[1], \
+Spinor[\"Helicity\", \"Square\", 3]])*\n     (-((PropDen[Mom[Multiparticle[1, \
+5]], qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", \n           \
+5], Spinor[\"Helicity\", \"Angle\", 6]]*SpinorChain[Spinor[\"Spin\", \
+\"Square\", 1], \n          Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Square\", 1], Mom[1], \n       Spinor[\"Helicity\", \"Angle\", 6]] + \
+SpinorChain[Spinor[\"Spin\", \"Square\", 1], Mom[5], \n       \
+Spinor[\"Helicity\", \"Angle\", 6]])*(SpinorChain[Spinor[\"Helicity\", \
+\"Square\", 3], Mom[6], \n       Mom[1], Spinor[\"Helicity\", \"Square\", 3]] \
++ SpinorChain[Spinor[\"Helicity\", \"Square\", 3], \n       Mom[6], Mom[5], \
+Spinor[\"Helicity\", \"Square\", 3]])*\n     (-((PropDen[Mom[Multiparticle[1, \
+5]], qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Square\", \n           \
+4], Spinor[\"Helicity\", \"Square\", 3]]*SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], Mom[2], \n          Spinor[\"Helicity\", \"Square\", \
+4]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Helicity\", \
+\"Square\", 4], Mom[1], \n       Mom[2], Spinor[\"Helicity\", \"Square\", 4]] \
++ SpinorChain[Spinor[\"Helicity\", \"Square\", 4], \n       Mom[5], Mom[2], \
+Spinor[\"Helicity\", \"Square\", 4]]) - \n    PropDen[Mom[Multiparticle[2, \
+4]], qedSavedMass]*PropDen[Mom[Multiparticle[2, 6]], qedSavedMass]*\n     \
+SpinorChain[Spinor[\"Spin\", \"Angle\", 2], Spinor[\"Helicity\", \"Angle\", \
+6]]*\n     (-((PropDen[Mom[Multiparticle[1, 5]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", \n           5], \
+Spinor[\"Helicity\", \"Angle\", 6]]*SpinorChain[Spinor[\"Spin\", \"Square\", \
+1], \n          Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], Mom[1], \n         \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Spin\", \
+\"Square\", 1], Mom[1], \n       Spinor[\"Helicity\", \"Angle\", 6]] + \
+SpinorChain[Spinor[\"Spin\", \"Square\", 1], Mom[5], \n       \
+Spinor[\"Helicity\", \"Angle\", 6]])*(SpinorChain[Spinor[\"Helicity\", \
+\"Square\", 3], Mom[1], \n       Mom[2], Spinor[\"Helicity\", \"Square\", 3]] \
++ SpinorChain[Spinor[\"Helicity\", \"Square\", 3], \n       Mom[5], Mom[2], \
+Spinor[\"Helicity\", \"Square\", 3]])*\n     (-((PropDen[Mom[Multiparticle[1, \
+5]], qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Square\", \n           \
+3], Spinor[\"Helicity\", \"Square\", 4]]*SpinorChain[Spinor[\"Helicity\", \
+\"Square\", 4], \n          Mom[6], Spinor[\"Helicity\", \"Angle\", \
+5]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n         Mom[1], \
+Spinor[\"Helicity\", \"Square\", 3]]) + SpinorChain[Spinor[\"Helicity\", \
+\"Square\", 4], \n       Mom[6], Mom[1], Spinor[\"Helicity\", \"Square\", 4]] \
++ \n      SpinorChain[Spinor[\"Helicity\", \"Square\", 4], Mom[6], Mom[5], \
+Spinor[\"Helicity\", \"Square\", \n        \
+4]])))/(qedSavedMass^2*PropDen[Mom[Multiparticle[1, 5]], qedSavedMass]*\n   \
+PropDen[Mom[Multiparticle[2, 4]], qedSavedMass]*PropDen[Mom[Multiparticle[2, \
+6]], qedSavedMass]*\n   PropDen[Mom[Multiparticle[1, 5, 3]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Square\", 3], \n    \
+Spinor[\"Helicity\", \"Square\", 5]]*(PropDen[Mom[Multiparticle[2, 3]], \
+qedSavedMass] + \n    (PropDen[Mom[Multiparticle[1, 5]], \
+qedSavedMass]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n       \
+Mom[2], Spinor[\"Helicity\", \"Square\", \
+3]])/SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n      Mom[1], \
+Spinor[\"Helicity\", \"Square\", 3]])*\n   (PropDen[Mom[Multiparticle[1, 5, \
+4]], qedSavedMass] - \n    (PropDen[Mom[Multiparticle[1, 5]], \
+qedSavedMass]*(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n        \
+Mom[1], Spinor[\"Helicity\", \"Square\", 3]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n        Mom[4], \
+Spinor[\"Helicity\", \"Square\", 3]]))/SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], \n      Mom[1], Spinor[\"Helicity\", \"Square\", 3]])*\n   \
+(PropDen[Mom[Multiparticle[1, 5, 6]], qedSavedMass] - \n    \
+(PropDen[Mom[Multiparticle[1, 5]], \
+qedSavedMass]*(SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n        \
+Mom[1], Spinor[\"Helicity\", \"Square\", 3]] + \
+SpinorChain[Spinor[\"Helicity\", \"Angle\", 5], \n        Mom[6], \
+Spinor[\"Helicity\", \"Square\", 3]]))/SpinorChain[Spinor[\"Helicity\", \
+\"Angle\", 5], \n      Mom[1], Spinor[\"Helicity\", \"Square\", 3]]))];",
+          "Input"], Cell[
+          "savedConstructedAmplitude === constructedAmplitude", "Input"]},
+        Closed]], Cell[CellGroupData[
+        {Cell["Why Automatic Diagram Completion Was Not Used Here",
+          "Subsection"], Cell["The tested diagram-based correction space was \
+enlarged to 4055 directions using only constructive diagram and \
+lower-amplitude sources. All 672 saved cut charts retained their original \
+data. Two modular diagnostics gave coefficient rank 2576 and augmented rank \
+2577. This is evidence of a missing direction in that finite ansatz, not an \
+exact rational impossibility proof. No exact fit or successful \
+CompleteFactorization result is claimed for that space; the explicit \
+lower-amplitude recursion above is a different, justified construction.",
+          "Text"]}, Closed]]}, Open]],
+   Cell[CellGroupData[{Cell["4. Independent Checks", "Section"],
+      Cell["The Feynman diagrams are generated only now, after the \
+constructive amplitude. Their internal lines remain off shell. Keep all \
+checker rows visible: PASS means agreement at the tested samples; an \
+unsupported factor or timeout is UNRESOLVED, not success.", "Text"],
+      Cell["feynmanDiagrams = CreateDiagrams[particles, \
+qedFeynmanModel];\nfeynmanPairs = \
+diagramAmplitudes[feynmanDiagrams];\npreparedFeynman = \
+PrepareAmplitudes[feynmanPairs, qedFeynmanModel,\n  \"ReferenceSpinors\" -> \
+\"AllSpurious\", \"MaxSteps\" -> 0];", "Input"], Cell["constructionChecks = \
+CheckAmplitudes[\n  constructedAmplitude, channels, factorizationModel,\n  \
+\"FeynmanAmplitudes\" -> preparedFeynman,\n  \"FeynmanModel\" -> \
+qedFeynmanModel, \"FeynmanSamples\" -> 3,\n  \"Samples\" -> 2, \
+\"HighEnergySamples\" -> 2, \"ReferenceSamples\" -> 2,\n  \"TimeConstraint\" \
+-> 600, \"Output\" -> \"Details\"];\nconstructionChecks[\"Table\"]",
+       "Input"], Cell[CellGroupData[
+        {Cell["Inspect the Constructed Expression", "Subsection"],
+         Cell["constructedAmplitude", "Input"]}, Closed]]}, Open]]}, Open]]
 }, Open  ]]
 },
 WindowSize->{1010, 911},
