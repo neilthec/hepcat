@@ -843,10 +843,140 @@ rspBracketDiagonalPair[bracket_, chain_] := Module[
     2 MomProd[leg, rspSpinorLeg[helicity]] SpinorChain[endpoint, momentum, helicity])
 ];
 
+(* Expand only the declared linear vector arguments. In particular a composite
+   vector square is a sum of external products, not an internal mass shell. *)
+rspOrdinaryMomentumDot[left_, right_] := Module[{a, b},
+  a = rspLinearMomentumTerms[left]; b = rspLinearMomentumTerms[right];
+  If[a === $Failed || b === $Failed ||
+      !AllTrue[Join[a, b], MatchQ[Last[#], Mom[_Integer]] &],
+    Return[Missing["UnsupportedMomentumProduct"]]];
+  Total[Flatten[Table[first[[1]] second[[1]] MomProd[first[[2, 1]], second[[2, 1]]],
+    {first, a}, {second, b}]]]
+];
+
+(* Adding its own null momentum at a physical helicity endpoint annihilates
+   that chain. A Xi with the same integer identifier grants no such license. *)
+rspEndpointEquivalentMomentumQ[from_, to_, endpoints_List] := Module[
+  {a, b, massless, differences},
+  If[from === to, Return[True]];
+  a = rspLinearMomentumTerms[from]; b = rspLinearMomentumTerms[to];
+  If[a === $Failed || b === $Failed ||
+      !AllTrue[Join[a, b], MatchQ[Last[#], Mom[_Integer]] &], Return[False]];
+  massless = DeleteDuplicates[Cases[endpoints,
+    Spinor["Helicity", "Angle" | "Square", leg_Integer] :> leg]];
+  differences = GatherBy[Join[a, ({-First[#], Last[#]} & /@ b)], Last];
+  AllTrue[differences, TrueQ[Expand[Total[First /@ #]] === 0] ||
+    MemberQ[massless, Last[First[#]][[1]]] &]
+];
+
+(* Recognize R-alpha Q=lambda p_b using ordinary vector coefficients only. *)
+rspMomentumAlongLeg[from_, base_, alpha_, leg_Integer] := Module[
+  {a, b, differences, along},
+  a = rspLinearMomentumTerms[from]; b = rspLinearMomentumTerms[base];
+  If[a === $Failed || b === $Failed ||
+      !AllTrue[Join[a, b], MatchQ[Last[#], Mom[_Integer]] &],
+    Return[Missing["NotAlongLeg"]]];
+  differences = GatherBy[Join[a, ({-alpha First[#], Last[#]} & /@ b)], Last];
+  If[!AllTrue[differences, Last[First[#]] === Mom[leg] ||
+      TrueQ[Expand[Total[First /@ #]] === 0] &], Return[Missing["NotAlongLeg"]]];
+  along = Select[differences, Last[First[#]] === Mom[leg] &];
+  Expand[Total[First /@ Flatten[along, 1]]]
+];
+
+(* Contract a common vector before an adjacent Q+lambda p_b slot is expanded.
+   The trailing typed chain is a spectator. This is Clifford algebra followed
+   by the determinant identity below, with every scalar remainder retained. *)
+rspSharedAdjacentMomentumPair[left_, right_] := Module[
+  {supported, endpoints, parts, slots, orientations, a, b, c, d, momentum,
+   tail, lambda, square, dot, nullMassRules, branch, sign,
+   tag = Unique["sharedAdjacentMomentumPair"]},
+  supported[spinor_] := MatchQ[spinor,
+    Spinor["Spin" | "Helicity" | "Xi", "Angle" | "Square", _] |
+    Spinor["Spin", "Upper" | "Lower", "Angle" | "Square", _, _]];
+  If[Head[left] =!= SpinorChain || Length[left] =!= 3 ||
+      Head[right] =!= SpinorChain || Length[right] < 4,
+    Return[Missing["NoSharedAdjacentMomentumPair"]]];
+  endpoints = {left[[1]], left[[3]]}; parts = List @@ right;
+  If[!AllTrue[Join[endpoints, parts[[{1, -1}]]], supported],
+    Return[Missing["NoSharedAdjacentMomentumPair"]]];
+  slots = Rest[Most[parts]];
+  If[SameQ[rspSpinorType[First[parts]], rspSpinorType[Last[parts]]] =!= EvenQ[Length[slots]] ||
+      AnyTrue[slots, rspLinearMomentumTerms[#] === $Failed &],
+    Return[Missing["NoSharedAdjacentMomentumPair"]]];
+  nullMassRules = (Mass[#] -> 0 &) /@ DeleteDuplicates[Cases[
+    Join[endpoints, parts[[{1, -1}]]],
+    Spinor["Helicity", "Angle" | "Square", leg_Integer] :> leg]];
+  orientations = {{1, parts}, {(-1)^(Length[slots] + 1), Reverse[parts]}};
+  Catch[Do[
+    {sign, parts} = orientation; slots = Rest[Most[parts]];
+    {c, d} = parts[[{1, -1}]]; momentum = First[slots]; tail = Drop[slots, 2];
+    b = endpoints[[i]]; a = endpoints[[3 - i]];
+    If[!MatchQ[b, Spinor["Helicity", "Angle" | "Square", _Integer]] ||
+        rspSpinorType[a] === rspSpinorType[b] ||
+        rspSpinorType[c] =!= rspSpinorType[b] ||
+        !rspEndpointEquivalentMomentumQ[left[[2]], momentum, endpoints], Continue[]];
+    lambda = rspMomentumAlongLeg[slots[[2]], momentum, alpha, rspSpinorLeg[b]];
+    If[MissingQ[lambda], Continue[]];
+    square = rspOrdinaryMomentumDot[momentum, momentum];
+    dot = rspOrdinaryMomentumDot[Mom[rspSpinorLeg[b]], momentum];
+    If[MissingQ[square] || MissingQ[dot], Continue[]];
+    {square, dot} = {square, dot} /. nullMassRules;
+    branch = SpinorChain @@ Join[{b}, tail, {d}];
+    Throw[sign (square (alpha left (SpinorChain @@ Join[{c}, tail, {d}]) +
+        lambda SpinorChain[a, rspFlipSpinor[b]] SpinorChain[c, b] branch) +
+      2 lambda dot SpinorChain[c, momentum, a] branch), tag],
+    {orientation, orientations}, {i, 2}, {alpha, {1, -1}}];
+    Missing["NoSharedAdjacentMomentumPair"], tag]
+];
+
+(* A two-dimensional determinant contracts a common vector in opposite
+   chiralities. Only the shared Helicity endpoint is assumed massless; keep the
+   complete vector-square and scalar-product remainder for the caller. *)
+rspSharedMomentumPair[left_, right_] := Module[
+  {supported, aEnds, bEnds, a, b, c, momentum, square, dot, nullMassRules,
+   tag = Unique["sharedMomentumPair"]},
+  supported[spinor_] := MatchQ[spinor,
+    Spinor["Spin" | "Helicity" | "Xi", "Angle" | "Square", _] |
+    Spinor["Spin", "Upper" | "Lower", "Angle" | "Square", _, _]];
+  If[Head[left] === SpinorChain && Length[left] === 3 &&
+      Head[right] === SpinorChain && Length[right] >= 4,
+    Return[rspSharedAdjacentMomentumPair[left, right]]];
+  If[Head[left] =!= SpinorChain || Head[right] =!= SpinorChain ||
+      Length[left] =!= 3 || Length[right] =!= 3,
+    Return[Missing["NoSharedMomentumPair"]]];
+  aEnds = {left[[1]], left[[3]]}; bEnds = {right[[1]], right[[3]]};
+  If[!AllTrue[Join[aEnds, bEnds], supported], Return[Missing["NoSharedMomentumPair"]]];
+  nullMassRules = (Mass[#] -> 0 &) /@ DeleteDuplicates[Cases[Join[aEnds, bEnds],
+    Spinor["Helicity", "Angle" | "Square", leg_Integer] :> leg]];
+  momentum = SelectFirst[DeleteDuplicates[{left[[2]], right[[2]]}],
+    rspEndpointEquivalentMomentumQ[left[[2]], #, aEnds] &&
+      rspEndpointEquivalentMomentumQ[right[[2]], #, bEnds] &,
+    Missing["NoCommonMomentum"]];
+  If[MissingQ[momentum], Return[Missing["NoSharedMomentumPair"]]];
+  Catch[Do[
+    b = aEnds[[i]]; a = aEnds[[3 - i]];
+    If[!MatchQ[b, Spinor["Helicity", "Angle" | "Square", _Integer]] ||
+        rspSpinorType[a] === rspSpinorType[b], Continue[]];
+    c = bEnds[[3 - j]];
+    If[bEnds[[j]] =!= rspFlipSpinor[b] ||
+        rspSpinorType[c] =!= rspSpinorType[b], Continue[]];
+    square = rspOrdinaryMomentumDot[momentum, momentum];
+    dot = rspOrdinaryMomentumDot[Mom[rspSpinorLeg[b]], momentum];
+    If[MissingQ[square] || MissingQ[dot], Continue[]];
+    square = square /. nullMassRules;
+    dot = dot /. nullMassRules;
+    Throw[square SpinorChain[a, rspFlipSpinor[b]] SpinorChain[c, b] +
+      2 dot SpinorChain[c, momentum, a], tag],
+    {i, 2}, {j, 2}];
+    Missing["NoSharedMomentumPair"], tag]
+];
+
 rspSandwichPair[left_, right_] := Module[
   {a = rspDiagonalSandwichData[left], b = rspDiagonalSandwichData[right],
    endpoint, other, leg, bracket, sameType, p, q, sign, gp, gq,
    replacement, tag = Unique["sandwichPair"]},
+  replacement = rspSharedMomentumPair[left, right];
+  If[!MissingQ[replacement], Return[replacement]];
   replacement = rspBracketMomentumPair[left, right];
   If[!MissingQ[replacement], Return[replacement]];
   replacement = rspBracketDiagonalPair[left, right];
@@ -883,7 +1013,8 @@ rspSandwichExpansionCount[expression_] := Module[{count, limit = 4096},
   count[expression]
 ];
 
-rspSandwichProducts[expression_] := Module[
+DownValues[rspSandwichProducts] = {};
+rspSandwichProducts[expression_, sharedOnly_ : False] := Module[
   {steps = 0, limit, tag = Unique["sandwichContractions"], reduce, result},
   (* The existing reducer may accept larger expressions. Only this additional
      contraction pass is skipped when it would create too many branches. *)
@@ -900,10 +1031,12 @@ rspSandwichProducts[expression_] := Module[
     positions = Select[Range[Length[chains]], ListQ[chains[[#]]] &];
     (* Finish stronger pair contractions before splitting a witnessed momentum. *)
     Catch[Do[Do[
-      replacement = If[split, rspHelicityMomentumPair, rspSandwichPair][
+      replacement = If[TrueQ[sharedOnly], rspSharedMomentumPair,
+        If[split, rspHelicityMomentumPair, rspSandwichPair]][
         chains[[positions[[i]], 1]], chains[[positions[[j]], 1]]];
       If[MissingQ[replacement],
-        replacement = If[split, rspHelicityMomentumPair, rspSandwichPair][
+        replacement = If[TrueQ[sharedOnly], rspSharedMomentumPair,
+          If[split, rspHelicityMomentumPair, rspSandwichPair]][
           chains[[positions[[j]], 1]], chains[[positions[[i]], 1]]]];
       If[!MissingQ[replacement],
         steps++;
@@ -914,7 +1047,8 @@ rspSandwichProducts[expression_] := Module[
         trial = (Times @@ factors) replacement;
         If[rspSandwichExpansionCount[trial] > 4096, Throw[$Failed, tag]];
         Throw[reduce[trial], nodeTag]],
-      {i, Length[positions]}, {j, i + 1, Length[positions]}], {split, {False, True}}];
+      {i, Length[positions]}, {j, i + 1, Length[positions]}],
+      {split, If[TrueQ[sharedOnly], {False}, {False, True}]}];
       Times @@ factors, nodeTag]
   ];
   reduce[value_] := value;
@@ -931,7 +1065,8 @@ rspLegacyProducts[expression_] := (Expand[Expand[Expand[
 ReduceSpinorProducts[amp_] := ConstructiveDiagrams`Private`withProtectedPropagators[amp,
   Function[body, Module[{linear, reduced, contracted},
     (* Reduce each chain before product rules can mix otherwise spectator factors. *)
-    linear = body /. {c_SpinorChain :> ConstructiveDiagrams`Private`rspLegacyProducts[
+    linear = ConstructiveDiagrams`Private`rspSandwichProducts[body, True];
+    linear = linear /. {c_SpinorChain :> ConstructiveDiagrams`Private`rspLegacyProducts[
         ConstructiveDiagrams`Private`rspLinearChain[c]],
       t_SpinorTrace :> ConstructiveDiagrams`Private`rspLinearTrace[t]};
     linear = ConstructiveDiagrams`Private`rspSandwichProducts[linear];

@@ -121,6 +121,48 @@ does not qualify: preparation does not invent helicity spinors for that
 off-shell line. The resulting complete candidate competes with the unsplit
 route, with physical propagators still protected.
 
+A common vector can also be contracted before multilinearity expands it.
+For a physical massless leg `b`, the ordinary two-component determinant
+identity gives
+
+```text
+[a|Q|b> <c|Q|b] = Q^2 [a b] <c b> + 2 (Q.p_b) <c|Q|a].
+```
+
+The determinant contribution is `Q^2 [a b] <c b>`. The remaining contraction
+contains the diagonal sandwich `<b|Q|b] = 2 (Q.p_b)`. This holds for a
+composite `Q`, both angle/square choices, and explicit massive spin indices.
+Adding a physical endpoint's own null momentum to a one-momentum sandwich
+does not change it; an Xi with the same integer identifier supplies no such
+permission. All scalar remainders are retained in `ReduceSpinorProducts`.
+
+The corresponding adjacent-vector contraction is useful on longer charged
+chains. With `F = [a|Q|b>` and `R = alpha Q + lambda p_b`, ordinary Clifford
+algebra gives
+
+```text
+F <c|Q R L|d>
+  = Q^2 (alpha F <c|L|d> + lambda [a b] <c b> <b|L|d>)
+    + 2 lambda (Q.p_b) <c|Q|a] <b|L|d>.
+```
+
+Here `alpha` is `1` or `-1`, and `L` is the untouched trailing momentum
+chain, possibly empty. Every branch has fewer momentum insertions. A bounded
+prepass finds the shared vectors before per-chain expansion obscures them;
+the existing expansion guard remains in force. This is an ordinary off-cut
+identity, not a license to discard either scalar remainder.
+
+In a particular diagram, two declared adjacent cuts can subsequently simplify
+these scalar factors. For example, if `Q = p_1+p_a`, `p_b^2 = 0`, and the
+mass list explicitly states `Q^2 = (Q+p_b)^2 = m^2`, their difference gives
+`Q.p_b = MomProd[1,b]+MomProd[a,b] = 0`. Preparation solves the linear
+scalar-product equations from all cuts of that one diagram together. External
+momentum conservation contributes additional equations only when enabled.
+No division by symbolic mass parameters is needed. Inconsistent exact cut
+data are reported; approximate mass data do not certify extra exact rules.
+These rules act only on protected numerators, and compete with the existing
+pairwise route instead of forcing one scalar-product parametrization.
+
 This function neither infers the external-particle list nor assumes momentum
 conservation. Expanding a composite momentum does not put it on an internal
 mass shell. Keep process-dependent conservation and diagram-local internal
@@ -157,6 +199,18 @@ auxiliary reference poles to cancel separately in each summand. The expansion
 guard and the comparison of completed expressions keep this an alternative,
 rather than forcing expansion of every input.
 
+Reference trials finish the cheap factored routes before attempting expensive
+whole-product reductions. Each completed finite candidate is checkpointed.
+If an optional later route exceeds its slice, the finished candidate remains
+eligible; the interrupted exploration is still recorded as incomplete. The
+ordinary preparation clock and reference-choice limits are unchanged.
+For an even number of external massless reference legs, selection also tries
+a bounded set of admissible reciprocal assignments, such as `a -> b, b -> a`.
+They often expose a shared-vector contraction. The original first tuple is
+retained, so `"MaxReferenceChoices" -> 1` still selects the same references.
+The matching search is capped and does not materialize the Cartesian product.
+These are general ordering heuristics, not process-specific helicity rules.
+
 The five-point all-positive electron/three-photon example in the thesis proposal,
 Eq. (90), exercises this ordering. Both admissible physical reference choices
 reduce to one term per diagram, with one two-momentum sandwich remaining. The
@@ -164,6 +218,46 @@ particular reference choice in Eq. (90) is checked against its explicit formula,
 including photon-label permutations and the coupling normalization read from
 the model. These are diagram-local numerator representatives, not a claim that
 their sum already passes every factorization channel.
+
+The mixed six-point cases `e,E,A.+,A.+,A.+,A.-` and
+`e,E,A.+,A.+,A.-,A.-` have 24 photon-order diagrams each. The new shared-vector
+and adjacent-vector identities, joint cut equations, and completed-route
+ordering are general reductions; the production code does not substitute
+these processes' known answers. With `"MaxSteps" -> 0`, the unchanged
+five-second reference budget and 20-second element budget, the representative
+AllSpurious trials gave:
+
+| Helicity order along the charged line | Complexity | Expanded terms |
+| --- | ---: | ---: |
+| `+++-` | 14 | 2 |
+| `++-+` | 42 | 6 |
+| `+-++` | 14 | 2 |
+| `-+++` | 14 | 2 |
+| `++--` | 3 | 3 |
+| `+-+-` | 52 | 4 |
+| `+--+` | 28 | 12 |
+| `-++-` | 28 | 12 |
+| `-+-+` | 52 | 4 |
+| `--++` | 3 | 3 |
+
+The two end-block balanced cases contain no numerator momentum insertions.
+The corresponding manually derived enclosed-helicity forms reach complexity
+22 with six expanded terms, so the automatic 28 is not the best known form.
+Finite reference selection and algebraic normal forms can also yield different
+quality after photon relabeling; the table is a representative comparison,
+not a uniform bound or a minimum theorem. Same-reference comparisons must use
+each diagram's own three cuts while preserving its auxiliary reference
+denominators. These local simplifications do not establish that the summed
+off-cut amplitude already passes completion or independent Feynman checks.
+
+A separate full run with default `Automatic` references and `"MaxSteps" -> 0`
+prepared all 48 diagrams, about two minutes per process. All 384 exact
+same-reference comparisons passed: two rational mass/kinematic charts and all
+four massive-spin components per diagram. Each original propagator remained
+present and each reference was assigned. Across all photon orderings, the
+observed complexities ranged from 14 to 76 for one negative helicity and from
+3 to 68 for two negative helicities. The wider ranges, compared with the
+representative table, reflect the bounded selection and reduction ordering.
 
 Physical references can introduce additional `PropDen` factors. Preparation
 records which factors came from those references and may cancel them against

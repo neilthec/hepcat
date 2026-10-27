@@ -221,11 +221,21 @@ acReferenceCycle = {Spinor["Xi", "Angle", 10] -> Spinor["Helicity", "Angle", 3],
 check["cyclic reference choices follow diagram-local vertex order rather than sorted particle labels",
   Sort[({#["Leg"], #["Target"]} &) /@ acReferenceAssignments[acReferenceCyclic]] ===
     {{3, 4}, {4, 5}, {5, 3}}];
+(* Test the substitution stage itself. Later preparation may use diagram-local
+   shell identities, and ordinary RSP is not a complete equality prover. *)
+acReferenceCyclicStage = SelectFirst[
+  First[acReferenceCyclic["DiagramReports"]]["Reductions"],
+  #["Operation"] === "ReferenceSpinors" &]["After"];
 check["massless reference substitution preserves both angle and square chirality",
   acReferenceCyclic["Status"] === "PREPARED" &&
     FreeQ[acReferenceCyclic["Amplitude"], Spinor["Xi", ___]] &&
-    ReduceSpinorProducts[acReferenceCyclic["Amplitude"] -
+    ReduceSpinorProducts[acReferenceCyclicStage -
       (acReferenceRaw /. acReferenceCycle)] === 0];
+check["the prepared cyclic numerator agrees independently on its declared cut",
+  And @@ Flatten[Table[Together[prMapOnChart[
+    (acReferenceCyclic["Amplitude"] - (acReferenceRaw /. acReferenceCycle)) /. acDen -> 1,
+    prChart[{1, 3}, acReferenceCutVariable, firstSpin, secondSpin]] /.
+      acReferenceCutVariable -> 0] === 0, {firstSpin, 2}, {secondSpin, 2}]]];
 acReferenceAutomatic = acReferencePrepare[{acReferencePair}, Automatic];
 check["Automatic uses supported spurious choices first",
   acReferenceAutomatic["Amplitude"] === acReferenceSpurious["Amplitude"] &&

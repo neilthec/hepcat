@@ -788,7 +788,215 @@ check["completed positive spinor powers and opaque physical propagator inverses 
     ConstructiveDiagrams`Private`preparationCompleteExternalInputQ[1/tpOpaque, tpScopeRules] &&
     ConstructiveDiagrams`Private`preparationCompleteExternalInputQ[tpKnownCompleted, tpScopeRules]];
 
-If[checks =!= 346, AppendTo[failures, {"UnexpectedCheckCount", checks, 346}]];
+(* ::Section:: *)
+(* Joint numerator-shell equations, with process conservation kept explicit. *)
+tpJointExternal = Thread[Mass /@ Range[6] -> {tpMass, tpMass, 0, 0, 0, 0}];
+tpJointRules = Join[tpJointExternal, {Mass[Multiparticle[1, 3]] -> tpMass,
+  Mass[Multiparticle[1, 3, 4]] -> tpMass, Mass[Multiparticle[2, 6]] -> tpMass}];
+tpJointDots = ConstructiveDiagrams`Private`preparationJointDotRules[tpJointRules, True];
+tpJointNoMC = ConstructiveDiagrams`Private`preparationJointDotRules[tpJointRules, False];
+check["adjacent declared cuts remove the middle scalar remainder jointly",
+  Together[(MomProd[1, 4] + MomProd[3, 4]) /. tpJointDots] === 0];
+check["the middle adjacent-cut identity does not require momentum conservation",
+  Together[(MomProd[1, 4] + MomProd[3, 4]) /. tpJointNoMC] === 0];
+check["enabled conservation supplies the complementary last forward cut",
+  Together[(MomProd[1, 5] + MomProd[3, 5] + MomProd[4, 5]) /. tpJointDots] === 0];
+check["disabled conservation does not invent a complementary forward cut",
+  Together[(MomProd[1, 5] + MomProd[3, 5] + MomProd[4, 5]) /. tpJointNoMC] =!= 0];
+check["joint cut rules have no dependencies on their own pivots",
+  FreeQ[Last /@ tpJointDots, Alternatives @@ (First /@ tpJointDots)]];
+tpJointInvariant[legs_, mass_] := Total[((Mass[#] /. tpJointExternal)^2) & /@ legs] +
+  2 Total[MomProd @@@ Subsets[legs, {2}]] - mass^2;
+check["the joint solution certifies every declared original cut equation",
+  And @@ (Together[tpJointInvariant[First[#], Last[#]] /. tpJointDots] === 0 & /@
+    {{{1, 3}, tpMass}, {{1, 3, 4}, tpMass}, {{2, 6}, tpMass}})];
+check["the joint solution certifies every enabled external dot-conservation equation",
+  And @@ Table[Together[((Mass[i] /. tpJointExternal)^2 +
+    Total[MomProd[i, #] & /@ DeleteCases[Range[6], i]]) /. tpJointDots] === 0, {i, 6}]];
+tpJointSparse = Join[Thread[Mass /@ {2, 5, 8, 11, 14, 17} ->
+    {tpMass, tpMass, 0, 0, 0, 0}], {Mass[Multiparticle[2, 8]] -> tpMass,
+    Mass[Multiparticle[2, 8, 11]] -> tpMass, Mass[Multiparticle[5, 17]] -> tpMass}];
+check["joint invariant reduction uses sparse external labels literally",
+  Together[(MomProd[2, 11] + MomProd[8, 11]) /.
+    ConstructiveDiagrams`Private`preparationJointDotRules[tpJointSparse, True]] === 0];
+tpJointContradictory = Join[Thread[Mass /@ Range[4] -> {0, 0, 0, 0}],
+  {Mass[Multiparticle[1, 2]] -> 1, Mass[Multiparticle[3, 4]] -> 2}];
+check["inconsistent simultaneous cut declarations return a failure",
+  FailureQ[ConstructiveDiagrams`Private`preparationJointDotRules[tpJointContradictory, True]]];
+check["approximate masses do not certify exact simultaneous cut identities",
+  ConstructiveDiagrams`Private`preparationJointDotRules[tpJointRules /. tpMass -> 1.0, True] === {}];
+tpJointPole = PropDen[Mom[Multiparticle[1, 3]], tpMass];
+tpJointInverse = 2 + MomProd[1, 4] + MomProd[3, 4];
+tpJointInput = (1 + MomProd[1, 4] + MomProd[3, 4])/(tpJointPole tpJointInverse);
+check["joint numerator equations leave every original propagator and inverse untouched",
+  ConstructiveDiagrams`Private`preparationReduceDots[tpJointInput, tpJointDots] ===
+    1/(tpJointPole tpJointInverse)];
+Do[
+  {tpJointInternal, tpJointConserve} = tpJointPolicy;
+  tpJointPrepared = PrepareAmplitudes[{{tpJointRules, tpJointInput}}, tpModel,
+    "ReferenceSpinors" -> None, "InternalOnShell" -> tpJointInternal,
+    "MomentumConservation" -> tpJointConserve, "MaxSteps" -> 0,
+    "ProgressReporting" -> False, "ReturnDetails" -> True];
+  tpJointRow = First[tpJointPrepared["DiagramReports"]];
+  check[{"public preparation respects joint-cut policy and inverse scope",
+      tpJointInternal, tpJointConserve},
+    tpJointRow["Status"] === "PREPARED" &&
+      DeleteDuplicates[Cases[tpJointRow["PreparedExpression"], _PropDen, Infinity]] === {tpJointPole} &&
+      Together[tpJointRow["PreparedExpression"] -
+        If[tpJointInternal, 1/(tpJointPole tpJointInverse), tpJointInput]] === 0],
+  {tpJointPolicy, {{True, True}, {True, False}, {False, True}}}];
+
+(* Keep the original first tuple, then examine bounded reciprocal reference
+   pairs before enumerating the full Cartesian product. *)
+tpReferenceChoices = Table[Table[<|"Leg" -> leg, "Mode" -> "AllSpurious", "Target" -> target|>,
+  {target, DeleteCases[Range[3, 6], leg]}], {leg, Range[3, 6]}];
+tpReferencePlan = ConstructiveDiagrams`Private`preparationReferenceSelections[tpReferenceChoices, 4];
+tpReciprocalSelectionQ[selection_] := With[
+  {mapping = AssociationThread[Lookup[selection, "Leg"], Lookup[selection, "Target"]]},
+  AllTrue[Keys[mapping], Lookup[mapping, Lookup[mapping, #, None], None] === # &]];
+check["bounded reference staging retains the legacy first choice",
+  First[tpReferencePlan["Selections"]] === First /@ tpReferenceChoices];
+check["the next three four-photon reference seeds are reciprocal pairs",
+  AllTrue[Rest[tpReferencePlan["Selections"]], tpReciprocalSelectionQ]];
+check["a one-choice reference budget retains exactly the legacy tuple",
+  ConstructiveDiagrams`Private`preparationReferenceSelections[tpReferenceChoices, 1]["Selections"] ===
+    {First /@ tpReferenceChoices}];
+check["the full reference-space size is reported without enumeration",
+  tpReferencePlan["AvailableChoices"] === 81];
+tpLargeReferenceChoices = Table[Table[<|"Leg" -> leg, "Mode" -> "AllSpurious", "Target" -> target|>,
+  {target, 10}], {leg, 10}];
+tpLargeReferencePlan = TimeConstrained[
+  ConstructiveDiagrams`Private`preparationReferenceSelections[tpLargeReferenceChoices, 3], 2, $TimedOut];
+check["a huge Cartesian reference space still has a bounded small plan",
+  AssociationQ[tpLargeReferencePlan] && tpLargeReferencePlan["AvailableChoices"] === 10^10 &&
+    Length[tpLargeReferencePlan["Selections"]] === 3];
+
+(* Non-search reference callbacks must not evaluate a symbol with an OwnValue
+   as a Function parameter in an already-running user kernel. *)
+Do[
+  tpCallbackPair = If[tpCallbackMode === None,
+    {tpJointExternal, SpinorChain[Spinor["Spin", "Angle", 1], Mom[1],
+      Spinor["Spin", "Square", 2]]},
+    {tpJointExternal, SpinorChain[Spinor["Xi", "Angle", 10], Mom[1],
+      Spinor["Helicity", "Square", 3]]/
+      SpinorChain[Spinor["Xi", "Angle", 10], Spinor["Helicity", "Angle", 3]]}];
+  tpCallbackValid = Block[{ConstructiveDiagrams`Private`value = 23,
+      ConstructiveDiagrams`Private`candidate = 29},
+    Quiet[Check[
+      tpCallbackReport = PrepareAmplitudes[{tpCallbackPair}, tpModel,
+        "ReferenceSpinors" -> tpCallbackMode, "InternalOnShell" -> False,
+        "MaxSteps" -> 0, "ProgressReporting" -> False, "ReturnDetails" -> True];
+      AssociationQ[tpCallbackReport] &&
+        First[tpCallbackReport["DiagramReports"]]["Status"] === "PREPARED" &&
+        ConstructiveDiagrams`Private`residueFiniteQ[tpCallbackReport["Amplitude"]],
+      False, {Function::flpar}], {Function::flpar}]];
+  check[{"preparation checkpoint callbacks tolerate existing private OwnValues", tpCallbackMode},
+    tpCallbackValid], {tpCallbackMode, {None, "IndependentXi"}}];
+
+(* ::Section:: *)
+(* Actual mixed six-point diagrams: independent exact own-three-cut charts.
+   Each original propagator is stripped before evaluating its numerator.
+   Auxiliary reference denominators retain their actual numerical values. *)
+tpSixJ = {{0, -1}, {1, 0}}; tpSixEps = -tpSixJ;
+tpSixAdj[p_] := {{p[[2, 2]], -p[[1, 2]]}, {-p[[2, 1]], p[[1, 1]]}};
+tpSixOwnChart[order_List, mass_, sample_Integer, spins_List] := Module[
+  {p1, angles, squares, coefficients, momenta, total, nullAngle, nullSquare, photon, conditions},
+  p1 = {{sample + 1, sample - 2},
+    {sample + 2, (mass^2 + (sample - 2) (sample + 2))/(sample + 1)}};
+  angles = <|3 -> {1, sample + 1}, 4 -> {sample + 2, 1},
+    5 -> {2, 2 sample + 3}, 6 -> {sample + 3, 2 sample + 5}|>;
+  squares = <||>; coefficients = <|3 -> sample + 2, 4 -> sample - 5,
+    5 -> sample + 3, 6 -> -(sample + 1)|>;
+  momenta = <|1 -> p1|>; total = p1;
+  Do[
+    nullAngle = angles[leg];
+    nullSquare = coefficients[leg] ({-#[[2]], #[[1]]} &)[tpSixAdj[total].nullAngle];
+    photon = Outer[Times, nullAngle, nullSquare];
+    AssociateTo[squares, leg -> nullSquare]; AssociateTo[momenta, leg -> photon];
+    total = total + photon, {leg, order}];
+  AssociateTo[momenta, 2 -> -total];
+  Do[AssociateTo[angles, leg -> UnitVector[2, spins[[leg]]]];
+    AssociateTo[squares, leg -> tpSixEps.tpSixAdj[momenta[leg]].angles[leg]/mass], {leg, {1, 2}}];
+  conditions = Join[{Det[momenta[1]] === mass^2, Det[momenta[2]] === mass^2,
+      Total[Values[momenta]] === ConstantArray[0, {2, 2}]},
+    (Det[momenta[#]] === 0 &) /@ Range[3, 6],
+    (Det[Total[Lookup[momenta, Join[{1}, Take[order, #]]]]] === mass^2 &) /@ Range[3]];
+  <|"Momenta" -> momenta, "Angle" -> angles, "Square" -> squares,
+    "MassValue" -> mass, "Conditions" -> conditions|>
+];
+tpSixMatrix[label_Integer, chart_] := chart["Momenta"][label];
+tpSixMatrix[Multiparticle[labels__], chart_] := Total[tpSixMatrix[#, chart] & /@ {labels}];
+tpSixVector[Spinor[_, kind_, label_], chart_] := chart[kind][label];
+tpSixChain[chain_SpinorChain, chart_] := Module[
+  {parts = List @@ chain, kind, row, right, matrix},
+  kind = parts[[1, 2]]; row = tpSixVector[First[parts], chart];
+  If[kind === "Angle", row = row.tpSixJ];
+  Do[matrix = vector /. Mom[label_] :> tpSixMatrix[label, chart];
+    row = row.If[kind === "Angle", matrix, tpSixAdj[matrix]];
+    kind = If[kind === "Angle", "Square", "Angle"], {vector, Rest[Most[parts]]}];
+  right = tpSixVector[Last[parts], chart];
+  If[Last[parts][[2]] === "Square", right = tpSixEps.right]; row.right
+];
+tpSixValue[expression_, chart_, originalPropagators_List] := Together[
+  expression /. Thread[originalPropagators -> ConstantArray[1, Length[originalPropagators]]] /.
+    {tpMass -> chart["MassValue"], tpCharge -> 1} /.
+    prop_PropDen :> (Det[tpSixMatrix[prop[[1, 1]], chart]] - prop[[2]]^2) /.
+    chain_SpinorChain :> tpSixChain[chain, chart] /.
+    MomProd[a_, b_] :> (Det[tpSixMatrix[a, chart] + tpSixMatrix[b, chart]] -
+      Det[tpSixMatrix[a, chart]] - Det[tpSixMatrix[b, chart]])/2];
+tpSixOrder[pair_] := Module[{sets, nested},
+  sets = DeleteDuplicates[(List @@ #[[1, 1]]) & /@
+    DeleteDuplicates[Cases[Last[pair], _PropDen, Infinity]]];
+  nested = SortBy[If[MemberQ[#, 1], #, Complement[Range[6], #]] & /@ sets, Length];
+  If[Length[nested] =!= 3, Return[Missing["ExpectedThreeCuts"]]];
+  Join[Complement[nested[[1]], {1}], Complement[nested[[2]], nested[[1]]],
+    Complement[nested[[3]], nested[[2]]], Complement[Range[3, 6], nested[[3]]]]
+];
+Do[
+  tpSixParticles = Join[{"e", "E"}, tpSixHelicities];
+  tpSixRaw = diagramAmplitudes[CreateDiagrams[tpSixParticles, tpModel]];
+  tpSixOrders = tpSixOrder /@ tpSixRaw;
+  tpSixWantedOrders = If[Count[tpSixHelicities, "A.-"] === 1,
+    {{3, 4, 5, 6}, {3, 6, 4, 5}}, {{3, 4, 5, 6}, {3, 5, 4, 6}}];
+  tpSixSelected = (tpSixRaw[[FirstPosition[tpSixOrders, #][[1]]]] &) /@ tpSixWantedOrders;
+  check[{"mixed six-point fixtures contain every distinct photon ordering", tpSixHelicities},
+    Length[tpSixRaw] === 24 && Sort[tpSixOrders] === Sort[Permutations[Range[3, 6]]]];
+  tpSixPrepared = PrepareAmplitudes[tpSixSelected, tpModel, "ReferenceSpinors" -> Automatic,
+    "MaxSteps" -> 0, "MaxReferenceChoices" -> 4, "ReferenceTimeConstraint" -> 2,
+    "TimeConstraint" -> 12, "ProgressReporting" -> False, "ReturnDetails" -> True];
+  Do[
+    tpSixPair = tpSixSelected[[tpSixIndex]];
+    tpSixRow = tpSixPrepared["DiagramReports"][[tpSixIndex]];
+    tpSixOutput = tpSixRow["PreparedExpression"];
+    tpSixOriginalProps = DeleteDuplicates[Cases[Last[tpSixPair], _PropDen, Infinity]];
+    tpSixRules = ConstructiveDiagrams`Private`preparationCanonicalMassRules[First[tpSixPair]];
+    tpSixContracted = ConstructiveDiagrams`Private`preparationNumerators[Last[tpSixPair],
+      Function[num, ConstructiveDiagrams`Private`preparationReplaceMasses[
+        ReduceSpinContractions[num], tpSixRules]]];
+    tpSixAssigned = ConstructiveDiagrams`Private`preparationReferences[tpSixContracted,
+      tpSixRules, tpModel, tpSixRaw, Automatic, (KeyTake[#, {"Leg", "Mode", "Target"}] &) /@
+        tpSixRow["ReferenceSpinors"]["Assignments"]];
+    check[{"automatic mixed six-point preparation chooses four references", tpSixHelicities, tpSixIndex},
+      tpSixRow["Status"] === "PREPARED" && tpSixAssigned["Status"] === "COMPLETE" &&
+        Length[tpSixRow["ReferenceSpinors"]["Assignments"]] === 4 &&
+        FreeQ[tpSixOutput, Spinor["Xi", ___] | _Mass] &&
+        ConstructiveDiagrams`Private`residueFiniteQ[tpSixOutput]];
+    check[{"mixed six-point preparation preserves all three original propagators", tpSixHelicities, tpSixIndex},
+      Length[tpSixOriginalProps] === 3 &&
+        ContainsAll[DeleteDuplicates[Cases[tpSixOutput, _PropDen, Infinity]], tpSixOriginalProps]];
+    tpSixCertificate = Table[
+      tpSixChart = tpSixOwnChart[tpSixWantedOrders[[tpSixIndex]],
+        tpSixSample[[1]], tpSixSample[[2]], tpSixSpins];
+      And @@ tpSixChart["Conditions"] &&
+        tpSixValue[tpSixAssigned["Expression"] - tpSixOutput,
+          tpSixChart, tpSixOriginalProps] === 0,
+      {tpSixSample, {{1, 1}, {3/7, 2}}}, {tpSixSpins, Tuples[{1, 2}, 2]}];
+    check[{"mixed six-point preparation has an independent same-reference three-cut certificate",
+        tpSixHelicities, tpSixIndex}, And @@ Flatten[tpSixCertificate]],
+    {tpSixIndex, 2}],
+  {tpSixHelicities, {{"A.+", "A.+", "A.+", "A.-"}, {"A.+", "A.+", "A.-", "A.-"}}}];
+
+If[checks =!= 381, AppendTo[failures, {"UnexpectedCheckCount", checks, 381}]];
 Print[ToString[checks] <> " thesis-preparation checks; " <> ToString[Length[failures]] <> " failures."];
 If[failures =!= {}, Print[failures]];
 Print["HEPCAT_TEST_COMPLETED:thesis-preparation-tests.wl"];

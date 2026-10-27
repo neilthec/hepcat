@@ -6394,6 +6394,8 @@ PrepareAmplitudes::args = "Expected diagram {massRules, expression} pairs or com
 PrepareAmplitudes::usage = PrepareAmplitudes::usage <>
   " Ordinary ReduceSpinorProducts acts on the whole expression, including auxiliary denominators, with PropDen protected. Only external mass replacements act globally; internal replacements remain numerator-only. With MomentumConservation -> True, the bounded identity search also tries consistent whole-numerator external momentum eliminations and composite complements. Each trial is reduced before a strictly improving whole-expression rank is required. These trials use only declared external mass labels, share MaxSteps, MaxCandidates and the per-element time limit, and protect inverse factors from conservation and internal-shell substitutions. MomentumConservation -> False disables them.";
 PrepareAmplitudes::usage = PrepareAmplitudes::usage <>
+  " Enabled internal numerator cuts also supply simultaneous linear scalar-product relations, including differences of adjacent cuts. External momentum-conservation equations enter only when enabled. Inconsistent exact constraints remain PARTIAL. Reference trials checkpoint completed factored reductions before optional whole-product exploration; an interrupted exploration is not marked exhaustive. Bounded reciprocal massless-reference choices are tried after the original first tuple without increasing the time or choice limits.";
+PrepareAmplitudes::usage = PrepareAmplitudes::usage <>
   " Input elements are detected individually: diagram {massRules, expression} pairs or compact factorization rows {m1, ..., mn, Multiparticle[cut], exchangedMass, expression}. The default output preserves each input element's format and metadata. Factorization rows supply only external shells and their selected cut; other propagators do not introduce shell assumptions. Channel 1/z factors and sewing signs are unchanged. Cut-only reductions preserve the selected residue, not an off-cut identity. Details add InputType, ElementTypes, ItemReports and ChannelReports.";
 PrepareAmplitudes::usage = PrepareAmplitudes::usage <>
   " An unavailable reference choice returns Failure for ordinary output, for diagrams and channels alike; detailed output retains PARTIAL expressions and diagnostics. AllSpurious needs another eligible massless external particle. With a single external photon, use Automatic or AllPhysical for constructive preparation.";
@@ -6573,6 +6575,50 @@ preparationDotRules[rules_List, conserve_] := Module[
   First /@ Select[GatherBy[DeleteDuplicates[replacements], First], Length[#] === 1 &]
 ];
 
+(* Solve the declared cut-invariant equations jointly. Row operations use only
+   the exact integer coefficient matrix, never division by a model parameter.
+   The caller supplies the internal-shell policy and protects all inverses. *)
+preparationJointDotRules[rules_List, conserve_] := Module[
+  {external = DeleteDuplicates[externalIndices[rules]], externalRules,
+   channels = knownInternalChannels[rules], pairs, dots, massSquares,
+   matrix = {}, constants = {}, transformed, coefficients, values, pivot,
+   replacements = {}, inconsistent},
+  If[Length[external] < 2, Return[{}]];
+  externalRules = preparationExternalRules[rules];
+  pairs = Subsets[external, {2}]; dots = orderedDot @@@ pairs;
+  massSquares = AssociationThread[external,
+    ((Mass[#] /. externalRules)^2 &) /@ external];
+  Do[
+    If[!ContainsAll[external, First[channel]], Continue[]];
+    AppendTo[matrix, (Boole[ContainsAll[First[channel], #]] &) /@ pairs];
+    AppendTo[constants,
+      (Last[channel]^2 - Total[Lookup[massSquares, First[channel]]])/2],
+    {channel, channels}];
+  If[TrueQ[conserve], Do[
+    AppendTo[matrix, (Boole[MemberQ[#, leg]] &) /@ pairs];
+    AppendTo[constants, -massSquares[leg]], {leg, external}]];
+  If[matrix === {}, Return[{}]];
+  (* Approximate mass data cannot certify exact simultaneous identities. *)
+  If[!FreeQ[constants, _Real], Return[{}]];
+  (* The identity block retains a certificate for every original equation. *)
+  transformed = RowReduce[Join[matrix, IdentityMatrix[Length[matrix]], 2]];
+  coefficients = transformed[[All, 1 ;; Length[dots]]];
+  values = Expand[transformed[[All, Length[dots] + 1 ;;]].constants];
+  inconsistent = Select[Range[Length[coefficients]],
+    AllTrue[coefficients[[#]], # === 0 &] && !residueExactZero[values[[#]]] &];
+  If[inconsistent =!= {}, Return[Failure["InconsistentCutInvariants", <|
+    "MessageTemplate" -> "The declared numerator cuts and external momentum constraints are inconsistent.",
+    "Residuals" -> values[[inconsistent]]|>]]];
+  Do[
+    pivot = SelectFirst[Range[Length[dots]], coefficients[[row, #]] =!= 0 &,
+      Missing["NoPivot"]];
+    If[!MissingQ[pivot],
+      AppendTo[replacements, dots[[pivot]] -> Expand[values[[row]] -
+        Total[MapThread[Times, {ReplacePart[coefficients[[row]], pivot -> 0], dots}]]]]],
+    {row, Length[coefficients]}];
+  replacements
+];
+
 preparationReduceDots[expr_, replacements_List] := Module[{denominators, tokens},
   If[replacements === {}, Return[expr]];
   (* Protect inverse factors and unknown-sign powers inside unexpanded sums. *)
@@ -6632,7 +6678,8 @@ preparationBetterQ[left_List, right_List] := left =!= right && OrderedQ[{left, r
    still factored. Rank after the caller's authorized numerator dot rules;
    whole-expression expansion otherwise obscures these wins. *)
 DownValues[preparationConservedMomentumChains] = {};
-preparationConservedMomentumChains[expr_, rules_List, conserve_, dotRules_List : {}] := Module[
+preparationConservedMomentumChains[expr_, rules_List, conserve_, dotRules_List : {},
+    normalizationMode_ : False] := Module[
   {external = DeleteDuplicates[externalIndices[rules]],
    externalRules = preparationExternalRules[rules], conservedZeroSlotQ, reduce},
   If[!TrueQ[conserve] || Length[external] < 2, Return[expr]];
@@ -6651,6 +6698,12 @@ preparationConservedMomentumChains[expr_, rules_List, conserve_, dotRules_List :
         SameQ[rspSpinorType[First[parts]], rspSpinorType[Last[parts]]] =!=
           EvenQ[Length[parts] - 2]), Return[value]];
     If[Head[value] === SpinorTrace && OddQ[Length[parts]], Return[value]];
+    If[TrueQ[normalizationMode] && !(Head[value] === SpinorChain &&
+        First[parts] === Last[parts] &&
+        MatchQ[First[parts], Spinor["Helicity", "Angle" | "Square", _Integer]]), Return[value]];
+    If[normalizationMode === "PreserveOpenSpin" && Head[value] === SpinorChain &&
+        First[parts] =!= Last[parts] && AllTrue[{First[parts], Last[parts]},
+          MatchQ[#, Spinor["Spin", ___]] && IntegerQ[rspSpinorLeg[#]] &], Return[value]];
     slots = If[Head[value] === SpinorChain, Rest[Most[parts]], parts];
     If[!FreeQ[slots, _MomHat] || AnyTrue[slots, rspLinearMomentumTerms[#] === $Failed &],
       Return[value]];
@@ -6912,12 +6965,43 @@ preparationReferences[expr_, rules_List, model_List, pairs_List, requested_, for
 (* Visit the baseline and single-leg changes before deeper combinations. Never
    materialize the exponentially large Cartesian product. *)
 preparationReferenceSelections[choices_List, limit_Integer] := Module[
-  {sizes = Length /@ choices, strides, total, indices = {}, seen = <||>, add, j, k, n},
+  {sizes = Length /@ choices, strides, total, indices = {}, seen = <||>, add, j, k, n,
+   legs, allowed, match, nodes = 0, seeds = 0, position},
   total = Times @@ sizes;
   strides = Table[Times @@ Drop[sizes, j], {j, Length[sizes]}];
   add[n_Integer] := If[Length[indices] < limit && !KeyExistsQ[seen, n],
     AppendTo[indices, n]; AssociateTo[seen, n -> True]];
   add[0];
+  (* Reciprocal massless references often preserve a shared chain momentum.
+     Keep the legacy first tuple, then try a bounded set of complete matchings. *)
+  If[Length[indices] < limit && EvenQ[Length[choices]] && Length[choices] >= 2 &&
+      AllTrue[choices, # =!= {} && AllTrue[#, AssociationQ] &],
+    legs = Lookup[First /@ choices, "Leg", Missing["NoLeg"]];
+    If[DuplicateFreeQ[legs] && AllTrue[legs, IntegerQ] &&
+        And @@ MapThread[Function[{group, leg},
+          AllTrue[group, Lookup[#, "Leg", None] === leg &]], {choices, legs}],
+      allowed = AssociationThread[legs, MapThread[Function[{group, leg},
+        DeleteDuplicates[Lookup[Select[group,
+          Lookup[#, "Leg", None] === leg && Lookup[#, "Mode", None] === "AllSpurious" &&
+            MemberQ[legs, Lookup[#, "Target", None]] && Lookup[#, "Target", None] =!= leg &],
+          "Target", {}]]], {choices, legs}]];
+      match[remaining_List, targets_Association] := If[
+        Length[indices] < limit && seeds < 8 && nodes < 256,
+        nodes++;
+        If[remaining === {},
+          seeds++;
+          position = Table[SelectFirst[Range[sizes[[j]]],
+            Lookup[choices[[j, #]], "Leg", None] === legs[[j]] &&
+              Lookup[choices[[j, #]], "Mode", None] === "AllSpurious" &&
+              Lookup[choices[[j, #]], "Target", None] === targets[legs[[j]]] &],
+            {j, Length[legs]}];
+          add[Total[(position - 1) strides]],
+          With[{leg = First[remaining]}, Do[
+            If[MemberQ[allowed[leg], partner] && MemberQ[allowed[partner], leg],
+              match[DeleteCases[Rest[remaining], partner],
+                Join[targets, <|leg -> partner, partner -> leg|>]]],
+            {partner, Rest[remaining]}]]]];
+      If[AllTrue[Values[allowed], # =!= {} &], match[legs, <||>]]]];
   For[j = 1, j <= Length[sizes] && Length[indices] < limit, j++,
     For[k = 1, k < sizes[[j]] && Length[indices] < limit, k++, add[k strides[[j]]]]];
   For[n = 0, n < total && Length[indices] < Min[limit, total], n++, add[n]];
@@ -6927,42 +7011,85 @@ preparationReferenceSelections[choices_List, limit_Integer] := Module[
 ];
 
 DownValues[preparationReferenceTrial] = {};
-preparationReferenceTrial[expr_, rules_List, dotRules_List, auxiliary_List : {}, conserve_ : False] :=
-  Module[{reduce, best, conserved = expr, consider, contractPairs, masslessCandidate},
+preparationReferenceTrial[expr_, rules_List, dotRules_List, auxiliary_List : {}, conserve_ : False,
+    jointRules_List : {}, checkpoint_ : None] :=
+  Module[{reduce, best = None, bestRank, conserved = expr, diagonalConserved = expr,
+    openSpinConserved = expr,
+    consider, contractPairs, bodies, structural, structuralInputs = {}},
     reduce[value_] := preparationCancelReferencePoles[preparationReduceDots[
       preparationSpinorProducts[preparationReduceDots[value, dotRules], rules], dotRules],
       rules, auxiliary];
-    best = reduce[expr];
-    consider[value_] := If[residueFiniteQ[value],
-      If[preparationBetterQ[preparationRank[value], preparationRank[best]], best = value];
-      With[{factored = preparationMasslessMomentumTrial[value, rules, dotRules, auxiliary]},
-        If[residueFiniteQ[factored] &&
-            preparationBetterQ[preparationRank[factored], preparationRank[best]], best = factored]]];
+    consider[value_] := Module[{rank}, If[residueFiniteQ[value],
+      rank = preparationRank[value];
+      If[best === None || preparationBetterQ[rank, bestRank],
+        best = value; bestRank = rank;
+        If[checkpoint =!= None, checkpoint[best]]]]];
+    structural[value_, distribute_] := Module[{body, precontracted, candidate},
+      body = If[TrueQ[distribute],
+        If[rspSandwichExpansionCount[value] > 4096, Return[Null]];
+        preparationProtectedDenominators[value, Expand], value];
+      If[MemberQ[structuralInputs, body], Return[Null]];
+      AppendTo[structuralInputs, body];
+      (* Preserve the original composite reference momenta until their common
+         vector is contracted. Charged chain slots and all inverses stay atomic. *)
+      precontracted = preparationNumerators[body,
+        Function[num, rspSandwichProducts[num, True]]];
+      precontracted = preparationNumerators[precontracted, rspSandwichProducts];
+      If[jointRules =!= {},
+        candidate = preparationFactorizedReferenceTrial[precontracted, rules,
+          jointRules, auxiliary, True];
+        consider[candidate];
+        If[precontracted =!= body,
+          consider[preparationMasslessMomentumTrial[candidate, rules, dotRules, auxiliary]]]];
+      candidate = preparationFactorizedReferenceTrial[precontracted, rules,
+        dotRules, auxiliary, True];
+      consider[candidate];
+      If[precontracted =!= body,
+        consider[preparationMasslessMomentumTrial[candidate, rules, dotRules, auxiliary]]]];
+    (* Complete cheap factor routes first. Their valid endpoints remain usable
+       if a later optional whole-product reduction exceeds its trial budget. *)
+    consider[preparationFactorizedReferenceTrial[expr, rules, dotRules, auxiliary, False]];
+    structural[expr, False];
+    structural[expr, True];
     If[TrueQ[conserve],
-      conserved = preparationConservedMomentumChains[expr, rules, True, dotRules];
-      If[conserved =!= expr,
-        consider[reduce[conserved]];
-        If[First[preparationRank[best]] > 1,
-          masslessCandidate = preparationMasslessMomentumTrial[conserved, rules, dotRules, auxiliary];
-          If[masslessCandidate =!= conserved, consider[masslessCandidate]]]]];
-    If[First[preparationRank[best]] <= 1, Return[best]];
-    consider[best];
-    If[First[preparationRank[best]] <= 1, Return[best]];
-    Do[
-      consider[preparationFactorizedReferenceTrial[expr, rules, dotRules, auxiliary, contractPairs]];
-      If[conserved =!= expr,
-        consider[preparationFactorizedReferenceTrial[conserved, rules, dotRules, auxiliary, contractPairs]]],
-      {contractPairs, {False, True}}];
-    best
+      openSpinConserved = preparationConservedMomentumChains[expr, rules, True, dotRules,
+        "PreserveOpenSpin"];
+      structural[openSpinConserved, True];
+      structural[openSpinConserved, False]];
+    If[best =!= None && First[bestRank] <= 1, Return[best]];
+    consider[preparationFactorizedReferenceTrial[expr, rules, dotRules, auxiliary, True]];
+    If[TrueQ[conserve],
+      diagonalConserved = preparationConservedMomentumChains[expr, rules, True, dotRules, True];
+      structural[diagonalConserved, True]; structural[diagonalConserved, False];
+      conserved = preparationConservedMomentumChains[expr, rules, True, dotRules]];
+    bodies = DeleteDuplicates[{expr, conserved}];
+    Do[If[body =!= expr,
+      Do[consider[preparationFactorizedReferenceTrial[body, rules, dotRules,
+        auxiliary, contractPairs]], {contractPairs, {False, True}}]], {body, bodies}];
+    If[best =!= None && First[bestRank] <= 1, Return[best]];
+    Do[structural[body, True]; structural[body, False], {body, bodies}];
+    If[jointRules =!= {}, Do[
+      consider[preparationFactorizedReferenceTrial[body, rules, jointRules, auxiliary, True]],
+      {body, bodies}]];
+    If[best =!= None && First[bestRank] <= 1, Return[best]];
+    Do[With[{factored = preparationMasslessMomentumTrial[body, rules, dotRules, auxiliary]},
+      If[factored =!= body, consider[factored]]], {body, bodies}];
+    (* Ordinary whole-expression reduction remains a competing completed route. *)
+    Do[consider[reduce[body]], {body, bodies}];
+    If[best =!= None,
+      With[{factored = preparationMasslessMomentumTrial[best, rules, dotRules, auxiliary]},
+        consider[factored]]];
+    If[best === None, $Failed, best]
   ];
 
 DownValues[preparationReferenceSearch] = {};
 preparationReferenceSearch[expr_, rules_List, model_List, pairs_List, requested_,
-    limit_Integer, seconds_, dotRules_List, progress_, shared_ : False, conserve_ : False] := Module[
+    limit_Integer, seconds_, dotRules_List, progress_, shared_ : False, conserve_ : False,
+    jointRules_List : {}] := Module[
   {baseline, plan, selections, available, best, alternatives = {}, cache = <||>,
-   started = AbsoluteTime[], tried = 0, completed = 0, value, row,
+   started = AbsoluteTime[], tried = 0, completed = 0, value,
    remaining, trialSeconds, outcome, timedOut = False, stop, search, diagnostics = {},
-   cacheKey, rank, reduced},
+   cacheKey, reduced, currentReport, record, snapshot, emit},
   baseline = preparationReferences[expr, rules, model, pairs, requested, {}, shared];
   If[baseline["Status"] =!= "COMPLETE" ||
       TrueQ[shared] ||
@@ -6970,6 +7097,32 @@ preparationReferenceSearch[expr_, rules_List, model_List, pairs_List, requested_
       Lookup[baseline, "Choices", {}] === {}, Return[baseline]];
   plan = preparationReferenceSelections[baseline["Choices"], limit];
   selections = plan["Selections"]; available = plan["AvailableChoices"]; best = baseline;
+  snapshot[reason_] := <|"AvailableChoices" -> available, "TriedChoices" -> tried,
+    "CompletedChoices" -> completed, "ReducedChoices" -> Length[alternatives],
+    "CheckpointedChoices" -> Count[Lookup[alternatives, "ExplorationComplete", {}], False],
+    "RejectedChoices" -> tried - Length[alternatives],
+    "Exhaustive" -> (completed === available), "StopReason" -> reason|>;
+  emit[] := progress[Join[<|"Completed" -> tried, "Total" -> Length[selections],
+      "AvailableReferenceChoices" -> available|>,
+    If[KeyExistsQ[best, "ReducedRank"],
+      <|"Complexity" -> First[best["ReducedRank"]], "Terms" -> best["ReducedRank"][[2]],
+        "BestReference" -> Join[best, <|"Search" -> snapshot["TimeConstraint"],
+          "Alternatives" -> SortBy[alternatives, {#["Rank"], #["ChoiceIndex"]} &]|>]|>, <||>]]];
+  record[candidate_, explored_] := Module[{rank, position, row, previous},
+    If[!AssociationQ[currentReport] || !residueFiniteQ[candidate], Return[Null]];
+    rank = preparationRank[candidate];
+    position = FirstPosition[Lookup[alternatives, "ChoiceIndex", {}], tried, Missing["NewChoice"]];
+    row = <|"Assignments" -> currentReport["Assignments"], "Expression" -> candidate,
+      "Rank" -> rank, "ChoiceIndex" -> tried, "ExplorationComplete" -> TrueQ[explored]|>;
+    If[MissingQ[position], AppendTo[alternatives, row],
+      previous = Extract[alternatives, position];
+      If[!preparationBetterQ[rank, previous["Rank"]],
+        row = Join[previous, <|"ExplorationComplete" ->
+          (TrueQ[explored] || TrueQ[previous["ExplorationComplete"]])|>]];
+      alternatives = ReplacePart[alternatives, position -> row]];
+    If[!KeyExistsQ[best, "ReducedRank"] || preparationBetterQ[rank, best["ReducedRank"]],
+      best = Join[currentReport, <|"ReducedExpression" -> candidate, "ReducedRank" -> rank|>]];
+    emit[]];
   outcome = TimeConstrained[
     Do[
       remaining = If[seconds === Infinity, Infinity, seconds - (AbsoluteTime[] - started)];
@@ -6977,48 +7130,37 @@ preparationReferenceSearch[expr_, rules_List, model_List, pairs_List, requested_
       tried++;
       trialSeconds = If[seconds === Infinity, Infinity,
         Min[remaining, Max[0.01, seconds/Min[Length[selections], 8]]]];
+      currentReport = None;
       value = TimeConstrained[Module[{report},
         report = If[tried === 1, baseline,
           preparationReferences[expr, rules, model, pairs, requested, selection, shared]];
         If[report["Status"] =!= "COMPLETE", Return[$Failed]];
+        currentReport = report;
         cacheKey = With[{body = report["Expression"]}, HoldComplete[body]];
         reduced = If[KeyExistsQ[cache, cacheKey], cache[cacheKey],
           preparationReferenceTrial[report["Expression"], rules, dotRules,
-            Lookup[report, "AuxiliaryPhysicalPropagators", {}], conserve]];
+            Lookup[report, "AuxiliaryPhysicalPropagators", {}], conserve, jointRules,
+            Function[record[#, False]]]];
         If[!residueFiniteQ[reduced], Return[$Failed]];
         AssociateTo[cache, cacheKey -> reduced];
-        rank = preparationRank[reduced];
-        <|"Report" -> report, "Expression" -> reduced, "Rank" -> rank|>
+        <|"Report" -> report, "Expression" -> reduced|>
       ], trialSeconds, $TimedOut];
       If[AssociationQ[value],
         completed++;
-        row = <|"Assignments" -> value["Report"]["Assignments"],
-          "Expression" -> value["Expression"], "Rank" -> value["Rank"], "ChoiceIndex" -> tried|>;
-        AppendTo[alternatives, row];
-        If[!KeyExistsQ[best, "ReducedRank"] || preparationBetterQ[value["Rank"], best["ReducedRank"]],
-          best = Join[value["Report"], <|"ReducedExpression" -> value["Expression"],
-            "ReducedRank" -> value["Rank"]|>]],
+        record[value["Expression"], True],
         If[value === $TimedOut, timedOut = True]];
-      progress[Join[<|"Completed" -> tried, "Total" -> Length[selections],
-          "AvailableReferenceChoices" -> available|>,
-        If[KeyExistsQ[best, "ReducedRank"],
-          <|"Complexity" -> First[best["ReducedRank"]], "Terms" -> best["ReducedRank"][[2]],
-            "BestReference" -> Join[best, <|
-              "Search" -> <|"AvailableChoices" -> available, "TriedChoices" -> tried,
-                "CompletedChoices" -> completed, "RejectedChoices" -> tried - completed,
-                "Exhaustive" -> False, "StopReason" -> "TimeConstraint"|>,
-              "Alternatives" -> SortBy[alternatives, {#["Rank"], #["ChoiceIndex"]} &]|>]|>, <||>]]],
+      emit[],
       {selection, selections}]; True,
     seconds, False];
   stop = Which[!TrueQ[outcome] || tried < Length[selections], "TimeConstraint",
     timedOut, "TrialTimeConstraint", available > tried, "MaxReferenceChoices", True, "Exhausted"];
-  search = <|"AvailableChoices" -> available, "TriedChoices" -> tried,
-    "CompletedChoices" -> completed, "RejectedChoices" -> tried - completed,
-    "Exhaustive" -> (completed === available), "StopReason" -> stop|>;
-  If[completed === 0, AppendTo[diagnostics,
-    "No reference trial completed within the selection budget; the deterministic reference assignment is retained."]];
+  search = snapshot[stop];
+  If[alternatives === {}, AppendTo[diagnostics,
+    "No reference reduction completed within the selection budget; the deterministic reference assignment is retained."]];
+  If[search["CheckpointedChoices"] > 0, AppendTo[diagnostics,
+    "Completed reduction candidates were retained from reference choices whose optional route exploration exceeded the budget."]];
   If[!TrueQ[search["Exhaustive"]], AppendTo[diagnostics,
-    "Reference selection was bounded; only completed trials were ranked, not every admissible assignment."]];
+    "Reference selection was bounded; only completed reduction candidates were ranked, and optional routes or admissible assignments may remain unexplored."]];
   Join[best, <|"Search" -> search,
     "Alternatives" -> SortBy[alternatives, {#["Rank"], #["ChoiceIndex"]} &],
     "Diagnostics" -> Join[Lookup[best, "Diagnostics", {}], diagnostics]|>]
@@ -7041,6 +7183,7 @@ preparationCompleteExternalInputQ[expr_, rules_List] := Module[
 preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pairs_, kind_] := Module[
   {rules = preparationCanonicalMassRules[First[pair]], original = Last[pair], expression = Last[pair],
    reductions = {}, history = {}, diagnostics = {}, channels, shellOptions, dotRules,
+   jointRules = {}, jointRuleFailure = None,
    started = AbsoluteTime[], outcome, stage = "Starting", stop = "MaxSteps",
    step, candidates, search, candidate, next, rank, best, bestRank, bestEdit,
    generated = 0, inspected = 0, event, reduceInvariants, before, after, identityStageComplete = False,
@@ -7078,6 +7221,14 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
     event[stage]];
   event["Starting"];
   outcome = Catch[TimeConstrained[
+    If[TrueQ[options["InternalOnShell"]],
+      stage = "InternalInvariantConditions";
+      jointRules = preparationJointDotRules[rules, options["MomentumConservation"]];
+      If[FailureQ[jointRules],
+        jointRuleFailure = jointRules; jointRules = {}; invalid = True;
+        AppendTo[diagnostics,
+          "The declared numerator shell conditions have inconsistent joint invariants."];
+        Throw[False, failureTag]]];
     If[kind === "FeynmanDiagram" && feynmanRawExpressionQ[expression],
       stage = "FeynmanToSpinorProducts";
       before = expression;
@@ -7117,7 +7268,7 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
             "Elapsed" -> AbsoluteTime[] - started,
             "Complexity" -> First[preparationRank[expression]],
             "Terms" -> preparationRank[expression][[2]]|>, KeyDrop[update, "BestReference"]]]],
-      kind === "FeynmanDiagram", options["MomentumConservation"]];
+      kind === "FeynmanDiagram", options["MomentumConservation"], jointRules];
     If[!AssociationQ[referenceReport] || referenceReport["Status"] =!= "COMPLETE",
       referenceFailure = True;
       diagnostics = Join[diagnostics, Lookup[referenceReport, "Diagnostics", {
@@ -7138,19 +7289,26 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
       admittedOriginal = True];
     event[stage];
     If[KeyExistsQ[referenceReport, "ReducedExpression"] ||
-        TrueQ[options["MomentumConservation"]],
+        TrueQ[options["MomentumConservation"]] || jointRules =!= {},
       stage = If[KeyExistsQ[referenceReport, "ReducedExpression"],
-        "RetainedReferenceTrial", "CompareConservedMomentumRoutes"];
+        "RetainedReferenceTrial", If[TrueQ[options["MomentumConservation"]],
+          "CompareConservedMomentumRoutes", "CompareInvariantRoutes"]];
       before = expression;
       after = If[KeyExistsQ[referenceReport, "ReducedExpression"],
         referenceReport["ReducedExpression"],
         preparationReferenceTrial[expression, rules, dotRules,
-          Lookup[referenceReport, "AuxiliaryPhysicalPropagators", {}], True]];
+          Lookup[referenceReport, "AuxiliaryPhysicalPropagators", {}],
+          options["MomentumConservation"], jointRules,
+          Function[
+            referenceFallback = Join[referenceReport, <|"ReducedExpression" -> #,
+              "ReducedRank" -> preparationRank[#]|>];
+            rememberCompleted[#, "CompletedReferenceCandidate"]]]];
       If[!residueFiniteQ[after], invalid = True; Throw[False, failureTag]];
       expression = after;
       AppendTo[reductions, <|"Operation" -> stage, "Before" -> before,
         "After" -> expression, "InternalOnShellIdentity" -> TrueQ[options["InternalOnShell"]],
         "OnShellChannels" -> channels, "OnShellDotReplacements" -> dotRules,
+        "JointOnShellDotReplacements" -> jointRules,
         "MomentumConservation" -> TrueQ[options["MomentumConservation"]]|>];
       rememberCompleted[expression, stage];
       event[stage]];
@@ -7214,7 +7372,7 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
     True,
     options["TimeConstraint"], False], failureTag];
   If[!TrueQ[outcome] && MemberQ[{"ReferenceSpinors", "InternalInvariantReduction",
-      "RetainedReferenceTrial", "CompareConservedMomentumRoutes", "ReduceSpinorProducts",
+      "RetainedReferenceTrial", "CompareConservedMomentumRoutes", "CompareInvariantRoutes", "ReduceSpinorProducts",
       "CancelAuxiliaryReferencePoles"}, stage] && AssociationQ[referenceFallback],
     referenceReport = referenceFallback;
     expression = referenceFallback["ReducedExpression"];
@@ -7253,6 +7411,7 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
     "OriginalExpression" -> original, "PreparedExpression" -> expression,
     "OriginalCandidateEligible" -> eligibleOriginal, "OriginalCandidateAdmitted" -> admittedOriginal,
     "InternalOnShellChannels" -> channels,
+    "JointOnShellDotReplacements" -> jointRules, "JointInvariantFailure" -> jointRuleFailure,
     "InternalOnShellConditions" -> ((PropDen[Mom[Multiparticle @@ First[#]], Last[#]] == 0) & /@
       Select[knownInternalChannels[rules], MemberQ[channels, First[#]] &]),
     "DenominatorsKeptOffShell" -> True,

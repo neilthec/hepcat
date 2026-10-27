@@ -1345,6 +1345,133 @@ Do[
       AllTrue[qfiBoard, qfiValue[qfiInput - qfiReduced, #] === 0 &]],
   {qfiChirality, {"Angle", "Square"}}];
 
+(* ::Section:: *)
+(* Shared vectors: ordinary determinant identities with every off-cut remainder.
+   Exact Weyl matrices are independent of the reduction code. Only the
+   explicitly labelled Helicity endpoints have rank-one momenta. *)
+qsvCharts = MapIndexed[Function[{chart, number}, Join[chart,
+  <|"References" -> AssociationMap[Join[chart["References"][#],
+      <|78 -> If[# === "Angle", {11 + First[number], 17}, {19, 23 + First[number]}]|>] &,
+    {"Angle", "Square"}]|>]], Take[qfiMassiveCharts, 5]];
+qsvMomentum[vector_, chart_] := vector /. Mom[label_] :> qfiMatrix[label, chart];
+qsvValueChain[chain_SpinorChain, chart_] := Module[
+  {parts = List @@ chain, kind, row, right},
+  kind = qfiKind[First[parts]]; row = qfiVector[First[parts], chart];
+  If[kind === "Angle", row = row.qfiJ];
+  Do[row = row.If[kind === "Angle", qsvMomentum[vector, chart],
+      qfiAdj[qsvMomentum[vector, chart]]]; kind = qfiOther[kind],
+    {vector, Rest[Most[parts]]}];
+  right = qfiVector[Last[parts], chart];
+  If[qfiKind[Last[parts]] === "Square", right = qfiEps.right]; row.right
+];
+qsvValue[expression_, chart_] := Together[
+  expression /. chain_SpinorChain :> qsvValueChain[chain, chart] /.
+    MomProd[a_, b_] :> (Det[qfiMatrix[a, chart] + qfiMatrix[b, chart]] -
+      Det[qfiMatrix[a, chart]] - Det[qfiMatrix[b, chart]])/2 /.
+    Power[Mass[label_Integer], power_Integer?EvenQ] :>
+      Det[qfiMatrix[label, chart]]^(power/2) /.
+    {Mass[1] -> chart["MassValue"], Mass[3] -> 0, Mass[5] -> 0}];
+qsvSharedPair[kind_, endpoint_, vector_, reverseFirst_, reverseSecond_] := Module[
+  {a = endpoint, b = Spinor["Helicity", qfiOther[kind], 5],
+   c = Spinor["Xi", qfiOther[kind], 77], first, second},
+  first = SpinorChain[a, vector, b];
+  second = SpinorChain[c, vector, Spinor["Helicity", kind, 5]];
+  {If[reverseFirst, SpinorChain @@ Reverse[List @@ first], first],
+    If[reverseSecond, SpinorChain @@ Reverse[List @@ second], second]}
+];
+Do[
+  qsvEndpoints = Join[{Spinor["Helicity", qsvKind, 3], Spinor["Spin", qsvKind, 1]},
+    Flatten[Table[Spinor["Spin", variance, qsvKind, 1, spin],
+      {variance, {"Upper", "Lower"}}, {spin, {-1/2, 1/2}}]]];
+  Do[
+    qsvPair = qsvSharedPair[qsvKind, qsvEndpoint, qsvQ, qsvReverse1, qsvReverse2];
+    qsvRight = ConstructiveDiagrams`Private`rspSharedMomentumPair @@ qsvPair;
+    check[{"shared-vector identity preserves parity, spin components and chain reversal",
+        qsvKind, qsvEndpoint, qsvQ, qsvReverse1, qsvReverse2},
+      !MissingQ[qsvRight] && AllTrue[Take[qsvCharts, 3],
+        qsvValue[Times @@ qsvPair - qsvRight, #] === 0 &]],
+    {qsvEndpoint, qsvEndpoints}, {qsvQ, {Mom[2], Mom[Multiparticle[2, 3]]}},
+    {qsvReverse1, {False, True}}, {qsvReverse2, {False, True}}],
+  {qsvKind, {"Angle", "Square"}}];
+Do[
+  qsvPair = {SpinorChain[Spinor["Helicity", qsvKind, 3], Mom[2],
+      Spinor["Helicity", qfiOther[qsvKind], 5]],
+    SpinorChain[Spinor["Xi", qfiOther[qsvKind], 77], Mom[Multiparticle[2, 3]],
+      Spinor["Helicity", qsvKind, 5]]};
+  qsvRight = ConstructiveDiagrams`Private`rspSharedMomentumPair @@ qsvPair;
+  check[{"a shared vector may differ by the chain's own massless endpoint", qsvKind},
+    !MissingQ[qsvRight] && AllTrue[qsvCharts,
+      qsvValue[Times @@ qsvPair - qsvRight, #] === 0 &]];
+  check[{"the ordinary shared-vector remainder remains off cut", qsvKind},
+    !FreeQ[qsvRight, MomProd[2, 5]] && !FreeQ[qsvRight, Mass[2]^2] &&
+      FreeQ[qsvRight, Mass[_Multiparticle]]];
+  check[{"an independent Xi identifier does not supply a null shared endpoint", qsvKind},
+    MissingQ[ConstructiveDiagrams`Private`rspSharedMomentumPair @@
+      (qsvPair /. Spinor["Helicity", position_, 5] :> Spinor["Xi", position, 5])]];
+  qsvReduced = ReduceSpinorProducts[Times @@ qsvPair];
+  check[{"shared-vector public reduction is exact and idempotent", qsvKind},
+    ReduceSpinorProducts[qsvReduced] === qsvReduced && AllTrue[qsvCharts,
+      qsvValue[Times @@ qsvPair - qsvReduced, #] === 0 &]];
+  qsvPowerInput = qsvPair[[1]]^2 qsvPair[[2]]^3;
+  qsvPowerReduced = ReduceSpinorProducts[qsvPowerInput];
+  check[{"shared-vector contraction supports positive powers", qsvKind},
+    AllTrue[Take[qsvCharts, 3], qsvValue[qsvPowerInput - qsvPowerReduced, #] === 0 &]];
+  qsvPole = PropDen[Mom[Multiparticle[2, 5]], qsvPoleMass];
+  qsvProtected = ReduceSpinorProducts[(Times @@ qsvPair)/qsvPole];
+  check[{"shared-vector contraction leaves the physical propagator opaque", qsvKind},
+    DeleteDuplicates[Cases[qsvProtected, _PropDen, Infinity]] === {qsvPole} &&
+      AllTrue[Take[qsvCharts, 3],
+        qsvValue[Times @@ qsvPair - qsvPole qsvProtected, #] === 0 &]],
+  {qsvKind, {"Angle", "Square"}}];
+
+(* Q(Q+lambda p_b) is shortened before a three-momentum charged chain is
+   distributed. No internal shell or momentum conservation is used here. *)
+Do[
+  qsvQ = Mom[Multiparticle[2, 3]];
+  qsvFirst = SpinorChain[Spinor["Helicity", qsvKind, 3], Mom[2],
+    Spinor["Helicity", qfiOther[qsvKind], 5]];
+  qsvLastKind = If[EvenQ[qsvTailLength], qfiOther[qsvKind], qsvKind];
+  qsvLong = SpinorChain @@ Join[{Spinor["Xi", qfiOther[qsvKind], 77],
+      qsvQ, qsvAlpha qsvQ + 2 Mom[5]}, ConstantArray[Mom[4], qsvTailLength],
+    {Spinor["Xi", qsvLastKind, 78]}];
+  If[qsvReverse, qsvLong = SpinorChain @@ Reverse[List @@ qsvLong]];
+  qsvRight = ConstructiveDiagrams`Private`rspSharedAdjacentMomentumPair[qsvFirst, qsvLong];
+  check[{"adjacent shared-vector identity keeps arbitrary tails and reversed chains exact",
+      qsvKind, qsvTailLength, qsvAlpha, qsvReverse},
+    !MissingQ[qsvRight] && AllTrue[qsvCharts,
+      qsvValue[qsvFirst qsvLong - qsvRight, #] === 0 &]],
+  {qsvKind, {"Angle", "Square"}}, {qsvTailLength, 0, 3},
+  {qsvAlpha, {1, -1}}, {qsvReverse, {False, True}}];
+Do[
+  qsvFirst = SpinorChain[Spinor["Helicity", qsvKind, 3], Mom[2],
+    Spinor["Helicity", qfiOther[qsvKind], 5]];
+  qsvLong = SpinorChain[Spinor["Spin", qsvVariance, qfiOther[qsvKind], 1, qsvSpin],
+    Mom[Multiparticle[2, 3]], Mom[Multiparticle[2, 3]] + 3 Mom[5]/7,
+    Spinor["Xi", qfiOther[qsvKind], 77]];
+  qsvRight = ConstructiveDiagrams`Private`rspSharedAdjacentMomentumPair[qsvFirst, qsvLong];
+  check[{"adjacent shared-vector identity preserves explicit massive spin variance",
+      qsvKind, qsvVariance, qsvSpin},
+    !MissingQ[qsvRight] && !FreeQ[qsvRight,
+      Spinor["Spin", qsvVariance, _, 1, qsvSpin]] &&
+      AllTrue[Take[qsvCharts, 3], qsvValue[qsvFirst qsvLong - qsvRight, #] === 0 &]],
+  {qsvKind, {"Angle", "Square"}}, {qsvVariance, {"Upper", "Lower"}},
+  {qsvSpin, {-1/2, 1/2}}];
+qsvFirst = SpinorChain[Spinor["Helicity", "Square", 3], Mom[2],
+  Spinor["Helicity", "Angle", 5]];
+qsvLong = SpinorChain[Spinor["Xi", "Angle", 77], Mom[Multiparticle[2, 3]],
+  Mom[Multiparticle[2, 3]] + Mom[5], Spinor["Xi", "Angle", 78]];
+qsvRight = ConstructiveDiagrams`Private`rspSharedAdjacentMomentumPair[qsvFirst, qsvLong];
+check["the adjacent-vector identity retains its complete scalar remainder",
+  !FreeQ[qsvRight, MomProd[2, 5]] && !FreeQ[qsvRight, MomProd[3, 5]] &&
+    FreeQ[qsvRight, Mass[_Multiparticle]]];
+check["unrelated vector differences do not trigger an adjacent contraction",
+  MissingQ[ConstructiveDiagrams`Private`rspSharedAdjacentMomentumPair[qsvFirst,
+    qsvLong /. (Mom[Multiparticle[2, 3]] + Mom[5]) -> Mom[4]]]];
+qsvReduced = ReduceSpinorProducts[qsvFirst qsvLong];
+check["the public adjacent-vector reduction is exact and idempotent",
+  ReduceSpinorProducts[qsvReduced] === qsvReduced && AllTrue[qsvCharts,
+    qsvValue[qsvFirst qsvLong - qsvReduced, #] === 0 &]];
+
 Print[<|"Checks" -> checks, "Failed" -> Length[failures], "Failures" -> failures|>];
 Print["HEPCAT_TEST_COMPLETED:spinor-identity-tests.wl"];
 Quit[If[failures === {}, 0, 1]];
