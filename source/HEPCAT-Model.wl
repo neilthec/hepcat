@@ -4706,6 +4706,114 @@ completionCheckChannelRows[normalized_Association, rows_List] := Module[
   Join[rows, Join[masses, {Multiparticle @@ #["Cut"], #["Mass"], 0}] & /@ missing]
 ];
 
+completionBoundedRationalReconstruction[value_Integer, modulus_Integer, limit_Integer] := Module[
+  {residue = Mod[value, modulus], r0 = modulus, r1, t0 = 0, t1 = 1, q, numerator, denominator},
+  If[residue === 0, Return[0]];
+  r1 = residue;
+  While[Abs[r1] > limit,
+    q = Quotient[r0, r1];
+    {r0, r1} = {r1, r0 - q r1}; {t0, t1} = {t1, t0 - q t1}];
+  If[t1 === 0, Return[Missing["NoReconstruction"]]];
+  {numerator, denominator} = Sign[t1] {r1, t1};
+  If[Abs[numerator] > limit || denominator > limit ||
+      !CoprimeQ[numerator, denominator] || !CoprimeQ[denominator, modulus] ||
+      Mod[numerator - residue denominator, modulus] =!= 0,
+    Missing["NoReconstruction"], numerator/denominator]
+];
+
+completionCertifiedModularReduce[matrix_List, constant_List, seconds_: 60,
+    primeInventory_: Automatic] := Module[
+  {fallback = Missing["CertifiedModularUnavailable"], started = AbsoluteTime[], deadline,
+   rows = Length[matrix], columns, rationalQ, primes = primeInventory,
+   augmented, profile = None, free = {}, modulus = 1,
+   residues, candidate = None, reduced, active, pivots, block, prime,
+   unique, reconstructed, lookup, limit, used = {}, heldOut, scales, integerBlock,
+   expected, proof, rationalRows, actualPivots, rank, bounded, stop,
+   profileBetterQ, rationalModulo, certify, tag = Unique["certifiedModular"]},
+  rationalQ[value_] := MatchQ[value, _Integer | _Rational];
+  If[!TrueQ[NumericQ[seconds] && Element[seconds, Reals] && 0 < seconds < Infinity] ||
+      Length[constant] =!= rows || !VectorQ[constant, rationalQ] ||
+      !MatrixQ[matrix, rationalQ], Return[fallback]];
+  If[rows === 0, Return[<|"ReducedRows" -> {}, "Rank" -> 0, "CheckedRows" -> 0|>]];
+  columns = Length[First[matrix]];
+  If[AllTrue[Join[Flatten[matrix], constant], # === 0 &],
+    Return[<|"ReducedRows" -> {}, "Rank" -> 0, "CheckedRows" -> rows|>]];
+  If[columns === 0, Return[fallback]];
+  If[primes === Automatic, primes = NestList[NextPrime[#, -1] &, 2147483647, 24]];
+  If[!ListQ[primes] || Length[primes] < 3 || !DuplicateFreeQ[primes] ||
+      !AllTrue[primes, IntegerQ[#] && 2 < # <= 2147483647 && PrimeQ[#] &],
+    Return[fallback]];
+  deadline = started + seconds;
+  stop[] := Throw[fallback, tag];
+  SetAttributes[bounded, HoldAll];
+  bounded[expression_] := If[AbsoluteTime[] >= deadline, stop[],
+    TimeConstrained[expression, Max[0.001, deadline - AbsoluteTime[]], stop[]]];
+  profileBetterQ[new_List, old_List] := Length[new] > Length[old] ||
+    (Length[new] === Length[old] && new =!= old && OrderedQ[{new, old}]);
+  rationalModulo[values_, p_Integer] := Map[Function[value,
+    Mod[Numerator[value] PowerMod[Denominator[value], -1, p], p]], values, {2}];
+  certify[values_, p_Integer] := Module[{},
+    scales = bounded[Apply[LCM, Denominator[#]] & /@ Transpose[values]];
+    integerBlock = Map[# scales &, values];
+    If[!MatrixQ[integerBlock, IntegerQ], stop[]];
+    expected = Map[# scales &, augmented[[All, Append[free, columns + 1]]]];
+    (* A_p B = [A_free, c] certifies every original row and free direction.
+       The free identity gives n-r independent null vectors; the modular
+       rank lower bound proves that this is the complete exact family. *)
+    proof = bounded[Normal[SparseArray[augmented[[All, profile]]].
+      SparseArray[integerBlock]] === expected];
+    If[!TrueQ[proof], Return[fallback]];
+    rank = Length[profile];
+    rationalRows = ConstantArray[0, {rank, columns + 1}];
+    rationalRows[[All, profile]] = IdentityMatrix[rank];
+    rationalRows[[All, Append[free, columns + 1]]] = values;
+    actualPivots = Map[Function[row, SelectFirst[Range[columns],
+      row[[#]] =!= 0 &, Missing["NoPivot"]]], rationalRows];
+    If[actualPivots =!= profile, Return[fallback]];
+    <|"ReducedRows" -> (Append[Most[#], -Last[#]] & /@ rationalRows),
+      "Rank" -> rank, "CheckedRows" -> rows, "Backend" -> "CertifiedCRT",
+      "CRTPrimes" -> used, "HeldOutPrime" -> p|>
+  ];
+  Quiet[Check[TimeConstrained[Catch[
+    augmented = bounded[MapThread[Function[{row, rhs},
+      With[{whole = Append[row, rhs]}, whole Apply[LCM, Denominator[whole]]]],
+      {matrix, constant}]];
+    Do[
+      reduced = bounded[RowReduce[augmented, Modulus -> prime]];
+      If[!MatrixQ[reduced, IntegerQ], stop[]];
+      active = Select[reduced, AnyTrue[#, # =!= 0 &] &];
+      pivots = First[FirstPosition[#, 1]] & /@ active;
+      If[!DuplicateFreeQ[pivots] || pivots =!= Sort[pivots] ||
+          !AllTrue[pivots, IntegerQ[#] && 1 <= # <= columns + 1 &], stop[]];
+      If[pivots === {} || MemberQ[pivots, columns + 1], Continue[]];
+      If[profile === None || profileBetterQ[pivots, profile],
+        profile = pivots; free = Complement[Range[columns], profile];
+        used = {}; modulus = 1; candidate = None,
+        If[pivots =!= profile, Continue[]]];
+      block = active[[All, Append[free, columns + 1]]];
+      If[candidate =!= None,
+        If[!AnyTrue[Flatten[candidate], Mod[Denominator[#], prime] === 0 &],
+          heldOut = bounded[rationalModulo[candidate, prime] === block];
+          If[TrueQ[heldOut],
+            proof = certify[candidate, prime];
+            If[AssociationQ[proof], Throw[proof, tag]]]];
+        candidate = None];
+      If[Length[used] >= 8, stop[]];
+      If[modulus === 1, residues = block,
+        residues = bounded[residues + modulus Mod[
+          (block - Mod[residues, prime]) PowerMod[modulus, -1, prime], prime]]];
+      modulus *= prime; AppendTo[used, prime];
+      If[Length[used] < 2, Continue[]];
+      unique = bounded[DeleteDuplicates[Flatten[residues]]];
+      limit = Floor[Sqrt[(modulus - 1)/2]];
+      reconstructed = bounded[completionBoundedRationalReconstruction[#, modulus, limit] & /@ unique];
+      If[FreeQ[reconstructed, _Missing],
+        lookup = AssociationThread[unique, reconstructed];
+        candidate = bounded[Lookup[lookup, #] & /@ residues]],
+      {prime, primes}];
+    fallback, tag], Max[0.001, deadline - AbsoluteTime[]], fallback], fallback]]
+];
+
 completionExactBlockReduce[matrix_List, constant_List, prime_: 2147483647] := Module[
   {rationalQ, fallback = Missing["ExactBlockFallback"], rows = Length[matrix], columns,
    integerMatrix, rowScales, modular, pivotPositions, selectedRows, pivots, free,
@@ -4857,8 +4965,10 @@ completionSolveLinear[equations_List, unknowns_List] := Module[
         If[ListQ[scaledConstant] && AllTrue[scaledConstant, rationalQ],
           rightScale = candidateScale; constant = scaledConstant]]]];
   augmented = MapThread[Append, {matrix, -constant}];
-  blockReduction = If[n >= 64, completionExactBlockReduce[matrix, constant],
+  blockReduction = If[n >= 64, completionCertifiedModularReduce[matrix, constant],
     Missing["SmallLinearSystem"]];
+  If[n >= 64 && !AssociationQ[blockReduction],
+    blockReduction = completionExactBlockReduce[matrix, constant]];
   reduced = If[AssociationQ[blockReduction], blockReduction["ReducedRows"],
     Quiet[Check[RootReduce[RowReduce[augmented]], $Failed]]];
   If[reduced === $Failed, Return[<|"Status" -> "UNRESOLVED",

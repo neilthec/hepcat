@@ -574,8 +574,14 @@ family before checking it. Optional final external reduction has one shared two-
 validation, commits atomically, and cannot turn validated success into failure.
 Exact common algebraic units may be removed from matrix columns and the right-hand
 side for rational elimination; restore the original coefficient and free-variable
-scales in solution rules. Large rational systems can select a square block using
-modular arithmetic, but must solve it exactly and certify every original row
+scales in solution rules. Large rational systems first try a bounded, 60-second
+CRT reconstruction using at most eight compatible primes and a separate unused
+prime check. Accept only after an exact integer-scaled certificate verifies every
+original equation for the particular solution and all independent free directions;
+the modular rank lower bound then certifies completeness. Failed reconstruction,
+bad primes or timeouts fall through to the existing exact solver, never to an
+approximate fit or a modular-only verdict. Large rational systems can select a
+square block using modular arithmetic, but must solve it exactly and certify every original row
 for a consistent particular solution and the complete independent free family.
 An original row with an exact nonzero constant residual and zero dependence
 on every free coordinate instead certifies inconsistency of the selected block

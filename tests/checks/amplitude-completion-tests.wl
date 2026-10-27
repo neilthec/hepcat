@@ -1515,7 +1515,7 @@ acBlockBadPrimeFamily = acBlockBadPrimeVariables /. acBlockBadPrimeFit["Solution
 acBlockBadPrimeFree = acBlockBadPrimeFit["FreeParameters"];
 acBlockBadPrimeParticular = acBlockBadPrimeFamily /. Thread[acBlockBadPrimeFree -> 0];
 acBlockBadPrimeNullspace = Transpose[Coefficient[acBlockBadPrimeFamily, #] & /@ acBlockBadPrimeFree];
-check["a rank-preserving modular pivot mismatch uses the exact native solver fallback",
+check["a rank-preserving unlucky prime retains the exact solution and original free family",
   acBlockBadPrimeFit["Status"] === "UNDERDETERMINED" && acBlockBadPrimeFit["Rank"] === 2 &&
     Length[acBlockBadPrimeFree] === 62 &&
     acBlockZero[acBlockBadPrimeMatrix.acBlockBadPrimeParticular + acBlockBadPrimeConstant] &&
@@ -1572,6 +1572,90 @@ check["the native fallback still solves an exact nonrational algebraic system",
 check["inexact coefficients do not enter an exact modular certificate",
   MissingQ[ConstructiveDiagrams`Private`completionExactBlockReduce[{{1., 2.}}, {3.}]]];
 (* End exact modular-block solver certificates. *)
+
+(* Bounded CRT reconstruction must certify the original exact affine family. *)
+acCRTResult = ConstructiveDiagrams`Private`completionCertifiedModularReduce[
+  acBlockMatrix, acBlockConstant];
+check["certified CRT preserves every original row and unconstrained zero column",
+  AssociationQ[acCRTResult] && acCRTResult["Rank"] === 3 &&
+    acCRTResult["CheckedRows"] === Length[acBlockMatrix] &&
+    acBlockCertificate[acCRTResult, acBlockMatrix, acBlockConstant]];
+check["nontrivial CRT certificates use two primes and a distinct unused check prime",
+  AssociationQ[acCRTResult] && Length[acCRTResult["CRTPrimes"]] >= 2 &&
+    !MemberQ[acCRTResult["CRTPrimes"], acCRTResult["HeldOutPrime"]]];
+acCRTRational = ConstructiveDiagrams`Private`completionCertifiedModularReduce[
+  acBlockRationalMatrix, acBlockRationalConstant];
+check["CRT row denominator clearing preserves rational particular and null directions",
+  acBlockCertificate[acCRTRational, acBlockRationalMatrix, acBlockRationalConstant]];
+acCRTLargeDenominator = 10^12 + 39;
+acCRTLargeMatrix = {{1, 1/acCRTLargeDenominator, 0},
+  {7/5, 7/(5 acCRTLargeDenominator), 0}};
+acCRTLargeConstant = {-1/(acCRTLargeDenominator + 2),
+  -7/(5 (acCRTLargeDenominator + 2))};
+acCRTLargeResult = ConstructiveDiagrams`Private`completionCertifiedModularReduce[
+  acCRTLargeMatrix, acCRTLargeConstant];
+check["CRT reconstructs exact fractions beyond a single-prime rational bound",
+  AssociationQ[acCRTLargeResult] && Length[acCRTLargeResult["CRTPrimes"]] >= 3 &&
+    acBlockCertificate[acCRTLargeResult, acCRTLargeMatrix, acCRTLargeConstant]];
+acCRTFullMatrix = {{2, 0, 0}, {0, -3, 0}, {0, 0, 5}, {2, -3, 5}};
+acCRTFullConstant = -acCRTFullMatrix.{3/7, -2/11, 4/13};
+acCRTFullResult = ConstructiveDiagrams`Private`completionCertifiedModularReduce[
+  acCRTFullMatrix, acCRTFullConstant];
+check["full-rank CRT rows use the production right-hand-side sign convention",
+  AssociationQ[acCRTFullResult] && acCRTFullResult["Rank"] === 3 &&
+    acCRTFullResult["ReducedRows"] === {{1, 0, 0, 3/7},
+      {0, 1, 0, -2/11}, {0, 0, 1, 4/13}} &&
+    acBlockCertificate[acCRTFullResult, acCRTFullMatrix, acCRTFullConstant]];
+acCRTZeroMatrix = ConstantArray[0, {3, 5}];
+acCRTZeroResult = ConstructiveDiagrams`Private`completionCertifiedModularReduce[
+  acCRTZeroMatrix, {0, 0, 0}];
+check["an exactly zero system retains the entire independent free family without sampling primes",
+  AssociationQ[acCRTZeroResult] && acCRTZeroResult["Rank"] === 0 &&
+    acCRTZeroResult["ReducedRows"] === {} &&
+    acBlockCertificate[acCRTZeroResult, acCRTZeroMatrix, {0, 0, 0}]];
+acCRTBadPivots = ConstructiveDiagrams`Private`completionCertifiedModularReduce[
+  {{105, 1}}, {-2}, 10, {3, 5, 7, 11, 13, 17, 19, 23, 29}];
+check["bad nonleading modular profiles cannot certify an incorrect rational pivot layout",
+  AssociationQ[acCRTBadPivots] &&
+    acCRTBadPivots["ReducedRows"] === {{1, 1/105, 2/105}} &&
+    acBlockCertificate[acCRTBadPivots, {{105, 1}}, {-2}]];
+acCRTRankDrop = ConstructiveDiagrams`Private`completionCertifiedModularReduce[
+  {{5, 0}, {0, 1}, {5, 1}}, {-10, -3, -13}, 10, {5, 7, 11, 13, 17}];
+check["a later full-rank prime supersedes an unlucky rank-dropping profile",
+  AssociationQ[acCRTRankDrop] && acCRTRankDrop["Rank"] === 2 &&
+    acBlockCertificate[acCRTRankDrop, {{5, 0}, {0, 1}, {5, 1}}, {-10, -3, -13}]];
+acCRTFalseContradiction = ConstructiveDiagrams`Private`completionCertifiedModularReduce[
+  {{3}}, {1}, 10, {3, 5, 7, 11}];
+check["a contradiction at one bad prime is not interpreted as an exact inconsistency",
+  AssociationQ[acCRTFalseContradiction] &&
+    acCRTFalseContradiction["ReducedRows"] === {{1, -1/3}}];
+check["inconsistent exact rows decline CRT and preserve the existing solver fallback",
+  MissingQ[ConstructiveDiagrams`Private`completionCertifiedModularReduce[
+    acBlockInconsistentMatrix, acBlockInconsistentConstant]]];
+check["a constant-only contradiction cannot produce a certified rank-zero family",
+  MissingQ[ConstructiveDiagrams`Private`completionCertifiedModularReduce[{{0, 0}}, {1}]]];
+check["an exhausted bad-prime inventory does not certify a sampled or truncated family",
+  MissingQ[ConstructiveDiagrams`Private`completionCertifiedModularReduce[
+    {{105, 1}}, {-2}, 10, {3, 5, 7}]]];
+check["invalid or exhausted CRT time budgets request the unchanged exact fallback",
+  AllTrue[{0, -1, Infinity, 1 + I, "invalid"},
+    MissingQ[ConstructiveDiagrams`Private`completionCertifiedModularReduce[
+      {{1, 2}}, {3}, #]] &]];
+check["an exhausted positive CRT clock does not enter a native solve or accept a partial family",
+  MissingQ[ConstructiveDiagrams`Private`completionCertifiedModularReduce[
+    PadRight[IdentityMatrix[96], {96, 128}], ConstantArray[1, 96], 10^-9]]];
+check["CRT does not approximate algebraic, complex, or inexact matrix entries",
+  AllTrue[{{{1, Sqrt[2]}}, {{1, I}}, {{1., 2.}}},
+    MissingQ[ConstructiveDiagrams`Private`completionCertifiedModularReduce[#, {3}]] &]];
+acCRTWideResult = ConstructiveDiagrams`Private`completionCertifiedModularReduce[
+  acBlockWideMatrix, acBlockWideConstant];
+check["a wide CRT family retains every exact particular and independent null direction",
+  AssociationQ[acCRTWideResult] && acCRTWideResult["Rank"] === 4 &&
+    acBlockCertificate[acCRTWideResult, acBlockWideMatrix, acBlockWideConstant]];
+check["CRT defaults do not replace the existing direct block API and bad-prime contract",
+  MissingQ[ConstructiveDiagrams`Private`completionExactBlockReduce[
+    {{5, 1, 0}, {5, 0, 1}}, {0, 0}, 5]] &&
+    acBlockCertificate[acBlockResult, acBlockMatrix, acBlockConstant]];
 
 Print["Completing the four-fermion single-photon process from actual diagrams."];
 acFourFermionParticles = {"e", "E", "E", "e", "A.+"};

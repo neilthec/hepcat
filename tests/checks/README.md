@@ -207,6 +207,12 @@ extraction path.
 Hidden inverse-bracket and invariant poles, higher-order cancellations, implicit
 x-factor context, zero-coefficient singular directions and custom maps exercise
 the conservative fallback paths rather than bypassing regularity checks.
+Large exact linear systems also test bounded CRT reconstruction with exact
+original-row and full-affine-family certificates. Manufactured cases cover
+coefficients beyond one prime's reconstruction bound, independent unused-prime
+checks, unlucky pivot profiles, original-coordinate signs and scales, zero/free
+columns, full-rank systems and unresolved fallback. Neither a modular rank nor
+a reconstructed candidate alone is accepted as a solution.
 Large exact linear systems test the certified modular-block solver against
 every original row and every free direction, with rational denominators,
 redundant rectangular systems, many right-hand sides, algebraic scaling,

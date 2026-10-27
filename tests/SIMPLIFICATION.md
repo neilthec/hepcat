@@ -913,6 +913,12 @@ separately identifies equation construction, exact solving and validation.
 Shared exact algebraic units in matrix columns and the right-hand side can
 be scaled out during linear elimination and restored afterward. Neither
 optimization changes the exact equations or the meaning of free parameters.
+For large rational systems, a bounded CRT reconstruction is tried before the
+native exact solve. It uses up to eight compatible primes and a separate unused
+prime, then certifies every original equation for both the particular solution
+and the complete independent free family using exact integer arithmetic. Its
+60-second budget, failed reconstructions and unlucky primes leave the existing
+solver as the fallback. This is not an approximate fit or a modular-only test.
 For large rational systems, modular arithmetic can select a smaller square
 block. The solve remains exact: every original equation must certify both
 the consistent particular solution and the full independent free family.
