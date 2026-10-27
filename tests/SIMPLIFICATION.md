@@ -76,6 +76,51 @@ supported. The contraction reduces the number of chain momentum insertions
 and has no inverse automatic rule. Step and prospective expansion limits
 retain the original product when the new pass would grow excessively.
 
+Massive-endpoint bracket contractions expose the corresponding external
+Dirac remainder before a diagram's internal shell is used. For a massless
+leg `k` and an arbitrary reference spinor `r`, the ordinary identity is
+
+```text
+<a k> <r|p_a|k]
+  = m_a <r k> [a k] + 2 (p_a.p_k) <a r>.
+```
+
+Apply Schouten to the two angle rows first:
+
+```text
+<a k> <r|p_a|k]
+  = <r k> <a|p_a|k] + <a r> <k|p_a|k].
+```
+
+The external Dirac equation replaces the first chain by `m_a [a k]`;
+the massless diagonal sandwich in the second is `2 (p_a.p_k)`.
+The reference may be an independent Xi. Its momentum-row counterpart is
+
+```text
+<a k> [k|P p_a|k]
+  = 2 m_a (P.p_k) [a k] - 2 (p_a.p_k) <a|P|k].
+```
+
+Both identities have angle/square duals and preserve a fixed explicit massive
+spin index. They require no momentum conservation or internal shell condition.
+For the diagram with its own electron cut `(p_a+p_k)^2 = m_a^2`, preparation
+may then set the remainder proportional to `2 (p_a.p_k)` to zero in that
+diagram's numerator. The original propagator remains off shell. When a
+physical reference supplies `P = p_b`, its factor `2 (p_b.p_k)` may cancel
+only a recorded auxiliary reference propagator, never an original diagram
+propagator. The ordinary reducer retains both terms.
+
+Rank-one factorization, such as `[a|p_k|r> = [a k]<k r>`, can remove another
+momentum insertion and expose cancellation of a reference bracket. The ordinary
+reducer uses a physical `Helicity` spinor in a neighboring bracket as an
+explicit massless witness; a Xi identifier does not supply this information.
+It also reduces `<k|P|k]` and `[k|P|k>` to `2 (p_k.P)` for the same massless
+physical leg. Preparation can additionally use a declared external integer
+leg's zero mass rule when no witness is present. An internal massless composite
+does not qualify: preparation does not invent helicity spinors for that
+off-shell line. The resulting complete candidate competes with the unsplit
+route, with physical propagators still protected.
+
 This function neither infers the external-particle list nor assumes momentum
 conservation. Expanding a composite momentum does not put it on an internal
 mass shell. Keep process-dependent conservation and diagram-local internal
@@ -89,6 +134,10 @@ complement can still be useful when endpoint terms or allowed cut remainders
 vanish. Disabling internal shells supplies no such cut rules. This remains
 process-dependent preparation and is disabled with
 `"MomentumConservation" -> False`.
+Literal linear momentum slots proportional to the complete declared external
+sum are reduced to zero before massless splitting can hide that sum inside
+brackets. The declared labels are used directly, including sparse labels;
+unknown legs and protected inverse factors are not erased.
 The conserved and unmodified routes are compared after reducing the whole
 product. A locally shorter chain does not replace a better complete expression,
 and the main preparation stage retains the winning reduced reference trial.
@@ -101,6 +150,12 @@ sandwich pairs, and cancel recorded auxiliary reference factors. The surrounding
 product need not undergo the older whole-product Schouten expansion. Ordinary
 and conserved routes compete after completion, so a factored candidate is kept
 only when the whole expression has a better rank.
+One bounded alternative distributes numerator sums with inverse factors held
+opaque, then applies the directed contractions before the older whole-product
+rearrangements. This exposes useful bracket factors while allowing recorded
+auxiliary reference poles to cancel separately in each summand. The expansion
+guard and the comparison of completed expressions keep this an alternative,
+rather than forcing expansion of every input.
 
 The five-point all-positive electron/three-photon example in the thesis proposal,
 Eq. (90), exercises this ordering. Both admissible physical reference choices
@@ -553,6 +608,32 @@ on a fermion line then cancels Xi by an exact two-component Schouten
 identity. Four radiating-current blocks give the final expression with
 physical propagators only. The negative-photon form follows by swapping
 angle and square spinors, and is checked independently.
+
+The general reducer and preparation now reproduce the useful local steps
+without calling this process-specific route. For `e,E,E,e,A.+`, fast
+preparation (`"MaxSteps" -> 0`) keeps six expanded terms per diagram:
+
+| Reference choice | Previous complexity | Improved complexity |
+| --- | ---: | ---: |
+| Common Xi, all eight diagrams | 30 | 22 |
+| Physical, first four diagrams | 38 | 38 |
+| Physical, remaining four diagrams | 44 | 38 |
+
+The physical-reference cases previously retained eight terms in the last four
+diagrams. Rank-one photon-momentum factorization, the directed bracket
+contractions, and the bounded distributed alternative remove the extra terms.
+Only the current diagram's numerator shell conditions are used. Pairing and
+reference cancellation on a common-Xi sum remain distinct from simplifying
+each diagram. Independently optimized physical reference choices can change
+the off-cut continuation, so the prepared sum still needs the completion and
+full-amplitude checks.
+
+For the completed radiation amplitude, the existing four-current expression
+remains the best found in the tested forms: 32 expanded terms, complexity 160.
+Whole-expression ordinary reduction gives 38 terms and complexity 190;
+factor collection and the five whole-numerator momentum eliminations tested
+did not produce a smaller result. Preparation retains the compact completed
+form. These comparisons do not establish a global minimum.
 
 For `e,E,A.+,A.+,A.-`, use:
 

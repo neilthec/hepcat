@@ -135,6 +135,206 @@ check["the original photon reference bracket has a finite limit",
   qftSpuriousReport["SpuriousSummary"] === <|"PASS" -> 1|> &&
     AllTrue[qftSpuriousReport["SpuriousChecks"], #["PoleOrder"] === 0 &]];
 
+(* Exact five-point chart for a radiating fermion line and a massless
+   exchanged line. Evaluate numerators after stripping both original poles. *)
+qftPreparationOwnChart[emitter_Integer, partner_Integer, spectators : {_Integer, _Integer},
+    photon_Integer, mass_, sample_Integer, spins_List] := Module[
+  {j = {{0, -1}, {1, 0}}, eps, adjugate, perpendicular, r, lq, tq, q,
+   lk, tk, k, a, b, c, d, u, v, z, w, pc, pd, massive, momenta,
+   angles, squares, angleBasis, squareBasis, checks},
+  eps = -j;
+  adjugate[p_] := {{p[[2, 2]], -p[[1, 2]]}, {-p[[2, 1]], p[[1, 1]]}};
+  perpendicular[x_] := {-x[[2]], x[[1]]};
+  r = {{sample + 1, sample - 2},
+    {sample + 2, (mass^2 + (sample - 2) (sample + 2))/(sample + 1)}};
+  lq = {sample + 3, 2 sample + 1};
+  tq = (sample + 2) perpendicular[adjugate[r].lq];
+  q = Outer[Times, lq, tq];
+  lk = {2, 2 sample + 3};
+  tk = (sample - 5) perpendicular[adjugate[r].lk];
+  k = Outer[Times, lk, tk];
+  {{a, b}, {c, d}} = q;
+  u = sample + 4; v = sample - 1;
+  z = (b mass^2 + v u d - v^2 c)/(b u - v a);
+  w = (z a + u d - v c)/b;
+  pc = {{u, v}, {w, z}}; pd = q - pc;
+  massive = Sort[Join[{emitter, partner}, spectators]];
+  momenta = AssociationThread[{emitter, partner, spectators[[1]], spectators[[2]], photon},
+    {r - k, -r - q, pc, pd, k}];
+  angles = AssociationThread[massive, UnitVector[2, #] & /@ spins];
+  squares = AssociationMap[eps.adjugate[momenta[#]].angles[#]/mass &, massive];
+  angleBasis = AssociationMap[IdentityMatrix[2] &, massive];
+  squareBasis = AssociationMap[eps.adjugate[momenta[#]]/mass &, massive];
+  AssociateTo[angles, photon -> lk]; AssociateTo[squares, photon -> tk];
+  checks = {
+    (Det /@ Lookup[momenta, massive]) === ConstantArray[mass^2, 4],
+    Det[k] === 0, Total[Values[momenta]] === ConstantArray[0, {2, 2}],
+    Det[momenta[emitter] + momenta[photon]] === mass^2,
+    Det[momenta[spectators[[1]]] + momenta[spectators[[2]]]] === 0,
+    And @@ ((!TrueQ[Det[momenta[#] + k] - mass^2 == 0]) & /@ Complement[massive, {emitter}])};
+  <|"Momenta" -> momenta, "Angle" -> angles, "Square" -> squares,
+    "AngleBasis" -> angleBasis, "SquareBasis" -> squareBasis,
+    "PoleVariable" -> qftPreparationUnusedPole, "ReferenceSeed" -> 8181,
+    "ReferenceOverrides" -> <|"Angle" -> <|0 -> {17, 29}|>, "Square" -> <|0 -> {31, 43}|>|>,
+    "MassValue" -> mass, "ChartChecks" -> checks|>
+];
+
+
+(* General preparation starts with the actual eight diagrams in either photon
+   helicity. No curated final expression is substituted for a diagram. *)
+qftPreparationExternal = Thread[Mass /@ Range[5] ->
+  {prElectronMass, prElectronMass, prElectronMass, prElectronMass, 0}];
+qftPreparationGeometry[diagram_] := Module[{photon, vertex, emitter, lines, radiating},
+  photon = First[First[Position[diagram["ExternalParticles"], "A.+" | "A.-"]]];
+  vertex = First[AdjacencyList[diagram["Graph"], photon]];
+  emitter = First[Cases[diagram["IncidentLegData"][vertex],
+    leg_Association /; leg["Kind"] === "External" && leg["Index"] =!= photon :> leg["Index"]]];
+  lines = diagramFermionLines[diagram];
+  radiating = SelectFirst[lines, MemberQ[#, emitter] &];
+  <|"Emitter" -> emitter, "Partner" -> First[Complement[radiating, {emitter}]],
+    "Spectators" -> SelectFirst[lines, !MemberQ[#, emitter] &], "Photon" -> photon|>
+];
+qftPreparationOwnValue[expression_, chart_] := Together[
+  ConstructiveDiagrams`Private`residueEvaluateChart[expression, chart,
+    {prElectronMass -> chart["MassValue"], prElectricCharge -> 2}]];
+qftPreparationOwnChecks[assigned_, prepared_, poles_List, geometry_, massSamples_List] := Module[
+  {originalNumerator, preparedNumerator, chart, before, after},
+  originalNumerator = Cancel[Together[assigned (Times @@ poles)]];
+  preparedNumerator = Cancel[Together[prepared (Times @@ poles)]];
+  Flatten[Table[
+    chart = qftPreparationOwnChart[geometry["Emitter"], geometry["Partner"],
+      geometry["Spectators"], geometry["Photon"], massSample[[1]], massSample[[2]], spins];
+    before = qftPreparationOwnValue[originalNumerator, chart];
+    after = qftPreparationOwnValue[preparedNumerator, chart];
+    And @@ chart["ChartChecks"] &&
+      FreeQ[{before, after}, _Missing | Indeterminate | ComplexInfinity | DirectedInfinity[_]] &&
+      Together[before - after] === 0,
+    {massSample, massSamples}, {spins, Tuples[{1, 2}, 4]}]]
+];
+qftPreparationFixtures = Table[Module[{particles, diagrams, pairs},
+  particles = ReplacePart[qftParts, 5 -> helicity];
+  diagrams = If[helicity === "A.+", qftDiagrams, CreateDiagrams[particles, qftDiagramModel]];
+  pairs = If[helicity === "A.+", qftRoute["ActualDiagramAmplitudes"], diagramAmplitudes[diagrams]];
+  <|"Helicity" -> helicity, "Particles" -> particles, "Diagrams" -> diagrams,
+    "Pairs" -> pairs, "Hash" -> Hash[pairs, "SHA256"],
+    "Geometry" -> (qftPreparationGeometry /@ diagrams)|>],
+  {helicity, {"A.+", "A.-"}}];
+check["the opposite-helicity preparation fixture also contains all eight actual diagrams",
+  Length[qftPreparationFixtures[[2]]["Diagrams"]] === 8 &&
+    Length[qftPreparationFixtures[[2]]["Pairs"]] === 8];
+qftPreparationModes = {"Xi", "AllPhysical"};
+qftPreparationReports = Association[];
+Do[
+  qftPreparedReport = TimeConstrained[PrepareAmplitudes[qftFixture["Pairs"], qftDiagramModel,
+    "ReferenceSpinors" -> qftMode, "MaxSteps" -> 0, "TimeConstraint" -> 15,
+    "ReferenceTimeConstraint" -> 10, "ProgressReporting" -> False, "ReturnDetails" -> True],
+    120, $TimedOut];
+  AssociateTo[qftPreparationReports, {qftFixture["Helicity"], qftMode} -> qftPreparedReport];
+  check[{"public four-fermion preparation completes every actual diagram", qftFixture["Helicity"], qftMode},
+    AssociationQ[qftPreparedReport] && qftPreparedReport["Status"] === "PREPARED" &&
+      Length[qftPreparedReport["DiagramReports"]] === 8];
+  Do[
+    qftOriginalPair = qftFixture["Pairs"][[qftPreparationIndex]];
+    qftOriginalPoles = DeleteDuplicates[Cases[Last[qftOriginalPair], _PropDen, Infinity]];
+    qftPreparedRow = If[AssociationQ[qftPreparedReport],
+      qftPreparedReport["DiagramReports"][[qftPreparationIndex]], <||>];
+    qftPreparedExpression = Lookup[qftPreparedRow, "PreparedExpression", $Failed];
+    qftExpectedXiKind = If[qftFixture["Helicity"] === "A.+", "Angle", "Square"];
+    check[{"automatic four-fermion preparation reaches the compact quotient and protects original poles",
+        qftFixture["Helicity"], qftMode, qftPreparationIndex},
+      qftPreparedExpression =!= $Failed && qftPreparedRow["Status"] === "PREPARED" &&
+        FreeQ[qftPreparedExpression, _Mass | _xFactor | _xTildeFactor |
+          _SpinorChainReduced | _SpinorTraceReduced] &&
+        SpinorExpressionComplexity[qftPreparedExpression] <= If[qftMode === "Xi", 22, 38] &&
+        ConstructiveDiagrams`Private`expressionTermCounts[qftPreparedExpression]["Terms"] <= 6 &&
+        ContainsAll[DeleteDuplicates[Cases[qftPreparedExpression, _PropDen, Infinity]], qftOriginalPoles] &&
+        If[qftMode === "AllPhysical", FreeQ[qftPreparedExpression, Spinor["Xi", ___]],
+          AllTrue[Cases[qftPreparedExpression, Spinor["Xi", kind_, id_] :> {kind, id}, Infinity],
+            # === {qftExpectedXiKind, 0} &]]];
+    qftOwnChecks = If[AssociationQ[qftPreparedReport],
+      qftPreparationOwnChecks[qftPreparedRow["ReferenceSpinors"]["Expression"], qftPreparedExpression,
+        qftOriginalPoles, qftFixture["Geometry"][[qftPreparationIndex]], {{1, 1}, {3/7, 2}}], {False}];
+    check[{"same-reference prepared numerators agree on both own cuts for all sixteen fermion spin components",
+        qftFixture["Helicity"], qftMode, qftPreparationIndex},
+      Length[qftOwnChecks] === 32 && And @@ qftOwnChecks],
+    {qftPreparationIndex, 8}];
+  (* Move the photon as well as the massive endpoints. These are typed
+     identity tests; no sign convention is inferred from a new process. *)
+  If[AssociationQ[qftPreparedReport],
+    qftLabelCycle = {1, 5, 2};
+    qftLabels = AssociationThread[qftLabelCycle, RotateLeft[qftLabelCycle]];
+    qftMapLabel[index_Integer] := Lookup[qftLabels, index, index];
+    qftMapLabel[indices_List] := qftMapLabel /@ indices;
+    qftTypedPair = PermuteParticles[{First[qftFixture["Pairs"][[1]]],
+      qftPreparedReport["DiagramReports"][[1]]["ReferenceSpinors"]["Expression"]}, qftLabelCycle];
+    qftTypedAuxiliary = PermuteParticles[Lookup[
+      qftPreparedReport["DiagramReports"][[1]]["ReferenceSpinors"], "AuxiliaryPhysicalPropagators", {}], qftLabelCycle];
+    qftTypedRules = ConstructiveDiagrams`Private`preparationCanonicalMassRules[First[qftTypedPair]];
+    qftTypedResult = ConstructiveDiagrams`Private`preparationReferenceTrial[
+      Last[qftTypedPair], qftTypedRules,
+      ConstructiveDiagrams`Private`preparationDotRules[qftTypedRules, True], qftTypedAuxiliary, True];
+    qftTypedPoles = PermuteParticles[DeleteDuplicates[Cases[
+      Last[qftFixture["Pairs"][[1]]], _PropDen, Infinity]], qftLabelCycle];
+    qftTypedChecks = qftPreparationOwnChecks[Last[qftTypedPair], qftTypedResult, qftTypedPoles,
+      Map[qftMapLabel, qftFixture["Geometry"][[1]]], {{3/7, 3}}],
+    qftTypedChecks = {False}];
+  check[{"four-fermion preparation is covariant under moving the photon and fermion labels",
+      qftFixture["Helicity"], qftMode},
+    Length[qftTypedChecks] === 16 && And @@ qftTypedChecks],
+  {qftFixture, qftPreparationFixtures}, {qftMode, qftPreparationModes}];
+Do[check[{"preparation leaves the retained raw four-fermion pairs unchanged", qftFixture["Helicity"]},
+  Hash[qftFixture["Pairs"], "SHA256"] === qftFixture["Hash"]],
+  {qftFixture, qftPreparationFixtures}];
+
+(* The massless bridge is licensed by a declared external zero mass, not by
+   an arbitrary inserted momentum or an internal massless cut. *)
+qftNoWitness[kind_] := SpinorChain[Spinor["Spin", kind, 1], Mom[5],
+  Spinor["Xi", If[kind === "Angle", "Square", "Angle"], 77]];
+qftMasslessTrial[value_, rules_] := ConstructiveDiagrams`Private`preparationMasslessMomentumTrial[
+  value, rules, {}, {}];
+Do[
+  qftNoWitnessInput = qftNoWitness[qftKind];
+  qftNoWitnessOutput = qftMasslessTrial[qftNoWitnessInput, qftPreparationExternal];
+  check[{"a declared external massless momentum factors without a separate helicity witness", qftKind},
+    SpinorExpressionComplexity[qftNoWitnessInput] === 5 &&
+      SpinorExpressionComplexity[qftNoWitnessOutput] === 1 && FreeQ[qftNoWitnessOutput, _Mom] &&
+      qftMap[qftNoWitnessInput - qftNoWitnessOutput, qftChart, 1] === 0],
+  {qftKind, {"Angle", "Square"}}];
+check["an unknown or nonzero external mass never licenses rank-one factorization",
+  And @@ Flatten[Table[qftMasslessTrial[qftNoWitness[kind],
+      qftPreparationExternal /. HoldPattern[Mass[5] -> 0] -> (Mass[5] -> mass)] === qftNoWitness[kind],
+    {kind, {"Angle", "Square"}}, {mass, {qftUnknownExternalMass, prElectronMass}}]]];
+qftCompositeNoWitness = SpinorChain[Spinor["Spin", "Angle", 1], Mom[Multiparticle[2, 3]],
+  Spinor["Xi", "Square", 77]];
+check["an internal massless declaration does not license an external rank-one spinor",
+  qftMasslessTrial[qftCompositeNoWitness,
+    Append[qftPreparationExternal, Mass[Multiparticle[2, 3]] -> 0]] === qftCompositeNoWitness];
+qftNoWitnessInput = qftNoWitness["Angle"];
+qftMasslessOpaque = PropDen[qftOpaqueArgument[qftNoWitnessInput, MomProd[2, 5]], qftOpaqueMass];
+qftMasslessScoped = qftMasslessTrial[(1 + qftNoWitnessInput)/
+  (qftMasslessOpaque (3 + qftNoWitnessInput)), qftPreparationExternal];
+qftMasslessOrdinaryInverse = ReduceSpinorProducts[1/(3 + qftNoWitnessInput)];
+check["the massless bridge preserves original propagators and inverse kinematics after ordinary normalization",
+  DeleteDuplicates[Cases[qftMasslessScoped, _PropDen, Infinity]] === {qftMasslessOpaque} &&
+    !FreeQ[qftMasslessScoped, qftMasslessOrdinaryInverse] &&
+    Count[qftMasslessOrdinaryInverse, Mom[5], Infinity] === 1 &&
+    FreeQ[qftMasslessOrdinaryInverse, Spinor["Helicity", _, 5]] &&
+    qftMasslessTrial[1/(3 + qftNoWitnessInput), qftPreparationExternal] === 1/(3 + qftNoWitnessInput)];
+
+(* The compact complete amplitude remains a separate off-cut representative. *)
+check["the known complete four-fermion amplitude has thirty-two terms and complexity one hundred sixty",
+  SpinorExpressionComplexity[qftRoute["Final"]] === 160 &&
+    ConstructiveDiagrams`Private`expressionTermCounts[qftRoute["Final"]]["Terms"] === 32];
+qftCompletePreparation = PrepareAmplitudes[{{qftPreparationExternal, qftRoute["Final"]}},
+  qftDiagramModel, "ReferenceSpinors" -> None, "InternalOnShell" -> False,
+  "MaxSteps" -> 0, "TimeConstraint" -> 15, "ProgressReporting" -> False, "ReturnDetails" -> True];
+check["ordinary preparation preserves the best known complete amplitude without assuming its internal cuts",
+  qftCompletePreparation["Status"] === "PREPARED" &&
+    SpinorExpressionComplexity[qftCompletePreparation["Amplitude"]] <= 160 &&
+    qftMap[qftCompletePreparation["Amplitude"] - qftRoute["Final"], qftChart, 1] === 0 &&
+    First[qftCompletePreparation["DiagramReports"]]["InternalOnShellChannels"] === {}];
+
+
 (* Mixed photon helicities: compare all six actual local numerators on
    their own two internal shells, then prove the global equality without
    using any internal shell conditions. *)

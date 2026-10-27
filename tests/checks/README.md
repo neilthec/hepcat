@@ -83,6 +83,12 @@ choices, and ordinary chain reduction before multiplying spectator factors.
 Mixed-helicity examples additionally check the opposite-chirality sandwich
 contraction, authorized per-chain numerator cuts, exact diagram-local spin
 components, and retention of an already simpler completed external expression.
+Massive-endpoint bracket contractions are checked independently with exact
+two-component matrices, both chiralities, explicit spin indices, powers and
+protected propagators. Four-fermion radiation tests separately check external
+massless-momentum factorization and the actual eight prepared diagrams on
+their own electron and photon cuts for every massive-spin component. These
+diagram-local checks do not assert equality of the unfinished off-cut sum.
 `PrepareAmplitudes` accepts both diagram pairs and compact factorization rows.
 Its channel tests check preserved row metadata and propagators, numerator-only
 selected-cut shell conditions, and protection of unrelated internal channels.

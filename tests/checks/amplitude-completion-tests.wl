@@ -813,6 +813,25 @@ acConservationChainPrepared = PrepareAmplitudes[{{acConservationRules, acConserv
   "MaxSteps" -> 2, "ProgressReporting" -> False];
 check["preparation knows the explicit conserved external set rather than a contiguous range",
   Last[First[acConservationChainPrepared]] === 0 && ReduceSpinorProducts[acConservationChain] =!= 0];
+acLinearConservationRules = Append[acConservationRules, First[acConservationRules]];
+acLinearConservation[value_, conserve_] := ConstructiveDiagrams`Private`preparationConservedMomentumChains[
+  value, acLinearConservationRules, conserve];
+acScaledConservationChain = SpinorChain[Spinor["Xi", "Square", 19],
+  (3 + acConservationCoefficient) Total[Mom /@ acConservationLabels], Spinor["Xi", "Angle", 23]];
+check["a common scalar multiple of the declared total momentum vanishes with duplicate external rules",
+  acLinearConservation[acScaledConservationChain, True] === 0];
+check["disabling conservation preserves a nonzero linear total-momentum chain",
+    acLinearConservation[acScaledConservationChain, False] === acScaledConservationChain &&
+    ReduceSpinorProducts[acScaledConservationChain] =!= 0];
+check["linear conservation never discards an undeclared momentum label",
+  acLinearConservation[acConservationChain /. Mom[Last[acConservationLabels]] -> Mom[97], True] =!= 0];
+check["linear conservation never discards unequal momentum coefficients",
+    acLinearConservation[acConservationChain /. Mom[Last[acConservationLabels]] ->
+      2 Mom[Last[acConservationLabels]], True] =!= 0];
+acConservationOpaque = PropDen[acOpaqueConservationArgument[acConservationChain], acOpaqueConservationMass];
+check["the linear total-momentum rule leaves inverse chains and original propagator arguments opaque",
+  acLinearConservation[1/acConservationChain, True] === 1/acConservationChain &&
+    acLinearConservation[acConservationOpaque, True] === acConservationOpaque];
 acPartial = PrepareAmplitudes[acLocalPairs, acMasslessScalarModel,
   "TimeConstraint" -> 0.000001, "ProgressReporting" -> False, "Output" -> "Details"];
 check["preparation timeouts retain original inputs and the last valid expression",
@@ -1346,10 +1365,11 @@ acQEDFiveSaved = acQEDFivePrepared;
 acQEDOffCutValue[expression_, chart_] := Together[prMapOnChart[
   expression /. trace_SpinorTrace :>
     ConstructiveDiagrams`Private`residueChartTrace[trace, chart], chart]];
-check["whole-expression cleanup leaves at most two compact terms per actual QED diagram",
+check["whole-expression cleanup retains or improves the compact primary complexity per actual QED diagram",
   AllTrue[acQEDFivePrepared, Function[pair,
-    If[Head[Last[pair]] === Plus, Length[Last[pair]], 1] <= 2 &&
-      SpinorExpressionComplexity[Last[pair]] <= 18]]];
+    SpinorExpressionComplexity[Last[pair]] <= 13 &&
+      (SpinorExpressionComplexity[Last[pair]] < 13 ||
+        ConstructiveDiagrams`Private`expressionTermCounts[Last[pair]]["Terms"] <= 2)]]];
 acQEDFiveOrdinaryReduced = (ReduceSpinorProducts[Last[#]] /.
     Cases[First[#], HoldPattern[Mass[_Integer] -> _]]) & /@ acQEDFivePrepared;
 acQEDFiveOrdinaryDifferences = MapThread[Last[#1] - #2 &,
@@ -1762,6 +1782,28 @@ If[FreeQ[acMixedHelicityDotPrepared, _MomProd],
            SpinorChain[First[acMixedHelicityOpenChain], acMixedHelicityOpenChain[[3]],
              acMixedHelicityOpenChain[[2]], Last[acMixedHelicityOpenChain]])]]}],
       acMixedHelicityDotPrepared]]];
+(* If only single-momentum chains survive, the external Clifford square
+   supplies the same scalar-square coverage without an inverse momentum
+   square. The charged external masses are nonzero in this QED fixture. *)
+If[FreeQ[acMixedHelicityDotPrepared, _MomProd],
+  acMixedHelicitySingleChain = FirstCase[acMixedHelicityNumeratorChains,
+    chain : SpinorChain[_Spinor, Mom[p_Integer], _Spinor] /;
+      MemberQ[Range[5], p] :> chain, Missing["NoSingleMomentumChain"]];
+  If[!MissingQ[acMixedHelicitySingleChain],
+    acMixedHelicityInsertedLeg = SelectFirst[{1, 2},
+      # =!= acMixedHelicitySingleChain[[2, 1]] &];
+    acMixedHelicityDotPrepared = Map[Function[pair, {First[pair],
+      ConstructiveDiagrams`Private`preparationNumerators[Last[pair],
+        Function[num, num /. acMixedHelicitySingleChain ->
+          ((2 MomProd[acMixedHelicityInsertedLeg, acMixedHelicitySingleChain[[2, 1]]] *
+              SpinorChain[First[acMixedHelicitySingleChain], Mom[acMixedHelicityInsertedLeg],
+                Last[acMixedHelicitySingleChain]] -
+            SpinorChain[First[acMixedHelicitySingleChain], Mom[acMixedHelicityInsertedLeg],
+              acMixedHelicitySingleChain[[2]], Mom[acMixedHelicityInsertedLeg],
+              Last[acMixedHelicitySingleChain]])/
+           (Mass[acMixedHelicityInsertedLeg]^2 /.
+             ConstructiveDiagrams`Private`preparationExternalRules[First[pair]]))]]}],
+      acMixedHelicityDotPrepared]]];
 acMixedHelicitySquareDot = SelectFirst[DeleteDuplicates[
   Cases[Last /@ acMixedHelicityDotPrepared, _MomProd, Infinity]],
   MatchQ[List @@ #, {_Integer, _Integer}] &&
@@ -1862,11 +1904,16 @@ acMixedPreparedChannelCompletion = acFactor[acMixedHelicityCompleted["Amplitude"
   "AlternativeChannels" -> acMixedHelicityChannels,
   "Samples" -> 1, "ValidationSamples" -> 1,
   "MaxCorrectionTerms" -> 128, "TimeConstraint" -> 60];
+acMixedPreparedChannelDifferences = Table[TimeConstrained[
+  acQEDOffCutValue[(acMixedPreparedChannelCompletion["Amplitude"] -
+      acMixedHelicityCompleted["Amplitude"]) /.
+    Power[p_Mom, exponent_Integer?EvenQ] :>
+      Det[prMomentum[p[[1]], prDoubleChart[acOffCutQ, acOffCutR, i, j]]]^(exponent/2),
+    prDoubleChart[acOffCutQ, acOffCutR, i, j]], 30, $TimedOut], {i, 2}, {j, 2}];
 check["prepared mixed-helicity channels accept an independently completed amplitude unchanged",
   acMixedPreparedChannelCompletion["Status"] === "COMPLETE" &&
     acMixedPreparedChannelCompletion["Correction"] === 0 &&
-    acZero[acMixedPreparedChannelCompletion["Amplitude"] -
-      acMixedHelicityCompleted["Amplitude"]]];
+    Flatten[acMixedPreparedChannelDifferences] === ConstantArray[0, 4]];
 check["channel alternatives are not inspected when the prepared-only comparison already succeeds",
   !KeyExistsQ[acMixedPreparedChannelCompletion, "AlternativeChannelFallback"]];
 acBadAlternativeChannels = ReplacePart[prChannels,

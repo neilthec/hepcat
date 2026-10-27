@@ -198,11 +198,12 @@ tpFiveRaw = diagramAmplitudes[CreateDiagrams[
 tpFivePrepared = TimeConstrained[PrepareAmplitudes[tpFiveRaw, tpModel,
   "ReferenceSpinors" -> "AllSpurious", "ProgressReporting" -> False], 120, $TimedOut];
 Do[
-  check[{"five-point AllSpurious retains at most two terms and complexity eighteen", tpIndex},
+  check[{"five-point AllSpurious retains or improves the compact primary complexity", tpIndex},
     ListQ[tpFivePrepared] && Length[tpFivePrepared] === 6 &&
       With[{expression = Last[tpFivePrepared[[tpIndex]]]},
-        If[Head[expression] === Plus, Length[expression], 1] <= 2 &&
-          SpinorExpressionComplexity[expression] <= 18]],
+        SpinorExpressionComplexity[expression] <= 13 &&
+          (SpinorExpressionComplexity[expression] < 13 ||
+            ConstructiveDiagrams`Private`expressionTermCounts[expression]["Terms"] <= 2)]],
   {tpIndex, 6}];
 
 tpOriginalPoleTerm = MomProd[1, 3]/PropDen[Mom[Multiparticle[1, 3]], tpMass];

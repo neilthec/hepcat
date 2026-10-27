@@ -6518,6 +6518,44 @@ preparationFactorizedReferenceTrial[expr_, rules_List, dotRules_List,
   preparationCancelReferencePoles[preparationReduceDots[body, dotRules], rules, auxiliary]
 ];
 
+(* External mass rules license rank-one momentum factors even when no helicity
+   spinor witnessing that leg is visible. Splitting protects inverse factors;
+   ordinary external-spinor normalization retains its existing inverse scope. *)
+preparationMasslessMomentumTrial[expr_, rules_List, dotRules_List, auxiliary_List] := Module[
+  {massless, split, body, best, expanded, changed, count = 0,
+   splitTag = Unique["masslessMomentumSplit"]},
+  massless = Cases[Select[preparationExternalRules[rules], residueExactZero[Last[#]] &],
+    HoldPattern[Mass[leg_Integer] -> _] :> leg];
+  If[massless === {}, Return[expr]];
+  If[FreeQ[preparationProtectedDenominators[expr,
+      Function[value, Cases[{value}, _SpinorChain, Infinity]]],
+      Mom[label_] /; Intersection[massless, momentumMembers[label]] =!= {}], Return[expr]];
+  body = preparationFactorizedSpinorProducts[expr, rules];
+  split[chain_] := Module[{value}, Catch[
+    Do[value = rspSplitMasslessMomentum[chain, leg];
+      If[!MissingQ[value], changed = True; count++; Throw[value, splitTag]], {leg, massless}];
+    chain, splitTag]];
+  Do[
+    changed = False;
+    body = preparationNumerators[body, Function[num, num /. chain_SpinorChain :> split[chain]]];
+    If[!changed, Break[]], {32}];
+  If[count === 0, Return[expr]];
+  body = preparationFactorizedSpinorProducts[body, rules];
+  best = preparationCancelReferencePoles[preparationReduceDots[body, dotRules], rules, auxiliary];
+  If[rspSandwichExpansionCount[best] <= 4096,
+    (* Distribute around opaque inverses before pairing; whole-product legacy
+       Schouten rules can otherwise hide the reducing bracket contraction. *)
+    expanded = preparationProtectedDenominators[best, Expand];
+    expanded = withProtectedPropagators[expanded, rspSandwichProducts];
+    expanded = preparationReduceDots[preparationFactorizedSpinorProducts[expanded, rules], dotRules];
+    If[rspSandwichExpansionCount[expanded] <= 4096,
+      expanded = preparationCancelReferencePoles[
+        preparationProtectedDenominators[expanded, Expand], rules, auxiliary];
+      If[residueFiniteQ[expanded] &&
+          preparationBetterQ[preparationRank[expanded], preparationRank[best]], best = expanded]]];
+  best
+];
+
 preparationDotRules[rules_List, conserve_] := Module[
   {channels = knownInternalChannels[rules], external = externalIndices[rules],
    pairs, complement, replacements, masses, value},
@@ -6595,8 +6633,16 @@ preparationBetterQ[left_List, right_List] := left =!= right && OrderedQ[{left, r
    whole-expression expansion otherwise obscures these wins. *)
 DownValues[preparationConservedMomentumChains] = {};
 preparationConservedMomentumChains[expr_, rules_List, conserve_, dotRules_List : {}] := Module[
-  {external = externalIndices[rules], externalRules = preparationExternalRules[rules], reduce},
+  {external = DeleteDuplicates[externalIndices[rules]],
+   externalRules = preparationExternalRules[rules], conservedZeroSlotQ, reduce},
   If[!TrueQ[conserve] || Length[external] < 2, Return[expr]];
+  conservedZeroSlotQ[slot_] := Module[{terms = rspLinearMomentumTerms[slot], coefficients},
+    If[terms === $Failed || !AllTrue[terms,
+        MatchQ[Last[#], Mom[_Integer]] && MemberQ[external, Last[#][[1]]] &], Return[False]];
+    coefficients = Table[Total[First /@ Select[terms, Last[#] === Mom[leg] &]],
+      {leg, external}];
+    AllTrue[Rest[coefficients], residueExactZero[# - First[coefficients]] &]
+  ];
   reduce[value_] := Module[
     {parts = List @@ value, slots, composites, baseline, best, bestRank,
      indices, replacements, selected, trial, reduced, rank},
@@ -6608,6 +6654,9 @@ preparationConservedMomentumChains[expr_, rules_List, conserve_, dotRules_List :
     slots = If[Head[value] === SpinorChain, Rest[Most[parts]], parts];
     If[!FreeQ[slots, _MomHat] || AnyTrue[slots, rspLinearMomentumTerms[#] === $Failed &],
       Return[value]];
+    (* Keep a declared total-momentum zero visible before rank-one massless
+       splitting removes its momentum slots from subsequent identity search. *)
+    If[AnyTrue[slots, conservedZeroSlotQ], Return[0]];
     composites = DeleteDuplicates[Cases[slots,
       momentum : Mom[label_Multiparticle] /;
         momentumMembers[label] =!= {} && ContainsAll[external, momentumMembers[label]] :>
@@ -6879,16 +6928,25 @@ preparationReferenceSelections[choices_List, limit_Integer] := Module[
 
 DownValues[preparationReferenceTrial] = {};
 preparationReferenceTrial[expr_, rules_List, dotRules_List, auxiliary_List : {}, conserve_ : False] :=
-  Module[{reduce, best, conserved = expr, consider, contractPairs},
+  Module[{reduce, best, conserved = expr, consider, contractPairs, masslessCandidate},
     reduce[value_] := preparationCancelReferencePoles[preparationReduceDots[
       preparationSpinorProducts[preparationReduceDots[value, dotRules], rules], dotRules],
       rules, auxiliary];
     best = reduce[expr];
-    consider[value_] := If[residueFiniteQ[value] &&
-        preparationBetterQ[preparationRank[value], preparationRank[best]], best = value];
+    consider[value_] := If[residueFiniteQ[value],
+      If[preparationBetterQ[preparationRank[value], preparationRank[best]], best = value];
+      With[{factored = preparationMasslessMomentumTrial[value, rules, dotRules, auxiliary]},
+        If[residueFiniteQ[factored] &&
+            preparationBetterQ[preparationRank[factored], preparationRank[best]], best = factored]]];
     If[TrueQ[conserve],
       conserved = preparationConservedMomentumChains[expr, rules, True, dotRules];
-      If[conserved =!= expr, consider[reduce[conserved]]]];
+      If[conserved =!= expr,
+        consider[reduce[conserved]];
+        If[First[preparationRank[best]] > 1,
+          masslessCandidate = preparationMasslessMomentumTrial[conserved, rules, dotRules, auxiliary];
+          If[masslessCandidate =!= conserved, consider[masslessCandidate]]]]];
+    If[First[preparationRank[best]] <= 1, Return[best]];
+    consider[best];
     If[First[preparationRank[best]] <= 1, Return[best]];
     Do[
       consider[preparationFactorizedReferenceTrial[expr, rules, dotRules, auxiliary, contractPairs]];

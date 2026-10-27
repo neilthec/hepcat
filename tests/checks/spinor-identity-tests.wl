@@ -1021,7 +1021,22 @@ Do[
   check[{"degenerate Schouten terminates", kind, chirality},
     degenerateSchoutenReduced =!= $TimedOut &&
       FreeQ[degenerateSchoutenReduced, _SpinorChainReduced] &&
-      numeric[degenerateSchoutenInput - degenerateSchoutenReduced] === 0],
+      If[kind === "Helicity",
+        (* A declared helicity spinor fixes its own momentum to rank one.
+           The old arbitrary matrix2 chart cannot test that identity. *)
+        Module[{angles = <|2 -> {2, -1}, 5 -> {3, 5}|>,
+            squares = <|2 -> {1, 4}, 5 -> {-2, 3}|>, momenta, chart},
+          momenta = Join[<|1 -> matrices[1]|>,
+            AssociationMap[Outer[Times, angles[#], squares[#]] &, {2, 5}]];
+          chart = <|"Momenta" -> momenta, "Angle" -> angles, "Square" -> squares,
+            "PoleVariable" -> degenerateSchoutenPole, "ReferenceSeed" -> 1|>;
+          Expand[(degenerateSchoutenInput - degenerateSchoutenReduced) /.
+            c_SpinorChain :> ConstructiveDiagrams`Private`residueChartChain[c, chart] /.
+            MomProd[a_, b_] :> (Det[momenta[a] + momenta[b]] -
+              Det[momenta[a]] - Det[momenta[b]])/2 /.
+            Power[Mass[label_Integer], power_Integer?EvenQ] :>
+              Det[momenta[label]]^(power/2)] === 0],
+        numeric[degenerateSchoutenInput - degenerateSchoutenReduced] === 0]],
   {kind, {"Spin", "Helicity"}}, {chirality, {"Angle", "Square"}}];
 check["all degenerate Schouten regressions completed", Length[degenerateSchoutenResults] === 4];
 degenerateSandwichResults = {};
@@ -1132,6 +1147,204 @@ check["repeated package reloads neither duplicate product rules nor erase unrela
 Unprotect[Times];
 Unset[Global`xiReloadLeft[a_] Global`xiReloadRight[b_]];
 Protect[Times];
+
+(* ::Section:: *)
+(* Radiating fermion currents: external Dirac, Schouten and rank-one momenta.
+   Every chart is exact. P is arbitrary; no internal cut or momentum
+   conservation is imposed. Explicit spin indices select independent columns. *)
+qfiOther["Angle"] := "Square";
+qfiOther["Square"] := "Angle";
+qfiJ = {{0, -1}, {1, 0}}; qfiEps = -qfiJ;
+qfiAdj[p_] := {{p[[2, 2]], -p[[1, 2]]}, {-p[[2, 1]], p[[1, 1]]}};
+qfiChart[massive_, seed_] := BlockRandom[SeedRandom[119003 + seed]; Module[
+  {m = If[massive, {1, 3/7, 2}[[1 + Mod[seed, 3]]], 0], u, v, w,
+   pa, p, basis, squareBasis, la, ta, lk, tk, ra, rs, momenta, angles, squares},
+  {u, v, w} = {RandomInteger[{1, 5}], RandomInteger[{-5, 5}], RandomInteger[{-5, 5}]};
+  basis = {{u, v}, {w, (1 + v w)/u}};
+  la = basis[[All, 1]];
+  If[massive,
+    {u, v, w} = {RandomInteger[{1, 5}], RandomInteger[{-5, 5}], RandomInteger[{-5, 5}]};
+    pa = {{u, v}, {w, (m^2 + v w)/u}};
+    squareBasis = qfiEps.qfiAdj[pa].basis/m; ta = squareBasis[[All, 1]],
+    ta = RandomInteger[{-5, 5}, 2]; pa = Outer[Times, la, ta]; squareBasis = IdentityMatrix[2]];
+  p = RandomInteger[{-5, 5}, {2, 2}];
+  lk = {2, seed + 2}; tk = {seed + 1, -1};
+  ra = {seed + 3, 2 seed - 1}; rs = {3 seed - 2, seed + 4};
+  momenta = <|1 -> pa, 2 -> p, 3 -> Outer[Times, ra, rs],
+    4 -> RandomInteger[{-5, 5}, {2, 2}], 5 -> Outer[Times, lk, tk]|>;
+  angles = <|1 -> la, 3 -> ra, 5 -> lk|>; squares = <|1 -> ta, 3 -> rs, 5 -> tk|>;
+  <|"Momenta" -> momenta, "Angle" -> angles, "Square" -> squares,
+    "AngleBasis" -> <|1 -> basis|>, "SquareBasis" -> <|1 -> squareBasis|>,
+    "References" -> <|"Angle" -> <|77 -> ra, 1 -> {seed - 2, seed + 5}|>,
+      "Square" -> <|77 -> rs, 1 -> {2 seed + 3, -seed - 1}|>|>, "MassValue" -> m|>
+]];
+qfiMassiveCharts = Table[qfiChart[True, seed], {seed, 10}];
+qfiMasslessCharts = Table[qfiChart[False, seed], {seed, 10}];
+qfiKind[s_Spinor] := s[[If[Length[s] === 5, 3, 2]]];
+qfiLeg[s_Spinor] := s[[If[Length[s] === 5, 4, 3]]];
+qfiVector[s_Spinor, chart_] := Module[{kind = qfiKind[s], label = qfiLeg[s], column, basis},
+  If[First[s] === "Xi", Return[chart["References"][kind][label]]];
+  If[Length[s] === 3, Return[chart[kind][label]]];
+  basis = chart[kind <> "Basis"][label]; column = If[Last[s] === -1/2, 1, 2];
+  If[s[[2]] === "Upper", basis[[All, column]],
+    If[column === 1, basis[[All, 2]], -basis[[All, 1]]]]
+];
+qfiMatrix[label_Integer, chart_] := chart["Momenta"][label];
+qfiMatrix[Multiparticle[labels__], chart_] := Total[qfiMatrix[#, chart] & /@ {labels}];
+qfiValueChain[c_SpinorChain, chart_] := Module[
+  {parts = List @@ c, kind, row, right},
+  kind = qfiKind[First[parts]]; row = qfiVector[First[parts], chart];
+  If[kind === "Angle", row = row.qfiJ];
+  Do[row = row.If[kind === "Angle", qfiMatrix[p[[1]], chart], qfiAdj[qfiMatrix[p[[1]], chart]]];
+    kind = qfiOther[kind], {p, Rest[Most[parts]]}];
+  right = qfiVector[Last[parts], chart];
+  If[qfiKind[Last[parts]] === "Square", right = qfiEps.right];
+  row.right
+];
+qfiValue[expression_, chart_] := Together[
+  expression /. c_SpinorChain :> qfiValueChain[c, chart] /.
+    MomProd[a_, b_] :> (Det[qfiMatrix[a, chart] + qfiMatrix[b, chart]] -
+      Det[qfiMatrix[a, chart]] - Det[qfiMatrix[b, chart]])/2 /.
+    Power[Mass[label_Integer], power_Integer?EvenQ] :> Det[qfiMatrix[label, chart]]^(power/2) /.
+    {Mass[1] -> chart["MassValue"], Mass[5] -> 0}];
+qfiFlip[s_Spinor] := s /. {
+  Spinor[family_, position_, kind_, label_, index_] :>
+    Spinor[family, position, qfiOther[kind], label, index],
+  Spinor[family_, kind_, label_] :> Spinor[family, qfiOther[kind], label]};
+qfiFactors[family_, a_, r_, reverseBracket_, reverseMomentum_] := Module[
+  {kind = qfiKind[a], k, otherK, bare, diagonal},
+  k = Spinor["Helicity", kind, 5]; otherK = Spinor["Helicity", qfiOther[kind], 5];
+  bare = If[reverseBracket, SpinorChain[k, a], SpinorChain[a, k]];
+  diagonal = If[family === "Fundamental",
+    If[reverseMomentum, SpinorChain[otherK, Mom[1], r], SpinorChain[r, Mom[1], otherK]],
+    SpinorChain @@ Join[{otherK}, Mom /@ If[reverseMomentum, {1, 2}, {2, 1}], {otherK}]];
+  {bare, diagonal}
+];
+qfiExpected[family_, a_, r_] := Module[{kind = qfiKind[a], k, otherK},
+  k = Spinor["Helicity", kind, 5]; otherK = Spinor["Helicity", qfiOther[kind], 5];
+  If[family === "Fundamental",
+    Mass[1] SpinorChain[r, k] SpinorChain[qfiFlip[a], otherK] +
+      2 MomProd[1, 5] SpinorChain[a, r],
+    2 Mass[1] MomProd[2, 5] SpinorChain[qfiFlip[a], otherK] -
+      2 MomProd[1, 5] SpinorChain[a, Mom[2], otherK]]
+];
+Do[
+  qfiA = Spinor[If[qfiMassive, "Spin", "Helicity"], qfiChirality, 1];
+  qfiR = Spinor["Xi", qfiChirality, 77];
+  qfiInput = Times @@ qfiFactors[qfiFamily, qfiA, qfiR, False, False];
+  qfiRight = qfiExpected[qfiFamily, qfiA, qfiR];
+  qfiBoard = If[qfiMassive, qfiMassiveCharts, qfiMasslessCharts];
+  check[{"radiation identity agrees with independent exact Weyl matrices", qfiFamily, qfiChirality, qfiMassive},
+    AllTrue[qfiBoard, qfiValue[qfiInput - qfiRight, #] === 0 &]];
+  qfiReduced = ReduceSpinorProducts[qfiInput];
+  check[{"ordinary radiation reduction retains its off-cut remainder and terminates", qfiFamily, qfiChirality, qfiMassive},
+    Count[qfiReduced, _Mom, Infinity] < Count[qfiInput, _Mom, Infinity] &&
+      !FreeQ[qfiReduced, MomProd[1, 5]] && FreeQ[qfiReduced, _SpinorChainReduced] &&
+      ReduceSpinorProducts[qfiReduced] === qfiReduced &&
+      AllTrue[qfiBoard, qfiValue[qfiInput - qfiReduced, #] === 0 &]],
+  {qfiFamily, {"Fundamental", "Physical"}}, {qfiChirality, {"Angle", "Square"}},
+  {qfiMassive, {True, False}}];
+Do[
+  qfiA = Spinor["Spin", qfiPosition, qfiChirality, 1, qfiSpin];
+  qfiR = Spinor["Xi", qfiChirality, 77];
+  qfiInput = Times @@ qfiFactors[qfiFamily, qfiA, qfiR, qfiReverseBracket, qfiReverseMomentum];
+  qfiReduced = ReduceSpinorProducts[qfiInput];
+  qfiSign = If[qfiReverseBracket, -1, 1] * If[qfiFamily === "Physical" && qfiReverseMomentum, -1, 1];
+  qfiRight = qfiSign qfiExpected[qfiFamily, qfiA, qfiR];
+  check[{"radiation contractions preserve indexed spin components and both orientations", qfiFamily,
+      qfiChirality, qfiPosition, qfiSpin, qfiReverseBracket, qfiReverseMomentum},
+    !FreeQ[qfiReduced, Spinor["Spin", qfiPosition, _, 1, qfiSpin]] &&
+      Count[qfiReduced, _Mom, Infinity] < Count[qfiInput, _Mom, Infinity] &&
+      AllTrue[Take[qfiMassiveCharts, 3],
+        qfiValue[qfiInput - qfiRight, #] === 0 && qfiValue[qfiInput - qfiReduced, #] === 0 &]],
+  {qfiFamily, {"Fundamental", "Physical"}}, {qfiChirality, {"Angle", "Square"}},
+  {qfiPosition, {"Upper", "Lower"}}, {qfiSpin, {-1/2, 1/2}},
+  {qfiReverseBracket, {False, True}}, {qfiReverseMomentum, {False, True}}];
+Do[
+  qfiA = Spinor["Spin", qfiChirality, 1]; qfiR = Spinor["Xi", qfiChirality, 77];
+  qfiPair = qfiFactors[qfiFamily, qfiA, qfiR, False, False];
+  qfiInput = 7 qfiPair[[1]]^qfiPowers[[1]] qfiPair[[2]]^qfiPowers[[2]];
+  qfiReduced = TimeConstrained[ReduceSpinorProducts[qfiInput], 5, $TimedOut];
+  check[{"radiation contractions support unequal positive powers", qfiFamily, qfiChirality, qfiPowers},
+    qfiReduced =!= $TimedOut && AllTrue[Take[qfiMassiveCharts, 5], qfiValue[qfiInput - qfiReduced, #] === 0 &]],
+  {qfiFamily, {"Fundamental", "Physical"}}, {qfiChirality, {"Angle", "Square"}},
+  {qfiPowers, {{2, 3}, {3, 2}}}];
+Do[
+  qfiA = Spinor["Spin", qfiChirality, 1];
+  qfiR = Spinor[qfiReferenceFamily, qfiChirality, If[qfiReferenceFamily === "Xi", 77, 3]];
+  qfiInput = Times @@ qfiFactors["Fundamental", qfiA, qfiR, False, False];
+  qfiReduced = ReduceSpinorProducts[qfiInput];
+  check[{"the fundamental identity permits an arbitrary independent reference", qfiChirality, qfiReferenceFamily},
+    Count[qfiReduced, _Mom, Infinity] < Count[qfiInput, _Mom, Infinity] &&
+      AllTrue[Take[qfiMassiveCharts, 5], qfiValue[qfiInput - qfiReduced, #] === 0 &]],
+  {qfiChirality, {"Angle", "Square"}}, {qfiReferenceFamily, {"Xi", "Spin", "Helicity"}}];
+Do[
+  qfiA = Spinor["Xi", qfiChirality, 1]; qfiR = Spinor["Xi", qfiChirality, 77];
+  qfiInput = Times @@ qfiFactors[qfiFamily, qfiA, qfiR, False, False];
+  qfiReduced = ReduceSpinorProducts[qfiInput];
+  check[{"a coinciding Xi identifier does not license a Dirac equation", qfiFamily, qfiChirality},
+    AllTrue[Take[qfiMassiveCharts, 5], qfiValue[qfiInput - qfiReduced, #] === 0 &]],
+  {qfiFamily, {"Fundamental", "Physical"}}, {qfiChirality, {"Angle", "Square"}}];
+qfiOpaque = PropDen[Mom[Multiparticle[1, 5]], qfiPoleMass];
+Do[
+  qfiA = Spinor["Spin", qfiChirality, 1]; qfiR = Spinor["Xi", qfiChirality, 77];
+  qfiInput = Times @@ qfiFactors["Physical", qfiA, qfiR, False, False];
+  qfiReduced = ReduceSpinorProducts[qfiInput/qfiOpaque];
+  check[{"ordinary radiation identities preserve the original physical propagator", qfiChirality},
+    DeleteDuplicates[Cases[qfiReduced, _PropDen, Infinity]] === {qfiOpaque} &&
+      !FreeQ[qfiReduced, MomProd[1, 5]] &&
+      AllTrue[Take[qfiMassiveCharts, 5], qfiValue[qfiInput - qfiOpaque qfiReduced, #] === 0 &]],
+  {qfiChirality, {"Angle", "Square"}}];
+Do[
+  qfiA = Spinor["Spin", qfiChirality, 1]; qfiR = Spinor["Xi", qfiChirality, 77];
+  qfiPair = qfiFactors[qfiFamily, qfiA, qfiR, False, False];
+  qfiInput = qfiPair[[1]]/qfiPair[[2]]; qfiReduced = ReduceSpinorProducts[qfiInput];
+  qfiBoard = Select[qfiMassiveCharts, qfiValue[qfiPair[[2]], #] =!= 0 &];
+  check[{"an inverse chain is not consumed as a numerator contraction", qfiFamily, qfiChirality},
+    Length[qfiBoard] >= 6 && AllTrue[qfiBoard, qfiValue[qfiInput - qfiReduced, #] === 0 &]],
+  {qfiFamily, {"Fundamental", "Physical"}}, {qfiChirality, {"Angle", "Square"}}];
+
+(* Rank-one insertion factorization: each slot and parity uses a genuinely
+   massless pk. An Xi identifier or an unconstrained matrix is not a witness. *)
+Do[
+  qfiSlots = ReplacePart[Take[{2, 3, 4, 2, 3}, qfiLength], qfiSlot -> 5];
+  qfiEndKind = If[EvenQ[qfiLength], qfiChirality, qfiOther[qfiChirality]];
+  qfiInput = SpinorChain @@ Join[{Spinor["Spin", qfiChirality, 1]}, Mom /@ qfiSlots,
+    {Spinor["Xi", qfiEndKind, 77]}];
+  qfiAtKind = If[EvenQ[qfiSlot - 1], qfiChirality, qfiOther[qfiChirality]];
+  qfiRight = (SpinorChain @@ Join[{First[qfiInput]}, Mom /@ Take[qfiSlots, qfiSlot - 1],
+      {Spinor["Helicity", qfiAtKind, 5]}]) *
+    (SpinorChain @@ Join[{Spinor["Helicity", qfiOther[qfiAtKind], 5]},
+      Mom /@ Drop[qfiSlots, qfiSlot], {Last[qfiInput]}]);
+  qfiSplit = ConstructiveDiagrams`Private`rspSplitMasslessMomentum[qfiInput, 5];
+  check[{"rank-one splitting has the correct orientation at every chain slot", qfiChirality, qfiLength, qfiSlot},
+    !MissingQ[qfiSplit] && Count[qfiSplit, _Mom, Infinity] === qfiLength - 1 &&
+      AllTrue[Take[qfiMassiveCharts, 3],
+        qfiValue[qfiInput - qfiRight, #] === 0 && qfiValue[qfiInput - qfiSplit, #] === 0 &]],
+  {qfiChirality, {"Angle", "Square"}}, {qfiLength, 1, 5}, {qfiSlot, qfiLength}];
+Do[
+  qfiInput = SpinorChain[Spinor["Spin", qfiChirality, 1], Mom[5],
+    Spinor["Xi", qfiOther[qfiChirality], 77]] *
+    SpinorChain[Spinor["Helicity", "Square", 5], Spinor["Xi", "Square", 77]];
+  qfiReduced = ReduceSpinorProducts[qfiInput];
+  check[{"a matching helicity witness removes an inserted massless momentum", qfiChirality},
+    FreeQ[qfiReduced, _Mom] && ReduceSpinorProducts[qfiReduced] === qfiReduced &&
+      AllTrue[Take[qfiMassiveCharts, 5], qfiValue[qfiInput - qfiReduced, #] === 0 &]];
+  qfiInput = SpinorChain[Spinor["Helicity", qfiChirality, 5], Mom[2],
+    Spinor["Helicity", qfiOther[qfiChirality], 5]];
+  check[{"a diagonal helicity sandwich is its ordinary scalar invariant", qfiChirality},
+    ReduceSpinorProducts[qfiInput] === 2 MomProd[2, 5] &&
+      ReduceSpinorProducts[qfiInput /. Mom[2] -> Mom[5]] === 0 &&
+      AllTrue[qfiMassiveCharts, qfiValue[qfiInput - 2 MomProd[2, 5], #] === 0 &]];
+  qfiInput = SpinorChain[Spinor["Spin", qfiChirality, 1], Mom[5],
+    Spinor["Xi", qfiOther[qfiChirality], 77]];
+  qfiReduced = ReduceSpinorProducts[qfiInput];
+  qfiBoard = Map[Join[#, <|"Momenta" -> Join[#["Momenta"], <|5 -> {{7, 2}, {3, 8}}|>]|>] &, Take[qfiMassiveCharts, 5]];
+  check[{"an unlicensed momentum stays unconstrained when no helicity witness exists", qfiChirality},
+    FreeQ[qfiReduced, Spinor["Helicity", _, 5]] &&
+      AllTrue[qfiBoard, qfiValue[qfiInput - qfiReduced, #] === 0 &]],
+  {qfiChirality, {"Angle", "Square"}}];
+
 Print[<|"Checks" -> checks, "Failed" -> Length[failures], "Failures" -> failures|>];
 Print["HEPCAT_TEST_COMPLETED:spinor-identity-tests.wl"];
 Quit[If[failures === {}, 0, 1]];

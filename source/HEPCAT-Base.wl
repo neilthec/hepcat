@@ -724,10 +724,133 @@ rspDiagonalSandwichData[chain_] := Module[{parts},
   {First[parts], parts[[2]], parts[[3]]}
 ];
 
+(* A Helicity endpoint is an explicit massless state, not a Xi identifier. *)
+rspHelicityScalarChain[chain_] := Module[{parts, left, right, leg},
+  If[Head[chain] =!= SpinorChain || Length[chain] =!= 3 ||
+      !MatchQ[chain[[2]], Mom[_Integer]], Return[chain]];
+  parts = List @@ chain; {left, right} = parts[[{1, 3}]];
+  If[!MatchQ[left, Spinor["Helicity", "Angle" | "Square", _Integer]] ||
+      right =!= rspFlipSpinor[left], Return[chain]];
+  leg = rspSpinorLeg[left];
+  If[parts[[2]] === Mom[leg], 0, 2 MomProd[leg, parts[[2, 1]]]]
+];
+
+(* The caller supplies a witnessed or declared massless leg. Factor its first
+   insertion without momentum conservation or any other mass-shell choice. *)
+rspSplitMasslessMomentum[chain_, leg_Integer] := Module[
+  {parts, slots, position, kind, opposite, supported},
+  supported[spinor_] := MatchQ[spinor,
+    Spinor["Spin" | "Helicity" | "Xi", "Angle" | "Square", _] |
+    Spinor["Spin", "Upper" | "Lower", "Angle" | "Square", _, _]];
+  If[Head[chain] =!= SpinorChain || Length[chain] < 3,
+    Return[Missing["NoMasslessMomentumSplit"]]];
+  parts = List @@ chain; slots = Rest[Most[parts]];
+  If[!supported[First[parts]] || !supported[Last[parts]] ||
+      !AllTrue[slots, MatchQ[#, Mom[_Integer]] &] ||
+      SameQ[rspSpinorType[First[parts]], rspSpinorType[Last[parts]]] =!= EvenQ[Length[slots]],
+    Return[Missing["NoMasslessMomentumSplit"]]];
+  position = FirstPosition[slots, Mom[leg], Missing["NoMasslessMomentumSplit"]];
+  If[MissingQ[position], Return[position]];
+  position = First[position]; kind = rspSpinorType[First[parts]];
+  If[OddQ[position - 1], kind = If[kind === "Angle", "Square", "Angle"]];
+  opposite = If[kind === "Angle", "Square", "Angle"];
+  (SpinorChain @@ Join[{First[parts]}, Take[slots, position - 1],
+      {Spinor["Helicity", kind, leg]}]) *
+    (SpinorChain @@ Join[{Spinor["Helicity", opposite, leg]}, Drop[slots, position],
+      {Last[parts]}])
+];
+
+rspHelicityMomentumPair[witness_, chain_] := Module[
+  {ends, helicities, replacement, tag = Unique["helicityMomentumPair"]},
+  If[Head[witness] =!= SpinorChain || Length[witness] =!= 2,
+    Return[Missing["NoHelicityMomentumPair"]]];
+  ends = List @@ witness;
+  If[!AllTrue[ends, MatchQ[#,
+        Spinor["Spin" | "Helicity" | "Xi", "Angle" | "Square", _] |
+        Spinor["Spin", "Upper" | "Lower", "Angle" | "Square", _, _]] &] ||
+      rspSpinorType[First[ends]] =!= rspSpinorType[Last[ends]],
+    Return[Missing["NoHelicityMomentumPair"]]];
+  helicities = DeleteDuplicates[Cases[ends,
+    Spinor["Helicity", "Angle" | "Square", k_Integer] :> k]];
+  Catch[Do[
+    replacement = rspSplitMasslessMomentum[chain, leg];
+    If[!MissingQ[replacement], Throw[witness replacement, tag]],
+    {leg, helicities}];
+    Missing["NoHelicityMomentumPair"], tag]
+];
+
+(* Identify <a k> or [a k] without losing an explicit spin index on a. *)
+rspMasslessBracketPartner[bracket_, helicity_] := Module[{ends, target, endpoint, sign},
+  If[Head[bracket] =!= SpinorChain || Length[bracket] =!= 2 ||
+      !MatchQ[helicity, Spinor["Helicity", "Angle" | "Square", _Integer]],
+    Return[Missing["NoBracketPartner"]]];
+  ends = List @@ bracket; target = rspFlipSpinor[helicity];
+  Which[Last[ends] === target, endpoint = First[ends]; sign = 1,
+    First[ends] === target, endpoint = Last[ends]; sign = -1,
+    True, Return[Missing["NoBracketPartner"]]];
+  If[!MatchQ[endpoint,
+      Spinor["Spin" | "Helicity", "Angle" | "Square", _Integer] |
+      Spinor["Spin", "Upper" | "Lower", "Angle" | "Square", _Integer, _]] ||
+      rspSpinorType[endpoint] =!= rspSpinorType[target] ||
+      rspSpinorLeg[endpoint] === rspSpinorLeg[helicity],
+    Return[Missing["NoBracketPartner"]]];
+  {endpoint, sign}
+];
+
+(* Schouten plus the external endpoint equation removes the sole momentum
+   insertion. The reference spinor is arbitrary; its Xi label is not a leg. *)
+rspBracketMomentumPair[bracket_, chain_] := Module[
+  {parts, helicity, reference, partner, endpoint, leg, mass,
+   tag = Unique["bracketMomentumPair"]},
+  If[Head[chain] =!= SpinorChain || Length[chain] =!= 3 ||
+      !MatchQ[chain[[2]], Mom[_Integer]], Return[Missing["NoBracketMomentumPair"]]];
+  parts = List @@ chain;
+  Catch[Do[
+    {helicity, reference} = ends;
+    If[!MatchQ[reference,
+        Spinor["Spin" | "Helicity" | "Xi", "Angle" | "Square", _] |
+        Spinor["Spin", "Upper" | "Lower", "Angle" | "Square", _, _]], Continue[]];
+    partner = rspMasslessBracketPartner[bracket, helicity];
+    If[MissingQ[partner], Continue[]];
+    endpoint = First[partner]; leg = rspSpinorLeg[endpoint];
+    If[chain[[2]] =!= Mom[leg] ||
+        rspSpinorType[reference] =!= rspSpinorType[endpoint], Continue[]];
+    mass = If[endpoint[[1]] === "Helicity", 0, Mass[leg]];
+    Throw[Last[partner] (mass SpinorChain[reference, rspFlipSpinor[helicity]] *
+        SpinorChain[rspFlipSpinor[endpoint], helicity] +
+      2 MomProd[leg, rspSpinorLeg[helicity]] SpinorChain[endpoint, reference]), tag],
+    {ends, {{First[parts], Last[parts]}, {Last[parts], First[parts]}}}];
+    Missing["NoBracketMomentumPair"], tag]
+];
+
+(* The same contraction after a reference row is represented as [k|P.
+   Keep its scalar-product remainder until the caller authorizes a cut. *)
+rspBracketDiagonalPair[bracket_, chain_] := Module[
+  {data = rspDiagonalSandwichData[chain], partner, endpoint, helicity,
+   leg, momentum, mass, sign},
+  If[MissingQ[data], Return[Missing["NoBracketDiagonalPair"]]];
+  helicity = First[data]; partner = rspMasslessBracketPartner[bracket, helicity];
+  If[MissingQ[partner], Return[Missing["NoBracketDiagonalPair"]]];
+  endpoint = First[partner]; leg = rspSpinorLeg[endpoint]; sign = Last[partner];
+  Which[data[[3]] === Mom[leg], momentum = data[[2]],
+    data[[2]] === Mom[leg], momentum = data[[3]]; sign = -sign,
+    True, Return[Missing["NoBracketDiagonalPair"]]];
+  If[MemberQ[{Mom[leg], Mom[rspSpinorLeg[helicity]]}, momentum],
+    Return[Missing["NoBracketDiagonalPair"]]];
+  mass = If[endpoint[[1]] === "Helicity", 0, Mass[leg]];
+  sign (2 mass MomProd[momentum[[1]], rspSpinorLeg[helicity]] *
+      SpinorChain[rspFlipSpinor[endpoint], helicity] -
+    2 MomProd[leg, rspSpinorLeg[helicity]] SpinorChain[endpoint, momentum, helicity])
+];
+
 rspSandwichPair[left_, right_] := Module[
   {a = rspDiagonalSandwichData[left], b = rspDiagonalSandwichData[right],
    endpoint, other, leg, bracket, sameType, p, q, sign, gp, gq,
-   tag = Unique["sandwichPair"]},
+   replacement, tag = Unique["sandwichPair"]},
+  replacement = rspBracketMomentumPair[left, right];
+  If[!MissingQ[replacement], Return[replacement]];
+  replacement = rspBracketDiagonalPair[left, right];
+  If[!MissingQ[replacement], Return[replacement]];
   If[MissingQ[a] || MissingQ[b], Return[Missing["NoSandwichPair"]]];
   endpoint = First[a]; other = First[b]; leg = rspSpinorLeg[endpoint];
   If[endpoint[[1]] =!= "Helicity" || !IntegerQ[leg] || endpoint === other,
@@ -775,10 +898,13 @@ rspSandwichProducts[expression_] := Module[
         MatchQ[#, Power[_SpinorChain, _Integer?Positive]], {#[[1]], #[[2]]},
         True, Missing["NotPositiveChain"]] &, factors];
     positions = Select[Range[Length[chains]], ListQ[chains[[#]]] &];
-    Catch[Do[
-      replacement = rspSandwichPair[chains[[positions[[i]], 1]], chains[[positions[[j]], 1]]];
+    (* Finish stronger pair contractions before splitting a witnessed momentum. *)
+    Catch[Do[Do[
+      replacement = If[split, rspHelicityMomentumPair, rspSandwichPair][
+        chains[[positions[[i]], 1]], chains[[positions[[j]], 1]]];
       If[MissingQ[replacement],
-        replacement = rspSandwichPair[chains[[positions[[j]], 1]], chains[[positions[[i]], 1]]]];
+        replacement = If[split, rspHelicityMomentumPair, rspSandwichPair][
+          chains[[positions[[j]], 1]], chains[[positions[[i]], 1]]]];
       If[!MissingQ[replacement],
         steps++;
         If[steps > limit, Throw[$Failed, tag]];
@@ -788,7 +914,7 @@ rspSandwichProducts[expression_] := Module[
         trial = (Times @@ factors) replacement;
         If[rspSandwichExpansionCount[trial] > 4096, Throw[$Failed, tag]];
         Throw[reduce[trial], nodeTag]],
-      {i, Length[positions]}, {j, i + 1, Length[positions]}];
+      {i, Length[positions]}, {j, i + 1, Length[positions]}], {split, {False, True}}];
       Times @@ factors, nodeTag]
   ];
   reduce[value_] := value;
@@ -796,10 +922,11 @@ rspSandwichProducts[expression_] := Module[
   If[result === $Failed || rspSandwichExpansionCount[result] > 4096, expression, result]
 ];
 
-rspLegacyProducts[expression_] := Expand[Expand[Expand[
+rspLegacyProducts[expression_] := (Expand[Expand[Expand[
     rspCommonScalarContent[expression] /. {SpinorChain[a___] :> SpinorChainReduced[a],
       SpinorTrace[a___] :> SpinorTraceReduced[a]}]]] /.
-  {SpinorChainReduced[a___] :> SpinorChain[a], SpinorTraceReduced[a___] :> SpinorTrace[a]};
+  {SpinorChainReduced[a___] :> SpinorChain[a], SpinorTraceReduced[a___] :> SpinorTrace[a]}) /.
+    chain_SpinorChain :> rspHelicityScalarChain[chain];
 
 ReduceSpinorProducts[amp_] := ConstructiveDiagrams`Private`withProtectedPropagators[amp,
   Function[body, Module[{linear, reduced, contracted},
