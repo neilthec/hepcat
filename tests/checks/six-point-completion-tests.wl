@@ -49,8 +49,10 @@ sixFiveContinuations = ConstructiveDiagrams`Private`completionChannelContinuatio
 check["five-point continuation counts and forward-reverse modes remain unchanged",
   Counts[Lookup[sixFiveContinuations["Variants"], "Mode"]] ===
     <|"AllSpurious" -> 6, "ReverseCyclic" -> 6, "AllPhysical" -> 6|>];
+(* Ordinary sandwich reductions expose 266 rather than 230 atomic directions.
+   Inspect the full space here, and separately require refusal at the old cap. *)
 sixExtendedBasis = ConstructiveDiagrams`Private`completionReducedChannelBasis[
-  sixNormalized, sixContinuations, 256, sixRules, 1729];
+  sixNormalized, sixContinuations, 512, sixRules, 1729];
 sixSelectedChecks = Select[sixExtendedBasis["Verification"],
   #["Mode"] === "SelectedCutReduction" &];
 check["six-point selected-cut reductions add eight grouped, certified directions",
@@ -58,10 +60,14 @@ check["six-point selected-cut reductions add eight grouped, certified directions
     Length[sixSelectedChecks] === 8 &&
     AllTrue[sixSelectedChecks, #["Verification"]["Status"] === "PASS" &]];
 check["the selected-cut extension stays within the declared correction-space cap",
-  AssociationQ[sixExtendedBasis] && Length[sixExtendedBasis["Basis"]] <= 256 &&
+  AssociationQ[sixExtendedBasis] && Length[sixExtendedBasis["Basis"]] <= 512 &&
     ConstructiveDiagrams`Private`completionReducedChannelBasis[
       sixNormalized, sixContinuations, 1, sixRules, 1729] ===
         Missing["ReducedChannelSpaceLimit"]];
+check["stronger ordinary reductions never silently truncate an oversized selected-cut space",
+  ConstructiveDiagrams`Private`completionReducedChannelBasis[
+    sixNormalized, sixContinuations, 256, sixRules, 1729] ===
+      Missing["ReducedChannelSpaceLimit"]];
 
 (* This behavior is not special to QED or photon references. *)
 sixScalarModel = {{{"Scalar", "s", "s", 1, 0, sixScalarMass, 0, 1, 1, "", ""}},

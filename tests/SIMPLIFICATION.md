@@ -51,10 +51,46 @@ Shared scalar content is extracted from polynomial sums before applying the
 existing Schouten rules, so preexpanded coefficient-weighted identities are
 recognized too. This adds no inverse Schouten rewrite or denominator combination.
 
+A directed diagonal-sandwich contraction also recognizes
+`[a|P Q|a] [b|P p_a|b]` and its angle-bracket counterpart, with a massless
+helicity spinor on leg `a`. In HEPCAT's conventions the ordinary identity is
+
+```text
+[a|P Q|a] [b|P p_a|b]
+  = 2 P^2 (p_a.Q) [ab]^2 + 2 (p_a.P) [ab] [b|P Q|a].
+```
+
+The second term is retained: `ReduceSpinorProducts` does not set `p_a.P` to
+zero. Reversed diagonal momentum orders and positive integer powers are
+supported. The contraction reduces the number of chain momentum insertions
+and has no inverse automatic rule. Step and prospective expansion limits
+retain the original product when the new pass would grow excessively.
+
 This function neither infers the external-particle list nor assumes momentum
 conservation. Expanding a composite momentum does not put it on an internal
 mass shell. Keep process-dependent conservation and diagram-local internal
 shell reductions in `PrepareAmplitudes` instead.
+
+During preparation, composite-momentum complements can be reduced inside
+individual numerator chains before expanding the complete product. Their
+quality is compared after ordinary external-shell reduction, so an equal-size
+complement can still be useful when its endpoint terms vanish. This remains
+process-dependent preparation and is disabled with
+`"MomentumConservation" -> False`.
+The conserved and unmodified routes are compared after reducing the whole
+product. A locally shorter chain does not replace a better complete expression,
+and the main preparation stage retains the winning reduced reference trial.
+
+Physical references can introduce additional `PropDen` factors. Preparation
+records which factors came from those references and may cancel them against
+their ordinary external pair invariants. The diagram's original physical
+propagators, equivalent complementary cuts, and unrelated inverse factors
+remain protected. An internal-shell condition never licenses canceling an
+original diagram denominator. The default output remains the prepared
+amplitude pairs; reference provenance and reduction records are optional details.
+Known composite masses are looked up independently of particle-label order,
+without dropping repeated labels or inventing values for unknown masses. These
+diagram-local replacements remain restricted to protected numerator paths.
 
 ## On-Shell Scope
 

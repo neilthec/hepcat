@@ -70,6 +70,14 @@ steps, disabled conservation and protected reciprocal factors.
 Preparation also tests ordinary whole-expression reduction of reciprocal
 spinor chains and bracket factors, independently of numerator-only internal
 on-shell substitutions.
+`thesis-preparation-tests.wl` independently checks the same-chirality
+diagonal-sandwich contraction with exact two-component matrices, reversed
+chains, explicit spin labels, powers, termination and growth guards. Its
+six-point all-positive QED examples reproduce the one-term diagram form of
+Eq. (101) in the thesis proposal, including particle-label permutations and
+the coupling normalization derived from the model. It separately checks
+reference-generated pole cancellation while original diagram propagators
+remain off shell and protected.
 `PrepareAmplitudes` accepts both diagram pairs and compact factorization rows.
 Its channel tests check preserved row metadata and propagators, numerator-only
 selected-cut shell conditions, and protection of unrelated internal channels.

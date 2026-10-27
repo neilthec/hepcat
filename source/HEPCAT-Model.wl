@@ -5798,7 +5798,7 @@ completionReducedChannelBasis[normalized_Association, references_Association,
       {Mass[Multiparticle @@ channel["Cut"]] -> channel["Mass"]}];
     selectedReduced = TimeConstrained[preparationReferenceTrial[
       preparationNumerators[variant["Expression"],
-        Function[num, ReduceSpinContractions[num] /. selectedRules]],
+        Function[num, preparationReplaceMasses[ReduceSpinContractions[num], selectedRules]]],
       selectedRules, preparationDotRules[selectedRules, True]], 2, $TimedOut];
     If[!residueFiniteQ[selectedReduced], Continue[]];
     difference = selectedReduced - variant["Expression"];
@@ -5889,7 +5889,7 @@ completionSelectedChannelBasis[normalized_Association, references_Association,
         {Mass[Multiparticle @@ channel["Cut"]] -> channel["Mass"]}];
       reduced = TimeConstrained[preparationReferenceTrial[
         preparationNumerators[variant["Expression"],
-          Function[num, ReduceSpinContractions[num] /. selectedRules]],
+          Function[num, preparationReplaceMasses[ReduceSpinContractions[num], selectedRules]]],
         selectedRules, preparationDotRules[selectedRules, True]], 2, $TimedOut];
       If[!residueFiniteQ[reduced], Continue[]];
       higherPoles = completionHigherPhysicalPoles[reduced, targets, externalLegs];
@@ -6486,11 +6486,19 @@ preparationNumerators[expr_, function_] := withProtectedPropagators[expr,
       preparationProtectedDenominators[Numerator[term], function]/Denominator[term]] /@
     If[Head[protected] === Plus, List @@ protected, {protected}]]]];
 
+(* Relabeling can change the order of a composite mass emitted by a contraction.
+   Canonicalize known lookup keys only; unknown masses retain their literal form. *)
+preparationReplaceMasses[expr_, rules_List] := Module[
+  {known = Association[preparationCanonicalMassRules[rules]]},
+  expr /. mass_Mass :> Lookup[known, preparationMassKey[mass], mass]
+];
+
 (* Ordinary spinor algebra also acts on auxiliary denominators. Only external
    mass replacements are global; diagram-local replacements stay in numerators. *)
 preparationSpinorProducts[expr_, rules_List] := withProtectedPropagators[
-  preparationNumerators[expr, Function[num, num /. rules]],
-  Function[body, ReduceSpinorProducts[body] /. preparationExternalRules[rules]]];
+  preparationNumerators[expr, Function[num, preparationReplaceMasses[num, rules]]],
+  Function[body, preparationNumerators[ReduceSpinorProducts[body],
+    Function[num, preparationReplaceMasses[num, rules]]] /. preparationExternalRules[rules]]];
 
 preparationDotRules[rules_List, conserve_] := Module[
   {channels = knownInternalChannels[rules], external = externalIndices[rules],
@@ -6519,10 +6527,93 @@ preparationReduceDots[expr_, replacements_List] := Module[{denominators, tokens}
     Function[num, num /. replacements]] /. Thread[tokens -> denominators]
 ];
 
+(* Only a reference-generated pole may cancel against its external pair
+   invariant. Original propagators and every other inverse remain opaque. *)
+preparationCancelReferencePoles[expr_, rules_List, auxiliary_List] := Module[
+  {external = preparationExternalRules[rules], props, tokens, dotPairs,
+   pair, masses, cancelTerm, polePower, body, result},
+  props = Select[DeleteDuplicates[auxiliary],
+    MatchQ[#, PropDen[Mom[Multiparticle[_Integer, _Integer]], _]] &];
+  props = Select[props, Function[prop,
+    pair = List @@ prop[[1, 1]]; masses = (Mass /@ pair) /. external;
+    DuplicateFreeQ[pair] && FreeQ[masses, _Mass] && MemberQ[masses, 0] &&
+      residueExactZero[Total[masses^2] - prop[[2]]^2]]];
+  If[props === {}, Return[expr]];
+  tokens = Table[Unique["referencePole"], {Length[props]}];
+  dotPairs = (List @@ #[[1, 1]]) & /@ props;
+  polePower[value_, allowed_List] := Total[Cases[{value},
+    HoldPattern[Power[base_, power_Integer]] /; power < 0 && MemberQ[allowed, base] :> -power,
+    Infinity]];
+  cancelTerm[term_] := Module[
+    {activeIndices, active, inverse, inverseTokens, replacements, originalPower,
+     protected, canceled},
+    activeIndices = Select[Range[Length[tokens]], !FreeQ[term,
+      Power[tokens[[#]], exponent_Integer /; exponent < 0]] &];
+    If[activeIndices === {}, Return[term]];
+    active = tokens[[activeIndices]];
+    inverse = DeleteDuplicates[Cases[{term}, power : Power[base_, exponent_] /;
+      !TrueQ[exponent >= 0] && !MemberQ[active, base] :> power, Infinity]];
+    inverseTokens = Table[Unique["keptInverse"], {Length[inverse]}];
+    protected = term /. Thread[inverse -> inverseTokens];
+    replacements = Flatten[Table[
+      {MomProd @@ dotPairs[[i]] -> tokens[[i]]/2,
+        MomProd @@ Reverse[dotPairs[[i]]] -> tokens[[i]]/2}, {i, activeIndices}]];
+    originalPower = polePower[protected, active];
+    canceled = Cancel[protected /. replacements];
+    If[polePower[canceled, active] < originalPower,
+      canceled /. Thread[inverseTokens -> inverse], term]];
+  body = expr /. Thread[props -> tokens];
+  result = If[Head[body] === Plus, Total[cancelTerm /@ List @@ body], cancelTerm[body]];
+  result /. Thread[tokens -> props]
+];
+
 preparationRank[expr_] := {SpinorExpressionComplexity[expr],
   If[Head[expr] === Plus, Length[expr], If[expr === 0, 0, 1]], LeafCount[expr]};
 
 preparationBetterQ[left_List, right_List] := left =!= right && OrderedQ[{left, right}];
+
+(* Choose conserved composite representatives while their parent chains are
+   still factored. Whole-expression expansion otherwise obscures these wins. *)
+preparationConservedMomentumChains[expr_, rules_List, conserve_] := Module[
+  {external = externalIndices[rules], externalRules = preparationExternalRules[rules], reduce},
+  If[!TrueQ[conserve] || Length[external] < 2, Return[expr]];
+  reduce[value_] := Module[
+    {parts = List @@ value, slots, composites, baseline, best, bestRank, improved = False,
+     indices, replacements, selected, trial, reduced, rank},
+    If[Head[value] === SpinorChain && (Length[parts] < 2 ||
+        rspSpinorType[First[parts]] === None || rspSpinorType[Last[parts]] === None ||
+        SameQ[rspSpinorType[First[parts]], rspSpinorType[Last[parts]]] =!=
+          EvenQ[Length[parts] - 2]), Return[value]];
+    If[Head[value] === SpinorTrace && OddQ[Length[parts]], Return[value]];
+    slots = If[Head[value] === SpinorChain, Rest[Most[parts]], parts];
+    If[!FreeQ[slots, _MomHat] || AnyTrue[slots, rspLinearMomentumTerms[#] === $Failed &],
+      Return[value]];
+    composites = DeleteDuplicates[Cases[slots,
+      momentum : Mom[label_Multiparticle] /;
+        momentumMembers[label] =!= {} && ContainsAll[external, momentumMembers[label]] :>
+          momentum, Infinity]];
+    If[composites === {}, Return[value]];
+    baseline = ReduceSpinorProducts[value] /. externalRules;
+    If[!residueFiniteQ[baseline], Return[value]];
+    best = baseline; bestRank = preparationRank[baseline];
+    indices = Take[DeleteDuplicates[Join[2^Range[0, Min[Length[composites], 31] - 1],
+      Range[1, 2^Min[Length[composites], 5] - 1]]], UpTo[31]];
+    Do[
+      selected = Pick[composites, IntegerDigits[index, 2, Length[composites]], 1];
+      replacements = (# -> -Total[Mom /@ Complement[external,
+          momentumMembers[#[[1]]]]]) & /@ selected;
+      trial = If[Head[value] === SpinorChain,
+        SpinorChain @@ Join[{First[parts]}, slots /. replacements, {Last[parts]}],
+        SpinorTrace @@ (slots /. replacements)];
+      reduced = ReduceSpinorProducts[trial] /. externalRules;
+      If[!residueFiniteQ[reduced], Continue[]];
+      rank = preparationRank[reduced];
+      If[preparationBetterQ[rank, bestRank],
+        best = reduced; bestRank = rank; improved = True], {index, indices}];
+    If[improved, best, value]];
+  preparationNumerators[expr, Function[num, num /. {
+    chain_SpinorChain :> reduce[chain], trace_SpinorTrace :> reduce[trace]}]]
+];
 
 preparationConservationCandidates[expr_, rules_List] := Module[
   {external = DeleteDuplicates[externalIndices[rules]], momenta, products, used, composites},
@@ -6598,7 +6689,7 @@ preparationReferences[expr_, rules_List, model_List, pairs_List, requested_, for
    referenceKey, opposite, compatibleMassQ, physicalQ, ownQ,
    choose, cache = <||>, infer, rewrite, transformed, physicalDenominators = {},
    protectedReferences, original = expr, pairChannels, bracketReferenceData,
-   choiceGroups = {}},
+   originalPropagatorKeys, auxiliaryPropagators, choiceGroups = {}},
   fail[message_] := Throw[<|"Status" -> "UNRESOLVED", "Expression" -> original,
     "Assignments" -> assignments, "Diagnostics" -> {message}|>, tag];
   Catch[
@@ -6625,6 +6716,8 @@ preparationReferences[expr_, rules_List, model_List, pairs_List, requested_, for
       fail["An Xi occurs outside a supported spinor chain."]];
     external = Sort[Cases[massRules, HoldPattern[Mass[i_Integer] -> _] :> i]];
     massless = Select[external, TrueQ[(Mass[#] /. massRules) == 0] &];
+    originalPropagatorKeys = DeleteMissing[residuePropagatorKey[#, external] & /@
+      DeleteDuplicates[Cases[expr, _PropDen, {0, Infinity}]]];
     If[TrueQ[shared] && choice === "Mixed",
       fail["Shared Mixed reference choices are not yet supported for Feynman diagrams; use Automatic, AllSpurious, AllPhysical, a cyclic choice, Xi, IndependentXi or None."]];
     If[TrueQ[shared] && requested === Automatic,
@@ -6737,8 +6830,11 @@ preparationReferences[expr_, rules_List, model_List, pairs_List, requested_, for
     If[choice =!= "IndependentXi" && !withProtectedPropagators[transformed,
         Function[body, FreeQ[body, Spinor["Xi", ___]]]],
       fail["A reference spinor could not be replaced in a supported chain."]];
+    auxiliaryPropagators = Select[DeleteDuplicates[Last /@ physicalDenominators],
+      !MemberQ[originalPropagatorKeys, residuePropagatorKey[#, external]] &];
     <|"Status" -> "COMPLETE", "Expression" -> transformed,
       "Assignments" -> assignments, "Choices" -> DeleteDuplicatesBy[choiceGroups, First[#]["Leg"] &],
+      "AuxiliaryPhysicalPropagators" -> auxiliaryPropagators,
       "Diagnostics" -> {}|>, tag]
 ];
 
@@ -6759,11 +6855,25 @@ preparationReferenceSelections[choices_List, limit_Integer] := Module[
       {j, Length[sizes]}]], indices]|>
 ];
 
-preparationReferenceTrial[expr_, rules_List, dotRules_List] := preparationReduceDots[
-  preparationSpinorProducts[preparationReduceDots[expr, dotRules], rules], dotRules];
+DownValues[preparationReferenceTrial] = {};
+preparationReferenceTrial[expr_, rules_List, dotRules_List, auxiliary_List : {}, conserve_ : False] :=
+  Module[{reduce, baseline, conserved, alternative},
+    reduce[value_] := preparationCancelReferencePoles[preparationReduceDots[
+      preparationSpinorProducts[preparationReduceDots[value, dotRules], rules], dotRules],
+      rules, auxiliary];
+    baseline = reduce[expr];
+    If[!TrueQ[conserve], Return[baseline]];
+    conserved = preparationConservedMomentumChains[expr, rules, True];
+    If[conserved === expr, Return[baseline]];
+    alternative = reduce[conserved];
+    If[residueFiniteQ[alternative] &&
+        preparationBetterQ[preparationRank[alternative], preparationRank[baseline]],
+      alternative, baseline]
+  ];
 
+DownValues[preparationReferenceSearch] = {};
 preparationReferenceSearch[expr_, rules_List, model_List, pairs_List, requested_,
-    limit_Integer, seconds_, dotRules_List, progress_, shared_ : False] := Module[
+    limit_Integer, seconds_, dotRules_List, progress_, shared_ : False, conserve_ : False] := Module[
   {baseline, plan, selections, available, best, alternatives = {}, cache = <||>,
    started = AbsoluteTime[], tried = 0, completed = 0, value, row,
    remaining, trialSeconds, outcome, timedOut = False, stop, search, diagnostics = {},
@@ -6788,7 +6898,8 @@ preparationReferenceSearch[expr_, rules_List, model_List, pairs_List, requested_
         If[report["Status"] =!= "COMPLETE", Return[$Failed]];
         cacheKey = With[{body = report["Expression"]}, HoldComplete[body]];
         reduced = If[KeyExistsQ[cache, cacheKey], cache[cacheKey],
-          preparationReferenceTrial[report["Expression"], rules, dotRules]];
+          preparationReferenceTrial[report["Expression"], rules, dotRules,
+            Lookup[report, "AuxiliaryPhysicalPropagators", {}], conserve]];
         If[!residueFiniteQ[reduced], Return[$Failed]];
         AssociateTo[cache, cacheKey -> reduced];
         rank = preparationRank[reduced];
@@ -6880,7 +6991,7 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
     stage = "ReduceSpinContractions";
     before = expression;
     after = preparationNumerators[expression,
-      Function[num, ReduceSpinContractions[num] /. rules]];
+      Function[num, preparationReplaceMasses[ReduceSpinContractions[num], rules]]];
     If[!residueFiniteQ[after], invalid = True; Throw[False, failureTag]];
     expression = after;
     AppendTo[reductions, <|"Operation" -> stage, "Before" -> before,
@@ -6901,7 +7012,7 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
             "Elapsed" -> AbsoluteTime[] - started,
             "Complexity" -> First[preparationRank[expression]],
             "Terms" -> preparationRank[expression][[2]]|>, KeyDrop[update, "BestReference"]]]],
-      kind === "FeynmanDiagram"];
+      kind === "FeynmanDiagram", options["MomentumConservation"]];
     If[!AssociationQ[referenceReport] || referenceReport["Status"] =!= "COMPLETE",
       referenceFailure = True;
       diagnostics = Join[diagnostics, Lookup[referenceReport, "Diagnostics", {
@@ -6916,6 +7027,22 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
       "After" -> expression, "InternalOnShellIdentity" -> False,
       "ReferenceChoice" -> options["ReferenceSpinors"]|>];
     event[stage];
+    If[KeyExistsQ[referenceReport, "ReducedExpression"] ||
+        TrueQ[options["MomentumConservation"]],
+      stage = If[KeyExistsQ[referenceReport, "ReducedExpression"],
+        "RetainedReferenceTrial", "CompareConservedMomentumRoutes"];
+      before = expression;
+      after = If[KeyExistsQ[referenceReport, "ReducedExpression"],
+        referenceReport["ReducedExpression"],
+        preparationReferenceTrial[expression, rules, dotRules,
+          Lookup[referenceReport, "AuxiliaryPhysicalPropagators", {}], True]];
+      If[!residueFiniteQ[after], invalid = True; Throw[False, failureTag]];
+      expression = after;
+      AppendTo[reductions, <|"Operation" -> stage, "Before" -> before,
+        "After" -> expression, "InternalOnShellIdentity" -> TrueQ[options["InternalOnShell"]],
+        "OnShellChannels" -> channels, "OnShellDotReplacements" -> dotRules,
+        "MomentumConservation" -> TrueQ[options["MomentumConservation"]]|>];
+      event[stage]];
     reduceInvariants["BeforeSpinorProducts"];
     stage = "ReduceSpinorProducts";
     before = expression;
@@ -6926,10 +7053,19 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
       "After" -> expression, "InternalOnShellIdentity" -> False|>];
     event[stage];
     reduceInvariants["AfterSpinorProducts"];
+    stage = "CancelAuxiliaryReferencePoles";
+    before = expression;
+    after = preparationCancelReferencePoles[expression, rules,
+      Lookup[referenceReport, "AuxiliaryPhysicalPropagators", {}]];
+    If[!residueFiniteQ[after], invalid = True; Throw[False, failureTag]];
+    expression = after;
+    AppendTo[reductions, <|"Operation" -> stage, "Before" -> before,
+      "After" -> expression, "InternalOnShellIdentity" -> False|>];
+    event[stage];
     stage = "IdentitySearch";
     Do[
       after = preparationSpinorProducts[preparationNumerators[expression,
-        Function[num, canonicalAmplitude[num, rules]]], rules];
+        Function[num, canonicalChains[preparationReplaceMasses[num, rules]]]], rules];
       If[!residueFiniteQ[after], invalid = True; Throw[False, failureTag]];
       expression = after;
       rank = preparationRank[expression]; best = expression; bestRank = rank; bestEdit = None;
@@ -6947,6 +7083,8 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
           preparationNumerators[expression - candidate["Subtract"] + candidate["Insert"], canonicalChains]];
         next = preparationSpinorProducts[next, rules];
         next = preparationReduceDots[next, dotRules];
+        next = preparationCancelReferencePoles[next, rules,
+          Lookup[referenceReport, "AuxiliaryPhysicalPropagators", {}]];
         If[!residueFiniteQ[next], Continue[]];
         If[preparationBetterQ[preparationRank[next], bestRank],
           best = next; bestRank = preparationRank[next]; bestEdit = candidate],
@@ -6963,7 +7101,8 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
     True,
     options["TimeConstraint"], False], failureTag];
   If[!TrueQ[outcome] && MemberQ[{"ReferenceSpinors", "InternalInvariantReduction",
-      "ReduceSpinorProducts"}, stage] && AssociationQ[referenceFallback],
+      "RetainedReferenceTrial", "CompareConservedMomentumRoutes", "ReduceSpinorProducts",
+      "CancelAuxiliaryReferencePoles"}, stage] && AssociationQ[referenceFallback],
     referenceReport = referenceFallback;
     expression = referenceFallback["ReducedExpression"];
     AppendTo[reductions, <|"Operation" -> "RetainedReferenceTrial", "Before" -> referenceInput,

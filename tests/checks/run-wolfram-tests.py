@@ -13,7 +13,7 @@ import sys
 TEST_SUITES = (
     "legacy-package-tests.wl", "legacy-algebra-tests.wl",
     "legacy-transform-tests.wl", "legacy-model-tests.wl",
-    "spinor-identity-tests.wl", "diagram-tests.wl",
+    "spinor-identity-tests.wl", "thesis-preparation-tests.wl", "diagram-tests.wl",
     "simplification-path-tests.wl", "physical-residue-tests.wl",
     "spurious-pole-tests.wl", "qed-five-point-simplification-tests.wl",
     "high-energy-tests.wl", "reference-independence-tests.wl",

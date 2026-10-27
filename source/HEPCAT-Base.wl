@@ -712,15 +712,98 @@ rspCommonScalarContent[expression_Plus] := Module[{atoms},
 ];
 rspCommonScalarContent[expression_] := expression;
 
+(* A massless diagonal sandwich pair contracts in one direction: four chain
+   momentum insertions become two, with its scalar-product remainder retained. *)
+rspDiagonalSandwichData[chain_] := Module[{parts},
+  If[Head[chain] =!= SpinorChain || Length[chain] =!= 4, Return[Missing["NotDiagonalSandwich"]]];
+  parts = List @@ chain;
+  If[First[parts] =!= Last[parts] || Head[First[parts]] =!= Spinor ||
+      !MemberQ[{"Angle", "Square"}, rspSpinorType[First[parts]]] ||
+      !AllTrue[parts[[{2, 3}]], MatchQ[#, Mom[_Integer]] &],
+    Return[Missing["NotDiagonalSandwich"]]];
+  {First[parts], parts[[2]], parts[[3]]}
+];
+
+rspSandwichPair[left_, right_] := Module[
+  {a = rspDiagonalSandwichData[left], b = rspDiagonalSandwichData[right],
+   endpoint, other, leg, bracket, p, q, sign, tag = Unique["sandwichPair"]},
+  If[MissingQ[a] || MissingQ[b], Return[Missing["NoSandwichPair"]]];
+  endpoint = First[a]; other = First[b]; leg = rspSpinorLeg[endpoint];
+  If[endpoint[[1]] =!= "Helicity" || !IntegerQ[leg] || endpoint === other ||
+      rspSpinorType[endpoint] =!= rspSpinorType[other], Return[Missing["NoSandwichPair"]]];
+  bracket = SpinorChain[endpoint, other];
+  Catch[Do[
+    {p, q} = first[[2]];
+    If[MemberQ[{p, q}, Mom[leg]] || p === q, Continue[]];
+    If[second[[2]] === {p, Mom[leg]},
+      sign = first[[1]] second[[1]];
+      Throw[sign (2 MomProd[p[[1]], p[[1]]] MomProd[leg, q[[1]]] bracket^2 +
+        2 MomProd[leg, p[[1]]] bracket SpinorChain[other, p, q, endpoint]), tag]],
+    {first, {{1, a[[{2, 3}]]}, {-1, Reverse[a[[{2, 3}]]]}}},
+    {second, {{1, b[[{2, 3}]]}, {-1, Reverse[b[[{2, 3}]]]}}}];
+    Missing["NoSandwichPair"], tag]
+];
+
+rspSandwichExpansionCount[expression_] := Module[{count, limit = 4096},
+  count[value_Plus] := Min[limit + 1, Total[count /@ List @@ value]];
+  count[value_Times] := Fold[Min[limit + 1, #1 #2] &, 1, count /@ List @@ value];
+  count[Power[base_, exponent_Integer?Positive]] := With[{size = count[base]},
+    Which[size <= 1, size, size > limit || exponent >= IntegerLength[limit, size], limit + 1,
+      True, Min[limit + 1, size^exponent]]];
+  count[_] := 1;
+  count[expression]
+];
+
+rspSandwichProducts[expression_] := Module[
+  {steps = 0, limit, tag = Unique["sandwichContractions"], reduce, result},
+  (* The existing reducer may accept larger expressions. Only this additional
+     contraction pass is skipped when it would create too many branches. *)
+  If[rspSandwichExpansionCount[expression] > 4096, Return[expression]];
+  limit = Min[4096, Max[64, Count[expression, _SpinorChain, Infinity]]];
+  reduce[value_Plus] := Map[reduce, value];
+  reduce[value_List] := Map[reduce, value];
+  reduce[Power[base_, exponent_]] := Power[reduce[base], exponent];
+  reduce[value_Times] := Module[{factors = reduce /@ List @@ value, chains, positions, replacement, trial,
+      nodeTag = Unique["sandwichProduct"]},
+    chains = Map[Which[Head[#] === SpinorChain, {#, 1},
+        MatchQ[#, Power[_SpinorChain, _Integer?Positive]], {#[[1]], #[[2]]},
+        True, Missing["NotPositiveChain"]] &, factors];
+    positions = Select[Range[Length[chains]], ListQ[chains[[#]]] &];
+    Catch[Do[
+      replacement = rspSandwichPair[chains[[positions[[i]], 1]], chains[[positions[[j]], 1]]];
+      If[MissingQ[replacement],
+        replacement = rspSandwichPair[chains[[positions[[j]], 1]], chains[[positions[[i]], 1]]]];
+      If[!MissingQ[replacement],
+        steps++;
+        If[steps > limit, Throw[$Failed, tag]];
+        Do[factors[[position]] = If[chains[[position, 2]] === 1, 1,
+          chains[[position, 1]]^(chains[[position, 2]] - 1)],
+          {position, positions[[{i, j}]]}];
+        trial = (Times @@ factors) replacement;
+        If[rspSandwichExpansionCount[trial] > 4096, Throw[$Failed, tag]];
+        Throw[reduce[trial], nodeTag]],
+      {i, Length[positions]}, {j, i + 1, Length[positions]}];
+      Times @@ factors, nodeTag]
+  ];
+  reduce[value_] := value;
+  result = Catch[reduce[expression], tag];
+  If[result === $Failed || rspSandwichExpansionCount[result] > 4096, expression, result]
+];
+
+rspLegacyProducts[expression_] := Expand[Expand[Expand[
+    rspCommonScalarContent[expression] /. {SpinorChain[a___] :> SpinorChainReduced[a],
+      SpinorTrace[a___] :> SpinorTraceReduced[a]}]]] /.
+  {SpinorChainReduced[a___] :> SpinorChain[a], SpinorTraceReduced[a___] :> SpinorTrace[a]};
+
 ReduceSpinorProducts[amp_] := ConstructiveDiagrams`Private`withProtectedPropagators[amp,
-  Function[body, Module[{linear},
+  Function[body, Module[{linear, reduced, contracted},
     linear = body /. {c_SpinorChain :> ConstructiveDiagrams`Private`rspLinearChain[c],
       t_SpinorTrace :> ConstructiveDiagrams`Private`rspLinearTrace[t]};
-    (* Unit-coefficient Schouten rules also apply after a common scalar is removed. *)
-    linear = ConstructiveDiagrams`Private`rspCommonScalarContent[linear];
-    Expand[Expand[Expand[linear /. {SpinorChain[a___] :> SpinorChainReduced[a],
-      SpinorTrace[a___] :> SpinorTraceReduced[a]}]]] /.
-      {SpinorChainReduced[a___] :> SpinorChain[a], SpinorTraceReduced[a___] :> SpinorTrace[a]}
+    linear = ConstructiveDiagrams`Private`rspSandwichProducts[linear];
+    reduced = ConstructiveDiagrams`Private`rspLegacyProducts[linear];
+    contracted = ConstructiveDiagrams`Private`rspSandwichProducts[reduced];
+    If[contracted === reduced, reduced,
+      ConstructiveDiagrams`Private`rspLegacyProducts[contracted]]
   ]]];
 
 End[];
