@@ -80,6 +80,17 @@ process-dependent preparation and is disabled with
 The conserved and unmodified routes are compared after reducing the whole
 product. A locally shorter chain does not replace a better complete expression,
 and the main preparation stage retains the winning reduced reference trial.
+Ordinary reductions of individual chains are retained while the product is
+still factored, even when no conservation alternative improves that chain.
+This can expose a sandwich-pair contraction before expansion obscures it.
+
+The five-point all-positive electron/three-photon example in the thesis proposal,
+Eq. (90), exercises this ordering. Both admissible physical reference choices
+reduce to one term per diagram, with one two-momentum sandwich remaining. The
+particular reference choice in Eq. (90) is checked against its explicit formula,
+including photon-label permutations and the coupling normalization read from
+the model. These are diagram-local numerator representatives, not a claim that
+their sum already passes every factorization channel.
 
 Physical references can introduce additional `PropDen` factors. Preparation
 records which factors came from those references and may cancel them against

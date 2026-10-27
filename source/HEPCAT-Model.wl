@@ -6578,7 +6578,7 @@ preparationConservedMomentumChains[expr_, rules_List, conserve_] := Module[
   {external = externalIndices[rules], externalRules = preparationExternalRules[rules], reduce},
   If[!TrueQ[conserve] || Length[external] < 2, Return[expr]];
   reduce[value_] := Module[
-    {parts = List @@ value, slots, composites, baseline, best, bestRank, improved = False,
+    {parts = List @@ value, slots, composites, baseline, best, bestRank,
      indices, replacements, selected, trial, reduced, rank},
     If[Head[value] === SpinorChain && (Length[parts] < 2 ||
         rspSpinorType[First[parts]] === None || rspSpinorType[Last[parts]] === None ||
@@ -6609,8 +6609,10 @@ preparationConservedMomentumChains[expr_, rules_List, conserve_] := Module[
       If[!residueFiniteQ[reduced], Continue[]];
       rank = preparationRank[reduced];
       If[preparationBetterQ[rank, bestRank],
-        best = reduced; bestRank = rank; improved = True], {index, indices}];
-    If[improved, best, value]];
+        best = reduced; bestRank = rank], {index, indices}];
+    (* A normalized baseline can expose a product identity even when no
+       conservation alternative improves this individual chain. *)
+    best];
   preparationNumerators[expr, Function[num, num /. {
     chain_SpinorChain :> reduce[chain], trace_SpinorTrace :> reduce[trace]}]]
 ];

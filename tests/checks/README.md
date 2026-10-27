@@ -78,6 +78,8 @@ Eq. (101) in the thesis proposal, including particle-label permutations and
 the coupling normalization derived from the model. It separately checks
 reference-generated pole cancellation while original diagram propagators
 remain off shell and protected.
+The five-point examples also exercise Eq. (90), both physical-reference
+choices, and ordinary chain reduction before multiplying spectator factors.
 `PrepareAmplitudes` accepts both diagram pairs and compact factorization rows.
 Its channel tests check preserved row metadata and propagators, numerator-only
 selected-cut shell conditions, and protection of unrelated internal channels.

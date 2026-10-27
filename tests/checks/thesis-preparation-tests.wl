@@ -23,8 +23,9 @@ tpEvaluate[expression_, chart_] := Expand[
       ConstructiveDiagrams`Private`residueChartChain[chain, chart] /.
     MomProd[a_, b_] :> With[{p = chart["Momenta"][a], q = chart["Momenta"][b]},
       (Det[p + q] - Det[p] - Det[q])/2] /.
-    Power[Mass[1], exponent_Integer?EvenQ] :>
-      Det[chart["Momenta"][1]]^(exponent/2)];
+    Power[Mass[label_Integer], exponent_Integer?EvenQ] /;
+        KeyExistsQ[chart["Momenta"], label] :>
+      Det[chart["Momenta"][label]]^(exponent/2)];
 tpCharts = BlockRandom[SeedRandom[721093]; Table[
   tpP = RandomInteger[{-7, 7}, {2, 2}];
   tpQ = RandomInteger[{-7, 7}, {2, 2}];
@@ -314,7 +315,125 @@ check["diagram-local mass substitutions never act inside an unrelated inverse fa
   ConstructiveDiagrams`Private`preparationSpinorProducts[
     tpProtectedCompositeMass, tpKnownCompositeRules] === tpProtectedCompositeMass];
 
-If[checks =!= 150, AppendTo[failures, {"UnexpectedCheckCount", checks, 150}]];
+(* Eq. (90) is the opposite physical-reference family to Eq. (72).
+   The signed model vertex is f = -Sqrt[2] EE; the final coefficient is -f^3. *)
+tpFiveCuts[pair_] := Sort[DeleteDuplicates[First /@ DeleteMissing[
+  ConstructiveDiagrams`Private`residuePropagatorKey[#, Range[5]] & /@
+    DeleteDuplicates[Cases[Last[pair], _PropDen, Infinity]]]]];
+tpFiveSame[left_, right_] := TrueQ[Cancel[Together[
+  ConstructiveDiagrams`Private`canonicalChains[
+    ConstructiveDiagrams`Private`residueCanonicalPropagators[left - right, Range[5]]]]] === 0];
+tpFiveEq90 = -tpVertexFactor^3 tpMass *
+  SpinorChain[Spinor["Spin", "Angle", 1], Spinor["Spin", "Angle", 2]] *
+  tpBracket["Square", 4, 5]^2 tpChain["Square", 3, 1, 2, 3] /
+  Times @@ (PropDen[Mom[Multiparticle @@ #], tpMass] & /@
+    {{1, 3}, {2, 3}, {2, 4}, {2, 5}});
+tpFivePhysical = TimeConstrained[PrepareAmplitudes[tpFiveRaw, tpModel,
+  "ReferenceSpinors" -> "AllPhysical", "ProgressReporting" -> False], 90, $TimedOut];
+check["five-point AllPhysical keeps the ordinary amplitude-pair output by default",
+  ListQ[tpFivePhysical] && Length[tpFivePhysical] === 6 &&
+    AllTrue[tpFivePhysical, MatchQ[#, {_List, _}] &]];
+Do[
+  check[{"every default five-point physical diagram is one term with one momentum sandwich", tpIndex},
+    ListQ[tpFivePhysical] && Length[tpFivePhysical] === 6 &&
+      With[{expression = Last[tpFivePhysical[[tpIndex]]]},
+        expression =!= 0 && Head[expression] =!= Plus && FreeQ[expression, _Mass | Spinor["Xi", ___]] &&
+          Count[Cases[expression, _SpinorChain, Infinity], _Mom, Infinity] === 2 &&
+          Length[tpFiveCuts[tpFivePhysical[[tpIndex]]]] === 4 &&
+          ContainsAll[tpFiveCuts[tpFivePhysical[[tpIndex]]], tpFiveCuts[tpFiveRaw[[tpIndex]]]]]],
+  {tpIndex, 6}];
+
+Do[
+  tpFivePair = tpFiveRaw[[tpIndex]];
+  tpFiveContracted = ReduceSpinContractions[Last[tpFivePair]] /. First[tpFivePair];
+  tpFiveReferenceBase = ConstructiveDiagrams`Private`preparationReferences[
+    tpFiveContracted, First[tpFivePair], tpModel, tpFiveRaw, "AllPhysical"];
+  tpFiveSelections = ConstructiveDiagrams`Private`preparationReferenceSelections[
+    tpFiveReferenceBase["Choices"], 64]["Selections"];
+  Do[
+    tpFiveReference = ConstructiveDiagrams`Private`preparationReferences[
+      tpFiveContracted, First[tpFivePair], tpModel, tpFiveRaw,
+      "AllPhysical", tpFiveSelections[[tpChoice]]];
+    tpFiveTrial = TimeConstrained[ConstructiveDiagrams`Private`preparationReferenceTrial[
+      tpFiveReference["Expression"], First[tpFivePair],
+      ConstructiveDiagrams`Private`preparationDotRules[First[tpFivePair], True],
+      tpFiveReference["AuxiliaryPhysicalPropagators"], True], 10, $TimedOut];
+    check[{"both admissible physical-reference choices produce a compact five-point diagram",
+        tpIndex, tpChoice},
+      Length[tpFiveSelections] === 2 && tpFiveTrial =!= $TimedOut && tpFiveTrial =!= 0 &&
+        Head[tpFiveTrial] =!= Plus && FreeQ[tpFiveTrial, _Mass | Spinor["Xi", ___]] &&
+        Count[Cases[tpFiveTrial, _SpinorChain, Infinity], _Mom, Infinity] === 2 &&
+        Length[tpFiveCuts[{First[tpFivePair], tpFiveTrial}]] === 4 &&
+        ContainsAll[tpFiveCuts[{First[tpFivePair], tpFiveTrial}], tpFiveCuts[tpFivePair]]],
+    {tpChoice, 2}],
+  {tpIndex, 6}];
+
+Do[
+  tpFiveWantedCuts = If[tpOrdering === "345", {{1, 3}, {2, 5}}, {{1, 3}, {2, 4}}];
+  tpFivePair = SelectFirst[tpFiveRaw, tpFiveCuts[#] === Sort[tpFiveWantedCuts] &];
+  tpFiveContracted = ReduceSpinContractions[Last[tpFivePair]] /. First[tpFivePair];
+  tpFiveTargets = If[tpOrdering === "345", {2, 2, 1}, {2, 1, 2}];
+  tpFiveForced = MapThread[<|"Leg" -> #1, "Mode" -> "AllPhysical", "Target" -> #2|> &,
+    {{3, 4, 5}, tpFiveTargets}];
+  tpFiveReference = ConstructiveDiagrams`Private`preparationReferences[
+    tpFiveContracted, First[tpFivePair], tpModel, tpFiveRaw, "AllPhysical", tpFiveForced];
+  tpFiveRawCoefficient = tpMass (tpFiveReference["Expression"] /.
+    {_SpinorChain -> 1, _PropDen -> 1});
+  check[{"the three-photon raw coefficient follows the actual signed cubic vertex", tpOrdering},
+    Expand[tpFiveRawCoefficient - tpVertexFactor^3] === 0];
+  Do[
+    tpFivePermutedPair = Fold[PermuteParticles,
+      {First[tpFivePair], tpFiveReference["Expression"]}, tpCycles];
+    tpFivePermutedAuxiliary = Fold[PermuteParticles,
+      tpFiveReference["AuxiliaryPhysicalPropagators"], tpCycles];
+    tpFivePermutedExpected = Fold[PermuteParticles, tpFiveEq90, tpCycles];
+    tpFiveTrial = TimeConstrained[ConstructiveDiagrams`Private`preparationReferenceTrial[
+      Last[tpFivePermutedPair], First[tpFivePermutedPair],
+      ConstructiveDiagrams`Private`preparationDotRules[First[tpFivePermutedPair], True],
+      tpFivePermutedAuxiliary, True], 10, $TimedOut];
+    check[{"both forced Eq90 routes and their typed permutations agree exactly", tpOrdering, tpCycles},
+      tpFiveTrial =!= $TimedOut && FreeQ[tpFiveTrial, _Mass | Spinor["Xi", ___]] &&
+        Head[tpFiveTrial] =!= Plus && tpFiveSame[tpFiveTrial, tpFivePermutedExpected]],
+    {tpCycles, {{}, {{3, 4}}, {{4, 5}}}}],
+  {tpOrdering, {"345", "354"}}];
+
+tpFiveOrdinaryPair = tpChain["Square", 4, 2, 3, 4] tpChain["Square", 3, 1, 2, 3];
+tpFiveOrdinaryReduced = ReduceSpinorProducts[tpFiveOrdinaryPair];
+check["the ordinary reversed Eq90 sandwich identity retains the selected-shell remainder",
+  !FreeQ[tpFiveOrdinaryReduced, MomProd[2, 3] | MomProd[3, 2]] &&
+    AllTrue[Take[tpCharts, 8], tpEvaluate[tpFiveOrdinaryPair - tpFiveOrdinaryReduced, #] === 0 &]];
+tpFiveZeroProduct = tpChain["Square", 3, 2, 2, 3] *
+  tpChain["Square", 4, 1, 2, 4] * tpBracket["Square", 3, 4];
+check["ordinary factored-chain cleanup removes a zero factor before product rewriting",
+  ReduceSpinorProducts[tpFiveZeroProduct] === 0];
+
+tpFiveFactored = SpinorChain[Spinor["Spin", "Angle", 1], Spinor["Spin", "Angle", 2]] *
+  tpChain["Square", 3, 1, 2, 3] *
+  SpinorChain[tpSpin["Square", 4], Mom[2], Mom[Multiparticle[2, 5]], tpSpin["Square", 4]] *
+  tpChain["Square", 5, 1, 2, 5];
+tpFiveFactoredReduced = ReduceSpinorProducts[tpFiveFactored];
+tpFiveOffCutCharts = BlockRandom[SeedRandom[721097]; Table[
+  tpShell[leg_] := Module[{a = RandomInteger[{1, 5}], b = RandomInteger[{-4, 4}],
+      c = RandomInteger[{-4, 4}]}, {{a, b}, {c, (1 + b c)/a}}];
+  tpMomenta = AssociationThread[{1, 2}, tpShell /@ {1, 2}];
+  tpAngles = AssociationThread[Range[5], Table[RandomInteger[{1, 5}, 2], {5}]];
+  tpSquares = AssociationThread[{3, 4, 5}, Table[RandomInteger[{-4, 4}, 2], {3}]];
+  Do[AssociateTo[tpSquares, tpLeg -> {{0, 1}, {-1, 0}} .
+      {{tpMomenta[tpLeg][[2, 2]], -tpMomenta[tpLeg][[1, 2]]},
+        {-tpMomenta[tpLeg][[2, 1]], tpMomenta[tpLeg][[1, 1]]}} . tpAngles[tpLeg]],
+    {tpLeg, {1, 2}}];
+  Do[AssociateTo[tpMomenta, tpLeg -> Outer[Times, tpAngles[tpLeg], tpSquares[tpLeg]]],
+    {tpLeg, {3, 4, 5}}];
+  <|"Momenta" -> tpMomenta, "Angle" -> tpAngles, "Square" -> tpSquares,
+    "PoleVariable" -> tpUnusedPole, "ReferenceSeed" -> 1|>, {6}]];
+check["ordinary per-factor cleanup exposes the compact Eq90 product without imposing an internal shell",
+  Head[tpFiveFactoredReduced] === Plus && Length[tpFiveFactoredReduced] <= 3 &&
+    Count[Cases[tpFiveFactoredReduced, _SpinorChain, Infinity], _Mom, Infinity] <= 8 &&
+    !FreeQ[tpFiveFactoredReduced, MomProd[2, 5] | MomProd[5, 2]] &&
+    ReduceSpinorProducts[tpFiveFactoredReduced] === tpFiveFactoredReduced &&
+    AllTrue[tpFiveOffCutCharts, tpEvaluate[tpFiveFactored - tpFiveFactoredReduced, #] === 0 &]];
+
+If[checks =!= 180, AppendTo[failures, {"UnexpectedCheckCount", checks, 180}]];
 Print[ToString[checks] <> " thesis-preparation checks; " <> ToString[Length[failures]] <> " failures."];
 If[failures =!= {}, Print[failures]];
 Print["HEPCAT_TEST_COMPLETED:thesis-preparation-tests.wl"];

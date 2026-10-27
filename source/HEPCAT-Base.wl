@@ -797,7 +797,9 @@ rspLegacyProducts[expression_] := Expand[Expand[Expand[
 
 ReduceSpinorProducts[amp_] := ConstructiveDiagrams`Private`withProtectedPropagators[amp,
   Function[body, Module[{linear, reduced, contracted},
-    linear = body /. {c_SpinorChain :> ConstructiveDiagrams`Private`rspLinearChain[c],
+    (* Reduce each chain before product rules can mix otherwise spectator factors. *)
+    linear = body /. {c_SpinorChain :> ConstructiveDiagrams`Private`rspLegacyProducts[
+        ConstructiveDiagrams`Private`rspLinearChain[c]],
       t_SpinorTrace :> ConstructiveDiagrams`Private`rspLinearTrace[t]};
     linear = ConstructiveDiagrams`Private`rspSandwichProducts[linear];
     reduced = ConstructiveDiagrams`Private`rspLegacyProducts[linear];
