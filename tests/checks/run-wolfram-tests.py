@@ -27,6 +27,8 @@ TEST_SUITES = (
     "preparation-remainders-tests.wl",
     "completed-amplitude-preparation-tests.wl",
     "final-amplitude-simplification-tests.wl",
+    "parallel-execution-tests.wl", "parallel-preparation-tests.wl",
+    "parallel-amplitude-check-tests.wl", "parallel-completion-tests.wl",
 )
 
 

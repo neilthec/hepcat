@@ -47,6 +47,37 @@ five-point representative is checked on two rational off-cut charts and all
 four coherent massive-spin components; no saved notebook or temporary cache
 is loaded by the suite.
 
+## Parallel Execution
+
+The four parallel suites require a licensed kernel that can launch and
+communicate with at least two local subkernels:
+
+```sh
+python3 tests/checks/run-wolfram-tests.py --timeout 600 \
+  --suite parallel-execution-tests.wl \
+  --suite parallel-preparation-tests.wl \
+  --suite parallel-amplitude-check-tests.wl \
+  --suite parallel-completion-tests.wl
+```
+
+They verify actual worker IDs rather than merely the presence of parallel
+options. Coverage includes ordered results, worker caps, nested serial fallback,
+retry after worker failure, caller random-state preservation, disjoint temporary
+coordinates, explicit model closures without user-global distribution, and
+preservation of an unrelated existing worker. Preparation compares real raw
+Feynman diagrams with one shared reference assignment and checks diagram/channel
+mass-rule scope. Checker tests compare exact seeded residues and every report
+category, including failed and opposite-sign examples. Completion compares exact
+fit equations, coherent-spin held-out samples, feedback and final amplitudes;
+expired deadlines remain unresolved. Coordinate names are compared up to bound
+variable renaming; numerical values, spin-polynomial coefficients, sample seeds,
+physical obligations and statuses are not weakened.
+
+The worker pool is local to each test's main kernel. The tests do not use the
+server or the interactive notebook kernel. A process that forbids local worker
+communication cannot run these parallel suites, even if serial Wolfram tests
+work. Ordinary package calls fall back to serial when startup is unavailable.
+
 ## Original Functionality
 
 These suites exercise the original tools directly, not through the newer

@@ -144,6 +144,42 @@ references remain unimplemented and report `PARTIAL` in details. An unavailable
 requested reference choice returns `Failure` in ordinary output rather than
 silently retaining the Xi spinors.
 
+## Parallel Calculations
+
+`PrepareAmplitudes`, `CompleteFactorization`, `CompleteHighEnergy`, and
+`CheckAmplitudes` accept `"Parallelization" -> Automatic` and
+`"MaxKernels" -> Automatic`. Automatic preparation dispatches independent
+items; small checker jobs stay serial, and short completion sample stages use
+parallelism after the package worker pool is warm. `"Parallelization" -> True`
+requests workers explicitly, `False` keeps the whole operation serial, and
+`"MaxKernels" -> 2` limits worker count. One worker means serial execution.
+The effective limit also respects available memory, processors and licensing.
+
+Workers load the saved local package sources and receive explicit, call-local
+model data. They do not inherit arbitrary definitions from `Global``. Custom
+kinematic maps stay on the calling kernel. Progress callbacks also run on the
+calling kernel. Existing user workers are left separate from the package pool.
+Use a separate test process that permits local worker communication; startup
+can fail in a restricted process even when the main Wolfram kernel is licensed.
+Failures to launch fall back to serial work and are recorded in details. If
+saved sources have changed since loading, reload HEPCAT before using workers;
+the package keeps the current call serial to avoid mixing code versions.
+
+Feynman references are chosen once for the complete input before dispatch and
+reused by every diagram. Never optimize Feynman references independently on
+workers. Constructive diagram and factorization-channel numerator conditions
+remain local to each item. Completion keeps the global simultaneous solve
+serial and parallelizes independent exact cut samples and held-out validation;
+this preserves sample seeds, all physical obligations, and the shared deadline.
+
+Ordinary amplitude and table outputs stay unchanged. Request preparation
+`"ReturnDetails" -> True` or checker `"Output" -> "Details"` to inspect the
+`"Execution"` entry. Completion details retain execution data in the sample
+constraint and validation reports. Cold worker startup adds several seconds;
+benchmark both cold and warm calls before claiming a speedup. Wall-clock-limited
+heuristic searches can stop at different valid intermediate forms under
+different loads; compare identical work with sufficient per-item budgets.
+
 ## Simplify, Explore, and Derive
 
 1. Establish the actual objective and supplied input: an expression, one diagram,
