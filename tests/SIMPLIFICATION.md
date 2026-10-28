@@ -76,6 +76,31 @@ supported. The contraction reduces the number of chain momentum insertions
 and has no inverse automatic rule. Step and prospective expansion limits
 retain the original product when the new pass would grow excessively.
 
+A massive Dirac--Schouten sum contraction also applies when the other
+endpoints are massive. For an external leg `a`,
+
+```text
+<a b> <r|p_a|s] - m_a <r b> [a s]
+  = <a r> <b|p_a|s].
+```
+
+Apply the two-dimensional Schouten identity to the angle rows,
+`<a b><r| = <r b><a| + <a r><b|`, then use the external Dirac equation
+`<a|p_a = m_a [a|`. The square/angle dual follows in the same way.
+There is no momentum-conservation or internal-shell assumption. Fixed
+explicit spin indices are retained.
+
+The reducer contracts matching sums in this direction, including bounded
+batches with a common mass term. Each accepted result strictly reduces both
+the completed term count and complexity. Inverse factors and physical
+propagators remain protected, and finite term, step and expansion limits
+bound the additional pass. Standalone reduction uses literal `Mass[a]`;
+preparation can match a model's mass parameter using the supplied external
+mass rules. A parameter from another model or an undeclared mass is never
+identified just because it has the same printed name. Preparation compares
+the complete candidate with its previous result and retains common scalar
+and denominator factors.
+
 Massive-endpoint bracket contractions expose the corresponding external
 Dirac remainder before a diagram's internal shell is used. For a massless
 leg `k` and an arbitrary reference spinor `r`, the ordinary identity is
@@ -849,6 +874,45 @@ checks the two identities by exact polynomial reduction on the external
 equal-mass kinematic variety. The two-block formula has fewer displayed
 groups but more expanded monomials, so it does not replace the default final
 expression. This bounded comparison is not a proof of global minimality.
+
+### Six-Point Six-Fermion Preparation
+
+For `e,E,e,E,e,E`, the cubic QED model generates 36 diagrams: six fermion
+matchings, three possible central fermion lines, and two attachment orders.
+Each diagram has two internal photon propagators and one internal electron
+propagator. There are no external photon references to choose.
+
+The direct contraction of the two sewn four-fermion currents gives 16 terms:
+eight mass terms and eight chains containing the composite internal momentum.
+Those composites hide additional momentum branches. The ordinary massive
+Dirac--Schouten sum contraction above removes matching mass contributions
+after external momentum reduction, using the correct leg's declared mass.
+
+| Form | Complexity | Expanded terms |
+| --- | ---: | ---: |
+| Spin contractions only, composite momentum retained | 128 | 16 |
+| Previous automatic preparation | 96 | 32 |
+| Improved automatic preparation | 88 | 24 |
+
+The improvement requires neither internal on-shell conditions nor momentum
+conservation. Preparation still supports those operations separately when
+enabled. The new sum contraction keeps fixed spin indices, model-local mass
+parameters and all three original propagators. It introduces no additional
+denominators. Common scalar and denominator factors are retained in the
+displayed result, so the smaller numerator does not duplicate a long common
+coefficient in every term. This is the best form found in these comparisons,
+not a proof that no shorter equivalent expression exists.
+
+A full automatic `"MaxSteps" -> 0` run prepared all 36 diagrams at 88/24
+in about 90 seconds, including all six identical-fermion matchings and their
+exchange signs. All three original propagators remained intact. Verification
+compared complete polynomials in six massive-spin doublets: 72 comparisons on
+the diagrams' own cuts and 72 independent ordinary-algebra comparisons away
+from the cuts, where total momentum was not constrained. Each comparison
+covers all 64 spin components, with two exact rational mass assignments.
+The off-cut tests kept every physical propagator nonzero. These checks
+validate the reduction; completion and validation of the summed amplitude
+remain separate steps.
 
 ### Automatic Physical and Spurious Checks
 

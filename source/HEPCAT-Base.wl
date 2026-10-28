@@ -1062,6 +1062,117 @@ rspLegacyProducts[expression_] := (Expand[Expand[Expand[
   {SpinorChainReduced[a___] :> SpinorChain[a], SpinorTraceReduced[a___] :> SpinorTrace[a]}) /.
     chain_SpinorChain :> rspHelicityScalarChain[chain];
 
+(* Contract a Dirac--Schouten pair only when its mass contribution already
+   occurs with the opposite coefficient. Optional mass data describe external
+   integer legs only; the ordinary public reducer supplies no model data. *)
+rspMassiveSchoutenSums[expression_, externalRules_List : {}] := Module[
+  {rules, protected, inverses, tokens, steps = 0, limit = 64,
+   tag = Unique["diracSchoutenSums"], supported, physical, normal, split,
+   reduce, contract, result},
+  rules = Cases[externalRules, rule : HoldPattern[Mass[_Integer] -> value_] /;
+    rspScalarQ[value] && FreeQ[value, _Mass] :> rule];
+  rules = First /@ Select[GatherBy[DeleteDuplicates[rules], First], Length[#] === 1 &];
+  If[FreeQ[expression, _Plus] || (rules === {} && FreeQ[expression, Mass[_Integer]]),
+    Return[expression]];
+  supported[spinor_] := MatchQ[spinor,
+    Spinor["Spin" | "Helicity" | "Xi", "Angle" | "Square", _] |
+    Spinor["Spin", "Upper" | "Lower", "Angle" | "Square", _, _]];
+  physical[spinor_] := MatchQ[spinor,
+    Spinor["Spin" | "Helicity", "Angle" | "Square", _Integer] |
+    Spinor["Spin", "Upper" | "Lower", "Angle" | "Square", _Integer, _]];
+  normal[value_] := Expand[value /. chain_SpinorChain :>
+      If[Length[chain] === 2 || (Length[chain] === 3 && MatchQ[chain[[2]], Mom[_Integer]]),
+        rspLegacyProducts[chain], chain]] /. rules;
+  split[term_] := Module[{factors = If[Head[term] === Times, List @@ term, {term}], scalar, monomial},
+    scalar = Times @@ Select[factors, rspScalarQ];
+    monomial = Times @@ Select[factors, !rspScalarQ[#] &];
+    {With[{value = monomial}, HoldComplete[value]], scalar, monomial}];
+  contract[value_Plus] := Module[
+    {current = normal[value], terms, parts, index, entries, groups, group, unique,
+     plans, plan, source, massIndex, trial, accepted, factors, chains, bare, momentum,
+     a, b, r, s, leg, mass, rest, sign, massTerm, remainder, massPart, positions},
+    If[rspSandwichExpansionCount[current] > 4096, Return[value]];
+    While[True,
+      If[steps >= limit, Throw[$Failed, tag]];
+      terms = If[Head[current] === Plus, List @@ current, {current}];
+      If[Length[terms] > 256, Return[If[steps === 0, value, current]]];
+      parts = split /@ terms;
+      index = AssociationThread[parts[[All, 1]], Range[Length[parts]]];
+      entries = {};
+      Do[
+        If[!FreeQ[terms[[t]], _SpinorHat | _MomHat | _SpinorEps | _SpinorZ | _MomQ], Continue[]];
+        factors = If[Head[terms[[t]]] === Times, List @@ terms[[t]], {terms[[t]]}];
+        chains = MapIndexed[Which[
+          Head[#1] === SpinorChain && Length[#1] >= 2, {#1, 1, First[#2]},
+          MatchQ[#1, Power[_SpinorChain, _Integer?Positive]] && Length[#1[[1]]] >= 2,
+            {#1[[1]], #1[[2]], First[#2]},
+          True, Missing["NotPositiveChain"]] &, factors];
+        chains = Select[chains, ListQ];
+        Do[
+          If[Length[bare[[1]]] =!= 2 || Length[momentum[[1]]] =!= 3 ||
+              !MatchQ[momentum[[1, 2]], Mom[_Integer]] ||
+              !AllTrue[Join[List @@ bare[[1]],
+                {momentum[[1, 1]], momentum[[1, -1]]}], supported],
+            Continue[]];
+          a = bare[[1, endpoint]]; b = bare[[1, 3 - endpoint]];
+          {r, s} = ends; leg = rspSpinorLeg[a];
+          If[!physical[a] || momentum[[1, 2]] =!= Mom[leg] ||
+              rspSpinorType[b] =!= rspSpinorType[a] ||
+              rspSpinorType[r] =!= rspSpinorType[a] ||
+              rspSpinorType[s] === rspSpinorType[a], Continue[]];
+          rest = factors;
+          Do[rest[[record[[3]]]] = If[record[[2]] === 1, 1,
+            record[[1]]^(record[[2]] - 1)], {record, {bare, momentum}}];
+          rest = Times @@ rest; sign = If[endpoint === 1, 1, -1];
+          mass = If[a[[1]] === "Helicity", 0, Mass[leg] /. rules];
+          massTerm = normal[sign rest mass SpinorChain[r, b] SpinorChain[rspFlipSpinor[a], s]];
+          If[massTerm === 0 || Head[massTerm] === Plus, Continue[]];
+          massPart = split[massTerm]; massIndex = Lookup[index, First[massPart], Missing["AbsentMassTerm"]];
+          If[MissingQ[massIndex] || massIndex === t, Continue[]];
+          remainder = normal[sign rest SpinorChain[a, r] SpinorChain[b, Mom[leg], s]];
+          AppendTo[entries, {t, massIndex, massPart[[2]], remainder}];
+          If[Length[entries] > 4096, Throw[$Failed, tag]],
+          {bare, chains}, {momentum, chains}, {endpoint, 2},
+          {ends, {{momentum[[1, 1]], momentum[[1, -1]]},
+            {momentum[[1, -1]], momentum[[1, 1]]}}}],
+        {t, Length[terms]}];
+      entries = DeleteDuplicates[entries];
+      groups = GatherBy[entries, #[[2]] &]; accepted = False;
+      Do[
+        unique = DeleteDuplicatesBy[group, First];
+        plans = DeleteDuplicates[Join[{unique}, List /@ Take[unique, UpTo[12]],
+          Subsets[Take[unique, UpTo[12]], {2}]]];
+        Do[
+          source = plan[[All, 1]]; massIndex = plan[[1, 2]];
+          If[MemberQ[source, massIndex] ||
+              !TrueQ[Expand[parts[[massIndex, 2]] + Total[plan[[All, 3]]]] === 0], Continue[]];
+          trial = normal[current - Total[terms[[source]]] - terms[[massIndex]] + Total[plan[[All, 4]]]];
+          If[rspSandwichExpansionCount[trial] > 4096, Continue[]];
+          If[Length[If[Head[trial] === Plus, List @@ trial, {trial}]] < Length[terms] &&
+              expressionComplexity[trial] < expressionComplexity[current],
+            current = trial; steps++; accepted = True; Break[]],
+          {plan, plans}];
+        If[accepted, Break[]], {group, groups}];
+      If[!accepted, Break[]]];
+    If[current === normal[value], value, current]
+  ];
+  reduce[value_Plus] := contract[Map[reduce, value]];
+  reduce[value_Times] := Map[reduce, value];
+  reduce[value_List] := Map[reduce, value];
+  reduce[Power[base_, exponent_Integer?Positive]] := Power[reduce[base], exponent];
+  reduce[value_] := value;
+  If[rspSandwichExpansionCount[expression] > 4096 || !FreeQ[expression,
+      Power[base_, exponent_Integer] /; exponent > 64 && !FreeQ[base, _SpinorChain | _SpinorTrace]],
+    Return[expression]];
+  withProtectedPropagators[expression, Function[body,
+    inverses = DeleteDuplicates[Cases[{body}, power : Power[_, exponent_] /;
+      !TrueQ[exponent >= 0], Infinity]];
+    tokens = Table[Unique["diracSchoutenInverse"], {Length[inverses]}];
+    protected = body /. Thread[inverses -> tokens];
+    result = Catch[reduce[protected], tag];
+    If[result === $Failed, body, result /. Thread[tokens -> inverses]]]]
+];
+
 ReduceSpinorProducts[amp_] := ConstructiveDiagrams`Private`withProtectedPropagators[amp,
   Function[body, Module[{linear, reduced, contracted},
     (* Reduce each chain before product rules can mix otherwise spectator factors. *)
@@ -1072,8 +1183,9 @@ ReduceSpinorProducts[amp_] := ConstructiveDiagrams`Private`withProtectedPropagat
     linear = ConstructiveDiagrams`Private`rspSandwichProducts[linear];
     reduced = ConstructiveDiagrams`Private`rspLegacyProducts[linear];
     contracted = ConstructiveDiagrams`Private`rspSandwichProducts[reduced];
-    If[contracted === reduced, reduced,
-      ConstructiveDiagrams`Private`rspLegacyProducts[contracted]]
+    reduced = If[contracted === reduced, reduced,
+      ConstructiveDiagrams`Private`rspLegacyProducts[contracted]];
+    ConstructiveDiagrams`Private`rspMassiveSchoutenSums[reduced]
   ]]];
 
 End[];

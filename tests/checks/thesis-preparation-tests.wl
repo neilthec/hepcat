@@ -1227,7 +1227,186 @@ check["normal-budget alternating four-photon preparation retains its established
     ContainsAll[DeleteDuplicates[Cases[tpBalancedExpression, _PropDen, Infinity]], tpBalancedProps] &&
     Hash[tpBalancedPair, "SHA256"] === tpBalancedHash && And @@ Flatten[tpBalancedCertificate]];
 
-If[checks =!= 422, AppendTo[failures, {"UnexpectedCheckCount", checks, 422}]];
+(* ::Section:: *)
+(* Six massive external fermions: two locally sewn vector currents.
+   Each chart has six independent two-component spinors, so equality of the
+   resulting polynomial checks all 64 spin components without a spin sum. *)
+(* Independent rational three-cut charts for the six-fermion QED tree. *)
+tpSFAdj[p_] := {{p[[2,2]],-p[[1,2]]},{-p[[2,1]],p[[1,1]]}};
+tpSFJ={{0,-1},{1,0}};tpSFEps=-tpSFJ;
+tpSFLineData[diagram_] := Module[
+ {lines,graph=diagram["Graph"],external=diagram["ExternalParticles"],paths,
+  massive,centralIndex,central,vertices,outer,photon,otherVertex,indices},
+ lines=Map[If[external[[First[#]]]==="e",#,Reverse[#]]&,
+   ConstructiveDiagrams`diagramFermionLines[diagram]];
+ paths=FindShortestPath[graph,First[#],Last[#]]& /@ lines;
+ massive=SelectFirst[Keys[diagram["Propagators"]],diagram["Propagators"][#]["Spin2"]===1&];
+ centralIndex=SelectFirst[Range[3],ContainsAll[paths[[#]],List@@massive]&];
+ central=lines[[centralIndex]];vertices=paths[[centralIndex,{2,-2}]];
+ indices=Table[
+   photon=SelectFirst[Keys[diagram["Propagators"]],
+     diagram["Propagators"][#]["Spin2"]===2 && MemberQ[List@@#,vertex]&];
+   otherVertex=First[DeleteCases[List@@photon,vertex]];
+   SelectFirst[DeleteCases[Range[3],centralIndex],MemberQ[paths[[#]],otherVertex]&],
+   {vertex,vertices}];
+ <|"CentralLine"->central,"OuterLines"->lines[[indices]],"Lines"->lines|>
+];
+tpSFOwnChart[diagram_,mass_,sample_Integer,spins_List:{}] := Module[
+ {top=tpSFLineData[diagram],p,q,photons,angles=<||>,squares=<||>,momenta=<||>,
+  left,right,lambda,tilde,split,mat,u,v,w,z,den,prop,conditions,tag=Unique["tpSFSplit"]},
+ p={{sample+1,sample-2},{sample+2,(mass^2+(sample-2)(sample+2))/(sample+1)}};
+ photons=Table[
+   lambda=If[j===1,{1,sample+1},{sample+2,1}];
+   tilde=If[j===1,sample+1,-sample-3] ({-#[[2]],#[[1]]}&)[tpSFAdj[p].lambda];
+   Outer[Times,lambda,tilde],{j,2}];
+ AssociateTo[momenta,top["CentralLine"][[1]]->p-photons[[1]]];
+ AssociateTo[momenta,top["CentralLine"][[2]]->-p-photons[[2]]];
+ split[null_,j_] := Catch[
+   Do[
+     u=sample+2j+2+offset;v=sample^2+3j+4+offset^2;
+     den=u null[[1,2]]-null[[1,1]]v;
+     If[den===0 || null[[1,1]]===0,Continue[]];
+     w=(null[[1,1]]mass^2-u v null[[2,1]]+u^2 null[[2,2]])/den;
+     z=(v null[[2,1]]+w null[[1,2]]-u null[[2,2]])/null[[1,1]];
+     mat={{u,v},{w,z}};
+     If[Det[mat]===mass^2 && Det[null-mat]===mass^2,Throw[mat,tag]],
+     {offset,0,8}];Failure["CannotSplitNullCurrent",<||>],tag];
+ Do[
+   mat=split[photons[[j]],j];
+   If[FailureQ[mat],Return[mat]];
+   AssociateTo[momenta,top["OuterLines"][[j,1]]->mat];
+   AssociateTo[momenta,top["OuterLines"][[j,2]]->photons[[j]]-mat],{j,2}];
+ Do[
+   lambda=If[Length[spins]===6,UnitVector[2,spins[[leg]]],{tpSFSpin[leg,1],tpSFSpin[leg,2]}];
+   AssociateTo[angles,leg->lambda];
+   AssociateTo[squares,leg->tpSFEps.tpSFAdj[momenta[leg]].lambda/mass],{leg,6}];
+ conditions=Join[{Total[Values[momenta]]===ConstantArray[0,{2,2}]},
+   Table[Det[momenta[leg]]===mass^2,{leg,6}],
+   Table[Det[Total[Lookup[momenta,List@@prop["Index"]]]]===
+       If[prop["Spin2"]===1,mass^2,0],{prop,Values[diagram["Propagators"]]}]];
+ <|"Momenta"->momenta,"Angle"->angles,"Square"->squares,"MassValue"->mass,
+   "Conditions"->conditions,"Topology"->top|>
+];
+tpSFMatrix[label_Integer,chart_]:=chart["Momenta"][label];
+tpSFMatrix[Multiparticle[legs__Integer],chart_]:=Total[tpSFMatrix[#,chart]& /@ {legs}];
+tpSFVector[Spinor[_,kind_,leg_Integer],chart_]:=chart[kind][leg];
+tpSFChain[chain_SpinorChain,chart_] := Module[{parts=List@@chain,kind,row,right,matrix},
+ kind=parts[[1,2]];row=tpSFVector[First[parts],chart];If[kind==="Angle",row=row.tpSFJ];
+ Do[matrix=vector/.Mom[label_]:>tpSFMatrix[label,chart];
+   row=row.If[kind==="Angle",matrix,tpSFAdj[matrix]];
+   kind=If[kind==="Angle","Square","Angle"],{vector,Rest[Most[parts]]}];
+ right=tpSFVector[Last[parts],chart];If[Last[parts][[2]]==="Square",right=tpSFEps.right];row.right];
+tpSFOwnValue[expression_,chart_,props_List,parameterRules_List] := Together[
+ expression/.Thread[props->ConstantArray[1,Length[props]]]/.parameterRules/.
+   denominator_PropDen:>(Det[tpSFMatrix[denominator[[1,1]],chart]]-denominator[[2]]^2)/.
+   chain_SpinorChain:>tpSFChain[chain,chart]/.
+   MomProd[a_,b_]:>(Det[tpSFMatrix[a,chart]+tpSFMatrix[b,chart]]-
+     Det[tpSFMatrix[a,chart]]-Det[tpSFMatrix[b,chart]])/2];
+
+(* Independent external-shell points with no total-momentum or internal-cut
+   condition, for checking ordinary identities separately from preparation. *)
+tpSFOffcutChart[mass_,sample_Integer] := Module[
+ {momenta=<||>,angles=<||>,squares=<||>,u,v,w,p,angle},
+ Do[
+   u=sample+leg+1;v=sample-2leg;w=sample+leg^2;
+   p={{u,v},{w,(mass^2+v w)/u}};
+   angle={tpSFSpin[leg,1],tpSFSpin[leg,2]};
+   AssociateTo[momenta,leg->p];AssociateTo[angles,leg->angle];
+   AssociateTo[squares,leg->tpSFEps.tpSFAdj[p].angle/mass],{leg,6}];
+ <|"Momenta"->momenta,"Angle"->angles,"Square"->squares,
+   "MassValue"->mass,"Conditions"->Table[Det[momenta[leg]]===mass^2,{leg,6}],
+   "ConservesMomentum"->(Total[Values[momenta]]===ConstantArray[0,{2,2}])|>
+];
+
+tpSFParticles = {"e", "E", "e", "E", "e", "E"};
+tpSFDiagrams = CreateDiagrams[tpSFParticles, tpModel];
+tpSFRaw = diagramAmplitudes[tpSFDiagrams];
+tpSFRawHash = Hash[tpSFRaw, "SHA256"];
+tpSFTopology = tpSFLineData /@ tpSFDiagrams;
+tpSFSigns = ConstructiveDiagrams`diagramFermionSign /@ tpSFDiagrams;
+check["six-fermion fixtures cover all 36 diagrams and both matching signs",
+  Length[tpSFDiagrams] === 36 && Length[tpSFRaw] === 36 &&
+    Count[tpSFSigns, 1] === 18 && Count[tpSFSigns, -1] === 18];
+tpSFFirstMatching = Select[Range[Length[tpSFDiagrams]],
+  Sort[tpSFTopology[[#]]["Lines"]] === {{1, 2}, {3, 4}, {5, 6}} &];
+tpSFCentralGroups = GatherBy[tpSFFirstMatching, tpSFTopology[[#]]["CentralLine"] &];
+check["one six-fermion matching has both attachment orders on each central line",
+  Length[tpSFFirstMatching] === 6 && Length[tpSFCentralGroups] === 3 &&
+    Sort[Length /@ tpSFCentralGroups] === {2, 2, 2} &&
+    Length[DeleteDuplicates[KeyTake[tpSFTopology[[#]], {"CentralLine", "OuterLines"}] & /@
+      tpSFFirstMatching]] === 6];
+tpSFNegative = FirstPosition[tpSFSigns, -1][[1]];
+tpSFRepresentativeIndices = Join[First /@ tpSFCentralGroups, {tpSFNegative}];
+tpSFSelected = tpSFRaw[[tpSFRepresentativeIndices]];
+tpSFRSC = ConstructiveDiagrams`Private`preparationNumerators[Last[#],
+    Function[num, ConstructiveDiagrams`Private`preparationReplaceMasses[
+      ReduceSpinContractions[num], First[#]]]] & /@ tpSFRaw;
+tpSFPrepared = PrepareAmplitudes[tpSFSelected, tpModel,
+  "ReferenceSpinors" -> Automatic, "MaxSteps" -> 0, "TimeConstraint" -> 20,
+  "ProgressReporting" -> False, "ReturnDetails" -> True];
+Do[
+  tpSFActualIndex = tpSFRepresentativeIndices[[tpSFItem]];
+  tpSFPair = tpSFRaw[[tpSFActualIndex]];
+  tpSFRow = tpSFPrepared["DiagramReports"][[tpSFItem]];
+  tpSFOutput = tpSFRow["PreparedExpression"];
+  tpSFProps = DeleteDuplicates[Cases[Last[tpSFPair], _PropDen, Infinity]];
+  tpSFTerms = If[Head[Expand[tpSFOutput]] === Plus, List @@ Expand[tpSFOutput], {tpSFOutput}];
+  check[{"six-fermion preparation retains a compact complete numerator", tpSFActualIndex},
+    tpSFRow["Status"] === "PREPARED" && SpinorExpressionComplexity[tpSFOutput] <= 88 &&
+      Length[tpSFTerms] <= 24 && ConstructiveDiagrams`Private`residueFiniteQ[tpSFOutput] &&
+      FreeQ[tpSFOutput, _Mass | Spinor["Xi", ___] | _xFactor | _xTildeFactor |
+        Spinor[_, _, _Multiparticle] | Spinor[_, _, _, _Multiparticle, _]]];
+  check[{"six-fermion preparation keeps exactly its three original propagators", tpSFActualIndex},
+    Length[tpSFProps] === 3 &&
+      Sort[DeleteDuplicates[Cases[tpSFOutput, _PropDen, Infinity]]] === Sort[tpSFProps]];
+  tpSFCertificate = Table[
+    tpSFChart = tpSFOwnChart[tpSFDiagrams[[tpSFActualIndex]],
+      tpSFSample[[1]], tpSFSample[[2]], {}];
+    And @@ tpSFChart["Conditions"] &&
+      AllTrue[Range[6], (Together /@ (
+        tpSFChart["Momenta"][#].tpSFEps.tpSFChart["Square"][#] +
+          tpSFSample[[1]] tpSFChart["Angle"][#])) === {0, 0} &] &&
+      tpSFOwnValue[tpSFRSC[[tpSFActualIndex]] - tpSFOutput, tpSFChart, tpSFProps,
+        {tpMass -> tpSFSample[[1]], tpCharge -> 1}] === 0 &&
+      tpSFOwnValue[tpSFRSC[[tpSFActualIndex]], tpSFChart, tpSFProps,
+        {tpMass -> tpSFSample[[1]], tpCharge -> 1}] =!= 0,
+    {tpSFSample, {{1, 1}, {3/7, 2}}}];
+  check[{"six-fermion preparation has a nonvacuous independent 64-component three-cut certificate",
+      tpSFActualIndex}, And @@ tpSFCertificate],
+  {tpSFItem, Length[tpSFRepresentativeIndices]}];
+check["six-fermion preparation leaves the complete raw diagram list unchanged",
+  Hash[tpSFRaw, "SHA256"] === tpSFRawHash];
+
+(* Ordinary preparation must not borrow the declared internal photon/electron
+   cuts when disabled. This starts from the algebraic contracted numerator;
+   the comparison is independent of how the diagram was originally sewn. *)
+tpSFPolicyIndex = First[tpSFFirstMatching];
+tpSFPolicyRaw = tpSFRaw[[tpSFPolicyIndex]];
+tpSFPolicyPair = {First[tpSFPolicyRaw], tpSFRSC[[tpSFPolicyIndex]]};
+tpSFPolicyProps = DeleteDuplicates[Cases[Last[tpSFPolicyRaw], _PropDen, Infinity]];
+tpSFPolicyReport = PrepareAmplitudes[{tpSFPolicyPair}, tpModel,
+  "ReferenceSpinors" -> None, "InternalOnShell" -> False, "MomentumConservation" -> False,
+  "MaxSteps" -> 0, "TimeConstraint" -> 20, "ProgressReporting" -> False, "ReturnDetails" -> True];
+tpSFPolicyRow = First[tpSFPolicyReport["DiagramReports"]];
+tpSFOffcutCertificate = Table[
+  tpSFOffcut = tpSFOffcutChart[tpSFSample[[1]], tpSFSample[[2]]];
+  And @@ tpSFOffcut["Conditions"] && !tpSFOffcut["ConservesMomentum"] &&
+    AllTrue[tpSFPolicyProps, Together[Det[tpSFMatrix[#[[1, 1]], tpSFOffcut]] -
+      (#[[2]] /. tpMass -> tpSFSample[[1]])^2] =!= 0 &] &&
+    tpSFOwnValue[Last[tpSFPolicyPair] - tpSFPolicyRow["PreparedExpression"],
+      tpSFOffcut, tpSFPolicyProps, {tpMass -> tpSFSample[[1]], tpCharge -> 1}] === 0,
+  {tpSFSample, {{1, 1}, {3/7, 2}}}];
+check["disabled cut and conservation policies still allow ordinary six-fermion sum reduction",
+  tpSFPolicyRow["Status"] === "PREPARED" &&
+    SpinorExpressionComplexity[tpSFPolicyRow["PreparedExpression"]] <= 88 &&
+    tpSFPolicyRow["InternalOnShellChannels"] === {} &&
+    tpSFPolicyRow["InternalOnShellConditions"] === {} &&
+    tpSFPolicyRow["JointOnShellDotReplacements"] === {} && And @@ tpSFOffcutCertificate];
+check["ordinary six-fermion preparation retains protected propagators with cuts disabled",
+  Sort[DeleteDuplicates[Cases[tpSFPolicyRow["PreparedExpression"], _PropDen, Infinity]]] ===
+    Sort[tpSFPolicyProps]];
+
+If[checks =!= 439, AppendTo[failures, {"UnexpectedCheckCount", checks, 439}]];
 Print[ToString[checks] <> " thesis-preparation checks; " <> ToString[Length[failures]] <> " failures."];
 If[failures =!= {}, Print[failures]];
 Print["HEPCAT_TEST_COMPLETED:thesis-preparation-tests.wl"];

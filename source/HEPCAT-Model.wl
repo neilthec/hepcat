@@ -6497,10 +6497,21 @@ preparationReplaceMasses[expr_, rules_List] := Module[
 
 (* Ordinary spinor algebra also acts on auxiliary denominators. Only external
    mass replacements are global; diagram-local replacements stay in numerators. *)
-preparationSpinorProducts[expr_, rules_List] := withProtectedPropagators[
-  preparationNumerators[expr, Function[num, preparationReplaceMasses[num, rules]]],
-  Function[body, preparationNumerators[ReduceSpinorProducts[body],
-    Function[num, preparationReplaceMasses[num, rules]]] /. preparationExternalRules[rules]]];
+preparationSpinorProducts[expr_, rules_List] := Module[
+  {external = preparationExternalRules[rules], ordinary, candidate},
+  ordinary = withProtectedPropagators[
+    preparationNumerators[expr, Function[num, preparationReplaceMasses[num, rules]]],
+    Function[body, preparationNumerators[ReduceSpinorProducts[body],
+      Function[num, preparationReplaceMasses[num, rules]]] /. external]];
+  (* Model-local external masses can license an ordinary sum contraction after
+     normalization. Compare complete expressions with every inverse held opaque. *)
+  candidate = preparationProtectedDenominators[ordinary,
+    Function[rspMassiveSchoutenSums[#, external]]];
+  If[candidate =!= ordinary && residueFiniteQ[candidate],
+    candidate = preparationProtectedDenominators[candidate, rspCommonScalarContent]];
+  If[residueFiniteQ[candidate] &&
+      preparationBetterQ[preparationRank[candidate], preparationRank[ordinary]], candidate, ordinary]
+];
 
 (* Reduce complete factors without expanding or mixing their surrounding
    product. The ordinary whole-product reducer remains a competing route. *)

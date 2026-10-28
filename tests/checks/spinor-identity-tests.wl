@@ -1472,6 +1472,95 @@ check["the public adjacent-vector reduction is exact and idempotent",
   ReduceSpinorProducts[qsvReduced] === qsvReduced && AllTrue[qsvCharts,
     qsvValue[qsvFirst qsvLong - qsvReduced, #] === 0 &]];
 
+(* ::Section:: *)
+(* Directed Dirac--Schouten sums. Only a declared external Dirac mass can
+   cancel the mass term. The arbitrary Weyl charts impose no internal cut
+   and no momentum conservation. *)
+qdsReduce[expression_, massRules_List : {}] :=
+  ConstructiveDiagrams`Private`rspMassiveSchoutenSums[expression, massRules];
+qdsEndpoints[kind_] := Join[{Spinor["Spin", kind, 1]}, Flatten[Table[
+  Spinor["Spin", variance, kind, 1, spin],
+  {variance, {"Upper", "Lower"}}, {spin, {-1/2, 1/2}}]]];
+Do[
+  qdsB = Spinor["Xi", qdsKind, 1];
+  qdsR = Spinor["Xi", qdsKind, 77];
+  qdsS = Spinor["Helicity", qfiOther[qdsKind], 5];
+  Do[
+    qdsBracket = SpinorChain[qdsA, qdsB];
+    qdsMomentum = SpinorChain[qdsR, Mom[1], qdsS];
+    If[qdsReverseBracket, qdsBracket = -SpinorChain[qdsB, qdsA]];
+    If[qdsReverseChain, qdsMomentum = SpinorChain[qdsS, Mom[1], qdsR]];
+    qdsMassTerm = Mass[1] SpinorChain[qdsR, qdsB] SpinorChain[qfiFlip[qdsA], qdsS];
+    qdsInput = qdsBracket qdsMomentum - qdsMassTerm;
+    qdsReduced = qdsReduce[qdsInput];
+    check[{"directed Dirac--Schouten cancellation preserves chirality, index and orientations",
+        qdsKind, qdsA, qdsReverseBracket, qdsReverseChain},
+      Head[qdsReduced] =!= Plus && Count[qdsReduced, _Mom, Infinity] === 1 &&
+        AllTrue[qfiMassiveCharts, qfiValue[qdsInput - qdsReduced, #] === 0 &]];
+    check[{"directed Dirac--Schouten cancellation is idempotent", qdsKind, qdsA,
+        qdsReverseBracket, qdsReverseChain}, qdsReduce[qdsReduced] === qdsReduced],
+    {qdsA, qdsEndpoints[qdsKind]}, {qdsReverseBracket, {False, True}},
+    {qdsReverseChain, {False, True}}],
+  {qdsKind, {"Angle", "Square"}}];
+qdsA = Spinor["Spin", "Angle", 1];
+qdsB = Spinor["Xi", "Angle", 1];
+qdsR = Spinor["Xi", "Angle", 77];
+qdsS = Spinor["Helicity", "Square", 5];
+qdsLeading = SpinorChain[qdsA, qdsB] SpinorChain[qdsR, Mom[1], qdsS];
+qdsMassTerm = Mass[1] SpinorChain[qdsR, qdsB] SpinorChain[qfiFlip[qdsA], qdsS];
+qdsInput = qdsLeading - qdsMassTerm; qdsReduced = qdsReduce[qdsInput];
+qdsUnknown = qdsInput /. Mass[1] -> qdsUnknownMass;
+check["an unrelated coefficient cannot license external Dirac cancellation",
+  qdsReduce[qdsUnknown] === qdsUnknown];
+check["explicit external mass rules enable the same ordinary cancellation",
+  qdsReduce[qdsUnknown, {Mass[1] -> qdsUnknownMass}] === qdsReduced];
+check["composite mass data never supply an external Dirac mass",
+  qdsReduce[qdsUnknown, {Mass[Multiparticle[1, 2]] -> qdsUnknownMass}] === qdsUnknown];
+check["conflicting external mass data are ignored",
+  qdsReduce[qdsUnknown, {Mass[1] -> qdsUnknownMass, Mass[1] -> qdsOtherMass}] === qdsUnknown];
+check["an Xi with a matching integer identifier is not an external Dirac spinor",
+  qdsReduce[qdsInput /. qdsA -> Spinor["Xi", "Angle", 1]] ===
+    (qdsInput /. qdsA -> Spinor["Xi", "Angle", 1])];
+check["the chirality flip must retain the same explicit spin component",
+  With[{indexed = qdsInput /. {
+      qdsA -> Spinor["Spin", "Upper", "Angle", 1, -1/2],
+      qfiFlip[qdsA] -> Spinor["Spin", "Upper", "Square", 1, 1/2]}},
+    qdsReduce[indexed] === indexed]];
+check["a hatted operand does not trigger the ordinary Dirac cancellation",
+  qdsReduce[qdsInput /. qdsA -> SpinorHat["Spin", "Angle", 1]] ===
+    (qdsInput /. qdsA -> SpinorHat["Spin", "Angle", 1])];
+qdsPole = PropDen[Mom[Multiparticle[1, 3]], qdsPoleMass];
+check["Dirac sum reduction protects a non-propagator inverse operand",
+  qdsReduce[1/(2 + qdsInput)] === 1/(2 + qdsInput)];
+check["Dirac sum reduction preserves original propagators and protected inverses",
+  qdsReduce[qdsInput/(qdsPole (2 + qdsInput))] ===
+    qdsReduced/(qdsPole (2 + qdsInput))];
+qdsPower = 7 SpinorChain[qdsR, qdsB]^2 qdsInput;
+qdsPowerReduced = qdsReduce[qdsPower];
+check["Dirac sum cancellation supports positive powers and scalar spectators",
+  Expand[qdsPowerReduced - 7 SpinorChain[qdsR, qdsB]^2 qdsReduced] === 0 &&
+    qdsReduce[qdsPowerReduced] === qdsPowerReduced && AllTrue[qfiMassiveCharts,
+      qfiValue[qdsPower - qdsPowerReduced, #] === 0 &]];
+check["enormous spinor powers skip directed sum expansion",
+  qdsReduce[SpinorChain[qdsR, qdsB]^(10^9) qdsInput] ===
+    SpinorChain[qdsR, qdsB]^(10^9) qdsInput];
+qdsBatch = qdsLeading - SpinorChain[qdsA, qdsR] SpinorChain[qdsB, Mom[1], qdsS] -
+  2 qdsMassTerm;
+qdsBatchReduced = qdsReduce[qdsBatch];
+check["compatible source terms may cancel a doubled mass coefficient together",
+  Length[If[Head[Expand[qdsBatchReduced]] === Plus, List @@ Expand[qdsBatchReduced],
+      {qdsBatchReduced}]] < Length[List @@ Expand[qdsBatch]] &&
+    qdsReduce[qdsBatchReduced] === qdsBatchReduced && AllTrue[qfiMassiveCharts,
+      qfiValue[qdsBatch - qdsBatchReduced, #] === 0 &]];
+qdsPublic = ReduceSpinorProducts[qdsInput];
+check["public ordinary reduction contracts literal external masses without model state",
+  Head[qdsPublic] =!= Plus && ReduceSpinorProducts[qdsPublic] === qdsPublic &&
+    AllTrue[qfiMassiveCharts, qfiValue[qdsInput - qdsPublic, #] === 0 &]];
+check["directed sums do not invent internal on-shell information",
+  FreeQ[qdsReduced, Mass[_Multiparticle] | _MomProd] &&
+    qdsReduce[qdsInput /. Mom[1] -> Mom[Multiparticle[1, 3]]] ===
+      (qdsInput /. Mom[1] -> Mom[Multiparticle[1, 3]])];
+
 Print[<|"Checks" -> checks, "Failed" -> Length[failures], "Failures" -> failures|>];
 Print["HEPCAT_TEST_COMPLETED:spinor-identity-tests.wl"];
 Quit[If[failures === {}, 0, 1]];
