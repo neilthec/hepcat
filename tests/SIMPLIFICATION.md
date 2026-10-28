@@ -1203,6 +1203,96 @@ The same pair passes directly through `CompleteHighEnergy` and can then be
 prepared again. `CheckAmplitudes` accepts either the pair or its bare expression;
 with a bare expression it obtains the external masses from the supplied channels.
 
+### Simplifying a Verified Final Amplitude
+
+Keep only the external mass rules attached to a completed amplitude. For fast
+ordinary cleanup without changing its reference choice, use:
+
+```wolfram
+simplified = PrepareAmplitudes[completedAmplitude, factorizationModel,
+  "ReferenceSpinors" -> None, "MaxSteps" -> 0];
+CheckAmplitudes[simplified, channels, factorizationModel,
+  "FeynmanAmplitudes" -> preparedFeynman, "FeynmanModel" -> feynmanModel]
+```
+
+`MaxSteps -> 0` disables the broad identity-candidate search. It still permits
+ordinary reductions, the bounded conservation trials, and algebraic compaction.
+An external-only pair always has internal shells disabled, even if an internal
+propagator occurs in its expression. The original and best completed snapshots
+remain competitors throughout preparation.
+
+The ordinary reducer now normalizes repeated contractions once within a call
+and compares a factored rational-amplitude route with its distributed route.
+Before distribution, structural estimates bound both the number of terms and
+the expanded expression size. Large powers and long composite products retain
+their completed factored reduction instead of entering an uncontrolled expand.
+Bare spinor contractions retain the established canonical rules, including
+external Dirac equations and the explicit scalar remainders of sandwich
+identities. A bounded inverse-protected factor pass extracts shared spinor
+content. None of these operations uses momentum conservation or an internal
+shell in `ReduceSpinorProducts`.
+
+Final-amplitude preparation additionally tries sparse grouping by the physical
+propagators that terms share and collection of rational coefficients of spinor
+atoms. Propagators are independent off-shell quantities in this algebra. It may
+use their exact definitions, for example
+`2 MomProd[i,j] = PropDen[Mom[Multiparticle[i,j]],M] + M^2 - m_i^2 - m_j^2`,
+to cancel a denominator. This retains the propagator term; it is not the
+substitution `PropDen -> 0`. Inverse spinor factors also have a protected
+competing collection route. Prospective size limits, memory and time budgets
+retain a previously completed candidate when an optional route becomes costly.
+
+When conservation is enabled, another bounded trial changes only one-momentum
+spinor sandwiches, then uses declared external massless momenta to factor them.
+Longer momentum words, scalar invariants and inverse factors are preserved.
+This can expose cancellations missed by replacing a momentum everywhere at
+once. Scalar `Mom[... ]^2` factors are treated as Lorentz dot products before
+any whole-numerator conservation substitution; they never become commuting
+products of vector symbols. Complementary physical denominators are normalized
+only when conservation is enabled. The final compaction also examines the best
+completed checkpoint, so a later expansion cannot hide an earlier useful form.
+
+The rank still compares weighted expanded complexity, displayed additive
+blocks and `LeafCount`. Factoring can reduce storage and repeated work while
+leaving the weighted expanded complexity unchanged. These are separate gains;
+none of the bounded searches establishes a globally shortest formula. Local
+ranking results are reused for at most sixteen snapshots of limited size and
+are discarded when that preparation call ends.
+
+The following comparisons use the saved notebook completions and the verified
+six-point completion outputs as inputs, without replacing them by model formulas.
+Times measure preparation only
+on the development laptop and exclude package loading, Feynman generation and
+checking; they are measurements rather than runtime guarantees.
+
+| Process | Weighted complexity | Expression size (`LeafCount`) | Preparation |
+| --- | ---: | ---: | ---: |
+| `e,E,+,+,+` | 27 → 27 | 286 → 168 | 0.15 s |
+| `e,E,+,+,-` | 148 → 70 | 1687 → 591 | 2.38 s |
+| `e,E,E,e,+` | 296 → 232 | 2945 → 1981 | 2.35 s |
+| `e,E,+,+,+,+` | 108 → 108 | 1347 → 732 | 0.38 s |
+| `e,E,+,+,+,-` | 13953 → 13944 | 184111 → 80489 | 17.30 s |
+
+The five-point results passed fresh independent Feynman comparisons and all
+9, 9 and 11 checks, respectively. They also equal their saved inputs at two
+exact off-cut points covering every coherent massive-spin coefficient. The
+six-point forms passed 17 and 26 checks, respectively, against fresh sums of
+24 Feynman diagrams; the latter includes nine spurious-pole checks. All
+preparation internal-shell lists are empty. The mixed five-point route also
+has a symbolic proof using only external shells and total momentum conservation.
+
+The four QED four-point representatives and the six compact canonical
+five-point model expressions retain their original ranks. The all-positive
+spurious-pole form and its parity counterpart remain exactly unchanged at
+complexity 30 and 417 leaves. Valid inverse brackets are eligible incumbents;
+raw endpoint contractions and elementary inverse traces still require reduction.
+The existing mixed formula has complexity 71 but seven expanded
+terms, whereas the new complexity-70 form has twelve. The known radiation
+formula at complexity 160 is still smaller than the automatically obtained
+232 form. These are useful comparisons, not evidence of a global minimum.
+The balanced six-point recursion retains unresolved spurious diagnostics and
+is tested as a resource stress case, not included in the all-checks-pass table.
+
 With preparation reports, `"PreparationRemainders" -> Automatic` first tries
 the prepared structures and grouped remainders, after the inexpensive input
 normalization attempts. Each item's `"RemainderData"` retains the exact

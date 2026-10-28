@@ -651,7 +651,7 @@ res
 
 
 (* ::Input::Initialization:: *)
-ReduceSpinorProducts::usage = "ReduceSpinorProducts[expr] applies ordinary spinor algebra, multilinearity, chain reversal, Clifford contractions and external-particle mass identities. It does not infer momentum conservation or impose a composite internal momentum's mass shell. PropDen factors remain unchanged.";
+ReduceSpinorProducts::usage = "ReduceSpinorProducts[expr] applies ordinary spinor algebra, multilinearity, chain reversal, Clifford contractions and external-particle mass identities. Compact rational amplitudes retain a competing factored form, with bounded prospective expansion and inverse-protected factor extraction. Bare contractions retain their canonical rules and off-cut remainders. It does not infer momentum conservation or impose a composite internal momentum's mass shell. PropDen arguments remain unchanged.";
 SpinorChainReduced; SpinorTraceReduced;
 
 Begin["ConstructiveDiagrams`Private`"];
@@ -1173,20 +1173,150 @@ rspMassiveSchoutenSums[expression_, externalRules_List : {}] := Module[
     If[result === $Failed, body, result /. Thread[tokens -> inverses]]]]
 ];
 
-ReduceSpinorProducts[amp_] := ConstructiveDiagrams`Private`withProtectedPropagators[amp,
-  Function[body, Module[{linear, reduced, contracted},
-    (* Reduce each chain before product rules can mix otherwise spectator factors. *)
-    linear = ConstructiveDiagrams`Private`rspSandwichProducts[body, True];
-    linear = linear /. {c_SpinorChain :> ConstructiveDiagrams`Private`rspLegacyProducts[
-        ConstructiveDiagrams`Private`rspLinearChain[c]],
-      t_SpinorTrace :> ConstructiveDiagrams`Private`rspLinearTrace[t]};
-    linear = ConstructiveDiagrams`Private`rspSandwichProducts[linear];
-    reduced = ConstructiveDiagrams`Private`rspLegacyProducts[linear];
-    contracted = ConstructiveDiagrams`Private`rspSandwichProducts[reduced];
-    reduced = If[contracted === reduced, reduced,
-      ConstructiveDiagrams`Private`rspLegacyProducts[contracted]];
-    ConstructiveDiagrams`Private`rspMassiveSchoutenSums[reduced]
+(* Estimate distribution work without constructing Cartesian products. Inverse
+   factors and typed contractions remain atomic at this structural stage. *)
+rspExpansionProfile[expression_, termLimit_ : 4096, leafLimit_ : 24000] := Module[
+  {profile, overflow = {termLimit + 1, leafLimit + 1}, combine},
+  combine[{n_, size_}, {m_, other_}] := If[n m > termLimit ||
+      m size + n other + n m > leafLimit, overflow,
+    {n m, m size + n other + n m}];
+  profile[value_Plus] := Module[{parts = profile /@ (List @@ value)},
+    {Min[termLimit + 1, Total[parts[[All, 1]]]],
+      Min[leafLimit + 1, 1 + Total[parts[[All, 2]]]]}];
+  profile[value_Times] := Fold[combine, {1, 0}, profile /@ (List @@ value)];
+  profile[value : Power[base_, exponent_Integer?Positive]] := Module[{part = profile[base]},
+    If[First[part] === 1, Return[{1, Min[leafLimit + 1, LeafCount[value]]}]];
+    If[First[part] > termLimit || exponent >= IntegerLength[termLimit, First[part]],
+      overflow, Fold[combine, {1, 0}, ConstantArray[part, exponent]]]];
+  profile[value_] := {1, Min[leafLimit + 1, LeafCount[value]]};
+  profile[expression]
+];
+
+rspExpansionBudgetQ[expression_] := With[{profile = rspExpansionProfile[expression]},
+  profile[[1]] <= 4096 && profile[[2]] <= 24000];
+
+(* Algebraic factoring only: inverse factors are independent opaque atoms, so
+   this pass cannot combine physical poles or infer a momentum relation. *)
+rspLocalFactorContent[expression_] := Module[
+  {inverses, tokens, restore, reduce, protected, result, nodes = 0},
+  If[LeafCount[expression] > 24000 || FreeQ[expression, _Plus] ||
+      FreeQ[expression, _SpinorChain | _SpinorTrace] ||
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace],
+    Return[expression]];
+  inverses = DeleteDuplicates[Cases[{expression}, power : Power[_, exponent_] /;
+    !TrueQ[exponent >= 0], Infinity]];
+  tokens = Table[Unique["spinorFactorInverse"], {Length[inverses]}];
+  restore[value_] := value /. Thread[tokens -> inverses];
+  protected = expression /. Thread[inverses -> tokens];
+  reduce[value_Plus] := Module[{ordinary = Map[reduce, value], factored},
+    If[nodes >= 256 || !rspExpansionBudgetQ[ordinary], Return[ordinary]];
+    nodes++; factored = Factor[ordinary];
+    If[LeafCount[restore[factored]] < LeafCount[restore[ordinary]], factored, ordinary]];
+  reduce[value_Times] := Map[reduce, value];
+  reduce[Power[base_, exponent_Integer?Positive]] := Power[reduce[base], exponent];
+  reduce[value_] := value;
+  result = TimeConstrained[reduce[protected], 2, protected];
+  restore[result]
+];
+
+(* Normalize each distinct contraction once within this invocation. Surrounding
+   products remain factored; completed ordinary reductions survive later guards. *)
+rspContractionBudgetQ[node_] := Module[{choices, branches, parts = List @@ node},
+  If[Head[node] === SpinorTrace,
+    If[Length[node] > 8, Return[False]];
+    choices = rspLinearMomentumTerms /@ parts,
+    If[Length[parts] < 2, Return[True]];
+    choices = rspLinearMomentumTerms /@ Rest[Most[parts]]];
+  If[MemberQ[choices, $Failed], Return[True]];
+  branches = Times @@ (Length /@ choices);
+  branches <= 128 && branches LeafCount[node] <= 24000
+];
+rspNormalizeContraction[chain_SpinorChain] := If[rspContractionBudgetQ[chain],
+  rspLegacyProducts[rspLinearChain[chain]], chain];
+rspNormalizeContraction[trace_SpinorTrace] := If[rspContractionBudgetQ[trace],
+  rspLegacyProducts[rspLinearTrace[trace]], trace];
+
+rspFactoredContractions[body_, normalizer_] := Module[{nodes, replacements = {}, result},
+  nodes = SortBy[DeleteDuplicates[Cases[{body}, _SpinorChain | _SpinorTrace, Infinity]], LeafCount];
+  TimeConstrained[
+    Do[result = normalizer[node];
+      If[FreeQ[result, _TerminatedEvaluation | $Aborted | $Failed | Indeterminate |
+          ComplexInfinity | _DirectedInfinity], AppendTo[replacements, node -> result]],
+      {node, nodes}],
+    5, Null];
+  body /. Dispatch[replacements]
+];
+
+(* Do not retain a prettier original in place of a direct Dirac or Clifford
+   contraction. Mere orientation and distribution are representation choices. *)
+rspElementaryContractionQ[body_] := AnyTrue[Cases[{body}, _SpinorChain | _SpinorTrace, Infinity],
+  Function[node, Module[{parts = List @@ node, slots, endpoints},
+    If[Head[node] === SpinorTrace, Return[Length[node] <= 2]];
+    If[Length[parts] < 2, Return[False]];
+    slots = Rest[Most[parts]]; endpoints = parts[[{1, -1}]];
+    (Length[parts] === 2 && First[parts] === Last[parts]) ||
+      (slots =!= {} && (First[slots] === Mom[rspSpinorLeg[First[endpoints]]] ||
+        Last[slots] === Mom[rspSpinorLeg[Last[endpoints]]])) ||
+      AnyTrue[Partition[slots, 2, 1], MatchQ[First[#], _Mom | _MomHat] &&
+        First[#] === Last[#] &]
   ]]];
+
+rspProductReductionCandidates[body_, retainOriginal_ : False] := Module[
+  {factored, linear, reduced, contracted, normalize, legacy = Missing["DistributionBudget"]},
+  normalize[node_] := normalize[node] = rspNormalizeContraction[node];
+  factored = rspFactoredContractions[body, normalize];
+  (* The complete legacy route remains a competitor whenever its prospective
+     expansion is bounded. Large rational factorizations never enter it. *)
+  If[rspExpansionBudgetQ[factored] &&
+      AllTrue[DeleteDuplicates[Cases[{factored}, _SpinorChain | _SpinorTrace, Infinity]],
+        rspContractionBudgetQ],
+    legacy = TimeConstrained[
+      linear = rspSandwichProducts[body, True];
+      linear = rspFactoredContractions[linear, normalize];
+      linear = rspSandwichProducts[linear];
+      If[!rspExpansionBudgetQ[linear], Missing["DistributionBudget"],
+        reduced = rspLegacyProducts[linear];
+        contracted = rspSandwichProducts[reduced];
+        reduced = If[contracted === reduced, reduced, rspLegacyProducts[contracted]];
+        If[rspExpansionBudgetQ[reduced], rspMassiveSchoutenSums[reduced], reduced]],
+      5, Missing["DistributionBudget"]]];
+  If[!FreeQ[legacy, _TerminatedEvaluation | $Aborted | $Failed | Indeterminate |
+      ComplexInfinity | _DirectedInfinity], legacy = Missing["UnfinishedReduction"]];
+  If[MissingQ[legacy], Return[DeleteDuplicates[Join[{factored},
+    If[TrueQ[retainOriginal] && !FreeQ[body, _Plus], {body}, {}]]]]];
+  If[!TrueQ[retainOriginal] || FreeQ[body, _Plus], Return[{legacy}]];
+  DeleteDuplicates[Join[{legacy, factored},
+    If[!TrueQ[rspElementaryContractionQ[body]], {body}, {}]]]
+];
+
+rspBestReduction[candidates_List, factor_ : True] := Module[{best, rank, next, nextRank},
+  best = First[candidates];
+  rank[value_] := rank[value] = {expressionComplexity[value],
+    If[Head[value] === Plus, Length[value], If[value === 0, 0, 1]], LeafCount[value]};
+  Do[
+    If[rspExpansionBudgetQ[best] && rspExpansionBudgetQ[next],
+      If[OrderedQ[{rank[next], rank[best]}] && rank[next] =!= rank[best], best = next],
+      If[LeafCount[next] < LeafCount[best], best = next]],
+    {next, Rest[candidates]}];
+  If[!TrueQ[factor], Return[best]];
+  next = rspLocalFactorContent[best];
+  If[LeafCount[next] < LeafCount[best],
+    If[!rspExpansionBudgetQ[best] || !rspExpansionBudgetQ[next] ||
+        OrderedQ[{rank[next], rank[best]}], best = next]];
+  best
+];
+
+ReduceSpinorProducts[amp_] /; (Head[amp] === SpinorChain && Length[amp] <= 3) ||
+    (Head[amp] === SpinorTrace && Length[amp] <= 2) :=
+  ConstructiveDiagrams`Private`withProtectedPropagators[amp,
+    ConstructiveDiagrams`Private`rspNormalizeContraction];
+ReduceSpinorProducts[amp_] := Module[
+  {hasPropagators = !FreeQ[amp, _PropDen], factoredAmplitude},
+  factoredAmplitude = hasPropagators && !FreeQ[amp, _Plus];
+  ConstructiveDiagrams`Private`rspBestReduction[
+    ConstructiveDiagrams`Private`withProtectedPropagators[amp,
+      Function[body, ConstructiveDiagrams`Private`rspProductReductionCandidates[body,
+        factoredAmplitude]]], hasPropagators]];
 
 End[];
 

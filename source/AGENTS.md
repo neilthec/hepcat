@@ -500,6 +500,36 @@ protect all inverse factors; the subsequent ordinary whole-expression spinor
 reduction may simplify auxiliary denominators. Do not move this process-dependent search into
 `ReduceSpinorProducts` or install persistent momentum-conservation rules.
 
+For an already verified final amplitude, pass a single external-mass pair to
+`PrepareAmplitudes`, normally with `"ReferenceSpinors" -> None`. `"MaxSteps" -> 0`
+retains the fast ordinary cleanup and bounded final compaction while skipping
+the broad candidate search. Compare complexity, expanded terms and expression
+size separately. A factored representation can be substantially smaller without
+changing the expanded complexity score. Preserve a useful existing form if a
+normalization route makes it worse; do not claim a global minimum.
+
+Final cleanup can expose an existing physical denominator through its exact
+virtuality identity, retaining its nonzero propagator contribution. This is an
+ordinary off-cut identity, not an internal-shell substitution. Sparse Laurent
+content grouping and scalar coefficient collection may regroup or cancel those
+factors. No new pole or interaction is inferred. Single-insertion conservation
+trials change only one-momentum spinor sandwiches, using the declared external
+labels and null external masses; they leave longer words and inverse factors
+untouched. Normalize scalar momentum squares as Lorentz products before global
+conservation substitutions. The original and best completed snapshots remain
+available through the final cleanup. Ranking caches are bounded and local to
+one preparation call, never a process/model cache.
+
+The ordinary reducer has prospective distribution guards and a factored route
+for rational amplitudes. Preserve its established bare-contraction normal forms
+and explicit off-cut sandwich remainders. Do not replace resource guard failures
+with an expanded partial expression, a numerical fit, or an internal-shell rule.
+For a new simplification, prove its identity with independent spinors or exact
+external-only off-cut charts, then recheck physical/spurious/high-energy/reference
+conditions and an independent Feynman sum. Unresolved checker categories remain
+unresolved; the balanced six-point recursion is a resource stress case, not an
+all-checks-pass final formula merely because Feynman samples agree.
+
 Automatic completion first tries bounded input-derived proposals when the
 original seed fails: fit one constant on its complete pole-bearing part, then
 on a union of exact complete signed terms shared across separate diagram

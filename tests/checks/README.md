@@ -33,6 +33,20 @@ These include a live descendant-process timeout test. Three syntax-wrapper
 integration tests also run when a local Wolfram kernel is available; otherwise
 those three are explicitly skipped.
 
+`final-amplitude-simplification-tests.wl` covers bounded, factor-preserving
+reductions of completed amplitudes. A self-contained twelve-term QED six-point
+fixture checks exact rational regrouping, unchanged physical poles and scoped
+parameters, typed relabeling, explicit spin indices and idempotence. Independent
+two-component determinants check ordinary Schouten identities, and large
+factored products verify that expansion guards retain endpoint Dirac reductions
+without distributing exponentially many terms. Completed amplitude preparation
+uses external masses only; an existing propagator never supplies an internal
+numerator shell rule. Exact virtuality cancellation and Lorentz scalar squares
+are tested separately from numerator on-shell conditions. The saved mixed
+five-point representative is checked on two rational off-cut charts and all
+four coherent massive-spin components; no saved notebook or temporary cache
+is loaded by the suite.
+
 ## Original Functionality
 
 These suites exercise the original tools directly, not through the newer

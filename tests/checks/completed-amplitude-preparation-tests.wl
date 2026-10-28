@@ -10,6 +10,9 @@ cpZero[value_] := Together[value] === 0;
 cpModel = {{{"Scalar", "s", "s", 1, 0, 0, 0, 1, 1, "", ""}}, {}, {}, {}};
 cpExternal = {Mass[1] -> cpMassA, Mass[2] -> cpMassB, Mass[3] -> 0, Mass[4] -> 0};
 cpDen = PropDen[Mom[Multiparticle[1, 3]], cpMassA];
+(* The external masses make this exact off-cut definition D13=2 p1.p3.
+   It is not the diagram-local shell substitution p1.p3=0. *)
+cpExternalZero[value_] := cpZero[value /. MomProd[1, 3] -> cpDen/2];
 cpChain = SpinorChain[Spinor["Spin", "Angle", 2], Mom[1], Mom[1],
   Spinor["Helicity", "Angle", 4]];
 cpBracket = SpinorChain[Spinor["Spin", "Angle", 2], Spinor["Helicity", "Angle", 4]];
@@ -21,10 +24,10 @@ cpPrepared = cpPrepare[cpPair];
 cpDetails = cpPrepare[cpPair, "ReturnDetails" -> True];
 check["a single amplitude pair returns the same single-pair format",
   MatchQ[cpPrepared, {_List, _}] && First[cpPrepared] === cpExternal &&
-    cpZero[Last[cpPrepared] - (cpMassA^2 cpBracket + MomProd[1, 3])/cpDen]];
+    cpExternalZero[Last[cpPrepared] - (cpMassA^2 cpBracket + MomProd[1, 3])/cpDen]];
 check["completed amplitude preparation applies ordinary external mass identities",
   FreeQ[Last[cpPrepared], Mom[1]] && !FreeQ[Last[cpPrepared], cpMassA^2] &&
-    !FreeQ[Last[cpPrepared], MomProd[1, 3]]];
+    cpZero[Last[cpPrepared] - cpMassA^2 cpBracket/cpDen - 1/2]];
 check["existing physical propagators do not introduce numerator shell rules",
   cpDetails["Options"]["InternalOnShell"] === False &&
     First[cpDetails["ItemReports"]]["InternalOnShellChannels"] === {} &&
@@ -39,8 +42,10 @@ check["detailed single-pair preparation retains normalized reusable item lists",
 check["ordinary output and detailed amplitude agree without changing the input",
   cpDetails["Amplitude"] === Last[cpPrepared] && cpPair === cpSaved &&
     cpPrepare[cpPair, "Output" -> "Expression"] === Last[cpPrepared]];
+cpPreparedList = cpPrepare[{cpPair}];
 check["list-of-pairs output keeps its established outer list",
-  cpPrepare[{cpPair}] === {cpPrepared} && cpPrepare[{}] === {}];
+  MatchQ[cpPreparedList, {{_List, _}}] && First[First[cpPreparedList]] === cpExternal &&
+    cpExternalZero[Last[First[cpPreparedList]] - Last[cpPrepared]] && cpPrepare[{}] === {}];
 check["the compatibility preparation name accepts a single pair too",
   PrepareDiagramAmplitudes[cpPair, cpModel, "MaxSteps" -> 0,
     "ProgressReporting" -> False] === cpPrepared];
@@ -55,8 +60,9 @@ check["a single genuine diagram still uses its explicitly supplied internal shel
     cpDiagram["Amplitude"] === 0 &&
     First[cpDiagram["ItemReports"]]["InternalOnShellChannels"] === {{1, 3}}];
 cpNested = cpPrepare[{cpExternal, MomProd[1, 3]/(cpDen (5 + MomProd[1, 3]))}];
-check["external-only preparation retains unknown numerator products and inverse factors",
-  cpZero[Last[cpNested] - MomProd[1, 3]/(cpDen (5 + MomProd[1, 3]))]];
+check["ordinary virtuality cancellation keeps the auxiliary inverse off shell",
+  cpExternalZero[Last[cpNested] - MomProd[1, 3]/(cpDen (5 + MomProd[1, 3]))] &&
+    !FreeQ[Last[cpNested], 1/(5 + MomProd[1, 3])] && Last[cpNested] =!= 0];
 
 cpReference[id_, leg_] :=
   SpinorChain[Spinor["Xi", "Angle", id], Mom[2], Spinor["Helicity", "Square", leg]]/

@@ -26,6 +26,7 @@ TEST_SUITES = (
     "six-point-completion-tests.wl",
     "preparation-remainders-tests.wl",
     "completed-amplitude-preparation-tests.wl",
+    "final-amplitude-simplification-tests.wl",
 )
 
 

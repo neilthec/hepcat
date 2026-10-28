@@ -7316,6 +7316,8 @@ PrepareAmplitudes::usage = PrepareAmplitudes::usage <>
   " A single {massRules, expression} pair is also accepted directly and returns a single pair by default. A completed amplitude carries external mass rules only: preparation applies ordinary reductions and reference choices without any internal-shell condition. Its existing propagators provide a separate reference-choice inventory, never numerator shell assumptions. Output -> Expression still returns the bare expression; details retain one-item OriginalAmplitudes and PreparedAmplitudes lists for reuse by completion.";
 PrepareAmplitudes::usage = PrepareAmplitudes::usage <>
   " ExternalParticles -> Automatic leaves unspecified particle identities uninferred. An ordered list of model particle or antiparticle names can be supplied to retain process information in detailed output for later completion. Its length and exact external masses must agree with every item. Ordinary amplitude pairs and channel rows are unchanged; no process cache or global model assignment is created.";
+PrepareAmplitudes::usage = PrepareAmplitudes::usage <>
+  " Completed external-only amplitudes also try bounded sparse physical-denominator grouping, spinor-coefficient collection, exact off-shell propagator definitions and single-insertion conservation followed by null-momentum splitting. These add no internal-shell conditions and remain enabled at MaxSteps -> 0. The best completed checkpoint is retained; representation size and weighted expanded complexity are compared separately. Ranking reuse is bounded and local to this call.";
 PrepareDiagramAmplitudes::usage = "PrepareDiagramAmplitudes is a compatibility alias for PrepareAmplitudes. Use PrepareAmplitudes for both diagram amplitude pairs and compact factorization-channel rows.";
 
 Options[PrepareAmplitudes] = {
@@ -7437,9 +7439,12 @@ preparationReplaceMasses[expr_, rules_List] := Module[
    mass replacements are global; diagram-local replacements stay in numerators. *)
 preparationSpinorProducts[expr_, rules_List] := Module[
   {external = preparationExternalRules[rules], ordinary, candidate},
-  ordinary = withProtectedPropagators[
-    preparationNumerators[expr, Function[num, preparationReplaceMasses[num, rules]]],
-    Function[body, preparationNumerators[ReduceSpinorProducts[body],
+  ordinary = preparationNumerators[expr, Function[num, preparationReplaceMasses[num, rules]]];
+  (* The public reducer protects its own propagators and needs to see the
+     rational amplitude structure when choosing its factored competitor. *)
+  ordinary = ReduceSpinorProducts[ordinary];
+  ordinary = withProtectedPropagators[ordinary,
+    Function[body, preparationNumerators[body,
       Function[num, preparationReplaceMasses[num, rules]]] /. external]];
   (* Model-local external masses can license an ordinary sum contraction after
      normalization. Compare complete expressions with every inverse held opaque. *)
@@ -7623,6 +7628,121 @@ preparationRank[expr_] := {SpinorExpressionComplexity[expr],
 
 preparationBetterQ[left_List, right_List] := left =!= right && OrderedQ[{left, right}];
 
+(* Expose an existing propagator by its exact definition, not by putting it on
+   shell. Only numerator scalar products and declared external masses are used. *)
+preparationExternalVirtualities[expression_, externalRules_List] := Module[
+  {external = externalIndices[externalRules], props, replacements, pair, mass, trial},
+  If[LeafCount[expression] > 24000 || FreeQ[expression, _MomProd] ||
+      rspSandwichExpansionCount[expression] > 256, Return[expression]];
+  props = DeleteDuplicates[Cases[expression, _PropDen, Infinity]];
+  replacements = DeleteMissing[Map[Function[prop,
+    pair = residueMomentumLegsFromExpression[prop[[1]]];
+    If[!ListQ[pair] || Length[pair] =!= 2 || !DuplicateFreeQ[pair] ||
+        !ContainsAll[external, pair], Missing["NotPairPole"],
+      pair = Sort[pair]; mass = prop[[2]];
+      orderedDot @@ pair -> (prop + mass^2 -
+        (Mass[First[pair]] /. externalRules)^2 -
+        (Mass[Last[pair]] /. externalRules)^2)/2]], props]];
+  replacements = DeleteDuplicatesBy[replacements, First];
+  If[replacements === {}, Return[expression]];
+  trial = preparationNumerators[expression, Function[num, num /. replacements]];
+  If[!rspExpansionBudgetQ[trial], Return[expression]];
+  trial = withProtectedPropagators[trial, Expand];
+  preparationSpinorProducts[trial, externalRules]
+];
+
+(* Sparse Laurent content, not a new spinor or on-shell identity. Keep small
+   groups with shared physical denominators instead of making one dense fraction. *)
+preparationSparsePoleContent[expression_, seconds_: 0.5] := Module[
+  {props, propTokens, body, terms, atoms, atomTokens, content, rationalContent,
+   common, inner, counts, thresholds, selected, denominator, remaining, groups,
+   block, candidate, restored, best = expression, bestRank, rank},
+  If[LeafCount[expression] > 24000 || rspSandwichExpansionCount[expression] > 128 ||
+      !FreeQ[expression, Power[base_, exponent_] /; !TrueQ[exponent >= 0] &&
+        !FreeQ[base, _SpinorChain | _SpinorTrace | _SpinorHat]] ||
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace],
+    Return[expression]];
+  props = DeleteDuplicates[Cases[expression, _PropDen, Infinity]];
+  If[Length[props] < 2 || Length[props] > 64, Return[expression]];
+  bestRank = preparationRank[expression];
+  TimeConstrained[
+    propTokens = Table[Unique["sparsePhysicalPole"], {Length[props]}];
+    body = expression /. Thread[props -> propTokens];
+    terms = With[{expanded = Expand[body]}, If[Head[expanded] === Plus, List @@ expanded, {expanded}]];
+    atoms = Join[DeleteDuplicates[Cases[body,
+      _SpinorChain | _SpinorTrace | _ModelParameter |
+        (value : Power[_Integer | _Rational, _Rational] /; NumericQ[value]), Infinity]], propTokens];
+    atomTokens = Table[Unique["sparseContentAtom"], {Length[atoms]}];
+    rationalContent[items_List] := Module[{coefficients},
+      coefficients = Times @@ Select[If[Head[#] === Times, List @@ #, {#}],
+        MatchQ[#, _Integer | _Rational] &] & /@ items;
+      If[MemberQ[coefficients, 0], 1,
+        If[AllTrue[coefficients, # < 0 &], -1, 1] *
+          (GCD @@ (Numerator /@ coefficients))/(LCM @@ (Denominator /@ coefficients))]];
+    content[items_List] := Module[{powers, commonPowers},
+      powers = Table[Exponent[#, token] & /@ (items /. Thread[atoms -> atomTokens]),
+        {token, atomTokens}];
+      commonPowers = Map[Which[Min[#] > 0, Min[#], Max[#] < 0, Max[#], True, 0] &, powers];
+      rationalContent[items] Times @@ MapThread[Power, {atoms, commonPowers}]];
+    common = content[terms]; inner = Cancel[#/common] & /@ terms;
+    counts = Count[inner, term_ /; !FreeQ[Denominator[term], #]] & /@ propTokens;
+    thresholds = Prepend[Take[Reverse[Sort[DeleteDuplicates[Select[counts,
+      # >= Length[terms]/2 &]]]], UpTo[4]], Length[terms] + 1];
+    block[items_List] := With[{unit = content[items]},
+      unit Total[Cancel[#/unit] & /@ items]];
+    Do[
+      selected = Pick[propTokens, # >= threshold & /@ counts];
+      denominator = Times @@ selected;
+      remaining = Complement[Pick[propTokens, # >= Length[terms]/2 & /@ counts], selected];
+      groups = GatherBy[Cancel[# denominator] & /@ inner,
+        Function[term, Select[remaining, !FreeQ[Denominator[term], #] &]]];
+      candidate = common Total[block /@ groups]/denominator;
+      restored = candidate /. Thread[propTokens -> props];
+      If[residueFiniteQ[restored] && LeafCount[restored] < LeafCount[best],
+        rank = preparationRank[restored];
+        If[preparationBetterQ[rank, bestRank], best = restored; bestRank = rank]],
+      {threshold, thresholds}], seconds, Null];
+  best
+];
+
+(* Compact a completed rational sum by collecting its spinor atoms. Physical
+   propagators remain independent off-shell quantities. Literal and inverse-
+   protected collections compete; large factored products are not expanded. *)
+preparationCompactExternalSums[expression_, seconds_: 5, externalRules_List : {}] := Module[
+  {best = expression, bestRank, inverses, inverseTokens,
+   protected, atoms, coefficient, trial, rank, reverse,
+   maximumAtoms = 512, maximumBranches = 2048, maximumLeaves = 200000},
+  If[LeafCount[expression] > maximumLeaves || FreeQ[expression, _Plus] ||
+      rspSandwichExpansionCount[expression] > maximumBranches ||
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace],
+    Return[expression]];
+  best = preparationSparsePoleContent[expression, Min[0.5, seconds/3]];
+  bestRank = preparationRank[best];
+  If[externalRules =!= {},
+    trial = TimeConstrained[preparationExternalVirtualities[expression, externalRules],
+      Min[1.5, seconds/2], expression];
+    If[residueFiniteQ[trial], rank = preparationRank[trial];
+      If[preparationBetterQ[rank, bestRank], best = trial; bestRank = rank]]];
+  TimeConstrained[MemoryConstrained[
+    Do[
+      trial = Function[body,
+        inverses = DeleteDuplicates[Cases[{body}, power : Power[base_, exponent_] /;
+          !TrueQ[exponent >= 0] && !FreeQ[base, _SpinorChain | _SpinorTrace | _SpinorHat], Infinity]];
+        inverseTokens = Table[Unique["compactSpinorInverse"], {Length[inverses]}];
+        protected = If[TrueQ[reverse], body /. Thread[inverses -> inverseTokens], body];
+        atoms = DeleteDuplicates[Cases[protected, _SpinorChain | _SpinorTrace, Infinity]];
+        If[atoms === {} || Length[atoms] > maximumAtoms, body,
+          coefficient[value_] := If[LeafCount[value] > 20000, value, Factor[value]];
+          Collect[protected, If[TrueQ[reverse], Reverse[atoms], atoms], coefficient] /.
+            Thread[inverseTokens -> inverses]]][expression];
+      If[residueFiniteQ[trial] && FreeQ[trial, _Collect | _Factor | _Cancel] &&
+          LeafCount[trial] < LeafCount[best],
+        rank = preparationRank[trial];
+        If[preparationBetterQ[rank, bestRank], best = trial; bestRank = rank]],
+      {reverse, {False, True}}], 268435456, Null], seconds, Null];
+  best
+];
+
 (* Choose conserved composite representatives while their parent chains are
    still factored. Rank after the caller's authorized numerator dot rules;
    whole-expression expansion otherwise obscures these wins. *)
@@ -7726,11 +7846,17 @@ preparationConservationCandidates[expr_, rules_List] := Module[
    ranking: the expanded substitution may expose distant cancellations. *)
 preparationConservationTrial[expr_, edit_Association, rules_List] := Module[
   {external = DeleteDuplicates[externalIndices[rules]], eliminate, members,
-   components, momentum, product, rewrite, complement},
+   components, momentum, product, rewrite, complement, scalarSquares},
+  (* A bare momentum square is a Lorentz scalar. Expand its dot product before
+     substituting a conserved vector sum, never as a commuting vector square. *)
+  scalarSquares[value_] := value /.
+    (square : HoldPattern[Power[momentum : Mom[label_], 2]] /;
+      momentumMembers[label] =!= {} && ContainsAll[external, momentumMembers[label]]) :>
+        rspOrdinaryMomentumDot[momentum, momentum];
   If[edit["Identity"] === "CompositeComplement",
     members = edit["Legs"]; complement = Complement[external, members];
     Return[preparationNumerators[expr, Function[num,
-      num /. (HoldPattern[Mom[label_]] /; momentumMembers[label] === members) :>
+      scalarSquares[num] /. (HoldPattern[Mom[label_]] /; momentumMembers[label] === members) :>
         -Total[Mom /@ complement]]]]];
   eliminate = First[edit["Legs"]];
   components[label_] := Module[{legs = momentumMembers[label], coefficients},
@@ -7745,9 +7871,36 @@ preparationConservationTrial[expr_, edit_Association, rules_List] := Module[
         !MemberQ[Join[momentumMembers[a], momentumMembers[b]], eliminate], Return[MomProd[a, b]]];
     Total[Flatten[Table[x[[2]] y[[2]] If[x[[1]] === y[[1]],
       Mass[x[[1]]]^2, orderedDot[x[[1]], y[[1]]]], {x, left}, {y, right}]]]];
-  rewrite[num_] := num /. {HoldPattern[Mom[label_]] :> momentum[label],
+  rewrite[num_] := scalarSquares[num] /. {HoldPattern[Mom[label_]] :> momentum[label],
     HoldPattern[MomProd[a_, b_]] :> product[a, b]};
   preparationNumerators[expr, rewrite]
+];
+
+(* Conservation in one-insertion sandwiches can expose a null-momentum
+   factorization without expanding longer words or scalar momentum squares. *)
+preparationSingleMomentumConservation[expression_, rules_List, seconds_: 2] := Module[
+  {external = externalIndices[rules], used, trial, best = expression, bestRank, rank},
+  If[Length[external] < 3 || LeafCount[expression] > 24000 ||
+      rspSandwichExpansionCount[expression] > 128, Return[expression]];
+  used = preparationProtectedDenominators[expression, Function[body,
+    DeleteDuplicates[Cases[body,
+      chain_SpinorChain /; Length[chain] === 3 && MatchQ[chain[[2]], Mom[_Integer]] :>
+        chain[[2, 1]], Infinity]]]];
+  used = Take[Intersection[external, used], UpTo[8]];
+  If[used === {}, Return[expression]];
+  bestRank = preparationRank[expression];
+  TimeConstrained[
+    Do[
+      trial = preparationNumerators[expression, Function[num, num /.
+        (chain_SpinorChain /; Length[chain] === 3 && chain[[2]] === Mom[anchor]) :>
+          SpinorChain[chain[[1]], -Total[Mom /@ DeleteCases[external, anchor]], chain[[-1]]]]];
+      trial = preparationMasslessMomentumTrial[trial, rules, {}, {}];
+      trial = preparationSpinorProducts[trial, rules];
+      trial = preparationCompactExternalSums[trial, Min[0.5, seconds/2], rules];
+      If[residueFiniteQ[trial], rank = preparationRank[trial];
+        If[preparationBetterQ[rank, bestRank], best = trial; bestRank = rank]],
+      {anchor, used}], seconds, Null];
+  best
 ];
 
 preparationSearchCandidates[expr_, rules_List, shellOptions_List, conserve_, limit_] := Module[
@@ -8206,10 +8359,22 @@ preparationCompleteExternalInputQ[expr_, rules_List] := Module[
     FreeQ[expr, _SpinorHat | _MomHat | _MomProdHat1 | _MomProdHat2 | _MomProdHat12 |
       _SpinorEps | _SpinorZ | _MomQ | _sigma | _xFactor | _xTildeFactor |
       _SpinorChainReduced | _SpinorTraceReduced | _Mass] &&
-    FreeQ[expr, Power[base_, exponent_] /;
-      !MatchQ[exponent, _Integer?Positive] && !FreeQ[base, _SpinorChain | _SpinorTrace]] &&
-    AllTrue[spinors, MatchQ[#, Spinor["Spin" | "Helicity", "Angle" | "Square", _Integer]] &&
-      MemberQ[external, #[[3]]] &]
+    (* Inverse brackets are valid in a completed amplitude. They must not
+       disqualify a compact spurious-pole form, while direct endpoint and
+       repeated-momentum contractions inside an inverse remain mandatory. *)
+    FreeQ[expr, Power[base_, exponent_] /; !MatchQ[exponent, _Integer?Positive] &&
+      !FreeQ[base, _SpinorChain | _SpinorTrace] &&
+      (TrueQ[rspElementaryContractionQ[base]] || !FreeQ[base,
+        trace_SpinorTrace /; Length[trace] <= 2 || OddQ[Length[trace]] ||
+          AnyTrue[Partition[List @@ trace, 2, 1],
+            MatchQ[First[#], _Mom | _MomHat] && First[#] === Last[#] &]])] &&
+    AllTrue[spinors,
+      (MatchQ[#, Spinor["Spin" | "Helicity", "Angle" | "Square", _Integer]] ||
+        MatchQ[#, Spinor["Spin", "Upper" | "Lower", "Angle" | "Square", _Integer,
+          _Integer | _Rational | _Real | ConstructiveDiagrams`VectorSpinIndex[_Integer, _Integer]]]) &&
+        MemberQ[external, rspSpinorLeg[#]] &&
+        If[MatchQ[Last[#], ConstructiveDiagrams`VectorSpinIndex[_Integer, _Integer]],
+          Last[#][[1]] === rspSpinorLeg[#], True] &]
 ];
 
 (* Retain differences as complete groups. This allocates no expanded correction
@@ -8311,7 +8476,8 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
    referenceSeconds, referenceFallback = None, referenceInput,
    failureTag = Unique["preparationFailure"], progressMetadata,
    eligibleOriginal, admittedOriginal = False, initialCandidate,
-   completedBest = None, completedBestRank, completedBestSource, rememberCompleted},
+   completedBest = None, completedBestRank, completedBestSource, rememberCompleted, snapshotRank,
+   rankSnapshots = 0},
   progressMetadata = Join[<|"Item" -> index, "Items" -> count, "InputType" -> kind|>,
     If[MemberQ[{"Diagram", "FeynmanDiagram"}, kind], <|"Diagram" -> index, "Diagrams" -> count|>, <||>]];
   channels = If[TrueQ[options["InternalOnShell"]],
@@ -8320,15 +8486,21 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
     preparationDotRules[rules, options["MomentumConservation"]], {}];
   shellOptions = {"OnShellChannels" -> channels,
     "MomentumConservation" -> options["MomentumConservation"]};
+  (* Ranking is pure but can expand a large completed expression. Reuse each
+     snapshot's rank within this element; no cache survives the call. *)
+  snapshotRank[value_] := Module[{result = preparationRank[value]},
+    If[rankSnapshots < 16 && LeafCount[value] <= 200000,
+      rankSnapshots++; snapshotRank[value] = result];
+    result];
   eligibleOriginal = preparationCompleteExternalInputQ[original, rules];
-  rememberCompleted[value_, label_] := Module[{valueRank = preparationRank[value]},
+  rememberCompleted[value_, label_] := Module[{valueRank = snapshotRank[value]},
     If[completedBest === None || preparationBetterQ[valueRank, completedBestRank],
       completedBest = value; completedBestRank = valueRank; completedBestSource = label]];
   event[label_] := completionProgress[options["ProgressFunction"], options["ProgressReporting"],
     Join[progressMetadata, <|"Stage" -> "Preparation", "Operation" -> label,
     "Elapsed" -> AbsoluteTime[] - started,
-    "Complexity" -> First[preparationRank[expression]],
-    "Terms" -> preparationRank[expression][[2]], "IdentitySteps" -> Length[history]|>]];
+    "Complexity" -> First[snapshotRank[expression]],
+    "Terms" -> snapshotRank[expression][[2]], "IdentitySteps" -> Length[history]|>]];
   reduceInvariants[phase_] := If[TrueQ[options["InternalOnShell"]],
     stage = "InternalInvariantReduction";
     before = expression;
@@ -8386,8 +8558,8 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
         completionProgress[options["ProgressFunction"], options["ProgressReporting"],
           Join[progressMetadata, <|"Stage" -> "Preparation", "Operation" -> "Choosing references",
             "Elapsed" -> AbsoluteTime[] - started,
-            "Complexity" -> First[preparationRank[expression]],
-            "Terms" -> preparationRank[expression][[2]]|>, KeyDrop[update, "BestReference"]]]],
+            "Complexity" -> First[snapshotRank[expression]],
+            "Terms" -> snapshotRank[expression][[2]]|>, KeyDrop[update, "BestReference"]]]],
       kind === "FeynmanDiagram", options["MomentumConservation"], jointRules,
       TrueQ[wholeAmplitude] || kind === "Amplitude"];
     If[!AssociationQ[referenceReport] || referenceReport["Status"] =!= "COMPLETE",
@@ -8410,7 +8582,21 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
       admittedOriginal = True];
     event[stage];
     If[TrueQ[wholeAmplitude] || kind === "Amplitude",
-      rememberCompleted[expression, "CompletedExternalReferenceInput"]];
+      rememberCompleted[expression, "CompletedExternalReferenceInput"];
+      stage = "CompactExternalAmplitude";
+      before = expression;
+      after = If[TrueQ[options["MomentumConservation"]],
+        residueCanonicalPropagators[expression, externalIndices[rules]], expression];
+      after = preparationCompactExternalSums[after,
+        If[options["TimeConstraint"] === Infinity, 5,
+          Max[0.000001, Min[5, options["TimeConstraint"] - (AbsoluteTime[] - started)]]],
+        preparationExternalRules[rules]];
+      If[residueFiniteQ[after], expression = after];
+      AppendTo[reductions, <|"Operation" -> stage, "Before" -> before,
+        "After" -> expression, "InternalOnShellIdentity" -> False,
+        "OnShellChannels" -> {}|>];
+      rememberCompleted[expression, stage];
+      event[stage]];
     If[KeyExistsQ[referenceReport, "ReducedExpression"] ||
         TrueQ[options["MomentumConservation"]] || jointRules =!= {},
       stage = If[KeyExistsQ[referenceReport, "ReducedExpression"],
@@ -8424,7 +8610,7 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
           options["MomentumConservation"], jointRules,
           Function[
             referenceFallback = Join[referenceReport, <|"ReducedExpression" -> #,
-              "ReducedRank" -> preparationRank[#]|>];
+              "ReducedRank" -> snapshotRank[#]|>];
             rememberCompleted[#, "CompletedReferenceCandidate"]]]];
       If[!residueFiniteQ[after], invalid = True; Throw[False, failureTag]];
       expression = after;
@@ -8455,13 +8641,26 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
       "After" -> expression, "InternalOnShellIdentity" -> False|>];
     rememberCompleted[expression, stage];
     event[stage];
+    If[(TrueQ[wholeAmplitude] || kind === "Amplitude") && TrueQ[options["MomentumConservation"]],
+      stage = "SingleMomentumConservation";
+      before = If[completedBest =!= None &&
+        preparationBetterQ[completedBestRank, snapshotRank[expression]], completedBest, expression];
+      after = preparationSingleMomentumConservation[before, preparationExternalRules[rules],
+        If[options["TimeConstraint"] === Infinity, 2,
+          Max[0.000001, Min[2, options["TimeConstraint"] - (AbsoluteTime[] - started)]]]];
+      If[residueFiniteQ[after], expression = after];
+      AppendTo[reductions, <|"Operation" -> stage, "Before" -> before,
+        "After" -> expression, "InternalOnShellIdentity" -> False,
+        "OnShellChannels" -> {}, "MomentumConservation" -> True|>];
+      rememberCompleted[expression, stage];
+      event[stage]];
     stage = "IdentitySearch";
     Do[
       after = preparationSpinorProducts[preparationNumerators[expression,
         Function[num, canonicalChains[preparationReplaceMasses[num, rules]]]], rules];
       If[!residueFiniteQ[after], invalid = True; Throw[False, failureTag]];
       expression = after;
-      rank = preparationRank[expression]; best = expression; bestRank = rank; bestEdit = None;
+      rank = snapshotRank[expression]; best = expression; bestRank = rank; bestEdit = None;
       search = preparationSearchCandidates[expression, rules, shellOptions,
         options["MomentumConservation"], options["MaxCandidates"]];
       candidates = search["Candidates"];
@@ -8479,8 +8678,8 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
         next = preparationCancelReferencePoles[next, rules,
           Lookup[referenceReport, "AuxiliaryPhysicalPropagators", {}]];
         If[!residueFiniteQ[next], Continue[]];
-        If[preparationBetterQ[preparationRank[next], bestRank],
-          best = next; bestRank = preparationRank[next]; bestEdit = candidate],
+        If[preparationBetterQ[snapshotRank[next], bestRank],
+          best = next; bestRank = snapshotRank[next]; bestEdit = candidate],
         {candidate, candidates}];
       If[bestEdit === None, stop = "NoImprovingIdentity"; Break[]];
       AppendTo[history, <|"Name" -> bestEdit["Name"], "Edit" -> bestEdit,
@@ -8491,6 +8690,19 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
       rememberCompleted[expression, "ImprovingIdentities"];
       event["Improving identities"],
       {step, options["MaxSteps"]}];
+    If[TrueQ[wholeAmplitude] || kind === "Amplitude",
+      stage = "FinalExternalCompaction";
+      before = If[completedBest =!= None &&
+        preparationBetterQ[completedBestRank, snapshotRank[expression]], completedBest, expression];
+      after = preparationCompactExternalSums[before,
+        If[options["TimeConstraint"] === Infinity, 5,
+          Max[0.000001, Min[5, options["TimeConstraint"] - (AbsoluteTime[] - started)]]],
+        preparationExternalRules[rules]];
+      If[residueFiniteQ[after], expression = after];
+      AppendTo[reductions, <|"Operation" -> stage, "Before" -> before,
+        "After" -> expression, "InternalOnShellIdentity" -> False, "OnShellChannels" -> {}|>];
+      rememberCompleted[expression, stage];
+      event[stage]];
     identityStageComplete = True;
     True,
     options["TimeConstraint"], False], failureTag];
@@ -8516,11 +8728,11 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
   If[TrueQ[outcome] && stop === "NoImprovingIdentity",
     AppendTo[diagnostics, "No strictly improving edit was found in the inspected candidate subset; this is not a proof of minimality."]];
   If[completedBest =!= None &&
-      preparationBetterQ[completedBestRank, preparationRank[expression]],
+      preparationBetterQ[completedBestRank, snapshotRank[expression]],
     before = expression; expression = completedBest;
     AppendTo[reductions, <|"Operation" -> "RetainedBestCompletedCandidate",
       "SourceOperation" -> completedBestSource, "Before" -> before, "After" -> expression,
-      "BeforeRank" -> preparationRank[before], "AfterRank" -> completedBestRank,
+      "BeforeRank" -> snapshotRank[before], "AfterRank" -> completedBestRank,
       "SelectionOnly" -> True, "InternalOnShellIdentity" -> False,
       "OnShellChannels" -> channels, "ReferenceChoice" -> options["ReferenceSpinors"]|>]];
   event[Which[TrueQ[outcome], "Prepared", referenceFailure, "Reference choice unavailable",

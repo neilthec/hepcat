@@ -49,16 +49,46 @@ sixFiveContinuations = ConstructiveDiagrams`Private`completionChannelContinuatio
 check["five-point continuation counts and forward-reverse modes remain unchanged",
   Counts[Lookup[sixFiveContinuations["Variants"], "Mode"]] ===
     <|"AllSpurious" -> 6, "ReverseCyclic" -> 6, "AllPhysical" -> 6|>];
-(* Ordinary sandwich reductions expose 266 rather than 230 atomic directions.
-   Inspect the full space here, and separately require refusal at the old cap. *)
+(* Ordinary reductions now expose 262 nonzero directions. Inspect the full
+   space and separately require refusal at the smaller cap. Already compact
+   selected-cut sources need no zero correction direction. *)
 sixExtendedBasis = ConstructiveDiagrams`Private`completionReducedChannelBasis[
   sixNormalized, sixContinuations, 512, sixRules, 1729];
 sixSelectedChecks = Select[sixExtendedBasis["Verification"],
   #["Mode"] === "SelectedCutReduction" &];
-check["six-point selected-cut reductions add eight grouped, certified directions",
-  AssociationQ[sixExtendedBasis] && Length[sixExtendedBasis["GroupedDirections"]] === 8 &&
-    Length[sixSelectedChecks] === 8 &&
-    AllTrue[sixSelectedChecks, #["Verification"]["Status"] === "PASS" &]];
+sixPhysicalSourceChecks = Select[sixExtendedBasis["Verification"],
+  #["Mode"] === "AllPhysical" &];
+sixUnchangedSelectedSources = Select[sixContinuations["Variants"],
+  #["Mode"] === "AllPhysical" && TrueQ[#["Accepted"]] && First[#["Cut"]] === 2 &];
+(* The new reducer retains these four compact sources literally. Certify their
+   zero difference explicitly rather than silently dropping cut obligations or
+   requiring artificial off-cut directions caused only by normalization. *)
+sixUnchangedSelectedChecks = Map[Function[source, Module[
+  {target, selectedRules, input, reduced},
+  target = SelectFirst[ConstructiveDiagrams`Private`completionTargets[sixNormalized["Targets"]],
+    #["Cut"] === source["Cut"] &&
+      ConstructiveDiagrams`Private`residueExactZero[#["Mass"]^2 - source["Mass"]^2] &];
+  selectedRules = Append[sixNormalized["ExternalMassRules"],
+    Mass[Multiparticle @@ target["Cut"]] -> target["Mass"]];
+  input = ConstructiveDiagrams`Private`preparationNumerators[source["Expression"],
+    Function[num, ConstructiveDiagrams`Private`preparationReplaceMasses[
+      ReduceSpinContractions[num], selectedRules]]];
+  reduced = TimeConstrained[ConstructiveDiagrams`Private`preparationReferenceTrial[
+    input, selectedRules,
+    ConstructiveDiagrams`Private`preparationDotRules[selectedRules, True]], 5, $TimedOut];
+  <|"Cut" -> source["Cut"], "Unchanged" -> (reduced =!= $TimedOut &&
+      TrueQ[ConstructiveDiagrams`Private`residueExactZero[reduced - source["Expression"]]])|>
+]], sixUnchangedSelectedSources];
+check["selected-cut reductions retain every source obligation and omit only certified zero directions",
+  AssociationQ[sixExtendedBasis] &&
+    Sort[Lookup[sixPhysicalSourceChecks, "Cut"]] ===
+      Flatten[Table[{leg, photon}, {leg, 2}, {photon, 3, 6}], 1] &&
+    AllTrue[sixPhysicalSourceChecks, #["Verification"]["Status"] === "PASS" &] &&
+    Length[sixExtendedBasis["GroupedDirections"]] === 4 &&
+    Sort[Lookup[sixSelectedChecks, "Cut"]] === Table[{1, photon}, {photon, 3, 6}] &&
+    AllTrue[sixSelectedChecks, #["Verification"]["Status"] === "PASS" &] &&
+    Sort[Lookup[sixUnchangedSelectedChecks, "Cut"]] === Table[{2, photon}, {photon, 3, 6}] &&
+    AllTrue[sixUnchangedSelectedChecks, TrueQ[#["Unchanged"]] &]];
 check["the selected-cut extension stays within the declared correction-space cap",
   AssociationQ[sixExtendedBasis] && Length[sixExtendedBasis["Basis"]] <= 512 &&
     ConstructiveDiagrams`Private`completionReducedChannelBasis[
