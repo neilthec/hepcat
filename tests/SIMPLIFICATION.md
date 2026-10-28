@@ -1222,6 +1222,29 @@ The rescaling attempt recovers this form without channel subtraction terms.
 Factorization success still needs the usual spurious, high-energy, reference
 and available Feynman checks. Those checks never fit an extra normalization.
 
+`"ChannelCompanions" -> Automatic` then tries a small correction space made
+from the supplied lower-point channel expressions. A two-leg cut is eligible
+when it joins a declared null external leg to a massive anchor with the same
+exchanged mass. Ordinary momentum expansion and declared-massless chain
+factorization expose grouped momentum structures; normalization is checked on
+that channel's cut. Group by chain/trace insertion count, then remove the
+emitted leg from typed lower-amplitude composite labels. Keep the selected
+propagator intact. Every completed group is a proposed correction direction,
+not a claimed identity or a guaranteed continuation of the original residue.
+No known final amplitude, process-specific numerator or new interaction enters.
+
+All propagators must belong to the original physical target catalog, with
+simple physical orders. Newly pole-free directions are excluded and explicit
+regular input is retained. The subsequent simultaneous fit checks all original
+channels, including expected zero residues, with fresh coherent-spin and
+parameter validation. A failed compact space leaves the broad fallback intact.
+Use `"ChannelCompanions" -> None` to disable it. Explicit correction bases and
+literal-channel mode bypass it. Construction is capped at 15 seconds; the
+construction and fit share at most one third of the remaining stage clock,
+capped at 60 seconds. Partial construction and size/time limits are recorded
+in details, not hidden by truncation. `MomentumDegree` in companion mappings
+counts chain/trace insertions, not the full high-energy degree of a term.
+
 Its automatic correction directions come from the actual input and sewn
 channel expressions, subject to `"MaxCorrectionTerms" -> 64`.
 The opt-in `"AlternativeChannels"` list supplies additional continuations only
@@ -1331,12 +1354,62 @@ assertion that all discarded input atoms were dependent. Every original
 channel and free direction still has to pass fresh validation. An oversized
 or inconsistent fallback remains unresolved.
 
+### Compact All-Positive Six-Point Result
+
+For `e,E,A.+,A.+,A.+,A.+`, physical-reference preparation gives 24 one-term
+diagrams. Ordinary canonicalization reveals six distinct terms, each repeated
+four times. Counting each once gets all six middle-line channels right, but
+fails all eight outer-line channels. An exact independent-weight fit on these
+six input groups is inconsistent: coefficient rank six, augmented rank seven.
+Thus neither a common factor nor different constant weights can finish it.
+
+The outer channels sew a three-point vertex to the known five-point amplitude.
+Writing the sewn momentum as `p1+pa` exposes products
+`[a|p1 p2|a] [i|p1 p2|i]` already present in those channel sources. Keeping
+these structures grouped and trying the typed companion construction above
+gives four directions. Their uniquely fixed coefficients recover a compact
+result containing the six-term diagram core and six additional pair-pole terms.
+
+With all momenta ingoing, define
+`t_(1r)=(p1+pr)^2-m^2`, `t_(2r)=(p2+pr)^2-m^2`, and
+`t_(1kl)=(p1+pk+pl)^2-m^2`. One convenient regrouping is
+
+```text
+M = 4 EE^4 m <12> / Product[t_(1r), r=3..6] *
+    Sum[ [kl]^2 / (t_(2i) t_(2j)) *
+         ( [i|p1 p2|i] [j|p1 p2|j]
+           - m^2 [ij]^2 t_(1i) t_(1j) / t_(1kl) ),
+         {i,j} any two-element subset of {3,4,5,6} ].
+```
+
+Here `{k,l}` is the complementary photon pair. Expanding this display gives
+12 terms and complexity 108. The term proportional to `m^2` is the six-term
+unique diagram core; the momentum-chain products supply the missing outer
+residues without changing the middle residues. The production algorithm
+discovers its numerator groups from the channel sources and fits their
+coefficients; it does not insert this displayed formula.
+
+On the same prepared input and the notebook's 12 fitting samples per channel,
+one held-out sample, 256-direction cap and Bose declaration, the previous
+completion took 178.5 seconds and returned 120 expanded terms with complexity
+1080, using 90 coefficients. The compact route took 18.4 seconds and returned
+12 terms with complexity 108, using four uniquely fixed coefficients. These
+times exclude the shared preparation and are measurements, not guarantees.
+
+The returned public result passed all 14 physical channels, exact sampled
+high-energy tests and three independent full off-cut comparisons against
+freshly generated 24-diagram Feynman amplitudes at `m=2, EE=3`. Internal
+Feynman lines remained off shell and no sign or normalization was fitted.
+There are no spurious denominators or explicit Xi spinors in this form.
+These checks establish the recorded sample agreement; they are not a proof
+of a globally shortest representation.
+
 The six-point `e,E,A.+,A.+,A.+,A.+` section of
 `tests/QED-5-point-construction.nb` uses this declaration, `"Samples" -> 12`,
 `"ValidationSamples" -> 1`, `"MaxCorrectionTerms" -> 256`,
-`"MaxRefinements" -> 5` and a 1200-second allowance. A full run from its actual
-24 prepared diagrams completed in about 14 minutes, with 161 independent
-correction directions. All 14 physical channels and the retained affine
+`"MaxRefinements" -> 5` and a 1200-second allowance. A historical broad-space
+run from 24 `AllSpurious` prepared diagrams completed in about 14 minutes,
+with 161 independent correction directions. All 14 physical channels and the retained affine
 family passed fresh exact coherent-spin checks at both the model mass and
 twice that mass. No answer or supplied correction basis entered the solve.
 The returned representative also agreed with an independent sum of all 24
@@ -1462,9 +1535,23 @@ expanding a large affine family.
 Algebraic cleanup uses external mass shells and momentum conservation only, removing
 directions only when they reduce exactly to zero. Unproved or genuinely
 residue-invisible directions remain in the affine family for the next stage.
-The optional final external reduction has one shared two-second budget and
-replaces the validated result only if the whole cleanup finishes. A cosmetic
-timeout retains the already validated amplitude and family.
+With `"RepresentativeSelection" -> Automatic`, a validated free family also
+gets a bounded search for a simpler particular point. Several deterministic
+orders try exact cancellations of formal expression coefficients. Each completed
+point is compared as a whole; a strict rank improvement is required. This is
+a heuristic, not a globally minimal sparse solve. All free directions remain
+available for the next stage, and explicit regular coefficients, including
+zero coefficients, are preserved rather than deleting contacts for brevity.
+`"RepresentativeSelection" -> None` leaves the original particular point.
+Details record the original center and the offset in the old free coordinates;
+`FamilyAmplitude` is rebased around the chosen amplitude with the same directions.
+
+Representative selection and final cleanup share the existing two-second
+post-validation allowance. Cleanup tries scalar regrouping and ordinary external
+reduction, retaining the better whole form. In particular, a compact product of
+momentum chains must not be replaced by a more complicated expansion merely
+because the ordinary reducer returns it. Interrupted work retains only a
+completed improved point and the already validated family.
 Typed `PropDen` poles are checked across that family, including poles hidden
 in its zero-parameter representative. Established zero-residue obligations
 remain checked even after the selected candidate loses the pole. Internal

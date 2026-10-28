@@ -276,7 +276,100 @@ check["the prepared-diagram result passes all six held-out physical residues",
   Length[ciQEDCompleted["ValidationReport"]["Channels"]] === 6 &&
     ciPass[ciQEDCompleted["ValidationReport"]]];
 
-check["the complete input-fit regression inventory ran", checks === 43];
+(* ::Section:: *)
+(* Exact bounded representative selection within a previously certified
+   family. These portable fixtures exercise affine geometry, not a new
+   physical interaction or a process-specific amplitude target. *)
+ciFPChoose[c_,d_List,f_List,s_:2] := ConstructiveDiagrams`Private`completionChooseFamilyPoint[c,d,f,s];
+ciFPCore=Spinor["Spin","Upper","Angle",1,-1/2];
+ciFPPole=PropDen[Mom[Multiparticle[1,3]],ciFPMass];
+ciFPA=SpinorChain[ciFPCore,Spinor["Helicity","Angle",3]]/ciFPPole;
+ciFPB=SpinorChain[ciFPCore,Spinor["Helicity","Angle",4]]/ciFPPole;
+ciFPC=SpinorChain[ciFPCore,Spinor["Helicity","Angle",5]]/ciFPPole;
+ciFPBase=2ciFPA+ciFPB;ciFPDirs={ciFPA-ciFPB};ciFPFree={ciFPCoordinate};ciFPSaved={ciFPBase,ciFPDirs,ciFPFree};
+ciFPResult=ciFPChoose[ciFPBase,ciFPDirs,ciFPFree];
+check["a simpler complete family point is chosen",ciFPResult["Status"]==="IMPROVED" && ConstructiveDiagrams`Private`preparationBetterQ[ciFPResult["RankAfter"],ciFPResult["RankBefore"]]];
+check["reported coordinates reconstruct the result exactly",Expand[ciFPResult["Amplitude"]-ciFPBase-ciFPResult["Values"].ciFPDirs]===0];
+check["rebasing preserves the entire original affine family",Expand[ciFPResult["Amplitude"]+ciFPFree.ciFPDirs-(ciFPBase+(ciFPFree+ciFPResult["Values"]).ciFPDirs)]===0];
+check["input directions and fixed spin indices are unchanged",{ciFPBase,ciFPDirs,ciFPFree}===ciFPSaved && !FreeQ[ciFPResult["Amplitude"],ciFPCore] && ciFPResult["DirectionsRetained"]===1];
+check["several deterministic orders are tried",Length[ciFPResult["OrdersTried"]]===6];
+ciFPContact=SpinorChain[Spinor["Helicity","Angle",6],Spinor["Helicity","Angle",7]];
+ciFPRegular[expr_] := With[{e=Expand[expr]},Total[Select[If[Head[e]===Plus,List@@e,{e}],FreeQ[Denominator[#],_PropDen]&]]];
+ciFPContactDirs={ciFPA-ciFPB+ciFPContact,ciFPContact};ciFPContactCoords={ciFPContactX,ciFPContactY};
+ciFPWithContact=ciFPChoose[ciFPBase+ciFPContact,ciFPContactDirs,ciFPContactCoords];
+check["regular input coefficients are preserved while pole-bearing terms simplify",ciFPWithContact["Status"]==="IMPROVED" && Expand[ciFPRegular[ciFPWithContact["Amplitude"]]-ciFPContact]===0 && ciFPWithContact["ProtectedRegularMonomials"]===1];
+check["contact directions remain available in the rebased complete family",ciFPWithContact["DirectionsRetained"]===2 && Expand[ciFPWithContact["Amplitude"]+ciFPContactCoords.ciFPContactDirs-(ciFPBase+ciFPContact+(ciFPContactCoords+ciFPWithContact["Values"]).ciFPContactDirs)]===0];
+ciFPOnlyContact=ciFPChoose[(ciFPBase*ciFPPole),{(ciFPA-ciFPB)*ciFPPole},ciFPFree];
+check["a pole-free amplitude is not changed merely to shrink it",ciFPOnlyContact["Status"]==="UNCHANGED" && ciFPOnlyContact["Amplitude"]===ciFPBase*ciFPPole];
+ciFPNoNewContact=ciFPChoose[ciFPBase,{ciFPA-ciFPB+ciFPContact},ciFPFree];
+check["a zero regular coefficient is also protected",ciFPNoNewContact["Amplitude"]===ciFPBase && ciFPRegular[ciFPNoNewContact["Amplitude"]]===0 && ciFPNoNewContact["Values"]==={0}];
+
+ciFPStable=ciFPChoose[ciFPA,{ciFPB},ciFPFree];
+check["an already smaller point is retained",ciFPStable["Status"]==="UNCHANGED" && ciFPStable["Amplitude"]===ciFPA && ciFPStable["Values"]==={0}];
+check["an empty direction list is harmless",ciFPChoose[ciFPA,{},{}]["Amplitude"]===ciFPA];
+check["mismatched coordinate lists are rejected conservatively",ciFPChoose[ciFPBase,ciFPDirs,{}]["Amplitude"]===ciFPBase];
+check["repeated coordinates are rejected conservatively",ciFPChoose[ciFPBase,{ciFPA,ciFPB},{ciFPCoordinate,ciFPCoordinate}]["Amplitude"]===ciFPBase];
+check["an invalid clock leaves the candidate unchanged",ciFPChoose[ciFPBase,ciFPDirs,ciFPFree,0]["Amplitude"]===ciFPBase];
+check["inexact coefficients are not treated as exact relations",ciFPChoose[0.1ciFPA+ciFPB,ciFPDirs,ciFPFree]["Amplitude"]===0.1ciFPA+ciFPB];
+check["coordinate dependent directions do not enter affine selection",ciFPChoose[ciFPBase,{ciFPCoordinate*ciFPA},ciFPFree]["Amplitude"]===ciFPBase];
+ciFPHuge=(ciFPA+ciFPB)^1000000;
+{ciFPHugeSeconds,ciFPHugeResult}=AbsoluteTiming[ciFPChoose[ciFPHuge,ciFPDirs,ciFPFree]];
+check["prospective expansion guard runs before expression ranking",ciFPHugeResult["Amplitude"]===ciFPHuge && StringContainsQ[ciFPHugeResult["Reason"],"expansion"] && ciFPHugeSeconds<1];
+ciFPPole=PropDen[Mom[Multiparticle[1,3]],ciFPMass];
+ciFPProtected=ciFPChoose[ciFPBase/ciFPPole,{(ciFPA-ciFPB)/ciFPPole},ciFPFree];
+check["selection preserves original propagators and coefficients",Cases[ciFPProtected["Amplitude"],_PropDen,Infinity]==={ciFPPole} && Expand[ciFPProtected["Amplitude"]-ciFPBase/ciFPPole-ciFPProtected["Values"].{(ciFPA-ciFPB)/ciFPPole}]===0];
+ciFPModelMass1=ModelParameter["Me","one","Real"];ciFPModelMass2=ModelParameter["Me","two","Real"];
+ciFPLocal=ciFPChoose[2ciFPModelMass1 ciFPA+ciFPModelMass2 ciFPB,{ciFPModelMass1 ciFPA-ciFPModelMass2 ciFPB},ciFPFree];
+check["distinct model local parameters remain independent monomials",Expand[ciFPLocal["Amplitude"]-(2ciFPModelMass1 ciFPA+ciFPModelMass2 ciFPB)-ciFPLocal["Values"].{ciFPModelMass1 ciFPA-ciFPModelMass2 ciFPB}]===0 && Length[ciFPLocal["Values"]]===1];
+DownValues[ciFPRankOriginal]=DownValues[ConstructiveDiagrams`Private`preparationRank]/.ConstructiveDiagrams`Private`preparationRank->ciFPRankOriginal;
+ciFPRankCount=0;
+ciFPEarlyTimeout=Block[{ConstructiveDiagrams`Private`preparationRank},
+ ConstructiveDiagrams`Private`preparationRank[expr_]:=(Pause[1];ciFPRankOriginal[expr]);
+ ciFPChoose[ciFPBase,ciFPDirs,ciFPFree,0.02]];
+check["a timeout before any complete point retains the original",ciFPEarlyTimeout["Amplitude"]===ciFPBase && ciFPEarlyTimeout["Values"]==={0} && TrueQ[ciFPEarlyTimeout["TimedOut"]]];
+ciFPCompletedTimeout=Block[{ConstructiveDiagrams`Private`preparationRank},
+ ConstructiveDiagrams`Private`preparationRank[expr_]:=(ciFPRankCount++;If[ciFPRankCount===3,Pause[1]];ciFPRankOriginal[expr]);
+ ciFPChoose[ciFPBase,ciFPDirs,ciFPFree,0.1]];
+check["a later timeout retains one complete improved point atomically",ciFPCompletedTimeout["Status"]==="IMPROVED" && TrueQ[ciFPCompletedTimeout["TimedOut"]] && Expand[ciFPCompletedTimeout["Amplitude"]-ciFPBase-ciFPCompletedTimeout["Values"].ciFPDirs]===0];
+
+(* The public stage keeps the full residue-invisible scalar contact family;
+   point selection changes neither the fitting space nor the known seed term. *)
+check["compact representative selection is enabled by default",
+  ("RepresentativeSelection" /. Options[CompleteFactorization]) === Automatic];
+check["unsupported representative selection settings are rejected",
+  Quiet[CompleteFactorization[ciScalarTree, ciScalarChannels, ciScalarModel,
+    "RepresentativeSelection" -> True]] === $Failed];
+ciFPContactAuto = ciFactor[ciScalarTree + ciContact, ciScalarChannels, ciScalarModel,
+  "CorrectionBasis" -> {1}, "ParameterRules" -> ciRules];
+ciFPContactNone = ciFactor[ciScalarTree + ciContact, ciScalarChannels, ciScalarModel,
+  "CorrectionBasis" -> {1}, "ParameterRules" -> ciRules,
+  "RepresentativeSelection" -> None];
+check["automatic and disabled selection preserve explicit regular input in a public scalar family",
+  AllTrue[{ciFPContactAuto, ciFPContactNone},
+    ciComplete[#] && ciZero[ciCanonical[#["Amplitude"] - ciScalarTree - ciContact]] &]];
+check["both public representative modes retain every contact direction and coherent family",
+  AllTrue[{ciFPContactAuto, ciFPContactNone},
+    #["RemainingBasis"] === {1} && Length[#["FreeParameters"]] === 1 &&
+      ciZero[ciCanonical[#["FamilyAmplitude"] - #["Amplitude"] -
+        #["FreeParameters"].#["RemainingBasis"]]] &]];
+check["both public representative modes retain independently passing physical checks",
+  AllTrue[{ciFPContactAuto, ciFPContactNone}, ciPass[#["ValidationReport"]] &]];
+check["the public disabled option skips point selection without removing its affine freedom",
+  ciFPContactNone["RepresentativeSelection"]["Status"] === "UNCHANGED" &&
+    Length[ciFPContactNone["FreeParameters"]] === 1 &&
+    ciFPContactAuto["RepresentativeSelection"]["ProtectedRegularMonomials"] >= 1];
+ciFPCleanupGuard = Block[
+  {ConstructiveDiagrams`Private`completionExternalReduce = Function[{value, massRules},
+    value + SpinorChain[Spinor["Spin", "Angle", 1], Mom[2], Mom[3],
+      Spinor["Spin", "Angle", 4]]]},
+  ciFactor[ciScalarTree + ciContact, ciScalarChannels, ciScalarModel,
+    "CorrectionBasis" -> {1}, "ParameterRules" -> ciRules,
+    "RepresentativeSelection" -> None]];
+check["optional cleanup cannot replace a validated point or direction with a worse finite expression",
+  ciComplete[ciFPCleanupGuard] && ciFPCleanupGuard["RemainingBasis"] === {1} &&
+    ciZero[ciCanonical[ciFPCleanupGuard["Amplitude"] - ciScalarTree - ciContact]]];
+
+check["the complete input-fit regression inventory ran", checks === 71];
 Print[checks, " completion-input-fit checks; ", Length[failures], " failures."];
 If[failures =!= {}, Print[failures]; Quit[1]];
 Print["HEPCAT_TEST_COMPLETED:completion-input-fit-tests.wl"];

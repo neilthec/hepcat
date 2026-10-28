@@ -1712,7 +1712,7 @@ acFourFermionFactorization = acFactor[acFourFermionPreparation, acFourFermionCha
   "MaxCorrectionTerms" -> 128, "TimeConstraint" -> 300];
 check["recorded references do not hide the physical correction space for four fermions",
   acFourFermionFactorization["Status"] === "COMPLETE" &&
-    acFourFermionFactorization["CorrectionSpace"] === "ReducedChannels" &&
+    MemberQ[{"ReducedChannels", "PeeledChannels"}, acFourFermionFactorization["CorrectionSpace"]] &&
     Length[acFourFermionFactorization["CorrectionBasis"]] <= 128 &&
     acPhysicalPass[acFourFermionFactorization["ValidationReport"]]];
 acFourFermionEnergy = acEnergy[acFourFermionFactorization["Amplitude"], acFourFermionChannels,
@@ -1847,12 +1847,14 @@ acMixedHelicityCompleted = acFactor[acMixedHelicityPrepared, acMixedHelicityChan
   "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}];
 check["mixed helicities complete automatically with old cyclic choices and scalar momentum squares",
   acMixedHelicityCompleted["Status"] === "COMPLETE" &&
-    acMixedHelicityCompleted["CorrectionSpace"] === "ReducedChannels" &&
+    MemberQ[{"ReducedChannels", "PeeledChannels"}, acMixedHelicityCompleted["CorrectionSpace"]] &&
     Length[acMixedHelicityCompleted["CorrectionBasis"]] <= 128 &&
     !FreeQ[acMixedHelicitySaved, Mom[Multiparticle @@ List @@ acMixedHelicitySquareDot]^2] &&
     acMixedHelicityPrepared === acMixedHelicitySaved];
 check["whole-channel reductions are checked before their correction terms are admitted",
-  With[{rows = acMixedHelicityCompleted["ReducedChannelSpace"]["Verification"]},
+  With[{rows = If[acMixedHelicityCompleted["CorrectionSpace"] === "PeeledChannels",
+      acMixedHelicityCompleted["ChannelCompanions"]["SourceChecks"],
+      acMixedHelicityCompleted["ReducedChannelSpace"]["Verification"]]},
     rows =!= {} && AllTrue[rows, #["Verification"]["Status"] === "PASS" &]]];
 acMixedHelicityFinalCheck = CheckPhysicalResidues[acMixedHelicityCompleted["Amplitude"],
   acMixedHelicityChannels, prFixtureModel, "ParameterRules" -> {prElectronMass -> 2, prElectricCharge -> 3},
@@ -1970,6 +1972,7 @@ acCompactFallback = Block[
     {normalized, references, limit, rules, seed}, <|"Basis" -> {}|>]},
   acFactor[prH/2, prChannels, prFixtureModel,
     "InputReweighting" -> None,
+    "ChannelCompanions" -> None,
     "Samples" -> 2, "ValidationSamples" -> 1,
     "MaxCorrectionTerms" -> 128, "TimeConstraint" -> 90,
     "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}]];
@@ -1988,10 +1991,18 @@ check["the legacy literal channel-term space is honestly insufficient for the fi
   acQEDFiveLegacy["Status"] === "UNRESOLVED" &&
     acQEDFiveLegacy["ConstraintData"]["LinearSolution"]["Status"] === "INCONSISTENT"];
 check["compact completion uses verified channel structures rather than silently reusing the old space",
-  acQEDFiveCompleted["CorrectionSpace"] === "ReducedChannels" &&
-    acQEDFiveCompleted["CorrectionBasis"] =!= acQEDFiveLegacy["CorrectionBasis"] &&
-    AnyTrue[acQEDFiveCompleted["ReducedChannelSpace"]["Sources"],
-      MemberQ[Lookup[acAcceptedContinuations, "Expression"], #] &]];
+  acQEDFiveCompleted["CorrectionBasis"] =!= acQEDFiveLegacy["CorrectionBasis"] &&
+    Or[
+      acQEDFiveCompleted["CorrectionSpace"] === "ReducedChannels" &&
+        AnyTrue[acQEDFiveCompleted["ReducedChannelSpace"]["Sources"],
+          MemberQ[Lookup[acAcceptedContinuations, "Expression"], #] &],
+      acQEDFiveCompleted["CorrectionSpace"] === "PeeledChannels" &&
+        acQEDFiveCompleted["ChannelCompanions"]["SourceChecks"] =!= {} &&
+        AllTrue[acQEDFiveCompleted["ChannelCompanions"]["SourceChecks"],
+          #["Verification"]["Status"] === "PASS" &] &&
+        acQEDFiveCompleted["ChannelCompanions"]["Mappings"] =!= {} &&
+        AllTrue[acQEDFiveCompleted["ChannelCompanions"]["Mappings"],
+          !TrueQ[#["PeelingIsIdentity"]] &]]];
 
 acQEDDistinct = prPreparedDiagramSum[DiagramAmplitudeRecords[
   CreateDiagrams[{"e", "E", "A.+", "A.+"}, prModel]]];

@@ -215,6 +215,14 @@ higher-order-pole rejection, selected-channel-only numerator reductions,
 additional cyclic reference choices and concise failure reasons. The physical-residue
 suite separately verifies that skipping an optional formal coefficient leaves
 the mapped residue and kinematic validation unchanged.
+The default suite also regenerates all 24 all-positive physical-reference
+diagrams and completes them through the source-derived companion stage,
+without supplying a known answer or correction basis. It checks the six
+four-copy input groups, four-coefficient fit, compact 12-term result, every
+physical channel at separate parameter values, high-energy behavior and a
+fresh full Feynman comparison. New purely regular companion directions are
+rejected. The input-fit suite additionally tests exact compact-point selection,
+protected contact coefficients, affine rebasing and bounded interruptions.
 It also covers the explicit balanced-helicity QED recursion example: fresh
 lower-point channels, all eight shifted products, reference assignment,
 propagator shifts, bounded failures, a fresh coherent-spin Feynman comparison

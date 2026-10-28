@@ -484,6 +484,23 @@ and ChannelReferences -> None skip the attempts. Both fits share at most one
 fifth of the remaining stage time, capped at 30 seconds; failures must leave
 the original seed and later solver intact. Details retain InputFitAttempts.
 
+Before the larger channel spaces, `"ChannelCompanions" -> Automatic` tries
+a small space derived from accepted closed physical-reference channel sources.
+Eligible two-leg cuts have one declared null external leg and a massive
+anchor with the same exchanged mass. Normalize each source using external
+identities and only its own cut, verifying that normalization. Group terms by
+chain/trace momentum-insertion count, then peel the emitted null label from
+typed lower-amplitude composites while protecting the selected propagator.
+This is a correction proposal, not an ordinary identity or an assertion that
+the selected residue is unchanged. Keep complete groups, coefficients and
+regular input. Reject new explicit pole-free directions, undeclared physical
+propagators and higher physical pole powers. Fit every original target and
+zero-residue obligation independently at coherent spin and parameter samples.
+Construction is capped at 15 seconds; construction plus fit share one third
+of the remaining stage time, capped at 60 seconds. Caps/partial construction
+must remain visible. If this space fails, retain the existing full fallback.
+None disables it; explicit bases and literal-channel mode bypass it.
+
 `CompleteFactorization` builds a bounded correction space from actual input
 and sewn-channel expressions, or an explicit `"CorrectionBasis"`, and solves all
 physical channels simultaneously. `"ChannelReferences" -> Automatic` also
@@ -590,8 +607,19 @@ Refit all accumulated raw equations in the original unknowns each round;
 composing dense intermediate solution rules can cause severe fraction growth.
 Construct the fitted amplitude and free directions only after sparse validation
 succeeds; keep their linear combinations factored instead of expanding a dense
-family before checking it. Optional final external reduction has one shared two-second budget after
-validation, commits atomically, and cannot turn validated success into failure.
+family before checking it. Optional representative selection and final external
+reduction have one shared two-second budget after validation. Selection tries
+bounded exact formal coefficient cancellations in several deterministic orders,
+keeps only a strict whole-expression improvement, and retains every free
+direction. Preserve coefficients of explicit regular monomials, including
+zero coefficients; do not erase contacts merely to shrink an expression.
+Rebase FamilyAmplitude around the new center with unchanged directions/free
+names, and record the original center and coordinate offset rather than
+misrepresenting old linear-solution coordinates. RepresentativeSelection -> None
+disables this choice. Cleanup must compare complete ranks and retain the
+original compact form if ordinary reduction expands it into a worse result.
+Interrupted work commits only a completed point and cannot turn validated
+success into failure.
 Exact common algebraic units may be removed from matrix columns and the right-hand
 side for rational elimination; restore the original coefficient and free-variable
 scales in solution rules. Large rational systems first try a bounded, 60-second
@@ -619,6 +647,7 @@ without changing the user's channels, model or vertex content.
 The optional details expose
 `"RefinementHistory"` and `"ChannelContinuations"`, including their verification
 scope. `"CorrectionSpace"` is `"ReducedChannels"`, `"LiteralTerms"`,
+`"InputRescaling"`, `"InputOverlap"`, `"PeeledChannels"`,
 `"BoseChannelUnion"`, `"BoseSelectedChannelUnion"`, `"BoseGroupedInputChannelUnion"`, `"SuppliedTerms"` or
 `"NotRequired"` when the input already passes.
 `"ReducedChannelSpace"` retains the compact sources, basis

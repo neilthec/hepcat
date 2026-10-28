@@ -614,6 +614,193 @@ check["the balanced example agrees with an independent fresh Feynman point in ev
     sixBalancedFeynmanProbe["InternalOnShell"] === False &&
     sixBalancedFeynmanProbe["NormalizationFitted"] === False];
 
+(* This default end-to-end regression follows the user's physical-reference
+   diagram route. It supplies only generated diagrams, channels and the model;
+   neither a final amplitude nor a correction basis enters construction. *)
+sixCompactOldChecks = checks;
+check["the original default six-point regression inventory remains intact", sixCompactOldChecks === 96];
+sixCompactChecks = 0;
+sixCompactCheck[name_, value_] := (sixCompactChecks++; check[name, value]);
+Print["Preparing twenty-four fresh all-positive physical-reference diagrams."];
+sixCompactDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 2];
+sixCompactDiagrams = CreateDiagrams[sixParticles, sixCompactDiagramModel];
+sixCompactRaw = diagramAmplitudes[sixCompactDiagrams];
+sixCompactRawSaved = sixCompactRaw;
+sixCompactPreparation = PrepareAmplitudes[sixCompactRaw, sixCompactDiagramModel,
+  "ReferenceSpinors" -> "AllPhysical", "MaxSteps" -> 0,
+  "ProgressReporting" -> False, "ReturnDetails" -> True];
+sixCompactPrepared = sixCompactPreparation["PreparedAmplitudes"];
+sixCompactNormalized = ConstructiveDiagrams`Private`completionNormalizeInput[
+  sixCompactPreparation, sixChannels, sixModel];
+sixCompactGroups = GatherBy[Last /@ sixCompactPrepared,
+  ConstructiveDiagrams`Private`completionCanonicalReduce[
+    #, sixCompactNormalized["ExternalMassRules"]] &];
+sixCompactCheck["all twenty-four fresh diagrams prepare to one-term physical-reference numerators",
+  Length[sixCompactDiagrams] === 24 && Length[sixCompactPrepared] === 24 &&
+    sixCompactPreparation["Status"] === "PREPARED" &&
+    AllTrue[sixCompactPrepared,
+      First[ConstructiveDiagrams`Private`preparationRank[Last[#]]] === 1 &]];
+sixCompactCheck["the generated physical-reference diagrams have six groups of four identical terms",
+  Length[sixCompactGroups] === 6 && (Length /@ sixCompactGroups) === ConstantArray[4, 6]];
+sixCompactCheck["preparation keeps the raw diagrams intact and eliminates only internal spin sums and references",
+  sixCompactRaw === sixCompactRawSaved &&
+    FreeQ[Last /@ sixCompactPrepared, _Mass | Spinor["Xi", ___] |
+      Spinor[___, _Multiparticle, ___] | _xFactor | _xTildeFactor]];
+sixCompactPlan = ConstructiveDiagrams`Private`completionBosePlan[
+  {{3, 4, 5, 6}}, sixCompactNormalized["ExternalMassRules"]];
+Print["Completing all fourteen channels using source-derived companions."];
+sixCompactCompletion = CompleteFactorization[sixCompactPreparation, sixChannels, sixModel,
+  "BoseSymmetryGroups" -> {{3, 4, 5, 6}}, "Samples" -> 2, "ValidationSamples" -> 2,
+  "MaxCorrectionTerms" -> 8, "TimeConstraint" -> 180,
+  "ProgressReporting" -> False, "ReturnDetails" -> True];
+sixCompactCheck["automatic completion finds a compact amplitude from fresh physical-reference diagrams",
+  AssociationQ[sixCompactCompletion] && sixCompactCompletion["Status"] === "COMPLETE" &&
+    sixCompactCompletion["CorrectionSpace"] === "PeeledChannels"];
+sixCompactCheck["the small source-derived fit has four coefficients and no discarded free family",
+  Length[sixCompactCompletion["CorrectionBasis"]] === 4 &&
+    sixCompactCompletion["FreeParameters"] === {} && sixCompactCompletion["RemainingBasis"] === {} &&
+    sixCompactCompletion["FamilyAmplitude"] === sixCompactCompletion["Amplitude"]];
+sixCompactCheck["the completed six-point amplitude retains twelve terms at complexity at most 108",
+  First[ConstructiveDiagrams`Private`preparationRank[sixCompactCompletion["Amplitude"]]] <= 108 &&
+    ConstructiveDiagrams`Private`expressionTermCounts[sixCompactCompletion["Amplitude"]]["Terms"] === 12];
+sixCompactCheck["the compact result is independent of reference labels and retains ordinary external spinors",
+  FreeQ[sixCompactCompletion["Amplitude"], _Mass | Spinor["Xi", ___] |
+    Spinor[___, _Multiparticle, ___] | _xFactor | _xTildeFactor | _Return | _Module]];
+sixCompactLastRound = Max[Lookup[sixCompactCompletion["ValidationReports"], "Round", -1]];
+sixCompactValidations = Select[sixCompactCompletion["ValidationReports"],
+  Lookup[#, "Round", -1] === sixCompactLastRound &];
+sixCompactCheck["all fourteen channels pass independent validation at both model mass scales",
+  Length[sixCompactValidations] === 2 &&
+    Length[DeleteDuplicates[Lookup[sixCompactValidations, "ParameterRules"]]] === 2 &&
+    AllTrue[sixCompactValidations, Function[entry,
+      Length[entry["Report"]["Channels"]] === 14 &&
+        AllTrue[entry["Report"]["Channels"], #["Status"] === "PASS" &]]]];
+sixCompactCheck["the companion fit records all declared coefficients and a separate fit seed",
+  Length[sixCompactCompletion["ConstraintData"]["FitVariables"]] === 4 &&
+    sixCompactCompletion["ConstraintData"]["LinearSolution"]["Rank"] === 4 &&
+    sixCompactCompletion["ConstraintData"]["FitSeed"] === 0];
+sixCompactCompanions = sixCompactCompletion["ChannelCompanions"];
+sixCompactCheck["the companion builder reports completed construction within the declared cap",
+  AssociationQ[sixCompactCompanions] &&
+    sixCompactCompanions["ConstructionStatus"] === "COMPLETE" &&
+    Length[sixCompactCompanions["Basis"]] === 4 &&
+    sixCompactCompanions["RawDirectionCount"] === 17 &&
+    sixCompactCompanions["Diagnostics"] === {}];
+sixCompactCheck["all eight ordinary selected-cut source normalizations are independently certified",
+  Length[sixCompactCompanions["SourceChecks"]] === 8 &&
+    AllTrue[sixCompactCompanions["SourceChecks"],
+      #["Verification"]["Status"] === "PASS" &&
+        Length[#["Verification"]["Samples"]] === 2 &&
+        #["Scope"] === "SelectedCutSourceNormalizationOnly" &]];
+sixCompactCheck["a momentum-peeling companion is explicitly distinguished from an identity",
+  Length[sixCompactCompanions["Mappings"]] === 16 &&
+    AllTrue[sixCompactCompanions["Mappings"], #["PeelingIsIdentity"] === False &]];
+sixCompactCheck["source components of every available momentum degree are retained before fitting",
+  Sort[DeleteDuplicates[Lookup[sixCompactCompanions["Mappings"], "MomentumDegree"]]] === {3, 4}];
+sixCompactCheck["the selected physical propagator is never changed by a typed peeling map",
+  AllTrue[sixCompactCompanions["Mappings"], Function[mapping,
+    AllTrue[mapping["PropagatorMap"], Function[replacement,
+      MatchQ[replacement, _PropDen -> _PropDen] &&
+        First[ConstructiveDiagrams`Private`residuePropagatorKey[First[replacement], Range[6]]] =!=
+          mapping["Cut"]]]]]];
+sixCompactCheck["typed peeling preserves the external spinors and their labels exactly",
+  AllTrue[sixCompactCompanions["Mappings"],
+    Sort[Cases[#["SourceExpression"], _Spinor, Infinity]] ===
+      Sort[Cases[#["CompanionExpression"], _Spinor, Infinity]] &]];
+sixCompactOpaque[value_] := value /. {_PropDen -> sixOpaquePropagator, _Mom -> sixOpaqueMomentum};
+sixCompactCheck["typed peeling leaves signs, coefficients and untyped integer payloads untouched",
+  AllTrue[sixCompactCompanions["Mappings"],
+    sixCompactOpaque[#["SourceExpression"]] === sixCompactOpaque[#["CompanionExpression"]] &]];
+sixCompactCheck["every generated companion uses known simple physical poles",
+  AllTrue[sixCompactCompanions["Basis"],
+    ConstructiveDiagrams`Private`completionHigherPhysicalPoles[#,
+      ConstructiveDiagrams`Private`completionTargets[sixCompactNormalized["Targets"]], Range[6]] === {} &]];
+sixCompactCapped = ConstructiveDiagrams`Private`completionPeeledChannelBasis[
+  sixCompactNormalized, sixCompactCompletion["ChannelContinuations"], sixCompactPlan,
+  1, sixRules, 726113, 15];
+sixCompactCheck["a companion space exceeding the requested cap is declined rather than truncated",
+  sixCompactCapped["Basis"] === Missing["PeeledChannelSpaceLimit"] &&
+    sixCompactCapped["ConstructionStatus"] === "PARTIAL" && sixCompactCapped["Diagnostics"] =!= {}];
+sixCompactScalarPlan = ConstructiveDiagrams`Private`completionBosePlan[{},
+  sixScalarNormalized["ExternalMassRules"]];
+sixCompactIneligibleSource = <|"Variants" -> {<|"Mode" -> "AllPhysical", "Accepted" -> True,
+  "Cut" -> sixScalarTarget["Cut"], "Mass" -> sixScalarTarget["Mass"],
+  "Expression" -> sixScalarTarget["StateSum"]/sixScalarTarget["Propagator"]|>}|>;
+sixCompactCheck["a channel without a massive-anchor and null-emission pair supplies no peeling ansatz",
+  ConstructiveDiagrams`Private`completionPeeledChannelBasis[
+    sixScalarNormalized, sixCompactIneligibleSource, sixCompactScalarPlan, 8,
+    sixScalarRules, 726119, 2] === Missing["NoEligibleSources"]];
+sixCompactContactTarget = SelectFirst[sixNormalized["Targets"], Length[#["Cut"]] === 2 &];
+sixCompactContactSource = <|"Variants" -> {<|"Mode" -> "AllPhysical", "Accepted" -> True,
+  "Cut" -> sixCompactContactTarget["Cut"], "Mass" -> sixCompactContactTarget["Mass"],
+  "Expression" -> 1|>}|>;
+sixCompactContactSpace = ConstructiveDiagrams`Private`completionPeeledChannelBasis[
+  sixNormalized, sixCompactContactSource, sixCompactPlan, 8, sixRules, 726127, 15];
+sixCompactCheck["even an eligible normalized source cannot introduce an independent pole-free direction",
+  AssociationQ[sixCompactContactSpace] && sixCompactContactSpace["Core"] === 0 &&
+    sixCompactContactSpace["RegularExpression"] === 0 &&
+    sixCompactContactSpace["Basis"] === {} && sixCompactContactSpace["Mappings"] === {} &&
+    Length[sixCompactContactSpace["SourceChecks"]] === 1 &&
+    First[sixCompactContactSpace["SourceChecks"]]["Verification"]["Status"] === "PASS"];
+sixCompactOtherPole = SelectFirst[sixNormalized["Targets"],
+  Length[#["Cut"]] === 2 && #["Cut"] =!= sixCompactContactTarget["Cut"] &];
+sixCompactPoleSum = 1/sixCompactContactTarget["Propagator"] + 1/sixCompactOtherPole["Propagator"];
+sixCompactPoleSumSource = <|"Variants" -> {<|"Mode" -> "AllPhysical", "Accepted" -> True,
+  "Cut" -> sixCompactContactTarget["Cut"], "Mass" -> sixCompactContactTarget["Mass"],
+  "Expression" -> sixCompactPoleSum|>}|>;
+sixCompactPoleSumSpace = ConstructiveDiagrams`Private`completionPeeledChannelBasis[
+  sixNormalized, sixCompactPoleSumSource, sixCompactPlan, 8, sixRules, 726129, 15];
+sixCompactCheck["a sum of physical pole terms is retained when its ordinary denominator is one",
+  Denominator[sixCompactPoleSum] === 1 && AssociationQ[sixCompactPoleSumSpace] &&
+    Length[sixCompactPoleSumSpace["Basis"]] === 1 &&
+    Length[sixCompactPoleSumSpace["Mappings"]] === 1 &&
+    sixCompactPoleSumSpace["RawDirectionCount"] === 1 &&
+    Denominator[First[sixCompactPoleSumSpace["Mappings"]]["ProjectedExpression"]] === 1];
+sixCompactCheck["channel companions are enabled by default and support an explicit opt-out",
+  ("ChannelCompanions" /. Options[CompleteFactorization]) === Automatic &&
+    Quiet[CompleteFactorization[0, sixScalarChannels, sixScalarModel,
+      "ChannelCompanions" -> True]] === $Failed];
+sixCompactDisabled = CompleteFactorization[0, sixScalarChannels, sixScalarModel,
+  "ChannelCompanions" -> None, "ParameterRules" -> sixScalarRules,
+  "Samples" -> 1, "ValidationSamples" -> 1, "TimeConstraint" -> 30,
+  "ProgressReporting" -> False, "ReturnDetails" -> True];
+sixCompactCheck["disabling companions preserves the existing general channel reconstruction",
+  sixCompactDisabled["Status"] === "COMPLETE" &&
+    sixCompactDisabled["ChannelCompanions"] === Missing["NotRequested"] &&
+    sixCompactDisabled["CorrectionSpace"] =!= "PeeledChannels" &&
+    AllTrue[sixCompactDisabled["ValidationReport"]["Channels"], #["Status"] === "PASS" &]];
+
+(* This independent benchmark is generated after the constructive solve and
+   never supplied as fitting data. Internal Feynman lines remain off shell. *)
+sixCompactFeynmanModel = sixBalancedFeynmanModel;
+sixCompactFeynmanRaw = diagramAmplitudes[CreateDiagrams[sixParticles, sixCompactFeynmanModel]];
+sixCompactFeynmanPrepared = PrepareAmplitudes[sixCompactFeynmanRaw, sixCompactFeynmanModel,
+  "ReferenceSpinors" -> "AllSpurious", "MaxSteps" -> 0, "TimeConstraint" -> 60,
+  "ProgressReporting" -> False];
+sixCompactCheck["the independent all-positive Feynman benchmark contains all twenty-four diagrams",
+  ListQ[sixCompactFeynmanPrepared] && Length[sixCompactFeynmanPrepared] === 24];
+sixCompactFullCheck = CheckAmplitudes[sixCompactCompletion["Amplitude"], sixChannels, sixModel,
+  "FeynmanAmplitudes" -> sixCompactFeynmanPrepared, "FeynmanModel" -> sixCompactFeynmanModel,
+  "FeynmanSamples" -> 1, "FeynmanTimeConstraint" -> 120,
+  "Samples" -> 3, "HighEnergySamples" -> 2, "ReferenceSamples" -> 2,
+  "RandomSeed" -> 726133, "TimeConstraint" -> 90, "Output" -> "Details"];
+sixCompactCheck["the compact automatic result passes fresh full channel-by-channel checks",
+  Length[sixCompactFullCheck["Channels"]] === 14 &&
+    AllTrue[sixCompactFullCheck["Channels"], #["Status"] === "PASS" &]];
+sixCompactCheck["the compact automatic amplitude passes the expected high-energy bound",
+  sixCompactFullCheck["HighEnergyCheck"]["Status"] === "PASS"];
+sixCompactCheck["the compact automatic result retains no unresolved reference or spurious-pole check",
+  sixCompactFullCheck["ReferenceCheck"]["Status"] === "PASS" &&
+    AllTrue[sixCompactFullCheck["SpuriousChecks"], #["Status"] === "PASS" &]];
+sixCompactCheck["the compact result agrees with fresh Feynman amplitudes in every coherent massive-spin component",
+  sixCompactFullCheck["FeynmanCheck"]["Status"] === "PASS" &&
+    sixCompactFullCheck["FeynmanCheck"]["CompletedSamples"] === 1 &&
+    sixCompactFullCheck["FeynmanCheck"]["Scope"] ===
+      "SampledOffCutMomentaAllImplicitMassiveSpinComponents" &&
+    sixCompactFullCheck["FeynmanCheck"]["InternalOnShell"] === False &&
+    sixCompactFullCheck["FeynmanCheck"]["NormalizationFitted"] === False];
+check["the complete compact six-point regression inventory ran", sixCompactChecks === 28];
+
 If[Environment["HEPCAT_TEST_FULL_BALANCED_SIX_POINT"] === "1",
   sixBalancedFullCheck = CheckAmplitudes[sixBalancedExample["Amplitude"], sixBalancedChannels, sixModel,
     "FeynmanAmplitudes" -> sixBalancedFeynmanPrepared, "FeynmanModel" -> sixBalancedFeynmanModel,
