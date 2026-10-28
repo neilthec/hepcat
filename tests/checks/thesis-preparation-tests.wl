@@ -996,7 +996,238 @@ Do[
     {tpSixIndex, 2}],
   {tpSixHelicities, {{"A.+", "A.+", "A.+", "A.-"}, {"A.+", "A.+", "A.-", "A.-"}}}];
 
-If[checks =!= 381, AppendTo[failures, {"UnexpectedCheckCount", checks, 381}]];
+(* ::Section:: *)
+(* Four massive fermions and two photons. Conservation alternatives must be
+   ranked after the declared external massless momenta have been factored. *)
+tpFourExternal = Thread[Mass /@ Range[6] -> {tpMass, tpMass, tpMass, tpMass, 0, 0}];
+tpFourOpen = SpinorChain[Spinor["Spin", "Square", 4], Mom[Multiparticle[1, 2, 3]],
+  Spinor["Spin", "Angle", 1]];
+tpFourConserved = ConstructiveDiagrams`Private`preparationConservedMomentumChains[
+  tpFourOpen, tpFourExternal, True, {}, False, True];
+check["external massless factorization participates in ranking an open-chain complement",
+  FreeQ[Cases[tpFourConserved, _SpinorChain, Infinity], _Mom] &&
+    SpinorExpressionComplexity[tpFourConserved] <= 3];
+check["ordinary reduction does not infer the four-fermion process conservation equation",
+  !FreeQ[Cases[ReduceSpinorProducts[tpFourOpen], _SpinorChain, Infinity], _Mom]];
+check["disabled conservation retains the original open composite chain",
+  ConstructiveDiagrams`Private`preparationConservedMomentumChains[
+    tpFourOpen, tpFourExternal, False, {}, False, True] === tpFourOpen];
+tpFourPole = PropDen[Mom[Multiparticle[1, 2, 3]], tpMass];
+tpFourInverse = 3 + tpFourOpen;
+check["complement ranking protects original propagators and ordinary inverse factors",
+  ConstructiveDiagrams`Private`preparationConservedMomentumChains[
+    tpFourOpen/(tpFourPole tpFourInverse), tpFourExternal, True, {}, False, True] ===
+      tpFourConserved/(tpFourPole tpFourInverse)];
+check["complement ranking protects powers with an unknown exponent",
+  ConstructiveDiagrams`Private`preparationConservedMomentumChains[
+    tpFourOpen tpFourInverse^tpFourUnknownPower, tpFourExternal, True, {}, False, True] ===
+      tpFourConserved tpFourInverse^tpFourUnknownPower];
+tpFourUndeclared = tpFourOpen /. Mom[Multiparticle[1, 2, 3]] -> Mom[Multiparticle[1, 2, 99]];
+check["conservation does not complement a momentum containing an undeclared leg",
+  ConstructiveDiagrams`Private`preparationConservedMomentumChains[
+    tpFourUndeclared, tpFourExternal, True, {}, False, True] === tpFourUndeclared];
+tpFourCycles = Table[{i, 8 + 3 i}, {i, 6}];
+tpFourSparseOpen = Fold[PermuteParticles, tpFourOpen, tpFourCycles];
+tpFourSparseRules = Fold[PermuteParticles, tpFourExternal, tpFourCycles];
+check["completed complement ranking is covariant under sparse typed relabeling",
+  ConstructiveDiagrams`Private`preparationConservedMomentumChains[
+    tpFourSparseOpen, tpFourSparseRules, True, {}, False, True] ===
+      Fold[PermuteParticles, tpFourConserved, tpFourCycles]];
+check["sparse labels do not enable conservation when its option is disabled",
+  ConstructiveDiagrams`Private`preparationConservedMomentumChains[
+    tpFourSparseOpen, tpFourSparseRules, False, {}, False, True] === tpFourSparseOpen];
+tpFourHelicityChain = SpinorChain[tpSpin["Angle", 6], Mom[Multiparticle[1, 2, 3]],
+  tpSpin["Square", 5]];
+tpFourHelicityExpected = ReduceSpinorProducts[-SpinorChain[tpSpin["Angle", 6], Mom[4],
+  tpSpin["Square", 5]]];
+check["selective reference-chain normalization preserves the open massive chain",
+  ConstructiveDiagrams`Private`preparationConservedMomentumChains[
+    tpFourOpen tpFourHelicityChain, tpFourExternal, True, {}, "HelicityEndpoints"] ===
+      tpFourOpen tpFourHelicityExpected];
+tpFourHat = tpFourHelicityChain /. Mom[Multiparticle[1, 2, 3]] -> MomHat[Multiparticle[1, 2, 3]];
+check["reference-chain conservation does not extend the new route to hatted momenta",
+  ConstructiveDiagrams`Private`preparationConservedMomentumChains[
+    tpFourHat, tpFourExternal, True, {}, "HelicityEndpoints"] === tpFourHat];
+Do[
+  tpFourPolicy = PrepareAmplitudes[{{Append[tpFourExternal,
+      Mass[Multiparticle[1, 5]] -> tpMass], tpFourOpen + MomProd[1, 5]}}, tpModel,
+    "ReferenceSpinors" -> None, "InternalOnShell" -> False,
+    "MomentumConservation" -> tpFourMC, "MaxSteps" -> 0,
+    "TimeConstraint" -> 20, "ProgressReporting" -> False, "ReturnDetails" -> True];
+  tpFourPolicyRow = First[tpFourPolicy["DiagramReports"]];
+  tpFourPolicyExpression = tpFourPolicyRow["PreparedExpression"];
+  check[{"external complement reduction does not enable a declared internal shell", tpFourMC},
+    tpFourPolicyRow["Status"] === "PREPARED" &&
+      tpFourPolicyRow["InternalOnShellChannels"] === {} &&
+      tpFourPolicyRow["JointOnShellDotReplacements"] === {} &&
+      !FreeQ[tpFourPolicyExpression, MomProd[1, 5]] &&
+      If[tpFourMC,
+        FreeQ[Cases[tpFourPolicyExpression, _SpinorChain, Infinity], _Mom],
+        !FreeQ[Cases[tpFourPolicyExpression, _SpinorChain, Infinity], _Mom]]],
+  {tpFourMC, {True, False}}];
+
+(* Root two oriented charged lines at their unique null exchanged photon.
+   Every external photon is chosen orthogonal to its adjacent charged line.
+   This chart construction uses matrices, not a symbolic preparation rule. *)
+tpFourLineData[diagram_] := Module[
+  {graph = diagram["Graph"], external = diagram["ExternalParticles"], edge, lines},
+  edge = SelectFirst[Keys[diagram["Propagators"]],
+    diagram["Propagators"][#]["Mass"] === 0 &&
+      diagram["Propagators"][#]["Spin2"] === 2 &];
+  lines = diagramFermionLines[diagram];
+  Map[Function[ends, Module[{oriented, path, sequence},
+    oriented = If[external[[First[ends]]] === "e", ends, Reverse[ends]];
+    path = FindShortestPath[graph, First[oriented], Last[oriented]];
+    sequence = Table[If[MemberQ[List @@ edge, path[[j]]], "Exchange",
+      First[Complement[AdjacencyList[graph, path[[j]]], path[[{j - 1, j + 1}]]]]],
+      {j, 2, Length[path] - 1}];
+    <|"Endpoints" -> oriented, "Sequence" -> sequence|>]], lines]
+];
+tpFourTopology[diagram_] := Module[{lines = tpFourLineData[diagram], owners, emitters, position},
+  owners = Table[SelectFirst[Range[2], MemberQ[lines[[#]]["Sequence"], leg] &], {leg, {5, 6}}];
+  emitters = MapThread[Function[{owner, leg},
+    position = FirstPosition[lines[[owner]]["Sequence"], "Exchange"][[1]];
+    If[FirstPosition[lines[[owner]]["Sequence"], leg][[1]] < position,
+      First[lines[[owner]]["Endpoints"]], Last[lines[[owner]]["Endpoints"]]]],
+    {owners, {5, 6}}];
+  Which[First[owners] =!= Last[owners], "SeparateLines",
+    First[emitters] === Last[emitters], "SameEndpoint", True, "OppositeEndpoints"]
+];
+tpFourOwnChart[diagram_, mass_, sample_Integer] := Module[
+  {lines = tpFourLineData[diagram], q, qa, angles = <||>, squares = <||>, momenta = <||>,
+   exchangeAngle = {1, sample + 1}, exchangeSquare = {sample + 2, 1},
+   u, v, w, z, current, sequence, position, ends, emit, coefficient, lambda, tilde,
+   photon, lineNumber, conditions},
+  q = Outer[Times, exchangeAngle, exchangeSquare];
+  emit[leg_Integer, sign_Integer] := (
+    lambda = {sample + leg + 1, sample^2 + leg^2 + 3};
+    coefficient = (sample + lineNumber + leg)/(sample + 2 leg + 1);
+    tilde = coefficient ({-#[[2]], #[[1]]} &)[tpSixAdj[current].lambda];
+    photon = Outer[Times, lambda, tilde];
+    AssociateTo[angles, leg -> lambda]; AssociateTo[squares, leg -> tilde];
+    AssociateTo[momenta, leg -> photon]; current = current + sign photon);
+  Do[
+    {ends, sequence} = Lookup[lines[[lineNumber]], {"Endpoints", "Sequence"}];
+    position = FirstPosition[sequence, "Exchange"][[1]];
+    u = sample + 2 lineNumber + 2; v = sample^2 + 3 lineNumber + 4;
+    w = (q[[1, 1]] mass^2 - u v q[[2, 1]] + u^2 q[[2, 2]])/(u q[[1, 2]] - q[[1, 1]] v);
+    z = (v q[[2, 1]] + w q[[1, 2]] - u q[[2, 2]])/q[[1, 1]];
+    qa = {{u, v}, {w, z}};
+    current = qa;
+    Do[emit[leg, -1], {leg, Reverse[Take[sequence, position - 1]]}];
+    AssociateTo[momenta, First[ends] -> current];
+    current = qa + If[lineNumber === 1, q, -q];
+    Do[emit[leg, 1], {leg, Drop[sequence, position]}];
+    AssociateTo[momenta, Last[ends] -> -current], {lineNumber, 2}];
+  Do[
+    lambda = {tpFourSpin[leg, 1], tpFourSpin[leg, 2]};
+    AssociateTo[angles, leg -> lambda];
+    AssociateTo[squares, leg -> tpSixEps.tpSixAdj[momenta[leg]].lambda/mass], {leg, 4}];
+  conditions = Join[{Total[Values[momenta]] === ConstantArray[0, {2, 2}]},
+    Table[Det[momenta[leg]] === If[leg <= 4, mass^2, 0], {leg, 6}],
+    Table[Det[Total[Lookup[momenta, List @@ prop["Index"]]]] ===
+      If[prop["Spin2"] === 1, mass^2, 0], {prop, Values[diagram["Propagators"]]}]];
+  <|"Momenta" -> momenta, "Angle" -> angles, "Square" -> squares,
+    "MassValue" -> mass, "Conditions" -> conditions|>
+];
+
+Do[
+  tpFourParticles = {"e", "E", "E", "e", "A.+", tpFourSecondPhoton};
+  tpFourDiagrams = CreateDiagrams[tpFourParticles, tpModel];
+  tpFourRaw = diagramAmplitudes[tpFourDiagrams];
+  tpFourRawHash = Hash[tpFourRaw, "SHA256"];
+  tpFourClasses = tpFourTopology /@ tpFourDiagrams;
+  tpFourSelectedIndices = (FirstPosition[tpFourClasses, #][[1]] &) /@
+    {"SameEndpoint", "OppositeEndpoints", "SeparateLines"};
+  tpFourSelected = tpFourRaw[[tpFourSelectedIndices]];
+  check[{"four-fermion two-photon fixtures cover all three radiation topologies", tpFourSecondPhoton},
+    Length[tpFourRaw] === 40 && KeySort[Counts[tpFourClasses]] ===
+      KeySort[<|"SameEndpoint" -> 16, "OppositeEndpoints" -> 8, "SeparateLines" -> 16|>]];
+  tpFourPrepared = PrepareAmplitudes[tpFourSelected, tpModel,
+    "ReferenceSpinors" -> "AllSpurious", "MaxSteps" -> 0,
+    "MaxReferenceChoices" -> 4, "ReferenceTimeConstraint" -> 5,
+    "TimeConstraint" -> 20, "ProgressReporting" -> False, "ReturnDetails" -> True];
+  Do[
+    tpFourIndex = tpFourSelectedIndices[[tpFourPosition]];
+    tpFourPair = tpFourSelected[[tpFourPosition]];
+    tpFourRow = tpFourPrepared["DiagramReports"][[tpFourPosition]];
+    tpFourExpression = tpFourRow["PreparedExpression"];
+    tpFourProps = DeleteDuplicates[Cases[Last[tpFourPair], _PropDen, Infinity]];
+    tpFourRules = ConstructiveDiagrams`Private`preparationCanonicalMassRules[First[tpFourPair]];
+    tpFourContracted = ConstructiveDiagrams`Private`preparationNumerators[Last[tpFourPair],
+      Function[num, ConstructiveDiagrams`Private`preparationReplaceMasses[
+        ReduceSpinContractions[num], tpFourRules]]];
+    tpFourReferences = ConstructiveDiagrams`Private`preparationReferences[tpFourContracted,
+      tpFourRules, tpModel, tpFourRaw, "AllSpurious",
+      (KeyTake[#, {"Leg", "Mode", "Target"}] &) /@ tpFourRow["ReferenceSpinors"]["Assignments"]];
+    check[{"four-fermion two-photon preparation completes a finite reference-free result",
+        tpFourSecondPhoton, tpFourClasses[[tpFourIndex]]},
+      tpFourRow["Status"] === "PREPARED" && tpFourReferences["Status"] === "COMPLETE" &&
+        Length[tpFourRow["ReferenceSpinors"]["Assignments"]] === 2 &&
+        FreeQ[tpFourExpression, Spinor["Xi", ___] | _Mass | _SpinorChainReduced | _SpinorTraceReduced] &&
+        ConstructiveDiagrams`Private`residueFiniteQ[tpFourExpression]];
+    check[{"four-fermion two-photon preparation retains all three original propagators",
+        tpFourSecondPhoton, tpFourClasses[[tpFourIndex]]},
+      Length[tpFourProps] === 3 &&
+        ContainsAll[DeleteDuplicates[Cases[tpFourExpression, _PropDen, Infinity]], tpFourProps]];
+    (* These bounds were measured with the public preparation budgets above.
+       A more compact manually derived current is not substituted into it. *)
+    tpFourQualityLimit = If[tpFourSecondPhoton === "A.+",
+      {8, 56, 59}[[tpFourPosition]], {56, 58, 57}[[tpFourPosition]]];
+    check[{"four-fermion two-photon preparation retains its measured bounded quality",
+        tpFourSecondPhoton, tpFourClasses[[tpFourIndex]]},
+      SpinorExpressionComplexity[tpFourExpression] <= tpFourQualityLimit &&
+        If[tpFourSecondPhoton === "A.+" && tpFourPosition === 1,
+          FreeQ[Cases[tpFourExpression, _SpinorChain, Infinity], _Mom], True]];
+    tpFourCertificate = Table[
+      tpFourChart = tpFourOwnChart[tpFourDiagrams[[tpFourIndex]],
+        tpFourSample[[1]], tpFourSample[[2]]];
+      And @@ tpFourChart["Conditions"] &&
+        tpSixValue[tpFourReferences["Expression"] - tpFourExpression,
+          tpFourChart, tpFourProps] === 0,
+      {tpFourSample, {{1, 1}, {3/7, 2}}}];
+    check[{"four-fermion two-photon numerators have exact coherent sixteen-spin certificates",
+        tpFourSecondPhoton, tpFourClasses[[tpFourIndex]]}, And @@ tpFourCertificate],
+    {tpFourPosition, Length[tpFourSelected]}];
+  check[{"four-fermion two-photon preparation leaves every raw diagram pair unchanged", tpFourSecondPhoton},
+    Hash[tpFourRaw, "SHA256"] === tpFourRawHash],
+  {tpFourSecondPhoton, {"A.+", "A.-"}}];
+
+(* An additional normal-budget call protects the established alternating
+   four-photon result while new optional conservation routes are explored. *)
+tpBalancedOrder = {3, 5, 4, 6};
+tpBalancedPair = SelectFirst[tpSixRaw, tpSixOrder[#] === tpBalancedOrder &];
+tpBalancedHash = Hash[tpBalancedPair, "SHA256"];
+tpBalancedPrepared = PrepareAmplitudes[{tpBalancedPair}, tpModel,
+  "ReferenceSpinors" -> "AllSpurious", "MaxSteps" -> 0,
+  "MaxReferenceChoices" -> 64, "ReferenceTimeConstraint" -> 5,
+  "TimeConstraint" -> 20, "ProgressReporting" -> False, "ReturnDetails" -> True];
+tpBalancedRow = First[tpBalancedPrepared["DiagramReports"]];
+tpBalancedExpression = tpBalancedRow["PreparedExpression"];
+tpBalancedProps = DeleteDuplicates[Cases[Last[tpBalancedPair], _PropDen, Infinity]];
+tpBalancedRules = ConstructiveDiagrams`Private`preparationCanonicalMassRules[First[tpBalancedPair]];
+tpBalancedContracted = ConstructiveDiagrams`Private`preparationNumerators[Last[tpBalancedPair],
+  Function[num, ConstructiveDiagrams`Private`preparationReplaceMasses[
+    ReduceSpinContractions[num], tpBalancedRules]]];
+tpBalancedReferences = ConstructiveDiagrams`Private`preparationReferences[tpBalancedContracted,
+  tpBalancedRules, tpModel, tpSixRaw, "AllSpurious",
+  (KeyTake[#, {"Leg", "Mode", "Target"}] &) /@ tpBalancedRow["ReferenceSpinors"]["Assignments"]];
+tpBalancedCertificate = Table[
+  tpBalancedChart = tpSixOwnChart[tpBalancedOrder, tpBalancedSample[[1]], tpBalancedSample[[2]],
+    tpBalancedSpins];
+  And @@ tpBalancedChart["Conditions"] &&
+    tpSixValue[tpBalancedReferences["Expression"] - tpBalancedExpression,
+      tpBalancedChart, tpBalancedProps] === 0,
+  {tpBalancedSample, {{1, 1}, {3/7, 2}}}, {tpBalancedSpins, Tuples[{1, 2}, 2]}];
+check["normal-budget alternating four-photon preparation retains its established compact result",
+  tpBalancedRow["Status"] === "PREPARED" &&
+    ConstructiveDiagrams`Private`residueFiniteQ[tpBalancedExpression] &&
+    SpinorExpressionComplexity[tpBalancedExpression] <= 52 &&
+    Length[tpBalancedProps] === 3 &&
+    ContainsAll[DeleteDuplicates[Cases[tpBalancedExpression, _PropDen, Infinity]], tpBalancedProps] &&
+    Hash[tpBalancedPair, "SHA256"] === tpBalancedHash && And @@ Flatten[tpBalancedCertificate]];
+
+If[checks =!= 422, AppendTo[failures, {"UnexpectedCheckCount", checks, 422}]];
 Print[ToString[checks] <> " thesis-preparation checks; " <> ToString[Length[failures]] <> " failures."];
 If[failures =!= {}, Print[failures]];
 Print["HEPCAT_TEST_COMPLETED:thesis-preparation-tests.wl"];

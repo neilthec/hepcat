@@ -6679,9 +6679,9 @@ preparationBetterQ[left_List, right_List] := left =!= right && OrderedQ[{left, r
    whole-expression expansion otherwise obscures these wins. *)
 DownValues[preparationConservedMomentumChains] = {};
 preparationConservedMomentumChains[expr_, rules_List, conserve_, dotRules_List : {},
-    normalizationMode_ : False] := Module[
+    normalizationMode_ : False, rankMassless_ : False] := Module[
   {external = DeleteDuplicates[externalIndices[rules]],
-   externalRules = preparationExternalRules[rules], conservedZeroSlotQ, reduce},
+   externalRules = preparationExternalRules[rules], conservedZeroSlotQ, finish, reduce},
   If[!TrueQ[conserve] || Length[external] < 2, Return[expr]];
   conservedZeroSlotQ[slot_] := Module[{terms = rspLinearMomentumTerms[slot], coefficients},
     If[terms === $Failed || !AllTrue[terms,
@@ -6690,7 +6690,19 @@ preparationConservedMomentumChains[expr_, rules_List, conserve_, dotRules_List :
       {leg, external}];
     AllTrue[Rest[coefficients], residueExactZero[# - First[coefficients]] &]
   ];
-  reduce[value_] := Module[
+  finish[value_] := Module[{normalized, split},
+    normalized = preparationReduceDots[ReduceSpinorProducts[value] /. externalRules, dotRules];
+    If[!residueFiniteQ[normalized], Return[normalized]];
+    If[!TrueQ[rankMassless] || !(Head[value] === SpinorChain &&
+        First[value] =!= Last[value] && AllTrue[{First[value], Last[value]},
+          MatchQ[#, Spinor["Spin", ___]] && IntegerQ[rspSpinorLeg[#]] &]), Return[normalized]];
+    (* A complement may expose null external momenta only after linearity.
+       External rules license this comparison without inferring internal shells. *)
+    split = preparationMasslessMomentumTrial[normalized, externalRules, dotRules, {}];
+    If[residueFiniteQ[split] && preparationBetterQ[preparationRank[split],
+        preparationRank[normalized]], split, normalized]
+  ];
+  reduce[value_] := reduce[value] = Module[
     {parts = List @@ value, slots, composites, baseline, best, bestRank,
      indices, replacements, selected, trial, reduced, rank},
     If[Head[value] === SpinorChain && (Length[parts] < 2 ||
@@ -6701,6 +6713,9 @@ preparationConservedMomentumChains[expr_, rules_List, conserve_, dotRules_List :
     If[TrueQ[normalizationMode] && !(Head[value] === SpinorChain &&
         First[parts] === Last[parts] &&
         MatchQ[First[parts], Spinor["Helicity", "Angle" | "Square", _Integer]]), Return[value]];
+    If[normalizationMode === "HelicityEndpoints" && !(Head[value] === SpinorChain &&
+        AllTrue[{First[parts], Last[parts]}, MatchQ[#, Spinor["Helicity", ___]] &&
+          IntegerQ[rspSpinorLeg[#]] &]), Return[value]];
     If[normalizationMode === "PreserveOpenSpin" && Head[value] === SpinorChain &&
         First[parts] =!= Last[parts] && AllTrue[{First[parts], Last[parts]},
           MatchQ[#, Spinor["Spin", ___]] && IntegerQ[rspSpinorLeg[#]] &], Return[value]];
@@ -6715,7 +6730,7 @@ preparationConservedMomentumChains[expr_, rules_List, conserve_, dotRules_List :
         momentumMembers[label] =!= {} && ContainsAll[external, momentumMembers[label]] :>
           momentum, Infinity]];
     If[composites === {}, Return[value]];
-    baseline = preparationReduceDots[ReduceSpinorProducts[value] /. externalRules, dotRules];
+    baseline = finish[value];
     If[!residueFiniteQ[baseline], Return[value]];
     best = baseline; bestRank = preparationRank[baseline];
     indices = Take[DeleteDuplicates[Join[2^Range[0, Min[Length[composites], 31] - 1],
@@ -6727,7 +6742,7 @@ preparationConservedMomentumChains[expr_, rules_List, conserve_, dotRules_List :
       trial = If[Head[value] === SpinorChain,
         SpinorChain @@ Join[{First[parts]}, slots /. replacements, {Last[parts]}],
         SpinorTrace @@ (slots /. replacements)];
-      reduced = preparationReduceDots[ReduceSpinorProducts[trial] /. externalRules, dotRules];
+      reduced = finish[trial];
       If[!residueFiniteQ[reduced], Continue[]];
       rank = preparationRank[reduced];
       If[preparationBetterQ[rank, bestRank],
@@ -7014,7 +7029,8 @@ DownValues[preparationReferenceTrial] = {};
 preparationReferenceTrial[expr_, rules_List, dotRules_List, auxiliary_List : {}, conserve_ : False,
     jointRules_List : {}, checkpoint_ : None] :=
   Module[{reduce, best = None, bestRank, conserved = expr, diagonalConserved = expr,
-    openSpinConserved = expr,
+    openSpinConserved = expr, helicityConserved = expr, legacyConserved, legacyCandidate,
+    rawComplements, rawTrial,
     consider, contractPairs, bodies, structural, structuralInputs = {}},
     reduce[value_] := preparationCancelReferencePoles[preparationReduceDots[
       preparationSpinorProducts[preparationReduceDots[value, dotRules], rules], dotRules],
@@ -7024,31 +7040,58 @@ preparationReferenceTrial[expr_, rules_List, dotRules_List, auxiliary_List : {},
       If[best === None || preparationBetterQ[rank, bestRank],
         best = value; bestRank = rank;
         If[checkpoint =!= None, checkpoint[best]]]]];
-    structural[value_, distribute_] := Module[{body, precontracted, candidate},
+    structural[value_, distribute_, refine_ : True] := Module[
+      {body, precontracted, conditioned, post, complete, key},
       body = If[TrueQ[distribute],
         If[rspSandwichExpansionCount[value] > 4096, Return[Null]];
         preparationProtectedDenominators[value, Expand], value];
-      If[MemberQ[structuralInputs, body], Return[Null]];
-      AppendTo[structuralInputs, body];
+      key = {body, TrueQ[refine]};
+      If[MemberQ[structuralInputs, key], Return[Null]];
+      AppendTo[structuralInputs, key];
       (* Preserve the original composite reference momenta until their common
          vector is contracted. Charged chain slots and all inverses stay atomic. *)
       precontracted = preparationNumerators[body,
         Function[num, rspSandwichProducts[num, True]]];
       precontracted = preparationNumerators[precontracted, rspSandwichProducts];
-      If[jointRules =!= {},
-        candidate = preparationFactorizedReferenceTrial[precontracted, rules,
-          jointRules, auxiliary, True];
+      complete[input_, activeDots_List] := Module[{candidate},
+        candidate = preparationFactorizedReferenceTrial[input, rules, activeDots, auxiliary, True];
         consider[candidate];
-        If[precontracted =!= body,
+        If[TrueQ[refine] && precontracted =!= body,
           consider[preparationMasslessMomentumTrial[candidate, rules, dotRules, auxiliary]]]];
-      candidate = preparationFactorizedReferenceTrial[precontracted, rules,
-        dotRules, auxiliary, True];
-      consider[candidate];
-      If[precontracted =!= body,
-        consider[preparationMasslessMomentumTrial[candidate, rules, dotRules, auxiliary]]]];
+      Do[
+        conditioned = preparationReduceDots[precontracted, activeDots];
+        complete[conditioned, activeDots];
+        If[TrueQ[conserve] && TrueQ[refine],
+          (* A contraction can change which conserved representative is useful.
+             Explore that alternative only after checkpointing the completed route. *)
+          post = preparationConservedMomentumChains[conditioned, rules, True, dotRules, False, True];
+          If[post =!= conditioned, complete[post, activeDots]]],
+        {activeDots, DeleteDuplicates[If[jointRules === {}, {dotRules}, {jointRules, dotRules}]]}]];
     (* Complete cheap factor routes first. Their valid endpoints remain usable
        if a later optional whole-product reduction exceeds its trial budget. *)
     consider[preparationFactorizedReferenceTrial[expr, rules, dotRules, auxiliary, False]];
+    If[TrueQ[conserve],
+      (* A locally better chain normal form can be worse in its whole product.
+         Preserve the earlier conserved route as a completed competitor. *)
+      legacyConserved = preparationConservedMomentumChains[expr, rules, True, dotRules, False, False];
+      legacyCandidate = preparationFactorizedReferenceTrial[legacyConserved, rules,
+        dotRules, auxiliary, True];
+      consider[legacyCandidate];
+      consider[preparationMasslessMomentumTrial[legacyCandidate, rules, dotRules, auxiliary]]];
+    If[best =!= None && First[bestRank] <= 1, Return[best]];
+    structural[expr, False, False];
+    If[TrueQ[conserve],
+      helicityConserved = preparationConservedMomentumChains[expr, rules, True, dotRules,
+        "HelicityEndpoints"];
+      structural[helicityConserved, False]; structural[helicityConserved, True];
+      (* Keep charged chains atomic while trying a bounded set of ordinary
+         composite complements, so adjacent-vector contractions remain visible. *)
+      rawComplements = Take[SortBy[Select[preparationConservationCandidates[helicityConserved, rules],
+          Lookup[#, "Identity", None] === "CompositeComplement" &],
+        -Length[Lookup[#, "Legs", {}]] &], UpTo[8]];
+      Do[
+        rawTrial = preparationConservationTrial[helicityConserved, edit, rules];
+        structural[rawTrial, False], {edit, rawComplements}]];
     structural[expr, False];
     structural[expr, True];
     If[TrueQ[conserve],
@@ -7061,7 +7104,7 @@ preparationReferenceTrial[expr_, rules_List, dotRules_List, auxiliary_List : {},
     If[TrueQ[conserve],
       diagonalConserved = preparationConservedMomentumChains[expr, rules, True, dotRules, True];
       structural[diagonalConserved, True]; structural[diagonalConserved, False];
-      conserved = preparationConservedMomentumChains[expr, rules, True, dotRules]];
+      conserved = legacyConserved];
     bodies = DeleteDuplicates[{expr, conserved}];
     Do[If[body =!= expr,
       Do[consider[preparationFactorizedReferenceTrial[body, rules, dotRules,

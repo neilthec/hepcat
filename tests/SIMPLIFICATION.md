@@ -192,6 +192,27 @@ sandwich pairs, and cancel recorded auxiliary reference factors. The surrounding
 product need not undergo the older whole-product Schouten expansion. Ordinary
 and conserved routes compete after completion, so a factored candidate is kept
 only when the whole expression has a better rank.
+One competing route ranks conservation alternatives for an open massive chain
+after factoring insertions of external momenta whose declared masses are zero.
+Two apparent three-term alternatives can have very different final costs: a
+complement
+containing the emitter's own momentum and the external photons can reduce to
+bare brackets, while the original complement retains momentum insertions.
+This uses the external mass rules and only the explicitly enabled numerator
+dot rules. It neither licenses an internal massless spinor nor adds momentum
+conservation to `ReduceSpinorProducts`.
+The earlier conserved normal form remains a separate whole-expression
+candidate. In particular, reference sandwiches retain their paired-contraction
+opportunity before massless splitting is tried. A better individual-chain rank
+does not justify discarding a better whole-product route.
+Another bounded competitor keeps charged chains intact while replacing a
+composite by its negative external complement. It then tries the shared-vector
+contractions before expanding the chain. For example, six-particle conservation
+turns the adjacent momenta `p4+p6, p1+p2+p3` into `Q, -Q-p5`, where `Q = p4+p6`.
+The existing adjacent-vector identity can recognize the latter representation.
+The raw complement is ranked only after the full contracted candidate is
+finished; at most eight such alternatives are inspected. Conservation remains
+optional, and original propagators and other inverse factors remain protected.
 One bounded alternative distributes numerator sums with inverse factors held
 opaque, then applies the directed contractions before the older whole-product
 rearrangements. This exposes useful bracket factors while allowing recorded
@@ -681,7 +702,7 @@ internal photon spinors only to the selected massless physical cut and
 evaluates its remaining x factors with the incoming-momentum orientation.
 It never assigns spinors to a generic off-shell composite momentum.
 
-### Worked Five-Point Identity Routes
+### Worked QED Identity Routes
 
 `tests/QED-5-point-residues.wl` also contains the process-specific worked
 routes used by both QED notebooks. Loading it does not run tests or change
@@ -728,6 +749,46 @@ Whole-expression ordinary reduction gives 38 terms and complexity 190;
 factor collection and the five whole-numerator momentum eliminations tested
 did not produce a smaller result. Preparation retains the compact completed
 form. These comparisons do not establish a global minimum.
+
+The six-point extensions `e,E,E,e,A.+,A.+` and `e,E,E,e,A.+,A.-` each have
+40 diagrams, including both identical-fermion pairings. Their radiation
+reductions can be organized by where the two photons attach. Applying the
+ordinary spinor identities and only the diagram's own numerator cuts gives
+the following compact local forms:
+
+| Photon attachment | `++`: complexity / expanded terms | `+-`: complexity / expanded terms |
+| --- | ---: | ---: |
+| Same endpoint of one fermion line | 8 / 8 | 56 / 8 |
+| Opposite endpoints of one fermion line | 56 / 8 | 58 / 10 |
+| Different fermion lines | 57 / 9 | 57 / 9 |
+
+These current-level forms were derived and checked against every actual
+diagram on two exact rational own-cut charts. The complete polynomial in
+four massive-spin doublets was compared, covering all 16 spin components
+without selecting one physical polarization. The sequential `++` form has
+no numerator momentum insertions. The other forms retain momentum dependence
+in compact sandwiches. This is a comparison of useful forms, not a global
+minimum proof or a claim that preparation always reaches every table entry.
+
+The general preparation improvement is the reduction order described above:
+normalize helicity reference chains while keeping charged chains intact,
+retain raw conserved complements until paired contractions have been tried,
+and rank open charged-chain complements after permitted external massless
+factorization. The earlier whole-expression route remains a competitor.
+No process-specific current formula is substituted by the package.
+
+With `"ReferenceSpinors" -> Automatic` and `"MaxSteps" -> 0`, the final
+automatic run prepared all 80 diagrams in about two minutes per process.
+All 160 exact polynomial comparisons passed, covering the 16 spin components
+at both mass/kinematic assignments, with all three original propagators kept.
+Every mixed-helicity diagram reached the corresponding table entry: 16
+same-endpoint diagrams at 56, eight opposite-endpoint diagrams at 58, and 16
+split-line diagrams at 57. For `++`, all 16 sequential diagrams reached
+complexity 8 and the eight opposite-endpoint diagrams reached 56. The split-line
+diagrams retained complexity 59 or 80 with 11 or 12 expanded terms; the
+derived nine-term form at 57 remains a useful target for further general
+search improvements. These comparisons validate diagram-local numerator
+reductions; full amplitude completion remains a separate stage.
 
 For `e,E,A.+,A.+,A.-`, use:
 
