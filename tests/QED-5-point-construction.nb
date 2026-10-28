@@ -283,8 +283,10 @@ conditions in its numerator. Original propagators stay off shell.\
 Cell[CellGroupData[{
 
 Cell["\<\
-preparation = PrepareAmplitudes[rawAmplitudes, diagramModel,
-  \"ReferenceSpinors\" -> referenceChoice];
+preparationDetails = PrepareAmplitudes[rawAmplitudes, diagramModel,
+  \"ReferenceSpinors\" -> referenceChoice,
+  \"ReturnDetails\" -> True];
+preparation = preparationDetails[\"PreparedAmplitudes\"];
 preparation\
 \>", "Input",
  CellLabel->
@@ -1407,9 +1409,10 @@ ad", "Real"],
 }, Open  ]],
 
 Cell["\<\
-Each result is {mass replacements, prepared expression}, ready for the next \
-step. Original expressions and reduction histories are not returned unless \
-requested.\
+Each displayed result is {mass replacements, prepared expression}. \
+preparationDetails keeps the discarded remainders and reference continuations \
+for completion, including a common-Xi candidate. These continuations are \
+possible corrections, not identities away from the cuts.\
 \>", "Text",ExpressionUUID->"f3bb5e78-8509-4a68-8049-acd45147bfec"],
 
 Cell[CellGroupData[{
@@ -1417,19 +1420,15 @@ Cell[CellGroupData[{
 Cell["Optional: Preparation Details", "Subsection",ExpressionUUID->"75a8ef12-ac29-4855-adb3-134b3c85bab8"],
 
 Cell["\<\
-ReturnDetails -> True requests the full report. Inspect the first diagram's \
+The preparation report is already saved. Inspect the first diagram's \
 reference assignments below. A PARTIAL status means preparation retained the \
 last completed expression; the report explains why.\
 \>", "Text",ExpressionUUID->"0b2bf6b8-8eb1-43cb-a78e-417b251fa0cc"],
 
 Cell["\<\
-preparationDetails = PrepareAmplitudes[rawAmplitudes, diagramModel,
-  \"ReferenceSpinors\" -> referenceChoice,
-  \"ReturnDetails\" -> True];
 Grid[Prepend[
   ({#[\"Reference\"], #[\"Mode\"], #[\"Target\"]} & /@
-    preparationDetails[\"DiagramReports\"][[1]][\"ReferenceSpinors\"][\"Assignments\"\
-]),
+    preparationDetails[\"DiagramReports\"][[1]][\"ReferenceSpinors\"][\"Assignments\"]),
   {\"Original reference\", \"Choice\", \"Replacement\"}], Frame -> All]\
 \>", "Input",
  CellLabel->"In[17]:=",ExpressionUUID->"e491cb78-13a4-495a-b158-4e479e480dea"]
@@ -1441,19 +1440,20 @@ Cell[CellGroupData[{
 Cell["4. Complete the Physical Residues", "Section",ExpressionUUID->"da13714b-7e29-4e39-9cab-225c647ba0ed"],
 
 Cell["\<\
-Generate and prepare the factorization channels, then solve their residue \
-constraints simultaneously. Preparation uses only the selected channel's \
-internal on-shell condition. Original channels are kept as fallback correction \
-directions only if the prepared channels do not suffice. The result is the updated amplitude, not a \
-report. An unfinished completion returns a concise Failure instead.\
+Prepare the factorization channels too, using only each selected channel's \
+internal on-shell condition. Pass both preparation reports to completion so \
+it can first try the simplified forms and their retained remainders. The \
+original channels remain the targets. The result is the updated amplitude, \
+not a report. An unfinished completion returns a concise Failure instead.\
 \>", "Text",ExpressionUUID->"69934b68-953e-4bc0-93b1-dfdfbd6556d4"],
 
 Cell[CellGroupData[{
 
 Cell["\<\
 channels = FactorizationAmplitudeChannels[particles, factorizationModel];
-preparedChannels = PrepareAmplitudes[channels, factorizationModel,
-  \"ReferenceSpinors\" -> referenceChoice];
+channelPreparationDetails = PrepareAmplitudes[channels, factorizationModel,
+  \"ReferenceSpinors\" -> referenceChoice, \"ReturnDetails\" -> True];
+preparedChannels = channelPreparationDetails[\"PreparedAmplitudes\"];
 Length[channels]\
 \>", "Input",
  CellLabel->
@@ -1469,9 +1469,8 @@ Cell[BoxData["6"], "Output",
 Cell[CellGroupData[{
 
 Cell["\<\
-factorization = CompleteFactorization[preparation, channels, \
-factorizationModel,
-  \"AlternativeChannels\" -> channels,
+factorization = CompleteFactorization[preparationDetails, channelPreparationDetails,
+  factorizationModel,
   \"Samples\" -> 1, \"ValidationSamples\" -> 1,
   \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> timeLimit];
 factorization\
@@ -5350,8 +5349,10 @@ Cell["3. Prepare Each Diagram", "Section",ExpressionUUID->"e8318ad5-33e4-4b43-92
 Cell[CellGroupData[{
 
 Cell["\<\
-preparation = PrepareAmplitudes[rawAmplitudes, diagramModel,
-  \"ReferenceSpinors\" -> referenceChoice];
+preparationDetails = PrepareAmplitudes[rawAmplitudes, diagramModel,
+  \"ReferenceSpinors\" -> referenceChoice,
+  \"ReturnDetails\" -> True];
+preparation = preparationDetails[\"PreparedAmplitudes\"];
 preparation\
 \>", "Input",
  CellLabel->"In[58]:=",ExpressionUUID->"f3b54b2b-bc11-4bd2-8060-816054562ec8"],
@@ -8116,6 +8117,9 @@ Cell[CellGroupData[{
 
 Cell["\<\
 channels = FactorizationAmplitudeChannels[particles, factorizationModel];
+channelPreparationDetails = PrepareAmplitudes[channels, factorizationModel,
+  \"ReferenceSpinors\" -> referenceChoice, \"ReturnDetails\" -> True];
+preparedChannels = channelPreparationDetails[\"PreparedAmplitudes\"];
 Length[channels]\
 \>", "Input",
  CellLabel->"In[60]:=",ExpressionUUID->"d1d215f7-3ce1-4e58-b659-34cf40a56718"],
@@ -8797,8 +8801,8 @@ ad", "Real"],
 Cell[CellGroupData[{
 
 Cell["\<\
-factorization = CompleteFactorization[preparation, channels, \
-factorizationModel,
+factorization = CompleteFactorization[preparationDetails, channelPreparationDetails,
+  factorizationModel,
   \"Samples\" -> 1, \"ValidationSamples\" -> 1,
   \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> timeLimit];
 factorization\
@@ -14129,8 +14133,10 @@ Cell["3. Prepare Each Diagram", "Section",ExpressionUUID->"b3cbf88d-347c-47f6-95
 Cell[CellGroupData[{
 
 Cell["\<\
-preparation = PrepareAmplitudes[rawAmplitudes, diagramModel,
-  \"ReferenceSpinors\" -> referenceChoice, \"MaxSteps\" -> 0];
+preparationDetails = PrepareAmplitudes[rawAmplitudes, diagramModel,
+  \"ReferenceSpinors\" -> referenceChoice, \"MaxSteps\" -> 0,
+  \"ReturnDetails\" -> True];
+preparation = preparationDetails[\"PreparedAmplitudes\"];
 preparation\
 \>", "Input",
  CellLabel->"In[90]:=",ExpressionUUID->"e4c32dd8-548e-483c-9500-5726362d653d"],
@@ -15873,6 +15879,9 @@ Cell[CellGroupData[{
 
 Cell["\<\
 channels = FactorizationAmplitudeChannels[particles, factorizationModel];
+channelPreparationDetails = PrepareAmplitudes[channels, factorizationModel,
+  \"ReferenceSpinors\" -> referenceChoice, \"ReturnDetails\" -> True];
+preparedChannels = channelPreparationDetails[\"PreparedAmplitudes\"];
 Length[channels]\
 \>", "Input",
  CellLabel->"In[60]:=",ExpressionUUID->"e64f06de-4a38-4a9d-8d6a-35d2e4ae81af"],
@@ -16554,8 +16563,8 @@ ad", "Real"],
 Cell[CellGroupData[{
 
 Cell["\<\
-factorization = CompleteFactorization[preparation, channels, \
-factorizationModel,
+factorization = CompleteFactorization[preparationDetails, channelPreparationDetails,
+  factorizationModel,
   \"Samples\" -> 3, \"ValidationSamples\" -> 1,
   \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> Max[timeLimit, 300]];
 factorization\
@@ -23767,8 +23776,10 @@ conditions in its numerator. Original propagators stay off shell.\
 \>", "Text",ExpressionUUID->"9916c18d-f6e4-45a7-b842-fe42dde7df29"],
 
 Cell["\<\
-preparation = PrepareAmplitudes[rawAmplitudes, diagramModel,
-  \"ReferenceSpinors\" -> referenceChoice];\
+preparationDetails = PrepareAmplitudes[rawAmplitudes, diagramModel,
+  \"ReferenceSpinors\" -> referenceChoice,
+  \"ReturnDetails\" -> True];
+preparation = preparationDetails[\"PreparedAmplitudes\"];\
 \>", "Input",
  CellChangeTimes->{{4.002029627104932*^9, 
   4.002029627937378*^9}},ExpressionUUID->"d61557f4-ea78-4d0f-8fe8-\
@@ -24379,19 +24390,15 @@ Cell[CellGroupData[{
 Cell["Optional: Preparation Details", "Subsection",ExpressionUUID->"b1067fca-8bad-40c1-8e00-779461c05107"],
 
 Cell["\<\
-ReturnDetails -> True requests the full report. Inspect the first diagram's \
+The preparation report is already saved. Inspect the first diagram's \
 reference assignments below. A PARTIAL status means preparation retained the \
 last completed expression; the report explains why.\
 \>", "Text",ExpressionUUID->"1784af3a-f8d7-4a70-ba15-34440b5621c8"],
 
 Cell["\<\
-preparationDetails = PrepareAmplitudes[rawAmplitudes, diagramModel,
-  \"ReferenceSpinors\" -> referenceChoice,
-  \"ReturnDetails\" -> True];
 Grid[Prepend[
   ({#[\"Reference\"], #[\"Mode\"], #[\"Target\"]} & /@
-    preparationDetails[\"DiagramReports\"][[1]][\"ReferenceSpinors\"][\"\
-Assignments\"]),
+    preparationDetails[\"DiagramReports\"][[1]][\"ReferenceSpinors\"][\"Assignments\"]),
   {\"Original reference\", \"Choice\", \"Replacement\"}], Frame -> All]\
 \>", "Input",
  CellLabel->"In[17]:=",ExpressionUUID->"472f3ff8-8d5a-4669-9613-97fc5583ef00"]
@@ -24406,6 +24413,9 @@ Cell[CellGroupData[{
 
 Cell["\<\
 channels = FactorizationAmplitudeChannels[particles, factorizationModel];
+channelPreparationDetails = PrepareAmplitudes[channels, factorizationModel,
+  \"ReferenceSpinors\" -> referenceChoice, \"ReturnDetails\" -> True];
+preparedChannels = channelPreparationDetails[\"PreparedAmplitudes\"];
 Length[channels]\
 \>", "Input",
  CellChangeTimes->{4.0020296563474417`*^9},
@@ -24436,8 +24446,8 @@ Cell[BoxData[
 Cell[CellGroupData[{
 
 Cell["\<\
-factorization = CompleteFactorization[preparation, channels, \
-factorizationModel,
+factorization = CompleteFactorization[preparationDetails, channelPreparationDetails,
+  factorizationModel,
   \"BoseSymmetryGroups\" -> {{3, 4, 5, 6}},
   \"Samples\" -> 12, \"ValidationSamples\" -> 1, \"MaxRefinements\" -> 5,
   \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> timeLimit];
@@ -27250,7 +27260,40 @@ lastPathIsLeafHeader, TypeSystem`NestedGrid`PackagePrivate`headerHidden$ = And[
  CellLabel->"Out[50]=",ExpressionUUID->"a12d310f-6828-46aa-a56f-25cfc638485b"]
 }, Open  ]]
 }, Open  ]]
-}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Optional: Completion Comparison", "Section",ExpressionUUID->"a3bc438f-153d-44b7-8cdd-c4fb9c32911c"],
+
+Cell["\<\
+These are completion-only wall times, excluding diagram and channel \
+preparation. The old call supplied prepared channel rows directly. The new \
+calls retain the original channel targets through the preparation reports. \
+PreparationRemainders -> None disables the first remainder attempt; Automatic \
+enables it. For five-point +++ with AllPhysical references: old 0.70 s, None \
+0.79 s, Automatic 0.67 s. All three return 3 expanded terms with complexity 27.\
+\>", "Text",ExpressionUUID->"c3e039d4-88da-4997-b31e-46e4d076fc5e"],
+
+Cell["\<\
+For five-point ++- with AllSpurious references, the old prepared-channel call \
+was UNRESOLVED after 4.03 s. With original targets retained, None completed \
+in 3.83 s and Automatic in 6.59 s. Both successful results have 14 expanded \
+terms and complexity 130.\
+\>", "Text",ExpressionUUID->"243555e5-f808-49cd-9891-f5b4731e02c9"],
+
+Cell["\<\
+For six-point ++++ with AllPhysical references, the old call completed in \
+62.23 s with 36 expanded terms and complexity 516. None completed in 20.25 s \
+and Automatic in 28.24 s; both give 12 expanded terms and complexity 108. \
+The retained remainder attempts did not improve these latter two examples \
+and added some overhead before the compact fallback. They remain bounded \
+alternatives, not a guaranteed speedup. All three new Automatic results \
+passed independent physical, high-energy and Feynman comparisons. These \
+measurements are examples, not timing guarantees.\
+\>", "Text",ExpressionUUID->"0cb96605-c0e3-4935-b38f-96b5b99b8626"]
+
+}, Closed]]
 }, Open  ]],
 Cell[CellGroupData[{
   Cell["e,E,A.+,A.+,A.+,A.-", "Chapter"],

@@ -989,9 +989,13 @@ particles = {"e", "E", "A.+", "A.+", "A.+"};
 qedDiagramModel = ReadModel[FileNameJoin[{hepcatDirectory, "models"}], 2];
 qedFactorizationModel = ReadModel[FileNameJoin[{hepcatDirectory, "models"}], 3];
 pairs = diagramAmplitudes[CreateDiagrams[particles, qedDiagramModel]];
-prepared = PrepareAmplitudes[pairs, qedDiagramModel];
+diagramPreparation = PrepareAmplitudes[pairs, qedDiagramModel,
+  "ReturnDetails" -> True];
+prepared = diagramPreparation["PreparedAmplitudes"];
 channels = FactorizationAmplitudeChannels[particles, qedFactorizationModel];
-preparedChannels = PrepareAmplitudes[channels, qedFactorizationModel];
+channelPreparation = PrepareAmplitudes[channels, qedFactorizationModel,
+  "ReturnDetails" -> True];
+preparedChannels = channelPreparation["PreparedAmplitudes"];
 ```
 
 `PrepareAmplitudes` recognizes each element's format: diagram pairs
@@ -1037,11 +1041,12 @@ condition. Its momentum-conservation complement describes the same cut, not
 an additional assumption. Other propagators inside the lower-point amplitudes
 stay off shell. Physical denominators, the sewing sign and `z` are preserved.
 Preparation preserves the selected-cut residue; it need not preserve the
-channel's continuation away from that pole. Keep `channels` as the original
-input and use `preparedChannels` for the reduced continuation. Completion does
-not automatically add the original forms back as extra correction directions.
-To retain that fallback, pass `"AlternativeChannels" -> channels`: completion
-tries the prepared channels first and consults the originals only if needed.
+channel's continuation away from that pole. Keep the two preparation reports
+and pass them to completion, as below. The original channel rows remain the
+residue targets; their simplified forms and retained differences supply
+correction candidates. Ordinary pairs and rows remain supported, but they
+carry no hidden history. For legacy plain prepared-channel rows, originals
+can still be supplied with `"AlternativeChannels" -> channels`.
 
 It applies `ReduceSpinContractions`, makes the selected
 reference-spinor replacements, then calls `ReduceSpinorProducts` with physical
@@ -1162,8 +1167,7 @@ disable both local conservation edits and these whole-numerator alternatives.
 
 ```wolfram
 factorizedAmplitude = CompleteFactorization[
-  prepared, preparedChannels, qedFactorizationModel,
-  "AlternativeChannels" -> channels]
+  diagramPreparation, channelPreparation, qedFactorizationModel]
 ```
 
 The default result is the completed amplitude, not a report.
@@ -1172,6 +1176,37 @@ The legacy `"Output" -> "Details"` also remains available. An unresolved
 ordinary call returns a compact `Failure` with guidance, without embedding
 the candidate or report. Its short `"Reason"` also states the actual failure,
 such as exceeding the correction-term cap, rather than implying a timeout.
+
+With preparation reports, `"PreparationRemainders" -> Automatic` first tries
+the prepared structures and grouped remainders, after the inexpensive input
+normalization attempts. Each item's `"RemainderData"` retains the exact
+fixed-reference difference `FixedReferenceExpression - PreparedExpression`,
+completed stage differences and the particular internal conditions used.
+Reference changes are recorded separately: neither changing Xi nor reducing a
+diagram numerator on its own cuts is asserted to preserve its full continuation.
+The tested reference alternatives retain their unreduced and reduced expressions.
+Common-Xi and unambiguous per-leg Xi sources remain available without a cache.
+
+The first correction space groups the supplied diagram and channel differences
+by momentum-insertion count. Ordinary pair-invariant identities expose a
+virtuality, for example `2 MomProd[i,j] = PropDen[Mom[Multiparticle[i,j]],M] +
+M^2 - Mass[i]^2 - Mass[j]^2`; they never set that propagator to zero.
+Complete groups with regular terms remain tied rather than becoming arbitrary
+independent contact directions. Original physical targets and zero obligations
+remain unchanged, and all fits retain coherent-spin and parameter validation.
+An exact compatibility probe may reject an inadequate space early; a consistent
+or timed-out probe is never a successful completion.
+
+This optional attempt uses at most one fifth of the remaining stage clock,
+capped at 12 seconds. Construction uses at most four seconds, with a smaller
+internal deadline to retain completed partial groups. An oversized space is
+reported rather than silently truncated. The existing channel solvers remain
+available if these remainders are insufficient. A retained common-reference
+sum may be tried as a final bounded fallback. Set `"PreparationRemainders" ->
+None` to compare the earlier route on the same inputs. Explicit correction
+bases and literal-channel mode bypass these automatic attempts. Details expose
+`"PreparationRemainders"`, `"PreparationRemainderFit"`,
+`"PreparationReferenceAttempts"` and `"ChannelPreparation"`.
 
 `CompleteFactorization` solves all supported physical-channel constraints
 simultaneously. It does not independently add one residue discrepancy divided
@@ -1251,7 +1286,9 @@ The opt-in `"AlternativeChannels"` list supplies additional continuations only
 after the prepared-channel solve fails. Each alternative's grouped selected-cut
 residue must agree before its correction directions are admitted; the prepared
 channels remain authoritative. Both attempts share the stage's correction-term
-and time limits. The default `{}` does not retain or reintroduce original inputs.
+and time limits. For plain row inputs the default `{}` does not retain or
+reintroduce original inputs. A channel preparation report instead explicitly
+retains the original rows as targets and supplies its preparation history.
 `"ChannelReferences" -> Automatic` supplements the raw channel expressions
 with bounded alternative reference choices: recorded preparation assignments
 when available, cyclic choices and physical momentum-insertion choices.
@@ -1353,6 +1390,40 @@ record both sizes in `"CorrectionSpaceCandidates"` and name the fallback
 assertion that all discarded input atoms were dependent. Every original
 channel and free direction still has to pass fresh validation. An oversized
 or inconsistent fallback remains unresolved.
+
+### Retained-Preparation Comparison
+
+Completion-only measurements on identical saved prepared expressions:
+
+| Process | Earlier plain prepared-channel input | Reports, remainders off | Reports, remainders on | Terms / complexity with reports |
+| --- | --- | --- | --- | --- |
+| Five-point `e,E,A.+,A.+,A.+` | 0.70 s | 0.79 s | 0.67 s | 3 / 27 |
+| Five-point `e,E,A.+,A.+,A.-` | Unresolved | 3.83 s | 6.59 s | 14 / 130 |
+| Six-point `e,E,A.+,A.+,A.+,A.+` | 62.23 s, 36 terms / 516 | 20.25 s | 28.24 s | 12 / 108 |
+
+Preserving original channel targets and continuations makes prepared channels
+usable without degrading the final form. The retained-remainder attempt itself
+does not improve these QED results yet: the mixed five-point space is exactly
+inconsistent, and the bounded partial six-point space is rejected by exact
+compatibility equations. Existing channel fallbacks supply the successful
+compact results. This is bounded extra work, not a claimed universal speedup.
+The all-positive five-point example finishes by inexpensive rescaling first.
+
+These runs used physical, spurious and physical reference preparation,
+respectively; `MaxSteps -> 0` retained the ordinary, conservation and internal
+numerator reductions. Fitting samples were 3, 3 and 12, with one held-out sample,
+cap 256, three refinements and 120/120/180-second stage limits. Only the six-point
+case declared Bose group `{{3,4,5,6}}`. Preparation times were about 6.85, 30.19
+and 85.81 seconds, with channel preparation another 0.73, 6.41 and 9.78 seconds;
+these are excluded from the table. Other diagnostics were running, so times
+are measurements, not guarantees.
+
+All three results passed fresh physical and sampled high-energy checks and
+agreed with independently regenerated 6/6/24-diagram Feynman sums at three
+fresh exact rational off-cut samples, including every coherent massive-spin
+component at `m=2, EE=3`. Internal Feynman lines remained off shell and no
+normalization was fitted. The unchanged regression tests cover the other
+five- and six-point QED examples; these three cases are the timed comparison.
 
 ### Compact All-Positive Six-Point Result
 

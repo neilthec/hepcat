@@ -389,11 +389,13 @@ The checker is still read-only. Use the three separate construction functions
 when amplitude completion, rather than diagnosis alone, is requested:
 
 ```wolfram
-prepared = PrepareAmplitudes[pairs, diagramModel];
+diagramPreparation = PrepareAmplitudes[pairs, diagramModel, "ReturnDetails" -> True];
+prepared = diagramPreparation["PreparedAmplitudes"];
 channels = FactorizationAmplitudeChannels[particles, factorizationModel];
-preparedChannels = PrepareAmplitudes[channels, factorizationModel];
-factorizedAmplitude = CompleteFactorization[prepared, preparedChannels,
-  factorizationModel, "AlternativeChannels" -> channels];
+channelPreparation = PrepareAmplitudes[channels, factorizationModel, "ReturnDetails" -> True];
+preparedChannels = channelPreparation["PreparedAmplitudes"];
+factorizedAmplitude = CompleteFactorization[diagramPreparation, channelPreparation,
+  factorizationModel];
 completedAmplitude = If[FailureQ[factorizedAmplitude] || factorizedAmplitude === $Failed,
   factorizedAmplitude,
   CompleteHighEnergy[factorizedAmplitude, channels, factorizationModel]];
@@ -406,16 +408,30 @@ It preserves the input format and metadata by default. Channel preparation
 derives only external mass rules and its declared cut, never shells for other
 propagators inside the lower-point amplitudes. The channel's contour factor
 and sewing sign remain unchanged. Cut-only reductions preserve its selected
-residue, not its off-cut continuation. Keep original rows available for later
-validation or alternative correction spaces. `"AlternativeChannels" -> channels`
-explicitly enables a fallback to their correction directions only if completion
-with the prepared rows fails. The original selected residues are checked against
-the prepared targets first; fitting and validation still use the prepared targets.
-This fallback shares the remaining time and term limits. Original rows are not
-automatically added when the option is omitted. Mixed formats require consistent
+residue, not its off-cut continuation. Pass both preparation reports to completion:
+the original channel rows remain authoritative residue targets, while simplified
+channels and retained differences supply correction candidates. Plain pairs and
+rows remain valid but carry no hidden history. The legacy `"AlternativeChannels"`
+option is available when only plain prepared rows were supplied; its selected-cut
+checks and remaining time/term limits are unchanged. Mixed formats require consistent
 external masses. `PrepareDiagramAmplitudes` is a thin compatibility alias,
 not another implementation. Use `"ReturnDetails" -> True` to request the original inputs,
 reference assignments and reduction history; this option defaults to `False`.
+The report's `RemainderData` separates the exact fixed-reference before/after
+difference from reference changes, and retains completed stage differences,
+tested reference alternatives and common-Xi sources. Never call these ordinary
+off-cut identities or impose a diagram's internal shells on the assembled sum.
+`PreparationRemainders -> Automatic` tries grouped retained corrections after
+cheap input rescaling and before broader channel spaces, within one fifth of
+the remaining stage clock capped at 12 seconds. Construction has at most four
+seconds with a smaller internal deadline, and retains partial diagnostics.
+Exact early compatibility equations can reject a space but never certify success.
+All original targets, zero obligations and coherent-spin/parameter validation
+remain mandatory. Ordinary pair-virtuality lifting keeps every propagator off
+shell; regular pieces stay tied to complete source groups. A common-reference
+sum is a final bounded fallback, requiring the same full validation. None
+disables these attempts; explicit bases and literal-channel mode bypass them.
+Preserve remainder and fallback diagnostics even when a later space succeeds.
 It applies `ReduceSpinContractions`, selects `"ReferenceSpinors"`, then calls
 `ReduceSpinorProducts` on the whole diagram expression while protecting physical
 propagators. Ordinary external spinor identities may simplify auxiliary
@@ -648,6 +664,7 @@ The optional details expose
 `"RefinementHistory"` and `"ChannelContinuations"`, including their verification
 scope. `"CorrectionSpace"` is `"ReducedChannels"`, `"LiteralTerms"`,
 `"InputRescaling"`, `"InputOverlap"`, `"PeeledChannels"`,
+`"PreparationRemainders"`, `"RetainedReferences"`,
 `"BoseChannelUnion"`, `"BoseSelectedChannelUnion"`, `"BoseGroupedInputChannelUnion"`, `"SuppliedTerms"` or
 `"NotRequired"` when the input already passes.
 `"ReducedChannelSpace"` retains the compact sources, basis

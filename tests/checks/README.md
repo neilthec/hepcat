@@ -92,8 +92,21 @@ diagram-local checks do not assert equality of the unfinished off-cut sum.
 `PrepareAmplitudes` accepts both diagram pairs and compact factorization rows.
 Its channel tests check preserved row metadata and propagators, numerator-only
 selected-cut shell conditions, and protection of unrelated internal channels.
-Completion can retain originals with the opt-in `"AlternativeChannels"` fallback,
-certified on the selected cuts and considered only after the prepared-first fit.
+Passing preparation reports for both inputs to `CompleteFactorization`
+retains the simplified expressions, grouped discarded remainders and reference
+continuations explicitly. Original channel expressions remain the authoritative
+residue targets. The solver first tries the retained preparation directions,
+with the same independent all-channel and parameter validation as its other
+correction spaces. Plain amplitude/channel lists remain supported, but do not
+carry preparation history. Their explicit `"AlternativeChannels"` fallback is
+still available. No hidden cache or metadata is attached to ordinary expressions.
+`preparation-remainders-tests.wl` covers exact source recomposition, separate
+reference changes, partial records, own-cut-only channel assumptions and inverse
+protection. A cubic scalar tree demonstrates recovery of another physical pole
+discarded during preparation. Additional tests preserve original and zero-residue
+targets, reject malformed reports, and ensure consistent, timed-out or inexact
+preflights cannot certify success. A genuine five-point QED common-reference
+fallback checks full channel validation, original-input and Bose metadata.
 Exact coefficient-refinement tests include heavily scaled rows, algebraic
 right-hand sides, retained free coefficients and late contradictions.
 
