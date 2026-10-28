@@ -401,6 +401,19 @@ completedAmplitude = If[FailureQ[factorizedAmplitude] || factorizedAmplitude ===
   CompleteHighEnergy[factorizedAmplitude, channels, factorizationModel]];
 ```
 
+Both completion stages normally return one `{externalMassRules, expression}`
+pair. Only external `Mass[leg]` replacements are retained, never internal shell
+assumptions. A successful pair can go directly into `PrepareAmplitudes` for
+further reduction, or into the checker and next completion stage. Preparation
+of a single external-only pair keeps that single-pair form and disables internal
+shells; propagators supply reference choices only. `"Output" -> "Expression"`
+requests the bare expression from either completion stage. Detailed reports
+retain separate `Amplitude` and `ExternalMassRules` fields as before.
+For a whole amplitude, keep repeated literal Xi references correlated. Never
+assign one shared Xi different values in different terms or for different
+particles. Automatic preparation may retain a shared Xi when a safe uniform
+replacement is unavailable; explicit incompatible choices must fail visibly.
+
 Run the final stage only after inspecting a successful factorization stage.
 `PrepareAmplitudes` detects each element: diagram `{massRules, expression}`
 pairs or compact factorization rows `{m1, ..., mn, Multiparticle[cut], mass, expression}`.

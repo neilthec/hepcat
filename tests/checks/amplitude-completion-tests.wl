@@ -2036,24 +2036,35 @@ check["both completion stages expose structured progress callbacks",
 acDefaultFactor = CompleteFactorization[prFourPointAmplitude, prFourPointChannels, prModel,
   "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "Samples" -> 1,
   "ValidationSamples" -> 1, "ProgressReporting" -> False];
-check["the default successful factorization output is an ordinary expression",
-  !AssociationQ[acDefaultFactor] && !FailureQ[acDefaultFactor] &&
-    acZero[acDefaultFactor - prFourPointAmplitude]];
-check["factorization diagnostics are disabled by default without changing expression output",
+acCompletedExternalRules = Thread[(Mass /@ Range[4]) ->
+  {prElectronMass, prElectronMass, 0, 0}];
+check["the default successful factorization output retains only external mass rules",
+  MatchQ[acDefaultFactor, {_List, _}] &&
+    First[acDefaultFactor] === acCompletedExternalRules &&
+    FreeQ[First[acDefaultFactor], _Multiparticle] &&
+    acZero[Last[acDefaultFactor] - prFourPointAmplitude]];
+check["factorization diagnostics are disabled by default while the amplitude keeps its masses",
   ("ReturnDetails" /. Options[CompleteFactorization]) === False &&
-    ("Output" /. Options[CompleteFactorization]) === "Expression"];
+    ("Output" /. Options[CompleteFactorization]) === "Amplitude"];
 acFactorFalse = CompleteFactorization[prFourPointAmplitude, prFourPointChannels, prModel,
   "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "Samples" -> 1, "ValidationSamples" -> 1,
   "ProgressReporting" -> False, "ReturnDetails" -> False];
-check["ReturnDetails False keeps a successfully validated factorization result plain",
-  !AssociationQ[acFactorFalse] && !FailureQ[acFactorFalse] &&
-    acZero[acFactorFalse - acDefaultFactor]];
+check["ReturnDetails False keeps a successfully validated amplitude pair plain",
+  MatchQ[acFactorFalse, {_List, _}] &&
+    First[acFactorFalse] === First[acDefaultFactor] &&
+    acZero[Last[acFactorFalse] - Last[acDefaultFactor]]];
+acExpressionFactor = CompleteFactorization[prFourPointAmplitude, prFourPointChannels, prModel,
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "Samples" -> 1,
+  "ValidationSamples" -> 1, "ProgressReporting" -> False, "Output" -> "Expression"];
+check["explicit factorization Expression output remains the bare symbolic expression",
+  !ListQ[acExpressionFactor] && !AssociationQ[acExpressionFactor] &&
+    acZero[acExpressionFactor - Last[acDefaultFactor]]];
 acFactorDetails = CompleteFactorization[prFourPointAmplitude, prFourPointChannels, prModel,
   "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "Samples" -> 1, "ValidationSamples" -> 1,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
 check["ReturnDetails True exposes the factorization candidate, constraints and validation history",
   AssociationQ[acFactorDetails] && acFactorDetails["Status"] === "COMPLETE" &&
-    acZero[acFactorDetails["Amplitude"] - acDefaultFactor] &&
+    acZero[acFactorDetails["Amplitude"] - Last[acDefaultFactor]] &&
     ContainsAll[Keys[acFactorDetails], {"InitialReport", "ValidationReport", "ConstraintData"}]];
 acFactorDetailsOverride = CompleteFactorization[
   prFourPointAmplitude, prFourPointChannels, prModel,
@@ -2063,13 +2074,20 @@ check["ReturnDetails True overrides the legacy factorization Expression output c
   AssociationQ[acFactorDetailsOverride] && acFactorDetailsOverride["Status"] === "COMPLETE"];
 check["legacy factorization Output Details remains supported",
   AssociationQ[acQEDFour] && acQEDFour["Status"] === "COMPLETE" &&
-    acZero[acQEDFour["Amplitude"] - acDefaultFactor]];
+    acZero[acQEDFour["Amplitude"] - Last[acDefaultFactor]]];
 acPlainFinal = CompleteHighEnergy[acDefaultFactor, prFourPointChannels, prModel,
   "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "Samples" -> 1,
   "ValidationSamples" -> 1, "ProgressReporting" -> False];
-check["a plain factorization result feeds final completion without extracting report fields",
-  !AssociationQ[acPlainFinal] && !FailureQ[acPlainFinal] &&
-    acZero[acPlainFinal - prFourPointAmplitude]];
+check["an amplitude pair feeds high-energy completion without extracting report fields",
+  MatchQ[acPlainFinal, {_List, _}] &&
+    First[acPlainFinal] === acCompletedExternalRules &&
+    acZero[Last[acPlainFinal] - prFourPointAmplitude]];
+acExpressionFinal = CompleteHighEnergy[acDefaultFactor, prFourPointChannels, prModel,
+  "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "Samples" -> 1,
+  "ValidationSamples" -> 1, "ProgressReporting" -> False, "Output" -> "Expression"];
+check["explicit high-energy Expression output remains available after amplitude-pair input",
+  !ListQ[acExpressionFinal] && !AssociationQ[acExpressionFinal] &&
+    acZero[acExpressionFinal - Last[acPlainFinal]]];
 Do[
   check["invalid factorization ReturnDetails value is rejected " <> ToString[bad, InputForm],
     acInvalid[Quiet[CompleteFactorization[prFourPointAmplitude,
@@ -2270,7 +2288,7 @@ Do[
 Print["Checking high-energy completion and preserved physical residues."];
 acScalarLocalRepair = CompleteHighEnergy[{acExternalZero, 7 + MomProd[1, 2]}, {},
   acMasslessScalarModel, "Samples" -> 2, "ValidationSamples" -> 2,
-  "ProgressReporting" -> False];
+  "ProgressReporting" -> False, "Output" -> "Expression"];
 check["automatic high-energy completion removes an existing inadmissible local term",
   acScalarLocalRepair === 7];
 acReferenceArtifact = SpinorChain[Spinor["Xi", "Angle", 71],

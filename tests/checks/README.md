@@ -107,6 +107,11 @@ discarded during preparation. Additional tests preserve original and zero-residu
 targets, reject malformed reports, and ensure consistent, timed-out or inexact
 preflights cannot certify success. A genuine five-point QED common-reference
 fallback checks full channel validation, original-input and Bose metadata.
+`completed-amplitude-preparation-tests.wl` checks the completion pair format,
+direct re-preparation with external mass rules only, and reference choices from
+physical propagators without inferring internal shells. It preserves literal
+shared-Xi correlations and compares a real five-point QED sum before and after
+preparation at independent exact off-cut points.
 Exact coefficient-refinement tests include heavily scaled rows, algebraic
 right-hand sides, retained free coefficients and late contradictions.
 

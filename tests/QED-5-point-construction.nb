@@ -1977,10 +1977,9 @@ Cell[CellGroupData[{
 Cell["5. Complete High Energy and Verify", "Section",ExpressionUUID->"809fa82c-a8c5-49e4-9431-d37a2d9a84a9"],
 
 Cell["\<\
-Run this stage only after factorization is complete. It checks physical \
-residues again, together with high-energy growth, spurious-pole cancellation \
-and explicit Xi independence. It does not necessarily find the shortest \
-expression.\
+Run this stage only after factorization is complete. It checks physical residues again, together with high-energy growth, spurious-pole cancellation and explicit Xi independence. It does not necessarily find the shortest expression.
+
+Completion returns {externalMassRules, expression}. The check below first uses PrepareAmplitudes to simplify that completed pair. Only external on-shell rules are retained; no internal numerator on-shell conditions are applied.\
 \>", "Text",ExpressionUUID->"8f05d2eb-7bef-45ae-b9b3-774c335de9a4"],
 
 Cell[CellGroupData[{
@@ -3505,14 +3504,16 @@ Cell["\<\
 Clear[constructedAmplitude, constructionChecks];
 If[FailureQ[completion] || completion === $Failed,
   completion,
-  constructedAmplitude = completion;
-  constructionChecks = CheckAmplitudes[
-    constructedAmplitude, channels, factorizationModel,
-    \"FeynmanAmplitudes\" -> preparedFeynman,
-    \"FeynmanModel\" -> qedFeynmanModel,
-    \"Samples\" -> checkSamples, \"TimeConstraint\" -> timeLimit,
-    \"Output\" -> \"Details\"];
-  constructionChecks[\"Table\"]]\
+  constructedAmplitude = PrepareAmplitudes[completion, factorizationModel];
+  If[FailureQ[constructedAmplitude] || constructedAmplitude === $Failed,
+    constructedAmplitude,
+    constructionChecks = CheckAmplitudes[
+      constructedAmplitude, channels, factorizationModel,
+      \"FeynmanAmplitudes\" -> preparedFeynman,
+      \"FeynmanModel\" -> qedFeynmanModel,
+      \"Samples\" -> checkSamples, \"TimeConstraint\" -> timeLimit,
+      \"Output\" -> \"Details\"];
+    constructionChecks[\"Table\"]]]\
 \>", "Input",
  CellChangeTimes->{{4.002017187598366*^9, 4.0020171932212467`*^9}, {
   4.002017349371266*^9, 4.002017357332312*^9}, {4.002017433514278*^9, 
@@ -12284,14 +12285,16 @@ Cell["\<\
 Clear[constructedAmplitude, constructionChecks];
 If[FailureQ[completion] || completion === $Failed,
   completion,
-  constructedAmplitude = completion;
-  constructionChecks = CheckAmplitudes[
-    constructedAmplitude, channels, factorizationModel,
-    \"FeynmanAmplitudes\" -> preparedFeynman,
-    \"FeynmanModel\" -> qedFeynmanModel,
-    \"Samples\" -> checkSamples, \"TimeConstraint\" -> timeLimit,
-    \"Output\" -> \"Details\"];
-  constructionChecks[\"Table\"]]\
+  constructedAmplitude = PrepareAmplitudes[completion, factorizationModel];
+  If[FailureQ[constructedAmplitude] || constructedAmplitude === $Failed,
+    constructedAmplitude,
+    constructionChecks = CheckAmplitudes[
+      constructedAmplitude, channels, factorizationModel,
+      \"FeynmanAmplitudes\" -> preparedFeynman,
+      \"FeynmanModel\" -> qedFeynmanModel,
+      \"Samples\" -> checkSamples, \"TimeConstraint\" -> timeLimit,
+      \"Output\" -> \"Details\"];
+    constructionChecks[\"Table\"]]]\
 \>", "Input",
  CellLabel->"In[76]:=",ExpressionUUID->"c9322b4d-143f-4709-a278-9f060affb40e"],
 
@@ -20046,14 +20049,16 @@ Cell["\<\
 Clear[constructedAmplitude, constructionChecks];
 If[FailureQ[completion] || completion === $Failed,
   completion,
-  constructedAmplitude = completion;
-  constructionChecks = CheckAmplitudes[
-    constructedAmplitude, channels, factorizationModel,
-    \"FeynmanAmplitudes\" -> preparedFeynman,
-    \"FeynmanModel\" -> qedFeynmanModel,
-    \"Samples\" -> checkSamples, \"TimeConstraint\" -> timeLimit,
-    \"Output\" -> \"Details\"];
-  constructionChecks[\"Table\"]]\
+  constructedAmplitude = PrepareAmplitudes[completion, factorizationModel];
+  If[FailureQ[constructedAmplitude] || constructedAmplitude === $Failed,
+    constructedAmplitude,
+    constructionChecks = CheckAmplitudes[
+      constructedAmplitude, channels, factorizationModel,
+      \"FeynmanAmplitudes\" -> preparedFeynman,
+      \"FeynmanModel\" -> qedFeynmanModel,
+      \"Samples\" -> checkSamples, \"TimeConstraint\" -> timeLimit,
+      \"Output\" -> \"Details\"];
+    constructionChecks[\"Table\"]]]\
 \>", "Input",
  CellLabel->"In[76]:=",ExpressionUUID->"2f37359f-75a4-4998-934d-5b2f91212427"],
 
@@ -26095,14 +26100,16 @@ Cell["\<\
 Clear[constructedAmplitude, constructionChecks];
 If[FailureQ[completion] || completion === $Failed,
   completion,
-  constructedAmplitude = completion;
-  constructionChecks = CheckAmplitudes[
-    constructedAmplitude, channels, factorizationModel,
-    \"FeynmanAmplitudes\" -> preparedFeynman,
-    \"FeynmanModel\" -> qedFeynmanModel,
-    \"Samples\" -> checkSamples, \"TimeConstraint\" -> timeLimit,
-    \"Output\" -> \"Details\"];
-  constructionChecks[\"Table\"]]\
+  constructedAmplitude = PrepareAmplitudes[completion, factorizationModel];
+  If[FailureQ[constructedAmplitude] || constructedAmplitude === $Failed,
+    constructedAmplitude,
+    constructionChecks = CheckAmplitudes[
+      constructedAmplitude, channels, factorizationModel,
+      \"FeynmanAmplitudes\" -> preparedFeynman,
+      \"FeynmanModel\" -> qedFeynmanModel,
+      \"Samples\" -> checkSamples, \"TimeConstraint\" -> timeLimit,
+      \"Output\" -> \"Details\"];
+    constructionChecks[\"Table\"]]]\
 \>", "Input",
  CellChangeTimes->{{4.002017187598366*^9, 4.0020171932212467`*^9}, {
   4.002017349371266*^9, 4.002017357332312*^9}, {4.002017433514278*^9, 

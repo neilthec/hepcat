@@ -1170,12 +1170,38 @@ factorizedAmplitude = CompleteFactorization[
   diagramPreparation, channelPreparation, qedFactorizationModel]
 ```
 
-The default result is the completed amplitude, not a report.
+The default result is `{externalMassRules, expression}`, not a report. Both
+completion stages retain only `Mass[externalLeg] -> mass` replacements in this
+pair. Internal numerator shell assumptions are not carried into the completed
+amplitude. `"Output" -> "Expression"` returns the bare expression when needed.
 `"ReturnDetails" -> False` is the default; `True` requests the full report.
 The legacy `"Output" -> "Details"` also remains available. An unresolved
 ordinary call returns a compact `Failure` with guidance, without embedding
 the candidate or report. Its short `"Reason"` also states the actual failure,
 such as exceeding the correction-term cap, rather than implying a timeout.
+
+The completed pair can be prepared directly:
+
+```wolfram
+finalAmplitude = PrepareAmplitudes[factorizedAmplitude, qedFactorizationModel];
+CheckAmplitudes[finalAmplitude, channels, qedFactorizationModel]
+```
+
+A single pair is returned as a single pair. External-only pairs represent a
+complete amplitude, so preparation applies external spinor identities,
+conservation, reference handling and its bounded simplification search, with
+internal on-shell conditions disabled. The physical propagators can supply a
+reference-choice inventory; they never supply extra shell assumptions. Lists
+of diagram pairs keep their existing list format and diagram-local behavior.
+Repeated literal Xi references remain correlated throughout a complete sum;
+preparation cannot split a shared reference into different per-particle values.
+If a requested physical-reference assignment cannot preserve that correlation,
+it remains unavailable rather than changing the amplitude's continuation.
+The ordinary automatic mode can retain the shared reference while still
+performing the other reductions.
+The same pair passes directly through `CompleteHighEnergy` and can then be
+prepared again. `CheckAmplitudes` accepts either the pair or its bare expression;
+with a bare expression it obtains the external masses from the supplied channels.
 
 With preparation reports, `"PreparationRemainders" -> Automatic` first tries
 the prepared structures and grouped remainders, after the inexpensive input
@@ -1713,10 +1739,11 @@ generic analytic proof, a complete reconstruction theorem or a uniqueness
 claim. Inspect the returned diagnostics and independently vary samples and
 parameters before relying on a fitted correction.
 
-Ordinary successful calls return the expression. An unresolved
+Ordinary successful calls return `{externalMassRules, expression}`; use
+`"Output" -> "Expression"` for just the expression. An unresolved
 `CompleteFactorization` returns a compact `Failure["IncompleteAmplitude", ...]`;
 request `"ReturnDetails" -> True` for its full diagnostics and retained candidate.
-`CompleteHighEnergy` is unchanged: an unresolved or underdetermined ordinary
+For `CompleteHighEnergy`, an unresolved or underdetermined ordinary
 call returns a failure retaining the candidate and report, while
 `"Output" -> "Details"` returns the report directly. Invalid inputs are rejected
 separately. Do not present an incomplete candidate as an established amplitude.
