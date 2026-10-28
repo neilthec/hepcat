@@ -178,6 +178,16 @@ sign. A process without an eligible cut retains real center-of-mass sampling.
 
 ## Factorization Completion
 
+`completion-input-fit-tests.wl` covers the automatic one-coefficient input
+normalization and shared-contribution proposals. It uses real scalar poles
+to distinguish an overcounted shared term from legitimate multiplicity,
+preserves complete signed coefficients and explicit regular input, and checks
+fallbacks, opt-outs, parameter validation and interrupted attempts. The real
+five-point QED example verifies six prepared AllPhysical diagrams have three
+exact pairs, with sum `2 H`, and recover `H` without channel subtraction terms.
+These tests treat overlap removal as a residue-validated candidate, never as
+an arithmetic identity for adding diagrams.
+
 The completion suite includes the notebook's actual five-point QED
 `AllSpurious` diagram preparation followed by automatic completion, without
 supplying a known answer as a correction basis. It also completes the

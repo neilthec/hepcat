@@ -4513,6 +4513,8 @@ CompleteFactorization::args = "Expected amplitude pairs or an expression, ordina
 CompleteFactorization::usage = CompleteFactorization::usage <>
   " AlternativeChannels -> {} optionally supplies original or alternative compact channel rows. Only after automatic completion fails are their selected residues checked against the supplied channels and their correction directions tried within the remaining term and time budgets. The supplied channels remain the targets for fitting and independent validation; alternatives never replace them. AlternativeChannelFallback in the details records the checks and result.";
 CompleteFactorization::usage = CompleteFactorization::usage <>
+  " InputReweighting -> Automatic first tries a single fitted coefficient on the pole-bearing input, then on a candidate that retains one copy of exact signed terms shared across separate diagram records. Explicit additive terms without PropDen denominators retain their original multiplicity. These are proposed corrections, not identities for summing diagrams; every original physical-channel obligation must pass fresh coherent-spin and parameter validation. The attempts share at most one fifth of the remaining stage time, capped at 30 seconds. InputReweighting -> None disables them; explicit CorrectionBasis and ChannelReferences -> None retain their existing behavior. InputFitAttempts in details records coefficients, overlap counts and validation. No normalization is fitted by CheckAmplitudes or its Feynman comparison.";
+CompleteFactorization::usage = CompleteFactorization::usage <>
   " BoseSymmetryGroups -> {} optionally declares disjoint groups of identical external bosonic states, for example {{3,4,5,6}} for four identical-helicity photons. The caller must supply the correct species and helicity grouping; equal masses alone do not identify identical states. Automatic Bose completion combines available compact, literal and certified selected-cut-prepared channel terms, then exactly averages the seed and directions over typed particle permutations while preserving all original residue targets. Exact formal linear dependencies may be removed by sparse reduction within a 60-second budget; an unfinished pruning pass keeps the full projected space. MaxCorrectionTerms applies after projection and pruning. The full space is retained whenever it fits; otherwise a bounded alternative keeps whole pole-bearing input diagrams and all available channel terms, without splitting the input diagrams into individual corrections. CorrectionSpaceCandidates records both sizes. CorrectionSpace -> BoseChannelUnion, BoseSelectedChannelUnion or BoseGroupedInputChannelUnion identifies the selected space in details; SelectedChannelSpace records its selected-cut checks. No successful reconstruction is claimed until every original target and the full fitted family pass independent validation. The permutation group is bounded at order 120. Each intermediate source-space construction may grow with that order, capped at 4096 directions unless a larger MaxCorrectionTerms was already requested. The merged union can exceed one source-space cap; neither this cap nor the clock is a hard memory limit. The ordinary default {} performs no such averaging and retains compact-then-literal behavior.";
 
 Begin["ConstructiveDiagrams`Private`"];
@@ -6020,10 +6022,84 @@ completionAlternativeChannelBasis[input_, normalized_Association, rows_List,
     "Diagnostics" -> {}|>, tag]
 ];
 
+(* These are candidate continuations, not identities for adding diagrams.
+   Keep complete signed coefficients and preserve explicit regular input. *)
+completionInputProposals[normalized_Association, limit_Integer : 4096] := Module[
+  {external = normalized["ExternalMassRules"], records = normalized["Records"],
+   expanded, terms, indexed, groups, repeated, regular, direction, union, proposals},
+  expanded = Map[Function[record, withProtectedPropagators[
+    completionCanonicalReduce[record["Expression"], external], Expand]], records];
+  terms = If[Head[#] === Plus, List @@ #, If[# === 0, {}, {#}]] & /@ expanded;
+  If[Total[Length /@ terms] > limit, Return[<|"Status" -> "UNRESOLVED",
+    "Proposals" -> {}, "Diagnostics" -> {"Input term collection exceeded its bounded size."}|>]];
+  regular = Total[Flatten[Select[#, FreeQ[Denominator[#], _PropDen] &] & /@ terms, 1]];
+  indexed = Flatten[MapIndexed[Function[{row, index},
+    {First[index], #} & /@ Select[row, !FreeQ[Denominator[#], _PropDen] &]], terms], 1];
+  direction = normalized["Expression"] - regular;
+  proposals = If[TrueQ[residueExactZero[direction]], {},
+    {<|"Mode" -> "InputRescaling", "Direction" -> direction,
+      "RepeatedTermGroups" -> 0, "RemovedCopies" -> 0|>}];
+  groups = GatherBy[indexed, Last];
+  repeated = Select[groups, Length[DeleteDuplicates[First /@ #]] > 1 &];
+  If[Length[records] > 1 && repeated =!= {},
+    union = Total[Last[First[#]] & /@ groups];
+    If[!TrueQ[residueExactZero[union - direction]] && !TrueQ[residueExactZero[union]],
+      AppendTo[proposals, <|"Mode" -> "InputOverlap", "Direction" -> union,
+        "RepeatedTermGroups" -> Length[repeated],
+        "RemovedCopies" -> Total[(Length[#] - 1 &) /@ repeated]|>]]];
+  <|"Status" -> "AVAILABLE", "RegularExpression" -> regular,
+    "Proposals" -> proposals, "Diagnostics" -> {}|>
+];
+
+(* Solve one coefficient against all channels, then validate fresh coherent
+   spin charts and every parameter set. No quotient of residues is needed. *)
+completionFitInputProposal[proposal_Association, regular_, normalized_Association,
+    samples_Integer, validationSamples_Integer, seed_Integer, rules_List,
+    validationSets_List, seconds_, callback_, enabled_] := Module[
+  {coefficient = Unique["inputNormalization"], direction = proposal["Direction"],
+   trial, constraints = <||>, solution = <||>, validations = {}, validation = Missing["NotChecked"],
+   factor = Missing["NotDetermined"], amplitude, checked, finished, status = "UNRESOLVED",
+   reason = "No unique validated input coefficient was established.", start = AbsoluteTime[], tag = Unique[]},
+  trial = regular + coefficient direction;
+  amplitude = normalized["Expression"];
+  finished = TimeConstrained[Catch[
+    constraints = completionResidueConstraints[trial, {coefficient}, normalized,
+      samples, seed, rules, seconds, callback, enabled];
+    If[constraints["Status"] =!= "COMPLETE",
+      reason = "Input fitting could not obtain every required residue constraint."; Throw[True, tag]];
+    solution = completionSolveLinear[constraints["Equations"], {coefficient},
+      If[seconds === Infinity, 30, Max[0.000001, seconds - (AbsoluteTime[] - start)]]];
+    If[solution["Status"] =!= "COMPLETE" || solution["FreeParameters"] =!= {},
+      reason = "No single uniquely determined constant matches all input residues."; Throw[True, tag]];
+    factor = coefficient /. solution["SolutionRules"];
+    If[!NumericQ[factor] || !residueFiniteQ[factor],
+      reason = "Input normalization was not a finite numerical constant."; Throw[True, tag]];
+    Do[
+      checked = completionSparseValidation[trial, {coefficient}, solution, {}, {},
+        normalized, validationSamples, seed + 1000003, validationSet, seconds, callback, enabled];
+      validation = checked["Report"];
+      AppendTo[validations, <|"ParameterRules" -> validationSet, "RandomSeed" -> seed + 1000003,
+        "Round" -> 0, "Report" -> validation|>];
+      If[!completionPhysicalPassQ[validation, normalized["Targets"]] || !TrueQ[checked["FamilyPass"]],
+        reason = "The input coefficient failed independent residue validation."; Throw[True, tag]],
+      {validationSet, validationSets}];
+    If[validationSets === {} || normalized["Targets"] === {},
+      reason = "Input reweighting requires nonvacuous physical-channel validation."; Throw[True, tag]];
+    amplitude = regular + factor direction;
+    status = "COMPLETE"; reason = "A unique constant passed independent physical-channel validation.";
+    True, tag], seconds, False];
+  If[!TrueQ[finished], reason = "Input reweighting exceeded its bounded time budget."];
+  Join[proposal, <|"Status" -> status, "Reason" -> reason, "NormalizationFactor" -> factor,
+    "Coefficient" -> coefficient, "Amplitude" -> amplitude, "Trial" -> trial,
+    "Constraints" -> constraints, "Solution" -> solution, "ValidationReport" -> validation,
+    "ValidationReports" -> validations, "RegularExpression" -> regular,
+    "ElapsedTime" -> AbsoluteTime[] - start|>]
+];
+
 Options[CompleteFactorization] = {"CorrectionBasis" -> Automatic,
   "ParameterRules" -> Automatic, "Samples" -> 4, "ValidationSamples" -> 4,
   "ValidationParameterRules" -> Automatic, "ChannelReferences" -> Automatic,
-  "AlternativeChannels" -> {}, "BoseSymmetryGroups" -> {},
+  "AlternativeChannels" -> {}, "BoseSymmetryGroups" -> {}, "InputReweighting" -> Automatic,
   "MaxRefinements" -> 3,
   "RandomSeed" -> 1729, "TimeConstraint" -> 60, "MaxCorrectionTerms" -> 64,
   "ProgressReporting" -> True, "ProgressFunction" -> Automatic,
@@ -6033,6 +6109,7 @@ CompleteFactorization[input_, channelRows_List, model_List, opts : OptionsPatter
   {output = OptionValue["Output"], details = OptionValue["ReturnDetails"],
    basisOption = OptionValue["CorrectionBasis"],
    references = OptionValue["ChannelReferences"], alternatives = OptionValue["AlternativeChannels"],
+   inputReweighting = OptionValue["InputReweighting"],
    boseGroups = OptionValue["BoseSymmetryGroups"], bosePlan, constructionLimit, project, projectedSeed,
    refinements = OptionValue["MaxRefinements"],
    rules = residueParameterRules[model, OptionValue["ParameterRules"]], samples = OptionValue["Samples"],
@@ -6048,13 +6125,14 @@ CompleteFactorization[input_, channelRows_List, model_List, opts : OptionsPatter
    weights, familyMaterialized = False,
    reducedChannels = Missing["NotRequested"], selectedChannels = Missing["NotRequested"],
    space = "NotRequired", fallbackBasis, literalBasis, channelLiteralBasis, groupedBasis,
-   budgetSpaces = {},
+   budgetSpaces = {}, inputProposals, inputAttempt, inputAttempts = {}, inputFitStart, inputFitBudget,
    fallbackReport, fallbackOptions, remainingSeconds, attemptSummary, alternativeSpace},
   If[!MemberQ[{"Expression", "Details"}, output] || !MemberQ[{True, False}, details] ||
       !(basisOption === Automatic || ListQ[basisOption]) || !completionParameterRulesQ[rules] ||
       !IntegerQ[samples] || samples < 1 ||
       !IntegerQ[validationSamples] || validationSamples < 1 || !IntegerQ[seed] ||
-      !MemberQ[{Automatic, None}, references] || !IntegerQ[refinements] || refinements < 0 ||
+      !MemberQ[{Automatic, None}, references] || !MemberQ[{Automatic, None}, inputReweighting] ||
+      !IntegerQ[refinements] || refinements < 0 ||
       !ListQ[alternatives] || !AllTrue[alternatives, preparationChannelQ] ||
       !(validationRules === Automatic || (ListQ[validationRules] &&
         AllTrue[validationRules, completionParameterRulesQ])) ||
@@ -6126,7 +6204,42 @@ CompleteFactorization[input_, channelRows_List, model_List, opts : OptionsPatter
           status = "UNRESOLVED";
           AppendTo[history, <|"Round" -> 0, "Status" -> "InitialParameterValidationFailed"|>];
           Break[]], {validationSet, validationSets}]];
-    If[!fastPath || status =!= "COMPLETE",
+    If[status =!= "COMPLETE" && basisOption === Automatic && references === Automatic &&
+        inputReweighting === Automatic,
+      inputFitStart = AbsoluteTime[];
+      inputFitBudget = If[seconds === Infinity, 30,
+        Min[30, Max[0, seconds - (inputFitStart - start)]/5]];
+      inputProposals = TimeConstrained[completionInputProposals[normalized],
+        Min[2, Max[0.000001, inputFitBudget/4]], <|"Status" -> "UNRESOLVED", "Proposals" -> {},
+          "Diagnostics" -> {"Input term collection exceeded its bounded time budget."}|>];
+      If[inputProposals["Status"] =!= "AVAILABLE",
+        AppendTo[inputAttempts, <|"Mode" -> "InputCollection", "Status" -> "UNRESOLVED",
+          "Diagnostics" -> inputProposals["Diagnostics"]|>],
+        Do[
+          remainingSeconds = inputFitBudget - (AbsoluteTime[] - inputFitStart);
+          If[remainingSeconds <= 0.01, Break[]];
+          completionProgress[callback, enabled, <|"Stage" -> "Trying input reweighting",
+            "Operation" -> proposal["Mode"], "Unknowns" -> 1|>];
+          inputAttempt = TimeConstrained[completionFitInputProposal[
+            Join[proposal, <|"Direction" -> project[proposal["Direction"]]|>],
+            project[inputProposals["RegularExpression"]], normalized,
+            samples, validationSamples, seed, rules, validationSets, remainingSeconds, callback, enabled],
+            remainingSeconds, <|"Mode" -> proposal["Mode"], "Status" -> "UNRESOLVED",
+              "Reason" -> "Input reweighting exceeded its bounded time budget."|>];
+          AppendTo[inputAttempts, inputAttempt];
+          If[inputAttempt["Status"] === "COMPLETE",
+            candidate = inputAttempt["Amplitude"]; family = candidate;
+            basis = {inputAttempt["Direction"]}; unknowns = {inputAttempt["Coefficient"]};
+            constraints = inputAttempt["Constraints"]; solution = inputAttempt["Solution"];
+            validation = inputAttempt["ValidationReport"];
+            validationReports = Join[validationReports, inputAttempt["ValidationReports"]];
+            history = {<|"Round" -> 0, "Status" -> "COMPLETE", "InputFit" -> inputAttempt["Mode"],
+              "NormalizationFactor" -> inputAttempt["NormalizationFactor"], "FreeParameters" -> {},
+              "RemovedZeroDirections" -> 0, "Rank" -> 1,
+              "EquationCount" -> Length[constraints["Equations"]]|>};
+            space = inputAttempt["Mode"]; status = "COMPLETE"; familyMaterialized = True; Break[]],
+          {proposal, inputProposals["Proposals"]}]]];
+    If[status =!= "COMPLETE",
       status = "UNRESOLVED"; familyMaterialized = False;
       If[basisOption === Automatic && references === Automatic,
         completionProgress[callback, enabled, <|"Stage" -> "Constructing channel continuations"|>];
@@ -6311,13 +6424,16 @@ CompleteFactorization[input_, channelRows_List, model_List, opts : OptionsPatter
     "InitialReport" -> initial, "ValidationReport" -> validation,
     "ParameterRules" -> rules,
     "ValidationReports" -> validationReports, "ValidationParameterRules" -> validationSets,
-    "ConstraintData" -> <|"Fit" -> constraints, "LinearSolution" -> solution,
+    "ConstraintData" -> <|"FitSeed" -> If[MemberQ[{"InputRescaling", "InputOverlap"}, space],
+        inputAttempt["RegularExpression"], projectedSeed],
+      "Fit" -> constraints, "LinearSolution" -> solution,
       "Validation" -> feedback|>, "RefinementHistory" -> history,
     "ChannelContinuations" -> continuations,
     "BoseSymmetry" -> KeyTake[bosePlan, {"Groups", "Order"}],
     "CorrectionSpace" -> space, "ReducedChannelSpace" -> reducedChannels,
     "SelectedChannelSpace" -> selectedChannels,
     "CorrectionSpaceCandidates" -> budgetSpaces,
+    "InputFitAttempts" -> inputAttempts,
     "Scope" -> "BoundedAdaptiveLinearCompletionAtExactSampledCutsWithHeldOutValidation",
     "ElapsedTime" -> AbsoluteTime[] - start, "Diagnostics" -> Join[diagnostics, {
       "Factorization completion alone does not assert high-energy or reference independence. Remaining residue-preserving directions are retained for the next stage.",
@@ -6372,7 +6488,8 @@ CompleteFactorization[input_, channelRows_List, model_List, opts : OptionsPatter
               {KeyTake[fallbackReport, {"Status", "Diagnostics", "ElapsedTime", "RefinementHistory"}]}],
             "ElapsedTime" -> AbsoluteTime[] - start|>];
           status = report["Status"]]]]];
-  report = Join[report, <|"ElapsedTime" -> AbsoluteTime[] - start|>];
+  report = Join[report, <|"ElapsedTime" -> AbsoluteTime[] - start,
+    "InputFitAttempts" -> inputAttempts|>];
   completionProgress[callback, enabled, <|"Stage" -> "Factorization " <> status,
     "Elapsed" -> report["ElapsedTime"], "Unknowns" -> If[ListQ[report["CorrectionBasis"]],
       Length[report["CorrectionBasis"]], Length[unknowns]]|>];

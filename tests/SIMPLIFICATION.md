@@ -1176,6 +1176,52 @@ such as exceeding the correction-term cap, rather than implying a timeout.
 `CompleteFactorization` solves all supported physical-channel constraints
 simultaneously. It does not independently add one residue discrepancy divided
 by each propagator, which could double count shared pole contributions.
+Before constructing the channel correction space, an input that does not
+already pass gets two inexpensive proposals with `"InputReweighting" -> Automatic`:
+
+1. Fit one constant multiplying its complete pole-bearing part. For example,
+   residues twice their expected values determine a coefficient of `1/2`.
+   This is one simultaneous linear solve, not a search over guessed numbers
+   or a division of potentially zero residue components.
+2. If needed, collect exact signed terms across separate input diagrams and
+   fit one constant multiplying their union. Thus the records `A+B` and `B+C`
+   can propose `A+B+C`, while the original input remains `A+2B+C`.
+
+Identical terms can carry a genuine physical multiplicity. Neither proposal
+is an automatic identity or a change to how `diagramAmplitudes` adds diagrams.
+All original physical-channel targets, including expected zero residues, must
+hold on fresh exact sampled charts, in all coherent massive-spin components
+and for every validation parameter set. A seed that already passes is retained.
+If the proposals fail, the existing general correction solver runs with the
+remaining time. Ordinary output still returns only the resulting amplitude.
+
+The overlap proposal compares complete terms, including their signs,
+coefficients and propagators. It does not identify `B` with `2 B`, discard
+opposite signs, or infer separate diagrams from an already summed expression.
+Preparation reports and diagram pairs retain the separate-record information.
+Explicit additive terms without `PropDen` denominators keep their original
+summed multiplicity in both attempts. This structural separation does not
+identify hidden pole-free content inside a pole-bearing numerator.
+
+Use `"InputReweighting" -> None` to disable these attempts. They also leave
+explicit `"CorrectionBasis"` choices, including `{}`, and the literal
+`"ChannelReferences" -> None` mode unchanged. Input collection has a 4096-term
+bound and a small clock limit; both fits together use at most one fifth of
+the remaining completion time, capped at 30 seconds. With details requested,
+`report["InputFitAttempts"]` records the attempted modes, normalization factors,
+overlap counts, equations and held-out validation. Successful correction spaces
+are named `"InputRescaling"` or `"InputOverlap"`. The detailed `ConstraintData`
+records `FitSeed`, so its fitted coefficient can be interpreted together with
+the complete direction in `CorrectionBasis`; for these attempts the seed is
+the preserved regular part, rather than the original amplitude.
+
+The five-point all-positive QED example prepares six one-term physical-reference
+diagrams with three exact pairs. Their sum is twice `H`; one copy from each pair
+is exactly `H`. Both statements can be checked by ordinary rational algebra.
+The rescaling attempt recovers this form without channel subtraction terms.
+Factorization success still needs the usual spurious, high-energy, reference
+and available Feynman checks. Those checks never fit an extra normalization.
+
 Its automatic correction directions come from the actual input and sewn
 channel expressions, subject to `"MaxCorrectionTerms" -> 64`.
 The opt-in `"AlternativeChannels"` list supplies additional continuations only

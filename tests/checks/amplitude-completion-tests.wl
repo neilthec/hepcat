@@ -1969,11 +1969,13 @@ acCompactFallback = Block[
   {ConstructiveDiagrams`Private`completionReducedChannelBasis = Function[
     {normalized, references, limit, rules, seed}, <|"Basis" -> {}|>]},
   acFactor[prH/2, prChannels, prFixtureModel,
+    "InputReweighting" -> None,
     "Samples" -> 2, "ValidationSamples" -> 1,
     "MaxCorrectionTerms" -> 128, "TimeConstraint" -> 90,
     "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}]];
 check["an insufficient compact strategy falls back to the retained literal channel terms",
   acCompactFallback["Status"] === "COMPLETE" &&
+    acCompactFallback["InputFitAttempts"] === {} &&
     acCompactFallback["CorrectionSpace"] === "LiteralTerms" &&
     Length[acCompactFallback["CorrectionSpaceAttempts"]] === 2 &&
     acPhysicalPass[acCompactFallback["ValidationReport"]]];

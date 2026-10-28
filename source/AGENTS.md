@@ -471,6 +471,19 @@ protect all inverse factors; the subsequent ordinary whole-expression spinor
 reduction may simplify auxiliary denominators. Do not move this process-dependent search into
 `ReduceSpinorProducts` or install persistent momentum-conservation rules.
 
+Automatic completion first tries bounded input-derived proposals when the
+original seed fails: fit one constant on its complete pole-bearing part, then
+on a union of exact complete signed terms shared across separate diagram
+records. These are corrections to test, not new identities for summing diagrams.
+Preserve explicit no-PropDen additive terms and every sign, coefficient and
+physical target. Accept only a unique constant passing fresh coherent-spin
+validation at every validation parameter set. Never change diagram generation
+or fit a normalization inside CheckAmplitudes/Feynman comparisons. An already
+passing seed is retained. `"InputReweighting" -> None`, explicit CorrectionBasis
+and ChannelReferences -> None skip the attempts. Both fits share at most one
+fifth of the remaining stage time, capped at 30 seconds; failures must leave
+the original seed and later solver intact. Details retain InputFitAttempts.
+
 `CompleteFactorization` builds a bounded correction space from actual input
 and sewn-channel expressions, or an explicit `"CorrectionBasis"`, and solves all
 physical channels simultaneously. `"ChannelReferences" -> Automatic` also
