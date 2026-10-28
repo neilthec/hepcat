@@ -15,8 +15,10 @@ acInvalid[value_] := value === $Failed || FailureQ[value];
 acSettings[opts___] := Normal[Join[<|"Samples" -> 2, "ValidationSamples" -> 2,
   "RandomSeed" -> 1729, "TimeConstraint" -> 60, "MaxCorrectionTerms" -> 64,
   "ProgressReporting" -> False, "Output" -> "Details"|>, Association[{opts}]]];
+(* These existing factorization-space regressions retain their unprojected
+   spaces. High-energy tests share acSettings but do not take this option. *)
 acFactor[input_, channels_, model_, opts___] := CompleteFactorization[
-  input, channels, model, Sequence @@ acSettings[opts]];
+  input, channels, model, Sequence @@ acSettings["BoseSymmetryGroups" -> {}, opts]];
 acEnergy[input_, channels_, model_, opts___] := CompleteHighEnergy[
   input, channels, model, Sequence @@ acSettings[opts]];
 acCheck[expression_, channels_, model_, rules_, seed_] := CheckPhysicalResidues[
@@ -61,8 +63,8 @@ acComplexPrecisionBasis = {(1. + I) acFormalX, (1. + I) acFormalY,
 check["formal pruning retains every direction when atomic complex coefficients are inexact",
   ConstructiveDiagrams`Private`completionIndependentBasis[acComplexPrecisionBasis] ===
     acComplexPrecisionBasis];
-check["Bose projection remains opt-in rather than inferred from equal masses",
-  ("BoseSymmetryGroups" /. Options[CompleteFactorization]) === {}];
+check["Bose state inference is automatic by default",
+  ("BoseSymmetryGroups" /. Options[CompleteFactorization]) === Automatic];
 
 (* Automatic charts use a single affine pass; opaque custom maps retain the
    exact legacy coefficient forms when that compatibility mode is requested. *)

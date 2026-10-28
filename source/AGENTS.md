@@ -561,15 +561,23 @@ termwise space. Attempts share the stage deadline and correction-term cap;
 do not silently discard excess directions. `"ChannelReferences" -> None`
 retains the literal-only behavior, and an explicit `"CorrectionBasis"` retains
 the supplied-space behavior after normalization.
-`"BoseSymmetryGroups" -> {}` is an opt-in declaration of identical bosonic
-external states, not an inference from equal masses. For four identical
-positive-helicity photons on legs 3--6, use `{{3, 4, 5, 6}}`. Average both the
-seed and each grouped correction direction, using typed particle permutations
-that preserve literal coefficients, Xi identifiers and numerical spin labels.
-Apply the correction-term cap after projection; retain the original input and
-all original residue targets. Never group fermions, different species or
-different helicities. The bounded group order is 120. This is an added physical
-symmetry constraint, not a replacement for independent channel validation.
+`"BoseSymmetryGroups" -> Automatic` is the default. Identify identical bosonic
+states from the model's twice-spin, species, masses and external spinor weights.
+Retain the ordered process with `"ExternalParticles" -> particles` in requested
+preparation reports; completion inherits it from input or channel reports.
+Plain input may provide the same option directly. Do not infer identical
+species from equal masses alone or merge opposite helicities, fermions,
+different fixed spin states or color-stripped colored states. Without process
+names, only unique model-and-spinor matches are projected; diagnostics explain
+ambiguous legs. Ordinary pairs and channel rows remain unchanged. No global
+process cache is created.
+Average the seed and correction directions using typed particle permutations
+that preserve coefficients, Xi identifiers and explicit numerical spin labels.
+Keep all original residue targets for independent validation. Automatic mode
+uses a bounded exact subgroup if the full order exceeds 120, recording both
+detected and used groups. Explicit groups remain available, with a total-order
+cap of 120; `"BoseSymmetryGroups" -> {}` opts out. This symmetry is an additional
+constraint, never a replacement for residue validation.
 With automatic correction directions and declared Bose symmetry, combine the
 available compact and literal spaces before projection. Also try the individual
 terms of each accepted selected-cut numerator reduction, including spurious
@@ -579,7 +587,7 @@ This step is bounded by the construction cap and a 60-second budget. Exact forma
 linear dependencies may be removed without changing that projected span.
 This pruning retains sparse matrices and has a 60-second budget; an unfinished
 pass retains all directions.
-The ordinary `{}` default keeps compact-then-literal behavior. Intermediate
+With explicit `{}`, completion keeps compact-then-literal behavior. Intermediate
 individual source-space construction grows with the permutation count, up to
 4096 directions unless the requested correction cap is already larger. The
 compact, literal and selected-cut spaces may merge into a larger union, bounded
@@ -717,7 +725,8 @@ or a compact `Failure["IncompleteAmplitude", ...]` with a short failure reason
 when unresolved, without embedding the candidate or report.
 Request `"ReturnDetails" -> True` to inspect
 its candidates, equations, diagnostics and validation. `CompleteHighEnergy`
-is unchanged: its ordinary incomplete failure retains the candidate and report,
+also accepts the channel preparation report, retaining original channel targets.
+Its ordinary incomplete failure retains the candidate and report,
 and `"Output" -> "Details"` returns that report directly. Never turn a retained
 unresolved candidate into a claimed physical result. All three stages
 support `"ProgressReporting" -> False` and a `"ProgressFunction"` callback;

@@ -318,7 +318,7 @@ check["a failure without diagnostic strings retains a useful generic message",
 
 sixScalarProgress = {};
 sixScalarCompletion = CompleteFactorization[0, sixScalarChannels, sixScalarModel,
-  "ParameterRules" -> sixScalarRules, "Samples" -> 1, "ValidationSamples" -> 1,
+  "BoseSymmetryGroups" -> {}, "ParameterRules" -> sixScalarRules, "Samples" -> 1, "ValidationSamples" -> 1,
   "MaxCorrectionTerms" -> 8, "TimeConstraint" -> 30, "ReturnDetails" -> True,
   "ProgressFunction" -> (AppendTo[sixScalarProgress, #] &)];
 check["reference-free channels complete a generic scalar amplitude end to end",
@@ -329,7 +329,7 @@ check["progress distinguishes exact solving from cut equation construction",
   AnyTrue[sixScalarProgress, Lookup[#, "Stage", None] === "Solving factorization" &&
     Lookup[#, "EquationCount", 0] > 0 && Lookup[#, "Unknowns", 0] === 3 &]];
 
-(* Bose symmetry is an explicit state declaration, never inferred from masses. *)
+(* Explicit state declarations remain available alongside conservative inference. *)
 sixBoseRules = Join[{Mass[1] -> sixScalarMass, Mass[2] -> sixScalarMass},
   Table[Mass[i] -> 0, {i, 3, 8}]];
 sixBosePlan = ConstructiveDiagrams`Private`completionBosePlan[{{3, 4, 5, 6}}, sixBoseRules];
@@ -361,9 +361,9 @@ check["every mixed-helicity permutation fixes the negative-helicity leg while av
         ConstantArray[Total[Mom /@ Range[3, 5]]/3, 3]}]];
 check["the mixed six-point QED model supplies all fourteen factorization channels",
   Length[sixMixedChannels] === 14];
-check["equal photon masses do not infer an opposite-helicity Bose grouping",
+check["an explicit empty declaration disables Bose projection despite automatic default inference",
   (Mass /@ Range[3, 6] /. sixBoseRules) === {0, 0, 0, 0} &&
-    ("BoseSymmetryGroups" /. Options[CompleteFactorization]) === {} &&
+    ("BoseSymmetryGroups" /. Options[CompleteFactorization]) === Automatic &&
     sixBoseEmpty["Groups"] === {} && sixBoseEmpty["Order"] === 1 &&
     ConstructiveDiagrams`Private`completionBoseProject[sixMixedBoseState, sixBoseEmpty] ===
       sixMixedBoseState];
@@ -650,12 +650,14 @@ sixCompactPlan = ConstructiveDiagrams`Private`completionBosePlan[
   {{3, 4, 5, 6}}, sixCompactNormalized["ExternalMassRules"]];
 Print["Completing all fourteen channels using source-derived companions."];
 sixCompactCompletion = CompleteFactorization[sixCompactPreparation, sixChannels, sixModel,
-  "BoseSymmetryGroups" -> {{3, 4, 5, 6}}, "Samples" -> 2, "ValidationSamples" -> 2,
+  "Samples" -> 2, "ValidationSamples" -> 2,
   "MaxCorrectionTerms" -> 8, "TimeConstraint" -> 180,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
-sixCompactCheck["automatic completion finds a compact amplitude from fresh physical-reference diagrams",
+sixCompactCheck["automatic completion infers identical photons and finds a compact amplitude from fresh diagrams",
   AssociationQ[sixCompactCompletion] && sixCompactCompletion["Status"] === "COMPLETE" &&
-    sixCompactCompletion["CorrectionSpace"] === "PeeledChannels"];
+    sixCompactCompletion["CorrectionSpace"] === "PeeledChannels" &&
+    sixCompactCompletion["BoseSymmetry"]["Automatic"] === True &&
+    sixCompactCompletion["BoseSymmetry"]["Groups"] === {{3, 4, 5, 6}}];
 sixCompactCheck["the small source-derived fit has four coefficients and no discarded free family",
   Length[sixCompactCompletion["CorrectionBasis"]] === 4 &&
     sixCompactCompletion["FreeParameters"] === {} && sixCompactCompletion["RemainingBasis"] === {} &&
@@ -761,7 +763,7 @@ sixCompactCheck["channel companions are enabled by default and support an explic
     Quiet[CompleteFactorization[0, sixScalarChannels, sixScalarModel,
       "ChannelCompanions" -> True]] === $Failed];
 sixCompactDisabled = CompleteFactorization[0, sixScalarChannels, sixScalarModel,
-  "ChannelCompanions" -> None, "ParameterRules" -> sixScalarRules,
+  "BoseSymmetryGroups" -> {}, "ChannelCompanions" -> None, "ParameterRules" -> sixScalarRules,
   "Samples" -> 1, "ValidationSamples" -> 1, "TimeConstraint" -> 30,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
 sixCompactCheck["disabling companions preserves the existing general channel reconstruction",

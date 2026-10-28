@@ -4521,7 +4521,7 @@ CompleteFactorization::usage = CompleteFactorization::usage <>
 CompleteFactorization::usage = CompleteFactorization::usage <>
   " Pass detailed PrepareAmplitudes reports for either input, including the channel argument, to retain preparation provenance. Original channel rows remain the residue targets; simplified rows and their fixed-reference remainders supply corrections. PreparationRemainders -> Automatic tries bounded grouped preparation corrections after inexpensive input reweighting and before larger channel spaces. Ordinary pair virtuality identities expose factors without putting any assembled propagator on shell. Exact compatibility probes can reject a space early but never certify success; all original channels and held-out spin/parameter tests remain required. The attempt shares at most one fifth of the remaining stage clock, capped at 12 seconds, with at most four seconds for construction. Unsuccessful spaces leave the existing fallbacks intact. Retained common-reference sums may be tried as a final bounded continuation fallback; reference changes are not assumed to be off-cut identities. PreparationRemainders -> None disables these attempts. Explicit CorrectionBasis and ChannelReferences -> None retain their literal behavior. Details expose PreparationRemainders, PreparationRemainderFit, PreparationReferenceAttempts and ChannelPreparation. Ordinary preparation pairs and channel rows do not contain hidden history or a cache.";
 CompleteFactorization::usage = CompleteFactorization::usage <>
-  " BoseSymmetryGroups -> {} optionally declares disjoint groups of identical external bosonic states, for example {{3,4,5,6}} for four identical-helicity photons. The caller must supply the correct species and helicity grouping; equal masses alone do not identify identical states. Automatic Bose completion combines available compact, literal and certified selected-cut-prepared channel terms, then exactly averages the seed and directions over typed particle permutations while preserving all original residue targets. Exact formal linear dependencies may be removed by sparse reduction within a 60-second budget; an unfinished pruning pass keeps the full projected space. MaxCorrectionTerms applies after projection and pruning. The full space is retained whenever it fits; otherwise a bounded alternative keeps whole pole-bearing input diagrams and all available channel terms, without splitting the input diagrams into individual corrections. CorrectionSpaceCandidates records both sizes. CorrectionSpace -> BoseChannelUnion, BoseSelectedChannelUnion or BoseGroupedInputChannelUnion identifies the selected space in details; SelectedChannelSpace records its selected-cut checks. No successful reconstruction is claimed until every original target and the full fitted family pass independent validation. The permutation group is bounded at order 120. Each intermediate source-space construction may grow with that order, capped at 4096 directions unless a larger MaxCorrectionTerms was already requested. The merged union can exceed one source-space cap; neither this cap nor the clock is a hard memory limit. The ordinary default {} performs no such averaging and retains compact-then-literal behavior.";
+  " BoseSymmetryGroups -> Automatic identifies identical bosonic external states using the supplied model's twice-spin, masses, species and helicity. ExternalParticles -> Automatic inherits ordered names retained in preparation reports. Pass ExternalParticles -> particles to PrepareAmplitudes or completion when compact pairs have lost the process names. Without names, only unambiguous model-and-spinor-state matches are projected; equal masses alone never identify a species. Fermions, opposite helicities, different fixed spin states, and color-stripped colored states are not merged. Explicit BoseSymmetryGroups -> {} disables averaging. Explicit disjoint groups remain supported and must be correct for the process. Automatic uses a bounded exact subgroup when the full group exceeds order 120; details expose detected and used groups, source and diagnostics. Bose completion combines available compact, literal and certified selected-cut-prepared channel terms, then exactly averages the seed and directions over typed particle permutations while preserving every original residue target. Exact formal linear dependencies may be removed by sparse reduction within a 60-second budget; unfinished pruning retains the full space. MaxCorrectionTerms applies after projection and pruning. CorrectionSpaceCandidates records the available space sizes. CorrectionSpace -> BoseChannelUnion, BoseSelectedChannelUnion or BoseGroupedInputChannelUnion identifies the selected space in details; SelectedChannelSpace records its selected-cut checks. Each intermediate source-space construction may grow with group order, capped at 4096 directions unless a larger MaxCorrectionTerms was requested. No successful reconstruction is claimed until every original target and the full fitted family pass independent validation.";
 
 Begin["ConstructiveDiagrams`Private`"];
 
@@ -4534,6 +4534,143 @@ completionBoseCycles[group_List, image_List] := Module[
     remaining = Complement[remaining, cycle];
     If[Length[cycle] > 1, AppendTo[cycles, cycle]]];
   cycles
+];
+
+(* Infer exchangeable external states without treating equal masses as species.
+   This reads homogeneous spinor weights without expanding the expression. *)
+completionExternalSpinWeights[expression_, rules_List] := Module[
+  {labels = Sort[Cases[rules, HoldPattern[Mass[i_Integer] -> _] :> i]],
+   zero, walk, spinorWeight, unknown = Missing["ExternalSpinWeight"]},
+  zero = ConstantArray[0, Length[labels]];
+  spinorWeight[s_Spinor] := Module[{parts = List @@ s, position, label, weight, result = zero},
+    position = FirstPosition[parts, "Angle" | "Square", Missing["Type"]];
+    If[MissingQ[position] || First[position] >= Length[parts], Return[unknown]];
+    position = First[position]; label = parts[[position + 1]];
+    If[!MemberQ[labels, label] || !MemberQ[{"Spin", "Helicity"}, First[parts]], Return[zero]];
+    weight = If[TrueQ[(Mass[label] /. rules) === 0],
+      If[parts[[position]] === "Angle", 1, -1], 1];
+    result[[First[FirstPosition[labels, label]]]] = weight; result];
+  walk[s_Spinor] := spinorWeight[s];
+  walk[value_Plus] := Module[{terms = Select[List @@ value, # =!= 0 &], weights},
+    weights = DeleteDuplicates[walk /@ terms];
+    If[Length[weights] === 1, First[weights], unknown]];
+  walk[value_Times] := Module[{weights = walk /@ (List @@ value)},
+    If[AnyTrue[weights, MissingQ], unknown, Total[weights]]];
+  walk[Power[base_, power_Integer]] := With[{weight = walk[base]},
+    If[MissingQ[weight], unknown, power weight]];
+  walk[value : (_SpinorChain | _SpinorChainReduced | _SpinorProduct)] := Module[
+    {weights = walk /@ (List @@ value)},
+    If[AnyTrue[weights, MissingQ], unknown, Total[weights]]];
+  walk[value_] := If[FreeQ[value, _Spinor | _SpinorHat | _xFactor], zero, unknown];
+  If[expression === 0, unknown, walk[expression]]
+];
+
+(* Keep the spin-state multiset separately in every additive term. Counting
+   distinct indices alone loses projections and ignores powers. *)
+completionBoseSpinState[expression_, label_Integer] := Module[
+  {walk, endpoint, unknown = Missing["ExternalSpinState"]},
+  endpoint[s_Spinor] := Module[{parts = List @@ s, position, variance, indices},
+    position = FirstPosition[parts, "Angle" | "Square", Missing["Type"]];
+    If[MissingQ[position] || First[position] >= Length[parts], Return[unknown]];
+    position = First[position];
+    If[parts[[position + 1]] =!= label || First[parts] =!= "Spin", Return[0]];
+    variance = Take[parts, {2, position - 1}];
+    indices = Drop[parts, position + 1] /.
+      ConstructiveDiagrams`VectorSpinIndex[_, slot_] :>
+        ConstructiveDiagrams`VectorSpinIndex[0, slot];
+    completionFixedSpinState[variance, indices]];
+  walk[s_Spinor] := endpoint[s];
+  walk[value_Plus] := Module[{states = DeleteDuplicates[walk /@ (List @@ value)]},
+    If[Length[states] === 1, First[states], unknown]];
+  walk[value : (_Times | _SpinorChain | _SpinorChainReduced | _SpinorProduct)] :=
+    Module[{states = walk /@ (List @@ value)},
+      If[AnyTrue[states, MissingQ], unknown, Total[states]]];
+  walk[Power[base_, power_Integer]] := With[{state = walk[base]},
+    If[MissingQ[state], unknown, power state]];
+  walk[value_] := If[FreeQ[value, _Spinor | _SpinorHat | _xFactor], 0, unknown];
+  walk[expression]
+];
+
+completionInferBoseGroups[normalized_Association, model_List, particles_: Automatic] := Module[
+  {rules = normalized["ExternalMassRules"], expression = normalized["Expression"],
+   labels, weights, evidence, declared = particles, names, rows, candidates,
+   mass, weight, boson, particle, state, legs = {}, keys = {}, diagnostics = {}, groups,
+   color, row, source},
+  labels = Sort[Cases[rules, HoldPattern[Mass[i_Integer] -> _] :> i]];
+  If[declared === Automatic, declared = Lookup[normalized, "ExternalParticles", Automatic]];
+  If[declared =!= Automatic,
+    declared = preparationExternalParticleNames[declared, rules, model];
+    If[FailureQ[declared], Return[declared]]];
+  evidence = expression;
+  If[expression === 0,
+    evidence = SelectFirst[Lookup[Lookup[normalized, "Targets", {}], "StateSum", {}],
+      # =!= 0 &, 0]];
+  weights = completionExternalSpinWeights[evidence, rules];
+  source = If[ListQ[declared], "ExternalParticles", "ModelAndExternalSpinWeights"];
+  Do[
+    mass = Mass[label] /. rules;
+    weight = If[ListQ[weights], weights[[index]], Missing["ExternalSpinWeight"]];
+    rows = Select[model[[1]], residueExactZero[#[[6]] - mass] &&
+      If[ListQ[declared], MemberQ[#[[{2, 3}]], declared[[index]]],
+        IntegerQ[weight] && #[[5]] === Abs[weight]] &];
+    candidates = DeleteDuplicates[Flatten[Function[r,
+      names = DeleteDuplicates[r[[{2, 3}]]];
+      If[mass === 0 && IntegerQ[weight] && weight =!= 0,
+        Select[names, !StringEndsQ[#, {".+", ".-"}] ||
+          StringEndsQ[#, If[weight < 0, ".+", ".-"]] &], names]] /@ rows]];
+    If[ListQ[declared], candidates = Intersection[candidates, {declared[[index]]}]];
+    particle = If[Length[candidates] === 1, First[candidates], Missing["AmbiguousParticle"]];
+    row = If[MissingQ[particle], Missing["Particle"],
+      SelectFirst[rows, MemberQ[#[[{2, 3}]], particle] &, Missing["Particle"]]];
+    boson = ListQ[row] && IntegerQ[row[[5]]] && EvenQ[row[[5]]];
+    color = If[ListQ[row] && Length[row] >= 8, row[[8]], 1];
+    state = Which[
+      !TrueQ[boson], Missing["NotBoson"],
+      mass === 0 && row[[5]] =!= 0,
+        If[IntegerQ[weight], weight, If[StringEndsQ[ToString[particle], ".+"], -row[[5]],
+          If[StringEndsQ[ToString[particle], ".-"], row[[5]], Missing["Helicity"]]]],
+      row[[5]] =!= 0 && (!IntegerQ[weight] || Abs[weight] =!= row[[5]]),
+        Missing["ExternalSpinState"],
+      True, completionBoseSpinState[evidence, label]];
+    If[Length[candidates] =!= 1,
+      AppendTo[diagnostics, "External leg " <> ToString[label] <>
+        " has no unique species and external state; no exchange symmetry was assumed for it."]];
+    If[TrueQ[boson] && MissingQ[state],
+      AppendTo[diagnostics, "The external spin state of leg " <> ToString[label] <>
+        " could not be established consistently; no exchange symmetry was assumed for it."]];
+    If[TrueQ[boson] && color =!= 1,
+      AppendTo[diagnostics, "Colored external leg " <> ToString[label] <>
+        " was left unprojected because color-stripped amplitudes need not be Bose symmetric."]];
+    AppendTo[legs, <|"Label" -> label, "SpinWeight" -> weight,
+      "Candidates" -> candidates, "Particle" -> particle, "Boson" -> boson|>];
+    AppendTo[keys, If[TrueQ[boson] && color === 1 && !MissingQ[state],
+      {particle, state}, Missing["NotExchangeable", label]]],
+    {index, Length[labels]}, {label, {labels[[index]]}}];
+  groups = Select[GatherBy[Range[Length[labels]], keys[[#]] &],
+    Length[#] > 1 && !MissingQ[keys[[First[#]]]] &];
+  <|"Groups" -> (labels[[#]] & /@ groups),
+    "ExternalParticles" -> Lookup[legs, "Particle", {}], "Legs" -> legs,
+    "Diagnostics" -> DeleteDuplicates[diagnostics], "Source" -> source|>
+];
+
+completionAutomaticBosePlan[normalized_Association, model_List, particles_: Automatic] := Module[
+  {inferred = completionInferBoseGroups[normalized, model, particles], groups = {},
+   order = 1, remaining, count, plan},
+  If[FailureQ[inferred], Return[inferred]];
+  (* A bounded subgroup is still a valid exact symmetry. Do not fail a large
+     process merely because its full permutation group exceeds the work cap. *)
+  Do[remaining = group;
+    While[Length[remaining] >= 2,
+      count = Min[Length[remaining], 5];
+      While[count >= 2 && order Factorial[count] > 120, count--];
+      If[count < 2, Break[]];
+      AppendTo[groups, Take[remaining, count]]; order *= Factorial[count];
+      remaining = Drop[remaining, count]], {group, inferred["Groups"]}];
+  plan = completionBosePlan[groups, normalized["ExternalMassRules"]];
+  Join[plan, <|"Automatic" -> True, "DetectedGroups" -> inferred["Groups"],
+    "ExternalParticles" -> inferred["ExternalParticles"], "Source" -> inferred["Source"],
+    "Diagnostics" -> Join[inferred["Diagnostics"], If[groups === inferred["Groups"], {},
+      {"An exact subgroup was used to keep permutation work within order 120."}]]|>]
 ];
 
 completionBosePlan[groups_, externalMassRules_List] := Module[
@@ -4576,8 +4713,10 @@ completionBoseCycle[expression_, cycle_List] := Module[
     MomHat[label_] :> MomHat[index[label]], MomQ[label_] :> MomQ[index[label]],
     (head:(MomProdHat1|MomProdHat2|MomProdHat12))[a_, b_] :> head[index[a], index[b]],
     MandelstahmHat[parts___] :> MandelstahmHat @@ (index /@ {parts})};
-  result /. ConstructiveDiagrams`VectorSpinIndex[label_, slot_] :>
-    ConstructiveDiagrams`VectorSpinIndex[index[label], slot]
+  result /. {
+    ConstructiveDiagrams`VectorSpinIndex[label_, slot_] :>
+      ConstructiveDiagrams`VectorSpinIndex[index[label], slot],
+    ConstructiveDiagrams`ColorIndex[label_] :> ConstructiveDiagrams`ColorIndex[index[label]]}
 ];
 
 completionBoseProject[expression_, plan_Association] :=
@@ -4604,7 +4743,7 @@ completionNormalizeInput[input_, channels_List, model_List] := Module[
   If[AssociationQ[value],
     extra = KeyTake[value, {"OriginalExpression", "FamilyAmplitude", "RemainingBasis",
       "FreeParameters", "CorrectionBasis", "ConstraintData", "DiagramReports",
-      "ItemReports", "RemainderData"}];
+      "ItemReports", "RemainderData", "ExternalParticles"}];
     value = Which[KeyExistsQ[value, "PreparedAmplitudes"], value["PreparedAmplitudes"],
       KeyExistsQ[value, "Amplitude"], value["Amplitude"],
       True, Return[Failure["InvalidCompletionInput", <||>]]];
@@ -6562,7 +6701,8 @@ completionFitInputProposal[proposal_Association, regular_, normalized_Associatio
 Options[CompleteFactorization] = {"CorrectionBasis" -> Automatic,
   "ParameterRules" -> Automatic, "Samples" -> 4, "ValidationSamples" -> 4,
   "ValidationParameterRules" -> Automatic, "ChannelReferences" -> Automatic,
-  "AlternativeChannels" -> {}, "BoseSymmetryGroups" -> {}, "InputReweighting" -> Automatic,
+  "AlternativeChannels" -> {}, "BoseSymmetryGroups" -> Automatic,
+  "ExternalParticles" -> Automatic, "InputReweighting" -> Automatic,
   "RepresentativeSelection" -> Automatic, "ChannelCompanions" -> Automatic,
   "PreparationRemainders" -> Automatic,
   "MaxRefinements" -> 3,
@@ -6579,7 +6719,8 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
    companionOption = OptionValue["ChannelCompanions"],
    remainderOption = OptionValue["PreparationRemainders"],
    channelRows, channelPreparation = <||>,
-   boseGroups = OptionValue["BoseSymmetryGroups"], bosePlan, constructionLimit, project, projectedSeed,
+   boseGroups = OptionValue["BoseSymmetryGroups"], bosePlan, processNames, processSources,
+   constructionLimit, project, projectedSeed,
    refinements = OptionValue["MaxRefinements"],
    rules = residueParameterRules[model, OptionValue["ParameterRules"]], samples = OptionValue["Samples"],
    validationSamples = OptionValue["ValidationSamples"], seed = OptionValue["RandomSeed"],
@@ -6633,7 +6774,20 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
     "Diagnostics" -> {"Input preparation exceeded TimeConstraint; the original input is retained."}|>, output, False]]];
   If[!AssociationQ[normalized] || FailureQ[normalized],
     Message[CompleteFactorization::args]; Return[$Failed]];
-  bosePlan = completionBosePlan[boseGroups, normalized["ExternalMassRules"]];
+  processSources = DeleteCases[{OptionValue["ExternalParticles"],
+    Lookup[normalized, "ExternalParticles", Automatic],
+    Lookup[channelPreparation, "ExternalParticles", Automatic]}, Automatic];
+  If[Length[DeleteDuplicates[processSources]] > 1,
+    Return[Failure["InconsistentExternalParticles", <|"MessageTemplate" ->
+      "The amplitude and channel process labels disagree."|>]]];
+  processNames = If[processSources === {}, Automatic, First[processSources]];
+  If[processNames =!= Automatic,
+    processNames = preparationExternalParticleNames[processNames, normalized["ExternalMassRules"], model];
+    If[FailureQ[processNames], Return[processNames]];
+    normalized = Join[normalized, <|"ExternalParticles" -> processNames|>]];
+  bosePlan = If[boseGroups === Automatic,
+    completionAutomaticBosePlan[normalized, model, processNames],
+    completionBosePlan[boseGroups, normalized["ExternalMassRules"]]];
   If[FailureQ[bosePlan], Return[bosePlan]];
   constructionLimit = If[bosePlan["Order"] === 1, limit,
     Max[limit, Min[4096, limit bosePlan["Order"]]]];
@@ -7014,7 +7168,7 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
       "Fit" -> constraints, "LinearSolution" -> solution,
       "Validation" -> feedback|>, "RefinementHistory" -> history,
     "ChannelContinuations" -> continuations,
-    "BoseSymmetry" -> KeyTake[bosePlan, {"Groups", "Order"}],
+    "BoseSymmetry" -> KeyDrop[bosePlan, "Permutations"],
     "CorrectionSpace" -> space, "ReducedChannelSpace" -> reducedChannels,
     "SelectedChannelSpace" -> selectedChannels,
     "CorrectionSpaceCandidates" -> budgetSpaces,
@@ -7087,7 +7241,7 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
       If[AssociationQ[fallbackReport] && fallbackReport["Status"] === "COMPLETE",
         report = Join[fallbackReport, <|"CorrectionSpace" -> "RetainedReferences",
           "OriginalExpression" -> original, "Correction" -> fallbackReport["Amplitude"] - original,
-          "BoseSymmetry" -> KeyTake[bosePlan, {"Groups", "Order"}],
+          "BoseSymmetry" -> KeyDrop[bosePlan, "Permutations"],
           "ChannelPreparation" -> report["ChannelPreparation"],
           "ElapsedTime" -> AbsoluteTime[] - start|>];
         status = "COMPLETE"; Break[]],
@@ -7130,6 +7284,7 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
   completionProgress[callback, enabled, <|"Stage" -> "Factorization " <> status,
     "Elapsed" -> report["ElapsedTime"], "Unknowns" -> If[ListQ[report["CorrectionBasis"]],
       Length[report["CorrectionBasis"]], Length[unknowns]]|>];
+  If[ListQ[processNames], report = Join[report, <|"ExternalParticles" -> processNames|>]];
   completionFormat[report, output, False]
 ];
 CompleteFactorization[___] := (Message[CompleteFactorization::args]; $Failed);
@@ -7159,10 +7314,13 @@ PrepareAmplitudes::usage = PrepareAmplitudes::usage <>
   " Detailed output also retains RemainderData for every item. It separates the fixed-reference reduction difference from reference-continuation choices and retains each completed reduction and identity-step remainder without expanding it. ShellRemainder is the exact algebraic difference between the selected fixed-reference expression and the returned prepared expression, not a claim of off-cut equality. ReferenceContinuations retain common-Xi and, when unambiguous, shared per-external-leg Xi source expressions before internal-shell reductions. These are proposed continuations requiring full-amplitude validation. Partial preparation and missing or ambiguous reference information remain explicit. Ordinary amplitude-pair and channel-row outputs stay unchanged; pass detailed preparation reports to completion to use the retained data.";
 PrepareAmplitudes::usage = PrepareAmplitudes::usage <>
   " A single {massRules, expression} pair is also accepted directly and returns a single pair by default. A completed amplitude carries external mass rules only: preparation applies ordinary reductions and reference choices without any internal-shell condition. Its existing propagators provide a separate reference-choice inventory, never numerator shell assumptions. Output -> Expression still returns the bare expression; details retain one-item OriginalAmplitudes and PreparedAmplitudes lists for reuse by completion.";
+PrepareAmplitudes::usage = PrepareAmplitudes::usage <>
+  " ExternalParticles -> Automatic leaves unspecified particle identities uninferred. An ordered list of model particle or antiparticle names can be supplied to retain process information in detailed output for later completion. Its length and exact external masses must agree with every item. Ordinary amplitude pairs and channel rows are unchanged; no process cache or global model assignment is created.";
 PrepareDiagramAmplitudes::usage = "PrepareDiagramAmplitudes is a compatibility alias for PrepareAmplitudes. Use PrepareAmplitudes for both diagram amplitude pairs and compact factorization-channel rows.";
 
 Options[PrepareAmplitudes] = {
   "ReferenceSpinors" -> Automatic,
+  "ExternalParticles" -> Automatic,
   "FermionHelicities" -> {},
   "MaxReferenceChoices" -> 64, "ReferenceTimeConstraint" -> Automatic,
   "InternalOnShell" -> True, "MaxSteps" -> 12, "MaxCandidates" -> 64,
@@ -7177,6 +7335,26 @@ preparationModelQ[model_] := ListQ[model] && Length[model] >= 2 &&
   ListQ[model[[1]]] && ListQ[model[[2]]] &&
   AllTrue[model[[1]], ListQ[#] && Length[#] >= 6 &&
     StringQ[#[[2]]] && StringQ[#[[3]]] &];
+
+(* Particle identity is process data. Equal masses alone cannot identify a
+   species, charge state or helicity, so retain only an explicit ordered list. *)
+preparationExternalParticleNames[requested_, rules_List, model_List] := Module[
+  {external, expected, masses},
+  If[requested === Automatic, Return[Missing["ExternalParticlesNotSpecified"]]];
+  external = Sort[Cases[rules, HoldPattern[Mass[leg_Integer] -> _] :> leg]];
+  If[!ListQ[requested] || !AllTrue[requested, StringQ] ||
+      Length[requested] =!= Length[external] || external =!= Range[Length[requested]],
+    Return[Failure["InvalidExternalParticles", <|"MessageTemplate" ->
+      "ExternalParticles must be an ordered list of model particle names, one for each declared external leg."|>]]];
+  expected = physicalParticleMass[#, model[[1]]] & /@ requested;
+  If[AnyTrue[expected, MissingQ], Return[Failure["UnknownExternalParticle", <|
+    "MessageTemplate" -> "An ExternalParticles name is absent or ambiguous in the supplied model."|>]]];
+  masses = (Mass /@ external) /. rules;
+  If[!And @@ MapThread[residueExactZero[#1 - #2] &, {masses, expected}],
+    Return[Failure["InconsistentExternalParticleMasses", <|"MessageTemplate" ->
+      "ExternalParticles and the supplied amplitude's external mass rules disagree."|>]]];
+  requested
+];
 
 preparationPairQ[pair_] := MatchQ[pair, {_List, _}] &&
   residueFiniteQ[Last[pair]] && AllTrue[First[pair],
@@ -8371,7 +8549,7 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
 ];
 
 PrepareAmplitudes[items_List, model_, opts : OptionsPattern[]] := Module[
-  {options, reports, prepared, external, diagnostics, details, types, pairs, inputType,
+  {options, reports, prepared, external, diagnostics, details, types, pairs, inputType, process,
    feynman = TrueQ[feynmanModelQ[model]], engineModel, referencePairs,
    sourceItems = items, single = preparationPairQ[items], externalAmplitude = False,
    output = OptionValue["Output"]},
@@ -8424,11 +8602,17 @@ PrepareAmplitudes[items_List, model_, opts : OptionsPattern[]] := Module[
   external = preparationExternalRules /@ (preparationCanonicalMassRules /@ First /@ pairs);
   If[external =!= {} && !AllTrue[Rest[external], preparationExternalRulesAgreeQ[First[external], #] &],
     Message[PrepareAmplitudes::args]; Return[$Failed]];
+  process = preparationExternalParticleNames[options["ExternalParticles"],
+    If[external === {}, {}, First[external]], engineModel];
+  If[FailureQ[process], Return[process]];
   reports = MapIndexed[Function[{pair, position}, With[{i = First[position]},
     Join[preparationOneAmplitude[pair, i, Length[pairs], options, engineModel, referencePairs,
       types[[i]], externalAmplitude],
       If[types[[i]] === "FactorizationChannel",
         <|"Channel" -> sourceItems[[i, -3]], "Cut" -> List @@ sourceItems[[i, -3]], "Mass" -> sourceItems[[i, -2]]|>, <||>]]]], pairs];
+  If[ListQ[process], reports = Map[Function[item, Join[item,
+    <|"ExternalParticles" -> process,
+      "RemainderData" -> Join[item["RemainderData"], <|"ExternalParticles" -> process|>]|>]], reports]];
   prepared = MapThread[preparationOutputItem[#1, #2, #3["PreparedExpression"]] &, {sourceItems, types, reports}];
   If[!TrueQ[options["ReturnDetails"]],
     If[output =!= "Details" && AnyTrue[reports, TrueQ[#["FeynmanConversionFailed"]] &],
@@ -8454,6 +8638,7 @@ PrepareAmplitudes[items_List, model_, opts : OptionsPattern[]] := Module[
     "ChannelReports" -> Select[reports, #["InputType"] === "FactorizationChannel" &],
     "Model" -> model, "Options" -> options,
     "Diagnostics" -> diagnostics|>;
+  If[ListQ[process], details = Join[details, <|"ExternalParticles" -> process|>]];
   details
 ];
 PrepareAmplitudes[___] := (Message[PrepareAmplitudes::args]; $Failed);
@@ -8469,7 +8654,7 @@ Begin["ConstructiveDiagrams`"];
 
 CompleteHighEnergy::usage = "CompleteHighEnergy[input, channels, model] fits a bounded set of residue-preserving correction directions to the high-energy, spurious-pole and explicit-reference conditions, then validates the complete candidate on independent samples. It uses remaining directions from CompleteFactorization details or an explicit CorrectionBasis. Automatic never invents an unrestricted contact-operator basis. ParameterRules -> Automatic uses the supplied model's variables and dependent functions; an explicit rule list overrides selected parameters without changing the symbolic amplitude. Output -> Details retains the candidate, affine family, fit equations and validation report. An incomplete result returns Failure unless Details is requested.";
 CompleteHighEnergy::usage = CompleteHighEnergy::usage <>
-  " The default Output -> Amplitude returns {externalMassRules, expression}, with external mass replacements only, ready for PrepareAmplitudes or CheckAmplitudes. Output -> Expression returns the bare expression; Output -> Details is unchanged.";
+  " The default Output -> Amplitude returns {externalMassRules, expression}, with external mass replacements only, ready for PrepareAmplitudes or CheckAmplitudes. Output -> Expression returns the bare expression; Output -> Details is unchanged. Channels may be a channel list or a PrepareAmplitudes details report; original channel expressions remain the authoritative residue targets.";
 
 Options[CompleteHighEnergy] = {"CorrectionBasis" -> Automatic,
   "ParameterRules" -> Automatic, "Samples" -> 4, "ValidationSamples" -> 4,
@@ -8479,13 +8664,38 @@ Options[CompleteHighEnergy] = {"CorrectionBasis" -> Automatic,
   "ProgressReporting" -> True, "ProgressFunction" -> Automatic,
   "Output" -> "Amplitude"};
 
-CompleteHighEnergy[input_, channels_List, model_List, opts : OptionsPattern[]] :=
+CompleteHighEnergy[input_, channelInput : (_List | _Association), model_List,
+    opts : OptionsPattern[]] := Module[{channels = channelInput},
+  If[AssociationQ[channelInput],
+    If[!ConstructiveDiagrams`Private`completionPreparedChannelsQ[channelInput],
+      Return[ConstructiveDiagrams`Private`completionHighEnergyArgumentsFailure[
+        {input, channelInput, model}]]];
+    channels = channelInput["OriginalAmplitudes"]];
   ConstructiveDiagrams`Private`completionHighEnergyStage[input, channels, model,
-    Join[Association[Options[CompleteHighEnergy]], Association[{opts}]]];
-CompleteHighEnergy[___] := Failure["InvalidCompletionArguments", <|
-  "MessageTemplate" -> "Expected an amplitude or completion report, a list of factorization channels, and a model."|>];
+    Join[Association[Options[CompleteHighEnergy]], Association[{opts}]]]
+];
+CompleteHighEnergy[args___] :=
+  ConstructiveDiagrams`Private`completionHighEnergyArgumentsFailure[{args}];
 
 Begin["ConstructiveDiagrams`Private`"];
+
+(* Report argument structure without embedding an amplitude or a full model.
+   Prepared channels retain their original rows as authoritative cut targets. *)
+completionHighEnergyArgumentsFailure[arguments_List] := Module[
+  {count = Length[arguments], invalid = {}},
+  If[count < 3, invalid = Range[count + 1, 3]];
+  If[count >= 2 && !(ListQ[arguments[[2]]] || completionPreparedChannelsQ[arguments[[2]]]),
+    AppendTo[invalid, 2]];
+  If[count >= 3 && !ListQ[arguments[[3]]], AppendTo[invalid, 3]];
+  If[invalid === {} && count > 3, invalid = Range[4, count]];
+  Failure["InvalidCompletionArguments", <|
+    "MessageTemplate" ->
+      "Expected an amplitude or completion report, a factorization-channel list or its preparation report, and a constructive model list. Inspect InvalidArgumentPositions and ArgumentHeads.",
+    "ArgumentCount" -> count, "ArgumentHeads" -> (Head /@ arguments),
+    "ArgumentLengths" -> (If[AtomQ[#] && !AssociationQ[#],
+      Missing["NotApplicable"], Length[#]] & /@ arguments),
+    "InvalidArgumentPositions" -> Sort[DeleteDuplicates[invalid]]|>]
+];
 
 completionHEMetadata[normalized_Association] := Module[{metadata, rules, legs},
   metadata = poleDiscoveryMetadata[Lookup[normalized, "Targets", {}],

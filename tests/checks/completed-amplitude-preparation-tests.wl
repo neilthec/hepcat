@@ -141,6 +141,39 @@ cpHighEnergy = CompleteHighEnergy[cpCompleted, cpCubicChannels, cpCubicModel,
 check["high-energy completion accepts and returns an external-mass pair",
   MatchQ[cpHighEnergy, {_List, _}] && First[cpHighEnergy] === First[cpCompleted] &&
     AllTrue[First[cpHighEnergy], MatchQ[#, HoldPattern[Mass[_Integer] -> _]] &]];
+cpHighEnergyChannels = PrepareAmplitudes[cpCubicChannels, cpCubicModel,
+  "ReturnDetails" -> True, "MaxSteps" -> 0, "ProgressReporting" -> False];
+cpHighEnergyFromChannels = CompleteHighEnergy[cpCompleted, cpHighEnergyChannels, cpCubicModel,
+  "Samples" -> 1, "ValidationSamples" -> 1,
+  "ParameterRules" -> {cpMass -> 1, cpCoupling -> 2},
+  "ProgressReporting" -> False, "TimeConstraint" -> 30];
+check["high-energy completion accepts prepared channel reports as well as ordinary lists",
+  MatchQ[cpHighEnergyFromChannels, {_List, _}] &&
+    First[cpHighEnergyFromChannels] === First[cpHighEnergy] &&
+    cpZero[Last[cpHighEnergyFromChannels] - Last[cpHighEnergy]]];
+cpChangedChannelReport = Join[cpHighEnergyChannels, <|"PreparedAmplitudes" ->
+  (ReplacePart[#, -1 -> 0] & /@ cpHighEnergyChannels["PreparedAmplitudes"])|>];
+cpHighEnergyOriginalTargets = CompleteHighEnergy[cpCompleted, cpChangedChannelReport, cpCubicModel,
+  "Samples" -> 1, "ValidationSamples" -> 1,
+  "ParameterRules" -> {cpMass -> 1, cpCoupling -> 2},
+  "ProgressReporting" -> False, "TimeConstraint" -> 30];
+check["high-energy channel preparation keeps original channel expressions as residue targets",
+  MatchQ[cpHighEnergyOriginalTargets, {_List, _}] &&
+    First[cpHighEnergyOriginalTargets] === First[cpHighEnergy] &&
+    cpZero[Last[cpHighEnergyOriginalTargets] - Last[cpHighEnergy]]];
+cpInvalidChannelReport = CompleteHighEnergy[cpCompleted,
+  <|"PreparedAmplitudes" -> cpCubicChannels|>, cpCubicModel];
+check["malformed high-energy channel reports identify the invalid second argument",
+  FailureQ[cpInvalidChannelReport] && First[cpInvalidChannelReport] === "InvalidCompletionArguments" &&
+    cpInvalidChannelReport[[2]]["ArgumentCount"] === 3 &&
+    cpInvalidChannelReport[[2]]["ArgumentHeads"] === {List, Association, List} &&
+    cpInvalidChannelReport[[2]]["ArgumentLengths"] === {2, 1, 4} &&
+    cpInvalidChannelReport[[2]]["InvalidArgumentPositions"] === {2}];
+cpInvalidHighEnergyModel = CompleteHighEnergy[cpCompleted, cpCubicChannels, FeynmanModel @@ cpCubicModel];
+check["unsupported high-energy model heads identify the invalid third argument",
+  FailureQ[cpInvalidHighEnergyModel] && First[cpInvalidHighEnergyModel] === "InvalidCompletionArguments" &&
+    cpInvalidHighEnergyModel[[2]]["ArgumentHeads"] === {List, List, FeynmanModel} &&
+    cpInvalidHighEnergyModel[[2]]["InvalidArgumentPositions"] === {3}];
 cpHighEnergyPrepared = PrepareAmplitudes[cpHighEnergy, cpCubicModel,
   "MaxSteps" -> 0, "ProgressReporting" -> False];
 check["the final high-energy result can be prepared directly without internal shells",

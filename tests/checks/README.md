@@ -247,7 +247,15 @@ propagator shifts, bounded failures, a fresh coherent-spin Feynman comparison
 and representative two- and three-particle residues. This example does not
 assert success of the separate automatic diagram-completion ansatz or
 silently certify unsupported spurious factors.
-Focused completion tests also cover opt-in Bose projection, the compact/literal
+`bose-symmetry-tests.wl` checks automatic identical-boson state inference from
+the model and homogeneous external spinor weights, including separate photon
+helicities, fermion exclusion, species/charge degeneracies and conservative
+color handling. Explicit ordered process labels can resolve ambiguous species;
+they are retained only in requested preparation reports without changing plain
+amplitude pairs or channel rows. Large exchange groups use a bounded exact
+subgroup. An explicit empty group list remains the opt-out for coefficient-space
+tests that intentionally retain asymmetric directions.
+Focused completion tests also cover explicit Bose projection, the compact/literal
 union, selected-cut atomic sources and exact formal-dependence pruning without changing the available span.
 The bounded pruning pass has a 60-second allowance. Exact Gaussian-rational
 columns use incremental sparse elimination; other exact numeric fields keep
@@ -263,8 +271,8 @@ are recorded, never silently truncated. Small scalar regressions verify the
 alternative at two mass scales and reject it when it still exceeds the cap.
 Cheap mixed-helicity tests check the fourteen-channel inventory and the
 six-element permutation group of three identical positive-helicity photons,
-leaving the negative-helicity photon fixed. Equal masses never infer a
-helicity grouping. The default without declared bosonic groups is unchanged.
+leaving the negative-helicity photon fixed. Equal masses alone never infer a
+helicity grouping. Automatic inference requires compatible external states.
 Automatic-chart simple-pole evaluation is compared with full mapped residues.
 Automatic affine components are extracted in one pass without changing their
 exact algebra, variable order or explicit zero directions. Opaque custom maps

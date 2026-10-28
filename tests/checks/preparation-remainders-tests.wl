@@ -145,8 +145,9 @@ rrCubicPrepared = PrepareAmplitudes[{rrCubicInput}, rrCubicModel,
   "ReferenceSpinors" -> None, "MaxSteps" -> 0,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
 rrCubicRules = {rrMass -> 1, rrCoupling -> 2};
+(* This fixture isolates reconstruction from remainders without a symmetry fit. *)
 rrFactor[input_, channels_, opts___] := CompleteFactorization[input, channels, rrCubicModel,
-  opts, "Samples" -> 2, "ValidationSamples" -> 2, "MaxCorrectionTerms" -> 16,
+  opts, "BoseSymmetryGroups" -> {}, "Samples" -> 2, "ValidationSamples" -> 2, "MaxCorrectionTerms" -> 16,
   "RandomSeed" -> 728891, "ParameterRules" -> rrCubicRules,
   "ProgressReporting" -> False, "ReturnDetails" -> True, "TimeConstraint" -> 60];
 rrCompleted = rrFactor[rrCubicPrepared, rrCubicChannels];

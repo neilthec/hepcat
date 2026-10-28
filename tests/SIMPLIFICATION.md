@@ -1361,22 +1361,43 @@ the additional continuations and compact-space attempt. An explicit
 `"CorrectionBasis"` still uses exactly the supplied directions, after ordinary
 normalization.
 
-For declared identical bosonic states, `"BoseSymmetryGroups"` can expand the
-available particle-label arrangements while reducing the number of independent
-grouped correction directions. For example, four positive-helicity photons on
-legs 3 through 6 use `"BoseSymmetryGroups" -> {{3, 4, 5, 6}}`. This averages
-both the seed and correction directions over all 24 typed permutations. The
-original input is retained in details, and the returned correction includes
-the change to the seed. Every original channel remains a separate held-out
-validation obligation. The option is not inferred from equal masses: the
-caller must group only identical species with identical external states,
-never fermions or opposite helicities. The default `{}` does no averaging.
-Groups must be disjoint, have equal declared masses and together have order
-at most 120. `"MaxCorrectionTerms"` applies after projection; automatic
+`"BoseSymmetryGroups" -> Automatic` uses the model's twice-spin together with
+species and external spinor state to identify identical bosons. Four
+positive-helicity photons on legs 3 through 6 are grouped automatically, while
+opposite helicities and all fermions stay separate. Equal masses alone are
+insufficient. Compact amplitude pairs and channel rows retain masses but not
+particle names. When preparing them, retain the already available process list:
+
+```wolfram
+preparationDetails = PrepareAmplitudes[rawAmplitudes, diagramModel,
+  "ExternalParticles" -> particles, "ReturnDetails" -> True];
+channelPreparationDetails = PrepareAmplitudes[channels, factorizationModel,
+  "ExternalParticles" -> particles, "ReturnDetails" -> True];
+factorization = CompleteFactorization[preparationDetails,
+  channelPreparationDetails, factorizationModel];
+```
+
+This adds process metadata only to detailed reports; ordinary pairs and rows
+keep their simple form. The ordered names are checked against the model and
+external masses. For a plain input, completion can also receive
+`"ExternalParticles" -> particles` directly. If names are absent, only unique
+matches from the model and homogeneous external spinor weights are used.
+Ambiguous species, different fixed massive-spin states, and color-stripped
+colored states are left unprojected; details explain why. This avoids guessing
+that a photon and gluon, or charged particles with equal masses, are identical.
+
+Averaging acts on the seed and correction directions through typed particle
+permutations. The original input remains in details and every original channel
+remains an independent validation obligation. `"BoseSymmetryGroups" -> {}`
+disables averaging. An explicit list of groups is still supported, with the
+caller responsible for its physical meaning. Explicit groups must be disjoint,
+have equal declared masses and total order at most 120. Automatic mode uses a
+valid bounded subgroup instead of failing for a larger multiplicity. The
+`"BoseSymmetry"` details show `"DetectedGroups"`, used `"Groups"`, `"Order"`,
+`"Source"` and diagnostics. `"MaxCorrectionTerms"` applies after projection;
 individual source-space construction may grow by the permutation count, up to
-4096 directions unless the caller already requested a larger term limit.
-The three source spaces can form a larger merged union before projection;
-their limits bound the individual spaces, not the total merged count or memory.
+4096 directions unless a larger term limit was requested. The merged union
+may be larger; these limits are not a hard memory bound.
 With automatic directions, this option first combines the available compact
 and literal channel spaces. It also tries individual terms from numerator
 reductions of accepted continuations on their selected cut, including
@@ -1743,6 +1764,14 @@ Ordinary successful calls return `{externalMassRules, expression}`; use
 `"Output" -> "Expression"` for just the expression. An unresolved
 `CompleteFactorization` returns a compact `Failure["IncompleteAmplitude", ...]`;
 request `"ReturnDetails" -> True` for its full diagnostics and retained candidate.
+`CompleteHighEnergy` accepts either the original channel list or
+`channelPreparationDetails`, just like factorization completion. In both cases,
+the original channel expressions are the residue targets. If a prepared final
+amplitude is used, test that same value for `Failure` before passing it onward.
+An immediate `InvalidCompletionArguments` means the calculation did not start;
+its compact argument-position diagnostics identify an invalid channel or model
+argument, rather than reporting a failed high-energy test.
+
 For `CompleteHighEnergy`, an unresolved or underdetermined ordinary
 call returns a failure retaining the candidate and report, while
 `"Output" -> "Details"` returns the report directly. Invalid inputs are rejected

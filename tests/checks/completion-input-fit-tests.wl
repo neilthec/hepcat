@@ -11,9 +11,11 @@ check[name_, value_] := (checks++;
 ciZero[value_] := Together[value] === 0;
 ciCanonical[value_, n_Integer : 4] :=
   ConstructiveDiagrams`Private`residueCanonicalPropagators[value, Range[n]];
+(* Deliberately asymmetric overlap targets test fitting before Bose projection. *)
 ciSettings[opts___] := Normal[Join[<|"Samples" -> 1, "ValidationSamples" -> 1,
   "RandomSeed" -> 11807, "TimeConstraint" -> 30, "MaxCorrectionTerms" -> 32,
-  "ProgressReporting" -> False, "ReturnDetails" -> True|>, Association[{opts}]]];
+  "ProgressReporting" -> False, "ReturnDetails" -> True,
+  "BoseSymmetryGroups" -> {}|>, Association[{opts}]]];
 ciFactor[input_, channels_, model_, opts___] := CompleteFactorization[
   input, channels, model, Sequence @@ ciSettings[opts]];
 ciPass[report_] := AssociationQ[report] &&

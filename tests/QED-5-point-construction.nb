@@ -284,6 +284,7 @@ Cell[CellGroupData[{
 
 Cell["\<\
 preparationDetails = PrepareAmplitudes[rawAmplitudes, diagramModel,
+  \"ExternalParticles\" -> particles,
   \"ReferenceSpinors\" -> referenceChoice,
   \"ReturnDetails\" -> True];
 preparation = preparationDetails[\"PreparedAmplitudes\"];
@@ -1452,6 +1453,7 @@ Cell[CellGroupData[{
 Cell["\<\
 channels = FactorizationAmplitudeChannels[particles, factorizationModel];
 channelPreparationDetails = PrepareAmplitudes[channels, factorizationModel,
+  \"ExternalParticles\" -> particles,
   \"ReferenceSpinors\" -> referenceChoice, \"ReturnDetails\" -> True];
 preparedChannels = channelPreparationDetails[\"PreparedAmplitudes\"];
 Length[channels]\
@@ -1987,7 +1989,7 @@ Cell[CellGroupData[{
 Cell["\<\
 completion = If[FailureQ[factorization] || factorization === $Failed,
   factorization,
-  CompleteHighEnergy[factorization, channels, factorizationModel,
+  CompleteHighEnergy[factorization, channelPreparationDetails, factorizationModel,
     \"Samples\" -> 1, \"ValidationSamples\" -> 1,
     \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> timeLimit]];
 completion\
@@ -5351,6 +5353,7 @@ Cell[CellGroupData[{
 
 Cell["\<\
 preparationDetails = PrepareAmplitudes[rawAmplitudes, diagramModel,
+  \"ExternalParticles\" -> particles,
   \"ReferenceSpinors\" -> referenceChoice,
   \"ReturnDetails\" -> True];
 preparation = preparationDetails[\"PreparedAmplitudes\"];
@@ -8119,6 +8122,7 @@ Cell[CellGroupData[{
 Cell["\<\
 channels = FactorizationAmplitudeChannels[particles, factorizationModel];
 channelPreparationDetails = PrepareAmplitudes[channels, factorizationModel,
+  \"ExternalParticles\" -> particles,
   \"ReferenceSpinors\" -> referenceChoice, \"ReturnDetails\" -> True];
 preparedChannels = channelPreparationDetails[\"PreparedAmplitudes\"];
 Length[channels]\
@@ -9841,7 +9845,7 @@ Cell[CellGroupData[{
 Cell["\<\
 completion = If[FailureQ[factorization] || factorization === $Failed,
   factorization,
-  CompleteHighEnergy[factorization, channels, factorizationModel,
+  CompleteHighEnergy[factorization, channelPreparationDetails, factorizationModel,
     \"Samples\" -> 1, \"ValidationSamples\" -> 1,
     \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> timeLimit]];
 completion\
@@ -14137,6 +14141,7 @@ Cell[CellGroupData[{
 
 Cell["\<\
 preparationDetails = PrepareAmplitudes[rawAmplitudes, diagramModel,
+  \"ExternalParticles\" -> particles,
   \"ReferenceSpinors\" -> referenceChoice, \"MaxSteps\" -> 0,
   \"ReturnDetails\" -> True];
 preparation = preparationDetails[\"PreparedAmplitudes\"];
@@ -15883,6 +15888,7 @@ Cell[CellGroupData[{
 Cell["\<\
 channels = FactorizationAmplitudeChannels[particles, factorizationModel];
 channelPreparationDetails = PrepareAmplitudes[channels, factorizationModel,
+  \"ExternalParticles\" -> particles,
   \"ReferenceSpinors\" -> referenceChoice, \"ReturnDetails\" -> True];
 preparedChannels = channelPreparationDetails[\"PreparedAmplitudes\"];
 Length[channels]\
@@ -17605,7 +17611,7 @@ Cell[CellGroupData[{
 Cell["\<\
 completion = If[FailureQ[factorization] || factorization === $Failed,
   factorization,
-  CompleteHighEnergy[factorization, channels, factorizationModel,
+  CompleteHighEnergy[factorization, channelPreparationDetails, factorizationModel,
     \"Samples\" -> 1, \"ValidationSamples\" -> 1,
     \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> timeLimit]];
 completion\
@@ -23782,6 +23788,7 @@ conditions in its numerator. Original propagators stay off shell.\
 
 Cell["\<\
 preparationDetails = PrepareAmplitudes[rawAmplitudes, diagramModel,
+  \"ExternalParticles\" -> particles,
   \"ReferenceSpinors\" -> referenceChoice,
   \"ReturnDetails\" -> True];
 preparation = preparationDetails[\"PreparedAmplitudes\"];\
@@ -24419,6 +24426,7 @@ Cell[CellGroupData[{
 Cell["\<\
 channels = FactorizationAmplitudeChannels[particles, factorizationModel];
 channelPreparationDetails = PrepareAmplitudes[channels, factorizationModel,
+  \"ExternalParticles\" -> particles,
   \"ReferenceSpinors\" -> referenceChoice, \"ReturnDetails\" -> True];
 preparedChannels = channelPreparationDetails[\"PreparedAmplitudes\"];
 Length[channels]\
@@ -24436,8 +24444,7 @@ Cell[BoxData["14"], "Output",
   "Out[139]=",ExpressionUUID->"7919e002-34b1-4224-a208-af4864fe878a"]
 }, Open  ]],
 
-Cell["The four photons on legs 3 through 6 are identical states, so the \
-completion below uses their Bose symmetry. This six-point system needs more \
+Cell["The four photons on legs 3 through 6 are identical states. Completion infers their Bose symmetry from the ordered process and the model; no manual groups are needed. This six-point system needs more \
 samples and correction terms than the five-point examples.", "Text",
  ExpressionUUID->"87d2e013-6b7b-43fc-8a92-eaa571f69986"],
 
@@ -24453,7 +24460,6 @@ Cell[CellGroupData[{
 Cell["\<\
 factorization = CompleteFactorization[preparationDetails, channelPreparationDetails,
   factorizationModel,
-  \"BoseSymmetryGroups\" -> {{3, 4, 5, 6}},
   \"Samples\" -> 12, \"ValidationSamples\" -> 1, \"MaxRefinements\" -> 5,
   \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> timeLimit];
 factorization\
@@ -24591,7 +24597,7 @@ Cell[CellGroupData[{
 Cell["\<\
 completion = If[FailureQ[factorization] || factorization === $Failed,
   factorization,
-  CompleteHighEnergy[factorization, channels, factorizationModel,
+  CompleteHighEnergy[factorization, channelPreparationDetails, factorizationModel,
     \"Samples\" -> 1, \"ValidationSamples\" -> 1,
     \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> timeLimit]];
 completion\
@@ -27323,8 +27329,8 @@ Cell[CellGroupData[{
   Cell[CellGroupData[{
     Cell["4. Complete the Physical Residues", "Section"],
     Cell["channels = FactorizationAmplitudeChannels[particles, factorizationModel];\nLength[channels]", "Input"],
-    Cell["There are 24 diagrams and 14 physical channels. Only legs 3, 4 and 5 have the same photon helicity, so leg 6 is not included in their Bose symmetry group. This mixed-helicity completion takes substantially longer than the earlier examples; the two-hour limit below is a budget, not a guaranteed finishing time. The independent Feynman amplitude is used only in the final check, never in the completion.", "Text"],
-    Cell["timeLimit = 7200;\nfactorization = CompleteFactorization[preparation, channels, factorizationModel,\n  \"BoseSymmetryGroups\" -> {{3, 4, 5}},\n  \"Samples\" -> 28, \"ValidationSamples\" -> 2, \"MaxRefinements\" -> 5,\n  \"RandomSeed\" -> 1729, \"MaxCorrectionTerms\" -> 1024,\n  \"TimeConstraint\" -> timeLimit];", "Input"]
+    Cell["There are 24 diagrams and 14 physical channels. Completion automatically identifies legs 3, 4 and 5 as identical boson states from the ordered process and model; leg 6 has the opposite helicity. This mixed-helicity completion takes substantially longer than the earlier examples; the two-hour limit below is a budget, not a guaranteed finishing time. The independent Feynman amplitude is used only in the final check, never in the completion.", "Text"],
+    Cell["timeLimit = 7200;\nfactorization = CompleteFactorization[preparation, channels, factorizationModel,\n  \"Samples\" -> 28, \"ValidationSamples\" -> 2, \"MaxRefinements\" -> 5,\n  \"RandomSeed\" -> 1729, \"MaxCorrectionTerms\" -> 1024,\n  \"TimeConstraint\" -> timeLimit];", "Input"]
   }, Open]],
   Cell[CellGroupData[{
     Cell["5. Verify the Completed Amplitude", "Section"],
