@@ -1620,6 +1620,47 @@ continuation must preserve its selected-cut residue at exact sampled
 kinematics before its terms are admitted. This is a bounded correction space,
 not an enumeration of all possible amplitudes or a proof of reference equivalence.
 
+`"ShiftedChannelContinuations" -> Automatic` also offers a compact family
+derived directly from the original factorization numerators. A deformation of
+two null external legs conserves total momentum and their mass shells. For
+each channel affected by that deformation, the code chooses the parameter
+that puts that channel on shell, evaluates its known lower-point product
+there, and divides by its original propagator. This gives a different
+continuation of the same selected residue. Each admitted direction must pass
+its own cut check before entering the simultaneous fit.
+
+The sum of these directions is a proposal, not an assumed recursion formula:
+no vanishing boundary at infinity is assumed. Every original physical channel
+and zero-residue obligation remains in the equations. Explicit regular input
+stays fixed; its pole-bearing part can be reweighted when `"InputReweighting"`
+allows that. Compact signed exchange averages preserve all declared boson and
+fermion symmetries. Failed independent validation adds equations before a
+refit, and the complete affine family is checked at every requested validation
+parameter assignment. The usual high-energy, spurious-pole, reference and
+optional Feynman checks remain separate requirements for construction.
+
+Automatic selects opposite null spin weights or identified null scalars where
+the current compound-pole checker applies: at least three null and at most two
+massive external legs. `True` allows broader generic attempts; `False` or
+`None` disables this proposal. Other inputs retain the established routes.
+The attempt uses at most four ordered pairs and half the remaining stage
+clock, capped at 90 seconds, while respecting `"MaxCorrectionTerms"`.
+Detailed reports retain the admitted source checks and attempted fits.
+
+Already contracted rational expressions are kept factored by
+`ReduceSpinContractions` when no contraction rule can apply. Its guard checks
+both explicit spin-index sums and ordinary massless angle/square contractions;
+real contractions still use the established rules. Preparation also retains
+an eligible complete input before trying reductions, so a timeout cannot
+discard that compact incumbent in favor of a larger partial expansion.
+For complete external amplitudes, preparation can apply contraction rules
+without global distribution, and checker normalization retains equivalent
+bare-helicity products for direct evaluation. Actual summed indices still
+require contraction. Ranking small expressions uses the usual complexity;
+ranking large factored expressions uses representation size when expanding
+them would exceed the reducer's existing distribution budget. The public
+complexity function is unchanged.
+
 With automatic channel references, completion first tries a compact space
 from accepted physical-reference continuations and complete sewn channels
 that already contain no reference spinors. In particular, a four-point-by-four-point
@@ -1876,11 +1917,20 @@ entered the fit. These are sampled checks, not an analytic uniqueness or
 global-minimality proof; the fresh serial 28-sample notebook run has not been
 timed end to end.
 
-The balanced-helicity chapter, `e,E,A.+,A.+,A.-,A.-`, uses a different,
-explicit construction. Its diagram/channel correction space still showed a
-consistency discrepancy after enlargement to 4055 directions. No exact fit
-was accepted. `qedBalancedSixPointAmplitude[factorizationModel]`, defined in
-`tests/QED-5-point-residues.wl`, instead regenerates the known lower-point
+The balanced-helicity chapter, `e,E,A.+,A.+,A.-,A.-`, now also completes with
+the general `ConstructAmplitude` wrapper. Model-derived shifted channel
+continuations supply the missing correction directions; the original
+fourteen channels remain the targets. With optional identity-route enumeration
+disabled, the original ordering and a reordered helicity assignment both
+completed in about 7.7 minutes, including independent Feynman comparison.
+Each final report passed 14 physical, 104 apparent spurious, high-energy,
+reference and Feynman checks. The reference row records the absence of
+explicit Xi, not a separate Ward-identity proof. Preparation of the completed
+expression took about six seconds while retaining its compact rational form.
+
+The earlier independent worked example remains available.
+`qedBalancedSixPointAmplitude[factorizationModel]`, defined in
+`tests/QED-5-point-residues.wl`, regenerates the known lower-point
 channels and constructs eight shifted sewn products. This is a worked
 minimal-QED recursion, not a general replacement for `CompleteFactorization`.
 The notebook explains the `[5,3>` shift and its vanishing boundary term.

@@ -539,8 +539,37 @@ ReverseSequence[a__]:=Reverse[List[a]]/.List[b__]:>b
 
 
 (* ::Input::Initialization:: *)
-ReduceSpinContractions[exp_]:=Module[{res=exp,oldRes,replacementRules,jjTimes=1},
-replacementRules={
+ReduceSpinContractions[exp_] := ConstructiveDiagrams`Private`spinContractionReduce[exp, True];
+
+Begin["ConstructiveDiagrams`Private`"];
+
+spinContractionsPossibleQ[rscExpression_, rscIncludeBareHelicity_ : True] := Module[
+  {rscSpinors, rscSignatures = {}, rscParts, rscKey, rscPolarizations, rscGroups},
+  If[!FreeQ[rscExpression, _SpinorEps], Return[True]];
+  rscSpinors = Cases[{rscExpression}, _Spinor | _SpinorHat, Infinity];
+  Do[
+    rscParts = List @@ rscSpinor;
+    Which[
+      MatchQ[rscParts, {"Spin", "Upper" | "Lower", "Angle" | "Square", _, _}],
+        rscKey = {Head[rscSpinor], "Spin", rscParts[[4]], rscParts[[5]]};
+        AppendTo[rscSignatures, {rscKey, rscParts[[2]]}],
+      TrueQ[rscIncludeBareHelicity] && MatchQ[rscParts, {"Helicity", "Angle" | "Square", _}],
+        rscKey = {Head[rscSpinor], "Helicity", 3, rscParts[[3]]};
+        AppendTo[rscSignatures, {rscKey, rscParts[[2]]}],
+      MatchQ[rscParts, {"Helicity", "Angle" | "Square", _, _}],
+        rscKey = {Head[rscSpinor], "Helicity", 4, rscParts[[3]], rscParts[[4]]};
+        AppendTo[rscSignatures, {rscKey, rscParts[[2]]}]], {rscSpinor, rscSpinors}];
+  rscGroups = GatherBy[rscSignatures, First];
+  AnyTrue[rscGroups, Function[rscGroup,
+    rscPolarizations = Last /@ rscGroup;
+    ContainsAll[rscPolarizations, {"Upper", "Lower"}] ||
+      ContainsAll[rscPolarizations, {"Angle", "Square"}]]]
+];
+
+spinContractionReduce[rscExpression_, rscExpand_] := Module[
+{rscResult=rscExpression,rscOldResult,rscReplacementRules,rscAttempts=1},
+If[!spinContractionsPossibleQ[rscExpression],Return[rscExpression]];
+rscReplacementRules={
 (*SpinorChain[...Spinor...]SpinorChain[...Spinor...]*)
 SpinorChain[a__,sHead_["Spin","Upper","Angle",b_,c_]]SpinorChain[sHead_["Spin","Lower","Angle",b_,c_],e__]/;spinorHeadQ[sHead]:>Mass[b]SpinorChain[a,e],
 SpinorChain[a__,sHead_["Spin","Upper","Square",b_,c_]]SpinorChain[sHead_["Spin","Lower","Square",b_,c_],e__]/;spinorHeadQ[sHead]:>-Mass[b]SpinorChain[a,e],SpinorChain[a__,sHead_["Spin","Upper","Angle",b_,c_]]SpinorChain[sHead_["Spin","Lower","Square",b_,c_],e__]/;spinorHeadQ[sHead]:>SpinorChain[a,momHead[sHead][b],e],
@@ -635,15 +664,17 @@ SpinorChain[ls___,sHead_["Spin","Upper",as_,pN_,J_],rs___]SpinorEps["Lower",J_,K
 SpinorChain[ls___,sHead_["Spin","Upper",as_,pN_,J_],rs___]SpinorEps["Lower",K_,J_]/;spinorHeadQ[sHead]:>-SpinorChain[ls,sHead["Spin","Lower",as,pN,K],rs]
 };
 
-While[res=!=oldRes,
-(*Print[jjTimes];*)
-oldRes=res;
-res=Expand[res//.replacementRules];
-jjTimes=jjTimes+1;
-If[jjTimes>10,Print["Giving up after 10 attempts to reduce!"];Break[]];
+While[rscResult=!=rscOldResult,
+(*Print[rscAttempts];*)
+rscOldResult=rscResult;
+rscResult=If[TrueQ[rscExpand], Expand[rscResult//.rscReplacementRules], rscResult//.rscReplacementRules];
+rscAttempts=rscAttempts+1;
+If[rscAttempts>10,Print["Giving up after 10 attempts to reduce!"];Break[]];
 ];
-res
-]
+rscResult
+];
+
+End[];
 
 
 (* ::Subsubsection::Closed:: *)

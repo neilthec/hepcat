@@ -2617,8 +2617,13 @@ residueSimpleInputs[amplitudes_, channelRows_List, model_List] := Module[
       MemberQ[external, First[#][[1]]] && (First[#] /. externalRules) === Last[#] &],
     Return[Failure["InconsistentMasses", <|
       "MessageTemplate" -> "Diagram and factorization external masses disagree."|>]]];
-  expressions = Map[Function[pair,
-    ReduceSpinContractions[Last[pair]] /. Join[First[pair], externalRules]], pairs];
+  expressions = Map[Function[pair, With[
+    {resolved = Last[pair] /. Join[First[pair], externalRules]},
+    (* A complete external spin polynomial can be evaluated directly. Its
+       ordinary bare-helicity product identities need not be expanded merely
+       to compare amplitudes; genuine summed indices still require reduction. *)
+    If[preparationCompleteExternalInputQ[resolved, externalRules], resolved,
+      ReduceSpinContractions[Last[pair]] /. Join[First[pair], externalRules]]]], pairs];
   If[!FreeQ[expressions, _Failure | _Missing | $Failed | $Aborted | $TimedOut],
     Return[Failure["InvalidAmplitudes", <|"MessageTemplate" -> "An amplitude calculation failed."|>]]];
   If[external === {} && !TrueQ[Total[expressions] === 0],
@@ -7784,13 +7789,341 @@ completionFitInputProposal[proposal_Association, regular_, normalized_Associatio
     "ElapsedTime" -> AbsoluteTime[] - start|>]
 ];
 
+(* Bounded two-null-leg deformations supply alternative channel continuations.
+   Every accepted direction preserves its selected cut. No shifted sum or
+   vanishing large-parameter boundary is assumed: all original channels are
+   still fitted and validated simultaneously. *)
+completionNullPairShift[expression_, variable_Symbol, pair : {_Integer, _Integer}, external_List] := Module[
+  {shiftSquare = First[pair], shiftAngle = Last[pair], rankOne = Unique["nullPairMomentum"],
+   tag = Unique["nullPairShiftFailure"], fail, kind, opposite, helicity, members,
+   eta, twiceQDot, scalarParameterQ, linearTerms, linearEta, linearTwiceQDot, endpointChoices,
+   momentumChoices, splitRankOne, shiftChain, shift},
+  If[!DuplicateFreeQ[pair] || !DuplicateFreeQ[external] || !SubsetQ[external,pair],
+    Return[Failure["InvalidNullPair", <||>]]];
+  fail[reason_, data_: <||>] := Throw[Failure[reason, data], tag];
+  scalarParameterQ[value_] := FreeQ[value, variable | rankOne] &&
+    !residueUnmappedQ[value /. _Mass -> 1];
+  kind[spinor_] := rspSpinorType[spinor];
+  opposite[type_] := If[type === "Angle", "Square", "Angle"];
+  helicity[type_, leg_] := Spinor["Helicity", type, leg];
+  members[label_Integer] /; MemberQ[external, label] := {label};
+  members[label_Multiparticle] := Flatten[members /@ List @@ label];
+  members[label_] := fail["UnsupportedMomentumLabel", <|"Label" -> label|>];
+  eta[label_] := Count[members[label], shiftSquare] - Count[members[label], shiftAngle];
+  twiceQDot[label_] := Total[Function[leg,
+      If[MemberQ[{shiftSquare, shiftAngle}, leg], 0,
+        SpinorChain[helicity["Angle", shiftSquare], Mom[leg],
+          helicity["Square", shiftAngle]]]] /@ members[label]];
+  linearTerms[momentum_] := Module[{factors, vectors, coefficient, label},
+    Which[
+      momentum === 0, {},
+      Head[momentum] === Mom && Length[momentum] === 1,
+        label = First[momentum];
+        If[IntegerQ[label] && MemberQ[external, label], {{1, momentum}},
+          If[MatchQ[label, Multiparticle[__Integer]] &&
+              AllTrue[List @@ label, MemberQ[external, #] &],
+            ({1, Mom[#]} & /@ List @@ label),
+            fail["UnsupportedMomentumLabel", <|"Label" -> label|>]]],
+      Head[momentum] === Plus, Flatten[linearTerms /@ (List @@ momentum), 1],
+      Head[momentum] === Times,
+        factors = List @@ momentum; vectors = Select[factors, !scalarParameterQ[#] &];
+        If[Length[vectors] =!= 1,
+          fail["UnsupportedLinearMomentum", <|"Momentum" -> momentum|>]];
+        coefficient = Times @@ Select[factors, scalarParameterQ];
+        If[!scalarParameterQ[coefficient],
+          fail["UnsupportedLinearMomentum", <|"Momentum" -> momentum|>]];
+        ({coefficient First[#], Last[#]} & /@ linearTerms[First[vectors]]),
+      True, fail["UnsupportedLinearMomentum", <|"Momentum" -> momentum|>]]];
+  linearEta[momentum_] := Total[(First[#] eta[Last[#][[1]]]) & /@ linearTerms[momentum]];
+  linearTwiceQDot[momentum_] := Total[(First[#] twiceQDot[Last[#][[1]]]) & /@ linearTerms[momentum]];
+  endpointChoices[spinor_] := Which[
+    spinor === helicity["Square", shiftSquare],
+      {{1, spinor}, {variable, helicity["Square", shiftAngle]}},
+    spinor === helicity["Angle", shiftAngle],
+      {{1, spinor}, {-variable, helicity["Angle", shiftSquare]}},
+    MatchQ[spinor, Spinor["Helicity", "Angle" | "Square", _Integer]] &&
+        MemberQ[external, rspSpinorLeg[spinor]], {{1, spinor}},
+    MatchQ[spinor, Spinor["Xi", "Angle" | "Square", _, ___]], {{1, spinor}},
+    MemberQ[pair, rspSpinorLeg[spinor]],
+      fail["UnsupportedShiftedMasslessSpinor", <|"Spinor" -> spinor|>],
+    kind[spinor] =!= None && Head[spinor] === Spinor &&
+        MemberQ[{"Spin", "Helicity"}, First[spinor]] &&
+        MemberQ[external, rspSpinorLeg[spinor]] &&
+        FreeQ[spinor, _SpinorHat], {{1, spinor}},
+    True, fail["UnsupportedSpinorEndpoint", <|"Spinor" -> spinor|>]];
+  momentumChoices[momentum_] := Flatten[Function[term,
+      Join[{{First[term], Last[term]}},
+        If[eta[Last[term][[1]]] === 0, {},
+          {{First[term] variable eta[Last[term][[1]]], rankOne}}]]] /@ linearTerms[momentum], 1];
+  splitRankOne[parts_List] := Module[{position, beforeKind, prefixEnd, suffixStart},
+    position = FirstPosition[parts, rankOne, Missing["NoShiftMomentum"]];
+    If[MissingQ[position], Return[SpinorChain @@ parts]];
+    position = First[position];
+    beforeKind = If[EvenQ[position - 2], kind[First[parts]], opposite[kind[First[parts]]]];
+    {prefixEnd, suffixStart} = If[beforeKind === "Angle",
+      {helicity["Angle", shiftSquare], helicity["Square", shiftAngle]},
+      {helicity["Square", shiftAngle], helicity["Angle", shiftSquare]}];
+    splitRankOne[Join[Take[parts, position - 1], {prefixEnd}]] *
+      splitRankOne[Join[{suffixStart}, Drop[parts, position]]]];
+  shiftChain[chain_SpinorChain] := Module[{parts = List @@ chain, slots, choices},
+    If[Length[parts] < 2 || kind[First[parts]] === None || kind[Last[parts]] === None,
+      fail["UnsupportedSpinorChain", <|"Chain" -> chain|>]];
+    slots = Rest[Most[parts]];
+    If[(kind[First[parts]] === kind[Last[parts]]) =!= EvenQ[Length[slots]],
+      fail["UnsupportedSpinorChainParity", <|"Chain" -> chain|>]];
+    choices = Join[{endpointChoices[First[parts]]}, momentumChoices /@ slots,
+      {endpointChoices[Last[parts]]}];
+    If[Times @@ (Length /@ choices) > 4096,
+      fail["ShiftChainExpansionLimit", <|"Limit" -> 4096|>]];
+    Total[(Times @@ (First /@ #)) splitRankOne[Last /@ #] & /@ Tuples[choices]]];
+  shift[value_] := Which[
+    AtomQ[value], value,
+    Head[value] === SpinorChain, shiftChain[value],
+    MatchQ[value, SpinorTrace[_, _]], With[{reduced = ReduceSpinorProducts[value]},
+      If[reduced === value, fail["UnreducedSpinorTrace"], shift[reduced]]],
+    Head[value] === SpinorTrace,
+      fail["UnsupportedLongSpinorTrace", <|"Trace" -> value|>],
+    Head[value] === PropDen && MemberQ[{2, 3}, Length[value]] &&
+        scalarParameterQ[Rest[List @@ value]],
+      value + variable linearEta[First[value]] linearTwiceQDot[First[value]],
+    Head[value] === MomProd && Length[value] === 2,
+      value + variable/2 (eta[value[[1]]] twiceQDot[value[[2]]] +
+        eta[value[[2]]] twiceQDot[value[[1]]]),
+    Head[value] === Mandelstahm && Length[value] === 2,
+      value + variable (eta[value[[1]]] + eta[value[[2]]]) *
+        (twiceQDot[value[[1]]] + twiceQDot[value[[2]]]),
+    MatchQ[value, Power[_Mom, _Integer?EvenQ]],
+      (First[value]^2 + variable linearEta[First[value]] linearTwiceQDot[First[value]])^(value[[2]]/2),
+    FreeQ[value, _Mom | _MomHat | _MomQ | _MomProd | _Mandelstahm |
+      _Spinor | _SpinorHat | _SpinorChain | _SpinorTrace | _PropDen |
+      _xFactor | _xTildeFactor], value,
+    MemberQ[{Plus, Times, Power}, Head[value]], Map[shift, value],
+    True, fail["UnsupportedShiftedStructure", <|"Expression" -> value|>]];
+  Catch[shift[expression], tag]
+];
+
+
+completionNullPairChoices[normalized_Association] := Module[
+  {external = normalized["ExternalMassRules"], labels, null, targets, evidence, weights, pairs, preferred},
+  labels = Sort[Cases[external, HoldPattern[Mass[i_Integer] -> _] :> i]];
+  null = Select[labels, TrueQ[(Mass[#] /. external) === 0] &];
+  If[Length[null] < 2, Return[{}]];
+  targets = completionTargets[normalized["Targets"]];
+  evidence = SelectFirst[Lookup[targets, "StateSum", {}], # =!= 0 && !MissingQ[#] &, 0];
+  weights = completionExternalSpinWeights[evidence, external];
+  pairs = Select[Tuples[null, 2], DuplicateFreeQ];
+  preferred = If[ListQ[weights], Select[pairs,
+    weights[[First[FirstPosition[labels, First[#]]]]] > 0 &&
+      weights[[First[FirstPosition[labels, Last[#]]]]] < 0 &], {}];
+  Take[Join[preferred, Complement[pairs, preferred]], UpTo[4]]
+];
+
+completionNullPairReferences[expression_, pair_List, massRules_List] := Module[
+  {metadata, null, assignments = <||>, excluded, kinds, preferred, selected},
+  metadata = referenceExpressionMetadata[expression];
+  null = Sort[Cases[massRules, HoldPattern[Mass[i_Integer] -> 0] :> i]];
+  Do[
+    excluded = Lookup[metadata["ReferenceLegs"], id, {}];
+    kinds = DeleteDuplicates[Cases[expression, Spinor["Xi", kind_, reference_, ___] /;
+      reference === id :> kind, Infinity]];
+    preferred = If[kinds === {"Square"}, Reverse[pair], pair];
+    selected = SelectFirst[DeleteDuplicates[Join[preferred, null]],
+      !MemberQ[excluded, #] &, Missing["NoNullReference"]];
+    If[MissingQ[selected], Return[Failure["NoRegularNullReference", <|"Reference" -> id|>]]];
+    AssociateTo[assignments, id -> selected], {id, metadata["References"]}];
+  <|"Expression" -> (expression /. Spinor["Xi", kind : ("Angle" | "Square"), id_, ___] :>
+      Spinor["Helicity", kind, assignments[id]]), "Assignments" -> assignments|>
+];
+
+completionNullPairChannels[normalized_Association, pair : {_Integer, _Integer},
+    rules_List, seed_Integer, limit_Integer, seconds_] := Module[
+  {started = AbsoluteTime[], external, massRules = normalized["ExternalMassRules"], targets,
+   variable = Unique["nullPairParameter"], sources = {}, records = {}, diagnostics = {},
+   cut, eta, slope, assigned, shifted, direction, verification, available, finished,
+   zeroBrackets, tag = Unique["nullPairCatalog"], exceeded = False},
+  external = Sort[Cases[massRules, HoldPattern[Mass[i_Integer] -> _] :> i]];
+  targets = completionTargets[normalized["Targets"]];
+  If[!DuplicateFreeQ[pair] || !SubsetQ[external, pair] ||
+      !AllTrue[pair, TrueQ[(Mass[#] /. massRules) === 0] &],
+    Return[<|"Status" -> "UNAVAILABLE", "Basis" -> {}, "Pair" -> pair,
+      "Diagnostics" -> {"A null-pair continuation requires two distinct declared massless external legs."}|>]];
+  zeroBrackets[value_] := value /. HoldPattern[SpinorChain[
+    s : Spinor["Helicity", "Angle" | "Square", _Integer], same_]] /;
+      s === same :> 0;
+  finished = TimeConstrained[Catch[
+    Do[
+      If[!TrueQ[Lookup[channel, "Complete", False]], Continue[]];
+      cut = channel["Cut"];
+      eta = Count[cut, First[pair]] - Count[cut, Last[pair]];
+      If[eta === 0, Continue[]];
+      slope = eta Total[Function[leg, If[MemberQ[pair, leg], 0,
+        SpinorChain[Spinor["Helicity", "Angle", First[pair]], Mom[leg],
+          Spinor["Helicity", "Square", Last[pair]]]]] /@ cut];
+      If[slope === 0, Continue[]];
+      assigned = completionNullPairReferences[channel["StateSum"], pair, massRules];
+      If[FailureQ[assigned], AppendTo[diagnostics, assigned]; Continue[]];
+      If[!FreeQ[assigned["Expression"], _xFactor | _xTildeFactor |
+          Spinor[_, _, _Multiparticle, ___]],
+        AppendTo[diagnostics, <|"Cut" -> cut, "Reason" -> "UnsupportedCompositeSpinorOrXFactor"|>];
+        Continue[]];
+      shifted = zeroBrackets[completionNullPairShift[
+        zeroBrackets[assigned["Expression"]], variable, pair, external]];
+      If[FailureQ[shifted], AppendTo[diagnostics, <|"Cut" -> cut, "Failure" -> shifted|>]; Continue[]];
+      direction = zeroBrackets[(shifted /. variable -> (-channel["Propagator"]/slope))/
+        channel["Propagator"]];
+      If[!residueFiniteQ[direction] || !FreeQ[direction, variable],
+        AppendTo[diagnostics, <|"Cut" -> cut, "Reason" -> "NonfiniteShiftedContinuation"|>]; Continue[]];
+      available = Max[0.000001, seconds - (AbsoluteTime[] - started)];
+      verification = TimeConstrained[completionContinuationCheck[
+        channel["StateSum"]/channel["Propagator"], direction, channel, targets, rules, seed],
+        Min[4, available], <|"Status" -> "UNRESOLVED", "Diagnostics" -> {"Selected-cut verification timed out."}|>];
+      AppendTo[records, <|"Cut" -> cut, "Mass" -> channel["Mass"], "Pair" -> pair,
+        "OriginalChannel" -> channel["StateSum"]/channel["Propagator"],
+        "ReferenceAssignments" -> assigned["Assignments"], "VirtualitySlope" -> slope,
+        "ShiftRoot" -> -channel["Propagator"]/slope,
+        "Verification" -> verification|>];
+      If[verification["Status"] =!= "PASS", Continue[]];
+      AppendTo[sources, direction];
+      If[Length[sources] > limit, exceeded = True; Throw[False, tag]], {channel, targets}]; True,
+    tag], seconds, False];
+  If[exceeded, sources = {}; AppendTo[diagnostics,
+    "The shifted channel space exceeds its bounded intermediate source count."]];
+  <|"Status" -> Which[exceeded, "UNAVAILABLE", sources === {}, "UNAVAILABLE",
+      TrueQ[finished], "AVAILABLE", True, "PARTIAL"],
+    "Basis" -> sources, "Pair" -> pair, "SourceChecks" -> records,
+    "BoundaryAtInfinityAssumed" -> False, "OriginalTargetsRetained" -> True,
+    "ElapsedTime" -> AbsoluteTime[] - started, "Diagnostics" -> diagnostics|>
+];
+
+completionCompactExchangeProject[expression_, plan_Association] := Module[
+  {result = completionBoseProject[expression, plan], factors, sums, coefficient},
+  factors = If[Head[result] === Times, List @@ result, {result}];
+  sums = Select[factors, Head[#] === Plus &];
+  If[Length[sums] === 1,
+    coefficient = result/First[sums];
+    If[NumericQ[coefficient], Return[Total[coefficient (List @@ First[sums])]]]];
+  result
+];
+
+completionNullPairSupport[normalized_Association, model_List, requested_] := Module[
+  {external = normalized["ExternalMassRules"], labels, null, massive, targets, evidence,
+   weights, pairs, preferred, names, masslessRows, scalarLegs = {}, rows, position, reason},
+  labels = Sort[Cases[external, HoldPattern[Mass[i_Integer] -> _] :> i]];
+  null = Select[labels, TrueQ[(Mass[#] /. external) === 0] &];
+  massive = Complement[labels, null];
+  pairs = completionNullPairChoices[normalized];
+  If[requested === True, Return[<|"Status" -> If[pairs === {}, "UNAVAILABLE", "AVAILABLE"],
+    "Pairs" -> pairs, "Scope" -> "ExplicitGenericAttempt", "Diagnostics" -> {}|>]];
+  If[Length[null] < 3 || Length[massive] > 2,
+    Return[<|"Status" -> "UNAVAILABLE", "Pairs" -> {},
+      "Diagnostics" -> {"Automatic shifted continuations require at least three null and at most two massive external legs, matching the current compound-pole checker support."}|>]];
+  targets = completionTargets[normalized["Targets"]];
+  evidence = SelectFirst[Lookup[targets, "StateSum", {}], # =!= 0 && !MissingQ[#] &, 0];
+  weights = completionExternalSpinWeights[evidence, external];
+  If[!ListQ[weights], Return[<|"Status" -> "UNAVAILABLE", "Pairs" -> {},
+    "Diagnostics" -> {"Automatic shifted continuations require homogeneous external spin weights."}|>]];
+  preferred = Select[pairs, weights[[First[FirstPosition[labels, First[#]]]]] > 0 &&
+    weights[[First[FirstPosition[labels, Last[#]]]]] < 0 &];
+  If[preferred =!= {}, Return[<|"Status" -> "AVAILABLE", "Pairs" -> preferred,
+    "Scope" -> "OppositeNullSpinWeightsWithinDiagnosticSupport", "Diagnostics" -> {}|>]];
+  names = Lookup[normalized, "ExternalParticles", Automatic];
+  Do[
+    position = First[FirstPosition[labels, leg]];
+    rows = If[ListQ[names] && Length[names] === Length[labels],
+      Select[model[[1]], MemberQ[#[[{2, 3}]], names[[position]]] &],
+      Select[model[[1]], TrueQ[#[[6]] === 0] &]];
+    If[rows =!= {} && AllTrue[rows, TrueQ[#[[5]] === 0] &] && weights[[position]] === 0,
+      AppendTo[scalarLegs, leg]], {leg, null}];
+  preferred = Select[pairs, SubsetQ[scalarLegs, #] &];
+  <|"Status" -> If[preferred === {}, "UNAVAILABLE", "AVAILABLE"], "Pairs" -> preferred,
+    "Scope" -> "NullScalarsWithinDiagnosticSupport", "Diagnostics" -> If[preferred === {}, {
+      "Automatic shifted continuations leave same-sign or unidentified null spin states to the established completion routes."}, {}]|>
+];
+
+completionFitShiftedChannels[regular_, basis_List, normalized_Association,
+    samples_Integer, validationSamples_Integer, seed_Integer, rules_List,
+    validationSets_List, refinements_Integer, seconds_, callback_, enabled_] := Module[
+  {started = AbsoluteTime[], unknowns = Table[Unique["shiftedChannelCoefficient"], {Length[basis]}],
+   trial, constraints = <||>, solution = <||>, feedback = <||>, validation = Missing["NotChecked"],
+   validations = {}, history = {}, allEquations = {}, allSamples = {}, free = {}, weights,
+   candidate = regular, family = regular, remaining = {}, status = "UNRESOLVED", diagnostics = {},
+   completed, validationSeed, validationCount, roundReports, familyPass, checked, zeroFree},
+  If[basis === {} || validationSets === {} || normalized["Targets"] === {} ||
+      !AllTrue[completionTargets[normalized["Targets"]],
+        TrueQ[Lookup[#, "Complete", False]] && !MissingQ[Lookup[#, "StateSum", Missing[]]] &],
+    Return[<|"Status" -> "UNRESOLVED", "Diagnostics" -> {
+      "Shifted-channel fitting requires nonempty complete original targets, correction directions and validation parameter sets."}|>]];
+  trial = regular + unknowns.basis;
+  completed = TimeConstrained[
+    constraints = completionResidueConstraints[trial, unknowns, normalized, samples, seed,
+      rules, seconds, callback, enabled];
+    If[constraints["Status"] === "COMPLETE",
+      allEquations = constraints["Equations"]; allSamples = constraints["Samples"];
+      Do[
+        completionProgress[callback, enabled, <|"Stage" -> "Solving shifted channel continuations",
+          "Round" -> round, "Unknowns" -> Length[unknowns], "EquationCount" -> Length[allEquations]|>];
+        solution = completionSolveLinear[allEquations, unknowns,
+          Max[0.000001, seconds - (AbsoluteTime[] - started)]];
+        If[!MemberQ[{"COMPLETE", "UNDERDETERMINED"}, solution["Status"]],
+          diagnostics = Join[diagnostics, solution["Diagnostics"]]; Break[]];
+        free = solution["FreeParameters"]; validationSeed = seed + 1000003 + 10000019 round;
+        validationCount = validationSamples (round + 1); roundReports = {}; familyPass = True;
+        feedback = <|"Status" -> "COMPLETE", "Equations" -> {}, "Samples" -> {}, "Diagnostics" -> {}|>;
+        Do[
+          checked = completionSparseValidation[trial, unknowns, solution, free, {}, normalized,
+            validationCount, validationSeed, assignment,
+            Max[0.000001, seconds - (AbsoluteTime[] - started)], callback, enabled];
+          validation = checked["Report"]; familyPass = familyPass && TrueQ[checked["FamilyPass"]];
+          feedback = <|"Status" -> If[feedback["Status"] === "COMPLETE" &&
+              checked["Feedback"]["Status"] === "COMPLETE", "COMPLETE", "UNRESOLVED"],
+            "Equations" -> Join[feedback["Equations"], checked["Feedback"]["Equations"]],
+            "Samples" -> Join[feedback["Samples"], checked["Feedback"]["Samples"]],
+            "Diagnostics" -> Join[feedback["Diagnostics"], checked["Feedback"]["Diagnostics"]]|>;
+          AppendTo[roundReports, <|"ParameterRules" -> assignment, "RandomSeed" -> validationSeed,
+            "Round" -> round, "Report" -> validation|>], {assignment, validationSets}];
+        validations = Join[validations, roundReports];
+        AppendTo[history, <|"Round" -> round, "FitSeed" -> seed,
+          "ValidationSeed" -> validationSeed, "ValidationSamples" -> validationCount,
+          "EquationCount" -> Length[allEquations], "Rank" -> solution["Rank"],
+          "FreeParameters" -> free, "RemovedZeroDirections" -> 0,
+          "Status" -> If[familyPass && AllTrue[roundReports,
+            completionPhysicalPassQ[#["Report"], normalized["Targets"]] &], "COMPLETE", "NeedsRefinement"]|>];
+        If[history[[-1]]["Status"] === "COMPLETE",
+          weights = unknowns /. solution["SolutionRules"];
+          candidate = regular + (weights /. Thread[free -> 0]).basis;
+          remaining = Function[parameter, (Coefficient[#, parameter] & /@ weights).basis] /@ free;
+          zeroFree = Pick[free, (# === 0 &) /@ remaining];
+          free = Pick[free, (# =!= 0 &) /@ remaining]; remaining = DeleteCases[remaining, 0];
+          family = candidate + If[free === {}, 0, free.remaining]; status = "COMPLETE";
+          history[[-1]] = Join[Last[history], <|"FreeParameters" -> free,
+            "RemovedZeroDirections" -> Length[zeroFree]|>]; Break[]];
+        If[feedback["Status"] =!= "COMPLETE" || round === refinements, Break[]];
+        allEquations = Join[allEquations, feedback["Equations"]];
+        allSamples = Join[allSamples, feedback["Samples"]], {round, 0, refinements}];
+      constraints = Join[constraints, <|"Equations" -> allEquations, "Samples" -> allSamples|>],
+      diagnostics = Join[diagnostics, constraints["Diagnostics"]]]; True,
+    seconds, False];
+  If[!TrueQ[completed], status = "UNRESOLVED";
+    AppendTo[diagnostics, "The bounded shifted-channel proposal fit exceeded its time budget."]];
+  <|"Status" -> status, "Amplitude" -> candidate, "FamilyAmplitude" -> family,
+    "RemainingBasis" -> remaining, "FreeParameters" -> free, "CorrectionBasis" -> basis,
+    "ConstraintData" -> <|"FitSeed" -> regular, "FitVariables" -> unknowns,
+      "Fit" -> constraints, "LinearSolution" -> solution, "Validation" -> feedback|>,
+    "ValidationReport" -> validation, "ValidationReports" -> validations,
+    "RefinementHistory" -> history, "ElapsedTime" -> AbsoluteTime[] - started,
+    "Diagnostics" -> diagnostics|>
+];
+
+CompleteFactorization::usage = CompleteFactorization::usage <>
+  " ShiftedChannelContinuations -> Automatic also tries up to four source-derived two-null-leg continuation proposals after cheap input/remainder routes, before wide correction spaces. Automatic requires at least three null and at most two massive external legs, matching the current compound-pole checker, and prefers opposite nonzero spin weights or identified null scalars. False or None disables this route; True permits a generic attempt beyond Automatic's support preference, with all original and final checks still required. Each direction is verified on its own original cut, then exact compact signed exchange averages are fitted against every original residue simultaneously. No shifted-sum formula or vanishing large-parameter boundary is assumed. Existing regular input pieces stay fixed; InputReweighting -> Automatic may fit the pole-bearing input core alongside the channel directions. Details retain ShiftedChannelContinuations, source checks, eligibility reasons, ShiftedChannelAttempts and ShiftedChannelFit. Unsupported, over-budget or nonclosing proposals fall back to the established routes.";
+
 Options[CompleteFactorization] = {"CorrectionBasis" -> Automatic,
   "ParameterRules" -> Automatic, "Samples" -> 4, "ValidationSamples" -> 4,
   "ValidationParameterRules" -> Automatic, "ChannelReferences" -> Automatic,
   "AlternativeChannels" -> {}, "BoseSymmetryGroups" -> Automatic, "FermionSymmetryGroups" -> Automatic,
   "ExternalParticles" -> Automatic, "InputReweighting" -> Automatic,
   "RepresentativeSelection" -> Automatic, "ChannelCompanions" -> Automatic,
-  "PreparationRemainders" -> Automatic,
+  "PreparationRemainders" -> Automatic, "ShiftedChannelContinuations" -> Automatic,
   "MaxRefinements" -> 3,
   "RandomSeed" -> 1729, "TimeConstraint" -> 60, "MaxCorrectionTerms" -> 64,
   "Parallelization" -> Automatic, "MaxKernels" -> Automatic,
@@ -7806,6 +8139,7 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
    representativeOption = OptionValue["RepresentativeSelection"],
    companionOption = OptionValue["ChannelCompanions"],
    remainderOption = OptionValue["PreparationRemainders"],
+   shiftedOption = OptionValue["ShiftedChannelContinuations"],
    channelRows, channelPreparation = <||>,
    boseGroups = OptionValue["BoseSymmetryGroups"], fermionGroups = OptionValue["FermionSymmetryGroups"],
    exchangePlan, processNames, processSources,
@@ -7831,6 +8165,10 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
    companionStarted, companionBudget, companionFitSeed,
    remainderSpace = Missing["NotRequested"], remainderFit = Missing["NotRequested"],
    remainderStarted, remainderBudget, remainderFitSeed, remainderProbe = Missing["NotRequested"],
+   shiftedSpace = Missing["NotRequested"], shiftedFit = Missing["NotRequested"],
+   shiftedAttempts = {}, shiftedPairs, shiftedStarted, shiftedBudget, shiftedInput,
+   shiftedCatalog, shiftedBasis, shiftedCore, shiftedSeed, shiftedFitSeed,
+   shiftedSupport, shiftedProjected, shiftedVariants, shiftedMode,
    referenceAttempts = {}, retainedReference, retainedReferenceBasis,
    fallbackReport, fallbackOptions, remainingSeconds, attemptSummary, alternativeSpace},
   If[!MemberQ[{"Amplitude", "Expression", "Details"}, output] || !MemberQ[{True, False}, details] ||
@@ -7843,6 +8181,7 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
       !MemberQ[{Automatic, None}, references] || !MemberQ[{Automatic, None}, inputReweighting] ||
       !MemberQ[{Automatic, None}, representativeOption] || !MemberQ[{Automatic, None}, companionOption] ||
       !MemberQ[{Automatic, None}, remainderOption] ||
+      !MemberQ[{Automatic, True, False, None}, shiftedOption] ||
       !IntegerQ[refinements] || refinements < 0 ||
       !ListQ[alternatives] || !AllTrue[alternatives, preparationChannelQ] ||
       !(validationRules === Automatic || (ListQ[validationRules] &&
@@ -8024,6 +8363,68 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
           validationReports = Join[validationReports, remainderFit["ValidationReports"]];
           history = remainderFit["RefinementHistory"];
           space = "PreparationRemainders"; status = "COMPLETE"; familyMaterialized = True]]];
+    If[status =!= "COMPLETE" && basisOption === Automatic && references === Automatic &&
+        MemberQ[{Automatic, True}, shiftedOption],
+      shiftedStarted = AbsoluteTime[];
+      shiftedBudget = If[seconds === Infinity, 90,
+        Min[90, 3 Max[0, seconds - (shiftedStarted - start)]/4]];
+      shiftedSupport = TimeConstrained[completionNullPairSupport[normalized, model, shiftedOption],
+        Max[0.000001, Min[2, shiftedBudget/10]], <|"Status" -> "UNAVAILABLE", "Pairs" -> {},
+          "Diagnostics" -> {"Shifted-channel eligibility exceeded its reserved time budget."}|>];
+      shiftedPairs = shiftedSupport["Pairs"];
+      shiftedSpace = <|"Status" -> "UNAVAILABLE", "Support" -> shiftedSupport, "Basis" -> {}|>;
+      If[shiftedPairs =!= {},
+      shiftedInput = If[AssociationQ[inputProposals], inputProposals,
+        TimeConstrained[completionInputProposals[normalized], Min[2, shiftedBudget/8],
+          <|"Status" -> "UNRESOLVED"|>]];
+      shiftedCore = 0; shiftedSeed = projectedSeed;
+      If[inputReweighting === Automatic && Lookup[shiftedInput, "Status", None] === "AVAILABLE",
+        shiftedSeed = project[shiftedInput["RegularExpression"]];
+        shiftedCore = projectedSeed - shiftedSeed];
+      Do[
+        remainingSeconds = shiftedBudget - (AbsoluteTime[] - shiftedStarted);
+        If[remainingSeconds <= 0.01, Break[]];
+        completionProgress[callback, enabled, <|"Stage" -> "Preparing shifted channel continuations",
+          "ShiftedLegs" -> pair|>];
+        shiftedCatalog = completionNullPairChannels[normalized, pair, rules,
+          seed + 661987, constructionLimit, Min[8, remainingSeconds/3]];
+        remainingSeconds = shiftedBudget - (AbsoluteTime[] - shiftedStarted);
+        shiftedProjected = If[shiftedCatalog["Basis"] === {}, {}, TimeConstrained[
+          DeleteDuplicates[DeleteCases[Join[If[shiftedCore === 0, {}, {shiftedCore}],
+            completionCompactExchangeProject[#, exchangePlan] & /@ shiftedCatalog["Basis"]], 0]],
+          Max[0.000001, Min[5, remainingSeconds/4]], Missing["ShiftedProjectionTimeout"]]];
+        shiftedBasis = If[ListQ[shiftedProjected], shiftedProjected, {}];
+        shiftedSpace = Join[shiftedCatalog, <|"Basis" -> shiftedBasis,
+          "Support" -> shiftedSupport, "RegularExpression" -> shiftedSeed,
+          "InputPoleCore" -> shiftedCore, "InputPoleCoreReweighted" -> (shiftedCore =!= 0),
+          "ExchangeProjection" -> "ExactCompactSignedGroupAverageBeforeFit",
+          "WithinLimit" -> (Length[shiftedBasis] <= limit)|>];
+        remainingSeconds = shiftedBudget - (AbsoluteTime[] - shiftedStarted);
+        If[shiftedBasis === {} || Length[shiftedBasis] > limit || remainingSeconds <= 0.01,
+          AppendTo[shiftedAttempts, <|"Pair" -> pair, "Status" -> "UNAVAILABLE",
+            "Terms" -> Length[shiftedBasis], "WithinLimit" -> (Length[shiftedBasis] <= limit),
+            "Diagnostics" -> Join[shiftedCatalog["Diagnostics"],
+              If[MissingQ[shiftedProjected], {"Exact exchange projection exceeded its reserved budget."}, {}]]|>]; Continue[]];
+        completionProgress[callback, enabled, <|"Stage" -> "Fitting shifted channel continuations",
+          "ShiftedLegs" -> pair, "Unknowns" -> Length[shiftedBasis]|>];
+        shiftedFit = completionFitShiftedChannels[shiftedSeed, shiftedBasis, normalized,
+          samples, validationSamples, seed, rules, validationSets, refinements,
+          remainingSeconds, callback, enabled];
+        AppendTo[shiftedAttempts, <|"Pair" -> pair,
+          "Status" -> shiftedFit["Status"], "Terms" -> Length[shiftedBasis], "WithinLimit" -> True|>];
+        If[shiftedFit["Status"] === "COMPLETE",
+          candidate = shiftedFit["Amplitude"]; family = shiftedFit["FamilyAmplitude"];
+          remaining = shiftedFit["RemainingBasis"]; free = shiftedFit["FreeParameters"];
+          basis = shiftedFit["CorrectionBasis"]; constraints = shiftedFit["ConstraintData"]["Fit"];
+          solution = shiftedFit["ConstraintData"]["LinearSolution"];
+          unknowns = shiftedFit["ConstraintData"]["FitVariables"];
+          shiftedFitSeed = shiftedFit["ConstraintData"]["FitSeed"];
+          feedback = shiftedFit["ConstraintData"]["Validation"];
+          validation = shiftedFit["ValidationReport"];
+          validationReports = Join[validationReports, shiftedFit["ValidationReports"]];
+          history = shiftedFit["RefinementHistory"];
+          space = "ShiftedChannels"; status = "COMPLETE"; familyMaterialized = True; Break[]],
+        {pair, shiftedPairs}]]];
     If[status =!= "COMPLETE" && basisOption === Automatic && references === Automatic,
         completionProgress[callback, enabled, <|"Stage" -> "Constructing channel continuations"|>];
         continuations = completionChannelContinuations[normalized, model, rules, seed];
@@ -8258,6 +8659,7 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
     "ParameterRules" -> rules,
     "ValidationReports" -> validationReports, "ValidationParameterRules" -> validationSets,
     "ConstraintData" -> <|"FitSeed" -> Which[space === "PreparationRemainders", remainderFitSeed,
+        space === "ShiftedChannels", shiftedFitSeed,
         space === "PeeledChannels", companionFitSeed,
         MemberQ[{"InputRescaling", "InputOverlap"}, space], inputAttempt["RegularExpression"],
         True, projectedSeed], "FitVariables" -> unknowns,
@@ -8271,6 +8673,10 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
     "SelectedChannelSpace" -> selectedChannels,
     "CorrectionSpaceCandidates" -> budgetSpaces,
     "InputFitAttempts" -> inputAttempts,
+    "ShiftedChannelContinuations" -> shiftedSpace,
+    "ShiftedChannelAttempts" -> shiftedAttempts,
+    "ShiftedChannelFit" -> If[AssociationQ[shiftedFit], KeyTake[shiftedFit,
+      {"Status", "ElapsedTime", "RefinementHistory", "ValidationReports"}], shiftedFit],
     "RepresentativeSelection" -> representative,
     "ChannelCompanions" -> companionSpace,
     "ChannelCompanionFit" -> If[AssociationQ[companionFit],
@@ -8382,7 +8788,12 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
       KeyExistsQ[entry, "CorrectionSpace"], Join[entry, <|"CorrectionSpace" ->
         completionExchangeSpaceName[entry["CorrectionSpace"], exchangePlan]|>], entry]],
       Lookup[report, "CorrectionSpaceCandidates", {}]],
-    "InputFitAttempts" -> inputAttempts, "ChannelCompanions" -> companionSpace,
+    "InputFitAttempts" -> inputAttempts,
+    "ShiftedChannelContinuations" -> shiftedSpace,
+    "ShiftedChannelAttempts" -> shiftedAttempts,
+    "ShiftedChannelFit" -> If[AssociationQ[shiftedFit], KeyTake[shiftedFit,
+      {"Status", "ElapsedTime", "RefinementHistory", "ValidationReports"}], shiftedFit],
+    "ChannelCompanions" -> companionSpace,
     "ChannelCompanionFit" -> If[AssociationQ[companionFit],
       KeyTake[companionFit, {"Status", "ElapsedTime", "RefinementHistory", "ValidationReports"}], companionFit],
     "PreparationRemainders" -> remainderSpace,
@@ -8592,6 +9003,7 @@ preparationSpinorProducts[expr_, rules_List] := Module[
      normalization. Compare complete expressions with every inverse held opaque. *)
   candidate = preparationProtectedDenominators[ordinary,
     Function[rspMassiveSchoutenSums[#, external]]];
+  If[candidate === ordinary, Return[ordinary]];
   If[candidate =!= ordinary && residueFiniteQ[candidate],
     candidate = preparationProtectedDenominators[candidate, rspCommonScalarContent]];
   If[residueFiniteQ[candidate] &&
@@ -8765,7 +9177,11 @@ preparationCancelReferencePoles[expr_, rules_List, auxiliary_List] := Module[
   result /. Thread[tokens -> props]
 ];
 
-preparationRank[expr_] := {SpinorExpressionComplexity[expr],
+(* Ranking must not expand the very rational expression it is trying to keep
+   compact. Match the reducer's distribution budget and use representation
+   size for its large factored competitors. *)
+preparationRank[expr_] := {If[rspExpansionBudgetQ[expr],
+    SpinorExpressionComplexity[expr], LeafCount[expr]],
   If[Head[expr] === Plus, Length[expr], If[expr === 0, 0, 1]], LeafCount[expr]};
 
 preparationBetterQ[left_List, right_List] := left =!= right && OrderedQ[{left, right}];
@@ -9498,6 +9914,7 @@ preparationReferenceSearch[expr_, rules_List, model_List, pairs_List, requested_
 preparationCompleteExternalInputQ[expr_, rules_List] := Module[
   {external = externalIndices[rules], spinors = Cases[{expr}, _Spinor, Infinity]},
   !TrueQ[feynmanRawExpressionQ[expr]] &&
+    !spinContractionsPossibleQ[expr, False] &&
     FreeQ[expr, _SpinorHat | _MomHat | _MomProdHat1 | _MomProdHat2 | _MomProdHat12 |
       _SpinorEps | _SpinorZ | _MomQ | _sigma | _xFactor | _xTildeFactor |
       _SpinorChainReduced | _SpinorTraceReduced | _Mass] &&
@@ -9618,6 +10035,7 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
    referenceSeconds, referenceFallback = None, referenceInput,
    failureTag = Unique["preparationFailure"], progressMetadata,
    eligibleOriginal, admittedOriginal = False, initialCandidate,
+   contractionTimedOut = False,
    completedBest = None, completedBestRank, completedBestSource, rememberCompleted, snapshotRank,
    rankSnapshots = 0},
   progressMetadata = Join[<|"Item" -> index, "Items" -> count, "InputType" -> kind|>,
@@ -9630,7 +10048,9 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
     "MomentumConservation" -> options["MomentumConservation"]};
   (* Ranking is pure but can expand a large completed expression. Reuse each
      snapshot's rank within this element; no cache survives the call. *)
-  snapshotRank[value_] := Module[{result = preparationRank[value]},
+  snapshotRank[value_] := Module[{result = If[rspExpansionBudgetQ[value], preparationRank[value],
+      {LeafCount[value], If[Head[value] === Plus, Length[value], If[value === 0, 0, 1]],
+        LeafCount[value]}]},
     If[rankSnapshots < 16 && LeafCount[value] <= 200000,
       rankSnapshots++; snapshotRank[value] = result];
     result];
@@ -9638,11 +10058,18 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
   rememberCompleted[value_, label_] := Module[{valueRank = snapshotRank[value]},
     If[completedBest === None || preparationBetterQ[valueRank, completedBestRank],
       completedBest = value; completedBestRank = valueRank; completedBestSource = label]];
-  event[label_] := completionProgress[options["ProgressFunction"], options["ProgressReporting"],
+  If[TrueQ[eligibleOriginal] && !TrueQ[options["InternalOnShell"]] &&
+      options["ReferenceSpinors"] === None,
+    initialCandidate = preparationNumerators[original,
+      Function[num, preparationReplaceMasses[num, preparationExternalRules[rules]]]];
+    rememberCompleted[initialCandidate, "AlreadyContractedInput"];
+    admittedOriginal = True];
+  event[label_] := If[TrueQ[options["ProgressReporting"]],
+    completionProgress[options["ProgressFunction"], options["ProgressReporting"],
     Join[progressMetadata, <|"Stage" -> "Preparation", "Operation" -> label,
     "Elapsed" -> AbsoluteTime[] - started,
     "Complexity" -> First[snapshotRank[expression]],
-    "Terms" -> snapshotRank[expression][[2]], "IdentitySteps" -> Length[history]|>]];
+    "Terms" -> snapshotRank[expression][[2]], "IdentitySteps" -> Length[history]|>]], Null];
   reduceInvariants[phase_] := If[TrueQ[options["InternalOnShell"]],
     stage = "InternalInvariantReduction";
     before = expression;
@@ -9680,12 +10107,23 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
       event[stage]];
     stage = "ReduceSpinContractions";
     before = expression;
-    after = preparationNumerators[expression,
-      Function[num, preparationReplaceMasses[ReduceSpinContractions[num], rules]]];
+    after = If[TrueQ[admittedOriginal], TimeConstrained[
+      preparationNumerators[expression,
+        Function[num, preparationReplaceMasses[spinContractionReduce[num, False], rules]]],
+      If[options["TimeConstraint"] === Infinity, 3,
+        Max[0.000001, Min[3, (options["TimeConstraint"] - (AbsoluteTime[] - started))/6]]],
+      $TimedOut],
+      preparationNumerators[expression,
+        Function[num, preparationReplaceMasses[ReduceSpinContractions[num], rules]]]];
+    If[after === $TimedOut,
+      contractionTimedOut = True; after = initialCandidate;
+      AppendTo[diagnostics,
+        "Optional contraction expansion exceeded its bounded budget; the already-complete external input is retained."]];
     If[!residueFiniteQ[after], invalid = True; Throw[False, failureTag]];
     expression = after;
     AppendTo[reductions, <|"Operation" -> stage, "Before" -> before,
-      "After" -> expression, "InternalOnShellIdentity" -> False|>];
+      "After" -> expression, "InternalOnShellIdentity" -> False,
+      "OptionalExpansionTimedOut" -> contractionTimedOut|>];
     event[stage];
     stage = "ReferenceSpinors";
     before = expression;
@@ -9718,7 +10156,7 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
     AppendTo[reductions, <|"Operation" -> stage, "Before" -> before,
       "After" -> expression, "InternalOnShellIdentity" -> False,
       "ReferenceChoice" -> options["ReferenceSpinors"]|>];
-    If[TrueQ[eligibleOriginal],
+    If[TrueQ[eligibleOriginal] && !TrueQ[admittedOriginal],
       initialCandidate = preparationNumerators[original,
         Function[num, preparationReplaceMasses[num, preparationExternalRules[rules]]]];
       rememberCompleted[initialCandidate, "AlreadyContractedInput"];
@@ -9748,13 +10186,25 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
       before = expression;
       after = If[KeyExistsQ[referenceReport, "ReducedExpression"],
         referenceReport["ReducedExpression"],
+        If[TrueQ[admittedOriginal], TimeConstrained[
+          preparationReferenceTrial[expression, rules, dotRules,
+            Lookup[referenceReport, "AuxiliaryPhysicalPropagators", {}],
+            options["MomentumConservation"], jointRules,
+            Function[rememberCompleted[#, "CompletedExternalMomentumCandidate"]]],
+          If[options["TimeConstraint"] === Infinity, 5,
+            Max[0.000001, Min[5, (options["TimeConstraint"] - (AbsoluteTime[] - started))/3]]],
+          Missing["OptionalExternalTrialTimeout"]],
         preparationReferenceTrial[expression, rules, dotRules,
           Lookup[referenceReport, "AuxiliaryPhysicalPropagators", {}],
           options["MomentumConservation"], jointRules,
           Function[
             referenceFallback = Join[referenceReport, <|"ReducedExpression" -> #,
               "ReducedRank" -> snapshotRank[#]|>];
-            rememberCompleted[#, "CompletedReferenceCandidate"]]]];
+            rememberCompleted[#, "CompletedReferenceCandidate"]]]]];
+      If[MissingQ[after] && TrueQ[admittedOriginal],
+        after = before;
+        AppendTo[diagnostics,
+          "Optional conserved-momentum exploration exceeded its bounded budget; the completed external input remains available."]];
       If[!residueFiniteQ[after], invalid = True; Throw[False, failureTag]];
       expression = after;
       AppendTo[reductions, <|"Operation" -> stage, "Before" -> before,

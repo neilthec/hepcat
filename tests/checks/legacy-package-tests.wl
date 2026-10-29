@@ -32,6 +32,16 @@ legacyCheck["public context is on the search path", MemberQ[$ContextPath, "Const
 legacyCheck["package loading restores the caller's context", $Context === "Global`"];
 legacyCheck["private context does not leak onto the search path",
   !MemberQ[$ContextPath, "ConstructiveDiagrams`Private`"]];
+legacyCheck["contraction helper definitions remain private",
+  Names["ConstructiveDiagrams`spinContractionsPossibleQ"] === {} &&
+    Names["ConstructiveDiagrams`spinContractionReduce"] === {} &&
+    DownValues[ConstructiveDiagrams`Private`spinContractionsPossibleQ] =!= {} &&
+    DownValues[ConstructiveDiagrams`Private`spinContractionReduce] =!= {}];
+legacyCheck["contraction helper locals do not become public symbols",
+  Names["ConstructiveDiagrams`rsc*"] === {} &&
+    Names["ConstructiveDiagrams`signatures"] === {} &&
+    Names["ConstructiveDiagrams`polarizations"] === {} &&
+    Names["ConstructiveDiagrams`includeBareHelicity"] === {}];
 
 (* These are interface-presence checks. The other legacy suites test their behavior. *)
 legacyPublicFunctions = {
@@ -92,6 +102,11 @@ legacyCheck["reloading preserves the legacy public definitions",
   AllTrue[legacyPublicFunctions, legacyDefinitionQ]];
 legacyCheck["reloading preserves public protections",
   AllTrue[legacyProtectedFunctions, legacyProtectedQ]];
+legacyCheck["reloading keeps contraction locals in the private context",
+  Names["ConstructiveDiagrams`rsc*"] === {} &&
+    Names["ConstructiveDiagrams`Private`rscSignatures"] =!= {} &&
+    Names["ConstructiveDiagrams`Private`rscPolarizations"] =!= {} &&
+    Names["ConstructiveDiagrams`Private`rscReplacementRules"] =!= {}];
 
 (* A bad path must not clear the working package before either source opens. *)
 legacyBeforeBadReload = DownValues[ReduceSpinorProducts];
@@ -152,8 +167,8 @@ legacyCheck["shifted residues cancel singular factors before evaluating a sum of
     Cancel[SumResiduesAlt[{{legacyMass, legacyMass, legacyMass, legacyMass, pole, legacyMass,
       legacyA/(z - zPlus[pole]) + legacyB/(z - zMinus[pole])}}] + legacyA + legacyB] === 0]];
 
-If[legacyChecks =!= 137, AppendTo[legacyFailures,
-  {"suite did not reach every check", "Expected" -> 137, "Actual" -> legacyChecks}]];
+If[legacyChecks =!= 140, AppendTo[legacyFailures,
+  {"suite did not reach every check", "Expected" -> 140, "Actual" -> legacyChecks}]];
 Print["Legacy package checks: ", legacyChecks, "; failures: ", Length[legacyFailures]];
 If[legacyFailures =!= {}, Print[InputForm[legacyFailures]]];
 If[legacyFailures =!= {}, Quit[1]];

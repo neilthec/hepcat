@@ -81,6 +81,28 @@ The suite also verifies restored physical masses and spinor-basis determinants
 after choosing sampling units, coherent Dirac identities, exact primitive-cache
 equivalence, and one shared time budget even for a large compound-pole group.
 
+`null-pair-shift-tests.wl` checks the typed two-null-leg deformation against
+independently shifted two-component momentum matrices at five and eight legs.
+It verifies conservation, all external shells, both null Dirac equations,
+multimomentum chains of either chirality, indexed massive spinors, scalar
+invariants, propagator widths and rational powers. Unsupported shifted spinor
+forms, composite cut spinors and hatted structures must fail explicitly.
+These are algebraic deformation tests, not a boundary-at-infinity assumption
+or an assertion that a sum of channel continuations is the full amplitude.
+
+`null-channel-completion-tests.wl` exercises model-derived continuations in
+the simultaneous residue fitter: selected-cut preservation, all original
+channels, independent parameter assignments, complete affine families,
+support and budget guards, and preservation of an existing local term.
+The constructor receives no known final expression or Feynman input to fit.
+
+`spin-contraction-guard-tests.wl` verifies that `ReduceSpinContractions` retains
+the exact factored input when no supported contraction is possible. Generated
+fixtures exercise every massive, bare and indexed helicity, trace and epsilon
+replacement family, including hatted spinors, positive and negative powers,
+denominators and sums. The existing legacy algebra suite separately checks
+their exact signs and reduced expressions.
+
 ## Parallel Execution
 
 The four parallel suites require a licensed kernel that can launch and

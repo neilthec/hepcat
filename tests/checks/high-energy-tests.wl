@@ -325,8 +325,15 @@ check["preconditioning exactifies floating coefficients before polynomial factor
       Rationalize[heRegroupFloatingPolynomial, 0]]] === 0];
 heBalancedChannels = FactorizationAmplitudeChannels[
   {"e", "E", "A.+", "A.+", "A.-", "A.-"}, heBalancedModel];
-heBalancedInputs = ConstructiveDiagrams`Private`residueSimpleInputs[
+heBalancedCompactInputs = ConstructiveDiagrams`Private`residueSimpleInputs[
   heBalancedData["Amplitude"], heBalancedChannels, heBalancedModel];
+check["checking an already-contracted compact amplitude does not expand optional bare-helicity identities",
+  heBalancedCompactInputs["Expression"] === heBalancedData["Amplitude"]];
+(* Keep a deliberately expanded regression even though ordinary checker
+   normalization now preserves the compact representation. *)
+heBalancedExpandedInput = Expand[ReduceSpinContractions[heBalancedData["Amplitude"]]];
+heBalancedInputs = ConstructiveDiagrams`Private`residueSimpleInputs[
+  heBalancedExpandedInput, heBalancedChannels, heBalancedModel];
 heBalancedPublicMetadata = ConstructiveDiagrams`Private`poleDiscoveryMetadata[
   heBalancedInputs["Targets"], heBalancedInputs["Records"]];
 heBalancedNormalized = ConstructiveDiagrams`Private`highEnergyCheckReport[

@@ -616,6 +616,21 @@ The ordinary reducer has prospective distribution guards and a factored route
 for rational amplitudes. Preserve its established bare-contraction normal forms
 and explicit off-cut sandwich remainders. Do not replace resource guard failures
 with an expanded partial expression, a numerical fit, or an internal-shell rule.
+ReduceSpinContractions first checks whether any contraction can apply. Preserve
+the exact factored input when none can. This guard must cover bare and indexed
+helicity angle/square pairs, massive upper/lower pairs, same-chain traces,
+epsilon tensors and hats, including occurrences under powers and denominators.
+Absence of an explicit summed index alone is not sufficient to skip reduction.
+Admit an already complete external expression as a preparation incumbent before
+potential expansion, so a timed-out reduction cannot replace it by a worse
+intermediate expression.
+For an admitted complete external amplitude, preparation may apply the same
+contraction rules in factored form, with optional bare-helicity expansion
+bounded separately. Checker normalization need not rewrite these ordinary
+identities; it must still resolve real summed indices. Ranking respects the
+reducer's prospective 4096-term/24000-leaf distribution budget and uses
+factored representation size beyond it. The public complexity function keeps
+its existing definition.
 For a new simplification, prove its identity with independent spinors or exact
 external-only off-cut charts, then recheck physical/spurious/high-energy/reference
 conditions and an independent Feynman sum. Unresolved checker categories remain
@@ -634,6 +649,31 @@ passing seed is retained. `"InputReweighting" -> None`, explicit CorrectionBasis
 and ChannelReferences -> None skip the attempts. Both fits share at most one
 fifth of the remaining stage time, capped at 30 seconds; failures must leave
 the original seed and later solver intact. Details retain InputFitAttempts.
+
+`"ShiftedChannelContinuations" -> Automatic` adds another bounded proposal
+before expensive channel expansion. It selects declared null legs from the
+external mass rules and spin weights, never particle names or a known process.
+For each affected original channel, shift the two external spinors while
+preserving momentum and their mass shells, solve its shifted propagator for
+the shift parameter, and evaluate its complete lower-amplitude numerator
+there. Divide by the original unshifted propagator. Verify each admitted
+direction on its own original cut. No boundary at infinity is assumed zero.
+Fit these compact directions and, when allowed, the input's pole-bearing core
+against every original target. Keep explicit regular input fixed. Exact signed
+exchange averaging precedes fitting; distribute only its numeric averaging
+factor, without expanding nested rational denominators. Validate the entire
+affine family at independent cuts and every validation parameter set, feeding
+failed samples back into the simultaneous equations. Unsupported proposals,
+failed validation and timeouts fall through to the existing routes.
+Automatic currently requires opposite null spin weights, or identified null
+scalars, within the compound-checker domain of at least three null and at most
+two massive external legs. This is a diagnostic support restriction, not a
+multiplicity or model restriction on completion. `True` permits broader generic
+attempts; `False` or `None` disables this proposal. Original and final checks
+remain mandatory. At most four ordered pairs share half the remaining stage
+time, capped at 90 seconds, and the existing correction-count bound. Details
+record ShiftedChannelContinuations and ShiftedChannelAttempts. Never replace
+this model-derived construction by a process-specific answer or recursion.
 
 Before the larger channel spaces, `"ChannelCompanions" -> Automatic` tries
 a small space derived from accepted closed physical-reference channel sources.
@@ -822,7 +862,7 @@ without changing the user's channels, model or vertex content.
 The optional details expose
 `"RefinementHistory"` and `"ChannelContinuations"`, including their verification
 scope. `"CorrectionSpace"` is `"ReducedChannels"`, `"LiteralTerms"`,
-`"InputRescaling"`, `"InputOverlap"`, `"PeeledChannels"`,
+`"InputRescaling"`, `"InputOverlap"`, `"PeeledChannels"`, `"ShiftedChannels"`,
 `"PreparationRemainders"`, `"RetainedReferences"`,
 `"BoseChannelUnion"`, `"BoseSelectedChannelUnion"`, `"BoseGroupedInputChannelUnion"`, `"SuppliedTerms"` or
 `"NotRequired"` when the input already passes.

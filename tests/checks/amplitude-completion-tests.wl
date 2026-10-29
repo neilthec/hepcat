@@ -1891,9 +1891,10 @@ check["the cyclic mixed-helicity scalar-square fixture retains exact off-cut equ
 acMixedHelicitySaved = acMixedHelicityPrepared;
 acMixedHelicityCompleted = acFactor[acMixedHelicityPrepared, acMixedHelicityChannels,
   prFixtureModel, "Samples" -> 1, "ValidationSamples" -> 1,
+  "ShiftedChannelContinuations" -> False,
   "MaxCorrectionTerms" -> 128, "TimeConstraint" -> 180,
   "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}];
-check["mixed helicities complete automatically with old cyclic choices and scalar momentum squares",
+check["the established compact route still handles cyclic choices and scalar momentum squares when shifted proposals are disabled",
   acMixedHelicityCompleted["Status"] === "COMPLETE" &&
     MemberQ[{"ReducedChannels", "PeeledChannels"}, acMixedHelicityCompleted["CorrectionSpace"]] &&
     Length[acMixedHelicityCompleted["CorrectionBasis"]] <= 128 &&
