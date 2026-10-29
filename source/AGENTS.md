@@ -173,8 +173,20 @@ manual calculations remain in collapsed groups.
 items; small checker jobs stay serial, and short completion sample stages use
 parallelism after the package worker pool is warm. `"Parallelization" -> True`
 requests workers explicitly, `False` keeps the whole operation serial, and
-`"MaxKernels" -> 2` limits worker count. One worker means serial execution.
-The effective limit also respects available memory, processors and licensing.
+a positive `"MaxKernels"` reduces worker count. One worker means serial
+execution. The default uses Mathematica's `$ProcessorCount`, the number of
+jobs and available license slots, accounting for unrelated user kernels.
+There is no fixed two-worker limit or expression-size memory estimate that
+silently reduces that count.
+
+Independent jobs use a dynamic queue: a worker receives its next item as soon
+as it finishes, before the main kernel invokes its progress callback. A slow
+item must not hold up other workers behind a wave barrier. Returned results
+retain input order; callbacks arrive in completion order with their original
+item indices and monotonically increasing completed counts. Transfer immutable
+closures once per worker and only the next job payload thereafter. Retry
+unfinished jobs on the main kernel after the parallel queue drains; do not
+stall healthy workers behind a serial retry.
 
 Workers load the saved local package sources and receive explicit, call-local
 model data. They do not inherit arbitrary definitions from `Global``. Custom
@@ -195,7 +207,8 @@ this preserves sample seeds, all physical obligations, and the shared deadline.
 
 Ordinary amplitude and table outputs stay unchanged. Request preparation
 `"ReturnDetails" -> True` or checker `"Output" -> "Details"` to inspect the
-`"Execution"` entry. Completion details retain execution data in the sample
+`"Execution"` entry, including `"Scheduler" -> "DynamicQueue"` for parallel
+work. Completion details retain execution data in the sample
 constraint and validation reports. Cold worker startup adds several seconds;
 benchmark both cold and warm calls before claiming a speedup. Wall-clock-limited
 heuristic searches can stop at different valid intermediate forms under

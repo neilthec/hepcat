@@ -71,7 +71,11 @@ python3 tests/checks/run-wolfram-tests.py --timeout 600 \
 ```
 
 They verify actual worker IDs rather than merely the presence of parallel
-options. Coverage includes ordered results, worker caps, nested serial fallback,
+options. Scheduler tests deliberately put a slow job first and verify that
+later jobs and progress callbacks finish before it, without changing returned
+input order. They also cover more than two real workers when available,
+processor/job/license limits, worker loss and exact-once serial retry.
+Coverage includes ordered results, worker caps, nested serial fallback,
 retry after worker failure, caller random-state preservation, disjoint temporary
 coordinates, explicit model closures without user-global distribution, and
 preservation of an unrelated existing worker. Preparation compares real raw

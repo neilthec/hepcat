@@ -1018,8 +1018,7 @@ An independent Feynman comparison is optional because it needs its own model:
 ```wolfram
 amplitude = ConstructAmplitude[particles, diagramModel, factorizationModel,
   "ReferenceSpinors" -> "AllPhysical",
-  "FeynmanModel" -> qedFeynmanModel,
-  "MaxKernels" -> 2]
+  "FeynmanModel" -> qedFeynmanModel]
 ```
 
 Feynman diagram references are shared across their full sum, and their internal
@@ -1030,6 +1029,34 @@ particle declarations without adding model globals.
 
 `"Samples"`, `"ValidationSamples"`, `"ParameterRules"`, `"HighEnergyBound"`,
 `"RandomSeed"`, `"Parallelization"` and `"MaxKernels"` provide common settings.
+`"MaxKernels" -> Automatic` uses Mathematica's processor count, available
+license slots and the number of independent jobs. There is no two-worker cap.
+For example, `"MaxKernels" -> 4` reduces the worker count when desired; `1`
+keeps execution serial. Independent jobs use a dynamic queue, so a free worker
+can start another diagram or sample without waiting for a slower item. Results
+retain their input order and progress reflects completed work. Completion's
+simultaneous linear solve remains serial. Startup and serial stages can still
+limit the speedup of a short whole calculation.
+
+A controlled local preparation comparison used the 24 diagrams of
+`e,E,A.+,A.+,A.+,A.+`, model 2, `"AllPhysical"`,
+`"MaxReferenceChoices" -> 1`, `"MaxSteps" -> 0` and a 120-second per-item limit.
+Mathematica reported eight processors. Exact prepared expressions agreed
+between serial, parallel and both source versions:
+
+| Preparation mode | Workers | Elapsed time |
+| --- | ---: | ---: |
+| Serial | 0 | 121.7 s |
+| Explicit two-worker cap, warm pool | 2 | 60.9 s |
+| Earlier automatic memory estimate, warm pool | 5 | 25.5 s |
+| Dynamic queue with automatic processor count, warm pool | 8 | 15.4 s |
+
+The new cold call took 22.1 seconds, including 6.7 seconds of startup. These
+measurements concern preparation at the stated search limits, not the whole
+construction or an exhaustive simplification claim. A separate uneven-duration
+queue test at a fixed two-worker count fell from 1.78 to 1.01 seconds, isolating
+the gain from removing wave barriers. Returned job values remained identical.
+
 The overall `"TimeConstraint"` defaults to `Infinity`; each underlying stage
 keeps its bounded default. Change individual settings with rule lists:
 

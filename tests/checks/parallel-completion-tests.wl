@@ -89,6 +89,27 @@ check["invalid factorization worker counts are rejected before fitting",
   Quiet[CompleteFactorization[prH, prChannels, prFixtureModel, "MaxKernels" -> 0]] === $Failed];
 check["invalid high-energy worker choices are rejected before checking",
   FailureQ[CompleteHighEnergy[prH, prChannels, prFixtureModel, "Parallelization" -> "invalid"]]];
+(* Completion callbacks may arrive in a different order from source jobs. *)
+pcProgressEvents = {};
+Block[{ConstructiveDiagrams`Private`$completionParallelSettings = pcSettings[True]},
+  ConstructiveDiagrams`Private`completionResidueConstraints[pcTrial, pcVariables,
+    pcNormalized, 1, 929017, pcRules, 60,
+    Function[event, AppendTo[pcProgressEvents, event]], True]];
+pcSampleEvents = Select[pcProgressEvents, Lookup[#, "Stage", None] === "Factorization samples" &];
+check["parallel fit progress counts completed samples independently of their source indices",
+  Lookup[pcSampleEvents, "Completed"] === Range[Length[pcNormalized["Targets"]]] &&
+    Sort[Lookup[pcSampleEvents, "Cut"]] === Sort[Lookup[pcNormalized["Targets"], "Cut"]]];
+pcProgressEvents = {};
+Block[{ConstructiveDiagrams`Private`$completionParallelSettings = pcSettings[True]},
+  ConstructiveDiagrams`Private`completionSparseValidation[pcTrial, pcVariables,
+    pcSolution, {}, {}, pcNormalized, 1, 1929020, pcRules, 60,
+    Function[event, AppendTo[pcProgressEvents, event]], True]];
+pcSampleEvents = Select[pcProgressEvents,
+  Lookup[#, "Stage", None] === "Validating sparse factorization samples" &];
+check["parallel held-out progress also counts completions monotonically",
+  Lookup[pcSampleEvents, "Completed"] === Range[Length[pcNormalized["Targets"]]] &&
+    Sort[Lookup[pcSampleEvents, "Cut"]] === Sort[Lookup[pcNormalized["Targets"], "Cut"]]];
+
 pcComponents = ConstructiveDiagrams`Private`completionLinearComponents[pcTrial, pcVariables, False];
 pcExpired = Quiet[ConstructiveDiagrams`Private`completionConstraintSample[
   pcComponents, pcVariables, ConstructiveDiagrams`Private`completionTargets[pcNormalized["Targets"]],

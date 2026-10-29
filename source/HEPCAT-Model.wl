@@ -2310,17 +2310,13 @@ amplitudeParallelSettingsQ[settings_Association] :=
     IntegerQ[settings["MaxKernels"]] && settings["MaxKernels"] > 0);
 
 amplitudeParallelLimit[jobs_List, worker_, requested_] := Module[
-  {limit, memory, perWorker, license = $MaxLicenseSubprocesses},
-  limit = Min[Length[jobs], Max[1, $ProcessorCount],
+  {license = $MaxLicenseSubprocesses, externalKernels},
+  (* Mathematica supplies the processor and license limits. An explicit user
+     cap may reduce them; expression-size guesses must not force two workers. *)
+  externalKernels = Length[Select[Kernels[], !MemberQ[$amplitudeParallelKernels, #] &]];
+  Min[Length[jobs], Max[1, $ProcessorCount],
     If[IntegerQ[requested], requested, Max[1, $ProcessorCount]],
-    If[IntegerQ[license] && license >= 0, license, Infinity]];
-  (* A conservative allowance for the package, the closure and symbolic
-     intermediates. Explicit MaxKernels is still a ceiling, never a promise. *)
-  memory = Quiet[Check[MemoryAvailable[], Missing["Unavailable"]]];
-  perWorker = 512*1024^2 + 6*(ByteCount[worker] + Max[0, Sequence @@ (ByteCount /@ jobs)]);
-  If[NumericQ[memory] && memory > 0,
-    limit = Min[limit, Max[1, Floor[memory/(2 perWorker)]]]];
-  limit
+    If[IntegerQ[license] && license >= 0, Max[0, license - externalKernels], Infinity]]
 ];
 
 (* Use Wolfram's explicit kernel send/receive API. ParallelEvaluate's
@@ -2330,12 +2326,15 @@ amplitudeParallelLimit[jobs_List, worker_, requested_] := Module[
 SetAttributes[amplitudeParallelEvaluate, HoldFirst];
 amplitudeParallelEvaluate[expression_, kernels_List, ___Rule] := Module[
   {sent, pending, results, value, progressed},
-  sent = Parallel`Developer`Send[kernels, expression];
   results = ConstantArray[$Failed, Length[kernels]];
+  sent = Quiet[Check[Parallel`Developer`Send[kernels, expression], $Failed]];
+  If[!ListQ[sent] || Length[sent] =!= Length[kernels], Return[results]];
   pending = Select[Range[Length[kernels]], sent[[#]] =!= $Failed &];
   While[pending =!= {},
     progressed = False;
-    Do[value = Parallel`Developer`ReceiveIfReady[kernels[[i]], HoldComplete];
+    Do[value = If[MemberQ[Kernels[], kernels[[i]]],
+        Quiet[Check[Parallel`Developer`ReceiveIfReady[kernels[[i]], HoldComplete], $Failed]],
+        $Failed];
       If[value =!= Parallel`Developer`$NotReady,
         results[[i]] = ReleaseHold[value]; pending = DeleteCases[pending, i];
         progressed = True], {i, pending}];
@@ -2409,8 +2408,9 @@ amplitudeParallelMap[worker_, jobs_List, settings_Association, callback_: None] 
   {started = AbsoluteTime[], requested = Lookup[settings, "Parallelization", Automatic],
    maximum = Lookup[settings, "MaxKernels", Automatic], count = Length[jobs],
    limit, pool = {}, setup, diagnostics = {}, startup = 0., results,
-   holder, kernelIDs = {}, used = {}, wave, active, payload, packets, packet,
-   index, cursor = 1, retries = {}, serial, mode = "Serial", cleanup, namespace, firstJobNumber},
+   holder, kernelIDs = {}, used = {}, active, healthy, packet, value, progressed,
+   index, cursor = 1, retries = {}, serial, mode = "Serial", cleanup, namespace,
+   firstJobNumber, dispatch},
   results = ConstantArray[Missing["NotEvaluated"], count];
   serial = Function[i, Module[{result}, result = worker[jobs[[i]]];
     results[[i]] = result;
@@ -2419,11 +2419,11 @@ amplitudeParallelMap[worker_, jobs_List, settings_Association, callback_: None] 
       TrueQ[$amplitudeParallelActive] || TrueQ[$KernelID > 0],
     Scan[serial, Range[count]];
     Return[<|"Results" -> results, "Execution" -> <|"Mode" -> "Serial",
-      "KernelCount" -> 0, "KernelIDs" -> {}, "JobCount" -> count,
+      "Scheduler" -> "Serial", "KernelCount" -> 0, "KernelIDs" -> {}, "JobCount" -> count,
       "StartupTime" -> 0., "ElapsedTime" -> AbsoluteTime[] - started,
       "RetriedJobs" -> {}, "Diagnostics" -> {}|>|>]];
   limit = amplitudeParallelLimit[jobs, worker, maximum];
-  If[limit < 2, diagnostics = {"The processor, license or available-memory limit allows fewer than two workers."}];
+  If[limit < 2, diagnostics = {"The processor or available license limit allows fewer than two workers."}];
   If[limit >= 2,
     setup = amplitudeParallelPool[limit,
       requested === Automatic && TrueQ[Lookup[settings, "WarmOnly", False]]];
@@ -2431,46 +2431,68 @@ amplitudeParallelMap[worker_, jobs_List, settings_Association, callback_: None] 
     diagnostics = setup["Diagnostics"]];
   If[Length[pool] < 2,
     Scan[serial, Range[count]],
-    (* A call-local package symbol transfers a potentially large immutable
-       closure once per worker. It is removed after this batch, including on
-       abort. Waves select only our capped pool, so unrelated kernels are left
-       alone and callbacks execute only after results reach the main kernel. *)
+    (* Transfer the immutable closure once per worker, then keep one job on
+       each worker. A completed worker immediately takes the next item before
+       the master invokes its progress callback. Results retain input order;
+       callbacks report actual completion order and original item indices. *)
     holder = Unique["ConstructiveDiagrams`Private`amplitudeJob$"];
     namespace = StringDelete[CreateUUID[], "-"];
     firstJobNumber = $amplitudeParallelJobNumber; $amplitudeParallelJobNumber += count;
     cleanup = Function[Null, With[{symbol = holder},
       Quiet[amplitudeParallelEvaluate[Remove[symbol], Select[pool, MemberQ[Kernels[], #] &],
         DistributedContexts -> None]]]];
-    CheckAbort[
-      kernelIDs = With[{symbol = holder, function = worker},
-        amplitudeParallelEvaluate[symbol = function; $KernelID, pool, DistributedContexts -> None]];
-      While[cursor <= count,
-        wave = Range[cursor, Min[count, cursor + Length[pool] - 1]];
-        active = Take[pool, Length[wave]];
-        payload = AssociationThread[Take[kernelIDs, Length[wave]],
-          ({#, jobs[[#]]} & /@ wave)];
-        packets = With[{symbol = holder, work = payload, scope = namespace, moduleBase = firstJobNumber}, Quiet[Check[
-          amplitudeParallelEvaluate[Module[{task = work[$KernelID]},
-            (* Unique[string] starts at 1 independently on each kernel.
-               A job-local context separates those coordinates. Module symbols
-               use a separate, very wide counter range for this bounded job. *)
+    dispatch[slot_Integer] := Module[{taskIndex, sent},
+      If[!TrueQ[healthy[[slot]]] || cursor > count, Return[Null]];
+      taskIndex = cursor; cursor++;
+      sent = With[{symbol = holder, task = {taskIndex, jobs[[taskIndex]]},
+          scope = namespace, moduleBase = firstJobNumber, kernel = pool[[slot]]},
+        Quiet[Check[Parallel`Developer`Send[{kernel},
+          Module[{work = task},
+            (* Each job gets a disjoint deterministic coordinate namespace,
+               regardless of which worker becomes available first. *)
             Block[{ConstructiveDiagrams`Private`$amplitudeParallelActive = True,
                 $HistoryLength = 0,
                 $Context = "ConstructiveDiagrams`Private`ParallelJob" <> scope <>
-                  "i" <> ToString[First[task]] <> "`",
-                $ModuleNumber = 10^12 + (moduleBase + First[task])*10^8},
-              <|"Index" -> First[task], "KernelID" -> $KernelID,
-                "Result" -> CheckAbort[symbol[Last[task]], $Aborted]|>]],
-            active, DistributedContexts -> None], $Failed]]];
-        If[!ListQ[packets], packets = ConstantArray[$Failed, Length[wave]]];
-        Do[index = wave[[j]]; packet = packets[[j]];
-          If[AssociationQ[packet] && Lookup[packet, "Index", None] === index &&
-              KeyExistsQ[packet, "Result"] &&
-              !MemberQ[{$Failed, $Aborted}, packet["Result"]],
-            results[[index]] = packet["Result"]; AppendTo[used, packet["KernelID"]];
-            If[callback =!= None, callback[results[[index]], index, count]],
-            AppendTo[retries, index]; serial[index]], {j, Length[wave]}];
-        cursor += Length[wave]];
+                  "i" <> ToString[First[work]] <> "`",
+                $ModuleNumber = 10^12 + (moduleBase + First[work])*10^8},
+              <|"Index" -> First[work], "KernelID" -> $KernelID,
+                "Result" -> CheckAbort[symbol[Last[work]], $Aborted]|>]]], {$Failed}]]];
+      If[ListQ[sent] && Length[sent] === 1 && First[sent] =!= $Failed,
+        active[[slot]] = taskIndex,
+        healthy[[slot]] = False; AppendTo[retries, taskIndex];
+        amplitudeParallelDropOwned[{pool[[slot]]}]]
+    ];
+    CheckAbort[
+      kernelIDs = With[{symbol = holder, function = worker},
+        amplitudeParallelEvaluate[symbol = function; $KernelID, pool, DistributedContexts -> None]];
+      active = ConstantArray[0, Length[pool]];
+      healthy = IntegerQ /@ kernelIDs;
+      Do[If[!TrueQ[healthy[[slot]]], amplitudeParallelDropOwned[{pool[[slot]]}]],
+        {slot, Length[pool]}];
+      Scan[dispatch, Range[Length[pool]]];
+      While[AnyTrue[active, # > 0 &],
+        progressed = False;
+        Do[If[active[[slot]] > 0,
+          value = If[MemberQ[Kernels[], pool[[slot]]],
+            Quiet[Check[Parallel`Developer`ReceiveIfReady[pool[[slot]], HoldComplete], $Failed]], $Failed];
+          If[value =!= Parallel`Developer`$NotReady,
+            index = active[[slot]]; active[[slot]] = 0; progressed = True;
+            packet = ReleaseHold[value];
+            If[!(AssociationQ[packet] && Lookup[packet, "Index", None] === index &&
+                Lookup[packet, "KernelID", None] === kernelIDs[[slot]] &&
+                KeyExistsQ[packet, "Result"]),
+              healthy[[slot]] = False; amplitudeParallelDropOwned[{pool[[slot]]}]];
+            If[TrueQ[healthy[[slot]]] && !MemberQ[{$Failed, $Aborted}, packet["Result"]],
+              results[[index]] = packet["Result"]; AppendTo[used, packet["KernelID"]];
+              dispatch[slot];
+              If[callback =!= None, callback[results[[index]], index, count]],
+              AppendTo[retries, index]; dispatch[slot]]]], {slot, Length[pool]}];
+        If[!progressed, Pause[0.001]]];
+      (* Transport failures do not block other workers. Retry only unfinished
+         jobs serially after the dynamic queue has drained. *)
+      If[cursor <= count, retries = Join[retries, Range[cursor, count]]];
+      retries = Sort[DeleteDuplicates[retries]];
+      Scan[serial, retries];
       cleanup[],
       (* Only this session's selected package workers can have pending jobs. *)
       amplitudeParallelDropOwned[pool], PropagateAborts -> True];
@@ -2478,6 +2500,7 @@ amplitudeParallelMap[worker_, jobs_List, settings_Association, callback_: None] 
   If[retries =!= {}, AppendTo[diagnostics,
     "Some worker jobs failed in transit or evaluation and were retried on the calling kernel."]];
   <|"Results" -> results, "Execution" -> <|"Mode" -> mode,
+    "Scheduler" -> If[mode === "Parallel", "DynamicQueue", "Serial"],
     "KernelCount" -> Length[DeleteDuplicates[used]], "KernelIDs" -> DeleteDuplicates[used],
     "JobCount" -> count, "StartupTime" -> startup,
     "ElapsedTime" -> AbsoluteTime[] - started, "RetriedJobs" -> retries,
@@ -5913,7 +5936,7 @@ completionConstraintSample[components_List, unknowns_List, targets_List,
 completionResidueConstraints[trial_, unknowns_List, normalized_Association,
     samples_Integer, seed_Integer, rules_List, seconds_, callback_, enabled_] := Module[
   {targets = completionTargets[normalized["Targets"]], components, jobs, worker, run,
-   results, valid, equations, used, diagnostics, started = AbsoluteTime[], deadline, settings},
+   results, valid, equations, used, diagnostics, started = AbsoluteTime[], deadline, settings, completedSamples = 0},
   components = completionLinearComponents[trial, unknowns, False];
   jobs = Tuples[{Range[Length[targets]], Range[samples]}];
   deadline = If[seconds === Infinity, Infinity, started + seconds];
@@ -5924,8 +5947,9 @@ completionResidueConstraints[trial_, unknowns_List, normalized_Association,
     Function[job, completionConstraintSample[c, u, t, job, se, r, sec, until]]];
   run = TimeConstrained[amplitudeParallelMap[worker, jobs,
       Join[settings, <|"WarmOnly" -> True|>], Function[{result, index, total},
+        completedSamples++;
         completionProgress[callback, enabled, <|"Stage" -> "Factorization samples",
-          "Completed" -> index, "Total" -> Length[jobs],
+          "Completed" -> completedSamples, "Total" -> Length[jobs],
           "Cut" -> targets[[First[jobs[[index]]]]]["Cut"],
           "Unknowns" -> Length[unknowns], "Elapsed" -> AbsoluteTime[] - started|>]]],
     seconds, $TimedOut];
@@ -6110,7 +6134,7 @@ completionSparseValidation[trial_, unknowns_List, solution_Association,
     seed_Integer, rules_List, seconds_, callback_, enabled_] := Module[
   {targets = completionTargets[normalized["Targets"]], components, rows, jobs, worker, run,
    results, valid, equations, used, diagnostics, familyPass, sampleRows, rowSigns, status,
-   summary, report, feedback, started = AbsoluteTime[], deadline, settings, candidateRules},
+   summary, report, feedback, started = AbsoluteTime[], deadline, settings, candidateRules, completedSamples = 0},
   components = completionLinearComponents[trial, unknowns, False];
   candidateRules = Thread[solution["FreeParameters"] -> 0];
   jobs = Tuples[{Range[Length[targets]], Range[samples]}];
@@ -6123,8 +6147,9 @@ completionSparseValidation[trial_, unknowns_List, solution_Association,
     Function[job, completionSparseValidationSample[c, u, t, job, sol, cand, f, z, se, r, sec, until]]];
   run = TimeConstrained[amplitudeParallelMap[worker, jobs,
       Join[settings, <|"WarmOnly" -> True|>], Function[{result, index, total},
+        completedSamples++;
         completionProgress[callback, enabled, <|"Stage" -> "Validating sparse factorization samples",
-          "Completed" -> index, "Total" -> Length[jobs],
+          "Completed" -> completedSamples, "Total" -> Length[jobs],
           "Cut" -> targets[[First[jobs[[index]]]]]["Cut"],
           "Unknowns" -> Length[free], "Elapsed" -> AbsoluteTime[] - started|>]]],
     seconds, $TimedOut];
