@@ -5,24 +5,15 @@
 
 (* CreatedBy='Wolfram 15.0' *)
 
-(* Internal cache information:
-NotebookFileLineBreakTest
-NotebookFileLineBreakTest
-NotebookDataPosition[       154,          7]
-NotebookDataLength[   1116616,      27641]
-NotebookOptionsPosition[   1094074,      27252]
-NotebookOutlinePosition[   1094542,      27270]
-CellTagsIndexPosition[   1094499,      27267]
-WindowTitle->Five-Point QED: Construction and Checks
-WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
 Notebook[{
 
 Cell[CellGroupData[{
-Cell["Five-Point QED: Construction and Checks", "Title",ExpressionUUID->"5ca1b447-bdbb-4884-877e-3bc950bf458e"],
 
-Cell["Evaluate Setup, then use Construct and Check at the start of a process chapter. The wrapper runs the complete workflow, displays timing and test results, and returns the validated expression. Earlier manual steps remain collapsed below each call. Compact worked formulas and the all-helicity checks are retained separately. All momenta are ingoing.", "Text",ExpressionUUID->"456f9b3b-17be-418a-8209-5779a70c7365"],
+Cell["Four-, Five- and Six-Point QED: Construction and Checks", "Title",ExpressionUUID->"5ca1b447-bdbb-4884-877e-3bc950bf458e"],
+
+Cell["Evaluate Setup once, then evaluate any individual calculation below. The 36 explicit calls cover all photon-helicity assignments at fixed external ordering: 5 four-point, 10 five-point and 21 six-point tree amplitudes of the electron/photon QED model. Each result has a distinct qed4..., qed5... or qed6... variable, so later calculations do not overwrite it. The wrapper displays progress, total time and all final checks before returning a validated expression. Some completion paths remain unresolved and are labeled beside their calculation cells. All momenta are ingoing. Other external label orderings follow by particle relabeling; pure-photon trees and charge-unbalanced processes vanish. Massive fermion spin dependence remains symbolic.", "Text", ExpressionUUID->"456f9b3b-17be-418a-8209-5779a70c7365"],
 
 Cell[CellGroupData[{
 
@@ -153,11 +144,7 @@ In[104]:=",ExpressionUUID->"8d0b4170-79ca-43c4-8e8f-37485758afbb"]
 }, Open  ]]
 }, Open  ]],
 
-Cell["\<\
-Use the three-point QED model for diagrams and the QED model containing the \
-known four-point amplitudes for five-point factorization. Neither model is \
-changed.\
-\>", "Text",ExpressionUUID->"e40be2b8-a07c-4c47-93ff-40449897d0a0"],
+Cell["Use the cubic QED model for every diagram calculation and for four-point factorization. The model containing known four- and five-point amplitudes supplies five- and six-point factorization. Neither model is changed.", "Text",ExpressionUUID->"e40be2b8-a07c-4c47-93ff-40449897d0a0"],
 
 Cell["\<\
 diagramModel = ReadModel[FileNameJoin[{hepcatDirectory, \"models\"}], 2];
@@ -197,6 +184,60 @@ Cell["constructionOptions = {\n  \"Samples\" -> checkSamples,\n  \"FeynmanModel\
 
 Cell[CellGroupData[{
 
+Cell["Four-Point Amplitudes", "Subtitle", ExpressionUUID->"058277b2-d0a3-505b-bd1a-c27c47ce0997"],
+
+Cell["Five separate calculations: every two-photon helicity assignment and four-fermion scattering. Four-point factorization uses the same cubic model as the diagrams.", "Text", ExpressionUUID->"b73eb392-82ee-5711-a971-c472ac8ca249"],
+
+Cell[CellGroupData[{
+
+Cell["e,E,A.+,A.+", "Chapter", ExpressionUUID->"44abe297-98a2-5c63-9e22-20132a3d21cb"],
+
+Cell["qed4PP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\"},\n  diagramModel, diagramModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"90196480-cbbe-591b-86bf-9971ced0f0e4"]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,A.+,A.-", "Chapter", ExpressionUUID->"6c528ba2-0997-5b0a-8471-8891d0a6212b"],
+
+Cell["qed4PM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\"},\n  diagramModel, diagramModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"ea0cf00e-74e4-5d70-b283-9e93b492ddf2"]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,A.-,A.+", "Chapter", ExpressionUUID->"c06e2ad2-6d65-59ba-bbe3-82f1c184d0dc"],
+
+Cell["qed4MP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\"},\n  diagramModel, diagramModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"2d47318b-2768-54aa-a153-5b151237d8e0"]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,A.-,A.-", "Chapter", ExpressionUUID->"1dd37843-dab3-5b64-8f91-00d69cbd1ee0"],
+
+Cell["qed4MM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\"},\n  diagramModel, diagramModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"ff9a4ce7-51eb-5dd2-83c5-4752ef20edcf"]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,E,e", "Chapter", ExpressionUUID->"ca8c8a3a-7428-5eea-9858-ee4650553a52"],
+
+Cell["qed4FourFermions = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\"},\n  diagramModel, diagramModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"30016c22-1f87-58da-9f86-9762ba2239bd"]
+
+}, Open]]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["Five-Point Amplitudes", "Subtitle", ExpressionUUID->"14d58ea4-5912-556a-a5f4-303fde3d68aa"],
+
+Cell["Ten separate calculations: all eight three-photon helicity assignments and both helicities for four-fermion photon emission.", "Text", ExpressionUUID->"6e4d3289-7533-59da-b218-9fccf89d4647"],
+
+Cell[CellGroupData[{
+
 Cell["e,E,A.+,A.+,A.+", "Chapter",
  CellChangeTimes->{{4.001759665590519*^9, 
   4.00175967079949*^9}},ExpressionUUID->"4254fc93-7cf4-42a6-a5cc-\
@@ -206,7 +247,7 @@ Cell["Construct and Check", "Section", ExpressionUUID->"4bb6cc79-e5b1-5881-9b17-
 
 Cell["Evaluate this cell after Setup. The wrapper generates and prepares the diagrams and factorization channels, completes and prepares the amplitude, then runs all final checks. The printed test report precedes the returned expression. The saved manual work remains available below.", "Text", ExpressionUUID->"39cf6e8f-7d10-5f73-a8f3-e11920c14eca"],
 
-Cell["constructedAmplitude = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"fc84dd4f-fa99-5122-82eb-b35b4a28e6ce"],
+Cell["qed5PPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"fc84dd4f-fa99-5122-82eb-b35b4a28e6ce"],
 
 Cell[CellGroupData[{
 
@@ -4685,7 +4726,7 @@ lastPathIsLeafHeader, TypeSystem`NestedGrid`PackagePrivate`headerHidden$ = And[
 }, Open  ]]
 
 }, Closed]]
-}, Closed]],
+}, Open]],
 
 Cell[CellGroupData[{
 
@@ -4698,7 +4739,7 @@ Cell["Construct and Check", "Section", ExpressionUUID->"472f8cd3-ab29-5c5c-b504-
 
 Cell["Evaluate this cell after Setup. The wrapper generates and prepares the diagrams and factorization channels, completes and prepares the amplitude, then runs all final checks. The printed test report precedes the returned expression. The saved manual work remains available below.", "Text", ExpressionUUID->"c46aee37-fe13-52c0-a562-296642d3c95f"],
 
-Cell["constructedAmplitude = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"cd6c2cab-65fa-5c26-bcaa-fb90afe96402"],
+Cell["qed5PPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"cd6c2cab-65fa-5c26-bcaa-fb90afe96402"],
 
 Cell[CellGroupData[{
 
@@ -13475,7 +13516,57 @@ lastPathIsLeafHeader, TypeSystem`NestedGrid`PackagePrivate`headerHidden$ = And[
 }, Open  ]]
 
 }, Closed]]
-}, Closed]],
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,A.+,A.-,A.+", "Chapter", ExpressionUUID->"63b567d5-e793-5b52-bb58-75534676f705"],
+
+Cell["qed5PMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"0b6964c8-0eb4-52b7-b917-78ade09bbbfc"]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,A.+,A.-,A.-", "Chapter", ExpressionUUID->"2453dfeb-e5ba-5233-b001-e8d8839dda3b"],
+
+Cell["qed5PMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"a77e61a3-edd5-5b98-8319-c1bcaeb49bb4"]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,A.-,A.+,A.+", "Chapter", ExpressionUUID->"30268457-ceb6-5ada-9ca0-39bbe417f399"],
+
+Cell["This ordering completed factorization in the notebook smoke test, but high-energy completion left undetermined correction directions. The strict wrapper returned Failure, so no validated final expression is claimed for this calculation yet.", "Text", ExpressionUUID->"0451a7f9-3405-5d2d-9ae1-da9bdf177f7d"],
+
+Cell["qed5MPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"505d8c13-008c-5100-b989-cbbbf7637ebf"]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,A.-,A.+,A.-", "Chapter", ExpressionUUID->"1e2a2871-2ee6-5217-9df2-e3efe682a61e"],
+
+Cell["qed5MPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"903c80bb-7e68-57a5-b352-a33498ce148a"]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,A.-,A.-,A.+", "Chapter", ExpressionUUID->"b8838f42-d395-55f2-aa71-ac5b452ed75b"],
+
+Cell["qed5MMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"f9882909-13ce-5453-94cd-e0b2e3247cd8"]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,A.-,A.-,A.-", "Chapter", ExpressionUUID->"f703f4de-d13a-5cc2-8bba-36389d452a2e"],
+
+Cell["qed5MMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"ff61f24f-3439-5805-8632-d085e4e68735"]
+
+}, Open]],
 
 Cell[CellGroupData[{
 
@@ -13489,7 +13580,7 @@ Cell["Construct and Check", "Section", ExpressionUUID->"adea72e3-c8dc-5579-81a9-
 
 Cell["Evaluate this cell after Setup. The wrapper generates and prepares the diagrams and factorization channels, completes and prepares the amplitude, then runs all final checks. The printed test report precedes the returned expression. The saved manual work remains available below.", "Text", ExpressionUUID->"8a0e400e-e796-55fe-8fc2-c7fa37685606"],
 
-Cell["constructedAmplitude = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  \"PreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FactorizationOptions\" -> {\"Samples\" -> 3, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 300},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"98a3963d-bf2b-5092-832a-9f8e0aef3ea7"],
+Cell["qed5FourFermionsP = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  \"PreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FactorizationOptions\" -> {\"Samples\" -> 3, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 300},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"98a3963d-bf2b-5092-832a-9f8e0aef3ea7"],
 
 Cell[CellGroupData[{
 
@@ -21253,11 +21344,29 @@ lastPathIsLeafHeader, TypeSystem`NestedGrid`PackagePrivate`headerHidden$ = And[
 }, Open  ]]
 
 }, Closed]]
-}, Closed]],
+}, Open]],
 
 Cell[CellGroupData[{
 
-Cell["6. Compact Worked QED Results", "Chapter",ExpressionUUID->"2cf2fd86-409e-433f-bfcd-dceba02743d2"],
+Cell["e,E,E,e,A.-", "Chapter", ExpressionUUID->"a580c69d-cf9b-5c7a-af95-9df454c158d7"],
+
+Cell["The smoke test completed factorization for this case, but high-energy completion left undetermined correction directions. The strict wrapper returned Failure rather than claiming a validated final expression.", "Text", ExpressionUUID->"7dbf9a87-9808-5c95-a673-9ed74906ec45"],
+
+Cell["qed5FourFermionsM = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  \"PreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FactorizationOptions\" -> {\"Samples\" -> 3, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 300},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"2ac0cb72-3082-5941-925b-b84b0bc3f0f4"]
+
+}, Open]]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["Additional Five-Point Worked Results (Optional)", "Subtitle", ExpressionUUID->"d001e7f1-725d-5fa4-ad99-82cddc48413b"],
+
+Cell["The earlier compact formulas and batch checks are preserved here. The explicit calculations above are independent and do not require these supplementary sections. Earlier step-by-step work also remains collapsed beneath its original process.", "Text", ExpressionUUID->"f9e5bf17-b3ce-5905-ae23-669a81c4abc5"],
+
+Cell[CellGroupData[{
+
+Cell["Compact Worked QED Results", "Chapter",ExpressionUUID->"2cf2fd86-409e-433f-bfcd-dceba02743d2"],
 
 Cell["\<\
 The general completion functions do not yet automatically finish every \
@@ -22369,7 +22478,7 @@ fourFermionWorkedRoute[\"PairedCurrents\"][[1]][\"SoftIdentity\"]\
 
 Cell[CellGroupData[{
 
-Cell["7. Check Every Five-Point Helicity Choice", "Chapter",ExpressionUUID->"ac6ec3a6-f0cf-47e7-8d9c-2f001b033e6f"],
+Cell["Check Every Five-Point Helicity Choice", "Chapter",ExpressionUUID->"ac6ec3a6-f0cf-47e7-8d9c-2f001b033e6f"],
 
 Cell["\<\
 The electron/photon model has two nonzero five-point tree families: one \
@@ -23755,7 +23864,15 @@ CheckAmplitudes[qedAmplitudes[[caseNumber]], qedChannels[[caseNumber]],
   \"Output\" -> \"Residues\"]\
 \>", "Input",ExpressionUUID->"81a48114-772b-4daa-988b-8fee1c950b68"]
 }, Closed]]
+}, Closed]]
+
 }, Closed]],
+
+Cell[CellGroupData[{
+
+Cell["Six-Point Amplitudes", "Subtitle", ExpressionUUID->"888390d6-34ec-58e0-9110-41252f148171"],
+
+Cell["Twenty-one separate calculations: all sixteen four-photon helicity assignments, all four two-photon assignments with four fermions, and six-fermion scattering. Some mixed-helicity calls retain a two-hour factorization budget; this is a limit, not a finishing-time guarantee. Unresolved calculations must not be interpreted as validated amplitudes.", "Text", ExpressionUUID->"34b004e4-81fa-586c-aee9-f98b402dfaa0"],
 
 Cell[CellGroupData[{
 
@@ -23769,7 +23886,7 @@ Cell["Construct and Check", "Section", ExpressionUUID->"cef9dd1a-4216-51ba-9e59-
 
 Cell["Evaluate this cell after Setup. The wrapper generates and prepares the diagrams and factorization channels, completes and prepares the amplitude, then runs all final checks. The printed test report precedes the returned expression. The saved manual work remains available below.", "Text", ExpressionUUID->"b7f4d745-8e49-5b0f-b734-9f343933d143"],
 
-Cell["constructedAmplitude = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 12, \"ValidationSamples\" -> 1,\n    \"MaxRefinements\" -> 5, \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 1200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 1200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"TimeConstraint\" -> 1200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"48382d56-5ad0-55e2-a99f-e9d5d2546991"],
+Cell["qed6PPPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 12, \"ValidationSamples\" -> 1,\n    \"MaxRefinements\" -> 5, \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 1200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 1200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"TimeConstraint\" -> 1200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"48382d56-5ad0-55e2-a99f-e9d5d2546991"],
 
 Cell[CellGroupData[{
 
@@ -27355,6 +27472,7 @@ measurements are examples, not timing guarantees.\
 
 }, Closed]]
 }, Open  ]],
+
 Cell[CellGroupData[{
   Cell["e,E,A.+,A.+,A.+,A.-", "Chapter"],
 
@@ -27362,7 +27480,7 @@ Cell["Construct and Check", "Section", ExpressionUUID->"4eb6abff-e598-59fb-a7d6-
 
 Cell["Evaluate this cell after Setup. The wrapper generates and prepares the diagrams and factorization channels, completes and prepares the amplitude, then runs all final checks. The printed test report precedes the returned expression. The saved manual work remains available below. This larger example retains the earlier two-hour factorization budget; that limit is not a finishing-time guarantee.", "Text", ExpressionUUID->"5def643f-d347-50e0-a9fd-68b70ff235b3"],
 
-Cell["constructedAmplitude = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 28, \"ValidationSamples\" -> 2,\n    \"MaxRefinements\" -> 5, \"RandomSeed\" -> 1729,\n    \"MaxCorrectionTerms\" -> 1024, \"TimeConstraint\" -> 7200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 7200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"FeynmanSamples\" -> 3,\n    \"TimeConstraint\" -> 7200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"883d3035-fc8e-5e0e-ae1a-657308bc023a"],
+Cell["qed6PPPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 28, \"ValidationSamples\" -> 2,\n    \"MaxRefinements\" -> 5, \"RandomSeed\" -> 1729,\n    \"MaxCorrectionTerms\" -> 1024, \"TimeConstraint\" -> 7200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 7200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"FeynmanSamples\" -> 3,\n    \"TimeConstraint\" -> 7200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"883d3035-fc8e-5e0e-ae1a-657308bc023a"],
 
 Cell[CellGroupData[{
 
@@ -27401,13 +27519,22 @@ Cell["Earlier Step-by-Step Work (Optional)", "Section", ExpressionUUID->"c32d308
 
 }, Closed]]
 }, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,A.+,A.+,A.-,A.+", "Chapter", ExpressionUUID->"7b807755-c098-5ca7-a7bf-1d1c77baf2f0"],
+
+Cell["qed6PPMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 28, \"ValidationSamples\" -> 2,\n    \"MaxRefinements\" -> 5, \"RandomSeed\" -> 1729,\n    \"MaxCorrectionTerms\" -> 1024, \"TimeConstraint\" -> 7200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 7200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"FeynmanSamples\" -> 3,\n    \"TimeConstraint\" -> 7200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"98d71f36-8972-575f-9c69-f4d9a25fa8f9"]
+
+}, Open]],
+
 Cell[CellGroupData[{Cell["e,E,A.+,A.+,A.-,A.-", "Chapter"],
 
 Cell["Construct and Check", "Section", ExpressionUUID->"d0ea60f9-9fe8-596d-952e-fb7f22b7885f"],
 
 Cell["Evaluate this cell after Setup. The wrapper generates and prepares the diagrams and factorization channels, completes and prepares the amplitude, then runs all final checks. The printed test report precedes the returned expression. The saved manual work remains available below. The earlier general completion did not finish this balanced-helicity case, and its separate recursion result still has unresolved compound spurious poles. This bounded wrapper attempt returns Failure if it cannot certify every required check; it does not silently substitute that recursion result.", "Text", ExpressionUUID->"26039431-c89a-5ead-9e82-153f2d487e70"],
 
-Cell["constructedAmplitude = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 2, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 180},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"0819812a-ac06-5b2c-a5ba-f2599326e196"],
+Cell["qed6PPMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 2, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 180},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"0819812a-ac06-5b2c-a5ba-f2599326e196"],
 
 Cell[CellGroupData[{
 
@@ -28506,403 +28633,173 @@ qedFeynmanModel, \"FeynmanSamples\" -> 3,\n  \"Samples\" -> 2, \
         {Cell["Inspect the Constructed Expression", "Subsection"],
          Cell["constructedAmplitude", "Input"]}, Closed]]}, Open]]
 }, Closed]]
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,A.+,A.-,A.+,A.+", "Chapter", ExpressionUUID->"4ee79a12-44d5-5ff2-8801-7779cbb28f8b"],
+
+Cell["qed6PMPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 28, \"ValidationSamples\" -> 2,\n    \"MaxRefinements\" -> 5, \"RandomSeed\" -> 1729,\n    \"MaxCorrectionTerms\" -> 1024, \"TimeConstraint\" -> 7200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 7200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"FeynmanSamples\" -> 3,\n    \"TimeConstraint\" -> 7200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"3f000dad-0c68-52f1-9f86-5663c5a19222"]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,A.+,A.-,A.+,A.-", "Chapter", ExpressionUUID->"972be87c-390e-5f13-bfdf-7dfd66577c97"],
+
+Cell["Automatic completion of this balanced-helicity family is still unresolved. This is a direct calculation with the general workflow; it does not substitute the separate recursion example.", "Text", ExpressionUUID->"874e539a-5a2b-5ebe-ae62-7307a423b9c7"],
+
+Cell["qed6PMPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 2, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 180},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"46fcfbd1-65d5-5c45-9986-6d6ce504726e"]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,A.+,A.-,A.-,A.+", "Chapter", ExpressionUUID->"01e478d0-08dc-5c9e-881d-c7ee0a2999ed"],
+
+Cell["Automatic completion of this balanced-helicity family is still unresolved. This is a direct calculation with the general workflow; it does not substitute the separate recursion example.", "Text", ExpressionUUID->"cec29136-21a5-58e1-bfac-f8e025ec28cf"],
+
+Cell["qed6PMMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 2, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 180},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"8bf73fa0-d385-5139-8a9e-acbd4c748357"]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,A.+,A.-,A.-,A.-", "Chapter", ExpressionUUID->"dcf28129-e2f2-5228-810c-f231dc09c4ae"],
+
+Cell["qed6PMMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 28, \"ValidationSamples\" -> 2,\n    \"MaxRefinements\" -> 5, \"RandomSeed\" -> 1729,\n    \"MaxCorrectionTerms\" -> 1024, \"TimeConstraint\" -> 7200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 7200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"FeynmanSamples\" -> 3,\n    \"TimeConstraint\" -> 7200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"ba227405-40aa-5731-b6a7-fc6a25372840"]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,A.-,A.+,A.+,A.+", "Chapter", ExpressionUUID->"5984e924-9b2b-5296-91df-b19cd087adb7"],
+
+Cell["qed6MPPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 28, \"ValidationSamples\" -> 2,\n    \"MaxRefinements\" -> 5, \"RandomSeed\" -> 1729,\n    \"MaxCorrectionTerms\" -> 1024, \"TimeConstraint\" -> 7200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 7200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"FeynmanSamples\" -> 3,\n    \"TimeConstraint\" -> 7200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"4df14370-a2c3-5e5e-89c6-c13da9b1a7f4"]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,A.-,A.+,A.+,A.-", "Chapter", ExpressionUUID->"fce99b6d-baf8-5f87-bca5-138061e70699"],
+
+Cell["Automatic completion of this balanced-helicity family is still unresolved. This is a direct calculation with the general workflow; it does not substitute the separate recursion example.", "Text", ExpressionUUID->"f12d21ea-a639-5816-a80a-a22edf17dcd5"],
+
+Cell["qed6MPPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 2, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 180},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"d9ab4ba1-5724-5444-860c-623db1d9aa94"]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,A.-,A.+,A.-,A.+", "Chapter", ExpressionUUID->"c1773450-c939-52ca-ba8f-bd954207ba47"],
+
+Cell["Automatic completion of this balanced-helicity family is still unresolved. This is a direct calculation with the general workflow; it does not substitute the separate recursion example.", "Text", ExpressionUUID->"a3d30078-a7d4-5f63-a583-4d0f65a47b01"],
+
+Cell["qed6MPMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 2, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 180},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"c0f95937-7a91-5933-914f-b90780cb818a"]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,A.-,A.+,A.-,A.-", "Chapter", ExpressionUUID->"e9f93243-549b-545d-8a9c-68ca15ab2332"],
+
+Cell["qed6MPMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 28, \"ValidationSamples\" -> 2,\n    \"MaxRefinements\" -> 5, \"RandomSeed\" -> 1729,\n    \"MaxCorrectionTerms\" -> 1024, \"TimeConstraint\" -> 7200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 7200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"FeynmanSamples\" -> 3,\n    \"TimeConstraint\" -> 7200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"24331ab2-5da4-58a4-aa99-400ac33e00e3"]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,A.-,A.-,A.+,A.+", "Chapter", ExpressionUUID->"11e094af-87e7-526d-a4f4-220c3ba3d757"],
+
+Cell["Automatic completion of this balanced-helicity family is still unresolved. This is a direct calculation with the general workflow; it does not substitute the separate recursion example.", "Text", ExpressionUUID->"8d7cdd9e-7865-5203-aa0b-d7d869cd9af3"],
+
+Cell["qed6MMPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 2, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 180},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"feac857c-b1f2-53c2-8224-42e08c8e526f"]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,A.-,A.-,A.+,A.-", "Chapter", ExpressionUUID->"932294fd-5531-5a53-8b40-abfe26bb4a02"],
+
+Cell["qed6MMPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 28, \"ValidationSamples\" -> 2,\n    \"MaxRefinements\" -> 5, \"RandomSeed\" -> 1729,\n    \"MaxCorrectionTerms\" -> 1024, \"TimeConstraint\" -> 7200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 7200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"FeynmanSamples\" -> 3,\n    \"TimeConstraint\" -> 7200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"ea85b16e-b434-52e9-b534-0e786e275e4e"]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,A.-,A.-,A.-,A.+", "Chapter", ExpressionUUID->"5883bf3b-bc21-5b57-959e-7fbc427b9b97"],
+
+Cell["qed6MMMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 28, \"ValidationSamples\" -> 2,\n    \"MaxRefinements\" -> 5, \"RandomSeed\" -> 1729,\n    \"MaxCorrectionTerms\" -> 1024, \"TimeConstraint\" -> 7200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 7200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"FeynmanSamples\" -> 3,\n    \"TimeConstraint\" -> 7200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"dbc76639-f10b-521c-8b4e-eb2ee8cc2b31"]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,A.-,A.-,A.-,A.-", "Chapter", ExpressionUUID->"2e0908f6-4d62-5068-b83e-2ee0a89924b1"],
+
+Cell["qed6MMMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 12, \"ValidationSamples\" -> 1,\n    \"MaxRefinements\" -> 5, \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 1200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 1200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"TimeConstraint\" -> 1200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"86b62ac4-7191-5590-95c5-34ce4ccc68f9"]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,E,e,A.+,A.+", "Chapter", ExpressionUUID->"dc2a7d10-2e26-54e3-ac32-91da653a12ee"],
+
+Cell["This family has diagram-preparation checks, but full automatic completion has not yet been established. This calculation runs the complete workflow and returns an expression only if every required check passes. An unresolved result remains visible as Failure.", "Text", ExpressionUUID->"e00c9759-5843-5d08-8c90-bc17e87f6b19"],
+
+Cell["qed6FourFermionsPP = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> Automatic,\n  \"PreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FactorizationOptions\" -> {\"Samples\" -> 3, \"ValidationSamples\" -> 1,\n    \"MaxRefinements\" -> 5, \"MaxCorrectionTerms\" -> 512, \"TimeConstraint\" -> 1200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 1200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"TimeConstraint\" -> 1200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"43109671-29f3-53c2-8f3e-a7707a317999"]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,E,e,A.+,A.-", "Chapter", ExpressionUUID->"ee351497-2df4-5e47-ae8e-c308fa7ad146"],
+
+Cell["This family has diagram-preparation checks, but full automatic completion has not yet been established. This calculation runs the complete workflow and returns an expression only if every required check passes. An unresolved result remains visible as Failure.", "Text", ExpressionUUID->"96168d5a-7876-5315-9519-6322c32cebf3"],
+
+Cell["qed6FourFermionsPM = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> Automatic,\n  \"PreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FactorizationOptions\" -> {\"Samples\" -> 3, \"ValidationSamples\" -> 1,\n    \"MaxRefinements\" -> 5, \"MaxCorrectionTerms\" -> 512, \"TimeConstraint\" -> 1200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 1200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"TimeConstraint\" -> 1200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"5a894df5-1ce9-5728-b90b-edbed091989e"]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,E,e,A.-,A.+", "Chapter", ExpressionUUID->"d3c55f83-826f-50c4-83e6-fddb2a296808"],
+
+Cell["This family has diagram-preparation checks, but full automatic completion has not yet been established. This calculation runs the complete workflow and returns an expression only if every required check passes. An unresolved result remains visible as Failure.", "Text", ExpressionUUID->"c424a257-de2e-5576-a87b-dcaf192ebb40"],
+
+Cell["qed6FourFermionsMP = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> Automatic,\n  \"PreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FactorizationOptions\" -> {\"Samples\" -> 3, \"ValidationSamples\" -> 1,\n    \"MaxRefinements\" -> 5, \"MaxCorrectionTerms\" -> 512, \"TimeConstraint\" -> 1200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 1200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"TimeConstraint\" -> 1200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"8828bc1f-4ead-5b86-b8d4-6dcf03cdef8b"]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,E,e,A.-,A.-", "Chapter", ExpressionUUID->"dd97993e-57e7-53ce-a81b-d041a55feb89"],
+
+Cell["This family has diagram-preparation checks, but full automatic completion has not yet been established. This calculation runs the complete workflow and returns an expression only if every required check passes. An unresolved result remains visible as Failure.", "Text", ExpressionUUID->"4ce2cdf2-4e4a-5c00-a691-21afa4f301b1"],
+
+Cell["qed6FourFermionsMM = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> Automatic,\n  \"PreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FactorizationOptions\" -> {\"Samples\" -> 3, \"ValidationSamples\" -> 1,\n    \"MaxRefinements\" -> 5, \"MaxCorrectionTerms\" -> 512, \"TimeConstraint\" -> 1200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 1200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"TimeConstraint\" -> 1200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"aa7189ea-ed5a-5e8a-945c-04d07d7d1ecb"]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["e,E,e,E,e,E", "Chapter", ExpressionUUID->"0b60b2a6-644f-5f88-bad8-eba453faa28e"],
+
+Cell["This family has diagram-preparation checks, but full automatic completion has not yet been established. This calculation runs the complete workflow and returns an expression only if every required check passes. An unresolved result remains visible as Failure.", "Text", ExpressionUUID->"4d396abd-34ca-5181-9a59-156cb832b62f"],
+
+Cell["qed6SixFermions = ConstructAmplitude[\n  {\"e\", \"E\", \"e\", \"E\", \"e\", \"E\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> Automatic,\n  \"PreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FactorizationOptions\" -> {\"Samples\" -> 3, \"ValidationSamples\" -> 1,\n    \"MaxRefinements\" -> 5, \"MaxCorrectionTerms\" -> 512, \"TimeConstraint\" -> 1200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 1200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"TimeConstraint\" -> 1200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"18e82e69-d9e2-5b59-a83b-c6b2e930b604"]
+
+}, Open]]
+
 }, Open]]
 }, Open  ]]
 },
 WindowSize->{1010, 911},
 WindowMargins->{{37, Automatic}, {Automatic, 0}},
-WindowTitle->"Five-Point QED: Construction and Checks",
+WindowTitle->"Four-, Five- and Six-Point QED: Construction and Checks",
 Magnification->1.1,
 FrontEndVersion->"15.0 for Mac OS X ARM (64-bit) (May 19, 2026)",
 StyleDefinitions->"Default.nb",
 ExpressionUUID->"a3a0eb40-1877-40fb-bf35-67fbbb75567f"
 ]
 (* End of Notebook Content *)
-
-(* Internal cache information *)
-(*CellTagsOutline
-CellTagsIndex->{}
-*)
-(*CellTagsIndex
-CellTagsIndex->{}
-*)
-(*NotebookFileOutline
-Notebook[{
-Cell[CellGroupData[{
-Cell[629, 23, 111, 0, 106, "Title",ExpressionUUID->"5ca1b447-bdbb-4884-877e-3bc950bf458e"],
-Cell[743, 25, 305, 5, 61, "Text",ExpressionUUID->"456f9b3b-17be-418a-8209-5779a70c7365"],
-Cell[CellGroupData[{
-Cell[1073, 34, 79, 0, 72, "Section",ExpressionUUID->"4816341a-7984-4b8b-988a-1a38dedfcf65"],
-Cell[CellGroupData[{
-Cell[1177, 38, 271, 6, 70, "Input",ExpressionUUID->"502400f7-a148-4769-998b-3289c5a54045"],
-Cell[CellGroupData[{
-Cell[1473, 48, 542, 9, 25, "Print",ExpressionUUID->"927e3870-f86e-46ed-ac49-24e96b4eb5a4"],
-Cell[2018, 59, 516, 9, 25, "Print",ExpressionUUID->"0ba01443-923a-4b09-9339-1d6f17e21a69"],
-Cell[2537, 70, 523, 9, 25, "Print",ExpressionUUID->"aa27c7e6-1c83-426a-b1ba-26a555348d87"],
-Cell[3063, 81, 539, 9, 25, "Print",ExpressionUUID->"7fb8cfc4-f536-44c7-9cb3-06abe4a96bfa"],
-Cell[3605, 92, 530, 9, 25, "Print",ExpressionUUID->"94499d6e-c40a-434b-8f64-17065e8a43ac"],
-Cell[4138, 103, 535, 9, 25, "Print",ExpressionUUID->"738f3d2f-15c4-413a-884e-90c05c8a73d2"],
-Cell[4676, 114, 542, 9, 25, "Print",ExpressionUUID->"d752eb28-7237-479c-b49e-6c7fbf25e613"],
-Cell[5221, 125, 514, 9, 25, "Print",ExpressionUUID->"35ef89ea-bb52-450b-8c90-01b7c9fc7e38"],
-Cell[5738, 136, 576, 10, 25, "Print",ExpressionUUID->"f2eba3ba-da9a-48f1-acaf-523d29357b87"],
-Cell[6317, 148, 548, 9, 25, "Print",ExpressionUUID->"8d0b4170-79ca-43c4-8e8f-37485758afbb"]
-}, Open  ]]
-}, Open  ]],
-Cell[6892, 161, 242, 4, 61, "Text",ExpressionUUID->"e40be2b8-a07c-4c47-93ff-40449897d0a0"],
-Cell[7137, 167, 404, 9, 127, "Input",ExpressionUUID->"f61894d2-c74b-4610-a3de-e1941760c4ae"],
-Cell[7544, 178, 359, 5, 85, "Text",ExpressionUUID->"5e949351-7167-4e81-83a5-e5d0eebf69c2"],
-Cell[7906, 185, 193, 5, 32, "Input",ExpressionUUID->"39ecf8f2-3357-45c7-b69b-99fa03763f4d"],
-Cell[8102, 192, 302, 4, 61, "Text",ExpressionUUID->"43f1ccea-2be0-4dac-abdd-f6a191035779"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[8441, 201, 159, 3, 74, "Chapter",ExpressionUUID->"4254fc93-7cf4-42a6-a5cc-47271d455e72"],
-Cell[CellGroupData[{
-Cell[8625, 208, 110, 0, 72, "Section",ExpressionUUID->"a25b4f6c-ab7e-4178-82c7-1af73d66324e"],
-Cell[8738, 210, 520, 7, 109, "Text",ExpressionUUID->"884df899-0624-455e-ac77-ff3789ad9b73"],
-Cell[9261, 219, 336, 7, 51, "Input",ExpressionUUID->"59e9054c-37eb-4d9b-9009-ab266ff680e0"],
-Cell[9600, 228, 495, 7, 85, "Text",ExpressionUUID->"381d17af-a09d-4116-8fd8-3524916bcd57"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[10132, 240, 98, 0, 72, "Section",ExpressionUUID->"db43e89f-6886-4c59-b8e6-bfcf66576fc6"],
-Cell[CellGroupData[{
-Cell[10255, 244, 226, 6, 70, "Input",ExpressionUUID->"2cf0490d-3446-4e8f-8f1f-5f2d05171f2d"],
-Cell[10484, 252, 250, 4, 36, "Output",ExpressionUUID->"a832d5fe-a895-4f71-9bfa-e6e79f3a8bdb"]
-}, Open  ]],
-Cell[10749, 259, 196, 3, 37, "Text",ExpressionUUID->"99bed7d4-df64-4bc9-a7e3-460737ceb805"],
-Cell[CellGroupData[{
-Cell[10970, 266, 94, 0, 58, "Subsection",ExpressionUUID->"f30e05cf-6e77-4326-97b4-d9c6741dc99e"],
-Cell[11067, 268, 101, 0, 70, "Input",ExpressionUUID->"e6e7e4e9-1352-4ac9-8f16-31a663ee659e"]
-}, Closed]]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[11217, 274, 97, 0, 72, "Section",ExpressionUUID->"d7eb1abf-cdef-4adf-b490-a6d9f152e8a2"],
-Cell[11317, 276, 377, 5, 85, "Text",ExpressionUUID->"a7164525-9dfc-4fd1-ae72-3cb18a63da1c"],
-Cell[CellGroupData[{
-Cell[11719, 285, 224, 6, 70, "Input",ExpressionUUID->"ec1714ca-a64e-4304-b156-d264fbcc9cb0"],
-Cell[11946, 293, 43865, 1113, 512, "Output",ExpressionUUID->"9361cfb3-ec7b-4d02-ab89-b2aa88453ea9"]
-}, Open  ]],
-Cell[55826, 1409, 244, 4, 61, "Text",ExpressionUUID->"f3bb5e78-8509-4a68-8049-acd45147bfec"],
-Cell[CellGroupData[{
-Cell[56095, 1417, 106, 0, 58, "Subsection",ExpressionUUID->"75a8ef12-ac29-4855-adb3-134b3c85bab8"],
-Cell[56204, 1419, 287, 4, 70, "Text",ExpressionUUID->"0b2bf6b8-8eb1-43cb-a78e-417b251fa0cc"],
-Cell[56494, 1425, 476, 10, 70, "Input",ExpressionUUID->"e491cb78-13a4-495a-b158-4e479e480dea"]
-}, Closed]]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[57019, 1441, 107, 0, 72, "Section",ExpressionUUID->"da13714b-7e29-4e39-9cab-225c647ba0ed"],
-Cell[57129, 1443, 480, 6, 109, "Text",ExpressionUUID->"69934b68-953e-4bc0-93b1-dfdfbd6556d4"],
-Cell[CellGroupData[{
-Cell[57634, 1453, 309, 7, 89, "Input",ExpressionUUID->"6ce8fa77-7a9f-4891-97d7-b6cbfc93f628"],
-Cell[57946, 1462, 248, 4, 36, "Output",ExpressionUUID->"638986ac-91c8-44a1-9957-810c3199b247"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[58231, 1471, 428, 10, 108, "Input",ExpressionUUID->"8a5e3a73-226a-4b05-b02c-9c60d84cc572"],
-Cell[58662, 1483, 8212, 236, 114, "Output",ExpressionUUID->"81b729df-17b0-495e-a151-014da9eb6388"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[66911, 1724, 230, 3, 32, "Input",ExpressionUUID->"868312f2-f949-469f-be20-4ee62182e802"],
-Cell[67144, 1729, 8187, 235, 114, "Output",ExpressionUUID->"98bf0e63-c7c7-4a33-b4a3-5389eeb1f0a8"]
-}, Open  ]],
-Cell[75346, 1967, 421, 6, 85, "Text",ExpressionUUID->"dad05d55-8a15-4c63-b152-f6e9c8db42ea"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[75804, 1978, 108, 0, 72, "Section",ExpressionUUID->"809fa82c-a8c5-49e4-9431-d37a2d9a84a9"],
-Cell[75915, 1980, 317, 5, 61, "Text",ExpressionUUID->"8f05d2eb-7bef-45ae-b9b3-774c335de9a4"],
-Cell[CellGroupData[{
-Cell[76257, 1989, 387, 8, 127, "Input",ExpressionUUID->"9c8b8417-1b8b-4a2e-acce-77e8a1662191"],
-Cell[76647, 1999, 8186, 235, 114, "Output",ExpressionUUID->"d239aef8-cfdc-4431-a587-bbfc94149728"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[84870, 2239, 106, 0, 58, "Subsection",ExpressionUUID->"2b5ecc59-5b39-4a7f-86a6-232d171e8aa8"],
-Cell[84979, 2241, 464, 6, 109, "Text",ExpressionUUID->"d6029ac6-3fce-4936-87c7-1f3388499fc6"],
-Cell[85446, 2249, 296, 6, 70, "Input",ExpressionUUID->"039bf1ac-86e8-4f7c-b8cc-64f454c06d95"],
-Cell[CellGroupData[{
-Cell[85767, 2259, 513, 9, 70, "Input",ExpressionUUID->"f013de80-8815-4f85-8295-d11d8c1e781b"],
-Cell[86283, 2270, 41676, 1223, 70, "Output",ExpressionUUID->"8a080cf1-b619-4516-bf21-830a61a44dfb"]
-}, Open  ]],
-Cell[127974, 3496, 347, 5, 70, "Text",ExpressionUUID->"5f86fa51-e8e0-4476-ab3e-676a28d63c3b"],
-Cell[CellGroupData[{
-Cell[128346, 3505, 734, 16, 70, "Input",ExpressionUUID->"6a8cd981-441c-4abf-9173-13a89e05fc1a"],
-Cell[129083, 3523, 59763, 1148, 70, "Output",ExpressionUUID->"fe851d76-5bed-4430-b385-ab7244750434"]
-}, Open  ]]
-}, Open  ]]
-}, Open  ]]
-}, Closed]],
-Cell[CellGroupData[{
-Cell[188919, 4679, 160, 3, 62, "Chapter",ExpressionUUID->"c63f3466-fe5e-4451-8c19-6c088a51a167"],
-Cell[CellGroupData[{
-Cell[189104, 4686, 110, 0, 70, "Section",ExpressionUUID->"682056db-00fc-4103-8cd7-0f24237c4d77"],
-Cell[189217, 4688, 381, 7, 70, "Input",ExpressionUUID->"29d0d85f-f004-4720-85cc-5a657b762e49"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[189635, 4700, 98, 0, 70, "Section",ExpressionUUID->"d8bda8c7-372c-456f-af4c-737de3132617"],
-Cell[CellGroupData[{
-Cell[189758, 4704, 222, 5, 70, "Input",ExpressionUUID->"c6db4d2f-e35d-4bd4-ad8c-2df45c39c940"],
-Cell[189983, 4711, 411, 6, 70, "Output",ExpressionUUID->"7064e033-0259-4ccf-bcc1-481785e2e47c"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[190431, 4722, 94, 0, 70, "Subsection",ExpressionUUID->"41d663bf-cacc-473c-98b4-bf09353cca2d"],
-Cell[CellGroupData[{
-Cell[190550, 4726, 129, 2, 70, "Input",ExpressionUUID->"1c8a6449-1532-4b19-9cac-825664b77025"],
-Cell[190682, 4730, 25405, 611, 70, "Output",ExpressionUUID->"be8dc7f4-2b25-41e7-8d9e-4f274c66f46b"]
-}, Open  ]]
-}, Closed]]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[216148, 5348, 97, 0, 70, "Section",ExpressionUUID->"e8318ad5-33e4-4b43-9290-03c47dcb0bfd"],
-Cell[CellGroupData[{
-Cell[216270, 5352, 220, 5, 70, "Input",ExpressionUUID->"f3b54b2b-bc11-4bd2-8060-816054562ec8"],
-Cell[216493, 5359, 109626, 2748, 70, "Output",ExpressionUUID->"485cfb48-7763-4d16-835e-4926144426f3"]
-}, Open  ]]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[326168, 8113, 107, 0, 70, "Section",ExpressionUUID->"29f22398-2563-4f3c-af3a-a91df89ad44b"],
-Cell[CellGroupData[{
-Cell[326300, 8117, 194, 4, 70, "Input",ExpressionUUID->"d1d215f7-3ce1-4e58-b659-34cf40a56718"],
-Cell[326497, 8123, 415, 6, 70, "Output",ExpressionUUID->"d0114b8a-fca7-4eba-81d2-5999b8bfdfc7"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[326949, 8134, 181, 2, 70, "Input",ExpressionUUID->"80f6253f-bc5f-4886-ae7d-41a977363c33"],
-Cell[327133, 8138, 25702, 656, 70, "Output",ExpressionUUID->"f6770b3a-a43d-4bea-a963-acc1cc2eaece"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[352872, 8799, 434, 9, 70, "Input",ExpressionUUID->"7637ba7a-1f31-4bb6-a598-429ae97f2565"],
-Cell[353309, 8810, 35342, 1016, 70, "Output",ExpressionUUID->"498c4ff5-1f5e-498b-a340-e249824d1000"]
-}, Open  ]]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[388700, 9832, 108, 0, 70, "Section",ExpressionUUID->"b21fa8bd-2996-40da-85bb-5e50520266a2"],
-Cell[CellGroupData[{
-Cell[388833, 9836, 387, 8, 70, "Input",ExpressionUUID->"74a2a00e-8f4f-478f-a9ac-4ce4f6177007"],
-Cell[389223, 9846, 35201, 1014, 70, "Output",ExpressionUUID->"1c93b8ab-2a10-48a3-a215-9f20c1be72ae"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[424461, 10865, 106, 0, 70, "Subsection",ExpressionUUID->"57af8919-bccf-4c2b-88b3-11ee8883ffb2"],
-Cell[424570, 10867, 306, 4, 70, "Text",ExpressionUUID->"a7a694c4-f1a2-4124-a741-213d8e2bfe1e"],
-Cell[424879, 10873, 296, 6, 70, "Input",ExpressionUUID->"11dcb2ba-ac54-409e-957b-8b92be5fa478"],
-Cell[CellGroupData[{
-Cell[425200, 10883, 369, 7, 70, "Input",ExpressionUUID->"233aefc4-996b-461a-81b2-a417948bf8cc"],
-Cell[425572, 10892, 48075, 1382, 70, "Output",ExpressionUUID->"38ab8aef-663c-45b6-aaf7-3e4a2a76dbcc"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[473684, 12279, 568, 13, 70, "Input",ExpressionUUID->"c9322b4d-143f-4709-a278-9f060affb40e"],
-Cell[474255, 12294, 59640, 1146, 70, "Output",ExpressionUUID->"291ab13a-36ce-4bf0-9ac2-9fbacc9c466a"]
-}, Open  ]]
-}, Open  ]]
-}, Open  ]]
-}, Closed]],
-Cell[CellGroupData[{
-Cell[533968, 13448, 254, 4, 62, "Chapter",ExpressionUUID->"e62cc4b7-85c3-47b2-b75a-e1dd311d185c"],
-Cell[CellGroupData[{
-Cell[534247, 13456, 110, 0, 72, "Section",ExpressionUUID->"5f1d6f76-3110-44d9-aa44-ce1079df991f"],
-Cell[534360, 13458, 473, 9, 51, "Input",ExpressionUUID->"4cecd6bb-dc75-4fad-8841-e7179e144e70"],
-Cell[534836, 13469, 322, 5, 61, "Text",ExpressionUUID->"2461f639-ae40-49eb-bf36-9c02916c34de"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[535195, 13479, 98, 0, 72, "Section",ExpressionUUID->"b9557763-dbbc-4f7b-8487-9aa2cc1b2069"],
-Cell[CellGroupData[{
-Cell[535318, 13483, 222, 5, 70, "Input",ExpressionUUID->"6427db48-6319-432e-a5b6-5921c1f3110c"],
-Cell[535543, 13490, 455, 6, 36, "Output",ExpressionUUID->"5b415b84-f152-4289-9450-68d3c27b32bd"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[536035, 13501, 94, 0, 58, "Subsection",ExpressionUUID->"a6930724-d45f-4bb4-bb30-8e3f7c6dcea6"],
-Cell[CellGroupData[{
-Cell[536154, 13505, 129, 2, 70, "Input",ExpressionUUID->"888dc68f-f784-4c63-af04-75ac825b5442"],
-Cell[536286, 13509, 25405, 611, 70, "Output",ExpressionUUID->"cd5f107f-b362-47ee-9445-75facdcbac34"]
-}, Open  ]]
-}, Closed]]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[561752, 14127, 97, 0, 72, "Section",ExpressionUUID->"b3cbf88d-347c-47f6-9536-6d4bed3873f1"],
-Cell[CellGroupData[{
-Cell[561874, 14131, 239, 5, 70, "Input",ExpressionUUID->"e4c32dd8-548e-483c-9500-5726362d653d"],
-Cell[562116, 14138, 68982, 1726, 815, "Output",ExpressionUUID->"f61a6465-f211-4868-a122-3588f66a1f5c"]
-}, Open  ]]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[631147, 15870, 107, 0, 70, "Section",ExpressionUUID->"d7d0aa82-7c25-40ab-91d3-9acd59f4a70a"],
-Cell[CellGroupData[{
-Cell[631279, 15874, 194, 4, 70, "Input",ExpressionUUID->"e64f06de-4a38-4a9d-8d6a-35d2e4ae81af"],
-Cell[631476, 15880, 415, 6, 70, "Output",ExpressionUUID->"0091cffc-52f5-4bf8-8939-d402f9b1f501"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[631928, 15891, 181, 2, 70, "Input",ExpressionUUID->"912ebc96-8a08-43b8-9033-eabdb333898b"],
-Cell[632112, 15895, 25702, 656, 70, "Output",ExpressionUUID->"fb6623cf-d077-473c-a52e-20a325976b5f"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[657851, 16556, 444, 9, 70, "Input",ExpressionUUID->"ba607fb4-3ec3-4c6c-8541-1971db26300e"],
-Cell[658298, 16567, 35342, 1016, 70, "Output",ExpressionUUID->"a42d6986-3ec1-4aab-b52c-ed9693164e54"]
-}, Open  ]]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[693689, 17589, 108, 0, 70, "Section",ExpressionUUID->"14798994-0fb5-423e-b30f-6ed5442d6637"],
-Cell[CellGroupData[{
-Cell[693822, 17593, 387, 8, 70, "Input",ExpressionUUID->"d1534d58-7c0a-4fcd-9a29-6c3009b68059"],
-Cell[694212, 17603, 35201, 1014, 70, "Output",ExpressionUUID->"07d6819f-74c5-448d-b607-e78cf855a999"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[729450, 18622, 106, 0, 70, "Subsection",ExpressionUUID->"a7174b5a-bb86-4400-a443-781d89b64f28"],
-Cell[729559, 18624, 306, 4, 70, "Text",ExpressionUUID->"0b5ec014-3b23-422a-a15a-3d66a6efcac7"],
-Cell[729868, 18630, 296, 6, 70, "Input",ExpressionUUID->"ea97d2eb-e401-4a4c-9129-cc07ba8885d1"],
-Cell[CellGroupData[{
-Cell[730189, 18640, 369, 7, 70, "Input",ExpressionUUID->"0aa112a4-f362-4f57-aec9-486432e254b6"],
-Cell[730561, 18649, 48075, 1382, 70, "Output",ExpressionUUID->"8a5f0cd2-49dc-4890-bc6b-0dd92335be19"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[778673, 20036, 568, 13, 70, "Input",ExpressionUUID->"2f37359f-75a4-4998-934d-5b2f91212427"],
-Cell[779244, 20051, 59640, 1146, 70, "Output",ExpressionUUID->"b6f7be63-4201-401e-9820-ae8206231a45"]
-}, Open  ]]
-}, Open  ]]
-}, Open  ]]
-}, Closed]],
-Cell[CellGroupData[{
-Cell[838957, 21205, 103, 0, 62, "Chapter",ExpressionUUID->"2cf2fd86-409e-433f-bfcd-dceba02743d2"],
-Cell[839063, 21207, 445, 6, 85, "Text",ExpressionUUID->"edd40085-a8bb-429c-a805-92eecea9c14e"],
-Cell[839511, 21215, 187, 5, 32, "Input",ExpressionUUID->"b688bea5-1a21-4088-a261-03190d7eb181"],
-Cell[CellGroupData[{
-Cell[839723, 21224, 108, 0, 58, "Subsection",ExpressionUUID->"3083faa4-f065-4610-8857-835fd9123e22"],
-Cell[839834, 21226, 228, 3, 61, "Text",ExpressionUUID->"7ea00ed6-7662-468c-9b1f-05f4f579a87e"],
-Cell[CellGroupData[{
-Cell[840087, 21233, 784, 16, 242, "Input",ExpressionUUID->"0d27ad3b-ec77-48ea-bdce-b76db9e946cf"],
-Cell[840874, 21251, 2949, 89, 77, "Output",ExpressionUUID->"bcc049e6-1d87-477f-be98-be8d13baf3ed"]
-}, Open  ]]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[843872, 21346, 114, 0, 58, "Subsection",ExpressionUUID->"00a63bca-afc3-4fb3-b302-7c1453074b6c"],
-Cell[843989, 21348, 335, 5, 85, "Text",ExpressionUUID->"5e1ac6aa-4b18-4257-a81c-e53227f700f1"],
-Cell[CellGroupData[{
-Cell[844349, 21357, 420, 9, 127, "Input",ExpressionUUID->"62b2aa74-25ad-4894-bd3b-c2bcb1423d47"],
-Cell[844772, 21368, 7307, 187, 161, "Output",ExpressionUUID->"2641ae6a-2546-490a-84e6-aaf7b5cbc676"]
-}, Open  ]]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[852128, 21561, 122, 0, 58, "Subsection",ExpressionUUID->"918905a1-c6a2-460b-84cb-7257e7737c83"],
-Cell[852253, 21563, 337, 6, 70, "Input",ExpressionUUID->"e40775dc-a743-46f5-a2e1-30e6caeba4e4"]
-}, Closed]],
-Cell[CellGroupData[{
-Cell[852627, 21574, 120, 0, 40, "Subsection",ExpressionUUID->"f783efdd-f4cb-4be5-91a1-27d221d69c6c"],
-Cell[852750, 21576, 359, 5, 85, "Text",ExpressionUUID->"05e17657-4b6e-4a0a-9797-4281416e2f5e"],
-Cell[CellGroupData[{
-Cell[853134, 21585, 406, 8, 108, "Input",ExpressionUUID->"e06eb4c0-2bd5-4243-9602-bba9f9a05267"],
-Cell[853543, 21595, 27109, 706, 422, "Output",ExpressionUUID->"2f68f431-c54a-4683-8572-7da4b494efef"]
-}, Open  ]]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[880701, 22307, 121, 0, 58, "Subsection",ExpressionUUID->"0037f450-fbd5-4741-8dee-df76bc414200"],
-Cell[880825, 22309, 145, 2, 70, "Input",ExpressionUUID->"c5711630-4106-403d-92b8-0559d7463cd7"]
-}, Closed]]
-}, Closed]],
-Cell[CellGroupData[{
-Cell[881019, 22317, 115, 0, 62, "Chapter",ExpressionUUID->"ac6ec3a6-f0cf-47e7-8d9c-2f001b033e6f"],
-Cell[881137, 22319, 420, 6, 85, "Text",ExpressionUUID->"39e199c3-56eb-4618-81ac-d93d00dfa632"],
-Cell[881560, 22327, 303, 4, 61, "Text",ExpressionUUID->"db54113d-b21d-47f0-aa16-6ced103ae475"],
-Cell[881866, 22333, 641, 14, 223, "Input",ExpressionUUID->"7ad9692e-cf7d-4996-ac43-c4f24b376773"],
-Cell[882510, 22349, 219, 3, 61, "Text",ExpressionUUID->"4a2d80da-d90a-425d-aa60-00d60c9ef184"],
-Cell[882732, 22354, 987, 24, 356, "Input",ExpressionUUID->"a567f2ed-0002-4769-8fc9-4adf08c310d6"],
-Cell[883722, 22380, 333, 5, 61, "Text",ExpressionUUID->"e0f83eb0-9f4d-4bae-a184-1514e6db1ca0"],
-Cell[CellGroupData[{
-Cell[884080, 22389, 569, 14, 165, "Input",ExpressionUUID->"d1af0282-ea1f-4773-a480-0772edb9c8ab"],
-Cell[CellGroupData[{
-Cell[884674, 22407, 352, 9, 25, "Print",ExpressionUUID->"58a4dff5-c5e1-424b-a0a9-2c5ef1c40425"],
-Cell[885029, 22418, 351, 9, 25, "Print",ExpressionUUID->"f370c40b-1693-4127-9ffc-926c3970a76e"],
-Cell[885383, 22429, 352, 9, 25, "Print",ExpressionUUID->"ae13b0e9-3d45-4e48-8d07-4afb198e3ef5"],
-Cell[885738, 22440, 352, 9, 25, "Print",ExpressionUUID->"6f7ac547-1003-4668-9200-ff9b31619e4a"],
-Cell[886093, 22451, 352, 9, 25, "Print",ExpressionUUID->"26126fd7-de75-4ad4-a6a1-5196aa6b046a"],
-Cell[886448, 22462, 352, 9, 25, "Print",ExpressionUUID->"95749753-0f76-417d-874e-923cfe2c7862"],
-Cell[886803, 22473, 354, 9, 25, "Print",ExpressionUUID->"9c85cfdf-76c6-4070-a302-6c93750eed52"],
-Cell[887160, 22484, 352, 9, 25, "Print",ExpressionUUID->"f2af5d9e-425b-4721-993b-6e32886dd459"],
-Cell[887515, 22495, 344, 9, 25, "Print",ExpressionUUID->"802ef699-019f-4431-af9b-ebe804f5f2de"],
-Cell[887862, 22506, 344, 9, 25, "Print",ExpressionUUID->"46e8c27b-7cd2-4154-894d-b1391e0eb9aa"]
-}, Open  ]]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[888255, 22521, 587, 14, 203, "Input",ExpressionUUID->"8235a1e2-7b33-4aee-9c36-66aeac147619"],
-Cell[888845, 22537, 2615, 62, 242, "Output",ExpressionUUID->"efa885e3-2f91-42a1-a59f-b1162e155a38"]
-}, Open  ]],
-Cell[891475, 22602, 315, 5, 61, "Text",ExpressionUUID->"6cdfc4df-3b33-4241-947a-d02cb60dfc2c"],
-Cell[CellGroupData[{
-Cell[891815, 22611, 93, 0, 58, "Subsection",ExpressionUUID->"2ccb06a8-2e9b-488b-a5b3-e948335e89fc"],
-Cell[CellGroupData[{
-Cell[891933, 22615, 150, 5, 51, "Input",ExpressionUUID->"2cccafb8-9762-4a76-8fab-6046feef98d2"],
-Cell[892086, 22622, 278, 6, 36, "Output",ExpressionUUID->"778bc396-44a3-450c-80ea-f7d659e64c26"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[892401, 22633, 134, 2, 32, "Input",ExpressionUUID->"d27d30d5-6033-45f3-aec2-ea37f0734ec0"],
-Cell[892538, 22637, 54807, 1049, 295, "Output",ExpressionUUID->"65230c26-f267-4fb5-8087-5f8146111fd0"]
-}, Open  ]]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[947394, 23692, 123, 0, 58, "Subsection",ExpressionUUID->"fb74e499-9041-4677-8500-2958c091df48"],
-Cell[947520, 23694, 99, 0, 70, "Input",ExpressionUUID->"5dcb18c6-0e7f-44cf-a176-c7e2aee51e81"],
-Cell[947622, 23696, 267, 5, 70, "Input",ExpressionUUID->"81a48114-772b-4daa-988b-8fee1c950b68"]
-}, Closed]]
-}, Closed]],
-Cell[CellGroupData[{
-Cell[947938, 23707, 212, 4, 62, "Chapter",ExpressionUUID->"15493c99-b701-4018-8d18-090e7c1acfef"],
-Cell[CellGroupData[{
-Cell[948175, 23715, 110, 0, 72, "Section",ExpressionUUID->"89026863-5544-489b-ab25-ac603cac3bb4"],
-Cell[948288, 23717, 394, 8, 51, "Input",ExpressionUUID->"973adb5c-6d80-4af0-a836-34261c6484b5"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[948719, 23730, 98, 0, 72, "Section",ExpressionUUID->"829336c3-0232-4ede-97cc-606232df4f3f"],
-Cell[CellGroupData[{
-Cell[948842, 23734, 226, 6, 70, "Input",ExpressionUUID->"53aaf630-9d47-402c-8e76-3f9c9e04a922"],
-Cell[949071, 23742, 276, 5, 36, "Output",ExpressionUUID->"3ff4402d-6579-4821-bb18-136f2ec1a844"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[949384, 23752, 94, 0, 58, "Subsection",ExpressionUUID->"f095ff72-e0c7-4626-9ccb-cd57a8a70d3d"],
-Cell[949481, 23754, 101, 0, 70, "Input",ExpressionUUID->"67d8c5bd-f375-416c-b478-6811d832ff41"]
-}, Closed]]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[949631, 23760, 97, 0, 72, "Section",ExpressionUUID->"ebda4c03-b7cb-4748-8e82-35ee77c7dae0"],
-Cell[949731, 23762, 377, 5, 85, "Text",ExpressionUUID->"9916c18d-f6e4-45a7-b842-fe42dde7df29"],
-Cell[950111, 23769, 255, 6, 51, "Input",ExpressionUUID->"d61557f4-ea78-4d0f-8fe8-1657f5c1719f"],
-Cell[CellGroupData[{
-Cell[950391, 23779, 236, 5, 32, "Input",ExpressionUUID->"b1e15175-8140-4948-bdbe-da0af247e045"],
-Cell[950630, 23786, 22847, 588, 347, "Output",ExpressionUUID->"ba90cc20-50f5-452e-a3f1-cf4c3d160db2"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[973514, 24379, 106, 0, 58, "Subsection",ExpressionUUID->"b1067fca-8bad-40c1-8e00-779461c05107"],
-Cell[973623, 24381, 287, 4, 70, "Text",ExpressionUUID->"1784af3a-f8d7-4a70-ba15-34440b5621c8"],
-Cell[973913, 24387, 476, 10, 70, "Input",ExpressionUUID->"472f3ff8-8d5a-4669-9613-97fc5583ef00"]
-}, Closed]]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[974438, 24403, 107, 0, 72, "Section",ExpressionUUID->"b2277d8e-d982-407c-81cd-b498c2b4d73a"],
-Cell[CellGroupData[{
-Cell[974570, 24407, 242, 6, 51, "Input",ExpressionUUID->"ee6aee73-6160-495b-b328-effacc98849a"],
-Cell[974815, 24415, 303, 6, 36, "Output",ExpressionUUID->"7919e002-34b1-4224-a208-af4864fe878a"]
-}, Open  ]],
-Cell[975133, 24424, 231, 5, 32, "Input",ExpressionUUID->"e5f9ed4a-a206-450e-9e24-0f2f916f3a73"],
-Cell[CellGroupData[{
-Cell[975389, 24433, 428, 10, 108, "Input",ExpressionUUID->"2728646b-efee-4444-81aa-d52c19f3d07d"],
-Cell[975820, 24445, 5886, 116, 77, "Output",ExpressionUUID->"00aaf71f-b322-4227-a387-ed8a723cf14b"]
-}, Open  ]]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[981755, 24567, 108, 0, 72, "Section",ExpressionUUID->"f0dc4534-4e92-4131-92da-26375b64a259"],
-Cell[CellGroupData[{
-Cell[981888, 24571, 387, 8, 127, "Input",ExpressionUUID->"32379913-9204-4d5b-8b62-7786c54bc7a2"],
-Cell[982278, 24581, 8186, 235, 114, "Output",ExpressionUUID->"2ad4fc02-74cf-4b04-96b6-67f47a63ba9e"]
-}, Open  ]],
-Cell[CellGroupData[{
-Cell[990501, 24821, 106, 0, 58, "Subsection",ExpressionUUID->"29fe5b44-c350-49c6-a767-1d0cfbb19979"],
-Cell[990610, 24823, 296, 6, 70, "Input",ExpressionUUID->"73584d18-50eb-4242-b2ab-726452f08855"],
-Cell[CellGroupData[{
-Cell[990931, 24833, 513, 9, 89, "Input",ExpressionUUID->"92ad92cb-8925-4055-9775-196e72980930"],
-Cell[991447, 24844, 41676, 1223, 436, "Output",ExpressionUUID->"e4a488e3-3641-475c-a7e5-2e9a935877cc"]
-}, Open  ]],
-Cell[1033138, 26070, 347, 5, 85, "Text",ExpressionUUID->"f898b1d2-a926-4d85-950c-bf2c028ded42"],
-Cell[CellGroupData[{
-Cell[1033510, 26079, 734, 16, 223, "Input",ExpressionUUID->"62cf9510-81cd-4566-9e42-51f3c8b6de40"],
-Cell[1034247, 26097, 59763, 1148, 325, "Output",ExpressionUUID->"a12d310f-6828-46aa-a56f-25cfc638485b"]
-}, Open  ]]
-}, Open  ]]
-}, Open  ]]
-}, Open  ]]
-}, Open  ]]
-}
-]
-*)
-
