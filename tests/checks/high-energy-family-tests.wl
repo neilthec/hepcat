@@ -80,6 +80,50 @@ check["genuine acceptable-growth local freedom remains underdetermined",
     heContactResult["RemainingBasis"] === {1} &&
     AllTrue[heContactResult["AfterReport"]["Checks"], #["Status"] === "PASS" &]];
 
+(* Explicit null axes are generic coordinate choices, not extra kinematic
+   constraints. Opposite homogeneous weights select a useful default pair. *)
+hePivotRules = {Mass[1] -> heMass, Mass[2] -> heMass,
+  Mass[3] -> 0, Mass[4] -> 0, Mass[5] -> 0, Mass[6] -> 0};
+hePivotAngle[i_, j_] := SpinorChain[Spinor["Helicity", "Angle", i], Spinor["Helicity", "Angle", j]];
+hePivotSquare[i_, j_] := SpinorChain[Spinor["Helicity", "Square", i], Spinor["Helicity", "Square", j]];
+hePivotMixed = hePivotSquare[3, 4] hePivotSquare[4, 5] hePivotSquare[3, 5] hePivotAngle[3, 6] hePivotAngle[4, 6]/hePivotAngle[3, 4];
+hePivotUniform = hePivotSquare[3, 4]^2 hePivotSquare[5, 6]^2;
+check["Opposite homogeneous weights choose null3/null6",
+  ConstructiveDiagrams`Private`completionHEPreferredNullPivots[hePivotMixed, hePivotRules] === {3, 6}];
+check["Uniform weights retain first two nulls",
+  ConstructiveDiagrams`Private`completionHEPreferredNullPivots[hePivotUniform, hePivotRules] === {3, 4}];
+check["Unknown weights retain first two nulls",
+  ConstructiveDiagrams`Private`completionHEPreferredNullPivots[hePivotSquare[3, 4] + hePivotAngle[3, 4], hePivotRules] === {3, 4}];
+check["No null pair retains automatic massive frame",
+  ConstructiveDiagrams`Private`completionHEPreferredNullPivots[hePivotMixed,
+    {Mass[1] -> heMass, Mass[2] -> heMass, Mass[3] -> heMass, Mass[4] -> 0}] === Automatic];
+Do[check["Reject invalid pivots " <> ToString[hePivotPivots, InputForm],
+  ConstructiveDiagrams`Private`completionHESymbolicExternalChart[hePivotRules, hePivotPivots] === $Failed],
+  {hePivotPivots, {{3, 3}, {1, 3}, {3, 99}, {3}, {3, 4, 5}, {3, "4"}, None}}];
+hePivotEpsilon = {{0, 1}, {-1, 0}};
+Do[
+ hePivotChart = ConstructiveDiagrams`Private`completionHESymbolicExternalChart[hePivotRules, hePivotPivots];
+ check["Axes preserved " <> ToString[hePivotPivots, InputForm], hePivotChart["NullAxisLegs"] === hePivotPivots];
+ check["Conservation " <> ToString[hePivotPivots, InputForm],
+   ConstructiveDiagrams`Private`residueExactZero[Total[Values[hePivotChart["Momenta"]]]]];
+ check["All external mass shells " <> ToString[hePivotPivots, InputForm],
+   AllTrue[Range[6], ConstructiveDiagrams`Private`residueExactZero[
+     Det[hePivotChart["Momenta"][#]] - hePivotChart["Masses"][#]^2] &]];
+ check["Null momentum spinor decomposition " <> ToString[hePivotPivots, InputForm],
+   AllTrue[Range[3, 6], ConstructiveDiagrams`Private`residueExactZero[
+     Outer[Times, hePivotChart["Angle"][#], hePivotChart["Square"][#]] - hePivotChart["Momenta"][#]] &]];
+ check["Full coherent massive spin bases " <> ToString[hePivotPivots, InputForm],
+   Length[hePivotChart["SpinVariables"]] === 2 && AllTrue[{1, 2},
+     !ConstructiveDiagrams`Private`residueExactZero[Det[hePivotChart["AngleBasis"][#]]] &&
+     ConstructiveDiagrams`Private`residueExactZero[hePivotChart["AngleBasis"][#].hePivotEpsilon.
+       Transpose[hePivotChart["SquareBasis"][#]] - hePivotChart["Momenta"][#]] &]];
+ hePivotCuts = Prepend[#, 1] & /@ Subsets[Range[3, 6], {1, 3}];
+ check["No internal shell imposed on fourteen physical cuts " <> ToString[hePivotPivots, InputForm],
+   hePivotChart["InternalOnShellConditions"] === {} && Length[hePivotCuts] === 14 &&
+   AllTrue[hePivotCuts, !ConstructiveDiagrams`Private`residueExactZero[
+     Det[Total[Lookup[hePivotChart["Momenta"], #]]] - heMass^2] &]],
+ {hePivotPivots, {{3, 4}, {3, 6}, {6, 3}}}];
+
 (* Use the actual notebook's numerical defaults, reference choices and budgets.
    The independent Feynman calculation is only a final benchmark. No known
    higher-point expression is supplied to construction or completion. *)
@@ -116,7 +160,7 @@ If[heFullConstruction, Do[
   Print["SKIP: set HEPCAT_TEST_FULL_HELICITY_CONSTRUCTION=1 for the four full notebook constructor regressions."]];
 check["identity pruning and construction preserve both supplied models",
   heOriginalModels === {heDiagramModel, heModel}];
-If[checks =!= If[heFullConstruction, 19, 11], AppendTo[failures, "Not every enabled assertion executed."]];
+If[checks =!= If[heFullConstruction, 48, 40], AppendTo[failures, "Not every enabled assertion executed."]];
 Print["CHECKS: ", checks, "; FAILURES: ", Length[failures]];
 If[failures =!= {}, Print[failures]];
 If[failures === {}, Print["HEPCAT_TEST_COMPLETED:high-energy-family-tests.wl"]];

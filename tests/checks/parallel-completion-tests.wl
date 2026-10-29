@@ -117,6 +117,39 @@ pcExpired = Quiet[ConstructiveDiagrams`Private`completionConstraintSample[
 check["a sample that missed the shared deadline is unresolved rather than accepted",
   AssociationQ[pcExpired] && pcExpired["Status"] === "UNRESOLVED" &&
     !KeyExistsQ[pcExpired, "Equations"]];
+
+(* Independent identity proofs share the same bounded worker queue. These are
+   ordinary external conservation identities, with one genuine local direction
+   deliberately retained. No sampled zero is accepted as an identity proof. *)
+pcIdentityRules = pcNormalized["ExternalMassRules"];
+pcIdentityParameters = Table[Unique["parallelIdentity"], {5}];
+pcIdentityDirections = Append[Table[Total[MomProd[leg, #] & /@ Range[5]],
+  {leg, 4}], 1];
+pcIdentityFamily = 7 + pcIdentityParameters.pcIdentityDirections;
+pcIdentityResult = Block[
+  {ConstructiveDiagrams`Private`$completionParallelSettings = pcSettings[True]},
+  ConstructiveDiagrams`Private`completionHEPruneIdentityFamily[
+    pcIdentityFamily, pcIdentityParameters, pcIdentityRules, prFixtureModel, 40]];
+check["independent identity certificates use real parallel workers",
+  pcIdentityResult["Execution"]["Mode"] === "Parallel" &&
+    pcIdentityResult["Execution"]["KernelCount"] === 2];
+check["only exact conservation identities are removed, in original parameter order",
+  pcIdentityResult["RemovedParameters"] === Most[pcIdentityParameters] &&
+    pcIdentityResult["FreeParameters"] === {Last[pcIdentityParameters]} &&
+    pcIdentityResult["RemainingBasis"] === {1} &&
+    pcIdentityResult["FamilyAmplitude"] === 7 + Last[pcIdentityParameters] &&
+    Lookup[pcIdentityResult["Certificates"], "Parameter"] === pcIdentityParameters &&
+    AllTrue[Most[pcIdentityResult["Certificates"]], #["Status"] === "PROVED_ZERO" &&
+      Lookup[#, "NumericalKinematicSamples", 0] === 0 &&
+      Lookup[#, "InternalOnShellConditions", {}] === {} &]];
+pcIdentityExpired = Block[
+  {ConstructiveDiagrams`Private`$completionParallelSettings = pcSettings[True]},
+  ConstructiveDiagrams`Private`completionHEPruneIdentityFamily[
+    pcIdentityFamily, pcIdentityParameters, pcIdentityRules, prFixtureModel, 0]];
+check["an exhausted parallel proof budget preserves the entire affine family",
+  pcIdentityExpired["FreeParameters"] === pcIdentityParameters &&
+    pcIdentityExpired["RemovedParameters"] === {} &&
+    Expand[pcIdentityExpired["FamilyAmplitude"] - pcIdentityFamily] === 0];
 Print["CHECKS: ", checks, "; FAILURES: ", Length[failures]];
 If[failures =!= {}, Print[failures]];
 CloseKernels[ConstructiveDiagrams`Private`$amplitudeParallelKernels];

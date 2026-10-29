@@ -1556,6 +1556,21 @@ qdsPublic = ReduceSpinorProducts[qdsInput];
 check["public ordinary reduction contracts literal external masses without model state",
   Head[qdsPublic] =!= Plus && ReduceSpinorProducts[qdsPublic] === qdsPublic &&
     AllTrue[qfiMassiveCharts, qfiValue[qdsInput - qdsPublic, #] === 0 &]];
+(* A parent Plus may disappear after its children reduce. The local contraction
+   helper must not escape as contract$...[0] or contract$...[a single term]. *)
+qdsZeroInput = qdsInput - qdsReduced;
+qdsNestedZero = qdsOuterA qdsZeroInput + qdsOuterB qdsZeroInput;
+check["nested directed Schouten sums reduce to literal zero",
+  qdsReduce[qdsNestedZero] === 0 && AllTrue[qfiMassiveCharts,
+    qfiValue[qdsNestedZero, #] === 0 &]];
+qdsNestedSurvivor = qdsOuterA qdsZeroInput + SpinorChain[qdsR, qdsB];
+check["collapsed directed Schouten parent preserves a single surviving term",
+  qdsReduce[qdsNestedSurvivor] === SpinorChain[qdsR, qdsB] &&
+    AllTrue[qfiMassiveCharts,
+      qfiValue[qdsNestedSurvivor - SpinorChain[qdsR, qdsB], #] === 0 &]];
+check["public reduction cannot leak a local contraction head from nested zero",
+  ReduceSpinorProducts[qdsNestedZero] === 0];
+
 check["directed sums do not invent internal on-shell information",
   FreeQ[qdsReduced, Mass[_Multiparticle] | _MomProd] &&
     qdsReduce[qdsInput /. Mom[1] -> Mom[Multiparticle[1, 3]]] ===

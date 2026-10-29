@@ -167,6 +167,8 @@ If[!MissingQ[tpRaw3456],
       {tpCycles, {{}, {{3, 4}}, {{4, 5}}}}]];
   tpAutomaticOptions = Join[Association[Options[PrepareAmplitudes]],
     <|"PolePreference" -> "AllPhysical", "MaxSteps" -> 0,
+      (* This private per-item entry point receives already resolved controls. *)
+      "MaxCandidates" -> 64, "MaxReferenceChoices" -> 64,
       "TimeConstraint" -> 20, "ReferenceTimeConstraint" -> 15,
       "ProgressReporting" -> False, "ReturnDetails" -> True|>];
   Do[

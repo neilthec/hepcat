@@ -380,6 +380,7 @@ check["a failure without diagnostic strings retains a useful generic message",
 
 sixScalarProgress = {};
 sixScalarCompletion = CompleteFactorization[0, sixScalarChannels, sixScalarModel,
+  "PolePreference" -> None,
   "BoseSymmetryGroups" -> {}, "ParameterRules" -> sixScalarRules, "Samples" -> 1, "ValidationSamples" -> 1,
   "MaxCorrectionTerms" -> 8, "TimeConstraint" -> 30, "ReturnDetails" -> True,
   "ProgressFunction" -> (AppendTo[sixScalarProgress, #] &)];
@@ -519,6 +520,8 @@ sixBudgetContains[basis_List, directions_List] := Length[
     ConstructiveDiagrams`Private`completionNormalizeBasis[Join[basis, directions]]]] === Length[basis];
 sixBudgetReports = Association@Table[cap -> CompleteFactorization[
   sixBudgetInput, sixScalarChannels, sixScalarModel,
+  (* Pin the legacy span-selection route; Automatic may try physical sources first. *)
+  "PolePreference" -> None,
   "BoseSymmetryGroups" -> {{1, 2, 3, 4}}, "ParameterRules" -> sixScalarRules,
   "ValidationParameterRules" -> {sixScalarRules,
     {sixScalarMass -> 2, sixScalarCoupling -> 2}},

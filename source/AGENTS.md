@@ -47,6 +47,16 @@ are relative to the repository root, not to this file.
   papers, especially `SM_Vertices.pdf`, `SM_4_Point_Amplitudes.pdf`, and
   `QED-Challenges.pdf`; do not assume familiar conventions from another package.
 
+The ordinary construction call needs only the process, diagram model and
+factorization model. Resource/effort options default to `Automatic`; do not put
+numeric tuning bags into user examples merely to restate normal behavior.
+`FeynmanModel` is an optional semantic input selecting an independent benchmark,
+not a resource setting that can be guessed from a constructive model.
+With no explicit pole prescription in construction or its preparation inputs,
+automatic completion may first try compact physical sources, then fall back to
+the inferred reference choice within the shared deadline. Explicit pole choices
+must remain authoritative independently of resource overrides.
+
 The active symbolic workflow does not require neural models or training. The
 earlier machine-learning simplifier is preserved on the `ml-simplify` branch.
 
@@ -542,9 +552,9 @@ It applies `ReduceSpinContractions`, selects `"PolePreference"`, then calls
 propagators. Ordinary external spinor identities may simplify auxiliary
 denominators. Only external mass replacements are global; internal mass and
 on-shell replacements remain numerator-only. Reference selection defaults to
-`Automatic`: optimize eligible other-massless-particle assignments where available,
-with physical momentum-insertion fallback for each remaining reference outside
-that diagram's own cuts. `"AllSpurious"` and `"AllPhysical"` optimize only their
+`Automatic`: compare eligible other-massless-particle assignments and physical
+momentum-insertion assignments outside that diagram's own cuts, retaining the
+best completed supported trial. `"AllSpurious"` and `"AllPhysical"` optimize only their
 respective eligible assignments; `"Mixed"` pools both kinds per external reference
 and may select a mixture or only one kind. `"Cyclic"` and `"ReverseCyclic"` retain
 fixed, reproducible choices without assignment optimization. `"Xi"` (one common
@@ -553,8 +563,8 @@ make the other choices explicit. The details record assignments and unavailable
 choices are PARTIAL, not silently accepted. Supply the complete diagram set when choosing
 physical references, so alternative physical channels can be identified.
 Optimized modes rank reduced complete diagram expressions by complexity, term
-count and expression size. The default `"MaxReferenceChoices" -> 64` bounds tested
-assignments per diagram. `"ReferenceTimeConstraint" -> Automatic` uses the smaller
+count and expression size. `"MaxReferenceChoices" -> Automatic` currently resolves
+to 64 tested assignments per diagram. `"ReferenceTimeConstraint" -> Automatic` uses the smaller
 of five seconds and one third of the remaining per-diagram time. Explicit positive
 values or `Infinity` remain subject to the shared diagram deadline. Progress shows
 choices tried, the budgeted total and the best complexity. The optional reference
@@ -579,9 +589,12 @@ the checker itself never merges them. `"InternalOnShell" -> False` disables
 both the direct invariant reduction and the extra shell edits. `"MaxSteps" -> 0`
 disables only the identity search, retaining reference selection, the basic
 reductions and the direct invariant reduction. The default
-preparation limits are 12 identity steps, 64 inspected candidates per step
-and 20 seconds per diagram. Partial preparation retains the last completed
-expression and its stop reason.
+preparation resource options are `Automatic`. The first pass uses zero extra
+identity steps, 64 inspected candidates when an explicit search is requested,
+and a finite per-item clock scaled by multiplicity and expression size. Ordinary
+spinor reduction, reference selection and scoped numerator shell reduction still
+run. Partial preparation retains the last completed expression and its stop reason.
+Explicit numeric steps, clocks and caps retain their requested meanings.
 Preparation's conservation search tries consistent whole-numerator momentum
 eliminations and composite complements, using only the declared external mass
 labels. Reduce a complete trial before comparing its full-expression rank;
@@ -931,9 +944,55 @@ rescaling an amplitude or fitting a sign. Preserve determinant and Dirac
 identities for every coherent massive-spin component. Exact primitive reuse
 is call-local and falls back to the whole evaluator for unsupported structures.
 
-Both completion stages default to 64 correction terms and a 60-second stage
-limit. They fit exact equations on sampled kinematics and validate independently;
-they are not generic symbolic reconstruction or uniqueness proofs. Use
+Completion resources default to `Automatic`, resolved by the shared lightweight
+policy from multiplicity, source/channel counts, expression size and retained
+family dimensions. The first correction allowance is 128 below six points and
+256 at six points; an observed cap failure may retry a complete larger source
+space within the same stage clock, up to automatic ceilings of 1024 and 2048.
+A cap is never satisfied by discarding arbitrary columns or affine directions.
+Explicit numeric caps and clocks are never increased. `AdaptiveAttempts` and
+`ResourcePolicy` retain the requested/resolved controls and observed attempts.
+The preferred-pole attempt scales with the actual channel count, receiving at
+most `Max[90, 30 channelCount]` seconds and three quarters of the remaining
+stage time. Its source construction and fitting share that deadline. Physical
+source eligibility is determined by the resulting denominators and supported
+reference-free structure across every source origin, including selected-cut
+auxiliary-reference sources; it is not determined by a reference-mode label.
+All accepted spaces still need every original cut and full-family validation.
+Final large-expression compaction may group equal physical propagator products
+and use bounded generalized Schouten edits on their numerators. Preserve the
+exact replay route and accept only an improved existing complexity rank.
+Commit the amplitude, rank and replay route as one checkpoint record so an
+interrupted search cannot expose mismatched metadata. Its external mass rules
+never include internal-line shells, and changing a compact
+particular expression does not remove any retained family directions.
+
+Automatic fit samples are at least four, increasing with actual unknown count
+and a conservative estimate of coherent-spin equations per channel. Massive
+scalars and fixed spin components do not invent tensor rows. Independent
+validation remains four samples; larger problems do not get weaker validation.
+Final wrapper checks also resolve automatic sample and time controls before
+calling the checker. The wrapper's overall automatic clock is finite, with
+baseline allowances of 600/1800/7200 seconds at four/five/six points plus a small
+work allowance; early success returns immediately. Preserve explicit numeric
+choices and ordinary first-rule precedence, including within stage option bags.
+They fit exact equations on sampled kinematics and validate independently;
+they are not generic symbolic reconstruction or uniqueness proofs.
+Independent exact identity proofs for retained affine directions may run in
+parallel within one shared deadline, with at most ninety seconds per job.
+Retain the original proof form. Try cheap scalar grouping and bounded
+Schouten identities on that original before ordinary preparation; a form ranked
+best for display can be much harder to certify symbolically. Modest compact
+candidates may go directly to a generic symbolic external chart, with external
+preparation retained as a later fallback. Exact primitive values are simplified
+and reused before mapping the full rational sum. Generic null axes may be chosen
+from opposite homogeneous little-group weights; the selected distinct null legs
+must pass the same external-shell and conservation validation. Internal
+virtualities remain unconstrained, and masses and coherent spin variables stay
+symbolic. A worker timeout, missing result or unsupported chart preserves its
+direction. Remove a direction only on an exact
+ordinary-identity or generic symbolic external-kinematics certificate, never
+because its physical or high-energy numerical samples happened to vanish. Use
 `"ValidationParameterRules" -> {rules1, rules2, ...}` for additional
 theory-consistent parameter assignments. Automatic mass-rescaled validation
 is used only when the model has no declared parameter relations; otherwise

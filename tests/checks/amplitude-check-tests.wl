@@ -269,7 +269,8 @@ check["Feynman preparation defaults to exact algebra without entering the constr
   qaDefaultFeynmanPreparation["Status"] === "PREPARED" &&
     qaDefaultFeynmanPreparation["Options"]["MaxSteps"] === 0 &&
     AllTrue[qaDefaultFeynmanPreparation["ItemReports"], #["IdentitySteps"] === {} &] &&
-    ("MaxSteps" /. Options[PrepareAmplitudes]) === 12];
+    ("MaxSteps" /. Options[PrepareAmplitudes]) === Automatic &&
+    qaDefaultFeynmanPreparation["ResourcePolicy"]["Requested"]["MaxSteps"] === Automatic];
 qaCompositeMomentum = Mom[Multiparticle[1, 3]];
 qaCompositeTracePair = {{Mass[1] -> Me, Mass[2] -> Me, Mass[3] -> 0,
     Mass[4] -> 0, Mass[Multiparticle[1, 3]] -> Me},

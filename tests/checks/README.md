@@ -49,6 +49,59 @@ is loaded by the suite.
 
 ## Full Process Construction
 
+Construction resource defaults are automatic. Focused tests must distinguish the
+public `Automatic` request from its numeric `ResourcePolicy` resolution, retain
+explicit override and first-rule precedence, and require the same independent
+physical/spurious/high-energy/reference checks. Resource caps may grow only as
+complete source-space proposals within the shared clock; no test may pass by
+silently dropping correction directions or reducing validation quality.
+Preferred physical proposals use channel-scaled shared clocks and inspect the
+actual denominators of sources from every origin, including auxiliary reference
+continuations. Exact identity pruning may dispatch independent directions in
+parallel within a shared deadline and a ninety-second per-job ceiling.
+Proof tests must retain the original expression before preparation, exercise
+original-form grouping/Schouten reductions and the direct symbolic-chart path,
+and preserve the later ordinary-preparation fallback. Generic null-axis choices
+may use opposite homogeneous little-group weights, but must retain validated
+external shells, conservation, symbolic masses and all coherent spin components.
+No internal virtuality may be constrained. Missing results, timeouts and zero
+numerical samples must preserve unproved freedom. Regression tests should check
+these scopes explicitly.
+For large final-expression compaction, require an exact replay of every grouped
+numerator Schouten edit, a strict improvement in the existing complexity rank,
+unchanged physical denominators, and independent amplitude checks. Atomic
+checkpoints must retain a consistent amplitude, rank and replay route even on
+interruption. The generic identity tests must not rely on a known process
+formula or internal shells.
+
+`automatic-resource-tests.wl` covers lightweight workload estimates, finite
+clock/cap resolution, coherent versus fixed-spin sample estimates, unchanged
+explicit overrides, public defaults, nested sample precedence and final-check
+deadlines. Its fresh four- and five-point constructors receive only the three
+required arguments; a forbidden six-point process must still validate as zero.
+The larger nonzero six-point default construction is available with
+`HEPCAT_TEST_FULL_AUTOMATIC_CONSTRUCTION=1`; it uses the same option-free call
+and must pass independent checks. The mixed six-point benchmark also retains
+its complete affine family through high-energy completion: the current
+160-column source fit leaves 67 directions, all subsequently removed only by
+exact ordinary or symbolic external-kinematics identity certificates. The
+recorded eight-worker high-energy stage completes in 61.4 seconds. These
+measurements are process benchmarks, not general runtime guarantees.
+Final external preparation takes another 29.4 seconds and gives 4,147 leaves
+in 18 groups with complexity 1,128; the 3.3-second final check reports 17 passes,
+including the independent Feynman comparison. A lower leaf count alone does
+not outrank a lower weighted complexity.
+
+The slower complete physical mixed-helicity constructor regression is enabled
+separately. It chooses `AllPhysical`, requests diagnostic output and supplies an
+independent Feynman model, but sets no fitting samples, correction caps, search
+steps or stage clocks:
+
+```sh
+HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION=1 python3 tests/checks/run-wolfram-tests.py --suite automatic-resource-tests.wl --timeout 1800
+```
+
+
 `physical-pole-completion-tests.wl` checks inherited and explicit physical-pole
 preferences, the original channel catalog, complementary cuts, inverse-factor
 and higher-pole guards, contour-normalized channel sources, exact exchange
@@ -72,6 +125,11 @@ or unresolved final checks. It does not modify or execute the user's notebooks.
 from real undetermined interactions. It checks the generic symbolic external
 chart, momentum conservation, chirality and little-group safety, fixed-spin
 and branch exclusions, proof deadlines and retained scalar contact freedom.
+The routine suite has 40 assertions, including 29 generic null-pivot checks:
+valid and invalid axis choices, opposite homogeneous-weight selection,
+conserved external mass shells and all 14 physical internal invariants remaining
+generically off shell. These checks use symbolic masses and no sampled
+phase-space assignments.
 The slower end-to-end regressions reproduce both formerly failing five-point
 notebook cases, their working counterparts and independent Feynman checks:
 

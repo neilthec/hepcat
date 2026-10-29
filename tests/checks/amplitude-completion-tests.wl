@@ -239,9 +239,18 @@ check["the prepared cyclic numerator agrees independently on its declared cut",
     prChart[{1, 3}, acReferenceCutVariable, firstSpin, secondSpin]] /.
       acReferenceCutVariable -> 0] === 0, {firstSpin, 2}, {secondSpin, 2}]]];
 acReferenceAutomatic = acReferencePrepare[{acReferencePair}, Automatic];
-check["Automatic uses supported spurious choices first",
-  acReferenceAutomatic["Amplitude"] === acReferenceSpurious["Amplitude"] &&
-    AllTrue[acReferenceAssignments[acReferenceAutomatic], #["Mode"] === "AllSpurious" &]];
+check["Automatic keeps a no-worse supported physical or spurious reference assignment",
+  acReferenceAutomatic["Status"] === "PREPARED" &&
+    !ConstructiveDiagrams`Private`preparationBetterQ[
+      ConstructiveDiagrams`Private`preparationRank[acReferenceSpurious["Amplitude"]],
+      ConstructiveDiagrams`Private`preparationRank[acReferenceAutomatic["Amplitude"]]] &&
+    AllTrue[acReferenceAssignments[acReferenceAutomatic],
+      MemberQ[{"AllSpurious", "AllPhysical"}, #["Mode"]] &] &&
+    FreeQ[acReferenceAutomatic["Amplitude"], Spinor["Xi", ___]] &&
+    And @@ Flatten[Table[Together[prMapOnChart[
+      (acReferenceAutomatic["Amplitude"] - First[acReferenceAutomatic["DiagramReports"]]["PolePreference"]["Expression"]) /. acDen -> 1,
+      prChart[{1, 3}, acReferenceCutVariable, firstSpin, secondSpin]] /.
+        acReferenceCutVariable -> 0] === 0, {firstSpin, 2}, {secondSpin, 2}]]];
 check["the default reference-spinor choice is Automatic",
   ("PolePreference" /. Options[PrepareAmplitudes]) === Automatic];
 acReferenceAlias = acReferencePrepare[{acReferencePair}, "Cyclic"];
@@ -369,7 +378,9 @@ check["reference optimization retains the original pair and its off-shell physic
     !FreeQ[acOptimizedSpurious["Amplitude"], acDen]];
 acReferenceSearch[report_] := First[report["DiagramReports"]]["PolePreference"]["Search"];
 check["reference optimization has finite default choices and an automatic shared time sub-budget",
-  ("MaxReferenceChoices" /. Options[PrepareAmplitudes]) === 64 &&
+  ("MaxReferenceChoices" /. Options[PrepareAmplitudes]) === Automatic &&
+    acOptimizedSpurious["Options"]["MaxReferenceChoices"] === 64 &&
+    acOptimizedSpurious["ResourcePolicy"]["Requested"]["MaxReferenceChoices"] === Automatic &&
     ("ReferenceTimeConstraint" /. Options[PrepareAmplitudes]) === Automatic];
 check["optimized reference details expose actual reduction scores and a bounded search inventory",
   With[{reference = First[acOptimizedSpurious["DiagramReports"]]["PolePreference"]},
@@ -1760,9 +1771,13 @@ acFourFermionFactorization = acFactor[acFourFermionPreparation, acFourFermionCha
   "MaxCorrectionTerms" -> 128, "TimeConstraint" -> 300];
 check["recorded references do not hide the physical correction space for four fermions",
   acFourFermionFactorization["Status"] === "COMPLETE" &&
-    MemberQ[{"ReducedChannels", "PeeledChannels"}, acFourFermionFactorization["CorrectionSpace"]] &&
+    MemberQ[{"ReducedChannels", "PeeledChannels", "PhysicalChannels"}, acFourFermionFactorization["CorrectionSpace"]] &&
     Length[acFourFermionFactorization["CorrectionBasis"]] <= 128 &&
-    acPhysicalPass[acFourFermionFactorization["ValidationReport"]]];
+    acPhysicalPass[acFourFermionFactorization["ValidationReport"]] &&
+    ConstructiveDiagrams`Private`completionPhysicalDenominatorOnlyQ[
+      acFourFermionFactorization["Amplitude"],
+      ConstructiveDiagrams`Private`completionNormalizeInput[acFourFermionPreparation,
+        acFourFermionChannels, prFixtureModel]]];
 acFourFermionEnergy = acEnergy[acFourFermionFactorization["Amplitude"], acFourFermionChannels,
   prFixtureModel, "Samples" -> 1, "ValidationSamples" -> 1, "TimeConstraint" -> 180];
 check["four-fermion completion satisfies high-energy and reference requirements",
@@ -1889,9 +1904,11 @@ check["the cyclic mixed-helicity scalar-square fixture retains exact off-cut equ
     Flatten[acMixedHelicityFixtureDifferences] ===
       ConstantArray[0, 4 Length[acMixedHelicityOrdinaryPrepared]]];
 acMixedHelicitySaved = acMixedHelicityPrepared;
+(* Isolate the established compact route; automatic preferred-source ordering
+   has its own tests and must not mask this older path's invariant checks. *)
 acMixedHelicityCompleted = acFactor[acMixedHelicityPrepared, acMixedHelicityChannels,
   prFixtureModel, "Samples" -> 1, "ValidationSamples" -> 1,
-  "ShiftedChannelContinuations" -> False,
+  "ShiftedChannelContinuations" -> False, "PolePreference" -> None,
   "MaxCorrectionTerms" -> 128, "TimeConstraint" -> 180,
   "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}];
 check["the established compact route still handles cyclic choices and scalar momentum squares when shifted proposals are disabled",
@@ -2016,11 +2033,13 @@ acContactCompact = ConstructiveDiagrams`Private`completionReducedChannelBasis[
 check["compact channel construction does not include a known pole-free input as a cancellation direction",
   AssociationQ[acContactCompact] && FreeQ[acContactCompact["Basis"], acPreservedContact]];
 
+(* Force the compact-to-literal fallback itself, keeping automatic pole-source
+   selection from satisfying the fit before the deliberately empty space. *)
 acCompactFallback = Block[
   {ConstructiveDiagrams`Private`completionReducedChannelBasis = Function[
     {normalized, references, limit, rules, seed}, <|"Basis" -> {}|>]},
   acFactor[prH/2, prChannels, prFixtureModel,
-    "InputReweighting" -> None,
+    "InputReweighting" -> None, "PolePreference" -> None,
     "ChannelCompanions" -> None,
     "Samples" -> 2, "ValidationSamples" -> 1,
     "MaxCorrectionTerms" -> 128, "TimeConstraint" -> 90,
@@ -2042,7 +2061,7 @@ check["the legacy literal channel-term space is honestly insufficient for the fi
 check["compact completion uses verified channel structures rather than silently reusing the old space",
   acQEDFiveCompleted["CorrectionBasis"] =!= acQEDFiveLegacy["CorrectionBasis"] &&
     Or[
-      acQEDFiveCompleted["CorrectionSpace"] === "ReducedChannels" &&
+      MemberQ[{"ReducedChannels", "PhysicalChannels"}, acQEDFiveCompleted["CorrectionSpace"]] &&
         AnyTrue[acQEDFiveCompleted["ReducedChannelSpace"]["Sources"],
           MemberQ[Lookup[acAcceptedContinuations, "Expression"], #] &],
       acQEDFiveCompleted["CorrectionSpace"] === "PeeledChannels" &&
@@ -2751,10 +2770,14 @@ acBudgetInvalid = Block[{ConstructiveDiagrams`Private`completionCertifiedModular
     {0, -1, Infinity, "Invalid"}];
 check["exhausted or invalid modular budgets remain unresolved without launching a backend",
   acBudgetSeen === {} && AllTrue[acBudgetInvalid, #["Status"] === "UNRESOLVED" &]];
-check["public completion forwards a finite remaining budget capped at nine hundred seconds",
+check["public completion delegates to its core and forwards a finite remaining modular budget",
   !FreeQ[DownValues[CompleteFactorization],
+    HoldPattern[ConstructiveDiagrams`Private`amplitudeAutomaticFactorization[___]]] &&
+  !FreeQ[DownValues[ConstructiveDiagrams`Private`amplitudeAutomaticFactorization],
+    HoldPattern[ConstructiveDiagrams`Private`completionFactorizationCore[___]]] &&
+  !FreeQ[DownValues[ConstructiveDiagrams`Private`completionFactorizationCore],
     HoldPattern[ConstructiveDiagrams`Private`completionSolveLinear[_, _, _]]]];
-acBudgetPublicExpression = First[Cases[DownValues[CompleteFactorization],
+acBudgetPublicExpression = First[Cases[DownValues[ConstructiveDiagrams`Private`completionFactorizationCore],
   HoldPattern[ConstructiveDiagrams`Private`completionSolveLinear[_, _, budget_]] :>
     HoldComplete[budget], Infinity]];
 acBudgetSecondsSymbol = First[Cases[acBudgetPublicExpression,

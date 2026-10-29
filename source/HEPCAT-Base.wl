@@ -1187,6 +1187,9 @@ rspMassiveSchoutenSums[expression_, externalRules_List : {}] := Module[
       If[!accepted, Break[]]];
     If[current === normal[value], value, current]
   ];
+  (* Recursive child reductions can collapse a Plus before contract is called.
+     Scalars and single products then need the identity case, not a local head. *)
+  contract[value_] := value;
   reduce[value_Plus] := contract[Map[reduce, value]];
   reduce[value_Times] := Map[reduce, value];
   reduce[value_List] := Map[reduce, value];

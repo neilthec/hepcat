@@ -1106,7 +1106,6 @@ An independent Feynman comparison is optional because it needs its own model:
 
 ```wolfram
 amplitude = ConstructAmplitude[particles, diagramModel, factorizationModel,
-  "PolePreference" -> "AllPhysical",
   "FeynmanModel" -> qedFeynmanModel]
 ```
 
@@ -1146,8 +1145,47 @@ construction or an exhaustive simplification claim. A separate uneven-duration
 queue test at a fixed two-worker count fell from 1.78 to 1.01 seconds, isolating
 the gain from removing wave barriers. Returned job values remained identical.
 
-The overall `"TimeConstraint"` defaults to `Infinity`; each underlying stage
-keeps its bounded default. Change individual settings with rule lists:
+The resource and effort defaults are `Automatic`; a four-, five- or six-point
+calculation needs no tuning options. Preparation begins with reference selection
+and the mandatory ordinary reductions, including its correctly scoped numerator
+shell conditions. Its automatic extra identity-search allowance is zero, avoiding
+eager candidate enumeration before testing whether the compact input suffices.
+A positive `"MaxSteps"` still requests additional strictly improving identity edits.
+Automatic reference selection compares supported spurious and physical choices
+using the reduced expression. If neither construction nor its preparation
+reports requests an explicit pole preference, completion can first try a compact
+physical-only correction space, then fall back to the inferred reference choices
+within its remaining budget. An explicit preference is preserved.
+
+Finite stage clocks and correction allowances depend on lightweight measurements:
+external multiplicity, diagram/channel count, expression size and retained family
+size. No expansion or kinematic assumption is used merely to choose resources.
+Factorization starts with 128 correction directions below six points and 256 at
+six points; an observed cap failure can retry a complete larger source space,
+up to the automatic ceiling, within the same shared stage deadline. Directions
+are never silently truncated. Explicit numeric limits are never increased.
+The preferred-pole proposal has a channel-scaled sub-budget: at most
+`Max[90, 30 channelCount]` seconds and three quarters of the remaining stage
+clock. Multiple-particle cuts reserve two thirds of that proposal budget for
+source construction; simpler cuts reserve one third. These are shared deadlines,
+not separate clocks restarted for every source.
+
+Automatic fit samples start at four and increase with the actual unknown count
+relative to the available channel/coherent-spin equations. Independent validation
+still uses four samples by default. Validation is not weakened to make a larger
+problem finish. Explicit sample counts override these choices. Exact samples and
+held-out checks retain their existing verification scope.
+
+The overall clock is finite too. Its baseline allowance is ten minutes at four
+points, thirty minutes at five points and two hours at six points, with a small
+work allowance; successful stages return immediately. These are resource limits,
+not predicted run times or guarantees that an arbitrary correction space closes.
+Stage baselines likewise scale with workload, and final checks receive their own
+automatic budget within the remaining overall time. Detailed output retains
+`"ResourcePolicy"` with requested and resolved values and factorization
+`"AdaptiveAttempts"` explaining any capacity retry.
+
+Override a setting only when a different budget or representation is wanted:
 
 ```wolfram
 amplitude = ConstructAmplitude[particles, diagramModel, factorizationModel,
@@ -1176,10 +1214,10 @@ reference and optional Feynman row must pass. Failure, opposite-sign,
 unresolved or underdetermined outcomes return a compact `Failure` instead of
 an uncertified expression. Detailed output preserves the stage diagnostics
 and available candidate explicitly. If construction stops before final
-validation, the displayed test row says `NOT RUN`. The wrapper does not enlarge
-the underlying bounded correction space or replace an unresolved calculation
-with a process-specific known formula. The balanced six-point QED example's
-known unresolved spurious checks remain an honest limitation.
+validation, the displayed test row says `NOT RUN`. Automatic resource escalation
+can enlarge a source-derived correction allowance; it never changes the original
+physical targets, permits a new independent interaction, or relaxes a check to
+force agreement.
 
 ### 1. Prepare the Diagrams and Channels
 
@@ -1212,8 +1250,9 @@ shell identities and ordinary algebra are used. No diagram-local internal-shell
 substitutions are made merely because the pairs list propagator masses.
 Prepared Feynman pairs carry external mass rules only, avoiding accidental
 reuse of internal propagator masses as constructive shell assumptions.
-Feynman inputs default to `"MaxSteps" -> 0` when omitted; a positive value opts
-into identity search, while constructive inputs keep their default of 12.
+Both Feynman and constructive inputs use `"MaxSteps" -> Automatic`, which
+initially resolves to zero extra edits. A positive value opts into additional
+identity search; conversion and ordinary reductions still run at zero.
 Feynman reference choices are shared across the entire diagram list.
 `Automatic`, `"AllSpurious"`, `"Cyclic"` and `"ReverseCyclic"` use a fixed
 consistent massless-particle cycle rather than optimizing each diagram
@@ -1258,9 +1297,9 @@ Momentum conservation permits using the mass of a complementary internal
 channel when its complement has exactly two external particles. Unknown pair
 invariants and denominator factors are not replaced. A larger internal
 momentum sum does not fix its individual pair products.
-The optional bounded identity search, enabled by
-default, can use that diagram's own internal mass rules and accepts only
-strictly improving edits. No diagram's internal conditions are passed to
+An explicitly requested positive `"MaxSteps"` enables the optional bounded
+identity search. It can use that diagram's own internal mass rules and accepts
+only strictly improving edits; `Automatic` initially uses zero extra edits. No diagram's internal conditions are passed to
 another diagram or imposed on the final sum. Reference assignments are recorded
 in the preparation details; the checker does not change them.
 
@@ -1268,7 +1307,7 @@ Choose the references with `"PolePreference"`:
 
 | Value | Choice |
 | --- | --- |
-| `Automatic` | Optimize over eligible other-massless-particle references where available, with physical momentum-insertion fallback for each remaining reference. This is the default. |
+| `Automatic` | Compare eligible spurious and physical momentum-insertion references after ordinary reduction, retaining the best completed supported choice. This is the default. |
 | `"AllSpurious"` | Optimize over assignments using only eligible other massless external spinors. |
 | `"AllPhysical"` | Optimize over momentum-insertion assignments giving physical channels outside that diagram's own propagators. |
 | `"Mixed"` | Optimize over both kinds for each reference. The best tested assignment may mix them or use only one kind. |
@@ -1289,8 +1328,8 @@ preparationDetails["DiagramReports"][[1]]["PolePreference"]
 The optimized modes reduce each tested complete diagram expression before
 ranking it by complexity, term count and expression size. They do not choose
 references merely by the apparent size of the reference denominator. The search
-is finite and bounded: `"MaxReferenceChoices" -> 64` limits the assignments
-tested per diagram. `"ReferenceTimeConstraint" -> Automatic` allows the smaller
+is finite and bounded: `"MaxReferenceChoices" -> Automatic` currently resolves
+to 64 assignments per diagram. `"ReferenceTimeConstraint" -> Automatic` allows the smaller
 of five seconds and one third of that diagram's remaining time. A positive
 number or `Infinity` can be supplied instead, but the overall per-diagram
 `"TimeConstraint"` always applies. The progress display reports choices tried,
@@ -1332,9 +1371,11 @@ can normalize bracket signs and cancel matching spinor factors. Physical
 outside `PropDen`; internal mass replacements and on-shell substitutions remain
 numerator-only.
 
-The defaults are `"InternalOnShell" -> True`, `"MaxSteps" -> 12`,
-`"MaxCandidates" -> 64` and `"TimeConstraint" -> 20`, with the time limit
-applied separately to each diagram, including its reference search. Set
+`"InternalOnShell" -> True` remains the ordinary preparation policy.
+`"MaxSteps"`, `"MaxCandidates"` and `"TimeConstraint"` default to `Automatic`:
+initially zero extra edits, 64 inspected candidates if a search is requested,
+and a finite clock based on multiplicity and item size. Each diagram has its
+own resolved time limit, including reference selection. Set
 `"InternalOnShell" -> False` to disable both the direct invariant reduction and
 additional internal-shell edits.
 `"MaxSteps" -> 0` retains reference selection, the two basic reductions and the
@@ -1927,9 +1968,8 @@ These checks establish the recorded sample agreement; they are not a proof
 of a globally shortest representation.
 
 The six-point `e,E,A.+,A.+,A.+,A.+` section of
-`tests/QED-5-point-construction.nb` uses this declaration, `"Samples" -> 12`,
-`"ValidationSamples" -> 1`, `"MaxCorrectionTerms" -> 256`,
-`"MaxRefinements" -> 5` and a 1200-second allowance. A historical broad-space
+`tests/QED-5-point-construction.nb` now uses the automatic defaults. Earlier
+benchmarks used explicit sample, correction-cap and clock settings. A historical broad-space
 run from 24 `AllSpurious` prepared diagrams completed in about 14 minutes,
 with 161 independent correction directions. All 14 physical channels and the retained affine
 family passed fresh exact coherent-spin checks at both the model mass and
@@ -1939,30 +1979,55 @@ Feynman diagrams at three fresh off-cut samples, including every coherent
 massive-spin component. These sampled comparisons are not an analytic proof;
 automatic spurious-pole and high-energy diagnostics remain separate checks.
 
-The following notebook chapter treats
-`e,E,A.+,A.+,A.+,A.-`. Its Bose group is only `{{3, 4, 5}}`:
-the negative-helicity photon on leg 6 must not be averaged with those legs.
-This example is substantially larger. Its automatic grouped-input/channel
-space has 902 directions within a 1024-direction cap. The notebook requests
-28 fitting samples per channel, two held-out validation samples and a
-7200-second completion allowance. That allowance is not a measured fresh-run
-time guarantee.
+The following notebook chapter treats `e,E,A.+,A.+,A.+,A.-`. Only legs
+`{3,4,5}` are identical positive-helicity photons; leg 6 must not be averaged
+with them. The current example uses the automatic resource defaults rather
+than a long list of manual sample, cap and clock settings.
 
-The mixed-helicity construction was checked using exact cut charts gathered
-in batches and retained during solver diagnosis. The 1568-row system has
-certified rank 575, retaining 327 independent coefficient directions rather
-than discarding them. All 14 physical channels and the complete affine family
-passed two fresh coherent-spin samples at each of the model mass and twice
-that mass. The selected amplitude agreed with the independent sum of 24
-Feynman diagrams at three fresh off-cut points, and its exact sampled
-high-energy test gave `E^-2`. Automatic denominator discovery retained all 14
-physical poles and identified 12 apparent spurious poles; every spurious
-Laurent check passed, including both branches of scalar massless invariants.
-No Xi remains, so explicit reference variation is not applicable, rather than
-an independent proof of reference independence. No Feynman answer or supplied correction basis
-entered the fit. These are sampled checks, not an analytic uniqueness or
-global-minimality proof; the fresh serial 28-sample notebook run has not been
-timed end to end.
+The current integrated `AllPhysical` factorization benchmark fits 160
+source-derived coefficient directions and retains 67 affine directions. Its
+source construction uses complete selected-cut-certified continuations and
+filters every source origin by the actual resulting denominators, rather than
+excluding an origin merely because its reference choice was called spurious.
+The raw completed representative has 9,844 leaves. Ordinary external preparation,
+including bounded propagator-grouped numerator identities, reduces it to 4,045
+leaves in 18 groups, with physical propagators only. No known final amplitude or
+Feynman answer enters the fit or the simplification.
+
+That measured run took 272 seconds for factorization, 35.6 seconds for final
+preparation and 14.4 seconds for fresh checks. All 17 report rows passed:
+14 physical channels, high-energy growth, the explicit-reference diagnostic and
+an independent off-cut Feynman comparison. There are no apparent spurious
+poles or explicit Xi spinors in this representative. The reference row therefore
+records absence of explicit Xi, not a separate Ward-identity proof. These are
+sampled amplitude checks, not a global-minimality or analytic uniqueness proof.
+
+The integrated high-energy stage now completes in 61.4 seconds with no free
+coefficients remaining. It proves all 67 retained directions to be ordinary
+external identities: 64 by a dense symbolic external chart and three by ordinary
+algebraic reductions. The eight-worker proof stage took 54.06 seconds. Mass
+parameters and coherent massive-spin variables remain symbolic; no numerical
+mass specialization, previously saved certificate or known final formula is
+used. Every direction was retained until its exact certificate succeeded.
+Final external-only preparation then takes 29.4 seconds and returns 18 groups
+with 4,147 leaves and weighted complexity 1,128. Fresh final checks take 3.3
+seconds, with all 17 rows passing, including the independent Feynman comparison.
+These are measured stage timings on the recorded prepared inputs, not a
+promise for every cold construction or machine.
+
+The proof ordering matters. Cheap scalar grouping and bounded numerator
+Schouten edits first operate on the original direction. A modest compact form
+can then go directly to a generic symbolic chart, before display-oriented
+preparation introduces a harder rational representation. A later external-only
+preparation remains available as a fallback. Generic null-axis choices may use
+opposite homogeneous little-group weights without constraining any internal
+virtuality. Timeouts and unsupported directions would still remain in the
+family rather than being declared zero from sampled agreement.
+
+Leaf count alone does not define the preferred final form. In this example the
+4,045-leaf representative has complexity 1,129, while an equivalent 4,147-leaf
+form reaches complexity 1,128 and therefore ranks better. These are bounded
+simplification results, not a proof of a globally simplest representation.
 
 The balanced-helicity chapter, `e,E,A.+,A.+,A.-,A.-`, now also completes with
 the general `ConstructAmplitude` wrapper. Model-derived shifted channel
@@ -2002,17 +2067,29 @@ an implementation limit, not a physical restriction or a reason to discard
 the raw input and channel sources. Factorization contributions from different
 exchanged species sharing one cut and mass are summed, not treated as
 alternative targets; incomplete lower-point data remain incomplete.
+Physical-only correction proposals inspect the actual denominators of every
+source origin, including prepared diagrams, prepared channels, reduced channel
+directions and selected-cut-certified auxiliary reference continuations. A
+source is not excluded merely because its original reference choice was called
+spurious; eligible resulting terms must contain only catalogued physical
+propagators, no unresolved references and no unsupported higher physical pole.
+Every proposed space must still satisfy all original channels and independent
+family validation. Filtering a proposal does not discard the original inputs or
+assert that a rejected continuation is an ordinary zero identity.
 An explicit `"CorrectionBasis" -> {term1, term2, ...}` supplies a different
 bounded space when the automatic one is insufficient. Physical propagators
 remain off shell except when extracting the residue for the selected cut.
 
-The fit uses exact equations at `"Samples" -> 4` cut configurations and
-rechecks the result at `"ValidationSamples" -> 4` independent configurations.
+The automatic fit starts with four exact cut configurations and increases its
+sample count from the actual unknown count and coherent-spin equations. It
+rechecks the result at four independent configurations by default. Explicit
+`"Samples"` and `"ValidationSamples"` values override those automatic choices.
 Implicit massive spin components are kept coherent rather than fitting one
 spin projection. If independent validation fails, the function converts those
 same saved cut charts into further exact equations, refits the simultaneous
-system and validates with fresh seeds. `"MaxRefinements" -> 3` allows at most
-three such retries after the initial fit; zero disables feedback. Feedback
+system and validates with fresh seeds. `"MaxRefinements" -> Automatic` starts
+with three retries and increases conservatively with the measured correction
+space; an explicit zero disables feedback. Feedback
 evaluates the original sparse correction directions before applying fitted
 coefficient rules, avoiding unnecessary expansion of a dense fitted family.
 Held-out validation also restricts each original component before inserting
@@ -2080,12 +2157,24 @@ zero coefficients, are preserved rather than deleting contacts for brevity.
 Details record the original center and the offset in the old free coordinates;
 `FamilyAmplitude` is rebased around the chosen amplitude with the same directions.
 
-Representative selection and final cleanup share the existing two-second
-post-validation allowance. Cleanup tries scalar regrouping and ordinary external
+Representative selection and final cleanup use a bounded post-validation
+allowance within the stage clock. Cleanup tries scalar regrouping and ordinary external
 reduction, retaining the better whole form. In particular, a compact product of
 momentum chains must not be replaced by a more complicated expansion merely
 because the ordinary reducer returns it. Interrupted work retains only a
 completed improved point and the already validated family.
+Large final expressions can also be compacted by grouping existing physical
+propagator products and simplifying each numerator. A bounded pass first factors
+ordinary scalar content, then tries generalized Schouten edits in the largest
+sum numerators. Every accepted edit is an exact identity with external mass
+rules only; the complete result must improve the existing complexity rank.
+Completed improvements are checkpointed within a fifteen-second total allowance,
+with size guards on the input and prospective expansion. The amplitude, rank
+and replay data are committed together in one checkpoint record, so a timeout
+cannot pair a new amplitude with an older route. Detailed routes retain the
+original numerator, selected edits and resulting numerator for replay. This
+changes only the representative's algebraic form and never removes affine
+directions or applies an internal-line shell to a final sum.
 Typed `PropDen` poles are checked across that family, including poles hidden
 in its zero-parameter representative. Established zero-residue obligations
 remain checked even after the selected candidate loses the pole. Internal
@@ -2133,8 +2222,10 @@ are imposed again, so a high-energy correction cannot knowingly spoil the
 fitted factorization conditions. The default `"HighEnergyBound" -> Automatic`
 uses `E^(4-n)`; change it when the theory requires a different bound.
 
-The defaults are `"Samples" -> 4`, `"ValidationSamples" -> 4`,
-`"MaxCorrectionTerms" -> 64` and an overall `"TimeConstraint" -> 60`.
+Resource defaults are `Automatic`, using the finite workload policy described
+above. Fit sampling starts at four, independent validation remains four, and
+explicit numeric settings are preserved. The retained family, rather than an
+unrelated original source count, supplies the high-energy unknown count.
 With no inherited family, the automatic directions are limited to supported
 terms already present in the expression. It does not invent an unrestricted
 contact-operator basis or introduce independent QED interactions. A needed
@@ -2146,12 +2237,29 @@ than guessing extra physics. Nonzero undetermined directions give
 A free coefficient can also multiply an expression that is identically zero.
 This previously caused false `UNDERDETERMINED` results for some five-point
 helicity orderings. Completion now removes only directions with an exact
-external-identity certificate: ordinary external reduction first, followed
-when needed by a symbolic rational parametrization of generic conserved,
-on-shell external momenta. Model parameters and all coherent massive-spin
+external-identity certificate. The proof retains the original expression,
+first trying cheap grouping by physical propagators and bounded Schouten edits
+on its numerators. A modest compact result can be tested immediately on a
+symbolic rational parametrization of generic conserved, on-shell external
+momenta. Ordinary external preparation is a later fallback: a representation
+ranked best for display can be considerably harder to prove equal to zero.
+Model parameters and all coherent massive-spin
 components remain symbolic. No internal line is put on shell, no known final
 amplitude is supplied, and numerical zero samples do not remove directions.
 Proof timeouts and unsupported expressions retain the original freedom.
+When parallel execution is enabled, independent identity proofs use the same
+worker pool as the other stages. Smaller directions are dispatched first, with
+a shared deadline and an allowance of at most ninety seconds for each
+direction. Cheap scalar grouping precedes the dense-chart size guard. Ordinary
+external reductions and primitive-first symbolic evaluation of each distinct
+typed primitive share the proof allowance. The chart may place massless legs
+with opposite homogeneous little-group weights on its coordinate axes. This
+changes only the rational coordinates, not the allowed kinematics: the axes
+must be distinct declared null legs, external shells and momentum conservation
+are validated, and internal virtualities remain free. Each worker must return
+its exact certificate; a missing, interrupted or unsuccessful worker leaves
+that direction in the family. Finite zero samples
+never replace these proofs.
 `"Output" -> "Details"` records the certificates in
 `"FamilyIdentityReduction"`. A genuine nonzero local ambiguity still remains
 `"UNDERDETERMINED"`.

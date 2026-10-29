@@ -460,7 +460,53 @@ check["the expansion guard still performs a direct external Dirac contraction",
 check["the sum compactor declines an oversized prospective distribution",
   fsCompact[fsLarge] === fsLarge];
 
-If[checks =!= 79, AppendTo[failures, "The suite did not execute all 79 checks."]];
+(* Search separately inside existing propagator groups, using ordinary
+   generalized Schouten identities and preserving every off-shell denominator. *)
+Do[
+  fsGroupNumerator = 3 fsBracket[fsType, 1, 2] fsBracket[fsType, 3, 4] -
+    3 fsBracket[fsType, 1, 3] fsBracket[fsType, 2, 4];
+  fsGroupInput = fsGroupNumerator/fsPole1 + fsBracket["Square", 5, 6]/fsPole2;
+  fsGroupExpected = -3 fsBracket[fsType, 1, 4] fsBracket[fsType, 2, 3]/fsPole1 +
+    fsBracket["Square", 5, 6]/fsPole2;
+  fsGroupResult = ConstructiveDiagrams`Private`preparationDenominatorSchouten[
+    fsGroupInput, Table[Mass[i] -> 0, {i, 6}], 3];
+  check[{"grouped Schouten produces a strictly simpler numerator", fsType},
+    fsGroupResult["Status"] === "IMPROVED" &&
+      fsRank[fsGroupResult["Amplitude"]][[1]] < fsRank[fsGroupInput][[1]] &&
+      Together[fsGroupResult["Amplitude"] - fsGroupExpected] === 0];
+  check[{"grouped identities agree with independent two-component determinants", fsType},
+    And @@ Table[fsBracketValue[fsGroupResult["Amplitude"] - fsGroupInput, seed] === 0,
+      {seed, 2, 4}]];
+  check[{"grouped reduction preserves the complete physical pole inventory", fsType},
+    fsPhysicalPoles[fsGroupResult["Amplitude"]] === fsPhysicalPoles[fsGroupInput] &&
+      FreeQ[fsGroupResult["Amplitude"], Mass[_Multiparticle]]];
+  check[{"grouped reduction records replayable elementary identity edits", fsType},
+    AllTrue[fsGroupResult["Route"], Function[row, Module[{num = row["OriginalNumerator"]},
+      Do[num = Expand[num - edit["Subtract"] + edit["Insert"]];
+        num = ConstructiveDiagrams`Private`canonicalChains[ReduceSpinorProducts[num]],
+        {edit, row["Edits"]}];
+      ReduceSpinorProducts[num - row["Numerator"]] === 0]]]],
+  {fsType, {"Angle", "Square"}}];
+check["an exhausted grouped search preserves the supplied expression exactly",
+  ConstructiveDiagrams`Private`preparationDenominatorSchouten[
+    fsGroupInput, {}, 0]["Amplitude"] === fsGroupInput];
+check["the grouped search declines exponentially large prospective expansions",
+  ConstructiveDiagrams`Private`preparationDenominatorSchouten[
+    fsLarge, {}, 2]["Amplitude"] === fsLarge];
+fsProofGroupedInput = fsRational + fsA/fsPole2;
+fsProofGrouped = ConstructiveDiagrams`Private`preparationGroupedPropagatorForm[
+  fsProofGroupedInput, 2];
+check["cheap proof grouping is an exact scalar identity with no shell assumptions",
+  Together[fsProofGrouped - fsProofGroupedInput] === 0 &&
+    LeafCount[fsProofGrouped] <= LeafCount[fsProofGroupedInput] &&
+    FreeQ[fsProofGrouped, Mass[_Multiparticle]]];
+check["cheap proof grouping preserves physical and auxiliary denominator factors",
+  fsPhysicalPoles[fsProofGrouped] === fsPhysicalPoles[fsProofGroupedInput] &&
+    !FreeQ[fsProofGrouped, fsInverse]];
+check["proof grouping also rejects an exponentially large distribution",
+  ConstructiveDiagrams`Private`preparationGroupedPropagatorForm[fsLarge, 2] === fsLarge];
+
+If[checks =!= 92, AppendTo[failures, "The suite did not execute all 92 checks."]];
 Print[checks, " final-amplitude simplification checks; ", Length[failures], " failures."];
 If[failures =!= {}, Print[failures]; Quit[1]];
 Print["HEPCAT_TEST_COMPLETED:final-amplitude-simplification-tests.wl"];

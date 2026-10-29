@@ -119,6 +119,7 @@ scalarPole = PropDen[Mom[Multiparticle[1, 4]], 1];
 scalarChannels = {Join[scalarMasses, {Multiparticle[1, 4], 1, -1/scalarPole}]};
 localResult = CompleteFactorization[{scalarRules, 7 + 2/scalarPole},
   scalarChannels, scalarModel, "InputReweighting" -> None,
+  "PolePreference" -> None,
   "BoseSymmetryGroups" -> {}, "FermionSymmetryGroups" -> {},
   "Samples" -> 1, "ValidationSamples" -> 1, "TimeConstraint" -> 30,
   "MaxCorrectionTerms" -> 8, "Parallelization" -> False,
@@ -129,6 +130,7 @@ check["the new stage preserves an existing local contribution while repairing th
   Cancel[Together[localResult["Amplitude"] - 1/scalarPole]] === 7];
 disabledResult = CompleteFactorization[{scalarRules, 7 + 2/scalarPole},
   scalarChannels, scalarModel, "ShiftedChannelContinuations" -> False,
+  "PolePreference" -> None,
   "InputReweighting" -> None, "BoseSymmetryGroups" -> {}, "FermionSymmetryGroups" -> {},
   "Samples" -> 1, "ValidationSamples" -> 1, "TimeConstraint" -> 20,
   "MaxCorrectionTerms" -> 8, "Parallelization" -> False,
