@@ -145,7 +145,7 @@ bsCubicModel[[2]] = {{"s", "s", "s", "", bsCoupling, 1}};
 bsCubicChannels = FactorizationAmplitudeChannels[ConstantArray["s", 4], bsCubicModel];
 bsCubicRules = Thread[(Mass /@ Range[4]) -> ConstantArray[bsScalarMass, 4]];
 bsCubicPrepared = PrepareAmplitudes[{bsCubicRules, 0}, bsCubicModel,
-  "ExternalParticles" -> ConstantArray["s", 4], "ReferenceSpinors" -> None,
+  "ExternalParticles" -> ConstantArray["s", 4], "PolePreference" -> None,
   "MaxSteps" -> 0, "ProgressReporting" -> False, "ReturnDetails" -> True];
 bsCubicSettings = {"Samples" -> 1, "ValidationSamples" -> 1, "TimeConstraint" -> 30,
   "MaxCorrectionTerms" -> 8, "ParameterRules" -> {bsScalarMass -> 1, bsCoupling -> 2},
@@ -168,7 +168,7 @@ check["explicit empty groups preserve successful legacy completion with no avera
 bsConflictModel = bsCubicModel;
 bsConflictModel[[1]] = bsScalarAmbiguousModel[[1]];
 bsConflictChannels = PrepareAmplitudes[bsCubicChannels, bsConflictModel,
-  "ExternalParticles" -> {"r", "s", "s", "s"}, "ReferenceSpinors" -> None,
+  "ExternalParticles" -> {"r", "s", "s", "s"}, "PolePreference" -> None,
   "MaxSteps" -> 0, "ProgressReporting" -> False, "ReturnDetails" -> True];
 bsConflict = CompleteFactorization[bsCubicPrepared, bsConflictChannels, bsConflictModel,
   "BoseSymmetryGroups" -> {}, Sequence @@ bsCubicSettings];
@@ -186,7 +186,7 @@ mdModel = {{{"a", "a", "A", 1, 0, mdMassA, 0, 1, 1, "", ""},
 mdRules = {Mass[1] -> mdMassA, Mass[2] -> mdMassA, Mass[3] -> 0, Mass[4] -> 0};
 mdPair = {mdRules, 3}; mdNames = {"a", "A", "v.+", "v.-"};
 mdPrepare[input_, opts___] := PrepareAmplitudes[input, mdModel, opts,
-  "ReferenceSpinors" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False];
+  "PolePreference" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False];
 mdDefault = mdPrepare[mdPair, "ReturnDetails" -> True];
 mdDetail = mdPrepare[mdPair, "ExternalParticles" -> mdNames, "ReturnDetails" -> True];
 check["Automatic process labels remain unspecified", !KeyExistsQ[mdDefault, "ExternalParticles"]];
@@ -231,7 +231,7 @@ check["nonempty process metadata is rejected on empty input",
   FailureQ[mdPrepare[{}, "ExternalParticles" -> {"a"}]]];
 mdFeynman = FeynmanModel @@ mdModel;
 mdFeynmanDetail = PrepareAmplitudes[mdPair, mdFeynman, "ExternalParticles" -> mdNames,
-  "ReferenceSpinors" -> None, "ProgressReporting" -> False, "ReturnDetails" -> True];
+  "PolePreference" -> None, "ProgressReporting" -> False, "ReturnDetails" -> True];
 check["Feynman-model preparation retains ordered particle metadata",
   mdFeynmanDetail["ExternalParticles"] === mdNames &&
     mdFeynmanDetail["PreparedAmplitudes"] === {mdPair}];
@@ -239,7 +239,7 @@ mdP1 = ModelParameter["same", "metadata-one", "Real"];
 mdP2 = ModelParameter["same", "metadata-two", "Real"];
 mdForeignModel = mdModel /. mdMassA -> mdP1;
 mdForeign = PrepareAmplitudes[{mdRules /. mdMassA -> mdP2, 3}, mdForeignModel,
-  "ExternalParticles" -> mdNames, "ReferenceSpinors" -> None,
+  "ExternalParticles" -> mdNames, "PolePreference" -> None,
   "MaxSteps" -> 0, "ProgressReporting" -> False];
 check["same printed mass names in different model scopes are not identified",
   FailureQ[mdForeign]];

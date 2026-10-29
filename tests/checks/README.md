@@ -49,6 +49,17 @@ is loaded by the suite.
 
 ## Full Process Construction
 
+`physical-pole-completion-tests.wl` checks inherited and explicit physical-pole
+preferences, the original channel catalog, complementary cuts, inverse-factor
+and higher-pole guards, contour-normalized channel sources, exact exchange
+projection, fixed regular input, correction-space caps and honest fallback.
+It also checks that high-energy completion retains the representation request.
+A fresh mixed-helicity five-point QED construction must pass all checks,
+including an independent Feynman comparison on three samples, retain only
+physical denominators, and stay below a compactness bound that rejects the
+former oversized result. No saved notebook output or temporary cache is used.
+
+
 `construct-amplitude-tests.wl` runs real four- and five-point QED workflows,
 including an independent Feynman benchmark and a genuinely zero forbidden
 process. It verifies original-channel checks, retained preparation history,
@@ -68,7 +79,7 @@ notebook cases, their working counterparts and independent Feynman checks:
 HEPCAT_TEST_FULL_HELICITY_CONSTRUCTION=1 python3 tests/checks/run-wolfram-tests.py --suite high-energy-family-tests.wl --timeout 900
 ```
 
-The spurious-pole suite includes the balanced six-point expression's 28
+The spurious-pole suite includes the balanced six-point expression's 24
 compound factors. Exact conserved-curve polynomial checks verify their
 cancellation in the full sum; an injected double pole at each factor must
 fail. Grouped serial/parallel tests preserve every original pole obligation,

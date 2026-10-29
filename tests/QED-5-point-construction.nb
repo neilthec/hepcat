@@ -192,7 +192,7 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.+,A.+", "Chapter", ExpressionUUID->"44abe297-98a2-5c63-9e22-20132a3d21cb"],
 
-Cell["qed4PP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\"},\n  diagramModel, diagramModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"90196480-cbbe-591b-86bf-9971ced0f0e4"]
+Cell["qed4PP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\"},\n  diagramModel, diagramModel,\n  \"PolePreference\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"90196480-cbbe-591b-86bf-9971ced0f0e4"]
 
 }, Open]],
 
@@ -200,7 +200,7 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.+,A.-", "Chapter", ExpressionUUID->"6c528ba2-0997-5b0a-8471-8891d0a6212b"],
 
-Cell["qed4PM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\"},\n  diagramModel, diagramModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"ea0cf00e-74e4-5d70-b283-9e93b492ddf2"]
+Cell["qed4PM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\"},\n  diagramModel, diagramModel,\n  \"PolePreference\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"ea0cf00e-74e4-5d70-b283-9e93b492ddf2"]
 
 }, Open]],
 
@@ -208,7 +208,7 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.-,A.+", "Chapter", ExpressionUUID->"c06e2ad2-6d65-59ba-bbe3-82f1c184d0dc"],
 
-Cell["qed4MP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\"},\n  diagramModel, diagramModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"2d47318b-2768-54aa-a153-5b151237d8e0"]
+Cell["qed4MP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\"},\n  diagramModel, diagramModel,\n  \"PolePreference\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"2d47318b-2768-54aa-a153-5b151237d8e0"]
 
 }, Open]],
 
@@ -216,7 +216,7 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.-,A.-", "Chapter", ExpressionUUID->"1dd37843-dab3-5b64-8f91-00d69cbd1ee0"],
 
-Cell["qed4MM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\"},\n  diagramModel, diagramModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"ff9a4ce7-51eb-5dd2-83c5-4752ef20edcf"]
+Cell["qed4MM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\"},\n  diagramModel, diagramModel,\n  \"PolePreference\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"ff9a4ce7-51eb-5dd2-83c5-4752ef20edcf"]
 
 }, Open]],
 
@@ -224,7 +224,7 @@ Cell[CellGroupData[{
 
 Cell["e,E,E,e", "Chapter", ExpressionUUID->"ca8c8a3a-7428-5eea-9858-ee4650553a52"],
 
-Cell["qed4FourFermions = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\"},\n  diagramModel, diagramModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"30016c22-1f87-58da-9f86-9762ba2239bd"]
+Cell["qed4FourFermions = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\"},\n  diagramModel, diagramModel,\n  \"PolePreference\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"30016c22-1f87-58da-9f86-9762ba2239bd"]
 
 }, Open]]
 
@@ -247,7 +247,7 @@ Cell["Construct and Check", "Section", ExpressionUUID->"4bb6cc79-e5b1-5881-9b17-
 
 Cell["Evaluate this cell after Setup. The wrapper generates and prepares the diagrams and factorization channels, completes and prepares the amplitude, then runs all final checks. The printed test report precedes the returned expression. The saved manual work remains available below.", "Text", ExpressionUUID->"39cf6e8f-7d10-5f73-a8f3-e11920c14eca"],
 
-Cell["qed5PPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"fc84dd4f-fa99-5122-82eb-b35b4a28e6ce"],
+Cell["qed5PPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"fc84dd4f-fa99-5122-82eb-b35b4a28e6ce"],
 
 Cell[CellGroupData[{
 
@@ -335,7 +335,7 @@ Cell[CellGroupData[{
 Cell["\<\
 preparationDetails = PrepareAmplitudes[rawAmplitudes, diagramModel,
   \"ExternalParticles\" -> particles,
-  \"ReferenceSpinors\" -> referenceChoice,
+  \"PolePreference\" -> referenceChoice,
   \"ReturnDetails\" -> True];
 preparation = preparationDetails[\"PreparedAmplitudes\"];
 preparation\
@@ -1479,7 +1479,7 @@ last completed expression; the report explains why.\
 Cell["\<\
 Grid[Prepend[
   ({#[\"Reference\"], #[\"Mode\"], #[\"Target\"]} & /@
-    preparationDetails[\"DiagramReports\"][[1]][\"ReferenceSpinors\"][\"Assignments\"]),
+    preparationDetails[\"DiagramReports\"][[1]][\"PolePreference\"][\"Assignments\"]),
   {\"Original reference\", \"Choice\", \"Replacement\"}], Frame -> All]\
 \>", "Input",
  CellLabel->"In[17]:=",ExpressionUUID->"e491cb78-13a4-495a-b158-4e479e480dea"]
@@ -1504,7 +1504,7 @@ Cell["\<\
 channels = FactorizationAmplitudeChannels[particles, factorizationModel];
 channelPreparationDetails = PrepareAmplitudes[channels, factorizationModel,
   \"ExternalParticles\" -> particles,
-  \"ReferenceSpinors\" -> referenceChoice, \"ReturnDetails\" -> True];
+  \"PolePreference\" -> referenceChoice, \"ReturnDetails\" -> True];
 preparedChannels = channelPreparationDetails[\"PreparedAmplitudes\"];
 Length[channels]\
 \>", "Input",
@@ -2308,7 +2308,7 @@ Cell[CellGroupData[{
 
 Cell["\<\
 preparedFeynman = PrepareAmplitudes[feynmanPairs, qedFeynmanModel,
-  \"ReferenceSpinors\" -> \"AllPhysical\", \"MaxSteps\" -> 0];
+  \"PolePreference\" -> \"AllPhysical\", \"MaxSteps\" -> 0];
 feynmanAmplitude = Total[Last /@ preparedFeynman];
 feynmanAmplitude\
 \>", "Input",
@@ -4757,7 +4757,7 @@ Cell["3. Prepare Each Diagram", "Subsection", ExpressionUUID->"1516e290-e068-4cc
 
 Cell["This uses AllPhysical references, matching the one-command example. Ordinary spinor reduction and each diagram's declared numerator on-shell conditions run. MaxSteps -> 0 skips only the additional identity-route search. The propagator denominators remain off shell.", "Text", ExpressionUUID->"6e2393ff-5c45-4c27-be0f-671ccb79c0b2"],
 
-Cell["ppmDiagramPreparation = PrepareAmplitudes[\n  ppmRawAmplitudes, diagramModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\", \"ExternalParticles\" -> ppmParticles,\n  \"MaxSteps\" -> 0, \"TimeConstraint\" -> timeLimit, \"ReturnDetails\" -> True];\nppmPreparedDiagrams = ppmDiagramPreparation[\"PreparedAmplitudes\"];\nppmPreparedDiagrams[[1]]", "Input", ExpressionUUID->"6bed1a0e-d70d-4f05-87e1-dd7a5116acdf"],
+Cell["ppmDiagramPreparation = PrepareAmplitudes[\n  ppmRawAmplitudes, diagramModel,\n  \"PolePreference\" -> \"AllPhysical\", \"ExternalParticles\" -> ppmParticles,\n  \"MaxSteps\" -> 0, \"TimeConstraint\" -> timeLimit, \"ReturnDetails\" -> True];\nppmPreparedDiagrams = ppmDiagramPreparation[\"PreparedAmplitudes\"];\nppmPreparedDiagrams[[1]]", "Input", ExpressionUUID->"6bed1a0e-d70d-4f05-87e1-dd7a5116acdf"],
 
 Cell["This is the starting sum before completion. No additional internal on-shell conditions are applied to the sum; completion still receives the preparation report so it retains the diagram history.", "Text", ExpressionUUID->"1a262711-0a30-45f5-b0cb-6b91f4d82a08"],
 
@@ -4769,7 +4769,7 @@ Cell["ppmChannels keeps the original channel products. Their preparation uses on
 
 Cell["ppmChannels = FactorizationAmplitudeChannels[ppmParticles, factorizationModel];\nppmChannels[[1]]", "Input", ExpressionUUID->"ccf3ab17-0fc2-42d5-9f07-2c83dccf5672"],
 
-Cell["ppmChannelPreparation = PrepareAmplitudes[\n  ppmChannels, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\", \"ExternalParticles\" -> ppmParticles,\n  \"MaxSteps\" -> 0, \"TimeConstraint\" -> timeLimit, \"ReturnDetails\" -> True];\nppmPreparedChannels = ppmChannelPreparation[\"PreparedAmplitudes\"];\nppmPreparedChannels[[1]]", "Input", ExpressionUUID->"81b4bf3f-a030-418d-bbcd-f1275f73fc04"],
+Cell["ppmChannelPreparation = PrepareAmplitudes[\n  ppmChannels, factorizationModel,\n  \"PolePreference\" -> \"AllPhysical\", \"ExternalParticles\" -> ppmParticles,\n  \"MaxSteps\" -> 0, \"TimeConstraint\" -> timeLimit, \"ReturnDetails\" -> True];\nppmPreparedChannels = ppmChannelPreparation[\"PreparedAmplitudes\"];\nppmPreparedChannels[[1]]", "Input", ExpressionUUID->"81b4bf3f-a030-418d-bbcd-f1275f73fc04"],
 
 Cell["5. Complete the Physical Factorization Channels", "Subsection", ExpressionUUID->"a2faf542-5990-4c51-b2f6-359d5bb7d8dc"],
 
@@ -4783,7 +4783,7 @@ Cell["6. Prepare the Factorization Result", "Subsection", ExpressionUUID->"db56f
 
 Cell["The combined amplitude is now prepared with external identities only. The short update below carries the same change into the retained correction family, without discarding any undetermined directions. The displayed prepared amplitude is the one passed on to the high-energy step.", "Text", ExpressionUUID->"1e085b99-6595-4bbf-8b8e-44f6eb7a38e8"],
 
-Cell["ppmPreparedFactorizedAmplitude = PrepareAmplitudes[\n  ppmFactorizedAmplitude, factorizationModel,\n  \"InternalOnShell\" -> False, \"ReferenceSpinors\" -> None,\n  \"MaxSteps\" -> 0, \"TimeConstraint\" -> timeLimit];\nppmPreparationChange = Last[ppmPreparedFactorizedAmplitude] - ppmFactorization[\"Amplitude\"];\nppmHighEnergyInput = Join[ppmFactorization, <|\n  \"Amplitude\" -> Last[ppmPreparedFactorizedAmplitude],\n  \"FamilyAmplitude\" -> ppmFactorization[\"FamilyAmplitude\"] + ppmPreparationChange,\n  \"Correction\" -> ppmFactorization[\"Correction\"] + ppmPreparationChange,\n  \"ExternalMassRules\" -> First[ppmPreparedFactorizedAmplitude]|>];\nppmPreparedFactorizedAmplitude", "Input", ExpressionUUID->"e0dbfbbf-dbf5-4a32-bef5-8e082a334681"],
+Cell["ppmPreparedFactorizedAmplitude = PrepareAmplitudes[\n  ppmFactorizedAmplitude, factorizationModel,\n  \"InternalOnShell\" -> False, \"PolePreference\" -> None,\n  \"MaxSteps\" -> 0, \"TimeConstraint\" -> timeLimit];\nppmPreparationChange = Last[ppmPreparedFactorizedAmplitude] - ppmFactorization[\"Amplitude\"];\nppmHighEnergyInput = Join[ppmFactorization, <|\n  \"Amplitude\" -> Last[ppmPreparedFactorizedAmplitude],\n  \"FamilyAmplitude\" -> ppmFactorization[\"FamilyAmplitude\"] + ppmPreparationChange,\n  \"Correction\" -> ppmFactorization[\"Correction\"] + ppmPreparationChange,\n  \"ExternalMassRules\" -> First[ppmPreparedFactorizedAmplitude]|>];\nppmPreparedFactorizedAmplitude", "Input", ExpressionUUID->"e0dbfbbf-dbf5-4a32-bef5-8e082a334681"],
 
 Cell["7. Complete the Remaining Conditions", "Subsection", ExpressionUUID->"c06dc186-57f6-4e8a-83f7-e590ab852646"],
 
@@ -4795,13 +4795,13 @@ Cell["8. Prepare and Inspect the Final Expression", "Subsection", ExpressionUUID
 
 Cell["There are no internal on-shell assumptions on this final sum. ppmFinalAmplitude is the external-mass pair; ppmFinalExpression is the expression alone.", "Text", ExpressionUUID->"37e812cd-b2f8-45d5-b28a-da45ef6b8a9e"],
 
-Cell["ppmFinalAmplitude = PrepareAmplitudes[\n  {ppmHighEnergy[\"ExternalMassRules\"], ppmHighEnergy[\"Amplitude\"]},\n  factorizationModel, \"InternalOnShell\" -> False, \"ReferenceSpinors\" -> None,\n  \"MaxSteps\" -> 0, \"TimeConstraint\" -> timeLimit];\nppmFinalExpression = Last[ppmFinalAmplitude]", "Input", ExpressionUUID->"eac487e5-8a16-43cb-9617-11110ace012a"],
+Cell["ppmFinalAmplitude = PrepareAmplitudes[\n  {ppmHighEnergy[\"ExternalMassRules\"], ppmHighEnergy[\"Amplitude\"]},\n  factorizationModel, \"InternalOnShell\" -> False, \"PolePreference\" -> None,\n  \"MaxSteps\" -> 0, \"TimeConstraint\" -> timeLimit];\nppmFinalExpression = Last[ppmFinalAmplitude]", "Input", ExpressionUUID->"eac487e5-8a16-43cb-9617-11110ace012a"],
 
 Cell["9. Compare with Feynman Diagrams and Run the Final Checks", "Subsection", ExpressionUUID->"85682d59-b53d-4678-9f33-9c7a653fa25e"],
 
 Cell["The Feynman result is generated independently after construction. Its internal lines stay off shell, and preparation uses one consistent reference prescription across all its diagrams.", "Text", ExpressionUUID->"1fee2583-c1bf-48e5-994b-3653bcbef490"],
 
-Cell["ppmFeynmanDiagrams = CreateDiagrams[ppmParticles, qedFeynmanModel];\nppmFeynmanAmplitudes = diagramAmplitudes[ppmFeynmanDiagrams];\nppmPreparedFeynman = PrepareAmplitudes[\n  ppmFeynmanAmplitudes, qedFeynmanModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\", \"InternalOnShell\" -> False,\n  \"MaxSteps\" -> 0, \"TimeConstraint\" -> timeLimit];\nppmPreparedFeynman[[1]]", "Input", ExpressionUUID->"001afc0d-8f96-465c-a48e-be9e54b6f048"],
+Cell["ppmFeynmanDiagrams = CreateDiagrams[ppmParticles, qedFeynmanModel];\nppmFeynmanAmplitudes = diagramAmplitudes[ppmFeynmanDiagrams];\nppmPreparedFeynman = PrepareAmplitudes[\n  ppmFeynmanAmplitudes, qedFeynmanModel,\n  \"PolePreference\" -> \"AllPhysical\", \"InternalOnShell\" -> False,\n  \"MaxSteps\" -> 0, \"TimeConstraint\" -> timeLimit];\nppmPreparedFeynman[[1]]", "Input", ExpressionUUID->"001afc0d-8f96-465c-a48e-be9e54b6f048"],
 
 Cell["CheckAmplitudes[ppmFinalAmplitude, ppmChannels, factorizationModel,\n  \"FeynmanAmplitudes\" -> ppmPreparedFeynman, \"FeynmanModel\" -> qedFeynmanModel,\n  \"Samples\" -> checkSamples, \"TimeConstraint\" -> timeLimit]", "Input", ExpressionUUID->"01dfda5a-220d-4eac-adb7-dfd6f8f90033"]
 
@@ -4815,7 +4815,7 @@ Cell["Construct and Check", "Section", ExpressionUUID->"472f8cd3-ab29-5c5c-b504-
 
 Cell["Evaluate this cell after Setup. The wrapper generates and prepares the diagrams and factorization channels, completes and prepares the amplitude, then runs all final checks. The printed test report precedes the returned expression. The saved manual work remains available below.", "Text", ExpressionUUID->"c46aee37-fe13-52c0-a562-296642d3c95f"],
 
-Cell["qed5PPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"cd6c2cab-65fa-5c26-bcaa-fb90afe96402"],
+Cell["qed5PPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"cd6c2cab-65fa-5c26-bcaa-fb90afe96402"],
 
 Cell[CellGroupData[{
 
@@ -5492,7 +5492,7 @@ Cell[CellGroupData[{
 Cell["\<\
 preparationDetails = PrepareAmplitudes[rawAmplitudes, diagramModel,
   \"ExternalParticles\" -> particles,
-  \"ReferenceSpinors\" -> referenceChoice,
+  \"PolePreference\" -> referenceChoice,
   \"ReturnDetails\" -> True];
 preparation = preparationDetails[\"PreparedAmplitudes\"];
 preparation\
@@ -8261,7 +8261,7 @@ Cell["\<\
 channels = FactorizationAmplitudeChannels[particles, factorizationModel];
 channelPreparationDetails = PrepareAmplitudes[channels, factorizationModel,
   \"ExternalParticles\" -> particles,
-  \"ReferenceSpinors\" -> referenceChoice, \"ReturnDetails\" -> True];
+  \"PolePreference\" -> referenceChoice, \"ReturnDetails\" -> True];
 preparedChannels = channelPreparationDetails[\"PreparedAmplitudes\"];
 Length[channels]\
 \>", "Input",
@@ -11029,7 +11029,7 @@ Cell[CellGroupData[{
 
 Cell["\<\
 preparedFeynman = PrepareAmplitudes[feynmanPairs, qedFeynmanModel,
-  \"ReferenceSpinors\" -> \"AllPhysical\", \"MaxSteps\" -> 0];
+  \"PolePreference\" -> \"AllPhysical\", \"MaxSteps\" -> 0];
 feynmanAmplitude = Total[Last /@ preparedFeynman];
 feynmanAmplitude\
 \>", "Input",
@@ -13598,7 +13598,7 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.+,A.-,A.+", "Chapter", ExpressionUUID->"63b567d5-e793-5b52-bb58-75534676f705"],
 
-Cell["qed5PMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"0b6964c8-0eb4-52b7-b917-78ade09bbbfc"]
+Cell["qed5PMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"0b6964c8-0eb4-52b7-b917-78ade09bbbfc"]
 
 }, Open]],
 
@@ -13606,7 +13606,7 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.+,A.-,A.-", "Chapter", ExpressionUUID->"2453dfeb-e5ba-5233-b001-e8d8839dda3b"],
 
-Cell["qed5PMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"a77e61a3-edd5-5b98-8319-c1bcaeb49bb4"]
+Cell["qed5PMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"a77e61a3-edd5-5b98-8319-c1bcaeb49bb4"]
 
 }, Open]],
 
@@ -13616,7 +13616,7 @@ Cell["e,E,A.-,A.+,A.+", "Chapter", ExpressionUUID->"30268457-ceb6-5ada-9ca0-39bb
 
 Cell["This ordering now completes automatically. The apparent high-energy freedom consisted of expressions proved identically zero using external identities and momentum conservation. Final checks, including the independent Feynman comparison, passed. Evaluate the calculation below to obtain a fresh result.", "Text", ExpressionUUID->"0451a7f9-3405-5d2d-9ae1-da9bdf177f7d"],
 
-Cell["qed5MPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"505d8c13-008c-5100-b989-cbbbf7637ebf"]
+Cell["qed5MPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"505d8c13-008c-5100-b989-cbbbf7637ebf"]
 
 }, Open]],
 
@@ -13624,7 +13624,7 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.-,A.+,A.-", "Chapter", ExpressionUUID->"1e2a2871-2ee6-5217-9df2-e3efe682a61e"],
 
-Cell["qed5MPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"903c80bb-7e68-57a5-b352-a33498ce148a"]
+Cell["qed5MPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"903c80bb-7e68-57a5-b352-a33498ce148a"]
 
 }, Open]],
 
@@ -13632,7 +13632,7 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.-,A.-,A.+", "Chapter", ExpressionUUID->"b8838f42-d395-55f2-aa71-ac5b452ed75b"],
 
-Cell["qed5MMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"f9882909-13ce-5453-94cd-e0b2e3247cd8"]
+Cell["qed5MMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"f9882909-13ce-5453-94cd-e0b2e3247cd8"]
 
 }, Open]],
 
@@ -13640,7 +13640,7 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.-,A.-,A.-", "Chapter", ExpressionUUID->"f703f4de-d13a-5cc2-8bba-36389d452a2e"],
 
-Cell["qed5MMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"ff61f24f-3439-5805-8632-d085e4e68735"]
+Cell["qed5MMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"ff61f24f-3439-5805-8632-d085e4e68735"]
 
 }, Open]],
 
@@ -13656,7 +13656,7 @@ Cell["Construct and Check", "Section", ExpressionUUID->"adea72e3-c8dc-5579-81a9-
 
 Cell["Evaluate this cell after Setup. The wrapper generates and prepares the diagrams and factorization channels, completes and prepares the amplitude, then runs all final checks. The printed test report precedes the returned expression. The saved manual work remains available below.", "Text", ExpressionUUID->"8a0e400e-e796-55fe-8fc2-c7fa37685606"],
 
-Cell["qed5FourFermionsP = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  \"PreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FactorizationOptions\" -> {\"Samples\" -> 3, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 300},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"98a3963d-bf2b-5092-832a-9f8e0aef3ea7"],
+Cell["qed5FourFermionsP = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> \"AllPhysical\",\n  \"PreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FactorizationOptions\" -> {\"Samples\" -> 3, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 300},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"98a3963d-bf2b-5092-832a-9f8e0aef3ea7"],
 
 Cell[CellGroupData[{
 
@@ -14342,7 +14342,7 @@ Cell[CellGroupData[{
 Cell["\<\
 preparationDetails = PrepareAmplitudes[rawAmplitudes, diagramModel,
   \"ExternalParticles\" -> particles,
-  \"ReferenceSpinors\" -> referenceChoice, \"MaxSteps\" -> 0,
+  \"PolePreference\" -> referenceChoice, \"MaxSteps\" -> 0,
   \"ReturnDetails\" -> True];
 preparation = preparationDetails[\"PreparedAmplitudes\"];
 preparation\
@@ -16089,7 +16089,7 @@ Cell["\<\
 channels = FactorizationAmplitudeChannels[particles, factorizationModel];
 channelPreparationDetails = PrepareAmplitudes[channels, factorizationModel,
   \"ExternalParticles\" -> particles,
-  \"ReferenceSpinors\" -> referenceChoice, \"ReturnDetails\" -> True];
+  \"PolePreference\" -> referenceChoice, \"ReturnDetails\" -> True];
 preparedChannels = channelPreparationDetails[\"PreparedAmplitudes\"];
 Length[channels]\
 \>", "Input",
@@ -18857,7 +18857,7 @@ Cell[CellGroupData[{
 
 Cell["\<\
 preparedFeynman = PrepareAmplitudes[feynmanPairs, qedFeynmanModel,
-  \"ReferenceSpinors\" -> \"AllPhysical\", \"MaxSteps\" -> 0];
+  \"PolePreference\" -> \"AllPhysical\", \"MaxSteps\" -> 0];
 feynmanAmplitude = Total[Last /@ preparedFeynman];
 feynmanAmplitude\
 \>", "Input",
@@ -21428,7 +21428,7 @@ Cell["e,E,E,e,A.-", "Chapter", ExpressionUUID->"a580c69d-cf9b-5c7a-af95-9df454c1
 
 Cell["This calculation now completes automatically. The apparent high-energy freedom consisted of expressions proved identically zero using external identities and momentum conservation. Final checks, including the independent Feynman comparison, passed. Evaluate the calculation below to obtain a fresh result.", "Text", ExpressionUUID->"7dbf9a87-9808-5c95-a673-9ed74906ec45"],
 
-Cell["qed5FourFermionsM = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  \"PreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FactorizationOptions\" -> {\"Samples\" -> 3, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 300},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"2ac0cb72-3082-5941-925b-b84b0bc3f0f4"]
+Cell["qed5FourFermionsM = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> \"AllPhysical\",\n  \"PreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FactorizationOptions\" -> {\"Samples\" -> 3, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 300},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"2ac0cb72-3082-5941-925b-b84b0bc3f0f4"]
 
 }, Open]]
 
@@ -23962,7 +23962,7 @@ Cell["Construct and Check", "Section", ExpressionUUID->"cef9dd1a-4216-51ba-9e59-
 
 Cell["Evaluate this cell after Setup. The wrapper generates and prepares the diagrams and factorization channels, completes and prepares the amplitude, then runs all final checks. The printed test report precedes the returned expression. The saved manual work remains available below.", "Text", ExpressionUUID->"b7f4d745-8e49-5b0f-b734-9f343933d143"],
 
-Cell["qed6PPPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 12, \"ValidationSamples\" -> 1,\n    \"MaxRefinements\" -> 5, \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 1200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 1200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"TimeConstraint\" -> 1200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"48382d56-5ad0-55e2-a99f-e9d5d2546991"],
+Cell["qed6PPPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> \"AllPhysical\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 12, \"ValidationSamples\" -> 1,\n    \"MaxRefinements\" -> 5, \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 1200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 1200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"TimeConstraint\" -> 1200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"48382d56-5ad0-55e2-a99f-e9d5d2546991"],
 
 Cell[CellGroupData[{
 
@@ -24027,7 +24027,7 @@ conditions in its numerator. Original propagators stay off shell.\
 Cell["\<\
 preparationDetails = PrepareAmplitudes[rawAmplitudes, diagramModel,
   \"ExternalParticles\" -> particles,
-  \"ReferenceSpinors\" -> referenceChoice,
+  \"PolePreference\" -> referenceChoice,
   \"ReturnDetails\" -> True];
 preparation = preparationDetails[\"PreparedAmplitudes\"];\
 \>", "Input",
@@ -24648,7 +24648,7 @@ last completed expression; the report explains why.\
 Cell["\<\
 Grid[Prepend[
   ({#[\"Reference\"], #[\"Mode\"], #[\"Target\"]} & /@
-    preparationDetails[\"DiagramReports\"][[1]][\"ReferenceSpinors\"][\"Assignments\"]),
+    preparationDetails[\"DiagramReports\"][[1]][\"PolePreference\"][\"Assignments\"]),
   {\"Original reference\", \"Choice\", \"Replacement\"}], Frame -> All]\
 \>", "Input",
  CellLabel->"In[17]:=",ExpressionUUID->"472f3ff8-8d5a-4669-9613-97fc5583ef00"]
@@ -24665,7 +24665,7 @@ Cell["\<\
 channels = FactorizationAmplitudeChannels[particles, factorizationModel];
 channelPreparationDetails = PrepareAmplitudes[channels, factorizationModel,
   \"ExternalParticles\" -> particles,
-  \"ReferenceSpinors\" -> referenceChoice, \"ReturnDetails\" -> True];
+  \"PolePreference\" -> referenceChoice, \"ReturnDetails\" -> True];
 preparedChannels = channelPreparationDetails[\"PreparedAmplitudes\"];
 Length[channels]\
 \>", "Input",
@@ -25096,7 +25096,7 @@ Cell[CellGroupData[{
 
 Cell["\<\
 preparedFeynman = PrepareAmplitudes[feynmanPairs, qedFeynmanModel,
-  \"ReferenceSpinors\" -> \"AllPhysical\", \"MaxSteps\" -> 0];
+  \"PolePreference\" -> \"AllPhysical\", \"MaxSteps\" -> 0];
 feynmanAmplitude = Total[Last /@ preparedFeynman];
 feynmanAmplitude\
 \>", "Input",
@@ -27556,7 +27556,7 @@ Cell["Construct and Check", "Section", ExpressionUUID->"4eb6abff-e598-59fb-a7d6-
 
 Cell["Evaluate this cell after Setup. The wrapper generates and prepares the diagrams and factorization channels, completes and prepares the amplitude, then runs all final checks. The printed test report precedes the returned expression. The saved manual work remains available below. This larger example retains the earlier two-hour factorization budget; that limit is not a finishing-time guarantee.", "Text", ExpressionUUID->"5def643f-d347-50e0-a9fd-68b70ff235b3"],
 
-Cell["qed6PPPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 28, \"ValidationSamples\" -> 2,\n    \"MaxRefinements\" -> 5, \"RandomSeed\" -> 1729,\n    \"MaxCorrectionTerms\" -> 1024, \"TimeConstraint\" -> 7200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 7200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"FeynmanSamples\" -> 3,\n    \"TimeConstraint\" -> 7200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"883d3035-fc8e-5e0e-ae1a-657308bc023a"],
+Cell["qed6PPPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 28, \"ValidationSamples\" -> 2,\n    \"MaxRefinements\" -> 5, \"RandomSeed\" -> 1729,\n    \"MaxCorrectionTerms\" -> 1024, \"TimeConstraint\" -> 7200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 7200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"FeynmanSamples\" -> 3,\n    \"TimeConstraint\" -> 7200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"883d3035-fc8e-5e0e-ae1a-657308bc023a"],
 
 Cell[CellGroupData[{
 
@@ -27575,7 +27575,7 @@ Cell["Earlier Step-by-Step Work (Optional)", "Section", ExpressionUUID->"c32d308
   }, Open]],
   Cell[CellGroupData[{
     Cell["3. Prepare Each Diagram", "Section"],
-    Cell["preparation = PrepareAmplitudes[rawAmplitudes, diagramModel,\n  \"ReferenceSpinors\" -> referenceChoice];", "Input"]
+    Cell["preparation = PrepareAmplitudes[rawAmplitudes, diagramModel,\n  \"PolePreference\" -> referenceChoice];", "Input"]
   }, Open]],
   Cell[CellGroupData[{
     Cell["4. Complete the Physical Residues", "Section"],
@@ -27585,7 +27585,7 @@ Cell["Earlier Step-by-Step Work (Optional)", "Section", ExpressionUUID->"c32d308
   }, Open]],
   Cell[CellGroupData[{
     Cell["5. Verify the Completed Amplitude", "Section"],
-    Cell["feynmanDiagrams = CreateDiagrams[particles, qedFeynmanModel];\nfeynmanPairs = diagramAmplitudes[feynmanDiagrams];\npreparedFeynman = PrepareAmplitudes[feynmanPairs, qedFeynmanModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\", \"MaxSteps\" -> 0];", "Input"],
+    Cell["feynmanDiagrams = CreateDiagrams[particles, qedFeynmanModel];\nfeynmanPairs = diagramAmplitudes[feynmanDiagrams];\npreparedFeynman = PrepareAmplitudes[feynmanPairs, qedFeynmanModel,\n  \"PolePreference\" -> \"AllSpurious\", \"MaxSteps\" -> 0];", "Input"],
     Cell["Clear[constructedAmplitude, constructionChecks];\nIf[FailureQ[factorization] || factorization === $Failed,\n  factorization,\n  constructedAmplitude = factorization;\n  constructionChecks = CheckAmplitudes[\n    constructedAmplitude, channels, factorizationModel,\n    \"FeynmanAmplitudes\" -> preparedFeynman,\n    \"FeynmanModel\" -> qedFeynmanModel, \"FeynmanSamples\" -> 3,\n    \"Samples\" -> checkSamples, \"TimeConstraint\" -> timeLimit,\n    \"Output\" -> \"Details\"];\n  constructionChecks[\"Table\"]]", "Input"],
     Cell[CellGroupData[{
       Cell["Inspect the Completed Amplitude", "Subsection"],
@@ -27600,7 +27600,7 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.+,A.+,A.-,A.+", "Chapter", ExpressionUUID->"7b807755-c098-5ca7-a7bf-1d1c77baf2f0"],
 
-Cell["qed6PPMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 28, \"ValidationSamples\" -> 2,\n    \"MaxRefinements\" -> 5, \"RandomSeed\" -> 1729,\n    \"MaxCorrectionTerms\" -> 1024, \"TimeConstraint\" -> 7200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 7200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"FeynmanSamples\" -> 3,\n    \"TimeConstraint\" -> 7200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"98d71f36-8972-575f-9c69-f4d9a25fa8f9"]
+Cell["qed6PPMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 28, \"ValidationSamples\" -> 2,\n    \"MaxRefinements\" -> 5, \"RandomSeed\" -> 1729,\n    \"MaxCorrectionTerms\" -> 1024, \"TimeConstraint\" -> 7200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 7200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"FeynmanSamples\" -> 3,\n    \"TimeConstraint\" -> 7200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"98d71f36-8972-575f-9c69-f4d9a25fa8f9"]
 
 }, Open]],
 
@@ -27610,7 +27610,7 @@ Cell["Construct and Check", "Section", ExpressionUUID->"d0ea60f9-9fe8-596d-952e-
 
 Cell["ConstructAmplitude now completes this case using additional channel continuations generated from the model's known lower-point amplitudes. Every original channel and all final checks, including the independent Feynman calculation, pass. The earlier step-by-step work remains below. These settings disable optional identity-route enumeration; ordinary spinor reduction and declared numerator mass-shell reductions still run.", "Text", ExpressionUUID->"26039431-c89a-5ead-9e82-153f2d487e70"],
 
-Cell["qed6PPMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"PreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"ChannelPreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FinalPreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FactorizationOptions\" -> {\"Samples\" -> 2, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 180},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"0819812a-ac06-5b2c-a5ba-f2599326e196"],
+Cell["qed6PPMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> \"AllSpurious\",\n  \"PreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"ChannelPreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FinalPreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FactorizationOptions\" -> {\"Samples\" -> 2, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 180},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"0819812a-ac06-5b2c-a5ba-f2599326e196"],
 
 Cell[CellGroupData[{
 
@@ -27629,7 +27629,7 @@ in the next cell is optional and can be skipped to reproduce the compact \
 result quickly. The lower-amplitude construction in step 3 does not use the \
 prepared diagram expression as a fitted answer.", "Text"],
       Cell["preparation = PrepareAmplitudes[rawAmplitudes, diagramModel,\n  \
-\"ReferenceSpinors\" -> \"AllSpurious\"];", "Input"],
+\"PolePreference\" -> \"AllSpurious\"];", "Input"],
       Cell[CellGroupData[{Cell["View the diagrams", "Subsection"],
          Cell["CreateArrowDiagrams[diagrams]", "Input"]}, Closed]]}, Open]],
    Cell[CellGroupData[{Cell["2. Physical Factorization Channels", "Section"],
@@ -28688,7 +28688,7 @@ unsupported factor or timeout is UNRESOLVED, not success.", "Text"],
       Cell["feynmanDiagrams = CreateDiagrams[particles, \
 qedFeynmanModel];\nfeynmanPairs = \
 diagramAmplitudes[feynmanDiagrams];\npreparedFeynman = \
-PrepareAmplitudes[feynmanPairs, qedFeynmanModel,\n  \"ReferenceSpinors\" -> \
+PrepareAmplitudes[feynmanPairs, qedFeynmanModel,\n  \"PolePreference\" -> \
 \"AllSpurious\", \"MaxSteps\" -> 0];", "Input"], Cell["constructionChecks = \
 CheckAmplitudes[\n  constructedAmplitude, channels, factorizationModel,\n  \
 \"FeynmanAmplitudes\" -> preparedFeynman,\n  \"FeynmanModel\" -> \
@@ -28705,7 +28705,7 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.+,A.-,A.+,A.+", "Chapter", ExpressionUUID->"4ee79a12-44d5-5ff2-8801-7779cbb28f8b"],
 
-Cell["qed6PMPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 28, \"ValidationSamples\" -> 2,\n    \"MaxRefinements\" -> 5, \"RandomSeed\" -> 1729,\n    \"MaxCorrectionTerms\" -> 1024, \"TimeConstraint\" -> 7200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 7200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"FeynmanSamples\" -> 3,\n    \"TimeConstraint\" -> 7200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"3f000dad-0c68-52f1-9f86-5663c5a19222"]
+Cell["qed6PMPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 28, \"ValidationSamples\" -> 2,\n    \"MaxRefinements\" -> 5, \"RandomSeed\" -> 1729,\n    \"MaxCorrectionTerms\" -> 1024, \"TimeConstraint\" -> 7200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 7200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"FeynmanSamples\" -> 3,\n    \"TimeConstraint\" -> 7200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"3f000dad-0c68-52f1-9f86-5663c5a19222"]
 
 }, Open]],
 
@@ -28715,7 +28715,7 @@ Cell["e,E,A.+,A.-,A.+,A.-", "Chapter", ExpressionUUID->"972be87c-390e-5f13-bfdf-
 
 Cell["Automatic completion of this balanced-helicity family is still unresolved. This is a direct calculation with the general workflow; it does not substitute the separate recursion example.", "Text", ExpressionUUID->"874e539a-5a2b-5ebe-ae62-7307a423b9c7"],
 
-Cell["qed6PMPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 2, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 180},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"46fcfbd1-65d5-5c45-9986-6d6ce504726e"]
+Cell["qed6PMPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 2, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 180},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"46fcfbd1-65d5-5c45-9986-6d6ce504726e"]
 
 }, Open]],
 
@@ -28725,7 +28725,7 @@ Cell["e,E,A.+,A.-,A.-,A.+", "Chapter", ExpressionUUID->"01e478d0-08dc-5c9e-881d-
 
 Cell["Automatic completion of this balanced-helicity family is still unresolved. This is a direct calculation with the general workflow; it does not substitute the separate recursion example.", "Text", ExpressionUUID->"cec29136-21a5-58e1-bfac-f8e025ec28cf"],
 
-Cell["qed6PMMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 2, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 180},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"8bf73fa0-d385-5139-8a9e-acbd4c748357"]
+Cell["qed6PMMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 2, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 180},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"8bf73fa0-d385-5139-8a9e-acbd4c748357"]
 
 }, Open]],
 
@@ -28733,7 +28733,7 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.+,A.-,A.-,A.-", "Chapter", ExpressionUUID->"dcf28129-e2f2-5228-810c-f231dc09c4ae"],
 
-Cell["qed6PMMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 28, \"ValidationSamples\" -> 2,\n    \"MaxRefinements\" -> 5, \"RandomSeed\" -> 1729,\n    \"MaxCorrectionTerms\" -> 1024, \"TimeConstraint\" -> 7200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 7200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"FeynmanSamples\" -> 3,\n    \"TimeConstraint\" -> 7200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"ba227405-40aa-5731-b6a7-fc6a25372840"]
+Cell["qed6PMMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 28, \"ValidationSamples\" -> 2,\n    \"MaxRefinements\" -> 5, \"RandomSeed\" -> 1729,\n    \"MaxCorrectionTerms\" -> 1024, \"TimeConstraint\" -> 7200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 7200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"FeynmanSamples\" -> 3,\n    \"TimeConstraint\" -> 7200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"ba227405-40aa-5731-b6a7-fc6a25372840"]
 
 }, Open]],
 
@@ -28741,7 +28741,7 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.-,A.+,A.+,A.+", "Chapter", ExpressionUUID->"5984e924-9b2b-5296-91df-b19cd087adb7"],
 
-Cell["qed6MPPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 28, \"ValidationSamples\" -> 2,\n    \"MaxRefinements\" -> 5, \"RandomSeed\" -> 1729,\n    \"MaxCorrectionTerms\" -> 1024, \"TimeConstraint\" -> 7200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 7200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"FeynmanSamples\" -> 3,\n    \"TimeConstraint\" -> 7200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"4df14370-a2c3-5e5e-89c6-c13da9b1a7f4"]
+Cell["qed6MPPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 28, \"ValidationSamples\" -> 2,\n    \"MaxRefinements\" -> 5, \"RandomSeed\" -> 1729,\n    \"MaxCorrectionTerms\" -> 1024, \"TimeConstraint\" -> 7200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 7200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"FeynmanSamples\" -> 3,\n    \"TimeConstraint\" -> 7200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"4df14370-a2c3-5e5e-89c6-c13da9b1a7f4"]
 
 }, Open]],
 
@@ -28751,7 +28751,7 @@ Cell["e,E,A.-,A.+,A.+,A.-", "Chapter", ExpressionUUID->"fce99b6d-baf8-5f87-bca5-
 
 Cell["Automatic completion of this balanced-helicity family is still unresolved. This is a direct calculation with the general workflow; it does not substitute the separate recursion example.", "Text", ExpressionUUID->"f12d21ea-a639-5816-a80a-a22edf17dcd5"],
 
-Cell["qed6MPPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 2, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 180},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"d9ab4ba1-5724-5444-860c-623db1d9aa94"]
+Cell["qed6MPPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 2, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 180},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"d9ab4ba1-5724-5444-860c-623db1d9aa94"]
 
 }, Open]],
 
@@ -28761,7 +28761,7 @@ Cell["e,E,A.-,A.+,A.-,A.+", "Chapter", ExpressionUUID->"c1773450-c939-52ca-ba8f-
 
 Cell["Automatic completion of this balanced-helicity family is still unresolved. This is a direct calculation with the general workflow; it does not substitute the separate recursion example.", "Text", ExpressionUUID->"a3d30078-a7d4-5f63-a583-4d0f65a47b01"],
 
-Cell["qed6MPMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 2, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 180},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"c0f95937-7a91-5933-914f-b90780cb818a"]
+Cell["qed6MPMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 2, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 180},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"c0f95937-7a91-5933-914f-b90780cb818a"]
 
 }, Open]],
 
@@ -28769,7 +28769,7 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.-,A.+,A.-,A.-", "Chapter", ExpressionUUID->"e9f93243-549b-545d-8a9c-68ca15ab2332"],
 
-Cell["qed6MPMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 28, \"ValidationSamples\" -> 2,\n    \"MaxRefinements\" -> 5, \"RandomSeed\" -> 1729,\n    \"MaxCorrectionTerms\" -> 1024, \"TimeConstraint\" -> 7200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 7200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"FeynmanSamples\" -> 3,\n    \"TimeConstraint\" -> 7200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"24331ab2-5da4-58a4-aa99-400ac33e00e3"]
+Cell["qed6MPMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 28, \"ValidationSamples\" -> 2,\n    \"MaxRefinements\" -> 5, \"RandomSeed\" -> 1729,\n    \"MaxCorrectionTerms\" -> 1024, \"TimeConstraint\" -> 7200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 7200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"FeynmanSamples\" -> 3,\n    \"TimeConstraint\" -> 7200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"24331ab2-5da4-58a4-aa99-400ac33e00e3"]
 
 }, Open]],
 
@@ -28779,7 +28779,7 @@ Cell["e,E,A.-,A.-,A.+,A.+", "Chapter", ExpressionUUID->"11e094af-87e7-526d-a4f4-
 
 Cell["Automatic completion of this balanced-helicity family is still unresolved. This is a direct calculation with the general workflow; it does not substitute the separate recursion example.", "Text", ExpressionUUID->"8d7cdd9e-7865-5203-aa0b-d7d869cd9af3"],
 
-Cell["qed6MMPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 2, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 180},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"feac857c-b1f2-53c2-8224-42e08c8e526f"]
+Cell["qed6MMPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 2, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 180},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"feac857c-b1f2-53c2-8224-42e08c8e526f"]
 
 }, Open]],
 
@@ -28787,7 +28787,7 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.-,A.-,A.+,A.-", "Chapter", ExpressionUUID->"932294fd-5531-5a53-8b40-abfe26bb4a02"],
 
-Cell["qed6MMPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 28, \"ValidationSamples\" -> 2,\n    \"MaxRefinements\" -> 5, \"RandomSeed\" -> 1729,\n    \"MaxCorrectionTerms\" -> 1024, \"TimeConstraint\" -> 7200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 7200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"FeynmanSamples\" -> 3,\n    \"TimeConstraint\" -> 7200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"ea85b16e-b434-52e9-b534-0e786e275e4e"]
+Cell["qed6MMPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 28, \"ValidationSamples\" -> 2,\n    \"MaxRefinements\" -> 5, \"RandomSeed\" -> 1729,\n    \"MaxCorrectionTerms\" -> 1024, \"TimeConstraint\" -> 7200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 7200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"FeynmanSamples\" -> 3,\n    \"TimeConstraint\" -> 7200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"ea85b16e-b434-52e9-b534-0e786e275e4e"]
 
 }, Open]],
 
@@ -28795,7 +28795,7 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.-,A.-,A.-,A.+", "Chapter", ExpressionUUID->"5883bf3b-bc21-5b57-959e-7fbc427b9b97"],
 
-Cell["qed6MMMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 28, \"ValidationSamples\" -> 2,\n    \"MaxRefinements\" -> 5, \"RandomSeed\" -> 1729,\n    \"MaxCorrectionTerms\" -> 1024, \"TimeConstraint\" -> 7200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 7200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"FeynmanSamples\" -> 3,\n    \"TimeConstraint\" -> 7200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"dbc76639-f10b-521c-8b4e-eb2ee8cc2b31"]
+Cell["qed6MMMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 28, \"ValidationSamples\" -> 2,\n    \"MaxRefinements\" -> 5, \"RandomSeed\" -> 1729,\n    \"MaxCorrectionTerms\" -> 1024, \"TimeConstraint\" -> 7200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 7200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"FeynmanSamples\" -> 3,\n    \"TimeConstraint\" -> 7200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"dbc76639-f10b-521c-8b4e-eb2ee8cc2b31"]
 
 }, Open]],
 
@@ -28803,7 +28803,7 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.-,A.-,A.-,A.-", "Chapter", ExpressionUUID->"2e0908f6-4d62-5068-b83e-2ee0a89924b1"],
 
-Cell["qed6MMMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 12, \"ValidationSamples\" -> 1,\n    \"MaxRefinements\" -> 5, \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 1200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 1200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"TimeConstraint\" -> 1200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"86b62ac4-7191-5590-95c5-34ce4ccc68f9"]
+Cell["qed6MMMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> \"AllPhysical\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 12, \"ValidationSamples\" -> 1,\n    \"MaxRefinements\" -> 5, \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 1200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 1200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"TimeConstraint\" -> 1200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"86b62ac4-7191-5590-95c5-34ce4ccc68f9"]
 
 }, Open]],
 
@@ -28813,7 +28813,7 @@ Cell["e,E,E,e,A.+,A.+", "Chapter", ExpressionUUID->"dc2a7d10-2e26-54e3-ac32-91da
 
 Cell["This family has diagram-preparation checks, but full automatic completion has not yet been established. This calculation runs the complete workflow and returns an expression only if every required check passes. An unresolved result remains visible as Failure.", "Text", ExpressionUUID->"e00c9759-5843-5d08-8c90-bc17e87f6b19"],
 
-Cell["qed6FourFermionsPP = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> Automatic,\n  \"PreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FactorizationOptions\" -> {\"Samples\" -> 3, \"ValidationSamples\" -> 1,\n    \"MaxRefinements\" -> 5, \"MaxCorrectionTerms\" -> 512, \"TimeConstraint\" -> 1200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 1200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"TimeConstraint\" -> 1200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"43109671-29f3-53c2-8f3e-a7707a317999"]
+Cell["qed6FourFermionsPP = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> Automatic,\n  \"PreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FactorizationOptions\" -> {\"Samples\" -> 3, \"ValidationSamples\" -> 1,\n    \"MaxRefinements\" -> 5, \"MaxCorrectionTerms\" -> 512, \"TimeConstraint\" -> 1200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 1200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"TimeConstraint\" -> 1200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"43109671-29f3-53c2-8f3e-a7707a317999"]
 
 }, Open]],
 
@@ -28823,7 +28823,7 @@ Cell["e,E,E,e,A.+,A.-", "Chapter", ExpressionUUID->"ee351497-2df4-5e47-ae8e-c308
 
 Cell["This family has diagram-preparation checks, but full automatic completion has not yet been established. This calculation runs the complete workflow and returns an expression only if every required check passes. An unresolved result remains visible as Failure.", "Text", ExpressionUUID->"96168d5a-7876-5315-9519-6322c32cebf3"],
 
-Cell["qed6FourFermionsPM = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> Automatic,\n  \"PreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FactorizationOptions\" -> {\"Samples\" -> 3, \"ValidationSamples\" -> 1,\n    \"MaxRefinements\" -> 5, \"MaxCorrectionTerms\" -> 512, \"TimeConstraint\" -> 1200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 1200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"TimeConstraint\" -> 1200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"5a894df5-1ce9-5728-b90b-edbed091989e"]
+Cell["qed6FourFermionsPM = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> Automatic,\n  \"PreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FactorizationOptions\" -> {\"Samples\" -> 3, \"ValidationSamples\" -> 1,\n    \"MaxRefinements\" -> 5, \"MaxCorrectionTerms\" -> 512, \"TimeConstraint\" -> 1200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 1200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"TimeConstraint\" -> 1200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"5a894df5-1ce9-5728-b90b-edbed091989e"]
 
 }, Open]],
 
@@ -28833,7 +28833,7 @@ Cell["e,E,E,e,A.-,A.+", "Chapter", ExpressionUUID->"d3c55f83-826f-50c4-83e6-fddb
 
 Cell["This family has diagram-preparation checks, but full automatic completion has not yet been established. This calculation runs the complete workflow and returns an expression only if every required check passes. An unresolved result remains visible as Failure.", "Text", ExpressionUUID->"c424a257-de2e-5576-a87b-dcaf192ebb40"],
 
-Cell["qed6FourFermionsMP = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> Automatic,\n  \"PreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FactorizationOptions\" -> {\"Samples\" -> 3, \"ValidationSamples\" -> 1,\n    \"MaxRefinements\" -> 5, \"MaxCorrectionTerms\" -> 512, \"TimeConstraint\" -> 1200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 1200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"TimeConstraint\" -> 1200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"8828bc1f-4ead-5b86-b8d4-6dcf03cdef8b"]
+Cell["qed6FourFermionsMP = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> Automatic,\n  \"PreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FactorizationOptions\" -> {\"Samples\" -> 3, \"ValidationSamples\" -> 1,\n    \"MaxRefinements\" -> 5, \"MaxCorrectionTerms\" -> 512, \"TimeConstraint\" -> 1200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 1200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"TimeConstraint\" -> 1200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"8828bc1f-4ead-5b86-b8d4-6dcf03cdef8b"]
 
 }, Open]],
 
@@ -28843,7 +28843,7 @@ Cell["e,E,E,e,A.-,A.-", "Chapter", ExpressionUUID->"dd97993e-57e7-53ce-a81b-d041
 
 Cell["This family has diagram-preparation checks, but full automatic completion has not yet been established. This calculation runs the complete workflow and returns an expression only if every required check passes. An unresolved result remains visible as Failure.", "Text", ExpressionUUID->"4ce2cdf2-4e4a-5c00-a691-21afa4f301b1"],
 
-Cell["qed6FourFermionsMM = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> Automatic,\n  \"PreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FactorizationOptions\" -> {\"Samples\" -> 3, \"ValidationSamples\" -> 1,\n    \"MaxRefinements\" -> 5, \"MaxCorrectionTerms\" -> 512, \"TimeConstraint\" -> 1200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 1200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"TimeConstraint\" -> 1200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"aa7189ea-ed5a-5e8a-945c-04d07d7d1ecb"]
+Cell["qed6FourFermionsMM = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> Automatic,\n  \"PreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FactorizationOptions\" -> {\"Samples\" -> 3, \"ValidationSamples\" -> 1,\n    \"MaxRefinements\" -> 5, \"MaxCorrectionTerms\" -> 512, \"TimeConstraint\" -> 1200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 1200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"TimeConstraint\" -> 1200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"aa7189ea-ed5a-5e8a-945c-04d07d7d1ecb"]
 
 }, Open]],
 
@@ -28853,7 +28853,7 @@ Cell["e,E,e,E,e,E", "Chapter", ExpressionUUID->"0b60b2a6-644f-5f88-bad8-eba453fa
 
 Cell["This family has diagram-preparation checks, but full automatic completion has not yet been established. This calculation runs the complete workflow and returns an expression only if every required check passes. An unresolved result remains visible as Failure.", "Text", ExpressionUUID->"4d396abd-34ca-5181-9a59-156cb832b62f"],
 
-Cell["qed6SixFermions = ConstructAmplitude[\n  {\"e\", \"E\", \"e\", \"E\", \"e\", \"E\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> Automatic,\n  \"PreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FactorizationOptions\" -> {\"Samples\" -> 3, \"ValidationSamples\" -> 1,\n    \"MaxRefinements\" -> 5, \"MaxCorrectionTerms\" -> 512, \"TimeConstraint\" -> 1200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 1200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"TimeConstraint\" -> 1200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"18e82e69-d9e2-5b59-a83b-c6b2e930b604"]
+Cell["qed6SixFermions = ConstructAmplitude[\n  {\"e\", \"E\", \"e\", \"E\", \"e\", \"E\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> Automatic,\n  \"PreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FactorizationOptions\" -> {\"Samples\" -> 3, \"ValidationSamples\" -> 1,\n    \"MaxRefinements\" -> 5, \"MaxCorrectionTerms\" -> 512, \"TimeConstraint\" -> 1200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 1200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"TimeConstraint\" -> 1200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"18e82e69-d9e2-5b59-a83b-c6b2e930b604"]
 
 }, Open]]
 

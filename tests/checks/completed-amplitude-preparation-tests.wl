@@ -68,24 +68,24 @@ cpReference[id_, leg_] :=
   SpinorChain[Spinor["Xi", "Angle", id], Mom[2], Spinor["Helicity", "Square", leg]]/
     SpinorChain[Spinor["Xi", "Angle", id], Spinor["Helicity", "Angle", leg]];
 cpPhysical = cpPrepare[{cpExternal, cpReference[71, 3]/cpDen},
-  "ReferenceSpinors" -> "AllPhysical", "ReturnDetails" -> True];
+  "PolePreference" -> "AllPhysical", "ReturnDetails" -> True];
 check["a completed amplitude can choose an existing physical pole as its reference",
   cpPhysical["Status"] === "PREPARED" &&
     FreeQ[cpPhysical["Amplitude"], Spinor["Xi", ___]] &&
-    First[cpPhysical["ItemReports"]]["ReferenceSpinors"]["Assignments"][[1]]["Target"] === 1];
+    First[cpPhysical["ItemReports"]]["PolePreference"]["Assignments"][[1]]["Target"] === 1];
 check["physical reference inventory remains separate from actual external mass rules",
   cpPhysical["ExternalMassRules"] === cpExternal &&
     First[cpPhysical["RemainderData"]]["MassRules"] === cpExternal &&
     First[cpPhysical["ItemReports"]]["InternalOnShellChannels"] === {}];
 cpRulesFive = Append[cpExternal, Mass[5] -> 0];
 cpShared = {cpRulesFive, cpReference[0, 3] cpReference[0, 4]/cpDen};
-cpSharedSpurious = cpPrepare[cpShared, "ReferenceSpinors" -> "AllSpurious", "ReturnDetails" -> True];
+cpSharedSpurious = cpPrepare[cpShared, "PolePreference" -> "AllSpurious", "ReturnDetails" -> True];
 check["one shared Xi is uniformly replaced by one admissible external spinor",
   cpSharedSpurious["Status"] === "PREPARED" &&
     FreeQ[cpSharedSpurious["Amplitude"], Spinor["Xi", ___]] &&
-    DeleteDuplicates[Lookup[First[cpSharedSpurious["ItemReports"]]["ReferenceSpinors"]["Assignments"],
+    DeleteDuplicates[Lookup[First[cpSharedSpurious["ItemReports"]]["PolePreference"]["Assignments"],
       "Target"]] === {5}];
-cpSharedAllPhysical = Quiet[cpPrepare[cpShared, "ReferenceSpinors" -> "AllPhysical"]];
+cpSharedAllPhysical = Quiet[cpPrepare[cpShared, "PolePreference" -> "AllPhysical"]];
 check["an unsafe per-leg physical replacement of a shared Xi is reported as unavailable",
   FailureQ[cpSharedAllPhysical] && First[cpSharedAllPhysical] === "AmplitudeReferences"];
 cpAngle[a_, b_] := SpinorChain[a, b];
@@ -102,17 +102,17 @@ cpUnassigned = cpPrepare[{cpExternal, cpAngle[cpXiOnly, cpA[3]]}, "ReturnDetails
 check["an unassigned literal Xi is preserved uniformly instead of guessed or split",
   cpUnassigned["Status"] === "PREPARED" &&
     cpUnassigned["Amplitude"] === cpAngle[cpXiOnly, cpA[3]] &&
-    First[cpUnassigned["ItemReports"]]["ReferenceSpinors"]["Assignments"][[1]]["Target"] === cpXiOnly];
+    First[cpUnassigned["ItemReports"]]["PolePreference"]["Assignments"][[1]]["Target"] === cpXiOnly];
 cpFeynmanModel = FeynmanModel @@ cpModel;
 cpFeynmanPair = {cpExternal, cpReference[0, 3] cpReference[0, 4]/cpDen};
 cpFeynmanSingle = PrepareAmplitudes[cpFeynmanPair, cpFeynmanModel,
   "MaxSteps" -> 0, "TimeConstraint" -> 3, "ProgressReporting" -> False, "ReturnDetails" -> True];
 check["a single external-only amplitude preserves Xi correlations with a Feynman model too",
-  First[cpFeynmanSingle["ItemReports"]]["ReferenceSpinors"]["Expression"] === Last[cpFeynmanPair] &&
-    DeleteDuplicates[Lookup[First[cpFeynmanSingle["ItemReports"]]["ReferenceSpinors"]["Assignments"],
+  First[cpFeynmanSingle["ItemReports"]]["PolePreference"]["Expression"] === Last[cpFeynmanPair] &&
+    DeleteDuplicates[Lookup[First[cpFeynmanSingle["ItemReports"]]["PolePreference"]["Assignments"],
       "Mode"]] === {"PreservedXi"} && !cpFeynmanSingle["Options"]["InternalOnShell"]];
 cpFeynmanUnsafe = Quiet[PrepareAmplitudes[cpFeynmanPair, cpFeynmanModel,
-  "ReferenceSpinors" -> "AllPhysical", "MaxSteps" -> 0, "ProgressReporting" -> False]];
+  "PolePreference" -> "AllPhysical", "MaxSteps" -> 0, "ProgressReporting" -> False]];
 check["a Feynman model does not permit splitting a completed amplitude's shared Xi",
   FailureQ[cpFeynmanUnsafe] && First[cpFeynmanUnsafe] === "FeynmanReferences"];
 
@@ -223,7 +223,7 @@ check["post-completion preparation retains the actual fixed-reference input as a
     ConstructiveDiagrams`Private`preparationRank[cpQEDCommon],
     ConstructiveDiagrams`Private`preparationRank[cpQEDPrepared["Amplitude"]]]];
 cpQEDPhysical = Quiet[PrepareAmplitudes[cpQEDPair, prModel,
-  "ReferenceSpinors" -> "AllPhysical", "MaxSteps" -> 0,
+  "PolePreference" -> "AllPhysical", "MaxSteps" -> 0,
   "ProgressReporting" -> False]];
 check["explicit physical post-preparation does not silently decorrelate a shared QED Xi",
   FailureQ[cpQEDPhysical]];

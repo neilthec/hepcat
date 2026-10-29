@@ -243,7 +243,7 @@ check["independent benchmarks come from two four-point and six five-point diagra
     FreeQ[qaSpinorBenchmarks, _DiracChain | _PolarizationVector | _Failure | $Failed]];
 Get[FileNameJoin[{root, "tests", "QED-5-point-residues.wl"}]];
 qaPreparedRawFeynman = PrepareAmplitudes[First[qaRawBenchmarks], qaFeynmanModel,
-  "ReferenceSpinors" -> None, "InternalOnShell" -> True, "MaxSteps" -> 0,
+  "PolePreference" -> None, "InternalOnShell" -> True, "MaxSteps" -> 0,
   "TimeConstraint" -> 60, "ProgressReporting" -> False, "ReturnDetails" -> True];
 check["Feynman-model preparation converts raw tensors without constructive internal-shell assumptions",
   qaPreparedRawFeynman["Status"] === "PREPARED" &&
@@ -259,12 +259,12 @@ check["generated raw Feynman amplitudes themselves never declare internal numera
   AllTrue[Flatten[qaRawBenchmarks, 1], Function[pair,
     AllTrue[First[pair], MatchQ[#, HoldPattern[Mass[_Integer] -> _]] &]]]];
 qaPreparedConvertedFeynman = PrepareAmplitudes[First[qaSpinorBenchmarks], qaFeynmanModel,
-  "ReferenceSpinors" -> None, "MaxSteps" -> 0,
+  "PolePreference" -> None, "MaxSteps" -> 0,
   "TimeConstraint" -> 60, "ProgressReporting" -> False];
 check["already converted Feynman pairs use the same preparation interface",
   qaPreparedConvertedFeynman === qaPreparedRawFeynman["PreparedAmplitudes"]];
 qaDefaultFeynmanPreparation = PrepareAmplitudes[First[qaRawBenchmarks], qaFeynmanModel,
-  "ReferenceSpinors" -> None, "ProgressReporting" -> False, "ReturnDetails" -> True];
+  "PolePreference" -> None, "ProgressReporting" -> False, "ReturnDetails" -> True];
 check["Feynman preparation defaults to exact algebra without entering the constructive identity search",
   qaDefaultFeynmanPreparation["Status"] === "PREPARED" &&
     qaDefaultFeynmanPreparation["Options"]["MaxSteps"] === 0 &&
@@ -276,7 +276,7 @@ qaCompositeTracePair = {{Mass[1] -> Me, Mass[2] -> Me, Mass[3] -> 0,
   SpinorTrace[qaCompositeMomentum, qaCompositeMomentum]/
     PropDen[qaCompositeMomentum, Me]};
 qaCompositeTracePrepared = PrepareAmplitudes[{qaCompositeTracePair}, qaFeynmanModel,
-  "ReferenceSpinors" -> None, "InternalOnShell" -> True, "MaxSteps" -> 0,
+  "PolePreference" -> None, "InternalOnShell" -> True, "MaxSteps" -> 0,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
 qaCompositeTraceChart = prFourPointChart[{1, 3}, 1, 1, 1];
 qaCompositeTraceValue[expression_] := ConstructiveDiagrams`Private`residueEvaluateChart[
@@ -287,10 +287,10 @@ check["even explicit InternalOnShell True cannot reduce a Feynman composite nume
       qaCompositeTraceValue[Last[qaCompositeTracePair]]] === 0 &&
     qaCompositeTraceValue[qaCompositeTracePrepared["Amplitude"]] === 4];
 qaSharedFeynman = PrepareAmplitudes[qaSpinorBenchmarks[[3]], qaFeynmanModel,
-  "ReferenceSpinors" -> "AllSpurious", "MaxSteps" -> 0, "TimeConstraint" -> 60,
+  "PolePreference" -> "AllSpurious", "MaxSteps" -> 0, "TimeConstraint" -> 60,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
 qaSharedFeynmanAssignments = Flatten[Lookup[
-  Lookup[qaSharedFeynman["ItemReports"], "ReferenceSpinors"], "Assignments"], 1];
+  Lookup[qaSharedFeynman["ItemReports"], "PolePreference"], "Assignments"], 1];
 check["all Feynman diagrams use one common reference assignment for each external photon",
   qaSharedFeynman["Status"] === "PREPARED" &&
     qaSharedFeynmanAssignments =!= {} &&
@@ -299,11 +299,11 @@ check["all Feynman diagrams use one common reference assignment for each externa
     FreeQ[qaSharedFeynman["Amplitude"], Spinor["Xi", ___]]];
 qaPhysicalProcessIndices = {1, 3, 4};
 qaPhysicalFeynman = Table[PrepareAmplitudes[qaSpinorBenchmarks[[i]], qaFeynmanModel,
-  "ReferenceSpinors" -> "AllPhysical", "MaxSteps" -> 0, "TimeConstraint" -> 90,
+  "PolePreference" -> "AllPhysical", "MaxSteps" -> 0, "TimeConstraint" -> 90,
   "ProgressReporting" -> False, "ReturnDetails" -> True], {i, qaPhysicalProcessIndices}];
 Do[With[{i = qaPhysicalProcessIndices[[j]]},
   qaPhysicalAssignments = Flatten[Lookup[
-    Lookup[qaPhysicalFeynman[[j]]["ItemReports"], "ReferenceSpinors"], "Assignments"], 1];
+    Lookup[qaPhysicalFeynman[[j]]["ItemReports"], "PolePreference"], "Assignments"], 1];
   check["shared physical Feynman references replace every Xi for process " <>
       ToString[qaProcesses[[i]], InputForm],
     qaPhysicalFeynman[[j]]["Status"] === "PREPARED" &&
@@ -323,16 +323,16 @@ Do[With[{i = qaPhysicalProcessIndices[[j]]},
         AllTrue[#, MatchQ[#, HoldPattern[Mass[_Integer] -> _]] &] &]]],
   {j, Length[qaPhysicalFeynman]}];
 qaUnsupportedFeynmanReferences = PrepareAmplitudes[First[qaSpinorBenchmarks], qaFeynmanModel,
-  "ReferenceSpinors" -> "Mixed", "MaxSteps" -> 0,
+  "PolePreference" -> "Mixed", "MaxSteps" -> 0,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
 check["unimplemented shared mixed Feynman references remain explicitly partial",
   qaUnsupportedFeynmanReferences["Status"] === "PARTIAL" &&
     qaUnsupportedFeynmanReferences["Diagnostics"] =!= {}];
 check["unsupported Feynman reference modes cannot silently return amplitudes with unchanged Xi",
   FailureQ[PrepareAmplitudes[First[qaSpinorBenchmarks], qaFeynmanModel,
-    "ReferenceSpinors" -> "Mixed", "MaxSteps" -> 0, "ProgressReporting" -> False]]];
+    "PolePreference" -> "Mixed", "MaxSteps" -> 0, "ProgressReporting" -> False]]];
 qaIndependentFeynman = PrepareAmplitudes[qaSpinorBenchmarks[[3]], qaFeynmanModel,
-  "ReferenceSpinors" -> "IndependentXi", "MaxSteps" -> 0, "TimeConstraint" -> 90,
+  "PolePreference" -> "IndependentXi", "MaxSteps" -> 0, "TimeConstraint" -> 90,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
 check["independent Feynman references survive ordinary preparation as distinct photon references",
   qaIndependentFeynman["Status"] === "PREPARED" &&
@@ -343,12 +343,12 @@ qaMasslessFeynmanModel[[1, qaElectronRow, 6]] = 0;
 qaMasslessFeynmanPairs = diagramAmplitudes[CreateDiagrams[
   {"e", "E", "A.+", "A.-"}, qaMasslessFeynmanModel]];
 qaMasslessUnspecified = Quiet[PrepareAmplitudes[qaMasslessFeynmanPairs, qaMasslessFeynmanModel,
-  "ReferenceSpinors" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False]];
+  "PolePreference" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False]];
 check["unspecified massless Dirac helicities cannot return unchecked prepared amplitudes",
   FailureQ[qaMasslessUnspecified]];
 qaMasslessSpecified = PrepareAmplitudes[qaMasslessFeynmanPairs, qaMasslessFeynmanModel,
   "FermionHelicities" -> {1 -> -1/2, 2 -> 1/2},
-  "ReferenceSpinors" -> None, "MaxSteps" -> 0,
+  "PolePreference" -> None, "MaxSteps" -> 0,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
 check["explicit massless Dirac helicities allow ordinary Feynman preparation",
   qaMasslessSpecified["Status"] === "PREPARED" &&
@@ -456,7 +456,7 @@ qaFourFermionRaw = diagramAmplitudes[CreateDiagrams[
   qaFourFermionParticles, qaFeynmanModel]];
 qaFourFermionReferenceModes = {"IndependentXi", "AllPhysical"};
 qaFourFermionPrepared = Table[PrepareAmplitudes[qaFourFermionRaw, qaFeynmanModel,
-  "ReferenceSpinors" -> mode, "MaxSteps" -> 0, "TimeConstraint" -> 90,
+  "PolePreference" -> mode, "MaxSteps" -> 0, "TimeConstraint" -> 90,
   "ProgressReporting" -> False, "ReturnDetails" -> True],
   {mode, qaFourFermionReferenceModes}];
 check["the four-fermion photon benchmark comes from all eight independent Feynman diagrams",

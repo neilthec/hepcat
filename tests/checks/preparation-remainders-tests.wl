@@ -15,12 +15,12 @@ rrPair = {rrRules, (3 + MomProd[1, 2])/rrDen};
 rrSaved = rrPair;
 rrPrepare[input_, opts___] := PrepareAmplitudes[input, rrModel, opts,
   "MaxSteps" -> 0, "ProgressReporting" -> False, "ReturnDetails" -> True];
-rrPrepared = rrPrepare[{rrPair}, "ReferenceSpinors" -> None];
+rrPrepared = rrPrepare[{rrPair}, "PolePreference" -> None];
 rrItem = First[rrPrepared["ItemReports"]]; rrData = rrItem["RemainderData"];
 check["preparation exposes one remainder record per input item only in details",
   rrPrepared["RemainderData"] === {rrData} &&
     rrPrepared["PreparedAmplitudes"] === {{rrRules, 7/(2 rrDen)}} &&
-    PrepareAmplitudes[{rrPair}, rrModel, "ReferenceSpinors" -> None,
+    PrepareAmplitudes[{rrPair}, rrModel, "PolePreference" -> None,
       "MaxSteps" -> 0, "ProgressReporting" -> False] === rrPrepared["PreparedAmplitudes"]];
 check["the retained fixed-reference remainder exactly reconstructs its source",
   rrData["Status"] === "COMPLETE" &&
@@ -38,21 +38,21 @@ check["the shell provenance identifies only declared internal conditions",
   rrData["OnShellChannels"] === {{1, 2}} && rrData["HasInternalConditions"] &&
     rrData["ExternalMassRules"] === rrExternal &&
     rrData["MassRules"] === rrRules];
-rrOff = rrPrepare[{rrPair}, "ReferenceSpinors" -> None, "InternalOnShell" -> False];
+rrOff = rrPrepare[{rrPair}, "PolePreference" -> None, "InternalOnShell" -> False];
 rrOffData = First[rrOff["RemainderData"]];
 check["disabling internal shells retains a source without introducing shell assumptions",
   rrOffData["OnShellChannels"] === {} && !rrOffData["HasInternalConditions"] &&
     rrZero[rrOffData["ShellRemainder"]] &&
     rrZero[rrOffData["PreparedExpression"] - Last[rrPair]]];
 rrNestedPair = {rrRules, (3 + MomProd[1, 2])/(rrDen (5 + MomProd[1, 2]))};
-rrNested = First[rrPrepare[{rrNestedPair}, "ReferenceSpinors" -> None]["RemainderData"]];
+rrNested = First[rrPrepare[{rrNestedPair}, "PolePreference" -> None]["RemainderData"]];
 check["retained numerator reductions preserve nested inverse factors",
   rrZero[rrNested["PreparedExpression"] - 7/(2 rrDen (5 + MomProd[1, 2]))] &&
     rrZero[rrNested["ShellRemainder"] - (MomProd[1, 2] - 1/2)/(rrDen (5 + MomProd[1, 2]))]];
 
 rrChannel = {0, 0, 0, 0, Multiparticle[1, 2], 1,
   (3 + MomProd[1, 2] + MomProd[1, 3])/(rrDen PropDen[Mom[Multiparticle[1, 3]], 2])};
-rrChannelPrepared = rrPrepare[{rrChannel}, "ReferenceSpinors" -> None];
+rrChannelPrepared = rrPrepare[{rrChannel}, "PolePreference" -> None];
 rrChannelData = First[rrChannelPrepared["RemainderData"]];
 check["prepared factorization rows retain only their selected cut",
   rrChannelPrepared["InputType"] === "FactorizationChannels" &&
@@ -73,7 +73,7 @@ rrReferenceRatio[id_, leg_] :=
   SpinorChain[Spinor["Xi", "Angle", id], Mom[1], Spinor["Helicity", "Square", leg]]/
     SpinorChain[Spinor["Xi", "Angle", id], Spinor["Helicity", "Angle", leg]];
 rrReferencePair = {rrRules, rrReferenceRatio[71, 3] rrReferenceRatio[72, 4]/rrDen};
-rrReferencePrepared = rrPrepare[{rrReferencePair}, "ReferenceSpinors" -> "IndependentXi"];
+rrReferencePrepared = rrPrepare[{rrReferencePair}, "PolePreference" -> "IndependentXi"];
 rrReferenceData = First[rrReferencePrepared["RemainderData"]];
 rrCommon = SelectFirst[rrReferenceData["ReferenceContinuations"], #["Mode"] === "Xi" &];
 rrIndependent = SelectFirst[rrReferenceData["ReferenceContinuations"], #["Mode"] === "IndependentXi" &];
@@ -92,18 +92,18 @@ check["reference-change differences are separate from fixed-reference remainders
     rrZero[rrReferenceData["FixedReferenceExpression"] -
       rrReferenceData["ShellRemainder"] - rrReferenceData["PreparedExpression"]] &&
     AnyTrue[rrReferenceData["Stages"], #["Scope"] === "ReferenceContinuationChange" &]];
-rrCommonPrepared = rrPrepare[{rrReferencePair}, "ReferenceSpinors" -> "Xi"];
+rrCommonPrepared = rrPrepare[{rrReferencePair}, "PolePreference" -> "Xi"];
 rrCommonData = First[rrCommonPrepared["RemainderData"]];
 check["an unassigned per-leg mapping is diagnosed without inventing one",
   Lookup[rrCommonData["ReferenceContinuations"], "Mode"] === {"Xi"} &&
     !rrCommonData["Completeness"]["ReferenceContinuationsComplete"] &&
     rrCommonData["Diagnostics"] =!= {}];
-rrAlternativePrepared = rrPrepare[{rrReferencePair}, "ReferenceSpinors" -> "AllSpurious",
+rrAlternativePrepared = rrPrepare[{rrReferencePair}, "PolePreference" -> "AllSpurious",
   "MaxReferenceChoices" -> 1, "ReferenceTimeConstraint" -> 2];
 rrAlternativeItem = First[rrAlternativePrepared["ItemReports"]];
 rrAlternatives = rrAlternativeItem["RemainderData"]["ReferenceAlternatives"];
 check["completed reference alternatives retain their own source and discarded differences",
-  rrAlternatives =!= {} && rrAlternatives === rrAlternativeItem["ReferenceSpinors"]["Alternatives"] &&
+  rrAlternatives =!= {} && rrAlternatives === rrAlternativeItem["PolePreference"]["Alternatives"] &&
     AllTrue[rrAlternatives, AssociationQ[#] &&
       rrZero[#["FixedReferenceExpression"] - #["ReducedExpression"] - #["ShellRemainder"]] &&
       #["Expression"] === #["ReducedExpression"] && !#["OffCutIdentityClaimed"] &]];
@@ -113,7 +113,7 @@ check["non-search reference choices expose an empty alternative list explicitly"
 rrSingleRules = {Mass[1] -> 1, Mass[2] -> 1, Mass[3] -> 1, Mass[4] -> 0,
   Mass[Multiparticle[1, 2]] -> 1};
 rrSinglePair = {rrSingleRules, rrReferenceRatio[71, 4]/rrDen};
-rrUnavailable = rrPrepare[{rrSinglePair}, "ReferenceSpinors" -> "AllSpurious"];
+rrUnavailable = rrPrepare[{rrSinglePair}, "PolePreference" -> "AllSpurious"];
 rrUnavailableData = First[rrUnavailable["RemainderData"]];
 check["an unavailable reference remains partial instead of asserting a completed shell source",
   rrUnavailable["Status"] === "PARTIAL" && rrUnavailableData["Status"] === "PARTIAL" &&
@@ -124,7 +124,7 @@ check["capturing a failed reference still preserves the completed contracted sou
   rrUnavailableData["Completeness"]["ReferenceInputAvailable"] &&
     Lookup[rrUnavailableData["ReferenceContinuations"], "Mode"] === {"Xi"}];
 check["empty preparations return aligned empty remainder data",
-  rrPrepare[{}, "ReferenceSpinors" -> None]["RemainderData"] === {}];
+  rrPrepare[{}, "PolePreference" -> None]["RemainderData"] === {}];
 
 (* A cubic scalar tree supplies actual independent physical poles. Rewrite
    one genuine diagram using an ordinary pair-virtuality identity, then let
@@ -142,7 +142,7 @@ rrVirtuality = 2 (MomProd @@ rrCut) + rrMass^2;
 rrCubicInput = {First[First[rrCubicPairs]],
   rrCubicTerms[[1]] + rrCubicTerms[[3]] + rrCubicTerms[[2]] rrVirtuality/rrCutDen};
 rrCubicPrepared = PrepareAmplitudes[{rrCubicInput}, rrCubicModel,
-  "ReferenceSpinors" -> None, "MaxSteps" -> 0,
+  "PolePreference" -> None, "MaxSteps" -> 0,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
 rrCubicRules = {rrMass -> 1, rrCoupling -> 2};
 (* This fixture isolates reconstruction from remainders without a symmetry fit. *)
@@ -164,7 +164,7 @@ check["the recovered remainder fit independently validates every original channe
   AllTrue[rrCompleted["ValidationReport"]["Channels"], #["Status"] === "PASS" &] &&
     rrCompleted["OriginalExpression"] === rrCubicPrepared["Amplitude"]];
 rrChannelsPrepared = PrepareAmplitudes[rrCubicChannels, rrCubicModel,
-  "ReferenceSpinors" -> None, "MaxSteps" -> 0,
+  "PolePreference" -> None, "MaxSteps" -> 0,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
 rrZeroPreparedChannels = Join[rrChannelsPrepared, <|"PreparedAmplitudes" ->
   (ReplacePart[#, -1 -> 0] & /@ rrChannelsPrepared["PreparedAmplitudes"])|>];
@@ -276,12 +276,14 @@ check["atomic inexact complex coefficients also leave the exact preflight undeci
 
 (* Force the new final continuation route using genuine five-point diagrams,
    not a supplied amplitude answer. Earlier correction spaces are disabled
-   only inside this test; the one retained common-reference direction still
-   undergoes the ordinary full six-channel fit and held-out validation. *)
+   only inside this test; PolePreference -> None also bypasses the earlier
+   preferred-source attempt while retaining all preparation provenance. The
+   retained common-reference direction still undergoes the ordinary full
+   six-channel fit and held-out validation. *)
 Get[FileNameJoin[{root, "tests", "QED-5-point-residues.wl"}]];
 rrQEDRaw = diagramAmplitudes[CreateDiagrams[prParticles, prModel]];
 rrQEDPrepared = PrepareAmplitudes[rrQEDRaw, prModel,
-  "ReferenceSpinors" -> "AllPhysical", "MaxReferenceChoices" -> 1,
+  "PolePreference" -> "AllPhysical", "MaxReferenceChoices" -> 1,
   "ReferenceTimeConstraint" -> 5, "MaxSteps" -> 0,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
 rrQEDNormalized = ConstructiveDiagrams`Private`completionNormalizeInput[
@@ -301,7 +303,7 @@ rrQEDFallback = Block[{
   ConstructiveDiagrams`Private`completionAutomaticBasis =
     Function[{normalized, limit, references}, {}]},
   CompleteFactorization[rrQEDPrepared, prChannels, prFixtureModel,
-    "InputReweighting" -> None, "MaxCorrectionTerms" -> 1,
+    "PolePreference" -> None, "InputReweighting" -> None, "MaxCorrectionTerms" -> 1,
     "BoseSymmetryGroups" -> {{3, 4, 5}}, "Samples" -> 1, "ValidationSamples" -> 1,
     "ParameterRules" -> {"Me" -> 1, "EE" -> 1},
     "TimeConstraint" -> 30, "ProgressReporting" -> False, "ReturnDetails" -> True]];

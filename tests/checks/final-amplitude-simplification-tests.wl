@@ -149,7 +149,7 @@ check["explicit external spin indices survive sparse rational grouping",
     fsZero[fsFixedCompact - fsFixedSix]];
 fsSixRules = Join[{Mass[1] -> fsMass, Mass[2] -> fsMass}, Table[Mass[i] -> 0, {i, 3, 6}]];
 fsPrepared = PrepareAmplitudes[{fsSixRules, fsSixOriginal}, fsModel,
-  "ReferenceSpinors" -> None, "MomentumConservation" -> False,
+  "PolePreference" -> None, "MomentumConservation" -> False,
   "MaxSteps" -> 0, "TimeConstraint" -> 30, "ProgressReporting" -> False,
   "ReturnDetails" -> True];
 check["public preparation compacts a completed amplitude without internal on-shell rules",
@@ -165,12 +165,12 @@ check["all original external masses remain available after preparation",
   fsPrepared["ExternalMassRules"] === fsSixRules &&
     First[First[fsPrepared["PreparedAmplitudes"]]] === fsSixRules];
 fsPreparedAgain = PrepareAmplitudes[First[fsPrepared["PreparedAmplitudes"]], fsModel,
-  "ReferenceSpinors" -> None, "MomentumConservation" -> False,
+  "PolePreference" -> None, "MomentumConservation" -> False,
   "MaxSteps" -> 0, "TimeConstraint" -> 30, "ProgressReporting" -> False];
 check["the public completed-amplitude route is idempotent",
   fsPreparedAgain === First[fsPrepared["PreparedAmplitudes"]]];
 fsProbe = PrepareAmplitudes[{fsSixRules, MomProd[1, 3]/fsD[{1, 3}]}, fsModel,
-  "ReferenceSpinors" -> None, "MomentumConservation" -> False,
+  "PolePreference" -> None, "MomentumConservation" -> False,
   "MaxSteps" -> 0, "ProgressReporting" -> False];
 check["a propagator in a final amplitude never licenses its numerator shell condition",
   Last[fsProbe] =!= 0 && fsZero[(Last[fsProbe] - 1/2) /.
@@ -265,14 +265,14 @@ check["single-insertion conservation preserves longer words and inverse factors"
   !FreeQ[fsSingleTrial, fsLongWord] && !FreeQ[fsSingleTrial, fsSingleCanonicalInverse] &&
     fsPhysicalPoles[fsSingleTrial] === {fsPole1}];
 fsSingleOff = PrepareAmplitudes[{fsSingleRules, fsSingleInput}, fsModel,
-  "ReferenceSpinors" -> None, "MomentumConservation" -> False,
+  "PolePreference" -> None, "MomentumConservation" -> False,
   "MaxSteps" -> 0, "TimeConstraint" -> 15, "ProgressReporting" -> False, "ReturnDetails" -> True];
 check["MomentumConservation False disables the additional completed-amplitude route",
   fsSingleOff["Options"]["MomentumConservation"] === False &&
     !AnyTrue[First[fsSingleOff["ItemReports"]]["Reductions"],
       #["Operation"] === "SingleMomentumConservation" &]];
 fsSingleOn = PrepareAmplitudes[{fsSingleRules, fsSingleInput}, fsModel,
-  "ReferenceSpinors" -> None, "MomentumConservation" -> True,
+  "PolePreference" -> None, "MomentumConservation" -> True,
   "MaxSteps" -> 0, "TimeConstraint" -> 15, "ProgressReporting" -> False, "ReturnDetails" -> True];
 check["the enabled conservation route remains an external ordinary-identity stage",
   AnyTrue[First[fsSingleOn["ItemReports"]]["Reductions"],
@@ -353,7 +353,7 @@ fsMixedOriginal = fsSavedMixedFixture[prElectronMass, prElectricCharge];
 fsMixedRules = {Mass[1] -> prElectronMass, Mass[2] -> prElectronMass,
   Mass[3] -> 0, Mass[4] -> 0, Mass[5] -> 0};
 fsMixedPrepared = PrepareAmplitudes[{fsMixedRules, fsMixedOriginal}, prModel,
-  "ReferenceSpinors" -> None, "MaxSteps" -> 0,
+  "PolePreference" -> None, "MaxSteps" -> 0,
   "TimeConstraint" -> 30, "ProgressReporting" -> False, "ReturnDetails" -> True];
 check["the saved mixed-helicity fixture retains the off-shell square that exposed the bug",
   SpinorExpressionComplexity[fsMixedOriginal] === 148 &&
@@ -394,7 +394,7 @@ Do[
     prS2 /. Spinor[type_, kind : ("Angle" | "Square"), rest___] :>
       Spinor[type, If[kind === "Angle", "Square", "Angle"], rest], prS2];
   fsS2Prepared = PrepareAmplitudes[{fsMixedRules, fsS2Input}, prModel,
-    "ReferenceSpinors" -> None, "MaxSteps" -> 0, "TimeConstraint" -> 10,
+    "PolePreference" -> None, "MaxSteps" -> 0, "TimeConstraint" -> 10,
     "ProgressReporting" -> False, "ReturnDetails" -> True];
   check[{"spurious-pole final forms retain their simpler original candidate", fsParity},
     fsS2Prepared["Status"] === "PREPARED" &&

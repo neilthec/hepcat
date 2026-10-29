@@ -226,7 +226,7 @@ qftPreparationModes = {"Xi", "AllPhysical"};
 qftPreparationReports = Association[];
 Do[
   qftPreparedReport = TimeConstrained[PrepareAmplitudes[qftFixture["Pairs"], qftDiagramModel,
-    "ReferenceSpinors" -> qftMode, "MaxSteps" -> 0, "TimeConstraint" -> 15,
+    "PolePreference" -> qftMode, "MaxSteps" -> 0, "TimeConstraint" -> 15,
     "ReferenceTimeConstraint" -> 10, "ProgressReporting" -> False, "ReturnDetails" -> True],
     120, $TimedOut];
   AssociateTo[qftPreparationReports, {qftFixture["Helicity"], qftMode} -> qftPreparedReport];
@@ -252,7 +252,7 @@ Do[
           AllTrue[Cases[qftPreparedExpression, Spinor["Xi", kind_, id_] :> {kind, id}, Infinity],
             # === {qftExpectedXiKind, 0} &]]];
     qftOwnChecks = If[AssociationQ[qftPreparedReport],
-      qftPreparationOwnChecks[qftPreparedRow["ReferenceSpinors"]["Expression"], qftPreparedExpression,
+      qftPreparationOwnChecks[qftPreparedRow["PolePreference"]["Expression"], qftPreparedExpression,
         qftOriginalPoles, qftFixture["Geometry"][[qftPreparationIndex]], {{1, 1}, {3/7, 2}}], {False}];
     check[{"same-reference prepared numerators agree on both own cuts for all sixteen fermion spin components",
         qftFixture["Helicity"], qftMode, qftPreparationIndex},
@@ -266,9 +266,9 @@ Do[
     qftMapLabel[index_Integer] := Lookup[qftLabels, index, index];
     qftMapLabel[indices_List] := qftMapLabel /@ indices;
     qftTypedPair = PermuteParticles[{First[qftFixture["Pairs"][[1]]],
-      qftPreparedReport["DiagramReports"][[1]]["ReferenceSpinors"]["Expression"]}, qftLabelCycle];
+      qftPreparedReport["DiagramReports"][[1]]["PolePreference"]["Expression"]}, qftLabelCycle];
     qftTypedAuxiliary = PermuteParticles[Lookup[
-      qftPreparedReport["DiagramReports"][[1]]["ReferenceSpinors"], "AuxiliaryPhysicalPropagators", {}], qftLabelCycle];
+      qftPreparedReport["DiagramReports"][[1]]["PolePreference"], "AuxiliaryPhysicalPropagators", {}], qftLabelCycle];
     qftTypedRules = ConstructiveDiagrams`Private`preparationCanonicalMassRules[First[qftTypedPair]];
     qftTypedResult = ConstructiveDiagrams`Private`preparationReferenceTrial[
       Last[qftTypedPair], qftTypedRules,
@@ -326,7 +326,7 @@ check["the known complete four-fermion amplitude has thirty-two terms and comple
   SpinorExpressionComplexity[qftRoute["Final"]] === 160 &&
     ConstructiveDiagrams`Private`expressionTermCounts[qftRoute["Final"]]["Terms"] === 32];
 qftCompletePreparation = PrepareAmplitudes[{{qftPreparationExternal, qftRoute["Final"]}},
-  qftDiagramModel, "ReferenceSpinors" -> None, "InternalOnShell" -> False,
+  qftDiagramModel, "PolePreference" -> None, "InternalOnShell" -> False,
   "MaxSteps" -> 0, "TimeConstraint" -> 15, "ProgressReporting" -> False, "ReturnDetails" -> True];
 check["ordinary preparation preserves the best known complete amplitude without assuming its internal cuts",
   qftCompletePreparation["Status"] === "PREPARED" &&

@@ -77,7 +77,7 @@ If[ppProgress["Execution"]["Mode"] === "Parallel",
 ppFeynmanModel = ReadModel[FileNameJoin[{root, "model_feynman"}], 2];
 ppFeynmanPairs = diagramAmplitudes[CreateDiagrams[{"e", "E", "A.+", "A.-"}, ppFeynmanModel]];
 ppFeynmanPrepare[opts___] := PrepareAmplitudes[ppFeynmanPairs, ppFeynmanModel, opts,
-  "ReferenceSpinors" -> "AllSpurious", "MaxSteps" -> 0,
+  "PolePreference" -> "AllSpurious", "MaxSteps" -> 0,
   "TimeConstraint" -> Infinity, "ProgressReporting" -> False, "ReturnDetails" -> True];
 ppFeynmanSerial = ppFeynmanPrepare["Parallelization" -> False];
 ppFeynmanParallel = ppFeynmanPrepare["Parallelization" -> True, "MaxKernels" -> 2];
@@ -89,14 +89,14 @@ check["one common Feynman reference assignment is fixed before dispatch",
     Sort[Lookup[ppFeynmanParallel["SharedReferences"]["Assignments"], "Leg"]] === {3, 4} &&
     AllTrue[ppFeynmanParallel["ItemReports"],
       Sort[KeyTake[#, {"Leg", "Mode", "Target"}] & /@
-        #["ReferenceSpinors"]["Assignments"]] ===
+        #["PolePreference"]["Assignments"]] ===
       Sort[ppFeynmanParallel["SharedReferences"]["Assignments"]] &]];
 check["Feynman internal numerators and denominators always stay off shell",
   AllTrue[ppFeynmanParallel["ItemReports"], #["InternalOnShellChannels"] === {} &&
     AllTrue[#["MassRules"], MatchQ[#, HoldPattern[Mass[_Integer] -> _]] &] &] &&
     FreeQ[ppFeynmanParallel["Amplitude"], Spinor["Xi", ___]]];
 ppFeynmanPhysical = PrepareAmplitudes[ppFeynmanPairs, ppFeynmanModel,
-  "ReferenceSpinors" -> "AllPhysical", "Parallelization" -> True, "MaxKernels" -> 2,
+  "PolePreference" -> "AllPhysical", "Parallelization" -> True, "MaxKernels" -> 2,
   "MaxSteps" -> 0, "TimeConstraint" -> Infinity, "ProgressReporting" -> False,
   "ReturnDetails" -> True];
 check["physical Feynman references use the same per-leg plan for every diagram",
@@ -104,7 +104,7 @@ check["physical Feynman references use the same per-leg plan for every diagram",
     AllTrue[ppFeynmanPhysical["SharedReferences"]["Assignments"], #["Mode"] === "AllPhysical" &] &&
     AllTrue[ppFeynmanPhysical["ItemReports"],
       Sort[KeyTake[#, {"Leg", "Mode", "Target"}] & /@
-        #["ReferenceSpinors"]["Assignments"]] ===
+        #["PolePreference"]["Assignments"]] ===
       Sort[ppFeynmanPhysical["SharedReferences"]["Assignments"]] &]];
 Do[check["invalid parallel settings fail cleanly: " <> ToString[invalid, InputForm],
   Quiet[PrepareAmplitudes[ppPairs, ppModel, invalid]] === $Failed],

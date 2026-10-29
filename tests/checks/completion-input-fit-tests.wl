@@ -248,7 +248,7 @@ check["the QED input fit checks every original physical channel independently",
     ciPass[ciQEDDoubled["ValidationReport"]]];
 ciQEDRaw = diagramAmplitudes[CreateDiagrams[prParticles, prModel]];
 ciQEDPrepared = PrepareAmplitudes[ciQEDRaw, prModel,
-  "ReferenceSpinors" -> "AllPhysical", "MaxSteps" -> 0,
+  "PolePreference" -> "AllPhysical", "MaxSteps" -> 0,
   "TimeConstraint" -> 20, "ReferenceTimeConstraint" -> 5,
   "ProgressReporting" -> False];
 ciQEDNormalized = ConstructiveDiagrams`Private`completionNormalizeInput[

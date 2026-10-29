@@ -583,7 +583,7 @@ Do[
     FailureQ[FeynmanToSpinorProducts[1, ffBadOption]]],
   {ffBadOption, {"ReduceSpinorProducts" -> Automatic, "TimeConstraint" -> 0,
     "TimeConstraint" -> -1, "TimeConstraint" -> "1", "MaxExpandedTerms" -> 0,
-    "FermionHelicities" -> 1, "ReferenceSpinors" -> "Cyclic", "UnknownOption" -> True}}];
+    "FermionHelicities" -> 1, "PolePreference" -> "Cyclic", "UnknownOption" -> True}}];
 ffCheck["an unlimited converter deadline remains an explicit supported option",
   FeynmanToSpinorProducts[1, "TimeConstraint" -> Infinity] === 1];
 

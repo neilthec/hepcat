@@ -15,7 +15,7 @@ caProcess5 = {"e", "E", "A.+", "A.+", "A.+"};
 caRules = {"Me" -> 1, "EE" -> 1};
 caCheckOptions = {"Samples" -> 1, "HighEnergySamples" -> 1,
   "ReferenceSamples" -> 1, "FeynmanSamples" -> 1, "TimeConstraint" -> 30};
-caOptions = <|"ReferenceSpinors" -> "AllPhysical", "Parallelization" -> False,
+caOptions = <|"PolePreference" -> "AllPhysical", "Parallelization" -> False,
   "TimeConstraint" -> 180, "ParameterRules" -> caRules,
   "Samples" -> 1, "ValidationSamples" -> 1, "RandomSeed" -> 892033,
   "ProgressReporting" -> False, "PrintReport" -> False,
@@ -164,7 +164,7 @@ caBoundedPreparation = caPreparationVariant[<||>];
 check["a bounded legal preparation snapshot can continue to strict validation",
   ConstructiveDiagrams`Private`constructPreparationUsableQ[caPreparationSource] &&
     ConstructiveDiagrams`Private`constructPreparationUsableQ[caBoundedPreparation]];
-caMissingReference = caPreparationVariant[<|"ReferenceSpinors" -> <|
+caMissingReference = caPreparationVariant[<|"PolePreference" -> <|
   "Status" -> "UNRESOLVED", "Diagnostics" -> {"Requested reference unavailable."}|>|>];
 check["an unresolved requested reference cannot masquerade as a search timeout",
   !ConstructiveDiagrams`Private`constructPreparationUsableQ[caMissingReference]];
@@ -186,7 +186,7 @@ check["physical denominators must remain off shell in accepted snapshots",
   !ConstructiveDiagrams`Private`constructPreparationUsableQ[
     caPreparationVariant[<|"DenominatorsKeptOffShell" -> False|>]]];
 caKeepReference = Join[caMissingReference, <|"Options" -> Join[
-  caMissingReference["Options"], <|"ReferenceSpinors" -> None|>]|>];
+  caMissingReference["Options"], <|"PolePreference" -> None|>]|>];
 check["leaving references explicitly unchanged remains a supported final preparation",
   ConstructiveDiagrams`Private`constructPreparationUsableQ[caKeepReference]];
 caOppositeOptions = Normal[Join[Association[caCheckOptions],

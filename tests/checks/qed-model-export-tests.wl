@@ -45,7 +45,7 @@ qmeVerify[particles_List, overrides_, seed_Integer] := Module[
   channels = FactorizationAmplitudeChannels[particles, qmeModel];
   feynman = PrepareAmplitudes[diagramAmplitudes[
       CreateDiagrams[particles, qmeFeynmanModel]], qmeFeynmanModel,
-    "ReferenceSpinors" -> "IndependentXi", "MaxSteps" -> 0,
+    "PolePreference" -> "IndependentXi", "MaxSteps" -> 0,
     "ProgressReporting" -> False];
   report = CheckAmplitudes[amplitude, channels, qmeModel,
     "FeynmanAmplitudes" -> feynman, "FeynmanModel" -> qmeFeynmanModel,

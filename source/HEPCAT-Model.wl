@@ -5303,6 +5303,8 @@ CompleteFactorization::usage = CompleteFactorization::usage <>
 CompleteFactorization::usage = CompleteFactorization::usage <>
   " Pass detailed PrepareAmplitudes reports for either input, including the channel argument, to retain preparation provenance. Original channel rows remain the residue targets; simplified rows and their fixed-reference remainders supply corrections. PreparationRemainders -> Automatic tries bounded grouped preparation corrections after inexpensive input reweighting and before larger channel spaces. Ordinary pair virtuality identities expose factors without putting any assembled propagator on shell. Exact compatibility probes can reject a space early but never certify success; all original channels and held-out spin/parameter tests remain required. The attempt shares at most one fifth of the remaining stage clock, capped at 12 seconds, with at most four seconds for construction. Unsuccessful spaces leave the existing fallbacks intact. Retained common-reference sums may be tried as a final bounded continuation fallback; reference changes are not assumed to be off-cut identities. PreparationRemainders -> None disables these attempts. Explicit CorrectionBasis and ChannelReferences -> None retain their literal behavior. Details expose PreparationRemainders, PreparationRemainderFit, PreparationReferenceAttempts and ChannelPreparation. Ordinary preparation pairs and channel rows do not contain hidden history or a cache.";
 CompleteFactorization::usage = CompleteFactorization::usage <>
+  " PolePreference has the same choices as PrepareAmplitudes and ConstructAmplitude. Automatic inherits the requested choice from detailed preparation reports; an explicit choice overrides it. AllPhysical first tries a bounded space whose kinematic denominators are only supplied physical propagators. AllSpurious favors other-massless-leg reference continuations; Cyclic and ReverseCyclic retain their orientations; Mixed admits both physical and spurious choices; Xi and IndependentXi favor their corresponding external-reference prescription. None disables the preferred-space attempt. This is a representation preference, not a guarantee or a weaker check: every original target, zero-residue obligation, coherent spin component and independent validation remains required. All fitted correction freedom is retained for CompleteHighEnergy. No independent regular interaction is added, and explicit regular input stays fixed. The attempt reserves at most half the remaining stage clock, capped at 90 seconds, with at most 15 seconds for construction. Insufficient or timed-out preferred spaces leave the existing fallbacks available. PreferredPoleSpace and PreferredPoleFit retain the attempt outcome. CompleteHighEnergy preserves the recorded preference.";
+CompleteFactorization::usage = CompleteFactorization::usage <>
   " BoseSymmetryGroups -> Automatic and FermionSymmetryGroups -> Automatic identify identical external states using the supplied model's twice-spin, masses, species and helicity. Even twice-spin uses symmetric permutations; odd twice-spin uses their parity signs. Electron and positron groups remain separate. ExternalParticles -> Automatic inherits ordered names retained in preparation reports. Pass ExternalParticles -> particles to PrepareAmplitudes or completion when compact pairs have lost the process names. Without names, only unambiguous model-and-spinor-state matches are projected; equal masses alone never identify a species. Opposite helicities, different fixed spin states, and color-stripped colored states are not merged automatically. Explicit disjoint groups remain supported and must be correct for the process. Each empty group option disables only that particle statistic; set both to {} to disable all exchange projection. The seed and correction directions are projected over the combined group, preserving every original residue target and the existing diagram and sewing signs. Automatic uses a bounded exact subgroup when the full combined group exceeds order 120; ExchangeSymmetry details expose detected and used groups, requested and used orders, FullGroupUsed, source and diagnostics. BoseSymmetry and FermionSymmetry give separate summaries. Completion combines available compact, literal and certified selected-cut-prepared channel terms before projection. Exact formal linear dependencies may be removed by sparse reduction within a 60-second budget; unfinished pruning retains the full space. MaxCorrectionTerms applies after projection and pruning. CorrectionSpaceCandidates records the available space sizes. Symmetry-union CorrectionSpace names begin with Bose for bosons only, Fermion for fermions only, and Exchange for both; SelectedChannelSpace records its selected-cut checks. Each intermediate source-space construction may grow with group order, capped at 4096 directions unless a larger MaxCorrectionTerms was requested. High-energy completion inherits the used exchange constraints from a detailed factorization report, including for newly generated correction directions. No successful reconstruction is claimed until every original target and the full fitted family pass independent validation.";
 
 Begin["ConstructiveDiagrams`Private`"];
@@ -5750,7 +5752,7 @@ completionNormalizeInput[input_, channels_List, model_List] := Module[
   If[AssociationQ[value],
     extra = KeyTake[value, {"OriginalExpression", "FamilyAmplitude", "RemainingBasis",
       "FreeParameters", "CorrectionBasis", "ConstraintData", "DiagramReports",
-      "ItemReports", "RemainderData", "ExternalParticles", "BoseSymmetry", "FermionSymmetry", "ExchangeSymmetry"}];
+      "ItemReports", "RemainderData", "ExternalParticles", "BoseSymmetry", "FermionSymmetry", "ExchangeSymmetry", "PolePreference"}];
     value = Which[KeyExistsQ[value, "PreparedAmplitudes"], value["PreparedAmplitudes"],
       KeyExistsQ[value, "Amplitude"], value["Amplitude"],
       True, Return[Failure["InvalidCompletionInput", <||>]]];
@@ -6767,6 +6769,301 @@ completionIndependentBasis[basis_List, seconds_: 60] := Module[{started, result,
     If[remaining <= 0, basis, completionLegacyIndependentBasis[basis, remaining]], Lookup[result, "Basis", basis]]
 ];
 
+(* One name and one set of reference choices across preparation/completion. *)
+completionPolePreference[requested_, inputs___] := Module[
+  {reports = Select[{inputs}, AssociationQ], choices, candidate},
+  If[requested =!= Automatic, Return[requested]];
+  choices = Flatten[Map[Function[report,
+    {Lookup[report, "PolePreference", Automatic],
+      Lookup[Lookup[report, "Options", <||>], "PolePreference", Automatic],
+      (* Permit an already-created in-memory legacy preparation report. *)
+      Lookup[Lookup[report, "Options", <||>], "ReferenceSpinors", Automatic]}], reports], 1];
+  candidate = SelectFirst[choices, # =!= Automatic &, None];
+  Replace[candidate, "Physical" -> "AllPhysical"]
+];
+
+(* Conservative structural source filter. It admits no new denominator by
+   algebraic inference: kinematic inverses must factor into known typed physical
+   propagators. Masses/couplings and other nonkinematic coefficients are allowed.
+   A rejected source remains available to the ordinary completion fallback. *)
+completionPhysicalDenominatorOnlyQ[expression_, normalized_Association] := Module[
+  {external = Lookup[normalized, "ExternalMassRules", {}], targets, legs, allowed,
+   inversePowers, baseQ, key, reciprocalFunctions},
+  If[!residueFiniteQ[expression], Return[False]];
+  legs = Cases[external, HoldPattern[Mass[i_Integer] -> _] :> i];
+  targets = completionTargets[Lookup[normalized, "Targets", {}]];
+  (* Augmented absent-pole obligations are zero-residue checks, not a
+     physical-pole declaration. Only supplied channel rows carry their
+     original ChannelExpression. They still all participate in the fit. *)
+  allowed = residueChannelKey /@ Select[targets, KeyExistsQ[#, "ChannelExpression"] &];
+  baseQ[value_PropDen] := Module[{candidateKey = residuePropagatorKey[value, legs]},
+    !MissingQ[candidateKey] && AnyTrue[allowed,
+      First[#] === First[candidateKey] && residueExactZero[Last[#]^2 - Last[candidateKey]^2] &]];
+  baseQ[value_Times] := AllTrue[List @@ value, baseQ];
+  baseQ[Power[value_, exponent_Integer?Positive]] := baseQ[value];
+  baseQ[value_] := !poleKinematicFactorQ[value] && residueFiniteQ[value] &&
+    !TrueQ[residueExactZero[value /. external]];
+  inversePowers = Cases[{expression}, Power[base_, exponent_] /;
+    !(NumericQ[exponent] && TrueQ[exponent >= 0]) :> {base, exponent}, Infinity];
+  If[!AllTrue[inversePowers, IntegerQ[Last[#]] && Last[#] < 0 && baseQ[First[#]] &], Return[False]];
+  reciprocalFunctions = Cases[{expression}, value : ((Csc | Sec | Cot | Csch | Sech | Coth)[arg_]) /;
+    poleKinematicFactorQ[arg] :> value, Infinity];
+  reciprocalFunctions === {}
+];
+
+(* This is only a source-derived correction proposal. Individual atoms need
+   not preserve their source channel: the caller must fit every original cut
+   and validate the complete affine family before accepting any result. *)
+completionPhysicalChannelBasis[normalized_Association, channelPreparation_,
+    exchangePlan_Association, constructionLimit_Integer, limit_Integer, seconds_,
+    reducedChannels_: Missing["NotProvided"]] := Module[
+  {started = AbsoluteTime[], external = normalized["ExternalMassRules"], legs,
+   proposals, regular = Missing["NotCollected"], sourceRecords = {}, sources = {}, groupedSources = {},
+   directions = {}, terms, value, reduced, projected, targets, fallbackBasis,
+   candidateMode = "PreparedAndReducedPhysicalUnion", fullCount = Missing["NotMeasured"],
+   diagnostics = {}, complete, exceeded = False, tag = Unique["physicalChannelBasis"],
+   closedQ, physicalQ, supportedQ, appendSource, channelNormalized, sourceCount = 0, rawCount = 0, basis = {}},
+  legs = Cases[external, HoldPattern[Mass[i_Integer] -> _] :> i];
+  targets = completionTargets[normalized["Targets"]];
+  physicalQ[expression_] := completionPhysicalDenominatorOnlyQ[expression, normalized];
+  closedQ[expression_] := FreeQ[expression,
+    _xFactor | _xTildeFactor | (Spinor | SpinorHat)["Xi", ___] |
+    (Spinor | SpinorHat)[_, ("Angle" | "Square"), _Multiparticle, ___] |
+    (Spinor | SpinorHat)[_, ("Upper" | "Lower"), ("Angle" | "Square"), _Multiparticle, ___]];
+  supportedQ[expression_] := Module[{higher},
+    If[!closedQ[expression] || !physicalQ[expression], Return[False]];
+    higher = completionHigherPhysicalPoles[expression, targets, legs];
+    ListQ[higher] && higher === {}
+  ];
+  appendSource[expression_, origin_] := Module[{canonical},
+    canonical = residueCanonicalPropagators[expression /. external, legs];
+    If[canonical =!= 0 && supportedQ[canonical],
+      AppendTo[sourceRecords, <|"Expression" -> canonical, "Source" -> origin|>]]];
+  complete = TimeConstrained[Catch[
+    proposals = completionInputProposals[normalized, constructionLimit];
+    If[Lookup[proposals, "Status", None] =!= "AVAILABLE",
+      diagnostics = Join[diagnostics, Lookup[proposals, "Diagnostics", {}]];
+      Throw[False, tag]];
+    regular = proposals["RegularExpression"];
+    (* Explicit regular input remains fixed; even it must have no apparent
+       spurious denominator for this physical-only proposal to qualify. *)
+    If[!closedQ[regular] || !physicalQ[regular],
+      AppendTo[diagnostics, "The fixed explicit regular input is not closed and physical-denominator-only."];
+      Throw[False, tag]];
+    Do[appendSource[record["Expression"], "PreparedInput"],
+      {record, normalized["Records"]}];
+    If[AssociationQ[channelPreparation] &&
+        ListQ[Lookup[channelPreparation, "PreparedAmplitudes", None]] &&
+        completionModelQ[Lookup[channelPreparation, "Model", None]],
+      (* Normalize the legacy 1/z contour and sewing sign exactly as the
+         checker does; neither belongs to a free off-cut continuation. *)
+      channelNormalized = residueSimpleInputs[0, channelPreparation["PreparedAmplitudes"],
+        channelPreparation["Model"]];
+      If[AssociationQ[channelNormalized],
+        Do[If[TrueQ[Lookup[target, "Complete", False]] && KeyExistsQ[target, "StateSum"],
+          appendSource[target["StateSum"]/target["Propagator"], "PreparedChannel"]],
+          {target, completionTargets[channelNormalized["Targets"]]}]]];
+    If[AssociationQ[reducedChannels],
+      Do[appendSource[source, "ReducedPhysicalChannelSource"],
+        {source, Lookup[reducedChannels, "Sources", {}]}];
+      Do[appendSource[source, "ReducedPhysicalChannelDirection"],
+        {source, Lookup[reducedChannels, "Basis", {}]}]];
+    targets = completionTargets[normalized["Targets"]];
+    Do[If[TrueQ[Lookup[target, "Complete", False]] && KeyExistsQ[target, "StateSum"],
+      appendSource[target["StateSum"]/target["Propagator"], "OriginalReferenceFreeChannel"]],
+      {target, targets}];
+    sourceRecords = DeleteDuplicatesBy[sourceRecords, #["Expression"] &];
+    sourceCount = Length[sourceRecords];
+    If[sourceCount === 0, AppendTo[diagnostics,
+      "No closed source with only catalogued physical propagator denominators was available."];
+      Throw[False, tag]];
+    Do[
+      value = record["Expression"];
+      (* Retain the original source if optional ordinary reduction times out
+         or exposes a denominator outside the supplied physical catalog. *)
+      reduced = TimeConstrained[completionExternalReduce[value, external],
+        Max[0.000001, Min[1, seconds/Max[1, 2 sourceCount]]], $TimedOut];
+      sources = DeleteDuplicates[Join[sources, {value},
+        If[residueFiniteQ[reduced] && supportedQ[reduced], {reduced}, {}]]];
+      If[record["Source"] === "ReducedPhysicalChannelDirection",
+        groupedSources = DeleteDuplicates[Join[groupedSources, {value},
+          If[residueFiniteQ[reduced] && supportedQ[reduced], {reduced}, {}]]]],
+      {record, sourceRecords}];
+    Do[
+      Which[
+        MemberQ[groupedSources, source], terms = {source},
+        rspSandwichExpansionCount[source] > constructionLimit,
+          AppendTo[diagnostics, "A source was kept grouped because its formal expansion exceeded the construction bound."];
+          terms = {source},
+        True, value = withProtectedPropagators[source, Expand];
+          terms = If[Head[value] === Plus, List @@ value, {value}]];
+      terms = Select[terms, # =!= 0 &&
+        !FreeQ[#, Power[_PropDen, _Integer?Negative]] && supportedQ[#] &];
+      directions = completionNormalizeBasis[Join[directions, terms]];
+      If[Length[directions] > constructionLimit,
+        exceeded = True; Throw[False, tag]], {source, sources}];
+    rawCount = Length[directions];
+    projected = completionCompactExchangeProject[#, exchangePlan] & /@ directions;
+    (* The source catalog can be incomplete under an exchange. Reject that
+       proposal instead of silently introducing an undeclared denominator. *)
+    If[!AllTrue[projected, supportedQ],
+      AppendTo[diagnostics, "Identical-particle projection exposed a denominator outside the physical catalog."];
+      Throw[False, tag]];
+    basis = completionIndependentBasis[completionNormalizeBasis[projected],
+      If[seconds === Infinity, 5, Max[0.000001, seconds - (AbsoluteTime[] - started)]]];
+    If[Length[basis] > limit, exceeded = True; Throw[False, tag]];
+    True, tag], seconds, False];
+  If[exceeded && AssociationQ[reducedChannels] &&
+      ListQ[Lookup[reducedChannels, "Basis", None]] &&
+      (seconds === Infinity || seconds - (AbsoluteTime[] - started) > 0.01),
+    (* A named smaller source space is a separate reconstruction proposal,
+       not a truncation of the oversized union or its eventual nullspace. *)
+    fullCount = Max[Length[directions], Length[basis]];
+    fallbackBasis = TimeConstrained[
+      completionIndependentBasis[completionNormalizeBasis[
+        completionCompactExchangeProject[#, exchangePlan] & /@
+          Select[reducedChannels["Basis"], supportedQ]],
+        If[seconds === Infinity, 5, Max[0.000001, seconds - (AbsoluteTime[] - started)]]],
+      If[seconds === Infinity, 5, Max[0.000001, seconds - (AbsoluteTime[] - started)]], $TimedOut];
+    If[ListQ[fallbackBasis] && fallbackBasis =!= {} && Length[fallbackBasis] <= limit &&
+        AllTrue[fallbackBasis, supportedQ],
+      basis = fallbackBasis; complete = True; exceeded = False;
+      candidateMode = "ReducedPhysicalChannelsBudgetFallback";
+      AppendTo[diagnostics,
+        "The full physical union exceeded its cap; the complete reduced physical-channel source space is tried instead."]]];
+  If[exceeded, AppendTo[diagnostics,
+    "The physical-only proposal exceeds its source or final correction-term cap; no arbitrary directions were discarded."]];
+  If[!TrueQ[complete] && diagnostics === {}, AppendTo[diagnostics,
+    "Physical-only source construction exceeded its shared time budget."]];
+  <|"Status" -> If[TrueQ[complete] && basis =!= {}, "AVAILABLE", "UNAVAILABLE"],
+    "Basis" -> If[TrueQ[complete], basis, {}], "RegularExpression" -> regular,
+    "Sources" -> sourceRecords, "RawDirectionCount" -> rawCount,
+    "CandidateMode" -> candidateMode, "OversizedUnionDirections" -> fullCount,
+    "SourceCount" -> sourceCount, "ProjectedDirectionCount" -> Length[basis],
+    "WithinLimit" -> !exceeded, "ElapsedTime" -> AbsoluteTime[] - started,
+    "Diagnostics" -> DeleteDuplicates[diagnostics],
+    "Scope" -> "SourceDerivedPhysicalDenominatorOnlyProposalRequiringAllChannelValidation"|>
+];
+
+(* Select the continuation prescription, never the physical channels to test. *)
+completionPreferredReferenceVariantQ[variant_Association, choice_] := Module[
+  {mode = Lookup[variant, "Mode", None], assignments = Lookup[variant, "Assignments", {}], kinds},
+  If[!TrueQ[Lookup[variant, "Accepted", False]], Return[False]];
+  kinds = DeleteDuplicates[Lookup[assignments, "Mode", {}]];
+  Switch[choice,
+    "AllSpurious", MemberQ[{"AllSpurious", "Cyclic", "ReverseCyclic", "RotatedCyclic"}, mode] ||
+      mode === "PreparedReferences" && kinds =!= {} && AllTrue[kinds, MemberQ[{"AllSpurious", "Cyclic", "ReverseCyclic"}, #] &],
+    "Cyclic", MemberQ[{"AllSpurious", "Cyclic"}, mode],
+    "ReverseCyclic", mode === "ReverseCyclic",
+    "Mixed", MemberQ[{"AllPhysical", "AllSpurious", "Cyclic", "ReverseCyclic", "RotatedCyclic", "Mixed"}, mode] ||
+      mode === "PreparedReferences" && kinds =!= {} && AllTrue[kinds, MemberQ[{"AllPhysical", "AllSpurious", "Cyclic", "ReverseCyclic"}, #] &],
+    "Xi", mode === "Xi" || mode === "PreparedReferences" && kinds === {"Xi"},
+    "IndependentXi", mode === "IndependentXi" || mode === "PreparedReferences" && kinds === {"IndependentXi"},
+    "AllPhysical", mode === "AllPhysical" || mode === "PreparedReferences" && kinds === {"AllPhysical"},
+    _, False]
+];
+
+(* A bounded source-derived proposal retaining the selected external reference
+   prescription. All true propagators remain. Every original residue and the
+   complete affine family still require the ordinary independent validation. *)
+completionPreferredReferenceBasis[normalized_Association, channelPreparation_,
+    exchangePlan_Association, constructionLimit_Integer, limit_Integer, seconds_,
+    continuations_Association, choice_, reducedChannels_: Missing["NotProvided"]] := Module[
+  {started = AbsoluteTime[], external = normalized["ExternalMassRules"], legs, targets,
+   allowed, variants, sourceRecords = {}, sources = {}, directions = {}, basis = {},
+   regular = Missing["NotCollected"], proposals, channelNormalized, preparedChoice,
+   inverseProps, closedQ, supportedQ, appendSource, higher, terms, value, reduced,
+   diagnostics = {}, complete, exceeded = False, tag = Unique["preferredReferenceBasis"]},
+  If[choice === "AllPhysical", Return[completionPhysicalChannelBasis[normalized,
+    channelPreparation, exchangePlan, constructionLimit, limit, seconds, reducedChannels]]];
+  If[!MemberQ[{"AllSpurious", "Mixed", "Cyclic", "ReverseCyclic", "Xi", "IndependentXi"}, choice],
+    Return[<|"Status" -> "UNAVAILABLE", "Basis" -> {}, "PolePreference" -> choice,
+      "RegularExpression" -> regular, "Diagnostics" -> {"No explicit reference preference was requested."}|>]];
+  legs = Cases[external, HoldPattern[Mass[i_Integer] -> _] :> i];
+  targets = completionTargets[normalized["Targets"]];
+  allowed = residueChannelKey /@ Select[targets, KeyExistsQ[#, "ChannelExpression"] &];
+  closedQ[expression_] := FreeQ[expression,
+    _xFactor | _xTildeFactor |
+    (Spinor | SpinorHat)[_, ("Angle" | "Square"), _Multiparticle, ___] |
+    (Spinor | SpinorHat)[_, ("Upper" | "Lower"), ("Angle" | "Square"), _Multiparticle, ___]] &&
+    (MemberQ[{"Xi", "IndependentXi"}, choice] || FreeQ[expression, (Spinor | SpinorHat)["Xi", ___]]);
+  supportedQ[expression_] := Module[{props, keys, orders},
+    If[!residueFiniteQ[expression] || !closedQ[expression], Return[False]];
+    (* Additional reference brackets are allowed in these modes, but a typed
+       propagator absent from the supplied physical channels is not silently
+       promoted from a zero-residue obligation into a physical channel. *)
+    props = DeleteDuplicates[Flatten[Cases[{expression}, Power[base_, exponent_] /;
+      !(NumericQ[exponent] && TrueQ[exponent >= 0]) :>
+        Cases[base, _PropDen, {0, Infinity}], Infinity]]];
+    keys = residuePropagatorKey[#, legs] & /@ props;
+    If[AnyTrue[keys, MissingQ] || !AllTrue[keys, Function[key,
+        AnyTrue[allowed, First[#] === First[key] && residueExactZero[Last[#]^2 - Last[key]^2] &]]], Return[False]];
+    orders = completionHigherPhysicalPoles[expression, targets, legs];
+    ListQ[orders] && orders === {}
+  ];
+  appendSource[expression_, origin_] := Module[{canonical},
+    canonical = residueCanonicalPropagators[expression /. external, legs];
+    If[canonical =!= 0 && supportedQ[canonical],
+      AppendTo[sourceRecords, <|"Expression" -> canonical, "Source" -> origin|>]]];
+  complete = TimeConstrained[Catch[
+    proposals = completionInputProposals[normalized, constructionLimit];
+    If[Lookup[proposals, "Status", None] =!= "AVAILABLE",
+      diagnostics = Join[diagnostics, Lookup[proposals, "Diagnostics", {}]]; Throw[False, tag]];
+    regular = proposals["RegularExpression"];
+    Do[appendSource[record["Expression"], "PreparedInput"], {record, normalized["Records"]}];
+    preparedChoice = If[AssociationQ[channelPreparation],
+      completionPolePreference[Automatic, channelPreparation], None];
+    If[preparedChoice === choice && ListQ[Lookup[channelPreparation, "PreparedAmplitudes", None]] &&
+        completionModelQ[Lookup[channelPreparation, "Model", None]],
+      channelNormalized = residueSimpleInputs[0, channelPreparation["PreparedAmplitudes"], channelPreparation["Model"]];
+      If[AssociationQ[channelNormalized], Do[
+        If[TrueQ[Lookup[target, "Complete", False]] && KeyExistsQ[target, "StateSum"],
+          appendSource[target["StateSum"]/target["Propagator"], "PreparedReferenceChannel"]],
+        {target, completionTargets[channelNormalized["Targets"]]}]]];
+    variants = Select[Lookup[continuations, "Variants", {}], completionPreferredReferenceVariantQ[#, choice] &];
+    Do[appendSource[variant["Expression"], <|"Kind" -> "PreferredChannelContinuation",
+        "Mode" -> variant["Mode"], "Cut" -> Lookup[variant, "Cut", Missing["NotRecorded"]]|>],
+      {variant, variants}];
+    (* A lower-point channel that already has no references has no external
+       reference decision to contradict this preference. *)
+    Do[If[TrueQ[Lookup[target, "Complete", False]] && KeyExistsQ[target, "StateSum"] &&
+        FreeQ[target["StateSum"], (Spinor | SpinorHat)["Xi", ___]],
+      appendSource[target["StateSum"]/target["Propagator"], "ReferenceFreeChannel"]], {target, targets}];
+    sourceRecords = DeleteDuplicatesBy[sourceRecords, #["Expression"] &];
+    If[sourceRecords === {}, AppendTo[diagnostics, "No closed continuation matching the requested pole preference was available."];
+      Throw[False, tag]];
+    Do[
+      value = record["Expression"];
+      reduced = TimeConstrained[completionExternalReduce[value, external],
+        Max[0.000001, Min[1, seconds/Max[1, 2 Length[sourceRecords]]]], $TimedOut];
+      sources = DeleteDuplicates[Join[sources, {value},
+        If[residueFiniteQ[reduced] && supportedQ[reduced], {reduced}, {}]]], {record, sourceRecords}];
+    Do[
+      If[rspSandwichExpansionCount[source] > constructionLimit,
+        terms = {source}, value = withProtectedPropagators[source, Expand];
+        terms = If[Head[value] === Plus, List @@ value, {value}]];
+      terms = Select[terms, # =!= 0 && !FreeQ[#, Power[_PropDen, _Integer?Negative]] && supportedQ[#] &];
+      directions = completionNormalizeBasis[Join[directions, terms]];
+      If[Length[directions] > constructionLimit, exceeded = True; Throw[False, tag]], {source, sources}];
+    directions = completionCompactExchangeProject[#, exchangePlan] & /@ directions;
+    If[!AllTrue[directions, supportedQ], AppendTo[diagnostics,
+      "Exchange projection produced an unsupported continuation; the ordinary fallback is retained."]; Throw[False, tag]];
+    basis = completionIndependentBasis[completionNormalizeBasis[directions],
+      If[seconds === Infinity, 5, Max[0.000001, seconds - (AbsoluteTime[] - started)]]];
+    If[Length[basis] > limit, exceeded = True; Throw[False, tag]];
+    True, tag], seconds, False];
+  If[exceeded, AppendTo[diagnostics, "The preferred-reference source space exceeded its term cap; no arbitrary directions were discarded."]];
+  If[!TrueQ[complete] && diagnostics === {}, AppendTo[diagnostics,
+    "Preferred-reference source construction exhausted its shared time budget."]];
+  <|"Status" -> If[TrueQ[complete] && basis =!= {}, "AVAILABLE", "UNAVAILABLE"],
+    "Basis" -> If[TrueQ[complete], basis, {}], "RegularExpression" -> regular,
+    "PolePreference" -> choice, "Sources" -> sourceRecords,
+    "RawDirectionCount" -> Length[directions], "ProjectedDirectionCount" -> Length[basis],
+    "WithinLimit" -> !exceeded, "ElapsedTime" -> AbsoluteTime[] - started,
+    "Diagnostics" -> DeleteDuplicates[diagnostics],
+    "Scope" -> "ReferencePreferredProposalRequiringOriginalAllChannelAndFamilyValidation"|>
+];
+
 (* Choose a small particular point of an already certified affine family.
    Formal monomial constraints use exact coefficients only. Explicit regular
    monomial coefficients stay fixed. The complete direction list and its
@@ -6888,7 +7185,7 @@ completionChooseFamilyPoint[candidate_, directions_List, free_List, seconds_ : 2
 ];
 
 completionRecordedReferenceTables[normalized_Association] := DeleteDuplicates[
-  Select[(Lookup[Lookup[#, "ReferenceSpinors", <||>], "Assignments", {}] & /@
+  Select[(Lookup[Lookup[#, "PolePreference", <||>], "Assignments", {}] & /@
     Lookup[normalized, "DiagramReports", {}]), # =!= {} &]];
 
 (* Preparation reports are explicit inputs, never an expression-keyed cache.
@@ -7242,7 +7539,9 @@ completionChannelContinuations[normalized_Association, model_List, rules_List,
                 "RotationLimit" -> rotationLimit|>]]]],
         AppendTo[diagnostics, <|"Cut" -> channel["Cut"], "Mode" -> mode,
           "Reason" -> "UnavailableReferenceContinuation"|>]],
-      {mode, {"AllSpurious", "ReverseCyclic", "AllPhysical"}}];
+      {mode, DeleteDuplicates[Join[{"AllSpurious", "ReverseCyclic", "AllPhysical"},
+        If[MemberQ[{"Xi", "IndependentXi", "Mixed"}, Lookup[normalized, "PolePreference", None]],
+          {normalized["PolePreference"]}, {}]]]}];
     (* Keep the physical classification when a recorded assignment produces
        the same expression; compact basis selection depends on that mode. *)
     proposals = (First[SortBy[#, If[Lookup[#, "Mode", None] === "AllPhysical", 0, 1] &]] &) /@
@@ -8122,7 +8421,7 @@ Options[CompleteFactorization] = {"CorrectionBasis" -> Automatic,
   "ValidationParameterRules" -> Automatic, "ChannelReferences" -> Automatic,
   "AlternativeChannels" -> {}, "BoseSymmetryGroups" -> Automatic, "FermionSymmetryGroups" -> Automatic,
   "ExternalParticles" -> Automatic, "InputReweighting" -> Automatic,
-  "RepresentativeSelection" -> Automatic, "ChannelCompanions" -> Automatic,
+  "RepresentativeSelection" -> Automatic, "PolePreference" -> Automatic, "ChannelCompanions" -> Automatic,
   "PreparationRemainders" -> Automatic, "ShiftedChannelContinuations" -> Automatic,
   "MaxRefinements" -> 3,
   "RandomSeed" -> 1729, "TimeConstraint" -> 60, "MaxCorrectionTerms" -> 64,
@@ -8137,6 +8436,7 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
    references = OptionValue["ChannelReferences"], alternatives = OptionValue["AlternativeChannels"],
    inputReweighting = OptionValue["InputReweighting"],
    representativeOption = OptionValue["RepresentativeSelection"],
+   polePreference = OptionValue["PolePreference"],
    companionOption = OptionValue["ChannelCompanions"],
    remainderOption = OptionValue["PreparationRemainders"],
    shiftedOption = OptionValue["ShiftedChannelContinuations"],
@@ -8161,6 +8461,8 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
    budgetSpaces = {}, inputProposals, inputAttempt, inputAttempts = {}, inputFitStart, inputFitBudget,
    representative = <|"Status" -> "UNCHANGED", "Reason" -> "No free family was selected."|>,
    postStarted, postBudget,
+   physicalSpace = Missing["NotRequested"], physicalFit = Missing["NotRequested"],
+   physicalStarted, physicalBudget, physicalFitSeed,
    companionSpace = Missing["NotRequested"], companionFit = Missing["NotRequested"],
    companionStarted, companionBudget, companionFitSeed,
    remainderSpace = Missing["NotRequested"], remainderFit = Missing["NotRequested"],
@@ -8179,7 +8481,8 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
       !(OptionValue["MaxKernels"] === Automatic ||
         IntegerQ[OptionValue["MaxKernels"]] && OptionValue["MaxKernels"] >= 1) ||
       !MemberQ[{Automatic, None}, references] || !MemberQ[{Automatic, None}, inputReweighting] ||
-      !MemberQ[{Automatic, None}, representativeOption] || !MemberQ[{Automatic, None}, companionOption] ||
+      !MemberQ[{Automatic, None}, representativeOption] ||
+      !MemberQ[preparationReferenceChoices, polePreference] || !MemberQ[{Automatic, None}, companionOption] ||
       !MemberQ[{Automatic, None}, remainderOption] ||
       !MemberQ[{Automatic, True, False, None}, shiftedOption] ||
       !IntegerQ[refinements] || refinements < 0 ||
@@ -8205,6 +8508,8 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
     "Diagnostics" -> {"Input preparation exceeded TimeConstraint; the original input is retained."}|>, output, False]]];
   If[!AssociationQ[normalized] || FailureQ[normalized],
     Message[CompleteFactorization::args]; Return[$Failed]];
+  polePreference = completionPolePreference[polePreference, input, channelPreparation];
+  normalized = Join[normalized, <|"PolePreference" -> polePreference|>];
   processSources = DeleteCases[{OptionValue["ExternalParticles"],
     Lookup[normalized, "ExternalParticles", Automatic],
     Lookup[channelPreparation, "ExternalParticles", Automatic]}, Automatic];
@@ -8313,6 +8618,53 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
               "EquationCount" -> Length[constraints["Equations"]]|>};
             space = inputAttempt["Mode"]; status = "COMPLETE"; familyMaterialized = True; Break[]],
           {proposal, inputProposals["Proposals"]}]]];
+    (* Prefer a source-derived physical representation when requested by
+       preparation. This is a bounded proposal, fitted against every original
+       residue, not an assertion that diagram continuations are identities. *)
+    If[status =!= "COMPLETE" && basisOption === Automatic && references === Automatic &&
+        polePreference =!= None,
+      physicalStarted = AbsoluteTime[];
+      physicalBudget = If[seconds === Infinity, 90,
+        Min[90, Max[0, seconds - (physicalStarted - start)]/2]];
+      completionProgress[callback, enabled, <|"Stage" -> "Preparing preferred-pole correction terms",
+        "Operation" -> ToString[polePreference]|>];
+      physicalSpace = TimeConstrained[
+        continuations = completionChannelContinuations[normalized, model, rules, seed];
+        If[polePreference === "AllPhysical",
+          reducedChannels = completionReducedChannelBasis[normalized, continuations,
+            constructionLimit, rules, seed]];
+        completionPreferredReferenceBasis[normalized, channelPreparation, exchangePlan,
+          constructionLimit, limit, Max[0.000001, Min[15, physicalBudget/3] -
+            (AbsoluteTime[] - physicalStarted)], continuations, polePreference, reducedChannels],
+        Max[0.000001, Min[15, physicalBudget/3]], Missing["PhysicalSpaceConstructionTimeout"]];
+      remainingSeconds = physicalBudget - (AbsoluteTime[] - physicalStarted);
+      If[AssociationQ[physicalSpace] && physicalSpace["Status"] === "AVAILABLE" && remainingSeconds > 0.01,
+        completionProgress[callback, enabled, <|"Stage" -> "Fitting preferred-pole correction terms",
+          "Operation" -> ToString[polePreference],
+          "Unknowns" -> Length[physicalSpace["Basis"]]|>];
+        fallbackOptions = Join[Association[Options[CompleteFactorization]], Association[{opts}],
+          <|"CorrectionBasis" -> physicalSpace["Basis"],
+            "PolePreference" -> polePreference, "BoseSymmetryGroups" -> {}, "FermionSymmetryGroups" -> {},
+            "InputReweighting" -> None, "ChannelCompanions" -> None,
+            "PreparationRemainders" -> None, "AlternativeChannels" -> {},
+            "ReturnDetails" -> True, "TimeConstraint" -> remainingSeconds|>];
+        physicalFit = TimeConstrained[CompleteFactorization[
+          {normalized["ExternalMassRules"], project[physicalSpace["RegularExpression"]]},
+          checkRows, model, Sequence @@ Normal[fallbackOptions]], remainingSeconds,
+          Missing["PhysicalSpaceFitTimeout"]];
+        If[AssociationQ[physicalFit] && physicalFit["Status"] === "COMPLETE",
+          candidate = physicalFit["Amplitude"]; family = physicalFit["FamilyAmplitude"];
+          remaining = physicalFit["RemainingBasis"]; free = physicalFit["FreeParameters"];
+          basis = physicalFit["CorrectionBasis"]; constraints = physicalFit["ConstraintData"]["Fit"];
+          solution = physicalFit["ConstraintData"]["LinearSolution"];
+          unknowns = physicalFit["ConstraintData"]["FitVariables"];
+          physicalFitSeed = physicalFit["ConstraintData"]["FitSeed"];
+          feedback = physicalFit["ConstraintData"]["Validation"];
+          validation = physicalFit["ValidationReport"];
+          validationReports = Join[validationReports, physicalFit["ValidationReports"]];
+          history = physicalFit["RefinementHistory"];
+          space = If[polePreference === "AllPhysical", "PhysicalChannels", "PreferredReferences"];
+          status = "COMPLETE"; familyMaterialized = True]]];
     If[status =!= "COMPLETE" && basisOption === Automatic && references === Automatic &&
         remainderOption === Automatic &&
         (AssociationQ[input] && Lookup[input, "RemainderData", {}] =!= {} ||
@@ -8658,7 +9010,8 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
     "InitialReport" -> initial, "ValidationReport" -> validation,
     "ParameterRules" -> rules,
     "ValidationReports" -> validationReports, "ValidationParameterRules" -> validationSets,
-    "ConstraintData" -> <|"FitSeed" -> Which[space === "PreparationRemainders", remainderFitSeed,
+    "ConstraintData" -> <|"FitSeed" -> Which[MemberQ[{"PhysicalChannels", "PreferredReferences"}, space], physicalFitSeed,
+        space === "PreparationRemainders", remainderFitSeed,
         space === "ShiftedChannels", shiftedFitSeed,
         space === "PeeledChannels", companionFitSeed,
         MemberQ[{"InputRescaling", "InputOverlap"}, space], inputAttempt["RegularExpression"],
@@ -8678,6 +9031,9 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
     "ShiftedChannelFit" -> If[AssociationQ[shiftedFit], KeyTake[shiftedFit,
       {"Status", "ElapsedTime", "RefinementHistory", "ValidationReports"}], shiftedFit],
     "RepresentativeSelection" -> representative,
+    "PolePreference" -> polePreference, "PreferredPoleSpace" -> physicalSpace,
+    "PhysicalPoleSpace" -> physicalSpace,
+    "PreferredPoleFit" -> physicalFit, "PhysicalPoleFit" -> physicalFit,
     "ChannelCompanions" -> companionSpace,
     "ChannelCompanionFit" -> If[AssociationQ[companionFit],
       KeyTake[companionFit, {"Status", "ElapsedTime", "RefinementHistory", "ValidationReports"}], companionFit],
@@ -8799,7 +9155,13 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
     "PreparationRemainders" -> remainderSpace,
     "PreparationRemainderFit" -> If[AssociationQ[remainderFit],
       KeyTake[remainderFit, {"Status", "ElapsedTime", "Reason", "Preflight", "RefinementHistory", "ValidationReports"}], remainderFit],
-    "PreparationReferenceAttempts" -> referenceAttempts|>];
+    "PreparationReferenceAttempts" -> referenceAttempts,
+    "PolePreference" -> polePreference, "PreferredPoleSpace" -> physicalSpace,
+    "PhysicalPoleSpace" -> physicalSpace,
+    "PreferredPoleFit" -> If[AssociationQ[physicalFit], KeyTake[physicalFit,
+      {"Status", "ElapsedTime", "Diagnostics", "RefinementHistory", "ValidationReports"}], physicalFit],
+    "PhysicalPoleFit" -> If[AssociationQ[physicalFit], KeyTake[physicalFit,
+      {"Status", "ElapsedTime", "Diagnostics", "RefinementHistory", "ValidationReports"}], physicalFit]|>];
   completionProgress[callback, enabled, <|"Stage" -> "Factorization " <> status,
     "Elapsed" -> report["ElapsedTime"], "Unknowns" -> If[ListQ[report["CorrectionBasis"]],
       Length[report["CorrectionBasis"]], Length[unknowns]]|>];
@@ -8817,7 +9179,7 @@ End[];
 
 Begin["ConstructiveDiagrams`"];
 
-PrepareAmplitudes::usage = "PrepareAmplitudes[items, model] prepares diagram amplitude pairs or compact factorization-channel rows, preserving their input formats. Each element is prepared independently by ReduceSpinContractions, ReferenceSpinors replacement and ReduceSpinorProducts with physical propagators protected. AllSpurious compares eligible other-massless-particle references, AllPhysical compares momentum-insertion references giving physical poles outside that element's own cuts, and Mixed compares both types per external leg. Automatic optimizes spurious references where available, otherwise physical references. Cyclic and ReverseCyclic retain fixed reproducible spurious choices; Xi uses one common Xi0, IndependentXi one generic reference per external particle, and None retains input references. The best completed trial is ranked after ordinary spinor reduction and diagram-local numerator-shell reductions. MaxReferenceChoices -> 64 bounds trials; ReferenceTimeConstraint -> Automatic uses at most five seconds and one third of the remaining per-element TimeConstraint, shared with subsequent preparation. This is a bounded finite-reference search, not a global-minimum claim. ReturnDetails -> False is the default; True exposes inputs, assignments, tested alternatives, search limits, reductions and diagnostics. InternalOnShell -> True reduces known numerator scalar products using only that element's mass rules, including two-leg complements when MomentumConservation is True, before and after spinor reduction even at MaxSteps -> 0. False disables these internal-shell reductions and edits. Unknown invariants and denominators are not put on shell. A bounded improving identity search follows. Output -> \"Expression\" returns the prepared sum; \"Amplitudes\" preserves input formats; \"Details\" and ReturnDetails -> True request diagnostics. ReturnDetails takes precedence. Unavailable reference choices or an overall timeout remain PARTIAL. ProgressReporting, ProgressFunction, MaxSteps, MaxCandidates and MomentumConservation control preparation. No model vertices or factorization corrections are added.";
+PrepareAmplitudes::usage = "PrepareAmplitudes[items, model] prepares diagram amplitude pairs or compact factorization-channel rows, preserving their input formats. Each element is prepared independently by ReduceSpinContractions, PolePreference replacement and ReduceSpinorProducts with physical propagators protected. AllSpurious compares eligible other-massless-particle references, AllPhysical compares momentum-insertion references giving physical poles outside that element's own cuts, and Mixed compares both types per external leg. Automatic optimizes spurious references where available, otherwise physical references. Cyclic and ReverseCyclic retain fixed reproducible spurious choices; Xi uses one common Xi0, IndependentXi one generic reference per external particle, and None retains input references. The best completed trial is ranked after ordinary spinor reduction and diagram-local numerator-shell reductions. MaxReferenceChoices -> 64 bounds trials; ReferenceTimeConstraint -> Automatic uses at most five seconds and one third of the remaining per-element TimeConstraint, shared with subsequent preparation. This is a bounded finite-reference search, not a global-minimum claim. ReturnDetails -> False is the default; True exposes inputs, assignments, tested alternatives, search limits, reductions and diagnostics. InternalOnShell -> True reduces known numerator scalar products using only that element's mass rules, including two-leg complements when MomentumConservation is True, before and after spinor reduction even at MaxSteps -> 0. False disables these internal-shell reductions and edits. Unknown invariants and denominators are not put on shell. A bounded improving identity search follows. Output -> \"Expression\" returns the prepared sum; \"Amplitudes\" preserves input formats; \"Details\" and ReturnDetails -> True request diagnostics. ReturnDetails takes precedence. Unavailable reference choices or an overall timeout remain PARTIAL. ProgressReporting, ProgressFunction, MaxSteps, MaxCandidates and MomentumConservation control preparation. No model vertices or factorization corrections are added.";
 PrepareAmplitudes::args = "Expected diagram {massRules, expression} pairs or compact factorization-channel rows, a model, and valid preparation options. All elements must declare consistent external masses.";
 PrepareAmplitudes::usage = PrepareAmplitudes::usage <>
   " Ordinary ReduceSpinorProducts acts on the whole expression, including auxiliary denominators, with PropDen protected. Only external mass replacements act globally; internal replacements remain numerator-only. With MomentumConservation -> True, the bounded identity search also tries consistent whole-numerator external momentum eliminations and composite complements. Each trial is reduced before a strictly improving whole-expression rank is required. These trials use only declared external mass labels, share MaxSteps, MaxCandidates and the per-element time limit, and protect inverse factors from conservation and internal-shell substitutions. MomentumConservation -> False disables them.";
@@ -8842,7 +9204,7 @@ PrepareAmplitudes::usage = PrepareAmplitudes::usage <>
 PrepareDiagramAmplitudes::usage = "PrepareDiagramAmplitudes is a compatibility alias for PrepareAmplitudes. Use PrepareAmplitudes for both diagram amplitude pairs and compact factorization-channel rows.";
 
 Options[PrepareAmplitudes] = {
-  "ReferenceSpinors" -> Automatic,
+  "PolePreference" -> Automatic,
   "ExternalParticles" -> Automatic,
   "FermionHelicities" -> {},
   "MaxReferenceChoices" -> 64, "ReferenceTimeConstraint" -> Automatic,
@@ -9494,7 +9856,7 @@ preparationReferences[expr_, rules_List, model_List, pairs_List, requested_, for
   fail[message_] := Throw[<|"Status" -> "UNRESOLVED", "Expression" -> original,
     "Assignments" -> assignments, "Diagnostics" -> {message}|>, tag];
   Catch[
-    If[!MemberQ[preparationReferenceChoices, requested], fail["Unsupported ReferenceSpinors choice."]];
+    If[!MemberQ[preparationReferenceChoices, requested], fail["Unsupported PolePreference choice."]];
     If[choice === None, Return[<|"Status" -> "COMPLETE", "Expression" -> expr,
       "Assignments" -> {}, "Diagnostics" -> {}|>]];
     protectedReferences = withProtectedPropagators[expr, Function[body,
@@ -9956,7 +10318,7 @@ preparationRemainderData[prepared_, reductions_List, history_List,
   sourceAvailable = !MissingQ[source] && residueFiniteQ[source];
   assignments = Lookup[reference, "Assignments", {}];
   stages = Map[Function[row,
-    scope = Which[Lookup[row, "Operation", None] === "ReferenceSpinors",
+    scope = Which[Lookup[row, "Operation", None] === "PolePreference",
         "ReferenceContinuationChange",
       TrueQ[Lookup[row, "SelectionOnly", False]], "CompletedCandidateSelection",
       TrueQ[Lookup[row, "InternalOnShellIdentity", False]] ||
@@ -10059,7 +10421,7 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
     If[completedBest === None || preparationBetterQ[valueRank, completedBestRank],
       completedBest = value; completedBestRank = valueRank; completedBestSource = label]];
   If[TrueQ[eligibleOriginal] && !TrueQ[options["InternalOnShell"]] &&
-      options["ReferenceSpinors"] === None,
+      options["PolePreference"] === None,
     initialCandidate = preparationNumerators[original,
       Function[num, preparationReplaceMasses[num, preparationExternalRules[rules]]]];
     rememberCompleted[initialCandidate, "AlreadyContractedInput"];
@@ -10125,14 +10487,14 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
       "After" -> expression, "InternalOnShellIdentity" -> False,
       "OptionalExpansionTimedOut" -> contractionTimedOut|>];
     event[stage];
-    stage = "ReferenceSpinors";
+    stage = "PolePreference";
     before = expression;
     referenceInput = expression;
     referenceSeconds = Replace[options["ReferenceTimeConstraint"], Automatic :>
       If[options["TimeConstraint"] === Infinity, 5,
         Max[0.000001, Min[5, (options["TimeConstraint"] - (AbsoluteTime[] - started))/3]]]];
     referenceReport = preparationReferenceSearch[expression, rules, model, pairs,
-      options["ReferenceSpinors"], options["MaxReferenceChoices"], referenceSeconds, dotRules,
+      options["PolePreference"], options["MaxReferenceChoices"], referenceSeconds, dotRules,
       Function[update,
         If[KeyExistsQ[update, "BestReference"], referenceFallback = update["BestReference"]];
         completionProgress[options["ProgressFunction"], options["ProgressReporting"],
@@ -10155,7 +10517,7 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
     expression = after;
     AppendTo[reductions, <|"Operation" -> stage, "Before" -> before,
       "After" -> expression, "InternalOnShellIdentity" -> False,
-      "ReferenceChoice" -> options["ReferenceSpinors"]|>];
+      "ReferenceChoice" -> options["PolePreference"]|>];
     If[TrueQ[eligibleOriginal] && !TrueQ[admittedOriginal],
       initialCandidate = preparationNumerators[original,
         Function[num, preparationReplaceMasses[num, preparationExternalRules[rules]]]];
@@ -10299,14 +10661,14 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
     identityStageComplete = True;
     True,
     options["TimeConstraint"], False], failureTag];
-  If[!TrueQ[outcome] && MemberQ[{"ReferenceSpinors", "InternalInvariantReduction",
+  If[!TrueQ[outcome] && MemberQ[{"PolePreference", "InternalInvariantReduction",
       "RetainedReferenceTrial", "CompareConservedMomentumRoutes", "CompareInvariantRoutes", "ReduceSpinorProducts",
       "CancelAuxiliaryReferencePoles"}, stage] && AssociationQ[referenceFallback],
     referenceReport = referenceFallback;
     expression = referenceFallback["ReducedExpression"];
     AppendTo[reductions, <|"Operation" -> "RetainedReferenceTrial", "Before" -> referenceInput,
       "After" -> expression, "InternalOnShellIdentity" -> TrueQ[options["InternalOnShell"]],
-      "ReferenceChoice" -> options["ReferenceSpinors"]|>]];
+      "ReferenceChoice" -> options["PolePreference"]|>]];
   If[!TrueQ[outcome] && stage === "FeynmanToSpinorProducts", conversionFailure = True];
   If[!TrueQ[outcome], stop = Which[conversionFailure, "FeynmanConversionFailed", invalid, "InvalidReduction",
       referenceFailure, "ReferenceChoiceUnavailable", True, "TimeConstraint"];
@@ -10327,7 +10689,7 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
       "SourceOperation" -> completedBestSource, "Before" -> before, "After" -> expression,
       "BeforeRank" -> snapshotRank[before], "AfterRank" -> completedBestRank,
       "SelectionOnly" -> True, "InternalOnShellIdentity" -> False,
-      "OnShellChannels" -> channels, "ReferenceChoice" -> options["ReferenceSpinors"]|>]];
+      "OnShellChannels" -> channels, "ReferenceChoice" -> options["PolePreference"]|>]];
   event[Which[TrueQ[outcome], "Prepared", referenceFailure, "Reference choice unavailable",
     conversionFailure, "Feynman conversion unavailable",
     invalid, "Invalid reduction retained previous state",
@@ -10345,7 +10707,7 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
       Select[knownInternalChannels[rules], MemberQ[channels, First[#]] &]),
     "DenominatorsKeptOffShell" -> True,
     "FeynmanConversionFailed" -> conversionFailure,
-    "ReferenceSpinors" -> referenceReport,
+    "PolePreference" -> referenceReport,
     "RemainderData" -> preparationRemainderData[expression, reductions, history,
       referenceReport, rules, channels, kind, TrueQ[outcome]],
     "Reductions" -> reductions, "IdentitySteps" -> history,
@@ -10380,7 +10742,7 @@ PrepareAmplitudes[items_List, model_, opts : OptionsPattern[]] := Module[
       !(AssociationQ[options["FermionHelicities"]] ||
         MatchQ[options["FermionHelicities"], {(_Rule | _RuleDelayed) ...}]) ||
       !MemberQ[{Automatic, None, "AllSpurious", "AllPhysical", "Mixed", "Xi", "Cyclic",
-        "ReverseCyclic", "IndependentXi"}, options["ReferenceSpinors"]] ||
+        "ReverseCyclic", "IndependentXi"}, options["PolePreference"]] ||
       !IntegerQ[options["MaxReferenceChoices"]] || options["MaxReferenceChoices"] < 1 ||
       !(options["ReferenceTimeConstraint"] === Automatic || options["ReferenceTimeConstraint"] === Infinity ||
         TrueQ[NumericQ[options["ReferenceTimeConstraint"]] && options["ReferenceTimeConstraint"] > 0]) ||
@@ -10418,7 +10780,7 @@ PrepareAmplitudes[items_List, model_, opts : OptionsPattern[]] := Module[
   workerOptions = options;
   If[feynman,
     sharedReferences = preparationSharedReferenceAssignments[pairs, engineModel,
-      referencePairs, options["ReferenceSpinors"], externalAmplitude];
+      referencePairs, options["PolePreference"], externalAmplitude];
     If[sharedReferences["Status"] === "COMPLETE",
       AssociateTo[workerOptions, "SharedReferenceAssignments" -> sharedReferences["Assignments"]]]];
   (* Capture inert model and process data explicitly. Callback definitions are
@@ -10460,7 +10822,7 @@ PrepareAmplitudes[items_List, model_, opts : OptionsPattern[]] := Module[
         AnyTrue[reports, #["StopReason"] === "ReferenceChoiceUnavailable" &],
       Return[Failure[If[feynman, "FeynmanReferences", "AmplitudeReferences"], <|"MessageTemplate" ->
         "The requested reference-spinor choice could not be applied. Use Automatic to allow a physical-reference fallback, or request ReturnDetails -> True for diagnostics.",
-        "ReferenceSpinors" -> options["ReferenceSpinors"]|>]]];
+        "PolePreference" -> options["PolePreference"]|>]]];
     Switch[output, "Amplitudes", Return[If[single, First[prepared], prepared]],
       "Expression", Return[Total[Last /@ prepared]]]];
   diagnostics = DeleteDuplicates[Join[Flatten[Lookup[reports, "Diagnostics", {}], 1],
@@ -10500,7 +10862,7 @@ CompleteHighEnergy::usage = CompleteHighEnergy::usage <>
 CompleteHighEnergy::usage = CompleteHighEnergy::usage <>
   " Detailed FamilyIdentityReduction and SolvedFamilyIdentityReduction entries retain bounded exact proofs for discarded affine directions. Only ordinary external identities or a dense symbolic rational external-kinematics identity certificate remove a direction; finite samples, unsupported structures and proof timeouts never do. Genuine undetermined contact freedom remains UNDERDETERMINED, and sampled validation is not a generic uniqueness proof.";
 
-Options[CompleteHighEnergy] = {"CorrectionBasis" -> Automatic,
+Options[CompleteHighEnergy] = {"CorrectionBasis" -> Automatic, "PolePreference" -> Automatic,
   "ParameterRules" -> Automatic, "Samples" -> 4, "ValidationSamples" -> 4,
   "RandomSeed" -> 1729, "TimeConstraint" -> 60,
   "HighEnergyBound" -> Automatic, "MaxCorrectionTerms" -> 64,
@@ -10934,7 +11296,7 @@ completionHEZeroDirection[expression_, rules_List, model_List, seconds_] := Modu
   result = TimeConstrained[
     ordinaryBudget = Min[6, seconds/5];
     prepared = PrepareAmplitudes[{rules, expression}, model,
-      "ReferenceSpinors" -> None, "InternalOnShell" -> False, "MaxSteps" -> 0,
+      "PolePreference" -> None, "InternalOnShell" -> False, "MaxSteps" -> 0,
       "TimeConstraint" -> ordinaryBudget, "Parallelization" -> False,
       "ProgressReporting" -> False, "ReturnDetails" -> True];
     If[AssociationQ[prepared] && residueFiniteQ[Lookup[prepared, "Amplitude", $Failed]],
@@ -10974,7 +11336,9 @@ completionHEPruneIdentityFamily[family_, parameters_List, rules_List, model_List
   Do[
     parameter = parameters[[index]]; direction = directions[[index]];
     remaining = Max[0, seconds - (AbsoluteTime[] - started)];
-    certificate = If[index > 16 || remaining <= 0,
+    (* The shared proof clock bounds work. A fixed direction-count cap can
+       leave a large family of exact identities falsely underdetermined. *)
+    certificate = If[remaining <= 0,
       <|"Status" -> "NOT_PROVED", "Method" -> "BoundedFamilyBudget"|>,
       completionHEZeroDirection[direction, rules, model, remaining]];
     AppendTo[certificates, Join[<|"Parameter" -> parameter|>, certificate]];
@@ -11189,6 +11553,7 @@ completionHighEnergyStage[input_, channels_List, model_List, settings_Associatio
    rules = residueParameterRules[model, settings["ParameterRules"]], effectiveSettings},
   If[!MemberQ[{"Amplitude", "Expression", "Details"}, output] ||
       !(settings["CorrectionBasis"] === Automatic || ListQ[settings["CorrectionBasis"]]) ||
+      !MemberQ[preparationReferenceChoices, settings["PolePreference"]] ||
       !completionParameterRulesQ[rules] ||
       !(settings["ValidationParameterRules"] === Automatic ||
         ListQ[settings["ValidationParameterRules"]] &&
@@ -11239,7 +11604,8 @@ completionHighEnergyStage[input_, channels_List, model_List, settings_Associatio
     Join[retained, <|"Status" -> "UNRESOLVED", "Diagnostics" -> Append[
       Lookup[retained, "Diagnostics", {}],
       "High-energy completion exceeded TimeConstraint. The best retained candidate is provided for inspection, not claimed complete."]|>]];
-  completionFormat[Join[report, <|"ParameterRules" -> rules,
+  completionFormat[Join[report, <|"PolePreference" ->
+      completionPolePreference[settings["PolePreference"], input], "ParameterRules" -> rules,
     "ElapsedSeconds" -> (AbsoluteTime[] - started)|>], output]
 ]];
 
@@ -11251,11 +11617,11 @@ End[];
 
 Begin["ConstructiveDiagrams`"];
 
-ConstructAmplitude::usage = "ConstructAmplitude[process, diagramModel, factorizationModel] generates and prepares diagrams and factorization channels, completes factorization and high-energy behavior, prepares each completed expression with external identities only, then checks the final amplitude. The ordinary result is the bare expression only when every required final check passes. Output -> Amplitude returns {externalMassRules, expression}; Details retains stage results, timings and diagnostics. ProgressReporting -> True displays the current stage, its elapsed time and total elapsed time. At the end PrintReport -> True prints total time, then the test table, before returning the expression. FeynmanModel -> None optionally supplies an independent model whose diagrams are prepared and compared too. PreparationOptions, ChannelPreparationOptions, FinalPreparationOptions, FactorizationOptions, HighEnergyOptions, CheckOptions and FeynmanPreparationOptions pass options to individual stages. TimeConstraint -> Infinity is the overall time budget; individual stages retain their own limits unless overridden. ReferenceSpinors, ParameterRules, HighEnergyBound, Samples, ValidationSamples, RandomSeed, Parallelization and MaxKernels provide common settings. The original channels remain the residue targets, discarded preparation terms and affine completion freedom are retained, and final preparation never applies internal-shell identities. Failed, opposite-sign, unresolved and underdetermined results are not returned as validated amplitudes.";
+ConstructAmplitude::usage = "ConstructAmplitude[process, diagramModel, factorizationModel] generates and prepares diagrams and factorization channels, completes factorization and high-energy behavior, prepares each completed expression with external identities only, then checks the final amplitude. The ordinary result is the bare expression only when every required final check passes. Output -> Amplitude returns {externalMassRules, expression}; Details retains stage results, timings and diagnostics. ProgressReporting -> True displays the current stage, its elapsed time and total elapsed time. At the end PrintReport -> True prints total time, then the test table, before returning the expression. FeynmanModel -> None optionally supplies an independent model whose diagrams are prepared and compared too. PreparationOptions, ChannelPreparationOptions, FinalPreparationOptions, FactorizationOptions, HighEnergyOptions, CheckOptions and FeynmanPreparationOptions pass options to individual stages. TimeConstraint -> Infinity is the overall time budget; individual stages retain their own limits unless overridden. PolePreference, ParameterRules, HighEnergyBound, Samples, ValidationSamples, RandomSeed, Parallelization and MaxKernels provide common settings. The original channels remain the residue targets, discarded preparation terms and affine completion freedom are retained, and final preparation never applies internal-shell identities. Failed, opposite-sign, unresolved and underdetermined results are not returned as validated amplitudes.";
 ConstructAmplitude::args = "Expected a process with at least four model particle names, a diagram model, a constructive factorization model, and valid construction options.";
 
 Options[ConstructAmplitude] = {
-  "ReferenceSpinors" -> Automatic, "ParameterRules" -> Automatic, "HighEnergyBound" -> Automatic,
+  "PolePreference" -> Automatic, "ParameterRules" -> Automatic, "HighEnergyBound" -> Automatic,
   "BoseSymmetryGroups" -> Automatic, "FermionSymmetryGroups" -> Automatic,
   "Samples" -> 4, "ValidationSamples" -> 4, "RandomSeed" -> 1729,
   "Parallelization" -> Automatic, "MaxKernels" -> Automatic,
@@ -11307,7 +11673,7 @@ constructPreparationUsableQ[report_] := Module[{items, keepReferences},
       !ListQ[Lookup[report, "ItemReports", None]] ||
       !ListQ[Lookup[report, "PreparedAmplitudes", None]], Return[False]];
   items = report["ItemReports"];
-  keepReferences = Lookup[Lookup[report, "Options", <||>], "ReferenceSpinors", Automatic] === None;
+  keepReferences = Lookup[Lookup[report, "Options", <||>], "PolePreference", Automatic] === None;
   Length[items] === Length[report["PreparedAmplitudes"]] && AllTrue[items,
     AssociationQ[#] && KeyExistsQ[#, "PreparedExpression"] &&
       residueFiniteQ[#["PreparedExpression"]] &&
@@ -11316,8 +11682,8 @@ constructPreparationUsableQ[report_] := Module[{items, keepReferences},
       !FailureQ[Lookup[#, "JointInvariantFailure", None]] &&
       (Lookup[#, "Status", None] === "PREPARED" ||
         Lookup[#, "Status", None] === "PARTIAL" && Lookup[#, "StopReason", None] === "TimeConstraint") &&
-      (keepReferences || AssociationQ[Lookup[#, "ReferenceSpinors", None]] &&
-        Lookup[#["ReferenceSpinors"], "Status", None] === "COMPLETE") &]
+      (keepReferences || AssociationQ[Lookup[#, "PolePreference", None]] &&
+        Lookup[#["PolePreference"], "Status", None] === "COMPLETE") &]
 ];
 
 constructAllChecksPassQ[report_, pair_, channels_List, model_List, benchmark_] := Module[
@@ -11373,7 +11739,7 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
       !IntegerQ[options["RandomSeed"]] ||
       !AllTrue[{options["Samples"], options["ValidationSamples"]}, IntegerQ[#] && # > 0 &] ||
       !MemberQ[{Automatic, None, "AllSpurious", "AllPhysical", "Mixed", "Xi", "Cyclic",
-        "ReverseCyclic", "IndependentXi"}, options["ReferenceSpinors"]] ||
+        "ReverseCyclic", "IndependentXi"}, options["PolePreference"]] ||
       !AllTrue[{{"PreparationOptions", PrepareAmplitudes},
         {"ChannelPreparationOptions", PrepareAmplitudes}, {"FinalPreparationOptions", PrepareAmplitudes},
         {"FeynmanPreparationOptions", PrepareAmplitudes}, {"FactorizationOptions", CompleteFactorization},
@@ -11411,7 +11777,7 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
       "Stage" -> currentStage, "StageElapsed" -> AbsoluteTime[] - stageStarted,
       "TotalElapsed" -> AbsoluteTime[] - started|>]]);
   stageOptions[function_, bag_, forced_: <||>] := Module[{settings, limit, common},
-    common = <|"ReferenceSpinors" -> options["ReferenceSpinors"],
+    common = <|"PolePreference" -> options["PolePreference"],
       "BoseSymmetryGroups" -> options["BoseSymmetryGroups"],
       "FermionSymmetryGroups" -> options["FermionSymmetryGroups"],
       "ExternalParticles" -> process, "ParameterRules" -> options["ParameterRules"],
@@ -11464,7 +11830,7 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
   prepareFinal[value_] := Module[{prepared, pair},
     prepared = PrepareAmplitudes[value, factorizationModel,
       Sequence @@ stageOptions[PrepareAmplitudes, options["FinalPreparationOptions"],
-        <|"InternalOnShell" -> False, "ReferenceSpinors" -> None,
+        <|"InternalOnShell" -> False, "PolePreference" -> None,
           "ReturnDetails" -> True, "Output" -> "Amplitudes"|>]];
     If[FailureQ[prepared] || prepared === $Failed, Return[prepared]];
     pair = If[AssociationQ[prepared],

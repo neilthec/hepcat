@@ -100,7 +100,7 @@ feynmanPairs = diagramAmplitudes[feynmanDiagrams];
 spinorPairs = FeynmanToSpinorProducts[feynmanPairs,
   "TimeConstraint" -> 60];
 preparedFeynman = PrepareAmplitudes[feynmanPairs, feynmanModel,
-  "ReferenceSpinors" -> "IndependentXi"];
+  "PolePreference" -> "IndependentXi"];
 ```
 
 Keep this benchmark separate from diagram-local constructive numerator choices.
@@ -537,7 +537,7 @@ shell; regular pieces stay tied to complete source groups. A common-reference
 sum is a final bounded fallback, requiring the same full validation. None
 disables these attempts; explicit bases and literal-channel mode bypass them.
 Preserve remainder and fallback diagnostics even when a later space succeeds.
-It applies `ReduceSpinContractions`, selects `"ReferenceSpinors"`, then calls
+It applies `ReduceSpinContractions`, selects `"PolePreference"`, then calls
 `ReduceSpinorProducts` on the whole diagram expression while protecting physical
 propagators. Ordinary external spinor identities may simplify auxiliary
 denominators. Only external mass replacements are global; internal mass and
@@ -574,7 +574,7 @@ The additional bounded, strictly improving identity search also
 uses only that diagram's internal mass rules. This additional search is
 distinct from `ReduceSpinorProducts` itself. Preserve the original pairs and
 the preparation details when studying numerator and reference choices. Use
-`"ReferenceSpinors" -> None` to preserve literal references for comparisons;
+`"PolePreference" -> None` to preserve literal references for comparisons;
 the checker itself never merges them. `"InternalOnShell" -> False` disables
 both the direct invariant reduction and the extra shell edits. `"MaxSteps" -> 0`
 disables only the identity search, retaining reference selection, the basic
@@ -593,7 +593,7 @@ reduction may simplify auxiliary denominators. Do not move this process-dependen
 `ReduceSpinorProducts` or install persistent momentum-conservation rules.
 
 For an already verified final amplitude, pass a single external-mass pair to
-`PrepareAmplitudes`, normally with `"ReferenceSpinors" -> None`. `"MaxSteps" -> 0`
+`PrepareAmplitudes`, normally with `"PolePreference" -> None`. `"MaxSteps" -> 0`
 retains the fast ordinary cleanup and bounded final compaction while skipping
 the broad candidate search. Compare complexity, expanded terms and expression
 size separately. A factored representation can be substantially smaller without
@@ -700,6 +700,20 @@ and cyclic and physical-reference alternatives for sewn channels. The prepared
 diagram expressions are not changed. Additional channel continuations enter
 the automatic space only after exact sampled checks preserve their selected
 cut residue; this is not an off-cut equality claim or a generic proof.
+`"PolePreference" -> Automatic` inherits an explicit AllPhysical preparation
+choice from detailed input/channel reports. Try a source-derived physical-only
+space before remainder and shifted attempts in that mode; ordinary inputs may
+request `"PolePreference" -> "AllPhysical"` explicitly. Do not classify augmented
+zero-residue obligations as original physical channels. Normalize prepared
+channel rows through the normal contour/sewing path before proposing terms.
+Retain grouped selected-cut differences and reject unsupported higher-order
+physical poles in this simple-residue attempt. Preserve explicit regular input,
+all original constraints and complete affine freedom. The preference is bounded
+and may fall back, with `PhysicalPoleSpace`/`PhysicalPoleFit` diagnostics; it is
+never permission to discard failing checks or claim universal reconstruction.
+The detailed report carries the preference through later preparation and
+high-energy stages. `None` retains the earlier attempt order.
+
 Automatic completion first tries a compact physical-reference channel space,
 including complete sewn channels that already contain no Xi spinors:
 apply ordinary external-shell and conservation reductions to each whole accepted

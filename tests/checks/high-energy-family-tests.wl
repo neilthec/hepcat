@@ -84,7 +84,7 @@ check["genuine acceptable-growth local freedom remains underdetermined",
    The independent Feynman calculation is only a final benchmark. No known
    higher-point expression is supplied to construction or completion. *)
 heRun[process_List] := ConstructAmplitude[process, heDiagramModel, heModel,
-  "ReferenceSpinors" -> "AllPhysical", "Output" -> "Details",
+  "PolePreference" -> "AllPhysical", "Output" -> "Details",
   "Samples" -> 2, "FeynmanModel" -> heFeynmanModel,
   "ProgressReporting" -> False, "PrintReport" -> False,
   "PreparationOptions" -> If[Count[process, "A.+" | "A.-"] === 1, {"MaxSteps" -> 0}, {}],

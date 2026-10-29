@@ -53,7 +53,7 @@ exchangePlan = ConstructiveDiagrams`Private`completionExchangePlan[
 compactCandidate = ConstructiveDiagrams`Private`completionCompactExchangeProject[
   fit["Amplitude"], exchangePlan];
 compactPrepared = PrepareAmplitudes[{normalized["ExternalMassRules"], compactCandidate}, model,
-  "InternalOnShell" -> False, "ReferenceSpinors" -> None, "MaxSteps" -> 0,
+  "InternalOnShell" -> False, "PolePreference" -> None, "MaxSteps" -> 0,
   "TimeConstraint" -> 20, "Parallelization" -> False,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
 check["preparation admits a completed compact rational input before optional contraction expansion",
@@ -145,7 +145,7 @@ If[Environment["HEPCAT_TEST_FULL_BALANCED_CONSTRUCTION"] === "1",
   diagramModel = ReadModel[FileNameJoin[{root, "models"}], 2];
   feynmanModel = ReadModel[FileNameJoin[{root, "model_feynman"}], 2];
   constructed = ConstructAmplitude[process, diagramModel, model,
-    "ReferenceSpinors" -> "AllSpurious", "FeynmanModel" -> feynmanModel,
+    "PolePreference" -> "AllSpurious", "FeynmanModel" -> feynmanModel,
     "Parallelization" -> False, "PreparationOptions" -> {"MaxSteps" -> 0},
     "ChannelPreparationOptions" -> {"MaxSteps" -> 0},
     "FinalPreparationOptions" -> {"MaxSteps" -> 0},

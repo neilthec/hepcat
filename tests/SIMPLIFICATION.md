@@ -463,7 +463,7 @@ off-cut equality test to the same report:
 ```wolfram
 feynmanPairs = diagramAmplitudes[CreateDiagrams[particles, qedFeynmanModel]];
 preparedFeynman = PrepareAmplitudes[feynmanPairs, qedFeynmanModel,
-  "ReferenceSpinors" -> "IndependentXi", "MaxSteps" -> 0];
+  "PolePreference" -> "IndependentXi", "MaxSteps" -> 0];
 CheckAmplitudes[finalAmplitude, channels, factorizationModel,
   "FeynmanAmplitudes" -> preparedFeynman,
   "FeynmanModel" -> qedFeynmanModel]
@@ -863,7 +863,7 @@ and rank open charged-chain complements after permitted external massless
 factorization. The earlier whole-expression route remains a competitor.
 No process-specific current formula is substituted by the package.
 
-With `"ReferenceSpinors" -> Automatic` and `"MaxSteps" -> 0`, the final
+With `"PolePreference" -> Automatic` and `"MaxSteps" -> 0`, the final
 automatic run prepared all 80 diagrams in about two minutes per process.
 All 160 exact polynomial comparisons passed, covering the 16 spin components
 at both mass/kinematic assignments, with all three original propagators kept.
@@ -1106,7 +1106,7 @@ An independent Feynman comparison is optional because it needs its own model:
 
 ```wolfram
 amplitude = ConstructAmplitude[particles, diagramModel, factorizationModel,
-  "ReferenceSpinors" -> "AllPhysical",
+  "PolePreference" -> "AllPhysical",
   "FeynmanModel" -> qedFeynmanModel]
 ```
 
@@ -1264,7 +1264,7 @@ strictly improving edits. No diagram's internal conditions are passed to
 another diagram or imposed on the final sum. Reference assignments are recorded
 in the preparation details; the checker does not change them.
 
-Choose the references with `"ReferenceSpinors"`:
+Choose the references with `"PolePreference"`:
 
 | Value | Choice |
 | --- | --- |
@@ -1282,8 +1282,8 @@ For example:
 
 ```wolfram
 preparationDetails = PrepareAmplitudes[pairs, qedDiagramModel,
-  "ReferenceSpinors" -> "AllPhysical", "ReturnDetails" -> True];
-preparationDetails["DiagramReports"][[1]]["ReferenceSpinors"]
+  "PolePreference" -> "AllPhysical", "ReturnDetails" -> True];
+preparationDetails["DiagramReports"][[1]]["PolePreference"]
 ```
 
 The optimized modes reduce each tested complete diagram expression before
@@ -1409,7 +1409,7 @@ ordinary cleanup without changing its reference choice, use:
 
 ```wolfram
 simplified = PrepareAmplitudes[completedAmplitude, factorizationModel,
-  "ReferenceSpinors" -> None, "MaxSteps" -> 0];
+  "PolePreference" -> None, "MaxSteps" -> 0];
 CheckAmplitudes[simplified, channels, factorizationModel,
   "FeynmanAmplitudes" -> preparedFeynman, "FeynmanModel" -> feynmanModel]
 ```
@@ -1493,9 +1493,56 @@ The balanced six-point recursion is a separate resource stress case. Its
 compound spurious factors now have conserved-curve checks; this does not
 establish success of the automatic diagram-completion algorithm.
 
-With preparation reports, `"PreparationRemainders" -> Automatic` first tries
-the prepared structures and grouped remainders, after the inexpensive input
-normalization attempts. Each item's `"RemainderData"` retains the exact
+`"PolePreference"` is the common selection option for `PrepareAmplitudes`,
+`CompleteFactorization`, `CompleteHighEnergy` and `ConstructAmplitude`. It replaces
+the earlier selection-option name. The low-level `FeynmanToSpinorProducts`
+`"ReferenceSpinors"` option still accepts explicit spinor replacement rules;
+that mapping interface is separate from this high-level representation choice.
+
+Preparation uses the choice to replace the external Xi spinors. Factorization
+completion uses the same choice to favor matching correction sources before
+trying shifted/general continuations. `Automatic` inherits a requested choice
+from detailed preparation reports; with ordinary inputs, pass the choice
+explicitly. The constructor forwards its common setting through the stages.
+
+| Choice | Preferred continuation sources |
+| --- | --- |
+| `"AllPhysical"` | Only the original supplied physical propagators in kinematic denominators. |
+| `"AllSpurious"` | References to other massless external legs, allowing auxiliary bracket poles. |
+| `"Cyclic"`, `"ReverseCyclic"` | The corresponding fixed massless-reference orientation. |
+| `"Mixed"` | Both physical and spurious reference choices. |
+| `"Xi"`, `"IndependentXi"` | Common or independent external reference spinors, respectively. |
+| `None` | Keep the input reference choice and skip a preferred-source completion attempt. |
+
+Physical propagators are retained in every mode. `AllSpurious` refers to the
+auxiliary reference denominators; it does not remove genuine physical poles
+or prevent ordinary algebra from canceling unnecessary factors. This is a bias,
+not a guarantee of a unique or globally simplest formula.
+
+The physical space uses prepared sources and reduced physical continuations.
+An augmented expected-zero residue obligation does not make a new propagator
+physical. Prepared channel rows use the normal contour removal and sewing sign.
+Grouped selected-cut differences remain proposed off-cut corrections, not
+ordinary identities of the full amplitude. Unsupported higher-order physical
+propagators are excluded from the current simple-residue attempt.
+
+Every preferred-space fit still enforces all original channels, expected zero
+residues, coherent massive-spin components and independent validation parameter
+assignments. Explicit regular input stays fixed; no independent contact
+interaction is invented. The complete fitted affine family passes to high-energy
+completion, which retains the preference. At most half the remaining clock,
+capped at 90 seconds, is reserved for the attempt, with at most 15 seconds for
+construction. Insufficient or timed-out spaces leave the existing fallbacks
+available. Details expose `"PolePreference"`, `"PreferredPoleSpace"` and
+`"PreferredPoleFit"` so any fallback is visible.
+If the full physical union exceeds the term cap, a separately named proposal
+uses the complete reduced physical-channel space before returning to general
+fallbacks. This preserves that smaller space's entire affine freedom rather
+than truncating arbitrary columns of the oversized union.
+
+With preparation reports, `"PreparationRemainders" -> Automatic` tries
+the prepared structures and grouped remainders after the inexpensive input
+normalization and any requested physical-pole attempt. Each item's `"RemainderData"` retains the exact
 fixed-reference difference `FixedReferenceExpression - PreparedExpression`,
 completed stage differences and the particular internal conditions used.
 Reference changes are recorded separately: neither changing Xi nor reducing a

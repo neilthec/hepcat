@@ -589,8 +589,8 @@ spBalancedCompoundFactors = Lookup[Select[spBalancedInventory,
   ConstructiveDiagrams`Private`poleRationalCurveFactorQ[#["CanonicalFactor"],
     First[spBalancedNormalized["Targets"]]] &], "CanonicalFactor"];
 check["the actual balanced six-point expression has no unclassified denominator factors",
-  Counts[Lookup[spBalancedInventory, "Classification"]] === <|"Physical" -> 14, "Spurious" -> 30|> &&
-    Length[spBalancedCompoundFactors] === 28];
+  Counts[Lookup[spBalancedInventory, "Classification"]] === <|"Physical" -> 14, "Spurious" -> 26|> &&
+    Length[spBalancedCompoundFactors] === 24];
 spBalancedCompoundBefore = spBalancedNormalized["Expression"];
 {spBalancedCompoundSeconds, spBalancedCompoundChecks} = AbsoluteTiming[
   ConstructiveDiagrams`Private`spuriousCheckReport[spBalancedNormalized["Expression"],
@@ -598,8 +598,8 @@ spBalancedCompoundBefore = spBalancedNormalized["Expression"];
     "RandomSeed" -> 887147, "ParameterRules" -> ModelParameterRules[spBalancedModel],
     "TimeConstraint" -> 30]];
 Print["Balanced six-point compound-pole checks: ", spBalancedCompoundSeconds, " s."];
-check["all twenty-eight actual compound denominators cancel on two fresh conserved curves",
-  Length[spBalancedCompoundChecks] === 28 &&
+check["all twenty-four actual compound denominators cancel on two fresh conserved curves",
+  Length[spBalancedCompoundChecks] === 24 &&
     AllTrue[spBalancedCompoundChecks, #["Status"] === "PASS" && #["CompletedSamples"] === 2 &]];
 check["the actual full amplitude stays unchanged and every compound root is certified",
   spBalancedNormalized["Expression"] === spBalancedCompoundBefore &&
@@ -627,7 +627,7 @@ spBalancedInjectedPoles = Function[factor, Module[{mappedFactor, modified, certi
   AssociationQ[certificate] && certificate["Status"] === "FAIL" && certificate["PoleOrder"] >= 2
 ]] /@ spBalancedCompoundFactors;
 check["injecting an uncancelled double pole at each actual compound factor fails every certificate",
-  spBalancedInjectedPoles === ConstantArray[True, 28]];
+  spBalancedInjectedPoles === ConstantArray[True, 24]];
 check["compound sampling restores original physical masses after choosing dimensionless units",
   spBalancedNegativeChart["KinematicScale"] === Abs[ModelParameter[spBalancedModel, "Me"] /. spBalancedNegativeRules] &&
     spBalancedNegativeChart["NumericalParametersUnchanged"] === True &&

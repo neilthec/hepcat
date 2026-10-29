@@ -19,6 +19,7 @@ TEST_SUITES = (
     "spurious-pole-tests.wl", "qed-five-point-simplification-tests.wl",
     "high-energy-tests.wl", "high-energy-family-tests.wl", "reference-independence-tests.wl",
     "amplitude-completion-tests.wl", "completion-input-fit-tests.wl",
+    "physical-pole-completion-tests.wl", "schouten-sum-sign-tests.wl",
     "null-pair-shift-tests.wl", "null-channel-completion-tests.wl",
     "bose-symmetry-tests.wl", "fermion-symmetry-tests.wl",
     "model-parameter-tests.wl", "feynman-tests.wl", "spinas-export-tests.wl",

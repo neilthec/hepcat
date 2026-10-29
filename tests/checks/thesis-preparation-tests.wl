@@ -166,7 +166,7 @@ If[!MissingQ[tpRaw3456],
           FreeQ[Cases[tpPrepared, _SpinorChain, Infinity], _Mom]],
       {tpCycles, {{}, {{3, 4}}, {{4, 5}}}}]];
   tpAutomaticOptions = Join[Association[Options[PrepareAmplitudes]],
-    <|"ReferenceSpinors" -> "AllPhysical", "MaxSteps" -> 0,
+    <|"PolePreference" -> "AllPhysical", "MaxSteps" -> 0,
       "TimeConstraint" -> 20, "ReferenceTimeConstraint" -> 15,
       "ProgressReporting" -> False, "ReturnDetails" -> True|>];
   Do[
@@ -196,7 +196,7 @@ If[!MissingQ[tpRaw3456],
 tpFiveRaw = diagramAmplitudes[CreateDiagrams[
   {"e", "E", "A.+", "A.+", "A.+"}, tpModel]];
 tpFivePrepared = TimeConstrained[PrepareAmplitudes[tpFiveRaw, tpModel,
-  "ReferenceSpinors" -> "AllSpurious", "ProgressReporting" -> False], 120, $TimedOut];
+  "PolePreference" -> "AllSpurious", "ProgressReporting" -> False], 120, $TimedOut];
 Do[
   check[{"five-point AllSpurious retains or improves the compact primary complexity", tpIndex},
     ListQ[tpFivePrepared] && Length[tpFivePrepared] === 6 &&
@@ -330,7 +330,7 @@ tpFiveEq90 = -tpVertexFactor^3 tpMass *
   Times @@ (PropDen[Mom[Multiparticle @@ #], tpMass] & /@
     {{1, 3}, {2, 3}, {2, 4}, {2, 5}});
 tpFivePhysical = TimeConstrained[PrepareAmplitudes[tpFiveRaw, tpModel,
-  "ReferenceSpinors" -> "AllPhysical", "ProgressReporting" -> False], 90, $TimedOut];
+  "PolePreference" -> "AllPhysical", "ProgressReporting" -> False], 90, $TimedOut];
 check["five-point AllPhysical keeps the ordinary amplitude-pair output by default",
   ListQ[tpFivePhysical] && Length[tpFivePhysical] === 6 &&
     AllTrue[tpFivePhysical, MatchQ[#, {_List, _}] &]];
@@ -533,7 +533,7 @@ tpMixedParticles = {"e", "E", "A.+", "A.+", "A.-"};
 tpMixedRaw = diagramAmplitudes[CreateDiagrams[tpMixedParticles, tpModel]];
 tpMixedRawHash = Hash[tpMixedRaw, "SHA256"];
 tpMixedReport = TimeConstrained[PrepareAmplitudes[tpMixedRaw, tpModel,
-  "ReferenceSpinors" -> "AllPhysical", "MaxSteps" -> 0,
+  "PolePreference" -> "AllPhysical", "MaxSteps" -> 0,
   "ProgressReporting" -> False, "ReturnDetails" -> True,
   "TimeConstraint" -> 20, "ReferenceTimeConstraint" -> 15], 120, $TimedOut];
 tpMixedOrder[pair_] := Module[{cuts = tpFiveCuts[pair], first, last},
@@ -582,7 +582,7 @@ tpMixedOwnCutChecks[report_, index_] := Module[
   If[!AssociationQ[report], Return[{False}]];
   originalPoles = Times @@ DeleteDuplicates[Cases[Last[tpMixedRaw[[index]]], _PropDen, Infinity]];
   originalNumerator = Cancel[Together[originalPoles *
-    report["DiagramReports"][[index]]["ReferenceSpinors"]["Expression"]]];
+    report["DiagramReports"][[index]]["PolePreference"]["Expression"]]];
   preparedNumerator = Cancel[Together[originalPoles *
     report["DiagramReports"][[index]]["PreparedExpression"]]];
   Flatten[Table[
@@ -612,7 +612,7 @@ Do[
     Length[tpMixedScopedChecks] === 8 && And @@ tpMixedScopedChecks],
   {tpIndex, 6}];
 tpMixedSpuriousReport = TimeConstrained[PrepareAmplitudes[tpMixedRaw, tpModel,
-  "ReferenceSpinors" -> "AllSpurious", "MaxSteps" -> 0,
+  "PolePreference" -> "AllSpurious", "MaxSteps" -> 0,
   "ProgressReporting" -> False, "ReturnDetails" -> True,
   "TimeConstraint" -> 20, "ReferenceTimeConstraint" -> 15], 120, $TimedOut];
 Do[
@@ -620,8 +620,8 @@ Do[
     AssociationQ[tpMixedSpuriousReport] && Length[tpMixedSpuriousReport["DiagramReports"]] === 6 &&
       With[{row = tpMixedSpuriousReport["DiagramReports"][[tpIndex]]},
         row["Status"] === "PREPARED" &&
-          Length[row["ReferenceSpinors"]["Assignments"]] === 3 &&
-          AllTrue[row["ReferenceSpinors"]["Assignments"], #["Mode"] === "AllSpurious" &] &&
+          Length[row["PolePreference"]["Assignments"]] === 3 &&
+          AllTrue[row["PolePreference"]["Assignments"], #["Mode"] === "AllSpurious" &] &&
           With[{expression = row["PreparedExpression"]},
             expression =!= 0 && FreeQ[expression, _Mass | Spinor["Xi", ___]] &&
               ConstructiveDiagrams`Private`expressionTermCounts[expression]["Terms"] <=
@@ -689,7 +689,7 @@ Do[
     !ConstructiveDiagrams`Private`preparationCompleteExternalInputQ[Last[tpIneligible], tpScopeRules]],
   {tpIneligible, tpIneligibleInputs}];
 tpKnownPreparation = TimeConstrained[PrepareAmplitudes[{{tpScopeRules, tpKnownCompleted}}, tpModel,
-  "ReferenceSpinors" -> None, "InternalOnShell" -> False, "MaxSteps" -> 0,
+  "PolePreference" -> None, "InternalOnShell" -> False, "MaxSteps" -> 0,
   "TimeConstraint" -> 15, "ProgressReporting" -> False, "ReturnDetails" -> True], 20, $TimedOut];
 tpKnownRow = If[AssociationQ[tpKnownPreparation], First[tpKnownPreparation["DiagramReports"]], <||>];
 check["external-only preparation never replaces the known completed amplitude with a worse normal form",
@@ -700,20 +700,24 @@ check["external-only preparation never replaces the known completed amplitude wi
 check["retaining a completed input still runs spin contractions, reference assignment and ordinary reduction",
   AssociationQ[tpKnownPreparation] &&
     ContainsAll[Lookup[tpKnownRow["Reductions"], "Operation"],
-      {"ReduceSpinContractions", "ReferenceSpinors", "ReduceSpinorProducts"}] &&
-    tpKnownRow["ReferenceSpinors"]["Status"] === "COMPLETE" &&
+      {"ReduceSpinContractions", "PolePreference", "ReduceSpinorProducts"}] &&
+    tpKnownRow["PolePreference"]["Status"] === "COMPLETE" &&
     TrueQ[tpKnownRow["OriginalCandidateEligible"]] && TrueQ[tpKnownRow["OriginalCandidateAdmitted"]]];
-check["restoring a better completed input is reported as selection rather than an internal-shell identity",
+(* Mandatory reductions may reach an equivalent equal-rank form without a
+   restoration event. When a best candidate is restored, record selection
+   rather than a new identity or an internal-shell substitution. *)
+check["completed-input retention reports selection honestly and preserves the amplitude",
   AssociationQ[tpKnownPreparation] &&
-    If[tpKnownRow["PreparedExpression"] === tpKnownCompleted,
-      AnyTrue[tpKnownRow["Reductions"],
-        Lookup[#, "Operation", None] === "RetainedBestCompletedCandidate" &&
-          Lookup[#, "SourceOperation", None] === "AlreadyContractedInput" &&
-          TrueQ[Lookup[#, "SelectionOnly", False]] &&
-          !TrueQ[Lookup[#, "InternalOnShellIdentity", True]] &],
-      ConstructiveDiagrams`Private`preparationBetterQ[
-        ConstructiveDiagrams`Private`preparationRank[tpKnownRow["PreparedExpression"]],
-        ConstructiveDiagrams`Private`preparationRank[tpKnownCompleted]]]];
+    AllTrue[Select[tpKnownRow["Reductions"],
+        Lookup[#, "Operation", None] === "RetainedBestCompletedCandidate" &],
+      StringQ[Lookup[#, "SourceOperation", None]] &&
+        TrueQ[Lookup[#, "SelectionOnly", False]] &&
+        !TrueQ[Lookup[#, "InternalOnShellIdentity", True]] &] &&
+    TimeConstrained[Module[{chart, difference},
+      chart = ConstructiveDiagrams`Private`completionHESymbolicExternalChart[tpScopeRules];
+      difference = ConstructiveDiagrams`Private`residueEvaluateChart[
+        tpKnownRow["PreparedExpression"] - tpKnownCompleted, chart, {}];
+      Cancel[Together[difference]] === 0], 20, False]];
 check["completed external preparation does not introduce internal numerator conditions",
   AssociationQ[tpKnownPreparation] && tpKnownRow["InternalOnShellChannels"] === {} &&
     tpKnownRow["InternalOnShellConditions"] === {}];
@@ -723,7 +727,7 @@ check["every raw mixed diagram remains ineligible for the original-input incumbe
 tpKnownMassPreparation = PrepareAmplitudes[{
   {Append[tpScopeRules, Mass[Multiparticle[1, 3]] -> tpMass],
     Mass[Multiparticle[3, 1]] tpKnownAngle[1, 2]}}, tpModel,
-  "ReferenceSpinors" -> None, "InternalOnShell" -> False, "MaxSteps" -> 0,
+  "PolePreference" -> None, "InternalOnShell" -> False, "MaxSteps" -> 0,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
 tpKnownMassRow = First[tpKnownMassPreparation["DiagramReports"]];
 check["best-form retention cannot restore an unresolved declared internal mass over ordinary replacement",
@@ -734,7 +738,7 @@ check["best-form retention cannot restore an unresolved declared internal mass o
     tpKnownMassRow["InternalOnShellChannels"] === {}];
 tpExternalMassPreparation = PrepareAmplitudes[{
   {tpScopeRules, Mass[1] tpKnownAngle[1, 2]/Mass[2]^2}}, tpModel,
-  "ReferenceSpinors" -> None, "InternalOnShell" -> False, "MaxSteps" -> 0,
+  "PolePreference" -> None, "InternalOnShell" -> False, "MaxSteps" -> 0,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
 tpExternalMassRow = First[tpExternalMassPreparation["DiagramReports"]];
 check["best-form retention cannot undo external mass replacement in a numerator or denominator",
@@ -767,7 +771,7 @@ AppendTo[tpInverseSeeds, <|"Name" -> "spinor factor with unknown exponent",
   "Expected" -> (ReduceSpinorProducts[tpUnknownSeedExpression] /. tpScopeRules)|>];
 Do[
   tpInverseSeedPreparation = PrepareAmplitudes[{{tpScopeRules, tpInverseSeed["Expression"]}}, tpModel,
-    "ReferenceSpinors" -> None, "InternalOnShell" -> False, "MaxSteps" -> 0,
+    "PolePreference" -> None, "InternalOnShell" -> False, "MaxSteps" -> 0,
     "TimeConstraint" -> 10, "ProgressReporting" -> False, "ReturnDetails" -> True];
   tpInverseSeedRow = First[tpInverseSeedPreparation["DiagramReports"]];
   check[{"raw inverse factors cannot bypass ordinary external normalization", tpInverseSeed["Name"]},
@@ -834,7 +838,7 @@ check["joint numerator equations leave every original propagator and inverse unt
 Do[
   {tpJointInternal, tpJointConserve} = tpJointPolicy;
   tpJointPrepared = PrepareAmplitudes[{{tpJointRules, tpJointInput}}, tpModel,
-    "ReferenceSpinors" -> None, "InternalOnShell" -> tpJointInternal,
+    "PolePreference" -> None, "InternalOnShell" -> tpJointInternal,
     "MomentumConservation" -> tpJointConserve, "MaxSteps" -> 0,
     "ProgressReporting" -> False, "ReturnDetails" -> True];
   tpJointRow = First[tpJointPrepared["DiagramReports"]];
@@ -884,7 +888,7 @@ Do[
       ConstructiveDiagrams`Private`candidate = 29},
     Quiet[Check[
       tpCallbackReport = PrepareAmplitudes[{tpCallbackPair}, tpModel,
-        "ReferenceSpinors" -> tpCallbackMode, "InternalOnShell" -> False,
+        "PolePreference" -> tpCallbackMode, "InternalOnShell" -> False,
         "MaxSteps" -> 0, "ProgressReporting" -> False, "ReturnDetails" -> True];
       AssociationQ[tpCallbackReport] &&
         First[tpCallbackReport["DiagramReports"]]["Status"] === "PREPARED" &&
@@ -961,7 +965,7 @@ Do[
   tpSixSelected = (tpSixRaw[[FirstPosition[tpSixOrders, #][[1]]]] &) /@ tpSixWantedOrders;
   check[{"mixed six-point fixtures contain every distinct photon ordering", tpSixHelicities},
     Length[tpSixRaw] === 24 && Sort[tpSixOrders] === Sort[Permutations[Range[3, 6]]]];
-  tpSixPrepared = PrepareAmplitudes[tpSixSelected, tpModel, "ReferenceSpinors" -> Automatic,
+  tpSixPrepared = PrepareAmplitudes[tpSixSelected, tpModel, "PolePreference" -> Automatic,
     "MaxSteps" -> 0, "MaxReferenceChoices" -> 4, "ReferenceTimeConstraint" -> 2,
     "TimeConstraint" -> 12, "ProgressReporting" -> False, "ReturnDetails" -> True];
   Do[
@@ -975,10 +979,10 @@ Do[
         ReduceSpinContractions[num], tpSixRules]]];
     tpSixAssigned = ConstructiveDiagrams`Private`preparationReferences[tpSixContracted,
       tpSixRules, tpModel, tpSixRaw, Automatic, (KeyTake[#, {"Leg", "Mode", "Target"}] &) /@
-        tpSixRow["ReferenceSpinors"]["Assignments"]];
+        tpSixRow["PolePreference"]["Assignments"]];
     check[{"automatic mixed six-point preparation chooses four references", tpSixHelicities, tpSixIndex},
       tpSixRow["Status"] === "PREPARED" && tpSixAssigned["Status"] === "COMPLETE" &&
-        Length[tpSixRow["ReferenceSpinors"]["Assignments"]] === 4 &&
+        Length[tpSixRow["PolePreference"]["Assignments"]] === 4 &&
         FreeQ[tpSixOutput, Spinor["Xi", ___] | _Mass] &&
         ConstructiveDiagrams`Private`residueFiniteQ[tpSixOutput]];
     check[{"mixed six-point preparation preserves all three original propagators", tpSixHelicities, tpSixIndex},
@@ -1051,7 +1055,7 @@ check["reference-chain conservation does not extend the new route to hatted mome
 Do[
   tpFourPolicy = PrepareAmplitudes[{{Append[tpFourExternal,
       Mass[Multiparticle[1, 5]] -> tpMass], tpFourOpen + MomProd[1, 5]}}, tpModel,
-    "ReferenceSpinors" -> None, "InternalOnShell" -> False,
+    "PolePreference" -> None, "InternalOnShell" -> False,
     "MomentumConservation" -> tpFourMC, "MaxSteps" -> 0,
     "TimeConstraint" -> 20, "ProgressReporting" -> False, "ReturnDetails" -> True];
   tpFourPolicyRow = First[tpFourPolicy["DiagramReports"]];
@@ -1144,7 +1148,7 @@ Do[
     Length[tpFourRaw] === 40 && KeySort[Counts[tpFourClasses]] ===
       KeySort[<|"SameEndpoint" -> 16, "OppositeEndpoints" -> 8, "SeparateLines" -> 16|>]];
   tpFourPrepared = PrepareAmplitudes[tpFourSelected, tpModel,
-    "ReferenceSpinors" -> "AllSpurious", "MaxSteps" -> 0,
+    "PolePreference" -> "AllSpurious", "MaxSteps" -> 0,
     "MaxReferenceChoices" -> 4, "ReferenceTimeConstraint" -> 5,
     "TimeConstraint" -> 20, "ProgressReporting" -> False, "ReturnDetails" -> True];
   Do[
@@ -1159,11 +1163,11 @@ Do[
         ReduceSpinContractions[num], tpFourRules]]];
     tpFourReferences = ConstructiveDiagrams`Private`preparationReferences[tpFourContracted,
       tpFourRules, tpModel, tpFourRaw, "AllSpurious",
-      (KeyTake[#, {"Leg", "Mode", "Target"}] &) /@ tpFourRow["ReferenceSpinors"]["Assignments"]];
+      (KeyTake[#, {"Leg", "Mode", "Target"}] &) /@ tpFourRow["PolePreference"]["Assignments"]];
     check[{"four-fermion two-photon preparation completes a finite reference-free result",
         tpFourSecondPhoton, tpFourClasses[[tpFourIndex]]},
       tpFourRow["Status"] === "PREPARED" && tpFourReferences["Status"] === "COMPLETE" &&
-        Length[tpFourRow["ReferenceSpinors"]["Assignments"]] === 2 &&
+        Length[tpFourRow["PolePreference"]["Assignments"]] === 2 &&
         FreeQ[tpFourExpression, Spinor["Xi", ___] | _Mass | _SpinorChainReduced | _SpinorTraceReduced] &&
         ConstructiveDiagrams`Private`residueFiniteQ[tpFourExpression]];
     check[{"four-fermion two-photon preparation retains all three original propagators",
@@ -1199,7 +1203,7 @@ tpBalancedOrder = {3, 5, 4, 6};
 tpBalancedPair = SelectFirst[tpSixRaw, tpSixOrder[#] === tpBalancedOrder &];
 tpBalancedHash = Hash[tpBalancedPair, "SHA256"];
 tpBalancedPrepared = PrepareAmplitudes[{tpBalancedPair}, tpModel,
-  "ReferenceSpinors" -> "AllSpurious", "MaxSteps" -> 0,
+  "PolePreference" -> "AllSpurious", "MaxSteps" -> 0,
   "MaxReferenceChoices" -> 64, "ReferenceTimeConstraint" -> 5,
   "TimeConstraint" -> 20, "ProgressReporting" -> False, "ReturnDetails" -> True];
 tpBalancedRow = First[tpBalancedPrepared["DiagramReports"]];
@@ -1211,7 +1215,7 @@ tpBalancedContracted = ConstructiveDiagrams`Private`preparationNumerators[Last[t
     ReduceSpinContractions[num], tpBalancedRules]]];
 tpBalancedReferences = ConstructiveDiagrams`Private`preparationReferences[tpBalancedContracted,
   tpBalancedRules, tpModel, tpSixRaw, "AllSpurious",
-  (KeyTake[#, {"Leg", "Mode", "Target"}] &) /@ tpBalancedRow["ReferenceSpinors"]["Assignments"]];
+  (KeyTake[#, {"Leg", "Mode", "Target"}] &) /@ tpBalancedRow["PolePreference"]["Assignments"]];
 tpBalancedCertificate = Table[
   tpBalancedChart = tpSixOwnChart[tpBalancedOrder, tpBalancedSample[[1]], tpBalancedSample[[2]],
     tpBalancedSpins];
@@ -1342,7 +1346,7 @@ tpSFRSC = ConstructiveDiagrams`Private`preparationNumerators[Last[#],
     Function[num, ConstructiveDiagrams`Private`preparationReplaceMasses[
       ReduceSpinContractions[num], First[#]]]] & /@ tpSFRaw;
 tpSFPrepared = PrepareAmplitudes[tpSFSelected, tpModel,
-  "ReferenceSpinors" -> Automatic, "MaxSteps" -> 0, "TimeConstraint" -> 20,
+  "PolePreference" -> Automatic, "MaxSteps" -> 0, "TimeConstraint" -> 20,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
 Do[
   tpSFActualIndex = tpSFRepresentativeIndices[[tpSFItem]];
@@ -1385,7 +1389,7 @@ tpSFPolicyRaw = tpSFRaw[[tpSFPolicyIndex]];
 tpSFPolicyPair = {First[tpSFPolicyRaw], tpSFRSC[[tpSFPolicyIndex]]};
 tpSFPolicyProps = DeleteDuplicates[Cases[Last[tpSFPolicyRaw], _PropDen, Infinity]];
 tpSFPolicyReport = PrepareAmplitudes[{tpSFPolicyPair}, tpModel,
-  "ReferenceSpinors" -> None, "InternalOnShell" -> False, "MomentumConservation" -> False,
+  "PolePreference" -> None, "InternalOnShell" -> False, "MomentumConservation" -> False,
   "MaxSteps" -> 0, "TimeConstraint" -> 20, "ProgressReporting" -> False, "ReturnDetails" -> True];
 tpSFPolicyRow = First[tpSFPolicyReport["DiagramReports"]];
 tpSFOffcutCertificate = Table[

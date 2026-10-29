@@ -196,15 +196,15 @@ acXiPair = {acRules, SpinorChain[Spinor["Xi", "Angle", 71],
   Spinor["Helicity", "Angle", 3]]/
     (SpinorChain[Spinor["Xi", "Angle", 72], Spinor["Helicity", "Angle", 3]] acDen)};
 acXiPrepared = Last[First[PrepareAmplitudes[{acXiPair}, prModel,
-  "ReferenceSpinors" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False]]];
+  "PolePreference" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False]]];
 check["explicit None preserves distinct reference spinors during preparation",
   Sort[DeleteDuplicates[Cases[acXiPrepared, Spinor["Xi", kind_, id_] :> {kind, id}, Infinity]]] ===
     {{"Angle", 71}, {"Angle", 72}} &&
     ReduceSpinorProducts[acXiPrepared - Last[acXiPair]] === 0];
 acReferencePrepare[pairs_, choice_, opts___] := PrepareAmplitudes[pairs, prModel,
-  opts, "ReferenceSpinors" -> choice, "MaxSteps" -> 0,
+  opts, "PolePreference" -> choice, "MaxSteps" -> 0,
   "ProgressReporting" -> False, "Output" -> "Details"];
-acReferenceAssignments[report_] := First[report["DiagramReports"]]["ReferenceSpinors"]["Assignments"];
+acReferenceAssignments[report_] := First[report["DiagramReports"]]["PolePreference"]["Assignments"];
 acReferenceRatio[kind_, id_, leg_, momentum_] := SpinorChain[
   Spinor["Xi", kind, id], Mom[momentum],
   Spinor["Helicity", If[kind === "Angle", "Square", "Angle"], leg]]/
@@ -227,7 +227,7 @@ check["cyclic reference choices follow diagram-local vertex order rather than so
    shell identities, and ordinary RSP is not a complete equality prover. *)
 acReferenceCyclicStage = SelectFirst[
   First[acReferenceCyclic["DiagramReports"]]["Reductions"],
-  #["Operation"] === "ReferenceSpinors" &]["After"];
+  #["Operation"] === "PolePreference" &]["After"];
 check["massless reference substitution preserves both angle and square chirality",
   acReferenceCyclic["Status"] === "PREPARED" &&
     FreeQ[acReferenceCyclic["Amplitude"], Spinor["Xi", ___]] &&
@@ -243,7 +243,7 @@ check["Automatic uses supported spurious choices first",
   acReferenceAutomatic["Amplitude"] === acReferenceSpurious["Amplitude"] &&
     AllTrue[acReferenceAssignments[acReferenceAutomatic], #["Mode"] === "AllSpurious" &]];
 check["the default reference-spinor choice is Automatic",
-  ("ReferenceSpinors" /. Options[PrepareAmplitudes]) === Automatic];
+  ("PolePreference" /. Options[PrepareAmplitudes]) === Automatic];
 acReferenceAlias = acReferencePrepare[{acReferencePair}, "Cyclic"];
 check["Cyclic retains the deterministic forward reference assignment",
   acReferenceAlias["Amplitude"] === acReferenceCyclic["Amplitude"]];
@@ -269,9 +269,9 @@ check["IndependentXi records one generic reference per external massless leg",
       Spinor["Xi", _, id_] :> id, Infinity]]] === {3, 4, 5}];
 check["reference selection occurs between spin contraction and spinor-product reduction",
   With[{operations = Lookup[First[acReferenceSpurious["DiagramReports"]]["Reductions"], "Operation"]},
-    ContainsAll[operations, {"ReduceSpinContractions", "ReferenceSpinors", "ReduceSpinorProducts"}] &&
+    ContainsAll[operations, {"ReduceSpinContractions", "PolePreference", "ReduceSpinorProducts"}] &&
       FirstPosition[operations, "ReduceSpinContractions"][[1]] <
-        FirstPosition[operations, "ReferenceSpinors"][[1]] <
+        FirstPosition[operations, "PolePreference"][[1]] <
         FirstPosition[operations, "ReduceSpinorProducts"][[1]]]];
 check["reference preparation retains its original input and off-shell physical denominator",
   acReferenceSpurious["OriginalAmplitudes"] === {acReferencePair} &&
@@ -292,17 +292,17 @@ acReferencePhysicalPairs = {
     acReferenceRatio["Square", 32, 4, 1]/PropDen[Mom[Multiparticle[1, 4]], prElectronMass]}};
 acReferencePhysical = acReferencePrepare[acReferencePhysicalPairs, "AllPhysical"];
 acPhysicalAssignments = Flatten[Lookup[
-  Lookup[acReferencePhysical["DiagramReports"], "ReferenceSpinors"], "Assignments"], 1];
+  Lookup[acReferencePhysical["DiagramReports"], "PolePreference"], "Assignments"], 1];
 check["physical reference choices use other certified poles rather than each diagram's own cut",
   acReferencePhysical["Status"] === "PREPARED" &&
     Sort[({#["Leg"], #["Target"]} &) /@ acPhysicalAssignments] === {{3, 2}, {4, 2}} &&
     AllTrue[acPhysicalAssignments, #["Mode"] === "AllPhysical" &]];
 check["physical choices replace Xi by opposite-chirality spinors and momentum insertions",
   FreeQ[acReferencePhysical["Amplitude"], Spinor["Xi", ___]] &&
-    !FreeQ[First[acReferencePhysical["DiagramReports"]]["ReferenceSpinors"]["Expression"],
+    !FreeQ[First[acReferencePhysical["DiagramReports"]]["PolePreference"]["Expression"],
       SpinorChain[Spinor["Helicity", "Square", 3], Mom[2], Mom[1],
         Spinor["Helicity", "Square", 3]]] &&
-    !FreeQ[Last[acReferencePhysical["DiagramReports"]]["ReferenceSpinors"]["Expression"],
+    !FreeQ[Last[acReferencePhysical["DiagramReports"]]["PolePreference"]["Expression"],
       SpinorChain[Spinor["Helicity", "Angle", 4], Mom[2], Mom[1],
         Spinor["Helicity", "Angle", 4]]]];
 check["only the newly inserted auxiliary self-sandwiches become certified physical denominators",
@@ -316,7 +316,7 @@ check["only the newly inserted auxiliary self-sandwiches become certified physic
 acReferenceUncertified = acReferencePrepare[{First[acReferencePhysicalPairs]}, "AllPhysical"];
 check["unsupported physical reference choices remain partial instead of inventing a pole",
   acReferenceUncertified["Status"] === "PARTIAL" &&
-    First[acReferenceUncertified["DiagramReports"]]["ReferenceSpinors"]["Status"] === "UNRESOLVED"];
+    First[acReferenceUncertified["DiagramReports"]]["PolePreference"]["Status"] === "UNRESOLVED"];
 acReferenceSingleExternal = Join[Thread[(Mass /@ Range[4]) -> ConstantArray[prElectronMass, 4]],
   {Mass[5] -> 0}];
 acReferenceSinglePairs = {
@@ -327,7 +327,7 @@ acReferenceSinglePairs = {
 acReferenceSingle = acReferencePrepare[acReferenceSinglePairs, Automatic];
 check["Automatic falls back to certified physical references when only one external leg is massless",
   acReferenceSingle["Status"] === "PREPARED" &&
-    Flatten[Lookup[Lookup[acReferenceSingle["DiagramReports"], "ReferenceSpinors"], "Assignments"], 1][[All, "Target"]] ===
+    Flatten[Lookup[Lookup[acReferenceSingle["DiagramReports"], "PolePreference"], "Assignments"], 1][[All, "Target"]] ===
       {2, 1} && FreeQ[acReferenceSingle["Amplitude"], Spinor["Xi", ___]]];
 acReferenceSingleSpurious = acReferencePrepare[acReferenceSinglePairs, "AllSpurious"];
 check["AllSpurious with a single massless leg never creates a zero self-bracket",
@@ -335,13 +335,13 @@ check["AllSpurious with a single massless leg never creates a zero self-bracket"
     FreeQ[acReferenceSingleSpurious["Amplitude"], Indeterminate | ComplexInfinity | _DirectedInfinity]];
 check["an unavailable constructive reference choice cannot silently return unchanged Xi spinors",
   FailureQ[PrepareAmplitudes[acReferenceSinglePairs, prModel,
-    "ReferenceSpinors" -> "AllSpurious", "ProgressReporting" -> False]] &&
+    "PolePreference" -> "AllSpurious", "ProgressReporting" -> False]] &&
     FailureQ[PrepareAmplitudes[acReferenceSinglePairs, prModel,
-      "ReferenceSpinors" -> "AllSpurious", "Output" -> "Expression",
+      "PolePreference" -> "AllSpurious", "Output" -> "Expression",
       "ProgressReporting" -> False]]];
 check["unsupported reference choices are rejected before preparation",
   acInvalid[Quiet[PrepareAmplitudes[{acReferencePair}, prModel,
-    "ReferenceSpinors" -> "Random", "ProgressReporting" -> False]]]];
+    "PolePreference" -> "Random", "ProgressReporting" -> False]]]];
 
 (* Reference-dependent toy numerators isolate assignment optimization. They are
    not assertions that arbitrary Xi-dependent inputs are physical amplitudes. *)
@@ -367,12 +367,12 @@ check["reference optimization retains the original pair and its off-shell physic
   acOptimizedSpurious["OriginalAmplitudes"] === {acOptimizedSpuriousPair} &&
     acOptimizedSpurious["PreparedAmplitudes"][[1, 1]] === First[acOptimizedSpuriousPair] &&
     !FreeQ[acOptimizedSpurious["Amplitude"], acDen]];
-acReferenceSearch[report_] := First[report["DiagramReports"]]["ReferenceSpinors"]["Search"];
+acReferenceSearch[report_] := First[report["DiagramReports"]]["PolePreference"]["Search"];
 check["reference optimization has finite default choices and an automatic shared time sub-budget",
   ("MaxReferenceChoices" /. Options[PrepareAmplitudes]) === 64 &&
     ("ReferenceTimeConstraint" /. Options[PrepareAmplitudes]) === Automatic];
 check["optimized reference details expose actual reduction scores and a bounded search inventory",
-  With[{reference = First[acOptimizedSpurious["DiagramReports"]]["ReferenceSpinors"]},
+  With[{reference = First[acOptimizedSpurious["DiagramReports"]]["PolePreference"]},
     ContainsAll[Keys[reference], {"ReducedExpression", "ReducedRank", "Search", "Alternatives"}] &&
       reference["ReducedExpression"] === 1/acDen &&
       reference["ReducedRank"][[1]] === SpinorExpressionComplexity[reference["ReducedExpression"]] &&
@@ -473,15 +473,15 @@ check["Mixed can prefer an all-physical winner even when spurious partners are a
     First[acReferenceAssignments[acOptimizedPhysicalCompetition]]["Mode"] === "AllPhysical" &&
     First[acReferenceAssignments[acOptimizedPhysicalCompetition]]["Target"] === 2];
 check["a new reference mode does not change an input with no Xi spinors",
-  PrepareAmplitudes[{acDiracPair}, prModel, "ReferenceSpinors" -> "Mixed",
+  PrepareAmplitudes[{acDiracPair}, prModel, "PolePreference" -> "Mixed",
     "MaxSteps" -> 0, "ProgressReporting" -> False] === acPreparedPairs];
 check["an infinite reference sub-budget remains valid for an input with no Xi spinors",
-  PrepareAmplitudes[{acDiracPair}, prModel, "ReferenceSpinors" -> "Mixed",
+  PrepareAmplitudes[{acDiracPair}, prModel, "PolePreference" -> "Mixed",
     "ReferenceTimeConstraint" -> Infinity, "MaxSteps" -> 0,
     "ProgressReporting" -> False] === acPreparedPairs];
 acReferenceOptimizationEvents = {};
 acReferenceProgress = PrepareAmplitudes[{acOptimizedSpuriousPair}, prModel,
-  "ReferenceSpinors" -> "AllSpurious", "MaxSteps" -> 0,
+  "PolePreference" -> "AllSpurious", "MaxSteps" -> 0,
   "ProgressReporting" -> True, "ProgressFunction" -> (AppendTo[acReferenceOptimizationEvents, #] &),
   "ReturnDetails" -> True];
 acReferenceChoosingEvents = Select[acReferenceOptimizationEvents,
@@ -496,7 +496,7 @@ check["reference optimization reports live tried-choice counts and best known co
       acReferenceSearch[acReferenceProgress]["TriedChoices"]];
 acReferencePostSelectionPaused = False;
 acReferencePostSelectionTimed = PrepareAmplitudes[{acOptimizedSpuriousPair}, prModel,
-  "ReferenceSpinors" -> "AllSpurious", "MaxSteps" -> 0,
+  "PolePreference" -> "AllSpurious", "MaxSteps" -> 0,
   "ReferenceTimeConstraint" -> Infinity, "TimeConstraint" -> 1,
   "ProgressReporting" -> True, "ReturnDetails" -> True,
   "ProgressFunction" -> (If[Lookup[#, "Operation", ""] === "ReduceSpinorProducts",
@@ -509,7 +509,7 @@ check["an overall timeout after reference selection retains the completed reduce
       acReferenceAssignments[acOptimizedSpurious] &&
     With[{diagram = First[acReferencePostSelectionTimed["DiagramReports"]]},
       diagram["StopReason"] === "TimeConstraint" &&
-        diagram["PreparedExpression"] === diagram["ReferenceSpinors"]["ReducedExpression"] &&
+        diagram["PreparedExpression"] === diagram["PolePreference"]["ReducedExpression"] &&
         MemberQ[Lookup[diagram["Reductions"], "Operation"], "RetainedReferenceTrial"]] &&
     !FreeQ[acReferencePostSelectionTimed["Amplitude"], acDen]];
 acReferenceSubTimed = acReferencePrepare[{acOptimizedSpuriousPair}, "AllSpurious",
@@ -522,9 +522,9 @@ check["reference sub-timeouts retain a valid fallback or an honestly partial ori
     FreeQ[acReferenceSubTimed["Amplitude"], Indeterminate | ComplexInfinity | _DirectedInfinity] &&
     If[acReferenceSubTimed["Status"] === "PREPARED",
       FreeQ[acReferenceSubTimed["Amplitude"], Spinor["Xi", ___]] &&
-        First[acReferenceSubTimed["DiagramReports"]]["ReferenceSpinors"]["Status"] === "COMPLETE" &&
+        First[acReferenceSubTimed["DiagramReports"]]["PolePreference"]["Status"] === "COMPLETE" &&
         If[acReferenceSearch[acReferenceSubTimed]["CompletedChoices"] === 0,
-          First[acReferenceSubTimed["DiagramReports"]]["ReferenceSpinors"]["Diagnostics"] =!= {},
+          First[acReferenceSubTimed["DiagramReports"]]["PolePreference"]["Diagnostics"] =!= {},
           True],
       acReferenceSubTimed["Status"] === "PARTIAL"]];
 acMasslessScalarModel = {{{"Scalar", "s", "s", 1, 0, 0, 0, 1, 1, "", ""}},
@@ -556,13 +556,13 @@ Do[
   check["contradictory diagram-shell masses are rejected before identity search " <> ToString[cut, InputForm],
     Quiet[PrepareAmplitudes[{{acConflictingRules,
       MomProd[1, 2]/PropDen[Mom[Multiparticle[1, 2]], 1]}}, acMasslessScalarModel,
-      "ReferenceSpinors" -> None, "MaxSteps" -> 4,
+      "PolePreference" -> None, "MaxSteps" -> 4,
       "ProgressReporting" -> False]] === $Failed],
   {cut, {Multiparticle[1, 2], Multiparticle[2, 1]}}];
 check["contradictory external masses are rejected before applying external equations of motion",
   Quiet[PrepareAmplitudes[{{Append[acExternalZero, Mass[1] -> 1],
     SpinorChain[Spinor["Spin", "Angle", 1], Mom[1], Spinor["Spin", "Square", 2]]}},
-    acMasslessScalarModel, "ReferenceSpinors" -> None,
+    acMasslessScalarModel, "PolePreference" -> None,
     "ProgressReporting" -> False]] === $Failed];
 acEquivalentShellRules = Join[acExternalZero,
   {Mass[Multiparticle[1, 2]] -> acShellParameter (acShellParameter + 1),
@@ -570,7 +570,7 @@ acEquivalentShellRules = Join[acExternalZero,
 acEquivalentShellPair = {acEquivalentShellRules,
   MomProd[1, 2]/PropDen[Mom[Multiparticle[1, 2]], acShellParameter (acShellParameter + 1)]};
 acEquivalentShellPrepared = PrepareAmplitudes[{acEquivalentShellPair}, acMasslessScalarModel,
-  "ReferenceSpinors" -> None, "MaxSteps" -> 0,
+  "PolePreference" -> None, "MaxSteps" -> 0,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
 check["algebraically equal reversed-cut mass declarations are accepted without mutating input metadata",
   acEquivalentShellPrepared["Status"] === "PREPARED" &&
@@ -582,14 +582,14 @@ acDuplicateExternalRules = Join[acExternalZero, {Mass[1] -> acShellParameter - a
 acDuplicateExternalPrepared = PrepareAmplitudes[{{acDuplicateExternalRules,
     SpinorChain[Spinor["Xi", "Square", 71], Total[Mom /@ Range[4]],
       Spinor["Xi", "Angle", 73]]}}, acMasslessScalarModel,
-  "ReferenceSpinors" -> None, "InternalOnShell" -> False, "MaxSteps" -> 2,
+  "PolePreference" -> None, "InternalOnShell" -> False, "MaxSteps" -> 2,
   "ProgressReporting" -> False];
 check["equivalent repeated external rules do not duplicate momenta in conservation",
   Last[First[acDuplicateExternalPrepared]] === 0 &&
     First[First[acDuplicateExternalPrepared]] === acDuplicateExternalRules];
 acReorderedLocalPairs = {First[acLocalPairs], {Reverse[First[Last[acLocalPairs]]], Last[Last[acLocalPairs]]}};
 acReorderedLocalPrepared = PrepareAmplitudes[acReorderedLocalPairs, acMasslessScalarModel,
-  "ReferenceSpinors" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False];
+  "PolePreference" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False];
 check["external rule order is immaterial while different diagrams retain their distinct internal shells",
   Last /@ acReorderedLocalPrepared === Last /@ acLocal["PreparedAmplitudes"] &&
     First /@ acReorderedLocalPrepared === First /@ acReorderedLocalPairs];
@@ -684,7 +684,7 @@ Do[
   acUnknownPowerPair = {Append[acExternalZero, Mass[Multiparticle[1, 2]] -> 1],
     (3 + MomProd[1, 2]^power)^2/PropDen[Mom[Multiparticle[1, 2]], 1]};
   acUnknownPowerPrepared = PrepareAmplitudes[{acUnknownPowerPair}, acMasslessScalarModel,
-    "ReferenceSpinors" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False];
+    "PolePreference" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False];
   check["an exponent with unknown sign protects its base from internal-shell substitution " <>
       ToString[power, InputForm],
     acZero[Last[First[acUnknownPowerPrepared]] - Expand[Last[acUnknownPowerPair]]] &&
@@ -693,13 +693,13 @@ Do[
 acPositivePowerPair = {Append[acExternalZero, Mass[Multiparticle[1, 2]] -> 1],
   (3 + MomProd[1, 2]^2)^2/PropDen[Mom[Multiparticle[1, 2]], 1]};
 acPositivePowerPrepared = PrepareAmplitudes[{acPositivePowerPair}, acMasslessScalarModel,
-  "ReferenceSpinors" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False];
+  "PolePreference" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False];
 check["nonnegative integer powers still receive diagram-local numerator shell reductions",
   Last[First[acPositivePowerPrepared]] === 169/(16 PropDen[Mom[Multiparticle[1, 2]], 1])];
 acExternalUnknownPower = (3 + SpinorChain[Spinor["Spin", "Square", 1], Mom[2],
     Spinor["Spin", "Angle", 2]]^(-acShellPower))^2/acDen;
 acExternalUnknownPowerPrepared = PrepareAmplitudes[{{acRules, acExternalUnknownPower}}, prModel,
-  "ReferenceSpinors" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False];
+  "PolePreference" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False];
 check["ordinary external spinor reduction still acts inside an unknown-sign power",
   acZero[Last[First[acExternalUnknownPowerPrepared]] - (ReduceSpinorProducts[acExternalUnknownPower] /. acRules)] &&
     FreeQ[Last[First[acExternalUnknownPowerPrepared]], SpinorChain[___, _Mom, ___]]];
@@ -710,7 +710,7 @@ acWholeBracket = SpinorChain[Spinor["Helicity", "Angle", 3], Spinor["Xi", "Angle
 acWholeReverseBracket = SpinorChain[Spinor["Xi", "Angle", 77], Spinor["Helicity", "Angle", 3]];
 acWholeBracketPrepared = PrepareAmplitudes[{{acRules,
     acWholeBracket/(acDen acWholeReverseBracket)}}, prModel,
-  "ReferenceSpinors" -> None, "InternalOnShell" -> False, "MaxSteps" -> 0,
+  "PolePreference" -> None, "InternalOnShell" -> False, "MaxSteps" -> 0,
   "ProgressReporting" -> False];
 check["whole-expression reduction cancels an auxiliary bracket with its reversed denominator",
   Last[First[acWholeBracketPrepared]] === -1/acDen];
@@ -721,14 +721,14 @@ Do[
   acWholeDiracBracket = SpinorChain[Spinor["Spin", acWholeOtherKind, 1],
     Spinor["Spin", acWholeOtherKind, 2]];
   acWholeDiracPrepared = PrepareAmplitudes[{{acRules, 1/(acDen acWholeDiracChain)}},
-    prModel, "ReferenceSpinors" -> None, "InternalOnShell" -> False, "MaxSteps" -> 0,
+    prModel, "PolePreference" -> None, "InternalOnShell" -> False, "MaxSteps" -> 0,
     "ProgressReporting" -> False];
   check["external Dirac identities reduce a reciprocal chain " <> acWholeKind,
     Last[First[acWholeDiracPrepared]] === -1/(prElectronMass acDen acWholeDiracBracket)],
   {acWholeKind, {"Angle", "Square"}}];
 acWholeTracePrepared = PrepareAmplitudes[{{acRules,
     1/(acDen SpinorTrace[Mom[1], Mom[1]])}}, prModel,
-  "ReferenceSpinors" -> None, "InternalOnShell" -> False, "MaxSteps" -> 0,
+  "PolePreference" -> None, "InternalOnShell" -> False, "MaxSteps" -> 0,
   "ProgressReporting" -> False];
 check["ordinary trace identities reduce a reciprocal trace without touching its physical pole",
   Last[First[acWholeTracePrepared]] === 1/(2 prElectronMass^2 acDen)];
@@ -736,7 +736,7 @@ acWholeShellDirac = SpinorChain[Spinor["Spin", "Square", 1], Mom[2],
   Spinor["Spin", "Angle", 2]];
 acWholeShellPrepared = PrepareAmplitudes[{{acDotRules,
     (3 + MomProd[2, 5])/(acDotDen (5 + MomProd[2, 5]) acWholeShellDirac)}}, prModel,
-  "ReferenceSpinors" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False];
+  "PolePreference" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False];
 check["ordinary denominator spinor reduction does not apply an internal scalar shell there",
   Last[First[acWholeShellPrepared]] === -3/(prElectronMass acDotDen (5 + MomProd[2, 5])
     SpinorChain[Spinor["Spin", "Square", 1], Spinor["Spin", "Square", 2]])];
@@ -752,7 +752,7 @@ acKnownNumeratorDotCount[pair_] := Module[{declared, external, known, terms},
 acDotQEDPairs = diagramAmplitudes[CreateDiagrams[
   {"e", "E", "A.+", "A.+", "A.+"}, prModel]];
 acDotQEDPrepared = PrepareAmplitudes[acDotQEDPairs, prModel,
-  "ReferenceSpinors" -> "AllSpurious", "MaxSteps" -> 0,
+  "PolePreference" -> "AllSpurious", "MaxSteps" -> 0,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
 (* Optimized references may avoid producing these dots at all. The explicit
    nonzero scalar-product fixtures above separately exercise their reduction. *)
@@ -776,7 +776,7 @@ acConservationDen = PropDen[Mom[Multiparticle[2, 5]], acShellMass];
 acConservationPair = {acConservationRules,
   Expand[3 + acConservationRow^2]/(acConservationDen (5 + MomProd[2, 5]))};
 acConservationPrepared = PrepareAmplitudes[{acConservationPair}, acMasslessScalarModel,
-  "ReferenceSpinors" -> None, "InternalOnShell" -> False, "MaxSteps" -> 4,
+  "PolePreference" -> None, "InternalOnShell" -> False, "MaxSteps" -> 4,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
 check["whole-numerator conservation simplifies a squared row with noncontiguous particle labels",
   acConservationPrepared["Status"] === "PREPARED" &&
@@ -790,7 +790,7 @@ check["accepted whole-numerator conservation has a strict recorded rank improvem
       OrderedQ[{Lookup[#, "AfterRank", Infinity], Lookup[#, "BeforeRank", -Infinity]}] &&
       Lookup[#, "AfterRank", None] =!= Lookup[#, "BeforeRank", None] &]];
 acConservationOff = PrepareAmplitudes[{acConservationPair}, acMasslessScalarModel,
-  "ReferenceSpinors" -> None, "InternalOnShell" -> False, "MomentumConservation" -> False,
+  "PolePreference" -> None, "InternalOnShell" -> False, "MomentumConservation" -> False,
   "MaxSteps" -> 4, "ProgressReporting" -> False, "ReturnDetails" -> True];
 check["disabling preparation conservation preserves the unconserved row-square value",
   Module[{angles, squares, momenta, epsilon = {{0, 1}, {-1, 0}}, adjugate, value},
@@ -808,12 +808,12 @@ check["disabling preparation conservation preserves the unconserved row-square v
       AllTrue[First[acConservationOff["DiagramReports"]]["IdentitySteps"],
         Lookup[#, "Name", None] =!= "MomentumConservation" &]]];
 acConservationZeroSteps = PrepareAmplitudes[{acConservationPair}, acMasslessScalarModel,
-  "ReferenceSpinors" -> None, "InternalOnShell" -> False, "MaxSteps" -> 0,
+  "PolePreference" -> None, "InternalOnShell" -> False, "MaxSteps" -> 0,
   "ProgressReporting" -> False];
 check["MaxSteps zero retains basic reduction without entering conservation search",
   acZero[Last[First[acConservationZeroSteps]] - Last[acConservationPair]]];
 acConservationTwice = PrepareAmplitudes[acConservationPrepared["PreparedAmplitudes"],
-  acMasslessScalarModel, "ReferenceSpinors" -> None, "InternalOnShell" -> False,
+  acMasslessScalarModel, "PolePreference" -> None, "InternalOnShell" -> False,
   "MaxSteps" -> 4, "ProgressReporting" -> False, "ReturnDetails" -> True];
 check["conservation preparation is idempotent and records no cycling edits",
   acConservationTwice["PreparedAmplitudes"] === acConservationPrepared["PreparedAmplitudes"] &&
@@ -821,7 +821,7 @@ check["conservation preparation is idempotent and records no cycling edits",
 acConservationChain = SpinorChain[Spinor["Xi", "Square", 19],
   Total[Mom /@ acConservationLabels], Spinor["Xi", "Angle", 23]];
 acConservationChainPrepared = PrepareAmplitudes[{{acConservationRules, acConservationChain}},
-  acMasslessScalarModel, "ReferenceSpinors" -> None, "InternalOnShell" -> False,
+  acMasslessScalarModel, "PolePreference" -> None, "InternalOnShell" -> False,
   "MaxSteps" -> 2, "ProgressReporting" -> False];
 check["preparation knows the explicit conserved external set rather than a contiguous range",
   Last[First[acConservationChainPrepared]] === 0 && ReduceSpinorProducts[acConservationChain] =!= 0];
@@ -892,7 +892,7 @@ acChannelRow = Join[ConstantArray[0, 4], {Multiparticle[2, 1], 2,
   -(3 + MomProd[1, 2] + MomProd[1, 3])/(acChannelDen acChannelUncutDen)}];
 acChannelSavedRow = acChannelRow;
 acChannelPrepared = PrepareAmplitudes[{acChannelRow}, acMasslessScalarModel,
-  "ReferenceSpinors" -> None, "MaxSteps" -> 0,
+  "PolePreference" -> None, "MaxSteps" -> 0,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
 acChannelExpected = -(5 + MomProd[1, 3])/(acChannelDen acChannelUncutDen);
 check["compact factorization rows use only their declared cut for numerator shells",
@@ -919,10 +919,10 @@ check["the selected and all unselected propagator denominators remain off shell"
     TrueQ[First[acChannelPrepared["ItemReports"]]["DenominatorsKeptOffShell"]]];
 check["channel rows are returned directly by default rather than converted to diagram pairs",
   PrepareAmplitudes[{acChannelRow}, acMasslessScalarModel,
-    "ReferenceSpinors" -> None, "MaxSteps" -> 0,
+    "PolePreference" -> None, "MaxSteps" -> 0,
     "ProgressReporting" -> False] === acChannelPrepared["PreparedAmplitudes"] &&
     PrepareAmplitudes[{acChannelRow}, acMasslessScalarModel,
-      "ReferenceSpinors" -> None, "MaxSteps" -> 0,
+      "PolePreference" -> None, "MaxSteps" -> 0,
       "ProgressReporting" -> False, "Output" -> "Expression"] ===
         acChannelPrepared["Amplitude"]];
 acExistingPoleXi = Spinor["Xi", "Angle", 5];
@@ -935,11 +935,11 @@ acExistingPoleRows = {
   {prElectronMass, prElectronMass, 0, 0, 0, Multiparticle[1, 3], prElectronMass, acExistingPoleSource},
   {prElectronMass, prElectronMass, 0, 0, 0, Multiparticle[2, 5], prElectronMass, 0}};
 acExistingPolePrepared = PrepareAmplitudes[acExistingPoleRows, prModel,
-  "ReferenceSpinors" -> "AllPhysical", "MaxSteps" -> 0,
+  "PolePreference" -> "AllPhysical", "MaxSteps" -> 0,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
 check["physical reference selection does not duplicate an uncut propagator already present in a channel",
   acExistingPolePrepared["Status"] === "PARTIAL" &&
-    First[acExistingPolePrepared["ItemReports"]]["ReferenceSpinors"]["Status"] === "UNRESOLVED" &&
+    First[acExistingPolePrepared["ItemReports"]]["PolePreference"]["Status"] === "UNRESOLVED" &&
     !FreeQ[First[acExistingPolePrepared["PreparedAmplitudes"]], Spinor["Xi", ___]] &&
     Exponent[Denominator[First[acExistingPolePrepared["PreparedAmplitudes"]][[-1]]],
       acExistingPole25] === 1];
@@ -948,22 +948,22 @@ check["excluding existing propagators from reference choices does not declare th
 acChannelContourRow = ReplacePart[acChannelRow,
   -1 -> Last[acChannelRow]/ConstructiveDiagrams`z];
 acChannelContourPrepared = PrepareAmplitudes[{acChannelContourRow}, acMasslessScalarModel,
-  "ReferenceSpinors" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False];
+  "PolePreference" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False];
 check["preparation does not strip the channel contour factor or add a sewing sign",
   acZero[ConstructiveDiagrams`z Last[First[acChannelContourPrepared]] - acChannelExpected] &&
     !FreeQ[Last[First[acChannelContourPrepared]], ConstructiveDiagrams`z]];
 acDiracChannelRow = {prElectronMass, prElectronMass, 0, 0, Multiparticle[1, 3], prElectronMass, Last[acDiracPair]};
 acDiracChannelPrepared = PrepareAmplitudes[{acDiracChannelRow}, prModel,
-  "ReferenceSpinors" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False];
+  "PolePreference" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False];
 check["compact channels also receive ordinary external Dirac identities",
   Last[First[acDiracChannelPrepared]] === acPrepared["Amplitude"] &&
     Most[First[acDiracChannelPrepared]] === Most[acDiracChannelRow]];
 check["the legacy preparation alias accepts the same compact channel rows",
   PrepareDiagramAmplitudes[{acChannelRow}, acMasslessScalarModel,
-    "ReferenceSpinors" -> None, "MaxSteps" -> 0,
+    "PolePreference" -> None, "MaxSteps" -> 0,
     "ProgressReporting" -> False] === acChannelPrepared["PreparedAmplitudes"]];
 acChannelOff = PrepareAmplitudes[{acChannelRow}, acMasslessScalarModel,
-  "ReferenceSpinors" -> None, "MaxSteps" -> 0, "InternalOnShell" -> False,
+  "PolePreference" -> None, "MaxSteps" -> 0, "InternalOnShell" -> False,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
 check["channel numerator shells can be disabled without discarding their metadata",
   acZero[acChannelOff["Amplitude"] - Last[acChannelRow]] &&
@@ -972,14 +972,14 @@ check["channel numerator shells can be disabled without discarding their metadat
 acChannelProtected = ReplacePart[acChannelRow, -1 ->
   (3 + MomProd[1, 2])/(acChannelDen (5 + MomProd[1, 2]))];
 acChannelProtectedPrepared = PrepareAmplitudes[{acChannelProtected}, acMasslessScalarModel,
-  "ReferenceSpinors" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False];
+  "PolePreference" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False];
 check["a factorization channel shell never substitutes into a reciprocal invariant",
   Last[First[acChannelProtectedPrepared]] === 5/(acChannelDen (5 + MomProd[1, 2]))];
 acChannelComplementRow = ReplacePart[acChannelRow, -1 -> MomProd[3, 4]/acChannelDen];
 acChannelComplement = PrepareAmplitudes[{acChannelComplementRow}, acMasslessScalarModel,
-  "ReferenceSpinors" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False];
+  "PolePreference" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False];
 acChannelComplementOff = PrepareAmplitudes[{acChannelComplementRow}, acMasslessScalarModel,
-  "ReferenceSpinors" -> None, "MaxSteps" -> 0, "MomentumConservation" -> False,
+  "PolePreference" -> None, "MaxSteps" -> 0, "MomentumConservation" -> False,
   "ProgressReporting" -> False];
 check["a channel's complementary cut is equivalent only when momentum conservation is enabled",
   Last[First[acChannelComplement]] === 2/acChannelDen &&
@@ -988,21 +988,21 @@ acChannelLargeDen = PropDen[Mom[Multiparticle[1, 2, 3]], 3];
 acChannelLargeRow = Join[ConstantArray[0, 5], {Multiparticle[1, 2, 3], 3,
   (1 + MomProd[4, 5])/acChannelLargeDen}];
 acChannelLarge = PrepareAmplitudes[{acChannelLargeRow}, acMasslessScalarModel,
-  "ReferenceSpinors" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False];
+  "PolePreference" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False];
 check["a larger factorization cut uses its known two-particle complement at five points",
   Most[First[acChannelLarge]] === Most[acChannelLargeRow] &&
     Last[First[acChannelLarge]] === 11/(2 acChannelLargeDen)];
 acChannelSixRow = Join[ConstantArray[0, 6], {Multiparticle[1, 2, 3], 3,
   (1 + MomProd[4, 5])/acChannelLargeDen}];
 acChannelSix = PrepareAmplitudes[{acChannelSixRow}, acMasslessScalarModel,
-  "ReferenceSpinors" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False];
+  "PolePreference" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False];
 check["a three-by-three cut does not invent an individual pair-mass condition",
   acZero[Last[First[acChannelSix]] - Last[acChannelSixRow]] &&
     !FreeQ[Last[First[acChannelSix]], MomProd[4, 5]] &&
     Most[First[acChannelSix]] === Most[acChannelSixRow]];
 acMixedPreparationInput = {First[acLocalPairs], acChannelRow};
 acMixedPreparation = PrepareAmplitudes[acMixedPreparationInput, acMasslessScalarModel,
-  "ReferenceSpinors" -> None, "MaxSteps" -> 0,
+  "PolePreference" -> None, "MaxSteps" -> 0,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
 check["each mixed-list element retains its own input format and shell assumptions",
   First[acMixedPreparation["PreparedAmplitudes"]] === First[acLocal["PreparedAmplitudes"]] &&
@@ -1022,7 +1022,7 @@ check["diagram diagnostics remain available through the legacy report-key alias"
 Do[
   check["malformed compact channel metadata is rejected " <> ToString[bad, InputForm],
     acInvalid[Quiet[PrepareAmplitudes[{bad}, acMasslessScalarModel,
-      "ReferenceSpinors" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False]]]],
+      "PolePreference" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False]]]],
   {bad, {
     {0, 0, 0, 0, Multiparticle[1, 1], 2, 1},
     {0, 0, 0, 0, Multiparticle[1, 5], 2, 1},
@@ -1038,13 +1038,13 @@ Do[
 check["mixed inputs with conflicting external masses fail before any simplification",
   acInvalid[Quiet[PrepareAmplitudes[{First[acLocalPairs],
     ReplacePart[acChannelRow, 1 -> 1]}, acMasslessScalarModel,
-      "ReferenceSpinors" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False]]]];
+      "PolePreference" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False]]]];
 check["an unknown preparation option cannot be silently ignored",
   acInvalid[Quiet[PrepareAmplitudes[{acChannelRow}, acMasslessScalarModel,
-    "ReferenceSpinors" -> None, "MaxSteps" -> 0,
+    "PolePreference" -> None, "MaxSteps" -> 0,
     "ProgressReporting" -> False, "UnknownPreparationOption" -> True]]]];
 acActualPreparedChannels = PrepareAmplitudes[prChannels, prFixtureModel,
-  "ReferenceSpinors" -> None, "MaxSteps" -> 0,
+  "PolePreference" -> None, "MaxSteps" -> 0,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
 check["actual five-point factorization channels keep all compact channel definitions",
   acActualPreparedChannels["Status"] === "PREPARED" &&
@@ -1344,9 +1344,9 @@ check["reference choices introducing unsupported repeated physical poles are rej
 (* The caller explicitly chooses a shared generic reference through preparation. *)
 acQEDCommonPairs = diagramAmplitudes[CreateDiagrams[{"e", "E", "A.+", "A.+"}, prModel]];
 acQEDPipelinePrepared = PrepareAmplitudes[acQEDCommonPairs, prModel,
-  "ReferenceSpinors" -> "Xi", "ProgressReporting" -> False, "Output" -> "Details"];
+  "PolePreference" -> "Xi", "ProgressReporting" -> False, "Output" -> "Details"];
 acQEDPipelinePairs = PrepareAmplitudes[acQEDCommonPairs, prModel,
-  "ReferenceSpinors" -> "Xi", "ProgressReporting" -> False];
+  "PolePreference" -> "Xi", "ProgressReporting" -> False];
 acQEDPlainFactor = acFactor[acQEDPipelinePairs, prFourPointChannels, prModel,
   "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}];
 check["ordinary prepared pairs feed factorization completion without extracting report fields",
@@ -1372,7 +1372,7 @@ check["actual QED diagrams pass all final conditions through the staged pipeline
 Print["Preparing the actual five-point AllSpurious diagrams."];
 acQEDFivePairs = diagramAmplitudes[CreateDiagrams[prParticles, prModel]];
 acQEDFivePrepared = PrepareAmplitudes[acQEDFivePairs, prModel,
-  "ReferenceSpinors" -> "AllSpurious", "ProgressReporting" -> False];
+  "PolePreference" -> "AllSpurious", "ProgressReporting" -> False];
 acQEDFiveSaved = acQEDFivePrepared;
 acQEDOffCutValue[expression_, chart_] := Together[prMapOnChart[
   expression /. trace_SpinorTrace :>
@@ -1437,7 +1437,7 @@ acQEDFeynmanModel = ReadModel[FileNameJoin[{root, "model_feynman"}], 2];
 acQEDFeynmanPairs = diagramAmplitudes[CreateDiagrams[prParticles, acQEDFeynmanModel]];
 Do[
   acQEDFeynmanPrepared = PrepareAmplitudes[acQEDFeynmanPairs, acQEDFeynmanModel,
-    "ReferenceSpinors" -> acReferenceMode, "ProgressReporting" -> False,
+    "PolePreference" -> acReferenceMode, "ProgressReporting" -> False,
     "TimeConstraint" -> 60];
   acQEDFeynmanCheck = CheckAmplitudes[acQEDFiveCompleted["Amplitude"],
     prChannels, prFixtureModel, "FeynmanAmplitudes" -> acQEDFeynmanPrepared,
@@ -1748,7 +1748,7 @@ Print["Completing the four-fermion single-photon process from actual diagrams."]
 acFourFermionParticles = {"e", "E", "E", "e", "A.+"};
 acFourFermionPairs = diagramAmplitudes[CreateDiagrams[acFourFermionParticles, prModel]];
 acFourFermionPreparation = PrepareAmplitudes[acFourFermionPairs, prModel,
-  "ReferenceSpinors" -> Automatic, "MaxSteps" -> 0,
+  "PolePreference" -> Automatic, "MaxSteps" -> 0,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
 acFourFermionChannels = FactorizationAmplitudeChannels[acFourFermionParticles, prFixtureModel];
 check["single-photon preparation selects physical references for all eight diagrams",
@@ -1769,7 +1769,7 @@ check["four-fermion completion satisfies high-energy and reference requirements"
   acFourFermionEnergy["Status"] === "COMPLETE" && acAllPass[acFourFermionEnergy["AfterReport"]]];
 acFourFermionFeynman = PrepareAmplitudes[diagramAmplitudes[
     CreateDiagrams[acFourFermionParticles, acQEDFeynmanModel]], acQEDFeynmanModel,
-  "ReferenceSpinors" -> "AllPhysical", "MaxSteps" -> 0, "ProgressReporting" -> False];
+  "PolePreference" -> "AllPhysical", "MaxSteps" -> 0, "ProgressReporting" -> False];
 acFourFermionFinal = CheckAmplitudes[acFourFermionEnergy["Amplitude"],
   acFourFermionChannels, prFixtureModel, "FeynmanAmplitudes" -> acFourFermionFeynman,
   "FeynmanModel" -> acQEDFeynmanModel, "Samples" -> 2,
@@ -1781,7 +1781,7 @@ check["the constructed four-fermion amplitude passes all eleven final checks",
 (* Mixed reference optimization must remain compatible with off-cut completion. *)
 Print["Checking optimized Mixed references through five-point completion."];
 acQEDMixedPrepared = PrepareAmplitudes[acQEDFivePairs, prModel,
-  "ReferenceSpinors" -> "Mixed", "MaxSteps" -> 0,
+  "PolePreference" -> "Mixed", "MaxSteps" -> 0,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
 acQEDMixedSaved = acQEDMixedPrepared["PreparedAmplitudes"];
 check["Mixed prepares all six real QED diagrams without changing their mass assumptions",
@@ -1816,7 +1816,7 @@ acMixedHelicityParticles = {"e", "E", "A.+", "A.+", "A.-"};
 acMixedHelicityPairs = diagramAmplitudes[CreateDiagrams[acMixedHelicityParticles, prModel]];
 acMixedHelicityChannels = FactorizationAmplitudeChannels[acMixedHelicityParticles, prFixtureModel];
 acMixedHelicityOrdinaryPrepared = PrepareAmplitudes[acMixedHelicityPairs, prModel,
-  "ReferenceSpinors" -> "Cyclic", "MaxSteps" -> 0,
+  "PolePreference" -> "Cyclic", "MaxSteps" -> 0,
   "ProgressReporting" -> False];
 (* Preparation may remove any particular dot product. Exercise scalar squares
    with one that actually remains, using only the declared external masses. *)
@@ -1924,7 +1924,7 @@ check["automatic mixed-helicity completion equals the independently worked resul
 (* Prepared compact rows are direct completion inputs, just as in the notebook. *)
 Print["Checking completion with prepared factorization-channel inputs."];
 acPreparedCompletionChannels = PrepareAmplitudes[prChannels, prFixtureModel,
-  "ReferenceSpinors" -> "AllSpurious", "MaxSteps" -> 0,
+  "PolePreference" -> "AllSpurious", "MaxSteps" -> 0,
   "ProgressReporting" -> False];
 check["alternative channel representations are opt-in rather than inferred from the model",
   ("AlternativeChannels" /. Options[CompleteFactorization]) === {}];
@@ -1958,7 +1958,7 @@ acPreparedChannelHeldOut = acCheck[acPreparedChannelCompletion["Amplitude"],
 check["completion using prepared channels also passes the original channels at independent parameters",
   acPhysicalPass[acPreparedChannelHeldOut]];
 acMixedPreparedChannels = PrepareAmplitudes[acMixedHelicityChannels, prFixtureModel,
-  "ReferenceSpinors" -> "AllSpurious", "MaxSteps" -> 0,
+  "PolePreference" -> "AllSpurious", "MaxSteps" -> 0,
   "ProgressReporting" -> False];
 acMixedPreparedChannelCompletion = acFactor[acMixedHelicityCompleted["Amplitude"],
   acMixedPreparedChannels, prFixtureModel,

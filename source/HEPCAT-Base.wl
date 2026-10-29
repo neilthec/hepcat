@@ -1534,10 +1534,10 @@ ReduceSpinorProducts[SpinorChain[Spinor["Spin","Angle",1],Spinor["Spin","Angle",
 
 
 Unprotect[Plus];
-(*[13][4|p1|2>-[14][3|p1|2> = <2|p1|1][34]*)
+(*[13][4|p1|2>-[14][3|p1|2> = -[34][1|p1|2>*)
 SpinorChainReduced[sHead_[sh1_,"Square",p1_],sHead_[sh3_,"Square",p3_]]SpinorChainReduced[sHead_[sh4_,"Square",p4_],mHead_[p1_],sHead_[sh2_,"Angle",p2_]]-
 SpinorChainReduced[sHead_[sh1_,"Square",p1_],sHead_[sh4_,"Square",p4_]]SpinorChainReduced[sHead_[sh3_,"Square",p3_],mHead_[p1_],sHead_[sh2_,"Angle",p2_]]/;(spinorHeadQ[sHead]&&momHeadQ[mHead]):=
-SpinorChainReduced[sHead[sh3,"Square",p3],sHead[sh4,"Square",p4]]SpinorChainReduced[sHead[sh1,"Square",p1],mHead[p1],sHead[sh2,"Angle",p2]];
+-SpinorChainReduced[sHead[sh3,"Square",p3],sHead[sh4,"Square",p4]]SpinorChainReduced[sHead[sh1,"Square",p1],mHead[p1],sHead[sh2,"Angle",p2]];
 Protect[Plus];
 
 
