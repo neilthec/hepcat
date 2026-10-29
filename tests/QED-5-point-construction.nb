@@ -4735,6 +4735,82 @@ Cell["e,E,A.+,A.+,A.-", "Chapter",
   4.001759700623199*^9}},ExpressionUUID->"c63f3466-fe5e-4451-8c19-\
 6c088a51a167"],
 
+Cell[CellGroupData[{
+
+Cell["Step-by-Step Calculation", "Section", ExpressionUUID->"40d49be9-15d7-4087-ada9-ffd1c34c6001"],
+
+Cell["Evaluate Setup first, then run these cells in order. The ppm variables belong only to e,E,A.+,A.+,A.-, so the intermediate results stay available for inspection. Stop if a completion status is not COMPLETE. The existing one-command calculation and its saved output remain below.", "Text", ExpressionUUID->"4004bfec-9302-4f5b-ac3a-ffc5be865fd6"],
+
+Cell["1. Generate and Display the Diagrams", "Subsection", ExpressionUUID->"84d24c8a-8a7e-4ed3-a441-f1b5046cea0b"],
+
+Cell["ppmParticles = {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\"};\nppmDiagrams = CreateDiagrams[ppmParticles, diagramModel];\nLength[ppmDiagrams]", "Input", ExpressionUUID->"d66617c2-37cc-476a-9755-9794c2c87f8e"],
+
+Cell["CreateArrowDiagrams[ppmDiagrams]", "Input", ExpressionUUID->"6375dd56-9584-4023-94ea-407b1ba3b02c"],
+
+Cell["2. Build the Diagram Amplitudes", "Subsection", ExpressionUUID->"3dcc5fe4-772d-46c7-a167-51b99fcd1665"],
+
+Cell["The full list is saved in ppmRawAmplitudes. Each entry contains its mass replacements and its expression. Change [[1]] to inspect a different diagram, or evaluate the list variable to see all of them.", "Text", ExpressionUUID->"45d448bb-b657-4757-b6bb-1829ed8679f7"],
+
+Cell["ppmRawAmplitudes = diagramAmplitudes[ppmDiagrams];\nppmRawAmplitudes[[1]]", "Input", ExpressionUUID->"f7bc8700-fe3f-4b82-b6d0-796689121d64"],
+
+Cell["3. Prepare Each Diagram", "Subsection", ExpressionUUID->"1516e290-e068-4cc6-90b9-88728b311fe8"],
+
+Cell["This uses AllPhysical references, matching the one-command example. Ordinary spinor reduction and each diagram's declared numerator on-shell conditions run. MaxSteps -> 0 skips only the additional identity-route search. The propagator denominators remain off shell.", "Text", ExpressionUUID->"6e2393ff-5c45-4c27-be0f-671ccb79c0b2"],
+
+Cell["ppmDiagramPreparation = PrepareAmplitudes[\n  ppmRawAmplitudes, diagramModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\", \"ExternalParticles\" -> ppmParticles,\n  \"MaxSteps\" -> 0, \"TimeConstraint\" -> timeLimit, \"ReturnDetails\" -> True];\nppmPreparedDiagrams = ppmDiagramPreparation[\"PreparedAmplitudes\"];\nppmPreparedDiagrams[[1]]", "Input", ExpressionUUID->"6bed1a0e-d70d-4f05-87e1-dd7a5116acdf"],
+
+Cell["This is the starting sum before completion. No additional internal on-shell conditions are applied to the sum; completion still receives the preparation report so it retains the diagram history.", "Text", ExpressionUUID->"1a262711-0a30-45f5-b0cb-6b91f4d82a08"],
+
+Cell["ppmPreparedSum = Total[Last /@ ppmPreparedDiagrams]", "Input", ExpressionUUID->"38490d20-979b-4f68-b9bc-03ba6f4ccb76"],
+
+Cell["4. Generate and Prepare the Factorization Channels", "Subsection", ExpressionUUID->"45b657b1-bad3-45a7-81ec-e9162cbaea25"],
+
+Cell["ppmChannels keeps the original channel products. Their preparation uses only the selected channel's numerator shell condition. Passing the preparation report to completion keeps the original channels as the residue targets.", "Text", ExpressionUUID->"420fcb28-db68-41a5-bfa4-7f0a01d4ebc6"],
+
+Cell["ppmChannels = FactorizationAmplitudeChannels[ppmParticles, factorizationModel];\nppmChannels[[1]]", "Input", ExpressionUUID->"ccf3ab17-0fc2-42d5-9f07-2c83dccf5672"],
+
+Cell["ppmChannelPreparation = PrepareAmplitudes[\n  ppmChannels, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\", \"ExternalParticles\" -> ppmParticles,\n  \"MaxSteps\" -> 0, \"TimeConstraint\" -> timeLimit, \"ReturnDetails\" -> True];\nppmPreparedChannels = ppmChannelPreparation[\"PreparedAmplitudes\"];\nppmPreparedChannels[[1]]", "Input", ExpressionUUID->"81b4bf3f-a030-418d-bbcd-f1275f73fc04"],
+
+Cell["5. Complete the Physical Factorization Channels", "Subsection", ExpressionUUID->"a2faf542-5990-4c51-b2f6-359d5bb7d8dc"],
+
+Cell["Keep the report in ppmFactorization so the next completion can use any remaining correction directions. Only its status is printed here. Continue to the next cell when it says COMPLETE.", "Text", ExpressionUUID->"2e098f91-3436-4cb2-8ad4-e63a9f99aec0"],
+
+Cell["ppmFactorization = CompleteFactorization[\n  ppmDiagramPreparation, ppmChannelPreparation, factorizationModel,\n  \"Samples\" -> 1, \"ValidationSamples\" -> 1,\n  \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> timeLimit,\n  \"ReturnDetails\" -> True];\nppmFactorization[\"Status\"]", "Input", ExpressionUUID->"526cf339-2bc3-4ec9-9fc6-633fd02fc3f1"],
+
+Cell["ppmFactorizedAmplitude = {ppmFactorization[\"ExternalMassRules\"],\n  ppmFactorization[\"Amplitude\"]}", "Input", ExpressionUUID->"38d2d742-977e-4fa0-95d2-d847a3cdd117"],
+
+Cell["6. Prepare the Factorization Result", "Subsection", ExpressionUUID->"db56f55b-df07-475a-8c01-bbadcf8a8b4e"],
+
+Cell["The combined amplitude is now prepared with external identities only. The short update below carries the same change into the retained correction family, without discarding any undetermined directions. The displayed prepared amplitude is the one passed on to the high-energy step.", "Text", ExpressionUUID->"1e085b99-6595-4bbf-8b8e-44f6eb7a38e8"],
+
+Cell["ppmPreparedFactorizedAmplitude = PrepareAmplitudes[\n  ppmFactorizedAmplitude, factorizationModel,\n  \"InternalOnShell\" -> False, \"ReferenceSpinors\" -> None,\n  \"MaxSteps\" -> 0, \"TimeConstraint\" -> timeLimit];\nppmPreparationChange = Last[ppmPreparedFactorizedAmplitude] - ppmFactorization[\"Amplitude\"];\nppmHighEnergyInput = Join[ppmFactorization, <|\n  \"Amplitude\" -> Last[ppmPreparedFactorizedAmplitude],\n  \"FamilyAmplitude\" -> ppmFactorization[\"FamilyAmplitude\"] + ppmPreparationChange,\n  \"Correction\" -> ppmFactorization[\"Correction\"] + ppmPreparationChange,\n  \"ExternalMassRules\" -> First[ppmPreparedFactorizedAmplitude]|>];\nppmPreparedFactorizedAmplitude", "Input", ExpressionUUID->"e0dbfbbf-dbf5-4a32-bef5-8e082a334681"],
+
+Cell["7. Complete the Remaining Conditions", "Subsection", ExpressionUUID->"c06dc186-57f6-4e8a-83f7-e590ab852646"],
+
+Cell["This checks the retained family against high-energy behavior, spurious poles and explicit reference dependence while keeping physical factorization. Continue only when the status is COMPLETE.", "Text", ExpressionUUID->"8e5c2b59-bb2a-4e3a-a1bb-3ff8b2cfd182"],
+
+Cell["ppmHighEnergy = CompleteHighEnergy[\n  ppmHighEnergyInput, ppmChannelPreparation, factorizationModel,\n  \"Samples\" -> 1, \"ValidationSamples\" -> 1,\n  \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> timeLimit,\n  \"Output\" -> \"Details\"];\nppmHighEnergy[\"Status\"]", "Input", ExpressionUUID->"aa9247e2-9548-4fde-9512-dee1b9e8026a"],
+
+Cell["8. Prepare and Inspect the Final Expression", "Subsection", ExpressionUUID->"5999d9ab-cc26-4feb-8f0d-02ab6935c3d8"],
+
+Cell["There are no internal on-shell assumptions on this final sum. ppmFinalAmplitude is the external-mass pair; ppmFinalExpression is the expression alone.", "Text", ExpressionUUID->"37e812cd-b2f8-45d5-b28a-da45ef6b8a9e"],
+
+Cell["ppmFinalAmplitude = PrepareAmplitudes[\n  {ppmHighEnergy[\"ExternalMassRules\"], ppmHighEnergy[\"Amplitude\"]},\n  factorizationModel, \"InternalOnShell\" -> False, \"ReferenceSpinors\" -> None,\n  \"MaxSteps\" -> 0, \"TimeConstraint\" -> timeLimit];\nppmFinalExpression = Last[ppmFinalAmplitude]", "Input", ExpressionUUID->"eac487e5-8a16-43cb-9617-11110ace012a"],
+
+Cell["9. Compare with Feynman Diagrams and Run the Final Checks", "Subsection", ExpressionUUID->"85682d59-b53d-4678-9f33-9c7a653fa25e"],
+
+Cell["The Feynman result is generated independently after construction. Its internal lines stay off shell, and preparation uses one consistent reference prescription across all its diagrams.", "Text", ExpressionUUID->"1fee2583-c1bf-48e5-994b-3653bcbef490"],
+
+Cell["ppmFeynmanDiagrams = CreateDiagrams[ppmParticles, qedFeynmanModel];\nppmFeynmanAmplitudes = diagramAmplitudes[ppmFeynmanDiagrams];\nppmPreparedFeynman = PrepareAmplitudes[\n  ppmFeynmanAmplitudes, qedFeynmanModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\", \"InternalOnShell\" -> False,\n  \"MaxSteps\" -> 0, \"TimeConstraint\" -> timeLimit];\nppmPreparedFeynman[[1]]", "Input", ExpressionUUID->"001afc0d-8f96-465c-a48e-be9e54b6f048"],
+
+Cell["CheckAmplitudes[ppmFinalAmplitude, ppmChannels, factorizationModel,\n  \"FeynmanAmplitudes\" -> ppmPreparedFeynman, \"FeynmanModel\" -> qedFeynmanModel,\n  \"Samples\" -> checkSamples, \"TimeConstraint\" -> timeLimit]", "Input", ExpressionUUID->"01dfda5a-220d-4eac-adb7-dfd6f8f90033"]
+
+}, Open]],
+
+Cell["One-Command Calculation", "Section", ExpressionUUID->"c55011e6-d7ec-430e-aad0-bedb5738ccf4"],
+
+
+
 Cell["Construct and Check", "Section", ExpressionUUID->"472f8cd3-ab29-5c5c-b504-2df46b41bb58"],
 
 Cell["Evaluate this cell after Setup. The wrapper generates and prepares the diagrams and factorization channels, completes and prepares the amplitude, then runs all final checks. The printed test report precedes the returned expression. The saved manual work remains available below.", "Text", ExpressionUUID->"c46aee37-fe13-52c0-a562-296642d3c95f"],
