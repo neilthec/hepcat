@@ -22,7 +22,7 @@ are relative to the repository root, not to this file.
 
 - `tests/SIMPLIFICATION.md`: practical guide to identities, on-shell scope,
   worked derivations, and the current checker API. Read this first.
-- `source/HEPCAT.wl`: package loader; loads the four source files below.
+- `source/HEPCAT.wl`: package loader; loads the source modules below.
 - `source/HEPCAT-Parameters.wl`: inert model-local parameters and functions,
   parameter lookup, local numerical rules and generic parameter formatting.
 - `source/HEPCAT-Base.wl`: spinor algebra, `ReduceSpinContractions`,
@@ -35,6 +35,9 @@ are relative to the repository root, not to this file.
 - `source/HEPCAT-Feynman.wl`: CalcHEP model parsing, unitary-gauge tree
   amplitudes and exact Feynman-to-spinor conversion. See
   `model_feynman/README.md` for the imported SM's scope and usage.
+- `source/HEPCAT-SPINAS.wl` and `source/spinas-runtime.hpp`: complete C++
+  process export, SPINAS linking, spin-state projection and physical example
+  momenta. The older `SPINAS` expression-formatting helpers remain available.
 - `tests/simplification-paths.wl`: curated four-point identity sequences.
 - `tests/SM-4-point-simplification-test.nb`, `tests/QED-5-point.nb`, and
   `tests/Factorization-checks.nb`: worked examples and user-facing usage.
@@ -363,6 +366,25 @@ The worked `qedFivePointModelAmplitudes[]` helper in
 five-point rows; `tests/checks/qed-model-export-tests.wl` checks the reloaded
 entries, all eight ordered three-photon helicities, massive spins, independent
 Feynman amplitudes and availability of six-point sewing channels.
+
+Export a final spinor amplitude with
+`WriteSPINASProcess[outputDirectory, particles, amplitude, model]`. Add
+`"Build" -> True, "RunExamples" -> True` to compile, link the existing local
+SPINAS library and run three conserved physical 2-to-N example points.
+`"SPINASDirectory"` selects its checkout; automatic lookup uses `SPINAS_ROOT`
+or the repository's sibling `spinas` directory. Model values stay local.
+Inputs use all-ingoing conventions; outgoing momenta and angle-spinor signs
+are crossed together. Never apply internal-shell identities in the exporter,
+alter supplied signs to fit a native example, or replace HEPCAT's explicit
+positive imaginary width with SPINAS's negative-width convention.
+`amp2` averages incoming massive spins at fixed massless helicities; it does
+not sum other helicity processes or include color or phase-space factors.
+Resolve auxiliary spinors, shifts and explicit color tensors first.
+Unsupported input returns `Failure` before writing project files.
+The `spinas-export-tests.wl` suite compiles generated 4-, 5- and 6-point
+projects and checks complex values and spin sums against independent native
+SPINAS expressions. A mixed-helicity eeAA sign difference between the current
+model and native example is tested explicitly, not silently corrected.
 
 ```wolfram
 channels = FactorizationAmplitudeChannels[particles, factorizationModel];

@@ -2299,7 +2299,7 @@ Begin["ConstructiveDiagrams`Private`"];
 $amplitudeParallelSourceDirectory = DirectoryName[$InputFileName];
 amplitudeParallelSignature[] := Quiet[Check[Hash[FileHash /@
   (FileNameJoin[{$amplitudeParallelSourceDirectory, #}] & /@
-    {"HEPCAT.wl", "HEPCAT-Base.wl", "HEPCAT-Parameters.wl", "HEPCAT-Model.wl", "HEPCAT-Feynman.wl"})], $Failed]];
+    {"HEPCAT.wl", "HEPCAT-Base.wl", "HEPCAT-Parameters.wl", "HEPCAT-Model.wl", "HEPCAT-Feynman.wl", "HEPCAT-SPINAS.wl", "spinas-runtime.hpp"})], $Failed]];
 $amplitudeParallelLoadedSignature = amplitudeParallelSignature[];
 If[!ListQ[$amplitudeParallelKernels], $amplitudeParallelKernels = {}];
 If[!IntegerQ[$amplitudeParallelJobNumber], $amplitudeParallelJobNumber = 0];

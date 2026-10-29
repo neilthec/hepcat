@@ -7,6 +7,8 @@ notebooks are preserved on the `ml-simplify` branch at commit `54f6920`.
 ## Files
 
 - `source/HEPCAT-Base.wl`: the identity tools, loaded by `HEPCAT.wl`.
+- `source/HEPCAT-SPINAS.wl`: complete C++ process export; its accompanying
+  `source/spinas-runtime.hpp` supplies spin projection and example phase space.
 - `tests/simplification-paths.wl`: known reference amplitudes and curated
   step-by-step simplification paths.
 - `tests/SM-4-point-simplification-test.nb`: the retained four-point reference
@@ -361,6 +363,65 @@ the repaired legacy-bug regressions. The five former known-failure probes
 are ordinary assertions now and fail the normal run if a bug returns.
 Use `--suite legacy-algebra-tests.wl` for a focused run, and run the runner's
 own tests with `python3 -m unittest discover -s tests/checks -p test_runner.py`.
+
+## Export a Runnable SPINAS Process
+
+After calculating and checking `finalAmplitude`, write a complete project with
+its ordered particle list and the model supplying its particle and parameter
+data. For example, for the all-positive two-photon amplitude:
+
+```wolfram
+outputDirectory = FileNameJoin[{$HomeDirectory, "spinas-output", "eeAA"}];
+WriteSPINASProcess[outputDirectory, {"e", "E", "A.+", "A.+"},
+  finalAmplitude, factorizationModel,
+  "SPINASDirectory" -> "/path/to/spinas",
+  "Build" -> True, "RunExamples" -> True]
+```
+
+The ordinary result is the project directory. It contains `process.hpp`,
+`process.cpp`, `main.cpp`, `spinas-runtime.hpp`, `CMakeLists.txt`, `README.md`
+and `manifest.json`. Compilation and execution are opt-in; both default to
+`False`, and `"RunExamples" -> True` also builds. The example executable prints
+three on-shell, momentum-conserving physical points and amplitude values.
+The existing SPINAS library must already be built; it is linked rather than
+copied or rebuilt. `"SPINASDirectory" -> Automatic` checks `SPINAS_ROOT` and
+the sibling `spinas` checkout. `"Precision" -> Automatic` reads its build
+configuration. Existing project files are protected unless
+`"Overwrite" -> True`; `"ReturnDetails" -> True` adds file paths and build/run
+reports.
+
+The generated class is `hepcat_generated::hepcat_process`; set another class
+and executable name with `"ProcessName"`. Call `set_momenta`, then `amp` with
+a doubled-spin array. Massless helicities are fixed by the exported process;
+massive states use normalized symmetric spinor tensors. `spin_sum` sums
+massive external spins and `amp2` also averages incoming massive spins.
+Neither includes an identical-particle phase-space factor, a sum over other
+massless helicities, or external color sums or averages. Colored processes
+require an explicitly color-stripped amplitude.
+
+Supply the analytic amplitude in HEPCAT's all-ingoing convention. C++ momenta
+have positive energies, with `"IncomingLegs" -> {1, 2}` by default; the exporter
+reverses outgoing momenta and angle spinors, leaving square spinors unchanged.
+Internal momenta and physical propagators remain off shell. It preserves the
+supplied coefficients and HEPCAT's explicit `+i m width` denominator sign.
+It does not choose a normalization or repair the amplitude during export.
+
+Parameter defaults are a resolved snapshot of the supplied model, with local
+`"ParameterRules"` overrides if wanted. No global parameter variables are
+created. The generated `Parameters` array supports complex couplings; its
+order is recorded in the manifest and README. When changing its
+values, keep dependent parameters consistent. Complete spinor expressions,
+amplitude mass-rule pairs and successful preparation/completion reports are
+accepted. Resolve Xi/Zeta spinors, x factors, uncontracted spin/color tensors
+and unsupported model functions first. Unresolved or unsupported input returns
+`Failure` before creating a partial project. Export supports massive spins
+through two and definite massless helicities, with two incoming legs and at
+least four external legs for the example generator. These demonstrations do
+not replace `CheckAmplitudes`.
+
+The focused regression suite compiles and runs four-, five- and six-point
+projects against independent native SPINAS formulas. See
+[the export coverage and convention notes](checks/README.md#spinas-process-export).
 
 ## Amplitude Checks
 

@@ -201,6 +201,44 @@ nonunit masses/couplings. Six-point channel inventories verify that the newly
 saved amplitudes are actually available for three-by-five sewing. The cubic
 diagram model is unchanged.
 
+## SPINAS Process Export
+
+Run the complete C++ export integration suite with:
+
+```sh
+python3 tests/checks/run-wolfram-tests.py --suite spinas-export-tests.wl --timeout 900
+```
+
+`spinas-export-tests.wl` uses the public `WriteSPINASProcess` API to write,
+configure, compile, link and run complete four-, five- and six-point projects.
+It finds the SPINAS checkout beside HEPCAT, or uses
+`HEPCAT_SPINAS_DIRECTORY`. Native checks require a C++11 compiler, CMake,
+SPINAS headers and its built static library, plus `SM/eeAA.cpp`. Missing
+compiler or native SPINAS fixtures produce an explicit skip while source-only
+checks still run; missing CMake is reported as a build failure. Builds use the
+installed library's precision setting.
+
+The independent C++ reference helper checks complex amplitudes at three
+conserved physical phase-space points for each fixture, including every
+massive-spin component. Coverage includes all four two-photon helicities,
+the agreeing five-point H and S2 forms, the twelve-term all-positive six-point
+form, massive-vector normalization, outgoing massive spinors, off-shell
+composite momentum insertions, chiral traces, reordered incoming legs,
+complex model parameters and HEPCAT's `+i m width` convention. Separate
+spin-average comparisons check that `amp2` adds no identical-particle factor
+or sum over other fixed massless helicities. The suite also checks zero
+amplitudes, scoped parameters despite same-named user globals, legacy
+formatting, overwrite protection and rejection before partial files are written.
+
+The mixed-helicity four-point entry in `models/amps3.mdl` has an explicit
+`-2 EE^2` coefficient, whereas native `SM/eeAA.cpp` uses `+2 e^2`.
+The exporter preserves the supplied amplitude's sign. Tests assert this
+algebraically identified relative minus for the imported model, and separately
+check direct equality when the input uses the native convention. No phase or
+normalization is fitted, and neither model nor exporter signs are changed to
+force agreement. These numerical regressions validate translation, not the
+physical correctness of every model entry.
+
 ## Model Isolation
 
 `model-isolation-tests.wl` exercises both model readers with same-named
@@ -455,9 +493,10 @@ pattern, spin configuration or historical notebook calculation. In particular:
   supply a complete numerical reference grid for every Standard Model process.
 - The complex-shift and spin-to-helicity tests cover representative branches,
   not every multi-shift expression or every vector-helicity conversion.
-- Export checks validate symbolic display objects and generated strings, not
-  front-end appearance, a rendered PDF or a compiled SPINAS program. Diagram
-  drawing functions have interface checks, not visual rendering checks.
+- Legacy display checks validate symbolic objects and strings, not front-end
+  appearance or a rendered PDF. The separate SPINAS integration suite does
+  compile and run generated programs when its native prerequisites are present.
+  Diagram drawing functions have interface checks, not visual rendering checks.
 - Reader tests cover missing files, missing final separators and blank records,
   but do not exhaustively validate malformed Wolfram expressions or every
   historical model-file layout. Loader preflight checks source-file availability,

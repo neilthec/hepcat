@@ -6,7 +6,7 @@
 
 Module[{sourceDirectory = Global`$HEPCATpath, sourceFiles, missingFiles},
 sourceFiles = If[StringQ[sourceDirectory],
-  FileNameJoin[{sourceDirectory, #}] & /@ {"HEPCAT-Base.wl", "HEPCAT-Parameters.wl", "HEPCAT-Model.wl", "HEPCAT-Feynman.wl"}, {}];
+  FileNameJoin[{sourceDirectory, #}] & /@ {"HEPCAT-Base.wl", "HEPCAT-Parameters.wl", "HEPCAT-Model.wl", "HEPCAT-Feynman.wl", "HEPCAT-SPINAS.wl"}, {}];
 missingFiles = Select[sourceFiles, !FileExistsQ[#] || DirectoryQ[#] &];
 If[!StringQ[sourceDirectory] || missingFiles =!= {},
   Message[Get::noopen, If[StringQ[sourceDirectory], StringRiffle[missingFiles, ", "],
@@ -51,7 +51,7 @@ Protect @@ (ToExpression /@ {
   "ExtractEnergy", "ExtractEnergy1", "ExtractEnergy2", "rSpinor", "ExpandSummation",
   "ReverseMomentum", "MomProdL", "MomProdR", "ChooseSpinIndices", "ChooseSpinIndex", "MakeIndicesExplicit", "SymmetrizeSpins", "SymmetrizeSpin",
   "SquareAmplitude", "ReadModel", "ReadVariables", "ReadFunctions", "ReadParticles", "ParticleMass", "ReadVertices", "ConvertVertex",
-  "ModelParameter", "ModelFunction", "ModelParameterName", "ModelParameterRules", "AppendModelAmplitudes",
+  "ModelParameter", "ModelFunction", "ModelParameterName", "ModelParameterRules", "AppendModelAmplitudes", "WriteSPINASProcess",
   "SChannelDiagram", "UChannelDiagram", "TChannelDiagram", "ConstructiveDiagram",
   "CompareAmpToSquaredAmp", "DeleteRandomConstructiveAmplitude", "CheckLengthConstructive", "CheckNumberOfSpinors", "CreateRandomConstructiveSpinorProduct",
   "CreateRandomMassFactor", "CreateRandomConstructiveAmplitudeTerm", "AddRandomConstructiveAmplitudeTerm", "CreateInitialRandomPopulationConstructiveAmplitudes",
