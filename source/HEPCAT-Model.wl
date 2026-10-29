@@ -4816,7 +4816,7 @@ End[];
 
 Begin["ConstructiveDiagrams`"];
 
-CompleteFactorization::usage = "CompleteFactorization[amplitudes, channels, model] constructs a bounded linear correction from the supplied diagram expressions and sewn channel expressions, solving all physical residues simultaneously. It accepts ordinary amplitude pairs, a prepared-expression report, or an expression. CorrectionBasis supplies correction directions; Automatic uses the input and channel expressions, not a universal amplitude ansatz. ChannelReferences -> Automatic constructs bounded alternative reference continuations, checking each on its selected cut. Without declared Bose symmetry, automatic completion first tries externally reduced whole physical-reference channels and grouped pole-bearing input terms, then falls back to literal input and channel terms within the same term and time limits. Explicit pole-free input terms are retained, not added as cancellation directions in the first attempt. ChannelReferences -> None keeps only the literal correction space. Recorded preparation references are tried when available. Failed independent validation samples supply further exact equations, up to MaxRefinements -> 3, with fresh subsequent validation. Only proven algebraically zero or exactly linearly dependent directions are removed without reducing the correction span; other residue-preserving directions remain available to CompleteHighEnergy. These sampled checks are not a generic analytic reconstruction or uniqueness proof. ReturnDetails -> False is the default: successful completion returns only the updated amplitude. ReturnDetails -> True retains the candidate, correction, affine family, CorrectionSpace, ChannelContinuations, RefinementHistory and validation, and takes precedence over Output. Output -> \"Details\" remains available for existing code. Unresolved completion normally returns a concise Failure[\"IncompleteAmplitude\", ...], without an unchecked candidate or embedded report. ParameterRules -> Automatic uses the supplied model's variables and dependent functions; an explicit rule list overrides selected parameters. Numerical substitutions affect the checks and fitting only, not the returned symbolic amplitude. No new interactions are inferred.";
+CompleteFactorization::usage = "CompleteFactorization[amplitudes, channels, model] constructs a bounded linear correction from the supplied diagram expressions and sewn channel expressions, solving all physical residues simultaneously. It accepts ordinary amplitude pairs, a prepared-expression report, or an expression. CorrectionBasis supplies correction directions; Automatic uses the input and channel expressions, not a universal amplitude ansatz. ChannelReferences -> Automatic constructs bounded alternative reference continuations, checking each on its selected cut. Without declared exchange symmetry, automatic completion first tries externally reduced whole physical-reference channels and grouped pole-bearing input terms, then falls back to literal input and channel terms within the same term and time limits. Explicit pole-free input terms are retained, not added as cancellation directions in the first attempt. ChannelReferences -> None keeps only the literal correction space. Recorded preparation references are tried when available. Failed independent validation samples supply further exact equations, up to MaxRefinements -> 3, with fresh subsequent validation. Only proven algebraically zero or exactly linearly dependent directions are removed without reducing the correction span; other residue-preserving directions remain available to CompleteHighEnergy. These sampled checks are not a generic analytic reconstruction or uniqueness proof. ReturnDetails -> False is the default: successful completion returns only the updated amplitude. ReturnDetails -> True retains the candidate, correction, affine family, CorrectionSpace, ChannelContinuations, RefinementHistory and validation, and takes precedence over Output. Output -> \"Details\" remains available for existing code. Unresolved completion normally returns a concise Failure[\"IncompleteAmplitude\", ...], without an unchecked candidate or embedded report. ParameterRules -> Automatic uses the supplied model's variables and dependent functions; an explicit rule list overrides selected parameters. Numerical substitutions affect the checks and fitting only, not the returned symbolic amplitude. No new interactions are inferred.";
 CompleteFactorization::args = "Expected amplitude pairs or an expression, ordinary factorization channels, a model and valid bounded-completion options.";
 CompleteFactorization::usage = CompleteFactorization::usage <>
   " The default Output -> Amplitude returns {externalMassRules, expression}, containing only Mass[externalLeg] replacements and no internal-shell assumptions. Pass this pair directly to PrepareAmplitudes, CompleteHighEnergy or CheckAmplitudes. Output -> Expression requests the bare expression; detailed reports keep their separate Amplitude and ExternalMassRules fields.";
@@ -4829,7 +4829,7 @@ CompleteFactorization::usage = CompleteFactorization::usage <>
 CompleteFactorization::usage = CompleteFactorization::usage <>
   " Pass detailed PrepareAmplitudes reports for either input, including the channel argument, to retain preparation provenance. Original channel rows remain the residue targets; simplified rows and their fixed-reference remainders supply corrections. PreparationRemainders -> Automatic tries bounded grouped preparation corrections after inexpensive input reweighting and before larger channel spaces. Ordinary pair virtuality identities expose factors without putting any assembled propagator on shell. Exact compatibility probes can reject a space early but never certify success; all original channels and held-out spin/parameter tests remain required. The attempt shares at most one fifth of the remaining stage clock, capped at 12 seconds, with at most four seconds for construction. Unsuccessful spaces leave the existing fallbacks intact. Retained common-reference sums may be tried as a final bounded continuation fallback; reference changes are not assumed to be off-cut identities. PreparationRemainders -> None disables these attempts. Explicit CorrectionBasis and ChannelReferences -> None retain their literal behavior. Details expose PreparationRemainders, PreparationRemainderFit, PreparationReferenceAttempts and ChannelPreparation. Ordinary preparation pairs and channel rows do not contain hidden history or a cache.";
 CompleteFactorization::usage = CompleteFactorization::usage <>
-  " BoseSymmetryGroups -> Automatic identifies identical bosonic external states using the supplied model's twice-spin, masses, species and helicity. ExternalParticles -> Automatic inherits ordered names retained in preparation reports. Pass ExternalParticles -> particles to PrepareAmplitudes or completion when compact pairs have lost the process names. Without names, only unambiguous model-and-spinor-state matches are projected; equal masses alone never identify a species. Fermions, opposite helicities, different fixed spin states, and color-stripped colored states are not merged. Explicit BoseSymmetryGroups -> {} disables averaging. Explicit disjoint groups remain supported and must be correct for the process. Automatic uses a bounded exact subgroup when the full group exceeds order 120; details expose detected and used groups, source and diagnostics. Bose completion combines available compact, literal and certified selected-cut-prepared channel terms, then exactly averages the seed and directions over typed particle permutations while preserving every original residue target. Exact formal linear dependencies may be removed by sparse reduction within a 60-second budget; unfinished pruning retains the full space. MaxCorrectionTerms applies after projection and pruning. CorrectionSpaceCandidates records the available space sizes. CorrectionSpace -> BoseChannelUnion, BoseSelectedChannelUnion or BoseGroupedInputChannelUnion identifies the selected space in details; SelectedChannelSpace records its selected-cut checks. Each intermediate source-space construction may grow with group order, capped at 4096 directions unless a larger MaxCorrectionTerms was requested. No successful reconstruction is claimed until every original target and the full fitted family pass independent validation.";
+  " BoseSymmetryGroups -> Automatic and FermionSymmetryGroups -> Automatic identify identical external states using the supplied model's twice-spin, masses, species and helicity. Even twice-spin uses symmetric permutations; odd twice-spin uses their parity signs. Electron and positron groups remain separate. ExternalParticles -> Automatic inherits ordered names retained in preparation reports. Pass ExternalParticles -> particles to PrepareAmplitudes or completion when compact pairs have lost the process names. Without names, only unambiguous model-and-spinor-state matches are projected; equal masses alone never identify a species. Opposite helicities, different fixed spin states, and color-stripped colored states are not merged automatically. Explicit disjoint groups remain supported and must be correct for the process. Each empty group option disables only that particle statistic; set both to {} to disable all exchange projection. The seed and correction directions are projected over the combined group, preserving every original residue target and the existing diagram and sewing signs. Automatic uses a bounded exact subgroup when the full combined group exceeds order 120; ExchangeSymmetry details expose detected and used groups, requested and used orders, FullGroupUsed, source and diagnostics. BoseSymmetry and FermionSymmetry give separate summaries. Completion combines available compact, literal and certified selected-cut-prepared channel terms before projection. Exact formal linear dependencies may be removed by sparse reduction within a 60-second budget; unfinished pruning retains the full space. MaxCorrectionTerms applies after projection and pruning. CorrectionSpaceCandidates records the available space sizes. Symmetry-union CorrectionSpace names begin with Bose for bosons only, Fermion for fermions only, and Exchange for both; SelectedChannelSpace records its selected-cut checks. Each intermediate source-space construction may grow with group order, capped at 4096 directions unless a larger MaxCorrectionTerms was requested. High-energy completion inherits the used exchange constraints from a detailed factorization report, including for newly generated correction directions. No successful reconstruction is claimed until every original target and the full fitted family pass independent validation.";
 
 Begin["ConstructiveDiagrams`Private`"];
 
@@ -4961,6 +4961,83 @@ completionInferBoseGroups[normalized_Association, model_List, particles_: Automa
     "Diagnostics" -> DeleteDuplicates[diagnostics], "Source" -> source|>
 ];
 
+(* Infer fermion statistics from the model, not from bracket orientation or
+   equal masses. Ambiguous species remain unprojected unless a user supplies
+   an explicit exchange group. Numeric fixed-spin components must agree. *)
+completionInferFermionGroups[normalized_Association, model_List, particles_: Automatic] := Module[
+  {rules = normalized["ExternalMassRules"], expression = normalized["Expression"],
+   labels, weights, evidence, declared = particles, names, rows, candidates, expectedMasses,
+   mass, weight, fermion, particle, state, spin, spins, colors, color,
+   legs = {}, keys = {}, diagnostics = {}, groups, source},
+  labels = Sort[Cases[rules, HoldPattern[Mass[i_Integer] -> _] :> i]];
+  If[declared === Automatic, declared = Lookup[normalized, "ExternalParticles", Automatic]];
+  If[declared =!= Automatic,
+    (* Compact amplitude records may use nonconsecutive external labels. The
+       ordered names still correspond to the sorted declared mass labels. *)
+    If[labels === Range[Length[labels]],
+      declared = preparationExternalParticleNames[declared, rules, model],
+      If[!ListQ[declared] || Length[declared] =!= Length[labels] || !AllTrue[declared, StringQ],
+        declared = Failure["InvalidExternalParticles", <|"MessageTemplate" ->
+          "ExternalParticles must contain one ordered name for each declared external label."|>],
+        expectedMasses = physicalParticleMass[#, model[[1]]] & /@ declared;
+        If[AnyTrue[expectedMasses, MissingQ] || !And @@ MapThread[residueExactZero[#1 - #2] &,
+            {expectedMasses, (Mass /@ labels) /. rules}],
+          declared = Failure["InconsistentExternalParticleMasses", <|"MessageTemplate" ->
+            "ExternalParticles must identify model particles with the declared external masses."|>]]]];
+    If[FailureQ[declared], Return[declared]]];
+  evidence = expression;
+  If[expression === 0,
+    evidence = SelectFirst[Lookup[Lookup[normalized, "Targets", {}], "StateSum", {}], # =!= 0 &, 0]];
+  weights = completionExternalSpinWeights[evidence, rules];
+  source = If[ListQ[declared], "ExternalParticles", "ModelAndExternalSpinWeights"];
+  Do[
+    mass = Mass[label] /. rules;
+    weight = If[ListQ[weights], weights[[index]], Missing["ExternalSpinWeight"]];
+    rows = Select[model[[1]], residueExactZero[#[[6]] - mass] &&
+      If[ListQ[declared], MemberQ[#[[{2, 3}]], declared[[index]]],
+        IntegerQ[weight] && #[[5]] === Abs[weight]] &];
+    candidates = DeleteDuplicates[Flatten[Function[r,
+      names = DeleteDuplicates[r[[{2, 3}]]];
+      If[mass === 0 && IntegerQ[weight] && weight =!= 0,
+        Select[names, !StringEndsQ[#, {".+", ".-"}] ||
+          StringEndsQ[#, If[weight < 0, ".+", ".-"]] &], names]] /@ rows]];
+    If[ListQ[declared], candidates = Intersection[candidates, {declared[[index]]}]];
+    particle = If[Length[candidates] === 1, First[candidates], Missing["AmbiguousParticle"]];
+    spins = DeleteDuplicates[#[[5]] & /@ rows];
+    spin = If[Length[spins] === 1, First[spins], Missing["AmbiguousSpin"]];
+    fermion = rows =!= {} && AllTrue[rows, IntegerQ[#[[5]]] && OddQ[#[[5]]] &];
+    colors = DeleteDuplicates[If[Length[#] >= 8, #[[8]], 1] & /@ rows];
+    color = If[Length[colors] === 1, First[colors], Missing["AmbiguousColor"]];
+    state = Which[
+      !TrueQ[fermion], Missing["NotFermion"],
+      mass === 0,
+        If[IntegerQ[weight], weight, If[StringEndsQ[ToString[particle], ".+"], -spin,
+          If[StringEndsQ[ToString[particle], ".-"], spin, Missing["Helicity"]]]],
+      !IntegerQ[spin] || !IntegerQ[weight] || Abs[weight] =!= spin,
+        Missing["ExternalSpinState"],
+      True, completionBoseSpinState[evidence, label]];
+    If[Length[candidates] =!= 1,
+      AppendTo[diagnostics, "External leg " <> ToString[label] <>
+        " has no unique species and external state; no fermion exchange symmetry was assumed for it."]];
+    If[TrueQ[fermion] && MissingQ[state],
+      AppendTo[diagnostics, "The external spin state of leg " <> ToString[label] <>
+        " could not be established consistently; no fermion exchange symmetry was assumed for it."]];
+    If[TrueQ[fermion] && color =!= 1,
+      AppendTo[diagnostics, "Colored external leg " <> ToString[label] <>
+        " was left unprojected because color-stripped amplitudes need not be fermion antisymmetric."]];
+    AppendTo[legs, <|"Label" -> label, "SpinWeight" -> weight, "Spin2" -> spin,
+      "Candidates" -> candidates, "Particle" -> particle, "Fermion" -> fermion,
+      "State" -> state, "Color" -> color|>];
+    AppendTo[keys, If[TrueQ[fermion] && color === 1 && Length[candidates] === 1 && !MissingQ[state],
+      {particle, state}, Missing["NotExchangeable", label]]],
+    {index, Length[labels]}, {label, {labels[[index]]}}];
+  groups = Select[GatherBy[Range[Length[labels]], keys[[#]] &],
+    Length[#] > 1 && !MissingQ[keys[[First[#]]]] &];
+  <|"Groups" -> (labels[[#]] & /@ groups),
+    "ExternalParticles" -> Lookup[legs, "Particle", {}], "Legs" -> legs,
+    "Diagnostics" -> DeleteDuplicates[diagnostics], "Source" -> source|>
+];
+
 completionAutomaticBosePlan[normalized_Association, model_List, particles_: Automatic] := Module[
   {inferred = completionInferBoseGroups[normalized, model, particles], groups = {},
    order = 1, remaining, count, plan},
@@ -5007,6 +5084,103 @@ completionBosePlan[groups_, externalMassRules_List] := Module[
     "Permutations" -> If[groups === {}, {{}}, Flatten[#, 1] & /@ Tuples[perGroup]]|>
 ];
 
+(* A fermion transposition contributes -1 in addition to any signs produced
+   by ordinary bracket identities. Cycles are relative permutations, so this
+   character is independent of label values or the group's written order. *)
+completionFermionCharacter[cycles_List] := Times @@ ((-1)^(Length[#] - 1) & /@ cycles);
+
+completionExplicitFermionGroupsQ[groups_List, inferred_Association] := Module[
+  {legs = inferred["Legs"], selected, candidates, states},
+  AllTrue[groups, Function[group,
+    selected = Map[Function[label, SelectFirst[legs,
+      Function[leg, leg["Label"] === label], Missing["Leg"]]], group];
+    If[!AllTrue[selected, AssociationQ] || !AllTrue[selected, TrueQ[#["Fermion"]] &], False,
+      candidates = Fold[Intersection, Lookup[First[selected], "Candidates", {}],
+        Lookup[Rest[selected], "Candidates", {}]];
+      states = Lookup[selected, "State", Missing["State"]];
+      candidates =!= {} && !AnyTrue[states, MissingQ] && Length[DeleteDuplicates[states]] === 1]
+  ]]
+];
+
+completionExchangePlan[normalized_Association, model_List, boseOption_, fermionOption_,
+    particles_: Automatic] := Module[
+  {rules = normalized["ExternalMassRules"], boseAutomatic = boseOption === Automatic,
+   fermiAutomatic = fermionOption === Automatic, boseInfo, fermiInfo, explicitBose, explicitFermi,
+   usedBose, usedFermi, allGroups, fixed, order, remaining, count, perGroup, tuples,
+   permutations, signs, diagnostics = {}, names, source, retainAutomatic,
+   automaticGroups, reserved, requestedGroups, requestedOrder},
+  boseInfo = If[boseAutomatic, completionInferBoseGroups[normalized, model, particles],
+    <|"Groups" -> boseOption, "Diagnostics" -> {}, "Source" -> "Explicit", "ExternalParticles" -> {}|>];
+  If[FailureQ[boseInfo], Return[boseInfo]];
+  fermiInfo = If[fermiAutomatic || fermionOption =!= {},
+    completionInferFermionGroups[normalized, model, particles],
+    <|"Groups" -> {}, "Diagnostics" -> {}, "Source" -> "Explicit", "ExternalParticles" -> {}, "Legs" -> {}|>];
+  If[FailureQ[fermiInfo], Return[fermiInfo]];
+  explicitBose = If[boseAutomatic, {}, boseOption];
+  explicitFermi = If[fermiAutomatic, {}, fermionOption];
+  fixed = completionBosePlan[If[ListQ[explicitBose] && ListQ[explicitFermi],
+    Join[explicitBose, explicitFermi], $Failed], rules];
+  If[FailureQ[fixed],
+    If[explicitFermi === {}, Return[fixed]];
+    Return[Failure[If[fixed[[1]] === "BoseSymmetryLimit", "ExchangeSymmetryLimit", "InvalidExchangeSymmetry"],
+      Join[fixed[[2]], <|"Reason" -> StringReplace[
+        Lookup[fixed[[2]], "Reason", "Invalid exchange groups."], "Bose" -> "Exchange"]|>]]]];
+  If[!completionExplicitFermionGroupsQ[explicitFermi, fermiInfo],
+    Return[Failure["InvalidFermionSymmetry", <|"Reason" ->
+      "Fermion groups must identify compatible odd-spin species, helicities and fixed spin states. Supply ExternalParticles when species are ambiguous."|>]]];
+  usedBose = explicitBose; usedFermi = explicitFermi; order = fixed["Order"];
+  retainAutomatic[group_List, statistic_, reserve_Integer] := (
+    remaining = Complement[group, Flatten[Join[usedBose, usedFermi]]];
+    While[Length[remaining] >= 2,
+      count = Min[Length[remaining], 5];
+      While[count >= 2 && order Factorial[count] 2^reserve > 120, count--];
+      If[count < 2, Break[]];
+      If[statistic === "Fermion", AppendTo[usedFermi, Take[remaining, count]],
+        AppendTo[usedBose, Take[remaining, count]]];
+      order *= Factorial[count]; remaining = Drop[remaining, count]]);
+  (* Keep room for at least one exchange in every remaining detected group
+     whenever that combined minimum fits. A large early group must not consume
+     the whole budget and hide an independent boson or fermion symmetry. *)
+  automaticGroups = Join[
+    If[fermiAutomatic, ({"Fermion", #} & /@ fermiInfo["Groups"]), {}],
+    If[boseAutomatic, ({"Boson", #} & /@ boseInfo["Groups"]), {}]];
+  automaticGroups = Select[automaticGroups,
+    Length[Complement[Last[#], Flatten[Join[usedBose, usedFermi]]]] >= 2 &];
+  Do[
+    reserved = Min[Length[automaticGroups] - i,
+      Max[0, IntegerLength[Quotient[120, order], 2] - 2]];
+    retainAutomatic[automaticGroups[[i, 2]], automaticGroups[[i, 1]], reserved],
+    {i, Length[automaticGroups]}];
+  requestedGroups = Join[If[boseAutomatic, boseInfo["Groups"], explicitBose],
+    If[fermiAutomatic, fermiInfo["Groups"], explicitFermi]];
+  requestedOrder = Times @@ (Factorial[Length[#]] & /@ requestedGroups);
+  allGroups = Join[usedBose, usedFermi];
+  perGroup = MapIndexed[Function[{group, position},
+    Function[image, With[{cycles = completionBoseCycles[group, image]},
+      <|"Cycles" -> cycles, "Sign" -> If[First[position] <= Length[usedBose], 1,
+        completionFermionCharacter[cycles]]|>]] /@ Permutations[group]], allGroups];
+  tuples = If[allGroups === {}, {{}}, Tuples[perGroup]];
+  permutations = (Flatten[Lookup[#, "Cycles", {}], 1] &) /@ tuples;
+  signs = (Times @@ Lookup[#, "Sign", {}] &) /@ tuples;
+  diagnostics = DeleteDuplicates[Join[boseInfo["Diagnostics"], fermiInfo["Diagnostics"],
+    If[boseAutomatic && usedBose =!= boseInfo["Groups"] ||
+        fermiAutomatic && usedFermi =!= fermiInfo["Groups"],
+      {"An exact exchange subgroup was used to keep combined Bose and fermion permutation work within order 120."}, {}]]];
+  names = If[Lookup[fermiInfo, "ExternalParticles", {}] =!= {}, fermiInfo["ExternalParticles"],
+    Lookup[boseInfo, "ExternalParticles", {}]];
+  source = If[boseAutomatic || fermiAutomatic, If[ListQ[particles] ||
+    ListQ[Lookup[normalized, "ExternalParticles", Automatic]], "ExternalParticles", "ModelAndExternalSpinWeights"], "Explicit"];
+  <|"Groups" -> allGroups, "BoseGroups" -> usedBose, "FermionGroups" -> usedFermi,
+    "DetectedBoseGroups" -> boseInfo["Groups"], "DetectedFermionGroups" -> fermiInfo["Groups"],
+    "Order" -> order, "RequestedOrder" -> requestedOrder, "MaximumOrder" -> 120,
+    "FullGroupUsed" -> (usedBose === If[boseAutomatic, boseInfo["Groups"], explicitBose] &&
+      usedFermi === If[fermiAutomatic, fermiInfo["Groups"], explicitFermi]),
+    "Permutations" -> permutations, "Signs" -> signs,
+    "Automatic" -> (boseAutomatic || fermiAutomatic), "BoseAutomatic" -> boseAutomatic,
+    "FermionAutomatic" -> fermiAutomatic, "ExternalParticles" -> names,
+    "Source" -> source, "Diagnostics" -> diagnostics|>
+];
+
 completionBoseCycle[expression_, cycle_List] := Module[
   {mapping = AssociationThread[cycle, RotateLeft[cycle]], index, result},
   index[Multiparticle[parts___]] := Multiparticle @@ (index /@ {parts});
@@ -5027,11 +5201,62 @@ completionBoseCycle[expression_, cycle_List] := Module[
     ConstructiveDiagrams`ColorIndex[label_] :> ConstructiveDiagrams`ColorIndex[index[label]]}
 ];
 
-completionBoseProject[expression_, plan_Association] :=
-  Total[Fold[completionBoseCycle, expression, #] & /@ plan["Permutations"]]/plan["Order"];
+completionBoseProject[expression_, plan_Association] := Module[{permutations = plan["Permutations"], signs},
+  signs = Lookup[plan, "Signs", ConstantArray[1, Length[permutations]]];
+  Total[MapThread[#1 Fold[completionBoseCycle, expression, #2] &, {signs, permutations}]]/plan["Order"]
+];
 
 completionModelQ[model_] := MatchQ[model, {_List, _List, _List, _List}] &&
   AllTrue[model[[1]], ListQ[#] && Length[#] >= 6 &];
+
+(* Statistics-specific details retain the earlier Bose report shape. The
+   combined plan controls the actual projection and its shared work cap. *)
+completionExchangeDetails[plan_Association, statistic_String] := Module[
+  {fermion = statistic === "Fermion", groups, detected, automatic},
+  groups = Lookup[plan, If[fermion, "FermionGroups", "BoseGroups"], {}];
+  detected = Lookup[plan, If[fermion, "DetectedFermionGroups", "DetectedBoseGroups"], groups];
+  automatic = Lookup[plan, If[fermion, "FermionAutomatic", "BoseAutomatic"], False];
+  If[!fermion && !TrueQ[automatic], Return[<|"Groups" -> groups,
+    "Order" -> Times @@ (Factorial[Length[#]] & /@ groups)|>]];
+  <|"Groups" -> groups, "DetectedGroups" -> detected,
+    "Order" -> Times @@ (Factorial[Length[#]] & /@ groups), "Automatic" -> automatic,
+    "ExternalParticles" -> Lookup[plan, "ExternalParticles", {}],
+    "Source" -> Lookup[plan, "Source", "Explicit"],
+    "Diagnostics" -> Lookup[plan, "Diagnostics", {}]|>
+];
+
+completionExchangeSpaceName[name_, plan_Association] := If[StringQ[name] &&
+    Lookup[plan, "FermionGroups", {}] =!= {},
+  StringReplace[name, StartOfString ~~ "Bose" ->
+    If[Lookup[plan, "BoseGroups", {}] === {}, "Fermion", "Exchange"]], name];
+
+(* Completion families carry their used groups explicitly. Rebuild only the
+   group action, not the physical residue targets or inferred spin states. *)
+completionInheritedExchangePlan[normalized_Association, model_List] := Module[
+  {saved = Lookup[normalized, "ExchangeSymmetry", <||>], bose, fermion, plan, fermionLabels, signs},
+  bose = Lookup[saved, "BoseGroups", Lookup[Lookup[normalized, "BoseSymmetry", <||>], "Groups", {}]];
+  fermion = Lookup[saved, "FermionGroups", Lookup[Lookup[normalized, "FermionSymmetry", <||>], "Groups", {}]];
+  plan = completionBosePlan[If[ListQ[bose] && ListQ[fermion], Join[bose, fermion], $Failed],
+    normalized["ExternalMassRules"]];
+  If[FailureQ[plan], Return[plan]];
+  (* These groups were validated for the process before factorization. The
+     completed expression may be zero, so it need not expose its spin states
+     again. Reconstruct the signed action from the retained used groups. *)
+  fermionLabels = Flatten[fermion];
+  signs = Map[Function[cycles, completionFermionCharacter[
+    Select[cycles, MemberQ[fermionLabels, First[#]] &]]], plan["Permutations"]];
+  Join[plan, <|"BoseGroups" -> bose, "FermionGroups" -> fermion, "Signs" -> signs|>,
+    KeyTake[saved, {"Automatic", "BoseAutomatic", "FermionAutomatic",
+      "DetectedBoseGroups", "DetectedFermionGroups", "Source", "Diagnostics", "ExternalParticles",
+      "RequestedOrder", "MaximumOrder", "FullGroupUsed"}]]
+];
+
+completionExchangeBasis[basis_List, plan_Association, rules_List] := If[
+  Lookup[plan, "Order", 1] === 1, DeleteDuplicates[basis],
+  DeleteDuplicates[Select[Map[Function[direction,
+    canonicalChains[residueCanonicalPropagators[completionBoseProject[direction, plan],
+      Cases[rules, HoldPattern[Mass[i_Integer] -> _] :> i]]]], basis],
+    !TrueQ[residueExactZero[#]] &]]];
 
 completionParameterRulesQ[rules_] := ListQ[rules] && AllTrue[rules,
   MatchQ[#, _Rule] && (modelParameterKeyQ[First[#]] || StringQ[First[#]]) &&
@@ -5051,7 +5276,7 @@ completionNormalizeInput[input_, channels_List, model_List] := Module[
   If[AssociationQ[value],
     extra = KeyTake[value, {"OriginalExpression", "FamilyAmplitude", "RemainingBasis",
       "FreeParameters", "CorrectionBasis", "ConstraintData", "DiagramReports",
-      "ItemReports", "RemainderData", "ExternalParticles"}];
+      "ItemReports", "RemainderData", "ExternalParticles", "BoseSymmetry", "FermionSymmetry", "ExchangeSymmetry"}];
     value = Which[KeyExistsQ[value, "PreparedAmplitudes"], value["PreparedAmplitudes"],
       KeyExistsQ[value, "Amplitude"], value["Amplitude"],
       True, Return[Failure["InvalidCompletionInput", <||>]]];
@@ -7060,7 +7285,7 @@ completionFitInputProposal[proposal_Association, regular_, normalized_Associatio
 Options[CompleteFactorization] = {"CorrectionBasis" -> Automatic,
   "ParameterRules" -> Automatic, "Samples" -> 4, "ValidationSamples" -> 4,
   "ValidationParameterRules" -> Automatic, "ChannelReferences" -> Automatic,
-  "AlternativeChannels" -> {}, "BoseSymmetryGroups" -> Automatic,
+  "AlternativeChannels" -> {}, "BoseSymmetryGroups" -> Automatic, "FermionSymmetryGroups" -> Automatic,
   "ExternalParticles" -> Automatic, "InputReweighting" -> Automatic,
   "RepresentativeSelection" -> Automatic, "ChannelCompanions" -> Automatic,
   "PreparationRemainders" -> Automatic,
@@ -7080,7 +7305,8 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
    companionOption = OptionValue["ChannelCompanions"],
    remainderOption = OptionValue["PreparationRemainders"],
    channelRows, channelPreparation = <||>,
-   boseGroups = OptionValue["BoseSymmetryGroups"], bosePlan, processNames, processSources,
+   boseGroups = OptionValue["BoseSymmetryGroups"], fermionGroups = OptionValue["FermionSymmetryGroups"],
+   exchangePlan, processNames, processSources,
    constructionLimit, project, projectedSeed,
    refinements = OptionValue["MaxRefinements"],
    rules = residueParameterRules[model, OptionValue["ParameterRules"]], samples = OptionValue["Samples"],
@@ -7149,14 +7375,12 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
     processNames = preparationExternalParticleNames[processNames, normalized["ExternalMassRules"], model];
     If[FailureQ[processNames], Return[processNames]];
     normalized = Join[normalized, <|"ExternalParticles" -> processNames|>]];
-  bosePlan = If[boseGroups === Automatic,
-    completionAutomaticBosePlan[normalized, model, processNames],
-    completionBosePlan[boseGroups, normalized["ExternalMassRules"]]];
-  If[FailureQ[bosePlan], Return[bosePlan]];
-  constructionLimit = If[bosePlan["Order"] === 1, limit,
-    Max[limit, Min[4096, limit bosePlan["Order"]]]];
-  project[value_] := If[bosePlan["Order"] === 1, value,
-    Expand[canonicalChains[residueCanonicalPropagators[completionBoseProject[value, bosePlan],
+  exchangePlan = completionExchangePlan[normalized, model, boseGroups, fermionGroups, processNames];
+  If[FailureQ[exchangePlan], Return[exchangePlan]];
+  constructionLimit = If[exchangePlan["Order"] === 1, limit,
+    Max[limit, Min[4096, limit exchangePlan["Order"]]]];
+  project[value_] := If[exchangePlan["Order"] === 1, value,
+    Expand[canonicalChains[residueCanonicalPropagators[completionBoseProject[value, exchangePlan],
       Cases[normalized["ExternalMassRules"], HoldPattern[Mass[i_Integer] -> _] :> i]]]]];
   original = normalized["Expression"]; candidate = original; family = original;
   projectedSeed = original;
@@ -7174,11 +7398,13 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
         preparationBetterQ[preparationRank[reduced], preparationRank[best]], reduced, best]];
   completionProgress[callback, enabled, <|"Stage" -> "Checking initial factorization"|>];
   finished = TimeConstrained[
-    If[bosePlan["Order"] > 1,
-      completionProgress[callback, enabled, <|"Stage" -> "Averaging identical boson labels",
-        "Total" -> bosePlan["Order"]|>];
+    If[exchangePlan["Order"] > 1,
+      completionProgress[callback, enabled, <|"Stage" -> If[exchangePlan["FermionGroups"] === {}, "Averaging identical boson labels",
+        If[exchangePlan["BoseGroups"] === {}, "Antisymmetrizing identical fermions",
+          "Applying boson and fermion exchange symmetry"]],
+        "Total" -> exchangePlan["Order"]|>];
       projectedSeed = project[original]; candidate = projectedSeed; family = projectedSeed];
-    initial = If[bosePlan["Order"] > 1,
+    initial = If[exchangePlan["Order"] > 1,
       completionSparseValidation[projectedSeed, {}, <|"SolutionRules" -> {}|>, {}, {},
         normalized, validationSamples, seed + 1000003, rules, seconds, callback, enabled]["Report"],
       CheckAmplitudes[{normalized["ExternalMassRules"], projectedSeed}, checkRows, model,
@@ -7193,7 +7419,7 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
     If[fastPath,
       status = "COMPLETE"; familyMaterialized = True;
       Do[
-        validation = If[bosePlan["Order"] > 1,
+        validation = If[exchangePlan["Order"] > 1,
           completionSparseValidation[candidate, {}, <|"SolutionRules" -> {}|>, {}, {},
             normalized, validationSamples, seed + 1000003, validationSet,
             seconds, callback, enabled]["Report"],
@@ -7255,7 +7481,7 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
         Min[12, Max[0, seconds - (remainderStarted - start)]/5]];
       completionProgress[callback, enabled, <|"Stage" -> "Preparing retained remainders"|>];
       remainderSpace = TimeConstrained[completionPreparationBasis[input, channelPreparation,
-        normalized, bosePlan, limit, Min[3, remainderBudget/4]],
+        normalized, exchangePlan, limit, Min[3, remainderBudget/4]],
         Max[0.000001, Min[4, remainderBudget/3]], Missing["RemainderConstructionTimeout"]];
       remainingSeconds = remainderBudget - (AbsoluteTime[] - remainderStarted);
       If[AssociationQ[remainderSpace] && ListQ[Lookup[remainderSpace, "Basis", None]] &&
@@ -7275,7 +7501,7 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
         completionProgress[callback, enabled, <|"Stage" -> "Fitting retained preparation remainders",
           "Unknowns" -> Length[remainderSpace["Basis"]]|>];
         fallbackOptions = Join[Association[Options[CompleteFactorization]], Association[{opts}],
-          <|"CorrectionBasis" -> remainderSpace["Basis"], "BoseSymmetryGroups" -> {},
+          <|"CorrectionBasis" -> remainderSpace["Basis"], "BoseSymmetryGroups" -> {}, "FermionSymmetryGroups" -> {},
             "InputReweighting" -> None, "ChannelCompanions" -> None,
             "PreparationRemainders" -> None, "RepresentativeSelection" -> None,
             "AlternativeChannels" -> {}, "ReturnDetails" -> True,
@@ -7305,7 +7531,7 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
             Min[60, Max[0, seconds - (companionStarted - start)]/3]];
           completionProgress[callback, enabled, <|"Stage" -> "Preparing compact channel companions"|>];
           companionSpace = TimeConstrained[completionPeeledChannelBasis[
-            normalized, continuations, bosePlan, limit, rules, seed, Min[15, companionBudget/2]],
+            normalized, continuations, exchangePlan, limit, rules, seed, Min[15, companionBudget/2]],
             Max[0.000001, Min[15, companionBudget/2]], Missing["CompanionConstructionTimeout"]];
           remainingSeconds = companionBudget - (AbsoluteTime[] - companionStarted);
           If[AssociationQ[companionSpace] && ListQ[Lookup[companionSpace, "Basis", None]] &&
@@ -7313,7 +7539,7 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
             completionProgress[callback, enabled, <|"Stage" -> "Fitting compact channel companions",
               "Unknowns" -> Length[companionSpace["Basis"]]|>];
             fallbackOptions = Join[Association[Options[CompleteFactorization]], Association[{opts}],
-              <|"CorrectionBasis" -> companionSpace["Basis"], "BoseSymmetryGroups" -> {},
+              <|"CorrectionBasis" -> companionSpace["Basis"], "BoseSymmetryGroups" -> {}, "FermionSymmetryGroups" -> {},
                 "InputReweighting" -> None, "ChannelCompanions" -> None,
                 "RepresentativeSelection" -> None, "AlternativeChannels" -> {},
                 "ReturnDetails" -> True, "TimeConstraint" -> remainingSeconds|>];
@@ -7347,7 +7573,7 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
           completionAutomaticBasis[normalized, constructionLimit,
             If[references === Automatic, continuations, None]]],
         completionNormalizeBasis[basisOption]];
-      If[basisOption === Automatic && bosePlan["Order"] > 1 && AssociationQ[reducedChannels],
+      If[basisOption === Automatic && exchangePlan["Order"] > 1 && AssociationQ[reducedChannels],
         literalBasis = completionAutomaticBasis[normalized, constructionLimit, continuations];
         If[ListQ[literalBasis],
           basis = completionNormalizeBasis[Join[basis, literalBasis]];
@@ -7359,13 +7585,14 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
         If[AssociationQ[selectedChannels],
           basis = completionNormalizeBasis[Join[basis, selectedChannels["Basis"]]];
           space = "BoseSelectedChannelUnion"]];
-      If[ListQ[basis] && bosePlan["Order"] > 1,
+      If[ListQ[basis] && exchangePlan["Order"] > 1,
         completionProgress[callback, enabled,
-          <|"Stage" -> "Reducing Bose-symmetric correction directions",
-            "Terms" -> Length[basis], "Permutations" -> bosePlan["Order"]|>];
+          <|"Stage" -> If[exchangePlan["FermionGroups"] === {},
+              "Reducing Bose-symmetric correction directions", "Reducing signed exchange correction directions"],
+            "Terms" -> Length[basis], "Permutations" -> exchangePlan["Order"]|>];
         basis = completionIndependentBasis[completionNormalizeBasis[project /@ basis]]];
       If[ListQ[basis] && Length[basis] > limit && basisOption === Automatic &&
-          bosePlan["Order"] > 1 && AssociationQ[reducedChannels],
+          exchangePlan["Order"] > 1 && AssociationQ[reducedChannels],
         AppendTo[budgetSpaces, <|"CorrectionSpace" -> space, "Terms" -> Length[basis],
           "WithinLimit" -> False|>];
         completionProgress[callback, enabled,
@@ -7535,7 +7762,9 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
       "Fit" -> constraints, "LinearSolution" -> solution,
       "Validation" -> feedback|>, "RefinementHistory" -> history,
     "ChannelContinuations" -> continuations,
-    "BoseSymmetry" -> KeyDrop[bosePlan, "Permutations"],
+    "BoseSymmetry" -> completionExchangeDetails[exchangePlan, "Boson"],
+    "FermionSymmetry" -> completionExchangeDetails[exchangePlan, "Fermion"],
+    "ExchangeSymmetry" -> KeyDrop[exchangePlan, "Permutations"],
     "CorrectionSpace" -> space, "ReducedChannelSpace" -> reducedChannels,
     "SelectedChannelSpace" -> selectedChannels,
     "CorrectionSpaceCandidates" -> budgetSpaces,
@@ -7595,7 +7824,7 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
         Min[12, seconds - (AbsoluteTime[] - start)]];
       If[remainingSeconds <= 0.01, Break[]];
       fallbackOptions = Join[Association[Options[CompleteFactorization]], Association[{opts}],
-        <|"CorrectionBasis" -> retainedReferenceBasis, "BoseSymmetryGroups" -> {},
+        <|"CorrectionBasis" -> retainedReferenceBasis, "BoseSymmetryGroups" -> {}, "FermionSymmetryGroups" -> {},
           "InputReweighting" -> None, "PreparationRemainders" -> None,
           "ChannelCompanions" -> None, "AlternativeChannels" -> {}, "ReturnDetails" -> True,
           "TimeConstraint" -> remainingSeconds|>];
@@ -7608,7 +7837,9 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
       If[AssociationQ[fallbackReport] && fallbackReport["Status"] === "COMPLETE",
         report = Join[fallbackReport, <|"CorrectionSpace" -> "RetainedReferences",
           "OriginalExpression" -> original, "Correction" -> fallbackReport["Amplitude"] - original,
-          "BoseSymmetry" -> KeyDrop[bosePlan, "Permutations"],
+          "BoseSymmetry" -> completionExchangeDetails[exchangePlan, "Boson"],
+    "FermionSymmetry" -> completionExchangeDetails[exchangePlan, "Fermion"],
+    "ExchangeSymmetry" -> KeyDrop[exchangePlan, "Permutations"],
           "ChannelPreparation" -> report["ChannelPreparation"],
           "ElapsedTime" -> AbsoluteTime[] - start|>];
         status = "COMPLETE"; Break[]],
@@ -7641,6 +7872,14 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
             "ElapsedTime" -> AbsoluteTime[] - start|>];
           status = report["Status"]]]]];
   report = Join[report, <|"ElapsedTime" -> AbsoluteTime[] - start,
+    "BoseSymmetry" -> completionExchangeDetails[exchangePlan, "Boson"],
+    "FermionSymmetry" -> completionExchangeDetails[exchangePlan, "Fermion"],
+    "ExchangeSymmetry" -> KeyDrop[exchangePlan, "Permutations"],
+    "CorrectionSpace" -> completionExchangeSpaceName[Lookup[report, "CorrectionSpace", space], exchangePlan],
+    "CorrectionSpaceCandidates" -> Map[Function[entry, If[AssociationQ[entry] &&
+      KeyExistsQ[entry, "CorrectionSpace"], Join[entry, <|"CorrectionSpace" ->
+        completionExchangeSpaceName[entry["CorrectionSpace"], exchangePlan]|>], entry]],
+      Lookup[report, "CorrectionSpaceCandidates", {}]],
     "InputFitAttempts" -> inputAttempts, "ChannelCompanions" -> companionSpace,
     "ChannelCompanionFit" -> If[AssociationQ[companionFit],
       KeyTake[companionFit, {"Status", "ElapsedTime", "RefinementHistory", "ValidationReports"}], companionFit],
@@ -9591,12 +9830,18 @@ completionHighEnergyWork[input_, channels_List, model_List, settings_Association
    equations, solution, family, free, candidate,
    validation, validations, familyValidations = {}, familyValid = True,
    ruleSets, status, diagnostics = {}, callback = settings["ProgressFunction"],
-   enabled = settings["ProgressReporting"], report},
+   enabled = settings["ProgressReporting"], report, exchangePlan},
   report = <|"Stage" -> "HighEnergy", "Status" -> "UNRESOLVED",
     "Amplitude" -> original, "OriginalExpression" -> Lookup[normalized, "OriginalExpression", original],
     "ExternalMassRules" -> normalized["ExternalMassRules"],
     "FamilyAmplitude" -> original, "FreeParameters" -> {}, "CorrectionBasis" -> {}, "RemainingBasis" -> {},
     "Correction" -> 0, "Diagnostics" -> {}, "Scope" -> "BoundedSampledExactLinearCompletion"|>;
+  exchangePlan = completionInheritedExchangePlan[normalized, model];
+  If[FailureQ[exchangePlan], Return[Join[report, <|"Diagnostics" -> {exchangePlan}|>]]];
+  If[Lookup[exchangePlan, "Order", 1] > 1,
+    report = Join[report, <|"ExchangeSymmetry" -> KeyDrop[exchangePlan, "Permutations"],
+      "BoseSymmetry" -> completionExchangeDetails[exchangePlan, "Boson"],
+      "FermionSymmetry" -> completionExchangeDetails[exchangePlan, "Fermion"]|>]];
   retain[report];
   metadata = completionHEMetadata[normalized];
   If[!AssociationQ[metadata], Return[Join[report, <|"Diagnostics" -> {
@@ -9631,7 +9876,10 @@ completionHighEnergyWork[input_, channels_List, model_List, settings_Association
   If[basis === Automatic,
     basis = If[inheritedParameters =!= {}, {},
       completionHEAutomaticBasis[original, metadata, settings, bound]]];
-  basis = DeleteDuplicates[basis];
+  If[Lookup[exchangePlan, "Order", 1] > 1 && basis =!= {},
+    completionProgress[callback, enabled, <|"Stage" -> "HighEnergy",
+      "Phase" -> "Preserving identical-particle exchange symmetry", "Terms" -> Length[basis]|>]];
+  basis = completionExchangeBasis[basis, exchangePlan, normalized["ExternalMassRules"]];
   If[Length[basis] + Length[inheritedParameters] > settings["MaxCorrectionTerms"],
     Return[Join[report, <|"Diagnostics" -> {"The correction family exceeds MaxCorrectionTerms; no directions were silently discarded."}|>]]];
   If[basis =!= {}, extra = Table[Unique["highEnergyCorrection"], {Length[basis]}];
@@ -9823,6 +10071,7 @@ ConstructAmplitude::args = "Expected a process with at least four model particle
 
 Options[ConstructAmplitude] = {
   "ReferenceSpinors" -> Automatic, "ParameterRules" -> Automatic, "HighEnergyBound" -> Automatic,
+  "BoseSymmetryGroups" -> Automatic, "FermionSymmetryGroups" -> Automatic,
   "Samples" -> 4, "ValidationSamples" -> 4, "RandomSeed" -> 1729,
   "Parallelization" -> Automatic, "MaxKernels" -> Automatic,
   "TimeConstraint" -> Infinity, "ProgressReporting" -> True,
@@ -9978,6 +10227,8 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
       "TotalElapsed" -> AbsoluteTime[] - started|>]]);
   stageOptions[function_, bag_, forced_: <||>] := Module[{settings, limit, common},
     common = <|"ReferenceSpinors" -> options["ReferenceSpinors"],
+      "BoseSymmetryGroups" -> options["BoseSymmetryGroups"],
+      "FermionSymmetryGroups" -> options["FermionSymmetryGroups"],
       "ExternalParticles" -> process, "ParameterRules" -> options["ParameterRules"],
       "Samples" -> options["Samples"], "ValidationSamples" -> options["ValidationSamples"],
       "HighEnergySamples" -> options["Samples"], "ReferenceSamples" -> options["Samples"],

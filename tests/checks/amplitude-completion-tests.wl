@@ -16,9 +16,9 @@ acSettings[opts___] := Normal[Join[<|"Samples" -> 2, "ValidationSamples" -> 2,
   "RandomSeed" -> 1729, "TimeConstraint" -> 60, "MaxCorrectionTerms" -> 64,
   "ProgressReporting" -> False, "Output" -> "Details"|>, Association[{opts}]]];
 (* These existing factorization-space regressions retain their unprojected
-   spaces. High-energy tests share acSettings but do not take this option. *)
+   spaces. High-energy tests share acSettings but do not take these options. *)
 acFactor[input_, channels_, model_, opts___] := CompleteFactorization[
-  input, channels, model, Sequence @@ acSettings["BoseSymmetryGroups" -> {}, opts]];
+  input, channels, model, Sequence @@ acSettings["BoseSymmetryGroups" -> {}, "FermionSymmetryGroups" -> {}, opts]];
 acEnergy[input_, channels_, model_, opts___] := CompleteHighEnergy[
   input, channels, model, Sequence @@ acSettings[opts]];
 acCheck[expression_, channels_, model_, rules_, seed_] := CheckPhysicalResidues[

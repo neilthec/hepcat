@@ -1534,12 +1534,14 @@ the additional continuations and compact-space attempt. An explicit
 `"CorrectionBasis"` still uses exactly the supplied directions, after ordinary
 normalization.
 
-`"BoseSymmetryGroups" -> Automatic` uses the model's twice-spin together with
-species and external spinor state to identify identical bosons. Four
-positive-helicity photons on legs 3 through 6 are grouped automatically, while
-opposite helicities and all fermions stay separate. Equal masses alone are
-insufficient. Compact amplitude pairs and channel rows retain masses but not
-particle names. When preparing them, retain the already available process list:
+`"BoseSymmetryGroups" -> Automatic` and
+`"FermionSymmetryGroups" -> Automatic` use the model's twice-spin together with
+species and external spinor state to identify all identical-particle groups.
+Even twice-spin gives symmetric exchange; odd twice-spin gives antisymmetric
+exchange. Four positive-helicity photons on legs 3 through 6 are grouped
+automatically. Electrons and positrons form separate groups, and opposite
+helicities remain separate. Equal masses alone are insufficient. Compact amplitude pairs and channel rows
+retain masses but not particle names. When preparing them, retain the already available process list:
 
 ```wolfram
 preparationDetails = PrepareAmplitudes[rawAmplitudes, diagramModel,
@@ -1561,14 +1563,37 @@ that a photon and gluon, or charged particles with equal masses, are identical.
 
 Averaging acts on the seed and correction directions through typed particle
 permutations. The original input remains in details and every original channel
-remains an independent validation obligation. `"BoseSymmetryGroups" -> {}`
-disables averaging. An explicit list of groups is still supported, with the
-caller responsible for its physical meaning. Explicit groups must be disjoint,
-have equal declared masses and total order at most 120. Automatic mode uses a
-valid bounded subgroup instead of failing for a larger multiplicity. The
-`"BoseSymmetry"` details show `"DetectedGroups"`, used `"Groups"`, `"Order"`,
-`"Source"` and diagnostics. `"MaxCorrectionTerms"` applies after projection;
-individual source-space construction may grow by the permutation count, up to
+remains an independent validation obligation. For
+`{"e", "E", "E", "e", "A.+", "A.+"}`, the identical groups are electrons
+`{1,4}`, positrons `{2,3}` and photons `{5,6}`. The combined projector is
+`(1 + P56) (1 - P14) (1 - P23) / 8`: all eight combinations are used, with
+negative signs for odd fermion exchanges and positive signs for photon
+exchanges. It preserves an already correctly symmetric amplitude, without
+changing diagram Wick signs or factorization sewing signs.
+
+Each empty option disables only its own statistic. Set both
+`"BoseSymmetryGroups" -> {}` and `"FermionSymmetryGroups" -> {}` to disable all
+exchange projection. Explicit groups are supported, with the caller
+responsible for their physical meaning. Groups must be disjoint, have equal
+declared masses and a combined permutation order at most 120; explicit
+fermion groups must describe compatible odd-spin states. For larger automatic
+groups a bounded exact subgroup is used, reserving exchanges for different
+species when possible. This need not enforce the full permutation group at
+arbitrary multiplicity. `"ExchangeSymmetry"` details show detected and used
+groups, `"RequestedOrder"`, used `"Order"`, `"MaximumOrder"`,
+`"FullGroupUsed"`, source and diagnostics. Separate `"BoseSymmetry"` and
+`"FermionSymmetry"` summaries show each statistic's groups and order; automatic
+summaries also explain state inference. Explicit Bose summaries retain their
+previous compact form.
+
+Pass the detailed factorization report to `CompleteHighEnergy` to retain its
+combined exchange constraints. Newly generated automatic directions and any
+explicit `"CorrectionBasis"` supplied to that stage are projected into the
+inherited symmetric/antisymmetric subspace. Ordinary amplitude pairs contain no
+hidden symmetry metadata.
+Union correction-space names use the prefix `Bose`, `Fermion` or `Exchange`
+according to the statistics present. `"MaxCorrectionTerms"` applies after
+projection; individual source-space construction may grow by the permutation count, up to
 4096 directions unless a larger term limit was requested. The merged union
 may be larger; these limits are not a hard memory bound.
 With automatic directions, this option first combines the available compact
@@ -1601,12 +1626,13 @@ inexact input is never pruned. A timeout retains every original direction,
 not a partially selected subset. The correction-term cap is checked afterward.
 Without declared groups, compact-then-literal behavior is unchanged.
 
-When that full automatic Bose space exceeds the requested term cap, a
+When that full automatic exchange space exceeds the requested term cap, a
 budget fallback keeps each whole pole-bearing input diagram as a correction,
 alongside all available channel atoms, instead of splitting the inputs into
 individual terms. It never changes a full space that already fits. Details
 record both sizes in `"CorrectionSpaceCandidates"` and name the fallback
-`"BoseGroupedInputChannelUnion"`. This is a different bounded space, not an
+`"BoseGroupedInputChannelUnion"` for Bose-only projection, with `Fermion` or
+`Exchange` prefixes when appropriate. This is a different bounded space, not an
 assertion that all discarded input atoms were dependent. Every original
 channel and free direction still has to pass fresh validation. An oversized
 or inconsistent fallback remains unresolved.

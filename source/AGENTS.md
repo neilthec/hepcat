@@ -648,24 +648,37 @@ termwise space. Attempts share the stage deadline and correction-term cap;
 do not silently discard excess directions. `"ChannelReferences" -> None`
 retains the literal-only behavior, and an explicit `"CorrectionBasis"` retains
 the supplied-space behavior after normalization.
-`"BoseSymmetryGroups" -> Automatic` is the default. Identify identical bosonic
-states from the model's twice-spin, species, masses and external spinor weights.
-Retain the ordered process with `"ExternalParticles" -> particles` in requested
-preparation reports; completion inherits it from input or channel reports.
-Plain input may provide the same option directly. Do not infer identical
-species from equal masses alone or merge opposite helicities, fermions,
-different fixed spin states or color-stripped colored states. Without process
-names, only unique model-and-spinor matches are projected; diagnostics explain
-ambiguous legs. Ordinary pairs and channel rows remain unchanged. No global
-process cache is created.
-Average the seed and correction directions using typed particle permutations
-that preserve coefficients, Xi identifiers and explicit numerical spin labels.
-Keep all original residue targets for independent validation. Automatic mode
-uses a bounded exact subgroup if the full order exceeds 120, recording both
-detected and used groups. Explicit groups remain available, with a total-order
-cap of 120; `"BoseSymmetryGroups" -> {}` opts out. This symmetry is an additional
-constraint, never a replacement for residue validation.
-With automatic correction directions and declared Bose symmetry, combine the
+`"BoseSymmetryGroups" -> Automatic` and `"FermionSymmetryGroups" -> Automatic`
+are the defaults. Identify all identical external groups from the model's
+twice-spin, species, masses and external spinor weights. Even twice-spin uses
+symmetric exchange; odd twice-spin uses the permutation parity. Keep particles
+and antiparticles separate. Retain the ordered process with
+`"ExternalParticles" -> particles` in requested preparation reports;
+completion inherits it from input or channel reports. Plain input may provide
+the same option directly. Do not infer species from equal masses alone or
+merge opposite helicities, different fixed spin states or color-stripped
+colored states automatically. Without process names, project only unique
+model-and-spinor matches. Ordinary pairs and channel rows remain unchanged;
+no global process cache is created.
+Apply one normalized signed projector to the seed and correction directions,
+combining all detected Bose and Fermi groups. For `e,E,E,e,A.+,A.+`, use
+`(1 + P56)(1 - P14)(1 - P23)/8`, not separate attempts for each group.
+Typed permutations preserve coefficients, Xi identifiers and explicit
+numerical spin labels. Do not change existing diagram Wick or sewing signs.
+Keep every original residue target for independent validation.
+Automatic mode uses a bounded exact subgroup if the full combined order
+exceeds 120, reserving exchanges for different groups where possible.
+Details retain detected/used groups, requested/used order and `FullGroupUsed`;
+never claim full symmetry when a subgroup was used. Explicit groups have the
+same combined cap. Each empty option disables only its own statistic; both
+must be `{}` to disable all exchange projection. This is an additional
+constraint, never a replacement for residue validation. Preserve exchange
+metadata through detailed factorization reports into `CompleteHighEnergy`,
+and project newly generated automatic and explicitly supplied high-energy
+correction directions with the same signed action. Do not re-infer spin states
+from a completed expression that may be zero. Already projected recursive fits must disable both options to avoid
+reapplying inference to their intermediate inputs.
+With automatic correction directions and declared exchange symmetry, combine the
 available compact and literal spaces before projection. Also try the individual
 terms of each accepted selected-cut numerator reduction, including spurious
 reference choices. Certify the whole reduced source on its own cut before
@@ -674,20 +687,21 @@ This step is bounded by the construction cap and a 60-second budget. Exact forma
 linear dependencies may be removed without changing that projected span.
 This pruning retains sparse matrices and has a 60-second budget; an unfinished
 pass retains all directions.
-With explicit `{}`, completion keeps compact-then-literal behavior. Intermediate
+With both symmetry options explicitly `{}`, completion keeps compact-then-literal behavior. Intermediate
 individual source-space construction grows with the permutation count, up to
 4096 directions unless the requested correction cap is already larger. The
 compact, literal and selected-cut spaces may merge into a larger union, bounded
 by the sum of their source-space limits. The final cap applies after projection
 and pruning; neither a term cap nor the shared clock is a hard memory limit.
-If that full automatic Bose space still exceeds the requested cap, a named
+If that full automatic exchange space still exceeds the requested cap, a named
 budget fallback may retain whole pole-bearing input diagrams plus every
 available channel atom, without splitting each input diagram into independent
 corrections. The full space remains unchanged whenever it fits. Report both
 sizes in `"CorrectionSpaceCandidates"`; do not truncate arbitrary directions
 or relax any target or affine-family validation. The fallback is
-`"BoseGroupedInputChannelUnion"`, and remains unresolved if it too exceeds
-the cap or cannot satisfy the constraints.
+`"BoseGroupedInputChannelUnion"` for Bose-only projection, with `Fermion` or
+`Exchange` prefixes for fermion-only or combined projection. It remains
+unresolved if it too exceeds the cap or cannot satisfy the constraints.
 New continuations with uncanceled higher-order physical propagator powers are
 recorded but not admitted: the current correction fitter supports regular
 simple-pole residues. This is a solver limit, not a restriction on the theory;
@@ -818,8 +832,8 @@ and `"Output" -> "Details"` returns that report directly. Never turn a retained
 unresolved candidate into a claimed physical result. All three stages
 support `"ProgressReporting" -> False` and a `"ProgressFunction"` callback;
 callbacks receive associations when progress reporting is enabled. An
-all-in-one wrapper has not yet been introduced. See `tests/SIMPLIFICATION.md`
-for the full staged example and scope limitations.
+all-in-one `ConstructAmplitude` wrapper is described above. See
+`tests/SIMPLIFICATION.md` for the full staged example and scope limitations.
 
 ## Preserve Work and Verify Changes
 

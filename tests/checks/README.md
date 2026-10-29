@@ -302,14 +302,27 @@ propagator shifts, bounded failures, a fresh coherent-spin Feynman comparison
 and representative two- and three-particle residues. This example does not
 assert success of the separate automatic diagram-completion ansatz or
 silently certify unsupported spurious factors.
+`fermion-symmetry-tests.wl` covers signed identical-fermion exchange and its
+combined use with Bose symmetry. It checks species/antiparticle separation,
+helicities, fixed-spin and color safeguards, parity for unordered groups,
+normalization and idempotence. The six-point `e,E,E,e,A.+,A.+` example uses the
+full order-eight signed action, including every fermion and photon group.
+Larger-group tests verify the shared work cap and explicit subgroup metadata.
+Known four- and five-point four-fermion amplitudes are checked before and after
+projection against fresh physical cuts and independent Feynman amplitudes.
+A missing pairing is repaired through the public completion API without
+changing original targets. High-energy directions inherit the combined action,
+including when the completed expression is zero. These are 50 focused checks;
+the six-point projector test does not claim a new six-point reconstruction.
+
 `bose-symmetry-tests.wl` checks automatic identical-boson state inference from
 the model and homogeneous external spinor weights, including separate photon
 helicities, fermion exclusion, species/charge degeneracies and conservative
 color handling. Explicit ordered process labels can resolve ambiguous species;
 they are retained only in requested preparation reports without changing plain
 amplitude pairs or channel rows. Large exchange groups use a bounded exact
-subgroup. An explicit empty group list remains the opt-out for coefficient-space
-tests that intentionally retain asymmetric directions.
+subgroup. Coefficient-space tests that intentionally retain asymmetric
+directions opt out with both symmetry options set to explicit empty lists.
 Focused completion tests also cover explicit Bose projection, the compact/literal
 union, selected-cut atomic sources and exact formal-dependence pruning without changing the available span.
 The bounded pruning pass has a 60-second allowance. Exact Gaussian-rational
