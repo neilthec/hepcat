@@ -9812,3 +9812,321 @@ completionHighEnergyStage[input_, channels_List, model_List, settings_Associatio
 
 End[];
 End[];
+
+(* ::Section::Closed:: *)
+(*Amplitude Construction Workflow*)
+
+Begin["ConstructiveDiagrams`"];
+
+ConstructAmplitude::usage = "ConstructAmplitude[process, diagramModel, factorizationModel] generates and prepares diagrams and factorization channels, completes factorization and high-energy behavior, prepares each completed expression with external identities only, then checks the final amplitude. The ordinary result is the bare expression only when every required final check passes. Output -> Amplitude returns {externalMassRules, expression}; Details retains stage results, timings and diagnostics. ProgressReporting -> True displays the current stage, its elapsed time and total elapsed time. At the end PrintReport -> True prints total time, then the test table, before returning the expression. FeynmanModel -> None optionally supplies an independent model whose diagrams are prepared and compared too. PreparationOptions, ChannelPreparationOptions, FinalPreparationOptions, FactorizationOptions, HighEnergyOptions, CheckOptions and FeynmanPreparationOptions pass options to individual stages. TimeConstraint -> Infinity is the overall time budget; individual stages retain their own limits unless overridden. ReferenceSpinors, ParameterRules, HighEnergyBound, Samples, ValidationSamples, RandomSeed, Parallelization and MaxKernels provide common settings. The original channels remain the residue targets, discarded preparation terms and affine completion freedom are retained, and final preparation never applies internal-shell identities. Failed, opposite-sign, unresolved and underdetermined results are not returned as validated amplitudes.";
+ConstructAmplitude::args = "Expected a process with at least four model particle names, a diagram model, a constructive factorization model, and valid construction options.";
+
+Options[ConstructAmplitude] = {
+  "ReferenceSpinors" -> Automatic, "ParameterRules" -> Automatic, "HighEnergyBound" -> Automatic,
+  "Samples" -> 4, "ValidationSamples" -> 4, "RandomSeed" -> 1729,
+  "Parallelization" -> Automatic, "MaxKernels" -> Automatic,
+  "TimeConstraint" -> Infinity, "ProgressReporting" -> True,
+  "ProgressFunction" -> Automatic, "PrintReport" -> True,
+  "PreparationOptions" -> {}, "ChannelPreparationOptions" -> {},
+  "FinalPreparationOptions" -> {}, "FactorizationOptions" -> {},
+  "HighEnergyOptions" -> {}, "CheckOptions" -> {},
+  "FeynmanModel" -> None, "FeynmanPreparationOptions" -> {},
+  "Output" -> "Expression"};
+
+Begin["ConstructiveDiagrams`Private`"];
+
+constructRuleOptions[value_] := If[AssociationQ[value], value, Association[Reverse[value]]];
+constructOptionBagQ[value_, function_] := (AssociationQ[value] || ListQ[value]) &&
+  OptionQ[Normal[value]] && Complement[First /@ Normal[value], First /@ Options[function]] === {};
+constructExternalMasses[process_List, model_] := Module[{parts, names, spin, resolved},
+  If[!TrueQ[feynmanModelQ[model]], Return[physicalParticleMass[#, model[[1]]] & /@ process]];
+  parts = List @@ model;
+  names = DeleteDuplicates[Flatten[parts[[1, All, {2, 3}]]]];
+  spin = Association[Flatten[({#[[2]] -> #[[5]], #[[3]] -> #[[5]]} &) /@ parts[[1]]]];
+  resolved = feynmanExternalParticle[#, names, spin] & /@ process;
+  Map[If[MissingQ[#], #, physicalParticleMass[First[#], parts[[1]]]] &, resolved]
+];
+constructSecondsQ[value_] := value === Infinity || NumericQ[value] &&
+  TrueQ[Element[value, Reals] && 0 < value < Infinity];
+constructDuration[seconds_] := ToString[NumberForm[N[seconds], {12, 1}], StandardForm] <> " s";
+constructFailure[stage_, diagnostics_List] := Failure["AmplitudeConstructionFailed", <|
+  "MessageTemplate" -> "Amplitude construction stopped at `1`. No validated final expression was produced.",
+  "MessageParameters" -> {stage}, "Stage" -> stage, "Status" -> "FAILED",
+  "Diagnostics" -> diagnostics|>];
+
+(* Whole-amplitude preparation is an ordinary external identity. Shift the
+   retained affine family by that same identity, preserving every free direction. *)
+constructPreparedFamily[report_Association, pair_List] := Module[
+  {old = report["Amplitude"], prepared = Last[pair], family},
+  family = Lookup[report, "FamilyAmplitude", old] + prepared - old;
+  Join[report, <|"Amplitude" -> prepared, "FamilyAmplitude" -> family,
+    "ExternalMassRules" -> First[pair],
+    "Correction" -> Lookup[report, "Correction", 0] + prepared - old|>]
+];
+
+(* A bounded heuristic search need not finish to supply a valid snapshot.
+   Conversion/reference failures and rejected reductions are different: those
+   must stop the workflow. Final validation still has to pass every test. *)
+constructPreparationUsableQ[report_] := Module[{items, keepReferences},
+  If[!AssociationQ[report] ||
+      !MemberQ[{"PREPARED", "PARTIAL"}, Lookup[report, "Status", None]] ||
+      !ListQ[Lookup[report, "ItemReports", None]] ||
+      !ListQ[Lookup[report, "PreparedAmplitudes", None]], Return[False]];
+  items = report["ItemReports"];
+  keepReferences = Lookup[Lookup[report, "Options", <||>], "ReferenceSpinors", Automatic] === None;
+  Length[items] === Length[report["PreparedAmplitudes"]] && AllTrue[items,
+    AssociationQ[#] && KeyExistsQ[#, "PreparedExpression"] &&
+      residueFiniteQ[#["PreparedExpression"]] &&
+      TrueQ[Lookup[#, "DenominatorsKeptOffShell", False]] &&
+      !TrueQ[Lookup[#, "FeynmanConversionFailed", False]] &&
+      !FailureQ[Lookup[#, "JointInvariantFailure", None]] &&
+      (Lookup[#, "Status", None] === "PREPARED" ||
+        Lookup[#, "Status", None] === "PARTIAL" && Lookup[#, "StopReason", None] === "TimeConstraint") &&
+      (keepReferences || AssociationQ[Lookup[#, "ReferenceSpinors", None]] &&
+        Lookup[#["ReferenceSpinors"], "Status", None] === "COMPLETE") &]
+];
+
+constructAllChecksPassQ[report_, pair_, channels_List, model_List, benchmark_] := Module[
+  {inputs, expected, actual, checks},
+  If[!AssociationQ[report] || !ListQ[Lookup[report, "Checks", None]] ||
+      !AssociationQ[Lookup[report, "HighEnergyCheck", None]] ||
+      !AssociationQ[Lookup[report, "ReferenceCheck", None]] ||
+      !TrueQ[Lookup[report, "AutomaticPoleDiscovery", False]], Return[False]];
+  checks = report["Checks"];
+  If[checks === {} || !AllTrue[checks, AssociationQ[#] && Lookup[#, "Status", None] === "PASS" &] ||
+      report["HighEnergyCheck"]["Status"] =!= "PASS" ||
+      report["ReferenceCheck"]["Status"] =!= "PASS", Return[False]];
+  inputs = residueSimpleInputs[pair, channels, model];
+  If[!AssociationQ[inputs] || FailureQ[inputs], Return[False]];
+  expected = DeleteDuplicates[residueChannelKey /@ inputs["Targets"]];
+  actual = residueChannelKey /@ Lookup[report, "Channels", {}];
+  If[!ContainsAll[actual, expected], Return[False]];
+  benchmark === None || AssociationQ[Lookup[report, "FeynmanCheck", None]] &&
+    Lookup[report["FeynmanCheck"], "Status", None] === "PASS"
+];
+
+ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
+    opts : OptionsPattern[]] := Module[
+  {options = Join[Association[Options[ConstructAmplitude]], Association[Reverse[{opts}]]],
+   started = AbsoluteTime[], stageStarted, currentStage = "Starting", lastEvent = <||>,
+   lastPrinted = 0., timings = {}, stages = <||>, output, enabled, callback, printReport,
+   diagramData, diagramPairs, diagramPreparation, channels, channelPreparation,
+   factorization, factorizedPair, highEnergy, finalPair = Missing["NotConstructed"],
+   feynmanModel, feynmanDiagrams, feynmanPairs, feynmanPrepared,
+   benchmark = None, checkReport = Missing["NotRun"], external, checkSettings,
+   result, report, failure = None, tag = Unique["amplitudeConstruction"],
+   save, emit, child, remaining, stageOptions, run, require, requirePreparation, prepareFinal, workflow,
+   completed = False, resultStatus, totalTime},
+  output = options["Output"]; enabled = options["ProgressReporting"];
+  callback = options["ProgressFunction"]; printReport = options["PrintReport"];
+  feynmanModel = options["FeynmanModel"];
+  If[Complement[First /@ {opts}, First /@ Options[ConstructAmplitude]] =!= {} ||
+      Length[process] < 4 || !AllTrue[process, StringQ] ||
+      !(completionModelQ[diagramModel] || TrueQ[feynmanModelQ[diagramModel]] &&
+        completionModelQ[List @@ diagramModel]) ||
+      !completionModelQ[factorizationModel] ||
+      !(feynmanModel === None || TrueQ[feynmanModelQ[feynmanModel]] &&
+        completionModelQ[List @@ feynmanModel]) ||
+      !MemberQ[{"Expression", "Amplitude", "Details"}, output] ||
+      !AllTrue[{enabled, printReport}, MemberQ[{True, False}, #] &] ||
+      !(callback === Automatic || MatchQ[callback, _Function | _Symbol]) ||
+      !MemberQ[{Automatic, True, False}, options["Parallelization"]] ||
+      !(options["MaxKernels"] === Automatic || IntegerQ[options["MaxKernels"]] && options["MaxKernels"] > 0) ||
+      !constructSecondsQ[options["TimeConstraint"]] ||
+      residueParameterRules[factorizationModel, options["ParameterRules"]] === $Failed ||
+      !(options["HighEnergyBound"] === Automatic || NumericQ[options["HighEnergyBound"]] &&
+        TrueQ[Element[options["HighEnergyBound"], Reals] && Abs[options["HighEnergyBound"]] < Infinity]) ||
+      !IntegerQ[options["RandomSeed"]] ||
+      !AllTrue[{options["Samples"], options["ValidationSamples"]}, IntegerQ[#] && # > 0 &] ||
+      !MemberQ[{Automatic, None, "AllSpurious", "AllPhysical", "Mixed", "Xi", "Cyclic",
+        "ReverseCyclic", "IndependentXi"}, options["ReferenceSpinors"]] ||
+      !AllTrue[{{"PreparationOptions", PrepareAmplitudes},
+        {"ChannelPreparationOptions", PrepareAmplitudes}, {"FinalPreparationOptions", PrepareAmplitudes},
+        {"FeynmanPreparationOptions", PrepareAmplitudes}, {"FactorizationOptions", CompleteFactorization},
+        {"HighEnergyOptions", CompleteHighEnergy}, {"CheckOptions", CheckAmplitudes}},
+        constructOptionBagQ[options[First[#]], Last[#]] &],
+    Message[ConstructAmplitude::args]; Return[Failure["InvalidConstructionArguments", <|
+      "MessageTemplate" -> "Invalid process, model or construction options."|>]]];
+  external = constructExternalMasses[process, diagramModel];
+  If[AnyTrue[external, MissingQ] || AnyTrue[
+      physicalParticleMass[#, factorizationModel[[1]]] & /@ process, MissingQ],
+    Return[Failure["UnknownExternalParticle", <|"MessageTemplate" ->
+      "Every process particle must occur in both supplied models."|>]]];
+  external = Thread[(Mass /@ Range[Length[process]]) -> external];
+  checkSettings = constructRuleOptions[options["CheckOptions"]];
+  If[!MemberQ[{Automatic, True}, Lookup[checkSettings, "HighEnergyCheck", Automatic]] ||
+      !MemberQ[{Automatic, True}, Lookup[checkSettings, "ReferenceCheck", Automatic]] ||
+      Lookup[checkSettings, "SpuriousPoles", Automatic] =!= Automatic,
+    Return[Failure["DisabledConstructionChecks", <|"MessageTemplate" ->
+      "ConstructAmplitude requires physical, automatic spurious-pole, high-energy and reference checks. Use CheckAmplitudes separately for selected diagnostics."|>]]];
+  stageStarted = started;
+  remaining[] := If[options["TimeConstraint"] === Infinity, Infinity,
+    Max[0., options["TimeConstraint"] - (AbsoluteTime[] - started)]];
+  save[name_, value_] := If[output === "Details", AssociateTo[stages, name -> value]];
+  emit[event_Association] := If[TrueQ[enabled],
+    If[callback =!= Automatic, Quiet[Check[callback[event], Null]],
+      If[$FrontEnd === Null && (Lookup[event, "Event", ""] =!= "Progress" ||
+          AbsoluteTime[] - lastPrinted >= 1),
+        lastPrinted = AbsoluteTime[];
+        Print[Row[{event["Stage"], ": ", Lookup[event, "Status", "working"],
+          "; stage ", constructDuration[event["StageElapsed"]],
+          "; total ", constructDuration[event["TotalElapsed"]]}]]]]];
+  child[event_Association] := (
+    lastEvent = event;
+    emit[Join[event, <|"Event" -> "Progress", "DetailStage" -> Lookup[event, "Stage", ""],
+      "Stage" -> currentStage, "StageElapsed" -> AbsoluteTime[] - stageStarted,
+      "TotalElapsed" -> AbsoluteTime[] - started|>]]);
+  stageOptions[function_, bag_, forced_: <||>] := Module[{settings, limit, common},
+    common = <|"ReferenceSpinors" -> options["ReferenceSpinors"],
+      "ExternalParticles" -> process, "ParameterRules" -> options["ParameterRules"],
+      "Samples" -> options["Samples"], "ValidationSamples" -> options["ValidationSamples"],
+      "HighEnergySamples" -> options["Samples"], "ReferenceSamples" -> options["Samples"],
+      "FeynmanSamples" -> options["Samples"], "HighEnergyBound" -> options["HighEnergyBound"],
+      "RandomSeed" -> options["RandomSeed"], "Parallelization" -> options["Parallelization"],
+      "MaxKernels" -> options["MaxKernels"]|>;
+    settings = Join[KeyTake[common, First /@ Options[function]], constructRuleOptions[bag], forced];
+    If[MemberQ[First /@ Options[function], "ProgressReporting"],
+      settings = Join[settings, <|"ProgressReporting" -> enabled, "ProgressFunction" -> child|>]];
+    limit = Lookup[settings, "TimeConstraint", "TimeConstraint" /. Options[function]];
+    If[constructSecondsQ[limit], settings["TimeConstraint"] = Min[limit, Max[0.000001, remaining[]]]];
+    Normal[settings]
+  ];
+  SetAttributes[run, HoldRest];
+  run[name_String, expression_] := Module[{value, elapsed, seconds},
+    currentStage = name; stageStarted = AbsoluteTime[]; lastEvent = <||>;
+    emit[<|"Event" -> "StageStarted", "Stage" -> name, "Status" -> "RUNNING",
+      "StageElapsed" -> 0., "TotalElapsed" -> stageStarted - started|>];
+    seconds = remaining[];
+    value = If[seconds <= 0, constructFailure[name, {"The overall time budget was exhausted."}],
+      TimeConstrained[expression, seconds,
+        constructFailure[name, {"The overall time budget was exhausted during this stage."}]]];
+    elapsed = AbsoluteTime[] - stageStarted;
+    resultStatus = Which[FailureQ[value] || value === $Failed || value === $Aborted, "FAILED",
+      AssociationQ[value] && KeyExistsQ[value, "Checks"],
+        If[Lookup[value, "Checks", {}] =!= {} &&
+          AllTrue[value["Checks"], Lookup[#, "Status", None] === "PASS" &], "COMPLETE", "FAILED"],
+      AssociationQ[value], Lookup[value, "Status", "COMPLETE"], True, "COMPLETE"];
+    AppendTo[timings, <|"Stage" -> name, "ElapsedTime" -> elapsed,
+      "TotalElapsedTime" -> AbsoluteTime[] - started, "Status" -> resultStatus|>];
+    save[name, value];
+    emit[<|"Event" -> "StageFinished", "Stage" -> name, "Status" -> resultStatus,
+      "StageElapsed" -> elapsed, "TotalElapsed" -> AbsoluteTime[] - started|>];
+    value
+  ];
+  require[value_, statuses_: Automatic] := If[FailureQ[value] || value === $Failed || value === $Aborted ||
+      statuses =!= Automatic && (!AssociationQ[value] || !MemberQ[statuses, Lookup[value, "Status", None]]),
+    Throw[constructFailure[currentStage, Which[FailureQ[value], {value},
+      AssociationQ[value], Lookup[value, "Diagnostics", {"The stage did not complete."}],
+      True, {"The stage did not produce a usable result."}]], tag]];
+  requirePreparation[value_] := (
+    require[value];
+    If[!constructPreparationUsableQ[value], Throw[constructFailure[currentStage,
+      If[AssociationQ[value], Lookup[value, "Diagnostics", {"Preparation did not retain a usable expression."}],
+        {"Preparation did not retain a usable expression."}]], tag]];
+    value
+  );
+  prepareFinal[value_] := Module[{prepared, pair},
+    prepared = PrepareAmplitudes[value, factorizationModel,
+      Sequence @@ stageOptions[PrepareAmplitudes, options["FinalPreparationOptions"],
+        <|"InternalOnShell" -> False, "ReferenceSpinors" -> None,
+          "ReturnDetails" -> True, "Output" -> "Amplitudes"|>]];
+    If[FailureQ[prepared] || prepared === $Failed, Return[prepared]];
+    pair = If[AssociationQ[prepared],
+      save[currentStage <> " details", prepared];
+      If[!constructPreparationUsableQ[prepared],
+        Return[constructFailure[currentStage, Lookup[prepared, "Diagnostics", {}]]]];
+      First[prepared["PreparedAmplitudes"]], prepared];
+    If[!preparationPairQ[pair],
+      constructFailure[currentStage, {"Final preparation did not return an external-mass amplitude pair."}], pair]
+  ];
+  workflow[] := Catch[
+    diagramData = run["Generating diagrams", CreateDiagrams[process, diagramModel]];
+    require[diagramData];
+    diagramPairs = run["Building diagram amplitudes", diagramAmplitudes[diagramData]];
+    require[diagramPairs];
+    If[diagramPairs === {}, diagramPairs = {{external, 0}}];
+    diagramPreparation = run["Preparing diagrams", PrepareAmplitudes[diagramPairs, diagramModel,
+      Sequence @@ stageOptions[PrepareAmplitudes, options["PreparationOptions"],
+        <|"ReturnDetails" -> True, "ExternalParticles" ->
+          If[TrueQ[feynmanModelQ[diagramModel]], Automatic, process]|>]]];
+    requirePreparation[diagramPreparation];
+    channels = run["Generating factorization channels", FactorizationAmplitudeChannels[process, factorizationModel]];
+    require[channels];
+    channelPreparation = run["Preparing factorization channels", PrepareAmplitudes[channels, factorizationModel,
+      Sequence @@ stageOptions[PrepareAmplitudes, options["ChannelPreparationOptions"],
+        Join[<|"ReturnDetails" -> True|>, If[channels === {}, <|"ExternalParticles" -> Automatic|>, <||>]]]]];
+    requirePreparation[channelPreparation];
+    factorization = run["Completing factorization", CompleteFactorization[diagramPreparation,
+      channelPreparation, factorizationModel, Sequence @@ stageOptions[CompleteFactorization,
+        options["FactorizationOptions"], <|"ReturnDetails" -> True, "ExternalParticles" -> process|>]]];
+    require[factorization, {"COMPLETE"}];
+    finalPair = {factorization["ExternalMassRules"], factorization["Amplitude"]};
+    factorizedPair = run["Preparing factorization result", prepareFinal[finalPair]];
+    require[factorizedPair]; finalPair = factorizedPair;
+    factorization = constructPreparedFamily[factorization, factorizedPair];
+    highEnergy = run["Completing high-energy behavior", CompleteHighEnergy[factorization,
+      channelPreparation, factorizationModel, Sequence @@ stageOptions[CompleteHighEnergy,
+        options["HighEnergyOptions"], <|"Output" -> "Details", "RandomSeed" -> Lookup[
+          constructRuleOptions[options["HighEnergyOptions"]], "RandomSeed", options["RandomSeed"] + 1000033]|>]]];
+    require[highEnergy, {"COMPLETE"}];
+    finalPair = {highEnergy["ExternalMassRules"], highEnergy["Amplitude"]};
+    finalPair = run["Preparing final amplitude", prepareFinal[finalPair]];
+    require[finalPair];
+    If[feynmanModel =!= None,
+      feynmanDiagrams = run["Generating Feynman diagrams", CreateDiagrams[process, feynmanModel]];
+      require[feynmanDiagrams];
+      feynmanPairs = run["Building Feynman amplitudes", diagramAmplitudes[feynmanDiagrams]];
+      require[feynmanPairs];
+      If[feynmanPairs === {}, feynmanPairs = {{Thread[(Mass /@ Range[Length[process]]) ->
+        constructExternalMasses[process, feynmanModel]], 0}}];
+      feynmanPrepared = run["Preparing Feynman amplitudes", PrepareAmplitudes[feynmanPairs, feynmanModel,
+        Sequence @@ stageOptions[PrepareAmplitudes, options["FeynmanPreparationOptions"],
+          <|"ReturnDetails" -> True, "InternalOnShell" -> False, "ExternalParticles" -> Automatic|>]]];
+      requirePreparation[feynmanPrepared];
+      benchmark = feynmanPrepared["PreparedAmplitudes"]];
+    checkSettings = Join[constructRuleOptions[options["CheckOptions"]], <|
+      "Output" -> "Details", "SpuriousPoles" -> Automatic,
+      "HighEnergyCheck" -> True, "ReferenceCheck" -> True,
+      "RandomSeed" -> Lookup[constructRuleOptions[options["CheckOptions"]],
+        "RandomSeed", options["RandomSeed"] + 2000003]|>,
+      If[feynmanModel =!= None, <|"FeynmanAmplitudes" -> benchmark, "FeynmanModel" -> feynmanModel|>, <||>]];
+    checkReport = run["Checking final amplitude", CheckAmplitudes[finalPair, channels, factorizationModel,
+      Sequence @@ stageOptions[CheckAmplitudes, checkSettings]]];
+    require[checkReport];
+    benchmark = Lookup[checkSettings, "FeynmanAmplitudes", None];
+    If[!constructAllChecksPassQ[checkReport, finalPair, channels, factorizationModel, benchmark],
+      Throw[constructFailure[currentStage, {"The final amplitude did not pass every required check.",
+        Lookup[checkReport, "Summary", Missing["NoTestSummary"]]}], tag]];
+    completed = True; finalPair,
+    tag];
+  result = If[TrueQ[enabled] && callback === Automatic && $FrontEnd =!= Null,
+    Monitor[workflow[], Refresh[Grid[{
+      {"Stage", currentStage},
+      {"Stage elapsed", constructDuration[AbsoluteTime[] - stageStarted]},
+      {"Total elapsed", constructDuration[AbsoluteTime[] - started]},
+      {"Progress", Row[{Lookup[lastEvent, "Stage", ""], " ", Lookup[lastEvent, "Operation", ""],
+        " ", Lookup[lastEvent, "Completed", ""], If[KeyExistsQ[lastEvent, "Total"], "/", ""],
+        Lookup[lastEvent, "Total", ""]}]}}, Alignment -> Left], UpdateInterval -> 1]], workflow[]];
+  totalTime = AbsoluteTime[] - started;
+  failure = If[completed, None, If[FailureQ[result], result,
+    constructFailure[currentStage, {"Construction ended without a validated amplitude."}]]];
+  If[TrueQ[printReport],
+    Print[Row[{"Total time: ", constructDuration[totalTime]}]];
+    Print[If[AssociationQ[checkReport] && KeyExistsQ[checkReport, "Table"], checkReport["Table"],
+      Dataset[{<|"Check" -> "Final amplitude tests", "Status" -> "NOT RUN",
+        "StoppedAt" -> currentStage|>}]]]];
+  report = <|"Status" -> If[completed, "COMPLETE", "FAILED"], "Process" -> process,
+    "Amplitude" -> If[completed, Last[finalPair], Missing["NotValidated"]],
+    "AmplitudePair" -> If[completed, finalPair, Missing["NotValidated"]],
+    "CandidateAmplitude" -> If[completed, Missing["NotNeeded"], finalPair],
+    "Checks" -> checkReport, "TotalTime" -> totalTime, "StageTimings" -> timings,
+    "Stages" -> stages, "Failure" -> failure|>;
+  If[output === "Details", Return[report]];
+  If[!completed, Return[failure]];
+  If[output === "Amplitude", finalPair, Last[finalPair]]
+];
+ConstructAmplitude[___] := (Message[ConstructAmplitude::args];
+  Failure["InvalidConstructionArguments", <|"MessageTemplate" -> "Invalid process, model or construction options."|>]);
+
+End[];
+End[];

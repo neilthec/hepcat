@@ -47,6 +47,16 @@ five-point representative is checked on two rational off-cut charts and all
 four coherent massive-spin components; no saved notebook or temporary cache
 is loaded by the suite.
 
+## Full Process Construction
+
+`construct-amplitude-tests.wl` runs real four- and five-point QED workflows,
+including an independent Feynman benchmark and a genuinely zero forbidden
+process. It verifies original-channel checks, retained preparation history,
+external-only final reductions, affine-family transport, fresh validation
+seeds, simple outputs, stage/total timings, progress events, final print order,
+option precedence, deadlines, model immutability and rejection of opposite-sign
+or unresolved final checks. It does not modify or execute the user's notebooks.
+
 ## Parallel Execution
 
 The four parallel suites require a licensed kernel that can launch and

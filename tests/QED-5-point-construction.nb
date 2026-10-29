@@ -22,12 +22,7 @@ Notebook[{
 Cell[CellGroupData[{
 Cell["Five-Point QED: Construction and Checks", "Title",ExpressionUUID->"5ca1b447-bdbb-4884-877e-3bc950bf458e"],
 
-Cell["\<\
-First use the new preparation and completion functions, one step at a time. \
-Then calculate the compact worked QED results and check all photon \
-helicities. Evaluate from the top in a fresh kernel. All momenta are ingoing.\
-\
-\>", "Text",ExpressionUUID->"456f9b3b-17be-418a-8209-5779a70c7365"],
+Cell["Evaluate Setup, then use Construct and Check at the start of a process chapter. The wrapper runs the complete workflow, displays timing and test results, and returns the validated expression. Earlier manual steps remain collapsed below each call. Compact worked formulas and the all-helicity checks are retained separately. All momenta are ingoing.", "Text",ExpressionUUID->"456f9b3b-17be-418a-8209-5779a70c7365"],
 
 Cell[CellGroupData[{
 
@@ -193,7 +188,11 @@ Cell["\<\
 The amplitudes retain symbolic Me and EE. Numerical checks and completion use \
 the parameter values and derived functions from the supplied model. PASS \
 means agreement at the tested samples, not a general analytic proof.\
-\>", "Text",ExpressionUUID->"43f1ccea-2be0-4dac-abdd-f6a191035779"]
+\>", "Text",ExpressionUUID->"43f1ccea-2be0-4dac-abdd-f6a191035779"],
+
+Cell["The construction wrapper runs the stages below, reports each stage and total elapsed time, prints the final tests, and returns the expression only when every required check passes. These shared settings include the independent Feynman comparison. Change the stage settings here if needed.", "Text", ExpressionUUID->"ec7e2a65-5ad5-54a8-b037-0c605814a7c6"],
+
+Cell["constructionOptions = {\n  \"Samples\" -> checkSamples,\n  \"FeynmanModel\" -> qedFeynmanModel,\n  \"FactorizationOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> timeLimit},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> timeLimit},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"TimeConstraint\" -> timeLimit}};", "Input", ExpressionUUID->"f8b9656d-43a3-593e-87c5-282cda73ac10"]
 }, Open  ]],
 
 Cell[CellGroupData[{
@@ -202,6 +201,16 @@ Cell["e,E,A.+,A.+,A.+", "Chapter",
  CellChangeTimes->{{4.001759665590519*^9, 
   4.00175967079949*^9}},ExpressionUUID->"4254fc93-7cf4-42a6-a5cc-\
 47271d455e72"],
+
+Cell["Construct and Check", "Section", ExpressionUUID->"4bb6cc79-e5b1-5881-9b17-76788c5ed6fd"],
+
+Cell["Evaluate this cell after Setup. The wrapper generates and prepares the diagrams and factorization channels, completes and prepares the amplitude, then runs all final checks. The printed test report precedes the returned expression. The saved manual work remains available below.", "Text", ExpressionUUID->"39cf6e8f-7d10-5f73-a8f3-e11920c14eca"],
+
+Cell["constructedAmplitude = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"fc84dd4f-fa99-5122-82eb-b35b4a28e6ce"],
+
+Cell[CellGroupData[{
+
+Cell["Earlier Step-by-Step Work (Optional)", "Section", ExpressionUUID->"7369c4b7-f770-5019-b403-b20fd89d7ae9"],
 
 Cell[CellGroupData[{
 
@@ -4674,6 +4683,8 @@ lastPathIsLeafHeader, TypeSystem`NestedGrid`PackagePrivate`headerHidden$ = And[
 }, Open  ]]
 }, Open  ]]
 }, Open  ]]
+
+}, Closed]]
 }, Closed]],
 
 Cell[CellGroupData[{
@@ -4682,6 +4693,16 @@ Cell["e,E,A.+,A.+,A.-", "Chapter",
  CellChangeTimes->{{4.001759665590519*^9, 
   4.001759700623199*^9}},ExpressionUUID->"c63f3466-fe5e-4451-8c19-\
 6c088a51a167"],
+
+Cell["Construct and Check", "Section", ExpressionUUID->"472f8cd3-ab29-5c5c-b504-2df46b41bb58"],
+
+Cell["Evaluate this cell after Setup. The wrapper generates and prepares the diagrams and factorization channels, completes and prepares the amplitude, then runs all final checks. The printed test report precedes the returned expression. The saved manual work remains available below.", "Text", ExpressionUUID->"c46aee37-fe13-52c0-a562-296642d3c95f"],
+
+Cell["constructedAmplitude = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"cd6c2cab-65fa-5c26-bcaa-fb90afe96402"],
+
+Cell[CellGroupData[{
+
+Cell["Earlier Step-by-Step Work (Optional)", "Section", ExpressionUUID->"606ff509-b704-5d41-b8e3-e70404e40958"],
 
 Cell[CellGroupData[{
 
@@ -13452,6 +13473,8 @@ lastPathIsLeafHeader, TypeSystem`NestedGrid`PackagePrivate`headerHidden$ = And[
 }, Open  ]]
 }, Open  ]]
 }, Open  ]]
+
+}, Closed]]
 }, Closed]],
 
 Cell[CellGroupData[{
@@ -13461,6 +13484,16 @@ Cell["e,E,E,e,A.+", "Chapter",
   4.002022017979504*^9, 4.0020220197101088`*^9}, {4.00202209134326*^9, 
   4.0020220920413723`*^9}},ExpressionUUID->"e62cc4b7-85c3-47b2-b75a-\
 e1dd311d185c"],
+
+Cell["Construct and Check", "Section", ExpressionUUID->"adea72e3-c8dc-5579-81a9-fe49b8884211"],
+
+Cell["Evaluate this cell after Setup. The wrapper generates and prepares the diagrams and factorization channels, completes and prepares the amplitude, then runs all final checks. The printed test report precedes the returned expression. The saved manual work remains available below.", "Text", ExpressionUUID->"8a0e400e-e796-55fe-8fc2-c7fa37685606"],
+
+Cell["constructedAmplitude = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  \"PreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FactorizationOptions\" -> {\"Samples\" -> 3, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 300},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"98a3963d-bf2b-5092-832a-9f8e0aef3ea7"],
+
+Cell[CellGroupData[{
+
+Cell["Earlier Step-by-Step Work (Optional)", "Section", ExpressionUUID->"d914545f-82aa-524c-996a-ec2d39476a12"],
 
 Cell[CellGroupData[{
 
@@ -21218,6 +21251,8 @@ lastPathIsLeafHeader, TypeSystem`NestedGrid`PackagePrivate`headerHidden$ = And[
 }, Open  ]]
 }, Open  ]]
 }, Open  ]]
+
+}, Closed]]
 }, Closed]],
 
 Cell[CellGroupData[{
@@ -23729,6 +23764,16 @@ Cell["e,E,A.+,A.+,A.+,A.+", "Chapter",
   4.002028656445068*^9, 
   4.002028657482607*^9}},ExpressionUUID->"15493c99-b701-4018-8d18-\
 090e7c1acfef"],
+
+Cell["Construct and Check", "Section", ExpressionUUID->"cef9dd1a-4216-51ba-9e59-1ce50abe37a7"],
+
+Cell["Evaluate this cell after Setup. The wrapper generates and prepares the diagrams and factorization channels, completes and prepares the amplitude, then runs all final checks. The printed test report precedes the returned expression. The saved manual work remains available below.", "Text", ExpressionUUID->"b7f4d745-8e49-5b0f-b734-9f343933d143"],
+
+Cell["constructedAmplitude = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 12, \"ValidationSamples\" -> 1,\n    \"MaxRefinements\" -> 5, \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 1200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 1200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"TimeConstraint\" -> 1200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"48382d56-5ad0-55e2-a99f-e9d5d2546991"],
+
+Cell[CellGroupData[{
+
+Cell["Earlier Step-by-Step Work (Optional)", "Section", ExpressionUUID->"0b6cd90d-2c02-5223-aec4-1d5e3a34fabf"],
 
 Cell[CellGroupData[{
 
@@ -27307,9 +27352,21 @@ measurements are examples, not timing guarantees.\
 \>", "Text",ExpressionUUID->"0cb96605-c0e3-4935-b38f-96b5b99b8626"]
 
 }, Closed]]
+
+}, Closed]]
 }, Open  ]],
 Cell[CellGroupData[{
   Cell["e,E,A.+,A.+,A.+,A.-", "Chapter"],
+
+Cell["Construct and Check", "Section", ExpressionUUID->"4eb6abff-e598-59fb-a7d6-39b1d927c816"],
+
+Cell["Evaluate this cell after Setup. The wrapper generates and prepares the diagrams and factorization channels, completes and prepares the amplitude, then runs all final checks. The printed test report precedes the returned expression. The saved manual work remains available below. This larger example retains the earlier two-hour factorization budget; that limit is not a finishing-time guarantee.", "Text", ExpressionUUID->"5def643f-d347-50e0-a9fd-68b70ff235b3"],
+
+Cell["constructedAmplitude = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 28, \"ValidationSamples\" -> 2,\n    \"MaxRefinements\" -> 5, \"RandomSeed\" -> 1729,\n    \"MaxCorrectionTerms\" -> 1024, \"TimeConstraint\" -> 7200},\n  \"HighEnergyOptions\" -> {\"Samples\" -> 1, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 7200},\n  \"CheckOptions\" -> {\"Samples\" -> checkSamples, \"FeynmanSamples\" -> 3,\n    \"TimeConstraint\" -> 7200},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"883d3035-fc8e-5e0e-ae1a-657308bc023a"],
+
+Cell[CellGroupData[{
+
+Cell["Earlier Step-by-Step Work (Optional)", "Section", ExpressionUUID->"c32d3089-5705-5d5b-a0d4-c8e7324435b0"],
   Cell[CellGroupData[{
     Cell["1. Choose the Process and References", "Section"],
     Cell["particles = {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.-\"};\nreferenceChoice = \"AllSpurious\";", "Input"]
@@ -27341,8 +27398,20 @@ Cell[CellGroupData[{
       Cell["constructedAmplitude", "Input"]
     }, Closed]]
   }, Open]]
+
+}, Closed]]
 }, Open]],
 Cell[CellGroupData[{Cell["e,E,A.+,A.+,A.-,A.-", "Chapter"],
+
+Cell["Construct and Check", "Section", ExpressionUUID->"d0ea60f9-9fe8-596d-952e-fb7f22b7885f"],
+
+Cell["Evaluate this cell after Setup. The wrapper generates and prepares the diagrams and factorization channels, completes and prepares the amplitude, then runs all final checks. The printed test report precedes the returned expression. The saved manual work remains available below. The earlier general completion did not finish this balanced-helicity case, and its separate recursion result still has unresolved compound spurious poles. This bounded wrapper attempt returns Failure if it cannot certify every required check; it does not silently substitute that recursion result.", "Text", ExpressionUUID->"26039431-c89a-5ead-9e82-153f2d487e70"],
+
+Cell["constructedAmplitude = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 2, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 180},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"0819812a-ac06-5b2c-a5ba-f2599326e196"],
+
+Cell[CellGroupData[{
+
+Cell["Earlier Step-by-Step Work (Optional)", "Section", ExpressionUUID->"6a956bf9-90be-57bf-b5fb-abe80cc95654"],
    Cell["For this balanced-helicity example, the bounded diagram-correction \
 search did not close the factorization constraints. The successful \
 construction below instead sews complete known lower-point QED amplitudes \
@@ -28435,7 +28504,9 @@ qedFeynmanModel, \"FeynmanSamples\" -> 3,\n  \"Samples\" -> 2, \
 -> 600, \"Output\" -> \"Details\"];\nconstructionChecks[\"Table\"]",
        "Input"], Cell[CellGroupData[
         {Cell["Inspect the Constructed Expression", "Subsection"],
-         Cell["constructedAmplitude", "Input"]}, Closed]]}, Open]]}, Open]]
+         Cell["constructedAmplitude", "Input"]}, Closed]]}, Open]]
+}, Closed]]
+}, Open]]
 }, Open  ]]
 },
 WindowSize->{1010, 911},

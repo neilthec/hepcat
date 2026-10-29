@@ -59,7 +59,7 @@ Protect @@ (ToExpression /@ {
   "CreateDiagrams", "CreateArrowDiagram", "CreateArrowDiagrams", "diagramAmplitude", "diagramAmplitudes",
   "SchoutenRewrite", "SchoutenCandidates", "SpinorIdentityCandidates", "ApplySpinorIdentity", "SpinorExpressionComplexity", "ComplicateAmplitude",
   "DiagramAmplitudeRecords", "PhysicalPoleResidue", "CheckAmplitudes", "CheckPhysicalResidues",
-  "PrepareAmplitudes", "PrepareDiagramAmplitudes", "CompleteFactorization", "CompleteHighEnergy",
+  "PrepareAmplitudes", "PrepareDiagramAmplitudes", "CompleteFactorization", "CompleteHighEnergy", "ConstructAmplitude",
   "FeynmanModel", "DiracWord", "DiracGamma", "DiracGamma5", "DiracSlash",
   "LorentzIndex", "LorentzMetric", "LorentzMomentum", "LorentzScalarProduct", "DiracChain", "FermionBar", "FermionKet",
   "PolarizationVector", "ColorDelta", "ColorGenerator", "ColorStructure", "ColorIndex",

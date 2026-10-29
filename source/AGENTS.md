@@ -144,6 +144,27 @@ references remain unimplemented and report `PARTIAL` in details. An unavailable
 requested reference choice returns `Failure` in ordinary output rather than
 silently retaining the Xi spinors.
 
+## Complete Process Workflow
+
+Use `ConstructAmplitude[process, diagramModel, factorizationModel]` when the
+user wants the complete construction. It generates and prepares diagrams and
+channels, completes factorization and high-energy behavior, prepares the
+completed expressions with external identities only, then runs all mandatory
+final checks against the original channels. Optional `"FeynmanModel"` adds an
+independent benchmark. Default output is the validated bare expression;
+`"Output" -> "Amplitude"` keeps external masses and `"Details"` retains stage
+results, timings and the complete checker report. Failures and unresolved
+checks must remain explicit. See `tests/SIMPLIFICATION.md` for stage options.
+
+The wrapper displays live stage and total times, then prints total time and
+the test table before returning. Preserve prepared-channel provenance and
+factorization-family freedom when modifying this workflow. Do not replace its
+original residue targets with prepared continuations, apply internal shell
+conditions after combining diagrams, disable a failing final check, or inject
+a process-specific known expression to make the wrapper appear successful.
+`tests/QED-5-point-construction.nb` uses one wrapper call per process; earlier
+manual calculations remain in collapsed groups.
+
 ## Parallel Calculations
 
 `PrepareAmplitudes`, `CompleteFactorization`, `CompleteHighEnergy`, and

@@ -978,9 +978,92 @@ coincident physical poles and timeouts.
 
 ## Preparing and Completing an Amplitude
 
-The three construction stages are separate from `CheckAmplitudes`.
-The checker still only checks its input; it never changes an amplitude.
-There is not yet an all-in-one process constructor.
+`ConstructAmplitude` coordinates the full process workflow. The individual
+construction stages remain available, and `CheckAmplitudes` still only checks
+its input; it never changes an amplitude.
+
+### Complete Process Workflow
+
+```wolfram
+amplitude = ConstructAmplitude[
+  {"e", "E", "A.+", "A.+", "A.+"},
+  qedDiagramModel, qedFactorizationModel]
+```
+
+The wrapper generates the diagrams and their amplitudes, prepares them,
+generates and prepares the factorization channels, completes factorization,
+prepares that result, completes high-energy behavior, prepares once more,
+and runs the final checks. Ordinary output is the validated expression.
+The notebook display shows the current stage, its elapsed time and total
+elapsed time, refreshing once per second. At the end it prints total time,
+then the test table, before returning the expression. In a terminal, stage
+start/end messages and throttled child updates include both elapsed times.
+
+The original factorization rows remain the physical-residue targets, while
+prepared channels and discarded remainders help completion.
+A preparation search that reaches its per-item limit can continue from its
+finite last completed expression when the requested references and conversion
+are established and denominators remain off shell. Rejected reductions,
+inconsistent invariants and conversion/reference failures stop construction.
+This bounded-search policy is the same for every output mode. The factorization
+family is transported through ordinary preparation without dropping its free
+directions. Both post-completion preparation steps use external identities
+only, with internal on-shell conditions disabled and existing references left
+unchanged. High-energy completion and final validation use fresh default
+sample seeds, distinct from the factorization fit. Explicit stage seeds can
+still be supplied for reproducible investigations.
+
+An independent Feynman comparison is optional because it needs its own model:
+
+```wolfram
+amplitude = ConstructAmplitude[particles, diagramModel, factorizationModel,
+  "ReferenceSpinors" -> "AllPhysical",
+  "FeynmanModel" -> qedFeynmanModel,
+  "MaxKernels" -> 2]
+```
+
+Feynman diagram references are shared across their full sum, and their internal
+numerators stay off shell. The main workflow uses the constructive diagram model; the
+factorization model must contain constructive lower-point amplitudes. Particle
+helicity aliases such as `A.+` are resolved against the underlying Feynman
+particle declarations without adding model globals.
+
+`"Samples"`, `"ValidationSamples"`, `"ParameterRules"`, `"HighEnergyBound"`,
+`"RandomSeed"`, `"Parallelization"` and `"MaxKernels"` provide common settings.
+The overall `"TimeConstraint"` defaults to `Infinity`; each underlying stage
+keeps its bounded default. Change individual settings with rule lists:
+
+```wolfram
+amplitude = ConstructAmplitude[particles, diagramModel, factorizationModel,
+  "FactorizationOptions" -> {"TimeConstraint" -> 1200,
+    "MaxCorrectionTerms" -> 256},
+  "CheckOptions" -> {"Samples" -> 3}]
+```
+
+The other bags are `"PreparationOptions"`, `"ChannelPreparationOptions"`,
+`"FinalPreparationOptions"`, `"HighEnergyOptions"`, and
+`"FeynmanPreparationOptions"`. Stage-specific values override common values;
+within an option list the first duplicate rule wins, as in ordinary Wolfram
+option handling. The wrapper controls intermediate output/progress formats,
+post-completion on-shell scope, and the required final checks.
+
+Request `"Output" -> "Amplitude"` for `{externalMassRules, expression}`, ready
+for `PrepareAmplitudes` or `CheckAmplitudes`. `"Output" -> "Details"` retains
+`"Stages"`, `"StageTimings"`, `"Checks"`, `"TotalTime"`, and the amplitude pair.
+`"ProgressReporting" -> False` suppresses ongoing progress;
+`"PrintReport" -> False` suppresses the final time and test table. A custom
+`"ProgressFunction"` receives `"StageStarted"`, `"Progress"`, and
+`"StageFinished"` events with stage and total elapsed seconds.
+
+Every required physical, automatically discovered spurious, high-energy,
+reference and optional Feynman row must pass. Failure, opposite-sign,
+unresolved or underdetermined outcomes return a compact `Failure` instead of
+an uncertified expression. Detailed output preserves the stage diagnostics
+and available candidate explicitly. If construction stops before final
+validation, the displayed test row says `NOT RUN`. The wrapper does not enlarge
+the underlying bounded correction space or replace an unresolved calculation
+with a process-specific known formula. The balanced six-point QED example's
+known unresolved spurious checks remain an honest limitation.
 
 ### 1. Prepare the Diagrams and Channels
 
