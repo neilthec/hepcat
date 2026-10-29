@@ -1037,6 +1037,34 @@ branches. The old permutation formula fails the angle-34 test. Regression
 tests also cover reference poles, higher-order poles, six-point kinematics,
 coincident physical poles and timeouts.
 
+Compound rational denominator factors also have a generic checking route.
+An exact massless-spinor mixing preserves every external shell and total
+momentum while varying a curve parameter. The checker reduces the full sum
+on each curve, then checks that its denominator is coprime to the suspected
+pole polynomial. Every root of that polynomial is covered, including its
+separate components. Roots shared with supplied physical propagators are
+rejected rather than counted as spurious passes. Several compound poles share
+one whole-amplitude reduction per sample. The result remains sampled evidence;
+it does not establish a global analytic identity. Constant, unsupported or
+unfinished pole maps remain unresolved.
+All compound poles share one `"TimeConstraint"` budget, not that budget
+multiplied by their count. Details record
+`"TimeConstraintScope" -> "SharedCompoundPoleGroup"`; ordinary pole checks
+retain their per-pole clocks. A stopped group preserves every unresolved row.
+This compound mode currently requires at least three massless and at most two
+massive external particles and homogeneous, typed Lorentz-covariant factors.
+Its auxiliary channel coordinate varies together with the massless spinors;
+holding the massive pair fixed would miss hidden invariant factors. The older
+bracket and scalar-invariant checks retain their existing scope.
+Sampling first chooses units from a nonzero external mass, where available,
+then restores the original physical momenta and spinor normalization. This
+changes only the sampled kinematics, never the amplitude, model masses or
+couplings. Details retain `"KinematicScale"` and the physical external masses.
+Each distinct typed kinematic primitive is reduced exactly before insertion
+into the complete rational sum. This call-local reuse prevents repeated large
+polynomial expansion; unsupported primitives retain the original evaluation
+path rather than receiving an assumed value.
+
 ## Preparing and Completing an Amplitude
 
 `ConstructAmplitude` coordinates the full process workflow. The individual
@@ -1461,8 +1489,9 @@ The existing mixed formula has complexity 71 but seven expanded
 terms, whereas the new complexity-70 form has twelve. The known radiation
 formula at complexity 160 is still smaller than the automatically obtained
 232 form. These are useful comparisons, not evidence of a global minimum.
-The balanced six-point recursion retains unresolved spurious diagnostics and
-is tested as a resource stress case, not included in the all-checks-pass table.
+The balanced six-point recursion is a separate resource stress case. Its
+compound spurious factors now have conserved-curve checks; this does not
+establish success of the automatic diagram-completion algorithm.
 
 With preparation reports, `"PreparationRemainders" -> Automatic` first tries
 the prepared structures and grouped remainders, after the inexpensive input
@@ -1862,10 +1891,11 @@ lower-point model, not the cubic diagram model, and uses no Feynman input.
 The resulting Xi-free expression passed all 14 physical channels at two fresh
 exact coherent-spin samples each, three fresh independent-Xi Feynman
 comparisons, two exact high-energy samples with `E^-2` growth, and both
-supported bracket-pole checks. The automatic classifier still leaves 28
-composite denominator factors unclassified. Those obligations remain
-`UNRESOLVED`; these results are not a claim that every spurious pole has been
-automatically certified or that the expression is globally simplest.
+supported bracket-pole checks. The checker also identifies its 28 compound
+denominator factors and tests their cancellation together on exact conserved
+sample curves. Every requested pole remains visible in the report, and
+unsupported or unfinished checks remain `UNRESOLVED`. Sampled finiteness
+does not establish a global analytic cancellation or a simplest expression.
 
 The generator also records and rejects a new continuation whose physical
 propagators retain powers greater than one after ordinary cancellation. Its
@@ -1917,15 +1947,17 @@ Shared exact algebraic units in matrix columns and the right-hand side can
 be scaled out during linear elimination and restored afterward. Neither
 optimization changes the exact equations or the meaning of free parameters.
 For large rational systems, a bounded CRT reconstruction is tried before the
-native exact solve. It uses up to eight compatible primes and a separate unused
-prime, then certifies every original equation for both the particular solution
+native exact solve. It uses a bounded inventory of compatible primes (25 by
+default) and a separate unused prime, then certifies every original equation for both the particular solution
 and the complete independent free family using exact integer arithmetic. Its
 attempt receives the time remaining in `CompleteFactorization`, capped at
 900 seconds; an infinite outer limit still uses that finite cap. Other private
 solver calls keep the 60-second default. Exhausted budgets remain unresolved.
 Failed reconstructions and unlucky primes leave the existing exact solver as
 the fallback, still within the overall completion clock. This is not an
-approximate fit or a modular-only test.
+approximate fit or an uncertified modular test. A valid prime giving full
+coefficient-column rank and a larger augmented rank certifies exact
+inconsistency; a rank-deficient modular gap alone does not.
 For large rational systems, modular arithmetic can select a smaller square
 block. The solve remains exact: every original equation must certify both
 the consistent particular solution and the full independent free family.
@@ -2013,6 +2045,19 @@ local completion must be consistent with the specified theory. If the bounded
 space cannot satisfy the constraints, the report retains the failure rather
 than guessing extra physics. Nonzero undetermined directions give
 `"UNDERDETERMINED"`, not a unique final answer.
+
+A free coefficient can also multiply an expression that is identically zero.
+This previously caused false `UNDERDETERMINED` results for some five-point
+helicity orderings. Completion now removes only directions with an exact
+external-identity certificate: ordinary external reduction first, followed
+when needed by a symbolic rational parametrization of generic conserved,
+on-shell external momenta. Model parameters and all coherent massive-spin
+components remain symbolic. No internal line is put on shell, no known final
+amplitude is supplied, and numerical zero samples do not remove directions.
+Proof timeouts and unsupported expressions retain the original freedom.
+`"Output" -> "Details"` records the certificates in
+`"FamilyIdentityReduction"`. A genuine nonzero local ambiguity still remains
+`"UNDERDETERMINED"`.
 
 For difficult cases, retaining the factorization family's remaining freedom
 can help. This is an explicit optional workflow:

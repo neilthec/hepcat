@@ -240,6 +240,38 @@ check["certified rational simple poles use frozen automatic restrictions",
 check["the selected complement is canonicalized to the same simple pole",
   sixFrozenEvaluator[1/PropDen[Mom[Multiparticle @@ sixScalarTarget["Complement"]],
     sixScalarTarget["Mass"]]] === 1];
+check["factored simple-pole numerators are restricted without full rational expansion",
+  sixFrozenEvaluator[(2 + sixAdditivePole MomProd[1, 3])/sixAdditivePole] === 2 &&
+    sixFrozenEvaluator[(2 + sixAdditivePole MomProd[1, 3])
+      (3 + sixAdditivePole)/sixAdditivePole] === 6];
+check["polynomial numerators never hide inverse or nonpolynomial cut dependence",
+  MissingQ[sixFrozenEvaluator[(2 + sixAdditivePole MomProd[1, 3])/
+    (sixAdditivePole (sixAdditiveInvariant - sixScalarMass^2))]] &&
+    MissingQ[sixFrozenEvaluator[Sin[sixAdditivePole]/sixAdditivePole]] &&
+    MissingQ[sixFrozenEvaluator[1/(sixAdditivePole (1 + sixAdditivePole))]]];
+sixHiddenCoefficientExpression = (1 + sixAdditivePole/
+  (sixAdditiveInvariant - sixScalarMass^2))/sixAdditivePole;
+sixHiddenCoefficientFast = ConstructiveDiagrams`Private`completionLinearResidue[
+  {sixHiddenCoefficientExpression}, {}, sixScalarTarget, sixScalarTargets, sixAdditiveChart, 10];
+sixHiddenCoefficientExact = ConstructiveDiagrams`Private`completionLinearResidue[
+  {sixHiddenCoefficientExpression}, {}, sixScalarTarget, sixScalarTargets,
+  KeyDrop[sixAdditiveChart, "AutomaticCoherentChart"], 10];
+check["cut-singular polynomial coefficients fall back before explicit pole powers disappear",
+  MissingQ[sixFrozenEvaluator[sixHiddenCoefficientExpression]] &&
+    sixHiddenCoefficientFast["Status"] === "PASS" && sixHiddenCoefficientExact["Status"] === "PASS" &&
+    sixHiddenCoefficientFast["PhysicalResidue"] === 2 &&
+    sixHiddenCoefficientExact["PhysicalResidue"] === 2 &&
+    sixHiddenCoefficientFast["ComponentRestrictionMethods"] === {"ExactMappedRestriction"}];
+check["a hidden higher pole in a polynomial coefficient cannot fabricate a simple residue",
+  With[{expression = (1 + sixAdditivePole/
+      (sixAdditiveInvariant - sixScalarMass^2)^2)/sixAdditivePole},
+    MissingQ[sixFrozenEvaluator[expression]] &&
+      ConstructiveDiagrams`Private`completionLinearResidue[{expression}, {}, sixScalarTarget,
+        sixScalarTargets, sixAdditiveChart, 10]["Status"] === "UNRESOLVED"]];
+check["regular polynomial coefficients may vanish on the cut without forcing expansion",
+  sixFrozenEvaluator[(2 + sixAdditivePole (sixAdditiveInvariant - sixScalarMass^2))/
+    sixAdditivePole] === 2 &&
+    sixFrozenEvaluator[(sixAdditiveInvariant - sixScalarMass^2)/sixAdditivePole] === 0];
 check["a hidden invariant pole declines the frozen shortcut before cancellation",
   MissingQ[sixFrozenEvaluator[1/(sixAdditiveInvariant - sixScalarMass^2)^2]] &&
     sixCancellationResult["ComponentRestrictionMethods"][[2]] === "ExactMappedRestriction"];
@@ -648,7 +680,7 @@ check["the balanced example agrees with an independent fresh Feynman point in ev
    diagram route. It supplies only generated diagrams, channels and the model;
    neither a final amplitude nor a correction basis enters construction. *)
 sixCompactOldChecks = checks;
-check["the original default six-point regression inventory remains intact", sixCompactOldChecks === 96];
+check["the original default six-point regression inventory and all cut-evaluator regressions remain intact", sixCompactOldChecks === 101];
 sixCompactChecks = 0;
 sixCompactCheck[name_, value_] := (sixCompactChecks++; check[name, value]);
 Print["Preparing twenty-four fresh all-positive physical-reference diagrams."];
@@ -848,14 +880,14 @@ If[Environment["HEPCAT_TEST_FULL_BALANCED_SIX_POINT"] === "1",
     sixBalancedFullCheck["HighEnergyCheck"]["Status"] === "PASS"];
   check["the full balanced example has no remaining external reference dependence",
     sixBalancedFullCheck["ReferenceCheck"]["Status"] === "PASS"];
-  check["the two classified spurious bracket poles pass their sampled limits",
+  check["all thirty classified spurious poles pass their sampled cancellation checks",
     With[{rows = Select[sixBalancedFullCheck["SpuriousChecks"],
         Lookup[Lookup[#, "Discovery", <||>], "Classification", None] === "Spurious" &]},
-      Length[rows] === 2 && AllTrue[rows, #["Status"] === "PASS" &]]];
-  check["unsupported discovered denominator factors stay unresolved instead of silently passing",
-    AllTrue[Select[sixBalancedFullCheck["SpuriousChecks"],
-      Lookup[Lookup[#, "Discovery", <||>], "Classification", None] === "Unclassified" &],
-      #["Status"] === "UNRESOLVED" &]];
+      Length[rows] === 30 && AllTrue[rows, #["Status"] === "PASS" &]]];
+  check["the balanced example has no unclassified or unfinished spurious obligations",
+    FreeQ[Lookup[Lookup[sixBalancedFullCheck["SpuriousChecks"], "Discovery"],
+      "Classification"], "Unclassified"] &&
+      AllTrue[sixBalancedFullCheck["SpuriousChecks"], #["Status"] === "PASS" &]];
 ];
 
 If[Environment["HEPCAT_TEST_FULL_SIX_POINT"] === "1",

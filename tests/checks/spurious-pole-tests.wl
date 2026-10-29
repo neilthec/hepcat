@@ -242,12 +242,19 @@ check["raw cancelled denominators remain visible and are checked on the full sum
     spRawCancelled["SpuriousSummary"] === <|"PASS" -> 1|>];
 spMixedChain = SpinorChain[Spinor["Helicity", "Angle", 3], Mom[1],
   Spinor["Helicity", "Square", 4]];
-spUnsupportedAuto = spAutoNoPhysical[1/spMixedChain];
-check["unsupported momentum-chain denominator surfaces instead of disappearing",
+spMixedAuto = spAutoNoPhysical[1/spMixedChain];
+check["mixed momentum-chain denominators receive actual cancellation checks",
+  spMixedAuto["SpuriousSummary"] === <|"FAIL" -> 1|> &&
+    First[spMixedAuto["SpuriousChecks"]]["PoleOrder"] === 1 &&
+    AnyTrue[spMixedAuto["PoleDiscovery"], #["Classification"] === "Spurious" &]];
+spUnsupportedChain = SpinorChain[Spinor["Helicity", "Angle", 3], Mom[7],
+  Spinor["Helicity", "Square", 4]];
+spUnsupportedAuto = spAutoNoPhysical[1/spUnsupportedChain];
+check["unknown momentum-chain denominator surfaces instead of disappearing",
   spUnsupportedAuto["SpuriousSummary"] === <|"UNRESOLVED" -> 1|> &&
     AnyTrue[spUnsupportedAuto["PoleDiscovery"],
       #["Classification"] === "Unclassified" && #["Diagnostics"] =!= {} &]];
-spUnsupportedValues = CheckPhysicalResidues[{spExternalRules, 1/spMixedChain}, {}, prModel,
+spUnsupportedValues = CheckPhysicalResidues[{spExternalRules, 1/spUnsupportedChain}, {}, prModel,
   "Samples" -> 1, "ParameterRules" -> {prElectronMass -> 1}, "Output" -> "Residues"];
 check["uncomputed spurious values remain missing rather than fabricated zeros",
   Head[spUnsupportedValues] === Dataset &&
@@ -471,6 +478,250 @@ spMetadataResult = First[ConstructiveDiagrams`Private`spuriousCheckReport[
   "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "TimeConstraint" -> 20]];
 check["a metadata-only chart descriptor does not invent a physical pole guard",
   spMetadataResult["Status"] === "FAIL"];
+
+(* Compound factors use conserved rational curves and exact polynomial gcds.
+   Every root is checked at once, without solving for one selected branch. *)
+spScalarCompound = 1 + MomProd[1, 3] MomProd[1, 4];
+spCompoundRows = ConstructiveDiagrams`Private`spuriousCheckReport[
+  1/spMixedChain^2 + 1/spScalarCompound^3,
+  {spMixedChain, spScalarCompound}, prTargets, "Samples" -> 2,
+  "RandomSeed" -> 887113, "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1},
+  "TimeConstraint" -> 20];
+check["uncancelled mixed and scalar compound poles fail with their actual orders",
+  Lookup[spCompoundRows, "Status"] === {"FAIL", "FAIL"} &&
+    Lookup[spCompoundRows, "PoleOrder"] === {2, 3}];
+check["compound certificates check every polynomial root away from physical poles",
+  AllTrue[spCompoundRows, AllTrue[#["Samples"],
+    TrueQ[#["AllPolynomialRootsChecked"]] &&
+      TrueQ[#["PhysicalPropagatorsNonzeroAtPoleRoots"]] &] &]];
+spCompoundCancelled = ConstructiveDiagrams`Private`spuriousCheckReport[
+  (spMixedChain + 7)/spMixedChain - 7/spMixedChain +
+    (spScalarCompound + 11)/spScalarCompound - 11/spScalarCompound,
+  {spMixedChain, spScalarCompound}, prTargets, "Samples" -> 2,
+  "RandomSeed" -> 887117, "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1},
+  "TimeConstraint" -> 20];
+check["compound apparent poles cancel only after checking the complete sum",
+  Lookup[spCompoundCancelled, "Status"] === {"PASS", "PASS"} &&
+    Lookup[spCompoundCancelled, "CompletedSamples"] === {2, 2}];
+spCompoundChart = First[First[spCompoundCancelled]["Samples"]]["Chart"];
+check["compound sample curves conserve momentum and every external mass shell identically",
+  ConstructiveDiagrams`Private`residueExactZero[Total[Values[spCompoundChart["Momenta"]]]] &&
+    AllTrue[Keys[spCompoundChart["Momenta"]],
+      ConstructiveDiagrams`Private`residueExactZero[
+        Det[spCompoundChart["Momenta"][#]] - spCompoundChart["Masses"][#]^2] &]];
+check["the massless spinor mixing is exactly nilpotent and never activates internal cut spinors",
+  spCompoundChart["SpinorMixingU"].spCompoundChart["SpinorMixingV"] === 0 &&
+    spCompoundChart["AllowCutSpinors"] === False &&
+    AllTrue[spCompoundChart["SpinorMixingLegs"],
+      ConstructiveDiagrams`Private`residueExactZero[
+        Outer[Times, spCompoundChart["Angle"][#], spCompoundChart["Square"][#]] -
+          spCompoundChart["Momenta"][#]] &]];
+check["compound curves vary the massive-pair invariant and have no coordinate denominator boundaries",
+  Exponent[ConstructiveDiagrams`Private`residueEvaluateChart[MomProd[1, 2],
+      spCompoundChart, {prElectronMass -> 1}], spCompoundChart["PoleVariable"]] > 0 &&
+    AllTrue[Flatten[Join[Values[spCompoundChart["Momenta"]], Values[spCompoundChart["Angle"]],
+      Values[spCompoundChart["Square"]]]], PolynomialQ[#, spCompoundChart["PoleVariable"]] &]];
+spHiddenMassiveFactor = SpinorChain[Spinor["Helicity", "Angle", 3], Mom[1], Mom[2],
+    Spinor["Helicity", "Angle", 4]] +
+  SpinorChain[Spinor["Helicity", "Angle", 3], Mom[2], Mom[1],
+    Spinor["Helicity", "Angle", 4]] - 7 spAngle34;
+spHiddenMetadata = Join[First[prTargets], <|"Cut" -> {1, 2}, "Complement" -> {3, 4, 5},
+  "Mass" -> 0, "KinematicMetadataOnly" -> True|>];
+spHiddenMassiveCheck = First[ConstructiveDiagrams`Private`spuriousCompoundCheck[
+  spAngle34/spHiddenMassiveFactor, {spHiddenMassiveFactor}, {spHiddenMetadata}, 20, 2, 887117,
+  {prElectronMass -> 1, prElectricCharge -> 1}, Automatic]["Rows"]];
+check["a Clifford-hidden massive invariant pole cannot pass through a frozen massless curve",
+  spHiddenMassiveCheck["Status"] === "FAIL" && spHiddenMassiveCheck["PoleOrder"] === 1];
+check["inhomogeneous little-group factors remain unsupported rather than receiving a partial certificate",
+  !ConstructiveDiagrams`Private`poleRationalCurveFactorQ[
+    spMixedChain + 1, First[prTargets]]];
+spThreeMassiveMetadata = <|"ExternalLegs" -> Range[7],
+  "ExternalMassRules" -> Thread[(Mass /@ Range[7]) ->
+    {prElectronMass, prElectronMass, prElectronMass, 0, 0, 0, 0}]|>;
+check["compound curves decline more than two massive legs conservatively",
+  !ConstructiveDiagrams`Private`poleRationalCurveFactorQ[
+    SpinorChain[Spinor["Helicity", "Angle", 4], Mom[1], Spinor["Helicity", "Square", 5]],
+    spThreeMassiveMetadata]];
+check["compound curves decline only two massless legs without changing ordinary bracket charts",
+  !ConstructiveDiagrams`Private`poleRationalCurveFactorQ[spMixedChain,
+    <|"ExternalLegs" -> Range[4], "ExternalMassRules" -> Thread[(Mass /@ Range[4]) ->
+      {prElectronMass, prElectronMass, 0, 0}]|>]];
+spBothBranches = ConstructiveDiagrams`Private`spuriousCompoundCheck[
+  1/spAngle34, {spAngle34 spSquare34}, prTargets, 20, 1, 887123,
+  {prElectronMass -> 1, prElectricCharge -> 1}, Automatic]["Rows"];
+check["a compound product cannot pass by checking only its harmless chiral component",
+  First[spBothBranches]["Status"] === "FAIL" &&
+    First[spBothBranches]["PoleOrder"] === 1];
+spCoincidentCompound = ConstructiveDiagrams`Private`spuriousCompoundCheck[
+  0, {spPhysicalPropagator}, prTargets, 20, 1, 887129,
+  {prElectronMass -> 1, prElectricCharge -> 1}, Automatic]["Rows"];
+check["compound checking cannot certify a supplied physical pole as spurious",
+  First[spCoincidentCompound]["Status"] === "UNRESOLVED" &&
+    AnyTrue[First[spCoincidentCompound]["Diagnostics"], StringContainsQ[#, "physical pole"] &]];
+Do[
+  spConstantCompound = ConstructiveDiagrams`Private`spuriousCompoundCheck[
+    0, {constant}, prTargets, 20, 1, 887131,
+    {prElectronMass -> 1, prElectricCharge -> 1}, Automatic]["Rows"];
+  check["a constant or zero curve polynomial cannot fabricate a pole pass " <> ToString[constant],
+    First[spConstantCompound]["Status"] === "UNRESOLVED" &&
+      First[spConstantCompound]["CompletedSamples"] === 0], {constant, {0, 1}}];
+check["unknown and inexact polynomial coefficients do not receive exact gcd certificates",
+  MissingQ[ConstructiveDiagrams`Private`spuriousCurveRationalData[spUnknownCoefficient z, z]] &&
+    MissingQ[ConstructiveDiagrams`Private`spuriousCurveRationalData[0.1 z, z]]];
+spMixedOrdering = ConstructiveDiagrams`Private`spuriousCheckReport[0,
+  {spMixedChain, spAngle34, spScalarCompound, spUnsupportedChain}, prTargets,
+  "Samples" -> 1, "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1},
+  "TimeConstraint" -> 20];
+check["grouped compound jobs preserve the supplied pole order and unresolved rows",
+  Lookup[spMixedOrdering, "Pole"] === {spMixedChain, spAngle34, spScalarCompound, spUnsupportedChain} &&
+    Lookup[spMixedOrdering, "Status"] === {"PASS", "PASS", "PASS", "UNRESOLVED"}];
+
+spBalancedModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+spBalancedExample = qedBalancedSixPointAmplitude[spBalancedModel,
+  "ReturnDetails" -> True, "ProgressReporting" -> False];
+spBalancedChannels = FactorizationAmplitudeChannels[spBalancedExample["Particles"], spBalancedModel];
+spBalancedNormalized = ConstructiveDiagrams`Private`residueSimpleInputs[
+  {spBalancedExample["ExternalMassRules"], spBalancedExample["Amplitude"]},
+  spBalancedChannels, spBalancedModel];
+spBalancedInventory = ConstructiveDiagrams`Private`poleDiscoverDenominators[
+  spBalancedNormalized["Expression"], spBalancedNormalized["Targets"], spBalancedNormalized["Records"]];
+spBalancedCompoundFactors = Lookup[Select[spBalancedInventory,
+  ConstructiveDiagrams`Private`poleRationalCurveFactorQ[#["CanonicalFactor"],
+    First[spBalancedNormalized["Targets"]]] &], "CanonicalFactor"];
+check["the actual balanced six-point expression has no unclassified denominator factors",
+  Counts[Lookup[spBalancedInventory, "Classification"]] === <|"Physical" -> 14, "Spurious" -> 30|> &&
+    Length[spBalancedCompoundFactors] === 28];
+spBalancedCompoundBefore = spBalancedNormalized["Expression"];
+{spBalancedCompoundSeconds, spBalancedCompoundChecks} = AbsoluteTiming[
+  ConstructiveDiagrams`Private`spuriousCheckReport[spBalancedNormalized["Expression"],
+    spBalancedCompoundFactors, spBalancedNormalized["Targets"], "Samples" -> 2,
+    "RandomSeed" -> 887147, "ParameterRules" -> ModelParameterRules[spBalancedModel],
+    "TimeConstraint" -> 30]];
+Print["Balanced six-point compound-pole checks: ", spBalancedCompoundSeconds, " s."];
+check["all twenty-eight actual compound denominators cancel on two fresh conserved curves",
+  Length[spBalancedCompoundChecks] === 28 &&
+    AllTrue[spBalancedCompoundChecks, #["Status"] === "PASS" && #["CompletedSamples"] === 2 &]];
+check["the actual full amplitude stays unchanged and every compound root is certified",
+  spBalancedNormalized["Expression"] === spBalancedCompoundBefore &&
+    AllTrue[spBalancedCompoundChecks, AllTrue[#["Samples"],
+      TrueQ[#["AllPolynomialRootsChecked"]] &&
+        TrueQ[#["PhysicalPropagatorsNonzeroAtPoleRoots"]] &] &]];
+spBalancedNegativeChart = First[First[spBalancedCompoundChecks]["Samples"]]["Chart"];
+spBalancedNegativeVariable = spBalancedNegativeChart["PoleVariable"];
+spBalancedNegativeRules = ModelParameterRules[spBalancedModel];
+spBalancedCurveData = ConstructiveDiagrams`Private`spuriousCurveRationalData[
+  ConstructiveDiagrams`Private`spuriousEvaluateCurve[spBalancedCompoundBefore,
+    spBalancedNegativeChart, spBalancedNegativeRules], spBalancedNegativeVariable];
+spBalancedPhysicalData = ConstructiveDiagrams`Private`spuriousCurveRationalData[
+  ConstructiveDiagrams`Private`residueEvaluateChart[#["Propagator"],
+    spBalancedNegativeChart, spBalancedNegativeRules], spBalancedNegativeVariable] & /@
+      spBalancedNormalized["Targets"];
+spBalancedInjectedPoles = Function[factor, Module[{mappedFactor, modified, certificate},
+  mappedFactor = ConstructiveDiagrams`Private`residueEvaluateChart[
+    factor, spBalancedNegativeChart, spBalancedNegativeRules];
+  modified = ConstructiveDiagrams`Private`spuriousCurveRationalData[
+    spBalancedCurveData["Numerator"]/spBalancedCurveData["Denominator"] + 1/mappedFactor^2,
+    spBalancedNegativeVariable];
+  certificate = ConstructiveDiagrams`Private`spuriousCurveCertificate[factor, modified,
+    spBalancedPhysicalData, spBalancedNegativeChart, spBalancedNegativeRules];
+  AssociationQ[certificate] && certificate["Status"] === "FAIL" && certificate["PoleOrder"] >= 2
+]] /@ spBalancedCompoundFactors;
+check["injecting an uncancelled double pole at each actual compound factor fails every certificate",
+  spBalancedInjectedPoles === ConstantArray[True, 28]];
+check["compound sampling restores original physical masses after choosing dimensionless units",
+  spBalancedNegativeChart["KinematicScale"] === Abs[ModelParameter[spBalancedModel, "Me"] /. spBalancedNegativeRules] &&
+    spBalancedNegativeChart["NumericalParametersUnchanged"] === True &&
+    spBalancedNegativeChart["Masses"][1] === (ModelParameter[spBalancedModel, "Me"] /. spBalancedNegativeRules) &&
+    spBalancedNegativeChart["DimensionlessExternalMasses"][1] === 1 &&
+    ModelParameterRules[spBalancedModel] === spBalancedNegativeRules];
+check["scaled massive angle and square bases retain their physical mass determinants",
+  AllTrue[Keys[spBalancedNegativeChart["AngleBasis"]],
+    ConstructiveDiagrams`Private`residueExactZero[
+      Det[spBalancedNegativeChart["AngleBasis"][#]] - spBalancedNegativeChart["Masses"][#]] &&
+      ConstructiveDiagrams`Private`residueExactZero[
+        Det[spBalancedNegativeChart["SquareBasis"][#]] - spBalancedNegativeChart["Masses"][#]] &]];
+spScaledCoherentChart = ConstructiveDiagrams`Private`completionHECoherentChart[spBalancedNegativeChart];
+check["mass-normalized curves preserve the full coherent massive Dirac equation",
+  AllTrue[{1, 2}, Function[leg, ConstructiveDiagrams`Private`residueExactZero[
+    ConstructiveDiagrams`Private`residueEvaluateChart[
+      SpinorChain[Spinor["Spin", "Angle", leg], Mom[leg], Spinor["Helicity", "Square", 3]] -
+        spScaledCoherentChart["Masses"][leg] SpinorChain[Spinor["Spin", "Square", leg],
+          Spinor["Helicity", "Square", 3]], spScaledCoherentChart, spBalancedNegativeRules]]]]];
+spPrimitiveCacheTrial = spCacheCoefficient prSpinAngle[1, 2]/spMixedChain^2 +
+  spCacheCoefficient (MomProd[1, 3] + 2 MomProd[1, 4])/spScalarCompound;
+check["call-local primitive reduction preserves exact curve values and every coherent spin component",
+  ConstructiveDiagrams`Private`residueExactZero[
+    ConstructiveDiagrams`Private`spuriousEvaluateCurve[
+      spPrimitiveCacheTrial, spScaledCoherentChart, spBalancedNegativeRules] -
+    ConstructiveDiagrams`Private`residueEvaluateChart[
+      spPrimitiveCacheTrial, spScaledCoherentChart, spBalancedNegativeRules]]];
+{spSharedBudgetSeconds, spSharedBudget} = AbsoluteTiming[Block[
+  {ConstructiveDiagrams`Private`spuriousEvaluateCurve = Function[{expression, chart, rules},
+    Pause[0.025]; Missing["DeliberatelySlowCurve"]]},
+  ConstructiveDiagrams`Private`spuriousCompoundCheck[0, ConstantArray[spMixedChain, 100],
+    prTargets, 0.02, 100, 887191, {prElectronMass -> 1, prElectricCharge -> 1}, Automatic]]];
+check["compound groups share one clock instead of multiplying it by their pole count",
+  spSharedBudgetSeconds < 1 && Length[spSharedBudget["Rows"]] === 100 &&
+    AllTrue[spSharedBudget["Rows"], #["Status"] === "UNRESOLVED" &&
+      #["TimeConstraint"] === 0.02 && #["TimeConstraintScope"] === "SharedCompoundPoleGroup" &]];
+
+spAffineUnknowns = {spRegularCoefficient, spDoubleCoefficient, spSimpleCoefficient, spSpinCoefficient};
+spAffineTrial = spRegularCoefficient + spDoubleCoefficient prSpinAngle[1, 2]/spMixedChain^2 +
+  spSimpleCoefficient/spMixedChain + spSpinCoefficient spSquare34/spMixedChain;
+spAffineReport = ConstructiveDiagrams`Private`spuriousCompoundConstraints[
+  spAffineTrial, spAffineUnknowns, {spMixedChain}, prTargets, First[prTargets],
+  2, 887201, {prElectronMass -> 1, prElectricCharge -> 1}, 20];
+check["compound completion generates exact affine equations without fitting a reference amplitude",
+  spAffineReport["Status"] === "COMPLETE" && Length[spAffineReport["Samples"]] === 2 &&
+    spAffineReport["Equations"] =!= {} &&
+    AllTrue[spAffineReport["Equations"] /. Thread[Rest[spAffineUnknowns] -> 0],
+      ConstructiveDiagrams`Private`residueExactZero]];
+check["regular affine directions are retained rather than invented or silently fixed",
+  FreeQ[spAffineReport["Equations"], spRegularCoefficient]];
+check["every pole-producing affine direction is constrained in all massive-spin components",
+  AllTrue[Rest[spAffineUnknowns], Function[unknown, With[
+    {assignment = Thread[spAffineUnknowns -> (Boole[# === unknown] & /@ spAffineUnknowns)]},
+    AnyTrue[spAffineReport["Equations"] /. assignment,
+      !ConstructiveDiagrams`Private`residueExactZero[#] &]]]] &&
+    AllTrue[spAffineReport["Samples"], Length[#["Chart"]["SpinVariables"]] === 2 &]];
+check["affine compound constraints eliminate curve and coherent-spin variables coefficientwise",
+  AllTrue[spAffineReport["Samples"], Function[sample,
+    AllTrue[Join[{sample["Chart"]["PoleVariable"]}, sample["Chart"]["SpinVariables"]],
+      FreeQ[spAffineReport["Equations"], #] &]]]];
+check["compound remainders retain the full double-pole denominator multiplicity",
+  AllTrue[spAffineReport["Samples"], Function[sample,
+    With[{row = First[sample["CompoundPoles"]], variable = sample["Chart"]["PoleVariable"]},
+      row["AllPolynomialRootsConstrained"] === True &&
+        row["PhysicalPropagatorsNonzeroAtPoleRoots"] === True &&
+        Exponent[row["SupportedDenominator"], variable] === 2 Exponent[row["PolePolynomial"], variable]]]]];
+Do[
+  spBadAffineReport = ConstructiveDiagrams`Private`spuriousCompoundConstraints[
+    bad, {spSimpleCoefficient}, {spMixedChain}, prTargets, First[prTargets],
+    1, 887211, {prElectronMass -> 1, prElectricCharge -> 1}, 20];
+  check["non-affine compound fitting stays unresolved " <> ToString[bad, InputForm],
+    spBadAffineReport["Status"] === "UNRESOLVED"],
+  {bad, {1/(spMixedChain + spSimpleCoefficient), spSimpleCoefficient^2/spMixedChain}}];
+spAffineTimed = ConstructiveDiagrams`Private`spuriousCompoundConstraints[
+  spAffineTrial, spAffineUnknowns, {spMixedChain}, prTargets, First[prTargets],
+  2, 887213, {prElectronMass -> 1, prElectricCharge -> 1}, 0.000001];
+check["compound coefficient generation reports timeouts without accepting a partial fit",
+  spAffineTimed["Status"] === "UNRESOLVED"];
+spIntegratedCompound = ConstructiveDiagrams`Private`completionHESpuriousConstraints[
+  spAffineTrial, spAffineUnknowns, <|"Targets" -> prTargets, "Records" -> {}|>,
+  First[prTargets], 2, 887201, {prElectronMass -> 1, prElectricCharge -> 1},
+  Automatic, False, 20];
+check["the completion dispatcher groups compound poles into exact coefficient constraints",
+  spIntegratedCompound["Status"] === "COMPLETE" &&
+    spIntegratedCompound["Equations"] === spAffineReport["Equations"] &&
+    AllTrue[spIntegratedCompound["Samples"],
+      #["Method"] === "ExactConservedCurvePolynomialRemainder" &]];
+spIntegratedCompoundFit = ConstructiveDiagrams`Private`completionSolveLinear[
+  spIntegratedCompound["Equations"], spAffineUnknowns];
+check["the integrated exact solve removes all pole directions and retains regular freedom",
+  spIntegratedCompoundFit["Status"] === "UNDERDETERMINED" &&
+    spIntegratedCompoundFit["Rank"] === 3 &&
+    spIntegratedCompoundFit["FreeParameters"] === {spRegularCoefficient} &&
+    (Rest[spAffineUnknowns] /. spIntegratedCompoundFit["SolutionRules"]) === {0, 0, 0}];
 
 Print[checks, " spurious-pole checks; ", Length[failures], " failures."];
 If[failures =!= {}, Print[failures]; Quit[1]];

@@ -15,7 +15,7 @@ paCheckOptions = {"Output" -> "Details", "Samples" -> 1,
 paAlpha[value_] := Module[{symbols},
   symbols = DeleteDuplicates[Cases[value, symbol_Symbol /;
       StringMatchQ[SymbolName[Unevaluated[symbol]],
-        ("physicalPole" | "automaticCut" | "referencePole" | "inverseEnergyRoot" |
+        ("physicalPole" | "automaticCut" | "referencePole" | "spuriousCurve" | "inverseEnergyRoot" |
           "externalSpin" | "completionSpin" | "referenceCoordinate" |
           "unusedReferencePole" | "unusedBenchmarkPole") ~~ DigitCharacter ..] :>
         symbol, Infinity, Heads -> True]];
@@ -30,12 +30,28 @@ paAlpha[value_] := Module[{symbols},
     Symbol["ConstructiveDiagrams`Private`parallelCheckCoordinate" <> ToString[i]],
     {i, Length[symbols]}]]]
 ];
+paWithoutPreconditioningTime[expression_] := MapAll[Function[value,
+  If[AssociationQ[value] && KeyExistsQ[value, "AlgebraicPreconditioning"] &&
+      AssociationQ[value["AlgebraicPreconditioning"]],
+    Join[value, <|"AlgebraicPreconditioning" ->
+      KeyDrop[value["AlgebraicPreconditioning"], "ElapsedTime"]|>], value]], expression];
 paSemantic[report_Association] := Association[KeyValueMap[Function[{key, value},
   key -> Switch[key,
     "Channels" | "SpuriousChecks" | "Checks", paAlpha /@ value,
     "Table" | "SpuriousTable" | "HighEnergyTable" | "ReferenceTable" |
       "FeynmanTable", paAlpha /@ Normal[value],
-    _, paAlpha[value]]], KeyDrop[report, "Execution"]]];
+    _, paAlpha[value]]], KeyDrop[paWithoutPreconditioningTime[report], "Execution"]]];
+paTimingFixture = <|"HighEnergyCheck" -> <|"Status" -> "PASS",
+  "AlgebraicPreconditioning" -> <|"Status" -> "REDUCED", "ElapsedTime" -> 1,
+    "OriginalTerms" -> 4, "ReducedTerms" -> 2|>|>|>;
+paRetimedFixture = ReplacePart[paTimingFixture,
+  {"HighEnergyCheck", "AlgebraicPreconditioning", "ElapsedTime"} -> 99];
+check["semantic comparisons ignore only preconditioning time, retaining its result and term counts",
+  paSemantic[paTimingFixture] === paSemantic[paRetimedFixture] &&
+    paSemantic[paTimingFixture] =!= paSemantic[ReplacePart[paRetimedFixture,
+      {"HighEnergyCheck", "AlgebraicPreconditioning", "ReducedTerms"} -> 3]] &&
+    paSemantic[paTimingFixture] =!= paSemantic[ReplacePart[paRetimedFixture,
+      {"HighEnergyCheck", "Status"} -> "FAIL"]]];
 check["parallel controls are exposed by the checker and compatibility alias",
   AllTrue[{CheckAmplitudes, CheckPhysicalResidues},
     ("Parallelization" /. Options[#]) === Automatic &&
@@ -123,6 +139,29 @@ paSpuriousFailure = ConstructiveDiagrams`Private`amplitudeCheckJobResult[
 check["failed spurious workers retain their pole rather than disappearing",
   paSpuriousFailure["Status"] === "UNRESOLVED" &&
     paSpuriousFailure["Pole"] === prAngle[3, 4]];
+paCompoundFactors = {SpinorChain[Spinor["Helicity", "Angle", 3], Mom[1],
+  Spinor["Helicity", "Square", 4]], 1 + MomProd[1, 3] MomProd[1, 4]};
+paCompoundJobs = ConstructiveDiagrams`Private`spuriousGroupJobs[
+  (<|"Group" -> "Spurious", "Kind" -> "Spurious", "Arguments" -> {
+    0, #, prTargets, 20, 2, 891047,
+    {prElectronMass -> 1, prElectricCharge -> 1}, Automatic}|> &) /@ paCompoundFactors];
+paCompoundDispatchJobs = Append[paCompoundJobs,
+  <|"Group" -> "Reference", "Kind" -> "Constant", "Value" -> <|"Status" -> "PASS"|>|>];
+paCompoundSerial = ConstructiveDiagrams`Private`amplitudeCheckDispatch[
+  paCompoundDispatchJobs, <|"Parallelization" -> False, "MaxKernels" -> 2|>];
+paCompoundParallel = ConstructiveDiagrams`Private`amplitudeCheckDispatch[
+  paCompoundDispatchJobs, <|"Parallelization" -> True, "MaxKernels" -> 2|>];
+check["compound poles share one worker calculation without dropping either obligation",
+  Length[paCompoundJobs] === 1 && First[paCompoundJobs]["Kind"] === "CompoundSpurious" &&
+    With[{rows = First[paCompoundParallel["Results"]]["Rows"]}, Length[rows] === 2 &&
+      AllTrue[rows, #["Status"] === "PASS" && #["CompletedSamples"] === 2 &]]];
+check["serial and parallel compound certificates use identical exact sample curves",
+  paAlpha[paCompoundSerial["Results"]] === paAlpha[paCompoundParallel["Results"]]];
+paCompoundFailure = ConstructiveDiagrams`Private`spuriousExpandJobResults[
+  paCompoundJobs, {<|"Status" -> "UNRESOLVED"|>}];
+check["an interrupted compound worker retains every original pole as unresolved",
+  Lookup[paCompoundFailure, "Pole"] === paCompoundFactors &&
+    Lookup[paCompoundFailure, "Status"] === {"UNRESOLVED", "UNRESOLVED"}];
 Do[check["invalid parallel option is rejected " <> ToString[bad, InputForm],
   Quiet[CheckAmplitudes[prH, prChannels, prFixtureModel, bad]] === $Failed],
   {bad, {"Parallelization" -> "Sometimes", "Parallelization" -> 2,

@@ -13538,7 +13538,7 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.-,A.+,A.+", "Chapter", ExpressionUUID->"30268457-ceb6-5ada-9ca0-39bbe417f399"],
 
-Cell["This ordering completed factorization in the notebook smoke test, but high-energy completion left undetermined correction directions. The strict wrapper returned Failure, so no validated final expression is claimed for this calculation yet.", "Text", ExpressionUUID->"0451a7f9-3405-5d2d-9ae1-da9bdf177f7d"],
+Cell["This ordering now completes automatically. The apparent high-energy freedom consisted of expressions proved identically zero using external identities and momentum conservation. Final checks, including the independent Feynman comparison, passed. Evaluate the calculation below to obtain a fresh result.", "Text", ExpressionUUID->"0451a7f9-3405-5d2d-9ae1-da9bdf177f7d"],
 
 Cell["qed5MPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"505d8c13-008c-5100-b989-cbbbf7637ebf"]
 
@@ -21350,7 +21350,7 @@ Cell[CellGroupData[{
 
 Cell["e,E,E,e,A.-", "Chapter", ExpressionUUID->"a580c69d-cf9b-5c7a-af95-9df454c158d7"],
 
-Cell["The smoke test completed factorization for this case, but high-energy completion left undetermined correction directions. The strict wrapper returned Failure rather than claiming a validated final expression.", "Text", ExpressionUUID->"7dbf9a87-9808-5c95-a673-9ed74906ec45"],
+Cell["This calculation now completes automatically. The apparent high-energy freedom consisted of expressions proved identically zero using external identities and momentum conservation. Final checks, including the independent Feynman comparison, passed. Evaluate the calculation below to obtain a fresh result.", "Text", ExpressionUUID->"7dbf9a87-9808-5c95-a673-9ed74906ec45"],
 
 Cell["qed5FourFermionsM = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllPhysical\",\n  \"PreparationOptions\" -> {\"MaxSteps\" -> 0},\n  \"FactorizationOptions\" -> {\"Samples\" -> 3, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 128, \"TimeConstraint\" -> 300},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"2ac0cb72-3082-5941-925b-b84b0bc3f0f4"]
 
@@ -27532,7 +27532,7 @@ Cell[CellGroupData[{Cell["e,E,A.+,A.+,A.-,A.-", "Chapter"],
 
 Cell["Construct and Check", "Section", ExpressionUUID->"d0ea60f9-9fe8-596d-952e-fb7f22b7885f"],
 
-Cell["Evaluate this cell after Setup. The wrapper generates and prepares the diagrams and factorization channels, completes and prepares the amplitude, then runs all final checks. The printed test report precedes the returned expression. The saved manual work remains available below. The earlier general completion did not finish this balanced-helicity case, and its separate recursion result still has unresolved compound spurious poles. This bounded wrapper attempt returns Failure if it cannot certify every required check; it does not silently substitute that recursion result.", "Text", ExpressionUUID->"26039431-c89a-5ead-9e82-153f2d487e70"],
+Cell["Evaluate this cell after Setup. The wrapper generates and prepares the diagrams and factorization channels, completes and prepares the amplitude, then runs all final checks. The printed test report precedes the returned expression. The saved manual work remains available below. The earlier general completion did not finish this balanced-helicity case. Its separate recursion result is a benchmark, and the checker now supports its compound spurious poles on conserved sample curves. This bounded wrapper attempt returns Failure if it cannot certify every required check; it does not silently substitute that recursion result.", "Text", ExpressionUUID->"26039431-c89a-5ead-9e82-153f2d487e70"],
 
 Cell["qed6PPMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"ReferenceSpinors\" -> \"AllSpurious\",\n  \"FactorizationOptions\" -> {\"Samples\" -> 2, \"ValidationSamples\" -> 1,\n    \"MaxCorrectionTerms\" -> 256, \"TimeConstraint\" -> 180},\n  Sequence @@ constructionOptions]", "Input", ExpressionUUID->"0819812a-ac06-5b2c-a5ba-f2599326e196"],
 
@@ -27543,12 +27543,7 @@ Cell["Earlier Step-by-Step Work (Optional)", "Section", ExpressionUUID->"6a956bf
 search did not close the factorization constraints. The successful \
 construction below instead sews complete known lower-point QED amplitudes \
 with an explicitly justified [5,3> shift. It is a worked QED recursion, not a \
-new universal completion algorithm.", "Text"], Cell["Physical residues, \
-independent Feynman comparisons, the E^-2 high-energy test and the two simple \
-bracket-pole tests pass at the sampled points. The automatic pole classifier \
-still leaves 28 compound denominator factors unclassified. Their cancellation \
-is not claimed to be numerically certified: the final report must keep those \
-rows UNRESOLVED.", "Text"],
+new universal completion algorithm.", "Text"], Cell["Physical residues, independent Feynman comparisons and the E^-2 high-energy test pass at the sampled points. The checker now handles both simple bracket poles and all 28 compound factors on exact conserved sample curves. These are numerical finiteness checks, not a global analytic cancellation proof. Evaluate the checks below for a fresh report.", "Text"],
    Cell[CellGroupData[{Cell["1. Diagrams and Preparation", "Section"],
       Cell["particles = {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \
 \"A.-\"};\ndiagrams = CreateDiagrams[particles, diagramModel];\nrawAmplitudes \
@@ -27622,12 +27617,7 @@ True];\nKeyTake[#, {\"Cut\", \"ShiftRoot\", \"ReferenceMode\"}] & /@ \
 recursionDetails[\"Channels\"]", "Input"],
          Cell["recursionDetails[\"Channels\"][[1]]", "Input"]}, Closed]],
       Cell[CellGroupData[{Cell["Saved Constructed Amplitude", "Subsection"],
-         Cell["This is the same eight-term expression, retained explicitly \
-rather than through a temporary file or compressed cache. Me and EE are \
-obtained from the selected factorization model when the cell is evaluated, so \
-moving the repository does not hardcode an old model scope. It is called \
-constructed, not fully verified, because the unclassified denominator tests \
-remain unresolved.", "Text"], Cell["savedConstructedAmplitude = With[{\n  \
+         Cell["This is the same eight-term expression, retained explicitly rather than through a temporary file or compressed cache. Me and EE are obtained from the selected factorization model when the cell is evaluated, so moving the repository does not hardcode an old model scope. This is a separate worked recursion example, rather than a fallback for automatic diagram completion. Run the checks below to validate this expression with the current code.", "Text"], Cell["savedConstructedAmplitude = With[{\n  \
 qedSavedMass = ModelParameter[factorizationModel, \"Me\"],\n  qedSavedCharge \
 = ModelParameter[factorizationModel, \
 \"EE\"]},\n(-4*qedSavedCharge^4*(qedSavedMass*SpinorChain[Spinor[\"Helicity\"\

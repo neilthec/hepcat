@@ -796,12 +796,14 @@ success into failure.
 Exact common algebraic units may be removed from matrix columns and the right-hand
 side for rational elimination; restore the original coefficient and free-variable
 scales in solution rules. Large rational systems first try a bounded, 60-second
-CRT reconstruction using at most eight compatible primes and a separate unused
-prime check. Accept only after an exact integer-scaled certificate verifies every
+CRT reconstruction using its bounded prime inventory (25 primes by default)
+and a separate unused-prime check. Accept only after an exact integer-scaled certificate verifies every
 original equation for the particular solution and all independent free directions;
 the modular rank lower bound then certifies completeness. Failed reconstruction,
 bad primes or timeouts fall through to the existing exact solver, never to an
-approximate fit or a modular-only verdict. Large rational systems can select a
+approximate fit or an uncertified modular verdict. Full coefficient-column rank
+and a larger augmented rank modulo a valid prime certify exact inconsistency;
+a rank-deficient modular gap does not. Large rational systems can select a
 square block using modular arithmetic, but must solve it exactly and certify every original row
 for a consistent particular solution and the complete independent free family.
 An original row with an exact nonzero constant residual and zero dependence
@@ -846,6 +848,34 @@ unrestricted contact basis or new independent QED interaction is inferred.
 Respect the specified theory and report insufficient correction spaces or
 unfixed directions honestly. The default bound remains the renormalizable
 tree hypothesis `E^(4-n)` and can be overridden.
+
+Before interpreting free coefficients as missing physics, distinguish true
+correction freedom from identity-zero expressions. High-energy completion
+first tries ordinary external preparation, then a bounded symbolic rational
+chart covering generic conserved external kinematics. The latter retains
+symbolic parameters and coherent spin components and constrains no internal
+line. Only an exact zero certificate removes a direction; unsupported forms
+and proof timeouts retain it. Details expose `"FamilyIdentityReduction"`.
+Preserve the typed Lorentz-scalar, chirality, little-group and branch guards;
+neither finite zero samples nor a special-frame component proves an identity.
+Genuine contact freedom remains `UNDERDETERMINED`.
+
+Compound spurious poles can be checked together on exact conserved rational
+curves. Polynomial coprimality checks all roots on each curve while rejecting
+roots shared with physical poles. This is sampled finiteness evidence, not
+a global identity proof. Keep every original pole obligation and its status
+visible when grouping work; unsupported or unfinished checks stay unresolved.
+The new compound mode currently requires at least three massless and at most
+two massive external legs, typed covariant factors and homogeneous massless
+weights. Its curve varies the massive-pair invariant as well as the massless
+spinors, so a hidden massive-invariant pole cannot be frozen away. Ordinary
+bracket and invariant checks retain their broader support.
+Compound poles share one checker `TimeConstraint` budget regardless of their
+count; unfinished rows remain explicit. Dimensionless chart generation must
+restore the original physical masses, momenta and spinor bases without
+rescaling an amplitude or fitting a sign. Preserve determinant and Dirac
+identities for every coherent massive-spin component. Exact primitive reuse
+is call-local and falls back to the whole evaluator for unsupported structures.
 
 Both completion stages default to 64 correction terms and a 60-second stage
 limit. They fit exact equations on sampled kinematics and validate independently;

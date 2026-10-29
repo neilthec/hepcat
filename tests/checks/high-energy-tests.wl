@@ -195,6 +195,37 @@ check["outgoing photon angle and square spinors reconstruct negative momentum ma
     heExactZero[(Outer[Times, heChart["Angle"][index],
       heChart["Square"][index]] - heChart["Momenta"][index]) /.
         heChartVariable -> 1/2]]]];
+check["fixed null directions use rational spinors without independent algebraic normalizations",
+  heChart["RationalMasslessSpinorLegs"] === {3, 4, 5} &&
+    AllTrue[Flatten[Values[KeyTake[heChart["Angle"], {3, 4, 5}]] heChartVariable],
+      MatchQ[#, _Integer | _Rational | _Complex] &]];
+heNullNormalization = Table[Module[{direction, radius, basis, normalizedAngle,
+    normalizedSquare, pivot, scale},
+  direction = heChart["OutgoingSpatialDirections"][[leg - 2]];
+  radius = Sqrt[direction.direction];
+  basis = ConstructiveDiagrams`Private`highEnergyDirectionBasis[direction];
+  normalizedAngle = -Sqrt[2 radius] basis[[All, 1]]/heChartVariable;
+  normalizedSquare = Sqrt[2 radius] Conjugate[basis[[All, 1]]]/heChartVariable;
+  pivot = SelectFirst[Range[2], !heExactZero[normalizedAngle[[#]]] &];
+  scale = Cancel[heChart["Angle"][leg][[pivot]]/normalizedAngle[[pivot]]];
+  FreeQ[scale, heChartVariable] && heExactZero[
+    heChart["Angle"][leg] - scale normalizedAngle] && heExactZero[
+    heChart["Square"][leg] - normalizedSquare/scale]], {leg, {3, 4, 5}}];
+check["rational null normalization is an exactly constant little-group rescaling",
+  And @@ heNullNormalization];
+heEnergyDependentNull = ConstructiveDiagrams`Private`highEnergyAutomaticChart[
+  1, <|"ExternalLegs" -> Range[4], "ExternalMassRules" ->
+    Thread[Mass /@ Range[4] -> {0, 1, 0, 0}]|>, 1, 1729, {}];
+check["energy-dependent null momenta retain the original normalization",
+  AssociationQ[heEnergyDependentNull] &&
+    !MemberQ[heEnergyDependentNull["RationalMasslessSpinorLegs"], 1] &&
+    ContainsAll[heEnergyDependentNull["RationalMasslessSpinorLegs"], {3, 4}]];
+heInhomogeneousNull = ConstructiveDiagrams`Private`highEnergyAutomaticChart[
+  1 + prAngle[3, 4], heQEDMetadata, 1, 1729, {prElectronMass -> 1}];
+check["inhomogeneous helicity sums retain their original relative normalizations",
+  AssociationQ[heInhomogeneousNull] &&
+    heInhomogeneousNull["RationalMasslessSpinorLegs"] === {} &&
+    heInhomogeneousNull["HomogeneousExternalSpinWeights"] === False];
 check["coherent massive spin variables retain every physical-spin coefficient",
   Length[heChart["SpinVariables"]] === 2 &&
     Keys[heChart["ExternalSpinVectors"]] === {1, 2}];
@@ -253,6 +284,61 @@ check["omitting the known SM contact exposes longitudinal E squared growth",
     AllTrue[heSMWithoutContact["Samples"], AnyTrue[#["Components"],
       Function[component, component["Power"] === 2 &&
         Take[Last /@ component["SpinMonomial"], -2] === {1, 1}]] &]];
+
+(* The small default electron mass used to make this exact expansion exceed
+   180 seconds before even one sample. The eight lower-amplitude recursion
+   terms must still be summed before any growth coefficient is judged. *)
+heBalancedModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+heBalancedData = qedBalancedSixPointAmplitude[heBalancedModel,
+  "ReturnDetails" -> True, "ProgressReporting" -> False];
+heBalancedMetadata = <|"ExternalLegs" -> Range[6],
+  "ExternalMassRules" -> heBalancedData["ExternalMassRules"]|>;
+heBalancedRules = ModelParameterRules[heBalancedModel];
+heBalanced = ConstructiveDiagrams`Private`highEnergyCheckReport[
+  heBalancedData["Amplitude"], heBalancedMetadata, 2, 981417,
+  heBalancedRules, 30, Automatic];
+check["the actual eight-term balanced six-point result has exact E minus two falloff at default model masses",
+  heBalancedData["RecursionTermCount"] === 8 && heBalanced["Status"] === "PASS" &&
+    heBalanced["ObservedPower"] === -2 && Length[heBalanced["Samples"]] === 2 &&
+    AllTrue[heBalanced["Samples"], #["ObservedPower"] === -2 &]];
+heBalancedTinyGrowth = ConstructiveDiagrams`Private`highEnergyCheckReport[
+  heBalancedData["Amplitude"] (1 + MomProd[1, 2]^2/10^100),
+  heBalancedMetadata, 1, 981417, heBalancedRules, 30, Automatic];
+check["rational null normalization does not conceal an exact tiny growing coefficient",
+  heBalancedTinyGrowth["Status"] === "FAIL" &&
+    heBalancedTinyGrowth["ObservedPower"] === 2];
+heRegroupPolynomial = Expand[(heRegroupX + heRegroupY)^36/
+  PropDen[Mom[Multiparticle[1, 2]], 1]];
+heRegroupedPolynomial = ConstructiveDiagrams`Private`highEnergyRegroupTerms[
+  heRegroupPolynomial, 5];
+check["algebraic preconditioning preserves each exact denominator-group sum",
+  heRegroupedPolynomial["Status"] === "COMPLETE" &&
+    heRegroupedPolynomial["OutputLeafCount"] < heRegroupedPolynomial["InputLeafCount"] &&
+    Cancel[Together[heRegroupedPolynomial["Expression"] - heRegroupPolynomial]] === 0];
+heRegroupFloatingPolynomial = Expand[heRegroupPolynomial/10.^100];
+heRegroupedFloating = ConstructiveDiagrams`Private`highEnergyRegroupTerms[
+  heRegroupFloatingPolynomial, 5];
+check["preconditioning exactifies floating coefficients before polynomial factorization",
+  heRegroupedFloating["Status"] === "COMPLETE" &&
+    FreeQ[heRegroupedFloating["Expression"], _Real] &&
+    Cancel[Together[heRegroupedFloating["Expression"] -
+      Rationalize[heRegroupFloatingPolynomial, 0]]] === 0];
+heBalancedChannels = FactorizationAmplitudeChannels[
+  {"e", "E", "A.+", "A.+", "A.-", "A.-"}, heBalancedModel];
+heBalancedInputs = ConstructiveDiagrams`Private`residueSimpleInputs[
+  heBalancedData["Amplitude"], heBalancedChannels, heBalancedModel];
+heBalancedPublicMetadata = ConstructiveDiagrams`Private`poleDiscoveryMetadata[
+  heBalancedInputs["Targets"], heBalancedInputs["Records"]];
+heBalancedNormalized = ConstructiveDiagrams`Private`highEnergyCheckReport[
+  heBalancedInputs["Expression"], heBalancedPublicMetadata, 2, 981431,
+  heBalancedRules, 120, Automatic];
+check["the expanded public-checker input retains exact E minus two growth at default model masses",
+  Length[heBalancedInputs["Expression"]] >= 1000 &&
+    heBalancedNormalized["Status"] === "PASS" &&
+    heBalancedNormalized["ObservedPower"] === -2 &&
+    Length[heBalancedNormalized["Samples"]] === 2 &&
+    heBalancedNormalized["AlgebraicPreconditioning"]["OutputLeafCount"] <
+      heBalancedNormalized["AlgebraicPreconditioning"]["InputLeafCount"]];
 
 Print[checks, " high-energy checks; ", Length[failures], " failures."];
 If[failures =!= {}, Print[failures]; Quit[1]];

@@ -1511,6 +1511,20 @@ acBlockRationalResult = ConstructiveDiagrams`Private`completionExactBlockReduce[
   acBlockRationalMatrix, acBlockRationalConstant];
 check["rational denominator clearing preserves the particular solution and full nullspace",
   acBlockCertificate[acBlockRationalResult, acBlockRationalMatrix, acBlockRationalConstant]];
+acBlockFullRankMatrix = {{1, 2}, {3, 5}, {4, 7}};
+acBlockFullRankConstant = -acBlockFullRankMatrix.{2/3, -5/7};
+acBlockFullRankResult = Check[ConstructiveDiagrams`Private`completionExactBlockReduce[
+  acBlockFullRankMatrix, acBlockFullRankConstant], $Failed];
+check["full-column-rank block certificates handle an empty free family without messages",
+  AssociationQ[acBlockFullRankResult] && acBlockFullRankResult["Rank"] === 2 &&
+    acBlockCertificate[acBlockFullRankResult, acBlockFullRankMatrix, acBlockFullRankConstant]];
+acBlockFullRankContradiction = Check[ConstructiveDiagrams`Private`completionExactBlockReduce[
+  Append[acBlockFullRankMatrix, First[acBlockFullRankMatrix]],
+  Append[acBlockFullRankConstant, First[acBlockFullRankConstant] + 1]], $Failed];
+check["full-column-rank block contradictions do not require a zero-dimensional identity matrix",
+  AssociationQ[acBlockFullRankContradiction] && acBlockFullRankContradiction["Rank"] === 2 &&
+    acBlockFullRankContradiction["ContradictionRow"] === 4 &&
+    Last[acBlockFullRankContradiction["ReducedRows"]] === {0, 0, 1}];
 acBlockInconsistentMatrix = Append[acBlockMatrix, First[acBlockMatrix]];
 acBlockInconsistentConstant = Append[acBlockConstant, First[acBlockConstant] + 1];
 acBlockInconsistentResult = ConstructiveDiagrams`Private`completionExactBlockReduce[
@@ -1638,6 +1652,17 @@ acCRTLargeResult = ConstructiveDiagrams`Private`completionCertifiedModularReduce
 check["CRT reconstructs exact fractions beyond a single-prime rational bound",
   AssociationQ[acCRTLargeResult] && Length[acCRTLargeResult["CRTPrimes"]] >= 3 &&
     acBlockCertificate[acCRTLargeResult, acCRTLargeMatrix, acCRTLargeConstant]];
+acCRTDeepDenominator = 2^160 + 7;
+acCRTDeepMatrix = {{1, 1/acCRTDeepDenominator}};
+acCRTDeepResult = ConstructiveDiagrams`Private`completionCertifiedModularReduce[
+  acCRTDeepMatrix, {0}, 10];
+check["CRT uses its bounded prime inventory when an exact null relation needs more than eight primes",
+  AssociationQ[acCRTDeepResult] && acCRTDeepResult["Rank"] === 1 &&
+    Length[acCRTDeepResult["CRTPrimes"]] > 8 &&
+    acBlockCertificate[acCRTDeepResult, acCRTDeepMatrix, {0}]];
+check["an explicitly short CRT inventory does not accept an unreconstructed null family",
+  MissingQ[ConstructiveDiagrams`Private`completionCertifiedModularReduce[
+    acCRTDeepMatrix, {0}, 10, NestList[NextPrime[#, -1] &, 2147483647, 7]]]];
 acCRTFullMatrix = {{2, 0, 0}, {0, -3, 0}, {0, 0, 5}, {2, -3, 5}};
 acCRTFullConstant = -acCRTFullMatrix.{3/7, -2/11, 4/13};
 acCRTFullResult = ConstructiveDiagrams`Private`completionCertifiedModularReduce[
@@ -1670,6 +1695,27 @@ acCRTFalseContradiction = ConstructiveDiagrams`Private`completionCertifiedModula
 check["a contradiction at one bad prime is not interpreted as an exact inconsistency",
   AssociationQ[acCRTFalseContradiction] &&
     acCRTFalseContradiction["ReducedRows"] === {{1, -1/3}}];
+acCRTContradictionMatrix = {{1/2, 2/3}, {3/5, -7/11}, {11/10, 1/33}};
+acCRTContradictionConstant = -acCRTContradictionMatrix.{2/3, -5/7} + {0, 0, 1};
+acCRTContradiction = ConstructiveDiagrams`Private`completionCertifiedModularReduce[
+  acCRTContradictionMatrix, acCRTContradictionConstant];
+check["full coefficient rank and a larger modular augmented rank certify an exact contradiction",
+  AssociationQ[acCRTContradiction] && acCRTContradiction["Status"] === "INCONSISTENT" &&
+    acCRTContradiction["Rank"] === 2 &&
+    acCRTContradiction["CoefficientRankLowerBound"] === 2 &&
+    acCRTContradiction["AugmentedRankLowerBound"] === 3 &&
+    !KeyExistsQ[acCRTContradiction, "ReducedRows"] &&
+    Last[acCRTContradictionMatrix] === Total[Most[acCRTContradictionMatrix]] &&
+    Last[acCRTContradictionConstant] - Total[Most[acCRTContradictionConstant]] === 1];
+acCRTContradictionVariables = Array[acCRTContradictionVariable, 64];
+acCRTContradictionFit = ConstructiveDiagrams`Private`completionSolveLinear[
+  Append[IdentityMatrix[64], UnitVector[64, 1]].acCRTContradictionVariables +
+    Append[ConstantArray[0, 64], 1], acCRTContradictionVariables];
+check["the production solver consumes a certified contradiction without requesting rational RREF rows",
+  acCRTContradictionFit["Status"] === "INCONSISTENT" &&
+    acCRTContradictionFit["Rank"] === 64 &&
+    acCRTContradictionFit["InconsistencyCertificate"]["Backend"] ===
+      "CertifiedFullColumnRankContradiction"];
 check["inconsistent exact rows decline CRT and preserve the existing solver fallback",
   MissingQ[ConstructiveDiagrams`Private`completionCertifiedModularReduce[
     acBlockInconsistentMatrix, acBlockInconsistentConstant]]];

@@ -57,6 +57,30 @@ seeds, simple outputs, stage/total timings, progress events, final print order,
 option precedence, deadlines, model immutability and rejection of opposite-sign
 or unresolved final checks. It does not modify or execute the user's notebooks.
 
+`high-energy-family-tests.wl` distinguishes identity-zero correction directions
+from real undetermined interactions. It checks the generic symbolic external
+chart, momentum conservation, chirality and little-group safety, fixed-spin
+and branch exclusions, proof deadlines and retained scalar contact freedom.
+The slower end-to-end regressions reproduce both formerly failing five-point
+notebook cases, their working counterparts and independent Feynman checks:
+
+```sh
+HEPCAT_TEST_FULL_HELICITY_CONSTRUCTION=1 python3 tests/checks/run-wolfram-tests.py --suite high-energy-family-tests.wl --timeout 900
+```
+
+The spurious-pole suite includes the balanced six-point expression's 28
+compound factors. Exact conserved-curve polynomial checks verify their
+cancellation in the full sum; an injected double pole at each factor must
+fail. Grouped serial/parallel tests preserve every original pole obligation,
+result order and unresolved worker failure.
+Negative tests include a Clifford sum hiding a massive-invariant pole, which
+massless-only deformations would miss. Compound curves vary that invariant,
+reject chart-boundary singularities and conservatively decline unsupported
+mass patterns or nonhomogeneous helicity factors.
+The suite also verifies restored physical masses and spinor-basis determinants
+after choosing sampling units, coherent Dirac identities, exact primitive-cache
+equivalence, and one shared time budget even for a large compound-pole group.
+
 ## Parallel Execution
 
 The four parallel suites require a licensed kernel that can launch and
