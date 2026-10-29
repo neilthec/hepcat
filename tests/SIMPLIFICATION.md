@@ -2015,6 +2015,13 @@ seconds, with all 17 rows passing, including the independent Feynman comparison.
 These are measured stage timings on the recorded prepared inputs, not a
 promise for every cold construction or machine.
 
+A separate fresh `ConstructAmplitude` regression also completes from raw
+diagrams with only `AllPhysical`, the independent Feynman model and diagnostic
+output choices supplied. No numerical resource overrides are used. It requires
+zero remaining high-energy-family coefficients, a compact result containing
+only catalogued physical poles, and every final check to pass. The complete
+automatic-resource suite, including this construction, passes all 42 assertions.
+
 The proof ordering matters. Cheap scalar grouping and bounded numerator
 Schouten edits first operate on the original direction. A modest compact form
 can then go directly to a generic symbolic chart, before display-oriented
