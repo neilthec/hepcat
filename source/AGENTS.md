@@ -440,6 +440,21 @@ Complex `amp` values preserve phases and explicit spin labels for future
 coherent production-decay contraction. Spin-summed probabilities cannot replace
 that contraction; no correlated production-decay engine is currently implied.
 The runnable exporter still requires two incoming legs.
+Every generated project includes an optional independent CalcHEP validation
+method and executable. `RunCalcHEPValidation -> True` builds and runs 1,000
+seeded common phase-space points. The ordinary SPINAS process must remain
+usable without CalcHEP. `source/calchep-runtime.hpp` wraps the installed C API;
+`source/spinas-validation.hpp` supplies common random kinematics and reports.
+Use the declared CalcHEP model, current parameters and explicit PDG leg map.
+Only the bundled QED models have an automatic counterpart; identical external
+species do not identify a theory. Preserve source model tables and stage
+private copies for runtime generation. Respect CalcHEP's process-global state.
+Its `sqme` includes incoming averaging and outgoing identical-particle factors.
+Never fit a scale, discard failed samples, compare a fixed-helicity subset
+with an unpolarized result, or silently ignore unmatched parameters. Every
+requested point must be evaluated without disagreement for PASS. Common
+momentum values are quantized once before either evaluator. This is numerical
+diagnostic evidence, not a uniform phase-space integral or an analytic proof.
 Generated formulas should remain readable in the style of native SPINAS
 processes: named model aliases, bracket/chain names, cached scalar denominators,
 ordinary division and wrapped numerator blocks. Preserve parameter rebinding

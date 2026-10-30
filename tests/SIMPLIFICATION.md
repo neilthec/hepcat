@@ -525,6 +525,75 @@ The focused regression suite compiles and runs four-, five- and six-point
 projects against independent native SPINAS formulas. See
 [the export coverage and convention notes](checks/README.md#spinas-process-export).
 
+## Independent CalcHEP Check of Generated C++
+
+`WriteSPINASProcess` also writes a `validate_calchep` method and a standalone
+`processName_validate_calchep` executable. Enable the build and immediate check
+with one option on an ordinary complete-helicity export:
+
+```wolfram
+WriteSPINASProcess[outputDirectory,
+  {"e", "E"} -> {"A", "A"},
+  {
+    {{"e", "E", "A.+", "A.+"}, qed4PP},
+    {{"e", "E", "A.+", "A.-"}, qed4PM},
+    {{"e", "E", "A.-", "A.-"}, qed4MM}
+  }, factorizationModel,
+  "RunCalcHEPValidation" -> True]
+```
+
+The default is 1,000 points and seed 12345. `"CalcHEPPoints"` and
+`"CalcHEPSeed"` override them. No new build option is needed: requesting this
+check builds the project. Existing files still require `"Overwrite" -> True`.
+For a previously generated project, run its validator independently:
+
+```sh
+./build/eeAA_validate_calchep --points 1000 --seed 12345
+```
+
+In C++, link the generated `eeAA_calchep_validation` library and call
+`process.validate_calchep(options)`, where `options` is a
+`hepcat_spinas::ValidationOptions`. The report exposes the pass status, counts,
+largest errors and first failing momentum point. The validator uses a copy of
+the process, preserving the caller's current momenta.
+
+The CalcHEP C interface creates and compiles the counterpart process at runtime
+using `getMEcode`, then evaluates `sqme` at each common point. Particle names
+are obtained by PDG, including outgoing antiparticles and self-conjugate
+photons. Current independent parameters are assigned, constraints are evaluated
+and required derived values and external masses are checked. Unknown or
+incompatible values produce an error rather than a mismatched comparison.
+CalcHEP's `sqme` includes the initial-state average and outgoing
+identical-particle factor, so the complete family uses `amp2()` directly.
+The legacy complete-massive-spin overload receives its missing final-state
+factor from the physical particle inventory. No numerical normalization is fit.
+
+`"CalcHEPDirectory" -> Automatic` finds a local installation, including a
+versioned directory below the sibling `CalcHEP` folder. The generated CMake
+project also accepts `-DCALCHEP_ROOT=/path/to/calchep`. The bundled constructive
+QED models are paired automatically with `model_feynman` model 2, which has a
+massive electron. Other theories require
+`"CalcHEPModel" -> {modelDirectory, modelNumber}`. External PDGs alone cannot
+distinguish QED from the full electroweak theory. `None` disables model pairing.
+No model tables in the installation or repository are modified. Temporary
+private copies adapt the compact HEPCAT table headers to CalcHEP's layout.
+
+This backend compares complete, unpolarized, colorless processes. A partial or
+fixed-helicity family, color-stripped result or unsupported model reports
+`UNAVAILABLE`; it cannot produce a passing validation. Ordinary SPINAS projects
+remain usable without CalcHEP. Link the separate backend when using its method.
+
+Random sequential decays vary the total energy and decay directions while
+maintaining external masses and momentum conservation. These are diagnostic
+points, not uniformly weighted phase-space integration events. Both evaluators
+receive the same double-valued momentum components. The default relative
+tolerance is `1e-7` with zero absolute tolerance, preventing a wrong tiny result
+from passing through an absolute floor. The C++ options or executable tolerance
+arguments allow an explicit override. Disagreements and nonfinite evaluations
+are counted, never discarded. The first failing point is retained for replay.
+The CalcHEP backend uses process-global C state and runs serially in a private
+workspace; concurrent CalcHEP sessions fail explicitly.
+
 ## Amplitude Checks
 
 `CheckAmplitudes` is the general checker. `CheckPhysicalResidues` remains a

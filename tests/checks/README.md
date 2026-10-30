@@ -370,6 +370,33 @@ diagram model is unchanged.
 
 ## SPINAS Process Export
 
+`spinas-calchep-tests.wl` is part of the normal suite and does not require a
+CalcHEP installation. It checks the generated API and unavailable-backend
+behavior, physical PDGs, external order, model selection, fixed-helicity/color
+guards and a compiled unavailable stub. It also compiles the standalone random
+phase-space/comparison tests in both SPINAS precision modes. Those tests cover
+mass shells and conservation through six points, seeded replay, common numeric
+inputs, 1,000-point pass and failure controls, tiny wrong amplitudes and explicit
+evaluation errors.
+
+The real external integration is opt-in:
+
+```sh
+python3 tests/checks/run-wolfram-tests.py --suite spinas-calchep-integration-tests.wl --timeout 1800
+```
+
+It uses the local CalcHEP dynamic C interface and native SPINAS library to
+generate and compare `eeAA` and `eeAAA` at 1,000 shared random points each. It
+also verifies seed replay, a deliberately doubled amplitude, external-mass
+mismatch diagnostics and preservation of the original model tables. Set
+`HEPCAT_CALCHEP_DIRECTORY` or use the sibling installation. The five-point
+external test can be omitted with `HEPCAT_TEST_CALCHEP_FIVE_POINT=0` when
+investigating a four-point build issue; a skipped case is not a pass.
+CalcHEP's input model is staged privately, independent of the HEPCAT expression.
+The normalization follows the dynamic-interface manual, section 10 and
+appendix D.3, and the installed `sqme` implementation. No empirical rescaling
+or amplitude-driven sample rejection is permitted.
+
 The polarization suite checks explicit incoming/outgoing processes, fixed
 incoming or outgoing massless helicities, antiparticle crossing, selected-sector
 coverage, incoming averaging and labeled outgoing symmetry factors. Its C++
