@@ -345,12 +345,13 @@ Begin["ConstructiveDiagrams`"];
 WriteSPINASProcess::usage = "WriteSPINASProcess[directory, particles, amplitude, model] writes a complete C++11 SPINAS process project for two incoming and at least two outgoing particles. The amplitude uses HEPCAT's all-ingoing convention; IncomingLegs -> {1,2} selects physical incoming legs and outgoing legs are crossed automatically, including angle-spinor signs. The project contains process.hpp, process.cpp, main.cpp, a deterministic physical phase-space example generator, CMakeLists.txt, README.md and manifest.json. SPINASDirectory -> Automatic looks for SPINAS_ROOT or the sibling spinas checkout; an explicit path overrides it. Model parameter defaults come from ModelParameterRules; ParameterRules overrides them locally. ProcessName sets a C++ class/executable name. Build -> True configures and links the project against the existing SPINAS library; RunExamples -> True also builds and runs three sample points. Precision -> Automatic reads the local SPINAS build configuration; LongDouble and Double are explicit choices. Overwrite -> False protects existing project files. ReturnDetails -> False normally returns the output directory; True adds file paths and build/run results. Fixed massless helicities are retained. amp2 averages incoming massive spins and sums outgoing massive spins at those fixed helicities, without an identical-particle phase-space factor or color sums/averages. Unsupported expressions return Failure before files are written; this function does not complete or validate the physical amplitude.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " The family overload WriteSPINASProcess[directory, {{particles1, amplitude1}, ...}, model] combines helicity-related amplitudes into one class. It fills identical-species, same-role massless leg permutations with their proper statistics sign, without inferring parity or missing zero amplitudes. Incomplete coverage is rejected before writing files. amp(ds1,...,dsn) and amp(Spins) select doubled spins and helicities; spin_sum sums all external spin/helicity states; amp2 also averages incoming states and includes the outgoing identical-species factorial factor, including identical fermions. Canonical formulas are compiled once and reused through leg maps. Colored families are currently refused because a full color sum is not implemented. The original four-argument fixed-helicity overload retains its existing spin-sum and symmetry-factor conventions.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " CMakeExecutable -> Automatic searches PATH and standard installation locations, including the macOS CMake application and Homebrew, so desktop Mathematica need not inherit the shell's PATH. An explicit full path selects another CMake installation. A missing build tool is reported before generating files; source-only export does not require CMake.";
+WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " WriteSPINASProcess[directory, incomingNames -> outgoingNames, amplitudeEntries, model] explicitly describes the physical process. The entries still contain all-ingoing particle lists and un-crossed formulas in that same leg order, with incoming legs first. Outgoing charged particle names are checked against the conjugate all-ingoing species. Generic massless names such as A sum their helicities; A.+ or A.- selects one. The established HEPCAT/SPINAS helicity sign convention is retained, and ReverseMomentum crosses outgoing momenta and angle spinors exactly once. FixedHelicities -> {leg -> doubledHelicity, ...} selects massless legs in either grouped overload. Only unfixed incoming helicities are averaged. A selected outgoing helicity gives a labeled contribution with the same identical-species phase-space factor. Complex amp calls preserve phases and include no spin sums, incoming averages or phase-space factors; coherent production-decay sewing is not performed by this exporter. Runnable projects currently require two incoming particles.";
 Options[WriteSPINASProcess] = {"SPINASDirectory" -> Automatic,
-  "IncomingLegs" -> {1, 2}, "ParameterRules" -> Automatic,
+  "IncomingLegs" -> {1, 2}, "FixedHelicities" -> Automatic, "ParameterRules" -> Automatic,
   "ProcessName" -> "hepcat_process", "Precision" -> Automatic,
   "Build" -> False, "RunExamples" -> False, "CMakeExecutable" -> Automatic, "Overwrite" -> False,
   "ReturnDetails" -> False};
-WriteSPINASProcess::args = "Expected an output directory, an ordered particle list, a spinor amplitude, a model and valid export options.";
+WriteSPINASProcess::args = "Expected an output directory, all-ingoing amplitude entries, a model and valid export options, optionally preceded by incoming particle names -> outgoing particle names. The fixed-helicity form takes an ordered all-ingoing particle list and amplitude instead of entries.";
 
 Begin["ConstructiveDiagrams`Private`"];
 $spinasExportSourceDirectory = DirectoryName[$InputFileName];
@@ -636,7 +637,7 @@ WriteSPINASProcess[directory_String, process : {___String}, amplitude_, model_, 
    dir = ExpandFileName[directory], data, runtime, files, contents, written, result, build,
    overwrite = OptionValue["Overwrite"], examples = OptionValue["RunExamples"],
    details = OptionValue["ReturnDetails"], buildRequested = OptionValue["Build"],
-   cmake = OptionValue["CMakeExecutable"], manifest},
+   cmake = OptionValue["CMakeExecutable"], fixed, manifest},
   If[Complement[Keys[options],First /@ Options[WriteSPINASProcess]] =!= {} ||
       !StringQ[name] || !TrueQ[spinasCppIdentifierQ[name]] || StringTrim[directory] === "" || !AllTrue[{overwrite,examples,details,buildRequested},MemberQ[{True,False},#]&] ||
       !MemberQ[{Automatic,"LongDouble","Double"},OptionValue["Precision"]] ||
@@ -648,6 +649,12 @@ WriteSPINASProcess[directory_String, process : {___String}, amplitude_, model_, 
   ir = spinasProcessIR[process,amplitude,data,<|"IncomingLegs"->OptionValue["IncomingLegs"],
     "ParameterRules"->OptionValue["ParameterRules"]|>];
   If[FailureQ[ir],Return[ir]];
+  fixed = spinasFixedHelicities[OptionValue["FixedHelicities"], ir["Spin2"],
+    TrueQ[# == 0] & /@ ir["MassValues"]];
+  If[FailureQ[fixed], Return[fixed]];
+  If[AnyTrue[Normal[fixed], ir["Helicities"][[First[#]]] =!= Last[#] &],
+    Return[Failure["SPINASHelicities", <|"MessageTemplate" ->
+      "FixedHelicities conflicts with the supplied fixed-helicity amplitude."|>]]];
   If[ir["LegCount"] < 4,Return[Failure["SPINASPhaseSpace",<|
     "MessageTemplate"->"The runnable project requires two incoming and at least two outgoing particles."|>]]];
   If[TrueQ[buildRequested] || TrueQ[examples],
@@ -690,12 +697,27 @@ spinasHelicitySpecies[name_String, row_List, massless_] := {
   If[TrueQ[massless] && row[[5]] > 0,
     StringReplace[name, RegularExpression["\\.[+-]$"] -> ""], name],
   row[[4]], row[[5]], row[[6]], If[Length[row] >= 8, row[[8]], 1]};
-spinasFamilyIR[entries_List, model_List, options_Association] := Module[
+spinasFixedHelicities[selection_, ranks_List, massless_List] := Module[{rules},
+  rules = If[selection === Automatic, {}, selection];
+  If[!ListQ[rules] || !AllTrue[rules, MatchQ[#, _Rule] &] ||
+      !DuplicateFreeQ[First /@ rules] ||
+      !AllTrue[rules, Function[rule, IntegerQ[First[rule]] &&
+        1 <= First[rule] <= Length[ranks] && TrueQ[massless[[First[rule]]]] &&
+        ranks[[First[rule]]] > 0 && IntegerQ[Last[rule]] &&
+        Abs[Last[rule]] === ranks[[First[rule]]]]],
+    Failure["SPINASHelicities", <|"MessageTemplate" ->
+      "FixedHelicities must be a list of unique massless spinful leg numbers mapped to allowed doubled helicities."|>],
+    Association[rules]]
+];
+spinasBareHelicityName[name_String] := StringReplace[name, RegularExpression["\\.[+-]$"] -> ""];
+spinasFamilyIR[entries_List, model_List, options_Association, physicalSpec_:Automatic] := Module[
   {tag = Unique["spinasFamily"], fail, components, first, process, n, incoming,
    rows, rowFor, species, massless, ranks, states, modelNames, signed, groups,
    expected, configurations, mappings = {}, mappingFor, source, mapping, record,
    direct, symbols, defaults, names, firstPosition, rewriteCpp, rebind,
-   finalNames, finalSpecies, finalCounts, symmetryDivisor, initialAverage},
+   finalNames, finalSpecies, finalCounts, symmetryDivisor, initialAverage,
+   fixed, selectedStates, physicalNames, expectedName, partnerName, specifiedFixed = {},
+   physicalProcess = Missing["NotSpecified"], processDescription = "", specifiedHelicity},
   fail[message_, data_: <||>] := Throw[Failure["SPINASHelicityFamily",
     Join[<|"MessageTemplate" -> message|>, data]], tag];
   Catch[
@@ -708,6 +730,8 @@ spinasFamilyIR[entries_List, model_List, options_Association] := Module[
     first = First[components]; process = first["Process"]; n = first["LegCount"];
     incoming = first["IncomingLegs"]; ranks = first["Spin2"];
     massless = TrueQ[# == 0] & /@ first["MassValues"];
+    fixed = spinasFixedHelicities[Lookup[options, "FixedHelicities", Automatic], ranks, massless];
+    If[FailureQ[fixed], Return[fixed]];
     If[AnyTrue[components, TrueQ[#["ColorStripped"]] &],
       fail["A full color sum is not implemented. Use the fixed-helicity exporter for an explicitly color-stripped amplitude."]];
     rowFor[name_] := SelectFirst[model[[1]], ListQ[#] && Length[#] >= 6 &&
@@ -720,6 +744,41 @@ spinasFamilyIR[entries_List, model_List, options_Association] := Module[
         MapThread[spinasHelicitySpecies,
           {component["Process"], rowFor /@ component["Process"], massless}] =!= species]],
       fail["Every family member must have the same ordered particle species, masses and incoming legs; only massless helicities may differ."]];
+    If[physicalSpec =!= Automatic,
+      If[!MatchQ[physicalSpec, _Rule] || !ListQ[First[physicalSpec]] ||
+          !ListQ[Last[physicalSpec]] || Length[First[physicalSpec]] =!= 2 ||
+          Length[Last[physicalSpec]] < 2 ||
+          !AllTrue[Join[First[physicalSpec], Last[physicalSpec]], StringQ] ||
+          Length[First[physicalSpec]] + Length[Last[physicalSpec]] =!= n,
+        fail["Describe the physical process as two incoming particle names -> at least two outgoing names, in the formula's leg order."]];
+      If[incoming =!= {1, 2},
+        fail["The explicit physical process places its incoming legs first; IncomingLegs conflicts with that description."]];
+      physicalNames = Join[First[physicalSpec], Last[physicalSpec]];
+      Do[
+        partnerName = If[process[[i]] === rows[[i, 2]], rows[[i, 3]], rows[[i, 2]]];
+        expectedName = If[MemberQ[incoming, i], process[[i]], partnerName];
+        If[massless[[i]] && ranks[[i]] > 0,
+          (* Photon +/- are paired in the model, but their helicity labels
+             are not flipped by HEPCAT's ReverseMomentum convention. Match
+             physical flavor separately from the chosen SPINAS helicity. *)
+          If[spinasBareHelicityName[physicalNames[[i]]] =!= spinasBareHelicityName[expectedName],
+            fail["The physical process does not match the supplied all-ingoing particle species.",
+              <|"Leg" -> i, "PhysicalParticle" -> physicalNames[[i]],
+                "AllIngoingParticle" -> process[[i]]|>]];
+          specifiedHelicity = Which[StringEndsQ[physicalNames[[i]], ".+"], ranks[[i]],
+            StringEndsQ[physicalNames[[i]], ".-"], -ranks[[i]], True, 0];
+          If[specifiedHelicity =!= 0, AppendTo[specifiedFixed, i -> specifiedHelicity]],
+          If[physicalNames[[i]] =!= expectedName,
+            fail["The physical process does not match the supplied all-ingoing particle species. Outgoing charged particles must be the conjugates of the analytic names.",
+              <|"Leg" -> i, "PhysicalParticle" -> physicalNames[[i]],
+                "ExpectedPhysicalParticle" -> expectedName|>]]],
+        {i, n}];
+      If[AnyTrue[specifiedFixed, KeyExistsQ[fixed, First[#]] && fixed[First[#]] =!= Last[#] &],
+        fail["FixedHelicities conflicts with a helicity specified in the physical process."]];
+      fixed = Join[fixed, Association[specifiedFixed]];
+      physicalProcess = <|"Incoming" -> First[physicalSpec], "Outgoing" -> Last[physicalSpec]|>;
+      processDescription = StringRiffle[First[physicalSpec], ", "] <> " -> " <>
+        StringRiffle[Last[physicalSpec], ", "]];
     configurations = Lookup[components, "Helicities"];
     If[!DuplicateFreeQ[configurations],
       fail["Supply only one amplitude for each helicity arrangement. Alternative formulas for the same helicities do not form separate branches."]];
@@ -731,9 +790,12 @@ spinasFamilyIR[entries_List, model_List, options_Association] := Module[
       If[signed === {}, {-ranks[[i]], ranks[[i]]},
         Sort[DeleteDuplicates[If[StringEndsQ[#, ".+"], ranks[[i]], -ranks[[i]]] & /@ signed]]]],
       {i, n}];
-    If[Times @@ (Length /@ states) > 4096,
+    If[AnyTrue[Normal[fixed], !MemberQ[states[[First[#]]], Last[#]] &],
+      fail["A selected helicity is not declared for this massless species in the supplied model."]];
+    selectedStates = MapIndexed[If[KeyExistsQ[fixed, First[#2]], {fixed[First[#2]]}, #1] &, states];
+    If[Times @@ (Length /@ selectedStates) > 4096,
       fail["The complete helicity family exceeds the supported export allowance of 4096 arrangements."]];
-    expected = Tuples[states];
+    expected = Tuples[selectedStates];
     groups = GatherBy[Select[Range[n], massless[[#]] && ranks[[#]] > 0 &],
       {species[[#]], MemberQ[incoming, #]} &];
     mappingFor[from_List, to_List] := Module[{image = Range[n], old, new, sign = 1},
@@ -759,7 +821,7 @@ spinasFamilyIR[entries_List, model_List, options_Association] := Module[
           {source, Length[components]}]];
       AppendTo[mappings, record], {configuration, expected}];
     If[AnyTrue[mappings, MissingQ],
-      fail["The supplied amplitudes do not cover all massless helicities. Supply the missing helicity sectors; no zero amplitude or parity relation is assumed.",
+      fail["The supplied amplitudes do not cover all requested massless helicities. Supply the missing helicity sectors; no zero amplitude or parity relation is assumed.",
         <|"MissingHelicities" -> Pick[expected, MissingQ /@ mappings, True]|>]];
     symbols = DeleteDuplicates[Flatten[Lookup[components, "ParameterSymbols"], 1]];
     names = ModelParameterName /@ symbols;
@@ -783,10 +845,13 @@ spinasFamilyIR[entries_List, model_List, options_Association] := Module[
       {finalNames, rows[[Complement[Range[n], incoming]]], massless[[Complement[Range[n], incoming]]]}];
     finalCounts = Length /@ Gather[finalSpecies];
     symmetryDivisor = Times @@ (Factorial /@ finalCounts);
-    initialAverage = Times @@ Table[If[massless[[i]], Length[states[[i]]], ranks[[i]] + 1], {i, incoming}];
+    initialAverage = Times @@ Table[If[massless[[i]], Length[selectedStates[[i]]], ranks[[i]] + 1], {i, incoming}];
     Join[first, <|"Family" -> True, "Process" -> (First /@ species),
       "InputProcesses" -> Lookup[components, "Process"], "FamilyComponents" -> components,
-      "HelicityConfigurations" -> expected, "HelicityStates" -> states, "Branches" -> mappings,
+      "Helicities" -> First[expected], "HelicityConfigurations" -> expected,
+      "HelicityStates" -> selectedStates, "Branches" -> mappings,
+      "FixedHelicities" -> Normal[fixed], "PhysicalProcess" -> physicalProcess,
+      "ProcessDescription" -> processDescription,
       "InputBranchCount" -> Length[components],
       "GeneratedBranchCount" -> Count[Lookup[mappings, "Origin"], "IdenticalLegPermutation"],
       "InitialSpinAverage" -> initialAverage, "SymmetryFactor" -> 1/symmetryDivisor,
@@ -891,22 +956,27 @@ spinasFamilyProjectMain[name_String] := StringReplace[spinasProjectMain[name], {
   "No identical-particle phase-space factor is included." -> "The final-state identical-particle symmetry factor is included in amp2()."}];
 spinasFamilyProjectREADME[name_String, ir_Association, precision_String] := StringReplace[
   spinasProjectREADME[name, ir, precision], {
+    "## Build and run" ->
+      If[ir["ProcessDescription"] === "", "", "Physical process: " <> ir["ProcessDescription"] <> ".\n\n"] <>
+      "Selected fixed massless helicities (1-based leg, doubled helicity): " <>
+      If[ir["FixedHelicities"] === {}, "none", ToString[ir["FixedHelicities"], InputForm]] <> ".\n\n" <>
+      "Complex amp calls have no averaging or phase-space factor. Keep and coherently contract these amplitudes for spin correlations; multiplying separate spin sums loses interference. This project does not implement production-decay sewing.\n\n## Build and run",
     "Massless helicities are fixed by the exported process. Massive states are normalized symmetric spinor tensors." ->
-      "The class includes every massless-helicity arrangement. Massive states use normalized symmetric spinor tensors. amp(ds1,...,dsn) and amp(Spins) accept doubled spins/helicities, as in native SPINAS processes.",
+      "The class includes every requested massless-helicity arrangement. Massive states use normalized symmetric spinor tensors. amp(ds1,...,dsn) and amp(Spins) accept doubled spins/helicities, as in native SPINAS processes.",
     "spin_sum sums all massive external spins. amp2 also averages incoming massive spins. Neither includes an identical-particle phase-space factor or a sum over other massless-helicity processes." ->
-      "spin_sum sums |amp|^2 over all external spins and massless helicities. amp2 divides by the incoming spin/helicity multiplicity (" <>
+      "spin_sum sums |amp|^2 over all external massive spins and the requested massless helicities. amp2 divides by the unfixed incoming spin/helicity multiplicity (" <>
       ToString[ir["InitialSpinAverage"]] <> ") and multiplies the final-state identical-particle factor (1/" <>
-      ToString[ir["FinalStateSymmetryDivisor"]] <> "). Identical particles are counted by species, including fermions, irrespective of helicity. No initial identical-particle factor is applied.",
+      ToString[ir["FinalStateSymmetryDivisor"]] <> "). Fixed incoming helicities are not averaged. Identical particles are counted by species, including fermions, irrespective of helicity. A fixed outgoing helicity selects a labeled contribution to this fully symmetrized sum, not an automatically normalized tagged-particle cross section. No initial identical-particle factor is applied.",
     "The executable prints three deterministic" ->
       "Only canonical supplied formulas are compiled. Identical-particle-related helicity branches use role-preserving leg permutations, including the fermion exchange sign. No parity relation or missing zero amplitude is inferred.\n\nThe executable prints three deterministic"}];
 
-WriteSPINASProcess[directory_String, entries_List, model_, opts:OptionsPattern[]] := Module[
-  {options = Join[Association[Options[WriteSPINASProcess]], Association[Reverse[Flatten[{opts}]]]],
+spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpec_] := Module[
+  {options = Join[Association[Options[WriteSPINASProcess]], Association[Reverse[Flatten[opts]]]],
    name, root, precision, ir, dir = ExpandFileName[directory], data, runtime,
    files, contents, written, result, build, cmake, manifest},
   name = options["ProcessName"];
   cmake = options["CMakeExecutable"];
-  If[Complement[First /@ Flatten[{opts}], First /@ Options[WriteSPINASProcess]] =!= {} ||
+  If[Complement[First /@ Flatten[opts], First /@ Options[WriteSPINASProcess]] =!= {} ||
       !StringQ[name] || !TrueQ[spinasCppIdentifierQ[name]] || StringTrim[directory] === "" ||
       !AllTrue[Lookup[options, {"Overwrite", "RunExamples", "ReturnDetails", "Build"}], MemberQ[{True, False}, #] &] ||
       !MemberQ[{Automatic, "LongDouble", "Double"}, options["Precision"]] ||
@@ -915,7 +985,8 @@ WriteSPINASProcess[directory_String, entries_List, model_, opts:OptionsPattern[]
     Message[WriteSPINASProcess::args]; Return[$Failed]];
   data = If[Head[model] === FeynmanModel, List @@ model, model];
   If[!ListQ[data], Return[Failure["InvalidModel", <||>]]];
-  ir = spinasFamilyIR[entries, data, KeyTake[options, {"IncomingLegs", "ParameterRules"}]];
+  ir = spinasFamilyIR[entries, data,
+    KeyTake[options, {"IncomingLegs", "ParameterRules", "FixedHelicities"}], physicalSpec];
   If[FailureQ[ir], Return[ir]];
   If[ir["LegCount"] < 4, Return[Failure["SPINASPhaseSpace", <|
     "MessageTemplate" -> "The runnable project requires two incoming and at least two outgoing particles."|>]]];
@@ -937,10 +1008,13 @@ WriteSPINASProcess[directory_String, entries_List, model_, opts:OptionsPattern[]
     "ParameterDefaults" -> (<|"Real" -> N[Re[#]], "Imaginary" -> N[Im[#]]|> & /@ ir["ParameterDefaults"]),
     "Masses" -> N[ir["MassValues"]], "Spin2" -> ir["Spin2"],
     "HelicityConfigurations" -> ir["HelicityConfigurations"], "Branches" -> ir["Branches"],
+    "FixedHelicities" -> Association[(ToString[First[#]] -> Last[#]) & /@ ir["FixedHelicities"]],
     "InputBranchCount" -> ir["InputBranchCount"], "GeneratedBranchCount" -> ir["GeneratedBranchCount"],
     "InitialSpinAverage" -> ir["InitialSpinAverage"], "SymmetryFactor" -> N[ir["SymmetryFactor"]],
     "FinalStateSymmetryDivisor" -> ir["FinalStateSymmetryDivisor"],
-    "SpinSumConvention" -> "All external spin/helicity states; amp2 averages incoming states and includes the outgoing identical-species factorial factor; no color sum."|>;
+    "SpinSumConvention" -> "All external massive spins and selected massless helicities; amp2 averages only unfixed incoming states and includes the outgoing identical-species factorial factor; selected outgoing helicities are labeled contributions; no color sum."|>;
+  If[AssociationQ[ir["PhysicalProcess"]], manifest = Join[manifest,
+    KeyTake[ir, {"PhysicalProcess", "ProcessDescription"}]]];
   contents = <|"Header" -> spinasFamilyProjectHeader[name, ir],
     "Source" -> spinasFamilyProjectSource[name, ir], "Demo" -> spinasFamilyProjectMain[name],
     "Runtime" -> Import[runtime, "Text"], "CMake" -> spinasProjectCMake[name, root, precision],
@@ -955,12 +1029,19 @@ WriteSPINASProcess[directory_String, entries_List, model_, opts:OptionsPattern[]
     "IncomingLegs" -> ir["IncomingLegs"], "Build" -> <|"Status" -> "NOT_REQUESTED"|>,
     "Examples" -> <|"Status" -> "NOT_REQUESTED"|>|>,
     KeyTake[ir, {"HelicityConfigurations", "InputBranchCount", "GeneratedBranchCount",
-      "InitialSpinAverage", "SymmetryFactor", "FinalStateSymmetryDivisor"}]];
+      "InitialSpinAverage", "SymmetryFactor", "FinalStateSymmetryDivisor", "FixedHelicities"}]];
+  If[AssociationQ[ir["PhysicalProcess"]], result = Join[result,
+    KeyTake[ir, {"PhysicalProcess", "ProcessDescription"}]]];
   If[TrueQ[options["Build"]] || TrueQ[options["RunExamples"]],
     build = spinasProjectBuild[dir, name, root, options["RunExamples"], cmake];
     If[FailureQ[build], Return[build]]; result = Join[result, build]];
   If[TrueQ[options["ReturnDetails"]], result, dir]
 ];
+
+WriteSPINASProcess[directory_String, entries_List, model_, opts:OptionsPattern[]] :=
+  spinasWriteFamily[directory, entries, model, {opts}, Automatic];
+WriteSPINASProcess[directory_String, physicalProcess_Rule, entries_List, model_, opts:OptionsPattern[]] :=
+  spinasWriteFamily[directory, entries, model, {opts}, physicalProcess];
 
 WriteSPINASProcess[___] := (Message[WriteSPINASProcess::args];$Failed);
 End[];

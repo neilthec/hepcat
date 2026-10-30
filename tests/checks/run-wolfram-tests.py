@@ -25,6 +25,7 @@ TEST_SUITES = (
     "model-parameter-tests.wl", "feynman-tests.wl", "spinas-export-tests.wl",
     "spinas-helicity-family-tests.wl",
     "spinas-build-tools-tests.wl",
+    "spinas-polarization-tests.wl",
     "amplitude-check-tests.wl",
     "model-isolation-tests.wl",
     "plain-text-tests.wl", "model-export-tests.wl", "qed-model-export-tests.wl",

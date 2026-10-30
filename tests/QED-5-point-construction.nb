@@ -177,7 +177,7 @@ Cell[CellGroupData[{
 
 Cell["C++ Output", "Subsection", ExpressionUUID->"b4c6fb87-9ca2-562d-8135-105e4be086dd"],
 
-Cell["The export cells at the end of each related amplitude family write one SPINAS process containing all its spin and helicity choices. Evaluate the amplitude calculations first. Equivalent photon placements are supplied by relabeling identical particles. The generated amp selects one spin/helicity configuration; spin_sum sums its squared magnitude over all external states, and amp2 also includes the initial-state spin average and final-state identical-particle factor. Each export builds and runs three example phase-space points. Failed or unevaluated amplitudes stop the export before files are written. The output folder below is outside the HEPCAT repository. Existing project files are protected; add \"Overwrite\" -> True only when you want to replace a previous export.", "Text", ExpressionUUID->"434e8d10-f994-50ec-b513-28ad794a07e5"],
+Cell["The export cells at the end of each related amplitude family write one SPINAS process containing its requested spin and helicity choices. Evaluate the amplitude calculations first. Equivalent photon placements are supplied by relabeling identical particles. The generated amp selects one spin/helicity configuration; spin_sum sums its squared magnitude over all external states, and amp2 also includes the initial-state spin average and final-state identical-particle factor. Each export builds and runs three example phase-space points. Failed or unevaluated amplitudes stop the export before files are written. The process arrow separates incoming and outgoing particles. A generic A sums photon helicities; A.+ fixes a helicity on either side. Supply the original all-ingoing expressions: outgoing momenta and angle spinors are crossed automatically. Fixed incoming helicities are not averaged. The output folder is set below. Existing project files are protected; add \"Overwrite\" -> True only when you want to replace a previous export.", "Text", ExpressionUUID->"434e8d10-f994-50ec-b513-28ad794a07e5"],
 
 Cell["spinasOutputDirectory = FileNameJoin[{$HomeDirectory, \"spinas-output\"}];", "Input", ExpressionUUID->"bd44a057-8980-5237-a7d8-0b841566c656"]
 
@@ -229,7 +229,7 @@ Cell["Export eeAA to C++", "Section", ExpressionUUID->"cbf747e0-733e-5073-b0fa-a
 
 Cell["The helicity expressions above are combined in one C++ process. Equivalent placements of the identical photons are filled automatically.", "Text", ExpressionUUID->"5a8a7bb2-b6ac-5095-b47c-ceafa073446b"],
 
-Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeAA\"}],\n  {\n    {{\"e\", \"E\", \"A.+\", \"A.+\"}, qed4PP},\n    {{\"e\", \"E\", \"A.+\", \"A.-\"}, qed4PM},\n    {{\"e\", \"E\", \"A.-\", \"A.-\"}, qed4MM}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeAA\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"975800f6-05a4-506c-9f46-0328a3934699"]
+Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeAA\"}],\n  {\"e\", \"E\"} -> {\"A\", \"A\"},\n  {\n    {{\"e\", \"E\", \"A.+\", \"A.+\"}, qed4PP},\n    {{\"e\", \"E\", \"A.+\", \"A.-\"}, qed4PM},\n    {{\"e\", \"E\", \"A.-\", \"A.-\"}, qed4MM}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeAA\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"975800f6-05a4-506c-9f46-0328a3934699"]
 
 }, Open]]
 
@@ -249,7 +249,7 @@ Cell["Export eeee to C++", "Section", ExpressionUUID->"060816fb-c92a-58c4-a3fe-0
 
 Cell["This process has no massless-helicity branches. Every massive-fermion spin remains an argument of the generated amplitude.", "Text", ExpressionUUID->"cda94856-c6e0-58b9-96a9-1eb15d732fc3"],
 
-Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeee\"}],\n  {\n    {{\"e\", \"E\", \"E\", \"e\"}, qed4FourFermions}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeee\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"3186ae38-ca4d-5eaa-b859-9369a49b163d"]
+Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeee\"}],\n  {\"e\", \"E\"} -> {\"e\", \"E\"},\n  {\n    {{\"e\", \"E\", \"E\", \"e\"}, qed4FourFermions}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeee\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"3186ae38-ca4d-5eaa-b859-9369a49b163d"]
 
 }, Open]]
 
@@ -13612,7 +13612,7 @@ Cell["Export eeAAA to C++", "Section", ExpressionUUID->"274cde2f-9a1a-558e-917c-
 
 Cell["The helicity expressions above are combined in one C++ process. Equivalent placements of the identical photons are filled automatically.", "Text", ExpressionUUID->"6386a579-cc77-535c-9756-b9fc3a4bc5fb"],
 
-Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeAAA\"}],\n  {\n    {{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"}, qed5PPP},\n    {{\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\"}, qed5PPM},\n    {{\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\"}, qed5PMM},\n    {{\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\"}, qed5MMM}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeAAA\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"6bd3f50d-ca6e-526d-9020-0b21d3304d76"]
+Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeAAA\"}],\n  {\"e\", \"E\"} -> {\"A\", \"A\", \"A\"},\n  {\n    {{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"}, qed5PPP},\n    {{\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\"}, qed5PPM},\n    {{\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\"}, qed5PMM},\n    {{\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\"}, qed5MMM}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeAAA\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"6bd3f50d-ca6e-526d-9020-0b21d3304d76"]
 
 }, Open]]
 
@@ -21373,7 +21373,7 @@ Cell["Export eeeeA to C++", "Section", ExpressionUUID->"1b55db53-a74f-5ab1-b9ae-
 
 Cell["The helicity expressions above are combined in one C++ process. Equivalent placements of the identical photons are filled automatically.", "Text", ExpressionUUID->"f67afe05-bb0e-5b49-842d-b4654db3d559"],
 
-Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeeeA\"}],\n  {\n    {{\"e\", \"E\", \"E\", \"e\", \"A.+\"}, qed5FourFermionsP},\n    {{\"e\", \"E\", \"E\", \"e\", \"A.-\"}, qed5FourFermionsM}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeeeA\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"5dd35c09-5d03-5983-8e36-0784b236e701"]
+Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeeeA\"}],\n  {\"e\", \"E\"} -> {\"e\", \"E\", \"A\"},\n  {\n    {{\"e\", \"E\", \"E\", \"e\", \"A.+\"}, qed5FourFermionsP},\n    {{\"e\", \"E\", \"E\", \"e\", \"A.-\"}, qed5FourFermionsM}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeeeA\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"5dd35c09-5d03-5983-8e36-0784b236e701"]
 
 }, Open]]
 
@@ -28825,7 +28825,7 @@ Cell["Export eeAAAA to C++", "Section", ExpressionUUID->"5f926e49-4832-5cb6-b3a6
 
 Cell["The helicity expressions above are combined in one C++ process. Equivalent placements of the identical photons are filled automatically.", "Text", ExpressionUUID->"4b574378-b26a-5a3a-8d12-91a73921f519"],
 
-Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeAAAA\"}],\n  {\n    {{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.+\"}, qed6PPPP},\n    {{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.-\"}, qed6PPPM},\n    {{\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \"A.-\"}, qed6PPMM},\n    {{\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\", \"A.-\"}, qed6PMMM},\n    {{\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\", \"A.-\"}, qed6MMMM}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeAAAA\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"d719600e-843c-511a-9e0c-a90505084be9"]
+Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeAAAA\"}],\n  {\"e\", \"E\"} -> {\"A\", \"A\", \"A\", \"A\"},\n  {\n    {{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.+\"}, qed6PPPP},\n    {{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.-\"}, qed6PPPM},\n    {{\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \"A.-\"}, qed6PPMM},\n    {{\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\", \"A.-\"}, qed6PMMM},\n    {{\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\", \"A.-\"}, qed6MMMM}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeAAAA\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"d719600e-843c-511a-9e0c-a90505084be9"]
 
 }, Open]]
 
@@ -28877,7 +28877,7 @@ Cell["Export eeeeAA to C++", "Section", ExpressionUUID->"10180362-6982-55dd-ae31
 
 Cell["The helicity expressions above are combined in one C++ process. Equivalent placements of the identical photons are filled automatically.", "Text", ExpressionUUID->"fc7c5ff8-a99b-5b3b-884e-3428b2fbdf5e"],
 
-Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeeeAA\"}],\n  {\n    {{\"e\", \"E\", \"E\", \"e\", \"A.+\", \"A.+\"}, qed6FourFermionsPP},\n    {{\"e\", \"E\", \"E\", \"e\", \"A.+\", \"A.-\"}, qed6FourFermionsPM},\n    {{\"e\", \"E\", \"E\", \"e\", \"A.-\", \"A.-\"}, qed6FourFermionsMM}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeeeAA\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"52cb1a12-3ac0-502b-a60f-960d370629cf"]
+Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeeeAA\"}],\n  {\"e\", \"E\"} -> {\"e\", \"E\", \"A\", \"A\"},\n  {\n    {{\"e\", \"E\", \"E\", \"e\", \"A.+\", \"A.+\"}, qed6FourFermionsPP},\n    {{\"e\", \"E\", \"E\", \"e\", \"A.+\", \"A.-\"}, qed6FourFermionsPM},\n    {{\"e\", \"E\", \"E\", \"e\", \"A.-\", \"A.-\"}, qed6FourFermionsMM}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeeeAA\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"52cb1a12-3ac0-502b-a60f-960d370629cf"]
 
 }, Open]]
 
@@ -28899,7 +28899,7 @@ Cell["Export eeeeee to C++", "Section", ExpressionUUID->"363a3aa7-a532-51bb-b647
 
 Cell["This process has no massless-helicity branches. Every massive-fermion spin remains an argument of the generated amplitude.", "Text", ExpressionUUID->"2a9899a9-30b5-55dd-8e05-13529e1db2ce"],
 
-Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeeeee\"}],\n  {\n    {{\"e\", \"E\", \"e\", \"E\", \"e\", \"E\"}, qed6SixFermions}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeeeee\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"1cd8cf8b-2382-5dcc-b099-df3c520fc451"]
+Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeeeee\"}],\n  {\"e\", \"E\"} -> {\"E\", \"e\", \"E\", \"e\"},\n  {\n    {{\"e\", \"E\", \"e\", \"E\", \"e\", \"E\"}, qed6SixFermions}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeeeee\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"1cd8cf8b-2382-5dcc-b099-df3c520fc451"]
 
 }, Open]]
 

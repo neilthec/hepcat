@@ -413,11 +413,33 @@ It combines massless-helicity variants into one class, derives equivalent
 arrangements by typed identical-particle permutations within the incoming or
 outgoing legs, and refuses incomplete helicity coverage before writing files.
 It does not infer opposite helicities by parity or silently supply zeros.
+The physical-process form is
+`WriteSPINASProcess[outputDirectory, incomingNames -> outgoingNames, entries, model]`.
+Each entry still contains its all-ingoing particle list and expression. The
+concatenated physical lists fix numbered leg order; do not relabel expressions
+or pre-cross them. Validate charged outgoing species against their all-ingoing
+antiparticles. For example, physical `e,A -> e,A` has analytic `e,A,E,A`.
+The photon model row pairs opposite helicities, so blindly conjugating every
+outgoing model name would incorrectly interchange them. Keep helicity signs in
+the established exporter/native SPINAS convention and apply `ReverseMomentum`
+exactly once for outgoing momenta and angle spinors.
+Generic massless names such as `A` request both helicities; `A.+` fixes a leg
+on either physical side. `"FixedHelicities" -> {leg -> doubledHelicity}` also
+works with either grouped form. Check complete coverage of the selected
+configurations, not helicities explicitly excluded by the caller. Fixed
+incoming helicities contribute no averaging factor. Fixed outgoing selections
+are labeled partial sums with the same full identical-species factorial;
+preserve that convention and document it rather than changing normalization
+based on the number of supplied formulas.
 The grouped class exposes `amp(spins)` and positional `amp(ds1, ds2, ...)`,
 raw `spin_sum()`, and `amp2()` including the incoming spin/helicity average and
 the final identical-species factorials. Count species independently of helicity;
 include identical fermions, and never average or remove amplitude terms.
 Canonical formulas are emitted once and reused by role-preserving leg maps.
+Complex `amp` values preserve phases and explicit spin labels for future
+coherent production-decay contraction. Spin-summed probabilities cannot replace
+that contraction; no correlated production-decay engine is currently implied.
+The runnable exporter still requires two incoming legs.
 Colored families are currently rejected because no full color sum or average
 is available; do not invent color factors from the number of external colors.
 Resolve auxiliary spinors, shifts and explicit color tensors first.

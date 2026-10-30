@@ -366,13 +366,14 @@ own tests with `python3 -m unittest discover -s tests/checks -p test_runner.py`.
 
 ## Export a Runnable SPINAS Process
 
-To put all helicities of one physical process in a single C++ project, supply
-the related particle lists and amplitudes together. For example, after
-calculating the three canonical two-photon cases in the notebook:
+Give the physical incoming and outgoing particles, then the related
+all-ingoing particle lists and amplitudes. For example, after calculating
+the three canonical two-photon cases in the notebook:
 
 ```wolfram
 outputDirectory = FileNameJoin[{$HomeDirectory, "spinas-output", "eeAA"}];
 WriteSPINASProcess[outputDirectory,
+  {"e", "E"} -> {"A", "A"},
   {
     {{"e", "E", "A.+", "A.+"}, qed4PP},
     {{"e", "E", "A.+", "A.-"}, qed4PM},
@@ -381,22 +382,60 @@ WriteSPINASProcess[outputDirectory,
   "ProcessName" -> "eeAA", "Build" -> True, "RunExamples" -> True]
 ```
 
+The arrow separates the two incoming particles from the outgoing particles.
+Their concatenated order fixes the expression's numbered legs: no particle
+relabeling is done. Supply the original all-ingoing expressions, without
+crossing them yourself. The exporter applies `ReverseMomentum` to the outgoing
+legs, including their angle-spinor signs, exactly once. For charged outgoing
+particles it checks the corresponding antiparticle in the all-ingoing list.
+For example, physical `e,A -> e,A` uses all-ingoing `e,A,E,A`.
+
 The mixed-helicity permutation is obtained by relabeling the identical photons.
 Each supplied formula is emitted once and reused for the equivalent
 arrangements. Only permutations within the incoming or outgoing legs are used;
 the exporter does not assume parity or invent missing zero amplitudes.
 An incomplete family returns `Failure` before creating project files.
 
+A generic massless name such as `"A"` requests both helicities. A name such as
+`"A.+"` fixes that leg's helicity, using the existing SPINAS convention rather
+than reversing the sign in the process description. This works on either side
+of the arrow. For example, polarized Compton scattering needs only these two
+expressions:
+
+```wolfram
+WriteSPINASProcess[polarizedDirectory,
+  {"e", "A.+"} -> {"e", "A"},
+  {
+    {{"e", "A.+", "E", "A.+"}, comptonPP},
+    {{"e", "A.+", "E", "A.-"}, comptonPM}
+  }, factorizationModel]
+```
+
+Alternatively, `"FixedHelicities" -> {leg -> doubledHelicity}` selects fixed
+massless helicities with either grouped calling form. For example,
+`"FixedHelicities" -> {4 -> -2}` fixes the fourth leg to negative photon
+helicity. Omitted legs are summed. Supplied expressions must cover every
+requested configuration; an absent configuration is not assumed to vanish.
+
 The grouped class provides `amp(spins)` and `amp(ds1, ds2, ...)`, using doubled
 spins/helicities as in native SPINAS. `spin_sum()` returns the raw sum of
-`std::norm(amp(...))` over all external spins and helicities. `amp2()` additionally
+`std::norm(amp(...))` over all external massive spins and the requested massless
+helicities. `amp2()` additionally
 divides by the incoming state counts and multiplies by the final-state symmetry
-factor. For each identical outgoing species that factor is `1/n!`, counting
+factor. Fixed incoming helicities are not averaged. For each identical
+outgoing species the symmetry factor is `1/n!`, counting
 all helicities together and including identical fermions. There is no incoming
 identical-particle factorial. Thus `eeAA` has `amp2() = spin_sum()/8`: four
 incoming spin states and two identical final photons. Three or four final
 photons contribute `1/6` or `1/24`, respectively. Colored families are currently
 rejected because the exporter has no general color-sum implementation.
+
+Fixing an outgoing helicity gives a labeled partial contribution with the same
+identical-species factor. Sum all labeled helicity sectors to recover the full
+unpolarized result. The complex `amp(...)` values retain phases and spin labels
+for future spin-correlated production and decay calculations. Coherent
+production-decay contraction is not automated; multiplying separately summed
+`amp2()` results would discard the correlations.
 
 The four-argument amplitude form below remains available for a single fixed
 massless-helicity expression, with its original normalization conventions.
@@ -441,7 +480,8 @@ massless helicities, or external color sums or averages. Colored processes
 require an explicitly color-stripped amplitude.
 
 Supply the analytic amplitude in HEPCAT's all-ingoing convention. C++ momenta
-have positive energies, with `"IncomingLegs" -> {1, 2}` by default; the exporter
+have positive energies. The physical arrow form selects the incoming and
+outgoing legs; older calls use `"IncomingLegs" -> {1, 2}` by default. The exporter
 reverses outgoing momenta and angle spinors, leaving square spinors unchanged.
 Internal momenta and physical propagators remain off shell. It preserves the
 supplied coefficients and HEPCAT's explicit `+i m width` denominator sign.

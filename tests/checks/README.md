@@ -341,6 +341,16 @@ diagram model is unchanged.
 
 ## SPINAS Process Export
 
+The polarization suite checks explicit incoming/outgoing processes, fixed
+incoming or outgoing massless helicities, antiparticle crossing, selected-sector
+coverage, incoming averaging and labeled outgoing symmetry factors. Its C++
+test compares complex amplitudes and restricted spin sums at three phase-space
+points, including recombination into the full helicity sum:
+
+```sh
+python3 tests/checks/run-wolfram-tests.py --suite spinas-polarization-tests.wl --timeout 300
+```
+
 The build-tool regression suite checks automatic and explicit CMake lookup,
 invalid tools before project creation, source-only export without CMake, and
 macOS GUI-style PATH builds for both fixed helicities and complete families.
