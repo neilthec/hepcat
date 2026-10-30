@@ -83,6 +83,13 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual([row["suite"] for row in self.records(result)],
                          ["legacy-algebra-tests.wl"])
 
+    def test_expensive_construction_requires_explicit_selection(self):
+        name = "physical-construction-integration-tests.wl"
+        self.assertNotIn(name, RUNNER.TEST_SUITES)
+        result = self.invoke("--suite", name)
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertEqual([row["suite"] for row in self.records(result)], [name])
+
     def test_repeated_selection_keeps_the_requested_order(self):
         result = self.invoke("--suite", "legacy-model-tests.wl",
                              "--suite", "spinor-identity-tests.wl")

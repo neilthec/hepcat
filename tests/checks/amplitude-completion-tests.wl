@@ -2973,8 +2973,11 @@ check["package reload replaces the old optional selected-channel budget and impl
     ConstructiveDiagrams`Private`completionSelectedChannelBasis[
       <|"Targets" -> {}, "ExternalMassRules" -> {}|>, <||>, 1, {}, 1] ===
       Missing["NoSelectedChannelSources"] &&
+    ConstructiveDiagrams`Private`completionSelectedChannelBasis[
+      <|"Targets" -> {}, "ExternalMassRules" -> {}|>, <||>, 1, {}, 1, 60, False] ===
+      Missing["NoSelectedChannelSources"] &&
     Cases[DownValues[ConstructiveDiagrams`Private`completionSelectedChannelBasis],
-      HoldPattern[Verbatim[Optional][_, budget_]] :> budget, Infinity] === {60}];
+      HoldPattern[Verbatim[Optional][_, default_]] :> default, Infinity] === {60, True}];
 check["targeted completion-helper reload migration preserves unrelated private functions",
   DownValues[ConstructiveDiagrams`Private`amplitudeCompletionReloadSentinel] ===
     acReloadUnrelatedDefinitions &&

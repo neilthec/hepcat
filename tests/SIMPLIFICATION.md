@@ -1296,6 +1296,13 @@ post-completion on-shell scope, and the required final checks.
 Request `"Output" -> "Amplitude"` for `{externalMassRules, expression}`, ready
 for `PrepareAmplitudes` or `CheckAmplitudes`. `"Output" -> "Details"` retains
 `"Stages"`, `"StageTimings"`, `"Checks"`, `"TotalTime"`, and the amplitude pair.
+It also records `"RequestedPolePreference"`, `"AchievedPhysicalDenominators"`
+and `"PreferenceFallbackReason"` for the final expression. A passing physical
+amplitude and a preferred denominator representation are separate results.
+If `AllPhysical` was requested but not established, the ordinary final report
+prints that limitation before the time and checks. Detailed output retains it
+even when printing is disabled; `COMPLETE` alone is not a claim that the
+denominator preference was achieved.
 `"ProgressReporting" -> False` suppresses ongoing progress;
 `"PrintReport" -> False` suppresses the final time and test table. A custom
 `"ProgressFunction"` receives `"StageStarted"`, `"Progress"`, and
@@ -1864,6 +1871,24 @@ as cancellation directions in this compact space. This is a structural
 distinction, not a decomposition of contact pieces hidden inside pole terms.
 No independent contact interactions or known final amplitude are inserted.
 
+For a physical-pole request at higher multiplicity, an earlier finite proposal
+keeps selected-cut-prepared whole channel expressions as leading fit
+coordinates. Their correlated numerators receive one coefficient each, rather
+than an independent coefficient for every expanded monomial. The remaining
+coordinates come from ordinary reduced physical channel atoms. Exact formal
+dependency pruning preserves this selected proposal's span and its ordering
+preference for whole sources. Explicit regular input remains fixed.
+
+Each selected source is checked on its own cut before use. Only that channel's
+numerator shell may enter its preparation; the full sum is not put on shell.
+Every original channel and the complete fitted affine family still undergo
+independent validation. This is a smaller reconstruction proposal, not a
+truncation of the larger correction space. If it is unavailable or does not
+fit, the broader physical union, including additional invariant continuations,
+remains a fallback within the same stage deadline. Detailed reports name this
+proposal `GroupedSelectedPhysicalSources` and retain its source verification.
+No additional user options are required.
+
 If this compact space is unavailable, or fails with time remaining, completion
 tries the existing literal termwise input-and-channel space. Both attempts share
 the stage's time limit and respect the same correction-term cap; there is no
@@ -2107,12 +2132,27 @@ seconds, with all 17 rows passing, including the independent Feynman comparison.
 These are measured stage timings on the recorded prepared inputs, not a
 promise for every cold construction or machine.
 
-A separate fresh `ConstructAmplitude` regression also completes from raw
-diagrams with only `AllPhysical`, the independent Feynman model and diagnostic
-output choices supplied. No numerical resource overrides are used. It requires
-zero remaining high-energy-family coefficients, a compact result containing
-only catalogued physical poles, and every final check to pass. The complete
-automatic-resource suite, including this construction, passes all 42 assertions.
+These staged measurements do not establish what a newly generated source
+catalog will produce in a fresh construction. The opt-in
+`physical-construction-integration-tests.wl` regression runs the exact ordinary
+notebook call from raw diagrams with `AllPhysical` and the independent Feynman
+model. It supplies no saved amplitude, correction basis or resource overrides.
+It requires a validated result with only physical denominators and complexity
+at most 327, then rebuilds the Feynman benchmark for an independent check.
+Run it separately with:
+
+```sh
+python3 tests/checks/run-wolfram-tests.py --suite physical-construction-integration-tests.wl --timeout 2400
+```
+
+The normal constructor options and resource defaults are unchanged. A compact
+worked-example test is not a substitute for this complete fresh-call test.
+The verified fresh ordinary call completed in 291.978 seconds and returned
+seven groups, 1,575 leaves and complexity 327, with only physical denominator
+factors. The separately regenerated validation reported 17 passes, including
+the Feynman comparison. These are measured results for that execution, not a
+runtime or global-minimality guarantee. The earlier saved ordinary call took
+about 663 seconds and retained apparent spurious denominators.
 
 The proof ordering matters. Cheap scalar grouping and bounded numerator
 Schouten edits first operate on the original direction. A modest compact form
@@ -2298,6 +2338,16 @@ Failed or interrupted normalizations and the untouched tail remain literal
 inputs. In the six-point example this reduced 650 columns to 258 independent
 columns, with no sampled identity tests or discarded unproved directions.
 
+Preparation also tries a bounded alternative on the original rational
+fractions, before they lose useful numerator context through normalization.
+It factors out common spectators, applies generalized Schouten moves that
+expose external endpoint Dirac contractions, and reduces with external masses
+only. Physical inverse factors are protected. The usual reduction and this
+alternative compete by the same whole-expression complexity rank; a slower or
+larger alternative cannot replace the best completed result. The retained
+`OriginalFractionSpinorIdentities` route records the ordinary edits and their
+denominators. It applies no internal-shell identities to a completed amplitude.
+
 Completion uses a private forward-product normalization policy for coefficient
 construction, while public preparation retains useful factored polynomials.
 A presentation preference must not implicitly redefine the proposal coordinates.
@@ -2395,7 +2445,14 @@ than guessing extra physics. Nonzero undetermined directions give
 `"UNDERDETERMINED"`, not a unique final answer.
 
 A free coefficient can also multiply an expression that is identically zero.
-This previously caused false `UNDERDETERMINED` results for some five-point
+When a completion report already carries exact affine coefficients in
+`RemainingBasis`, high-energy preparation reuses them only after checking
+their number, coordinate independence and literal reconstruction of the
+complete family. This avoids expanding a large family merely to extract the
+same coefficients again. Missing or inconsistent metadata takes the ordinary
+coefficient-extraction path; nonlinear families and unproved directions remain
+explicit. Reusing coefficients is not itself an identity-zero certificate.
+Unrecognized identity-zero directions previously caused false `UNDERDETERMINED` results for some five-point
 helicity orderings. Completion now removes only directions with an exact
 external-identity certificate. The proof retains the original expression,
 first trying cheap grouping by physical propagators and bounded Schouten edits

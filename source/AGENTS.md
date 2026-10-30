@@ -803,6 +803,22 @@ termwise space. Attempts share the stage deadline and correction-term cap;
 do not silently discard excess directions. `"ChannelReferences" -> None`
 retains the literal-only behavior, and an explicit `"CorrectionBasis"` retains
 the supplied-space behavior after normalization.
+For higher-point physical requests, first propose whole selected-cut-prepared
+channel expressions as leading correlated coordinates, followed by ordinary
+reduced physical channel atoms. Keep the complete numerator of each selected
+source under one coefficient. Verify its own cut before use and apply only
+that cut's numerator shell in source preparation. The general fit still tests
+all original channels, all affine directions and independent samples.
+`GroupedSelectedPhysicalSources` is a separate finite proposal; preserve the
+larger physical union and invariant-continuation fallback within the shared
+clock. Never meet a cap by truncating that proposal. Retain `SourceVerification`
+and report unvisited or timed-out source choices honestly.
+
+Final constructor details expose `RequestedPolePreference`,
+`AchievedPhysicalDenominators` and `PreferenceFallbackReason`. Classify the
+final expression, not merely an earlier factorization result. A passing
+amplitude can still miss the requested denominator presentation; print that
+limitation with the ordinary final report and preserve it in details.
 `"BoseSymmetryGroups" -> Automatic` and `"FermionSymmetryGroups" -> Automatic`
 are the defaults. Identify all identical external groups from the model's
 twice-spin, species, masses and external spinor weights. Even twice-spin uses
@@ -979,6 +995,11 @@ and proof timeouts retain it. Details expose `"FamilyIdentityReduction"`.
 Preserve the typed Lorentz-scalar, chirality, little-group and branch guards;
 neither finite zero samples nor a special-frame component proves an identity.
 Genuine contact freedom remains `UNDERDETERMINED`.
+The high-energy stage may reuse retained affine coefficients only when their
+length and coordinate independence are valid and they literally reconstruct
+the supplied family and center. This skips unnecessary `CoefficientArrays`
+expansion without bypassing a zero proof. Incorrect metadata uses normal
+coefficient extraction; nonlinear families and unproved freedom remain.
 
 Compound spurious poles can be checked together on exact conserved rational
 curves. Polynomial coprimality checks all roots on each curve while rejecting
@@ -1019,6 +1040,12 @@ Commit the amplitude, rank and replay route as one checkpoint record so an
 interrupted search cannot expose mismatched metadata. Its external mass rules
 never include internal-line shells, and changing a compact
 particular expression does not remove any retained family directions.
+An additional ordinary preparation route retains the original rational
+fractions, factors out spectators and prioritizes Schouten moves exposing
+external Dirac contractions. It competes against the existing route by the
+same whole-expression rank and retains completed checkpoints and replay
+records. No inverse factor or internal mass shell may be changed by this
+completed-amplitude alternative.
 
 Automatic fit samples are at least four, increasing with actual unknown count
 and a conservative estimate of coherent-spin equations per channel. Massive

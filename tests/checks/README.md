@@ -74,6 +74,35 @@ checkpoints must retain a consistent amplitude, rank and replay route even on
 interruption. The generic identity tests must not rely on a known process
 formula or internal shells.
 
+`compact-physical-source-tests.wl` checks the smaller physical source proposal,
+fixed regular terms, unchanged residue obligations, physical/simple-pole guards,
+complete-space cap rejection and retained own-cut certificates. Its correlated
+multi-term continuation must remain one leading coordinate, rather than being
+silently split into independently weighted monomials. Deferring optional
+invariant trials must not claim that those trials were performed.
+`retained-affine-coefficients-tests.wl` checks exact retained-coefficient reuse,
+the structural reconstruction guard, mismatched metadata, nonlinear families,
+proof-budget exhaustion and removal only after an exact zero certificate.
+
+The expensive fresh mixed-helicity six-point construction is opt-in:
+
+```sh
+python3 tests/checks/run-wolfram-tests.py --suite physical-construction-integration-tests.wl --timeout 2400
+```
+
+This executes the exact ordinary notebook call with `AllPhysical` and its
+Feynman model. It loads no prior amplitude, prepared cache, example helper or
+supplied correction basis and sets no numerical resource overrides. The test
+requires only physical denominators and complexity at most 327, then rebuilds
+the independent Feynman benchmark and reruns all amplitude checks. Its result
+must be reported separately from the worked-example fixture tests. Normal
+constructor options and defaults are unchanged.
+The verified fresh ordinary call took 291.978 seconds and produced seven
+groups with complexity 327 and 1,575 leaves, all denominators physical. The
+integration suite passed all seven assertions; its independently regenerated
+amplitude report had 17 passing rows, including Feynman agreement. These are
+recorded measurements, not promises for a different workload or machine.
+
 `automatic-resource-tests.wl` covers lightweight workload estimates, finite
 clock/cap resolution, coherent versus fixed-spin sample estimates, unchanged
 explicit overrides, public defaults, nested sample precedence and final-check

@@ -37,7 +37,10 @@ check["the public constructor exposes simple output and parallel controls",
     ("MaxKernels" /. Options[ConstructAmplitude]) === Automatic];
 caDetails = caRun4["Output" -> "Details"];
 check["actual four-point QED construction completes every stage",
-  AssociationQ[caDetails] && caDetails["Status"] === "COMPLETE"];
+  AssociationQ[caDetails] && caDetails["Status"] === "COMPLETE" &&
+    caDetails["RequestedPolePreference"] === "AllPhysical" &&
+    caDetails["AchievedPhysicalDenominators"] === True &&
+    caDetails["PreferenceFallbackReason"] === None];
 If[!AssociationQ[caDetails] || Lookup[caDetails, "Status", None] =!= "COMPLETE",
   Print["Cannot continue construction assertions: ", caDetails];
   If[checks =!= 40, AppendTo[failures, "Not every construction assertion executed."]];

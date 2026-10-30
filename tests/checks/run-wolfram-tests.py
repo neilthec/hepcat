@@ -20,6 +20,7 @@ TEST_SUITES = (
     "high-energy-tests.wl", "high-energy-family-tests.wl", "reference-independence-tests.wl",
     "amplitude-completion-tests.wl", "completion-input-fit-tests.wl",
     "physical-pole-completion-tests.wl", "schouten-sum-sign-tests.wl",
+    "compact-physical-source-tests.wl", "retained-affine-coefficients-tests.wl",
     "null-pair-shift-tests.wl", "null-channel-completion-tests.wl",
     "bose-symmetry-tests.wl", "fermion-symmetry-tests.wl",
     "model-parameter-tests.wl", "feynman-tests.wl", "spinas-export-tests.wl",
@@ -35,11 +36,16 @@ TEST_SUITES = (
     "final-amplitude-simplification-tests.wl",
     "reverse-normalization-tests.wl", "determinant-pair-tests.wl",
     "ordinary-pole-compaction-tests.wl", "scalar-pole-tests.wl",
+    "whole-fraction-schouten-tests.wl",
     "qed-worked-example-tests.wl",
     "parallel-execution-tests.wl", "parallel-preparation-tests.wl",
     "parallel-amplitude-check-tests.wl", "parallel-completion-tests.wl",
     "construct-amplitude-tests.wl", "automatic-resource-tests.wl",
 )
+
+# These execute full expensive notebook constructions rather than component
+# regressions. Select them explicitly and give the external runner enough time.
+INTEGRATION_TEST_SUITES = ("physical-construction-integration-tests.wl",)
 
 
 def main():
@@ -47,8 +53,8 @@ def main():
     parser.add_argument("--kernel", default=shutil.which("WolframKernel") or
                         "/Applications/Wolfram.app/Contents/MacOS/WolframKernel")
     parser.add_argument("--timeout", type=float, default=300)
-    parser.add_argument("--suite", action="append", choices=TEST_SUITES,
-                        help="Run only this suite; repeat to select several. Default: all suites.")
+    parser.add_argument("--suite", action="append", choices=TEST_SUITES + INTEGRATION_TEST_SUITES,
+                        help="Run only this suite; repeat to select several. Default: standard suites. Full constructions are opt-in.")
     parser.add_argument("--strict-known-issues", action="store_true",
                         help="Compatibility flag; repaired legacy probes already fail normally on regression.")
     args = parser.parse_args()
