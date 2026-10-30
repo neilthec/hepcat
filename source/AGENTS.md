@@ -395,6 +395,10 @@ Export a final spinor amplitude with
 `WriteSPINASProcess[outputDirectory, particles, amplitude, model]`. Add
 `"Build" -> True, "RunExamples" -> True` to compile, link the existing local
 SPINAS library and run three conserved physical 2-to-N example points.
+Build-tool discovery checks PATH and standard installation locations, including
+the macOS CMake application and Homebrew, without changing the user's environment.
+`"CMakeExecutable"` accepts an explicit full path when needed. Check build tools
+before writing generated files; source-only export must not require CMake.
 `"SPINASDirectory"` selects its checkout; automatic lookup uses `SPINAS_ROOT`
 or the repository's sibling `spinas` directory. Model values stay local.
 Inputs use all-ingoing conventions; outgoing momenta and angle-spinor signs

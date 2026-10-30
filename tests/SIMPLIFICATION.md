@@ -424,6 +424,13 @@ configuration. Existing project files are protected unless
 `"Overwrite" -> True`; `"ReturnDetails" -> True` adds file paths and build/run
 reports.
 
+When building from desktop Mathematica, CMake is found on `PATH` or in standard
+installation locations, including the macOS CMake application and Homebrew.
+No shell setup is required. For a custom installation, set
+`"CMakeExecutable" -> "/full/path/to/cmake"`. A missing or unusable CMake is
+reported before files are generated; source-only export does not require it.
+The detailed build report records the executable used.
+
 The generated class is `hepcat_generated::hepcat_process`; set another class
 and executable name with `"ProcessName"`. Call `set_momenta`, then `amp` with
 a doubled-spin array. Massless helicities are fixed by the exported process;

@@ -341,6 +341,15 @@ diagram model is unchanged.
 
 ## SPINAS Process Export
 
+The build-tool regression suite checks automatic and explicit CMake lookup,
+invalid tools before project creation, source-only export without CMake, and
+macOS GUI-style PATH builds for both fixed helicities and complete families.
+It also exercises a custom executable path containing spaces:
+
+```sh
+python3 tests/checks/run-wolfram-tests.py --suite spinas-build-tools-tests.wl --timeout 180
+```
+
 The grouped-helicity integration suite is:
 
 ```sh

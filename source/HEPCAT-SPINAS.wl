@@ -344,10 +344,11 @@ End[];
 Begin["ConstructiveDiagrams`"];
 WriteSPINASProcess::usage = "WriteSPINASProcess[directory, particles, amplitude, model] writes a complete C++11 SPINAS process project for two incoming and at least two outgoing particles. The amplitude uses HEPCAT's all-ingoing convention; IncomingLegs -> {1,2} selects physical incoming legs and outgoing legs are crossed automatically, including angle-spinor signs. The project contains process.hpp, process.cpp, main.cpp, a deterministic physical phase-space example generator, CMakeLists.txt, README.md and manifest.json. SPINASDirectory -> Automatic looks for SPINAS_ROOT or the sibling spinas checkout; an explicit path overrides it. Model parameter defaults come from ModelParameterRules; ParameterRules overrides them locally. ProcessName sets a C++ class/executable name. Build -> True configures and links the project against the existing SPINAS library; RunExamples -> True also builds and runs three sample points. Precision -> Automatic reads the local SPINAS build configuration; LongDouble and Double are explicit choices. Overwrite -> False protects existing project files. ReturnDetails -> False normally returns the output directory; True adds file paths and build/run results. Fixed massless helicities are retained. amp2 averages incoming massive spins and sums outgoing massive spins at those fixed helicities, without an identical-particle phase-space factor or color sums/averages. Unsupported expressions return Failure before files are written; this function does not complete or validate the physical amplitude.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " The family overload WriteSPINASProcess[directory, {{particles1, amplitude1}, ...}, model] combines helicity-related amplitudes into one class. It fills identical-species, same-role massless leg permutations with their proper statistics sign, without inferring parity or missing zero amplitudes. Incomplete coverage is rejected before writing files. amp(ds1,...,dsn) and amp(Spins) select doubled spins and helicities; spin_sum sums all external spin/helicity states; amp2 also averages incoming states and includes the outgoing identical-species factorial factor, including identical fermions. Canonical formulas are compiled once and reused through leg maps. Colored families are currently refused because a full color sum is not implemented. The original four-argument fixed-helicity overload retains its existing spin-sum and symmetry-factor conventions.";
+WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " CMakeExecutable -> Automatic searches PATH and standard installation locations, including the macOS CMake application and Homebrew, so desktop Mathematica need not inherit the shell's PATH. An explicit full path selects another CMake installation. A missing build tool is reported before generating files; source-only export does not require CMake.";
 Options[WriteSPINASProcess] = {"SPINASDirectory" -> Automatic,
   "IncomingLegs" -> {1, 2}, "ParameterRules" -> Automatic,
   "ProcessName" -> "hepcat_process", "Precision" -> Automatic,
-  "Build" -> False, "RunExamples" -> False, "Overwrite" -> False,
+  "Build" -> False, "RunExamples" -> False, "CMakeExecutable" -> Automatic, "Overwrite" -> False,
   "ReturnDetails" -> False};
 WriteSPINASProcess::args = "Expected an output directory, an ordered particle list, a spinor amplitude, a model and valid export options.";
 
@@ -571,12 +572,40 @@ spinasProjectREADME[name_String, ir_Association, precision_String] := StringRiff
 
 spinasProjectCommand[arguments_List] := Quiet[Check[RunProcess[arguments],
   <|"ExitCode" -> -1, "StandardOutput" -> "", "StandardError" -> "The external program could not be started."|>]];
-spinasProjectBuild[directory_String, name_String, root_String, runExamples_] := Module[
-  {cmake, located, configure, build, run, executable, configureArguments},
-  located = spinasProjectCommand[{"/usr/bin/which", "cmake"}];
-  cmake = If[Lookup[located,"ExitCode",-1] === 0, StringTrim[located["StandardOutput"]], ""];
-  If[cmake === "", Return[Failure["SPINASBuild", <|"MessageTemplate" -> "CMake was not found on PATH.",
-    "Directory" -> directory|>]]];
+(* Desktop Mathematica does not normally inherit the login shell's PATH.
+   Locate CMake locally without changing the user's environment or installing
+   command-line links into a system directory. An explicit path is authoritative. *)
+spinasProjectCMakeExecutable[option_] := Module[
+  {path, executableName, candidates, standard, programFiles, probe, executable},
+  If[StringQ[option], candidates = {ExpandFileName[option]},
+    path = Replace[Environment["PATH"], Except[_String] -> ""];
+    executableName = If[$OperatingSystem === "Windows", "cmake.exe", "cmake"];
+    standard = Switch[$OperatingSystem,
+      "MacOSX", {"/Applications/CMake.app/Contents/bin/cmake",
+        FileNameJoin[{$HomeDirectory, "Applications", "CMake.app", "Contents", "bin", "cmake"}],
+        "/opt/homebrew/bin/cmake", "/usr/local/bin/cmake"},
+      "Windows", programFiles = Environment /@ {"ProgramFiles", "ProgramFiles(x86)"};
+        FileNameJoin[{#, "CMake", "bin", "cmake.exe"}] & /@
+          Select[programFiles, StringQ[#] && # =!= "" &],
+      _, {"/usr/local/bin/cmake", "/usr/bin/cmake", "/bin/cmake", "/snap/bin/cmake"}];
+    candidates = Join[FileNameJoin[{#, executableName}] & /@
+        Select[StringSplit[path, If[$OperatingSystem === "Windows", ";", ":"]], # =!= "" &],
+      standard]];
+  executable = SelectFirst[DeleteDuplicates[ExpandFileName /@ candidates],
+    Function[candidate, FileExistsQ[candidate] && !DirectoryQ[candidate] &&
+      (probe = spinasProjectCommand[{candidate, "--version"}];
+       Lookup[probe, "ExitCode", -1] === 0 &&
+         StringStartsQ[StringTrim[Lookup[probe, "StandardOutput", ""]], "cmake version "])], ""];
+  If[executable =!= "", executable,
+    Failure["SPINASBuild", <|"MessageTemplate" ->
+      If[StringQ[option], "The specified CMake executable could not be run. Set CMakeExecutable to the full path of a working CMake installation.",
+        "CMake could not be found on PATH or in its standard installation locations. Install CMake or set CMakeExecutable to its full path."],
+      "CMakeExecutable" -> option|>]]
+];
+spinasProjectBuild[directory_String, name_String, root_String, runExamples_, cmakeOption_:Automatic] := Module[
+  {cmake, configure, build, run, executable, configureArguments},
+  cmake = spinasProjectCMakeExecutable[cmakeOption];
+  If[FailureQ[cmake], Return[cmake]];
   configureArguments = {cmake,"-S",directory,"-B",FileNameJoin[{directory,"build"}]};
   (* A resolved checkout supersedes any prior generated build's cached root,
      header and library paths when the project is regenerated. *)
@@ -598,18 +627,21 @@ spinasProjectBuild[directory_String, name_String, root_String, runExamples_] := 
       "MessageTemplate" -> "The compiled phase-space examples did not run successfully.",
       "Directory" -> directory, "CommandResult" -> run|>]]];
     run = Join[run,<|"Status" -> "RAN"|>]];
-  <|"Build" -> Join[build,<|"Status" -> "BUILT", "Configure" -> configure|>], "Examples" -> run|>
+  <|"Build" -> Join[build,<|"Status" -> "BUILT", "Configure" -> configure,
+    "CMakeExecutable" -> cmake|>], "Examples" -> run|>
 ];
 
 WriteSPINASProcess[directory_String, process : {___String}, amplitude_, model_, opts:OptionsPattern[]] := Module[
   {options = Association[{opts}], name = OptionValue["ProcessName"], root, precision, ir,
    dir = ExpandFileName[directory], data, runtime, files, contents, written, result, build,
    overwrite = OptionValue["Overwrite"], examples = OptionValue["RunExamples"],
-   details = OptionValue["ReturnDetails"], buildRequested = OptionValue["Build"], manifest},
+   details = OptionValue["ReturnDetails"], buildRequested = OptionValue["Build"],
+   cmake = OptionValue["CMakeExecutable"], manifest},
   If[Complement[Keys[options],First /@ Options[WriteSPINASProcess]] =!= {} ||
       !StringQ[name] || !TrueQ[spinasCppIdentifierQ[name]] || StringTrim[directory] === "" || !AllTrue[{overwrite,examples,details,buildRequested},MemberQ[{True,False},#]&] ||
       !MemberQ[{Automatic,"LongDouble","Double"},OptionValue["Precision"]] ||
-      !(OptionValue["SPINASDirectory"]===Automatic || StringQ[OptionValue["SPINASDirectory"]]),
+      !(OptionValue["SPINASDirectory"]===Automatic || StringQ[OptionValue["SPINASDirectory"]]) ||
+      !(cmake === Automatic || (StringQ[cmake] && StringTrim[cmake] =!= "")),
     Message[WriteSPINASProcess::args]; Return[$Failed]];
   data = If[Head[model] === FeynmanModel,List @@ model,model];
   If[!ListQ[data],Return[Failure["InvalidModel",<||>]]];
@@ -618,6 +650,8 @@ WriteSPINASProcess[directory_String, process : {___String}, amplitude_, model_, 
   If[FailureQ[ir],Return[ir]];
   If[ir["LegCount"] < 4,Return[Failure["SPINASPhaseSpace",<|
     "MessageTemplate"->"The runnable project requires two incoming and at least two outgoing particles."|>]]];
+  If[TrueQ[buildRequested] || TrueQ[examples],
+    cmake = spinasProjectCMakeExecutable[cmake]; If[FailureQ[cmake], Return[cmake]]];
   runtime = FileNameJoin[{$spinasExportSourceDirectory,"spinas-runtime.hpp"}];
   If[!FileExistsQ[runtime],Return[Failure["SPINASRuntime",<|"MessageTemplate"->"The SPINAS runtime template is missing."|>]]];
   root = spinasProjectRoot[OptionValue["SPINASDirectory"]];
@@ -645,7 +679,7 @@ WriteSPINASProcess[directory_String, process : {___String}, amplitude_, model_, 
   result = <|"Directory"->dir,"Files"->files,"Process"->process,"IncomingLegs"->ir["IncomingLegs"],
     "Build"-><|"Status"->"NOT_REQUESTED"|>,"Examples"-><|"Status"->"NOT_REQUESTED"|>|>;
   If[TrueQ[buildRequested] || TrueQ[examples],
-    build = spinasProjectBuild[dir,name,root,examples]; If[FailureQ[build],Return[build]];
+    build = spinasProjectBuild[dir,name,root,examples,cmake]; If[FailureQ[build],Return[build]];
     result = Join[result,build]];
   If[TrueQ[details],result,dir]
 ];
@@ -869,13 +903,15 @@ spinasFamilyProjectREADME[name_String, ir_Association, precision_String] := Stri
 WriteSPINASProcess[directory_String, entries_List, model_, opts:OptionsPattern[]] := Module[
   {options = Join[Association[Options[WriteSPINASProcess]], Association[Reverse[Flatten[{opts}]]]],
    name, root, precision, ir, dir = ExpandFileName[directory], data, runtime,
-   files, contents, written, result, build, manifest},
+   files, contents, written, result, build, cmake, manifest},
   name = options["ProcessName"];
+  cmake = options["CMakeExecutable"];
   If[Complement[First /@ Flatten[{opts}], First /@ Options[WriteSPINASProcess]] =!= {} ||
       !StringQ[name] || !TrueQ[spinasCppIdentifierQ[name]] || StringTrim[directory] === "" ||
       !AllTrue[Lookup[options, {"Overwrite", "RunExamples", "ReturnDetails", "Build"}], MemberQ[{True, False}, #] &] ||
       !MemberQ[{Automatic, "LongDouble", "Double"}, options["Precision"]] ||
-      !(options["SPINASDirectory"] === Automatic || StringQ[options["SPINASDirectory"]]),
+      !(options["SPINASDirectory"] === Automatic || StringQ[options["SPINASDirectory"]]) ||
+      !(cmake === Automatic || (StringQ[cmake] && StringTrim[cmake] =!= "")),
     Message[WriteSPINASProcess::args]; Return[$Failed]];
   data = If[Head[model] === FeynmanModel, List @@ model, model];
   If[!ListQ[data], Return[Failure["InvalidModel", <||>]]];
@@ -883,6 +919,8 @@ WriteSPINASProcess[directory_String, entries_List, model_, opts:OptionsPattern[]
   If[FailureQ[ir], Return[ir]];
   If[ir["LegCount"] < 4, Return[Failure["SPINASPhaseSpace", <|
     "MessageTemplate" -> "The runnable project requires two incoming and at least two outgoing particles."|>]]];
+  If[TrueQ[options["Build"]] || TrueQ[options["RunExamples"]],
+    cmake = spinasProjectCMakeExecutable[cmake]; If[FailureQ[cmake], Return[cmake]]];
   runtime = FileNameJoin[{$spinasExportSourceDirectory, "spinas-runtime.hpp"}];
   If[!FileExistsQ[runtime], Return[Failure["SPINASRuntime", <|"MessageTemplate" -> "The SPINAS runtime template is missing."|>]]];
   root = spinasProjectRoot[options["SPINASDirectory"]];
@@ -919,7 +957,7 @@ WriteSPINASProcess[directory_String, entries_List, model_, opts:OptionsPattern[]
     KeyTake[ir, {"HelicityConfigurations", "InputBranchCount", "GeneratedBranchCount",
       "InitialSpinAverage", "SymmetryFactor", "FinalStateSymmetryDivisor"}]];
   If[TrueQ[options["Build"]] || TrueQ[options["RunExamples"]],
-    build = spinasProjectBuild[dir, name, root, options["RunExamples"]];
+    build = spinasProjectBuild[dir, name, root, options["RunExamples"], cmake];
     If[FailureQ[build], Return[build]]; result = Join[result, build]];
   If[TrueQ[options["ReturnDetails"]], result, dir]
 ];
