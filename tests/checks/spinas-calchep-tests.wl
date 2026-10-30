@@ -24,12 +24,12 @@ scFamily = {#, scLookup[#]} & /@ scProcesses;
 scOptions = Join[Association[Options[WriteSPINASProcess]],
   <|"ParameterRules" -> scRules, "CalcHEPModel" -> None,
     "CalcHEPDirectory" -> scPath["not installed"]|>];
-check["CalcHEP validation has opt-in execution and reproducible ordinary defaults",
+check["CalcHEP validation has opt-in execution and an automatic time-based default seed",
   ("CalcHEPDirectory" /. Options[WriteSPINASProcess]) === Automatic &&
     ("CalcHEPModel" /. Options[WriteSPINASProcess]) === Automatic &&
     ("RunCalcHEPValidation" /. Options[WriteSPINASProcess]) === False &&
     ("CalcHEPPoints" /. Options[WriteSPINASProcess]) === 1000 &&
-    ("CalcHEPSeed" /. Options[WriteSPINASProcess]) === 12345];
+    ("CalcHEPSeed" /. Options[WriteSPINASProcess]) === Automatic];
 scIR = ConstructiveDiagrams`Private`spinasFamilyIR[scFamily, scModel,
   KeyTake[scOptions, {"IncomingLegs", "ParameterRules", "FixedHelicities"}]];
 scDisabled = ConstructiveDiagrams`Private`spinasCalcHEPConfiguration[scIR, scModel, scOptions];
@@ -66,6 +66,46 @@ check["the manifest identifies the missing benchmark without reporting a test pa
 scCMake = Import[scExport["Files"]["CMake"], "Text"];
 check["the generated project provides a standalone validation executable",
   StringContainsQ[scCMake, "calchep_stub_validate_calchep"]];
+
+check["automatic seed metadata remains a runtime choice instead of a frozen export-time number",
+  scManifest["CalcHEPValidation"]["Seed"] === "Automatic"];
+scAutomaticMain = Import[scExport["Files"]["CalcHEPMain"], "Text"];
+check["an ordinary generated validator keeps its time-seeded C++ default",
+  !StringContainsQ[scAutomaticMain, "defaults.seed = UINT64_C("]];
+scZeroSeedConfig = ConstructiveDiagrams`Private`spinasCalcHEPConfiguration[
+  scIR, scModel, Join[scOptions, <|"CalcHEPSeed" -> 0|>]];
+scMaxSeedConfig = ConstructiveDiagrams`Private`spinasCalcHEPConfiguration[
+  scIR, scModel, Join[scOptions, <|"CalcHEPSeed" -> 18446744073709551615|>]];
+check["explicit zero and maximum uint64 seeds are emitted as exact fixed choices",
+  StringContainsQ[ConstructiveDiagrams`Private`spinasCalcHEPMain["calchep_stub", scZeroSeedConfig],
+    "defaults.seed = UINT64_C(0);"] &&
+  StringContainsQ[ConstructiveDiagrams`Private`spinasCalcHEPMain["calchep_stub", scMaxSeedConfig],
+    "defaults.seed = UINT64_C(18446744073709551615);"]];
+scCapturedCommand = {};
+scAutomaticRun = Block[{ConstructiveDiagrams`Private`spinasProjectCommand = Function[arguments,
+    scCapturedCommand = arguments;
+    <|"ExitCode" -> 0, "StandardOutput" -> "Seed: 8675309\nAmplitude validation: PASS\n",
+      "StandardError" -> ""|>]},
+  ConstructiveDiagrams`Private`spinasRunCalcHEPValidation[scDirectory, "calchep_stub", scDisabled]];
+check["the automatic execution helper records the concrete seed printed by the validator",
+  AssociationQ[scAutomaticRun] && scAutomaticRun["Seed"] === 8675309 &&
+    !MemberQ[scCapturedCommand, "--seed"]];
+scExplicitRun = Block[{ConstructiveDiagrams`Private`spinasProjectCommand = Function[arguments,
+    scCapturedCommand = arguments;
+    <|"ExitCode" -> 0, "StandardOutput" -> "Seed: 0\nAmplitude validation: PASS\n",
+      "StandardError" -> ""|>]},
+  ConstructiveDiagrams`Private`spinasRunCalcHEPValidation[scDirectory, "calchep_stub", scZeroSeedConfig]];
+check["an explicit zero seed is passed to the executable and retained in its returned report",
+  AssociationQ[scExplicitRun] && scExplicitRun["Seed"] === 0 &&
+    Take[scCapturedCommand, -2] === {"--seed", "0"}];
+scMissingSeedRun = Block[{ConstructiveDiagrams`Private`spinasProjectCommand = Function[arguments,
+    <|"ExitCode" -> 0, "StandardOutput" -> "Amplitude validation: PASS\n", "StandardError" -> ""|>]},
+  ConstructiveDiagrams`Private`spinasRunCalcHEPValidation[scDirectory, "calchep_stub", scDisabled]];
+scWrongSeedRun = Block[{ConstructiveDiagrams`Private`spinasProjectCommand = Function[arguments,
+    <|"ExitCode" -> 0, "StandardOutput" -> "Seed: 7\nAmplitude validation: PASS\n", "StandardError" -> ""|>]},
+  ConstructiveDiagrams`Private`spinasRunCalcHEPValidation[scDirectory, "calchep_stub", scZeroSeedConfig]];
+check["a missing or incorrectly overridden replay seed cannot be reported as a successful run",
+  FailureQ[scMissingSeedRun] && FailureQ[scWrongSeedRun]];
 
 scSelectedOptions = Join[scOptions, <|"CalcHEPModel" -> Automatic, "FixedHelicities" -> {3 -> 2}|>];
 scSelectedIR = ConstructiveDiagrams`Private`spinasFamilyIR[scFamily, scModel,

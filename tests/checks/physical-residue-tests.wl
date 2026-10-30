@@ -79,10 +79,10 @@ Do[
     CreateDiagrams[prStoredParticles, prModel]];
   prStoredDiagramAmplitude = prPreparedDiagramSum[prStoredDiagramRecords];
   prStoredReport = CheckPhysicalResidues[prStoredAmplitude,
-    prStoredChannels, prModel, "Output" -> "Details", "Samples" -> 2,
+    prStoredChannels, prModel, "Output" -> "Details", "Samples" -> 2, "RandomSeed" -> 1729,
     "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "TimeConstraint" -> 30];
   prStoredDiagramReport = CheckPhysicalResidues[prStoredDiagramAmplitude,
-    prStoredChannels, prModel, "Output" -> "Details", "Samples" -> 2,
+    prStoredChannels, prModel, "Output" -> "Details", "Samples" -> 2, "RandomSeed" -> 1729,
     "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "TimeConstraint" -> 30];
   prStoredLabel = ToString[prStoredParticles, InputForm];
   check["stored QED4 amplitude agrees with cubic sewing " <> prStoredLabel,
@@ -607,7 +607,7 @@ check["empty factorization data is explicitly reported as no comparisons",
    QED chart. A lone pole with its sewn constant numerator has known residue. *)
 prSixScalarReport = prDetailedReport[
   prSixScalarTarget["StateSum"]/prSixScalarTarget["Propagator"],
-  {prSixScalarTarget}, "Samples" -> 2,
+  {prSixScalarTarget}, "Samples" -> 2, "RandomSeed" -> 1729,
   "ParameterRules" -> {scalarCubic -> 2, scalarQuartic -> 3, scalarQuintic -> 5},
   "TimeConstraint" -> 15];
 check["automatic physical residue checks work at six points without diagram records",
@@ -624,7 +624,7 @@ check["complete six-point report checks all twenty-five physical scalar cuts",
     AllTrue[prSixScalarFullReport["Channels"], #["Status"] === "PASS" &]];
 prSixScalarRepeated = prDetailedReport[
   prSixScalarTarget["StateSum"]/prSixScalarTarget["Propagator"],
-  {prSixScalarTarget}, "Samples" -> 2,
+  {prSixScalarTarget}, "Samples" -> 2, "RandomSeed" -> 1729,
   "ParameterRules" -> {scalarCubic -> 2, scalarQuartic -> 3, scalarQuintic -> 5},
   "TimeConstraint" -> 15];
 prNormalizedSampleMomenta[report_] := Map[Function[sample,

@@ -2284,11 +2284,25 @@ CheckAmplitudes::usage = CheckAmplitudes::usage <>
   " FeynmanAmplitudes -> None optionally supplies an independent full Feynman amplitude, a mass-rule/expression pair, or a list of pairs. The full sums are compared at common conserved external on-shell momenta away from all internal propagator poles, with no internal-shell substitutions and no sewing sign or normalization fitted to the benchmark. Explicit Xi references vary independently between the two full sums. FeynmanSamples -> Automatic uses Samples and FeynmanTimeConstraint -> Automatic uses TimeConstraint. Output -> \"Feynman\" shows visible amplitude samples; Details includes FeynmanCheck. PASS and Opp Sign are sampled comparisons of all implicit massive-spin components, not generic analytic proofs. Raw supported Feynman tensors are converted automatically; use PrepareAmplitudes with FermionHelicities first when massless Dirac helicities must be supplied.";
 CheckAmplitudes::usage = CheckAmplitudes::usage <>
   " Parallelization -> Automatic runs sufficiently large independent channel, spurious-pole and whole-amplitude checks on package workers. True requests parallel execution and False keeps the serial calculation. MaxKernels -> Automatic uses the available worker limit; a positive integer reduces it. The exact sample seeds and report ordering are preserved. Custom KinematicMap functions remain on the calling kernel without distributing user definitions. Failed worker calculations remain UNRESOLVED. Only Details includes execution metadata; ordinary tables are unchanged.";
+CheckAmplitudes::usage = CheckAmplitudes::usage <>
+  " RandomSeed -> Automatic chooses a time-based seed once per run without changing the caller's random stream. Details records the resolved RandomSeed; an explicit integer replays that run's sample choices.";
 CheckPhysicalResidues::usage = "CheckPhysicalResidues is a compatibility alias for CheckAmplitudes, which checks physical residues, spurious poles, high-energy growth, reference independence and optional full Feynman-amplitude agreement.";
 CheckAmplitudes::usage = CheckAmplitudes::usage <>
   " Supply FeynmanModel -> benchmarkModel when the benchmark comes from a separate model. Its numerical parameters are resolved only from that model; Automatic uses the third argument's model. Missing benchmark definitions remain UNRESOLVED rather than borrowing candidate values. ParameterRules may use string names such as \"Me\" -> 1 for local overrides.";
 
 Begin["ConstructiveDiagrams`Private`"];
+
+(* ::Subsection::Closed:: *)
+(*Run Seeds*)
+
+(* Resolve Automatic once before distributing jobs or deriving stage seeds.
+   Reading the clock and incrementing a private counter does not consume the
+   caller's random stream. Keep the counter across package reloads. *)
+If[!IntegerQ[$amplitudeAutomaticSeedCounter], $amplitudeAutomaticSeedCounter = 0];
+amplitudeResolveRandomSeed[Automatic] := Mod[Hash[
+  {AbsoluteTime[], $SessionID, $ProcessID, ++$amplitudeAutomaticSeedCounter},
+  "SHA256"], 2^63];
+amplitudeResolveRandomSeed[seed_] := seed;
 
 (* ::Subsection::Closed:: *)
 (*Independent Amplitude Jobs*)
@@ -3176,7 +3190,7 @@ residueNumericMassesQ[channel_, rules_List] := AllTrue[Append[
 DownValues[CheckAmplitudes] = {};
 Options[CheckAmplitudes] = Join[
   DeleteCases[Options[PhysicalPoleResidue], HoldPattern["StructuralCoefficient" -> _]], {
-  "Tolerance" -> 10^-10, "Samples" -> 4, "RandomSeed" -> 1729,
+  "Tolerance" -> 10^-10, "Samples" -> 4, "RandomSeed" -> Automatic,
   "ParameterRules" -> Automatic, "Output" -> "Table", "SpuriousPoles" -> Automatic,
   "HighEnergyCheck" -> Automatic, "HighEnergyBound" -> Automatic,
   "HighEnergySamples" -> 3, "HighEnergyTimeConstraint" -> Automatic,
@@ -3353,7 +3367,7 @@ residueCheckPlan[expr_, targets_List, records_List,
    tolerance = OptionValue[CheckAmplitudes, {opts}, "Tolerance"],
    uncut = OptionValue[CheckAmplitudes, {opts}, "UncutChannels"],
    samples = OptionValue[CheckAmplitudes, {opts}, "Samples"],
-   seed = OptionValue[CheckAmplitudes, {opts}, "RandomSeed"],
+   seed = amplitudeResolveRandomSeed[OptionValue[CheckAmplitudes, {opts}, "RandomSeed"]],
    rules = Replace[OptionValue[CheckAmplitudes, {opts}, "ParameterRules"], Automatic -> {}],
    physical, channels, allChannels,
    signatures, jobs, unmatched, external},
@@ -3460,6 +3474,7 @@ amplitudeCheckJobResult[job_Association, result_] := If[
 CheckAmplitudes[amplitudes_, channelRows_List, model_List,
     opts : OptionsPattern[]] := Module[
   {output = OptionValue["Output"], factors = OptionValue["SpuriousPoles"],
+   seed = amplitudeResolveRandomSeed[OptionValue["RandomSeed"]],
    inputs, report, physical, spurious, combined, externalRules, external,
    automatic, targets, records, keys, discovery = {}, candidates, check,
    seconds = OptionValue["TimeConstraint"], energy, energyMetadata, energyRows,
@@ -3481,7 +3496,7 @@ CheckAmplitudes[amplitudes_, channelRows_List, model_List,
    energyJob, referenceJob, benchmarkJob, execution},
   If[!MemberQ[{Automatic, True, False}, parallel] ||
       !(maxKernels === Automatic || IntegerQ[maxKernels] && maxKernels > 0) ||
-      parameters === $Failed ||
+      parameters === $Failed || !IntegerQ[seed] ||
       Complement[First /@ Flatten[{opts}], First /@ Options[CheckAmplitudes]] =!= {} ||
       !MemberQ[{"Table", "Residues", "Summary", "Details", "HighEnergy", "References", "Feynman"}, output] ||
       !(factors === Automatic || ListQ[factors]) ||
@@ -3499,7 +3514,7 @@ CheckAmplitudes[amplitudes_, channelRows_List, model_List,
       !(benchmarkSeconds === Automatic || benchmarkSeconds === Infinity ||
         TrueQ[NumericQ[benchmarkSeconds] && benchmarkSeconds > 0]),
     Message[CheckAmplitudes::args]; Return[$Failed]];
-  numericOptions = Join[{"ParameterRules" -> parameters}, {opts}];
+  numericOptions = Join[{"RandomSeed" -> seed, "ParameterRules" -> parameters}, {opts}];
   inputs = residueSimpleInputs[amplitudes, channelRows, model];
   If[FailureQ[inputs],
     Message[CheckAmplitudes::input, inputs["MessageTemplate"]]; Return[$Failed]];
@@ -3548,7 +3563,7 @@ CheckAmplitudes[amplitudes_, channelRows_List, model_List,
         If[candidate["Classification"] === "Spurious",
           <|"Group" -> "Spurious", "Kind" -> "Spurious", "Arguments" -> {
             inputs["Expression"], candidate["CanonicalFactor"], physical, seconds,
-            OptionValue["Samples"], OptionValue["RandomSeed"], parameters,
+            OptionValue["Samples"], seed, parameters,
             OptionValue["KinematicMap"]}, "Discovery" -> candidate,
             "FailureBase" -> <|"Pole" -> candidate["CanonicalFactor"]|>|>,
           <|"Group" -> "Spurious", "Kind" -> "Constant", "Discovery" -> candidate,
@@ -3558,7 +3573,7 @@ CheckAmplitudes[amplitudes_, channelRows_List, model_List,
       ], candidates],
       Map[Function[factor, <|"Group" -> "Spurious", "Kind" -> "Spurious",
         "Arguments" -> {inputs["Expression"], factor, physical, seconds,
-          OptionValue["Samples"], OptionValue["RandomSeed"], parameters,
+          OptionValue["Samples"], seed, parameters,
           OptionValue["KinematicMap"]}, "FailureBase" -> <|"Pole" -> factor|>|>],
         DeleteDuplicates[factors]]];
   ];
@@ -3569,7 +3584,7 @@ CheckAmplitudes[amplitudes_, channelRows_List, model_List,
     energyJob = If[AssociationQ[energyMetadata],
       <|"Group" -> "HighEnergy", "Kind" -> "HighEnergy", "Arguments" -> {
         inputs["Expression"], energyMetadata, energySamples,
-        OptionValue["RandomSeed"], parameters, energySeconds, energyBound}|>,
+        seed, parameters, energySeconds, energyBound}|>,
       <|"Group" -> "HighEnergy", "Kind" -> "Constant", "Value" -> <|
         "Type" -> "HighEnergy", "Status" -> "UNRESOLVED",
         "ObservedPower" -> Missing["NotDetermined"], "ExpectedPower" -> energyBound,
@@ -3586,7 +3601,7 @@ CheckAmplitudes[amplitudes_, channelRows_List, model_List,
     referenceJob = If[AssociationQ[referenceMetadata],
       <|"Group" -> "Reference", "Kind" -> "Reference", "Arguments" -> {
         inputs["Expression"], referenceMetadata, referenceChannels,
-        referenceSamples, OptionValue["RandomSeed"], parameters, referenceSeconds}|>,
+        referenceSamples, seed, parameters, referenceSeconds}|>,
       <|"Group" -> "Reference", "Kind" -> "Constant", "Value" -> <|
         "Type" -> "Reference", "Status" -> "UNRESOLVED", "References" -> {},
         "Samples" -> {}, "Diagnostics" -> {
@@ -3602,7 +3617,7 @@ CheckAmplitudes[amplitudes_, channelRows_List, model_List,
         residueParameterRules[benchmarkModel, OptionValue["ParameterRules"]],
       True, $Failed];
     benchmarkJob = <|"Group" -> "Feynman", "Kind" -> "Feynman", "Arguments" -> {
-      inputs, benchmark, model, benchmarkSamples, OptionValue["RandomSeed"],
+      inputs, benchmark, model, benchmarkSamples, seed,
       parameters, benchmarkParameters, benchmarkSeconds, OptionValue["Tolerance"]}|>;
     AppendTo[extraJobs, benchmarkJob]];
   (* Start the two large whole-amplitude calculations together. Other groups
@@ -4622,7 +4637,7 @@ spuriousCheckReport[expr_, factors_List, targets_List,
     opts : OptionsPattern[CheckAmplitudes]] := Module[
   {seconds = OptionValue[CheckAmplitudes, {opts}, "TimeConstraint"],
    samples = OptionValue[CheckAmplitudes, {opts}, "Samples"],
-   seed = OptionValue[CheckAmplitudes, {opts}, "RandomSeed"],
+   seed = amplitudeResolveRandomSeed[OptionValue[CheckAmplitudes, {opts}, "RandomSeed"]],
    rules = Replace[OptionValue[CheckAmplitudes, {opts}, "ParameterRules"], Automatic -> {}],
    map = OptionValue[CheckAmplitudes, {opts}, "KinematicMap"], jobs},
   jobs = spuriousGroupJobs[(<|"Group" -> "Spurious", "Kind" -> "Spurious",
@@ -5293,7 +5308,7 @@ Begin["ConstructiveDiagrams`"];
 CompleteFactorization::usage = "CompleteFactorization[amplitudes, channels, model] constructs a bounded linear correction from the supplied diagram expressions and sewn channel expressions, solving all physical residues simultaneously. It accepts ordinary amplitude pairs, a prepared-expression report, or an expression. CorrectionBasis supplies correction directions; Automatic uses the input and channel expressions, not a universal amplitude ansatz. ChannelReferences -> Automatic constructs bounded alternative reference continuations, checking each on its selected cut. Without declared exchange symmetry, automatic completion first tries externally reduced whole physical-reference channels and grouped pole-bearing input terms, then falls back to literal input and channel terms within the same term and time limits. Explicit pole-free input terms are retained, not added as cancellation directions in the first attempt. ChannelReferences -> None keeps only the literal correction space. Recorded preparation references are tried when available. Failed independent validation samples supply further exact equations, up to MaxRefinements -> 3, with fresh subsequent validation. Only proven algebraically zero or exactly linearly dependent directions are removed without reducing the correction span; other residue-preserving directions remain available to CompleteHighEnergy. These sampled checks are not a generic analytic reconstruction or uniqueness proof. ReturnDetails -> False is the default: successful completion returns only the updated amplitude. ReturnDetails -> True retains the candidate, correction, affine family, CorrectionSpace, ChannelContinuations, RefinementHistory and validation, and takes precedence over Output. Output -> \"Details\" remains available for existing code. Unresolved completion normally returns a concise Failure[\"IncompleteAmplitude\", ...], without an unchecked candidate or embedded report. ParameterRules -> Automatic uses the supplied model's variables and dependent functions; an explicit rule list overrides selected parameters. Numerical substitutions affect the checks and fitting only, not the returned symbolic amplitude. No new interactions are inferred.";
 CompleteFactorization::args = "Expected amplitude pairs or an expression, ordinary factorization channels, a model and valid bounded-completion options.";
 CompleteFactorization::usage = CompleteFactorization::usage <>
-  " The default Output -> Amplitude returns {externalMassRules, expression}, containing only Mass[externalLeg] replacements and no internal-shell assumptions. Pass this pair directly to PrepareAmplitudes, CompleteHighEnergy or CheckAmplitudes. Output -> Expression requests the bare expression; detailed reports keep their separate Amplitude and ExternalMassRules fields.";
+  " RandomSeed -> Automatic chooses a time-based seed once for the complete stage, including its retries. Details records the resolved RandomSeed; an explicit integer retains reproducible sample choices. The default Output -> Amplitude returns {externalMassRules, expression}, containing only Mass[externalLeg] replacements and no internal-shell assumptions. Pass this pair directly to PrepareAmplitudes, CompleteHighEnergy or CheckAmplitudes. Output -> Expression requests the bare expression; detailed reports keep their separate Amplitude and ExternalMassRules fields.";
 CompleteFactorization::usage = CompleteFactorization::usage <>
   " AlternativeChannels -> {} optionally supplies original or alternative compact channel rows. Only after automatic completion fails are their selected residues checked against the supplied channels and their correction directions tried within the remaining term and time budgets. The supplied channels remain the targets for fitting and independent validation; alternatives never replace them. AlternativeChannelFallback in the details records the checks and result.";
 CompleteFactorization::usage = CompleteFactorization::usage <>
@@ -5879,16 +5894,19 @@ amplitudeAutomaticSettings[stage_String, requested_Association, metrics_Associat
    An explicitly supplied numeric cap or clock is never increased. *)
 amplitudeAutomaticFactorization[input_, channelInput_, model_, supplied_List] := Block[{$completionAutomaticCorrectionTermCeiling = None}, Module[
   {requested = Join[Association[Options[CompleteFactorization]], Association[Reverse[supplied]]],
-   resolution, metrics, settings, originalOutput, details, automaticKeys, started = AbsoluteTime[],
+   resolution, metrics, settings, originalOutput, details, automaticKeys, resolvedSupplied,
+   started = AbsoluteTime[],
    budget, remaining, cap, ceiling, report, attempts = {}, needed, diagnostics, retry, next,
    automaticSamples, numericOptions, core, measured, automaticPole, initialPole, poleMode,
    recordedChoices, poleFallbackPending, attemptCap, effectiveCap, bestReport = Missing["NotValidated"],
    bestRank = {Infinity, Infinity}, candidateRank, physicalOnly, normalizedCandidate, rows, requestedPole, annotateOutcome},
+  requested["RandomSeed"] = amplitudeResolveRandomSeed[requested["RandomSeed"]];
+  resolvedSupplied = Normal[requested];
   originalOutput = Lookup[requested, "Output", "Amplitude"];
   details = Lookup[requested, "ReturnDetails", False];
   If[Complement[First /@ supplied, First /@ Options[CompleteFactorization]] =!= {} ||
       !MemberQ[{True, False}, details] || !MemberQ[{"Amplitude", "Expression", "Details"}, originalOutput],
-    Return[completionFactorizationCore[input, channelInput, model, Sequence @@ supplied]]];
+    Return[completionFactorizationCore[input, channelInput, model, Sequence @@ resolvedSupplied]]];
   metrics = amplitudeResourceMetrics[input, channelInput,
     Lookup[requested, "ExternalParticles", Automatic],
     If[ListQ[Lookup[requested, "CorrectionBasis", Automatic]], Length[requested["CorrectionBasis"]], Automatic]];
@@ -5939,7 +5957,7 @@ amplitudeAutomaticFactorization[input_, channelInput_, model_, supplied_List] :=
       result]];
   If[automaticKeys === {} && !automaticPole,
     Return[annotateOutcome[Block[{$completionAutomaticFitSamples = False},
-      completionFactorizationCore[input, channelInput, model, Sequence @@ supplied]]]]];
+      completionFactorizationCore[input, channelInput, model, Sequence @@ resolvedSupplied]]]]];
   remaining[] := If[budget === Infinity, Infinity, Max[0, budget - (AbsoluteTime[] - started)]];
   While[True,
     numericOptions = Join[settings, <|"MaxCorrectionTerms" -> cap, "PolePreference" -> poleMode,
@@ -8932,7 +8950,7 @@ Options[CompleteFactorization] = {"CorrectionBasis" -> Automatic,
   "RepresentativeSelection" -> Automatic, "PolePreference" -> Automatic, "ChannelCompanions" -> Automatic,
   "PreparationRemainders" -> Automatic, "ShiftedChannelContinuations" -> Automatic,
   "MaxRefinements" -> 3,
-  "RandomSeed" -> 1729, "TimeConstraint" -> Automatic, "MaxCorrectionTerms" -> Automatic,
+  "RandomSeed" -> Automatic, "TimeConstraint" -> Automatic, "MaxCorrectionTerms" -> Automatic,
   "Parallelization" -> Automatic, "MaxKernels" -> Automatic,
   "ProgressReporting" -> True, "ProgressFunction" -> Automatic,
   "ReturnDetails" -> False, "Output" -> "Amplitude"};
@@ -8958,7 +8976,8 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
    constructionLimit, project, projectedSeed,
    refinements = OptionValue["MaxRefinements"],
    rules = residueParameterRules[model, OptionValue["ParameterRules"]], samples = OptionValue["Samples"],
-   validationSamples = OptionValue["ValidationSamples"], seed = OptionValue["RandomSeed"],
+   validationSamples = OptionValue["ValidationSamples"],
+   seed = amplitudeResolveRandomSeed[OptionValue["RandomSeed"]],
    validationRules = OptionValue["ValidationParameterRules"], validationSets, validationReports = {},
    seconds = OptionValue["TimeConstraint"], limit = OptionValue["MaxCorrectionTerms"],
    enabled = OptionValue["ProgressReporting"], callback = OptionValue["ProgressFunction"],
@@ -9020,6 +9039,7 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
   If[MissingQ[normalized], Return[completionFormat[<|"Stage" -> "Factorization",
     "Status" -> "UNRESOLVED", "Amplitude" -> completionInputExpression[input],
     "OriginalInput" -> input, "Correction" -> 0, "FreeParameters" -> {},
+    "RandomSeed" -> seed,
     "Diagnostics" -> {"Input preparation exceeded TimeConstraint; the original input is retained."}|>, output, False]]];
   If[!AssociationQ[normalized] || FailureQ[normalized],
     Message[CompleteFactorization::args]; Return[$Failed]];
@@ -9662,7 +9682,7 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
         family = candidate + If[free === {}, 0, free.remaining];
         history[[-1]] = Join[Last[history], <|"FreeParameters" -> free,
           "RemovedZeroDirections" -> Last[history]["RemovedZeroDirections"] + Length[zeroFree]|>]]]];
-  report = <|"Stage" -> "Factorization", "Status" -> status,
+  report = <|"Stage" -> "Factorization", "Status" -> status, "RandomSeed" -> seed,
     "Amplitude" -> candidate, "OriginalExpression" -> original,
     "Correction" -> candidate - original, "CorrectionBasis" -> basis,
     "FamilyAmplitude" -> family, "RemainingBasis" -> remaining, "FreeParameters" -> free,
@@ -9822,7 +9842,7 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
           report["FreeParameters"].report["RemainingBasis"]]|>]];
     report = Join[report, <|"OrdinaryCompaction" -> ordinaryCompaction|>]];
   report = Join[report, <|"ElapsedTime" -> AbsoluteTime[] - start,
-    "EffectiveMaxCorrectionTerms" -> limit,
+    "RandomSeed" -> seed, "EffectiveMaxCorrectionTerms" -> limit,
     "CapChanges" -> If[AssociationQ[physicalSpace], Lookup[physicalSpace, "CapChanges", {}], {}],
     "BoseSymmetry" -> completionExchangeDetails[exchangePlan, "Boson"],
     "FermionSymmetry" -> completionExchangeDetails[exchangePlan, "Fermion"],
@@ -12346,13 +12366,13 @@ Begin["ConstructiveDiagrams`"];
 
 CompleteHighEnergy::usage = "CompleteHighEnergy[input, channels, model] fits a bounded set of residue-preserving correction directions to the high-energy, spurious-pole and explicit-reference conditions, then validates the complete candidate on independent samples. It uses remaining directions from CompleteFactorization details or an explicit CorrectionBasis. Automatic never invents an unrestricted contact-operator basis. ParameterRules -> Automatic uses the supplied model's variables and dependent functions; an explicit rule list overrides selected parameters without changing the symbolic amplitude. Output -> Details retains the candidate, affine family, fit equations and validation report. An incomplete result returns Failure unless Details is requested.";
 CompleteHighEnergy::usage = CompleteHighEnergy::usage <>
-  " The default Output -> Amplitude returns {externalMassRules, expression}, with external mass replacements only, ready for PrepareAmplitudes or CheckAmplitudes. Output -> Expression returns the bare expression; Output -> Details is unchanged. Channels may be a channel list or a PrepareAmplitudes details report; original channel expressions remain the authoritative residue targets.";
+  " RandomSeed -> Automatic chooses a time-based seed once per stage. Details records the resolved RandomSeed; an explicit integer retains reproducible sample choices. The default Output -> Amplitude returns {externalMassRules, expression}, with external mass replacements only, ready for PrepareAmplitudes or CheckAmplitudes. Output -> Expression returns the bare expression; Output -> Details is unchanged. Channels may be a channel list or a PrepareAmplitudes details report; original channel expressions remain the authoritative residue targets.";
 CompleteHighEnergy::usage = CompleteHighEnergy::usage <>
   " Detailed FamilyIdentityReduction and SolvedFamilyIdentityReduction entries retain bounded exact proofs for discarded affine directions. Only ordinary external identities or a dense symbolic rational external-kinematics identity certificate remove a direction; finite samples, unsupported structures and proof timeouts never do. Genuine undetermined contact freedom remains UNDERDETERMINED, and sampled validation is not a generic uniqueness proof.";
 
 Options[CompleteHighEnergy] = {"CorrectionBasis" -> Automatic, "PolePreference" -> Automatic,
   "ParameterRules" -> Automatic, "Samples" -> Automatic, "ValidationSamples" -> Automatic,
-  "RandomSeed" -> 1729, "TimeConstraint" -> Automatic,
+  "RandomSeed" -> Automatic, "TimeConstraint" -> Automatic,
   "HighEnergyBound" -> Automatic, "MaxCorrectionTerms" -> Automatic,
   "Parallelization" -> Automatic, "MaxKernels" -> Automatic,
   "ValidationParameterRules" -> Automatic,
@@ -13454,7 +13474,9 @@ completionHighEnergyStage[input_, channels_List, model_List, requestedSettings_A
    resolution = amplitudeAutomaticSettings["HighEnergy", requestedSettings,
      amplitudeResourceMetrics[input, channels]], settings, seconds, output,
    rules = residueParameterRules[model, requestedSettings["ParameterRules"]], effectiveSettings},
-  settings = resolution["Settings"]; seconds = settings["TimeConstraint"]; output = settings["Output"];
+  settings = resolution["Settings"];
+  settings["RandomSeed"] = amplitudeResolveRandomSeed[settings["RandomSeed"]];
+  seconds = settings["TimeConstraint"]; output = settings["Output"];
   If[!MemberQ[{"Amplitude", "Expression", "Details"}, output] ||
       !(settings["CorrectionBasis"] === Automatic || ListQ[settings["CorrectionBasis"]]) ||
       !MemberQ[preparationReferenceChoices, settings["PolePreference"]] ||
@@ -13483,6 +13505,7 @@ completionHighEnergyStage[input_, channels_List, model_List, requestedSettings_A
   If[MissingQ[normalized], Return[completionFormat[<|"Stage" -> "HighEnergy",
     "Status" -> "UNRESOLVED", "Amplitude" -> rawExpression,
     "OriginalInput" -> input, "OriginalExpression" -> rawExpression,
+    "RandomSeed" -> settings["RandomSeed"],
     "Correction" -> 0, "CorrectionBasis" -> {}, "RemainingBasis" -> {},
     "FamilyAmplitude" -> rawExpression, "FreeParameters" -> {},
     "ElapsedSeconds" -> (AbsoluteTime[] - started),
@@ -13492,6 +13515,7 @@ completionHighEnergyStage[input_, channels_List, model_List, requestedSettings_A
     "ValidationParameterRules" -> completionValidationRuleSets[model,
       settings["ParameterRules"], settings["ValidationParameterRules"]]|>];
   retained = <|"Stage" -> "HighEnergy", "Status" -> "UNRESOLVED",
+      "RandomSeed" -> settings["RandomSeed"],
       "Amplitude" -> normalized["Expression"], "OriginalExpression" -> normalized["OriginalExpression"],
       "ExternalMassRules" -> normalized["ExternalMassRules"],
       "Correction" -> 0, "CorrectionBasis" -> {},
@@ -13510,7 +13534,7 @@ completionHighEnergyStage[input_, channels_List, model_List, requestedSettings_A
     Join[retained, <|"Status" -> "UNRESOLVED", "Diagnostics" -> Append[
       Lookup[retained, "Diagnostics", {}],
       "High-energy completion exceeded TimeConstraint. The best retained candidate is provided for inspection, not claimed complete."]|>]];
-  completionFormat[Join[report, <|"PolePreference" ->
+  completionFormat[Join[report, <|"RandomSeed" -> settings["RandomSeed"], "PolePreference" ->
       completionPolePreference[settings["PolePreference"], input], "ParameterRules" -> rules,
     "ResourcePolicy" -> Join[resolution["ResourcePolicy"], <|"Resolved" ->
       Join[resolution["ResourcePolicy"]["Resolved"],
@@ -13527,12 +13551,14 @@ End[];
 Begin["ConstructiveDiagrams`"];
 
 ConstructAmplitude::usage = "ConstructAmplitude[process, diagramModel, factorizationModel] generates and prepares diagrams and factorization channels, completes factorization and high-energy behavior, prepares each completed expression with external identities only, then checks the final amplitude. The ordinary result is the bare expression only when every required final check passes. Output -> Amplitude returns {externalMassRules, expression}; Details retains stage results, timings and diagnostics. ProgressReporting -> True displays the current stage, its elapsed time and total elapsed time. At the end PrintReport -> True prints total time, then the test table, before returning the expression. FeynmanModel -> None optionally supplies an independent model whose diagrams are prepared and compared too. PreparationOptions, ChannelPreparationOptions, FinalPreparationOptions, FactorizationOptions, HighEnergyOptions, CheckOptions and FeynmanPreparationOptions pass options to individual stages. TimeConstraint -> Automatic selects a finite overall budget from the process and workload; individual stages resolve their own automatic limits. Explicit values override those choices. PolePreference, ParameterRules, HighEnergyBound, Samples, ValidationSamples, RandomSeed, Parallelization and MaxKernels provide common settings. The original channels remain the residue targets, discarded preparation terms and affine completion freedom are retained, and final preparation never applies internal-shell identities. Failed, opposite-sign, unresolved and underdetermined results are not returned as validated amplitudes.";
+ConstructAmplitude::usage = ConstructAmplitude::usage <>
+  " RandomSeed -> Automatic chooses one time-based run seed. The stages derive their seeds from that value, with explicit stage overrides honored. Details records RandomSeed and PrintReport prints it with the final timing; an explicit integer reproduces the sample choices.";
 ConstructAmplitude::args = "Expected a process with at least four model particle names, a diagram model, a constructive factorization model, and valid construction options.";
 
 Options[ConstructAmplitude] = {
   "PolePreference" -> Automatic, "ParameterRules" -> Automatic, "HighEnergyBound" -> Automatic,
   "BoseSymmetryGroups" -> Automatic, "FermionSymmetryGroups" -> Automatic,
-  "Samples" -> Automatic, "ValidationSamples" -> Automatic, "RandomSeed" -> 1729,
+  "Samples" -> Automatic, "ValidationSamples" -> Automatic, "RandomSeed" -> Automatic,
   "Parallelization" -> Automatic, "MaxKernels" -> Automatic,
   "TimeConstraint" -> Automatic, "ProgressReporting" -> True,
   "ProgressFunction" -> Automatic, "PrintReport" -> True,
@@ -13630,6 +13656,8 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
   output = options["Output"]; enabled = options["ProgressReporting"];
   callback = options["ProgressFunction"]; printReport = options["PrintReport"];
   feynmanModel = options["FeynmanModel"];
+  requestedOptions = options;
+  options["RandomSeed"] = amplitudeResolveRandomSeed[options["RandomSeed"]];
   If[Complement[First /@ {opts}, First /@ Options[ConstructAmplitude]] =!= {} ||
       Length[process] < 4 || !AllTrue[process, StringQ] ||
       !(completionModelQ[diagramModel] || TrueQ[feynmanModelQ[diagramModel]] &&
@@ -13657,7 +13685,6 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
         constructOptionBagQ[options[First[#]], Last[#]] &],
     Message[ConstructAmplitude::args]; Return[Failure["InvalidConstructionArguments", <|
       "MessageTemplate" -> "Invalid process, model or construction options."|>]]];
-  requestedOptions = options;
   resourceResolution = amplitudeAutomaticSettings["Construction", options,
     amplitudeResourceMetrics[{}, {}, process]];
   options["TimeConstraint"] = resourceResolution["Settings"]["TimeConstraint"];
@@ -13701,6 +13728,8 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
       "RandomSeed" -> options["RandomSeed"], "Parallelization" -> options["Parallelization"],
       "MaxKernels" -> options["MaxKernels"]|>;
     settings = Join[KeyTake[common, First /@ Options[function]], constructRuleOptions[bag], forced];
+    If[KeyExistsQ[settings, "RandomSeed"] && settings["RandomSeed"] === Automatic,
+      settings["RandomSeed"] = options["RandomSeed"]];
     If[MemberQ[First /@ Options[function], "ProgressReporting"],
       settings = Join[settings, <|"ProgressReporting" -> enabled, "ProgressFunction" -> child|>]];
     If[function === CheckAmplitudes,
@@ -13791,7 +13820,8 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     highEnergy = run["Completing high-energy behavior", CompleteHighEnergy[factorization,
       channelPreparation, factorizationModel, Sequence @@ stageOptions[CompleteHighEnergy,
         options["HighEnergyOptions"], <|"Output" -> "Details", "RandomSeed" -> Lookup[
-          constructRuleOptions[options["HighEnergyOptions"]], "RandomSeed", options["RandomSeed"] + 1000033]|>]]];
+          constructRuleOptions[options["HighEnergyOptions"]], "RandomSeed", options["RandomSeed"] + 1000033] /.
+            Automatic -> options["RandomSeed"] + 1000033|>]]];
     require[highEnergy, {"COMPLETE"}];
     finalPair = {highEnergy["ExternalMassRules"], highEnergy["Amplitude"]};
     finalPair = run["Preparing final amplitude", prepareFinal[finalPair]];
@@ -13812,7 +13842,8 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
       "Output" -> "Details", "SpuriousPoles" -> Automatic,
       "HighEnergyCheck" -> True, "ReferenceCheck" -> True,
       "RandomSeed" -> Lookup[constructRuleOptions[options["CheckOptions"]],
-        "RandomSeed", options["RandomSeed"] + 2000003]|>,
+        "RandomSeed", options["RandomSeed"] + 2000003] /.
+          Automatic -> options["RandomSeed"] + 2000003|>,
       If[feynmanModel =!= None, <|"FeynmanAmplitudes" -> benchmark, "FeynmanModel" -> feynmanModel|>, <||>]];
     checkReport = run["Checking final amplitude", CheckAmplitudes[finalPair, channels, factorizationModel,
       Sequence @@ stageOptions[CheckAmplitudes, checkSettings]]];
@@ -13846,11 +13877,13 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
   totalTime = AbsoluteTime[] - started;
   If[TrueQ[printReport],
     If[StringQ[representationReason], Print[representationReason]];
+    Print[Row[{"Random seed: ", options["RandomSeed"]}]];
     Print[Row[{"Total time: ", constructDuration[totalTime]}]];
     Print[If[AssociationQ[checkReport] && KeyExistsQ[checkReport, "Table"], checkReport["Table"],
       Dataset[{<|"Check" -> "Final amplitude tests", "Status" -> "NOT RUN",
         "StoppedAt" -> currentStage|>}]]]];
   report = <|"Status" -> If[completed, "COMPLETE", "FAILED"], "Process" -> process,
+    "RandomSeed" -> options["RandomSeed"],
     "Amplitude" -> If[completed, Last[finalPair], Missing["NotValidated"]],
     "AmplitudePair" -> If[completed, finalPair, Missing["NotValidated"]],
     "CandidateAmplitude" -> If[completed, Missing["NotNeeded"], finalPair],

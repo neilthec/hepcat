@@ -543,14 +543,14 @@ WriteSPINASProcess::usage = "WriteSPINASProcess[directory, particles, amplitude,
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " The family overload WriteSPINASProcess[directory, {{particles1, amplitude1}, ...}, model] combines helicity-related amplitudes into one class. It fills identical-species, same-role massless leg permutations with their proper statistics sign, without inferring parity or missing zero amplitudes. Incomplete coverage is rejected before writing files. amp(ds1,...,dsn) and amp(Spins) select doubled spins and helicities; spin_sum sums all external spin/helicity states; amp2 also averages incoming states and includes the outgoing identical-species factorial factor, including identical fermions. Ordinary projects use persistent native SPINAS products and direct helicity branches; very large families retain canonical dispatch to bound source size. Colored families are currently refused because a full color sum is not implemented. The original four-argument fixed-helicity overload retains its existing spin-sum and symmetry-factor conventions.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " CMakeExecutable -> Automatic searches PATH and standard installation locations, including the macOS CMake application and Homebrew, so desktop Mathematica need not inherit the shell's PATH. An explicit full path selects another CMake installation. A missing build tool is reported before generating files; source-only export does not require CMake.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " WriteSPINASProcess[directory, incomingNames -> outgoingNames, amplitudeEntries, model] explicitly describes the physical process. The entries still contain all-ingoing particle lists and un-crossed formulas in that same leg order, with incoming legs first. Outgoing charged particle names are checked against the conjugate all-ingoing species. Generic massless names such as A sum their helicities; A.+ or A.- selects one. The established HEPCAT/SPINAS helicity sign convention is retained, and ReverseMomentum crosses outgoing momenta and angle spinors exactly once. FixedHelicities -> {leg -> doubledHelicity, ...} selects massless legs in either grouped overload. Only unfixed incoming helicities are averaged. A selected outgoing helicity gives a labeled contribution with the same identical-species phase-space factor. Complex amp calls preserve phases and include no spin sums, incoming averages or phase-space factors; coherent production-decay sewing is not performed by this exporter. Runnable projects currently require two incoming particles.";
-WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " Generated projects also contain validate_calchep(options) and a process_validate_calchep executable for an independent, seeded 1000-point comparison with an on-the-fly CalcHEP process. CalcHEPDirectory -> Automatic locates the local installation. CalcHEPModel -> {directory, number} selects the equivalent theory; Automatic recognizes the bundled massive-electron QED models. RunCalcHEPValidation -> True builds and runs this check, using CalcHEPPoints -> 1000 and CalcHEPSeed -> 12345 by default. Complete unpolarized colorless processes are supported; fixed-helicity or color-stripped comparisons report unavailable. Ordinary SPINAS execution does not require CalcHEP.";
+WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " Generated projects also contain validate_calchep(options) and a process_validate_calchep executable for an independent, seeded 1000-point comparison with an on-the-fly CalcHEP process. CalcHEPDirectory -> Automatic locates the local installation. CalcHEPModel -> {directory, number} selects the equivalent theory; Automatic recognizes the bundled massive-electron QED models. RunCalcHEPValidation -> True builds and runs this check, using CalcHEPPoints -> 1000 and CalcHEPSeed -> Automatic by default. Automatic chooses a seed from the time when validation runs and reports the concrete seed for replay; an explicit unsigned 64-bit integer fixes it. Complete unpolarized colorless processes are supported; fixed-helicity or color-stripped comparisons report unavailable. Ordinary SPINAS execution does not require CalcHEP.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " If the CalcHEP numerical libraries are available, Build -> True also creates build/n_calchep and a calchep/n_calchep session launcher. This uses CalcHEP's numerical menus, VEGAS, cuts and histograms with the exported SPINAS matrix element, without CalcHEP symbolic generation or a CalcHEPModel counterpart. Independent model parameters remain adjustable, dependent functions are recomputed, and mass/width changes are propagated. Fixed helicities remain labeled contributions. The ordinary SPINAS project remains usable without CalcHEP.";
 Options[WriteSPINASProcess] = {"SPINASDirectory" -> Automatic,
   "IncomingLegs" -> {1, 2}, "FixedHelicities" -> Automatic, "ParameterRules" -> Automatic,
   "ProcessName" -> "hepcat_process", "Precision" -> Automatic,
   "Build" -> False, "RunExamples" -> False, "CMakeExecutable" -> Automatic, "Overwrite" -> False,
   "CalcHEPDirectory" -> Automatic, "CalcHEPModel" -> Automatic,
-  "RunCalcHEPValidation" -> False, "CalcHEPPoints" -> 1000, "CalcHEPSeed" -> 12345,
+  "RunCalcHEPValidation" -> False, "CalcHEPPoints" -> 1000, "CalcHEPSeed" -> Automatic,
   "ReturnDetails" -> False};
 WriteSPINASProcess::args = "Expected an output directory, all-ingoing amplitude entries, a model and valid export options, optionally preceded by incoming particle names -> outgoing particle names. The fixed-helicity form takes an ordered all-ingoing particle list and amplitude instead of entries.";
 
@@ -631,7 +631,8 @@ spinasCalcHEPOptionsQ[options_Association] :=
     MatchQ[options["CalcHEPModel"], {_String, _Integer?Positive}]) &&
   MemberQ[{True, False}, options["RunCalcHEPValidation"]] &&
   IntegerQ[options["CalcHEPPoints"]] && 0 < options["CalcHEPPoints"] <= 2147483647 &&
-  IntegerQ[options["CalcHEPSeed"]] && 0 <= options["CalcHEPSeed"] <= 18446744073709551615;
+  (options["CalcHEPSeed"] === Automatic || IntegerQ[options["CalcHEPSeed"]] &&
+    0 <= options["CalcHEPSeed"] <= 18446744073709551615);
 
 (* Automatic model pairing recognizes the repository's QED models. Matching
    external species alone would confuse QED with the electroweak theory. *)
@@ -701,7 +702,8 @@ spinasCalcHEPConfiguration[ir_Association, data_List, supplied_Association] := M
     "ProcessDescription" -> StringRiffle[physicalNames[[incoming]], ", "] <> " -> " <>
       StringRiffle[physicalNames[[outgoing]], ", "],
     "ParameterNames" -> ir["ParameterNames"], "SPINASNormalizationFactor" -> factor,
-    "Points" -> options["CalcHEPPoints"], "Seed" -> options["CalcHEPSeed"]|>
+    "Points" -> options["CalcHEPPoints"],
+    "Seed" -> Replace[options["CalcHEPSeed"], Automatic -> "Automatic"]|>
 ];
 
 spinasCalcHEPSource[name_String, ir_Association, config_Association] := Module[
@@ -786,7 +788,9 @@ spinasCalcHEPMain[name_String, config_Association] := StringRiffle[{
   "      hepcat_spinas::print_validation_usage(std::cout);", "      return 0;", "    }", "",
   "    hepcat_spinas::ValidationOptions defaults;",
   "    defaults.points = " <> ToString[config["Points"]] <> ";",
-  "    defaults.seed = UINT64_C(" <> ToString[config["Seed"]] <> ");",
+  If[config["Seed"] === "Automatic",
+    "    // ValidationOptions chooses a fresh seed from the time at startup.",
+    "    defaults.seed = UINT64_C(" <> ToString[config["Seed"]] <> ");"],
   "    const auto options = hepcat_spinas::parse_validation_arguments(argc, argv, defaults);", "",
   "    hepcat_generated::" <> name <> " process;",
   "    const auto report = process.validate_calchep(options);",
@@ -834,6 +838,7 @@ spinasCalcHEPProject[dir_String, name_String, ir_Association, config_Association
 spinasCalcHEPREADME[name_String, config_Association] := StringRiffle[{
   "", "## Independent CalcHEP validation", "",
   "The generated validate_calchep(options) method compares 1000 seeded random physical phase-space points by default. The same momentum values are sent to SPINAS and CalcHEP. The validator generates the CalcHEP process at runtime in a private temporary workspace and leaves the installation unchanged.", "",
+  "CalcHEPSeed -> Automatic chooses a seed from the current time when the validation executable runs, not when its source is exported. The report prints the actual Seed for replay. Set CalcHEPSeed to an unsigned 64-bit integer to choose a fixed executable default, or use --seed to override it for one run. In C++, assign options.seed directly; zero is a valid explicit seed.", "",
   "```sh", "./build/" <> name <> "_validate_calchep", "./build/" <> name <> "_validate_calchep --points 1000 --seed 12345", "```", "",
   "Link the " <> name <> "_calchep_validation library when calling the method from your own C++ program. Configure -DCALCHEP_ROOT=/path/to/calchep if it was not found. This separate backend keeps the ordinary SPINAS process usable without CalcHEP.",
   "Spin/color averaging and the final-state identical-particle factor follow CalcHEP's documented squared-matrix-element convention. This implementation validates complete unpolarized colorless processes; fixed-helicity and color-stripped comparisons report unavailable. It does not guess a missing helicity or fit a normalization ratio.",
@@ -1589,17 +1594,27 @@ spinasProjectBuild[directory_String, name_String, root_String, runExamples_, cma
     "CMakeExecutable" -> cmake|>], "Examples" -> run|>
 ];
 
-spinasRunCalcHEPValidation[directory_String, name_String, config_Association] := Module[{command, run},
+spinasRunCalcHEPValidation[directory_String, name_String, config_Association] := Module[
+  {command, run, reportedSeeds, actualSeed, failure},
   command = {FileNameJoin[{directory, "build", name <> "_validate_calchep" <>
       If[$OperatingSystem === "Windows", ".exe", ""]}],
-    "--points", ToString[config["Points"]], "--seed", ToString[config["Seed"]]};
+    "--points", ToString[config["Points"]]};
+  If[config["Seed"] =!= "Automatic",
+    command = Join[command, {"--seed", ToString[config["Seed"]]}]];
   run = spinasProjectCommand[command];
+  reportedSeeds = DeleteDuplicates[StringCases[Lookup[run, "StandardOutput", ""],
+    "Seed: " ~~ digits : DigitCharacter .. :> FromDigits[digits]]];
+  actualSeed = If[Length[reportedSeeds] === 1, First[reportedSeeds], Missing["SeedNotReported"]];
   If[Lookup[run, "ExitCode", -1] =!= 0 ||
-      !StringContainsQ[Lookup[run, "StandardOutput", ""], "Amplitude validation: PASS"],
-    Return[Failure["CalcHEPValidation", <|"MessageTemplate" ->
+      !StringContainsQ[Lookup[run, "StandardOutput", ""], "Amplitude validation: PASS"] ||
+      !IntegerQ[actualSeed] || !(0 <= actualSeed <= 18446744073709551615) ||
+      config["Seed"] =!= "Automatic" && actualSeed =!= config["Seed"],
+    failure = <|"MessageTemplate" ->
       "The CalcHEP comparison did not pass. Inspect the report and first failing phase-space point.",
-      "Directory" -> directory, "CommandResult" -> run|>]]];
-  Join[run, <|"Status" -> "PASS", "Points" -> config["Points"], "Seed" -> config["Seed"]|>]
+      "Directory" -> directory, "CommandResult" -> run|>;
+    If[IntegerQ[actualSeed], AssociateTo[failure, "Seed" -> actualSeed]];
+    Return[Failure["CalcHEPValidation", failure]]];
+  Join[run, <|"Status" -> "PASS", "Points" -> config["Points"], "Seed" -> actualSeed|>]
 ];
 
 (* ::Subsection::Closed:: *)

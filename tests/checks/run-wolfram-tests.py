@@ -43,7 +43,7 @@ TEST_SUITES = (
     "qed-worked-example-tests.wl",
     "parallel-execution-tests.wl", "parallel-preparation-tests.wl",
     "parallel-amplitude-check-tests.wl", "parallel-completion-tests.wl",
-    "construct-amplitude-tests.wl", "automatic-resource-tests.wl",
+    "construct-amplitude-tests.wl", "automatic-resource-tests.wl", "random-seed-tests.wl",
 )
 
 # These execute full expensive notebook constructions rather than component

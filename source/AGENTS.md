@@ -453,6 +453,12 @@ method and executable. `RunCalcHEPValidation -> True` builds and runs 1,000
 seeded common phase-space points. The ordinary SPINAS process must remain
 usable without CalcHEP. `source/calchep-runtime.hpp` wraps the installed C API;
 `source/spinas-validation.hpp` supplies common random kinematics and reports.
+Ordinary validation, checking and completion runs default to a time-based seed.
+Resolve `RandomSeed -> Automatic` once per HEPCAT run, preserve explicit seeds
+and stage offsets, and retain the concrete seed in diagnostics. Generated C++
+validation must choose its automatic seed at runtime, not during export; its
+printed report records the actual seed. Deterministic regression fixtures may
+and should supply explicit seeds where replay is part of the assertion.
 Use the declared CalcHEP model, current parameters and explicit PDG leg map.
 Only the bundled QED models have an automatic counterpart; identical external
 species do not identify a theory. Preserve source model tables and stage

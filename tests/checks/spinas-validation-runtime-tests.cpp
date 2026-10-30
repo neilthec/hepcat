@@ -48,6 +48,14 @@ int main() {
       random_kinematics(std::array<ldouble, 6>{{0, 1, 0.2L, 0.3L, 2, 0}},
         std::array<std::size_t, 2>{{1, 4}}));
 
+    const ValidationOptions first_automatic_options;
+    const ValidationOptions second_automatic_options;
+    check("new validation options choose distinct time-based seeds",
+      first_automatic_options.seed != second_automatic_options.seed);
+    const ValidationOptions copied_automatic_options = first_automatic_options;
+    check("copying validation settings preserves their chosen replay seed",
+      copied_automatic_options.seed == first_automatic_options.seed);
+
     ValidationOptions options;
     options.seed = 93;
     const auto parse = [&](std::vector<std::string> arguments) {
@@ -60,6 +68,14 @@ int main() {
     check("readable validator main delegates exact point, seed and tolerance parsing",
       parsed.points == 17 && parsed.seed == 12 && parsed.relative_tolerance == ldouble(1e-5L)
       && parsed.absolute_tolerance == 0);
+    const auto zero_seed = parse({"validator", "--seed", "0"});
+    const auto largest_seed = parse({"validator", "--seed", "18446744073709551615"});
+    check("explicit zero and maximum unsigned seeds remain valid replay choices",
+      zero_seed.seed == 0 && largest_seed.seed == std::numeric_limits<std::uint64_t>::max());
+    std::mt19937_64 first_zero_engine(zero_seed.seed), second_zero_engine(zero_seed.seed);
+    check("an explicit zero seed replays the same complete physical point",
+      make_random_validation_momenta(masses, incoming, first_zero_engine, zero_seed) ==
+        make_random_validation_momenta(masses, incoming, second_zero_engine, zero_seed));
     bool rejects_bad_arguments = true;
     for (const auto& arguments : std::vector<std::vector<std::string>>{
         {"validator", "--points"}, {"validator", "--points", "-1"},
@@ -92,6 +108,16 @@ int main() {
     const auto value = [](const Momenta<4>& point) {
       return 1 + std::abs(dot(point[0], point[2])) + std::abs(point[3][1]);
     };
+    ValidationOptions automatic_run_options;
+    automatic_run_options.points = 8;
+    const auto automatic_report = compare_squared_amplitudes(
+      masses, incoming, value, value, automatic_run_options);
+    std::ostringstream automatic_text;
+    print_validation_report(automatic_report, automatic_text);
+    check("automatic runs report the concrete time-based seed used for all their points",
+      automatic_report.passed && automatic_report.seed == automatic_run_options.seed &&
+        automatic_text.str().find("Seed: " + std::to_string(automatic_run_options.seed)) != std::string::npos);
+
     std::ostringstream progress;
     const auto equal = compare_squared_amplitudes(masses, incoming,
       [&](const Momenta<4>& point) { ++first_calls; shared = point; return value(point); },

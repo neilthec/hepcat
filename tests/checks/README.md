@@ -16,6 +16,14 @@ Individual assertions in the legacy suites also have short limits.
 An end-of-suite count guards against a recursion error silently skipping a
 test loop.
 
+Ordinary HEPCAT checks and generated C++ validation use time-based seeds by
+default. Regression cases that depend on replay or a particular kinematic
+fixture supply an explicit seed. Automatic-seed tests check that the resolved
+seed is recorded once, can be reused to replay the samples, and does not alter
+the caller's Wolfram random state.
+`random-seed-tests.wl` covers all public checking and construction defaults,
+parallel replay, nested stage overrides and the recorded seed in final output.
+
 Run only the suite relevant to a change by selecting it explicitly:
 
 ```sh

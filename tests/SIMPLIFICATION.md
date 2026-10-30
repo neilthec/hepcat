@@ -548,14 +548,22 @@ WriteSPINASProcess[outputDirectory,
   "RunCalcHEPValidation" -> True]
 ```
 
-The default is 1,000 points and seed 12345. `"CalcHEPPoints"` and
-`"CalcHEPSeed"` override them. No new build option is needed: requesting this
-check builds the project. Existing files still require `"Overwrite" -> True`.
+The default is 1,000 points with a fresh time-based seed for each run.
+`"CalcHEPPoints"` and `"CalcHEPSeed"` override them; for example,
+`"CalcHEPSeed" -> 12345` makes the validation reproducible. No new build option
+is needed: requesting this check builds the project. Existing files still
+require `"Overwrite" -> True`.
 For a previously generated project, run its validator independently:
 
 ```sh
+./build/eeAA_validate_calchep
 ./build/eeAA_validate_calchep --points 1000 --seed 12345
 ```
+
+The first command chooses a seed from the current time. The second uses the
+specified seed. The printed report records the actual seed, so an automatic
+run can be replayed. In C++, `ValidationOptions` chooses a time-based seed by
+default; assigning `options.seed` explicitly overrides it, including seed zero.
 
 In C++, link the generated `eeAA_calchep_validation` library and call
 `process.validate_calchep(options)`, where `options` is a
@@ -776,14 +784,20 @@ is applied exactly once to the internal comparison target, not to the supplied
 channel rows or candidate amplitude. Users do not build metadata records or
 manually adjust their amplitudes' signs.
 
-For each cut, the checker generates four reproducible exact rational,
+For each cut, the checker generates four exact rational,
 generally complex kinematic samples. All external shells and momentum
 conservation hold while the selected propagator varies through zero; other
 listed poles remain generic. The construction has no four- or five-leg limit
 and visits both complex three-point massless branch choices.
 
-Options include `"Samples" -> 4`, `"RandomSeed" -> 1729` and
+Options include `"Samples" -> 4`, `"RandomSeed" -> Automatic` and
 `"TimeConstraint" -> 30` (per pole, and separately for discovery).
+An automatic seed is chosen from the current time once for the run and retained
+as `"RandomSeed"` in detailed output. All check groups share that resolved seed.
+Set `"RandomSeed" -> 1729`, or any other explicit integer, to replay the same
+kinematic samples. `ConstructAmplitude`, `CompleteFactorization` and
+`CompleteHighEnergy` use the same automatic default and retain their resolved
+run seeds; a construction passes concrete seeds to its nested stages.
 `"ParameterRules" -> Automatic` is the default: numerical checks and completion
 resolve the parameter values and derived functions from the supplied model.
 Neither the symbolic amplitude nor the model is assigned numerical values

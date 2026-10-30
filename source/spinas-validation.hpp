@@ -13,6 +13,8 @@
 // These are validation samples, not a uniformly weighted phase-space integral.
 
 #include "spinas-runtime.hpp"
+#include <atomic>
+#include <chrono>
 #include <cstdint>
 #include <iomanip>
 #include <ostream>
@@ -25,9 +27,32 @@ namespace hepcat_spinas {
 // 1. Settings and results
 // ============================================================================
 
+namespace detail {
+
+// Start each ordinary run from the current time. The counter also distinguishes
+// runs created within one clock tick, or while the system clock moves backward.
+// Copies of ValidationOptions retain their seed, so a run remains replayable.
+inline std::uint64_t validation_seed_from_time() {
+  const auto now = std::chrono::system_clock::now().time_since_epoch();
+  std::uint64_t seed = static_cast<std::uint64_t>(
+    std::chrono::duration_cast<std::chrono::nanoseconds>(now).count());
+  static std::atomic<std::uint64_t> last_seed(0);
+  std::uint64_t previous = last_seed.load(std::memory_order_relaxed);
+  do {
+    if (seed <= previous) {
+      seed = previous + 1;
+    }
+  } while (!last_seed.compare_exchange_weak(
+    previous, seed, std::memory_order_relaxed, std::memory_order_relaxed));
+  return seed;
+}
+
+} // namespace detail
+
 struct ValidationOptions {
   std::size_t points = 1000;
-  std::uint64_t seed = UINT64_C(12345);
+  // Assign a specific seed, including zero, to reproduce a previous run.
+  std::uint64_t seed = detail::validation_seed_from_time();
   ldouble relative_tolerance = 1e-7L;
   // A fixed absolute tolerance can hide a wrong zero for a small amplitude.
   // Users may supply one explicitly when their numerical problem requires it.

@@ -143,9 +143,10 @@ check["total progress time never moves backwards",
 caPrinted = {};
 caPrintedResult = Block[{Print = (AppendTo[caPrinted, HoldComplete[##]] &)},
   caRun4["PrintReport" -> True]];
-check["end-of-run output shows total time followed by tests and returns the expression",
-  Length[caPrinted] >= 2 &&
-    StringContainsQ[ToString[First[caPrinted], InputForm], "Total"] &&
+check["end-of-run output records the seed then total time and tests before returning the expression",
+  Length[caPrinted] >= 3 &&
+    StringContainsQ[ToString[First[caPrinted], InputForm], "Random seed"] &&
+    StringContainsQ[ToString[caPrinted[[-2]], InputForm], "Total"] &&
     StringContainsQ[ToString[Last[caPrinted], InputForm], "PASS"] &&
     Together[caPrintedResult - caExpression] === 0];
 caFeynmanModel = ReadModel[FileNameJoin[{root, "model_feynman"}], 2];
