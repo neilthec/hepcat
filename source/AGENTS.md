@@ -38,6 +38,10 @@ are relative to the repository root, not to this file.
 - `source/HEPCAT-SPINAS.wl` and `source/spinas-runtime.hpp`: complete C++
   process export, SPINAS linking, spin-state projection and physical example
   momenta. The older `SPINAS` expression-formatting helpers remain available.
+- `source/calchep-spinas-runtime.hpp`: direct adapter from the generated SPINAS
+  class to CalcHEP's numerical integration program, including local model data,
+  constraints, current masses and separate worker caches. This backend does
+  not generate a symbolic CalcHEP matrix element.
 - `tests/simplification-paths.wl`: curated four-point identity sequences.
 - `tests/SM-4-point-simplification-test.nb`, `tests/QED-5-point.nb`, and
   `tests/Factorization-checks.nb`: worked examples and user-facing usage.
@@ -479,6 +483,16 @@ Colored families are currently rejected because no full color sum or average
 is available; do not invent color factors from the number of external colors.
 Resolve auxiliary spinors, shifts and explicit color tensors first.
 Unsupported input returns `Failure` before writing project files.
+The separate `n_calchep` numerical target must use the supplied SPINAS squared
+amplitude directly through CalcHEP's numerical ABI. Do not invoke the symbolic
+generator or require a counterpart CalcHEP model for this integration backend.
+Keep model inputs and dependent constraints synchronized with SPINAS mass and
+parameter updates. Numerical workers need separate process caches; preserve
+incoming/outgoing leg order, selected helicities and normalization exactly once.
+Explicit amplitude widths remain authoritative; unsupported automatic-width or
+gauge-restoration operations must not silently change the supplied amplitude.
+Test genuine numerical integration and parameter changes in private workspaces,
+without modifying the installed CalcHEP or the user's exported formulas.
 The `spinas-export-tests.wl` suite compiles generated 4-, 5- and 6-point
 projects and checks complex values and spin sums against independent native
 SPINAS expressions. A mixed-helicity eeAA sign difference between the current

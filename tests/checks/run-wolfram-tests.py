@@ -27,6 +27,7 @@ TEST_SUITES = (
     "spinas-helicity-family-tests.wl",
     "spinas-build-tools-tests.wl",
     "spinas-calchep-tests.wl",
+    "spinas-calchep-numerical-tests.wl",
     "spinas-native-project-tests.wl",
     "spinas-polarization-tests.wl",
     "amplitude-check-tests.wl",

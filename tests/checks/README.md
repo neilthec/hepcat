@@ -399,6 +399,31 @@ mass shells and conservation through six points, seeded replay, common numeric
 inputs, 1,000-point pass and failure controls, tiny wrong amplitudes and explicit
 evaluation errors.
 
+`spinas-calchep-numerical-tests.wl` covers a different use of CalcHEP: its
+numerical integration executable evaluates the supplied SPINAS amplitude,
+without generating a symbolic counterpart. It builds and starts the genuine
+`n_calchep` in a private session with `CalcHEPModel -> None` and a trap symbolic
+executable. It tests current masses, dependency-ordered constraints, selected
+normalization, arbitrary incoming order, independent worker caches, running
+couplings, unsupported-input errors and zero-parameter models. The runtime
+probes compile in both SPINAS precision modes. Unused unsupported model
+definitions are reported; a required missing dependency remains unavailable.
+
+Enable genuine VEGAS integrals as well as the ordinary callback checks with:
+
+```sh
+HEPCAT_TEST_CALCHEP_NUMERICAL_INTEGRATION=1 python3 tests/checks/run-wolfram-tests.py --suite spinas-calchep-numerical-tests.wl --timeout 900
+```
+
+The full run has 29 assertions. It compares the integrated `eeAA` cross section
+with an independent SPINAS angular quadrature, repeats after coupling and mass
+changes without rebuilding, and compares a constant five-scalar amplitude with
+the analytic three-body phase volume and identical-particle factor. All 29
+passed on 2026-10-30; no symbolic-generator call was recorded. The three-body
+result was 333.8268 +/- 0.1224 pb, versus 333.7078 pb analytically. The `eeAA`
+result was 65181.0918 +/- 0.0179 pb, versus 65181.0853 pb by quadrature. These
+are finite Monte Carlo validation runs, not analytic equality certificates.
+
 The real external integration is opt-in:
 
 ```sh

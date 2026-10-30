@@ -600,6 +600,65 @@ are counted, never discarded. The first failing point is retained for replay.
 The CalcHEP backend uses process-global C state and runs serially in a private
 workspace; concurrent CalcHEP sessions fail explicitly.
 
+## CalcHEP Numerical Integration With SPINAS Amplitudes
+
+The generated `n_calchep` target uses CalcHEP's numerical integration program
+with the exported SPINAS amplitude as its matrix element. This is separate from
+the independent comparison above: integration does not generate a symbolic
+CalcHEP process and needs no equivalent `CalcHEPModel`.
+
+With numerical CalcHEP libraries installed, the ordinary `"Build" -> True`
+export builds `build/n_calchep` and creates a separate `calchep` session
+directory. Start the program from that directory:
+
+```sh
+cd /path/to/exported/process/calchep
+./n_calchep
+```
+
+Use CalcHEP's usual numerical menus to choose beams, inputs, cuts, histograms
+and integration settings. Its existing scripts also work from this directory:
+
+```sh
+bash /path/to/calchep/bin/set_param EE 0.31333 Me 0.0005
+bash /path/to/calchep/bin/set_momenta 100 100
+bash /path/to/calchep/bin/set_vegas 5 10000 5 100000 1000
+bash /path/to/calchep/bin/run_vegas
+```
+
+The session and integration files stay in this exported process directory.
+`"CalcHEPDirectory"` and the CMake `CALCHEP_ROOT` select the installation, just
+as for the independent comparison. No additional exporter option is needed.
+
+The numerical program retains CalcHEP's model-parameter and constraint menus,
+beam settings, cuts, phase-space mappings, distributions and VEGAS integration.
+The bridge returns the SPINAS spin-summed, averaged, symmetry-weighted squared
+amplitude; CalcHEP supplies the flux and phase-space weights. No additional
+amplitude squaring, incoming average or identical-particle factor is applied.
+
+Parameter changes recalculate model constraints and update the generated
+process parameters and external masses before evaluating new momenta. Each
+integration worker has its own SPINAS process and cached products. Changing an
+external particle between massive and massless spin representations requires a
+new export. Fixed-helicity exports integrate their documented selected
+contribution, not an inferred unpolarized result.
+An explicit override of a dependent model parameter promotes it to an
+independent input for that export; downstream constraints continue to update.
+When the model declares CalcHEP's independent strong coupling `GG`, the
+numerical scale-dependent `GG` value is bound locally for each phase-space
+point, with its dependent parameters recalculated. It must not change external
+phase-space masses. Other model couplings remain ordinary explicit inputs.
+
+The explicit amplitude's width prescription remains authoritative. This bridge
+does not derive decay widths or add CalcHEP gauge-restoration prescriptions to
+the supplied amplitude. A model must provide any required numerical parameters
+and supported dependent expressions.
+Unrelated unsupported definitions may be omitted with explicit manifest
+diagnostics; missing dependencies of the supplied amplitude cannot be omitted.
+The numerical interface inherits the installed CalcHEP limits, including
+11-character names and at most 20 external particles. This does not restrict
+the standalone SPINAS export.
+
 ## Amplitude Checks
 
 `CheckAmplitudes` is the general checker. `CheckPhysicalResidues` remains a
