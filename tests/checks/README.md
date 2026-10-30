@@ -341,6 +341,24 @@ diagram model is unchanged.
 
 ## SPINAS Process Export
 
+The grouped-helicity integration suite is:
+
+```sh
+python3 tests/checks/run-wolfram-tests.py --suite spinas-helicity-family-tests.wl --timeout 420
+```
+
+It compiles one project per particle family and independently enumerates every
+external spin and helicity at three physical phase-space points. Native
+`eeAA` complex amplitudes and its full spin-averaged result are compared with
+the generated code. Incoming photons exercise helicity averaging, three final
+photons exercise the `1/3!` factor, and six massive fermions exercise the
+`1/(2! 2!)` factor. Other fixtures test shared parameter indices and complex
+parameter updates across branches, signed identical massless-fermion
+permutations, explicit zero sectors, incomplete-family rejection and overwrite
+protection. No parity relation or missing zero amplitude is inferred. This
+suite needs the built SPINAS library and native `eeAA`/`AAee` fixtures for its
+compiled comparisons; source-only guards still run if those are unavailable.
+
 Run the complete C++ export integration suite with:
 
 ```sh

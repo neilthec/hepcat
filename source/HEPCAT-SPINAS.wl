@@ -71,6 +71,9 @@ spinasProcessIR[process_List, amplitude_, model_List, options_Association] := Mo
     canonicalSymbol[value_] := value;
     normalizeInput[value_, depth_: 0] := Which[
       depth > 32, fail["Amplitude report nesting exceeds the supported input depth."],
+      AssociationQ[value] && KeyExistsQ[value, "Status"] &&
+          !MemberQ[{"COMPLETE", "PREPARED", "PASS", "CONSTRUCTED"}, value["Status"]],
+        fail["The amplitude report is not complete or successful. Export a completed report, or explicitly extract a candidate expression for diagnostic export."],
       AssociationQ[value] && KeyExistsQ[value, "Amplitude"],
         normalizeInput[value["Amplitude"], depth + 1],
       AssociationQ[value] && KeyExistsQ[value, "PreparedAmplitudes"],
@@ -340,6 +343,7 @@ End[];
 
 Begin["ConstructiveDiagrams`"];
 WriteSPINASProcess::usage = "WriteSPINASProcess[directory, particles, amplitude, model] writes a complete C++11 SPINAS process project for two incoming and at least two outgoing particles. The amplitude uses HEPCAT's all-ingoing convention; IncomingLegs -> {1,2} selects physical incoming legs and outgoing legs are crossed automatically, including angle-spinor signs. The project contains process.hpp, process.cpp, main.cpp, a deterministic physical phase-space example generator, CMakeLists.txt, README.md and manifest.json. SPINASDirectory -> Automatic looks for SPINAS_ROOT or the sibling spinas checkout; an explicit path overrides it. Model parameter defaults come from ModelParameterRules; ParameterRules overrides them locally. ProcessName sets a C++ class/executable name. Build -> True configures and links the project against the existing SPINAS library; RunExamples -> True also builds and runs three sample points. Precision -> Automatic reads the local SPINAS build configuration; LongDouble and Double are explicit choices. Overwrite -> False protects existing project files. ReturnDetails -> False normally returns the output directory; True adds file paths and build/run results. Fixed massless helicities are retained. amp2 averages incoming massive spins and sums outgoing massive spins at those fixed helicities, without an identical-particle phase-space factor or color sums/averages. Unsupported expressions return Failure before files are written; this function does not complete or validate the physical amplitude.";
+WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " The family overload WriteSPINASProcess[directory, {{particles1, amplitude1}, ...}, model] combines helicity-related amplitudes into one class. It fills identical-species, same-role massless leg permutations with their proper statistics sign, without inferring parity or missing zero amplitudes. Incomplete coverage is rejected before writing files. amp(ds1,...,dsn) and amp(Spins) select doubled spins and helicities; spin_sum sums all external spin/helicity states; amp2 also averages incoming states and includes the outgoing identical-species factorial factor, including identical fermions. Canonical formulas are compiled once and reused through leg maps. Colored families are currently refused because a full color sum is not implemented. The original four-argument fixed-helicity overload retains its existing spin-sum and symmetry-factor conventions.";
 Options[WriteSPINASProcess] = {"SPINASDirectory" -> Automatic,
   "IncomingLegs" -> {1, 2}, "ParameterRules" -> Automatic,
   "ProcessName" -> "hepcat_process", "Precision" -> Automatic,
@@ -351,12 +355,13 @@ Begin["ConstructiveDiagrams`Private`"];
 $spinasExportSourceDirectory = DirectoryName[$InputFileName];
 
 spinasCppIdentifierQ[name_String] := StringMatchQ[name, RegularExpression["[A-Za-z][A-Za-z0-9_]*"]] &&
-  !StringContainsQ[name,"__"] && !MemberQ[{
+  !StringContainsQ[name,"__"] && !StringMatchQ[name, RegularExpression["component_[0-9]+"]] && !MemberQ[{
     "std", "spinas", "hepcat_generated", "hepcat_spinas", "Parameters", "Momenta", "Spins",
     "all", "clean", "help", "test", "install", "package", "package_source",
     "edit_cache", "rebuild_cache", "list_install_components",
     "leg_count", "parameter_count", "default_parameters", "default_spins", "incoming_legs",
     "get_parameters", "masses", "set_parameters", "set_momenta", "amp", "spin_sum", "amp2",
+    "helicity_count", "helicity_configurations", "incoming_spin_average", "symmetry_factor", "ParticleView",
     "parameters", "external_masses", "momenta", "particles", "momenta_ready", "component",
     "cdouble", "ldouble", "FourMomentum", "checked_mass", "validate_momenta", "finite_complex",
     "spinor_assignments", "spinor_normalization", "sum_momenta", "momentum_matrix",
@@ -596,7 +601,7 @@ spinasProjectBuild[directory_String, name_String, root_String, runExamples_] := 
   <|"Build" -> Join[build,<|"Status" -> "BUILT", "Configure" -> configure|>], "Examples" -> run|>
 ];
 
-WriteSPINASProcess[directory_String, process_List, amplitude_, model_, opts:OptionsPattern[]] := Module[
+WriteSPINASProcess[directory_String, process : {___String}, amplitude_, model_, opts:OptionsPattern[]] := Module[
   {options = Association[{opts}], name = OptionValue["ProcessName"], root, precision, ir,
    dir = ExpandFileName[directory], data, runtime, files, contents, written, result, build,
    overwrite = OptionValue["Overwrite"], examples = OptionValue["RunExamples"],
@@ -644,6 +649,281 @@ WriteSPINASProcess[directory_String, process_List, amplitude_, model_, opts:Opti
     result = Join[result,build]];
   If[TrueQ[details],result,dir]
 ];
+
+(* A family contains one canonical formula per supplied helicity arrangement.
+   Identical-leg maps select the other arrangements without copying formulas. *)
+spinasHelicitySpecies[name_String, row_List, massless_] := {
+  If[TrueQ[massless] && row[[5]] > 0,
+    StringReplace[name, RegularExpression["\\.[+-]$"] -> ""], name],
+  row[[4]], row[[5]], row[[6]], If[Length[row] >= 8, row[[8]], 1]};
+spinasFamilyIR[entries_List, model_List, options_Association] := Module[
+  {tag = Unique["spinasFamily"], fail, components, first, process, n, incoming,
+   rows, rowFor, species, massless, ranks, states, modelNames, signed, groups,
+   expected, configurations, mappings = {}, mappingFor, source, mapping, record,
+   direct, symbols, defaults, names, firstPosition, rewriteCpp, rebind,
+   finalNames, finalSpecies, finalCounts, symmetryDivisor, initialAverage},
+  fail[message_, data_: <||>] := Throw[Failure["SPINASHelicityFamily",
+    Join[<|"MessageTemplate" -> message|>, data]], tag];
+  Catch[
+    If[entries === {} || Length[entries] > 4096 ||
+        !AllTrue[entries, MatchQ[#, {_List, _}] && First[#] =!= {} &&
+          AllTrue[First[#], StringQ] &],
+      fail["Provide a nonempty list of {particle names, amplitude} pairs."]];
+    components = spinasProcessIR[First[#], Last[#], model, options] & /@ entries;
+    If[AnyTrue[components, FailureQ], Return[SelectFirst[components, FailureQ]]];
+    first = First[components]; process = first["Process"]; n = first["LegCount"];
+    incoming = first["IncomingLegs"]; ranks = first["Spin2"];
+    massless = TrueQ[# == 0] & /@ first["MassValues"];
+    If[AnyTrue[components, TrueQ[#["ColorStripped"]] &],
+      fail["A full color sum is not implemented. Use the fixed-helicity exporter for an explicitly color-stripped amplitude."]];
+    rowFor[name_] := SelectFirst[model[[1]], ListQ[#] && Length[#] >= 6 &&
+      MemberQ[#[[{2, 3}]], name] &, Missing["Particle"]];
+    rows = rowFor /@ process;
+    species = MapThread[spinasHelicitySpecies, {process, rows, massless}];
+    If[AnyTrue[components, Function[component,
+        component["LegCount"] =!= n || component["IncomingLegs"] =!= incoming ||
+        component["Spin2"] =!= ranks || component["Masses"] =!= first["Masses"] ||
+        MapThread[spinasHelicitySpecies,
+          {component["Process"], rowFor /@ component["Process"], massless}] =!= species]],
+      fail["Every family member must have the same ordered particle species, masses and incoming legs; only massless helicities may differ."]];
+    configurations = Lookup[components, "Helicities"];
+    If[!DuplicateFreeQ[configurations],
+      fail["Supply only one amplitude for each helicity arrangement. Alternative formulas for the same helicities do not form separate branches."]];
+    modelNames = DeleteDuplicates[Flatten[(#[[{2, 3}]] &) /@ model[[1]]]];
+    states = Table[If[!massless[[i]] || ranks[[i]] == 0, {0},
+      signed = Select[modelNames, Function[name,
+        StringMatchQ[name, ___ ~~ (".+" | ".-")] &&
+        spinasHelicitySpecies[name, rowFor[name], True] === species[[i]]]];
+      If[signed === {}, {-ranks[[i]], ranks[[i]]},
+        Sort[DeleteDuplicates[If[StringEndsQ[#, ".+"], ranks[[i]], -ranks[[i]]] & /@ signed]]]],
+      {i, n}];
+    If[Times @@ (Length /@ states) > 4096,
+      fail["The complete helicity family exceeds the supported export allowance of 4096 arrangements."]];
+    expected = Tuples[states];
+    groups = GatherBy[Select[Range[n], massless[[#]] && ranks[[#]] > 0 &],
+      {species[[#]], MemberQ[incoming, #]} &];
+    mappingFor[from_List, to_List] := Module[{image = Range[n], old, new, sign = 1},
+      Do[
+        Do[old = Select[group, from[[#]] === helicity &];
+          new = Select[group, to[[#]] === helicity &];
+          If[Length[old] =!= Length[new], Return[$Failed]];
+          Do[image[[old[[j]]]] = new[[j]], {j, Length[old]}],
+          {helicity, states[[First[group]]]}];
+        If[OddQ[ranks[[First[group]]]], sign *= Signature[image[[group]]]],
+        {group, groups}];
+      If[!AllTrue[Range[n], from[[#]] === to[[image[[#]]]] &], Return[$Failed]];
+      <|"LegPermutation" -> image, "FermionSign" -> sign|>];
+    Do[
+      direct = FirstPosition[configurations, configuration, Missing["NotSupplied"]];
+      record = Missing["NoBranch"];
+      If[!MissingQ[direct],
+        record = <|"Helicities" -> configuration, "InputIndex" -> First[direct],
+          "LegPermutation" -> Range[n], "FermionSign" -> 1, "Origin" -> "Supplied"|>,
+        Do[mapping = mappingFor[configurations[[source]], configuration];
+          If[AssociationQ[mapping], record = Join[<|"Helicities" -> configuration,
+            "InputIndex" -> source, "Origin" -> "IdenticalLegPermutation"|>, mapping]; Break[]],
+          {source, Length[components]}]];
+      AppendTo[mappings, record], {configuration, expected}];
+    If[AnyTrue[mappings, MissingQ],
+      fail["The supplied amplitudes do not cover all massless helicities. Supply the missing helicity sectors; no zero amplitude or parity relation is assumed.",
+        <|"MissingHelicities" -> Pick[expected, MissingQ /@ mappings, True]|>]];
+    symbols = DeleteDuplicates[Flatten[Lookup[components, "ParameterSymbols"], 1]];
+    names = ModelParameterName /@ symbols;
+    If[!DuplicateFreeQ[names], fail["Model parameter names must be unambiguous across the complete family."]];
+    defaults = Map[Function[symbol,
+      source = SelectFirst[components, MemberQ[#["ParameterSymbols"], symbol] &];
+      source["ParameterDefaults"][[First[FirstPosition[source["ParameterSymbols"], symbol]]]]], symbols];
+    rewriteCpp[text_String, local_List] := StringReplace[text,
+      MapIndexed[("parameters[" <> ToString[First[#2] - 1] <> "]") ->
+        ("parameters[" <> ToString[First[FirstPosition[symbols, #1]] - 1] <> "]") &, local]];
+    rebind[component_Association] := Join[component, <|
+      "ExpressionCpp" -> rewriteCpp[component["ExpressionCpp"], component["ParameterSymbols"]],
+      "ChainStatements" -> (rewriteCpp[#, component["ParameterSymbols"]] & /@ component["ChainStatements"]),
+      "MassCpp" -> (rewriteCpp[#, component["ParameterSymbols"]] & /@ component["MassCpp"]),
+      "ParameterSymbols" -> symbols, "ParameterNames" -> names,
+      "ParameterDefaults" -> defaults|>];
+    components = rebind /@ components; first = First[components];
+    finalNames = Map[Function[i,
+      If[process[[i]] === rows[[i, 2]], rows[[i, 3]], rows[[i, 2]]]], Complement[Range[n], incoming]];
+    finalSpecies = MapThread[spinasHelicitySpecies,
+      {finalNames, rows[[Complement[Range[n], incoming]]], massless[[Complement[Range[n], incoming]]]}];
+    finalCounts = Length /@ Gather[finalSpecies];
+    symmetryDivisor = Times @@ (Factorial /@ finalCounts);
+    initialAverage = Times @@ Table[If[massless[[i]], Length[states[[i]]], ranks[[i]] + 1], {i, incoming}];
+    Join[first, <|"Family" -> True, "Process" -> (First /@ species),
+      "InputProcesses" -> Lookup[components, "Process"], "FamilyComponents" -> components,
+      "HelicityConfigurations" -> expected, "HelicityStates" -> states, "Branches" -> mappings,
+      "InputBranchCount" -> Length[components],
+      "GeneratedBranchCount" -> Count[Lookup[mappings, "Origin"], "IdenticalLegPermutation"],
+      "InitialSpinAverage" -> initialAverage, "SymmetryFactor" -> 1/symmetryDivisor,
+      "FinalStateSymmetryDivisor" -> symmetryDivisor,
+      "FinalStateSpecies" -> (First /@ finalSpecies)|>], tag]
+];
+
+spinasFamilyProjectHeader[name_String, ir_Association] := Module[{header, scalarArguments, scalarValues, declarations},
+  header = spinasProjectHeader[name, ir];
+  scalarArguments = StringRiffle[Table["int ds" <> ToString[i], {i, ir["LegCount"]}], ", "];
+  scalarValues = spinasCppArray[Table["ds" <> ToString[i], {i, ir["LegCount"]}]];
+  declarations = StringRiffle[Table[
+    "  cdouble component_" <> ToString[i - 1] <>
+      "(const std::vector<std::vector<int>>& spinor_spins, const ParticleView& particle_view, const Momenta& momenta);",
+    {i, ir["InputBranchCount"]}], "\n"];
+  StringReplace[header, {
+    "  using Spins = std::array<int, leg_count>;" ->
+      "  using Spins = std::array<int, leg_count>;\n  static constexpr std::size_t helicity_count = " <>
+        ToString[Length[ir["HelicityConfigurations"]]] <> ";\n  static std::array<Spins, helicity_count> helicity_configurations();\n" <>
+        "  static ldouble incoming_spin_average();\n  static ldouble symmetry_factor();",
+    "  cdouble amp(const Spins& spins);" -> "  cdouble amp(const Spins& spins);",
+    "  ldouble spin_sum();" -> "  cdouble amp(" <> scalarArguments <> ") { return amp(Spins" <> scalarValues <> "); }\n  ldouble spin_sum();",
+    "  cdouble component(const std::vector<std::vector<int>>& spinor_spins);" ->
+      "  using ParticleView = std::array<spinas::particle*, leg_count>;\n" <>
+      "  cdouble component(std::size_t source, const std::vector<std::vector<int>>& spinor_spins, const ParticleView& particle_view, const Momenta& momenta);\n" <> declarations}]
+];
+
+spinasFamilyProjectSource[name_String, ir_Association] := Module[
+  {n = ir["LegCount"], ranks = ir["Spin2"], components = ir["FamilyComponents"],
+   branches = ir["Branches"], prefix, componentCode, endpointRules, configurations,
+   permutationRows, sourceIndices, signs, rankArray, dispatchCases, k},
+  prefix = First[StringSplit[spinasProjectSource[name, ir], "cdouble " <> name <> "::component(", 2]];
+  prefix = StringReplace[prefix, "constexpr std::size_t " <> name <> "::parameter_count;" ->
+    "constexpr std::size_t " <> name <> "::parameter_count;\nconstexpr std::size_t " <> name <> "::helicity_count;"];
+  endpointRules = Table[("particles[" <> ToString[i - 1] <> "].") ->
+    ("particle_view[" <> ToString[i - 1] <> "]->"), {i, n}];
+  componentCode = StringRiffle[MapIndexed[Function[{component, index}, StringRiffle[Join[{
+      "cdouble " <> name <> "::component_" <> ToString[First[index] - 1] <>
+        "(const std::vector<std::vector<int>>& spinor_spins, const ParticleView& particle_view, const Momenta& momenta) {"},
+      ("  " <> StringReplace[#, endpointRules] &) /@ component["ChainStatements"], {
+      "  return " <> StringReplace[component["ExpressionCpp"], endpointRules] <> ";", "}", ""}], "\n"]], components], "\n"];
+  dispatchCases = Table["    case " <> ToString[i - 1] <> ": return component_" <> ToString[i - 1] <>
+    "(spinor_spins,particle_view,momenta);", {i, Length[components]}];
+  configurations = spinasCppArray[spinasCppArray[ToString /@ #] & /@ ir["HelicityConfigurations"]];
+  permutationRows = spinasCppArray[spinasCppArray[ToString /@ (#["LegPermutation"] - 1)] & /@ branches];
+  sourceIndices = spinasCppArray[ToString /@ (Lookup[branches, "InputIndex"] - 1)];
+  signs = spinasCppArray[ToString /@ Lookup[branches, "FermionSign"]];
+  rankArray = spinasCppArray[ToString /@ ranks];
+  prefix <> componentCode <> StringRiffle[Join[{
+    "cdouble " <> name <> "::component(std::size_t source, const std::vector<std::vector<int>>& spinor_spins, const ParticleView& particle_view, const Momenta& momenta) {",
+    "  switch (source) {"}, dispatchCases, {
+    "    default: throw std::logic_error(\"Unknown generated helicity component.\");", "  }", "}", "",
+    "std::array<" <> name <> "::Spins," <> name <> "::helicity_count> " <> name <> "::helicity_configurations() {",
+    "  return std::array<Spins,helicity_count>" <> configurations <> ";", "}", "",
+    "ldouble " <> name <> "::incoming_spin_average() { return " <> spinasCppReal[ir["InitialSpinAverage"]] <> "; }",
+    "ldouble " <> name <> "::symmetry_factor() { return " <> spinasCppReal[ir["SymmetryFactor"]] <> "; }", "",
+    "cdouble " <> name <> "::amp(const Spins& spins) {",
+    "  if (!momenta_ready) throw std::logic_error(\"Call set_momenta before amp.\");",
+    "  static const std::array<int,leg_count> ranks = " <> rankArray <> ";",
+    "  static const std::array<std::array<std::size_t,leg_count>,helicity_count> permutations = " <> permutationRows <> ";",
+    "  static const std::array<std::size_t,helicity_count> sources = " <> sourceIndices <> ";",
+    "  static const std::array<int,helicity_count> signs = " <> signs <> ";",
+    "  const auto configurations = helicity_configurations(); std::size_t branch=helicity_count;",
+    "  for (std::size_t candidate=0; candidate<helicity_count; ++candidate) {",
+    "    bool match=true; for (std::size_t i=0; i<leg_count; ++i)",
+    "      if (external_masses[i]==0 && spins[i]!=configurations[candidate][i]) match=false;",
+    "    if (match) { branch=candidate; break; }", "  }",
+    "  if (branch==helicity_count) throw std::invalid_argument(\"No supplied or identical-particle-related amplitude has these massless helicities.\");",
+    "  ParticleView particle_view; Momenta selected_momenta;",
+    "  for (std::size_t i=0; i<leg_count; ++i) {",
+    "    particle_view[i]=&particles[permutations[branch][i]]; selected_momenta[i]=momenta[permutations[branch][i]];", "  }",
+    "  std::vector<std::vector<std::vector<int>>> assignments(leg_count);",
+    "  std::vector<std::vector<int>> spinor_spins(leg_count); ldouble normalization=1;",
+    "  for (std::size_t i=0; i<leg_count; ++i) {",
+    "    if (external_masses[i]==0) assignments[i]=spinor_assignments(0,0);",
+    "    else { assignments[i]=spinor_assignments(ranks[i],spins[i]);",
+    "      normalization*=spinor_normalization(ranks[i],spins[i]); }", "  }",
+    "  std::function<cdouble(std::size_t)> sum = [&](std::size_t leg) -> cdouble {",
+    "    if (leg==leg_count) return component(sources[branch],spinor_spins,particle_view,selected_momenta);",
+    "    cdouble result(0,0); for (const auto& indices : assignments[leg]) {",
+    "      spinor_spins[leg]=indices; result+=sum(leg+1);", "    } return result;", "  };",
+    "  return ldouble(signs[branch])*normalization*sum(0);", "}", "",
+    "ldouble " <> name <> "::spin_sum() {",
+    "  static const std::array<int,leg_count> ranks = " <> rankArray <> ";",
+    "  ldouble result=0;",
+    "  for (const auto& helicities : helicity_configurations()) {",
+    "    Spins spins=default_spins(); for (std::size_t i=0; i<leg_count; ++i)",
+    "      if (external_masses[i]==0) spins[i]=helicities[i];",
+    "    std::function<ldouble(std::size_t)> sum = [&](std::size_t leg) -> ldouble {",
+    "      if (leg==leg_count) return std::norm(amp(spins));",
+    "      if (external_masses[leg]==0 || ranks[leg]==0) return sum(leg+1);",
+    "      ldouble value=0; for (int spin=-ranks[leg]; spin<=ranks[leg]; spin+=2) {",
+    "        spins[leg]=spin; value+=sum(leg+1);", "      } return value;", "    };",
+    "    result+=sum(0);", "  } return result;", "}", "",
+    "ldouble " <> name <> "::amp2() { return spin_sum()*symmetry_factor()/incoming_spin_average(); }",
+    "} // namespace hepcat_generated", ""}], "\n"]
+];
+
+spinasFamilyProjectMain[name_String] := StringReplace[spinasProjectMain[name], {
+  "fixed massless helicities." -> "all exported massless helicities.",
+  "fixed-helicity, initial-spin-averaged |M|^2" -> "spin/helicity-summed, initial-averaged, symmetry-weighted |M|^2",
+  "No identical-particle phase-space factor is included." -> "The final-state identical-particle symmetry factor is included in amp2()."}];
+spinasFamilyProjectREADME[name_String, ir_Association, precision_String] := StringReplace[
+  spinasProjectREADME[name, ir, precision], {
+    "Massless helicities are fixed by the exported process. Massive states are normalized symmetric spinor tensors." ->
+      "The class includes every massless-helicity arrangement. Massive states use normalized symmetric spinor tensors. amp(ds1,...,dsn) and amp(Spins) accept doubled spins/helicities, as in native SPINAS processes.",
+    "spin_sum sums all massive external spins. amp2 also averages incoming massive spins. Neither includes an identical-particle phase-space factor or a sum over other massless-helicity processes." ->
+      "spin_sum sums |amp|^2 over all external spins and massless helicities. amp2 divides by the incoming spin/helicity multiplicity (" <>
+      ToString[ir["InitialSpinAverage"]] <> ") and multiplies the final-state identical-particle factor (1/" <>
+      ToString[ir["FinalStateSymmetryDivisor"]] <> "). Identical particles are counted by species, including fermions, irrespective of helicity. No initial identical-particle factor is applied.",
+    "The executable prints three deterministic" ->
+      "Only canonical supplied formulas are compiled. Identical-particle-related helicity branches use role-preserving leg permutations, including the fermion exchange sign. No parity relation or missing zero amplitude is inferred.\n\nThe executable prints three deterministic"}];
+
+WriteSPINASProcess[directory_String, entries_List, model_, opts:OptionsPattern[]] := Module[
+  {options = Join[Association[Options[WriteSPINASProcess]], Association[Reverse[Flatten[{opts}]]]],
+   name, root, precision, ir, dir = ExpandFileName[directory], data, runtime,
+   files, contents, written, result, build, manifest},
+  name = options["ProcessName"];
+  If[Complement[First /@ Flatten[{opts}], First /@ Options[WriteSPINASProcess]] =!= {} ||
+      !StringQ[name] || !TrueQ[spinasCppIdentifierQ[name]] || StringTrim[directory] === "" ||
+      !AllTrue[Lookup[options, {"Overwrite", "RunExamples", "ReturnDetails", "Build"}], MemberQ[{True, False}, #] &] ||
+      !MemberQ[{Automatic, "LongDouble", "Double"}, options["Precision"]] ||
+      !(options["SPINASDirectory"] === Automatic || StringQ[options["SPINASDirectory"]]),
+    Message[WriteSPINASProcess::args]; Return[$Failed]];
+  data = If[Head[model] === FeynmanModel, List @@ model, model];
+  If[!ListQ[data], Return[Failure["InvalidModel", <||>]]];
+  ir = spinasFamilyIR[entries, data, KeyTake[options, {"IncomingLegs", "ParameterRules"}]];
+  If[FailureQ[ir], Return[ir]];
+  If[ir["LegCount"] < 4, Return[Failure["SPINASPhaseSpace", <|
+    "MessageTemplate" -> "The runnable project requires two incoming and at least two outgoing particles."|>]]];
+  runtime = FileNameJoin[{$spinasExportSourceDirectory, "spinas-runtime.hpp"}];
+  If[!FileExistsQ[runtime], Return[Failure["SPINASRuntime", <|"MessageTemplate" -> "The SPINAS runtime template is missing."|>]]];
+  root = spinasProjectRoot[options["SPINASDirectory"]];
+  precision = spinasProjectPrecision[root, options["Precision"]];
+  files = AssociationThread[{"Header", "Source", "Demo", "Runtime", "CMake", "README", "Manifest"},
+    FileNameJoin[{dir, #}] & /@ {"process.hpp", "process.cpp", "main.cpp", "spinas-runtime.hpp", "CMakeLists.txt", "README.md", "manifest.json"}];
+  If[!TrueQ[options["Overwrite"]] && AnyTrue[Values[files], FileExistsQ],
+    Return[Failure["SPINASFilesExist", <|"MessageTemplate" -> "Generated project files already exist. Use Overwrite -> True to replace them.", "Directory" -> dir|>]]];
+  If[FileExistsQ[dir] && !DirectoryQ[dir], Return[Failure["SPINASDirectory", <|"Directory" -> dir|>]]];
+  manifest = <|"Generator" -> "HEPCAT WriteSPINASProcess", "HelicityFamily" -> True,
+    "Process" -> ir["Process"], "InputProcesses" -> ir["InputProcesses"],
+    "IncomingLegs" -> ir["IncomingLegs"], "Class" -> name, "Precision" -> precision,
+    "ColorStripped" -> False, "ParameterOrder" -> ir["ParameterNames"],
+    "ParameterDefaults" -> (<|"Real" -> N[Re[#]], "Imaginary" -> N[Im[#]]|> & /@ ir["ParameterDefaults"]),
+    "Masses" -> N[ir["MassValues"]], "Spin2" -> ir["Spin2"],
+    "HelicityConfigurations" -> ir["HelicityConfigurations"], "Branches" -> ir["Branches"],
+    "InputBranchCount" -> ir["InputBranchCount"], "GeneratedBranchCount" -> ir["GeneratedBranchCount"],
+    "InitialSpinAverage" -> ir["InitialSpinAverage"], "SymmetryFactor" -> N[ir["SymmetryFactor"]],
+    "FinalStateSymmetryDivisor" -> ir["FinalStateSymmetryDivisor"],
+    "SpinSumConvention" -> "All external spin/helicity states; amp2 averages incoming states and includes the outgoing identical-species factorial factor; no color sum."|>;
+  contents = <|"Header" -> spinasFamilyProjectHeader[name, ir],
+    "Source" -> spinasFamilyProjectSource[name, ir], "Demo" -> spinasFamilyProjectMain[name],
+    "Runtime" -> Import[runtime, "Text"], "CMake" -> spinasProjectCMake[name, root, precision],
+    "README" -> spinasFamilyProjectREADME[name, ir, precision]|>;
+  If[!AllTrue[Values[contents], StringQ], Return[Failure["SPINASGeneration", <|"MessageTemplate" -> "The C++ project could not be generated."|>]]];
+  written = Quiet[Check[
+    If[!DirectoryQ[dir], CreateDirectory[dir, CreateIntermediateDirectories -> True]];
+    AllTrue[KeyValueMap[Export[files[#1], #2, "Text"] &, contents], StringQ] &&
+      StringQ[Export[files["Manifest"], manifest, "RawJSON"]], False]];
+  If[!TrueQ[written], Return[Failure["SPINASWrite", <|"MessageTemplate" -> "The output files could not all be written.", "Directory" -> dir|>]]];
+  result = Join[<|"Directory" -> dir, "Files" -> files, "Process" -> ir["Process"],
+    "IncomingLegs" -> ir["IncomingLegs"], "Build" -> <|"Status" -> "NOT_REQUESTED"|>,
+    "Examples" -> <|"Status" -> "NOT_REQUESTED"|>|>,
+    KeyTake[ir, {"HelicityConfigurations", "InputBranchCount", "GeneratedBranchCount",
+      "InitialSpinAverage", "SymmetryFactor", "FinalStateSymmetryDivisor"}]];
+  If[TrueQ[options["Build"]] || TrueQ[options["RunExamples"]],
+    build = spinasProjectBuild[dir, name, root, options["RunExamples"]];
+    If[FailureQ[build], Return[build]]; result = Join[result, build]];
+  If[TrueQ[options["ReturnDetails"]], result, dir]
+];
+
 WriteSPINASProcess[___] := (Message[WriteSPINASProcess::args];$Failed);
 End[];
 End[];

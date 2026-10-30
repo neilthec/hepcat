@@ -13,7 +13,7 @@ Cell[CellGroupData[{
 
 Cell["Four-, Five- and Six-Point QED: Construction and Checks", "Title",ExpressionUUID->"5ca1b447-bdbb-4884-877e-3bc950bf458e"],
 
-Cell["Evaluate Setup once, then evaluate any individual calculation below. The 36 explicit calls cover all photon-helicity assignments at fixed external ordering: 5 four-point, 10 five-point and 21 six-point tree amplitudes of the electron/photon QED model. Each result has a distinct qed4..., qed5... or qed6... variable, so later calculations do not overwrite it. The wrapper displays progress, total time and all final checks before returning a validated expression. Some completion paths remain unresolved and are labeled beside their calculation cells. All momenta are ingoing. Other external label orderings follow by particle relabeling; pure-photon trees and charge-unbalanced processes vanish. Massive fermion spin dependence remains symbolic.", "Text", ExpressionUUID->"456f9b3b-17be-418a-8209-5779a70c7365"],
+Cell["Evaluate Setup once, then evaluate the individual calculations below. Canonical photon-helicity representatives are sufficient for the C++ export: it combines them into one process and supplies equivalent placements by relabeling identical particles. Each result has a distinct qed4..., qed5... or qed6... variable, so later calculations do not overwrite it. The wrapper displays progress, total time and all final checks before returning a validated expression. Some completion paths remain unresolved and are labeled beside their calculation cells. All momenta are ingoing. Other external label orderings follow by particle relabeling; pure-photon trees and charge-unbalanced processes vanish. Massive fermion spin dependence remains symbolic.", "Text", ExpressionUUID->"456f9b3b-17be-418a-8209-5779a70c7365"],
 
 Cell[CellGroupData[{
 
@@ -171,6 +171,18 @@ means agreement at the tested samples, not a general analytic proof.\
 \>", "Text",ExpressionUUID->"43f1ccea-2be0-4dac-abdd-f6a191035779"],
 
 Cell["The construction wrapper chooses its calculation settings automatically, reports progress and elapsed time, and returns the expression only when all required checks pass. The one option shown below supplies the independent Feynman benchmark model; it does not tune the calculation. Other options are needed only to override a default.", "Text", ExpressionUUID->"ec7e2a65-5ad5-54a8-b037-0c605814a7c6"]
+,
+
+Cell[CellGroupData[{
+
+Cell["C++ Output", "Subsection", ExpressionUUID->"b4c6fb87-9ca2-562d-8135-105e4be086dd"],
+
+Cell["The export cells at the end of each related amplitude family write one SPINAS process containing all its spin and helicity choices. Evaluate the amplitude calculations first. Equivalent photon placements are supplied by relabeling identical particles. The generated amp selects one spin/helicity configuration; spin_sum sums its squared magnitude over all external states, and amp2 also includes the initial-state spin average and final-state identical-particle factor. Each export builds and runs three example phase-space points. Failed or unevaluated amplitudes stop the export before files are written. The output folder below is outside the HEPCAT repository. Existing project files are protected; add \"Overwrite\" -> True only when you want to replace a previous export.", "Text", ExpressionUUID->"434e8d10-f994-50ec-b513-28ad794a07e5"],
+
+Cell["spinasOutputDirectory = FileNameJoin[{$HomeDirectory, \"spinas-output\"}];", "Input", ExpressionUUID->"bd44a057-8980-5237-a7d8-0b841566c656"]
+
+}, Open]]
+
 }, Open  ]],
 
 Cell[CellGroupData[{
@@ -209,6 +221,18 @@ Cell["e,E,A.-,A.-", "Chapter", ExpressionUUID->"1dd37843-dab3-5b64-8f91-00d69cbd
 
 Cell["qed4MM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\"},\n  diagramModel, diagramModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"ff9a4ce7-51eb-5dd2-83c5-4752ef20edcf"]
 
+,
+
+Cell[CellGroupData[{
+
+Cell["Export eeAA to C++", "Section", ExpressionUUID->"cbf747e0-733e-5073-b0fa-a16d0627c1b3"],
+
+Cell["The helicity expressions above are combined in one C++ process. Equivalent placements of the identical photons are filled automatically.", "Text", ExpressionUUID->"5a8a7bb2-b6ac-5095-b47c-ceafa073446b"],
+
+Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeAA\"}],\n  {\n    {{\"e\", \"E\", \"A.+\", \"A.+\"}, qed4PP},\n    {{\"e\", \"E\", \"A.+\", \"A.-\"}, qed4PM},\n    {{\"e\", \"E\", \"A.-\", \"A.-\"}, qed4MM}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeAA\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"975800f6-05a4-506c-9f46-0328a3934699"]
+
+}, Open]]
+
 }, Open]],
 
 Cell[CellGroupData[{
@@ -216,6 +240,18 @@ Cell[CellGroupData[{
 Cell["e,E,E,e", "Chapter", ExpressionUUID->"ca8c8a3a-7428-5eea-9858-ee4650553a52"],
 
 Cell["qed4FourFermions = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\"},\n  diagramModel, diagramModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"30016c22-1f87-58da-9f86-9762ba2239bd"]
+
+,
+
+Cell[CellGroupData[{
+
+Cell["Export eeee to C++", "Section", ExpressionUUID->"060816fb-c92a-58c4-a3fe-0fa4cf3f48a1"],
+
+Cell["This process has no massless-helicity branches. Every massive-fermion spin remains an argument of the generated amplitude.", "Text", ExpressionUUID->"cda94856-c6e0-58b9-96a9-1eb15d732fc3"],
+
+Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeee\"}],\n  {\n    {{\"e\", \"E\", \"E\", \"e\"}, qed4FourFermions}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeee\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"3186ae38-ca4d-5eaa-b859-9369a49b163d"]
+
+}, Open]]
 
 }, Open]]
 
@@ -13568,6 +13604,18 @@ Cell["e,E,A.-,A.-,A.-", "Chapter", ExpressionUUID->"f703f4de-d13a-5cc2-8bba-3638
 
 Cell["qed5MMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"ff61f24f-3439-5805-8632-d085e4e68735"]
 
+,
+
+Cell[CellGroupData[{
+
+Cell["Export eeAAA to C++", "Section", ExpressionUUID->"274cde2f-9a1a-558e-917c-f3de4e3d1581"],
+
+Cell["The helicity expressions above are combined in one C++ process. Equivalent placements of the identical photons are filled automatically.", "Text", ExpressionUUID->"6386a579-cc77-535c-9756-b9fc3a4bc5fb"],
+
+Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeAAA\"}],\n  {\n    {{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"}, qed5PPP},\n    {{\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\"}, qed5PPM},\n    {{\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\"}, qed5PMM},\n    {{\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\"}, qed5MMM}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeAAA\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"6bd3f50d-ca6e-526d-9020-0b21d3304d76"]
+
+}, Open]]
+
 }, Open]],
 
 Cell[CellGroupData[{
@@ -21317,6 +21365,18 @@ Cell["This calculation now completes automatically. The apparent high-energy fre
 
 Cell["qed5FourFermionsM = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"2ac0cb72-3082-5941-925b-b84b0bc3f0f4"]
 
+,
+
+Cell[CellGroupData[{
+
+Cell["Export eeeeA to C++", "Section", ExpressionUUID->"1b55db53-a74f-5ab1-b9ae-175b83ca16ea"],
+
+Cell["The helicity expressions above are combined in one C++ process. Equivalent placements of the identical photons are filled automatically.", "Text", ExpressionUUID->"f67afe05-bb0e-5b49-842d-b4654db3d559"],
+
+Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeeeA\"}],\n  {\n    {{\"e\", \"E\", \"E\", \"e\", \"A.+\"}, qed5FourFermionsP},\n    {{\"e\", \"E\", \"E\", \"e\", \"A.-\"}, qed5FourFermionsM}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeeeA\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"5dd35c09-5d03-5983-8e36-0784b236e701"]
+
+}, Open]]
+
 }, Open]]
 
 }, Open]],
@@ -28757,6 +28817,18 @@ Cell["e,E,A.-,A.-,A.-,A.-", "Chapter", ExpressionUUID->"2e0908f6-4d62-5068-b83e-
 
 Cell["qed6MMMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"86b62ac4-7191-5590-95c5-34ce4ccc68f9"]
 
+,
+
+Cell[CellGroupData[{
+
+Cell["Export eeAAAA to C++", "Section", ExpressionUUID->"5f926e49-4832-5cb6-b3a6-365fae37b536"],
+
+Cell["The helicity expressions above are combined in one C++ process. Equivalent placements of the identical photons are filled automatically.", "Text", ExpressionUUID->"4b574378-b26a-5a3a-8d12-91a73921f519"],
+
+Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeAAAA\"}],\n  {\n    {{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.+\"}, qed6PPPP},\n    {{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.-\"}, qed6PPPM},\n    {{\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \"A.-\"}, qed6PPMM},\n    {{\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\", \"A.-\"}, qed6PMMM},\n    {{\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\", \"A.-\"}, qed6MMMM}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeAAAA\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"d719600e-843c-511a-9e0c-a90505084be9"]
+
+}, Open]]
+
 }, Open]],
 
 Cell[CellGroupData[{
@@ -28797,6 +28869,18 @@ Cell["This family has diagram-preparation checks, but full automatic completion 
 
 Cell["qed6FourFermionsMM = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"aa7189ea-ed5a-5e8a-945c-04d07d7d1ecb"]
 
+,
+
+Cell[CellGroupData[{
+
+Cell["Export eeeeAA to C++", "Section", ExpressionUUID->"10180362-6982-55dd-ae31-2544d11a5a3c"],
+
+Cell["The helicity expressions above are combined in one C++ process. Equivalent placements of the identical photons are filled automatically.", "Text", ExpressionUUID->"fc7c5ff8-a99b-5b3b-884e-3428b2fbdf5e"],
+
+Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeeeAA\"}],\n  {\n    {{\"e\", \"E\", \"E\", \"e\", \"A.+\", \"A.+\"}, qed6FourFermionsPP},\n    {{\"e\", \"E\", \"E\", \"e\", \"A.+\", \"A.-\"}, qed6FourFermionsPM},\n    {{\"e\", \"E\", \"E\", \"e\", \"A.-\", \"A.-\"}, qed6FourFermionsMM}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeeeAA\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"52cb1a12-3ac0-502b-a60f-960d370629cf"]
+
+}, Open]]
+
 }, Open]],
 
 Cell[CellGroupData[{
@@ -28806,6 +28890,18 @@ Cell["e,E,e,E,e,E", "Chapter", ExpressionUUID->"0b60b2a6-644f-5f88-bad8-eba453fa
 Cell["This family has diagram-preparation checks, but full automatic completion has not yet been established. This calculation runs the complete workflow and returns an expression only if every required check passes. An unresolved result remains visible as Failure.", "Text", ExpressionUUID->"4d396abd-34ca-5181-9a59-156cb832b62f"],
 
 Cell["qed6SixFermions = ConstructAmplitude[\n  {\"e\", \"E\", \"e\", \"E\", \"e\", \"E\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"18e82e69-d9e2-5b59-a83b-c6b2e930b604"]
+
+,
+
+Cell[CellGroupData[{
+
+Cell["Export eeeeee to C++", "Section", ExpressionUUID->"363a3aa7-a532-51bb-b647-be49ba0e375f"],
+
+Cell["This process has no massless-helicity branches. Every massive-fermion spin remains an argument of the generated amplitude.", "Text", ExpressionUUID->"2a9899a9-30b5-55dd-8e05-13529e1db2ce"],
+
+Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeeeee\"}],\n  {\n    {{\"e\", \"E\", \"e\", \"E\", \"e\", \"E\"}, qed6SixFermions}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeeeee\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"1cd8cf8b-2382-5dcc-b099-df3c520fc451"]
+
+}, Open]]
 
 }, Open]]
 

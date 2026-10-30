@@ -403,6 +403,19 @@ alter supplied signs to fit a native example, or replace HEPCAT's explicit
 positive imaginary width with SPINAS's negative-width convention.
 `amp2` averages incoming massive spins at fixed massless helicities; it does
 not sum other helicity processes or include color or phase-space factors.
+For a complete physical process use the grouped overload
+`WriteSPINASProcess[outputDirectory, {{particles1, amplitude1}, ...}, model]`.
+It combines massless-helicity variants into one class, derives equivalent
+arrangements by typed identical-particle permutations within the incoming or
+outgoing legs, and refuses incomplete helicity coverage before writing files.
+It does not infer opposite helicities by parity or silently supply zeros.
+The grouped class exposes `amp(spins)` and positional `amp(ds1, ds2, ...)`,
+raw `spin_sum()`, and `amp2()` including the incoming spin/helicity average and
+the final identical-species factorials. Count species independently of helicity;
+include identical fermions, and never average or remove amplitude terms.
+Canonical formulas are emitted once and reused by role-preserving leg maps.
+Colored families are currently rejected because no full color sum or average
+is available; do not invent color factors from the number of external colors.
 Resolve auxiliary spinors, shifts and explicit color tensors first.
 Unsupported input returns `Failure` before writing project files.
 The `spinas-export-tests.wl` suite compiles generated 4-, 5- and 6-point

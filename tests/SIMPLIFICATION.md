@@ -366,6 +366,40 @@ own tests with `python3 -m unittest discover -s tests/checks -p test_runner.py`.
 
 ## Export a Runnable SPINAS Process
 
+To put all helicities of one physical process in a single C++ project, supply
+the related particle lists and amplitudes together. For example, after
+calculating the three canonical two-photon cases in the notebook:
+
+```wolfram
+outputDirectory = FileNameJoin[{$HomeDirectory, "spinas-output", "eeAA"}];
+WriteSPINASProcess[outputDirectory,
+  {
+    {{"e", "E", "A.+", "A.+"}, qed4PP},
+    {{"e", "E", "A.+", "A.-"}, qed4PM},
+    {{"e", "E", "A.-", "A.-"}, qed4MM}
+  }, factorizationModel,
+  "ProcessName" -> "eeAA", "Build" -> True, "RunExamples" -> True]
+```
+
+The mixed-helicity permutation is obtained by relabeling the identical photons.
+Each supplied formula is emitted once and reused for the equivalent
+arrangements. Only permutations within the incoming or outgoing legs are used;
+the exporter does not assume parity or invent missing zero amplitudes.
+An incomplete family returns `Failure` before creating project files.
+
+The grouped class provides `amp(spins)` and `amp(ds1, ds2, ...)`, using doubled
+spins/helicities as in native SPINAS. `spin_sum()` returns the raw sum of
+`std::norm(amp(...))` over all external spins and helicities. `amp2()` additionally
+divides by the incoming state counts and multiplies by the final-state symmetry
+factor. For each identical outgoing species that factor is `1/n!`, counting
+all helicities together and including identical fermions. There is no incoming
+identical-particle factorial. Thus `eeAA` has `amp2() = spin_sum()/8`: four
+incoming spin states and two identical final photons. Three or four final
+photons contribute `1/6` or `1/24`, respectively. Colored families are currently
+rejected because the exporter has no general color-sum implementation.
+
+The four-argument amplitude form below remains available for a single fixed
+massless-helicity expression, with its original normalization conventions.
 After calculating and checking `finalAmplitude`, write a complete project with
 its ordered particle list and the model supplying its particle and parameter
 data. For example, for the all-positive two-photon amplitude:
