@@ -97,11 +97,13 @@ requires only physical denominators and complexity at most 327, then rebuilds
 the independent Feynman benchmark and reruns all amplitude checks. Its result
 must be reported separately from the worked-example fixture tests. Normal
 constructor options and defaults are unchanged.
-The verified fresh ordinary call took 291.978 seconds and produced seven
+The verified fresh ordinary call on 2026-10-30 took 272.251 seconds and produced seven
 groups with complexity 327 and 1,575 leaves, all denominators physical. The
 integration suite passed all seven assertions; its independently regenerated
 amplitude report had 17 passing rows, including Feynman agreement. These are
 recorded measurements, not promises for a different workload or machine.
+This execution includes the certified-identity retry that resolves the former
+high-energy proof timeout without changing the notebook call or its defaults.
 
 `automatic-resource-tests.wl` covers lightweight workload estimates, finite
 clock/cap resolution, coherent versus fixed-spin sample estimates, unchanged
@@ -177,11 +179,20 @@ or unresolved final checks. It does not modify or execute the user's notebooks.
 from real undetermined interactions. It checks the generic symbolic external
 chart, momentum conservation, chirality and little-group safety, fixed-spin
 and branch exclusions, proof deadlines and retained scalar contact freedom.
-The routine suite has 40 assertions, including 29 generic null-pivot checks:
+The routine suite has 77 assertions, including 29 generic null-pivot checks:
 valid and invalid axis choices, opposite homogeneous-weight selection,
 conserved external mass shells and all 14 physical internal invariants remaining
 generically off shell. These checks use symbolic masses and no sampled
 phase-space assignments.
+Additional checks cover alternative dependent external shells, a retained
+six-point identity, truthful unfinished-proof diagnostics, and symbolic
+coherent-spin coefficient proofs. Independent polynomial degree verification,
+constant and mixed components, deliberately nonzero additions, higher spin
+powers, spin-dependent denominators and expired deadlines are tested. The
+plain fixture supplies a zero direction, never a complete amplitude answer.
+Certified-span retries additionally verify exact reconstruction, prerequisite
+certification, preservation of nonzero remainders and shared deadlines. The
+parallel suite checks the same retry through a real warm worker pool.
 The slower end-to-end regressions reproduce both formerly failing five-point
 notebook cases, their working counterparts and independent Feynman checks:
 

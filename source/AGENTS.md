@@ -1029,6 +1029,32 @@ line. Only an exact zero certificate removes a direction; unsupported forms
 and proof timeouts retain it. Details expose `"FamilyIdentityReduction"`.
 Preserve the typed Lorentz-scalar, chirality, little-group and branch guards;
 neither finite zero samples nor a special-frame component proves an identity.
+The proof tries a bounded coordinate portfolio on the original grouped form
+before display-oriented simplification. Solving two remaining massive external
+shells can keep a chart smaller; the earlier dependent-leg choice remains a
+fallback. Each chart must validate all external shells and conservation, retain
+symbolic masses and coherent spin variables, and impose no internal shell.
+Repeated typed primitives are evaluated once per chart within its proof budget.
+Large mapped expressions may be checked coefficient by coefficient in their
+symbolic coherent-spin variables. Verify polynomial dependence, derive degree
+upper bounds, and independently check that native derivatives above each bound
+vanish. Native symbolic Taylor coefficients then cover the entire finite
+monomial grid, including constant and mixed components. A zero certificate
+requires a complete traversal and an exact zero for every coefficient. A
+partial traversal, unsupported spin denominator, timeout or nonzero component
+retains the direction. This is a symbolic tensor proof, not selected numerical
+spin samples.
+Identity-proof progress reports completed and certified directions. A warm pool
+also handles a two- or three-direction tail under its shared deadline; Automatic
+does not launch a cold pool solely for that tail. An unfinished zero proof is
+reported separately from an exactly established nonzero correction direction.
+After a proof batch, exact rational row operations may subtract already
+certified identities from an unresolved direction. Verify both the formal
+subtraction and subsequent regrouping, then independently prove the remainder
+zero before removing the original coordinate. Certificate dependencies must
+come from the initial proved batch, without circular or sampled-zero premises.
+Unproved originals remain in the affine family. This retry shares the original
+deadline and records its relation coefficients and reused proofs.
 Genuine contact freedom remains `UNDERDETERMINED`.
 The high-energy stage may reuse retained affine coefficients only when their
 length and coordinate independence are valid and they literally reconstruct

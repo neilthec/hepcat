@@ -2243,12 +2243,14 @@ python3 tests/checks/run-wolfram-tests.py --suite physical-construction-integrat
 
 The normal constructor options and resource defaults are unchanged. A compact
 worked-example test is not a substitute for this complete fresh-call test.
-The verified fresh ordinary call completed in 291.978 seconds and returned
+The verified fresh ordinary call on 2026-10-30 completed in 272.251 seconds and returned
 seven groups, 1,575 leaves and complexity 327, with only physical denominator
 factors. The separately regenerated validation reported 17 passes, including
 the Feynman comparison. These are measured results for that execution, not a
 runtime or global-minimality guarantee. The earlier saved ordinary call took
-about 663 seconds and retained apparent spurious denominators.
+about 663 seconds and retained apparent spurious denominators. The current
+execution also resolves the later high-energy identity-proof timeout through
+exact certified-identity reuse, without changing the notebook call or defaults.
 
 The proof ordering matters. Cheap scalar grouping and bounded numerator
 Schouten edits first operate on the original direction. A modest compact form
@@ -2551,15 +2553,24 @@ explicit. Reusing coefficients is not itself an identity-zero certificate.
 Unrecognized identity-zero directions previously caused false `UNDERDETERMINED` results for some five-point
 helicity orderings. Completion now removes only directions with an exact
 external-identity certificate. The proof retains the original expression,
-first trying cheap grouping by physical propagators and bounded Schouten edits
-on its numerators. A modest compact result can be tested immediately on a
-symbolic rational parametrization of generic conserved, on-shell external
-momenta. Ordinary external preparation is a later fallback: a representation
+first trying cheap grouping by physical propagators and bounded rational
+coordinate alternatives. The chart can solve two remaining massive external
+shells instead of the earlier dependent pair. This can keep a proof much
+smaller without changing the allowed kinematics. Ordinary Schouten edits and
+external preparation remain available: a representation
 ranked best for display can be considerably harder to prove equal to zero.
 Model parameters and all coherent massive-spin
 components remain symbolic. No internal line is put on shell, no known final
 amplitude is supplied, and numerical zero samples do not remove directions.
 Proof timeouts and unsupported expressions retain the original freedom.
+Large mapped expressions can be proved coefficient by coefficient in their
+symbolic coherent-spin variables. Polynomial dependence and degree upper
+bounds are checked; derivatives above each bound independently verify the
+coverage. Native symbolic derivatives extract every Taylor coefficient on the
+complete finite monomial grid. Each coefficient, including constant and mixed
+components, must vanish exactly. A partial traversal cannot produce a zero
+certificate. This checks the complete symbolic spin tensor, not selected
+numerical spin states, and avoids expanding one enormous rational expression.
 When parallel execution is enabled, independent identity proofs use the same
 worker pool as the other stages. Smaller directions are dispatched first, with
 a shared deadline and an allowance of at most ninety seconds for each
@@ -2573,6 +2584,18 @@ are validated, and internal virtualities remain free. Each worker must return
 its exact certificate; a missing, interrupted or unsuccessful worker leaves
 that direction in the family. Finite zero samples
 never replace these proofs.
+A warm worker pool can also process two or three remaining proofs in parallel;
+Automatic avoids starting a cold pool solely for that short tail. Progress
+counts show completed and certified directions. Detailed unfinished results
+separate proof-resource reasons from established nonzero freedom, so a timeout
+does not claim that the model is missing an interaction.
+If a direction remains difficult, a bounded retry can subtract exact identities
+already certified in that same batch. Rational row operations preserve every
+formal monomial and verify the subtraction and regrouping. The smaller
+remainder must receive its own independent exact zero certificate. Details
+retain the coefficients, prerequisite certificates and remainder proof under
+`"CertifiedZeroSpanRetry"`; a failed retry retains the original direction.
+No numerical zero samples or unproved directions serve as premises.
 `"Output" -> "Details"` records the certificates in
 `"FamilyIdentityReduction"`. A genuine nonzero local ambiguity still remains
 `"UNDERDETERMINED"`.

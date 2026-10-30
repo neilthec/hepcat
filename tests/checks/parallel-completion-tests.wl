@@ -142,6 +142,75 @@ check["only exact conservation identities are removed, in original parameter ord
     AllTrue[Most[pcIdentityResult["Certificates"]], #["Status"] === "PROVED_ZERO" &&
       Lookup[#, "NumericalKinematicSamples", 0] === 0 &&
       Lookup[#, "InternalOnShellConditions", {}] === {} &]];
+pcTailParameters = Take[pcIdentityParameters, 3];
+pcTailDirections = Join[Take[pcIdentityDirections, 2], {1}];
+pcTailEvents = {};
+pcTailResult = Block[
+  {ConstructiveDiagrams`Private`$completionParallelSettings = pcSettings[Automatic]},
+  ConstructiveDiagrams`Private`completionHEPruneIdentityFamily[
+    7 + pcTailParameters.pcTailDirections, pcTailParameters, pcIdentityRules,
+    prFixtureModel, 40, pcTailDirections,
+    Function[event, AppendTo[pcTailEvents, event]]]];
+check["a short automatic proof tail reuses the warm parallel worker pool",
+  pcTailResult["Execution"]["Mode"] === "Parallel" &&
+    pcTailResult["Execution"]["KernelCount"] === 2];
+check["a short parallel proof tail preserves genuine freedom and exact zero certificates",
+  pcTailResult["RemovedParameters"] === Most[pcTailParameters] &&
+    pcTailResult["FreeParameters"] === {Last[pcTailParameters]} &&
+    pcTailResult["RemainingBasis"] === {1} &&
+    pcTailResult["FamilyAmplitude"] === 7 + Last[pcTailParameters]];
+check["proof progress counts every completed, certified and retained direction",
+  Lookup[pcTailEvents, "Completed"] === Range[3] &&
+    Lookup[pcTailEvents, "Total"] === {3, 3, 3} &&
+    OrderedQ[Lookup[pcTailEvents, "ProvedZero"]] &&
+    AllTrue[pcTailEvents, #["Completed"] === #["ProvedZero"] + #["RetainedDirections"] &] &&
+    Last[pcTailEvents]["ProvedZero"] === 2 &&
+    Last[pcTailEvents]["RetainedDirections"] === 1];
+(* Supply a deterministic first-batch snapshot whose two prerequisites were
+   independently proved above. Only that snapshot is simulated: the remainder
+   proofs and their second dispatch run on the real warm worker pool. *)
+pcSpanParameters = Table[Unique["parallelSpan"], {4}];
+pcSpanZeros = Take[pcIdentityDirections, 2];
+pcSpanTarget = 2 First[pcSpanZeros] + 3 Last[pcSpanZeros];
+pcSpanDirections = Join[pcSpanZeros, {pcSpanTarget, pcSpanTarget + 1}];
+pcSpanMapCalls = 0; pcSpanEvents = {};
+DownValues[pcRealParallelMap] = DownValues[ConstructiveDiagrams`Private`amplitudeParallelMap] /.
+  ConstructiveDiagrams`Private`amplitudeParallelMap -> pcRealParallelMap;
+pcSpanResult = Block[
+  {ConstructiveDiagrams`Private`$completionParallelSettings = pcSettings[Automatic],
+   ConstructiveDiagrams`Private`amplitudeParallelMap =
+     Function[{worker, jobs, settings, callback},
+       pcSpanMapCalls++;
+       If[pcSpanMapCalls === 1,
+         pcSpanInitialResults = Table[<|"Index" -> index,
+           "Parameter" -> pcSpanParameters[[index]], "Certificate" ->
+             If[index <= 2, KeyDrop[pcIdentityResult["Certificates"][[index]], "Parameter"],
+               <|"Status" -> "NOT_PROVED", "Method" -> "TimeConstraint"|>]|>, {index, jobs}];
+         If[callback =!= None, MapIndexed[
+           callback[#1, First[#2], Length[pcSpanInitialResults]] &, pcSpanInitialResults]];
+         <|"Results" -> pcSpanInitialResults, "Execution" -> <|"Mode" -> "InitialFixture"|>|>,
+         pcRealParallelMap[worker, jobs, settings, callback]]]},
+  ConstructiveDiagrams`Private`completionHEPruneIdentityFamily[
+    7 + pcSpanParameters.pcSpanDirections, pcSpanParameters, pcIdentityRules,
+    prFixtureModel, 30, pcSpanDirections,
+    Function[event, AppendTo[pcSpanEvents, event]]]];
+check["certified-span remainder proofs reuse the real warm parallel worker pool",
+  pcSpanMapCalls === 2 &&
+    pcSpanResult["CertifiedZeroSpanRetry"]["Execution"]["Mode"] === "Parallel" &&
+    pcSpanResult["CertifiedZeroSpanRetry"]["Execution"]["KernelCount"] === 2];
+check["parallel certified-span retries prove zero while preserving a genuine contact direction",
+  pcSpanResult["RemovedParameters"] === Most[pcSpanParameters] &&
+    pcSpanResult["FreeParameters"] === {Last[pcSpanParameters]} &&
+    pcSpanResult["RemainingBasis"] === {Last[pcSpanDirections]} &&
+    pcSpanResult["Certificates"][[3]]["Method"] === "CertifiedZeroSpanRemainder" &&
+    pcSpanResult["Certificates"][[4]]["Status"] === "NOT_PROVED"];
+pcSpanRetryEvents = Select[pcSpanEvents,
+  Lookup[#, "Operation", None] === "Reusing certified ordinary identities" &];
+check["warm certified-span retry progress reports complete proof and retention counts",
+  Lookup[pcSpanRetryEvents, "Completed"] === {1, 2} &&
+    Lookup[pcSpanRetryEvents, "Total"] === {2, 2} &&
+    Last[pcSpanRetryEvents]["ProvedZero"] === 1 &&
+    Last[pcSpanRetryEvents]["RetainedDirections"] === 1];
 pcIdentityExpired = Block[
   {ConstructiveDiagrams`Private`$completionParallelSettings = pcSettings[True]},
   ConstructiveDiagrams`Private`completionHEPruneIdentityFamily[

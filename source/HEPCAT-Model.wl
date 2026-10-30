@@ -12668,7 +12668,7 @@ completionHEPreferredNullPivots[expression_, rules_List] := Module[
   If[MissingQ[opposite], Take[null, 2], opposite]
 ];
 
-completionHESymbolicExternalChart[rules_List, nullPivots_: Automatic] := Module[
+completionHESymbolicExternalChart[rules_List, nullPivots_: Automatic, dependentShells_: Automatic] := Module[
   {external = Sort[Cases[rules, HoldPattern[Mass[i_Integer] -> _] :> i]],
    masses, null, massive, momenta = <||>, variables = {}, variable, new, shell,
    free, final, total, a, b, k, x, y, first, angle = <||>, square = <||>,
@@ -12698,7 +12698,11 @@ completionHESymbolicExternalChart[rules_List, nullPivots_: Automatic] := Module[
         massive[[2]] -> {{variable, 0}, {0, masses[massive[[2]]]^2/variable}}}],
     True, Return[$Failed]];
   free = Complement[external, Keys[momenta]];
-  final = Take[free, -2]; free = Drop[free, -2];
+  If[dependentShells === Automatic,
+    final = Take[free, -2]; free = Drop[free, -2],
+    If[!MatchQ[dependentShells, {_Integer, _Integer}] || !DuplicateFreeQ[dependentShells] ||
+        !ContainsAll[free, dependentShells], Return[$Failed]];
+    final = dependentShells; free = Complement[free, final]];
   Do[AssociateTo[momenta, leg -> shell[masses[leg], leg === First[free]]], {leg, free}];
   total = -Total[Values[momenta]]; {a, b} = {new[], new[]};
   k = Det[total] + masses[First[final]]^2 - masses[Last[final]]^2;
@@ -12729,6 +12733,7 @@ completionHESymbolicExternalChart[rules_List, nullPivots_: Automatic] := Module[
     "AngleBasis" -> angleBasis, "SquareBasis" -> squareBasis,
     "SpinVariables" -> spins,
     "NullAxisLegs" -> If[Length[null] >= 2, Take[null, 2], {}],
+    "DependentShellLegs" -> final,
     "PoleVariable" -> Unique["unusedIdentityPole"],
     "ReferenceSeed" -> 0, "CoherentVectorSpinIndices" -> True,
     "ExternalIdentityCoordinates" -> variables, "ExternalMassShellsValidated" -> True,
@@ -12787,9 +12792,112 @@ completionHECovariantScalarQ[expression_, external_List] := Module[
   TrueQ[scalar[expression]]
 ];
 
+(* This structural bound may overestimate degree. Native symbolic derivatives
+   independently certify it before every Taylor coefficient is checked. *)
+completionHECoherentPolynomialDegreeBounds[expression_, variables_List] := Module[
+  {visit, count = Length[variables], zero, invalid = $Failed},
+  If[!DuplicateFreeQ[variables] || !AllTrue[variables, MatchQ[#, _Symbol] &], Return[invalid]];
+  zero = ConstantArray[0, count];
+  visit[value_] := visit[value] = Which[
+    MemberQ[variables, value], UnitVector[count, First[FirstPosition[variables, value]]],
+    FreeQ[value, Alternatives @@ variables], zero,
+    Head[value] === Plus, With[{children = visit /@ (List @@ value)},
+      If[MemberQ[children, invalid], invalid, Max /@ Transpose[children]]],
+    Head[value] === Times, With[{children = visit /@ (List @@ value)},
+      If[MemberQ[children, invalid], invalid, Total[children]]],
+    Head[value] === Power && IntegerQ[value[[2]]] && value[[2]] >= 0,
+      With[{base = visit[value[[1]]]}, If[base === invalid, invalid, value[[2]] base]],
+    True, invalid];
+  visit[expression]
+];
+
+completionHECoherentComponentCertificate[mapped_, variables_List, seconds_: Infinity] := Module[
+  {work, invalid = <|"Status" -> "NOT_PROVED", "Method" -> "TimeConstraint"|>},
+  If[!(seconds === Infinity || NumericQ[seconds] && TrueQ[seconds > 0]), Return[invalid]];
+  work[] := Module[{bounds, boundChecks, orders, expected, coefficient,
+      checked = {}, exactZero, record, unsupportedCoefficient = False},
+    If[!DuplicateFreeQ[variables] || !AllTrue[variables, MatchQ[#, _Symbol] &] ||
+        !residueFiniteQ[mapped] || residueUnmappedQ[mapped] || !FreeQ[mapped, _Real],
+      Return[<|"Status" -> "NOT_PROVED", "Method" -> "UnsupportedCoherentPolynomial"|>]];
+    If[!TrueQ[PolynomialQ[mapped, variables]], Return[<|"Status" -> "NOT_PROVED",
+      "Method" -> "NonPolynomialCoherentSpins", "PolynomialQ" -> False|>]];
+    bounds = completionHECoherentPolynomialDegreeBounds[mapped, variables];
+    If[!ListQ[bounds] || Length[bounds] =!= Length[variables] ||
+        !AllTrue[bounds, IntegerQ[#] && # >= 0 &], Return[<|"Status" -> "NOT_PROVED",
+      "Method" -> "UnsupportedCoherentPolynomialDegree", "PolynomialQ" -> True|>]];
+    expected = Times @@ (bounds + 1);
+    If[expected > 4096, Return[<|"Status" -> "NOT_PROVED", "Method" -> "CoherentComponentLimit",
+      "PolynomialQ" -> True, "DegreeUpperBounds" -> bounds,
+      "ComponentCount" -> expected, "MaximumComponents" -> 4096|>]];
+    boundChecks = MapThread[Function[{variable, bound},
+      TrueQ[D[mapped, {variable, bound + 1}] === 0]], {variables, bounds}];
+    If[!AllTrue[boundChecks, TrueQ], Return[<|"Status" -> "NOT_PROVED",
+      "Method" -> "CoherentPolynomialDegreeBoundFailed", "PolynomialQ" -> True,
+      "DegreeUpperBounds" -> bounds, "DegreeBoundDerivativesZero" -> boundChecks,
+      "DegreeBoundsVerified" -> False|>]];
+    orders = Tuples[Range[0, #] & /@ bounds];
+    record = <|"PolynomialQ" -> True, "DegreeUpperBounds" -> bounds,
+      "DegreeBoundsVerified" -> True, "DegreeBoundDerivativesZero" -> boundChecks,
+      "CoefficientMethod" -> "ExactSymbolicTaylorCoefficients",
+      "ComponentCount" -> expected, "ComponentMonomials" -> orders,
+      "SpinVariables" -> variables, "ConstantCoefficientIncluded" -> True,
+      "NumericalKinematicSamples" -> 0, "CoherentSpinSamples" -> 0,
+      "InternalOnShellConditions" -> {}|>;
+    Do[
+      (* Taylor coefficients are symbolic derivatives, not sampled spin states.
+         Substituting one variable at a time preserves scalar factoring. *)
+      coefficient = Fold[Function[{polynomial, index},
+        (D[polynomial, {variables[[index]], order[[index]]}]/Factorial[order[[index]]]) /.
+          variables[[index]] -> 0], mapped, Range[Length[variables]]];
+      If[!FreeQ[coefficient, Alternatives @@ variables] || !residueFiniteQ[coefficient],
+        unsupportedCoefficient = True; Break[]];
+      exactZero = TrueQ[Cancel[Together[coefficient], Extension -> Automatic] === 0];
+      AppendTo[checked, <|"Monomial" -> order, "ExactZero" -> exactZero|>];
+      If[!exactZero, Break[]], {order, orders}];
+    If[unsupportedCoefficient, Return[Join[record, <|"Status" -> "NOT_PROVED",
+      "Method" -> "UnsupportedCoherentTaylorCoefficient", "ComponentProofs" -> checked,
+      "ComponentsChecked" -> Length[checked], "FullCoefficientCoverage" -> False,
+      "ReconstructionVerified" -> False, "AllComponentsZero" -> False|>]]];
+    (* Polynomiality plus the independently certified degree bounds makes the
+       complete Taylor grid an exact reconstruction theorem. Partial traversal
+       or even one nonzero coefficient must never produce a zero certificate. *)
+    If[Length[checked] =!= expected || !AllTrue[checked, TrueQ[#["ExactZero"]] &],
+      Return[Join[record, <|"Status" -> "NOT_PROVED",
+        "Method" -> "NonzeroCoherentPolynomialComponent", "ComponentProofs" -> checked,
+        "ComponentsChecked" -> Length[checked], "FullCoefficientCoverage" -> (Length[checked] === expected),
+        "ReconstructionVerified" -> (Length[checked] === expected), "AllComponentsZero" -> False|>]]];
+    Join[record, <|"Status" -> "PROVED_ZERO", "Method" -> "CoherentPolynomialComponents",
+      "ComponentProofs" -> checked, "ComponentsChecked" -> Length[checked],
+      "FullCoefficientCoverage" -> True, "ReconstructionVerified" -> True,
+      "ReconstructionMethod" -> "VerifiedPolynomialTaylorCoverage", "AllComponentsZero" -> True|>]
+  ];
+  If[seconds === Infinity, work[], TimeConstrained[work[], seconds, invalid]]
+];
+
+(* Coordinate choices change only the rational parametrization. Prefer solving
+   two remaining massive shells when available; retain the original chart too. *)
+completionHEIdentityChartChoices[expression_, rules_List] := Module[
+  {external, null, massive, axes, fixed, available, dependent, legacy},
+  external = Sort[Cases[rules, HoldPattern[Mass[i_Integer] -> _] :> i]];
+  null = Select[external, TrueQ[(Mass[#] /. rules) === 0] &];
+  massive = Complement[external, null];
+  axes = completionHEPreferredNullPivots[expression, rules];
+  fixed = Which[Length[null] >= 2, If[ListQ[axes], axes, Take[null, 2]],
+    null =!= {} && massive =!= {}, {First[massive], First[null]},
+    Length[massive] >= 2, Take[massive, 2], True, {}];
+  available = Complement[external, fixed];
+  legacy = <|"NullAxisLegs" -> axes, "DependentShellLegs" -> Automatic|>;
+  dependent = Intersection[available, massive];
+  If[Length[available] < 2 || Length[dependent] < 2, Return[{legacy}]];
+  dependent = Take[dependent, 2];
+  If[dependent === Take[available, -2], {legacy},
+    {<|"NullAxisLegs" -> axes, "DependentShellLegs" -> dependent|>, legacy}]
+];
+
 completionHEZeroDirection[expression_, rules_List, model_List, seconds_] := Module[
   {started = AbsoluteTime[], candidate = expression, prepared, result,
-   unsupported, remaining, ordinaryBudget, weights, grouped, work, symbolicProof},
+   unsupported, remaining, ordinaryBudget, weights, grouped, work, symbolicProof,
+   symbolicPortfolio, charts = <||>, earlyChoices, primitiveCount},
   If[residueExactZero[expression], Return[<|"Status" -> "PROVED_ZERO",
     "Method" -> "ExactRationalAlgebra", "ElapsedTime" -> (AbsoluteTime[] - started)|>]];
   unsupported = !FreeQ[expression, _SpinorHat | _MomHat | _xFactor | _xTildeFactor |
@@ -12805,31 +12913,72 @@ completionHEZeroDirection[expression_, rules_List, model_List, seconds_] := Modu
       !TrueQ[seconds > 0],
     Return[<|"Status" -> "NOT_PROVED", "Method" -> "PreservedDirection"|>]];
   remaining[] := Max[0.000001, seconds - (AbsoluteTime[] - started)];
-  symbolicProof[value_, allowance_] := TimeConstrained[Module[{chart, mapped},
-    chart = completionHESymbolicExternalChart[rules, completionHEPreferredNullPivots[value, rules]];
-    If[!AssociationQ[chart], Return[<|"Status" -> "NOT_PROVED", "Method" -> "UnsupportedExternalChart"|>]];
-    mapped = spuriousEvaluateCurve[value, chart, {}];
-    If[residueUnmappedQ[mapped] || !residueFiniteQ[mapped] || ListQ[mapped] ||
-        !FreeQ[mapped, _Missing | _Failure],
-      Return[<|"Status" -> "NOT_PROVED", "Method" -> "UnsupportedExternalChart"|>]];
-    If[TrueQ[Cancel[Together[mapped]] === 0],
-      <|"Status" -> "PROVED_ZERO", "Method" -> "DenseSymbolicExternalChart",
-        "Chart" -> chart, "NumericalKinematicSamples" -> 0,
-        "InternalOnShellConditions" -> {}, "CovariantTypedScalar" -> True,
-        "ReducedLeafCount" -> LeafCount[value]|>,
-      <|"Status" -> "NOT_PROVED", "Method" -> "NonzeroSymbolicExternalChart"|>]],
+  symbolicProof[value_, allowance_, choice_Association] := TimeConstrained[
+    MemoryConstrained[Module[{chart, mapped, key, componentProof = None, zero},
+      key = ToString[choice, InputForm];
+      chart = Lookup[charts, key, Missing["NotBuilt"]];
+      If[MissingQ[chart],
+        chart = completionHESymbolicExternalChart[rules,
+          choice["NullAxisLegs"], choice["DependentShellLegs"]];
+        If[AssociationQ[chart], AssociateTo[charts, key -> chart]]];
+      If[!AssociationQ[chart], Return[<|"Status" -> "NOT_PROVED", "Method" -> "UnsupportedExternalChart"|>]];
+      (* This maps each distinct typed primitive once before inserting it
+         into the rational sum. The cache and chart stay local to this proof. *)
+      mapped = spuriousEvaluateCurve[value, chart, {}];
+      If[residueUnmappedQ[mapped] || !residueFiniteQ[mapped] || ListQ[mapped] ||
+          !FreeQ[mapped, _Missing | _Failure],
+        Return[<|"Status" -> "NOT_PROVED", "Method" -> "UnsupportedExternalChart"|>]];
+      If[LeafCount[mapped] > 50000,
+        componentProof = completionHECoherentComponentCertificate[mapped, chart["SpinVariables"]];
+        If[Lookup[componentProof, "Status", None] =!= "PROVED_ZERO",
+          Return[<|"Status" -> "NOT_PROVED", "Method" ->
+            If[Lookup[componentProof, "Method", None] === "NonzeroCoherentPolynomialComponent",
+              "NonzeroSymbolicExternalChart", Lookup[componentProof, "Method", "UnsupportedExternalChart"]],
+            "ChartChoice" -> choice, "ComponentProof" -> componentProof|>]];
+        zero = True,
+        zero = TrueQ[Cancel[Together[mapped]] === 0]];
+      If[zero,
+        Join[<|"Status" -> "PROVED_ZERO", "Method" -> "DenseSymbolicExternalChart",
+          "Chart" -> chart, "ChartChoice" -> choice, "NumericalKinematicSamples" -> 0,
+          "InternalOnShellConditions" -> {}, "CovariantTypedScalar" -> True,
+          "ReducedLeafCount" -> LeafCount[value]|>,
+          If[AssociationQ[componentProof], <|"ComponentProof" -> componentProof|>, <||>]],
+        <|"Status" -> "NOT_PROVED", "Method" -> "NonzeroSymbolicExternalChart",
+          "ChartChoice" -> choice|>]], 268435456,
+      <|"Status" -> "NOT_PROVED", "Method" -> "SymbolicChartMemoryLimit"|>],
     Max[0.000001, allowance], <|"Status" -> "NOT_PROVED", "Method" -> "TimeConstraint"|>];
+  symbolicPortfolio[value_, allowance_] := Module[
+    {choices = Take[completionHEIdentityChartChoices[value, rules], UpTo[2]],
+     began = AbsoluteTime[], left, proof = <|"Status" -> "NOT_PROVED", "Method" -> "TimeConstraint"|>, attempts = {}},
+    Do[
+      left = Min[remaining[], Max[0, allowance - (AbsoluteTime[] - began)]];
+      If[left <= 0.000001, Break[]];
+      proof = symbolicProof[value, If[index === 1 && Length[choices] > 1,
+        2 left/3, left], choices[[index]]];
+      AppendTo[attempts, Join[choices[[index]], KeyTake[proof, {"Status", "Method"}]]];
+      If[proof["Status"] === "PROVED_ZERO" || proof["Method"] === "NonzeroSymbolicExternalChart",
+        Return[Join[proof, <|"ChartAttempts" -> attempts|>]]], {index, Length[choices]}];
+    Join[proof, <|"ChartAttempts" -> attempts|>]
+  ];
   work[] := Module[{proof},
-    (* A display-optimal preparation can be worse for a symbolic proof. Try
-       exact grouping and identities on the original expression first. *)
+    (* Try the original grouped form before display-oriented transformations.
+       Repeated primitives are cheap to map even when the sum is long. *)
     candidate = preparationGroupedPropagatorForm[expression, Min[2, seconds/12]];
+    primitiveCount = Length[DeleteDuplicates[Cases[candidate,
+      _SpinorChain | _SpinorTrace | _PropDen | _MomProd | _Mandelstahm |
+        HoldPattern[Mom[_]^2], {0, Infinity}]]];
+    If[LeafCount[candidate] <= 150000 && primitiveCount <= 256 && remaining[] > 1,
+      proof = symbolicPortfolio[candidate, Min[60, 2 remaining[]/3]];
+      If[proof["Status"] === "PROVED_ZERO" || proof["Method"] === "NonzeroSymbolicExternalChart",
+        Return[Join[proof, <|"ProofInput" -> "OriginalGrouped",
+          "DistinctPrimitives" -> primitiveCount|>]]]];
     If[1000 <= LeafCount[candidate] <= 24000 && remaining[] > 2,
       grouped = preparationDenominatorSchouten[candidate, rules, Min[15, remaining[]/3]];
       candidate = Lookup[grouped, "Amplitude", candidate]];
     If[residueExactZero[candidate], Return[<|"Status" -> "PROVED_ZERO",
       "Method" -> "OrdinaryExternalIdentities", "ProofInput" -> "OriginalGrouped"|>]];
     If[LeafCount[candidate] <= 6000 && remaining[] > 2,
-      proof = symbolicProof[candidate, Min[40, remaining[]]];
+      proof = symbolicPortfolio[candidate, Min[20, remaining[]/2]];
       If[proof["Status"] === "PROVED_ZERO" || proof["Method"] === "NonzeroSymbolicExternalChart",
         Return[Join[proof, <|"ProofInput" -> "OriginalGrouped"|>]]]];
     ordinaryBudget = Min[Max[6, Ceiling[LeafCount[candidate]/4000]], remaining[]/3];
@@ -12848,19 +12997,93 @@ completionHEZeroDirection[expression_, rules_List, model_List, seconds_] := Modu
       "Method" -> "OrdinaryExternalIdentities", "ProofInput" -> "ExternalPrepared"|>]];
     If[LeafCount[candidate] > 24000, Return[<|"Status" -> "NOT_PROVED",
       "Method" -> "DenseChartSizeGuard", "ReducedLeafCount" -> LeafCount[candidate]|>]];
-    Join[symbolicProof[candidate, remaining[]], <|"ProofInput" -> "ExternalPrepared"|>]
+    Join[symbolicPortfolio[candidate, remaining[]], <|"ProofInput" -> "ExternalPrepared"|>]
   ];
   result = TimeConstrained[work[], seconds,
     <|"Status" -> "NOT_PROVED", "Method" -> "TimeConstraint"|>];
   Join[result, <|"ElapsedTime" -> (AbsoluteTime[] - started)|>]
 ];
 
+(* A proof may be much easier after subtracting identities already certified in
+   the same affine family. This is exact rational-coordinate row reduction,
+   not a new kinematic condition or a numerical relation search. *)
+completionHECertifiedZeroRemainder[target_, known_List, seconds_: 20] := Module[
+  {started = AbsoluteTime[], fallback, work, result},
+  fallback = <|"Status" -> "UNCHANGED", "Method" -> "CertifiedZeroSpanNotReduced",
+    "ReducedInput" -> target, "OriginalLeafCount" -> LeafCount[target],
+    "ReducedLeafCount" -> LeafCount[target], "ExactFormalReconstruction" -> False,
+    "ExactGroupingReconstruction" -> False|>;
+  If[!TrueQ[seconds > 0] || known === {} || Length[known] > 128 ||
+      LeafCount[{target, known}] > 1000000, Return[fallback]];
+  work[] := Module[{profiles, split, scalar, columns, keys, count, size, matrix,
+      targetVector, costs, order, reducedRows, pivots, vector, coefficients,
+      coefficient, inverseOrder, remainder, grouped, groupedMap, exact, grouping,
+      used},
+    profiles = rspExpansionProfile[#, 32768, 2500000] & /@ Join[known, {target}];
+    If[Total[profiles[[All, 1]]] > 32768 ||
+        Total[profiles[[All, 2]]] > 2500000, Return[fallback]];
+    scalar[term_] := Times @@ Select[
+      If[Head[term] === Times, List @@ term, {term}], MatchQ[#, _Integer | _Rational] &];
+    split[expression_] := Module[{expanded, terms},
+      expanded = withProtectedPropagators[expression, Expand];
+      terms = If[Head[expanded] === Plus, List @@ expanded,
+        If[expanded === 0, {}, {expanded}]];
+      Merge[(With[{factor = scalar[#]}, Association[(#/factor) -> factor]] & /@ terms), Total]];
+    columns = split /@ Join[known, {target}];
+    keys = DeleteDuplicates[Flatten[Keys /@ columns]];
+    count = Length[known]; size = Length[keys];
+    If[size === 0 || size > 8192, Return[fallback]];
+    matrix = Lookup[#, keys, 0] & /@ Take[columns, count];
+    targetVector = Lookup[Last[columns], keys, 0];
+    If[!AllTrue[Flatten[{matrix, targetVector}], MatchQ[#, _Integer | _Rational] &],
+      Return[fallback]];
+    (* Prefer eliminating monomials actually present in this target, with the
+       shorter momentum words first. Every column remains in the calculation. *)
+    costs = ({Count[Numerator[#], _Mom, Infinity], LeafCount[#]} & /@ keys);
+    order = SortBy[Range[size], {If[targetVector[[#]] === 0, 1, 0],
+      costs[[#, 1]], costs[[#, 2]]} &];
+    reducedRows = RowReduce[Join[matrix[[All, order]], IdentityMatrix[count], 2]];
+    pivots = Table[SelectFirst[Range[size], reducedRows[[index, #]] =!= 0 &, None],
+      {index, count}];
+    vector = targetVector[[order]]; coefficients = ConstantArray[0, count];
+    Do[If[pivots[[index]] === None, Continue[]];
+      coefficient = vector[[pivots[[index]]]];
+      If[coefficient === 0, Continue[]];
+      vector = vector - coefficient reducedRows[[index, 1 ;; size]];
+      coefficients = coefficients + coefficient reducedRows[[index, size + 1 ;;]],
+      {index, count}];
+    inverseOrder = Ordering[order];
+    exact = AllTrue[targetVector - coefficients.matrix - vector[[inverseOrder]], # === 0 &];
+    If[!TrueQ[exact] || !AllTrue[coefficients, MatchQ[#, _Integer | _Rational] &], Return[fallback]];
+    remainder = Total[vector keys[[order]]];
+    grouped = preparationGroupedPropagatorForm[remainder, Min[1,
+      Max[0.000001, seconds - (AbsoluteTime[] - started)]]];
+    groupedMap = split[grouped];
+    grouping = Complement[Keys[groupedMap], keys] === {} &&
+      AllTrue[Lookup[groupedMap, keys, 0] - vector[[inverseOrder]], # === 0 &];
+    If[!TrueQ[grouping] || LeafCount[grouped] >= LeafCount[target], Return[fallback]];
+    used = Select[Range[count], coefficients[[#]] =!= 0 &];
+    <|"Status" -> "REDUCED", "Method" -> "ExactRationalCertifiedZeroSpan",
+      "ReducedInput" -> grouped, "OriginalLeafCount" -> LeafCount[target],
+      "ReducedLeafCount" -> LeafCount[grouped], "KnownZeroCoefficients" -> coefficients,
+      "UsedKnownZeroPositions" -> used, "KnownZeroCount" -> count,
+      "FormalMonomialCount" -> size, "RetainedMonomialCount" -> Count[vector, Except[0]],
+      "ExactFormalReconstruction" -> True, "ExactGroupingReconstruction" -> True,
+      "NumericalKinematicSamples" -> 0, "InternalOnShellConditions" -> {}|>
+  ];
+  result = TimeConstrained[MemoryConstrained[work[], 268435456, fallback], seconds, fallback];
+  If[!AssociationQ[result], result = fallback];
+  Join[result, <|"ElapsedTime" -> (AbsoluteTime[] - started)|>]
+];
+
 (* Remove only directions proved to be ordinary external identities. A failed
    certificate, a deadline, or nonzero local contact freedom is retained. *)
 completionHEPruneIdentityFamily[family_, parameters_List, rules_List, model_List, seconds_,
-    knownDirections_:Automatic] := Module[
+    knownDirections_:Automatic, progress_:None] := Module[
   {started = AbsoluteTime[], directions, certificates = {}, kept = {}, removed = {},
-   center, arrays, settings, jobs, deadline, allowance, worker, dispatch, results, resultByIndex},
+   center, arrays, settings, jobs, deadline, allowance, worker, dispatch, results, resultByIndex,
+   completed = 0, proved = 0, executionSettings, observe, zeroIndices, retrySummary,
+   retryEntries, retryJobs, retryWorker, retryObserve, retryDispatch, retryResults, left, reduction},
   center = family /. Thread[parameters -> 0];
   If[ListQ[knownDirections] && Length[knownDirections] === Length[parameters] &&
       FreeQ[knownDirections, Alternatives @@ parameters] &&
@@ -12889,9 +13112,23 @@ completionHEPruneIdentityFamily[family_, parameters_List, rules_List, model_List
       TimeConstrained[completionHEZeroDirection[d[[index]], r, m, left], left,
         <|"Status" -> "NOT_PROVED", "Method" -> "TimeConstraint"|>]];
     <|"Index" -> index, "Parameter" -> p[[index]], "Certificate" -> proof|>]]];
-  dispatch = amplitudeParallelMap[worker, jobs,
-    If[TrueQ[seconds > 0] && Length[jobs] >= 4, settings,
-      Join[settings, <|"Parallelization" -> False|>]], None];
+  (* A short tail can contain the most expensive proofs. Reuse a warm worker
+     pool for two or three jobs instead of serially exhausting their shared
+     deadline. Automatic does not start a cold pool just for that tail. *)
+  executionSettings = If[TrueQ[seconds > 0] && Length[jobs] >= 2,
+    If[Length[jobs] < 4 && Lookup[settings, "Parallelization", Automatic] === Automatic,
+      Join[settings, <|"WarmOnly" -> True|>], settings],
+    Join[settings, <|"Parallelization" -> False|>]];
+  observe[result_, index_, total_] := (
+    completed++;
+    If[AssociationQ[result] && AssociationQ[Lookup[result, "Certificate", None]] &&
+        Lookup[result["Certificate"], "Status", None] === "PROVED_ZERO", proved++];
+    If[progress =!= None, progress[<|"Stage" -> "HighEnergy",
+      "Phase" -> "Proving identity-zero family directions",
+      "Operation" -> "Certifying ordinary identities", "Completed" -> completed,
+      "Total" -> total, "ProvedZero" -> proved,
+      "RetainedDirections" -> completed - proved|>]]);
+  dispatch = amplitudeParallelMap[worker, jobs, executionSettings, observe];
   results = Lookup[dispatch, "Results", {}];
   resultByIndex = Association[Map[Function[result,
     If[AssociationQ[result] && IntegerQ[Lookup[result, "Index", None]] &&
@@ -12901,11 +13138,91 @@ completionHEPruneIdentityFamily[family_, parameters_List, rules_List, model_List
     <|"Parameter" -> parameter|>, Lookup[resultByIndex, First[index],
       <|"Status" -> "NOT_PROVED", "Method" -> "ProofWorkerUnavailable"|>]]], parameters];
   kept = Select[Range[Length[parameters]], certificates[[#]]["Status"] =!= "PROVED_ZERO" &];
+  (* Retry only after the first batch has established independent identities.
+     Exact formal subtraction can expose a much smaller proof problem while
+     preserving the original affine coordinates and every unproved direction. *)
+  zeroIndices = Select[Range[Length[parameters]], certificates[[#]]["Status"] === "PROVED_ZERO" &];
+  retrySummary = <|"Attempted" -> 0, "Certified" -> 0,
+    "PrerequisitesFromInitialBatch" -> zeroIndices|>;
+  retryEntries = <||>;
+  If[zeroIndices =!= {} && kept =!= {} && Length[zeroIndices] <= 128,
+    Do[
+      left = If[deadline === Infinity, Infinity, deadline - AbsoluteTime[]];
+      If[!TrueQ[left > 2], Break[]];
+      reduction = completionHECertifiedZeroRemainder[directions[[index]], directions[[zeroIndices]],
+        If[left === Infinity, 20, Min[20, left/4]]];
+      If[AssociationQ[reduction] && Lookup[reduction, "Status", None] === "REDUCED" &&
+          TrueQ[Lookup[reduction, "ExactFormalReconstruction", False]] &&
+          TrueQ[Lookup[reduction, "ExactGroupingReconstruction", False]] &&
+          ListQ[Lookup[reduction, "KnownZeroCoefficients", None]] &&
+          Length[reduction["KnownZeroCoefficients"]] === Length[zeroIndices] &&
+          AllTrue[reduction["KnownZeroCoefficients"], MatchQ[#, _Integer | _Rational] &] &&
+          ListQ[Lookup[reduction, "UsedKnownZeroPositions", None]] &&
+          AllTrue[reduction["UsedKnownZeroPositions"], IntegerQ[#] && 1 <= # <= Length[zeroIndices] &],
+        AssociateTo[retryEntries, index -> reduction]],
+      {index, kept}]];
+  retryJobs = Keys[retryEntries];
+  If[retryJobs =!= {},
+    completed = 0; proved = 0;
+    retryWorker = With[{entries = retryEntries, initial = certificates,
+        prerequisites = zeroIndices, p = parameters, r = rules, m = model,
+        until = deadline, perDirection = allowance}, Function[index,
+      Module[{entry = entries[index], left, proof, usedIndices, dependencies, accepted},
+        left = If[until === Infinity, perDirection, Max[0, Min[perDirection, until - AbsoluteTime[]]]];
+        proof = If[left <= 0,
+          <|"Status" -> "NOT_PROVED", "Method" -> "BoundedFamilyBudget"|>,
+          TimeConstrained[completionHEZeroDirection[entry["ReducedInput"], r, m, left], left,
+            <|"Status" -> "NOT_PROVED", "Method" -> "TimeConstraint"|>]];
+        usedIndices = prerequisites[[entry["UsedKnownZeroPositions"]]];
+        dependencies = (<|"Index" -> #, "Parameter" -> p[[#]],
+          "Status" -> initial[[#]]["Status"], "Method" -> Lookup[initial[[#]], "Method", None]|> & /@ usedIndices);
+        accepted = TrueQ[entry["ExactFormalReconstruction"]] &&
+          TrueQ[entry["ExactGroupingReconstruction"]] &&
+          AllTrue[dependencies, #["Status"] === "PROVED_ZERO" &] &&
+          Lookup[proof, "Status", None] === "PROVED_ZERO";
+        <|"Index" -> index, "Parameter" -> p[[index]],
+          "Certificate" -> If[accepted,
+            Join[<|"Status" -> "PROVED_ZERO", "Method" -> "CertifiedZeroSpanRemainder",
+              "PrerequisiteCertifiedDirections" -> dependencies,
+              "ReusedCertificate" -> proof, "OriginalDirectionProof" -> initial[[index]],
+              "NumericalKinematicSamples" -> 0, "InternalOnShellConditions" -> {}|>,
+              KeyTake[entry, {"ReducedInput", "OriginalLeafCount", "ReducedLeafCount",
+                "KnownZeroCoefficients", "UsedKnownZeroPositions", "KnownZeroCount",
+                "FormalMonomialCount", "RetainedMonomialCount", "ExactFormalReconstruction",
+                "ExactGroupingReconstruction"}]],
+            Join[initial[[index]], <|"CertifiedZeroSpanRetry" -> Join[
+              KeyDrop[entry, {"ReducedInput"}], <|"PrerequisiteCertifiedDirections" -> dependencies,
+                "ReusedCertificate" -> proof, "OriginalDirectionRetained" -> True|>]|>]]|>
+      ]]];
+    retryObserve[result_, index_, total_] := (
+      completed++;
+      If[AssociationQ[result] && AssociationQ[Lookup[result, "Certificate", None]] &&
+          Lookup[result["Certificate"], "Status", None] === "PROVED_ZERO", proved++];
+      If[progress =!= None, progress[<|"Stage" -> "HighEnergy",
+        "Phase" -> "Retrying identity proofs with certified identities",
+        "Operation" -> "Reusing certified ordinary identities", "Completed" -> completed,
+        "Total" -> total, "ProvedZero" -> proved,
+        "RetainedDirections" -> completed - proved|>]]);
+    executionSettings = If[Length[retryJobs] < 4 &&
+        Lookup[settings, "Parallelization", Automatic] === Automatic,
+      Join[settings, <|"WarmOnly" -> True|>], settings];
+    retryDispatch = amplitudeParallelMap[retryWorker, retryJobs, executionSettings, retryObserve];
+    retryResults = Lookup[retryDispatch, "Results", {}];
+    Do[If[AssociationQ[result] && IntegerQ[Lookup[result, "Index", None]] &&
+        AssociationQ[Lookup[result, "Certificate", None]],
+      certificates[[result["Index"]]] = result["Certificate"]], {result, retryResults}];
+    retrySummary = <|"Attempted" -> Length[retryJobs],
+      "Certified" -> Count[Lookup[Lookup[retryResults, "Certificate", <||>], "Status", None], "PROVED_ZERO"],
+      "PrerequisitesFromInitialBatch" -> zeroIndices,
+      "Execution" -> Lookup[retryDispatch, "Execution", <||>]|>;
+    kept = Select[Range[Length[parameters]], certificates[[#]]["Status"] =!= "PROVED_ZERO" &]];
+
   removed = parameters[[Complement[Range[Length[parameters]], kept]]];
   <|"FamilyAmplitude" -> center + If[kept === {}, 0, parameters[[kept]].directions[[kept]]],
     "FreeParameters" -> parameters[[kept]], "RemainingBasis" -> directions[[kept]],
     "RemovedParameters" -> removed, "Certificates" -> certificates, "AffineFamily" -> True,
     "Execution" -> Lookup[dispatch, "Execution", <||>],
+    "CertifiedZeroSpanRetry" -> retrySummary,
     "ElapsedTime" -> (AbsoluteTime[] - started)|>
 ];
 
@@ -12917,7 +13234,8 @@ completionHighEnergyWork[input_, channels_List, model_List, settings_Association
    equations, solution, family, free, candidate,
    validation, validations, familyValidations = {}, familyValid = True,
    fitSamples = settings["Samples"], ruleSets, status, diagnostics = {}, callback = settings["ProgressFunction"],
-   enabled = settings["ProgressReporting"], report, exchangePlan, familyReduction},
+   enabled = settings["ProgressReporting"], report, exchangePlan, familyReduction,
+   retainedProofs, proofReasons, establishedNonzero, proofSummary},
   report = <|"Stage" -> "HighEnergy", "Status" -> "UNRESOLVED",
     "Amplitude" -> original, "OriginalExpression" -> Lookup[normalized, "OriginalExpression", original],
     "ExternalMassRules" -> normalized["ExternalMassRules"],
@@ -12942,7 +13260,8 @@ completionHighEnergyWork[input_, channels_List, model_List, settings_Association
       "Phase" -> "Proving identity-zero family directions", "Terms" -> Length[inheritedParameters]|>];
     familyReduction = completionHEPruneIdentityFamily[trial, inheritedParameters,
       normalized["ExternalMassRules"], model, Min[Max[45, 10 Length[inheritedParameters]],
-        3 settings["TimeConstraint"]/4], inheritedBasis];
+        3 settings["TimeConstraint"]/4], inheritedBasis,
+      Function[event, completionProgress[callback, enabled, event]]];
     If[!TrueQ[familyReduction["AffineFamily"]], Return[Join[report,
       <|"FamilyIdentityReduction" -> familyReduction,
         "Diagnostics" -> familyReduction["Diagnostics"]|>]]];
@@ -13053,7 +13372,8 @@ completionHighEnergyWork[input_, channels_List, model_List, settings_Association
     !residueExactZero[D[family, #]] &];
   If[free =!= {},
     familyReduction = completionHEPruneIdentityFamily[family, free,
-      normalized["ExternalMassRules"], model, Min[Max[30, 10 Length[free]], settings["TimeConstraint"]/2]];
+      normalized["ExternalMassRules"], model, Min[Max[30, 10 Length[free]], settings["TimeConstraint"]/2],
+      Automatic, Function[event, completionProgress[callback, enabled, event]]];
     family = familyReduction["FamilyAmplitude"]; free = familyReduction["FreeParameters"];
     report = Join[report, <|"SolvedFamilyIdentityReduction" -> familyReduction|>]];
   candidate = family /. Thread[free -> 0];
@@ -13091,8 +13411,25 @@ completionHighEnergyWork[input_, channels_List, model_List, settings_Association
         AllTrue[Lookup[#, "Equations", {}], highEnergyZeroState[#] === "Zero" &] &] &]];
   status = Which[!AllTrue[validations, completionHEAllPassQ[#["Report"]] &] || !familyValid, "UNRESOLVED",
     free =!= {}, "UNDERDETERMINED", True, "COMPLETE"];
+  retainedProofs = Select[Lookup[Lookup[report, "SolvedFamilyIdentityReduction",
+      Lookup[report, "FamilyIdentityReduction", <||>]], "Certificates", {}],
+    MemberQ[free, Lookup[#, "Parameter", None]] &];
+  proofReasons = Counts[Lookup[retainedProofs, "Method", "UnreportedProof"]];
+  If[Length[retainedProofs] < Length[free],
+    AssociateTo[proofReasons, "UnreportedProof" ->
+      (Lookup[proofReasons, "UnreportedProof", 0] + Length[free] - Length[retainedProofs])]];
+  establishedNonzero = Count[Lookup[retainedProofs, "Method", None], "NonzeroSymbolicExternalChart"];
+  proofSummary = <|"RetainedDirections" -> Length[free],
+    "EstablishedNonzeroDirections" -> establishedNonzero,
+    "IdentityProofUnfinished" -> (Length[free] - establishedNonzero),
+    "ProofReasons" -> proofReasons|>;
   diagnostics = Join[Lookup[solution, "Diagnostics", {}],
-    If[free =!= {}, {"The requested conditions leave nonzero correction directions undetermined. Their zero-parameter representative is retained for inspection; additional model information is required."}, {}],
+    If[free =!= {}, Join[
+      If[proofSummary["IdentityProofUnfinished"] > 0, {
+        "Some retained correction directions have not been proved to vanish by ordinary external identities. An unfinished identity proof does not establish a missing interaction or a need for additional model information."}, {}],
+      If[establishedNonzero > 0, {
+        "The requested conditions leave established nonzero correction freedom. Its zero-parameter representative is retained for inspection; additional justified constraints or model information are required."}, {}],
+      {proofSummary}], {}],
     If[!AllTrue[validations, completionHEAllPassQ[#["Report"]] &], {
       "The candidate failed or could not complete independent validation; no complete amplitude is claimed."}, {}],
     If[!familyValid, {"The remaining affine family did not satisfy every exact held-out constraint; the reported fit-only freedom is not a validated amplitude family."}, {}],
@@ -13107,7 +13444,8 @@ completionHighEnergyWork[input_, channels_List, model_List, settings_Association
     "SolutionRules" -> solution["SolutionRules"], "AfterReport" -> validation,
     "ValidationReports" -> validations, "FamilyValidation" -> familyValidations,
     "ValidationParameterRules" -> ruleSets,
-    "Correction" -> candidate - original, "Diagnostics" -> diagnostics|>]
+    "Correction" -> candidate - original, "RetainedDirectionProofSummary" -> proofSummary,
+    "Diagnostics" -> diagnostics|>]
 ];
 
 completionHighEnergyStage[input_, channels_List, model_List, requestedSettings_Association] := Block[{$completionParallelSettings =
