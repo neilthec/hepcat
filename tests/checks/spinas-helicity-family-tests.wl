@@ -48,6 +48,15 @@ check["the manifest records complete helicities and separate normalization facto
   Length[sfManifest["HelicityConfigurations"]] === 4 &&
     sfManifest["InitialSpinAverage"] === 4 && sfManifest["FinalStateSymmetryDivisor"] === 2];
 sfHeader = Import[sfPlain["Files"]["Header"], "Text"];
+sfReadableSource = Import[sfPlain["Files"]["Source"], "Text"];
+check["canonical helicity formulas have descriptive method names rather than numbered components",
+  AllTrue[{"helicity_pp", "helicity_pm", "helicity_mm"},
+    StringContainsQ[sfReadableSource, "::" <> # <> "("] &] &&
+    !StringContainsQ[sfReadableSource, RegularExpression["::component_[0-9]+\\("]]];
+check["the saved family source separates formulas and tables into readable lines",
+  Max[StringLength /@ StringSplit[sfReadableSource, "\n"]] <= 120 &&
+    StringContainsQ[sfReadableSource, "a12a"] &&
+    StringContainsQ[sfReadableSource, "t13"]];
 check["the generated header exposes spin-array and native-style amplitude calls",
   AllTrue[{"amp(const Spins&", "spin_sum()", "amp2()", "incoming_spin_average",
     "symmetry_factor", "helicity_configurations"}, StringContainsQ[sfHeader, #] &] &&
@@ -57,6 +66,11 @@ sfBefore = AssociationMap[BinaryReadList[#, "Byte"] &, sfFiles];
 sfRefused = sfExport["family_plain", ({First[#], 2 Last[#]} & /@ sfFour)];
 check["a valid family cannot overwrite existing generated files by default",
   FailureQ[sfRefused] && sfBefore === AssociationMap[BinaryReadList[#, "Byte"] &, sfFiles]];
+sfReservedPath = sfPath["reserved_helicity_method"];
+sfReservedName = WriteSPINASProcess[sfReservedPath, sfFour, sfModel,
+  "ProcessName" -> "helicity_pp", "ParameterRules" -> sfRules, "SPINASDirectory" -> sfSpinas];
+check["the process class name cannot collide with a descriptive helicity method",
+  FailureQ[sfReservedName] && !DirectoryQ[sfReservedPath]];
 
 sfIncompletePath = sfPath["missing_helicities"];
 sfIncomplete = WriteSPINASProcess[sfIncompletePath, Take[sfFour, 1], sfModel,

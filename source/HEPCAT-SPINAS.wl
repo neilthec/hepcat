@@ -7,13 +7,15 @@ Begin["ConstructiveDiagrams`Private`"];
 
 (* Numeric literals preserve the supplied numerical value without routing
    it through a machine-double C++ literal. *)
-spinasCppReal[value_] := Module[{digits, exponent, sign},
+spinasCppReal[value_] := Module[{digits, exponent, sign, fraction},
   If[!TrueQ[NumberQ[value] && Im[value] == 0], Return[$Failed]];
   If[TrueQ[value == 0], Return["ldouble(0.0L)"]];
   sign = If[TrueQ[value < 0], "-", ""];
   {digits, exponent} = RealDigits[N[SetPrecision[Abs[value], 32], 32], 10, 24];
   If[!VectorQ[digits, IntegerQ], Return[$Failed]];
-  "ldouble(" <> sign <> ToString[First[digits]] <> "." <> StringJoin[ToString /@ Rest[digits]] <>
+  fraction = StringReplace[StringJoin[ToString /@ Rest[digits]], RegularExpression["0+$"] -> ""];
+  If[fraction === "", fraction = "0"];
+  "ldouble(" <> sign <> ToString[First[digits]] <> "." <> fraction <>
     "e" <> ToString[exponent - 1] <> "L)"
 ];
 spinasCppNumber[value_] := Module[{real, imaginary},
@@ -41,12 +43,34 @@ spinasProcessIR[process_List, amplitude_, model_List, options_Association] := Mo
    parameterDefaults, parameterCpp, parameterNames, expression, original, crossed,
    weights, helicities, spin2, indexed, spinIndices, implicit, indexRules = {},
    emit, emitParameter, emitVector, momentumCoefficients, endpoint, chainCode,
-   traceCode, chains = {}, chainStatements = {}, chainCpp, expressionCpp, massCpp,
+   traceCode, chains = {}, chainStatements = {}, chainNames = {}, chainCpp, expressionCpp, massCpp,
+   scalarExpressions = {}, scalarStatements = {}, scalarNames = {}, scalarComments = {},
+   usedNames = {}, allocateName, cacheScalar, emitProduct, emitQuotient, emitSum,
+   numerator, denominator, numeratorTerms, expressionPieces,
    numerical, coefficient, parts, head, explicit, indices, leg, slots, state,
    canonicalSymbol, protectedCrossing, outgoing, pairRules = {}, normalizeInput,
    allocateImplicit, spinSlot, slotDegrees, reservedSlots, availableSlots, assigned},
   fail[reason_String, value_: None] := Throw[Failure["SPINASExport", <|
     "MessageTemplate" -> reason, "UnsupportedExpression" -> HoldForm[value]|>], tag];
+  allocateName[base_String] := Module[{name = base, suffix = 1},
+    While[MemberQ[usedNames, name], suffix++; name = base <> "_" <> ToString[suffix]];
+    AppendTo[usedNames, name]; name];
+  cacheScalar[value_, base_String, code_String] := Module[{position, name},
+    position = FirstPosition[scalarExpressions, value, Missing["New"]];
+    If[!MissingQ[position], Return[scalarNames[[First[position]]]]];
+    name = allocateName[base]; AppendTo[scalarExpressions, value]; AppendTo[scalarNames, name];
+    AppendTo[scalarComments, spinasReadableMath[value]];
+    AppendTo[scalarStatements, "const cdouble " <> name <> " = " <> code <> ";"]; name];
+  emitProduct[values_List] := If[values === {}, "ldouble(1.0L)",
+    StringRiffle[Map[If[Head[#] === Plus, "(" <> emit[#] <> ")", emit[#]] &, values], " * "]];
+  emitQuotient[value_] := Module[{top = Numerator[value], bottom = Denominator[value], topCode, bottomCode},
+    topCode = If[Head[top] === Times, emitProduct[List @@ top], emit[top]];
+    If[bottom === 1, Return[topCode]];
+    bottomCode = If[Head[bottom] === Times, emitProduct[List @@ bottom], emit[bottom]];
+    "(" <> topCode <> ") / (" <> bottomCode <> ")"];
+  emitSum[values_List] := StringRiffle[MapIndexed[
+    If[spinasNegativeTermQ[#1], If[First[#2] === 1, "-", "- "] <> emit[-#1],
+      If[First[#2] === 1, "", "+ "] <> emit[#1]] &, values], " "];
   Catch[
     If[Length[model] =!= 4 || !AllTrue[model, ListQ] || count < 2 ||
         !AllTrue[process, StringQ], fail["Expected model data and at least two ordered external particle names."]];
@@ -285,27 +309,36 @@ spinasProcessIR[process_List, amplitude_, model_List, options_Association] := Mo
       NumberQ[value], With[{number = spinasCppNumber[value]}, If[number === $Failed, fail["Nonfinite C++ numeric literal.", value], number]],
       value === Pi, "std::acos(ldouble(-1))", value === E, "std::exp(ldouble(1))",
       Head[value] === Symbol, emitParameter[value],
-      Head[value] === Plus, "(" <> StringRiffle[emit /@ List @@ value, " + "] <> ")",
-      Head[value] === Times, "(" <> StringRiffle[emit /@ List @@ value, " * "] <> ")",
+      Head[value] === Plus, "(" <> emitSum[List @@ value] <> ")",
+      Head[value] === Times, emitQuotient[value],
       Head[value] === spinasExportLorentzSquare, "mass2(" <> emitVector[First[value]] <> ")",
       Head[value] === Power && spinasMomentumExpressionQ[First[value]] && Last[value] === 2,
         "mass2(" <> emitVector[First[value]] <> ")",
+      Head[value] === Power && IntegerQ[Last[value]] && Last[value] < 0,
+        "(ldouble(1.0L) / (" <> emit[First[value]^(-Last[value])] <> "))",
+      Head[value] === Power && MemberQ[{2, 3, 4}, Last[value]] &&
+          MatchQ[First[value], _ModelParameter | _Symbol | _SpinorChain | _PropDen],
+        With[{base = emit[First[value]]}, "(" <> StringRiffle[ConstantArray[base, Last[value]], " * "] <> ")"],
       Head[value] === Power && IntegerQ[Last[value]] && Abs[Last[value]] <= 2147483647,
         "std::pow(cdouble(" <> emit[First[value]] <> "), " <> ToString[Last[value]] <> ")",
       Head[value] === Power, "std::pow(cdouble(" <> emit[First[value]] <> "), " <> emit[Last[value]] <> ")",
       Head[value] === SpinorChain,
         With[{position = FirstPosition[chains, value, Missing["New"]]},
           If[MissingQ[position], AppendTo[chains, value];
-            AppendTo[chainStatements, "const cdouble chain_" <> ToString[Length[chains] - 1] <> " = " <> chainCode[value] <> ";"];
-            "chain_" <> ToString[Length[chains] - 1], "chain_" <> ToString[First[position] - 1]]],
+            AppendTo[chainNames, allocateName[spinasChainName[value]]];
+            AppendTo[chainStatements, "const cdouble " <> Last[chainNames] <> " = " <> chainCode[value] <> ";"];
+            Last[chainNames], chainNames[[First[position]]]]],
       Head[value] === SpinorTrace, traceCode[value],
       Head[value] === MomProd && Length[value] === 2,
-        "dot(" <> emitVector[If[MatchQ[value[[1]], _Integer | _Multiparticle], Mom[value[[1]]], value[[1]]]] <> ", " <>
-          emitVector[If[MatchQ[value[[2]], _Integer | _Multiparticle], Mom[value[[2]]], value[[2]]]] <> ")",
-      Head[value] === Mandelstahm, "mass2(" <> emitVector[Total[Mom /@ List @@ value]] <> ")",
+        cacheScalar[value, spinasScalarName[value],
+          "dot(" <> emitVector[If[MatchQ[value[[1]], _Integer | _Multiparticle], Mom[value[[1]]], value[[1]]]] <> ", " <>
+          emitVector[If[MatchQ[value[[2]], _Integer | _Multiparticle], Mom[value[[2]]], value[[2]]]] <> ")"],
+      Head[value] === Mandelstahm,
+        cacheScalar[value, spinasScalarName[value], "mass2(" <> emitVector[Total[Mom /@ List @@ value]] <> ")"],
       Head[value] === PropDen && MemberQ[{2, 3}, Length[value]],
-        "(mass2(" <> emitVector[First[value]] <> ") - (" <> emit[value[[2]]] <> ") * (" <> emit[value[[2]]] <> ")" <>
-          If[Length[value] === 3, " + cdouble(0.0L, 1.0L) * (" <> emit[value[[2]]] <> ") * (" <> emit[value[[3]]] <> ")", ""] <> ")",
+        cacheScalar[value, spinasScalarName[value],
+          "mass2(" <> emitVector[First[value]] <> ") - (" <> emit[value[[2]]] <> ") * (" <> emit[value[[2]]] <> ")" <>
+          If[Length[value] === 3, " + cdouble(0.0L, 1.0L) * (" <> emit[value[[2]]] <> ") * (" <> emit[value[[3]]] <> ")", ""]],
       Head[value] === Conjugate && Length[value] === 1, "std::conj(cdouble(" <> emit[First[value]] <> "))",
       Head[value] === Re && Length[value] === 1, "std::real(cdouble(" <> emit[First[value]] <> "))",
       Head[value] === Im && Length[value] === 1, "std::imag(cdouble(" <> emit[First[value]] <> "))",
@@ -316,6 +349,11 @@ spinasProcessIR[process_List, amplitude_, model_List, options_Association] := Mo
       True, fail["The amplitude contains an unsupported scalar, tensor, color, or model-function structure.", value]];
     massCpp = emit /@ masses;
     expressionCpp = emit[crossed];
+    numerator = Numerator[crossed]; denominator = Denominator[crossed];
+    numeratorTerms = If[Head[numerator] === Plus, List @@ numerator, {numerator}];
+    expressionPieces = <|"NumeratorTerms" -> (emit[If[spinasNegativeTermQ[#], -#, #]] & /@ numeratorTerms),
+      "NumeratorSigns" -> (If[spinasNegativeTermQ[#], -1, 1] & /@ numeratorTerms),
+      "Denominator" -> emit[denominator], "UnitDenominator" -> (denominator === 1)|>;
     parameterDefaults = Map[Function[parameter,
       numerical = Quiet[N[parameter /. parameterRules, 24]];
       If[!NumberQ[numerical] || !FreeQ[numerical, Indeterminate | DirectedInfinity],
@@ -330,10 +368,167 @@ spinasProcessIR[process_List, amplitude_, model_List, options_Association] := Mo
       "MassValues" -> massValues, "MassCpp" -> massCpp,
       "ParameterNames" -> parameterNames, "ParameterSymbols" -> usedParameters,
       "ParameterDefaults" -> parameterDefaults, "ParameterCppDefaults" -> parameterCpp,
-      "ExpressionCpp" -> expressionCpp, "ChainStatements" -> chainStatements,
+      "ExpressionCpp" -> expressionCpp, "ExpressionPieces" -> expressionPieces,
+      "ChainStatements" -> chainStatements, "Chains" -> chains, "ChainNames" -> chainNames,
+      "ScalarExpressions" -> scalarExpressions, "ScalarNames" -> scalarNames,
+      "ScalarStatements" -> scalarStatements, "ScalarComments" -> scalarComments,
       "OriginalExpression" -> original, "CrossedExpression" -> crossed,
       "IndexedExpression" -> indexed, "ExternalMassRules" -> massRules,
       "ColorStripped" -> AnyTrue[rows, Length[#] >= 8 && #[[8]] =!= 1 &]|>, tag]
+];
+
+(* ::Subsection::Closed:: *)
+(*Readable Formula Output*)
+
+spinasNegativeTermQ[value_] := With[{coefficient = If[Head[value] === Times, First[value], value]},
+  NumberQ[coefficient] && TrueQ[Im[coefficient] == 0 && Re[coefficient] < 0]];
+
+spinasReadableIdentifier[text_String] := Module[{name},
+  name = StringTrim[StringReplace[text, {
+    RegularExpression["[^A-Za-z0-9_]+"] -> "_", RegularExpression["_+"] -> "_"}], "_"];
+  If[name === "", name = "value"];
+  If[StringLength[name] > 48, name = StringTake[name, 48]];
+  If[!spinasCppIdentifierQ[name], name = "parameter_" <> name]; name
+];
+
+spinasChainName[chain_SpinorChain] := Module[{items = List @@ chain, labels, separator},
+  labels = Join[{ToString[rspSpinorLeg[First[items]]]},
+    (If[MatchQ[#, Mom[_Integer]], ToString[First[#]], "P"] & /@ Take[items, {2, -2}]),
+    {ToString[rspSpinorLeg[Last[items]]]}];
+  separator = If[AnyTrue[labels, StringLength[#] > 1 &] || MemberQ[labels, "P"], "_", ""];
+  If[rspSpinorType[First[items]] === "Angle", "a", "s"] <>
+    StringRiffle[labels, separator] <> If[rspSpinorType[Last[items]] === "Angle", "a", "s"]
+];
+
+spinasReadableMath[value_] := Which[
+  Head[value] === ModelParameter, ModelParameterName[value],
+  Head[value] === Mom, If[Head[First[value]] === Multiparticle,
+    "(" <> StringRiffle[("p" <> ToString[#]) & /@ List @@ First[value], " + "] <> ")",
+    "p" <> ToString[First[value]]],
+  Head[value] === Plus, "(" <> StringRiffle[MapIndexed[
+    If[spinasNegativeTermQ[#1], If[First[#2] === 1, "-", "- "] <> spinasReadableMath[-#1],
+      If[First[#2] === 1, "", "+ "] <> spinasReadableMath[#1]] &, List @@ value], " "] <> ")",
+  Head[value] === Times, If[First[value] === -1,
+    "-" <> spinasReadableMath[-value], StringRiffle[spinasReadableMath /@ List @@ value, " * "]],
+  Head[value] === Power, "(" <> spinasReadableMath[First[value]] <> ")^" <> spinasReadableMath[Last[value]],
+  Head[value] === SpinorChain, Module[{items = List @@ value, left, right, middle},
+    left = If[rspSpinorType[First[items]] === "Angle", "<", "["];
+    right = If[rspSpinorType[Last[items]] === "Angle", ">", "]"];
+    middle = spinasReadableMath /@ Take[items, {2, -2}];
+    left <> ToString[rspSpinorLeg[First[items]]] <>
+      If[middle === {}, " ", "|" <> StringRiffle[middle, " "] <> "|"] <>
+      ToString[rspSpinorLeg[Last[items]]] <> right],
+  Head[value] === PropDen,
+    spinasReadableMath[First[value]] <> "^2 - (" <> spinasReadableMath[value[[2]]] <> ")^2" <>
+      If[Length[value] === 3, " + i * " <> spinasReadableMath[value[[2]]] <> " * " <>
+        spinasReadableMath[value[[3]]], ""],
+  Head[value] === MomProd, StringRiffle[
+    spinasReadableMath[spinasMomentumArgument[#]] & /@ List @@ value, " . "],
+  Head[value] === Mandelstahm, "(" <>
+    StringRiffle[("p" <> ToString[#]) & /@ List @@ value, " + "] <> ")^2",
+  Head[value] === spinasExportLorentzSquare, "(" <> spinasReadableMath[First[value]] <> ")^2",
+  True, StringReplace[ToString[value, InputForm], {"\n" -> " ", "\r" -> " "}]
+];
+
+spinasScalarName[value_] := Module[{labels, vector, momentumLabel},
+  momentumLabel[leg_Integer] := ToString[leg];
+  momentumLabel[Mom[leg_Integer]] := ToString[leg];
+  momentumLabel[_] := "P";
+  Which[
+    Head[value] === PropDen,
+      vector = First[value] /. Mom[Multiparticle[items___]] :> Total[Mom /@ {items}];
+      labels = DeleteDuplicates[Cases[vector, Mom[i_Integer] :> i, {0, Infinity}]];
+      If[TrueQ[value[[2]] === 0], "s", "t"] <>
+        If[labels === {}, "P", StringRiffle[ToString /@ labels,
+          If[AnyTrue[labels, # > 9 &], "_", ""]]],
+    Head[value] === Mandelstahm, "s" <> StringRiffle[ToString /@ List @@ value,
+      If[AnyTrue[List @@ value, # > 9 &], "_", ""]],
+    Head[value] === MomProd, "p" <> momentumLabel[First[value]] <> "_dot_p" <> momentumLabel[Last[value]],
+    True, "invariant"]
+];
+
+(* This wrapping operates only on generated C++ arithmetic, never on string
+   literals. Whitespace is free in these expressions and names remain intact. *)
+spinasReadableCppLines[text_String, indent_String : "  ", width_Integer : 112] := Module[
+  {words = StringSplit[text], lines = {}, line = indent, continuation = indent <> "  "},
+  Do[If[StringLength[line] > StringLength[indent] && StringLength[line] + StringLength[word] + 1 > width,
+      AppendTo[lines, line]; line = continuation <> word,
+      line = line <> If[StringTrim[line] === "", "", " "] <> word], {word, words}];
+  If[StringTrim[line] =!= "", AppendTo[lines, line]]; lines
+];
+
+spinasReadableCommentLines[text_String] := ("  // " <> # &) /@
+  spinasReadableCppLines[StringReplace[text,
+    {"\n" -> " ", "\r" -> " ", "\t" -> " ", "\\" -> "/"}], "", 104];
+
+spinasComponentName[ir_Association] := "helicity_" <>
+  If[AllTrue[ir["Helicities"], # === 0 &], "tensor",
+    StringJoin[If[# > 0, "p", "m"] & /@ DeleteCases[ir["Helicities"], 0]]];
+
+spinasReadableComponentBody[ir_Association, family_:False] := Module[
+  {n = ir["LegCount"], ranks = ir["Spin2"], used, aliases, parameterRules, spinRules,
+   legRules, substitutions, rewrite, lines = {}, parameterLines = {}, legLines = {}, spinLines = {},
+   addSection, name, base, suffix, text, pieces, terms, signs, code, prefix, emitted,
+   chains = Lookup[ir, "Chains", {}], scalars = Lookup[ir, "ScalarStatements", {}]},
+  used = Join[Lookup[ir, "ChainNames", {}], Lookup[ir, "ScalarNames", {}],
+    {"numerator", "denominator", "spinor_spins", "particle_view"},
+    Table["p" <> ToString[i], {i, n}],
+    Flatten[Table[If[ranks[[i]] > 1,
+      Table["ds" <> ToString[i] <> "_" <> ToString[j], {j, ranks[[i]]}],
+      {"ds" <> ToString[i]}], {i, n}]]];
+  aliases = Table[
+    base = spinasReadableIdentifier[ir["ParameterNames"][[i]]]; name = base; suffix = 1;
+    If[MemberQ[used, name], base = "parameter_" <> base; name = base];
+    While[MemberQ[used, name], suffix++; name = base <> "_" <> ToString[suffix]];
+    AppendTo[used, name];
+    AppendTo[parameterLines, "  const cdouble " <> name <> " = parameters[" <> ToString[i - 1] <> "];" ];
+    name, {i, Length[ir["ParameterNames"]]}];
+  parameterRules = MapIndexed[("parameters[" <> ToString[First[#2] - 1] <> "]") -> #1 &, aliases];
+  legRules = Table[("particles[" <> ToString[i - 1] <> "].") -> ("p" <> ToString[i] <> "."), {i, n}];
+  spinRules = Flatten[Table[
+    Table[("spinor_spins[" <> ToString[i - 1] <> "][" <> ToString[j - 1] <> "]") ->
+      ("ds" <> ToString[i] <> If[ranks[[i]] > 1, "_" <> ToString[j], ""]),
+      {j, ranks[[i]]}], {i, n}]];
+  substitutions = Join[parameterRules, legRules, spinRules];
+  rewrite[value_String] := StringReplace[value, substitutions];
+  text = StringRiffle[Join[ir["ChainStatements"], scalars], "\n"];
+  Do[
+    If[StringContainsQ[text, "particles[" <> ToString[i - 1] <> "]."],
+      AppendTo[legLines, "  auto& p" <> ToString[i] <> " = " <>
+        If[TrueQ[family], "*particle_view[" <> ToString[i - 1] <> "]", "particles[" <> ToString[i - 1] <> "]"] <> ";"]];
+    Do[If[StringContainsQ[text, "spinor_spins[" <> ToString[i - 1] <> "][" <> ToString[j - 1] <> "]"],
+      AppendTo[spinLines, "  const int ds" <> ToString[i] <> If[ranks[[i]] > 1, "_" <> ToString[j], ""] <>
+        " = spinor_spins[" <> ToString[i - 1] <> "][" <> ToString[j - 1] <> "];" ]],
+      {j, ranks[[i]]}], {i, n}];
+  addSection[label_String, values_List] := If[values =!= {},
+    lines = Join[lines, {"  // " <> label}, values, {""}]];
+  addSection["Model parameters.", parameterLines];
+  addSection["External particles and doubled spin indices.", Join[legLines, spinLines]];
+  If[scalars =!= {},
+    lines = Join[lines, {"  // Propagators and scalar invariants (physical incoming/outgoing momenta)."}];
+    Do[lines = Join[lines,
+      spinasReadableCommentLines[ir["ScalarNames"][[i]] <> " = " <> ir["ScalarComments"][[i]]],
+      spinasReadableCppLines[rewrite[scalars[[i]]]]], {i, Length[scalars]}];
+    AppendTo[lines, ""]];
+  If[ir["ChainStatements"] =!= {},
+    AppendTo[lines, "  // Spinor products. The a/s names denote angle/square endpoints."];
+    Do[lines = Join[lines, If[i <= Length[chains],
+        spinasReadableCommentLines[ir["ChainNames"][[i]] <> " = " <> spinasReadableMath[chains[[i]]]], {}],
+      spinasReadableCppLines[rewrite[ir["ChainStatements"][[i]]]]], {i, Length[ir["ChainStatements"]]}];
+    AppendTo[lines, ""]];
+  pieces = ir["ExpressionPieces"]; terms = rewrite /@ pieces["NumeratorTerms"];
+  signs = pieces["NumeratorSigns"];
+  If[TrueQ[pieces["UnitDenominator"]] && Length[terms] === 1 && StringLength[First[terms]] < 84,
+    Return[Join[lines, {"  return " <> If[First[signs] < 0, "-", ""] <> First[terms] <> ";"}]]];
+  AppendTo[lines, "  const cdouble numerator ="];
+  Do[prefix = If[i === 1, If[signs[[i]] < 0, "-", ""], If[signs[[i]] < 0, "- ", "+ "]];
+    code = prefix <> terms[[i]] <> If[i === Length[terms], ";", ""];
+    emitted = spinasReadableCppLines[code, "      "];
+    lines = Join[lines, emitted], {i, Length[terms]}];
+  If[TrueQ[pieces["UnitDenominator"]], AppendTo[lines, "  return numerator;"],
+    lines = Join[lines, spinasReadableCppLines["const cdouble denominator = " <> rewrite[pieces["Denominator"]] <> ";"],
+      {"", "  return numerator / denominator;"}]];
+  lines
 ];
 
 End[];
@@ -357,7 +552,8 @@ Begin["ConstructiveDiagrams`Private`"];
 $spinasExportSourceDirectory = DirectoryName[$InputFileName];
 
 spinasCppIdentifierQ[name_String] := StringMatchQ[name, RegularExpression["[A-Za-z][A-Za-z0-9_]*"]] &&
-  !StringContainsQ[name,"__"] && !StringMatchQ[name, RegularExpression["component_[0-9]+"]] && !MemberQ[{
+  !StringContainsQ[name,"__"] &&
+  !StringMatchQ[name, RegularExpression["component_[0-9]+|helicity_[pm]+|helicity_tensor"]] && !MemberQ[{
     "std", "spinas", "hepcat_generated", "hepcat_spinas", "Parameters", "Momenta", "Spins",
     "all", "clean", "help", "test", "install", "package", "package_source",
     "edit_cache", "rebuild_cache", "list_install_components",
@@ -407,128 +603,172 @@ spinasProjectPrecision[root_String, option_] := Module[{cache, value},
 spinasProjectHeader[name_String, ir_Association] := StringRiffle[{
   "#pragma once", "#include <array>", "#include <cstddef>", "#include <vector>",
   "#include \"spinas.h\"", "#include \"spinas-runtime.hpp\"", "",
-  "namespace hepcat_generated {", "class " <> name <> " {", "public:",
+  "namespace hepcat_generated {", "", "class " <> name <> " {", "public:",
   "  static constexpr std::size_t leg_count = " <> ToString[ir["LegCount"]] <> ";",
   "  static constexpr std::size_t parameter_count = " <> ToString[Length[ir["ParameterDefaults"]]] <> ";",
   "  using Parameters = std::array<cdouble, parameter_count>;",
   "  using Momenta = hepcat_spinas::Momenta<leg_count>;",
-  "  using Spins = std::array<int, leg_count>;", "  " <> name <> "();",
+  "  using Spins = std::array<int, leg_count>;", "", "  " <> name <> "();",
   "  explicit " <> name <> "(const Parameters& values);",
   "  static Parameters default_parameters();", "  static Spins default_spins();",
-  "  static std::array<std::size_t, 2> incoming_legs();",
+  "  static std::array<std::size_t, 2> incoming_legs();", "",
   "  const Parameters& get_parameters() const { return parameters; }",
   "  const std::array<ldouble, leg_count>& masses() const { return external_masses; }",
-  "  void set_parameters(const Parameters& values);",
-  "  void set_momenta(const Momenta& values);", "  cdouble amp(const Spins& spins);",
-  "  ldouble spin_sum();", "  ldouble amp2();", "private:",
+  "", "  void set_parameters(const Parameters& values);",
+  "  void set_momenta(const Momenta& values);", "",
+  "  // Complex amplitude for explicit doubled spins and helicities.",
+  "  cdouble amp(const Spins& spins);",
+  "  ldouble spin_sum();", "  ldouble amp2();", "", "private:",
   "  Parameters parameters;", "  std::array<ldouble, leg_count> external_masses;",
   "  Momenta momenta;", "  std::array<spinas::particle, leg_count> particles;",
-  "  bool momenta_ready = false;",
+  "  bool momenta_ready = false;", "",
   "  cdouble component(const std::vector<std::vector<int>>& spinor_spins);",
-  "};", "} // namespace hepcat_generated", ""}, "\n"];
+  "};", "", "} // namespace hepcat_generated", ""}, "\n"];
 
 spinasProjectSource[name_String, ir_Association] := Module[
   {n = ir["LegCount"], spin2 = ir["Spin2"], helicities = ir["Helicities"],
-   massValues = ir["MassValues"], defaults, spinDefaults, incoming, massLines, chainLines},
-  defaults = spinasCppArray[spinasCppComplex /@ ir["ParameterDefaults"]];
+   massValues = ir["MassValues"], defaults, spinDefaults, incoming, massLines, componentLines},
+  defaults = MapIndexed["    " <> spinasCppComplex[#1] <>
+    If[First[#2] < Length[ir["ParameterDefaults"]], ",", ""] <>
+    " // " <> spinasCppQuoted[ir["ParameterNames"][[First[#2]]]] &, ir["ParameterDefaults"]];
   spinDefaults = spinasCppArray[ToString /@ MapThread[
     If[TrueQ[#1 == 0], #2, -#3] &, {massValues, helicities, spin2}]];
   incoming = spinasCppArray[ToString /@ (ir["IncomingLegs"] - 1)];
   massLines = MapIndexed["  external_masses[" <> ToString[First[#2] - 1] <>
     "] = checked_mass(cdouble(" <> #1 <> "));" &, ir["MassCpp"]];
-  chainLines = "  " <> # & /@ ir["ChainStatements"];
+  componentLines = spinasReadableComponentBody[ir];
   StringRiffle[Join[{
     "#include \"process.hpp\"", "#include <cmath>", "#include <functional>",
     "#include <stdexcept>", "", "namespace hepcat_generated {",
-    "using namespace hepcat_spinas;",
+    "using namespace hepcat_spinas;", "",
     "constexpr std::size_t " <> name <> "::leg_count;",
     "constexpr std::size_t " <> name <> "::parameter_count;", "",
-    name <> "::" <> name <> "() : " <> name <> "(default_parameters()) {}",
-    name <> "::" <> name <> "(const Parameters& values) { set_parameters(values); }",
-    name <> "::Parameters " <> name <> "::default_parameters() { return Parameters" <> defaults <> "; }",
-    name <> "::Spins " <> name <> "::default_spins() { return Spins" <> spinDefaults <> "; }",
-    "std::array<std::size_t,2> " <> name <> "::incoming_legs() { return " <> incoming <> "; }", "",
+    "// Model parameters and external states.",
+    name <> "::" <> name <> "() : " <> name <> "(default_parameters()) {}", "",
+    name <> "::" <> name <> "(const Parameters& values) {",
+    "  set_parameters(values);", "}", "",
+    name <> "::Parameters " <> name <> "::default_parameters() {",
+    "  return Parameters{{"}, defaults, {
+    "  }};", "}", "",
+    name <> "::Spins " <> name <> "::default_spins() {",
+    "  return Spins" <> spinDefaults <> ";", "}", "",
+    "std::array<std::size_t, 2> " <> name <> "::incoming_legs() {",
+    "  return " <> incoming <> ";", "}", "",
     "void " <> name <> "::set_parameters(const Parameters& values) {",
     "  momenta_ready = false;",
-    "  for (const auto& value : values) if (!finite_complex(value))",
-    "    throw std::invalid_argument(\"Model parameters must be finite.\");",
-    "  parameters = values;"}, massLines, {
-    "  static const std::array<int,leg_count> ranks = " <> spinasCppArray[ToString /@ spin2] <> ";",
-    "  static const std::array<bool,leg_count> originally_massless = " <>
+    "  for (const auto& value : values) {",
+    "    if (!finite_complex(value)) {",
+    "      throw std::invalid_argument(\"Model parameters must be finite.\");",
+    "    }", "  }",
+    "  parameters = values;", ""}, massLines, {"",
+    "  static const std::array<int, leg_count> ranks = " <> spinasCppArray[ToString /@ spin2] <> ";",
+    "  static const std::array<bool, leg_count> originally_massless = " <>
       spinasCppArray[If[TrueQ[#==0],"true","false"]& /@ massValues] <> ";",
-    "  for (std::size_t i=0; i<leg_count; ++i) if (ranks[i]>0 &&",
-    "      (external_masses[i]==0) != originally_massless[i])",
-    "    throw std::invalid_argument(\"Changing between massive and massless spin states requires re-exporting the process.\");",
-    "  for (std::size_t i=0; i<leg_count; ++i) particles[i] = spinas::particle(external_masses[i]);",
+    "  for (std::size_t i = 0; i < leg_count; ++i) {",
+    "    if (ranks[i] > 0 && (external_masses[i] == 0) != originally_massless[i]) {",
+    "      throw std::invalid_argument(",
+    "        \"Changing between massive and massless spin states requires re-exporting the process.\");",
+    "    }",
+    "    particles[i] = spinas::particle(external_masses[i]);", "  }",
     "}", "", "void " <> name <> "::set_momenta(const Momenta& values) {",
     "  const auto validation = validate_momenta(values, external_masses, incoming_legs());",
-    "  if (!validation.valid) throw std::invalid_argument(validation.message);",
-    "  momenta_ready = false; momenta = values;",
-    "  for (std::size_t i=0; i<leg_count; ++i) particles[i].set_momentum(momenta[i].data());",
+    "  if (!validation.valid) {",
+    "    throw std::invalid_argument(validation.message);", "  }",
+    "  momenta_ready = false;",
+    "  momenta = values;",
+    "  for (std::size_t i = 0; i < leg_count; ++i) {",
+    "    particles[i].set_momentum(momenta[i].data());", "  }",
     "  momenta_ready = true;", "}", "",
-    "cdouble " <> name <> "::component(const std::vector<std::vector<int>>& spinor_spins) {"}, chainLines, {
-    "  return " <> ir["ExpressionCpp"] <> ";", "}", "",
+    "// Amplitude formula. Momenta have already been crossed during export.",
+    "cdouble " <> name <> "::component(const std::vector<std::vector<int>>& spinor_spins) {"}, componentLines, {
+    "}", "",
+    "// Normalize and symmetrize massive external spin states.",
     "cdouble " <> name <> "::amp(const Spins& spins) {",
-    "  if (!momenta_ready) throw std::logic_error(\"Call set_momenta before amp.\");",
-    "  static const std::array<int,leg_count> ranks = " <> spinasCppArray[ToString /@ spin2] <> ";",
-    "  static const std::array<int,leg_count> helicities = " <> spinasCppArray[ToString /@ helicities] <> ";",
+    "  if (!momenta_ready) {",
+    "    throw std::logic_error(\"Call set_momenta before amp.\");", "  }",
+    "  static const std::array<int, leg_count> ranks = " <> spinasCppArray[ToString /@ spin2] <> ";",
+    "  static const std::array<int, leg_count> helicities = " <> spinasCppArray[ToString /@ helicities] <> ";", "",
     "  std::vector<std::vector<std::vector<int>>> assignments(leg_count);",
-    "  std::vector<std::vector<int>> spinor_spins(leg_count); ldouble normalization=1;",
-    "  for (std::size_t i=0; i<leg_count; ++i) {",
+    "  std::vector<std::vector<int>> spinor_spins(leg_count);",
+    "  ldouble normalization = 1;", "",
+    "  for (std::size_t i = 0; i < leg_count; ++i) {",
     "    if (external_masses[i] == 0) {",
-    "      if (spins[i] != helicities[i]) throw std::invalid_argument(\"This process has fixed massless helicities.\");",
-    "      assignments[i] = spinor_assignments(0,0);",
+    "      if (spins[i] != helicities[i]) {",
+    "        throw std::invalid_argument(\"This process has fixed massless helicities.\");", "      }",
+    "      assignments[i] = spinor_assignments(0, 0);",
     "    } else {",
-    "      assignments[i] = spinor_assignments(ranks[i],spins[i]);",
-    "      normalization *= spinor_normalization(ranks[i],spins[i]);",
-    "    }", "  }",
+    "      assignments[i] = spinor_assignments(ranks[i], spins[i]);",
+    "      normalization *= spinor_normalization(ranks[i], spins[i]);",
+    "    }", "  }", "",
     "  std::function<cdouble(std::size_t)> sum = [&](std::size_t leg) -> cdouble {",
-    "    if (leg == leg_count) return component(spinor_spins);",
-    "    cdouble result(0,0); for (const auto& indices : assignments[leg]) {",
-    "      spinor_spins[leg] = indices; result += sum(leg+1);", "    } return result;", "  };",
+    "    if (leg == leg_count) {",
+    "      return component(spinor_spins);", "    }",
+    "    cdouble result(0, 0);",
+    "    for (const auto& indices : assignments[leg]) {",
+    "      spinor_spins[leg] = indices;",
+    "      result += sum(leg + 1);", "    }",
+    "    return result;", "  };", "",
     "  return normalization * sum(0);", "}", "",
+    "// Sum |M|^2 over the massive spins at the fixed massless helicities.",
     "ldouble " <> name <> "::spin_sum() {",
-    "  static const std::array<int,leg_count> ranks = " <> spinasCppArray[ToString /@ spin2] <> ";",
-    "  Spins spins = default_spins();",
+    "  static const std::array<int, leg_count> ranks = " <> spinasCppArray[ToString /@ spin2] <> ";",
+    "  Spins spins = default_spins();", "",
     "  std::function<ldouble(std::size_t)> sum = [&](std::size_t leg) -> ldouble {",
-    "    if (leg == leg_count) return std::norm(amp(spins));",
-    "    if (external_masses[leg] == 0 || ranks[leg] == 0) return sum(leg+1);",
-    "    ldouble result=0; for (int ds=-ranks[leg]; ds<=ranks[leg]; ds+=2) {",
-    "      spins[leg]=ds; result += sum(leg+1);", "    } return result;", "  };",
+    "    if (leg == leg_count) {",
+    "      return std::norm(amp(spins));", "    }",
+    "    if (external_masses[leg] == 0 || ranks[leg] == 0) {",
+    "      return sum(leg + 1);", "    }",
+    "    ldouble result = 0;",
+    "    for (int ds = -ranks[leg]; ds <= ranks[leg]; ds += 2) {",
+    "      spins[leg] = ds;",
+    "      result += sum(leg + 1);", "    }",
+    "    return result;", "  };", "",
     "  return sum(0);", "}", "",
     "ldouble " <> name <> "::amp2() {",
-    "  static const std::array<int,leg_count> ranks = " <> spinasCppArray[ToString /@ spin2] <> ";",
-    "  ldouble average=1; for (const auto i : incoming_legs())",
-    "    if (external_masses[i] != 0) average *= ranks[i]+1;",
-    "  return spin_sum()/average;", "}", "} // namespace hepcat_generated", ""}], "\n"]
+    "  static const std::array<int, leg_count> ranks = " <> spinasCppArray[ToString /@ spin2] <> ";",
+    "  ldouble average = 1;",
+    "  for (const auto i : incoming_legs()) {",
+    "    if (external_masses[i] != 0) {",
+    "      average *= ranks[i] + 1;", "    }", "  }",
+    "  return spin_sum() / average;", "}", "", "} // namespace hepcat_generated", ""}], "\n"]
 ];
 
 spinasProjectMain[name_String] := StringRiffle[{
   "#include \"process.hpp\"", "#include <iomanip>", "#include <iostream>",
-  "#include <stdexcept>", "", "int main() { try {",
-  "  using Process = hepcat_generated::" <> name <> ";",
-  "  Process process; const auto incoming = Process::incoming_legs();",
-  "  const ldouble energy = hepcat_spinas::example_center_of_mass_energy(process.masses(), incoming);",
-  "  std::cout << std::setprecision(18);",
-  "  std::cout << \"HEPCAT/SPINAS physical 2-to-N examples; fixed massless helicities.\\n\";",
-  "  for (unsigned point=0; point<3; ++point) {",
-  "    const auto momenta = hepcat_spinas::make_example_momenta(process.masses(), incoming, energy, point);",
-  "    const auto check = hepcat_spinas::validate_momenta(momenta,process.masses(),incoming);",
-  "    if (!check.valid) throw std::runtime_error(check.message);",
-  "    process.set_momenta(momenta); const auto spins = Process::default_spins();",
-  "    const auto amplitude = process.amp(spins); const auto averaged = process.amp2();",
-  "    if (!hepcat_spinas::finite_complex(amplitude) || !std::isfinite(averaged))",
-  "      throw std::runtime_error(\"An example amplitude is not finite.\");",
-  "    std::cout << \"Point \" << point+1 << \"; sqrt(s) = \" << energy << '\\n';",
-  "    for (std::size_t i=0; i<Process::leg_count; ++i) {",
-  "      std::cout << \"  p\" << i+1 << \" =\"; for (const auto x : momenta[i]) std::cout << ' ' << x;",
-  "      std::cout << '\\n';", "    }",
-  "    std::cout << \"  conservation/shell scaled error = \" << check.maximum_scaled_error << '\\n'",
-  "      << \"  amplitude(default doubled spins) = \" << amplitude << '\\n'",
-  "      << \"  fixed-helicity, initial-spin-averaged |M|^2 = \" << averaged << '\\n';",
-  "  }", "  std::cout << \"No identical-particle phase-space factor is included.\\n\";",
-  "  return 0;", "} catch (const std::exception& error) {",
-  "  std::cerr << \"Example failed: \" << error.what() << '\\n'; return 1;", "} }", ""}, "\n"];
+  "#include <stdexcept>", "", "int main() {", "  try {",
+  "    using Process = hepcat_generated::" <> name <> ";",
+  "    Process process;",
+  "    const auto incoming = Process::incoming_legs();",
+  "    const ldouble energy = hepcat_spinas::example_center_of_mass_energy(",
+  "      process.masses(), incoming);", "",
+  "    std::cout << std::setprecision(18);",
+  "    std::cout << \"HEPCAT/SPINAS physical 2-to-N examples; fixed massless helicities.\\n\";",
+  "    for (unsigned point = 0; point < 3; ++point) {",
+  "      const auto momenta = hepcat_spinas::make_example_momenta(",
+  "        process.masses(), incoming, energy, point);",
+  "      const auto check = hepcat_spinas::validate_momenta(",
+  "        momenta, process.masses(), incoming);",
+  "      if (!check.valid) {",
+  "        throw std::runtime_error(check.message);", "      }", "",
+  "      process.set_momenta(momenta);",
+  "      const auto spins = Process::default_spins();",
+  "      const auto amplitude = process.amp(spins);",
+  "      const auto averaged = process.amp2();",
+  "      if (!hepcat_spinas::finite_complex(amplitude) || !std::isfinite(averaged)) {",
+  "        throw std::runtime_error(\"An example amplitude is not finite.\");", "      }", "",
+  "      std::cout << \"Point \" << point + 1 << \"; sqrt(s) = \" << energy << '\\n';",
+  "      for (std::size_t i = 0; i < Process::leg_count; ++i) {",
+  "        std::cout << \"  p\" << i + 1 << \" =\";",
+  "        for (const auto x : momenta[i]) {",
+  "          std::cout << ' ' << x;", "        }",
+  "        std::cout << '\\n';", "      }",
+  "      std::cout << \"  conservation/shell scaled error = \" << check.maximum_scaled_error << '\\n'",
+  "        << \"  amplitude(default doubled spins) = \" << amplitude << '\\n'",
+  "        << \"  fixed-helicity, initial-spin-averaged |M|^2 = \" << averaged << '\\n';",
+  "    }", "    std::cout << \"No identical-particle phase-space factor is included.\\n\";",
+  "    return 0;", "  } catch (const std::exception& error) {",
+  "    std::cerr << \"Example failed: \" << error.what() << '\\n';",
+  "    return 1;", "  }", "}", ""}, "\n"];
 
 spinasProjectCMake[name_String, root_String, precision_String] := StringRiffle[{
   "cmake_minimum_required(VERSION 3.10)", "project(" <> name <> " LANGUAGES CXX)",
@@ -554,6 +794,9 @@ spinasProjectREADME[name_String, ir_Association, precision_String] := StringRiff
     StringRiffle[ToString /@ ir["IncomingLegs"], ", "] <> " are incoming; all other legs are outgoing.",
   "Outgoing momenta and angle spinors were crossed from the supplied all-ingoing expression. Propagators remain off shell.",
   "HEPCAT's explicit +i*m*width denominator convention is preserved rather than replaced by SPINAS's opposite-width convention.", "",
+  "## Read the formulas", "",
+  "process.cpp names spinor products in the native SPINAS style, such as a12a and s314a, with bracket comments. Model parameters have named local aliases, propagators and scalar invariants are evaluated once per component, and long formulas are split into numerator and denominator blocks.",
+  "The separate spin and helicity dispatch code supplies normalized tensor projections and reuses canonical formulas through signed leg maps. This is general support code, not a claim of greater speed than a hand-optimized native SPINAS process. Export formatting does not simplify or change the supplied amplitude.", "",
   "## Build and run", "", "```sh", "cmake -S . -B build -DSPINAS_ROOT=/path/to/spinas",
   "cmake --build build --parallel", "./build/" <> name, "ctest --test-dir build --output-on-failure", "```", "",
   "This project uses the " <> precision <> " SPINAS ABI. It must match the library build; re-export with Precision if required.",
@@ -834,7 +1077,10 @@ spinasFamilyIR[entries_List, model_List, options_Association, physicalSpec_:Auto
         ("parameters[" <> ToString[First[FirstPosition[symbols, #1]] - 1] <> "]") &, local]];
     rebind[component_Association] := Join[component, <|
       "ExpressionCpp" -> rewriteCpp[component["ExpressionCpp"], component["ParameterSymbols"]],
+      "ExpressionPieces" -> (component["ExpressionPieces"] /.
+        text_String :> rewriteCpp[text, component["ParameterSymbols"]]),
       "ChainStatements" -> (rewriteCpp[#, component["ParameterSymbols"]] & /@ component["ChainStatements"]),
+      "ScalarStatements" -> (rewriteCpp[#, component["ParameterSymbols"]] & /@ component["ScalarStatements"]),
       "MassCpp" -> (rewriteCpp[#, component["ParameterSymbols"]] & /@ component["MassCpp"]),
       "ParameterSymbols" -> symbols, "ParameterNames" -> names,
       "ParameterDefaults" -> defaults|>];
@@ -863,90 +1109,141 @@ spinasFamilyProjectHeader[name_String, ir_Association] := Module[{header, scalar
   header = spinasProjectHeader[name, ir];
   scalarArguments = StringRiffle[Table["int ds" <> ToString[i], {i, ir["LegCount"]}], ", "];
   scalarValues = spinasCppArray[Table["ds" <> ToString[i], {i, ir["LegCount"]}]];
-  declarations = StringRiffle[Table[
-    "  cdouble component_" <> ToString[i - 1] <>
-      "(const std::vector<std::vector<int>>& spinor_spins, const ParticleView& particle_view, const Momenta& momenta);",
-    {i, ir["InputBranchCount"]}], "\n"];
+  declarations = StringRiffle[Map[Function[component, StringRiffle[{
+    "  cdouble " <> spinasComponentName[component] <> "(",
+    "    const std::vector<std::vector<int>>& spinor_spins,",
+    "    const ParticleView& particle_view, const Momenta& momenta);"}, "\n"]],
+    ir["FamilyComponents"]], "\n\n"];
   StringReplace[header, {
     "  using Spins = std::array<int, leg_count>;" ->
-      "  using Spins = std::array<int, leg_count>;\n  static constexpr std::size_t helicity_count = " <>
-        ToString[Length[ir["HelicityConfigurations"]]] <> ";\n  static std::array<Spins, helicity_count> helicity_configurations();\n" <>
+      "  using Spins = std::array<int, leg_count>;\n\n  static constexpr std::size_t helicity_count = " <>
+        ToString[Length[ir["HelicityConfigurations"]]] <> ";\n" <>
+        "  static std::array<Spins, helicity_count> helicity_configurations();\n" <>
         "  static ldouble incoming_spin_average();\n  static ldouble symmetry_factor();",
     "  cdouble amp(const Spins& spins);" -> "  cdouble amp(const Spins& spins);",
-    "  ldouble spin_sum();" -> "  cdouble amp(" <> scalarArguments <> ") { return amp(Spins" <> scalarValues <> "); }\n  ldouble spin_sum();",
+    "  ldouble spin_sum();" -> "  cdouble amp(" <> scalarArguments <> ") {\n" <>
+      "    return amp(Spins" <> scalarValues <> ");\n  }\n\n  ldouble spin_sum();",
     "  cdouble component(const std::vector<std::vector<int>>& spinor_spins);" ->
-      "  using ParticleView = std::array<spinas::particle*, leg_count>;\n" <>
-      "  cdouble component(std::size_t source, const std::vector<std::vector<int>>& spinor_spins, const ParticleView& particle_view, const Momenta& momenta);\n" <> declarations}]
+      "  using ParticleView = std::array<spinas::particle*, leg_count>;\n\n" <>
+      "  cdouble component(\n    std::size_t source, const std::vector<std::vector<int>>& spinor_spins,\n" <>
+      "    const ParticleView& particle_view, const Momenta& momenta);\n\n" <> declarations}]
 ];
 
 spinasFamilyProjectSource[name_String, ir_Association] := Module[
   {n = ir["LegCount"], ranks = ir["Spin2"], components = ir["FamilyComponents"],
-   branches = ir["Branches"], prefix, componentCode, endpointRules, configurations,
-   permutationRows, sourceIndices, signs, rankArray, dispatchCases, k},
+   branches = ir["Branches"], prefix, componentCode, configurationRows,
+   permutationRows, sourceIndices, signs, rankArray, dispatchCases, helicityLabel},
   prefix = First[StringSplit[spinasProjectSource[name, ir], "cdouble " <> name <> "::component(", 2]];
   prefix = StringReplace[prefix, "constexpr std::size_t " <> name <> "::parameter_count;" ->
     "constexpr std::size_t " <> name <> "::parameter_count;\nconstexpr std::size_t " <> name <> "::helicity_count;"];
-  endpointRules = Table[("particles[" <> ToString[i - 1] <> "].") ->
-    ("particle_view[" <> ToString[i - 1] <> "]->"), {i, n}];
-  componentCode = StringRiffle[MapIndexed[Function[{component, index}, StringRiffle[Join[{
-      "cdouble " <> name <> "::component_" <> ToString[First[index] - 1] <>
-        "(const std::vector<std::vector<int>>& spinor_spins, const ParticleView& particle_view, const Momenta& momenta) {"},
-      ("  " <> StringReplace[#, endpointRules] &) /@ component["ChainStatements"], {
-      "  return " <> StringReplace[component["ExpressionCpp"], endpointRules] <> ";", "}", ""}], "\n"]], components], "\n"];
-  dispatchCases = Table["    case " <> ToString[i - 1] <> ": return component_" <> ToString[i - 1] <>
-    "(spinor_spins,particle_view,momenta);", {i, Length[components]}];
-  configurations = spinasCppArray[spinasCppArray[ToString /@ #] & /@ ir["HelicityConfigurations"]];
-  permutationRows = spinasCppArray[spinasCppArray[ToString /@ (#["LegPermutation"] - 1)] & /@ branches];
+  componentCode = StringRiffle[Map[Function[component, StringRiffle[Join[{
+      "cdouble " <> name <> "::" <> spinasComponentName[component] <> "(",
+      "  const std::vector<std::vector<int>>& spinor_spins,",
+      "  const ParticleView& particle_view, const Momenta& momenta) {"},
+      spinasReadableComponentBody[component, True], {"}", ""}], "\n"]], components], "\n"];
+  dispatchCases = Flatten[Table[{
+    "    case " <> ToString[i - 1] <> ":",
+    "      return " <> spinasComponentName[components[[i]]] <>
+      "(spinor_spins, particle_view, momenta);"}, {i, Length[components]}]];
+  helicityLabel[configuration_List] := "doubled helicities: " <>
+    StringRiffle[ToString /@ configuration, ", "];
+  configurationRows = MapIndexed["    " <> spinasCppArray[ToString /@ #1] <>
+    If[First[#2] < Length[branches], ",", ""] <> " // " <> helicityLabel[#1] &,
+    ir["HelicityConfigurations"]];
+  permutationRows = MapIndexed["    " <> spinasCppArray[ToString /@ (#1["LegPermutation"] - 1)] <>
+    If[First[#2] < Length[branches], ",", ""] <> " // " <> helicityLabel[#1["Helicities"]] &,
+    branches];
   sourceIndices = spinasCppArray[ToString /@ (Lookup[branches, "InputIndex"] - 1)];
   signs = spinasCppArray[ToString /@ Lookup[branches, "FermionSign"]];
   rankArray = spinasCppArray[ToString /@ ranks];
   prefix <> componentCode <> StringRiffle[Join[{
-    "cdouble " <> name <> "::component(std::size_t source, const std::vector<std::vector<int>>& spinor_spins, const ParticleView& particle_view, const Momenta& momenta) {",
+    "// Reuse each canonical formula for its identical-particle-related helicities.",
+    "cdouble " <> name <> "::component(",
+    "  std::size_t source, const std::vector<std::vector<int>>& spinor_spins,",
+    "  const ParticleView& particle_view, const Momenta& momenta) {",
     "  switch (source) {"}, dispatchCases, {
-    "    default: throw std::logic_error(\"Unknown generated helicity component.\");", "  }", "}", "",
-    "std::array<" <> name <> "::Spins," <> name <> "::helicity_count> " <> name <> "::helicity_configurations() {",
-    "  return std::array<Spins,helicity_count>" <> configurations <> ";", "}", "",
-    "ldouble " <> name <> "::incoming_spin_average() { return " <> spinasCppReal[ir["InitialSpinAverage"]] <> "; }",
-    "ldouble " <> name <> "::symmetry_factor() { return " <> spinasCppReal[ir["SymmetryFactor"]] <> "; }", "",
+    "    default:", "      throw std::logic_error(\"Unknown generated helicity component.\");",
+    "  }", "}", "",
+    "std::array<" <> name <> "::Spins, " <> name <> "::helicity_count>",
+    name <> "::helicity_configurations() {",
+    "  // Massless doubled helicities; massive spins are supplied to amp(...).",
+    "  return std::array<Spins, helicity_count>{{"}, configurationRows, {
+    "  }};", "}", "",
+    "ldouble " <> name <> "::incoming_spin_average() {",
+    "  return " <> spinasCppReal[ir["InitialSpinAverage"]] <> ";", "}", "",
+    "ldouble " <> name <> "::symmetry_factor() {",
+    "  return " <> spinasCppReal[ir["SymmetryFactor"]] <> ";", "}", "",
+    "// Select a helicity branch, then project the massive spin tensors.",
     "cdouble " <> name <> "::amp(const Spins& spins) {",
-    "  if (!momenta_ready) throw std::logic_error(\"Call set_momenta before amp.\");",
-    "  static const std::array<int,leg_count> ranks = " <> rankArray <> ";",
-    "  static const std::array<std::array<std::size_t,leg_count>,helicity_count> permutations = " <> permutationRows <> ";",
-    "  static const std::array<std::size_t,helicity_count> sources = " <> sourceIndices <> ";",
-    "  static const std::array<int,helicity_count> signs = " <> signs <> ";",
-    "  const auto configurations = helicity_configurations(); std::size_t branch=helicity_count;",
-    "  for (std::size_t candidate=0; candidate<helicity_count; ++candidate) {",
-    "    bool match=true; for (std::size_t i=0; i<leg_count; ++i)",
-    "      if (external_masses[i]==0 && spins[i]!=configurations[candidate][i]) match=false;",
-    "    if (match) { branch=candidate; break; }", "  }",
-    "  if (branch==helicity_count) throw std::invalid_argument(\"No supplied or identical-particle-related amplitude has these massless helicities.\");",
-    "  ParticleView particle_view; Momenta selected_momenta;",
-    "  for (std::size_t i=0; i<leg_count; ++i) {",
-    "    particle_view[i]=&particles[permutations[branch][i]]; selected_momenta[i]=momenta[permutations[branch][i]];", "  }",
+    "  if (!momenta_ready) {",
+    "    throw std::logic_error(\"Call set_momenta before amp.\");", "  }",
+    "  static const std::array<int, leg_count> ranks = " <> rankArray <> ";", "",
+    "  // Canonical formula leg -> physical process leg (zero-based indices).",
+    "  static const std::array<std::array<std::size_t, leg_count>, helicity_count> permutations = {{"},
+    permutationRows, {
+    "  }};",
+    Sequence @@ spinasReadableCppLines[
+      "static const std::array<std::size_t, helicity_count> sources = " <> sourceIndices <> ";"],
+    Sequence @@ spinasReadableCppLines[
+      "static const std::array<int, helicity_count> signs = " <> signs <> ";"], "",
+    "  const auto configurations = helicity_configurations();",
+    "  std::size_t branch = helicity_count;",
+    "  for (std::size_t candidate = 0; candidate < helicity_count; ++candidate) {",
+    "    bool match = true;",
+    "    for (std::size_t i = 0; i < leg_count; ++i) {",
+    "      if (external_masses[i] == 0 && spins[i] != configurations[candidate][i]) {",
+    "        match = false;", "      }", "    }",
+    "    if (match) {", "      branch = candidate;", "      break;", "    }", "  }",
+    "  if (branch == helicity_count) {",
+    "    throw std::invalid_argument(",
+    "      \"No supplied or identical-particle-related amplitude has these massless helicities.\");", "  }", "",
+    "  ParticleView particle_view;",
+    "  Momenta selected_momenta;",
+    "  for (std::size_t i = 0; i < leg_count; ++i) {",
+    "    particle_view[i] = &particles[permutations[branch][i]];",
+    "    selected_momenta[i] = momenta[permutations[branch][i]];", "  }", "",
     "  std::vector<std::vector<std::vector<int>>> assignments(leg_count);",
-    "  std::vector<std::vector<int>> spinor_spins(leg_count); ldouble normalization=1;",
-    "  for (std::size_t i=0; i<leg_count; ++i) {",
-    "    if (external_masses[i]==0) assignments[i]=spinor_assignments(0,0);",
-    "    else { assignments[i]=spinor_assignments(ranks[i],spins[i]);",
-    "      normalization*=spinor_normalization(ranks[i],spins[i]); }", "  }",
+    "  std::vector<std::vector<int>> spinor_spins(leg_count);",
+    "  ldouble normalization = 1;", "",
+    "  for (std::size_t i = 0; i < leg_count; ++i) {",
+    "    if (external_masses[i] == 0) {",
+    "      assignments[i] = spinor_assignments(0, 0);",
+    "    } else {",
+    "      assignments[i] = spinor_assignments(ranks[i], spins[i]);",
+    "      normalization *= spinor_normalization(ranks[i], spins[i]);", "    }", "  }", "",
     "  std::function<cdouble(std::size_t)> sum = [&](std::size_t leg) -> cdouble {",
-    "    if (leg==leg_count) return component(sources[branch],spinor_spins,particle_view,selected_momenta);",
-    "    cdouble result(0,0); for (const auto& indices : assignments[leg]) {",
-    "      spinor_spins[leg]=indices; result+=sum(leg+1);", "    } return result;", "  };",
-    "  return ldouble(signs[branch])*normalization*sum(0);", "}", "",
+    "    if (leg == leg_count) {",
+    "      return component(sources[branch], spinor_spins, particle_view, selected_momenta);", "    }",
+    "    cdouble result(0, 0);",
+    "    for (const auto& indices : assignments[leg]) {",
+    "      spinor_spins[leg] = indices;",
+    "      result += sum(leg + 1);", "    }",
+    "    return result;", "  };", "",
+    "  return ldouble(signs[branch]) * normalization * sum(0);", "}", "",
+    "// Sum all requested massless helicities and massive external spins.",
     "ldouble " <> name <> "::spin_sum() {",
-    "  static const std::array<int,leg_count> ranks = " <> rankArray <> ";",
-    "  ldouble result=0;",
+    "  static const std::array<int, leg_count> ranks = " <> rankArray <> ";",
+    "  ldouble result = 0;", "",
     "  for (const auto& helicities : helicity_configurations()) {",
-    "    Spins spins=default_spins(); for (std::size_t i=0; i<leg_count; ++i)",
-    "      if (external_masses[i]==0) spins[i]=helicities[i];",
+    "    Spins spins = default_spins();",
+    "    for (std::size_t i = 0; i < leg_count; ++i) {",
+    "      if (external_masses[i] == 0) {",
+    "        spins[i] = helicities[i];", "      }", "    }", "",
     "    std::function<ldouble(std::size_t)> sum = [&](std::size_t leg) -> ldouble {",
-    "      if (leg==leg_count) return std::norm(amp(spins));",
-    "      if (external_masses[leg]==0 || ranks[leg]==0) return sum(leg+1);",
-    "      ldouble value=0; for (int spin=-ranks[leg]; spin<=ranks[leg]; spin+=2) {",
-    "        spins[leg]=spin; value+=sum(leg+1);", "      } return value;", "    };",
-    "    result+=sum(0);", "  } return result;", "}", "",
-    "ldouble " <> name <> "::amp2() { return spin_sum()*symmetry_factor()/incoming_spin_average(); }",
+    "      if (leg == leg_count) {",
+    "        return std::norm(amp(spins));", "      }",
+    "      if (external_masses[leg] == 0 || ranks[leg] == 0) {",
+    "        return sum(leg + 1);", "      }",
+    "      ldouble value = 0;",
+    "      for (int spin = -ranks[leg]; spin <= ranks[leg]; spin += 2) {",
+    "        spins[leg] = spin;",
+    "        value += sum(leg + 1);", "      }",
+    "      return value;", "    };", "",
+    "    result += sum(0);", "  }",
+    "  return result;", "}", "",
+    "// Initial-state average and final-state identical-particle phase-space factor.",
+    "ldouble " <> name <> "::amp2() {",
+    "  return spin_sum() * symmetry_factor() / incoming_spin_average();", "}", "",
     "} // namespace hepcat_generated", ""}], "\n"]
 ];
 

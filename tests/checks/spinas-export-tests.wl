@@ -41,6 +41,13 @@ check["exporting is separate from opt-in compilation and execution",
     ("RunExamples" /. Options[WriteSPINASProcess]) === False &&
     ("Overwrite" /. Options[WriteSPINASProcess]) === False &&
     ("ReturnDetails" /. Options[WriteSPINASProcess]) === False];
+seCppLiteralValue[value_] := Quiet[Check[ToExpression[StringReplace[
+  ConstructiveDiagrams`Private`spinasCppReal[value],
+  {"ldouble(" -> "", "L)" -> "", "e" -> "*^"}]], $Failed]];
+check["short numerical literals retain leading fractional zeros",
+  Abs[seCppLiteralValue[1/100000] - N[1/100000]] < 10^-18];
+check["short numerical literals retain significant internal zeros",
+  Abs[seCppLiteralValue[1001/10000000] - N[1001/10000000]] < 10^-18];
 sePlainDirectory = WriteSPINASProcess[sePath["plain project with spaces"],
   {"e", "E", "A.+", "A.+"}, seFourPP, seModel,
   "ParameterRules" -> seRules, "SPINASDirectory" -> seSpinas];
@@ -54,6 +61,11 @@ check["generated code uses SPINAS without unresolved Wolfram notation",
   StringContainsQ[sePlainHeader <> sePlainSource, "spinas::particle"] &&
     !StringContainsQ[sePlainHeader <> sePlainSource,
       {"SpinorChain[", "ModelParameter[", "PropDen[", "Power["}]];
+check["the actual process source names familiar parameters, spinor products and physical poles",
+  AllTrue[{"Me", "EE", "a12a", "t13", "t14"},
+    StringContainsQ[sePlainSource, RegularExpression["\\b" <> # <> "\\b"]] &]];
+check["ordinary integer powers and propagators use multiplication and division",
+  StringContainsQ[sePlainSource, " / "] && !StringContainsQ[sePlainSource, "std::pow"]];
 check["legacy expression formatting remains available",
   SPINAS[seA[3, 4]] === "a34a.v()" &&
     DeclareSPINASSpinorProducts[2 seA[3, 4]] === "//Spinor Products\n sproduct a34a;"];
@@ -99,6 +111,44 @@ seGeneric = seModel;
 seGeneric[[1]] = Join[seGeneric[[1]], {
   {"fixture scalar", "h", "h", 100, 0, 0, 0, 1, 1, "h", "h"},
   {"fixture vector", "V", "V", 101, 2, seMass, 0, 1, 1, "V", "V"}}];
+(* Names that overlap with physics caches, C++ keywords or punctuation must
+   stay separate without changing the model parameters or the formula. *)
+seReadableParameters = ModelParameter[#, "spinas-readable-export", "Real"] & /@
+  {"t13", "class", "a12a", "g/e", "line\n\\"};
+seReadableValues = {2/7, 3/5, 5/11, 7/13, 2};
+seReadableModel = seGeneric;
+seReadableModel[[1]] = Append[seReadableModel[[1]],
+  {"readable massive scalar", "r", "r", 992, 0, seMass, 0, 1, 1, "r", "r"}];
+seReadableModel[[3]] = Join[seReadableModel[[3]],
+  Transpose[{seReadableParameters, seReadableValues}]];
+seReadableExpression =
+  (seReadableParameters[[1]] + seReadableParameters[[2]] MomProd[1, 3]) *
+    (1 + seReadableParameters[[3]]^2 (1 + seReadableParameters[[4]] MomProd[1, 3])) /
+    PropDen[Mom[Multiparticle[1, 3]], seMass] +
+  (seReadableParameters[[3]] + seReadableParameters[[4]] MomProd[1, 3]) /
+    PropDen[Mom[Multiparticle[1, 3]], seReadableParameters[[5]]];
+seReadableBefore = {seReadableModel, seReadableExpression};
+seReadable = seExport["readable_collisions", ConstantArray["r", 4],
+  seReadableExpression, seReadableModel];
+check["readable names support punctuation, newlines, keywords and cache-name collisions",
+  AssociationQ[seReadable] && DirectoryQ[seReadable["Directory"]]];
+seReadableIR = ConstructiveDiagrams`Private`spinasProcessIR[
+  ConstantArray["r", 4], seReadableExpression, seReadableModel,
+  <|"ParameterRules" -> seRules|>];
+check["the same cut at distinct masses retains two independent cached propagators",
+  AssociationQ[seReadableIR] &&
+    Count[seReadableIR["ScalarExpressions"], _PropDen] === 2 &&
+    DuplicateFreeQ[seReadableIR["ScalarNames"]]];
+check["repeated momentum products share one cached kinematic invariant",
+  AssociationQ[seReadableIR] && Count[seReadableIR["ScalarExpressions"], _MomProd] === 1];
+If[AssociationQ[seReadable],
+  seReadableSource = Import[seReadable["Files"]["Source"], "Text"];
+  check["nontrivial numerator and denominator expressions are wrapped in the saved source",
+    Max[StringLength /@ StringSplit[seReadableSource, "\n"]] <= 120 &&
+      StringContainsQ[seReadableSource, "parameter_"] &&
+      !StringContainsQ[seReadableSource, "std::pow"]]];
+check["readable export does not modify model data or its symbolic expression",
+  {seReadableModel, seReadableExpression} === seReadableBefore];
 seComplex = ModelParameter["gComplex", "spinas-export-tests", "Complex"];
 seComplexModel = seModel;
 seComplexModel[[3]] = Append[seComplexModel[[3]], {seComplex, I/7}];
@@ -139,6 +189,18 @@ check["implicit spin-bearing powers allocate every tensor slot",
   AssociationQ[sePowerIR] &&
     StringContainsQ[StringJoin[sePowerIR["ChainStatements"]], "spinor_spins[0][1]"] &&
     StringContainsQ[StringJoin[sePowerIR["ChainStatements"]], "spinor_spins[1][1]"]];
+seReadableSlots = SpinorChain[
+  Spinor["Spin", "Upper", "Angle", 1, VectorSpinIndex[1, 1]],
+  Spinor["Spin", "Upper", "Angle", 2, VectorSpinIndex[2, 1]]] SpinorChain[
+  Spinor["Spin", "Lower", "Angle", 1, VectorSpinIndex[1, 2]],
+  Spinor["Spin", "Lower", "Angle", 2, VectorSpinIndex[2, 2]]];
+seReadableSlotsIR = seTensorIR[seReadableSlots];
+check["readable chain names distinguish the same legs with different tensor slots and index variance",
+  AssociationQ[seReadableSlotsIR] && Length[seReadableSlotsIR["ChainNames"]] === 2 &&
+    DuplicateFreeQ[seReadableSlotsIR["ChainNames"]] &&
+    StringContainsQ[StringJoin[seReadableSlotsIR["ChainStatements"]], "false"]];
+seReadableSlotsProject = seExport["readable_tensor_slots", {"V", "V", "h", "h"},
+  seReadableSlots, seGeneric];
 seFactoredIR = seTensorIR[seVectorExpression (1 + seMass^2 + MomProd[1, 2])];
 check["implicit tensor allocation preserves factored scalar sums",
   AssociationQ[seFactoredIR] && Head[seFactoredIR["IndexedExpression"]] === Times &&
@@ -184,6 +246,71 @@ seLibraries = Select[FileNameJoin[{seSpinas, #, "libspinas.a"}] & /@ {"build", "
 seNativeAvailable = !seFailed[seCompiler] && seLibraries =!= {} &&
   FileExistsQ[FileNameJoin[{seSpinas, "include", "spinas.h"}]] &&
   FileExistsQ[FileNameJoin[{seSpinas, "SM", "eeAA.cpp"}]];
+If[seNativeAvailable && AllTrue[{seReadable, seReadableSlotsProject}, AssociationQ],
+  seReadableMain = StringRiffle[Join[
+    ("#include \"" <> #["Files"]["Header"] <> "\"") & /@
+      {seReadable, seReadableSlotsProject}, {
+    "#include <algorithm>", "#include <cmath>", "#include <iostream>",
+    "bool agrees(cdouble actual, cdouble expected) {",
+    "  return std::abs(actual - expected) <= ldouble(1e-12L) *",
+    "      std::max(ldouble(1), std::max(std::abs(actual), std::abs(expected)));",
+    "}", "int main() { try {",
+    "  using namespace hepcat_spinas;",
+    "  hepcat_generated::readable_collisions scalar;",
+    "  hepcat_generated::readable_tensor_slots tensor;",
+    "  for (unsigned point = 0; point < 3; ++point) {",
+    "    const auto momenta = make_example_momenta(scalar.masses(), scalar.incoming_legs(),",
+    "        example_center_of_mass_energy(scalar.masses(), scalar.incoming_legs()), point);",
+    "    scalar.set_momenta(momenta);",
+    "    FourMomentum transferred = momenta[0];",
+    "    for (std::size_t mu = 0; mu < 4; ++mu) transferred[mu] -= momenta[2][mu];",
+    "    const ldouble dot13 = -dot(momenta[0], momenta[2]);",
+    "    const ldouble invariant = mass2(transferred);",
+    "    const ldouble numerator1 = (ldouble(2)/7 + ldouble(3)/5 * dot13) *",
+    "        (1 + ldouble(25)/121 * (1 + ldouble(7)/13 * dot13));",
+    "    const ldouble numerator2 = ldouble(5)/11 + ldouble(7)/13 * dot13;",
+    "    const cdouble expected = numerator1/(invariant - 1) + numerator2/(invariant - 4);",
+    "    if (!agrees(scalar.amp(scalar.default_spins()), expected)) return 1;",
+    "    const auto tensor_momenta = make_example_momenta(tensor.masses(), tensor.incoming_legs(),",
+    "        example_center_of_mass_energy(tensor.masses(), tensor.incoming_legs()), point);",
+    "    tensor.set_momenta(tensor_momenta);",
+    "    spinas::particle p1(tensor.masses()[0]), p2(tensor.masses()[1]);",
+    "    p1.set_momentum(tensor_momenta[0].data());",
+    "    p2.set_momentum(tensor_momenta[1].data());",
+    "    for (int ds1 = -2; ds1 <= 2; ds1 += 2) {",
+    "      for (int ds2 = -2; ds2 <= 2; ds2 += 2) {",
+    "        cdouble expected_tensor(0, 0);",
+    "        for (const auto& one : spinor_assignments(2, ds1)) {",
+    "          for (const auto& two : spinor_assignments(2, ds2)) {",
+    "            expected_tensor += (p1.langle(one[0], true) * p2.rangle(two[0], true)) *",
+    "                (p1.langle(one[1], false) * p2.rangle(two[1], false));",
+    "          }",
+    "        }",
+    "        expected_tensor *= spinor_normalization(2, ds1) * spinor_normalization(2, ds2);",
+    "        if (!agrees(tensor.amp({{ds1, ds2, 0, 0}}), expected_tensor)) return 2;",
+    "      }",
+    "    }",
+    "  }",
+    "  std::cout << \"READABLE_EXPORT_COMPLEX_COMPARISONS=30\\n\"; return 0;",
+    "} catch (const std::exception& error) { std::cerr << error.what() << '\\n'; return 3; } }"}], "\n"];
+  seReadableOracle = sePath["readable_oracle.cpp"];
+  Export[seReadableOracle, seReadableMain, "Text"];
+  seReadablePrecision = If[FileExistsQ[FileNameJoin[{seSpinas, "build", "CMakeCache.txt"}]] &&
+      StringContainsQ[Import[FileNameJoin[{seSpinas, "build", "CMakeCache.txt"}], "Text"],
+        "PRECISION_TYPE:STRING=LONG_DOUBLE"], {"-DWITH_LONG_DOUBLE"}, {}];
+  seReadableExecutable = sePath["readable_oracle"];
+  seReadableCompiled = seRun[Join[{"c++", "-std=c++11", "-O1"}, seReadablePrecision,
+    {"-I" <> FileNameJoin[{seSpinas, "include"}], seReadableOracle,
+      seReadable["Files"]["Source"], seReadableSlotsProject["Files"]["Source"],
+      First[seLibraries], "-o", seReadableExecutable}]];
+  check["readable aliases and disambiguated tensor chains compile against SPINAS",
+    !seFailed[seReadableCompiled]];
+  If[!seFailed[seReadableCompiled],
+    seReadableRan = seRun[{seReadableExecutable}];
+    check["cache-name collisions, distinct propagator masses and upper/lower tensor slots preserve complex amplitudes",
+      !seFailed[seReadableRan] && StringContainsQ[seReadableRan["StandardOutput"],
+        "READABLE_EXPORT_COMPLEX_COMPARISONS=30"]],
+    Print["READABILITY ORACLE COMPILATION: ", seReadableCompiled]]];
 seCppMain[class_String, kind_Integer, h3_:2, h4_:2] := StringRiffle[{
   "#include \"process.hpp\"", "#include \"spinas-export-reference.hpp\"",
   "int main() { return hepcat_export_reference::run_process<hepcat_generated::" <>

@@ -463,6 +463,27 @@ configuration. Existing project files are protected unless
 `"Overwrite" -> True`; `"ReturnDetails" -> True` adds file paths and build/run
 reports.
 
+Generated `process.cpp` files use the familiar SPINAS product names: `a12a`
+for an angle bracket, `s34s` for a square bracket and `s314a` for a momentum
+chain. Comments display the corresponding bracket expression. The formulas
+use model parameter aliases such as `Me` and `EE`, named physical denominators
+such as `t13`, and separate, wrapped numerator and denominator expressions.
+Repeated scalar products and propagators are calculated once per component
+evaluation. Small powers of named primitives use multiplication and inverse
+factors use division.
+Names are disambiguated when spin slots, masses or model names coincide.
+
+The `helicity_pp`, `helicity_pm`, etc. methods contain the canonical formulas.
+The separate `amp` and `spin_sum` methods handle leg permutations and normalized
+spin projections. This keeps one compiled formula per supplied helicity sector
+without expanding every identical-particle permutation into another formula.
+The generic spin machinery is retained for arbitrary multiplicity and spin;
+the generated style is not claimed to outperform a hand-optimized native
+SPINAS process. Unlike native `sproduct` members, the local primitive aliases
+are recomputed for a component evaluation. The `ldouble` casts preserve
+compatibility with both SPINAS precision builds. Formatting changes do not
+simplify or otherwise alter the supplied amplitude.
+
 When building from desktop Mathematica, CMake is found on `PATH` or in standard
 installation locations, including the macOS CMake application and Homebrew.
 No shell setup is required. For a custom installation, set

@@ -440,6 +440,14 @@ Complex `amp` values preserve phases and explicit spin labels for future
 coherent production-decay contraction. Spin-summed probabilities cannot replace
 that contraction; no correlated production-decay engine is currently implied.
 The runnable exporter still requires two incoming legs.
+Generated formulas should remain readable in the style of native SPINAS
+processes: named model aliases, bracket/chain names, cached scalar denominators,
+ordinary division and wrapped numerator blocks. Preserve parameter rebinding
+across helicity families, collision-safe C++ names, massive spin-slot variance
+and signed leg maps. Comments derived from model names must not contain raw
+newlines or trailing backslashes. Formatting never licenses changing the
+amplitude or its crossing convention. Local primitive caches are not a claim
+of outperforming hand-written `sproduct` caches across spin evaluations.
 Colored families are currently rejected because no full color sum or average
 is available; do not invent color factors from the number of external colors.
 Resolve auxiliary spinors, shifts and explicit color tensors first.
