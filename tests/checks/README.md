@@ -370,6 +370,15 @@ diagram model is unchanged.
 
 ## SPINAS Process Export
 
+`spinas-native-project-tests.wl` checks native persistent product caches and
+direct helicity formulas against independent complex-amplitude calculations.
+Its compiled projects cover changing momenta and parameters, the mass setter,
+copying and assignment with pointer rebinding, vector relocation, composite
+and long-chain matrix evaluation, upper/lower massive-spin slots, reserved
+names, and simultaneous particle permutations of scalar invariants. It also
+checks that generated CalcHEP wrappers show named parameters and omit redundant
+copies for an unchanged external order.
+
 `spinas-calchep-tests.wl` is part of the normal suite and does not require a
 CalcHEP installation. It checks the generated API and unavailable-backend
 behavior, physical PDGs, external order, model selection, fixed-helicity/color

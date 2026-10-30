@@ -58,7 +58,8 @@ check["the generated project includes callable validation and its portable runti
 scHeader = Import[FileNameJoin[{scExport["Directory"], "process.hpp"}], "Text"];
 scSource = Import[FileNameJoin[{scExport["Directory"], "calchep-validation.cpp"}], "Text"];
 check["the public process class exposes validation while the stub explicitly reports unavailability",
-  StringContainsQ[scHeader, "validate_calchep"] && StringContainsQ[scSource, "UNAVAILABLE"]];
+  StringContainsQ[scHeader, "validate_calchep"] &&
+    StringContainsQ[scSource, "hepcat_spinas::unavailable_validation("]];
 scManifest = Import[scExport["Files"]["Manifest"], "RawJSON"];
 check["the manifest identifies the missing benchmark without reporting a test pass",
   Lookup[Lookup[scManifest, "CalcHEPValidation", <||>], "Status", None] === "UNAVAILABLE"];

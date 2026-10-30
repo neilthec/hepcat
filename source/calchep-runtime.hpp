@@ -17,6 +17,7 @@
 #include <fcntl.h>
 #include <fstream>
 #include <iterator>
+#include <limits>
 #include <mutex>
 #include <sstream>
 #include <stdexcept>
@@ -42,6 +43,62 @@ struct CalcHEPParameter {
   std::string name;
   double value;
 };
+
+template <class T>
+double checked_calchep_parameter(const std::complex<T>& value, const std::string& name) {
+  const double real = static_cast<double>(std::real(value));
+  if (std::imag(value) != 0 || !std::isfinite(real) ||
+      (std::real(value) != 0 && real == 0)) {
+    throw std::invalid_argument("CalcHEP parameter '" + name +
+      "' must have a finite real value representable at double precision.");
+  }
+  return real;
+}
+
+template <class T, std::size_t N>
+void check_calchep_masses(const std::array<T, N>& expected,
+                         const std::vector<long double>& actual,
+                         const std::array<std::size_t, N>& external_order) {
+  if (actual.size() != N) {
+    throw std::invalid_argument("CalcHEP and SPINAS have different external particle counts.");
+  }
+  std::array<bool, N> used = {};
+  for (std::size_t leg = 0; leg < N; ++leg) {
+    const std::size_t source = external_order[leg];
+    if (source >= N || used[source]) {
+      throw std::invalid_argument("The CalcHEP external leg order is not a permutation.");
+    }
+    used[source] = true;
+    const long double mass = static_cast<long double>(expected[source]);
+    if (!std::isfinite(mass) || !std::isfinite(actual[leg]) || mass < 0 || actual[leg] < 0) {
+      throw std::invalid_argument("CalcHEP and SPINAS external masses must be finite and nonnegative.");
+    }
+    const long double scale = std::max(std::abs(mass), std::abs(actual[leg]));
+    if ((mass == 0) != (actual[leg] == 0) || std::abs(mass - actual[leg]) > 1e-10L * scale) {
+      throw std::invalid_argument("CalcHEP and SPINAS external masses differ.");
+    }
+  }
+}
+
+template <class T, std::size_t N>
+void check_calchep_masses(const std::array<T, N>& expected,
+                         const std::vector<long double>& actual) {
+  std::array<std::size_t, N> identity;
+  for (std::size_t leg = 0; leg < N; ++leg) identity[leg] = leg;
+  check_calchep_masses(expected, actual, identity);
+}
+
+template <class T, std::size_t N>
+std::array<std::array<T, 4>, N> calchep_momenta_in_order(
+    const std::array<std::array<T, 4>, N>& momenta,
+    const std::array<std::size_t, N>& external_order) {
+  std::array<std::array<T, 4>, N> ordered;
+  for (std::size_t leg = 0; leg < N; ++leg) {
+    if (external_order[leg] >= N) throw std::invalid_argument("Invalid CalcHEP momentum leg.");
+    ordered[leg] = momenta[external_order[leg]];
+  }
+  return ordered;
+}
 
 namespace calchep_detail {
 

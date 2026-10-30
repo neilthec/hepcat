@@ -49,9 +49,9 @@ check["the manifest records complete helicities and separate normalization facto
     sfManifest["InitialSpinAverage"] === 4 && sfManifest["FinalStateSymmetryDivisor"] === 2];
 sfHeader = Import[sfPlain["Files"]["Header"], "Text"];
 sfReadableSource = Import[sfPlain["Files"]["Source"], "Text"];
-check["canonical helicity formulas have descriptive method names rather than numbered components",
-  AllTrue[{"helicity_pp", "helicity_pm", "helicity_mm"},
-    StringContainsQ[sfReadableSource, "::" <> # <> "("] &] &&
+check["native helicity formulas are directly readable amplitude branches",
+  StringContainsQ[sfReadableSource, "::amp("] &&
+    StringContainsQ[sfReadableSource, "if ("] && StringContainsQ[sfReadableSource, ".v("] &&
     !StringContainsQ[sfReadableSource, RegularExpression["::component_[0-9]+\\("]]];
 check["the saved family source separates formulas and tables into readable lines",
   Max[StringLength /@ StringSplit[sfReadableSource, "\n"]] <= 120 &&
@@ -94,9 +94,7 @@ check["one unsupported branch rejects the family atomically",
   FailureQ[sfBad] && !DirectoryQ[sfBadPath]];
 sfExplicitZero = sfExport["explicit_zero_sectors", ({First[#], 0} & /@ sfFour)];
 check["explicitly supplied zero sectors still form a complete massive-spin family",
-  AssociationQ[sfExplicitZero] && Length[sfExplicitZero["HelicityConfigurations"]] === 4 &&
-    StringCount[Import[sfExplicitZero["Files"]["Source"], "Text"],
-      "return ldouble(0.0L);"] === 3];
+  AssociationQ[sfExplicitZero] && Length[sfExplicitZero["HelicityConfigurations"]] === 4];
 sfColoredModel = sfModel;
 sfColoredModel[[1]] = Map[If[MemberQ[#[[{2, 3}]], "e"], ReplacePart[#, 8 -> 3], #] &,
   sfColoredModel[[1]]];
@@ -253,6 +251,10 @@ sfBuildAndCompare[name_String, records_List, model_, kind_Integer, ranks_List,
 ];
 
 If[sfNativeAvailable,
+  sfZeroOracle = sfOracle[sfExplicitZero, "explicit_zero_sectors", 7, {1, 1, 2, 2}, 4, 4, 2];
+  check["every explicit zero helicity compiles and has zero amplitude and spin sum",
+    !sfFailed[sfZeroOracle] &&
+      StringContainsQ[sfZeroOracle["StandardOutput"], "FAMILY_COMPARISONS=48"]];
   sfReports = {
     sfBuildAndCompare["family_eeAA", sfFour, sfModel, 1, {1, 1, 2, 2}, 4, 4, 2],
     sfBuildAndCompare["family_AAee", sfIncoming, sfModel, 2, {2, 2, 1, 1}, 4, 4, 1],

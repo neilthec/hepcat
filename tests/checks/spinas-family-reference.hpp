@@ -59,6 +59,7 @@ template<> struct oracle<4> {
       native.set_momenta(point[0].data(), point[1].data(), point[2].data(), point[3].data());
       return native.amp(spins[0], spins[1], spins[2], spins[3]);
     }
+    if (kind == 7) return cdouble(0,0);
     auto p = particles(point, masses);
     if (kind == 5) {
       if (spins[2] > 0) {

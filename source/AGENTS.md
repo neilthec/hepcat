@@ -435,7 +435,11 @@ The grouped class exposes `amp(spins)` and positional `amp(ds1, ds2, ...)`,
 raw `spin_sum()`, and `amp2()` including the incoming spin/helicity average and
 the final identical-species factorials. Count species independently of helicity;
 include identical fermions, and never average or remove amplitude terms.
-Canonical formulas are emitted once and reused by role-preserving leg maps.
+Ordinary projects use native persistent `particle` and `sproduct` members,
+direct helicity branches in `amp`, and explicit spin loops in `spin_sum`.
+Role-preserving leg maps are resolved during generation. Very large families
+retain canonical dispatch to bound duplicated source; the manifest's
+`CodeStyle` identifies the selected representation.
 Complex `amp` values preserve phases and explicit spin labels for future
 coherent production-decay contraction. Spin-summed probabilities cannot replace
 that contraction; no correlated production-decay engine is currently implied.
@@ -456,13 +460,21 @@ requested point must be evaluated without disagreement for PASS. Common
 momentum values are quantized once before either evaluator. This is numerical
 diagnostic evidence, not a uniform phase-space integral or an analytic proof.
 Generated formulas should remain readable in the style of native SPINAS
-processes: named model aliases, bracket/chain names, cached scalar denominators,
-ordinary division and wrapped numerator blocks. Preserve parameter rebinding
+processes: named model members, bracket/chain names, cached scalar denominators,
+ordinary division and wrapped numerator blocks. Native products and scalar
+invariants are updated in `set_momenta`, and `.v(...)` reuses cached spin
+components. Composite or long momentum chains retain direct matrix evaluation
+without imposing any additional mass shell. External particles remain on shell.
+Copies and assignments must rebuild product pointers into their own particles;
+mass and parameter updates must invalidate the current momentum state.
+Preserve parameter rebinding
 across helicity families, collision-safe C++ names, massive spin-slot variance
 and signed leg maps. Comments derived from model names must not contain raw
 newlines or trailing backslashes. Formatting never licenses changing the
-amplitude or its crossing convention. Local primitive caches are not a claim
-of outperforming hand-written `sproduct` caches across spin evaluations.
+amplitude or its crossing convention. Do not claim a speedup over hand-written
+SPINAS processes without measuring it. CalcHEP wrappers should expose named
+model parameters and short evaluator functions; reusable validation plumbing
+belongs in the runtime headers.
 Colored families are currently rejected because no full color sum or average
 is available; do not invent color factors from the number of external colors.
 Resolve auxiliary spinors, shifts and explicit color tensors first.

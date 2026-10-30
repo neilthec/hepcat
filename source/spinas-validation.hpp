@@ -57,6 +57,74 @@ struct ValidationReport {
   std::vector<std::string> errors;
 };
 
+inline ValidationReport unavailable_validation(const ValidationOptions& options,
+                                               const std::string& message) {
+  ValidationReport report;
+  report.status = "UNAVAILABLE";
+  report.requested_points = options.points;
+  report.seed = options.seed;
+  report.message = message;
+  return report;
+}
+
+inline ValidationReport failed_validation(const ValidationOptions& options,
+                                          const std::string& message) {
+  ValidationReport report = unavailable_validation(options, message);
+  report.status = "ERROR";
+  report.errors.push_back(message);
+  return report;
+}
+
+inline bool validation_help_requested(int argc, char** argv) {
+  for (int argument = 1; argument < argc; ++argument) {
+    if (std::string(argv[argument]) == "--help") return true;
+  }
+  return false;
+}
+
+inline void print_validation_usage(std::ostream& output) {
+  output << "--points N --seed S --relative-tolerance R --absolute-tolerance A\n";
+}
+
+inline ValidationOptions parse_validation_arguments(
+    int argc, char** argv, ValidationOptions options = ValidationOptions()) {
+  for (int argument = 1; argument < argc; ++argument) {
+    const std::string flag(argv[argument]);
+    if (argument + 1 == argc) {
+      throw std::invalid_argument("Missing validator option value.");
+    }
+    const std::string value(argv[++argument]);
+    std::size_t consumed = 0;
+    if (flag == "--points" || flag == "--seed") {
+      if (value.empty() || value[0] == '-') {
+        throw std::invalid_argument("Expected an unsigned integer.");
+      }
+      const auto number = std::stoull(value, &consumed);
+      if (consumed != value.size()) {
+        throw std::invalid_argument("Invalid integer option.");
+      }
+      if (flag == "--points") {
+        if (number > std::numeric_limits<std::size_t>::max()) {
+          throw std::invalid_argument("The point count exceeds this platform's range.");
+        }
+        options.points = static_cast<std::size_t>(number);
+      } else {
+        options.seed = number;
+      }
+    } else if (flag == "--relative-tolerance" || flag == "--absolute-tolerance") {
+      const auto number = std::stold(value, &consumed);
+      if (consumed != value.size() || !std::isfinite(number) || number < 0) {
+        throw std::invalid_argument("Expected a finite nonnegative tolerance.");
+      }
+      if (flag == "--relative-tolerance") options.relative_tolerance = number;
+      else options.absolute_tolerance = number;
+    } else {
+      throw std::invalid_argument("Unknown validator option.");
+    }
+  }
+  return options;
+}
+
 namespace detail {
 
 // The random engine and its conversion are explicit. In particular, this

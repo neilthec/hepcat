@@ -468,21 +468,27 @@ for an angle bracket, `s34s` for a square bracket and `s314a` for a momentum
 chain. Comments display the corresponding bracket expression. The formulas
 use model parameter aliases such as `Me` and `EE`, named physical denominators
 such as `t13`, and separate, wrapped numerator and denominator expressions.
-Repeated scalar products and propagators are calculated once per component
-evaluation. Small powers of named primitives use multiplication and inverse
+Repeated scalar products and propagators are calculated once in `set_momenta`.
+Small powers of named primitives use multiplication and inverse
 factors use division.
 Names are disambiguated when spin slots, masses or model names coincide.
 
-The `helicity_pp`, `helicity_pm`, etc. methods contain the canonical formulas.
-The separate `amp` and `spin_sum` methods handle leg permutations and normalized
-spin projections. This keeps one compiled formula per supplied helicity sector
-without expanding every identical-particle permutation into another formula.
-The generic spin machinery is retained for arbitrary multiplicity and spin;
-the generated style is not claimed to outperform a hand-optimized native
-SPINAS process. Unlike native `sproduct` members, the local primitive aliases
-are recomputed for a component evaluation. The `ldouble` casts preserve
-compatibility with both SPINAS precision builds. Formatting changes do not
-simplify or otherwise alter the supplied amplitude.
+Ordinary generated classes now keep `particle p1, p2, ...` and native
+`sproduct` members, initialize them in the constructor, and update their caches
+in `set_momenta`. The scalar-argument `amp(ds1, ...)` contains direct helicity
+branches with calls such as `a12a.v(ds1, ds2)`. `spin_sum` uses explicit spin
+loops. A convenience constructor takes couplings followed by direct external
+mass parameters, and `set_masses` changes those masses. The `Parameters` array
+interface remains available in its documented model order. After changing
+masses or parameters, call `set_momenta` again.
+
+Composite momenta and chains beyond the native insertion limit use direct
+momentum matrices, preserving off-shell insertions. Very large helicity families
+use canonical formula dispatch to limit duplicated source. `manifest.json`
+reports `CodeStyle` as `NativeSPINAS` or `CanonicalDispatch`. Both representations
+preserve generic spin projections and signed particle permutations. The
+`ldouble` casts preserve compatibility with both SPINAS precision builds.
+Formatting changes do not simplify or otherwise alter the supplied amplitude.
 
 When building from desktop Mathematica, CMake is found on `PATH` or in standard
 installation locations, including the macOS CMake application and Homebrew.

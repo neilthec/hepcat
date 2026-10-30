@@ -50,6 +50,34 @@ int main() {
 
     ValidationOptions options;
     options.seed = 93;
+    const auto parse = [&](std::vector<std::string> arguments) {
+      std::vector<char*> argv;
+      for (auto& argument : arguments) argv.push_back(&argument[0]);
+      return parse_validation_arguments(static_cast<int>(argv.size()), argv.data(), options);
+    };
+    const auto parsed = parse({"validator", "--points", "17", "--seed", "12",
+      "--relative-tolerance", "1e-5", "--absolute-tolerance", "0"});
+    check("readable validator main delegates exact point, seed and tolerance parsing",
+      parsed.points == 17 && parsed.seed == 12 && parsed.relative_tolerance == ldouble(1e-5L)
+      && parsed.absolute_tolerance == 0);
+    bool rejects_bad_arguments = true;
+    for (const auto& arguments : std::vector<std::vector<std::string>>{
+        {"validator", "--points"}, {"validator", "--points", "-1"},
+        {"validator", "--seed", "12junk"}, {"validator", "--unknown", "1"},
+        {"validator", "--relative-tolerance", "nan"},
+        {"validator", "--absolute-tolerance", "-1"}}) {
+      bool rejected = false;
+      try { parse(arguments); } catch (const std::exception&) { rejected = true; }
+      rejects_bad_arguments = rejects_bad_arguments && rejected;
+    }
+    check("shared argument parsing refuses missing, invalid and unsafe numeric controls",
+      rejects_bad_arguments);
+    const auto unavailable = unavailable_validation(options, "missing backend");
+    const auto configuration_error = failed_validation(options, "wrong model");
+    check("readable report helpers preserve requested seed and cannot mark failure as a pass",
+      !unavailable.passed && unavailable.status == "UNAVAILABLE" && unavailable.seed == 93
+      && unavailable.requested_points == options.points && !configuration_error.passed
+      && configuration_error.status == "ERROR" && configuration_error.errors.size() == 1);
     std::mt19937_64 first_engine(options.seed), second_engine(options.seed), other_engine(options.seed + 1);
     const auto first_point = make_random_validation_momenta(masses, incoming, first_engine, options);
     check("the seed replays the identical complete phase-space point",
