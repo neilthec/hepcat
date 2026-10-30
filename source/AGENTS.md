@@ -41,8 +41,13 @@ are relative to the repository root, not to this file.
 - `tests/simplification-paths.wl`: curated four-point identity sequences.
 - `tests/SM-4-point-simplification-test.nb`, `tests/QED-5-point.nb`, and
   `tests/Factorization-checks.nb`: worked examples and user-facing usage.
-- `tests/QED-5-point-residues.wl`: explicit five-point QED routes and fixtures.
-  These helpers are process-specific examples, not general simplifiers.
+- `tests/QED-5-point-residues.wl`: explicit QED routes and fixtures, including
+  the seven-group six-point mixed-helicity worked derivation. These helpers
+  are process-specific examples, not general simplifiers. The general ordinary
+  numerator-factor, determinant-pair and shared-pole reductions live in Base
+  and Model; preserve their exact replay routes and every regular remainder.
+  The balanced six-point physical-current reference is an independently
+  derived benchmark, not a formula used by constructive completion.
 - `papers/`: physics conventions and identity references. Consult the relevant
   papers, especially `SM_Vertices.pdf`, `SM_4_Point_Amplitudes.pdf`, and
   `QED-Challenges.pdf`; do not assume familiar conventions from another package.
@@ -177,6 +182,15 @@ conditions after combining diagrams, disable a failing final check, or inject
 a process-specific known expression to make the wrapper appear successful.
 `tests/QED-5-point-construction.nb` uses one wrapper call per process; earlier
 manual calculations remain in collapsed groups.
+
+Keep presentation and correction-coordinate construction distinct. Completion's
+private forward-product scope must not leak into public preparation. A large
+physical basis may normalize each existing column as a whole and prune exact
+formal dependencies. Re-atomizing a reduced source can change the proposal
+space, even when the complete source is equal. Retain every unproved column,
+timeout and unvisited tail, and preserve the original channel obligations.
+Automatic cap growth must reuse an already built adequate projected space
+within the existing deadline; explicit numeric caps remain authoritative.
 
 ## Parallel Calculations
 

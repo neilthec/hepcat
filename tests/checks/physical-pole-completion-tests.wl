@@ -35,6 +35,95 @@ check["Regular terms admitted",phys[m+coupling a,normalized]];
 check["Mass declared zero inverse rejected",!phys[1/(p Mass[3]),normalized]];
 check["Symbolic inverse powers rejected",!phys[p^exponent,normalized]];
 check["Reciprocal kinematic functions rejected",!phys[Csc[MomProd[1,3]]/p,normalized]];
+(* Reducing a correction column must preserve that one coordinate, even when
+   ordinary external identities rewrite its numerator as a multi-term sum. *)
+ppNormalizeColumns = ConstructiveDiagrams`Private`completionNormalizePhysicalColumns;
+ppColumnRules = {Mass[7] -> ppMassA, Mass[11] -> ppMassB, Mass[13] -> 0, Mass[17] -> 0};
+ppColumnProp = PropDen[Mom[Multiparticle[7,13]], ppInternalMass];
+ppColumnLeft = Spinor["Helicity", "Angle", 13];
+ppColumnRight = Spinor["Helicity", "Angle", 17];
+ppColumnBracket = SpinorChain[ppColumnLeft, ppColumnRight];
+ppColumnInput = {
+  (SpinorChain[ppColumnLeft, Mom[7], Mom[7], ppColumnRight] +
+   SpinorChain[ppColumnLeft, Mom[11], Mom[11], ppColumnRight])/ppColumnProp,
+  1/(1 + Mass[7]) + 1/(1 + Mass[11]),
+  (MomProd[7,13] + ppUnrelated)/ppColumnProp};
+ppColumnSaved = ppColumnInput;
+ppColumnFlag = OwnValues[ConstructiveDiagrams`Private`$rspCanonicalProductBasis];
+ppColumnReport = ppNormalizeColumns[ppColumnInput,
+  Append[ppColumnRules, Mass[Multiparticle[7,13]] -> ppInternalMass], 5];
+check["ordinary column normalization preserves the input and number of coordinates",
+  ppColumnInput === ppColumnSaved && Length[ppColumnReport["Basis"]] === 3 &&
+    ppColumnReport["InputColumns"] === 3 && ppColumnReport["OutputColumns"] === 3];
+check["a reduced sum remains one whole correction direction",
+  Together[ppColumnReport["Basis"][[1]] -
+    (ppMassA^2 + ppMassB^2) ppColumnBracket/ppColumnProp] === 0 &&
+    !TrueQ[ppColumnReport["Reatomized"]] && !TrueQ[ppColumnReport["SourceBasisChanged"]]];
+check["unequal external masses stay independent in the normalized column",
+  ppColumnReport["Basis"][[2]] === 1/(1 + ppMassA) + 1/(1 + ppMassB) &&
+    !FreeQ[ppColumnReport["Basis"][[1]], ppMassA] &&
+    !FreeQ[ppColumnReport["Basis"][[1]], ppMassB]];
+check["whole-column normalization does not impose the internal mass shell",
+  Together[ppColumnReport["Basis"][[3]] - ppColumnInput[[3]]] === 0 &&
+    !FreeQ[ppColumnReport["Basis"][[3]], MomProd[7,13]] &&
+    ppColumnReport["InternalOnShellConditions"] === {} &&
+    FreeQ[ppColumnReport["ExternalMassRules"], Mass[_Multiparticle]]];
+check["every whole-column route has a completed ordinary identity checkpoint",
+  ppColumnReport["NormalizedColumns"] === 3 &&
+    AllTrue[ppColumnReport["ColumnReports"],
+      #1["Status"] === "NORMALIZED" && TrueQ[#1["ExactForwardIdentity"]] &&
+      #1["NumericalKinematicSamples"] === 0 && #1["InternalOnShellConditions"] === {} &]];
+check["the column normalizer restores the private canonical-basis scope",
+  OwnValues[ConstructiveDiagrams`Private`$rspCanonicalProductBasis] === ppColumnFlag];
+ppColumnPermutation = {7 -> 21, 11 -> 37, 13 -> 41, 17 -> 53};
+ppColumnPermuted = ppNormalizeColumns[ppColumnInput /. ppColumnPermutation,
+  ppColumnRules /. ppColumnPermutation, 5];
+check["whole-column normalization is independent of the particle numbering",
+  Together[ppColumnPermuted["Basis"] - (ppColumnReport["Basis"] /. ppColumnPermutation)] === {0,0,0}];
+ppColumnScopedRules = ppColumnRules /. {ppMassA -> ModelParameter["m", "left-model", "Real"],
+  ppMassB -> ModelParameter["m", "right-model", "Real"]};
+ppColumnScoped = ppNormalizeColumns[ppColumnInput, ppColumnScopedRules, 5];
+check["model-scoped parameters are not identified by their display names",
+  !FreeQ[ppColumnScoped["Basis"][[1]], ModelParameter["m", "left-model", "Real"]] &&
+    !FreeQ[ppColumnScoped["Basis"][[1]], ModelParameter["m", "right-model", "Real"]]];
+ppColumnConflicting = ppNormalizeColumns[ppColumnInput,
+  Append[ppColumnRules, Mass[7] -> ppOtherMass], 5];
+check["conflicting external mass data preserves the complete original basis",
+  ppColumnConflicting["Basis"] === ppColumnInput && ppColumnConflicting["Processed"] === 0];
+ppColumnNonscalar = ppNormalizeColumns[ppColumnInput,
+  ReplacePart[ppColumnRules, 1 -> (Mass[7] -> {ppMassA, ppMassB})], 5];
+check["nonscalar external mass data cannot license a column identity",
+  ppColumnNonscalar["Basis"] === ppColumnInput && ppColumnNonscalar["Processed"] === 0];
+ppColumnDuplicate = ppNormalizeColumns[ppColumnInput, Append[ppColumnRules, First[ppColumnRules]], 5];
+check["identical external mass duplicates leave the same whole-column span",
+  ppColumnDuplicate["Basis"] === ppColumnReport["Basis"]];
+ppColumnInternal = ppNormalizeColumns[ppColumnInput, Join[ppColumnRules,
+  {Mass[Multiparticle[7,13]] -> {ppMassA, ppMassB},
+   Mass[Multiparticle[7,13]] -> ppOtherMass}], 5];
+check["even malformed internal mass declarations do not enter external column reduction",
+  ppColumnInternal["Basis"] === ppColumnReport["Basis"] &&
+    ppColumnInternal["ExternalMassRules"] === ppColumnRules];
+ppColumnNoBudget = ppNormalizeColumns[ppColumnInput, ppColumnRules, 0];
+check["a zero normalization budget keeps every untouched direction",
+  ppColumnNoBudget["Basis"] === ppColumnInput && ppColumnNoBudget["UntouchedTail"] === Range[3]];
+ppColumnInterrupted = Block[{ConstructiveDiagrams`Private`completionExternalReduce},
+  ConstructiveDiagrams`Private`completionExternalReduce[value_, masses_List] := (Pause[0.05]; value);
+  ppNormalizeColumns[ppColumnInput, ppColumnRules, 0.001]];
+check["a shared deadline cannot publish a partial column or truncate its tail",
+  ppColumnInterrupted["Basis"] === ppColumnInput &&
+    ppColumnInterrupted["OutputColumns"] === 3 && ppColumnInterrupted["Processed"] === 0 &&
+    ppColumnInterrupted["ColumnReports"] === {}];
+ppColumnFailed = Block[{ConstructiveDiagrams`Private`completionExternalReduce},
+  ConstructiveDiagrams`Private`completionExternalReduce[value_, masses_List] := $Failed;
+  ppNormalizeColumns[ppColumnInput, ppColumnRules, 5]];
+check["failed reductions retain each literal direction instead of dropping it",
+  ppColumnFailed["Basis"] === ppColumnInput && ppColumnFailed["Processed"] === 3 &&
+    AllTrue[ppColumnFailed["ColumnReports"], #1["Status"] === "PRESERVED" &]];
+ppColumnEmpty = ppNormalizeColumns[{}, ppColumnRules, 5];
+check["an empty physical basis remains empty with a complete span report",
+  ppColumnEmpty["Basis"] === {} && ppColumnEmpty["OutputColumns"] === 0 &&
+    TrueQ[ppColumnEmpty["FunctionalSpanPreserved"]]];
+
 builder=ConstructiveDiagrams`Private`completionPhysicalChannelBasis;
 scalarModel={{{"Scalar","s","s",1,0,m,0,1,1,"",""}},{{"s","s","s","",g,1}},{},{}};
 scalarPairs=diagramAmplitudes[CreateDiagrams[ConstantArray["s",4],scalarModel]];

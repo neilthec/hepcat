@@ -1161,9 +1161,20 @@ Finite stage clocks and correction allowances depend on lightweight measurements
 external multiplicity, diagram/channel count, expression size and retained family
 size. No expansion or kinematic assumption is used merely to choose resources.
 Factorization starts with 128 correction directions below six points and 256 at
-six points; an observed cap failure can retry a complete larger source space,
-up to the automatic ceiling, within the same shared stage deadline. Directions
-are never silently truncated. Explicit numeric limits are never increased.
+six points. A supplied correction list contributes its actual length to this
+initial automatic choice. If a complete physical union has already been built,
+its projected independent count can raise an automatic cap immediately, reusing
+that union before trying smaller fallback spaces. Both this adjustment and any
+later capacity retry share the original stage deadline and automatic ceiling.
+A large raw catalog does not trigger another capacity retry when its complete
+projected space already fits. Directions are never silently truncated. Explicit
+numeric limits are never increased, including in nested calls.
+Completion details distinguish `"RequestedPolePreference"` from
+`"AchievedPhysicalDenominators"`. A validated fallback may remain `"COMPLETE"`
+while displaying denominator factors outside the physical-propagator inventory.
+Its `"PreferenceFallbackReason"` and progress message make that distinction
+explicit; passing spurious-pole checks does not mean the factors disappeared
+from the displayed expression.
 The preferred-pole proposal has a channel-scaled sub-budget: at most
 `Max[90, 30 channelCount]` seconds and three quarters of the remaining stage
 clock. Multiple-particle cuts reserve two thirds of that proposal budget for
@@ -2182,6 +2193,67 @@ cannot pair a new amplitude with an older route. Detailed routes retain the
 original numerator, selected edits and resulting numerator for replay. This
 changes only the representative's algebraic form and never removes affine
 directions or applies an internal-line shell to a final sum.
+A second bounded ordinary pass works across different physical denominators.
+It recovers factors hidden by forward product normalization, using only products
+of existing typed spinor chains. Every reverse lift must reproduce the original
+polynomial through the forward reducer with the declared external masses.
+The determinant-pair identity and generated scalar Schouten identities can then
+reduce a small block sharing a higher-particle propagator. Exact propagator
+definitions expose that propagator in the numerator. Polynomial division keeps
+both the pole contribution and the complete regular remainder; it never puts an
+internal line on shell. Complementary momentum sets require momentum
+conservation to be enabled.
+
+The regular pieces are collected over their existing pair propagators while
+preserving useful numerator factors. Each completed improvement stores its
+expression and replay route together. Preparation and factorization completion
+share this general cleanup; the latter records it in `"OrdinaryCompaction"` and
+recenters `"FamilyAmplitude"` without deleting any `"RemainingBasis"` directions.
+The post-fit cleanup leaves the fit dimension and original channel obligations
+unchanged. Large physical correction catalogs can also normalize each existing
+column as a whole before exact dependency pruning. This preserves their complete
+functional span; a reduced sum is never split into new fitting coordinates.
+Failed or interrupted normalizations and the untouched tail remain literal
+inputs. In the six-point example this reduced 650 columns to 258 independent
+columns, with no sampled identity tests or discarded unproved directions.
+
+Completion uses a private forward-product normalization policy for coefficient
+construction, while public preparation retains useful factored polynomials.
+A presentation preference must not implicitly redefine the proposal coordinates.
+The private policy is dynamically scoped and restores the caller's state.
+
+The worked six-point process `e,E,A.+,A.+,A.+,A.-` illustrates the reduction in
+`QED-5-point-construction.nb`. Example-only formulas and the local identity route
+are in `QED-5-point-residues.wl`, through
+`QEDSixPointPPPMPreviousExample[model]`, `QEDSixPointPPPMCompactExample[model]`,
+and `QEDSixPointPPPMExampleProof[model]`. Production code never calls these
+process-specific helpers. The general simplifier reduces the previous form's
+complexity from 1128 to 327, with seven groups instead of eighteen. The
+nonzero regular remainder is essential; dropping it would give an incorrect
+six-term amplitude. Generic proofs and regressions cover arbitrary labels,
+unequal masses, both chiralities, scoped parameters, budget limits and explicit
+quotient/remainder replay. No internal-shell identity enters this final reduction.
+
+The same example file provides
+`QEDSixPointPPMMPhysicalCurrentExample[model]` for the balanced-helicity
+six-point process. It is a readable independent off-shell-current derivation,
+with shared physical references and ordinary Clifford, external Dirac, null
+momentum and virtuality identities. It has 38 factored groups, only the fourteen
+physical propagators, and weighted complexity 3224 instead of 41028 for the
+eight-term spurious-pole reference. Both formulas pass independent checks, but
+the physical-current reference is not injected into constructive completion.
+The notebook labels this distinction. A fresh 504-direction physical proposal
+was insufficient for this process: its exact sampled simultaneous system was
+inconsistent. Increasing its time allowance cannot repair that particular
+proposal space; further source continuations are still needed.
+The reference also exposes an important current solver limitation: apparent
+double physical-pole factors cancel in complete numerator blocks, whereas
+source admission currently requires formally simple powers. Do not merely
+remove that guard. A future extension must preserve whole blocks and establish
+their regular residue restriction, or constrain every higher Laurent
+coefficient to vanish along with fitting the simple residue. The existing
+complete-source and final checks remain required.
+
 Typed `PropDen` poles are checked across that family, including poles hidden
 in its zero-parameter representative. Established zero-residue obligations
 remain checked even after the selected candidate loses the pole. Internal

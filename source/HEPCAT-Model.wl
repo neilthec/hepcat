@@ -5877,19 +5877,21 @@ amplitudeAutomaticSettings[stage_String, requested_Association, metrics_Associat
 
 (* Resource-only retries use the same original amplitudes and channel targets.
    An explicitly supplied numeric cap or clock is never increased. *)
-amplitudeAutomaticFactorization[input_, channelInput_, model_, supplied_List] := Module[
+amplitudeAutomaticFactorization[input_, channelInput_, model_, supplied_List] := Block[{$completionAutomaticCorrectionTermCeiling = None}, Module[
   {requested = Join[Association[Options[CompleteFactorization]], Association[Reverse[supplied]]],
    resolution, metrics, settings, originalOutput, details, automaticKeys, started = AbsoluteTime[],
    budget, remaining, cap, ceiling, report, attempts = {}, needed, diagnostics, retry, next,
    automaticSamples, numericOptions, core, measured, automaticPole, initialPole, poleMode,
-   recordedChoices, poleFallbackPending, bestReport = Missing["NotValidated"],
-   bestRank = {Infinity, Infinity}, candidateRank, physicalOnly, normalizedCandidate, rows},
+   recordedChoices, poleFallbackPending, attemptCap, effectiveCap, bestReport = Missing["NotValidated"],
+   bestRank = {Infinity, Infinity}, candidateRank, physicalOnly, normalizedCandidate, rows, requestedPole, annotateOutcome},
   originalOutput = Lookup[requested, "Output", "Amplitude"];
   details = Lookup[requested, "ReturnDetails", False];
   If[Complement[First /@ supplied, First /@ Options[CompleteFactorization]] =!= {} ||
       !MemberQ[{True, False}, details] || !MemberQ[{"Amplitude", "Expression", "Details"}, originalOutput],
     Return[completionFactorizationCore[input, channelInput, model, Sequence @@ supplied]]];
-  metrics = amplitudeResourceMetrics[input, channelInput, Lookup[requested, "ExternalParticles", Automatic]];
+  metrics = amplitudeResourceMetrics[input, channelInput,
+    Lookup[requested, "ExternalParticles", Automatic],
+    If[ListQ[Lookup[requested, "CorrectionBasis", Automatic]], Length[requested["CorrectionBasis"]], Automatic]];
   resolution = amplitudeAutomaticSettings["Factorization", requested, metrics];
   settings = resolution["Settings"]; automaticKeys = resolution["ResourcePolicy"]["AutomaticOptions"];
   budget = settings["TimeConstraint"]; cap = settings["MaxCorrectionTerms"];
@@ -5907,24 +5909,64 @@ amplitudeAutomaticFactorization[input_, channelInput_, model_, supplied_List] :=
       "Cyclic", "ReverseCyclic", "IndependentXi"}, #] &];
   initialPole = If[automaticPole, "AllPhysical", requested["PolePreference"]];
   poleMode = initialPole; poleFallbackPending = automaticPole;
-  If[automaticKeys === {} && !automaticPole,
-    Return[Block[{$completionAutomaticFitSamples = False},
-      completionFactorizationCore[input, channelInput, model, Sequence @@ supplied]]]];
   rows = If[AssociationQ[channelInput], channelInput["OriginalAmplitudes"], channelInput];
+  requestedPole = completionPolePreference[initialPole, input, channelInput];
+  (* Correctness and the requested denominator representation are independent.
+     A validated fallback must not silently claim that AllPhysical was achieved. *)
+  annotateOutcome[value_] := If[!AssociationQ[value] || !KeyExistsQ[value, "Status"], value,
+    Module[{achieved = Lookup[value, "AchievedPhysicalDenominators", Missing["NoCompleteAmplitude"]],
+       classified, classificationSeconds, reason = None, result},
+      If[value["Status"] === "COMPLETE" && !MemberQ[{True, False}, achieved],
+        classificationSeconds = If[budget === Infinity, 2,
+          Max[0, Min[2, budget - (AbsoluteTime[] - started)]]];
+        achieved = If[classificationSeconds <= 0, Missing["RepresentationClassificationTimeout"],
+          TimeConstrained[
+            classified = completionNormalizeInput[
+              {value["ExternalMassRules"], value["Amplitude"]}, rows, model];
+            If[AssociationQ[classified],
+              completionPhysicalDenominatorOnlyQ[value["Amplitude"], classified],
+              Missing["RepresentationNotEstablished"]], classificationSeconds,
+            Missing["RepresentationClassificationTimeout"]]]];
+      If[value["Status"] === "COMPLETE" && requestedPole === "AllPhysical" && achieved === False,
+        reason = "The validated result still displays denominator factors outside the physical-propagator inventory. A physical-only representation was not established within this completion attempt."];
+      result = Join[value, <|"RequestedPolePreference" -> requestedPole,
+        "AchievedPhysicalDenominators" -> achieved, "PreferenceFallbackReason" -> reason|>];
+      If[StringQ[reason], completionProgress[settings["ProgressFunction"], settings["ProgressReporting"],
+        <|"Stage" -> "Factorization representation", "Status" -> "COMPLETE",
+          "Operation" -> "Physical-only form not established; retaining the validated result",
+          "RequestedPolePreference" -> requestedPole, "AchievedPhysicalDenominators" -> False,
+          "PreferenceFallbackReason" -> reason|>]];
+      result]];
+  If[automaticKeys === {} && !automaticPole,
+    Return[annotateOutcome[Block[{$completionAutomaticFitSamples = False},
+      completionFactorizationCore[input, channelInput, model, Sequence @@ supplied]]]]];
   remaining[] := If[budget === Infinity, Infinity, Max[0, budget - (AbsoluteTime[] - started)]];
   While[True,
     numericOptions = Join[settings, <|"MaxCorrectionTerms" -> cap, "PolePreference" -> poleMode,
       "TimeConstraint" -> Max[0.000001, If[poleFallbackPending,
         Min[remaining[], Max[30, budget/2]], remaining[]]], "ReturnDetails" -> True|>];
+    attemptCap = cap;
     report = Block[{$completionAutomaticFitSamples = automaticSamples,
-      $completionAutomaticPoleSearch = automaticPole},
+      $completionAutomaticPoleSearch = automaticPole,
+      $completionAutomaticCorrectionTermCeiling = If[MemberQ[automaticKeys, "MaxCorrectionTerms"], ceiling, None]},
       completionFactorizationCore[input, channelInput, model, Sequence @@ Normal[numericOptions]]];
     If[!AssociationQ[report], If[AssociationQ[bestReport], Break[], Return[report]]];
+    effectiveCap = Lookup[report, "EffectiveMaxCorrectionTerms", cap];
+    If[MemberQ[automaticKeys, "MaxCorrectionTerms"] && IntegerQ[effectiveCap] &&
+        cap < effectiveCap <= ceiling, cap = effectiveCap];
+    (* Once a complete union has been projected and pruned within its cap,
+       raw atomization is not an unmet resource demand. A nonclosing fit in
+       that adequate space must not trigger an identical larger-cap rebuild. *)
     measured = Max[Prepend[Select[Flatten[Cases[report, data_Association :>
-      Values[KeyTake[data, {"Terms", "ProjectedDirectionCount", "RawDirectionCount",
-        "OversizedUnionDirections"}]], {0, Infinity}]], IntegerQ[#] && # > 0 &], 0]];
+      Values[KeyTake[data, If[Lookup[data, "Status", None] === "AVAILABLE" &&
+          TrueQ[Lookup[data, "WithinLimit", False]] &&
+          Lookup[data, "CandidateMode", None] === "PreparedAndReducedPhysicalUnion",
+        {"Terms", "ProjectedDirectionCount"},
+        {"Terms", "ProjectedDirectionCount", "RawDirectionCount", "OversizedUnionDirections"}]]],
+      {0, Infinity}]], IntegerQ[#] && # > 0 &], 0]];
     AppendTo[attempts, <|"Attempt" -> Length[attempts] + 1,
-      "MaxCorrectionTerms" -> cap, "PolePreference" -> poleMode,
+      "MaxCorrectionTerms" -> attemptCap, "EffectiveMaxCorrectionTerms" -> cap,
+      "CapChanges" -> Lookup[report, "CapChanges", {}], "PolePreference" -> poleMode,
       "Status" -> Lookup[report, "Status", "UNRESOLVED"],
       "ElapsedTime" -> Lookup[report, "ElapsedTime", Missing["NotRecorded"]],
       "ObservedDirections" -> measured, "CorrectionSpace" -> Lookup[report, "CorrectionSpace", None]|>];
@@ -5934,6 +5976,8 @@ amplitudeAutomaticFactorization[input_, channelInput_, model_, supplied_List] :=
         {report["ExternalMassRules"], report["Amplitude"]}, rows, model];
       physicalOnly = AssociationQ[normalizedCandidate] &&
         completionPhysicalDenominatorOnlyQ[report["Amplitude"], normalizedCandidate];
+      report = Join[report, <|"AchievedPhysicalDenominators" -> If[
+        AssociationQ[normalizedCandidate], physicalOnly, Missing["RepresentationNotEstablished"]]|>];
       candidateRank = {If[initialPole === "AllPhysical" && !physicalOnly, 1, 0], LeafCount[report["Amplitude"]]};
       If[OrderedQ[{candidateRank, bestRank}], bestReport = report; bestRank = candidateRank];
       If[poleMode =!= "AllPhysical" || physicalOnly, Break[]]];
@@ -5961,9 +6005,12 @@ amplitudeAutomaticFactorization[input_, channelInput_, model_, supplied_List] :=
         <|"MaxCorrectionTerms" -> cap, "Samples" -> Lookup[report, "FitSamples", settings["Samples"]],
           "PolePreference" -> Lookup[report, "PolePreference", poleMode]|>],
       "AutomaticPoleSearch" -> automaticPole|>], "AdaptiveAttempts" -> attempts,
+    "EffectiveMaxCorrectionTerms" -> cap,
+    "CapChanges" -> Flatten[Lookup[attempts, "CapChanges", {}], 1],
     "ElapsedTime" -> AbsoluteTime[] - started|>];
+  report = annotateOutcome[report];
   completionFormat[report, If[TrueQ[details], "Details", originalOutput], False]
-];
+]];
 
 (* Carry automatic fitting provenance explicitly into internal retries. A
    separate public call with numeric samples always retains its own setting. *)
@@ -7061,6 +7108,60 @@ completionPhysicalDenominatorOnlyQ[expression_, normalized_Association] := Modul
 (* This is only a source-derived correction proposal. Individual atoms need
    not preserve their source channel: the caller must fit every original cut
    and validate the complete affine family before accepting any result. *)
+(* Normalize each existing correction direction as a WHOLE expression. Splitting
+   a reduced sum into new coordinates would change the proposal space. Every
+   unfinished column and the unvisited tail therefore remain literal inputs. *)
+completionNormalizePhysicalColumns[basis_List, massRules_List, seconds_ : 30] := Module[
+  {started = AbsoluteTime[], external, checkpoint, outcome = True, remaining,
+   value, complete, report, allowance, count = Length[basis], inputLeaves, i},
+  external = preparationExternalRules[massRules];
+  checkpoint = <|"Basis" -> basis, "ColumnReports" -> {}, "Processed" -> 0|>;
+  inputLeaves = LeafCount[basis];
+  If[!TrueQ[NumericQ[seconds] && 0 < seconds < Infinity] || inputLeaves > 2000000 ||
+      !preparationScalarExternalRulesQ[external],
+    Return[Join[checkpoint, <|"Status" -> "UNCHANGED", "InputColumns" -> count,
+      "OutputColumns" -> count, "NormalizedColumns" -> 0, "TimeoutsPreserved" -> 0,
+      "UntouchedTail" -> Range[count], "SourceBasisChanged" -> False,
+      "FunctionalSpanPreserved" -> True, "Reatomized" -> False,
+      "ExternalMassRules" -> external, "InternalOnShellConditions" -> {},
+      "ElapsedTime" -> AbsoluteTime[] - started|>]]];
+  external = DeleteDuplicatesBy[external, First];
+  remaining[] := Max[0, seconds - (AbsoluteTime[] - started)];
+  outcome = TimeConstrained[MemoryConstrained[
+    Do[
+      allowance = Min[2, remaining[]]; If[allowance <= 0, Break[]];
+      value = TimeConstrained[MemoryConstrained[
+        Block[{$rspCanonicalProductBasis = True}, completionExternalReduce[basis[[i]], external]],
+        67108864, $Failed], allowance, $TimedOut];
+      complete = value =!= $TimedOut && residueFiniteQ[value] &&
+        FreeQ[value, _List | _Association | _Rule | _RuleDelayed];
+      report = <|"Index" -> i, "Status" -> If[complete, "NORMALIZED", "PRESERVED"],
+        "Before" -> basis[[i]], "After" -> If[complete, value, basis[[i]]],
+        "ExactForwardIdentity" -> True,
+        "Method" -> If[complete, "OrdinaryExternalIdentityNormalization", "UnchangedCheckpoint"],
+        "Operations" -> If[complete, {"CanonicalPropagators", "ExternalMomentumConservation",
+          "ForwardSpinorProducts", "ExternalMassReplacements", "CanonicalChains",
+          "ExactRationalAlgebra"}, {}],
+        "NumericalKinematicSamples" -> 0, "InternalOnShellConditions" -> {}|>;
+      (* One checkpoint commits the column, proof route and processed index.
+         A deadline between RHS evaluation and this Set keeps the old state. *)
+      checkpoint = <|"Basis" -> If[complete, ReplacePart[checkpoint["Basis"], i -> value],
+          checkpoint["Basis"]], "ColumnReports" -> Append[checkpoint["ColumnReports"], report],
+        "Processed" -> i|>,
+      {i, count}]; True,
+    268435456, False], Max[0.000001, remaining[]], False];
+  Join[checkpoint, <|"Status" -> If[checkpoint["Processed"] === count, "NORMALIZED", "PARTIAL"],
+    "InputColumns" -> count, "OutputColumns" -> Length[checkpoint["Basis"]],
+    "NormalizedColumns" -> Count[checkpoint["ColumnReports"], row_ /; row["Status"] === "NORMALIZED"],
+    "TimeoutsPreserved" -> Count[checkpoint["ColumnReports"], row_ /; row["Status"] === "PRESERVED"],
+    "UntouchedTail" -> Range[checkpoint["Processed"] + 1, count],
+    "TimedOut" -> !TrueQ[outcome], "SourceBasisChanged" -> False,
+    "FunctionalSpanPreserved" -> True, "Reatomized" -> False,
+    "ExternalMassRules" -> external, "InternalOnShellConditions" -> {},
+    "ElapsedTime" -> AbsoluteTime[] - started|>]
+];
+
+
 completionPhysicalChannelBasis[normalized_Association, channelPreparation_,
     exchangePlan_Association, constructionLimit_Integer, limit_Integer, seconds_,
     reducedChannels_: Missing["NotProvided"]] := Module[
@@ -7069,7 +7170,17 @@ completionPhysicalChannelBasis[normalized_Association, channelPreparation_,
    directions = {}, terms, value, reduced, projected, targets, fallbackBasis,
    candidateMode = "PreparedAndReducedPhysicalUnion", fullCount = Missing["NotMeasured"],
    diagnostics = {}, complete, exceeded = False, tag = Unique["physicalChannelBasis"],
-   closedQ, physicalQ, supportedQ, appendSource, channelNormalized, sourceCount = 0, rawCount = 0, basis = {}},
+   closedQ, physicalQ, supportedQ, appendSource, channelNormalized, sourceCount = 0, rawCount = 0, basis = {},
+   automaticCeiling, constructionBound, effectiveLimit = limit, capChanges = {}, nextLimit,
+   columnNormalization = Missing["NotRequested"], normalizationBudget, normalizedColumns,
+   rejectedColumns = {}},
+  (* The public wrapper grants this permission only for an Automatic cap.
+     Every explicit numeric child call resets it at its own wrapper entry. *)
+  automaticCeiling = If[IntegerQ[$completionAutomaticCorrectionTermCeiling] &&
+      $completionAutomaticCorrectionTermCeiling > limit, $completionAutomaticCorrectionTermCeiling, limit];
+  constructionBound = If[automaticCeiling > limit,
+    Min[4096, Max[constructionLimit, automaticCeiling Max[1, Lookup[exchangePlan, "Order", 1]]]],
+    constructionLimit];
   legs = Cases[external, HoldPattern[Mass[i_Integer] -> _] :> i];
   targets = completionTargets[normalized["Targets"]];
   physicalQ[expression_] := completionPhysicalDenominatorOnlyQ[expression, normalized];
@@ -7087,7 +7198,7 @@ completionPhysicalChannelBasis[normalized_Association, channelPreparation_,
     If[canonical =!= 0 && supportedQ[canonical],
       AppendTo[sourceRecords, <|"Expression" -> canonical, "Source" -> origin|>]]];
   complete = TimeConstrained[Catch[
-    proposals = completionInputProposals[normalized, constructionLimit];
+    proposals = completionInputProposals[normalized, constructionBound];
     If[Lookup[proposals, "Status", None] =!= "AVAILABLE",
       diagnostics = Join[diagnostics, Lookup[proposals, "Diagnostics", {}]];
       Throw[False, tag]];
@@ -7139,7 +7250,7 @@ completionPhysicalChannelBasis[normalized_Association, channelPreparation_,
     Do[
       Which[
         MemberQ[groupedSources, source], terms = {source},
-        rspSandwichExpansionCount[source] > constructionLimit,
+        rspSandwichExpansionCount[source] > constructionBound,
           AppendTo[diagnostics, "A source was kept grouped because its formal expansion exceeded the construction bound."];
           terms = {source},
         True, value = withProtectedPropagators[source, Expand];
@@ -7147,7 +7258,7 @@ completionPhysicalChannelBasis[normalized_Association, channelPreparation_,
       terms = Select[terms, # =!= 0 &&
         !FreeQ[#, Power[_PropDen, _Integer?Negative]] && supportedQ[#] &];
       directions = completionNormalizeBasis[Join[directions, terms]];
-      If[Length[directions] > constructionLimit,
+      If[Length[directions] > constructionBound,
         exceeded = True; Throw[False, tag]], {source, sources}];
     rawCount = Length[directions];
     projected = completionCompactExchangeProject[#, exchangePlan] & /@ directions;
@@ -7156,9 +7267,31 @@ completionPhysicalChannelBasis[normalized_Association, channelPreparation_,
     If[!AllTrue[projected, supportedQ],
       AppendTo[diagnostics, "Identical-particle projection exposed a denominator outside the physical catalog."];
       Throw[False, tag]];
+    (* Preserve the functional column space while exposing ordinary identity
+       dependencies. Never split a normalized column into new fit variables. *)
+    If[Length[projected] > 128,
+      normalizationBudget = If[seconds === Infinity, 90,
+        Min[90, 3 Max[0, seconds - (AbsoluteTime[] - started)]/4]];
+      If[normalizationBudget > 0.01,
+        columnNormalization = completionNormalizePhysicalColumns[projected, external,
+          normalizationBudget];
+        normalizedColumns = columnNormalization["Basis"];
+        rejectedColumns = Select[Range[Length[projected]],
+          !closedQ[normalizedColumns[[#]]] || !physicalQ[normalizedColumns[[#]]] &];
+        Do[normalizedColumns[[index]] = projected[[index]], {index, rejectedColumns}];
+        projected = normalizedColumns;
+        columnNormalization = Join[columnNormalization,
+          <|"RejectedPresentationColumns" -> rejectedColumns,
+            "AcceptedDistinctColumns" -> Length[completionNormalizeBasis[projected]]|>]]];
     basis = completionIndependentBasis[completionNormalizeBasis[projected],
       If[seconds === Infinity, 5, Max[0.000001, seconds - (AbsoluteTime[] - started)]]];
-    If[Length[basis] > limit, exceeded = True; Throw[False, tag]];
+    If[effectiveLimit < Length[basis] <= automaticCeiling,
+      nextLimit = Min[automaticCeiling, 2^Ceiling[Log[2, Length[basis]]]];
+      capChanges = {<|"From" -> effectiveLimit, "To" -> nextLimit,
+        "ObservedProjectedDirections" -> Length[basis],
+        "Operation" -> "ReuseCompletePhysicalUnion", "ElapsedTime" -> AbsoluteTime[] - started|>};
+      effectiveLimit = nextLimit];
+    If[Length[basis] > effectiveLimit, exceeded = True; Throw[False, tag]];
     True, tag], seconds, False];
   If[exceeded && AssociationQ[reducedChannels] &&
       ListQ[Lookup[reducedChannels, "Basis", None]] &&
@@ -7172,7 +7305,7 @@ completionPhysicalChannelBasis[normalized_Association, channelPreparation_,
           Select[reducedChannels["Basis"], supportedQ]],
         If[seconds === Infinity, 5, Max[0.000001, seconds - (AbsoluteTime[] - started)]]],
       If[seconds === Infinity, 5, Max[0.000001, seconds - (AbsoluteTime[] - started)]], $TimedOut];
-    If[ListQ[fallbackBasis] && fallbackBasis =!= {} && Length[fallbackBasis] <= limit &&
+    If[ListQ[fallbackBasis] && fallbackBasis =!= {} && Length[fallbackBasis] <= effectiveLimit &&
         AllTrue[fallbackBasis, supportedQ],
       basis = fallbackBasis; complete = True; exceeded = False;
       candidateMode = "ReducedPhysicalChannelsBudgetFallback";
@@ -7187,7 +7320,10 @@ completionPhysicalChannelBasis[normalized_Association, channelPreparation_,
     "Sources" -> sourceRecords, "RawDirectionCount" -> rawCount,
     "CandidateMode" -> candidateMode, "OversizedUnionDirections" -> fullCount,
     "SourceCount" -> sourceCount, "ProjectedDirectionCount" -> Length[basis],
-    "WithinLimit" -> !exceeded, "ElapsedTime" -> AbsoluteTime[] - started,
+    "WithinLimit" -> !exceeded, "EffectiveMaxCorrectionTerms" -> effectiveLimit,
+    "CapChanges" -> capChanges, "CatalogConstructionLimit" -> constructionBound,
+    "ColumnNormalization" -> columnNormalization,
+    "ElapsedTime" -> AbsoluteTime[] - started,
     "Diagnostics" -> DeleteDuplicates[diagnostics],
     "Scope" -> "SourceDerivedPhysicalDenominatorOnlyProposalRequiringAllChannelValidation"|>
 ];
@@ -8690,7 +8826,8 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
   ConstructiveDiagrams`Private`amplitudeAutomaticFactorization[input, channelInput, model, {opts}];
 
 ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : (_List | _Association), model_List, opts : OptionsPattern[CompleteFactorization]] := Block[{$completionParallelSettings = <|
-    "Parallelization" -> OptionValue["Parallelization"], "MaxKernels" -> OptionValue["MaxKernels"]|>}, Module[
+    "Parallelization" -> OptionValue["Parallelization"], "MaxKernels" -> OptionValue["MaxKernels"]|>,
+    ConstructiveDiagrams`Private`$rspCanonicalProductBasis = True}, Module[
   {output = OptionValue["Output"], details = OptionValue["ReturnDetails"],
    basisOption = OptionValue["CorrectionBasis"],
    references = OptionValue["ChannelReferences"], alternatives = OptionValue["AlternativeChannels"],
@@ -8720,7 +8857,7 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
    space = "NotRequired", fallbackBasis, literalBasis, channelLiteralBasis, groupedBasis,
    budgetSpaces = {}, inputProposals, inputAttempt, inputAttempts = {}, inputFitStart, inputFitBudget,
    representative = <|"Status" -> "UNCHANGED", "Reason" -> "No free family was selected."|>,
-   postStarted, postBudget,
+   postStarted, postBudget, ordinaryCompaction,
    physicalSpace = Missing["NotRequested"], physicalFit = Missing["NotRequested"],
    physicalStarted, physicalBudget, physicalBuildBudget, physicalFitSeed,
    physicalSelected = Missing["NotRequested"], physicalReferences,
@@ -8965,13 +9102,17 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
           constructionLimit, limit, Max[0.000001, physicalBuildBudget -
             (AbsoluteTime[] - physicalStarted)], continuations, polePreference, reducedChannels],
         Max[0.000001, physicalBuildBudget], Missing["PhysicalSpaceConstructionTimeout"]];
+      If[AssociationQ[physicalSpace] && IntegerQ[Lookup[physicalSpace, "EffectiveMaxCorrectionTerms", None]] &&
+          IntegerQ[$completionAutomaticCorrectionTermCeiling] &&
+          limit < physicalSpace["EffectiveMaxCorrectionTerms"] <= $completionAutomaticCorrectionTermCeiling,
+        limit = physicalSpace["EffectiveMaxCorrectionTerms"]];
       remainingSeconds = physicalBudget - (AbsoluteTime[] - physicalStarted);
       If[AssociationQ[physicalSpace] && physicalSpace["Status"] === "AVAILABLE" && remainingSeconds > 0.01,
         completionProgress[callback, enabled, <|"Stage" -> "Fitting preferred-pole correction terms",
           "Operation" -> ToString[polePreference],
           "Unknowns" -> Length[physicalSpace["Basis"]]|>];
         fallbackOptions = Join[Association[Options[CompleteFactorization]], Association[{opts}],
-          <|"CorrectionBasis" -> physicalSpace["Basis"],
+          <|"CorrectionBasis" -> physicalSpace["Basis"], "MaxCorrectionTerms" -> limit,
             "PolePreference" -> polePreference, "BoseSymmetryGroups" -> {}, "FermionSymmetryGroups" -> {},
             "InputReweighting" -> None, "ChannelCompanions" -> None,
             "PreparationRemainders" -> None, "AlternativeChannels" -> {},
@@ -9364,6 +9505,7 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
     "SelectedChannelSpace" -> selectedChannels,
     "CorrectionSpaceCandidates" -> budgetSpaces,
     "InputFitAttempts" -> inputAttempts,
+    "BasisNormalizationPolicy" -> "CanonicalExpandedProductsWithRetainedSources",
     "ShiftedChannelContinuations" -> shiftedSpace,
     "ShiftedChannelAttempts" -> shiftedAttempts,
     "ShiftedChannelFit" -> If[AssociationQ[shiftedFit], KeyTake[shiftedFit,
@@ -9474,7 +9616,31 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
               {KeyTake[fallbackReport, {"Status", "Diagnostics", "ElapsedTime", "RefinementHistory"}]}],
             "ElapsedTime" -> AbsoluteTime[] - start|>];
           status = report["Status"]]]]];
+  (* Normalize the certified particular solution by ordinary external identities.
+     Keep the full affine family: changing its center by an exact identity does
+     not delete or constrain any independent correction direction. *)
+  remainingSeconds = If[seconds === Infinity, 12,
+    Max[0, Min[12, seconds - (AbsoluteTime[] - start)]]];
+  If[Lookup[report, "Status", "UNRESOLVED"] === "COMPLETE" && remainingSeconds > 0.01 &&
+      500 <= LeafCount[report["Amplitude"]] <= 24000 &&
+      !FreeQ[report["Amplitude"], chain_SpinorChain /; Length[chain] === 4 && First[chain] === Last[chain]],
+    completionProgress[callback, enabled, <|"Stage" -> "Compacting ordinary pole identities",
+      "Elapsed" -> AbsoluteTime[] - start|>];
+    ordinaryCompaction = preparationOrdinaryPoleCompaction[report["Amplitude"],
+      report["ExternalMassRules"], True, remainingSeconds];
+    ordinaryCompaction = Join[ordinaryCompaction, <|"OriginalCenter" -> report["Amplitude"],
+      "RetainedDirectionCount" -> Length[Lookup[report, "RemainingBasis", {}]],
+      "CorrectionSpanChanged" -> False|>];
+    If[Lookup[ordinaryCompaction, "Status", "UNCHANGED"] === "IMPROVED",
+      trial = ordinaryCompaction["Amplitude"];
+      report = Join[report, <|"Amplitude" -> trial,
+        "Correction" -> trial - report["OriginalExpression"],
+        "FamilyAmplitude" -> trial + If[Lookup[report, "FreeParameters", {}] === {}, 0,
+          report["FreeParameters"].report["RemainingBasis"]]|>]];
+    report = Join[report, <|"OrdinaryCompaction" -> ordinaryCompaction|>]];
   report = Join[report, <|"ElapsedTime" -> AbsoluteTime[] - start,
+    "EffectiveMaxCorrectionTerms" -> limit,
+    "CapChanges" -> If[AssociationQ[physicalSpace], Lookup[physicalSpace, "CapChanges", {}], {}],
     "BoseSymmetry" -> completionExchangeDetails[exchangePlan, "Boson"],
     "FermionSymmetry" -> completionExchangeDetails[exchangePlan, "Fermion"],
     "ExchangeSymmetry" -> KeyDrop[exchangePlan, "Permutations"],
@@ -9484,6 +9650,7 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
         completionExchangeSpaceName[entry["CorrectionSpace"], exchangePlan]|>], entry]],
       Lookup[report, "CorrectionSpaceCandidates", {}]],
     "InputFitAttempts" -> inputAttempts,
+    "BasisNormalizationPolicy" -> "CanonicalExpandedProductsWithRetainedSources",
     "ShiftedChannelContinuations" -> shiftedSpace,
     "ShiftedChannelAttempts" -> shiftedAttempts,
     "ShiftedChannelFit" -> If[AssociationQ[shiftedFit], KeyTake[shiftedFit,
@@ -9911,6 +10078,110 @@ preparationExternalVirtualities[expression_, externalRules_List] := Module[
   preparationSpinorProducts[trial, externalRules]
 ];
 
+(* A numerator-polynomial identity for arbitrary P,Q and declared massless b,c.
+   The angle dual reverses the momentum word and the overall determinant sign.
+   Momentum squares remain virtualities unless an external mass rule fixes them.
+   Search is bounded; the last expression and its edit log commit together. *)
+preparationDeterminantPairs[expression_, externalRules_List, maxPairs_: 8, seconds_: 5] := Module[
+  {started = AbsoluteTime[], checkpoint, external, canon, endpointQ, leg, powers, contains,
+   outcome, memoryStop = Unique["determinantPairMemory"], remaining, body, terms,
+   found, diagonal, parts, kind, other, otherCross, assignment, sign, word, b, c, p, q, bs, cs, oppositeB,
+   oppositeC, otherDiagonal, cross, crossed, bracket, firstMonomial, secondMonomial,
+   firstCoefficient, secondCoefficient, rhs, candidate, edit, i, j, step, initialLeaves},
+  checkpoint = <|"Expression" -> expression, "Edits" -> {}|>;
+  remaining[] := If[seconds === Infinity, Infinity, Max[0, seconds - (AbsoluteTime[] - started)]];
+  If[!IntegerQ[maxPairs] || maxPairs < 0 ||
+      !(seconds === Infinity || NumericQ[seconds] && TrueQ[seconds >= 0]),
+    Return[Join[checkpoint, <|"Status" -> "SKIPPED", "TimedOut" -> False,
+      "Reason" -> "InvalidBudget", "ElapsedTime" -> AbsoluteTime[] - started|>]]];
+  If[maxPairs === 0 || TrueQ[seconds === 0],
+    Return[Join[checkpoint, <|"Status" -> "UNCHANGED", "TimedOut" -> TrueQ[seconds === 0],
+      "Reason" -> If[maxPairs === 0, "NoPairBudget", "TimeConstraint"],
+      "ElapsedTime" -> AbsoluteTime[] - started|>]]];
+  initialLeaves = LeafCount[expression];
+  If[initialLeaves > 12000 ||
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace] ||
+      !FreeQ[expression, Power[base_, exponent_] /; !TrueQ[exponent >= 0] &&
+        !FreeQ[base, _PropDen | _SpinorChain | _SpinorTrace | _Mom | _MomProd]] ||
+      !rspExpansionBudgetQ[expression],
+    Return[Join[checkpoint, <|"Status" -> "SKIPPED", "TimedOut" -> False,
+      "Reason" -> "NumeratorPolynomialGuard", "ElapsedTime" -> AbsoluteTime[] - started|>]]];
+  external = Select[externalRules, MatchQ[#, HoldPattern[Mass[_Integer] -> _]] &];
+  If[!AllTrue[external, residueFiniteQ[Last[#]] && FreeQ[Last[#],
+        _List | _Association | _Rule | _RuleDelayed | _Mass | _Mom | _MomProd |
+        _Spinor | _SpinorChain | _SpinorTrace | _PropDen | _Dot | _NonCommutativeMultiply] &] ||
+      !preparationMassRulesConsistentQ[external],
+    Return[Join[checkpoint, <|"Status" -> "SKIPPED", "TimedOut" -> False,
+      "Reason" -> "InvalidOrConflictingExternalMassRules", "ElapsedTime" -> AbsoluteTime[] - started|>]]];
+  canon[value_] := canonicalChains[withProtectedPropagators[value, Expand]];
+  endpointQ[value_] := MatchQ[value, Spinor["Helicity", "Angle" | "Square", _Integer]];
+  leg[value_] := value[[3]];
+  powers[value_] := Merge[Map[Function[factor,
+    If[MatchQ[factor, Power[_, _Integer]], factor[[1]] -> factor[[2]], factor -> 1]],
+    Select[If[Head[value] === Times, List @@ value, {value}], !NumericQ[#] &]], Total];
+  contains[value_, monomial_] := Module[{available = powers[value], required = powers[monomial]},
+    AllTrue[Keys[required], Lookup[available, #, 0] >= required[#] &]];
+  outcome = TimeConstrained[MemoryConstrained[
+    Do[
+      body = canon[checkpoint["Expression"]]; terms = If[Head[body] === Plus, List @@ body, {body}];
+      If[Length[terms] > 128, Break[]]; found = False;
+      Catch[
+        Do[
+          Do[
+            parts = List @@ diagonal; bs = First[parts]; b = leg[bs]; kind = bs[[2]];
+            If[!TrueQ[(Mass[b] /. external) === 0], Continue[]];
+            other = If[kind === "Square", "Angle", "Square"];
+            word = parts[[2 ;; 3]];
+            oppositeB = Spinor["Helicity", other, b];
+            Do[
+            {p, q, sign} = assignment;
+            crossed = DeleteDuplicates[Cases[terms[[i]], chain_SpinorChain /;
+              Length[chain] === 3 && chain[[2]] === Mom[p] &&
+                ((endpointQ[First[chain]] && First[chain][[2]] === kind && Last[chain] === oppositeB) ||
+                 (First[chain] === oppositeB && endpointQ[Last[chain]] && Last[chain][[2]] === kind)), Infinity]];
+            Do[
+              cs = If[endpointQ[First[cross]] && First[cross][[2]] === kind, First[cross], Last[cross]];
+              c = leg[cs];
+              If[c === b || !TrueQ[(Mass[c] /. external) === 0], Continue[]];
+              oppositeC = Spinor["Helicity", other, c];
+              otherDiagonal = SpinorChain[cs, Sequence @@ word, cs];
+              bracket = SpinorChain[bs, cs];
+              firstMonomial = canonicalChains[bracket MomProd[q, c] cross diagonal];
+              If[!contains[terms[[i]], firstMonomial], Continue[]];
+              firstCoefficient = Cancel[terms[[i]]/firstMonomial];
+              Do[
+                secondMonomial = canonicalChains[bracket MomProd[q, b] otherCross otherDiagonal];
+                Do[
+                  If[j === i || !contains[terms[[j]], secondMonomial], Continue[]];
+                  secondCoefficient = Cancel[terms[[j]]/secondMonomial];
+                  If[!TrueQ[Cancel[firstCoefficient + secondCoefficient] === 0], Continue[]];
+                  rhs = sign (bracket^2 (MomProd[p, p] (2 MomProd[q, b]) (2 MomProd[q, c]) -
+                    MomProd[q, q] (2 MomProd[p, b]) (2 MomProd[p, c])) +
+                    2 MomProd[b, c] diagonal otherDiagonal);
+                  candidate = canon[(Total[Delete[terms, List /@ {i, j}]] + firstCoefficient rhs/2) /. external];
+                  If[!residueFiniteQ[candidate], Continue[]];
+                  edit = <|"Momenta" -> {p, q}, "MasslessLegs" -> {b, c}, "Chirality" -> kind,
+                    "Subtract" -> terms[[i]] + terms[[j]], "Insert" -> firstCoefficient rhs/2,
+                    "Identity" -> "TwoByTwoDeterminantPair", "InternalOnShellConditions" -> {}|>;
+                  checkpoint = <|"Expression" -> candidate, "Edits" -> Append[checkpoint["Edits"], edit]|>;
+                  found = True; Throw[Null],
+                  {j, Length[terms]}],
+                {otherCross, {SpinorChain[bs, Mom[p], oppositeC], SpinorChain[oppositeC, Mom[p], bs]}}],
+              {cross, crossed}],
+            {assignment, {{word[[1, 1]], word[[2, 1]], 1},
+              {word[[2, 1]], word[[1, 1]], -1}}}],
+            {diagonal, DeleteDuplicates[Cases[terms[[i]], chain_SpinorChain /;
+              Length[chain] === 4 && First[chain] === Last[chain] && endpointQ[First[chain]] &&
+                MatchQ[chain[[2]], _Mom] && MatchQ[chain[[3]], _Mom], Infinity]]}],
+          {i, Length[terms]}]];
+      If[!found, Break[]], {step, maxPairs}]; True,
+    268435456, memoryStop], remaining[], $TimedOut];
+  Join[checkpoint, <|"Status" -> If[checkpoint["Edits"] === {}, "UNCHANGED", "REDUCED"],
+    "TimedOut" -> (outcome === $TimedOut),
+    "Reason" -> Which[outcome === $TimedOut, "TimeConstraint", outcome === memoryStop, "MemoryConstraint", True, "Completed"],
+    "ElapsedTime" -> AbsoluteTime[] - started|>]
+];
+
 (* Sparse Laurent content, not a new spinor or on-shell identity. Keep small
    groups with shared physical denominators instead of making one dense fraction. *)
 preparationSparsePoleContent[expression_, seconds_: 0.5] := Module[
@@ -10102,6 +10373,448 @@ preparationDenominatorSchouten[expression_, externalRules_List, seconds_: 15] :=
       "Numerator" -> #3, "Edits" -> #4|> &, {denominators, originalNumerators,
         bestRecord["Chosen"], bestRecord["Route"]}],
     "ElapsedTime" -> AbsoluteTime[] - started|>
+];
+
+(* These ordinary scalar identities require scalar external masses. Invalid
+   declarations cannot license either a fixed virtuality or a null spinor. *)
+preparationScalarExternalRulesQ[rules_List] := Module[{external = preparationExternalRules[rules]},
+  preparationMassRulesConsistentQ[external] && AllTrue[external,
+    residueFiniteQ[Last[#]] && FreeQ[Last[#], _List | _Association | _Rule | _RuleDelayed | _Spinor | _SpinorChain |
+      _SpinorTrace | _Mom | _MomProd | _PropDen | _Mandelstahm | _Mass | _Dot |
+      _NonCommutativeMultiply | _sigma | _colorT | _colorTrace | Indeterminate |
+      ComplexInfinity | _DirectedInfinity] &]
+];
+
+(* Exact virtuality definitions. A positive propagator atom is retained on the
+   right-hand side; this never substitutes an internal mass-shell condition. *)
+preparationPropagatorDefinitions[expression_, externalRules_List] := Module[
+  {massSquare, legs},
+  If[!preparationScalarExternalRulesQ[externalRules], Return[expression]];
+  massSquare[i_] := With[{mass = Mass[i] /. externalRules},
+    If[FreeQ[mass, _Mass], mass^2, orderedDot[i, i]]];
+  expression /. prop_PropDen :> If[Length[prop] =!= 2, prop,
+    legs = residueMomentumLegsFromExpression[First[prop]];
+    If[ListQ[legs] && DuplicateFreeQ[legs], Total[massSquare /@ legs] +
+      2 Total[orderedDot @@@ Subsets[legs, {2}]] - prop[[2]]^2, prop]]
+];
+
+preparationVirtualityTrials[expression_, externalRules_List, inventory_List,
+    conserve_ : False] := Module[
+  {props, external, records = {}, trials = {}, legs, complement, rest, choices,
+   massSquare, add, rhs, constant, pivot, coefficient, identity, target},
+  If[!preparationScalarExternalRulesQ[externalRules], Return[{}]];
+  props = DeleteDuplicates[Cases[{inventory}, prop_PropDen /; Length[prop] === 2 :> prop, Infinity]];
+  props = Select[props, With[{parts = residueMomentumLegsFromExpression[First[#]]},
+    ListQ[parts] && DuplicateFreeQ[parts]] &];
+  external = Sort[DeleteDuplicates[externalIndices[externalRules]]];
+  massSquare[i_] := With[{mass = Mass[i] /. externalRules},
+    If[FreeQ[mass, _Mass], mass^2, orderedDot[i, i]]];
+  Do[legs = Sort[residueMomentumLegsFromExpression[First[prop]]];
+    If[Length[legs] >= 2, AppendTo[records, <|"Propagator" -> prop,
+      "Legs" -> legs, "MomentumConservationUsed" -> False|>]];
+    If[TrueQ[conserve] && ContainsAll[external, legs],
+      complement = Complement[external, legs];
+      If[Length[complement] >= 2, AppendTo[records, <|"Propagator" -> prop,
+        "Legs" -> complement, "MomentumConservationUsed" -> True|>]]], {prop, props}];
+  add[record_, right_, kind_] := Module[{dots},
+    target = record["Propagator"]; identity = Expand[right - target];
+    dots = DeleteDuplicates[Cases[identity, _MomProd, Infinity]];
+    Do[coefficient = Coefficient[identity, pivot];
+      If[coefficient =!= 0 && FreeQ[coefficient, _MomProd] && !FreeQ[expression, pivot],
+        AppendTo[trials, Join[record, <|"Rule" -> (pivot -> Expand[pivot - identity/coefficient]),
+          "Identity" -> identity, "Kind" -> kind|>]]], {pivot, dots}]];
+  Do[legs = record["Legs"];
+    If[Length[legs] >= 3,
+      Do[rest = DeleteCases[legs, center];
+        choices = Table[Select[props,
+          Sort[residueMomentumLegsFromExpression[First[#]]] === Sort[{center, leg}] &], {leg, rest}];
+        If[AnyTrue[choices, # === {} &] || Times @@ (Length /@ choices) > 32, Continue[]];
+        Do[constant = (2 - Length[legs]) massSquare[center] +
+            Total[(#[[2]]^2 &) /@ selected] - record["Propagator"][[2]]^2;
+          rhs = Total[selected] + 2 Total[orderedDot @@@ Subsets[rest, {2}]] + constant;
+          add[record, rhs, "CenteredPairDefinition"], {selected, Tuples[choices]}], {center, legs}]];
+    rhs = Total[massSquare /@ legs] + 2 Total[orderedDot @@@ Subsets[legs, {2}]] -
+      record["Propagator"][[2]]^2;
+    add[record, rhs, "DirectDefinition"], {record, records}];
+  Take[DeleteDuplicatesBy[trials, Lookup[#, "Rule"] &], UpTo[256]]
+];
+
+(* Ordinary scalar Schouten relations from the actual chain atoms. The
+   opposite-chirality bracket identity is licensed only by declared external
+   massless endpoints. Propagator definitions keep their positive virtuality;
+   only the requested shared pole and its explicitly enabled complement enter
+   the relation pool. No process-specific numerator template is used. *)
+preparationScalarSchoutenRelations[expression_, higher_PropDen, externalRules_List,
+    inventory_List, conserve_, seconds_ : 1] := Module[
+  {started = AbsoluteTime[], external, props, atoms, diagonal, brackets, records = {},
+   orient, normalize, pairRules, add, lhs, rhs, identity, rewrite, pairDefinitions,
+   scalarSign, virtualities, outcome, tag = Unique["scalarSchoutenRelations"]},
+  If[!TrueQ[seconds > 0] || LeafCount[expression] > 8000 ||
+      !preparationScalarExternalRulesQ[externalRules] ||
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace],
+    Return[{}]];
+  external = preparationExternalRules[externalRules];
+  orient[chain_SpinorChain] := Module[{parts = List @@ chain, left, right},
+    {left, right} = parts[[{1, -1}]];
+    Which[
+      Length[parts] === 2 && spinorType[left] === spinorType[right] &&
+          IntegerQ[spinorLeg[left]] && IntegerQ[spinorLeg[right]] &&
+          spinorLeg[left] > spinorLeg[right], -(SpinorChain @@ Reverse[parts]),
+      Length[parts] === 3 && spinorType[left] === "Square" &&
+          spinorType[right] === "Angle", SpinorChain @@ Reverse[parts],
+      True, chain]];
+  normalize[value_] := Expand[((value /. chain_SpinorChain :>
+      ReduceSpinorProducts[chain]) /. external) /. chain_SpinorChain :> orient[chain]];
+  pairRules[value_] := Lookup[First /@ GatherBy[
+      Select[preparationVirtualityTrials[value, external, props, False],
+        #["Kind"] === "DirectDefinition" && Length[#["Legs"]] === 2 &&
+          !TrueQ[#["MomentumConservationUsed"]] &], First[#["Rule"]] &], "Rule", {}];
+  add[value_, source_] := If[value =!= 0 && LeafCount[value] <= 1000,
+    AppendTo[records, <|"Identity" -> Expand[value], "Origin" -> source|>];
+    If[Length[records] >= 24, Throw[True, tag]]];
+  outcome = TimeConstrained[MemoryConstrained[Catch[
+    If[!rspExpansionBudgetQ[expression], Throw[False, tag]];
+    props = DeleteDuplicates[Cases[{inventory}, prop_PropDen /; Length[prop] === 2 :> prop, Infinity]];
+    If[Length[props] > 128, Throw[False, tag]];
+    atoms = DeleteDuplicates[Cases[expression, _SpinorChain, Infinity]];
+    If[Length[atoms] > 32, Throw[False, tag]];
+    diagonal = Select[atoms, Length[#] === 4 && First[List @@ #] === Last[List @@ #] &&
+      MatchQ[#[[2]], Mom[_Integer]] && MatchQ[#[[3]], Mom[_Integer]] &];
+    brackets = Select[atoms, Length[#] === 2 &];
+    Do[
+      If[spinorType[First[List @@ diag]] === spinorType[First[List @@ bracket]] ||
+          !MemberQ[spinorLeg /@ (List @@ bracket), spinorLeg[First[List @@ diag]]], Continue[]];
+      rewrite = SchoutenRewrite[diag, bracket, {1, 0}];
+      If[rewrite === $Failed, Continue[]];
+      lhs = normalize[diag bracket]; rhs = normalize[rewrite];
+      pairDefinitions = pairRules[lhs - rhs];
+      identity = Expand[(lhs - rhs) /. pairDefinitions];
+      add[identity, <|"Operation" -> "GeneralizedScalarSchouten",
+        "Product" -> diag bracket, "Split" -> {1, 0},
+        "PairDefinitions" -> pairDefinitions|>], {diag, diagonal}, {bracket, brackets}];
+    Do[
+      If[spinorType[First[List @@ first]] === spinorType[First[List @@ second]] ||
+          Sort[spinorLeg /@ (List @@ first)] =!= Sort[spinorLeg /@ (List @@ second)] ||
+          !AllTrue[Join[List @@ first, List @@ second],
+            MatchQ[#, Spinor["Helicity", "Angle" | "Square", _Integer]] &] ||
+          !AllTrue[spinorLeg /@ (List @@ first), TrueQ[(Mass[#] /. external) === 0] &], Continue[]];
+      lhs = normalize[first second];
+      scalarSign = Times @@ Select[If[Head[lhs] === Times, List @@ lhs, {lhs}], NumberQ];
+      rhs = -2 scalarSign (orderedDot @@ (spinorLeg /@ (List @@ first)));
+      identity = Expand[lhs - rhs];
+      virtualities = Select[preparationVirtualityTrials[identity, external, props, conserve],
+        #["Kind"] === "CenteredPairDefinition" && #["Propagator"] === higher &];
+      Do[add[Expand[identity /. record["Rule"]],
+        <|"Operation" -> "MasslessBracketAndPhysicalVirtuality",
+          "BracketProduct" -> lhs, "ScalarProduct" -> rhs,
+          "ExternalMassRules" -> external, "Virtuality" -> record|>],
+        {record, virtualities}], {first, brackets}, {second, brackets}]; True, tag],
+    134217728, False], Max[0.000001, seconds - (AbsoluteTime[] - started)], False];
+  Take[DeleteDuplicatesBy[records, #["Identity"] &], UpTo[12]]
+];
+
+(* A bounded ordinary polynomial search on one shared physical-pole cluster.
+   All monomial pivots are exact consequences of the generated scalar
+   identities. Intermediate representatives may be larger, but no inverse
+   kinematic cofactor is admitted. Every best checkpoint retains its complete
+   numerator division, pole contribution, regular remainder and replay data. *)
+preparationScalarPoleBlock[expression_, higher_PropDen, externalRules_List,
+    inventory_List, conserve_, seconds_ : 8] := Module[
+  {started = AbsoluteTime[], bestRecord, outcome, external, masses, props, tokens, restore,
+   replace, token, available, rank, numericContent, legalCofactorQ, orient, normalize,
+   terms, normalizedTerms = {}, lifts = {}, local, numerator, denominator, lift,
+   together, initialNumerator, relations, pairDefinitions, rawRelations, assemble,
+   beam, seen, next, id, pivot, quotients, quotient, cofactor, trial, candidate,
+   checkpoint, attempts = 0, tag = Unique["scalarPoleBlock"], sourceRank},
+  bestRecord = <|"Amplitude" -> expression, "PoleContribution" -> expression,
+    "RegularRemainder" -> 0, "Route" -> {}, "Status" -> "UNCHANGED",
+    "PolynomialDivisionCertificate" -> True|>;
+  If[!TrueQ[seconds > 0] || LeafCount[expression] > 8000 ||
+      !preparationScalarExternalRulesQ[externalRules] ||
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace] ||
+      !FreeQ[expression, Power[base_, exponent_] /; !TrueQ[exponent >= 0] &&
+        !FreeQ[base, _SpinorChain | _SpinorTrace | _SpinorHat]], Return[bestRecord]];
+  external = preparationExternalRules[externalRules]; masses = DeleteDuplicates[Last /@ external];
+  available[] := Max[0.000001, seconds - (AbsoluteTime[] - started)];
+  numericContent[value_] := Times @@ Select[
+    If[Head[value] === Times, List @@ value, {value}], NumberQ[#] && Precision[#] === Infinity &];
+  legalCofactorQ[value_] := residueFiniteQ[value] && FreeQ[value, Power[base_, exponent_] /;
+    !TrueQ[exponent >= 0] && !(NumberQ[base] || (MemberQ[masses, base] && base =!= 0))];
+  orient[chain_SpinorChain] := Module[{parts = List @@ chain, left, right},
+    {left, right} = parts[[{1, -1}]];
+    Which[
+      Length[parts] === 2 && spinorType[left] === spinorType[right] &&
+          IntegerQ[spinorLeg[left]] && IntegerQ[spinorLeg[right]] &&
+          spinorLeg[left] > spinorLeg[right], -(SpinorChain @@ Reverse[parts]),
+      Length[parts] === 3 && spinorType[left] === "Square" &&
+          spinorType[right] === "Angle", SpinorChain @@ Reverse[parts], True, chain]];
+  normalize[value_] := Expand[((value /. chain_SpinorChain :>
+      ReduceSpinorProducts[chain]) /. external) /. chain_SpinorChain :> orient[chain]];
+  outcome = TimeConstrained[MemoryConstrained[Catch[
+    If[!rspExpansionBudgetQ[expression] || rspSandwichExpansionCount[expression] > 256,
+      Throw[False, tag]];
+    sourceRank = preparationRank[expression]; bestRecord = Join[bestRecord, <|"Rank" -> sourceRank|>];
+    props = DeleteDuplicates[Cases[{inventory}, prop_PropDen /; Length[prop] === 2 :> prop, Infinity]];
+    If[Length[props] > 128 || !MemberQ[props, higher], Throw[False, tag]];
+    tokens = Table[Unique["scalarPhysicalVirtuality"], {Length[props]}];
+    replace = Thread[props -> tokens]; restore = Thread[tokens -> props]; token = higher /. replace;
+    rank[value_] := preparationRank[value /. restore];
+    terms = If[Head[expression] === Plus, List @@ expression, {expression}];
+    If[Length[terms] > 8, Throw[False, tag]];
+    Do[local = term /. replace; numerator = Numerator[local]; denominator = Denominator[local];
+      lift = rspReverseNormalizationFactor[numerator, external, Min[1, available[]/5]];
+      AppendTo[lifts, <|"OriginalNumerator" -> numerator, "Reduction" -> lift|>];
+      AppendTo[normalizedTerms, lift["Amplitude"]/denominator], {term, terms}];
+    rawRelations = preparationScalarSchoutenRelations[expression, higher, external, props,
+      conserve, Min[1, available[]/4]];
+    pairDefinitions = Lookup[First /@ GatherBy[
+      Select[preparationVirtualityTrials[normalize[expression], external, props, False],
+        #["Kind"] === "DirectDefinition" && Length[#["Legs"]] === 2 &&
+          !TrueQ[#["MomentumConservationUsed"]] &], First[#["Rule"]] &], "Rule", {}];
+    together = Together[(normalize[Total[normalizedTerms]] /. pairDefinitions) /. replace];
+    initialNumerator = Expand[Numerator[together]]; denominator = Denominator[together];
+    If[LeafCount[initialNumerator] > 6000 || !rspExpansionBudgetQ[initialNumerator] ||
+        !PolynomialQ[initialNumerator, token] || Exponent[denominator, token] =!= 1,
+      Throw[False, tag]];
+    relations = (Join[#, <|"TokenIdentity" -> Expand[#["Identity"] /. replace]|>] & /@ rawRelations);
+    assemble[value_] := Module[{quot, rem, pole, regular, joined, single, chosen, zero},
+      If[!PolynomialQ[value, token], Return[Missing["NonPolynomialVirtuality"]]];
+      {quot, rem} = PolynomialQuotientRemainder[value, token, token];
+      zero = Expand[value - token quot - rem];
+      If[zero =!= 0, Return[Missing["UncertifiedDivision"]]];
+      pole = Factor[rem]/denominator; regular = Factor[quot]/Cancel[denominator/token];
+      joined = pole + regular; single = Factor[value]/denominator;
+      chosen = If[preparationBetterQ[rank[joined], rank[single]], joined, single];
+      <|"Amplitude" -> chosen, "DecompositionAmplitude" -> joined,
+        "PoleContribution" -> pole, "RegularRemainder" -> regular,
+        "Numerator" -> value, "Quotient" -> quot, "Remainder" -> rem,
+        "PolynomialDivisionCertificate" -> True, "PolynomialDivisionZero" -> zero,
+        "Denominator" -> denominator, "Rank" -> rank[chosen]|>];
+    candidate = assemble[initialNumerator];
+    If[AssociationQ[candidate] && preparationBetterQ[candidate["Rank"], bestRecord["Rank"]],
+      bestRecord = Join[candidate, <|"Route" -> {}, "Status" -> "IMPROVED",
+        "NumeratorLifts" -> lifts, "PairDefinitions" -> pairDefinitions,
+        "InitialNumerator" -> initialNumerator|>]];
+    beam = {<|"Poly" -> initialNumerator, "Route" -> {}|>}; seen = <|Hash[initialNumerator] -> True|>;
+    Do[next = {};
+      Do[Do[id = relation["TokenIdentity"];
+        Do[pivot = monomial/numericContent[monomial];
+          quotients = DeleteCases[Map[Function[value,
+            quotient = Cancel[value/pivot];
+            If[legalCofactorQ[quotient], quotient, Missing["NotPolynomialMultiple"]]],
+            If[Head[state["Poly"]] === Plus, List @@ state["Poly"], {state["Poly"]}]], _Missing];
+          If[quotients === {}, Continue[]];
+          cofactor = Total[quotients]/numericContent[monomial];
+          trial = Expand[state["Poly"] - cofactor id];
+          If[KeyExistsQ[seen, Hash[trial]], Continue[]]; AssociateTo[seen, Hash[trial] -> True];
+          If[LeafCount[trial] > 3 LeafCount[initialNumerator] || !rspExpansionBudgetQ[trial], Continue[]];
+          candidate = assemble[trial]; If[!AssociationQ[candidate], Continue[]]; attempts++;
+          checkpoint = Join[candidate, <|"Route" -> Append[state["Route"],
+            <|"Relation" -> KeyDrop[relation, "TokenIdentity"],
+              "Pivot" -> pivot, "Cofactor" -> cofactor|>],
+            "NumeratorLifts" -> lifts, "PairDefinitions" -> pairDefinitions,
+            "InitialNumerator" -> initialNumerator, "Status" -> "IMPROVED"|>];
+          If[preparationBetterQ[candidate["Rank"], bestRecord["Rank"]], bestRecord = checkpoint];
+          AppendTo[next, <|"Poly" -> trial, "Route" -> checkpoint["Route"], "Rank" -> candidate["Rank"]|>],
+          {monomial, If[Head[id] === Plus, List @@ id, {id}]}], {relation, relations}], {state, beam}];
+      If[next === {}, Break[]]; beam = Take[SortBy[next, #["Rank"] &], UpTo[8]], {depth, 4}]; True, tag],
+    268435456, False], available[], False];
+  (* No scoped physical-virtuality token escapes in amplitudes OR replay data. *)
+  If[ListQ[restore], bestRecord = bestRecord /. restore];
+  Join[bestRecord, <|"Attempts" -> attempts, "TimedOut" -> !TrueQ[outcome],
+    "ElapsedTime" -> AbsoluteTime[] - started, "InternalOnShellConditions" -> {}|>]
+];
+
+(* A small common-denominator block can expose a determinant cancellation.
+   Polynomial division by an existing propagator retains BOTH its pole part
+   and its regular remainder. No numerator is evaluated on an internal cut. *)
+preparationCrossDenominatorBlock[expression_, higher_PropDen, externalRules_List,
+    inventory_List, conserve_, seconds_ : 2] := Module[
+  {started = AbsoluteTime[], bestRecord, outcome, together, numerator, denominator,
+   dotted, determinant, dotRules, trials, body, polynomial, quotient, remainder,
+   token = Unique["ordinaryVirtuality"], candidate, rank, expandedDefinitions,
+   external, massSquareRules, available, route, trial},
+  bestRecord = <|"Amplitude" -> expression, "Route" -> {}, "Status" -> "UNCHANGED"|>;
+  If[!TrueQ[seconds > 0] || LeafCount[expression] > 8000 ||
+      !rspExpansionBudgetQ[expression] || !preparationScalarExternalRulesQ[externalRules] ||
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace] ||
+      !FreeQ[expression, Power[base_, exponent_] /; !TrueQ[exponent >= 0] &&
+        !FreeQ[base, _SpinorChain | _SpinorTrace | _SpinorHat]], Return[bestRecord]];
+  external = preparationExternalRules[externalRules];
+  available[] := Max[0.000001, seconds - (AbsoluteTime[] - started)];
+  outcome = TimeConstrained[MemoryConstrained[
+    bestRecord = Join[bestRecord, <|"Rank" -> preparationRank[expression]|>];
+    together = withProtectedPropagators[expression, Together];
+    numerator = Numerator[together]; denominator = Denominator[together];
+    expandedDefinitions = preparationPropagatorDefinitions[numerator, external];
+    If[!rspExpansionBudgetQ[expandedDefinitions], Return[bestRecord]];
+    dotted = canonicalChains[Expand[expandedDefinitions]];
+    determinant = preparationDeterminantPairs[dotted, external, 8, Min[1, available[]/3]];
+    massSquareRules = (orderedDot[First[#][[1]], First[#][[1]]] -> Last[#]^2 &) /@ external;
+    body = Expand[Lookup[determinant, "Expression", dotted] /. massSquareRules];
+    trials = preparationVirtualityTrials[body, external, inventory, conserve];
+    dotRules = First /@ GatherBy[Select[trials,
+      #["Kind"] === "DirectDefinition" && Length[#["Legs"]] === 2 &&
+        !TrueQ[#["MomentumConservationUsed"]] &], First[#["Rule"]] &];
+    dotRules = Lookup[dotRules, "Rule", {}];
+    trials = Select[trials, #["Propagator"] === higher && Length[#["Legs"]] >= 3 &];
+    Do[polynomial = Expand[(body /. trial["Rule"] /. dotRules) /. higher -> token];
+      If[!PolynomialQ[polynomial, token], Continue[]];
+      quotient = PolynomialQuotient[polynomial, token, token];
+      remainder = PolynomialRemainder[polynomial, token, token];
+      candidate = (Factor[quotient] token/denominator + Factor[remainder]/denominator) /. token -> higher;
+      If[!residueFiniteQ[candidate], Continue[]]; rank = preparationRank[candidate];
+      If[preparationBetterQ[rank, bestRecord["Rank"]],
+        route = {<|"Operation" -> "ExactPropagatorDefinitions", "Before" -> numerator,
+            "After" -> dotted|>, <|"Operation" -> "DeterminantPairs",
+            "Edits" -> Lookup[determinant, "Edits", {}]|>,
+          <|"Operation" -> "ExactVirtualityDivision", "Virtuality" -> higher,
+            "ScalarRule" -> trial, "PairDefinitions" -> dotRules,
+            "Quotient" -> (quotient /. token -> higher), "Remainder" -> remainder,
+            "InternalOnShellConditions" -> {}|>};
+        bestRecord = <|"Amplitude" -> candidate, "Rank" -> rank, "Route" -> route,
+          "Status" -> "IMPROVED"|>], {trial, trials}]; True,
+    268435456, False], available[], False];
+  Join[bestRecord, <|"TimedOut" -> !TrueQ[outcome],
+    "ElapsedTime" -> AbsoluteTime[] - started, "InternalOnShellConditions" -> {}|>]
+];
+
+(* Retain useful numerator factors while bringing regular remainders over their
+   existing physical denominators. Bounded pair merges expose common content;
+   no spinor identity, new pole or shell assumption is used in this pass. *)
+preparationCollectRegularRemainders[expression_, seconds_ : 2] := Module[
+  {started = AbsoluteTime[], best, outcome, terms, available, merge, fold, remember,
+   candidate, chosen, bestGain, difference, route = {}, i, j, pass},
+  best = <|"Amplitude" -> expression, "Route" -> {}, "Status" -> "UNCHANGED"|>;
+  If[!TrueQ[seconds > 0] || LeafCount[expression] > 12000 || !rspExpansionBudgetQ[expression] ||
+      !residueFiniteQ[expression] ||
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace],
+    Return[best]];
+  available[] := Max[0.000001, seconds - (AbsoluteTime[] - started)];
+  fold[input_] := Module[{sums, names},
+    sums = DeleteDuplicates[Flatten[Cases[{input}, term_Times :>
+      Select[List @@ term, Head[#] === Plus &], Infinity]]];
+    names = Table[Unique["retainedNumeratorFactor"], {Length[sums]}];
+    withProtectedPropagators[input /. Thread[sums -> names],
+      Function[body, Factor[Together[body]]]] /. Thread[names -> sums]];
+  merge[input_] := Module[{fraction, num, den, diagonal, answer, proposal},
+    fraction = withProtectedPropagators[input, Together];
+    num = Numerator[fraction]; den = Denominator[fraction]; answer = Factor[num];
+    diagonal = Take[DeleteDuplicates[Cases[num, chain_SpinorChain /;
+      Length[chain] === 4 && First[chain] === Last[chain], Infinity]], UpTo[8]];
+    Do[proposal = answer /. polynomial_Plus :> Collect[polynomial, atom, Factor];
+      If[LeafCount[proposal] < LeafCount[answer], answer = proposal], {atom, diagonal}];
+    answer/den];
+  remember[input_] := Module[{answer = fold[input], rank},
+    If[!residueFiniteQ[answer], Return[Null]]; rank = preparationRank[answer];
+    If[preparationBetterQ[rank, best["Rank"]], best = <|"Amplitude" -> answer,
+      "Rank" -> rank, "Route" -> Append[route, <|"Operation" -> "CollectExistingNumeratorFactors",
+        "Before" -> input, "After" -> answer|>], "Status" -> "IMPROVED"|>]];
+  outcome = TimeConstrained[MemoryConstrained[
+    best = Join[best, <|"Rank" -> preparationRank[expression]|>];
+    terms = If[Head[expression] === Plus, List @@ expression, {expression}];
+    If[Length[terms] <= 16,
+      remember[Total[terms]];
+      Do[chosen = None; bestGain = 0;
+        Do[If[LeafCount[terms[[i]] + terms[[j]]] > 2500, Continue[]];
+          candidate = merge[terms[[i]] + terms[[j]]];
+          difference = LeafCount[terms[[i]] + terms[[j]]] - LeafCount[candidate];
+          If[residueFiniteQ[candidate] && difference > bestGain &&
+              First[preparationRank[candidate]] <= First[preparationRank[terms[[i]] + terms[[j]]]],
+            bestGain = difference; chosen = {i, j, candidate}],
+          {i, Length[terms]}, {j, i + 1, Length[terms]}];
+        If[chosen === None, Break[]];
+        AppendTo[route, <|"Operation" -> "ExactRationalPairMerge",
+          "Before" -> terms[[chosen[[1]]]] + terms[[chosen[[2]]]], "After" -> chosen[[3]]|>];
+        terms = Append[terms[[Complement[Range[Length[terms]], chosen[[{1, 2}]]]]], chosen[[3]]];
+        remember[Total[terms]], {pass, 6}], remember[expression]];
+    True, 268435456, False], available[], False];
+  Join[best, <|"TimedOut" -> !TrueQ[outcome], "ElapsedTime" -> AbsoluteTime[] - started,
+    "InternalOnShellConditions" -> {}|>]
+];
+
+(* Ordinary identities on numerator groups, then across a bounded shared-pole
+   cluster. Checkpoints retain expression and derivation atomically. *)
+preparationOrdinaryPoleCompaction[expression_, externalRules_List, conserve_ : True,
+    seconds_ : 12] := Module[
+  {started = AbsoluteTime[], bestRecord, outcome, body, terms, groups, keys, numerators,
+   current, trial, rank, lift, route = {}, key, available, props, higher, cluster,
+   indices, result, scalarResult, unselected, before, after, i},
+  bestRecord = <|"Amplitude" -> expression, "Route" -> {}, "Status" -> "UNCHANGED"|>;
+  If[!TrueQ[seconds > 0] || LeafCount[expression] > 24000 ||
+      !rspExpansionBudgetQ[expression] || rspSandwichExpansionCount[expression] > 512 ||
+      !preparationScalarExternalRulesQ[externalRules] ||
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace] ||
+      !FreeQ[expression, Power[base_, exponent_] /; !TrueQ[exponent >= 0] &&
+        !FreeQ[base, _SpinorChain | _SpinorTrace | _SpinorHat]], Return[bestRecord]];
+  available[] := Max[0.000001, seconds - (AbsoluteTime[] - started)];
+  key[term_] := Times @@ Select[If[Head[term] === Times, List @@ term, {term}],
+    MatchQ[#, Power[_PropDen, n_Integer?Negative]] &];
+  outcome = TimeConstrained[MemoryConstrained[
+    bestRecord = Join[bestRecord, <|"Rank" -> preparationRank[expression]|>];
+    body = withProtectedPropagators[expression, Expand];
+    terms = If[Head[body] === Plus, List @@ body, {body}];
+    groups = GroupBy[terms, key]; keys = Keys[groups];
+    numerators = MapThread[Expand[Total[#1]/#2] &, {Values[groups], keys}];
+    Do[If[Head[numerators[[i]]] =!= Plus || LeafCount[numerators[[i]]] > 2000, Continue[]];
+      lift = rspReverseNormalizationFactor[numerators[[i]], externalRules, Min[0.8, available[]/4]];
+      If[Lookup[lift, "Status", "UNCHANGED"] === "IMPROVED",
+        numerators[[i]] = lift["Amplitude"];
+        AppendTo[route, <|"Operation" -> "ReverseNormalizationFactors", "Denominator" -> keys[[i]],
+          "Route" -> lift["Route"], "ForwardNormalizationCertificate" -> True|>]],
+      {i, Reverse[SortBy[Range[Length[numerators]], LeafCount[numerators[[#]]] &]]}];
+    current = Total[keys (rspLocalFactorContent /@ numerators)];
+    If[preparationBetterQ[preparationRank[current], bestRecord["Rank"]],
+      bestRecord = <|"Amplitude" -> current, "Rank" -> preparationRank[current],
+        "Route" -> route, "Status" -> "IMPROVED"|>];
+    props = DeleteDuplicates[Cases[expression, _PropDen, Infinity]];
+    higher = Select[props, With[{legs = residueMomentumLegsFromExpression[First[#]]},
+      ListQ[legs] && Length[legs] >= 3] &];
+    terms = If[Head[current] === Plus, List @@ current, {current}];
+    Do[indices = Select[Range[Length[terms]], !FreeQ[key[terms[[#]]], prop] &];
+      (* A factored numerator can contain the entire shared-pole block in
+         one fraction. It needs the same exact quotient/remainder search. *)
+      If[Length[indices] < 1 || Length[indices] > 8, Continue[]];
+      cluster = Total[terms[[indices]]];
+      result = preparationCrossDenominatorBlock[cluster, prop, externalRules, props,
+        conserve, Min[2, available[]/2]];
+      scalarResult = preparationScalarPoleBlock[cluster, prop, externalRules, props,
+        conserve, Min[6, available[]/2]];
+      (* Expose the complete quotient for later cross-cluster collection even
+         when a single local fraction has fewer top-level display groups. *)
+      If[Lookup[scalarResult, "Status", "UNCHANGED"] === "IMPROVED" &&
+          KeyExistsQ[scalarResult, "DecompositionAmplitude"],
+        scalarResult = Join[scalarResult, <|"Amplitude" -> scalarResult["DecompositionAmplitude"]|>]];
+      If[Lookup[scalarResult, "Status", "UNCHANGED"] === "IMPROVED" &&
+          (Lookup[result, "Status", "UNCHANGED"] =!= "IMPROVED" ||
+            preparationBetterQ[preparationRank[scalarResult["Amplitude"]],
+              preparationRank[result["Amplitude"]]]), result = scalarResult];
+      If[Lookup[result, "Status", "UNCHANGED"] =!= "IMPROVED", Continue[]];
+      unselected = Complement[Range[Length[terms]], indices];
+      trial = Total[terms[[unselected]]] + result["Amplitude"];
+      rank = preparationRank[trial];
+      If[preparationBetterQ[rank, bestRecord["Rank"]],
+        AppendTo[route, <|"Operation" -> "CrossDenominatorBlock", "Propagator" -> prop,
+          "Before" -> cluster, "After" -> result["Amplitude"], "Route" -> result["Route"]|>];
+        bestRecord = <|"Amplitude" -> trial, "Rank" -> rank, "Route" -> route, "Status" -> "IMPROVED"|>;
+        current = trial; terms = If[Head[current] === Plus, List @@ current, {current}]], {prop, higher}];
+    (* Retained pieces regular in the higher channels may still have pair poles.
+       Combine these exact remainders only after the local cancellations. *)
+    indices = Select[Range[Length[terms]], FreeQ[key[terms[[#]]],
+      prop_PropDen /; MemberQ[higher, prop]] &];
+    If[2 <= Length[indices] <= 32,
+      before = Total[terms[[indices]]];
+      result = preparationCollectRegularRemainders[before, Min[2, available[]/2]];
+      after = result["Amplitude"];
+      trial = Total[terms[[Complement[Range[Length[terms]], indices]]]] + after;
+      rank = preparationRank[trial];
+      If[residueFiniteQ[trial] && preparationBetterQ[rank, bestRecord["Rank"]],
+        AppendTo[route, <|"Operation" -> "CollectRetainedRegularRemainders",
+          "Before" -> before, "After" -> after, "InternalOnShellConditions" -> {}|>];
+        bestRecord = <|"Amplitude" -> trial, "Rank" -> rank, "Route" -> route, "Status" -> "IMPROVED"|>]];
+    True, 268435456, False], available[], False];
+  Join[bestRecord, <|"TimedOut" -> !TrueQ[outcome], "ElapsedTime" -> AbsoluteTime[] - started,
+    "InternalOnShellConditions" -> {}|>]
 ];
 
 (* Choose conserved composite representatives while their parent chains are
@@ -11098,6 +11811,22 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
       AppendTo[reductions, <|"Operation" -> stage, "Before" -> before,
         "After" -> expression, "InternalOnShellIdentity" -> False, "OnShellChannels" -> {}|>];
       rememberCompleted[expression, stage];
+      If[500 <= LeafCount[expression] <= 24000 && !FreeQ[expression, _PropDen] &&
+          !FreeQ[expression, chain_SpinorChain /; Length[chain] === 4 && First[chain] === Last[chain]],
+        stage = "OrdinaryCrossDenominatorIdentities";
+        before = expression;
+        groupedCompaction = preparationOrdinaryPoleCompaction[before,
+          preparationExternalRules[rules], options["MomentumConservation"],
+          If[options["TimeConstraint"] === Infinity, 12,
+            Max[0.000001, Min[12, options["TimeConstraint"] - (AbsoluteTime[] - started)]]]];
+        after = Lookup[groupedCompaction, "Amplitude", before];
+        If[residueFiniteQ[after] && preparationBetterQ[snapshotRank[after], snapshotRank[before]],
+          expression = after];
+        AppendTo[reductions, <|"Operation" -> stage, "Before" -> before,
+          "After" -> expression, "InternalOnShellIdentity" -> False, "OnShellChannels" -> {},
+          "IdentityRoute" -> Lookup[groupedCompaction, "Route", {}],
+          "SearchTimedOut" -> Lookup[groupedCompaction, "TimedOut", False]|>];
+        rememberCompleted[expression, stage]];
       If[3000 <= LeafCount[expression] <= 24000 && !FreeQ[expression, _PropDen],
         stage = "PropagatorGroupedSpinorIdentities";
         before = expression;

@@ -27425,6 +27425,80 @@ Cell["Earlier Step-by-Step Work (Optional)", "Section", ExpressionUUID->"c32d308
   }, Open]]
 
 }, Closed]]
+,
+
+Cell[CellGroupData[{
+
+Cell["A Shorter Result from Ordinary Identities", "Section", ExpressionUUID->"b9a89a11-1eaf-5ba2-b340-dbac89313125"],
+
+Cell["This worked example simplifies the earlier validated 18-term expression to seven terms. It uses ordinary spinor identities, external mass shells, and momentum conservation. No internal line is put on shell. The example formulas are separate from the production construction algorithm and are not claimed to be globally shortest.", "Text", ExpressionUUID->"bfacd104-4ea3-58de-b9bc-43733c4b36e8"],
+
+Cell["Get[FileNameJoin[{hepcatDirectory, \"tests\", \"QED-5-point-residues.wl\"}]];\nqed6PPPMPreviousWorked = QEDSixPointPPPMPreviousExample[factorizationModel];\nqed6PPPMCompactWorked = QEDSixPointPPPMCompactExample[factorizationModel];", "Input", ExpressionUUID->"a4db7ff4-bc63-5ecd-b941-2f45dbc937d8"],
+
+Cell["The compact expression includes a nonzero remainder that is regular at every three-leg pole. The six shorter three-leg-pole terms alone are not the full amplitude. All denominator factors in the complete seven-term expression are physical.", "Text", ExpressionUUID->"0f44b5a9-e4cb-55c3-b507-942dfe5e6782"],
+
+Cell["Last[qed6PPPMCompactWorked]", "Input", ExpressionUUID->"24b0b812-e5eb-514e-acf0-09bcf5a47195"],
+
+Cell["Grid[{{\"Form\", \"Complexity\", \"Terms\"},\n  {\"Previous\", SpinorExpressionComplexity[Last[qed6PPPMPreviousWorked]], Length[Last[qed6PPPMPreviousWorked]]},\n  {\"Compact\", SpinorExpressionComplexity[Last[qed6PPPMCompactWorked]], Length[Last[qed6PPPMCompactWorked]]}}, Frame -> All]", "Input", ExpressionUUID->"9a862f77-c823-5190-9c8c-0f6c4c2b5d10"],
+
+Cell["The general preparation function derives a shorter expression from the previous form. No compact example formula or target expression is passed to the simplifier; it uses the process-independent identities.", "Text", ExpressionUUID->"59e51e61-0ae7-5d58-8eaa-bbeba1d1f63e"],
+
+Cell["qed6PPPMReducedWorked = PrepareAmplitudes[qed6PPPMPreviousWorked, factorizationModel];\nLast[qed6PPPMReducedWorked]", "Input", ExpressionUUID->"9b82200a-85c5-5345-9853-0477b95e251c"],
+
+Cell["qed6PPPMWorkedChannels = FactorizationAmplitudeChannels[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.-\"}, factorizationModel];\nCheckAmplitudes[qed6PPPMReducedWorked, qed6PPPMWorkedChannels, factorizationModel]", "Input", ExpressionUUID->"29db8688-56db-5042-8911-baf10fa4236e"],
+
+Cell[CellGroupData[{
+
+Cell["The Local Identities", "Subsection", ExpressionUUID->"9da851b4-9134-52c8-9066-67ea80041b98"],
+
+Cell["These display the determinant identity, two scalar Schouten identities, exact three-leg virtuality relations, and the one-momentum transpose. The displayed mass factors belong only to the external electron and positron. A propagator is retained in each virtuality relation; it is never set to zero.", "Text", ExpressionUUID->"be8a8469-ba34-5805-b6aa-b414f333fbf5"],
+
+Cell["Column[QEDSixPointPPPMIdentities[factorizationModel]]", "Input", ExpressionUUID->"1ad5bb81-8db7-567c-9e67-e616e6920fe2"]
+
+}, Open]],
+
+Cell[CellGroupData[{
+
+Cell["Step Through a Paired Reduction", "Subsection", ExpressionUUID->"07ba405d-da83-5181-847d-26dec1d502cb"],
+
+Cell["The two terms differ by one two-leg denominator. Combining their numerators exposes a determinant identity. One contribution cancels two shared reference denominators; the other cancels the three-leg propagator and remains part of the regular remainder.", "Text", ExpressionUUID->"91cf5de2-d03c-5050-b349-de784f1e09e6"],
+
+Cell["qed6PPPMWorkedRoute = QEDSixPointPPPMIdentityRoute[factorizationModel];\nColumn[{\"Before\", qed6PPPMWorkedRoute[[1]][\"Before\"],\n  \"After\", qed6PPPMWorkedRoute[[1]][\"After\"]}]", "Input", ExpressionUUID->"c4308f7c-c690-53f8-a4ae-fd5f45911eeb"]
+
+}, Closed]],
+
+Cell[CellGroupData[{
+
+Cell["Step Through a Heavy Numerator", "Subsection", ExpressionUUID->"9fbf5897-3d72-524d-aacf-22dde8df2ef5"],
+
+Cell["The long numerator factors using external Dirac and Schouten identities. Combining it with its companion terms cancels two additional denominator factors.", "Text", ExpressionUUID->"3da2a58e-24f6-511f-9c8c-15c094e37342"],
+
+Cell["Column[{\"Before\", qed6PPPMWorkedRoute[[4]][\"Before\"],\n  \"After\", qed6PPPMWorkedRoute[[4]][\"After\"]}]", "Input", ExpressionUUID->"4023fbb3-6740-58c8-ab31-f8f5f7f4a055"]
+
+}, Closed]],
+
+Cell[CellGroupData[{
+
+Cell["Verify Every Local Equality", "Subsection", ExpressionUUID->"db2fa18f-aec3-57ea-8833-55e5dfe00f86"],
+
+Cell["This optional calculation checks the six local changes with symbolic mass and coherent massive spins, then checks the formal collection of the regular remainders. It returns a short table rather than the full coordinate certificates.", "Text", ExpressionUUID->"a7f02c59-b007-5546-9873-da1ce789ac06"],
+
+Cell["QEDSixPointPPPMExampleProof[factorizationModel]", "Input", ExpressionUUID->"cc31f4e1-636a-5ab6-adf8-ab27d6b72699"]
+
+}, Closed]],
+
+Cell[CellGroupData[{
+
+Cell["Independent Feynman Comparison", "Subsection", ExpressionUUID->"11e3506a-f8d1-58a4-9d07-c90350e2dc26"],
+
+Cell["This optional calculation generates an independent Feynman amplitude. Preparation uses shared photon references and leaves all internal Feynman lines off shell. The final checker includes the Feynman comparison as well as its usual tests.", "Text", ExpressionUUID->"9e73059b-7afa-5c69-b230-437c4c1dc723"],
+
+Cell["qed6PPPMWorkedFeynman = PrepareAmplitudes[\n  diagramAmplitudes[CreateDiagrams[\n    {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.-\"}, qedFeynmanModel]], qedFeynmanModel];\nCheckAmplitudes[qed6PPPMReducedWorked, qed6PPPMWorkedChannels, factorizationModel,\n  \"FeynmanAmplitudes\" -> qed6PPPMWorkedFeynman, \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"53d9a0fc-2671-52e3-bb9c-004ad97d93e2"]
+
+}, Closed]]
+
+}, Open]]
+
 }, Open]],
 
 Cell[CellGroupData[{
@@ -28521,6 +28595,62 @@ unsupported factor or timeout is UNRESOLVED, not success.", "Text"],
         {Cell["Inspect the Constructed Expression", "Subsection"],
          Cell["constructedAmplitude", "Input"]}, Closed]]}, Open]]
 }, Closed]]
+,
+
+Cell[CellGroupData[{
+
+Cell["An Independent Reference with Physical Poles", "Section", ExpressionUUID->"c02f622f-1c4d-5c45-b201-1d62070f8634"],
+
+Cell["This is a separate worked reference for the balanced-helicity process. It comes from the exact sum of 24 ordered off-shell Dirac currents, with one shared physical momentum reference per photon. Ordinary external spinor and Clifford identities reduce it to 38 factored numerator groups. No internal line is put on shell. This does not mean that ConstructAmplitude above has found this representation, and no process-specific reference formula is supplied to the production algorithm.", "Text", ExpressionUUID->"22a60cf6-74e2-5c47-833d-54a7e8274f22"],
+
+Cell["Get[FileNameJoin[{hepcatDirectory, \"tests\", \"QED-5-point-residues.wl\"}]];\nqed6PPMMPhysicalReference = QEDSixPointPPMMPhysicalCurrentExample[factorizationModel];\nLast[qed6PPMMPhysicalReference]", "Input", ExpressionUUID->"05978255-d47d-5251-b09d-27a2bdafb520"],
+
+Cell["Every denominator factor is one of the 14 physical propagators. The result has no Xi spinors or inverse spinor brackets. It is a validated reference, not a claim of a globally shortest expression.", "Text", ExpressionUUID->"f33e671e-802c-5655-a43c-6d575ba65311"],
+
+Cell["qed6PPMMPhysicalChannels = FactorizationAmplitudeChannels[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \"A.-\"}, factorizationModel];\nCheckAmplitudes[qed6PPMMPhysicalReference, qed6PPMMPhysicalChannels, factorizationModel]", "Input", ExpressionUUID->"1e419b06-6786-5c9c-b3ce-8569ea698c25"],
+
+Cell[CellGroupData[{
+
+Cell["Inspect the Physical Poles", "Subsection", ExpressionUUID->"85a11fa5-d910-55f1-b740-0e652a4b5530"],
+
+Cell["Column[Sort[DeleteDuplicates[\n  Cases[Last[qed6PPMMPhysicalReference], _PropDen, Infinity]]]]", "Input", ExpressionUUID->"5cac6c22-1ac4-5c82-93eb-5c1da31c1682"]
+
+}, Closed]],
+
+Cell[CellGroupData[{
+
+Cell["Ordinary Identity Route", "Subsection", ExpressionUUID->"4bd5d8ca-7ea9-512a-a3ac-1eb85f4ea849"],
+
+Cell["For each external photon, choose the momentum-insertion reference built from p1. Its reference denominator is the physical two-leg virtuality shown below. Then apply external Dirac equations, Clifford anticommutation, null-momentum factorization and Schouten identities. Exact propagator definitions expose cancellations while keeping both the pole contribution and every regular remainder. All identities use only external mass shells; propagator numerators and denominators remain off shell.", "Text", ExpressionUUID->"15f155ca-7c62-59c5-9bbf-ee2c75a31fc4"],
+
+Cell["Column[QEDSixPointPPMMPhysicalCurrentIdentities[factorizationModel]]", "Input", ExpressionUUID->"0b14e878-1bb8-5a59-b85a-6318ae1420f3"]
+
+}, Closed]],
+
+Cell[CellGroupData[{
+
+Cell["Compare Simplicity", "Subsection", ExpressionUUID->"d0efca1e-ff53-519b-9d51-93c38dfa65c4"],
+
+Cell["Displayed group count can be misleading. For the current QED model, this physical reference has weighted complexity 3224 and 284 expanded terms, compared with 41028 and 2000 for the eight-term spurious recursion. Counting numerator momentum insertions after expansion gives 648 versus 10202. The following cell reproduces the complexity and term counts.", "Text", ExpressionUUID->"1197c08a-7b12-5463-8dff-c89b882cac5f"],
+
+Cell["qed6PPMMSpuriousReference = qedBalancedSixPointAmplitude[factorizationModel];\nGrid[{{\"Form\", \"Weighted complexity\", \"Expanded terms\"},\n  {\"Physical current reference\", SpinorExpressionComplexity[Last[qed6PPMMPhysicalReference]],\n    Length[Expand[Last[qed6PPMMPhysicalReference]]]},\n  {\"Eight-term spurious recursion\", SpinorExpressionComplexity[qed6PPMMSpuriousReference],\n    Length[Expand[qed6PPMMSpuriousReference]]}}, Frame -> All]", "Input", ExpressionUUID->"f9a9cfc3-1018-5c24-a08b-68a90b09f2e2"]
+
+}, Closed]],
+
+Cell[CellGroupData[{
+
+Cell["Regenerate the Off-Shell Reference and Check It", "Subsection", ExpressionUUID->"2de16f19-5d37-5c4d-a257-5956756d97a9"],
+
+Cell["This optional calculation starts again from the independent Dirac diagrams. Feynman preparation shares photon references across all diagrams and never applies internal on-shell conditions. Its bounded reductions can return a different equivalent representation from the stored 38-group formula. These currents are a derivation reference and benchmark, not replacement factorization data.", "Text", ExpressionUUID->"ef6bd53f-f113-5917-a13d-44fc32b40a63"],
+
+Cell["qed6PPMMOffShellDiagrams = diagramAmplitudes[CreateDiagrams[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \"A.-\"}, qedFeynmanModel]];\nqed6PPMMOffShellPrepared = PrepareAmplitudes[\n  qed6PPMMOffShellDiagrams, qedFeynmanModel, \"PolePreference\" -> \"AllPhysical\"];", "Input", ExpressionUUID->"c0bbc173-539f-56f9-ae4f-e38fcf74caaf"],
+
+Cell["CheckAmplitudes[qed6PPMMPhysicalReference, qed6PPMMPhysicalChannels, factorizationModel,\n  \"FeynmanAmplitudes\" -> qed6PPMMOffShellPrepared, \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"b6b1ceb1-e311-540d-894f-2858a08d9bab"]
+
+}, Closed]]
+
+}, Open]]
+
 }, Open]],
 
 Cell[CellGroupData[{

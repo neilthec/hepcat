@@ -863,5 +863,723 @@ qedBalancedSixPointAmplitude[model_, OptionsPattern[]] := Module[
   If[FailureQ[result] || !AssociationQ[result], result, If[details, result, result["Amplitude"]]]
 ];
 
+(* ::Section::Closed:: *)
+(* Six-point +++- worked identities. These are examples, never production inputs. *)
+
+qedSixPointPPPMExampleParts[model_] := Module[
+  {mass = Quiet[ModelParameter[model, "Me"]], charge = Quiet[ModelParameter[model, "EE"]],
+   rules, angleSpinor, squareSpinor, angle, square, mixed, diagonal, pole,
+   labels = {{3, 4, 5}, {4, 5, 3}, {5, 3, 4}}, common, carrier, bracket12,
+   chain6, beta, heavy, heavyFactored, mainTerms, pairTerms, poleTerm1,
+   poleTerm2, pairRemainder, mainRemainder, remainderNumerator,
+   previousTerms, compactTerms, mainOld, pairOld, mainNew, pairNew},
+  If[!MatchQ[mass, ModelParameter[_String, _String, _String]] ||
+      !MatchQ[charge, ModelParameter[_String, _String, _String]],
+    Return[Failure["QEDExampleParameters", <|"MessageTemplate" ->
+      "The worked QED example requires model parameters Me and EE."|>]]];
+  rules = Thread[Mass /@ Range[6] -> {mass, mass, 0, 0, 0, 0}];
+  angleSpinor[i_] := Spinor[If[i <= 2, "Spin", "Helicity"], "Angle", i];
+  squareSpinor[i_] := Spinor[If[i <= 2, "Spin", "Helicity"], "Square", i];
+  angle[i_, j_] := SpinorChain[angleSpinor[i], angleSpinor[j]];
+  square[i_, j_] := SpinorChain[squareSpinor[i], squareSpinor[j]];
+  mixed[p_, j_] := SpinorChain[angleSpinor[6], Mom[p], squareSpinor[j]];
+  diagonal[j_] := SpinorChain[squareSpinor[j], Mom[1], Mom[2], squareSpinor[j]];
+  pole[legs__Integer] := PropDen[Mom[Multiparticle @@ Sort[{legs}]], mass];
+  common = pole[1, 3] pole[1, 4] pole[1, 5] pole[1, 6];
+  carrier = angle[1, 6] angle[2, 6]; bracket12 = angle[1, 2];
+  chain6 = SpinorChain[angleSpinor[6], Mom[1], Mom[2], angleSpinor[6]];
+  beta[b_, c_] := mass MomProd[2, b] square[b, c]^2 -
+    (square[b, c] SpinorChain[squareSpinor[c], Mom[1], angleSpinor[b]] diagonal[b] +
+      diagonal[b] diagonal[c])/mass;
+  (* The eleven-monomial numerator retained from the earlier validated result. *)
+  heavy[j_] := -2 MomProd[1, 2] angle[6, 1] angle[6, 2] square[j, 6] mixed[1, j] -
+    2 MomProd[1, 6] angle[6, 1] angle[6, 2] square[j, 6] mixed[1, j] -
+    2 mass MomProd[1, 2] angle[6, 1] square[j, 2] mixed[1, j] +
+    mass^2 bracket12 mixed[1, j]^2 -
+    mass angle[6, 1] square[j, 6] mixed[1, j] mixed[1, 2] +
+    mass^2 angle[6, 1] angle[6, 2] square[j, 6] mixed[2, j] +
+    2 mass MomProd[1, 2] angle[6, 2] square[j, 1] mixed[2, j] +
+    mass^2 bracket12 mixed[2, j]^2 +
+    mass angle[6, 2] square[j, 6] square[j, 1] chain6 +
+    2 MomProd[1, 2] angle[6, 1] angle[6, 2] diagonal[j] +
+    2 MomProd[1, 6] angle[6, 1] angle[6, 2] diagonal[j];
+  heavyFactored[j_] := (pole[1, 6] carrier + bracket12 chain6)
+    (diagonal[j] - square[j, 6] mixed[1, j]);
+  mainTerms[j_, b_, c_] := 4 charge^4 mass square[b, c]^2/common {
+    heavy[j]/(pole[2, 6] pole[1, b, c]),
+    -bracket12 (2 MomProd[2, j] mixed[1, j]^2 - angle[j, 6] mixed[1, j] diagonal[j] -
+      chain6 diagonal[j])/(pole[2, j] pole[1, b, c]),
+    carrier diagonal[j]/pole[2, j],
+    pole[1, 6] carrier diagonal[j]/(pole[2, j] pole[1, b, c])};
+  pairTerms[j_, b_, c_] := 4 charge^4 mixed[1, j]
+    (square[j, 6] carrier - bracket12 mixed[1, j])/(common pole[1, j, 6]) {
+      beta[b, c]/pole[2, b], beta[c, b]/pole[2, c]};
+  poleTerm1[j_, b_, c_] := 4 charge^4 mass square[b, c]^2 mixed[1, j]
+    (square[j, 6] carrier - bracket12 mixed[1, j])/
+    (pole[1, j] pole[1, 6] pole[2, b] pole[2, c] pole[1, j, 6]);
+  poleTerm2[j_, b_, c_] := -4 charge^4 mass square[b, c]^2 mixed[2, j]
+    (square[j, 6] carrier + bracket12 mixed[2, j])/
+    (pole[1, b] pole[1, c] pole[2, 6] pole[2, j] pole[1, b, c]);
+  pairRemainder[j_, b_, c_] := -4 charge^4 mixed[1, j]
+    (square[j, 6] carrier - bracket12 mixed[1, j]) diagonal[b] diagonal[c]/
+    (mass common pole[2, b] pole[2, c]);
+  mainRemainder[j_, b_, c_] := 4 charge^4 mass square[b, c]^2 diagonal[j]
+    ((pole[1, 6] + pole[2, 6]) carrier + bracket12 chain6)/
+    (common pole[2, 6] pole[2, j]);
+  remainderNumerator = mass^2 ((pole[1, 6] + pole[2, 6]) carrier + bracket12 chain6)
+    Total[Function[label, With[{j = label[[1]], b = label[[2]], c = label[[3]]},
+      square[b, c]^2 diagonal[j] pole[2, b] pole[2, c]]] /@ labels] -
+    pole[2, 6] Total[Function[label, With[{j = label[[1]], b = label[[2]], c = label[[3]]},
+      pole[2, j] mixed[1, j] (square[j, 6] carrier - bracket12 mixed[1, j])
+        diagonal[b] diagonal[c]]] /@ labels];
+  mainOld = Total /@ (mainTerms @@@ labels); pairOld = Total /@ (pairTerms @@@ labels);
+  mainNew = (poleTerm2 @@@ labels) + (mainRemainder @@@ labels);
+  pairNew = (poleTerm1 @@@ labels) + (pairRemainder @@@ labels);
+  previousTerms = Join[Flatten[mainTerms @@@ labels, 1], Flatten[pairTerms @@@ labels, 1]];
+  compactTerms = Join[poleTerm1 @@@ labels, poleTerm2 @@@ labels,
+    {4 charge^4 remainderNumerator/(mass common pole[2, 6] pole[2, 3] pole[2, 4] pole[2, 5])}];
+  <|"ExternalMassRules" -> rules, "PreviousExpression" -> Total[previousTerms],
+    "CompactExpression" -> Total[compactTerms], "PreviousTerms" -> previousTerms,
+    "CompactTerms" -> compactTerms, "MainOldBlocks" -> mainOld, "MainNewBlocks" -> mainNew,
+    "PairOldBlocks" -> pairOld, "PairNewBlocks" -> pairNew,
+    "HeavyNumerators" -> (heavy /@ {3, 4, 5}),
+    "FactoredHeavyNumerators" -> (heavyFactored /@ {3, 4, 5}),
+    "RemainderNumerator" -> remainderNumerator,
+    "Scope" -> "A worked QED +++- example. Production completion does not call these formulas.",
+    "InternalOnShellConditions" -> {}|>
+];
+
+QEDSixPointPPPMCompactExample[model_] := Module[{parts = qedSixPointPPPMExampleParts[model]},
+  If[FailureQ[parts], parts, {parts["ExternalMassRules"], parts["CompactExpression"]}]];
+QEDSixPointPPPMPreviousExample[model_] := Module[{parts = qedSixPointPPPMExampleParts[model]},
+  If[FailureQ[parts], parts, {parts["ExternalMassRules"], parts["PreviousExpression"]}]];
+
+QEDSixPointPPPMIdentityRoute[model_] := Module[{parts = qedSixPointPPPMExampleParts[model]},
+  If[FailureQ[parts], parts, Join[
+    MapThread[<|"Identity" -> "Determinant pair and exact three-leg virtuality", "Before" -> #1,
+      "After" -> #2, "InternalOnShellConditions" -> {}|> &,
+      {parts["PairOldBlocks"], parts["PairNewBlocks"]}],
+    MapThread[<|"Identity" -> "External Dirac and scalar Schouten", "Before" -> #1,
+      "After" -> #2, "InternalOnShellConditions" -> {}|> &,
+      {parts["MainOldBlocks"], parts["MainNewBlocks"]}]]]];
+
+QEDSixPointPPPMIdentities[model_] := Module[
+  {parts = qedSixPointPPPMExampleParts[model], mass, a, s, angle, square, x, y, k, pole, equal},
+  If[FailureQ[parts], Return[parts]];
+  mass = Mass[1] /. parts["ExternalMassRules"];
+  a[i_] := Spinor[If[i <= 2, "Spin", "Helicity"], "Angle", i];
+  s[i_] := Spinor[If[i <= 2, "Spin", "Helicity"], "Square", i];
+  angle[i_, j_] := SpinorChain[a[i], a[j]]; square[i_, j_] := SpinorChain[s[i], s[j]];
+  x[i_] := SpinorChain[s[i], Mom[1], Mom[2], s[i]];
+  y[p_, i_, j_] := SpinorChain[a[i], Mom[p], s[j]];
+  k = SpinorChain[a[6], Mom[1], Mom[2], a[6]];
+  pole[legs__Integer] := PropDen[Mom[Multiparticle @@ Sort[{legs}]], mass];
+  equal[left_, right_] := Inactive[Equal][left, right];
+  {equal[square[4, 5] (2 MomProd[2, 5] y[1, 4, 5] x[4] -
+      2 MomProd[2, 4] y[1, 5, 4] x[5]),
+    square[4, 5]^2 mass^2 (4 MomProd[2, 4] MomProd[2, 5] -
+      4 MomProd[1, 4] MomProd[1, 5]) + 2 MomProd[4, 5] x[4] x[5]],
+   equal[square[3, 6] k, pole[1, 6] y[2, 6, 3] - pole[2, 6] y[1, 6, 3]],
+   equal[angle[3, 6] x[3], pole[2, 3] y[1, 6, 3] - pole[1, 3] y[2, 6, 3]],
+   equal[pole[1, 3, 6], pole[2, 4] + pole[2, 5] + 2 MomProd[4, 5]],
+   equal[pole[1, 4, 5], pole[2, 3] + pole[2, 6] + 2 MomProd[3, 6]],
+   equal[SpinorChain[s[3], Mom[1], a[6]], y[1, 6, 3]]}
+];
+
+QEDSixPointPPPMExampleProof[model_] := Module[{parts, route, rows, proof, formal},
+  parts = qedSixPointPPPMExampleParts[model]; If[FailureQ[parts], Return[parts]];
+  route = QEDSixPointPPPMIdentityRoute[model];
+  rows = MapIndexed[Function[{step, index},
+    proof = ConstructiveDiagrams`Private`completionHEZeroDirection[
+      step["Before"] - step["After"], parts["ExternalMassRules"], model, 30];
+    {First[index], step["Identity"], Lookup[proof, "Status", "NOT_PROVED"]}], route];
+  formal = ConstructiveDiagrams`Private`withProtectedPropagators[
+    Total[parts["MainNewBlocks"]] + Total[parts["PairNewBlocks"]] - parts["CompactExpression"], Together];
+  AppendTo[rows, {7, "Collect the regular remainders", If[formal === 0, "PROVED_ZERO", "NOT_PROVED"]}];
+  Grid[Prepend[rows, {"Step", "Identity", "Status"}], Frame -> All, Alignment -> Left]
+];
+
+(* ::Section::Closed:: *)
+(* Six-point ++-- off-shell-current reference. Example only, never a completion input. *)
+
+(* This is an independently derived minimal-QED reference, not the output of
+   constructive factorization completion. The 24 ordered Dirac currents use
+   the same p1 momentum reference for every external photon. Ordinary external
+   Dirac, Clifford and spinor identities give the 38 factored groups below.
+   All internal numerator momenta and all propagators stay off shell. *)
+QEDSixPointPPMMPhysicalCurrentExample[model_] := Module[
+  {mass = Quiet[ModelParameter[model, "Me"]], charge = Quiet[ModelParameter[model, "EE"]],
+   rules, angleSpinor, squareSpinor, angle, square, pole, terms},
+  If[!MatchQ[mass, ModelParameter[_String, _String, _String]] ||
+      !MatchQ[charge, ModelParameter[_String, _String, _String]],
+    Return[Failure["QEDExampleParameters", <|"MessageTemplate" ->
+      "The worked QED example requires declared model parameters Me and EE."|>]]];
+  rules = Thread[Mass /@ Range[6] -> {mass, mass, 0, 0, 0, 0}];
+  angleSpinor[i_] := Spinor[If[i <= 2, "Spin", "Helicity"], "Angle", i];
+  squareSpinor[i_] := Spinor[If[i <= 2, "Spin", "Helicity"], "Square", i];
+  angle[i_, j_] := SpinorChain[angleSpinor[i], angleSpinor[j]];
+  square[i_, j_] := SpinorChain[squareSpinor[i], squareSpinor[j]];
+  pole[legs__Integer] := PropDen[Mom[Multiparticle @@ Sort[{legs}]], mass];
+  terms = {
+  (-8*mass^2*angle[1, 6]*angle[5, 6]^2*MomProd[1, 6]*square[2, 3]*square[3, 4]*square[4, 6])/
+ (pole[1, 4]*pole[1, 5]*pole[1, 6]^2*pole[2, 3]*pole[1, 5, 6]),
+
+  (-4*angle[1, 6]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*
+  (mass^3*angle[2, 5]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*square[3, 4] +
+   2*mass*angle[2, 5]*MomProd[1, 2]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*
+    square[3, 4] + mass*angle[2, 5]*pole[1, 5]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*
+    square[3, 4] + mass*angle[2, 5]*pole[1, 6]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*
+    square[3, 4] - mass^2*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[2]]*
+    SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*square[3, 4] -
+   mass^3*angle[2, 5]*SpinorChain[angleSpinor[5], Mom[2], squareSpinor[4]]*square[3, 4] -
+   mass^2*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[2]]*SpinorChain[angleSpinor[5], Mom[2],
+     squareSpinor[4]]*square[3, 4] - pole[1, 6]*SpinorChain[angleSpinor[5], Mom[1],
+     squareSpinor[2]]*SpinorChain[angleSpinor[5], Mom[2], squareSpinor[4]]*square[3, 4] +
+   mass*angle[2, 5]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*square[4, 6] -
+   SpinorChain[angleSpinor[5], Mom[1], squareSpinor[2]]*SpinorChain[angleSpinor[5], Mom[2],
+     squareSpinor[4]]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*square[4, 6]))/
+ (pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]*pole[2, 5]*pole[1, 3, 6]),
+
+  (-4*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*square[1, 4]*
+  (mass^2*angle[2, 5]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]] + 2*angle[2, 5]*MomProd[1, 2]*
+    SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[3]] + angle[2, 5]*pole[1, 5]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]] -
+   mass*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[2]]*SpinorChain[angleSpinor[5], Mom[1],
+     squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]] -
+   mass^2*angle[2, 5]*SpinorChain[angleSpinor[5], Mom[2], squareSpinor[3]]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]] -
+   mass*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[2]]*SpinorChain[angleSpinor[5], Mom[2],
+     squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]] +
+   2*angle[2, 5]*angle[4, 6]*MomProd[1, 2]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*
+    square[3, 4] + angle[2, 5]*angle[4, 6]*pole[1, 5]*SpinorChain[angleSpinor[5], Mom[1],
+     squareSpinor[3]]*square[3, 4] - mass*angle[4, 6]*SpinorChain[angleSpinor[5], Mom[1],
+     squareSpinor[2]]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*square[3, 4] -
+   mass^2*angle[2, 5]*angle[4, 6]*SpinorChain[angleSpinor[5], Mom[2], squareSpinor[3]]*
+    square[3, 4]))/(pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]*pole[2, 5]*pole[1, 4, 6]),
+
+  (4*angle[1, 6]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*
+  (mass^3*angle[2, 5]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*square[3, 4] +
+   2*mass*angle[2, 5]*MomProd[1, 2]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*
+    square[3, 4] + mass*angle[2, 5]*pole[1, 5]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*
+    square[3, 4] - mass^2*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[2]]*
+    SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*square[3, 4] -
+   mass^3*angle[2, 5]*SpinorChain[angleSpinor[5], Mom[2], squareSpinor[3]]*square[3, 4] -
+   mass^2*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[2]]*SpinorChain[angleSpinor[5], Mom[2],
+     squareSpinor[3]]*square[3, 4] - mass*angle[2, 5]*SpinorChain[angleSpinor[5], Mom[1],
+     squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*square[4, 6] +
+   SpinorChain[angleSpinor[5], Mom[1], squareSpinor[2]]*SpinorChain[angleSpinor[5], Mom[2],
+     squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*square[4, 6]))/
+ (pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]*pole[2, 5]*pole[1, 4, 6]),
+
+  (4*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*square[1, 3]*
+  (-(mass^2*angle[2, 5]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*
+     SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]) - 2*angle[2, 5]*MomProd[1, 2]*
+    SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[4]] - angle[2, 5]*pole[1, 5]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]] +
+   mass*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[2]]*SpinorChain[angleSpinor[5], Mom[1],
+     squareSpinor[4]]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]] +
+   mass^2*angle[2, 5]*SpinorChain[angleSpinor[5], Mom[2], squareSpinor[4]]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]] +
+   mass*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[2]]*SpinorChain[angleSpinor[5], Mom[2],
+     squareSpinor[4]]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]] +
+   2*angle[2, 5]*angle[3, 6]*MomProd[1, 2]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*
+    square[3, 4] + angle[2, 5]*angle[3, 6]*pole[1, 5]*SpinorChain[angleSpinor[5], Mom[1],
+     squareSpinor[4]]*square[3, 4] - mass*angle[3, 6]*SpinorChain[angleSpinor[5], Mom[1],
+     squareSpinor[2]]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*square[3, 4] -
+   mass^2*angle[2, 5]*angle[3, 6]*SpinorChain[angleSpinor[5], Mom[2], squareSpinor[4]]*
+    square[3, 4]))/(pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]*pole[2, 5]*pole[1, 3, 6]),
+
+  (-4*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*square[1, 4]*
+  (mass^2*angle[2, 6]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]] + 2*angle[2, 6]*MomProd[1, 2]*
+    SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[3]] + angle[2, 6]*pole[1, 6]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]] -
+   mass*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[2]]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]] -
+   mass^2*angle[2, 6]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*
+    SpinorChain[angleSpinor[6], Mom[2], squareSpinor[3]] -
+   mass*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[2]]*SpinorChain[angleSpinor[6], Mom[2], squareSpinor[3]] +
+   2*angle[2, 6]*angle[4, 5]*MomProd[1, 2]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*
+    square[3, 4] + angle[2, 6]*angle[4, 5]*pole[1, 6]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[3]]*square[3, 4] - mass*angle[4, 5]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[2]]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*square[3, 4] -
+   mass^2*angle[2, 6]*angle[4, 5]*SpinorChain[angleSpinor[6], Mom[2], squareSpinor[3]]*
+    square[3, 4]))/(pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]*pole[2, 6]*pole[1, 4, 5]),
+
+  (4*angle[1, 5]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*
+  (mass^3*angle[2, 6]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*square[3, 4] +
+   2*mass*angle[2, 6]*MomProd[1, 2]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*
+    square[3, 4] + mass*angle[2, 6]*pole[1, 6]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*
+    square[3, 4] - mass^2*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[2]]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*square[3, 4] -
+   mass^3*angle[2, 6]*SpinorChain[angleSpinor[6], Mom[2], squareSpinor[3]]*square[3, 4] -
+   mass^2*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[2]]*SpinorChain[angleSpinor[6], Mom[2],
+     squareSpinor[3]]*square[3, 4] - mass*angle[2, 6]*SpinorChain[angleSpinor[5], Mom[1],
+     squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*square[4, 5] +
+   SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[2]]*SpinorChain[angleSpinor[6], Mom[2], squareSpinor[3]]*square[4, 5]))/
+ (pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]*pole[2, 6]*pole[1, 4, 5]),
+
+  (-4*angle[1, 5]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*
+  (mass^3*angle[2, 6]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*square[3, 4] +
+   2*mass*angle[2, 6]*MomProd[1, 2]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*
+    square[3, 4] + mass*angle[2, 6]*pole[1, 5]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*
+    square[3, 4] + mass*angle[2, 6]*pole[1, 6]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*
+    square[3, 4] - mass^2*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[2]]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*square[3, 4] -
+   mass^3*angle[2, 6]*SpinorChain[angleSpinor[6], Mom[2], squareSpinor[4]]*square[3, 4] -
+   mass^2*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[2]]*SpinorChain[angleSpinor[6], Mom[2],
+     squareSpinor[4]]*square[3, 4] - pole[1, 5]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[2]]*SpinorChain[angleSpinor[6], Mom[2], squareSpinor[4]]*square[3, 4] +
+   mass*angle[2, 6]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*square[4, 5] -
+   SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[2]]*SpinorChain[angleSpinor[6], Mom[2], squareSpinor[4]]*square[4, 5]))/
+ (pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]*pole[2, 6]*pole[1, 3, 5]),
+
+  (4*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*square[1, 3]*
+  (-(mass^2*angle[2, 6]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*
+     SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]) - 2*angle[2, 6]*MomProd[1, 2]*
+    SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[4]] - angle[2, 6]*pole[1, 6]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]] +
+   mass*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[2]]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]] +
+   mass^2*angle[2, 6]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*
+    SpinorChain[angleSpinor[6], Mom[2], squareSpinor[4]] +
+   mass*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[2]]*SpinorChain[angleSpinor[6], Mom[2], squareSpinor[4]] +
+   2*angle[2, 6]*angle[3, 5]*MomProd[1, 2]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*
+    square[3, 4] + angle[2, 6]*angle[3, 5]*pole[1, 6]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[4]]*square[3, 4] - mass*angle[3, 5]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[2]]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*square[3, 4] -
+   mass^2*angle[2, 6]*angle[3, 5]*SpinorChain[angleSpinor[6], Mom[2], squareSpinor[4]]*
+    square[3, 4]))/(pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]*pole[2, 6]*pole[1, 3, 5]),
+
+  (8*mass^3*angle[1, 6]*angle[5, 6]^2*MomProd[1, 6]*SpinorChain[squareSpinor[3], Mom[1],
+   angleSpinor[2]]*square[3, 4]*square[4, 6])/(pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]^2*
+  pole[2, 3]*pole[1, 5, 6]),
+
+  (-8*angle[1, 6]*angle[5, 6]*MomProd[1, 6]*SpinorChain[squareSpinor[4], Mom[1], angleSpinor[5]]*
+  square[2, 3]*square[3, 4])/(pole[1, 4]*pole[1, 6]^2*pole[2, 3]*pole[1, 5, 6]),
+
+  (-8*mass^2*angle[1, 6]*angle[5, 6]*MomProd[1, 6]*SpinorChain[squareSpinor[4], Mom[1],
+   angleSpinor[5]]*square[2, 3]*square[3, 4])/(pole[1, 4]*pole[1, 5]*pole[1, 6]^2*pole[2, 3]*
+  pole[1, 5, 6]),
+
+  (-16*angle[1, 6]*angle[5, 6]*MomProd[1, 6]^2*SpinorChain[squareSpinor[4], Mom[1], angleSpinor[5]]*
+  square[2, 3]*square[3, 4])/(pole[1, 4]*pole[1, 5]*pole[1, 6]^2*pole[2, 3]*pole[1, 5, 6]),
+
+  (-8*mass^4*angle[1, 6]*angle[5, 6]*MomProd[1, 6]*SpinorChain[squareSpinor[4], Mom[1],
+   angleSpinor[5]]*square[2, 3]*square[3, 4])/(pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]^2*
+  pole[2, 3]*pole[1, 5, 6]),
+
+  (8*mass*angle[1, 6]*angle[5, 6]*MomProd[1, 6]*SpinorChain[squareSpinor[3], Mom[1], angleSpinor[2]]*
+  SpinorChain[squareSpinor[4], Mom[1], angleSpinor[5]]*square[3, 4])/
+ (pole[1, 3]*pole[1, 4]*pole[1, 6]^2*pole[2, 3]*pole[1, 5, 6]),
+
+  (8*mass^3*angle[1, 6]*angle[5, 6]*MomProd[1, 6]*SpinorChain[squareSpinor[3], Mom[1],
+   angleSpinor[2]]*SpinorChain[squareSpinor[4], Mom[1], angleSpinor[5]]*square[3, 4])/
+ (pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]^2*pole[2, 3]*pole[1, 5, 6]),
+
+  (16*mass*angle[1, 6]*angle[5, 6]*MomProd[1, 2]*MomProd[1, 6]*SpinorChain[squareSpinor[3], Mom[1],
+   angleSpinor[2]]*SpinorChain[squareSpinor[4], Mom[1], angleSpinor[5]]*square[3, 4])/
+ (pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]^2*pole[2, 3]*pole[1, 5, 6]),
+
+  (16*mass*angle[1, 6]*angle[5, 6]*MomProd[1, 6]^2*SpinorChain[squareSpinor[3], Mom[1],
+   angleSpinor[2]]*SpinorChain[squareSpinor[4], Mom[1], angleSpinor[5]]*square[3, 4])/
+ (pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]^2*pole[2, 3]*pole[1, 5, 6]),
+
+  (8*angle[1, 6]*MomProd[1, 6]*SpinorChain[squareSpinor[4], Mom[1], angleSpinor[6]]*
+  (mass*SpinorChain[squareSpinor[3], Mom[1], angleSpinor[2]]*SpinorChain[squareSpinor[3], Mom[1],
+     angleSpinor[5]]*SpinorChain[squareSpinor[4], Mom[1], angleSpinor[5]] +
+   mass*SpinorChain[squareSpinor[3], Mom[1], angleSpinor[2]]*SpinorChain[squareSpinor[3], Mom[2],
+     angleSpinor[5]]*SpinorChain[squareSpinor[4], Mom[1], angleSpinor[5]] -
+   mass^2*SpinorChain[squareSpinor[3], Mom[1], angleSpinor[5]]*SpinorChain[squareSpinor[4], Mom[1],
+     angleSpinor[5]]*square[2, 3] - 2*MomProd[1, 2]*SpinorChain[squareSpinor[3], Mom[1],
+     angleSpinor[5]]*SpinorChain[squareSpinor[4], Mom[1], angleSpinor[5]]*square[2, 3] -
+   pole[1, 3]*SpinorChain[squareSpinor[3], Mom[1], angleSpinor[5]]*
+    SpinorChain[squareSpinor[4], Mom[1], angleSpinor[5]]*square[2, 3] +
+   mass^2*SpinorChain[squareSpinor[3], Mom[2], angleSpinor[5]]*SpinorChain[squareSpinor[4], Mom[1],
+     angleSpinor[5]]*square[2, 3] - mass*angle[5, 6]*SpinorChain[squareSpinor[3], Mom[1],
+     angleSpinor[2]]*SpinorChain[squareSpinor[3], Mom[1], angleSpinor[5]]*square[4, 6] +
+   2*angle[5, 6]*MomProd[1, 2]*SpinorChain[squareSpinor[3], Mom[1], angleSpinor[5]]*square[2, 3]*
+    square[4, 6] + angle[5, 6]*pole[1, 3]*SpinorChain[squareSpinor[3], Mom[1], angleSpinor[5]]*
+    square[2, 3]*square[4, 6] - mass^2*angle[5, 6]*SpinorChain[squareSpinor[3], Mom[2],
+     angleSpinor[5]]*square[2, 3]*square[4, 6]))/(pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]^2*
+  pole[2, 3]*pole[1, 4, 6]),
+
+  (4*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*square[1, 4]*
+  (-(mass^2*angle[5, 6]*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[3]]*
+     SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]) -
+   mass^2*angle[5, 6]*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[3]]*
+    SpinorChain[angleSpinor[5], Mom[2], squareSpinor[3]] -
+   angle[4, 6]*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[3]]*
+    SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*SpinorChain[angleSpinor[5], Mom[2],
+     squareSpinor[3]] + mass^3*angle[5, 6]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*
+    square[2, 3] + 2*mass*angle[5, 6]*MomProd[1, 2]*SpinorChain[angleSpinor[5], Mom[1],
+     squareSpinor[3]]*square[2, 3] + mass*angle[5, 6]*pole[1, 3]*
+    SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*square[2, 3] +
+   mass*angle[4, 6]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*
+    SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*square[2, 3] -
+   mass^3*angle[5, 6]*SpinorChain[angleSpinor[5], Mom[2], squareSpinor[3]]*square[2, 3]))/
+ (pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]*pole[2, 3]*pole[1, 4, 6]),
+
+  (-4*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*square[1, 4]*
+  (-(mass^2*angle[5, 6]*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[3]]*
+     SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]) -
+   mass^2*angle[5, 6]*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[3]]*
+    SpinorChain[angleSpinor[6], Mom[2], squareSpinor[3]] -
+   angle[5, 6]*pole[1, 4]*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[3]]*
+    SpinorChain[angleSpinor[6], Mom[2], squareSpinor[3]] +
+   angle[4, 6]*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[3]]*
+    SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*SpinorChain[angleSpinor[6], Mom[2],
+     squareSpinor[3]] + mass^3*angle[5, 6]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*
+    square[2, 3] + 2*mass*angle[5, 6]*MomProd[1, 2]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[3]]*square[2, 3] + mass*angle[5, 6]*pole[1, 3]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*square[2, 3] +
+   mass*angle[5, 6]*pole[1, 4]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*square[2, 3] -
+   mass*angle[4, 6]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*square[2, 3] -
+   mass^3*angle[5, 6]*SpinorChain[angleSpinor[6], Mom[2], squareSpinor[3]]*square[2, 3]))/
+ (pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]*pole[2, 3]*pole[1, 4, 5]),
+
+  (-4*angle[1, 5]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*
+  (-(mass*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[1],
+      squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]) -
+   mass*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[4]]*SpinorChain[angleSpinor[6], Mom[2], squareSpinor[3]] +
+   mass^2*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[4]]*square[2, 3] + 2*MomProd[1, 2]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*square[2, 3] +
+   pole[1, 3]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*square[2, 3] -
+   mass^2*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*SpinorChain[angleSpinor[6], Mom[2],
+     squareSpinor[3]]*square[2, 3] - mass*angle[5, 6]*SpinorChain[angleSpinor[2], Mom[1],
+     squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*square[4, 5] +
+   2*angle[5, 6]*MomProd[1, 2]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*square[2, 3]*
+    square[4, 5] + angle[5, 6]*pole[1, 3]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*
+    square[2, 3]*square[4, 5] - mass^2*angle[5, 6]*SpinorChain[angleSpinor[6], Mom[2],
+     squareSpinor[3]]*square[2, 3]*square[4, 5]))/(pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]*
+  pole[2, 3]*pole[1, 4, 5]),
+
+  (4*angle[1, 6]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*
+  (mass*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[4]]*SpinorChain[angleSpinor[5], Mom[1],
+     squareSpinor[3]]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]] +
+   mass*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[4]]*SpinorChain[angleSpinor[5], Mom[1],
+     squareSpinor[3]]*SpinorChain[angleSpinor[5], Mom[2], squareSpinor[4]] -
+   mass^2*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*SpinorChain[angleSpinor[5], Mom[1],
+     squareSpinor[4]]*square[2, 4] - 2*MomProd[1, 2]*SpinorChain[angleSpinor[5], Mom[1],
+     squareSpinor[3]]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*square[2, 4] -
+   pole[1, 4]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*
+    SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*square[2, 4] +
+   mass^2*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*SpinorChain[angleSpinor[5], Mom[2],
+     squareSpinor[4]]*square[2, 4] - mass*angle[5, 6]*SpinorChain[angleSpinor[2], Mom[1],
+     squareSpinor[4]]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*square[3, 6] +
+   2*angle[5, 6]*MomProd[1, 2]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*square[2, 4]*
+    square[3, 6] + angle[5, 6]*pole[1, 4]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*
+    square[2, 4]*square[3, 6] - mass^2*angle[5, 6]*SpinorChain[angleSpinor[5], Mom[2],
+     squareSpinor[4]]*square[2, 4]*square[3, 6]))/(pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]*
+  pole[2, 4]*pole[1, 3, 6]),
+
+  (4*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*square[1, 3]*
+  (-(mass^2*angle[5, 6]*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[4]]*
+     SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]) -
+   mass^2*angle[5, 6]*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[4]]*
+    SpinorChain[angleSpinor[5], Mom[2], squareSpinor[4]] -
+   angle[3, 6]*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[4]]*
+    SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*SpinorChain[angleSpinor[5], Mom[2],
+     squareSpinor[4]] + mass^3*angle[5, 6]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*
+    square[2, 4] + 2*mass*angle[5, 6]*MomProd[1, 2]*SpinorChain[angleSpinor[5], Mom[1],
+     squareSpinor[4]]*square[2, 4] + mass*angle[5, 6]*pole[1, 4]*
+    SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*square[2, 4] +
+   mass*angle[3, 6]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*
+    SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*square[2, 4] -
+   mass^3*angle[5, 6]*SpinorChain[angleSpinor[5], Mom[2], squareSpinor[4]]*square[2, 4]))/
+ (pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]*pole[2, 4]*pole[1, 3, 6]),
+
+  (-4*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*square[1, 3]*
+  (-(mass^2*angle[5, 6]*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[4]]*
+     SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]) -
+   mass^2*angle[5, 6]*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[4]]*
+    SpinorChain[angleSpinor[6], Mom[2], squareSpinor[4]] -
+   angle[5, 6]*pole[1, 3]*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[4]]*
+    SpinorChain[angleSpinor[6], Mom[2], squareSpinor[4]] +
+   angle[3, 6]*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[4]]*
+    SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[2],
+     squareSpinor[4]] + mass^3*angle[5, 6]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*
+    square[2, 4] + 2*mass*angle[5, 6]*MomProd[1, 2]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[4]]*square[2, 4] + mass*angle[5, 6]*pole[1, 3]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*square[2, 4] +
+   mass*angle[5, 6]*pole[1, 4]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*square[2, 4] -
+   mass*angle[3, 6]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*square[2, 4] -
+   mass^3*angle[5, 6]*SpinorChain[angleSpinor[6], Mom[2], squareSpinor[4]]*square[2, 4]))/
+ (pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]*pole[2, 4]*pole[1, 3, 5]),
+
+  (-4*angle[1, 5]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*
+  (-(mass*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[4]]*SpinorChain[angleSpinor[6], Mom[1],
+      squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]) -
+   mass*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[4]]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[2], squareSpinor[4]] +
+   mass^2*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[4]]*square[2, 4] + 2*MomProd[1, 2]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*square[2, 4] +
+   pole[1, 4]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*square[2, 4] -
+   mass^2*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[2],
+     squareSpinor[4]]*square[2, 4] - mass*angle[5, 6]*SpinorChain[angleSpinor[2], Mom[1],
+     squareSpinor[4]]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*square[3, 5] +
+   2*angle[5, 6]*MomProd[1, 2]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*square[2, 4]*
+    square[3, 5] + angle[5, 6]*pole[1, 4]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*
+    square[2, 4]*square[3, 5] - mass^2*angle[5, 6]*SpinorChain[angleSpinor[6], Mom[2],
+     squareSpinor[4]]*square[2, 4]*square[3, 5]))/(pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]*
+  pole[2, 4]*pole[1, 3, 5]),
+
+  (4*square[1, 4]*square[3, 4]*
+  (-(mass^4*angle[2, 5]*angle[5, 6]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]) -
+   mass^2*angle[2, 5]*angle[5, 6]*pole[1, 5]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]] -
+   angle[2, 5]*angle[5, 6]*pole[1, 3]*pole[1, 5]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[3]] - angle[2, 5]*angle[5, 6]*pole[1, 4]*pole[1, 5]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]] +
+   mass^3*angle[5, 6]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[2]]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]] + 2*mass*angle[5, 6]*MomProd[1, 2]*
+    SpinorChain[angleSpinor[5], Mom[1], squareSpinor[2]]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[3]] + mass*angle[5, 6]*pole[1, 3]*SpinorChain[angleSpinor[5], Mom[1],
+     squareSpinor[2]]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]] +
+   mass*angle[5, 6]*pole[1, 4]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[2]]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]] -
+   mass^2*angle[2, 5]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*
+    SpinorChain[angleSpinor[5], Mom[1], Mom[2], angleSpinor[6]] -
+   angle[2, 5]*pole[1, 3]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*
+    SpinorChain[angleSpinor[5], Mom[1], Mom[2], angleSpinor[6]] -
+   angle[2, 5]*pole[1, 4]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*
+    SpinorChain[angleSpinor[5], Mom[1], Mom[2], angleSpinor[6]] -
+   mass*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[2]]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[3]]*SpinorChain[angleSpinor[5], Mom[1], Mom[2], angleSpinor[6]] +
+   mass^2*angle[2, 5]*angle[4, 6]*angle[5, 6]*pole[1, 5]*square[3, 4] -
+   mass^3*angle[4, 6]*angle[5, 6]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[2]]*
+    square[3, 4] + mass^2*angle[2, 5]*angle[4, 6]*SpinorChain[angleSpinor[5], Mom[1], Mom[2],
+     angleSpinor[6]]*square[3, 4]))/(pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]*pole[2, 5]*
+  pole[1, 3, 4]),
+
+  (4*square[1, 3]*square[3, 4]*(mass^4*angle[2, 5]*angle[5, 6]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[4]] + mass^2*angle[2, 5]*angle[5, 6]*pole[1, 5]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]] + angle[2, 5]*angle[5, 6]*pole[1, 3]*
+    pole[1, 5]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]] +
+   angle[2, 5]*angle[5, 6]*pole[1, 4]*pole[1, 5]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[4]] - mass^3*angle[5, 6]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[2]]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]] - 2*mass*angle[5, 6]*MomProd[1, 2]*
+    SpinorChain[angleSpinor[5], Mom[1], squareSpinor[2]]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[4]] - mass*angle[5, 6]*pole[1, 3]*SpinorChain[angleSpinor[5], Mom[1],
+     squareSpinor[2]]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]] -
+   mass*angle[5, 6]*pole[1, 4]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[2]]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]] +
+   mass^2*angle[2, 5]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*
+    SpinorChain[angleSpinor[5], Mom[1], Mom[2], angleSpinor[6]] +
+   angle[2, 5]*pole[1, 3]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*
+    SpinorChain[angleSpinor[5], Mom[1], Mom[2], angleSpinor[6]] +
+   angle[2, 5]*pole[1, 4]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*
+    SpinorChain[angleSpinor[5], Mom[1], Mom[2], angleSpinor[6]] +
+   mass*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[2]]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[4]]*SpinorChain[angleSpinor[5], Mom[1], Mom[2], angleSpinor[6]] +
+   mass^2*angle[2, 5]*angle[3, 6]*angle[5, 6]*pole[1, 5]*square[3, 4] -
+   mass^3*angle[3, 6]*angle[5, 6]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[2]]*
+    square[3, 4] + mass^2*angle[2, 5]*angle[3, 6]*SpinorChain[angleSpinor[5], Mom[1], Mom[2],
+     angleSpinor[6]]*square[3, 4]))/(pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]*pole[2, 5]*
+  pole[1, 3, 4]),
+
+  (-4*square[1, 4]*square[3, 4]*
+  (-(mass^4*angle[2, 6]*angle[5, 6]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]) -
+   2*mass^2*angle[2, 6]*angle[5, 6]*MomProd[1, 2]*SpinorChain[angleSpinor[5], Mom[1],
+     squareSpinor[3]] - 2*angle[2, 6]*angle[5, 6]*MomProd[1, 2]*pole[1, 3]*
+    SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]] - 2*angle[2, 6]*angle[5, 6]*MomProd[1, 2]*
+    pole[1, 4]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]] -
+   mass^2*angle[2, 6]*angle[5, 6]*pole[1, 6]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]] -
+   angle[2, 6]*angle[5, 6]*pole[1, 3]*pole[1, 6]*SpinorChain[angleSpinor[5], Mom[1],
+     squareSpinor[3]] - angle[2, 6]*angle[5, 6]*pole[1, 4]*pole[1, 6]*
+    SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]] +
+   mass^3*angle[5, 6]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[2]] + mass*angle[5, 6]*pole[1, 3]*
+    SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[2]] + mass*angle[5, 6]*pole[1, 4]*SpinorChain[angleSpinor[5], Mom[1],
+     squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[2]] +
+   mass^2*angle[2, 6]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*
+    SpinorChain[angleSpinor[5], Mom[1], Mom[2], angleSpinor[6]] +
+   angle[2, 6]*pole[1, 3]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*
+    SpinorChain[angleSpinor[5], Mom[1], Mom[2], angleSpinor[6]] +
+   angle[2, 6]*pole[1, 4]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*
+    SpinorChain[angleSpinor[5], Mom[1], Mom[2], angleSpinor[6]] +
+   mass*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[2]]*SpinorChain[angleSpinor[5], Mom[1], Mom[2], angleSpinor[6]] +
+   2*mass^2*angle[2, 6]*angle[4, 5]*angle[5, 6]*MomProd[1, 2]*square[3, 4] +
+   mass^2*angle[2, 6]*angle[4, 5]*angle[5, 6]*pole[1, 6]*square[3, 4] -
+   mass^3*angle[4, 5]*angle[5, 6]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[2]]*
+    square[3, 4] - mass^2*angle[2, 6]*angle[4, 5]*SpinorChain[angleSpinor[5], Mom[1], Mom[2],
+     angleSpinor[6]]*square[3, 4]))/(pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]*pole[2, 6]*
+  pole[1, 3, 4]),
+
+  (-4*square[1, 3]*square[3, 4]*(mass^4*angle[2, 6]*angle[5, 6]*SpinorChain[angleSpinor[5], Mom[1],
+     squareSpinor[4]] + 2*mass^2*angle[2, 6]*angle[5, 6]*MomProd[1, 2]*
+    SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]] + 2*angle[2, 6]*angle[5, 6]*MomProd[1, 2]*
+    pole[1, 3]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]] +
+   2*angle[2, 6]*angle[5, 6]*MomProd[1, 2]*pole[1, 4]*SpinorChain[angleSpinor[5], Mom[1],
+     squareSpinor[4]] + mass^2*angle[2, 6]*angle[5, 6]*pole[1, 6]*
+    SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]] + angle[2, 6]*angle[5, 6]*pole[1, 3]*
+    pole[1, 6]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]] +
+   angle[2, 6]*angle[5, 6]*pole[1, 4]*pole[1, 6]*SpinorChain[angleSpinor[5], Mom[1],
+     squareSpinor[4]] - mass^3*angle[5, 6]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[2]] - mass*angle[5, 6]*pole[1, 3]*
+    SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[2]] - mass*angle[5, 6]*pole[1, 4]*SpinorChain[angleSpinor[5], Mom[1],
+     squareSpinor[4]]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[2]] -
+   mass^2*angle[2, 6]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*
+    SpinorChain[angleSpinor[5], Mom[1], Mom[2], angleSpinor[6]] -
+   angle[2, 6]*pole[1, 3]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*
+    SpinorChain[angleSpinor[5], Mom[1], Mom[2], angleSpinor[6]] -
+   angle[2, 6]*pole[1, 4]*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*
+    SpinorChain[angleSpinor[5], Mom[1], Mom[2], angleSpinor[6]] -
+   mass*SpinorChain[angleSpinor[5], Mom[1], squareSpinor[4]]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[2]]*SpinorChain[angleSpinor[5], Mom[1], Mom[2], angleSpinor[6]] +
+   2*mass^2*angle[2, 6]*angle[3, 5]*angle[5, 6]*MomProd[1, 2]*square[3, 4] +
+   mass^2*angle[2, 6]*angle[3, 5]*angle[5, 6]*pole[1, 6]*square[3, 4] -
+   mass^3*angle[3, 5]*angle[5, 6]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[2]]*
+    square[3, 4] - mass^2*angle[2, 6]*angle[3, 5]*SpinorChain[angleSpinor[5], Mom[1], Mom[2],
+     angleSpinor[6]]*square[3, 4]))/(pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]*pole[2, 6]*
+  pole[1, 3, 4]),
+
+  (-8*mass^2*angle[1, 6]*angle[5, 6]^2*MomProd[1, 6]*SpinorChain[squareSpinor[3], Mom[1], Mom[2],
+   squareSpinor[4]]*square[2, 3]*square[4, 6])/(pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]^2*
+  pole[2, 3]*pole[1, 5, 6]),
+
+  (-8*angle[1, 6]*angle[5, 6]*MomProd[1, 6]*SpinorChain[squareSpinor[4], Mom[1], angleSpinor[5]]*
+  SpinorChain[squareSpinor[3], Mom[1], Mom[2], squareSpinor[4]]*square[2, 3])/
+ (pole[1, 3]*pole[1, 4]*pole[1, 6]^2*pole[2, 3]*pole[1, 5, 6]),
+
+  (-8*mass^2*angle[1, 6]*angle[5, 6]*MomProd[1, 6]*SpinorChain[squareSpinor[4], Mom[1],
+   angleSpinor[5]]*SpinorChain[squareSpinor[3], Mom[1], Mom[2], squareSpinor[4]]*square[2, 3])/
+ (pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]^2*pole[2, 3]*pole[1, 5, 6]),
+
+  (-16*angle[1, 6]*angle[5, 6]*MomProd[1, 6]^2*SpinorChain[squareSpinor[4], Mom[1], angleSpinor[5]]*
+  SpinorChain[squareSpinor[3], Mom[1], Mom[2], squareSpinor[4]]*square[2, 3])/
+ (pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]^2*pole[2, 3]*pole[1, 5, 6]),
+
+  (-8*mass*angle[1, 6]*angle[5, 6]*MomProd[1, 6]*SpinorChain[squareSpinor[3], Mom[1], angleSpinor[2]]*
+  SpinorChain[squareSpinor[4], Mom[1], angleSpinor[5]]*SpinorChain[squareSpinor[3], Mom[1], Mom[2],
+   squareSpinor[4]])/(pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]^2*pole[2, 3]*pole[1, 5, 6]),
+
+  (-8*angle[1, 6]*angle[5, 6]*MomProd[1, 6]*
+  (mass*SpinorChain[squareSpinor[3], Mom[1], angleSpinor[5]]*SpinorChain[squareSpinor[4], Mom[1],
+     angleSpinor[2]]*SpinorChain[squareSpinor[3], Mom[1], Mom[2], squareSpinor[4]] +
+   mass^2*SpinorChain[squareSpinor[3], Mom[1], angleSpinor[5]]*SpinorChain[squareSpinor[3], Mom[1],
+     Mom[2], squareSpinor[4]]*square[2, 4] + 2*MomProd[1, 6]*SpinorChain[squareSpinor[3], Mom[1],
+     angleSpinor[5]]*SpinorChain[squareSpinor[3], Mom[1], Mom[2], squareSpinor[4]]*square[2, 4] +
+   pole[1, 5]*SpinorChain[squareSpinor[3], Mom[1], angleSpinor[5]]*
+    SpinorChain[squareSpinor[3], Mom[1], Mom[2], squareSpinor[4]]*square[2, 4] +
+   mass^3*SpinorChain[squareSpinor[3], Mom[1], angleSpinor[5]]*SpinorChain[squareSpinor[4], Mom[1],
+     angleSpinor[2]]*square[3, 4] + 2*mass*MomProd[1, 6]*SpinorChain[squareSpinor[3], Mom[1],
+     angleSpinor[5]]*SpinorChain[squareSpinor[4], Mom[1], angleSpinor[2]]*square[3, 4] +
+   mass*pole[1, 5]*SpinorChain[squareSpinor[3], Mom[1], angleSpinor[5]]*
+    SpinorChain[squareSpinor[4], Mom[1], angleSpinor[2]]*square[3, 4] -
+   mass^4*SpinorChain[squareSpinor[3], Mom[1], angleSpinor[5]]*square[2, 4]*square[3, 4] -
+   2*mass^2*MomProd[1, 2]*SpinorChain[squareSpinor[3], Mom[1], angleSpinor[5]]*square[2, 4]*
+    square[3, 4] - 4*MomProd[1, 2]*MomProd[1, 6]*SpinorChain[squareSpinor[3], Mom[1],
+     angleSpinor[5]]*square[2, 4]*square[3, 4] - mass^2*pole[1, 4]*
+    SpinorChain[squareSpinor[3], Mom[1], angleSpinor[5]]*square[2, 4]*square[3, 4] -
+   2*MomProd[1, 6]*pole[1, 4]*SpinorChain[squareSpinor[3], Mom[1], angleSpinor[5]]*square[2, 4]*
+    square[3, 4] - 2*MomProd[1, 2]*pole[1, 5]*SpinorChain[squareSpinor[3], Mom[1], angleSpinor[5]]*
+    square[2, 4]*square[3, 4] - pole[1, 4]*pole[1, 5]*SpinorChain[squareSpinor[3], Mom[1],
+     angleSpinor[5]]*square[2, 4]*square[3, 4] + mass^2*angle[5, 6]*
+    SpinorChain[squareSpinor[3], Mom[1], Mom[2], squareSpinor[4]]*square[2, 4]*square[3, 6] +
+   mass^3*angle[5, 6]*SpinorChain[squareSpinor[4], Mom[1], angleSpinor[2]]*square[3, 4]*
+    square[3, 6] - 2*mass^2*angle[5, 6]*MomProd[1, 2]*square[2, 4]*square[3, 4]*square[3, 6] -
+   mass^2*angle[5, 6]*pole[1, 4]*square[2, 4]*square[3, 4]*square[3, 6]))/
+ (pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]^2*pole[2, 4]*pole[1, 5, 6]),
+
+  (-4*angle[1, 5]*angle[5, 6]*(-(mass*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[3]]*
+     SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*SpinorChain[squareSpinor[3], Mom[1],
+      Mom[2], squareSpinor[4]]) - mass^2*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*
+    SpinorChain[squareSpinor[3], Mom[1], Mom[2], squareSpinor[4]]*square[2, 3] -
+   pole[1, 5]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*
+    SpinorChain[squareSpinor[3], Mom[1], Mom[2], squareSpinor[4]]*square[2, 3] -
+   pole[1, 6]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*
+    SpinorChain[squareSpinor[3], Mom[1], Mom[2], squareSpinor[4]]*square[2, 3] +
+   mass^3*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[4]]*square[3, 4] + 2*mass*MomProd[1, 2]*SpinorChain[angleSpinor[2], Mom[1],
+     squareSpinor[3]]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*square[3, 4] +
+   mass*pole[1, 5]*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[3]]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*square[3, 4] +
+   mass*pole[1, 6]*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[3]]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*square[3, 4] -
+   mass^4*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*square[2, 3]*square[3, 4] -
+   mass^2*pole[1, 3]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*square[2, 3]*
+    square[3, 4] - pole[1, 3]*pole[1, 5]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[4]]*
+    square[2, 3]*square[3, 4] - pole[1, 3]*pole[1, 6]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[4]]*square[2, 3]*square[3, 4] + mass^2*angle[5, 6]*
+    SpinorChain[squareSpinor[3], Mom[1], Mom[2], squareSpinor[4]]*square[2, 3]*square[4, 5] -
+   mass^3*angle[5, 6]*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[3]]*square[3, 4]*
+    square[4, 5] + mass^2*angle[5, 6]*pole[1, 3]*square[2, 3]*square[3, 4]*square[4, 5]))/
+ (pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]*pole[2, 3]*pole[1, 5, 6]),
+
+  (4*angle[1, 5]*angle[5, 6]*(mass*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[4]]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*SpinorChain[squareSpinor[3], Mom[1],
+     Mom[2], squareSpinor[4]] + mass^2*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*
+    SpinorChain[squareSpinor[3], Mom[1], Mom[2], squareSpinor[4]]*square[2, 4] +
+   pole[1, 5]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*
+    SpinorChain[squareSpinor[3], Mom[1], Mom[2], squareSpinor[4]]*square[2, 4] +
+   pole[1, 6]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*
+    SpinorChain[squareSpinor[3], Mom[1], Mom[2], squareSpinor[4]]*square[2, 4] +
+   mass^3*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[4]]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[3]]*square[3, 4] + mass*pole[1, 5]*SpinorChain[angleSpinor[2], Mom[1],
+     squareSpinor[4]]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*square[3, 4] +
+   mass*pole[1, 6]*SpinorChain[angleSpinor[2], Mom[1], squareSpinor[4]]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*square[3, 4] -
+   mass^4*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*square[2, 4]*square[3, 4] -
+   2*mass^2*MomProd[1, 2]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*square[2, 4]*
+    square[3, 4] - mass^2*pole[1, 4]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*
+    square[2, 4]*square[3, 4] - 2*MomProd[1, 2]*pole[1, 5]*SpinorChain[angleSpinor[6], Mom[1],
+     squareSpinor[3]]*square[2, 4]*square[3, 4] - pole[1, 4]*pole[1, 5]*
+    SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*square[2, 4]*square[3, 4] -
+   2*MomProd[1, 2]*pole[1, 6]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*square[2, 4]*
+    square[3, 4] - pole[1, 4]*pole[1, 6]*SpinorChain[angleSpinor[6], Mom[1], squareSpinor[3]]*
+    square[2, 4]*square[3, 4] - mass^2*angle[5, 6]*SpinorChain[squareSpinor[3], Mom[1], Mom[2],
+     squareSpinor[4]]*square[2, 4]*square[3, 5] - mass^3*angle[5, 6]*
+    SpinorChain[angleSpinor[2], Mom[1], squareSpinor[4]]*square[3, 4]*square[3, 5] +
+   2*mass^2*angle[5, 6]*MomProd[1, 2]*square[2, 4]*square[3, 4]*square[3, 5] +
+   mass^2*angle[5, 6]*pole[1, 4]*square[2, 4]*square[3, 4]*square[3, 5]))/
+ (pole[1, 3]*pole[1, 4]*pole[1, 5]*pole[1, 6]*pole[2, 4]*pole[1, 5, 6])
+};
+  {rules, charge^4 Total[terms]}
+];
+
+(* Inactive equalities keep the input and output visible. These are ordinary
+   identities and exact propagator definitions, not internal cut conditions. *)
+QEDSixPointPPMMPhysicalCurrentIdentities[model_] := Module[
+  {example, mass, a, s, pole, eq, p = 1, q = 2},
+  example = QEDSixPointPPMMPhysicalCurrentExample[model];
+  If[FailureQ[example], Return[example]];
+  mass = Mass[1] /. First[example];
+  a[i_] := Spinor[If[i <= 2, "Spin", "Helicity"], "Angle", i];
+  s[i_] := Spinor[If[i <= 2, "Spin", "Helicity"], "Square", i];
+  pole[legs__Integer] := PropDen[Mom[Multiparticle @@ Sort[{legs}]], mass];
+  eq[left_, right_] := Inactive[Equal][left, right];
+  {eq[SpinorChain[s[3], Mom[1], a[3]], pole[1, 3]],
+   eq[SpinorChain[a[5], Mom[1], s[5]], pole[1, 5]],
+   eq[SpinorChain[a[1], Mom[p], Mom[q], a[2]] +
+       SpinorChain[a[1], Mom[q], Mom[p], a[2]],
+     2 MomProd[p, q] SpinorChain[a[1], a[2]]],
+   eq[SpinorChain[a[1], Mom[1], Mom[1], a[2]],
+     mass^2 SpinorChain[a[1], a[2]]],
+   eq[SpinorChain[a[1], Mom[3], Mom[4], a[2]],
+     SpinorChain[a[1], a[3]] SpinorChain[s[3], s[4]] SpinorChain[a[4], a[2]]],
+   eq[pole[1, 3, 5], pole[1, 3] + pole[1, 5] + 2 MomProd[3, 5]]}
+];
+
 <|"Amplitudes" -> <|"H" -> prH, "S2" -> prS2, "OldPermutation" -> prOldPermutation|>,
   "FactorizationTargets" -> prElectronTargets, "ReportFunction" -> q5ResidueReport|>

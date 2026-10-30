@@ -114,6 +114,85 @@ check["the constructor's sample, time, pole and worker settings are automatic",
   AllTrue[{"TimeConstraint", "Samples", "ValidationSamples", "PolePreference", "Parallelization", "MaxKernels"},
     (# /. Options[ConstructAmplitude]) === Automatic &]];
 
+(* Discover an actual projected physical basis before falling back to a
+   smaller space. This generic source catalog has two exact formal directions. *)
+arCapPropagator = PropDen[Mom[Multiparticle[1, 2]], 0];
+arCapRules = Table[Mass[i] -> 0, {i, 4}];
+arCapTarget = <|"ExternalLegs" -> Range[4], "Cut" -> {1, 2}, "Mass" -> 0,
+  "ChannelExpression" -> 0, "Complete" -> True, "StateSum" -> 0|>;
+arCapNormalized = <|"Expression" -> (arDirectionA + arDirectionB)/arCapPropagator,
+  "ExternalMassRules" -> arCapRules, "Targets" -> {arCapTarget},
+  "Records" -> {<|"Expression" -> (arDirectionA + arDirectionB)/arCapPropagator|>}|>;
+arCapPlan = <|"Order" -> 1, "Permutations" -> {{}}, "Signs" -> {1}|>;
+arCapHash = Hash[arCapNormalized, "SHA256"];
+arCapAutomatic = Block[{ConstructiveDiagrams`Private`$completionAutomaticCorrectionTermCeiling = 8},
+  ConstructiveDiagrams`Private`completionPhysicalChannelBasis[
+    arCapNormalized, None, arCapPlan, 1, 1, 5]];
+arCapExplicit = Block[{ConstructiveDiagrams`Private`$completionAutomaticCorrectionTermCeiling = None},
+  ConstructiveDiagrams`Private`completionPhysicalChannelBasis[
+    arCapNormalized, None, arCapPlan, 4, 1, 5]];
+arCapCeiling = Block[{ConstructiveDiagrams`Private`$completionAutomaticCorrectionTermCeiling = 1},
+  ConstructiveDiagrams`Private`completionPhysicalChannelBasis[
+    arCapNormalized, None, arCapPlan, 4, 1, 5]];
+check["an automatic cap reuses the complete discovered projected physical basis",
+  arCapAutomatic["Status"] === "AVAILABLE" && Length[arCapAutomatic["Basis"]] === 2 &&
+    arCapAutomatic["EffectiveMaxCorrectionTerms"] === 2 &&
+    arCapAutomatic["CandidateMode"] === "PreparedAndReducedPhysicalUnion"];
+check["early cap changes and bounded raw-catalog construction are explicit",
+  MatchQ[arCapAutomatic["CapChanges"], {_Association}] &&
+    KeyTake[First[arCapAutomatic["CapChanges"]], {"From", "To", "ObservedProjectedDirections"}] ===
+      <|"From" -> 1, "To" -> 2, "ObservedProjectedDirections" -> 2|> &&
+    2 <= arCapAutomatic["CatalogConstructionLimit"] <= 4096];
+check["a fixed cap never silently truncates or expands the physical basis",
+  arCapExplicit["Status"] === "UNAVAILABLE" && arCapExplicit["Basis"] === {} &&
+    arCapExplicit["EffectiveMaxCorrectionTerms"] === 1 && arCapExplicit["CapChanges"] === {}];
+check["the automatic hard ceiling is never exceeded",
+  arCapCeiling["Status"] === "UNAVAILABLE" && arCapCeiling["EffectiveMaxCorrectionTerms"] === 1 &&
+    arCapCeiling["CapChanges"] === {}];
+check["early-cap discovery leaves the original source catalog unchanged",
+  Hash[arCapNormalized, "SHA256"] === arCapHash];
+
+(* An inert core report isolates the retry controller. No mocked report is
+   accepted as an amplitude or used to bypass a physical check. *)
+arMeasureCalls = 0;
+arMeasurePhysical = <|"Status" -> "AVAILABLE", "WithinLimit" -> True,
+  "CandidateMode" -> "PreparedAndReducedPhysicalUnion",
+  "RawDirectionCount" -> 512, "ProjectedDirectionCount" -> 2|>;
+arMeasureFallback = Join[arMeasurePhysical,
+  <|"CandidateMode" -> "ReducedPhysicalChannelsBudgetFallback", "OversizedUnionDirections" -> 512|>];
+arMeasureRun[space_, suppliedBasis_ : Automatic] := Internal`InheritedBlock[
+  {ConstructiveDiagrams`Private`completionFactorizationCore},
+  Clear[ConstructiveDiagrams`Private`completionFactorizationCore];
+  ConstructiveDiagrams`Private`completionFactorizationCore[args___] := (
+    arMeasureCalls++;
+    <|"Status" -> "UNRESOLVED", "Amplitude" -> 0,
+      "ExternalMassRules" -> arRules4, "Diagnostics" -> {"The supplied source space did not close."},
+      "CorrectionSpace" -> "RetryControlFixture", "PhysicalPoleSpace" -> space,
+      "EffectiveMaxCorrectionTerms" -> 128, "ElapsedTime" -> 0|>);
+  CompleteFactorization[{arRules4, 0}, {}, {{}, {}, {}, {}},
+    "CorrectionBasis" -> suppliedBasis,
+    "PolePreference" -> "AllPhysical", "ReturnDetails" -> True,
+    "ProgressReporting" -> False, "Parallelization" -> False]];
+arMeasureComplete = arMeasureRun[arMeasurePhysical];
+check["a complete projected physical space does not retry its larger raw atom count",
+  arMeasureCalls === 1 && Length[arMeasureComplete["AdaptiveAttempts"]] === 1 &&
+    First[arMeasureComplete["AdaptiveAttempts"]]["ObservedDirections"] === 2 &&
+    arMeasureComplete["EffectiveMaxCorrectionTerms"] === 128];
+arMeasureCalls = 0;
+arMeasureReduced = arMeasureRun[arMeasureFallback];
+check["an oversized reduced fallback still requests a bounded larger cap",
+  arMeasureCalls === 2 && Length[arMeasureReduced["AdaptiveAttempts"]] === 2 &&
+    First[arMeasureReduced["AdaptiveAttempts"]]["ObservedDirections"] === 512 &&
+    arMeasureReduced["EffectiveMaxCorrectionTerms"] === 512];
+
+arMeasureCalls = 0;
+arMeasuredExplicitBasis = arMeasureRun[arMeasurePhysical, Table[arBasisDirection[i], {i, 258}]];
+check["an explicit basis informs the initial automatic cap before any fit attempt",
+  arMeasureCalls === 1 &&
+    arMeasuredExplicitBasis["ResourcePolicy"]["Metrics"]["BasisDirections"] === 258 &&
+    arMeasuredExplicitBasis["ResourcePolicy"]["Resolved"]["MaxCorrectionTerms"] === 512 &&
+    First[arMeasuredExplicitBasis["AdaptiveAttempts"]]["MaxCorrectionTerms"] === 512];
+
 (* Fresh public calls exercise the defaults without resource tuning, temporary
    caches, notebook outputs, known final amplitudes or global SetOptions. *)
 arDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 2];
@@ -178,7 +257,8 @@ arExplicitFit = Block[{ConstructiveDiagrams`Private`$completionAutomaticFitSampl
 check["automatic time selection never overrides an explicit fit sample count in a nested call",
   AssociationQ[arExplicitFit] && arExplicitFit["Status"] === "COMPLETE" &&
     arExplicitFit["FitSamples"] === 1 && arExplicitFit["ResourcePolicy"]["Resolved"]["Samples"] === 1];
-arNumericFit = Block[{ConstructiveDiagrams`Private`$completionAutomaticFitSamples = True},
+arNumericFit = Block[{ConstructiveDiagrams`Private`$completionAutomaticFitSamples = True,
+  ConstructiveDiagrams`Private`$completionAutomaticCorrectionTermCeiling = 1024},
   CompleteFactorization[{arOverride["AmplitudePair"][[1]], 0},
     FactorizationAmplitudeChannels[arProcess4, arDiagramModel], arDiagramModel,
     "CorrectionBasis" -> (Last /@ arOverride["Stages"]["Preparing diagrams"]["PreparedAmplitudes"]),
@@ -186,6 +266,80 @@ arNumericFit = Block[{ConstructiveDiagrams`Private`$completionAutomaticFitSample
     "ProgressReporting" -> False, "Parallelization" -> False, "ReturnDetails" -> True]];
 check["fully numeric public calls isolate their samples from an enclosing automatic fit",
   AssociationQ[arNumericFit] && arNumericFit["Status"] === "COMPLETE" && arNumericFit["FitSamples"] === 1];
+check["an explicit numeric public cap isolates inherited automatic permissions",
+  arNumericFit["EffectiveMaxCorrectionTerms"] === 32 &&
+    arNumericFit["CapChanges"] === {} && Length[arNumericFit["CorrectionBasis"]] <= 32];
+
+(* The controller must distinguish a validated expression from its pole
+   presentation. Multiply a real checked amplitude by an exact quotient 1;
+   mock only private dispatch so the fallback branch is inexpensive. *)
+arPreferenceU = SpinorChain[Spinor["Helicity", "Angle", 3], Spinor["Helicity", "Angle", 4]];
+arPreferenceV = SpinorChain[Spinor["Helicity", "Angle", 3], Mom[1], Mom[2],
+  Spinor["Helicity", "Angle", 4]];
+arPreferenceIdentity = (arPreferenceU^2 - arPreferenceV^2)/
+  ((arPreferenceU - arPreferenceV) (arPreferenceU + arPreferenceV));
+arPreferenceBase = arOverride["Stages"]["Completing factorization"];
+arPreferenceExpression = arPreferenceBase["Amplitude"] arPreferenceIdentity;
+arPreferenceEvents = {};
+arPreferenceRun[expression_, extra_List : {}] := Internal`InheritedBlock[
+  {ConstructiveDiagrams`Private`completionFactorizationCore},
+  Clear[ConstructiveDiagrams`Private`completionFactorizationCore];
+  ConstructiveDiagrams`Private`completionFactorizationCore[args___] :=
+    Join[KeyDrop[arPreferenceBase, {"RequestedPolePreference", "AchievedPhysicalDenominators",
+      "PreferenceFallbackReason"}], <|"Amplitude" -> expression,
+      "FamilyAmplitude" -> expression, "CorrectionSpace" -> "ShiftedChannels"|>];
+  CompleteFactorization[{arPreferenceBase["ExternalMassRules"], expression},
+    FactorizationAmplitudeChannels[arProcess4, arDiagramModel], arDiagramModel,
+    "PolePreference" -> "AllPhysical", "ReturnDetails" -> True,
+    "ProgressReporting" -> True, "Parallelization" -> False,
+    "ProgressFunction" -> Function[event, AppendTo[arPreferenceEvents, event]],
+    Sequence @@ extra]];
+arPreferenceFallback = arPreferenceRun[arPreferenceExpression];
+check["the fallback presentation fixture is exactly the same checked amplitude",
+  Cancel[arPreferenceIdentity - 1] === 0 &&
+    arPreferenceBase["Status"] === "COMPLETE" &&
+    AllTrue[arPreferenceBase["ValidationReport"]["Channels"], #["Status"] === "PASS" &]];
+check["a validated AllPhysical fallback stays complete but reports the unmet representation",
+  arPreferenceFallback["Status"] === "COMPLETE" &&
+    arPreferenceFallback["RequestedPolePreference"] === "AllPhysical" &&
+    arPreferenceFallback["AchievedPhysicalDenominators"] === False &&
+    StringQ[arPreferenceFallback["PreferenceFallbackReason"]]];
+check["pole-preference reporting changes neither the fitted amplitude nor residue validation",
+  arPreferenceFallback["Amplitude"] === arPreferenceExpression &&
+    arPreferenceFallback["ValidationReport"] === arPreferenceBase["ValidationReport"] &&
+    arPreferenceFallback["CorrectionSpace"] === "ShiftedChannels"];
+check["the completion progress event discloses a valid representation fallback",
+  Count[arPreferenceEvents, event_Association /;
+    Lookup[event, "Stage", None] === "Factorization representation" &&
+      Lookup[event, "Status", None] === "COMPLETE" &&
+      Lookup[event, "AchievedPhysicalDenominators", True] === False] === 1];
+arPreferenceNumeric = arPreferenceRun[arPreferenceExpression,
+  {"TimeConstraint" -> 30, "Samples" -> 1, "ValidationSamples" -> 1, "MaxCorrectionTerms" -> 32}];
+check["fully explicit resource calls retain the same truthful pole-preference details",
+  arPreferenceNumeric["Status"] === "COMPLETE" &&
+    arPreferenceNumeric["RequestedPolePreference"] === "AllPhysical" &&
+    arPreferenceNumeric["AchievedPhysicalDenominators"] === False];
+arPreferenceExhausted = arPreferenceRun[arPreferenceExpression,
+  {"TimeConstraint" -> 10^-9, "Samples" -> 1, "ValidationSamples" -> 1, "MaxCorrectionTerms" -> 32}];
+check["representation reporting respects an exhausted explicit shared clock",
+  arPreferenceExhausted["Status"] === "COMPLETE" &&
+    MissingQ[arPreferenceExhausted["AchievedPhysicalDenominators"]] &&
+    arPreferenceExhausted["PreferenceFallbackReason"] === None];
+arPreferencePhysicalDiagrams = PrepareAmplitudes[
+  diagramAmplitudes[CreateDiagrams[arProcess4, arDiagramModel]], arDiagramModel,
+  "PolePreference" -> "AllPhysical", "ProgressReporting" -> False, "Parallelization" -> False];
+arPreferencePhysicalSource = CompleteFactorization[arPreferencePhysicalDiagrams,
+  FactorizationAmplitudeChannels[arProcess4, arDiagramModel], arDiagramModel,
+  "PolePreference" -> "AllPhysical", "ReturnDetails" -> True,
+  "ProgressReporting" -> False, "Parallelization" -> False];
+arPreferencePhysical = arPreferenceRun[arPreferencePhysicalSource["Amplitude"]];
+check["a physical-only result reports success without a fallback reason",
+  arPreferencePhysicalSource["Status"] === "COMPLETE" &&
+    arPreferencePhysicalSource["AchievedPhysicalDenominators"] === True &&
+    arPreferencePhysical["Status"] === "COMPLETE" &&
+    arPreferencePhysical["RequestedPolePreference"] === "AllPhysical" &&
+    arPreferencePhysical["AchievedPhysicalDenominators"] === True &&
+    arPreferencePhysical["PreferenceFallbackReason"] === None];
 check["small automatic sample batches avoid cold worker startup",
   ConstructiveDiagrams`Private`completionWarmOnlyQ[{{1, 1}}, {arParameter}, {1, arParameter}]];
 check["large exact sample batches may rebuild a cold pool after a short probe",
@@ -228,7 +382,7 @@ If[Environment["HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION"] === "1",
       AllTrue[arMixedReport["Checks"]["Checks"], #["Status"] === "PASS" &] &&
       arMixedReport["Checks"]["FeynmanCheck"]["Status"] === "PASS"],
   Print["SKIP: set HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION=1 for the full AllPhysical mixed six-point constructor regression."]];
-arExpected = 39 + If[Environment["HEPCAT_TEST_FULL_AUTOMATIC_CONSTRUCTION"] === "1", 2, 0] +
+arExpected = 55 + If[Environment["HEPCAT_TEST_FULL_AUTOMATIC_CONSTRUCTION"] === "1", 2, 0] +
   If[Environment["HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION"] === "1", 3, 0];
 If[checks =!= arExpected, AppendTo[failures, "Not every automatic-resource assertion executed."]];
 Print["AUTOMATIC RESOURCE CHECKS: ", checks, "; FAILURES: ", Length[failures]];

@@ -682,7 +682,7 @@ End[];
 
 
 (* ::Input::Initialization:: *)
-ReduceSpinorProducts::usage = "ReduceSpinorProducts[expr] applies ordinary spinor algebra, multilinearity, chain reversal, Clifford contractions and external-particle mass identities. Compact rational amplitudes retain a competing factored form, with bounded prospective expansion and inverse-protected factor extraction. Bare contractions retain their canonical rules and off-cut remainders. It does not infer momentum conservation or impose a composite internal momentum's mass shell. PropDen arguments remain unchanged.";
+ReduceSpinorProducts::usage = "ReduceSpinorProducts[expr] applies ordinary spinor algebra, multilinearity, chain reversal, Clifford contractions and external-particle mass identities. Compact polynomial and rational expressions retain a competing factored form, with bounded prospective expansion and inverse-protected factor extraction. Bare contractions retain their canonical rules and off-cut remainders. It does not infer momentum conservation or impose a composite internal momentum's mass shell. PropDen arguments remain unchanged.";
 SpinorChainReduced; SpinorTraceReduced;
 
 Begin["ConstructiveDiagrams`Private`"];
@@ -1285,10 +1285,12 @@ rspFactoredContractions[body_, normalizer_] := Module[{nodes, replacements = {},
    contraction. Mere orientation and distribution are representation choices. *)
 rspElementaryContractionQ[body_] := AnyTrue[Cases[{body}, _SpinorChain | _SpinorTrace, Infinity],
   Function[node, Module[{parts = List @@ node, slots, endpoints},
-    If[Head[node] === SpinorTrace, Return[Length[node] <= 2]];
+    If[Head[node] === SpinorTrace, Return[Length[node] <= 2 ||
+      (rspContractionBudgetQ[node] && AnyTrue[parts, MatchQ[#, _Plus | _Times | 0] &])]];
     If[Length[parts] < 2, Return[False]];
     slots = Rest[Most[parts]]; endpoints = parts[[{1, -1}]];
     (Length[parts] === 2 && First[parts] === Last[parts]) ||
+      (rspContractionBudgetQ[node] && AnyTrue[slots, MatchQ[#, _Plus | _Times | 0] &]) ||
       (slots =!= {} && (First[slots] === Mom[rspSpinorLeg[First[endpoints]]] ||
         Last[slots] === Mom[rspSpinorLeg[Last[endpoints]]])) ||
       AnyTrue[Partition[slots, 2, 1], MatchQ[First[#], _Mom | _MomHat] &&
@@ -1340,13 +1342,145 @@ rspBestReduction[candidates_List, factor_ : True] := Module[{best, rank, next, n
   best
 ];
 
+(* Recover polynomial factors hidden by forward product normalization. Every
+   proposed lift is generated from existing typed chain atoms and the existing
+   forward-only reducer. External masses are explicit; no internal shell or
+   momentum-conservation assumption is inferred here. *)
+rspReverseNormalizationFactor[expression_, massRules_List : {}, seconds_ : 2,
+    pairLimit_Integer : 128, beamWidth_Integer : 8, depthLimit_Integer : 3] := Module[
+  {started = AbsoluteTime[], externalRules, masses, original = expression,
+   rank, better, terms, scalar, split, inverseSafeQ, cofactorQ, finiteQ, forward,
+   scalarMassQ, validMassRules,
+   atoms, pairs, products = {}, pairCount = 0, generated = 0, originalForward,
+   best, beam, seen, outcome = True, next, current, expanded, currentTerms,
+   currentMap, lifts, cofactors, subtract, subtractMap, shared, matches, raw,
+   proposal, hash, record, certificate, forwardValue, tag = Unique["reverseFactor"],
+   state, product, cofactor, target, source, lift, depth},
+  finiteQ[value_] := FreeQ[value, _TerminatedEvaluation | $Aborted | $Failed | $TimedOut |
+    Indeterminate | ComplexInfinity | _DirectedInfinity | _Missing | _Failure | _ConditionalExpression];
+  scalarMassQ[value_] := finiteQ[value] && FreeQ[value, _List | _Association |
+    _Rule | _RuleDelayed | _Spinor | _SpinorChain | _SpinorChainReduced |
+    _SpinorTrace | _Mom | _MomProd | _PropDen | _Mandelstahm | _Mass |
+    _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace];
+  externalRules = Select[massRules, MatchQ[#, HoldPattern[Mass[_Integer] -> _]] &];
+  validMassRules = AllTrue[externalRules, scalarMassQ[Last[#]] &] &&
+    AllTrue[GatherBy[externalRules, First], Length[DeleteDuplicates[Last /@ #]] === 1 &];
+  externalRules = If[validMassRules, DeleteDuplicatesBy[externalRules, First], {}];
+  masses = DeleteDuplicates[Last /@ externalRules];
+  rank[value_] := {expressionComplexity[value], LeafCount[value]};
+  better[left_, right_] := left =!= right && OrderedQ[{left, right}];
+  terms[value_] := With[{body = Expand[canonicalChains[value]]},
+    If[Head[body] === Plus, List @@ body, If[body === 0, {}, {body}]]];
+  scalar[term_] := Times @@ Select[If[Head[term] === Times, List @@ term, {term}],
+    NumberQ[#] && Precision[#] === Infinity &];
+  split[value_] := Merge[(With[{coefficient = scalar[#]},
+    Association[Cancel[#/coefficient] -> coefficient]] & /@ terms[value]), Total];
+  inverseSafeQ[value_] := AllTrue[
+    Cases[{value}, Power[base_, exponent_?Negative] :> base, Infinity],
+    NumberQ[#] || (MemberQ[masses, #] && # =!= 0) &];
+  cofactorQ[value_] := finiteQ[value] && FreeQ[value, _Plus] && inverseSafeQ[value];
+  (* Do not call public ReduceSpinorProducts: the helper may itself be used
+     by a reduction pipeline. False selects its forward/legacy competitor. *)
+  forward[value_] := forward[value] = Module[{candidates, result},
+    candidates = rspProductReductionCandidates[Expand[value], False];
+    If[!ListQ[candidates] || candidates === {}, Return[$Failed]];
+    result = Expand[canonicalChains[First[candidates] /. externalRules]];
+    If[finiteQ[result], result, $Failed]];
+  best = <|"Amplitude" -> original, "Rank" -> {LeafCount[original], LeafCount[original]},
+    "RankMethod" -> "StructuralFallback", "Route" -> {},
+    "ForwardNormalizationCertificate" -> True|>;
+  If[!TrueQ[NumericQ[seconds] && 0 < seconds < Infinity] || pairLimit <= 0 ||
+      beamWidth <= 0 || depthLimit <= 0 || LeafCount[expression] > 6000 ||
+      !rspExpansionBudgetQ[expression] || !finiteQ[expression] || !validMassRules ||
+      !FreeQ[expression, _PropDen | _Dot | _NonCommutativeMultiply | _sigma |
+        _colorT | _colorTrace] || !inverseSafeQ[expression] ||
+      !FreeQ[expression, number_?NumberQ /; Precision[number] =!= Infinity],
+    Return[Join[best, <|"Status" -> "UNCHANGED", "TimedOut" -> False,
+      "Generated" -> 0, "PairCount" -> 0, "NormalizedProductCount" -> 0,
+      "ExternalMassRules" -> externalRules, "MassRulesValid" -> validMassRules,
+      "InternalOnShellConditions" -> {}, "ElapsedTime" -> AbsoluteTime[] - started|>]]];
+  outcome = TimeConstrained[MemoryConstrained[Catch[
+    best = Join[best, <|"Rank" -> rank[original], "RankMethod" -> "ExpressionComplexity"|>];
+    atoms = DeleteDuplicates[Cases[canonicalChains[original], _SpinorChain, Infinity]];
+    If[Length[atoms] < 2 || Length[atoms] > 24, Throw[True, tag]];
+    originalForward = forward[original];
+    If[originalForward === $Failed, Throw[True, tag]];
+    pairs = DeleteDuplicates[Flatten[Table[atoms[[i]] atoms[[j]],
+      {i, Length[atoms]}, {j, i, Length[atoms]}]]];
+    pairs = Take[SortBy[pairs, {-Total[Cases[#, chain_SpinorChain :>
+        Length[chain] - 2, Infinity]], LeafCount[#]} &], UpTo[pairLimit]];
+    pairCount = Length[pairs];
+    Do[forwardValue = forward[raw];
+      If[Head[forwardValue] === Plus && Length[forwardValue] <= 16,
+        AppendTo[products, <|"Raw" -> raw, "Forward" -> forwardValue,
+          "Terms" -> terms[forwardValue]|>]], {raw, pairs}];
+    products = DeleteDuplicatesBy[products, {#["Raw"], #["Forward"]} &];
+    beam = {best}; seen = <|Hash[original, "SHA256"] -> True|>;
+    Do[
+      next = {};
+      Do[current = state["Amplitude"]; expanded = Expand[current];
+        currentTerms = terms[current]; currentMap = split[current]; lifts = {};
+        Do[cofactors = DeleteDuplicates[Flatten[Table[Cancel[target/source],
+            {target, currentTerms}, {source, product["Terms"]}]]];
+          cofactors = Select[cofactors, cofactorQ];
+          Do[
+            (* Product normalization can use other factors in the cofactor.
+               Normalizing only the bare pair would miss those legal edits. *)
+            subtract = forward[cofactor product["Raw"]];
+            If[subtract === $Failed, Continue[]];
+            subtractMap = split[subtract];
+            shared = Intersection[Keys[subtractMap], Keys[currentMap]];
+            matches = Count[shared, key_ /; subtractMap[key] === currentMap[key]];
+            If[matches < 2, Continue[]];
+            raw = Expand[canonicalChains[expanded - subtract + cofactor product["Raw"]]];
+            If[!finiteQ[raw] || LeafCount[raw] > 2 LeafCount[original], Continue[]];
+            AppendTo[lifts, <|"RawExpression" -> raw,
+              "Edit" -> <|"Product" -> product["Raw"], "Cofactor" -> cofactor,
+                "NormalizedBlock" -> subtract, "MatchedTerms" -> matches,
+                "CanonicalizeChains" -> True,
+                "ForwardNormalizationCertificate" -> True|>,
+              "Priority" -> {-matches, rank[raw]}|>],
+            {cofactor, cofactors}], {product, products}];
+        lifts = Take[SortBy[DeleteDuplicatesBy[lifts,
+            Hash[#["RawExpression"], "SHA256"] &], #["Priority"] &], UpTo[64]];
+        Do[proposal = Factor[lift["RawExpression"]]; hash = Hash[proposal, "SHA256"];
+          If[KeyExistsQ[seen, hash] || !finiteQ[proposal] || !inverseSafeQ[proposal], Continue[]];
+          AssociateTo[seen, hash -> True];
+          record = <|"Amplitude" -> proposal, "Rank" -> rank[proposal],
+            "RankMethod" -> "ExpressionComplexity",
+            "Route" -> Append[state["Route"], lift["Edit"]]|>;
+          If[First[record["Rank"]] > 3 First[best["Rank"]]/2, Continue[]];
+          generated++; AppendTo[next, record];
+          If[better[record["Rank"], best["Rank"]],
+            certificate = TrueQ[forward[proposal] === originalForward];
+            If[certificate,
+              (* The expression, replay route and exact certificate are one
+                 checkpoint, so a deadline cannot retain only part of it. *)
+              best = Join[record, <|"ForwardNormalizationCertificate" -> True|>]]],
+          {lift, lifts}], {state, beam}];
+      If[next === {}, Break[]];
+      beam = Take[SortBy[next, #["Rank"] &], UpTo[beamWidth]],
+      {depth, depthLimit}]; True, tag], 268435456, False],
+    Max[0.000001, seconds - (AbsoluteTime[] - started)], False];
+  Join[best, <|"Status" -> If[best["Amplitude"] === original, "UNCHANGED", "IMPROVED"],
+    "TimedOut" -> !TrueQ[outcome], "Generated" -> generated,
+    "PairCount" -> pairCount, "NormalizedProductCount" -> Length[products],
+    "ExternalMassRules" -> externalRules, "MassRulesValid" -> validMassRules,
+    "InternalOnShellConditions" -> {}, "InverseKinematicsIntroduced" -> !inverseSafeQ[best["Amplitude"]],
+    "ElapsedTime" -> AbsoluteTime[] - started|>]
+];
+
+
 ReduceSpinorProducts[amp_] /; (Head[amp] === SpinorChain && Length[amp] <= 3) ||
     (Head[amp] === SpinorTrace && Length[amp] <= 2) :=
   ConstructiveDiagrams`Private`withProtectedPropagators[amp,
     ConstructiveDiagrams`Private`rspNormalizeContraction];
 ReduceSpinorProducts[amp_] := Module[
   {hasPropagators = !FreeQ[amp, _PropDen], factoredAmplitude},
-  factoredAmplitude = hasPropagators && !FreeQ[amp, _Plus];
+  (* Completion's coordinate construction needs the historical forward normal
+     form. Its private dynamic scope must not change user-facing preparation. *)
+  factoredAmplitude = !FreeQ[amp, _Plus] &&
+    (!TrueQ[ConstructiveDiagrams`Private`$rspCanonicalProductBasis] || hasPropagators);
   ConstructiveDiagrams`Private`rspBestReduction[
     ConstructiveDiagrams`Private`withProtectedPropagators[amp,
       Function[body, ConstructiveDiagrams`Private`rspProductReductionCandidates[body,

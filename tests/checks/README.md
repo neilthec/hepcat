@@ -82,15 +82,38 @@ required arguments; a forbidden six-point process must still validate as zero.
 The larger nonzero six-point default construction is available with
 `HEPCAT_TEST_FULL_AUTOMATIC_CONSTRUCTION=1`; it uses the same option-free call
 and must pass independent checks. The mixed six-point benchmark also retains
-its complete affine family through high-energy completion: the current
-160-column source fit leaves 67 directions, all subsequently removed only by
+its complete affine family through high-energy completion: an earlier
+160-column source fit left 67 directions, all subsequently removed only by
 exact ordinary or symbolic external-kinematics identity certificates. The
 recorded eight-worker high-energy stage completes in 61.4 seconds. These
 measurements are process benchmarks, not general runtime guarantees.
 Final external preparation takes another 29.4 seconds and gives 4,147 leaves
 in 18 groups with complexity 1,128; the 3.3-second final check reports 17 passes,
-including the independent Feynman comparison. A lower leaf count alone does
-not outrank a lower weighted complexity.
+including the independent Feynman comparison. Those are recorded measurements
+from that earlier source construction, not guarantees for a newly generated
+correction space. A lower leaf count alone does not outrank a lower weighted
+complexity.
+
+`reverse-normalization-tests.wl`, `determinant-pair-tests.wl`,
+`ordinary-pole-compaction-tests.wl` and `scalar-pole-tests.wl` cover the new
+ordinary-identity reduction routes. They test arbitrary momentum labels,
+unequal external masses, exact polynomial certificates, numerator-only scope,
+unchanged inverse factors, interrupted-search checkpoints and retained regular
+remainders. The complete six-point `+++-` fixture reduces from complexity 1128
+to 327 using the general compactor, with a formal equality check against the
+independently derived seven-group expression. A single factored numerator must
+receive the same complete pole-block reduction as several separate fractions.
+This fixture test is distinct from a fresh full construction, which may choose
+a different equivalent representative.
+
+`qed-worked-example-tests.wl` materializes the compact six-point `+++-` and
+physical-pole `++--` references directly from the readable example definitions.
+It checks model-local parameter binding, unchanged models, ordinary displayed
+identities and the complete physical-pole catalogs, then runs all sixteen
+non-Feynman checks with the default four samples. It reads no temporary caches
+and does not use either example as an input to production completion. The
+balanced reference is derived independently from off-shell Dirac currents;
+it is not a claim that constructive completion has found that representation.
 
 The slower complete physical mixed-helicity constructor regression is enabled
 separately. It chooses `AllPhysical`, requests diagnostic output and supplies an

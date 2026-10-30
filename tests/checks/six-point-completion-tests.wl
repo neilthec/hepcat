@@ -49,22 +49,18 @@ sixFiveContinuations = ConstructiveDiagrams`Private`completionChannelContinuatio
 check["five-point continuation counts and forward-reverse modes remain unchanged",
   Counts[Lookup[sixFiveContinuations["Variants"], "Mode"]] ===
     <|"AllSpurious" -> 6, "ReverseCyclic" -> 6, "AllPhysical" -> 6|>];
-(* Ordinary reductions now expose 262 nonzero directions. Inspect the full
-   space and separately require refusal at the smaller cap. Already compact
-   selected-cut sources need no zero correction direction. *)
+(* Inspect the complete selected-cut space. Its exact monomial count and
+   which sources normalize literally can change when ordinary algebra improves. *)
 sixExtendedBasis = ConstructiveDiagrams`Private`completionReducedChannelBasis[
   sixNormalized, sixContinuations, 512, sixRules, 1729];
 sixSelectedChecks = Select[sixExtendedBasis["Verification"],
   #["Mode"] === "SelectedCutReduction" &];
 sixPhysicalSourceChecks = Select[sixExtendedBasis["Verification"],
   #["Mode"] === "AllPhysical" &];
-sixUnchangedSelectedSources = Select[sixContinuations["Variants"],
-  #["Mode"] === "AllPhysical" && TrueQ[#["Accepted"]] && First[#["Cut"]] === 2 &];
-(* The new reducer retains these four compact sources literally. Certify their
-   zero difference explicitly rather than silently dropping cut obligations or
-   requiring artificial off-cut directions caused only by normalization. *)
-sixUnchangedSelectedChecks = Map[Function[source, Module[
-  {target, selectedRules, input, reduced},
+sixSelectedSources = Select[sixContinuations["Variants"],
+  #["Mode"] === "AllPhysical" && TrueQ[#["Accepted"]] &];
+sixSelectedSourceChecks = Map[Function[source, Module[
+  {target, selectedRules, input, reduced, difference},
   target = SelectFirst[ConstructiveDiagrams`Private`completionTargets[sixNormalized["Targets"]],
     #["Cut"] === source["Cut"] &&
       ConstructiveDiagrams`Private`residueExactZero[#["Mass"]^2 - source["Mass"]^2] &];
@@ -76,19 +72,24 @@ sixUnchangedSelectedChecks = Map[Function[source, Module[
   reduced = TimeConstrained[ConstructiveDiagrams`Private`preparationReferenceTrial[
     input, selectedRules,
     ConstructiveDiagrams`Private`preparationDotRules[selectedRules, True]], 5, $TimedOut];
-  <|"Cut" -> source["Cut"], "Unchanged" -> (reduced =!= $TimedOut &&
-      TrueQ[ConstructiveDiagrams`Private`residueExactZero[reduced - source["Expression"]]])|>
-]], sixUnchangedSelectedSources];
+  difference = reduced - source["Expression"];
+  <|"Cut" -> source["Cut"], "Difference" -> difference,
+    "Unchanged" -> (reduced =!= $TimedOut &&
+      TrueQ[ConstructiveDiagrams`Private`residueExactZero[difference]])|>
+]], sixSelectedSources];
+sixChangedSelected = Select[sixSelectedSourceChecks, !TrueQ[#["Unchanged"]] &];
+sixGroupedSpan = ConstructiveDiagrams`Private`completionIndependentBasis[
+  ConstructiveDiagrams`Private`completionNormalizeBasis[sixExtendedBasis["GroupedDirections"]]];
 check["selected-cut reductions retain every source obligation and omit only certified zero directions",
   AssociationQ[sixExtendedBasis] &&
     Sort[Lookup[sixPhysicalSourceChecks, "Cut"]] ===
       Flatten[Table[{leg, photon}, {leg, 2}, {photon, 3, 6}], 1] &&
     AllTrue[sixPhysicalSourceChecks, #["Verification"]["Status"] === "PASS" &] &&
-    Length[sixExtendedBasis["GroupedDirections"]] === 4 &&
-    Sort[Lookup[sixSelectedChecks, "Cut"]] === Table[{1, photon}, {photon, 3, 6}] &&
+    Sort[Lookup[sixSelectedChecks, "Cut"]] === Sort[Lookup[sixChangedSelected, "Cut"]] &&
     AllTrue[sixSelectedChecks, #["Verification"]["Status"] === "PASS" &] &&
-    Sort[Lookup[sixUnchangedSelectedChecks, "Cut"]] === Table[{2, photon}, {photon, 3, 6}] &&
-    AllTrue[sixUnchangedSelectedChecks, TrueQ[#["Unchanged"]] &]];
+    Length[ConstructiveDiagrams`Private`completionIndependentBasis[
+      ConstructiveDiagrams`Private`completionNormalizeBasis[Join[sixGroupedSpan,
+        Lookup[sixChangedSelected, "Difference"]]]]] === Length[sixGroupedSpan]];
 check["the selected-cut extension stays within the declared correction-space cap",
   AssociationQ[sixExtendedBasis] && Length[sixExtendedBasis["Basis"]] <= 512 &&
     ConstructiveDiagrams`Private`completionReducedChannelBasis[
@@ -96,7 +97,7 @@ check["the selected-cut extension stays within the declared correction-space cap
         Missing["ReducedChannelSpaceLimit"]];
 check["stronger ordinary reductions never silently truncate an oversized selected-cut space",
   ConstructiveDiagrams`Private`completionReducedChannelBasis[
-    sixNormalized, sixContinuations, 256, sixRules, 1729] ===
+    sixNormalized, sixContinuations, Length[sixExtendedBasis["Basis"]] - 1, sixRules, 1729] ===
       Missing["ReducedChannelSpaceLimit"]];
 
 (* This behavior is not special to QED or photon references. *)
