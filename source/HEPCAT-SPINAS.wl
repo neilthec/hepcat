@@ -2083,13 +2083,8 @@ WriteSPINASProcess[directory_String, process : {___String}, amplitude_, model_, 
   If[TrueQ[buildRequested] || TrueQ[examples] || (TrueQ[fullOptions["RunCalcHEPValidation"]] || TrueQ[fullOptions["RunMadGraphValidation"]]),
     build = spinasProjectBuild[dir,name,root,examples,cmake,calchep["CalcHEPDirectory"]]; If[FailureQ[build],Return[build]];
     result = Join[result,build]];
-  If[TrueQ[fullOptions["RunCalcHEPValidation"]],
-    build = spinasRunCalcHEPValidation[dir,name,calchep]; If[FailureQ[build],Return[build]];
-    result = Join[result,<|"CalcHEPValidation" -> build|>]];
-  If[TrueQ[fullOptions["RunMadGraphValidation"]],
-    build = spinasRunMadGraphValidation[dir, name, madgraph]; If[FailureQ[build], Return[build]];
-    Print[spinasMadGraphValidationOutput[build, "Table"]];
-    result = Join[result, <|"MadGraphValidation" -> build|>]];
+  result = spinasRunRequestedValidations[result, dir, name, calchep, madgraph, fullOptions];
+  If[FailureQ[result], Return[result]];
   If[TrueQ[details],result,dir]
 ];
 
@@ -2520,13 +2515,8 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
   If[TrueQ[options["Build"]] || TrueQ[options["RunExamples"]] || (TrueQ[options["RunCalcHEPValidation"]] || TrueQ[options["RunMadGraphValidation"]]),
     build = spinasProjectBuild[dir, name, root, options["RunExamples"], cmake, calchep["CalcHEPDirectory"]];
     If[FailureQ[build], Return[build]]; result = Join[result, build]];
-  If[TrueQ[options["RunCalcHEPValidation"]],
-    build = spinasRunCalcHEPValidation[dir, name, calchep]; If[FailureQ[build], Return[build]];
-    result = Join[result, <|"CalcHEPValidation" -> build|>]];
-  If[TrueQ[options["RunMadGraphValidation"]],
-    build = spinasRunMadGraphValidation[dir, name, madgraph]; If[FailureQ[build], Return[build]];
-    Print[spinasMadGraphValidationOutput[build, "Table"]];
-    result = Join[result, <|"MadGraphValidation" -> build|>]];
+  result = spinasRunRequestedValidations[result, dir, name, calchep, madgraph, options];
+  If[FailureQ[result], Return[result]];
   If[TrueQ[options["ReturnDetails"]], result, dir]
 ];
 

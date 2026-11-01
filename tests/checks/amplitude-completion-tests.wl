@@ -1788,9 +1788,14 @@ acFourFermionFeynman = PrepareAmplitudes[diagramAmplitudes[
 acFourFermionFinal = CheckAmplitudes[acFourFermionEnergy["Amplitude"],
   acFourFermionChannels, prFixtureModel, "FeynmanAmplitudes" -> acFourFermionFeynman,
   "FeynmanModel" -> acQEDFeynmanModel, "Samples" -> 2,
+  (* Keep the exact seed that exposed an unfinished third high-energy sample.
+     This intentionally unprojected fixture needs more Laurent-expansion time
+     than the public constructor's symmetry-reduced amplitude. *)
+  "RandomSeed" -> 6157842894738730042, "HighEnergyTimeConstraint" -> 180,
   "TimeConstraint" -> 90, "Output" -> "Details"];
 check["the constructed four-fermion amplitude passes all eleven final checks",
   acFourFermionFinal["Summary"] === <|"PASS" -> 11|> && acAllPass[acFourFermionFinal] &&
+    acFourFermionFinal["HighEnergyCheck"]["CompletedSamples"] === 3 &&
     acFourFermionFinal["FeynmanCheck"]["CompletedSamples"] === 2];
 
 (* Mixed reference optimization must remain compatible with off-cut completion. *)
@@ -2247,6 +2252,47 @@ check["sparse validation certifies every coherent massive-spin component on all 
     AllTrue[Flatten[Lookup[acSparseSpinValidation["Report"]["Channels"], "Samples"]],
       Length[#["SpinVariables"]] === 2 && TrueQ[#["KinematicChecks"]["Valid"]] &&
         And @@ #["KinematicChecks"]["UncutChannelsRemainGeneric"] &]];
+(* Initial symmetry checks have no fitted variables, so their minimal solution
+   needs only SolutionRules. An absent optional key must still yield a list of
+   substitutions and evaluate every real QED cut, rather than leave jobs inert. *)
+acSparseNoUnknownRun[amplitude_, solution_] := Block[
+  {ConstructiveDiagrams`Private`$completionParallelSettings = <|"Parallelization" -> False|>},
+  ConstructiveDiagrams`Private`completionSparseValidation[
+    amplitude, {}, solution, {}, {}, acSparseSpinNormalized, 2, 57017,
+    ModelParameterRules[prModel, {"Me" -> 1, "EE" -> 1}], 15, Automatic, False]];
+acSparseMinimalSolution = acSparseNoUnknownRun[prFourPointAmplitude,
+  <|"SolutionRules" -> {}|>];
+acSparseExplicitEmptySolution = acSparseNoUnknownRun[prFourPointAmplitude,
+  <|"SolutionRules" -> {}, "FreeParameters" -> {}|>];
+acSparseDoubledNoUnknown = acSparseNoUnknownRun[2 prFourPointAmplitude,
+  <|"SolutionRules" -> {}|>];
+acSparseMinimalSamples = Flatten[Lookup[acSparseMinimalSolution["Report"]["Channels"], "Samples"]];
+acSparseExplicitSamples = Flatten[Lookup[acSparseExplicitEmptySolution["Report"]["Channels"], "Samples"]];
+check["minimal no-variable sparse solutions evaluate every QED cut and numerical spin coefficient",
+  acSparseMinimalSolution["Report"]["Summary"] === <|"PASS" -> 2|> &&
+    acSparseMinimalSolution["Feedback"]["Status"] === "COMPLETE" &&
+    acSparseMinimalSolution["FamilyPass"] && Length[acSparseMinimalSamples] === 4 &&
+    AllTrue[acSparseMinimalSamples, Function[sample,
+      TrueQ[sample["KinematicChecks"]["Valid"]] &&
+        AllTrue[Lookup[sample, {"CalculatedResidue", "ExpectedResidue"}], Function[value,
+          PolynomialQ[value, sample["SpinVariables"]] &&
+            AllTrue[Last /@ CoefficientRules[value, sample["SpinVariables"]], NumericQ]]]]]];
+check["a doubled no-variable candidate remains a genuine sparse residue failure",
+  acSparseDoubledNoUnknown["Report"]["Summary"] === <|"FAIL" -> 2|> &&
+    acSparseDoubledNoUnknown["Feedback"]["Status"] === "COMPLETE" &&
+    !acSparseDoubledNoUnknown["FamilyPass"] &&
+    AllTrue[Flatten[Lookup[acSparseDoubledNoUnknown["Report"]["Channels"], "Samples"]],
+      Together[#["CalculatedResidue"] - 2 #["ExpectedResidue"]] === 0 &]];
+check["explicit and omitted empty FreeParameters give the same evaluated residues",
+  acSparseExplicitEmptySolution["Report"]["Summary"] === <|"PASS" -> 2|> &&
+    Length[acSparseMinimalSamples] === Length[acSparseExplicitSamples] &&
+    And @@ MapThread[Function[{minimal, explicit},
+      With[{common = Array[acSparseCompareSpin, Length[minimal["SpinVariables"]]]},
+        And @@ Map[Function[key, Together[
+          (minimal[key] /. Thread[minimal["SpinVariables"] -> common]) -
+          (explicit[key] /. Thread[explicit["SpinVariables"] -> common])] === 0],
+          {"CalculatedResidue", "ExpectedResidue", "Difference"}]]],
+      {acSparseMinimalSamples, acSparseExplicitSamples}]];
 acNoFeedback = acFactor[0, Take[acScalarFourChannels, 1], acScalarModel,
   "CorrectionBasis" -> acAdaptiveBasis, "ParameterRules" -> acScalarRules,
   "Samples" -> 1, "ValidationSamples" -> 1, "MaxRefinements" -> 0];

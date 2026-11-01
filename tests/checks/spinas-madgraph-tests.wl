@@ -153,6 +153,40 @@ smgCheck["helicity labels are readable rather than hidden nested lists",
 smgCheck["detailed output preserves the raw doubled-helicity vectors",
   ConstructiveDiagrams`Private`spinasMadGraphValidationOutput[smgPresentationReport, "Details"] === smgPresentationReport];
 
+smgCalls = {};
+smgCombined = Block[{
+  ConstructiveDiagrams`Private`spinasRunCalcHEPValidation = Function[{directory, name, config},
+    AppendTo[smgCalls, "CalcHEP"];
+    Failure["TestReferenceFailure", <|"CommandResult" -> <|
+      "StandardOutput" -> "Amplitude validation: FAIL"|>|>]],
+  ConstructiveDiagrams`Private`spinasRunMadGraphValidation = Function[{directory, name, config},
+    AppendTo[smgCalls, "MadGraph"]; smgPresentationReport]},
+  ConstructiveDiagrams`Private`spinasRunRequestedValidations[<|"Directory" -> smgDirectory|>,
+    smgDirectory, "test", <|"Points" -> 1000|>, <||>,
+    <|"RunCalcHEPValidation" -> True, "RunMadGraphValidation" -> True|>]];
+smgCheck["a failed first reference never suppresses the second independent comparison",
+  smgCalls === {"CalcHEP", "MadGraph"} && FailureQ[smgCombined] &&
+    smgCombined[[2]]["FailedReferences"] === {"CalcHEP"} &&
+    smgCombined[[2]]["ExportResult"]["MadGraphValidation"]["Status"] === "PASS"];
+smgCalls = {};
+smgMismatch = Block[{
+  ConstructiveDiagrams`Private`spinasRunCalcHEPValidation = Function[{directory, name, config},
+    AppendTo[smgCalls, "CalcHEP"]; <|"Status" -> "PASS"|>],
+  ConstructiveDiagrams`Private`spinasRunMadGraphValidation = Function[{directory, name, config},
+    AppendTo[smgCalls, "MadGraph"]; <|"Status" -> "FAIL", "Message" -> "Known mismatch", "Rows" -> {}|>]},
+  ConstructiveDiagrams`Private`spinasRunRequestedValidations[<|"Directory" -> smgDirectory|>,
+    smgDirectory, "test", <|"Points" -> 1000|>, <||>,
+    <|"RunCalcHEPValidation" -> True, "RunMadGraphValidation" -> True|>]];
+smgCheck["a completed but numerically failing MadGraph comparison remains a failed validation",
+  smgCalls === {"CalcHEP", "MadGraph"} && FailureQ[smgMismatch] &&
+    smgMismatch[[2]]["FailedReferences"] === {"MadGraph"} &&
+    smgMismatch[[2]]["ExportResult"]["CalcHEPValidation"]["Status"] === "PASS"];
+smgCheck["unrequested validation leaves an ordinary source export unchanged",
+  ConstructiveDiagrams`Private`spinasRunRequestedValidations[<|"Directory" -> smgDirectory|>,
+    smgDirectory, "test", <||>, <||>,
+    <|"RunCalcHEPValidation" -> False, "RunMadGraphValidation" -> False|>] ===
+      <|"Directory" -> smgDirectory|>];
+
 DeleteDirectory[smgTemporary, DeleteContents -> True];
 Print["MadGraph public surface: ", smgChecks - Length[smgFailures], " / ", smgChecks, " checks passed."];
 If[smgFailures =!= {}, Print["Failures: ", smgFailures]; Exit[1]];

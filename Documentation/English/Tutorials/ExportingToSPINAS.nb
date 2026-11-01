@@ -127,7 +127,53 @@ to perform that operation.", "ExampleText"],
       " ", "->", " ", "\"Details\"", "]"}]], "Input"],
   Cell["This example writes files, starts a longer calculation, or requires \
 an optional external tool. Evaluate it when you want to perform that \
-operation.", "ExampleText"], Cell["Related Functions", "SeeAlsoSection"],
+operation.", "ExampleText"], Cell["Run Both Independent References",
+   "TechNoteSection"], Cell["The two reference checks answer separate \
+questions and both should be available even when one fails. Ask the exporter \
+to run both checks, with an explicit installation and model for each program. \
+The supplied HEPCAT expression is not replaced by either reference result.",
+   "TechNoteText"], Cell["A failed requested comparison returns Failure. Its \
+ExportResult retains the generated project and both reference reports, so a \
+CalcHEP failure does not hide the MadGraph result. Compilation or writing \
+source does not by itself establish amplitude agreement. Differences in the \
+selected theory, masses, couplings or conventions must be investigated rather \
+than fitted away.", "TechNoteText"], Cell["Run both comparisons on the same \
+exported QED helicity family. Replace the installation paths with your \
+selected locations.", "ExampleText"],
+  Cell[BoxData[RowBox[{"calcHEPDirectory", " ", "=", " ",
+      "\"/path/to/CalcHEP\"", ";", "\n", "exportReport", " ", "=", " ",
+      "WriteSPINASProcess", "[", "exportDirectory", ",", " ", "{", "\"e\"",
+      ",", " ", "\"E\"", "}", " ", "->", " ", "{", "\"A\"", ",", " ",
+      "\"A\"", "}", ",", " ", "entries", ",", " ", "knownModel", ",", "\n",
+      " ", " ", "\"ProcessName\"", " ", "->", " ", "\"eeAA\"", ",", " ",
+      "\"Overwrite\"", " ", "->", " ", "True", ",", "\n", " ", " ",
+      "\"CalcHEPDirectory\"", " ", "->", " ", "calcHEPDirectory", ",", "\n",
+      " ", " ", "\"CalcHEPModel\"", " ", "->", " ", "{",
+      "feynmanModelDirectory", ",", " ", "2", "}", ",", "\n", " ", " ",
+      "\"CalcHEPAllowedParticles\"", " ", "->", " ", "{", "11", ",", " ",
+      "22", "}", ",", "\n", " ", " ", "\"MadGraphDirectory\"", " ", "->",
+      " ", "madGraphDirectory", ",", " ", "\"MadGraphModel\"", " ", "->",
+      " ", "\"sm-full\"", ",", "\n", " ", " ",
+      "\"MadGraphAllowedParticles\"", " ", "->", " ", "{", "11", ",", " ",
+      "22", "}", ",", "\n", " ", " ", "\"RunCalcHEPValidation\"", " ", "->",
+      " ", "True", ",", " ", "\"RunMadGraphValidation\"", " ", "->", " ",
+      "True", ",", "\n", " ", " ", "\"ReturnDetails\"", " ", "->", " ",
+      "True", "]", ";"}]], "Input"], Cell["This example writes files, starts \
+a longer calculation, or requires an optional external tool. Evaluate it when \
+you want to perform that operation.", "ExampleText"],
+  Cell["Inspect a failed combined comparison without losing the other \
+reference report.", "ExampleText"],
+  Cell[BoxData[RowBox[{"referenceReports", " ", "=", " ", "Replace", "[",
+      "exportReport", ",", " ", "Failure", "[", "\"SPINASValidation\"", ",",
+      " ", "data", "_", "Association", "]", " ", ":>", " ", "data", "[",
+      "\"ExportResult\"", "]", "]", ";", "\n", "If", "[", "AssociationQ",
+      "[", "referenceReports", "]", ",", " ", "KeyTake", "[",
+      "referenceReports", ",", " ", "{", "\"CalcHEPValidation\"", ",", " ",
+      "\"MadGraphValidation\"", "}", "]", ",", " ", "referenceReports",
+      "]"}]], "Input"], Cell["This example writes files, starts a longer \
+calculation, or requires an optional external tool. Evaluate it when you want \
+to perform that operation.", "ExampleText"], Cell["Related Functions",
+   "SeeAlsoSection"],
   Cell[TextData[{ButtonBox["WriteSPINASProcess", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/WriteSPINASProcess"], "  \[Bullet]  ",
      ButtonBox["LookupAmplitude", BaseStyle -> "Link",

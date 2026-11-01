@@ -589,6 +589,7 @@
       "The model must supply the complete lower-point amplitudes needed on both sides. Missing amplitudes are zero. Four-point QED uses the three-point model, while five-point QED uses the model containing complete four-point amplitudes.",
       "These are residue targets, not independent diagrams whose sum is a complete amplitude. Directly summing channels double counts overlapping pole information.",
       "Keep the package's sewing convention. CheckAmplitudes converts the stored z convention and includes its required overall sewing sign once; do not add a manual sign to force agreement.",
+      "Fermion sewing automatically includes the internal-port contraction sign, exchange signs for identical external fermions and the grading that joins the spectator fermion blocks of the two lower amplitudes. This last sign matters when both lower amplitudes contain multiple fermion lines; cubic sewing is unchanged. No process-specific or cut-specific sign should be supplied by the user.",
       "A channel may contain reference spinors that describe a continuation away from its cut. PrepareAmplitudes may simplify that continuation using only the selected channel shell. CompleteFactorization retains the original channel targets when preparation reports are supplied.",
       "A FeynmanModel contains off-shell vertices, not the complete on-shell lower amplitudes required here, and is rejected as factorization input."
     ],
@@ -1387,6 +1388,7 @@
       "The default high-energy target is the renormalizable tree bound E^(4-n), with masses held fixed. \"HighEnergyBound\" can express another stated bound; it is a physical input rather than an arbitrary fitting preference.",
       "A successful ordinary result keeps the {externalMassRules, expression} form. There are no new internal on-shell conditions on this combined amplitude, so it may be simplified again with PrepareAmplitudes.",
       "\"Output\" -> \"Details\" retains the candidate, equations, fitted family and validation. A timeout, unsupported direction space or unresolved free coefficient is not silently assigned an arbitrary value.",
+      "Exact identity proofs receive an allowance based on both the number and the size of retained affine directions. A small family containing a large expression can therefore receive more proof time, still within the stage's TimeConstraint. Details records FamilyIdentityProofBudget, including DirectionCount, LargestDirectionLeafCount and AllocatedSeconds. This changes resource allocation only: an unproved direction is retained, and genuine undetermined interactions are not discarded.",
       "Use model-local \"ParameterRules\" only for numerical sampling. An explicit \"RandomSeed\" replays the run; Automatic records a newly chosen time-based seed in details.",
       "This stage cannot establish an unknown interaction merely because it would improve high-energy behavior. The model and supplied direction space determine what is being solved."
     ],

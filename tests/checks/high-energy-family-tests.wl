@@ -10,6 +10,36 @@ heDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 2];
 heModel = ReadModel[FileNameJoin[{root, "models"}], 3];
 heFeynmanModel = ReadModel[FileNameJoin[{root, "model_feynman"}], 2];
 heOriginalModels = {heDiagramModel, heModel};
+heBudgetParameter = Unique["proofBudgetParameter"];
+heSmallDirection = heBudgetTerm[1] + heBudgetTerm[2];
+heLargeDirection = Total[Array[heBudgetTerm, 7000]];
+heSmallBudget = ConstructiveDiagrams`Private`completionHEIdentityProofBudget[
+  1 + heBudgetParameter heSmallDirection, {heBudgetParameter}, {heSmallDirection}, 300];
+heLargeBudget = ConstructiveDiagrams`Private`completionHEIdentityProofBudget[
+  1 + heBudgetParameter heLargeDirection, {heBudgetParameter}, {heLargeDirection}, 300];
+check["identity-proof effort grows for a large direction even when the family has one coordinate",
+  heLargeBudget["AllocatedSeconds"] > heSmallBudget["AllocatedSeconds"] &&
+    heSmallBudget["AllocatedSeconds"] >= 45];
+check["proof-budget diagnostics record the actual direction size and count",
+  heLargeBudget["DirectionCount"] === 1 &&
+    heLargeBudget["LargestDirectionLeafCount"] === LeafCount[heLargeDirection]];
+heCappedBudget = ConstructiveDiagrams`Private`completionHEIdentityProofBudget[
+  1 + heBudgetParameter heLargeDirection, {heBudgetParameter}, {heLargeDirection}, 20];
+check["a large direction cannot extend an explicitly limited stage clock",
+  0 < heCappedBudget["AllocatedSeconds"] <= 15];
+heManyBudget = ConstructiveDiagrams`Private`completionHEIdentityProofBudget[
+  1, Array[heBudgetVariable, 10], ConstantArray[heSmallDirection, 10], 300];
+check["complexity-aware allocation preserves the existing direction-count allowance",
+  heManyBudget["AllocatedSeconds"] >= 100];
+heFallbackBudget = ConstructiveDiagrams`Private`completionHEIdentityProofBudget[
+  1 + heBudgetParameter heLargeDirection, {heBudgetParameter}, Automatic, 300];
+check["an unavailable coefficient list uses the full family size conservatively",
+  heFallbackBudget["LargestDirectionLeafCount"] === LeafCount[1 + heBudgetParameter heLargeDirection] &&
+    heFallbackBudget["AllocatedSeconds"] >= heLargeBudget["AllocatedSeconds"]];
+check["empty families need no proof clock and an unlimited stage still gets a bounded workload allowance",
+  ConstructiveDiagrams`Private`completionHEIdentityProofBudget[1, {}, {}, 300]["AllocatedSeconds"] === 0 &&
+    0 < ConstructiveDiagrams`Private`completionHEIdentityProofBudget[
+      1 + heBudgetParameter heLargeDirection, {heBudgetParameter}, {heLargeDirection}, Infinity]["AllocatedSeconds"] < Infinity];
 heMass = ModelParameter[heModel, "Me"];
 heRules = {Mass[1] -> heMass, Mass[2] -> heMass, Mass[3] -> 0, Mass[4] -> 0, Mass[5] -> 0};
 heChart = ConstructiveDiagrams`Private`completionHESymbolicExternalChart[heRules];
@@ -428,9 +458,41 @@ If[heFullConstruction, Do[
   {process, {{"e", "E", "A.-", "A.+", "A.+"}, {"e", "E", "A.+", "A.-", "A.+"},
     {"e", "E", "E", "e", "A.-"}, {"e", "E", "E", "e", "A.+"}}}],
   Print["SKIP: set HEPCAT_TEST_FULL_HELICITY_CONSTRUCTION=1 for the four full notebook constructor regressions."]];
+(* Exact notebook calls, with only replay and presentation controls added.
+   No cached amplitude or process-specific correction basis is supplied. *)
+heFreshNotebook = Environment["HEPCAT_TEST_NOTEBOOK_FOUR_FERMION"] === "1";
+heFreshExportDirectory = Environment["HEPCAT_NOTEBOOK_VALIDATION_DIRECTORY"];
+If[heFreshNotebook, Do[
+  heFreshProcess = {"e", "E", "E", "e", heFreshCase[[1]]};
+  heFreshResult = ConstructAmplitude[heFreshProcess, heDiagramModel, heModel,
+    "FeynmanModel" -> heFeynmanModel, "RandomSeed" -> heFreshCase[[2]],
+    "Output" -> "Details", "ProgressReporting" -> False, "PrintReport" -> False];
+  check["the exact four-fermion photon notebook call completes with its replay seed: " <> heFreshCase[[1]],
+    AssociationQ[heFreshResult] && heFreshResult["Status"] === "COMPLETE" &&
+      heFreshResult["Checks"]["FeynmanCheck"]["Status"] === "PASS" &&
+      AllTrue[heFreshResult["Checks"]["Checks"], #["Status"] === "PASS" &]];
+  heFreshReduction = Lookup[Lookup[Lookup[heFreshResult, "Stages", <||>],
+    "Completing high-energy behavior", <||>], "FamilyIdentityReduction", <||>];
+  heFreshCertified = Select[Lookup[heFreshReduction, "Certificates", {}],
+    Lookup[#, "Status", None] === "PROVED_ZERO" &];
+  check["notebook family directions are removed only with exact external-identity certificates: " <> heFreshCase[[1]],
+    ContainsAll[Lookup[heFreshCertified, "Parameter", {}], Lookup[heFreshReduction, "RemovedParameters", {}]] &&
+      AllTrue[heFreshCertified,
+      Lookup[#, "NumericalKinematicSamples", 0] === 0 &&
+        Lookup[#, "InternalOnShellConditions", {}] === {} &]];
+  If[StringQ[heFreshExportDirectory] && DirectoryQ[heFreshExportDirectory],
+    heFreshTag = "qed5FourFermions" <> If[heFreshCase[[1]] === "A.+", "P", "M"];
+    Export[FileNameJoin[{heFreshExportDirectory, heFreshTag <> "-fixed-report.wxf"}],
+      KeyTake[heFreshResult, {"Status", "Amplitude", "Checks", "RandomSeed", "StageTimings", "Failure"}], "WXF"];
+    If[Lookup[heFreshResult, "Status", None] === "COMPLETE",
+      Export[FileNameJoin[{heFreshExportDirectory, heFreshTag <> "-fixed.wxf"}],
+        heFreshResult["Amplitude"], "WXF"]]],
+  {heFreshCase, {{"A.+", 724106912298138516}, {"A.-", 9158220563237508691}}}],
+  Print["SKIP: set HEPCAT_TEST_NOTEBOOK_FOUR_FERMION=1 for the exact replayed notebook calls."]];
 check["identity pruning and construction preserve both supplied models",
   heOriginalModels === {heDiagramModel, heModel}];
-If[checks =!= If[heFullConstruction, 85, 77], AppendTo[failures, "Not every enabled assertion executed."]];
+If[checks =!= 83 + If[heFullConstruction, 8, 0] + If[heFreshNotebook, 4, 0],
+  AppendTo[failures, "Not every enabled assertion executed."]];
 Print["CHECKS: ", checks, "; FAILURES: ", Length[failures]];
 If[failures =!= {}, Print[failures]];
 If[failures === {}, Print["HEPCAT_TEST_COMPLETED:high-energy-family-tests.wl"]];

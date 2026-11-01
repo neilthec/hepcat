@@ -612,7 +612,8 @@
       "Generated projects contain validate_madgraph(options) and a process_validate_madgraph executable. ValidateMadGraph provides the corresponding Mathematica entry point, including a simple per-helicity table and optional detailed numerical diagnostics. MadGraph is not required for ordinary SPINAS evaluation.",
       "\"MadGraphParameterMap\" maps HEPCAT parameter names to differently named UFO parameters. Used couplings and masses are checked rather than assumed from the external particle names.",
       "MadGraph propagator widths are matched to the amplitude prescription. For bare HEPCAT PropDen denominators, unmatched adjustable reference widths are zeroed; explicit reference width rules and matched width parameters are preserved. Detailed validation reports record this choice.",
-      "The return value is the output directory. \"ReturnDetails\" -> True adds generated file paths, build information, normalization metadata and optional validation results."
+      "The return value is the output directory. \"ReturnDetails\" -> True adds generated file paths, build information, normalization metadata and optional validation results.",
+      "When both independent reference checks are requested, both are attempted even if one fails. A requested numerical FAIL, unavailable reference or runtime error returns Failure; its ExportResult contains the generated project and both reference reports. Writing source or finishing compilation is not reported as a physics-validation success."
     ],
     "examples": [
       {

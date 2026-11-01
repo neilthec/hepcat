@@ -179,7 +179,11 @@ Cell["C++ Output", "Subsection", ExpressionUUID->"b4c6fb87-9ca2-562d-8135-105e4b
 
 Cell["The export cells at the end of each related amplitude family write one SPINAS process containing its requested spin and helicity choices. Evaluate the amplitude calculations first. Equivalent photon placements are supplied by relabeling identical particles. The generated amp selects one spin/helicity configuration; spin_sum sums its squared magnitude over all external states, and amp2 also includes the initial-state spin average and final-state identical-particle factor. Each export builds and runs three example phase-space points. Failed or unevaluated amplitudes stop the export before files are written. The process arrow separates incoming and outgoing particles. A generic A sums photon helicities; A.+ fixes a helicity on either side. Supply the original all-ingoing expressions: outgoing momenta and angle spinors are crossed automatically. Fixed incoming helicities are not averaged. The output folder is set below. Existing project files are protected; add \"Overwrite\" -> True only when you want to replace a previous export.", "Text", ExpressionUUID->"434e8d10-f994-50ec-b513-28ad794a07e5"],
 
-Cell["spinasOutputDirectory = FileNameJoin[{$HomeDirectory, \"spinas-output\"}];", "Input", ExpressionUUID->"bd44a057-8980-5237-a7d8-0b841566c656"]
+Cell["spinasOutputDirectory = FileNameJoin[{$HomeDirectory, \"spinas-output\"}];", "Input", ExpressionUUID->"bd44a057-8980-5237-a7d8-0b841566c656"],
+
+Cell["Choose the independent reference programs and models here. These are explicit example locations; change them for your installation. The selected MadGraph SM model is restricted to electrons, positrons and photons by the visible PDG list. CalcHEP uses the separate massive-QED Feynman model. The checks compare squared amplitudes, so overall phases are allowed. Each individual calculation has a MadGraph check at its specified photon helicities, with massive spins summed. Each grouped C++ export also runs the full CalcHEP spin/helicity-summed comparison and the MadGraph helicity checks. All use 1000 random points by default and print the actual seed for replay. Failed or unfinished constructive calculations are never counted as passing.", "Text", ExpressionUUID->"26c8f871-c0fb-5a55-a4c8-8bc257b7184b"],
+
+Cell["madGraphDirectory = FileNameJoin[{ParentDirectory[hepcatDirectory], \"MadGraph\"}];\nmadGraphModel = \"sm-full\";\ncalcHEPDirectory = FileNameJoin[{ParentDirectory[hepcatDirectory], \"CalcHEP\", \"calchep_3.9.2\"}];\ncalcHEPModel = {FileNameJoin[{hepcatDirectory, \"model_feynman\"}], 2};\nreferenceParticlePDGs = {11, 22};\nvalidationPoints = 1000;\nmadGraphValidationOptions = {\n  \"MadGraphDirectory\" -> madGraphDirectory,\n  \"MadGraphModel\" -> madGraphModel,\n  \"MadGraphAllowedParticles\" -> referenceParticlePDGs,\n  \"MadGraphPoints\" -> validationPoints\n};", "Input", ExpressionUUID->"c44af2bb-0ad6-562d-8a65-8ae930fd2c08"]
 
 }, Open]]
 
@@ -195,7 +199,9 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.+,A.+", "Chapter", ExpressionUUID->"44abe297-98a2-5c63-9e22-20132a3d21cb"],
 
-Cell["qed4PP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\"},\n  diagramModel, diagramModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"90196480-cbbe-591b-86bf-9971ced0f0e4"]
+Cell["qed4PP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\"},\n  diagramModel, diagramModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"90196480-cbbe-591b-86bf-9971ced0f0e4"],
+
+Cell["qed4PPMadGraph = If[\n  ValueQ[qed4PP] && FreeQ[qed4PP, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.+\", \"A.+\"}, qed4PP, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"fef00e63-a5b3-5380-a2a9-6ed45900f3d3"]
 
 }, Open]],
 
@@ -203,7 +209,9 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.+,A.-", "Chapter", ExpressionUUID->"6c528ba2-0997-5b0a-8471-8891d0a6212b"],
 
-Cell["qed4PM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\"},\n  diagramModel, diagramModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"ea0cf00e-74e4-5d70-b283-9e93b492ddf2"]
+Cell["qed4PM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\"},\n  diagramModel, diagramModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"ea0cf00e-74e4-5d70-b283-9e93b492ddf2"],
+
+Cell["qed4PMMadGraph = If[\n  ValueQ[qed4PM] && FreeQ[qed4PM, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.+\", \"A.-\"}, qed4PM, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"cf149b0b-edce-5a9c-9e3e-a189cddc6af1"]
 
 }, Open]],
 
@@ -211,7 +219,9 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.-,A.+", "Chapter", ExpressionUUID->"c06e2ad2-6d65-59ba-bbe3-82f1c184d0dc"],
 
-Cell["qed4MP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\"},\n  diagramModel, diagramModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"2d47318b-2768-54aa-a153-5b151237d8e0"]
+Cell["qed4MP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\"},\n  diagramModel, diagramModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"2d47318b-2768-54aa-a153-5b151237d8e0"],
+
+Cell["qed4MPMadGraph = If[\n  ValueQ[qed4MP] && FreeQ[qed4MP, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.-\", \"A.+\"}, qed4MP, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"e30b4dc8-1bea-58b1-9dc2-61d2e8a940b7"]
 
 }, Open]],
 
@@ -219,7 +229,9 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.-,A.-", "Chapter", ExpressionUUID->"1dd37843-dab3-5b64-8f91-00d69cbd1ee0"],
 
-Cell["qed4MM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\"},\n  diagramModel, diagramModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"ff9a4ce7-51eb-5dd2-83c5-4752ef20edcf"]
+Cell["qed4MM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\"},\n  diagramModel, diagramModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"ff9a4ce7-51eb-5dd2-83c5-4752ef20edcf"],
+
+Cell["qed4MMMadGraph = If[\n  ValueQ[qed4MM] && FreeQ[qed4MM, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.-\", \"A.-\"}, qed4MM, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"48aab16e-1544-50b2-a32f-6aff58921275"]
 
 ,
 
@@ -229,7 +241,9 @@ Cell["Export eeAA to C++", "Section", ExpressionUUID->"cbf747e0-733e-5073-b0fa-a
 
 Cell["The helicity expressions above are combined in one C++ process. Equivalent placements of the identical photons are filled automatically.", "Text", ExpressionUUID->"5a8a7bb2-b6ac-5095-b47c-ceafa073446b"],
 
-Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeAA\"}],\n  {\"e\", \"E\"} -> {\"A\", \"A\"},\n  {\n    {{\"e\", \"E\", \"A.+\", \"A.+\"}, qed4PP},\n    {{\"e\", \"E\", \"A.+\", \"A.-\"}, qed4PM},\n    {{\"e\", \"E\", \"A.-\", \"A.-\"}, qed4MM}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeAA\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"975800f6-05a4-506c-9f46-0328a3934699"]
+Cell["eeAAExport = WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeAA\"}],\n  {\"e\", \"E\"} -> {\"A\", \"A\"},\n  {\n    {{\"e\", \"E\", \"A.+\", \"A.+\"}, qed4PP},\n    {{\"e\", \"E\", \"A.+\", \"A.-\"}, qed4PM},\n    {{\"e\", \"E\", \"A.-\", \"A.-\"}, qed4MM}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeAA\",\n  \"Build\" -> True, \"RunExamples\" -> True,\n  \"CalcHEPDirectory\" -> calcHEPDirectory,\n  \"CalcHEPModel\" -> calcHEPModel,\n  \"CalcHEPAllowedParticles\" -> referenceParticlePDGs,\n  \"MadGraphDirectory\" -> madGraphDirectory,\n  \"MadGraphModel\" -> madGraphModel,\n  \"MadGraphAllowedParticles\" -> referenceParticlePDGs,\n  \"CalcHEPPoints\" -> validationPoints,\n  \"MadGraphPoints\" -> validationPoints,\n  \"RunCalcHEPValidation\" -> True,\n  \"RunMadGraphValidation\" -> True,\n  \"ReturnDetails\" -> True];", "Input", ExpressionUUID->"975800f6-05a4-506c-9f46-0328a3934699"],
+
+Cell["The independent tests use the constructive expressions above. Full export and validation diagnostics remain in eeAAExport; a reference formula is never substituted. If an export already exists, add \"Overwrite\" -> True deliberately to refresh it.", "Text", ExpressionUUID->"2e65c039-f773-536f-a15d-c88468d0748f"]
 
 }, Open]]
 
@@ -239,7 +253,9 @@ Cell[CellGroupData[{
 
 Cell["e,E,E,e", "Chapter", ExpressionUUID->"ca8c8a3a-7428-5eea-9858-ee4650553a52"],
 
-Cell["qed4FourFermions = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\"},\n  diagramModel, diagramModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"30016c22-1f87-58da-9f86-9762ba2239bd"]
+Cell["qed4FourFermions = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\"},\n  diagramModel, diagramModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"30016c22-1f87-58da-9f86-9762ba2239bd"],
+
+Cell["qed4FourFermionsMadGraph = If[\n  ValueQ[qed4FourFermions] && FreeQ[qed4FourFermions, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"E\", \"e\"}, qed4FourFermions, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"ca587309-20d6-59dd-bd1f-5b5f25aacfaf"]
 
 ,
 
@@ -249,7 +265,9 @@ Cell["Export eeee to C++", "Section", ExpressionUUID->"060816fb-c92a-58c4-a3fe-0
 
 Cell["This process has no massless-helicity branches. Every massive-fermion spin remains an argument of the generated amplitude.", "Text", ExpressionUUID->"cda94856-c6e0-58b9-96a9-1eb15d732fc3"],
 
-Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeee\"}],\n  {\"e\", \"E\"} -> {\"e\", \"E\"},\n  {\n    {{\"e\", \"E\", \"E\", \"e\"}, qed4FourFermions}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeee\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"3186ae38-ca4d-5eaa-b859-9369a49b163d"]
+Cell["eeeeExport = WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeee\"}],\n  {\"e\", \"E\"} -> {\"e\", \"E\"},\n  {\n    {{\"e\", \"E\", \"E\", \"e\"}, qed4FourFermions}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeee\",\n  \"Build\" -> True, \"RunExamples\" -> True,\n  \"CalcHEPDirectory\" -> calcHEPDirectory,\n  \"CalcHEPModel\" -> calcHEPModel,\n  \"CalcHEPAllowedParticles\" -> referenceParticlePDGs,\n  \"MadGraphDirectory\" -> madGraphDirectory,\n  \"MadGraphModel\" -> madGraphModel,\n  \"MadGraphAllowedParticles\" -> referenceParticlePDGs,\n  \"CalcHEPPoints\" -> validationPoints,\n  \"MadGraphPoints\" -> validationPoints,\n  \"RunCalcHEPValidation\" -> True,\n  \"RunMadGraphValidation\" -> True,\n  \"ReturnDetails\" -> True];", "Input", ExpressionUUID->"3186ae38-ca4d-5eaa-b859-9369a49b163d"],
+
+Cell["The independent tests use the constructive expressions above. Full export and validation diagnostics remain in eeeeExport; a reference formula is never substituted. If an export already exists, add \"Overwrite\" -> True deliberately to refresh it.", "Text", ExpressionUUID->"5bf7e0d4-9222-5c48-9dce-f26e2d945568"]
 
 }, Open]]
 
@@ -275,6 +293,8 @@ Cell["Construct and Check", "Section", ExpressionUUID->"4bb6cc79-e5b1-5881-9b17-
 Cell["Evaluate this cell after Setup. The wrapper generates and prepares the diagrams and factorization channels, completes and prepares the amplitude, then runs all final checks. The printed test report precedes the returned expression. The saved manual work remains available below.", "Text", ExpressionUUID->"39cf6e8f-7d10-5f73-a8f3-e11920c14eca"],
 
 Cell["qed5PPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"fc84dd4f-fa99-5122-82eb-b35b4a28e6ce"],
+
+Cell["qed5PPPMadGraph = If[\n  ValueQ[qed5PPP] && FreeQ[qed5PPP, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"}, qed5PPP, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"93110642-6dcd-557d-bb89-0e1f4af32930"],
 
 Cell[CellGroupData[{
 
@@ -4810,6 +4830,8 @@ Cell["Construct and Check", "Section", ExpressionUUID->"472f8cd3-ab29-5c5c-b504-
 Cell["Evaluate this cell after Setup. The wrapper generates and prepares the diagrams and factorization channels, completes and prepares the amplitude, then runs all final checks. The printed test report precedes the returned expression. The saved manual work remains available below.", "Text", ExpressionUUID->"c46aee37-fe13-52c0-a562-296642d3c95f"],
 
 Cell["qed5PPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"cd6c2cab-65fa-5c26-bcaa-fb90afe96402"],
+
+Cell["qed5PPMMadGraph = If[\n  ValueQ[qed5PPM] && FreeQ[qed5PPM, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\"}, qed5PPM, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"a59befc8-a43b-5782-bf75-eca772b1c22a"],
 
 Cell[CellGroupData[{
 
@@ -13560,7 +13582,9 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.+,A.-,A.+", "Chapter", ExpressionUUID->"63b567d5-e793-5b52-bb58-75534676f705"],
 
-Cell["qed5PMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"0b6964c8-0eb4-52b7-b917-78ade09bbbfc"]
+Cell["qed5PMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"0b6964c8-0eb4-52b7-b917-78ade09bbbfc"],
+
+Cell["qed5PMPMadGraph = If[\n  ValueQ[qed5PMP] && FreeQ[qed5PMP, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.+\", \"A.-\", \"A.+\"}, qed5PMP, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"a2f890be-fa18-557a-995f-5bf3b9f3a8d2"]
 
 }, Open]],
 
@@ -13568,7 +13592,9 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.+,A.-,A.-", "Chapter", ExpressionUUID->"2453dfeb-e5ba-5233-b001-e8d8839dda3b"],
 
-Cell["qed5PMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"a77e61a3-edd5-5b98-8319-c1bcaeb49bb4"]
+Cell["qed5PMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"a77e61a3-edd5-5b98-8319-c1bcaeb49bb4"],
+
+Cell["qed5PMMMadGraph = If[\n  ValueQ[qed5PMM] && FreeQ[qed5PMM, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\"}, qed5PMM, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"7685135f-0c23-5941-8229-8095fb7d8754"]
 
 }, Open]],
 
@@ -13578,7 +13604,9 @@ Cell["e,E,A.-,A.+,A.+", "Chapter", ExpressionUUID->"30268457-ceb6-5ada-9ca0-39bb
 
 Cell["This ordering now completes automatically. The apparent high-energy freedom consisted of expressions proved identically zero using external identities and momentum conservation. Final checks, including the independent Feynman comparison, passed. Evaluate the calculation below to obtain a fresh result.", "Text", ExpressionUUID->"0451a7f9-3405-5d2d-9ae1-da9bdf177f7d"],
 
-Cell["qed5MPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"505d8c13-008c-5100-b989-cbbbf7637ebf"]
+Cell["qed5MPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"505d8c13-008c-5100-b989-cbbbf7637ebf"],
+
+Cell["qed5MPPMadGraph = If[\n  ValueQ[qed5MPP] && FreeQ[qed5MPP, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.-\", \"A.+\", \"A.+\"}, qed5MPP, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"3c4c6754-12a3-521b-81d1-cf0187bcbddb"]
 
 }, Open]],
 
@@ -13586,7 +13614,9 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.-,A.+,A.-", "Chapter", ExpressionUUID->"1e2a2871-2ee6-5217-9df2-e3efe682a61e"],
 
-Cell["qed5MPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"903c80bb-7e68-57a5-b352-a33498ce148a"]
+Cell["qed5MPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"903c80bb-7e68-57a5-b352-a33498ce148a"],
+
+Cell["qed5MPMMadGraph = If[\n  ValueQ[qed5MPM] && FreeQ[qed5MPM, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.-\", \"A.+\", \"A.-\"}, qed5MPM, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"87426c60-74b2-5eef-a11b-b54a43aefe60"]
 
 }, Open]],
 
@@ -13594,7 +13624,9 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.-,A.-,A.+", "Chapter", ExpressionUUID->"b8838f42-d395-55f2-aa71-ac5b452ed75b"],
 
-Cell["qed5MMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"f9882909-13ce-5453-94cd-e0b2e3247cd8"]
+Cell["qed5MMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"f9882909-13ce-5453-94cd-e0b2e3247cd8"],
+
+Cell["qed5MMPMadGraph = If[\n  ValueQ[qed5MMP] && FreeQ[qed5MMP, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.-\", \"A.-\", \"A.+\"}, qed5MMP, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"9415df8a-4629-5158-a82e-79055b8c9799"]
 
 }, Open]],
 
@@ -13602,7 +13634,9 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.-,A.-,A.-", "Chapter", ExpressionUUID->"f703f4de-d13a-5cc2-8bba-36389d452a2e"],
 
-Cell["qed5MMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"ff61f24f-3439-5805-8632-d085e4e68735"]
+Cell["qed5MMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"ff61f24f-3439-5805-8632-d085e4e68735"],
+
+Cell["qed5MMMMadGraph = If[\n  ValueQ[qed5MMM] && FreeQ[qed5MMM, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\"}, qed5MMM, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"0334a3fc-46f8-55c9-878f-f01767002ce7"]
 
 ,
 
@@ -13612,7 +13646,9 @@ Cell["Export eeAAA to C++", "Section", ExpressionUUID->"274cde2f-9a1a-558e-917c-
 
 Cell["The helicity expressions above are combined in one C++ process. Equivalent placements of the identical photons are filled automatically.", "Text", ExpressionUUID->"6386a579-cc77-535c-9756-b9fc3a4bc5fb"],
 
-Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeAAA\"}],\n  {\"e\", \"E\"} -> {\"A\", \"A\", \"A\"},\n  {\n    {{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"}, qed5PPP},\n    {{\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\"}, qed5PPM},\n    {{\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\"}, qed5PMM},\n    {{\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\"}, qed5MMM}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeAAA\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"6bd3f50d-ca6e-526d-9020-0b21d3304d76"]
+Cell["eeAAAExport = WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeAAA\"}],\n  {\"e\", \"E\"} -> {\"A\", \"A\", \"A\"},\n  {\n    {{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"}, qed5PPP},\n    {{\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\"}, qed5PPM},\n    {{\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\"}, qed5PMM},\n    {{\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\"}, qed5MMM}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeAAA\",\n  \"Build\" -> True, \"RunExamples\" -> True,\n  \"CalcHEPDirectory\" -> calcHEPDirectory,\n  \"CalcHEPModel\" -> calcHEPModel,\n  \"CalcHEPAllowedParticles\" -> referenceParticlePDGs,\n  \"MadGraphDirectory\" -> madGraphDirectory,\n  \"MadGraphModel\" -> madGraphModel,\n  \"MadGraphAllowedParticles\" -> referenceParticlePDGs,\n  \"CalcHEPPoints\" -> validationPoints,\n  \"MadGraphPoints\" -> validationPoints,\n  \"RunCalcHEPValidation\" -> True,\n  \"RunMadGraphValidation\" -> True,\n  \"ReturnDetails\" -> True];", "Input", ExpressionUUID->"6bd3f50d-ca6e-526d-9020-0b21d3304d76"],
+
+Cell["The independent tests use the constructive expressions above. Full export and validation diagnostics remain in eeAAAExport; a reference formula is never substituted. If an export already exists, add \"Overwrite\" -> True deliberately to refresh it.", "Text", ExpressionUUID->"d44598a7-a970-587d-bca5-9fe84c7fec08"]
 
 }, Open]]
 
@@ -13631,6 +13667,8 @@ Cell["Construct and Check", "Section", ExpressionUUID->"adea72e3-c8dc-5579-81a9-
 Cell["Evaluate this cell after Setup. The wrapper generates and prepares the diagrams and factorization channels, completes and prepares the amplitude, then runs all final checks. The printed test report precedes the returned expression. The saved manual work remains available below.", "Text", ExpressionUUID->"8a0e400e-e796-55fe-8fc2-c7fa37685606"],
 
 Cell["qed5FourFermionsP = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"98a3963d-bf2b-5092-832a-9f8e0aef3ea7"],
+
+Cell["qed5FourFermionsPMadGraph = If[\n  ValueQ[qed5FourFermionsP] && FreeQ[qed5FourFermionsP, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"E\", \"e\", \"A.+\"}, qed5FourFermionsP, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"73f08b58-e3a5-57be-8a96-f3a17628cd45"],
 
 Cell[CellGroupData[{
 
@@ -21363,7 +21401,9 @@ Cell["e,E,E,e,A.-", "Chapter", ExpressionUUID->"a580c69d-cf9b-5c7a-af95-9df454c1
 
 Cell["This calculation now completes automatically. The apparent high-energy freedom consisted of expressions proved identically zero using external identities and momentum conservation. Final checks, including the independent Feynman comparison, passed. Evaluate the calculation below to obtain a fresh result.", "Text", ExpressionUUID->"7dbf9a87-9808-5c95-a673-9ed74906ec45"],
 
-Cell["qed5FourFermionsM = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"2ac0cb72-3082-5941-925b-b84b0bc3f0f4"]
+Cell["qed5FourFermionsM = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"2ac0cb72-3082-5941-925b-b84b0bc3f0f4"],
+
+Cell["qed5FourFermionsMMadGraph = If[\n  ValueQ[qed5FourFermionsM] && FreeQ[qed5FourFermionsM, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"E\", \"e\", \"A.-\"}, qed5FourFermionsM, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"b5216f95-7846-5b3b-893f-edb3abc6c9e9"]
 
 ,
 
@@ -21373,7 +21413,9 @@ Cell["Export eeeeA to C++", "Section", ExpressionUUID->"1b55db53-a74f-5ab1-b9ae-
 
 Cell["The helicity expressions above are combined in one C++ process. Equivalent placements of the identical photons are filled automatically.", "Text", ExpressionUUID->"f67afe05-bb0e-5b49-842d-b4654db3d559"],
 
-Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeeeA\"}],\n  {\"e\", \"E\"} -> {\"e\", \"E\", \"A\"},\n  {\n    {{\"e\", \"E\", \"E\", \"e\", \"A.+\"}, qed5FourFermionsP},\n    {{\"e\", \"E\", \"E\", \"e\", \"A.-\"}, qed5FourFermionsM}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeeeA\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"5dd35c09-5d03-5983-8e36-0784b236e701"]
+Cell["eeeeAExport = WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeeeA\"}],\n  {\"e\", \"E\"} -> {\"e\", \"E\", \"A\"},\n  {\n    {{\"e\", \"E\", \"E\", \"e\", \"A.+\"}, qed5FourFermionsP},\n    {{\"e\", \"E\", \"E\", \"e\", \"A.-\"}, qed5FourFermionsM}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeeeA\",\n  \"Build\" -> True, \"RunExamples\" -> True,\n  \"CalcHEPDirectory\" -> calcHEPDirectory,\n  \"CalcHEPModel\" -> calcHEPModel,\n  \"CalcHEPAllowedParticles\" -> referenceParticlePDGs,\n  \"MadGraphDirectory\" -> madGraphDirectory,\n  \"MadGraphModel\" -> madGraphModel,\n  \"MadGraphAllowedParticles\" -> referenceParticlePDGs,\n  \"CalcHEPPoints\" -> validationPoints,\n  \"MadGraphPoints\" -> validationPoints,\n  \"RunCalcHEPValidation\" -> True,\n  \"RunMadGraphValidation\" -> True,\n  \"ReturnDetails\" -> True];", "Input", ExpressionUUID->"5dd35c09-5d03-5983-8e36-0784b236e701"],
+
+Cell["The independent tests use the constructive expressions above. Full export and validation diagnostics remain in eeeeAExport; a reference formula is never substituted. If an export already exists, add \"Overwrite\" -> True deliberately to refresh it.", "Text", ExpressionUUID->"f01e0644-1bd0-5cd9-83ce-3d031ade093a"]
 
 }, Open]]
 
@@ -23893,6 +23935,8 @@ Cell["Construct and Check", "Section", ExpressionUUID->"cef9dd1a-4216-51ba-9e59-
 Cell["Evaluate this cell after Setup. The wrapper generates and prepares the diagrams and factorization channels, completes and prepares the amplitude, then runs all final checks. The printed test report precedes the returned expression. The saved manual work remains available below.", "Text", ExpressionUUID->"b7f4d745-8e49-5b0f-b734-9f343933d143"],
 
 Cell["qed6PPPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"48382d56-5ad0-55e2-a99f-e9d5d2546991"],
+
+Cell["qed6PPPPMadGraph = If[\n  ValueQ[qed6PPPP] && FreeQ[qed6PPPP, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.+\"}, qed6PPPP, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"43ea5406-b49f-5ab8-a017-2d4ea0030529"],
 
 Cell[CellGroupData[{
 
@@ -27449,6 +27493,8 @@ Cell["Evaluate this cell after Setup. The wrapper generates and prepares the dia
 
 Cell["qed6PPPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"PolePreference\" -> \"AllPhysical\",\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"883d3035-fc8e-5e0e-ae1a-657308bc023a"],
 
+Cell["qed6PPPMMadGraph = If[\n  ValueQ[qed6PPPM] && FreeQ[qed6PPPM, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.-\"}, qed6PPPM, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"71b2b6f5-5494-5cc3-9e80-3ccdbb3502c8"],
+
 Cell[CellGroupData[{
 
 Cell["Earlier Step-by-Step Work (Optional)", "Section", ExpressionUUID->"c32d3089-5705-5d5b-a0d4-c8e7324435b0"],
@@ -27565,7 +27611,9 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.+,A.+,A.-,A.+", "Chapter", ExpressionUUID->"7b807755-c098-5ca7-a7bf-1d1c77baf2f0"],
 
-Cell["qed6PPMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"98d71f36-8972-575f-9c69-f4d9a25fa8f9"]
+Cell["qed6PPMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"98d71f36-8972-575f-9c69-f4d9a25fa8f9"],
+
+Cell["qed6PPMPMadGraph = If[\n  ValueQ[qed6PPMP] && FreeQ[qed6PPMP, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \"A.+\"}, qed6PPMP, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"93eadd34-2803-5124-b898-b47a21340ebb"]
 
 }, Open]],
 
@@ -27576,6 +27624,8 @@ Cell["Construct and Check", "Section", ExpressionUUID->"d0ea60f9-9fe8-596d-952e-
 Cell["ConstructAmplitude now completes this case using additional channel continuations generated from the model's known lower-point amplitudes. Every original channel and all final checks, including the independent Feynman calculation, pass. The earlier step-by-step work remains below. These settings disable optional identity-route enumeration; ordinary spinor reduction and declared numerator mass-shell reductions still run.", "Text", ExpressionUUID->"26039431-c89a-5ead-9e82-153f2d487e70"],
 
 Cell["qed6PPMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"0819812a-ac06-5b2c-a5ba-f2599326e196"],
+
+Cell["qed6PPMMMadGraph = If[\n  ValueQ[qed6PPMM] && FreeQ[qed6PPMM, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \"A.-\"}, qed6PPMM, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"9ab8260a-162c-546d-9d3d-56b4075f3f96"],
 
 Cell[CellGroupData[{
 
@@ -28717,7 +28767,9 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.+,A.-,A.+,A.+", "Chapter", ExpressionUUID->"4ee79a12-44d5-5ff2-8801-7779cbb28f8b"],
 
-Cell["qed6PMPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"3f000dad-0c68-52f1-9f86-5663c5a19222"]
+Cell["qed6PMPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"3f000dad-0c68-52f1-9f86-5663c5a19222"],
+
+Cell["qed6PMPPMadGraph = If[\n  ValueQ[qed6PMPP] && FreeQ[qed6PMPP, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.+\", \"A.-\", \"A.+\", \"A.+\"}, qed6PMPP, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"6dfa71d2-eb46-550b-a954-493ea23a5678"]
 
 }, Open]],
 
@@ -28727,7 +28779,9 @@ Cell["e,E,A.+,A.-,A.+,A.-", "Chapter", ExpressionUUID->"972be87c-390e-5f13-bfdf-
 
 Cell["Automatic completion of this balanced-helicity family is still unresolved. This is a direct calculation with the general workflow; it does not substitute the separate recursion example.", "Text", ExpressionUUID->"874e539a-5a2b-5ebe-ae62-7307a423b9c7"],
 
-Cell["qed6PMPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"46fcfbd1-65d5-5c45-9986-6d6ce504726e"]
+Cell["qed6PMPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"46fcfbd1-65d5-5c45-9986-6d6ce504726e"],
+
+Cell["qed6PMPMMadGraph = If[\n  ValueQ[qed6PMPM] && FreeQ[qed6PMPM, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.+\", \"A.-\", \"A.+\", \"A.-\"}, qed6PMPM, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"3c991b4a-8185-5ebf-9ee9-9b33dbba475b"]
 
 }, Open]],
 
@@ -28737,7 +28791,9 @@ Cell["e,E,A.+,A.-,A.-,A.+", "Chapter", ExpressionUUID->"01e478d0-08dc-5c9e-881d-
 
 Cell["Automatic completion of this balanced-helicity family is still unresolved. This is a direct calculation with the general workflow; it does not substitute the separate recursion example.", "Text", ExpressionUUID->"cec29136-21a5-58e1-bfac-f8e025ec28cf"],
 
-Cell["qed6PMMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"8bf73fa0-d385-5139-8a9e-acbd4c748357"]
+Cell["qed6PMMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"8bf73fa0-d385-5139-8a9e-acbd4c748357"],
+
+Cell["qed6PMMPMadGraph = If[\n  ValueQ[qed6PMMP] && FreeQ[qed6PMMP, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\", \"A.+\"}, qed6PMMP, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"ef327bfe-f6a5-5135-b9aa-18585732d5ed"]
 
 }, Open]],
 
@@ -28745,7 +28801,9 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.+,A.-,A.-,A.-", "Chapter", ExpressionUUID->"dcf28129-e2f2-5228-810c-f231dc09c4ae"],
 
-Cell["qed6PMMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"ba227405-40aa-5731-b6a7-fc6a25372840"]
+Cell["qed6PMMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"ba227405-40aa-5731-b6a7-fc6a25372840"],
+
+Cell["qed6PMMMMadGraph = If[\n  ValueQ[qed6PMMM] && FreeQ[qed6PMMM, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\", \"A.-\"}, qed6PMMM, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"f0482e97-467b-5d2d-ba62-aac986049b8b"]
 
 }, Open]],
 
@@ -28753,7 +28811,9 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.-,A.+,A.+,A.+", "Chapter", ExpressionUUID->"5984e924-9b2b-5296-91df-b19cd087adb7"],
 
-Cell["qed6MPPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"4df14370-a2c3-5e5e-89c6-c13da9b1a7f4"]
+Cell["qed6MPPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"4df14370-a2c3-5e5e-89c6-c13da9b1a7f4"],
+
+Cell["qed6MPPPMadGraph = If[\n  ValueQ[qed6MPPP] && FreeQ[qed6MPPP, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.-\", \"A.+\", \"A.+\", \"A.+\"}, qed6MPPP, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"cb64804f-5616-5870-9876-6fdf6d56c6ed"]
 
 }, Open]],
 
@@ -28763,7 +28823,9 @@ Cell["e,E,A.-,A.+,A.+,A.-", "Chapter", ExpressionUUID->"fce99b6d-baf8-5f87-bca5-
 
 Cell["Automatic completion of this balanced-helicity family is still unresolved. This is a direct calculation with the general workflow; it does not substitute the separate recursion example.", "Text", ExpressionUUID->"f12d21ea-a639-5816-a80a-a22edf17dcd5"],
 
-Cell["qed6MPPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"d9ab4ba1-5724-5444-860c-623db1d9aa94"]
+Cell["qed6MPPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"d9ab4ba1-5724-5444-860c-623db1d9aa94"],
+
+Cell["qed6MPPMMadGraph = If[\n  ValueQ[qed6MPPM] && FreeQ[qed6MPPM, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.-\", \"A.+\", \"A.+\", \"A.-\"}, qed6MPPM, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"b20fa224-69d1-59b4-8e60-bf4f74211704"]
 
 }, Open]],
 
@@ -28773,7 +28835,9 @@ Cell["e,E,A.-,A.+,A.-,A.+", "Chapter", ExpressionUUID->"c1773450-c939-52ca-ba8f-
 
 Cell["Automatic completion of this balanced-helicity family is still unresolved. This is a direct calculation with the general workflow; it does not substitute the separate recursion example.", "Text", ExpressionUUID->"a3d30078-a7d4-5f63-a583-4d0f65a47b01"],
 
-Cell["qed6MPMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"c0f95937-7a91-5933-914f-b90780cb818a"]
+Cell["qed6MPMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"c0f95937-7a91-5933-914f-b90780cb818a"],
+
+Cell["qed6MPMPMadGraph = If[\n  ValueQ[qed6MPMP] && FreeQ[qed6MPMP, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.-\", \"A.+\", \"A.-\", \"A.+\"}, qed6MPMP, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"765d0805-467e-5b79-9a29-1ed221a3967d"]
 
 }, Open]],
 
@@ -28781,7 +28845,9 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.-,A.+,A.-,A.-", "Chapter", ExpressionUUID->"e9f93243-549b-545d-8a9c-68ca15ab2332"],
 
-Cell["qed6MPMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"24331ab2-5da4-58a4-aa99-400ac33e00e3"]
+Cell["qed6MPMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.+\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"24331ab2-5da4-58a4-aa99-400ac33e00e3"],
+
+Cell["qed6MPMMMadGraph = If[\n  ValueQ[qed6MPMM] && FreeQ[qed6MPMM, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.-\", \"A.+\", \"A.-\", \"A.-\"}, qed6MPMM, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"527844a2-714e-5b3f-a41e-676d18c637b2"]
 
 }, Open]],
 
@@ -28791,7 +28857,9 @@ Cell["e,E,A.-,A.-,A.+,A.+", "Chapter", ExpressionUUID->"11e094af-87e7-526d-a4f4-
 
 Cell["Automatic completion of this balanced-helicity family is still unresolved. This is a direct calculation with the general workflow; it does not substitute the separate recursion example.", "Text", ExpressionUUID->"8d7cdd9e-7865-5203-aa0b-d7d869cd9af3"],
 
-Cell["qed6MMPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"feac857c-b1f2-53c2-8224-42e08c8e526f"]
+Cell["qed6MMPP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"feac857c-b1f2-53c2-8224-42e08c8e526f"],
+
+Cell["qed6MMPPMadGraph = If[\n  ValueQ[qed6MMPP] && FreeQ[qed6MMPP, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.-\", \"A.-\", \"A.+\", \"A.+\"}, qed6MMPP, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"3345ff3d-04cb-5087-9b7e-92bb299f1d66"]
 
 }, Open]],
 
@@ -28799,7 +28867,9 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.-,A.-,A.+,A.-", "Chapter", ExpressionUUID->"932294fd-5531-5a53-8b40-abfe26bb4a02"],
 
-Cell["qed6MMPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"ea85b16e-b434-52e9-b534-0e786e275e4e"]
+Cell["qed6MMPM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"ea85b16e-b434-52e9-b534-0e786e275e4e"],
+
+Cell["qed6MMPMMadGraph = If[\n  ValueQ[qed6MMPM] && FreeQ[qed6MMPM, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.-\", \"A.-\", \"A.+\", \"A.-\"}, qed6MMPM, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"b0fae85b-51f6-5c4e-9260-faa47f197cc1"]
 
 }, Open]],
 
@@ -28807,7 +28877,9 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.-,A.-,A.-,A.+", "Chapter", ExpressionUUID->"5883bf3b-bc21-5b57-959e-7fbc427b9b97"],
 
-Cell["qed6MMMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"dbc76639-f10b-521c-8b4e-eb2ee8cc2b31"]
+Cell["qed6MMMP = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"dbc76639-f10b-521c-8b4e-eb2ee8cc2b31"],
+
+Cell["qed6MMMPMadGraph = If[\n  ValueQ[qed6MMMP] && FreeQ[qed6MMMP, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\", \"A.+\"}, qed6MMMP, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"45aa941c-da63-5025-b33d-c1685d0f8a43"]
 
 }, Open]],
 
@@ -28815,7 +28887,9 @@ Cell[CellGroupData[{
 
 Cell["e,E,A.-,A.-,A.-,A.-", "Chapter", ExpressionUUID->"2e0908f6-4d62-5068-b83e-2ee0a89924b1"],
 
-Cell["qed6MMMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"86b62ac4-7191-5590-95c5-34ce4ccc68f9"]
+Cell["qed6MMMM = ConstructAmplitude[\n  {\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"86b62ac4-7191-5590-95c5-34ce4ccc68f9"],
+
+Cell["qed6MMMMMadGraph = If[\n  ValueQ[qed6MMMM] && FreeQ[qed6MMMM, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\", \"A.-\"}, qed6MMMM, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"33548d79-d152-56e6-8358-b2d086c515c7"]
 
 ,
 
@@ -28825,7 +28899,9 @@ Cell["Export eeAAAA to C++", "Section", ExpressionUUID->"5f926e49-4832-5cb6-b3a6
 
 Cell["The helicity expressions above are combined in one C++ process. Equivalent placements of the identical photons are filled automatically.", "Text", ExpressionUUID->"4b574378-b26a-5a3a-8d12-91a73921f519"],
 
-Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeAAAA\"}],\n  {\"e\", \"E\"} -> {\"A\", \"A\", \"A\", \"A\"},\n  {\n    {{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.+\"}, qed6PPPP},\n    {{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.-\"}, qed6PPPM},\n    {{\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \"A.-\"}, qed6PPMM},\n    {{\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\", \"A.-\"}, qed6PMMM},\n    {{\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\", \"A.-\"}, qed6MMMM}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeAAAA\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"d719600e-843c-511a-9e0c-a90505084be9"]
+Cell["eeAAAAExport = WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeAAAA\"}],\n  {\"e\", \"E\"} -> {\"A\", \"A\", \"A\", \"A\"},\n  {\n    {{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.+\"}, qed6PPPP},\n    {{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.-\"}, qed6PPPM},\n    {{\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \"A.-\"}, qed6PPMM},\n    {{\"e\", \"E\", \"A.+\", \"A.-\", \"A.-\", \"A.-\"}, qed6PMMM},\n    {{\"e\", \"E\", \"A.-\", \"A.-\", \"A.-\", \"A.-\"}, qed6MMMM}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeAAAA\",\n  \"Build\" -> True, \"RunExamples\" -> True,\n  \"CalcHEPDirectory\" -> calcHEPDirectory,\n  \"CalcHEPModel\" -> calcHEPModel,\n  \"CalcHEPAllowedParticles\" -> referenceParticlePDGs,\n  \"MadGraphDirectory\" -> madGraphDirectory,\n  \"MadGraphModel\" -> madGraphModel,\n  \"MadGraphAllowedParticles\" -> referenceParticlePDGs,\n  \"CalcHEPPoints\" -> validationPoints,\n  \"MadGraphPoints\" -> validationPoints,\n  \"RunCalcHEPValidation\" -> True,\n  \"RunMadGraphValidation\" -> True,\n  \"ReturnDetails\" -> True];", "Input", ExpressionUUID->"d719600e-843c-511a-9e0c-a90505084be9"],
+
+Cell["The independent tests use the constructive expressions above. Full export and validation diagnostics remain in eeAAAAExport; a reference formula is never substituted. If an export already exists, add \"Overwrite\" -> True deliberately to refresh it.", "Text", ExpressionUUID->"89146adb-27b9-53e9-9193-7b50447823b2"]
 
 }, Open]]
 
@@ -28837,7 +28913,9 @@ Cell["e,E,E,e,A.+,A.+", "Chapter", ExpressionUUID->"dc2a7d10-2e26-54e3-ac32-91da
 
 Cell["This family has diagram-preparation checks, but full automatic completion has not yet been established. This calculation runs the complete workflow and returns an expression only if every required check passes. An unresolved result remains visible as Failure.", "Text", ExpressionUUID->"e00c9759-5843-5d08-8c90-bc17e87f6b19"],
 
-Cell["qed6FourFermionsPP = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"43109671-29f3-53c2-8f3e-a7707a317999"]
+Cell["qed6FourFermionsPP = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.+\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"43109671-29f3-53c2-8f3e-a7707a317999"],
+
+Cell["qed6FourFermionsPPMadGraph = If[\n  ValueQ[qed6FourFermionsPP] && FreeQ[qed6FourFermionsPP, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"E\", \"e\", \"A.+\", \"A.+\"}, qed6FourFermionsPP, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"b04e4cf8-9218-5d25-ae3d-f0f0bff3dcd8"]
 
 }, Open]],
 
@@ -28847,7 +28925,9 @@ Cell["e,E,E,e,A.+,A.-", "Chapter", ExpressionUUID->"ee351497-2df4-5e47-ae8e-c308
 
 Cell["This family has diagram-preparation checks, but full automatic completion has not yet been established. This calculation runs the complete workflow and returns an expression only if every required check passes. An unresolved result remains visible as Failure.", "Text", ExpressionUUID->"96168d5a-7876-5315-9519-6322c32cebf3"],
 
-Cell["qed6FourFermionsPM = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"5a894df5-1ce9-5728-b90b-edbed091989e"]
+Cell["qed6FourFermionsPM = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.+\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"5a894df5-1ce9-5728-b90b-edbed091989e"],
+
+Cell["qed6FourFermionsPMMadGraph = If[\n  ValueQ[qed6FourFermionsPM] && FreeQ[qed6FourFermionsPM, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"E\", \"e\", \"A.+\", \"A.-\"}, qed6FourFermionsPM, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"2db9f6f3-e0c8-5d80-acc2-3816a5965b55"]
 
 }, Open]],
 
@@ -28857,7 +28937,9 @@ Cell["e,E,E,e,A.-,A.+", "Chapter", ExpressionUUID->"d3c55f83-826f-50c4-83e6-fddb
 
 Cell["This family has diagram-preparation checks, but full automatic completion has not yet been established. This calculation runs the complete workflow and returns an expression only if every required check passes. An unresolved result remains visible as Failure.", "Text", ExpressionUUID->"c424a257-de2e-5576-a87b-dcaf192ebb40"],
 
-Cell["qed6FourFermionsMP = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"8828bc1f-4ead-5b86-b8d4-6dcf03cdef8b"]
+Cell["qed6FourFermionsMP = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.-\", \"A.+\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"8828bc1f-4ead-5b86-b8d4-6dcf03cdef8b"],
+
+Cell["qed6FourFermionsMPMadGraph = If[\n  ValueQ[qed6FourFermionsMP] && FreeQ[qed6FourFermionsMP, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"E\", \"e\", \"A.-\", \"A.+\"}, qed6FourFermionsMP, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"14e4e516-53d9-52df-8736-5bf4b7f100e1"]
 
 }, Open]],
 
@@ -28867,7 +28949,9 @@ Cell["e,E,E,e,A.-,A.-", "Chapter", ExpressionUUID->"dd97993e-57e7-53ce-a81b-d041
 
 Cell["This family has diagram-preparation checks, but full automatic completion has not yet been established. This calculation runs the complete workflow and returns an expression only if every required check passes. An unresolved result remains visible as Failure.", "Text", ExpressionUUID->"4ce2cdf2-4e4a-5c00-a691-21afa4f301b1"],
 
-Cell["qed6FourFermionsMM = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"aa7189ea-ed5a-5e8a-945c-04d07d7d1ecb"]
+Cell["qed6FourFermionsMM = ConstructAmplitude[\n  {\"e\", \"E\", \"E\", \"e\", \"A.-\", \"A.-\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"aa7189ea-ed5a-5e8a-945c-04d07d7d1ecb"],
+
+Cell["qed6FourFermionsMMMadGraph = If[\n  ValueQ[qed6FourFermionsMM] && FreeQ[qed6FourFermionsMM, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"E\", \"e\", \"A.-\", \"A.-\"}, qed6FourFermionsMM, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"caf1c22c-9374-5540-9588-41e8213b5113"]
 
 ,
 
@@ -28877,7 +28961,9 @@ Cell["Export eeeeAA to C++", "Section", ExpressionUUID->"10180362-6982-55dd-ae31
 
 Cell["The helicity expressions above are combined in one C++ process. Equivalent placements of the identical photons are filled automatically.", "Text", ExpressionUUID->"fc7c5ff8-a99b-5b3b-884e-3428b2fbdf5e"],
 
-Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeeeAA\"}],\n  {\"e\", \"E\"} -> {\"e\", \"E\", \"A\", \"A\"},\n  {\n    {{\"e\", \"E\", \"E\", \"e\", \"A.+\", \"A.+\"}, qed6FourFermionsPP},\n    {{\"e\", \"E\", \"E\", \"e\", \"A.+\", \"A.-\"}, qed6FourFermionsPM},\n    {{\"e\", \"E\", \"E\", \"e\", \"A.-\", \"A.-\"}, qed6FourFermionsMM}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeeeAA\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"52cb1a12-3ac0-502b-a60f-960d370629cf"]
+Cell["eeeeAAExport = WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeeeAA\"}],\n  {\"e\", \"E\"} -> {\"e\", \"E\", \"A\", \"A\"},\n  {\n    {{\"e\", \"E\", \"E\", \"e\", \"A.+\", \"A.+\"}, qed6FourFermionsPP},\n    {{\"e\", \"E\", \"E\", \"e\", \"A.+\", \"A.-\"}, qed6FourFermionsPM},\n    {{\"e\", \"E\", \"E\", \"e\", \"A.-\", \"A.-\"}, qed6FourFermionsMM}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeeeAA\",\n  \"Build\" -> True, \"RunExamples\" -> True,\n  \"CalcHEPDirectory\" -> calcHEPDirectory,\n  \"CalcHEPModel\" -> calcHEPModel,\n  \"CalcHEPAllowedParticles\" -> referenceParticlePDGs,\n  \"MadGraphDirectory\" -> madGraphDirectory,\n  \"MadGraphModel\" -> madGraphModel,\n  \"MadGraphAllowedParticles\" -> referenceParticlePDGs,\n  \"CalcHEPPoints\" -> validationPoints,\n  \"MadGraphPoints\" -> validationPoints,\n  \"RunCalcHEPValidation\" -> True,\n  \"RunMadGraphValidation\" -> True,\n  \"ReturnDetails\" -> True];", "Input", ExpressionUUID->"52cb1a12-3ac0-502b-a60f-960d370629cf"],
+
+Cell["The independent tests use the constructive expressions above. Full export and validation diagnostics remain in eeeeAAExport; a reference formula is never substituted. If an export already exists, add \"Overwrite\" -> True deliberately to refresh it.", "Text", ExpressionUUID->"1af0ae66-e77d-56b9-b249-7d2085765df8"]
 
 }, Open]]
 
@@ -28889,7 +28975,9 @@ Cell["e,E,e,E,e,E", "Chapter", ExpressionUUID->"0b60b2a6-644f-5f88-bad8-eba453fa
 
 Cell["This family has diagram-preparation checks, but full automatic completion has not yet been established. This calculation runs the complete workflow and returns an expression only if every required check passes. An unresolved result remains visible as Failure.", "Text", ExpressionUUID->"4d396abd-34ca-5181-9a59-156cb832b62f"],
 
-Cell["qed6SixFermions = ConstructAmplitude[\n  {\"e\", \"E\", \"e\", \"E\", \"e\", \"E\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"18e82e69-d9e2-5b59-a83b-c6b2e930b604"]
+Cell["qed6SixFermions = ConstructAmplitude[\n  {\"e\", \"E\", \"e\", \"E\", \"e\", \"E\"},\n  diagramModel, factorizationModel,\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"18e82e69-d9e2-5b59-a83b-c6b2e930b604"],
+
+Cell["qed6SixFermionsMadGraph = If[\n  ValueQ[qed6SixFermions] && FreeQ[qed6SixFermions, _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[\n    {\"e\", \"E\", \"e\", \"E\", \"e\", \"E\"}, qed6SixFermions, factorizationModel,\n    Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]\n]", "Input", ExpressionUUID->"46dba57c-c9a8-54ad-ab9e-c51309115304"]
 
 ,
 
@@ -28899,7 +28987,9 @@ Cell["Export eeeeee to C++", "Section", ExpressionUUID->"363a3aa7-a532-51bb-b647
 
 Cell["This process has no massless-helicity branches. Every massive-fermion spin remains an argument of the generated amplitude.", "Text", ExpressionUUID->"2a9899a9-30b5-55dd-8e05-13529e1db2ce"],
 
-Cell["WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeeeee\"}],\n  {\"e\", \"E\"} -> {\"E\", \"e\", \"E\", \"e\"},\n  {\n    {{\"e\", \"E\", \"e\", \"E\", \"e\", \"E\"}, qed6SixFermions}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeeeee\",\n  \"Build\" -> True, \"RunExamples\" -> True]", "Input", ExpressionUUID->"1cd8cf8b-2382-5dcc-b099-df3c520fc451"]
+Cell["eeeeeeExport = WriteSPINASProcess[\n  FileNameJoin[{spinasOutputDirectory, \"eeeeee\"}],\n  {\"e\", \"E\"} -> {\"E\", \"e\", \"E\", \"e\"},\n  {\n    {{\"e\", \"E\", \"e\", \"E\", \"e\", \"E\"}, qed6SixFermions}\n  }, factorizationModel,\n  \"ProcessName\" -> \"eeeeee\",\n  \"Build\" -> True, \"RunExamples\" -> True,\n  \"CalcHEPDirectory\" -> calcHEPDirectory,\n  \"CalcHEPModel\" -> calcHEPModel,\n  \"CalcHEPAllowedParticles\" -> referenceParticlePDGs,\n  \"MadGraphDirectory\" -> madGraphDirectory,\n  \"MadGraphModel\" -> madGraphModel,\n  \"MadGraphAllowedParticles\" -> referenceParticlePDGs,\n  \"CalcHEPPoints\" -> validationPoints,\n  \"MadGraphPoints\" -> validationPoints,\n  \"RunCalcHEPValidation\" -> True,\n  \"RunMadGraphValidation\" -> True,\n  \"ReturnDetails\" -> True];", "Input", ExpressionUUID->"1cd8cf8b-2382-5dcc-b099-df3c520fc451"],
+
+Cell["The independent tests use the constructive expressions above. Full export and validation diagnostics remain in eeeeeeExport; a reference formula is never substituted. If an export already exists, add \"Overwrite\" -> True deliberately to refresh it.", "Text", ExpressionUUID->"fd5ab068-16f8-5226-82ee-8fd5e6f5953a"]
 
 }, Open]]
 

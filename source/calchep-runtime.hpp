@@ -389,11 +389,14 @@ class CalcHEPProcess {
     }
     std::vector<REAL> buffer(4 * Size);
     for (std::size_t leg = 0; leg < Size; ++leg) {
+      // CalcHEP may sort its external states when generating the process.
+      // Keep the caller's physical ordering and translate only at this boundary.
+      const std::size_t physical_leg = reference_order_[leg];
       for (std::size_t component = 0; component < 4; ++component) {
-        if (!std::isfinite(momenta[leg][component])) {
+        if (!std::isfinite(momenta[physical_leg][component])) {
           throw std::invalid_argument("A CalcHEP phase-space component is not finite.");
         }
-        buffer[4 * leg + component] = static_cast<REAL>(momenta[leg][component]);
+        buffer[4 * leg + component] = static_cast<REAL>(momenta[physical_leg][component]);
       }
     }
     int error = 0;
@@ -517,17 +520,31 @@ class CalcHEPProcess {
         matrix_element_->interface->nprc != 1) {
       throw std::runtime_error("CalcHEP generated an unexpected subprocess or multiplicity.");
     }
+    reference_order_.resize(pdgs_.size());
+    masses_.resize(pdgs_.size());
+    std::vector<bool> assigned(pdgs_.size(), false);
     for (std::size_t index = 0; index < pdgs_.size(); ++index) {
       REAL mass;
       int pdg;
       matrix_element_->interface->pinf(1, static_cast<int>(index + 1), &mass, &pdg);
-      if (pdg != pdgs_[index]) {
-        throw std::runtime_error("CalcHEP changed the external particle ordering.");
-      }
       if (!std::isfinite(mass) || mass < 0) {
         throw std::runtime_error("CalcHEP returned an invalid external mass.");
       }
-      masses_.push_back(static_cast<long double>(mass));
+      // Match each native slot to one unused requested slot of the same species
+      // and role. Repeated identical particles use stable first-unused matches.
+      const std::size_t first = index < 2 ? 0 : 2;
+      const std::size_t last = index < 2 ? 2 : pdgs_.size();
+      std::size_t physical_leg = first;
+      while (physical_leg < last &&
+             (assigned[physical_leg] || pdgs_[physical_leg] != pdg)) {
+        ++physical_leg;
+      }
+      if (physical_leg == last) {
+        throw std::runtime_error("CalcHEP changed the external particle species or incoming/outgoing roles.");
+      }
+      assigned[physical_leg] = true;
+      reference_order_[index] = physical_leg;
+      masses_[physical_leg] = static_cast<long double>(mass);
     }
   }
 
@@ -565,6 +582,8 @@ class CalcHEPProcess {
   calchep_detail::Workspace workspace_;
   numout* matrix_element_;
   std::vector<int> pdgs_;
+  // Native CalcHEP external slot -> caller's physical external slot.
+  std::vector<std::size_t> reference_order_;
   std::vector<long double> masses_;
   double strong_coupling_;
   std::string process_;

@@ -584,6 +584,13 @@ assumptions or discard zero, unsupported or branch-sensitive denominators.
 - `Opp Sign` is a diagnostic, not permission to flip a result. Trace crossing,
   fermion ordering, model signs, and normalization. The checker already applies
   the sewing factor `-1` from `(i A_L)(i A_R)(i/PropDen)/i`; do not apply it twice.
+  `factorizationExternalFermionSign` separately accounts for internal-port
+  contraction parity, identical-species exchange and multiline spectator-block
+  grading. For lower words with `2 rL` and `2 rR` fermion ports, the latter is
+  the Koszul shuffle sign `(-1)^((rL - 1) (rR - 1))`; it leaves cubic sewing
+  unchanged. Do not replace these distinct signs with a process- or cut-size
+  rule. Compatible exact iterated residues must agree in either order, including
+  with distinct fermion flavors; see `fermion-sewing-grading-tests.wl`.
 - `FAIL` and `UNRESOLVED` must remain visible. Unsupported denominator forms,
   singular charts, unspecified parameters, and timeouts are not zero results.
 - No discovered spurious denominator does not prove regularity everywhere.
@@ -915,7 +922,9 @@ Apply one normalized signed projector to the seed and correction directions,
 combining all detected Bose and Fermi groups. For `e,E,E,e,A.+,A.+`, use
 `(1 + P56)(1 - P14)(1 - P23)/8`, not separate attempts for each group.
 Typed permutations preserve coefficients, Xi identifiers and explicit
-numerical spin labels. Do not change existing diagram Wick or sewing signs.
+numerical spin labels. Do not alter diagram Wick or sewing signs merely to
+force agreement. A sign repair requires an independent ordering derivation and
+exact compatible-pole tests, including distinct fermion flavors.
 Keep every original residue target for independent validation.
 Automatic mode uses a bounded exact subgroup if the full combined order
 exceeds 120, reserving exchanges for different groups where possible.

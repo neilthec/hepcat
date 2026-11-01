@@ -151,6 +151,39 @@ miShortcut = ValidateMadGraph[{"e", "E"} -> {"A", "A"}, miFamily, miModel,
 miCheck["the direct public shortcut honors the explicitly selected reference setup",
   miPassed[miShortcut, 4, 20] && miShortcut["Seed"] === 112233];
 
+Print["Checking that a genuine CalcHEP model mismatch does not suppress the independent MadGraph check."];
+miCalcHEP = Replace[Environment["HEPCAT_CALCHEP_DIRECTORY"], $Failed | "" ->
+  FileNameJoin[{ParentDirectory[miRoot], "CalcHEP", "calchep_3.9.2"}]];
+miCombined = WriteSPINASProcess[miPath["madgraph_combined_reference_mismatch"],
+  {"e", "E"} -> {"e", "E"}, {{miFermionProcess, miFermionAmplitude}}, miModel,
+  "ProcessName" -> "madgraph_combined_reference_mismatch", "ParameterRules" -> miRules,
+  "SPINASDirectory" -> miSpinas,
+  "CalcHEPDirectory" -> miCalcHEP, "CalcHEPModel" -> {FileNameJoin[{miRoot, "model_feynman"}], 1},
+  "CalcHEPAllowedParticles" -> All, "CalcHEPPoints" -> 3, "CalcHEPSeed" -> 12345,
+  "MadGraphDirectory" -> miMadGraph, "MadGraphModel" -> "sm-full",
+  "MadGraphAllowedParticles" -> {11, 22}, "MadGraphPoints" -> 3, "MadGraphSeed" -> 12345,
+  "RunCalcHEPValidation" -> True, "RunMadGraphValidation" -> True, "ReturnDetails" -> True];
+miCheck["a real full-SM reference mismatch is returned as a failed requested comparison",
+  MatchQ[miCombined, Failure["SPINASValidation", _Association]] &&
+    miCombined[[2]]["FailedReferences"] === {"CalcHEP"}];
+If[FailureQ[miCombined] && AssociationQ[Lookup[miCombined[[2]], "ExportResult", None]],
+  miCombinedResult = miCombined[[2]]["ExportResult"];
+  miCheck["MadGraph still completes after the genuine CalcHEP numerical failure",
+    FailureQ[miCombinedResult["CalcHEPValidation"]] &&
+      StringContainsQ[miCombinedResult["CalcHEPValidation"][[2]]["CommandResult"]["StandardOutput"],
+        "Amplitude validation: FAIL"] &&
+      miPassed[miCombinedResult["MadGraphValidation"], 1, 3]],
+  miCheck["the combined failure retains both reports", False]];
+
+Print["Checking that RunMadGraphValidation cannot disguise a numerical FAIL as ordinary export success."];
+miExportWrong = miExport["madgraph_wrong_requested", miWrongFamily,
+  "RunMadGraphValidation" -> True, "MadGraphPoints" -> 3, "MadGraphSeed" -> 12345];
+miCheck["a genuinely wrong requested MadGraph comparison returns Failure with its numerical report",
+  MatchQ[miExportWrong, Failure["SPINASValidation", _Association]] &&
+    miExportWrong[[2]]["FailedReferences"] === {"MadGraph"} &&
+    miExportWrong[[2]]["ExportResult"]["MadGraphValidation"]["Status"] === "FAIL" &&
+    Length[miRows[miExportWrong[[2]]["ExportResult"]["MadGraphValidation"]]] === 4];
+
 miCheck["independent numerical validation does not mutate the supplied HEPCAT model", miModel === miModelBefore];
 
 Print["MadGraph integration artifacts: ", miTemporary];

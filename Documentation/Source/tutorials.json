@@ -480,6 +480,25 @@
             "evaluate": false
           }
         ]
+      },
+      {
+        "title": "Run Both Independent References",
+        "paragraphs": [
+          "The two reference checks answer separate questions and both should be available even when one fails. Ask the exporter to run both checks, with an explicit installation and model for each program. The supplied HEPCAT expression is not replaced by either reference result.",
+          "A failed requested comparison returns Failure. Its ExportResult retains the generated project and both reference reports, so a CalcHEP failure does not hide the MadGraph result. Compilation or writing source does not by itself establish amplitude agreement. Differences in the selected theory, masses, couplings or conventions must be investigated rather than fitted away."
+        ],
+        "examples": [
+          {
+            "description": "Run both comparisons on the same exported QED helicity family. Replace the installation paths with your selected locations.",
+            "input": "calcHEPDirectory = \"/path/to/CalcHEP\";\nexportReport = WriteSPINASProcess[exportDirectory, {\"e\", \"E\"} -> {\"A\", \"A\"}, entries, knownModel,\n  \"ProcessName\" -> \"eeAA\", \"Overwrite\" -> True,\n  \"CalcHEPDirectory\" -> calcHEPDirectory,\n  \"CalcHEPModel\" -> {feynmanModelDirectory, 2},\n  \"CalcHEPAllowedParticles\" -> {11, 22},\n  \"MadGraphDirectory\" -> madGraphDirectory, \"MadGraphModel\" -> \"sm-full\",\n  \"MadGraphAllowedParticles\" -> {11, 22},\n  \"RunCalcHEPValidation\" -> True, \"RunMadGraphValidation\" -> True,\n  \"ReturnDetails\" -> True];",
+            "evaluate": false
+          },
+          {
+            "description": "Inspect a failed combined comparison without losing the other reference report.",
+            "input": "referenceReports = Replace[exportReport, Failure[\"SPINASValidation\", data_Association] :> data[\"ExportResult\"]];\nIf[AssociationQ[referenceReports], KeyTake[referenceReports, {\"CalcHEPValidation\", \"MadGraphValidation\"}], referenceReports]",
+            "evaluate": false
+          }
+        ]
       }
     ],
     "related": [

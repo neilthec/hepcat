@@ -17,6 +17,7 @@ TEST_SUITES = (
     "spinor-identity-tests.wl", "spin-contraction-guard-tests.wl",
     "thesis-preparation-tests.wl", "diagram-tests.wl",
     "simplification-path-tests.wl", "physical-residue-tests.wl",
+    "fermion-sewing-grading-tests.wl",
     "spurious-pole-tests.wl", "qed-five-point-simplification-tests.wl",
     "high-energy-tests.wl", "high-energy-family-tests.wl", "reference-independence-tests.wl",
     "amplitude-completion-tests.wl", "completion-input-fit-tests.wl",

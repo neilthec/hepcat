@@ -218,7 +218,9 @@ be included.", "TableText"]},
         "TableText"], Cell["Whether export builds and runs the generated \
 independent CalcHEP comparison. It uses the same physical points on both \
 implementations; unsupported polarized or color-stripped comparisons report \
-unavailable.", "TableText"]},
+unavailable. When MadGraph is also requested, its check still runs if CalcHEP \
+fails. A failed requested reference returns Failure with both reports \
+retained in ExportResult.", "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"CalcHEPPoints\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"1000"}]], "InlineFormula"]}],
@@ -281,7 +283,9 @@ parameters prevent a passing comparison.", "TableText"]},
         "TableText"], Cell["Whether WriteSPINASProcess builds and runs the \
 independent MadGraph comparison. False writes the optional support without \
 running it; True runs a report for each exported massless-helicity \
-combination.", "TableText"]},
+combination. A numerical FAIL is returned as Failure, not a successful \
+source-export result. If CalcHEP is also requested, both checks are attempted \
+and their reports remain in ExportResult.", "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"MadGraphPoints\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"1000"}]], "InlineFormula"]}],

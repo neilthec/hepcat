@@ -945,6 +945,68 @@ check["six-fermion factorization retains identical-species exchange parity",
   prPermutedFermionTarget["StateSum"] ===
       -prSwapFermionLabels[prFirstFermionTarget["StateSum"]]];
 
+(* Compatible single-channel targets must have the same iterated residue.
+   This exact conserved family has s12 = u and t123 = v independently;
+   every other physical channel stays generic at their intersection. The
+   targets are generated from the public API, without a six-point formula. *)
+prSixFermionDoubleResidue = Module[
+  {targets, photon, fermion, rules, u, v, q, p1, p2, p3, p4, p56,
+   momenta, zero, geometry, otherTargets, j, angles, squares, base,
+   photonChart, fermionChart, photonFirst, fermionFirst},
+  targets = prAdaptedTargets[{"e", "E", "e", "E", "e", "E"}, prFixtureModel];
+  photon = SelectFirst[targets, #["Cut"] === {1, 2} &];
+  fermion = SelectFirst[targets, #["Cut"] === {1, 2, 3} &];
+  rules = {prElectronMass -> 1, prElectricCharge -> 1};
+  q = {{1, 0}, {0, u}};
+  p1 = {{1/2, 2}, {u/8 - 1/2, u/2}}; p2 = q - p1;
+  p3 = {{2, 1}, {2 v - 6 u - 1, v - 3 u}};
+  p4 = {{2, 3}, {4, 13/2}};
+  p56 = BlockRandom[SeedRandom[20261101];
+    ConstructiveDiagrams`Private`residueSplitTwoBody[-q - p3 - p4, 1, 1, False]];
+  If[FailureQ[p56], Return[<|"Geometry" -> False, "Nonzero" -> False,
+    "Equal" -> False|>]];
+  momenta = AssociationThread[Range[6], Join[{p1, p2, p3, p4}, p56]];
+  zero[value_] := Together[value] === 0;
+  otherTargets = Select[targets, !MemberQ[{{1, 2}, {1, 2, 3}}, #["Cut"]] &];
+  geometry = AllTrue[Values[momenta], zero[Det[#] - 1] &] &&
+    AllTrue[Flatten[Total[Values[momenta]]], zero] &&
+    zero[Det[momenta[1] + momenta[2]] - u] &&
+    zero[Det[momenta[1] + momenta[2] + momenta[3]] - 1 - v] &&
+    Length[otherTargets] === 16 && AllTrue[otherTargets,
+      !zero[(Det[Total[Lookup[momenta, #["Cut"]]]] -
+        (#["Mass"] /. rules)^2) /. {u -> 0, v -> 0}] &];
+  j = {{0, 1}, {-1, 0}};
+  angles = AssociationThread[Range[6], Table[{1, i + 1}, {i, 6}]];
+  squares = AssociationThread[Range[6], Table[
+    j.ConstructiveDiagrams`Private`residueAdjugate[momenta[i]].angles[i], {i, 6}]];
+  base = <|"Momenta" -> momenta, "Angle" -> angles, "Square" -> squares,
+    "AngleBasis" -> AssociationThread[Range[6], ConstantArray[IdentityMatrix[2], 6]],
+    "SquareBasis" -> AssociationThread[Range[6], Table[
+      j.ConstructiveDiagrams`Private`residueAdjugate[momenta[i]], {i, 6}]],
+    "Masses" -> AssociationThread[Range[6], ConstantArray[1, 6]],
+    "ReferenceSeed" -> 1729, "Cut" -> {1, 2}, "Complement" -> {3, 4, 5, 6},
+    "CutMass" -> 0, "AllowCutSpinors" -> True|>;
+  photonChart = Join[base /. u -> 0, <|"PoleVariable" -> v|>];
+  fermionChart = Join[base /. v -> 0, <|"PoleVariable" -> u|>];
+  photonFirst = TimeConstrained[Cancel[Together[
+    ConstructiveDiagrams`Private`residueEvaluateChart[
+      (fermion["Propagator"] photon["StateSum"]) /. rules, photonChart, rules]]] /. v -> 0,
+    30, $TimedOut];
+  fermionFirst = TimeConstrained[Cancel[Together[
+    ConstructiveDiagrams`Private`residueEvaluateChart[
+      (photon["Propagator"] fermion["StateSum"]) /. rules, fermionChart, rules]]] /. u -> 0,
+    30, $TimedOut];
+  <|"Geometry" -> geometry, "Nonzero" ->
+      AllTrue[{photonFirst, fermionFirst}, NumberQ[#] && # =!= 0 &],
+    "Equal" -> zero[photonFirst - fermionFirst]|>
+];
+check["six-fermion double-pole chart keeps only its two selected propagators on shell",
+  prSixFermionDoubleResidue["Geometry"]];
+check["six-fermion compatible residues give a nonzero exact comparison",
+  prSixFermionDoubleResidue["Nonzero"]];
+check["sewing photon then fermion agrees with sewing fermion then photon",
+  prSixFermionDoubleResidue["Equal"]];
+
 prAllFourFermionChannels = FactorizationAmplitudeChannels[{"e", "E", "e", "E"}, prModel];
 prAllFourFermionTargets = ConstructiveDiagrams`Private`residueSimpleInputs[
   0, prAllFourFermionChannels, prModel]["Targets"];

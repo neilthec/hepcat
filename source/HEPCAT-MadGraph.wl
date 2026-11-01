@@ -5,7 +5,7 @@
 
 Begin["ConstructiveDiagrams`"];
 ValidateMadGraph::usage = "ValidateMadGraph[directory] independently checks an exported SPINAS process against MadGraph at shared random physical momenta, with a separate result for every exported massless-helicity combination. ValidateMadGraph[particles, amplitude, model] checks one fixed-helicity all-ingoing expression. ValidateMadGraph[incoming -> outgoing, amplitudeEntries, model] first exports and builds a private SPINAS project. Massive spins are summed, not compared in potentially different spin bases. MadGraphPoints defaults to 1000 per helicity and MadGraphSeed -> Automatic chooses and reports a fresh replayable seed. Output -> Table returns a readable per-helicity table; Summary gives result counts and Details retains the complete numerical report and failed momenta. Specify MadGraphDirectory and MadGraphModel explicitly. MadGraphAllowedParticles -> All retains the selected theory; a list of positive absolute PDG codes, such as {11,22}, restricts intermediate particle types and includes their antiparticles. No theory or particle restriction is inferred from the HEPCAT model. MadGraphParameterMap and MadGraphParameterRules handle different parameter names or reference inputs. Squared amplitudes are compared, so overall phases do not affect the result. Colorless tree processes are supported; unsupported or unavailable comparisons are never reported as passing. This is numerical validation, not an analytic proof.";
-WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " Generated projects also expose validate_madgraph(options) and a process_validate_madgraph executable for independent fixed-massless-helicity validation. Specify MadGraphDirectory and MadGraphModel to select the independent installation and UFO theory. MadGraphAllowedParticles -> All retains all model particles; {11,22}, for example, restricts to electrons, positrons and photons using absolute PDG codes. MadGraphParameterMap relates differently named HEPCAT and UFO parameters; MadGraphParameterRules supplies explicit UFO external input values. RunMadGraphValidation -> True builds and runs MadGraphPoints -> 1000 shared points per helicity with MadGraphSeed -> Automatic. Fixed incoming or outgoing helicities are supported, and massive external spins are summed. Numerical mismatches remain FAIL, including losses of floating-point precision. Ordinary SPINAS execution does not require MadGraph.";
+WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " Generated projects also expose validate_madgraph(options) and a process_validate_madgraph executable for independent fixed-massless-helicity validation. Specify MadGraphDirectory and MadGraphModel to select the independent installation and UFO theory. MadGraphAllowedParticles -> All retains all model particles; {11,22}, for example, restricts to electrons, positrons and photons using absolute PDG codes. MadGraphParameterMap relates differently named HEPCAT and UFO parameters; MadGraphParameterRules supplies explicit UFO external input values. RunMadGraphValidation -> True builds and runs MadGraphPoints -> 1000 shared points per helicity with MadGraphSeed -> Automatic. Fixed incoming or outgoing helicities are supported, and massive external spins are summed. Numerical mismatches remain FAIL, including losses of floating-point precision. When both reference checks are requested, both run independently even if the first fails. A failed requested check returns Failure with ExportResult retaining both reports and the generated files. Ordinary SPINAS execution does not require MadGraph.";
 Options[WriteSPINASProcess] = Join[Options[WriteSPINASProcess], {
   "MadGraphDirectory" -> None, "MadGraphModel" -> None, "MadGraphAllowedParticles" -> All,
   "MadGraphParameterRules" -> Automatic, "MadGraphParameterMap" -> Automatic,
@@ -206,6 +206,36 @@ spinasMadGraphValidationOutput[report_Association, output_String] := Switch[outp
     Map[Join[<|"Helicities" -> spinasMadGraphHelicityLabel[#["Helicities"]]|>,
       KeyTake[#, {"Status", "Points", "MaximumRelativeError"}]] &, report["Rows"]]],
     MaxItems -> {All, All}]];
+
+(* Do not let one independent reference failure suppress the other comparison.
+   A written project is not evidence that its requested physics checks passed. *)
+spinasRunRequestedValidations[result_Association, directory_String, name_String,
+    calchep_Association, madgraph_Association, options_Association] := Module[
+  {updated = result, report, failures = {}, command, status},
+  If[TrueQ[options["RunCalcHEPValidation"]],
+    report = spinasRunCalcHEPValidation[directory, name, calchep];
+    AssociateTo[updated, "CalcHEPValidation" -> report];
+    status = If[AssociationQ[report], Lookup[report, "Status", "ERROR"],
+      command = If[FailureQ[report], Lookup[report[[2]], "CommandResult", <||>], <||>];
+      FirstCase[StringCases[Lookup[command, "StandardOutput", ""],
+        "Amplitude validation: " ~~ value : ("FAIL" | "ERROR" | "UNAVAILABLE") :> value],
+        _String, "ERROR"]];
+    Print[Dataset[{<|"Reference" -> "CalcHEP", "Status" -> status,
+      "RequestedPoints" -> calchep["Points"]|>}]];
+    If[status =!= "PASS", AppendTo[failures, "CalcHEP"]]];
+  If[TrueQ[options["RunMadGraphValidation"]],
+    report = spinasRunMadGraphValidation[directory, name, madgraph];
+    AssociateTo[updated, "MadGraphValidation" -> report];
+    If[AssociationQ[report], Print[spinasMadGraphValidationOutput[report, "Table"]],
+      Print[Dataset[{<|"Reference" -> "MadGraph", "Status" -> "ERROR"|>}]]];
+    If[!AssociationQ[report] || Lookup[report, "Status", "ERROR"] =!= "PASS",
+      AppendTo[failures, "MadGraph"]]];
+  If[failures =!= {}, Return[Failure["SPINASValidation", <|
+    "MessageTemplate" -> "The requested independent comparison did not pass for `1`. Every requested reference check was attempted; inspect ExportResult for the reports.",
+    "MessageParameters" -> {StringRiffle[failures, ", "]}, "Directory" -> directory,
+    "FailedReferences" -> failures, "ExportResult" -> updated|>]]];
+  updated
+];
 spinasRunMadGraphValidation[directory_String, name_String, config_Association, supplied_Association : <||>] := Module[
   {options = Join[Association[Options[ValidateMadGraph]], supplied], reportFile, command, run, report, seed},
   reportFile = FileNameJoin[{directory, "madgraph-validation-report-" <> CreateUUID[] <> ".json"}];
@@ -234,6 +264,7 @@ spinasRunMadGraphValidation[directory_String, name_String, config_Association, s
   If[StringQ[Lookup[report, "ReferenceBuildJSON", None]],
     With[{reference = Quiet[Check[ImportString[report["ReferenceBuildJSON"], "RawJSON"], $Failed]]},
       If[AssociationQ[reference], report = Join[KeyDrop[report, "ReferenceBuildJSON"], <|"Reference" -> reference|>]]]];
+  Print["MadGraph random seed: ", report["Seed"]];
   Join[report, <|"Directory" -> directory, "ReportFile" -> reportFile,
     "StandardOutput" -> Lookup[run, "StandardOutput", ""], "StandardError" -> Lookup[run, "StandardError", ""]|>]
 ];

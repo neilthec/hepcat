@@ -96,6 +96,9 @@ If[ciSucceeded[ciRestrictionBuilt],
   check["restricted full-SM Bhabha equals QED, unrestricted SM differs, and unknown allowed types are rejected",
     ciSucceeded[ciRestrictionRun] && StringContainsQ[
       Lookup[ciRestrictionRun, "StandardOutput", ""], "CALCHEP_PARTICLE_RESTRICTION_PASS"]];
+  check["CalcHEP canonical external ordering preserves masses, outgoing momenta and beam roles",
+    ciSucceeded[ciRestrictionRun] && StringContainsQ[
+      Lookup[ciRestrictionRun, "StandardOutput", ""], "CALCHEP_EXTERNAL_ORDER_PASS"]];
   If[!ciSucceeded[ciRestrictionRun], Print["CALCHEP RESTRICTION PROBE: ", ciRestrictionRun]],
   Print["CALCHEP RESTRICTION BUILD: ", ciRestrictionBuilt]];
 

@@ -187,7 +187,7 @@ or unresolved final checks. It does not modify or execute the user's notebooks.
 from real undetermined interactions. It checks the generic symbolic external
 chart, momentum conservation, chirality and little-group safety, fixed-spin
 and branch exclusions, proof deadlines and retained scalar contact freedom.
-The routine suite has 77 assertions, including 29 generic null-pivot checks:
+The routine suite has 83 assertions, including 29 generic null-pivot checks:
 valid and invalid axis choices, opposite homogeneous-weight selection,
 conserved external mass shells and all 14 physical internal invariants remaining
 generically off shell. These checks use symbolic masses and no sampled
@@ -201,12 +201,28 @@ plain fixture supplies a zero direction, never a complete amplitude answer.
 Certified-span retries additionally verify exact reconstruction, prerequisite
 certification, preservation of nonzero remainders and shared deadlines. The
 parallel suite checks the same retry through a real warm worker pool.
+Six resource-policy checks verify that proof effort scales with the largest
+direction as well as the family size, remains inside an explicit stage clock,
+and never changes identity certification or retention of unproved directions.
 The slower end-to-end regressions reproduce both formerly failing five-point
 notebook cases, their working counterparts and independent Feynman checks:
 
 ```sh
 HEPCAT_TEST_FULL_HELICITY_CONSTRUCTION=1 python3 tests/checks/run-wolfram-tests.py --suite high-energy-family-tests.wl --timeout 900
 ```
+
+The exact default notebook calls for four-fermion photon emission can also be
+replayed with their original failing seeds. They retain the normal algorithm
+settings and add no cached amplitude or special correction basis:
+
+```sh
+HEPCAT_TEST_NOTEBOOK_FOUR_FERMION=1 python3 tests/checks/run-wolfram-tests.py --suite high-energy-family-tests.wl --timeout 900
+```
+
+This mode runs 87 assertions, including independent Feynman checks and exact
+external-identity certificate checks. An optional existing
+`HEPCAT_NOTEBOOK_VALIDATION_DIRECTORY` receives the newly constructed amplitudes
+and compact reports for separate numerical validation.
 
 The spurious-pole suite includes the balanced six-point expression's 24
 compound factors. Exact conserved-curve polynomial checks verify their
@@ -849,3 +865,9 @@ workspace and skip when a suitable C++ compiler or SPINAS headers are absent.
 They cover timeouts, replayable seeds, phase invariance, parameter updates,
 particle filters and explicit failures. The builder tests cover model matching,
 width prescriptions and safe parameter-card serialization.
+
+`fermion-sewing-grading-tests.wl` verifies spectator-block grading and its
+associativity, preserves cubic sewing phases, and checks an exact nonzero
+photon/fermion double residue for three distinct Dirac flavors against an
+independently generated six-diagram Feynman amplitude. Lower amplitudes are
+derived from cubic model vertices, with no supplied six-point answer.

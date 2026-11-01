@@ -25,13 +25,19 @@ channels double counts overlapping pole information.", "Notes"],
   Cell["Keep the package's sewing convention. CheckAmplitudes converts the \
 stored z convention and includes its required overall sewing sign once; do \
 not add a manual sign to force agreement.", "Notes"],
-  Cell["A channel may contain reference spinors that describe a continuation \
-away from its cut. PrepareAmplitudes may simplify that continuation using \
-only the selected channel shell. CompleteFactorization retains the original \
-channel targets when preparation reports are supplied.", "Notes"],
-  Cell["A FeynmanModel contains off-shell vertices, not the complete on-shell \
-lower amplitudes required here, and is rejected as factorization input.",
-   "Notes"], Cell["Examples", "PrimaryExamplesSection"],
+  Cell["Fermion sewing automatically includes the internal-port contraction \
+sign, exchange signs for identical external fermions and the grading that \
+joins the spectator fermion blocks of the two lower amplitudes. This last \
+sign matters when both lower amplitudes contain multiple fermion lines; cubic \
+sewing is unchanged. No process-specific or cut-specific sign should be \
+supplied by the user.", "Notes"], Cell["A channel may contain reference \
+spinors that describe a continuation away from its cut. PrepareAmplitudes may \
+simplify that continuation using only the selected channel shell. \
+CompleteFactorization retains the original channel targets when preparation \
+reports are supplied.", "Notes"], Cell["A FeynmanModel contains off-shell \
+vertices, not the complete on-shell lower amplitudes required here, and is \
+rejected as factorization input.", "Notes"],
+  Cell["Examples", "PrimaryExamplesSection"],
   Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
      Cell["Evaluate this setup once before the examples. The paths refer to \
 the local HEPCAT checkout; no model parameters are assigned global numerical \

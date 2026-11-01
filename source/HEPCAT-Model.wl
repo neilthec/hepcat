@@ -886,13 +886,30 @@ physicalParticleMass[particle_, particleRows_List] := Module[{masses},
   If[Length[masses] === 1, First[masses], Missing["UnknownParticleMass", particle]]
 ];
 
-(* Keep external exchange parity and the Wick sign from moving the two
-   internal fermion ports adjacent before contracting the model-row words. *)
+(* Lower amplitudes are commuting spinor tensors, with their own fermion
+   reference ordering already absorbed. Sewing a Dirac line also joins the
+   two spectator particle/antiparticle blocks. A lower word with 2r fermion
+   ports has r-1 spectators in each such block after selecting the open line.
+   Moving the right spectator block through the left one is a Koszul shuffle.
+   Its parity is independent of particle flavors and of the cut labels. *)
+factorizationFermionReferenceSign[lowerWords_List] := Module[
+  {spectators, leftBlock, rightBlock},
+  If[Length[lowerWords] =!= 2 || !AllTrue[lowerWords,
+      ListQ[#] && Length[#] >= 2 && EvenQ[Length[#]] &], Return[$Failed]];
+  spectators = (Length[#]/2 - 1) & /@ lowerWords;
+  leftBlock = Range[First[spectators]];
+  rightBlock = First[spectators] + Range[Last[spectators]];
+  Signature[Join[rightBlock, leftBlock]]
+];
+
+(* Keep spectator-reference grading, external exchange parity, and the local
+   Wick sign from moving the two internal ports adjacent as separate factors. *)
 factorizationExternalFermionSign[channel_List, model_List] := Module[
-  {species, words, orders, rows, row, rules, internalPositions, contractionSign},
+  {species, lowerWords, words, orders, rows, row, rules, internalPositions,
+   contractionSign, referenceSign},
   species = DeleteDuplicates[Flatten[Cases[model[[1]],
     item_List /; item[[5]] === 1 :> item[[{2, 3}]]]]];
-  words = Map[Function[tagged,
+  lowerWords = Map[Function[tagged,
     rows = Select[model[[2]],
       Sort[physicalAmplitudeParticles[#]] === Sort[tagged[[All, 1]]] &];
     If[rows === {}, Return[{}]];
@@ -901,12 +918,15 @@ factorizationExternalFermionSign[channel_List, model_List] := Module[
     Select[MapIndexed[{#1, First[#2] /. rules} &, Drop[row, -2]],
       MemberQ[species, First[#]] &]
   ], channel];
-  words = Flatten[words, 1];
+  words = Flatten[lowerWords, 1];
   internalPositions = Flatten[Position[words, {_, _Multiparticle}, {1}]];
   contractionSign = If[Length[internalPositions] === 2,
     (-1)^(internalPositions[[2]] - internalPositions[[1]] - 1), 1];
+  referenceSign = If[Length[internalPositions] === 2,
+    factorizationFermionReferenceSign[lowerWords], 1];
+  If[referenceSign === $Failed, Return[$Failed]];
   orders = Table[Cases[words, {particle, label_Integer} :> label], {particle, species}];
-  contractionSign Times @@ (Signature[Ordering[#]] & /@ orders)
+  referenceSign contractionSign Times @@ (Signature[Ordering[#]] & /@ orders)
 ];
 
 
@@ -6925,7 +6945,7 @@ completionSparseValidation[trial_, unknowns_List, solution_Association,
    results, valid, equations, used, diagnostics, familyPass, sampleRows, rowSigns, status,
    summary, report, feedback, started = AbsoluteTime[], deadline, settings, candidateRules, completedSamples = 0},
   components = completionLinearComponents[trial, unknowns, False];
-  candidateRules = Thread[solution["FreeParameters"] -> 0];
+  candidateRules = Thread[Lookup[solution, "FreeParameters", {}] -> 0];
   jobs = Tuples[{Range[Length[targets]], Range[samples]}];
   deadline = If[seconds === Infinity, Infinity, started + seconds];
   settings = If[AssociationQ[$completionParallelSettings], $completionParallelSettings,
@@ -13246,6 +13266,22 @@ completionHEPruneIdentityFamily[family_, parameters_List, rules_List, model_List
     "ElapsedTime" -> (AbsoluteTime[] - started)|>
 ];
 
+(* Proof effort depends on the size of the affine directions as well as their
+   count. A small family can contain one large identity; dividing a fixed short
+   allowance between chart alternatives can otherwise time out every proof.
+   This allocates time only. Certificates and all acceptance tests are unchanged. *)
+completionHEIdentityProofBudget[family_, parameters_List, directions_, seconds_] := Module[
+  {count = Length[parameters], largest, baseline, work, allocated},
+  largest = If[ListQ[directions] && Length[directions] === count,
+    Max[Prepend[LeafCount /@ directions, 0]], LeafCount[family]];
+  baseline = Max[45, 10 count];
+  work = 15 Ceiling[largest/2500];
+  allocated = If[count === 0, 0, Min[Max[baseline, work], 3 seconds/4]];
+  <|"DirectionCount" -> count, "LargestDirectionLeafCount" -> largest,
+    "BaselineSeconds" -> baseline, "ComplexitySeconds" -> work,
+    "StageTimeConstraint" -> seconds, "AllocatedSeconds" -> allocated|>
+];
+
 completionHighEnergyWork[input_, channels_List, model_List, settings_Association,
     normalized_Association, retain_] := Module[
   {original = normalized["Expression"], metadata, before, basis, inheritedBasis,
@@ -13255,7 +13291,7 @@ completionHighEnergyWork[input_, channels_List, model_List, settings_Association
    validation, validations, familyValidations = {}, familyValid = True,
    fitSamples = settings["Samples"], ruleSets, status, diagnostics = {}, callback = settings["ProgressFunction"],
    enabled = settings["ProgressReporting"], report, exchangePlan, familyReduction,
-   retainedProofs, proofReasons, establishedNonzero, proofSummary},
+   retainedProofs, proofReasons, establishedNonzero, proofSummary, familyProofBudget},
   report = <|"Stage" -> "HighEnergy", "Status" -> "UNRESOLVED",
     "Amplitude" -> original, "OriginalExpression" -> Lookup[normalized, "OriginalExpression", original],
     "ExternalMassRules" -> normalized["ExternalMassRules"],
@@ -13278,9 +13314,11 @@ completionHighEnergyWork[input_, channels_List, model_List, settings_Association
   If[inheritedParameters =!= {},
     completionProgress[callback, enabled, <|"Stage" -> "HighEnergy",
       "Phase" -> "Proving identity-zero family directions", "Terms" -> Length[inheritedParameters]|>];
+    familyProofBudget = completionHEIdentityProofBudget[trial, inheritedParameters,
+      inheritedBasis, settings["TimeConstraint"]];
+    report = Join[report, <|"FamilyIdentityProofBudget" -> familyProofBudget|>]; retain[report];
     familyReduction = completionHEPruneIdentityFamily[trial, inheritedParameters,
-      normalized["ExternalMassRules"], model, Min[Max[45, 10 Length[inheritedParameters]],
-        3 settings["TimeConstraint"]/4], inheritedBasis,
+      normalized["ExternalMassRules"], model, familyProofBudget["AllocatedSeconds"], inheritedBasis,
       Function[event, completionProgress[callback, enabled, event]]];
     If[!TrueQ[familyReduction["AffineFamily"]], Return[Join[report,
       <|"FamilyIdentityReduction" -> familyReduction,

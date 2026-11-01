@@ -110,10 +110,13 @@ class RunnerTests(unittest.TestCase):
                 self.assertEqual(self.records(result), [])
 
     def test_nonzero_exit_stops_later_suites_and_preserves_output(self):
-        result = self.invoke(env={"HEPCAT_FAKE_EXIT": "7"})
+        result = self.invoke("--suite", "legacy-package-tests.wl",
+                             "--suite", "legacy-algebra-tests.wl",
+                             env={"HEPCAT_FAKE_EXIT": "7"})
         self.assertEqual(result.returncode, 7)
         self.assertEqual(len(self.records(result)), 1)
         self.assertIn("legacy-package-tests.wl", result.stdout)
+        self.assertNotIn("Running legacy-algebra-tests.wl", result.stdout)
 
     def test_zero_exit_without_completion_marker_fails(self):
         result = self.invoke(env={"HEPCAT_FAKE_NO_MARKER": "1"})

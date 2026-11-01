@@ -36,12 +36,19 @@ combined amplitude, so it may be simplified again with PrepareAmplitudes.",
    "Notes"], Cell["\"Output\" -> \"Details\" retains the candidate, \
 equations, fitted family and validation. A timeout, unsupported direction \
 space or unresolved free coefficient is not silently assigned an arbitrary \
-value.", "Notes"], Cell["Use model-local \"ParameterRules\" only for \
-numerical sampling. An explicit \"RandomSeed\" replays the run; Automatic \
-records a newly chosen time-based seed in details.", "Notes"],
-  Cell["This stage cannot establish an unknown interaction merely because it \
-would improve high-energy behavior. The model and supplied direction space \
-determine what is being solved.", "Notes"], Cell["Options", "NotesSection"],
+value.", "Notes"], Cell["Exact identity proofs receive an allowance based on \
+both the number and the size of retained affine directions. A small family \
+containing a large expression can therefore receive more proof time, still \
+within the stage's TimeConstraint. Details records FamilyIdentityProofBudget, \
+including DirectionCount, LargestDirectionLeafCount and AllocatedSeconds. \
+This changes resource allocation only: an unproved direction is retained, and \
+genuine undetermined interactions are not discarded.", "Notes"],
+  Cell["Use model-local \"ParameterRules\" only for numerical sampling. An \
+explicit \"RandomSeed\" replays the run; Automatic records a newly chosen \
+time-based seed in details.", "Notes"], Cell["This stage cannot establish an \
+unknown interaction merely because it would improve high-energy behavior. The \
+model and supplied direction space determine what is being solved.",
+   "Notes"], Cell["Options", "NotesSection"],
   Cell[BoxData[GridBox[{{Cell["Option", "TableHeader"],
        Cell["Default", "TableHeader"], Cell["Meaning", "TableHeader"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"CorrectionBasis\""}]],
