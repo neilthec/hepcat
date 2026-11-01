@@ -19,10 +19,11 @@ massless helicity choices for the same physical process in one export. Spin \
 sums square each fixed-spin amplitude before summing and apply the declared \
 averages and identical-particle factors.", "GuideAbstract"],
   Cell["Generated random phase-space tests use a time-based default seed, \
-with an explicit seed for reproducibility. Optional CalcHEP comparison \
-validates the same phase-space points independently. The direct n_calchep \
-integration backend instead uses the exported HEPCAT amplitude as its matrix \
-element.", "GuideAbstract"], Cell["Readable Analytic Output",
+with an explicit seed for reproducibility. Optional CalcHEP and MadGraph \
+comparisons validate the same points independently. MadGraph can report each \
+massless-helicity combination separately. The direct n_calchep integration \
+backend instead uses the exported HEPCAT amplitude as its matrix element.",
+   "GuideAbstract"], Cell["Readable Analytic Output",
    "GuideFunctionsSubsection"],
   Cell[TextData[{ButtonBox["PlainText", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/PlainText"], ": ", "Writes readable \
@@ -54,8 +55,13 @@ s legacy compact bracket notation into typed HEPCAT spinor expressions."}],
    "GuideFunctionsSubsection"],
   Cell[TextData[{ButtonBox["WriteSPINASProcess", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/WriteSPINASProcess"], ": ", "Writes a \
-complete, readable C++ process using SPINAS, with optional CalcHEP validation \
-and integration."}], "GuideText"], Cell["Lower-Level SPINAS Formatting",
+complete, readable C++ process using SPINAS, with optional CalcHEP and \
+helicity-resolved MadGraph validation."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ValidateMadGraph", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ValidateMadGraph"], ": ", "Compares \
+exported HEPCAT/SPINAS amplitudes with independent MadGraph matrix elements \
+on common random phase-space points, separately for each massless-helicity \
+combination."}], "GuideText"], Cell["Lower-Level SPINAS Formatting",
    "GuideFunctionsSubsection"],
   Cell[TextData[{ButtonBox["SPINAS", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/SPINAS"], ": ", "Formats a supported \

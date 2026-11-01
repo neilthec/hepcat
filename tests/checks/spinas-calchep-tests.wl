@@ -24,9 +24,10 @@ scFamily = {#, scLookup[#]} & /@ scProcesses;
 scOptions = Join[Association[Options[WriteSPINASProcess]],
   <|"ParameterRules" -> scRules, "CalcHEPModel" -> None,
     "CalcHEPDirectory" -> scPath["not installed"]|>];
-check["CalcHEP validation has opt-in execution and an automatic time-based default seed",
-  ("CalcHEPDirectory" /. Options[WriteSPINASProcess]) === Automatic &&
-    ("CalcHEPModel" /. Options[WriteSPINASProcess]) === Automatic &&
+check["CalcHEP requires explicit installation and model selection, with an automatic time-based seed",
+  ("CalcHEPDirectory" /. Options[WriteSPINASProcess]) === None &&
+    ("CalcHEPModel" /. Options[WriteSPINASProcess]) === None &&
+    ("CalcHEPAllowedParticles" /. Options[WriteSPINASProcess]) === All &&
     ("RunCalcHEPValidation" /. Options[WriteSPINASProcess]) === False &&
     ("CalcHEPPoints" /. Options[WriteSPINASProcess]) === 1000 &&
     ("CalcHEPSeed" /. Options[WriteSPINASProcess]) === Automatic];
@@ -38,6 +39,30 @@ check["an explicitly disabled CalcHEP counterpart is unavailable rather than a p
     StringQ[Lookup[scDisabled, "Reason", None]] && StringLength[scDisabled["Reason"]] > 0];
 check["opposite photon helicities remain one self-conjugate physical species",
   scDisabled["PhysicalPDGs"] === {11, -11, 22, 22}];
+scExplicitOptions = Join[scOptions, <|"CalcHEPModel" -> {FileNameJoin[{root, "model_feynman"}], 2},
+  "CalcHEPAllowedParticles" -> {22, 11, 22}|>];
+scExplicit = ConstructiveDiagrams`Private`spinasCalcHEPConfiguration[scIR, scModel, scExplicitOptions];
+check["explicit internal particle restrictions are normalized and retained in metadata",
+  scExplicit["Supported"] && scExplicit["AllowedParticlePDGs"] === {11, 22} &&
+    scExplicit["ParticleRestriction"] === "AllowedPDGs" && scExplicit["ModelNumber"] === 2];
+check["the default particle choice preserves the complete explicitly selected theory",
+  scDisabled["AllowedParticlePDGs"] === {} && scDisabled["ParticleRestriction"] === "All"];
+scExcluded = ConstructiveDiagrams`Private`spinasCalcHEPConfiguration[scIR, scModel,
+  Join[scExplicitOptions, <|"CalcHEPAllowedParticles" -> {22}|>]];
+check["a restriction that excludes an external particle cannot run as a valid reference",
+  scExcluded["Status"] === "UNAVAILABLE" && StringContainsQ[scExcluded["Reason"], "excludes an external"]];
+check["invalid allowed particle lists are rejected before project export",
+  AllTrue[{{}, {0}, {-11, 22}, {11.}, {True}, {2147483648}},
+    !ConstructiveDiagrams`Private`spinasCalcHEPOptionsQ[
+      Join[scOptions, <|"CalcHEPAllowedParticles" -> #|>]] &]];
+check["explicitly disabled CalcHEP directories never trigger discovery",
+  ConstructiveDiagrams`Private`spinasCalcHEPRoot[None] === "" &&
+    ConstructiveDiagrams`Private`spinasCalcHEPNumericalRoot[None] === ""];
+scSelectedSource = ConstructiveDiagrams`Private`spinasCalcHEPSource["calchep_selected", scIR, scExplicit];
+check["the generated runtime receives the explicit restriction and reports excluded native names",
+  StringContainsQ[scSelectedSource, "const std::vector<int> allowed_particle_pdgs = {11, 22};"] &&
+    StringContainsQ[scSelectedSource, "false, allowed_particle_pdgs)"] &&
+    StringContainsQ[scSelectedSource, "excluded_particle_names()"]];
 scReordered = ConstructiveDiagrams`Private`spinasCalcHEPConfiguration[
   Join[scIR, <|"IncomingLegs" -> {2, 1}|>], scModel, scOptions];
 check["the explicit incoming order determines both CalcHEP leg order and physical particle identities",
@@ -129,8 +154,8 @@ scOtherModel[[1]] = Append[scOtherModel[[1]],
   {"additional scalar", "q", "q", 990001, 0, 0, 0, 1, "", "q", "q"}];
 scOther = ConstructiveDiagrams`Private`spinasCalcHEPConfiguration[
   scIR, scOtherModel, Join[scOptions, <|"CalcHEPModel" -> Automatic|>]];
-check["an unfamiliar theory cannot silently select pure QED from its external particle names alone",
-  AssociationQ[scOther] && scOther["Status"] === "UNAVAILABLE"];
+check["no theory silently selects a reference model from its external particle names",
+  AssociationQ[scOther] && scOther["Status"] === "UNAVAILABLE" && scOther["ModelNumber"] === 0];
 check["configuration and export never assign model globals or modify the supplied model",
   scModel === scModelBefore && {OwnValues[Global`Me], OwnValues[Global`EE]} === scGlobalsBefore];
 

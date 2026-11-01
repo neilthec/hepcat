@@ -457,10 +457,29 @@
       {
         "title": "CalcHEP Validation and Integration",
         "paragraphs": [
-          "Optional CalcHEP validation generates an independent symbolic CalcHEP process and compares squared amplitudes on shared random kinematics. This checks more than the internal consistency of exported SPINAS code.",
+          "Optional CalcHEP validation generates an independent symbolic reference process and compares squared amplitudes on shared random kinematics. Select CalcHEPDirectory and CalcHEPModel explicitly; neither is guessed. CalcHEPAllowedParticles -> All uses the full selected model, while a visible PDG list selects a smaller reference sector.",
           "The optional n_calchep backend has a different purpose: it connects CalcHEP's numerical integration machinery to the HEPCAT SPINAS matrix element without CalcHEP symbolically regenerating that matrix element. Generated parameter and mass interfaces keep the runtime values consistent."
         ],
         "examples": []
+      },
+      {
+        "title": "Validate Each Photon Helicity with MadGraph",
+        "paragraphs": [
+          "ValidateMadGraph provides an independent numerical check using MadGraph's own generated matrix element. It fixes each massless helicity combination, sums massive-particle spins and evaluates both implementations on exactly the same physical momenta. Masses, couplings, initial-state averages and identical-particle factors must agree.",
+          "Select the MadGraph installation, UFO model and particle content explicitly. The example uses sm-full for a massive electron and then MadGraphAllowedParticles -> {11,22} to choose only the electron/positron/photon sector. Without that filter the full Standard Model also contains weak exchange in four-fermion processes. Parameter overrides and maps must match the chosen reference theory; no fitted ratio hides a mismatch."
+        ],
+        "examples": [
+          {
+            "description": "Validate the already exported process.",
+            "input": "madGraphDirectory = FileNameJoin[{ParentDirectory[hepcatDirectory], \"MadGraph\"}];\nWriteSPINASProcess[exportDirectory, {\"e\", \"E\"} -> {\"A\", \"A\"}, entries, knownModel, \"ProcessName\" -> \"eeAA\", \"Overwrite\" -> True, \"MadGraphDirectory\" -> madGraphDirectory, \"MadGraphModel\" -> \"sm-full\", \"MadGraphAllowedParticles\" -> {11, 22}];\nValidateMadGraph[exportDirectory]",
+            "evaluate": false
+          },
+          {
+            "description": "Keep a replayable diagnostic report.",
+            "input": "ValidateMadGraph[exportDirectory, \"MadGraphSeed\" -> 12345, \"Output\" -> \"Details\"]",
+            "evaluate": false
+          }
+        ]
       }
     ],
     "related": [
@@ -469,7 +488,8 @@
       "AppendModelAmplitudes",
       "ModelParameterRules",
       "SPINAS",
-      "PlainText"
+      "PlainText",
+      "ValidateMadGraph"
     ],
     "guides": [
       "FormattingAndExport",

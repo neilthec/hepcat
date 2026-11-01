@@ -799,3 +799,53 @@ and power cases, appropriate external mass assumptions, a relabeling, and an
 idempotence or bounded-termination case. Independent exact matrix checks are
 especially valuable for signs. Preserve off-shell propagators and keep internal
 numerator shell assumptions explicit and diagram-local.
+
+## Independent MadGraph Validation
+
+`spinas-madgraph-tests.wl` covers the public Mathematica entry point and exported
+project surface without requiring MadGraph. It checks unconfigured installation
+and model defaults, explicit theory and particle-sector selection, per-helicity
+support, unavailable-backend metadata, source-only export, replay-seed and
+point-count guards, and preservation of the input model. Missing
+benchmark software cannot become a passing numerical check.
+
+Full MadGraph integration additionally requires the local generator, GNU
+Fortran, a C++ compiler and the installed SPINAS library. The validator generates
+an independent unpolarized reference process and selects fixed massless helicity
+vectors from that process, summing massive spins. This avoids comparing different
+massive-spin bases and avoids changing identical-particle normalization by
+creating separately polarized subprocesses. The numerical report records the
+actual seed and first failing common momenta for replay.
+
+Select the full independent numerical test explicitly:
+
+```sh
+python3 tests/checks/run-wolfram-tests.py \
+  --suite spinas-madgraph-integration-tests.wl --timeout 900
+```
+
+It matches an adjustable massive-electron QED model, checks 1000 common points
+for each of the four photon-helicity combinations, replays the seed, rejects a
+deliberately doubled single-helicity amplitude, retains the failing momenta,
+accepts an overall imaginary amplitude phase, and checks a fixed outgoing
+photon helicity. It also checks four-fermion QED scattering against an explicitly
+selected photon/electron reference sector, guarding against accidentally
+including Z or Higgs exchange from a full SM model. The installation, model and
+particle restriction appear in the test calls, including the direct Mathematica
+shortcut. The test fixture selects HEPCAT_MADGRAPH_DIRECTORY or a sibling
+MadGraph directory explicitly; the package does not infer that location. Failed
+test projects are retained at the printed temporary path for diagnosis;
+successful projects are removed.
+
+The builder and C++ protocol also have lightweight tests that do not require a
+MadGraph installation:
+
+```sh
+python3 -m unittest discover -s tests/checks -p 'test_madgraph_*.py' -v
+```
+
+The runtime tests compile a small fake reference backend in a temporary
+workspace and skip when a suitable C++ compiler or SPINAS headers are absent.
+They cover timeouts, replayable seeds, phase invariance, parameter updates,
+particle filters and explicit failures. The builder tests cover model matching,
+width prescriptions and safe parameter-card serialization.

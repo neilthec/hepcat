@@ -580,7 +580,7 @@
   },
   {
     "name": "WriteSPINASProcess",
-    "summary": "Writes a complete, readable C++ process using SPINAS, with optional CalcHEP validation and integration.",
+    "summary": "Writes a complete, readable C++ process using SPINAS, with optional CalcHEP and helicity-resolved MadGraph validation.",
     "syntaxes": [
       {
         "input": "WriteSPINASProcess[directory, particles, amplitude, model]",
@@ -602,11 +602,16 @@
       "Generated amp returns the complex amplitude for one external spin/helicity assignment. spin_sum adds |amp| squared over the requested states. Family amp2 also averages unfixed incoming states and applies the final identical-species factor once, including identical fermions.",
       "The older fixed-helicity overload preserves its existing normalization convention. Use the physical-process or family form for a complete unpolarized process.",
       "The default export writes source only. \"Build\" -> True compiles and links the existing SPINAS library; \"RunExamples\" -> True also runs three conserved physical example points. No external library is installed or rebuilt.",
-      "\"SPINASDirectory\", \"CalcHEPDirectory\" and \"CMakeExecutable\" override automatic tool discovery. The SPINAS precision must match the library ABI. \"Overwrite\" -> True explicitly permits replacing an existing exported project.",
-      "The independent CalcHEP validator generates a counterpart process and compares common random points. \"CalcHEPModel\" selects an equivalent model; Automatic recognizes the bundled QED models. \"RunCalcHEPValidation\" -> True builds and runs it. The actual time-based seed is reported, and an explicit \"CalcHEPSeed\" or --seed value replays it.",
+      "\"SPINASDirectory\" and \"CMakeExecutable\" support automatic build-tool discovery. Independent validation instead requires an explicit reference-generator directory and model selection. The SPINAS precision must match the library ABI. \"Overwrite\" -> True explicitly permits replacing an existing exported project.",
+      "The independent CalcHEP validator generates a reference process and compares common random points. Specify \"CalcHEPDirectory\" and \"CalcHEPModel\" -> {directory, modelNumber}; both default to None. \"CalcHEPAllowedParticles\" -> All retains the full chosen theory, while an explicit list of positive absolute PDGs restricts the reference particle sector. \"RunCalcHEPValidation\" -> True builds and runs it. The actual time-based seed is reported, and an explicit \"CalcHEPSeed\" or --seed value replays it.",
       "A separate n_calchep target uses the SPINAS matrix element with CalcHEP's numerical phase-space integration, cuts, histograms and VEGAS. This bypasses symbolic CalcHEP generation and does not require an equivalent CalcHEPModel.",
       "Numerical model constraints, masses and widths are connected to the numerical menus. Explicit amplitude width conventions remain authoritative. Unsupported automatic-width or gauge-restoring operations are refused.",
       "Current complete numerical exports are colorless. Unresolved Xi spinors, hats, unsupported symbolic functions or color tensors must be resolved before exporting.",
+      "The independent MadGraph validator generates one unpolarized reference process and compares each exported massless-helicity combination separately. \"RunMadGraphValidation\" -> True builds and runs the check; \"MadGraphPoints\" -> 1000 and \"MadGraphSeed\" -> Automatic are the normal defaults. Massive external spins are summed because the two libraries may use different spin bases.",
+      "Specify \"MadGraphDirectory\" and \"MadGraphModel\" explicitly to select the independent reference generator and UFO theory; both default to None. \"MadGraphAllowedParticles\" -> All retains the full chosen model, or a list such as {11, 22} explicitly selects the electron/positron/photon sector. \"MadGraphParameterRules\" supplies external UFO input values when numerical matching needs an override. No theory or particle restriction is inferred from the HEPCAT process.",
+      "Generated projects contain validate_madgraph(options) and a process_validate_madgraph executable. ValidateMadGraph provides the corresponding Mathematica entry point, including a simple per-helicity table and optional detailed numerical diagnostics. MadGraph is not required for ordinary SPINAS evaluation.",
+      "\"MadGraphParameterMap\" maps HEPCAT parameter names to differently named UFO parameters. Used couplings and masses are checked rather than assumed from the external particle names.",
+      "MadGraph propagator widths are matched to the amplitude prescription. For bare HEPCAT PropDen denominators, unmatched adjustable reference widths are zeroed; explicit reference width rules and matched width parameters are preserved. Detailed validation reports record this choice.",
       "The return value is the output directory. \"ReturnDetails\" -> True adds generated file paths, build information, normalization metadata and optional validation results."
     ],
     "examples": [
@@ -617,12 +622,22 @@
       },
       {
         "description": "Export a complete four-point photon-helicity family to a temporary directory.",
-        "input": "knownModel = ReadModel[modelDirectory, 3];\nhelicityProcesses = {{\"e\", \"E\", \"A.+\", \"A.+\"}, {\"e\", \"E\", \"A.+\", \"A.-\"}, {\"e\", \"E\", \"A.-\", \"A.-\"}};\nentries = {#, LookupAmplitude[Thread[{#, Range[4]}], knownModel, False, {i, j, k, l}]} & /@ helicityProcesses;\nexportDirectory = CreateDirectory[];\nWriteSPINASProcess[exportDirectory, {\"e\", \"E\"} -> {\"A\", \"A\"}, entries, knownModel, \"ProcessName\" -> \"eeAA\"]",
+        "input": "knownModel = ReadModel[modelDirectory, 3];\nhelicityProcesses = {{\"e\", \"E\", \"A.+\", \"A.+\"}, {\"e\", \"E\", \"A.+\", \"A.-\"}, {\"e\", \"E\", \"A.-\", \"A.+\"}, {\"e\", \"E\", \"A.-\", \"A.-\"}};\nentries = {#, LookupAmplitude[Thread[{#, Range[4]}], knownModel, False, {i, j, k, l}]} & /@ helicityProcesses;\nexportDirectory = CreateDirectory[];\nWriteSPINASProcess[exportDirectory, {\"e\", \"E\"} -> {\"A\", \"A\"}, entries, knownModel, \"ProcessName\" -> \"eeAA\"]",
         "evaluate": false
       },
       {
         "description": "Optionally build the exported project and run its example points.",
         "input": "WriteSPINASProcess[exportDirectory, {\"e\", \"E\"} -> {\"A\", \"A\"}, entries, knownModel, \"ProcessName\" -> \"eeAA\", \"Overwrite\" -> True, \"Build\" -> True, \"RunExamples\" -> True]",
+        "evaluate": false
+      },
+      {
+        "description": "Generate the independent per-helicity MadGraph report while exporting. Set the directory and model to your chosen installation and theory; this example explicitly selects the electron/positron/photon sector of sm-full.",
+        "input": "madGraphDirectory = FileNameJoin[{ParentDirectory[hepcatDirectory], \"MadGraph\"}];\nWriteSPINASProcess[exportDirectory, {\"e\", \"E\"} -> {\"A\", \"A\"}, entries, knownModel, \"ProcessName\" -> \"eeAA\", \"Overwrite\" -> True, \"MadGraphDirectory\" -> madGraphDirectory, \"MadGraphModel\" -> \"sm-full\", \"MadGraphAllowedParticles\" -> {11, 22}, \"RunMadGraphValidation\" -> True]",
+        "evaluate": false
+      },
+      {
+        "description": "Select the CalcHEP installation, model and QED sector explicitly for an independent unpolarized comparison. Replace the installation path, model directory and model number with your chosen reference.",
+        "input": "calcHEPDirectory = \"/path/to/CalcHEP\";\nWriteSPINASProcess[exportDirectory, {\"e\", \"E\"} -> {\"A\", \"A\"}, entries, knownModel, \"ProcessName\" -> \"eeAA\", \"Overwrite\" -> True, \"CalcHEPDirectory\" -> calcHEPDirectory, \"CalcHEPModel\" -> {feynmanModelDirectory, 2}, \"CalcHEPAllowedParticles\" -> {11, 22}, \"RunCalcHEPValidation\" -> True]",
         "evaluate": false
       }
     ],
@@ -631,8 +646,89 @@
       "PlainText",
       "ReverseMomentum",
       "CheckAmplitudes",
-      "ModelParameterRules"
+      "ModelParameterRules",
+      "ValidateMadGraph"
     ],
     "guide": "FormattingAndExport"
+  },
+  {
+    "name": "ValidateMadGraph",
+    "summary": "Compares exported HEPCAT/SPINAS amplitudes with independent MadGraph matrix elements on common random phase-space points, separately for each massless-helicity combination.",
+    "syntaxes": [
+      {
+        "input": "ValidateMadGraph[directory]",
+        "description": "builds and runs the MadGraph validator of a SPINAS project exported by the current WriteSPINASProcess."
+      },
+      {
+        "input": "ValidateMadGraph[incoming -> outgoing, entries, model]",
+        "description": "exports and validates the supplied all-incoming amplitude entries for the declared physical process."
+      },
+      {
+        "input": "ValidateMadGraph[particles, amplitude, model]",
+        "description": "validates one all-incoming amplitude at its specified massless helicities, with IncomingLegs selecting the physical incoming pair."
+      },
+      {
+        "input": "ValidateMadGraph[input, ..., \"Output\" -> \"Details\"]",
+        "description": "returns the full report, including per-helicity failures and the actual random seed."
+      }
+    ],
+    "details": [
+      "The default result is a compact table with one row for each exported massless-helicity combination. \"Output\" -> \"Summary\" gives status counts; \"Output\" -> \"Details\" retains the full diagnostic association.",
+      "The benchmark is calculated from MadGraph's own generated amplitudes, independently of the supplied HEPCAT expression. Both evaluations receive the same physical momenta and matched masses and couplings. This tests the expression and numerical export together.",
+      "Amplitude entries retain HEPCAT's all-incoming convention. Declare incoming -> outgoing as in WriteSPINASProcess; the exporter crosses outgoing momenta and angle spinors once. Do not cross the formulas manually before passing them.",
+      "The particles, amplitude, model overload mirrors the original fixed-helicity WriteSPINASProcess form and retains its normalization convention. Use the grouped physical-process form when validating a complete helicity family.",
+      "The reference process is generated without restricting its external helicities. The validator selects individual helicity vectors from that process, fixes the requested massless helicities and sums the massive-particle spin states. It therefore avoids assuming that the MadGraph and SPINAS massive spin bases are identical.",
+      "The default table displays massless helicities as leg:sign labels, such as 3:-, 4:+. A process with no massless helicities is labeled accordingly. Details retains the original exported leg-order vectors with doubled helicities: photons have entries +2 or -2, and zero entries do not select a massless helicity on that leg. Massive spin states are summed.",
+      "The comparison uses squared amplitudes. Complex amplitudes themselves may differ by external-state phase conventions. Initial spin averages and final identical-particle factors are applied consistently once, including cases where an incoming or outgoing massless helicity is fixed. Multiplying either amplitude by an overall phase, including -1 or I, is not a mismatch.",
+      "\"MadGraphPoints\" -> 1000 checks 1000 common physical points for each massless-helicity combination. \"MadGraphSeed\" -> Automatic chooses a time-based seed at runtime and records it. An explicit unsigned 64-bit integer, including zero, permits replay.",
+      "\"RelativeTolerance\" -> 10^-7 and \"AbsoluteTolerance\" -> 0 are the default comparisons. An absolute floor is not used to hide a wrong small amplitude. Nonfinite values, incomplete checks and evaluation errors cannot be reported as PASS. A failed report retains the first failing point and its momenta.",
+      "\"MinimumEnergy\" and \"MaximumEnergy\" bound the sampled center-of-mass energy; Automatic chooses values above the process thresholds. These are validation samples, not a phase-space integral or an analytic proof.",
+      "Choose \"MadGraphDirectory\" and \"MadGraphModel\" explicitly; neither an installation nor a theory is selected by default. The model is a UFO name or directory. For example, \"sm-full\" includes massive electrons and all Standard Model interactions. \"MadGraphAllowedParticles\" -> {11, 22} explicitly restricts that reference to the electron, positron and photon sector, excluding Z and Higgs exchange in pure-QED four-fermion tests. All, the default filter, retains the complete selected theory. Automatic model selection does not infer a theory.",
+      "Particle filters use positive absolute PDG codes and include the corresponding antiparticles. The list must contain every external particle type. A filter that omits an external state or names particles unavailable in the selected model cannot produce a passing comparison.",
+      "An explicitly supplied Automatic generator directory may consult the corresponding environment variables. It does not scan hard-coded installation directories. Passing the installation path directly makes the reference setup visible in the calculation.",
+      "Masses and used model parameters are matched to the supplied model. \"MadGraphParameterRules\" -> {\"name\" -> value, ...} overrides named external UFO inputs when needed. For a custom theory, ensure that its independent inputs and derived couplings agree with the HEPCAT model; ambiguous or inconsistent matching produces a diagnostic instead of a false pass.",
+      "\"MadGraphParameterMap\" -> {\"HEPCATName\" -> \"UFOName\", ...} identifies differently named model parameters. A mapping may target an external input or a derived UFO parameter whose value is checked. It does not replace the independent numeric inputs supplied by MadGraphParameterRules.",
+      "Propagator widths must use the same prescription on both sides. Bare HEPCAT PropDen denominators have no decay width, so unmatched, independently adjustable MadGraph decay-width inputs are set to zero. Explicit MadGraphParameterRules and width parameters used by the HEPCAT amplitude retain their supplied values. The detailed Reference report records the width policy and the zeroed or preserved inputs; an unsupported dependent-width mapping is reported before a comparison can pass.",
+      "\"TimeConstraint\" -> 600 bounds MadGraph reference preparation. It is not a deadline for the complete export, CMake build and numerical sampling operation.",
+      "The current numerical validator supports colorless tree-level processes with two incoming particles, at least two outgoing particles and external spins through one. It requires MadGraph, a Fortran compiler, SPINAS and the normal C++ build tools. Missing installations or unsupported inputs are reported explicitly; ordinary source-only SPINAS exports remain usable.",
+      "Validation can expose numerical conditioning as well as incorrect formulas. Expressions involving nearly cancelling terms or inverse small masses may lose precision at high energy even when an equivalent compact form is stable. Inspect detailed failures before changing tolerances.",
+      "The directory overload expects a project containing the MadGraph support emitted by the current WriteSPINASProcess. Regenerate an older project with that exporter before using this overload.",
+      "An exported project retains its process, model parameters, reference configuration and fixed-helicity selection. The directory overload changes sampling controls such as points, seed, tolerances, energy bounds and the reference preparation budget. To change a stored export setting, regenerate the project or use the amplitude-and-model overload; those overrides are rejected rather than silently ignored."
+    ],
+    "examples": [
+      {
+        "description": "Inspect the validation options without running external software.",
+        "input": "Options[ValidateMadGraph]",
+        "evaluate": true
+      },
+      {
+        "description": "Choose a MadGraph installation and explicitly select its QED sector, then validate the complete photon-helicity family. Replace this example sibling directory and model selection with your chosen installation and theory.",
+        "input": "madGraphDirectory = FileNameJoin[{ParentDirectory[hepcatDirectory], \"MadGraph\"}];\nknownModel = ReadModel[modelDirectory, 3];\nhelicityProcesses = {{\"e\", \"E\", \"A.+\", \"A.+\"}, {\"e\", \"E\", \"A.+\", \"A.-\"}, {\"e\", \"E\", \"A.-\", \"A.+\"}, {\"e\", \"E\", \"A.-\", \"A.-\"}};\nentries = {#, LookupAmplitude[Thread[{#, Range[4]}], knownModel, False, {i1, i2, i3, i4}]} & /@ helicityProcesses;\nValidateMadGraph[{\"e\", \"E\"} -> {\"A\", \"A\"}, entries, knownModel, \"MadGraphDirectory\" -> madGraphDirectory, \"MadGraphModel\" -> \"sm-full\", \"MadGraphAllowedParticles\" -> {11, 22}]",
+        "evaluate": false
+      },
+      {
+        "description": "Replay a run and retain its full diagnostics.",
+        "input": "ValidateMadGraph[{\"e\", \"E\"} -> {\"A\", \"A\"}, entries, knownModel, \"MadGraphDirectory\" -> madGraphDirectory, \"MadGraphModel\" -> \"sm-full\", \"MadGraphAllowedParticles\" -> {11, 22}, \"MadGraphSeed\" -> 12345, \"Output\" -> \"Details\"]",
+        "evaluate": false
+      },
+      {
+        "description": "Validate a project already written by the current exporter.",
+        "input": "exportDirectory = CreateDirectory[];\nWriteSPINASProcess[exportDirectory, {\"e\", \"E\"} -> {\"A\", \"A\"}, entries, knownModel, \"MadGraphDirectory\" -> madGraphDirectory, \"MadGraphModel\" -> \"sm-full\", \"MadGraphAllowedParticles\" -> {11, 22}];\nValidateMadGraph[exportDirectory]",
+        "evaluate": false
+      },
+      {
+        "description": "Validate one amplitude with both photon helicities fixed.",
+        "input": "fixedProcess = {\"e\", \"E\", \"A.+\", \"A.+\"};\nfixedAmplitude = LookupAmplitude[Thread[{fixedProcess, Range[4]}], knownModel, False, {i1, i2, i3, i4}];\nValidateMadGraph[fixedProcess, fixedAmplitude, knownModel, \"MadGraphDirectory\" -> madGraphDirectory, \"MadGraphModel\" -> \"sm-full\", \"MadGraphAllowedParticles\" -> {11, 22}]",
+        "evaluate": false
+      }
+    ],
+    "related": [
+      "WriteSPINASProcess",
+      "CheckAmplitudes",
+      "ReadModel",
+      "ModelParameterRules",
+      "LookupAmplitude"
+    ],
+    "guide": "AmplitudeValidation"
   }
 ]

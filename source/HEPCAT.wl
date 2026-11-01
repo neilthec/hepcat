@@ -6,7 +6,7 @@
 
 Module[{sourceDirectory = Global`$HEPCATpath, sourceFiles, missingFiles},
 sourceFiles = If[StringQ[sourceDirectory],
-  FileNameJoin[{sourceDirectory, #}] & /@ {"HEPCAT-Base.wl", "HEPCAT-Parameters.wl", "HEPCAT-Model.wl", "HEPCAT-Feynman.wl", "HEPCAT-SPINAS.wl"}, {}];
+  FileNameJoin[{sourceDirectory, #}] & /@ {"HEPCAT-Base.wl", "HEPCAT-Parameters.wl", "HEPCAT-Model.wl", "HEPCAT-Feynman.wl", "HEPCAT-SPINAS.wl", "HEPCAT-MadGraph.wl"}, {}];
 missingFiles = Select[sourceFiles, !FileExistsQ[#] || DirectoryQ[#] &];
 If[!StringQ[sourceDirectory] || missingFiles =!= {},
   Message[Get::noopen, If[StringQ[sourceDirectory], StringRiffle[missingFiles, ", "],
@@ -63,7 +63,7 @@ Protect @@ (ToExpression /@ {
   "FeynmanModel", "DiracWord", "DiracGamma", "DiracGamma5", "DiracSlash",
   "LorentzIndex", "LorentzMetric", "LorentzMomentum", "LorentzScalarProduct", "DiracChain", "FermionBar", "FermionKet",
   "PolarizationVector", "ColorDelta", "ColorGenerator", "ColorStructure", "ColorIndex",
-  "FeynmanToSpinorProducts", "VectorSpinIndex"
+  "FeynmanToSpinorProducts", "VectorSpinIndex", "ValidateMadGraph"
 });
 EndPackage[];
 

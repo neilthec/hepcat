@@ -543,13 +543,13 @@ WriteSPINASProcess::usage = "WriteSPINASProcess[directory, particles, amplitude,
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " The family overload WriteSPINASProcess[directory, {{particles1, amplitude1}, ...}, model] combines helicity-related amplitudes into one class. It fills identical-species, same-role massless leg permutations with their proper statistics sign, without inferring parity or missing zero amplitudes. Incomplete coverage is rejected before writing files. amp(ds1,...,dsn) and amp(Spins) select doubled spins and helicities; spin_sum sums all external spin/helicity states; amp2 also averages incoming states and includes the outgoing identical-species factorial factor, including identical fermions. Ordinary projects use persistent native SPINAS products and direct helicity branches; very large families retain canonical dispatch to bound source size. Colored families are currently refused because a full color sum is not implemented. The original four-argument fixed-helicity overload retains its existing spin-sum and symmetry-factor conventions.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " CMakeExecutable -> Automatic searches PATH and standard installation locations, including the macOS CMake application and Homebrew, so desktop Mathematica need not inherit the shell's PATH. An explicit full path selects another CMake installation. A missing build tool is reported before generating files; source-only export does not require CMake.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " WriteSPINASProcess[directory, incomingNames -> outgoingNames, amplitudeEntries, model] explicitly describes the physical process. The entries still contain all-ingoing particle lists and un-crossed formulas in that same leg order, with incoming legs first. Outgoing charged particle names are checked against the conjugate all-ingoing species. Generic massless names such as A sum their helicities; A.+ or A.- selects one. The established HEPCAT/SPINAS helicity sign convention is retained, and ReverseMomentum crosses outgoing momenta and angle spinors exactly once. FixedHelicities -> {leg -> doubledHelicity, ...} selects massless legs in either grouped overload. Only unfixed incoming helicities are averaged. A selected outgoing helicity gives a labeled contribution with the same identical-species phase-space factor. Complex amp calls preserve phases and include no spin sums, incoming averages or phase-space factors; coherent production-decay sewing is not performed by this exporter. Runnable projects currently require two incoming particles.";
-WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " Generated projects also contain validate_calchep(options) and a process_validate_calchep executable for an independent, seeded 1000-point comparison with an on-the-fly CalcHEP process. CalcHEPDirectory -> Automatic locates the local installation. CalcHEPModel -> {directory, number} selects the equivalent theory; Automatic recognizes the bundled massive-electron QED models. RunCalcHEPValidation -> True builds and runs this check, using CalcHEPPoints -> 1000 and CalcHEPSeed -> Automatic by default. Automatic chooses a seed from the time when validation runs and reports the concrete seed for replay; an explicit unsigned 64-bit integer fixes it. Complete unpolarized colorless processes are supported; fixed-helicity or color-stripped comparisons report unavailable. Ordinary SPINAS execution does not require CalcHEP.";
+WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " Generated projects also contain validate_calchep(options) and a process_validate_calchep executable for an independent, seeded 1000-point comparison with an on-the-fly CalcHEP process. CalcHEPDirectory -> None and CalcHEPModel -> None leave reference validation unconfigured. Select the installation directory and CalcHEPModel -> {directory, number} explicitly. CalcHEPDirectory -> Automatic consults CALCHEP_ROOT or CALCHEP only. CalcHEPAllowedParticles -> All keeps the selected reference theory intact; an explicit list of positive absolute PDG codes, such as {11,22}, restricts internal particle types and includes their antiparticles. RunCalcHEPValidation -> True builds and runs this check, using CalcHEPPoints -> 1000 and CalcHEPSeed -> Automatic by default. Automatic chooses a seed from the time when validation runs and reports the concrete seed for replay; an explicit unsigned 64-bit integer fixes it. Complete unpolarized colorless processes are supported; fixed-helicity or color-stripped comparisons report unavailable. Ordinary SPINAS execution does not require CalcHEP.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " If the CalcHEP numerical libraries are available, Build -> True also creates build/n_calchep and a calchep/n_calchep session launcher. This uses CalcHEP's numerical menus, VEGAS, cuts and histograms with the exported SPINAS matrix element, without CalcHEP symbolic generation or a CalcHEPModel counterpart. Independent model parameters remain adjustable, dependent functions are recomputed, and mass/width changes are propagated. Fixed helicities remain labeled contributions. The ordinary SPINAS project remains usable without CalcHEP.";
 Options[WriteSPINASProcess] = {"SPINASDirectory" -> Automatic,
   "IncomingLegs" -> {1, 2}, "FixedHelicities" -> Automatic, "ParameterRules" -> Automatic,
   "ProcessName" -> "hepcat_process", "Precision" -> Automatic,
   "Build" -> False, "RunExamples" -> False, "CMakeExecutable" -> Automatic, "Overwrite" -> False,
-  "CalcHEPDirectory" -> Automatic, "CalcHEPModel" -> Automatic,
+  "CalcHEPDirectory" -> None, "CalcHEPModel" -> None, "CalcHEPAllowedParticles" -> All,
   "RunCalcHEPValidation" -> False, "CalcHEPPoints" -> 1000, "CalcHEPSeed" -> Automatic,
   "ReturnDetails" -> False};
 WriteSPINASProcess::args = "Expected an output directory, all-ingoing amplitude entries, a model and valid export options, optionally preceded by incoming particle names -> outgoing particle names. The fixed-helicity form takes an ordered all-ingoing particle list and amplitude instead of entries.";
@@ -565,7 +565,7 @@ spinasCppIdentifierQ[name_String] := StringMatchQ[name, RegularExpression["[A-Za
     "edit_cache", "rebuild_cache", "list_install_components",
     "leg_count", "parameter_count", "default_parameters", "default_spins", "incoming_legs",
     "get_parameters", "masses", "set_parameters", "set_momenta", "set_masses", "initialize_products",
-    "amp", "spin_sum", "amp2", "validate_calchep", "n_calchep",
+    "amp", "spin_sum", "amp2", "validate_calchep", "validate_madgraph", "n_calchep",
     "helicity_count", "helicity_configurations", "incoming_spin_average", "symmetry_factor", "ParticleView",
     "parameters", "external_masses", "momenta", "particles", "momenta_ready", "component",
     "cdouble", "ldouble", "FourMomentum", "checked_mass", "validate_momenta", "finite_complex",
@@ -615,10 +615,8 @@ spinasCalcHEPRoot[option_] := Module[{parents, candidates, valid},
   valid[path_] := DirectoryQ[path] &&
     FileExistsQ[FileNameJoin[{path, "c_source", "dynamicME", "include", "dynamic_cs.h"}]] &&
     FileExistsQ[FileNameJoin[{path, "bin", "s_calchep"}]];
-  parents = If[StringQ[option], {ExpandFileName[option]},
-    Join[Select[Environment /@ {"CALCHEP_ROOT", "CALCHEP"}, StringQ[#] && # =!= "" &],
-      {FileNameJoin[{ParentDirectory[ParentDirectory[$spinasExportSourceDirectory]], "CalcHEP"}],
-        FileNameJoin[{$HomeDirectory, "code", "CalcHEP"}]}]];
+  parents = Which[StringQ[option], {ExpandFileName[option]}, option === Automatic,
+    Select[Environment /@ {"CALCHEP_ROOT", "CALCHEP"}, StringQ[#] && # =!= "" &], True, {}];
   candidates = Flatten[Table[Join[{parent},
     If[DirectoryQ[parent], Reverse[Sort[FileNames["calchep_*", parent]]], {}]], {parent, parents}]];
   SelectFirst[DeleteDuplicates[candidates], valid, ""]
@@ -629,38 +627,20 @@ spinasCalcHEPOptionsQ[options_Association] :=
     StringQ[options["CalcHEPDirectory"]]) &&
   (MemberQ[{Automatic, None}, options["CalcHEPModel"]] ||
     MatchQ[options["CalcHEPModel"], {_String, _Integer?Positive}]) &&
+  (options["CalcHEPAllowedParticles"] === All ||
+    ListQ[options["CalcHEPAllowedParticles"]] && options["CalcHEPAllowedParticles"] =!= {} &&
+      AllTrue[options["CalcHEPAllowedParticles"], IntegerQ[#] && 0 < # <= 2147483647 &]) &&
   MemberQ[{True, False}, options["RunCalcHEPValidation"]] &&
   IntegerQ[options["CalcHEPPoints"]] && 0 < options["CalcHEPPoints"] <= 2147483647 &&
   (options["CalcHEPSeed"] === Automatic || IntegerQ[options["CalcHEPSeed"]] &&
     0 <= options["CalcHEPSeed"] <= 18446744073709551615);
 
-(* Automatic model pairing recognizes the repository's QED models. Matching
-   external species alone would confuse QED with the electroweak theory. *)
-spinasCalcHEPQEDModelQ[data_List] := Module[{pdgs, scopes, knownScopes, triples, reference, canonical},
-  If[Length[data] =!= 4 || !ListQ[First[data]], Return[False]];
-  pdgs = Sort[DeleteDuplicates[Abs[data[[1, All, 4]]]]];
-  If[pdgs =!= {11, 22}, Return[False]];
-  scopes = DeleteDuplicates[Cases[data, ModelParameter[_, scope_String, _] :> scope, Infinity]];
-  knownScopes = modelParameterScope[FileNameJoin[{ParentDirectory[$spinasExportSourceDirectory], "models"}], #] & /@ {2, 3};
-  If[MemberQ[scopes, modelParameterScope[
-      FileNameJoin[{ParentDirectory[$spinasExportSourceDirectory], "model_feynman"}], 2]], Return[True]];
-  If[Intersection[scopes, knownScopes] === {}, Return[False]];
-  reference = ReadModel[FileNameJoin[{ParentDirectory[$spinasExportSourceDirectory], "models"}], 2];
-  If[!ListQ[reference], Return[False]];
-  triples[rows_] := Select[rows, ListQ[#] && Length[#] >= 5 &&
-    Count[Drop[#, -2], name_String /; name =!= ""] === 3 &];
-  canonical[value_] := value /. ModelParameter[name_String, _, _] :> spinasCalcHEPParameterName[name];
-  Sort[canonical[triples[data[[2]]]]] === Sort[canonical[triples[reference[[2]]]]]
-];
-
 spinasCalcHEPConfiguration[ir_Association, data_List, supplied_Association] := Module[
   {options = Join[Association[Options[WriteSPINASProcess]], supplied], root, spec, modelDirectory = "",
    modelNumber = 0, process, rows, incoming, order, pdgs, physical, selfConjugate,
-   available = True, reasons = {}, massless, outgoing, groups, symmetry, factor = 1, physicalNames},
+   available = True, reasons = {}, massless, outgoing, groups, symmetry, factor = 1, physicalNames, allowed},
   root = spinasCalcHEPRoot[options["CalcHEPDirectory"]];
   spec = options["CalcHEPModel"];
-  If[spec === Automatic && spinasCalcHEPQEDModelQ[data],
-    spec = {FileNameJoin[{ParentDirectory[$spinasExportSourceDirectory], "model_feynman"}], 2}];
   If[MatchQ[spec, {_String, _Integer?Positive}],
     modelDirectory = ExpandFileName[First[spec]]; modelNumber = Last[spec],
     available = False; AppendTo[reasons, If[spec === None, "CalcHEP validation was disabled.",
@@ -681,6 +661,10 @@ spinasCalcHEPConfiguration[ir_Association, data_List, supplied_Association] := M
     spinasBareHelicityName[If[MemberQ[outgoing, i] &&
         spinasBareHelicityName[rows[[i, 2]]] =!= spinasBareHelicityName[rows[[i, 3]]],
       If[particle === rows[[i, 2]], rows[[i, 3]], rows[[i, 2]]], particle]]]], process];
+  allowed = Replace[options["CalcHEPAllowedParticles"], All -> {}];
+  allowed = Sort[DeleteDuplicates[allowed]];
+  If[allowed =!= {} && !AllTrue[physical, MemberQ[allowed, Abs[#]] &],
+    available = False; AppendTo[reasons, "CalcHEPAllowedParticles excludes an external particle type."]];
   massless = TrueQ[# == 0] & /@ ir["MassValues"];
   If[TrueQ[Lookup[ir, "ColorStripped", False]] ||
       AnyTrue[rows, Length[#] >= 8 && #[[8]] =!= 1 &],
@@ -699,6 +683,7 @@ spinasCalcHEPConfiguration[ir_Association, data_List, supplied_Association] := M
     "Supported" -> available, "Reason" -> StringRiffle[reasons, " "],
     "CalcHEPDirectory" -> root, "ModelDirectory" -> modelDirectory, "ModelNumber" -> modelNumber,
     "PhysicalPDGs" -> physical[[order]], "LegOrder" -> order,
+    "AllowedParticlePDGs" -> allowed, "ParticleRestriction" -> If[allowed === {}, "All", "AllowedPDGs"],
     "ProcessDescription" -> StringRiffle[physicalNames[[incoming]], ", "] <> " -> " <>
       StringRiffle[physicalNames[[outgoing]], ", "],
     "ParameterNames" -> ir["ParameterNames"], "SPINASNormalizationFactor" -> factor,
@@ -719,7 +704,7 @@ spinasCalcHEPSource[name_String, ir_Association, config_Association] := Module[
     "    " <> spinasCppQuoted[config["Reason"]] <> ");", "}", "",
     "} // namespace hepcat_generated", ""}], "\n"]]];
   used = {"spinas_process", "calchep_process", "parameters", "model_parameters", "model_directory",
-    "model_number", "particle_pdgs", "external_order", "options", "point", "final_state_factor",
+    "model_number", "particle_pdgs", "allowed_particle_pdgs", "excluded_particle", "external_order", "options", "point", "final_state_factor",
     "spinas_squared", "calchep_squared", "name", "values"};
   aliases = Table[
     base = spinasReadableIdentifier[parameter]; alias = base; suffix = 1;
@@ -752,7 +737,9 @@ spinasCalcHEPSource[name_String, ir_Association, config_Association] := Module[
     "    const std::string model_directory = " <> spinasCppQuoted[config["ModelDirectory"]] <> ";",
     "    const int model_number = " <> ToString[config["ModelNumber"]] <> ";",
     "    const std::vector<int> particle_pdgs = {" <>
-      StringRiffle[ToString /@ config["PhysicalPDGs"], ", "] <> "};", "",
+      StringRiffle[ToString /@ config["PhysicalPDGs"], ", "] <> "};",
+    "    const std::vector<int> allowed_particle_pdgs = {" <>
+      StringRiffle[ToString /@ config["AllowedParticlePDGs"], ", "] <> "};", "",
     "    // Match the current SPINAS parameters to the CalcHEP model by name.",
     "    const auto parameters = get_parameters();"}, parameterLines, {
     "    const std::vector<hepcat_spinas::CalcHEPParameter> model_parameters = {"},
@@ -761,7 +748,12 @@ spinasCalcHEPSource[name_String, ir_Association, config_Association] := Module[
     "    };", "",
     "    // Generate and compile the CalcHEP process in its private workspace.",
     "    hepcat_spinas::CalcHEPProcess calchep_process(",
-    "      model_directory, model_number, particle_pdgs, model_parameters, " <> strongCode <> ");"},
+    "      model_directory, model_number, particle_pdgs, model_parameters, " <> strongCode <> ", false, allowed_particle_pdgs);",
+    "    if (!allowed_particle_pdgs.empty()) {",
+    "      std::cout << \"CalcHEP excluded internal particles:\";",
+    "      for (const auto& excluded_particle : calchep_process.excluded_particle_names())",
+    "        std::cout << ' ' << excluded_particle;",
+    "      std::cout << '\\n';", "    }"},
     orderLines, {massCheck, ""}, factorLines, {
     "    // Each evaluator receives exactly the same physical phase-space point.",
     "    auto spinas_squared = [&](const Momenta& point) -> ldouble {",
@@ -837,6 +829,7 @@ spinasCalcHEPProject[dir_String, name_String, ir_Association, config_Association
 
 spinasCalcHEPREADME[name_String, config_Association] := StringRiffle[{
   "", "## Independent CalcHEP validation", "",
+  "Choose the CalcHEP installation with CalcHEPDirectory and its reference model with CalcHEPModel -> {directory, number}. Both default to None, so HEPCAT never guesses a reference installation or theory. Explicit CalcHEPDirectory -> Automatic uses only CALCHEP_ROOT or CALCHEP environment settings. CalcHEPAllowedParticles -> All retains the entire selected model; a list such as {11,22} explicitly restricts internal particles to electrons/positrons and photons. The chosen restriction is recorded in manifest.json. No reference model is rewritten or trimmed.", "",
   "The generated validate_calchep(options) method compares 1000 seeded random physical phase-space points by default. The same momentum values are sent to SPINAS and CalcHEP. The validator generates the CalcHEP process at runtime in a private temporary workspace and leaves the installation unchanged.", "",
   "CalcHEPSeed -> Automatic chooses a seed from the current time when the validation executable runs, not when its source is exported. The report prints the actual Seed for replay. Set CalcHEPSeed to an unsigned 64-bit integer to choose a fixed executable default, or use --seed to override it for one run. In C++, assign options.seed directly; zero is a valid explicit seed.", "",
   "```sh", "./build/" <> name <> "_validate_calchep", "./build/" <> name <> "_validate_calchep --points 1000 --seed 12345", "```", "",
@@ -929,7 +922,7 @@ spinasNativeCachePlan[ir_Association, reservedNames_List : {}] := Module[
     "InputIndex" -> 1, "LegPermutation" -> Range[n], "FermionSign" -> 1|>}];
   used = Join[reservedNames, {"parameters", "external_masses", "momenta", "momenta_ready", "initialize_products",
     "amp", "spin_sum", "amp2", "component", "numerator", "denominator", "values", "spins",
-    "set_parameters", "set_momenta", "set_masses", "get_parameters", "validate_calchep",
+    "set_parameters", "set_momenta", "set_masses", "get_parameters", "validate_calchep", "validate_madgraph",
     "amplitude", "result", "validation", "other", "ranks", "originally_massless", "check_spin"},
     Table["p" <> ToString[i], {i, n}],
     Table["assignments" <> ToString[i], {i, n}], Table["indices" <> ToString[i], {i, n}],
@@ -1625,10 +1618,8 @@ spinasCalcHEPNumericalRoot[option_] := Module[{parents, candidates, valid},
   valid[path_] := DirectoryQ[path] && AllTrue[
     {"lib/n_calchep.o", "lib/num_c.a", "include/num_out.h", "include/VandP.h"},
     FileExistsQ[FileNameJoin[{path, #}]] &];
-  parents = If[StringQ[option], {ExpandFileName[option]},
-    Join[Select[Environment /@ {"CALCHEP_ROOT", "CALCHEP"}, StringQ[#] && # =!= "" &],
-      {FileNameJoin[{ParentDirectory[ParentDirectory[$spinasExportSourceDirectory]], "CalcHEP"}],
-       FileNameJoin[{$HomeDirectory, "code", "CalcHEP"}]}]];
+  parents = Which[StringQ[option], {ExpandFileName[option]}, option === Automatic,
+    Select[Environment /@ {"CALCHEP_ROOT", "CALCHEP"}, StringQ[#] && # =!= "" &], True, {}];
   candidates = Flatten[Table[Join[{parent}, If[DirectoryQ[parent],
     Reverse[Sort[FileNames["calchep_*", parent]]], {}]], {parent, parents}]];
   SelectFirst[DeleteDuplicates[candidates], valid, ""]
@@ -2012,14 +2003,14 @@ WriteSPINASProcess[directory_String, process : {___String}, amplitude_, model_, 
    overwrite = OptionValue["Overwrite"], examples = OptionValue["RunExamples"],
    details = OptionValue["ReturnDetails"], buildRequested = OptionValue["Build"],
    cmake = OptionValue["CMakeExecutable"], fixed, manifest, fullOptions, calchep, validationProject,
-   numerical, numericalProject, code},
+   numerical, numericalProject, madgraph, madgraphProject, code},
   fullOptions = Join[Association[Options[WriteSPINASProcess]], Association[Reverse[{opts}]]];
   If[Complement[Keys[options],First /@ Options[WriteSPINASProcess]] =!= {} ||
       !StringQ[name] || !TrueQ[spinasCppIdentifierQ[name]] || StringTrim[directory] === "" || !AllTrue[{overwrite,examples,details,buildRequested},MemberQ[{True,False},#]&] ||
       !MemberQ[{Automatic,"LongDouble","Double"},OptionValue["Precision"]] ||
       !(OptionValue["SPINASDirectory"]===Automatic || StringQ[OptionValue["SPINASDirectory"]]) ||
       !(cmake === Automatic || (StringQ[cmake] && StringTrim[cmake] =!= "")) ||
-      !spinasCalcHEPOptionsQ[fullOptions],
+      !spinasCalcHEPOptionsQ[fullOptions] || !spinasMadGraphOptionsQ[fullOptions],
     Message[WriteSPINASProcess::args]; Return[$Failed]];
   data = If[Head[model] === FeynmanModel,List @@ model,model];
   If[!ListQ[data],Return[Failure["InvalidModel",<||>]]];
@@ -2028,6 +2019,9 @@ WriteSPINASProcess[directory_String, process : {___String}, amplitude_, model_, 
   If[FailureQ[ir],Return[ir]];
   calchep = spinasCalcHEPConfiguration[ir, data, fullOptions];
   numerical = spinasCalcHEPNumericalConfiguration[ir, data, fullOptions];
+  madgraph = spinasMadGraphConfiguration[ir, data, fullOptions, calchep];
+  If[TrueQ[fullOptions["RunMadGraphValidation"]] && madgraph["Status"] =!= "AVAILABLE",
+    Return[Failure["MadGraphUnavailable", <|"MessageTemplate" -> madgraph["Reason"]|>]]];
   If[TrueQ[fullOptions["RunCalcHEPValidation"]] && calchep["Status"] =!= "AVAILABLE",
     Return[Failure["CalcHEPUnavailable", <|"MessageTemplate" -> calchep["Reason"]|>]]];
   fixed = spinasFixedHelicities[OptionValue["FixedHelicities"], ir["Spin2"],
@@ -2038,7 +2032,7 @@ WriteSPINASProcess[directory_String, process : {___String}, amplitude_, model_, 
       "FixedHelicities conflicts with the supplied fixed-helicity amplitude."|>]]];
   If[ir["LegCount"] < 4,Return[Failure["SPINASPhaseSpace",<|
     "MessageTemplate"->"The runnable project requires two incoming and at least two outgoing particles."|>]]];
-  If[TrueQ[buildRequested] || TrueQ[examples] || TrueQ[fullOptions["RunCalcHEPValidation"]],
+  If[TrueQ[buildRequested] || TrueQ[examples] || (TrueQ[fullOptions["RunCalcHEPValidation"]] || TrueQ[fullOptions["RunMadGraphValidation"]]),
     cmake = spinasProjectCMakeExecutable[cmake]; If[FailureQ[cmake], Return[cmake]]];
   runtime = FileNameJoin[{$spinasExportSourceDirectory,"spinas-runtime.hpp"}];
   If[!FileExistsQ[runtime],Return[Failure["SPINASRuntime",<|"MessageTemplate"->"The SPINAS runtime template is missing."|>]]];
@@ -2048,11 +2042,13 @@ WriteSPINASProcess[directory_String, process : {___String}, amplitude_, model_, 
     FileNameJoin[{dir,#}]& /@ {"process.hpp","process.cpp","main.cpp","spinas-runtime.hpp","CMakeLists.txt","README.md","manifest.json"}];
   validationProject = spinasCalcHEPProject[dir, name, ir, calchep];
   numericalProject = spinasCalcHEPNumericalProject[dir, name, numerical];
-  files = Join[files, validationProject["Files"], numericalProject["Files"]];
+  madgraphProject = spinasMadGraphProject[dir, name, madgraph];
+  files = Join[files, validationProject["Files"], numericalProject["Files"], madgraphProject["Files"]];
   If[!TrueQ[overwrite] && AnyTrue[Values[files],FileExistsQ],
     Return[Failure["SPINASFilesExist",<|"MessageTemplate"->"Generated project files already exist. Use Overwrite -> True to replace them.","Directory"->dir|>]]];
   If[FileExistsQ[dir] && !DirectoryQ[dir],Return[Failure["SPINASDirectory",<|"Directory"->dir|>]]];
   code = spinasProjectCode[name, ir];
+  code = Join[code, <|"Header" -> spinasMadGraphHeader[code["Header"]]|>];
   manifest = <|"Generator"->"HEPCAT WriteSPINASProcess", "Process"->process,
     "IncomingLegs"->ir["IncomingLegs"], "Class"->name, "Precision"->precision,
     "ColorStripped"->ir["ColorStripped"],
@@ -2060,15 +2056,16 @@ WriteSPINASProcess[directory_String, process : {___String}, amplitude_, model_, 
     "ParameterDefaults"->(<|"Real"->N[Re[#]],"Imaginary"->N[Im[#]]|>& /@ ir["ParameterDefaults"]),
     "Masses"->N[ir["MassValues"]], "Spin2"->ir["Spin2"], "Helicities"->ir["Helicities"],
     "CalcHEPValidation" -> Join[calchep, <|"SPINASNormalizationFactor" -> N[calchep["SPINASNormalizationFactor"]]|>],
+    "MadGraphValidation" -> Join[madgraph, <|"Normalization" -> N[madgraph["Normalization"]]|>],
     "CalcHEPNumerical" -> spinasCalcHEPNumericalPublicConfiguration[numerical],
     "CodeStyle" -> code["Style"]|>;
   contents = <|"Header"->code["Header"], "Source"->code["Source"],
     "Demo"->spinasProjectMain[name], "Runtime"->Import[runtime,"Text"],
     "CMake"->spinasProjectCMake[name,root,precision] <> spinasCalcHEPCMake[name,calchep] <>
-      spinasCalcHEPNumericalCMake[name, numerical],
+      spinasCalcHEPNumericalCMake[name, numerical] <> spinasMadGraphCMake[name],
     "README"->spinasProjectREADME[name,ir,precision] <> spinasCalcHEPREADME[name,calchep] <>
-      spinasCalcHEPNumericalREADME[numerical]|>;
-  contents = Join[contents, validationProject["Contents"], numericalProject["Contents"]];
+      spinasCalcHEPNumericalREADME[numerical] <> spinasMadGraphREADME[name, madgraph]|>;
+  contents = Join[contents, validationProject["Contents"], numericalProject["Contents"], madgraphProject["Contents"]];
   If[!AllTrue[Values[contents],StringQ],Return[Failure["SPINASGeneration",<|"MessageTemplate"->"The C++ project could not be generated."|>]]];
   written = Quiet[Check[
     If[!DirectoryQ[dir],CreateDirectory[dir,CreateIntermediateDirectories->True]];
@@ -2078,16 +2075,21 @@ WriteSPINASProcess[directory_String, process : {___String}, amplitude_, model_, 
   result = <|"Directory"->dir,"Files"->files,"Process"->process,"IncomingLegs"->ir["IncomingLegs"],
     "Build"-><|"Status"->"NOT_REQUESTED"|>,"Examples"-><|"Status"->"NOT_REQUESTED"|>,
     "CalcHEPValidation" -> <|"Status" -> "NOT_REQUESTED", "Configuration" -> calchep|>,
+    "MadGraphValidation" -> <|"Status" -> "NOT_REQUESTED", "Configuration" -> madgraph|>,
     "CalcHEPNumerical" -> Join[spinasCalcHEPNumericalPublicConfiguration[numerical],
       <|"Executable" -> FileNameJoin[{dir, "build", "n_calchep"}],
         "SessionDirectory" -> FileNameJoin[{dir, "calchep"}]|>],
     "CodeStyle" -> code["Style"]|>;
-  If[TrueQ[buildRequested] || TrueQ[examples] || TrueQ[fullOptions["RunCalcHEPValidation"]],
+  If[TrueQ[buildRequested] || TrueQ[examples] || (TrueQ[fullOptions["RunCalcHEPValidation"]] || TrueQ[fullOptions["RunMadGraphValidation"]]),
     build = spinasProjectBuild[dir,name,root,examples,cmake,calchep["CalcHEPDirectory"]]; If[FailureQ[build],Return[build]];
     result = Join[result,build]];
   If[TrueQ[fullOptions["RunCalcHEPValidation"]],
     build = spinasRunCalcHEPValidation[dir,name,calchep]; If[FailureQ[build],Return[build]];
     result = Join[result,<|"CalcHEPValidation" -> build|>]];
+  If[TrueQ[fullOptions["RunMadGraphValidation"]],
+    build = spinasRunMadGraphValidation[dir, name, madgraph]; If[FailureQ[build], Return[build]];
+    Print[spinasMadGraphValidationOutput[build, "Table"]];
+    result = Join[result, <|"MadGraphValidation" -> build|>]];
   If[TrueQ[details],result,dir]
 ];
 
@@ -2428,7 +2430,7 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
   {options = Join[Association[Options[WriteSPINASProcess]], Association[Reverse[Flatten[opts]]]],
    name, root, precision, ir, dir = ExpandFileName[directory], data, runtime,
    files, contents, written, result, build, cmake, manifest, calchep, validationProject,
-   numerical, numericalProject, code},
+   numerical, numericalProject, madgraph, madgraphProject, code},
   name = options["ProcessName"];
   cmake = options["CMakeExecutable"];
   If[Complement[First /@ Flatten[opts], First /@ Options[WriteSPINASProcess]] =!= {} ||
@@ -2437,7 +2439,7 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
       !MemberQ[{Automatic, "LongDouble", "Double"}, options["Precision"]] ||
       !(options["SPINASDirectory"] === Automatic || StringQ[options["SPINASDirectory"]]) ||
       !(cmake === Automatic || (StringQ[cmake] && StringTrim[cmake] =!= "")) ||
-      !spinasCalcHEPOptionsQ[options],
+      !spinasCalcHEPOptionsQ[options] || !spinasMadGraphOptionsQ[options],
     Message[WriteSPINASProcess::args]; Return[$Failed]];
   data = If[Head[model] === FeynmanModel, List @@ model, model];
   If[!ListQ[data], Return[Failure["InvalidModel", <||>]]];
@@ -2446,11 +2448,14 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
   If[FailureQ[ir], Return[ir]];
   calchep = spinasCalcHEPConfiguration[ir, data, options];
   numerical = spinasCalcHEPNumericalConfiguration[ir, data, options];
+  madgraph = spinasMadGraphConfiguration[ir, data, options, calchep];
+  If[TrueQ[options["RunMadGraphValidation"]] && madgraph["Status"] =!= "AVAILABLE",
+    Return[Failure["MadGraphUnavailable", <|"MessageTemplate" -> madgraph["Reason"]|>]]];
   If[TrueQ[options["RunCalcHEPValidation"]] && calchep["Status"] =!= "AVAILABLE",
     Return[Failure["CalcHEPUnavailable", <|"MessageTemplate" -> calchep["Reason"]|>]]];
   If[ir["LegCount"] < 4, Return[Failure["SPINASPhaseSpace", <|
     "MessageTemplate" -> "The runnable project requires two incoming and at least two outgoing particles."|>]]];
-  If[TrueQ[options["Build"]] || TrueQ[options["RunExamples"]] || TrueQ[options["RunCalcHEPValidation"]],
+  If[TrueQ[options["Build"]] || TrueQ[options["RunExamples"]] || (TrueQ[options["RunCalcHEPValidation"]] || TrueQ[options["RunMadGraphValidation"]]),
     cmake = spinasProjectCMakeExecutable[cmake]; If[FailureQ[cmake], Return[cmake]]];
   runtime = FileNameJoin[{$spinasExportSourceDirectory, "spinas-runtime.hpp"}];
   If[!FileExistsQ[runtime], Return[Failure["SPINASRuntime", <|"MessageTemplate" -> "The SPINAS runtime template is missing."|>]]];
@@ -2460,11 +2465,13 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
     FileNameJoin[{dir, #}] & /@ {"process.hpp", "process.cpp", "main.cpp", "spinas-runtime.hpp", "CMakeLists.txt", "README.md", "manifest.json"}];
   validationProject = spinasCalcHEPProject[dir, name, ir, calchep];
   numericalProject = spinasCalcHEPNumericalProject[dir, name, numerical];
-  files = Join[files, validationProject["Files"], numericalProject["Files"]];
+  madgraphProject = spinasMadGraphProject[dir, name, madgraph];
+  files = Join[files, validationProject["Files"], numericalProject["Files"], madgraphProject["Files"]];
   If[!TrueQ[options["Overwrite"]] && AnyTrue[Values[files], FileExistsQ],
     Return[Failure["SPINASFilesExist", <|"MessageTemplate" -> "Generated project files already exist. Use Overwrite -> True to replace them.", "Directory" -> dir|>]]];
   If[FileExistsQ[dir] && !DirectoryQ[dir], Return[Failure["SPINASDirectory", <|"Directory" -> dir|>]]];
   code = spinasProjectCode[name, ir];
+  code = Join[code, <|"Header" -> spinasMadGraphHeader[code["Header"]]|>];
   manifest = <|"Generator" -> "HEPCAT WriteSPINASProcess", "HelicityFamily" -> True,
     "Process" -> ir["Process"], "InputProcesses" -> ir["InputProcesses"],
     "IncomingLegs" -> ir["IncomingLegs"], "Class" -> name, "Precision" -> precision,
@@ -2478,6 +2485,7 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
     "FinalStateSymmetryDivisor" -> ir["FinalStateSymmetryDivisor"],
     "SpinSumConvention" -> "All external massive spins and selected massless helicities; amp2 averages only unfixed incoming states and includes the outgoing identical-species factorial factor; selected outgoing helicities are labeled contributions; no color sum.",
     "CalcHEPValidation" -> Join[calchep, <|"SPINASNormalizationFactor" -> N[calchep["SPINASNormalizationFactor"]]|>],
+    "MadGraphValidation" -> Join[madgraph, <|"Normalization" -> N[madgraph["Normalization"]]|>],
     "CalcHEPNumerical" -> spinasCalcHEPNumericalPublicConfiguration[numerical],
     "CodeStyle" -> code["Style"]|>;
   If[AssociationQ[ir["PhysicalProcess"]], manifest = Join[manifest,
@@ -2486,10 +2494,10 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
     "Source" -> code["Source"], "Demo" -> spinasFamilyProjectMain[name],
     "Runtime" -> Import[runtime, "Text"],
     "CMake" -> spinasProjectCMake[name, root, precision] <> spinasCalcHEPCMake[name, calchep] <>
-      spinasCalcHEPNumericalCMake[name, numerical],
+      spinasCalcHEPNumericalCMake[name, numerical] <> spinasMadGraphCMake[name],
     "README" -> spinasFamilyProjectREADME[name, ir, precision] <> spinasCalcHEPREADME[name, calchep] <>
-      spinasCalcHEPNumericalREADME[numerical]|>;
-  contents = Join[contents, validationProject["Contents"], numericalProject["Contents"]];
+      spinasCalcHEPNumericalREADME[numerical] <> spinasMadGraphREADME[name, madgraph]|>;
+  contents = Join[contents, validationProject["Contents"], numericalProject["Contents"], madgraphProject["Contents"]];
   If[!AllTrue[Values[contents], StringQ], Return[Failure["SPINASGeneration", <|"MessageTemplate" -> "The C++ project could not be generated."|>]]];
   written = Quiet[Check[
     If[!DirectoryQ[dir], CreateDirectory[dir, CreateIntermediateDirectories -> True]];
@@ -2500,6 +2508,7 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
     "IncomingLegs" -> ir["IncomingLegs"], "Build" -> <|"Status" -> "NOT_REQUESTED"|>,
     "Examples" -> <|"Status" -> "NOT_REQUESTED"|>,
     "CalcHEPValidation" -> <|"Status" -> "NOT_REQUESTED", "Configuration" -> calchep|>,
+    "MadGraphValidation" -> <|"Status" -> "NOT_REQUESTED", "Configuration" -> madgraph|>,
     "CalcHEPNumerical" -> Join[spinasCalcHEPNumericalPublicConfiguration[numerical],
       <|"Executable" -> FileNameJoin[{dir, "build", "n_calchep"}],
         "SessionDirectory" -> FileNameJoin[{dir, "calchep"}]|>],
@@ -2508,12 +2517,16 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
       "InitialSpinAverage", "SymmetryFactor", "FinalStateSymmetryDivisor", "FixedHelicities"}]];
   If[AssociationQ[ir["PhysicalProcess"]], result = Join[result,
     KeyTake[ir, {"PhysicalProcess", "ProcessDescription"}]]];
-  If[TrueQ[options["Build"]] || TrueQ[options["RunExamples"]] || TrueQ[options["RunCalcHEPValidation"]],
+  If[TrueQ[options["Build"]] || TrueQ[options["RunExamples"]] || (TrueQ[options["RunCalcHEPValidation"]] || TrueQ[options["RunMadGraphValidation"]]),
     build = spinasProjectBuild[dir, name, root, options["RunExamples"], cmake, calchep["CalcHEPDirectory"]];
     If[FailureQ[build], Return[build]]; result = Join[result, build]];
   If[TrueQ[options["RunCalcHEPValidation"]],
     build = spinasRunCalcHEPValidation[dir, name, calchep]; If[FailureQ[build], Return[build]];
     result = Join[result, <|"CalcHEPValidation" -> build|>]];
+  If[TrueQ[options["RunMadGraphValidation"]],
+    build = spinasRunMadGraphValidation[dir, name, madgraph]; If[FailureQ[build], Return[build]];
+    Print[spinasMadGraphValidationOutput[build, "Table"]];
+    result = Join[result, <|"MadGraphValidation" -> build|>]];
   If[TrueQ[options["ReturnDetails"]], result, dir]
 ];
 

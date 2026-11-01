@@ -51,7 +51,8 @@ check["class names may coincide with familiar mass and spinor-product labels",
   AssociationQ[npClassMassReport] && AssociationQ[npClassProductReport]];
 npCHReport = WriteSPINASProcess[npPath["native_calchep_source"], npFamily, npModel,
   "ProcessName" -> "native_calchep_source", "ParameterRules" -> npRules,
-  "SPINASDirectory" -> npSpinas, "CalcHEPDirectory" -> None, "ReturnDetails" -> True];
+  "SPINASDirectory" -> npSpinas, "CalcHEPDirectory" -> None,
+  "CalcHEPModel" -> {FileNameJoin[{root, "model_feynman"}], 2}, "ReturnDetails" -> True];
 check["the independent validator also exports readable source without requiring CalcHEP",
   AssociationQ[npCHReport]];
 If[AssociationQ[npCHReport],

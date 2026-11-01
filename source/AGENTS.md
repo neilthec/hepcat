@@ -50,6 +50,12 @@ include the documentation updates in the same commit as the implementation.
 - `source/HEPCAT-Feynman.wl`: CalcHEP model parsing, unitary-gauge tree
   amplitudes and exact Feynman-to-spinor conversion. See
   `model_feynman/README.md` for the imported SM's scope and usage.
+- `source/HEPCAT-MadGraph.wl`, `source/madgraph-runtime.py`, and
+  `source/madgraph-runtime.hpp`: independent, per-massless-helicity MadGraph
+  validation of exported SPINAS amplitudes and the `ValidateMadGraph` entry
+  point. The benchmark uses a separately generated MadGraph amplitude, matching
+  masses, couplings, leg order and normalization. Sum massive spins unless an
+  explicit basis transformation has been implemented.
 - `source/HEPCAT-SPINAS.wl` and `source/spinas-runtime.hpp`: complete C++
   process export, SPINAS linking, spin-state projection and physical example
   momenta. The older `SPINAS` expression-formatting helpers remain available.
@@ -474,10 +480,14 @@ and stage offsets, and retain the concrete seed in diagnostics. Generated C++
 validation must choose its automatic seed at runtime, not during export; its
 printed report records the actual seed. Deterministic regression fixtures may
 and should supply explicit seeds where replay is part of the assertion.
-Use the declared CalcHEP model, current parameters and explicit PDG leg map.
-Only the bundled QED models have an automatic counterpart; identical external
-species do not identify a theory. Preserve source model tables and stage
-private copies for runtime generation. Respect CalcHEP's process-global state.
+Use the user's declared CalcHEP or MadGraph installation and reference model,
+current parameters and explicit PDG leg map. Do not infer a reference theory or
+silently restrict intermediate species from the HEPCAT model. Particle filters
+are opt-in user options: `CalcHEPAllowedParticles` and
+`MadGraphAllowedParticles` accept positive absolute PDG codes and include their
+antiparticles; `All` retains the selected theory. Preserve source model tables
+and stage private copies for runtime generation. Respect CalcHEP's
+process-global state.
 Its `sqme` includes incoming averaging and outgoing identical-particle factors.
 Never fit a scale, discard failed samples, compare a fixed-helicity subset
 with an unpolarized result, or silently ignore unmatched parameters. Every

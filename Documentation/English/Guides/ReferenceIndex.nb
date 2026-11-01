@@ -603,14 +603,20 @@ helper."}], "GuideText"],
        "paclet:HEPCAT/ref/UpdateSPINASSpinorProducts"], ": ", "Writes update \
 statements for distinct spinor products in an expression."}], "GuideText"],
   Cell["V", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["ValidateMadGraph", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ValidateMadGraph"], ": ", "Compares \
+exported HEPCAT/SPINAS amplitudes with independent MadGraph matrix elements \
+on common random phase-space points, separately for each massless-helicity \
+combination."}], "GuideText"],
   Cell[TextData[{ButtonBox["VectorSpinIndex", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/VectorSpinIndex"], ": ", "Labels one \
 of the two symmetric little-group slots of a massive vector."}],
    "GuideText"], Cell["W", "GuideFunctionsSubsection"],
   Cell[TextData[{ButtonBox["WriteSPINASProcess", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/WriteSPINASProcess"], ": ", "Writes a \
-complete, readable C++ process using SPINAS, with optional CalcHEP validation \
-and integration."}], "GuideText"], Cell["X", "GuideFunctionsSubsection"],
+complete, readable C++ process using SPINAS, with optional CalcHEP and \
+helicity-resolved MadGraph validation."}], "GuideText"],
+  Cell["X", "GuideFunctionsSubsection"],
   Cell[TextData[{ButtonBox["xFactor", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/xFactor"], ": ",
      "Represents a constructive three-point x-factor."}], "GuideText"],

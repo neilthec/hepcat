@@ -58,7 +58,26 @@ mass shells."}], "GuideText"],
   Cell[TextData[{ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], ": ", "Simplify \
 diagram pairs or factorization rows while retaining their physical \
-assumptions."}], "GuideText"], Cell["Tutorials", "GuideTutorialsSection"],
+assumptions."}], "GuideText"], Cell["Independent Numerical Benchmarks",
+   "GuideFunctionsSubsection"], Cell["Compare exported spinor amplitudes with \
+an independent matrix-element generator, including individual massless \
+helicities.", "GuideText"],
+  Cell[TextData[{ButtonBox["ValidateMadGraph", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ValidateMadGraph"], ": ", "Compares \
+exported HEPCAT/SPINAS amplitudes with independent MadGraph matrix elements \
+on common random phase-space points, separately for each massless-helicity \
+combination."}], "GuideText"],
+  Cell[TextData[{ButtonBox["WriteSPINASProcess", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/WriteSPINASProcess"], ": ", "Writes a \
+complete, readable C++ process using SPINAS, with optional CalcHEP and \
+helicity-resolved MadGraph validation."}], "GuideText"],
+  Cell[TextData[{ButtonBox["Formatting, Model Output and SPINAS Export",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/guide/FormattingAndExport"]}], "GuideMoreAbout"],
+  Cell[TextData[{ButtonBox["Exporting a Numerical SPINAS Process",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/tutorial/ExportingToSPINAS"]}], "GuideTutorial"],
+  Cell["Tutorials", "GuideTutorialsSection"],
   Cell[TextData[
     {ButtonBox["Constructing and Checking an Amplitude in Stages",
       BaseStyle -> "Link", ButtonData ->

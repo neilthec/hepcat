@@ -327,10 +327,11 @@ class CalcHEPProcess {
   CalcHEPProcess(const std::string& model_directory, int model_number,
                  const std::vector<int>& physical_pdgs,
                  const std::vector<CalcHEPParameter>& parameters,
-                 double strong_coupling = 1.0, bool keep_work_files = false)
+                 double strong_coupling = 1.0, bool keep_work_files = false,
+                 const std::vector<int>& allowed_particle_pdgs = std::vector<int>())
       : lock_(calchep_detail::session_mutex(), std::try_to_lock),
         workspace_(keep_work_files), matrix_element_(NULL), pdgs_(physical_pdgs),
-        strong_coupling_(strong_coupling) {
+        strong_coupling_(strong_coupling), allowed_pdgs_(allowed_particle_pdgs) {
     if (!lock_.owns_lock()) {
       throw std::runtime_error("Another CalcHEP validation session is active; run validators sequentially.");
     }
@@ -339,6 +340,21 @@ class CalcHEPProcess {
     }
     if (!std::isfinite(strong_coupling_) || strong_coupling_ < 0) {
       throw std::invalid_argument("The CalcHEP strong coupling must be finite and nonnegative.");
+    }
+    std::sort(allowed_pdgs_.begin(), allowed_pdgs_.end());
+    allowed_pdgs_.erase(std::unique(allowed_pdgs_.begin(), allowed_pdgs_.end()), allowed_pdgs_.end());
+    for (const int allowed : allowed_pdgs_) {
+      if (allowed <= 0) {
+        throw std::invalid_argument("Allowed CalcHEP particle types must be positive absolute PDG integers.");
+      }
+    }
+    if (!allowed_pdgs_.empty()) {
+      for (const int pdg : pdgs_) {
+        if (pdg == std::numeric_limits<int>::min() ||
+            !std::binary_search(allowed_pdgs_.begin(), allowed_pdgs_.end(), std::abs(pdg))) {
+          throw std::invalid_argument("The CalcHEP particle restriction excludes an external particle type.");
+        }
+      }
     }
     const std::string staged = calchep_detail::stage_model(
         model_directory, model_number, workspace_.path());
@@ -363,6 +379,8 @@ class CalcHEPProcess {
   const std::vector<int>& particle_pdgs() const { return pdgs_; }
   const std::string& process_name() const { return process_; }
   const std::string& work_directory() const { return workspace_.path(); }
+  const std::vector<int>& allowed_particle_pdgs() const { return allowed_pdgs_; }
+  const std::vector<std::string>& excluded_particle_names() const { return excluded_names_; }
 
   template <typename Real, std::size_t Size>
   double squared_amplitude(const std::array<std::array<Real, 4>, Size>& momenta) {
@@ -448,9 +466,20 @@ class CalcHEPProcess {
     std::vector<char> process(process_.begin(), process_.end());
     process.push_back('\0');
     char library[] = "hepcat_validation";
-    char excluded[] = "";
+    build_particle_restriction();
+    std::string exclusion;
+    for (const auto& particle : excluded_names_) {
+      if (!exclusion.empty()) exclusion += ",";
+      exclusion += particle;
+    }
+    std::vector<char> excluded(exclusion.begin(), exclusion.end());
+    excluded.push_back('\0');
+    char excluded_output[] = "";
+    // The fourth argument filters virtual particles. The fifth instead filters
+    // unspecified outgoing states and must not be used for an internal cut.
     // Unitary gauge; do not add t-channel Breit-Wigner factors.
-    matrix_element_ = getMEcode(0, 1, process.data(), NULL, excluded, library);
+    matrix_element_ = getMEcode(0, 1, process.data(),
+        excluded_names_.empty() ? NULL : excluded.data(), excluded_output, library);
     if (!matrix_element_) {
       throw std::runtime_error("CalcHEP could not generate " + process_ + " in " + workspace_.path());
     }
@@ -502,6 +531,36 @@ class CalcHEPProcess {
     }
   }
 
+  void build_particle_restriction() {
+    if (allowed_pdgs_.empty()) return; // All particles in the explicitly selected model.
+    std::vector<int> known;
+    for (int index = 0; index < nModelParticles; ++index) {
+      const ModelPrtclsStr& particle = ModelPrtcls[index];
+      if (particle.NPDG == std::numeric_limits<int>::min()) {
+        throw std::runtime_error("The CalcHEP model has an invalid particle PDG code.");
+      }
+      const int pdg = std::abs(particle.NPDG);
+      // PDG-zero auxiliary rows implement vertices and are not physical types.
+      if (pdg == 0) continue;
+      known.push_back(pdg);
+      if (std::binary_search(allowed_pdgs_.begin(), allowed_pdgs_.end(), pdg)) continue;
+      const char* names[] = {particle.name, particle.aname};
+      for (const char* name : names) {
+        if (!name || !calchep_detail::safe_particle_name(name)) {
+          throw std::runtime_error("A CalcHEP particle name cannot be used in the requested restriction.");
+        }
+        excluded_names_.push_back(name);
+      }
+    }
+    for (const int pdg : allowed_pdgs_) {
+      if (std::find(known.begin(), known.end(), pdg) == known.end()) {
+        throw std::invalid_argument("The CalcHEP reference model lacks allowed PDG type " + std::to_string(pdg));
+      }
+    }
+    std::sort(excluded_names_.begin(), excluded_names_.end());
+    excluded_names_.erase(std::unique(excluded_names_.begin(), excluded_names_.end()), excluded_names_.end());
+  }
+
   std::unique_lock<std::mutex> lock_;
   calchep_detail::Workspace workspace_;
   numout* matrix_element_;
@@ -509,6 +568,8 @@ class CalcHEPProcess {
   std::vector<long double> masses_;
   double strong_coupling_;
   std::string process_;
+  std::vector<int> allowed_pdgs_;
+  std::vector<std::string> excluded_names_;
 };
 
 } // namespace hepcat_spinas

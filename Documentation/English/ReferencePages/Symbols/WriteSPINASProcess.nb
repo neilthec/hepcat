@@ -8,7 +8,7 @@ Notebook[
      GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
    "AnchorBarGrid"], Cell["WriteSPINASProcess", "ObjectName"],
   Cell["Writes a complete, readable C++ process using SPINAS, with optional \
-CalcHEP validation and integration.", "Notes"],
+CalcHEP and helicity-resolved MadGraph validation.", "Notes"],
   Cell[TextData[{Cell[BoxData[RowBox[{"WriteSPINASProcess", "[", "directory",
          ",", " ", "particles", ",", " ", "amplitude", ",", " ", "model",
          "]"}]], "InlineFormula"], "  ", "exports one all-incoming amplitude \
@@ -41,28 +41,55 @@ physical-process or family form for a complete unpolarized process.",
    "Notes"], Cell["The default export writes source only. \"Build\" -> True \
 compiles and links the existing SPINAS library; \"RunExamples\" -> True also \
 runs three conserved physical example points. No external library is \
-installed or rebuilt.", "Notes"], Cell["\"SPINASDirectory\", \
-\"CalcHEPDirectory\" and \"CMakeExecutable\" override automatic tool \
-discovery. The SPINAS precision must match the library ABI. \"Overwrite\" -> \
-True explicitly permits replacing an existing exported project.", "Notes"],
-  Cell["The independent CalcHEP validator generates a counterpart process and \
-compares common random points. \"CalcHEPModel\" selects an equivalent model; \
-Automatic recognizes the bundled QED models. \"RunCalcHEPValidation\" -> True \
-builds and runs it. The actual time-based seed is reported, and an explicit \
-\"CalcHEPSeed\" or --seed value replays it.", "Notes"],
-  Cell["A separate n_calchep target uses the SPINAS matrix element with \
-CalcHEP's numerical phase-space integration, cuts, histograms and VEGAS. This \
-bypasses symbolic CalcHEP generation and does not require an equivalent \
-CalcHEPModel.", "Notes"], Cell["Numerical model constraints, masses and \
-widths are connected to the numerical menus. Explicit amplitude width \
-conventions remain authoritative. Unsupported automatic-width or \
-gauge-restoring operations are refused.", "Notes"],
-  Cell["Current complete numerical exports are colorless. Unresolved Xi \
-spinors, hats, unsupported symbolic functions or color tensors must be \
-resolved before exporting.", "Notes"], Cell["The return value is the output \
-directory. \"ReturnDetails\" -> True adds generated file paths, build \
-information, normalization metadata and optional validation results.",
-   "Notes"], Cell["Options", "NotesSection"],
+installed or rebuilt.", "Notes"], Cell["\"SPINASDirectory\" and \
+\"CMakeExecutable\" support automatic build-tool discovery. Independent \
+validation instead requires an explicit reference-generator directory and \
+model selection. The SPINAS precision must match the library ABI. \
+\"Overwrite\" -> True explicitly permits replacing an existing exported \
+project.", "Notes"], Cell["The independent CalcHEP validator generates a \
+reference process and compares common random points. Specify \
+\"CalcHEPDirectory\" and \"CalcHEPModel\" -> {directory, modelNumber}; both \
+default to None. \"CalcHEPAllowedParticles\" -> All retains the full chosen \
+theory, while an explicit list of positive absolute PDGs restricts the \
+reference particle sector. \"RunCalcHEPValidation\" -> True builds and runs \
+it. The actual time-based seed is reported, and an explicit \"CalcHEPSeed\" \
+or --seed value replays it.", "Notes"], Cell["A separate n_calchep target \
+uses the SPINAS matrix element with CalcHEP's numerical phase-space \
+integration, cuts, histograms and VEGAS. This bypasses symbolic CalcHEP \
+generation and does not require an equivalent CalcHEPModel.", "Notes"],
+  Cell["Numerical model constraints, masses and widths are connected to the \
+numerical menus. Explicit amplitude width conventions remain authoritative. \
+Unsupported automatic-width or gauge-restoring operations are refused.",
+   "Notes"], Cell["Current complete numerical exports are colorless. \
+Unresolved Xi spinors, hats, unsupported symbolic functions or color tensors \
+must be resolved before exporting.", "Notes"], Cell["The independent MadGraph \
+validator generates one unpolarized reference process and compares each \
+exported massless-helicity combination separately. \"RunMadGraphValidation\" \
+-> True builds and runs the check; \"MadGraphPoints\" -> 1000 and \
+\"MadGraphSeed\" -> Automatic are the normal defaults. Massive external spins \
+are summed because the two libraries may use different spin bases.",
+   "Notes"], Cell["Specify \"MadGraphDirectory\" and \"MadGraphModel\" \
+explicitly to select the independent reference generator and UFO theory; both \
+default to None. \"MadGraphAllowedParticles\" -> All retains the full chosen \
+model, or a list such as {11, 22} explicitly selects the \
+electron/positron/photon sector. \"MadGraphParameterRules\" supplies external \
+UFO input values when numerical matching needs an override. No theory or \
+particle restriction is inferred from the HEPCAT process.", "Notes"],
+  Cell["Generated projects contain validate_madgraph(options) and a \
+process_validate_madgraph executable. ValidateMadGraph provides the \
+corresponding Mathematica entry point, including a simple per-helicity table \
+and optional detailed numerical diagnostics. MadGraph is not required for \
+ordinary SPINAS evaluation.", "Notes"], Cell["\"MadGraphParameterMap\" maps \
+HEPCAT parameter names to differently named UFO parameters. Used couplings \
+and masses are checked rather than assumed from the external particle names."\
+, "Notes"], Cell["MadGraph propagator widths are matched to the amplitude \
+prescription. For bare HEPCAT PropDen denominators, unmatched adjustable \
+reference widths are zeroed; explicit reference width rules and matched width \
+parameters are preserved. Detailed validation reports record this choice.",
+   "Notes"], Cell["The return value is the output directory. \
+\"ReturnDetails\" -> True adds generated file paths, build information, \
+normalization metadata and optional validation results.", "Notes"],
+  Cell["Options", "NotesSection"],
   Cell[BoxData[GridBox[{{Cell["Option", "TableHeader"],
        Cell["Default", "TableHeader"], Cell["Meaning", "TableHeader"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"SPINASDirectory\""}]],
@@ -133,18 +160,25 @@ replaced. False protects an existing SPINAS output directory from accidental \
 overwriting.", "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"CalcHEPDirectory\""}]],
            "InlineFormula"]}], "TableText"],
-       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
-           "InlineFormula"]}], "TableText"], Cell["Directory containing the \
-local CalcHEP installation. Automatic searches the configured local \
-installation; ordinary SPINAS execution remains available when CalcHEP is \
-absent.", "TableText"]},
+       Cell[TextData[{Cell[BoxData[RowBox[{"None"}]], "InlineFormula"]}],
+        "TableText"], Cell["Chosen CalcHEP installation directory. None, the \
+default, leaves the optional backend unconfigured. An explicitly supplied \
+Automatic consults the corresponding environment variables only; no \
+installation path is guessed.", "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"CalcHEPModel\""}]],
            "InlineFormula"]}], "TableText"],
-       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
-           "InlineFormula"]}], "TableText"], Cell["Equivalent CalcHEP theory \
-for independent validation, given as {directory, modelNumber}. Automatic \
-recognizes the supported bundled massive-electron QED models; it does not \
-infer an arbitrary theory.", "TableText"]},
+       Cell[TextData[{Cell[BoxData[RowBox[{"None"}]], "InlineFormula"]}],
+        "TableText"], Cell["Chosen equivalent CalcHEP reference theory as \
+{directory, modelNumber}. None, the default, selects no theory; Automatic \
+does not infer a model. This reference model is separate from the supplied \
+HEPCAT amplitudes.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"CalcHEPAllowedParticles\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"All"}]], "InlineFormula"]}],
+        "TableText"], Cell["All retains the full selected CalcHEP theory. A \
+nonempty list of unique positive absolute PDG codes restricts the independent \
+reference particle sector, including antiparticles. Every external type must \
+be included.", "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"RunCalcHEPValidation\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"False"}]], "InlineFormula"]}],
@@ -172,11 +206,67 @@ zero, makes the run reproducible.", "TableText"]},
 instead of the compact default result. For preparation and factorization \
 completion it retains provenance, directions and validation and takes \
 precedence over Output; for export it returns file paths and build/run \
-results.", "TableText"]}}, GridBoxAlignment ->
-      {"Columns" -> {Left, Left, Left}}, GridBoxItemSize ->
-      {"Columns" -> {Scaled[0.23], Scaled[0.19], Scaled[0.58]}},
-     GridBoxDividers -> {"Rows" -> {False, True, {False}, False}}]],
-   "3ColumnTableMod"], Cell["Examples", "PrimaryExamplesSection"],
+results.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"MadGraphDirectory\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"None"}]], "InlineFormula"]}],
+        "TableText"], Cell["Chosen MadGraph installation directory. None, the \
+default, leaves reference validation disabled. An explicitly supplied \
+Automatic consults environment variables only; pass a path to make the \
+selection explicit.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"MadGraphModel\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"None"}]], "InlineFormula"]}],
+        "TableText"], Cell["Chosen equivalent MadGraph UFO model name or \
+directory. None, the default, selects no reference theory. Automatic does not \
+infer a theory. Specify the model and any particle filter explicitly.",
+        "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"MadGraphAllowedParticles\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"All"}]], "InlineFormula"]}],
+        "TableText"], Cell["All retains the full selected MadGraph theory. A \
+nonempty list of unique positive absolute PDG codes, such as {11,22}, \
+restricts the reference particle sector and includes antiparticles. Every \
+external particle type must be present.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"MadGraphParameterRules\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Real numerical values for \
+named external MadGraph UFO parameters. Automatic uses the supported \
+model-parameter matching; explicit rules supply otherwise ambiguous \
+independent inputs.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"MadGraphParameterMap\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Rules mapping HEPCAT model \
+parameter names to external or derived MadGraph UFO parameter names. \
+Automatic uses supported same-name and known-model matching; unresolved used \
+parameters prevent a passing comparison.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"RunMadGraphValidation\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"False"}]], "InlineFormula"]}],
+        "TableText"], Cell["Whether WriteSPINASProcess builds and runs the \
+independent MadGraph comparison. False writes the optional support without \
+running it; True runs a report for each exported massless-helicity \
+combination.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"MadGraphPoints\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"1000"}]], "InlineFormula"]}],
+        "TableText"], Cell["Number of common random phase-space points \
+compared for each massless-helicity combination. The default is 1000.",
+        "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"MadGraphSeed\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Random seed for the \
+generated MadGraph comparison. Automatic chooses one time-based seed when \
+validation runs and reports it; an explicit unsigned 64-bit integer, \
+including zero, replays the samples.", "TableText"]}},
+     GridBoxAlignment -> {"Columns" -> {Left, Left, Left}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.23], Scaled[0.19],
+         Scaled[0.58]}}, GridBoxDividers ->
+      {"Rows" -> {False, True, {False}, False}}]], "3ColumnTableMod"],
+  Cell["Examples", "PrimaryExamplesSection"],
   Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
      Cell["Evaluate this setup once before the examples. The paths refer to \
 the local HEPCAT checkout; no model parameters are assigned global numerical \
@@ -199,44 +289,28 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
   Cell["Basic Examples", "ExampleSection"],
   Cell["Inspect the available export options without writing files.",
    "ExampleText"], Cell[BoxData[RowBox[{"Options", "[", "WriteSPINASProcess",
-      "]"}]], "Input"],
-  Cell[BoxData[RowBox[{"{", "\"SPINASDirectory\"", " ", "->", " ",
-      "Automatic", ",", " ", "\"IncomingLegs\"", " ", "->", " ", "{", "1",
-      ",", " ", "2", "}", ",", " ", "\"FixedHelicities\"", " ", "->", " ",
-      "Automatic", ",", " ", "\"ParameterRules\"", " ", "->", " ",
-      "Automatic", ",", " ", "\"ProcessName\"", " ", "->", " ",
-      "\"hepcat_process\"", ",", " ", "\"Precision\"", " ", "->", " ",
-      "Automatic", ",", " ", "\"Build\"", " ", "->", " ", "False", ",", " ",
-      "\"RunExamples\"", " ", "->", " ", "False", ",", " ",
-      "\"CMakeExecutable\"", " ", "->", " ", "Automatic", ",", " ",
-      "\"Overwrite\"", " ", "->", " ", "False", ",", " ",
-      "\"CalcHEPDirectory\"", " ", "->", " ", "Automatic", ",", " ",
-      "\"CalcHEPModel\"", " ", "->", " ", "Automatic", ",", " ",
-      "\"RunCalcHEPValidation\"", " ", "->", " ", "False", ",", " ",
-      "\"CalcHEPPoints\"", " ", "->", " ", "1000", ",", " ",
-      "\"CalcHEPSeed\"", " ", "->", " ", "Automatic", ",", " ",
-      "\"ReturnDetails\"", " ", "->", " ", "False", "}"}]], "Output"],
-  Cell["Export a complete four-point photon-helicity family to a temporary \
-directory.", "ExampleText"],
+      "]"}]], "Input"], Cell["Export a complete four-point photon-helicity \
+family to a temporary directory.", "ExampleText"],
   Cell[BoxData[RowBox[{"knownModel", " ", "=", " ", "ReadModel", "[",
       "modelDirectory", ",", " ", "3", "]", ";", "\n", "helicityProcesses",
       " ", "=", " ", "{", "{", "\"e\"", ",", " ", "\"E\"", ",", " ",
       "\"A.+\"", ",", " ", "\"A.+\"", "}", ",", " ", "{", "\"e\"", ",", " ",
       "\"E\"", ",", " ", "\"A.+\"", ",", " ", "\"A.-\"", "}", ",", " ", "{",
-      "\"e\"", ",", " ", "\"E\"", ",", " ", "\"A.-\"", ",", " ", "\"A.-\"",
-      "}", "}", ";", "\n", "entries", " ", "=", " ", "{", "#", ",", " ",
-      "LookupAmplitude", "[", "Thread", "[", "{", "#", ",", " ", "Range",
-      "[", "4", "]", "}", "]", ",", " ", "knownModel", ",", " ", "False",
-      ",", " ", "{", "i", ",", " ", "j", ",", " ", "k", ",", " ", "l", "}",
-      "]", "}", " ", "&", " ", "/@", " ", "helicityProcesses", ";", "\n",
-      "exportDirectory", " ", "=", " ", "CreateDirectory", "[", "]", ";",
-      "\n", "WriteSPINASProcess", "[", "exportDirectory", ",", " ", "{",
-      "\"e\"", ",", " ", "\"E\"", "}", " ", "->", " ", "{", "\"A\"", ",",
-      " ", "\"A\"", "}", ",", " ", "entries", ",", " ", "knownModel", ",",
-      " ", "\"ProcessName\"", " ", "->", " ", "\"eeAA\"", "]"}]], "Input"],
-  Cell["This example writes files, starts a longer calculation, or requires \
-an optional external tool. Evaluate it when you want to perform that \
-operation.", "ExampleText"],
+      "\"e\"", ",", " ", "\"E\"", ",", " ", "\"A.-\"", ",", " ", "\"A.+\"",
+      "}", ",", " ", "{", "\"e\"", ",", " ", "\"E\"", ",", " ", "\"A.-\"",
+      ",", " ", "\"A.-\"", "}", "}", ";", "\n", "entries", " ", "=", " ",
+      "{", "#", ",", " ", "LookupAmplitude", "[", "Thread", "[", "{", "#",
+      ",", " ", "Range", "[", "4", "]", "}", "]", ",", " ", "knownModel",
+      ",", " ", "False", ",", " ", "{", "i", ",", " ", "j", ",", " ", "k",
+      ",", " ", "l", "}", "]", "}", " ", "&", " ", "/@", " ",
+      "helicityProcesses", ";", "\n", "exportDirectory", " ", "=", " ",
+      "CreateDirectory", "[", "]", ";", "\n", "WriteSPINASProcess", "[",
+      "exportDirectory", ",", " ", "{", "\"e\"", ",", " ", "\"E\"", "}", " ",
+      "->", " ", "{", "\"A\"", ",", " ", "\"A\"", "}", ",", " ", "entries",
+      ",", " ", "knownModel", ",", " ", "\"ProcessName\"", " ", "->", " ",
+      "\"eeAA\"", "]"}]], "Input"], Cell["This example writes files, starts a \
+longer calculation, or requires an optional external tool. Evaluate it when \
+you want to perform that operation.", "ExampleText"],
   Cell["Optionally build the exported project and run its example points.",
    "ExampleText"], Cell[BoxData[RowBox[{"WriteSPINASProcess", "[",
       "exportDirectory", ",", " ", "{", "\"e\"", ",", " ", "\"E\"", "}", " ",
@@ -245,6 +319,40 @@ operation.", "ExampleText"],
       "\"eeAA\"", ",", " ", "\"Overwrite\"", " ", "->", " ", "True", ",",
       " ", "\"Build\"", " ", "->", " ", "True", ",", " ", "\"RunExamples\"",
       " ", "->", " ", "True", "]"}]], "Input"],
+  Cell["This example writes files, starts a longer calculation, or requires \
+an optional external tool. Evaluate it when you want to perform that \
+operation.", "ExampleText"], Cell["Generate the independent per-helicity \
+MadGraph report while exporting. Set the directory and model to your chosen \
+installation and theory; this example explicitly selects the \
+electron/positron/photon sector of sm-full.", "ExampleText"],
+  Cell[BoxData[RowBox[{"madGraphDirectory", " ", "=", " ", "FileNameJoin",
+      "[", "{", "ParentDirectory", "[", "hepcatDirectory", "]", ",", " ",
+      "\"MadGraph\"", "}", "]", ";", "\n", "WriteSPINASProcess", "[",
+      "exportDirectory", ",", " ", "{", "\"e\"", ",", " ", "\"E\"", "}", " ",
+      "->", " ", "{", "\"A\"", ",", " ", "\"A\"", "}", ",", " ", "entries",
+      ",", " ", "knownModel", ",", " ", "\"ProcessName\"", " ", "->", " ",
+      "\"eeAA\"", ",", " ", "\"Overwrite\"", " ", "->", " ", "True", ",",
+      " ", "\"MadGraphDirectory\"", " ", "->", " ", "madGraphDirectory", ",",
+      " ", "\"MadGraphModel\"", " ", "->", " ", "\"sm-full\"", ",", " ",
+      "\"MadGraphAllowedParticles\"", " ", "->", " ", "{", "11", ",", " ",
+      "22", "}", ",", " ", "\"RunMadGraphValidation\"", " ", "->", " ",
+      "True", "]"}]], "Input"], Cell["This example writes files, starts a \
+longer calculation, or requires an optional external tool. Evaluate it when \
+you want to perform that operation.", "ExampleText"],
+  Cell["Select the CalcHEP installation, model and QED sector explicitly for \
+an independent unpolarized comparison. Replace the installation path, model \
+directory and model number with your chosen reference.", "ExampleText"],
+  Cell[BoxData[RowBox[{"calcHEPDirectory", " ", "=", " ",
+      "\"/path/to/CalcHEP\"", ";", "\n", "WriteSPINASProcess", "[",
+      "exportDirectory", ",", " ", "{", "\"e\"", ",", " ", "\"E\"", "}", " ",
+      "->", " ", "{", "\"A\"", ",", " ", "\"A\"", "}", ",", " ", "entries",
+      ",", " ", "knownModel", ",", " ", "\"ProcessName\"", " ", "->", " ",
+      "\"eeAA\"", ",", " ", "\"Overwrite\"", " ", "->", " ", "True", ",",
+      " ", "\"CalcHEPDirectory\"", " ", "->", " ", "calcHEPDirectory", ",",
+      " ", "\"CalcHEPModel\"", " ", "->", " ", "{", "feynmanModelDirectory",
+      ",", " ", "2", "}", ",", " ", "\"CalcHEPAllowedParticles\"", " ", "->",
+      " ", "{", "11", ",", " ", "22", "}", ",", " ",
+      "\"RunCalcHEPValidation\"", " ", "->", " ", "True", "]"}]], "Input"],
   Cell["This example writes files, starts a longer calculation, or requires \
 an optional external tool. Evaluate it when you want to perform that \
 operation.", "ExampleText"], Cell["See Also", "SeeAlsoSection"],
@@ -257,7 +365,9 @@ operation.", "ExampleText"], Cell["See Also", "SeeAlsoSection"],
      ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"], "  \[Bullet]  ",
      ButtonBox["ModelParameterRules", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/ModelParameterRules"]}], "SeeAlso"],
+      ButtonData -> "paclet:HEPCAT/ref/ModelParameterRules"],
+     "  \[Bullet]  ", ButtonBox["ValidateMadGraph", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ValidateMadGraph"]}], "SeeAlso"],
   Cell["Related Guides", "MoreAboutSection"],
   Cell[TextData[{ButtonBox["Formatting, Model Output and SPINAS Export",
       BaseStyle -> "Link", ButtonData ->
@@ -270,7 +380,8 @@ operation.", "ExampleText"], Cell["See Also", "SeeAlsoSection"],
      "uri" -> "HEPCAT/ref/WriteSPINASProcess",
      "title" -> "WriteSPINASProcess", "type" -> "Symbol",
      "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Writes a \
-complete, readable C++ process using SPINAS, with optional CalcHEP validation \
-and integration.", "keywords" -> {"HEPCAT", "WriteSPINASProcess",
-       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
+complete, readable C++ process using SPINAS, with optional CalcHEP and \
+helicity-resolved MadGraph validation.", "keywords" ->
+      {"HEPCAT", "WriteSPINASProcess", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

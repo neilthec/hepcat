@@ -36,7 +36,7 @@ Do[
       Documentation`CreateMessageLink["ConstructiveDiagrams`", symbol,
         "usage", "English", False] === "paclet:HEPCAT/ref/" <> symbol]
   ],
-  {symbolName, {"ReadModel", "SpinorChain", "PrepareAmplitudes", "ConstructAmplitude", "WriteSPINASProcess"}}
+  {symbolName, {"ReadModel", "SpinorChain", "PrepareAmplitudes", "ConstructAmplitude", "WriteSPINASProcess", "ValidateMadGraph"}}
 ];
 
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
@@ -93,6 +93,10 @@ drCheck["native Help search finds the main HEPCAT guide",
 drCheck["native exact symbol search finds ReadModel",
   DocumentationSearch`DirectHitSearch[drIndexDirectories, "ReadModel"] ===
     {"ReadModel", "HEPCAT/ref/ReadModel"}];
+
+drCheck["native exact symbol search finds the MadGraph validation reference",
+  DocumentationSearch`DirectHitSearch[drIndexDirectories, "ValidateMadGraph"] ===
+    {"ValidateMadGraph", "HEPCAT/ref/ValidateMadGraph"}];
 
 Print["Documentation registration: ", drChecks - Length[drFailures], " / ", drChecks, " checks passed."];
 If[drFailures =!= {}, Print["Failures: ", drFailures]; Exit[1]];

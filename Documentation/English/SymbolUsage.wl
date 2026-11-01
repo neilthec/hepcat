@@ -568,4 +568,16 @@ helicity-related {particles, amplitude} entries into one \
 class.\nWriteSPINASProcess[directory, incoming -> outgoing, entries, model] \
 declares the physical process and crosses its outgoing legs \
 automatically.\nWrites a complete, readable C++ process using SPINAS, with \
-optional CalcHEP validation and integration."|>
+optional CalcHEP and helicity-resolved MadGraph validation.",
+ "ConstructiveDiagrams`ValidateMadGraph" -> "ValidateMadGraph[directory] \
+builds and runs the MadGraph validator of a SPINAS project exported by the \
+current WriteSPINASProcess.\nValidateMadGraph[incoming -> outgoing, entries, \
+model] exports and validates the supplied all-incoming amplitude entries for \
+the declared physical process.\nValidateMadGraph[particles, amplitude, model] \
+validates one all-incoming amplitude at its specified massless helicities, \
+with IncomingLegs selecting the physical incoming \
+pair.\nValidateMadGraph[input, ..., \"Output\" -> \"Details\"] returns the \
+full report, including per-helicity failures and the actual random \
+seed.\nCompares exported HEPCAT/SPINAS amplitudes with independent MadGraph \
+matrix elements on common random phase-space points, separately for each \
+massless-helicity combination."|>

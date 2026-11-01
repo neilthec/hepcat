@@ -12,7 +12,11 @@ ciRun[command_List] := Quiet[Check[RunProcess[command], <|"ExitCode" -> -1|>]];
 ciSucceeded[report_] := AssociationQ[report] && Lookup[report, "ExitCode", -1] === 0;
 ciSpinas = Replace[Environment["HEPCAT_SPINAS_DIRECTORY"],
   $Failed | "" -> FileNameJoin[{ParentDirectory[root], "spinas"}]];
-ciCalcHEP = Replace[Environment["HEPCAT_CALCHEP_DIRECTORY"], $Failed | "" -> Automatic];
+ciCalcHEP = Replace[Environment["HEPCAT_CALCHEP_DIRECTORY"], $Failed | "" -> None];
+If[ciCalcHEP === None,
+  DeleteDirectory[ciDirectory, DeleteContents -> True];
+  Print["SKIP: Set HEPCAT_CALCHEP_DIRECTORY to the explicit reference installation."];
+  Print["HEPCAT_TEST_COMPLETED:spinas-calchep-integration-tests.wl"]; Quit[0]];
 ciModel = ReadModel[FileNameJoin[{root, "models"}], 3];
 ciModelBefore = ciModel;
 ciRules = {"Me" -> 1, "EE" -> 1/3};
@@ -29,7 +33,7 @@ ciFour = ciRecords[ciFourProcesses];
 ciExport[name_String, entries_List, opts___] := WriteSPINASProcess[ciPath[name], entries, ciModel,
   opts, "ProcessName" -> name, "SPINASDirectory" -> ciSpinas, "ParameterRules" -> ciRules,
   "CalcHEPDirectory" -> ciCalcHEP, "CalcHEPModel" -> ciCounterpart,
-  "CalcHEPPoints" -> 1000, "CalcHEPSeed" -> 12345, "ReturnDetails" -> True];
+  "CalcHEPAllowedParticles" -> {11, 22}, "CalcHEPPoints" -> 1000, "CalcHEPSeed" -> 12345, "ReturnDetails" -> True];
 ciExecutable[report_Association, name_String] := FileNameJoin[
   {report["Directory"], "build", name <> "_validate_calchep" <> If[$OperatingSystem === "Windows", ".exe", ""]}];
 ciCompare[report_Association, name_String, points_Integer:1000] := ciRun[
@@ -48,7 +52,8 @@ ciManifest = Import[ciPositive["Files"]["Manifest"], "RawJSON"];
 ciConfig = Lookup[ciManifest, "CalcHEPValidation", <||>];
 check["the selected CalcHEP model is available and physical photon PDGs stay self-conjugate",
   Lookup[ciConfig, "Status", None] === "AVAILABLE" &&
-    Lookup[ciConfig, "PhysicalPDGs", {}] === {11, -11, 22, 22}];
+    Lookup[ciConfig, "PhysicalPDGs", {}] === {11, -11, 22, 22} &&
+    Lookup[ciConfig, "AllowedParticlePDGs", {}] === {11, 22}];
 check["the generated standalone validator was built", FileExistsQ[ciExecutable[ciPositive, "calchep_positive"]]];
 ciPositiveRun = ciCompare[ciPositive, "calchep_positive"];
 check["1000 shared random points agree without a fitted normalization", ciPassed[ciPositiveRun]];
@@ -63,14 +68,45 @@ check["the same seed reproduces the full compared-point and error summary",
   ciPassed[ciReplayRun] && ciReplayLines[ciPositiveRun["StandardOutput"]] ===
     ciReplayLines[ciReplayRun["StandardOutput"]]];
 
+(* A full-SM process must remain full SM unless the user explicitly restricts it.
+   Reuse the generated project's selected CalcHEP libraries for this native probe. *)
+ciRestrictionTarget = "calchep_particle_restriction";
+ciRestrictionSource = FileNameJoin[{root, "tests", "checks", "calchep-particle-restriction-tests.cpp"}];
+ciRestrictionCMake = StringRiffle[{
+  "", "add_executable(" <> ciRestrictionTarget <> " " <>
+    ConstructiveDiagrams`Private`spinasCppQuoted[ciRestrictionSource] <> ")",
+  "target_include_directories(" <> ciRestrictionTarget <> " PRIVATE " <>
+    ConstructiveDiagrams`Private`spinasCppQuoted[FileNameJoin[{root, "source"}]] <>
+    " \"${CALCHEP_ROOT}/include\" \"${CALCHEP_ROOT}/c_source/dynamicME/include\" " <>
+    "\"${CALCHEP_ROOT}/c_source/ntools/include\")",
+  "target_link_libraries(" <> ciRestrictionTarget <> " PRIVATE calchep_positive_calchep_validation)",
+  "set_target_properties(" <> ciRestrictionTarget <> " PROPERTIES BUILD_RPATH \"${CALCHEP_ROOT}/lib\")", ""}, "\n"];
+Export[ciPositive["Files"]["CMake"], Import[ciPositive["Files"]["CMake"], "Text"] <> ciRestrictionCMake, "Text"];
+ciCMake = ConstructiveDiagrams`Private`spinasProjectCMakeExecutable[Automatic];
+ciRestrictionConfigured = ciRun[{ciCMake, "-S", ciPositive["Directory"], "-B",
+  FileNameJoin[{ciPositive["Directory"], "build"}]}];
+ciRestrictionBuilt = If[ciSucceeded[ciRestrictionConfigured],
+  ciRun[{ciCMake, "--build", FileNameJoin[{ciPositive["Directory"], "build"}], "--target", ciRestrictionTarget}],
+  ciRestrictionConfigured];
+check["the explicit particle-restriction regression compiles against the selected CalcHEP installation",
+  ciSucceeded[ciRestrictionBuilt]];
+If[ciSucceeded[ciRestrictionBuilt],
+  ciRestrictionRun = ciRun[{FileNameJoin[{ciPositive["Directory"], "build", ciRestrictionTarget}],
+    First[ciCounterpart]}];
+  check["restricted full-SM Bhabha equals QED, unrestricted SM differs, and unknown allowed types are rejected",
+    ciSucceeded[ciRestrictionRun] && StringContainsQ[
+      Lookup[ciRestrictionRun, "StandardOutput", ""], "CALCHEP_PARTICLE_RESTRICTION_PASS"]];
+  If[!ciSucceeded[ciRestrictionRun], Print["CALCHEP RESTRICTION PROBE: ", ciRestrictionRun]],
+  Print["CALCHEP RESTRICTION BUILD: ", ciRestrictionBuilt]];
+
 ciAutoIR = ConstructiveDiagrams`Private`spinasFamilyIR[ciFour, ciModel,
   <|"ParameterRules" -> ciRules, "IncomingLegs" -> {1, 2}, "FixedHelicities" -> Automatic|>];
 ciAutomatic = ConstructiveDiagrams`Private`spinasCalcHEPConfiguration[ciAutoIR, ciModel,
   Join[Association[Options[WriteSPINASProcess]],
     <|"CalcHEPDirectory" -> ciCalcHEP, "ParameterRules" -> ciRules|>]];
-check["recognized pure-QED model data selects the matching massive CalcHEP counterpart automatically",
-  AssociationQ[ciAutomatic] && ciAutomatic["Status"] === "AVAILABLE" &&
-    ciAutomatic["ModelNumber"] === 2 && ciAutomatic["PhysicalPDGs"] === {11, -11, 22, 22}];
+check["even recognized QED input requires an explicitly selected reference model",
+  AssociationQ[ciAutomatic] && ciAutomatic["Status"] === "UNAVAILABLE" &&
+    ciAutomatic["ModelNumber"] === 0 && ciAutomatic["PhysicalPDGs"] === {11, -11, 22, 22}];
 ciComptonProcesses = Join[{"e", #[[1]], "E"}, {#[[2]]}] & /@ Tuples[{"A.+", "A.-"}, 2];
 ciComptonIR = ConstructiveDiagrams`Private`spinasFamilyIR[ciRecords[ciComptonProcesses], ciModel,
   <|"ParameterRules" -> ciRules, "IncomingLegs" -> {1, 2}, "FixedHelicities" -> Automatic|>,

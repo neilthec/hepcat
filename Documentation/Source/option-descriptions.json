@@ -3,8 +3,8 @@
   "BoseSymmetryGroups": "Groups of identical external bosons to symmetrize. Automatic infers species and helicity from ordered process metadata and the model; {} disables boson exchange projection without disabling fermion projection.",
   "Build": "Whether to configure and compile the exported C++ project against the existing SPINAS library. False writes source files only; a source-only export does not require CMake.",
   "CMakeExecutable": "Path to the CMake program used when building. Automatic searches PATH and standard installations, including common macOS application and Homebrew locations.",
-  "CalcHEPDirectory": "Directory containing the local CalcHEP installation. Automatic searches the configured local installation; ordinary SPINAS execution remains available when CalcHEP is absent.",
-  "CalcHEPModel": "Equivalent CalcHEP theory for independent validation, given as {directory, modelNumber}. Automatic recognizes the supported bundled massive-electron QED models; it does not infer an arbitrary theory.",
+  "CalcHEPDirectory": "Chosen CalcHEP installation directory. None, the default, leaves the optional backend unconfigured. An explicitly supplied Automatic consults the corresponding environment variables only; no installation path is guessed.",
+  "CalcHEPModel": "Chosen equivalent CalcHEP reference theory as {directory, modelNumber}. None, the default, selects no theory; Automatic does not infer a model. This reference model is separate from the supplied HEPCAT amplitudes.",
   "CalcHEPPoints": "Number of random physical phase-space points compared by the generated independent CalcHEP validation executable. This tests both implementations at the same points.",
   "CalcHEPSeed": "Default seed of the generated CalcHEP comparison. Automatic chooses from the time when validation runs and prints the concrete seed; an unsigned 64-bit integer, including zero, makes the run reproducible.",
   "ChannelCompanions": "Whether completion first tries a small set of source-derived physical-pole correction directions for eligible two-leg channels. Automatic gives this attempt a bounded share of the existing clock; None skips it. Every original channel must still validate.",
@@ -87,5 +87,21 @@
   "Momenta": "Complete external momentum labels available to the older simplification or x-factor helper. This is a legacy symbol option; the list supplies the context needed for momentum-conservation identities.",
   "PrintWarnings": "Whether the older SimplifySpinorProducts helper prints warnings about its iterative simplification. This legacy symbol option affects messages rather than the allowed physical assumptions.",
   "massReplacementRules": "Explicit Mass[...] replacement rules for the older SimplifySpinorProducts helper. Supply only assumptions justified for the current item; do not combine incompatible diagram-local shells.",
-  "nTimes": "Maximum number of repeated simplification rounds in the older SimplifySpinorProducts helper. This is a legacy symbol option, not a wall-clock limit."
+  "nTimes": "Maximum number of repeated simplification rounds in the older SimplifySpinorProducts helper. This is a legacy symbol option, not a wall-clock limit.",
+  "MadGraphDirectory": "Chosen MadGraph installation directory. None, the default, leaves reference validation disabled. An explicitly supplied Automatic consults environment variables only; pass a path to make the selection explicit.",
+  "MadGraphModel": "Chosen equivalent MadGraph UFO model name or directory. None, the default, selects no reference theory. Automatic does not infer a theory. Specify the model and any particle filter explicitly.",
+  "MadGraphParameterRules": "Real numerical values for named external MadGraph UFO parameters. Automatic uses the supported model-parameter matching; explicit rules supply otherwise ambiguous independent inputs.",
+  "RunMadGraphValidation": "Whether WriteSPINASProcess builds and runs the independent MadGraph comparison. False writes the optional support without running it; True runs a report for each exported massless-helicity combination.",
+  "MadGraphPoints": "Number of common random phase-space points compared for each massless-helicity combination. The default is 1000.",
+  "MadGraphSeed": "Random seed for the generated MadGraph comparison. Automatic chooses one time-based seed when validation runs and reports it; an explicit unsigned 64-bit integer, including zero, replays the samples.",
+  "RelativeTolerance": "Maximum relative numerical difference allowed by the selected comparison. ValidateMadGraph defaults to 10^-7; this is applied independently to each tested massless-helicity combination.",
+  "AbsoluteTolerance": "Optional absolute numerical comparison tolerance. ValidateMadGraph defaults to zero so a wrong tiny amplitude cannot pass through a fixed absolute floor.",
+  "MinimumEnergy": "Lower center-of-mass energy used by ValidateMadGraph's random validation samples. Automatic chooses a value above the incoming and outgoing mass thresholds.",
+  "MaximumEnergy": "Upper center-of-mass energy used by ValidateMadGraph's random validation samples. Automatic chooses a suitable range above threshold.",
+  "MadGraphParameterMap": "Rules mapping HEPCAT model parameter names to external or derived MadGraph UFO parameter names. Automatic uses supported same-name and known-model matching; unresolved used parameters prevent a passing comparison.",
+  "ValidateMadGraph": {
+    "TimeConstraint": "Time budget in seconds for generating and compiling the independent MadGraph reference process. A timeout is an incomplete check, not PASS."
+  },
+  "MadGraphAllowedParticles": "All retains the full selected MadGraph theory. A nonempty list of unique positive absolute PDG codes, such as {11,22}, restricts the reference particle sector and includes antiparticles. Every external particle type must be present.",
+  "CalcHEPAllowedParticles": "All retains the full selected CalcHEP theory. A nonempty list of unique positive absolute PDG codes restricts the independent reference particle sector, including antiparticles. Every external type must be included."
 }
