@@ -2,7 +2,7 @@
 
 (* Build deployed Mathematica Help notebooks from the reviewed source catalogs.
    Run Get["/absolute/path/to/hepcat/Documentation/Build.wl"] in a licensed
-   kernel. Example cells are parsed under HoldAllComplete and never executed. *)
+   kernel. Example cells are tokenized as literal source and never evaluated. *)
 Global`$HEPCATpath = FileNameJoin[{ParentDirectory[DirectoryName[$InputFileName]], "source"}];
 Get[FileNameJoin[{Global`$HEPCATpath, "HEPCAT.wl"}]];
 Needs["CodeParser`"];
