@@ -69,6 +69,89 @@ fsCheck["the independent Feynman and factorization double residues are nonzero",
  result["Nonzero"] && FreeQ[{fullDouble,targetDouble},$Failed|$TimedOut|Indeterminate|DirectedInfinity]];
 fsCheck["mixed-flavor fermion sewing agrees exactly with the off-shell Feynman double residue",
  result["Equal"]];
+
+(* A common grouped-state reference is required for both kinds of sewing. *)
+fsCheck["boson sewing includes the lower-to-full reference normalization",
+ ConstructiveDiagrams`Private`factorizationFermionReferenceSign[{Range[2],Range[2]},False]===-1 &&
+ ConstructiveDiagrams`Private`factorizationFermionReferenceSign[{Range[2],Range[4]},False]===1 &&
+ ConstructiveDiagrams`Private`factorizationFermionReferenceSign[{{},Range[4]},False]===1];
+fsReferenceGrade[a_,b_,sewnFermion_]:=ConstructiveDiagrams`Private`factorizationFermionReferenceSign[
+ {Range[2a],Range[2b]},sewnFermion];
+fsCheck["mixed boson and fermion reference transports compose consistently",
+ And@@Flatten[Table[
+ fsReferenceGrade[a,b,firstFermion] fsReferenceGrade[a+b-Boole[firstFermion],c,secondFermion]===
+ fsReferenceGrade[b,c,secondFermion] fsReferenceGrade[a,b+c-Boole[secondFermion],firstFermion],
+ {a,1,3},{b,1,3},{c,1,3},{firstFermion,{False,True}},{secondFermion,{False,True}}]]];
+
+(* A paired Dirac reference must not invent a sign for fermion-number violation. *)
+fsUnpairedModel=ReplacePart[cm,{
+  1->{ReplacePart[cm[[1,1]],{1->"test scalar",2->"S",3->"S",4->999,5->0,6->0}],cm[[1,2]]},
+  2->{{"e","e","S",1,SpinorChain[Spinor["Spin","Angle",1],Spinor["Spin","Angle",2]]},
+      {"E","E","S",1,SpinorChain[Spinor["Spin","Square",1],Spinor["Spin","Square",2]]}}}];
+fsUnpairedResult=FactorizationAmplitudeChannels[{"e","e","E","E"},fsUnpairedModel];
+fsCheck["unpaired Dirac lower amplitudes return a public failure before multiplying an invalid sign",
+ MatchQ[fsUnpairedResult,Failure["UnsupportedFermionSewing",_Association]] &&
+ FreeQ[fsUnpairedResult,$Failed]];
+
+(* Verify the lower data independently before using it in a larger cut. *)
+Do[
+ fsProcess=Drop[fsRow,-2];
+ fsLowerFeynman=FeynmanToSpinorProducts[diagramAmplitudes[CreateDiagrams[fsProcess,fm]],
+   "TimeConstraint"->30]/.{fMass->cMass,fCharge->cCharge};
+ fsLowerReport=CheckAmplitudes[
+   {Thread[Mass/@Range[4]->ConstantArray[cMass,4]],fsRow[[-2]]fsRow[[-1]]},
+   FactorizationAmplitudeChannels[fsProcess,known],known,
+   "FeynmanAmplitudes"->fsLowerFeynman,"FeynmanSamples"->1,"Samples"->1,
+   "RandomSeed"->20261101,"ParameterRules"->rules,
+   "SpuriousPoles"->{},"HighEnergyCheck"->False,"ReferenceCheck"->False,
+   "Parallelization"->False,"TimeConstraint"->15,"Output"->"Details"];
+ fsCheck["mixed-flavor lower row independently agrees with every Feynman spin coefficient "<>
+   ToString[fsProcess,InputForm],
+   AssociationQ[fsLowerReport] && Lookup[fsLowerReport["FeynmanCheck"],"Status",None]==="PASS"],
+ {fsRow,rows4}];
+
+(* The three photon cuts require complete four-fermion-plus-photon lower data.
+   Build these from ordinary off-shell Feynman diagrams, not from sewing. *)
+fsRows5=Flatten[Table[Module[{p,raw5,prepared5,a},
+ p=Join[flavors[[pair[[1]],{1,2}]],flavors[[pair[[2]],{2,1}]],{photon}];
+ raw5=diagramAmplitudes[CreateDiagrams[p,fm]];
+ prepared5=PrepareAmplitudes[raw5,fm,"PolePreference"->"AllPhysical",
+   "InternalOnShell"->False,"MaxSteps"->0,"TimeConstraint"->30,
+   "Parallelization"->False,"ReturnDetails"->True,"ProgressReporting"->False];
+ If[!AssociationQ[prepared5] || !ListQ[Lookup[prepared5,"PreparedAmplitudes",None]],Return[$Failed]];
+ a=Total[Last/@prepared5["PreparedAmplitudes"]]/.{fMass->cMass,fCharge->cCharge};
+ If[Length[raw5]=!=4 || !FreeQ[a,Spinor["Xi",___]],Return[$Failed]];
+ Join[p,{1,a}]],{pair,Subsets[Range[3],{2}]},{photon,{"A.+","A.-"}}],1];
+fsCheck["all six mixed four-fermion photon rows retain all four off-shell diagrams",
+ Length[fsRows5]===6 && AllTrue[fsRows5,ListQ] && FreeQ[fsRows5,$Failed|_Failure]];
+If[Length[fsRows5]===6 && AllTrue[fsRows5,ListQ],
+ fsKnown5=ReplacePart[known,2->Join[known[[2]],fsRows5]];
+ fsChannels9=FactorizationAmplitudeChannels[process6,fsKnown5];
+ fsTargets9=ConstructiveDiagrams`Private`residueSimpleInputs[amp6,fsChannels9,fsKnown5]["Targets"];
+ fsCoherentRows=TimeConstrained[Table[Module[{ch,chart,comparison},
+   ch=ConstructiveDiagrams`Private`residueNormalizeChannel[target];
+   chart=ConstructiveDiagrams`Private`completionCutChart[ch,1,20261101,rules];
+   If[FailureQ[chart],Return[$Failed]];
+   comparison=ConstructiveDiagrams`Private`residueCheckChannel[
+     amp6,ch,{},fsTargets9,fsTargets9,chart["Map"],"Symbolic",18,10^-12,{}];
+   {ch["Cut"],Length[chart["SpinVariables"]],Lookup[comparison,"Status",None],
+     TrueQ[Lookup[comparison,"Difference",Missing[]]===0]}],{target,fsTargets9}],120,$TimedOut];
+ fsCheck["all nine mixed photon and fermion cuts agree for every one of 64 spin components",
+   Length[fsTargets9]===9 && MatchQ[fsCoherentRows,{{_List,6,"PASS",True}..}] && Length[fsCoherentRows]===9];
+ fsAntiProcess=ReplacePart[process6,{2->process6[[4]],4->process6[[2]]}];
+ fsAntiFeynman=FeynmanToSpinorProducts[diagramAmplitudes[CreateDiagrams[fsAntiProcess,fm]],
+   "TimeConstraint"->60]/.{fMass->cMass,fCharge->cCharge};
+ fsAntiAmp=Total[Last/@fsAntiFeynman];
+ fsAntiChannels=FactorizationAmplitudeChannels[fsAntiProcess,fsKnown5];
+ fsAntiReport=CheckAmplitudes[fsAntiAmp,fsAntiChannels,fsKnown5,
+   "ParameterRules"->rules,"Samples"->1,"RandomSeed"->20261101,
+   "SpuriousPoles"->{},"HighEnergyCheck"->False,"ReferenceCheck"->False,
+   "Parallelization"->False,"TimeConstraint"->15,"Output"->"Details"];
+ fsCheck["all nine cuts keep one reference convention after exchanging two distinct antifermions",
+   AssociationQ[fsAntiReport] && Length[fsAntiReport["Channels"]]===9 &&
+   AllTrue[fsAntiReport["Channels"],Lookup[#,"Status",None]==="PASS"&]];
+];
+
 Print["FERMION_SEWING_GRADING_CHECKS=",fsChecks,"; FAILURES=",Length[fsFailures]];
 If[fsFailures=!={},Print[fsFailures];Print["MIXED_RESULT ",InputForm[result]]];
 Print["HEPCAT_TEST_COMPLETED:fermion-sewing-grading-tests.wl"];

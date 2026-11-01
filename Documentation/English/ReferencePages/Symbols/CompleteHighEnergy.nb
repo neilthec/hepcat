@@ -30,6 +30,11 @@ the original channels.", "Notes"], Cell["The default high-energy target is \
 the renormalizable tree bound E^(4-n), with masses held fixed. \
 \"HighEnergyBound\" can express another stated bound; it is a physical input \
 rather than an arbitrary fitting preference.", "Notes"],
+  Cell["Independent high-energy validation may use a conservative all-spin \
+upper-bound certificate for supported large expressions. Such a report \
+records ObservedPowerUpperBound and leaves ObservedPower missing; it does not \
+claim a measured leading Laurent power. Unsupported or inconclusive \
+certificates retain the ordinary exact Laurent comparison.", "Notes"],
   Cell["A successful ordinary result keeps the {externalMassRules, \
 expression} form. There are no new internal on-shell conditions on this \
 combined amplitude, so it may be simplified again with PrepareAmplitudes.",

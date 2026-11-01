@@ -810,7 +810,8 @@ expandExternalXFactors[newExp,n]
 DownValues[FactorizationAmplitudeChannels] = {};
 Options[FactorizationAmplitudeChannels] = {};
 FactorizationAmplitudeChannels::usage = "FactorizationAmplitudeChannels[particles, model] returns one row for each nonzero factorization channel: the external masses, channel momentum combination, exchanged mass, and sewn product of lower-point amplitudes divided by z and the propagator denominator. Amplitudes absent from the supplied model are zero.";
-FactorizationAmplitudeChannels[particles_List,model_]:=Module[{partitions,j,i,k,channel,momenta1,momenta2,amp1,amp2,amp12A,amp12B,amplitude={},masses={},xFactorReverseProtect,xFactorReverseProtectInverse,Multipart,XiN=1,massReplacements={}},
+FactorizationAmplitudeChannels[particles_List,model_]:=Module[{partitions,j,i,k,channel,momenta1,momenta2,amp1,amp2,amp12A,amp12B,fermionSewingSign,fermionSewingTag=Unique["factorizationSewing"],amplitude={},masses={},xFactorReverseProtect,xFactorReverseProtectInverse,Multipart,XiN=1,massReplacements={}},
+Catch[
 If[TrueQ[ConstructiveDiagrams`Private`feynmanModelQ[model]],
 Return[Failure["FeynmanVerticesNotFactorizationAmplitudes",<|"MessageTemplate"->
 "Factorization requires known on-shell spinor amplitudes, not bare Feynman vertices. Convert and validate the lower-point amplitudes first."|>]]];
@@ -834,7 +835,12 @@ channel[[2]]=Append[channel[[2]],{model[[1,j,3]],momenta2}];
 amp1=ReverseMomentum[LookupAmplitude[channel[[1]],model,False,{i1,i2,i3,i4}],momenta1]//.xFactorReverseProtect/.momenta1->momenta2//.xFactorReverseProtectInverse;
 If[amp1=!=0,amp2=LookupAmplitude[channel[[2]],model,True,{i1,i2,i3,i4}]];
 If[amp1=!=0&&amp2=!=0,(*Print[amp1];Print[amp2];*)
-amp12A=ConstructiveDiagrams`Private`factorizationExternalFermionSign[channel,model] ReduceSpinContractions[amp1 amp2]/.{
+fermionSewingSign=ConstructiveDiagrams`Private`factorizationExternalFermionSign[channel,model];
+If[fermionSewingSign===$Failed||FailureQ[fermionSewingSign],
+Throw[Failure["UnsupportedFermionSewing",<|"MessageTemplate"->
+"Factorization sewing requires balanced Dirac particle/antiparticle pairs in each lower amplitude, with unambiguous particle roles.",
+"Channel"->channel|>],fermionSewingTag]];
+amp12A=fermionSewingSign ReduceSpinContractions[amp1 amp2]/.{
 Mass[momenta1]->model[[1,j,6]],
 SpinorChain[a__,Mom[Multiparticle[parts__]],b__]:>SpinorChain[a,Total[Mom/@{parts}],b]
 };];(*Print[amp12A];*)
@@ -848,7 +854,12 @@ channel[[2]]=Append[channel[[2]],{model[[1,j,2]],momenta2}];
 amp1=ReverseMomentum[LookupAmplitude[channel[[1]],model,False,{i1,i2,i3,i4}],momenta1]//.xFactorReverseProtect/.momenta1->momenta2//.xFactorReverseProtectInverse;
 If[amp1=!=0,amp2=LookupAmplitude[channel[[2]],model,True,{i1,i2,i3,i4}]];
 If[amp1=!=0&&amp2=!=0,(*Print[amp1];Print[amp2];*)
-amp12B=ConstructiveDiagrams`Private`factorizationExternalFermionSign[channel,model] ReduceSpinContractions[amp1 amp2]/.{
+fermionSewingSign=ConstructiveDiagrams`Private`factorizationExternalFermionSign[channel,model];
+If[fermionSewingSign===$Failed||FailureQ[fermionSewingSign],
+Throw[Failure["UnsupportedFermionSewing",<|"MessageTemplate"->
+"Factorization sewing requires balanced Dirac particle/antiparticle pairs in each lower amplitude, with unambiguous particle roles.",
+"Channel"->channel|>],fermionSewingTag]];
+amp12B=fermionSewingSign ReduceSpinContractions[amp1 amp2]/.{
 Mass[momenta1]->model[[1,j,6]],
 SpinorChain[a__,Mom[Multiparticle[parts__]],b__]:>SpinorChain[a,Total[Mom/@{parts}],b]
 };];(*Print[amp12B];*)
@@ -866,6 +877,7 @@ AppendTo[amplitude,Flatten[{masses,momenta2,model[[1,j,6]],ExpandXFactors[Simpli
 (*Print[Expand[amplitude[[-1]]]]];*)
 ,{j,1,Length[model[[1]]]},{i,1,Length[partitions]}];
 amplitude/.massReplacements
+,fermionSewingTag]
 ]
 
 
@@ -886,29 +898,36 @@ physicalParticleMass[particle_, particleRows_List] := Module[{masses},
   If[Length[masses] === 1, First[masses], Missing["UnknownParticleMass", particle]]
 ];
 
-(* Lower amplitudes are commuting spinor tensors, with their own fermion
-   reference ordering already absorbed. Sewing a Dirac line also joins the
-   two spectator particle/antiparticle blocks. A lower word with 2r fermion
-   ports has r-1 spectators in each such block after selecting the open line.
-   Moving the right spectator block through the left one is a Koszul shuffle.
-   Its parity is independent of particle flavors and of the cut labels. *)
-factorizationFermionReferenceSign[lowerWords_List] := Module[
-  {spectators, leftBlock, rightBlock},
-  If[Length[lowerWords] =!= 2 || !AllTrue[lowerWords,
-      ListQ[#] && Length[#] >= 2 && EvenQ[Length[#]] &], Return[$Failed]];
-  spectators = (Length[#]/2 - 1) & /@ lowerWords;
-  leftBlock = Range[First[spectators]];
-  rightBlock = First[spectators] + Range[Last[spectators]];
+(* Lower amplitudes are commuting spinor tensors in a paired Dirac-state
+   reference. Grouping r particle/antiparticle pairs has parity
+   h(r) = (-1)^(r (r-1)/2). Sewing changes the number of pairs by delta=1
+   for an internal fermion and delta=0 for an internal boson. The reference
+   conversion h(rL) h(rR) / h(rL+rR-delta) is the block shuffle below. *)
+factorizationFermionReferenceSign[lowerWords_List, sewnFermion_: True] := Module[
+  {delta, blocks, leftBlock, rightBlock},
+  If[!MemberQ[{False, True}, sewnFermion] || Length[lowerWords] =!= 2 ||
+      !AllTrue[lowerWords, ListQ[#] && EvenQ[Length[#]] &], Return[$Failed]];
+  delta = Boole[sewnFermion];
+  blocks = (Length[#]/2 - delta) & /@ lowerWords;
+  If[Min[blocks] < 0, Return[$Failed]];
+  leftBlock = Range[First[blocks]];
+  rightBlock = First[blocks] + Range[Last[blocks]];
   Signature[Join[rightBlock, leftBlock]]
 ];
 
-(* Keep spectator-reference grading, external exchange parity, and the local
-   Wick sign from moving the two internal ports adjacent as separate factors. *)
+(* Internal-port movement, ordered Dirac contraction, surviving external-word
+   transport and lower-to-full reference normalization are distinct signs.
+   Sorting only within identical species loses mixed-flavor reference phases. *)
 factorizationExternalFermionSign[channel_List, model_List] := Module[
-  {species, lowerWords, words, orders, rows, row, rules, internalPositions,
-   contractionSign, referenceSign},
-  species = DeleteDuplicates[Flatten[Cases[model[[1]],
-    item_List /; item[[5]] === 1 :> item[[{2, 3}]]]]];
+  {fermions, particles, antiparticles, species, ambiguous, roles, lowerWords,
+   words, rows, row, rules, internalPositions, sewnFermion, contractionSign,
+   orientationSign, referenceSign, externalWord},
+  fermions = Select[model[[1]], #[[5]] === 1 &];
+  particles = (#[[2]] &) /@ fermions;
+  antiparticles = (#[[3]] &) /@ fermions;
+  species = DeleteDuplicates[Join[particles, antiparticles]];
+  ambiguous = Intersection[particles, antiparticles];
+  roles = AssociationMap[If[MemberQ[antiparticles, #], 1, 0] &, species];
   lowerWords = Map[Function[tagged,
     rows = Select[model[[2]],
       Sort[physicalAmplitudeParticles[#]] === Sort[tagged[[All, 1]]] &];
@@ -919,14 +938,21 @@ factorizationExternalFermionSign[channel_List, model_List] := Module[
       MemberQ[species, First[#]] &]
   ], channel];
   words = Flatten[lowerWords, 1];
+  If[AnyTrue[words, MemberQ[ambiguous, First[#]] &], Return[$Failed]];
+  If[!AllTrue[lowerWords, With[{wordRoles = roles /@ (First /@ #)},
+      Count[wordRoles, 0] === Count[wordRoles, 1]] &], Return[$Failed]];
   internalPositions = Flatten[Position[words, {_, _Multiparticle}, {1}]];
-  contractionSign = If[Length[internalPositions] === 2,
+  If[!MemberQ[{0, 2}, Length[internalPositions]], Return[$Failed]];
+  sewnFermion = Length[internalPositions] === 2;
+  contractionSign = If[sewnFermion,
     (-1)^(internalPositions[[2]] - internalPositions[[1]] - 1), 1];
-  referenceSign = If[Length[internalPositions] === 2,
-    factorizationFermionReferenceSign[lowerWords], 1];
+  orientationSign = If[sewnFermion,
+    If[roles[words[[First[internalPositions], 1]]] === 0, -1, 1], 1];
+  referenceSign = factorizationFermionReferenceSign[lowerWords, sewnFermion];
   If[referenceSign === $Failed, Return[$Failed]];
-  orders = Table[Cases[words, {particle, label_Integer} :> label], {particle, species}];
-  referenceSign contractionSign Times @@ (Signature[Ordering[#]] & /@ orders)
+  externalWord = Cases[words, {particle_, label_Integer} :> {roles[particle], label}];
+  If[!DuplicateFreeQ[Last /@ externalWord], Return[$Failed]];
+  referenceSign contractionSign orientationSign Signature[Ordering[externalWord]]
 ];
 
 
@@ -2295,7 +2321,7 @@ Scan[If[Names[#] =!= {}, Remove[#]] &, DeleteDuplicates[
 
 DiagramAmplitudeRecords::usage = "DiagramAmplitudeRecords[diagrams] retains each diagram's original expression, physical propagators, numerator conditions and mass rules. The string option SimplificationFunction accepts a function on {massRules, expression}; its default is Identity. NumeratorOnShellChannels declares any internal conditions used by that function; no internal-shell simplification is applied automatically.";
 PhysicalPoleResidue::usage = "PhysicalPoleResidue[expression, channel] extracts a pole coefficient. A list of channels extracts a compatible multiple-pole coefficient. Without a coherent KinematicMap the result is only FORMAL. A map f[expression, channels, poleVariables] must evaluate all spinors, momenta and propagators consistently near the selected cuts. KinematicKind distinguishes Sample from Symbolic charts. StructuralCoefficient -> True also computes the formal opaque-propagator coefficient by default; False skips that optional symbolic calculation and returns Missing[NotRequested] in its field without changing the mapped physical residue or kinematic validation. No internal on-shell condition is inferred from diagram mass rules.";
-CheckAmplitudes::usage = "CheckAmplitudes[diagramAmplitudes, channels, model] checks physical residues against the ordinary rows returned by FactorizationAmplitudeChannels, automatically discovers apparent denominator poles, and tests high-energy growth and explicit Xi reference-spinor independence of the complete summed amplitude. Only supplied channels certify physical poles; other supported denominator poles are tested for cancellation while physical propagators remain nonzero. The physical comparison applies the sewing factor -1 from (i A_L)(i A_R)(i/PropDen)/i. HighEnergyCheck -> Automatic enables exact high-energy expansions at sampled real, fixed-angle, momentum-conserving kinematics with external masses and couplings held fixed. HighEnergyBound -> Automatic assumes the renormalizable-tree bound E^(4-n); a numerical exponent overrides it, and HighEnergyCheck -> False disables this diagnostic. HighEnergySamples and HighEnergyTimeConstraint control the energy test. ReferenceCheck -> Automatic varies all literal Xi labels simultaneously at sampled conserved external kinematics away from physical poles, holding momenta and external spin states fixed. ReferenceSamples and ReferenceTimeConstraint control this test; ReferenceCheck -> False disables it. An expression without explicit reference spinors has no explicit Xi dependence; this is not a Ward-identity proof. ParameterRules -> Automatic uses numerical variables and dependent functions from the supplied model. An explicit rule list overrides selected model parameters; dependent functions are recomputed. Numerical values are used only for checking, leaving the amplitude symbolic. PASS denotes agreement, finiteness, acceptable growth or reference independence at the recorded kinematic samples, not a generic analytic proof. Opp Sign diagnoses an overall opposite sign in physical residues or a supplied Feynman comparison. Unsupported calculations and timeouts remain UNRESOLVED. Output -> \"HighEnergy\" shows energy samples, \"References\" shows reference comparisons, \"Residues\" shows physical and spurious-pole samples, \"Summary\" returns combined counts and \"Details\" retains all diagnostics. SpuriousPoles -> Automatic discovers denominators; a list overrides discovery and {} disables spurious checks. Set SpuriousPoles -> {}, HighEnergyCheck -> False and ReferenceCheck -> False for the legacy physical-only report. Samples, RandomSeed, ParameterRules and TimeConstraint control pole comparisons. Inputs remain unchanged and no amplitude correction or new interaction is added.";
+CheckAmplitudes::usage = "CheckAmplitudes[diagramAmplitudes, channels, model] checks physical residues against the ordinary rows returned by FactorizationAmplitudeChannels, automatically discovers apparent denominator poles, and tests high-energy growth and explicit Xi reference-spinor independence of the complete summed amplitude. Only supplied channels certify physical poles; other supported denominator poles are tested for cancellation while physical propagators remain nonzero. The physical comparison applies the sewing factor -1 from (i A_L)(i A_R)(i/PropDen)/i. HighEnergyCheck -> Automatic checks growth at sampled real, fixed-angle, momentum-conserving kinematics with external masses and couplings held fixed. Large supported reference-free expressions may certify a conservative all-spin upper bound; ObservedPower remains missing when only ObservedPowerUpperBound is certified. Unsupported or inconclusive bounds use the exact Laurent expansion. HighEnergyBound -> Automatic assumes the renormalizable-tree bound E^(4-n); a numerical exponent overrides it, and HighEnergyCheck -> False disables this diagnostic. HighEnergySamples and HighEnergyTimeConstraint control the energy test. ReferenceCheck -> Automatic varies all literal Xi labels simultaneously at sampled conserved external kinematics away from physical poles, holding momenta and external spin states fixed. ReferenceSamples and ReferenceTimeConstraint control this test; ReferenceCheck -> False disables it. An expression without explicit reference spinors has no explicit Xi dependence; this is not a Ward-identity proof. ParameterRules -> Automatic uses numerical variables and dependent functions from the supplied model. An explicit rule list overrides selected model parameters; dependent functions are recomputed. Numerical values are used only for checking, leaving the amplitude symbolic. PASS denotes agreement, finiteness, acceptable growth or reference independence at the recorded kinematic samples, not a generic analytic proof. Opp Sign diagnoses an overall opposite sign in physical residues or a supplied Feynman comparison. Unsupported calculations and timeouts remain UNRESOLVED. Output -> \"HighEnergy\" shows energy samples, \"References\" shows reference comparisons, \"Residues\" shows physical and spurious-pole samples, \"Summary\" returns combined counts and \"Details\" retains all diagnostics. SpuriousPoles -> Automatic discovers denominators; a list overrides discovery and {} disables spurious checks. Set SpuriousPoles -> {}, HighEnergyCheck -> False and ReferenceCheck -> False for the legacy physical-only report. Samples, RandomSeed, ParameterRules and TimeConstraint control pole comparisons. Inputs remain unchanged and no amplitude correction or new interaction is added.";
 DiagramAmplitudeRecords::args = "Expected a list of diagram associations and valid diagram-local simplification options.";
 PhysicalPoleResidue::args = "Expected channel associations with Cut, Complement, Mass and ExternalLegs, and valid diagnostic options.";
 CheckAmplitudes::args = "Expected diagram amplitudes, the ordinary channel rows returned by FactorizationAmplitudeChannels, a model, and valid comparison options.";
@@ -4876,11 +4902,145 @@ highEnergyRegroupTerms[expr_, seconds_] := Module[
     "CompletedGroups" -> completed, "ElapsedTime" -> AbsoluteTime[] - started|>
 ];
 
+(* A structural upper bound can avoid expanding a large coherent spin tensor.
+   Every external spinor is O(E^(1/2)), every momentum is O(E), and a
+   nondegenerate multiparticle propagator is Theta(E^2). Only a strict typed
+   polynomial numerator and verified propagator denominators are admitted.
+   An inconclusive bound always returns to the existing Laurent calculation. *)
+highEnergyUpperBoundCertificate[expr_, chart_Association, parameterRules_List, bound_] := Module[
+  {tag = Unique[], t = Lookup[chart, "PoleVariable", Missing[]],
+   variables = Lookup[chart, "SpinVariables", {}], external, checks, work,
+   constantQ, polynomialInSpinsQ, finitePolynomialQ, scaledValue, momentum, endpoint, primitive,
+   propagator, weight, degree, value, parts,
+   spinors = <||>, primitives = <||>, poles = <||>,
+   reject, result, masses, massiveLegs, basis},
+  reject[reason_] := Throw[<|"Status" -> "NOT_CERTIFIED", "Reason" -> reason|>, tag];
+  result = Catch[
+    external = Sort[Keys[Lookup[chart, "Momenta", <||>]]];
+    checks = Lookup[chart, "KinematicChecks", <||>];
+    If[Length[external] < 4 || !AllTrue[external, IntegerQ] ||
+        !ListQ[variables] || !DuplicateFreeQ[variables] || !AllTrue[variables, MatchQ[#, _Symbol] &] || MissingQ[t] ||
+        !TrueQ[Lookup[checks, "MomentumConservation", False]] ||
+        Length[Lookup[checks, "ExternalMassShells", {}]] =!= Length[external] ||
+        !AllTrue[Lookup[checks, "ExternalMassShells", {}], TrueQ] ||
+        !TrueQ[Lookup[checks, "PositiveFutureEnergies", False]] ||
+        TrueQ[Lookup[chart, "AllowCutSpinors", False]], reject["UnsupportedExternalChart"]];
+    constantQ[x_] := FreeQ[x, Alternatives @@ Join[{t}, variables]] &&
+      FreeQ[x, _Spinor | _SpinorChain | _SpinorTrace | _Mom | _MomProd |
+        _Mandelstahm | _PropDen | _Mass | _xFactor | _xTildeFactor] &&
+      NumericQ[x] && residueFiniteQ[x];
+    polynomialInSpinsQ[x_] := variables === {} || PolynomialQ[x, variables];
+    finitePolynomialQ[x_] := residueFiniteQ[x] &&
+      FreeQ[x, _Spinor | _SpinorChain | _SpinorTrace | _Mom | _MomProd |
+        _Mandelstahm | _PropDen | _Mass | _Missing | _Failure] &&
+      polynomialInSpinsQ[x] && AllTrue[
+        Last /@ If[variables === {}, {{} -> x}, CoefficientRules[x, variables]], constantQ];
+    scaledValue[x_, power_] := Quiet[Cancel[Together[t^power x]] /. t -> 0];
+    masses = Lookup[chart, "Masses", <||>];
+    If[!AssociationQ[masses] || !ContainsAll[Keys[masses], external] ||
+        !AllTrue[Lookup[masses, external], constantQ], reject["IncompleteFixedExternalMasses"]];
+    massiveLegs = Select[external, !TrueQ[masses[#] === 0] &];
+    Do[
+      basis = Lookup[Lookup[chart, kind <> "Basis", <||>], leg, Missing[]];
+      If[!MatrixQ[basis] || Dimensions[basis] =!= {2, 2} ||
+          !AllTrue[Flatten[Map[scaledValue[#, 1] &, basis, {2}]], constantQ],
+        reject["UnboundedMassiveSpinBasis"]],
+      {leg, massiveLegs}, {kind, {"Angle", "Square"}}];
+    momentum[p_] := momentum[p] = Module[{m = residueChartMomentumExpression[p, chart], scaled},
+      If[!MatrixQ[m] || Dimensions[m] =!= {2, 2}, reject["UnsupportedMomentum"]];
+      scaled = Map[scaledValue[#, 2] &, m, {2}];
+      If[!AllTrue[Flatten[scaled], constantQ], reject["UnboundedMomentumChart"]]; m];
+    endpoint[s_Spinor] := Module[{data = List @@ s, position, leg, vector, scaled},
+      If[KeyExistsQ[spinors, s], Return[1/2]];
+      If[!MemberQ[{"Spin", "Helicity"}, First[data]], reject["ReferenceOrUnsupportedSpinor"]];
+      position = FirstPosition[data, "Angle" | "Square", Missing[]];
+      If[MissingQ[position] || Length[data] < First[position] + 1,
+        reject["UnsupportedSpinor"]];
+      leg = data[[First[position] + 1]];
+      If[!IntegerQ[leg] || !MemberQ[external, leg], reject["CompositeOrUnknownSpinor"]];
+      vector = residueChartSpinor[s, Join[chart, <|"CoherentVectorSpinIndices" -> True|>]];
+      If[!ListQ[vector] || Length[vector] =!= 2 ||
+          !AllTrue[vector, polynomialInSpinsQ], reject["NonpolynomialSpinor"]];
+      scaled = scaledValue[#, 1] & /@ vector;
+      If[!AllTrue[scaled, finitePolynomialQ], reject["UnboundedSpinorChart"]];
+      AssociateTo[spinors, s -> leg]; 1/2];
+    primitive[p_] := Module[{v},
+      If[KeyExistsQ[primitives, p], Return[primitives[p]]];
+      v = residueEvaluateChart[p, Join[chart, <|"CoherentVectorSpinIndices" -> True|>], {}];
+      If[!residueFiniteQ[v] || residueUnmappedQ[v] || !polynomialInSpinsQ[v],
+        reject["UnsupportedOrNonpolynomialPrimitive"]];
+      AssociateTo[primitives, p -> True]; True];
+    propagator[p_PropDen] := Module[{k, c, other, m, l, inv},
+      If[Length[p] =!= 2 || !constantQ[p[[2]]], reject["NonconstantPropagatorMass"]];
+      k = residuePropagatorKey[p, external];
+      If[MissingQ[k], reject["UnsupportedPropagator"]];
+      c = First[k]; other = Complement[external, c];
+      If[Min[Length[c], Length[other]] < 2, reject["ExternalLegPropagator"]];
+      If[KeyExistsQ[poles, k], Return[2]];
+      m = momentum[p[[1]]];
+      l = Map[scaledValue[#, 2] &, m, {2}]; inv = Det[l];
+      If[!constantQ[inv] || highEnergyZeroState[inv] =!= "Nonzero",
+        reject["DegenerateLeadingPropagator"]];
+      AssociateTo[poles, k -> <|"Cut" -> c, "Complement" -> other,
+        "Mass" -> p[[2]], "LeadingInvariant" -> inv|>]; 2];
+    weight[x_] := weight[x] = Which[
+      constantQ[x], 0,
+      Head[x] === Plus, Max[weight /@ List @@ x],
+      Head[x] === Times, Total[weight /@ List @@ x],
+      MatchQ[x, Power[_PropDen, _Integer?Negative]], x[[2]] propagator[x[[1]]],
+      Head[x] === PropDen && Length[x] === 2 && constantQ[x[[2]]],
+        momentum[x[[1]]]; primitive[x]; 2,
+      MatchQ[x, Power[_Mom, _Integer?EvenQ]] && x[[2]] >= 0,
+        momentum[x[[1]]]; x[[2]],
+      Head[x] === Power && IntegerQ[x[[2]]] && x[[2]] >= 0, x[[2]] weight[x[[1]]],
+      Head[x] === SpinorChain,
+        parts = List @@ x;
+        If[Length[parts] < 2 || Head[First[parts]] =!= Spinor || Head[Last[parts]] =!= Spinor,
+          reject["UnsupportedSpinorChain"]];
+        value = endpoint[First[parts]] + endpoint[Last[parts]];
+        Scan[momentum, Rest[Most[parts]]]; primitive[x]; value + Length[parts] - 2,
+      Head[x] === SpinorTrace && EvenQ[Length[x]] && Length[x] > 0,
+        Scan[momentum, List @@ x]; primitive[x]; Length[x],
+      MatchQ[x, MomProd[_, _] | Mandelstahm[_, _]],
+        Scan[(momentum[Mom[#]]) &, List @@ x]; primitive[x]; 2,
+      True, Throw[<|"Status" -> "NOT_CERTIFIED", "Reason" -> "UnsupportedNumeratorOrDenominator",
+        "UnsupportedHead" -> Head[x], "UnsupportedStructure" ->
+          If[LeafCount[x] <= 64, x, Missing["LargeUnsupportedStructure"]]|>, tag]];
+    work = Rationalize[expr /. Mass[i_Integer] :> Lookup[chart["Masses"], i,
+      Missing["UnknownExternalMass"]], 0] /. Rationalize[parameterRules, 0];
+    If[!FreeQ[work, Spinor["Xi", ___]], reject["ExplicitReferenceSpinor"]];
+    degree = weight[work];
+    If[!NumericQ[degree] || !TrueQ[degree <= bound],
+      Return[<|"Status" -> "NOT_CERTIFIED", "Reason" -> "UpperBoundAboveRequestedBound",
+        "PowerUpperBound" -> degree|>]];
+    <|"Status" -> "PASS", "Method" -> "ConservativeExternalPowerCounting",
+      "PowerUpperBound" -> degree, "ExpectedPower" -> bound,
+      "CoherentSpinPolynomial" -> True, "SpinVariables" -> variables,
+      "CoherentSpinLegs" -> Keys[Lookup[chart, "ExternalSpinVectors", <||>]],
+      "MassiveSpinBasisBoundVerified" -> True, "MassiveSpinBasisLegs" -> massiveLegs,
+      "CheckedExternalSpinors" -> Length[spinors], "CheckedNumeratorPrimitives" -> Length[primitives],
+      "GenericPropagators" -> Values[poles], "InternalOnShellConditions" -> {},
+      "Scope" -> "ConservativeGenericFixedAngleUpperBoundAllSuppliedSpinComponents"|>, tag];
+  result
+];
+
 highEnergyOneSample[expr_, chart_Association, parameterRules_List, bound_] := Module[
   {t = chart["PoleVariable"], variables = chart["SpinVariables"], mapped, order,
    series, expanded, powers, coefficients, components = {}, state, power,
    component, observed, unresolved = False, lower = Missing["NotObserved"],
-   upper, lowest, spinRules, establishedViolation = False},
+   upper, lowest, spinRules, establishedViolation = False, certificate},
+  If[LeafCount[expr] >= 5000,
+    certificate = highEnergyUpperBoundCertificate[expr, chart, parameterRules, bound];
+    If[Lookup[certificate, "Status", None] === "PASS", Return[<|"Status" -> "PASS",
+      "ObservedPower" -> Missing["UpperBoundCertificate"],
+      "ObservedPowerUpperBound" -> certificate["PowerUpperBound"],
+      "ObservedGrowth" -> "At most " <> highEnergyGrowthString[certificate["PowerUpperBound"]],
+      "ExpectedPower" -> bound, "ExpectedGrowth" -> "At most " <> highEnergyGrowthString[bound],
+      "Components" -> {}, "ExpansionOrder" -> Missing["NotNeeded"],
+      "CoefficientConvention" -> "UnnormalizedCoherentSpinPolynomial",
+      "SpinVariables" -> variables, "Chart" -> chart,
+      "Method" -> "ConservativeExternalPowerCounting", "UpperBoundCertificate" -> certificate,
+      "Diagnostics" -> {"A conservative power bound is certified for every supplied coherent-spin component. No leading Laurent coefficient or observed leading power is claimed."}|>]]];
   mapped = residueEvaluateChart[Rationalize[expr, 0], chart, Rationalize[parameterRules, 0]];
   If[!residueFiniteQ[mapped] || residueUnmappedQ[mapped],
     Return[<|"Status" -> "UNRESOLVED", "Diagnostics" -> {
@@ -4919,6 +5079,8 @@ highEnergyOneSample[expr_, chart_Association, parameterRules_List, bound_] := Mo
     MissingQ[observed], -(order + 1)/2, True, observed];
   <|"Status" -> Which[establishedViolation, "FAIL",
       unresolved, "UNRESOLVED", True, "PASS"],
+    "Method" -> "ExactFixedAngleLaurentExpansion",
+    "UpperBoundAttempt" -> If[AssociationQ[certificate], certificate, Missing["SmallInputUsesLaurent"]],
     "ObservedPower" -> observed, "ObservedPowerUpperBound" -> upper,
     "ObservedGrowth" -> Which[unresolved, "Not determined",
       MissingQ[observed], "At most " <> highEnergyGrowthString[upper],
@@ -4936,7 +5098,7 @@ highEnergyCheckReport[expr_, metadata_Association, samples_Integer, seed_Integer
     parameterRules_List, seconds_, requestedBound_] := Module[
   {external = Lookup[metadata, "ExternalLegs", {}], bound, base, results = {},
    chart, result, completed, status, observed, upper, diagnostics,
-   work = expr, preconditioning = <|"Status" -> "NotStarted"|>},
+   work = expr, preconditioning = <|"Status" -> "NotStarted"|>, boundOnly, methods},
   bound = If[requestedBound === Automatic, 4 - Length[external], requestedBound];
   base = <|"Type" -> "HighEnergy", "Pole" -> "Fixed-angle high energy",
     "Status" -> "UNRESOLVED", "ExpectedPower" -> bound,
@@ -4963,15 +5125,21 @@ highEnergyCheckReport[expr_, metadata_Association, samples_Integer, seed_Integer
       AllTrue[results, Lookup[#, "Status"] === "PASS" &], "PASS", True, "UNRESOLVED"];
   observed = DeleteMissing[Lookup[results, "ObservedPower", Missing["NotDetermined"]]];
   upper = DeleteMissing[Lookup[results, "ObservedPowerUpperBound", Missing["NotDetermined"]]];
-  observed = If[observed === {}, Missing["NotObserved"], Max[observed]];
+  boundOnly = AnyTrue[results, KeyExistsQ[#, "UpperBoundCertificate"] &];
+  observed = If[boundOnly || observed === {}, Missing["NotObserved"], Max[observed]];
+  methods = DeleteDuplicates[(Lookup[#, "Method", "ExactFixedAngleLaurentExpansion"] &) /@ results];
   diagnostics = Flatten[Lookup[results, "Diagnostics", {}]];
   diagnostics = Join[diagnostics, If[TrueQ[completed], {}, {
       "The high-energy check exceeded TimeConstraint; no conclusion is drawn from unfinished samples."}],
     {"Each recorded family keeps all external legs exactly on shell and conserves momentum. Internal propagators remain off shell.",
-     "PASS tests exact asymptotic powers at sampled real fixed-angle directions, not a generic analytic proof or a gauge-independence test."}];
+     If[boundOnly,
+       "Large supported expressions may certify a conservative generic fixed-angle upper bound instead of measuring the leading Laurent power. No internal-line shell condition is used.",
+       "PASS tests exact asymptotic powers at sampled real fixed-angle directions, not a generic analytic proof or a gauge-independence test."]}];
   If[!TrueQ[completed] || AnyTrue[results, Lookup[#, "Status"] === "UNRESOLVED" &],
     observed = Missing["IncompleteChecks"]; upper = {}];
   Join[base, <|"Status" -> status, "Samples" -> results,
+    "Method" -> If[boundOnly, If[Length[methods] === 1, First[methods],
+      "ConservativePowerCountingWithLaurentFallback"], "ExactFixedAngleLaurentExpansion"],
     "CompletedSamples" -> Length[results], "ObservedPower" -> observed,
     "ObservedPowerUpperBound" -> If[upper === {}, Missing["NotDetermined"], Max[upper]],
     "ObservedGrowth" -> Which[!MissingQ[observed], highEnergyGrowthString[observed],
@@ -4979,7 +5147,7 @@ highEnergyCheckReport[expr_, metadata_Association, samples_Integer, seed_Integer
     "CoefficientConvention" -> "UnnormalizedCoherentSpinPolynomial",
     "AlgebraicPreconditioning" -> KeyDrop[preconditioning, {"Expression"}],
     "Diagnostics" -> DeleteDuplicates[Append[diagnostics,
-      "All coefficients of each massive coherent spin polynomial are checked, including mixed-index longitudinal states. Constant binomial normalization factors do not change their energy powers."]]|>]
+      "All implicit massive-spin components are covered, including mixed-index longitudinal states. Constant binomial normalization factors do not change their energy powers."]]|>]
 ];
 
 (* ::Subsection::Closed:: *)
@@ -5175,10 +5343,42 @@ amplitudeComparisonState[value_, variables_List, tolerance_] := Module[{numerato
     MemberQ[states, "Nonzero"], "Nonzero", True, "Unknown"]
 ];
 
+(* Reduce scalar coefficients before reconstructing the coherent tensor.
+   Whole-polynomial Together/Cancel can spend most of the checker budget on
+   a multivariate GCD although all kinematic denominators are spin independent. *)
+amplitudeComparisonPolynomial[value_, variables_List] := Module[{rules, reduced, polynomial = value},
+  If[!residueFiniteQ[value] || residueUnmappedQ[value],
+    Return[Failure["UnsupportedAmplitudeValue", <||>]]];
+  If[variables =!= {} && !PolynomialQ[polynomial, variables],
+    polynomial = TimeConstrained[Quiet[Check[Cancel[Together[polynomial]], $Failed]], 5, $TimedOut];
+    If[!residueFiniteQ[polynomial] || !PolynomialQ[polynomial, variables],
+      Return[Failure["SpinDependentDenominator", <||>]]]];
+  rules = If[variables === {}, {{} -> polynomial}, CoefficientRules[polynomial, variables]];
+  reduced = (First[#] -> Quiet[Check[Cancel[Together[Last[#]]], $Failed]]) & /@ rules;
+  If[!AllTrue[Last /@ reduced, residueFiniteQ],
+    Failure["NonfiniteSpinCoefficient", <||>], reduced]
+];
+
+amplitudeComparisonCoefficientState[coefficients_List, tolerance_] := Module[{states},
+  (* Preserve the original numerator convention. Comparing a small rational
+     value directly against tolerance could hide a genuine exact coefficient. *)
+  states = (With[{numerator = Numerator[Cancel[Together[#]]]},
+      If[!residueFiniteQ[numerator] || residueUnmappedQ[numerator], "Unknown",
+        If[residueComparisonZeroQ[numerator, "Sample", tolerance], "Zero",
+          highEnergyZeroState[numerator]]]]) & /@ coefficients;
+  Which[AllTrue[states, # === "Zero" &], "Zero",
+    MemberQ[states, "Nonzero"], "Nonzero", True, "Unknown"]
+];
+
+amplitudeComparisonPolynomialValue[rules_List, variables_List] := Total[
+  (Last[#] Times @@ MapThread[Power, {variables, First[#]}]) & /@ rules];
+
 amplitudeComparisonOneSample[expression_, benchmark_, chart_Association, sample_Integer,
     seed_Integer, attempt_Integer, rules_List, benchmarkRules_List, tolerance_] := BlockRandom[Module[
   {assignments, candidateChart, benchmarkChart, candidate, expected, difference,
-   opposite, states, signs, variables = Lookup[chart, "SpinVariables", {}], base},
+   opposite, states, signs, variables = Lookup[chart, "SpinVariables", {}], base,
+   candidateRules, expectedRules, monomials, coefficientKey, candidateCoefficients,
+   expectedCoefficients, differenceRules, oppositeRules},
   SeedRandom[Hash[{seed, sample, attempt, "FeynmanComparison"}, "CRC32"]];
   assignments[value_] := Association[(# -> RandomChoice[DeleteCases[Range[-7, 7], 0], 4]) & /@
     referenceExpressionMetadata[value]["References"]];
@@ -5188,24 +5388,44 @@ amplitudeComparisonOneSample[expression_, benchmark_, chart_Association, sample_
     "SpinVariables" -> variables, "MatchingSigns" -> {}, "Retryable" -> False,
     "CandidateReferenceOverrides" -> candidateChart["ReferenceOverrides"],
     "FeynmanReferenceOverrides" -> benchmarkChart["ReferenceOverrides"]|>;
-  candidate = Quiet[Check[Cancel[Together[residueEvaluateChart[
-    Rationalize[expression, 0], candidateChart, Rationalize[rules, 0]]]], $Failed]];
-  expected = Quiet[Check[Cancel[Together[residueEvaluateChart[
-    Rationalize[benchmark, 0], benchmarkChart, Rationalize[benchmarkRules, 0]]]], $Failed]];
+  candidate = Quiet[Check[residueEvaluateChart[
+    Rationalize[expression, 0], candidateChart, Rationalize[rules, 0]], $Failed]];
+  expected = Quiet[Check[residueEvaluateChart[
+    Rationalize[benchmark, 0], benchmarkChart, Rationalize[benchmarkRules, 0]], $Failed]];
   If[!residueFiniteQ[candidate] || !residueFiniteQ[expected],
     Return[Join[base, <|"Retryable" -> True, "Diagnostics" -> {
       "The full amplitude or its Feynman benchmark was singular at this off-cut sample."}|>]]];
   If[residueUnmappedQ[candidate] || residueUnmappedQ[expected],
     Return[Join[base, <|"Diagnostics" -> {
       "The full-amplitude comparison contains unsupported kinematic structures."}|>]]];
-  difference = Quiet[Check[Cancel[Together[candidate - expected]], $Failed]];
-  opposite = Quiet[Check[Cancel[Together[candidate + expected]], $Failed]];
-  states = amplitudeComparisonState[#, variables, tolerance] & /@ {difference, opposite};
+  candidateRules = amplitudeComparisonPolynomial[candidate, variables];
+  expectedRules = amplitudeComparisonPolynomial[expected, variables];
+  If[FailureQ[candidateRules] || FailureQ[expectedRules],
+    Return[Join[base, <|"Diagnostics" -> {
+      "Massive coherent-spin dependence must be polynomial with finite scalar coefficients; spin-dependent denominators are unsupported."}|>]]];
+  coefficientKey[powers_] := Apply[HoldComplete, powers];
+  candidateCoefficients = Association[(coefficientKey[First[#]] -> Last[#]) & /@ candidateRules];
+  expectedCoefficients = Association[(coefficientKey[First[#]] -> Last[#]) & /@ expectedRules];
+  monomials = Union[First /@ candidateRules, First /@ expectedRules];
+  differenceRules = (# -> Cancel[Together[
+      Lookup[candidateCoefficients, coefficientKey[#], 0] -
+      Lookup[expectedCoefficients, coefficientKey[#], 0]]]) & /@ monomials;
+  oppositeRules = (# -> Cancel[Together[
+      Lookup[candidateCoefficients, coefficientKey[#], 0] +
+      Lookup[expectedCoefficients, coefficientKey[#], 0]]]) & /@ monomials;
+  candidate = amplitudeComparisonPolynomialValue[candidateRules, variables];
+  expected = amplitudeComparisonPolynomialValue[expectedRules, variables];
+  difference = amplitudeComparisonPolynomialValue[differenceRules, variables];
+  opposite = amplitudeComparisonPolynomialValue[oppositeRules, variables];
+  states = amplitudeComparisonCoefficientState[#, tolerance] & /@
+    {Last /@ differenceRules, Last /@ oppositeRules};
   signs = Pick[{1, -1}, states, "Zero"];
   Join[base, <|"Status" -> Which[MemberQ[signs, 1], "PASS",
       MemberQ[signs, -1], "Opp Sign", states === {"Nonzero", "Nonzero"}, "FAIL", True, "UNRESOLVED"],
     "CalculatedAmplitude" -> candidate, "FeynmanAmplitude" -> expected,
     "Difference" -> difference, "OppositeSignDifference" -> opposite, "MatchingSigns" -> signs,
+    "ComparisonMethod" -> "AllCoherentSpinCoefficients",
+    "ComparedSpinMonomials" -> monomials,
     "Diagnostics" -> Which[MemberQ[signs, 1], {}, MemberQ[signs, -1], {
         "The full amplitudes have opposite signs; no sign has been changed or fitted."},
       states === {"Nonzero", "Nonzero"}, {"An exact massive-spin coefficient disagrees at this off-cut sample."},
@@ -5214,27 +5434,78 @@ amplitudeComparisonOneSample[expression_, benchmark_, chart_Association, sample_
 
 (* Rational tree amplitudes admit complex samples without unnecessary radicals.
    Freeze the cut coordinate away from zero and reject every physical pole. *)
+amplitudeComparisonChartValidation[chart_Association, channels_List, rules_List] := Module[
+  {momenta = Lookup[chart, "Momenta", <||>], masses = Lookup[chart, "Masses", <||>],
+   external, zero, shells, conservation, bases, generic, poleValues, j = {{0, 1}, {-1, 0}},
+   a, s, p, mass, coherent},
+  external = Sort[Keys[momenta]];
+  zero[value_] := residueFiniteQ[value] && AllTrue[Flatten[{value}], residueExactZero];
+  If[Length[external] < 4 || !ContainsAll[Keys[masses], external] ||
+      !residueFiniteQ[KeyTake[chart, {"Momenta", "Masses", "Angle", "Square", "AngleBasis", "SquareBasis"}]],
+    Return[<|"Valid" -> False, "Diagnostics" -> {"Incomplete off-cut kinematics."}|>]];
+  shells = Table[p = momenta[leg]; mass = masses[leg];
+    MatrixQ[p] && Dimensions[p] === {2, 2} && NumericQ[mass] && zero[Det[p] - mass^2],
+    {leg, external}];
+  conservation = zero[Total[Values[momenta]]];
+  bases = Table[p = momenta[leg]; mass = masses[leg];
+    If[residueExactZero[mass],
+      a = Lookup[Lookup[chart, "Angle", <||>], leg, Missing[]];
+      s = Lookup[Lookup[chart, "Square", <||>], leg, Missing[]];
+      MatchQ[a, {_, _}] && MatchQ[s, {_, _}] && zero[Outer[Times, a, s] - p],
+      a = Lookup[Lookup[chart, "AngleBasis", <||>], leg, Missing[]];
+      s = Lookup[Lookup[chart, "SquareBasis", <||>], leg, Missing[]];
+      coherent = Lookup[Lookup[chart, "ExternalSpinVectors", <||>], leg, Missing[]];
+      MatrixQ[a] && MatrixQ[s] && Dimensions[a] === {2, 2} && Dimensions[s] === {2, 2} &&
+        MatchQ[coherent, {_, _}] && zero[Det[a] - mass] &&
+        zero[s - j.residueAdjugate[p].a/mass] &&
+        zero[chart["Angle"][leg] - a.coherent] && zero[chart["Square"][leg] - s.coherent]],
+    {leg, external}];
+  poleValues = residueEvaluateChart[#["Propagator"], chart, Rationalize[rules, 0]] & /@ channels;
+  generic = (residueFiniteQ[#] && !residueUnmappedQ[#] && highEnergyZeroState[#] === "Nonzero") & /@ poleValues;
+  <|"Valid" -> (And @@ Join[shells, bases, generic, {conservation}]),
+    "ExternalMassShells" -> shells, "MomentumConservation" -> conservation,
+    "ExternalSpinorBases" -> bases, "PhysicalPropagatorsNonzero" -> generic,
+    "RejectedPhysicalCuts" -> DeleteDuplicates[Pick[Lookup[channels, "Cut"], generic, False]],
+    "InternalOnShellConditions" -> {}|>
+];
+
 amplitudeRationalComparisonChart[channels_List, sample_Integer, seed_Integer, rules_List] := BlockRandom[Module[
-  {eligible, generated, chart, pole, frozen, index, values,
-   result = Failure["NoRegularRationalComparisonPoint", <||>]},
+  {eligible, generated, chart, pole, frozen, index, values, geometrySeed, validation,
+   attempts = {}, rejected, coordinates, tag = Unique["rationalComparison"]},
   eligible = Select[channels, Min[Length[#["Cut"]], Length[#["Complement"]]] >= 2 &];
   If[eligible === {}, Return[Failure["NoRationalComparisonChannel", <||>]]];
-  index = 1 + Mod[sample - 1, Length[eligible]];
-  generated = completionCutChart[eligible[[index]], sample, seed, rules];
-  If[FailureQ[generated], Return[generated]];
-  chart = generated["Chart"]; pole = chart["PoleVariable"];
-  SeedRandom[Hash[{seed, sample, eligible[[index]]["Cut"], "FeynmanOffCut"}, "CRC32"]];
-  values = DeleteDuplicates[RandomChoice[{-1, 1}, 8]
-    RandomInteger[{2, 19}, 8]/RandomInteger[{1, 7}, 8]];
-  Do[
-    frozen = Join[chart /. pole -> value, <|"PoleVariable" -> Unique["unusedBenchmarkPole"],
-      "SpinVariables" -> generated["SpinVariables"], "SamplingParameter" -> value,
-      "CoherentVectorSpinIndices" -> True, "AllowCutSpinors" -> False,
-      "SamplingConstruction" -> "ExactRationalComplexOffCut"|>];
-    If[residueFiniteQ[frozen] && referencePhysicalGenericQ[frozen, channels, rules],
-      result = frozen; Break[]],
-    {value, values}];
-  result
+  Catch[Do[
+    index = 1 + Mod[sample + generation - 2, Length[eligible]];
+    geometrySeed = If[generation === 1, seed,
+      Hash[{seed, sample, generation, "FeynmanRationalGeometry"}, "CRC32"]];
+    generated = completionCutChart[eligible[[index]], sample, geometrySeed, rules];
+    If[FailureQ[generated], AppendTo[attempts, <|"GeometryAttempt" -> generation,
+      "GeometrySeed" -> geometrySeed, "Cut" -> eligible[[index]]["Cut"], "Failure" -> generated|>]; Continue[]];
+    chart = generated["Chart"]; pole = chart["PoleVariable"];
+    SeedRandom[Hash[{geometrySeed, sample, eligible[[index]]["Cut"], "FeynmanOffCut"}, "CRC32"]];
+    values = DeleteDuplicates[RandomChoice[{-1, 1}, 8]
+      RandomInteger[{2, 19}, 8]/RandomInteger[{1, 7}, 8]];
+    rejected = {}; coordinates = 0;
+    Do[
+      coordinates++;
+      frozen = Join[chart /. pole -> value, <|"PoleVariable" -> Unique["unusedBenchmarkPole"],
+        "SpinVariables" -> generated["SpinVariables"], "SamplingParameter" -> value,
+        "CoherentVectorSpinIndices" -> True, "AllowCutSpinors" -> False,
+        "SamplingConstruction" -> "ExactRationalComplexOffCut"|>];
+      validation = If[residueFiniteQ[frozen], amplitudeComparisonChartValidation[frozen, channels, rules],
+        <|"Valid" -> False, "Diagnostics" -> {"Nonfinite off-cut geometry."}|>];
+      If[TrueQ[validation["Valid"]],
+        AppendTo[attempts, <|"GeometryAttempt" -> generation, "GeometrySeed" -> geometrySeed,
+          "Cut" -> eligible[[index]]["Cut"], "CoordinateTrials" -> coordinates,
+          "RejectedPhysicalCuts" -> DeleteDuplicates[rejected], "Status" -> "ACCEPTED"|>];
+        Throw[Join[frozen, <|"OffCutKinematicValidation" -> validation,
+          "RationalSamplingAttempts" -> attempts|>], tag]];
+      rejected = Join[rejected, Lookup[validation, "RejectedPhysicalCuts", {}]], {value, values}];
+    AppendTo[attempts, <|"GeometryAttempt" -> generation, "GeometrySeed" -> geometrySeed,
+      "Cut" -> eligible[[index]]["Cut"], "CoordinateTrials" -> coordinates,
+      "RejectedPhysicalCuts" -> DeleteDuplicates[rejected], "Status" -> "REJECTED"|>],
+    {generation, 4}];
+  Failure["NoRegularRationalComparisonPoint", <|"Attempts" -> attempts|>], tag]
 ]];
 
 amplitudeFeynmanReport[inputs_Association, supplied_, model_List, samples_Integer,
@@ -5242,7 +5513,7 @@ amplitudeFeynmanReport[inputs_Association, supplied_, model_List, samples_Intege
   {expression = inputs["Expression"], metadata, externalRules, external, benchmark,
    propagators, keys, channels, chart, frozen, parameter, validation,
    results = {}, result, completed, resolved, signs, status, diagnostics = {},
-   tag = Unique["feynmanComparison"], base},
+   tag = Unique["feynmanComparison"], base, rationalFailure},
   base = <|"Type" -> "Feynman", "Pole" -> "Full Feynman amplitude", "Status" -> "UNRESOLVED",
     "Samples" -> {}, "RequestedSamples" -> samples, "CompletedSamples" -> 0,
     "Method" -> "ExactSampledFullAmplitudeSpinPolynomialComparison",
@@ -5282,6 +5553,7 @@ amplitudeFeynmanReport[inputs_Association, supplied_, model_List, samples_Intege
       Do[
         frozen = amplitudeRationalComparisonChart[channels, sample + samples attempt, seed, rules];
         If[FailureQ[frozen],
+          rationalFailure = frozen;
           chart = highEnergyAutomaticChart[expression + benchmark, metadata,
             sample + samples attempt, seed, rules];
           If[FailureQ[chart], result = Join[result, <|"KinematicFailure" -> chart|>]; Continue[]];
@@ -5290,6 +5562,7 @@ amplitudeFeynmanReport[inputs_Association, supplied_, model_List, samples_Intege
           frozen = Join[chart /. parameter -> validation,
             <|"PoleVariable" -> Unique["unusedBenchmarkPole"], "SamplingParameter" -> validation,
               "CoherentVectorSpinIndices" -> True,
+              "RationalComparisonFallback" -> rationalFailure,
               "SamplingConstruction" -> "ExactRealCenterOfMassOffCut"|>]];
         If[!referencePhysicalGenericQ[frozen, channels, rules], Continue[]];
         result = amplitudeComparisonOneSample[expression, benchmark, frozen, sample,

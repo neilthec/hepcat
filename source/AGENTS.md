@@ -556,6 +556,22 @@ momenta, falling back to real center-of-mass samples when unavailable. All
 external shells, momentum conservation and nonzero physical propagators are
 still required. The separate high-energy test retains real scattering
 kinematics. Details record each chart's `SamplingConstruction`.
+Rational full-amplitude sampling retries a bounded number of fresh deterministic
+geometries when accidental spectator poles invalidate a whole one-parameter
+family. Preserve the original first geometry and seed; record rejected cuts and
+all geometry attempts. Validate external shells, conservation, every spinor basis
+and every original physical propagator before accepting a point. Geometry
+selection must never inspect amplitude agreement, and a finite mismatch must
+never trigger a retry. Real center-of-mass sampling remains the fallback.
+The full comparison verifies polynomial coherent-spin dependence, then reduces
+and compares every scalar coefficient in the union of both monomial supports.
+Do not apply a whole-tensor multivariate GCD to the ordinary polynomial case.
+A bounded ordinary cancellation may recover a removable spin denominator; a
+genuinely spin-dependent denominator remains unsupported. Preserve the original
+scalar numerator convention before tolerance tests, so an exact tiny rational
+coefficient is not rounded to zero. Retain every mixed monomial, every requested
+sample and the complete difference and opposite-sign diagnostic.
+
 `CheckPhysicalResidues` remains a compatibility alias for `CheckAmplitudes`.
 
 Numerical checks and completion use the supplied model's parameter values and
@@ -578,19 +594,39 @@ and reduce their two-momentum traces. This affects only the inventory: the
 Laurent checks use the original summed amplitude. Do not add internal-shell
 assumptions or discard zero, unsupported or branch-sensitive denominators.
 
+Large reference-free typed polynomials may use a conservative high-energy
+upper-bound certificate before Laurent expansion. Verify every massive spin-basis
+column and the actual chart's nonzero leading multiparticle invariants. Numeric
+fixed coefficients and supported polynomial spin dependence are required. An
+unsupported or excessive bound uses the original Laurent route. Report only an
+upper bound, with missing observed leading power; do not turn it into a measured
+coefficient. This does not certify model pole membership, and all residue,
+spurious, reference and Feynman checks remain required. Never put internal
+virtualities on shell for this certificate.
+
 - `PASS` means agreement or finiteness at the recorded samples, not a general
   analytic proof. Vary reproducible samples and parameters as supplementary
   evidence, and distinguish such tests from symbolic proofs.
 - `Opp Sign` is a diagnostic, not permission to flip a result. Trace crossing,
   fermion ordering, model signs, and normalization. The checker already applies
   the sewing factor `-1` from `(i A_L)(i A_R)(i/PropDen)/i`; do not apply it twice.
-  `factorizationExternalFermionSign` separately accounts for internal-port
-  contraction parity, identical-species exchange and multiline spectator-block
-  grading. For lower words with `2 rL` and `2 rR` fermion ports, the latter is
-  the Koszul shuffle sign `(-1)^((rL - 1) (rR - 1))`; it leaves cubic sewing
-  unchanged. Do not replace these distinct signs with a process- or cut-size
-  rule. Compatible exact iterated residues must agree in either order, including
-  with distinct fermion flavors; see `fermion-sewing-grading-tests.wl`.
+  `factorizationExternalFermionSign` transports both lower amplitudes to one
+  common grouped Dirac-state reference. Keep local internal-port contraction
+  parity and particle/antiparticle contraction orientation separate from the
+  permutation of the surviving fermion word, sorted by particle/antiparticle
+  role and then external label. The lower-to-full reference normalization is
+  `h(rL) h(rR) / h(rL + rR - delta)`, where `h(r) = (-1)^(r (r - 1)/2)` and
+  `delta` is 1 for an internal fermion and 0 for an internal boson. Counting
+  only identical-species exchanges or only the number of ports is insufficient
+  for mixed flavors. Do not replace this ordering derivation with a process-
+  or cut-size rule. Compatible exact iterated residues must agree in either
+  order. Test all-spin residues and distinct antifermion reorderings against
+  independent Feynman amplitudes; see `fermion-sewing-grading-tests.wl`.
+  This reference convention requires balanced Dirac particle/antiparticle
+  roles in every lower word. Ambiguous self-conjugate roles and unpaired
+  fermion-number-violating rows are unsupported; retain the explicit public
+  `UnsupportedFermionSewing` failure rather than multiplying `$Failed` into
+  an expression or extending the phase convention without a derivation.
 - `FAIL` and `UNRESOLVED` must remain visible. Unsupported denominator forms,
   singular charts, unspecified parameters, and timeouts are not zero results.
 - No discovered spurious denominator does not prove regularity everywhere.

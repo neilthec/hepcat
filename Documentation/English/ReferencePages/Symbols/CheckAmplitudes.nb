@@ -35,19 +35,41 @@ analytic cancellation when one is practical.", "Notes"],
   Cell["High-energy checks scale conserved external kinematics with fixed \
 masses and inspect all sampled spin assignments. The automatic renormalizable \
 tree target is E^(4-n); \"HighEnergyBound\" can state another theory's \
-expected bound.", "Notes"], Cell["Reference tests vary explicit external Xi \
-spinors on conserved kinematics. If none remain, the report establishes \
-absence of explicit Xi dependence; that alone is not a separate analytic \
-Ward-identity proof.", "Notes"], Cell["Supply \"FeynmanAmplitudes\" and the \
-matching \"FeynmanModel\" for an independent full-amplitude comparison at \
-ordinary off-cut kinematics.", "Notes"], Cell["Default numerical parameter \
-values come from the model. \"ParameterRules\" locally overrides selected \
-values without changing the symbolic amplitude. \"RandomSeed\" -> Automatic \
-chooses a time-based seed once; provide an integer to replay samples.",
-   "Notes"], Cell["The ordinary table is deliberately short. \"Output\" -> \
-\"Residues\" shows calculated and expected sampled values, \"Summary\" counts \
-statuses, and \"Details\" retains the complete report. Other focused outputs \
-include \"HighEnergy\", \"References\" and \"Feynman\".", "Notes"],
+expected bound.", "Notes"], Cell["Large reference-free typed expressions may \
+certify a conservative upper bound from external-spinor and momentum degrees. \
+Every massive spin-basis column and each propagator's nonzero leading \
+invariant are checked on the actual conserved high-energy chart. The report \
+records ObservedPowerUpperBound and leaves ObservedPower missing because no \
+leading Laurent coefficient was measured.", "Notes"],
+  Cell["Unsupported structures, explicit references, hidden spinor \
+denominators, degenerate leading invariants or an upper bound above the \
+target retain the exact Laurent fallback. Multiparticle propagator growth \
+does not establish model membership: the physical and spurious-pole checks \
+remain separate and unchanged. Internal virtualities are never set on shell \
+for either energy method.", "Notes"], Cell["Reference tests vary explicit \
+external Xi spinors on conserved kinematics. If none remain, the report \
+establishes absence of explicit Xi dependence; that alone is not a separate \
+analytic Ward-identity proof.", "Notes"], Cell["Supply \"FeynmanAmplitudes\" \
+and the matching \"FeynmanModel\" for an independent full-amplitude \
+comparison at ordinary off-cut kinematics.", "Notes"],
+  Cell["The full Feynman comparison checks every coherent massive-spin \
+monomial from both sums. Scalar coefficients are reduced separately so a \
+large spin tensor does not require one multivariate polynomial cancellation. \
+Both exact differences and opposite-sign diagnostics are retained; the \
+numerical zero-test convention and requested sample count are unchanged.",
+   "Notes"], Cell["Off-cut Feynman sampling first tries bounded deterministic \
+rational geometries. If an accidental physical pole invalidates one geometry, \
+a fresh geometry is tried before the real center-of-mass fallback. Acceptance \
+uses only external shells, conservation, spinor-basis consistency and nonzero \
+physical propagators, never amplitude agreement. Details retain rejected cuts \
+and geometry attempts.", "Notes"], Cell["Default numerical parameter values \
+come from the model. \"ParameterRules\" locally overrides selected values \
+without changing the symbolic amplitude. \"RandomSeed\" -> Automatic chooses \
+a time-based seed once; provide an integer to replay samples.", "Notes"],
+  Cell["The ordinary table is deliberately short. \"Output\" -> \"Residues\" \
+shows calculated and expected sampled values, \"Summary\" counts statuses, \
+and \"Details\" retains the complete report. Other focused outputs include \
+\"HighEnergy\", \"References\" and \"Feynman\".", "Notes"],
   Cell["PASS, Opp Sign, FAIL and UNRESOLVED describe the performed tests. \
 They do not establish a generic symbolic reconstruction or uniqueness \
 theorem. Do not interpret a disabled or unresolved test as a pass.",

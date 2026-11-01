@@ -55,6 +55,22 @@ five-point representative is checked on two rational off-cut charts and all
 four coherent massive-spin components; no saved notebook or temporary cache
 is loaded by the suite.
 
+`high-energy-power-counting-tests.wl` covers conservative all-spin upper bounds,
+complete massive basis scaling, generic propagator invariants, strict numeric
+coefficients, and the exact Laurent fallback for hidden denominators, references
+and genuine bad growth. Bound-only samples never invent observed leading powers;
+unresolved directions prevent an overall bound claim. No internal shell is used.
+
+`feynman-coefficient-comparison-tests.wl` compares the scalar-coefficient route
+with the former whole-polynomial route on small cases. It covers every monomial
+of 64- and 729-component tensors, opposite signs, tiny exact mixed coefficients
+below the numerical tolerance, removable spin denominators and genuinely
+unsupported spin-dependent denominators. No coefficient or sample is dropped.
+Its recorded six-point seed regression rejects an accidental spectator pole,
+then validates all 27 original propagator obligations and complete external
+kinematics on a fresh rational geometry. Incorrect amplitudes and damaged spin
+bases still fail; sampling is never selected by comparison agreement.
+
 ## Full Process Construction
 
 Construction resource defaults are automatic. Focused tests must distinguish the
@@ -866,8 +882,13 @@ They cover timeouts, replayable seeds, phase invariance, parameter updates,
 particle filters and explicit failures. The builder tests cover model matching,
 width prescriptions and safe parameter-card serialization.
 
-`fermion-sewing-grading-tests.wl` verifies spectator-block grading and its
-associativity, preserves cubic sewing phases, and checks an exact nonzero
-photon/fermion double residue for three distinct Dirac flavors against an
-independently generated six-diagram Feynman amplitude. Lower amplitudes are
-derived from cubic model vertices, with no supplied six-point answer.
+`fermion-sewing-grading-tests.wl` verifies the common fermion-reference
+normalization for boson and fermion sewing, including mixed-seam composition
+and unchanged cubic phases. Three distinct Dirac flavors test an exact nonzero
+photon/fermion double residue and all nine physical cuts against an independent
+six-diagram Feynman amplitude. Each cut checks all 64 massive-spin components;
+an interchange of distinct antifermions checks the external reference order.
+Complete lower amplitudes are generated from cubic vertices and independent
+off-shell Feynman diagrams, with no supplied six-point answer.
+An explicit negative case checks that unpaired Dirac lower amplitudes are
+reported as unsupported before any invalid sign enters an amplitude.
