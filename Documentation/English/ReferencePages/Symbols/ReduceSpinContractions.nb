@@ -1,0 +1,93 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT SYMBOL", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData ->
+            "paclet:HEPCAT/guide/IdentitiesAndSimplification"]}],
+        "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["ReduceSpinContractions", "ObjectName"],
+  Cell["Sews contracted massive or massless spinor indices into shorter \
+momentum chains.", "Notes"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"ReduceSpinContractions", "[", "expr",
+         "]"}]], "InlineFormula"], "  ", "applies supported spin-sum and \
+little-group contraction identities."}], "Usage"],
+  Cell["Details", "NotesSection"], Cell["Apply this to diagram products \
+before ordinary spinor reduction. Matching repeated upper and lower massive \
+indices are contracted with HEPCAT's epsilon and completeness conventions.",
+   "Notes"], Cell["Massless completeness also joins a pair of chains through \
+a matching helicity leg. Powers and spectator factors are supported.",
+   "Notes"], Cell["This function contracts indices already present in the \
+expression. It does not average initial spins, add symmetry factors, or \
+choose a process.", "Notes"], Cell["Examples", "PrimaryExamplesSection"],
+  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
+     Cell["Evaluate this setup once before the examples. The paths refer to \
+the local HEPCAT checkout; no model parameters are assigned global numerical \
+values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
+         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
+         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
+         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
+         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
+         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
+         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
+         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
+         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
+         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
+         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
+         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
+         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
+         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
+         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
+      "Input", InitializationCell -> True]}, Open]],
+  Cell["Basic Examples", "ExampleSection"],
+  Cell["Sew massless spinors through leg 3.", "ExampleText"],
+  Cell[BoxData[RowBox[{"ReduceSpinContractions", "[", "SpinorChain", "[",
+      "Spinor", "[", "\"Spin\"", ",", " ", "\"Angle\"", ",", " ", "1", "]",
+      ",", " ", "Spinor", "[", "\"Helicity\"", ",", " ", "\"Angle\"", ",",
+      " ", "3", "]", "]", " ", "SpinorChain", "[", "Spinor", "[",
+      "\"Helicity\"", ",", " ", "\"Square\"", ",", " ", "3", "]", ",", " ",
+      "Spinor", "[", "\"Spin\"", ",", " ", "\"Square\"", ",", " ", "4", "]",
+      "]", "]"}]], "Input"],
+  Cell[BoxData[TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"",
+        StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], "\"|\"",
+      SubscriptBox["p", "3"], "\"|\"", TemplateBox[
+       {StyleBox["4", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+     "RowDefault"]], "Output"],
+  Cell["Sew a repeated massive little-group index.", "ExampleText"],
+  Cell[BoxData[RowBox[{"ReduceSpinContractions", "[", "SpinorChain", "[",
+      "Spinor", "[", "\"Spin\"", ",", " ", "\"Angle\"", ",", " ", "1", "]",
+      ",", " ", "Spinor", "[", "\"Spin\"", ",", " ", "\"Upper\"", ",", " ",
+      "\"Angle\"", ",", " ", "2", ",", " ", "j", "]", "]", " ",
+      "SpinorChain", "[", "Spinor", "[", "\"Spin\"", ",", " ", "\"Lower\"",
+      ",", " ", "\"Square\"", ",", " ", "2", ",", " ", "j", "]", ",", " ",
+      "Spinor", "[", "\"Spin\"", ",", " ", "\"Square\"", ",", " ", "4", "]",
+      "]", "]"}]], "Input"],
+  Cell[BoxData[TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"",
+        StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"], "\"|\"",
+      SubscriptBox["p", "2"], "\"|\"", TemplateBox[
+       {StyleBox["4", Bold, StripOnInput -> False], "\"]\""}, "RowDefault"]},
+     "RowDefault"]], "Output"], Cell["See Also", "SeeAlsoSection"],
+  Cell[TextData[{ButtonBox["ReduceSpinorProducts", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReduceSpinorProducts"],
+     "  \[Bullet]  ", ButtonBox["SquareAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SquareAmplitude"], "  \[Bullet]  ",
+     ButtonBox["ExpandSummation", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ExpandSummation"]}], "SeeAlso"],
+  Cell["Related Guides", "MoreAboutSection"],
+  Cell[TextData[{ButtonBox["Identities and Simplification",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/guide/IdentitiesAndSimplification"], "  \[Bullet]  ",
+     ButtonBox["HEPCAT: Constructive Amplitudes and Spinor Algebra",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}],
+   "MoreAbout"]}, WindowTitle ->
+  "ReduceSpinContractions - HEPCAT Documentation", Saveable -> False,
+ WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/ref/ReduceSpinContractions",
+     "title" -> "ReduceSpinContractions", "type" -> "Symbol",
+     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Sews contracted \
+massive or massless spinor indices into shorter momentum chains.",
+     "keywords" -> {"HEPCAT", "ReduceSpinContractions", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

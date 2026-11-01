@@ -1,0 +1,276 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT SYMBOL", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/FormattingAndExport"]}],
+        "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["WriteSPINASProcess", "ObjectName"],
+  Cell["Writes a complete, readable C++ process using SPINAS, with optional \
+CalcHEP validation and integration.", "Notes"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"WriteSPINASProcess", "[", "directory",
+         ",", " ", "particles", ",", " ", "amplitude", ",", " ", "model",
+         "]"}]], "InlineFormula"], "  ", "exports one all-incoming amplitude \
+at its fixed massless helicities."}], "Usage"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"WriteSPINASProcess", "[", "directory",
+         ",", " ", "entries", ",", " ", "model", "]"}]], "InlineFormula"],
+     "  ", "combines helicity-related {particles, amplitude} entries into one \
+class."}], "Usage"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"WriteSPINASProcess", "[", "directory",
+         ",", " ", "incoming", " ", "->", " ", "outgoing", ",", " ",
+         "entries", ",", " ", "model", "]"}]], "InlineFormula"], "  ", "decla\
+res the physical process and crosses its outgoing legs automatically."}],
+   "Usage"], Cell["Details", "NotesSection"], Cell["Inputs are symbolic \
+all-incoming amplitudes. In the physical-process form, the concatenated \
+incoming and outgoing lists fix the external-leg order, while each amplitude \
+entry retains its all-incoming particle list. Do not pre-cross these \
+formulas.", "Notes"], Cell["For example, a physical e,A -> e,A process has \
+all-incoming species e,A,E,A. Outgoing momenta and angle-spinor signs are \
+crossed exactly once by the exporter.", "Notes"],
+  Cell["A generic massless name such as A requests its complete helicity sum. \
+A.+, A.- or the string option \"FixedHelicities\" selects a specified \
+helicity. Incomplete requested coverage is refused; missing amplitudes are \
+not invented using parity.", "Notes"], Cell["Generated amp returns the \
+complex amplitude for one external spin/helicity assignment. spin_sum adds \
+|amp| squared over the requested states. Family amp2 also averages unfixed \
+incoming states and applies the final identical-species factor once, \
+including identical fermions.", "Notes"], Cell["The older fixed-helicity \
+overload preserves its existing normalization convention. Use the \
+physical-process or family form for a complete unpolarized process.",
+   "Notes"], Cell["The default export writes source only. \"Build\" -> True \
+compiles and links the existing SPINAS library; \"RunExamples\" -> True also \
+runs three conserved physical example points. No external library is \
+installed or rebuilt.", "Notes"], Cell["\"SPINASDirectory\", \
+\"CalcHEPDirectory\" and \"CMakeExecutable\" override automatic tool \
+discovery. The SPINAS precision must match the library ABI. \"Overwrite\" -> \
+True explicitly permits replacing an existing exported project.", "Notes"],
+  Cell["The independent CalcHEP validator generates a counterpart process and \
+compares common random points. \"CalcHEPModel\" selects an equivalent model; \
+Automatic recognizes the bundled QED models. \"RunCalcHEPValidation\" -> True \
+builds and runs it. The actual time-based seed is reported, and an explicit \
+\"CalcHEPSeed\" or --seed value replays it.", "Notes"],
+  Cell["A separate n_calchep target uses the SPINAS matrix element with \
+CalcHEP's numerical phase-space integration, cuts, histograms and VEGAS. This \
+bypasses symbolic CalcHEP generation and does not require an equivalent \
+CalcHEPModel.", "Notes"], Cell["Numerical model constraints, masses and \
+widths are connected to the numerical menus. Explicit amplitude width \
+conventions remain authoritative. Unsupported automatic-width or \
+gauge-restoring operations are refused.", "Notes"],
+  Cell["Current complete numerical exports are colorless. Unresolved Xi \
+spinors, hats, unsupported symbolic functions or color tensors must be \
+resolved before exporting.", "Notes"], Cell["The return value is the output \
+directory. \"ReturnDetails\" -> True adds generated file paths, build \
+information, normalization metadata and optional validation results.",
+   "Notes"], Cell["Options", "NotesSection"],
+  Cell[BoxData[GridBox[{{Cell["Option", "TableHeader"],
+       Cell["Default", "TableHeader"], Cell["Meaning", "TableHeader"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"SPINASDirectory\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Path to the local SPINAS \
+checkout/library. Automatic searches SPINAS_ROOT and the sibling spinas \
+checkout; an explicit directory selects another installation.",
+        "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"IncomingLegs\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"{", "1", ",", " ", "2", "}"}]],
+           "InlineFormula"]}], "TableText"], Cell["External leg labels that \
+are physically incoming in exported C++. Other legs are crossed once from \
+HEPCAT's all-ingoing convention, including outgoing angle-spinor signs. \
+Runnable projects currently require two incoming particles.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"FixedHelicities\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Massless \
+leg-to-doubled-helicity rules selecting states in the grouped SPINAS \
+exporter. Automatic retains the requested coverage; explicitly fixed incoming \
+helicities are not averaged over, and a fixed outgoing helicity is a labeled \
+contribution.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"ParameterRules\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Local numerical parameter \
+overrides keyed by model references or string names. Automatic resolves the \
+model's variables and dependent functions; fitting and checks do not assign \
+global values or replace parameters in the symbolic final amplitude.",
+        "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"ProcessName\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"\"hepcat_process\""}]],
+           "InlineFormula"]}], "TableText"], Cell["Valid C++ identifier for \
+the exported SPINAS class and executable. Choose a readable process name that \
+does not collide with reserved generated members.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"Precision\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Floating-point type used \
+by exported SPINAS code. Automatic reads the local library build \
+configuration; \"Double\" and \"LongDouble\" must match the library being \
+linked.", "TableText"]}, {Cell[TextData[{Cell[BoxData[RowBox[{"\"Build\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"False"}]], "InlineFormula"]}],
+        "TableText"], Cell["Whether to configure and compile the exported C++ \
+project against the existing SPINAS library. False writes source files only; \
+a source-only export does not require CMake.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"RunExamples\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"False"}]], "InlineFormula"]}],
+        "TableText"], Cell["Whether to build the exported SPINAS project and \
+execute its sample phase-space points. True implies the necessary build \
+step.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"CMakeExecutable\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Path to the CMake program \
+used when building. Automatic searches PATH and standard installations, \
+including common macOS application and Homebrew locations.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"Overwrite\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"False"}]], "InlineFormula"]}],
+        "TableText"], Cell["Whether existing generated project files may be \
+replaced. False protects an existing SPINAS output directory from accidental \
+overwriting.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"CalcHEPDirectory\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Directory containing the \
+local CalcHEP installation. Automatic searches the configured local \
+installation; ordinary SPINAS execution remains available when CalcHEP is \
+absent.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"CalcHEPModel\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Equivalent CalcHEP theory \
+for independent validation, given as {directory, modelNumber}. Automatic \
+recognizes the supported bundled massive-electron QED models; it does not \
+infer an arbitrary theory.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"RunCalcHEPValidation\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"False"}]], "InlineFormula"]}],
+        "TableText"], Cell["Whether export builds and runs the generated \
+independent CalcHEP comparison. It uses the same physical points on both \
+implementations; unsupported polarized or color-stripped comparisons report \
+unavailable.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"CalcHEPPoints\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"1000"}]], "InlineFormula"]}],
+        "TableText"], Cell["Number of random physical phase-space points \
+compared by the generated independent CalcHEP validation executable. This \
+tests both implementations at the same points.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"CalcHEPSeed\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Default seed of the \
+generated CalcHEP comparison. Automatic chooses from the time when validation \
+runs and prints the concrete seed; an unsigned 64-bit integer, including \
+zero, makes the run reproducible.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"ReturnDetails\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"False"}]], "InlineFormula"]}],
+        "TableText"], Cell["Whether to expose optional diagnostic data \
+instead of the compact default result. For preparation and factorization \
+completion it retains provenance, directions and validation and takes \
+precedence over Output; for export it returns file paths and build/run \
+results.", "TableText"]}}, GridBoxAlignment ->
+      {"Columns" -> {Left, Left, Left}}, GridBoxItemSize ->
+      {"Columns" -> {Scaled[0.23], Scaled[0.19], Scaled[0.58]}},
+     GridBoxDividers -> {"Rows" -> {False, True, {False}, False}}]],
+   "3ColumnTableMod"], Cell["Examples", "PrimaryExamplesSection"],
+  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
+     Cell["Evaluate this setup once before the examples. The paths refer to \
+the local HEPCAT checkout; no model parameters are assigned global numerical \
+values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
+         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
+         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
+         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
+         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
+         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
+         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
+         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
+         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
+         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
+         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
+         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
+         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
+         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
+         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
+      "Input", InitializationCell -> True]}, Open]],
+  Cell["Basic Examples", "ExampleSection"],
+  Cell["Inspect the available export options without writing files.",
+   "ExampleText"], Cell[BoxData[RowBox[{"Options", "[", "WriteSPINASProcess",
+      "]"}]], "Input"],
+  Cell[BoxData[RowBox[{"{", "\"SPINASDirectory\"", " ", "->", " ",
+      "Automatic", ",", " ", "\"IncomingLegs\"", " ", "->", " ", "{", "1",
+      ",", " ", "2", "}", ",", " ", "\"FixedHelicities\"", " ", "->", " ",
+      "Automatic", ",", " ", "\"ParameterRules\"", " ", "->", " ",
+      "Automatic", ",", " ", "\"ProcessName\"", " ", "->", " ",
+      "\"hepcat_process\"", ",", " ", "\"Precision\"", " ", "->", " ",
+      "Automatic", ",", " ", "\"Build\"", " ", "->", " ", "False", ",", " ",
+      "\"RunExamples\"", " ", "->", " ", "False", ",", " ",
+      "\"CMakeExecutable\"", " ", "->", " ", "Automatic", ",", " ",
+      "\"Overwrite\"", " ", "->", " ", "False", ",", " ",
+      "\"CalcHEPDirectory\"", " ", "->", " ", "Automatic", ",", " ",
+      "\"CalcHEPModel\"", " ", "->", " ", "Automatic", ",", " ",
+      "\"RunCalcHEPValidation\"", " ", "->", " ", "False", ",", " ",
+      "\"CalcHEPPoints\"", " ", "->", " ", "1000", ",", " ",
+      "\"CalcHEPSeed\"", " ", "->", " ", "Automatic", ",", " ",
+      "\"ReturnDetails\"", " ", "->", " ", "False", "}"}]], "Output"],
+  Cell["Export a complete four-point photon-helicity family to a temporary \
+directory.", "ExampleText"],
+  Cell[BoxData[RowBox[{"knownModel", " ", "=", " ", "ReadModel", "[",
+      "modelDirectory", ",", " ", "3", "]", ";", "\n", "helicityProcesses",
+      " ", "=", " ", "{", "{", "\"e\"", ",", " ", "\"E\"", ",", " ",
+      "\"A.+\"", ",", " ", "\"A.+\"", "}", ",", " ", "{", "\"e\"", ",", " ",
+      "\"E\"", ",", " ", "\"A.+\"", ",", " ", "\"A.-\"", "}", ",", " ", "{",
+      "\"e\"", ",", " ", "\"E\"", ",", " ", "\"A.-\"", ",", " ", "\"A.-\"",
+      "}", "}", ";", "\n", "entries", " ", "=", " ", "{", "#", ",", " ",
+      "LookupAmplitude", "[", "Thread", "[", "{", "#", ",", " ", "Range",
+      "[", "4", "]", "}", "]", ",", " ", "knownModel", ",", " ", "False",
+      ",", " ", "{", "i", ",", " ", "j", ",", " ", "k", ",", " ", "l", "}",
+      "]", "}", " ", "&", " ", "/@", " ", "helicityProcesses", ";", "\n",
+      "exportDirectory", " ", "=", " ", "CreateDirectory", "[", "]", ";",
+      "\n", "WriteSPINASProcess", "[", "exportDirectory", ",", " ", "{",
+      "\"e\"", ",", " ", "\"E\"", "}", " ", "->", " ", "{", "\"A\"", ",",
+      " ", "\"A\"", "}", ",", " ", "entries", ",", " ", "knownModel", ",",
+      " ", "\"ProcessName\"", " ", "->", " ", "\"eeAA\"", "]"}]], "Input"],
+  Cell["This example writes files, starts a longer calculation, or requires \
+an optional external tool. Evaluate it when you want to perform that \
+operation.", "ExampleText"],
+  Cell["Optionally build the exported project and run its example points.",
+   "ExampleText"], Cell[BoxData[RowBox[{"WriteSPINASProcess", "[",
+      "exportDirectory", ",", " ", "{", "\"e\"", ",", " ", "\"E\"", "}", " ",
+      "->", " ", "{", "\"A\"", ",", " ", "\"A\"", "}", ",", " ", "entries",
+      ",", " ", "knownModel", ",", " ", "\"ProcessName\"", " ", "->", " ",
+      "\"eeAA\"", ",", " ", "\"Overwrite\"", " ", "->", " ", "True", ",",
+      " ", "\"Build\"", " ", "->", " ", "True", ",", " ", "\"RunExamples\"",
+      " ", "->", " ", "True", "]"}]], "Input"],
+  Cell["This example writes files, starts a longer calculation, or requires \
+an optional external tool. Evaluate it when you want to perform that \
+operation.", "ExampleText"], Cell["See Also", "SeeAlsoSection"],
+  Cell[TextData[{ButtonBox["SPINAS", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SPINAS"], "  \[Bullet]  ",
+     ButtonBox["PlainText", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PlainText"], "  \[Bullet]  ",
+     ButtonBox["ReverseMomentum", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReverseMomentum"], "  \[Bullet]  ",
+     ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"], "  \[Bullet]  ",
+     ButtonBox["ModelParameterRules", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ModelParameterRules"]}], "SeeAlso"],
+  Cell["Related Guides", "MoreAboutSection"],
+  Cell[TextData[{ButtonBox["Formatting, Model Output and SPINAS Export",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/guide/FormattingAndExport"], "  \[Bullet]  ",
+     ButtonBox["HEPCAT: Constructive Amplitudes and Spinor Algebra",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}],
+   "MoreAbout"]}, WindowTitle -> "WriteSPINASProcess - HEPCAT Documentation",
+ Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/ref/WriteSPINASProcess",
+     "title" -> "WriteSPINASProcess", "type" -> "Symbol",
+     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Writes a \
+complete, readable C++ process using SPINAS, with optional CalcHEP validation \
+and integration.", "keywords" -> {"HEPCAT", "WriteSPINASProcess",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

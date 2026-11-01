@@ -1,0 +1,123 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT TUTORIAL", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}], "AnchorBar"]}},
+     GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["Exporting a Numerical SPINAS Process",
+   "TechNoteTitle"], Cell["Group helicities, declare physical crossing and \
+build readable numerical code.", "TechNoteText"],
+  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
+     Cell["Evaluate this setup once before the examples. The paths refer to \
+the local HEPCAT checkout; no model parameters are assigned global numerical \
+values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
+         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
+         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
+         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
+         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
+         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
+         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
+         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
+         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
+         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
+         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
+         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
+         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
+         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
+         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
+      "Input", InitializationCell -> True]}, Open]],
+  Cell["Collect Analytic Helicity Amplitudes", "TechNoteSection"],
+  Cell["One exported process should contain the massless helicity choices \
+needed by the requested spin sum. The expressions still use HEPCAT's \
+all-incoming convention. The known four-point QED model is a small example \
+that does not need a new construction run.", "TechNoteText"],
+  Cell["Collect the independent photon-helicity cases.", "ExampleText"],
+  Cell[BoxData[RowBox[{"knownModel", " ", "=", " ", "ReadModel", "[",
+      "modelDirectory", ",", " ", "3", "]", ";", "\n", "processes", " ", "=",
+      " ", "{", "{", "\"e\"", ",", " ", "\"E\"", ",", " ", "\"A.+\"", ",",
+      " ", "\"A.+\"", "}", ",", " ", "{", "\"e\"", ",", " ", "\"E\"", ",",
+      " ", "\"A.+\"", ",", " ", "\"A.-\"", "}", ",", " ", "{", "\"e\"", ",",
+      " ", "\"E\"", ",", " ", "\"A.-\"", ",", " ", "\"A.-\"", "}", "}", ";",
+      "\n", "entries", " ", "=", " ", "{", "#", ",", " ", "LookupAmplitude",
+      "[", "Thread", "[", "{", "#", ",", " ", "Range", "[", "4", "]", "}",
+      "]", ",", " ", "knownModel", ",", " ", "False", ",", " ", "{", "i1",
+      ",", " ", "i2", ",", " ", "i3", ",", " ", "i4", "}", "]", "}", " ",
+      "&", " ", "/@", " ", "processes", ";"}]], "Input"],
+  Cell["Specify Physical Incoming and Outgoing Particles",
+   "TechNoteSection"], Cell["The physical process makes crossing unambiguous. \
+WriteSPINASProcess reverses the outgoing momenta and spinor conventions. For \
+identical photons it can use the supported permutation completion of supplied \
+helicity cases; incomplete requested helicity coverage must be reported \
+rather than silently summed as zero.", "TechNoteText"],
+  Cell["Use an explicit helicity in the physical process when that particle \
+is intentionally fixed. A spin-summed amplitude squares the modulus for each \
+spin/helicity assignment and then adds those contributions. It does not add \
+amplitudes from different external spin states before squaring.",
+   "TechNoteText"], Cell["Write files into a new temporary directory.",
+   "ExampleText"], Cell[BoxData[RowBox[{"exportDirectory", " ", "=", " ",
+      "CreateDirectory", "[", "]", ";", "\n", "WriteSPINASProcess", "[",
+      "exportDirectory", ",", " ", "{", "\"e\"", ",", " ", "\"E\"", "}", " ",
+      "->", " ", "{", "\"A\"", ",", " ", "\"A\"", "}", ",", " ", "entries",
+      ",", " ", "knownModel", ",", " ", "\"ProcessName\"", " ", "->", " ",
+      "\"eeAA\"", "]"}]], "Input"], Cell["This example writes files, starts a \
+longer calculation, or requires an optional external tool. Evaluate it when \
+you want to perform that operation.", "ExampleText"],
+  Cell["Build and Run", "TechNoteSection"], Cell["The exporter writes the \
+process header and implementation, a small driver, CMake support and \
+validation helpers. Request building when SPINAS and the required compiler \
+tools are installed. The output report gives the generated locations and \
+build/run diagnostics.", "TechNoteText"], Cell["Normal random validation uses \
+a time-based seed. Pass an explicit seed when replaying a failure. The \
+generated numerical tests compare the same phase-space points for both \
+implementations.", "TechNoteText"],
+  Cell["Build and run the generated example where SPINAS is installed.",
+   "ExampleText"], Cell[BoxData[RowBox[{"WriteSPINASProcess", "[",
+      "exportDirectory", ",", " ", "{", "\"e\"", ",", " ", "\"E\"", "}", " ",
+      "->", " ", "{", "\"A\"", ",", " ", "\"A\"", "}", ",", " ", "entries",
+      ",", " ", "knownModel", ",", " ", "\"ProcessName\"", " ", "->", " ",
+      "\"eeAA\"", ",", " ", "\"Overwrite\"", " ", "->", " ", "True", ",",
+      " ", "\"Build\"", " ", "->", " ", "True", ",", " ", "\"RunExamples\"",
+      " ", "->", " ", "True", "]"}]], "Input"],
+  Cell["This example writes files, starts a longer calculation, or requires \
+an optional external tool. Evaluate it when you want to perform that \
+operation.", "ExampleText"], Cell["CalcHEP Validation and Integration",
+   "TechNoteSection"], Cell["Optional CalcHEP validation generates an \
+independent symbolic CalcHEP process and compares squared amplitudes on \
+shared random kinematics. This checks more than the internal consistency of \
+exported SPINAS code.", "TechNoteText"], Cell["The optional n_calchep backend \
+has a different purpose: it connects CalcHEP's numerical integration \
+machinery to the HEPCAT SPINAS matrix element without CalcHEP symbolically \
+regenerating that matrix element. Generated parameter and mass interfaces \
+keep the runtime values consistent.", "TechNoteText"],
+  Cell["Related Functions", "SeeAlsoSection"],
+  Cell[TextData[{ButtonBox["WriteSPINASProcess", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/WriteSPINASProcess"], "  \[Bullet]  ",
+     ButtonBox["LookupAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/LookupAmplitude"], "  \[Bullet]  ",
+     ButtonBox["AppendModelAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/AppendModelAmplitudes"],
+     "  \[Bullet]  ", ButtonBox["ModelParameterRules", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ModelParameterRules"],
+     "  \[Bullet]  ", ButtonBox["SPINAS", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SPINAS"], "  \[Bullet]  ",
+     ButtonBox["PlainText", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PlainText"]}], "SeeAlso"],
+  Cell["Related Guides", "MoreAboutSection"],
+  Cell[TextData[{ButtonBox["Formatting, Model Output and SPINAS Export",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/guide/FormattingAndExport"], "  \[Bullet]  ",
+     ButtonBox["Models and Model-Local Parameters", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/guide/ModelsAndParameters"]}],
+   "MoreAbout"]}, WindowTitle ->
+  "Exporting a Numerical SPINAS Process - HEPCAT Documentation",
+ Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/tutorial/ExportingToSPINAS",
+     "title" -> "Exporting a Numerical SPINAS Process", "type" -> "Tutorial",
+     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Group \
+helicities, declare physical crossing and build readable numerical code.",
+     "keywords" -> {"HEPCAT", "ExportingToSPINAS", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

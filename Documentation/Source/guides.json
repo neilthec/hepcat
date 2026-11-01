@@ -1,0 +1,1054 @@
+[
+  {
+    "name": "HEPCAT",
+    "title": "HEPCAT: Constructive Amplitudes and Spinor Algebra",
+    "summary": "Build, simplify, complete and validate scattering amplitudes with explicit spinor identities.",
+    "paragraphs": [
+      "HEPCAT works with helicity and massive spin spinors, constructive amplitude models, tree diagrams and factorization channels. It also reads CalcHEP Feynman models, converts supported tree expressions to spinor products and exports numerical SPINAS processes.",
+      "Start with a model and an ordered list of external particles. HEPCAT uses all external momenta incoming. Labels 1, 2, ... refer to positions in that list; a physical incoming-to-outgoing process is specified separately when exporting numerical code.",
+      "ConstructAmplitude runs the normal construction workflow with automatic defaults and a live progress display. The individual diagram, preparation, completion and checking functions are available when you want to inspect each stage.",
+      "The constructive diagram model supplies elementary amplitudes. The factorization model must contain the complete lower-point amplitudes needed for the requested multiplicity. Missing amplitudes are treated as zero. All parameters stay inside the model, so different models can be used at the same time.",
+      "A passing numerical check is evidence at the sampled kinematics, not a proof of an analytic identity. Keep the detailed report when investigating a failed or unresolved channel, a spurious denominator or a high-energy limit."
+    ],
+    "sections": [
+      {
+        "title": "Start Here",
+        "description": "A short first calculation and the notation used throughout HEPCAT.",
+        "functions": [],
+        "guides": [],
+        "tutorials": [
+          "GettingStarted",
+          "ConstructingAndCheckingAnAmplitude"
+        ]
+      },
+      {
+        "title": "Models, Diagrams and Construction",
+        "description": "",
+        "functions": [],
+        "guides": [
+          "ModelsAndParameters",
+          "DiagramsAndFactorization",
+          "AmplitudeConstruction"
+        ],
+        "tutorials": []
+      },
+      {
+        "title": "Spinors and Exact Identities",
+        "description": "",
+        "functions": [],
+        "guides": [
+          "SpinorAlgebra",
+          "IdentitiesAndSimplification"
+        ],
+        "tutorials": [
+          "ApplyingSpinorIdentities",
+          "KinematicsAndOnShellConditions"
+        ]
+      },
+      {
+        "title": "Check and Compare Results",
+        "description": "",
+        "functions": [],
+        "guides": [
+          "AmplitudeValidation",
+          "FeynmanAmplitudes"
+        ],
+        "tutorials": [
+          "FeynmanComparison"
+        ]
+      },
+      {
+        "title": "Display, Save and Run Numerical Code",
+        "description": "",
+        "functions": [],
+        "guides": [
+          "FormattingAndExport"
+        ],
+        "tutorials": [
+          "ExportingToSPINAS"
+        ]
+      },
+      {
+        "title": "Browse the Package",
+        "description": "",
+        "functions": [],
+        "guides": [
+          "ReferenceIndex",
+          "LegacyAmplitudeSearch"
+        ],
+        "tutorials": []
+      }
+    ],
+    "tutorials": []
+  },
+  {
+    "name": "SpinorAlgebra",
+    "title": "Spinors, Momenta and Spin Sums",
+    "summary": "Represent and manipulate angle brackets, square brackets, momentum chains and spin indices.",
+    "paragraphs": [
+      "SpinorChain displays HEPCAT expressions in angle and square bracket notation. Spinor endpoints distinguish massless helicity spinors, massive spin spinors and auxiliary reference spinors. Mom and Multiparticle describe momentum insertions without turning them into external particles.",
+      "External labels, little-group indices and reference labels have separate meanings. ChooseSpinIndices selects explicit spin indices; ReverseMomentum crosses an external momentum; PermuteParticles relabels particles consistently."
+    ],
+    "sections": [
+      {
+        "title": "Build Expressions",
+        "description": "",
+        "functions": [
+          "Spinor",
+          "SpinorChain",
+          "SpinorTrace",
+          "Mom",
+          "Mass",
+          "Multiparticle",
+          "MultiparticleDiff",
+          "PropDen",
+          "MomProd"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "Spin Indices and Squaring",
+        "description": "",
+        "functions": [
+          "ChooseSpinIndex",
+          "ChooseSpinIndices",
+          "MakeIndicesExplicit",
+          "MakeIndicesImplicit",
+          "SymmetrizeSpin",
+          "SymmetrizeSpins",
+          "ReduceSpinContractions",
+          "SquareAmplitude",
+          "ExpandSummation"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "Crossing, Relabeling and Kinematics",
+        "description": "",
+        "functions": [
+          "ReverseMomentum",
+          "PermuteParticles",
+          "ReverseSequence",
+          "ExtractEnergy",
+          "ExtractEnergy1",
+          "ExtractEnergy2",
+          "MomProdExplicit",
+          "SpinToHelicitySpinors"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "Reference Factors and Deformations",
+        "description": "",
+        "functions": [
+          "xFactor",
+          "xTildeFactor",
+          "SpinorHat",
+          "MomHat",
+          "MomQ",
+          "MomProdHat1",
+          "MomProdHat2",
+          "MomProdHat12",
+          "SpinorEps",
+          "SpinorZ",
+          "ComplexifyMomenta",
+          "UnhatMomenta",
+          "ExpandComplexMomenta",
+          "ReplaceSpinorZ",
+          "ExpandMomHatAlt",
+          "UnHatSpinors",
+          "zPlus",
+          "zMinus"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "Other Symbolic Heads",
+        "description": "",
+        "functions": [
+          "Particle",
+          "Coupling",
+          "Mandelstahm",
+          "MandelstahmHat",
+          "En",
+          "MomMagnitude",
+          "Theta",
+          "Phi",
+          "rr",
+          "sigma",
+          "delta",
+          "ConstructiveAmplitude",
+          "colorT",
+          "colorf",
+          "colorTrace"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "More Functions and Symbols",
+        "description": "",
+        "functions": [
+          "SpinorChainReduced",
+          "SpinorTraceReduced"
+        ],
+        "guides": [],
+        "tutorials": []
+      }
+    ],
+    "tutorials": [
+      "ApplyingSpinorIdentities",
+      "KinematicsAndOnShellConditions"
+    ]
+  },
+  {
+    "name": "ModelsAndParameters",
+    "title": "Models and Model-Local Parameters",
+    "summary": "Read model tables, retrieve known amplitudes and save new results.",
+    "paragraphs": [
+      "ReadModel returns one model value that contains particles, amplitudes or vertices, independent variables and dependent functions. Pass that value to calculations. Reading a model does not assign global masses or couplings.",
+      "Use the model built from elementary amplitudes to generate diagrams. For factorization, supply complete known lower-point amplitudes in the model. For five-point QED, the bundled three-point diagram model and the model that also contains four-point amplitudes have different jobs."
+    ],
+    "sections": [
+      {
+        "title": "Read and Inspect Models",
+        "description": "",
+        "functions": [
+          "ReadModel",
+          "ReadParticles",
+          "ReadAmplitudes",
+          "ReadVariables",
+          "ReadFunctions",
+          "ParticleMass",
+          "FeynmanModel"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "Parameters Stay with Their Model",
+        "description": "",
+        "functions": [
+          "ModelParameter",
+          "ModelFunction",
+          "ModelParameterName",
+          "ModelParameterRules"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "Known Amplitudes and Text Input",
+        "description": "",
+        "functions": [
+          "LookupAmplitude",
+          "ConvertAmplitude",
+          "ConvertAmplitudeOld",
+          "ConvertStringAmplitude",
+          "ConvertStringHattedAmplitude",
+          "AddOppositeHelicityAmplitudes"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "Extend a Factorization Model",
+        "description": "",
+        "functions": [
+          "AppendModelAmplitudes"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "More Functions and Symbols",
+        "description": "",
+        "functions": [
+          "ReadVertices",
+          "ConvertVertex"
+        ],
+        "guides": [],
+        "tutorials": []
+      }
+    ],
+    "tutorials": [
+      "GettingStarted",
+      "ConstructingAndCheckingAnAmplitude"
+    ]
+  },
+  {
+    "name": "DiagramsAndFactorization",
+    "title": "Diagrams and Factorization Channels",
+    "summary": "Generate diagrams and physical channel expressions from model data.",
+    "paragraphs": [
+      "CreateDiagrams generates tree diagrams for an ordered process. diagramAmplitudes converts the complete list, including the package conventions for fermion ordering and internal photon or gluon helicity sums. Prefer the plural function for a complete process.",
+      "FactorizationAmplitudeChannels returns the compact channel definition and product of complete lower-point amplitudes divided by its propagator. A channel imposes one internal on-shell condition for its residue; other internal propagators are retained.",
+      "Diagrams organize compatible products of physical propagators. Channels specify their required residues. They complement one another but are not interchangeable contributions to be summed without controlling repeated poles."
+    ],
+    "sections": [
+      {
+        "title": "Diagrams and Pictures",
+        "description": "",
+        "functions": [
+          "CreateDiagrams",
+          "CreateArrowDiagram",
+          "CreateArrowDiagrams",
+          "diagramAmplitudes",
+          "diagramAmplitude",
+          "DiagramAmplitudeRecords"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "Channels and Residues",
+        "description": "",
+        "functions": [
+          "FactorizationPartitions",
+          "FactorizationAmplitudeChannels",
+          "LookupAmplitude",
+          "PhysicalPoleResidue"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "Reference Factors",
+        "description": "",
+        "functions": [
+          "ExpandXFactors"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "Earlier Diagram Utilities",
+        "description": "",
+        "functions": [
+          "ConstructiveDiagram",
+          "SChannelDiagram",
+          "TChannelDiagram",
+          "UChannelDiagram",
+          "SimplifyFactorizationChannels",
+          "SumResiduesAlt"
+        ],
+        "guides": [],
+        "tutorials": []
+      }
+    ],
+    "tutorials": [
+      "ConstructingAndCheckingAnAmplitude",
+      "KinematicsAndOnShellConditions"
+    ]
+  },
+  {
+    "name": "IdentitiesAndSimplification",
+    "title": "Identities and Simplification",
+    "summary": "Apply exact identities and inspect legal one-step rewrites.",
+    "paragraphs": [
+      "ReduceSpinContractions performs spin-index contractions. ReduceSpinorProducts applies the oriented spinor and momentum-chain rules without assuming internal particles are on shell. PrepareAmplitudes adds the process information needed for bounded momentum-conservation searches and diagram-specific numerator conditions.",
+      "Use applyToNumerator when rules are valid only in each numerator. It preserves each term in its existing form and does not call Together or Expand first. Never use internal on-shell replacements on the physical propagator denominators.",
+      "For a derivation, inspect SpinorIdentityCandidates and use ApplySpinorIdentity to replay one chosen operation. These are exact symbolic tools and do not require a trained neural model."
+    ],
+    "sections": [
+      {
+        "title": "Normal Reductions",
+        "description": "",
+        "functions": [
+          "ReduceSpinContractions",
+          "ReduceSpinorProducts",
+          "SimplifySpinorProducts",
+          "SpinorChainReduced",
+          "SpinorTraceReduced",
+          "applyToNumerator",
+          "ExtractMandelstahm",
+          "ReducexFactors",
+          "ReduceColor"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "Inspect and Replay Identities",
+        "description": "",
+        "functions": [
+          "SpinorIdentityCandidates",
+          "ApplySpinorIdentity",
+          "SchoutenRewrite",
+          "SchoutenCandidates",
+          "SpinorExpressionComplexity",
+          "ComplicateAmplitude"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "Process-Aware Preparation",
+        "description": "",
+        "functions": [
+          "PrepareAmplitudes",
+          "PrepareDiagramAmplitudes",
+          "xFactorReduced",
+          "xTildeFactorReduced"
+        ],
+        "guides": [],
+        "tutorials": []
+      }
+    ],
+    "tutorials": [
+      "ApplyingSpinorIdentities",
+      "KinematicsAndOnShellConditions"
+    ]
+  },
+  {
+    "name": "AmplitudeConstruction",
+    "title": "Constructing and Completing Amplitudes",
+    "summary": "Prepare diagram seeds, solve factorization constraints and complete allowed high-energy behavior.",
+    "paragraphs": [
+      "ConstructAmplitude connects diagram generation, preparation, factorization, completion and validation. Start with the normal automatic defaults. Override options to investigate a representation, change a time budget or reproduce a numerical run.",
+      "PrepareAmplitudes simplifies each diagram or channel with the assumptions that its input actually declares. With ReturnDetails -> True it also preserves the discarded remainders and provenance that completion can try before generating broader corrections.",
+      "CompleteFactorization solves a bounded simultaneous correction problem, not an unrestricted search through every possible rational amplitude. CompleteHighEnergy uses the remaining factorization-compatible directions to test and repair allowed high-energy behavior. A failure or unresolved result means the available directions or numerical checks did not establish a completion.",
+      "For a manually staged calculation, retain the detailed preparation and factorization objects until the high-energy stage finishes. The simple final mass-rules/amplitude pair can then be prepared with external on-shell identities and checked again."
+    ],
+    "sections": [
+      {
+        "title": "Normal Workflow",
+        "description": "",
+        "functions": [
+          "ConstructAmplitude",
+          "PrepareAmplitudes",
+          "CompleteFactorization",
+          "CompleteHighEnergy",
+          "CheckAmplitudes"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "Inputs and Diagnostics",
+        "description": "",
+        "functions": [
+          "CreateDiagrams",
+          "diagramAmplitudes",
+          "FactorizationAmplitudeChannels",
+          "DiagramAmplitudeRecords",
+          "PhysicalPoleResidue"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "Compatibility Name",
+        "description": "",
+        "functions": [
+          "PrepareDiagramAmplitudes"
+        ],
+        "guides": [],
+        "tutorials": []
+      }
+    ],
+    "tutorials": [
+      "ConstructingAndCheckingAnAmplitude",
+      "KinematicsAndOnShellConditions"
+    ]
+  },
+  {
+    "name": "AmplitudeValidation",
+    "title": "Checking Amplitudes",
+    "summary": "Compare physical residues, spurious poles, high-energy behavior, references and Feynman results.",
+    "paragraphs": [
+      "CheckAmplitudes takes an amplitude, compact factorization channels and a model. The normal output is a readable report; request Residues, Summary or Details when you need the actual sampled comparisons.",
+      "The checker identifies physical poles from the supplied channels and discovers additional candidate spurious factors in the amplitude. It also supports high-energy behavior, external reference-spinor independence and comparison with an independent Feynman expression. The available metadata and kinematic support determine which checks can be completed.",
+      "PASS means the selected check passed at the sampled points within its tolerance. Opp Sign identifies a residue that differs by an overall sign. FAIL and unresolved or skipped checks must be inspected; none should be silently interpreted as agreement.",
+      "Automatic seeds vary between runs. Set RandomSeed explicitly to replay a diagnostic. Numerical approaches to a spurious pole should avoid other physical singularities and use enough precision to separate a true divergence from cancellation error."
+    ],
+    "sections": [
+      {
+        "title": "Check the Complete Result",
+        "description": "",
+        "functions": [
+          "CheckAmplitudes",
+          "CheckPhysicalResidues"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "Inspect a Pole",
+        "description": "",
+        "functions": [
+          "PhysicalPoleResidue",
+          "FactorizationAmplitudeChannels",
+          "PropDen"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "Independent Feynman Comparison",
+        "description": "",
+        "functions": [
+          "ReadModel",
+          "FeynmanToSpinorProducts",
+          "PrepareAmplitudes"
+        ],
+        "guides": [],
+        "tutorials": []
+      }
+    ],
+    "tutorials": [
+      "ConstructingAndCheckingAnAmplitude",
+      "FeynmanComparison"
+    ]
+  },
+  {
+    "name": "FeynmanAmplitudes",
+    "title": "Feynman Models and Spinor Conversion",
+    "summary": "Use CalcHEP Feynman rules as an independent off-shell diagram backend.",
+    "paragraphs": [
+      "ReadModel recognizes CalcHEP vertex tables and returns FeynmanModel. The same CreateDiagrams and diagramAmplitudes entry points then produce ordered Dirac and Lorentz expressions. FeynmanToSpinorProducts converts the supported tree contractions into HEPCAT spinor chains.",
+      "All internal Feynman propagators remain off shell. A common external polarization reference must be used across the full sum of Feynman diagrams; the individual diagrams are generally reference dependent.",
+      "The backend supports its documented unitary-gauge tree subset. It reports unsupported tensor or fermion structures explicitly. The model reader and tensor representation are general infrastructure, not hard-coded Standard Model amplitude answers."
+    ],
+    "sections": [
+      {
+        "title": "Read, Generate and Convert",
+        "description": "",
+        "functions": [
+          "ReadModel",
+          "FeynmanModel",
+          "CreateDiagrams",
+          "diagramAmplitudes",
+          "FeynmanToSpinorProducts",
+          "PrepareAmplitudes",
+          "CheckAmplitudes"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "Dirac Algebra",
+        "description": "",
+        "functions": [
+          "DiracWord",
+          "DiracGamma",
+          "DiracGamma5",
+          "DiracSlash",
+          "FermionBar",
+          "FermionKet",
+          "DiracChain"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "Lorentz and Polarization Tensors",
+        "description": "",
+        "functions": [
+          "LorentzIndex",
+          "LorentzMetric",
+          "LorentzMomentum",
+          "LorentzScalarProduct",
+          "PolarizationVector",
+          "VectorSpinIndex"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "Color Tensors",
+        "description": "",
+        "functions": [
+          "ColorIndex",
+          "ColorDelta",
+          "ColorGenerator",
+          "ColorStructure"
+        ],
+        "guides": [],
+        "tutorials": []
+      }
+    ],
+    "tutorials": [
+      "FeynmanComparison"
+    ]
+  },
+  {
+    "name": "FormattingAndExport",
+    "title": "Formatting, Model Output and SPINAS Export",
+    "summary": "Display analytic expressions and write numerical C++ processes.",
+    "paragraphs": [
+      "HEPCAT already formats spinor chains as brackets in notebooks. PlainText and TeX produce text representations. SPINAS is an expression formatter; WriteSPINASProcess writes the complete numerical process, build files and validation support.",
+      "For numerical code, specify the physical incoming and outgoing process so HEPCAT can cross its all-incoming analytic expression. Group massless helicity choices for the same physical process in one export. Spin sums square each fixed-spin amplitude before summing and apply the declared averages and identical-particle factors.",
+      "Generated random phase-space tests use a time-based default seed, with an explicit seed for reproducibility. Optional CalcHEP comparison validates the same phase-space points independently. The direct n_calchep integration backend instead uses the exported HEPCAT amplitude as its matrix element."
+    ],
+    "sections": [
+      {
+        "title": "Readable Analytic Output",
+        "description": "",
+        "functions": [
+          "PlainText",
+          "lPlainText",
+          "TeX",
+          "lTeX",
+          "nice",
+          "lnice"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "Save Model Amplitudes",
+        "description": "",
+        "functions": [
+          "AppendModelAmplitudes",
+          "ConvertStringAmplitude"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "Complete Numerical Process",
+        "description": "",
+        "functions": [
+          "WriteSPINASProcess"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "Lower-Level SPINAS Formatting",
+        "description": "",
+        "functions": [
+          "SPINAS",
+          "lSPINAS",
+          "CreateSPName",
+          "CreateSPInitializationStatement",
+          "CreateSPUpdateStatement",
+          "InitializeSPINASSpinorProducts",
+          "UpdateSPINASSpinorProducts",
+          "DeclareSPINASSpinorProducts",
+          "Output"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "More Functions and Symbols",
+        "description": "",
+        "functions": [
+          "ConvertStringHattedAmplitude"
+        ],
+        "guides": [],
+        "tutorials": []
+      }
+    ],
+    "tutorials": [
+      "ExportingToSPINAS"
+    ]
+  },
+  {
+    "name": "LegacyAmplitudeSearch",
+    "title": "Reserved and Earlier APIs",
+    "summary": "Recognize historical names and use the maintained calculation workflow.",
+    "paragraphs": [
+      "Some names remain exported for compatibility with old notebooks but have no callable implementation on this branch. Their individual pages identify that status explicitly. A help page for a reserved name does not make the old algorithm available.",
+      "Use ConstructAmplitude and the exact identity tools for current constructive work. Machine-learning simplification and evolutionary amplitude-search development are not required by these tools."
+    ],
+    "sections": [
+      {
+        "title": "Current Alternatives",
+        "description": "",
+        "functions": [
+          "ConstructAmplitude",
+          "PrepareAmplitudes",
+          "SpinorIdentityCandidates",
+          "ApplySpinorIdentity"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "Reserved Names",
+        "description": "",
+        "functions": [
+          "HelicitySpinorHat",
+          "SpinSpinorHat",
+          "rSpinor",
+          "MomProdL",
+          "MomProdR",
+          "ReduceXFactorsP",
+          "ReduceXFactorsM",
+          "CompareAmpToSquaredAmp",
+          "DeleteRandomConstructiveAmplitude",
+          "CheckLengthConstructive",
+          "CheckNumberOfSpinors",
+          "CreateRandomConstructiveSpinorProduct",
+          "CreateRandomMassFactor",
+          "CreateRandomConstructiveAmplitudeTerm",
+          "AddRandomConstructiveAmplitudeTerm",
+          "CreateInitialRandomPopulationConstructiveAmplitudes",
+          "RandomDeleteSpinorProduct",
+          "RandomAddSpinorProduct",
+          "RandomChangeCoefficientSpinorProduct",
+          "MateConstructiveAmplitudes",
+          "MakeNRandomChanges",
+          "FindAmp",
+          "ReadVertices",
+          "ConvertVertex"
+        ],
+        "guides": [],
+        "tutorials": []
+      }
+    ],
+    "tutorials": []
+  },
+  {
+    "name": "ReferenceIndex",
+    "title": "HEPCAT Reference Index",
+    "summary": "Alphabetical reference for every documented public function and symbolic head.",
+    "paragraphs": [
+      "Browse individual reference pages here, or use the topic guides on the main HEPCAT page. Internal implementation helpers and accidental context-local variables are not part of the published API."
+    ],
+    "sections": [
+      {
+        "title": "A",
+        "description": "",
+        "functions": [
+          "AddOppositeHelicityAmplitudes",
+          "AddRandomConstructiveAmplitudeTerm",
+          "AppendModelAmplitudes",
+          "ApplySpinorIdentity",
+          "applyToNumerator"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "C",
+        "description": "",
+        "functions": [
+          "CheckAmplitudes",
+          "CheckLengthConstructive",
+          "CheckNumberOfSpinors",
+          "CheckPhysicalResidues",
+          "ChooseSpinIndex",
+          "ChooseSpinIndices",
+          "ColorDelta",
+          "colorf",
+          "ColorGenerator",
+          "ColorIndex",
+          "ColorStructure",
+          "colorT",
+          "colorTrace",
+          "CompareAmpToSquaredAmp",
+          "CompleteFactorization",
+          "CompleteHighEnergy",
+          "ComplexifyMomenta",
+          "ComplicateAmplitude",
+          "ConstructAmplitude",
+          "ConstructiveAmplitude",
+          "ConstructiveDiagram",
+          "ConvertAmplitude",
+          "ConvertAmplitudeOld",
+          "ConvertStringAmplitude",
+          "ConvertStringHattedAmplitude",
+          "ConvertVertex",
+          "Coupling",
+          "CreateArrowDiagram",
+          "CreateArrowDiagrams",
+          "CreateDiagrams",
+          "CreateInitialRandomPopulationConstructiveAmplitudes",
+          "CreateRandomConstructiveAmplitudeTerm",
+          "CreateRandomConstructiveSpinorProduct",
+          "CreateRandomMassFactor",
+          "CreateSPInitializationStatement",
+          "CreateSPName",
+          "CreateSPUpdateStatement"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "D",
+        "description": "",
+        "functions": [
+          "DeclareSPINASSpinorProducts",
+          "DeleteRandomConstructiveAmplitude",
+          "delta",
+          "diagramAmplitude",
+          "DiagramAmplitudeRecords",
+          "diagramAmplitudes",
+          "DiracChain",
+          "DiracGamma",
+          "DiracGamma5",
+          "DiracSlash",
+          "DiracWord"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "E",
+        "description": "",
+        "functions": [
+          "En",
+          "ExpandComplexMomenta",
+          "ExpandMomHatAlt",
+          "ExpandSummation",
+          "ExpandXFactors",
+          "ExtractEnergy",
+          "ExtractEnergy1",
+          "ExtractEnergy2",
+          "ExtractMandelstahm"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "F",
+        "description": "",
+        "functions": [
+          "FactorizationAmplitudeChannels",
+          "FactorizationPartitions",
+          "FermionBar",
+          "FermionKet",
+          "FeynmanModel",
+          "FeynmanToSpinorProducts",
+          "FindAmp"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "H",
+        "description": "",
+        "functions": [
+          "HelicitySpinorHat"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "I",
+        "description": "",
+        "functions": [
+          "InitializeSPINASSpinorProducts"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "L",
+        "description": "",
+        "functions": [
+          "lnice",
+          "LookupAmplitude",
+          "LorentzIndex",
+          "LorentzMetric",
+          "LorentzMomentum",
+          "LorentzScalarProduct",
+          "lPlainText",
+          "lSPINAS",
+          "lTeX"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "M",
+        "description": "",
+        "functions": [
+          "MakeIndicesExplicit",
+          "MakeIndicesImplicit",
+          "MakeNRandomChanges",
+          "Mandelstahm",
+          "MandelstahmHat",
+          "Mass",
+          "MateConstructiveAmplitudes",
+          "ModelFunction",
+          "ModelParameter",
+          "ModelParameterName",
+          "ModelParameterRules",
+          "Mom",
+          "MomHat",
+          "MomMagnitude",
+          "MomProd",
+          "MomProdExplicit",
+          "MomProdHat1",
+          "MomProdHat12",
+          "MomProdHat2",
+          "MomProdL",
+          "MomProdR",
+          "MomQ",
+          "Multiparticle",
+          "MultiparticleDiff"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "N",
+        "description": "",
+        "functions": [
+          "nice"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "O",
+        "description": "",
+        "functions": [
+          "Output"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "P",
+        "description": "",
+        "functions": [
+          "Particle",
+          "ParticleMass",
+          "PermuteParticles",
+          "Phi",
+          "PhysicalPoleResidue",
+          "PlainText",
+          "PolarizationVector",
+          "PrepareAmplitudes",
+          "PrepareDiagramAmplitudes",
+          "PropDen"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "R",
+        "description": "",
+        "functions": [
+          "RandomAddSpinorProduct",
+          "RandomChangeCoefficientSpinorProduct",
+          "RandomDeleteSpinorProduct",
+          "ReadAmplitudes",
+          "ReadFunctions",
+          "ReadModel",
+          "ReadParticles",
+          "ReadVariables",
+          "ReadVertices",
+          "ReduceColor",
+          "ReduceSpinContractions",
+          "ReduceSpinorProducts",
+          "ReducexFactors",
+          "ReduceXFactorsM",
+          "ReduceXFactorsP",
+          "ReplaceSpinorZ",
+          "ReverseMomentum",
+          "ReverseSequence",
+          "rr",
+          "rSpinor"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "S",
+        "description": "",
+        "functions": [
+          "SChannelDiagram",
+          "SchoutenCandidates",
+          "SchoutenRewrite",
+          "sigma",
+          "SimplifyFactorizationChannels",
+          "SimplifySpinorProducts",
+          "SPINAS",
+          "Spinor",
+          "SpinorChain",
+          "SpinorChainReduced",
+          "SpinorEps",
+          "SpinorExpressionComplexity",
+          "SpinorHat",
+          "SpinorIdentityCandidates",
+          "SpinorTrace",
+          "SpinorTraceReduced",
+          "SpinorZ",
+          "SpinSpinorHat",
+          "SpinToHelicitySpinors",
+          "SquareAmplitude",
+          "SumResiduesAlt",
+          "SymmetrizeSpin",
+          "SymmetrizeSpins"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "T",
+        "description": "",
+        "functions": [
+          "TChannelDiagram",
+          "TeX",
+          "Theta"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "U",
+        "description": "",
+        "functions": [
+          "UChannelDiagram",
+          "UnhatMomenta",
+          "UnHatSpinors",
+          "UpdateSPINASSpinorProducts"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "V",
+        "description": "",
+        "functions": [
+          "VectorSpinIndex"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "W",
+        "description": "",
+        "functions": [
+          "WriteSPINASProcess"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "X",
+        "description": "",
+        "functions": [
+          "xFactor",
+          "xFactorReduced",
+          "xTildeFactor",
+          "xTildeFactorReduced"
+        ],
+        "guides": [],
+        "tutorials": []
+      },
+      {
+        "title": "Z",
+        "description": "",
+        "functions": [
+          "zMinus",
+          "zPlus"
+        ],
+        "guides": [],
+        "tutorials": []
+      }
+    ],
+    "tutorials": []
+  }
+]

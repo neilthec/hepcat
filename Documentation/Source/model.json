@@ -1,0 +1,1947 @@
+[
+  {
+    "name": "ReadModel",
+    "summary": "Read a constructive amplitude model or an imported CalcHEP Feynman model.",
+    "syntaxes": [
+      {
+        "input": "ReadModel[directory, number]",
+        "description": "Read the numbered model files from a directory."
+      }
+    ],
+    "details": [
+      "A constructive model is the four-element list {particles, amplitudes, variables, functions}. Its data come from prtclsN.mdl, ampsN.mdl, varsN.mdl and funcN.mdl. Keep this list and pass it to other HEPCAT functions.",
+      "When lgrngN.mdl is present and ampsN.mdl is absent, the reader recognizes a CalcHEP model and returns FeynmanModel[particles, vertices, variables, functions]. Bare Feynman vertices are not complete lower-point amplitudes for constructive factorization.",
+      "Parameters are inert model-local ModelParameter objects. Reading two models does not assign global symbols such as Me or EE, and one model cannot silently change another model's values.",
+      "Use the QED model containing three-point vertices for diagrams. Use a model containing complete four-point amplitudes when factorizing a five-point process, and complete five-point amplitudes when factorizing a six-point process. An amplitude missing from the supplied factorization model is treated as zero.",
+      "The reader reports malformed, unavailable or unterminated model tables as failures rather than executing arbitrary expressions from model text."
+    ],
+    "examples": [
+      {
+        "description": "Read the bundled QED three-point model and see its four sections.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nLength[qedModel]",
+        "evaluate": true,
+        "expected": "4"
+      },
+      {
+        "description": "Retrieve a mass and its locally resolved numerical value.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nme = ModelParameter[qedModel, \"Me\"];\nme /. ModelParameterRules[qedModel]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ModelParameter",
+      "ModelParameterRules",
+      "CreateDiagrams",
+      "FactorizationAmplitudeChannels",
+      "FeynmanModel"
+    ],
+    "guide": "ModelsAndParameters"
+  },
+  {
+    "name": "ReadVariables",
+    "summary": "Read a model variable table without assigning global parameter values.",
+    "syntaxes": [
+      {
+        "input": "ReadVariables[file]",
+        "description": "Return the variable rows in a numbered varsN.mdl file."
+      }
+    ],
+    "details": [
+      "Each returned row contains {parameter, value, comment}, with parameter represented by ModelParameter[name, scope, \"Real\"]. The scope separates models that happen to use the same parameter name.",
+      "The table requires its final separator. Invalid arithmetic or malformed rows are rejected by the model expression parser.",
+      "ReadModel normally calls this reader for you. For numerical calculations, use ModelParameterRules on the complete model so dependent functions and overrides are resolved consistently."
+    ],
+    "examples": [
+      {
+        "description": "Inspect one declared variable.",
+        "input": "variables = ReadVariables[FileNameJoin[{modelDirectory, \"vars2.mdl\"}]];\nFirst[variables]",
+        "evaluate": true
+      },
+      {
+        "description": "List the declared names rather than assigning them.",
+        "input": "ModelParameterName /@ variables[[All, 1]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ReadModel",
+      "ReadFunctions",
+      "ModelParameter",
+      "ModelParameterRules"
+    ],
+    "guide": "ModelsAndParameters"
+  },
+  {
+    "name": "ReadFunctions",
+    "summary": "Read the dependent parameter expressions in a model function table.",
+    "syntaxes": [
+      {
+        "input": "ReadFunctions[file]",
+        "description": "Return the rows of a funcN.mdl table."
+      }
+    ],
+    "details": [
+      "Rows retain a model-local parameter, its defining expression and any comment. Reading a dependent parameter is distinct from numerically resolving it.",
+      "Supported arithmetic is parsed as inert model data. An external function is retained as ModelFunction rather than called in the Wolfram session.",
+      "Use ModelParameterRules[model] to obtain the numerically resolved subset. A cyclic dependency or unsupported external function does not prevent unrelated resolvable parameters from being used."
+    ],
+    "examples": [
+      {
+        "description": "Inspect the QED dependent definitions.",
+        "input": "functions = ReadFunctions[FileNameJoin[{modelDirectory, \"func2.mdl\"}]];\nfunctions",
+        "evaluate": true
+      },
+      {
+        "description": "Resolve the complete model locally.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nModelParameterRules[qedModel]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ReadModel",
+      "ReadVariables",
+      "ModelFunction",
+      "ModelParameterRules"
+    ],
+    "guide": "ModelsAndParameters"
+  },
+  {
+    "name": "ReadParticles",
+    "summary": "Read particle and antiparticle declarations from a model table.",
+    "syntaxes": [
+      {
+        "input": "ReadParticles[file]",
+        "description": "Read the eleven-column prtclsN.mdl table."
+      }
+    ],
+    "details": [
+      "The columns retain the full name, particle name, antiparticle name, identifier, twice the spin, mass, width, color, auxiliary information and two display names. The list order and particle names are model data, not newly created Wolfram symbols.",
+      "Mass parameters are parsed into model-local ModelParameter references. ParticleMass searches both the particle and antiparticle columns.",
+      "Diagram generation and automatic identical-particle symmetry use particle identities and twice-spin declarations. Equal masses alone do not identify particles."
+    ],
+    "examples": [
+      {
+        "description": "Read the particle table.",
+        "input": "particles = ReadParticles[FileNameJoin[{modelDirectory, \"prtcls2.mdl\"}]];\nparticles",
+        "evaluate": true
+      },
+      {
+        "description": "Find the electron mass from the particle declarations.",
+        "input": "ParticleMass[\"e\", particles]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ReadModel",
+      "ParticleMass",
+      "CreateDiagrams",
+      "ModelParameter"
+    ],
+    "guide": "ModelsAndParameters"
+  },
+  {
+    "name": "ParticleMass",
+    "summary": "Look up a particle or antiparticle mass in a particle table.",
+    "syntaxes": [
+      {
+        "input": "ParticleMass[name, particles]",
+        "description": "Return the mass declared for a particle name."
+      }
+    ],
+    "details": [
+      "The second argument is the particle section of a model, normally model[[1]], rather than the entire four-element model.",
+      "The lookup recognizes either the particle name or its antiparticle name. It returns the declared symbolic mass, including a ModelParameter when that is what the model contains.",
+      "The empty padding name \"\" has mass 0. An unknown nonempty particle name returns -1. Check for this sentinel when accepting user particle names."
+    ],
+    "examples": [
+      {
+        "description": "Particle and antiparticle have the declared common mass.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nParticleMass[\"e\", qedModel[[1]]] === ParticleMass[\"E\", qedModel[[1]]]",
+        "evaluate": true,
+        "expected": "True"
+      },
+      {
+        "description": "Distinguish model padding from an unknown name.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\n{ParticleMass[\"\", qedModel[[1]]], ParticleMass[\"not-a-particle\", qedModel[[1]]]}",
+        "evaluate": true,
+        "expected": "{0, -1}"
+      }
+    ],
+    "related": [
+      "ReadParticles",
+      "ReadModel",
+      "ModelParameter"
+    ],
+    "guide": "ModelsAndParameters"
+  },
+  {
+    "name": "ReadAmplitudes",
+    "summary": "Read complete constructive amplitudes and their separate overall factors.",
+    "syntaxes": [
+      {
+        "input": "ReadAmplitudes[file, particles]",
+        "description": "Read an ampsN.mdl table using the particle declarations for spin and mass information."
+      }
+    ],
+    "details": [
+      "An amplitude row contains the external particle names, optional empty padding columns, an overall factor and the expression divided by that factor. The last two entries are therefore multiplied to obtain the full stored amplitude.",
+      "The reader uses ConvertAmplitude to translate compact bracket notation into typed HEPCAT expressions. It does not automatically invent missing opposite-helicity amplitudes.",
+      "The factorization code treats an unlisted lower-point amplitude as zero. Populate the model with the complete lower-point results needed by the intended calculation.",
+      "ReadModel normally reads the matching particle and amplitude files together and should be preferred for routine use."
+    ],
+    "examples": [
+      {
+        "description": "Read the QED vertex-amplitude rows explicitly.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nrows = ReadAmplitudes[FileNameJoin[{modelDirectory, \"amps2.mdl\"}], qedModel[[1]]];\nFirst[rows]",
+        "evaluate": true
+      },
+      {
+        "description": "Recover the complete expression in one row.",
+        "input": "First[rows][[-2]] First[rows][[-1]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ReadModel",
+      "ConvertAmplitude",
+      "LookupAmplitude",
+      "AppendModelAmplitudes"
+    ],
+    "guide": "ModelsAndParameters"
+  },
+  {
+    "name": "ConvertAmplitude",
+    "summary": "Convert a constructive model row from text into typed spinor notation.",
+    "syntaxes": [
+      {
+        "input": "ConvertAmplitude[row, particles]",
+        "description": "Convert the final amplitude string using the row's external particles."
+      },
+      {
+        "input": "ConvertAmplitude[row, particles, scope]",
+        "description": "Use an explicit parameter scope for model data."
+      }
+    ],
+    "details": [
+      "The row has particle-name columns followed by an overall factor and an amplitude string. The return value is the converted final expression; the separate overall factor is not multiplied into it.",
+      "Compact angle and square brackets become SpinorChain expressions. Interior digits become momentum insertions; the particle table selects massive \"Spin\" or massless \"Helicity\" endpoints.",
+      "The converter recognizes x factors, propagator denominators and declared model parameters. For example, s13-Me^2 represents PropDen[Mom[Multiparticle[1,3]], Me] with the model-local mass parameter.",
+      "Compact bracket digits are single-digit labels. Use typed SpinorChain, Spinor and Mom expressions when multi-digit external labels or more explicit structures are required.",
+      "The current converter uses the restricted model expression parser. ConvertAmplitudeOld is retained for historical compatibility and is not the recommended model reader."
+    ],
+    "examples": [
+      {
+        "description": "Translate a massive angle bracket from a three-point row.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nConvertAmplitude[{\"e\", \"E\", \"A.+\", 1, \"<12>\"}, qedModel[[1]]]",
+        "evaluate": true,
+        "expected": "SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Spinor[\"Spin\", \"Angle\", 2]]"
+      },
+      {
+        "description": "Convert a photon square bracket in a four-point row.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nConvertAmplitude[{\"e\", \"E\", \"A.+\", \"A.+\", 1, \"[34]^2\"}, qedModel[[1]]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ReadAmplitudes",
+      "ReadModel",
+      "SpinorChain",
+      "PropDen",
+      "ConvertAmplitudeOld"
+    ],
+    "guide": "ModelsAndParameters"
+  },
+  {
+    "name": "ConvertAmplitudeOld",
+    "summary": "Access the historical string converter retained for compatibility.",
+    "syntaxes": [
+      {
+        "input": "ConvertAmplitudeOld[string, particles]",
+        "description": "Use the older string-replacement converter; new code should use ConvertAmplitude."
+      }
+    ],
+    "details": [
+      "This historical implementation predates the model-local parameter parser. Its original spinor-type setup is no longer active in the function, so it is not a supported replacement for the current row-based converter.",
+      "The old implementation uses general string replacement and expression conversion. Do not use it to import arbitrary model text or rely on it for multi-digit labels.",
+      "For new work, load an entire model with ReadModel or call ConvertAmplitude with a full row and particle table."
+    ],
+    "examples": [
+      {
+        "description": "A scalar constant is a minimal compatibility example.",
+        "input": "ConvertAmplitudeOld[\"1\", {}]",
+        "evaluate": true,
+        "expected": "1"
+      },
+      {
+        "description": "Use the current converter for a typed amplitude.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nConvertAmplitude[{\"e\", \"E\", \"A.+\", 1, \"<12>\"}, qedModel[[1]]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ConvertAmplitude",
+      "ReadAmplitudes",
+      "ReadModel"
+    ],
+    "guide": "ModelsAndParameters"
+  },
+  {
+    "name": "AddOppositeHelicityAmplitudes",
+    "summary": "Mechanically add angle-square conjugate rows with reversed massless helicities.",
+    "syntaxes": [
+      {
+        "input": "AddOppositeHelicityAmplitudes[rows]",
+        "description": "Retain each row and add its helicity-reversed bracket partner when applicable."
+      }
+    ],
+    "details": [
+      "For a row containing particle names ending in .+ or .-, the added row reverses all of those suffixes, interchanges angle and square spinors, and interchanges xFactor with xTildeFactor. The separate factor is retained.",
+      "This is a mechanical model-building operation, not a proof of a model's parity properties or coupling conjugation conventions. Verify the resulting amplitude and normalization for the theory being entered.",
+      "ReadAmplitudes does not currently call this operation automatically. Explicitly listed helicity amplitudes remain the clearest way to specify a complete model."
+    ],
+    "examples": [
+      {
+        "description": "Inspect the two helicity names in a small row pair.",
+        "input": "rows = {{\"e\", \"E\", \"A.+\", 1, SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Spinor[\"Spin\", \"Angle\", 2]]}};\nvariants = AddOppositeHelicityAmplitudes[rows];\nvariants[[All, 3]]",
+        "evaluate": true,
+        "expected": "{\"A.+\", \"A.-\"}"
+      },
+      {
+        "description": "Inspect the converted square-bracket partner.",
+        "input": "Last[variants]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ReadAmplitudes",
+      "ConvertAmplitude",
+      "AppendModelAmplitudes"
+    ],
+    "guide": "ModelsAndParameters"
+  },
+  {
+    "name": "AppendModelAmplitudes",
+    "summary": "Append validated text representations of supplied amplitudes to a constructive model file.",
+    "syntaxes": [
+      {
+        "input": "AppendModelAmplitudes[directory, number, entries]",
+        "description": "Append {particles, amplitude} or {particles, factor, amplitudeOverFactor} entries to ampsN.mdl."
+      }
+    ],
+    "details": [
+      "This function writes amplitudes already obtained by the user. It does not derive them or establish their physical correctness. Run CheckAmplitudes and independent checks before making an amplitude available as factorization input.",
+      "Particle and parameter declarations come from the target model. Every new row must round-trip through the model reader before the file is replaced atomically.",
+      "The returned association has keys \"File\", \"Added\" and \"Skipped\". Repeating an identical append is a no-op; a conflicting amplitude for an existing particle multiset rejects the batch.",
+      "Existing comments and rows are preserved. Reload ReadModel after writing. Use a temporary copy for experiments rather than changing the bundled model in a help example."
+    ],
+    "examples": [
+      {
+        "description": "Append a known four-point result to a temporary copy of the three-point QED model.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nknownQEDModel = ReadModel[modelDirectory, 3];\ntemporaryModelDirectory = CreateDirectory[];\nScan[CopyFile[FileNameJoin[{modelDirectory, # <> \"2.mdl\"}], FileNameJoin[{temporaryModelDirectory, # <> \"2.mdl\"}]] &, {\"prtcls\", \"amps\", \"vars\", \"func\"}];\nparticles = {\"e\", \"E\", \"A.+\", \"A.+\"};\nknownAmplitude = LookupAmplitude[Thread[{particles, Range[4]}], knownQEDModel, False, {i1, i2, i3, i4}];\n(* Use parameters declared in the target copy. *)\ncopiedModel = ReadModel[temporaryModelDirectory, 2];\nparameterMap = Thread[(First /@ ModelParameterRules[knownQEDModel]) -> (ModelParameter[copiedModel, ModelParameterName[#]] & /@ (First /@ ModelParameterRules[knownQEDModel]))];\nAppendModelAmplitudes[temporaryModelDirectory, 2, {{particles, knownAmplitude /. parameterMap}}]",
+        "evaluate": false
+      },
+      {
+        "description": "An empty batch leaves the target untouched and reports zero additions.",
+        "input": "AppendModelAmplitudes[modelDirectory, 2, {}]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ReadModel",
+      "PlainText",
+      "LookupAmplitude",
+      "CheckAmplitudes",
+      "FactorizationAmplitudeChannels"
+    ],
+    "guide": "ModelsAndParameters"
+  },
+  {
+    "name": "ModelParameter",
+    "summary": "Represent and retrieve a parameter belonging to one model.",
+    "syntaxes": [
+      {
+        "input": "ModelParameter[model, name]",
+        "description": "Find a declared parameter by its string name."
+      },
+      {
+        "input": "ModelParameter[name, scope, domain]",
+        "description": "Retain a parameter as inert model-local data."
+      }
+    ],
+    "details": [
+      "Parameters display their model names, such as Me or EE, but are not global Wolfram symbols. Keep the typed parameter in expressions and obtain numerical replacements with ModelParameterRules.",
+      "The scope separates declarations belonging to different model data. A string lookup returns Failure when the name is absent or ambiguous; it does not create a new declaration.",
+      "The domain \"Real\" makes Conjugate[parameter] evaluate to parameter. Imported model declarations currently retain this real-parameter convention. Other domains do not receive that automatic conjugation rule.",
+      "Use ModelParameterName to inspect the displayed name. Directly constructing a reference is mainly useful for tools that preserve model data; routine physics code should retrieve the reference from its model."
+    ],
+    "examples": [
+      {
+        "description": "Retrieve a declared electron mass.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nme = ModelParameter[qedModel, \"Me\"];\n{ModelParameterName[me], Conjugate[me] === me}",
+        "evaluate": true,
+        "expected": "{\"Me\", True}"
+      },
+      {
+        "description": "Override a value locally without assigning Me globally.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nme = ModelParameter[qedModel, \"Me\"];\nme /. ModelParameterRules[qedModel, {\"Me\" -> 1}]",
+        "evaluate": true,
+        "expected": "1"
+      }
+    ],
+    "related": [
+      "ModelParameterName",
+      "ModelParameterRules",
+      "ModelFunction",
+      "ReadModel"
+    ],
+    "guide": "ModelsAndParameters"
+  },
+  {
+    "name": "ModelFunction",
+    "summary": "Retain an external model function call as inert data.",
+    "syntaxes": [
+      {
+        "input": "ModelFunction[name, scope, arguments]",
+        "description": "Represent an external function belonging to a model."
+      }
+    ],
+    "details": [
+      "The model expression reader can encounter named functions that are not supported numerical arithmetic. Such a call is stored rather than executed in the caller's session.",
+      "StandardForm and TraditionalForm display a familiar function call while retaining the typed head internally. PlainText, TeX and SPINAS preserve its name and arguments for output.",
+      "An unsupported function prevents a dependent parameter from resolving numerically. It does not justify executing an arbitrary Wolfram function with the same displayed name."
+    ],
+    "examples": [
+      {
+        "description": "Inspect an inert call without invoking a global function.",
+        "input": "externalCall = ModelFunction[\"RunningCoupling\", \"example-model\", {3/2}];\nHead[externalCall]",
+        "evaluate": true,
+        "expected": "ModelFunction"
+      },
+      {
+        "description": "Convert the retained call to model-style text.",
+        "input": "PlainText[externalCall]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ReadFunctions",
+      "ModelParameter",
+      "ModelParameterRules",
+      "PlainText"
+    ],
+    "guide": "ModelsAndParameters"
+  },
+  {
+    "name": "ModelParameterName",
+    "summary": "Get the string name of a model-local parameter.",
+    "syntaxes": [
+      {
+        "input": "ModelParameterName[parameter]",
+        "description": "Extract the name from a ModelParameter reference."
+      }
+    ],
+    "details": [
+      "The result is a string such as \"Me\", not a symbol with a global value. It is useful for labels, parameter overrides and exported code.",
+      "Names alone do not distinguish different model scopes. Retain the original ModelParameter when substituting in an amplitude."
+    ],
+    "examples": [
+      {
+        "description": "Read a declared parameter name.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nModelParameterName[ModelParameter[qedModel, \"Me\"]]",
+        "evaluate": true,
+        "expected": "\"Me\""
+      },
+      {
+        "description": "List the names that resolved to numerical parameter values.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nModelParameterName /@ (First /@ ModelParameterRules[qedModel])",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ModelParameter",
+      "ModelParameterRules",
+      "ReadVariables"
+    ],
+    "guide": "ModelsAndParameters"
+  },
+  {
+    "name": "ModelParameterRules",
+    "summary": "Resolve model parameters numerically without changing the symbolic amplitude or global session.",
+    "syntaxes": [
+      {
+        "input": "ModelParameterRules[model]",
+        "description": "Resolve model variables and supported dependent functions."
+      },
+      {
+        "input": "ModelParameterRules[model, overrides]",
+        "description": "Apply local overrides keyed by ModelParameter references or string names."
+      }
+    ],
+    "details": [
+      "The default overrides are Automatic. Model variables and resolvable function dependencies are evaluated locally and returned as ordinary replacement rules.",
+      "A cyclic dependency, unknown external function or unresolved parameter is omitted rather than guessed. Unrelated parameters that can be resolved remain in the returned rules.",
+      "String overrides are convenient for user code, for example {\"Me\" -> 1, \"EE\" -> 1}. Typed parameter keys are useful when working with several models at once.",
+      "These replacements are appropriate for checks, fitting and exported numerical defaults. They do not overwrite the symbolic model list or assign names such as EE globally."
+    ],
+    "examples": [
+      {
+        "description": "Resolve the bundled QED numerical parameters.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nModelParameterRules[qedModel]",
+        "evaluate": true
+      },
+      {
+        "description": "Replay a calculation at unit mass and charge locally.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\n{ModelParameter[qedModel, \"Me\"], ModelParameter[qedModel, \"EE\"]} /. ModelParameterRules[qedModel, {\"Me\" -> 1, \"EE\" -> 1}]",
+        "evaluate": true,
+        "expected": "{1, 1}"
+      }
+    ],
+    "related": [
+      "ModelParameter",
+      "ModelParameterName",
+      "ReadModel",
+      "CheckAmplitudes"
+    ],
+    "guide": "ModelsAndParameters"
+  },
+  {
+    "name": "FactorizationPartitions",
+    "summary": "Enumerate distinct complementary external-leg partitions for tree factorization.",
+    "syntaxes": [
+      {
+        "input": "FactorizationPartitions[particles]",
+        "description": "Partition numbered external particles into two sides containing at least two external legs each."
+      }
+    ],
+    "details": [
+      "External legs are tagged by their original positions, so two identical particles remain distinct numbered legs. A partition and its complement are included only once.",
+      "The output enumerates possible cuts before asking whether the supplied model supports a nonzero intermediate species and two nonzero lower-point amplitudes.",
+      "FactorizationAmplitudeChannels performs the model-dependent sewing. These partitions are combinatorial input and should not be summed as amplitudes."
+    ],
+    "examples": [
+      {
+        "description": "There are three distinct two-sided partitions at four points.",
+        "input": "Length[FactorizationPartitions[{\"e\", \"E\", \"A.+\", \"A.-\"}]]",
+        "evaluate": true,
+        "expected": "3"
+      },
+      {
+        "description": "The five-point combinatorial partitions number ten.",
+        "input": "Length[FactorizationPartitions[{\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\"}]]",
+        "evaluate": true,
+        "expected": "10"
+      }
+    ],
+    "related": [
+      "FactorizationAmplitudeChannels",
+      "LookupAmplitude",
+      "CreateDiagrams"
+    ],
+    "guide": "DiagramsAndFactorization"
+  },
+  {
+    "name": "LookupAmplitude",
+    "summary": "Retrieve a complete model amplitude with its external labels reassigned.",
+    "syntaxes": [
+      {
+        "input": "LookupAmplitude[taggedParticles, model, rightSide, spinIndices]",
+        "description": "Match particle names, multiply the stored factor, and relabel typed particle slots."
+      }
+    ],
+    "details": [
+      "taggedParticles has entries {particleName, label}; labels may include Multiparticle for a sewn internal line. The four-entry spinIndices list supplies the indices used when an internal massive state must be explicit.",
+      "A lookup of ordinary external particles uses rightSide -> False as the third positional argument. The rightSide flag matters for internal-state index conventions when sewing opposite sides of a channel.",
+      "The matcher handles repeated particle names without replacing scalar coefficients, exponents or independent spin-index labels. If a complete amplitude is absent, the result is 0.",
+      "Use a model containing complete lower-point amplitudes. A product of bare vertex tensors is not a stored complete higher-point amplitude."
+    ],
+    "examples": [
+      {
+        "description": "Retrieve the QED positive-helicity three-point amplitude.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nLookupAmplitude[{{\"e\", 1}, {\"E\", 2}, {\"A.+\", 3}}, qedModel, False, {i1, i2, i3, i4}]",
+        "evaluate": true
+      },
+      {
+        "description": "Missing model amplitudes give zero.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nLookupAmplitude[{{\"e\", 1}, {\"e\", 2}, {\"e\", 3}}, qedModel, False, {i1, i2, i3, i4}]",
+        "evaluate": true,
+        "expected": "0"
+      }
+    ],
+    "related": [
+      "ReadModel",
+      "ReadAmplitudes",
+      "FactorizationAmplitudeChannels",
+      "AppendModelAmplitudes"
+    ],
+    "guide": "DiagramsAndFactorization"
+  },
+  {
+    "name": "FactorizationAmplitudeChannels",
+    "summary": "Sew known lower-point amplitudes into the physical factorization channels.",
+    "syntaxes": [
+      {
+        "input": "FactorizationAmplitudeChannels[particles, model]",
+        "description": "Return the nonzero channel products for the specified all-ingoing process."
+      }
+    ],
+    "details": [
+      "Each compact row contains the external masses, the cut Multiparticle label, the exchanged mass and the sewn lower-point product divided by z and the propagator denominator. The last entry is the expression; the preceding data identify its physical cut.",
+      "The model must supply the complete lower-point amplitudes needed on both sides. Missing amplitudes are zero. Four-point QED uses the three-point model, while five-point QED uses the model containing complete four-point amplitudes.",
+      "These are residue targets, not independent diagrams whose sum is a complete amplitude. Directly summing channels double counts overlapping pole information.",
+      "Keep the package's sewing convention. CheckAmplitudes converts the stored z convention and includes its required overall sewing sign once; do not add a manual sign to force agreement.",
+      "A channel may contain reference spinors that describe a continuation away from its cut. PrepareAmplitudes may simplify that continuation using only the selected channel shell. CompleteFactorization retains the original channel targets when preparation reports are supplied.",
+      "A FeynmanModel contains off-shell vertices, not the complete on-shell lower amplitudes required here, and is rejected as factorization input."
+    ],
+    "examples": [
+      {
+        "description": "Generate the electron-exchange channels for four-point QED.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nLength[channels]",
+        "evaluate": true,
+        "expected": "2"
+      },
+      {
+        "description": "Use higher-point model data for a five-point factorization.",
+        "input": "knownQEDModel = ReadModel[modelDirectory, 3];\nfivePointChannels = FactorizationAmplitudeChannels[{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"}, knownQEDModel];\nLength[fivePointChannels]",
+        "evaluate": true,
+        "expected": "6"
+      }
+    ],
+    "related": [
+      "FactorizationPartitions",
+      "LookupAmplitude",
+      "PrepareAmplitudes",
+      "CompleteFactorization",
+      "CheckAmplitudes"
+    ],
+    "guide": "DiagramsAndFactorization"
+  },
+  {
+    "name": "CreateDiagrams",
+    "summary": "Generate tree diagrams from a supplied constructive or Feynman model.",
+    "syntaxes": [
+      {
+        "input": "CreateDiagrams[{p1, p2, ...}, model]",
+        "description": "Generate trees for an ordered all-ingoing external particle list."
+      },
+      {
+        "input": "CreateDiagrams[p1, p2, ..., model]",
+        "description": "Use the equivalent separate-particle argument form."
+      }
+    ],
+    "details": [
+      "The external list determines particle labels 1, 2, and so on. Use the model's literal names, including massless helicity suffixes such as A.+ and A.-.",
+      "For constructive photon or gluon internal lines, one generic internal line represents both helicities. The graph count is not doubled for each internal helicity.",
+      "Each tree is an association containing graph and particle data, propagators, vertex information and index maps. Pass the resulting list to CreateArrowDiagrams for display or diagramAmplitudes for expressions.",
+      "Constructive and Feynman models follow their own amplitude rules. Feynman internal propagators and numerators remain off shell; constructive numerator preparation can use explicitly declared diagram-local shell conditions.",
+      "Use the model containing the intended vertices for diagram generation. A complete higher-point amplitude included for factorization is not automatically a new independent interaction in the theory.",
+      "Fewer than three external legs or unsupported particle names produce no generated diagrams."
+    ],
+    "examples": [
+      {
+        "description": "Generate the two four-point QED orderings.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\nLength[diagrams]",
+        "evaluate": true,
+        "expected": "2"
+      },
+      {
+        "description": "Generate all six photon orderings at five points.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nLength[CreateDiagrams[{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"}, qedModel]]",
+        "evaluate": true,
+        "expected": "6"
+      }
+    ],
+    "related": [
+      "ReadModel",
+      "CreateArrowDiagrams",
+      "diagramAmplitudes",
+      "DiagramAmplitudeRecords",
+      "ConstructAmplitude"
+    ],
+    "guide": "DiagramsAndFactorization"
+  },
+  {
+    "name": "CreateArrowDiagram",
+    "summary": "Draw one generated tree with external labels and directed particle lines.",
+    "syntaxes": [
+      {
+        "input": "CreateArrowDiagram[diagram]",
+        "description": "Draw one diagram returned by CreateDiagrams."
+      },
+      {
+        "input": "CreateArrowDiagram[diagram, options]",
+        "description": "Optionally display the vertex and propagator expressions."
+      }
+    ],
+    "details": [
+      "The input is one diagram association, not the list returned by CreateDiagrams. Use CreateArrowDiagrams to draw a whole process.",
+      "The string options \"ShowVertexExpressions\" and \"ShowPropagatorExpressions\" default to False. Enable them when inspecting how model vertices and internal lines are assigned.",
+      "Displaying a diagram does not derive or validate its amplitude. Use diagramAmplitudes and the construction/checking tools for that workflow."
+    ],
+    "examples": [
+      {
+        "description": "Draw the first QED tree.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\nCreateArrowDiagram[First[diagrams]]",
+        "evaluate": true
+      },
+      {
+        "description": "Inspect its expressions as well as its topology.",
+        "input": "CreateArrowDiagram[First[diagrams], \"ShowVertexExpressions\" -> True, \"ShowPropagatorExpressions\" -> True]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "CreateArrowDiagrams",
+      "CreateDiagrams",
+      "diagramAmplitudes"
+    ],
+    "guide": "DiagramsAndFactorization"
+  },
+  {
+    "name": "CreateArrowDiagrams",
+    "summary": "Draw the generated trees for a complete process.",
+    "syntaxes": [
+      {
+        "input": "CreateArrowDiagrams[diagrams]",
+        "description": "Draw a list returned by CreateDiagrams."
+      },
+      {
+        "input": "CreateArrowDiagrams[diagrams, options]",
+        "description": "Apply diagram display options to every tree."
+      }
+    ],
+    "details": [
+      "Use this function to inspect all orderings and exchanged particles before working with expressions. External labels follow the input process order.",
+      "The same string display options as CreateArrowDiagram are accepted. Expression labels are optional because large vertices can otherwise overwhelm the picture."
+    ],
+    "examples": [
+      {
+        "description": "Display both QED four-point diagrams.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\nCreateArrowDiagrams[diagrams]",
+        "evaluate": true
+      },
+      {
+        "description": "Include propagator expressions.",
+        "input": "CreateArrowDiagrams[diagrams, \"ShowPropagatorExpressions\" -> True]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "CreateDiagrams",
+      "CreateArrowDiagram",
+      "diagramAmplitudes"
+    ],
+    "guide": "DiagramsAndFactorization"
+  },
+  {
+    "name": "diagramAmplitude",
+    "summary": "Evaluate the expression associated with one generated diagram.",
+    "syntaxes": [
+      {
+        "input": "diagramAmplitude[diagram]",
+        "description": "Return one diagram's bare amplitude expression."
+      }
+    ],
+    "details": [
+      "This lower-level singular function returns only the expression. For a process, use diagramAmplitudes, which retains each diagram's mass rules with its expression.",
+      "Constructive evaluation combines internal photon or gluon helicities and expands external x factors. Known mass replacements are applied before return.",
+      "Feynman evaluation retains ordered Dirac chains, Lorentz and color tensors, and off-shell internal lines. Convert Feynman tensors through the dedicated Feynman tools or preparation workflow.",
+      "A single diagram generally is neither reference independent nor a complete amplitude. Its simplification may need completion after diagrams are combined."
+    ],
+    "examples": [
+      {
+        "description": "Inspect the first constructive diagram expression.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\ndiagramAmplitude[First[diagrams]]",
+        "evaluate": true
+      },
+      {
+        "description": "Prefer the mass-rule pair when continuing to preparation.",
+        "input": "First[diagramAmplitudes[diagrams]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "diagramAmplitudes",
+      "CreateDiagrams",
+      "PrepareAmplitudes",
+      "FeynmanToSpinorProducts"
+    ],
+    "guide": "DiagramsAndFactorization"
+  },
+  {
+    "name": "diagramAmplitudes",
+    "summary": "Evaluate every tree while retaining its separate mass and internal-cut declarations.",
+    "syntaxes": [
+      {
+        "input": "diagramAmplitudes[diagrams]",
+        "description": "Return {{massRules, expression}, ...} for the generated diagrams."
+      }
+    ],
+    "details": [
+      "The first entry of each pair declares external masses and, for constructive diagrams, the internal channel masses belonging to that diagram. The second entry is the expression with known mass replacements already applied.",
+      "Keep each diagram's conditions separate. Conditions from different constructive diagrams are not simultaneous shell assumptions for the complete sum.",
+      "Feynman diagram pairs contain external mass declarations without internal on-shell assumptions. Their exact propagators remain off shell.",
+      "External x factors are already expanded. Use PrepareAmplitudes next rather than manually repeating the old x-factor replacement step.",
+      "Total[Last /@ amplitudes] extracts the bare sum, but loses useful process and preparation provenance. Detailed preparation reports retain discarded terms for later completion."
+    ],
+    "examples": [
+      {
+        "description": "Get the two separately declared four-point diagram expressions.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\namplitudes = diagramAmplitudes[diagrams];\nLength[amplitudes]",
+        "evaluate": true,
+        "expected": "2"
+      },
+      {
+        "description": "Prepare them with a physical-pole preference.",
+        "input": "prepared = PrepareAmplitudes[amplitudes, qedModel, \"PolePreference\" -> \"AllPhysical\"];\nprepared",
+        "evaluate": false
+      }
+    ],
+    "related": [
+      "CreateDiagrams",
+      "diagramAmplitude",
+      "PrepareAmplitudes",
+      "CompleteFactorization",
+      "DiagramAmplitudeRecords"
+    ],
+    "guide": "DiagramsAndFactorization"
+  },
+  {
+    "name": "DiagramAmplitudeRecords",
+    "summary": "Retain explicit diagram expressions, physical propagators and numerator assumptions for diagnostics.",
+    "syntaxes": [
+      {
+        "input": "DiagramAmplitudeRecords[diagrams]",
+        "description": "Build a record for each generated diagram without adding an automatic shell reduction."
+      },
+      {
+        "input": "DiagramAmplitudeRecords[diagrams, options]",
+        "description": "Apply a supplied pair-preserving simplification and record any declared shell usage."
+      }
+    ],
+    "details": [
+      "Each record contains \"OriginalExpression\", \"Expression\", \"OriginalNumerator\", \"Numerator\", \"MassRules\", \"ExternalMassRules\", \"PhysicalPropagators\" and the physical denominator. This is an inspection format rather than the normal user amplitude output.",
+      "The option \"SimplificationFunction\" defaults to Identity and receives {massRules, expression}. It must return that form with exactly the same mass rules. Propagator objects are protected during the transformation.",
+      "\"NumeratorOnShellChannels\" records any internal conditions used by the supplied transformation; merely declaring them does not apply them. \"DenominatorsKeptOffShell\" distinguishes numerator simplification from a residue restriction.",
+      "For routine bounded simplification and completion, PrepareAmplitudes with \"ReturnDetails\" -> True is the richer workflow because it retains discarded remainders and selected reference choices."
+    ],
+    "examples": [
+      {
+        "description": "Inspect the data retained for one diagram.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\nrecords = DiagramAmplitudeRecords[diagrams];\nKeys[First[records]]",
+        "evaluate": true
+      },
+      {
+        "description": "Extract its physical propagator information.",
+        "input": "First[records][\"PhysicalPropagators\"]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "CreateDiagrams",
+      "diagramAmplitudes",
+      "PhysicalPoleResidue",
+      "PrepareAmplitudes"
+    ],
+    "guide": "DiagramsAndFactorization"
+  },
+  {
+    "name": "ExpandXFactors",
+    "summary": "Apply the retained x-factor identities and external reference-spinor expansion.",
+    "syntaxes": [
+      {
+        "input": "ExpandXFactors[expression, particleCount]",
+        "description": "Apply the supported x-factor rewrites for labels 1 through particleCount."
+      }
+    ],
+    "details": [
+      "This helper includes older paired x-factor identities and an external-line replacement when exactly one external label is missing from the x-factor labels. That missing label identifies the external massless line.",
+      "The replacement introduces reference spinors. PrepareAmplitudes can choose their explicit forms through \"PolePreference\".",
+      "diagramAmplitudes already expands external x factors, so most modern calculations do not need a manual call. This helper is not a promise to eliminate every arbitrary x-factor structure at any multiplicity."
+    ],
+    "examples": [
+      {
+        "description": "Expand an external three-point x factor.",
+        "input": "ExpandXFactors[xFactor[1, 2], 3]",
+        "evaluate": true
+      },
+      {
+        "description": "An ambiguous missing external label is not guessed.",
+        "input": "ExpandXFactors[xFactor[1, 2], 4]",
+        "evaluate": true,
+        "expected": "xFactor[1, 2]"
+      }
+    ],
+    "related": [
+      "xFactor",
+      "xTildeFactor",
+      "diagramAmplitudes",
+      "PrepareAmplitudes"
+    ],
+    "guide": "DiagramsAndFactorization"
+  },
+  {
+    "name": "ConstructiveDiagram",
+    "summary": "Evaluate an older three-point vertex or a selected four-point exchange.",
+    "syntaxes": [
+      {
+        "input": "ConstructiveDiagram[particles, model]",
+        "description": "Match one three-point constructive amplitude."
+      },
+      {
+        "input": "ConstructiveDiagram[particles, internalParticle, model, channel]",
+        "description": "Evaluate the selected four-point exchange with channel labels such as {1,2}."
+      }
+    ],
+    "details": [
+      "This historical helper supports a three-particle vertex and a four-particle exchange. It is not the general tree generator for higher multiplicity.",
+      "The selected channel identifies which two of the four external particles meet on one side. The internal particle name must be present in the supplied particle table.",
+      "Use CreateDiagrams followed by diagramAmplitudes for new calculations. That route handles generic internal photon/gluon helicities, external x factors and per-diagram mass-rule pairs consistently.",
+      "The historical helper can return zero when no matching vertex or exchange exists and may print a diagnostic for unrecognized names. A zero here is not a full-process physical validation."
+    ],
+    "examples": [
+      {
+        "description": "Evaluate one QED three-point vertex.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nConstructiveDiagram[{\"e\", \"E\", \"A.+\"}, qedModel]",
+        "evaluate": true
+      },
+      {
+        "description": "Use the modern route for a complete four-point process.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\namplitudes = diagramAmplitudes[diagrams];\namplitudes",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "CreateDiagrams",
+      "diagramAmplitudes",
+      "SChannelDiagram",
+      "TChannelDiagram",
+      "UChannelDiagram"
+    ],
+    "guide": "DiagramsAndFactorization"
+  },
+  {
+    "name": "SChannelDiagram",
+    "summary": "Evaluate a selected four-point s-channel exchange with the historical constructive helper.",
+    "syntaxes": [
+      {
+        "input": "SChannelDiagram[p1, p2, p3, p4, internalParticle, model]",
+        "description": "Call ConstructiveDiagram for channel {1, 2}."
+      }
+    ],
+    "details": [
+      "The six arguments specify four all-ingoing external particle names, one internal species and the complete model list. This is a fixed four-point convenience function, not general factorization.",
+      "The selected pairing is {1, 2}; its complement is the other side of the exchange. The model must contain the internal particle and both needed vertices.",
+      "For new calculations use CreateDiagrams and diagramAmplitudes. They retain mass declarations and handle generic internal massless-vector helicities rather than asking the user to select a single internal helicity."
+    ],
+    "examples": [
+      {
+        "description": "Evaluate a selected massive-vector exchange in the bundled constructive SM model.",
+        "input": "smModel = ReadModel[modelDirectory, 1];\nSChannelDiagram[\"e\", \"E\", \"M\", \"m\", \"Z\", smModel]",
+        "evaluate": false
+      },
+      {
+        "description": "Generate the complete process with the general interface.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\nCreateArrowDiagrams[diagrams]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ConstructiveDiagram",
+      "CreateDiagrams",
+      "diagramAmplitudes",
+      "FactorizationAmplitudeChannels"
+    ],
+    "guide": "DiagramsAndFactorization"
+  },
+  {
+    "name": "TChannelDiagram",
+    "summary": "Evaluate a selected four-point t-channel exchange with the historical constructive helper.",
+    "syntaxes": [
+      {
+        "input": "TChannelDiagram[p1, p2, p3, p4, internalParticle, model]",
+        "description": "Call ConstructiveDiagram for channel {1, 3}."
+      }
+    ],
+    "details": [
+      "The six arguments specify four all-ingoing external particle names, one internal species and the complete model list. This is a fixed four-point convenience function, not general factorization.",
+      "The selected pairing is {1, 3}; its complement is the other side of the exchange. The model must contain the internal particle and both needed vertices.",
+      "For new calculations use CreateDiagrams and diagramAmplitudes. They retain mass declarations and handle generic internal massless-vector helicities rather than asking the user to select a single internal helicity."
+    ],
+    "examples": [
+      {
+        "description": "Evaluate a selected massive-vector exchange in the bundled constructive SM model.",
+        "input": "smModel = ReadModel[modelDirectory, 1];\nTChannelDiagram[\"e\", \"e\", \"E\", \"E\", \"Z\", smModel]",
+        "evaluate": false
+      },
+      {
+        "description": "Generate the complete process with the general interface.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\nCreateArrowDiagrams[diagrams]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ConstructiveDiagram",
+      "CreateDiagrams",
+      "diagramAmplitudes",
+      "FactorizationAmplitudeChannels"
+    ],
+    "guide": "DiagramsAndFactorization"
+  },
+  {
+    "name": "UChannelDiagram",
+    "summary": "Evaluate a selected four-point u-channel exchange with the historical constructive helper.",
+    "syntaxes": [
+      {
+        "input": "UChannelDiagram[p1, p2, p3, p4, internalParticle, model]",
+        "description": "Call ConstructiveDiagram for channel {1, 4}."
+      }
+    ],
+    "details": [
+      "The six arguments specify four all-ingoing external particle names, one internal species and the complete model list. This is a fixed four-point convenience function, not general factorization.",
+      "The selected pairing is {1, 4}; its complement is the other side of the exchange. The model must contain the internal particle and both needed vertices.",
+      "For new calculations use CreateDiagrams and diagramAmplitudes. They retain mass declarations and handle generic internal massless-vector helicities rather than asking the user to select a single internal helicity."
+    ],
+    "examples": [
+      {
+        "description": "Evaluate a selected massive-vector exchange in the bundled constructive SM model.",
+        "input": "smModel = ReadModel[modelDirectory, 1];\nUChannelDiagram[\"e\", \"e\", \"E\", \"E\", \"Z\", smModel]",
+        "evaluate": false
+      },
+      {
+        "description": "Generate the complete process with the general interface.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\nCreateArrowDiagrams[diagrams]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ConstructiveDiagram",
+      "CreateDiagrams",
+      "diagramAmplitudes",
+      "FactorizationAmplitudeChannels"
+    ],
+    "guide": "DiagramsAndFactorization"
+  },
+  {
+    "name": "SimplifyFactorizationChannels",
+    "summary": "Apply the historical spinor simplifier separately to compact channel rows.",
+    "syntaxes": [
+      {
+        "input": "SimplifyFactorizationChannels[channels]",
+        "description": "Retain each channel row and simplify its last expression using its selected cut."
+      }
+    ],
+    "details": [
+      "This historical helper builds external mass rules from each row and treats only that row's selected internal line as on shell. It then calls SimplifySpinorProducts with the corresponding momenta and mass replacements.",
+      "Simplifying on a cut preserves that channel residue while changing the continuation away from the cut. Do not combine the shell assumptions of several different rows.",
+      "PrepareAmplitudes is the preferred modern interface. It accepts the same compact rows, provides bounded effort and reference choices, and can preserve discarded remainders and original targets with \"ReturnDetails\" -> True."
+    ],
+    "examples": [
+      {
+        "description": "The historical helper leaves an empty channel list unchanged.",
+        "input": "SimplifyFactorizationChannels[{}]",
+        "evaluate": true,
+        "expected": "{}"
+      },
+      {
+        "description": "Prepare real channels using the current interface.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nPrepareAmplitudes[channels, qedModel, \"ReturnDetails\" -> True]",
+        "evaluate": false
+      }
+    ],
+    "related": [
+      "FactorizationAmplitudeChannels",
+      "PrepareAmplitudes",
+      "SimplifySpinorProducts"
+    ],
+    "guide": "DiagramsAndFactorization"
+  },
+  {
+    "name": "SumResiduesAlt",
+    "summary": "Sum the two finite-pole residues in a previously shifted channel representation.",
+    "syntaxes": [
+      {
+        "input": "SumResiduesAlt[channels]",
+        "description": "Cancel removable factors and evaluate the zPlus and zMinus poles of each shifted channel."
+      }
+    ],
+    "details": [
+      "This low-level historical ALT helper expects channel rows whose final expressions already contain the correct shifted rational dependence on z and the cut-specific zPlus and zMinus roots.",
+      "It cancels the pole factor before substituting the corresponding root and returns minus the sum of both residues over all supplied rows. This ordering avoids evaluating an uncanceled 0/0.",
+      "The helper does not generate the shift, determine its validity at infinity or repair missing boundary data. It is distinct from PhysicalPoleResidue, which verifies physical cut kinematics.",
+      "For the current diagram-and-factorization workflow, use CompleteFactorization and CheckAmplitudes instead of interpreting an arbitrary sum of channel products as the final amplitude."
+    ],
+    "examples": [
+      {
+        "description": "An empty shifted-channel collection contributes no residues.",
+        "input": "SumResiduesAlt[{}]",
+        "evaluate": true,
+        "expected": "0"
+      },
+      {
+        "description": "Inspect the root and shift symbols required by a shifted expression.",
+        "input": "DownValues[SumResiduesAlt]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ExpandMomHatAlt",
+      "FactorizationAmplitudeChannels",
+      "PhysicalPoleResidue",
+      "CompleteFactorization"
+    ],
+    "guide": "DiagramsAndFactorization"
+  },
+  {
+    "name": "PhysicalPoleResidue",
+    "summary": "Extract a single- or compatible multiple-pole coefficient with explicit kinematic scope.",
+    "syntaxes": [
+      {
+        "input": "PhysicalPoleResidue[expression, channel]",
+        "description": "Extract the coefficient at one declared physical pole."
+      },
+      {
+        "input": "PhysicalPoleResidue[expression, {channel1, channel2, ...}]",
+        "description": "Extract a compatible multiple-pole coefficient."
+      },
+      {
+        "input": "PhysicalPoleResidue[expression, channels, \"KinematicMap\" -> map]",
+        "description": "Restrict the complete expression on a coherent physical cut chart."
+      }
+    ],
+    "details": [
+      "The channel input is a normalized association or a list of such associations describing \"Cut\", \"ExternalLegs\", \"Mass\" and the matching propagator. DiagramAmplitudeRecords exposes suitable \"PhysicalPropagators\" records.",
+      "With \"KinematicMap\" -> Automatic, the result has \"Status\" -> \"FORMAL\". \"StructuralCoefficient\" treats PropDen as an opaque pole variable and does not prove that spinor numerators have the required physical residue.",
+      "A map is called as map[expression, channels, poleVariables]. It must evaluate spinors, momenta and denominators consistently while preserving external shells, momentum conservation and the selected cut coordinates without imposing unrelated cuts.",
+      "With a valid chart the physical result is stored in \"PhysicalResidue\". \"KinematicKind\" distinguishes numerical sample charts from symbolic charts. A sampled PASS is evidence on that chart, not an identity for all kinematics.",
+      "The full rational expression is canceled before cut substitution. A surviving higher-order pole, invalid chart or timeout returns UNRESOLVED rather than silently substituting into a singular denominator.",
+      "The default \"StructuralCoefficient\" -> True also computes the optional formal coefficient. False can save that extra symbolic work when the physical chart calculation is the intended result.",
+      "Physical residue extraction does not inherit a collection of internal numerator-shell assumptions from diagrams. The chosen cut is imposed through the chart."
+    ],
+    "examples": [
+      {
+        "description": "Extract a formal coefficient using a real diagram's cut record.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\nrecord = First[DiagramAmplitudeRecords[diagrams]];\nchannel = First[record[\"PhysicalPropagators\"]];\ndenominator = channel[\"Propagator\"];\nresidue = PhysicalPoleResidue[3/denominator + 7, channel];\n{residue[\"Status\"], residue[\"StructuralCoefficient\"]}",
+        "evaluate": true,
+        "expected": "{\"FORMAL\", 3}"
+      },
+      {
+        "description": "The same formal extraction does not claim physical cut validation.",
+        "input": "residue[\"PhysicalResidue\"]",
+        "evaluate": true,
+        "expected": "Missing[\"KinematicsRequired\"]"
+      }
+    ],
+    "related": [
+      "DiagramAmplitudeRecords",
+      "CheckAmplitudes",
+      "FactorizationAmplitudeChannels",
+      "PropDen"
+    ],
+    "guide": "AmplitudeValidation"
+  },
+  {
+    "name": "CheckAmplitudes",
+    "summary": "Check physical residues, apparent spurious poles, high-energy growth and reference dependence.",
+    "syntaxes": [
+      {
+        "input": "CheckAmplitudes[amplitude, channels, model]",
+        "description": "Run the combined checks and return a compact status table."
+      },
+      {
+        "input": "CheckAmplitudes[amplitudePairs, channels, model, options]",
+        "description": "Check the sum while retaining external mass information."
+      },
+      {
+        "input": "CheckAmplitudes[amplitude, channels, model, \"Output\" -> \"Details\"]",
+        "description": "Retain samples, differences, diagnostics and the run seed."
+      }
+    ],
+    "details": [
+      "The first argument may be a bare expression, one {externalMassRules, expression} pair or a list of diagram-style pairs. The supplied compact FactorizationAmplitudeChannels rows identify the physical poles and expected lower-point products.",
+      "Physical residue comparisons include the package's fixed sewing conversion once. \"Opp Sign\" diagnoses a result that matches only after a global minus sign; it does not change the amplitude or fit a sign.",
+      "Apparent denominator factors outside the known physical channels are discovered automatically and checked for spurious singularities. Finite approach tests are numerical evidence, not a replacement for an analytic cancellation when one is practical.",
+      "High-energy checks scale conserved external kinematics with fixed masses and inspect all sampled spin assignments. The automatic renormalizable tree target is E^(4-n); \"HighEnergyBound\" can state another theory's expected bound.",
+      "Reference tests vary explicit external Xi spinors on conserved kinematics. If none remain, the report establishes absence of explicit Xi dependence; that alone is not a separate analytic Ward-identity proof.",
+      "Supply \"FeynmanAmplitudes\" and the matching \"FeynmanModel\" for an independent full-amplitude comparison at ordinary off-cut kinematics.",
+      "Default numerical parameter values come from the model. \"ParameterRules\" locally overrides selected values without changing the symbolic amplitude. \"RandomSeed\" -> Automatic chooses a time-based seed once; provide an integer to replay samples.",
+      "The ordinary table is deliberately short. \"Output\" -> \"Residues\" shows calculated and expected sampled values, \"Summary\" counts statuses, and \"Details\" retains the complete report. Other focused outputs include \"HighEnergy\", \"References\" and \"Feynman\".",
+      "PASS, Opp Sign, FAIL and UNRESOLVED describe the performed tests. They do not establish a generic symbolic reconstruction or uniqueness theorem. Do not interpret a disabled or unresolved test as a pass.",
+      "Independent checks can use \"Parallelization\" -> Automatic and \"MaxKernels\" -> Automatic. Set False or 1 for serial execution; effective speed depends on expression size and worker setup cost."
+    ],
+    "examples": [
+      {
+        "description": "Check a known QED four-point amplitude against channels from three-point vertices.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nknownQEDModel = ReadModel[modelDirectory, 3];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\namplitude = LookupAmplitude[Thread[{process, Range[4]}], knownQEDModel, False, {i1, i2, i3, i4}];\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nCheckAmplitudes[amplitude, channels, knownQEDModel, \"RandomSeed\" -> 314159]",
+        "evaluate": false
+      },
+      {
+        "description": "Ask for the concrete comparisons only when needed.",
+        "input": "CheckAmplitudes[amplitude, channels, knownQEDModel, \"Output\" -> \"Residues\", \"RandomSeed\" -> 314159]",
+        "evaluate": false
+      },
+      {
+        "description": "Inspect available controls and defaults.",
+        "input": "Options[CheckAmplitudes]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "FactorizationAmplitudeChannels",
+      "PhysicalPoleResidue",
+      "CompleteFactorization",
+      "CompleteHighEnergy",
+      "ConstructAmplitude",
+      "ModelParameterRules"
+    ],
+    "guide": "AmplitudeValidation"
+  },
+  {
+    "name": "CheckPhysicalResidues",
+    "summary": "Use the earlier name for the combined amplitude checker.",
+    "syntaxes": [
+      {
+        "input": "CheckPhysicalResidues[amplitude, channels, model, options]",
+        "description": "Call CheckAmplitudes with the same arguments and options."
+      }
+    ],
+    "details": [
+      "This compatibility name retains the original call style, but the checker now covers more than physical residues. New notebooks should use CheckAmplitudes.",
+      "It shares the string options and status conventions of CheckAmplitudes, including spurious-pole, high-energy, reference and optional Feynman checks. The name does not restrict the calculation to residues alone.",
+      "Set an explicit \"RandomSeed\" when comparing two checker calls so differences in random samples do not obscure the comparison."
+    ],
+    "examples": [
+      {
+        "description": "The compatibility name exposes the same defaults.",
+        "input": "Options[CheckPhysicalResidues] === Options[CheckAmplitudes]",
+        "evaluate": true,
+        "expected": "True"
+      },
+      {
+        "description": "Use the modern function name in a notebook.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nCheckAmplitudes[Total[Last /@ diagramAmplitudes[CreateDiagrams[process, qedModel]]], channels, qedModel]",
+        "evaluate": false
+      }
+    ],
+    "related": [
+      "CheckAmplitudes",
+      "PhysicalPoleResidue"
+    ],
+    "guide": "AmplitudeValidation"
+  },
+  {
+    "name": "PrepareAmplitudes",
+    "summary": "Simplify diagram pairs or factorization rows while retaining their physical assumptions.",
+    "syntaxes": [
+      {
+        "input": "PrepareAmplitudes[items, model]",
+        "description": "Prepare a mass-rule pair, a list of diagram pairs or compact factorization-channel rows."
+      },
+      {
+        "input": "PrepareAmplitudes[items, model, \"PolePreference\" -> preference]",
+        "description": "Choose and simplify a bounded set of allowed reference-spinor assignments."
+      },
+      {
+        "input": "PrepareAmplitudes[items, model, \"ReturnDetails\" -> True]",
+        "description": "Retain original inputs, selected references, discarded remainders and preparation diagnostics."
+      }
+    ],
+    "details": [
+      "The ordinary result retains the input format with each expression replaced by its prepared form. \"Output\" -> \"Expression\" returns the sum instead. The detailed report is optional so routine use does not expose implementation data.",
+      "Preparation applies ReduceSpinContractions, chooses reference spinors, then applies ReduceSpinorProducts and bounded improving identities. Momentum conservation is used with the known external leg set rather than added as an unconditional chain rewrite.",
+      "Constructive internal-shell simplification acts on each item's numerator using only that item's mass declarations. Physical PropDen objects stay off shell. A channel row declares only its own cut; completed external-mass pairs declare no internal cut.",
+      "ReduceSpinorProducts itself applies the ordinary external-shell identities. The additional diagram-local internal-shell reductions belong to preparation and may be disabled with \"InternalOnShell\" -> False.",
+      "\"PolePreference\" -> \"AllPhysical\" compares momentum-insertion references that introduce physical denominator channels outside the current diagram's cuts. \"AllSpurious\" compares references built from other eligible massless particles. \"Mixed\" permits both; Automatic compares admissible choices within a bounded budget.",
+      "\"Cyclic\" and \"ReverseCyclic\" retain fixed massless reference cycles. \"Xi\" uses a common reference, \"IndependentXi\" keeps separate generic references, and None leaves the references unchanged. An unavailable requested choice is reported rather than silently declared successful.",
+      "The search ranks completed trials by expression complexity and respects bounded time and candidate limits. It does not prove a global minimum. Automatic resource settings scale to the process; user values remain authoritative.",
+      "The detailed output retains original expressions and discarded remainders so CompleteFactorization can first reuse information lost in aggressive preparation. Pass the report itself when preserving that information matters.",
+      "Feynman inputs use coherent external references for the whole diagram sum and never declare internal lines on shell. The reference assignment is fixed before independent items are sent to workers.",
+      "\"Parallelization\" and \"MaxKernels\" default to Automatic. Items are independent jobs, input order is retained, and user progress runs on the main kernel. \"MaxSteps\" -> 0 disables the bounded identity search but keeps deterministic algebraic and permitted scalar-shell reductions.",
+      "The same interface can simplify a completed amplitude returned as {externalMassRules, expression}; with no internal mass declarations it uses only ordinary identities. It never adds factorization corrections or model interactions."
+    ],
+    "examples": [
+      {
+        "description": "Prepare the two QED diagrams with a physical-pole preference.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\namplitudes = diagramAmplitudes[diagrams];\nPrepareAmplitudes[amplitudes, qedModel, \"PolePreference\" -> \"AllPhysical\"]",
+        "evaluate": false
+      },
+      {
+        "description": "Retain discarded terms for the completion stage.",
+        "input": "preparedReport = PrepareAmplitudes[amplitudes, qedModel, \"ReturnDetails\" -> True];\npreparedReport[\"PreparedAmplitudes\"]",
+        "evaluate": false
+      },
+      {
+        "description": "A massless external self-product reduces without combining input terms.",
+        "input": "scalarModel = {{{\"scalar\", \"s\", \"s\", 1, 0, 0, 0, 1, \"\", \"s\", \"s\"}}, {{\"s\", \"s\", \"s\", \"s\", 1, 7}}, {}, {}};\nexternalRules = Thread[(Mass /@ Range[4]) -> 0];\nPrepareAmplitudes[{externalRules, MomProd[1, 1] + 7}, scalarModel, \"MaxSteps\" -> 0, \"ProgressReporting\" -> False]",
+        "evaluate": false
+      }
+    ],
+    "related": [
+      "diagramAmplitudes",
+      "FactorizationAmplitudeChannels",
+      "ReduceSpinorProducts",
+      "ReduceSpinContractions",
+      "CompleteFactorization",
+      "PrepareDiagramAmplitudes"
+    ],
+    "guide": "AmplitudeConstruction"
+  },
+  {
+    "name": "PrepareDiagramAmplitudes",
+    "summary": "Use the compatibility name for PrepareAmplitudes.",
+    "syntaxes": [
+      {
+        "input": "PrepareDiagramAmplitudes[items, model, options]",
+        "description": "Prepare the same input formats with the same options as PrepareAmplitudes."
+      }
+    ],
+    "details": [
+      "The modern name reflects support for diagram pairs, factorization rows and completed external-mass pairs. New notebooks should use PrepareAmplitudes.",
+      "The compatibility call has the same default compact output and optional detailed reports. It does not restore an earlier neural simplifier or apply a different set of assumptions."
+    ],
+    "examples": [
+      {
+        "description": "The two names share their available options.",
+        "input": "Options[PrepareDiagramAmplitudes] === Options[PrepareAmplitudes]",
+        "evaluate": true,
+        "expected": "True"
+      },
+      {
+        "description": "Use the general name for channel preparation.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nPrepareAmplitudes[channels, qedModel]",
+        "evaluate": false
+      }
+    ],
+    "related": [
+      "PrepareAmplitudes",
+      "diagramAmplitudes",
+      "FactorizationAmplitudeChannels"
+    ],
+    "guide": "AmplitudeConstruction"
+  },
+  {
+    "name": "CompleteFactorization",
+    "summary": "Repair physical residue deficits with a bounded simultaneous correction fit.",
+    "syntaxes": [
+      {
+        "input": "CompleteFactorization[amplitudes, channels, model]",
+        "description": "Fit corrections against all known physical channels simultaneously."
+      },
+      {
+        "input": "CompleteFactorization[preparationReport, channelsOrReport, model]",
+        "description": "Start from prepared inputs while retaining discarded expressions and original residue targets."
+      },
+      {
+        "input": "CompleteFactorization[input, channels, model, \"ReturnDetails\" -> True]",
+        "description": "Keep the candidate, affine freedom, correction directions and validation diagnostics."
+      }
+    ],
+    "details": [
+      "The function starts with the supplied amplitude, compares every physical residue with its lower-point target and solves for correction coefficients together. It does not naively add the channel products, which overlap on multiple poles.",
+      "Preparation details provide simplified expressions, original expressions and discarded remainders. These are tried before broader channel-continuation directions, preserving useful diagram information without making a hard-coded process formula.",
+      "The correction space is finite and bounded. Alternative reference continuations, input reweighting and retained terms can supply additional directions. Failure to span a deficit is reported honestly; the function does not invent unknown lower amplitudes or arbitrary interactions.",
+      "The ordinary successful output is {externalMassRules, expression}. No internal shell declaration survives for the complete amplitude. It can be passed to PrepareAmplitudes or CompleteHighEnergy.",
+      "\"Output\" -> \"Expression\" gives the bare expression. \"ReturnDetails\" -> True or \"Output\" -> \"Details\" exposes the fit, correction, channel continuations, refinement history and validation. Request details when CompleteHighEnergy must retain residue-preserving affine freedom.",
+      "\"PolePreference\" biases representation and continuation choices. AllPhysical favors physical-only inverse factors; it is not permission to return an unchecked expression or a proof that the result is globally simplest.",
+      "Identical boson and fermion permutations are inferred from ordered external particle identities and the model's twice-spin declarations. Equal masses alone cannot identify the species. Supply \"ExternalParticles\" when a bare input has lost the ordered process metadata.",
+      "Numerical fitting uses locally resolved model parameters. A time-based seed is chosen once for Automatic; an integer replays the sampling. Independent validation and failed-sample refinement guard against a fit that happens to match its training points.",
+      "Automatic effort settings bound runtime and correction size. An unresolved result normally returns a concise Failure rather than an unchecked amplitude. Detailed reports distinguish complete, incomplete and underdetermined cases.",
+      "Physical residue agreement leaves any genuine pole-free or residue-preserving freedom for CompleteHighEnergy and other stated physical constraints. No universal uniqueness claim follows from sampled residues alone."
+    ],
+    "examples": [
+      {
+        "description": "The explicit staged QED workflow retains preparation information.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\namplitudes = diagramAmplitudes[diagrams];\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nprepared = PrepareAmplitudes[amplitudes, qedModel, \"ReturnDetails\" -> True];\nfactorized = CompleteFactorization[prepared, channels, qedModel, \"ReturnDetails\" -> True];\nfactorized",
+        "evaluate": false
+      },
+      {
+        "description": "A declared scalar contact amplitude requires no pole correction.",
+        "input": "scalarModel = {{{\"scalar\", \"s\", \"s\", 1, 0, 0, 0, 1, \"\", \"s\", \"s\"}}, {{\"s\", \"s\", \"s\", \"s\", 1, 7}}, {}, {}};\nexternalRules = Thread[(Mass /@ Range[4]) -> 0];\nCompleteFactorization[{externalRules, 7}, {}, scalarModel, \"ExternalParticles\" -> ConstantArray[\"s\", 4], \"ProgressReporting\" -> False, \"RandomSeed\" -> 2026]",
+        "evaluate": false
+      }
+    ],
+    "related": [
+      "PrepareAmplitudes",
+      "FactorizationAmplitudeChannels",
+      "CompleteHighEnergy",
+      "CheckAmplitudes",
+      "ConstructAmplitude"
+    ],
+    "guide": "AmplitudeConstruction"
+  },
+  {
+    "name": "CompleteHighEnergy",
+    "summary": "Fit retained residue-preserving freedom to high-energy, spurious-pole and reference constraints.",
+    "syntaxes": [
+      {
+        "input": "CompleteHighEnergy[input, channels, model]",
+        "description": "Constrain a completed amplitude and its retained correction freedom."
+      },
+      {
+        "input": "CompleteHighEnergy[input, channels, model, \"Output\" -> \"Details\"]",
+        "description": "Inspect the fit equations, affine family and independent validation."
+      }
+    ],
+    "details": [
+      "Pass detailed CompleteFactorization output when its remaining affine directions are needed. Alternatively supply a justified explicit \"CorrectionBasis\". Automatic uses retained information and does not create an unrestricted contact-operator ansatz.",
+      "The fitted directions must preserve the known physical residues. High-energy scaling, apparent spurious singularities and explicit reference dependence are tested together, and the candidate is validated again against the original channels.",
+      "The default high-energy target is the renormalizable tree bound E^(4-n), with masses held fixed. \"HighEnergyBound\" can express another stated bound; it is a physical input rather than an arbitrary fitting preference.",
+      "A successful ordinary result keeps the {externalMassRules, expression} form. There are no new internal on-shell conditions on this combined amplitude, so it may be simplified again with PrepareAmplitudes.",
+      "\"Output\" -> \"Details\" retains the candidate, equations, fitted family and validation. A timeout, unsupported direction space or unresolved free coefficient is not silently assigned an arbitrary value.",
+      "Use model-local \"ParameterRules\" only for numerical sampling. An explicit \"RandomSeed\" replays the run; Automatic records a newly chosen time-based seed in details.",
+      "This stage cannot establish an unknown interaction merely because it would improve high-energy behavior. The model and supplied direction space determine what is being solved."
+    ],
+    "examples": [
+      {
+        "description": "Retain the factorization family and pass it into the high-energy stage.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\namplitudes = diagramAmplitudes[diagrams];\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nprepared = PrepareAmplitudes[amplitudes, qedModel, \"ReturnDetails\" -> True];\nfactorized = CompleteFactorization[prepared, channels, qedModel, \"ReturnDetails\" -> True];\nCompleteHighEnergy[factorized, channels, qedModel, \"Output\" -> \"Details\"]",
+        "evaluate": false
+      },
+      {
+        "description": "Retain an allowed four-point scalar contact interaction.",
+        "input": "scalarModel = {{{\"scalar\", \"s\", \"s\", 1, 0, 0, 0, 1, \"\", \"s\", \"s\"}}, {{\"s\", \"s\", \"s\", \"s\", 1, 7}}, {}, {}};\nexternalRules = Thread[(Mass /@ Range[4]) -> 0];\nfactorized = CompleteFactorization[{externalRules, 7}, {}, scalarModel, \"ExternalParticles\" -> ConstantArray[\"s\", 4], \"ReturnDetails\" -> True, \"ProgressReporting\" -> False, \"RandomSeed\" -> 2026];\nCompleteHighEnergy[factorized, {}, scalarModel, \"ProgressReporting\" -> False, \"RandomSeed\" -> 2026]",
+        "evaluate": false
+      }
+    ],
+    "related": [
+      "CompleteFactorization",
+      "CheckAmplitudes",
+      "PrepareAmplitudes",
+      "ConstructAmplitude"
+    ],
+    "guide": "AmplitudeConstruction"
+  },
+  {
+    "name": "ConstructAmplitude",
+    "summary": "Construct, complete, simplify and validate an amplitude from its process and two models.",
+    "syntaxes": [
+      {
+        "input": "ConstructAmplitude[process, diagramModel, factorizationModel]",
+        "description": "Run the full workflow and return the validated bare expression."
+      },
+      {
+        "input": "ConstructAmplitude[process, diagramModel, factorizationModel, \"Output\" -> \"Amplitude\"]",
+        "description": "Retain the external mass rules with the expression."
+      },
+      {
+        "input": "ConstructAmplitude[process, diagramModel, factorizationModel, \"Output\" -> \"Details\"]",
+        "description": "Retain stage outputs, timings, checks and the chosen run seed."
+      }
+    ],
+    "details": [
+      "The process is an ordered all-ingoing particle list. Use the diagram model for vertices and a factorization model containing the complete lower-point amplitudes. Four-point QED can use the three-point model for both roles; five-point QED needs the model containing complete four-point amplitudes for factorization.",
+      "The stages generate and prepare diagram amplitudes, generate and prepare channel continuations, complete physical factorization, complete high-energy behavior, simplify the completed amplitude with ordinary external identities, and run the final checks.",
+      "Original residue targets, discarded preparation remainders and residual affine freedom are retained between stages. Final preparation never puts a combined amplitude's internal propagators on shell.",
+      "A bare expression is returned only when every required final check passes. An opposite-sign, failed, unresolved or underdetermined case remains a Failure or detailed diagnostic report, not an alleged validated result.",
+      "The defaults choose bounded resources automatically according to multiplicity and workload. Routine examples need only the three main arguments. \"TimeConstraint\", \"Parallelization\" and \"MaxKernels\" can override the automatic choices.",
+      "\"PolePreference\" controls reference choices and representation preferences through preparation and completion. For example, \"AllPhysical\" asks the workflow to favor physical-only denominator forms.",
+      "Progress shows the current stage, its elapsed time and the total elapsed time. The final printed report shows time, the chosen seed and test results before the expression. \"ProgressReporting\" -> False and \"PrintReport\" -> False suppress these displays.",
+      "\"RandomSeed\" -> Automatic chooses one time-based run seed from which stage seeds are derived. Give an integer to reproduce sampling and inspect \"Details\" to preserve the actual seed.",
+      "\"FeynmanModel\" can supply an independent off-shell benchmark. It is a separate semantic input and cannot be guessed from the constructive factorization model.",
+      "Advanced stage-specific options are supplied in \"PreparationOptions\", \"ChannelPreparationOptions\", \"FactorizationOptions\", \"HighEnergyOptions\", \"FinalPreparationOptions\", \"CheckOptions\" and \"FeynmanPreparationOptions\". These are optional refinements, not required boilerplate.",
+      "Identical boson and fermion symmetry is inferred from the process identities and the model. Fixed photon helicities are distinct process choices; amplitudes differing by those choices can later be exported together with WriteSPINASProcess."
+    ],
+    "examples": [
+      {
+        "description": "Construct the four-point QED positive-helicity amplitude with normal automatic defaults.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nConstructAmplitude[{\"e\", \"E\", \"A.+\", \"A.+\"}, qedModel, qedModel]",
+        "evaluate": false
+      },
+      {
+        "description": "Choose a physical-pole representation and retain the complete run report.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nknownQEDModel = ReadModel[modelDirectory, 3];\nConstructAmplitude[{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"}, qedModel, knownQEDModel, \"PolePreference\" -> \"AllPhysical\", \"Output\" -> \"Details\", \"RandomSeed\" -> 314159]",
+        "evaluate": false
+      },
+      {
+        "description": "Inspect automatic resource defaults without running a construction.",
+        "input": "Options[ConstructAmplitude]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ReadModel",
+      "CreateDiagrams",
+      "PrepareAmplitudes",
+      "CompleteFactorization",
+      "CompleteHighEnergy",
+      "CheckAmplitudes",
+      "WriteSPINASProcess"
+    ],
+    "guide": "AmplitudeConstruction"
+  },
+  {
+    "name": "ReadVertices",
+    "summary": "Reserved historical vertex-reader name.",
+    "syntaxes": [
+      {
+        "input": "ReadVertices",
+        "description": "Reserved compatibility symbol; there is no callable implementation on the current factorization branch."
+      }
+    ],
+    "details": [
+      "The package still reserves and protects this name, but the current source defines no evaluation rules for it. A protected symbol is not evidence that its earlier algorithm remains available.",
+      "Use ReadModel to load constructive amplitude tables or imported CalcHEP Feynman vertices.",
+      "The historical machine-learning simplifier is preserved separately on the ml-simplify branch. This reserved name is not a supported neural-training interface on the active factorization branch."
+    ],
+    "examples": [
+      {
+        "description": "Confirm that the reserved name has no implementation.",
+        "input": "DownValues[ReadVertices]",
+        "evaluate": true,
+        "expected": "{}"
+      }
+    ],
+    "related": [
+      "ReadModel",
+      "ReadModel"
+    ],
+    "guide": "ModelsAndParameters"
+  },
+  {
+    "name": "ConvertVertex",
+    "summary": "Reserved historical vertex-converter name.",
+    "syntaxes": [
+      {
+        "input": "ConvertVertex",
+        "description": "Reserved compatibility symbol; there is no callable implementation on the current factorization branch."
+      }
+    ],
+    "details": [
+      "The package still reserves and protects this name, but the current source defines no evaluation rules for it. A protected symbol is not evidence that its earlier algorithm remains available.",
+      "Use ReadModel for model input and ConvertAmplitude for a complete constructive row.",
+      "The historical machine-learning simplifier is preserved separately on the ml-simplify branch. This reserved name is not a supported neural-training interface on the active factorization branch."
+    ],
+    "examples": [
+      {
+        "description": "Confirm that the reserved name has no implementation.",
+        "input": "DownValues[ConvertVertex]",
+        "evaluate": true,
+        "expected": "{}"
+      }
+    ],
+    "related": [
+      "ConvertAmplitude",
+      "ReadModel"
+    ],
+    "guide": "ModelsAndParameters"
+  },
+  {
+    "name": "CompareAmpToSquaredAmp",
+    "summary": "Reserved historical amplitude-comparison name.",
+    "syntaxes": [
+      {
+        "input": "CompareAmpToSquaredAmp",
+        "description": "Reserved compatibility symbol; there is no callable implementation on the current factorization branch."
+      }
+    ],
+    "details": [
+      "The package still reserves and protects this name, but the current source defines no evaluation rules for it. A protected symbol is not evidence that its earlier algorithm remains available.",
+      "Use CheckAmplitudes for the current combined validation workflow.",
+      "The historical machine-learning simplifier is preserved separately on the ml-simplify branch. This reserved name is not a supported neural-training interface on the active factorization branch."
+    ],
+    "examples": [
+      {
+        "description": "Confirm that the reserved name has no implementation.",
+        "input": "DownValues[CompareAmpToSquaredAmp]",
+        "evaluate": true,
+        "expected": "{}"
+      }
+    ],
+    "related": [
+      "CheckAmplitudes",
+      "CheckAmplitudes"
+    ],
+    "guide": "LegacyAmplitudeSearch"
+  },
+  {
+    "name": "DeleteRandomConstructiveAmplitude",
+    "summary": "Reserved historical random amplitude-deletion name.",
+    "syntaxes": [
+      {
+        "input": "DeleteRandomConstructiveAmplitude",
+        "description": "Reserved compatibility symbol; there is no callable implementation on the current factorization branch."
+      }
+    ],
+    "details": [
+      "The package still reserves and protects this name, but the current source defines no evaluation rules for it. A protected symbol is not evidence that its earlier algorithm remains available.",
+      "Use explicit identity candidates for reproducible symbolic changes.",
+      "The historical machine-learning simplifier is preserved separately on the ml-simplify branch. This reserved name is not a supported neural-training interface on the active factorization branch."
+    ],
+    "examples": [
+      {
+        "description": "Confirm that the reserved name has no implementation.",
+        "input": "DownValues[DeleteRandomConstructiveAmplitude]",
+        "evaluate": true,
+        "expected": "{}"
+      }
+    ],
+    "related": [
+      "ComplicateAmplitude",
+      "CheckAmplitudes"
+    ],
+    "guide": "LegacyAmplitudeSearch"
+  },
+  {
+    "name": "CheckLengthConstructive",
+    "summary": "Reserved historical random-search length-check name.",
+    "syntaxes": [
+      {
+        "input": "CheckLengthConstructive",
+        "description": "Reserved compatibility symbol; there is no callable implementation on the current factorization branch."
+      }
+    ],
+    "details": [
+      "The package still reserves and protects this name, but the current source defines no evaluation rules for it. A protected symbol is not evidence that its earlier algorithm remains available.",
+      "Use SpinorExpressionComplexity to inspect the current symbolic complexity measure.",
+      "The historical machine-learning simplifier is preserved separately on the ml-simplify branch. This reserved name is not a supported neural-training interface on the active factorization branch."
+    ],
+    "examples": [
+      {
+        "description": "Confirm that the reserved name has no implementation.",
+        "input": "DownValues[CheckLengthConstructive]",
+        "evaluate": true,
+        "expected": "{}"
+      }
+    ],
+    "related": [
+      "SpinorExpressionComplexity",
+      "CheckAmplitudes"
+    ],
+    "guide": "LegacyAmplitudeSearch"
+  },
+  {
+    "name": "CheckNumberOfSpinors",
+    "summary": "Reserved historical random-search spinor-count name.",
+    "syntaxes": [
+      {
+        "input": "CheckNumberOfSpinors",
+        "description": "Reserved compatibility symbol; there is no callable implementation on the current factorization branch."
+      }
+    ],
+    "details": [
+      "The package still reserves and protects this name, but the current source defines no evaluation rules for it. A protected symbol is not evidence that its earlier algorithm remains available.",
+      "Use typed Spinor and SpinorChain patterns to inspect an expression.",
+      "The historical machine-learning simplifier is preserved separately on the ml-simplify branch. This reserved name is not a supported neural-training interface on the active factorization branch."
+    ],
+    "examples": [
+      {
+        "description": "Confirm that the reserved name has no implementation.",
+        "input": "DownValues[CheckNumberOfSpinors]",
+        "evaluate": true,
+        "expected": "{}"
+      }
+    ],
+    "related": [
+      "SpinorChain",
+      "CheckAmplitudes"
+    ],
+    "guide": "LegacyAmplitudeSearch"
+  },
+  {
+    "name": "CreateRandomConstructiveSpinorProduct",
+    "summary": "Reserved historical random spinor-product generator name.",
+    "syntaxes": [
+      {
+        "input": "CreateRandomConstructiveSpinorProduct",
+        "description": "Reserved compatibility symbol; there is no callable implementation on the current factorization branch."
+      }
+    ],
+    "details": [
+      "The package still reserves and protects this name, but the current source defines no evaluation rules for it. A protected symbol is not evidence that its earlier algorithm remains available.",
+      "Use ComplicateAmplitude for legal identity-based scrambling rather than an arbitrary invented spinor product.",
+      "The historical machine-learning simplifier is preserved separately on the ml-simplify branch. This reserved name is not a supported neural-training interface on the active factorization branch."
+    ],
+    "examples": [
+      {
+        "description": "Confirm that the reserved name has no implementation.",
+        "input": "DownValues[CreateRandomConstructiveSpinorProduct]",
+        "evaluate": true,
+        "expected": "{}"
+      }
+    ],
+    "related": [
+      "ComplicateAmplitude",
+      "CheckAmplitudes"
+    ],
+    "guide": "LegacyAmplitudeSearch"
+  },
+  {
+    "name": "CreateRandomMassFactor",
+    "summary": "Reserved historical random mass-factor generator name.",
+    "syntaxes": [
+      {
+        "input": "CreateRandomMassFactor",
+        "description": "Reserved compatibility symbol; there is no callable implementation on the current factorization branch."
+      }
+    ],
+    "details": [
+      "The package still reserves and protects this name, but the current source defines no evaluation rules for it. A protected symbol is not evidence that its earlier algorithm remains available.",
+      "Retrieve the model mass declarations and use legal identities when modifying an amplitude.",
+      "The historical machine-learning simplifier is preserved separately on the ml-simplify branch. This reserved name is not a supported neural-training interface on the active factorization branch."
+    ],
+    "examples": [
+      {
+        "description": "Confirm that the reserved name has no implementation.",
+        "input": "DownValues[CreateRandomMassFactor]",
+        "evaluate": true,
+        "expected": "{}"
+      }
+    ],
+    "related": [
+      "ModelParameter",
+      "CheckAmplitudes"
+    ],
+    "guide": "LegacyAmplitudeSearch"
+  },
+  {
+    "name": "CreateRandomConstructiveAmplitudeTerm",
+    "summary": "Reserved historical random term-generator name.",
+    "syntaxes": [
+      {
+        "input": "CreateRandomConstructiveAmplitudeTerm",
+        "description": "Reserved compatibility symbol; there is no callable implementation on the current factorization branch."
+      }
+    ],
+    "details": [
+      "The package still reserves and protects this name, but the current source defines no evaluation rules for it. A protected symbol is not evidence that its earlier algorithm remains available.",
+      "Use recorded identity edits to generate controlled examples.",
+      "The historical machine-learning simplifier is preserved separately on the ml-simplify branch. This reserved name is not a supported neural-training interface on the active factorization branch."
+    ],
+    "examples": [
+      {
+        "description": "Confirm that the reserved name has no implementation.",
+        "input": "DownValues[CreateRandomConstructiveAmplitudeTerm]",
+        "evaluate": true,
+        "expected": "{}"
+      }
+    ],
+    "related": [
+      "ComplicateAmplitude",
+      "CheckAmplitudes"
+    ],
+    "guide": "LegacyAmplitudeSearch"
+  },
+  {
+    "name": "AddRandomConstructiveAmplitudeTerm",
+    "summary": "Reserved historical random term-insertion name.",
+    "syntaxes": [
+      {
+        "input": "AddRandomConstructiveAmplitudeTerm",
+        "description": "Reserved compatibility symbol; there is no callable implementation on the current factorization branch."
+      }
+    ],
+    "details": [
+      "The package still reserves and protects this name, but the current source defines no evaluation rules for it. A protected symbol is not evidence that its earlier algorithm remains available.",
+      "Use a specified legal identity rather than adding a random term to a physical amplitude.",
+      "The historical machine-learning simplifier is preserved separately on the ml-simplify branch. This reserved name is not a supported neural-training interface on the active factorization branch."
+    ],
+    "examples": [
+      {
+        "description": "Confirm that the reserved name has no implementation.",
+        "input": "DownValues[AddRandomConstructiveAmplitudeTerm]",
+        "evaluate": true,
+        "expected": "{}"
+      }
+    ],
+    "related": [
+      "ApplySpinorIdentity",
+      "CheckAmplitudes"
+    ],
+    "guide": "LegacyAmplitudeSearch"
+  },
+  {
+    "name": "CreateInitialRandomPopulationConstructiveAmplitudes",
+    "summary": "Reserved historical population-search initializer name.",
+    "syntaxes": [
+      {
+        "input": "CreateInitialRandomPopulationConstructiveAmplitudes",
+        "description": "Reserved compatibility symbol; there is no callable implementation on the current factorization branch."
+      }
+    ],
+    "details": [
+      "The package still reserves and protects this name, but the current source defines no evaluation rules for it. A protected symbol is not evidence that its earlier algorithm remains available.",
+      "The current construction workflow uses diagrams, known factorization data and bounded correction spaces.",
+      "The historical machine-learning simplifier is preserved separately on the ml-simplify branch. This reserved name is not a supported neural-training interface on the active factorization branch."
+    ],
+    "examples": [
+      {
+        "description": "Confirm that the reserved name has no implementation.",
+        "input": "DownValues[CreateInitialRandomPopulationConstructiveAmplitudes]",
+        "evaluate": true,
+        "expected": "{}"
+      }
+    ],
+    "related": [
+      "ConstructAmplitude",
+      "CheckAmplitudes"
+    ],
+    "guide": "LegacyAmplitudeSearch"
+  },
+  {
+    "name": "RandomDeleteSpinorProduct",
+    "summary": "Reserved historical random spinor-deletion name.",
+    "syntaxes": [
+      {
+        "input": "RandomDeleteSpinorProduct",
+        "description": "Reserved compatibility symbol; there is no callable implementation on the current factorization branch."
+      }
+    ],
+    "details": [
+      "The package still reserves and protects this name, but the current source defines no evaluation rules for it. A protected symbol is not evidence that its earlier algorithm remains available.",
+      "Use identity-preserving edits; deleting a factor generally changes the amplitude.",
+      "The historical machine-learning simplifier is preserved separately on the ml-simplify branch. This reserved name is not a supported neural-training interface on the active factorization branch."
+    ],
+    "examples": [
+      {
+        "description": "Confirm that the reserved name has no implementation.",
+        "input": "DownValues[RandomDeleteSpinorProduct]",
+        "evaluate": true,
+        "expected": "{}"
+      }
+    ],
+    "related": [
+      "ApplySpinorIdentity",
+      "CheckAmplitudes"
+    ],
+    "guide": "LegacyAmplitudeSearch"
+  },
+  {
+    "name": "RandomAddSpinorProduct",
+    "summary": "Reserved historical random spinor-insertion name.",
+    "syntaxes": [
+      {
+        "input": "RandomAddSpinorProduct",
+        "description": "Reserved compatibility symbol; there is no callable implementation on the current factorization branch."
+      }
+    ],
+    "details": [
+      "The package still reserves and protects this name, but the current source defines no evaluation rules for it. A protected symbol is not evidence that its earlier algorithm remains available.",
+      "Use identity-preserving edits; inserting a factor generally changes the amplitude.",
+      "The historical machine-learning simplifier is preserved separately on the ml-simplify branch. This reserved name is not a supported neural-training interface on the active factorization branch."
+    ],
+    "examples": [
+      {
+        "description": "Confirm that the reserved name has no implementation.",
+        "input": "DownValues[RandomAddSpinorProduct]",
+        "evaluate": true,
+        "expected": "{}"
+      }
+    ],
+    "related": [
+      "ApplySpinorIdentity",
+      "CheckAmplitudes"
+    ],
+    "guide": "LegacyAmplitudeSearch"
+  },
+  {
+    "name": "RandomChangeCoefficientSpinorProduct",
+    "summary": "Reserved historical random coefficient-mutation name.",
+    "syntaxes": [
+      {
+        "input": "RandomChangeCoefficientSpinorProduct",
+        "description": "Reserved compatibility symbol; there is no callable implementation on the current factorization branch."
+      }
+    ],
+    "details": [
+      "The package still reserves and protects this name, but the current source defines no evaluation rules for it. A protected symbol is not evidence that its earlier algorithm remains available.",
+      "Use justified correction directions and simultaneous residue fitting to determine coefficients.",
+      "The historical machine-learning simplifier is preserved separately on the ml-simplify branch. This reserved name is not a supported neural-training interface on the active factorization branch."
+    ],
+    "examples": [
+      {
+        "description": "Confirm that the reserved name has no implementation.",
+        "input": "DownValues[RandomChangeCoefficientSpinorProduct]",
+        "evaluate": true,
+        "expected": "{}"
+      }
+    ],
+    "related": [
+      "CompleteFactorization",
+      "CheckAmplitudes"
+    ],
+    "guide": "LegacyAmplitudeSearch"
+  },
+  {
+    "name": "MateConstructiveAmplitudes",
+    "summary": "Reserved historical amplitude-population mating name.",
+    "syntaxes": [
+      {
+        "input": "MateConstructiveAmplitudes",
+        "description": "Reserved compatibility symbol; there is no callable implementation on the current factorization branch."
+      }
+    ],
+    "details": [
+      "The package still reserves and protects this name, but the current source defines no evaluation rules for it. A protected symbol is not evidence that its earlier algorithm remains available.",
+      "Use the current symbolic construction stages instead of an unavailable population search.",
+      "The historical machine-learning simplifier is preserved separately on the ml-simplify branch. This reserved name is not a supported neural-training interface on the active factorization branch."
+    ],
+    "examples": [
+      {
+        "description": "Confirm that the reserved name has no implementation.",
+        "input": "DownValues[MateConstructiveAmplitudes]",
+        "evaluate": true,
+        "expected": "{}"
+      }
+    ],
+    "related": [
+      "ConstructAmplitude",
+      "CheckAmplitudes"
+    ],
+    "guide": "LegacyAmplitudeSearch"
+  },
+  {
+    "name": "MakeNRandomChanges",
+    "summary": "Reserved historical random-mutation driver name.",
+    "syntaxes": [
+      {
+        "input": "MakeNRandomChanges",
+        "description": "Reserved compatibility symbol; there is no callable implementation on the current factorization branch."
+      }
+    ],
+    "details": [
+      "The package still reserves and protects this name, but the current source defines no evaluation rules for it. A protected symbol is not evidence that its earlier algorithm remains available.",
+      "Use legal identity edits and explicit seeds when creating reproducible random scrambles.",
+      "The historical machine-learning simplifier is preserved separately on the ml-simplify branch. This reserved name is not a supported neural-training interface on the active factorization branch."
+    ],
+    "examples": [
+      {
+        "description": "Confirm that the reserved name has no implementation.",
+        "input": "DownValues[MakeNRandomChanges]",
+        "evaluate": true,
+        "expected": "{}"
+      }
+    ],
+    "related": [
+      "ComplicateAmplitude",
+      "CheckAmplitudes"
+    ],
+    "guide": "LegacyAmplitudeSearch"
+  },
+  {
+    "name": "FindAmp",
+    "summary": "Reserved historical amplitude-search name.",
+    "syntaxes": [
+      {
+        "input": "FindAmp",
+        "description": "Reserved compatibility symbol; there is no callable implementation on the current factorization branch."
+      }
+    ],
+    "details": [
+      "The package still reserves and protects this name, but the current source defines no evaluation rules for it. A protected symbol is not evidence that its earlier algorithm remains available.",
+      "Use ConstructAmplitude for the current model-driven generation, completion and validation workflow.",
+      "The historical machine-learning simplifier is preserved separately on the ml-simplify branch. This reserved name is not a supported neural-training interface on the active factorization branch."
+    ],
+    "examples": [
+      {
+        "description": "Confirm that the reserved name has no implementation.",
+        "input": "DownValues[FindAmp]",
+        "evaluate": true,
+        "expected": "{}"
+      }
+    ],
+    "related": [
+      "ConstructAmplitude",
+      "CheckAmplitudes"
+    ],
+    "guide": "LegacyAmplitudeSearch"
+  }
+]

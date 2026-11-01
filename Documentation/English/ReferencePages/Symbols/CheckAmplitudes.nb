@@ -1,0 +1,323 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT SYMBOL", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/AmplitudeValidation"]}],
+        "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["CheckAmplitudes", "ObjectName"],
+  Cell["Check physical residues, apparent spurious poles, high-energy growth \
+and reference dependence.", "Notes"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"CheckAmplitudes", "[", "amplitude",
+         ",", " ", "channels", ",", " ", "model", "]"}]], "InlineFormula"],
+     "  ", "Run the combined checks and return a compact status table."}],
+   "Usage"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"CheckAmplitudes", "[", "amplitudePairs\
+", ",", " ", "channels", ",", " ", "model", ",", " ", "options", "]"}]],
+      "InlineFormula"], "  ",
+     "Check the sum while retaining external mass information."}], "Usage"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"CheckAmplitudes", "[", "amplitude",
+         ",", " ", "channels", ",", " ", "model", ",", " ", "\"Output\"",
+         " ", "->", " ", "\"Details\"", "]"}]], "InlineFormula"], "  ",
+     "Retain samples, differences, diagnostics and the run seed."}],
+   "Usage"], Cell["Details", "NotesSection"], Cell["The first argument may be \
+a bare expression, one {externalMassRules, expression} pair or a list of \
+diagram-style pairs. The supplied compact FactorizationAmplitudeChannels rows \
+identify the physical poles and expected lower-point products.", "Notes"],
+  Cell["Physical residue comparisons include the package's fixed sewing \
+conversion once. \"Opp Sign\" diagnoses a result that matches only after a \
+global minus sign; it does not change the amplitude or fit a sign.",
+   "Notes"], Cell["Apparent denominator factors outside the known physical \
+channels are discovered automatically and checked for spurious singularities. \
+Finite approach tests are numerical evidence, not a replacement for an \
+analytic cancellation when one is practical.", "Notes"],
+  Cell["High-energy checks scale conserved external kinematics with fixed \
+masses and inspect all sampled spin assignments. The automatic renormalizable \
+tree target is E^(4-n); \"HighEnergyBound\" can state another theory's \
+expected bound.", "Notes"], Cell["Reference tests vary explicit external Xi \
+spinors on conserved kinematics. If none remain, the report establishes \
+absence of explicit Xi dependence; that alone is not a separate analytic \
+Ward-identity proof.", "Notes"], Cell["Supply \"FeynmanAmplitudes\" and the \
+matching \"FeynmanModel\" for an independent full-amplitude comparison at \
+ordinary off-cut kinematics.", "Notes"], Cell["Default numerical parameter \
+values come from the model. \"ParameterRules\" locally overrides selected \
+values without changing the symbolic amplitude. \"RandomSeed\" -> Automatic \
+chooses a time-based seed once; provide an integer to replay samples.",
+   "Notes"], Cell["The ordinary table is deliberately short. \"Output\" -> \
+\"Residues\" shows calculated and expected sampled values, \"Summary\" counts \
+statuses, and \"Details\" retains the complete report. Other focused outputs \
+include \"HighEnergy\", \"References\" and \"Feynman\".", "Notes"],
+  Cell["PASS, Opp Sign, FAIL and UNRESOLVED describe the performed tests. \
+They do not establish a generic symbolic reconstruction or uniqueness \
+theorem. Do not interpret a disabled or unresolved test as a pass.",
+   "Notes"], Cell["Independent checks can use \"Parallelization\" -> \
+Automatic and \"MaxKernels\" -> Automatic. Set False or 1 for serial \
+execution; effective speed depends on expression size and worker setup cost."\
+, "Notes"], Cell["Options", "NotesSection"],
+  Cell[BoxData[GridBox[{{Cell["Option", "TableHeader"],
+       Cell["Default", "TableHeader"], Cell["Meaning", "TableHeader"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"KinematicMap\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Function map[expression, \
+channels, poleVariables] evaluating every spinor, momentum and propagator \
+consistently near selected cuts. The checker can construct supported \
+automatic charts; PhysicalPoleResidue with Automatic alone returns a FORMAL \
+structural coefficient.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"KinematicKind\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"\"Sample\""}]],
+           "InlineFormula"]}], "TableText"], Cell["Scope of a supplied \
+physical cut chart: \"Sample\" for sampled kinematics or \"Symbolic\" for a \
+symbolic chart. A sampled match is evidence on the chart, not a general \
+analytic identity.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"TimeConstraint\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"30"}]], "InlineFormula"]}],
+        "TableText"], Cell["Maximum elapsed time allowed by the operation or \
+stage. Where Automatic is supported it selects a finite workload-dependent \
+budget; explicit seconds or supported Infinity override it. A timeout is \
+reported, never treated as a successful amplitude.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"UncutChannels\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"{", "}"}]], "InlineFormula"]}],
+        "TableText"], Cell["Other known physical channels that must remain \
+generic while the selected cut is imposed. The chart validator rejects \
+unintended extra cuts or incompatible external data.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"Tolerance\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"1", "/", "10000000000"}]],
+           "InlineFormula"]}], "TableText"], Cell["Numerical comparison \
+tolerance for sampled amplitudes and residues. Exact cancellations remain \
+exact; tightening a tolerance does not remove floating-point conditioning \
+problems near singular points.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"Samples\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"4"}]], "InlineFormula"]}],
+        "TableText"], Cell["Number of physical cut samples or fitting \
+samples, depending on the stage. Automatic completion settings choose a \
+bounded process-dependent count; successful fitting is followed by separate \
+validation samples.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"RandomSeed\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Random-sampling seed. \
+Automatic resolves one time-based seed for the operation; an explicit \
+integer, including zero, reproduces the sample choices. Detailed reports \
+retain the resolved seed. ComplicateAmplitude uses the legacy symbol key \
+RandomSeed; modern construction/checking functions use the string key \
+\"RandomSeed\".", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"ParameterRules\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Local numerical parameter \
+overrides keyed by model references or string names. Automatic resolves the \
+model's variables and dependent functions; fitting and checks do not assign \
+global values or replace parameters in the symbolic final amplitude.",
+        "TableText"]}, {Cell[TextData[{Cell[BoxData[RowBox[{"\"Output\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"\"Table\""}]],
+           "InlineFormula"]}], "TableText"], Cell["Choose the amount and \
+shape of returned information. Defaults are a compact check table, prepared \
+input forms, a completed {externalMassRules, expression} pair, or a bare \
+constructed expression; \"Details\" preserves diagnostics and provenance.",
+        "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"SpuriousPoles\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Apparent nonphysical poles \
+to test. Automatic discovers denominator factors not accounted for by the \
+supplied physical channels; {} disables these tests instead of certifying \
+cancellation.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"HighEnergyCheck\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Whether to test \
+high-energy scaling of the complete amplitude. Automatic runs the applicable \
+built-in check; False omits it and therefore narrows the reported \
+validation.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"HighEnergyBound\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Maximum allowed power of \
+energy with masses fixed. Automatic uses the renormalizable tree target \
+E^(4-n); provide a justified different bound for another theory or \
+normalization.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"HighEnergySamples\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"3"}]], "InlineFormula"]}],
+        "TableText"], Cell["Number of independent kinematic directions/spin \
+assignments sampled for high-energy scaling. More samples improve numerical \
+evidence but do not turn the check into a symbolic proof.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"HighEnergyTimeConstraint\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Time budget for the \
+high-energy diagnostic. Automatic chooses a bounded allowance; unresolved \
+scaling or a timeout is not counted as a pass.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"ReferenceCheck\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Whether the checker varies \
+explicit Xi reference spinors. Automatic runs the applicable test; if no Xi \
+remains, the report records no explicit dependence rather than claiming an \
+additional analytic Ward-identity proof.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"ReferenceSamples\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"3"}]], "InlineFormula"]}],
+        "TableText"], Cell["Number of reference-spinor comparisons on \
+conserved external kinematics. These comparisons hold the physical \
+phase-space point fixed while changing admissible references.",
+        "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"ReferenceTimeConstraint\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Budget for reference \
+comparisons in checking, or reference-choice search in preparation. Automatic \
+bounds this work; preparation shares it with the remaining per-item clock \
+rather than adding an unlimited extra search.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"FeynmanAmplitudes\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"None"}]], "InlineFormula"]}],
+        "TableText"], Cell["Independent Feynman amplitude expressions or \
+pairs to compare at ordinary off-cut momenta. None omits this extra \
+comparison; it does not disable the constructive physical-pole checks.",
+        "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"FeynmanModel\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["The independent model used \
+with Feynman amplitudes. In ConstructAmplitude, None omits Feynman generation \
+and an explicit model enables it; in the checker, Automatic uses the \
+appropriate supplied model context when available.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"FeynmanSamples\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Number of independent \
+phase-space/spin comparisons with the supplied Feynman result. Automatic \
+chooses a bounded count appropriate to the checking workload.",
+        "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"FeynmanTimeConstraint\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Time budget for the \
+independent Feynman comparison. Automatic resolves a bounded allowance; a \
+timeout is reported as unresolved, not as agreement.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"Parallelization\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Whether independent items \
+or checks may use local Wolfram workers. Automatic uses suitable parallel \
+work within available resources; False requests serial evaluation, and result \
+order is retained.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"MaxKernels\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Maximum local Wolfram \
+worker kernels available to parallel stages. Automatic respects processor \
+availability and license limits; 1 requests serial execution. Worker setup \
+and expression transfer can outweigh small jobs.", "TableText"]}},
+     GridBoxAlignment -> {"Columns" -> {Left, Left, Left}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.23], Scaled[0.19],
+         Scaled[0.58]}}, GridBoxDividers ->
+      {"Rows" -> {False, True, {False}, False}}]], "3ColumnTableMod"],
+  Cell["Examples", "PrimaryExamplesSection"],
+  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
+     Cell["Evaluate this setup once before the examples. The paths refer to \
+the local HEPCAT checkout; no model parameters are assigned global numerical \
+values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
+         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
+         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
+         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
+         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
+         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
+         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
+         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
+         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
+         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
+         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
+         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
+         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
+         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
+         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
+      "Input", InitializationCell -> True]}, Open]],
+  Cell["Basic Examples", "ExampleSection"], Cell["Check a known QED \
+four-point amplitude against channels from three-point vertices.",
+   "ExampleText"], Cell[BoxData[RowBox[{"qedModel", " ", "=", " ",
+      "ReadModel", "[", "modelDirectory", ",", " ", "2", "]", ";", "\n",
+      "knownQEDModel", " ", "=", " ", "ReadModel", "[", "modelDirectory",
+      ",", " ", "3", "]", ";", "\n", "process", " ", "=", " ", "{", "\"e\"",
+      ",", " ", "\"E\"", ",", " ", "\"A.+\"", ",", " ", "\"A.+\"", "}", ";",
+      "\n", "amplitude", " ", "=", " ", "LookupAmplitude", "[", "Thread",
+      "[", "{", "process", ",", " ", "Range", "[", "4", "]", "}", "]", ",",
+      " ", "knownQEDModel", ",", " ", "False", ",", " ", "{", "i1", ",", " ",
+      "i2", ",", " ", "i3", ",", " ", "i4", "}", "]", ";", "\n", "channels",
+      " ", "=", " ", "FactorizationAmplitudeChannels", "[", "process", ",",
+      " ", "qedModel", "]", ";", "\n", "CheckAmplitudes", "[", "amplitude",
+      ",", " ", "channels", ",", " ", "knownQEDModel", ",", " ",
+      "\"RandomSeed\"", " ", "->", " ", "314159", "]"}]], "Input"],
+  Cell["This example writes files, starts a longer calculation, or requires \
+an optional external tool. Evaluate it when you want to perform that \
+operation.", "ExampleText"],
+  Cell["Ask for the concrete comparisons only when needed.", "ExampleText"],
+  Cell[BoxData[RowBox[{"CheckAmplitudes", "[", "amplitude", ",", " ",
+      "channels", ",", " ", "knownQEDModel", ",", " ", "\"Output\"", " ",
+      "->", " ", "\"Residues\"", ",", " ", "\"RandomSeed\"", " ", "->", " ",
+      "314159", "]"}]], "Input"], Cell["This example writes files, starts a \
+longer calculation, or requires an optional external tool. Evaluate it when \
+you want to perform that operation.", "ExampleText"],
+  Cell["Inspect available controls and defaults.", "ExampleText"],
+  Cell[BoxData[RowBox[{"Options", "[", "CheckAmplitudes", "]"}]], "Input"],
+  Cell[BoxData[RowBox[{"{", "\"KinematicMap\"", " ", "->", " ", "Automatic",
+      ",", " ", "\"KinematicKind\"", " ", "->", " ", "\"Sample\"", ",", " ",
+      "\"TimeConstraint\"", " ", "->", " ", "30", ",", " ",
+      "\"UncutChannels\"", " ", "->", " ", "{", "}", ",", " ",
+      "\"Tolerance\"", " ", "->", " ", "1", "/", "10000000000", ",", " ",
+      "\"Samples\"", " ", "->", " ", "4", ",", " ", "\"RandomSeed\"", " ",
+      "->", " ", "Automatic", ",", " ", "\"ParameterRules\"", " ", "->", " ",
+      "Automatic", ",", " ", "\"Output\"", " ", "->", " ", "\"Table\"", ",",
+      " ", "\"SpuriousPoles\"", " ", "->", " ", "Automatic", ",", " ",
+      "\"HighEnergyCheck\"", " ", "->", " ", "Automatic", ",", " ",
+      "\"HighEnergyBound\"", " ", "->", " ", "Automatic", ",", " ",
+      "\"HighEnergySamples\"", " ", "->", " ", "3", ",", " ",
+      "\"HighEnergyTimeConstraint\"", " ", "->", " ", "Automatic", ",", " ",
+      "\"ReferenceCheck\"", " ", "->", " ", "Automatic", ",", " ",
+      "\"ReferenceSamples\"", " ", "->", " ", "3", ",", " ",
+      "\"ReferenceTimeConstraint\"", " ", "->", " ", "Automatic", ",", " ",
+      "\"FeynmanAmplitudes\"", " ", "->", " ", "None", ",", " ",
+      "\"FeynmanModel\"", " ", "->", " ", "Automatic", ",", " ",
+      "\"FeynmanSamples\"", " ", "->", " ", "Automatic", ",", " ",
+      "\"FeynmanTimeConstraint\"", " ", "->", " ", "Automatic", ",", " ",
+      "\"Parallelization\"", " ", "->", " ", "Automatic", ",", " ",
+      "\"MaxKernels\"", " ", "->", " ", "Automatic", "}"}]], "Output"],
+  Cell["See Also", "SeeAlsoSection"],
+  Cell[TextData[{ButtonBox["FactorizationAmplitudeChannels",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/FactorizationAmplitudeChannels"], "  \[Bullet]  ",
+     ButtonBox["PhysicalPoleResidue", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PhysicalPoleResidue"],
+     "  \[Bullet]  ", ButtonBox["CompleteFactorization", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CompleteFactorization"],
+     "  \[Bullet]  ", ButtonBox["CompleteHighEnergy", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CompleteHighEnergy"], "  \[Bullet]  ",
+     ButtonBox["ConstructAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ConstructAmplitude"], "  \[Bullet]  ",
+     ButtonBox["ModelParameterRules", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ModelParameterRules"]}], "SeeAlso"],
+  Cell["Related Guides", "MoreAboutSection"],
+  Cell[TextData[{ButtonBox["Checking Amplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/guide/AmplitudeValidation"],
+     "  \[Bullet]  ", ButtonBox[
+      "HEPCAT: Constructive Amplitudes and Spinor Algebra",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}],
+   "MoreAbout"]}, WindowTitle -> "CheckAmplitudes - HEPCAT Documentation",
+ Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/ref/CheckAmplitudes", "title" -> "CheckAmplitudes",
+     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" -> "Check physical residues, apparent spurious poles, \
+high-energy growth and reference dependence.",
+     "keywords" -> {"HEPCAT", "CheckAmplitudes", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

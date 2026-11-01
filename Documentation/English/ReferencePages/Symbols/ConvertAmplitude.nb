@@ -1,0 +1,99 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT SYMBOL", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/ModelsAndParameters"]}],
+        "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["ConvertAmplitude", "ObjectName"],
+  Cell[
+   "Convert a constructive model row from text into typed spinor notation.",
+   "Notes"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"ConvertAmplitude", "[", "row", ",",
+         " ", "particles", "]"}]], "InlineFormula"], "  ", "Convert the final \
+amplitude string using the row's external particles."}], "Usage"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"ConvertAmplitude", "[", "row", ",",
+         " ", "particles", ",", " ", "scope", "]"}]], "InlineFormula"], "  ",
+     "Use an explicit parameter scope for model data."}], "Usage"],
+  Cell["Details", "NotesSection"], Cell["The row has particle-name columns \
+followed by an overall factor and an amplitude string. The return value is \
+the converted final expression; the separate overall factor is not multiplied \
+into it.", "Notes"], Cell["Compact angle and square brackets become \
+SpinorChain expressions. Interior digits become momentum insertions; the \
+particle table selects massive \"Spin\" or massless \"Helicity\" endpoints.",
+   "Notes"], Cell["The converter recognizes x factors, propagator \
+denominators and declared model parameters. For example, s13-Me^2 represents \
+PropDen[Mom[Multiparticle[1,3]], Me] with the model-local mass parameter.",
+   "Notes"], Cell["Compact bracket digits are single-digit labels. Use typed \
+SpinorChain, Spinor and Mom expressions when multi-digit external labels or \
+more explicit structures are required.", "Notes"],
+  Cell["The current converter uses the restricted model expression parser. \
+ConvertAmplitudeOld is retained for historical compatibility and is not the \
+recommended model reader.", "Notes"], Cell["Examples",
+   "PrimaryExamplesSection"],
+  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
+     Cell["Evaluate this setup once before the examples. The paths refer to \
+the local HEPCAT checkout; no model parameters are assigned global numerical \
+values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
+         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
+         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
+         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
+         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
+         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
+         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
+         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
+         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
+         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
+         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
+         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
+         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
+         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
+         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
+      "Input", InitializationCell -> True]}, Open]],
+  Cell["Basic Examples", "ExampleSection"],
+  Cell["Translate a massive angle bracket from a three-point row.",
+   "ExampleText"], Cell[BoxData[RowBox[{"qedModel", " ", "=", " ",
+      "ReadModel", "[", "modelDirectory", ",", " ", "2", "]", ";", "\n",
+      "ConvertAmplitude", "[", "{", "\"e\"", ",", " ", "\"E\"", ",", " ",
+      "\"A.+\"", ",", " ", "1", ",", " ", "\"<12>\"", "}", ",", " ",
+      "qedModel", "[", "[", "1", "]", "]", "]"}]], "Input"],
+  Cell[BoxData[TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"",
+        StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"],
+      TemplateBox[{StyleBox["2", Bold, StripOnInput -> False],
+        "\"\[RightAngleBracket]\""}, "RowDefault"]}, "RowDefault"]],
+   "Output"], Cell["Convert a photon square bracket in a four-point row.",
+   "ExampleText"], Cell[BoxData[RowBox[{"qedModel", " ", "=", " ",
+      "ReadModel", "[", "modelDirectory", ",", " ", "2", "]", ";", "\n",
+      "ConvertAmplitude", "[", "{", "\"e\"", ",", " ", "\"E\"", ",", " ",
+      "\"A.+\"", ",", " ", "\"A.+\"", ",", " ", "1", ",", " ", "\"[34]^2\"",
+      "}", ",", " ", "qedModel", "[", "[", "1", "]", "]", "]"}]], "Input"],
+  Cell[BoxData[SuperscriptBox[TemplateBox[{TemplateBox[{"\"[\"", "3"},
+        "RowDefault"], TemplateBox[{"4", "\"]\""}, "RowDefault"]},
+      "RowDefault"], "2"]], "Output"], Cell["See Also", "SeeAlsoSection"],
+  Cell[TextData[{ButtonBox["ReadAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReadAmplitudes"], "  \[Bullet]  ",
+     ButtonBox["ReadModel", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReadModel"], "  \[Bullet]  ",
+     ButtonBox["SpinorChain", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SpinorChain"], "  \[Bullet]  ",
+     ButtonBox["PropDen", BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/PropDen"], "  \[Bullet]  ",
+     ButtonBox["ConvertAmplitudeOld", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ConvertAmplitudeOld"]}], "SeeAlso"],
+  Cell["Related Guides", "MoreAboutSection"],
+  Cell[TextData[{ButtonBox["Models and Model-Local Parameters",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/guide/ModelsAndParameters"], "  \[Bullet]  ",
+     ButtonBox["HEPCAT: Constructive Amplitudes and Spinor Algebra",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}],
+   "MoreAbout"]}, WindowTitle -> "ConvertAmplitude - HEPCAT Documentation",
+ Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/ref/ConvertAmplitude", "title" -> "ConvertAmplitude",
+     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" ->
+      "Convert a constructive model row from text into typed spinor \
+notation.", "keywords" -> {"HEPCAT", "ConvertAmplitude",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

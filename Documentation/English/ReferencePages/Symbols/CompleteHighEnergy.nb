@@ -1,0 +1,247 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT SYMBOL", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/AmplitudeConstruction"]}],
+        "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["CompleteHighEnergy", "ObjectName"],
+  Cell["Fit retained residue-preserving freedom to high-energy, spurious-pole \
+and reference constraints.", "Notes"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"CompleteHighEnergy", "[", "input",
+         ",", " ", "channels", ",", " ", "model", "]"}]], "InlineFormula"],
+     "  ",
+     "Constrain a completed amplitude and its retained correction freedom."}]\
+, "Usage"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"CompleteHighEnergy", "[", "input",
+         ",", " ", "channels", ",", " ", "model", ",", " ", "\"Output\"",
+         " ", "->", " ", "\"Details\"", "]"}]], "InlineFormula"], "  ", "Insp\
+ect the fit equations, affine family and independent validation."}],
+   "Usage"], Cell["Details", "NotesSection"],
+  Cell["Pass detailed CompleteFactorization output when its remaining affine \
+directions are needed. Alternatively supply a justified explicit \
+\"CorrectionBasis\". Automatic uses retained information and does not create \
+an unrestricted contact-operator ansatz.", "Notes"],
+  Cell["The fitted directions must preserve the known physical residues. \
+High-energy scaling, apparent spurious singularities and explicit reference \
+dependence are tested together, and the candidate is validated again against \
+the original channels.", "Notes"], Cell["The default high-energy target is \
+the renormalizable tree bound E^(4-n), with masses held fixed. \
+\"HighEnergyBound\" can express another stated bound; it is a physical input \
+rather than an arbitrary fitting preference.", "Notes"],
+  Cell["A successful ordinary result keeps the {externalMassRules, \
+expression} form. There are no new internal on-shell conditions on this \
+combined amplitude, so it may be simplified again with PrepareAmplitudes.",
+   "Notes"], Cell["\"Output\" -> \"Details\" retains the candidate, \
+equations, fitted family and validation. A timeout, unsupported direction \
+space or unresolved free coefficient is not silently assigned an arbitrary \
+value.", "Notes"], Cell["Use model-local \"ParameterRules\" only for \
+numerical sampling. An explicit \"RandomSeed\" replays the run; Automatic \
+records a newly chosen time-based seed in details.", "Notes"],
+  Cell["This stage cannot establish an unknown interaction merely because it \
+would improve high-energy behavior. The model and supplied direction space \
+determine what is being solved.", "Notes"], Cell["Options", "NotesSection"],
+  Cell[BoxData[GridBox[{{Cell["Option", "TableHeader"],
+       Cell["Default", "TableHeader"], Cell["Meaning", "TableHeader"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"CorrectionBasis\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Explicit correction \
+expressions whose coefficients may be fitted. Automatic uses bounded \
+directions from the supplied diagrams, channels and retained preparation \
+data; it does not invent an unrestricted interaction ansatz.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"PolePreference\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Reference and \
+representation preference shared by preparation and completion. Automatic \
+compares or inherits admissible choices; \"AllPhysical\", \"AllSpurious\" and \
+\"Mixed\" bias pole forms, while cyclic/common/independent reference choices \
+and None are also available. Required checks remain unchanged.",
+        "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"ParameterRules\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Local numerical parameter \
+overrides keyed by model references or string names. Automatic resolves the \
+model's variables and dependent functions; fitting and checks do not assign \
+global values or replace parameters in the symbolic final amplitude.",
+        "TableText"]}, {Cell[TextData[{Cell[BoxData[RowBox[{"\"Samples\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Number of physical cut \
+samples or fitting samples, depending on the stage. Automatic completion \
+settings choose a bounded process-dependent count; successful fitting is \
+followed by separate validation samples.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"ValidationSamples\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Number of held-out samples \
+used after fitting correction coefficients. Automatic chooses a bounded \
+workload-dependent allowance; these samples are distinct from the fitting \
+equations.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"RandomSeed\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Random-sampling seed. \
+Automatic resolves one time-based seed for the operation; an explicit \
+integer, including zero, reproduces the sample choices. Detailed reports \
+retain the resolved seed. ComplicateAmplitude uses the legacy symbol key \
+RandomSeed; modern construction/checking functions use the string key \
+\"RandomSeed\".", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"TimeConstraint\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Maximum elapsed time \
+allowed by the operation or stage. Where Automatic is supported it selects a \
+finite workload-dependent budget; explicit seconds or supported Infinity \
+override it. A timeout is reported, never treated as a successful amplitude."\
+, "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"HighEnergyBound\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Maximum allowed power of \
+energy with masses fixed. Automatic uses the renormalizable tree target \
+E^(4-n); provide a justified different bound for another theory or \
+normalization.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"MaxCorrectionTerms\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Bound on the size of the \
+fitted correction space. Automatic chooses a finite process-dependent limit; \
+explicit values control effort without weakening residue and \
+independent-validation requirements.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"Parallelization\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Whether independent items \
+or checks may use local Wolfram workers. Automatic uses suitable parallel \
+work within available resources; False requests serial evaluation, and result \
+order is retained.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"MaxKernels\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Maximum local Wolfram \
+worker kernels available to parallel stages. Automatic respects processor \
+availability and license limits; 1 requests serial execution. Worker setup \
+and expression transfer can outweigh small jobs.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"ValidationParameterRules\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Additional or \
+automatically selected local parameter assignments used in independent \
+completion validation. They help detect fits tied accidentally to one \
+numerical mass or coupling point without changing the symbolic result.",
+        "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"ProgressReporting\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"True"}]], "InlineFormula"]}],
+        "TableText"], Cell["Whether preparation and construction stages \
+display their progress. False suppresses the live stage display without \
+changing the algebra or validation.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"ProgressFunction\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Optional callback \
+receiving stage progress information. Automatic uses the normal progress \
+display; callbacks are evaluated on the main kernel rather than independently \
+by workers.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"Output\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"\"Amplitude\""}]],
+           "InlineFormula"]}], "TableText"], Cell["Choose the amount and \
+shape of returned information. Defaults are a compact check table, prepared \
+input forms, a completed {externalMassRules, expression} pair, or a bare \
+constructed expression; \"Details\" preserves diagnostics and provenance.",
+        "TableText"]}}, GridBoxAlignment ->
+      {"Columns" -> {Left, Left, Left}}, GridBoxItemSize ->
+      {"Columns" -> {Scaled[0.23], Scaled[0.19], Scaled[0.58]}},
+     GridBoxDividers -> {"Rows" -> {False, True, {False}, False}}]],
+   "3ColumnTableMod"], Cell["Examples", "PrimaryExamplesSection"],
+  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
+     Cell["Evaluate this setup once before the examples. The paths refer to \
+the local HEPCAT checkout; no model parameters are assigned global numerical \
+values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
+         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
+         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
+         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
+         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
+         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
+         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
+         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
+         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
+         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
+         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
+         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
+         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
+         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
+         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
+      "Input", InitializationCell -> True]}, Open]],
+  Cell["Basic Examples", "ExampleSection"],
+  Cell[
+   "Retain the factorization family and pass it into the high-energy stage.",
+   "ExampleText"], Cell[BoxData[RowBox[{"qedModel", " ", "=", " ",
+      "ReadModel", "[", "modelDirectory", ",", " ", "2", "]", ";", "\n",
+      "process", " ", "=", " ", "{", "\"e\"", ",", " ", "\"E\"", ",", " ",
+      "\"A.+\"", ",", " ", "\"A.+\"", "}", ";", "\n", "diagrams", " ", "=",
+      " ", "CreateDiagrams", "[", "process", ",", " ", "qedModel", "]", ";",
+      "\n", "amplitudes", " ", "=", " ", "diagramAmplitudes", "[",
+      "diagrams", "]", ";", "\n", "channels", " ", "=", " ",
+      "FactorizationAmplitudeChannels", "[", "process", ",", " ", "qedModel",
+      "]", ";", "\n", "prepared", " ", "=", " ", "PrepareAmplitudes", "[",
+      "amplitudes", ",", " ", "qedModel", ",", " ", "\"ReturnDetails\"", " ",
+      "->", " ", "True", "]", ";", "\n", "factorized", " ", "=", " ",
+      "CompleteFactorization", "[", "prepared", ",", " ", "channels", ",",
+      " ", "qedModel", ",", " ", "\"ReturnDetails\"", " ", "->", " ", "True",
+      "]", ";", "\n", "CompleteHighEnergy", "[", "factorized", ",", " ",
+      "channels", ",", " ", "qedModel", ",", " ", "\"Output\"", " ", "->",
+      " ", "\"Details\"", "]"}]], "Input"], Cell["This example writes files, \
+starts a longer calculation, or requires an optional external tool. Evaluate \
+it when you want to perform that operation.", "ExampleText"],
+  Cell["Retain an allowed four-point scalar contact interaction.",
+   "ExampleText"], Cell[BoxData[RowBox[{"scalarModel", " ", "=", " ", "{",
+      "{", "{", "\"scalar\"", ",", " ", "\"s\"", ",", " ", "\"s\"", ",", " ",
+      "1", ",", " ", "0", ",", " ", "0", ",", " ", "0", ",", " ", "1", ",",
+      " ", "\"\"", ",", " ", "\"s\"", ",", " ", "\"s\"", "}", "}", ",", " ",
+      "{", "{", "\"s\"", ",", " ", "\"s\"", ",", " ", "\"s\"", ",", " ",
+      "\"s\"", ",", " ", "1", ",", " ", "7", "}", "}", ",", " ", "{", "}",
+      ",", " ", "{", "}", "}", ";", "\n", "externalRules", " ", "=", " ",
+      "Thread", "[", "(", "Mass", " ", "/@", " ", "Range", "[", "4", "]",
+      ")", " ", "->", " ", "0", "]", ";", "\n", "factorized", " ", "=", " ",
+      "CompleteFactorization", "[", "{", "externalRules", ",", " ", "7", "}",
+      ",", " ", "{", "}", ",", " ", "scalarModel", ",", " ",
+      "\"ExternalParticles\"", " ", "->", " ", "ConstantArray", "[", "\"s\"",
+      ",", " ", "4", "]", ",", " ", "\"ReturnDetails\"", " ", "->", " ",
+      "True", ",", " ", "\"ProgressReporting\"", " ", "->", " ", "False",
+      ",", " ", "\"RandomSeed\"", " ", "->", " ", "2026", "]", ";", "\n",
+      "CompleteHighEnergy", "[", "factorized", ",", " ", "{", "}", ",", " ",
+      "scalarModel", ",", " ", "\"ProgressReporting\"", " ", "->", " ",
+      "False", ",", " ", "\"RandomSeed\"", " ", "->", " ", "2026", "]"}]],
+   "Input"], Cell["This example writes files, starts a longer calculation, or \
+requires an optional external tool. Evaluate it when you want to perform that \
+operation.", "ExampleText"], Cell["See Also", "SeeAlsoSection"],
+  Cell[TextData[{ButtonBox["CompleteFactorization", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CompleteFactorization"],
+     "  \[Bullet]  ", ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"], "  \[Bullet]  ",
+     ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], "  \[Bullet]  ",
+     ButtonBox["ConstructAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ConstructAmplitude"]}], "SeeAlso"],
+  Cell["Related Guides", "MoreAboutSection"],
+  Cell[TextData[{ButtonBox["Constructing and Completing Amplitudes",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/guide/AmplitudeConstruction"], "  \[Bullet]  ",
+     ButtonBox["HEPCAT: Constructive Amplitudes and Spinor Algebra",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}],
+   "MoreAbout"]}, WindowTitle -> "CompleteHighEnergy - HEPCAT Documentation",
+ Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/ref/CompleteHighEnergy",
+     "title" -> "CompleteHighEnergy", "type" -> "Symbol",
+     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Fit retained \
+residue-preserving freedom to high-energy, spurious-pole and reference \
+constraints.", "keywords" -> {"HEPCAT", "CompleteHighEnergy",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

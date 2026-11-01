@@ -1,0 +1,112 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT SYMBOL", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/ModelsAndParameters"]}],
+        "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["AppendModelAmplitudes", "ObjectName"],
+  Cell["Append validated text representations of supplied amplitudes to a \
+constructive model file.", "Notes"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"AppendModelAmplitudes", "[",
+         "directory", ",", " ", "number", ",", " ", "entries", "]"}]],
+      "InlineFormula"], "  ", "Append {particles, amplitude} or {particles, \
+factor, amplitudeOverFactor} entries to ampsN.mdl."}], "Usage"],
+  Cell["Details", "NotesSection"], Cell["This function writes amplitudes \
+already obtained by the user. It does not derive them or establish their \
+physical correctness. Run CheckAmplitudes and independent checks before \
+making an amplitude available as factorization input.", "Notes"],
+  Cell["Particle and parameter declarations come from the target model. Every \
+new row must round-trip through the model reader before the file is replaced \
+atomically.", "Notes"], Cell["The returned association has keys \"File\", \
+\"Added\" and \"Skipped\". Repeating an identical append is a no-op; a \
+conflicting amplitude for an existing particle multiset rejects the batch.",
+   "Notes"], Cell["Existing comments and rows are preserved. Reload ReadModel \
+after writing. Use a temporary copy for experiments rather than changing the \
+bundled model in a help example.", "Notes"],
+  Cell["Examples", "PrimaryExamplesSection"],
+  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
+     Cell["Evaluate this setup once before the examples. The paths refer to \
+the local HEPCAT checkout; no model parameters are assigned global numerical \
+values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
+         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
+         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
+         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
+         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
+         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
+         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
+         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
+         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
+         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
+         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
+         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
+         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
+         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
+         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
+      "Input", InitializationCell -> True]}, Open]],
+  Cell["Basic Examples", "ExampleSection"], Cell["Append a known four-point \
+result to a temporary copy of the three-point QED model.", "ExampleText"],
+  Cell[BoxData[RowBox[{"qedModel", " ", "=", " ", "ReadModel", "[",
+      "modelDirectory", ",", " ", "2", "]", ";", "\n", "knownQEDModel", " ",
+      "=", " ", "ReadModel", "[", "modelDirectory", ",", " ", "3", "]", ";",
+      "\n", "temporaryModelDirectory", " ", "=", " ", "CreateDirectory", "[",
+      "]", ";", "\n", "Scan", "[", "CopyFile", "[", "FileNameJoin", "[", "{",
+      "modelDirectory", ",", " ", "#", " ", "<>", " ", "\"2.mdl\"", "}", "]",
+      ",", " ", "FileNameJoin", "[", "{", "temporaryModelDirectory", ",",
+      " ", "#", " ", "<>", " ", "\"2.mdl\"", "}", "]", "]", " ", "&", ",",
+      " ", "{", "\"prtcls\"", ",", " ", "\"amps\"", ",", " ", "\"vars\"",
+      ",", " ", "\"func\"", "}", "]", ";", "\n", "particles", " ", "=", " ",
+      "{", "\"e\"", ",", " ", "\"E\"", ",", " ", "\"A.+\"", ",", " ",
+      "\"A.+\"", "}", ";", "\n", "knownAmplitude", " ", "=", " ",
+      "LookupAmplitude", "[", "Thread", "[", "{", "particles", ",", " ",
+      "Range", "[", "4", "]", "}", "]", ",", " ", "knownQEDModel", ",", " ",
+      "False", ",", " ", "{", "i1", ",", " ", "i2", ",", " ", "i3", ",", " ",
+      "i4", "}", "]", ";", "\n",
+      "(* Use parameters declared in the target copy. *)", "\n",
+      "copiedModel", " ", "=", " ", "ReadModel", "[",
+      "temporaryModelDirectory", ",", " ", "2", "]", ";", "\n",
+      "parameterMap", " ", "=", " ", "Thread", "[", "(", "First", " ", "/@",
+      " ", "ModelParameterRules", "[", "knownQEDModel", "]", ")", " ", "->",
+      " ", "(", "ModelParameter", "[", "copiedModel", ",", " ",
+      "ModelParameterName", "[", "#", "]", "]", " ", "&", " ", "/@", " ",
+      "(", "First", " ", "/@", " ", "ModelParameterRules", "[",
+      "knownQEDModel", "]", ")", ")", "]", ";", "\n",
+      "AppendModelAmplitudes", "[", "temporaryModelDirectory", ",", " ", "2",
+      ",", " ", "{", "{", "particles", ",", " ", "knownAmplitude", " ", "/.",
+      " ", "parameterMap", "}", "}", "]"}]], "Input"],
+  Cell["This example writes files, starts a longer calculation, or requires \
+an optional external tool. Evaluate it when you want to perform that \
+operation.", "ExampleText"],
+  Cell[
+   "An empty batch leaves the target untouched and reports zero additions.",
+   "ExampleText"], Cell[BoxData[RowBox[{"AppendModelAmplitudes", "[",
+      "modelDirectory", ",", " ", "2", ",", " ", "{", "}", "]"}]], "Input"],
+  Cell["See Also", "SeeAlsoSection"],
+  Cell[TextData[{ButtonBox["ReadModel", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReadModel"], "  \[Bullet]  ",
+     ButtonBox["PlainText", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PlainText"], "  \[Bullet]  ",
+     ButtonBox["LookupAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/LookupAmplitude"], "  \[Bullet]  ",
+     ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"], "  \[Bullet]  ",
+     ButtonBox["FactorizationAmplitudeChannels", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/FactorizationAmplitudeChannels"]}],
+   "SeeAlso"], Cell["Related Guides", "MoreAboutSection"],
+  Cell[TextData[{ButtonBox["Models and Model-Local Parameters",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/guide/ModelsAndParameters"], "  \[Bullet]  ",
+     ButtonBox["HEPCAT: Constructive Amplitudes and Spinor Algebra",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}],
+   "MoreAbout"]}, WindowTitle ->
+  "AppendModelAmplitudes - HEPCAT Documentation", Saveable -> False,
+ WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/ref/AppendModelAmplitudes",
+     "title" -> "AppendModelAmplitudes", "type" -> "Symbol",
+     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Append validated \
+text representations of supplied amplitudes to a constructive model file.",
+     "keywords" -> {"HEPCAT", "AppendModelAmplitudes", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

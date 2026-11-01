@@ -1,0 +1,79 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT GUIDE", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}], "AnchorBar"]}},
+     GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["Checking Amplitudes", "GuideTitle"],
+  Cell["Compare physical residues, spurious poles, high-energy behavior, \
+references and Feynman results.", "GuideAbstract"],
+  Cell["CheckAmplitudes takes an amplitude, compact factorization channels \
+and a model. The normal output is a readable report; request Residues, \
+Summary or Details when you need the actual sampled comparisons.",
+   "GuideAbstract"], Cell["The checker identifies physical poles from the \
+supplied channels and discovers additional candidate spurious factors in the \
+amplitude. It also supports high-energy behavior, external reference-spinor \
+independence and comparison with an independent Feynman expression. The \
+available metadata and kinematic support determine which checks can be \
+completed.", "GuideAbstract"], Cell["PASS means the selected check passed at \
+the sampled points within its tolerance. Opp Sign identifies a residue that \
+differs by an overall sign. FAIL and unresolved or skipped checks must be \
+inspected; none should be silently interpreted as agreement.",
+   "GuideAbstract"], Cell["Automatic seeds vary between runs. Set RandomSeed \
+explicitly to replay a diagnostic. Numerical approaches to a spurious pole \
+should avoid other physical singularities and use enough precision to \
+separate a true divergence from cancellation error.", "GuideAbstract"],
+  Cell["Check the Complete Result", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"], ": ", "Check \
+physical residues, apparent spurious poles, high-energy growth and reference \
+dependence."}], "GuideText"],
+  Cell[TextData[{ButtonBox["CheckPhysicalResidues", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CheckPhysicalResidues"], ": ",
+     "Use the earlier name for the combined amplitude checker."}],
+   "GuideText"], Cell["Inspect a Pole", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["PhysicalPoleResidue", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PhysicalPoleResidue"], ": ", "Extract \
+a single- or compatible multiple-pole coefficient with explicit kinematic \
+scope."}], "GuideText"],
+  Cell[TextData[{ButtonBox["FactorizationAmplitudeChannels",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/FactorizationAmplitudeChannels"], ": ", "Sew known \
+lower-point amplitudes into the physical factorization channels."}],
+   "GuideText"], Cell[TextData[{ButtonBox["PropDen", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PropDen"], ": ",
+     "Represents an off-shell physical propagator denominator."}],
+   "GuideText"], Cell["Independent Feynman Comparison",
+   "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["ReadModel", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReadModel"], ": ", "Read a \
+constructive amplitude model or an imported CalcHEP Feynman model."}],
+   "GuideText"], Cell[TextData[{ButtonBox["FeynmanToSpinorProducts",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/FeynmanToSpinorProducts"], ": ", "Converts \
+contracted Feynman amplitudes to spinor products without imposing internal \
+mass shells."}], "GuideText"],
+  Cell[TextData[{ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], ": ", "Simplify \
+diagram pairs or factorization rows while retaining their physical \
+assumptions."}], "GuideText"], Cell["Tutorials", "GuideTutorialsSection"],
+  Cell[TextData[
+    {ButtonBox["Constructing and Checking an Amplitude in Stages",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/tutorial/ConstructingAndCheckingAnAmplitude"],
+     "  \[Bullet]  ", ButtonBox[
+      "Comparing a Constructive Result with Feynman Diagrams",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/tutorial/FeynmanComparison"]}], "GuideTutorial"]},
+ WindowTitle -> "Checking Amplitudes - HEPCAT Documentation",
+ Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/guide/AmplitudeValidation",
+     "title" -> "Checking Amplitudes", "type" -> "Guide",
+     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Compare physical \
+residues, spurious poles, high-energy behavior, references and Feynman \
+results.", "keywords" -> {"HEPCAT", "AmplitudeValidation",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

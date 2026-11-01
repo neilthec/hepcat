@@ -1,0 +1,111 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT GUIDE", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}], "AnchorBar"]}},
+     GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["Diagrams and Factorization Channels",
+   "GuideTitle"],
+  Cell["Generate diagrams and physical channel expressions from model data.",
+   "GuideAbstract"], Cell["CreateDiagrams generates tree diagrams for an \
+ordered process. diagramAmplitudes converts the complete list, including the \
+package conventions for fermion ordering and internal photon or gluon \
+helicity sums. Prefer the plural function for a complete process.",
+   "GuideAbstract"], Cell["FactorizationAmplitudeChannels returns the compact \
+channel definition and product of complete lower-point amplitudes divided by \
+its propagator. A channel imposes one internal on-shell condition for its \
+residue; other internal propagators are retained.", "GuideAbstract"],
+  Cell["Diagrams organize compatible products of physical propagators. \
+Channels specify their required residues. They complement one another but are \
+not interchangeable contributions to be summed without controlling repeated \
+poles.", "GuideAbstract"], Cell["Diagrams and Pictures",
+   "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["CreateDiagrams", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CreateDiagrams"], ": ",
+     "Generate tree diagrams from a supplied constructive or Feynman model."}]\
+, "GuideText"], Cell[TextData[{ButtonBox["CreateArrowDiagram",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/CreateArrowDiagram"], ": ", "Draw one generated \
+tree with external labels and directed particle lines."}], "GuideText"],
+  Cell[TextData[{ButtonBox["CreateArrowDiagrams", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CreateArrowDiagrams"], ": ",
+     "Draw the generated trees for a complete process."}], "GuideText"],
+  Cell[TextData[{ButtonBox["diagramAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/diagramAmplitudes"], ": ", "Evaluate \
+every tree while retaining its separate mass and internal-cut declarations."}]\
+, "GuideText"], Cell[TextData[{ButtonBox["diagramAmplitude",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/diagramAmplitude"], ": ",
+     "Evaluate the expression associated with one generated diagram."}],
+   "GuideText"], Cell[TextData[{ButtonBox["DiagramAmplitudeRecords",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/DiagramAmplitudeRecords"], ": ", "Retain explicit \
+diagram expressions, physical propagators and numerator assumptions for \
+diagnostics."}], "GuideText"], Cell["Channels and Residues",
+   "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["FactorizationPartitions", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/FactorizationPartitions"], ": ", "Enum\
+erate distinct complementary external-leg partitions for tree factorization."}\
+], "GuideText"], Cell[TextData[{ButtonBox["FactorizationAmplitudeChannels",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/FactorizationAmplitudeChannels"], ": ", "Sew known \
+lower-point amplitudes into the physical factorization channels."}],
+   "GuideText"], Cell[TextData[{ButtonBox["LookupAmplitude",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/LookupAmplitude"], ": ", "Retrieve a complete model \
+amplitude with its external labels reassigned."}], "GuideText"],
+  Cell[TextData[{ButtonBox["PhysicalPoleResidue", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PhysicalPoleResidue"], ": ", "Extract \
+a single- or compatible multiple-pole coefficient with explicit kinematic \
+scope."}], "GuideText"], Cell["Reference Factors",
+   "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["ExpandXFactors", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ExpandXFactors"], ": ", "Apply the \
+retained x-factor identities and external reference-spinor expansion."}],
+   "GuideText"], Cell["Earlier Diagram Utilities",
+   "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["ConstructiveDiagram", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ConstructiveDiagram"], ": ", "Evaluate \
+an older three-point vertex or a selected four-point exchange."}],
+   "GuideText"], Cell[TextData[{ButtonBox["SChannelDiagram",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/SChannelDiagram"], ": ", "Evaluate a selected \
+four-point s-channel exchange with the historical constructive helper."}],
+   "GuideText"], Cell[TextData[{ButtonBox["TChannelDiagram",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/TChannelDiagram"], ": ", "Evaluate a selected \
+four-point t-channel exchange with the historical constructive helper."}],
+   "GuideText"], Cell[TextData[{ButtonBox["UChannelDiagram",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/UChannelDiagram"], ": ", "Evaluate a selected \
+four-point u-channel exchange with the historical constructive helper."}],
+   "GuideText"], Cell[TextData[{ButtonBox["SimplifyFactorizationChannels",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/SimplifyFactorizationChannels"], ": ", "Apply the \
+historical spinor simplifier separately to compact channel rows."}],
+   "GuideText"], Cell[TextData[{ButtonBox["SumResiduesAlt",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/SumResiduesAlt"],
+     ": ", "Sum the two finite-pole residues in a previously shifted channel \
+representation."}], "GuideText"], Cell["Tutorials", "GuideTutorialsSection"],
+  Cell[TextData[
+    {ButtonBox["Constructing and Checking an Amplitude in Stages",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/tutorial/ConstructingAndCheckingAnAmplitude"],
+     "  \[Bullet]  ", ButtonBox[
+      "Kinematics, References and On-Shell Conditions", BaseStyle -> "Link",
+      ButtonData ->
+       "paclet:HEPCAT/tutorial/KinematicsAndOnShellConditions"]}],
+   "GuideTutorial"]}, WindowTitle ->
+  "Diagrams and Factorization Channels - HEPCAT Documentation",
+ Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/guide/DiagramsAndFactorization",
+     "title" -> "Diagrams and Factorization Channels", "type" -> "Guide",
+     "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" ->
+      "Generate diagrams and physical channel expressions from model data.",
+     "keywords" -> {"HEPCAT", "DiagramsAndFactorization",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

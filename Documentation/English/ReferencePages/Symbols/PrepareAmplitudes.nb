@@ -1,0 +1,274 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT SYMBOL", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/AmplitudeConstruction"]}],
+        "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["PrepareAmplitudes", "ObjectName"],
+  Cell["Simplify diagram pairs or factorization rows while retaining their \
+physical assumptions.", "Notes"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"PrepareAmplitudes", "[", "items", ",",
+         " ", "model", "]"}]], "InlineFormula"], "  ", "Prepare a mass-rule \
+pair, a list of diagram pairs or compact factorization-channel rows."}],
+   "Usage"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"PrepareAmplitudes", "[", "items", ",",
+         " ", "model", ",", " ", "\"PolePreference\"", " ", "->", " ",
+         "preference", "]"}]], "InlineFormula"], "  ", "Choose and simplify a \
+bounded set of allowed reference-spinor assignments."}], "Usage"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"PrepareAmplitudes", "[", "items", ",",
+         " ", "model", ",", " ", "\"ReturnDetails\"", " ", "->", " ", "True",
+         "]"}]], "InlineFormula"], "  ", "Retain original inputs, selected \
+references, discarded remainders and preparation diagnostics."}], "Usage"],
+  Cell["Details", "NotesSection"], Cell["The ordinary result retains the \
+input format with each expression replaced by its prepared form. \"Output\" \
+-> \"Expression\" returns the sum instead. The detailed report is optional so \
+routine use does not expose implementation data.", "Notes"],
+  Cell["Preparation applies ReduceSpinContractions, chooses reference \
+spinors, then applies ReduceSpinorProducts and bounded improving identities. \
+Momentum conservation is used with the known external leg set rather than \
+added as an unconditional chain rewrite.", "Notes"],
+  Cell["Constructive internal-shell simplification acts on each item's \
+numerator using only that item's mass declarations. Physical PropDen objects \
+stay off shell. A channel row declares only its own cut; completed \
+external-mass pairs declare no internal cut.", "Notes"],
+  Cell["ReduceSpinorProducts itself applies the ordinary external-shell \
+identities. The additional diagram-local internal-shell reductions belong to \
+preparation and may be disabled with \"InternalOnShell\" -> False.",
+   "Notes"], Cell["\"PolePreference\" -> \"AllPhysical\" compares \
+momentum-insertion references that introduce physical denominator channels \
+outside the current diagram's cuts. \"AllSpurious\" compares references built \
+from other eligible massless particles. \"Mixed\" permits both; Automatic \
+compares admissible choices within a bounded budget.", "Notes"],
+  Cell["\"Cyclic\" and \"ReverseCyclic\" retain fixed massless reference \
+cycles. \"Xi\" uses a common reference, \"IndependentXi\" keeps separate \
+generic references, and None leaves the references unchanged. An unavailable \
+requested choice is reported rather than silently declared successful.",
+   "Notes"], Cell["The search ranks completed trials by expression complexity \
+and respects bounded time and candidate limits. It does not prove a global \
+minimum. Automatic resource settings scale to the process; user values remain \
+authoritative.", "Notes"], Cell["The detailed output retains original \
+expressions and discarded remainders so CompleteFactorization can first reuse \
+information lost in aggressive preparation. Pass the report itself when \
+preserving that information matters.", "Notes"],
+  Cell["Feynman inputs use coherent external references for the whole diagram \
+sum and never declare internal lines on shell. The reference assignment is \
+fixed before independent items are sent to workers.", "Notes"],
+  Cell["\"Parallelization\" and \"MaxKernels\" default to Automatic. Items \
+are independent jobs, input order is retained, and user progress runs on the \
+main kernel. \"MaxSteps\" -> 0 disables the bounded identity search but keeps \
+deterministic algebraic and permitted scalar-shell reductions.", "Notes"],
+  Cell["The same interface can simplify a completed amplitude returned as \
+{externalMassRules, expression}; with no internal mass declarations it uses \
+only ordinary identities. It never adds factorization corrections or model \
+interactions.", "Notes"], Cell["Options", "NotesSection"],
+  Cell[BoxData[GridBox[{{Cell["Option", "TableHeader"],
+       Cell["Default", "TableHeader"], Cell["Meaning", "TableHeader"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"PolePreference\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Reference and \
+representation preference shared by preparation and completion. Automatic \
+compares or inherits admissible choices; \"AllPhysical\", \"AllSpurious\" and \
+\"Mixed\" bias pole forms, while cyclic/common/independent reference choices \
+and None are also available. Required checks remain unchanged.",
+        "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"ExternalParticles\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Ordered external particle \
+names when compact amplitude pairs no longer retain the process. Automatic \
+uses recorded metadata or only unambiguous model matches; equal masses alone \
+never establish identical species.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"FermionHelicities\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"{", "}"}]], "InlineFormula"]}],
+        "TableText"], Cell["Leg-to-helicity rules or an association \
+specifying massless Dirac external states for Feynman conversion. Required \
+missing massless-fermion helicities are reported rather than guessed.",
+        "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"MaxReferenceChoices\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Maximum reference \
+assignments tried during bounded preparation. Automatic currently allows up \
+to 64 trials, subject to the shared reference and item clocks; this is not \
+exhaustive global minimization.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"ReferenceTimeConstraint\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Budget for reference \
+comparisons in checking, or reference-choice search in preparation. Automatic \
+bounds this work; preparation shares it with the remaining per-item clock \
+rather than adding an unlimited extra search.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"InternalOnShell\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"True"}]], "InlineFormula"]}],
+        "TableText"], Cell["Whether preparation may use declared constructive \
+internal-channel masses in each item's numerator. True never puts PropDen \
+denominators on shell and never transfers one diagram's assumptions to \
+another; False leaves internal-shell reductions disabled.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"MaxSteps\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Maximum improving \
+identity-search steps during preparation. Automatic scales the bounded effort \
+to the workload; 0 retains deterministic contraction, spinor and permitted \
+scalar-shell reductions while skipping the search.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"MaxCandidates\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Bound on candidate \
+identity edits considered during preparation. Automatic selects a finite \
+workload-dependent allowance rather than searching every possible route.",
+        "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"TimeConstraint\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Maximum elapsed time \
+allowed by the operation or stage. Where Automatic is supported it selects a \
+finite workload-dependent budget; explicit seconds or supported Infinity \
+override it. A timeout is reported, never treated as a successful amplitude."\
+, "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"MomentumConservation\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"True"}]], "InlineFormula"]}],
+        "TableText"], Cell["Whether identities may use the complete declared \
+external momentum sum. The operation uses the known external-leg list rather \
+than imposing unrelated internal cut conditions.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"Parallelization\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Whether independent items \
+or checks may use local Wolfram workers. Automatic uses suitable parallel \
+work within available resources; False requests serial evaluation, and result \
+order is retained.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"MaxKernels\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Maximum local Wolfram \
+worker kernels available to parallel stages. Automatic respects processor \
+availability and license limits; 1 requests serial execution. Worker setup \
+and expression transfer can outweigh small jobs.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"ProgressReporting\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"True"}]], "InlineFormula"]}],
+        "TableText"], Cell["Whether preparation and construction stages \
+display their progress. False suppresses the live stage display without \
+changing the algebra or validation.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"ProgressFunction\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Optional callback \
+receiving stage progress information. Automatic uses the normal progress \
+display; callbacks are evaluated on the main kernel rather than independently \
+by workers.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"ReturnDetails\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"False"}]], "InlineFormula"]}],
+        "TableText"], Cell["Whether to expose optional diagnostic data \
+instead of the compact default result. For preparation and factorization \
+completion it retains provenance, directions and validation and takes \
+precedence over Output; for export it returns file paths and build/run \
+results.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"Output\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"\"Amplitudes\""}]],
+           "InlineFormula"]}], "TableText"], Cell["Choose the amount and \
+shape of returned information. Defaults are a compact check table, prepared \
+input forms, a completed {externalMassRules, expression} pair, or a bare \
+constructed expression; \"Details\" preserves diagnostics and provenance.",
+        "TableText"]}}, GridBoxAlignment ->
+      {"Columns" -> {Left, Left, Left}}, GridBoxItemSize ->
+      {"Columns" -> {Scaled[0.23], Scaled[0.19], Scaled[0.58]}},
+     GridBoxDividers -> {"Rows" -> {False, True, {False}, False}}]],
+   "3ColumnTableMod"], Cell["Examples", "PrimaryExamplesSection"],
+  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
+     Cell["Evaluate this setup once before the examples. The paths refer to \
+the local HEPCAT checkout; no model parameters are assigned global numerical \
+values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
+         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
+         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
+         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
+         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
+         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
+         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
+         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
+         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
+         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
+         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
+         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
+         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
+         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
+         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
+      "Input", InitializationCell -> True]}, Open]],
+  Cell["Basic Examples", "ExampleSection"],
+  Cell["Prepare the two QED diagrams with a physical-pole preference.",
+   "ExampleText"], Cell[BoxData[RowBox[{"qedModel", " ", "=", " ",
+      "ReadModel", "[", "modelDirectory", ",", " ", "2", "]", ";", "\n",
+      "process", " ", "=", " ", "{", "\"e\"", ",", " ", "\"E\"", ",", " ",
+      "\"A.+\"", ",", " ", "\"A.+\"", "}", ";", "\n", "diagrams", " ", "=",
+      " ", "CreateDiagrams", "[", "process", ",", " ", "qedModel", "]", ";",
+      "\n", "amplitudes", " ", "=", " ", "diagramAmplitudes", "[",
+      "diagrams", "]", ";", "\n", "PrepareAmplitudes", "[", "amplitudes",
+      ",", " ", "qedModel", ",", " ", "\"PolePreference\"", " ", "->", " ",
+      "\"AllPhysical\"", "]"}]], "Input"], Cell["This example writes files, \
+starts a longer calculation, or requires an optional external tool. Evaluate \
+it when you want to perform that operation.", "ExampleText"],
+  Cell["Retain discarded terms for the completion stage.", "ExampleText"],
+  Cell[BoxData[RowBox[{"preparedReport", " ", "=", " ", "PrepareAmplitudes",
+      "[", "amplitudes", ",", " ", "qedModel", ",", " ", "\"ReturnDetails\"",
+      " ", "->", " ", "True", "]", ";", "\n", "preparedReport", "[",
+      "\"PreparedAmplitudes\"", "]"}]], "Input"],
+  Cell["This example writes files, starts a longer calculation, or requires \
+an optional external tool. Evaluate it when you want to perform that \
+operation.", "ExampleText"],
+  Cell[
+   "A massless external self-product reduces without combining input terms.",
+   "ExampleText"], Cell[BoxData[RowBox[{"scalarModel", " ", "=", " ", "{",
+      "{", "{", "\"scalar\"", ",", " ", "\"s\"", ",", " ", "\"s\"", ",", " ",
+      "1", ",", " ", "0", ",", " ", "0", ",", " ", "0", ",", " ", "1", ",",
+      " ", "\"\"", ",", " ", "\"s\"", ",", " ", "\"s\"", "}", "}", ",", " ",
+      "{", "{", "\"s\"", ",", " ", "\"s\"", ",", " ", "\"s\"", ",", " ",
+      "\"s\"", ",", " ", "1", ",", " ", "7", "}", "}", ",", " ", "{", "}",
+      ",", " ", "{", "}", "}", ";", "\n", "externalRules", " ", "=", " ",
+      "Thread", "[", "(", "Mass", " ", "/@", " ", "Range", "[", "4", "]",
+      ")", " ", "->", " ", "0", "]", ";", "\n", "PrepareAmplitudes", "[",
+      "{", "externalRules", ",", " ", "MomProd", "[", "1", ",", " ", "1",
+      "]", " ", "+", " ", "7", "}", ",", " ", "scalarModel", ",", " ",
+      "\"MaxSteps\"", " ", "->", " ", "0", ",", " ", "\"ProgressReporting\"",
+      " ", "->", " ", "False", "]"}]], "Input"],
+  Cell["This example writes files, starts a longer calculation, or requires \
+an optional external tool. Evaluate it when you want to perform that \
+operation.", "ExampleText"], Cell["See Also", "SeeAlsoSection"],
+  Cell[TextData[{ButtonBox["diagramAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/diagramAmplitudes"], "  \[Bullet]  ",
+     ButtonBox["FactorizationAmplitudeChannels", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/FactorizationAmplitudeChannels"],
+     "  \[Bullet]  ", ButtonBox["ReduceSpinorProducts", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReduceSpinorProducts"],
+     "  \[Bullet]  ", ButtonBox["ReduceSpinContractions",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ReduceSpinContractions"], "  \[Bullet]  ",
+     ButtonBox["CompleteFactorization", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CompleteFactorization"],
+     "  \[Bullet]  ", ButtonBox["PrepareDiagramAmplitudes",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/PrepareDiagramAmplitudes"]}], "SeeAlso"],
+  Cell["Related Guides", "MoreAboutSection"],
+  Cell[TextData[{ButtonBox["Constructing and Completing Amplitudes",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/guide/AmplitudeConstruction"], "  \[Bullet]  ",
+     ButtonBox["HEPCAT: Constructive Amplitudes and Spinor Algebra",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}],
+   "MoreAbout"]}, WindowTitle -> "PrepareAmplitudes - HEPCAT Documentation",
+ Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/ref/PrepareAmplitudes", "title" -> "PrepareAmplitudes",
+     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" -> "Simplify diagram pairs or factorization rows while \
+retaining their physical assumptions.", "keywords" ->
+      {"HEPCAT", "PrepareAmplitudes", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

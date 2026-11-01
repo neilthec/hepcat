@@ -1,0 +1,638 @@
+[
+  {
+    "name": "FeynmanModel",
+    "summary": "Represents a model specified by off-shell Feynman rules.",
+    "syntaxes": [
+      {
+        "input": "FeynmanModel[particles, vertices, variables, functions]",
+        "description": "stores the four model tables used by the Feynman backend."
+      }
+    ],
+    "details": [
+      "ReadModel automatically returns this head when the selected model contains CalcHEP lgrngN.mdl rules instead of constructive ampsN.mdl amplitudes.",
+      "The four parts are the particle table, vertex table, independent parameters and dependent functions. ModelParameter keeps each model's parameters local, so several models can be used together.",
+      "Use the same CreateDiagrams and diagramAmplitudes workflow as for a constructive model. The model head selects ordered Dirac and Lorentz tensors with off-shell internal propagators.",
+      "The supported tree backend uses unitary gauge for massive vectors, excludes ghosts and Goldstones consistently, and retains the CalcHEP tensor auxiliary for the four-gluon interaction. Unsupported Majorana flow or higher-spin fields return Failure.",
+      "A Feynman vertex table is not a table of complete lower-point amplitudes. Use a constructive model containing complete amplitudes as the factorization model."
+    ],
+    "examples": [
+      {
+        "description": "Read the bundled massive-electron QED Feynman model.",
+        "input": "fm = ReadModel[feynmanModelDirectory, 2]; Head[fm]",
+        "evaluate": true
+      },
+      {
+        "description": "Inspect the four tables without changing the model.",
+        "input": "Length /@ (List @@ fm)",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ReadModel",
+      "CreateDiagrams",
+      "diagramAmplitudes",
+      "FeynmanToSpinorProducts",
+      "ModelParameter"
+    ],
+    "guide": "FeynmanAmplitudes"
+  },
+  {
+    "name": "DiracWord",
+    "summary": "Represents an ordered product of Dirac matrices and slashed momenta.",
+    "syntaxes": [
+      {
+        "input": "DiracWord[operator1, operator2, ...]",
+        "description": "represents an ordered product of Dirac matrices and slashed momenta."
+      }
+    ],
+    "details": [
+      "Arguments are operators in their written order. DiracWord is not a commutative Times product; exchanging two gamma matrices requires the corresponding Clifford identity.",
+      "DiracGamma, DiracGamma5 and DiracSlash are the supported operator types. An empty word represents the identity between fermion endpoints.",
+      "These objects are normally generated from a Feynman model. Use FeynmanToSpinorProducts after Lorentz indices have been contracted."
+    ],
+    "examples": [
+      {
+        "description": "Construct the symbolic object.",
+        "input": "DiracWord[DiracGamma[mu], DiracSlash[Mom[3]], DiracGamma[nu]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "DiracGamma",
+      "DiracGamma5",
+      "DiracSlash",
+      "DiracChain",
+      "FeynmanToSpinorProducts"
+    ],
+    "guide": "FeynmanAmplitudes"
+  },
+  {
+    "name": "DiracGamma",
+    "summary": "Represents a Dirac gamma matrix carrying a Lorentz index.",
+    "syntaxes": [
+      {
+        "input": "DiracGamma[index]",
+        "description": "represents a Dirac gamma matrix carrying a Lorentz index."
+      }
+    ],
+    "details": [
+      "Place gamma matrices inside DiracWord to retain their noncommutative order.",
+      "A conversion expression must contract every Lorentz index exactly twice. A free Lorentz index is an explicit unsupported input, rather than silently discarded.",
+      "The matrix conventions used by conversion are those of HEPCAT; do not import an overall sign from a different spinor convention."
+    ],
+    "examples": [
+      {
+        "description": "Construct the symbolic object.",
+        "input": "DiracWord[DiracGamma[mu], DiracGamma[nu]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "DiracWord",
+      "DiracSlash",
+      "LorentzMetric",
+      "DiracChain"
+    ],
+    "guide": "FeynmanAmplitudes"
+  },
+  {
+    "name": "DiracGamma5",
+    "summary": "Represents the chirality matrix in an ordered Dirac word.",
+    "syntaxes": [
+      {
+        "input": "DiracGamma5",
+        "description": "represents the chirality matrix in an ordered Dirac word."
+      }
+    ],
+    "details": [
+      "DiracGamma5 is a symbol, not a function of a Lorentz index.",
+      "FeynmanToSpinorProducts uses gamma5 = diag(-1,+1) in its Weyl-block convention.",
+      "The position inside DiracWord matters. Chiral projectors are scalar combinations of the identity and this matrix."
+    ],
+    "examples": [
+      {
+        "description": "Construct the symbolic object.",
+        "input": "DiracWord[DiracGamma[mu], DiracGamma5]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "DiracWord",
+      "DiracGamma",
+      "FeynmanToSpinorProducts"
+    ],
+    "guide": "FeynmanAmplitudes"
+  },
+  {
+    "name": "DiracSlash",
+    "summary": "Represents a momentum contracted with a Dirac gamma matrix.",
+    "syntaxes": [
+      {
+        "input": "DiracSlash[Mom[label]]",
+        "description": "represents a momentum contracted with a Dirac gamma matrix."
+      }
+    ],
+    "details": [
+      "Use DiracSlash inside DiracWord, rather than multiplying it as an unordered matrix factor.",
+      "The momentum may be a composite or signed sum. Conversion retains internal momenta off shell.",
+      "Ordinary external Dirac identities may simplify a contracted bilinear, but no internal mass shell is inferred from a propagator."
+    ],
+    "examples": [
+      {
+        "description": "Construct the symbolic object.",
+        "input": "DiracWord[DiracSlash[Mom[Multiparticle[1, 3]]]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "DiracWord",
+      "Mom",
+      "Multiparticle",
+      "FeynmanToSpinorProducts"
+    ],
+    "guide": "FeynmanAmplitudes"
+  },
+  {
+    "name": "LorentzIndex",
+    "summary": "Labels a Lorentz slot in a Feynman tensor.",
+    "syntaxes": [
+      {
+        "input": "LorentzIndex[slot]",
+        "description": "labels a Lorentz slot in a Feynman tensor."
+      }
+    ],
+    "details": [
+      "LorentzIndex[slot, 2] denotes a second Lorentz slot for a tensor auxiliary.",
+      "Vertex-local slots are attached to the incident lines by diagram generation. They are not external particle numbers until the vertex has been attached.",
+      "A summed index must appear exactly twice in the expression passed to conversion."
+    ],
+    "examples": [
+      {
+        "description": "Construct the symbolic object.",
+        "input": "LorentzMetric[LorentzIndex[1], LorentzIndex[2]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "LorentzMetric",
+      "LorentzMomentum",
+      "DiracGamma"
+    ],
+    "guide": "FeynmanAmplitudes"
+  },
+  {
+    "name": "LorentzMetric",
+    "summary": "Represents the Minkowski metric with two Lorentz indices.",
+    "syntaxes": [
+      {
+        "input": "LorentzMetric[index1, index2]",
+        "description": "represents the Minkowski metric with two Lorentz indices."
+      }
+    ],
+    "details": [
+      "It is a symbolic tensor used by the Feynman backend, with the HEPCAT (+,-,-,-) momentum convention.",
+      "FeynmanToSpinorProducts contracts metrics with the other tensors before producing spinor chains. It does not apply metric-component substitutions to spinor expressions by itself."
+    ],
+    "examples": [
+      {
+        "description": "Construct the symbolic object.",
+        "input": "LorentzMetric[mu, nu] LorentzMomentum[Mom[1], nu]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "LorentzIndex",
+      "LorentzMomentum",
+      "LorentzScalarProduct",
+      "FeynmanToSpinorProducts"
+    ],
+    "guide": "FeynmanAmplitudes"
+  },
+  {
+    "name": "LorentzMomentum",
+    "summary": "Represents a four-momentum carrying a Lorentz index.",
+    "syntaxes": [
+      {
+        "input": "LorentzMomentum[momentum, index]",
+        "description": "represents a four-momentum carrying a Lorentz index."
+      }
+    ],
+    "details": [
+      "The first argument is a Mom object or a supported momentum combination. The second is the Lorentz index contracted with another tensor.",
+      "It retains off-shell Feynman momentum information until the contraction/conversion stage.",
+      "This head is distinct from MomProd, which is a scalar product in the spinor representation."
+    ],
+    "examples": [
+      {
+        "description": "Construct the symbolic object.",
+        "input": "LorentzMomentum[Mom[3], mu] LorentzMomentum[Mom[4], mu]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "Mom",
+      "LorentzMetric",
+      "LorentzScalarProduct",
+      "FeynmanToSpinorProducts"
+    ],
+    "guide": "FeynmanAmplitudes"
+  },
+  {
+    "name": "LorentzScalarProduct",
+    "summary": "Retains an off-shell scalar product in a Feynman rule.",
+    "syntaxes": [
+      {
+        "input": "LorentzScalarProduct[p, q]",
+        "description": "retains an off-shell scalar product in a Feynman rule."
+      }
+    ],
+    "details": [
+      "A CalcHEP momentum dot product is retained as this typed object before vertex momentum slots have been attached.",
+      "It does not apply p squared = mass squared to an internal momentum. The Feynman result must retain the full off-shell numerator.",
+      "After conversion, ordinary spinor expressions use MomProd or explicit momentum chains instead."
+    ],
+    "examples": [
+      {
+        "description": "Construct the symbolic object.",
+        "input": "LorentzScalarProduct[Mom[1] + Mom[3], Mom[2]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "LorentzMomentum",
+      "MomProd",
+      "FeynmanToSpinorProducts"
+    ],
+    "guide": "FeynmanAmplitudes"
+  },
+  {
+    "name": "FermionBar",
+    "summary": "Represents the left antifermion endpoint of an ordered Dirac chain.",
+    "syntaxes": [
+      {
+        "input": "FermionBar[leg, mass, chirality]",
+        "description": "represents the left antifermion endpoint of an ordered Dirac chain."
+      }
+    ],
+    "details": [
+      "The endpoint uses an all-incoming external-leg label and its external mass.",
+      "The normal Dirac tag is \"Dirac\". Chiral fields use their model tags, rather than an assumed helicity label for a massive particle.",
+      "HEPCAT conversion uses bar v = (<p|,-[p|). This convention fixes relative signs in the Weyl blocks."
+    ],
+    "examples": [
+      {
+        "description": "Construct the symbolic object.",
+        "input": "DiracChain[FermionBar[1, m, \"Dirac\"], DiracWord[], FermionKet[2, m, \"Dirac\"]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "FermionKet",
+      "DiracChain",
+      "DiracWord",
+      "FeynmanToSpinorProducts"
+    ],
+    "guide": "FeynmanAmplitudes"
+  },
+  {
+    "name": "FermionKet",
+    "summary": "Represents the right fermion endpoint of an ordered Dirac chain.",
+    "syntaxes": [
+      {
+        "input": "FermionKet[leg, mass, chirality]",
+        "description": "represents the right fermion endpoint of an ordered Dirac chain."
+      }
+    ],
+    "details": [
+      "The endpoint uses an all-incoming external-leg label and its external mass.",
+      "The normal Dirac tag is \"Dirac\". Massive spin states are retained as spinor indices, not fixed by a chirality string.",
+      "HEPCAT conversion uses u = (-|p>,|p]). Massless Dirac external fields need an explicit helicity assignment for conversion."
+    ],
+    "examples": [
+      {
+        "description": "Construct the symbolic object.",
+        "input": "DiracChain[FermionBar[1, m, \"Dirac\"], DiracWord[DiracSlash[Mom[3]]], FermionKet[2, m, \"Dirac\"]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "FermionBar",
+      "DiracChain",
+      "Spinor",
+      "FeynmanToSpinorProducts"
+    ],
+    "guide": "FeynmanAmplitudes"
+  },
+  {
+    "name": "DiracChain",
+    "summary": "Represents an ordered external-fermion bilinear.",
+    "syntaxes": [
+      {
+        "input": "DiracChain[bar, word, ket]",
+        "description": "joins FermionBar and FermionKet endpoints through one DiracWord."
+      }
+    ],
+    "details": [
+      "Order is part of the expression. Keep gamma matrices and internal momentum slashes inside the DiracWord.",
+      "All external labels follow HEPCAT's incoming convention. Internal Feynman numerator momenta remain off shell.",
+      "When several fermion lines occur, retain the explicit pairing and signs generated by diagramAmplitudes instead of rearranging endpoints by hand."
+    ],
+    "examples": [
+      {
+        "description": "Construct a scalar bilinear.",
+        "input": "bilinear = DiracChain[FermionBar[1, m, \"Dirac\"], DiracWord[], FermionKet[2, m, \"Dirac\"]]",
+        "evaluate": true
+      },
+      {
+        "description": "Convert its endpoints into spinor products.",
+        "input": "FeynmanToSpinorProducts[bilinear]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "DiracWord",
+      "FermionBar",
+      "FermionKet",
+      "FeynmanToSpinorProducts"
+    ],
+    "guide": "FeynmanAmplitudes"
+  },
+  {
+    "name": "PolarizationVector",
+    "summary": "Represents an external vector wavefunction in the Feynman backend.",
+    "syntaxes": [
+      {
+        "input": "PolarizationVector[leg, index, mass, helicity]",
+        "description": "represents an external vector wavefunction in the Feynman backend."
+      }
+    ],
+    "details": [
+      "The leg labels the external momentum, index is its Lorentz slot, and mass distinguishes massive from massless wavefunctions.",
+      "For a photon, helicity +1 or -1 selects its wavefunction. The corresponding process names use A.+ or A.-.",
+      "A massive vector retains two symmetric VectorSpinIndex labels during conversion. Distinct Feynman diagrams must use a common reference choice for a given external gauge particle."
+    ],
+    "examples": [
+      {
+        "description": "Construct the symbolic object.",
+        "input": "PolarizationVector[3, mu, 0, 1]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "VectorSpinIndex",
+      "FeynmanToSpinorProducts",
+      "PrepareAmplitudes"
+    ],
+    "guide": "FeynmanAmplitudes"
+  },
+  {
+    "name": "VectorSpinIndex",
+    "summary": "Labels one of the two symmetric little-group slots of a massive vector.",
+    "syntaxes": [
+      {
+        "input": "VectorSpinIndex[leg, slot]",
+        "description": "labels one of the two symmetric little-group slots of a massive vector."
+      }
+    ],
+    "details": [
+      "The slot is 1 or 2. The pair belongs to a single spin-one external state, not to two distinct particles.",
+      "FeynmanToSpinorProducts keeps these explicit slots to preserve the vector spin tensor.",
+      "The SPINAS exporter combines the symmetric spinor components for one vector polarization before taking its squared modulus. Different external spin states are then summed incoherently."
+    ],
+    "examples": [
+      {
+        "description": "Construct the symbolic object.",
+        "input": "{VectorSpinIndex[3, 1], VectorSpinIndex[3, 2]}",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "PolarizationVector",
+      "Spinor",
+      "MakeIndicesExplicit",
+      "WriteSPINASProcess"
+    ],
+    "guide": "FeynmanAmplitudes"
+  },
+  {
+    "name": "ColorIndex",
+    "summary": "Labels an external color state.",
+    "syntaxes": [
+      {
+        "input": "ColorIndex[leg]",
+        "description": "labels an external color state."
+      }
+    ],
+    "details": [
+      "External color labels survive symbolic Feynman conversion. Internal color labels are local dummy indices.",
+      "An unresolved external color tensor is not a numerical color sum. The current complete SPINAS exporter refuses color-stripped families when a full color sum is required."
+    ],
+    "examples": [
+      {
+        "description": "Construct the symbolic object.",
+        "input": "ColorDelta[ColorIndex[1], ColorIndex[2]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ColorIndex",
+      "ColorDelta",
+      "ColorGenerator",
+      "ColorStructure",
+      "FeynmanToSpinorProducts"
+    ],
+    "guide": "FeynmanAmplitudes"
+  },
+  {
+    "name": "ColorDelta",
+    "summary": "Represents a contracted color Kronecker tensor.",
+    "syntaxes": [
+      {
+        "input": "ColorDelta[index1, index2]",
+        "description": "represents a contracted color Kronecker tensor."
+      }
+    ],
+    "details": [
+      "The tensor is retained symbolically by the Feynman backend. It does not imply a sum over all external colors.",
+      "Keep the color contraction conventions of the supplied model when comparing with an independent numerical process."
+    ],
+    "examples": [
+      {
+        "description": "Construct the symbolic object.",
+        "input": "ColorDelta[ColorIndex[1], ColorIndex[2]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ColorIndex",
+      "ColorDelta",
+      "ColorGenerator",
+      "ColorStructure",
+      "FeynmanToSpinorProducts"
+    ],
+    "guide": "FeynmanAmplitudes"
+  },
+  {
+    "name": "ColorGenerator",
+    "summary": "Represents a fundamental SU(3) generator.",
+    "syntaxes": [
+      {
+        "input": "ColorGenerator[antifundamental, fundamental, adjoint]",
+        "description": "represents a fundamental SU(3) generator."
+      }
+    ],
+    "details": [
+      "The normalization follows CalcHEP's lambda/2 convention.",
+      "Argument order distinguishes the antifundamental, fundamental and adjoint slots. Reordering these slots can change the amplitude.",
+      "The backend retains color tensors; it does not infer missing external color sums or averages."
+    ],
+    "examples": [
+      {
+        "description": "Construct the symbolic object.",
+        "input": "ColorGenerator[ColorIndex[1], ColorIndex[2], ColorIndex[3]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ColorIndex",
+      "ColorDelta",
+      "ColorGenerator",
+      "ColorStructure",
+      "FeynmanToSpinorProducts"
+    ],
+    "guide": "FeynmanAmplitudes"
+  },
+  {
+    "name": "ColorStructure",
+    "summary": "Represents an SU(3) structure constant.",
+    "syntaxes": [
+      {
+        "input": "ColorStructure[a, b, c]",
+        "description": "represents an SU(3) structure constant."
+      }
+    ],
+    "details": [
+      "This is the antisymmetric tensor f(a,b,c) in the imported CalcHEP convention.",
+      "The vertex's factor of i is retained separately. Do not add another i merely because this head denotes a structure constant.",
+      "Unresolved color tensors remain explicit through Feynman-to-spinor conversion."
+    ],
+    "examples": [
+      {
+        "description": "Construct the symbolic object.",
+        "input": "ColorStructure[a, b, c]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ColorIndex",
+      "ColorDelta",
+      "ColorGenerator",
+      "ColorStructure",
+      "FeynmanToSpinorProducts"
+    ],
+    "guide": "FeynmanAmplitudes"
+  },
+  {
+    "name": "FeynmanToSpinorProducts",
+    "summary": "Converts contracted Feynman amplitudes to spinor products without imposing internal mass shells.",
+    "syntaxes": [
+      {
+        "input": "FeynmanToSpinorProducts[expression]",
+        "description": "converts a contracted Feynman tensor expression."
+      },
+      {
+        "input": "FeynmanToSpinorProducts[{massRules, expression}]",
+        "description": "preserves the external mass-rule pair."
+      },
+      {
+        "input": "FeynmanToSpinorProducts[amplitudes]",
+        "description": "converts a list of amplitude pairs."
+      }
+    ],
+    "details": [
+      "The external convention is u = (-|p>,|p]), bar v = (<p|,-[p|), gamma5 = diag(-1,+1). All momenta remain incoming in the symbolic result.",
+      "Lorentz indices must be fully contracted. Unsupported tensors, free indices and unsupported fields return Failure rather than a partially converted amplitude.",
+      "Internal Feynman slashes and propagators remain off shell. Conversion applies ordinary algebra and external wavefunction conventions only.",
+      "Use the string option \"FermionHelicities\" for massless Dirac external fields. \"ReferenceSpinors\" supplies per-leg references; Automatic retains independent generic Xi references.",
+      "Raw diagrams can also be passed directly to PrepareAmplitudes with their FeynmanModel. That route performs conversion before reference selection and reduction.",
+      "For gauge invariance, use one reference assignment per external gauge leg for the entire Feynman sum, rather than optimizing separate Feynman diagrams independently."
+    ],
+    "examples": [
+      {
+        "description": "Convert a scalar massive-fermion bilinear.",
+        "input": "FeynmanToSpinorProducts[DiracChain[FermionBar[1, m, \"Dirac\"], DiracWord[], FermionKet[2, m, \"Dirac\"]]]",
+        "evaluate": true
+      },
+      {
+        "description": "Generate and convert the four-point QED diagrams.",
+        "input": "fm = ReadModel[feynmanModelDirectory, 2];\nfeynmanDiagrams = CreateDiagrams[{\"e\", \"E\", \"A.+\", \"A.-\"}, fm];\nfeynmanPairs = diagramAmplitudes[feynmanDiagrams];\nHead /@ FeynmanToSpinorProducts[feynmanPairs]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "FeynmanModel",
+      "DiracChain",
+      "PrepareAmplitudes",
+      "diagramAmplitudes",
+      "CheckAmplitudes"
+    ],
+    "guide": "FeynmanAmplitudes"
+  },
+  {
+    "name": "WriteSPINASProcess",
+    "summary": "Writes a complete, readable C++ process using SPINAS, with optional CalcHEP validation and integration.",
+    "syntaxes": [
+      {
+        "input": "WriteSPINASProcess[directory, particles, amplitude, model]",
+        "description": "exports one all-incoming amplitude at its fixed massless helicities."
+      },
+      {
+        "input": "WriteSPINASProcess[directory, entries, model]",
+        "description": "combines helicity-related {particles, amplitude} entries into one class."
+      },
+      {
+        "input": "WriteSPINASProcess[directory, incoming -> outgoing, entries, model]",
+        "description": "declares the physical process and crosses its outgoing legs automatically."
+      }
+    ],
+    "details": [
+      "Inputs are symbolic all-incoming amplitudes. In the physical-process form, the concatenated incoming and outgoing lists fix the external-leg order, while each amplitude entry retains its all-incoming particle list. Do not pre-cross these formulas.",
+      "For example, a physical e,A -> e,A process has all-incoming species e,A,E,A. Outgoing momenta and angle-spinor signs are crossed exactly once by the exporter.",
+      "A generic massless name such as A requests its complete helicity sum. A.+, A.- or the string option \"FixedHelicities\" selects a specified helicity. Incomplete requested coverage is refused; missing amplitudes are not invented using parity.",
+      "Generated amp returns the complex amplitude for one external spin/helicity assignment. spin_sum adds |amp| squared over the requested states. Family amp2 also averages unfixed incoming states and applies the final identical-species factor once, including identical fermions.",
+      "The older fixed-helicity overload preserves its existing normalization convention. Use the physical-process or family form for a complete unpolarized process.",
+      "The default export writes source only. \"Build\" -> True compiles and links the existing SPINAS library; \"RunExamples\" -> True also runs three conserved physical example points. No external library is installed or rebuilt.",
+      "\"SPINASDirectory\", \"CalcHEPDirectory\" and \"CMakeExecutable\" override automatic tool discovery. The SPINAS precision must match the library ABI. \"Overwrite\" -> True explicitly permits replacing an existing exported project.",
+      "The independent CalcHEP validator generates a counterpart process and compares common random points. \"CalcHEPModel\" selects an equivalent model; Automatic recognizes the bundled QED models. \"RunCalcHEPValidation\" -> True builds and runs it. The actual time-based seed is reported, and an explicit \"CalcHEPSeed\" or --seed value replays it.",
+      "A separate n_calchep target uses the SPINAS matrix element with CalcHEP's numerical phase-space integration, cuts, histograms and VEGAS. This bypasses symbolic CalcHEP generation and does not require an equivalent CalcHEPModel.",
+      "Numerical model constraints, masses and widths are connected to the numerical menus. Explicit amplitude width conventions remain authoritative. Unsupported automatic-width or gauge-restoring operations are refused.",
+      "Current complete numerical exports are colorless. Unresolved Xi spinors, hats, unsupported symbolic functions or color tensors must be resolved before exporting.",
+      "The return value is the output directory. \"ReturnDetails\" -> True adds generated file paths, build information, normalization metadata and optional validation results."
+    ],
+    "examples": [
+      {
+        "description": "Inspect the available export options without writing files.",
+        "input": "Options[WriteSPINASProcess]",
+        "evaluate": true
+      },
+      {
+        "description": "Export a complete four-point photon-helicity family to a temporary directory.",
+        "input": "knownModel = ReadModel[modelDirectory, 3];\nhelicityProcesses = {{\"e\", \"E\", \"A.+\", \"A.+\"}, {\"e\", \"E\", \"A.+\", \"A.-\"}, {\"e\", \"E\", \"A.-\", \"A.-\"}};\nentries = {#, LookupAmplitude[Thread[{#, Range[4]}], knownModel, False, {i, j, k, l}]} & /@ helicityProcesses;\nexportDirectory = CreateDirectory[];\nWriteSPINASProcess[exportDirectory, {\"e\", \"E\"} -> {\"A\", \"A\"}, entries, knownModel, \"ProcessName\" -> \"eeAA\"]",
+        "evaluate": false
+      },
+      {
+        "description": "Optionally build the exported project and run its example points.",
+        "input": "WriteSPINASProcess[exportDirectory, {\"e\", \"E\"} -> {\"A\", \"A\"}, entries, knownModel, \"ProcessName\" -> \"eeAA\", \"Overwrite\" -> True, \"Build\" -> True, \"RunExamples\" -> True]",
+        "evaluate": false
+      }
+    ],
+    "related": [
+      "SPINAS",
+      "PlainText",
+      "ReverseMomentum",
+      "CheckAmplitudes",
+      "ModelParameterRules"
+    ],
+    "guide": "FormattingAndExport"
+  }
+]

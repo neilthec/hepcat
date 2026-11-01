@@ -1,0 +1,140 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT SYMBOL", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData ->
+            "paclet:HEPCAT/guide/IdentitiesAndSimplification"]}],
+        "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["SpinorIdentityCandidates", "ObjectName"],
+  Cell["Enumerates legal symbolic identity edits for a diagram or amplitude \
+expression.", "Notes"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"SpinorIdentityCandidates", "[", "{",
+         "massRules", ",", " ", "expr", "}", ",", " ", "opts", "]"}]],
+      "InlineFormula"], "  ", "returns available exact edit associations."}],
+   "Usage"], Cell["Details", "NotesSection"], Cell["The input pair is a list \
+of mass replacement rules together with its expression, as returned for one \
+diagram by diagramAmplitudes.", "Notes"], Cell["The string option \
+\"OnShellChannels\"->Automatic permits only the diagram's declared internal \
+channels. Use \"OnShellChannels\"->{} for an ordinary combined amplitude \
+whose internal lines must remain off shell.", "Notes"],
+  Cell["The string option \"MomentumConservation\" defaults to True. Set it \
+False when the external momentum information does not justify a conservation \
+replacement.", "Notes"], Cell["Each edit records a name and symbolic \
+replacement. The function canonicalizes chains and applies linearity before \
+enumeration. It does not score the edits or promise that the first is a \
+useful simplification.", "Notes"], Cell["PropDen factors remain opaque. Use \
+the same options when applying an edit with ApplySpinorIdentity.", "Notes"],
+  Cell["Options", "NotesSection"],
+  Cell[BoxData[GridBox[{{Cell["Option", "TableHeader"],
+       Cell["Default", "TableHeader"], Cell["Meaning", "TableHeader"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"OnShellChannels\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Internal cuts legal for an \
+explicit identity edit or scramble. Automatic reads the current diagram \
+pair's internal mass rules; use {} for a combined amplitude with no allowed \
+internal-shell identities.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"MomentumConservation\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"True"}]], "InlineFormula"]}],
+        "TableText"], Cell["Whether identities may use the complete declared \
+external momentum sum. The operation uses the known external-leg list rather \
+than imposing unrelated internal cut conditions.", "TableText"]}},
+     GridBoxAlignment -> {"Columns" -> {Left, Left, Left}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.23], Scaled[0.19],
+         Scaled[0.58]}}, GridBoxDividers ->
+      {"Rows" -> {False, True, {False}, False}}]], "3ColumnTableMod"],
+  Cell["Examples", "PrimaryExamplesSection"],
+  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
+     Cell["Evaluate this setup once before the examples. The paths refer to \
+the local HEPCAT checkout; no model parameters are assigned global numerical \
+values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
+         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
+         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
+         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
+         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
+         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
+         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
+         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
+         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
+         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
+         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
+         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
+         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
+         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
+         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
+      "Input", InitializationCell -> True]}, Open]],
+  Cell["Basic Examples", "ExampleSection"],
+  Cell["List identities without internal-shell or conservation assumptions.",
+   "ExampleText"], Cell[BoxData[RowBox[{"SpinorIdentityCandidates", "[", "{",
+      "{", "}", ",", " ", "SpinorChain", "[", "Spinor", "[", "\"Helicity\"",
+      ",", " ", "\"Angle\"", ",", " ", "1", "]", ",", " ", "Spinor", "[",
+      "\"Helicity\"", ",", " ", "\"Angle\"", ",", " ", "2", "]", "]", " ",
+      "SpinorChain", "[", "Spinor", "[", "\"Helicity\"", ",", " ",
+      "\"Angle\"", ",", " ", "3", "]", ",", " ", "Spinor", "[",
+      "\"Helicity\"", ",", " ", "\"Angle\"", ",", " ", "4", "]", "]", "}",
+      ",", " ", "\"OnShellChannels\"", " ", "->", " ", "{", "}", ",", " ",
+      "\"MomentumConservation\"", " ", "->", " ", "False", "]"}]], "Input"],
+  Cell[BoxData[RowBox[{"{", RowBox[{"Association", "[",
+        RowBox[{RowBox[{"\"Name\"", "\[Rule]", "\"Schouten\""}], ",",
+          RowBox[{"\"Subtract\"", "\[Rule]", RowBox[
+             {TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"", "1"},
+                 "RowDefault"], TemplateBox[{"2",
+                  "\"\[RightAngleBracket]\""}, "RowDefault"]}, "RowDefault"],
+              " ", TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"", "3"},
+                 "RowDefault"], TemplateBox[{"4",
+                  "\"\[RightAngleBracket]\""}, "RowDefault"]},
+               "RowDefault"]}]}], ",", RowBox[{"\"Insert\"", "\[Rule]",
+            RowBox[{RowBox[{"-", RowBox[{"(", RowBox[{TemplateBox[
+                     {TemplateBox[{"\"\[LeftAngleBracket]\"", "1"},
+                       "RowDefault"], TemplateBox[{"4",
+                        "\"\[RightAngleBracket]\""}, "RowDefault"]},
+                     "RowDefault"], " ", TemplateBox[{TemplateBox[
+                       {"\"\[LeftAngleBracket]\"", "2"}, "RowDefault"],
+                      TemplateBox[{"3", "\"\[RightAngleBracket]\""},
+                       "RowDefault"]}, "RowDefault"]}], ")"}]}], "+",
+              RowBox[{TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"",
+                    "1"}, "RowDefault"], TemplateBox[{"3",
+                    "\"\[RightAngleBracket]\""}, "RowDefault"]},
+                 "RowDefault"], " ", TemplateBox[{TemplateBox[
+                   {"\"\[LeftAngleBracket]\"", "2"}, "RowDefault"],
+                  TemplateBox[{"4", "\"\[RightAngleBracket]\""},
+                   "RowDefault"]}, "RowDefault"]}]}]}], ",",
+          RowBox[{"\"Chains\"", "\[Rule]", RowBox[{"{", RowBox[{TemplateBox[
+                 {TemplateBox[{"\"\[LeftAngleBracket]\"", "1"},
+                   "RowDefault"], TemplateBox[{"2",
+                    "\"\[RightAngleBracket]\""}, "RowDefault"]},
+                 "RowDefault"], ",", TemplateBox[{TemplateBox[
+                   {"\"\[LeftAngleBracket]\"", "3"}, "RowDefault"],
+                  TemplateBox[{"4", "\"\[RightAngleBracket]\""},
+                   "RowDefault"]}, "RowDefault"]}], "}"}]}], ",",
+          RowBox[{"\"Splits\"", "\[Rule]", RowBox[{"{", RowBox[{"0", ",",
+                "0"}], "}"}]}]}], "]"}], "}"}]], "Output"],
+  Cell["See Also", "SeeAlsoSection"],
+  Cell[TextData[{ButtonBox["ApplySpinorIdentity", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ApplySpinorIdentity"],
+     "  \[Bullet]  ", ButtonBox["SchoutenCandidates", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SchoutenCandidates"], "  \[Bullet]  ",
+     ButtonBox["ComplicateAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ComplicateAmplitude"],
+     "  \[Bullet]  ", ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"]}], "SeeAlso"],
+  Cell["Related Guides", "MoreAboutSection"],
+  Cell[TextData[{ButtonBox["Identities and Simplification",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/guide/IdentitiesAndSimplification"], "  \[Bullet]  ",
+     ButtonBox["HEPCAT: Constructive Amplitudes and Spinor Algebra",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}],
+   "MoreAbout"]}, WindowTitle ->
+  "SpinorIdentityCandidates - HEPCAT Documentation", Saveable -> False,
+ WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/ref/SpinorIdentityCandidates",
+     "title" -> "SpinorIdentityCandidates", "type" -> "Symbol",
+     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Enumerates legal \
+symbolic identity edits for a diagram or amplitude expression.",
+     "keywords" -> {"HEPCAT", "SpinorIdentityCandidates",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

@@ -1,0 +1,84 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT SYMBOL", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/DiagramsAndFactorization"]}],
+        "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["ExpandXFactors", "ObjectName"],
+  Cell["Apply the retained x-factor identities and external reference-spinor \
+expansion.", "Notes"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"ExpandXFactors", "[", "expression",
+         ",", " ", "particleCount", "]"}]], "InlineFormula"], "  ", "Apply \
+the supported x-factor rewrites for labels 1 through particleCount."}],
+   "Usage"], Cell["Details", "NotesSection"], Cell["This helper includes \
+older paired x-factor identities and an external-line replacement when \
+exactly one external label is missing from the x-factor labels. That missing \
+label identifies the external massless line.", "Notes"],
+  Cell["The replacement introduces reference spinors. PrepareAmplitudes can \
+choose their explicit forms through \"PolePreference\".", "Notes"],
+  Cell["diagramAmplitudes already expands external x factors, so most modern \
+calculations do not need a manual call. This helper is not a promise to \
+eliminate every arbitrary x-factor structure at any multiplicity.", "Notes"],
+  Cell["Examples", "PrimaryExamplesSection"],
+  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
+     Cell["Evaluate this setup once before the examples. The paths refer to \
+the local HEPCAT checkout; no model parameters are assigned global numerical \
+values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
+         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
+         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
+         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
+         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
+         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
+         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
+         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
+         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
+         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
+         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
+         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
+         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
+         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
+         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
+      "Input", InitializationCell -> True]}, Open]],
+  Cell["Basic Examples", "ExampleSection"],
+  Cell["Expand an external three-point x factor.", "ExampleText"],
+  Cell[BoxData[RowBox[{"ExpandXFactors", "[", "xFactor", "[", "1", ",", " ",
+      "2", "]", ",", " ", "3", "]"}]], "Input"],
+  Cell[BoxData[FractionBox[TemplateBox[
+      {TemplateBox[{"\"\[LeftAngleBracket]\"", SubscriptBox["\[Xi]", "10"]},
+        "RowDefault"], "\"|\"", SubscriptBox["p", "2"], "\"|\"",
+       TemplateBox[{"3", "\"]\""}, "RowDefault"]}, "RowDefault"],
+     RowBox[{SubscriptBox["M", "2"], " ", TemplateBox[
+        {TemplateBox[{"\"\[LeftAngleBracket]\"", SubscriptBox["\[Xi]",
+            "10"]}, "RowDefault"], TemplateBox[
+          {"3", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+        "RowDefault"]}]]], "Output"],
+  Cell["An ambiguous missing external label is not guessed.", "ExampleText"],
+  Cell[BoxData[RowBox[{"ExpandXFactors", "[", "xFactor", "[", "1", ",", " ",
+      "2", "]", ",", " ", "4", "]"}]], "Input"],
+  Cell[BoxData[RowBox[{"xFactor", "[", "1", ",", " ", "2", "]"}]], "Output"],
+  Cell["See Also", "SeeAlsoSection"],
+  Cell[TextData[{ButtonBox["xFactor", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/xFactor"], "  \[Bullet]  ",
+     ButtonBox["xTildeFactor", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/xTildeFactor"], "  \[Bullet]  ",
+     ButtonBox["diagramAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/diagramAmplitudes"], "  \[Bullet]  ",
+     ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"]}], "SeeAlso"],
+  Cell["Related Guides", "MoreAboutSection"],
+  Cell[TextData[{ButtonBox["Diagrams and Factorization Channels",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/guide/DiagramsAndFactorization"], "  \[Bullet]  ",
+     ButtonBox["HEPCAT: Constructive Amplitudes and Spinor Algebra",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}],
+   "MoreAbout"]}, WindowTitle -> "ExpandXFactors - HEPCAT Documentation",
+ Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/ref/ExpandXFactors", "title" -> "ExpandXFactors",
+     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" -> "Apply the retained x-factor identities and external \
+reference-spinor expansion.", "keywords" -> {"HEPCAT", "ExpandXFactors",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

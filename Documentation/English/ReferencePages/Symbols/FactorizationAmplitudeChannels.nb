@@ -1,0 +1,97 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT SYMBOL", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/DiagramsAndFactorization"]}],
+        "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["FactorizationAmplitudeChannels", "ObjectName"],
+  Cell["Sew known lower-point amplitudes into the physical factorization \
+channels.", "Notes"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"FactorizationAmplitudeChannels", "[",
+         "particles", ",", " ", "model", "]"}]], "InlineFormula"], "  ", "Ret\
+urn the nonzero channel products for the specified all-ingoing process."}],
+   "Usage"], Cell["Details", "NotesSection"], Cell["Each compact row contains \
+the external masses, the cut Multiparticle label, the exchanged mass and the \
+sewn lower-point product divided by z and the propagator denominator. The \
+last entry is the expression; the preceding data identify its physical cut.",
+   "Notes"], Cell["The model must supply the complete lower-point amplitudes \
+needed on both sides. Missing amplitudes are zero. Four-point QED uses the \
+three-point model, while five-point QED uses the model containing complete \
+four-point amplitudes.", "Notes"], Cell["These are residue targets, not \
+independent diagrams whose sum is a complete amplitude. Directly summing \
+channels double counts overlapping pole information.", "Notes"],
+  Cell["Keep the package's sewing convention. CheckAmplitudes converts the \
+stored z convention and includes its required overall sewing sign once; do \
+not add a manual sign to force agreement.", "Notes"],
+  Cell["A channel may contain reference spinors that describe a continuation \
+away from its cut. PrepareAmplitudes may simplify that continuation using \
+only the selected channel shell. CompleteFactorization retains the original \
+channel targets when preparation reports are supplied.", "Notes"],
+  Cell["A FeynmanModel contains off-shell vertices, not the complete on-shell \
+lower amplitudes required here, and is rejected as factorization input.",
+   "Notes"], Cell["Examples", "PrimaryExamplesSection"],
+  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
+     Cell["Evaluate this setup once before the examples. The paths refer to \
+the local HEPCAT checkout; no model parameters are assigned global numerical \
+values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
+         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
+         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
+         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
+         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
+         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
+         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
+         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
+         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
+         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
+         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
+         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
+         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
+         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
+         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
+      "Input", InitializationCell -> True]}, Open]],
+  Cell["Basic Examples", "ExampleSection"],
+  Cell["Generate the electron-exchange channels for four-point QED.",
+   "ExampleText"], Cell[BoxData[RowBox[{"qedModel", " ", "=", " ",
+      "ReadModel", "[", "modelDirectory", ",", " ", "2", "]", ";", "\n",
+      "process", " ", "=", " ", "{", "\"e\"", ",", " ", "\"E\"", ",", " ",
+      "\"A.+\"", ",", " ", "\"A.+\"", "}", ";", "\n", "channels", " ", "=",
+      " ", "FactorizationAmplitudeChannels", "[", "process", ",", " ",
+      "qedModel", "]", ";", "\n", "Length", "[", "channels", "]"}]],
+   "Input"], Cell[BoxData[RowBox[{"2"}]], "Output"],
+  Cell["Use higher-point model data for a five-point factorization.",
+   "ExampleText"], Cell[BoxData[RowBox[{"knownQEDModel", " ", "=", " ",
+      "ReadModel", "[", "modelDirectory", ",", " ", "3", "]", ";", "\n",
+      "fivePointChannels", " ", "=", " ", "FactorizationAmplitudeChannels",
+      "[", "{", "\"e\"", ",", " ", "\"E\"", ",", " ", "\"A.+\"", ",", " ",
+      "\"A.+\"", ",", " ", "\"A.+\"", "}", ",", " ", "knownQEDModel", "]",
+      ";", "\n", "Length", "[", "fivePointChannels", "]"}]], "Input"],
+  Cell[BoxData[RowBox[{"6"}]], "Output"], Cell["See Also", "SeeAlsoSection"],
+  Cell[TextData[{ButtonBox["FactorizationPartitions", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/FactorizationPartitions"],
+     "  \[Bullet]  ", ButtonBox["LookupAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/LookupAmplitude"], "  \[Bullet]  ",
+     ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], "  \[Bullet]  ",
+     ButtonBox["CompleteFactorization", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CompleteFactorization"],
+     "  \[Bullet]  ", ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"]}], "SeeAlso"],
+  Cell["Related Guides", "MoreAboutSection"],
+  Cell[TextData[{ButtonBox["Diagrams and Factorization Channels",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/guide/DiagramsAndFactorization"], "  \[Bullet]  ",
+     ButtonBox["HEPCAT: Constructive Amplitudes and Spinor Algebra",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}],
+   "MoreAbout"]}, WindowTitle ->
+  "FactorizationAmplitudeChannels - HEPCAT Documentation", Saveable -> False,
+ WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/ref/FactorizationAmplitudeChannels",
+     "title" -> "FactorizationAmplitudeChannels", "type" -> "Symbol",
+     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Sew known \
+lower-point amplitudes into the physical factorization channels.",
+     "keywords" -> {"HEPCAT", "FactorizationAmplitudeChannels",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

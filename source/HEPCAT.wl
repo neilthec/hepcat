@@ -65,5 +65,11 @@ Protect @@ (ToExpression /@ {
   "PolarizationVector", "ColorDelta", "ColorGenerator", "ColorStructure", "ColorIndex",
   "FeynmanToSpinorProducts", "VectorSpinIndex"
 });
-EndPackage[]
+EndPackage[];
+
+(* Make local reference pages available to F1 and the Documentation Center.
+   This optional registration never opens the help browser during loading. *)
+With[{documentationLoader = FileNameJoin[{sourceDirectory, "HEPCAT-Documentation.wl"}]},
+  If[FileExistsQ[documentationLoader], Get[documentationLoader]]
+];
 ]

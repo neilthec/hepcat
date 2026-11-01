@@ -1,0 +1,75 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT SYMBOL", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/SpinorAlgebra"]}],
+        "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["ExpandComplexMomenta", "ObjectName"],
+  Cell["Expands supported legacy complex-shift formulas with specified masses \
+and companion legs.", "Notes"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"ExpandComplexMomenta", "[", "expr",
+         ",", " ", "{", "i", ",", " ", "mi", "}", ",", " ", "k", ",", " ",
+         "{", "j", ",", " ", "mj", "}", ",", " ", "l", ",", " ", "mik",
+         "]"}]], "InlineFormula"], "  ", "applies the implemented shift \
+identities for the chosen mass pattern."}], "Usage"],
+  Cell["Details", "NotesSection"], Cell["The pair arguments identify the \
+shifted legs and their masses; k and l identify the companion legs used by \
+the construction, and mik is the corresponding channel mass.", "Notes"],
+  Cell["This is a collection of specialized massive/massless cases. It is not \
+a generic solver for an arbitrary complex deformation. Preserve the original \
+expression and verify the assumptions when using it.", "Notes"],
+  Cell["For an expression without any matching shifted object, the input \
+remains unchanged.", "Notes"], Cell["Examples", "PrimaryExamplesSection"],
+  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
+     Cell["Evaluate this setup once before the examples. The paths refer to \
+the local HEPCAT checkout; no model parameters are assigned global numerical \
+values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
+         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
+         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
+         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
+         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
+         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
+         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
+         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
+         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
+         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
+         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
+         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
+         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
+         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
+         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
+      "Input", InitializationCell -> True]}, Open]],
+  Cell["Basic Examples", "ExampleSection"], Cell["Expand a scalar-product \
+marker in the supported massive zero-channel case.", "ExampleText"],
+  Cell[BoxData[RowBox[{"ExpandComplexMomenta", "[", "MomProdHat1", "[", "1",
+      ",", " ", "5", "]", ",", " ", "{", "1", ",", " ", "m1", "}", ",", " ",
+      "3", ",", " ", "{", "2", ",", " ", "m2", "}", ",", " ", "4", ",", " ",
+      "0", "]"}]], "Input"],
+  Cell[BoxData[RowBox[{"-", RowBox[{SubscriptBox["p", "3"], ".",
+        SubscriptBox["p", "5"]}]}]], "Output"],
+  Cell["See Also", "SeeAlsoSection"],
+  Cell[TextData[{ButtonBox["ComplexifyMomenta", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ComplexifyMomenta"], "  \[Bullet]  ",
+     ButtonBox["ReplaceSpinorZ", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReplaceSpinorZ"], "  \[Bullet]  ",
+     ButtonBox["UnhatMomenta", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/UnhatMomenta"]}], "SeeAlso"],
+  Cell["Related Guides", "MoreAboutSection"],
+  Cell[TextData[{ButtonBox["Spinors, Momenta and Spin Sums",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/guide/SpinorAlgebra"], "  \[Bullet]  ",
+     ButtonBox["HEPCAT: Constructive Amplitudes and Spinor Algebra",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}],
+   "MoreAbout"]}, WindowTitle ->
+  "ExpandComplexMomenta - HEPCAT Documentation", Saveable -> False,
+ WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/ref/ExpandComplexMomenta",
+     "title" -> "ExpandComplexMomenta", "type" -> "Symbol",
+     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Expands \
+supported legacy complex-shift formulas with specified masses and companion \
+legs.", "keywords" -> {"HEPCAT", "ExpandComplexMomenta",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

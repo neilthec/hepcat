@@ -1,0 +1,112 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT GUIDE", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}], "AnchorBar"]}},
+     GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["Formatting, Model Output and SPINAS Export",
+   "GuideTitle"],
+  Cell["Display analytic expressions and write numerical C++ processes.",
+   "GuideAbstract"], Cell["HEPCAT already formats spinor chains as brackets \
+in notebooks. PlainText and TeX produce text representations. SPINAS is an \
+expression formatter; WriteSPINASProcess writes the complete numerical \
+process, build files and validation support.", "GuideAbstract"],
+  Cell["For numerical code, specify the physical incoming and outgoing \
+process so HEPCAT can cross its all-incoming analytic expression. Group \
+massless helicity choices for the same physical process in one export. Spin \
+sums square each fixed-spin amplitude before summing and apply the declared \
+averages and identical-particle factors.", "GuideAbstract"],
+  Cell["Generated random phase-space tests use a time-based default seed, \
+with an explicit seed for reproducibility. Optional CalcHEP comparison \
+validates the same phase-space points independently. The direct n_calchep \
+integration backend instead uses the exported HEPCAT amplitude as its matrix \
+element.", "GuideAbstract"], Cell["Readable Analytic Output",
+   "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["PlainText", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PlainText"], ": ", "Writes readable \
+bracket notation or explicit model-readable amplitude text."}], "GuideText"],
+  Cell[TextData[{ButtonBox["lPlainText", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/lPlainText"], ": ",
+     "Returns compact plain text for the left endpoint of a chain."}],
+   "GuideText"], Cell[TextData[{ButtonBox["TeX", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/TeX"], ": ",
+     "Converts supported HEPCAT expressions into a LaTeX string."}],
+   "GuideText"], Cell[TextData[{ButtonBox["lTeX", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/lTeX"], ": ",
+     "Returns the LaTeX string for a spinor at the left end of a chain."}],
+   "GuideText"], Cell[TextData[{ButtonBox["nice", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/nice"], ": ",
+     "Formats legacy HEPCAT objects in readable notebook notation."}],
+   "GuideText"], Cell[TextData[{ButtonBox["lnice", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/lnice"], ": ",
+     "Formats a single spinor as the left endpoint of a displayed chain."}],
+   "GuideText"], Cell["Save Model Amplitudes", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["AppendModelAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/AppendModelAmplitudes"], ": ", "Append \
+validated text representations of supplied amplitudes to a constructive model \
+file."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ConvertStringAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ConvertStringAmplitude"], ": ", "Parse\
+s legacy compact bracket notation into typed HEPCAT spinor expressions."}],
+   "GuideText"], Cell["Complete Numerical Process",
+   "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["WriteSPINASProcess", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/WriteSPINASProcess"], ": ", "Writes a \
+complete, readable C++ process using SPINAS, with optional CalcHEP validation \
+and integration."}], "GuideText"], Cell["Lower-Level SPINAS Formatting",
+   "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["SPINAS", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SPINAS"], ": ", "Formats a supported \
+expression as a legacy SPINAS C++ expression string."}], "GuideText"],
+  Cell[TextData[{ButtonBox["lSPINAS", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/lSPINAS"], ": ",
+     "Returns the legacy SPINAS name prefix for a chain's left endpoint."}],
+   "GuideText"], Cell[TextData[{ButtonBox["CreateSPName",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/CreateSPName"],
+     ": ", "Constructs the legacy SPINAS member name for one chain."}],
+   "GuideText"], Cell[TextData[{ButtonBox["CreateSPInitializationStatement",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/CreateSPInitializationStatement"], ": ",
+     "Writes a legacy SPINAS sproduct initialization statement."}],
+   "GuideText"], Cell[TextData[{ButtonBox["CreateSPUpdateStatement",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/CreateSPUpdateStatement"], ": ",
+     "Writes a legacy SPINAS spinor-product update statement."}],
+   "GuideText"], Cell[TextData[{ButtonBox["InitializeSPINASSpinorProducts",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/InitializeSPINASSpinorProducts"], ": ", "Writes \
+initialization statements for distinct spinor chains in an expression."}],
+   "GuideText"], Cell[TextData[{ButtonBox["UpdateSPINASSpinorProducts",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/UpdateSPINASSpinorProducts"], ": ", "Writes update \
+statements for distinct spinor products in an expression."}], "GuideText"],
+  Cell[TextData[{ButtonBox["DeclareSPINASSpinorProducts",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/DeclareSPINASSpinorProducts"], ": ", "Writes a \
+legacy sproduct member declaration for chains in an expression."}],
+   "GuideText"], Cell[TextData[{ButtonBox["Output", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/Output"], ": ", "Is a legacy display \
+marker with a single specialized formatting definition."}], "GuideText"],
+  Cell["More Functions and Symbols", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["ConvertStringHattedAmplitude",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ConvertStringHattedAmplitude"], ": ", "Parses a \
+legacy bracket expression and marks its spinors and momenta as shifted."}],
+   "GuideText"], Cell["Tutorials", "GuideTutorialsSection"],
+  Cell[TextData[{ButtonBox["Exporting a Numerical SPINAS Process",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/tutorial/ExportingToSPINAS"]}], "GuideTutorial"]},
+ WindowTitle ->
+  "Formatting, Model Output and SPINAS Export - HEPCAT Documentation",
+ Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/guide/FormattingAndExport",
+     "title" -> "Formatting, Model Output and SPINAS Export",
+     "type" -> "Guide", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" ->
+      "Display analytic expressions and write numerical C++ processes.",
+     "keywords" -> {"HEPCAT", "FormattingAndExport", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

@@ -1,0 +1,79 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT SYMBOL", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/SpinorAlgebra"]}],
+        "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["MomProd", "ObjectName"],
+  Cell["Represents a Lorentz scalar product of particle or composite \
+momenta.", "Notes"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"MomProd", "[", "i", ",", " ", "j",
+         "]"}]], "InlineFormula"], "  ", "represents p_i.p_j."}], "Usage"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"MomProd", "[", "Multiparticle", "[",
+         "i1", ",", " ", "...", "]", ",", " ", "j", "]"}]], "InlineFormula"],
+     "  ", "expands the scalar product over a momentum sum."}], "Usage"],
+  Cell["Details", "NotesSection"], Cell["The arguments are particle labels, \
+rather than Mom wrappers. The scalar product is symmetric and bilinear for \
+supported signed and composite labels.", "Notes"],
+  Cell["MomProd[i,i] evaluates to Mass[i]^2. This is the external mass \
+identity for a single label. No diagram-specific internal channel condition \
+is inferred from MomProd[i,j].", "Notes"], Cell["For the diagram with \
+(p_i+p_j)^2=m_channel^2, PrepareAmplitudes can separately apply 2 \
+p_i.p_j=m_channel^2-m_i^2-m_j^2 in its numerator.", "Notes"],
+  Cell["Examples", "PrimaryExamplesSection"],
+  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
+     Cell["Evaluate this setup once before the examples. The paths refer to \
+the local HEPCAT checkout; no model parameters are assigned global numerical \
+values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
+         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
+         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
+         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
+         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
+         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
+         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
+         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
+         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
+         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
+         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
+         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
+         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
+         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
+         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
+      "Input", InitializationCell -> True]}, Open]],
+  Cell["Basic Examples", "ExampleSection"],
+  Cell["Expand a composite scalar product.", "ExampleText"],
+  Cell[BoxData[RowBox[{"MomProd", "[", "Multiparticle", "[", "1", ",", " ",
+      "2", "]", ",", " ", "3", "]"}]], "Input"],
+  Cell[BoxData[RowBox[{RowBox[{SubscriptBox["p", "1"], ".",
+        SubscriptBox["p", "3"]}], "+", RowBox[{SubscriptBox["p", "2"], ".",
+        SubscriptBox["p", "3"]}]}]], "Output"],
+  Cell["Use the external mass identity.", "ExampleText"],
+  Cell[BoxData[RowBox[{"MomProd", "[", "1", ",", " ", "1", "]"}]], "Input"],
+  Cell[BoxData[SubsuperscriptBox["M", "1", "2"]], "Output"],
+  Cell["See Also", "SeeAlsoSection"],
+  Cell[TextData[{ButtonBox["Mom", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/Mom"], "  \[Bullet]  ",
+     ButtonBox["Mass", BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/Mass"], "  \[Bullet]  ",
+     ButtonBox["ExtractMandelstahm", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ExtractMandelstahm"], "  \[Bullet]  ",
+     ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"]}], "SeeAlso"],
+  Cell["Related Guides", "MoreAboutSection"],
+  Cell[TextData[{ButtonBox["Spinors, Momenta and Spin Sums",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/guide/SpinorAlgebra"], "  \[Bullet]  ",
+     ButtonBox["HEPCAT: Constructive Amplitudes and Spinor Algebra",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}],
+   "MoreAbout"]}, WindowTitle -> "MomProd - HEPCAT Documentation",
+ Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/ref/MomProd", "title" -> "MomProd", "type" -> "Symbol",
+     "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" ->
+      "Represents a Lorentz scalar product of particle or composite momenta."\
+, "keywords" -> {"HEPCAT", "MomProd", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

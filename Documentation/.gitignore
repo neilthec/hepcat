@@ -1,0 +1,2 @@
+# Lucene opens this lock file while reading or rebuilding the Help index.
+English/SearchIndex/**/write.lock

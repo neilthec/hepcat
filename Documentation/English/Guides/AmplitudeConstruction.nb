@@ -1,0 +1,94 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT GUIDE", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}], "AnchorBar"]}},
+     GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["Constructing and Completing Amplitudes",
+   "GuideTitle"], Cell["Prepare diagram seeds, solve factorization \
+constraints and complete allowed high-energy behavior.", "GuideAbstract"],
+  Cell["ConstructAmplitude connects diagram generation, preparation, \
+factorization, completion and validation. Start with the normal automatic \
+defaults. Override options to investigate a representation, change a time \
+budget or reproduce a numerical run.", "GuideAbstract"],
+  Cell["PrepareAmplitudes simplifies each diagram or channel with the \
+assumptions that its input actually declares. With ReturnDetails -> True it \
+also preserves the discarded remainders and provenance that completion can \
+try before generating broader corrections.", "GuideAbstract"],
+  Cell["CompleteFactorization solves a bounded simultaneous correction \
+problem, not an unrestricted search through every possible rational \
+amplitude. CompleteHighEnergy uses the remaining factorization-compatible \
+directions to test and repair allowed high-energy behavior. A failure or \
+unresolved result means the available directions or numerical checks did not \
+establish a completion.", "GuideAbstract"], Cell["For a manually staged \
+calculation, retain the detailed preparation and factorization objects until \
+the high-energy stage finishes. The simple final mass-rules/amplitude pair \
+can then be prepared with external on-shell identities and checked again.",
+   "GuideAbstract"], Cell["Normal Workflow", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["ConstructAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ConstructAmplitude"], ": ", "Construct\
+, complete, simplify and validate an amplitude from its process and two \
+models."}], "GuideText"],
+  Cell[TextData[{ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], ": ", "Simplify \
+diagram pairs or factorization rows while retaining their physical \
+assumptions."}], "GuideText"],
+  Cell[TextData[{ButtonBox["CompleteFactorization", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CompleteFactorization"], ": ", "Repair \
+physical residue deficits with a bounded simultaneous correction fit."}],
+   "GuideText"], Cell[TextData[{ButtonBox["CompleteHighEnergy",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/CompleteHighEnergy"], ": ", "Fit retained \
+residue-preserving freedom to high-energy, spurious-pole and reference \
+constraints."}], "GuideText"],
+  Cell[TextData[{ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"], ": ", "Check \
+physical residues, apparent spurious poles, high-energy growth and reference \
+dependence."}], "GuideText"], Cell["Inputs and Diagnostics",
+   "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["CreateDiagrams", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CreateDiagrams"], ": ",
+     "Generate tree diagrams from a supplied constructive or Feynman model."}]\
+, "GuideText"], Cell[TextData[{ButtonBox["diagramAmplitudes",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/diagramAmplitudes"], ": ", "Evaluate every tree \
+while retaining its separate mass and internal-cut declarations."}],
+   "GuideText"], Cell[TextData[{ButtonBox["FactorizationAmplitudeChannels",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/FactorizationAmplitudeChannels"], ": ", "Sew known \
+lower-point amplitudes into the physical factorization channels."}],
+   "GuideText"], Cell[TextData[{ButtonBox["DiagramAmplitudeRecords",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/DiagramAmplitudeRecords"], ": ", "Retain explicit \
+diagram expressions, physical propagators and numerator assumptions for \
+diagnostics."}], "GuideText"],
+  Cell[TextData[{ButtonBox["PhysicalPoleResidue", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PhysicalPoleResidue"], ": ", "Extract \
+a single- or compatible multiple-pole coefficient with explicit kinematic \
+scope."}], "GuideText"], Cell["Compatibility Name",
+   "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["PrepareDiagramAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareDiagramAmplitudes"], ": ",
+     "Use the compatibility name for PrepareAmplitudes."}], "GuideText"],
+  Cell["Tutorials", "GuideTutorialsSection"],
+  Cell[TextData[
+    {ButtonBox["Constructing and Checking an Amplitude in Stages",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/tutorial/ConstructingAndCheckingAnAmplitude"],
+     "  \[Bullet]  ", ButtonBox[
+      "Kinematics, References and On-Shell Conditions", BaseStyle -> "Link",
+      ButtonData ->
+       "paclet:HEPCAT/tutorial/KinematicsAndOnShellConditions"]}],
+   "GuideTutorial"]}, WindowTitle ->
+  "Constructing and Completing Amplitudes - HEPCAT Documentation",
+ Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/guide/AmplitudeConstruction",
+     "title" -> "Constructing and Completing Amplitudes", "type" -> "Guide",
+     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Prepare diagram \
+seeds, solve factorization constraints and complete allowed high-energy \
+behavior.", "keywords" -> {"HEPCAT", "AmplitudeConstruction",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

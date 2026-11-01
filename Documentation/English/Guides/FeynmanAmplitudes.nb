@@ -1,0 +1,126 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT GUIDE", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}], "AnchorBar"]}},
+     GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["Feynman Models and Spinor Conversion",
+   "GuideTitle"],
+  Cell[
+   "Use CalcHEP Feynman rules as an independent off-shell diagram backend.",
+   "GuideAbstract"], Cell["ReadModel recognizes CalcHEP vertex tables and \
+returns FeynmanModel. The same CreateDiagrams and diagramAmplitudes entry \
+points then produce ordered Dirac and Lorentz expressions. \
+FeynmanToSpinorProducts converts the supported tree contractions into HEPCAT \
+spinor chains.", "GuideAbstract"], Cell["All internal Feynman propagators \
+remain off shell. A common external polarization reference must be used \
+across the full sum of Feynman diagrams; the individual diagrams are \
+generally reference dependent.", "GuideAbstract"],
+  Cell["The backend supports its documented unitary-gauge tree subset. It \
+reports unsupported tensor or fermion structures explicitly. The model reader \
+and tensor representation are general infrastructure, not hard-coded Standard \
+Model amplitude answers.", "GuideAbstract"],
+  Cell["Read, Generate and Convert", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["ReadModel", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReadModel"], ": ", "Read a \
+constructive amplitude model or an imported CalcHEP Feynman model."}],
+   "GuideText"], Cell[TextData[{ButtonBox["FeynmanModel",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/FeynmanModel"],
+     ": ", "Represents a model specified by off-shell Feynman rules."}],
+   "GuideText"], Cell[TextData[{ButtonBox["CreateDiagrams",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/CreateDiagrams"],
+     ": ",
+     "Generate tree diagrams from a supplied constructive or Feynman model."}]\
+, "GuideText"], Cell[TextData[{ButtonBox["diagramAmplitudes",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/diagramAmplitudes"], ": ", "Evaluate every tree \
+while retaining its separate mass and internal-cut declarations."}],
+   "GuideText"], Cell[TextData[{ButtonBox["FeynmanToSpinorProducts",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/FeynmanToSpinorProducts"], ": ", "Converts \
+contracted Feynman amplitudes to spinor products without imposing internal \
+mass shells."}], "GuideText"],
+  Cell[TextData[{ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], ": ", "Simplify \
+diagram pairs or factorization rows while retaining their physical \
+assumptions."}], "GuideText"],
+  Cell[TextData[{ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"], ": ", "Check \
+physical residues, apparent spurious poles, high-energy growth and reference \
+dependence."}], "GuideText"], Cell["Dirac Algebra",
+   "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["DiracWord", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/DiracWord"], ": ",
+     "Represents an ordered product of Dirac matrices and slashed momenta."}]\
+, "GuideText"], Cell[TextData[{ButtonBox["DiracGamma", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/DiracGamma"], ": ",
+     "Represents a Dirac gamma matrix carrying a Lorentz index."}],
+   "GuideText"], Cell[TextData[{ButtonBox["DiracGamma5", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/DiracGamma5"], ": ",
+     "Represents the chirality matrix in an ordered Dirac word."}],
+   "GuideText"], Cell[TextData[{ButtonBox["DiracSlash", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/DiracSlash"], ": ",
+     "Represents a momentum contracted with a Dirac gamma matrix."}],
+   "GuideText"], Cell[TextData[{ButtonBox["FermionBar", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/FermionBar"], ": ",
+     "Represents the left antifermion endpoint of an ordered Dirac chain."}],
+   "GuideText"], Cell[TextData[{ButtonBox["FermionKet", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/FermionKet"], ": ",
+     "Represents the right fermion endpoint of an ordered Dirac chain."}],
+   "GuideText"], Cell[TextData[{ButtonBox["DiracChain", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/DiracChain"], ": ",
+     "Represents an ordered external-fermion bilinear."}], "GuideText"],
+  Cell["Lorentz and Polarization Tensors", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["LorentzIndex", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/LorentzIndex"], ": ",
+     "Labels a Lorentz slot in a Feynman tensor."}], "GuideText"],
+  Cell[TextData[{ButtonBox["LorentzMetric", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/LorentzMetric"], ": ",
+     "Represents the Minkowski metric with two Lorentz indices."}],
+   "GuideText"], Cell[TextData[{ButtonBox["LorentzMomentum",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/LorentzMomentum"], ": ",
+     "Represents a four-momentum carrying a Lorentz index."}], "GuideText"],
+  Cell[TextData[{ButtonBox["LorentzScalarProduct", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/LorentzScalarProduct"], ": ",
+     "Retains an off-shell scalar product in a Feynman rule."}],
+   "GuideText"], Cell[TextData[{ButtonBox["PolarizationVector",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/PolarizationVector"], ": ",
+     "Represents an external vector wavefunction in the Feynman backend."}],
+   "GuideText"], Cell[TextData[{ButtonBox["VectorSpinIndex",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/VectorSpinIndex"], ": ", "Labels one of the two \
+symmetric little-group slots of a massive vector."}], "GuideText"],
+  Cell["Color Tensors", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["ColorIndex", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ColorIndex"], ": ",
+     "Labels an external color state."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ColorDelta", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ColorDelta"], ": ",
+     "Represents a contracted color Kronecker tensor."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ColorGenerator", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ColorGenerator"], ": ",
+     "Represents a fundamental SU(3) generator."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ColorStructure", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ColorStructure"], ": ",
+     "Represents an SU(3) structure constant."}], "GuideText"],
+  Cell["Tutorials", "GuideTutorialsSection"],
+  Cell[TextData[
+    {ButtonBox["Comparing a Constructive Result with Feynman Diagrams",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/tutorial/FeynmanComparison"]}], "GuideTutorial"]},
+ WindowTitle ->
+  "Feynman Models and Spinor Conversion - HEPCAT Documentation",
+ Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/guide/FeynmanAmplitudes",
+     "title" -> "Feynman Models and Spinor Conversion", "type" -> "Guide",
+     "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" ->
+      "Use CalcHEP Feynman rules as an independent off-shell diagram \
+backend.", "keywords" -> {"HEPCAT", "FeynmanAmplitudes",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

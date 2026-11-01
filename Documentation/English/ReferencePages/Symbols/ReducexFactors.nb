@@ -1,0 +1,106 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT SYMBOL", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData ->
+            "paclet:HEPCAT/guide/IdentitiesAndSimplification"]}],
+        "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["ReducexFactors", "ObjectName"],
+  Cell["Reduces legacy x-factor expressions using an explicitly declared \
+four-point channel.", "Notes"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"ReducexFactors", "[", "expr", ",",
+         " ", "opts", "]"}]], "InlineFormula"], "  ", "applies the supported \
+xFactorReduced and xTildeFactorReduced rules."}], "Usage"],
+  Cell["Details", "NotesSection"], Cell["The lowercase x in ReducexFactors is \
+part of the actual function name. The default symbolic options are \
+Momenta->{1,2,3,4}, ChannelMomenta->{1,4} and ChannelMass->Mchannel.",
+   "Notes"], Cell["These are older specialized four-point identities. Supply \
+the correct channel and do not use them to assume unrelated internal lines \
+are on shell in a summed amplitude.", "Notes"],
+  Cell["For current diagram output, external x-factor expansion is normally \
+already performed by diagramAmplitudes; see ExpandXFactors for an explicit \
+model-aware operation.", "Notes"], Cell["Options", "NotesSection"],
+  Cell[BoxData[GridBox[{{Cell["Option", "TableHeader"],
+       Cell["Default", "TableHeader"], Cell["Meaning", "TableHeader"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"Momenta"}]], "InlineFormula"]}],
+        "TableText"], Cell[TextData[
+         {Cell[BoxData[RowBox[{"{", "1", ",", " ", "2", ",", " ", "3", ",",
+              " ", "4", "}"}]], "InlineFormula"]}], "TableText"],
+       Cell["Complete external momentum labels available to the older \
+simplification or x-factor helper. This is a legacy symbol option; the list \
+supplies the context needed for momentum-conservation identities.",
+        "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"ChannelMomenta"}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"{", "1", ",", " ", "4", "}"}]],
+           "InlineFormula"]}], "TableText"], Cell["External labels defining \
+the selected channel in the older x-factor reducers. This legacy symbol \
+option works with ChannelMass and Momenta.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"ChannelMass"}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Mchannel"}]], "InlineFormula"]}],
+        "TableText"], Cell["Mass of the selected internal channel in the \
+older x-factor reducers. This is a legacy symbol option and supplies a \
+declared numerator identity, not an instruction to set propagator \
+denominators on shell.", "TableText"]}}, GridBoxAlignment ->
+      {"Columns" -> {Left, Left, Left}}, GridBoxItemSize ->
+      {"Columns" -> {Scaled[0.23], Scaled[0.19], Scaled[0.58]}},
+     GridBoxDividers -> {"Rows" -> {False, True, {False}, False}}]],
+   "3ColumnTableMod"], Cell["Examples", "PrimaryExamplesSection"],
+  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
+     Cell["Evaluate this setup once before the examples. The paths refer to \
+the local HEPCAT checkout; no model parameters are assigned global numerical \
+values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
+         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
+         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
+         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
+         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
+         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
+         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
+         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
+         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
+         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
+         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
+         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
+         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
+         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
+         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
+      "Input", InitializationCell -> True]}, Open]],
+  Cell["Basic Examples", "ExampleSection"],
+  Cell["Inspect the channel assumptions before using this legacy helper.",
+   "ExampleText"], Cell[BoxData[RowBox[{"Options", "[", "ReducexFactors",
+      "]"}]], "Input"],
+  Cell[BoxData[RowBox[{"{", "Momenta", " ", "->", " ", "{", "1", ",", " ",
+      "2", ",", " ", "3", ",", " ", "4", "}", ",", " ", "ChannelMomenta",
+      " ", "->", " ", "{", "1", ",", " ", "4", "}", ",", " ", "ChannelMass",
+      " ", "->", " ", "Mchannel", "}"}]], "Output"],
+  Cell["Convert an elementary x-factor to the legacy reduced head.",
+   "ExampleText"], Cell[BoxData[RowBox[{"InputForm", "[", "ReducexFactors",
+      "[", "xFactor", "[", "1", ",", " ", "2", "]", "]", "]"}]], "Input"],
+  Cell[BoxData[RowBox[{"InputForm", "[", "xFactorReduced", "[", "1", ",",
+      " ", "2", "]", "]"}]], "Output"], Cell["See Also", "SeeAlsoSection"],
+  Cell[TextData[{ButtonBox["xFactor", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/xFactor"], "  \[Bullet]  ",
+     ButtonBox["xTildeFactor", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/xTildeFactor"], "  \[Bullet]  ",
+     ButtonBox["ExpandXFactors", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ExpandXFactors"], "  \[Bullet]  ",
+     ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"]}], "SeeAlso"],
+  Cell["Related Guides", "MoreAboutSection"],
+  Cell[TextData[{ButtonBox["Identities and Simplification",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/guide/IdentitiesAndSimplification"], "  \[Bullet]  ",
+     ButtonBox["HEPCAT: Constructive Amplitudes and Spinor Algebra",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}],
+   "MoreAbout"]}, WindowTitle -> "ReducexFactors - HEPCAT Documentation",
+ Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/ref/ReducexFactors", "title" -> "ReducexFactors",
+     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" -> "Reduces legacy x-factor expressions using an explicitly \
+declared four-point channel.", "keywords" -> {"HEPCAT", "ReducexFactors",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

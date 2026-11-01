@@ -1,0 +1,78 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT SYMBOL", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/FeynmanAmplitudes"]}],
+        "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["DiracWord", "ObjectName"],
+  Cell[
+   "Represents an ordered product of Dirac matrices and slashed momenta.",
+   "Notes"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"DiracWord", "[", "operator1", ",",
+         " ", "operator2", ",", " ", "...", "]"}]], "InlineFormula"], "  ", "\
+represents an ordered product of Dirac matrices and slashed momenta."}],
+   "Usage"], Cell["Details", "NotesSection"], Cell["Arguments are operators \
+in their written order. DiracWord is not a commutative Times product; \
+exchanging two gamma matrices requires the corresponding Clifford identity.",
+   "Notes"], Cell["DiracGamma, DiracGamma5 and DiracSlash are the supported \
+operator types. An empty word represents the identity between fermion \
+endpoints.", "Notes"], Cell["These objects are normally generated from a \
+Feynman model. Use FeynmanToSpinorProducts after Lorentz indices have been \
+contracted.", "Notes"], Cell["Examples", "PrimaryExamplesSection"],
+  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
+     Cell["Evaluate this setup once before the examples. The paths refer to \
+the local HEPCAT checkout; no model parameters are assigned global numerical \
+values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
+         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
+         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
+         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
+         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
+         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
+         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
+         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
+         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
+         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
+         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
+         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
+         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
+         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
+         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
+      "Input", InitializationCell -> True]}, Open]],
+  Cell["Basic Examples", "ExampleSection"],
+  Cell["Construct the symbolic object.", "ExampleText"],
+  Cell[BoxData[RowBox[{"DiracWord", "[", "DiracGamma", "[", "mu", "]", ",",
+      " ", "DiracSlash", "[", "Mom", "[", "3", "]", "]", ",", " ",
+      "DiracGamma", "[", "nu", "]", "]"}]], "Input"],
+  Cell[BoxData[RowBox[{"DiracWord", "[",
+      RowBox[{RowBox[{"DiracGamma", "[", "mu", "]"}], ",",
+        RowBox[{"DiracSlash", "[", SubscriptBox["p", "3"], "]"}], ",",
+        RowBox[{"DiracGamma", "[", "nu", "]"}]}], "]"}]], "Output"],
+  Cell["See Also", "SeeAlsoSection"],
+  Cell[TextData[{ButtonBox["DiracGamma", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/DiracGamma"], "  \[Bullet]  ",
+     ButtonBox["DiracGamma5", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/DiracGamma5"], "  \[Bullet]  ",
+     ButtonBox["DiracSlash", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/DiracSlash"], "  \[Bullet]  ",
+     ButtonBox["DiracChain", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/DiracChain"], "  \[Bullet]  ",
+     ButtonBox["FeynmanToSpinorProducts", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/FeynmanToSpinorProducts"]}],
+   "SeeAlso"], Cell["Related Guides", "MoreAboutSection"],
+  Cell[TextData[{ButtonBox["Feynman Models and Spinor Conversion",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/guide/FeynmanAmplitudes"], "  \[Bullet]  ",
+     ButtonBox["HEPCAT: Constructive Amplitudes and Spinor Algebra",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}],
+   "MoreAbout"]}, WindowTitle -> "DiracWord - HEPCAT Documentation",
+ Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/ref/DiracWord", "title" -> "DiracWord",
+     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" ->
+      "Represents an ordered product of Dirac matrices and slashed momenta.",
+     "keywords" -> {"HEPCAT", "DiracWord", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

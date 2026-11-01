@@ -11,6 +11,7 @@ import sys
 
 
 TEST_SUITES = (
+    "documentation-content-tests.wl", "documentation-registration-tests.wl",
     "legacy-package-tests.wl", "legacy-algebra-tests.wl",
     "legacy-transform-tests.wl", "legacy-model-tests.wl",
     "spinor-identity-tests.wl", "spin-contraction-guard-tests.wl",

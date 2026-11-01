@@ -1,0 +1,643 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT GUIDE", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}], "AnchorBar"]}},
+     GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["HEPCAT Reference Index", "GuideTitle"],
+  Cell["Alphabetical reference for every documented public function and \
+symbolic head.", "GuideAbstract"], Cell["Browse individual reference pages \
+here, or use the topic guides on the main HEPCAT page. Internal \
+implementation helpers and accidental context-local variables are not part of \
+the published API.", "GuideAbstract"], Cell["A", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["AddOppositeHelicityAmplitudes",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/AddOppositeHelicityAmplitudes"], ": ", "Mechanicall\
+y add angle-square conjugate rows with reversed massless helicities."}],
+   "GuideText"],
+  Cell[TextData[{ButtonBox["AddRandomConstructiveAmplitudeTerm",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/AddRandomConstructiveAmplitudeTerm"], ": ",
+     "Reserved historical random term-insertion name."}], "GuideText"],
+  Cell[TextData[{ButtonBox["AppendModelAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/AppendModelAmplitudes"], ": ", "Append \
+validated text representations of supplied amplitudes to a constructive model \
+file."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ApplySpinorIdentity", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ApplySpinorIdentity"], ": ", "Applies \
+a currently legal identity edit and returns the new expression."}],
+   "GuideText"], Cell[TextData[{ButtonBox["applyToNumerator",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/applyToNumerator"], ": ", "Applies rules or a \
+function to the numerator of each additive term in its existing form."}],
+   "GuideText"], Cell["C", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"], ": ", "Check \
+physical residues, apparent spurious poles, high-energy growth and reference \
+dependence."}], "GuideText"],
+  Cell[TextData[{ButtonBox["CheckLengthConstructive", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CheckLengthConstructive"], ": ",
+     "Reserved historical random-search length-check name."}], "GuideText"],
+  Cell[TextData[{ButtonBox["CheckNumberOfSpinors", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CheckNumberOfSpinors"], ": ",
+     "Reserved historical random-search spinor-count name."}], "GuideText"],
+  Cell[TextData[{ButtonBox["CheckPhysicalResidues", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CheckPhysicalResidues"], ": ",
+     "Use the earlier name for the combined amplitude checker."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ChooseSpinIndex",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ChooseSpinIndex"], ": ", "Selects a physical spin \
+projection for one external massive particle."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ChooseSpinIndices", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ChooseSpinIndices"], ": ",
+     "Selects spin projections in external-particle order."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ColorDelta", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ColorDelta"], ": ",
+     "Represents a contracted color Kronecker tensor."}], "GuideText"],
+  Cell[TextData[{ButtonBox["colorf", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/colorf"], ": ", "Represents a \
+structure-constant object in the legacy color trace convention."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ColorGenerator",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/ColorGenerator"],
+     ": ", "Represents a fundamental SU(3) generator."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ColorIndex", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ColorIndex"], ": ",
+     "Labels an external color state."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ColorStructure", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ColorStructure"], ": ",
+     "Represents an SU(3) structure constant."}], "GuideText"],
+  Cell[TextData[{ButtonBox["colorT", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/colorT"], ": ",
+     "Represents a fundamental SU(3) generator in the legacy color reducer."}]\
+, "GuideText"], Cell[TextData[{ButtonBox["colorTrace", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/colorTrace"], ": ",
+     "Represents a trace of legacy colorT generators."}], "GuideText"],
+  Cell[TextData[{ButtonBox["CompareAmpToSquaredAmp", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CompareAmpToSquaredAmp"], ": ",
+     "Reserved historical amplitude-comparison name."}], "GuideText"],
+  Cell[TextData[{ButtonBox["CompleteFactorization", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CompleteFactorization"], ": ", "Repair \
+physical residue deficits with a bounded simultaneous correction fit."}],
+   "GuideText"], Cell[TextData[{ButtonBox["CompleteHighEnergy",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/CompleteHighEnergy"], ": ", "Fit retained \
+residue-preserving freedom to high-energy, spurious-pole and reference \
+constraints."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ComplexifyMomenta", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ComplexifyMomenta"], ": ",
+     "Marks supported momenta and spinors for a legacy complex deformation."}]\
+, "GuideText"], Cell[TextData[{ButtonBox["ComplicateAmplitude",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ComplicateAmplitude"], ": ", "Generates a \
+model-free random sequence of reversible symbolic identities."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ConstructAmplitude",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ConstructAmplitude"], ": ", "Construct, complete, \
+simplify and validate an amplitude from its process and two models."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ConstructiveAmplitude",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ConstructiveAmplitude"], ": ",
+     "Stores a legacy amplitude as a coupling, numerator and denominator."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ConstructiveDiagram",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ConstructiveDiagram"], ": ", "Evaluate an older \
+three-point vertex or a selected four-point exchange."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ConvertAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ConvertAmplitude"], ": ", "Convert a \
+constructive model row from text into typed spinor notation."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ConvertAmplitudeOld",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ConvertAmplitudeOld"], ": ",
+     "Access the historical string converter retained for compatibility."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ConvertStringAmplitude",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ConvertStringAmplitude"], ": ", "Parses legacy \
+compact bracket notation into typed HEPCAT spinor expressions."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ConvertStringHattedAmplitude",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ConvertStringHattedAmplitude"], ": ", "Parses a \
+legacy bracket expression and marks its spinors and momenta as shifted."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ConvertVertex",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/ConvertVertex"],
+     ": ", "Reserved historical vertex-converter name."}], "GuideText"],
+  Cell[TextData[{ButtonBox["Coupling", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/Coupling"], ": ", "Represents a \
+symbolic indexed coupling in legacy amplitude expressions."}], "GuideText"],
+  Cell[TextData[{ButtonBox["CreateArrowDiagram", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CreateArrowDiagram"], ": ", "Draw one \
+generated tree with external labels and directed particle lines."}],
+   "GuideText"], Cell[TextData[{ButtonBox["CreateArrowDiagrams",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/CreateArrowDiagrams"], ": ",
+     "Draw the generated trees for a complete process."}], "GuideText"],
+  Cell[TextData[{ButtonBox["CreateDiagrams", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CreateDiagrams"], ": ",
+     "Generate tree diagrams from a supplied constructive or Feynman model."}]\
+, "GuideText"],
+  Cell[TextData[
+    {ButtonBox["CreateInitialRandomPopulationConstructiveAmplitudes",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/CreateInitialRandomPopulationConstructiveAmplitudes\
+"], ": ", "Reserved historical population-search initializer name."}],
+   "GuideText"],
+  Cell[TextData[{ButtonBox["CreateRandomConstructiveAmplitudeTerm",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/CreateRandomConstructiveAmplitudeTerm"], ": ",
+     "Reserved historical random term-generator name."}], "GuideText"],
+  Cell[TextData[{ButtonBox["CreateRandomConstructiveSpinorProduct",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/CreateRandomConstructiveSpinorProduct"], ": ",
+     "Reserved historical random spinor-product generator name."}],
+   "GuideText"], Cell[TextData[{ButtonBox["CreateRandomMassFactor",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/CreateRandomMassFactor"], ": ",
+     "Reserved historical random mass-factor generator name."}],
+   "GuideText"], Cell[TextData[{ButtonBox["CreateSPInitializationStatement",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/CreateSPInitializationStatement"], ": ",
+     "Writes a legacy SPINAS sproduct initialization statement."}],
+   "GuideText"], Cell[TextData[{ButtonBox["CreateSPName",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/CreateSPName"],
+     ": ", "Constructs the legacy SPINAS member name for one chain."}],
+   "GuideText"], Cell[TextData[{ButtonBox["CreateSPUpdateStatement",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/CreateSPUpdateStatement"], ": ",
+     "Writes a legacy SPINAS spinor-product update statement."}],
+   "GuideText"], Cell["D", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["DeclareSPINASSpinorProducts",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/DeclareSPINASSpinorProducts"], ": ", "Writes a \
+legacy sproduct member declaration for chains in an expression."}],
+   "GuideText"],
+  Cell[TextData[{ButtonBox["DeleteRandomConstructiveAmplitude",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/DeleteRandomConstructiveAmplitude"], ": ",
+     "Reserved historical random amplitude-deletion name."}], "GuideText"],
+  Cell[TextData[{ButtonBox["delta", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/delta"], ": ",
+     "Is a legacy symbolic delta display marker."}], "GuideText"],
+  Cell[TextData[{ButtonBox["diagramAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/diagramAmplitude"], ": ",
+     "Evaluate the expression associated with one generated diagram."}],
+   "GuideText"], Cell[TextData[{ButtonBox["DiagramAmplitudeRecords",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/DiagramAmplitudeRecords"], ": ", "Retain explicit \
+diagram expressions, physical propagators and numerator assumptions for \
+diagnostics."}], "GuideText"],
+  Cell[TextData[{ButtonBox["diagramAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/diagramAmplitudes"], ": ", "Evaluate \
+every tree while retaining its separate mass and internal-cut declarations."}]\
+, "GuideText"], Cell[TextData[{ButtonBox["DiracChain", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/DiracChain"], ": ",
+     "Represents an ordered external-fermion bilinear."}], "GuideText"],
+  Cell[TextData[{ButtonBox["DiracGamma", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/DiracGamma"], ": ",
+     "Represents a Dirac gamma matrix carrying a Lorentz index."}],
+   "GuideText"], Cell[TextData[{ButtonBox["DiracGamma5", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/DiracGamma5"], ": ",
+     "Represents the chirality matrix in an ordered Dirac word."}],
+   "GuideText"], Cell[TextData[{ButtonBox["DiracSlash", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/DiracSlash"], ": ",
+     "Represents a momentum contracted with a Dirac gamma matrix."}],
+   "GuideText"], Cell[TextData[{ButtonBox["DiracWord", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/DiracWord"], ": ",
+     "Represents an ordered product of Dirac matrices and slashed momenta."}]\
+, "GuideText"], Cell["E", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["En", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/En"], ": ", "Labels the energy of an \
+external particle in explicit spinor formulas."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ExpandComplexMomenta", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ExpandComplexMomenta"], ": ", "Expands \
+supported legacy complex-shift formulas with specified masses and companion \
+legs."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ExpandMomHatAlt", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ExpandMomHatAlt"], ": ",
+     "Expands supported all-line-shift momentum and propagator markers."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ExpandSummation",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ExpandSummation"], ": ", "Expands supported \
+contracted massive spin indices into explicit plus/minus half components."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ExpandXFactors",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/ExpandXFactors"],
+     ": ", "Apply the retained x-factor identities and external \
+reference-spinor expansion."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ExtractEnergy", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ExtractEnergy"], ": ", "Evaluates \
+supported spinor chains as explicit energy-angle matrix expressions."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ExtractEnergy1",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/ExtractEnergy1"],
+     ": ", "Substitutes one particle's momentum matrices and explicit \
+four-vector components."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ExtractEnergy2", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ExtractEnergy2"], ": ", "Substitutes \
+explicit two-component spinor rows and columns for one particle."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ExtractMandelstahm",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ExtractMandelstahm"], ": ", "Rewrites scalar \
+momentum products and supported two-particle propagators using s invariants."}\
+], "GuideText"], Cell["F", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["FactorizationAmplitudeChannels",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/FactorizationAmplitudeChannels"], ": ", "Sew known \
+lower-point amplitudes into the physical factorization channels."}],
+   "GuideText"], Cell[TextData[{ButtonBox["FactorizationPartitions",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/FactorizationPartitions"], ": ", "Enumerate \
+distinct complementary external-leg partitions for tree factorization."}],
+   "GuideText"], Cell[TextData[{ButtonBox["FermionBar", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/FermionBar"], ": ",
+     "Represents the left antifermion endpoint of an ordered Dirac chain."}],
+   "GuideText"], Cell[TextData[{ButtonBox["FermionKet", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/FermionKet"], ": ",
+     "Represents the right fermion endpoint of an ordered Dirac chain."}],
+   "GuideText"], Cell[TextData[{ButtonBox["FeynmanModel",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/FeynmanModel"],
+     ": ", "Represents a model specified by off-shell Feynman rules."}],
+   "GuideText"], Cell[TextData[{ButtonBox["FeynmanToSpinorProducts",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/FeynmanToSpinorProducts"], ": ", "Converts \
+contracted Feynman amplitudes to spinor products without imposing internal \
+mass shells."}], "GuideText"],
+  Cell[TextData[{ButtonBox["FindAmp", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/FindAmp"], ": ",
+     "Reserved historical amplitude-search name."}], "GuideText"],
+  Cell["H", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["HelicitySpinorHat", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/HelicitySpinorHat"], ": ", "Is a \
+retained protected compatibility symbol without an active public \
+implementation."}], "GuideText"], Cell["I", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["InitializeSPINASSpinorProducts",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/InitializeSPINASSpinorProducts"], ": ", "Writes \
+initialization statements for distinct spinor chains in an expression."}],
+   "GuideText"], Cell["L", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["lnice", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/lnice"], ": ",
+     "Formats a single spinor as the left endpoint of a displayed chain."}],
+   "GuideText"], Cell[TextData[{ButtonBox["LookupAmplitude",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/LookupAmplitude"], ": ", "Retrieve a complete model \
+amplitude with its external labels reassigned."}], "GuideText"],
+  Cell[TextData[{ButtonBox["LorentzIndex", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/LorentzIndex"], ": ",
+     "Labels a Lorentz slot in a Feynman tensor."}], "GuideText"],
+  Cell[TextData[{ButtonBox["LorentzMetric", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/LorentzMetric"], ": ",
+     "Represents the Minkowski metric with two Lorentz indices."}],
+   "GuideText"], Cell[TextData[{ButtonBox["LorentzMomentum",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/LorentzMomentum"], ": ",
+     "Represents a four-momentum carrying a Lorentz index."}], "GuideText"],
+  Cell[TextData[{ButtonBox["LorentzScalarProduct", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/LorentzScalarProduct"], ": ",
+     "Retains an off-shell scalar product in a Feynman rule."}],
+   "GuideText"], Cell[TextData[{ButtonBox["lPlainText", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/lPlainText"], ": ",
+     "Returns compact plain text for the left endpoint of a chain."}],
+   "GuideText"], Cell[TextData[{ButtonBox["lSPINAS", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/lSPINAS"], ": ",
+     "Returns the legacy SPINAS name prefix for a chain's left endpoint."}],
+   "GuideText"], Cell[TextData[{ButtonBox["lTeX", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/lTeX"], ": ",
+     "Returns the LaTeX string for a spinor at the left end of a chain."}],
+   "GuideText"], Cell["M", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["MakeIndicesExplicit", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/MakeIndicesExplicit"], ": ", "Replaces \
+implicit massive spin indices with specified explicit upper indices."}],
+   "GuideText"], Cell[TextData[{ButtonBox["MakeIndicesImplicit",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/MakeIndicesImplicit"], ": ",
+     "Removes supported explicit upper massive spin indices from chains."}],
+   "GuideText"], Cell[TextData[{ButtonBox["MakeNRandomChanges",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/MakeNRandomChanges"], ": ",
+     "Reserved historical random-mutation driver name."}], "GuideText"],
+  Cell[TextData[{ButtonBox["Mandelstahm", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/Mandelstahm"], ": ",
+     "Represents the scalar invariant (p_i+p_j)^2."}], "GuideText"],
+  Cell[TextData[{ButtonBox["MandelstahmHat", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/MandelstahmHat"], ": ",
+     "Represents the complex-deformed version of a two-particle invariant."}]\
+, "GuideText"], Cell[TextData[{ButtonBox["Mass", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/Mass"], ": ",
+     "Represents the symbolic mass assigned to a particle or a channel."}],
+   "GuideText"], Cell[TextData[{ButtonBox["MateConstructiveAmplitudes",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/MateConstructiveAmplitudes"], ": ",
+     "Reserved historical amplitude-population mating name."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ModelFunction", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ModelFunction"], ": ",
+     "Retain an external model function call as inert data."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ModelParameter", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ModelParameter"], ": ",
+     "Represent and retrieve a parameter belonging to one model."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ModelParameterName",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ModelParameterName"], ": ",
+     "Get the string name of a model-local parameter."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ModelParameterRules", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ModelParameterRules"], ": ", "Resolve \
+model parameters numerically without changing the symbolic amplitude or \
+global session."}], "GuideText"],
+  Cell[TextData[{ButtonBox["Mom", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/Mom"], ": ",
+     "Represents a momentum insertion in HEPCAT spinor algebra."}],
+   "GuideText"], Cell[TextData[{ButtonBox["MomHat", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/MomHat"], ": ",
+     "Represents a complex-deformed momentum insertion."}], "GuideText"],
+  Cell[TextData[{ButtonBox["MomMagnitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/MomMagnitude"], ": ",
+     "Labels the magnitude of a particle's spatial momentum."}],
+   "GuideText"], Cell[TextData[{ButtonBox["MomProd", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/MomProd"], ": ",
+     "Represents a Lorentz scalar product of particle or composite momenta."}]\
+, "GuideText"], Cell[TextData[{ButtonBox["MomProdExplicit",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/MomProdExplicit"], ": ", "Stores the intermediate \
+explicit four-vector scalar product used by ExtractEnergy."}], "GuideText"],
+  Cell[TextData[{ButtonBox["MomProdHat1", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/MomProdHat1"], ": ",
+     "Represents a scalar product involving complex-deformed momenta."}],
+   "GuideText"], Cell[TextData[{ButtonBox["MomProdHat12",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/MomProdHat12"],
+     ": ",
+     "Represents a scalar product involving complex-deformed momenta."}],
+   "GuideText"], Cell[TextData[{ButtonBox["MomProdHat2", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/MomProdHat2"], ": ",
+     "Represents a scalar product involving complex-deformed momenta."}],
+   "GuideText"], Cell[TextData[{ButtonBox["MomProdL", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/MomProdL"], ": ", "Is a retained \
+protected compatibility symbol without an active public implementation."}],
+   "GuideText"], Cell[TextData[{ButtonBox["MomProdR", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/MomProdR"], ": ", "Is a retained \
+protected compatibility symbol without an active public implementation."}],
+   "GuideText"], Cell[TextData[{ButtonBox["MomQ", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/MomQ"], ": ",
+     "Represents an auxiliary q-momentum label in symbolic output."}],
+   "GuideText"], Cell[TextData[{ButtonBox["Multiparticle",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/Multiparticle"],
+     ": ", "Labels a sum of external particle momenta."}], "GuideText"],
+  Cell[TextData[{ButtonBox["MultiparticleDiff", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/MultiparticleDiff"], ": ", "Represents \
+a legacy composite label for a difference of particle momenta."}],
+   "GuideText"], Cell["N", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["nice", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/nice"], ": ",
+     "Formats legacy HEPCAT objects in readable notebook notation."}],
+   "GuideText"], Cell["O", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["Output", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/Output"], ": ", "Is a legacy display \
+marker with a single specialized formatting definition."}], "GuideText"],
+  Cell["P", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["Particle", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/Particle"], ": ",
+     "Wraps a particle label for older display and export helpers."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ParticleMass",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/ParticleMass"],
+     ": ", "Look up a particle or antiparticle mass in a particle table."}],
+   "GuideText"], Cell[TextData[{ButtonBox["PermuteParticles",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/PermuteParticles"], ": ", "Cyclically relabels the \
+specified external particles in typed amplitude expressions."}],
+   "GuideText"], Cell[TextData[{ButtonBox["Phi", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/Phi"], ": ",
+     "Labels the azimuthal angle used for an explicit momentum or spinor."}],
+   "GuideText"], Cell[TextData[{ButtonBox["PhysicalPoleResidue",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/PhysicalPoleResidue"], ": ", "Extract a single- or \
+compatible multiple-pole coefficient with explicit kinematic scope."}],
+   "GuideText"], Cell[TextData[{ButtonBox["PlainText", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PlainText"], ": ", "Writes readable \
+bracket notation or explicit model-readable amplitude text."}], "GuideText"],
+  Cell[TextData[{ButtonBox["PolarizationVector", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PolarizationVector"], ": ",
+     "Represents an external vector wavefunction in the Feynman backend."}],
+   "GuideText"], Cell[TextData[{ButtonBox["PrepareAmplitudes",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/PrepareAmplitudes"], ": ", "Simplify diagram pairs \
+or factorization rows while retaining their physical assumptions."}],
+   "GuideText"], Cell[TextData[{ButtonBox["PrepareDiagramAmplitudes",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/PrepareDiagramAmplitudes"], ": ",
+     "Use the compatibility name for PrepareAmplitudes."}], "GuideText"],
+  Cell[TextData[{ButtonBox["PropDen", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PropDen"], ": ",
+     "Represents an off-shell physical propagator denominator."}],
+   "GuideText"], Cell["R", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["RandomAddSpinorProduct", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/RandomAddSpinorProduct"], ": ",
+     "Reserved historical random spinor-insertion name."}], "GuideText"],
+  Cell[TextData[{ButtonBox["RandomChangeCoefficientSpinorProduct",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/RandomChangeCoefficientSpinorProduct"], ": ",
+     "Reserved historical random coefficient-mutation name."}], "GuideText"],
+  Cell[TextData[{ButtonBox["RandomDeleteSpinorProduct", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/RandomDeleteSpinorProduct"], ": ",
+     "Reserved historical random spinor-deletion name."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ReadAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReadAmplitudes"], ": ", "Read complete \
+constructive amplitudes and their separate overall factors."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ReadFunctions", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReadFunctions"], ": ",
+     "Read the dependent parameter expressions in a model function table."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ReadModel", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReadModel"], ": ", "Read a \
+constructive amplitude model or an imported CalcHEP Feynman model."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ReadParticles",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/ReadParticles"],
+     ": ",
+     "Read particle and antiparticle declarations from a model table."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ReadVariables",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/ReadVariables"],
+     ": ",
+     "Read a model variable table without assigning global parameter values."}\
+], "GuideText"], Cell[TextData[{ButtonBox["ReadVertices",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/ReadVertices"],
+     ": ", "Reserved historical vertex-reader name."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ReduceColor", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReduceColor"], ": ", "Reduces legacy \
+SU(3) generator and structure-constant expressions to traces."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ReduceSpinContractions",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ReduceSpinContractions"], ": ", "Sews contracted \
+massive or massless spinor indices into shorter momentum chains."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ReduceSpinorProducts",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ReduceSpinorProducts"], ": ", "Reduces spinor \
+chains and traces using ordinary identities and external on-shell \
+conditions."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ReducexFactors", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReducexFactors"], ": ", "Reduces \
+legacy x-factor expressions using an explicitly declared four-point channel."}\
+], "GuideText"], Cell[TextData[{ButtonBox["ReduceXFactorsM",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ReduceXFactorsM"], ": ", "Is a retained protected \
+compatibility symbol without an active public implementation."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ReduceXFactorsP",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ReduceXFactorsP"], ": ", "Is a retained protected \
+compatibility symbol without an active public implementation."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ReplaceSpinorZ",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/ReplaceSpinorZ"],
+     ": ",
+     "Replaces a two-index auxiliary z object in a supported massive shift."}]\
+, "GuideText"], Cell[TextData[{ButtonBox["ReverseMomentum",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ReverseMomentum"], ": ", "Crosses selected external \
+legs in complete spinor amplitude expressions."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ReverseSequence", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReverseSequence"], ": ",
+     "Reverses a sequence of arguments for use inside another expression."}],
+   "GuideText"], Cell[TextData[{ButtonBox["rr", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/rr"], ": ",
+     "Represents a legacy indexed r label used in formatted expressions."}],
+   "GuideText"], Cell[TextData[{ButtonBox["rSpinor", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/rSpinor"], ": ", "Is a retained \
+protected compatibility symbol without an active public implementation."}],
+   "GuideText"], Cell["S", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["SChannelDiagram", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SChannelDiagram"], ": ", "Evaluate a \
+selected four-point s-channel exchange with the historical constructive \
+helper."}], "GuideText"],
+  Cell[TextData[{ButtonBox["SchoutenCandidates", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SchoutenCandidates"], ": ",
+     "Lists exact generalized Schouten edits available in an expression."}],
+   "GuideText"], Cell[TextData[{ButtonBox["SchoutenRewrite",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/SchoutenRewrite"], ": ", "Constructs the \
+generalized Schouten identity for two chains at specified momentum splits."}]\
+, "GuideText"], Cell[TextData[{ButtonBox["sigma", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/sigma"], ": ",
+     "Represents a symbolic Pauli-matrix label for legacy display."}],
+   "GuideText"], Cell[TextData[{ButtonBox["SimplifyFactorizationChannels",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/SimplifyFactorizationChannels"], ": ", "Apply the \
+historical spinor simplifier separately to compact channel rows."}],
+   "GuideText"], Cell[TextData[{ButtonBox["SimplifySpinorProducts",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/SimplifySpinorProducts"], ": ", "Runs the older \
+iterative momentum-conservation and spinor simplifier."}], "GuideText"],
+  Cell[TextData[{ButtonBox["SPINAS", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SPINAS"], ": ", "Formats a supported \
+expression as a legacy SPINAS C++ expression string."}], "GuideText"],
+  Cell[TextData[{ButtonBox["Spinor", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/Spinor"], ": ", "Represents a massless \
+helicity spinor, a massive spin spinor, or an auxiliary reference spinor."}],
+   "GuideText"], Cell[TextData[{ButtonBox["SpinorChain", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SpinorChain"], ": ", "Represents an \
+angle or square spinor bracket, optionally with an ordered sequence of \
+momentum insertions."}], "GuideText"],
+  Cell[TextData[{ButtonBox["SpinorChainReduced", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SpinorChainReduced"], ": ",
+     "Is the rule-bearing reduction head used internally for SpinorChain."}],
+   "GuideText"], Cell[TextData[{ButtonBox["SpinorEps", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SpinorEps"], ": ",
+     "Represents an explicit little-group epsilon tensor."}], "GuideText"],
+  Cell[TextData[{ButtonBox["SpinorExpressionComplexity", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SpinorExpressionComplexity"], ": ",
+     "Returns a scalar complexity score for a spinor expression."}],
+   "GuideText"], Cell[TextData[{ButtonBox["SpinorHat", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SpinorHat"], ": ",
+     "Represents a spinor whose momentum has been complex-deformed."}],
+   "GuideText"], Cell[TextData[{ButtonBox["SpinorIdentityCandidates",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/SpinorIdentityCandidates"], ": ", "Enumerates legal \
+symbolic identity edits for a diagram or amplitude expression."}],
+   "GuideText"], Cell[TextData[{ButtonBox["SpinorTrace", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SpinorTrace"], ": ",
+     "Represents the ordered chiral trace of momentum matrices."}],
+   "GuideText"], Cell[TextData[{ButtonBox["SpinorTraceReduced",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/SpinorTraceReduced"], ": ",
+     "Is the rule-bearing reduction head used internally for SpinorTrace."}],
+   "GuideText"], Cell[TextData[{ButtonBox["SpinorZ", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SpinorZ"], ": ",
+     "Represents an indexed auxiliary z object in legacy complex shifts."}],
+   "GuideText"], Cell[TextData[{ButtonBox["SpinSpinorHat",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/SpinSpinorHat"],
+     ": ", "Is a retained protected compatibility symbol without an active \
+public implementation."}], "GuideText"],
+  Cell[TextData[{ButtonBox["SpinToHelicitySpinors", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SpinToHelicitySpinors"], ": ", "Applie\
+s legacy spin-to-helicity expansions to selected massive particle spinors."}]\
+, "GuideText"], Cell[TextData[{ButtonBox["SquareAmplitude",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/SquareAmplitude"], ": ", "Forms the amplitude times \
+its Hermitian conjugate with explicit massive indices."}], "GuideText"],
+  Cell[TextData[{ButtonBox["SumResiduesAlt", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SumResiduesAlt"], ": ", "Sum the two \
+finite-pole residues in a previously shifted channel representation."}],
+   "GuideText"], Cell[TextData[{ButtonBox["SymmetrizeSpin",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/SymmetrizeSpin"],
+     ": ", "Inserts and symmetrizes the little-group indices of one massive \
+particle."}], "GuideText"],
+  Cell[TextData[{ButtonBox["SymmetrizeSpins", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SymmetrizeSpins"], ": ", "Symmetrizes \
+massive little-group indices using a list in external-particle order."}],
+   "GuideText"], Cell["T", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["TChannelDiagram", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/TChannelDiagram"], ": ", "Evaluate a \
+selected four-point t-channel exchange with the historical constructive \
+helper."}], "GuideText"],
+  Cell[TextData[{ButtonBox["TeX", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/TeX"], ": ",
+     "Converts supported HEPCAT expressions into a LaTeX string."}],
+   "GuideText"], Cell[TextData[{ButtonBox["Theta", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/Theta"], ": ",
+     "Labels the polar angle used for an explicit momentum or spinor."}],
+   "GuideText"], Cell["U", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["UChannelDiagram", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/UChannelDiagram"], ": ", "Evaluate a \
+selected four-point u-channel exchange with the historical constructive \
+helper."}], "GuideText"],
+  Cell[TextData[{ButtonBox["UnhatMomenta", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/UnhatMomenta"], ": ",
+     "Removes the standard complex-deformation markers."}], "GuideText"],
+  Cell[TextData[{ButtonBox["UnHatSpinors", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/UnHatSpinors"], ": ",
+     "Removes SpinorHat markers while leaving shifted momenta unchanged."}],
+   "GuideText"], Cell[TextData[{ButtonBox["UpdateSPINASSpinorProducts",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/UpdateSPINASSpinorProducts"], ": ", "Writes update \
+statements for distinct spinor products in an expression."}], "GuideText"],
+  Cell["V", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["VectorSpinIndex", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/VectorSpinIndex"], ": ", "Labels one \
+of the two symmetric little-group slots of a massive vector."}],
+   "GuideText"], Cell["W", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["WriteSPINASProcess", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/WriteSPINASProcess"], ": ", "Writes a \
+complete, readable C++ process using SPINAS, with optional CalcHEP validation \
+and integration."}], "GuideText"], Cell["X", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["xFactor", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/xFactor"], ": ",
+     "Represents a constructive three-point x-factor."}], "GuideText"],
+  Cell[TextData[{ButtonBox["xFactorReduced", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/xFactorReduced"], ": ",
+     "Evaluates a supported legacy four-point composite x-factor formula."}],
+   "GuideText"], Cell[TextData[{ButtonBox["xTildeFactor",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/xTildeFactor"],
+     ": ", "Represents a constructive three-point x-factor."}], "GuideText"],
+  Cell[TextData[{ButtonBox["xTildeFactorReduced", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/xTildeFactorReduced"], ": ",
+     "Evaluates a supported legacy four-point composite x-factor formula."}],
+   "GuideText"], Cell["Z", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["zMinus", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/zMinus"], ": ",
+     "Labels the minus root of a complex-shift pole equation."}],
+   "GuideText"], Cell[TextData[{ButtonBox["zPlus", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/zPlus"], ": ",
+     "Labels the plus root of a complex-shift pole equation."}],
+   "GuideText"]}, WindowTitle ->
+  "HEPCAT Reference Index - HEPCAT Documentation", Saveable -> False,
+ WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/guide/ReferenceIndex",
+     "title" -> "HEPCAT Reference Index", "type" -> "Guide",
+     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Alphabetical \
+reference for every documented public function and symbolic head.",
+     "keywords" -> {"HEPCAT", "ReferenceIndex", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

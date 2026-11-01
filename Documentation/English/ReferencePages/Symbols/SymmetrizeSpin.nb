@@ -1,0 +1,105 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT SYMBOL", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/SpinorAlgebra"]}],
+        "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["SymmetrizeSpin", "ObjectName"],
+  Cell[
+   "Inserts and symmetrizes the little-group indices of one massive \
+particle.", "Notes"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"SymmetrizeSpin", "[", "expr", ",",
+         " ", "i", ",", " ", "{", "indices", "}", "]"}]], "InlineFormula"],
+     "  ", "averages the distinct index permutations for particle i."}],
+   "Usage"], Cell["Details", "NotesSection"], Cell["The routine acts on the \
+implicit massive spinor factors of the specified particle. It supports one \
+through four indices.", "Notes"], Cell["The average is over distinct \
+permutations, so coincident index labels retain their proper normalization. \
+This is little-group symmetrization, not a permutation of identical external \
+particles.", "Notes"],
+  Cell[
+   "Use ChooseSpinIndex to select a normalized physical spin projection.",
+   "Notes"], Cell["Examples", "PrimaryExamplesSection"],
+  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
+     Cell["Evaluate this setup once before the examples. The paths refer to \
+the local HEPCAT checkout; no model parameters are assigned global numerical \
+values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
+         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
+         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
+         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
+         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
+         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
+         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
+         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
+         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
+         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
+         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
+         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
+         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
+         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
+         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
+      "Input", InitializationCell -> True]}, Open]],
+  Cell["Basic Examples", "ExampleSection"],
+  Cell["Symmetrize a pair of massive spin indices.", "ExampleText"],
+  Cell[BoxData[RowBox[{"SymmetrizeSpin", "[", "SpinorChain", "[", "Spinor",
+      "[", "\"Spin\"", ",", " ", "\"Angle\"", ",", " ", "1", "]", ",", " ",
+      "Spinor", "[", "\"Helicity\"", ",", " ", "\"Angle\"", ",", " ", "3",
+      "]", "]", " ", "SpinorChain", "[", "Spinor", "[", "\"Spin\"", ",", " ",
+      "\"Square\"", ",", " ", "1", "]", ",", " ", "Spinor", "[",
+      "\"Helicity\"", ",", " ", "\"Square\"", ",", " ", "4", "]", "]", ",",
+      " ", "1", ",", " ", "{", "i", ",", " ", "j", "}", "]"}]], "Input"],
+  Cell[BoxData[RowBox[{RowBox[{FractionBox["1", "2"], " ",
+        TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"",
+            TemplateBox[{StyleBox["1", Bold, StripOnInput -> False], "j"},
+             "Superscript", SyntaxForm -> SuperscriptBox]}, "RowDefault"],
+          TemplateBox[{"3", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", TemplateBox[
+         {TemplateBox[{"\"[\"", TemplateBox[{StyleBox["1", Bold,
+               StripOnInput -> False], "i"}, "Superscript",
+             SyntaxForm -> SuperscriptBox]}, "RowDefault"],
+          TemplateBox[{"4", "\"]\""}, "RowDefault"]}, "RowDefault"]}], "+",
+      RowBox[{FractionBox["1", "2"], " ", TemplateBox[
+         {TemplateBox[{"\"\[LeftAngleBracket]\"", TemplateBox[
+             {StyleBox["1", Bold, StripOnInput -> False], "i"},
+             "Superscript", SyntaxForm -> SuperscriptBox]}, "RowDefault"],
+          TemplateBox[{"3", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], " ", TemplateBox[
+         {TemplateBox[{"\"[\"", TemplateBox[{StyleBox["1", Bold,
+               StripOnInput -> False], "j"}, "Superscript",
+             SyntaxForm -> SuperscriptBox]}, "RowDefault"],
+          TemplateBox[{"4", "\"]\""}, "RowDefault"]}, "RowDefault"]}]}]],
+   "Output"], Cell["Keep a repeated index with unit permutation weight.",
+   "ExampleText"], Cell[BoxData[RowBox[{"SymmetrizeSpin", "[", "SpinorChain",
+      "[", "Spinor", "[", "\"Spin\"", ",", " ", "\"Angle\"", ",", " ", "1",
+      "]", ",", " ", "Spinor", "[", "\"Helicity\"", ",", " ", "\"Angle\"",
+      ",", " ", "3", "]", "]", "^", "2", ",", " ", "1", ",", " ", "{", "i",
+      ",", " ", "i", "}", "]"}]], "Input"],
+  Cell[BoxData[SuperscriptBox[TemplateBox[
+      {TemplateBox[{"\"\[LeftAngleBracket]\"", TemplateBox[
+          {StyleBox["1", Bold, StripOnInput -> False], "i"}, "Superscript",
+          SyntaxForm -> SuperscriptBox]}, "RowDefault"],
+       TemplateBox[{"3", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+      "RowDefault"], "2"]], "Output"], Cell["See Also", "SeeAlsoSection"],
+  Cell[TextData[{ButtonBox["SymmetrizeSpins", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SymmetrizeSpins"], "  \[Bullet]  ",
+     ButtonBox["MakeIndicesExplicit", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/MakeIndicesExplicit"],
+     "  \[Bullet]  ", ButtonBox["ChooseSpinIndex", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ChooseSpinIndex"]}], "SeeAlso"],
+  Cell["Related Guides", "MoreAboutSection"],
+  Cell[TextData[{ButtonBox["Spinors, Momenta and Spin Sums",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/guide/SpinorAlgebra"], "  \[Bullet]  ",
+     ButtonBox["HEPCAT: Constructive Amplitudes and Spinor Algebra",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}],
+   "MoreAbout"]}, WindowTitle -> "SymmetrizeSpin - HEPCAT Documentation",
+ Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/ref/SymmetrizeSpin", "title" -> "SymmetrizeSpin",
+     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" -> "Inserts and symmetrizes the little-group indices of one \
+massive particle.", "keywords" -> {"HEPCAT", "SymmetrizeSpin",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

@@ -1,0 +1,93 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT SYMBOL", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/SpinorAlgebra"]}],
+        "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["ExpandMomHatAlt", "ObjectName"],
+  Cell["Expands supported all-line-shift momentum and propagator markers.",
+   "Notes"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"ExpandMomHatAlt", "[", "expr", "]"}]],
+      "InlineFormula"], "  ",
+     "rewrites shifted composite propagators and chain momentum insertions."}]\
+, "Usage"], Cell["Details", "NotesSection"], Cell["A MomHat insertion in a \
+chain becomes Mom plus z MomQ. A shifted composite propagator is expressed \
+using its unshifted PropDen and the channel roots zPlus and zMinus.",
+   "Notes"], Cell["This legacy all-line-shift helper uses the package symbol \
+ConstructiveDiagrams`z. It does not determine the auxiliary q momenta or \
+solve for the roots.", "Notes"], Cell["Preserve the shift definitions and \
+assumptions alongside the result. This is separate from ordinary amplitude \
+preparation.", "Notes"], Cell["Examples", "PrimaryExamplesSection"],
+  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
+     Cell["Evaluate this setup once before the examples. The paths refer to \
+the local HEPCAT checkout; no model parameters are assigned global numerical \
+values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
+         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
+         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
+         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
+         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
+         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
+         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
+         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
+         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
+         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
+         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
+         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
+         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
+         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
+         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
+      "Input", InitializationCell -> True]}, Open]],
+  Cell["Basic Examples", "ExampleSection"],
+  Cell["Expand one shifted chain insertion.", "ExampleText"],
+  Cell[BoxData[RowBox[{"ExpandMomHatAlt", "[", "SpinorChain", "[", "Spinor",
+      "[", "\"Helicity\"", ",", " ", "\"Square\"", ",", " ", "1", "]", ",",
+      " ", "MomHat", "[", "2", "]", ",", " ", "Spinor", "[", "\"Helicity\"",
+      ",", " ", "\"Angle\"", ",", " ", "3", "]", "]", "]"}]], "Input"],
+  Cell[BoxData[RowBox[{TemplateBox[{TemplateBox[{"\"[\"", "1"},
+         "RowDefault"], "\"|\"", SubscriptBox["p", "2"], "\"|\"",
+        TemplateBox[{"3", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+       "RowDefault"], "+", RowBox[{"z", " ", TemplateBox[
+         {TemplateBox[{"\"[\"", "1"}, "RowDefault"], "\"|\"",
+          SubscriptBox["q", "2"], "\"|\"", TemplateBox[
+           {"3", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"]}]}]], "Output"],
+  Cell["Expose both roots of a shifted composite propagator.",
+   "ExampleText"], Cell[BoxData[RowBox[{"ExpandMomHatAlt", "[", "1", "/",
+      "PropDen", "[", "MomHat", "[", "Multiparticle", "[", "1", ",", " ",
+      "3", "]", "]", ",", " ", "m", "]", "]"}]], "Input"],
+  Cell[BoxData[FractionBox[RowBox[{SubsuperscriptBox["\"z\"",
+        RowBox[{"1", ",", "3"}], "\"+\""], " ", SubsuperscriptBox["\"z\"",
+        RowBox[{"1", ",", "3"}], "\"+\""]}],
+     RowBox[{RowBox[{"(", RowBox[{RowBox[{"-", SuperscriptBox["m", "2"]}],
+           "+", SubsuperscriptBox["p", RowBox[{"1", ",", "3"}], "2"]}],
+         ")"}], " ", RowBox[{"(", RowBox[{"z", "-", SubsuperscriptBox[
+            "\"z\"", RowBox[{"1", ",", "3"}], "\"+\""]}], ")"}], " ",
+       RowBox[{"(", RowBox[{"z", "-", SubsuperscriptBox["\"z\"",
+            RowBox[{"1", ",", "3"}], "\"+\""]}], ")"}]}]]], "Output"],
+  Cell["See Also", "SeeAlsoSection"],
+  Cell[TextData[{ButtonBox["ComplexifyMomenta", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ComplexifyMomenta"], "  \[Bullet]  ",
+     ButtonBox["MomQ", BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/MomQ"], "  \[Bullet]  ",
+     ButtonBox["zPlus", BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/zPlus"], "  \[Bullet]  ",
+     ButtonBox["zMinus", BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/zMinus"]}], "SeeAlso"],
+  Cell["Related Guides", "MoreAboutSection"],
+  Cell[TextData[{ButtonBox["Spinors, Momenta and Spin Sums",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/guide/SpinorAlgebra"], "  \[Bullet]  ",
+     ButtonBox["HEPCAT: Constructive Amplitudes and Spinor Algebra",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}],
+   "MoreAbout"]}, WindowTitle -> "ExpandMomHatAlt - HEPCAT Documentation",
+ Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/ref/ExpandMomHatAlt", "title" -> "ExpandMomHatAlt",
+     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" ->
+      "Expands supported all-line-shift momentum and propagator markers.",
+     "keywords" -> {"HEPCAT", "ExpandMomHatAlt", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

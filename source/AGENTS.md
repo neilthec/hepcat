@@ -23,6 +23,9 @@ are relative to the repository root, not to this file.
 - `tests/SIMPLIFICATION.md`: practical guide to identities, on-shell scope,
   worked derivations, and the current checker API. Read this first.
 - `source/HEPCAT.wl`: package loader; loads the source modules below.
+- `Documentation/English/Guides/HEPCAT.nb`: main Mathematica Help guide, with
+  topic guides, worked tutorials, and public symbol references. See
+  `Documentation/README.md` for rebuilding and checking the documentation.
 - `source/HEPCAT-Parameters.wl`: inert model-local parameters and functions,
   parameter lookup, local numerical rules and generic parameter formatting.
 - `source/HEPCAT-Base.wl`: spinor algebra, `ReduceSpinContractions`,

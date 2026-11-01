@@ -1,0 +1,97 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT GUIDE", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}], "AnchorBar"]}},
+     GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"],
+  Cell["HEPCAT: Constructive Amplitudes and Spinor Algebra", "GuideTitle"],
+  Cell["Build, simplify, complete and validate scattering amplitudes with \
+explicit spinor identities.", "GuideAbstract"],
+  Cell["HEPCAT works with helicity and massive spin spinors, constructive \
+amplitude models, tree diagrams and factorization channels. It also reads \
+CalcHEP Feynman models, converts supported tree expressions to spinor \
+products and exports numerical SPINAS processes.", "GuideAbstract"],
+  Cell["Start with a model and an ordered list of external particles. HEPCAT \
+uses all external momenta incoming. Labels 1, 2, ... refer to positions in \
+that list; a physical incoming-to-outgoing process is specified separately \
+when exporting numerical code.", "GuideAbstract"],
+  Cell["ConstructAmplitude runs the normal construction workflow with \
+automatic defaults and a live progress display. The individual diagram, \
+preparation, completion and checking functions are available when you want to \
+inspect each stage.", "GuideAbstract"], Cell["The constructive diagram model \
+supplies elementary amplitudes. The factorization model must contain the \
+complete lower-point amplitudes needed for the requested multiplicity. \
+Missing amplitudes are treated as zero. All parameters stay inside the model, \
+so different models can be used at the same time.", "GuideAbstract"],
+  Cell["A passing numerical check is evidence at the sampled kinematics, not \
+a proof of an analytic identity. Keep the detailed report when investigating \
+a failed or unresolved channel, a spurious denominator or a high-energy \
+limit.", "GuideAbstract"], Cell["Start Here", "GuideFunctionsSubsection"],
+  Cell["A short first calculation and the notation used throughout HEPCAT.",
+   "GuideText"], Cell[TextData[{ButtonBox["Getting Started with HEPCAT",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/tutorial/GettingStarted"], "  \[Bullet]  ",
+     ButtonBox["Constructing and Checking an Amplitude in Stages",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/tutorial/ConstructingAndCheckingAnAmplitude"]}],
+   "GuideTutorial"], Cell["Models, Diagrams and Construction",
+   "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["Models and Model-Local Parameters",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/guide/ModelsAndParameters"], "  \[Bullet]  ",
+     ButtonBox["Diagrams and Factorization Channels", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/guide/DiagramsAndFactorization"],
+     "  \[Bullet]  ", ButtonBox["Constructing and Completing Amplitudes",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/guide/AmplitudeConstruction"]}], "GuideMoreAbout"],
+  Cell["Spinors and Exact Identities", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["Spinors, Momenta and Spin Sums",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/guide/SpinorAlgebra"], "  \[Bullet]  ",
+     ButtonBox["Identities and Simplification", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/guide/IdentitiesAndSimplification"]}],
+   "GuideMoreAbout"],
+  Cell[TextData[{ButtonBox["Applying Spinor Identities in a Derivation",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/tutorial/ApplyingSpinorIdentities"], "  \[Bullet]  ",
+     ButtonBox["Kinematics, References and On-Shell Conditions",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/tutorial/KinematicsAndOnShellConditions"]}],
+   "GuideTutorial"], Cell["Check and Compare Results",
+   "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["Checking Amplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/guide/AmplitudeValidation"],
+     "  \[Bullet]  ", ButtonBox["Feynman Models and Spinor Conversion",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/guide/FeynmanAmplitudes"]}], "GuideMoreAbout"],
+  Cell[TextData[
+    {ButtonBox["Comparing a Constructive Result with Feynman Diagrams",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/tutorial/FeynmanComparison"]}], "GuideTutorial"],
+  Cell["Display, Save and Run Numerical Code", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["Formatting, Model Output and SPINAS Export",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/guide/FormattingAndExport"]}], "GuideMoreAbout"],
+  Cell[TextData[{ButtonBox["Exporting a Numerical SPINAS Process",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/tutorial/ExportingToSPINAS"]}], "GuideTutorial"],
+  Cell["Browse the Package", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["HEPCAT Reference Index", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/guide/ReferenceIndex"], "  \[Bullet]  ",
+     ButtonBox["Reserved and Earlier APIs", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/guide/LegacyAmplitudeSearch"]}],
+   "GuideMoreAbout"]}, WindowTitle -> "HEPCAT: Constructive Amplitudes and \
+Spinor Algebra - HEPCAT Documentation", Saveable -> False,
+ WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/guide/HEPCAT", "title" ->
+      "HEPCAT: Constructive Amplitudes and Spinor Algebra",
+     "type" -> "Guide", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" -> "Build, simplify, complete and validate scattering \
+amplitudes with explicit spinor identities.", "keywords" ->
+      {"HEPCAT", "HEPCAT", "spinor amplitudes"}, "status" -> "None",
+     "index" -> True}}, StyleDefinitions -> FrontEnd`FileName[{"Wolfram"},
+   "Reference.nb"]]

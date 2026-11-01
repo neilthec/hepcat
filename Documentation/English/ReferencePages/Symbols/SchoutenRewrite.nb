@@ -1,0 +1,98 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT SYMBOL", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData ->
+            "paclet:HEPCAT/guide/IdentitiesAndSimplification"]}],
+        "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["SchoutenRewrite", "ObjectName"],
+  Cell["Constructs the generalized Schouten identity for two chains at \
+specified momentum splits.", "Notes"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"SchoutenRewrite", "[", "c1", ",", " ",
+         "c2", ",", " ", "{", "m", ",", " ", "n", "}", "]"}]],
+      "InlineFormula"], "  ", "returns an equivalent two-product expression \
+when the split chiralities agree."}], "Usage"],
+  Cell["Details", "NotesSection"], Cell["m and n count the momentum \
+insertions before the split in c1 and c2. Zero is the split next to the first \
+endpoint; the full insertion count is the split next to the last endpoint.",
+   "Notes"], Cell["Invalid chains, out-of-range splits and incompatible split \
+chiralities return $Failed. Explicit spin-index labels and variances are \
+preserved.", "Notes"], Cell["The returned expression is an identity with no \
+internal-shell or momentum-conservation assumption. It is not necessarily \
+simpler.", "Notes"], Cell["Examples", "PrimaryExamplesSection"],
+  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
+     Cell["Evaluate this setup once before the examples. The paths refer to \
+the local HEPCAT checkout; no model parameters are assigned global numerical \
+values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
+         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
+         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
+         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
+         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
+         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
+         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
+         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
+         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
+         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
+         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
+         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
+         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
+         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
+         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
+      "Input", InitializationCell -> True]}, Open]],
+  Cell["Basic Examples", "ExampleSection"],
+  Cell["Construct the ordinary angle-bracket Schouten identity.",
+   "ExampleText"], Cell[BoxData[RowBox[{"SchoutenRewrite", "[",
+      "SpinorChain", "[", "Spinor", "[", "\"Helicity\"", ",", " ",
+      "\"Angle\"", ",", " ", "1", "]", ",", " ", "Spinor", "[",
+      "\"Helicity\"", ",", " ", "\"Angle\"", ",", " ", "2", "]", "]", ",",
+      " ", "SpinorChain", "[", "Spinor", "[", "\"Helicity\"", ",", " ",
+      "\"Angle\"", ",", " ", "3", "]", ",", " ", "Spinor", "[",
+      "\"Helicity\"", ",", " ", "\"Angle\"", ",", " ", "4", "]", "]", ",",
+      " ", "{", "0", ",", " ", "0", "}", "]"}]], "Input"],
+  Cell[BoxData[RowBox[
+     {RowBox[{"-", RowBox[{"(", RowBox[{TemplateBox[
+             {TemplateBox[{"\"\[LeftAngleBracket]\"", "3"}, "RowDefault"],
+              TemplateBox[{"2", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+             "RowDefault"], " ", TemplateBox[{TemplateBox[{
+                "\"\[LeftAngleBracket]\"", "4"}, "RowDefault"],
+              TemplateBox[{"1", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+             "RowDefault"]}], ")"}]}], "+",
+      RowBox[{TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"", "3"},
+           "RowDefault"], TemplateBox[{"1", "\"\[RightAngleBracket]\""},
+           "RowDefault"]}, "RowDefault"], " ", TemplateBox[
+         {TemplateBox[{"\"\[LeftAngleBracket]\"", "4"}, "RowDefault"],
+          TemplateBox[{"2", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"]}]}]], "Output"],
+  Cell["Reject a split beyond the chain length.", "ExampleText"],
+  Cell[BoxData[RowBox[{"SchoutenRewrite", "[", "SpinorChain", "[", "Spinor",
+      "[", "\"Helicity\"", ",", " ", "\"Angle\"", ",", " ", "1", "]", ",",
+      " ", "Spinor", "[", "\"Helicity\"", ",", " ", "\"Angle\"", ",", " ",
+      "2", "]", "]", ",", " ", "SpinorChain", "[", "Spinor", "[",
+      "\"Helicity\"", ",", " ", "\"Angle\"", ",", " ", "3", "]", ",", " ",
+      "Spinor", "[", "\"Helicity\"", ",", " ", "\"Angle\"", ",", " ", "4",
+      "]", "]", ",", " ", "{", "1", ",", " ", "0", "}", "]"}]], "Input"],
+  Cell["See Also", "SeeAlsoSection"],
+  Cell[TextData[{ButtonBox["SchoutenCandidates", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SchoutenCandidates"], "  \[Bullet]  ",
+     ButtonBox["SpinorIdentityCandidates", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SpinorIdentityCandidates"],
+     "  \[Bullet]  ", ButtonBox["ReduceSpinorProducts", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReduceSpinorProducts"]}], "SeeAlso"],
+  Cell["Related Guides", "MoreAboutSection"],
+  Cell[TextData[{ButtonBox["Identities and Simplification",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/guide/IdentitiesAndSimplification"], "  \[Bullet]  ",
+     ButtonBox["HEPCAT: Constructive Amplitudes and Spinor Algebra",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}],
+   "MoreAbout"]}, WindowTitle -> "SchoutenRewrite - HEPCAT Documentation",
+ Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/ref/SchoutenRewrite", "title" -> "SchoutenRewrite",
+     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" -> "Constructs the generalized Schouten identity for two \
+chains at specified momentum splits.", "keywords" ->
+      {"HEPCAT", "SchoutenRewrite", "spinor amplitudes"}, "status" -> "None",
+     "index" -> True}}, StyleDefinitions -> FrontEnd`FileName[{"Wolfram"},
+   "Reference.nb"]]

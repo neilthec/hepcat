@@ -1,0 +1,132 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT GUIDE", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}], "AnchorBar"]}},
+     GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["Reserved and Earlier APIs", "GuideTitle"],
+  Cell[
+   "Recognize historical names and use the maintained calculation workflow.",
+   "GuideAbstract"], Cell["Some names remain exported for compatibility with \
+old notebooks but have no callable implementation on this branch. Their \
+individual pages identify that status explicitly. A help page for a reserved \
+name does not make the old algorithm available.", "GuideAbstract"],
+  Cell["Use ConstructAmplitude and the exact identity tools for current \
+constructive work. Machine-learning simplification and evolutionary \
+amplitude-search development are not required by these tools.",
+   "GuideAbstract"], Cell["Current Alternatives",
+   "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["ConstructAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ConstructAmplitude"], ": ", "Construct\
+, complete, simplify and validate an amplitude from its process and two \
+models."}], "GuideText"],
+  Cell[TextData[{ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], ": ", "Simplify \
+diagram pairs or factorization rows while retaining their physical \
+assumptions."}], "GuideText"],
+  Cell[TextData[{ButtonBox["SpinorIdentityCandidates", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SpinorIdentityCandidates"], ": ", "Enu\
+merates legal symbolic identity edits for a diagram or amplitude expression."}\
+], "GuideText"], Cell[TextData[{ButtonBox["ApplySpinorIdentity",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ApplySpinorIdentity"], ": ", "Applies a currently \
+legal identity edit and returns the new expression."}], "GuideText"],
+  Cell["Reserved Names", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["HelicitySpinorHat", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/HelicitySpinorHat"], ": ", "Is a \
+retained protected compatibility symbol without an active public \
+implementation."}], "GuideText"],
+  Cell[TextData[{ButtonBox["SpinSpinorHat", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SpinSpinorHat"], ": ", "Is a retained \
+protected compatibility symbol without an active public implementation."}],
+   "GuideText"], Cell[TextData[{ButtonBox["rSpinor", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/rSpinor"], ": ", "Is a retained \
+protected compatibility symbol without an active public implementation."}],
+   "GuideText"], Cell[TextData[{ButtonBox["MomProdL", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/MomProdL"], ": ", "Is a retained \
+protected compatibility symbol without an active public implementation."}],
+   "GuideText"], Cell[TextData[{ButtonBox["MomProdR", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/MomProdR"], ": ", "Is a retained \
+protected compatibility symbol without an active public implementation."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ReduceXFactorsP",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ReduceXFactorsP"], ": ", "Is a retained protected \
+compatibility symbol without an active public implementation."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ReduceXFactorsM",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ReduceXFactorsM"], ": ", "Is a retained protected \
+compatibility symbol without an active public implementation."}],
+   "GuideText"], Cell[TextData[{ButtonBox["CompareAmpToSquaredAmp",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/CompareAmpToSquaredAmp"], ": ",
+     "Reserved historical amplitude-comparison name."}], "GuideText"],
+  Cell[TextData[{ButtonBox["DeleteRandomConstructiveAmplitude",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/DeleteRandomConstructiveAmplitude"], ": ",
+     "Reserved historical random amplitude-deletion name."}], "GuideText"],
+  Cell[TextData[{ButtonBox["CheckLengthConstructive", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CheckLengthConstructive"], ": ",
+     "Reserved historical random-search length-check name."}], "GuideText"],
+  Cell[TextData[{ButtonBox["CheckNumberOfSpinors", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CheckNumberOfSpinors"], ": ",
+     "Reserved historical random-search spinor-count name."}], "GuideText"],
+  Cell[TextData[{ButtonBox["CreateRandomConstructiveSpinorProduct",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/CreateRandomConstructiveSpinorProduct"], ": ",
+     "Reserved historical random spinor-product generator name."}],
+   "GuideText"], Cell[TextData[{ButtonBox["CreateRandomMassFactor",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/CreateRandomMassFactor"], ": ",
+     "Reserved historical random mass-factor generator name."}],
+   "GuideText"],
+  Cell[TextData[{ButtonBox["CreateRandomConstructiveAmplitudeTerm",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/CreateRandomConstructiveAmplitudeTerm"], ": ",
+     "Reserved historical random term-generator name."}], "GuideText"],
+  Cell[TextData[{ButtonBox["AddRandomConstructiveAmplitudeTerm",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/AddRandomConstructiveAmplitudeTerm"], ": ",
+     "Reserved historical random term-insertion name."}], "GuideText"],
+  Cell[TextData[
+    {ButtonBox["CreateInitialRandomPopulationConstructiveAmplitudes",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/CreateInitialRandomPopulationConstructiveAmplitudes\
+"], ": ", "Reserved historical population-search initializer name."}],
+   "GuideText"], Cell[TextData[{ButtonBox["RandomDeleteSpinorProduct",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/RandomDeleteSpinorProduct"], ": ",
+     "Reserved historical random spinor-deletion name."}], "GuideText"],
+  Cell[TextData[{ButtonBox["RandomAddSpinorProduct", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/RandomAddSpinorProduct"], ": ",
+     "Reserved historical random spinor-insertion name."}], "GuideText"],
+  Cell[TextData[{ButtonBox["RandomChangeCoefficientSpinorProduct",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/RandomChangeCoefficientSpinorProduct"], ": ",
+     "Reserved historical random coefficient-mutation name."}], "GuideText"],
+  Cell[TextData[{ButtonBox["MateConstructiveAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/MateConstructiveAmplitudes"], ": ",
+     "Reserved historical amplitude-population mating name."}], "GuideText"],
+  Cell[TextData[{ButtonBox["MakeNRandomChanges", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/MakeNRandomChanges"], ": ",
+     "Reserved historical random-mutation driver name."}], "GuideText"],
+  Cell[TextData[{ButtonBox["FindAmp", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/FindAmp"], ": ",
+     "Reserved historical amplitude-search name."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ReadVertices", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReadVertices"], ": ",
+     "Reserved historical vertex-reader name."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ConvertVertex", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ConvertVertex"], ": ",
+     "Reserved historical vertex-converter name."}], "GuideText"]},
+ WindowTitle -> "Reserved and Earlier APIs - HEPCAT Documentation",
+ Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/guide/LegacyAmplitudeSearch",
+     "title" -> "Reserved and Earlier APIs", "type" -> "Guide",
+     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Recognize \
+historical names and use the maintained calculation workflow.",
+     "keywords" -> {"HEPCAT", "LegacyAmplitudeSearch", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

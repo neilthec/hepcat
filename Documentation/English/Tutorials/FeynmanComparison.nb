@@ -1,0 +1,123 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT TUTORIAL", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}], "AnchorBar"]}},
+     GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"],
+  Cell["Comparing a Constructive Result with Feynman Diagrams",
+   "TechNoteTitle"],
+  Cell[
+   "Read a Feynman model, convert its diagrams and compare the same process."\
+, "TechNoteText"], Cell[CellGroupData[
+    {Cell["Load HEPCAT", "ExampleSubsection"], Cell["Evaluate this setup once \
+before the examples. The paths refer to the local HEPCAT checkout; no model \
+parameters are assigned global numerical values.", "ExampleText"],
+     Cell[BoxData[RowBox[{"If", "[", "!", "StringQ", "[",
+         "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ", "[",
+         "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
+         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
+         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
+         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
+         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
+         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
+         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
+         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
+         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
+         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
+         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
+         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
+         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
+      "Input", InitializationCell -> True]}, Open]],
+  Cell["Choose Consistent Models", "TechNoteSection"],
+  Cell["The constructive and Feynman model parameters must describe the same \
+masses and couplings. ReadModel keeps them local, so use explicit model data \
+and parameter rules rather than relying on a global symbol left over from \
+another model.", "TechNoteText"], Cell["The bundled QED Feynman model \
+includes the electron mass. Its off-shell internal lines provide an \
+independent comparison with the completed constructive result.",
+   "TechNoteText"], Cell["Read both models and select a four-point process.",
+   "ExampleText"], Cell[BoxData[RowBox[{"qedModel", " ", "=", " ",
+      "ReadModel", "[", "modelDirectory", ",", " ", "2", "]", ";", "\n",
+      "feynmanModel", " ", "=", " ", "ReadModel", "[",
+      "feynmanModelDirectory", ",", " ", "2", "]", ";", "\n", "process", " ",
+      "=", " ", "{", "\"e\"", ",", " ", "\"E\"", ",", " ", "\"A.+\"", ",",
+      " ", "\"A.+\"", "}", ";"}]], "Input"],
+  Cell["Generate and Convert the Feynman Expression", "TechNoteSection"],
+  Cell["The same diagram entry points dispatch on the model type. \
+FeynmanToSpinorProducts contracts supported Lorentz and ordered Dirac \
+structures and reports unsupported cases. Never impose constructive internal \
+numerator on-shell conditions on the Feynman propagators.", "TechNoteText"],
+  Cell["Produce spinor-product Feynman amplitudes.", "ExampleText"],
+  Cell[BoxData[RowBox[{"feynmanDiagrams", " ", "=", " ", "CreateDiagrams",
+      "[", "process", ",", " ", "feynmanModel", "]", ";", "\n",
+      "feynmanAmplitudes", " ", "=", " ", "FeynmanToSpinorProducts", "[",
+      "diagramAmplitudes", "[", "feynmanDiagrams", "]", "]", ";"}]],
+   "Input"], Cell["This example writes files, starts a longer calculation, or \
+requires an optional external tool. Evaluate it when you want to perform that \
+operation.", "ExampleText"], Cell["Prepare with Shared References",
+   "TechNoteSection"], Cell["Use PrepareAmplitudes on the full Feynman list \
+so all diagrams use consistent external references. Changing references \
+independently in individual Feynman diagrams generally changes their sum.",
+   "TechNoteText"],
+  Cell["Use a physical-pole preference consistently across the list.",
+   "ExampleText"], Cell[BoxData[RowBox[{"preparedFeynman", " ", "=", " ",
+      "PrepareAmplitudes", "[", "feynmanAmplitudes", ",", " ",
+      "feynmanModel", ",", " ", "\"PolePreference\"", " ", "->", " ",
+      "\"AllPhysical\"", "]", ";"}]], "Input"],
+  Cell["This example writes files, starts a longer calculation, or requires \
+an optional external tool. Evaluate it when you want to perform that \
+operation.", "ExampleText"], Cell["Compare with a Constructive Result",
+   "TechNoteSection"], Cell["CheckAmplitudes can compare an independently \
+obtained final constructive expression with the Feynman result as well as \
+with its physical channels. See the CheckAmplitudes reference options for the \
+exact comparison input and parameter mapping.", "TechNoteText"],
+  Cell["Inspect discrepancies with a fixed RandomSeed. Agreement at several \
+generic points is a useful regression check; singular limits and analytic \
+identities provide stronger complementary tests.", "TechNoteText"],
+  Cell["Construct the corresponding analytic result.", "ExampleText"],
+  Cell[BoxData[RowBox[{"finalAmplitude", " ", "=", " ", "ConstructAmplitude",
+      "[", "process", ",", " ", "qedModel", ",", " ", "qedModel", "]", ";",
+      "\n", "channels", " ", "=", " ", "FactorizationAmplitudeChannels", "[",
+      "process", ",", " ", "qedModel", "]", ";"}]], "Input"],
+  Cell["This example writes files, starts a longer calculation, or requires \
+an optional external tool. Evaluate it when you want to perform that \
+operation.", "ExampleText"],
+  Cell["Include the independent Feynman expression in the combined report.",
+   "ExampleText"], Cell[BoxData[RowBox[{"CheckAmplitudes", "[",
+      "finalAmplitude", ",", " ", "channels", ",", " ", "qedModel", ",", " ",
+      "\"FeynmanAmplitudes\"", " ", "->", " ", "preparedFeynman", ",", " ",
+      "\"FeynmanModel\"", " ", "->", " ", "feynmanModel", ",", " ",
+      "\"RandomSeed\"", " ", "->", " ", "314159", "]"}]], "Input"],
+  Cell["This example writes files, starts a longer calculation, or requires \
+an optional external tool. Evaluate it when you want to perform that \
+operation.", "ExampleText"], Cell["Related Functions", "SeeAlsoSection"],
+  Cell[TextData[{ButtonBox["ReadModel", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReadModel"], "  \[Bullet]  ",
+     ButtonBox["FeynmanModel", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/FeynmanModel"], "  \[Bullet]  ",
+     ButtonBox["FeynmanToSpinorProducts", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/FeynmanToSpinorProducts"],
+     "  \[Bullet]  ", ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], "  \[Bullet]  ",
+     ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"]}], "SeeAlso"],
+  Cell["Related Guides", "MoreAboutSection"],
+  Cell[TextData[{ButtonBox["Feynman Models and Spinor Conversion",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/guide/FeynmanAmplitudes"], "  \[Bullet]  ",
+     ButtonBox["Checking Amplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/guide/AmplitudeValidation"]}],
+   "MoreAbout"]}, WindowTitle -> "Comparing a Constructive Result with \
+Feynman Diagrams - HEPCAT Documentation", Saveable -> False,
+ WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/tutorial/FeynmanComparison",
+     "title" -> "Comparing a Constructive Result with Feynman Diagrams",
+     "type" -> "Tutorial", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" -> "Read a Feynman model, convert its diagrams and compare the \
+same process.", "keywords" -> {"HEPCAT", "FeynmanComparison",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

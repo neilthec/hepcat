@@ -1,0 +1,2909 @@
+[
+  {
+    "name": "Spinor",
+    "summary": "Represents a massless helicity spinor, a massive spin spinor, or an auxiliary reference spinor.",
+    "syntaxes": [
+      {
+        "input": "Spinor[\"Helicity\", type, i]",
+        "description": "represents a massless external spinor of chirality \"Angle\" or \"Square\"."
+      },
+      {
+        "input": "Spinor[\"Spin\", type, i]",
+        "description": "represents a massive spinor with its little-group index implicit."
+      },
+      {
+        "input": "Spinor[\"Spin\", variance, type, i, index]",
+        "description": "makes the \"Upper\" or \"Lower\" little-group index explicit."
+      },
+      {
+        "input": "Spinor[\"Xi\", type, i]",
+        "description": "represents an auxiliary reference spinor; its label need not be an external particle."
+      }
+    ],
+    "details": [
+      "Spinors form the endpoints of SpinorChain. HEPCAT displays complete chains in angle and square bracket notation automatically.",
+      "External particle labels and little-group indices have different roles. In the five-argument form, the fourth argument labels the particle and the fifth labels its spin index.",
+      "HEPCAT uses all external momenta incoming. Use ReverseMomentum to cross legs in complete amplitude expressions; changing a particle label is not crossing."
+    ],
+    "examples": [
+      {
+        "description": "Form the angle bracket <12>.",
+        "input": "SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]]",
+        "evaluate": true
+      },
+      {
+        "description": "Display a massive spinor with an explicit upper index.",
+        "input": "SpinorChain[Spinor[\"Spin\", \"Upper\", \"Angle\", 1, j], Spinor[\"Helicity\", \"Angle\", 3]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "SpinorChain",
+      "MakeIndicesExplicit",
+      "ChooseSpinIndex",
+      "ReverseMomentum"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "SpinorChain",
+    "summary": "Represents an angle or square spinor bracket, optionally with an ordered sequence of momentum insertions.",
+    "syntaxes": [
+      {
+        "input": "SpinorChain[left, right]",
+        "description": "represents a bracket with two spinor endpoints."
+      },
+      {
+        "input": "SpinorChain[left, Mom[i1], Mom[i2], ..., right]",
+        "description": "represents a momentum chain with its given order."
+      }
+    ],
+    "details": [
+      "Angle and square are represented by Spinor endpoints with type \"Angle\" or \"Square\". An even number of momentum insertions connects equal chiralities; an odd number connects opposite chiralities.",
+      "SpinorChain already has readable notebook formatting. Keep the expression itself for algebra, substitution and export.",
+      "ReduceSpinorProducts applies ordinary spinor identities. ReduceSpinContractions first sews explicit contracted spin indices. Neither a displayed bracket nor a reference spinor alone specifies a physical process."
+    ],
+    "examples": [
+      {
+        "description": "Write a square bracket.",
+        "input": "SpinorChain[Spinor[\"Helicity\", \"Square\", 1], Spinor[\"Helicity\", \"Square\", 2]]",
+        "evaluate": true
+      },
+      {
+        "description": "Write [1|p2|3>.",
+        "input": "SpinorChain[Spinor[\"Helicity\", \"Square\", 1], Mom[2], Spinor[\"Helicity\", \"Angle\", 3]]",
+        "evaluate": true
+      },
+      {
+        "description": "Reduce a repeated massless angle endpoint.",
+        "input": "ReduceSpinorProducts[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 1]]]",
+        "evaluate": true,
+        "expected": "0"
+      }
+    ],
+    "related": [
+      "Spinor",
+      "ReduceSpinorProducts",
+      "ReduceSpinContractions",
+      "PlainText"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "SpinorTrace",
+    "summary": "Represents the ordered chiral trace of momentum matrices.",
+    "syntaxes": [
+      {
+        "input": "SpinorTrace[Mom[i1], Mom[i2], ...]",
+        "description": "represents a momentum-matrix trace."
+      }
+    ],
+    "details": [
+      "The order of momentum arguments matters. Trace reductions use HEPCAT's alternating two-component matrix conventions; this is not an ordinary Mathematica Tr of symbolic vectors.",
+      "ReduceSpinorProducts reduces supported traces and preserves chiral ordering. ExtractEnergy can turn supported chains and traces into explicit two-component matrix expressions."
+    ],
+    "examples": [
+      {
+        "description": "Reduce a two-momentum trace.",
+        "input": "ReduceSpinorProducts[SpinorTrace[Mom[1], Mom[2]]]",
+        "evaluate": true
+      },
+      {
+        "description": "Display an ordered four-momentum trace.",
+        "input": "SpinorTrace[Mom[1], Mom[2], Mom[3], Mom[4]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "SpinorChain",
+      "ReduceSpinorProducts",
+      "ExtractEnergy"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "Mom",
+    "summary": "Represents a momentum insertion in HEPCAT spinor algebra.",
+    "syntaxes": [
+      {
+        "input": "Mom[i]",
+        "description": "constructs the corresponding symbolic object."
+      }
+    ],
+    "details": [
+      "Mom[Multiparticle[i,j,...]] is the sum of the listed particle momenta. A composite label does not make that sum an on-shell external momentum.",
+      "Use Mom inside SpinorChain or PropDen. Use MomProd for a Lorentz scalar product."
+    ],
+    "examples": [
+      {
+        "description": "Inspect a symbolic example.",
+        "input": "SpinorChain[Spinor[\"Helicity\", \"Square\", 1], Mom[2], Spinor[\"Helicity\", \"Angle\", 3]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "Multiparticle",
+      "MomProd",
+      "PropDen"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "Mass",
+    "summary": "Represents the symbolic mass assigned to a particle or a channel.",
+    "syntaxes": [
+      {
+        "input": "Mass[i]",
+        "description": "constructs the corresponding symbolic object."
+      }
+    ],
+    "details": [
+      "Mass[Multiparticle[i,j,...]] labels a channel mass. Diagram mass replacement rules supply its value. The symbol by itself does not impose that channel's on-shell condition.",
+      "Models provide mass parameters, which are separate from these kinematic placeholders. Preparation applies the appropriate replacement rules."
+    ],
+    "examples": [
+      {
+        "description": "Inspect a symbolic example.",
+        "input": "{Mass[1], Mass[Multiparticle[1, 3]]}",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ParticleMass",
+      "MomProd",
+      "PrepareAmplitudes"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "Multiparticle",
+    "summary": "Labels a sum of external particle momenta.",
+    "syntaxes": [
+      {
+        "input": "Multiparticle[i1, i2, ...]",
+        "description": "constructs the corresponding symbolic object."
+      }
+    ],
+    "details": [
+      "Mom[Multiparticle[i,j]] denotes p_i+p_j. Mass[Multiparticle[i,j]] labels the corresponding channel mass.",
+      "Keep Multiparticle as a typed label, rather than replacing every occurrence with Plus: propagators and mass replacement lists rely on this structure."
+    ],
+    "examples": [
+      {
+        "description": "Inspect a symbolic example.",
+        "input": "Mom[Multiparticle[1, 3]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "Mom",
+      "Mass",
+      "MultiparticleDiff"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "MultiparticleDiff",
+    "summary": "Represents a legacy composite label for a difference of particle momenta.",
+    "syntaxes": [
+      {
+        "input": "MultiparticleDiff[i, j]",
+        "description": "constructs the corresponding symbolic object."
+      }
+    ],
+    "details": [
+      "This label is supported by older formatting and scalar-product rules. Current diagram output normally uses Multiparticle and explicit signs in Mom expressions.",
+      "Its formatting resembles a composite momentum label, so use InputForm when the distinction from a sum matters."
+    ],
+    "examples": [
+      {
+        "description": "Inspect a symbolic example.",
+        "input": "InputForm[MultiparticleDiff[1, 2]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "Multiparticle",
+      "Mom"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "Particle",
+    "summary": "Wraps a particle label for older display and export helpers.",
+    "syntaxes": [
+      {
+        "input": "Particle[i]",
+        "description": "constructs the corresponding symbolic object."
+      }
+    ],
+    "details": [
+      "Particle is a symbolic label wrapper. It is not a model particle record, a momentum, or a constructor for diagram states.",
+      "Use a model and its particle-name strings with CreateDiagrams."
+    ],
+    "examples": [
+      {
+        "description": "Inspect a symbolic example.",
+        "input": "InputForm[Particle[1]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "CreateDiagrams",
+      "Spinor"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "MomHat",
+    "summary": "Represents a complex-deformed momentum insertion.",
+    "syntaxes": [
+      {
+        "input": "MomHat[i]",
+        "description": "constructs the corresponding symbolic object."
+      }
+    ],
+    "details": [
+      "This is the shifted counterpart of Mom used by the legacy complex-deformation utilities. Merely adding a hat does not choose or solve a shift.",
+      "UnhatMomenta removes the marker; ExpandComplexMomenta applies supported special-case shift formulas."
+    ],
+    "examples": [
+      {
+        "description": "Inspect a symbolic example.",
+        "input": "ComplexifyMomenta[Mom[1]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "Mom",
+      "ComplexifyMomenta",
+      "UnhatMomenta"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "MomQ",
+    "summary": "Represents an auxiliary q-momentum label in symbolic output.",
+    "syntaxes": [
+      {
+        "input": "MomQ[i]",
+        "description": "constructs the corresponding symbolic object."
+      }
+    ],
+    "details": [
+      "MomQ has display support for auxiliary momenta. It is distinct from the physical Mom head and is not automatically assigned an on-shell mass or numerical value."
+    ],
+    "examples": [
+      {
+        "description": "Inspect a symbolic example.",
+        "input": "InputForm[MomQ[1]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "Mom",
+      "MomHat"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "En",
+    "summary": "Labels the energy of an external particle in explicit spinor formulas.",
+    "syntaxes": [
+      {
+        "input": "En[i]",
+        "description": "constructs the corresponding symbolic object."
+      }
+    ],
+    "details": [
+      "ExtractEnergy returns expressions in En[i], MomMagnitude[i], Theta[i] and Phi[i]. Supply consistent numerical on-shell kinematics before numerical evaluation."
+    ],
+    "examples": [
+      {
+        "description": "Inspect a symbolic example.",
+        "input": "ExtractEnergy[MomProd[1, 2], {{1}, {2}}]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ExtractEnergy",
+      "MomMagnitude",
+      "Theta",
+      "Phi"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "MomMagnitude",
+    "summary": "Labels the magnitude of a particle's spatial momentum.",
+    "syntaxes": [
+      {
+        "input": "MomMagnitude[i]",
+        "description": "constructs the corresponding symbolic object."
+      }
+    ],
+    "details": [
+      "This is the nonnegative spatial momentum magnitude used by explicit spinor evaluation. For a real on-shell massive leg, it obeys p_i^2=En[i]^2-Mass[i]^2."
+    ],
+    "examples": [
+      {
+        "description": "Inspect a symbolic example.",
+        "input": "InputForm[MomMagnitude[1]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "En",
+      "ExtractEnergy",
+      "Theta",
+      "Phi"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "Theta",
+    "summary": "Labels the polar angle used for an explicit momentum or spinor.",
+    "syntaxes": [
+      {
+        "input": "Theta[i]",
+        "description": "constructs the corresponding symbolic object."
+      }
+    ],
+    "details": [
+      "ExtractEnergy uses the spherical momentum convention (E,p sin(theta) cos(phi),p sin(theta) sin(phi),p cos(theta))."
+    ],
+    "examples": [
+      {
+        "description": "Inspect a symbolic example.",
+        "input": "InputForm[Theta[1]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "Phi",
+      "ExtractEnergy",
+      "MomMagnitude"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "Phi",
+    "summary": "Labels the azimuthal angle used for an explicit momentum or spinor.",
+    "syntaxes": [
+      {
+        "input": "Phi[i]",
+        "description": "constructs the corresponding symbolic object."
+      }
+    ],
+    "details": [
+      "The angle appears in the complex phases of two-component spinors and in the spatial momentum components used by ExtractEnergy."
+    ],
+    "examples": [
+      {
+        "description": "Inspect a symbolic example.",
+        "input": "InputForm[Phi[1]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "Theta",
+      "ExtractEnergy"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "Coupling",
+    "summary": "Represents a symbolic indexed coupling in legacy amplitude expressions.",
+    "syntaxes": [
+      {
+        "input": "Coupling[i]",
+        "description": "constructs the corresponding symbolic object."
+      }
+    ],
+    "details": [
+      "Coupling is an inert indexed label with notebook and text formatting. Models usually use model-local parameters and functions instead.",
+      "A Coupling label has no numerical value until the user supplies a rule."
+    ],
+    "examples": [
+      {
+        "description": "Inspect a symbolic example.",
+        "input": "Coupling[1] /. Coupling[1] -> g",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ModelParameter",
+      "ConstructiveAmplitude"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "rr",
+    "summary": "Represents a legacy indexed r label used in formatted expressions.",
+    "syntaxes": [
+      {
+        "input": "rr[i, j]",
+        "description": "constructs the corresponding symbolic object."
+      }
+    ],
+    "details": [
+      "rr is a symbolic display label. It does not compute a spinor product or define a momentum shift by itself."
+    ],
+    "examples": [
+      {
+        "description": "Inspect a symbolic example.",
+        "input": "InputForm[rr[1, 2]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "nice",
+      "SpinorZ"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "sigma",
+    "summary": "Represents a symbolic Pauli-matrix label for legacy display.",
+    "syntaxes": [
+      {
+        "input": "sigma[i]",
+        "description": "constructs the corresponding symbolic object."
+      }
+    ],
+    "details": [
+      "The head has display support, but sigma[i] is not automatically replaced with PauliMatrix[i]. Use Mathematica's PauliMatrix for an explicit numerical matrix."
+    ],
+    "examples": [
+      {
+        "description": "Inspect a symbolic example.",
+        "input": "InputForm[sigma[1]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ExtractEnergy1",
+      "SpinorTrace"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "delta",
+    "summary": "Is a legacy symbolic delta display marker.",
+    "syntaxes": [
+      {
+        "input": "delta",
+        "description": "constructs the corresponding symbolic object."
+      }
+    ],
+    "details": [
+      "This marker has formatting support. It does not implement KroneckerDelta or DiracDelta evaluation."
+    ],
+    "examples": [
+      {
+        "description": "Inspect a symbolic example.",
+        "input": "InputForm[delta]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "sigma",
+      "nice"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "SpinorEps",
+    "summary": "Represents an explicit little-group epsilon tensor.",
+    "syntaxes": [
+      {
+        "input": "SpinorEps[variance, i, j]",
+        "description": "constructs the corresponding symbolic object."
+      }
+    ],
+    "details": [
+      "The variance is \"Upper\" or \"Lower\". ReduceSpinContractions implements supported raising and lowering contractions with explicit massive spinor indices.",
+      "Do not confuse these little-group indices with external particle labels."
+    ],
+    "examples": [
+      {
+        "description": "Inspect a symbolic example.",
+        "input": "InputForm[SpinorEps[\"Lower\", i, j]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ReduceSpinContractions",
+      "Spinor",
+      "MakeIndicesExplicit"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "SpinorZ",
+    "summary": "Represents an indexed auxiliary z object in legacy complex shifts.",
+    "syntaxes": [
+      {
+        "input": "SpinorZ[\"Both\", i, j]",
+        "description": "constructs the corresponding symbolic object."
+      }
+    ],
+    "details": [
+      "Forms with \"Upper\" or \"Lower\" have one index. ReplaceSpinorZ implements a supported massive shift substitution for the two-index form.",
+      "These symbols are auxiliary shift data, not ordinary external spinors."
+    ],
+    "examples": [
+      {
+        "description": "Inspect a symbolic example.",
+        "input": "InputForm[SpinorZ[\"Both\", i, j]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ReplaceSpinorZ",
+      "ComplexifyMomenta"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "Mandelstahm",
+    "summary": "Represents the scalar invariant (p_i+p_j)^2.",
+    "syntaxes": [
+      {
+        "input": "Mandelstahm[i, j]",
+        "description": "constructs the corresponding symbolic object."
+      }
+    ],
+    "details": [
+      "The package uses the spelling Mandelstahm in this symbol name. The displayed notation is s_ij.",
+      "ExtractMandelstahm converts scalar products to these invariants. Its default four-point mode also identifies complementary pairs; specify the true multiplicity for higher-point expressions."
+    ],
+    "examples": [
+      {
+        "description": "Inspect a symbolic example.",
+        "input": "ExtractMandelstahm[2 MomProd[1, 3], 5]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ExtractMandelstahm",
+      "MomProd",
+      "PropDen"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "MandelstahmHat",
+    "summary": "Represents the complex-deformed version of a two-particle invariant.",
+    "syntaxes": [
+      {
+        "input": "MandelstahmHat[i, j]",
+        "description": "constructs the corresponding symbolic object."
+      }
+    ],
+    "details": [
+      "ExtractMandelstahm converts MomProdHat12 and supported hatted propagators to this form. The hat is a deformation marker, not a numerical value."
+    ],
+    "examples": [
+      {
+        "description": "Inspect a symbolic example.",
+        "input": "InputForm[MandelstahmHat[1, 3]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "Mandelstahm",
+      "ComplexifyMomenta"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "zPlus",
+    "summary": "Labels the plus root of a complex-shift pole equation.",
+    "syntaxes": [
+      {
+        "input": "zPlus[channel]",
+        "description": "constructs the corresponding symbolic object."
+      }
+    ],
+    "details": [
+      "This is a symbolic label with display support for a channel-dependent root. It does not solve the pole equation on its own."
+    ],
+    "examples": [
+      {
+        "description": "Inspect a symbolic example.",
+        "input": "InputForm[zPlus[Multiparticle[1, 3]]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "zMinus",
+      "ComplexifyMomenta"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "zMinus",
+    "summary": "Labels the minus root of a complex-shift pole equation.",
+    "syntaxes": [
+      {
+        "input": "zMinus[channel]",
+        "description": "constructs the corresponding symbolic object."
+      }
+    ],
+    "details": [
+      "This is a symbolic label with display support for a channel-dependent root. It does not solve the pole equation on its own."
+    ],
+    "examples": [
+      {
+        "description": "Inspect a symbolic example.",
+        "input": "InputForm[zMinus[Multiparticle[1, 3]]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "zPlus",
+      "ComplexifyMomenta"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "ConstructiveAmplitude",
+    "summary": "Stores a legacy amplitude as a coupling, numerator and denominator.",
+    "syntaxes": [
+      {
+        "input": "ConstructiveAmplitude[coupling, numerator, denominator]",
+        "description": "represents coupling numerator/denominator."
+      }
+    ],
+    "details": [
+      "Notebook formatting displays the quotient, while the underlying expression retains its three fields. Use InputForm or List@@expression to inspect them.",
+      "Some older index and squaring helpers preserve this wrapper. Current construction and completion workflows normally use {massRules,expression} records."
+    ],
+    "examples": [
+      {
+        "description": "Inspect the stored fields.",
+        "input": "List @@ ConstructiveAmplitude[g, n, d]",
+        "evaluate": true,
+        "expected": "{g, n, d}"
+      },
+      {
+        "description": "Convert the wrapper to an ordinary expression.",
+        "input": "ConstructiveAmplitude[g, n, d] /. ConstructiveAmplitude[c_, n_, d_] :> c n/d",
+        "evaluate": true,
+        "expected": "g*n/d"
+      }
+    ],
+    "related": [
+      "SquareAmplitude",
+      "PrepareAmplitudes",
+      "diagramAmplitudes"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "PropDen",
+    "summary": "Represents an off-shell physical propagator denominator.",
+    "syntaxes": [
+      {
+        "input": "PropDen[Mom[channel], m]",
+        "description": "represents p_channel^2-m^2."
+      },
+      {
+        "input": "PropDen[Mom[channel], m, width]",
+        "description": "represents p_channel^2-m^2+I m width."
+      }
+    ],
+    "details": [
+      "PropDen is kept opaque by the modern spinor reducer and identity tools. Diagram-local internal on-shell identities act on numerators and must not set the denominator of the current diagram to zero.",
+      "A denominator records the actual momentum and propagating mass. It is not merely a shorthand for a channel's on-shell condition."
+    ],
+    "examples": [
+      {
+        "description": "Keep the propagator while reducing the numerator.",
+        "input": "ReduceSpinorProducts[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 1]]/PropDen[Mom[Multiparticle[1, 3]], m]]",
+        "evaluate": true,
+        "expected": "0"
+      },
+      {
+        "description": "Inspect the explicit invariant form.",
+        "input": "ExtractMandelstahm[PropDen[Mom[Multiparticle[1, 3]], m], 5]",
+        "evaluate": true,
+        "expected": "Mandelstahm[1, 3] - m^2"
+      }
+    ],
+    "related": [
+      "Mom",
+      "Mass",
+      "ExtractMandelstahm",
+      "PrepareAmplitudes"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "MomProd",
+    "summary": "Represents a Lorentz scalar product of particle or composite momenta.",
+    "syntaxes": [
+      {
+        "input": "MomProd[i, j]",
+        "description": "represents p_i.p_j."
+      },
+      {
+        "input": "MomProd[Multiparticle[i1, ...], j]",
+        "description": "expands the scalar product over a momentum sum."
+      }
+    ],
+    "details": [
+      "The arguments are particle labels, rather than Mom wrappers. The scalar product is symmetric and bilinear for supported signed and composite labels.",
+      "MomProd[i,i] evaluates to Mass[i]^2. This is the external mass identity for a single label. No diagram-specific internal channel condition is inferred from MomProd[i,j].",
+      "For the diagram with (p_i+p_j)^2=m_channel^2, PrepareAmplitudes can separately apply 2 p_i.p_j=m_channel^2-m_i^2-m_j^2 in its numerator."
+    ],
+    "examples": [
+      {
+        "description": "Expand a composite scalar product.",
+        "input": "MomProd[Multiparticle[1, 2], 3]",
+        "evaluate": true
+      },
+      {
+        "description": "Use the external mass identity.",
+        "input": "MomProd[1, 1]",
+        "evaluate": true,
+        "expected": "Mass[1]^2"
+      }
+    ],
+    "related": [
+      "Mom",
+      "Mass",
+      "ExtractMandelstahm",
+      "PrepareAmplitudes"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "MomProdHat1",
+    "summary": "Represents a scalar product involving complex-deformed momenta.",
+    "syntaxes": [
+      {
+        "input": "MomProdHat1[i, j]",
+        "description": "represents a scalar product with the first momentum shifted and the second unshifted."
+      }
+    ],
+    "details": [
+      "These markers are used by ComplexifyMomenta and ExpandComplexMomenta. They distinguish which scalar-product factors belong to a deformation.",
+      "The marker is not a prescription for an arbitrary shift. Use the supported deformation utilities with consistent masses and shift legs."
+    ],
+    "examples": [
+      {
+        "description": "Inspect the deformation marker.",
+        "input": "InputForm[MomProdHat1[1, 3]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "MomProd",
+      "ComplexifyMomenta",
+      "ExpandComplexMomenta"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "MomProdHat2",
+    "summary": "Represents a scalar product involving complex-deformed momenta.",
+    "syntaxes": [
+      {
+        "input": "MomProdHat2[i, j]",
+        "description": "represents a scalar product with the first momentum unshifted and the second shifted."
+      }
+    ],
+    "details": [
+      "These markers are used by ComplexifyMomenta and ExpandComplexMomenta. They distinguish which scalar-product factors belong to a deformation.",
+      "The marker is not a prescription for an arbitrary shift. Use the supported deformation utilities with consistent masses and shift legs."
+    ],
+    "examples": [
+      {
+        "description": "Inspect the deformation marker.",
+        "input": "InputForm[MomProdHat2[1, 3]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "MomProd",
+      "ComplexifyMomenta",
+      "ExpandComplexMomenta"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "MomProdHat12",
+    "summary": "Represents a scalar product involving complex-deformed momenta.",
+    "syntaxes": [
+      {
+        "input": "MomProdHat12[i, j]",
+        "description": "represents a scalar product with both momenta shifted."
+      }
+    ],
+    "details": [
+      "These markers are used by ComplexifyMomenta and ExpandComplexMomenta. They distinguish which scalar-product factors belong to a deformation.",
+      "The marker is not a prescription for an arbitrary shift. Use the supported deformation utilities with consistent masses and shift legs."
+    ],
+    "examples": [
+      {
+        "description": "Inspect the deformation marker.",
+        "input": "InputForm[MomProdHat12[1, 3]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "MomProd",
+      "ComplexifyMomenta",
+      "ExpandComplexMomenta"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "SpinorHat",
+    "summary": "Represents a spinor whose momentum has been complex-deformed.",
+    "syntaxes": [
+      {
+        "input": "SpinorHat[kind, type, i]",
+        "description": "marks a helicity, massive or reference spinor as shifted."
+      },
+      {
+        "input": "SpinorHat[\"Spin\", variance, type, i, index]",
+        "description": "retains an explicit massive little-group index on a shifted spinor."
+      }
+    ],
+    "details": [
+      "The argument conventions mirror Spinor. Supported hatted identities and complex-shift substitutions preserve chirality and explicit index placement.",
+      "A hat alone does not specify the shift parameter or an on-shell solution. UnhatMomenta removes the marker without proving that a shifted expression equals the original."
+    ],
+    "examples": [
+      {
+        "description": "Mark the spinors in a chain as shifted.",
+        "input": "ComplexifyMomenta[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "Spinor",
+      "ComplexifyMomenta",
+      "UnhatMomenta"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "SpinorChainReduced",
+    "summary": "Is the rule-bearing reduction head used internally for SpinorChain.",
+    "syntaxes": [
+      {
+        "input": "SpinorChainReduced[args]",
+        "description": "exposes the automatic elementary reduction rules."
+      }
+    ],
+    "details": [
+      "Use ReduceSpinorProducts on ordinary SpinorChain expressions in normal calculations. The reducer manages the conversion to and from this head and runs additional bounded simplification passes.",
+      "Direct use can be useful for inspecting an elementary rule, but bypasses the full public reduction workflow."
+    ],
+    "examples": [
+      {
+        "description": "Inspect an elementary reduction.",
+        "input": "SpinorChainReduced[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 1]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ReduceSpinorProducts",
+      "SpinorChain"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "SpinorTraceReduced",
+    "summary": "Is the rule-bearing reduction head used internally for SpinorTrace.",
+    "syntaxes": [
+      {
+        "input": "SpinorTraceReduced[args]",
+        "description": "exposes the automatic elementary reduction rules."
+      }
+    ],
+    "details": [
+      "Use ReduceSpinorProducts on ordinary SpinorTrace expressions in normal calculations. The reducer manages the conversion to and from this head and runs additional bounded simplification passes.",
+      "Direct use can be useful for inspecting an elementary rule, but bypasses the full public reduction workflow."
+    ],
+    "examples": [
+      {
+        "description": "Inspect an elementary reduction.",
+        "input": "SpinorTraceReduced[Mom[1], Mom[2]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ReduceSpinorProducts",
+      "SpinorTrace"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "xFactor",
+    "summary": "Represents a constructive three-point x-factor.",
+    "syntaxes": [
+      {
+        "input": "xFactor[massiveLegOrComposite, masslessLegOrComposite]",
+        "description": "records the ordered x-factor labels."
+      }
+    ],
+    "details": [
+      "x-factors carry reference-spinor information until expanded or reduced. Modern diagramAmplitudes expands supported external x-factors before returning amplitudes.",
+      "For existing expressions, ExpandXFactors requires the diagram and model information. The older ReducexFactors utility uses four-point channel assumptions explicitly."
+    ],
+    "examples": [
+      {
+        "description": "Inspect an x-factor without imposing a reference choice.",
+        "input": "InputForm[xFactor[1, 3]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ExpandXFactors",
+      "xTildeFactor",
+      "ReducexFactors",
+      "diagramAmplitudes"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "xTildeFactor",
+    "summary": "Represents a constructive three-point x-factor.",
+    "syntaxes": [
+      {
+        "input": "xTildeFactor[massiveLegOrComposite, masslessLegOrComposite]",
+        "description": "records the ordered x-factor labels."
+      }
+    ],
+    "details": [
+      "x-factors carry reference-spinor information until expanded or reduced. Modern diagramAmplitudes expands supported external x-factors before returning amplitudes.",
+      "For existing expressions, ExpandXFactors requires the diagram and model information. The older ReducexFactors utility uses four-point channel assumptions explicitly."
+    ],
+    "examples": [
+      {
+        "description": "Inspect an x-factor without imposing a reference choice.",
+        "input": "InputForm[xTildeFactor[1, 3]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ExpandXFactors",
+      "xFactor",
+      "ReducexFactors",
+      "diagramAmplitudes"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "applyToNumerator",
+    "summary": "Applies rules or a function to the numerator of each additive term in its existing form.",
+    "syntaxes": [
+      {
+        "input": "applyToNumerator[expr, rules]",
+        "description": "applies one replacement rule or a list of rules to each term's numerator."
+      }
+    ],
+    "details": [
+      "The function does not first combine denominators with Together and does not expand the expression. Each term of the sum as supplied is handled independently.",
+      "The denominator of each existing term is preserved. This makes it useful when applying diagram-local numerator identities while keeping physical propagators off shell.",
+      "Ordinary Mathematica evaluation of the input still occurs before the function receives it. It cannot undo simplifications already made by the evaluator."
+    ],
+    "examples": [
+      {
+        "description": "Replace numerator symbols without altering their denominators.",
+        "input": "applyToNumerator[(a + b)/d + c/e, {a -> x, c -> y}]",
+        "evaluate": true
+      },
+      {
+        "description": "Transform a factored numerator without expansion.",
+        "input": "applyToNumerator[(a + b)^2/d, {a -> x}]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ReduceSpinorProducts",
+      "PrepareAmplitudes"
+    ],
+    "guide": "IdentitiesAndSimplification"
+  },
+  {
+    "name": "ReduceSpinContractions",
+    "summary": "Sews contracted massive or massless spinor indices into shorter momentum chains.",
+    "syntaxes": [
+      {
+        "input": "ReduceSpinContractions[expr]",
+        "description": "applies supported spin-sum and little-group contraction identities."
+      }
+    ],
+    "details": [
+      "Apply this to diagram products before ordinary spinor reduction. Matching repeated upper and lower massive indices are contracted with HEPCAT's epsilon and completeness conventions.",
+      "Massless completeness also joins a pair of chains through a matching helicity leg. Powers and spectator factors are supported.",
+      "This function contracts indices already present in the expression. It does not average initial spins, add symmetry factors, or choose a process."
+    ],
+    "examples": [
+      {
+        "description": "Sew massless spinors through leg 3.",
+        "input": "ReduceSpinContractions[SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 3]] SpinorChain[Spinor[\"Helicity\", \"Square\", 3], Spinor[\"Spin\", \"Square\", 4]]]",
+        "evaluate": true
+      },
+      {
+        "description": "Sew a repeated massive little-group index.",
+        "input": "ReduceSpinContractions[SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Spinor[\"Spin\", \"Upper\", \"Angle\", 2, j]] SpinorChain[Spinor[\"Spin\", \"Lower\", \"Square\", 2, j], Spinor[\"Spin\", \"Square\", 4]]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ReduceSpinorProducts",
+      "SquareAmplitude",
+      "ExpandSummation"
+    ],
+    "guide": "IdentitiesAndSimplification"
+  },
+  {
+    "name": "ReduceSpinorProducts",
+    "summary": "Reduces spinor chains and traces using ordinary identities and external on-shell conditions.",
+    "syntaxes": [
+      {
+        "input": "ReduceSpinorProducts[expr]",
+        "description": "returns a reduced expression using bounded, directed algebraic passes."
+      }
+    ],
+    "details": [
+      "The reducer handles chain reversal, momentum-slot linearity, supported Clifford contractions, external Dirac equations, Schouten contractions and exact polynomial/rational simplifications.",
+      "It does not infer total momentum conservation and does not impose diagram-local internal on-shell conditions. PrepareAmplitudes supplies process information for those additional operations.",
+      "Momentum sums and Multiparticle insertions can be expanded where useful. Shared scalar factors and opaque physical PropDen factors are retained where possible.",
+      "Automatic rules have a directed simplification order and finite expansion limits. The result is not a proof of a globally minimal form. For an explicit derivation, retain each SpinorIdentityCandidates edit and its assumptions."
+    ],
+    "examples": [
+      {
+        "description": "Remove a diagonal massless angle bracket.",
+        "input": "ReduceSpinorProducts[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 1]]]",
+        "evaluate": true,
+        "expected": "0"
+      },
+      {
+        "description": "Contract adjacent copies of an external momentum.",
+        "input": "ReduceSpinorProducts[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Mom[3], Mom[3], Spinor[\"Helicity\", \"Angle\", 2]]]",
+        "evaluate": true
+      },
+      {
+        "description": "Distribute a momentum sum in a chain.",
+        "input": "ReduceSpinorProducts[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Mom[2] + Mom[3], Spinor[\"Helicity\", \"Square\", 4]]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ReduceSpinContractions",
+      "PrepareAmplitudes",
+      "ApplySpinorIdentity",
+      "SpinorExpressionComplexity"
+    ],
+    "guide": "IdentitiesAndSimplification"
+  },
+  {
+    "name": "SimplifySpinorProducts",
+    "summary": "Runs the older iterative momentum-conservation and spinor simplifier.",
+    "syntaxes": [
+      {
+        "input": "SimplifySpinorProducts[expr, opts]",
+        "description": "runs a directed iterative simplification with declared momenta and mass rules."
+      }
+    ],
+    "details": [
+      "This older routine contains specialized three- and four-point momentum-conservation rules. For current general diagram workflows, use PrepareAmplitudes; for process-independent algebra, use ReduceSpinorProducts.",
+      "Its option keys are symbols: Momenta, InternalLines, InternalLineOnShell, nTimes, massReplacementRules and PrintWarnings. This differs from the string option names used by the modern preparation and identity APIs.",
+      "Defaults include Momenta->{1,2,3,4}, InternalLines->{1,2}, InternalLineOnShell->False and nTimes->10. Turning on InternalLineOnShell changes the allowed numerator assumptions and must be restricted to an individual diagram.",
+      "The routine may print its conservation assumptions. Disable PrintWarnings when they have already been inspected."
+    ],
+    "examples": [
+      {
+        "description": "Run one iteration without internal-shell assumptions.",
+        "input": "SimplifySpinorProducts[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 1]], nTimes -> 1, PrintWarnings -> False]",
+        "evaluate": true,
+        "expected": "0"
+      },
+      {
+        "description": "Inspect the legacy option names.",
+        "input": "Options[SimplifySpinorProducts]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ReduceSpinorProducts",
+      "PrepareAmplitudes",
+      "ReducexFactors"
+    ],
+    "guide": "IdentitiesAndSimplification"
+  },
+  {
+    "name": "ExtractMandelstahm",
+    "summary": "Rewrites scalar momentum products and supported two-particle propagators using s invariants.",
+    "syntaxes": [
+      {
+        "input": "ExtractMandelstahm[expr]",
+        "description": "uses the historical four-point convention."
+      },
+      {
+        "input": "ExtractMandelstahm[expr, n]",
+        "description": "uses n-point kinematics, applying complementary-pair identifications only when n is 4."
+      }
+    ],
+    "details": [
+      "For i different from j, MomProd[i,j] becomes (Mandelstahm[i,j]-Mass[i]^2-Mass[j]^2)/2.",
+      "The default four-point mode identifies s34=s12, s24=s13 and s23=s14. These equalities require four-point momentum conservation; specify the actual higher multiplicity when they do not apply.",
+      "This is an explicit representation conversion. It need not make an expression simpler, and differs from diagram-local internal on-shell reduction."
+    ],
+    "examples": [
+      {
+        "description": "Convert one scalar product without four-point pair identifications.",
+        "input": "ExtractMandelstahm[2 MomProd[3, 4], 5]",
+        "evaluate": true
+      },
+      {
+        "description": "Observe the historical four-point complement convention.",
+        "input": "ExtractMandelstahm[Mandelstahm[3, 4]]",
+        "evaluate": true,
+        "expected": "Mandelstahm[1, 2]"
+      }
+    ],
+    "related": [
+      "Mandelstahm",
+      "MomProd",
+      "PropDen"
+    ],
+    "guide": "IdentitiesAndSimplification"
+  },
+  {
+    "name": "ReducexFactors",
+    "summary": "Reduces legacy x-factor expressions using an explicitly declared four-point channel.",
+    "syntaxes": [
+      {
+        "input": "ReducexFactors[expr, opts]",
+        "description": "applies the supported xFactorReduced and xTildeFactorReduced rules."
+      }
+    ],
+    "details": [
+      "The lowercase x in ReducexFactors is part of the actual function name. The default symbolic options are Momenta->{1,2,3,4}, ChannelMomenta->{1,4} and ChannelMass->Mchannel.",
+      "These are older specialized four-point identities. Supply the correct channel and do not use them to assume unrelated internal lines are on shell in a summed amplitude.",
+      "For current diagram output, external x-factor expansion is normally already performed by diagramAmplitudes; see ExpandXFactors for an explicit model-aware operation."
+    ],
+    "examples": [
+      {
+        "description": "Inspect the channel assumptions before using this legacy helper.",
+        "input": "Options[ReducexFactors]",
+        "evaluate": true
+      },
+      {
+        "description": "Convert an elementary x-factor to the legacy reduced head.",
+        "input": "InputForm[ReducexFactors[xFactor[1, 2]]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "xFactor",
+      "xTildeFactor",
+      "ExpandXFactors",
+      "PrepareAmplitudes"
+    ],
+    "guide": "IdentitiesAndSimplification"
+  },
+  {
+    "name": "ReduceColor",
+    "summary": "Reduces legacy SU(3) generator and structure-constant expressions to traces.",
+    "syntaxes": [
+      {
+        "input": "ReduceColor[expr]",
+        "description": "applies supported fundamental-color trace and completeness identities."
+      }
+    ],
+    "details": [
+      "This older helper works with colorT, colorf and colorTrace heads, not the newer Feynman ColorGenerator and ColorStructure representation.",
+      "The rules use SU(3) numerical coefficients, including Tr[1]=3 and the 1/3 completeness term. It is not a general SU(N) reducer.",
+      "Repeated adjoint indices trigger completeness identities; uncontracted traces can remain symbolic."
+    ],
+    "examples": [
+      {
+        "description": "Reduce the trace of a single SU(3) generator.",
+        "input": "ReduceColor[ConstructiveDiagrams`colorTrace[ConstructiveDiagrams`colorT[a]]]",
+        "evaluate": true,
+        "expected": "0"
+      },
+      {
+        "description": "Reduce the empty color trace.",
+        "input": "ReduceColor[ConstructiveDiagrams`colorTrace[]]",
+        "evaluate": true,
+        "expected": "3"
+      }
+    ],
+    "related": [
+      "ColorGenerator",
+      "ColorStructure"
+    ],
+    "guide": "IdentitiesAndSimplification"
+  },
+  {
+    "name": "SchoutenRewrite",
+    "summary": "Constructs the generalized Schouten identity for two chains at specified momentum splits.",
+    "syntaxes": [
+      {
+        "input": "SchoutenRewrite[c1, c2, {m, n}]",
+        "description": "returns an equivalent two-product expression when the split chiralities agree."
+      }
+    ],
+    "details": [
+      "m and n count the momentum insertions before the split in c1 and c2. Zero is the split next to the first endpoint; the full insertion count is the split next to the last endpoint.",
+      "Invalid chains, out-of-range splits and incompatible split chiralities return $Failed. Explicit spin-index labels and variances are preserved.",
+      "The returned expression is an identity with no internal-shell or momentum-conservation assumption. It is not necessarily simpler."
+    ],
+    "examples": [
+      {
+        "description": "Construct the ordinary angle-bracket Schouten identity.",
+        "input": "SchoutenRewrite[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]], SpinorChain[Spinor[\"Helicity\", \"Angle\", 3], Spinor[\"Helicity\", \"Angle\", 4]], {0, 0}]",
+        "evaluate": true
+      },
+      {
+        "description": "Reject a split beyond the chain length.",
+        "input": "SchoutenRewrite[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]], SpinorChain[Spinor[\"Helicity\", \"Angle\", 3], Spinor[\"Helicity\", \"Angle\", 4]], {1, 0}]",
+        "evaluate": true,
+        "expected": "$Failed"
+      }
+    ],
+    "related": [
+      "SchoutenCandidates",
+      "SpinorIdentityCandidates",
+      "ReduceSpinorProducts"
+    ],
+    "guide": "IdentitiesAndSimplification"
+  },
+  {
+    "name": "SchoutenCandidates",
+    "summary": "Lists exact generalized Schouten edits available in an expression.",
+    "syntaxes": [
+      {
+        "input": "SchoutenCandidates[expr]",
+        "description": "returns edit associations for eligible pairs of chains and splits."
+      }
+    ],
+    "details": [
+      "Each edit includes its Name, Subtract, Insert, Chains and Splits. The Subtract and Insert expressions include the appropriate spectator factors.",
+      "The function does not choose the best edit and does not use a neural model. No internal on-shell condition is assumed.",
+      "Inspect an edit by applying expr-edit[\"Subtract\"]+edit[\"Insert\"]. For the modern context-validated editing API, use SpinorIdentityCandidates and ApplySpinorIdentity."
+    ],
+    "examples": [
+      {
+        "description": "Inspect the available Schouten identities.",
+        "input": "SchoutenCandidates[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]] SpinorChain[Spinor[\"Helicity\", \"Angle\", 3], Spinor[\"Helicity\", \"Angle\", 4]]]",
+        "evaluate": true
+      },
+      {
+        "description": "Verify that a candidate records its replacement fields.",
+        "input": "Keys[First[SchoutenCandidates[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]] SpinorChain[Spinor[\"Helicity\", \"Angle\", 3], Spinor[\"Helicity\", \"Angle\", 4]]]]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "SchoutenRewrite",
+      "SpinorIdentityCandidates",
+      "ApplySpinorIdentity"
+    ],
+    "guide": "IdentitiesAndSimplification"
+  },
+  {
+    "name": "SpinorIdentityCandidates",
+    "summary": "Enumerates legal symbolic identity edits for a diagram or amplitude expression.",
+    "syntaxes": [
+      {
+        "input": "SpinorIdentityCandidates[{massRules, expr}, opts]",
+        "description": "returns available exact edit associations."
+      }
+    ],
+    "details": [
+      "The input pair is a list of mass replacement rules together with its expression, as returned for one diagram by diagramAmplitudes.",
+      "The string option \"OnShellChannels\"->Automatic permits only the diagram's declared internal channels. Use \"OnShellChannels\"->{} for an ordinary combined amplitude whose internal lines must remain off shell.",
+      "The string option \"MomentumConservation\" defaults to True. Set it False when the external momentum information does not justify a conservation replacement.",
+      "Each edit records a name and symbolic replacement. The function canonicalizes chains and applies linearity before enumeration. It does not score the edits or promise that the first is a useful simplification.",
+      "PropDen factors remain opaque. Use the same options when applying an edit with ApplySpinorIdentity."
+    ],
+    "examples": [
+      {
+        "description": "List identities without internal-shell or conservation assumptions.",
+        "input": "SpinorIdentityCandidates[{{}, SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]] SpinorChain[Spinor[\"Helicity\", \"Angle\", 3], Spinor[\"Helicity\", \"Angle\", 4]]}, \"OnShellChannels\" -> {}, \"MomentumConservation\" -> False]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ApplySpinorIdentity",
+      "SchoutenCandidates",
+      "ComplicateAmplitude",
+      "PrepareAmplitudes"
+    ],
+    "guide": "IdentitiesAndSimplification"
+  },
+  {
+    "name": "ApplySpinorIdentity",
+    "summary": "Applies a currently legal identity edit and returns the new expression.",
+    "syntaxes": [
+      {
+        "input": "ApplySpinorIdentity[{massRules, expr}, edit, opts]",
+        "description": "validates and applies an edit returned by SpinorIdentityCandidates."
+      }
+    ],
+    "details": [
+      "An edit must be legal for the supplied expression and for the same on-shell and momentum-conservation settings used during enumeration. Stale or incompatible edits return $Failed and a message.",
+      "The returned value is the new expression. Preserve the massRules yourself when forming the next state pair.",
+      "Keep a list of Before, After and the edit association when building a reproducible derivation. An edit's availability does not mean that it improves the complexity measure."
+    ],
+    "examples": [
+      {
+        "description": "Choose and apply a legal edit.",
+        "input": "Module[{pair = {{}, SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]] SpinorChain[Spinor[\"Helicity\", \"Angle\", 3], Spinor[\"Helicity\", \"Angle\", 4]]}, edits}, edits = SpinorIdentityCandidates[pair, \"OnShellChannels\" -> {}, \"MomentumConservation\" -> False]; ApplySpinorIdentity[pair, First[edits], \"OnShellChannels\" -> {}, \"MomentumConservation\" -> False]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "SpinorIdentityCandidates",
+      "SpinorExpressionComplexity",
+      "ComplicateAmplitude"
+    ],
+    "guide": "IdentitiesAndSimplification"
+  },
+  {
+    "name": "SpinorExpressionComplexity",
+    "summary": "Returns a scalar complexity score for a spinor expression.",
+    "syntaxes": [
+      {
+        "input": "SpinorExpressionComplexity[expr]",
+        "description": "counts terms, momentum insertions and scalar momentum products with the package's simplification weights."
+      }
+    ],
+    "details": [
+      "Composite momentum slots contribute their implicit branches: Mom[Multiparticle[1,3]] is not treated as a single elementary insertion.",
+      "Physical PropDen factors are opaque to this score. The measure is a heuristic for selecting smaller algebraic representations, not an invariant of the amplitude or a proof of minimality."
+    ],
+    "examples": [
+      {
+        "description": "Compare a bracket with a chain containing two momentum insertions.",
+        "input": "{SpinorExpressionComplexity[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]]], SpinorExpressionComplexity[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Mom[3], Mom[4], Spinor[\"Helicity\", \"Angle\", 2]]]}",
+        "evaluate": true
+      },
+      {
+        "description": "Inspect a single expression's score.",
+        "input": "SpinorExpressionComplexity[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ReduceSpinorProducts",
+      "SpinorIdentityCandidates",
+      "PrepareAmplitudes"
+    ],
+    "guide": "IdentitiesAndSimplification"
+  },
+  {
+    "name": "ComplicateAmplitude",
+    "summary": "Generates a model-free random sequence of reversible symbolic identities.",
+    "syntaxes": [
+      {
+        "input": "ComplicateAmplitude[{massRules, expr}, n]",
+        "description": "applies up to n eligible random edits; n defaults to 5."
+      },
+      {
+        "input": "ComplicateAmplitude[{massRules, expr}, n, RandomSeed -> seed, \"RecordSteps\" -> True]",
+        "description": "records a reproducible trajectory."
+      }
+    ],
+    "details": [
+      "The returned association contains MassRules, Original, Expression and Steps. With \"RecordSteps\"->True it also includes Trajectory, whose entries contain Before, After and Candidate.",
+      "The string options \"OnShellChannels\" and \"MomentumConservation\" have the same meaning as in SpinorIdentityCandidates. RandomSeed is a symbolic option; Automatic uses the ordinary random state.",
+      "The routine is useful for testing identity replay and generating exact equivalent forms. Random scrambling need not monotonically increase complexity, and fewer than n moves can occur when no eligible move remains."
+    ],
+    "examples": [
+      {
+        "description": "Generate and retain a short repeatable identity trajectory.",
+        "input": "ComplicateAmplitude[{{}, SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]] SpinorChain[Spinor[\"Helicity\", \"Angle\", 3], Spinor[\"Helicity\", \"Angle\", 4]]}, 2, RandomSeed -> 17, \"RecordSteps\" -> True, \"OnShellChannels\" -> {}, \"MomentumConservation\" -> False]",
+        "evaluate": true
+      },
+      {
+        "description": "Request no edits.",
+        "input": "ComplicateAmplitude[{{}, SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]]}, 0][\"Steps\"]",
+        "evaluate": true,
+        "expected": "0"
+      }
+    ],
+    "related": [
+      "SpinorIdentityCandidates",
+      "ApplySpinorIdentity",
+      "SpinorExpressionComplexity"
+    ],
+    "guide": "IdentitiesAndSimplification"
+  },
+  {
+    "name": "ReverseMomentum",
+    "summary": "Crosses selected external legs in complete spinor amplitude expressions.",
+    "syntaxes": [
+      {
+        "input": "ReverseMomentum[expr, i]",
+        "description": "reverses external momentum i."
+      },
+      {
+        "input": "ReverseMomentum[expr, {i1, i2, ...}]",
+        "description": "crosses the listed legs in sequence."
+      }
+    ],
+    "details": [
+      "HEPCAT constructs all momenta incoming. Crossing an outgoing leg changes each angle spinor on that leg by a minus sign, leaves its square spinors unchanged, and reverses its explicit momentum insertions.",
+      "Every repeated occurrence in a chain is counted. Scalar products and propagator momenta are crossed consistently, while coefficients, powers, mass labels and spin-index labels are retained.",
+      "The operation targets supported amplitude structures, including chains, traces, scalar products and propagators. A standalone Mom[i] or Spinor object is not crossed by this legacy interface; use complete expressions.",
+      "Reference Xi labels and complex-shift hats are not ordinary external-leg occurrences. Do not use ReverseMomentum as a general relabeling function."
+    ],
+    "examples": [
+      {
+        "description": "Cross an angle-bracket leg.",
+        "input": "ReverseMomentum[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]], 2]",
+        "evaluate": true
+      },
+      {
+        "description": "Cross the explicit momentum in a chain.",
+        "input": "ReverseMomentum[SpinorChain[Spinor[\"Helicity\", \"Square\", 1], Mom[2], Spinor[\"Helicity\", \"Angle\", 3]], 2]",
+        "evaluate": true
+      },
+      {
+        "description": "Cross a propagator momentum.",
+        "input": "ReverseMomentum[1/PropDen[Mom[1] + Mom[3], m], 3]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "PermuteParticles",
+      "Spinor",
+      "WriteSPINASProcess"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "PermuteParticles",
+    "summary": "Cyclically relabels the specified external particles in typed amplitude expressions.",
+    "syntaxes": [
+      {
+        "input": "PermuteParticles[expr, {i1, i2, ..., in}]",
+        "description": "maps i1 to i2, i2 to i3, and the last label back to i1."
+      }
+    ],
+    "details": [
+      "This function applies one cycle. It does not sum all permutations and does not automatically multiply by a fermion-exchange sign.",
+      "Typed momentum, mass, invariant, spinor and x-factor labels are relabeled. Numerical coefficients and explicit little-group indices are preserved. Xi reference labels are not treated as external particles.",
+      "Apply a sequence of cycles or construct the appropriate exact replacement when a different permutation is required."
+    ],
+    "examples": [
+      {
+        "description": "Cycle three momentum labels.",
+        "input": "PermuteParticles[Mom[1] + 2 Mom[2] + 3 Mom[3], {1, 2, 3}]",
+        "evaluate": true
+      },
+      {
+        "description": "Preserve an explicit spin index.",
+        "input": "PermuteParticles[SpinorChain[Spinor[\"Spin\", \"Upper\", \"Angle\", 2, 7], Spinor[\"Helicity\", \"Angle\", 11]], {2, 7, 11}]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ReverseMomentum",
+      "SymmetrizeSpins",
+      "CreateDiagrams"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "ReverseSequence",
+    "summary": "Reverses a sequence of arguments for use inside another expression.",
+    "syntaxes": [
+      {
+        "input": "ReverseSequence[a1, a2, ..., an]",
+        "description": "returns the arguments in reverse sequence order."
+      }
+    ],
+    "details": [
+      "Unlike Reverse[{a,b,c}], this helper removes the intermediate List wrapper. Its result is intended to splice into the arguments of another head.",
+      "For general Mathematica list manipulation, prefer Reverse; this helper is useful when constructing a reversed spinor-chain argument sequence."
+    ],
+    "examples": [
+      {
+        "description": "Reverse the arguments passed to an inert head.",
+        "input": "f[ReverseSequence[a, b, c]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "SpinorChain",
+      "ReduceSpinorProducts"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "ChooseSpinIndex",
+    "summary": "Selects a physical spin projection for one external massive particle.",
+    "syntaxes": [
+      {
+        "input": "ChooseSpinIndex[expr, i, projection]",
+        "description": "inserts the explicit spin-index combination for particle i."
+      }
+    ],
+    "details": [
+      "Supported projections include spin one half (+1/2 or -1/2) and spin one (+1,0,-1). The longitudinal spin-one state is a normalized sum of the two mixed index assignments.",
+      "These values are physical spin projections, not the doubled-spin integers used by the generated SPINAS C++ interface.",
+      "The function works with implicit massive Spinor indices and expands the input to apply the supported patterns. It is not a sum over spins."
+    ],
+    "examples": [
+      {
+        "description": "Choose the positive spin-half state of leg 1.",
+        "input": "ChooseSpinIndex[SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 3]], 1, 1/2]",
+        "evaluate": true
+      },
+      {
+        "description": "Choose the longitudinal state of a spin-one leg.",
+        "input": "ChooseSpinIndex[SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 3]] SpinorChain[Spinor[\"Spin\", \"Square\", 1], Spinor[\"Helicity\", \"Square\", 4]], 1, 0]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ChooseSpinIndices",
+      "MakeIndicesExplicit",
+      "SymmetrizeSpin"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "ChooseSpinIndices",
+    "summary": "Selects spin projections in external-particle order.",
+    "syntaxes": [
+      {
+        "input": "ChooseSpinIndices[expr, projection1, projection2, ...]",
+        "description": "applies ChooseSpinIndex to legs 1,2,... with the corresponding projections."
+      }
+    ],
+    "details": [
+      "Supply projections as separate arguments, rather than as one list. Each projection has the physical spin units used by ChooseSpinIndex.",
+      "For noncontiguous or selected legs, call ChooseSpinIndex directly. The routine does not infer spins from a model."
+    ],
+    "examples": [
+      {
+        "description": "Choose spin-half projections for both massive endpoints.",
+        "input": "ChooseSpinIndices[SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Spinor[\"Spin\", \"Angle\", 2]], 1/2, -1/2]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ChooseSpinIndex",
+      "ExtractEnergy",
+      "SquareAmplitude"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "MakeIndicesExplicit",
+    "summary": "Replaces implicit massive spin indices with specified explicit upper indices.",
+    "syntaxes": [
+      {
+        "input": "MakeIndicesExplicit[expr, i, {indices}]",
+        "description": "assigns the listed indices to particle i."
+      },
+      {
+        "input": "MakeIndicesExplicit[expr, indexLists]",
+        "description": "assigns the per-particle list at position i to particle i."
+      }
+    ],
+    "details": [
+      "The supported patterns contain one through four spin indices per particle, corresponding to spin one half through spin two. A scalar leg can have an empty index list.",
+      "This is index insertion, not a symmetrized spin state. Use SymmetrizeSpin or ChooseSpinIndex for those operations.",
+      "ConstructiveAmplitude wrappers are supported by acting on their numerator. The implementation expands relevant expressions before matching."
+    ],
+    "examples": [
+      {
+        "description": "Insert one explicit upper little-group index.",
+        "input": "MakeIndicesExplicit[SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 3]], 1, {j}]",
+        "evaluate": true
+      },
+      {
+        "description": "Supply index lists in particle order.",
+        "input": "MakeIndicesExplicit[SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Spinor[\"Spin\", \"Square\", 2]], {{i}, {j}}]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "MakeIndicesImplicit",
+      "SymmetrizeSpin",
+      "ChooseSpinIndex"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "MakeIndicesImplicit",
+    "summary": "Removes supported explicit upper massive spin indices from chains.",
+    "syntaxes": [
+      {
+        "input": "MakeIndicesImplicit[expr]",
+        "description": "replaces explicit upper-index massive Spinor occurrences with their implicit form."
+      }
+    ],
+    "details": [
+      "This legacy helper prints a warning: it assumes that all indices to be removed are upper and uncontracted. It is not a safe inverse of an arbitrary contraction or spin sum.",
+      "Lower indices and already contracted structures require the correct algebra rather than erasing their labels."
+    ],
+    "examples": [
+      {
+        "description": "Remove an uncontracted upper index.",
+        "input": "MakeIndicesImplicit[SpinorChain[Spinor[\"Spin\", \"Upper\", \"Angle\", 1, j], Spinor[\"Helicity\", \"Angle\", 3]]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "MakeIndicesExplicit",
+      "ReduceSpinContractions",
+      "SymmetrizeSpin"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "SymmetrizeSpin",
+    "summary": "Inserts and symmetrizes the little-group indices of one massive particle.",
+    "syntaxes": [
+      {
+        "input": "SymmetrizeSpin[expr, i, {indices}]",
+        "description": "averages the distinct index permutations for particle i."
+      }
+    ],
+    "details": [
+      "The routine acts on the implicit massive spinor factors of the specified particle. It supports one through four indices.",
+      "The average is over distinct permutations, so coincident index labels retain their proper normalization. This is little-group symmetrization, not a permutation of identical external particles.",
+      "Use ChooseSpinIndex to select a normalized physical spin projection."
+    ],
+    "examples": [
+      {
+        "description": "Symmetrize a pair of massive spin indices.",
+        "input": "SymmetrizeSpin[SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 3]] SpinorChain[Spinor[\"Spin\", \"Square\", 1], Spinor[\"Helicity\", \"Square\", 4]], 1, {i, j}]",
+        "evaluate": true
+      },
+      {
+        "description": "Keep a repeated index with unit permutation weight.",
+        "input": "SymmetrizeSpin[SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 3]]^2, 1, {i, i}]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "SymmetrizeSpins",
+      "MakeIndicesExplicit",
+      "ChooseSpinIndex"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "SymmetrizeSpins",
+    "summary": "Symmetrizes massive little-group indices using a list in external-particle order.",
+    "syntaxes": [
+      {
+        "input": "SymmetrizeSpins[expr, indexLists]",
+        "description": "applies SymmetrizeSpin to each particle's index list."
+      }
+    ],
+    "details": [
+      "Supply one list per particle. Empty lists describe particles without massive spin indices.",
+      "The function preserves a ConstructiveAmplitude wrapper when present and acts on its numerator. It does not impose identical-particle exchange symmetry."
+    ],
+    "examples": [
+      {
+        "description": "Assign one index to each massive endpoint.",
+        "input": "SymmetrizeSpins[SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Spinor[\"Spin\", \"Angle\", 2]], {{i}, {j}}]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "SymmetrizeSpin",
+      "MakeIndicesExplicit",
+      "SquareAmplitude"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "ExpandSummation",
+    "summary": "Expands supported contracted massive spin indices into explicit plus/minus half components.",
+    "syntaxes": [
+      {
+        "input": "ExpandSummation[expr]",
+        "description": "writes eligible repeated symbolic indices as a two-component sum."
+      }
+    ],
+    "details": [
+      "The input is expanded before the supported matching index patterns are replaced. A repeated upper/lower index on the same particle is resolved into its two spin-half components.",
+      "This exposes component sums instead of sewing them into momentum insertions. ReduceSpinContractions is usually the more compact alternative.",
+      "The routine does not insert an initial spin average or an identical-particle symmetry factor."
+    ],
+    "examples": [
+      {
+        "description": "Expand a repeated massive upper/lower index.",
+        "input": "ExpandSummation[SpinorChain[Spinor[\"Spin\", \"Upper\", \"Angle\", 1, j], Spinor[\"Helicity\", \"Angle\", 3]] SpinorChain[Spinor[\"Spin\", \"Lower\", \"Square\", 1, j], Spinor[\"Helicity\", \"Square\", 4]]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ReduceSpinContractions",
+      "ChooseSpinIndex",
+      "SquareAmplitude"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "SquareAmplitude",
+    "summary": "Forms the amplitude times its Hermitian conjugate with explicit massive indices.",
+    "syntaxes": [
+      {
+        "input": "SquareAmplitude[expr, spins]",
+        "description": "constructs the conjugate product using the per-particle spins."
+      }
+    ],
+    "details": [
+      "The input should have implicit, uncontracted external massive spin indices, with internal contractions already reduced. The supported spin magnitudes are 0,1/2,1,3/2 and 2.",
+      "The function makes indices explicit in one copy, symmetrizes the other and conjugates the first. It returns their product; further ReduceSpinContractions and ReduceSpinorProducts may be required.",
+      "This helper does not perform an initial spin average or multiply identical-particle phase-space factors. It is not intended for complex-shifted external states."
+    ],
+    "examples": [
+      {
+        "description": "Square a scalar amplitude with no spin indices.",
+        "input": "SquareAmplitude[g, {0, 0}]",
+        "evaluate": true
+      },
+      {
+        "description": "Inspect the unsimplified massive spin product.",
+        "input": "SquareAmplitude[SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Spinor[\"Spin\", \"Angle\", 2]], {1/2, 1/2}]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ReduceSpinContractions",
+      "ReduceSpinorProducts",
+      "SymmetrizeSpins",
+      "WriteSPINASProcess"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "ExtractEnergy",
+    "summary": "Evaluates supported spinor chains as explicit energy-angle matrix expressions.",
+    "syntaxes": [
+      {
+        "input": "ExtractEnergy[expr, particleSpins]",
+        "description": "substitutes momentum matrices and two-component spinors for the listed particles."
+      }
+    ],
+    "details": [
+      "A massless or scalar entry can be {particle}. A massive spin entry is {particle,spin,projection}, using physical spin values such as {1,1/2,1/2}.",
+      "Results use En[i], MomMagnitude[i], Theta[i] and Phi[i]. The spatial momentum convention is p(sin(theta)cos(phi),sin(theta)sin(phi),cos(theta)).",
+      "Internally, ExtractEnergy1 substitutes momentum matrices and ExtractEnergy2 substitutes spinor rows and columns; the final pass evaluates Dot and Tr.",
+      "Supply a complete and consistent on-shell configuration for numerical use. The function does not generate phase space or enforce total momentum conservation."
+    ],
+    "examples": [
+      {
+        "description": "Evaluate an angle bracket in explicit massless components.",
+        "input": "ExtractEnergy[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]], {{1}, {2}}]",
+        "evaluate": true
+      },
+      {
+        "description": "Evaluate a scalar momentum product.",
+        "input": "ExtractEnergy[MomProd[1, 2], {{1}, {2}}]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ExtractEnergy1",
+      "ExtractEnergy2",
+      "En",
+      "MomMagnitude"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "ExtractEnergy1",
+    "summary": "Substitutes one particle's momentum matrices and explicit four-vector components.",
+    "syntaxes": [
+      {
+        "input": "ExtractEnergy1[expr, i, energy, momentumMagnitude, theta, phi]",
+        "description": "replaces supported momentum occurrences for particle i."
+      }
+    ],
+    "details": [
+      "This is the first stage of ExtractEnergy. Spinor endpoints remain symbolic until ExtractEnergy2 is applied.",
+      "The time-space metric is (+,-,-,-). Upper and lower four-vectors carry the corresponding spatial signs. Momentum-matrix placement follows the chain's current chirality.",
+      "For a finished numerical scalar, normally use ExtractEnergy rather than stopping after this intermediate stage."
+    ],
+    "examples": [
+      {
+        "description": "Expose the explicit momentum matrix in a chain.",
+        "input": "ExtractEnergy1[SpinorChain[Spinor[\"Helicity\", \"Square\", 1], Mom[2], Spinor[\"Helicity\", \"Angle\", 3]], 2, energy, momentum, 0, 0]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ExtractEnergy",
+      "ExtractEnergy2",
+      "MomProdExplicit"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "ExtractEnergy2",
+    "summary": "Substitutes explicit two-component spinor rows and columns for one particle.",
+    "syntaxes": [
+      {
+        "input": "ExtractEnergy2[expr, i, energy, momentumMagnitude, theta, phi]",
+        "description": "replaces supported helicity and indexed massive spinor endpoints on particle i."
+      }
+    ],
+    "details": [
+      "This is the second stage of ExtractEnergy. It uses sqrt(E+p) and sqrt(E-p) for massive components, and sqrt(2E) for massless helicity spinors.",
+      "Explicit massive index values are +1/2 or -1/2. Chirality, variance and endpoint position determine the correct row or column and signs.",
+      "The returned SpinorChain can still contain vectors. ExtractEnergy performs the final conversion to Dot and Tr."
+    ],
+    "examples": [
+      {
+        "description": "Insert a massless angle row at the north pole.",
+        "input": "ExtractEnergy2[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]], 1, energy, energy, 0, 0]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ExtractEnergy",
+      "ExtractEnergy1",
+      "ChooseSpinIndex"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "MomProdExplicit",
+    "summary": "Stores the intermediate explicit four-vector scalar product used by ExtractEnergy.",
+    "syntaxes": [
+      {
+        "input": "MomProdExplicit[upperFourVector, lowerFourVector]",
+        "description": "represents the intermediate Dot product before final evaluation."
+      }
+    ],
+    "details": [
+      "ExtractEnergy1 produces this head after substituting one or both momentum vectors. ExtractEnergy converts it to Mathematica Dot in its final pass.",
+      "It is not a replacement for the label-based MomProd in ordinary symbolic amplitudes."
+    ],
+    "examples": [
+      {
+        "description": "Use ExtractEnergy to evaluate the intermediate scalar product.",
+        "input": "ExtractEnergy[MomProd[1, 2], {{1}, {2}}]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "MomProd",
+      "ExtractEnergy",
+      "ExtractEnergy1"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "SpinToHelicitySpinors",
+    "summary": "Applies legacy spin-to-helicity expansions to selected massive particle spinors.",
+    "syntaxes": [
+      {
+        "input": "SpinToHelicitySpinors[expr, {particle, spin, helicity}]",
+        "description": "uses the supported fixed-spin helicity expansion."
+      },
+      {
+        "input": "SpinToHelicitySpinors[expr, specification1, specification2, ...]",
+        "description": "applies up to four specifications in sequence."
+      }
+    ],
+    "details": [
+      "This older routine uses energy, momentum magnitude, masses and auxiliary Zeta spinors. The source describes it as implemented only to linear order, so do not treat it as a universal exact massive-to-massless replacement.",
+      "Use ChooseSpinIndex and ExtractEnergy for explicit physical spin components without relying on this expansion."
+    ],
+    "examples": [
+      {
+        "description": "Inspect the supported spin-one negative-helicity conversion.",
+        "input": "SpinToHelicitySpinors[SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 3]]^2, {1, 1, -1}]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ChooseSpinIndex",
+      "ExtractEnergy",
+      "Spinor"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "ConvertStringAmplitude",
+    "summary": "Parses legacy compact bracket notation into typed HEPCAT spinor expressions.",
+    "syntaxes": [
+      {
+        "input": "ConvertStringAmplitude[text, masses]",
+        "description": "uses the per-particle mass list to distinguish massless and massive spinors."
+      },
+      {
+        "input": "ConvertStringAmplitude[text, masses, InternalMasses -> rules]",
+        "description": "also supplies mass rules for composite endpoint labels."
+      }
+    ],
+    "details": [
+      "Examples include <12>, [12], <1|p2|3], p1.p2, s12 and x12. The compact grammar was designed around single-digit external labels and specialized composite notation.",
+      "A zero mass selects \"Helicity\" and a nonzero mass selects \"Spin\". Explicit ^ or _ index markers in supported bracket notation become upper or lower little-group indices.",
+      "The parser finishes with ToExpression, so parse only trusted input. For modern model persistence, prefer PlainText[expr,\"Model\"] together with the model reader."
+    ],
+    "examples": [
+      {
+        "description": "Parse a massless angle bracket.",
+        "input": "ConvertStringAmplitude[\"<12>\", {0, 0}]",
+        "evaluate": true
+      },
+      {
+        "description": "Use the mass list to select a massive endpoint.",
+        "input": "ConvertStringAmplitude[\"<12>\", {m, 0}]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ConvertStringHattedAmplitude",
+      "PlainText",
+      "SpinorChain"
+    ],
+    "guide": "FormattingAndExport"
+  },
+  {
+    "name": "ConvertStringHattedAmplitude",
+    "summary": "Parses a legacy bracket expression and marks its spinors and momenta as shifted.",
+    "syntaxes": [
+      {
+        "input": "ConvertStringHattedAmplitude[text, masses, opts]",
+        "description": "calls ConvertStringAmplitude and replaces Spinor and Mom by their hatted forms."
+      }
+    ],
+    "details": [
+      "The compact grammar, mass-list interpretation and trusted-input requirement are the same as ConvertStringAmplitude.",
+      "This marks deformation heads only; it does not choose a shift or solve a pole equation."
+    ],
+    "examples": [
+      {
+        "description": "Parse a hatted angle bracket.",
+        "input": "ConvertStringHattedAmplitude[\"<12>\", {0, 0}]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ConvertStringAmplitude",
+      "SpinorHat",
+      "ComplexifyMomenta"
+    ],
+    "guide": "FormattingAndExport"
+  },
+  {
+    "name": "ComplexifyMomenta",
+    "summary": "Marks supported momenta and spinors for a legacy complex deformation.",
+    "syntaxes": [
+      {
+        "input": "ComplexifyMomenta[expr]",
+        "description": "marks all supported Spinor, Mom and scalar-product occurrences."
+      },
+      {
+        "input": "ComplexifyMomenta[expr, i, j]",
+        "description": "marks the square spinor of leg i, angle spinor of leg j, and the supported shifted momentum factors."
+      }
+    ],
+    "details": [
+      "This is a symbolic marking step, not a complete general complex shift. ExpandComplexMomenta implements the supported continuation cases.",
+      "The two-leg form distinguishes scalar products with one or both deformed momenta. Do not assume that arbitrary reference or mixed hatted objects have been transformed."
+    ],
+    "examples": [
+      {
+        "description": "Mark every supported object.",
+        "input": "ComplexifyMomenta[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]] MomProd[1, 3]]",
+        "evaluate": true
+      },
+      {
+        "description": "Mark a selected pair of shift legs.",
+        "input": "ComplexifyMomenta[SpinorChain[Spinor[\"Helicity\", \"Square\", 1], Mom[2], Spinor[\"Helicity\", \"Angle\", 3]], 1, 3]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ExpandComplexMomenta",
+      "UnhatMomenta",
+      "SpinorHat"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "UnhatMomenta",
+    "summary": "Removes the standard complex-deformation markers.",
+    "syntaxes": [
+      {
+        "input": "UnhatMomenta[expr]",
+        "description": "replaces SpinorHat, MomHat and MomProdHat12 by Spinor, Mom and MomProd."
+      }
+    ],
+    "details": [
+      "This is a head replacement, not an evaluation of a shift parameter. It does not automatically remove the one-slot MomProdHat1 or MomProdHat2 markers.",
+      "Use it only when the mathematical operation being performed justifies returning those objects to their unshifted form."
+    ],
+    "examples": [
+      {
+        "description": "Undo the all-object marking operation.",
+        "input": "UnhatMomenta[ComplexifyMomenta[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]] Mom[3]]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ComplexifyMomenta",
+      "ExpandComplexMomenta"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "ExpandComplexMomenta",
+    "summary": "Expands supported legacy complex-shift formulas with specified masses and companion legs.",
+    "syntaxes": [
+      {
+        "input": "ExpandComplexMomenta[expr, {i, mi}, k, {j, mj}, l, mik]",
+        "description": "applies the implemented shift identities for the chosen mass pattern."
+      }
+    ],
+    "details": [
+      "The pair arguments identify the shifted legs and their masses; k and l identify the companion legs used by the construction, and mik is the corresponding channel mass.",
+      "This is a collection of specialized massive/massless cases. It is not a generic solver for an arbitrary complex deformation. Preserve the original expression and verify the assumptions when using it.",
+      "For an expression without any matching shifted object, the input remains unchanged."
+    ],
+    "examples": [
+      {
+        "description": "Expand a scalar-product marker in the supported massive zero-channel case.",
+        "input": "ExpandComplexMomenta[MomProdHat1[1, 5], {1, m1}, 3, {2, m2}, 4, 0]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ComplexifyMomenta",
+      "ReplaceSpinorZ",
+      "UnhatMomenta"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "ReplaceSpinorZ",
+    "summary": "Replaces a two-index auxiliary z object in a supported massive shift.",
+    "syntaxes": [
+      {
+        "input": "ReplaceSpinorZ[expr, {i, mi}, {j, mj}, k]",
+        "description": "rewrites SpinorZ[\"Both\",I,J] when both specified masses are nonzero."
+      }
+    ],
+    "details": [
+      "The result is a sum of a massive spinor bracket and a chain with Mom[k], divided by mi mj. The original upper/lower little-group indices are retained.",
+      "If either mass is zero, this particular replacement is not applied. It is not a generic rule for all SpinorZ forms."
+    ],
+    "examples": [
+      {
+        "description": "Expand a two-index z object.",
+        "input": "ReplaceSpinorZ[SpinorZ[\"Both\", i, j], {1, m1}, {2, m2}, 3]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "SpinorZ",
+      "ComplexifyMomenta",
+      "ExpandComplexMomenta"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "nice",
+    "summary": "Formats legacy HEPCAT objects in readable notebook notation.",
+    "syntaxes": [
+      {
+        "input": "nice[expr]",
+        "description": "returns the corresponding formatted output."
+      }
+    ],
+    "details": [
+      "Complete SpinorChain expressions already have automatic notebook formatting. Applying nice is normally unnecessary, and its display objects should not replace algebraic expressions in calculations."
+    ],
+    "examples": [
+      {
+        "description": "Format a small spinor example.",
+        "input": "nice[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "SpinorChain",
+      "TeX",
+      "PlainText"
+    ],
+    "guide": "FormattingAndExport"
+  },
+  {
+    "name": "lnice",
+    "summary": "Formats a single spinor as the left endpoint of a displayed chain.",
+    "syntaxes": [
+      {
+        "input": "lnice[spinor]",
+        "description": "returns the corresponding formatted output."
+      }
+    ],
+    "details": [
+      "This is the bra-endpoint helper used by nice. For a whole bracket, use an ordinary SpinorChain, which already formats automatically."
+    ],
+    "examples": [
+      {
+        "description": "Format a small spinor example.",
+        "input": "lnice[Spinor[\"Helicity\", \"Angle\", 1]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "nice",
+      "SpinorChain"
+    ],
+    "guide": "FormattingAndExport"
+  },
+  {
+    "name": "TeX",
+    "summary": "Converts supported HEPCAT expressions into a LaTeX string.",
+    "syntaxes": [
+      {
+        "input": "TeX[expr]",
+        "description": "returns the corresponding formatted output."
+      }
+    ],
+    "details": [
+      "This is the legacy LaTeX formatter for spinors, momentum chains, masses and scalar factors. It returns a string for inclusion in a document; keep the original expression for symbolic work."
+    ],
+    "examples": [
+      {
+        "description": "Format a small spinor example.",
+        "input": "TeX[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "lTeX",
+      "PlainText",
+      "nice"
+    ],
+    "guide": "FormattingAndExport"
+  },
+  {
+    "name": "lTeX",
+    "summary": "Returns the LaTeX string for a spinor at the left end of a chain.",
+    "syntaxes": [
+      {
+        "input": "lTeX[spinor]",
+        "description": "returns the corresponding formatted output."
+      }
+    ],
+    "details": [
+      "This is the left-endpoint helper used by TeX; it inserts the opening angle or square bracket appropriate to the spinor chirality."
+    ],
+    "examples": [
+      {
+        "description": "Format a small spinor example.",
+        "input": "lTeX[Spinor[\"Helicity\", \"Square\", 1]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "TeX",
+      "SpinorChain"
+    ],
+    "guide": "FormattingAndExport"
+  },
+  {
+    "name": "lPlainText",
+    "summary": "Returns compact plain text for the left endpoint of a chain.",
+    "syntaxes": [
+      {
+        "input": "lPlainText[spinor]",
+        "description": "returns the corresponding formatted output."
+      }
+    ],
+    "details": [
+      "Use PlainText on an entire expression. This helper formats only the left endpoint and is useful when implementing a custom display formatter."
+    ],
+    "examples": [
+      {
+        "description": "Format a small spinor example.",
+        "input": "lPlainText[Spinor[\"Helicity\", \"Angle\", 1]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "PlainText",
+      "SpinorChain"
+    ],
+    "guide": "FormattingAndExport"
+  },
+  {
+    "name": "SPINAS",
+    "summary": "Formats a supported expression as a legacy SPINAS C++ expression string.",
+    "syntaxes": [
+      {
+        "input": "SPINAS[expr]",
+        "description": "returns the corresponding formatted output."
+      }
+    ],
+    "details": [
+      "This formatter emits .v() calls and scalar arithmetic for already declared spinor products. It does not create a complete process class, cross external legs, configure spin sums, or build a program. WriteSPINASProcess is the complete exporter."
+    ],
+    "examples": [
+      {
+        "description": "Format a small spinor example.",
+        "input": "SPINAS[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "WriteSPINASProcess",
+      "CreateSPName",
+      "InitializeSPINASSpinorProducts"
+    ],
+    "guide": "FormattingAndExport"
+  },
+  {
+    "name": "lSPINAS",
+    "summary": "Returns the legacy SPINAS name prefix for a chain's left endpoint.",
+    "syntaxes": [
+      {
+        "input": "lSPINAS[spinor]",
+        "description": "returns the corresponding formatted output."
+      }
+    ],
+    "details": [
+      "This is an implementation helper for SPINAS chain names: angle endpoints begin with a and square endpoints with s. Use SPINAS for a complete expression."
+    ],
+    "examples": [
+      {
+        "description": "Format a small spinor example.",
+        "input": "lSPINAS[Spinor[\"Helicity\", \"Angle\", 1]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "SPINAS",
+      "CreateSPName"
+    ],
+    "guide": "FormattingAndExport"
+  },
+  {
+    "name": "PlainText",
+    "summary": "Writes readable bracket notation or explicit model-readable amplitude text.",
+    "syntaxes": [
+      {
+        "input": "PlainText[expr]",
+        "description": "returns compact human-readable text."
+      },
+      {
+        "input": "PlainText[expr, \"Model\"]",
+        "description": "returns explicit text suitable for storing a supported exact expression in a HEPCAT model."
+      }
+    ],
+    "details": [
+      "The ordinary form uses angle and square bracket notation. Model mode inserts explicit multiplication and typed forms where compact notation would be ambiguous.",
+      "Model mode returns Failure for unsupported or inexact objects rather than silently emitting an ambiguous model expression. Exact symbolic coefficients and rational numbers are preferred.",
+      "The output is a string. For a complete C++ process, use WriteSPINASProcess; for adding amplitudes to a factorization model, use AppendModelAmplitudes."
+    ],
+    "examples": [
+      {
+        "description": "Write a readable bracket expression.",
+        "input": "PlainText[2 SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]]]",
+        "evaluate": true
+      },
+      {
+        "description": "Write an exact expression in model syntax.",
+        "input": "PlainText[(2/3) SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]], \"Model\"]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ConvertStringAmplitude",
+      "AppendModelAmplitudes",
+      "TeX"
+    ],
+    "guide": "FormattingAndExport"
+  },
+  {
+    "name": "CreateSPName",
+    "summary": "Constructs the legacy SPINAS member name for one chain.",
+    "syntaxes": [
+      {
+        "input": "CreateSPName[chain]",
+        "description": "returns C++ source text."
+      }
+    ],
+    "details": [
+      "Names encode the left chirality, particle/momentum labels and right chirality, such as a12a for an angle bracket.",
+      "Use only supported labels and chain shapes; WriteSPINASProcess manages complete process naming and declarations."
+    ],
+    "examples": [
+      {
+        "description": "Generate a readable C++ snippet.",
+        "input": "CreateSPName[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "SPINAS",
+      "WriteSPINASProcess"
+    ],
+    "guide": "FormattingAndExport"
+  },
+  {
+    "name": "CreateSPInitializationStatement",
+    "summary": "Writes a legacy SPINAS sproduct initialization statement.",
+    "syntaxes": [
+      {
+        "input": "CreateSPInitializationStatement[chain]",
+        "description": "returns C++ source text."
+      }
+    ],
+    "details": [
+      "The output is C++ text referencing particle members p1,p2,... and the appropriate ANGLE or SQUARE constructor. It assumes those particle objects are already declared.",
+      "For a full constructor and process class, use WriteSPINASProcess."
+    ],
+    "examples": [
+      {
+        "description": "Generate a readable C++ snippet.",
+        "input": "CreateSPInitializationStatement[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "SPINAS",
+      "WriteSPINASProcess"
+    ],
+    "guide": "FormattingAndExport"
+  },
+  {
+    "name": "CreateSPUpdateStatement",
+    "summary": "Writes a legacy SPINAS spinor-product update statement.",
+    "syntaxes": [
+      {
+        "input": "CreateSPUpdateStatement[chain]",
+        "description": "returns C++ source text."
+      }
+    ],
+    "details": [
+      "The output calls the chain's named .update() method. Call updates after setting the corresponding particle momenta in C++."
+    ],
+    "examples": [
+      {
+        "description": "Generate a readable C++ snippet.",
+        "input": "CreateSPUpdateStatement[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "SPINAS",
+      "WriteSPINASProcess"
+    ],
+    "guide": "FormattingAndExport"
+  },
+  {
+    "name": "InitializeSPINASSpinorProducts",
+    "summary": "Writes initialization statements for distinct spinor chains in an expression.",
+    "syntaxes": [
+      {
+        "input": "InitializeSPINASSpinorProducts[expr]",
+        "description": "returns C++ source text."
+      }
+    ],
+    "details": [
+      "This legacy helper collects, sorts and deduplicates SpinorChain objects occurring inside the supplied expression. It emits C++ text, not declarations of the particle objects.",
+      "Use a containing expression or a list when processing a single bare chain; the helper searches subexpressions rather than the top-level head."
+    ],
+    "examples": [
+      {
+        "description": "Generate a readable C++ snippet.",
+        "input": "InitializeSPINASSpinorProducts[{SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]], SpinorChain[Spinor[\"Helicity\", \"Square\", 1], Spinor[\"Helicity\", \"Square\", 2]]}]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "SPINAS",
+      "WriteSPINASProcess"
+    ],
+    "guide": "FormattingAndExport"
+  },
+  {
+    "name": "UpdateSPINASSpinorProducts",
+    "summary": "Writes update statements for distinct spinor products in an expression.",
+    "syntaxes": [
+      {
+        "input": "UpdateSPINASSpinorProducts[expr]",
+        "description": "returns C++ source text."
+      }
+    ],
+    "details": [
+      "This legacy helper emits one .update() call per distinct chain after sorting and deduplication. It belongs in a process's momentum-setting method.",
+      "A list can be used to include one or more bare chains in the subexpression search."
+    ],
+    "examples": [
+      {
+        "description": "Generate a readable C++ snippet.",
+        "input": "UpdateSPINASSpinorProducts[{SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]], SpinorChain[Spinor[\"Helicity\", \"Square\", 1], Spinor[\"Helicity\", \"Square\", 2]]}]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "SPINAS",
+      "WriteSPINASProcess"
+    ],
+    "guide": "FormattingAndExport"
+  },
+  {
+    "name": "DeclareSPINASSpinorProducts",
+    "summary": "Writes a legacy sproduct member declaration for chains in an expression.",
+    "syntaxes": [
+      {
+        "input": "DeclareSPINASSpinorProducts[expr]",
+        "description": "returns C++ source text."
+      }
+    ],
+    "details": [
+      "The result is a C++ declaration string for distinct sorted chains found inside expr. It does not initialize the objects or generate the rest of a process class.",
+      "A list can be used to include one or more bare chains in the subexpression search."
+    ],
+    "examples": [
+      {
+        "description": "Generate a readable C++ snippet.",
+        "input": "DeclareSPINASSpinorProducts[{SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]], SpinorChain[Spinor[\"Helicity\", \"Square\", 1], Spinor[\"Helicity\", \"Square\", 2]]}]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "SPINAS",
+      "WriteSPINASProcess"
+    ],
+    "guide": "FormattingAndExport"
+  },
+  {
+    "name": "HelicitySpinorHat",
+    "summary": "Is a retained protected compatibility symbol without an active public implementation.",
+    "syntaxes": [
+      {
+        "input": "HelicitySpinorHat",
+        "description": "identifies the retained name; it is not a supported executable routine in this checkout."
+      }
+    ],
+    "details": [
+      "The package loader protects this historical name, but the current source supplies no public downvalue implementation for it. Applying it as if it were an active function leaves an unevaluated expression.",
+      "Use the related current functions rather than relying on an older notebook's reference to this name."
+    ],
+    "examples": [
+      {
+        "description": "Confirm the absence of executable definitions.",
+        "input": "DownValues[HelicitySpinorHat]",
+        "evaluate": true,
+        "expected": "{}"
+      }
+    ],
+    "related": [
+      "SpinorHat",
+      "Spinor"
+    ],
+    "guide": "LegacyAmplitudeSearch"
+  },
+  {
+    "name": "SpinSpinorHat",
+    "summary": "Is a retained protected compatibility symbol without an active public implementation.",
+    "syntaxes": [
+      {
+        "input": "SpinSpinorHat",
+        "description": "identifies the retained name; it is not a supported executable routine in this checkout."
+      }
+    ],
+    "details": [
+      "The package loader protects this historical name, but the current source supplies no public downvalue implementation for it. Applying it as if it were an active function leaves an unevaluated expression.",
+      "Use the related current functions rather than relying on an older notebook's reference to this name."
+    ],
+    "examples": [
+      {
+        "description": "Confirm the absence of executable definitions.",
+        "input": "DownValues[SpinSpinorHat]",
+        "evaluate": true,
+        "expected": "{}"
+      }
+    ],
+    "related": [
+      "SpinorHat",
+      "Spinor"
+    ],
+    "guide": "LegacyAmplitudeSearch"
+  },
+  {
+    "name": "rSpinor",
+    "summary": "Is a retained protected compatibility symbol without an active public implementation.",
+    "syntaxes": [
+      {
+        "input": "rSpinor",
+        "description": "identifies the retained name; it is not a supported executable routine in this checkout."
+      }
+    ],
+    "details": [
+      "The package loader protects this historical name, but the current source supplies no public downvalue implementation for it. Applying it as if it were an active function leaves an unevaluated expression.",
+      "Use the related current functions rather than relying on an older notebook's reference to this name."
+    ],
+    "examples": [
+      {
+        "description": "Confirm the absence of executable definitions.",
+        "input": "DownValues[rSpinor]",
+        "evaluate": true,
+        "expected": "{}"
+      }
+    ],
+    "related": [
+      "ReverseMomentum",
+      "Spinor"
+    ],
+    "guide": "LegacyAmplitudeSearch"
+  },
+  {
+    "name": "MomProdL",
+    "summary": "Is a retained protected compatibility symbol without an active public implementation.",
+    "syntaxes": [
+      {
+        "input": "MomProdL",
+        "description": "identifies the retained name; it is not a supported executable routine in this checkout."
+      }
+    ],
+    "details": [
+      "The package loader protects this historical name, but the current source supplies no public downvalue implementation for it. Applying it as if it were an active function leaves an unevaluated expression.",
+      "Use the related current functions rather than relying on an older notebook's reference to this name."
+    ],
+    "examples": [
+      {
+        "description": "Confirm the absence of executable definitions.",
+        "input": "DownValues[MomProdL]",
+        "evaluate": true,
+        "expected": "{}"
+      }
+    ],
+    "related": [
+      "MomProd",
+      "ReverseMomentum"
+    ],
+    "guide": "LegacyAmplitudeSearch"
+  },
+  {
+    "name": "MomProdR",
+    "summary": "Is a retained protected compatibility symbol without an active public implementation.",
+    "syntaxes": [
+      {
+        "input": "MomProdR",
+        "description": "identifies the retained name; it is not a supported executable routine in this checkout."
+      }
+    ],
+    "details": [
+      "The package loader protects this historical name, but the current source supplies no public downvalue implementation for it. Applying it as if it were an active function leaves an unevaluated expression.",
+      "Use the related current functions rather than relying on an older notebook's reference to this name."
+    ],
+    "examples": [
+      {
+        "description": "Confirm the absence of executable definitions.",
+        "input": "DownValues[MomProdR]",
+        "evaluate": true,
+        "expected": "{}"
+      }
+    ],
+    "related": [
+      "MomProd",
+      "ReverseMomentum"
+    ],
+    "guide": "LegacyAmplitudeSearch"
+  },
+  {
+    "name": "ReduceXFactorsP",
+    "summary": "Is a retained protected compatibility symbol without an active public implementation.",
+    "syntaxes": [
+      {
+        "input": "ReduceXFactorsP",
+        "description": "identifies the retained name; it is not a supported executable routine in this checkout."
+      }
+    ],
+    "details": [
+      "The package loader protects this historical name, but the current source supplies no public downvalue implementation for it. Applying it as if it were an active function leaves an unevaluated expression.",
+      "Use the related current functions rather than relying on an older notebook's reference to this name."
+    ],
+    "examples": [
+      {
+        "description": "Confirm the absence of executable definitions.",
+        "input": "DownValues[ReduceXFactorsP]",
+        "evaluate": true,
+        "expected": "{}"
+      }
+    ],
+    "related": [
+      "ExpandXFactors",
+      "ReducexFactors"
+    ],
+    "guide": "LegacyAmplitudeSearch"
+  },
+  {
+    "name": "ReduceXFactorsM",
+    "summary": "Is a retained protected compatibility symbol without an active public implementation.",
+    "syntaxes": [
+      {
+        "input": "ReduceXFactorsM",
+        "description": "identifies the retained name; it is not a supported executable routine in this checkout."
+      }
+    ],
+    "details": [
+      "The package loader protects this historical name, but the current source supplies no public downvalue implementation for it. Applying it as if it were an active function leaves an unevaluated expression.",
+      "Use the related current functions rather than relying on an older notebook's reference to this name."
+    ],
+    "examples": [
+      {
+        "description": "Confirm the absence of executable definitions.",
+        "input": "DownValues[ReduceXFactorsM]",
+        "evaluate": true,
+        "expected": "{}"
+      }
+    ],
+    "related": [
+      "ExpandXFactors",
+      "ReducexFactors"
+    ],
+    "guide": "LegacyAmplitudeSearch"
+  },
+  {
+    "name": "Output",
+    "summary": "Is a legacy display marker with a single specialized formatting definition.",
+    "syntaxes": [
+      {
+        "input": "Output[ConstructiveDiagrams`zp]",
+        "description": "formats the historical z_p marker."
+      }
+    ],
+    "details": [
+      "Output is not a general expression formatter. In this checkout its only specialized definition is for the package's zp marker.",
+      "For a complete HEPCAT expression, rely on ordinary notebook formatting, PlainText or TeX."
+    ],
+    "examples": [
+      {
+        "description": "Inspect the legacy definition without using it as a general output API.",
+        "input": "DownValues[Output]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "PlainText",
+      "TeX",
+      "nice"
+    ],
+    "guide": "FormattingAndExport"
+  },
+  {
+    "name": "ExpandMomHatAlt",
+    "summary": "Expands supported all-line-shift momentum and propagator markers.",
+    "syntaxes": [
+      {
+        "input": "ExpandMomHatAlt[expr]",
+        "description": "rewrites shifted composite propagators and chain momentum insertions."
+      }
+    ],
+    "details": [
+      "A MomHat insertion in a chain becomes Mom plus z MomQ. A shifted composite propagator is expressed using its unshifted PropDen and the channel roots zPlus and zMinus.",
+      "This legacy all-line-shift helper uses the package symbol ConstructiveDiagrams`z. It does not determine the auxiliary q momenta or solve for the roots.",
+      "Preserve the shift definitions and assumptions alongside the result. This is separate from ordinary amplitude preparation."
+    ],
+    "examples": [
+      {
+        "description": "Expand one shifted chain insertion.",
+        "input": "ExpandMomHatAlt[SpinorChain[Spinor[\"Helicity\", \"Square\", 1], MomHat[2], Spinor[\"Helicity\", \"Angle\", 3]]]",
+        "evaluate": true
+      },
+      {
+        "description": "Expose both roots of a shifted composite propagator.",
+        "input": "ExpandMomHatAlt[1/PropDen[MomHat[Multiparticle[1, 3]], m]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ComplexifyMomenta",
+      "MomQ",
+      "zPlus",
+      "zMinus"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "UnHatSpinors",
+    "summary": "Removes SpinorHat markers while leaving shifted momenta unchanged.",
+    "syntaxes": [
+      {
+        "input": "UnHatSpinors[expr]",
+        "description": "replaces each SpinorHat by Spinor."
+      }
+    ],
+    "details": [
+      "This is a symbolic head replacement used by legacy shift calculations. It does not determine a shift or remove MomHat and scalar-product markers.",
+      "Use UnhatMomenta when the intended operation also removes its supported shifted momentum heads. Neither operation proves equality between different kinematics."
+    ],
+    "examples": [
+      {
+        "description": "Unhat only the spinor endpoints.",
+        "input": "UnHatSpinors[SpinorChain[SpinorHat[\"Helicity\", \"Square\", 1], MomHat[2], SpinorHat[\"Helicity\", \"Angle\", 3]]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "UnhatMomenta",
+      "SpinorHat",
+      "ComplexifyMomenta"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "xFactorReduced",
+    "summary": "Evaluates a supported legacy four-point composite x-factor formula.",
+    "syntaxes": [
+      {
+        "input": "xFactorReduced[i, Multiparticle[j, k], opts]",
+        "description": "uses the declared momenta, channel and channel mass."
+      }
+    ],
+    "details": [
+      "This is the specialized reduced head used by ReducexFactors. The symbolic options are Momenta, ChannelMomenta and ChannelMass; defaults refer to four-point momenta {1,2,3,4}.",
+      "The supported composite pattern identifies the fourth external leg and constructs a momentum-chain expression. It is not a generic higher-point x-factor expansion.",
+      "Use ExpandXFactors with a diagram and model for the current model-aware external x-factor operation."
+    ],
+    "examples": [
+      {
+        "description": "Evaluate the supported composite pattern.",
+        "input": "xFactorReduced[1, Multiparticle[2, 3], Momenta -> {1, 2, 3, 4}, ChannelMomenta -> {1, 4}, ChannelMass -> m]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ReducexFactors",
+      "ExpandXFactors",
+      "xFactor",
+      "xTildeFactor"
+    ],
+    "guide": "IdentitiesAndSimplification"
+  },
+  {
+    "name": "xTildeFactorReduced",
+    "summary": "Evaluates a supported legacy four-point composite x-factor formula.",
+    "syntaxes": [
+      {
+        "input": "xTildeFactorReduced[i, Multiparticle[j, k], opts]",
+        "description": "uses the declared momenta, channel and channel mass."
+      }
+    ],
+    "details": [
+      "This is the specialized reduced head used by ReducexFactors. The symbolic options are Momenta, ChannelMomenta and ChannelMass; defaults refer to four-point momenta {1,2,3,4}.",
+      "The supported composite pattern identifies the fourth external leg and constructs a momentum-chain expression. It is not a generic higher-point x-factor expansion.",
+      "Use ExpandXFactors with a diagram and model for the current model-aware external x-factor operation."
+    ],
+    "examples": [
+      {
+        "description": "Evaluate the supported composite pattern.",
+        "input": "xTildeFactorReduced[1, Multiparticle[2, 3], Momenta -> {1, 2, 3, 4}, ChannelMomenta -> {1, 4}, ChannelMass -> m]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ReducexFactors",
+      "ExpandXFactors",
+      "xFactor",
+      "xTildeFactor"
+    ],
+    "guide": "IdentitiesAndSimplification"
+  },
+  {
+    "name": "colorT",
+    "summary": "Represents a fundamental SU(3) generator in the legacy color reducer.",
+    "syntaxes": [
+      {
+        "input": "colorT[args]",
+        "description": "forms the symbolic color object."
+      }
+    ],
+    "details": [
+      "These older color heads are interpreted by ReduceColor with its SU(3) trace conventions. The modern Feynman representation uses ColorGenerator, ColorStructure and ColorDelta instead.",
+      "Do not interchange the legacy and Feynman heads without verifying their normalization and factors of I."
+    ],
+    "examples": [
+      {
+        "description": "Apply a supported trace reduction.",
+        "input": "ReduceColor[colorT[a, i, j] colorT[b, j, i]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ReduceColor",
+      "ColorGenerator",
+      "ColorStructure"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "colorf",
+    "summary": "Represents a structure-constant object in the legacy color trace convention.",
+    "syntaxes": [
+      {
+        "input": "colorf[args]",
+        "description": "forms the symbolic color object."
+      }
+    ],
+    "details": [
+      "These older color heads are interpreted by ReduceColor with its SU(3) trace conventions. The modern Feynman representation uses ColorGenerator, ColorStructure and ColorDelta instead.",
+      "Do not interchange the legacy and Feynman heads without verifying their normalization and factors of I."
+    ],
+    "examples": [
+      {
+        "description": "Apply a supported trace reduction.",
+        "input": "ReduceColor[colorf[a, b, c]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ReduceColor",
+      "ColorGenerator",
+      "ColorStructure"
+    ],
+    "guide": "SpinorAlgebra"
+  },
+  {
+    "name": "colorTrace",
+    "summary": "Represents a trace of legacy colorT generators.",
+    "syntaxes": [
+      {
+        "input": "colorTrace[args]",
+        "description": "forms the symbolic color object."
+      }
+    ],
+    "details": [
+      "These older color heads are interpreted by ReduceColor with its SU(3) trace conventions. The modern Feynman representation uses ColorGenerator, ColorStructure and ColorDelta instead.",
+      "Do not interchange the legacy and Feynman heads without verifying their normalization and factors of I."
+    ],
+    "examples": [
+      {
+        "description": "Apply a supported trace reduction.",
+        "input": "ReduceColor[colorTrace[]]",
+        "evaluate": true
+      }
+    ],
+    "related": [
+      "ReduceColor",
+      "ColorGenerator",
+      "ColorStructure"
+    ],
+    "guide": "SpinorAlgebra"
+  }
+]

@@ -1,0 +1,173 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT TUTORIAL", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}], "AnchorBar"]}},
+     GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["Constructing and Checking an Amplitude in Stages",
+   "TechNoteTitle"], Cell["Inspect diagrams, preparation, simultaneous \
+completion and the final validation report.", "TechNoteText"],
+  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
+     Cell["Evaluate this setup once before the examples. The paths refer to \
+the local HEPCAT checkout; no model parameters are assigned global numerical \
+values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
+         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
+         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
+         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
+         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
+         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
+         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
+         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
+         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
+         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
+         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
+         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
+         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
+         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
+         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
+      "Input", InitializationCell -> True]}, Open]],
+  Cell["Choose the Process and Models", "TechNoteSection"],
+  Cell["All external particles are incoming in the analytic expression. For a \
+four-point process, both sides of a factorization channel are three-point \
+amplitudes, so the elementary QED model is sufficient. A five-point process \
+also needs complete four-point amplitudes in its factorization model.",
+   "TechNoteText"],
+  Cell["Use one model for both jobs in this four-point example.",
+   "ExampleText"], Cell[BoxData[RowBox[{"qedModel", " ", "=", " ",
+      "ReadModel", "[", "modelDirectory", ",", " ", "2", "]", ";", "\n",
+      "process", " ", "=", " ", "{", "\"e\"", ",", " ", "\"E\"", ",", " ",
+      "\"A.+\"", ",", " ", "\"A.+\"", "}", ";"}]], "Input"],
+  Cell["Generate Diagrams and Channels", "TechNoteSection"],
+  Cell["CreateDiagrams returns diagram data. diagramAmplitudes converts the \
+whole list using consistent fermion ordering and internal helicity \
+conventions. The channels are a separate list and should not be added to the \
+diagram sum.", "TechNoteText"],
+  Cell["Generate the diagrams, display them and calculate their amplitudes.",
+   "ExampleText"], Cell[BoxData[RowBox[{"diagrams", " ", "=", " ",
+      "CreateDiagrams", "[", "process", ",", " ", "qedModel", "]", ";", "\n",
+      "rawAmplitudes", " ", "=", " ", "diagramAmplitudes", "[", "diagrams",
+      "]", ";", "\n", "CreateArrowDiagrams", "[", "diagrams", "]"}]],
+   "Input"], Cell["This example writes files, starts a longer calculation, or \
+requires an optional external tool. Evaluate it when you want to perform that \
+operation.", "ExampleText"],
+  Cell["Generate compact physical factorization channels.", "ExampleText"],
+  Cell[BoxData[RowBox[{"channels", " ", "=", " ",
+      "FactorizationAmplitudeChannels", "[", "process", ",", " ", "qedModel",
+      "]", ";"}]], "Input"], Cell["This example writes files, starts a longer \
+calculation, or requires an optional external tool. Evaluate it when you want \
+to perform that operation.", "ExampleText"],
+  Cell["Prepare Without Throwing Away Information", "TechNoteSection"],
+  Cell["The normal preparation result is a compact list of \
+mass-rules/amplitude pairs. For a staged completion, retain the detailed \
+object so the completion can try discarded numerator remainders first. The \
+reducers act on spin contractions and ordinary spinor identities before using \
+each diagram's explicitly recorded internal on-shell conditions in its \
+numerator.", "TechNoteText"], Cell["PolePreference guides the representation. \
+AllPhysical favors reference choices with physical denominators; AllSpurious \
+uses admissible massless reference choices. Neither preference is a proof of \
+factorization or a guarantee that a bounded search finds the global simplest \
+form.", "TechNoteText"], Cell["Retain the preparation report.",
+   "ExampleText"], Cell[BoxData[RowBox[{"prepared", " ", "=", " ",
+      "PrepareAmplitudes", "[", "rawAmplitudes", ",", " ", "qedModel", ",",
+      " ", "\"PolePreference\"", " ", "->", " ", "\"AllPhysical\"", ",", " ",
+      "\"ReturnDetails\"", " ", "->", " ", "True", "]", ";", "\n",
+      "prepared", "[", "\"PreparedAmplitudes\"", "]"}]], "Input"],
+  Cell["This example writes files, starts a longer calculation, or requires \
+an optional external tool. Evaluate it when you want to perform that \
+operation.", "ExampleText"], Cell["Complete the Physical Residues",
+   "TechNoteSection"], Cell["CompleteFactorization fits corrections \
+simultaneously across physical channels and validates them on additional \
+samples. Keep its detailed family information for the high-energy stage. It \
+reports failure rather than claiming a solution when its bounded correction \
+set does not close.", "TechNoteText"],
+  Cell["Solve the factorization constraints and retain the compatible \
+family.", "ExampleText"],
+  Cell[BoxData[RowBox[{"factorized", " ", "=", " ", "CompleteFactorization",
+      "[", "prepared", ",", " ", "channels", ",", " ", "qedModel", ",", " ",
+      "\"ReturnDetails\"", " ", "->", " ", "True", "]", ";"}]], "Input"],
+  Cell["This example writes files, starts a longer calculation, or requires \
+an optional external tool. Evaluate it when you want to perform that \
+operation.", "ExampleText"],
+  Cell["Complete High-Energy Behavior and Simplify", "TechNoteSection"],
+  Cell["CompleteHighEnergy uses factorization-compatible directions and the \
+theory's declared content and bounds. It does not grant arbitrary independent \
+QED contact interactions. Its detailed report keeps the external masses \
+separately from the amplitude.", "TechNoteText"],
+  Cell["The final mass-rules/amplitude pair contains external masses only. \
+Preparation of this final pair therefore applies ordinary and external \
+on-shell identities without reimposing the internal on-shell assumptions of \
+an individual diagram.", "TechNoteText"],
+  Cell["Complete the high-energy stage and extract the final pair.",
+   "ExampleText"], Cell[BoxData[RowBox[{"highEnergy", " ", "=", " ",
+      "CompleteHighEnergy", "[", "factorized", ",", " ", "channels", ",",
+      " ", "qedModel", ",", " ", "\"Output\"", " ", "->", " ", "\"Details\"",
+      "]", ";", "\n", "finalAmplitude", " ", "=", " ", "{", "highEnergy",
+      "[", "\"ExternalMassRules\"", "]", ",", " ", "highEnergy", "[",
+      "\"Amplitude\"", "]", "}", ";", "\n", "finalAmplitude", " ", "=", " ",
+      "PrepareAmplitudes", "[", "finalAmplitude", ",", " ", "qedModel", "]",
+      ";"}]], "Input"], Cell["This example writes files, starts a longer \
+calculation, or requires an optional external tool. Evaluate it when you want \
+to perform that operation.", "ExampleText"], Cell["Read the Checks",
+   "TechNoteSection"], Cell["The default report combines the checks supported \
+by the supplied amplitude and metadata. Use a fixed seed for a reproducible \
+investigation; omit it for fresh samples. Ask for Residues to see the \
+calculated and expected values, and Details for the full diagnostic object.",
+   "TechNoteText"], Cell["A failed check identifies the next issue to \
+investigate. Opp Sign is different from a generic mismatch. Unresolved or \
+skipped checks do not establish agreement.", "TechNoteText"],
+  Cell["Check the final result.", "ExampleText"],
+  Cell[BoxData[RowBox[{"CheckAmplitudes", "[", "finalAmplitude", ",", " ",
+      "channels", ",", " ", "qedModel", ",", " ", "\"RandomSeed\"", " ",
+      "->", " ", "314159", "]"}]], "Input"], Cell["This example writes files, \
+starts a longer calculation, or requires an optional external tool. Evaluate \
+it when you want to perform that operation.", "ExampleText"],
+  Cell["Inspect the actual sampled residues.", "ExampleText"],
+  Cell[BoxData[RowBox[{"CheckAmplitudes", "[", "finalAmplitude", ",", " ",
+      "channels", ",", " ", "qedModel", ",", " ", "\"Output\"", " ", "->",
+      " ", "\"Residues\"", ",", " ", "\"RandomSeed\"", " ", "->", " ",
+      "314159", "]"}]], "Input"], Cell["This example writes files, starts a \
+longer calculation, or requires an optional external tool. Evaluate it when \
+you want to perform that operation.", "ExampleText"],
+  Cell["The Same Workflow in One Call", "TechNoteSection"],
+  Cell["ConstructAmplitude handles the stage reports and preserved provenance \
+internally. Use it for normal calculations and the separate functions when \
+you want to inspect or modify a stage.", "TechNoteText"],
+  Cell["Run with normal automatic defaults.", "ExampleText"],
+  Cell[BoxData[RowBox[{"ConstructAmplitude", "[", "process", ",", " ",
+      "qedModel", ",", " ", "qedModel", "]"}]], "Input"],
+  Cell["This example writes files, starts a longer calculation, or requires \
+an optional external tool. Evaluate it when you want to perform that \
+operation.", "ExampleText"], Cell["Related Functions", "SeeAlsoSection"],
+  Cell[TextData[{ButtonBox["ConstructAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ConstructAmplitude"], "  \[Bullet]  ",
+     ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], "  \[Bullet]  ",
+     ButtonBox["CompleteFactorization", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CompleteFactorization"],
+     "  \[Bullet]  ", ButtonBox["CompleteHighEnergy", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CompleteHighEnergy"], "  \[Bullet]  ",
+     ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"]}], "SeeAlso"],
+  Cell["Related Guides", "MoreAboutSection"],
+  Cell[TextData[
+    {ButtonBox["HEPCAT: Constructive Amplitudes and Spinor Algebra",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"],
+     "  \[Bullet]  ", ButtonBox["Constructing and Completing Amplitudes",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/guide/AmplitudeConstruction"], "  \[Bullet]  ",
+     ButtonBox["Checking Amplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/guide/AmplitudeValidation"]}],
+   "MoreAbout"]}, WindowTitle ->
+  "Constructing and Checking an Amplitude in Stages - HEPCAT Documentation",
+ Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/tutorial/ConstructingAndCheckingAnAmplitude",
+     "title" -> "Constructing and Checking an Amplitude in Stages",
+     "type" -> "Tutorial", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" -> "Inspect diagrams, preparation, simultaneous completion and \
+the final validation report.", "keywords" ->
+      {"HEPCAT", "ConstructingAndCheckingAnAmplitude", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

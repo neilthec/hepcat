@@ -1,0 +1,119 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT SYMBOL", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData ->
+            "paclet:HEPCAT/guide/IdentitiesAndSimplification"]}],
+        "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["ApplySpinorIdentity", "ObjectName"],
+  Cell[
+   "Applies a currently legal identity edit and returns the new expression.",
+   "Notes"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"ApplySpinorIdentity", "[", "{",
+         "massRules", ",", " ", "expr", "}", ",", " ", "edit", ",", " ",
+         "opts", "]"}]], "InlineFormula"], "  ", "validates and applies an \
+edit returned by SpinorIdentityCandidates."}], "Usage"],
+  Cell["Details", "NotesSection"], Cell["An edit must be legal for the \
+supplied expression and for the same on-shell and momentum-conservation \
+settings used during enumeration. Stale or incompatible edits return $Failed \
+and a message.", "Notes"], Cell["The returned value is the new expression. \
+Preserve the massRules yourself when forming the next state pair.", "Notes"],
+  Cell["Keep a list of Before, After and the edit association when building a \
+reproducible derivation. An edit's availability does not mean that it \
+improves the complexity measure.", "Notes"], Cell["Options", "NotesSection"],
+  Cell[BoxData[GridBox[{{Cell["Option", "TableHeader"],
+       Cell["Default", "TableHeader"], Cell["Meaning", "TableHeader"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"OnShellChannels\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"], Cell["Internal cuts legal for an \
+explicit identity edit or scramble. Automatic reads the current diagram \
+pair's internal mass rules; use {} for a combined amplitude with no allowed \
+internal-shell identities.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"MomentumConservation\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"True"}]], "InlineFormula"]}],
+        "TableText"], Cell["Whether identities may use the complete declared \
+external momentum sum. The operation uses the known external-leg list rather \
+than imposing unrelated internal cut conditions.", "TableText"]}},
+     GridBoxAlignment -> {"Columns" -> {Left, Left, Left}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.23], Scaled[0.19],
+         Scaled[0.58]}}, GridBoxDividers ->
+      {"Rows" -> {False, True, {False}, False}}]], "3ColumnTableMod"],
+  Cell["Examples", "PrimaryExamplesSection"],
+  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
+     Cell["Evaluate this setup once before the examples. The paths refer to \
+the local HEPCAT checkout; no model parameters are assigned global numerical \
+values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
+         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
+         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
+         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
+         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
+         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
+         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
+         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
+         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
+         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
+         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
+         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
+         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
+         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
+         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
+      "Input", InitializationCell -> True]}, Open]],
+  Cell["Basic Examples", "ExampleSection"],
+  Cell["Choose and apply a legal edit.", "ExampleText"],
+  Cell[BoxData[RowBox[{"Module", "[", "{", "pair", " ", "=", " ", "{", "{",
+      "}", ",", " ", "SpinorChain", "[", "Spinor", "[", "\"Helicity\"", ",",
+      " ", "\"Angle\"", ",", " ", "1", "]", ",", " ", "Spinor", "[",
+      "\"Helicity\"", ",", " ", "\"Angle\"", ",", " ", "2", "]", "]", " ",
+      "SpinorChain", "[", "Spinor", "[", "\"Helicity\"", ",", " ",
+      "\"Angle\"", ",", " ", "3", "]", ",", " ", "Spinor", "[",
+      "\"Helicity\"", ",", " ", "\"Angle\"", ",", " ", "4", "]", "]", "}",
+      ",", " ", "edits", "}", ",", " ", "edits", " ", "=", " ",
+      "SpinorIdentityCandidates", "[", "pair", ",", " ",
+      "\"OnShellChannels\"", " ", "->", " ", "{", "}", ",", " ",
+      "\"MomentumConservation\"", " ", "->", " ", "False", "]", ";", " ",
+      "ApplySpinorIdentity", "[", "pair", ",", " ", "First", "[", "edits",
+      "]", ",", " ", "\"OnShellChannels\"", " ", "->", " ", "{", "}", ",",
+      " ", "\"MomentumConservation\"", " ", "->", " ", "False", "]", "]"}]],
+   "Input"],
+  Cell[BoxData[RowBox[
+     {RowBox[{"-", RowBox[{"(", RowBox[{TemplateBox[
+             {TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, "RowDefault"],
+              TemplateBox[{"4", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+             "RowDefault"], " ", TemplateBox[{TemplateBox[{
+                "\"\[LeftAngleBracket]\"", "2"}, "RowDefault"],
+              TemplateBox[{"3", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+             "RowDefault"]}], ")"}]}], "+",
+      RowBox[{TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"", "1"},
+           "RowDefault"], TemplateBox[{"3", "\"\[RightAngleBracket]\""},
+           "RowDefault"]}, "RowDefault"], " ", TemplateBox[
+         {TemplateBox[{"\"\[LeftAngleBracket]\"", "2"}, "RowDefault"],
+          TemplateBox[{"4", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"]}]}]], "Output"], Cell["See Also", "SeeAlsoSection"],
+  Cell[TextData[{ButtonBox["SpinorIdentityCandidates", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SpinorIdentityCandidates"],
+     "  \[Bullet]  ", ButtonBox["SpinorExpressionComplexity",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/SpinorExpressionComplexity"], "  \[Bullet]  ",
+     ButtonBox["ComplicateAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ComplicateAmplitude"]}], "SeeAlso"],
+  Cell["Related Guides", "MoreAboutSection"],
+  Cell[TextData[{ButtonBox["Identities and Simplification",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/guide/IdentitiesAndSimplification"], "  \[Bullet]  ",
+     ButtonBox["HEPCAT: Constructive Amplitudes and Spinor Algebra",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}],
+   "MoreAbout"]}, WindowTitle ->
+  "ApplySpinorIdentity - HEPCAT Documentation", Saveable -> False,
+ WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/ref/ApplySpinorIdentity",
+     "title" -> "ApplySpinorIdentity", "type" -> "Symbol",
+     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Applies a \
+currently legal identity edit and returns the new expression.",
+     "keywords" -> {"HEPCAT", "ApplySpinorIdentity", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

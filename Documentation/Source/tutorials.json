@@ -1,0 +1,479 @@
+[
+  {
+    "name": "GettingStarted",
+    "title": "Getting Started with HEPCAT",
+    "summary": "Load the package, read a model and make a first spinor calculation.",
+    "sections": [
+      {
+        "title": "Load HEPCAT",
+        "paragraphs": [
+          "Set $HEPCATpath to the source directory in your checkout, then evaluate Get. Replace the example directory with your own. Loading registers this checkout with Mathematica Help without opening any windows.",
+          "After loading, put the cursor in a public symbol and press F1. Search Documentation for HEPCAT, or use the main HEPCAT guide. Reload the package if you have updated its documentation."
+        ],
+        "examples": [
+          {
+            "description": "Load the package from a local checkout.",
+            "input": "Global`$HEPCATpath = FileNameJoin[{$HomeDirectory, \"code\", \"hepcat\", \"source\"}];\nGet[FileNameJoin[{$HEPCATpath, \"HEPCAT.wl\"}]]",
+            "evaluate": false
+          }
+        ]
+      },
+      {
+        "title": "Read a Model",
+        "paragraphs": [
+          "The examples use the bundled QED model 2 for three-point vertices and model 3 for complete amplitudes through four points. Keep both model lists if needed; their parameters do not overwrite global definitions."
+        ],
+        "examples": [
+          {
+            "description": "Locate the model directory and read the elementary QED model.",
+            "input": "hepcatDirectory = ParentDirectory[Global`$HEPCATpath];\nmodelDirectory = FileNameJoin[{hepcatDirectory, \"models\"}];\nqedModel = ReadModel[modelDirectory, 2];\nLength /@ qedModel",
+            "evaluate": true
+          },
+          {
+            "description": "Obtain numerical mass and coupling rules from this model.",
+            "input": "ModelParameterRules[qedModel]",
+            "evaluate": true
+          }
+        ]
+      },
+      {
+        "title": "Write and Reduce a Spinor Chain",
+        "paragraphs": [
+          "Labels refer to the ordered external particles. Strings such as Angle and Square select the chirality. A massless self-bracket vanishes; the basic reducer does not need to know the process."
+        ],
+        "examples": [
+          {
+            "description": "Display <13> in the notebook.",
+            "input": "SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 3]]",
+            "evaluate": true
+          },
+          {
+            "description": "Reduce a vanishing self-bracket.",
+            "input": "ReduceSpinorProducts[SpinorChain[Spinor[\"Helicity\", \"Angle\", 3], Spinor[\"Helicity\", \"Angle\", 3]]]",
+            "evaluate": true,
+            "expected": "0"
+          }
+        ]
+      },
+      {
+        "title": "Construct a Complete Amplitude",
+        "paragraphs": [
+          "For a first full calculation, let automatic defaults choose the working budgets. ConstructAmplitude reports each stage and its elapsed time, the final checks and the final amplitude with its external mass rules. A complete known factorization model is essential at higher multiplicity."
+        ],
+        "examples": [
+          {
+            "description": "Construct a four-point QED amplitude.",
+            "input": "ConstructAmplitude[{\"e\", \"E\", \"A.+\", \"A.+\"}, qedModel, qedModel]",
+            "evaluate": false
+          }
+        ]
+      }
+    ],
+    "related": [
+      "ReadModel",
+      "ConstructAmplitude",
+      "Spinor",
+      "SpinorChain",
+      "ReduceSpinorProducts"
+    ],
+    "guides": [
+      "HEPCAT",
+      "ModelsAndParameters",
+      "SpinorAlgebra"
+    ]
+  },
+  {
+    "name": "ConstructingAndCheckingAnAmplitude",
+    "title": "Constructing and Checking an Amplitude in Stages",
+    "summary": "Inspect diagrams, preparation, simultaneous completion and the final validation report.",
+    "sections": [
+      {
+        "title": "Choose the Process and Models",
+        "paragraphs": [
+          "All external particles are incoming in the analytic expression. For a four-point process, both sides of a factorization channel are three-point amplitudes, so the elementary QED model is sufficient. A five-point process also needs complete four-point amplitudes in its factorization model."
+        ],
+        "examples": [
+          {
+            "description": "Use one model for both jobs in this four-point example.",
+            "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};",
+            "evaluate": true
+          }
+        ]
+      },
+      {
+        "title": "Generate Diagrams and Channels",
+        "paragraphs": [
+          "CreateDiagrams returns diagram data. diagramAmplitudes converts the whole list using consistent fermion ordering and internal helicity conventions. The channels are a separate list and should not be added to the diagram sum."
+        ],
+        "examples": [
+          {
+            "description": "Generate the diagrams, display them and calculate their amplitudes.",
+            "input": "diagrams = CreateDiagrams[process, qedModel];\nrawAmplitudes = diagramAmplitudes[diagrams];\nCreateArrowDiagrams[diagrams]",
+            "evaluate": false
+          },
+          {
+            "description": "Generate compact physical factorization channels.",
+            "input": "channels = FactorizationAmplitudeChannels[process, qedModel];",
+            "evaluate": false
+          }
+        ]
+      },
+      {
+        "title": "Prepare Without Throwing Away Information",
+        "paragraphs": [
+          "The normal preparation result is a compact list of mass-rules/amplitude pairs. For a staged completion, retain the detailed object so the completion can try discarded numerator remainders first. The reducers act on spin contractions and ordinary spinor identities before using each diagram's explicitly recorded internal on-shell conditions in its numerator.",
+          "PolePreference guides the representation. AllPhysical favors reference choices with physical denominators; AllSpurious uses admissible massless reference choices. Neither preference is a proof of factorization or a guarantee that a bounded search finds the global simplest form."
+        ],
+        "examples": [
+          {
+            "description": "Retain the preparation report.",
+            "input": "prepared = PrepareAmplitudes[rawAmplitudes, qedModel, \"PolePreference\" -> \"AllPhysical\", \"ReturnDetails\" -> True];\nprepared[\"PreparedAmplitudes\"]",
+            "evaluate": false
+          }
+        ]
+      },
+      {
+        "title": "Complete the Physical Residues",
+        "paragraphs": [
+          "CompleteFactorization fits corrections simultaneously across physical channels and validates them on additional samples. Keep its detailed family information for the high-energy stage. It reports failure rather than claiming a solution when its bounded correction set does not close."
+        ],
+        "examples": [
+          {
+            "description": "Solve the factorization constraints and retain the compatible family.",
+            "input": "factorized = CompleteFactorization[prepared, channels, qedModel, \"ReturnDetails\" -> True];",
+            "evaluate": false
+          }
+        ]
+      },
+      {
+        "title": "Complete High-Energy Behavior and Simplify",
+        "paragraphs": [
+          "CompleteHighEnergy uses factorization-compatible directions and the theory's declared content and bounds. It does not grant arbitrary independent QED contact interactions. Its detailed report keeps the external masses separately from the amplitude.",
+          "The final mass-rules/amplitude pair contains external masses only. Preparation of this final pair therefore applies ordinary and external on-shell identities without reimposing the internal on-shell assumptions of an individual diagram."
+        ],
+        "examples": [
+          {
+            "description": "Complete the high-energy stage and extract the final pair.",
+            "input": "highEnergy = CompleteHighEnergy[factorized, channels, qedModel, \"Output\" -> \"Details\"];\nfinalAmplitude = {highEnergy[\"ExternalMassRules\"], highEnergy[\"Amplitude\"]};\nfinalAmplitude = PrepareAmplitudes[finalAmplitude, qedModel];",
+            "evaluate": false
+          }
+        ]
+      },
+      {
+        "title": "Read the Checks",
+        "paragraphs": [
+          "The default report combines the checks supported by the supplied amplitude and metadata. Use a fixed seed for a reproducible investigation; omit it for fresh samples. Ask for Residues to see the calculated and expected values, and Details for the full diagnostic object.",
+          "A failed check identifies the next issue to investigate. Opp Sign is different from a generic mismatch. Unresolved or skipped checks do not establish agreement."
+        ],
+        "examples": [
+          {
+            "description": "Check the final result.",
+            "input": "CheckAmplitudes[finalAmplitude, channels, qedModel, \"RandomSeed\" -> 314159]",
+            "evaluate": false
+          },
+          {
+            "description": "Inspect the actual sampled residues.",
+            "input": "CheckAmplitudes[finalAmplitude, channels, qedModel, \"Output\" -> \"Residues\", \"RandomSeed\" -> 314159]",
+            "evaluate": false
+          }
+        ]
+      },
+      {
+        "title": "The Same Workflow in One Call",
+        "paragraphs": [
+          "ConstructAmplitude handles the stage reports and preserved provenance internally. Use it for normal calculations and the separate functions when you want to inspect or modify a stage."
+        ],
+        "examples": [
+          {
+            "description": "Run with normal automatic defaults.",
+            "input": "ConstructAmplitude[process, qedModel, qedModel]",
+            "evaluate": false
+          }
+        ]
+      }
+    ],
+    "related": [
+      "ConstructAmplitude",
+      "PrepareAmplitudes",
+      "CompleteFactorization",
+      "CompleteHighEnergy",
+      "CheckAmplitudes"
+    ],
+    "guides": [
+      "HEPCAT",
+      "AmplitudeConstruction",
+      "AmplitudeValidation"
+    ]
+  },
+  {
+    "name": "ApplyingSpinorIdentities",
+    "title": "Applying Spinor Identities in a Derivation",
+    "summary": "Use ordinary reductions and inspect individual legal rewrites.",
+    "sections": [
+      {
+        "title": "Ordinary Reduction",
+        "paragraphs": [
+          "ReduceSpinorProducts applies HEPCAT's oriented spinor rules. It handles ordinary momentum-chain algebra and external mass identities, but it does not know the total number of particles, infer momentum conservation or impose internal on-shell conditions.",
+          "ReduceSpinContractions and ReduceSpinorProducts have distinct roles. First contract the explicit spin indices, then reduce the resulting chains. For an amplitude, process-aware preparation performs the broader bounded simplification search."
+        ],
+        "examples": [
+          {
+            "description": "Reduce a self-bracket.",
+            "input": "ReduceSpinorProducts[SpinorChain[Spinor[\"Helicity\", \"Square\", 4], Spinor[\"Helicity\", \"Square\", 4]]]",
+            "evaluate": true,
+            "expected": "0"
+          }
+        ]
+      },
+      {
+        "title": "Keep Denominators Protected",
+        "paragraphs": [
+          "applyToNumerator takes replacement rules and applies them to the numerator of each existing top-level term. It does not combine terms using Together and does not expand them first. This is useful when an identity is valid only in the numerator of a particular diagram."
+        ],
+        "examples": [
+          {
+            "description": "Replace a numerator symbol while keeping an ordinary denominator untouched.",
+            "input": "applyToNumerator[x/y + x/z, x -> a]",
+            "evaluate": true
+          },
+          {
+            "description": "Inspect the transformed expression in text form.",
+            "input": "PlainText[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]]]",
+            "evaluate": true
+          }
+        ]
+      },
+      {
+        "title": "Explore a Single Identity",
+        "paragraphs": [
+          "SpinorIdentityCandidates lists legal local rewrites. Each candidate carries enough information for ApplySpinorIdentity to replay it. Inspect the returned data rather than inventing a process-specific substitution that has not been justified.",
+          "The complexity score is a search heuristic. A lower score is helpful, but an intermediate increase can be required for cancellations. Use the candidate details and exact identities to justify the derivation independently of the heuristic."
+        ],
+        "examples": [
+          {
+            "description": "Build a Schouten expression and inspect candidate identities.",
+            "input": "expr = SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]] SpinorChain[Spinor[\"Helicity\", \"Angle\", 3], Spinor[\"Helicity\", \"Angle\", 4]];\nSpinorIdentityCandidates[expr]",
+            "evaluate": false
+          },
+          {
+            "description": "Measure a search expression.",
+            "input": "SpinorExpressionComplexity[expr]",
+            "evaluate": false
+          }
+        ]
+      },
+      {
+        "title": "Use Known Masses Only Where Valid",
+        "paragraphs": [
+          "For an individual constructive diagram, the declared internal masses may be used in its numerator. For a factorization channel, only the cut line is additionally on shell. For the final sum and for all Feynman internal propagators, keep internal momenta off shell.",
+          "Do not prove equivalence of two final amplitudes by imposing their internal on-shell conditions. Compare them with ordinary spinor identities, external conditions and momentum conservation, or use the validation framework for numerical evidence."
+        ],
+        "examples": []
+      }
+    ],
+    "related": [
+      "ReduceSpinContractions",
+      "ReduceSpinorProducts",
+      "applyToNumerator",
+      "SpinorIdentityCandidates",
+      "ApplySpinorIdentity",
+      "SpinorExpressionComplexity"
+    ],
+    "guides": [
+      "IdentitiesAndSimplification",
+      "SpinorAlgebra"
+    ]
+  },
+  {
+    "name": "KinematicsAndOnShellConditions",
+    "title": "Kinematics, References and On-Shell Conditions",
+    "summary": "Keep external kinematics, channel residues and diagram numerator assumptions distinct.",
+    "sections": [
+      {
+        "title": "All External Momenta Are Incoming",
+        "paragraphs": [
+          "HEPCAT analytic formulas obey p1 + p2 + ... = 0 with every external momentum incoming. Reordering particles changes labels; crossing reverses a momentum and its spinor conventions. Use ReverseMomentum for symbolic crossing and give WriteSPINASProcess the physical incoming-to-outgoing process.",
+          "For the angle/square convention used here, a crossed massless momentum reverses the angle spinor sign while the square spinor is unchanged. Do not reverse only Mom insertions and leave its spinors unchanged."
+        ],
+        "examples": []
+      },
+      {
+        "title": "External and Internal Conditions",
+        "paragraphs": [
+          "ReduceSpinorProducts uses ordinary spinor identities and external mass algebra. Process-wide momentum conservation is handled in PrepareAmplitudes, where the process labels are available.",
+          "A diagram pair carries a mass replacement list. An internal entry records a numerator condition for that diagram. PrepareAmplitudes can use it aggressively while preserving discarded remainders in the detailed report. PropDen objects keep the actual propagators off shell.",
+          "A factorization channel puts its cut momentum on shell when its residue is compared with a product of lower-point amplitudes. It does not put every internal line of the lower-point amplitudes on shell.",
+          "A final amplitude with an external mass list can be prepared again. Without internal entries, preparation must not invent diagram-specific internal conditions. Feynman diagram internals remain off shell throughout."
+        ],
+        "examples": []
+      },
+      {
+        "title": "Reference Choices",
+        "paragraphs": [
+          "PolePreference controls reference choices and biases later representation searches. AllSpurious uses suitable massless references when available; AllPhysical uses spinor-momentum references that create admissible physical denominators; Mixed searches both kinds. Automatic chooses from the supported choices.",
+          "Constructive diagram representatives may use different reference choices while completion restores the required full-channel constraints. Feynman diagrams are not separately gauge invariant, so their full sum must use a consistent external reference assignment.",
+          "Reference independence of the final result is a real test. Leaving an unresolved xi in an expression is not automatically a failure, but the checker must vary admissible reference spinors and compare the complete amplitude."
+        ],
+        "examples": []
+      }
+    ],
+    "related": [
+      "ReverseMomentum",
+      "PermuteParticles",
+      "PrepareAmplitudes",
+      "PropDen",
+      "PhysicalPoleResidue",
+      "CheckAmplitudes"
+    ],
+    "guides": [
+      "SpinorAlgebra",
+      "AmplitudeConstruction",
+      "AmplitudeValidation"
+    ]
+  },
+  {
+    "name": "FeynmanComparison",
+    "title": "Comparing a Constructive Result with Feynman Diagrams",
+    "summary": "Read a Feynman model, convert its diagrams and compare the same process.",
+    "sections": [
+      {
+        "title": "Choose Consistent Models",
+        "paragraphs": [
+          "The constructive and Feynman model parameters must describe the same masses and couplings. ReadModel keeps them local, so use explicit model data and parameter rules rather than relying on a global symbol left over from another model.",
+          "The bundled QED Feynman model includes the electron mass. Its off-shell internal lines provide an independent comparison with the completed constructive result."
+        ],
+        "examples": [
+          {
+            "description": "Read both models and select a four-point process.",
+            "input": "qedModel = ReadModel[modelDirectory, 2];\nfeynmanModel = ReadModel[feynmanModelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};",
+            "evaluate": true
+          }
+        ]
+      },
+      {
+        "title": "Generate and Convert the Feynman Expression",
+        "paragraphs": [
+          "The same diagram entry points dispatch on the model type. FeynmanToSpinorProducts contracts supported Lorentz and ordered Dirac structures and reports unsupported cases. Never impose constructive internal numerator on-shell conditions on the Feynman propagators."
+        ],
+        "examples": [
+          {
+            "description": "Produce spinor-product Feynman amplitudes.",
+            "input": "feynmanDiagrams = CreateDiagrams[process, feynmanModel];\nfeynmanAmplitudes = FeynmanToSpinorProducts[diagramAmplitudes[feynmanDiagrams]];",
+            "evaluate": false
+          }
+        ]
+      },
+      {
+        "title": "Prepare with Shared References",
+        "paragraphs": [
+          "Use PrepareAmplitudes on the full Feynman list so all diagrams use consistent external references. Changing references independently in individual Feynman diagrams generally changes their sum."
+        ],
+        "examples": [
+          {
+            "description": "Use a physical-pole preference consistently across the list.",
+            "input": "preparedFeynman = PrepareAmplitudes[feynmanAmplitudes, feynmanModel, \"PolePreference\" -> \"AllPhysical\"];",
+            "evaluate": false
+          }
+        ]
+      },
+      {
+        "title": "Compare with a Constructive Result",
+        "paragraphs": [
+          "CheckAmplitudes can compare an independently obtained final constructive expression with the Feynman result as well as with its physical channels. See the CheckAmplitudes reference options for the exact comparison input and parameter mapping.",
+          "Inspect discrepancies with a fixed RandomSeed. Agreement at several generic points is a useful regression check; singular limits and analytic identities provide stronger complementary tests."
+        ],
+        "examples": [
+          {
+            "description": "Construct the corresponding analytic result.",
+            "input": "finalAmplitude = ConstructAmplitude[process, qedModel, qedModel];\nchannels = FactorizationAmplitudeChannels[process, qedModel];",
+            "evaluate": false
+          },
+          {
+            "description": "Include the independent Feynman expression in the combined report.",
+            "input": "CheckAmplitudes[finalAmplitude, channels, qedModel, \"FeynmanAmplitudes\" -> preparedFeynman, \"FeynmanModel\" -> feynmanModel, \"RandomSeed\" -> 314159]",
+            "evaluate": false
+          }
+        ]
+      }
+    ],
+    "related": [
+      "ReadModel",
+      "FeynmanModel",
+      "FeynmanToSpinorProducts",
+      "PrepareAmplitudes",
+      "CheckAmplitudes"
+    ],
+    "guides": [
+      "FeynmanAmplitudes",
+      "AmplitudeValidation"
+    ]
+  },
+  {
+    "name": "ExportingToSPINAS",
+    "title": "Exporting a Numerical SPINAS Process",
+    "summary": "Group helicities, declare physical crossing and build readable numerical code.",
+    "sections": [
+      {
+        "title": "Collect Analytic Helicity Amplitudes",
+        "paragraphs": [
+          "One exported process should contain the massless helicity choices needed by the requested spin sum. The expressions still use HEPCAT's all-incoming convention. The known four-point QED model is a small example that does not need a new construction run."
+        ],
+        "examples": [
+          {
+            "description": "Collect the independent photon-helicity cases.",
+            "input": "knownModel = ReadModel[modelDirectory, 3];\nprocesses = {{\"e\", \"E\", \"A.+\", \"A.+\"}, {\"e\", \"E\", \"A.+\", \"A.-\"}, {\"e\", \"E\", \"A.-\", \"A.-\"}};\nentries = {#, LookupAmplitude[Thread[{#, Range[4]}], knownModel, False, {i1, i2, i3, i4}]} & /@ processes;",
+            "evaluate": true
+          }
+        ]
+      },
+      {
+        "title": "Specify Physical Incoming and Outgoing Particles",
+        "paragraphs": [
+          "The physical process makes crossing unambiguous. WriteSPINASProcess reverses the outgoing momenta and spinor conventions. For identical photons it can use the supported permutation completion of supplied helicity cases; incomplete requested helicity coverage must be reported rather than silently summed as zero.",
+          "Use an explicit helicity in the physical process when that particle is intentionally fixed. A spin-summed amplitude squares the modulus for each spin/helicity assignment and then adds those contributions. It does not add amplitudes from different external spin states before squaring."
+        ],
+        "examples": [
+          {
+            "description": "Write files into a new temporary directory.",
+            "input": "exportDirectory = CreateDirectory[];\nWriteSPINASProcess[exportDirectory, {\"e\", \"E\"} -> {\"A\", \"A\"}, entries, knownModel, \"ProcessName\" -> \"eeAA\"]",
+            "evaluate": false
+          }
+        ]
+      },
+      {
+        "title": "Build and Run",
+        "paragraphs": [
+          "The exporter writes the process header and implementation, a small driver, CMake support and validation helpers. Request building when SPINAS and the required compiler tools are installed. The output report gives the generated locations and build/run diagnostics.",
+          "Normal random validation uses a time-based seed. Pass an explicit seed when replaying a failure. The generated numerical tests compare the same phase-space points for both implementations."
+        ],
+        "examples": [
+          {
+            "description": "Build and run the generated example where SPINAS is installed.",
+            "input": "WriteSPINASProcess[exportDirectory, {\"e\", \"E\"} -> {\"A\", \"A\"}, entries, knownModel, \"ProcessName\" -> \"eeAA\", \"Overwrite\" -> True, \"Build\" -> True, \"RunExamples\" -> True]",
+            "evaluate": false
+          }
+        ]
+      },
+      {
+        "title": "CalcHEP Validation and Integration",
+        "paragraphs": [
+          "Optional CalcHEP validation generates an independent symbolic CalcHEP process and compares squared amplitudes on shared random kinematics. This checks more than the internal consistency of exported SPINAS code.",
+          "The optional n_calchep backend has a different purpose: it connects CalcHEP's numerical integration machinery to the HEPCAT SPINAS matrix element without CalcHEP symbolically regenerating that matrix element. Generated parameter and mass interfaces keep the runtime values consistent."
+        ],
+        "examples": []
+      }
+    ],
+    "related": [
+      "WriteSPINASProcess",
+      "LookupAmplitude",
+      "AppendModelAmplitudes",
+      "ModelParameterRules",
+      "SPINAS",
+      "PlainText"
+    ],
+    "guides": [
+      "FormattingAndExport",
+      "ModelsAndParameters"
+    ]
+  }
+]

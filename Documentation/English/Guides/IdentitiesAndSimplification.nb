@@ -1,0 +1,116 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT GUIDE", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}], "AnchorBar"]}},
+     GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["Identities and Simplification", "GuideTitle"],
+  Cell["Apply exact identities and inspect legal one-step rewrites.",
+   "GuideAbstract"], Cell["ReduceSpinContractions performs spin-index \
+contractions. ReduceSpinorProducts applies the oriented spinor and \
+momentum-chain rules without assuming internal particles are on shell. \
+PrepareAmplitudes adds the process information needed for bounded \
+momentum-conservation searches and diagram-specific numerator conditions.",
+   "GuideAbstract"], Cell["Use applyToNumerator when rules are valid only in \
+each numerator. It preserves each term in its existing form and does not call \
+Together or Expand first. Never use internal on-shell replacements on the \
+physical propagator denominators.", "GuideAbstract"],
+  Cell["For a derivation, inspect SpinorIdentityCandidates and use \
+ApplySpinorIdentity to replay one chosen operation. These are exact symbolic \
+tools and do not require a trained neural model.", "GuideAbstract"],
+  Cell["Normal Reductions", "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["ReduceSpinContractions", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReduceSpinContractions"], ": ", "Sews \
+contracted massive or massless spinor indices into shorter momentum chains."}]\
+, "GuideText"], Cell[TextData[{ButtonBox["ReduceSpinorProducts",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ReduceSpinorProducts"], ": ", "Reduces spinor \
+chains and traces using ordinary identities and external on-shell \
+conditions."}], "GuideText"],
+  Cell[TextData[{ButtonBox["SimplifySpinorProducts", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SimplifySpinorProducts"], ": ",
+     "Runs the older iterative momentum-conservation and spinor simplifier."}]\
+, "GuideText"], Cell[TextData[{ButtonBox["SpinorChainReduced",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/SpinorChainReduced"], ": ",
+     "Is the rule-bearing reduction head used internally for SpinorChain."}],
+   "GuideText"], Cell[TextData[{ButtonBox["SpinorTraceReduced",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/SpinorTraceReduced"], ": ",
+     "Is the rule-bearing reduction head used internally for SpinorTrace."}],
+   "GuideText"], Cell[TextData[{ButtonBox["applyToNumerator",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/applyToNumerator"], ": ", "Applies rules or a \
+function to the numerator of each additive term in its existing form."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ExtractMandelstahm",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ExtractMandelstahm"], ": ", "Rewrites scalar \
+momentum products and supported two-particle propagators using s invariants."}\
+], "GuideText"], Cell[TextData[{ButtonBox["ReducexFactors",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/ReducexFactors"],
+     ": ", "Reduces legacy x-factor expressions using an explicitly declared \
+four-point channel."}], "GuideText"],
+  Cell[TextData[{ButtonBox["ReduceColor", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReduceColor"], ": ", "Reduces legacy \
+SU(3) generator and structure-constant expressions to traces."}],
+   "GuideText"], Cell["Inspect and Replay Identities",
+   "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["SpinorIdentityCandidates", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SpinorIdentityCandidates"], ": ", "Enu\
+merates legal symbolic identity edits for a diagram or amplitude expression."}\
+], "GuideText"], Cell[TextData[{ButtonBox["ApplySpinorIdentity",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ApplySpinorIdentity"], ": ", "Applies a currently \
+legal identity edit and returns the new expression."}], "GuideText"],
+  Cell[TextData[{ButtonBox["SchoutenRewrite", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SchoutenRewrite"], ": ", "Constructs \
+the generalized Schouten identity for two chains at specified momentum \
+splits."}], "GuideText"],
+  Cell[TextData[{ButtonBox["SchoutenCandidates", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SchoutenCandidates"], ": ",
+     "Lists exact generalized Schouten edits available in an expression."}],
+   "GuideText"], Cell[TextData[{ButtonBox["SpinorExpressionComplexity",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/SpinorExpressionComplexity"], ": ",
+     "Returns a scalar complexity score for a spinor expression."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ComplicateAmplitude",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ComplicateAmplitude"], ": ", "Generates a \
+model-free random sequence of reversible symbolic identities."}],
+   "GuideText"], Cell["Process-Aware Preparation",
+   "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], ": ", "Simplify \
+diagram pairs or factorization rows while retaining their physical \
+assumptions."}], "GuideText"],
+  Cell[TextData[{ButtonBox["PrepareDiagramAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareDiagramAmplitudes"], ": ",
+     "Use the compatibility name for PrepareAmplitudes."}], "GuideText"],
+  Cell[TextData[{ButtonBox["xFactorReduced", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/xFactorReduced"], ": ",
+     "Evaluates a supported legacy four-point composite x-factor formula."}],
+   "GuideText"], Cell[TextData[{ButtonBox["xTildeFactorReduced",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/xTildeFactorReduced"], ": ",
+     "Evaluates a supported legacy four-point composite x-factor formula."}],
+   "GuideText"], Cell["Tutorials", "GuideTutorialsSection"],
+  Cell[TextData[{ButtonBox["Applying Spinor Identities in a Derivation",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/tutorial/ApplyingSpinorIdentities"], "  \[Bullet]  ",
+     ButtonBox["Kinematics, References and On-Shell Conditions",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/tutorial/KinematicsAndOnShellConditions"]}],
+   "GuideTutorial"]}, WindowTitle ->
+  "Identities and Simplification - HEPCAT Documentation", Saveable -> False,
+ WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/guide/IdentitiesAndSimplification",
+     "title" -> "Identities and Simplification", "type" -> "Guide",
+     "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" ->
+      "Apply exact identities and inspect legal one-step rewrites.",
+     "keywords" -> {"HEPCAT", "IdentitiesAndSimplification",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

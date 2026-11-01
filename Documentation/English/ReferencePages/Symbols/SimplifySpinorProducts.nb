@@ -1,0 +1,135 @@
+Notebook[
+ {Cell[BoxData[GridBox[{{Cell["HEPCAT SYMBOL", "PacletNameCell"],
+       Cell[TextData[{ButtonBox["HEPCAT", BaseStyle -> "Link",
+           ButtonData -> "paclet:HEPCAT/guide/HEPCAT"], "  \[Bullet]  ",
+          ButtonBox["Related Guide", BaseStyle -> "Link",
+           ButtonData ->
+            "paclet:HEPCAT/guide/IdentitiesAndSimplification"]}],
+        "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
+   "AnchorBarGrid"], Cell["SimplifySpinorProducts", "ObjectName"],
+  Cell["Runs the older iterative momentum-conservation and spinor \
+simplifier.", "Notes"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"SimplifySpinorProducts", "[", "expr",
+         ",", " ", "opts", "]"}]], "InlineFormula"], "  ", "runs a directed \
+iterative simplification with declared momenta and mass rules."}], "Usage"],
+  Cell["Details", "NotesSection"], Cell["This older routine contains \
+specialized three- and four-point momentum-conservation rules. For current \
+general diagram workflows, use PrepareAmplitudes; for process-independent \
+algebra, use ReduceSpinorProducts.", "Notes"], Cell["Its option keys are \
+symbols: Momenta, InternalLines, InternalLineOnShell, nTimes, \
+massReplacementRules and PrintWarnings. This differs from the string option \
+names used by the modern preparation and identity APIs.", "Notes"],
+  Cell["Defaults include Momenta->{1,2,3,4}, InternalLines->{1,2}, \
+InternalLineOnShell->False and nTimes->10. Turning on InternalLineOnShell \
+changes the allowed numerator assumptions and must be restricted to an \
+individual diagram.", "Notes"], Cell["The routine may print its conservation \
+assumptions. Disable PrintWarnings when they have already been inspected.",
+   "Notes"], Cell["Options", "NotesSection"],
+  Cell[BoxData[GridBox[{{Cell["Option", "TableHeader"],
+       Cell["Default", "TableHeader"], Cell["Meaning", "TableHeader"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"Momenta"}]], "InlineFormula"]}],
+        "TableText"], Cell[TextData[
+         {Cell[BoxData[RowBox[{"{", "1", ",", " ", "2", ",", " ", "3", ",",
+              " ", "4", "}"}]], "InlineFormula"]}], "TableText"],
+       Cell["Complete external momentum labels available to the older \
+simplification or x-factor helper. This is a legacy symbol option; the list \
+supplies the context needed for momentum-conservation identities.",
+        "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"InternalLines"}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"{", "1", ",", " ", "2", "}"}]],
+           "InlineFormula"]}], "TableText"], Cell["External labels composing \
+the internal line used by the older SimplifySpinorProducts helper. It matters \
+only when the corresponding internal-shell reductions are enabled and its \
+mass rules are supplied.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"InternalLineOnShell"}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"False"}]], "InlineFormula"]}],
+        "TableText"], Cell["Whether the older SimplifySpinorProducts helper \
+may additionally use the stated InternalLines shell. False is the default; \
+ordinary ReduceSpinorProducts does not acquire an internal-shell assumption."\
+, "TableText"]}, {Cell[TextData[{Cell[BoxData[RowBox[{"nTimes"}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"10"}]], "InlineFormula"]}],
+        "TableText"], Cell["Maximum number of repeated simplification rounds \
+in the older SimplifySpinorProducts helper. This is a legacy symbol option, \
+not a wall-clock limit.", "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"massReplacementRules"}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"{", "}"}]], "InlineFormula"]}],
+        "TableText"], Cell["Explicit Mass[...] replacement rules for the \
+older SimplifySpinorProducts helper. Supply only assumptions justified for \
+the current item; do not combine incompatible diagram-local shells.",
+        "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"PrintWarnings"}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"True"}]], "InlineFormula"]}],
+        "TableText"], Cell["Whether the older SimplifySpinorProducts helper \
+prints warnings about its iterative simplification. This legacy symbol option \
+affects messages rather than the allowed physical assumptions.",
+        "TableText"]}}, GridBoxAlignment ->
+      {"Columns" -> {Left, Left, Left}}, GridBoxItemSize ->
+      {"Columns" -> {Scaled[0.23], Scaled[0.19], Scaled[0.58]}},
+     GridBoxDividers -> {"Rows" -> {False, True, {False}, False}}]],
+   "3ColumnTableMod"], Cell["Examples", "PrimaryExamplesSection"],
+  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
+     Cell["Evaluate this setup once before the examples. The paths refer to \
+the local HEPCAT checkout; no model parameters are assigned global numerical \
+values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
+         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
+         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
+         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
+         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
+         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
+         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
+         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
+         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
+         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
+         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
+         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
+         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
+         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
+         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
+      "Input", InitializationCell -> True]}, Open]],
+  Cell["Basic Examples", "ExampleSection"],
+  Cell["Run one iteration without internal-shell assumptions.",
+   "ExampleText"], Cell[BoxData[RowBox[{"SimplifySpinorProducts", "[",
+      "SpinorChain", "[", "Spinor", "[", "\"Helicity\"", ",", " ",
+      "\"Angle\"", ",", " ", "1", "]", ",", " ", "Spinor", "[",
+      "\"Helicity\"", ",", " ", "\"Angle\"", ",", " ", "1", "]", "]", ",",
+      " ", "nTimes", " ", "->", " ", "1", ",", " ", "PrintWarnings", " ",
+      "->", " ", "False", "]"}]], "Input"], Cell[BoxData[RowBox[{"0"}]],
+   "Output"], Cell["Inspect the legacy option names.", "ExampleText"],
+  Cell[BoxData[RowBox[{"Options", "[", "SimplifySpinorProducts", "]"}]],
+   "Input"], Cell[BoxData[RowBox[{"{", "Momenta", " ", "->", " ", "{", "1",
+      ",", " ", "2", ",", " ", "3", ",", " ", "4", "}", ",", " ",
+      "InternalLines", " ", "->", " ", "{", "1", ",", " ", "2", "}", ",",
+      " ", "InternalLineOnShell", " ", "->", " ", "False", ",", " ",
+      "nTimes", " ", "->", " ", "10", ",", " ", "massReplacementRules", " ",
+      "->", " ", "{", "}", ",", " ", "PrintWarnings", " ", "->", " ", "True",
+      "}"}]], "Output"], Cell["See Also", "SeeAlsoSection"],
+  Cell[TextData[{ButtonBox["ReduceSpinorProducts", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReduceSpinorProducts"],
+     "  \[Bullet]  ", ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], "  \[Bullet]  ",
+     ButtonBox["ReducexFactors", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReducexFactors"]}], "SeeAlso"],
+  Cell["Related Guides", "MoreAboutSection"],
+  Cell[TextData[{ButtonBox["Identities and Simplification",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/guide/IdentitiesAndSimplification"], "  \[Bullet]  ",
+     ButtonBox["HEPCAT: Constructive Amplitudes and Spinor Algebra",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}],
+   "MoreAbout"]}, WindowTitle ->
+  "SimplifySpinorProducts - HEPCAT Documentation", Saveable -> False,
+ WindowSize -> {1000, 850}, CellContext -> Notebook,
+ TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
+     "uri" -> "HEPCAT/ref/SimplifySpinorProducts",
+     "title" -> "SimplifySpinorProducts", "type" -> "Symbol",
+     "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" ->
+      "Runs the older iterative momentum-conservation and spinor simplifier."\
+, "keywords" -> {"HEPCAT", "SimplifySpinorProducts", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]
