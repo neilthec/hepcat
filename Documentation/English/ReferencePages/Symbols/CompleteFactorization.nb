@@ -28,6 +28,12 @@ directions and validation diagnostics."}], "Usage"],
 supplied amplitude, compares every physical residue with its lower-point \
 target and solves for correction coefficients together. It does not naively \
 add the channel products, which overlap on multiple poles.", "Notes"],
+  Cell["When MaxCorrectionTerms is Automatic, an already built and projected \
+exchange-symmetry correction union can be admitted within the automatic \
+ceiling without rebuilding its sources. CapChanges records the effective \
+increase and preserved direction count. This never extends TimeConstraint, \
+truncates columns or changes residue and affine-family validation. Explicit \
+numerical caps and supplied correction bases retain their limits.", "Notes"],
   Cell["Preparation details provide simplified expressions, original \
 expressions and discarded remainders. These are tried before broader \
 channel-continuation directions, preserving useful diagram information \

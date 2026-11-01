@@ -152,6 +152,61 @@ check["the automatic hard ceiling is never exceeded",
 check["early-cap discovery leaves the original source catalog unchanged",
   Hash[arCapNormalized, "SHA256"] === arCapHash];
 
+arUnionBasis = Table[arUnionDirection[i], {i, 907}];
+arUnionHash = Hash[arUnionBasis, "SHA256"];
+arUnionAdmission = ConstructiveDiagrams`Private`completionMaterializedBasisCap[
+  arUnionBasis, Automatic, 256, 2048];
+check["an already materialized exchange union grows only its automatic effective cap",
+  arUnionAdmission["EffectiveMaxCorrectionTerms"] === 1024 &&
+    First[arUnionAdmission["CapChanges"]]["Operation"] === "ReuseCompleteExchangeUnion"];
+check["automatic admission preserves every original column without normalization or trimming",
+  Hash[arUnionBasis, "SHA256"] === arUnionHash && Length[arUnionBasis] === 907];
+check["an explicit cap has no inherited permission to grow a materialized union",
+  ConstructiveDiagrams`Private`completionMaterializedBasisCap[
+    arUnionBasis, Automatic, 256, None] ===
+      <|"EffectiveMaxCorrectionTerms" -> 256, "CapChanges" -> {}|>];
+check["a supplied correction basis never gains implicit cap admission",
+  ConstructiveDiagrams`Private`completionMaterializedBasisCap[
+    arUnionBasis, arUnionBasis, 256, 2048]["EffectiveMaxCorrectionTerms"] === 256];
+check["an oversized union is retained intact but never admitted beyond the automatic ceiling",
+  ConstructiveDiagrams`Private`completionMaterializedBasisCap[
+    arUnionBasis, Automatic, 256, 512] ===
+      <|"EffectiveMaxCorrectionTerms" -> 256, "CapChanges" -> {}|> && Length[arUnionBasis] === 907];
+check["an automatic ceiling need not be a power of two",
+  ConstructiveDiagrams`Private`completionMaterializedBasisCap[
+    arUnionBasis, Automatic, 256, 1000]["EffectiveMaxCorrectionTerms"] === 1000];
+check["an incomplete source checkpoint cannot raise a cap",
+  ConstructiveDiagrams`Private`completionMaterializedBasisCap[
+    Append[arUnionBasis, $TimedOut], Automatic, 256, 2048]["CapChanges"] === {}];
+
+(* The controller must not rebuild a complete union merely because its initial
+   heuristic cap was too small. This inert core never claims a fitted result. *)
+arUnionBuilds = 0;
+arUnionController = Internal`InheritedBlock[
+  {ConstructiveDiagrams`Private`completionFactorizationCore},
+  Clear[ConstructiveDiagrams`Private`completionFactorizationCore];
+  ConstructiveDiagrams`Private`completionFactorizationCore[input_, channels_, model_, opts___] := Module[
+    {settings = Association[{opts}], admission},
+    arUnionBuilds++;
+    admission = ConstructiveDiagrams`Private`completionMaterializedBasisCap[
+      arUnionBasis, settings["CorrectionBasis"], settings["MaxCorrectionTerms"],
+      ConstructiveDiagrams`Private`$completionAutomaticCorrectionTermCeiling];
+    Join[<|"Status" -> "UNRESOLVED", "Amplitude" -> 0, "ExternalMassRules" -> arRules4,
+      "CorrectionBasis" -> arUnionBasis, "CorrectionSpace" -> "ExchangeSelectedChannelUnion",
+      "CorrectionSpaceCandidates" -> {<|"Terms" -> Length[arUnionBasis],
+        "WithinLimit" -> True|>}, "ElapsedTime" -> 0,
+      "Diagnostics" -> {"An inert source-space fixture does not certify an amplitude."}|>, admission]];
+  CompleteFactorization[{arRules4, 0}, {}, {{}, {}, {}, {}},
+    "PolePreference" -> "AllPhysical", "ReturnDetails" -> True,
+    "TimeConstraint" -> 17/2, "ProgressReporting" -> False, "Parallelization" -> False]];
+check["the automatic controller builds an admitted complete union once and preserves all columns",
+  arUnionBuilds === 1 && Length[arUnionController["AdaptiveAttempts"]] === 1 &&
+    arUnionController["EffectiveMaxCorrectionTerms"] === 1024 &&
+    arUnionController["CorrectionBasis"] === arUnionBasis &&
+    arUnionController["Status"] === "UNRESOLVED"];
+check["admitting an existing union does not extend the original stage clock",
+  arUnionController["ResourcePolicy"]["Resolved"]["TimeConstraint"] === 17/2];
+
 (* An inert core report isolates the retry controller. No mocked report is
    accepted as an amplitude or used to bypass a physical check. *)
 arMeasureCalls = 0;
@@ -382,7 +437,7 @@ If[Environment["HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION"] === "1",
       AllTrue[arMixedReport["Checks"]["Checks"], #["Status"] === "PASS" &] &&
       arMixedReport["Checks"]["FeynmanCheck"]["Status"] === "PASS"],
   Print["SKIP: set HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION=1 for the full AllPhysical mixed six-point constructor regression."]];
-arExpected = 55 + If[Environment["HEPCAT_TEST_FULL_AUTOMATIC_CONSTRUCTION"] === "1", 2, 0] +
+arExpected = 64 + If[Environment["HEPCAT_TEST_FULL_AUTOMATIC_CONSTRUCTION"] === "1", 2, 0] +
   If[Environment["HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION"] === "1", 3, 0];
 If[checks =!= arExpected, AppendTo[failures, "Not every automatic-resource assertion executed."]];
 Print["AUTOMATIC RESOURCE CHECKS: ", checks, "; FAILURES: ", Length[failures]];

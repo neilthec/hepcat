@@ -61,6 +61,11 @@ coefficients, and the exact Laurent fallback for hidden denominators, references
 and genuine bad growth. Bound-only samples never invent observed leading powers;
 unresolved directions prevent an overall bound claim. No internal shell is used.
 
+`automatic-resource-tests.wl` also checks in-place admission of a complete
+exchange correction union: construction occurs once, every column is retained,
+the automatic ceiling and original clock remain binding, and explicit caps or
+supplied bases never acquire implicit permission to grow.
+
 `feynman-coefficient-comparison-tests.wl` compares the scalar-coefficient route
 with the former whole-polynomial route on small cases. It covers every monomial
 of 64- and 729-component tensors, opposite signs, tiny exact mixed coefficients

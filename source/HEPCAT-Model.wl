@@ -9251,6 +9251,19 @@ Options[CompleteFactorization] = {"CorrectionBasis" -> Automatic,
 CompleteFactorization[input_, channelInput : (_List | _Association), model_List, opts : OptionsPattern[]] :=
   ConstructiveDiagrams`Private`amplitudeAutomaticFactorization[input, channelInput, model, {opts}];
 
+(* Admit an already built complete union without repeating its construction.
+   The dynamic ceiling is granted only by the public Automatic-cap wrapper. *)
+ConstructiveDiagrams`Private`completionMaterializedBasisCap[basis_, requestedBasis_, limit_Integer, ceiling_] := Module[
+  {count = If[ListQ[basis], Length[basis], 0], next = limit, changes = {}},
+  If[requestedBasis === Automatic && ListQ[basis] &&
+      FreeQ[basis, _Failure | _Missing | $Failed | $Aborted | $TimedOut] &&
+      IntegerQ[ceiling] && limit < count <= ceiling,
+    next = Min[ceiling, 2^Ceiling[Log[2, count]]];
+    changes = {<|"From" -> limit, "To" -> next,
+      "ObservedProjectedDirections" -> count, "Operation" -> "ReuseCompleteExchangeUnion"|>}];
+  <|"EffectiveMaxCorrectionTerms" -> next, "CapChanges" -> changes|>
+];
+
 ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : (_List | _Association), model_List, opts : OptionsPattern[CompleteFactorization]] := Block[{$completionParallelSettings = <|
     "Parallelization" -> OptionValue["Parallelization"], "MaxKernels" -> OptionValue["MaxKernels"]|>,
     ConstructiveDiagrams`Private`$rspCanonicalProductBasis = True}, Module[
@@ -9266,7 +9279,7 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
    channelRows, channelPreparation = <||>,
    boseGroups = OptionValue["BoseSymmetryGroups"], fermionGroups = OptionValue["FermionSymmetryGroups"],
    exchangePlan, processNames, processSources,
-   constructionLimit, project, projectedSeed,
+   constructionLimit, project, projectedSeed, unionAdmission, unionCapChanges = {},
    refinements = OptionValue["MaxRefinements"],
    rules = residueParameterRules[model, OptionValue["ParameterRules"]], samples = OptionValue["Samples"],
    validationSamples = OptionValue["ValidationSamples"],
@@ -9816,6 +9829,17 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
               "Reducing Bose-symmetric correction directions", "Reducing signed exchange correction directions"],
             "Terms" -> Length[basis], "Permutations" -> exchangePlan["Order"]|>];
         basis = completionIndependentBasis[completionNormalizeBasis[project /@ basis]]];
+      If[ListQ[basis] && exchangePlan["Order"] > 1,
+        unionAdmission = completionMaterializedBasisCap[basis, basisOption, limit,
+          $completionAutomaticCorrectionTermCeiling];
+        If[unionAdmission["EffectiveMaxCorrectionTerms"] > limit,
+          unionCapChanges = Join[unionCapChanges,
+            (Join[#, <|"CorrectionSpace" -> space, "ElapsedTime" -> AbsoluteTime[] - start|>] &) /@
+              unionAdmission["CapChanges"]];
+          limit = unionAdmission["EffectiveMaxCorrectionTerms"];
+          completionProgress[callback, enabled, <|"Stage" -> "Reusing complete exchange correction space",
+            "Terms" -> Length[basis], "MaxCorrectionTerms" -> limit,
+            "Elapsed" -> AbsoluteTime[] - start|>]]];
       If[ListQ[basis] && Length[basis] > limit && basisOption === Automatic &&
           exchangePlan["Order"] > 1 && AssociationQ[reducedChannels],
         AppendTo[budgetSpaces, <|"CorrectionSpace" -> space, "Terms" -> Length[basis],
@@ -10136,7 +10160,8 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
     report = Join[report, <|"OrdinaryCompaction" -> ordinaryCompaction|>]];
   report = Join[report, <|"ElapsedTime" -> AbsoluteTime[] - start,
     "RandomSeed" -> seed, "EffectiveMaxCorrectionTerms" -> limit,
-    "CapChanges" -> If[AssociationQ[physicalSpace], Lookup[physicalSpace, "CapChanges", {}], {}],
+    "CapChanges" -> Join[If[AssociationQ[physicalSpace], Lookup[physicalSpace, "CapChanges", {}], {}],
+      unionCapChanges],
     "BoseSymmetry" -> completionExchangeDetails[exchangePlan, "Boson"],
     "FermionSymmetry" -> completionExchangeDetails[exchangePlan, "Fermion"],
     "ExchangeSymmetry" -> KeyDrop[exchangePlan, "Permutations"],

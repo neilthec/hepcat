@@ -1174,6 +1174,12 @@ policy from multiplicity, source/channel counts, expression size and retained
 family dimensions. The first correction allowance is 128 below six points and
 256 at six points; an observed cap failure may retry a complete larger source
 space within the same stage clock, up to automatic ceilings of 1024 and 2048.
+When the complete projected exchange union is already materialized within its
+automatic ceiling, raise the call-local effective cap and reuse that exact union
+before trying grouped fallbacks. Record `ReuseCompleteExchangeUnion` in
+`CapChanges`; do not rebuild the sources merely to change that heuristic cap.
+This admission never extends the shared clock or grants permission to explicit
+numeric caps or supplied correction bases.
 A cap is never satisfied by discarding arbitrary columns or affine directions.
 Explicit numeric caps and clocks are never increased. `AdaptiveAttempts` and
 `ResourcePolicy` retain the requested/resolved controls and observed attempts.
