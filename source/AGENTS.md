@@ -18,6 +18,18 @@ This file is in `source/`. For tasks started elsewhere in the repository,
 explicitly read `source/AGENTS.md` before using this workflow. All paths below
 are relative to the repository root, not to this file.
 
+## Keep Mathematica Help Current
+
+Documentation is part of every package improvement. When adding or changing a
+public function, option, default, input/output format, or supported workflow,
+update the relevant reference pages, examples, guides and tutorials in
+`Documentation/Source` in the same change. Document limitations and failures
+honestly, and verify any changed example outputs before updating their cache.
+Rebuild the native notebooks, usage registry and search index with
+`Documentation/Build.wl`, then run the focused documentation checks described in
+`Documentation/README.md`. Review the resulting Help pages for readability and
+include the documentation updates in the same commit as the implementation.
+
 ## Start Here
 
 - `tests/SIMPLIFICATION.md`: practical guide to identities, on-shell scope,
