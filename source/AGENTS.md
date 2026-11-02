@@ -537,7 +537,12 @@ With an explicitly configured MadGraph model, the same `WriteSPINASProcess`
 export also creates a `<ProcessName>_madevent` launcher alongside the independent
 MadGraph validator. `source/madevent-runtime.py` lazily creates a private native
 LO MadEvent process and replaces its raw fixed-spin MATRIX with the exported
-SPINAS amplitude. Keep MadEvent's averaging, final identical-species factor,
+SPINAS amplitude. Its default working directory is the caller's current
+directory: launching from `build` creates `build/madevent`. Keep exported source
+and library paths independent of that output workspace. `--work-directory DIR`
+selects another workspace; print full card, HTML and event locations at startup.
+Preserve earlier sessions rather than moving or overwriting their results.
+Keep MadEvent's averaging, final identical-species factor,
 phase-space maps, cuts and event generation; never call `amp2` inside MATRIX or
 fall back to HELAS after a failed evaluation. Synchronize current evaluated UFO
 parameters and masses on each numerical call, reusing cached products across

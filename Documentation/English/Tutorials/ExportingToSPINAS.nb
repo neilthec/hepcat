@@ -144,16 +144,24 @@ next-to-leading-order or matched calculation. Massive-spin correlations \
 cannot be inferred from a spin-summed result or from treating the two \
 libraries' spin bases as identical.", "TechNoteText"],
   Cell["Request \"Build\" -> True in the same export call. For ProcessName -> \
-\"eeAA\", the compiled launcher is build/eeAA_madevent. Run \
-./build/eeAA_madevent --prepare from the exported directory to create the \
-private MadEvent session. The first generation step can take longer than \
-later runs because MadEvent builds its integration code.", "TechNoteText"],
-  Cell["Use the generated madevent/Cards/run_card.dat for beam energies, \
-cuts, event counts, integration settings and the random seed, and \
-madevent/Cards/param_card.dat for the numerical model inputs. After preparing \
-the session, ./build/eeAA_madevent opens the numerical interface; \
-./build/eeAA_madevent --run run_01 generates events with the current cards. A \
---command-file path argument runs a normal MadEvent command file.",
+\"eeAA\", enter build and run ./eeAA_madevent --prepare. The default output \
+workspace is the directory from which you run the launcher, so this creates \
+build/madevent. The launcher prints the full card, HTML and event-output \
+locations. The first generation step can take longer than later runs because \
+MadEvent builds its integration code.", "TechNoteText"],
+  Cell["From the same build directory, ./eeAA_madevent opens the numerical \
+interface and ./eeAA_madevent --run run_01 generates events. Under that \
+working directory, madevent/Cards/run_card.dat controls beam energies, cuts, \
+event counts, integration settings and the random seed; \
+madevent/Cards/param_card.dat controls numerical model inputs. Open \
+madevent/index.html for progress and results, and find the event file in \
+madevent/Events/run_01.", "TechNoteText"], Cell["Use --work-directory DIR to \
+select another output workspace, or --command-file path to run a normal \
+MadEvent command file. Existing sessions are retained where they were \
+created. For example, from build, --work-directory .. continues an earlier \
+madevent session stored in the exported project's main directory. Repeated \
+launches in the same workspace preserve its cards and events; the amplitude \
+source and compiled libraries remain in the exported project.",
    "TechNoteText"], Cell["The independent comparison remains available \
 through ValidateMadGraph[exportDirectory] and the generated \
 eeAA_validate_madgraph program. The two workflows share the export and \

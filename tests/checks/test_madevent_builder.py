@@ -28,7 +28,9 @@ _SPEC.loader.exec_module(builder)
 class MadEventBuilderTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory(prefix="hepcat-madevent-unit-")
-        self.directory = Path(self.temporary.name)
+        self.directory = Path(self.temporary.name).resolve()
+        self.previous_directory = Path.cwd()
+        os.chdir(self.directory)
         self.config = {
             "MadGraphDirectory": str(self.directory / "chosen-MadGraph"),
             "MadGraphModel": "explicit-test-ufo",
@@ -44,7 +46,36 @@ class MadEventBuilderTests(unittest.TestCase):
         }
 
     def tearDown(self):
+        os.chdir(self.previous_directory)
         self.temporary.cleanup()
+
+    def make_export(self, config=None):
+        config = self.config if config is None else config
+        project = Path(config["ProcessDirectory"])
+        (project / "build").mkdir(parents=True, exist_ok=True)
+        library = project / "build" / "libfixture.a"
+        library.touch()
+        (project / "build" / "madevent-link.json").write_text(json.dumps({
+            "Libraries": [str(library)], "CXXRuntime": "c++"}))
+        return project
+
+    def make_owned_run(self, workspace, config=None):
+        config = self.config if config is None else config
+        self.make_export(config)
+        process = workspace / "madevent"
+        (process / "bin" / "internal").mkdir(parents=True)
+        (process / "Cards").mkdir()
+        (process / "bin" / "madevent").write_text("import internal.madevent_interface as cmd_interface\n")
+        matrix = process / "matrix.f"
+        matrix.write_text("SPINAS numerical hook\n")
+        normalized = builder.validate_config(config)
+        report = {"Status": "READY", "MadEventDirectory": str(process.resolve()),
+                  "WorkingDirectory": str(workspace.resolve()),
+                  "ConfigurationSHA256": builder.configuration_fingerprint(
+                      normalized, builder.load_link_configuration(normalized)),
+                  "MatrixHashes": [{"Path": "matrix.f", "SHA256": hashlib.sha256(matrix.read_bytes()).hexdigest()}]}
+        (process / "hepcat-madevent.json").write_text(json.dumps(report))
+        return process, report
 
     def test_validation_has_no_side_effects_or_implicit_model(self):
         original = copy.deepcopy(self.config)
@@ -232,24 +263,13 @@ class MadEventBuilderTests(unittest.TestCase):
         interface.do_reweight("--mode=OFF -from_cards")
 
     def test_existing_private_runs_cannot_be_silently_overwritten(self):
-        project = self.directory / "export"
-        (project / "build").mkdir(parents=True)
-        library = project / "build" / "libfixture.a"
-        library.touch()
-        (project / "build" / "madevent-link.json").write_text(json.dumps({
-            "Libraries": [str(library)], "CXXRuntime": "c++"}))
-        process = project / "madevent"
+        project = self.make_export()
+        process = self.directory / "madevent"
         process.mkdir()
         with self.assertRaisesRegex(builder.MadEventSetupError, "ownership"):
             builder.prepare(self.config)
-        normalized = builder.validate_config(self.config)
-        matrix = process / "matrix.f"
-        matrix.write_text("SPINAS numerical hook\n")
-        (process / "bin" / "internal").mkdir(parents=True)
-        (process / "bin" / "madevent").write_text("import internal.madevent_interface as cmd_interface\n")
-        report = {"ConfigurationSHA256": builder.configuration_fingerprint(normalized, builder.load_link_configuration(normalized)),
-                  "MatrixHashes": [{"Path": "matrix.f", "SHA256": hashlib.sha256(matrix.read_bytes()).hexdigest()}]}
-        (process / "hepcat-madevent.json").write_text(json.dumps(report))
+        process.rmdir()
+        process, report = self.make_owned_run(self.directory)
         self.assertEqual(builder.prepare(self.config), report)
         with self.assertRaisesRegex(builder.MadEventSetupError, "metadata changed"):
             builder.prepare(dict(self.config, ParameterDefaults=[.4, .0005]))
@@ -261,9 +281,88 @@ class MadEventBuilderTests(unittest.TestCase):
         with self.assertRaisesRegex(builder.MadEventSetupError, "metadata changed"):
             builder.prepare(self.config)
         link_path.write_text(link_before)
-        matrix.write_text("regenerated HELAS matrix\n")
+        (process / "matrix.f").write_text("regenerated HELAS matrix\n")
         with self.assertRaisesRegex(builder.MadEventSetupError, "modified or regenerated"):
             builder.prepare(self.config)
+
+    def test_default_session_uses_launch_directory_and_preserves_legacy_export(self):
+        project = self.make_export()
+        legacy = project / "madevent"
+        legacy.mkdir()
+        (legacy / "old-events.lhe").write_text("preserve previous results\n")
+        process, report = self.make_owned_run(self.directory)
+        (process / "Cards" / "run_card.dat").write_text("current user cards\n")
+        self.assertEqual(builder.prepare(self.config), report)
+        self.assertEqual(process, Path.cwd() / "madevent")
+        self.assertEqual((process / "Cards" / "run_card.dat").read_text(), "current user cards\n")
+        self.assertEqual((legacy / "old-events.lhe").read_text(), "preserve previous results\n")
+        self.assertEqual(Path(self.config["ProcessDirectory"]), project)
+
+    def test_generation_staging_is_in_launch_directory_not_export(self):
+        project = self.make_export()
+        class FakeReference:
+            ValidationSetupError = ValueError
+            def checked_configuration(self, data):
+                raise ValueError("deliberate stop before model generation")
+        with mock.patch.object(builder, "reference_runtime", return_value=FakeReference()):
+            with self.assertRaisesRegex(builder.MadEventSetupError, "deliberate stop"):
+                builder.prepare(self.config)
+        self.assertTrue((self.directory / ".hepcat-madevent-support").is_dir())
+        self.assertFalse((project / ".hepcat-madevent-support").exists())
+        self.assertFalse((project / "madevent").exists())
+
+    def test_explicit_workspace_and_cli_inputs_resolve_from_launch_directory(self):
+        workspace = self.directory / "chosen output"
+        workspace.mkdir()
+        process, report = self.make_owned_run(workspace)
+        project = Path(self.config["ProcessDirectory"])
+        config_path = project / "madevent-config.json"
+        config_path.write_text(json.dumps(self.config))
+        inputs = self.directory / "inputs"
+        inputs.mkdir()
+        (inputs / "run_card.dat").write_text("requested run controls\n")
+        (inputs / "param_card.dat").write_text("requested model inputs\n")
+        (inputs / "commands.txt").write_text("quit\n")
+        output = io.StringIO()
+        with mock.patch.object(builder.subprocess, "call", return_value=0) as call, \
+             contextlib.redirect_stdout(output):
+            status = builder.main(["--configuration", str(config_path),
+                "--work-directory", "chosen output", "--run-card", "inputs/run_card.dat",
+                "--param-card", "inputs/param_card.dat", "--command-file", "inputs/commands.txt"])
+        self.assertEqual(status, 0)
+        self.assertEqual(call.call_args.kwargs["cwd"], process)
+        self.assertEqual(Path(call.call_args.args[0][-1]), inputs / "commands.txt")
+        self.assertEqual((process / "Cards" / "run_card.dat").read_text(), "requested run controls\n")
+        self.assertEqual((process / "Cards" / "param_card.dat").read_text(), "requested model inputs\n")
+        for path in [process / "index.html", process / "Events", process / "Cards"]:
+            self.assertIn(str(path), output.getvalue())
+        self.assertFalse((self.directory / "madevent").exists())
+        self.assertFalse((project / "madevent").exists())
+        # Preparation alone must report the same paths and retain edited cards.
+        with contextlib.redirect_stdout(output):
+            self.assertEqual(builder.main(["--configuration", str(config_path),
+                "--work-directory", "chosen output", "--prepare"]), 0)
+        self.assertEqual((process / "Cards" / "run_card.dat").read_text(), "requested run controls\n")
+        self.assertEqual(builder.prepare(self.config, root=workspace), report)
+
+    def test_one_workspace_cannot_mix_different_exported_amplitudes(self):
+        self.make_owned_run(self.directory)
+        other = dict(self.config, ProcessDirectory=str(self.directory / "other export"))
+        self.make_export(other)
+        with self.assertRaisesRegex(builder.MadEventSetupError, "metadata changed"):
+            builder.prepare(other)
+
+    def test_relative_source_paths_follow_configuration_not_output_directory(self):
+        process, report = self.make_owned_run(self.directory)
+        project = Path(self.config["ProcessDirectory"])
+        config_path = project / "madevent-config.json"
+        config_path.write_text(json.dumps(dict(self.config, ProcessDirectory=".")))
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            status = builder.main(["--configuration", "export/madevent-config.json", "--prepare"])
+        self.assertEqual(status, 0)
+        self.assertIn(str(process / "Events"), output.getvalue())
+        self.assertFalse((project / "madevent").exists())
 
     def test_native_error_exit_zero_does_not_become_success(self):
         cases = [("missing-events", ["--run", "run_01"], "missing", 1),
@@ -301,6 +400,7 @@ class MadEventBuilderTests(unittest.TestCase):
                 with mock.patch.object(builder, "prepare", return_value={"MadEventDirectory": str(process)}), \
                      mock.patch.object(builder.subprocess, "call", side_effect=run_native) as call, \
                      mock.patch.object(builder.time, "time_ns", return_value=10000), \
+                     contextlib.redirect_stdout(io.StringIO()), \
                      contextlib.redirect_stderr(error_output):
                     actual = builder.main(["--configuration", str(config_path)] + arguments)
                 self.assertEqual(actual, expected, error_output.getvalue())

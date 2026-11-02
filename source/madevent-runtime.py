@@ -421,13 +421,19 @@ def configuration_fingerprint(config, link=None):
 
 
 def prepare(data, root=None):
-    """Lazily build a private ordinary MadEvent directory, retaining its cards."""
+    """Build MadEvent under the launch/work directory, retaining its cards.
+
+    ProcessDirectory identifies the exported amplitude and libraries. The
+    independent root argument selects numerical output; by default it is cwd.
+    """
     config = validate_config(data)
-    project = Path(root or config["ProcessDirectory"]).expanduser().resolve()
+    project = Path(config["ProcessDirectory"]).expanduser().resolve()
     if not project.is_dir():
         raise MadEventSetupError("ProcessDirectory must be an existing exported SPINAS project.")
-    final = project / "madevent"
     link = load_link_configuration(config)
+    workspace = Path(root or Path.cwd()).expanduser().resolve()
+    workspace.mkdir(parents=True, exist_ok=True)
+    final = workspace / "madevent"
     fingerprint = configuration_fingerprint(config, link)
     if final.exists():
         manifest = final / "hepcat-madevent.json"
@@ -435,14 +441,15 @@ def prepare(data, root=None):
             raise MadEventSetupError("Refusing to overwrite a MadEvent directory without HEPCAT ownership metadata.")
         report = json.loads(manifest.read_text())
         if report.get("ConfigurationSHA256") != fingerprint:
-            raise MadEventSetupError("Export metadata changed. Use a fresh ProcessDirectory instead of overwriting an existing MadEvent run.")
+            raise MadEventSetupError("Export metadata changed or this MadEvent directory belongs to another process: " +
+                str(final) + ". Launch from a different directory or select --work-directory DIR.")
         for row in report.get("MatrixHashes", []):
             path = final / row["Path"]
             if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != row["SHA256"]:
                 raise MadEventSetupError("A private MATRIX was modified or regenerated; refusing to run it.")
         install_runtime_guard(final)
-        return report
-    support = project / ".hepcat-madevent-support"
+        return dict(report, MadEventDirectory=str(final), WorkingDirectory=str(workspace))
+    support = workspace / ".hepcat-madevent-support"
     if support.exists():
         raise MadEventSetupError("A previous MadEvent preparation is incomplete. Inspect " + str(support) + " before removing or renaming it.")
     support.mkdir()
@@ -516,7 +523,8 @@ def prepare(data, root=None):
         options.write_text(options.read_text() + "\n# HEPCAT: serial default; the user can select native multicore mode.\nrun_mode = 0\nnb_core = 1\nautomatic_html_opening = False\nnotification_center = False\n")
         hashes = [{"Path": str(matrix.relative_to(process)), "SHA256": hashlib.sha256(matrix.read_bytes()).hexdigest()} for matrix in matrices]
         report = {"Status": "READY", "Backend": "HEPCAT SPINAS", "Process": process_string,
-                  "MadEventDirectory": str(final), "ConfigurationSHA256": fingerprint,
+                  "MadEventDirectory": str(final), "WorkingDirectory": str(workspace),
+                  "ExportDirectory": str(project), "ConfigurationSHA256": fingerprint,
                   "ParameterMatching": matches, "RuntimeParameterSymbols": expressions, "LinkConfiguration": link,
                   "MassMatching": mass_matching, "Subprocesses": patch_reports,
                   "MatrixHashes": hashes, "UnsupportedPolarizationLegs": sorted(set(config["_MassiveLegs"]) & {1, 2} | set(config["_FixedIncomingLegs"])),
@@ -544,6 +552,8 @@ def prepare(data, root=None):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--configuration", required=True, type=Path)
+    parser.add_argument("--work-directory", type=Path,
+                        help="Create or reuse madevent/ under this directory (default: the current directory).")
     parser.add_argument("--prepare", action="store_true", help="Generate and build MadEvent without launching a run.")
     parser.add_argument("--command-file", type=Path, help="Native bin/madevent command script.")
     parser.add_argument("--run", help="Generate unweighted events with this native run name.")
@@ -555,13 +565,22 @@ def main(argv=None):
         parser.error("Use --run or --command-file, not both.")
     try:
         config = json.loads(args.configuration.read_text())
-        # Exported paths are relative to this configuration, never caller cwd.
+        # Amplitude source paths belong to the export; numerical output belongs
+        # to the directory from which the user starts the launcher.
         base = args.configuration.resolve().parent
         config.setdefault("ProcessDirectory", str(base))
+        if isinstance(config["ProcessDirectory"], str):
+            source = Path(config["ProcessDirectory"]).expanduser()
+            if not source.is_absolute():
+                config["ProcessDirectory"] = str((base / source).resolve())
         if args.timeout is not None:
             config["TimeConstraint"] = args.timeout
-        report = prepare(config)
+        report = prepare(config, root=args.work_directory)
         process = Path(report["MadEventDirectory"])
+        print("MadEvent output directory: " + str(process), flush=True)
+        print("  HTML:   " + str(process / "index.html"), flush=True)
+        print("  Events: " + str(process / "Events"), flush=True)
+        print("  Cards:  " + str(process / "Cards"), flush=True)
         for source, target in ((args.run_card, "run_card.dat"), (args.param_card, "param_card.dat")):
             if source:
                 if not source.is_file():

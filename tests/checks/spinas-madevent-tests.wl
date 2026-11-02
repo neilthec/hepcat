@@ -56,6 +56,9 @@ If[AssociationQ[smeSelected],
   smeNumerical = smeSelectedManifest["MadEventNumerical"];
   If[smeNumerical["Status"] =!= "AVAILABLE", Print["NUMERICAL CONFIGURATION: ", InputForm[smeNumerical]]];
   smeReference = smeSelectedManifest["MadGraphValidation"];
+  smeCheck["numerical sessions are resolved at launch rather than pinned to the export",
+    smeNumerical["SessionDirectory"] === "madevent" &&
+      smeNumerical["SessionDirectoryBase"] === "WorkingDirectory"];
   smeCheck["both workflows preserve the explicitly chosen model and particle sector",
     smeNumerical["Status"] === "AVAILABLE" &&
       And @@ (smeNumerical[#] === smeReference[#] & /@

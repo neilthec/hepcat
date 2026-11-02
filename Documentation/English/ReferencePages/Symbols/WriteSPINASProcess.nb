@@ -129,16 +129,23 @@ madevent-config.json and a small launcher. \"Build\" -> True builds the \
 process_madevent_matrix static library and build/process_madevent executable, \
 with process replaced by ProcessName. MadEvent topology generation is \
 deferred until the launcher is used.", "Notes"],
-  Cell["From the exported directory, run ./build/process_madevent --prepare \
-to create the private MadEvent process. Use ./build/process_madevent for its \
-interactive interface, --command-file path for a standard MadEvent command \
-file, or --run run_name to generate events with the current cards. The \
-private madevent/Cards/run_card.dat and param_card.dat files control the \
-numerical run. Current evaluated UFO parameters are passed to SPINAS at every \
-matrix-element call, so supported coupling and mass changes take effect \
-without rebuilding the exported amplitude. Changing a spinning external \
-particle between massive and massless requires a new export.", "Notes"],
-  Cell["Options", "NotesSection"],
+  Cell["Enter the exported project's build directory and run \
+./process_madevent --prepare to create a MadEvent session inside that working \
+directory. Use ./process_madevent for its interactive interface, \
+--command-file path for a standard MadEvent command file, or --run run_name \
+to generate events with the current cards. The default session is madevent \
+under the directory from which the launcher is run; --work-directory DIR \
+selects another workspace. The launcher prints full card, HTML and \
+event-output locations. Existing sessions elsewhere remain untouched.",
+   "Notes"], Cell["Within the chosen workspace, madevent/Cards/run_card.dat \
+and param_card.dat control the numerical run, madevent/index.html opens the \
+HTML pages, and madevent/Events/run_name contains the generated events. \
+Repeated launches from the same workspace retain its cards and results. The \
+exported source and compiled libraries stay in the original project. Current \
+evaluated UFO parameters are passed to SPINAS at every matrix-element call, \
+so supported coupling and mass changes take effect without rebuilding the \
+exported amplitude. Changing a spinning external particle between massive and \
+massless requires a new export.", "Notes"], Cell["Options", "NotesSection"],
   Cell[BoxData[GridBox[{{Cell["Option", "TableHeader"],
        Cell["Default", "TableHeader"], Cell["Meaning", "TableHeader"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"SPINASDirectory\""}]],

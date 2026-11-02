@@ -62,6 +62,11 @@ If[FileExistsQ[smeiReportPath],
     smeiReport["Status"] === "PASS" && Length[smeiReport["Runs"]] === 4 &&
       AllTrue[smeiReport["Runs"], #["Events"] === 20 && NumericQ[#["CrossSectionPB"]] &&
         #["CrossSectionPB"] > 0 && FileExistsQ[#["EventFile"]] &]];
+  smeiCheck["the binary writes its session and events beneath the directory it was launched from",
+    smeiReport["WorkingDirectory"] === FileNameJoin[{smeiExport["Directory"], "build"}] &&
+      smeiReport["MadEventDirectory"] === FileNameJoin[{smeiExport["Directory"], "build", "madevent"}] &&
+      !DirectoryQ[FileNameJoin[{smeiExport["Directory"], "madevent"}]] &&
+      smeiReport["ScaledWorkingDirectory"] === FileNameJoin[{smeiScaledExport["Directory"], "build"}]];
   smeiCheck["doubling the live QED charge produces the expected rate scaling",
     Abs[smeiReport["ChargeRateRatio"]/16 - 1] < 1/5];
   smeiCheck["the integration uses the supplied amplitude rather than falling back to native HELAS",

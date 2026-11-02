@@ -103,21 +103,31 @@ def main():
     args = parser.parse_args()
     project = args.project.resolve()
     launcher = args.launcher.resolve()
+    workspace = project / "build"
+    require(workspace.is_dir(), "The compiled export must have a build directory")
     runtime = load_runtime(project)
     runs = []
 
     def launch(arguments, log_name):
         with (project / log_name).open("w") as log:
-            result = subprocess.run([str(launcher)] + arguments, cwd=project,
+            result = subprocess.run([str(launcher)] + arguments, cwd=workspace,
                 stdout=log, stderr=subprocess.STDOUT, timeout=args.timeout)
         require(result.returncode == 0, "MadEvent launch failed; inspect " + str(project / log_name))
 
     launch(["--prepare"], "madevent-prepare-test.log")
-    process = project / "madevent"
+    process = workspace / "madevent"
+    require(process.is_dir(), "MadEvent was not created in the launch directory")
+    require(not (project / "madevent").exists(), "MadEvent unexpectedly wrote to the exported source directory")
+    require((workspace / ".hepcat-madevent-support").is_dir(), "Private staging did not follow the launch directory")
     manifest_path = process / "hepcat-madevent.json"
     manifest = json.loads(manifest_path.read_text())
     require(manifest.get("Status") == "READY", "Native numerical process is not READY")
     require(manifest.get("Backend") == "HEPCAT SPINAS", "Wrong numerical matrix element")
+    require(manifest.get("WorkingDirectory") == str(workspace), "Working-directory metadata does not match the launch location")
+    preparation_output = (project / "madevent-prepare-test.log").read_text()
+    require(all(str(path) in preparation_output for path in
+        [process / "index.html", process / "Events", process / "Cards"]),
+        "Startup did not explain the HTML, event and card locations")
     hashes_before = manifest["MatrixHashes"]
     run_card = project / "integration-run-card.dat"
     run_card.write_text((process / "Cards" / "run_card.dat").read_text())
@@ -170,15 +180,18 @@ def main():
     # unchanged instead of producing the required factor of four.
     scaled_project = args.scaled_project.resolve()
     scaled_launcher = args.scaled_launcher.resolve()
+    scaled_workspace = scaled_project / "build"
     def launch_scaled(arguments, log_name):
         log_path = scaled_project / log_name
         with log_path.open("w") as log:
             result = subprocess.run([str(scaled_launcher)] + arguments,
-                cwd=scaled_project, stdout=log, stderr=subprocess.STDOUT,
+                cwd=scaled_workspace, stdout=log, stderr=subprocess.STDOUT,
                 timeout=args.timeout)
         require(result.returncode == 0, "Scaled MadEvent launch failed; inspect " + str(log_path))
     launch_scaled(["--prepare"], "madevent-prepare-test.log")
-    scaled_process = scaled_project / "madevent"
+    scaled_process = scaled_workspace / "madevent"
+    require(scaled_process.is_dir() and not (scaled_project / "madevent").exists(),
+            "The scaled export did not keep output in its launch directory")
     scaled_commands = scaled_project / "hepcat_scaled.commands"
     scaled_commands.write_text("generate_events hepcat_scaled -f\nquit\n")
     launch_scaled(["--run-card", str(run_card), "--param-card", str(initial_param_card),
@@ -194,6 +207,8 @@ def main():
             "A doubled HEPCAT amplitude did not produce four times the rate; possible native-matrix fallback")
     runs.append(scaled)
     report = {"Status": "PASS", "Runs": runs, "ChargeRateRatio": ratio,
+              "WorkingDirectory": str(workspace), "MadEventDirectory": str(process),
+              "ScaledWorkingDirectory": str(scaled_workspace),
               "ScaledAmplitudeRateRatio": scaled_ratio, "ExpectedScaledAmplitudeRateRatio": 4,
               "ExpectedChargeRateRatio": 16,
               "Scope": "Genuine LO MadEvent integration and LHE output using the exported HEPCAT/SPINAS matrix element."}
