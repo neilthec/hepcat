@@ -9253,6 +9253,9 @@ CompleteFactorization[input_, channelInput : (_List | _Association), model_List,
 
 (* Admit an already built complete union without repeating its construction.
    The dynamic ceiling is granted only by the public Automatic-cap wrapper. *)
+ConstructiveDiagrams`Private`completionSourceConstructionLimit[limit_Integer, order_Integer] :=
+  If[order === 1, limit, Max[limit, Min[4096, limit order]]];
+
 ConstructiveDiagrams`Private`completionMaterializedBasisCap[basis_, requestedBasis_, limit_Integer, ceiling_] := Module[
   {count = If[ListQ[basis], Length[basis], 0], next = limit, changes = {}},
   If[requestedBasis === Automatic && ListQ[basis] &&
@@ -9364,8 +9367,7 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
     normalized = Join[normalized, <|"ExternalParticles" -> processNames|>]];
   exchangePlan = completionExchangePlan[normalized, model, boseGroups, fermionGroups, processNames];
   If[FailureQ[exchangePlan], Return[exchangePlan]];
-  constructionLimit = If[exchangePlan["Order"] === 1, limit,
-    Max[limit, Min[4096, limit exchangePlan["Order"]]]];
+  constructionLimit = completionSourceConstructionLimit[limit, exchangePlan["Order"]];
   project[value_] := If[exchangePlan["Order"] === 1, value,
     Expand[canonicalChains[residueCanonicalPropagators[completionBoseProject[value, exchangePlan],
       Cases[normalized["ExternalMassRules"], HoldPattern[Mass[i_Integer] -> _] :> i]]]]];
@@ -9613,7 +9615,8 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
       If[AssociationQ[physicalSpace] && IntegerQ[Lookup[physicalSpace, "EffectiveMaxCorrectionTerms", None]] &&
           IntegerQ[$completionAutomaticCorrectionTermCeiling] &&
           limit < physicalSpace["EffectiveMaxCorrectionTerms"] <= $completionAutomaticCorrectionTermCeiling,
-        limit = physicalSpace["EffectiveMaxCorrectionTerms"]];
+        limit = physicalSpace["EffectiveMaxCorrectionTerms"];
+        constructionLimit = completionSourceConstructionLimit[limit, exchangePlan["Order"]]];
       remainingSeconds = physicalBudget - (AbsoluteTime[] - physicalStarted);
       If[AssociationQ[physicalSpace] && physicalSpace["Status"] === "AVAILABLE" && remainingSeconds > 0.01,
         completionProgress[callback, enabled, <|"Stage" -> "Fitting preferred-pole correction terms",
@@ -9837,6 +9840,7 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
             (Join[#, <|"CorrectionSpace" -> space, "ElapsedTime" -> AbsoluteTime[] - start|>] &) /@
               unionAdmission["CapChanges"]];
           limit = unionAdmission["EffectiveMaxCorrectionTerms"];
+          constructionLimit = completionSourceConstructionLimit[limit, exchangePlan["Order"]];
           completionProgress[callback, enabled, <|"Stage" -> "Reusing complete exchange correction space",
             "Terms" -> Length[basis], "MaxCorrectionTerms" -> limit,
             "Elapsed" -> AbsoluteTime[] - start|>]]];
@@ -10160,6 +10164,7 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
     report = Join[report, <|"OrdinaryCompaction" -> ordinaryCompaction|>]];
   report = Join[report, <|"ElapsedTime" -> AbsoluteTime[] - start,
     "RandomSeed" -> seed, "EffectiveMaxCorrectionTerms" -> limit,
+    "SourceConstructionLimit" -> constructionLimit,
     "CapChanges" -> Join[If[AssociationQ[physicalSpace], Lookup[physicalSpace, "CapChanges", {}], {}],
       unionCapChanges],
     "BoseSymmetry" -> completionExchangeDetails[exchangePlan, "Boson"],

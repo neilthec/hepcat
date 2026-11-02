@@ -207,6 +207,25 @@ check["the automatic controller builds an admitted complete union once and prese
 check["admitting an existing union does not extend the original stage clock",
   arUnionController["ResourcePolicy"]["Resolved"]["TimeConstraint"] === 17/2];
 
+arLiteralTerms = Table[arLiteralDirection[i]/arCapPropagator, {i, 1048}];
+arLiteralNormalized = Join[arCapNormalized, <|"Expression" -> Total[arLiteralTerms], "Targets" -> {}|>];
+arOldSourceLimit = ConstructiveDiagrams`Private`completionSourceConstructionLimit[256, 4];
+arAdmittedSourceLimit = ConstructiveDiagrams`Private`completionSourceConstructionLimit[2048, 4];
+arStaleLiteralBasis = ConstructiveDiagrams`Private`completionAutomaticBasis[
+  arLiteralNormalized, arOldSourceLimit, <|"Sources" -> {}|>];
+arAdmittedLiteralBasis = ConstructiveDiagrams`Private`completionAutomaticBasis[
+  arLiteralNormalized, arAdmittedSourceLimit, <|"Sources" -> {}|>];
+check["a stale pre-admission source bound reproduces the literal-space rejection",
+  arOldSourceLimit === 1024 && FailureQ[arStaleLiteralBasis] &&
+    arStaleLiteralBasis[[2]]["Terms"] === 1048];
+check["a raised effective cap supplies the same established construction policy to later fallbacks",
+  arAdmittedSourceLimit === 4096 && ListQ[arAdmittedLiteralBasis] &&
+    Length[arAdmittedLiteralBasis] === 1048 && Total[arAdmittedLiteralBasis] === Total[arLiteralTerms]];
+check["source construction retains the existing bounds for explicit and unsymmetrized spaces",
+  ConstructiveDiagrams`Private`completionSourceConstructionLimit[17, 4] === 68 &&
+    ConstructiveDiagrams`Private`completionSourceConstructionLimit[17, 1] === 17 &&
+    ConstructiveDiagrams`Private`completionSourceConstructionLimit[5000, 8] === 5000];
+
 (* An inert core report isolates the retry controller. No mocked report is
    accepted as an amplitude or used to bypass a physical check. *)
 arMeasureCalls = 0;
@@ -437,7 +456,7 @@ If[Environment["HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION"] === "1",
       AllTrue[arMixedReport["Checks"]["Checks"], #["Status"] === "PASS" &] &&
       arMixedReport["Checks"]["FeynmanCheck"]["Status"] === "PASS"],
   Print["SKIP: set HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION=1 for the full AllPhysical mixed six-point constructor regression."]];
-arExpected = 64 + If[Environment["HEPCAT_TEST_FULL_AUTOMATIC_CONSTRUCTION"] === "1", 2, 0] +
+arExpected = 67 + If[Environment["HEPCAT_TEST_FULL_AUTOMATIC_CONSTRUCTION"] === "1", 2, 0] +
   If[Environment["HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION"] === "1", 3, 0];
 If[checks =!= arExpected, AppendTo[failures, "Not every automatic-resource assertion executed."]];
 Print["AUTOMATIC RESOURCE CHECKS: ", checks, "; FAILURES: ", Length[failures]];

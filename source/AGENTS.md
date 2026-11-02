@@ -1180,6 +1180,10 @@ before trying grouped fallbacks. Record `ReuseCompleteExchangeUnion` in
 `CapChanges`; do not rebuild the sources merely to change that heuristic cap.
 This admission never extends the shared clock or grants permission to explicit
 numeric caps or supplied correction bases.
+After either physical-union or exchange-union admission, update the intermediate
+source-construction allowance from the effective cap using the same existing
+permutation-count and 4096-direction policy. Later fallbacks must not use the
+stale initial allowance. `SourceConstructionLimit` records the resulting bound.
 A cap is never satisfied by discarding arbitrary columns or affine directions.
 Explicit numeric caps and clocks are never increased. `AdaptiveAttempts` and
 `ResourcePolicy` retain the requested/resolved controls and observed attempts.

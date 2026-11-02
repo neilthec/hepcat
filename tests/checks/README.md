@@ -65,6 +65,9 @@ unresolved directions prevent an overall bound claim. No internal shell is used.
 exchange correction union: construction occurs once, every column is retained,
 the automatic ceiling and original clock remain binding, and explicit caps or
 supplied bases never acquire implicit permission to grow.
+The later literal fallback also uses the construction allowance implied by the
+admitted effective cap, rather than rejecting valid columns against a stale
+pre-admission allowance.
 
 `feynman-coefficient-comparison-tests.wl` compares the scalar-coefficient route
 with the former whole-polynomial route on small cases. It covers every monomial
