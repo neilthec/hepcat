@@ -107,7 +107,7 @@ operation.", "ExampleText"], Cell["Related Functions", "SeeAlsoSection"],
       ButtonData -> "paclet:HEPCAT/ref/ReduceSpinorProducts"]}], "SeeAlso"],
   Cell["Related Guides", "MoreAboutSection"],
   Cell[TextData[
-    {ButtonBox["HEPCAT: Constructive Amplitudes and Spinor Algebra",
+    {ButtonBox["HEPCAT: High Energy Physics Constructive Amplitude Tool",
       BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"],
      "  \[Bullet]  ", ButtonBox["Models and Model-Local Parameters",
       BaseStyle -> "Link", ButtonData ->

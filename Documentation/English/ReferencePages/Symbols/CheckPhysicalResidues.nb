@@ -234,7 +234,7 @@ you want to perform that operation.", "ExampleText"],
   Cell[TextData[{ButtonBox["Checking Amplitudes", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/guide/AmplitudeValidation"],
      "  \[Bullet]  ", ButtonBox[
-      "HEPCAT: Constructive Amplitudes and Spinor Algebra",
+      "HEPCAT: High Energy Physics Constructive Amplitude Tool",
       BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}],
    "MoreAbout"]}, WindowTitle ->
   "CheckPhysicalResidues - HEPCAT Documentation", Saveable -> False,

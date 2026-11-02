@@ -1,7 +1,7 @@
 [
   {
     "name": "HEPCAT",
-    "title": "HEPCAT: Constructive Amplitudes and Spinor Algebra",
+    "title": "HEPCAT: High Energy Physics Constructive Amplitude Tool",
     "summary": "Build, simplify, complete and validate scattering amplitudes with explicit spinor identities.",
     "paragraphs": [
       "HEPCAT works with helicity and massive spin spinors, constructive amplitude models, tree diagrams and factorization channels. It also reads CalcHEP Feynman models, converts supported tree expressions to spinor products and exports numerical SPINAS processes.",

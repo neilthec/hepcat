@@ -65,7 +65,7 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
   Cell[TextData[{ButtonBox["Models and Model-Local Parameters",
       BaseStyle -> "Link", ButtonData ->
        "paclet:HEPCAT/guide/ModelsAndParameters"], "  \[Bullet]  ",
-     ButtonBox["HEPCAT: Constructive Amplitudes and Spinor Algebra",
+     ButtonBox["HEPCAT: High Energy Physics Constructive Amplitude Tool",
       BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}],
    "MoreAbout"]}, WindowTitle ->
   "ConvertAmplitudeOld - HEPCAT Documentation", Saveable -> False,

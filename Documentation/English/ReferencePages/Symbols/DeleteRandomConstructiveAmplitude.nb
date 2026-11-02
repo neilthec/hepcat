@@ -54,7 +54,7 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
   Cell[TextData[{ButtonBox["Reserved and Earlier APIs", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/guide/LegacyAmplitudeSearch"],
      "  \[Bullet]  ", ButtonBox[
-      "HEPCAT: Constructive Amplitudes and Spinor Algebra",
+      "HEPCAT: High Energy Physics Constructive Amplitude Tool",
       BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}],
    "MoreAbout"]}, WindowTitle ->
   "DeleteRandomConstructiveAmplitude - HEPCAT Documentation",

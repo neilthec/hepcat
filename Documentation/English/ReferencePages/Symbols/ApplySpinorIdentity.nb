@@ -104,7 +104,7 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
   Cell[TextData[{ButtonBox["Identities and Simplification",
       BaseStyle -> "Link", ButtonData ->
        "paclet:HEPCAT/guide/IdentitiesAndSimplification"], "  \[Bullet]  ",
-     ButtonBox["HEPCAT: Constructive Amplitudes and Spinor Algebra",
+     ButtonBox["HEPCAT: High Energy Physics Constructive Amplitude Tool",
       BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}],
    "MoreAbout"]}, WindowTitle ->
   "ApplySpinorIdentity - HEPCAT Documentation", Saveable -> False,

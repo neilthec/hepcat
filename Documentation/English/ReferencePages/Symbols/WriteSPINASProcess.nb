@@ -468,7 +468,7 @@ operation.", "ExampleText"], Cell["See Also", "SeeAlsoSection"],
   Cell[TextData[{ButtonBox["Formatting, Model Output and SPINAS Export",
       BaseStyle -> "Link", ButtonData ->
        "paclet:HEPCAT/guide/FormattingAndExport"], "  \[Bullet]  ",
-     ButtonBox["HEPCAT: Constructive Amplitudes and Spinor Algebra",
+     ButtonBox["HEPCAT: High Energy Physics Constructive Amplitude Tool",
       BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}],
    "MoreAbout"]}, WindowTitle -> "WriteSPINASProcess - HEPCAT Documentation",
  Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,

@@ -48,7 +48,7 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
   Cell[TextData[{ButtonBox["Spinors, Momenta and Spin Sums",
       BaseStyle -> "Link", ButtonData ->
        "paclet:HEPCAT/guide/SpinorAlgebra"], "  \[Bullet]  ",
-     ButtonBox["HEPCAT: Constructive Amplitudes and Spinor Algebra",
+     ButtonBox["HEPCAT: High Energy Physics Constructive Amplitude Tool",
       BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/guide/HEPCAT"]}],
    "MoreAbout"]}, WindowTitle -> "Theta - HEPCAT Documentation",
  Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,

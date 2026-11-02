@@ -7,9 +7,9 @@ Notebook[
      GridBoxAlignment -> {"Columns" -> {Left, Right}},
      GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
    "AnchorBarGrid"],
-  Cell["HEPCAT: Constructive Amplitudes and Spinor Algebra", "GuideTitle"],
-  Cell["Build, simplify, complete and validate scattering amplitudes with \
-explicit spinor identities.", "GuideAbstract"],
+  Cell["HEPCAT: High Energy Physics Constructive Amplitude Tool",
+   "GuideTitle"], Cell["Build, simplify, complete and validate scattering \
+amplitudes with explicit spinor identities.", "GuideAbstract"],
   Cell["HEPCAT works with helicity and massive spin spinors, constructive \
 amplitude models, tree diagrams and factorization channels. It also reads \
 CalcHEP Feynman models, converts supported tree expressions to spinor \
@@ -83,12 +83,12 @@ limit.", "GuideAbstract"], Cell["Start Here", "GuideFunctionsSubsection"],
       ButtonData -> "paclet:HEPCAT/guide/ReferenceIndex"], "  \[Bullet]  ",
      ButtonBox["Reserved and Earlier APIs", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/guide/LegacyAmplitudeSearch"]}],
-   "GuideMoreAbout"]}, WindowTitle -> "HEPCAT: Constructive Amplitudes and \
-Spinor Algebra - HEPCAT Documentation", Saveable -> False,
+   "GuideMoreAbout"]}, WindowTitle -> "HEPCAT: High Energy Physics \
+Constructive Amplitude Tool - HEPCAT Documentation", Saveable -> False,
  WindowSize -> {1000, 850}, CellContext -> Notebook,
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/guide/HEPCAT", "title" ->
-      "HEPCAT: Constructive Amplitudes and Spinor Algebra",
+      "HEPCAT: High Energy Physics Constructive Amplitude Tool",
      "type" -> "Guide", "label" -> "HEPCAT Guide", "paclet" -> "HEPCAT",
      "language" -> "en", "summary" -> "Build, simplify, complete and validate \
 scattering amplitudes with explicit spinor identities.",
