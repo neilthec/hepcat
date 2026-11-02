@@ -560,17 +560,24 @@ def configuration_fingerprint(config, link=None):
 
 
 def prepare(data, root=None):
-    """Build MadEvent under the launch/work directory, retaining its cards.
+    """Build MadEvent under the compiled export, retaining its cards.
 
-    ProcessDirectory identifies the exported amplitude and libraries. The
-    independent root argument selects numerical output; by default it is cwd.
+    New exports use the directory containing BridgeLinkFile as their default
+    numerical workspace. An explicit root overrides it; older configurations
+    retain their launch-directory default.
     """
     config = validate_config(data)
     project = Path(config["ProcessDirectory"]).expanduser().resolve()
     if not project.is_dir():
         raise MadEventSetupError("ProcessDirectory must be an existing exported SPINAS project.")
     link = load_link_configuration(config)
-    workspace = Path(root or Path.cwd()).expanduser().resolve()
+    default_workspace = Path.cwd()
+    if config.get("SessionDirectoryBase") == "BuildDirectory":
+        link_path = Path(config["BridgeLinkFile"]).expanduser()
+        if not link_path.is_absolute():
+            link_path = project / link_path
+        default_workspace = link_path.resolve().parent
+    workspace = Path(root if root is not None else default_workspace).expanduser().resolve()
     workspace.mkdir(parents=True, exist_ok=True)
     session = config.get("SessionDirectory", "madevent")
     if not isinstance(session, str) or not re.fullmatch(r"[A-Za-z0-9_.-]+", session) or session in (".", ".."):
@@ -585,7 +592,7 @@ def prepare(data, root=None):
         legacy_link = {key: link[key] for key in ("Libraries", "CXXRuntime", "RuntimeLibraryDirectories") if key in link}
         if report.get("ConfigurationSHA256") not in (fingerprint, configuration_fingerprint(config, legacy_link)):
             raise MadEventSetupError("Export metadata changed or this MadEvent directory belongs to another process: " +
-                str(final) + ". Launch from a different directory or select --work-directory DIR.")
+                str(final) + ". Select --work-directory DIR for a separate numerical session.")
         for row in report.get("MatrixHashes", []):
             path = final / row["Path"]
             if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != row["SHA256"]:
@@ -704,7 +711,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--configuration", required=True, type=Path)
     parser.add_argument("--work-directory", type=Path,
-                        help="Create or reuse madevent/ under this directory (default: the current directory).")
+                        help="Create or reuse PROC_<ProcessName>/ under this directory (new exports default to their build directory).")
     parser.add_argument("--prepare", action="store_true", help="Generate and build MadEvent without launching a run.")
     parser.add_argument("--command-file", type=Path, help="Native bin/madevent command script.")
     parser.add_argument("--run", help="Generate unweighted events with this native run name.")
@@ -716,8 +723,8 @@ def main(argv=None):
         parser.error("Use --run or --command-file, not both.")
     try:
         config = json.loads(args.configuration.read_text())
-        # Amplitude source paths belong to the export; numerical output belongs
-        # to the directory from which the user starts the launcher.
+        # Amplitude sources belong to the export. Numerical output defaults to
+        # its compiled build directory unless --work-directory overrides it.
         base = args.configuration.resolve().parent
         config.setdefault("ProcessDirectory", str(base))
         if isinstance(config["ProcessDirectory"], str):

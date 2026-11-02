@@ -92,13 +92,16 @@ selected model, while a visible PDG list selects a smaller reference sector."\
 purpose: it connects CalcHEP's numerical integration machinery to the HEPCAT \
 SPINAS matrix element without CalcHEP symbolically regenerating that matrix \
 element. Generated parameter and mass interfaces keep the runtime values \
-consistent.", "TechNoteText"], Cell["After building, enter the exported \
-project's results directory alongside build (from build, use cd ../results) \
-and run ./n_calchep. The actual executable is copied there, so it does not \
-disappear when the original build directory is removed. This folder holds the \
-numerical run's settings and output; validation and example programs stay in \
-build. Keep the installed CalcHEP and system runtime dependencies available."\
-, "TechNoteText"], Cell["Validate Each Photon Helicity with MadGraph",
+consistent.", "TechNoteText"], Cell["After building, enter build/results from \
+the exported project directory and run ./n_calchep. If you are already in \
+build, use cd results. This folder contains the actual executable copy, \
+numerical settings and output. It is created inside the CMake build \
+directory, including an alternative build directory selected during \
+configuration, so generated run data stays separate from source. Validation \
+and example programs stay in build. Move the complete results directory \
+elsewhere before deleting build if you want to keep that numerical session. \
+Keep the installed CalcHEP and system runtime dependencies available.",
+   "TechNoteText"], Cell["Validate Each Photon Helicity with MadGraph",
    "TechNoteSection"], Cell["ValidateMadGraph provides an independent \
 numerical check using MadGraph's own generated matrix element. It fixes each \
 massless helicity combination, sums massive-particle spins and evaluates both \
@@ -151,15 +154,17 @@ libraries' spin bases as identical.", "TechNoteText"],
   Cell["Request \"Build\" -> True in the same export call. For ProcessName -> \
 \"eeAA\", enter build and run ./eeAA_madevent --prepare. Compiling the \
 launcher alone does not create the native MadEvent directory; this \
-preparation command does. The default output workspace is the directory from \
-which you run the launcher, so this creates build/PROC_eeAA. The PROC_ name \
-follows ProcessName for other processes. The launcher prints the full card, \
-HTML and event-output locations. The first generation step can take longer \
-than later runs because MadEvent builds its integration code.",
-   "TechNoteText"], Cell["From the same build directory, ./eeAA_madevent \
-opens the numerical interface and ./eeAA_madevent --run run_01 generates \
-events. Under that working directory, PROC_eeAA/Cards/run_card.dat controls \
-beam energies, cuts, event counts, integration settings and the random seed; \
+preparation command does. The default workspace is the compiled project's \
+build directory, determined from its build metadata, so the result is \
+build/PROC_eeAA even if you instead run ./build/eeAA_madevent --prepare from \
+the exported source directory. The PROC_ name follows ProcessName for other \
+processes. The launcher prints the full card, HTML and event-output \
+locations. The first generation step can take longer than later runs because \
+MadEvent builds its integration code.", "TechNoteText"],
+  Cell["From the same build directory, ./eeAA_madevent opens the numerical \
+interface and ./eeAA_madevent --run run_01 generates events. Under that \
+working directory, PROC_eeAA/Cards/run_card.dat controls beam energies, cuts, \
+event counts, integration settings and the random seed; \
 PROC_eeAA/Cards/param_card.dat controls numerical model inputs. Open \
 PROC_eeAA/index.html for progress and results, and find the event file in \
 PROC_eeAA/Events/run_01.", "TechNoteText"], Cell["Use --work-directory DIR to \
@@ -167,9 +172,10 @@ select another output workspace, or --command-file path to run a normal \
 MadEvent command file. Existing sessions are retained where they were \
 created; use their own bin/madevent program to continue a prepared process. \
 Repeated launches in the same workspace preserve its cards and events.",
-   "TechNoteText"], Cell["After --prepare finishes, move or copy the whole \
-PROC_eeAA directory to the location where you want to keep the numerical \
-process. Enter that directory and run ./bin/madevent. Its amplitude sources, \
+   "TechNoteText"], Cell["After --prepare finishes, you can move or copy the \
+whole PROC_eeAA directory to the location where you want to keep the \
+numerical process. Move it outside build before deleting build if you want to \
+keep it. Enter that directory and run ./bin/madevent. Its amplitude sources, \
 headers, HEPCAT/SPINAS numerical libraries and private model support are \
 included, so the original exported project, build directory and SPINAS \
 checkout can be removed without breaking the prepared process. Keep the \

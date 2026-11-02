@@ -56,9 +56,9 @@ If[AssociationQ[smeSelected],
   smeNumerical = smeSelectedManifest["MadEventNumerical"];
   If[smeNumerical["Status"] =!= "AVAILABLE", Print["NUMERICAL CONFIGURATION: ", InputForm[smeNumerical]]];
   smeReference = smeSelectedManifest["MadGraphValidation"];
-  smeCheck["numerical sessions are resolved at launch rather than pinned to the export",
+  smeCheck["numerical sessions default to the compiled build directory",
     smeNumerical["SessionDirectory"] === "PROC_madevent_stub" &&
-      smeNumerical["SessionDirectoryBase"] === "WorkingDirectory"];
+      smeNumerical["SessionDirectoryBase"] === "BuildDirectory"];
   smeCheck["both workflows preserve the explicitly chosen model and particle sector",
     smeNumerical["Status"] === "AVAILABLE" &&
       And @@ (smeNumerical[#] === smeReference[#] & /@
@@ -69,6 +69,7 @@ If[AssociationQ[smeSelected],
        "madevent-main.cpp", "madevent-runtime.py", "madevent-config.json"}, FileExistsQ]];
   smeCheck["topology generation remains lazy during source-only export",
     !DirectoryQ[FileNameJoin[{smeSelected["Directory"], smeNumerical["SessionDirectory"]}]] &&
+      !DirectoryQ[FileNameJoin[{smeSelected["Directory"], "build", smeNumerical["SessionDirectory"]}]] &&
       FileNames["*", smeFakeMG, Infinity] === {FileNameJoin[{smeFakeMG, "bin"}],
         FileNameJoin[{smeFakeMG, "bin", "mg5_aMC"}]}];
   smeCheck["the numerical adapter keeps the raw matrix element separate from averaging",

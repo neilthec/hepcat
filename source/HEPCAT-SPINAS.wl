@@ -556,7 +556,7 @@ WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " The family overload W
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " CMakeExecutable -> Automatic searches PATH and standard installation locations, including the macOS CMake application and Homebrew, so desktop Mathematica need not inherit the shell's PATH. An explicit full path selects another CMake installation. A missing build tool is reported before generating files; source-only export does not require CMake.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " WriteSPINASProcess[directory, incomingNames -> outgoingNames, amplitudeEntries, model] explicitly describes the physical process. The entries still contain all-ingoing particle lists and un-crossed formulas in that same leg order, with incoming legs first. Outgoing charged particle names are checked against the conjugate all-ingoing species. Generic massless names such as A sum their helicities; A.+ or A.- selects one. The established HEPCAT/SPINAS helicity sign convention is retained, and ReverseMomentum crosses outgoing momenta and angle spinors exactly once. FixedHelicities -> {leg -> doubledHelicity, ...} selects massless legs in either grouped overload. Only unfixed incoming helicities are averaged. A selected outgoing helicity gives a labeled contribution with the same identical-species phase-space factor. Complex amp calls preserve phases and include no spin sums, incoming averages or phase-space factors; coherent production-decay sewing is not performed by this exporter. Runnable projects currently require two incoming particles.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " Generated projects also contain validate_calchep(options) and a process_validate_calchep executable for an independent, seeded 1000-point comparison with an on-the-fly CalcHEP process. CalcHEPDirectory -> None and CalcHEPModel -> None leave reference validation unconfigured. Select the installation directory and CalcHEPModel -> {directory, number} explicitly. CalcHEPDirectory -> Automatic consults CALCHEP_ROOT or CALCHEP only. CalcHEPAllowedParticles -> All keeps the selected reference theory intact; an explicit list of positive absolute PDG codes, such as {11,22}, restricts internal particle types and includes their antiparticles. RunCalcHEPValidation -> True builds and runs this check, using CalcHEPPoints -> 1000 and CalcHEPSeed -> Automatic by default. Automatic chooses a seed from the time when validation runs and reports the concrete seed for replay; an explicit unsigned 64-bit integer fixes it. Complete unpolarized colorless processes are supported; fixed-helicity or color-stripped comparisons report unavailable. Ordinary SPINAS execution does not require CalcHEP.";
-WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " If the CalcHEP numerical libraries are available, Build -> True also creates build/n_calchep and copies a runnable executable to results/n_calchep alongside build. From build, enter ../results and run ./n_calchep. This uses CalcHEP's numerical menus, VEGAS, cuts and histograms with the exported SPINAS matrix element, without CalcHEP symbolic generation or a CalcHEPModel counterpart. Independent model parameters remain adjustable, dependent functions are recomputed, and mass/width changes are propagated. Fixed helicities remain labeled contributions. The ordinary SPINAS project remains usable without CalcHEP.";
+WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " If the CalcHEP numerical libraries are available, Build -> True also creates build/n_calchep and copies a runnable executable to build/results/n_calchep. From build, enter results and run ./n_calchep. This uses CalcHEP's numerical menus, VEGAS, cuts and histograms with the exported SPINAS matrix element, without CalcHEP symbolic generation or a CalcHEPModel counterpart. Independent model parameters remain adjustable, dependent functions are recomputed, and mass/width changes are propagated. Fixed helicities remain labeled contributions. The ordinary SPINAS project remains usable without CalcHEP.";
 Options[WriteSPINASProcess] = {"SPINASDirectory" -> Automatic,
   "IncomingLegs" -> {1, 2}, "FixedHelicities" -> Automatic, "ParameterRules" -> Automatic,
   "ProcessName" -> "hepcat_process", "Precision" -> Automatic,
@@ -1862,7 +1862,7 @@ spinasCalcHEPNumericalConfiguration[ir_Association, data_List, supplied_Associat
       "SelectedHelicities" -> If[family, Lookup[ir, "FixedHelicities", {}],
         (Rule[#, ir["Helicities"][[#]]] & /@ Select[Range[ir["LegCount"]],
           TrueQ[ir["MassValues"][[#]] == 0] && ir["Spin2"][[#]] > 0 &])],
-      "SymbolicGeneration" -> False, "Backend" -> "SPINAS", "SessionDirectory" -> "results"|>, tag]
+      "SymbolicGeneration" -> False, "Backend" -> "SPINAS", "SessionDirectory" -> FileNameJoin[{"build", "results"}]|>, tag]
 ];
 
 spinasCalcHEPNumericalSource[name_String, config_Association] := Module[
@@ -1963,7 +1963,7 @@ spinasCalcHEPNumericalCMake[name_String, config_Association] := StringRiffle[{
   "  target_link_libraries(n_calchep PRIVATE \"${CALCHEP_ROOT}/lib/libSLHAplus.a\"",
   "    \"${CALCHEP_ROOT}/lib/dummy.a\" \"${CALCHEP_ROOT}/lib/ntools.a\" ${CMAKE_DL_LIBS} m pthread)",
   "  set_target_properties(n_calchep PROPERTIES BUILD_RPATH \"${CALCHEP_ROOT}/lib\")",
-  "  set(CALCHEP_SESSION \"${CMAKE_CURRENT_SOURCE_DIR}/results\")",
+  "  set(CALCHEP_SESSION \"${CMAKE_CURRENT_BINARY_DIR}/results\")",
   "  file(MAKE_DIRECTORY \"${CALCHEP_SESSION}/aux/models\" \"${CALCHEP_SESSION}/aux/tmp\"",
   "    \"${CALCHEP_SESSION}/aux/results\" \"${CALCHEP_SESSION}/aux/so_generated\")",
   "  add_custom_command(TARGET n_calchep POST_BUILD",
@@ -1989,9 +1989,9 @@ spinasCalcHEPNumericalPublicConfiguration[config_Association] := Join[
 
 spinasCalcHEPNumericalREADME[config_Association] := StringRiffle[{
   "", "## CalcHEP numerical integration using the SPINAS amplitude", "",
-  "When CalcHEP's numerical libraries are installed, the normal build places a runnable copy of `n_calchep` in `results/`, alongside `build/`. This is an actual executable, not a link into `build`. The commands below start at the exported project root. If you are already in `build`, replace `cd results` with `cd ../results`:",
+  "When CalcHEP's numerical libraries are installed, the normal build places a runnable copy of `n_calchep` in `build/results/`. This is an actual executable copy. The commands below start in `build`; from the exported project root, use `cd build/results` instead:",
   "", "```sh", "cd results", "./n_calchep", "```", "",
-  "The copied executable can be moved with its results and session files. It retains the installed CalcHEP and system-library dependencies. With a shared SPINAS build, its SPINAS library must remain available too. Existing runs in an earlier `calchep/` directory are left in place. Ordinary examples and validation/test executables remain in `build`.",
+  "Move `build/results` elsewhere before deleting `build` if you want to keep its executable, settings and results. It retains the installed CalcHEP and system-library dependencies. With a shared SPINAS build, its SPINAS library must remain available too. Existing runs in an earlier `calchep/` directory are left in place. Ordinary examples and validation/test executables remain in `build`.",
   "The executable uses CalcHEP's numerical interface, phase-space mappings, VEGAS integration, cuts, histograms and event tools. Every matrix element is evaluated by this project's SPINAS class. It never calls the CalcHEP symbolic generator and does not need an equivalent CalcHEPModel. It leaves the installed CalcHEP files unchanged.",
   "Independent inputs appear in CalcHEP's parameter menu. Dependent model constraints are recalculated in dependency order, then the generated process updates masses and invalidates its momentum/product caches. An explicit ParameterRules override of a dependent parameter makes that value an independent input for this export; its downstream constraints continue to update normally.",
   "Masses, couplings and explicit widths are taken from the exported HEPCAT model. CalcHEP automatic width calculations and gauge-restoring width switches are not provided by the SPINAS backend; unsupported switches are rejected. Changing an external spinning particle between massive and massless requires re-exporting its spin-state representation.",
@@ -2096,8 +2096,8 @@ WriteSPINASProcess[directory_String, process : {___String}, amplitude_, model_, 
     "MadGraphValidation" -> <|"Status" -> "NOT_REQUESTED", "Configuration" -> madgraph|>,
     "MadEventNumerical" -> madevent,
     "CalcHEPNumerical" -> Join[spinasCalcHEPNumericalPublicConfiguration[numerical],
-      <|"Executable" -> FileNameJoin[{dir, "results", "n_calchep"}],
-        "SessionDirectory" -> FileNameJoin[{dir, "results"}]|>],
+      <|"Executable" -> FileNameJoin[{dir, "build", "results", "n_calchep"}],
+        "SessionDirectory" -> FileNameJoin[{dir, "build", "results"}]|>],
     "CodeStyle" -> code["Style"]|>;
   If[TrueQ[buildRequested] || TrueQ[examples] || (TrueQ[fullOptions["RunCalcHEPValidation"]] || TrueQ[fullOptions["RunMadGraphValidation"]]),
     build = spinasProjectBuild[dir,name,root,examples,cmake,calchep["CalcHEPDirectory"]]; If[FailureQ[build],Return[build]];
@@ -2528,8 +2528,8 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
     "MadGraphValidation" -> <|"Status" -> "NOT_REQUESTED", "Configuration" -> madgraph|>,
     "MadEventNumerical" -> madevent,
     "CalcHEPNumerical" -> Join[spinasCalcHEPNumericalPublicConfiguration[numerical],
-      <|"Executable" -> FileNameJoin[{dir, "results", "n_calchep"}],
-        "SessionDirectory" -> FileNameJoin[{dir, "results"}]|>],
+      <|"Executable" -> FileNameJoin[{dir, "build", "results", "n_calchep"}],
+        "SessionDirectory" -> FileNameJoin[{dir, "build", "results"}]|>],
     "CodeStyle" -> code["Style"]|>,
     KeyTake[ir, {"HelicityConfigurations", "InputBranchCount", "GeneratedBranchCount",
       "InitialSpinAverage", "SymmetryFactor", "FinalStateSymmetryDivisor", "FixedHelicities"}]];

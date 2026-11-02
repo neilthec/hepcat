@@ -45,16 +45,16 @@ check["source export includes readable numerical adapter and runtime files",
   AllTrue[Lookup[snUnavailable["Files"], {"CalcHEPNumericalSource", "CalcHEPNumericalRuntime"}, ""],
     StringQ[#] && FileExistsQ[#] &]];
 check["the numerical executable and session are exposed in results",
-  snUnavailable["CalcHEPNumerical"]["Executable"] === FileNameJoin[{snUnavailable["Directory"], "results", "n_calchep"}] &&
-    snUnavailable["CalcHEPNumerical"]["SessionDirectory"] === FileNameJoin[{snUnavailable["Directory"], "results"}]];
+  snUnavailable["CalcHEPNumerical"]["Executable"] === FileNameJoin[{snUnavailable["Directory"], "build", "results", "n_calchep"}] &&
+    snUnavailable["CalcHEPNumerical"]["SessionDirectory"] === FileNameJoin[{snUnavailable["Directory"], "build", "results"}]];
 check["the saved manifest names the same results session as the runnable export",
-  snUnavailableManifest["CalcHEPNumerical"]["SessionDirectory"] === "results"];
+  snUnavailableManifest["CalcHEPNumerical"]["SessionDirectory"] === FileNameJoin[{"build", "results"}]];
 check["question-mark help names the runnable results copy",
-  StringContainsQ[WriteSPINASProcess::usage, "results/n_calchep"] &&
+  StringContainsQ[WriteSPINASProcess::usage, "build/results/n_calchep"] &&
     !StringContainsQ[WriteSPINASProcess::usage, "calchep/n_calchep"]];
 snGeneratedCMake = Import[snUnavailable["Files"]["CMake"], "Text"];
 check["CMake copies the runnable numerical executable instead of linking it into build",
-  StringContainsQ[snGeneratedCMake, "set(CALCHEP_SESSION \"${CMAKE_CURRENT_SOURCE_DIR}/results\")"] &&
+  StringContainsQ[snGeneratedCMake, "set(CALCHEP_SESSION \"${CMAKE_CURRENT_BINARY_DIR}/results\")"] &&
     StringContainsQ[snGeneratedCMake, "-E copy \"$<TARGET_FILE:n_calchep>\""] &&
     !StringContainsQ[snGeneratedCMake, "create_symlink \"$<TARGET_FILE:n_calchep>\""]];
 snAdapter = Import[snUnavailable["Files"]["CalcHEPNumericalSource"], "Text"];
@@ -129,6 +129,9 @@ If[StringQ[snCalcHEP] && DirectoryQ[snCalcHEP] &&
   If[AssociationQ[snBuilt],
     check["building the results copy preserves earlier calchep sessions",
       FileExistsQ[snLegacyMarker] && Import[snLegacyMarker, "Text"] === "keep the earlier session"];
+    check["the numerical build keeps its results out of the exported source directory",
+      DirectoryQ[FileNameJoin[{snBuilt["Directory"], "build", "results"}]] &&
+        !DirectoryQ[FileNameJoin[{snBuilt["Directory"], "results"}]]];
     snManifest = Import[snBuilt["Files"]["Manifest"], "RawJSON"];
     snConfiguration = Lookup[snManifest, "CalcHEPNumerical", <||>];
     check["numerical availability is independent of the disabled symbolic counterpart model",
@@ -142,7 +145,7 @@ If[StringQ[snCalcHEP] && DirectoryQ[snCalcHEP] &&
       snBinaryHash = FileHash[snExecutable, "SHA256"];
       snRunDirectory = DirectoryName[snExecutable];
       check["the runnable results executable is a regular file rather than a symlink",
-        snExecutable === FileNameJoin[{snBuilt["Directory"], "results", "n_calchep"}] &&
+        snExecutable === FileNameJoin[{snBuilt["Directory"], "build", "results", "n_calchep"}] &&
           snSucceeded[snRun[{"/bin/sh", "-c", "test -f \"$1\" && test ! -L \"$1\"", "check-copy", snExecutable}]]];
       snStarted = snRun[{"/usr/bin/env", "nParProc=1", snExecutable, "-blind", "0"}, snRunDirectory];
       check["the real CalcHEP numerical menu starts headlessly with the SPINAS interface",

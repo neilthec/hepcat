@@ -52,8 +52,11 @@ class MadEventBuilderTests(unittest.TestCase):
     def make_export(self, config=None):
         config = self.config if config is None else config
         project = Path(config["ProcessDirectory"])
-        (project / "build").mkdir(parents=True, exist_ok=True)
-        library = project / "build" / "libfixture.a"
+        link_path = Path(config["BridgeLinkFile"])
+        if not link_path.is_absolute():
+            link_path = project / link_path
+        link_path.parent.mkdir(parents=True, exist_ok=True)
+        library = link_path.parent / "libfixture.a"
         library.touch()
         headers = self.directory / "spinas-dependency" / "include"
         headers.mkdir(parents=True, exist_ok=True)
@@ -62,7 +65,7 @@ class MadEventBuilderTests(unittest.TestCase):
         for filename in ("process.cpp", "process.hpp", "madevent-spinas.cpp",
                          "spinas-runtime.hpp", "spinas-validation.hpp"):
             (project / filename).write_text("// exported amplitude source: " + filename + "\n")
-        (project / "build" / "madevent-link.json").write_text(json.dumps({
+        link_path.write_text(json.dumps({
             "Libraries": [str(library)], "CXXRuntime": "c++",
             "SPINASIncludeDirectory": str(headers)}))
         return project
@@ -308,7 +311,7 @@ class MadEventBuilderTests(unittest.TestCase):
         with self.assertRaisesRegex(builder.MadEventSetupError, "modified or regenerated"):
             builder.prepare(self.config)
 
-    def test_default_session_uses_launch_directory_and_preserves_legacy_export(self):
+    def test_legacy_default_session_uses_launch_directory_and_preserves_export(self):
         project = self.make_export()
         legacy = project / "madevent"
         legacy.mkdir()
@@ -320,6 +323,48 @@ class MadEventBuilderTests(unittest.TestCase):
         self.assertEqual((process / "Cards" / "run_card.dat").read_text(), "current user cards\n")
         self.assertEqual((legacy / "old-events.lhe").read_text(), "preserve previous results\n")
         self.assertEqual(Path(self.config["ProcessDirectory"]), project)
+
+    def test_build_directory_session_preserves_runs_and_ignores_launch_directory(self):
+        config = dict(self.config, SessionDirectory="PROC_eeAA",
+                      SessionDirectoryBase="BuildDirectory",
+                      BridgeLinkFile="compiled outputs/madevent-link.json")
+        project = self.make_export(config)
+        build = project / "compiled outputs"
+        process, report = self.make_owned_run(build, config)
+        (process / "Cards" / "run_card.dat").write_text("edited numerical controls\n")
+        event = process / "Events" / "old_run" / "unweighted_events.lhe"
+        event.parent.mkdir(parents=True)
+        event.write_text("keep the generated events\n")
+        legacy = project / "PROC_eeAA"
+        legacy.mkdir()
+        (legacy / "older-events.lhe").write_text("keep the earlier source-root run\n")
+
+        for launch_directory in (project, self.directory):
+            with self.subTest(launch_directory=launch_directory):
+                os.chdir(launch_directory)
+                self.assertEqual(builder.prepare(config), report)
+        self.assertEqual(Path(report["WorkingDirectory"]), build)
+        self.assertEqual(process, build / "PROC_eeAA")
+        self.assertEqual((process / "Cards" / "run_card.dat").read_text(), "edited numerical controls\n")
+        self.assertEqual(event.read_text(), "keep the generated events\n")
+        self.assertEqual((legacy / "older-events.lhe").read_text(), "keep the earlier source-root run\n")
+        self.assertFalse((self.directory / "PROC_eeAA").exists())
+
+    def test_build_directory_staging_does_not_mix_generated_support_with_source(self):
+        config = dict(self.config, SessionDirectory="PROC_eeAA",
+                      SessionDirectoryBase="BuildDirectory")
+        project = self.make_export(config)
+        class FakeReference:
+            ValidationSetupError = ValueError
+            def checked_configuration(self, data):
+                raise ValueError("deliberate stop before model generation")
+        os.chdir(project)
+        with mock.patch.object(builder, "reference_runtime", return_value=FakeReference()):
+            with self.assertRaisesRegex(builder.MadEventSetupError, "deliberate stop"):
+                builder.prepare(config)
+        self.assertTrue((project / "build" / ".hepcat-madevent-support").is_dir())
+        self.assertFalse((project / ".hepcat-madevent-support").exists())
+        self.assertFalse((project / "PROC_eeAA").exists())
 
     def test_generation_staging_is_in_launch_directory_not_export(self):
         project = self.make_export()
@@ -337,10 +382,11 @@ class MadEventBuilderTests(unittest.TestCase):
     def test_explicit_workspace_and_cli_inputs_resolve_from_launch_directory(self):
         workspace = self.directory / "chosen output"
         workspace.mkdir()
-        process, report = self.make_owned_run(workspace)
-        project = Path(self.config["ProcessDirectory"])
+        config = dict(self.config, SessionDirectoryBase="BuildDirectory")
+        process, report = self.make_owned_run(workspace, config)
+        project = Path(config["ProcessDirectory"])
         config_path = project / "madevent-config.json"
-        config_path.write_text(json.dumps(self.config))
+        config_path.write_text(json.dumps(config))
         inputs = self.directory / "inputs"
         inputs.mkdir()
         (inputs / "run_card.dat").write_text("requested run controls\n")
@@ -366,7 +412,8 @@ class MadEventBuilderTests(unittest.TestCase):
             self.assertEqual(builder.main(["--configuration", str(config_path),
                 "--work-directory", "chosen output", "--prepare"]), 0)
         self.assertEqual((process / "Cards" / "run_card.dat").read_text(), "requested run controls\n")
-        self.assertEqual(builder.prepare(self.config, root=workspace), report)
+        self.assertEqual(builder.prepare(config, root=workspace), report)
+        self.assertFalse((project / "build" / "madevent").exists())
 
     def test_one_workspace_cannot_mix_different_exported_amplitudes(self):
         self.make_owned_run(self.directory)
