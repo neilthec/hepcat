@@ -164,6 +164,28 @@ If[$ProcessorCount >= 3 && ($MaxLicenseSubprocesses === Infinity ||
       ParallelEvaluate[Global`unrelatedParallelSentinel, peUnrelated, DistributedContexts -> None] === {914}],
   Print["SKIP: more-than-two-worker execution requires three available processors and enough licensed subprocesses."]
 ];
+(* Optional native proof sources participate in the worker version check while
+   a symbolic-only installation remains usable without those support files. *)
+peSignatureDirectory = CreateDirectory[];
+peRequiredSources = {"HEPCAT.wl", "HEPCAT-Base.wl", "HEPCAT-Parameters.wl",
+  "HEPCAT-Model.wl", "HEPCAT-Feynman.wl", "HEPCAT-SPINAS.wl", "spinas-runtime.hpp"};
+Scan[CopyFile[FileNameJoin[{root, "source", #}], FileNameJoin[{peSignatureDirectory, #}]] &, peRequiredSources];
+peSignature[] := Block[{ConstructiveDiagrams`Private`$amplitudeParallelSourceDirectory = peSignatureDirectory},
+  ConstructiveDiagrams`Private`amplitudeParallelSignature[]];
+peSymbolicSignature = peSignature[];
+check["missing optional native sources do not disable symbolic workers", IntegerQ[peSymbolicSignature]];
+peNativeSource = FileNameJoin[{peSignatureDirectory, "laurent-proof-runtime.cpp"}];
+Export[peNativeSource, "// exact optional native proof fixture\n", "Text"];
+peNativeSignature = peSignature[];
+check["adding an optional native source changes the worker signature",
+  IntegerQ[peNativeSignature] && peNativeSignature =!= peSymbolicSignature];
+Export[peNativeSource, "// changed optional native proof fixture\n", "Text"];
+check["native source edits invalidate the loaded worker signature", peSignature[] =!= peNativeSignature];
+DeleteFile[peNativeSource];
+check["removing optional proof sources restores the symbolic-only signature", peSignature[] === peSymbolicSignature];
+DeleteFile[FileNameJoin[{peSignatureDirectory, "HEPCAT-Base.wl"}]];
+check["missing required symbolic sources remain a signature failure", peSignature[] === $Failed];
+DeleteDirectory[peSignatureDirectory, DeleteContents -> True];
 Print["CHECKS: ",checks,"; FAILURES: ",Length[failures]];
 If[failures =!= {}, Print[failures]];
 If[failures === {}, Print["HEPCAT_TEST_COMPLETED:parallel-execution-tests.wl"]];

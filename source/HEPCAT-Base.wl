@@ -1207,6 +1207,299 @@ rspMassiveSchoutenSums[expression_, externalRules_List : {}] := Module[
     If[result === $Failed, body, result /. Thread[tokens -> inverses]]]]
 ];
 
+(* Bounded ordinary identities in a multilinear six-spinor, at-most-one-insertion sector.
+   This helper neither assumes momentum conservation nor touches a denominator. *)
+rspMultilinearIdentitySpace[expression_, externalRules_List] := Module[
+  {rules, grouped, legs, spinors, records, index, masses, massValues, massTokens, massMap,
+   angle, square, aHead, bHead, cHead, massByIndex, formalChain, formalize, restore,
+   generators = {}, descriptions = {}, add, ang, sq, remaining, left, right, k, aa, bb,
+   cc, dd, ee, ff, prefactor, endpoint, scalarFactor, original, originalParts, coordinates, terms, split,
+   tag = Unique["ordinaryIdentitySpace"], supported, signature},
+  If[LeafCount[expression] > 3500 || rspSandwichExpansionCount[expression] > 128 ||
+      !FreeQ[expression, _PropDen | _SpinorTrace | _SpinorHat | _MomHat | _MomQ |
+        _SpinorZ | _SpinorEps | _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace] ||
+      !FreeQ[expression, Power[base_, exponent_] /; !TrueQ[exponent >= 0] &&
+        !FreeQ[base, _SpinorChain | _Mom]], Return[Missing["UnsupportedIdentitySector"]]];
+  If[AnyTrue[externalRules, Function[rule,
+      MatchQ[rule, HoldPattern[Mass[_Integer] :> _]] ||
+      MatchQ[rule, HoldPattern[Mass[_Integer] -> _]] &&
+        (!rspScalarQ[Last[rule]] || !FreeQ[Last[rule], _Mass | _DirectedInfinity |
+          Indeterminate | $Failed | $Aborted | $TimedOut])]],
+    Return[Missing["UnsupportedExternalMassField"]]];
+  rules = Cases[externalRules, rule : HoldPattern[Mass[_Integer] -> value_] /;
+    rspScalarQ[value] && FreeQ[value, _Mass] :> rule];
+  grouped = GatherBy[DeleteDuplicates[rules], First];
+  If[AnyTrue[grouped, Length[#] =!= 1 &], Return[Missing["InconsistentExternalMasses"]]];
+  rules = First /@ grouped; legs = Sort[Cases[rules, HoldPattern[Mass[i_Integer] -> _] :> i]];
+  If[Length[legs] < 6 || Length[legs] > 8, Return[Missing["UnsupportedExternalMultiplicity"]]];
+  supported[s_] := MatchQ[s,
+    Spinor["Spin" | "Helicity", "Angle" | "Square", _Integer] |
+    Spinor["Spin", "Upper" | "Lower", "Angle" | "Square", _Integer, _]];
+  spinors = DeleteDuplicates[Cases[expression, _Spinor, Infinity]];
+  If[!AllTrue[spinors, supported], Return[Missing["UnsupportedSpinorMetadata"]]];
+  records = Sort[DeleteDuplicates[If[rspSpinorType[#] === "Angle", #, rspFlipSpinor[#]] & /@ spinors]];
+  If[Length[records] =!= 6 || Length[DeleteDuplicates[rspSpinorLeg /@ records]] =!= 6 ||
+      !SubsetQ[legs, rspSpinorLeg /@ records], Return[Missing["NotSixDistinctSpinors"]]];
+  masses = (Mass[rspSpinorLeg[#]] /. rules) & /@ records;
+  If[AnyTrue[masses, !MatchQ[#, _Symbol | _ModelParameter | _Integer | _Rational] &] ||
+      AnyTrue[Range[6], records[[#, 1]] === "Helicity" && masses[[#]] =!= 0 &],
+    Return[Missing["UnsupportedExternalMassField"]]];
+  massValues = DeleteDuplicates[Select[masses, !NumberQ[#] &]];
+  massTokens = Table[Unique["ordinaryExternalMass"], {Length[massValues]}];
+  massMap = Thread[massValues -> massTokens]; massByIndex = masses /. massMap;
+  index = AssociationThread[records, Range[6]];
+  angle[i_] := records[[i]]; square[i_] := rspFlipSpinor[records[[i]]];
+  aHead[i_Integer, j_Integer] /; i > j := -aHead[j, i]; aHead[i_Integer, i_Integer] := 0;
+  bHead[i_Integer, j_Integer] /; i > j := -bHead[j, i]; bHead[i_Integer, i_Integer] := 0;
+  endpoint[value_] := value /. {
+    cHead[i_Integer, mom_Integer, j_Integer] /; mom === rspSpinorLeg[records[[i]]] :>
+      massByIndex[[i]] bHead[i, j],
+    cHead[i_Integer, mom_Integer, j_Integer] /; mom === rspSpinorLeg[records[[j]]] :>
+      -massByIndex[[j]] aHead[i, j]};
+  formalChain[chain_SpinorChain] := Module[{l, r, li, ri, slots, choices, types},
+    If[!MemberQ[{2, 3}, Length[chain]], Throw[Missing["HigherMomentumDegree"], tag]];
+    {l, r} = {First[chain], Last[chain]};
+    If[!supported[l] || !supported[r], Throw[Missing["UnsupportedSpinorMetadata"], tag]];
+    li = Lookup[index, If[rspSpinorType[l] === "Angle", l, rspFlipSpinor[l]], Missing["UnseenSpinor"]];
+    ri = Lookup[index, If[rspSpinorType[r] === "Angle", r, rspFlipSpinor[r]], Missing["UnseenSpinor"]];
+    If[!IntegerQ[li] || !IntegerQ[ri], Throw[Missing["UnseenSpinor"], tag]];
+    types = rspSpinorType /@ {l, r};
+    If[Length[chain] === 2, Return[Switch[types,
+      {"Angle", "Angle"}, aHead[li, ri], {"Square", "Square"}, bHead[li, ri],
+      _, Throw[Missing["UnsupportedChirality"], tag]]]];
+    If[types === {"Square", "Angle"}, {li, ri} = {ri, li},
+      If[types =!= {"Angle", "Square"}, Throw[Missing["UnsupportedChirality"], tag]]];
+    choices = rspLinearMomentumTerms[chain[[2]]];
+    If[choices === $Failed || !AllTrue[choices, MatchQ[#, {_Integer | _Rational, Mom[_Integer]}] &&
+        MemberQ[legs, #[[2, 1]]] &], Throw[Missing["UnsupportedMomentumField"], tag]];
+    Total[(First[#] cHead[li, #[[2, 1]], ri]) & /@ choices]
+  ];
+  formalize[value_] := Catch[endpoint[Expand[(value /. rules /. massMap) /.
+      chain_SpinorChain :> formalChain[chain]]], tag];
+  restore[value_] := value /. {aHead[i_, j_] :> SpinorChain[angle[i], angle[j]],
+    bHead[i_, j_] :> SpinorChain[square[i], square[j]],
+    cHead[i_, mom_, j_] :> SpinorChain[angle[i], Mom[mom], square[j]]} /.
+      Thread[massTokens -> massValues];
+  terms[value_] := If[Head[value] === Plus, List @@ value, {value}];
+  scalarFactor[value_] := FreeQ[value, _aHead | _bHead | _cHead] && FreeQ[value, Alternatives @@ massTokens];
+  split[term_] := With[{factors = If[Head[term] === Times, List @@ term, {term}]},
+    {Times @@ Select[factors, scalarFactor], Times @@ Select[factors, !scalarFactor[#] &]}];
+  original = formalize[expression];
+  If[MissingQ[original] || !FreeQ[original, _SpinorChain | _Spinor | _Mom],
+    Return[Missing["UnsupportedIdentitySector"]]];
+  originalParts = split /@ terms[original];
+  prefactor = SelectFirst[originalParts, !FreeQ[Last[#], _cHead] &, Missing["NoMomentumTerm"]];
+  If[MissingQ[prefactor], Return[Missing["NoMomentumTerm"]]];
+  prefactor = First[prefactor];
+  If[!rspScalarQ[prefactor] || prefactor === 0 ||
+      !AllTrue[First /@ originalParts, MatchQ[Cancel[#/prefactor], _Integer | _Rational] &],
+    Return[Missing["UnsupportedCoefficientField"]]];
+  signature[monomial_] := Module[{a = Cases[{monomial}, _aHead, Infinity],
+      b = Cases[{monomial}, _bHead, Infinity], c = Cases[{monomial}, _cHead, Infinity], ids},
+    ids = Flatten[Join[List @@@ a, List @@@ b, ({#[[1]], #[[3]]} & /@ c)]];
+    Sort[ids] === Range[6] && Length[a] + Length[b] + Length[c] === 3 &&
+      (Length[c] === 1 && Length[a] === 1 && Length[b] === 1 ||
+       Length[c] === 0 && MemberQ[{1, 2}, Length[a]] && Length[a] + Length[b] === 3)
+  ];
+  If[!AllTrue[Last /@ originalParts, signature], Return[Missing["NonmultilinearIdentitySector"]]];
+  add[value_, description_] := (AppendTo[generators, endpoint[Expand[value]]];
+    AppendTo[descriptions, description]);
+  Do[ang = Complement[Range[6], sq]; {aa, bb, cc, dd} = ang; {ee, ff} = sq;
+    Do[add[m bHead[ee, ff] (aHead[aa, bb] aHead[cc, dd] - aHead[aa, cc] aHead[bb, dd] +
+        aHead[aa, dd] aHead[bb, cc]), {"AngleSchouten", ang, sq}];
+      add[m aHead[ee, ff] (bHead[aa, bb] bHead[cc, dd] - bHead[aa, cc] bHead[bb, dd] +
+        bHead[aa, dd] bHead[bb, cc]), {"SquareSchouten", sq, ang}],
+      {m, DeleteDuplicates[massByIndex]}], {sq, Subsets[Range[6], {2}]}];
+  Do[sq = Complement[Range[6], ang]; {aa, cc, dd} = ang;
+    Do[{ee, ff} = Complement[sq, {right}];
+      add[bHead[ee, ff] (aHead[cc, dd] cHead[aa, k, right] +
+        aHead[dd, aa] cHead[cc, k, right] + aHead[aa, cc] cHead[dd, k, right]),
+        {"LeftSandwichSchouten", ang, right, k}], {right, sq}, {k, legs}];
+    Do[{cc, dd} = Complement[ang, {left}]; {bb, ee, ff} = sq;
+      add[aHead[cc, dd] (bHead[ee, ff] cHead[left, k, bb] +
+        bHead[ff, bb] cHead[left, k, ee] + bHead[bb, ee] cHead[left, k, ff]),
+        {"RightSandwichSchouten", left, sq, k}], {left, ang}, {k, legs}],
+    {ang, Subsets[Range[6], {3}]}];
+  coordinates[value_] := Module[{parts = split /@ terms[Expand[value]], scalar},
+    If[value === 0, Return[<|"Scalar" -> 1, "Coefficients" -> <||>|>]];
+    scalar = SelectFirst[parts, !FreeQ[Last[#], _cHead] &, First[parts]][[1]];
+    If[scalar === 0 || !AllTrue[First /@ parts,
+        MatchQ[Cancel[#/scalar], _Integer | _Rational] &], Return[Missing["UnsupportedCoefficientField"]]];
+    <|"Scalar" -> scalar, "Coefficients" -> Select[Merge[
+       (Association[#[[2]] -> Cancel[#[[1]]/scalar]] & /@ parts), Total], # =!= 0 &]|>
+  ];
+  <|"Records" -> records, "ExternalLegs" -> legs, "ExternalMassRules" -> rules,
+    "ToFormal" -> Function[value, formalize[value]], "Restore" -> Function[value, restore[value]],
+    "Coordinates" -> Function[value, coordinates[value]],
+    "Identities" -> generators, "Descriptions" -> descriptions,
+    "ScalarFreeQ" -> Function[value, scalarFactor[value]], "FormalOriginal" -> original,
+    "OriginalAmplitude" -> expression|>
+];
+
+rspIdentityPrepareSystem[space_Association, extraIdentities_List : {}] := Module[
+  {identities, rows, keys, index, entries, matrix, weights, all, rules, split, tagged, originalRows, pivots},
+  identities = DeleteDuplicates[DeleteCases[Join[space["Identities"], extraIdentities], 0]];
+  If[Length[identities] > 2048, Return[Missing["IdentityRowLimit"]]];
+  split[term_] := With[{factors = If[Head[term] === Times, List @@ term, {term}]},
+    Times @@ Select[factors, !NumberQ[#] &] -> Times @@ Select[factors, NumberQ]];
+  rows = Function[value, Select[Merge[Association /@ (List /@ (split /@
+      If[Head[value] === Plus, List @@ value, {value}])), Total], # =!= 0 &]] /@ identities;
+  If[!AllTrue[Flatten[Values /@ rows], MatchQ[#, _Integer | _Rational] &],
+    Return[Missing["UnsupportedIdentityField"]]];
+  keys = DeleteDuplicates[Flatten[Keys /@ rows]];
+  If[Length[keys] > 2048, Return[Missing["IdentityColumnLimit"]]];
+  index = AssociationThread[keys, Range[Length[keys]]];
+  entries = Flatten[MapIndexed[Function[{row, position}, KeyValueMap[
+      Function[{key, coefficient}, {index[key], First[position]} -> coefficient], row]], rows]];
+  If[Length[entries] > 16384, Return[Missing["IdentityNonzeroLimit"]]];
+  matrix = SparseArray[entries, {Length[keys], Length[identities]}];
+  originalRows = Length[identities];
+  (* Redundant identity coordinates have zero cost and can make a numerical LP
+     degenerate. Modular pivots only propose a subset of already exact identity
+     rows. Dropping a row can reduce search power, never assert a new identity. *)
+  pivots = TimeConstrained[MemoryConstrained[Quiet[Check[
+    DeleteDuplicates[Function[row, With[{positions = Position[row, Except[0], {1}, Heads -> False]},
+      If[positions === {}, Nothing, First[First[positions]]]]] /@
+        Normal[RowReduce[matrix, Modulus -> 1000003]]], $Failed]], 128000000, $Failed], 0.5, $Failed];
+  If[ListQ[pivots] && 0 < Length[pivots] < Length[identities] &&
+      AllTrue[pivots, IntegerQ[#] && 1 <= # <= Length[identities] &],
+    identities = identities[[pivots]]; matrix = matrix[[All, pivots]]];
+  weights = Function[key, Module[{ordinary = space["Restore"][key]},
+      expressionComplexity[ordinary]]] /@ keys;
+  Join[space, <|"SystemIdentities" -> identities, "Keys" -> keys, "Index" -> index,
+    "IdentityMatrix" -> matrix, "Weights" -> weights,
+    "OriginalIdentityRows" -> originalRows|>]
+];
+
+rspOptimizeIdentitySpace[expression_, system_Association, seconds_ : 2] := Module[
+  {started = AbsoluteTime[], result, formal, coordinates, scalar, coefficients, keys, n, ng,
+   matrix, vector, lpMatrix, costs, inequalities, proposal, point, alpha, candidatePolynomial,
+   candidate, replay, used, limits, available, currentRank, candidateRank, trial, tolerance,
+   zeroAlpha, proposedPoints,
+   record = <|"Amplitude" -> expression, "Status" -> "UNCHANGED", "ExactFormalReplay" -> False|>},
+  If[!TrueQ[seconds > 0], Return[record]];
+  available[] := Max[0.000001, seconds - (AbsoluteTime[] - started)];
+  result = TimeConstrained[MemoryConstrained[
+    formal = system["ToFormal"][expression];
+    If[MissingQ[formal], Return[record]];
+    coordinates = system["Coordinates"][formal];
+    If[MissingQ[coordinates], Return[record]];
+    scalar = coordinates["Scalar"]; coefficients = coordinates["Coefficients"];
+    If[Complement[Keys[coefficients], system["Keys"]] =!= {}, Return[record]];
+    keys = system["Keys"]; matrix = system["IdentityMatrix"]; {n, ng} = Dimensions[matrix];
+    vector = Normal[SparseArray[KeyValueMap[system["Index"][#1] -> #2 &, coefficients], {n}]];
+    costs = Join[system["Weights"], system["Weights"], ConstantArray[0, ng]];
+    lpMatrix = Join[IdentityMatrix[n, SparseArray], -IdentityMatrix[n, SparseArray], -matrix, 2];
+    inequalities = SparseArray[{Band[{1, 1}] -> 1.}, {2 n, 2 n + ng}];
+    (* A zero identity has an exact sparse certificate already; do not ask a
+       degenerate numerical optimum to rediscover it. Nonzero sources continue
+       to the bounded proposal search unchanged. *)
+    zeroAlpha = TimeConstrained[Quiet[Check[LinearSolve[matrix, -vector], $Failed]],
+      Min[0.3, available[]/4], $Failed];
+    If[VectorQ[zeroAlpha] && TrueQ[Normal[matrix.zeroAlpha + vector] === ConstantArray[0, n]],
+      proposedPoints = {ConstantArray[0, n]},
+      proposal = Quiet[Check[LinearOptimization[N[costs], {inequalities, ConstantArray[0., 2 n]},
+          {N[lpMatrix], -N[vector]}, "PrimalMinimizer", Method -> "CLP", Tolerance -> 10^-10], $Failed]];
+      If[!VectorQ[proposal, NumericQ] || Length[proposal] =!= 2 n + ng, Return[record]];
+      proposedPoints = Table[Map[If[Abs[#] < tolerance, 0, Rationalize[#, tolerance]] &,
+        Take[proposal, n] - Take[Drop[proposal, n], n]], {tolerance, {10^-4, 10^-6, 10^-8}}]];
+    currentRank = {expressionComplexity[expression], LeafCount[expression]};
+    Do[
+      candidatePolynomial = Total[MapThread[Times, {point, keys}]];
+      candidate = scalar system["Restore"][candidatePolynomial];
+      candidateRank = {expressionComplexity[candidate], LeafCount[candidate]};
+      If[!OrderedQ[{candidateRank, currentRank}] || candidateRank === currentRank, Continue[]];
+      alpha = If[VectorQ[zeroAlpha] && point === ConstantArray[0, n], zeroAlpha,
+        Quiet[Check[LinearSolve[matrix, point - vector], $Failed]]];
+      If[!VectorQ[alpha], Continue[]];
+      replay = Expand[candidatePolynomial - formal/scalar -
+        Total[MapThread[Times, {alpha, system["SystemIdentities"]}]]];
+      If[replay =!= 0, Continue[]];
+      trial = TimeConstrained[rspLocalFactorContent[candidate], Min[0.15, available[]/4], candidate];
+      If[expressionComplexity[trial] <= expressionComplexity[candidate] &&
+          rspSandwichExpansionCount[trial] <= rspSandwichExpansionCount[candidate] &&
+          LeafCount[trial] < LeafCount[candidate] &&
+          TrueQ[Expand[system["ToFormal"][trial] - system["ToFormal"][candidate]] === 0],
+        candidate = trial; candidateRank = {expressionComplexity[candidate], LeafCount[candidate]}];
+      used = Select[Range[Length[alpha]], alpha[[#]] =!= 0 &];
+      record = <|"Amplitude" -> candidate, "Status" -> "IMPROVED", "ExactFormalReplay" -> True,
+        "BeforeRank" -> currentRank, "AfterRank" -> candidateRank,
+        "IdentityCounts" -> <|"Rows" -> ng, "Monomials" -> n, "UsedRows" -> Length[used]|>,
+        "Certificate" -> <|"Coefficients" -> alpha[[used]],
+          "OrdinaryIdentities" -> (system["Restore"] /@ system["SystemIdentities"][[used]]),
+          "ExactResidual" -> replay|>|>;
+      Break[], {point, proposedPoints}];
+    record, 384000000, record], seconds, record];
+  Join[result, <|"ElapsedTime" -> AbsoluteTime[] - started|>]
+];
+
+
+(* A two-component determinant identity with independent momentum matrices.
+   This is a proposal helper, not an unconditional expanding rewrite rule. *)
+rspSharedDiagonalPair[first_, second_, externalRules_List : {}] := Module[
+  {supported, diagonal, rules, grouped, angle, square, aword, sword, common,
+   q, a, b, sign, virtuality, ordinarySquare, left, right, replacement},
+  supported[spinor_] := MatchQ[spinor,
+    Spinor["Spin" | "Helicity", "Angle" | "Square", _Integer] |
+    Spinor["Spin", "Upper" | "Lower", "Angle" | "Square", _Integer, _]];
+  diagonal[value_] := Head[value] === SpinorChain && Length[value] === 4 &&
+    First[value] === Last[value] && supported[First[value]] &&
+    AllTrue[List @@ value[[2 ;; 3]], MatchQ[#, _Mom] &];
+  If[!diagonal[first] || !diagonal[second] ||
+      rspSpinorType[First[first]] === rspSpinorType[First[second]],
+    Return[Missing["NoOppositeDiagonalPair"]]];
+  If[AnyTrue[externalRules, Function[rule,
+      MatchQ[rule, HoldPattern[Mass[_Integer] :> _]] ||
+      MatchQ[rule, HoldPattern[Mass[_Integer] -> _]] &&
+        (!rspScalarQ[Last[rule]] || !FreeQ[Last[rule], _List | _Association | _Rule | _RuleDelayed | _Mass | _DirectedInfinity |
+          Indeterminate | $Failed | $Aborted | $TimedOut])]],
+    Return[Missing["UnsupportedExternalMassField"]]];
+  rules = Cases[externalRules, rule : HoldPattern[Mass[_Integer] -> _] :> rule];
+  grouped = GatherBy[DeleteDuplicates[rules], First];
+  If[AnyTrue[grouped, Length[#] =!= 1 &], Return[Missing["InconsistentExternalMasses"]]];
+  rules = First /@ grouped;
+  {angle, square} = If[rspSpinorType[First[first]] === "Angle",
+    {first, second}, {second, first}];
+  aword = List @@ angle[[2 ;; 3]]; sword = List @@ square[[2 ;; 3]];
+  common = Intersection[aword, sword];
+  If[common === {}, Return[Missing["NoSharedMatrix"]]];
+  q = First[SortBy[common, LeafCount]];
+  If[Length[DeleteCases[aword, q]] =!= 1 || Length[DeleteCases[sword, q]] =!= 1,
+    Return[Missing["RepeatedDiagonalMatrix"]]];
+  {a, b} = {First[DeleteCases[aword, q]], First[DeleteCases[sword, q]]};
+  sign = If[Last[aword] === q, 1, -1] If[Last[sword] === q, 1, -1];
+  virtuality = rspOrdinaryMomentumDot[q, q];
+  If[MissingQ[virtuality], Return[virtuality]];
+  ordinarySquare = (virtuality /. rules) /. HoldPattern[MomProd[i_Integer, i_Integer]] :>
+    With[{mass = Mass[i] /. rules}, If[FreeQ[mass, _Mass], mass^2, MomProd[i, i]]];
+  {left, right} = {First[angle], First[square]};
+  replacement = sign (ordinarySquare SpinorChain[left, a, right] SpinorChain[left, b, right] -
+    SpinorChain[left, q, right] SpinorChain[left, a, q, b, right]);
+  <|"Amplitude" -> replacement, "OriginalPair" -> {first, second},
+    "AngleWord" -> aword, "SquareWord" -> sword, "ReversalSign" -> sign,
+    "SharedMomentum" -> q, "OriginalVirtuality" -> virtuality,
+    "ExternalVirtuality" -> ordinarySquare, "InternalOnShellIdentity" -> False,
+    "Operation" -> "TwoComponentSharedMatrixDeterminant"|>
+];
+
+(* Construct a polynomial cofactor by deleting an actual positive factor.
+   Division and recursive containment are deliberately not eligibility tests. *)
+rspLiteralFactorCofactor[term_, factor_] := Module[{parts, position, remaining, quotient},
+  parts = If[Head[term] === Times, List @@ term, {term}];
+  position = SelectFirst[Range[Length[parts]], parts[[#]] === factor ||
+    MatchQ[parts[[#]], Power[base_, exponent_Integer?Positive] /; base === factor] &,
+    Missing["NoLiteralPositiveFactor"]];
+  If[MissingQ[position], Return[position]];
+  remaining = If[parts[[position]] === factor, Delete[parts, position],
+    ReplacePart[parts, position -> factor^(Last[parts[[position]]] - 1)]];
+  quotient = Times @@ remaining;
+  If[!FreeQ[quotient, Power[base_, exponent_] /;
+        !TrueQ[exponent >= 0] && !FreeQ[base, _SpinorChain | _Mom]], Return[Missing["InverseKinematicCofactor"]]];
+  If[!TrueQ[Expand[term - factor quotient] === 0], Return[Missing["LiteralReconstructionFailed"]]];
+  <|"Term" -> term, "Factor" -> factor, "Cofactor" -> quotient,
+    "FactorPosition" -> position, "ExactLiteralReconstruction" -> True|>
+];
+
 (* Estimate distribution work without constructing Cartesian products. Inverse
    factors and typed contractions remain atomic at this structural stage. *)
 rspExpansionProfile[expression_, termLimit_ : 4096, leafLimit_ : 24000] := Module[

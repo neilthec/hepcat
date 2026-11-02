@@ -53,6 +53,16 @@ Shared scalar content is extracted from polynomial sums before applying the
 existing Schouten rules, so preexpanded coefficient-weighted identities are
 recognized too. This adds no inverse Schouten rewrite or denominator combination.
 
+Whole-amplitude preparation can additionally compare sparse ordinary-identity
+representatives of a supported six-spinor numerator sector. The six external
+spinor slots must be distinct and occur once per monomial; higher insertion
+degrees, unsupported indices or oversized systems leave the expression on its
+existing reduction route. The proposed representative is accepted only after
+an exact Schouten/external-Dirac identity replay, with declared momentum
+conservation added only by preparation. No internal mass shell is used and
+each complete denominator product remains fixed. The search has finite time,
+memory and identity-system bounds and retains only completed improvements.
+
 A directed diagonal-sandwich contraction also recognizes
 `[a|P Q|a] [b|P p_a|b]` and its angle-bracket counterpart, with a massless
 helicity spinor on leg `a`. In HEPCAT's conventions the ordinary identity is
@@ -1883,6 +1893,30 @@ bases and literal-channel mode bypass these automatic attempts. Details expose
 `CompleteFactorization` solves all supported physical-channel constraints
 simultaneously. It does not independently add one residue discrepancy divided
 by each propagator, which could double count shared pole contributions.
+For a large coherent-spin problem, completion first tries keeping related
+numerator terms together. It collects existing prepared diagrams, prepared
+channel continuations and retained preparation remainders, partitions each
+source by its number of momentum insertions, and projects the complete blocks
+under the inferred exchange symmetries. The first fit preserves the supplied
+discarded-remainder presentation alongside canonical prepared whole sources;
+a canonical copy verifies every source's eligibility without replacing those
+remainder coordinates. A normalized source proposal remains a fallback. Premature
+rewrites can change the representative chosen by an otherwise equivalent fit.
+This is a smaller proposed correction space, not an assertion that the blocks
+are individually correct. Every
+original residue obligation, including required zero residues, still enters
+the simultaneous fit and independent validation. An inconsistent proposal
+falls back to wider source spaces within the same deadline and explicit caps.
+No coordinate is discarded merely because it vanishes at sampled points.
+
+During those fits, a typed polynomial numerator without the selected physical
+denominator is regular at that cut if all of its other inverse factors are
+verified finite and nonzero on the same exact chart. Completion can then insert
+its zero residue without evaluating a large numerator. The coordinate remains
+in the linear system and in its affine family. Hidden bracket inverses,
+coincident poles, unsupported expressions and user-supplied charts keep the
+full restriction path.
+
 Before constructing the channel correction space, an input that does not
 already pass gets two inexpensive proposals with `"InputReweighting" -> Automatic`:
 

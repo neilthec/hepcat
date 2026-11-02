@@ -16,12 +16,19 @@ TEST_SUITES = (
     "legacy-transform-tests.wl", "legacy-model-tests.wl",
     "numerical-spinor-stability-tests.wl",
     "spinor-identity-tests.wl", "spin-contraction-guard-tests.wl",
+    "ordinary-identity-normalization-tests.wl",
+    "shared-matrix-cofactor-tests.wl", "native-laurent-identity-tests.wl",
+    "native-rest-null-dual-tests.wl",
     "thesis-preparation-tests.wl", "diagram-tests.wl",
     "simplification-path-tests.wl", "physical-residue-tests.wl",
     "fermion-sewing-grading-tests.wl",
     "spurious-pole-tests.wl", "qed-five-point-simplification-tests.wl",
-    "high-energy-tests.wl", "high-energy-power-counting-tests.wl", "high-energy-family-tests.wl", "reference-independence-tests.wl",
+    "high-energy-tests.wl", "high-energy-power-counting-tests.wl", "high-energy-family-tests.wl",
+    "high-energy-compact-retry-tests.wl", "reference-independence-tests.wl",
+    "coherent-polynomial-rules-tests.wl", "high-energy-coefficient-series-tests.wl",
+    "high-energy-dispatch-tests.wl", "high-energy-laurent-rows-tests.wl",
     "amplitude-completion-tests.wl", "completion-input-fit-tests.wl",
+    "completion-structured-source-tests.wl",
     "physical-pole-completion-tests.wl", "schouten-sum-sign-tests.wl",
     "compact-physical-source-tests.wl", "retained-affine-coefficients-tests.wl",
     "null-pair-shift-tests.wl", "null-channel-completion-tests.wl",
@@ -42,6 +49,7 @@ TEST_SUITES = (
     "completed-amplitude-preparation-tests.wl",
     "final-amplitude-simplification-tests.wl",
     "reverse-normalization-tests.wl", "determinant-pair-tests.wl",
+    "numerator-spectator-tests.wl",
     "ordinary-pole-compaction-tests.wl", "scalar-pole-tests.wl",
     "whole-fraction-schouten-tests.wl",
     "qed-worked-example-tests.wl",
@@ -53,6 +61,7 @@ TEST_SUITES = (
 # These execute full expensive notebook constructions rather than component
 # regressions. Select them explicitly and give the external runner enough time.
 INTEGRATION_TEST_SUITES = ("physical-construction-integration-tests.wl",
+                          "fermion-construction-integration-tests.wl",
                           "spinas-calchep-integration-tests.wl",
                           "spinas-madgraph-integration-tests.wl")
 

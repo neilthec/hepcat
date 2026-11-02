@@ -35,19 +35,49 @@ upper-bound certificate for supported large expressions. Such a report \
 records ObservedPowerUpperBound and leaves ObservedPower missing; it does not \
 claim a measured leading Laurent power. Unsupported or inconclusive \
 certificates retain the ordinary exact Laurent comparison.", "Notes"],
-  Cell["A successful ordinary result keeps the {externalMassRules, \
-expression} form. There are no new internal on-shell conditions on this \
-combined amplitude, so it may be simplified again with PrepareAmplitudes.",
-   "Notes"], Cell["\"Output\" -> \"Details\" retains the candidate, \
-equations, fitted family and validation. A timeout, unsupported direction \
-space or unresolved free coefficient is not silently assigned an arbitrary \
-value.", "Notes"], Cell["Exact identity proofs receive an allowance based on \
-both the number and the size of retained affine directions. A small family \
-containing a large expression can therefore receive more proof time, still \
-within the stage's TimeConstraint. Details records FamilyIdentityProofBudget, \
-including DirectionCount, LargestDirectionLeafCount and AllocatedSeconds. \
-This changes resource allocation only: an unproved direction is retained, and \
-genuine undetermined interactions are not discarded.", "Notes"],
+  Cell["When an exact Laurent expansion is needed, large coherent-spin \
+polynomials can first be separated into all of their scalar coefficients \
+without expanding the kinematic coefficient field. Every coefficient is \
+expanded and reassembled exactly; no spin components or small coefficients \
+are sampled away. Independent high-energy samples share one deadline and can \
+run on separate workers. Large retained families can use the same exact \
+coefficient separation to build fitting equations; correction unknowns are \
+reassembled before extracting equations, so a condition such as x+y=0 retains \
+its coupled freedom.", "Notes"], Cell["If Series assumes an exact numeric \
+radical coefficient is zero, that assumption is accepted only after an exact \
+algebraic zero certificate. A tiny genuine nonzero value, an unproved \
+assumption, another warning or an insufficient expansion order keeps the \
+result unresolved or on its original fallback. Details retain these \
+certificates.", "Notes"], Cell["A successful ordinary result keeps the \
+{externalMassRules, expression} form. There are no new internal on-shell \
+conditions on this combined amplitude, so it may be simplified again with \
+PrepareAmplitudes.", "Notes"], Cell["\"Output\" -> \"Details\" retains the \
+candidate, equations, fitted family and validation. A timeout, unsupported \
+direction space or unresolved free coefficient is not silently assigned an \
+arbitrary value.", "Notes"], Cell["Exact identity proofs receive an allowance \
+based on both the number and the size of retained affine directions. A small \
+family containing a large expression can therefore receive more proof time, \
+still within the stage's TimeConstraint. Details records \
+FamilyIdentityProofBudget, including DirectionCount, \
+LargestDirectionLeafCount and AllocatedSeconds. This changes resource \
+allocation only: an unproved direction is retained, and genuine undetermined \
+interactions are not discarded.", "Notes"], Cell["For a large coherent-spin \
+direction whose original symbolic proof is expensive, a bounded retry factors \
+numerator spectators and compacts each physical-pole group using ordinary \
+identities. It keeps the original direction and the reduction route, then \
+requires the existing generic symbolic external-kinematics certificate on the \
+compact expression. It does not use internal shells or sampled zeros as a \
+proof; an unfinished attempt retains the direction.", "Notes"],
+  Cell["A late serial fallback can prove supported identities on a dense \
+symbolic external rest/null chart using complete exact Laurent-polynomial \
+arithmetic. It chooses angle or square null-spinor axes from the expression, \
+then verifies external shells, conservation, spinor reconstruction, typed \
+homogeneity, coefficient coverage and a nonzero off-cut denominator domain. \
+Unit normalization requires exact mass/coupling witnesses; it is not a \
+numerical phase-space test. The optional local runtime uses Python 3, a C++17 \
+compiler and Boost headers. Missing tools, unsupported structure or any \
+resource limit preserve the unproved direction. All preparation, compilation \
+and evaluation remain inside the existing shared deadline.", "Notes"],
   Cell["Use model-local \"ParameterRules\" only for numerical sampling. An \
 explicit \"RandomSeed\" replays the run; Automatic records a newly chosen \
 time-based seed in details.", "Notes"], Cell["This stage cannot establish an \

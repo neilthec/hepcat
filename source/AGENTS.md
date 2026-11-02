@@ -1230,6 +1230,33 @@ They fit exact equations on sampled kinematics and validate independently;
 they are not generic symbolic reconstruction or uniqueness proofs.
 Independent exact identity proofs for retained affine directions may run in
 parallel within one shared deadline, with at most ninety seconds per job.
+A late serial exact-Laurent fallback has a 120-second ceiling per retained
+direction, including chart construction, export, compilation and verification;
+its native evaluation is capped at ninety seconds and 1 GiB. Both limits are
+clipped to the existing family/stage deadline, and it must not launch another
+worker pool.
+The optional `laurent-proof-*` support files belong in source snapshots and
+worker fingerprints. Require dense-chart covariance and homogeneous spin weights,
+exact mass/coupling normalization witnesses, reversible export, every coherent
+coefficient ZERO and every cleared denominator NONZERO before pruning a direction.
+Missing tools, hash/witness mismatches and partial/resource-limited results must
+retain the original direction. Never replace this proof with numerical samples.
+The rest/null identity chart can fix angle or square spinor axes, selected from
+typed massless-spinor occurrence counts. Both orientations need the same dense
+domain, external-shell, conservation, spinor-reconstruction and covariance
+certificates. A choice of cheaper coordinates is never a new shell condition.
+Large affine high-energy fits may expand exact scalar coefficients before
+reassembling the spin polynomial. Keep correction unknowns coupled when forming
+equations: a row such as x+y is one equation, not two separate zero coefficients.
+Fingerprint cached correction catalogs by the ordered source expressions and
+scope actually consumed. Do not hash full retained preparation histories when
+only ShellRemainder values are used; their temporary copies can exhaust the
+construction memory guard before a small source catalog is built. Changes to
+consumed remainders must still invalidate the catalog, and its complete source
+content and canonical eligibility must be verified before reuse.
+Every Laurent route, including whole-expression fallbacks, must certify Series
+zero assumptions even when the caller disables their warnings. Never accept a
+quiet fallback after a rejected exact-zero assumption.
 Retain the original proof form. Try cheap scalar grouping and bounded
 Schouten identities on that original before ordinary preparation; a form ranked
 best for display can be much harder to certify symbolically. Modest compact

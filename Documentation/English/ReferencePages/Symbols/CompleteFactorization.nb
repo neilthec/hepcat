@@ -40,6 +40,22 @@ supplied correction bases retain their limits.", "Notes"],
 expressions and discarded remainders. These are tried before broader \
 channel-continuation directions, preserving useful diagram information \
 without making a hard-coded process formula.", "Notes"],
+  Cell["For sufficiently large coherent-spin systems, a preliminary proposal \
+keeps related terms of existing prepared sources and their retained \
+remainders together, grouped by momentum-insertion degree. It fits that \
+complete proposal against every original channel before attempting wider \
+continuation spaces. The first proposal keeps prepared whole sources in their \
+physical form and preserves the supplied discarded remainders through \
+grouping and exchange projection; eligibility is checked on canonical copies. \
+Rewriting those remainders is deferred to the fit so early rewrites do not \
+accidentally favor a more complicated representative. A normalized source \
+proposal remains a fallback within the same clock and explicit limits. \
+Neither changes the physical targets.", "Notes"],
+  Cell["Residue sampling may skip the numerator evaluation of a coordinate \
+that is structurally regular at the selected cut, after verifying every other \
+inverse factor is finite and nonzero on that same exact chart. The coordinate \
+remains in the system. Hidden spinor inverses, coincident poles and \
+unsupported or custom charts use the full residue evaluator.", "Notes"],
   Cell["The correction space is finite and bounded. Alternative reference \
 continuations, input reweighting and retained terms can supply additional \
 directions. Failure to span a deficit is reported honestly; the function does \

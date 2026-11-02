@@ -29,6 +29,23 @@ routine use does not expose implementation data.", "Notes"],
 spinors, then applies ReduceSpinorProducts and bounded improving identities. \
 Momentum conservation is used with the known external leg set rather than \
 added as an unconditional chain rewrite.", "Notes"],
+  Cell["A bounded numerator pass can factor existing spectator spinor chains \
+to expose small Schouten and external Dirac identities. Each complete \
+inverse-factor product stays separate, inverse factors are protected, and \
+only a strict improvement of the complete expression is retained. Unsupported \
+sectors and interrupted trials keep their last completed expression.",
+   "Notes"], Cell["A further bounded ordinary-identity pass handles supported \
+numerators with six distinct external spinor slots and at most one momentum \
+insertion per monomial. It searches Schouten, external Dirac and, when \
+enabled, declared total-momentum-conservation identities. A numerical \
+optimization only proposes a sparse form: exact rational identity \
+coefficients and a zero algebraic replay residual are required before \
+accepting it. Denominators and internal virtualities are unchanged; this does \
+not prove a global minimum.", "Notes"], Cell["For completed external \
+amplitudes, a bounded shared-matrix identity can expose literal spectator \
+factors and smaller six-spinor coefficients. Only complete improving \
+checkpoints are returned. This final-amplitude route leaves the \
+diagram/channel source partitions used by completion unchanged.", "Notes"],
   Cell["Constructive internal-shell simplification acts on each item's \
 numerator using only that item's mass declarations. Physical PropDen objects \
 stay off shell. A channel row declares only its own cut; completed \

@@ -86,6 +86,74 @@ then validates all 27 original propagator obligations and complete external
 kinematics on a fresh rational geometry. Incorrect amplitudes and damaged spin
 bases still fail; sampling is never selected by comparison agreement.
 
+`completion-structured-source-tests.wl` covers source-derived correction blocks,
+conservative zero residues of structurally regular columns, and the original
+fallbacks. A zero shortcut must preserve every matrix coordinate and verify all
+other inverse factors on the actual cut chart. Unsupported inverses, coincident
+poles and custom maps use the full evaluator.
+
+`ordinary-identity-normalization-tests.wl` covers bounded sparse Schouten and
+external-Dirac normalization. Numerical optimization proposes coordinates only;
+accepted candidates require an exact ordinary-identity replay and a strict rank
+improvement. Preparation supplies momentum-conservation relations from its
+external leg set. Standalone reduction receives no implicit conservation rule.
+
+`shared-matrix-cofactor-tests.wl` verifies the general two-by-two shared-matrix
+diagonal identity, both chiral word orientations, explicit spin variance,
+literal spectator witnesses, virtuality preservation and bounded whole-amplitude
+cofactor normalization. Each accepted complete checkpoint must improve the
+existing rank; diagram/channel degree-partition sources remain unchanged.
+
+`native-laurent-identity-tests.wl` covers the late serial generic identity
+certificate: dense external rest/null coordinates, typed mass/coupling
+normalization, reversible algebra export, full coherent coefficient coverage,
+nonzero denominator domain and runtime/root/hash/deadline checks. The optional
+hard fixture runs with `HEPCAT_TEST_NATIVE_FULL_DIRECTION=1`. The Python suite
+`test_laurent_proof_runtime.py` independently tests exact Laurent arithmetic,
+factor witnesses, tool availability, all declared roots, caps and process cleanup.
+Missing optional native tools never turn an unresolved direction into a proof.
+`native-rest-null-dual-tests.wl` separately verifies both angle- and square-axis
+charts, their exact external identities, and the typed expression-based selector.
+
+`numerator-spectator-tests.wl` covers denominator-preserving local collections
+that expose small ordinary identity coefficients. Trials retain complete inverse
+inventories, external mass scope and atomic timeout checkpoints.
+
+`high-energy-compact-retry-tests.wl` retains two real identity-zero directions
+that were expensive to prove in their original presentation. It checks the
+ordinary compaction route followed by a generic symbolic certificate, with no
+sampled-zero acceptance or internal shells. A genuine small deformation, short
+deadline, unsupported input and existing smaller workflows guard the fallback.
+
+`coherent-polynomial-rules-tests.wl` verifies exact recursive spin-polynomial
+arithmetic with opaque scalar coefficients. It checks complete coefficient and
+constant-term coverage, higher spin, tiny genuine coefficients, unsupported
+spin-dependent denominators and bounded failure without partial acceptance.
+`high-energy-coefficient-series-tests.wl` compares scalar-coefficient and whole
+spin-polynomial Laurent expansions exactly. `high-energy-dispatch-tests.wl`
+checks real parallel sample dispatch against serial results, fixed sample order
+and seeds, complete spin coverage and one shared clock including preconditioning.
+The scalar-Series suite also requires exact certificates for CAS zero-test
+assumptions, rejects tiny nonzero assumptions, captures repeated assumptions
+under caller Quiet/Off and checks that system Message definitions are restored
+after success and interruption. Finite but under-expanded series remain incomplete.
+
+The expensive `fermion-construction-integration-tests.wl` constructs the
+four-fermion/two-photon PP, PM and MM sectors and the six-fermion process from
+fresh models. It uses the public `AllPhysical` workflow, ordinary automatic
+resource settings, fixed replay seeds and an independent Feynman benchmark.
+No saved final amplitude or process-specific correction basis is supplied.
+Select one case while developing, for example:
+
+```sh
+HEPCAT_FERMION_INTEGRATION_CASES=PM python3 tests/checks/run-wolfram-tests.py --suite fermion-construction-integration-tests.wl --timeout 3600
+```
+
+Omit the environment selection to run all four cases sequentially, with a
+larger external runner timeout. Report each case's actual result and timings;
+passing the component suites alone does not establish that a full construction
+finishes.
+
 ## Full Process Construction
 
 Construction resource defaults are automatic. Focused tests must distinguish the
@@ -907,3 +975,8 @@ Complete lower amplitudes are generated from cubic vertices and independent
 off-shell Feynman diagrams, with no supplied six-point answer.
 An explicit negative case checks that unpaired Dirac lower amplitudes are
 reported as unsupported before any invalid sign enters an amplitude.
+
+`high-energy-laurent-rows-tests.wl` checks large affine-family coefficient
+expansion without splitting coupled unknown equations. It covers exact tiny
+coefficients, full spin tensors, nonlinear or singular unknowns, unsupported
+metadata, deadlines and the unchanged exact fallback.
