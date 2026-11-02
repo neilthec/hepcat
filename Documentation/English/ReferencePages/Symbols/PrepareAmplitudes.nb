@@ -42,8 +42,13 @@ optimization only proposes a sparse form: exact rational identity \
 coefficients and a zero algebraic replay residual are required before \
 accepting it. Denominators and internal virtualities are unchanged; this does \
 not prove a global minimum.", "Notes"], Cell["For completed external \
-amplitudes, a bounded shared-matrix identity can expose literal spectator \
-factors and smaller six-spinor coefficients. Only complete improving \
+amplitudes, ordinary external pair definitions can first cancel apparent \
+repeated propagators without internal-shell conditions. A bounded \
+shared-matrix identity can then expose one or two literal positive spectator \
+chain factors and smaller six-spinor coefficients. A two-factor route removes \
+only witnessed polynomial factors, preserves each original fraction, and \
+requires exact identity replay after lifting the spectators back. Inverse \
+factors are unchanged by that cofactor route. Only complete improving \
 checkpoints are returned. This final-amplitude route leaves the \
 diagram/channel source partitions used by completion unchanged.", "Notes"],
   Cell["Constructive internal-shell simplification acts on each item's \
@@ -63,8 +68,12 @@ cycles. \"Xi\" uses a common reference, \"IndependentXi\" keeps separate \
 generic references, and None leaves the references unchanged. An unavailable \
 requested choice is reported rather than silently declared successful.",
    "Notes"], Cell["The search ranks completed trials by expression complexity \
-and respects bounded time and candidate limits. It does not prove a global \
-minimum. Automatic resource settings scale to the process; user values remain \
+and respects bounded time and candidate limits. Measuring a completed \
+candidate has a separate bounded allowance from distributing identity trials, \
+so a moderately large but cheaply measured expression is still ranked by its \
+spinor complexity. A leaf-count fallback is not compared against a \
+weighted-complexity score. The search does not prove a global minimum. \
+Automatic resource settings scale to the process; user values remain \
 authoritative.", "Notes"], Cell["The detailed output retains original \
 expressions and discarded remainders so CompleteFactorization can first reuse \
 information lost in aggressive preparation. Pass the report itself when \

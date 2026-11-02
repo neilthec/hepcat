@@ -52,6 +52,54 @@ check["an apparent spinor-bracket pole cannot enter the physical-only source pro
 csHigher = csBuild[{csSource, csSource/csPole13}];
 check["higher physical pole powers are kept outside the simple-residue proposal",
   csHigher["Status"] === "AVAILABLE" && csHigher["SourceCount"] === 1];
+csPairInput = ConstructiveDiagrams`Private`completionNormalizeInput[
+  {csRules, 2 MomProd[1, 3] csSource/csPole13}, csChannels, csModel];
+csPairInputBefore = csPairInput;
+csPairCatalog = ConstructiveDiagrams`Private`completionPhysicalChannelBasis[
+  csPairInput, None, <|"Order" -> 1, "Permutations" -> {{}}|>, 64, 16, 10];
+check["ordinary pair cancellation occurs before complete-source higher-pole admission",
+  AnyTrue[csPairCatalog["Sources"], Lookup[#, "Source", None] === "PreparedInput" &&
+    Lookup[Lookup[#, "OrdinaryPoleNormalization", <||>], "Status", None] === "REDUCED" &&
+    TrueQ[ConstructiveDiagrams`Private`residueExactZero[#["Expression"] - csSource]] &]];
+check["source admission leaves all original targets and the supplied input unchanged",
+  csPairInput === csPairInputBefore && csModel === csModelBefore];
+csGenuineInput = ConstructiveDiagrams`Private`completionNormalizeInput[
+  {csRules, (2 MomProd[1, 3] + csGenuineRemainder) csSource/csPole13}, csChannels, csModel];
+csGenuineCatalog = ConstructiveDiagrams`Private`completionPhysicalChannelBasis[
+  csGenuineInput, None, <|"Order" -> 1, "Permutations" -> {{}}|>, 64, 16, 10];
+check["a nonzero residual double pole still rejects the complete prepared source",
+  AllTrue[csGenuineCatalog["Sources"], Lookup[#, "Source", None] =!= "PreparedInput" &]];
+csQuotientSource = csCarrier (4 MomProd[1, 3]^2/csPole13^2 + 2 MomProd[1, 3]/csPole13^2);
+csQuotientInput = ConstructiveDiagrams`Private`completionNormalizeInput[
+  {csRules, 7 csRegular + csQuotientSource}, csChannels, csModel];
+csQuotientCatalog = ConstructiveDiagrams`Private`completionPhysicalChannelBasis[
+  csQuotientInput, None, <|"Order" -> 1, "Permutations" -> {{}}|>, 64, 16, 10];
+check["an ordinary quotient stays correlated with its complete pole-bearing source",
+  AnyTrue[csQuotientCatalog["Sources"], Lookup[#, "Source", None] === "PreparedInput" &&
+    TrueQ[Lookup[#, "CorrelatedRegularQuotient", False]] &&
+    TrueQ[ConstructiveDiagrams`Private`residueExactZero[#["Expression"] - csCarrier (1 + 1/csPole13)]] &]];
+check["the already-explicit regular input is fixed exactly once",
+  csQuotientCatalog["RegularExpression"] === 7 csRegular &&
+    Length[csQuotientCatalog["Basis"]] === 1 &&
+    !FreeQ[First[csQuotientCatalog["Basis"]], _Plus]];
+csOppositeRegular = ConstructiveDiagrams`Private`completionNormalizeInput[
+  {{csRules, 7 csRegular + csQuotientSource}, {csRules, -7 csRegular}}, csChannels, csModel];
+csOppositeCatalog = ConstructiveDiagrams`Private`completionPhysicalChannelBasis[
+  csOppositeRegular, None, <|"Order" -> 1, "Permutations" -> {{}}|>, 64, 16, 10];
+check["mutually canceling explicit regular records are still stripped individually",
+  csOppositeCatalog["RegularExpression"] === 0 &&
+    Length[csOppositeCatalog["Basis"]] === 1 &&
+    Sort[Lookup[csOppositeCatalog["Sources"], "Expression"]] ===
+      Sort[Lookup[csQuotientCatalog["Sources"], "Expression"]]];
+csPureRegular = ConstructiveDiagrams`Private`completionNormalizeInput[
+  {csRules, 4 csCarrier MomProd[1, 3]^2/csPole13^2}, csChannels, csModel];
+csPureCatalog = ConstructiveDiagrams`Private`completionPhysicalChannelBasis[
+  csPureRegular, None, <|"Order" -> 1, "Permutations" -> {{}}|>, 64, 16, 10];
+check["a source-derived purely regular quotient is retained without claiming a residue fixes it",
+  csPureCatalog["Status"] === "AVAILABLE" && csPureCatalog["RegularExpression"] === 0 &&
+    Length[csPureCatalog["Basis"]] === 1 &&
+    AnyTrue[csPureCatalog["Sources"], TrueQ[Lookup[#, "CorrelatedRegularQuotient", False]] &&
+      #["Expression"] === csCarrier &]];
 csXi = csBuild[{csSource, csSource SpinorChain[
   Spinor["Xi", "Angle", 90], Spinor["Helicity", "Angle", 3]]}];
 check["unresolved auxiliary spinors cannot enter a closed physical source proposal",

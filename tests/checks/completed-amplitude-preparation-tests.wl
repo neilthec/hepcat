@@ -20,6 +20,14 @@ cpPair = {cpExternal, (cpChain + MomProd[1, 3])/cpDen};
 cpSaved = cpPair;
 cpPrepare[input_, opts___] := PrepareAmplitudes[input, cpModel, opts,
   "MaxSteps" -> 0, "ProgressReporting" -> False];
+cpRepeated = cpPrepare[{cpExternal, 2 MomProd[1, 3]/cpDen^2}, "ReturnDetails" -> True];
+check["completed preparation exposes an ordinary pair definition before repeated-pole admission",
+  AssociationQ[cpRepeated] && cpRepeated["Amplitude"] === 1/cpDen];
+check["the repeated-pole reduction records its ordinary scope and exact forward rule",
+  AnyTrue[First[cpRepeated["ItemReports"]]["Reductions"],
+    Lookup[#, "Operation", None] === "OrdinaryPairVirtualityCancellation" &&
+      Lookup[#, "InternalOnShellIdentity", True] === False &&
+      Lookup[Lookup[#, "IdentityRoute", <||>], "ExactForwardIdentity", False] === True &]];
 cpPrepared = cpPrepare[cpPair];
 cpDetails = cpPrepare[cpPair, "ReturnDetails" -> True];
 check["a single amplitude pair returns the same single-pair format",

@@ -1007,6 +1007,16 @@ or relax any target or affine-family validation. The fallback is
 `"BoseGroupedInputChannelUnion"` for Bose-only projection, with `Fermion` or
 `Exchange` prefixes for fermion-only or combined projection. It remains
 unresolved if it too exceeds the cap or cannot satisfy the constraints.
+An ordinary external pair-virtuality definition may remove an apparent repeated
+physical pole before source admission. This does not put its propagator on
+shell. Retain every nonzero regular quotient with its complete source under one
+coefficient; do not pass that source through a pole-only monomial filter. A
+wholly regular derived source remains available freedom for later checks, not
+a new arbitrary contact interaction or a coefficient fixed by residues.
+Strip already-explicit regular input per record before normalization, since its
+sum is separately fixed, including when different records' regular pieces
+cancel. Keep exact forward rules and restore uncanceled positive virtualities
+as numerator momentum products rather than hiding their complexity in PropDen.
 New continuations with uncanceled higher-order physical propagator powers are
 recorded but not admitted: the current correction fitter supports regular
 simple-pole residues. This is a solver limit, not a restriction on the theory;
@@ -1081,7 +1091,15 @@ on every free coordinate instead certifies inconsistency of the selected block
 and that original row. Repair
 failed right-hand-side solves or fall back to ordinary exact row reduction;
 modular rank alone never proves consistency or inconsistency. Do not replace
-this with an approximate fit. Ordinary
+this with an approximate fit. A separately verified exact left-null witness may
+instead prove inconsistency without computing the matrix's exact rank: check
+every original coefficient column and an exactly nonzero constant residual.
+Integer row scaling must be included in the witness replay. Such a terminal
+contradiction may report `Rank -> Missing["NotComputedFromContradictionCertificate"]`
+and an honest `RankLowerBound`; never label a modular lower bound as exact rank.
+Successful and underdetermined solves must still certify their complete affine
+families and exact ranks. Failed or timed-out witness attempts retain the old
+exact-solver fallback inside the existing deadline. Ordinary
 external-shell and conservation identities remove only provably zero
 correction directions. Retain every unproved or genuinely residue-invisible
 direction for later constraints. Typed `PropDen` poles are checked throughout

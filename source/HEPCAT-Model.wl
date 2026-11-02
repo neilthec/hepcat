@@ -6779,6 +6779,108 @@ completionBoundedRationalReconstruction[value_Integer, modulus_Integer, limit_In
     Missing["NoReconstruction"], numerator/denominator]
 ];
 
+completionExactLeftNullCertificate[matrix_List, constant_List, rowScales_List,
+    integerWitness_List] := Module[
+  {fallback = Missing["InvalidExactLeftNullCertificate"], rationalQ, rows = Length[matrix],
+   columns, integerMatrix, annihilation, delta},
+  rationalQ[value_] := MatchQ[value, _Integer | _Rational];
+  If[rows === 0 || !MatrixQ[matrix, rationalQ] || Length[constant] =!= rows ||
+      !VectorQ[constant, rationalQ] || Length[rowScales] =!= rows ||
+      !AllTrue[rowScales, IntegerQ[#] && # > 0 &] ||
+      Length[integerWitness] =!= rows || !VectorQ[integerWitness, IntegerQ], Return[fallback]];
+  columns = Length[First[matrix]];
+  If[columns === 0, Return[fallback]];
+  integerMatrix = MapThread[Times, {matrix, rowScales}];
+  If[!MatrixQ[integerMatrix, IntegerQ], Return[fallback]];
+  (* For y = rowScales*w, w.(rowScales*A) is exactly y.A. This
+     integer form checks every original coefficient without rational GCDs. *)
+  annihilation = Normal[SparseArray[integerWitness].SparseArray[integerMatrix]];
+  delta = integerWitness.(rowScales constant);
+  If[Length[annihilation] =!= columns || !AllTrue[annihilation, # === 0 &] ||
+      !rationalQ[delta] || delta === 0, Return[fallback]];
+  <|"LeftNullVector" -> rowScales integerWitness, "RowScales" -> rowScales,
+    "RowScaledLeftNullVector" -> integerWitness,
+    "ZeroCoefficientResidual" -> annihilation, "NonzeroConstantResidual" -> delta,
+    "ExactAllColumnCertificate" -> True|>
+];
+
+(* A left-null contradiction certifies inconsistency without constructing the
+   full affine nullspace. Row denominator clearing makes the final all-column
+   certificate an integer product. A modular pivot count is only a lower bound
+   on the exact rank and is reported as such. *)
+completionExactLeftNullContradiction[matrix_List, constant_List, seconds_: 60,
+    prime_: 2147483647] := Module[
+  {fallback = Missing["NoCertifiedLeftNullContradiction"], started = AbsoluteTime[],
+   deadline, rows = Length[matrix], columns, rationalQ, rowScales, integerMatrix,
+   integerConstant, modular, positions, selectedRows, pivots, rank, square,
+   right, rightScale, point, pointScale, scaledPoint, residual, contradiction,
+   weights, weightScale, integerWitness, certificate,
+   bounded, stop, tag = Unique["leftNullContradiction"]},
+  rationalQ[value_] := MatchQ[value, _Integer | _Rational];
+  If[!TrueQ[NumericQ[seconds] && Element[seconds, Reals] && 0 < seconds < Infinity] ||
+      rows === 0 || !MatrixQ[matrix, rationalQ] || Length[constant] =!= rows ||
+      !VectorQ[constant, rationalQ] || !IntegerQ[prime] ||
+      !TrueQ[2 < prime <= 2147483647 && PrimeQ[prime]], Return[fallback]];
+  columns = Length[First[matrix]];
+  If[columns === 0, Return[fallback]];
+  deadline = started + seconds;
+  stop[] := Throw[fallback, tag];
+  SetAttributes[bounded, HoldAll];
+  bounded[expression_] := If[AbsoluteTime[] >= deadline, stop[],
+    TimeConstrained[expression, Max[0.001, deadline - AbsoluteTime[]], stop[]]];
+  positions[value_List] := DeleteCases[Map[Function[row,
+    SelectFirst[Range[Length[row]], row[[#]] =!= 0 &, Missing["ZeroRow"]]], value], _Missing];
+  Quiet[Check[TimeConstrained[MemoryConstrained[Catch[
+    rowScales = bounded[Apply[LCM, Denominator[#]] & /@ matrix];
+    integerMatrix = bounded[MapThread[Times, {matrix, rowScales}]];
+    integerConstant = bounded[rowScales constant];
+    If[!MatrixQ[integerMatrix, IntegerQ] ||
+        !AllTrue[rowScales, IntegerQ[#] && # > 0 &], stop[]];
+    contradiction = SelectFirst[Range[rows],
+      AllTrue[integerMatrix[[#]], # === 0 &] && integerConstant[[#]] =!= 0 &,
+      Missing["NoConstantRow"]];
+    If[!MissingQ[contradiction],
+      integerWitness = UnitVector[rows, contradiction]; rank = 0,
+      modular = bounded[RowReduce[Mod[Transpose[integerMatrix], prime], Modulus -> prime]];
+      If[!MatrixQ[modular, IntegerQ], stop[]];
+      selectedRows = positions[modular]; rank = Length[selectedRows];
+      If[rank === 0, stop[]];
+      modular = bounded[RowReduce[Mod[integerMatrix[[selectedRows]], prime], Modulus -> prime]];
+      If[!MatrixQ[modular, IntegerQ], stop[]];
+      pivots = positions[modular];
+      If[Length[pivots] =!= rank || !DuplicateFreeQ[selectedRows] ||
+          !DuplicateFreeQ[pivots], stop[]];
+      square = integerMatrix[[selectedRows, pivots]];
+      right = -integerConstant[[selectedRows]];
+      rightScale = bounded[Apply[LCM, Denominator[right]]];
+      point = bounded[LinearSolve[square, rightScale right]]/rightScale;
+      If[!VectorQ[point, rationalQ] || Length[point] =!= rank, stop[]];
+      pointScale = bounded[Apply[LCM, Denominator[point]]];
+      scaledPoint = pointScale point;
+      If[!AllTrue[bounded[square.scaledPoint - pointScale right], # === 0 &], stop[]];
+      residual = bounded[integerMatrix[[All, pivots]].scaledPoint +
+        pointScale integerConstant];
+      contradiction = SelectFirst[Range[rows], residual[[#]] =!= 0 &,
+        Missing["ConsistentParticular"]];
+      If[MissingQ[contradiction], stop[]];
+      weights = bounded[LinearSolve[Transpose[square], integerMatrix[[contradiction, pivots]]]];
+      If[!VectorQ[weights, rationalQ] || Length[weights] =!= rank, stop[]];
+      weightScale = bounded[Apply[LCM, Denominator[weights]]];
+      integerWitness = weightScale UnitVector[rows, contradiction];
+      integerWitness[[selectedRows]] -= weightScale weights];
+    certificate = bounded[completionExactLeftNullCertificate[
+      matrix, constant, rowScales, integerWitness]];
+    If[!AssociationQ[certificate], stop[]];
+    Join[<|"Status" -> "INCONSISTENT", "Rank" -> Which[
+        AllTrue[Flatten[integerMatrix], # === 0 &], 0,
+        rank === columns, columns, True, Missing["NotComputedFromContradictionCertificate"]],
+      "RankLowerBound" -> rank, "CoefficientRankLowerBound" -> rank, "CheckedRows" -> rows,
+      "CheckedColumns" -> columns, "Backend" -> "CertifiedExactLeftNullContradiction",
+      "ContradictionPrime" -> prime, "ContradictionRow" -> contradiction|>, certificate],
+    tag], 536870912, fallback],
+    Max[0.001, deadline - AbsoluteTime[]], fallback], fallback]]
+];
+
 completionCertifiedModularReduce[matrix_List, constant_List, seconds_: 60,
     primeInventory_: Automatic] := Module[
   {fallback = Missing["CertifiedModularUnavailable"], started = AbsoluteTime[], deadline,
@@ -6787,7 +6889,8 @@ completionCertifiedModularReduce[matrix_List, constant_List, seconds_: 60,
    residues, candidate = None, reduced, active, pivots, block, prime,
    unique, reconstructed, lookup, limit, used = {}, heldOut, scales, integerBlock,
    expected, proof, rationalRows, actualPivots, rank, bounded, stop,
-   profileBetterQ, rationalModulo, certify, tag = Unique["certifiedModular"]},
+   profileBetterQ, rationalModulo, certify, contradictionAttempted = False,
+   tag = Unique["certifiedModular"]},
   rationalQ[value_] := MatchQ[value, _Integer | _Rational];
   If[!TrueQ[NumericQ[seconds] && Element[seconds, Reals] && 0 < seconds < Infinity] ||
       Length[constant] =!= rows || !VectorQ[constant, rationalQ] ||
@@ -6852,6 +6955,12 @@ completionCertifiedModularReduce[matrix_List, constant_List, seconds_: 60,
           "CheckedRows" -> rows, "Backend" -> "CertifiedFullColumnRankContradiction",
           "ContradictionPrime" -> prime, "CoefficientRankLowerBound" -> columns,
           "AugmentedRankLowerBound" -> columns + 1|>, tag]];
+      If[MemberQ[pivots, columns + 1] && !TrueQ[contradictionAttempted],
+        contradictionAttempted = True;
+        proof = bounded[completionExactLeftNullContradiction[matrix, constant,
+          Min[20., Max[0.001, deadline - AbsoluteTime[]]], prime]];
+        If[AssociationQ[proof] && Lookup[proof, "Status", None] === "INCONSISTENT" &&
+            TrueQ[Lookup[proof, "ExactAllColumnCertificate", False]], Throw[proof, tag]]];
       If[pivots === {} || MemberQ[pivots, columns + 1], Continue[]];
       If[profile === None || profileBetterQ[pivots, profile],
         profile = pivots; free = Complement[Range[columns], profile];
@@ -7042,6 +7151,8 @@ completionSolveLinear[equations_List, unknowns_List, modularSeconds_ : 60] := Mo
   If[AssociationQ[blockReduction] && Lookup[blockReduction, "Status", None] === "INCONSISTENT",
     Return[<|"Status" -> "INCONSISTENT", "SolutionRules" -> {},
       "FreeParameters" -> unknowns, "Rank" -> blockReduction["Rank"],
+      "RankLowerBound" -> Lookup[blockReduction, "RankLowerBound",
+        Lookup[blockReduction, "CoefficientRankLowerBound", blockReduction["Rank"]]],
       "InconsistencyCertificate" -> KeyDrop[blockReduction, "Status"],
       "Diagnostics" -> {"No correction in the current bounded space satisfies every channel."}|>]];
   If[n >= 64 && !AssociationQ[blockReduction],
@@ -7073,12 +7184,20 @@ completionSolveLinear[equations_List, unknowns_List, modularSeconds_ : 60] := Mo
 ];
 
 DownValues[completionRefineLinear] = {};
-completionRefineLinear[previous_Association, equations_List, modularSeconds_ : 60] := Module[{extension},
+completionRefineLinear[previous_Association, equations_List, modularSeconds_ : 60] := Module[
+  {extension, rank, rankLowerBound, result},
   extension = completionSolveLinear[equations /. previous["SolutionRules"],
     previous["FreeParameters"], modularSeconds];
-  Join[extension, <|"Rank" -> previous["Rank"] + extension["Rank"],
+  rank = If[IntegerQ[previous["Rank"]] && IntegerQ[extension["Rank"]],
+    previous["Rank"] + extension["Rank"], Missing["NotComputedFromContradictionCertificate"]];
+  result = Join[extension, <|"Rank" -> rank,
     "SolutionRules" -> Join[previous["SolutionRules"] /. extension["SolutionRules"],
-      extension["SolutionRules"]]|>]
+      extension["SolutionRules"]]|>];
+  If[MissingQ[rank],
+    rankLowerBound = Lookup[previous, "RankLowerBound", previous["Rank"]] +
+      Lookup[extension, "RankLowerBound", extension["Rank"]];
+    If[IntegerQ[rankLowerBound], AssociateTo[result, "RankLowerBound" -> rankLowerBound]]];
+  result
 ];
 
 completionCoherentCutChart[saved_Association, rules_List] := Module[
@@ -7839,6 +7958,7 @@ completionPhysicalChannelBasis[normalized_Association, channelPreparation_,
     reducedChannels_: Missing["NotProvided"]] := Module[
   {started = AbsoluteTime[], external = normalized["ExternalMassRules"], legs,
    proposals, regular = Missing["NotCollected"], sourceRecords = {}, sources = {}, groupedSources = {},
+   quotientSources = {}, regularPartQ,
    directions = {}, terms, value, reduced, projected, targets, fallbackBasis,
    candidateMode = "PreparedAndReducedPhysicalUnion", fullCount = Missing["NotMeasured"],
    diagnostics = {}, complete, exceeded = False, tag = Unique["physicalChannelBasis"],
@@ -7855,7 +7975,7 @@ completionPhysicalChannelBasis[normalized_Association, channelPreparation_,
     constructionLimit];
   legs = Cases[external, HoldPattern[Mass[i_Integer] -> _] :> i];
   targets = completionTargets[normalized["Targets"]];
-  physicalQ[expression_] := completionPhysicalDenominatorOnlyQ[expression, normalized];
+  physicalQ = completionPhysicalDenominatorPredicate[normalized];
   closedQ[expression_] := FreeQ[expression,
     _xFactor | _xTildeFactor | (Spinor | SpinorHat)["Xi", ___] |
     (Spinor | SpinorHat)[_, ("Angle" | "Square"), _Multiparticle, ___] |
@@ -7865,10 +7985,21 @@ completionPhysicalChannelBasis[normalized_Association, channelPreparation_,
     higher = completionHigherPhysicalPoles[expression, targets, legs];
     ListQ[higher] && higher === {}
   ];
-  appendSource[expression_, origin_] := Module[{canonical},
+  regularPartQ[expression_] := Module[{expanded},
+    If[rspSandwichExpansionCount[expression] > Min[4096, constructionBound], Return[True]];
+    expanded = withProtectedPropagators[expression, Expand];
+    AnyTrue[If[Head[expanded] === Plus, List @@ expanded, {expanded}],
+      # =!= 0 && FreeQ[Denominator[#], _PropDen] &]
+  ];
+  appendSource[expression_, origin_] := Module[{canonical, ordinary},
     canonical = residueCanonicalPropagators[expression /. external, legs];
+    ordinary = completionOrdinaryPairPoleSource[canonical, external];
+    canonical = ordinary["Expression"];
     If[canonical =!= 0 && supportedQ[canonical],
-      AppendTo[sourceRecords, <|"Expression" -> canonical, "Source" -> origin|>]]];
+      AppendTo[sourceRecords, Join[<|"Expression" -> canonical, "Source" -> origin,
+          "CorrelatedRegularQuotient" -> regularPartQ[canonical]|>,
+        If[ordinary["Status"] === "REDUCED", <|"OrdinaryPoleNormalization" ->
+          KeyDrop[ordinary, "Expression"]|>, <||>]]]]];
   complete = TimeConstrained[Catch[
     proposals = completionInputProposals[normalized, constructionBound];
     If[Lookup[proposals, "Status", None] =!= "AVAILABLE",
@@ -7880,8 +8011,11 @@ completionPhysicalChannelBasis[normalized_Association, channelPreparation_,
     If[!closedQ[regular] || !physicalQ[regular],
       AppendTo[diagnostics, "The fixed explicit regular input is not closed and physical-denominator-only."];
       Throw[False, tag]];
-    Do[appendSource[record["Expression"], "PreparedInput"],
-      {record, normalized["Records"]}];
+    (* Explicit regular input is already fixed in RegularExpression. Strip it
+       per record before ordinary cancellation, including mutually canceling
+       regular pieces in different records. A newly exposed quotient remains
+       correlated with its entire pole-bearing source. *)
+    Do[appendSource[source, "PreparedInput"], {source, proposals["PoleBearingByRecord"]}];
     If[AssociationQ[channelPreparation] &&
         ListQ[Lookup[channelPreparation, "PreparedAmplitudes", None]] &&
         completionModelQ[Lookup[channelPreparation, "Model", None]],
@@ -7915,7 +8049,11 @@ completionPhysicalChannelBasis[normalized_Association, channelPreparation_,
         Max[0.000001, Min[1, seconds/Max[1, 2 sourceCount]]], $TimedOut];
       sources = DeleteDuplicates[Join[sources, {value},
         If[residueFiniteQ[reduced] && supportedQ[reduced], {reduced}, {}]]];
-      If[record["Source"] === "ReducedPhysicalChannelDirection",
+      If[TrueQ[Lookup[record, "CorrelatedRegularQuotient", False]],
+        quotientSources = DeleteDuplicates[Join[quotientSources, {value},
+          If[residueFiniteQ[reduced] && supportedQ[reduced], {reduced}, {}]]]];
+      If[record["Source"] === "ReducedPhysicalChannelDirection" ||
+          TrueQ[Lookup[record, "CorrelatedRegularQuotient", False]],
         groupedSources = DeleteDuplicates[Join[groupedSources, {value},
           If[residueFiniteQ[reduced] && supportedQ[reduced], {reduced}, {}]]]],
       {record, sourceRecords}];
@@ -7928,7 +8066,7 @@ completionPhysicalChannelBasis[normalized_Association, channelPreparation_,
         True, value = withProtectedPropagators[source, Expand];
           terms = If[Head[value] === Plus, List @@ value, {value}]];
       terms = Select[terms, # =!= 0 &&
-        !FreeQ[#, Power[_PropDen, _Integer?Negative]] && supportedQ[#] &];
+        (MemberQ[quotientSources, source] || !FreeQ[#, Power[_PropDen, _Integer?Negative]]) && supportedQ[#] &];
       directions = completionNormalizeBasis[Join[directions, terms]];
       If[Length[directions] > constructionBound,
         exceeded = True; Throw[False, tag]], {source, sources}];
@@ -8759,15 +8897,85 @@ completionAssignedReferences[expression_, inferred_List, recorded_List,
       "Diagnostics" -> {}|>, tag]
 ];
 
+(* An external pair invariant can cancel an apparent repeated propagator before
+   simple-pole admission. Keep every other inverse opaque, retain the complete
+   rational source and restore uncanceled numerator virtualities to scalar
+   products. This is an ordinary off-shell identity, never a cut assumption. *)
+completionOrdinaryPairPoleSource[expression_, externalRules_List, seconds_: 0.5] := Module[
+  {external = preparationExternalRules[externalRules], props, rules, back, pair,
+   masses, trial, result, originalOrder, order, restoreNumerator, checkpoint, outcome},
+  checkpoint = <|"Expression" -> expression, "Status" -> "UNCHANGED", "Rules" -> {},
+    "InverseDefinitionRules" -> {}, "InternalOnShellConditions" -> {},
+    "ExactForwardIdentity" -> True|>;
+  If[!TrueQ[seconds > 0] || LeafCount[expression] > 60000 || FreeQ[expression, _MomProd] ||
+      !preparationScalarExternalRulesQ[external], Return[checkpoint]];
+  props = DeleteDuplicates[Cases[expression,
+    Power[prop : PropDen[Mom[Multiparticle[_Integer, _Integer]], _], n_Integer /; n < -1] :> prop,
+    Infinity]];
+  props = Select[props, Function[prop,
+    pair = List @@ prop[[1, 1]]; masses = (Mass /@ pair) /. external;
+    DuplicateFreeQ[pair] && FreeQ[masses, _Mass | _Real] && MemberQ[masses, 0] &&
+      residueExactZero[Total[masses^2] - prop[[2]]^2]]];
+  If[props === {}, Return[checkpoint]];
+  rules = DeleteDuplicates[Flatten[Map[Function[prop, pair = List @@ prop[[1, 1]];
+    {MomProd @@ pair -> prop/2, MomProd @@ Reverse[pair] -> prop/2}], props]]];
+  back = Map[Function[prop, prop -> 2 (orderedDot @@ List @@ prop[[1, 1]])], props];
+  order[value_] := Total[Cases[{value}, Power[prop_PropDen, n_Integer?Negative] /;
+    MemberQ[props, prop] :> -n, Infinity]];
+  restoreNumerator[term_] := Module[{num = Numerator[term], inverses, tokens},
+    inverses = DeleteDuplicates[Cases[{num}, inverse : Power[_, exponent_] /;
+      !TrueQ[exponent >= 0] :> inverse, Infinity]];
+    tokens = Table[Unique["pairVirtualityInverse"], {Length[inverses]}];
+    ((num /. Thread[inverses -> tokens]) /. back) /.
+      Thread[tokens -> inverses]]/Denominator[term];
+  originalOrder = order[expression];
+  outcome = TimeConstrained[MemoryConstrained[
+    trial = preparationCancelReferencePoles[expression, external, props];
+    (* Positive powers left by exact division carry ordinary numerator
+       momentum content. Do not make them artificially cheap PropDen atoms. *)
+    result = Total[restoreNumerator /@ If[Head[trial] === Plus, List @@ trial, {trial}]];
+    If[result =!= expression && residueFiniteQ[result] && order[result] < originalOrder,
+      checkpoint = Join[checkpoint, <|"Expression" -> result, "Status" -> "REDUCED",
+        "Rules" -> rules, "InverseDefinitionRules" -> back,
+        "Method" -> "OrdinaryExternalPairVirtualityCancellation"|>]];
+    True, 134217728, False], seconds, False];
+  Join[checkpoint, <|"Completed" -> TrueQ[outcome]|>]
+];
+
 (* Each continuation is checked only on its own cut. This preserves the supplied
    residue without imposing that channel's shell condition on the full sum. *)
+(* A sum cannot have a larger pole order than its largest summand. Products
+   add these upper bounds. This sufficient structural certificate avoids a
+   global rational combination when every tracked pole is already simple.
+   It makes no statement about other denominator factors or hidden kinematics. *)
+completionExplicitSimplePoleBoundQ[expression_, variables_List] := Module[
+  {zero, tracked, position, bound, orders, tag = Unique["simplePoleBound"]},
+  If[variables === {} || Length[variables] > 128 || !AllTrue[variables, AtomQ] ||
+      !DuplicateFreeQ[variables], Return[False]];
+  zero = ConstantArray[0, Length[variables]];
+  tracked = Alternatives @@ variables;
+  position = AssociationThread[variables, Range[Length[variables]]];
+  bound[value_] := Which[
+    FreeQ[value, tracked], zero,
+    AtomQ[value], zero,
+    Head[value] === Plus, Max @@@ Transpose[bound /@ List @@ value],
+    Head[value] === Times, Total[bound /@ List @@ value],
+    MatchQ[value, Power[_, _Integer?Positive]], value[[2]] bound[value[[1]]],
+    MatchQ[value, Power[_, _Integer?Negative]] && KeyExistsQ[position, value[[1]]],
+      ReplacePart[zero, position[value[[1]]] -> -value[[2]]],
+    True, Throw[False, tag]
+  ];
+  Catch[orders = bound[expression]; Max[orders] <= 1, tag]
+];
+
 completionHigherPhysicalPoles[expression_, targets_List, external_List] := Module[
-  {propagators, variables, rational, denominator, orders},
+  {propagators, variables, body, rational, denominator, orders},
   propagators = DeleteDuplicates[Lookup[residueNormalizeChannel /@ targets, "Propagator"]];
   If[propagators === {}, Return[{}]];
   variables = Table[Unique["continuationPole"], {Length[propagators]}];
-  rational = Cancel[Together[residueCanonicalPropagators[expression, external] /.
-    Thread[propagators -> variables]]];
+  body = residueCanonicalPropagators[expression, external] /. Thread[propagators -> variables];
+  If[TrueQ[completionExplicitSimplePoleBoundQ[body, variables]], Return[{}]];
+  rational = Cancel[Together[body]];
   denominator = Denominator[rational];
   If[!PolynomialQ[denominator, variables],
     Return[Failure["UnsupportedContinuationDenominator", <||>]]];
@@ -8810,7 +9018,7 @@ completionChannelContinuations[normalized_Association, model_List, rules_List,
   {targets, poleTargets, externalRules = normalized["ExternalMassRules"], external, inventory,
    sources = {}, variants = {}, diagnostics = {}, recorded, source, propagators,
    ownKeys, ownRules, proposal, inferred, proposals, verification, accepted,
-   higherPoles, channelIndex = 0, rotationGroups, rotationCount,
+   higherPoles, ordinary, channelIndex = 0, rotationGroups, rotationCount,
    rotationLimit = 16, selection, rotated},
   targets = Select[completionTargets[normalized["Targets"]],
     TrueQ[Lookup[#, "Complete", False]] && KeyExistsQ[#, "StateSum"] &];
@@ -8873,6 +9081,10 @@ completionChannelContinuations[normalized_Association, model_List, rules_List,
       GatherBy[proposals, #["Expression"] &];
     Do[
       If[MemberQ[sources, proposal["Expression"]], Continue[]];
+      ordinary = completionOrdinaryPairPoleSource[proposal["Expression"], externalRules];
+      If[ordinary["Status"] === "REDUCED", proposal = Join[proposal,
+        <|"Expression" -> ordinary["Expression"],
+          "OrdinaryPoleNormalization" -> KeyDrop[ordinary, "Expression"]|>]];
       higherPoles = completionHigherPhysicalPoles[proposal["Expression"], targets, external];
       verification = Which[
         FailureQ[higherPoles], <|"Status" -> "UNRESOLVED", "Samples" -> {},
@@ -8888,7 +9100,7 @@ completionChannelContinuations[normalized_Association, model_List, rules_List,
       AppendTo[variants, Join[<|"Cut" -> channel["Cut"], "Mass" -> channel["Mass"],
         "Mode" -> proposal["Mode"], "Assignments" -> proposal["Assignments"],
         "Expression" -> proposal["Expression"], "Accepted" -> accepted,
-        "Verification" -> verification|>, KeyTake[proposal, "Rotation"]]];
+        "Verification" -> verification|>, KeyTake[proposal, {"Rotation", "OrdinaryPoleNormalization"}]]];
       If[accepted, AppendTo[sources, proposal["Expression"]]], {proposal, proposals}],
     {channel, targets}];
   <|"Sources" -> DeleteDuplicates[sources], "Variants" -> variants,
@@ -8937,7 +9149,8 @@ completionReducedChannelBasis[normalized_Association, references_Association,
   referenceFree = Select[targets, TrueQ[Lookup[#, "Complete", False]] &&
     KeyExistsQ[#, "StateSum"] && !TrueQ[residueExactZero[#["StateSum"]]] &];
   Do[
-    source = residueCanonicalPropagators[target["StateSum"]/target["Propagator"], externalLegs];
+    source = completionOrdinaryPairPoleSource[
+      residueCanonicalPropagators[target["StateSum"]/target["Propagator"], externalLegs], external]["Expression"];
     If[referenceFreeQ[source],
       AppendTo[variants, <|"Cut" -> target["Cut"], "Mass" -> target["Mass"],
         "Mode" -> "ReferenceFree", "Expression" -> source|>]],
@@ -9354,14 +9567,17 @@ completionAlternativeChannelBasis[input_, normalized_Association, rows_List,
    Keep complete signed coefficients and preserve explicit regular input. *)
 completionInputProposals[normalized_Association, limit_Integer : 4096] := Module[
   {external = normalized["ExternalMassRules"], records = normalized["Records"],
-   expanded, terms, indexed, groups, repeated, regular, direction, union, proposals},
+   expanded, terms, indexed, groups, repeated, regular, regularByRecord,
+   poleBearingByRecord, direction, union, proposals},
   expanded = Map[Function[record, withProtectedPropagators[
     completionCanonicalReduce[record["Expression"], external], Expand]], records];
   terms = If[Head[#] === Plus, List @@ #, If[# === 0, {}, {#}]] & /@ expanded;
   If[Total[Length /@ terms] > limit, Return[<|"Status" -> "UNRESOLVED",
     "Reason" -> "InputTermCollectionLimit", "Terms" -> Total[Length /@ terms], "Limit" -> limit,
     "Proposals" -> {}, "Diagnostics" -> {"Input term collection exceeded its bounded size."}|>]];
-  regular = Total[Flatten[Select[#, FreeQ[Denominator[#], _PropDen] &] & /@ terms, 1]];
+  regularByRecord = Total[Select[#, FreeQ[Denominator[#], _PropDen] &]] & /@ terms;
+  poleBearingByRecord = Total[Select[#, !FreeQ[Denominator[#], _PropDen] &]] & /@ terms;
+  regular = Total[regularByRecord];
   indexed = Flatten[MapIndexed[Function[{row, index},
     {First[index], #} & /@ Select[row, !FreeQ[Denominator[#], _PropDen] &]], terms], 1];
   direction = normalized["Expression"] - regular;
@@ -9377,6 +9593,7 @@ completionInputProposals[normalized_Association, limit_Integer : 4096] := Module
         "RepeatedTermGroups" -> Length[repeated],
         "RemovedCopies" -> Total[(Length[#] - 1 &) /@ repeated]|>]]];
   <|"Status" -> "AVAILABLE", "RegularExpression" -> regular,
+    "RegularByRecord" -> regularByRecord, "PoleBearingByRecord" -> poleBearingByRecord,
     "Proposals" -> proposals, "Diagnostics" -> {}|>
 ];
 
@@ -11075,6 +11292,126 @@ preparationMultilinearIdentityNormalize[expression_, externalRules_List,
     "TimedOut" -> (AbsoluteTime[] - started >= seconds)|>]
 ];
 
+(* Peel at most two actual positive chain factors before using the audited
+   six-slot ordinary identity space. Keep each existing fraction intact. *)
+preparationPairedLiteralSpectators[expression_, externalRules_List,
+    conserve_ : True, seconds_ : 12] := Module[
+  {started = AbsoluteTime[], best, available, slotDegree, inverseQ, positiveChains,
+   record, slotCounts, parts, sumPosition, outer, fractions, chosen, fractionParts,
+   inverse, numerator, monomials, pairs, witnesses, firstWitness, secondWitness,
+   core, coreTerms, records, space, normalized, coordinates, scalar, identitySum,
+   liftedResidual, literalResidual, reconstructionResidual, proposal, proposalFractions, candidate, rank,
+   eligible = 0, inspected = 0, maximumEligible = 24, maximumFractions = 96,
+   route = {}, pair, index, outcome},
+  best = <|"Amplitude" -> expression, "Status" -> "UNCHANGED", "Route" -> {}|>;
+  slotDegree[_SpinorChain] := 2;
+  slotDegree[value_Plus] := Max[slotDegree /@ List @@ value];
+  slotDegree[value_Times] := Total[slotDegree /@ List @@ value];
+  slotDegree[Power[base_, exponent_Integer?Positive]] := exponent slotDegree[base];
+  slotDegree[_] := 0;
+  If[!TrueQ[NumericQ[seconds] && seconds > 0] || LeafCount[expression] > 160000 ||
+      FreeQ[expression, _Plus] || slotDegree[expression] < 10 ||
+      rspSandwichExpansionCount[expression] > 4096 ||
+      !preparationScalarExternalRulesQ[externalRules] ||
+      !FreeQ[expression, _SpinorTrace | _SpinorHat | _MomHat | _MomQ |
+        _SpinorZ | _SpinorEps | _sigma | _colorT | _colorTrace |
+        _Dot | _NonCommutativeMultiply] ||
+      !FreeQ[expression, Power[_, exponent_] /;
+        !TrueQ[exponent >= 0] && !IntegerQ[exponent]], Return[best]];
+  available[] := Max[0.000001, seconds - (AbsoluteTime[] - started)];
+  inverseQ[value_] := MatchQ[value, Power[_, exponent_] /; !TrueQ[exponent >= 0]];
+  positiveChains[term_] := Flatten[Map[Which[
+      Head[#] === SpinorChain, {#},
+      MatchQ[#, Power[_SpinorChain, _Integer?Positive]],
+        ConstantArray[First[#], Min[2, Last[#]]], True, {}] &,
+    If[Head[term] === Times, List @@ term, {term}]], 1];
+  record[spinor_] := If[rspSpinorType[spinor] === "Angle", spinor, rspFlipSpinor[spinor]];
+  slotCounts[value_] := Counts[record /@ Cases[value, _Spinor, Infinity]];
+  outcome = TimeConstrained[MemoryConstrained[
+    parts = If[Head[expression] === Times, List @@ expression, {expression}];
+    sumPosition = SelectFirst[Range[Length[parts]], Head[parts[[#]]] === Plus &,
+      Missing["NoSingleOuterSum"]];
+    Which[Head[expression] === Plus, outer = 1; fractions = List @@ expression,
+      Count[parts, _Plus] === 1 && !MissingQ[sumPosition] &&
+          FreeQ[Times @@ Delete[parts, sumPosition], _SpinorChain | _Mom | _MomProd],
+        outer = Times @@ Delete[parts, sumPosition]; fractions = List @@ parts[[sumPosition]],
+      True, outer = 1; fractions = {expression}];
+    If[Length[fractions] > maximumFractions, Return[best]];
+    chosen = fractions;
+    Do[
+      If[eligible >= maximumEligible, Break[]];
+      fractionParts = If[Head[chosen[[index]]] === Times, List @@ chosen[[index]], {chosen[[index]]}];
+      inverse = Times @@ Select[fractionParts, inverseQ];
+      numerator = Times @@ Select[fractionParts, !inverseQ[#] &];
+      If[LeafCount[numerator] > 6000 || FreeQ[numerator, _Plus] ||
+          rspSandwichExpansionCount[numerator] > 128 ||
+          !rspExpansionBudgetQ[numerator], Continue[]];
+      monomials = With[{expanded = Expand[numerator]},
+        If[Head[expanded] === Plus, List @@ expanded, {expanded}]];
+      If[Length[monomials] > 128, Continue[]];
+      pairs = DeleteDuplicates[Flatten[(Subsets[positiveChains[#], {2}] & /@ monomials), 1]];
+      pairs = SortBy[pairs, LeafCount];
+      Do[
+        If[eligible >= maximumEligible, Break[]];
+        inspected++;
+        witnesses = Select[Map[Function[term,
+          firstWitness = rspLiteralFactorCofactor[term, pair[[1]]];
+          If[!AssociationQ[firstWitness], Return[Missing["NoFirstLiteralFactor"]]];
+          secondWitness = rspLiteralFactorCofactor[firstWitness["Cofactor"], pair[[2]]];
+          If[!AssociationQ[secondWitness], Return[Missing["NoSecondLiteralFactor"]]];
+          <|"Term" -> term, "Cofactor" -> secondWitness["Cofactor"],
+            "Witnesses" -> {firstWitness, secondWitness}|>], monomials], AssociationQ];
+        If[Length[witnesses] < 2, Continue[]];
+        core = Expand[Total[Lookup[witnesses, "Cofactor"]]];
+        records = DeleteDuplicates[record /@ Cases[core, _Spinor, Infinity]];
+        If[Length[records] =!= 6 || Length[DeleteDuplicates[rspSpinorLeg /@ records]] =!= 6,
+          Continue[]];
+        coreTerms = If[Head[core] === Plus, List @@ core, {core}];
+        If[!AllTrue[coreTerms, Sort[Values[slotCounts[#]]] === ConstantArray[1, 6] &], Continue[]];
+        space = rspMultilinearIdentitySpace[core, externalRules];
+        If[!AssociationQ[space], Continue[]];
+        eligible++;
+        normalized = preparationMultilinearIdentityNormalize[core, externalRules,
+          conserve, Min[1.5, available[]]];
+        If[Lookup[normalized, "Status", "UNCHANGED"] =!= "IMPROVED", Continue[]];
+        coordinates = space["Coordinates"][space["ToFormal"][core]];
+        If[!AssociationQ[coordinates], Continue[]];
+        scalar = coordinates["Scalar"];
+        identitySum = Total[Map[Function[entry, With[{certificate = entry["Certificate"]},
+          Total[MapThread[Times, {certificate["Coefficients"],
+            certificate["OrdinaryIdentities"]}]]]], normalized["Route"]]];
+        literalResidual = Expand[Total[Lookup[witnesses, "Term"]] - (Times @@ pair) core];
+        liftedResidual = Expand[space["ToFormal"][normalized["Amplitude"] - core - scalar identitySum]];
+        If[literalResidual =!= 0 || liftedResidual =!= 0, Continue[]];
+        proposal = rspLocalFactorContent[Expand[numerator - Total[Lookup[witnesses, "Term"]] +
+          (Times @@ pair) normalized["Amplitude"]]];
+        reconstructionResidual = Expand[proposal - numerator -
+          (Times @@ pair) (normalized["Amplitude"] - core)];
+        If[reconstructionResidual =!= 0, Continue[]];
+        proposalFractions = ReplacePart[chosen, index -> inverse proposal];
+        candidate = outer Total[proposalFractions];
+        If[!residueFiniteQ[candidate], Continue[]];
+        rank = preparationRank[candidate];
+        If[!preparationBetterQ[rank, preparationRank[best["Amplitude"]]], Continue[]];
+        chosen = proposalFractions;
+        AppendTo[route, <|"Operation" -> "PairedLiteralSpectatorOrdinaryIdentities",
+          "Fraction" -> index, "InverseFactors" -> inverse, "OuterFactor" -> outer,
+          "SpectatorFactors" -> pair, "LiteralFactorWitnesses" -> witnesses,
+          "CoefficientScalar" -> scalar, "CoefficientRoute" -> normalized["Route"],
+          "BeforeCoefficient" -> core, "AfterCoefficient" -> normalized["Amplitude"],
+          "BeforeNumerator" -> numerator, "AfterNumerator" -> proposal,
+          "ExactLiteralResidual" -> literalResidual, "ExactLiftedResidual" -> liftedResidual,
+          "ExactNumeratorReconstructionResidual" -> reconstructionResidual,
+          "ExactFormalReplay" -> True, "InternalOnShellIdentity" -> False,
+          "MomentumConservation" -> TrueQ[conserve]|>];
+        best = <|"Amplitude" -> candidate, "Status" -> "IMPROVED", "Route" -> route|>;
+        Break[], {pair, pairs}],
+      {index, Length[chosen]}]; True, 512000000, False], seconds, False];
+  Join[best, <|"ElapsedTime" -> AbsoluteTime[] - started,
+    "EligibleCores" -> eligible, "InspectedLiteralPairs" -> inspected,
+    "TimedOut" -> !TrueQ[outcome]|>]
+];
+
 (* Compare complete numerator groups after a determinant-pair proposal exposes
    ordinary six-spinor cofactors. No propagator or inverse factor is changed. *)
 preparationSharedMatrixCofactors[expression_, externalRules_List,
@@ -11085,7 +11422,7 @@ preparationSharedMatrixCofactors[expression_, externalRules_List,
    endpointCounts, endpointRecord, spectatorPriority, scalarPrefix, scalarCore, scalarFactors, inverseQ, records, slotDegree,
    spectators, witnesses, coefficient, remainder, reduced, normalized, result,
    candidateCoefficient, candidate, factorTrial, cofactorRoute, acceptedRoute = {},
-   outcome, i, selected, position, beforeFactor, ruleRecord},
+   outcome, i, selected, position, beforeFactor, ruleRecord, pairedCandidate},
   best = <|"Amplitude" -> expression, "Status" -> "UNCHANGED", "Route" -> {}|>;
   slotDegree[_SpinorChain] := 2;
   slotDegree[value_Plus] := Max[slotDegree /@ List @@ value];
@@ -11100,6 +11437,11 @@ preparationSharedMatrixCofactors[expression_, externalRules_List,
       !FreeQ[expression, _SpinorTrace | _SpinorHat | _MomHat | _MomQ |
         _sigma | _colorT | _colorTrace | _Dot | _NonCommutativeMultiply], Return[best]];
   available[] := Max[0.000001, seconds - (AbsoluteTime[] - started)];
+  pairedCandidate = preparationPairedLiteralSpectators[expression, externalRules,
+    conserve, Min[12, 2 available[]/3]];
+  If[Lookup[pairedCandidate, "Status", "UNCHANGED"] === "IMPROVED" &&
+      preparationBetterQ[preparationRank[pairedCandidate["Amplitude"]], preparationRank[best["Amplitude"]]],
+    best = pairedCandidate];
   inverseQ[value_] := MatchQ[value, Power[_, exponent_] /; !TrueQ[exponent >= 0]];
   key[term_] := Times @@ Select[If[Head[term] === Times, List @@ term, {term}], inverseQ];
   positive[term_] := Times @@ Select[If[Head[term] === Times, List @@ term, {term}], !inverseQ[#] &];
@@ -11208,7 +11550,7 @@ preparationSharedMatrixCofactors[expression_, externalRules_List,
       If[preparationBetterQ[preparationRank[candidate], preparationRank[best["Amplitude"]]],
         best = <|"Amplitude" -> candidate, "Status" -> "IMPROVED", "Route" -> acceptedRoute|>],
       {i, Reverse[SortBy[Range[Length[numerators]], LeafCount[numerators[[#]]] &]]}];
-    best, 512000000, best], seconds, best];
+    best, 512000000, best], available[], best];
   Join[best, <|"ElapsedTime" -> AbsoluteTime[] - started,
     "TimedOut" -> (AbsoluteTime[] - started >= seconds)|>]
 ];
@@ -11380,14 +11722,32 @@ preparationCancelReferencePoles[expr_, rules_List, auxiliary_List] := Module[
   result /. Thread[tokens -> props]
 ];
 
-(* Ranking must not expand the very rational expression it is trying to keep
-   compact. Match the reducer's distribution budget and use representation
-   size for its large factored competitors. *)
-preparationRank[expr_] := {If[rspExpansionBudgetQ[expr],
-    SpinorExpressionComplexity[expr], LeafCount[expr]],
-  If[Head[expr] === Plus, Length[expr], If[expr === 0, 0, 1]], LeafCount[expr]};
+(* Measuring a completed candidate is cheaper than exploring its distributed
+   identity routes. Keep this bounded measurement allowance separate from the
+   reducer's expansion budget. The tag prevents incomparable leaf fallbacks
+   from being accepted as improvements over measured weighted complexity. *)
+preparationRank[expr_] := Module[
+  {leaves = LeafCount[expr], groups, profile, score, metric},
+  groups = If[Head[expr] === Plus, Length[expr], If[expr === 0, 0, 1]];
+  score = TimeConstrained[MemoryConstrained[
+    profile = rspExpansionProfile[expr, 4096, 200000];
+    If[profile[[1]] <= 4096 && profile[[2]] <= 200000,
+      SpinorExpressionComplexity[expr], Missing["RankingDistributionLimit"]],
+    134217728, Missing["RankingMemoryLimit"]], 0.2, Missing["RankingTimeLimit"]];
+  If[IntegerQ[score] && score >= 0,
+    metric = "SpinorExpressionComplexity",
+    score = leaves; metric = "LeafCountFallback"];
+  {score, groups, leaves, metric}
+];
 
-preparationBetterQ[left_List, right_List] := left =!= right && OrderedQ[{left, right}];
+preparationBetterQ[left_List, right_List] := Module[{a, b},
+  If[Length[left] === 3 && Length[right] === 3,
+    Return[left =!= right && OrderedQ[{left, right}]]];
+  If[Length[left] =!= 4 || Length[right] =!= 4 || Last[left] =!= Last[right] ||
+      !MemberQ[{"SpinorExpressionComplexity", "LeafCountFallback"}, Last[left]], Return[False]];
+  a = Take[left, 3]; b = Take[right, 3];
+  a =!= b && OrderedQ[{a, b}]
+];
 
 (* Expose an existing propagator by its exact definition, not by putting it on
    shell. Only numerator scalar products and declared external masses are used. *)
@@ -13048,7 +13408,7 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
    eligibleOriginal, admittedOriginal = False, initialCandidate,
    contractionTimedOut = False,
    completedBest = None, completedBestRank, completedBestSource, rememberCompleted, snapshotRank,
-   rankSnapshots = 0, groupedCompaction, fractionCompaction, fractionSeconds},
+   rankSnapshots = 0, groupedCompaction, fractionCompaction, fractionSeconds, pairNormalization},
   progressMetadata = Join[<|"Item" -> index, "Items" -> count, "InputType" -> kind|>,
     If[MemberQ[{"Diagram", "FeynmanDiagram"}, kind], <|"Diagram" -> index, "Diagrams" -> count|>, <||>]];
   channels = If[TrueQ[options["InternalOnShell"]],
@@ -13059,9 +13419,7 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
     "MomentumConservation" -> options["MomentumConservation"]};
   (* Ranking is pure but can expand a large completed expression. Reuse each
      snapshot's rank within this element; no cache survives the call. *)
-  snapshotRank[value_] := Module[{result = If[rspExpansionBudgetQ[value], preparationRank[value],
-      {LeafCount[value], If[Head[value] === Plus, Length[value], If[value === 0, 0, 1]],
-        LeafCount[value]}]},
+  snapshotRank[value_] := Module[{result = preparationRank[value]},
     If[rankSnapshots < 16 && LeafCount[value] <= 200000,
       rankSnapshots++; snapshotRank[value] = result];
     result];
@@ -13175,6 +13533,19 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
     event[stage];
     If[TrueQ[wholeAmplitude] || kind === "Amplitude",
       rememberCompleted[expression, "CompletedExternalReferenceInput"];
+      If[!TrueQ[options["InternalOnShell"]] || knownInternalChannels[rules] === {},
+        stage = "OrdinaryPairVirtualityCancellation";
+        before = expression;
+        pairNormalization = completionOrdinaryPairPoleSource[before,
+          preparationExternalRules[rules], If[options["TimeConstraint"] === Infinity, 1,
+            Max[0.000001, Min[1, options["TimeConstraint"] - (AbsoluteTime[] - started)]]]];
+        after = pairNormalization["Expression"];
+        If[residueFiniteQ[after] && preparationBetterQ[snapshotRank[after], snapshotRank[before]],
+          expression = after];
+        AppendTo[reductions, <|"Operation" -> stage, "Before" -> before,
+          "After" -> expression, "InternalOnShellIdentity" -> False, "OnShellChannels" -> {},
+          "IdentityRoute" -> KeyDrop[pairNormalization, "Expression"]|>];
+        rememberCompleted[expression, stage]; event[stage]];
       stage = "CompactExternalAmplitude";
       before = expression;
       after = If[TrueQ[options["MomentumConservation"]],

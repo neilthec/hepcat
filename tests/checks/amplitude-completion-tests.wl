@@ -1551,7 +1551,8 @@ acBlockInconsistentFit = ConstructiveDiagrams`Private`completionSolveLinear[
   acBlockInconsistentVariables];
 check["the simultaneous solver reports a certified block contradiction as inconsistent",
   acBlockInconsistentFit["Status"] === "INCONSISTENT" &&
-    acBlockInconsistentFit["Rank"] === 3 && acBlockInconsistentFit["SolutionRules"] === {}];
+    MissingQ[acBlockInconsistentFit["Rank"]] && acBlockInconsistentFit["RankLowerBound"] === 3 &&
+    acBlockInconsistentFit["SolutionRules"] === {}];
 check["an unlucky prime with a rank drop falls back instead of certifying a false nullspace",
   MissingQ[ConstructiveDiagrams`Private`completionExactBlockReduce[
     {{5, 0}, {0, 1}, {5, 1}}, {-10, -3, -13}, 5]]];
@@ -1562,8 +1563,10 @@ acBlockRankDropVariables = Table[Unique["acBlockRankDropCoefficient"], {64}];
 acBlockRankDropFit = ConstructiveDiagrams`Private`completionSolveLinear[
   PadRight[{{1, 0}, {0, 2147483647}, {1, 0}}, {3, 64}].acBlockRankDropVariables + {0, 0, 1},
   acBlockRankDropVariables];
-check["native fallback reports the exact coefficient rank for an inconsistent rank-dropping-prime system",
-  acBlockRankDropFit["Status"] === "INCONSISTENT" && acBlockRankDropFit["Rank"] === 2 &&
+check["a contradiction certificate does not misreport an unlucky modular rank as exact",
+  acBlockRankDropFit["Status"] === "INCONSISTENT" && MissingQ[acBlockRankDropFit["Rank"]] &&
+    acBlockRankDropFit["RankLowerBound"] === 1 &&
+    acBlockRankDropFit["InconsistencyCertificate"]["ExactAllColumnCertificate"] === True &&
     acBlockRankDropFit["SolutionRules"] === {}];
 check["a rank-preserving bad prime cannot return duplicate rational leading pivots",
   MissingQ[ConstructiveDiagrams`Private`completionExactBlockReduce[
@@ -1727,11 +1730,20 @@ check["the production solver consumes a certified contradiction without requesti
     acCRTContradictionFit["Rank"] === 64 &&
     acCRTContradictionFit["InconsistencyCertificate"]["Backend"] ===
       "CertifiedFullColumnRankContradiction"];
-check["inconsistent exact rows decline CRT and preserve the existing solver fallback",
-  MissingQ[ConstructiveDiagrams`Private`completionCertifiedModularReduce[
-    acBlockInconsistentMatrix, acBlockInconsistentConstant]]];
-check["a constant-only contradiction cannot produce a certified rank-zero family",
-  MissingQ[ConstructiveDiagrams`Private`completionCertifiedModularReduce[{{0, 0}}, {1}]]];
+acCRTRankDeficientContradiction = ConstructiveDiagrams`Private`completionCertifiedModularReduce[
+  acBlockInconsistentMatrix, acBlockInconsistentConstant];
+check["rank-deficient inconsistent rows use an exact all-column left-null certificate",
+  acCRTRankDeficientContradiction["Status"] === "INCONSISTENT" &&
+    MissingQ[acCRTRankDeficientContradiction["Rank"]] &&
+    acCRTRankDeficientContradiction["RankLowerBound"] === 3 &&
+    acCRTRankDeficientContradiction["LeftNullVector"].acBlockInconsistentMatrix ===
+      ConstantArray[0, Length[First[acBlockInconsistentMatrix]]] &&
+    acCRTRankDeficientContradiction["LeftNullVector"].acBlockInconsistentConstant =!= 0];
+acCRTConstantContradiction = ConstructiveDiagrams`Private`completionCertifiedModularReduce[{{0, 0}}, {1}];
+check["a constant-only contradiction is inconsistent with certified exact coefficient rank zero",
+  acCRTConstantContradiction["Status"] === "INCONSISTENT" &&
+    acCRTConstantContradiction["Rank"] === 0 &&
+    !KeyExistsQ[acCRTConstantContradiction, "ReducedRows"]];
 check["an exhausted bad-prime inventory does not certify a sampled or truncated family",
   MissingQ[ConstructiveDiagrams`Private`completionCertifiedModularReduce[
     {{105, 1}}, {-2}, 10, {3, 5, 7}]]];

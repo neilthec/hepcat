@@ -115,7 +115,8 @@ fsSixOriginal = FactorTerms[Total[fsSixTerms]];
 fsSixSaved = fsSixOriginal;
 fsSixCompact = fsSparse[fsSixOriginal, 2];
 check["the six-point fixture has its documented complexity and original size",
-  fsRank[fsSixOriginal] === {108, 1, 1347} &&
+  Take[fsRank[fsSixOriginal], 3] === {108, 1, 1347} &&
+    Last[fsRank[fsSixOriginal]] === "SpinorExpressionComplexity" &&
     ConstructiveDiagrams`Private`expressionTermCounts[fsSixOriginal]["Terms"] === 12];
 check["sparse pole-content extraction finds the compact six-block representation",
   fsRank[fsSixCompact][[1]] === 108 && LeafCount[fsSixCompact] <= 732 &&

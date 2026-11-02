@@ -40,12 +40,22 @@ supplied correction bases retain their limits.", "Notes"],
 expressions and discarded remainders. These are tried before broader \
 channel-continuation directions, preserving useful diagram information \
 without making a hard-coded process formula.", "Notes"],
-  Cell["For sufficiently large coherent-spin systems, a preliminary proposal \
-keeps related terms of existing prepared sources and their retained \
-remainders together, grouped by momentum-insertion degree. It fits that \
-complete proposal against every original channel before attempting wider \
-continuation spaces. The first proposal keeps prepared whole sources in their \
-physical form and preserves the supplied discarded remainders through \
+  Cell["Before admitting a source to a simple-physical-pole proposal, a \
+bounded ordinary external pair-virtuality cancellation can remove apparent \
+repeated propagators. For a massless leg k and an external leg p of mass m, \
+PropDen[p+k,m] equals 2 p.k without putting the internal line on shell. Newly \
+exposed regular quotients stay correlated with their complete source under \
+one coefficient, including a wholly regular quotient; their coefficients are \
+not claimed to be fixed by residues. Already-explicit regular input is fixed \
+separately and removed per input record before source normalization. \
+Uncanceled positive numerator virtualities are restored as momentum products. \
+Genuine higher-order poles still fail the existing simple-pole admission \
+guard.", "Notes"], Cell["For sufficiently large coherent-spin systems, a \
+preliminary proposal keeps related terms of existing prepared sources and \
+their retained remainders together, grouped by momentum-insertion degree. It \
+fits that complete proposal against every original channel before attempting \
+wider continuation spaces. The first proposal keeps prepared whole sources in \
+their physical form and preserves the supplied discarded remainders through \
 grouping and exchange projection; eligibility is checked on canonical copies. \
 Rewriting those remainders is deferred to the fit so early rewrites do not \
 accidentally favor a more complicated representative. A normalized source \
@@ -78,9 +88,15 @@ process metadata.", "Notes"], Cell["Numerical fitting uses locally resolved \
 model parameters. A time-based seed is chosen once for Automatic; an integer \
 replays the sampling. Independent validation and failed-sample refinement \
 guard against a fit that happens to match its training points.", "Notes"],
-  Cell["Automatic effort settings bound runtime and correction size. An \
-unresolved result normally returns a concise Failure rather than an unchecked \
-amplitude. Detailed reports distinguish complete, incomplete and \
+  Cell["A large inconsistent exact system may be rejected by a verified \
+left-null contradiction certificate instead of computing its full affine \
+solution. Every original coefficient column and the nonzero constant residual \
+are checked exactly. If no exact matrix rank was computed, details report \
+Rank as Missing and give RankLowerBound separately; successful and \
+underdetermined solutions retain their exact-rank and full-family checks.",
+   "Notes"], Cell["Automatic effort settings bound runtime and correction \
+size. An unresolved result normally returns a concise Failure rather than an \
+unchecked amplitude. Detailed reports distinguish complete, incomplete and \
 underdetermined cases.", "Notes"], Cell["Physical residue agreement leaves \
 any genuine pole-free or residue-preserving freedom for CompleteHighEnergy \
 and other stated physical constraints. No universal uniqueness claim follows \

@@ -2582,13 +2582,87 @@ The notebook labels this distinction. A fresh 504-direction physical proposal
 was insufficient for this process: its exact sampled simultaneous system was
 inconsistent. Increasing its time allowance cannot repair that particular
 proposal space; further source continuations are still needed.
-The reference also exposes an important current solver limitation: apparent
-double physical-pole factors cancel in complete numerator blocks, whereas
-source admission currently requires formally simple powers. Do not merely
-remove that guard. A future extension must preserve whole blocks and establish
-their regular residue restriction, or constrain every higher Laurent
-coefficient to vanish along with fitting the simple residue. The existing
-complete-source and final checks remain required.
+Apparent repeated poles must first be distinguished from genuine higher-order
+poles. Source admission now tries bounded ordinary external-pair cancellation
+before rerunning its simple-pole guard. This handles the massless external-pair
+case described below; it does not remove the guard or admit an uncanceled
+higher-order pole. Complete-source residue verification and final checks remain
+required.
+
+#### Balanced six-point ordinary reduction
+
+For `e,E,A.+,A.+,A.-,A.-`, the independent physical-current reference can be
+reduced further without any internal-shell identity. All momenta are ingoing;
+only the external masses and declared total momentum conservation are used.
+This is a worked reference reduction, not a formula supplied to constructive
+completion.
+
+First, for a massless external photon `i`, the physical denominator definition
+is `t_1i = 2 p1.pi`, with `t_1i = (p1+pi)^2-m^2`, and similarly for `t_2i`.
+For example,
+
+```text
+(p1.p6)/t_16^2 = 1/(2 t_16).
+```
+
+This is an off-cut identity, not `t_16 = 0`. Exact pair definitions remove all
+43 apparent repeated-pole terms in the expanded starting reference. The
+production source helper requires a massless external member of the pair,
+consistent scalar external masses and the matching propagator mass. Other
+inverses remain opaque. Every polynomial quotient and nonzero regular remainder
+is retained; uncanceled numerator virtualities remain visible as momentum
+products. A genuine residual double pole still fails source admission.
+
+Second, existing positive spectator factors such as `[34]<56>` can expose a
+six-distinct-spinor coefficient for the ordinary Schouten/Dirac optimizer. An
+illustrative coefficient identity is
+
+```text
+<15><6|p1|3] - <16><5|p1|3]
+  = -<56><1|p1|3] = -m <56>[13].
+```
+
+The massive spin index is preserved. Up to two actual chain factors are peeled
+with literal multiplicity witnesses, without dividing by an assumed factor.
+Exact coefficient replay and complete numerator reconstruction are checked
+separately, so a longer momentum-chain spectator can remain opaque. Each
+original fraction and its inverse factors are retained, and only a strictly
+better complete result is accepted within the existing deadline.
+
+Third, measuring weighted complexity has a separate bounded allowance from
+searching distributed identity routes. A 2478-complexity form had only 218
+expanded monomials, but its predicted distributed size exceeded the reducer's
+24000-leaf search limit. The old leaf fallback could therefore favor a
+2552-complexity form. Bounded score measurement fixes that comparison without
+raising the identity-search expansion limits. Measured weighted scores are
+never compared directly with unmeasured leaf fallbacks.
+
+Recorded ordinary reductions, with symbolic model-local mass and charge:
+
+| Form | Complexity | Expanded terms | Momentum insertions | Leaves |
+| --- | ---: | ---: | ---: | ---: |
+| Original physical-current reference | 3224 | 284 | 648 | 15244 |
+| Exact pair-virtuality cancellation | 3052 | 284 | 648 | 15176 |
+| Earlier bounded preparation | 2478 | 218 | 530 | 12343 |
+| Next preparation pass | 2217 | 209 | 468 | 12123 |
+| Following preparation pass | 2102 | 202 | 441 | 12422 |
+
+The last two trials used automatic effort budgets, serial execution,
+`"PolePreference" -> None` and `"InternalOnShell" -> False`, taking about
+40 seconds each. The 2102 form keeps only the fourteen physical propagators,
+with simple powers, no Xi and no inverse spinor factors. Exposing any positive
+numerator virtualities leaves its weighted score unchanged.
+
+That exact final pair passed all fourteen physical channels at two fresh exact
+samples, plus high-energy and reference checks. Independent MadGraph validation
+passed 1000 common physical points with no mismatches or evaluation errors and
+a maximum relative difference of `2.36*10^-13`. The comparison sums massive
+spins and compares squared amplitudes; MadGraph's `sm-full` model is restricted
+to particles 11 and 22. These checks and exact ordinary routes establish a
+smaller verified representation, not a global-minimum or uniqueness proof.
+Automatic constructive discovery of this compact physical form remains a
+separate completion-policy task; reducing the independent reference does not
+establish that the constructor discovers it on its own.
 
 Typed `PropDen` poles are checked across that family, including poles hidden
 in its zero-parameter representative. Established zero-residue obligations
