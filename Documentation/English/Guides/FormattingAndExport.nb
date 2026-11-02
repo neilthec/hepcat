@@ -21,9 +21,9 @@ averages and identical-particle factors.", "GuideAbstract"],
   Cell["Generated random phase-space tests use a time-based default seed, \
 with an explicit seed for reproducibility. Optional CalcHEP and MadGraph \
 comparisons validate the same points independently. MadGraph can report each \
-massless-helicity combination separately. The direct n_calchep integration \
-backend instead uses the exported HEPCAT amplitude as its matrix element.",
-   "GuideAbstract"], Cell["Readable Analytic Output",
+massless-helicity combination separately. The direct n_calchep and MadEvent \
+numerical bridges instead use the exported HEPCAT amplitude as their matrix \
+element.", "GuideAbstract"], Cell["Readable Analytic Output",
    "GuideFunctionsSubsection"],
   Cell[TextData[{ButtonBox["PlainText", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/PlainText"], ": ", "Writes readable \
@@ -56,7 +56,7 @@ s legacy compact bracket notation into typed HEPCAT spinor expressions."}],
   Cell[TextData[{ButtonBox["WriteSPINASProcess", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/WriteSPINASProcess"], ": ", "Writes a \
 complete, readable C++ process using SPINAS, with optional CalcHEP and \
-helicity-resolved MadGraph validation."}], "GuideText"],
+MadGraph validation and numerical integration."}], "GuideText"],
   Cell[TextData[{ButtonBox["ValidateMadGraph", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ValidateMadGraph"], ": ", "Compares \
 exported HEPCAT/SPINAS amplitudes with independent MadGraph matrix elements \

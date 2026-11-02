@@ -122,7 +122,11 @@ sampling controls such as points, seed, tolerances, energy bounds and the \
 reference preparation budget. To change a stored export setting, regenerate \
 the project or use the amplitude-and-model overload; those overrides are \
 rejected rather than silently ignored.", "Notes"],
-  Cell["Options", "NotesSection"],
+  Cell["The same WriteSPINASProcess project can also contain a MadEvent \
+numerical launcher. Use ValidateMadGraph for the independent per-helicity \
+amplitude comparison and the generated process_madevent launcher for \
+numerical integration and event generation with the supplied SPINAS \
+amplitude.", "Notes"], Cell["Options", "NotesSection"],
   Cell[BoxData[GridBox[{{Cell["Option", "TableHeader"],
        Cell["Default", "TableHeader"], Cell["Meaning", "TableHeader"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"SPINASDirectory\""}]],
@@ -245,24 +249,27 @@ results.", "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"MadGraphDirectory\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"None"}]], "InlineFormula"]}],
-        "TableText"], Cell["Chosen MadGraph installation directory. None, the \
-default, leaves reference validation disabled. An explicitly supplied \
-Automatic consults environment variables only; pass a path to make the \
-selection explicit.", "TableText"]},
+        "TableText"], Cell["Chosen MadGraph installation directory for \
+independent validation and the MadEvent numerical bridge. None, the default, \
+leaves this optional support unconfigured. An explicitly supplied Automatic \
+consults environment variables only; pass a path to make the selection \
+explicit.", "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"MadGraphModel\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"None"}]], "InlineFormula"]}],
-        "TableText"], Cell["Chosen equivalent MadGraph UFO model name or \
-directory. None, the default, selects no reference theory. Automatic does not \
-infer a theory. Specify the model and any particle filter explicitly.",
-        "TableText"]},
+        "TableText"], Cell["Chosen MadGraph UFO model name or directory. It \
+supplies the independent validation reference and the numerical MadEvent \
+model metadata and phase-space topologies. None, the default, selects no \
+theory; Automatic does not infer one. Specify the model and any particle \
+filter explicitly.", "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"MadGraphAllowedParticles\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"All"}]], "InlineFormula"]}],
         "TableText"], Cell["All retains the full selected MadGraph theory. A \
 nonempty list of unique positive absolute PDG codes, such as {11,22}, \
-restricts the reference particle sector and includes antiparticles. Every \
-external particle type must be present.", "TableText"]},
+restricts the particle sector used for reference validation and MadEvent \
+topology generation and includes antiparticles. Every external particle type \
+must be present.", "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"MadGraphParameterRules\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],

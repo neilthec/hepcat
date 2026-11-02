@@ -89,8 +89,8 @@
   "PrintWarnings": "Whether the older SimplifySpinorProducts helper prints warnings about its iterative simplification. This legacy symbol option affects messages rather than the allowed physical assumptions.",
   "massReplacementRules": "Explicit Mass[...] replacement rules for the older SimplifySpinorProducts helper. Supply only assumptions justified for the current item; do not combine incompatible diagram-local shells.",
   "nTimes": "Maximum number of repeated simplification rounds in the older SimplifySpinorProducts helper. This is a legacy symbol option, not a wall-clock limit.",
-  "MadGraphDirectory": "Chosen MadGraph installation directory. None, the default, leaves reference validation disabled. An explicitly supplied Automatic consults environment variables only; pass a path to make the selection explicit.",
-  "MadGraphModel": "Chosen equivalent MadGraph UFO model name or directory. None, the default, selects no reference theory. Automatic does not infer a theory. Specify the model and any particle filter explicitly.",
+  "MadGraphDirectory": "Chosen MadGraph installation directory for independent validation and the MadEvent numerical bridge. None, the default, leaves this optional support unconfigured. An explicitly supplied Automatic consults environment variables only; pass a path to make the selection explicit.",
+  "MadGraphModel": "Chosen MadGraph UFO model name or directory. It supplies the independent validation reference and the numerical MadEvent model metadata and phase-space topologies. None, the default, selects no theory; Automatic does not infer one. Specify the model and any particle filter explicitly.",
   "MadGraphParameterRules": "Real numerical values for named external MadGraph UFO parameters. Automatic uses the supported model-parameter matching; explicit rules supply otherwise ambiguous independent inputs.",
   "RunMadGraphValidation": "Whether WriteSPINASProcess builds and runs the independent MadGraph comparison. False writes the optional support without running it; True runs a report for each exported massless-helicity combination. A numerical FAIL is returned as Failure, not a successful source-export result. If CalcHEP is also requested, both checks are attempted and their reports remain in ExportResult.",
   "MadGraphPoints": "Number of common random phase-space points compared for each massless-helicity combination. The default is 1000.",
@@ -103,6 +103,6 @@
   "ValidateMadGraph": {
     "TimeConstraint": "Time budget in seconds for generating and compiling the independent MadGraph reference process. A timeout is an incomplete check, not PASS."
   },
-  "MadGraphAllowedParticles": "All retains the full selected MadGraph theory. A nonempty list of unique positive absolute PDG codes, such as {11,22}, restricts the reference particle sector and includes antiparticles. Every external particle type must be present.",
+  "MadGraphAllowedParticles": "All retains the full selected MadGraph theory. A nonempty list of unique positive absolute PDG codes, such as {11,22}, restricts the particle sector used for reference validation and MadEvent topology generation and includes antiparticles. Every external particle type must be present.",
   "CalcHEPAllowedParticles": "All retains the full selected CalcHEP theory. A nonempty list of unique positive absolute PDG codes restricts the independent reference particle sector, including antiparticles. Every external type must be included."
 }

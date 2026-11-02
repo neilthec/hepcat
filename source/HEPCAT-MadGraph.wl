@@ -6,6 +6,7 @@
 Begin["ConstructiveDiagrams`"];
 ValidateMadGraph::usage = "ValidateMadGraph[directory] independently checks an exported SPINAS process against MadGraph at shared random physical momenta, with a separate result for every exported massless-helicity combination. ValidateMadGraph[particles, amplitude, model] checks one fixed-helicity all-ingoing expression. ValidateMadGraph[incoming -> outgoing, amplitudeEntries, model] first exports and builds a private SPINAS project. Massive spins are summed, not compared in potentially different spin bases. MadGraphPoints defaults to 1000 per helicity and MadGraphSeed -> Automatic chooses and reports a fresh replayable seed. Output -> Table returns a readable per-helicity table; Summary gives result counts and Details retains the complete numerical report and failed momenta. Specify MadGraphDirectory and MadGraphModel explicitly. MadGraphAllowedParticles -> All retains the selected theory; a list of positive absolute PDG codes, such as {11,22}, restricts intermediate particle types and includes their antiparticles. No theory or particle restriction is inferred from the HEPCAT model. MadGraphParameterMap and MadGraphParameterRules handle different parameter names or reference inputs. Squared amplitudes are compared, so overall phases do not affect the result. Colorless tree processes are supported; unsupported or unavailable comparisons are never reported as passing. This is numerical validation, not an analytic proof.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " Generated projects also expose validate_madgraph(options) and a process_validate_madgraph executable for independent fixed-massless-helicity validation. Specify MadGraphDirectory and MadGraphModel to select the independent installation and UFO theory. MadGraphAllowedParticles -> All retains all model particles; {11,22}, for example, restricts to electrons, positrons and photons using absolute PDG codes. MadGraphParameterMap relates differently named HEPCAT and UFO parameters; MadGraphParameterRules supplies explicit UFO external input values. RunMadGraphValidation -> True builds and runs MadGraphPoints -> 1000 shared points per helicity with MadGraphSeed -> Automatic. Fixed incoming or outgoing helicities are supported, and massive external spins are summed. Numerical mismatches remain FAIL, including losses of floating-point precision. When both reference checks are requested, both run independently even if the first fails. A failed requested check returns Failure with ExportResult retaining both reports and the generated files. Ordinary SPINAS execution does not require MadGraph.";
+WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " The same explicit MadGraph configuration also writes a process_madevent launcher. It prepares a private MadEvent process on first use and supplies the exported HEPCAT/SPINAS matrix element to MadEvent integration, unweighting and event output. Build -> True compiles the launcher; --prepare builds its private process without running events. Run and parameter cards adjust cuts, beams, masses and couplings. Fixed massless helicities and summed massive spins retain their specified averaging and symmetry factors. Current numerical coverage is colorless leading-order tree amplitudes; coherent decay sewing, NLO matching and a MadGraph massive-spin basis are not provided. The independent MadGraph validator continues to use MadGraph's own amplitude.";
 Options[WriteSPINASProcess] = Join[Options[WriteSPINASProcess], {
   "MadGraphDirectory" -> None, "MadGraphModel" -> None, "MadGraphAllowedParticles" -> All,
   "MadGraphParameterRules" -> Automatic, "MadGraphParameterMap" -> Automatic,
@@ -176,6 +177,148 @@ spinasMadGraphREADME[name_String, config_Association] := StringRiffle[{
   "The reference is generated and compiled once in a private temporary workspace. The installed MadGraph source and its model files are not edited. Current SPINAS parameter and mass values are matched to the UFO inputs; unknown mappings or mismatched dependent couplings stop the check.",
   "The base comparison is colorless tree level. The ordinary process remains usable without MadGraph. A numerical FAIL, including floating-point cancellation in an exported formula, is not changed into a pass by fitting a scale or relaxing tolerances.",
   "Configuration: " <> config["Status"] <> If[config["Reason"] === "", "", ". " <> config["Reason"]], ""}, "\n"];
+
+(* ::Subsection::Closed:: *)
+(*MadEvent Integration with the Exported Amplitude*)
+
+(* Keep the ordinary MadGraph comparison independent.  This second project
+   replaces only MadEvent's numerical matrix kernel, retaining its phase-space
+   mappings, integration, unweighting and event output. *)
+spinasMadEventConfiguration[dir_String, name_String, ir_Association, config_Association] := Module[
+  {family = TrueQ[Lookup[ir, "Family", False]], average, symmetry, defaults},
+  average = If[family, ir["InitialSpinAverage"],
+    Times @@ (If[TrueQ[ir["MassValues"][[#]] == 0], 1, ir["Spin2"][[#]] + 1] & /@ ir["IncomingLegs"])];
+  symmetry = If[family, ir["SymmetryFactor"],
+    1/(Times @@ (Factorial /@ Values[Counts[Drop[config["PhysicalPDGs"], 2]]]))];
+  defaults = N[Re[ir["ParameterDefaults"]]];
+  Join[config, <|"Backend" -> "HEPCAT/SPINAS", "ProcessDirectory" -> dir,
+    "Normalization" -> N[config["Normalization"]],
+    "ParameterRules" -> Map[N, config["ParameterRules"]],
+    "BridgeLibrary" -> FileNameJoin[{dir, "build", "lib" <> name <> "_madevent_matrix.a"}],
+    "BridgeLinkFile" -> FileNameJoin[{dir, "build", "madevent-link.json"}],
+    "Executable" -> FileNameJoin[{dir, "build", name <> "_madevent"}],
+    "SessionDirectory" -> FileNameJoin[{dir, "madevent"}],
+    "ParameterDefaults" -> defaults,
+    "Parameters" -> MapThread[<|"Name" -> #1, "Value" -> #2|> &, {ir["ParameterNames"], defaults}],
+    "Masses" -> N[ir["MassValues"]], "InitialSpinAverage" -> N[average],
+    "SymmetryFactor" -> N[symmetry], "TimeConstraint" -> 600,
+    "SpinConvention" -> "Raw squared amplitude for one complete external spin configuration; massive basis is SPINAS; no coherent decay sewing.",
+    "Scope" -> "Colorless leading-order tree amplitudes; MadEvent integration and unweighted events."|>]
+];
+
+spinasMadEventSource[name_String, ir_Association, config_Association] := Module[
+  {massless = TrueQ[# == 0] & /@ ir["MassValues"], helicities = config["HelicityConfigurations"]},
+  StringRiffle[{
+    "// Numerical MadEvent kernel. The independent MadGraph validator uses its own amplitude.",
+    "#include \"process.hpp\"", "#include <cmath>", "#include <memory>", "#include <string>", "",
+    "namespace {", "using Process = hepcat_generated::" <> name <> ";",
+    "// Each numerical worker owns its parameters, particles and spinor-product cache.",
+    "thread_local std::unique_ptr<Process> process;",
+    "thread_local Process::Parameters previous_parameters;",
+    "thread_local Process::Momenta previous_momenta;", "thread_local bool momenta_ready = false;",
+    "thread_local std::string last_error;",
+    "const std::array<std::size_t, Process::leg_count> leg_order = " <>
+      spinasCppArray[ToString /@ (config["LegOrder"] - 1)] <> ";",
+    "const std::array<int, Process::leg_count> spin2 = " <> spinasCppArray[ToString /@ ir["Spin2"]] <> ";",
+    "const std::array<bool, Process::leg_count> massless = " <>
+      spinasCppArray[If[#, "true", "false"] & /@ massless] <> ";",
+    "const std::array<Process::Spins, " <> ToString[Length[helicities]] <> "> selected_helicities = {{",
+    StringRiffle[("  Process::Spins" <> spinasCppArray[ToString /@ #]) & /@ helicities, ",\n"],
+    "}};", "",
+    "bool selected(const Process::Spins& spins) {",
+    "  for (const auto& helicities : selected_helicities) {", "    bool match = true;",
+    "    for (std::size_t leg = 0; leg < Process::leg_count; ++leg)",
+    "      if (massless[leg] && spins[leg] != helicities[leg]) match = false;",
+    "    if (match) return true;", "  }", "  return false;", "}", "} // namespace", "",
+    "extern \"C\" int hepcat_madevent_leg_count() { return static_cast<int>(Process::leg_count); }",
+    "extern \"C\" int hepcat_madevent_parameter_count() { return static_cast<int>(Process::parameter_count); }",
+    "extern \"C\" const char* hepcat_madevent_error() { return last_error.c_str(); }", "",
+    "// MadEvent supplies physical momenta in incoming-then-outgoing order.",
+    "// The analytic exporter has already crossed outgoing momenta and spinors once.",
+    "// Return raw |amp|^2; MadEvent performs the spin average and identical-state factor.",
+    "extern \"C\" int hepcat_madevent_matrix(const double* momenta, const int* helicities,",
+    "                                      const double* parameters, double* answer) {",
+    "  last_error.clear();", "  if (answer) *answer = 0;", "  try {",
+    "    if (!momenta || !helicities || !answer || (Process::parameter_count && !parameters))",
+    "      throw std::invalid_argument(\"Missing MadEvent matrix-element input.\");",
+    "    Process::Parameters values;",
+    "    for (std::size_t parameter = 0; parameter < Process::parameter_count; ++parameter) {",
+    "      if (!std::isfinite(parameters[parameter])) throw std::invalid_argument(\"Nonfinite MadEvent model parameter.\");",
+    "      values[parameter] = cdouble(parameters[parameter], 0);", "    }",
+    "    if (!process) {", "      process.reset(new Process(values)); previous_parameters = values; momenta_ready = false;",
+    "    } else if (values != previous_parameters) {", "      process->set_parameters(values); previous_parameters = values; momenta_ready = false;", "    }",
+    "    Process::Momenta physical;", "    Process::Spins spins;",
+    "    for (std::size_t mg_leg = 0; mg_leg < Process::leg_count; ++mg_leg) {",
+    "      const std::size_t leg = leg_order[mg_leg];", "      const int helicity = helicities[mg_leg];",
+    "      if ((spin2[leg] == 0 && helicity != 0) ||",
+    "          (spin2[leg] == 1 && helicity != -1 && helicity != 1) ||",
+    "          (spin2[leg] == 2 && helicity != -1 && helicity != 1 && (massless[leg] || helicity != 0)))",
+    "        throw std::invalid_argument(\"Invalid MadEvent external helicity.\");",
+    "      spins[leg] = spin2[leg] == 2 ? 2*helicity : helicity;",
+    "      if ((process->masses()[leg] == 0) != massless[leg])",
+    "        throw std::invalid_argument(\"An external massless/massive category changed; regenerate this process.\");",
+    "      for (std::size_t component = 0; component < 4; ++component) {",
+    "        const double value = momenta[4*mg_leg + component];",
+    "        if (!std::isfinite(value)) throw std::invalid_argument(\"Nonfinite MadEvent momentum.\");",
+    "        physical[leg][component] = value;", "      }", "    }",
+    "    // A fixed massless helicity is a selected contribution, not an extra average.",
+    "    if (!selected(spins)) return 0;",
+    "    // MadEvent visits many spins at one phase-space point. Reuse all products.",
+    "    if (!momenta_ready || physical != previous_momenta) {",
+    "      process->set_momenta(physical); previous_momenta = physical; momenta_ready = true;", "    }",
+    "    const ldouble probability = std::norm(process->amp(spins));",
+    "    *answer = static_cast<double>(probability);",
+    "    if (!std::isfinite(*answer) || *answer < 0) throw std::runtime_error(\"Nonfinite HEPCAT squared amplitude.\");",
+    "    return 0;", "  } catch (const std::exception& error) { last_error = error.what(); }",
+    "  catch (...) { last_error = \"Unknown HEPCAT numerical matrix-element error.\"; }",
+    "  // A failed update must not leave a partially rebound process in the next call.",
+    "  process.reset(); momenta_ready = false;", "  if (answer) *answer = 0;", "  return 1;", "}", ""}, "\n"]
+];
+
+spinasMadEventMain[name_String, config_Association, dir_String] := StringRiffle[{
+  "// Start the private MadEvent session with the exported HEPCAT/SPINAS matrix element.",
+  "#include <cerrno>", "#include <cstring>", "#include <iostream>", "#include <string>",
+  "#include <vector>", "#include <unistd.h>", "", "int main(int argc, char** argv) {",
+  "  std::vector<std::string> arguments = {", "    " <> spinasCppQuoted[config["PythonExecutable"]] <> ",",
+  "    " <> spinasCppQuoted[FileNameJoin[{dir, "madevent-runtime.py"}]] <> ",",
+  "    \"--configuration\", " <> spinasCppQuoted[FileNameJoin[{dir, "madevent-config.json"}]] <> "};",
+  "  for (int i = 1; i < argc; ++i) arguments.push_back(argv[i]);",
+  "  std::vector<char*> command;", "  for (auto& argument : arguments) command.push_back(&argument[0]);",
+  "  command.push_back(nullptr);", "  execv(command[0], command.data());",
+  "  std::cerr << \"Could not start the MadEvent integration helper: \" << std::strerror(errno) << '\\n';",
+  "  return 2;", "}", ""}, "\n"];
+
+spinasMadEventCMake[name_String, config_Association] := If[config["Status"] =!= "AVAILABLE", "",
+  StringRiffle[{
+    "", "# MadEvent uses this raw fixed-spin kernel; the reference validator stays independent.",
+    "# A static archive also supports an existing SPINAS library built without PIC.",
+    "add_library(" <> name <> "_madevent_matrix STATIC madevent-spinas.cpp)",
+    "target_link_libraries(" <> name <> "_madevent_matrix PUBLIC " <> name <> "_process)",
+    "add_executable(" <> name <> "_madevent madevent-main.cpp)",
+    "add_dependencies(" <> name <> "_madevent " <> name <> "_madevent_matrix)",
+    "if(APPLE AND CMAKE_CXX_COMPILER_ID MATCHES \"Clang\")",
+    "  set(HEPCAT_MADEVENT_CXX_RUNTIME \"c++\")", "else()",
+    "  set(HEPCAT_MADEVENT_CXX_RUNTIME \"stdc++\")", "endif()",
+    "get_filename_component(HEPCAT_MADEVENT_RUNTIME_DIRECTORY \"${SPINAS_LIBRARY}\" DIRECTORY)",
+    "file(GENERATE OUTPUT \"${CMAKE_CURRENT_BINARY_DIR}/madevent-link.json\" CONTENT",
+    "  \"{\\n  \\\"Libraries\\\": [\\\"$<TARGET_FILE:" <> name <> "_madevent_matrix>\\\", \\\"$<TARGET_FILE:" <>
+      name <> "_process>\\\", \\\"${SPINAS_LIBRARY}\\\"],\\n  \\\"CXXRuntime\\\": \\\"${HEPCAT_MADEVENT_CXX_RUNTIME}\\\",\\n  \\\"RuntimeLibraryDirectories\\\": [\\\"${HEPCAT_MADEVENT_RUNTIME_DIRECTORY}\\\"]\\n}\\n\")", ""}, "\n"]];
+
+spinasMadEventProject[dir_String, name_String, ir_Association, config_Association] :=
+  If[config["Status"] =!= "AVAILABLE", <|"Files" -> <||>, "Contents" -> <||>|>, <|
+    "Files" -> AssociationThread[{"MadEventBuilder", "MadEventSource", "MadEventMain", "MadEventConfiguration"},
+      FileNameJoin[{dir, #}] & /@ {"madevent-runtime.py", "madevent-spinas.cpp", "madevent-main.cpp", "madevent-config.json"}],
+    "Contents" -> <|"MadEventBuilder" -> Import[FileNameJoin[{$spinasExportSourceDirectory, "madevent-runtime.py"}], "Text"],
+      "MadEventSource" -> spinasMadEventSource[name, ir, config],
+      "MadEventMain" -> spinasMadEventMain[name, config, dir],
+      "MadEventConfiguration" -> ExportString[config, "RawJSON"]|>|>];
+
+spinasMadEventREADME[name_String, config_Association] := If[config["Status"] =!= "AVAILABLE", "", StringRiffle[{
+  "", "## MadEvent integration using the HEPCAT amplitude", "",
+  "The same MadGraphDirectory, MadGraphModel, particle restriction and parameter matching also configure a numerical MadEvent backend. Build the ordinary project, then run `./build/" <> name <> "_madevent`. The first run creates a private `madevent/` process and replaces its numerical matrix kernel with the supplied HEPCAT/SPINAS amplitude. MadGraph still supplies the phase-space mappings, integration, cuts, unweighting and Les Houches event output. Its independent reference validator remains unchanged.",
+  "Use `./build/" <> name <> "_madevent --prepare` to create and compile without starting a run, `--command-file commands.txt` for standard MadEvent commands, or `--run run_name` to generate events. `--run-card FILE` and `--param-card FILE` select cards before a run; `--help` lists the launcher options. Edit the private process cards to change beams, cuts, event counts, masses and couplings as in an ordinary MadEvent process.",
+  "The matrix kernel receives current evaluated UFO model parameters on every call, including parameter-card updates. It reuses one SPINAS cache per numerical thread and updates masses before momenta. Unsupported mappings, complex parameters, changed massless/massive categories or failed evaluations stop the run. The installed MadGraph source and models are not edited.",
+  "The returned kernel is raw |amp|^2 for each selected helicity and each massive spin. MadEvent performs incoming averaging and final identical-species factors exactly once, with the fixed-incoming-helicity average adjusted. Selected outgoing helicities remain labeled contributions. Massive spins are summed in the SPINAS basis; this interface does not provide spin-correlated decays or an identified MadGraph massive-spin basis. Current coverage is colorless leading-order tree amplitudes, not NLO or matched showers. The generated `madevent-spinas.cpp` and `madevent-main.cpp` show the numerical interface explicitly.", ""}, "\n"]];
 
 (* ::Subsection::Closed:: *)
 (*Mathematica Entry Point*)

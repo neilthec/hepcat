@@ -597,7 +597,7 @@
     "paragraphs": [
       "HEPCAT already formats spinor chains as brackets in notebooks. PlainText and TeX produce text representations. SPINAS is an expression formatter; WriteSPINASProcess writes the complete numerical process, build files and validation support.",
       "For numerical code, specify the physical incoming and outgoing process so HEPCAT can cross its all-incoming analytic expression. Group massless helicity choices for the same physical process in one export. Spin sums square each fixed-spin amplitude before summing and apply the declared averages and identical-particle factors.",
-      "Generated random phase-space tests use a time-based default seed, with an explicit seed for reproducibility. Optional CalcHEP and MadGraph comparisons validate the same points independently. MadGraph can report each massless-helicity combination separately. The direct n_calchep integration backend instead uses the exported HEPCAT amplitude as its matrix element."
+      "Generated random phase-space tests use a time-based default seed, with an explicit seed for reproducibility. Optional CalcHEP and MadGraph comparisons validate the same points independently. MadGraph can report each massless-helicity combination separately. The direct n_calchep and MadEvent numerical bridges instead use the exported HEPCAT amplitude as their matrix element."
     ],
     "sections": [
       {

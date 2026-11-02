@@ -580,7 +580,7 @@
   },
   {
     "name": "WriteSPINASProcess",
-    "summary": "Writes a complete, readable C++ process using SPINAS, with optional CalcHEP and helicity-resolved MadGraph validation.",
+    "summary": "Writes a complete, readable C++ process using SPINAS, with optional CalcHEP and MadGraph validation and numerical integration.",
     "syntaxes": [
       {
         "input": "WriteSPINASProcess[directory, particles, amplitude, model]",
@@ -611,10 +611,16 @@
       "The independent MadGraph validator generates one unpolarized reference process and compares each exported massless-helicity combination separately. \"RunMadGraphValidation\" -> True builds and runs the check; \"MadGraphPoints\" -> 1000 and \"MadGraphSeed\" -> Automatic are the normal defaults. Massive external spins are summed because the two libraries may use different spin bases.",
       "Specify \"MadGraphDirectory\" and \"MadGraphModel\" explicitly to select the independent reference generator and UFO theory; both default to None. \"MadGraphAllowedParticles\" -> All retains the full chosen model, or a list such as {11, 22} explicitly selects the electron/positron/photon sector. \"MadGraphParameterRules\" supplies external UFO input values when numerical matching needs an override. No theory or particle restriction is inferred from the HEPCAT process.",
       "Generated projects contain validate_madgraph(options) and a process_validate_madgraph executable. ValidateMadGraph provides the corresponding Mathematica entry point, including a simple per-helicity table and optional detailed numerical diagnostics. MadGraph is not required for ordinary SPINAS evaluation.",
+      "The same export also supplies a MadEvent numerical bridge. Independent MadGraph validation evaluates MadGraph's own matrix element; the MadEvent bridge instead evaluates the supplied HEPCAT/SPINAS amplitude inside MadEvent's leading-order integration and event-generation workflow. Both use the explicitly selected MadGraph installation, UFO model and particle restriction.",
+      "The selected UFO model supplies MadEvent's particle information, numerical parameter definitions and phase-space topologies. The HEPCAT/SPINAS expression remains the numerical matrix element. Running the numerical bridge does not by itself establish agreement with MadGraph's independent expression; use the separate validation report for that comparison.",
+      "MadEvent retains its phase-space weights, flux, beam and cut handling, integration and event generation. The bridge must apply the incoming-state average and final identical-particle factor exactly once. Fixed massless helicities remain selected contributions; their normalization is not replaced by an unpolarized result.",
+      "The initial MadEvent bridge supports colorless leading-order tree processes supported by the SPINAS exporter. It does not generate virtual corrections, subtraction terms or a matched next-to-leading-order calculation. Massive SPINAS spin labels must not be interpreted as MadGraph helicity-basis or production-decay correlation data. Massive event spins are left unspecified; a massive polarized beam is not supported by this bridge.",
       "\"MadGraphParameterMap\" maps HEPCAT parameter names to differently named UFO parameters. Used couplings and masses are checked rather than assumed from the external particle names.",
       "MadGraph propagator widths are matched to the amplitude prescription. For bare HEPCAT PropDen denominators, unmatched adjustable reference widths are zeroed; explicit reference width rules and matched width parameters are preserved. Detailed validation reports record this choice.",
       "The return value is the output directory. \"ReturnDetails\" -> True adds generated file paths, build information, normalization metadata and optional validation results.",
-      "When both independent reference checks are requested, both are attempted even if one fails. A requested numerical FAIL, unavailable reference or runtime error returns Failure; its ExportResult contains the generated project and both reference reports. Writing source or finishing compilation is not reported as a physics-validation success."
+      "When both independent reference checks are requested, both are attempted even if one fails. A requested numerical FAIL, unavailable reference or runtime error returns Failure; its ExportResult contains the generated project and both reference reports. Writing source or finishing compilation is not reported as a physics-validation success.",
+      "With MadGraph configured, the exporter writes madevent-spinas.cpp, madevent-runtime.py, madevent-config.json and a small launcher. \"Build\" -> True builds the process_madevent_matrix static library and build/process_madevent executable, with process replaced by ProcessName. MadEvent topology generation is deferred until the launcher is used.",
+      "From the exported directory, run ./build/process_madevent --prepare to create the private MadEvent process. Use ./build/process_madevent for its interactive interface, --command-file path for a standard MadEvent command file, or --run run_name to generate events with the current cards. The private madevent/Cards/run_card.dat and param_card.dat files control the numerical run. Current evaluated UFO parameters are passed to SPINAS at every matrix-element call, so supported coupling and mass changes take effect without rebuilding the exported amplitude. Changing a spinning external particle between massive and massless requires a new export."
     ],
     "examples": [
       {
@@ -640,6 +646,11 @@
       {
         "description": "Select the CalcHEP installation, model and QED sector explicitly for an independent unpolarized comparison. Replace the installation path, model directory and model number with your chosen reference.",
         "input": "calcHEPDirectory = \"/path/to/CalcHEP\";\nWriteSPINASProcess[exportDirectory, {\"e\", \"E\"} -> {\"A\", \"A\"}, entries, knownModel, \"ProcessName\" -> \"eeAA\", \"Overwrite\" -> True, \"CalcHEPDirectory\" -> calcHEPDirectory, \"CalcHEPModel\" -> {feynmanModelDirectory, 2}, \"CalcHEPAllowedParticles\" -> {11, 22}, \"RunCalcHEPValidation\" -> True]",
+        "evaluate": false
+      },
+      {
+        "description": "Export the numerical MadEvent bridge and the independent validator together. Set the installation and model explicitly; this example selects only electrons, positrons and photons.",
+        "input": "madGraphDirectory = FileNameJoin[{ParentDirectory[hepcatDirectory], \"MadGraph\"}];\nWriteSPINASProcess[exportDirectory, {\"e\", \"E\"} -> {\"A\", \"A\"}, entries, knownModel, \"ProcessName\" -> \"eeAA\", \"Overwrite\" -> True, \"Build\" -> True, \"MadGraphDirectory\" -> madGraphDirectory, \"MadGraphModel\" -> \"sm-full\", \"MadGraphAllowedParticles\" -> {11, 22}]",
         "evaluate": false
       }
     ],
@@ -695,7 +706,8 @@
       "The current numerical validator supports colorless tree-level processes with two incoming particles, at least two outgoing particles and external spins through one. It requires MadGraph, a Fortran compiler, SPINAS and the normal C++ build tools. Missing installations or unsupported inputs are reported explicitly; ordinary source-only SPINAS exports remain usable.",
       "Validation can expose numerical conditioning as well as incorrect formulas. Expressions involving nearly cancelling terms or inverse small masses may lose precision at high energy even when an equivalent compact form is stable. Inspect detailed failures before changing tolerances.",
       "The directory overload expects a project containing the MadGraph support emitted by the current WriteSPINASProcess. Regenerate an older project with that exporter before using this overload.",
-      "An exported project retains its process, model parameters, reference configuration and fixed-helicity selection. The directory overload changes sampling controls such as points, seed, tolerances, energy bounds and the reference preparation budget. To change a stored export setting, regenerate the project or use the amplitude-and-model overload; those overrides are rejected rather than silently ignored."
+      "An exported project retains its process, model parameters, reference configuration and fixed-helicity selection. The directory overload changes sampling controls such as points, seed, tolerances, energy bounds and the reference preparation budget. To change a stored export setting, regenerate the project or use the amplitude-and-model overload; those overrides are rejected rather than silently ignored.",
+      "The same WriteSPINASProcess project can also contain a MadEvent numerical launcher. Use ValidateMadGraph for the independent per-helicity amplitude comparison and the generated process_madevent launcher for numerical integration and event generation with the supplied SPINAS amplitude."
     ],
     "examples": [
       {

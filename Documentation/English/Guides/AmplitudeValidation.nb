@@ -70,7 +70,7 @@ combination."}], "GuideText"],
   Cell[TextData[{ButtonBox["WriteSPINASProcess", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/WriteSPINASProcess"], ": ", "Writes a \
 complete, readable C++ process using SPINAS, with optional CalcHEP and \
-helicity-resolved MadGraph validation."}], "GuideText"],
+MadGraph validation and numerical integration."}], "GuideText"],
   Cell[TextData[{ButtonBox["Formatting, Model Output and SPINAS Export",
       BaseStyle -> "Link", ButtonData ->
        "paclet:HEPCAT/guide/FormattingAndExport"]}], "GuideMoreAbout"],

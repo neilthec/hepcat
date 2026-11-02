@@ -574,7 +574,7 @@ helicity-related {particles, amplitude} entries into one \
 class.\nWriteSPINASProcess[directory, incoming -> outgoing, entries, model] \
 declares the physical process and crosses its outgoing legs \
 automatically.\nWrites a complete, readable C++ process using SPINAS, with \
-optional CalcHEP and helicity-resolved MadGraph validation.",
+optional CalcHEP and MadGraph validation and numerical integration.",
  "ConstructiveDiagrams`ValidateMadGraph" -> "ValidateMadGraph[directory] \
 builds and runs the MadGraph validator of a SPINAS project exported by the \
 current WriteSPINASProcess.\nValidateMadGraph[incoming -> outgoing, entries, \

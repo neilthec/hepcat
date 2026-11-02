@@ -41,6 +41,7 @@ TEST_SUITES = (
     "spinas-build-tools-tests.wl",
     "spinas-calchep-tests.wl",
     "spinas-madgraph-tests.wl",
+    "spinas-madevent-tests.wl",
     "spinas-calchep-numerical-tests.wl",
     "spinas-native-project-tests.wl",
     "spinas-polarization-tests.wl",
@@ -66,7 +67,8 @@ TEST_SUITES = (
 INTEGRATION_TEST_SUITES = ("physical-construction-integration-tests.wl",
                           "fermion-construction-integration-tests.wl",
                           "spinas-calchep-integration-tests.wl",
-                          "spinas-madgraph-integration-tests.wl")
+                          "spinas-madgraph-integration-tests.wl",
+                          "spinas-madevent-integration-tests.wl")
 
 
 def main():

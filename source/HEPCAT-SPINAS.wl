@@ -2017,7 +2017,7 @@ WriteSPINASProcess[directory_String, process : {___String}, amplitude_, model_, 
    overwrite = OptionValue["Overwrite"], examples = OptionValue["RunExamples"],
    details = OptionValue["ReturnDetails"], buildRequested = OptionValue["Build"],
    cmake = OptionValue["CMakeExecutable"], fixed, manifest, fullOptions, calchep, validationProject,
-   numerical, numericalProject, madgraph, madgraphProject, code},
+   numerical, numericalProject, madgraph, madgraphProject, madevent, madeventProject, code},
   fullOptions = Join[Association[Options[WriteSPINASProcess]], Association[Reverse[{opts}]]];
   If[Complement[Keys[options],First /@ Options[WriteSPINASProcess]] =!= {} ||
       !StringQ[name] || !TrueQ[spinasCppIdentifierQ[name]] || StringTrim[directory] === "" || !AllTrue[{overwrite,examples,details,buildRequested},MemberQ[{True,False},#]&] ||
@@ -2034,6 +2034,7 @@ WriteSPINASProcess[directory_String, process : {___String}, amplitude_, model_, 
   calchep = spinasCalcHEPConfiguration[ir, data, fullOptions];
   numerical = spinasCalcHEPNumericalConfiguration[ir, data, fullOptions];
   madgraph = spinasMadGraphConfiguration[ir, data, fullOptions, calchep];
+  madevent = spinasMadEventConfiguration[dir, name, ir, madgraph];
   If[TrueQ[fullOptions["RunMadGraphValidation"]] && madgraph["Status"] =!= "AVAILABLE",
     Return[Failure["MadGraphUnavailable", <|"MessageTemplate" -> madgraph["Reason"]|>]]];
   If[TrueQ[fullOptions["RunCalcHEPValidation"]] && calchep["Status"] =!= "AVAILABLE",
@@ -2057,7 +2058,8 @@ WriteSPINASProcess[directory_String, process : {___String}, amplitude_, model_, 
   validationProject = spinasCalcHEPProject[dir, name, ir, calchep];
   numericalProject = spinasCalcHEPNumericalProject[dir, name, numerical];
   madgraphProject = spinasMadGraphProject[dir, name, madgraph];
-  files = Join[files, validationProject["Files"], numericalProject["Files"], madgraphProject["Files"]];
+  madeventProject = spinasMadEventProject[dir, name, ir, madevent];
+  files = Join[files, validationProject["Files"], numericalProject["Files"], madgraphProject["Files"], madeventProject["Files"]];
   If[!TrueQ[overwrite] && AnyTrue[Values[files],FileExistsQ],
     Return[Failure["SPINASFilesExist",<|"MessageTemplate"->"Generated project files already exist. Use Overwrite -> True to replace them.","Directory"->dir|>]]];
   If[FileExistsQ[dir] && !DirectoryQ[dir],Return[Failure["SPINASDirectory",<|"Directory"->dir|>]]];
@@ -2071,15 +2073,16 @@ WriteSPINASProcess[directory_String, process : {___String}, amplitude_, model_, 
     "Masses"->N[ir["MassValues"]], "Spin2"->ir["Spin2"], "Helicities"->ir["Helicities"],
     "CalcHEPValidation" -> Join[calchep, <|"SPINASNormalizationFactor" -> N[calchep["SPINASNormalizationFactor"]]|>],
     "MadGraphValidation" -> Join[madgraph, <|"Normalization" -> N[madgraph["Normalization"]]|>],
+    "MadEventNumerical" -> madevent,
     "CalcHEPNumerical" -> spinasCalcHEPNumericalPublicConfiguration[numerical],
     "CodeStyle" -> code["Style"]|>;
   contents = <|"Header"->code["Header"], "Source"->code["Source"],
     "Demo"->spinasProjectMain[name], "Runtime"->Import[runtime,"Text"],
     "CMake"->spinasProjectCMake[name,root,precision] <> spinasCalcHEPCMake[name,calchep] <>
-      spinasCalcHEPNumericalCMake[name, numerical] <> spinasMadGraphCMake[name],
+      spinasCalcHEPNumericalCMake[name, numerical] <> spinasMadGraphCMake[name] <> spinasMadEventCMake[name, madevent],
     "README"->spinasProjectREADME[name,ir,precision] <> spinasCalcHEPREADME[name,calchep] <>
-      spinasCalcHEPNumericalREADME[numerical] <> spinasMadGraphREADME[name, madgraph]|>;
-  contents = Join[contents, validationProject["Contents"], numericalProject["Contents"], madgraphProject["Contents"]];
+      spinasCalcHEPNumericalREADME[numerical] <> spinasMadGraphREADME[name, madgraph] <> spinasMadEventREADME[name, madevent]|>;
+  contents = Join[contents, validationProject["Contents"], numericalProject["Contents"], madgraphProject["Contents"], madeventProject["Contents"]];
   If[!AllTrue[Values[contents],StringQ],Return[Failure["SPINASGeneration",<|"MessageTemplate"->"The C++ project could not be generated."|>]]];
   written = Quiet[Check[
     If[!DirectoryQ[dir],CreateDirectory[dir,CreateIntermediateDirectories->True]];
@@ -2090,6 +2093,7 @@ WriteSPINASProcess[directory_String, process : {___String}, amplitude_, model_, 
     "Build"-><|"Status"->"NOT_REQUESTED"|>,"Examples"-><|"Status"->"NOT_REQUESTED"|>,
     "CalcHEPValidation" -> <|"Status" -> "NOT_REQUESTED", "Configuration" -> calchep|>,
     "MadGraphValidation" -> <|"Status" -> "NOT_REQUESTED", "Configuration" -> madgraph|>,
+    "MadEventNumerical" -> madevent,
     "CalcHEPNumerical" -> Join[spinasCalcHEPNumericalPublicConfiguration[numerical],
       <|"Executable" -> FileNameJoin[{dir, "build", "n_calchep"}],
         "SessionDirectory" -> FileNameJoin[{dir, "calchep"}]|>],
@@ -2439,7 +2443,7 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
   {options = Join[Association[Options[WriteSPINASProcess]], Association[Reverse[Flatten[opts]]]],
    name, root, precision, ir, dir = ExpandFileName[directory], data, runtime,
    files, contents, written, result, build, cmake, manifest, calchep, validationProject,
-   numerical, numericalProject, madgraph, madgraphProject, code},
+   numerical, numericalProject, madgraph, madgraphProject, madevent, madeventProject, code},
   name = options["ProcessName"];
   cmake = options["CMakeExecutable"];
   If[Complement[First /@ Flatten[opts], First /@ Options[WriteSPINASProcess]] =!= {} ||
@@ -2458,6 +2462,7 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
   calchep = spinasCalcHEPConfiguration[ir, data, options];
   numerical = spinasCalcHEPNumericalConfiguration[ir, data, options];
   madgraph = spinasMadGraphConfiguration[ir, data, options, calchep];
+  madevent = spinasMadEventConfiguration[dir, name, ir, madgraph];
   If[TrueQ[options["RunMadGraphValidation"]] && madgraph["Status"] =!= "AVAILABLE",
     Return[Failure["MadGraphUnavailable", <|"MessageTemplate" -> madgraph["Reason"]|>]]];
   If[TrueQ[options["RunCalcHEPValidation"]] && calchep["Status"] =!= "AVAILABLE",
@@ -2475,7 +2480,8 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
   validationProject = spinasCalcHEPProject[dir, name, ir, calchep];
   numericalProject = spinasCalcHEPNumericalProject[dir, name, numerical];
   madgraphProject = spinasMadGraphProject[dir, name, madgraph];
-  files = Join[files, validationProject["Files"], numericalProject["Files"], madgraphProject["Files"]];
+  madeventProject = spinasMadEventProject[dir, name, ir, madevent];
+  files = Join[files, validationProject["Files"], numericalProject["Files"], madgraphProject["Files"], madeventProject["Files"]];
   If[!TrueQ[options["Overwrite"]] && AnyTrue[Values[files], FileExistsQ],
     Return[Failure["SPINASFilesExist", <|"MessageTemplate" -> "Generated project files already exist. Use Overwrite -> True to replace them.", "Directory" -> dir|>]]];
   If[FileExistsQ[dir] && !DirectoryQ[dir], Return[Failure["SPINASDirectory", <|"Directory" -> dir|>]]];
@@ -2495,6 +2501,7 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
     "SpinSumConvention" -> "All external massive spins and selected massless helicities; amp2 averages only unfixed incoming states and includes the outgoing identical-species factorial factor; selected outgoing helicities are labeled contributions; no color sum.",
     "CalcHEPValidation" -> Join[calchep, <|"SPINASNormalizationFactor" -> N[calchep["SPINASNormalizationFactor"]]|>],
     "MadGraphValidation" -> Join[madgraph, <|"Normalization" -> N[madgraph["Normalization"]]|>],
+    "MadEventNumerical" -> madevent,
     "CalcHEPNumerical" -> spinasCalcHEPNumericalPublicConfiguration[numerical],
     "CodeStyle" -> code["Style"]|>;
   If[AssociationQ[ir["PhysicalProcess"]], manifest = Join[manifest,
@@ -2503,10 +2510,10 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
     "Source" -> code["Source"], "Demo" -> spinasFamilyProjectMain[name],
     "Runtime" -> Import[runtime, "Text"],
     "CMake" -> spinasProjectCMake[name, root, precision] <> spinasCalcHEPCMake[name, calchep] <>
-      spinasCalcHEPNumericalCMake[name, numerical] <> spinasMadGraphCMake[name],
+      spinasCalcHEPNumericalCMake[name, numerical] <> spinasMadGraphCMake[name] <> spinasMadEventCMake[name, madevent],
     "README" -> spinasFamilyProjectREADME[name, ir, precision] <> spinasCalcHEPREADME[name, calchep] <>
-      spinasCalcHEPNumericalREADME[numerical] <> spinasMadGraphREADME[name, madgraph]|>;
-  contents = Join[contents, validationProject["Contents"], numericalProject["Contents"], madgraphProject["Contents"]];
+      spinasCalcHEPNumericalREADME[numerical] <> spinasMadGraphREADME[name, madgraph] <> spinasMadEventREADME[name, madevent]|>;
+  contents = Join[contents, validationProject["Contents"], numericalProject["Contents"], madgraphProject["Contents"], madeventProject["Contents"]];
   If[!AllTrue[Values[contents], StringQ], Return[Failure["SPINASGeneration", <|"MessageTemplate" -> "The C++ project could not be generated."|>]]];
   written = Quiet[Check[
     If[!DirectoryQ[dir], CreateDirectory[dir, CreateIntermediateDirectories -> True]];
@@ -2518,6 +2525,7 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
     "Examples" -> <|"Status" -> "NOT_REQUESTED"|>,
     "CalcHEPValidation" -> <|"Status" -> "NOT_REQUESTED", "Configuration" -> calchep|>,
     "MadGraphValidation" -> <|"Status" -> "NOT_REQUESTED", "Configuration" -> madgraph|>,
+    "MadEventNumerical" -> madevent,
     "CalcHEPNumerical" -> Join[spinasCalcHEPNumericalPublicConfiguration[numerical],
       <|"Executable" -> FileNameJoin[{dir, "build", "n_calchep"}],
         "SessionDirectory" -> FileNameJoin[{dir, "calchep"}]|>],

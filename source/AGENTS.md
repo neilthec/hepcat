@@ -533,6 +533,22 @@ Explicit amplitude widths remain authoritative; unsupported automatic-width or
 gauge-restoration operations must not silently change the supplied amplitude.
 Test genuine numerical integration and parameter changes in private workspaces,
 without modifying the installed CalcHEP or the user's exported formulas.
+With an explicitly configured MadGraph model, the same `WriteSPINASProcess`
+export also creates a `<ProcessName>_madevent` launcher alongside the independent
+MadGraph validator. `source/madevent-runtime.py` lazily creates a private native
+LO MadEvent process and replaces its raw fixed-spin MATRIX with the exported
+SPINAS amplitude. Keep MadEvent's averaging, final identical-species factor,
+phase-space maps, cuts and event generation; never call `amp2` inside MATRIX or
+fall back to HELAS after a failed evaluation. Synchronize current evaluated UFO
+parameters and masses on each numerical call, reusing cached products across
+spins at a common phase-space point. Preserve the user's cards on later launches.
+The current interface supports colorless tree processes and selected massless
+helicities with complete massive-spin sums. Disable helicity sampling and
+pruning, reject unsupported massive-beam polarization, and label massive LHE
+spins as unspecified. MadSpin, reweighting, colored event flows and NLO need
+separate adapters; do not claim these are provided by this interface. Test native
+survey/refine and unweighted LHE output, live card changes, crossing and exactly
+one normalization factor, with the independent validator left untouched.
 The `spinas-export-tests.wl` suite compiles generated 4-, 5- and 6-point
 projects and checks complex values and spin sums against independent native
 SPINAS expressions. A mixed-helicity eeAA sign difference between the current
