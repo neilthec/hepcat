@@ -2552,6 +2552,13 @@ alternative compete by the same whole-expression complexity rank; a slower or
 larger alternative cannot replace the best completed result. The retained
 `OriginalFractionSpinorIdentities` route records the ordinary edits and their
 denominators. It applies no internal-shell identities to a completed amplitude.
+When a complete checkpoint improves, this alternative can start another short
+search from that checkpoint instead of repeating contraction expansion. The
+searches share the existing preparation deadline and stop on no improvement,
+the finite pass limit, or clock exhaustion. Details retain `CheckpointIterations`,
+`StopReason` and the complete before/after identity route. The best complete
+checkpoint survives an interrupted later search. This exposes successive
+ordinary Schouten steps without claiming a stationary or global minimum.
 
 Completion uses a private forward-product normalization policy for coefficient
 construction, while public preparation retains useful factored polynomials.

@@ -51,6 +51,14 @@ requires exact identity replay after lifting the spectators back. Inverse \
 factors are unchanged by that cofactor route. Only complete improving \
 checkpoints are returned. This final-amplitude route leaves the \
 diagram/channel source partitions used by completion unchanged.", "Notes"],
+  Cell["For completed amplitudes, the original-fraction alternative can \
+continue from each strictly improving ordinary-identity checkpoint. Short \
+searches share the remaining preparation clock rather than restarting \
+contraction expansion. It stops when no better checkpoint is found, its \
+finite pass limit is reached, or the existing time allowance expires. The \
+detailed OriginalFractionSpinorIdentities reduction records \
+CheckpointIterations, StopReason and the complete ordinary identity route. \
+This is a bounded multistep search, not a proof of minimality.", "Notes"],
   Cell["Constructive internal-shell simplification acts on each item's \
 numerator using only that item's mass declarations. Physical PropDen objects \
 stay off shell. A channel row declares only its own cut; completed \

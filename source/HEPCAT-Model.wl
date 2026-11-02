@@ -12150,6 +12150,48 @@ preparationWholeFractionSchouten[expression_, externalRules_List, seconds_ : 12]
     "InternalOnShellConditions" -> {}|>]
 ];
 
+(* Continue from completed ordinary fraction checkpoints, rather than rerunning
+   contraction expansion between useful edits. Every pass has its own short
+   search allowance and all passes share the caller's remaining deadline. *)
+preparationWholeFractionContinuation[expression_, externalRules_List, seconds_ : 36,
+    checkpoint_ : None] := Module[
+  {started = AbsoluteTime[], best, remaining, trial, before, route = {}, attempts = {},
+   finished = True, stop = "NoImprovingCheckpoint", pass = 0, maximumPasses = 8},
+  best = <|"Amplitude" -> expression, "Rank" -> preparationRank[expression],
+    "Route" -> {}, "Status" -> "UNCHANGED"|>;
+  If[!TrueQ[NumericQ[seconds] && seconds > 0],
+    Return[Join[best, <|"Iterations" -> {}, "TimedOut" -> False,
+      "StopReason" -> "NoSearchBudget", "ElapsedTime" -> AbsoluteTime[] - started,
+      "InternalOnShellConditions" -> {}|>]]];
+  remaining[] := Max[0, seconds - (AbsoluteTime[] - started)];
+  finished = TimeConstrained[
+    While[pass < maximumPasses && remaining[] > 0.01,
+      pass++; before = best["Amplitude"];
+      trial = preparationWholeFractionSchouten[before, externalRules, Min[12, remaining[]]];
+      AppendTo[attempts, If[AssociationQ[trial],
+        Join[KeyTake[trial, {"Status", "TimedOut", "ElapsedTime", "AttemptedFractions",
+          "InspectedCandidates"}], <|"Pass" -> pass|>],
+        <|"Pass" -> pass, "Status" -> "UnavailableCheckpoint"|>]];
+      If[!AssociationQ[trial] || !KeyExistsQ[trial, "Amplitude"] ||
+          !residueFiniteQ[trial["Amplitude"]] ||
+          !preparationBetterQ[preparationRank[trial["Amplitude"]], best["Rank"]],
+        stop = "NoImprovingCheckpoint"; Break[]];
+      AppendTo[route, <|"Operation" -> "WholeFractionContinuation",
+        "Before" -> before, "After" -> trial["Amplitude"],
+        "IdentityRoute" -> Lookup[trial, "Route", {}],
+        "InternalOnShellConditions" -> {}|>];
+      (* Commit the complete expression and replay together. A later timeout
+         must not expose an incomplete edit or lose this accepted checkpoint. *)
+      best = <|"Amplitude" -> trial["Amplitude"], "Rank" -> preparationRank[trial["Amplitude"]],
+        "Route" -> route, "Status" -> "IMPROVED"|>;
+      If[Head[checkpoint] === Function, checkpoint[best]];
+      stop = If[pass === maximumPasses, "IterationLimit", "SharedTimeBudget"]]; True,
+    seconds, False];
+  Join[best, <|"Iterations" -> attempts, "TimedOut" -> !TrueQ[finished] || remaining[] <= 0.01,
+    "StopReason" -> If[!TrueQ[finished], "SharedTimeBudget", stop],
+    "ElapsedTime" -> AbsoluteTime[] - started, "InternalOnShellConditions" -> {}|>]
+];
+
 (* Compact ordinary external spinor identities within unchanged propagator
    groups. No diagram-local shell assumption is used. Keep only a strict
    whole-expression improvement, including completed checkpoints on timeout. *)
@@ -13747,18 +13789,22 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
       If[TrueQ[eligibleOriginal] && 500 <= LeafCount[original] <= 24000 &&
           !FreeQ[original, _PropDen] &&
           First[snapshotRank[expression]] > First[snapshotRank[original]]/2,
-        fractionSeconds = If[options["TimeConstraint"] === Infinity, 12,
-          Max[0, Min[12, options["TimeConstraint"] - (AbsoluteTime[] - started)]]];
+        fractionSeconds = If[options["TimeConstraint"] === Infinity, 36,
+          Max[0, options["TimeConstraint"] - (AbsoluteTime[] - started)]];
         If[fractionSeconds > 0.01,
           stage = "OriginalFractionSpinorIdentities";
-          fractionCompaction = preparationWholeFractionSchouten[original,
-            preparationExternalRules[rules], fractionSeconds];
+          fractionCompaction = None;
+          fractionCompaction = preparationWholeFractionContinuation[original,
+            preparationExternalRules[rules], fractionSeconds,
+            Function[record, fractionCompaction = record]];
           after = Lookup[fractionCompaction, "Amplitude", original];
           AppendTo[reductions, <|"Operation" -> stage, "Before" -> original,
             "After" -> after, "AlternativeRoute" -> True,
             "InternalOnShellIdentity" -> False, "OnShellChannels" -> {},
             "IdentityRoute" -> Lookup[fractionCompaction, "Route", {}],
-            "SearchTimedOut" -> Lookup[fractionCompaction, "TimedOut", False]|>];
+            "SearchTimedOut" -> Lookup[fractionCompaction, "TimedOut", False],
+            "CheckpointIterations" -> Lookup[fractionCompaction, "Iterations", {}],
+            "StopReason" -> Lookup[fractionCompaction, "StopReason", None]|>];
           If[residueFiniteQ[after],
             rememberCompleted[after, stage];
             If[preparationBetterQ[snapshotRank[after], snapshotRank[expression]], expression = after]]]];
@@ -13766,6 +13812,23 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
     identityStageComplete = True;
     True,
     options["TimeConstraint"], False], failureTag];
+  (* The outer item clock may expire during a later short fraction search.
+     Its callback published the last complete expression and replay atomically,
+     so retain that checkpoint even if the continuation itself could not return. *)
+  If[!TrueQ[outcome] && stage === "OriginalFractionSpinorIdentities" &&
+      AssociationQ[fractionCompaction] && KeyExistsQ[fractionCompaction, "Amplitude"] &&
+      residueFiniteQ[fractionCompaction["Amplitude"]],
+    after = fractionCompaction["Amplitude"];
+    rememberCompleted[after, stage];
+    If[!AnyTrue[reductions, Lookup[#, "Operation", None] === stage &&
+        Lookup[#, "After", None] === after &],
+      AppendTo[reductions, <|"Operation" -> stage, "Before" -> original,
+        "After" -> after, "AlternativeRoute" -> True,
+        "InternalOnShellIdentity" -> False, "OnShellChannels" -> {},
+        "IdentityRoute" -> Lookup[fractionCompaction, "Route", {}],
+        "SearchTimedOut" -> True, "OuterClockCheckpoint" -> True,
+        "CheckpointIterations" -> Lookup[fractionCompaction, "Iterations", {}],
+        "StopReason" -> "SharedTimeBudget"|>]]];
   If[!TrueQ[outcome] && MemberQ[{"PolePreference", "InternalInvariantReduction",
       "RetainedReferenceTrial", "CompareConservedMomentumRoutes", "CompareInvariantRoutes", "ReduceSpinorProducts",
       "CancelAuxiliaryReferencePoles"}, stage] && AssociationQ[referenceFallback],

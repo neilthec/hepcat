@@ -92,6 +92,80 @@ check["conflicting external masses cannot license a reduction",
 check["the helper reports ordinary scope without creating model or numerical assumptions",
   AllTrue[wfResult["Route"], #["ForwardReduction"] === "SpinorProductsAndExternalDiracSchouten" &] &&
     wfResult["AttemptedFractions"] >= 1 && wfResult["InspectedCandidates"] >= 1];
+
+wfContinuation = ConstructiveDiagrams`Private`preparationWholeFractionContinuation[
+  wfExpression, wfRules, 5];
+check["checkpoint continuation preserves the actual ordinary Dirac-Schouten result",
+  wfContinuation["Status"] === "IMPROVED" &&
+    TrueQ[Expand[wfContinuation["Amplitude"] - wfExpected/wfW] === 0]];
+check["every continued real checkpoint retains a complete ordinary replay",
+  wfContinuation["Route"] =!= {} &&
+    First[wfContinuation["Route"]]["Before"] === wfExpression &&
+    Last[wfContinuation["Route"]]["After"] === wfContinuation["Amplitude"] &&
+    AllTrue[Flatten[Lookup[wfContinuation["Route"], "IdentityRoute"], 1], wfReplay] &&
+    wfContinuation["InternalOnShellConditions"] === {}];
+wfContinuationInverse = ConstructiveDiagrams`Private`preparationWholeFractionContinuation[
+  wfExpression/wfBracket, wfRules, 5];
+check["continued checkpoints keep the existing inverse factors unchanged",
+  TrueQ[Expand[wfContinuationInverse["Amplitude"] - wfExpected/(wfW wfBracket)] === 0]];
+wfContinuationZero = ConstructiveDiagrams`Private`preparationWholeFractionContinuation[
+  wfExpression, wfRules, 0];
+check["zero continuation budget leaves the complete input and route unchanged",
+  wfContinuationZero["Amplitude"] === wfExpression && wfContinuationZero["Route"] === {} &&
+    wfContinuationZero["StopReason"] === "NoSearchBudget"];
+
+(* Controlled search checkpoints test scheduling and interrupted-state safety.
+   They are not used as mathematical identities or physical validation. *)
+wfControlPoints = {wfExpression + wfBracket^3 + wfBracket^2,
+  wfExpression + wfBracket^2, wfExpression};
+wfControlCalls = {};
+wfControlResult = Block[{ConstructiveDiagrams`Private`preparationWholeFractionSchouten},
+  ConstructiveDiagrams`Private`preparationWholeFractionSchouten[value_, scope_, budget_] := Module[{position},
+    AppendTo[wfControlCalls, <|"Input" -> value, "Budget" -> budget|>];
+    position = First[FirstPosition[wfControlPoints, value]];
+    <|"Amplitude" -> wfControlPoints[[Min[3, position + 1]]],
+      "Route" -> {<|"ControlledCheckpoint" -> position|>}, "Status" -> "IMPROVED"|>];
+  ConstructiveDiagrams`Private`preparationWholeFractionContinuation[First[wfControlPoints], wfRules, 5]];
+check["continuation starts each new search from its accepted predecessor",
+  Lookup[wfControlCalls, "Input"] === wfControlPoints &&
+    wfControlResult["Amplitude"] === Last[wfControlPoints] &&
+    Length[wfControlResult["Route"]] === 2];
+check["a nominal success without a strict improvement stops continuation",
+  wfControlResult["StopReason"] === "NoImprovingCheckpoint" &&
+    Length[wfControlResult["Iterations"]] === 3];
+check["all continuation searches share a decreasing finite allowance",
+  AllTrue[Lookup[wfControlCalls, "Budget"], 0 < # <= 5 &] &&
+    OrderedQ[Reverse[Lookup[wfControlCalls, "Budget"]]]];
+wfInterruptedCalls = 0;
+wfContinuationInterrupted = Block[{ConstructiveDiagrams`Private`preparationWholeFractionSchouten},
+  ConstructiveDiagrams`Private`preparationWholeFractionSchouten[value_, scope_, budget_] :=
+    (wfInterruptedCalls++;
+      If[wfInterruptedCalls > 1, Pause[1]];
+      <|"Amplitude" -> wfControlPoints[[2]], "Route" -> {<|"ControlledCheckpoint" -> 1|>},
+        "Status" -> "IMPROVED"|>);
+  ConstructiveDiagrams`Private`preparationWholeFractionContinuation[First[wfControlPoints], wfRules, 0.15]];
+check["an interrupted later search retains the complete earlier expression and replay",
+  wfContinuationInterrupted["Amplitude"] === wfControlPoints[[2]] &&
+    Length[wfContinuationInterrupted["Route"]] === 1 &&
+    Last[wfContinuationInterrupted["Route"]]["After"] === wfContinuationInterrupted["Amplitude"] &&
+    wfContinuationInterrupted["Rank"] ===
+      ConstructiveDiagrams`Private`preparationRank[wfContinuationInterrupted["Amplitude"]] &&
+    TrueQ[wfContinuationInterrupted["TimedOut"]]];
+wfPublishedCheckpoint = None; wfInterruptedCalls = 0;
+wfOuterInterrupted = Block[{ConstructiveDiagrams`Private`preparationWholeFractionSchouten},
+  ConstructiveDiagrams`Private`preparationWholeFractionSchouten[value_, scope_, budget_] :=
+    (wfInterruptedCalls++;
+      If[wfInterruptedCalls > 1, Pause[1]];
+      <|"Amplitude" -> wfControlPoints[[2]], "Route" -> {<|"ControlledCheckpoint" -> 1|>},
+        "Status" -> "IMPROVED"|>);
+  TimeConstrained[ConstructiveDiagrams`Private`preparationWholeFractionContinuation[
+    First[wfControlPoints], wfRules, 5, Function[record, wfPublishedCheckpoint = record]],
+    0.15, $TimedOut]];
+check["an outer caller clock can recover the published complete expression and replay",
+  wfOuterInterrupted === $TimedOut && AssociationQ[wfPublishedCheckpoint] &&
+    wfPublishedCheckpoint["Amplitude"] === wfControlPoints[[2]] &&
+    Length[wfPublishedCheckpoint["Route"]] === 1 &&
+    Last[wfPublishedCheckpoint["Route"]]["After"] === wfPublishedCheckpoint["Amplitude"]];
 Print["WHOLE FRACTION SCHOUTEN CHECKS: ", checks, "; FAILURES: ", Length[failures]];
 If[failures === {}, Print["HEPCAT_TEST_COMPLETED:whole-fraction-schouten-tests.wl"], Print[failures]];
 Quit[If[failures === {}, 0, 1]];

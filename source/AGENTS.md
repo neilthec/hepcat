@@ -1234,6 +1234,11 @@ external Dirac contractions. It competes against the existing route by the
 same whole-expression rank and retains completed checkpoints and replay
 records. No inverse factor or internal mass shell may be changed by this
 completed-amplitude alternative.
+Its original-fraction search may continue from a strictly improving checkpoint
+within the same remaining preparation clock. Do not restart contraction
+expansion between those short searches. Retain the full sequential replay,
+finite pass bound, and the last completed expression on timeout; an improved
+checkpoint is not a proof of minimality.
 
 Automatic fit samples are at least four, increasing with actual unknown count
 and a conservative estimate of coherent-spin equations per channel. Massive
