@@ -4703,8 +4703,28 @@ highEnergyGrowthString[power_] := If[MissingQ[power], "Not determined",
 highEnergyMomentumMatrix[energy_, {x_, y_, z_}] :=
   {{energy + z, x - I y}, {x + I y, energy - z}};
 
-highEnergyDirectionBasis[vector_List] := Module[{r = Sqrt[vector.vector], x, y, z},
+highEnergyRealNorm[vector_List] := Module[{scale = Max[Abs[vector]]},
+  If[TrueQ[scale == 0], 0, scale Sqrt[Quiet[Total[(vector/scale)^2],General::munfl]]]
+];
+highEnergyDirectionBasis[vector_List] := Module[
+  {r, x, y, z, transverse, large, small, real},
   {x, y, z} = vector;
+  real = AllTrue[vector, externalShellRealFiniteQ] &&
+    AnyTrue[vector, Precision[#] =!= Infinity &];
+  r = If[real, highEnergyRealNorm[vector], Sqrt[vector.vector]];
+  (* On the real south hemisphere rationalize r+z with x^2+y^2.
+     Keep the same azimuthal phases as the original north-chart formula. *)
+  If[real && !TrueQ[r == 0],
+    If[TrueQ[z < 0],
+      If[TrueQ[x == 0 && y == 0], Return[{{0, -1}, {1, 0}}]];
+      transverse = highEnergyRealNorm[{x, y}];
+      large = Sqrt[(1 - z/r)/2];
+      small = (transverse/r)/(2 large);
+      Return[{{small, -((x - I y)/transverse) large},
+        {((x + I y)/transverse) large, small}}],
+      large = Sqrt[(1 + z/r)/2];
+      Return[{{large, (-x/r + I y/r)/(2 large)},
+        {(x/r + I y/r)/(2 large), large}}]]];
   If[TrueQ[r + z == 0], {{0, -1}, {1, 0}},
     {{r + z, -x + I y}, {x + I y, r + z}}/Sqrt[2 r (r + z)]]
 ];

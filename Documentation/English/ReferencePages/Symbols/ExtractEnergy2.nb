@@ -13,13 +13,24 @@ particle.", "Notes"],
          " ", "i", ",", " ", "energy", ",", " ", "momentumMagnitude", ",",
          " ", "theta", ",", " ", "phi", "]"}]], "InlineFormula"], "  ", "repl\
 aces supported helicity and indexed massive spinor endpoints on particle i."}]\
-, "Usage"], Cell["Details", "NotesSection"], Cell["This is the second stage \
-of ExtractEnergy. It uses sqrt(E+p) and sqrt(E-p) for massive components, and \
-sqrt(2E) for massless helicity spinors.", "Notes"],
-  Cell["Explicit massive index values are +1/2 or -1/2. Chirality, variance \
-and endpoint position determine the correct row or column and signs.",
-   "Notes"], Cell["The returned SpinorChain can still contain vectors. \
-ExtractEnergy performs the final conversion to Dot and Tr.", "Notes"],
+, "Usage"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"ExtractEnergy2", "[", "expr", ",",
+         " ", "i", ",", " ", "energy", ",", " ", "momentumMagnitude", ",",
+         " ", "theta", ",", " ", "phi", ",", " ", "mass", "]"}]],
+      "InlineFormula"], "  ", "also supplies the known external on-shell mass \
+for stable numerical components."}], "Usage"],
+  Cell["Details", "NotesSection"], Cell["This is the second stage of \
+ExtractEnergy. It uses sqrt(E+p) and sqrt(E-p) for massive components, and \
+sqrt(2E) for massless helicity spinors. With a known on-shell mass and \
+supported positive-energy numerical inputs, the small massive component uses \
+abs(m)/sqrt(E+p).", "Notes"], Cell["Explicit massive index values are +1/2 or \
+-1/2. Chirality, variance and endpoint position determine the correct row or \
+column and signs.", "Notes"], Cell["The returned SpinorChain can still \
+contain vectors. ExtractEnergy performs the final conversion to Dot and Tr.",
+   "Notes"], Cell["The optional trailing mass is used only by the supported \
+real positive-energy on-shell numerical route. Omitting it preserves the \
+original formulas; negative-energy, complex and clearly off-shell inputs \
+retain the original branch behavior.", "Notes"],
   Cell["Examples", "PrimaryExamplesSection"],
   Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
      Cell["Evaluate this setup once before the examples. The paths refer to \

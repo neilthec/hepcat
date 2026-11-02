@@ -62,18 +62,22 @@ rational geometries. If an accidental physical pole invalidates one geometry, \
 a fresh geometry is tried before the real center-of-mass fallback. Acceptance \
 uses only external shells, conservation, spinor-basis consistency and nonzero \
 physical propagators, never amplitude agreement. Details retain rejected cuts \
-and geometry attempts.", "Notes"], Cell["Default numerical parameter values \
-come from the model. \"ParameterRules\" locally overrides selected values \
-without changing the symbolic amplitude. \"RandomSeed\" -> Automatic chooses \
-a time-based seed once; provide an integer to replay samples.", "Notes"],
-  Cell["The ordinary table is deliberately short. \"Output\" -> \"Residues\" \
-shows calculated and expected sampled values, \"Summary\" counts statuses, \
-and \"Details\" retains the complete report. Other focused outputs include \
-\"HighEnergy\", \"References\" and \"Feynman\".", "Notes"],
-  Cell["PASS, Opp Sign, FAIL and UNRESOLVED describe the performed tests. \
-They do not establish a generic symbolic reconstruction or uniqueness \
-theorem. Do not interpret a disabled or unresolved test as a pass.",
-   "Notes"], Cell["Independent checks can use \"Parallelization\" -> \
+and geometry attempts.", "Notes"], Cell["Numerical external spinor bases use \
+known masses and stable real direction components to avoid cancellation in \
+highly boosted or nearly axial configurations. Exact and complex chart \
+formulas retain their analytic branches; internal virtualities are not \
+assigned an external mass shell.", "Notes"], Cell["Default numerical \
+parameter values come from the model. \"ParameterRules\" locally overrides \
+selected values without changing the symbolic amplitude. \"RandomSeed\" -> \
+Automatic chooses a time-based seed once; provide an integer to replay \
+samples.", "Notes"], Cell["The ordinary table is deliberately short. \
+\"Output\" -> \"Residues\" shows calculated and expected sampled values, \
+\"Summary\" counts statuses, and \"Details\" retains the complete report. \
+Other focused outputs include \"HighEnergy\", \"References\" and \
+\"Feynman\".", "Notes"], Cell["PASS, Opp Sign, FAIL and UNRESOLVED describe \
+the performed tests. They do not establish a generic symbolic reconstruction \
+or uniqueness theorem. Do not interpret a disabled or unresolved test as a \
+pass.", "Notes"], Cell["Independent checks can use \"Parallelization\" -> \
 Automatic and \"MaxKernels\" -> Automatic. Set False or 1 for serial \
 execution; effective speed depends on expression size and worker setup cost."\
 , "Notes"], Cell["Options", "NotesSection"],

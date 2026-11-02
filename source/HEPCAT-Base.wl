@@ -2532,7 +2532,86 @@ res
 
 
 (* ::Input::Initialization:: *)
-ExtractEnergy[amp_,particleSpins_List]:=Module[{res=amp,particleSpin},
+(* Explicit external masses are optional. Keep these arithmetic heads inert
+   until kinematics are numerical, including the usual symbolic /. workflow.
+   The consistency check rejects resolved off-shell data; it cannot infer a
+   tiny mass from already rounded energy and momentum values. *)
+Begin["ConstructiveDiagrams`Private`"];
+externalShellRealFiniteQ[value_] := NumericQ[value] &&
+  TrueQ[Element[value, Reals] && Abs[value] < Infinity];
+externalShellNumericalQ[energy_, momentum_, mass_] := Module[
+  {values = {energy, momentum, mass}, scale, precisions, residual, uncertainty},
+  If[!AllTrue[values, externalShellRealFiniteQ] ||
+      !TrueQ[energy >= 0 && momentum >= 0], Return[False]];
+  scale = Max[Abs[values]];
+  If[TrueQ[scale == 0], Return[True]];
+  precisions = Precision /@ values /. MachinePrecision -> $MachinePrecision;
+  If[Min[precisions] === Infinity,
+    Return[TrueQ[Quiet[RootReduce[(energy - momentum) (energy + momentum) - mass^2]] == 0]]];
+  If[Min[Take[precisions, 2]] < 4, Return[False]];
+  (* Weight each supplied uncertainty by its own invariant contribution.
+     A low-precision tiny mass must not hide resolved off-shell E,p data. *)
+  uncertainty = Quiet[64 Total[MapThread[
+    If[#2 === Infinity, 0, #1^2 10^-#2] &, {values/scale, precisions}]]];
+  residual = Quiet[(energy/scale - momentum/scale) (energy/scale + momentum/scale) - (mass/scale)^2];
+  TrueQ[Abs[residual] <= uncertainty]
+];
+externalShellLargeRoot[energy_, momentum_] := Module[{scale = Max[energy, momentum]},
+  If[TrueQ[scale == 0], 0, Sqrt[scale] Sqrt[energy/scale + momentum/scale]]
+];
+externalShellRoot[energy_?NumericQ, momentum_?NumericQ, mass_?NumericQ, sign : (-1 | 1)] :=
+  If[externalShellNumericalQ[energy, momentum, mass],
+    If[sign === 1, externalShellLargeRoot[energy, momentum],
+      If[TrueQ[mass == 0], 0, Abs[mass]/externalShellLargeRoot[energy, momentum]]],
+    Sqrt[energy + sign momentum]];
+externalShellDifference[energy_?NumericQ, momentum_?NumericQ, mass_?NumericQ] :=
+  If[externalShellNumericalQ[energy, momentum, mass],
+    externalShellRoot[energy, momentum, mass, -1]^2, energy - momentum];
+externalShellDiagonal[energy_?NumericQ, momentum_?NumericQ, mass_?NumericQ, theta_, sign : (-1 | 1)] :=
+  If[externalShellNumericalQ[energy, momentum, mass],
+    externalShellRoot[energy, momentum, mass, -1]^2 +
+      2 momentum If[sign === 1, Cos[theta/2]^2, Sin[theta/2]^2],
+    energy + sign momentum Cos[theta]];
+externalShellScalarProduct[
+    first : {e1_?NumericQ, p1_?NumericQ, theta1_, phi1_, m1_?NumericQ},
+    second : {e2_?NumericQ, p2_?NumericQ, theta2_, phi2_, m2_?NumericQ}] := Module[{d1, d2},
+  If[externalShellNumericalQ[e1, p1, m1] && externalShellNumericalQ[e2, p2, m2],
+    If[first === second, Return[m1^2]];
+    d1 = externalShellRoot[e1, p1, m1, -1]^2;
+    d2 = externalShellRoot[e2, p2, m2, -1]^2;
+    p1 d2 + p2 d1 + d1 d2 + 2 p1 p2 (Sin[(theta1 - theta2)/2]^2 +
+      Sin[theta1] Sin[theta2] Sin[(phi1 - phi2)/2]^2),
+    e1 e2 - p1 p2 (Cos[theta1] Cos[theta2] +
+      Sin[theta1] Sin[theta2] Cos[phi1 - phi2])]
+];
+End[];
+
+Options[ExtractEnergy] = {"MassRules" -> {}};
+ExtractEnergy::mass = "MassRules must be a list of explicit Mass[particle] -> mass rules for the supplied external particles.";
+ExtractEnergy[amp_,particleSpins_List,OptionsPattern[]]:=Module[
+ {res=amp,particleSpin,ConstructiveDiagrams`Private`massRules=OptionValue["MassRules"],ConstructiveDiagrams`Private`external,ConstructiveDiagrams`Private`externalRules,ConstructiveDiagrams`Private`massFor,ConstructiveDiagrams`Private`record},
+If[!MatchQ[ConstructiveDiagrams`Private`massRules,{___Rule}] || !AllTrue[ConstructiveDiagrams`Private`massRules,MatchQ[#,HoldPattern[Mass[_] -> _]]&],
+ Message[ExtractEnergy::mass];Return[$Failed]];
+ConstructiveDiagrams`Private`external=First /@ particleSpins;
+ConstructiveDiagrams`Private`externalRules=Select[ConstructiveDiagrams`Private`massRules,MemberQ[ConstructiveDiagrams`Private`external,First[#][[1]]]&];
+ConstructiveDiagrams`Private`massFor[ConstructiveDiagrams`Private`index_] := If[MemberQ[First /@ ConstructiveDiagrams`Private`massRules,Mass[ConstructiveDiagrams`Private`index]],Mass[ConstructiveDiagrams`Private`index]/.ConstructiveDiagrams`Private`massRules,Automatic];
+ConstructiveDiagrams`Private`record[ConstructiveDiagrams`Private`index_] := {En[ConstructiveDiagrams`Private`index],MomMagnitude[ConstructiveDiagrams`Private`index],Theta[ConstructiveDiagrams`Private`index],Phi[ConstructiveDiagrams`Private`index],ConstructiveDiagrams`Private`massFor[ConstructiveDiagrams`Private`index]};
+If[ConstructiveDiagrams`Private`massRules =!= {},res=res/.{
+ HoldPattern[Power[En[i_] - MomMagnitude[j_],1/2]]/;(i===j &&
+   MemberQ[ConstructiveDiagrams`Private`external,i] && ConstructiveDiagrams`Private`massFor[i]=!=Automatic):>
+   ConstructiveDiagrams`Private`externalShellRoot[En[i],MomMagnitude[i],ConstructiveDiagrams`Private`massFor[i],-1],
+ HoldPattern[Power[En[i_] - MomMagnitude[j_],-1/2]]/;(i===j &&
+   MemberQ[ConstructiveDiagrams`Private`external,i] && ConstructiveDiagrams`Private`massFor[i]=!=Automatic):>
+   1/ConstructiveDiagrams`Private`externalShellRoot[En[i],MomMagnitude[i],ConstructiveDiagrams`Private`massFor[i],-1],
+ HoldPattern[En[i_] - MomMagnitude[j_]]/;(i===j &&
+   MemberQ[ConstructiveDiagrams`Private`external,i] && ConstructiveDiagrams`Private`massFor[i]=!=Automatic):>
+   ConstructiveDiagrams`Private`externalShellDifference[En[i],MomMagnitude[i],ConstructiveDiagrams`Private`massFor[i]],
+ MomProd[i_,j_]/;(MemberQ[ConstructiveDiagrams`Private`external,i] && MemberQ[ConstructiveDiagrams`Private`external,j] &&
+   ConstructiveDiagrams`Private`massFor[i]=!=Automatic && ConstructiveDiagrams`Private`massFor[j]=!=Automatic):>
+   ConstructiveDiagrams`Private`externalShellScalarProduct[ConstructiveDiagrams`Private`record[i],ConstructiveDiagrams`Private`record[j]],
+ SpinorTrace[Mom[i_],Mom[j_]]/;(MemberQ[ConstructiveDiagrams`Private`external,i] && MemberQ[ConstructiveDiagrams`Private`external,j] &&
+   ConstructiveDiagrams`Private`massFor[i]=!=Automatic && ConstructiveDiagrams`Private`massFor[j]=!=Automatic):>
+   2 ConstructiveDiagrams`Private`externalShellScalarProduct[ConstructiveDiagrams`Private`record[i],ConstructiveDiagrams`Private`record[j]]}];
 (*Insert spin indices for massive particles*)
 Do[
 If[Length[particleSpins[[ii]]]>1,particleSpin={particleSpins[[ii,2]],particleSpins[[ii,3]]};,
@@ -2546,9 +2625,9 @@ particleSpin=={1,0},res=1/Sqrt[2] (MakeIndicesExplicit[res,particleSpins[[ii,1]]
 ],{ii,1,Length[particleSpins]}];
 
 (*Extract explicit momentum*)
-Do[res=ExtractEnergy1[res,particleSpins[[ii,1]],En[particleSpins[[ii,1]]],MomMagnitude[particleSpins[[ii,1]]],Theta[particleSpins[[ii,1]]],Phi[particleSpins[[ii,1]]]];
+Do[res=ExtractEnergy1[res,particleSpins[[ii,1]],En[particleSpins[[ii,1]]],MomMagnitude[particleSpins[[ii,1]]],Theta[particleSpins[[ii,1]]],Phi[particleSpins[[ii,1]]],ConstructiveDiagrams`Private`massFor[particleSpins[[ii,1]]]];
 ,{ii,1,Length[particleSpins]}];
-Do[res=ExtractEnergy2[res,particleSpins[[ii,1]],En[particleSpins[[ii,1]]],MomMagnitude[particleSpins[[ii,1]]],Theta[particleSpins[[ii,1]]],Phi[particleSpins[[ii,1]]]];
+Do[res=ExtractEnergy2[res,particleSpins[[ii,1]],En[particleSpins[[ii,1]]],MomMagnitude[particleSpins[[ii,1]]],Theta[particleSpins[[ii,1]]],Phi[particleSpins[[ii,1]]],ConstructiveDiagrams`Private`massFor[particleSpins[[ii,1]]]];
 ,{ii,1,Length[particleSpins]}];
 
 
@@ -2556,14 +2635,17 @@ res/.{
 SpinorChain[a__]:>Dot[a],
 SpinorTrace[a__]:>Tr[Dot[a]],
 MomProdExplicit[a__]:>Dot[a]
-}
+}/.ConstructiveDiagrams`Private`externalRules
 ]
 
 
 (* ::Input::Initialization:: *)
-ExtractEnergy1[amp_,pn_,En_,pm_,\[Theta]_,\[Phi]_]:=Module[{res=amp,pupper,plower,p4vupper,p4vlower},
-plower={{En+pm Cos[\[Theta]],pm Sin[\[Theta]]Exp[-I \[Phi]]},{pm Sin[\[Theta]]Exp[I \[Phi]],En-pm Cos[\[Theta]]}};
-pupper={{En-pm Cos[\[Theta]],-pm Sin[\[Theta]]Exp[-I \[Phi]]},{-pm Sin[\[Theta]]Exp[I \[Phi]],En+pm Cos[\[Theta]]}};
+ExtractEnergy1[amp_,pn_,En_,pm_,\[Theta]_,\[Phi]_,ConstructiveDiagrams`Private`mass_:Automatic]:=Module[
+ {res=amp,pupper,plower,p4vupper,p4vlower,ConstructiveDiagrams`Private`plus,ConstructiveDiagrams`Private`minus},
+{ConstructiveDiagrams`Private`plus,ConstructiveDiagrams`Private`minus}=If[ConstructiveDiagrams`Private`mass===Automatic,{En+pm Cos[\[Theta]],En-pm Cos[\[Theta]]},
+ ConstructiveDiagrams`Private`externalShellDiagonal[En,pm,ConstructiveDiagrams`Private`mass,\[Theta],#]&/@{1,-1}];
+plower={{ConstructiveDiagrams`Private`plus,pm Sin[\[Theta]]Exp[-I \[Phi]]},{pm Sin[\[Theta]]Exp[I \[Phi]],ConstructiveDiagrams`Private`minus}};
+pupper={{ConstructiveDiagrams`Private`minus,-pm Sin[\[Theta]]Exp[-I \[Phi]]},{-pm Sin[\[Theta]]Exp[I \[Phi]],ConstructiveDiagrams`Private`plus}};
 p4vupper={En,pm Sin[\[Theta]]Cos[\[Phi]],pm Sin[\[Theta]]Sin[\[Phi]],pm Cos[\[Theta]]};
 p4vlower={En,-pm Sin[\[Theta]]Cos[\[Phi]],-pm Sin[\[Theta]]Sin[\[Phi]],-pm Cos[\[Theta]]};
 
@@ -2601,31 +2683,34 @@ Mandelstahm[a_,pn]:>2MomProd[pn,a]+Mass[pn]^2+Mass[a]^2
 res];
 
 
-ExtractEnergy2[amp_,pn_,En_,pm_,\[Theta]_,\[Phi]_]:=Module[{res=amp,c=Cos[\[Theta]/2],s=Sin[\[Theta]/2]Exp[I \[Phi]],sc=Sin[\[Theta]/2]Exp[-I \[Phi]]},
+ExtractEnergy2[amp_,pn_,En_,pm_,\[Theta]_,\[Phi]_,ConstructiveDiagrams`Private`mass_:Automatic]:=Module[
+ {res=amp,c=Cos[\[Theta]/2],s=Sin[\[Theta]/2]Exp[I \[Phi]],sc=Sin[\[Theta]/2]Exp[-I \[Phi]],ConstructiveDiagrams`Private`large,ConstructiveDiagrams`Private`small},
+{ConstructiveDiagrams`Private`large,ConstructiveDiagrams`Private`small}=If[ConstructiveDiagrams`Private`mass===Automatic,{Sqrt[En+pm],Sqrt[En-pm]},
+ ConstructiveDiagrams`Private`externalShellRoot[En,pm,ConstructiveDiagrams`Private`mass,#]&/@{1,-1}];
 res=res//.{
 SpinorChain[Spinor["Helicity","Angle",pn],a___]:>SpinorChain[Sqrt[2En]{s,-c},a],
-SpinorChain[Spinor["Spin","Upper","Angle",pn,-1/2],a___]:>SpinorChain[Sqrt[En+pm]{s,-c},a],
+SpinorChain[Spinor["Spin","Upper","Angle",pn,-1/2],a___]:>SpinorChain[ConstructiveDiagrams`Private`large{s,-c},a],
 SpinorChain[a___,Spinor["Helicity","Angle",pn]]:>SpinorChain[a,Sqrt[2En]{c,s}],
-SpinorChain[a___,Spinor["Spin","Upper","Angle",pn,-1/2]]:>SpinorChain[a,Sqrt[En+pm]{c,s}],
-SpinorChain[Spinor["Spin","Upper","Angle",pn,1/2],a___]:>SpinorChain[Sqrt[En-pm]{c,sc},a],
-SpinorChain[a___,Spinor["Spin","Upper","Angle",pn,1/2]]:>SpinorChain[a,Sqrt[En-pm]{-sc,c}],
+SpinorChain[a___,Spinor["Spin","Upper","Angle",pn,-1/2]]:>SpinorChain[a,ConstructiveDiagrams`Private`large{c,s}],
+SpinorChain[Spinor["Spin","Upper","Angle",pn,1/2],a___]:>SpinorChain[ConstructiveDiagrams`Private`small{c,sc},a],
+SpinorChain[a___,Spinor["Spin","Upper","Angle",pn,1/2]]:>SpinorChain[a,ConstructiveDiagrams`Private`small{-sc,c}],
 
-SpinorChain[Spinor["Spin","Lower","Angle",pn,-1/2],a___]:>SpinorChain[Sqrt[En-pm]{c,sc},a],
-SpinorChain[a___,Spinor["Spin","Lower","Angle",pn,-1/2]]:>SpinorChain[a,Sqrt[En-pm]{-sc,c}],
-SpinorChain[Spinor["Spin","Lower","Angle",pn,1/2],a___]:>SpinorChain[-Sqrt[En+pm]{s,-c},a],
-SpinorChain[a___,Spinor["Spin","Lower","Angle",pn,1/2]]:>SpinorChain[a,-Sqrt[En+pm]{c,s}],
+SpinorChain[Spinor["Spin","Lower","Angle",pn,-1/2],a___]:>SpinorChain[ConstructiveDiagrams`Private`small{c,sc},a],
+SpinorChain[a___,Spinor["Spin","Lower","Angle",pn,-1/2]]:>SpinorChain[a,ConstructiveDiagrams`Private`small{-sc,c}],
+SpinorChain[Spinor["Spin","Lower","Angle",pn,1/2],a___]:>SpinorChain[-ConstructiveDiagrams`Private`large{s,-c},a],
+SpinorChain[a___,Spinor["Spin","Lower","Angle",pn,1/2]]:>SpinorChain[a,-ConstructiveDiagrams`Private`large{c,s}],
 
-SpinorChain[Spinor["Spin","Upper","Square",pn,-1/2],a___]:>SpinorChain[-Sqrt[En-pm]{-s,c},a],
-SpinorChain[a___,Spinor["Spin","Upper","Square",pn,-1/2]]:>SpinorChain[a,-Sqrt[En-pm]{c,s}],
+SpinorChain[Spinor["Spin","Upper","Square",pn,-1/2],a___]:>SpinorChain[-ConstructiveDiagrams`Private`small{-s,c},a],
+SpinorChain[a___,Spinor["Spin","Upper","Square",pn,-1/2]]:>SpinorChain[a,-ConstructiveDiagrams`Private`small{c,s}],
 SpinorChain[Spinor["Helicity","Square",pn],a___]:>SpinorChain[Sqrt[2En]{c,sc},a],
-SpinorChain[Spinor["Spin","Upper","Square",pn,1/2],a___]:>SpinorChain[Sqrt[En+pm]{c,sc},a],
+SpinorChain[Spinor["Spin","Upper","Square",pn,1/2],a___]:>SpinorChain[ConstructiveDiagrams`Private`large{c,sc},a],
 SpinorChain[a___,Spinor["Helicity","Square",pn]]:>SpinorChain[a,Sqrt[2En]{sc,-c}],
-SpinorChain[a___,Spinor["Spin","Upper","Square",pn,1/2]]:>SpinorChain[a,Sqrt[En+pm]{sc,-c}],
+SpinorChain[a___,Spinor["Spin","Upper","Square",pn,1/2]]:>SpinorChain[a,ConstructiveDiagrams`Private`large{sc,-c}],
 
-SpinorChain[Spinor["Spin","Lower","Square",pn,-1/2],a___]:>SpinorChain[Sqrt[En+pm]{c,sc},a],
-SpinorChain[a___,Spinor["Spin","Lower","Square",pn,-1/2]]:>SpinorChain[a,Sqrt[En+pm]{sc,-c}],
-SpinorChain[Spinor["Spin","Lower","Square",pn,1/2],a___]:>SpinorChain[Sqrt[En-pm]{-s,c},a],
-SpinorChain[a___,Spinor["Spin","Lower","Square",pn,1/2]]:>SpinorChain[a,Sqrt[En-pm]{c,s}]
+SpinorChain[Spinor["Spin","Lower","Square",pn,-1/2],a___]:>SpinorChain[ConstructiveDiagrams`Private`large{c,sc},a],
+SpinorChain[a___,Spinor["Spin","Lower","Square",pn,-1/2]]:>SpinorChain[a,ConstructiveDiagrams`Private`large{sc,-c}],
+SpinorChain[Spinor["Spin","Lower","Square",pn,1/2],a___]:>SpinorChain[ConstructiveDiagrams`Private`small{-s,c},a],
+SpinorChain[a___,Spinor["Spin","Lower","Square",pn,1/2]]:>SpinorChain[a,ConstructiveDiagrams`Private`small{c,s}]
 
 };
 

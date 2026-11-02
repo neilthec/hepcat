@@ -175,23 +175,29 @@ constructs the conjugate product using the per-particle spins.\nForms the \
 amplitude times its Hermitian conjugate with explicit massive indices.",
  "ConstructiveDiagrams`ExtractEnergy" -> "ExtractEnergy[expr, particleSpins] \
 substitutes momentum matrices and two-component spinors for the listed \
-particles.\nEvaluates supported spinor chains as explicit energy-angle matrix \
-expressions.", "ConstructiveDiagrams`ExtractEnergy1" -> "ExtractEnergy1[expr, \
-i, energy, momentumMagnitude, theta, phi] replaces supported momentum \
-occurrences for particle i.\nSubstitutes one particle's momentum matrices and \
-explicit four-vector components.", "ConstructiveDiagrams`ExtractEnergy2" -> "\
-ExtractEnergy2[expr, i, energy, momentumMagnitude, theta, phi] replaces \
-supported helicity and indexed massive spinor endpoints on particle \
-i.\nSubstitutes explicit two-component spinor rows and columns for one \
-particle.", "ConstructiveDiagrams`MomProdExplicit" -> "MomProdExplicit[upperF\
-ourVector, lowerFourVector] represents the intermediate Dot product before \
-final evaluation.\nStores the intermediate explicit four-vector scalar \
-product used by ExtractEnergy.",
- "ConstructiveDiagrams`SpinToHelicitySpinors" -> "SpinToHelicitySpinors[expr, \
-{particle, spin, helicity}] uses the supported fixed-spin helicity \
-expansion.\nSpinToHelicitySpinors[expr, specification1, specification2, ...] \
-applies up to four specifications in sequence.\nApplies legacy \
-spin-to-helicity expansions to selected massive particle spinors.",
+particles.\nExtractEnergy[expr, particleSpins, \"MassRules\" -> {Mass[i] -> \
+mass, ...}] supplies known external on-shell masses for stable numerical \
+evaluation.\nEvaluates supported spinor chains as explicit energy-angle \
+matrix expressions.", "ConstructiveDiagrams`ExtractEnergy1" -> "ExtractEnergy\
+1[expr, i, energy, momentumMagnitude, theta, phi] replaces supported momentum \
+occurrences for particle i.\nExtractEnergy1[expr, i, energy, \
+momentumMagnitude, theta, phi, mass] also supplies the known external \
+on-shell mass for stable numerical components.\nSubstitutes one particle's \
+momentum matrices and explicit four-vector components.",
+ "ConstructiveDiagrams`ExtractEnergy2" -> "ExtractEnergy2[expr, i, energy, \
+momentumMagnitude, theta, phi] replaces supported helicity and indexed \
+massive spinor endpoints on particle i.\nExtractEnergy2[expr, i, energy, \
+momentumMagnitude, theta, phi, mass] also supplies the known external \
+on-shell mass for stable numerical components.\nSubstitutes explicit \
+two-component spinor rows and columns for one particle.",
+ "ConstructiveDiagrams`MomProdExplicit" -> "MomProdExplicit[upperFourVector, \
+lowerFourVector] represents the intermediate Dot product before final \
+evaluation.\nStores the intermediate explicit four-vector scalar product used \
+by ExtractEnergy.", "ConstructiveDiagrams`SpinToHelicitySpinors" -> "SpinToHe\
+licitySpinors[expr, {particle, spin, helicity}] uses the supported fixed-spin \
+helicity expansion.\nSpinToHelicitySpinors[expr, specification1, \
+specification2, ...] applies up to four specifications in sequence.\nApplies \
+legacy spin-to-helicity expansions to selected massive particle spinors.",
  "ConstructiveDiagrams`ConvertStringAmplitude" -> "ConvertStringAmplitude[tex\
 t, masses] uses the per-particle mass list to distinguish massless and \
 massive spinors.\nConvertStringAmplitude[text, masses, InternalMasses -> \

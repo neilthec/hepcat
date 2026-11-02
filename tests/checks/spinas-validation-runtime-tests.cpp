@@ -48,6 +48,90 @@ int main() {
       random_kinematics(std::array<ldouble, 6>{{0, 1, 0.2L, 0.3L, 2, 0}},
         std::array<std::size_t, 2>{{1, 4}}));
 
+    const ldouble epsilon = std::numeric_limits<ldouble>::epsilon();
+    const ldouble wide = std::pow(ldouble(10),
+      std::numeric_limits<ldouble>::max_exponent10/3);
+    const ldouble tiny = 1/wide;
+    check("physical two-body momenta avoid a quartic overflow",
+      detail::two_body_momentum(wide,0,0) == wide/2);
+    check("physical two-body momenta avoid a quartic underflow",
+      detail::two_body_momentum(tiny,0,0) == tiny/2);
+    const ldouble just_above_threshold = std::nextafter(ldouble(2),ldouble(3));
+    const ldouble threshold_reference = std::sqrt(
+      (just_above_threshold-2)*(just_above_threshold+2))/2;
+    check("near-threshold two-body momenta retain the small physical difference",
+      std::abs(detail::two_body_momentum(just_above_threshold,1,1)/threshold_reference-1)
+        <= 64*epsilon && detail::two_body_momentum(2,1,1) == 0);
+    check("negative-mass helper conventions retain the same squared-mass kinematics",
+      std::abs(detail::two_body_momentum(10,-1,2)/detail::two_body_momentum(10,1,2)-1)
+        <= 64*epsilon);
+
+    const FourMomentum fast_frame = {{std::hypot(ldouble(1e8L),ldouble(1)),0,0,1e8L}};
+    const FourMomentum backward_photon = {{1,0,0,-1}};
+    const auto soft_photon = detail::boost_from_rest(backward_photon,fast_frame,1);
+    const ldouble soft_energy = 1/(fast_frame[0]+fast_frame[3]);
+    check("a backward massless particle keeps positive energy under a large boost",
+      soft_photon[0] > 0 && std::abs(soft_photon[0]/soft_energy-1) <= 64*epsilon
+      && soft_photon[3] == -soft_photon[0]);
+    const ldouble child_mass = 1e-4L;
+    const FourMomentum backward_massive = {{std::hypot(ldouble(1),child_mass),0,0,-1}};
+    const FourMomentum faster_frame = {{std::hypot(ldouble(1e12L),ldouble(1)),0,0,1e12L}};
+    const auto massive_boosted = detail::boost_on_shell_from_rest(
+      backward_massive,child_mass,faster_frame,1);
+    // E' = p(E-1)+(E_frame-p)E, with both small differences rationalized.
+    const ldouble massive_energy = faster_frame[3]*child_mass*
+      (child_mass/(backward_massive[0]+1))
+      + backward_massive[0]/(faster_frame[0]+faster_frame[3]);
+    check("a known on-shell child does not subtract its tiny E-minus-p component",
+      std::isfinite(massive_boosted[0]) &&
+      std::abs(massive_boosted[0]/massive_energy-1) <= 128*epsilon);
+    const FourMomentum oblique_frame = {{std::hypot(ldouble(5e7L),ldouble(1)),3e7L,4e7L,0}};
+    const ldouble oblique_p = std::hypot(oblique_frame[1],oblique_frame[2]);
+    const ldouble nx=oblique_frame[1]/oblique_p,ny=oblique_frame[2]/oblique_p;
+    // Reuse the represented direction so this tests an exactly collinear input.
+    const ldouble oblique_child_energy=std::hypot(nx,ny);
+    const auto oblique_soft = detail::boost_on_shell_from_rest(
+      FourMomentum{{oblique_child_energy,-nx,-ny,0}},0,oblique_frame,1);
+    const ldouble oblique_energy = oblique_child_energy/(oblique_frame[0]+oblique_p);
+    check("stable backward boosts are not tied to a coordinate axis",
+      std::abs(oblique_soft[0]/oblique_energy-1) <= 128*epsilon &&
+      std::abs(oblique_soft[1]/oblique_energy+nx) <= 128*epsilon &&
+      std::abs(oblique_soft[2]/oblique_energy+ny) <= 128*epsilon);
+
+    const FourMomentum slow_frame = {{1,0,0,1e-20L}};
+    const auto tiny_boost = detail::boost_from_rest(FourMomentum{{1,0,0,0}},slow_frame,1);
+    check("tiny boosts preserve a small newly generated spatial component",
+      tiny_boost[3] == slow_frame[3]);
+    const FourMomentum ordinary_frame = {{std::sqrt(ldouble(29)),0,0,5}};
+    const auto virtual_boost = detail::boost_from_rest(FourMomentum{{3,1,2,-1}},ordinary_frame,2);
+    const auto past_boost = detail::boost_from_rest(FourMomentum{{-3,1,2,-1}},ordinary_frame,2);
+    check("the generic boost does not impose a child mass shell",
+      std::abs(virtual_boost[0]-(3*ordinary_frame[0]-5)/2) <= 128*epsilon*10 &&
+      std::abs(mass2(virtual_boost)-3) <= 256*epsilon*100);
+    check("the generic boost preserves negative-energy vector conventions",
+      past_boost[0] < 0 &&
+      std::abs(past_boost[0]-(-3*ordinary_frame[0]-5)/2) <= 128*epsilon*10 &&
+      std::abs(mass2(past_boost)-3) <= 256*epsilon*100);
+
+    const std::array<ldouble,4> massless = {{0,0,0,0}};
+    const auto wide_example = make_example_momenta(massless,incoming,wide,0);
+    const auto tiny_example = make_example_momenta(massless,incoming,tiny,0);
+    check("complete example kinematics work beyond the quartic arithmetic range",
+      validate_momenta(wide_example,massless,incoming).valid &&
+      std::abs((wide_example[0][0]+wide_example[1][0])/wide-1) <= 64*epsilon);
+    check("complete example kinematics retain very small positive energies",
+      validate_momenta(tiny_example,massless,incoming).valid && tiny_example[2][0] > 0 &&
+      std::abs((tiny_example[0][0]+tiny_example[1][0])/tiny-1) <= 64*epsilon);
+    std::mt19937_64 wide_random(20261101);
+    bool wide_random_valid = true;
+    for (unsigned sample=0;sample<16;++sample) {
+      const std::array<ldouble,6> zero_masses = {{0,0,0,0,0,0}};
+      const auto point = make_random_momenta(zero_masses,incoming,wide,wide_random);
+      wide_random_valid = wide_random_valid && validate_momenta(point,zero_masses,incoming).valid;
+    }
+    check("successive random decays retain finite conserved high-scale momenta",
+      wide_random_valid);
+
     const ValidationOptions first_automatic_options;
     const ValidationOptions second_automatic_options;
     check("new validation options choose distinct time-based seeds",

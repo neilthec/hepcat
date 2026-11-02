@@ -55,6 +55,13 @@ five-point representative is checked on two rational off-cut charts and all
 four coherent massive-spin components; no saved notebook or temporary cache
 is loaded by the suite.
 
+`numerical-spinor-stability-tests.wl` covers declared external on-shell masses
+in explicit energy-angle evaluation, including symbolic construction followed
+by numerical replacement. Highly boosted small spinor components, momentum
+matrix diagonals and scalar products are checked alongside rest, massless,
+negative-energy, complex and off-shell controls. Exact chart formulas remain
+unchanged; inexact real direction bases avoid near-axis cancellation.
+
 `high-energy-power-counting-tests.wl` covers conservative all-spin upper bounds,
 complete massive basis scaling, generic propagator invariants, strict numeric
 coefficients, and the exact Laurent fallback for hidden denominators, references

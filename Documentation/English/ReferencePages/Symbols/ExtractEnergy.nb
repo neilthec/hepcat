@@ -12,9 +12,15 @@ expressions.", "Notes"],
   Cell[TextData[{Cell[BoxData[RowBox[{"ExtractEnergy", "[", "expr", ",", " ",
          "particleSpins", "]"}]], "InlineFormula"], "  ", "substitutes \
 momentum matrices and two-component spinors for the listed particles."}],
-   "Usage"], Cell["Details", "NotesSection"], Cell["A massless or scalar \
-entry can be {particle}. A massive spin entry is {particle,spin,projection}, \
-using physical spin values such as {1,1/2,1/2}.", "Notes"],
+   "Usage"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"ExtractEnergy", "[", "expr", ",", " ",
+         "particleSpins", ",", " ", "\"MassRules\"", " ", "->", " ", "{",
+         "Mass", "[", "i", "]", " ", "->", " ", "mass", ",", " ", "...", "}",
+         "]"}]], "InlineFormula"], "  ", "supplies known external on-shell \
+masses for stable numerical evaluation."}], "Usage"],
+  Cell["Details", "NotesSection"], Cell["A massless or scalar entry can be \
+{particle}. A massive spin entry is {particle,spin,projection}, using \
+physical spin values such as {1,1/2,1/2}.", "Notes"],
   Cell["Results use En[i], MomMagnitude[i], Theta[i] and Phi[i]. The spatial \
 momentum convention is p(sin(theta)cos(phi),sin(theta)sin(phi),cos(theta)).",
    "Notes"], Cell["Internally, ExtractEnergy1 substitutes momentum matrices \
@@ -22,6 +28,36 @@ and ExtractEnergy2 substitutes spinor rows and columns; the final pass \
 evaluates Dot and Tr.", "Notes"], Cell["Supply a complete and consistent \
 on-shell configuration for numerical use. The function does not generate \
 phase space or enforce total momentum conservation.", "Notes"],
+  Cell["The optional string option \"MassRules\" defaults to {}. Supply \
+external masses, for example {Mass[1] -> me}, when evaluating highly boosted \
+massive spinors. The known mass allows the small component sqrt(E-p) to be \
+evaluated as abs(m)/sqrt(E+p) for supported positive-energy on-shell input.",
+   "Notes"], Cell["Rounded energy and momentum alone cannot recover a small \
+mass once E-p has lost its significant digits. A supplied mass is physical \
+input, not a mass inferred from that subtraction. Numerical consistency \
+checks gate this stable route; they cannot independently establish a tiny \
+mass from rounded data.", "Notes"], Cell["The default symbolic formulas are \
+unchanged. Signed-energy, complex and unsupported off-shell inputs retain \
+their branch-sensitive expressions. Supplying external masses does not put a \
+composite momentum or a propagator denominator on shell.", "Notes"],
+  Cell["The mass-aware route also stabilizes supported external scalar \
+products and scalar energy factors already produced by SpinToHelicitySpinors. \
+It supports constructing the expression symbolically and substituting \
+numerical kinematics afterward.", "Notes"], Cell["Options", "NotesSection"],
+  Cell[BoxData[GridBox[{{Cell["Option", "TableHeader"],
+       Cell["Default", "TableHeader"], Cell["Meaning", "TableHeader"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"MassRules\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"{", "}"}]], "InlineFormula"]}],
+        "TableText"], Cell["Known external on-shell masses for ExtractEnergy \
+numerical evaluation, supplied as {Mass[leg] -> mass, ...}. The default {} \
+preserves the existing energy-angle formulas. Supplied masses permit stable \
+small spinor components and supported momentum expressions; they do not \
+impose internal propagator shells.", "TableText"]}},
+     GridBoxAlignment -> {"Columns" -> {Left, Left, Left}},
+     GridBoxItemSize -> {"Columns" -> {Scaled[0.23], Scaled[0.19],
+         Scaled[0.58]}}, GridBoxDividers ->
+      {"Rows" -> {False, True, {False}, False}}]], "3ColumnTableMod"],
   Cell["Examples", "PrimaryExamplesSection"],
   Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
      Cell["Evaluate this setup once before the examples. The paths refer to \
@@ -72,7 +108,28 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
       "MomMagnitude", "[", "2", "]", "*", "Sin", "[", "Phi", "[", "1", "]",
       "]", "*", "Sin", "[", "Phi", "[", "2", "]", "]", "*", "Sin", "[",
       "Theta", "[", "1", "]", "]", "*", "Sin", "[", "Theta", "[", "2", "]",
-      "]"}]], "Output"], Cell["See Also", "SeeAlsoSection"],
+      "]"}]], "Output"], Cell["Retain a tiny massive spinor component after \
+machine energy and momentum have rounded to the same value. The result is \
+nonzero because the mass is supplied independently.", "ExampleText"],
+  Cell[BoxData[RowBox[{"energyExpression", " ", "=", " ", "ExtractEnergy",
+      "[", "\n", " ", " ", "SpinorChain", "[", "Spinor", "[", "\"Spin\"",
+      ",", " ", "\"Upper\"", ",", " ", "\"Angle\"", ",", " ", "1", ",", " ",
+      "1", "/", "2", "]", ",", "\n", " ", " ", " ", " ", "Spinor", "[",
+      "\"Helicity\"", ",", " ", "\"Angle\"", ",", " ", "2", "]", "]", ",",
+      " ", "{", "{", "1", "}", ",", " ", "{", "2", "}", "}", ",", "\n", " ",
+      " ", "\"MassRules\"", " ", "->", " ", "{", "Mass", "[", "1", "]", " ",
+      "->", " ", "1", "/", "2000", ",", " ", "Mass", "[", "2", "]", " ",
+      "->", " ", "0", "}", "]", ";", "\n", "energyExpression", " ", "/.",
+      " ", "{", "En", "[", "1", "]", " ", "->", " ", "10.", "^", "12", ",",
+      " ", "MomMagnitude", "[", "1", "]", " ", "->", " ", "10.", "^", "12",
+      ",", "\n", " ", " ", "Theta", "[", "1", "]", " ", "->", " ", "0.", ",",
+      " ", "Phi", "[", "1", "]", " ", "->", " ", "0.", ",", " ", "En", "[",
+      "2", "]", " ", "->", " ", "1.", ",", "\n", " ", " ", "MomMagnitude",
+      "[", "2", "]", " ", "->", " ", "1.", ",", " ", "Theta", "[", "2", "]",
+      " ", "->", " ", "0.", ",", " ", "Phi", "[", "2", "]", " ", "->", " ",
+      "0.", "}"}]], "Input"],
+  Cell[BoxData[RowBox[{"5.*^-10", " ", "+", " ", "0.", "*", "I"}]],
+   "Output"], Cell["See Also", "SeeAlsoSection"],
   Cell[TextData[{ButtonBox["ExtractEnergy1", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ExtractEnergy1"], "  \[Bullet]  ",
      ButtonBox["ExtractEnergy2", BaseStyle -> "Link",

@@ -38,25 +38,33 @@ incoming states and applies the final identical-species factor once, \
 including identical fermions.", "Notes"], Cell["The older fixed-helicity \
 overload preserves its existing normalization convention. Use the \
 physical-process or family form for a complete unpolarized process.",
-   "Notes"], Cell["The default export writes source only. \"Build\" -> True \
-compiles and links the existing SPINAS library; \"RunExamples\" -> True also \
-runs three conserved physical example points. No external library is \
-installed or rebuilt.", "Notes"], Cell["\"SPINASDirectory\" and \
-\"CMakeExecutable\" support automatic build-tool discovery. Independent \
-validation instead requires an explicit reference-generator directory and \
-model selection. The SPINAS precision must match the library ABI. \
-\"Overwrite\" -> True explicitly permits replacing an existing exported \
-project.", "Notes"], Cell["The independent CalcHEP validator generates a \
-reference process and compares common random points. Specify \
-\"CalcHEPDirectory\" and \"CalcHEPModel\" -> {directory, modelNumber}; both \
-default to None. \"CalcHEPAllowedParticles\" -> All retains the full chosen \
-theory, while an explicit list of positive absolute PDGs restricts the \
-reference particle sector. \"RunCalcHEPValidation\" -> True builds and runs \
-it. The actual time-based seed is reported, and an explicit \"CalcHEPSeed\" \
-or --seed value replays it.", "Notes"], Cell["A separate n_calchep target \
-uses the SPINAS matrix element with CalcHEP's numerical phase-space \
-integration, cuts, histograms and VEGAS. This bypasses symbolic CalcHEP \
-generation and does not require an equivalent CalcHEPModel.", "Notes"],
+   "Notes"], Cell["Generated examples and random validation points use stable \
+physical two-body kinematics, including known-mass light-cone components for \
+boosted decay products. This numerical mass-shell information belongs to the \
+generated external particles and decay construction; it does not place \
+virtual propagators on shell. Known external momentum squares use their \
+declared masses, and supported external scalar products use the stable \
+particle contraction with crossing signs retained. General composite squares \
+and scalar products remain off shell.", "Notes"],
+  Cell["The default export writes source only. \"Build\" -> True compiles and \
+links the existing SPINAS library; \"RunExamples\" -> True also runs three \
+conserved physical example points. No external library is installed or \
+rebuilt.", "Notes"], Cell["\"SPINASDirectory\" and \"CMakeExecutable\" \
+support automatic build-tool discovery. Independent validation instead \
+requires an explicit reference-generator directory and model selection. The \
+SPINAS precision must match the library ABI. \"Overwrite\" -> True explicitly \
+permits replacing an existing exported project.", "Notes"],
+  Cell["The independent CalcHEP validator generates a reference process and \
+compares common random points. Specify \"CalcHEPDirectory\" and \
+\"CalcHEPModel\" -> {directory, modelNumber}; both default to None. \
+\"CalcHEPAllowedParticles\" -> All retains the full chosen theory, while an \
+explicit list of positive absolute PDGs restricts the reference particle \
+sector. \"RunCalcHEPValidation\" -> True builds and runs it. The actual \
+time-based seed is reported, and an explicit \"CalcHEPSeed\" or --seed value \
+replays it.", "Notes"], Cell["A separate n_calchep target uses the SPINAS \
+matrix element with CalcHEP's numerical phase-space integration, cuts, \
+histograms and VEGAS. This bypasses symbolic CalcHEP generation and does not \
+require an equivalent CalcHEPModel.", "Notes"],
   Cell["Numerical model constraints, masses and widths are connected to the \
 numerical menus. Explicit amplitude width conventions remain authoritative. \
 Unsupported automatic-width or gauge-restoring operations are refused.",

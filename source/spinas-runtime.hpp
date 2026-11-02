@@ -166,6 +166,12 @@ MomentumValidation validate_momenta(const Momenta<N>& momenta,
 }
 
 namespace detail {
+inline ldouble difference_of_products(const ldouble a, const ldouble b,
+                                      const ldouble c, const ldouble d) {
+  const ldouble cd = c*d;
+  const ldouble cd_error = std::fma(-c,d,cd);
+  return std::fma(a,b,-cd)+cd_error;
+}
 inline ldouble fractional_part(const ldouble number) {
   return number-std::floor(number);
 }
@@ -173,26 +179,90 @@ inline ldouble two_body_momentum(const ldouble mass, const ldouble first_mass,
                                  const ldouble second_mass) {
   const ldouble sum = first_mass+second_mass;
   const ldouble difference = first_mass-second_mass;
+  // Physical decay inputs admit a dimensionless Kallen product. Avoid forming
+  // mass^4: it can overflow or underflow while the final momentum is finite.
+  // Keep the original branch for negative masses and nonphysical inputs.
+  if (std::isfinite(mass) && std::isfinite(first_mass) && std::isfinite(second_mass)
+      && mass > 0 && first_mass >= 0 && second_mass >= 0 && sum <= mass) {
+    const ldouble absolute_difference = std::abs(difference);
+    const ldouble scaled = ((mass-sum)/mass)*(1+sum/mass)
+      *((mass-absolute_difference)/mass)*(1+absolute_difference/mass);
+    return (mass/2)*std::sqrt(std::max(ldouble(0), scaled));
+  }
   const ldouble radicand = (mass-sum)*(mass+sum)*(mass-difference)*(mass+difference);
   const ldouble scale = std::max(ldouble(1), mass*mass*mass*mass);
   if (mass <= 0 || radicand < -128*std::numeric_limits<ldouble>::epsilon()*scale)
     throw std::invalid_argument("A requested two-body decay is below threshold.");
   return std::sqrt(std::max(ldouble(0), radicand))/(2*mass);
 }
+inline FourMomentum boost_rest_components(const FourMomentum& momentum,
+                                         const FourMomentum& frame,
+                                         const ldouble frame_mass,
+                                         const bool known_on_shell,
+                                         const ldouble particle_mass) {
+  if (frame_mass <= 0 || frame[0] <= 0)
+    throw std::invalid_argument("A timelike parent is required for a rest-frame boost.");
+  const ldouble frame_p = std::hypot(frame[1],std::hypot(frame[2],frame[3]));
+  // The ordinary form preserves tiny boosts, where subtracting two light-cone
+  // components would lose a small longitudinal momentum. Its E+M denominator
+  // already avoids the unstable (gamma-1)/beta^2 expression.
+  if (frame_p <= frame_mass) {
+    const ldouble spatial_dot = frame[1]*momentum[1] + frame[2]*momentum[2]
+                              + frame[3]*momentum[3];
+    FourMomentum result;
+    result[0] = (frame[0]*momentum[0]+spatial_dot)/frame_mass;
+    const ldouble factor = momentum[0]/frame_mass
+                        + spatial_dot/(frame_mass*(frame[0]+frame_mass));
+    for (std::size_t component=1; component<4; ++component)
+      result[component] = momentum[component] + factor*frame[component];
+    return result;
+  }
+  const std::array<ldouble,3> direction = {{frame[1]/frame_p,
+    frame[2]/frame_p,frame[3]/frame_p}};
+  const ldouble parallel = direction[0]*momentum[1]
+    + direction[1]*momentum[2] + direction[2]*momentum[3];
+  // Compensate both products: contracting only one product into an FMA can
+  // create a false transverse component even for exactly collinear vectors.
+  const std::array<ldouble,3> cross = {{
+    difference_of_products(direction[1],momentum[3],direction[2],momentum[2]),
+    difference_of_products(direction[2],momentum[1],direction[0],momentum[3]),
+    difference_of_products(direction[0],momentum[2],direction[1],momentum[1])}};
+  ldouble plus = momentum[0]+parallel;
+  ldouble minus = momentum[0]-parallel;
+  if (known_on_shell && momentum[0] > 0) {
+    // Only the decay generator supplies a known child mass. Recover its small
+    // light-cone component from m^2+p_perp^2 instead of subtracting E-|p_parallel|.
+    const ldouble transverse = std::hypot(cross[0],std::hypot(cross[1],cross[2]));
+    const ldouble transverse_mass = std::hypot(particle_mass,transverse);
+    const ldouble large = momentum[0]+std::abs(parallel);
+    const ldouble small = transverse_mass*(transverse_mass/large);
+    plus = parallel >= 0 ? large : small;
+    minus = parallel >= 0 ? small : large;
+  }
+  // E_frame-|p_frame| = M^2/(E_frame+|p_frame|). Half-sums and ratios
+  // avoid overflowing either a rapidity factor or E_frame+|p_frame|.
+  const ldouble frame_half_plus = frame[0]/2+frame_p/2;
+  const ldouble forward = frame_half_plus*(plus/frame_mass);
+  const ldouble backward = (frame_mass/frame_half_plus)*(minus/4);
+  const ldouble boosted_parallel = forward-backward;
+  FourMomentum result = {{forward+backward,
+    difference_of_products(cross[1],direction[2],cross[2],direction[1])+direction[0]*boosted_parallel,
+    difference_of_products(cross[2],direction[0],cross[0],direction[2])+direction[1]*boosted_parallel,
+    difference_of_products(cross[0],direction[1],cross[1],direction[0])+direction[2]*boosted_parallel}};
+  return result;
+}
+// Generic child four-vectors remain off shell and may have negative energy.
 inline FourMomentum boost_from_rest(const FourMomentum& momentum,
                                     const FourMomentum& frame,
                                     const ldouble frame_mass) {
-  if (frame_mass <= 0 || frame[0] <= 0)
-    throw std::invalid_argument("A timelike parent is required for a rest-frame boost.");
-  const ldouble spatial_dot = frame[1]*momentum[1] + frame[2]*momentum[2]
-                            + frame[3]*momentum[3];
-  FourMomentum result;
-  result[0] = (frame[0]*momentum[0]+spatial_dot)/frame_mass;
-  const ldouble factor = momentum[0]/frame_mass
-                      + spatial_dot/(frame_mass*(frame[0]+frame_mass));
-  for (std::size_t component=1; component<4; ++component)
-    result[component] = momentum[component] + factor*frame[component];
-  return result;
+  return boost_rest_components(momentum,frame,frame_mass,false,0);
+}
+// Use only when the child's mass is known from a physical decay construction.
+inline FourMomentum boost_on_shell_from_rest(const FourMomentum& momentum,
+                                             const ldouble particle_mass,
+                                             const FourMomentum& frame,
+                                             const ldouble frame_mass) {
+  return boost_rest_components(momentum,frame,frame_mass,true,particle_mass);
 }
 }
 
@@ -229,9 +299,9 @@ Momenta<N> make_example_momenta(const std::array<ldouble, N>& masses,
   Momenta<N> result;
   const ldouble initial_p = detail::two_body_momentum(sqrt_s,
     masses[incoming[0]], masses[incoming[1]]);
-  result[incoming[0]] = {{std::sqrt(initial_p*initial_p+masses[incoming[0]]*masses[incoming[0]]),
+  result[incoming[0]] = {{std::hypot(initial_p,masses[incoming[0]]),
                           0, 0, initial_p}};
-  result[incoming[1]] = {{std::sqrt(initial_p*initial_p+masses[incoming[1]]*masses[incoming[1]]),
+  result[incoming[1]] = {{std::hypot(initial_p,masses[incoming[1]]),
                           0, 0, -initial_p}};
   FourMomentum frame = {{sqrt_s, 0, 0, 0}};
   ldouble frame_mass=sqrt_s;
@@ -252,15 +322,15 @@ Momenta<N> make_example_momenta(const std::array<ldouble, N>& masses,
     const ldouble magnitude=detail::two_body_momentum(frame_mass,masses[leg],remaining_mass);
     const ldouble cosine=0.8L*(2*detail::fractional_part(
       0.7548776662466927600L*(point_index+1)+0.5698402909980532659L*(step+1))-1);
-    const ldouble sine=std::sqrt(std::max(ldouble(0),1-cosine*cosine));
+    const ldouble sine=std::sqrt(std::max(ldouble(0),(1-cosine)*(1+cosine)));
     const ldouble azimuth=2*pi*detail::fractional_part(
       0.6180339887498948482L*(point_index+1)+0.7320508075688772935L*(step+1));
-    const FourMomentum rest_first={{std::sqrt(magnitude*magnitude+masses[leg]*masses[leg]),
+    const FourMomentum rest_first={{std::hypot(magnitude,masses[leg]),
       magnitude*sine*std::cos(azimuth),magnitude*sine*std::sin(azimuth),magnitude*cosine}};
-    const FourMomentum rest_remaining={{std::sqrt(magnitude*magnitude+remaining_mass*remaining_mass),
+    const FourMomentum rest_remaining={{std::hypot(magnitude,remaining_mass),
       -rest_first[1],-rest_first[2],-rest_first[3]}};
-    result[leg]=detail::boost_from_rest(rest_first,frame,frame_mass);
-    frame=detail::boost_from_rest(rest_remaining,frame,frame_mass);
+    result[leg]=detail::boost_on_shell_from_rest(rest_first,masses[leg],frame,frame_mass);
+    frame=detail::boost_on_shell_from_rest(rest_remaining,remaining_mass,frame,frame_mass);
     frame_mass=remaining_mass;
   }
   result[outgoing.back()]=frame;

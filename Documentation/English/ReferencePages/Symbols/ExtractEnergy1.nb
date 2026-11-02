@@ -13,6 +13,11 @@ components.", "Notes"],
          " ", "i", ",", " ", "energy", ",", " ", "momentumMagnitude", ",",
          " ", "theta", ",", " ", "phi", "]"}]], "InlineFormula"], "  ",
      "replaces supported momentum occurrences for particle i."}], "Usage"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"ExtractEnergy1", "[", "expr", ",",
+         " ", "i", ",", " ", "energy", ",", " ", "momentumMagnitude", ",",
+         " ", "theta", ",", " ", "phi", ",", " ", "mass", "]"}]],
+      "InlineFormula"], "  ", "also supplies the known external on-shell mass \
+for stable numerical components."}], "Usage"],
   Cell["Details", "NotesSection"], Cell["This is the first stage of \
 ExtractEnergy. Spinor endpoints remain symbolic until ExtractEnergy2 is \
 applied.", "Notes"], Cell["The time-space metric is (+,-,-,-). Upper and \
@@ -20,7 +25,13 @@ lower four-vectors carry the corresponding spatial signs. Momentum-matrix \
 placement follows the chain's current chirality.", "Notes"],
   Cell["For a finished numerical scalar, normally use ExtractEnergy rather \
 than stopping after this intermediate stage.", "Notes"],
-  Cell["Examples", "PrimaryExamplesSection"],
+  Cell["The optional trailing mass is used only by the supported real \
+positive-energy on-shell numerical route. Omitting it preserves the original \
+formulas; negative-energy, complex and clearly off-shell inputs retain the \
+original branch behavior.", "Notes"], Cell["When the mass is known, a small \
+momentum-matrix diagonal is rationalized using the mass and transverse \
+momentum rather than subtracting nearly equal energy and longitudinal \
+momentum.", "Notes"], Cell["Examples", "PrimaryExamplesSection"],
   Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
      Cell["Evaluate this setup once before the examples. The paths refer to \
 the local HEPCAT checkout; no model parameters are assigned global numerical \

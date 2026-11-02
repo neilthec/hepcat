@@ -371,6 +371,15 @@ using it. Ask about uncertain conventions; do not silently invent a rule.
   multiparticles. Never globally replace integers: that also changes numerical
   coefficients, powers, spin indices, and auxiliary reference labels.
 
+Known positive-energy external mass shells permit stable numerical forms such
+as `abs(m)/sqrt(E+|p|)` and rationalized small momentum-matrix diagonals. Retain
+the declared mass: rounded energy and momentum can have lost that information.
+Never infer a tiny mass from their squared difference or apply the replacement
+to a virtual composite or propagator. The legacy `ExtractEnergy` accepts optional
+`"MassRules" -> {Mass[leg] -> mass, ...}`; its default `{}` preserves existing
+symbolic output. Preserve negative-energy, complex and unannotated branch
+behavior, and test construction followed by later numerical replacement.
+
 ## Models and Final Checks
 
 Use a vertex model for diagrams and a model containing complete known

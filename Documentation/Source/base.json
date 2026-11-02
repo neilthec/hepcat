@@ -1797,13 +1797,21 @@
       {
         "input": "ExtractEnergy[expr, particleSpins]",
         "description": "substitutes momentum matrices and two-component spinors for the listed particles."
+      },
+      {
+        "input": "ExtractEnergy[expr, particleSpins, \"MassRules\" -> {Mass[i] -> mass, ...}]",
+        "description": "supplies known external on-shell masses for stable numerical evaluation."
       }
     ],
     "details": [
       "A massless or scalar entry can be {particle}. A massive spin entry is {particle,spin,projection}, using physical spin values such as {1,1/2,1/2}.",
       "Results use En[i], MomMagnitude[i], Theta[i] and Phi[i]. The spatial momentum convention is p(sin(theta)cos(phi),sin(theta)sin(phi),cos(theta)).",
       "Internally, ExtractEnergy1 substitutes momentum matrices and ExtractEnergy2 substitutes spinor rows and columns; the final pass evaluates Dot and Tr.",
-      "Supply a complete and consistent on-shell configuration for numerical use. The function does not generate phase space or enforce total momentum conservation."
+      "Supply a complete and consistent on-shell configuration for numerical use. The function does not generate phase space or enforce total momentum conservation.",
+      "The optional string option \"MassRules\" defaults to {}. Supply external masses, for example {Mass[1] -> me}, when evaluating highly boosted massive spinors. The known mass allows the small component sqrt(E-p) to be evaluated as abs(m)/sqrt(E+p) for supported positive-energy on-shell input.",
+      "Rounded energy and momentum alone cannot recover a small mass once E-p has lost its significant digits. A supplied mass is physical input, not a mass inferred from that subtraction. Numerical consistency checks gate this stable route; they cannot independently establish a tiny mass from rounded data.",
+      "The default symbolic formulas are unchanged. Signed-energy, complex and unsupported off-shell inputs retain their branch-sensitive expressions. Supplying external masses does not put a composite momentum or a propagator denominator on shell.",
+      "The mass-aware route also stabilizes supported external scalar products and scalar energy factors already produced by SpinToHelicitySpinors. It supports constructing the expression symbolically and substituting numerical kinematics afterward."
     ],
     "examples": [
       {
@@ -1814,6 +1822,11 @@
       {
         "description": "Evaluate a scalar momentum product.",
         "input": "ExtractEnergy[MomProd[1, 2], {{1}, {2}}]",
+        "evaluate": true
+      },
+      {
+        "description": "Retain a tiny massive spinor component after machine energy and momentum have rounded to the same value. The result is nonzero because the mass is supplied independently.",
+        "input": "energyExpression = ExtractEnergy[\n  SpinorChain[Spinor[\"Spin\", \"Upper\", \"Angle\", 1, 1/2],\n    Spinor[\"Helicity\", \"Angle\", 2]], {{1}, {2}},\n  \"MassRules\" -> {Mass[1] -> 1/2000, Mass[2] -> 0}];\nenergyExpression /. {En[1] -> 10.^12, MomMagnitude[1] -> 10.^12,\n  Theta[1] -> 0., Phi[1] -> 0., En[2] -> 1.,\n  MomMagnitude[2] -> 1., Theta[2] -> 0., Phi[2] -> 0.}",
         "evaluate": true
       }
     ],
@@ -1832,12 +1845,18 @@
       {
         "input": "ExtractEnergy1[expr, i, energy, momentumMagnitude, theta, phi]",
         "description": "replaces supported momentum occurrences for particle i."
+      },
+      {
+        "input": "ExtractEnergy1[expr, i, energy, momentumMagnitude, theta, phi, mass]",
+        "description": "also supplies the known external on-shell mass for stable numerical components."
       }
     ],
     "details": [
       "This is the first stage of ExtractEnergy. Spinor endpoints remain symbolic until ExtractEnergy2 is applied.",
       "The time-space metric is (+,-,-,-). Upper and lower four-vectors carry the corresponding spatial signs. Momentum-matrix placement follows the chain's current chirality.",
-      "For a finished numerical scalar, normally use ExtractEnergy rather than stopping after this intermediate stage."
+      "For a finished numerical scalar, normally use ExtractEnergy rather than stopping after this intermediate stage.",
+      "The optional trailing mass is used only by the supported real positive-energy on-shell numerical route. Omitting it preserves the original formulas; negative-energy, complex and clearly off-shell inputs retain the original branch behavior.",
+      "When the mass is known, a small momentum-matrix diagonal is rationalized using the mass and transverse momentum rather than subtracting nearly equal energy and longitudinal momentum."
     ],
     "examples": [
       {
@@ -1860,12 +1879,17 @@
       {
         "input": "ExtractEnergy2[expr, i, energy, momentumMagnitude, theta, phi]",
         "description": "replaces supported helicity and indexed massive spinor endpoints on particle i."
+      },
+      {
+        "input": "ExtractEnergy2[expr, i, energy, momentumMagnitude, theta, phi, mass]",
+        "description": "also supplies the known external on-shell mass for stable numerical components."
       }
     ],
     "details": [
-      "This is the second stage of ExtractEnergy. It uses sqrt(E+p) and sqrt(E-p) for massive components, and sqrt(2E) for massless helicity spinors.",
+      "This is the second stage of ExtractEnergy. It uses sqrt(E+p) and sqrt(E-p) for massive components, and sqrt(2E) for massless helicity spinors. With a known on-shell mass and supported positive-energy numerical inputs, the small massive component uses abs(m)/sqrt(E+p).",
       "Explicit massive index values are +1/2 or -1/2. Chirality, variance and endpoint position determine the correct row or column and signs.",
-      "The returned SpinorChain can still contain vectors. ExtractEnergy performs the final conversion to Dot and Tr."
+      "The returned SpinorChain can still contain vectors. ExtractEnergy performs the final conversion to Dot and Tr.",
+      "The optional trailing mass is used only by the supported real positive-energy on-shell numerical route. Omitting it preserves the original formulas; negative-energy, complex and clearly off-shell inputs retain the original branch behavior."
     ],
     "examples": [
       {

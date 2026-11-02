@@ -25,6 +25,13 @@ npExport[name_String, input_, model_:Automatic] := WriteSPINASProcess[npPath[nam
 npFamilyReport = npExport["native_lifecycle", npFamily];
 npDotFamily = ({First[#], Last[#] MomProd[3, 4]} &) /@ npFamily;
 npDotReport = npExport["native_dot_family", npDotFamily];
+npCrossDotFamily = ({First[#], Last[#] MomProd[1, 3]} &) /@ npFamily;
+npCrossDotReport = npExport["native_crossed_dot_family", npCrossDotFamily];
+npSquareFamily = ({First[#], Last[#] Mom[1]^2} &) /@ npFamily;
+npSquareReport = npExport["native_external_square", npSquareFamily];
+npSquareIR = ConstructiveDiagrams`Private`spinasProcessIR[First[npFamily][[1]],
+  First[npFamily][[2]] Mom[1]^2, npModel,
+  <|"IncomingLegs"->{1,2},"ParameterRules"->npRules|>];
 npClassMassReport = npExport["Me", npFamily];
 npClassProductReport = npExport["a12a", npFamily];
 check["a complete family exports the native process API", AssociationQ[npFamilyReport]];
@@ -47,6 +54,12 @@ check["cache ownership is explicit for copying process objects",
     StringContainsQ[npHeader <> npSource, "operator="]];
 check["permuted helicity branches retain a two-momentum invariant",
   AssociationQ[npDotReport] && DirectoryQ[npDotReport["Directory"]]];
+check["crossed external dot products retain both native particle arguments under leg maps",
+  AssociationQ[npCrossDotReport] &&
+    StringContainsQ[Import[npCrossDotReport["Files"]["Source"],"Text"],"p1.dot(p4)"]];
+check["literal external squares are normalized to a live model mass before export",
+  AssociationQ[npSquareReport] && AssociationQ[npSquareIR] &&
+    FreeQ[npSquareIR["IndexedExpression"], HoldPattern[Mom[_Integer]^2]]];
 check["class names may coincide with familiar mass and spinor-product labels",
   AssociationQ[npClassMassReport] && AssociationQ[npClassProductReport]];
 npCHReport = WriteSPINASProcess[npPath["native_calchep_source"], npFamily, npModel,
@@ -67,6 +80,22 @@ If[AssociationQ[npCHReport],
 npGeneric = npModel;
 npGeneric[[1]] = Append[npGeneric[[1]],
   {"native fixture scalar", "h", "h", 993, 0, 0, 0, 1, 1, "h", "h"}];
+npDotModel = npGeneric;
+npDotModel[[1]] = Append[npDotModel[[1]],
+  {"massive external dot fixture", "s", "s", 995, 0, npMass, 0, 1, 1, "s", "s"}];
+npStableDotReport = WriteSPINASProcess[npPath["native_collinear_dot"],
+  ConstantArray["s",4], MomProd[2 Mom[1],-3 Mom[3]], npDotModel,
+  "ProcessName"->"native_collinear_dot","ParameterRules"->npRules,
+  "SPINASDirectory"->npSpinas,"CalcHEPDirectory"->None,"CalcHEPModel"->None,
+  "ReturnDetails"->True];
+npVirtualDotIR = ConstructiveDiagrams`Private`spinasProcessIR[ConstantArray["s",4],
+  MomProd[Mom[Multiparticle[1,3]],Mom[2]],npDotModel,
+  <|"IncomingLegs"->{1,2},"ParameterRules"->npRules|>];
+check["scaled single-leg dots use declared particles while virtual arguments keep generic Lorentz algebra",
+  AssociationQ[npStableDotReport] && AssociationQ[npVirtualDotIR] &&
+    StringContainsQ[Import[npStableDotReport["Files"]["Source"],"Text"],"p1.dot(p3)"] &&
+    StringContainsQ[StringJoin[npVirtualDotIR["ScalarStatements"]],"dot(sum_momenta("] &&
+    !StringContainsQ[StringJoin[npVirtualDotIR["ScalarStatements"]],".dot("]];
 npTensorParameter = ModelParameter["amplitude", "native-local-collision", "Real"];
 npValidationParameter = ModelParameter["validation", "native-local-collision", "Real"];
 npTensorModel = npGeneric;
@@ -99,6 +128,13 @@ npLongReport = WriteSPINASProcess[npPath["native_long_chain"], {"e", "E", "h", "
   "ReturnDetails" -> True];
 check["composite and longer-than-native momentum chains retain a supported path",
   AssociationQ[npCompositeReport] && AssociationQ[npLongReport]];
+npVirtualSquareIR = ConstructiveDiagrams`Private`spinasProcessIR[
+  {"e", "E", "h", "h"}, npComposite Mom[Multiparticle[1,3]]^2, npGeneric,
+  <|"IncomingLegs"->{1,2},"ParameterRules"->npRules|>];
+check["a genuine multiparticle square remains an off-shell numerical invariant",
+  AssociationQ[npVirtualSquareIR] &&
+    !FreeQ[npVirtualSquareIR["IndexedExpression"], HoldPattern[Mom[_Multiparticle]^2]] &&
+    StringContainsQ[npVirtualSquareIR["ExpressionCpp"], "mass2("]];
 check["native generation leaves the supplied model unchanged", npModel === npBefore];
 
 npRun[command_List] := Quiet[Check[RunProcess[command], $Failed]];
@@ -106,19 +142,24 @@ npFailed[report_] := !AssociationQ[report] || Lookup[report, "ExitCode", -1] =!=
 npLibraries = Select[FileNameJoin[{npSpinas, #, "libspinas.a"}] & /@ {"build", "lib"}, FileExistsQ];
 npCompiler = npRun[{"c++", "--version"}];
 If[npLibraries =!= {} && !npFailed[npCompiler] &&
-    AllTrue[{npDotReport, npClassMassReport, npClassProductReport, npTensorReport,
+    AllTrue[{npDotReport, npCrossDotReport, npStableDotReport, npSquareReport,
+      npClassMassReport, npClassProductReport, npTensorReport,
       npCompositeReport, npLongReport}, AssociationQ],
   npManifest = Import[npFamilyReport["Files"]["Manifest"], "RawJSON"];
   npMassIndex = First[FirstPosition[npManifest["ParameterOrder"], "Me"]] - 1;
   npChargeIndex = First[FirstPosition[npManifest["ParameterOrder"], "EE"]] - 1;
   npIncludeLines = ("#include \"" <> #["Files"]["Header"] <> "\"") & /@
-    {npFamilyReport, npDotReport, npClassMassReport, npClassProductReport,
+    {npFamilyReport, npDotReport, npCrossDotReport, npStableDotReport,
+      npSquareReport, npClassMassReport, npClassProductReport,
       npTensorReport, npCompositeReport, npLongReport};
   npCpp = StringRiffle[Join[npIncludeLines, {
     "#include \"SM/include/eeAA.h\"", "#include <algorithm>", "#include <iostream>",
     "#include <memory>", "#include <stdexcept>", "#include <vector>",
     "using Process = hepcat_generated::native_lifecycle;",
     "using DotProcess = hepcat_generated::native_dot_family;",
+    "using CrossDotProcess = hepcat_generated::native_crossed_dot_family;",
+    "using CollinearDot = hepcat_generated::native_collinear_dot;",
+    "using SquareProcess = hepcat_generated::native_external_square;",
     "using ClassMass = hepcat_generated::Me;",
     "using ClassProduct = hepcat_generated::a12a;",
     "using Tensor = hepcat_generated::native_tensor_parameter;",
@@ -139,7 +180,7 @@ If[npLibraries =!= {} && !npFailed[npCompiler] &&
     "    energy, index);",
     "}",
     "template<class P> void check_qed(P& generated, const typename P::Momenta& momenta,",
-    "    const char* label, ldouble factor=1) {",
+    "    const char* label, ldouble factor=1, bool mapped_dot=false) {",
     "  const auto parameters = generated.get_parameters();",
     "  const ldouble charge = std::real(parameters[" <> ToString[npChargeIndex] <> "]);",
     "  const ldouble mass = std::real(parameters[" <> ToString[npMassIndex] <> "]);",
@@ -149,7 +190,10 @@ If[npLibraries =!= {} && !npFailed[npCompiler] &&
     "  for (int ds1=-1; ds1<=1; ds1+=2) for (int ds2=-1; ds2<=1; ds2+=2)",
     "    for (int ds3=-2; ds3<=2; ds3+=4) for (int ds4=-2; ds4<=2; ds4+=4) {",
     "      const typename P::Spins spins = {{ds1,ds2,ds3,ds4}};",
-    "      const cdouble expected = factor*ldouble(ds3==ds4 ? 1 : -1)*reference.amp(ds1,ds2,ds3,ds4);",
+    "      // The missing -+ branch is the photon-swap of the supplied +- fixture.",
+    "      const ldouble branch_factor = mapped_dot ? -hepcat_spinas::dot(",
+    "        momenta[0],momenta[ds3<0 && ds4>0 ? 3 : 2]) : factor;",
+    "      const cdouble expected = branch_factor*ldouble(ds3==ds4 ? 1 : -1)*reference.amp(ds1,ds2,ds3,ds4);",
     "      same(generated.amp(spins), expected, label);",
     "      same(generated.amp(ds1,ds2,ds3,ds4), expected, \"scalar spin overload\");",
     "      spin_sum += std::norm(expected);", "    }",
@@ -192,6 +236,41 @@ If[npLibraries =!= {} && !npFailed[npCompiler] &&
     "    const auto momenta=point(dot_process,index); dot_process.set_momenta(momenta);",
     "    check_qed(dot_process,momenta,\"two-momentum invariant through swapped helicities\",",
     "      hepcat_spinas::dot(momenta[2],momenta[3]));", "  }",
+    "  CrossDotProcess cross_dot;",
+    "  for (unsigned index=0; index<5; ++index) {",
+    "    const auto momenta=point(cross_dot,index); cross_dot.set_momenta(momenta);",
+    "    check_qed(cross_dot,momenta,\"crossed external dot through photon leg maps\",1,true);", "  }",
+    "  CollinearDot collinear_dot;",
+    "  const auto check_collinear=[&](ldouble energy) {",
+    "    const ldouble mass=collinear_dot.masses()[0];",
+    "    const ldouble magnitude=std::sqrt((energy-mass)*(energy+mass));",
+    "    CollinearDot::Momenta collinear;",
+    "    collinear[0]={{energy,0,0,magnitude}}; collinear[2]=collinear[0];",
+    "    collinear[1]={{energy,0,0,-magnitude}}; collinear[3]=collinear[1];",
+    "    collinear_dot.set_momenta(collinear);",
+    "    same(collinear_dot.amp({{0,0,0,0}}),cdouble(6*mass*mass),",
+    "      \"stable collinear external product with crossing coefficients\");", "  };",
+    "  collinear_dot.set_masses(ldouble(0.0005L)); check_collinear(50);",
+    "  collinear_dot.set_masses(ldouble(0.0007L)); check_collinear(200);",
+    "  auto dot_parameters=collinear_dot.get_parameters();",
+    "  dot_parameters[0]=cdouble(ldouble(0.0009L),0);",
+    "  collinear_dot.set_parameters(dot_parameters); check_collinear(200);",
+    "  SquareProcess square_process;",
+    "  for (const ldouble mass : {ldouble(0.0005L),ldouble(0.0007L)}) {",
+    "    square_process.set_masses(mass);",
+    "    const auto momenta=hepcat_spinas::make_example_momenta(square_process.masses(),",
+    "      square_process.incoming_legs(),ldouble(100),3);",
+    "    square_process.set_momenta(momenta);",
+    "    check_qed(square_process,momenta,\"stable external square after set_masses\",mass*mass);",
+    "  }",
+    "  auto square_parameters=square_process.get_parameters();",
+    "  square_parameters[" <> ToString[npMassIndex] <> "]=cdouble(ldouble(0.0008L),0);",
+    "  square_process.set_parameters(square_parameters);",
+    "  const auto square_point=hepcat_spinas::make_example_momenta(square_process.masses(),",
+    "    square_process.incoming_legs(),ldouble(400),5);",
+    "  square_process.set_momenta(square_point);",
+    "  check_qed(square_process,square_point,\"stable external square after set_parameters\",",
+    "    square_process.masses()[0]*square_process.masses()[0]);",
     "  ClassMass class_mass; ClassProduct class_product;",
     "  const auto mass_point=point(class_mass,18); class_mass.set_momenta(mass_point);",
     "  check_qed(class_mass,mass_point,\"class and mass name collision\");",
@@ -275,7 +354,8 @@ If[npLibraries =!= {} && !npFailed[npCompiler] &&
         "PRECISION_TYPE:STRING=LONG_DOUBLE"], {"-DWITH_LONG_DOUBLE"}, {}];
   npCompiled = npRun[Join[{"c++","-std=c++11","-O1"}, npPrecision,
     {"-I" <> FileNameJoin[{npSpinas,"include"}], "-I" <> npSpinas, npCppPath},
-    (#["Files"]["Source"] & /@ {npFamilyReport,npDotReport,npClassMassReport,npClassProductReport,
+    (#["Files"]["Source"] & /@ {npFamilyReport,npDotReport,npCrossDotReport,npStableDotReport,
+      npSquareReport,npClassMassReport,npClassProductReport,
       npTensorReport,npCompositeReport,npLongReport}),
     {FileNameJoin[{npSpinas,"SM","eeAA.cpp"}], First[npLibraries], "-o", npExecutable}]];
   check["native cache and fallback lifecycle projects compile and link", !npFailed[npCompiled]];

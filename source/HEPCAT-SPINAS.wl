@@ -42,7 +42,7 @@ spinasProcessIR[process_List, amplitude_, model_List, options_Association] := Mo
    rows, masses, massRules, massValues, parameterRules, declared, usedParameters = {},
    parameterDefaults, parameterCpp, parameterNames, expression, original, crossed,
    weights, helicities, spin2, indexed, spinIndices, implicit, indexRules = {},
-   emit, emitParameter, emitVector, momentumCoefficients, endpoint, chainCode,
+   emit, emitParameter, emitVector, emitDot, momentumCoefficients, endpoint, chainCode,
    traceCode, chains = {}, chainStatements = {}, chainNames = {}, chainCpp, expressionCpp, massCpp,
    scalarExpressions = {}, scalarStatements = {}, scalarNames = {}, scalarComments = {},
    usedNames = {}, allocateName, cacheScalar, emitProduct, emitQuotient, emitSum,
@@ -126,6 +126,10 @@ spinasProcessIR[process_List, amplitude_, model_List, options_Association] := Mo
       {rule, pairRules}];
     massRules = Thread[(Mass /@ Range[count]) -> masses];
     expression = original /. massRules;
+    (* External legs have declared masses. Do not recover p_i^2 by subtracting
+       large numerical components; multiparticle virtualities stay untouched. *)
+    expression = expression /. HoldPattern[Power[Mom[label_Integer], 2]] /;
+      MemberQ[Range[count], label] :> masses[[label]]^2;
     expression = expression /. {SpinorChainReduced -> SpinorChain, SpinorTraceReduced -> SpinorTrace};
     If[!FreeQ[expression, _xFactor | _xTildeFactor | _SpinorHat | _MomHat | _MomQ |
         _MomProdHat1 | _MomProdHat2 | _MomProdHat12],
@@ -263,6 +267,16 @@ spinasProcessIR[process_List, amplitude_, model_List, options_Association] := Mo
       components = Table["(" <> StringRiffle[MapIndexed[If[TrueQ[#1 === 0], Nothing,
         "(" <> spinasCppReal[#1] <> ") * momenta[" <> ToString[First[#2] - 1] <> "][" <> ToString[mu] <> "]"] &, values], " + "] <> ")", {mu, 0, 3}];
       "FourMomentum{{" <> StringRiffle[components, ", "] <> "}}"];
+    emitDot[first_, second_] := Module[{a = spinasMomentumArgument[first],
+        b = spinasMomentumArgument[second], left, right, scale, code},
+      left = spinasNativeUnitMomentum[a]; right = spinasNativeUnitMomentum[b];
+      If[FreeQ[{left, right}, $Failed] &&
+          AllTrue[{First[left], First[right]}, MemberQ[Range[count], #] &],
+        scale = Last[left] Last[right];
+        code = "particles[" <> ToString[First[left]-1] <> "].dot(particles[" <>
+          ToString[First[right]-1] <> "])";
+        Return[If[scale === 1, code, "(" <> emit[scale] <> " * " <> code <> ")"]]];
+      "dot(" <> emitVector[a] <> ", " <> emitVector[b] <> ")"];
     endpoint[spinor_Spinor, left_] := Module[{data = List @@ spinor, position, label, type, variance, indices, slot, method},
       position = FirstPosition[data, "Angle" | "Square", Missing["Type"]];
       If[MissingQ[position], fail["A spinor endpoint has no angle/square type.", spinor]];
@@ -330,9 +344,7 @@ spinasProcessIR[process_List, amplitude_, model_List, options_Association] := Mo
             Last[chainNames], chainNames[[First[position]]]]],
       Head[value] === SpinorTrace, cacheScalar[value, spinasScalarName[value], traceCode[value]],
       Head[value] === MomProd && Length[value] === 2,
-        cacheScalar[value, spinasScalarName[value],
-          "dot(" <> emitVector[If[MatchQ[value[[1]], _Integer | _Multiparticle], Mom[value[[1]]], value[[1]]]] <> ", " <>
-          emitVector[If[MatchQ[value[[2]], _Integer | _Multiparticle], Mom[value[[2]]], value[[2]]]] <> ")"],
+        cacheScalar[value, spinasScalarName[value], emitDot[value[[1]], value[[2]]]],
       Head[value] === Mandelstahm,
         cacheScalar[value, spinasScalarName[value], "mass2(" <> emitVector[Total[Mom /@ List @@ value]] <> ")"],
       Head[value] === PropDen && MemberQ[{2, 3}, Length[value]],
@@ -880,6 +892,8 @@ spinasNativeCppRelabel[text_String, permutation_List, ranks_List] := Module[
       ("momenta[" <> ToString[permutation[[i]] - 1] <> "]"), {i, n}],
     Table[("particles[" <> ToString[i - 1] <> "].") ->
       ("p" <> ToString[permutation[[i]]] <> "."), {i, n}],
+    Table[("particles[" <> ToString[i - 1] <> "]") ->
+      ("p" <> ToString[permutation[[i]]]), {i, n}],
     Flatten[Table[Table[
       ("spinor_spins[" <> ToString[i - 1] <> "][" <> ToString[slot - 1] <> "]") ->
         ("ds" <> ToString[permutation[[i]]] <>

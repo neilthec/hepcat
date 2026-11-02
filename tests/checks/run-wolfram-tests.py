@@ -14,6 +14,7 @@ TEST_SUITES = (
     "documentation-content-tests.wl", "documentation-registration-tests.wl",
     "legacy-package-tests.wl", "legacy-algebra-tests.wl",
     "legacy-transform-tests.wl", "legacy-model-tests.wl",
+    "numerical-spinor-stability-tests.wl",
     "spinor-identity-tests.wl", "spin-contraction-guard-tests.wl",
     "thesis-preparation-tests.wl", "diagram-tests.wl",
     "simplification-path-tests.wl", "physical-residue-tests.wl",

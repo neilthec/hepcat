@@ -222,11 +222,11 @@ Momenta<LegCount> make_random_momenta(
   const ldouble beam_momentum = detail::two_body_momentum(
     center_of_mass_energy, masses[incoming[0]], masses[incoming[1]]);
   momenta[incoming[0]] = {{
-    std::sqrt(beam_momentum * beam_momentum + masses[incoming[0]] * masses[incoming[0]]),
+    std::hypot(beam_momentum,masses[incoming[0]]),
     0, 0, beam_momentum
   }};
   momenta[incoming[1]] = {{
-    std::sqrt(beam_momentum * beam_momentum + masses[incoming[1]] * masses[incoming[1]]),
+    std::hypot(beam_momentum,masses[incoming[1]]),
     0, 0, -beam_momentum
   }};
 
@@ -255,25 +255,25 @@ Momenta<LegCount> make_random_momenta(
     const ldouble decay_momentum = detail::two_body_momentum(
       cluster_mass, masses[emitted_leg], remaining_mass);
     const ldouble cos_theta = 2 * detail::validation_uniform(engine) - 1;
-    const ldouble sin_theta = std::sqrt(std::max(ldouble(0), 1 - cos_theta * cos_theta));
+    const ldouble sin_theta = std::sqrt(std::max(ldouble(0), (1-cos_theta)*(1+cos_theta)));
     const ldouble phi = 2 * pi * detail::validation_uniform(engine);
     const FourMomentum emitted_rest = {{
-      std::sqrt(decay_momentum * decay_momentum + masses[emitted_leg] * masses[emitted_leg]),
+      std::hypot(decay_momentum,masses[emitted_leg]),
       decay_momentum * sin_theta * std::cos(phi),
       decay_momentum * sin_theta * std::sin(phi),
       decay_momentum * cos_theta
     }};
     const FourMomentum remaining_rest = {{
-      std::sqrt(decay_momentum * decay_momentum + remaining_mass * remaining_mass),
+      std::hypot(decay_momentum,remaining_mass),
       -emitted_rest[1], -emitted_rest[2], -emitted_rest[3]
     }};
 
     // Step 4: boost both products back to the overall COM frame. Save the
     // emitted particle and continue splitting only the remaining cluster.
-    momenta[emitted_leg] = detail::boost_from_rest(
-      emitted_rest, cluster_momentum, cluster_mass);
-    cluster_momentum = detail::boost_from_rest(
-      remaining_rest, cluster_momentum, cluster_mass);
+    momenta[emitted_leg] = detail::boost_on_shell_from_rest(
+      emitted_rest, masses[emitted_leg], cluster_momentum, cluster_mass);
+    cluster_momentum = detail::boost_on_shell_from_rest(
+      remaining_rest, remaining_mass, cluster_momentum, cluster_mass);
     cluster_mass = remaining_mass;
   }
   momenta[outgoing.back()] = cluster_momentum;

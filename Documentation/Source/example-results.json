@@ -216,5 +216,6 @@
   "ReduceSpinorProducts[SpinorChain[Spinor[\"Helicity\", \"Angle\", 3], Spinor[\"Helicity\", \"Angle\", 3]]]": "0",
   "ReduceSpinorProducts[SpinorChain[Spinor[\"Helicity\", \"Square\", 4], Spinor[\"Helicity\", \"Square\", 4]]]": "0",
   "applyToNumerator[x/y + x/z, x -> a]": "a/y + a/z",
-  "PlainText[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]]]": "\"<12>\""
+  "PlainText[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]]]": "\"<12>\"",
+  "energyExpression = ExtractEnergy[\n  SpinorChain[Spinor[\"Spin\", \"Upper\", \"Angle\", 1, 1/2],\n    Spinor[\"Helicity\", \"Angle\", 2]], {{1}, {2}},\n  \"MassRules\" -> {Mass[1] -> 1/2000, Mass[2] -> 0}];\nenergyExpression /. {En[1] -> 10.^12, MomMagnitude[1] -> 10.^12,\n  Theta[1] -> 0., Phi[1] -> 0., En[2] -> 1.,\n  MomMagnitude[2] -> 1., Theta[2] -> 0., Phi[2] -> 0.}": "5.*^-10 + 0.*I"
 }
