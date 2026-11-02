@@ -1252,7 +1252,9 @@
         "title": "Optional comparisons and narrower reports",
         "paragraphs": [
           "Use `\"FeynmanAmplitudes\"` to supply an independently obtained spinor-form Feynman expression or amplitude pairs. The full sums are compared away from propagator poles with no internal-shell substitutions. [FeynmanToSpinorProducts](paclet:HEPCAT/ref/FeynmanToSpinorProducts) and [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes) provide the conversion and ordinary preparation steps.",
-          "All four standard categories are enabled by their automatic defaults when applicable. For a deliberately narrower physical-residue-only report, set `\"SpuriousPoles\" -> {}`, `\"HighEnergyCheck\" -> False` and `\"ReferenceCheck\" -> False`. A missing or disabled test must not be interpreted as a successful check of that property."
+          "All four standard categories are enabled by their automatic defaults when applicable. For a deliberately narrower physical-residue-only report, set `\"SpuriousPoles\" -> {}`, `\"HighEnergyCheck\" -> False` and `\"ReferenceCheck\" -> False`. A missing or disabled test must not be interpreted as a successful check of that property.",
+          "Automatic scheduling takes the number of coherent massive-spin components into account. A short expression can still represent sixteen or more components; those checks can reuse an existing worker pool instead of being treated as a small scalar calculation. Explicit parallel settings and custom kinematic maps keep their usual meaning.",
+          "A high-energy PASS can come from an exact conservative bound on every spin component. This route also applies to compact expressions with several massive-spin legs, where separate Laurent expansions would be expensive. The report then says “At most” and records an upper-bound certificate; it does not claim to have measured a leading power."
         ]
       }
     ]
@@ -1447,7 +1449,8 @@
         "paragraphs": [
           "A factorization channel determines an amplitude on one pole. Extending its expression away from that pole is not unique, and different channels can share double or higher simultaneous poles. Simply adding a correction for each failed channel can double count a shared contribution or spoil a channel that already passed.",
           "Completion therefore constructs a finite set of correction directions from the supplied information and determines their coefficients using all channel conditions at once. Diagram reweightings, terms retained during preparation and alternative reference choices can supply useful directions. The original lower-point channel products remain the targets throughout.",
-          "The function does not search every imaginable expression and does not invent an unknown interaction. If a required lower-point amplitude is absent from the model, or the available correction directions cannot express a needed contribution, longer fitting alone is not a guarantee of success."
+          "The function does not search every imaginable expression and does not invent an unknown interaction. If a required lower-point amplitude is absent from the model, or the available correction directions cannot express a needed contribution, longer fitting alone is not a guarantee of success.",
+          "For a small coherent-spin tensor, physical-pole completion first tries a compact correction space from the already reduced channel sources, including ordinary two-particle cuts. This avoids introducing a large collection of redundant coordinates before it is needed. A proposal still has to fit every original channel and pass independent validation; larger tensor systems retain their correlated source route."
         ]
       },
       {
@@ -1511,7 +1514,9 @@
         "paragraphs": [
           "The automatic high-energy bound is `E^(4-n)` for a renormalizable tree amplitude with `n` external particles. The comparison takes fixed-angle high-energy limits while holding masses and couplings fixed. Supply `\"HighEnergyBound\"` when your theory requires a different stated growth condition.",
           "A proposed correction is also checked against the original physical channels. Removing a spurious singularity or improving energy growth is not allowed to spoil factorization. Explicit Xi references are varied when present, and apparent denominator poles must satisfy the supported cancellation checks.",
-          "Only directions supported by the model and the supplied calculation are considered. The function does not create an unrestricted contact-interaction basis or infer new QED interactions. If the stated constraints leave a genuine free interaction, that freedom must remain unresolved rather than being assigned an arbitrary number."
+          "Only directions supported by the model and the supplied calculation are considered. The function does not create an unrestricted contact-interaction basis or infer new QED interactions. If the stated constraints leave a genuine free interaction, that freedom must remain unresolved rather than being assigned an arbitrary number.",
+          "Redundant correction directions are removed only after exact identity proofs. The proof first tries ordinary external reductions, then chooses economical massive-spinor coordinates and checks every coherent-spin coefficient. Angle and square basis choices describe the same complete spin tensor; they are calculation choices, not assumptions that the theory is parity invariant.",
+          "When a conservative high-energy certificate already establishes the requested bound for every component, expensive series expansions are unnecessary. Fresh validation directions and the supplied parameter-validation sets are still checked. A failed or unfinished certificate falls back to the existing calculation and never turns an unresolved result into PASS."
         ]
       },
       {

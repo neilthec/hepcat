@@ -68,6 +68,12 @@ imaginable expression and does not invent an unknown interaction. If a \
 required lower-point amplitude is absent from the model, or the available \
 correction directions cannot express a needed contribution, longer fitting \
 alone is not a guarantee of success."}], "Notes"],
+  Cell[TextData[{"For a small coherent-spin tensor, physical-pole completion \
+first tries a compact correction space from the already reduced channel \
+sources, including ordinary two-particle cuts. This avoids introducing a \
+large collection of redundant coordinates before it is needed. A proposal \
+still has to fit every original channel and pass independent validation; \
+larger tensor systems retain their correlated source route."}], "Notes"],
   Cell["Retaining information for the following stages", "NotesSection"],
   Cell[TextData[{"Detailed preparation reports are preferred when simplifying \
 aggressively. They keep the original diagram expressions and the pieces \

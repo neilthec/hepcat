@@ -64,7 +64,19 @@ calculation are considered. The function does not create an unrestricted \
 contact-interaction basis or infer new QED interactions. If the stated \
 constraints leave a genuine free interaction, that freedom must remain \
 unresolved rather than being assigned an arbitrary number."}], "Notes"],
-  Cell["Reading the result", "NotesSection"],
+  Cell[TextData[{"Redundant correction directions are removed only after \
+exact identity proofs. The proof first tries ordinary external reductions, \
+then chooses economical massive-spinor coordinates and checks every \
+coherent-spin coefficient. Angle and square basis choices describe the same \
+complete spin tensor; they are calculation choices, not assumptions that the \
+theory is parity invariant."}], "Notes"],
+  Cell[TextData[{"When a conservative high-energy certificate already \
+establishes the requested bound for every component, expensive series \
+expansions are unnecessary. Fresh validation directions and the supplied \
+parameter-validation sets are still checked. A failed or unfinished \
+certificate falls back to the existing calculation and never turns an \
+unresolved result into PASS."}], "Notes"], Cell["Reading the result",
+   "NotesSection"],
   Cell[TextData[{"Use ", Cell[BoxData[RowBox[{"\"Output\"", " ", "->", " ",
          "\"Details\""}]], "InlineFormula"],
      Cell[BoxData[RowBox[{" ", "to", " ", "inspect", " ", "the", " ",

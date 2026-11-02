@@ -26,7 +26,8 @@ TEST_SUITES = (
     "fermion-sewing-grading-tests.wl",
     "spurious-pole-tests.wl", "qed-five-point-simplification-tests.wl",
     "high-energy-tests.wl", "high-energy-power-counting-tests.wl", "high-energy-family-tests.wl",
-    "high-energy-compact-retry-tests.wl", "reference-independence-tests.wl",
+    "high-energy-compact-retry-tests.wl", "five-point-identity-proof-tests.wl",
+    "reference-independence-tests.wl",
     "coherent-polynomial-rules-tests.wl", "high-energy-coefficient-series-tests.wl",
     "high-energy-dispatch-tests.wl", "high-energy-laurent-rows-tests.wl",
     "amplitude-completion-tests.wl", "completion-input-fit-tests.wl",
@@ -65,6 +66,7 @@ TEST_SUITES = (
 # These execute full expensive notebook constructions rather than component
 # regressions. Select them explicitly and give the external runner enough time.
 INTEGRATION_TEST_SUITES = ("physical-construction-integration-tests.wl",
+                          "five-point-construction-integration-tests.wl",
                           "fermion-construction-integration-tests.wl",
                           "spinas-calchep-integration-tests.wl",
                           "spinas-madgraph-integration-tests.wl",

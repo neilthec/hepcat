@@ -136,6 +136,17 @@ report, set ", Cell[BoxData[RowBox[{"\"SpuriousPoles\"", " ", "->", " ", "{",
      Cell[BoxData[RowBox[{"\"ReferenceCheck\"", " ", "->", " ", "False"}]],
       "InlineFormula"], ". A missing or disabled test must not be interpreted \
 as a successful check of that property."}], "Notes"],
+  Cell[TextData[{"Automatic scheduling takes the number of coherent \
+massive-spin components into account. A short expression can still represent \
+sixteen or more components; those checks can reuse an existing worker pool \
+instead of being treated as a small scalar calculation. Explicit parallel \
+settings and custom kinematic maps keep their usual meaning."}], "Notes"],
+  Cell[TextData[{"A high-energy PASS can come from an exact conservative \
+bound on every spin component. This route also applies to compact expressions \
+with several massive-spin legs, where separate Laurent expansions would be \
+expensive. The report then says \[OpenCurlyDoubleQuote]At \
+most\[CloseCurlyDoubleQuote] and records an upper-bound certificate; it does \
+not claim to have measured a leading power."}], "Notes"],
   Cell["Options", "NotesSection"],
   Cell[BoxData[GridBox[{{Cell["Option", "TableHeader"],
        Cell["Default", "TableHeader"], Cell["Meaning", "TableHeader"]},

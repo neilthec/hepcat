@@ -2926,3 +2926,26 @@ values. Model 2 stays cubic for diagram generation. Model 3 now supplies both
 three-by-five and four-by-four sewings at six points. The all-plus six-point
 notebook section exercises their simultaneous completion as described above;
 this does not establish every other six-point process or helicity assignment.
+
+## Preserving Lower-Point Performance
+
+Physical completion tries the compact original reduced-channel proposal for
+small coherent-spin tensors even when every cut has two particles. It keeps
+the original targets, explicit regular input and full fitted affine family;
+an unsuccessful small proposal falls back to the wider source space. Systems
+with more coherent spin components keep their correlated source route.
+
+Exact identity proofs compare ordinary reduced forms and equivalent angle- or
+square-constant massive-spinor bases before certifying all tensor components.
+No internal shell is used in those proofs. Automatic checker scheduling
+accounts for coherent component count, and compact multi-spin expressions may
+use the same conservative high-energy bound certificate as larger expressions.
+A bound certificate reports an upper bound rather than an observed leading
+power; fresh samples and parameter assignments remain required.
+
+Run `five-point-construction-integration-tests.wl` explicitly to test the six
+independent five-point QED helicity sectors using the notebook's public calls
+and independent Feynman comparison. The suite checks successful construction,
+physical denominators, known complexity ceilings and matching complexity for
+opposite helicities. `HEPCAT_FIVE_POINT_INTEGRATION_CASES` can select a comma-separated
+subset. Timings are reported separately from correctness assertions.

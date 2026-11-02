@@ -3524,6 +3524,16 @@ amplitudeCheckJobResult[job_Association, result_] := If[
       "The independent check did not return a complete report; no agreement is certified."},
       If[FailureQ[result] || MissingQ[result], {result}, {}]]|>]];
 
+(* A short displayed expression can encode a large coherent spin tensor.
+   Estimate its exact component work without expanding or sampling it. *)
+amplitudeCheckWork[expression_, metadata_] := Module[{rules, metrics},
+  rules = If[AssociationQ[metadata], Lookup[metadata, "ExternalMassRules", {}], {}];
+  metrics = amplitudeResourceMetrics[{rules, expression}];
+  <|"ExpressionLeaves" -> LeafCount[expression],
+    "CoherentComponents" -> Lookup[metrics, "CoherentComponents", 1],
+    "WeightedLeaves" -> LeafCount[expression] Max[1, Lookup[metrics, "CoherentComponents", 1]]|>
+];
+
 CheckAmplitudes[amplitudes_, channelRows_List, model_List,
     opts : OptionsPattern[]] := Module[
   {output = OptionValue["Output"], factors = OptionValue["SpuriousPoles"],
@@ -3547,7 +3557,7 @@ CheckAmplitudes[amplitudes_, channelRows_List, model_List,
    parallel = OptionValue["Parallelization"], maxKernels = OptionValue["MaxKernels"],
    plan, jobs, run, jobResults, groups, spuriousJobs = {}, extraJobs = {},
    energyJob, energyPlan = Missing["NotRequested"], energySampleJobs = {},
-   energySampleRows = {}, referenceJob, benchmarkJob, execution},
+   energySampleRows = {}, referenceJob, benchmarkJob, execution, workEstimate, smallWork},
   If[!MemberQ[{Automatic, True, False}, parallel] ||
       !(maxKernels === Automatic || IntegerQ[maxKernels] && maxKernels > 0) ||
       parameters === $Failed || !IntegerQ[seed] ||
@@ -3680,15 +3690,20 @@ CheckAmplitudes[amplitudes_, channelRows_List, model_List,
   jobs = Join[Select[extraJobs, MemberQ[{"HighEnergy", "Feynman"}, #["Group"]] &],
     plan["Jobs"], spuriousJobs,
     Select[extraJobs, !MemberQ[{"HighEnergy", "Feynman"}, #["Group"]] &]];
+  workEstimate = amplitudeCheckWork[inputs["Expression"],
+    poleDiscoveryMetadata[targets, records]];
+  smallWork = workEstimate["WeightedLeaves"] < 3000;
   run = amplitudeCheckDispatch[jobs, <|
     "Parallelization" -> If[OptionValue["KinematicMap"] =!= Automatic ||
-      parallel === Automatic && LeafCount[inputs["Expression"]] < 3000,
+      parallel === Automatic && smallWork,
       False, parallel],
+    "WarmOnly" -> (parallel === Automatic && LeafCount[inputs["Expression"]] < 3000),
     "MaxKernels" -> maxKernels|>];
   jobResults = MapThread[amplitudeCheckJobResult, {jobs, run["Results"]}];
   groups = GroupBy[Transpose[{Lookup[jobs, "Group", {}], jobResults}], First -> Last];
   energySampleRows = If[AssociationQ[energyPlan], Lookup[groups, "HighEnergy", {}], {}];
   execution = Join[run["Execution"], <|"RequestedParallelization" -> parallel,
+    "WorkEstimate" -> workEstimate,
     "HighEnergySampleJobs" -> Length[energySampleJobs],
     "HighEnergyCompletedSampleJobs" -> Count[Lookup[energySampleRows, "SampleCompleted", {}], True],
     "HighEnergySampleExecution" -> (Join[KeyTake[#, {"Sample", "SampleCompleted"}],
@@ -3696,7 +3711,7 @@ CheckAmplitudes[amplitudes_, channelRows_List, model_List,
     "HighEnergyTimeBudgetScope" -> "SharedPreconditioningAndAllSamples",
     "SchedulingReason" -> Which[OptionValue["KinematicMap"] =!= Automatic,
       "Custom kinematic maps are evaluated on the calling kernel.",
-      parallel === Automatic && LeafCount[inputs["Expression"]] < 3000,
+      parallel === Automatic && smallWork,
       "The expression is small enough that worker startup would dominate the checks.",
       True, "Independent checks use the requested worker settings."]|>];
   report = residueCheckReportFromPlan[plan, Lookup[groups, "Physical", {}]];
@@ -5161,7 +5176,10 @@ highEnergyOneSample[expr_, chart_Association, parameterRules_List, bound_] := Mo
    component, observed, unresolved = False, lower = Missing["NotObserved"],
    upper, lowest, spinRules, establishedViolation = False, certificate,
    coefficientExpansion = Missing["NotRequested"], wholeExpansion = Missing["NotRequested"]},
-  If[LeafCount[expr] >= 5000,
+  (* Coherent tensor size also matters: a compact four-spin expression can
+     otherwise trigger sixteen expensive scalar Laurent expansions per
+     sample. The same exact bound certificate is useful before that work. *)
+  If[LeafCount[expr] >= 5000 || Length[variables] >= 4 && LeafCount[expr] >= 500,
     certificate = highEnergyUpperBoundCertificate[expr, chart, parameterRules, bound];
     If[Lookup[certificate, "Status", None] === "PASS", Return[<|"Status" -> "PASS",
       "ObservedPower" -> Missing["UpperBoundCertificate"],
@@ -5316,7 +5334,7 @@ highEnergyCheckReportFromPlan[plan_Association, sampleRows_List] := Module[
       "The high-energy check exceeded TimeConstraint; no conclusion is drawn from unfinished samples."}],
     {"Each recorded family keeps all external legs exactly on shell and conserves momentum. Internal propagators remain off shell.",
      If[boundOnly,
-       "Large supported expressions may certify a conservative generic fixed-angle upper bound instead of measuring the leading Laurent power. No internal-line shell condition is used.",
+       "Supported expressions may certify a conservative generic fixed-angle upper bound instead of measuring the leading Laurent power. No internal-line shell condition is used.",
        "PASS tests exact asymptotic powers at sampled real fixed-angle directions, not a generic analytic proof or a gauge-independence test."]}];
   If[!TrueQ[completed] || AnyTrue[results, Lookup[#, "Status"] === "UNRESOLVED" &],
     observed = Missing["IncompleteChecks"]; upper = {}];
@@ -10365,7 +10383,8 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
          a truncation of the larger union. Its fit still tests every original
          channel, all retained affine directions and independent samples. *)
       If[status =!= "COMPLETE" && polePreference === "AllPhysical" &&
-          AnyTrue[normalized["Targets"], Length[#["Cut"]] > 2 &],
+          (AnyTrue[normalized["Targets"], Length[#["Cut"]] > 2 &] ||
+            Lookup[structuredMetrics, "CoherentComponents", 1] <= 4),
         completionProgress[callback, enabled,
           <|"Stage" -> "Preparing compact physical source terms"|>];
         reducedPhysicalBudget = Min[Max[90, 12 Length[normalized["Targets"]]], physicalBudget/2];
@@ -10375,9 +10394,15 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
           If[!AssociationQ[reducedChannels],
             reducedChannels = completionReducedChannelBasis[normalized, continuations,
               constructionLimit, rules, seed]];
-          physicalSelected = completionSelectedChannelBasis[normalized, continuations,
-            constructionLimit, rules, seed, Max[0.000001,
-              3 (reducedPhysicalBudget - (AbsoluteTime[] - physicalStarted))/5], False];
+          (* Small coherent tensors get the original reduced sources even for
+             two-particle cuts. Splitting the same sources for a large tensor
+             can make a cheap correlated fit much wider, so those keep the
+             established route. Higher cuts retain their selected controls. *)
+          physicalSelected = If[AnyTrue[normalized["Targets"], Length[#["Cut"]] > 2 &],
+            completionSelectedChannelBasis[normalized, continuations,
+              constructionLimit, rules, seed, Max[0.000001,
+                3 (reducedPhysicalBudget - (AbsoluteTime[] - physicalStarted))/5], False],
+            Missing["NotNeededForOriginalSourceProposal"]];
           completionReducedPhysicalSourceBasis[normalized, reducedChannels, exchangePlan,
             constructionLimit, limit, Max[0.000001, reducedPhysicalBudget -
               (AbsoluteTime[] - physicalStarted)], physicalSelected],
@@ -14681,8 +14706,9 @@ completionHEMasslessHelicityTagsQ[expression_, rules_List] := Module[{legs, exte
 completionHEZeroDirection[expression_, rules_List, model_List, seconds_] := Module[
   {started = AbsoluteTime[], candidate = expression, prepared, result,
    unsupported, remaining, ordinaryBudget, weights, grouped, work, symbolicProof,
-   symbolicPortfolio, charts = <||>, earlyChoices, primitiveCount, coherentWork, compactEligible,
+   symbolicPortfolio, chartForChoice, charts = <||>, earlyChoices, primitiveCount, coherentWork, compactEligible,
    compactStarted, compactBudget, compactLeft, compactValue, compactRecord,
+   earlyCompacted = False, earlyBudget, earlyStarted, earlyBefore,
    compactRetry = Missing["NotRequested"]},
   If[residueExactZero[expression], Return[<|"Status" -> "PROVED_ZERO",
     "Method" -> "ExactRationalAlgebra", "ElapsedTime" -> (AbsoluteTime[] - started)|>]];
@@ -14702,14 +14728,47 @@ completionHEZeroDirection[expression_, rules_List, model_List, seconds_] := Modu
   coherentWork = Times @@ MapThread[If[TrueQ[(Mass[#1] /. rules) === 0], 1, 1 + Max[0, #2]] &,
     {Sort[Cases[rules, HoldPattern[Mass[i_Integer] -> _] :> i]], weights}];
   remaining[] := Max[0.000001, seconds - (AbsoluteTime[] - started)];
+  chartForChoice[choice_Association] := Module[
+    {key = ToString[choice, InputForm], chart, massive, angle, square,
+     angleBasis, squareBasis, mass, basis, vector, leg,
+     epsilon = {{0, 1}, {-1, 0}}, basisChecks},
+    chart = Lookup[charts, key, Missing["NotBuilt"]];
+    If[!MissingQ[chart], Return[chart]];
+    chart = completionHESymbolicExternalChart[rules,
+      choice["NullAxisLegs"], choice["DependentShellLegs"]];
+    If[!AssociationQ[chart], Return[chart]];
+    If[Lookup[choice, "MassiveSpinorBasis", "Angle"] === "Square",
+      (* Both bases cover the complete massive spin tensor. Fixing square
+         instead of angle coordinates is an invertible little-group basis
+         change, not a helicity sample or an internal on-shell identity. *)
+      massive = Keys[chart["AngleBasis"]];
+      angle = chart["Angle"]; square = chart["Square"];
+      angleBasis = chart["AngleBasis"]; squareBasis = chart["SquareBasis"];
+      Do[
+        leg = massive[[index]]; mass = chart["Masses"][leg];
+        basis = {{mass, 0}, {0, 1}};
+        vector = {1, chart["SpinVariables"][[index]]};
+        AssociateTo[squareBasis, leg -> basis];
+        AssociateTo[angleBasis, leg -> (-chart["Momenta"][leg].epsilon.basis/mass)];
+        AssociateTo[angle, leg -> angleBasis[leg].vector];
+        AssociateTo[square, leg -> basis.vector], {index, Length[massive]}];
+      basisChecks = AllTrue[massive, Function[particle,
+        residueExactZero[Det[angleBasis[particle]] - chart["Masses"][particle]] &&
+          residueExactZero[Det[squareBasis[particle]] - chart["Masses"][particle]] &&
+          residueExactZero[angleBasis[particle].epsilon.Transpose[squareBasis[particle]] -
+            chart["Momenta"][particle]] &&
+          residueExactZero[squareBasis[particle] - epsilon.residueAdjugate[
+            chart["Momenta"][particle]].angleBasis[particle]/chart["Masses"][particle]]]];
+      If[!TrueQ[basisChecks], Return[$Failed]];
+      chart = Join[chart, <|"Angle" -> angle, "Square" -> square,
+        "AngleBasis" -> angleBasis, "SquareBasis" -> squareBasis,
+        "MassiveSpinorBasis" -> "Square", "ExternalSpinorBasesValidated" -> True|>],
+      chart = Join[chart, <|"MassiveSpinorBasis" -> "Angle"|>]];
+    AssociateTo[charts, key -> chart]; chart
+  ];
   symbolicProof[value_, allowance_, choice_Association] := TimeConstrained[
     MemoryConstrained[Module[{chart, mapped, key, componentProof = None, zero},
-      key = ToString[choice, InputForm];
-      chart = Lookup[charts, key, Missing["NotBuilt"]];
-      If[MissingQ[chart],
-        chart = completionHESymbolicExternalChart[rules,
-          choice["NullAxisLegs"], choice["DependentShellLegs"]];
-        If[AssociationQ[chart], AssociateTo[charts, key -> chart]]];
+      chart = chartForChoice[choice];
       If[!AssociationQ[chart], Return[<|"Status" -> "NOT_PROVED", "Method" -> "UnsupportedExternalChart"|>]];
       (* This maps each distinct typed primitive once before inserting it
          into the rational sum. The cache and chart stay local to this proof. *)
@@ -14717,7 +14776,8 @@ completionHEZeroDirection[expression_, rules_List, model_List, seconds_] := Modu
       If[residueUnmappedQ[mapped] || !residueFiniteQ[mapped] || ListQ[mapped] ||
           !FreeQ[mapped, _Missing | _Failure],
         Return[<|"Status" -> "NOT_PROVED", "Method" -> "UnsupportedExternalChart"|>]];
-      If[LeafCount[mapped] > 50000,
+      If[LeafCount[mapped] > 50000 ||
+          (Length[chart["SpinVariables"]] >= 4 && LeafCount[mapped] >= 5000),
         componentProof = completionHECoherentComponentCertificate[mapped, chart["SpinVariables"]];
         If[Lookup[componentProof, "Status", None] =!= "PROVED_ZERO",
           Return[<|"Status" -> "NOT_PROVED", "Method" ->
@@ -14738,7 +14798,27 @@ completionHEZeroDirection[expression_, rules_List, model_List, seconds_] := Modu
     Max[0.000001, allowance], <|"Status" -> "NOT_PROVED", "Method" -> "TimeConstraint"|>];
   symbolicPortfolio[value_, allowance_] := Module[
     {choices = Take[completionHEIdentityChartChoices[value, rules], UpTo[2]],
-     began = AbsoluteTime[], left, proof = <|"Status" -> "NOT_PROVED", "Method" -> "TimeConstraint"|>, attempts = {}},
+     began = AbsoluteTime[], left, proof = <|"Status" -> "NOT_PROVED", "Method" -> "TimeConstraint"|>, attempts = {},
+     primitives, costs = {}, cost, chart, key},
+    If[coherentWork >= 16,
+      choices = Flatten[Table[Join[choice, <|"MassiveSpinorBasis" -> basis|>],
+        {choice, choices}, {basis, {"Angle", "Square"}}], 1]];
+    (* Choosing coordinates is representation work, not a kinematic sample.
+       A small primitive map predicts tensor coefficient growth much more
+       cheaply than expanding the complete coherent rational expression. *)
+    If[coherentWork >= 16 && Length[choices] > 1 && remaining[] > 2,
+      primitives = DeleteDuplicates[Cases[value,
+        _SpinorChain | _SpinorTrace | _PropDen | _MomProd | _Mandelstahm |
+          HoldPattern[Mom[_]^2], {0, Infinity}]];
+      If[Length[primitives] <= 64,
+        costs = Table[
+          cost = TimeConstrained[
+            chart = chartForChoice[choice];
+            If[AssociationQ[chart],
+              Total[LeafCount[spuriousEvaluateCurve[#, chart, {}]] & /@ primitives], Infinity],
+            Min[1, remaining[]/12], Infinity];
+          <|"Choice" -> choice, "MappedPrimitiveLeaves" -> cost|>, {choice, choices}];
+        choices = Lookup[SortBy[costs, #["MappedPrimitiveLeaves"] &], "Choice"]]];
     Do[
       left = Min[remaining[], Max[0, allowance - (AbsoluteTime[] - began)]];
       If[left <= 0.000001, Break[]];
@@ -14746,8 +14826,8 @@ completionHEZeroDirection[expression_, rules_List, model_List, seconds_] := Modu
         2 left/3, left], choices[[index]]];
       AppendTo[attempts, Join[choices[[index]], KeyTake[proof, {"Status", "Method"}]]];
       If[proof["Status"] === "PROVED_ZERO" || proof["Method"] === "NonzeroSymbolicExternalChart",
-        Return[Join[proof, <|"ChartAttempts" -> attempts|>]]], {index, Length[choices]}];
-    Join[proof, <|"ChartAttempts" -> attempts|>]
+        Return[Join[proof, <|"ChartAttempts" -> attempts, "ChartPlanning" -> costs|>]]], {index, Length[choices]}];
+    Join[proof, <|"ChartAttempts" -> attempts, "ChartPlanning" -> costs|>]
   ];
   work[] := Module[{proof},
     (* Try the original grouped form before display-oriented transformations.
@@ -14758,26 +14838,46 @@ completionHEZeroDirection[expression_, rules_List, model_List, seconds_] := Modu
         HoldPattern[Mom[_]^2], {0, Infinity}]]];
     compactEligible = NumericQ[seconds] && TrueQ[10 <= seconds < Infinity] &&
       1000 <= LeafCount[candidate] <= 24000 && coherentWork >= 16;
-    If[LeafCount[candidate] <= 150000 && primitiveCount <= 256 && remaining[] > 1,
-      proof = symbolicPortfolio[candidate, If[compactEligible,
-        Min[5, seconds/10], Min[60, 2 remaining[]/3]]];
-      If[proof["Status"] === "PROVED_ZERO" || proof["Method"] === "NonzeroSymbolicExternalChart",
-        Return[Join[proof, <|"ProofInput" -> "OriginalGrouped",
-          "DistinctPrimitives" -> primitiveCount|>]]]];
+    (* Cheap ordinary collections come before a dense tensor proof. They
+       retain every propagator off shell and do not require a full public
+       preparation report, identity search or any internal-shell condition. *)
     If[compactEligible && remaining[] > 2,
-      compactStarted = AbsoluteTime[]; compactBudget = Min[10, remaining[]/3];
+      earlyStarted = AbsoluteTime[]; earlyBudget = Min[4, remaining[]/8];
       compactRetry = <|"Status" -> "UNCHANGED", "Input" -> candidate,
         "Amplitude" -> candidate, "Route" -> {}, "CoherentComponentEstimate" -> coherentWork,
         "NumericalKinematicSamples" -> 0, "InternalOnShellConditions" -> {}|>;
+      Do[
+        earlyBefore = candidate;
+        compactValue = preparationCompactExternalSums[candidate, earlyBudget/2, rules];
+        If[residueFiniteQ[compactValue] &&
+            preparationBetterQ[preparationRank[compactValue], preparationRank[candidate]],
+          candidate = compactValue; earlyCompacted = True;
+          compactRetry = Join[compactRetry, <|"Status" -> "IMPROVED", "Amplitude" -> candidate,
+            "Route" -> Append[compactRetry["Route"], <|
+              "Operation" -> "EarlyExternalTensorCollection", "Before" -> earlyBefore,
+              "After" -> candidate, "ExternalMassRules" -> preparationExternalRules[rules],
+              "InternalOnShellConditions" -> {}|>]|>]], {2}];
+      compactRetry = Join[compactRetry, <|"EarlyElapsedTime" -> AbsoluteTime[] - earlyStarted|>]];
+    If[LeafCount[candidate] <= 150000 && primitiveCount <= 256 && remaining[] > 1,
+      proof = symbolicPortfolio[candidate, If[TrueQ[earlyCompacted], Min[20, 2 remaining[]/3], If[compactEligible,
+        Min[5, seconds/10], Min[60, 2 remaining[]/3]]]];
+      If[proof["Status"] === "PROVED_ZERO" || proof["Method"] === "NonzeroSymbolicExternalChart",
+        Return[Join[proof, <|"ProofInput" -> If[TrueQ[earlyCompacted], "OrdinaryCompacted", "OriginalGrouped"],
+          "DistinctPrimitives" -> primitiveCount|>]]]];
+    If[compactEligible && remaining[] > 2,
+      compactStarted = AbsoluteTime[]; compactBudget = Min[10, remaining[]/3];
+      If[MissingQ[compactRetry], compactRetry = <|"Status" -> "UNCHANGED", "Input" -> candidate,
+        "Amplitude" -> candidate, "Route" -> {}, "CoherentComponentEstimate" -> coherentWork,
+        "NumericalKinematicSamples" -> 0, "InternalOnShellConditions" -> {}|>];
       compactValue = preparationNumeratorSpectatorSums[candidate, Min[2, compactBudget/4], rules];
       If[residueFiniteQ[compactValue] &&
           preparationBetterQ[preparationRank[compactValue], preparationRank[candidate]],
         compactRetry = Join[compactRetry, <|"Status" -> "IMPROVED", "Amplitude" -> compactValue,
-          "Route" -> {<|"Operation" -> "NumeratorSpectatorCollection",
+          "Route" -> Append[compactRetry["Route"], <|"Operation" -> "NumeratorSpectatorCollection",
             "Before" -> candidate, "After" -> compactValue,
             "ForwardReduction" -> "CollectNumeratorCoefficientsThenOrdinarySpinorProductsAndFactor",
             "ExternalMassRules" -> preparationExternalRules[rules],
-            "InverseFactorsProtected" -> True, "InternalOnShellConditions" -> {}|>}|>]];
+            "InverseFactorsProtected" -> True, "InternalOnShellConditions" -> {}|>]|>]];
       compactLeft = Max[0, Min[remaining[], compactBudget - (AbsoluteTime[] - compactStarted)]];
       If[compactLeft > 0.01,
         compactRecord = preparationOrdinaryPoleCompaction[compactRetry["Amplitude"], rules, True, compactLeft];
