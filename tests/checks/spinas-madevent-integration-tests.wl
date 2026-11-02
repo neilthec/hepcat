@@ -45,6 +45,10 @@ smeiWrite[name_String, entries_] := WriteSPINASProcess[FileNameJoin[{smeiTempora
 smeiExport = smeiWrite["eeAA", smeiFamily];
 smeiCheck["the public exporter builds the combined numerical project", AssociationQ[smeiExport]];
 If[!AssociationQ[smeiExport], Print["EXPORT FAILURE: ", InputForm[smeiExport]]; Exit[1]];
+smeiCheck["Build True prepares the movable native process before any launcher run",
+  FileExistsQ[FileNameJoin[{smeiExport["Directory"], "build", "PROC_eeAA", "bin", "madevent"}]] &&
+    FileExistsQ[FileNameJoin[{smeiExport["Directory"], "build", "PROC_eeAA", "hepcat-madevent.json"}]] &&
+    FileNames["unweighted_events*", FileNameJoin[{smeiExport["Directory"], "build", "PROC_eeAA", "Events"}], Infinity] === {}];
 smeiConfiguration = smeiExport["MadEventNumerical"];
 smeiCheck["the chosen numerical model and launcher are available",
   smeiConfiguration["Status"] === "AVAILABLE" && FileExistsQ[smeiConfiguration["Executable"]]];

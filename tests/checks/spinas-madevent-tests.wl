@@ -83,6 +83,13 @@ If[AssociationQ[smeSelected],
       StringContainsQ[cmake, "madevent_stub_madevent_matrix STATIC"] &&
         StringContainsQ[cmake, "add_executable(madevent_stub_madevent"] &&
         StringContainsQ[cmake, "madevent-link.json"]]];
+  smeCheck["an ordinary build prepares the native process without generating events",
+    With[{cmake = Import[smeSelected["Files"]["CMake"], "Text"]},
+      StringContainsQ[cmake, "option(HEPCAT_PREPARE_MADEVENT"] &&
+        StringContainsQ[cmake, "madevent_stub_madevent_process ALL"] &&
+        StringContainsQ[cmake, "madevent_stub_madevent>\" --prepare"] &&
+        StringContainsQ[cmake, "DEPENDS madevent_stub_madevent madevent_stub_madevent_matrix madevent_stub_process"] &&
+        !StringContainsQ[cmake, "--run "]]];
   smeCheck["the generated link metadata identifies headers and a static SPINAS archive for bundling",
     With[{cmake = Import[smeSelected["Files"]["CMake"], "Text"]},
       StringContainsQ[cmake, "SPINASIncludeDirectory"] &&
