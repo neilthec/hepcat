@@ -91,8 +91,9 @@ MadGraph validation and numerical integration."}], "GuideText"],
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/guide/AmplitudeValidation",
      "title" -> "Checking Amplitudes", "type" -> "Guide",
-     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Compare physical \
-residues, spurious poles, high-energy behavior, references and Feynman \
-results.", "keywords" -> {"HEPCAT", "AmplitudeValidation",
-       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
+     "label" -> "HEPCAT Guide", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" -> "Compare physical residues, spurious poles, high-energy \
+behavior, references and Feynman results.", "keywords" ->
+      {"HEPCAT", "AmplitudeValidation", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

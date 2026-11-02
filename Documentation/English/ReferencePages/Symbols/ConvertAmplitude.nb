@@ -91,8 +91,8 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/ConvertAmplitude", "title" -> "ConvertAmplitude",
-     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" ->
+     "type" -> "Symbol", "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT",
+     "language" -> "en", "summary" ->
       "Convert a constructive model row from text into typed spinor \
 notation.", "keywords" -> {"HEPCAT", "ConvertAmplitude",
        "spinor amplitudes"}, "status" -> "None", "index" -> True}},

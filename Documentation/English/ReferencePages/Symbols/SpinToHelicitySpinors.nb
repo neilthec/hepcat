@@ -76,8 +76,8 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/SpinToHelicitySpinors",
      "title" -> "SpinToHelicitySpinors", "type" -> "Symbol",
-     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Applies legacy \
-spin-to-helicity expansions to selected massive particle spinors.",
-     "keywords" -> {"HEPCAT", "SpinToHelicitySpinors", "spinor amplitudes"},
-     "status" -> "None", "index" -> True}},
+     "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" -> "Applies legacy spin-to-helicity expansions to selected \
+massive particle spinors.", "keywords" -> {"HEPCAT", "SpinToHelicitySpinors",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

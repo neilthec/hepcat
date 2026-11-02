@@ -127,7 +127,7 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/SimplifySpinorProducts",
      "title" -> "SimplifySpinorProducts", "type" -> "Symbol",
-     "paclet" -> "HEPCAT", "language" -> "en",
+     "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
      "summary" ->
       "Runs the older iterative momentum-conservation and spinor simplifier."\
 , "keywords" -> {"HEPCAT", "SimplifySpinorProducts", "spinor amplitudes"},

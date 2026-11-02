@@ -55,7 +55,7 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/lnice", "title" -> "lnice", "type" -> "Symbol",
-     "paclet" -> "HEPCAT", "language" -> "en",
+     "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
      "summary" ->
       "Formats a single spinor as the left endpoint of a displayed chain.",
      "keywords" -> {"HEPCAT", "lnice", "spinor amplitudes"},

@@ -79,8 +79,8 @@ ad", "Real"], Editable -> False], ",", "\"0\"", ",", "1", ",", "\"\"", ",",
  Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/ReadParticles", "title" -> "ReadParticles",
-     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" ->
+     "type" -> "Symbol", "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT",
+     "language" -> "en", "summary" ->
       "Read particle and antiparticle declarations from a model table.",
      "keywords" -> {"HEPCAT", "ReadParticles", "spinor amplitudes"},
      "status" -> "None", "index" -> True}},

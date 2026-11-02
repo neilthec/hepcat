@@ -270,8 +270,8 @@ to perform that operation.", "ExampleText"], Cell["Related Functions",
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/tutorial/ExportingToSPINAS",
      "title" -> "Exporting a Numerical SPINAS Process", "type" -> "Tutorial",
-     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Group \
-helicities, declare physical crossing and build readable numerical code.",
-     "keywords" -> {"HEPCAT", "ExportingToSPINAS", "spinor amplitudes"},
-     "status" -> "None", "index" -> True}},
+     "label" -> "HEPCAT Tutorial", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" -> "Group helicities, declare physical crossing and build \
+readable numerical code.", "keywords" -> {"HEPCAT", "ExportingToSPINAS",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

@@ -67,7 +67,7 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/MakeIndicesImplicit",
      "title" -> "MakeIndicesImplicit", "type" -> "Symbol",
-     "paclet" -> "HEPCAT", "language" -> "en",
+     "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
      "summary" ->
       "Removes supported explicit upper massive spin indices from chains.",
      "keywords" -> {"HEPCAT", "MakeIndicesImplicit", "spinor amplitudes"},

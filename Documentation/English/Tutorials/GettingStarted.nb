@@ -119,7 +119,7 @@ operation.", "ExampleText"], Cell["Related Functions", "SeeAlsoSection"],
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/tutorial/GettingStarted",
      "title" -> "Getting Started with HEPCAT", "type" -> "Tutorial",
-     "paclet" -> "HEPCAT", "language" -> "en",
+     "label" -> "HEPCAT Tutorial", "paclet" -> "HEPCAT", "language" -> "en",
      "summary" ->
       "Load the package, read a model and make a first spinor calculation.",
      "keywords" -> {"HEPCAT", "GettingStarted", "spinor amplitudes"},

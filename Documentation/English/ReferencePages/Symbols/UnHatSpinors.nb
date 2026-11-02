@@ -62,8 +62,8 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/UnHatSpinors", "title" -> "UnHatSpinors",
-     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" ->
+     "type" -> "Symbol", "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT",
+     "language" -> "en", "summary" ->
       "Removes SpinorHat markers while leaving shifted momenta unchanged.",
      "keywords" -> {"HEPCAT", "UnHatSpinors", "spinor amplitudes"},
      "status" -> "None", "index" -> True}},

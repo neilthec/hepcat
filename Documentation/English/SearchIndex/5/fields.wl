@@ -107,6 +107,21 @@
 		"BulkRetrievalOptimized" -> False
 	|>,
 	<|
+		"Name" -> "DisplayedCategory",
+		"Type" -> "Text",
+		"Stored" -> True,
+		"Searchable" -> False,
+		"Tokenized" -> False,
+		"Weight" -> 1,
+		"Language" -> "English",
+		"IgnoreCase" -> True,
+		"StemmingMethod" -> Automatic,
+		"CamelCaseMatching" -> True,
+		"DeleteStopWords" -> True,
+		"StoreTermVectors" -> False,
+		"BulkRetrievalOptimized" -> False
+	|>,
+	<|
 		"Name" -> "URI",
 		"Type" -> "Text",
 		"Stored" -> True,

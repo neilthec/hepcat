@@ -61,8 +61,9 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/UnhatMomenta", "title" -> "UnhatMomenta",
-     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" -> "Removes the standard complex-deformation markers.",
+     "type" -> "Symbol", "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT",
+     "language" -> "en", "summary" ->
+      "Removes the standard complex-deformation markers.",
      "keywords" -> {"HEPCAT", "UnhatMomenta", "spinor amplitudes"},
      "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

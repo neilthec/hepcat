@@ -144,8 +144,9 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/PhysicalPoleResidue",
      "title" -> "PhysicalPoleResidue", "type" -> "Symbol",
-     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Extract a \
-single- or compatible multiple-pole coefficient with explicit kinematic \
-scope.", "keywords" -> {"HEPCAT", "PhysicalPoleResidue",
-       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
+     "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" -> "Extract a single- or compatible multiple-pole coefficient \
+with explicit kinematic scope.", "keywords" ->
+      {"HEPCAT", "PhysicalPoleResidue", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

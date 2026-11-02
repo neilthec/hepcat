@@ -239,8 +239,8 @@ structure-constant object in the legacy color trace convention."}],
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/guide/SpinorAlgebra",
      "title" -> "Spinors, Momenta and Spin Sums", "type" -> "Guide",
-     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Represent and \
-manipulate angle brackets, square brackets, momentum chains and spin \
-indices.", "keywords" -> {"HEPCAT", "SpinorAlgebra", "spinor amplitudes"},
-     "status" -> "None", "index" -> True}},
+     "label" -> "HEPCAT Guide", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" -> "Represent and manipulate angle brackets, square brackets, \
+momentum chains and spin indices.", "keywords" -> {"HEPCAT", "SpinorAlgebra",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

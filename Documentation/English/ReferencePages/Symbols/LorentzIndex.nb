@@ -59,8 +59,9 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/LorentzIndex", "title" -> "LorentzIndex",
-     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" -> "Labels a Lorentz slot in a Feynman tensor.",
+     "type" -> "Symbol", "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT",
+     "language" -> "en", "summary" ->
+      "Labels a Lorentz slot in a Feynman tensor.",
      "keywords" -> {"HEPCAT", "LorentzIndex", "spinor amplitudes"},
      "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

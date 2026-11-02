@@ -85,8 +85,8 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/MakeIndicesExplicit",
      "title" -> "MakeIndicesExplicit", "type" -> "Symbol",
-     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Replaces \
-implicit massive spin indices with specified explicit upper indices.",
-     "keywords" -> {"HEPCAT", "MakeIndicesExplicit", "spinor amplitudes"},
-     "status" -> "None", "index" -> True}},
+     "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" -> "Replaces implicit massive spin indices with specified \
+explicit upper indices.", "keywords" -> {"HEPCAT", "MakeIndicesExplicit",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

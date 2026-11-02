@@ -59,7 +59,7 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/CreateSPInitializationStatement",
      "title" -> "CreateSPInitializationStatement", "type" -> "Symbol",
-     "paclet" -> "HEPCAT", "language" -> "en",
+     "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
      "summary" ->
       "Writes a legacy SPINAS sproduct initialization statement.",
      "keywords" -> {"HEPCAT", "CreateSPInitializationStatement",

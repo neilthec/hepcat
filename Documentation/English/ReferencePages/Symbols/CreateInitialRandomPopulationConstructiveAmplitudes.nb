@@ -66,8 +66,9 @@ plitudes - HEPCAT Documentation", Saveable -> False,
      "uri" ->
       "HEPCAT/ref/CreateInitialRandomPopulationConstructiveAmplitudes",
      "title" -> "CreateInitialRandomPopulationConstructiveAmplitudes",
-     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" -> "Reserved historical population-search initializer name.",
+     "type" -> "Symbol", "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT",
+     "language" -> "en", "summary" ->
+      "Reserved historical population-search initializer name.",
      "keywords" -> {"HEPCAT",
        "CreateInitialRandomPopulationConstructiveAmplitudes",
        "spinor amplitudes"}, "status" -> "None", "index" -> True}},

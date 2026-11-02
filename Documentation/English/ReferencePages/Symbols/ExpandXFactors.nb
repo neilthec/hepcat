@@ -77,8 +77,9 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/ExpandXFactors", "title" -> "ExpandXFactors",
-     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" -> "Apply the retained x-factor identities and external \
-reference-spinor expansion.", "keywords" -> {"HEPCAT", "ExpandXFactors",
-       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
- StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]
+     "type" -> "Symbol", "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT",
+     "language" -> "en", "summary" -> "Apply the retained x-factor identities \
+and external reference-spinor expansion.", "keywords" ->
+      {"HEPCAT", "ExpandXFactors", "spinor amplitudes"}, "status" -> "None",
+     "index" -> True}}, StyleDefinitions -> FrontEnd`FileName[{"Wolfram"},
+   "Reference.nb"]]

@@ -67,7 +67,7 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/ConstructiveAmplitude",
      "title" -> "ConstructiveAmplitude", "type" -> "Symbol",
-     "paclet" -> "HEPCAT", "language" -> "en",
+     "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
      "summary" ->
       "Stores a legacy amplitude as a coupling, numerator and denominator.",
      "keywords" -> {"HEPCAT", "ConstructiveAmplitude", "spinor amplitudes"},

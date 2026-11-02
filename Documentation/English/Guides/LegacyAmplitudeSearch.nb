@@ -125,8 +125,8 @@ compatibility symbol without an active public implementation."}],
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/guide/LegacyAmplitudeSearch",
      "title" -> "Reserved and Earlier APIs", "type" -> "Guide",
-     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Recognize \
-historical names and use the maintained calculation workflow.",
-     "keywords" -> {"HEPCAT", "LegacyAmplitudeSearch", "spinor amplitudes"},
-     "status" -> "None", "index" -> True}},
+     "label" -> "HEPCAT Guide", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" -> "Recognize historical names and use the maintained \
+calculation workflow.", "keywords" -> {"HEPCAT", "LegacyAmplitudeSearch",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

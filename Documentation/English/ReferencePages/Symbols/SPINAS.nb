@@ -60,8 +60,8 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/SPINAS", "title" -> "SPINAS", "type" -> "Symbol",
-     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Formats a \
-supported expression as a legacy SPINAS C++ expression string.",
-     "keywords" -> {"HEPCAT", "SPINAS", "spinor amplitudes"},
+     "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" -> "Formats a supported expression as a legacy SPINAS C++ \
+expression string.", "keywords" -> {"HEPCAT", "SPINAS", "spinor amplitudes"},
      "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

@@ -74,8 +74,8 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/ReplaceSpinorZ", "title" -> "ReplaceSpinorZ",
-     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" ->
+     "type" -> "Symbol", "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT",
+     "language" -> "en", "summary" ->
       "Replaces a two-index auxiliary z object in a supported massive shift."\
 , "keywords" -> {"HEPCAT", "ReplaceSpinorZ", "spinor amplitudes"},
      "status" -> "None", "index" -> True}},

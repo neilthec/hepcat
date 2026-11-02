@@ -64,7 +64,7 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/PolarizationVector",
      "title" -> "PolarizationVector", "type" -> "Symbol",
-     "paclet" -> "HEPCAT", "language" -> "en",
+     "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
      "summary" ->
       "Represents an external vector wavefunction in the Feynman backend.",
      "keywords" -> {"HEPCAT", "PolarizationVector", "spinor amplitudes"},

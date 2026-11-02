@@ -68,8 +68,9 @@ marker in the supported massive zero-channel case.", "ExampleText"],
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/ExpandComplexMomenta",
      "title" -> "ExpandComplexMomenta", "type" -> "Symbol",
-     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Expands \
-supported legacy complex-shift formulas with specified masses and companion \
-legs.", "keywords" -> {"HEPCAT", "ExpandComplexMomenta",
-       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
+     "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" -> "Expands supported legacy complex-shift formulas with \
+specified masses and companion legs.", "keywords" ->
+      {"HEPCAT", "ExpandComplexMomenta", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

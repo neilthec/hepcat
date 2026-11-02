@@ -74,8 +74,8 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/ReadVariables", "title" -> "ReadVariables",
-     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" ->
+     "type" -> "Symbol", "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT",
+     "language" -> "en", "summary" ->
       "Read a model variable table without assigning global parameter \
 values.", "keywords" -> {"HEPCAT", "ReadVariables", "spinor amplitudes"},
      "status" -> "None", "index" -> True}},

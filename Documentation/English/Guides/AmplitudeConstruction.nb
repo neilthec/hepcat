@@ -87,8 +87,9 @@ scope."}], "GuideText"], Cell["Compatibility Name",
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/guide/AmplitudeConstruction",
      "title" -> "Constructing and Completing Amplitudes", "type" -> "Guide",
-     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Prepare diagram \
-seeds, solve factorization constraints and complete allowed high-energy \
-behavior.", "keywords" -> {"HEPCAT", "AmplitudeConstruction",
-       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
+     "label" -> "HEPCAT Guide", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" -> "Prepare diagram seeds, solve factorization constraints and \
+complete allowed high-energy behavior.", "keywords" ->
+      {"HEPCAT", "AmplitudeConstruction", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

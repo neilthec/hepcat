@@ -65,8 +65,8 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/UpdateSPINASSpinorProducts",
      "title" -> "UpdateSPINASSpinorProducts", "type" -> "Symbol",
-     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Writes update \
-statements for distinct spinor products in an expression.",
-     "keywords" -> {"HEPCAT", "UpdateSPINASSpinorProducts",
+     "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" -> "Writes update statements for distinct spinor products in \
+an expression.", "keywords" -> {"HEPCAT", "UpdateSPINASSpinorProducts",
        "spinor amplitudes"}, "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

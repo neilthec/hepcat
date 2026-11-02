@@ -63,8 +63,8 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/DiracGamma", "title" -> "DiracGamma",
-     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" ->
+     "type" -> "Symbol", "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT",
+     "language" -> "en", "summary" ->
       "Represents a Dirac gamma matrix carrying a Lorentz index.",
      "keywords" -> {"HEPCAT", "DiracGamma", "spinor amplitudes"},
      "status" -> "None", "index" -> True}},

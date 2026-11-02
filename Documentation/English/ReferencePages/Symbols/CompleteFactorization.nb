@@ -384,8 +384,9 @@ operation.", "ExampleText"], Cell["See Also", "SeeAlsoSection"],
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/CompleteFactorization",
      "title" -> "CompleteFactorization", "type" -> "Symbol",
-     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Repair physical \
-residue deficits with a bounded simultaneous correction fit.",
-     "keywords" -> {"HEPCAT", "CompleteFactorization", "spinor amplitudes"},
+     "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" -> "Repair physical residue deficits with a bounded \
+simultaneous correction fit.", "keywords" ->
+      {"HEPCAT", "CompleteFactorization", "spinor amplitudes"},
      "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

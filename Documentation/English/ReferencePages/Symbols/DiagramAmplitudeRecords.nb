@@ -143,8 +143,9 @@ bc79fa19d6792772af2948585b673a998d4f95927eaad", "Real"], Editable ->
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/DiagramAmplitudeRecords",
      "title" -> "DiagramAmplitudeRecords", "type" -> "Symbol",
-     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Retain explicit \
-diagram expressions, physical propagators and numerator assumptions for \
-diagnostics.", "keywords" -> {"HEPCAT", "DiagramAmplitudeRecords",
-       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
+     "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" -> "Retain explicit diagram expressions, physical propagators \
+and numerator assumptions for diagnostics.", "keywords" ->
+      {"HEPCAT", "DiagramAmplitudeRecords", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

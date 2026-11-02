@@ -76,8 +76,9 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/PermuteParticles", "title" -> "PermuteParticles",
-     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" -> "Cyclically relabels the specified external particles in \
-typed amplitude expressions.", "keywords" -> {"HEPCAT", "PermuteParticles",
-       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
+     "type" -> "Symbol", "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT",
+     "language" -> "en", "summary" -> "Cyclically relabels the specified \
+external particles in typed amplitude expressions.",
+     "keywords" -> {"HEPCAT", "PermuteParticles", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

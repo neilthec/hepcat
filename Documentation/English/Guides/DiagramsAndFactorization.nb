@@ -103,7 +103,7 @@ representation."}], "GuideText"], Cell["Tutorials", "GuideTutorialsSection"],
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/guide/DiagramsAndFactorization",
      "title" -> "Diagrams and Factorization Channels", "type" -> "Guide",
-     "paclet" -> "HEPCAT", "language" -> "en",
+     "label" -> "HEPCAT Guide", "paclet" -> "HEPCAT", "language" -> "en",
      "summary" ->
       "Generate diagrams and physical channel expressions from model data.",
      "keywords" -> {"HEPCAT", "DiagramsAndFactorization",

@@ -108,7 +108,7 @@ assumptions."}], "GuideText"],
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/guide/IdentitiesAndSimplification",
      "title" -> "Identities and Simplification", "type" -> "Guide",
-     "paclet" -> "HEPCAT", "language" -> "en",
+     "label" -> "HEPCAT Guide", "paclet" -> "HEPCAT", "language" -> "en",
      "summary" ->
       "Apply exact identities and inspect legal one-step rewrites.",
      "keywords" -> {"HEPCAT", "IdentitiesAndSimplification",

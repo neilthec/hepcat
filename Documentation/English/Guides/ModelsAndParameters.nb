@@ -105,7 +105,7 @@ file."}], "GuideText"], Cell["More Functions and Symbols",
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/guide/ModelsAndParameters",
      "title" -> "Models and Model-Local Parameters", "type" -> "Guide",
-     "paclet" -> "HEPCAT", "language" -> "en",
+     "label" -> "HEPCAT Guide", "paclet" -> "HEPCAT", "language" -> "en",
      "summary" ->
       "Read model tables, retrieve known amplitudes and save new results.",
      "keywords" -> {"HEPCAT", "ModelsAndParameters", "spinor amplitudes"},

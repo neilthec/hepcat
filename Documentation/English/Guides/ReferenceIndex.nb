@@ -642,8 +642,8 @@ MadGraph validation and numerical integration."}], "GuideText"],
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/guide/ReferenceIndex",
      "title" -> "HEPCAT Reference Index", "type" -> "Guide",
-     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Alphabetical \
-reference for every documented public function and symbolic head.",
-     "keywords" -> {"HEPCAT", "ReferenceIndex", "spinor amplitudes"},
-     "status" -> "None", "index" -> True}},
+     "label" -> "HEPCAT Guide", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" -> "Alphabetical reference for every documented public \
+function and symbolic head.", "keywords" -> {"HEPCAT", "ReferenceIndex",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

@@ -91,9 +91,9 @@ spinors and compare the complete amplitude.", "TechNoteText"],
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/tutorial/KinematicsAndOnShellConditions",
      "title" -> "Kinematics, References and On-Shell Conditions",
-     "type" -> "Tutorial", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" -> "Keep external kinematics, channel residues and diagram \
-numerator assumptions distinct.", "keywords" ->
-      {"HEPCAT", "KinematicsAndOnShellConditions", "spinor amplitudes"},
-     "status" -> "None", "index" -> True}},
+     "type" -> "Tutorial", "label" -> "HEPCAT Tutorial",
+     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Keep external \
+kinematics, channel residues and diagram numerator assumptions distinct.",
+     "keywords" -> {"HEPCAT", "KinematicsAndOnShellConditions",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

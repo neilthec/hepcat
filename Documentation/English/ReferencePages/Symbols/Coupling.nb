@@ -57,8 +57,8 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/Coupling", "title" -> "Coupling",
-     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" -> "Represents a symbolic indexed coupling in legacy amplitude \
-expressions.", "keywords" -> {"HEPCAT", "Coupling", "spinor amplitudes"},
-     "status" -> "None", "index" -> True}},
+     "type" -> "Symbol", "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT",
+     "language" -> "en", "summary" -> "Represents a symbolic indexed coupling \
+in legacy amplitude expressions.", "keywords" -> {"HEPCAT", "Coupling",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

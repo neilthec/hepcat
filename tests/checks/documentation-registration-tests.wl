@@ -90,6 +90,52 @@ drCheck["the native Help search discovers the local index", drIndexDirectories =
 drCheck["native Help search finds the main HEPCAT guide",
   !FreeQ[DocumentationSearch`SearchDocumentation[drIndexDirectories, {}, "HEPCAT", "Limit" -> 10],
     "HEPCAT/guide/HEPCAT"]];
+(* Search hits must also render as the real Documentation Center result cells.
+   Checking only titles and URIs misses absent display metadata. No notebook
+   is opened by ExportSearchResults. *)
+drCheckRenderedSearch[query_String, uri_String] := Module[{results, matches, notebook},
+  results = DocumentationSearch`SearchDocumentation[drIndexDirectories, {}, query, "Limit" -> 10];
+  matches = "Matches" /. results;
+  drCheck["native search returns complete display fields for " <> query,
+    ListQ[matches] && matches =!= {} && AllTrue[matches,
+      MatchQ[#, {_String, _String, _String, _String, _String, _String}] &]];
+  notebook = Check[DocumentationSearch`ExportSearchResults[results, "Notebook"], $Failed];
+  drCheck["native Help search renders clickable results for " <> query,
+    MatchQ[notebook, _Notebook] &&
+      Length[Cases[notebook, Cell[_, "SearchResultCell", ___], Infinity]] === Length[matches] &&
+      !FreeQ[notebook, "paclet:" <> uri]]
+];
+drCheckRenderedSearch["HEPCAT", "HEPCAT/guide/HEPCAT"];
+drCheckRenderedSearch["hepcat", "HEPCAT/guide/HEPCAT"];
+drCheckRenderedSearch["ReadModel", "HEPCAT/ref/ReadModel"];
+drCheckRenderedSearch["Getting Started", "HEPCAT/tutorial/GettingStarted"];
+
+drAllSearchResults = DocumentationSearch`SearchDocumentation[drIndexDirectories, {}, "HEPCAT", "Limit" -> 1000];
+drAllSearchMatches = "Matches" /. drAllSearchResults;
+drCheck["every Help page is indexed with complete display metadata",
+  ListQ[drAllSearchMatches] &&
+    Length[drAllSearchMatches] === Length[FileNames["*.nb", drDocumentation, Infinity]] &&
+    AllTrue[drAllSearchMatches, MatchQ[#, {_String, _String, _String, _String, _String, _String}] &]];
+drCheck["every indexed Help page renders in native search without messages",
+  Module[{notebook = DocumentationSearch`ExportSearchResults[drAllSearchResults, "Notebook"]},
+    MatchQ[notebook, _Notebook] &&
+      Length[Cases[notebook, Cell[_, "SearchResultCell", ___], Infinity]] === Length[drAllSearchMatches]]];
+
+(* The Documentation Center searches the combined system/paclet index, not
+   only the HEPCAT index. Exercise that public route as well. *)
+drGlobalSearchResults = DocumentationSearch`SearchDocumentation["hepcat", "Limit" -> 10];
+drGlobalSearchMatches = "Matches" /. drGlobalSearchResults;
+drCheck["combined system Help search exposes the HEPCAT guide with its display label",
+  ListQ[drGlobalSearchMatches] && AllTrue[drGlobalSearchMatches,
+    MatchQ[#, {_String, _String, _String, _String, _String, _String}] &] &&
+    MemberQ[drGlobalSearchMatches,
+      {_String, "Guide", _String, "HEPCAT/guide/HEPCAT", "HEPCAT Guide", _String}]];
+drCheck["combined system Help search renders the clickable HEPCAT results without messages",
+  Module[{notebook = DocumentationSearch`ExportSearchResults[drGlobalSearchResults, "Notebook"]},
+    MatchQ[notebook, _Notebook] &&
+      Length[Cases[notebook, Cell[_, "SearchResultCell", ___], Infinity]] === Length[drGlobalSearchMatches] &&
+      !FreeQ[notebook, "paclet:HEPCAT/guide/HEPCAT"]]];
+
 drCheck["native exact symbol search finds ReadModel",
   DocumentationSearch`DirectHitSearch[drIndexDirectories, "ReadModel"] ===
     {"ReadModel", "HEPCAT/ref/ReadModel"}];

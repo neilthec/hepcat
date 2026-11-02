@@ -86,8 +86,8 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/ReduceSpinContractions",
      "title" -> "ReduceSpinContractions", "type" -> "Symbol",
-     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Sews contracted \
-massive or massless spinor indices into shorter momentum chains.",
-     "keywords" -> {"HEPCAT", "ReduceSpinContractions", "spinor amplitudes"},
-     "status" -> "None", "index" -> True}},
+     "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" -> "Sews contracted massive or massless spinor indices into \
+shorter momentum chains.", "keywords" -> {"HEPCAT", "ReduceSpinContractions",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

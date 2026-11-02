@@ -73,7 +73,7 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/ConvertAmplitudeOld",
      "title" -> "ConvertAmplitudeOld", "type" -> "Symbol",
-     "paclet" -> "HEPCAT", "language" -> "en",
+     "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
      "summary" ->
       "Access the historical string converter retained for compatibility.",
      "keywords" -> {"HEPCAT", "ConvertAmplitudeOld", "spinor amplitudes"},

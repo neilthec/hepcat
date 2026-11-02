@@ -85,8 +85,8 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/ExpandMomHatAlt", "title" -> "ExpandMomHatAlt",
-     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" ->
+     "type" -> "Symbol", "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT",
+     "language" -> "en", "summary" ->
       "Expands supported all-line-shift momentum and propagator markers.",
      "keywords" -> {"HEPCAT", "ExpandMomHatAlt", "spinor amplitudes"},
      "status" -> "None", "index" -> True}},

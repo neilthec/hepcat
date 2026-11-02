@@ -147,8 +147,8 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/CreateArrowDiagram",
      "title" -> "CreateArrowDiagram", "type" -> "Symbol",
-     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Draw one \
-generated tree with external labels and directed particle lines.",
-     "keywords" -> {"HEPCAT", "CreateArrowDiagram", "spinor amplitudes"},
-     "status" -> "None", "index" -> True}},
+     "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" -> "Draw one generated tree with external labels and directed \
+particle lines.", "keywords" -> {"HEPCAT", "CreateArrowDiagram",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

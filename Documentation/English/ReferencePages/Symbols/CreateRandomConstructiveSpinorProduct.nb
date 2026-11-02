@@ -64,7 +64,7 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/CreateRandomConstructiveSpinorProduct",
      "title" -> "CreateRandomConstructiveSpinorProduct", "type" -> "Symbol",
-     "paclet" -> "HEPCAT", "language" -> "en",
+     "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
      "summary" ->
       "Reserved historical random spinor-product generator name.",
      "keywords" -> {"HEPCAT", "CreateRandomConstructiveSpinorProduct",

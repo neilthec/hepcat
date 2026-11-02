@@ -84,7 +84,10 @@ The content checks validate public API coverage, page structure, held example
 syntax, links, native notebook syntax, and the instruction to avoid em dashes.
 The registration checks exercise package loading and reloading, optional missing
 documentation, usage descriptions, F1 links, main-page resolution, and native
-Help search. Neither suite changes model data or runs a construction job.
+Help search, including rendering the search results that Mathematica displays.
+Generated pages retain the native title, type, category label, summary, context
+and URI metadata required by the search display. Neither suite changes model
+data or runs a construction job.
 
 Keep reference pages honest about limits. Reserved compatibility names have no
 callable implementation on this branch and are labeled accordingly. A numerical

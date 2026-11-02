@@ -89,9 +89,9 @@ Spinor Algebra - HEPCAT Documentation", Saveable -> False,
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/guide/HEPCAT", "title" ->
       "HEPCAT: Constructive Amplitudes and Spinor Algebra",
-     "type" -> "Guide", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" -> "Build, simplify, complete and validate scattering \
-amplitudes with explicit spinor identities.", "keywords" ->
-      {"HEPCAT", "HEPCAT", "spinor amplitudes"}, "status" -> "None",
-     "index" -> True}}, StyleDefinitions -> FrontEnd`FileName[{"Wolfram"},
-   "Reference.nb"]]
+     "type" -> "Guide", "label" -> "HEPCAT Guide", "paclet" -> "HEPCAT",
+     "language" -> "en", "summary" -> "Build, simplify, complete and validate \
+scattering amplitudes with explicit spinor identities.",
+     "keywords" -> {"HEPCAT", "HEPCAT", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

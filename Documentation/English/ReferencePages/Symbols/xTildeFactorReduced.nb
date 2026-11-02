@@ -109,7 +109,7 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/xTildeFactorReduced",
      "title" -> "xTildeFactorReduced", "type" -> "Symbol",
-     "paclet" -> "HEPCAT", "language" -> "en",
+     "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
      "summary" ->
       "Evaluates a supported legacy four-point composite x-factor formula.",
      "keywords" -> {"HEPCAT", "xTildeFactorReduced", "spinor amplitudes"},

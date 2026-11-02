@@ -59,7 +59,7 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/SpinorTraceReduced",
      "title" -> "SpinorTraceReduced", "type" -> "Symbol",
-     "paclet" -> "HEPCAT", "language" -> "en",
+     "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
      "summary" ->
       "Is the rule-bearing reduction head used internally for SpinorTrace.",
      "keywords" -> {"HEPCAT", "SpinorTraceReduced", "spinor amplitudes"},

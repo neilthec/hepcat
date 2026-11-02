@@ -96,8 +96,8 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/ChooseSpinIndex", "title" -> "ChooseSpinIndex",
-     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" ->
+     "type" -> "Symbol", "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT",
+     "language" -> "en", "summary" ->
       "Selects a physical spin projection for one external massive particle."\
 , "keywords" -> {"HEPCAT", "ChooseSpinIndex", "spinor amplitudes"},
      "status" -> "None", "index" -> True}},

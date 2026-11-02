@@ -110,8 +110,8 @@ legacy bracket expression and marks its spinors and momenta as shifted."}],
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/guide/FormattingAndExport",
      "title" -> "Formatting, Model Output and SPINAS Export",
-     "type" -> "Guide", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" ->
+     "type" -> "Guide", "label" -> "HEPCAT Guide", "paclet" -> "HEPCAT",
+     "language" -> "en", "summary" ->
       "Display analytic expressions and write numerical C++ processes.",
      "keywords" -> {"HEPCAT", "FormattingAndExport", "spinor amplitudes"},
      "status" -> "None", "index" -> True}},

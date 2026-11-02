@@ -58,8 +58,9 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/MultiparticleDiff", "title" -> "MultiparticleDiff",
-     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" -> "Represents a legacy composite label for a difference of \
-particle momenta.", "keywords" -> {"HEPCAT", "MultiparticleDiff",
-       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
+     "type" -> "Symbol", "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT",
+     "language" -> "en", "summary" -> "Represents a legacy composite label \
+for a difference of particle momenta.", "keywords" ->
+      {"HEPCAT", "MultiparticleDiff", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

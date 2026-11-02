@@ -116,8 +116,9 @@ Feynman Diagrams - HEPCAT Documentation", Saveable -> False,
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/tutorial/FeynmanComparison",
      "title" -> "Comparing a Constructive Result with Feynman Diagrams",
-     "type" -> "Tutorial", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" -> "Read a Feynman model, convert its diagrams and compare the \
-same process.", "keywords" -> {"HEPCAT", "FeynmanComparison",
-       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
+     "type" -> "Tutorial", "label" -> "HEPCAT Tutorial",
+     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Read a Feynman \
+model, convert its diagrams and compare the same process.",
+     "keywords" -> {"HEPCAT", "FeynmanComparison", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

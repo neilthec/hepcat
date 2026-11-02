@@ -300,9 +300,9 @@ operation.", "ExampleText"], Cell["See Also", "SeeAlsoSection"],
  Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/PrepareAmplitudes", "title" -> "PrepareAmplitudes",
-     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" -> "Simplify diagram pairs or factorization rows while \
-retaining their physical assumptions.", "keywords" ->
-      {"HEPCAT", "PrepareAmplitudes", "spinor amplitudes"},
+     "type" -> "Symbol", "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT",
+     "language" -> "en", "summary" -> "Simplify diagram pairs or \
+factorization rows while retaining their physical assumptions.",
+     "keywords" -> {"HEPCAT", "PrepareAmplitudes", "spinor amplitudes"},
      "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

@@ -123,8 +123,8 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/ComplicateAmplitude",
      "title" -> "ComplicateAmplitude", "type" -> "Symbol",
-     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Generates a \
-model-free random sequence of reversible symbolic identities.",
-     "keywords" -> {"HEPCAT", "ComplicateAmplitude", "spinor amplitudes"},
-     "status" -> "None", "index" -> True}},
+     "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" -> "Generates a model-free random sequence of reversible \
+symbolic identities.", "keywords" -> {"HEPCAT", "ComplicateAmplitude",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

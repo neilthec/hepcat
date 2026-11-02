@@ -64,9 +64,12 @@ $BuildResult = Module[{documentationRoot, repositoryRoot, sourceRoot, outputRoot
     ButtonData -> "paclet:HEPCAT/" <> kind <> "/" <> name];
   linksCell[names_List, style_, kind_: "ref"] := Cell[
     TextData[Riffle[link[#, kind] & /@ names, "  •  "]], style];
+  (* Native Help search displays label separately from type; a missing label
+     makes its result-cell renderer reject an otherwise valid search hit. *)
   metadata[name_, title_, type_, summary_, kind_] := {
     "Metadata" -> {"context" -> "ConstructiveDiagrams`", "uri" -> "HEPCAT/" <> kind <> "/" <> name,
-      "title" -> title, "type" -> type, "paclet" -> "HEPCAT", "language" -> "en",
+      "title" -> title, "type" -> type, "label" -> "HEPCAT " <> type,
+      "paclet" -> "HEPCAT", "language" -> "en",
       "summary" -> summary, "keywords" -> {"HEPCAT", name, "spinor amplitudes"},
       "status" -> "None", "index" -> True}};
   anchor[label_, guide_: "HEPCAT"] := Cell[BoxData[GridBox[{{

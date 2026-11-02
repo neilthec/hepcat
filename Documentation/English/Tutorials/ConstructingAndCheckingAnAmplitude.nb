@@ -165,9 +165,9 @@ operation.", "ExampleText"], Cell["Related Functions", "SeeAlsoSection"],
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/tutorial/ConstructingAndCheckingAnAmplitude",
      "title" -> "Constructing and Checking an Amplitude in Stages",
-     "type" -> "Tutorial", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" -> "Inspect diagrams, preparation, simultaneous completion and \
-the final validation report.", "keywords" ->
-      {"HEPCAT", "ConstructingAndCheckingAnAmplitude", "spinor amplitudes"},
-     "status" -> "None", "index" -> True}},
+     "type" -> "Tutorial", "label" -> "HEPCAT Tutorial",
+     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Inspect \
+diagrams, preparation, simultaneous completion and the final validation \
+report.", "keywords" -> {"HEPCAT", "ConstructingAndCheckingAnAmplitude",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

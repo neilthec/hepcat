@@ -118,7 +118,7 @@ symmetric little-group slots of a massive vector."}], "GuideText"],
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/guide/FeynmanAmplitudes",
      "title" -> "Feynman Models and Spinor Conversion", "type" -> "Guide",
-     "paclet" -> "HEPCAT", "language" -> "en",
+     "label" -> "HEPCAT Guide", "paclet" -> "HEPCAT", "language" -> "en",
      "summary" ->
       "Use CalcHEP Feynman rules as an independent off-shell diagram \
 backend.", "keywords" -> {"HEPCAT", "FeynmanAmplitudes",

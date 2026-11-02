@@ -327,8 +327,9 @@ operation.", "ExampleText"],
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/ConstructAmplitude",
      "title" -> "ConstructAmplitude", "type" -> "Symbol",
-     "paclet" -> "HEPCAT", "language" -> "en", "summary" -> "Construct, \
-complete, simplify and validate an amplitude from its process and two \
-models.", "keywords" -> {"HEPCAT", "ConstructAmplitude",
-       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
+     "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
+     "summary" -> "Construct, complete, simplify and validate an amplitude \
+from its process and two models.", "keywords" ->
+      {"HEPCAT", "ConstructAmplitude", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

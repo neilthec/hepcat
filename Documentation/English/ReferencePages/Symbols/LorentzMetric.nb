@@ -64,8 +64,8 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/LorentzMetric", "title" -> "LorentzMetric",
-     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" ->
+     "type" -> "Symbol", "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT",
+     "language" -> "en", "summary" ->
       "Represents the Minkowski metric with two Lorentz indices.",
      "keywords" -> {"HEPCAT", "LorentzMetric", "spinor amplitudes"},
      "status" -> "None", "index" -> True}},

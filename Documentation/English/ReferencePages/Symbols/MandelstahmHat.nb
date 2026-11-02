@@ -56,8 +56,8 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/MandelstahmHat", "title" -> "MandelstahmHat",
-     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" ->
+     "type" -> "Symbol", "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT",
+     "language" -> "en", "summary" ->
       "Represents the complex-deformed version of a two-particle invariant.",
      "keywords" -> {"HEPCAT", "MandelstahmHat", "spinor amplitudes"},
      "status" -> "None", "index" -> True}},

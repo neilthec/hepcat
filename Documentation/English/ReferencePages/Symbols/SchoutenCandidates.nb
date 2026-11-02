@@ -114,7 +114,7 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/SchoutenCandidates",
      "title" -> "SchoutenCandidates", "type" -> "Symbol",
-     "paclet" -> "HEPCAT", "language" -> "en",
+     "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
      "summary" ->
       "Lists exact generalized Schouten edits available in an expression.",
      "keywords" -> {"HEPCAT", "SchoutenCandidates", "spinor amplitudes"},

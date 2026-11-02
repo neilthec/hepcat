@@ -92,8 +92,9 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  Saveable -> False, WindowSize -> {1000, 850}, CellContext -> Notebook,
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/ReverseMomentum", "title" -> "ReverseMomentum",
-     "type" -> "Symbol", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" -> "Crosses selected external legs in complete spinor \
-amplitude expressions.", "keywords" -> {"HEPCAT", "ReverseMomentum",
-       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
- StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]
+     "type" -> "Symbol", "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT",
+     "language" -> "en", "summary" -> "Crosses selected external legs in \
+complete spinor amplitude expressions.", "keywords" ->
+      {"HEPCAT", "ReverseMomentum", "spinor amplitudes"}, "status" -> "None",
+     "index" -> True}}, StyleDefinitions -> FrontEnd`FileName[{"Wolfram"},
+   "Reference.nb"]]
