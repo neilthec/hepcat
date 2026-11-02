@@ -7,9 +7,8 @@ Notebook[
         "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
      GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
    "AnchorBarGrid"], Cell["ValidateMadGraph", "ObjectName"],
-  Cell["Compares exported HEPCAT/SPINAS amplitudes with independent MadGraph \
-matrix elements on common random phase-space points, separately for each \
-massless-helicity combination.", "Notes"],
+  Cell[TextData[{"Checks a HEPCAT/SPINAS amplitude against an independently \
+generated MadGraph result at common random physical momenta."}], "Notes"],
   Cell[TextData[{Cell[BoxData[RowBox[{"ValidateMadGraph", "[", "directory",
          "]"}]], "InlineFormula"], "  ", "builds and runs the MadGraph \
 validator of a SPINAS project exported by the current WriteSPINASProcess."}],
@@ -28,354 +27,412 @@ helicities, with IncomingLegs selecting the physical incoming pair."}],
          " ", "...", ",", " ", "\"Output\"", " ", "->", " ", "\"Details\"",
          "]"}]], "InlineFormula"], "  ", "returns the full report, including \
 per-helicity failures and the actual random seed."}], "Usage"],
-  Cell["Details", "NotesSection"], Cell["The default result is a compact \
-table with one row for each exported massless-helicity combination. \
-\"Output\" -> \"Summary\" gives status counts; \"Output\" -> \"Details\" \
-retains the full diagnostic association.", "Notes"],
-  Cell["The benchmark is calculated from MadGraph's own generated amplitudes, \
-independently of the supplied HEPCAT expression. Both evaluations receive the \
-same physical momenta and matched masses and couplings. This tests the \
-expression and numerical export together.", "Notes"],
-  Cell["Amplitude entries retain HEPCAT's all-incoming convention. Declare \
-incoming -> outgoing as in WriteSPINASProcess; the exporter crosses outgoing \
-momenta and angle spinors once. Do not cross the formulas manually before \
-passing them.", "Notes"], Cell["The particles, amplitude, model overload \
-mirrors the original fixed-helicity WriteSPINASProcess form and retains its \
-normalization convention. Use the grouped physical-process form when \
-validating a complete helicity family.", "Notes"],
-  Cell["The reference process is generated without restricting its external \
-helicities. The validator selects individual helicity vectors from that \
-process, fixes the requested massless helicities and sums the \
-massive-particle spin states. It therefore avoids assuming that the MadGraph \
-and SPINAS massive spin bases are identical.", "Notes"],
-  Cell["The default table displays massless helicities as leg:sign labels, \
-such as 3:-, 4:+. A process with no massless helicities is labeled \
-accordingly. Details retains the original exported leg-order vectors with \
-doubled helicities: photons have entries +2 or -2, and zero entries do not \
-select a massless helicity on that leg. Massive spin states are summed.",
-   "Notes"], Cell["The comparison uses squared amplitudes. Complex amplitudes \
-themselves may differ by external-state phase conventions. Initial spin \
-averages and final identical-particle factors are applied consistently once, \
-including cases where an incoming or outgoing massless helicity is fixed. \
-Multiplying either amplitude by an overall phase, including -1 or I, is not a \
-mismatch.", "Notes"], Cell["\"MadGraphPoints\" -> 1000 checks 1000 common \
-physical points for each massless-helicity combination. \"MadGraphSeed\" -> \
-Automatic chooses a time-based seed at runtime and records it. An explicit \
-unsigned 64-bit integer, including zero, permits replay.", "Notes"],
-  Cell["\"RelativeTolerance\" -> 10^-7 and \"AbsoluteTolerance\" -> 0 are the \
-default comparisons. An absolute floor is not used to hide a wrong small \
-amplitude. Nonfinite values, incomplete checks and evaluation errors cannot \
-be reported as PASS. A failed report retains the first failing point and its \
-momenta.", "Notes"], Cell["\"MinimumEnergy\" and \"MaximumEnergy\" bound the \
-sampled center-of-mass energy; Automatic chooses values above the process \
-thresholds. These are validation samples, not a phase-space integral or an \
-analytic proof.", "Notes"], Cell["Choose \"MadGraphDirectory\" and \
-\"MadGraphModel\" explicitly; neither an installation nor a theory is \
-selected by default. The model is a UFO name or directory. For example, \
-\"sm-full\" includes massive electrons and all Standard Model interactions. \
-\"MadGraphAllowedParticles\" -> {11, 22} explicitly restricts that reference \
-to the electron, positron and photon sector, excluding Z and Higgs exchange \
-in pure-QED four-fermion tests. All, the default filter, retains the complete \
-selected theory. Automatic model selection does not infer a theory.",
-   "Notes"], Cell["Particle filters use positive absolute PDG codes and \
-include the corresponding antiparticles. The list must contain every external \
-particle type. A filter that omits an external state or names particles \
-unavailable in the selected model cannot produce a passing comparison.",
-   "Notes"], Cell["An explicitly supplied Automatic generator directory may \
-consult the corresponding environment variables. It does not scan hard-coded \
-installation directories. Passing the installation path directly makes the \
-reference setup visible in the calculation.", "Notes"],
-  Cell["Masses and used model parameters are matched to the supplied model. \
-\"MadGraphParameterRules\" -> {\"name\" -> value, ...} overrides named \
-external UFO inputs when needed. For a custom theory, ensure that its \
-independent inputs and derived couplings agree with the HEPCAT model; \
-ambiguous or inconsistent matching produces a diagnostic instead of a false \
-pass.", "Notes"], Cell["\"MadGraphParameterMap\" -> {\"HEPCATName\" -> \
-\"UFOName\", ...} identifies differently named model parameters. A mapping \
-may target an external input or a derived UFO parameter whose value is \
-checked. It does not replace the independent numeric inputs supplied by \
-MadGraphParameterRules.", "Notes"], Cell["Propagator widths must use the same \
-prescription on both sides. Bare HEPCAT PropDen denominators have no decay \
-width, so unmatched, independently adjustable MadGraph decay-width inputs are \
-set to zero. Explicit MadGraphParameterRules and width parameters used by the \
-HEPCAT amplitude retain their supplied values. The detailed Reference report \
-records the width policy and the zeroed or preserved inputs; an unsupported \
-dependent-width mapping is reported before a comparison can pass.", "Notes"],
-  Cell["\"TimeConstraint\" -> 600 bounds MadGraph reference preparation. It \
-is not a deadline for the complete export, CMake build and numerical sampling \
-operation.", "Notes"], Cell["The current numerical validator supports \
-colorless tree-level processes with two incoming particles, at least two \
-outgoing particles and external spins through one. It requires MadGraph, a \
-Fortran compiler, SPINAS and the normal C++ build tools. Missing \
-installations or unsupported inputs are reported explicitly; ordinary \
-source-only SPINAS exports remain usable.", "Notes"],
-  Cell["Validation can expose numerical conditioning as well as incorrect \
-formulas. Expressions involving nearly cancelling terms or inverse small \
-masses may lose precision at high energy even when an equivalent compact form \
-is stable. Inspect detailed failures before changing tolerances.", "Notes"],
-  Cell["The directory overload expects a project containing the MadGraph \
-support emitted by the current WriteSPINASProcess. Regenerate an older \
-project with that exporter before using this overload.", "Notes"],
-  Cell["An exported project retains its process, model parameters, reference \
-configuration and fixed-helicity selection. The directory overload changes \
-sampling controls such as points, seed, tolerances, energy bounds and the \
-reference preparation budget. To change a stored export setting, regenerate \
-the project or use the amplitude-and-model overload; those overrides are \
-rejected rather than silently ignored.", "Notes"],
-  Cell["The same WriteSPINASProcess project can also contain a MadEvent \
-numerical launcher. Use ValidateMadGraph for the independent per-helicity \
-amplitude comparison and the generated process_madevent launcher for \
-numerical integration and event generation with the supplied SPINAS \
-amplitude.", "Notes"], Cell["Options", "NotesSection"],
+  Cell["Details", "NotesSection"],
+  Cell[TextData[{"Use ", Cell[BoxData[RowBox[{"ValidateMadGraph"}]],
+      "InlineFormula"], " after deriving an amplitude when you want an \
+independent numerical check of the formula and its C++ translation. MadGraph \
+generates its own reference matrix element; the validator evaluates both \
+results at exactly the same physical momenta with matched parameters."}],
+   "Notes"], Cell[TextData[{"The normal result is a table with one row for \
+each exported massless-helicity combination. A process without massless \
+helicities has one corresponding row. A ", Cell[BoxData[RowBox[{"PASS"}]],
+      "InlineFormula"], " means that all requested comparisons in that row \
+met the stated numerical tolerance."}], "Notes"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"ValidateMadGraph", "[", "directory",
+         "]"}]], "InlineFormula"], " uses an existing project written by ",
+     ButtonBox["WriteSPINASProcess", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/WriteSPINASProcess"], ". The \
+amplitude-and-model forms first make a private export, build the numerical \
+code and run the comparison."}], "Notes"],
+  Cell[TextData[{"The comparison is a numerical test over sampled phase \
+space. It provides an independent diagnostic of a proposed expression, rather \
+than a proof of equality for every kinematic point."}], "Notes"],
+  Cell["Providing the reaction and the reference theory", "NotesSection"],
+  Cell[TextData[{"Use the same ",
+     Cell[BoxData[RowBox[{"incoming", " ", "->", " ", "outgoing"}]],
+      "InlineFormula"], ", helicity entries and model as for ",
+     ButtonBox["WriteSPINASProcess", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/WriteSPINASProcess"], ". Keep each \
+formula all incoming; the exporter performs the outgoing momentum and spinor \
+crossing. The four-argument fixed-helicity form retains its single-amplitude \
+convention."}], "Notes"],
+  Cell[TextData[{"Supply ", Cell[BoxData[RowBox[{"\"MadGraphDirectory\""}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{" ", "and", " "}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{"\"MadGraphModel\""}]],
+      "InlineFormula"], " explicitly. The model can be a UFO name or \
+directory. Choose a theory with the interactions you intend to compare; the \
+external particle names alone do not determine which internal exchanges \
+belong in it."}], "Notes"],
+  Cell[TextData[{"For example, ",
+     Cell[BoxData[RowBox[{"\"MadGraphModel\"", " ", "->", " ",
+         "\"sm-full\""}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "with", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"\"MadGraphAllowedParticles\"", " ", "->", " ",
+         "{", "11", ",", "22", "}"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "explicitly", " ", "restricts", " ", "the",
+         " ", "reference", " ", "to", " ", "electrons", ",", " ",
+         "positrons", " ", "and", " ", "photons", ".", " ", "This", " ",
+         "gives", " ", "a", " ", "pure", "-", "QED", " ", "comparison", " ",
+         "while", " ", "retaining", " ", "the", " ", "model", "'", "s", " ",
+         "massive", " ", "electron", ".", " ", "Leaving", " ", "the", " ",
+         "particle", " ", "filter", " ", "at", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"All"}]], "InlineFormula"], " allows every \
+interaction of the selected model, including its Z and Higgs exchanges when \
+relevant."}], "Notes"], Cell[TextData[{"Particle filters use positive \
+absolute PDG codes, include their antiparticles and must contain every \
+external particle type. Unsupported or inconsistent selections produce a \
+diagnostic instead of a passing comparison."}], "Notes"],
+  Cell["Helicities, spin sums and phases", "NotesSection"],
+  Cell[TextData[{"The validator checks each requested massless-helicity \
+assignment separately. The table displays labels such as ",
+     Cell[BoxData[RowBox[{"3", ":", "-", ",", " ", "4", ":", "+"}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{";", " ", "details", " ",
+         "retain", " ", "the", " ", "original", " ", "leg", "-", "order",
+         " ", "vectors", " ", "with", " ", "doubled", " ", "integer", " ",
+         "helicities", ",", " ", "such", " ", "as", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"-", "2"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "and", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"+", "2"}]], "InlineFormula"], " for photons."}],
+   "Notes"], Cell[TextData[{"Massive spins are summed on each side. \
+Individual massive spin components can use different bases in MadGraph and \
+SPINAS, so their complex numbers are not compared component by component."}],
+   "Notes"], Cell[TextData[{"Each comparison uses a squared amplitude. An \
+overall phase, including a sign or a factor of ",
+     Cell[BoxData[RowBox[{"I"}]], "InlineFormula"], ", therefore does not \
+cause a mismatch. Relative phases between contributions to the same amplitude \
+remain essential because they affect interference."}], "Notes"],
+  Cell[TextData[{"Incoming averages and outgoing identical-species factors \
+are matched once. A fixed incoming or outgoing massless helicity remains the \
+selected contribution; it is not silently replaced by an unpolarized sum."}],
+   "Notes"], Cell["Sampling and understanding a failed comparison",
+   "NotesSection"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"\"MadGraphPoints\"", " ", "->", " ",
+         "1000"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "requests", " ", "1000", " ", "common", " ",
+         "physical", " ", "points", " ", "for", " ", "every", " ",
+         "massless", "-", "helicity", " ", "combination", ".", " "}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{"\"MadGraphSeed\"", " ", "->",
+         " ", "Automatic"}]], "InlineFormula"], " selects a seed at run time \
+and reports it. Supply an unsigned 64-bit integer, including zero, to repeat \
+a particular sample sequence."}], "Notes"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"\"RelativeTolerance\"", " ", "->",
+         " ", "10", "^", "-", "7"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "and", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"\"AbsoluteTolerance\"", " ", "->", " ", "0"}]],
+      "InlineFormula"], " are the default numerical tolerances. Nonfinite \
+values, missing evaluations and runtime errors cannot count as a pass. The \
+full report retains the first failing momenta and the concrete seed."}],
+   "Notes"],
+  Cell[TextData[{"Use ", Cell[BoxData[RowBox[{"\"MinimumEnergy\""}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{" ", "and", " "}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{"\"MaximumEnergy\""}]],
+      "InlineFormula"], " to restrict the sampled center-of-mass energies. \
+Automatic choices lie above the process thresholds. These random points are \
+validation probes, rather than an integration result or a cross section."}],
+   "Notes"], Cell[TextData[{"A failure can expose numerical conditioning as \
+well as an incorrect expression. At high energy, large cancellations or \
+inverse small masses can make one form lose precision even when a more \
+compact equivalent form is stable. Compare the failed values and momenta \
+before loosening a tolerance."}], "Notes"],
+  Cell["Matching parameters and widths", "NotesSection"],
+  Cell[TextData[{"The HEPCAT model supplies its numerical inputs through ",
+     ButtonBox["ModelParameterRules", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ModelParameterRules"], ". ",
+     Cell[BoxData[RowBox[{"\"MadGraphParameterMap\"", " ", "->", " ", "{",
+         "\"HEPCATName\"", " ", "->", " ", "\"UFOName\"", ",", " ", "...",
+         "}"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "relates", " ", "differently", " ", "named",
+         " ", "parameters", ";", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"\"MadGraphParameterRules\""}]], "InlineFormula"],
+     " supplies explicit external UFO input values when necessary."}],
+   "Notes"], Cell[TextData[{"A name mapping does not by itself change a \
+derived UFO coupling to an arbitrary value. Its value must agree with the \
+selected model's independent inputs. Ambiguous or inconsistent matching \
+produces a diagnostic before the comparison can pass."}], "Notes"],
+  Cell[TextData[{"The two sides must also use the same propagator-width \
+prescription. A bare ", ButtonBox["PropDen", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PropDen"], " has no decay width, so \
+independently adjustable, unmatched MadGraph decay-width inputs are set to \
+zero. Explicit reference width rules and matched width parameters retain \
+their supplied values. The detailed reference report records this choice."}],
+   "Notes"], Cell["Reports and external software", "NotesSection"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"\"Output\"", " ", "->", " ",
+         "\"Summary\""}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "gives", " ", "status", " ", "counts", ".",
+         " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"\"Output\"", " ", "->", " ", "\"Details\""}]],
+      "InlineFormula"], " gives the complete report, including reference \
+setup, helicity selection, numerical errors and failed momenta. These reports \
+help distinguish a theory mismatch from a sampling or numerical problem."}],
+   "Notes"], Cell[TextData[{"The current validator supports colorless tree \
+processes with two incoming particles, at least two outgoing particles and \
+external spins through one. It requires MadGraph, a Fortran compiler, SPINAS \
+and the normal C++ build tools. Ordinary source-only SPINAS exports remain \
+available without those reference tools."}], "Notes"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"\"TimeConstraint\"", " ", "->", " ",
+         "600"}]], "InlineFormula"], " bounds MadGraph reference preparation. \
+It does not impose a single deadline on the complete CMake build and all \
+requested numerical samples."}], "Notes"],
+  Cell[TextData[{"The directory form uses the process, model, parameter \
+matching and fixed-helicity selection saved in that export. You can vary \
+sampling controls such as points, seed, tolerances and energy bounds. To \
+change the stored reaction or reference theory, regenerate the project or use \
+an amplitude-and-model form."}], "Notes"],
+  Cell[TextData[{"For numerical event generation with the HEPCAT amplitude, \
+use the MadEvent launcher generated by ", ButtonBox["WriteSPINASProcess",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/WriteSPINASProcess"], ". Running that simulation \
+does not replace the independent comparison provided by ",
+     Cell[BoxData[RowBox[{"ValidateMadGraph"}]], "InlineFormula"], "."}],
+   "Notes"], Cell["Options", "NotesSection"],
   Cell[BoxData[GridBox[{{Cell["Option", "TableHeader"],
        Cell["Default", "TableHeader"], Cell["Meaning", "TableHeader"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"SPINASDirectory\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
-           "InlineFormula"]}], "TableText"], Cell["Path to the local SPINAS \
-checkout/library. Automatic searches SPINAS_ROOT and the sibling spinas \
-checkout; an explicit directory selects another installation.",
-        "TableText"]},
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{"Path to the local SPINAS checkout/library. Automatic \
+searches SPINAS_ROOT and the sibling spinas checkout; an explicit directory \
+selects another installation."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"IncomingLegs\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"{", "1", ",", " ", "2", "}"}]],
-           "InlineFormula"]}], "TableText"], Cell["External leg labels that \
-are physically incoming in exported C++. Other legs are crossed once from \
-HEPCAT's all-ingoing convention, including outgoing angle-spinor signs. \
-Runnable projects currently require two incoming particles.", "TableText"]},
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{"External leg labels that are physically incoming in \
+exported C++. Other legs are crossed once from HEPCAT's all-ingoing \
+convention, including outgoing angle-spinor signs. Runnable projects \
+currently require two incoming particles."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"FixedHelicities\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
-           "InlineFormula"]}], "TableText"], Cell["Massless \
-leg-to-doubled-helicity rules selecting states in the grouped SPINAS \
-exporter. Automatic retains the requested coverage; explicitly fixed incoming \
-helicities are not averaged over, and a fixed outgoing helicity is a labeled \
-contribution.", "TableText"]},
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{"Massless leg-to-doubled-helicity rules selecting \
+states in the grouped SPINAS exporter. Automatic retains the requested \
+coverage; explicitly fixed incoming helicities are not averaged over, and a \
+fixed outgoing helicity is a labeled contribution."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"ParameterRules\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
-           "InlineFormula"]}], "TableText"], Cell["Local numerical parameter \
-overrides keyed by model references or string names. Automatic resolves the \
-model's variables and dependent functions; fitting and checks do not assign \
-global values or replace parameters in the symbolic final amplitude.",
-        "TableText"]},
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{"Local numerical parameter overrides keyed by model \
+references or string names. Automatic resolves the model's variables and \
+dependent functions; fitting and checks do not assign global values or \
+replace parameters in the symbolic final amplitude."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"ProcessName\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"\"hepcat_process\""}]],
-           "InlineFormula"]}], "TableText"], Cell["Valid C++ identifier for \
-the exported SPINAS class and executable. Choose a readable process name that \
-does not collide with reserved generated members.", "TableText"]},
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{"Valid C++ identifier for the exported SPINAS class and \
+executable. Choose a readable process name that does not collide with \
+reserved generated members."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"Precision\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
-           "InlineFormula"]}], "TableText"], Cell["Floating-point type used \
-by exported SPINAS code. Automatic reads the local library build \
-configuration; \"Double\" and \"LongDouble\" must match the library being \
-linked.", "TableText"]}, {Cell[TextData[{Cell[BoxData[RowBox[{"\"Build\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{"Floating-point type used by exported SPINAS code. \
+Automatic reads the local library build configuration; \"Double\" and \
+\"LongDouble\" must match the library being linked."}], "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"Build\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"False"}]], "InlineFormula"]}],
-        "TableText"], Cell["Whether to configure and compile the exported C++ \
-project against the existing SPINAS library. False writes source files only; \
-a source-only export does not require CMake.", "TableText"]},
+        "TableText"], Cell[TextData[{"Whether to configure and compile the \
+exported C++ project against the existing SPINAS library. False writes source \
+files only; a source-only export does not require CMake."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"RunExamples\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"False"}]], "InlineFormula"]}],
-        "TableText"], Cell["Whether to build the exported SPINAS project and \
-execute its sample phase-space points. True implies the necessary build \
-step.", "TableText"]},
+        "TableText"], Cell[TextData[{"Whether to build the exported SPINAS \
+project and execute its sample phase-space points. True implies the necessary \
+build step."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"CMakeExecutable\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
-           "InlineFormula"]}], "TableText"], Cell["Path to the CMake program \
-used when building. Automatic searches PATH and standard installations, \
-including common macOS application and Homebrew locations.", "TableText"]},
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{"Path to the CMake program used when building. \
+Automatic searches PATH and standard installations, including common macOS \
+application and Homebrew locations."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"Overwrite\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"False"}]], "InlineFormula"]}],
-        "TableText"], Cell["Whether existing generated project files may be \
-replaced. False protects an existing SPINAS output directory from accidental \
-overwriting.", "TableText"]},
+        "TableText"], Cell[TextData[{"Whether existing generated project \
+files may be replaced. False protects an existing SPINAS output directory \
+from accidental overwriting."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"CalcHEPDirectory\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"None"}]], "InlineFormula"]}],
-        "TableText"], Cell["Chosen CalcHEP installation directory. None, the \
-default, leaves the optional backend unconfigured. An explicitly supplied \
-Automatic consults the corresponding environment variables only; no \
-installation path is guessed.", "TableText"]},
+        "TableText"], Cell[TextData[{"Chosen CalcHEP installation directory. \
+None, the default, leaves the optional backend unconfigured. An explicitly \
+supplied Automatic consults the corresponding environment variables only; no \
+installation path is guessed."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"CalcHEPModel\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"None"}]], "InlineFormula"]}],
-        "TableText"], Cell["Chosen equivalent CalcHEP reference theory as \
-{directory, modelNumber}. None, the default, selects no theory; Automatic \
-does not infer a model. This reference model is separate from the supplied \
-HEPCAT amplitudes.", "TableText"]},
+        "TableText"], Cell[TextData[{"Chosen equivalent CalcHEP reference \
+theory as {directory, modelNumber}. None, the default, selects no theory; \
+Automatic does not infer a model. This reference model is separate from the \
+supplied HEPCAT amplitudes."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"CalcHEPAllowedParticles\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"All"}]], "InlineFormula"]}],
-        "TableText"], Cell["All retains the full selected CalcHEP theory. A \
-nonempty list of unique positive absolute PDG codes restricts the independent \
-reference particle sector, including antiparticles. Every external type must \
-be included.", "TableText"]},
+        "TableText"], Cell[TextData[{"All retains the full selected CalcHEP \
+theory. A nonempty list of unique positive absolute PDG codes restricts the \
+independent reference particle sector, including antiparticles. Every \
+external type must be included."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"RunCalcHEPValidation\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"False"}]], "InlineFormula"]}],
-        "TableText"], Cell["Whether export builds and runs the generated \
-independent CalcHEP comparison. It uses the same physical points on both \
-implementations; unsupported polarized or color-stripped comparisons report \
-unavailable. When MadGraph is also requested, its check still runs if CalcHEP \
-fails. A failed requested reference returns Failure with both reports \
-retained in ExportResult.", "TableText"]},
+        "TableText"], Cell[TextData[{"Whether export builds and runs the \
+generated independent CalcHEP comparison. It uses the same physical points on \
+both implementations; unsupported polarized or color-stripped comparisons \
+report unavailable. When MadGraph is also requested, its check still runs if \
+CalcHEP fails. A failed requested reference returns Failure with both reports \
+retained in ExportResult."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"CalcHEPPoints\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"1000"}]], "InlineFormula"]}],
-        "TableText"], Cell["Number of random physical phase-space points \
-compared by the generated independent CalcHEP validation executable. This \
-tests both implementations at the same points.", "TableText"]},
+        "TableText"], Cell[TextData[{"Number of random physical phase-space \
+points compared by the generated independent CalcHEP validation executable. \
+This tests both implementations at the same points."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"CalcHEPSeed\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
-           "InlineFormula"]}], "TableText"], Cell["Default seed of the \
-generated CalcHEP comparison. Automatic chooses from the time when validation \
-runs and prints the concrete seed; an unsigned 64-bit integer, including \
-zero, makes the run reproducible.", "TableText"]},
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{"Default seed of the generated CalcHEP comparison. \
+Automatic chooses from the time when validation runs and prints the concrete \
+seed; an unsigned 64-bit integer, including zero, makes the run \
+reproducible."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"ReturnDetails\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"False"}]], "InlineFormula"]}],
-        "TableText"], Cell["Whether to expose optional diagnostic data \
-instead of the compact default result. For preparation and factorization \
+        "TableText"], Cell[TextData[{"Whether to expose optional diagnostic \
+data instead of the compact default result. For preparation and factorization \
 completion it retains provenance, directions and validation and takes \
 precedence over Output; for export it returns file paths and build/run \
-results.", "TableText"]},
+results."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"MadGraphDirectory\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"None"}]], "InlineFormula"]}],
-        "TableText"], Cell["Chosen MadGraph installation directory for \
-independent validation and the MadEvent numerical bridge. None, the default, \
-leaves this optional support unconfigured. An explicitly supplied Automatic \
-consults environment variables only; pass a path to make the selection \
-explicit.", "TableText"]},
+        "TableText"], Cell[TextData[{"Chosen MadGraph installation directory \
+for independent validation and the MadEvent numerical bridge. None, the \
+default, leaves this optional support unconfigured. An explicitly supplied \
+Automatic consults environment variables only; pass a path to make the \
+selection explicit."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"MadGraphModel\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"None"}]], "InlineFormula"]}],
-        "TableText"], Cell["Chosen MadGraph UFO model name or directory. It \
-supplies the independent validation reference and the numerical MadEvent \
-model metadata and phase-space topologies. None, the default, selects no \
-theory; Automatic does not infer one. Specify the model and any particle \
-filter explicitly.", "TableText"]},
+        "TableText"], Cell[TextData[{"Chosen MadGraph UFO model name or \
+directory. It supplies the independent validation reference and the numerical \
+MadEvent model metadata and phase-space topologies. None, the default, \
+selects no theory; Automatic does not infer one. Specify the model and any \
+particle filter explicitly."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"MadGraphAllowedParticles\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"All"}]], "InlineFormula"]}],
-        "TableText"], Cell["All retains the full selected MadGraph theory. A \
-nonempty list of unique positive absolute PDG codes, such as {11,22}, \
-restricts the particle sector used for reference validation and MadEvent \
-topology generation and includes antiparticles. Every external particle type \
-must be present.", "TableText"]},
+        "TableText"], Cell[TextData[{"All retains the full selected MadGraph \
+theory. A nonempty list of unique positive absolute PDG codes, such as \
+{11,22}, restricts the particle sector used for reference validation and \
+MadEvent topology generation and includes antiparticles. Every external \
+particle type must be present."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"MadGraphParameterRules\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
-           "InlineFormula"]}], "TableText"], Cell["Real numerical values for \
-named external MadGraph UFO parameters. Automatic uses the supported \
-model-parameter matching; explicit rules supply otherwise ambiguous \
-independent inputs.", "TableText"]},
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{"Real numerical values for named external MadGraph UFO \
+parameters. Automatic uses the supported model-parameter matching; explicit \
+rules supply otherwise ambiguous independent inputs."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"MadGraphParameterMap\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
-           "InlineFormula"]}], "TableText"], Cell["Rules mapping HEPCAT model \
-parameter names to external or derived MadGraph UFO parameter names. \
-Automatic uses supported same-name and known-model matching; unresolved used \
-parameters prevent a passing comparison.", "TableText"]},
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{"Rules mapping HEPCAT model parameter names to external \
+or derived MadGraph UFO parameter names. Automatic uses supported same-name \
+and known-model matching; unresolved used parameters prevent a passing \
+comparison."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"RunMadGraphValidation\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"False"}]], "InlineFormula"]}],
-        "TableText"], Cell["Whether WriteSPINASProcess builds and runs the \
-independent MadGraph comparison. False writes the optional support without \
-running it; True runs a report for each exported massless-helicity \
+        "TableText"], Cell[TextData[{"Whether WriteSPINASProcess builds and \
+runs the independent MadGraph comparison. False writes the optional support \
+without running it; True runs a report for each exported massless-helicity \
 combination. A numerical FAIL is returned as Failure, not a successful \
 source-export result. If CalcHEP is also requested, both checks are attempted \
-and their reports remain in ExportResult.", "TableText"]},
+and their reports remain in ExportResult."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"MadGraphPoints\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"1000"}]], "InlineFormula"]}],
-        "TableText"], Cell["Number of common random phase-space points \
-compared for each massless-helicity combination. The default is 1000.",
-        "TableText"]},
-      {Cell[TextData[{Cell[BoxData[RowBox[{"\"MadGraphSeed\""}]],
+        "TableText"], Cell[TextData[{"Number of common random phase-space \
+points compared for each massless-helicity combination. The default is 1000."}\
+], "TableText"]}, {Cell[TextData[{Cell[BoxData[RowBox[{"\"MadGraphSeed\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
-           "InlineFormula"]}], "TableText"], Cell["Random seed for the \
-generated MadGraph comparison. Automatic chooses one time-based seed when \
-validation runs and reports it; an explicit unsigned 64-bit integer, \
-including zero, replays the samples.", "TableText"]},
-      {Cell[TextData[{Cell[BoxData[RowBox[{"\"Output\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{"Random seed for the generated MadGraph comparison. \
+Automatic chooses one time-based seed when validation runs and reports it; an \
+explicit unsigned 64-bit integer, including zero, replays the samples."}],
+        "TableText"]}, {Cell[TextData[{Cell[BoxData[RowBox[{"\"Output\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"\"Table\""}]],
-           "InlineFormula"]}], "TableText"], Cell["Choose the amount and \
-shape of returned information. Defaults are a compact check table, prepared \
-input forms, a completed {externalMassRules, expression} pair, or a bare \
-constructed expression; \"Details\" preserves diagnostics and provenance.",
-        "TableText"]},
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{"Choose the amount and shape of returned information. \
+Defaults are a compact check table, prepared input forms, a completed \
+{externalMassRules, expression} pair, or a bare constructed expression; \
+\"Details\" preserves diagnostics and provenance."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"RelativeTolerance\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"1", "/", "10000000"}]],
-           "InlineFormula"]}], "TableText"], Cell["Maximum relative numerical \
-difference allowed by the selected comparison. ValidateMadGraph defaults to \
-10^-7; this is applied independently to each tested massless-helicity \
-combination.", "TableText"]},
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{"Maximum relative numerical difference allowed by the \
+selected comparison. ValidateMadGraph defaults to 10^-7; this is applied \
+independently to each tested massless-helicity combination."}],
+        "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"AbsoluteTolerance\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"0"}]], "InlineFormula"]}],
-        "TableText"], Cell["Optional absolute numerical comparison tolerance. \
-ValidateMadGraph defaults to zero so a wrong tiny amplitude cannot pass \
-through a fixed absolute floor.", "TableText"]},
+        "TableText"], Cell[TextData[{"Optional absolute numerical comparison \
+tolerance. ValidateMadGraph defaults to zero so a wrong tiny amplitude cannot \
+pass through a fixed absolute floor."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"MinimumEnergy\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
-           "InlineFormula"]}], "TableText"], Cell["Lower center-of-mass \
-energy used by ValidateMadGraph's random validation samples. Automatic \
-chooses a value above the incoming and outgoing mass thresholds.",
-        "TableText"]},
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{"Lower center-of-mass energy used by ValidateMadGraph's \
+random validation samples. Automatic chooses a value above the incoming and \
+outgoing mass thresholds."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"MaximumEnergy\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
-           "InlineFormula"]}], "TableText"], Cell["Upper center-of-mass \
-energy used by ValidateMadGraph's random validation samples. Automatic \
-chooses a suitable range above threshold.", "TableText"]},
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{"Upper center-of-mass energy used by ValidateMadGraph's \
+random validation samples. Automatic chooses a suitable range above \
+threshold."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"TimeConstraint\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"600"}]], "InlineFormula"]}],
-        "TableText"], Cell["Time budget in seconds for generating and \
-compiling the independent MadGraph reference process. A timeout is an \
-incomplete check, not PASS.", "TableText"]}}, GridBoxAlignment ->
+        "TableText"], Cell[TextData[{"Time budget in seconds for generating \
+and compiling the independent MadGraph reference process. A timeout is an \
+incomplete check, not PASS."}], "TableText"]}}, GridBoxAlignment ->
       {"Columns" -> {Left, Left, Left}}, GridBoxItemSize ->
       {"Columns" -> {Scaled[0.23], Scaled[0.19], Scaled[0.58]}},
      GridBoxDividers -> {"Rows" -> {False, True, {False}, False}}]],
    "3ColumnTableMod"], Cell["Examples", "PrimaryExamplesSection"],
-  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
-     Cell["Evaluate this setup once before the examples. The paths refer to \
-the local HEPCAT checkout; no model parameters are assigned global numerical \
-values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
-         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
-         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
-         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
-         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
-         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
-         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
-         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
-         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
-         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
-         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
-         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
-         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
-         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
-         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
-      "Input", InitializationCell -> True]}, Open]],
-  Cell["Basic Examples", "ExampleSection"],
-  Cell["Inspect the validation options without running external software.",
+  Cell[CellGroupData[{Cell["Load HEPCAT if needed", "ExampleSubsection"],
+     Cell["Skip this setup if HEPCAT is already loaded. These examples assume \
+the checkout is in ~/code/hepcat; change the paths if yours is elsewhere. \
+Evaluate loading in its own cell before the calculation.", "ExampleText"],
+     Cell[BoxData[RowBox[{"Get", "[", "\"~/code/hepcat/source/HEPCAT.wl\"",
+         "]", ";", "\n", "hepcatDirectory", " ", "=", " ",
+         "\"~/code/hepcat\"", ";", "\n", "modelDirectory", " ", "=", " ",
+         "\"~/code/hepcat/models\"", ";"}]], "Input",
+      InitializationCell -> True]}, Closed]], Cell["Basic Examples",
+   "ExampleSection"], Cell["Inspect the interface", "ExampleSubsection"],
+  Cell[TextData[
+    {"Inspect the validation options without running external software."}],
    "ExampleText"], Cell[BoxData[RowBox[{"Options", "[", "ValidateMadGraph",
-      "]"}]], "Input"], Cell["Choose a MadGraph installation and explicitly \
-select its QED sector, then validate the complete photon-helicity family. \
-Replace this example sibling directory and model selection with your chosen \
-installation and theory.", "ExampleText"],
+      "]"}]], "Input"], Cell["Validate a complete helicity family",
+   "ExampleSubsection"], Cell[TextData[{"Choose a MadGraph installation and \
+explicitly select its QED sector, then validate the complete photon-helicity \
+family. Replace this example sibling directory and model selection with your \
+chosen installation and theory."}], "ExampleText"],
   Cell[BoxData[RowBox[{"madGraphDirectory", " ", "=", " ", "FileNameJoin",
       "[", "{", "ParentDirectory", "[", "hepcatDirectory", "]", ",", " ",
       "\"MadGraph\"", "}", "]", ";", "\n", "knownModel", " ", "=", " ",
@@ -399,33 +456,38 @@ installation and theory.", "ExampleText"],
       " ", "{", "11", ",", " ", "22", "}", "]"}]], "Input"],
   Cell["This example writes files, starts a longer calculation, or requires \
 an optional external tool. Evaluate it when you want to perform that \
-operation.", "ExampleText"],
-  Cell["Replay a run and retain its full diagnostics.", "ExampleText"],
-  Cell[BoxData[RowBox[{"ValidateMadGraph", "[", "{", "\"e\"", ",", " ",
-      "\"E\"", "}", " ", "->", " ", "{", "\"A\"", ",", " ", "\"A\"", "}",
-      ",", " ", "entries", ",", " ", "knownModel", ",", " ",
-      "\"MadGraphDirectory\"", " ", "->", " ", "madGraphDirectory", ",", " ",
-      "\"MadGraphModel\"", " ", "->", " ", "\"sm-full\"", ",", " ",
+operation.", "ExampleText"], Cell["Replay and inspect a check",
+   "ExampleSubsection"],
+  Cell[TextData[{"Replay a run and retain its full diagnostics."}],
+   "ExampleText"], Cell[BoxData[RowBox[{"ValidateMadGraph", "[", "{",
+      "\"e\"", ",", " ", "\"E\"", "}", " ", "->", " ", "{", "\"A\"", ",",
+      " ", "\"A\"", "}", ",", " ", "entries", ",", " ", "knownModel", ",",
+      " ", "\"MadGraphDirectory\"", " ", "->", " ", "madGraphDirectory", ",",
+      " ", "\"MadGraphModel\"", " ", "->", " ", "\"sm-full\"", ",", " ",
       "\"MadGraphAllowedParticles\"", " ", "->", " ", "{", "11", ",", " ",
       "22", "}", ",", " ", "\"MadGraphSeed\"", " ", "->", " ", "12345", ",",
       " ", "\"Output\"", " ", "->", " ", "\"Details\"", "]"}]], "Input"],
   Cell["This example writes files, starts a longer calculation, or requires \
 an optional external tool. Evaluate it when you want to perform that \
-operation.", "ExampleText"],
-  Cell["Validate a project already written by the current exporter.",
-   "ExampleText"], Cell[BoxData[RowBox[{"exportDirectory", " ", "=", " ",
-      "CreateDirectory", "[", "]", ";", "\n", "WriteSPINASProcess", "[",
-      "exportDirectory", ",", " ", "{", "\"e\"", ",", " ", "\"E\"", "}", " ",
-      "->", " ", "{", "\"A\"", ",", " ", "\"A\"", "}", ",", " ", "entries",
-      ",", " ", "knownModel", ",", " ", "\"MadGraphDirectory\"", " ", "->",
-      " ", "madGraphDirectory", ",", " ", "\"MadGraphModel\"", " ", "->",
-      " ", "\"sm-full\"", ",", " ", "\"MadGraphAllowedParticles\"", " ",
-      "->", " ", "{", "11", ",", " ", "22", "}", "]", ";", "\n",
+operation.", "ExampleText"], Cell["Validate an existing export",
+   "ExampleSubsection"],
+  Cell[TextData[{"Validate a project already written by the current \
+exporter."}], "ExampleText"],
+  Cell[BoxData[RowBox[{"exportDirectory", " ", "=", " ", "CreateDirectory",
+      "[", "]", ";", "\n", "WriteSPINASProcess", "[", "exportDirectory", ",",
+      " ", "{", "\"e\"", ",", " ", "\"E\"", "}", " ", "->", " ", "{",
+      "\"A\"", ",", " ", "\"A\"", "}", ",", " ", "entries", ",", " ",
+      "knownModel", ",", " ", "\"MadGraphDirectory\"", " ", "->", " ",
+      "madGraphDirectory", ",", " ", "\"MadGraphModel\"", " ", "->", " ",
+      "\"sm-full\"", ",", " ", "\"MadGraphAllowedParticles\"", " ", "->",
+      " ", "{", "11", ",", " ", "22", "}", "]", ";", "\n",
       "ValidateMadGraph", "[", "exportDirectory", "]"}]], "Input"],
   Cell["This example writes files, starts a longer calculation, or requires \
 an optional external tool. Evaluate it when you want to perform that \
-operation.", "ExampleText"],
-  Cell["Validate one amplitude with both photon helicities fixed.",
+operation.", "ExampleText"], Cell["Validate one helicity sector",
+   "ExampleSubsection"],
+  Cell[TextData[
+    {"Validate one amplitude with both photon helicities fixed."}],
    "ExampleText"], Cell[BoxData[RowBox[{"fixedProcess", " ", "=", " ", "{",
       "\"e\"", ",", " ", "\"E\"", ",", " ", "\"A.+\"", ",", " ", "\"A.+\"",
       "}", ";", "\n", "fixedAmplitude", " ", "=", " ", "LookupAmplitude",
@@ -462,9 +524,8 @@ you want to perform that operation.", "ExampleText"],
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/ValidateMadGraph", "title" -> "ValidateMadGraph",
      "type" -> "Symbol", "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT",
-     "language" -> "en", "summary" -> "Compares exported HEPCAT/SPINAS \
-amplitudes with independent MadGraph matrix elements on common random \
-phase-space points, separately for each massless-helicity combination.",
-     "keywords" -> {"HEPCAT", "ValidateMadGraph", "spinor amplitudes"},
+     "language" -> "en", "summary" -> "Checks a HEPCAT/SPINAS amplitude \
+against an independently generated MadGraph result at common random physical \
+momenta.", "keywords" -> {"HEPCAT", "ValidateMadGraph", "spinor amplitudes"},
      "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

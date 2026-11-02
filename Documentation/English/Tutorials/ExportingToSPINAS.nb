@@ -7,55 +7,62 @@ Notebook[
      GridBoxAlignment -> {"Columns" -> {Left, Right}},
      GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
    "AnchorBarGrid"], Cell["Exporting a Numerical SPINAS Process",
-   "TechNoteTitle"], Cell["Group helicities, declare physical crossing and \
-build readable numerical code.", "TechNoteText"],
-  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
-     Cell["Evaluate this setup once before the examples. The paths refer to \
-the local HEPCAT checkout; no model parameters are assigned global numerical \
-values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
-         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
-         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
-         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
-         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
-         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
-         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
-         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
-         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
-         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
-         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
-         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
-         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
-         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
-         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
-      "Input", InitializationCell -> True]}, Open]],
+   "TechNoteTitle"], Cell[TextData[{"Export a checked amplitude family, build \
+its numerical code, and compare or integrate it with independent external \
+tools."}], "TechNoteText"],
+  Cell[CellGroupData[{Cell["Load HEPCAT if needed", "ExampleSubsection"],
+     Cell["Skip this setup if HEPCAT is already loaded. These examples assume \
+the checkout is in ~/code/hepcat; change the paths if yours is elsewhere. \
+Evaluate loading in its own cell before the calculation.", "ExampleText"],
+     Cell[BoxData[RowBox[{"Get", "[", "\"~/code/hepcat/source/HEPCAT.wl\"",
+         "]", ";", "\n", "hepcatDirectory", " ", "=", " ",
+         "\"~/code/hepcat\"", ";", "\n", "modelDirectory", " ", "=", " ",
+         "\"~/code/hepcat/models\"", ";", "\n", "feynmanModelDirectory", " ",
+         "=", " ", "\"~/code/hepcat/model_feynman\"", ";"}]], "Input",
+      InitializationCell -> True]}, Closed]],
   Cell["Collect Analytic Helicity Amplitudes", "TechNoteSection"],
-  Cell["One exported process should contain the massless helicity choices \
-needed by the requested spin sum. The expressions still use HEPCAT's \
-all-incoming convention. The known four-point QED model is a small example \
-that does not need a new construction run.", "TechNoteText"],
-  Cell["Collect the independent photon-helicity cases.", "ExampleText"],
-  Cell[BoxData[RowBox[{"knownModel", " ", "=", " ", "ReadModel", "[",
-      "modelDirectory", ",", " ", "3", "]", ";", "\n", "processes", " ", "=",
-      " ", "{", "{", "\"e\"", ",", " ", "\"E\"", ",", " ", "\"A.+\"", ",",
-      " ", "\"A.+\"", "}", ",", " ", "{", "\"e\"", ",", " ", "\"E\"", ",",
-      " ", "\"A.+\"", ",", " ", "\"A.-\"", "}", ",", " ", "{", "\"e\"", ",",
-      " ", "\"E\"", ",", " ", "\"A.-\"", ",", " ", "\"A.-\"", "}", "}", ";",
-      "\n", "entries", " ", "=", " ", "{", "#", ",", " ", "LookupAmplitude",
-      "[", "Thread", "[", "{", "#", ",", " ", "Range", "[", "4", "]", "}",
-      "]", ",", " ", "knownModel", ",", " ", "False", ",", " ", "{", "i1",
-      ",", " ", "i2", ",", " ", "i3", ",", " ", "i4", "}", "]", "}", " ",
-      "&", " ", "/@", " ", "processes", ";"}]], "Input"],
-  Cell["Specify Physical Incoming and Outgoing Particles",
-   "TechNoteSection"], Cell["The physical process makes crossing unambiguous. \
-WriteSPINASProcess reverses the outgoing momenta and spinor conventions. For \
-identical photons it can use the supported permutation completion of supplied \
-helicity cases; incomplete requested helicity coverage must be reported \
-rather than silently summed as zero.", "TechNoteText"],
-  Cell["Use an explicit helicity in the physical process when that particle \
-is intentionally fixed. A spin-summed amplitude squares the modulus for each \
-spin/helicity assignment and then adds those contributions. It does not add \
-amplitudes from different external spin states before squaring.",
-   "TechNoteText"], Cell["Write files into a new temporary directory.",
+  Cell[TextData[{"This tutorial starts with known, checked QED amplitudes and \
+turns them into one numerical process. It separates source generation, \
+compilation, independent validation and event generation so you can choose \
+the stage you need."}], "TechNoteText"],
+  Cell[TextData[{"The input entries remain in HEPCAT's all-incoming \
+convention. The physical process passed to ", ButtonBox["WriteSPINASProcess",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/WriteSPINASProcess"], " determines which momenta \
+are crossed in the generated numerical code. The exporter needs the formulas \
+for the requested helicity combinations, not just a spin-summed squared \
+amplitude."}], "TechNoteText"],
+  Cell[TextData[{ButtonBox["LookupAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/LookupAmplitude"], " retrieves the \
+stored four-point formulas from the bundled factorization model. Here the \
+three analytic sectors, together with the exporter's allowed \
+identical-particle permutations, provide the photon-helicity coverage for the \
+unpolarized physical process."}], "TechNoteText"],
+  Cell[TextData[{"Collect the independent photon-helicity cases."}],
+   "ExampleText"], Cell[BoxData[RowBox[{"knownModel", " ", "=", " ",
+      "ReadModel", "[", "modelDirectory", ",", " ", "3", "]", ";", "\n",
+      "processes", " ", "=", " ", "{", "{", "\"e\"", ",", " ", "\"E\"", ",",
+      " ", "\"A.+\"", ",", " ", "\"A.+\"", "}", ",", " ", "{", "\"e\"", ",",
+      " ", "\"E\"", ",", " ", "\"A.+\"", ",", " ", "\"A.-\"", "}", ",", " ",
+      "{", "\"e\"", ",", " ", "\"E\"", ",", " ", "\"A.-\"", ",", " ",
+      "\"A.-\"", "}", "}", ";", "\n", "entries", " ", "=", " ", "{", "#",
+      ",", " ", "LookupAmplitude", "[", "Thread", "[", "{", "#", ",", " ",
+      "Range", "[", "4", "]", "}", "]", ",", " ", "knownModel", ",", " ",
+      "False", ",", " ", "{", "i1", ",", " ", "i2", ",", " ", "i3", ",", " ",
+      "i4", "}", "]", "}", " ", "&", " ", "/@", " ", "processes", ";"}]],
+   "Input"], Cell["Specify Physical Incoming and Outgoing Particles",
+   "TechNoteSection"],
+  Cell[TextData[{"The rule ",
+     Cell[BoxData[RowBox[{"{", "\"e\"", ",", " ", "\"E\"", "}", " ", "->",
+         " ", "{", "\"A\"", ",", " ", "\"A\"", "}"}]], "InlineFormula"], " \
+describes electron-positron annihilation to two photons. Generic A requests \
+the photon helicities required by that physical process. A fixed-helicity \
+choice must be explicit if you want only a selected contribution."}],
+   "TechNoteText"], Cell[TextData[{"The ordinary export writes source files \
+and a README; it does not require a compiler. The returned directory contains \
+the generated process class and build instructions. Keep that directory \
+distinct from the symbolic model files."}], "TechNoteText"],
+  Cell[TextData[{"Write files into a new temporary directory."}],
    "ExampleText"], Cell[BoxData[RowBox[{"exportDirectory", " ", "=", " ",
       "CreateDirectory", "[", "]", ";", "\n", "WriteSPINASProcess", "[",
       "exportDirectory", ",", " ", "{", "\"e\"", ",", " ", "\"E\"", "}", " ",
@@ -64,15 +71,23 @@ amplitudes from different external spin states before squaring.",
       "\"eeAA\"", "]"}]], "Input"], Cell["This example writes files, starts a \
 longer calculation, or requires an optional external tool. Evaluate it when \
 you want to perform that operation.", "ExampleText"],
-  Cell["Build and Run", "TechNoteSection"], Cell["The exporter writes the \
-process header and implementation, a small driver, CMake support and \
-validation helpers. Request building when SPINAS and the required compiler \
-tools are installed. The output report gives the generated locations and \
-build/run diagnostics.", "TechNoteText"], Cell["Normal random validation uses \
-a time-based seed. Pass an explicit seed when replaying a failure. The \
-generated numerical tests compare the same phase-space points for both \
-implementations.", "TechNoteText"],
-  Cell["Build and run the generated example where SPINAS is installed.",
+  Cell["Build and Run", "TechNoteSection"],
+  Cell[TextData[{"Set ", Cell[BoxData[RowBox[{"\"Build\"", " ", "->", " ",
+         "True"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "when", " ", "SPINAS", " ", "and", " ", "a",
+         " ", "compatible", " ", "compiler", " ", "toolchain", " ", "are",
+         " ", "available", ".", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"\"RunExamples\"", " ", "->", " ", "True"}]],
+      "InlineFormula"], " also evaluates the supplied physical example \
+momenta. Building or obtaining a finite example value is useful for checking \
+the numerical interface, but is not an independent validation of the \
+physics."}], "TechNoteText"],
+  Cell[TextData[{"The generated class has an amplitude function for explicit \
+spins/helicities and a squared-amplitude function with the declared spin \
+average and identical-particle factor. It sums squared moduli of the selected \
+amplitudes; it does not square a sum of their moduli."}], "TechNoteText"],
+  Cell[TextData[
+    {"Build and run the generated example where SPINAS is installed."}],
    "ExampleText"], Cell[BoxData[RowBox[{"WriteSPINASProcess", "[",
       "exportDirectory", ",", " ", "{", "\"e\"", ",", " ", "\"E\"", "}", " ",
       "->", " ", "{", "\"A\"", ",", " ", "\"A\"", "}", ",", " ", "entries",
@@ -83,113 +98,118 @@ implementations.", "TechNoteText"],
   Cell["This example writes files, starts a longer calculation, or requires \
 an optional external tool. Evaluate it when you want to perform that \
 operation.", "ExampleText"], Cell["CalcHEP Validation and Integration",
-   "TechNoteSection"], Cell["Optional CalcHEP validation generates an \
-independent symbolic reference process and compares squared amplitudes on \
+   "TechNoteSection"], Cell[TextData[{"Optional CalcHEP validation generates \
+an independent symbolic reference process and compares squared amplitudes on \
 shared random kinematics. Select CalcHEPDirectory and CalcHEPModel \
 explicitly; neither is guessed. CalcHEPAllowedParticles -> All uses the full \
-selected model, while a visible PDG list selects a smaller reference sector."\
-, "TechNoteText"], Cell["The optional n_calchep backend has a different \
-purpose: it connects CalcHEP's numerical integration machinery to the HEPCAT \
-SPINAS matrix element without CalcHEP symbolically regenerating that matrix \
-element. Generated parameter and mass interfaces keep the runtime values \
-consistent.", "TechNoteText"], Cell["After building, enter build/results from \
-the exported project directory and run ./n_calchep. If you are already in \
-build, use cd results. This folder contains the actual executable copy, \
-numerical settings and output. It is created inside the CMake build \
-directory, including an alternative build directory selected during \
-configuration, so generated run data stays separate from source. Validation \
-and example programs stay in build. Move the complete results directory \
-elsewhere before deleting build if you want to keep that numerical session. \
-Keep the installed CalcHEP and system runtime dependencies available.",
-   "TechNoteText"], Cell["Validate Each Photon Helicity with MadGraph",
-   "TechNoteSection"], Cell["ValidateMadGraph provides an independent \
-numerical check using MadGraph's own generated matrix element. It fixes each \
-massless helicity combination, sums massive-particle spins and evaluates both \
+selected model, while a visible PDG list selects a smaller reference sector."}\
+], "TechNoteText"], Cell[TextData[{"The optional n_calchep backend has a \
+different purpose: it connects CalcHEP's numerical integration machinery to \
+the HEPCAT SPINAS matrix element without CalcHEP symbolically regenerating \
+that matrix element. Generated parameter and mass interfaces keep the runtime \
+values consistent."}], "TechNoteText"],
+  Cell[TextData[{"After building, enter build/results from the exported \
+project directory and run ./n_calchep. If you are already in build, use cd \
+results. This folder contains the actual executable copy, numerical settings \
+and output. It is created inside the CMake build directory, including an \
+alternative build directory selected during configuration, so generated run \
+data stays separate from source. Validation and example programs stay in \
+build. Move the complete results directory elsewhere before deleting build if \
+you want to keep that numerical session. Keep the installed CalcHEP and \
+system runtime dependencies available."}], "TechNoteText"],
+  Cell["Validate Each Photon Helicity with MadGraph", "TechNoteSection"],
+  Cell[TextData[{"ValidateMadGraph provides an independent numerical check \
+using MadGraph's own generated matrix element. It fixes each massless \
+helicity combination, sums massive-particle spins and evaluates both \
 implementations on exactly the same physical momenta. Masses, couplings, \
-initial-state averages and identical-particle factors must agree.",
-   "TechNoteText"], Cell["Select the MadGraph installation, UFO model and \
-particle content explicitly. The example uses sm-full for a massive electron \
-and then MadGraphAllowedParticles -> {11,22} to choose only the \
+initial-state averages and identical-particle factors must agree."}],
+   "TechNoteText"], Cell[TextData[{"Select the MadGraph installation, UFO \
+model and particle content explicitly. The example uses sm-full for a massive \
+electron and then MadGraphAllowedParticles -> {11,22} to choose only the \
 electron/positron/photon sector. Without that filter the full Standard Model \
 also contains weak exchange in four-fermion processes. Parameter overrides \
 and maps must match the chosen reference theory; no fitted ratio hides a \
-mismatch.", "TechNoteText"], Cell["Validate the already exported process.",
-   "ExampleText"], Cell[BoxData[RowBox[{"madGraphDirectory", " ", "=", " ",
-      "FileNameJoin", "[", "{", "ParentDirectory", "[", "hepcatDirectory",
-      "]", ",", " ", "\"MadGraph\"", "}", "]", ";", "\n",
-      "WriteSPINASProcess", "[", "exportDirectory", ",", " ", "{", "\"e\"",
-      ",", " ", "\"E\"", "}", " ", "->", " ", "{", "\"A\"", ",", " ",
-      "\"A\"", "}", ",", " ", "entries", ",", " ", "knownModel", ",", " ",
-      "\"ProcessName\"", " ", "->", " ", "\"eeAA\"", ",", " ",
-      "\"Overwrite\"", " ", "->", " ", "True", ",", " ",
-      "\"MadGraphDirectory\"", " ", "->", " ", "madGraphDirectory", ",", " ",
-      "\"MadGraphModel\"", " ", "->", " ", "\"sm-full\"", ",", " ",
+mismatch."}], "TechNoteText"],
+  Cell[TextData[{"Validate the already exported process."}], "ExampleText"],
+  Cell[BoxData[RowBox[{"madGraphDirectory", " ", "=", " ", "FileNameJoin",
+      "[", "{", "ParentDirectory", "[", "hepcatDirectory", "]", ",", " ",
+      "\"MadGraph\"", "}", "]", ";", "\n", "WriteSPINASProcess", "[",
+      "exportDirectory", ",", " ", "{", "\"e\"", ",", " ", "\"E\"", "}", " ",
+      "->", " ", "{", "\"A\"", ",", " ", "\"A\"", "}", ",", " ", "entries",
+      ",", " ", "knownModel", ",", " ", "\"ProcessName\"", " ", "->", " ",
+      "\"eeAA\"", ",", " ", "\"Overwrite\"", " ", "->", " ", "True", ",",
+      " ", "\"MadGraphDirectory\"", " ", "->", " ", "madGraphDirectory", ",",
+      " ", "\"MadGraphModel\"", " ", "->", " ", "\"sm-full\"", ",", " ",
       "\"MadGraphAllowedParticles\"", " ", "->", " ", "{", "11", ",", " ",
       "22", "}", "]", ";", "\n", "ValidateMadGraph", "[", "exportDirectory",
       "]"}]], "Input"], Cell["This example writes files, starts a longer \
 calculation, or requires an optional external tool. Evaluate it when you want \
 to perform that operation.", "ExampleText"],
-  Cell["Keep a replayable diagnostic report.", "ExampleText"],
+  Cell[TextData[{"Keep a replayable diagnostic report."}], "ExampleText"],
   Cell[BoxData[RowBox[{"ValidateMadGraph", "[", "exportDirectory", ",", " ",
       "\"MadGraphSeed\"", " ", "->", " ", "12345", ",", " ", "\"Output\"",
       " ", "->", " ", "\"Details\"", "]"}]], "Input"],
   Cell["This example writes files, starts a longer calculation, or requires \
 an optional external tool. Evaluate it when you want to perform that \
 operation.", "ExampleText"], Cell["Use the SPINAS Amplitude in MadEvent",
-   "TechNoteSection"], Cell["The same WriteSPINASProcess export supports two \
+   "TechNoteSection"],
+  Cell[TextData[{"The same ", ButtonBox["WriteSPINASProcess",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/WriteSPINASProcess"], " export supports two \
 separate MadGraph workflows. ValidateMadGraph compares with an independently \
 generated MadGraph amplitude. The MadEvent numerical bridge instead uses the \
 supplied HEPCAT/SPINAS amplitude for integration and event generation, while \
-retaining MadEvent's phase-space channels, beam settings and cuts.",
-   "TechNoteText"], Cell["Select the installation, UFO model and any particle \
-restriction explicitly as in the validation example. Keep the analytic \
-entries in the all-incoming convention; the exporter crosses the declared \
-outgoing legs once. Parameter and mass changes must remain consistent with \
-the supplied amplitude and the chosen numerical model.", "TechNoteText"],
-  Cell["This bridge is for supported colorless leading-order tree amplitudes. \
-It does not create the additional matrix elements needed for a \
-next-to-leading-order or matched calculation. Massive-spin correlations \
-cannot be inferred from a spin-summed result or from treating the two \
-libraries' spin bases as identical.", "TechNoteText"],
-  Cell["Request \"Build\" -> True in the same export call. For ProcessName -> \
-\"eeAA\", enter build and run ./eeAA_madevent --prepare. Compiling the \
-launcher alone does not create the native MadEvent directory; this \
-preparation command does. The default workspace is the compiled project's \
-build directory, determined from its build metadata, so the result is \
-build/PROC_eeAA even if you instead run ./build/eeAA_madevent --prepare from \
-the exported source directory. The PROC_ name follows ProcessName for other \
-processes. The launcher prints the full card, HTML and event-output \
-locations. The first generation step can take longer than later runs because \
-MadEvent builds its integration code.", "TechNoteText"],
-  Cell["From the same build directory, ./eeAA_madevent opens the numerical \
-interface and ./eeAA_madevent --run run_01 generates events. Under that \
-working directory, PROC_eeAA/Cards/run_card.dat controls beam energies, cuts, \
-event counts, integration settings and the random seed; \
+retaining MadEvent's phase-space channels, beam settings and cuts."}],
+   "TechNoteText"], Cell[TextData[{"Select the installation, UFO model and \
+any particle restriction explicitly as in the validation example. Keep the \
+analytic entries in the all-incoming convention; the exporter crosses the \
+declared outgoing legs once. Parameter and mass changes must remain \
+consistent with the supplied amplitude and the chosen numerical model."}],
+   "TechNoteText"], Cell[TextData[{"This bridge is for supported colorless \
+leading-order tree amplitudes. It does not create the additional matrix \
+elements needed for a next-to-leading-order or matched calculation. \
+Massive-spin correlations cannot be inferred from a spin-summed result or \
+from treating the two libraries' spin bases as identical."}],
+   "TechNoteText"], Cell[TextData[{"Request \"Build\" -> True in the same \
+export call. For ProcessName -> \"eeAA\", enter build and run ./eeAA_madevent \
+--prepare. Compiling the launcher alone does not create the native MadEvent \
+directory; this preparation command does. The default workspace is the \
+compiled project's build directory, determined from its build metadata, so \
+the result is build/PROC_eeAA even if you instead run ./build/eeAA_madevent \
+--prepare from the exported source directory. The PROC_ name follows \
+ProcessName for other processes. The launcher prints the full card, HTML and \
+event-output locations. The first generation step can take longer than later \
+runs because MadEvent builds its integration code."}], "TechNoteText"],
+  Cell[TextData[{"From the same build directory, ./eeAA_madevent opens the \
+numerical interface and ./eeAA_madevent --run run_01 generates events. Under \
+that working directory, PROC_eeAA/Cards/run_card.dat controls beam energies, \
+cuts, event counts, integration settings and the random seed; \
 PROC_eeAA/Cards/param_card.dat controls numerical model inputs. Open \
 PROC_eeAA/index.html for progress and results, and find the event file in \
-PROC_eeAA/Events/run_01.", "TechNoteText"], Cell["Use --work-directory DIR to \
-select another output workspace, or --command-file path to run a normal \
-MadEvent command file. Existing sessions are retained where they were \
-created; use their own bin/madevent program to continue a prepared process. \
-Repeated launches in the same workspace preserve its cards and events.",
-   "TechNoteText"], Cell["After --prepare finishes, you can move or copy the \
-whole PROC_eeAA directory to the location where you want to keep the \
-numerical process. Move it outside build before deleting build if you want to \
-keep it. Enter that directory and run ./bin/madevent. Its amplitude sources, \
-headers, HEPCAT/SPINAS numerical libraries and private model support are \
-included, so the original exported project, build directory and SPINAS \
-checkout can be removed without breaking the prepared process. Keep the \
-external MadGraph installation, Python, Fortran toolchain and system \
-libraries available. The outer eeAA_madevent program is the initial setup \
-launcher; the complete prepared directory is the unit to move. Move it \
-between runs while no integration or compilation is active.",
-   "TechNoteText"], Cell["The independent comparison remains available \
-through ValidateMadGraph[exportDirectory] and the generated \
-eeAA_validate_madgraph program. The two workflows share the export and \
-selected model while performing different calculations.", "TechNoteText"],
-  Cell["Export the numerical MadEvent bridge and the independent validator \
-together. Set the installation and model explicitly; this example selects \
-only electrons, positrons and photons.", "ExampleText"],
+PROC_eeAA/Events/run_01."}], "TechNoteText"],
+  Cell[TextData[{"Use --work-directory DIR to select another output \
+workspace, or --command-file path to run a normal MadEvent command file. \
+Existing sessions are retained where they were created; use their own \
+bin/madevent program to continue a prepared process. Repeated launches in the \
+same workspace preserve its cards and events."}], "TechNoteText"],
+  Cell[TextData[{"After --prepare finishes, you can move or copy the whole \
+PROC_eeAA directory to the location where you want to keep the numerical \
+process. Move it outside build before deleting build if you want to keep it. \
+Enter that directory and run ./bin/madevent. Its amplitude sources, headers, \
+HEPCAT/SPINAS numerical libraries and private model support are included, so \
+the original exported project, build directory and SPINAS checkout can be \
+removed without breaking the prepared process. Keep the external MadGraph \
+installation, Python, Fortran toolchain and system libraries available. The \
+outer eeAA_madevent program is the initial setup launcher; the complete \
+prepared directory is the unit to move. Move it between runs while no \
+integration or compilation is active."}], "TechNoteText"],
+  Cell[TextData[{"The independent comparison remains available through \
+ValidateMadGraph[exportDirectory] and the generated eeAA_validate_madgraph \
+program. The two workflows share the export and selected model while \
+performing different calculations."}], "TechNoteText"],
+  Cell[TextData[{"Export the numerical MadEvent bridge and the independent \
+validator together. Set the installation and model explicitly; this example \
+selects only electrons, positrons and photons."}], "ExampleText"],
   Cell[BoxData[RowBox[{"madGraphDirectory", " ", "=", " ", "FileNameJoin",
       "[", "{", "ParentDirectory", "[", "hepcatDirectory", "]", ",", " ",
       "\"MadGraph\"", "}", "]", ";", "\n", "WriteSPINASProcess", "[",
@@ -205,19 +225,19 @@ only electrons, positrons and photons.", "ExampleText"],
 longer calculation, or requires an optional external tool. Evaluate it when \
 you want to perform that operation.", "ExampleText"],
   Cell["Run Both Independent References", "TechNoteSection"],
-  Cell["The two reference checks answer separate questions and both should be \
-available even when one fails. Ask the exporter to run both checks, with an \
-explicit installation and model for each program. The supplied HEPCAT \
-expression is not replaced by either reference result.", "TechNoteText"],
-  Cell["A failed requested comparison returns Failure. Its ExportResult \
-retains the generated project and both reference reports, so a CalcHEP \
-failure does not hide the MadGraph result. Compilation or writing source does \
-not by itself establish amplitude agreement. Differences in the selected \
-theory, masses, couplings or conventions must be investigated rather than \
-fitted away.", "TechNoteText"], Cell["Run both comparisons on the same \
-exported QED helicity family. Replace the installation paths with your \
-selected locations.", "ExampleText"],
-  Cell[BoxData[RowBox[{"calcHEPDirectory", " ", "=", " ",
+  Cell[TextData[{"The two reference checks answer separate questions and both \
+should be available even when one fails. Ask the exporter to run both checks, \
+with an explicit installation and model for each program. The supplied HEPCAT \
+expression is not replaced by either reference result."}], "TechNoteText"],
+  Cell[TextData[{"A failed requested comparison returns Failure. Its \
+ExportResult retains the generated project and both reference reports, so a \
+CalcHEP failure does not hide the MadGraph result. Compilation or writing \
+source does not by itself establish amplitude agreement. Differences in the \
+selected theory, masses, couplings or conventions must be investigated rather \
+than fitted away."}], "TechNoteText"],
+  Cell[TextData[{"Run both comparisons on the same exported QED helicity \
+family. Replace the installation paths with your selected locations."}],
+   "ExampleText"], Cell[BoxData[RowBox[{"calcHEPDirectory", " ", "=", " ",
       "\"/path/to/CalcHEP\"", ";", "\n", "exportReport", " ", "=", " ",
       "WriteSPINASProcess", "[", "exportDirectory", ",", " ", "{", "\"e\"",
       ",", " ", "\"E\"", "}", " ", "->", " ", "{", "\"A\"", ",", " ",
@@ -238,8 +258,8 @@ selected locations.", "ExampleText"],
       "True", "]", ";"}]], "Input"], Cell["This example writes files, starts \
 a longer calculation, or requires an optional external tool. Evaluate it when \
 you want to perform that operation.", "ExampleText"],
-  Cell["Inspect a failed combined comparison without losing the other \
-reference report.", "ExampleText"],
+  Cell[TextData[{"Inspect a failed combined comparison without losing the \
+other reference report."}], "ExampleText"],
   Cell[BoxData[RowBox[{"referenceReports", " ", "=", " ", "Replace", "[",
       "exportReport", ",", " ", "Failure", "[", "\"SPINASValidation\"", ",",
       " ", "data", "_", "Association", "]", " ", ":>", " ", "data", "[",
@@ -278,7 +298,8 @@ to perform that operation.", "ExampleText"], Cell["Related Functions",
      "uri" -> "HEPCAT/tutorial/ExportingToSPINAS",
      "title" -> "Exporting a Numerical SPINAS Process", "type" -> "Tutorial",
      "label" -> "HEPCAT Tutorial", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" -> "Group helicities, declare physical crossing and build \
-readable numerical code.", "keywords" -> {"HEPCAT", "ExportingToSPINAS",
-       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
+     "summary" -> "Export a checked amplitude family, build its numerical \
+code, and compare or integrate it with independent external tools.",
+     "keywords" -> {"HEPCAT", "ExportingToSPINAS", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

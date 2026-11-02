@@ -7,111 +7,122 @@ Notebook[
      GridBoxAlignment -> {"Columns" -> {Left, Right}},
      GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
    "AnchorBarGrid"], Cell["Spinors, Momenta and Spin Sums", "GuideTitle"],
-  Cell["Represent and manipulate angle brackets, square brackets, momentum \
-chains and spin indices.", "GuideAbstract"], Cell["SpinorChain displays \
-HEPCAT expressions in angle and square bracket notation. Spinor endpoints \
-distinguish massless helicity spinors, massive spin spinors and auxiliary \
-reference spinors. Mom and Multiparticle describe momentum insertions without \
-turning them into external particles.", "GuideAbstract"],
-  Cell["External labels, little-group indices and reference labels have \
-separate meanings. ChooseSpinIndices selects explicit spin indices; \
-ReverseMomentum crosses an external momentum; PermuteParticles relabels \
-particles consistently.", "GuideAbstract"], Cell["Build Expressions",
-   "GuideFunctionsSubsection"],
+  Cell[TextData[{"Represent and manipulate angle brackets, square brackets, \
+momentum chains and spin indices."}], "GuideAbstract"],
+  Cell[TextData[
+    {"A bracket such as an angle or square product is represented by ",
+     ButtonBox["SpinorChain", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SpinorChain"], ", with ",
+     ButtonBox["Spinor", BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/Spinor"], " objects at its ends. Put ",
+     ButtonBox["Mom", BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/Mom"], " objects between the endpoints for momentum \
+insertions. The notebook display gives the familiar bracket notation while \
+retaining an expression that the algebra functions can manipulate."}],
+   "GuideAbstract"], Cell[TextData[{"Particle labels and spin indices play \
+different roles. A label identifies which external momentum belongs to a \
+factor; an explicit massive-spin index selects a component. ",
+     ButtonBox["ChooseSpinIndices", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ChooseSpinIndices"],
+     " makes spin choices, whereas ", ButtonBox["PermuteParticles",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/PermuteParticles"],
+     " relabels the particles throughout the expression. ",
+     ButtonBox["ReverseMomentum", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReverseMomentum"],
+     " implements crossing, including the associated spinor signs."}],
+   "GuideAbstract"], Cell[TextData[{"Start with ",
+     ButtonBox["ReduceSpinContractions", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReduceSpinContractions"],
+     " when contracted spin indices remain, and ",
+     ButtonBox["ReduceSpinorProducts", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReduceSpinorProducts"], " for ordinary \
+chain identities. Neither is a substitute for supplying the complete process \
+and diagram-local assumptions to ", ButtonBox["PrepareAmplitudes",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/PrepareAmplitudes"], ". The ",
+     ButtonBox["identity tutorial", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/tutorial/ApplyingSpinorIdentities"],
+     " shows how to inspect individual exact moves."}], "GuideAbstract"],
+  Cell["Build Expressions", "GuideFunctionsSubsection"],
   Cell[TextData[{ButtonBox["Spinor", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/Spinor"], ": ", "Represents a massless \
-helicity spinor, a massive spin spinor, or an auxiliary reference spinor."}],
-   "GuideText"], Cell[TextData[{ButtonBox["SpinorChain", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/SpinorChain"], ": ", "Represents an \
-angle or square spinor bracket, optionally with an ordered sequence of \
-momentum insertions."}], "GuideText"],
-  Cell[TextData[{ButtonBox["SpinorTrace", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/Spinor"], ": ", "Represents an angle \
+or square spinor belonging to an external particle or an auxiliary \
+reference."}], "GuideText"],
+  Cell[TextData[{ButtonBox["SpinorChain", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SpinorChain"], ": ", "Represents a \
+spinor bracket or an ordered spinor chain with momentum insertions."}],
+   "GuideText"], Cell[TextData[{ButtonBox["SpinorTrace", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/SpinorTrace"], ": ",
-     "Represents the ordered chiral trace of momentum matrices."}],
+     "Represents an ordered chiral trace of momentum matrices."}],
    "GuideText"], Cell[TextData[{ButtonBox["Mom", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/Mom"], ": ",
-     "Represents a momentum insertion in HEPCAT spinor algebra."}],
+     "Represents a momentum in a spinor chain or a propagator."}],
    "GuideText"], Cell[TextData[{ButtonBox["Mass", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/Mass"], ": ",
-     "Represents the symbolic mass assigned to a particle or a channel."}],
+      ButtonData -> "paclet:HEPCAT/ref/Mass"], ": ", "Represents an \
+external-particle mass or the assigned mass of an internal channel."}],
    "GuideText"], Cell[TextData[{ButtonBox["Multiparticle",
       BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/Multiparticle"],
-     ": ", "Labels a sum of external particle momenta."}], "GuideText"],
-  Cell[TextData[{ButtonBox["MultiparticleDiff", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/MultiparticleDiff"], ": ", "Represents \
-a legacy composite label for a difference of particle momenta."}],
+     ": ", "Labels the sum of a specified set of external momenta."}],
    "GuideText"], Cell[TextData[{ButtonBox["PropDen", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/PropDen"], ": ",
-     "Represents an off-shell physical propagator denominator."}],
+      ButtonData -> "paclet:HEPCAT/ref/PropDen"], ": ", "Represents a \
+physical propagator denominator without putting its momentum on shell."}],
    "GuideText"], Cell[TextData[{ButtonBox["MomProd", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/MomProd"], ": ",
-     "Represents a Lorentz scalar product of particle or composite momenta."}]\
-, "GuideText"], Cell["Spin Indices and Squaring",
+      ButtonData -> "paclet:HEPCAT/ref/MomProd"], ": ", "Represents the \
+Lorentz scalar product of two external or composite momenta."}],
+   "GuideText"], Cell["Spin Indices and Squaring",
    "GuideFunctionsSubsection"],
   Cell[TextData[{ButtonBox["ChooseSpinIndex", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ChooseSpinIndex"], ": ",
-     "Selects a physical spin projection for one external massive particle."}]\
+     "Selects one physical spin projection of a massive external particle."}]\
 , "GuideText"], Cell[TextData[{ButtonBox["ChooseSpinIndices",
       BaseStyle -> "Link", ButtonData ->
-       "paclet:HEPCAT/ref/ChooseSpinIndices"], ": ",
-     "Selects spin projections in external-particle order."}], "GuideText"],
+       "paclet:HEPCAT/ref/ChooseSpinIndices"], ": ", "Selects physical spin \
+projections for successive massive external particles."}], "GuideText"],
   Cell[TextData[{ButtonBox["MakeIndicesExplicit", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/MakeIndicesExplicit"], ": ", "Replaces \
-implicit massive spin indices with specified explicit upper indices."}],
-   "GuideText"], Cell[TextData[{ButtonBox["MakeIndicesImplicit",
-      BaseStyle -> "Link", ButtonData ->
-       "paclet:HEPCAT/ref/MakeIndicesImplicit"], ": ",
-     "Removes supported explicit upper massive spin indices from chains."}],
+      ButtonData -> "paclet:HEPCAT/ref/MakeIndicesExplicit"], ": ", "Inserts \
+specified upper little-group indices into the implicit massive spinors of an \
+expression."}], "GuideText"],
+  Cell[TextData[{ButtonBox["MakeIndicesImplicit", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/MakeIndicesImplicit"], ": ", "Removes \
+the supported explicit upper massive-spin indices from spinor chains."}],
    "GuideText"], Cell[TextData[{ButtonBox["SymmetrizeSpin",
       BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/SymmetrizeSpin"],
-     ": ", "Inserts and symmetrizes the little-group indices of one massive \
-particle."}], "GuideText"],
+     ": ", "Assigns and symmetrizes the little-group indices of one massive \
+external particle."}], "GuideText"],
   Cell[TextData[{ButtonBox["SymmetrizeSpins", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/SymmetrizeSpins"], ": ", "Symmetrizes \
-massive little-group indices using a list in external-particle order."}],
+massive little-group indices for a list of external particles."}],
    "GuideText"], Cell[TextData[{ButtonBox["ReduceSpinContractions",
       BaseStyle -> "Link", ButtonData ->
-       "paclet:HEPCAT/ref/ReduceSpinContractions"], ": ", "Sews contracted \
-massive or massless spinor indices into shorter momentum chains."}],
-   "GuideText"], Cell[TextData[{ButtonBox["SquareAmplitude",
+       "paclet:HEPCAT/ref/ReduceSpinContractions"], ": ", "Contracts repeated \
+spin indices and joins the associated spinor factors into momentum chains."}]\
+, "GuideText"], Cell[TextData[{ButtonBox["SquareAmplitude",
       BaseStyle -> "Link", ButtonData ->
-       "paclet:HEPCAT/ref/SquareAmplitude"], ": ", "Forms the amplitude times \
-its Hermitian conjugate with explicit massive indices."}], "GuideText"],
+       "paclet:HEPCAT/ref/SquareAmplitude"], ": ", "Constructs an amplitude \
+times its Hermitian conjugate, retaining the massive-spin contractions to be \
+reduced."}], "GuideText"],
   Cell[TextData[{ButtonBox["ExpandSummation", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/ExpandSummation"], ": ", "Expands \
-supported contracted massive spin indices into explicit plus/minus half \
-components."}], "GuideText"], Cell["Crossing, Relabeling and Kinematics",
+      ButtonData -> "paclet:HEPCAT/ref/ExpandSummation"], ": ", "Writes \
+supported contracted massive-spin indices as explicit two-component sums."}],
+   "GuideText"], Cell["Crossing, Relabeling and Kinematics",
    "GuideFunctionsSubsection"],
   Cell[TextData[{ButtonBox["ReverseMomentum", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ReverseMomentum"], ": ", "Crosses \
-selected external legs in complete spinor amplitude expressions."}],
-   "GuideText"], Cell[TextData[{ButtonBox["PermuteParticles",
-      BaseStyle -> "Link", ButtonData ->
-       "paclet:HEPCAT/ref/PermuteParticles"], ": ", "Cyclically relabels the \
-specified external particles in typed amplitude expressions."}],
-   "GuideText"], Cell[TextData[{ButtonBox["ReverseSequence",
-      BaseStyle -> "Link", ButtonData ->
-       "paclet:HEPCAT/ref/ReverseSequence"], ": ",
-     "Reverses a sequence of arguments for use inside another expression."}],
-   "GuideText"], Cell[TextData[{ButtonBox["ExtractEnergy",
-      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/ExtractEnergy"],
-     ": ", "Evaluates supported spinor chains as explicit energy-angle matrix \
+selected external momenta, including their spinor signs, in a complete \
+amplitude expression."}], "GuideText"],
+  Cell[TextData[{ButtonBox["PermuteParticles", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PermuteParticles"], ": ", "Cyclically \
+relabels selected external particles in typed spinor and momentum \
 expressions."}], "GuideText"],
-  Cell[TextData[{ButtonBox["ExtractEnergy1", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/ExtractEnergy1"], ": ", "Substitutes \
-one particle's momentum matrices and explicit four-vector components."}],
-   "GuideText"], Cell[TextData[{ButtonBox["ExtractEnergy2",
-      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/ExtractEnergy2"],
-     ": ", "Substitutes explicit two-component spinor rows and columns for \
-one particle."}], "GuideText"],
-  Cell[TextData[{ButtonBox["MomProdExplicit", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/MomProdExplicit"], ": ", "Stores the \
-intermediate explicit four-vector scalar product used by ExtractEnergy."}],
-   "GuideText"], Cell[TextData[{ButtonBox["SpinToHelicitySpinors",
-      BaseStyle -> "Link", ButtonData ->
-       "paclet:HEPCAT/ref/SpinToHelicitySpinors"], ": ", "Applies legacy \
-spin-to-helicity expansions to selected massive particle spinors."}],
-   "GuideText"], Cell["Reference Factors and Deformations",
+  Cell[TextData[{ButtonBox["ExtractEnergy", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ExtractEnergy"], ": ", "Evaluates \
+supported spinor expressions in an explicit energy, momentum-angle and spin \
+basis."}], "GuideText"],
+  Cell[TextData[{ButtonBox["SpinToHelicitySpinors", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SpinToHelicitySpinors"], ": ", "Applie\
+s legacy spin-to-helicity expansions to selected massive particle spinors."}]\
+, "GuideText"], Cell["Reference Factors and Deformations",
    "GuideFunctionsSubsection"],
   Cell[TextData[{ButtonBox["xFactor", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/xFactor"], ": ",
@@ -125,10 +136,7 @@ spin-to-helicity expansions to selected massive particle spinors."}],
    "GuideText"], Cell[TextData[{ButtonBox["MomHat", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/MomHat"], ": ",
      "Represents a complex-deformed momentum insertion."}], "GuideText"],
-  Cell[TextData[{ButtonBox["MomQ", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/MomQ"], ": ",
-     "Represents an auxiliary q-momentum label in symbolic output."}],
-   "GuideText"], Cell[TextData[{ButtonBox["MomProdHat1", BaseStyle -> "Link",
+  Cell[TextData[{ButtonBox["MomProdHat1", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/MomProdHat1"], ": ",
      "Represents a scalar product involving complex-deformed momenta."}],
    "GuideText"], Cell[TextData[{ButtonBox["MomProdHat2", BaseStyle -> "Link",
@@ -139,12 +147,9 @@ spin-to-helicity expansions to selected massive particle spinors."}],
      ": ",
      "Represents a scalar product involving complex-deformed momenta."}],
    "GuideText"], Cell[TextData[{ButtonBox["SpinorEps", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/SpinorEps"], ": ",
-     "Represents an explicit little-group epsilon tensor."}], "GuideText"],
-  Cell[TextData[{ButtonBox["SpinorZ", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/SpinorZ"], ": ",
-     "Represents an indexed auxiliary z object in legacy complex shifts."}],
-   "GuideText"], Cell[TextData[{ButtonBox["ComplexifyMomenta",
+      ButtonData -> "paclet:HEPCAT/ref/SpinorEps"], ": ", "Represents the \
+antisymmetric tensor used to raise and lower massive little-group indices."}]\
+, "GuideText"], Cell[TextData[{ButtonBox["ComplexifyMomenta",
       BaseStyle -> "Link", ButtonData ->
        "paclet:HEPCAT/ref/ComplexifyMomenta"], ": ", "Marks supported momenta \
 and spinors for a legacy complex deformation."}], "GuideText"],
@@ -166,22 +171,10 @@ legs."}], "GuideText"],
       BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/UnHatSpinors"],
      ": ",
      "Removes SpinorHat markers while leaving shifted momenta unchanged."}],
-   "GuideText"], Cell[TextData[{ButtonBox["zPlus", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/zPlus"], ": ",
-     "Labels the plus root of a complex-shift pole equation."}],
-   "GuideText"], Cell[TextData[{ButtonBox["zMinus", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/zMinus"], ": ",
-     "Labels the minus root of a complex-shift pole equation."}],
    "GuideText"], Cell["Other Symbolic Heads", "GuideFunctionsSubsection"],
-  Cell[TextData[{ButtonBox["Particle", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/Particle"], ": ",
-     "Wraps a particle label for older display and export helpers."}],
-   "GuideText"], Cell[TextData[{ButtonBox["Coupling", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/Coupling"], ": ", "Represents a \
-symbolic indexed coupling in legacy amplitude expressions."}], "GuideText"],
   Cell[TextData[{ButtonBox["Mandelstahm", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/Mandelstahm"], ": ",
-     "Represents the scalar invariant (p_i+p_j)^2."}], "GuideText"],
+     "Represents the two-particle invariant (p_i+p_j)^2."}], "GuideText"],
   Cell[TextData[{ButtonBox["MandelstahmHat", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/MandelstahmHat"], ": ",
      "Represents the complex-deformed version of a two-particle invariant."}]\
@@ -197,35 +190,10 @@ external particle in explicit spinor formulas."}], "GuideText"],
    "GuideText"], Cell[TextData[{ButtonBox["Phi", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/Phi"], ": ",
      "Labels the azimuthal angle used for an explicit momentum or spinor."}],
-   "GuideText"], Cell[TextData[{ButtonBox["rr", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/rr"], ": ",
-     "Represents a legacy indexed r label used in formatted expressions."}],
-   "GuideText"], Cell[TextData[{ButtonBox["sigma", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/sigma"], ": ",
-     "Represents a symbolic Pauli-matrix label for legacy display."}],
-   "GuideText"], Cell[TextData[{ButtonBox["delta", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/delta"], ": ",
-     "Is a legacy symbolic delta display marker."}], "GuideText"],
-  Cell[TextData[{ButtonBox["ConstructiveAmplitude", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/ConstructiveAmplitude"], ": ",
-     "Stores a legacy amplitude as a coupling, numerator and denominator."}],
-   "GuideText"], Cell[TextData[{ButtonBox["colorT", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/colorT"], ": ",
-     "Represents a fundamental SU(3) generator in the legacy color reducer."}]\
-, "GuideText"], Cell[TextData[{ButtonBox["colorf", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/colorf"], ": ", "Represents a \
-structure-constant object in the legacy color trace convention."}],
-   "GuideText"], Cell[TextData[{ButtonBox["colorTrace", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/colorTrace"], ": ",
-     "Represents a trace of legacy colorT generators."}], "GuideText"],
-  Cell["More Functions and Symbols", "GuideFunctionsSubsection"],
-  Cell[TextData[{ButtonBox["SpinorChainReduced", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/SpinorChainReduced"], ": ",
-     "Is the rule-bearing reduction head used internally for SpinorChain."}],
-   "GuideText"], Cell[TextData[{ButtonBox["SpinorTraceReduced",
+   "GuideText"], Cell[TextData[{ButtonBox["ConstructiveAmplitude",
       BaseStyle -> "Link", ButtonData ->
-       "paclet:HEPCAT/ref/SpinorTraceReduced"], ": ",
-     "Is the rule-bearing reduction head used internally for SpinorTrace."}],
+       "paclet:HEPCAT/ref/ConstructiveAmplitude"], ": ", "Stores an earlier \
+amplitude representation as coupling, numerator and denominator."}],
    "GuideText"], Cell["Tutorials", "GuideTutorialsSection"],
   Cell[TextData[{ButtonBox["Applying Spinor Identities in a Derivation",
       BaseStyle -> "Link", ButtonData ->

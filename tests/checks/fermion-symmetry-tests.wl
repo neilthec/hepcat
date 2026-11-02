@@ -226,7 +226,7 @@ fsVerify[particles_List,expectedCount_Integer] := Module[
       fsZero[amp+fsSwap[amp,{2,3}],Length[particles]]];
   check["signed averaging preserves the known QED normalization "<>ToString[particles,InputForm],
     fsZero[projected-amp,Length[particles]]];
-  feynman=PrepareAmplitudes[diagramAmplitudes[CreateDiagrams[particles,fsFeynmanModel]],
+  feynman=PrepareAmplitudes[DiagramAmplitudes[CreateDiagrams[particles,fsFeynmanModel]],
     fsFeynmanModel,"PolePreference"->"IndependentXi","MaxSteps"->0,
     "TimeConstraint"->60,"Parallelization"->False,"ProgressReporting"->False];
   before=CheckAmplitudes[amp,channels,fsRealModel,"FeynmanAmplitudes"->feynman,

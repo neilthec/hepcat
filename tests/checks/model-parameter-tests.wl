@@ -81,7 +81,7 @@ check["resolving model defaults and overrides never assigns global parameter val
     OwnValues[#] === {} &] && mpModel === mpSavedModel];
 
 (* The same resolved rules feed every category of the public checker. *)
-mpScalarPairs = diagramAmplitudes[CreateDiagrams[ConstantArray["s", 4], mpModel]];
+mpScalarPairs = DiagramAmplitudes[CreateDiagrams[ConstantArray["s", 4], mpModel]];
 mpScalarAmplitude = Total[(ReduceSpinContractions[Last[#]] /. First[#]) & /@ mpScalarPairs];
 mpScalarChannels = FactorizationAmplitudeChannels[ConstantArray["s", 4], mpModel];
 mpSavedAmplitude = mpScalarAmplitude; mpSavedChannels = mpScalarChannels;

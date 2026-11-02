@@ -476,7 +476,7 @@ simplificationElectronWWZRoute[] := Module[
   Message[simplificationRoutes::build]; Return[$Failed]];
  {<|"Name" -> "e, E, W-, W+ / Z exchange", "Masses" -> masses,
    "States" -> states, "Identities" -> identities,
-   "Sources" -> {"SM-4-point-test.nb / ampffWWZTested; diagramAmplitudes plus ReduceSpinContractions"},
+   "Sources" -> {"SM-4-point-test.nb / ampffWWZTested; DiagramAmplitudes plus ReduceSpinContractions"},
    "OnShellChannels" -> Automatic, "MomentumConservation" -> True|>}
 ];
 
@@ -677,7 +677,7 @@ simplificationZhWWZRoute[] := Module[
  {<|"Name" -> "Z, h, W-, W+ / Z exchange", "Masses" -> masses,
    "States" -> states, "Identities" -> Lookup[edits, "Name"],
    "Sources" -> {"SM-4-point-test.nb / ampZhWWSTested; saved PASS (opposite overall sign)",
-    "diagramAmplitudes plus ReduceSpinContractions"},
+    "DiagramAmplitudes plus ReduceSpinContractions"},
    "TemplateSign" -> -1, "OnShellChannels" -> Automatic, "MomentumConservation" -> True|>}
 ];
 
@@ -963,14 +963,14 @@ simplificationZhWWWRoutes[] := Module[
  route = <|"Name" -> "Z, h, W-, W+ / T-channel W exchange", "Masses" -> masses,
   "States" -> states, "Identities" -> Lookup[edits, "Name"],
   "Sources" -> {"SM-4-point-test.nb / zhWWFinalize[ampZhWWTTested[], T]; saved PASS (opposite overall sign)",
-   "diagramAmplitudes plus ReduceSpinContractions"},
+   "DiagramAmplitudes plus ReduceSpinContractions"},
   "TemplateSign" -> -1, "OnShellChannels" -> Automatic, "MomentumConservation" -> True|>;
  permutation = AssociationThread[Range[4], {1, 2, 4, 3}];
  {route, Join[route, <|"Name" -> "Z, h, W-, W+ / U-channel W exchange",
    "Masses" -> Join[Take[masses, 4], ConstructiveDiagrams`Private`relabelLegs[Drop[masses, 4], permutation]],
    "States" -> (-ConstructiveDiagrams`Private`canonicalChains[ConstructiveDiagrams`Private`relabelLegs[#, permutation]] & /@ states),
    "Sources" -> {"SM-4-point-test.nb / zhWWFinalize[ampZhWWUTested[], U]; saved PASS (opposite overall sign)",
-    "diagramAmplitudes plus ReduceSpinContractions; crossed T-channel legal identities"}|>]}
+    "DiagramAmplitudes plus ReduceSpinContractions; crossed T-channel legal identities"}|>]}
 ];
 
 (* ::Subsection::Closed:: *)

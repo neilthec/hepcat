@@ -1,7 +1,14 @@
 (* Native Help registration, direct symbol help, local search and safe loading. *)
 drRoot = FileNameJoin[FileNameSplit[DirectoryName[DirectoryName[DirectoryName[$InputFileName]]]]];
-Global`$HEPCATpath = FileNameJoin[{drRoot, "source"}];
-Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
+drSource = FileNameJoin[{drRoot, "source"}];
+drLoader = FileNameJoin[{drSource, "HEPCAT.wl"}];
+(* Check the simple documented Get in a fresh kernel, without a global path.
+   An explicitly invalid path must still fail before package initialization. *)
+drMissingSource = FileNameJoin[{$TemporaryDirectory, "hepcat-missing-source-" <> CreateUUID[]}];
+drBadFresh = Block[{Global`$HEPCATpath = drMissingSource}, Quiet[Get[drLoader]]];
+drFreshInitialized = MemberQ[$Packages, "ConstructiveDiagrams`"];
+Clear[Global`$HEPCATpath];
+Block[{$MessageList = {}}, Get[drLoader]; drLoadMessages = $MessageList];
 drChecks = 0; drFailures = {};
 SetAttributes[drCheck, HoldRest];
 drCheck[name_, assertion_] := Module[{result},
@@ -11,6 +18,46 @@ drCheck[name_, assertion_] := Module[{result},
 ];
 
 drDocumentation = FileNameJoin[{drRoot, "Documentation", "English"}];
+drCheck["an explicit bad source path fails before fresh initialization",
+  drBadFresh === $Failed && !drFreshInitialized];
+drCheck["direct Get infers its source directory with no global setup",
+  FileNameSplit[Global`$HEPCATpath] === FileNameSplit[drSource] && drLoadMessages === {} &&
+    MemberQ[$ContextPath, "ConstructiveDiagrams`"] && $Context === "Global`"];
+drCheck["the CamelCase numerator function changes only existing numerators",
+  ApplyToNumerator[drNumerator/drDenominator + (drNumerator + 1)/drOtherDenominator,
+    drNumerator -> 2] === 2/drDenominator + 3/drOtherDenominator];
+drQED = ReadModel[FileNameJoin[{drRoot, "models"}], 2];
+drDiagramPairs = DiagramAmplitudes[CreateDiagrams[{"e", "E", "A.+", "A.-"}, drQED]];
+drCheck["the CamelCase diagram function computes a real small QED amplitude",
+  ListQ[drDiagramPairs] && Length[drDiagramPairs] === 2 &&
+    AllTrue[drDiagramPairs, MatchQ[#, {_List, _}] && Last[#] =!= 0 &] &&
+    FreeQ[drDiagramPairs, _DiagramAmplitudes | _Failure]];
+drDefinitionCount[name_String] := ToExpression["ConstructiveDiagrams`" <> name,
+  InputForm, Function[symbol, Length[DownValues[symbol]] + Length[SubValues[symbol]], HoldAllComplete]];
+drCheck["retired mixed-case spellings have no callable definitions",
+  drDefinitionCount["diagramAmplitudes"] === 0 && drDefinitionCount["applyToNumerator"] === 0];
+
+(* A missing, incomplete or non-string override must not clear working APIs. *)
+drDefinitionsBeforeBadPath = DownValues[ApplyToNumerator];
+drContextBeforeBadPath = {$Context, $ContextPath};
+drBadReload = Block[{Global`$HEPCATpath = drMissingSource}, Quiet[Get[drLoader]]];
+drCheck["a missing explicit source override preserves a loaded package",
+  drBadReload === $Failed &&
+    DownValues[ApplyToNumerator] === drDefinitionsBeforeBadPath &&
+    {$Context, $ContextPath} === drContextBeforeBadPath];
+drPartialSource = CreateDirectory[];
+CopyFile[FileNameJoin[{drSource, "HEPCAT-Base.wl"}], FileNameJoin[{drPartialSource, "HEPCAT-Base.wl"}]];
+drPartialReload = Block[{Global`$HEPCATpath = drPartialSource}, Quiet[Get[drLoader]]];
+drCheck["an incomplete override is rejected before the first source is loaded",
+  drPartialReload === $Failed &&
+    DownValues[ApplyToNumerator] === drDefinitionsBeforeBadPath &&
+    {$Context, $ContextPath} === drContextBeforeBadPath];
+DeleteDirectory[drPartialSource, DeleteContents -> True];
+drBadPathType = Block[{Global`$HEPCATpath = 17}, Quiet[Get[drLoader]]];
+drCheck["a non-string source override fails without clearing definitions",
+  drBadPathType === $Failed &&
+    DownValues[ApplyToNumerator] === drDefinitionsBeforeBadPath];
+
 drCheck["legacy symbolic heads receive useful question-mark help",
   StringQ[Mom::usage] && StringContainsQ[Mom::usage, "Mom["] &&
     StringQ[Spinor::usage] && StringContainsQ[Spinor::usage, "Spinor["]];
@@ -36,7 +83,7 @@ Do[
       Documentation`CreateMessageLink["ConstructiveDiagrams`", symbol,
         "usage", "English", False] === "paclet:HEPCAT/ref/" <> symbol]
   ],
-  {symbolName, {"ReadModel", "SpinorChain", "PrepareAmplitudes", "ConstructAmplitude", "WriteSPINASProcess", "ValidateMadGraph"}}
+  {symbolName, {"ReadModel", "SpinorChain", "DiagramAmplitudes", "ApplyToNumerator", "PrepareAmplitudes", "ConstructAmplitude", "WriteSPINASProcess", "ValidateMadGraph"}}
 ];
 
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
@@ -112,6 +159,34 @@ drCheckRenderedSearch["Getting Started", "HEPCAT/tutorial/GettingStarted"];
 
 drAllSearchResults = DocumentationSearch`SearchDocumentation[drIndexDirectories, {}, "HEPCAT", "Limit" -> 1000];
 drAllSearchMatches = "Matches" /. drAllSearchResults;
+(* Reviewed internals and retired names remain in the source inventory, but
+   must not leak into Help pages, native search or the question-mark registry. *)
+drCatalogDirectory = FileNameJoin[{drRoot, "Documentation", "Source"}];
+drPublicQ[entry_Association] := Lookup[entry, "visibility", "public"] === "public";
+drAllCatalog = Join @@ (Import[FileNameJoin[{drCatalogDirectory, #}], "RawJSON"] & /@
+  {"base.json", "model.json", "feynman-export.json"});
+drPublicNames = Lookup[Select[drAllCatalog, drPublicQ], "name", {}];
+drHiddenNames = DeleteDuplicates[Join[
+  Lookup[Select[drAllCatalog, !drPublicQ[#] &], "name", {}],
+  Flatten[Lookup[drAllCatalog, "retiredNames", {}]]]];
+drAllGuides = Import[FileNameJoin[{drCatalogDirectory, "guides.json"}], "RawJSON"];
+drHiddenGuides = Lookup[Select[drAllGuides, !drPublicQ[#] &], "name", {}];
+drHiddenURIs = Join[("HEPCAT/ref/" <> # &) /@ drHiddenNames,
+  ("HEPCAT/guide/" <> # &) /@ drHiddenGuides];
+drIndexedURIs = If[ListQ[drAllSearchMatches], Cases[drAllSearchMatches, {_, _, _, uri_String, _, _} :> uri], {}];
+drCheck["internal and retired pages are absent from native search",
+  Intersection[drHiddenURIs, drIndexedURIs] === {}];
+drCheck["every public symbol is present in native search",
+  Complement[("HEPCAT/ref/" <> # &) /@ drPublicNames, drIndexedURIs] === {}];
+drUsageRegistry = Get[FileNameJoin[{drDocumentation, "SymbolUsage.wl"}]];
+drCheck["only public catalog names are registered for usage help",
+  AssociationQ[drUsageRegistry] &&
+    Sort[Keys[drUsageRegistry]] === Sort[("ConstructiveDiagrams`" <> # &) /@ drPublicNames] &&
+    Intersection[Keys[drUsageRegistry], ("ConstructiveDiagrams`" <> # &) /@ drHiddenNames] === {}];
+drCheck["no internal or retired reference notebook remains on disk",
+  Intersection[drHiddenNames, FileBaseName /@ FileNames["*.nb", FileNameJoin[{drDocumentation, "ReferencePages", "Symbols"}]]] === {} &&
+    AllTrue[drHiddenGuides, !FileExistsQ[FileNameJoin[{drDocumentation, "Guides", # <> ".nb"}]] &]];
+
 drCheck["every Help page is indexed with complete display metadata",
   ListQ[drAllSearchMatches] &&
     Length[drAllSearchMatches] === Length[FileNames["*.nb", drDocumentation, Infinity]] &&

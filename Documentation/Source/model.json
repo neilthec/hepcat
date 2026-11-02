@@ -1,7 +1,7 @@
 [
   {
     "name": "ReadModel",
-    "summary": "Read a constructive amplitude model or an imported CalcHEP Feynman model.",
+    "summary": "Load the particle content, amplitudes and parameters of a model for use throughout HEPCAT.",
     "syntaxes": [
       {
         "input": "ReadModel[directory, number]",
@@ -9,11 +9,9 @@
       }
     ],
     "details": [
-      "A constructive model is the four-element list {particles, amplitudes, variables, functions}. Its data come from prtclsN.mdl, ampsN.mdl, varsN.mdl and funcN.mdl. Keep this list and pass it to other HEPCAT functions.",
-      "When lgrngN.mdl is present and ampsN.mdl is absent, the reader recognizes a CalcHEP model and returns FeynmanModel[particles, vertices, variables, functions]. Bare Feynman vertices are not complete lower-point amplitudes for constructive factorization.",
-      "Parameters are inert model-local ModelParameter objects. Reading two models does not assign global symbols such as Me or EE, and one model cannot silently change another model's values.",
-      "Use the QED model containing three-point vertices for diagrams. Use a model containing complete four-point amplitudes when factorizing a five-point process, and complete five-point amplitudes when factorizing a six-point process. An amplitude missing from the supplied factorization model is treated as zero.",
-      "The reader reports malformed, unavailable or unterminated model tables as failures rather than executing arbitrary expressions from model text."
+      "Start a calculation by reading a model once and giving the resulting value a name, for example `qedModel = ReadModel[modelDirectory, 2]`. Pass that value to [CreateDiagrams](paclet:HEPCAT/ref/CreateDiagrams), [ConstructAmplitude](paclet:HEPCAT/ref/ConstructAmplitude) and the other model-dependent functions. You can keep several models in the same Mathematica session.",
+      "The first argument is the directory containing the model tables; the second is the number in their filenames. A constructive model numbered `2` uses `prtcls2.mdl`, `amps2.mdl`, `vars2.mdl` and `func2.mdl`. The returned list is `{particles, amplitudes, variables, functions}`. Usually you can pass it on unchanged rather than unpacking its tables.",
+      "Particle names in a process are strings from that model, including their case and helicity suffixes. In the bundled QED model, `\"e\"` and `\"E\"` are the electron and its antiparticle, while `\"A.+\"` and `\"A.-\"` select photon helicities. HEPCAT numbers legs by their positions in the process list and takes all external momenta as ingoing."
     ],
     "examples": [
       {
@@ -35,11 +33,29 @@
       "FactorizationAmplitudeChannels",
       "FeynmanModel"
     ],
-    "guide": "ModelsAndParameters"
+    "guide": "ModelsAndParameters",
+    "detail_sections": [
+      {
+        "title": "Choosing the right amplitudes for a calculation",
+        "paragraphs": [
+          "The model used to draw diagrams supplies the allowed interactions. A separate model used for [FactorizationAmplitudeChannels](paclet:HEPCAT/ref/FactorizationAmplitudeChannels) must supply complete lower-point amplitudes. A five-point factorization channel can contain a complete four-point amplitude, so a list containing only three-point vertices is not sufficient for that purpose.",
+          "For the bundled QED examples, model `2` supplies the three-point vertices. Model `3` also contains known higher-point amplitudes and is used as factorization input for the larger examples. The required information is determined by the process, not by a special meaning attached to the numbers `2` and `3`.",
+          "An amplitude absent from the factorization model is treated as zero. Check that the model contains the lower-point results you intend to use; HEPCAT cannot distinguish an intentionally zero amplitude from one that has not yet been entered. [AppendModelAmplitudes](paclet:HEPCAT/ref/AppendModelAmplitudes) adds already established results to a constructive model."
+        ]
+      },
+      {
+        "title": "Parameters and Feynman models",
+        "paragraphs": [
+          "Masses and couplings remain symbolic [ModelParameter](paclet:HEPCAT/ref/ModelParameter) objects belonging to this model. Reading a model does not assign numerical values to global names such as `Me` or `EE`. Use [ModelParameterRules](paclet:HEPCAT/ref/ModelParameterRules) when you want numerical substitutions or local overrides.",
+          "A directory containing `lgrngN.mdl` but no `ampsN.mdl` is read as a CalcHEP Feynman model. The result has the head [FeynmanModel](paclet:HEPCAT/ref/FeynmanModel), allowing the same diagram-generation interface to choose Feynman rules. Its bare vertices are not a replacement for complete lower-point amplitudes in constructive factorization.",
+          "Missing files, malformed expressions and unterminated tables return `Failure`. Inspect that result before continuing; a failed read is not an empty or zero model."
+        ]
+      }
+    ]
   },
   {
     "name": "ReadVariables",
-    "summary": "Read a model variable table without assigning global parameter values.",
+    "summary": "Inspect the independent parameter table of a model file.",
     "syntaxes": [
       {
         "input": "ReadVariables[file]",
@@ -47,9 +63,10 @@
       }
     ],
     "details": [
-      "Each returned row contains {parameter, value, comment}, with parameter represented by ModelParameter[name, scope, \"Real\"]. The scope separates models that happen to use the same parameter name.",
-      "The table requires its final separator. Invalid arithmetic or malformed rows are rejected by the model expression parser.",
-      "ReadModel normally calls this reader for you. For numerical calculations, use ModelParameterRules on the complete model so dependent functions and overrides are resolved consistently."
+      "For ordinary calculations, use [ReadModel](paclet:HEPCAT/ref/ReadModel). `ReadVariables[file]` is useful when you are inspecting or building a model and need its independent parameters without loading the other tables. Give the complete filename, such as `vars2.mdl`.",
+      "The result is a list of `{parameter, value, comment}` rows. Each parameter is represented by a model-local [ModelParameter](paclet:HEPCAT/ref/ModelParameter), so reading the file does not set global Mathematica values. Use [ModelParameterName](paclet:HEPCAT/ref/ModelParameterName) to read its name as a string.",
+      "These rows are declarations, not a complete numerical substitution scheme. [ModelParameterRules](paclet:HEPCAT/ref/ModelParameterRules) works on the complete model and also resolves dependent definitions and overrides. Use it when evaluating an amplitude numerically.",
+      "The table must end with its normal separator. Malformed parameter names or expressions return `Failure`, rather than running code from the file."
     ],
     "examples": [
       {
@@ -69,11 +86,12 @@
       "ModelParameter",
       "ModelParameterRules"
     ],
-    "guide": "ModelsAndParameters"
+    "guide": "ModelsAndParameters",
+    "visibility": "internal"
   },
   {
     "name": "ReadFunctions",
-    "summary": "Read the dependent parameter expressions in a model function table.",
+    "summary": "Inspect a model file containing dependent parameter definitions.",
     "syntaxes": [
       {
         "input": "ReadFunctions[file]",
@@ -81,9 +99,9 @@
       }
     ],
     "details": [
-      "Rows retain a model-local parameter, its defining expression and any comment. Reading a dependent parameter is distinct from numerically resolving it.",
-      "Supported arithmetic is parsed as inert model data. An external function is retained as ModelFunction rather than called in the Wolfram session.",
-      "Use ModelParameterRules[model] to obtain the numerically resolved subset. A cyclic dependency or unsupported external function does not prevent unrelated resolvable parameters from being used."
+      "Use this reader when examining how a model defines derived quantities, such as a coupling calculated from other input parameters. The first argument is a complete `funcN.mdl` filename. [ReadModel](paclet:HEPCAT/ref/ReadModel) normally reads this table for you.",
+      "Each returned row retains the model-local parameter, its defining expression and its comment. Reading a definition does not assign it to a global symbol and does not numerically resolve all of its dependencies. To obtain usable numerical substitutions for the complete model, call [ModelParameterRules](paclet:HEPCAT/ref/ModelParameterRules).",
+      "A function supplied by an external model is stored as [ModelFunction](paclet:HEPCAT/ref/ModelFunction) data. HEPCAT does not run an unrelated Mathematica function merely because it has the same printed name. Unresolved definitions can therefore remain symbolic while other, supported definitions are still usable."
     ],
     "examples": [
       {
@@ -103,11 +121,12 @@
       "ModelFunction",
       "ModelParameterRules"
     ],
-    "guide": "ModelsAndParameters"
+    "guide": "ModelsAndParameters",
+    "visibility": "internal"
   },
   {
     "name": "ReadParticles",
-    "summary": "Read particle and antiparticle declarations from a model table.",
+    "summary": "Inspect the particles, antiparticles, spins and masses declared in a model file.",
     "syntaxes": [
       {
         "input": "ReadParticles[file]",
@@ -115,9 +134,9 @@
       }
     ],
     "details": [
-      "The columns retain the full name, particle name, antiparticle name, identifier, twice the spin, mass, width, color, auxiliary information and two display names. The list order and particle names are model data, not newly created Wolfram symbols.",
-      "Mass parameters are parsed into model-local ModelParameter references. ParticleMass searches both the particle and antiparticle columns.",
-      "Diagram generation and automatic identical-particle symmetry use particle identities and twice-spin declarations. Equal masses alone do not identify particles."
+      "Supply the complete `prtclsN.mdl` filename. The result is the particle table used by [ReadModel](paclet:HEPCAT/ref/ReadModel). You usually do not need this separate reader unless you are inspecting or constructing a model.",
+      "A row contains the full name, particle and antiparticle names, particle identifier, twice the spin, mass, width, color information, auxiliary information and two display names. Process lists use the particle-name strings, not the full descriptive names or newly created Mathematica symbols.",
+      "The mass column can contain a model-local [ModelParameter](paclet:HEPCAT/ref/ModelParameter). [ParticleMass](paclet:HEPCAT/ref/ParticleMass) retrieves it without requiring you to remember the column number. The twice-spin and particle identities also let HEPCAT distinguish boson and fermion exchange symmetry; equal numerical masses do not make two species identical."
     ],
     "examples": [
       {
@@ -137,11 +156,12 @@
       "CreateDiagrams",
       "ModelParameter"
     ],
-    "guide": "ModelsAndParameters"
+    "guide": "ModelsAndParameters",
+    "visibility": "internal"
   },
   {
     "name": "ParticleMass",
-    "summary": "Look up a particle or antiparticle mass in a particle table.",
+    "summary": "Find the mass declared for a particle or antiparticle.",
     "syntaxes": [
       {
         "input": "ParticleMass[name, particles]",
@@ -149,9 +169,9 @@
       }
     ],
     "details": [
-      "The second argument is the particle section of a model, normally model[[1]], rather than the entire four-element model.",
-      "The lookup recognizes either the particle name or its antiparticle name. It returns the declared symbolic mass, including a ModelParameter when that is what the model contains.",
-      "The empty padding name \"\" has mass 0. An unknown nonempty particle name returns -1. Check for this sentinel when accepting user particle names."
+      "The first argument is a model particle name such as `\"e\"`. The second is the particle table, normally `model[[1]]`, rather than the complete model. Both the particle name and its antiparticle name are recognized.",
+      "The answer is the mass as declared in the model. If it is a [ModelParameter](paclet:HEPCAT/ref/ModelParameter), it remains symbolic until you apply [ModelParameterRules](paclet:HEPCAT/ref/ModelParameterRules). This lets the same expression be used with more than one numerical parameter choice.",
+      "The empty name `\"\"`, used as padding in model tables, gives `0`. An unknown nonempty name gives `-1`. When accepting a process supplied by someone else, check for that value rather than interpreting it as a physical mass."
     ],
     "examples": [
       {
@@ -168,7 +188,6 @@
       }
     ],
     "related": [
-      "ReadParticles",
       "ReadModel",
       "ModelParameter"
     ],
@@ -176,7 +195,7 @@
   },
   {
     "name": "ReadAmplitudes",
-    "summary": "Read complete constructive amplitudes and their separate overall factors.",
+    "summary": "Inspect the complete constructive amplitudes stored in a model file.",
     "syntaxes": [
       {
         "input": "ReadAmplitudes[file, particles]",
@@ -184,10 +203,9 @@
       }
     ],
     "details": [
-      "An amplitude row contains the external particle names, optional empty padding columns, an overall factor and the expression divided by that factor. The last two entries are therefore multiplied to obtain the full stored amplitude.",
-      "The reader uses ConvertAmplitude to translate compact bracket notation into typed HEPCAT expressions. It does not automatically invent missing opposite-helicity amplitudes.",
-      "The factorization code treats an unlisted lower-point amplitude as zero. Populate the model with the complete lower-point results needed by the intended calculation.",
-      "ReadModel normally reads the matching particle and amplitude files together and should be preferred for routine use."
+      "For routine use, load the complete model with [ReadModel](paclet:HEPCAT/ref/ReadModel). This separate reader takes an `ampsN.mdl` filename and the matching particle table. It is useful when inspecting the amplitude part of a model or checking newly written rows.",
+      "Each row contains the external particle names, any empty padding columns, an overall factor and an amplitude expression divided by that factor. Multiply the last two entries to recover the full stored amplitude. The reader translates the model file's bracket notation into [SpinorChain](paclet:HEPCAT/ref/SpinorChain) and other typed HEPCAT expressions.",
+      "Reading does not complete a list of helicities, derive missing amplitudes or establish that the stored expressions are correct. Unlisted lower-point amplitudes are treated as zero by [FactorizationAmplitudeChannels](paclet:HEPCAT/ref/FactorizationAmplitudeChannels). Validate results before adding them with [AppendModelAmplitudes](paclet:HEPCAT/ref/AppendModelAmplitudes)."
     ],
     "examples": [
       {
@@ -203,11 +221,11 @@
     ],
     "related": [
       "ReadModel",
-      "ConvertAmplitude",
       "LookupAmplitude",
       "AppendModelAmplitudes"
     ],
-    "guide": "ModelsAndParameters"
+    "guide": "ModelsAndParameters",
+    "visibility": "internal"
   },
   {
     "name": "ConvertAmplitude",
@@ -249,7 +267,8 @@
       "PropDen",
       "ConvertAmplitudeOld"
     ],
-    "guide": "ModelsAndParameters"
+    "guide": "ModelsAndParameters",
+    "visibility": "internal"
   },
   {
     "name": "ConvertAmplitudeOld",
@@ -283,7 +302,8 @@
       "ReadAmplitudes",
       "ReadModel"
     ],
-    "guide": "ModelsAndParameters"
+    "guide": "ModelsAndParameters",
+    "visibility": "internal"
   },
   {
     "name": "AddOppositeHelicityAmplitudes",
@@ -317,11 +337,12 @@
       "ConvertAmplitude",
       "AppendModelAmplitudes"
     ],
-    "guide": "ModelsAndParameters"
+    "guide": "ModelsAndParameters",
+    "visibility": "internal"
   },
   {
     "name": "AppendModelAmplitudes",
-    "summary": "Append validated text representations of supplied amplitudes to a constructive model file.",
+    "summary": "Add established amplitude expressions to a constructive model for later factorization calculations.",
     "syntaxes": [
       {
         "input": "AppendModelAmplitudes[directory, number, entries]",
@@ -329,10 +350,11 @@
       }
     ],
     "details": [
-      "This function writes amplitudes already obtained by the user. It does not derive them or establish their physical correctness. Run CheckAmplitudes and independent checks before making an amplitude available as factorization input.",
-      "Particle and parameter declarations come from the target model. Every new row must round-trip through the model reader before the file is replaced atomically.",
-      "The returned association has keys \"File\", \"Added\" and \"Skipped\". Repeating an identical append is a no-op; a conflicting amplitude for an existing particle multiset rejects the batch.",
-      "Existing comments and rows are preserved. Reload ReadModel after writing. Use a temporary copy for experiments rather than changing the bundled model in a help example."
+      "Use this function after obtaining and checking a new amplitude. For example, once a five-point result has been established, storing it in a model makes it available when [FactorizationAmplitudeChannels](paclet:HEPCAT/ref/FactorizationAmplitudeChannels) builds six-point channels. The function writes the expressions you supply; it does not derive or validate their physics.",
+      "Give the target directory, model number and a list of entries. An entry `{particles, amplitude}` writes the complete expression. The longer form `{particles, factor, amplitudeOverFactor}` separates a common overall factor from the expression stored after it. The particle list uses the same all-ingoing order and names as the expression.",
+      "The target model supplies the particle declarations and parameter names. When taking a result from a different model, replace its model-local [ModelParameter](paclet:HEPCAT/ref/ModelParameter) objects with the corresponding parameters of the target model before writing. Matching printed names do not by themselves merge the two parameter scopes.",
+      "The result reports the destination file and the numbers of added and skipped entries. An identical existing entry is skipped. A conflicting expression for the same particle multiset rejects the batch instead of silently replacing the old result. Every proposed row must be readable again before the amplitude file is replaced.",
+      "Existing rows and comments are preserved. Reload with [ReadModel](paclet:HEPCAT/ref/ReadModel) to use the new data. First try a temporary copy of a model, as in the example, and use [CheckAmplitudes](paclet:HEPCAT/ref/CheckAmplitudes) and any independent comparisons appropriate to the process before promoting a result to factorization input."
     ],
     "examples": [
       {
@@ -357,7 +379,7 @@
   },
   {
     "name": "ModelParameter",
-    "summary": "Represent and retrieve a parameter belonging to one model.",
+    "summary": "Refer to a mass, coupling or other parameter belonging to a particular model.",
     "syntaxes": [
       {
         "input": "ModelParameter[model, name]",
@@ -369,10 +391,10 @@
       }
     ],
     "details": [
-      "Parameters display their model names, such as Me or EE, but are not global Wolfram symbols. Keep the typed parameter in expressions and obtain numerical replacements with ModelParameterRules.",
-      "The scope separates declarations belonging to different model data. A string lookup returns Failure when the name is absent or ambiguous; it does not create a new declaration.",
-      "The domain \"Real\" makes Conjugate[parameter] evaluate to parameter. Imported model declarations currently retain this real-parameter convention. Other domains do not receive that automatic conjugation rule.",
-      "Use ModelParameterName to inspect the displayed name. Directly constructing a reference is mainly useful for tools that preserve model data; routine physics code should retrieve the reference from its model."
+      "Use `ModelParameter[model, \"Me\"]` to retrieve the model's declaration of the parameter named `Me`. It prints with that familiar name, but it is an inert object carrying the identity of its model. This is why two loaded models can both contain `Me` without changing one another.",
+      "Keep these objects in symbolic amplitude expressions. Apply [ModelParameterRules](paclet:HEPCAT/ref/ModelParameterRules) to obtain numerical values, optionally with different values for selected inputs. Assigning a value to an unrelated global symbol called `Me` does not change a model-local parameter.",
+      "The three-argument form is the representation stored by the model reader: a name, a scope and a domain. Most users should retrieve parameters from [ReadModel](paclet:HEPCAT/ref/ReadModel) rather than manufacture that representation. The `\"Real\"` domain makes the parameter unchanged by complex conjugation.",
+      "A name lookup that is missing or ambiguous returns `Failure`. It does not create a new declaration. Use [ModelParameterName](paclet:HEPCAT/ref/ModelParameterName) when you need the string name, for example to match parameters while transferring an amplitude between models."
     ],
     "examples": [
       {
@@ -398,7 +420,7 @@
   },
   {
     "name": "ModelFunction",
-    "summary": "Retain an external model function call as inert data.",
+    "summary": "Keep a model-supplied external function as symbolic data.",
     "syntaxes": [
       {
         "input": "ModelFunction[name, scope, arguments]",
@@ -406,9 +428,9 @@
       }
     ],
     "details": [
-      "The model expression reader can encounter named functions that are not supported numerical arithmetic. Such a call is stored rather than executed in the caller's session.",
-      "StandardForm and TraditionalForm display a familiar function call while retaining the typed head internally. PlainText, TeX and SPINAS preserve its name and arguments for output.",
-      "An unsupported function prevents a dependent parameter from resolving numerically. It does not justify executing an arbitrary Wolfram function with the same displayed name."
+      "Some model tables refer to a function implemented by the model's numerical environment, for example a running-mass prescription. [ReadModel](paclet:HEPCAT/ref/ReadModel) keeps such a call as `ModelFunction[name, scope, arguments]` instead of evaluating an arbitrary Mathematica function with the same name.",
+      "The scope identifies the model and the final list contains the arguments. Usually this object appears as part of a dependent parameter definition rather than something you need to construct by hand.",
+      "A retained function call can be used in symbolic work, but its numerical value is not automatically available. [ModelParameterRules](paclet:HEPCAT/ref/ModelParameterRules) resolves supported arithmetic and dependencies; unsupported external calls remain unresolved. Supply appropriate declared inputs or a supported numerical prescription before relying on checks that require that quantity."
     ],
     "examples": [
       {
@@ -424,7 +446,6 @@
       }
     ],
     "related": [
-      "ReadFunctions",
       "ModelParameter",
       "ModelParameterRules",
       "PlainText"
@@ -433,7 +454,7 @@
   },
   {
     "name": "ModelParameterName",
-    "summary": "Get the string name of a model-local parameter.",
+    "summary": "Return the string name of a model-local parameter.",
     "syntaxes": [
       {
         "input": "ModelParameterName[parameter]",
@@ -441,8 +462,8 @@
       }
     ],
     "details": [
-      "The result is a string such as \"Me\", not a symbol with a global value. It is useful for labels, parameter overrides and exported code.",
-      "Names alone do not distinguish different model scopes. Retain the original ModelParameter when substituting in an amplitude."
+      "Use this when reporting parameters or matching their names between two models. For example, the parameter returned by `ModelParameter[model, \"Me\"]` has the name `\"Me\"` even though the complete object also carries a model scope and a domain.",
+      "The result is a string, not an assignable Mathematica symbol and not a numerical value. To obtain numerical replacement rules, use [ModelParameterRules](paclet:HEPCAT/ref/ModelParameterRules). To retrieve a parameter in another model, pass the returned name to [ModelParameter](paclet:HEPCAT/ref/ModelParameter)."
     ],
     "examples": [
       {
@@ -459,14 +480,13 @@
     ],
     "related": [
       "ModelParameter",
-      "ModelParameterRules",
-      "ReadVariables"
+      "ModelParameterRules"
     ],
     "guide": "ModelsAndParameters"
   },
   {
     "name": "ModelParameterRules",
-    "summary": "Resolve model parameters numerically without changing the symbolic amplitude or global session.",
+    "summary": "Obtain numerical parameter substitutions while keeping model definitions local.",
     "syntaxes": [
       {
         "input": "ModelParameterRules[model]",
@@ -478,10 +498,11 @@
       }
     ],
     "details": [
-      "The default overrides are Automatic. Model variables and resolvable function dependencies are evaluated locally and returned as ordinary replacement rules.",
-      "A cyclic dependency, unknown external function or unresolved parameter is omitted rather than guessed. Unrelated parameters that can be resolved remain in the returned rules.",
-      "String overrides are convenient for user code, for example {\"Me\" -> 1, \"EE\" -> 1}. Typed parameter keys are useful when working with several models at once.",
-      "These replacements are appropriate for checks, fitting and exported numerical defaults. They do not overwrite the symbolic model list or assign names such as EE globally."
+      "Apply the resulting rules to a symbolic expression when you want numbers. The model itself and any global Mathematica names are left unchanged. Independent input parameters and the supported dependent definitions are resolved together.",
+      "The optional second argument changes selected inputs for this calculation. It can use model-local [ModelParameter](paclet:HEPCAT/ref/ModelParameter) references or string names, for example `{\"Me\" -> 1}`. Dependent definitions are then recomputed, so changing an input remains consistent with quantities derived from it.",
+      "An explicit override of a dependent parameter treats that value as an independent input for this evaluation. This is useful for a numerical comparison, but you are responsible for whether that parameter choice describes the intended theory.",
+      "A dependency cycle or an unsupported [ModelFunction](paclet:HEPCAT/ref/ModelFunction) call cannot always be given a number. Such unresolved definitions are omitted while unrelated resolvable parameters are retained. Inspect the rules if a later numerical calculation reports a parameter without a value.",
+      "[CheckAmplitudes](paclet:HEPCAT/ref/CheckAmplitudes), [CompleteFactorization](paclet:HEPCAT/ref/CompleteFactorization) and [ConstructAmplitude](paclet:HEPCAT/ref/ConstructAmplitude) normally obtain numerical values from the model themselves. You do not need to repeat its defaults in every call."
     ],
     "examples": [
       {
@@ -537,11 +558,12 @@
       "LookupAmplitude",
       "CreateDiagrams"
     ],
-    "guide": "DiagramsAndFactorization"
+    "guide": "DiagramsAndFactorization",
+    "visibility": "internal"
   },
   {
     "name": "LookupAmplitude",
-    "summary": "Retrieve a complete model amplitude with its external labels reassigned.",
+    "summary": "Retrieve a stored lower-point amplitude with a specified particle numbering.",
     "syntaxes": [
       {
         "input": "LookupAmplitude[taggedParticles, model, rightSide, spinIndices]",
@@ -549,10 +571,10 @@
       }
     ],
     "details": [
-      "taggedParticles has entries {particleName, label}; labels may include Multiparticle for a sewn internal line. The four-entry spinIndices list supplies the indices used when an internal massive state must be explicit.",
-      "A lookup of ordinary external particles uses rightSide -> False as the third positional argument. The rightSide flag matters for internal-state index conventions when sewing opposite sides of a channel.",
-      "The matcher handles repeated particle names without replacing scalar coefficients, exponents or independent spin-index labels. If a complete amplitude is absent, the result is 0.",
-      "Use a model containing complete lower-point amplitudes. A product of bare vertex tensors is not a stored complete higher-point amplitude."
+      "This is an advanced way to obtain a complete amplitude already present in a constructive model. `taggedParticles` has entries such as `{\"e\", 1}` and `{\"E\", 2}`. The function matches their particle content to a stored model row, includes that row's overall factor and relabels its typed particle slots to the supplied numbering.",
+      "Only particle-label positions are relabeled. Numerical coefficients, powers and independent spin-index symbols are not interpreted as particle numbers. Repeated identical species are assigned distinct matching labels instead of repeatedly replacing every occurrence by the same leg.",
+      "The `rightSide` argument and four supplied spin-index names support sewing lower-point amplitudes across an internal line. In an ordinary lookup with only integer external labels, the common form is `LookupAmplitude[Thread[{particles, Range[Length[particles]]}], model, False, {i1, i2, i3, i4}]`.",
+      "An absent amplitude returns `0`. That is the same missing-amplitude convention used by [FactorizationAmplitudeChannels](paclet:HEPCAT/ref/FactorizationAmplitudeChannels). For an entire calculation, prefer that function or [ConstructAmplitude](paclet:HEPCAT/ref/ConstructAmplitude), which also carry the channel and external-state information needed for sewing and validation."
     ],
     "examples": [
       {
@@ -569,7 +591,6 @@
     ],
     "related": [
       "ReadModel",
-      "ReadAmplitudes",
       "FactorizationAmplitudeChannels",
       "AppendModelAmplitudes"
     ],
@@ -577,7 +598,7 @@
   },
   {
     "name": "FactorizationAmplitudeChannels",
-    "summary": "Sew known lower-point amplitudes into the physical factorization channels.",
+    "summary": "Build the known lower-point amplitude products that a full amplitude must reproduce at its physical poles.",
     "syntaxes": [
       {
         "input": "FactorizationAmplitudeChannels[particles, model]",
@@ -585,14 +606,9 @@
       }
     ],
     "details": [
-      "Each compact row contains the external masses, the cut Multiparticle label, the exchanged mass and the sewn lower-point product divided by z and the propagator denominator. The last entry is the expression; the preceding data identify its physical cut.",
-      "The model must supply the complete lower-point amplitudes needed on both sides. Missing amplitudes are zero. Four-point QED uses the three-point model, while five-point QED uses the model containing complete four-point amplitudes.",
-      "These are residue targets, not independent diagrams whose sum is a complete amplitude. Directly summing channels double counts overlapping pole information.",
-      "Keep the package's sewing convention. CheckAmplitudes converts the stored z convention and includes its required overall sewing sign once; do not add a manual sign to force agreement.",
-      "Fermion ordering is transported automatically from both lower amplitudes to one common particle/antiparticle reference order. The signs include internal fermion contraction orientation, the complete surviving fermion word across identical and distinct species, and the lower-to-full reference normalization. Boson and fermion channels use the same convention. Do not supply process-specific or cut-specific signs.",
-      "The fermion reference convention requires balanced Dirac particle/antiparticle pairs in each lower amplitude. Ambiguous self-conjugate fermion roles or unpaired fermion-number-violating rows return an UnsupportedFermionSewing failure rather than an assumed sign.",
-      "A channel may contain reference spinors that describe a continuation away from its cut. PrepareAmplitudes may simplify that continuation using only the selected channel shell. CompleteFactorization retains the original channel targets when preparation reports are supplied.",
-      "A FeynmanModel contains off-shell vertices, not the complete on-shell lower amplitudes required here, and is rejected as factorization input."
+      "Give an ordered, all-ingoing process list and a constructive model containing the required lower-point amplitudes. A channel divides the external legs into two groups. When the momentum flowing between those groups goes on shell, the full amplitude must factor into the corresponding two lower-point amplitudes, with the internal states sewn together.",
+      "The return value is a compact list, one row per nonzero channel. A row has the form `{m1, ..., mn, Multiparticle[cut], exchangedMass, expression}`. The first entries are the external masses in process order; the cut lists the momenta that sum to the internal momentum. The final entry is the sewn product with its propagator denominator and the historical `1/z` factor.",
+      "You can inspect these rows directly, but you normally pass the list unchanged to [CheckAmplitudes](paclet:HEPCAT/ref/CheckAmplitudes) or [CompleteFactorization](paclet:HEPCAT/ref/CompleteFactorization). Those functions interpret the channel information and sewing convention. Do not remove `z`, fit an overall sign or simply sum the channel expressions to make a candidate full amplitude."
     ],
     "examples": [
       {
@@ -609,17 +625,33 @@
       }
     ],
     "related": [
-      "FactorizationPartitions",
       "LookupAmplitude",
       "PrepareAmplitudes",
       "CompleteFactorization",
       "CheckAmplitudes"
     ],
-    "guide": "DiagramsAndFactorization"
+    "guide": "DiagramsAndFactorization",
+    "detail_sections": [
+      {
+        "title": "Supplying enough lower-point information",
+        "paragraphs": [
+          "For four-point factorization, the lower amplitudes have three legs. At five points, a channel can involve a three-point and a complete four-point amplitude. At six points, complete four- and five-point amplitudes can be needed. The diagram model can still contain only the allowed vertices; the factorization model serves a different purpose.",
+          "The bundled QED model `2` supplies three-point vertices. Model `3` also stores known complete amplitudes for larger channels. Use [ReadModel](paclet:HEPCAT/ref/ReadModel) to load the model appropriate to the multiplicity you are checking.",
+          "An unlisted lower-point amplitude is treated as zero and does not produce a nonzero channel row. The user is responsible for supplying all known nonzero lower-point amplitudes. A CalcHEP [FeynmanModel](paclet:HEPCAT/ref/FeynmanModel) contains bare vertices, so it is not accepted as the factorization model."
+        ]
+      },
+      {
+        "title": "Preparation and interpretation",
+        "paragraphs": [
+          "[PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes) can simplify channel rows without changing their compact format. Such a row declares only its selected internal cut; it does not put every other propagator in the product on shell. Request preparation details if you will pass those reductions to completion, so the original channel targets remain available.",
+          "Different channels overlap on multiple poles. Adding their products as independent diagrams would generally double count those overlaps. [CompleteFactorization](paclet:HEPCAT/ref/CompleteFactorization) instead solves the channel conditions together, starting from the diagram expression and a bounded space of possible corrections."
+        ]
+      }
+    ]
   },
   {
     "name": "CreateDiagrams",
-    "summary": "Generate tree diagrams from a supplied constructive or Feynman model.",
+    "summary": "Generate the tree diagrams allowed by a model for an ordered external process.",
     "syntaxes": [
       {
         "input": "CreateDiagrams[{p1, p2, ...}, model]",
@@ -631,12 +663,11 @@
       }
     ],
     "details": [
-      "The external list determines particle labels 1, 2, and so on. Use the model's literal names, including massless helicity suffixes such as A.+ and A.-.",
-      "For constructive photon or gluon internal lines, one generic internal line represents both helicities. The graph count is not doubled for each internal helicity.",
-      "Each tree is an association containing graph and particle data, propagators, vertex information and index maps. Pass the resulting list to CreateArrowDiagrams for display or diagramAmplitudes for expressions.",
-      "Constructive and Feynman models follow their own amplitude rules. Feynman internal propagators and numerators remain off shell; constructive numerator preparation can use explicitly declared diagram-local shell conditions.",
-      "Use the model containing the intended vertices for diagram generation. A complete higher-point amplitude included for factorization is not automatically a new independent interaction in the theory.",
-      "Fewer than three external legs or unsupported particle names produce no generated diagrams."
+      "The process is a list of model particle-name strings. Their positions fix labels `1`, `2`, and so on, and all external momenta are ingoing. For example, `{\"e\", \"E\", \"A.+\", \"A.-\"}` selects two fermion states and two photon helicities in the bundled QED model.",
+      "The result is a list of diagram objects, not an amplitude sum. Use [CreateArrowDiagrams](paclet:HEPCAT/ref/CreateArrowDiagrams) to draw them. Use [DiagramAmplitudes](paclet:HEPCAT/ref/DiagramAmplitudes) to obtain one mass-rule/expression pair for each diagram, then [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes) to simplify those expressions.",
+      "For constructive models, each generic internal photon or gluon represents the combined helicity contribution. It is not necessary to generate a separate topology for each internal helicity. The model's particle, antiparticle and twice-spin declarations also determine fermion connections and exchange signs.",
+      "With a [FeynmanModel](paclet:HEPCAT/ref/FeynmanModel), the same call selects Feynman vertices and propagators. Those internal numerators remain off shell. [FeynmanToSpinorProducts](paclet:HEPCAT/ref/FeynmanToSpinorProducts) or Feynman preparation converts their Lorentz and Dirac structures for comparison.",
+      "This function generates diagrams from the supplied interactions. It does not infer missing vertices, complete an amplitude from factorization data or establish that a simplified sum passes physical checks. [ConstructAmplitude](paclet:HEPCAT/ref/ConstructAmplitude) combines those later stages when you want the full workflow."
     ],
     "examples": [
       {
@@ -655,7 +686,7 @@
     "related": [
       "ReadModel",
       "CreateArrowDiagrams",
-      "diagramAmplitudes",
+      "DiagramAmplitudes",
       "DiagramAmplitudeRecords",
       "ConstructAmplitude"
     ],
@@ -663,7 +694,7 @@
   },
   {
     "name": "CreateArrowDiagram",
-    "summary": "Draw one generated tree with external labels and directed particle lines.",
+    "summary": "Draw one tree diagram and optionally inspect its vertex and propagator expressions.",
     "syntaxes": [
       {
         "input": "CreateArrowDiagram[diagram]",
@@ -675,9 +706,9 @@
       }
     ],
     "details": [
-      "The input is one diagram association, not the list returned by CreateDiagrams. Use CreateArrowDiagrams to draw a whole process.",
-      "The string options \"ShowVertexExpressions\" and \"ShowPropagatorExpressions\" default to False. Enable them when inspecting how model vertices and internal lines are assigned.",
-      "Displaying a diagram does not derive or validate its amplitude. Use diagramAmplitudes and the construction/checking tools for that workflow."
+      "Pass one diagram returned by [CreateDiagrams](paclet:HEPCAT/ref/CreateDiagrams), for example `First[diagrams]`. The drawing shows numbered external legs, internal connections and particle labels, so you can relate the topology to the symbolic amplitude.",
+      "The default drawing emphasizes the particle structure. Set `\"ShowVertexExpressions\" -> True` to display the expressions at its vertices, or `\"ShowPropagatorExpressions\" -> True` to display its propagators. These options change the drawing, not the diagram data or its amplitude.",
+      "To draw the complete list with the same display choices, use [CreateArrowDiagrams](paclet:HEPCAT/ref/CreateArrowDiagrams)."
     ],
     "examples": [
       {
@@ -694,13 +725,13 @@
     "related": [
       "CreateArrowDiagrams",
       "CreateDiagrams",
-      "diagramAmplitudes"
+      "DiagramAmplitudes"
     ],
     "guide": "DiagramsAndFactorization"
   },
   {
     "name": "CreateArrowDiagrams",
-    "summary": "Draw the generated trees for a complete process.",
+    "summary": "Draw all the diagrams generated for a process.",
     "syntaxes": [
       {
         "input": "CreateArrowDiagrams[diagrams]",
@@ -712,8 +743,9 @@
       }
     ],
     "details": [
-      "Use this function to inspect all orderings and exchanged particles before working with expressions. External labels follow the input process order.",
-      "The same string display options as CreateArrowDiagram are accepted. Expression labels are optional because large vertices can otherwise overwhelm the picture."
+      "This is the usual display companion to [CreateDiagrams](paclet:HEPCAT/ref/CreateDiagrams). Store the generated list in `diagrams`, then evaluate `CreateArrowDiagrams[diagrams]` to see the individual tree topologies.",
+      "The order corresponds to the input list. The drawings help you identify which external momenta form each internal line, but they do not combine or simplify the amplitude expressions.",
+      "The options of [CreateArrowDiagram](paclet:HEPCAT/ref/CreateArrowDiagram) are applied to every drawing. Turn on vertex or propagator expressions when investigating a particular construction; leave them off for a compact overview."
     ],
     "examples": [
       {
@@ -730,7 +762,7 @@
     "related": [
       "CreateDiagrams",
       "CreateArrowDiagram",
-      "diagramAmplitudes"
+      "DiagramAmplitudes"
     ],
     "guide": "DiagramsAndFactorization"
   },
@@ -744,7 +776,7 @@
       }
     ],
     "details": [
-      "This lower-level singular function returns only the expression. For a process, use diagramAmplitudes, which retains each diagram's mass rules with its expression.",
+      "This lower-level singular function returns only the expression. For a process, use DiagramAmplitudes, which retains each diagram's mass rules with its expression.",
       "Constructive evaluation combines internal photon or gluon helicities and expands external x factors. Known mass replacements are applied before return.",
       "Feynman evaluation retains ordered Dirac chains, Lorentz and color tensors, and off-shell internal lines. Convert Feynman tensors through the dedicated Feynman tools or preparation workflow.",
       "A single diagram generally is neither reference independent nor a complete amplitude. Its simplification may need completion after diagrams are combined."
@@ -757,38 +789,39 @@
       },
       {
         "description": "Prefer the mass-rule pair when continuing to preparation.",
-        "input": "First[diagramAmplitudes[diagrams]]",
+        "input": "First[DiagramAmplitudes[diagrams]]",
         "evaluate": true
       }
     ],
     "related": [
-      "diagramAmplitudes",
+      "DiagramAmplitudes",
       "CreateDiagrams",
       "PrepareAmplitudes",
       "FeynmanToSpinorProducts"
     ],
-    "guide": "DiagramsAndFactorization"
+    "guide": "DiagramsAndFactorization",
+    "visibility": "internal"
   },
   {
-    "name": "diagramAmplitudes",
-    "summary": "Evaluate every tree while retaining its separate mass and internal-cut declarations.",
+    "name": "DiagramAmplitudes",
+    "summary": "Obtain a symbolic amplitude expression and its mass replacements for each generated diagram.",
     "syntaxes": [
       {
-        "input": "diagramAmplitudes[diagrams]",
+        "input": "DiagramAmplitudes[diagrams]",
         "description": "Return {{massRules, expression}, ...} for the generated diagrams."
       }
     ],
     "details": [
-      "The first entry of each pair declares external masses and, for constructive diagrams, the internal channel masses belonging to that diagram. The second entry is the expression with known mass replacements already applied.",
-      "Keep each diagram's conditions separate. Conditions from different constructive diagrams are not simultaneous shell assumptions for the complete sum.",
-      "Feynman diagram pairs contain external mass declarations without internal on-shell assumptions. Their exact propagators remain off shell.",
-      "External x factors are already expanded. Use PrepareAmplitudes next rather than manually repeating the old x-factor replacement step.",
-      "Total[Last /@ amplitudes] extracts the bare sum, but loses useful process and preparation provenance. Detailed preparation reports retain discarded terms for later completion."
+      "Pass the complete list returned by [CreateDiagrams](paclet:HEPCAT/ref/CreateDiagrams). The result is `{{massRules, expression}, ...}`, with one entry per diagram. This format keeps the expression next to the mass information needed when preparing it.",
+      "Each mass list declares the external particle masses and, for a constructive diagram, its internal-line masses. Known mass replacements are applied to the expression and retained in the list. In particular, the declarations identify which internal numerator relations are available to [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes).",
+      "Constructive diagrams combine the internal photon or gluon helicities and replace supported external x factors before returning. Use the plural function for the full process: some simplifications and pairings involve the diagram list rather than an isolated diagram.",
+      "For Feynman diagrams, the result retains Dirac chains, Lorentz or color tensors and off-shell propagators. Their mass lists contain external masses only; no internal on-shell condition is declared. Use Feynman preparation or [FeynmanToSpinorProducts](paclet:HEPCAT/ref/FeynmanToSpinorProducts) before comparing their spinor expressions.",
+      "This is the diagram result before factorization and high-energy completion. For constructive work, simplify it diagram by diagram first and keep preparation details if you want the discarded remainders available to [CompleteFactorization](paclet:HEPCAT/ref/CompleteFactorization). Use [CheckAmplitudes](paclet:HEPCAT/ref/CheckAmplitudes) to assess a proposed complete sum."
     ],
     "examples": [
       {
         "description": "Get the two separately declared four-point diagram expressions.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\namplitudes = diagramAmplitudes[diagrams];\nLength[amplitudes]",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\namplitudes = DiagramAmplitudes[diagrams];\nLength[amplitudes]",
         "evaluate": true,
         "expected": "2"
       },
@@ -800,16 +833,18 @@
     ],
     "related": [
       "CreateDiagrams",
-      "diagramAmplitude",
       "PrepareAmplitudes",
       "CompleteFactorization",
       "DiagramAmplitudeRecords"
     ],
-    "guide": "DiagramsAndFactorization"
+    "guide": "DiagramsAndFactorization",
+    "retiredNames": [
+      "diagramAmplitudes"
+    ]
   },
   {
     "name": "DiagramAmplitudeRecords",
-    "summary": "Retain explicit diagram expressions, physical propagators and numerator assumptions for diagnostics.",
+    "summary": "Inspect the expression, propagators and assumptions associated with each diagram.",
     "syntaxes": [
       {
         "input": "DiagramAmplitudeRecords[diagrams]",
@@ -821,15 +856,15 @@
       }
     ],
     "details": [
-      "Each record contains \"OriginalExpression\", \"Expression\", \"OriginalNumerator\", \"Numerator\", \"MassRules\", \"ExternalMassRules\", \"PhysicalPropagators\" and the physical denominator. This is an inspection format rather than the normal user amplitude output.",
-      "The option \"SimplificationFunction\" defaults to Identity and receives {massRules, expression}. It must return that form with exactly the same mass rules. Propagator objects are protected during the transformation.",
-      "\"NumeratorOnShellChannels\" records any internal conditions used by the supplied transformation; merely declaring them does not apply them. \"DenominatorsKeptOffShell\" distinguishes numerator simplification from a residue restriction.",
-      "For routine bounded simplification and completion, PrepareAmplitudes with \"ReturnDetails\" -> True is the richer workflow because it retains discarded remainders and selected reference choices."
+      "This is an advanced inspection tool for a list returned by [CreateDiagrams](paclet:HEPCAT/ref/CreateDiagrams). It returns one association per diagram, keeping its original expression, numerator, physical propagators, external particles and mass rules together.",
+      "Use it when you need to see which numerator assumptions belong to a particular diagram, rather than to the complete summed amplitude. The default does not apply a new internal-shell simplification.",
+      "An optional `\"SimplificationFunction\"` acts on the `{massRules, expression}` pair and must return a pair with the same mass rules. `\"NumeratorOnShellChannels\"` records the cut conditions that your supplied operation used. Recording assumptions is not a proof that an arbitrary supplied function is a legal identity.",
+      "Most calculations should use [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes) with `\"ReturnDetails\" -> True`. That interface performs the built-in preparation and retains the reduction information that [CompleteFactorization](paclet:HEPCAT/ref/CompleteFactorization) knows how to reuse."
     ],
     "examples": [
       {
-        "description": "Inspect the data retained for one diagram.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\nrecords = DiagramAmplitudeRecords[diagrams];\nKeys[First[records]]",
+        "description": "Inspect the original expression and declared physical denominator of one diagram.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\nrecords = DiagramAmplitudeRecords[diagrams];\nKeyTake[First[records], {\"OriginalExpression\", \"PhysicalDenominator\"}]",
         "evaluate": true
       },
       {
@@ -840,7 +875,7 @@
     ],
     "related": [
       "CreateDiagrams",
-      "diagramAmplitudes",
+      "DiagramAmplitudes",
       "PhysicalPoleResidue",
       "PrepareAmplitudes"
     ],
@@ -858,7 +893,7 @@
     "details": [
       "This helper includes older paired x-factor identities and an external-line replacement when exactly one external label is missing from the x-factor labels. That missing label identifies the external massless line.",
       "The replacement introduces reference spinors. PrepareAmplitudes can choose their explicit forms through \"PolePreference\".",
-      "diagramAmplitudes already expands external x factors, so most modern calculations do not need a manual call. This helper is not a promise to eliminate every arbitrary x-factor structure at any multiplicity."
+      "DiagramAmplitudes already expands external x factors, so most modern calculations do not need a manual call. This helper is not a promise to eliminate every arbitrary x-factor structure at any multiplicity."
     ],
     "examples": [
       {
@@ -876,10 +911,11 @@
     "related": [
       "xFactor",
       "xTildeFactor",
-      "diagramAmplitudes",
+      "DiagramAmplitudes",
       "PrepareAmplitudes"
     ],
-    "guide": "DiagramsAndFactorization"
+    "guide": "DiagramsAndFactorization",
+    "visibility": "internal"
   },
   {
     "name": "ConstructiveDiagram",
@@ -897,7 +933,7 @@
     "details": [
       "This historical helper supports a three-particle vertex and a four-particle exchange. It is not the general tree generator for higher multiplicity.",
       "The selected channel identifies which two of the four external particles meet on one side. The internal particle name must be present in the supplied particle table.",
-      "Use CreateDiagrams followed by diagramAmplitudes for new calculations. That route handles generic internal photon/gluon helicities, external x factors and per-diagram mass-rule pairs consistently.",
+      "Use CreateDiagrams followed by DiagramAmplitudes for new calculations. That route handles generic internal photon/gluon helicities, external x factors and per-diagram mass-rule pairs consistently.",
       "The historical helper can return zero when no matching vertex or exchange exists and may print a diagnostic for unrecognized names. A zero here is not a full-process physical validation."
     ],
     "examples": [
@@ -908,18 +944,19 @@
       },
       {
         "description": "Use the modern route for a complete four-point process.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\namplitudes = diagramAmplitudes[diagrams];\namplitudes",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\namplitudes = DiagramAmplitudes[diagrams];\namplitudes",
         "evaluate": true
       }
     ],
     "related": [
       "CreateDiagrams",
-      "diagramAmplitudes",
+      "DiagramAmplitudes",
       "SChannelDiagram",
       "TChannelDiagram",
       "UChannelDiagram"
     ],
-    "guide": "DiagramsAndFactorization"
+    "guide": "DiagramsAndFactorization",
+    "visibility": "internal"
   },
   {
     "name": "SChannelDiagram",
@@ -933,7 +970,7 @@
     "details": [
       "The six arguments specify four all-ingoing external particle names, one internal species and the complete model list. This is a fixed four-point convenience function, not general factorization.",
       "The selected pairing is {1, 2}; its complement is the other side of the exchange. The model must contain the internal particle and both needed vertices.",
-      "For new calculations use CreateDiagrams and diagramAmplitudes. They retain mass declarations and handle generic internal massless-vector helicities rather than asking the user to select a single internal helicity."
+      "For new calculations use CreateDiagrams and DiagramAmplitudes. They retain mass declarations and handle generic internal massless-vector helicities rather than asking the user to select a single internal helicity."
     ],
     "examples": [
       {
@@ -950,10 +987,11 @@
     "related": [
       "ConstructiveDiagram",
       "CreateDiagrams",
-      "diagramAmplitudes",
+      "DiagramAmplitudes",
       "FactorizationAmplitudeChannels"
     ],
-    "guide": "DiagramsAndFactorization"
+    "guide": "DiagramsAndFactorization",
+    "visibility": "internal"
   },
   {
     "name": "TChannelDiagram",
@@ -967,7 +1005,7 @@
     "details": [
       "The six arguments specify four all-ingoing external particle names, one internal species and the complete model list. This is a fixed four-point convenience function, not general factorization.",
       "The selected pairing is {1, 3}; its complement is the other side of the exchange. The model must contain the internal particle and both needed vertices.",
-      "For new calculations use CreateDiagrams and diagramAmplitudes. They retain mass declarations and handle generic internal massless-vector helicities rather than asking the user to select a single internal helicity."
+      "For new calculations use CreateDiagrams and DiagramAmplitudes. They retain mass declarations and handle generic internal massless-vector helicities rather than asking the user to select a single internal helicity."
     ],
     "examples": [
       {
@@ -984,10 +1022,11 @@
     "related": [
       "ConstructiveDiagram",
       "CreateDiagrams",
-      "diagramAmplitudes",
+      "DiagramAmplitudes",
       "FactorizationAmplitudeChannels"
     ],
-    "guide": "DiagramsAndFactorization"
+    "guide": "DiagramsAndFactorization",
+    "visibility": "internal"
   },
   {
     "name": "UChannelDiagram",
@@ -1001,7 +1040,7 @@
     "details": [
       "The six arguments specify four all-ingoing external particle names, one internal species and the complete model list. This is a fixed four-point convenience function, not general factorization.",
       "The selected pairing is {1, 4}; its complement is the other side of the exchange. The model must contain the internal particle and both needed vertices.",
-      "For new calculations use CreateDiagrams and diagramAmplitudes. They retain mass declarations and handle generic internal massless-vector helicities rather than asking the user to select a single internal helicity."
+      "For new calculations use CreateDiagrams and DiagramAmplitudes. They retain mass declarations and handle generic internal massless-vector helicities rather than asking the user to select a single internal helicity."
     ],
     "examples": [
       {
@@ -1018,10 +1057,11 @@
     "related": [
       "ConstructiveDiagram",
       "CreateDiagrams",
-      "diagramAmplitudes",
+      "DiagramAmplitudes",
       "FactorizationAmplitudeChannels"
     ],
-    "guide": "DiagramsAndFactorization"
+    "guide": "DiagramsAndFactorization",
+    "visibility": "internal"
   },
   {
     "name": "SimplifyFactorizationChannels",
@@ -1055,7 +1095,8 @@
       "PrepareAmplitudes",
       "SimplifySpinorProducts"
     ],
-    "guide": "DiagramsAndFactorization"
+    "guide": "DiagramsAndFactorization",
+    "visibility": "internal"
   },
   {
     "name": "SumResiduesAlt",
@@ -1091,11 +1132,12 @@
       "PhysicalPoleResidue",
       "CompleteFactorization"
     ],
-    "guide": "DiagramsAndFactorization"
+    "guide": "DiagramsAndFactorization",
+    "visibility": "internal"
   },
   {
     "name": "PhysicalPoleResidue",
-    "summary": "Extract a single- or compatible multiple-pole coefficient with explicit kinematic scope.",
+    "summary": "Extract the coefficient of one physical propagator pole, or of compatible simultaneous poles.",
     "syntaxes": [
       {
         "input": "PhysicalPoleResidue[expression, channel]",
@@ -1111,13 +1153,11 @@
       }
     ],
     "details": [
-      "The channel input is a normalized association or a list of such associations describing \"Cut\", \"ExternalLegs\", \"Mass\" and the matching propagator. DiagramAmplitudeRecords exposes suitable \"PhysicalPropagators\" records.",
-      "With \"KinematicMap\" -> Automatic, the result has \"Status\" -> \"FORMAL\". \"StructuralCoefficient\" treats PropDen as an opaque pole variable and does not prove that spinor numerators have the required physical residue.",
-      "A map is called as map[expression, channels, poleVariables]. It must evaluate spinors, momenta and denominators consistently while preserving external shells, momentum conservation and the selected cut coordinates without imposing unrelated cuts.",
-      "With a valid chart the physical result is stored in \"PhysicalResidue\". \"KinematicKind\" distinguishes numerical sample charts from symbolic charts. A sampled PASS is evidence on that chart, not an identity for all kinematics.",
-      "The full rational expression is canceled before cut substitution. A surviving higher-order pole, invalid chart or timeout returns UNRESOLVED rather than silently substituting into a singular denominator.",
-      "The default \"StructuralCoefficient\" -> True also computes the optional formal coefficient. False can save that extra symbolic work when the physical chart calculation is the intended result.",
-      "Physical residue extraction does not inherit a collection of internal numerator-shell assumptions from diagrams. The chosen cut is imposed through the chart."
+      "Near a simple pole with denominator `t`, an amplitude has the form `R/t + regular terms`. Its residue coefficient is the finite limit of `t` times the amplitude at `t = 0`. This function performs that extraction for a declared channel. A list of channels requests the corresponding compatible multiple-pole coefficient.",
+      "Each channel is an association specifying its `\"Cut\"`, `\"Complement\"`, `\"Mass\"` and `\"ExternalLegs\"`. A physical cut changes momenta, spinors and propagators together. Merely replacing one occurrence of [PropDen](paclet:HEPCAT/ref/PropDen) by zero is not enough to evaluate a spinor expression consistently.",
+      "Without a coherent `\"KinematicMap\"`, the result is labeled `\"FORMAL\"`: it can identify the coefficient of opaque propagator symbols, but does not certify a physical residue. For ordinary model-based comparisons, [CheckAmplitudes](paclet:HEPCAT/ref/CheckAmplitudes) builds its supported coherent kinematic samples for you.",
+      "A custom map `f[expression, channels, poleVariables]` must evaluate every momentum, spinor and denominator in a common chart near the requested cuts. `\"KinematicKind\"` distinguishes sampled from symbolic charts. Singular or incompatible restrictions are reported rather than interpreted as zero.",
+      "The optional structural coefficient is included by default. Set `\"StructuralCoefficient\" -> False` to skip that extra opaque-propagator calculation when you only need the mapped result. That option does not loosen the kinematic checks."
     ],
     "examples": [
       {
@@ -1143,7 +1183,7 @@
   },
   {
     "name": "CheckAmplitudes",
-    "summary": "Check physical residues, apparent spurious poles, high-energy growth and reference dependence.",
+    "summary": "Check a proposed amplitude against physical factorization, spurious-pole, high-energy and reference-spinor conditions.",
     "syntaxes": [
       {
         "input": "CheckAmplitudes[amplitude, channels, model]",
@@ -1159,21 +1199,9 @@
       }
     ],
     "details": [
-      "The first argument may be a bare expression, one {externalMassRules, expression} pair or a list of diagram-style pairs. The supplied compact FactorizationAmplitudeChannels rows identify the physical poles and expected lower-point products.",
-      "Physical residue comparisons include the package's fixed sewing conversion once. \"Opp Sign\" diagnoses a result that matches only after a global minus sign; it does not change the amplitude or fit a sign.",
-      "Apparent denominator factors outside the known physical channels are discovered automatically and checked for spurious singularities. Finite approach tests are numerical evidence, not a replacement for an analytic cancellation when one is practical.",
-      "High-energy checks scale conserved external kinematics with fixed masses and inspect all sampled spin assignments. The automatic renormalizable tree target is E^(4-n); \"HighEnergyBound\" can state another theory's expected bound.",
-      "Large reference-free typed expressions may certify a conservative upper bound from external-spinor and momentum degrees. Every massive spin-basis column and each propagator's nonzero leading invariant are checked on the actual conserved high-energy chart. The report records ObservedPowerUpperBound and leaves ObservedPower missing because no leading Laurent coefficient was measured.",
-      "Unsupported structures, explicit references, hidden spinor denominators, degenerate leading invariants or an upper bound above the target retain the exact Laurent fallback. Multiparticle propagator growth does not establish model membership: the physical and spurious-pole checks remain separate and unchanged. Internal virtualities are never set on shell for either energy method.",
-      "Reference tests vary explicit external Xi spinors on conserved kinematics. If none remain, the report establishes absence of explicit Xi dependence; that alone is not a separate analytic Ward-identity proof.",
-      "Supply \"FeynmanAmplitudes\" and the matching \"FeynmanModel\" for an independent full-amplitude comparison at ordinary off-cut kinematics.",
-      "The full Feynman comparison checks every coherent massive-spin monomial from both sums. Scalar coefficients are reduced separately so a large spin tensor does not require one multivariate polynomial cancellation. Both exact differences and opposite-sign diagnostics are retained; the numerical zero-test convention and requested sample count are unchanged.",
-      "Off-cut Feynman sampling first tries bounded deterministic rational geometries. If an accidental physical pole invalidates one geometry, a fresh geometry is tried before the real center-of-mass fallback. Acceptance uses only external shells, conservation, spinor-basis consistency and nonzero physical propagators, never amplitude agreement. Details retain rejected cuts and geometry attempts.",
-      "Numerical external spinor bases use known masses and stable real direction components to avoid cancellation in highly boosted or nearly axial configurations. Exact and complex chart formulas retain their analytic branches; internal virtualities are not assigned an external mass shell.",
-      "Default numerical parameter values come from the model. \"ParameterRules\" locally overrides selected values without changing the symbolic amplitude. \"RandomSeed\" -> Automatic chooses a time-based seed once; provide an integer to replay samples.",
-      "The ordinary table is deliberately short. \"Output\" -> \"Residues\" shows calculated and expected sampled values, \"Summary\" counts statuses, and \"Details\" retains the complete report. Other focused outputs include \"HighEnergy\", \"References\" and \"Feynman\".",
-      "PASS, Opp Sign, FAIL and UNRESOLVED describe the performed tests. They do not establish a generic symbolic reconstruction or uniqueness theorem. Do not interpret a disabled or unresolved test as a pass.",
-      "Independent checks can use \"Parallelization\" -> Automatic and \"MaxKernels\" -> Automatic. Set False or 1 for serial execution; effective speed depends on expression size and worker setup cost."
+      "Give the proposed amplitude, the ordinary channel rows from [FactorizationAmplitudeChannels](paclet:HEPCAT/ref/FactorizationAmplitudeChannels), and the constructive model used for those channels. The amplitude may be a bare expression, one `{externalMassRules, expression}` pair or a list of diagram pairs to be summed.",
+      "The default result is a compact table of checks. `PASS` means that the requested comparison succeeded at the recorded samples. `FAIL` is a disagreement. `Opp Sign` means a residue or full-amplitude comparison agrees after an overall sign reversal; it is useful diagnostic information, not a passing result. `UNRESOLVED` means the requested calculation could not establish a result, for example because a form is unsupported or a time limit was reached.",
+      "The function reports what the supplied expression does. It does not change a sign, fit a normalization, simplify away a discrepancy by a new internal-shell assumption or repair the amplitude. To determine corrections from the known channels, use [CompleteFactorization](paclet:HEPCAT/ref/CompleteFactorization)."
     ],
     "examples": [
       {
@@ -1187,9 +1215,10 @@
         "evaluate": false
       },
       {
-        "description": "Inspect available controls and defaults.",
-        "input": "Options[CheckAmplitudes]",
-        "evaluate": true
+        "section": "Inspect a failed or unresolved check",
+        "description": "Keep the full diagnostic report without filling the notebook with every sampled expression. The same fixed seed replays the earlier kinematics.",
+        "input": "report = CheckAmplitudes[amplitude, channels, knownQEDModel, \"Output\" -> \"Details\", \"RandomSeed\" -> 314159];\nreport[\"Summary\"]",
+        "evaluate": false
       }
     ],
     "related": [
@@ -1200,7 +1229,33 @@
       "ConstructAmplitude",
       "ModelParameterRules"
     ],
-    "guide": "AmplitudeValidation"
+    "guide": "AmplitudeValidation",
+    "detail_sections": [
+      {
+        "title": "What is checked",
+        "paragraphs": [
+          "Physical poles are defined by the supplied factorization channels. At each pole, the checker compares the residue of the full amplitude with the sewn product of complete lower-point amplitudes. It accounts for HEPCAT's amplitude and propagator conventions, including the sewing minus sign. Every other propagator is kept away from its pole during an ordinary single-pole comparison.",
+          "Apparent denominator poles not certified as physical by those channels are examined for cancellation. The checker discovers supported angle brackets, square brackets and other inverse factors from the expression. A spurious-pole `PASS` is evidence that the complete amplitude is finite on the tested approach to that apparent pole; individual summands may still diverge and cancel.",
+          "The high-energy check increases the energy at fixed scattering angles while holding external masses and couplings fixed. The default bound is the renormalizable tree-level expectation `E^(4-n)` for `n` external particles. If your theory requires another bound, state it with `\"HighEnergyBound\"`.",
+          "When explicit Xi reference spinors remain, their choices are varied together while the physical momenta and external spin states are held fixed. An expression without explicit Xi objects has no explicit reference choice left to vary. This check does not claim a separate Ward-identity proof."
+        ]
+      },
+      {
+        "title": "Inspecting a disagreement",
+        "paragraphs": [
+          "Start with the table to see which kind of check failed. Ask for `\"Output\" -> \"Residues\"` to display calculated and expected pole samples, or `\"HighEnergy\"` and `\"References\"` to inspect those comparisons. `\"Summary\"` gives counts; `\"Details\"` retains the full report, sampled momenta, parameter rules and the actual random seed.",
+          "Numerical parameter values come from the model by default. A `\"ParameterRules\"` list overrides selected inputs locally and recomputes dependent values, without changing the symbolic amplitude. Set an integer `\"RandomSeed\"` to replay the same sampled comparison.",
+          "The checks provide sampled evidence, not a proof that two symbolic expressions are identical for every allowed kinematic point. Increase the sample count or use independent tools when investigating a suspected agreement. The detailed report states which checks and kinematic restrictions were actually completed."
+        ]
+      },
+      {
+        "title": "Optional comparisons and narrower reports",
+        "paragraphs": [
+          "Use `\"FeynmanAmplitudes\"` to supply an independently obtained spinor-form Feynman expression or amplitude pairs. The full sums are compared away from propagator poles with no internal-shell substitutions. [FeynmanToSpinorProducts](paclet:HEPCAT/ref/FeynmanToSpinorProducts) and [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes) provide the conversion and ordinary preparation steps.",
+          "All four standard categories are enabled by their automatic defaults when applicable. For a deliberately narrower physical-residue-only report, set `\"SpuriousPoles\" -> {}`, `\"HighEnergyCheck\" -> False` and `\"ReferenceCheck\" -> False`. A missing or disabled test must not be interpreted as a successful check of that property."
+        ]
+      }
+    ]
   },
   {
     "name": "CheckPhysicalResidues",
@@ -1225,7 +1280,7 @@
       },
       {
         "description": "Use the modern function name in a notebook.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nCheckAmplitudes[Total[Last /@ diagramAmplitudes[CreateDiagrams[process, qedModel]]], channels, qedModel]",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nCheckAmplitudes[Total[Last /@ DiagramAmplitudes[CreateDiagrams[process, qedModel]]], channels, qedModel]",
         "evaluate": false
       }
     ],
@@ -1233,11 +1288,12 @@
       "CheckAmplitudes",
       "PhysicalPoleResidue"
     ],
-    "guide": "AmplitudeValidation"
+    "guide": "AmplitudeValidation",
+    "visibility": "internal"
   },
   {
     "name": "PrepareAmplitudes",
-    "summary": "Simplify diagram pairs or factorization rows while retaining their physical assumptions.",
+    "summary": "Simplify diagram expressions, factorization channels or a completed amplitude before the next calculation stage.",
     "syntaxes": [
       {
         "input": "PrepareAmplitudes[items, model]",
@@ -1253,26 +1309,14 @@
       }
     ],
     "details": [
-      "The ordinary result retains the input format with each expression replaced by its prepared form. \"Output\" -> \"Expression\" returns the sum instead. The detailed report is optional so routine use does not expose implementation data.",
-      "Preparation applies ReduceSpinContractions, chooses reference spinors, then applies ReduceSpinorProducts and bounded improving identities. Momentum conservation is used with the known external leg set rather than added as an unconditional chain rewrite.",
-      "A bounded numerator pass can factor existing spectator spinor chains to expose small Schouten and external Dirac identities. Each complete inverse-factor product stays separate, inverse factors are protected, and only a strict improvement of the complete expression is retained. Unsupported sectors and interrupted trials keep their last completed expression.",
-      "A further bounded ordinary-identity pass handles supported numerators with six distinct external spinor slots and at most one momentum insertion per monomial. It searches Schouten, external Dirac and, when enabled, declared total-momentum-conservation identities. A numerical optimization only proposes a sparse form: exact rational identity coefficients and a zero algebraic replay residual are required before accepting it. Denominators and internal virtualities are unchanged; this does not prove a global minimum.",
-      "For completed external amplitudes, ordinary external pair definitions can first cancel apparent repeated propagators without internal-shell conditions. A bounded shared-matrix identity can then expose one or two literal positive spectator chain factors and smaller six-spinor coefficients. A two-factor route removes only witnessed polynomial factors, preserves each original fraction, and requires exact identity replay after lifting the spectators back. Inverse factors are unchanged by that cofactor route. Only complete improving checkpoints are returned. This final-amplitude route leaves the diagram/channel source partitions used by completion unchanged.",
-      "For completed amplitudes, the original-fraction alternative can continue from each strictly improving ordinary-identity checkpoint. Short searches share the remaining preparation clock rather than restarting contraction expansion. It stops when no better checkpoint is found, its finite pass limit is reached, or the existing time allowance expires. The detailed OriginalFractionSpinorIdentities reduction records CheckpointIterations, StopReason and the complete ordinary identity route. This is a bounded multistep search, not a proof of minimality.",
-      "Constructive internal-shell simplification acts on each item's numerator using only that item's mass declarations. Physical PropDen objects stay off shell. A channel row declares only its own cut; completed external-mass pairs declare no internal cut.",
-      "ReduceSpinorProducts itself applies the ordinary external-shell identities. The additional diagram-local internal-shell reductions belong to preparation and may be disabled with \"InternalOnShell\" -> False.",
-      "\"PolePreference\" -> \"AllPhysical\" compares momentum-insertion references that introduce physical denominator channels outside the current diagram's cuts. \"AllSpurious\" compares references built from other eligible massless particles. \"Mixed\" permits both; Automatic compares admissible choices within a bounded budget.",
-      "\"Cyclic\" and \"ReverseCyclic\" retain fixed massless reference cycles. \"Xi\" uses a common reference, \"IndependentXi\" keeps separate generic references, and None leaves the references unchanged. An unavailable requested choice is reported rather than silently declared successful.",
-      "The search ranks completed trials by expression complexity and respects bounded time and candidate limits. Measuring a completed candidate has a separate bounded allowance from distributing identity trials, so a moderately large but cheaply measured expression is still ranked by its spinor complexity. A leaf-count fallback is not compared against a weighted-complexity score. The search does not prove a global minimum. Automatic resource settings scale to the process; user values remain authoritative.",
-      "The detailed output retains original expressions and discarded remainders so CompleteFactorization can first reuse information lost in aggressive preparation. Pass the report itself when preserving that information matters.",
-      "Feynman inputs use coherent external references for the whole diagram sum and never declare internal lines on shell. The reference assignment is fixed before independent items are sent to workers.",
-      "\"Parallelization\" and \"MaxKernels\" default to Automatic. Items are independent jobs, input order is retained, and user progress runs on the main kernel. \"MaxSteps\" -> 0 disables the bounded identity search but keeps deterministic algebraic and permitted scalar-shell reductions.",
-      "The same interface can simplify a completed amplitude returned as {externalMassRules, expression}; with no internal mass declarations it uses only ordinary identities. It never adds factorization corrections or model interactions."
+      "This is the preparation step between generating expressions and completing an amplitude. It contracts spin indices, chooses requested reference spinors, reduces spinor products and tries bounded improving identities. Unlike [CompleteFactorization](paclet:HEPCAT/ref/CompleteFactorization), it does not add missing physical contributions.",
+      "Accepted inputs are one `{massRules, expression}` pair, a list of such diagram pairs, or the compact rows returned by [FactorizationAmplitudeChannels](paclet:HEPCAT/ref/FactorizationAmplitudeChannels). The ordinary output keeps the same format. You can inspect one prepared diagram or channel without unpacking a large report.",
+      "The mass declarations are part of the meaning of an input. A diagram may declare several internal cuts; a factorization row declares only its selected cut; a completed amplitude should carry external mass rules only. Preparation does not infer new on-shell conditions merely because a denominator appears in the expression."
     ],
     "examples": [
       {
         "description": "Prepare the two QED diagrams with a physical-pole preference.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\namplitudes = diagramAmplitudes[diagrams];\nPrepareAmplitudes[amplitudes, qedModel, \"PolePreference\" -> \"AllPhysical\"]",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\namplitudes = DiagramAmplitudes[diagrams];\nPrepareAmplitudes[amplitudes, qedModel, \"PolePreference\" -> \"AllPhysical\"]",
         "evaluate": false
       },
       {
@@ -1287,14 +1331,40 @@
       }
     ],
     "related": [
-      "diagramAmplitudes",
+      "DiagramAmplitudes",
       "FactorizationAmplitudeChannels",
       "ReduceSpinorProducts",
       "ReduceSpinContractions",
-      "CompleteFactorization",
-      "PrepareDiagramAmplitudes"
+      "CompleteFactorization"
     ],
-    "guide": "AmplitudeConstruction"
+    "guide": "AmplitudeConstruction",
+    "detail_sections": [
+      {
+        "title": "On-shell conditions and protected denominators",
+        "paragraphs": [
+          "[ReduceSpinContractions](paclet:HEPCAT/ref/ReduceSpinContractions) and [ReduceSpinorProducts](paclet:HEPCAT/ref/ReduceSpinorProducts) apply the ordinary contraction and external-particle identities. Preparation additionally knows the complete external leg list and can try momentum-conservation reductions.",
+          "With `\"InternalOnShell\" -> True`, constructive numerator reductions can use the internal mass declarations belonging to that individual diagram or channel. For example, knowing the mass of the line with momentum `p2+p5` can replace its numerator scalar product `p2.p5` by a combination of masses. The physical [PropDen](paclet:HEPCAT/ref/PropDen) denominators remain off shell.",
+          "Such a numerator choice is a representative valid on the declared cut; it need not be an identity away from that cut. Request `\"ReturnDetails\" -> True` when the result will feed completion. The report retains the original expressions and discarded remainders, giving completion more information than the compact result alone.",
+          "A completed `{externalMassRules, expression}` pair has no internal cut declarations, so it can be prepared again using ordinary identities without introducing internal-shell conditions. Feynman preparation also keeps internal numerators off shell and uses one common reference assignment for each external gauge leg across all diagrams."
+        ]
+      },
+      {
+        "title": "Choosing reference spinors",
+        "paragraphs": [
+          "`\"PolePreference\" -> Automatic` compares allowed choices and keeps the simplest completed trial within the reference budget. `\"AllSpurious\"` uses other eligible massless external particles as references. `\"AllPhysical\"` uses momentum-insertion references that introduce physical poles outside the constructive item's own cuts. `\"Mixed\"` compares both types.",
+          "`\"Cyclic\"` and `\"ReverseCyclic\"` give reproducible massless-particle reference choices. `\"Xi\"` makes the references common, `\"IndependentXi\"` keeps a separate generic reference for each external particle, and `None` leaves the supplied references unchanged. With only one massless external particle, an all-spurious choice may be unavailable; `Automatic` or `\"AllPhysical\"` can still be useful.",
+          "These options express a choice of representation. The search is finite, so a result is not guaranteed to be globally shortest. An unavailable requested choice or an unfinished computation is reported rather than silently treated as fully prepared."
+        ]
+      },
+      {
+        "title": "Keeping the result and controlling effort",
+        "paragraphs": [
+          "Use the ordinary output for inspection or a short calculation. Use `\"ReturnDetails\" -> True` when passing preparation information into [CompleteFactorization](paclet:HEPCAT/ref/CompleteFactorization). `\"Output\" -> \"Expression\"` returns a bare sum; details preserve the item reports, reference assignments and retained differences.",
+          "Normal resource settings are automatic. The live display shows progress through the items. Independent diagrams or channels can be prepared in parallel; set `\"Parallelization\" -> False` to keep the work on the main kernel, or use `\"MaxKernels\"` to reduce the worker count.",
+          "If preparation stops at a limit, inspect its status before assuming all requested reductions were completed. Giving more time permits a larger search but does not prove that a shorter expression exists. [SpinorExpressionComplexity](paclet:HEPCAT/ref/SpinorExpressionComplexity) provides the ranking measure used to compare candidate forms."
+        ]
+      }
+    ]
   },
   {
     "name": "PrepareDiagramAmplitudes",
@@ -1324,14 +1394,15 @@
     ],
     "related": [
       "PrepareAmplitudes",
-      "diagramAmplitudes",
+      "DiagramAmplitudes",
       "FactorizationAmplitudeChannels"
     ],
-    "guide": "AmplitudeConstruction"
+    "guide": "AmplitudeConstruction",
+    "visibility": "internal"
   },
   {
     "name": "CompleteFactorization",
-    "summary": "Repair physical residue deficits with a bounded simultaneous correction fit.",
+    "summary": "Add corrections that make a candidate amplitude reproduce all supplied physical factorization channels together.",
     "syntaxes": [
       {
         "input": "CompleteFactorization[amplitudes, channels, model]",
@@ -1347,27 +1418,13 @@
       }
     ],
     "details": [
-      "The function starts with the supplied amplitude, compares every physical residue with its lower-point target and solves for correction coefficients together. It does not naively add the channel products, which overlap on multiple poles.",
-      "When MaxCorrectionTerms is Automatic, an already built and projected exchange-symmetry correction union can be admitted within the automatic ceiling without rebuilding its sources. CapChanges records the effective increase and preserved direction count. Later source builders use the construction allowance implied by that effective cap, recorded as SourceConstructionLimit. This never extends TimeConstraint, truncates columns or changes residue and affine-family validation. Explicit numerical caps and supplied correction bases retain their limits.",
-      "Preparation details provide simplified expressions, original expressions and discarded remainders. These are tried before broader channel-continuation directions, preserving useful diagram information without making a hard-coded process formula.",
-      "Before admitting a source to a simple-physical-pole proposal, a bounded ordinary external pair-virtuality cancellation can remove apparent repeated propagators. For a massless leg k and an external leg p of mass m, PropDen[p+k,m] equals 2 p.k without putting the internal line on shell. Newly exposed regular quotients stay correlated with their complete source under one coefficient, including a wholly regular quotient; their coefficients are not claimed to be fixed by residues. Already-explicit regular input is fixed separately and removed per input record before source normalization. Uncanceled positive numerator virtualities are restored as momentum products. Genuine higher-order poles still fail the existing simple-pole admission guard.",
-      "For sufficiently large coherent-spin systems, a preliminary proposal keeps related terms of existing prepared sources and their retained remainders together, grouped by momentum-insertion degree. It fits that complete proposal against every original channel before attempting wider continuation spaces. The first proposal keeps prepared whole sources in their physical form and preserves the supplied discarded remainders through grouping and exchange projection; eligibility is checked on canonical copies. Rewriting those remainders is deferred to the fit so early rewrites do not accidentally favor a more complicated representative. A normalized source proposal remains a fallback within the same clock and explicit limits. Neither changes the physical targets.",
-      "Residue sampling may skip the numerator evaluation of a coordinate that is structurally regular at the selected cut, after verifying every other inverse factor is finite and nonzero on that same exact chart. The coordinate remains in the system. Hidden spinor inverses, coincident poles and unsupported or custom charts use the full residue evaluator.",
-      "The correction space is finite and bounded. Alternative reference continuations, input reweighting and retained terms can supply additional directions. Failure to span a deficit is reported honestly; the function does not invent unknown lower amplitudes or arbitrary interactions.",
-      "The ordinary successful output is {externalMassRules, expression}. No internal shell declaration survives for the complete amplitude. It can be passed to PrepareAmplitudes or CompleteHighEnergy.",
-      "\"Output\" -> \"Expression\" gives the bare expression. \"ReturnDetails\" -> True or \"Output\" -> \"Details\" exposes the fit, correction, channel continuations, refinement history and validation. Request details when CompleteHighEnergy must retain residue-preserving affine freedom.",
-      "\"PolePreference\" biases representation and continuation choices. AllPhysical favors physical-only inverse factors; it is not permission to return an unchecked expression or a proof that the result is globally simplest.",
-      "Identical boson and fermion permutations are inferred from ordered external particle identities and the model's twice-spin declarations. Equal masses alone cannot identify the species. Supply \"ExternalParticles\" when a bare input has lost the ordered process metadata.",
-      "Numerical fitting uses locally resolved model parameters. A time-based seed is chosen once for Automatic; an integer replays the sampling. Independent validation and failed-sample refinement guard against a fit that happens to match its training points.",
-      "A large inconsistent exact system may be rejected by a verified left-null contradiction certificate instead of computing its full affine solution. Every original coefficient column and the nonzero constant residual are checked exactly. If no exact matrix rank was computed, details report Rank as Missing and give RankLowerBound separately; successful and underdetermined solutions retain their exact-rank and full-family checks. Its optional contradiction proof scales with the actual matrix width, stays within half the remaining solver clock, and has a 120-second ceiling. A modular rank gap alone is never accepted as an exact proof.",
-      "Automatic effort settings bound runtime and correction size. An unresolved result normally returns a concise Failure rather than an unchecked amplitude. Detailed reports distinguish complete, incomplete and underdetermined cases.",
-      "Physical residue agreement leaves any genuine pole-free or residue-preserving freedom for CompleteHighEnergy and other stated physical constraints. No universal uniqueness claim follows from sampled residues alone.",
-      "Exact integer, rational and Gaussian-rational coefficients have exact zero decisions without a numerical tolerance. Other algebraic coefficients retain algebraic normalization; approximate or unresolved symbolic values are not silently accepted as exact proof."
+      "Start with diagram expressions or their detailed [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes) report, the channels from [FactorizationAmplitudeChannels](paclet:HEPCAT/ref/FactorizationAmplitudeChannels), and the factorization model. The function compares the candidate's residue with the expected lower-point product at every physical pole and solves for correction coefficients simultaneously.",
+      "A successful ordinary result is `{externalMassRules, expression}`. It contains no internal-shell declarations for the complete amplitude and can be passed directly to preparation, [CompleteHighEnergy](paclet:HEPCAT/ref/CompleteHighEnergy) or [CheckAmplitudes](paclet:HEPCAT/ref/CheckAmplitudes). Use `\"Output\" -> \"Expression\"` if you specifically want the bare expression."
     ],
     "examples": [
       {
-        "description": "The explicit staged QED workflow retains preparation information.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\namplitudes = diagramAmplitudes[diagrams];\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nprepared = PrepareAmplitudes[amplitudes, qedModel, \"ReturnDetails\" -> True];\nfactorized = CompleteFactorization[prepared, channels, qedModel, \"ReturnDetails\" -> True];\nfactorized",
+        "description": "Prepare the two QED diagrams, solve their residue conditions together, and display the resulting amplitude. Keep the detailed result in factorized for the next stage.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\namplitudes = DiagramAmplitudes[diagrams];\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nprepared = PrepareAmplitudes[amplitudes, qedModel, \"ReturnDetails\" -> True];\nfactorized = CompleteFactorization[prepared, channels, qedModel, \"ReturnDetails\" -> True];\nfactorized[\"Amplitude\"]",
         "evaluate": false
       },
       {
@@ -1383,11 +1440,37 @@
       "CheckAmplitudes",
       "ConstructAmplitude"
     ],
-    "guide": "AmplitudeConstruction"
+    "guide": "AmplitudeConstruction",
+    "detail_sections": [
+      {
+        "title": "Why the channels are solved together",
+        "paragraphs": [
+          "A factorization channel determines an amplitude on one pole. Extending its expression away from that pole is not unique, and different channels can share double or higher simultaneous poles. Simply adding a correction for each failed channel can double count a shared contribution or spoil a channel that already passed.",
+          "Completion therefore constructs a finite set of correction directions from the supplied information and determines their coefficients using all channel conditions at once. Diagram reweightings, terms retained during preparation and alternative reference choices can supply useful directions. The original lower-point channel products remain the targets throughout.",
+          "The function does not search every imaginable expression and does not invent an unknown interaction. If a required lower-point amplitude is absent from the model, or the available correction directions cannot express a needed contribution, longer fitting alone is not a guarantee of success."
+        ]
+      },
+      {
+        "title": "Retaining information for the following stages",
+        "paragraphs": [
+          "Detailed preparation reports are preferred when simplifying aggressively. They keep the original diagram expressions and the pieces discarded by diagram-local numerator-shell reductions. Completion tries useful retained pieces before constructing broader alternatives, rather than having to rediscover that information from a reduced sum.",
+          "Residue agreement can leave combinations of corrections undetermined because they vanish on all tested physical poles. Request `\"ReturnDetails\" -> True` if the result will go to [CompleteHighEnergy](paclet:HEPCAT/ref/CompleteHighEnergy). That report retains the whole remaining family, not just one chosen expression.",
+          "`\"PolePreference\"` biases the representation searched for: for example, `\"AllPhysical\"` favors forms with physical denominator poles. It never permits a failed channel to be ignored. Identical-particle exchange symmetry is inferred from the supplied particle identities and model spins when that information is available; `\"ExternalParticles\"` can provide the process for a bare expression."
+        ]
+      },
+      {
+        "title": "Validation, limits and failure reports",
+        "paragraphs": [
+          "Coefficients are fitted using coherent kinematic samples and then checked on independent samples. A failed validation point can be added to the equations before another fit. Model numerical values are used for fitting and checking; the returned amplitude retains its symbolic parameters.",
+          "Resource settings are automatic by default. `\"TimeConstraint\"` and `\"MaxCorrectionTerms\"` can impose explicit limits. `\"RandomSeed\"` records or repeats the sampling. More time allows more work within the available correction space, not an unrestricted search for a unique answer.",
+          "An unfinished result normally returns `Failure[\"IncompleteAmplitude\", ...]` instead of presenting an unchecked candidate as an amplitude. To investigate, request `\"ReturnDetails\" -> True` and examine the candidate, validation, attempted correction space and remaining free parameters. A successful factorization fit still needs the high-energy, spurious-pole and any independent checks appropriate to the theory; sampled residue agreement alone is not a uniqueness proof."
+        ]
+      }
+    ]
   },
   {
     "name": "CompleteHighEnergy",
-    "summary": "Fit retained residue-preserving freedom to high-energy, spurious-pole and reference constraints.",
+    "summary": "Use high-energy and other full-amplitude conditions to fix freedom left after physical factorization.",
     "syntaxes": [
       {
         "input": "CompleteHighEnergy[input, channels, model]",
@@ -1399,24 +1482,14 @@
       }
     ],
     "details": [
-      "Pass detailed CompleteFactorization output when its remaining affine directions are needed. Alternatively supply a justified explicit \"CorrectionBasis\". Automatic uses retained information and does not create an unrestricted contact-operator ansatz.",
-      "The fitted directions must preserve the known physical residues. High-energy scaling, apparent spurious singularities and explicit reference dependence are tested together, and the candidate is validated again against the original channels.",
-      "The default high-energy target is the renormalizable tree bound E^(4-n), with masses held fixed. \"HighEnergyBound\" can express another stated bound; it is a physical input rather than an arbitrary fitting preference.",
-      "Independent high-energy validation may use a conservative all-spin upper-bound certificate for supported large expressions. Such a report records ObservedPowerUpperBound and leaves ObservedPower missing; it does not claim a measured leading Laurent power. Unsupported or inconclusive certificates retain the ordinary exact Laurent comparison.",
-      "When an exact Laurent expansion is needed, large coherent-spin polynomials can first be separated into all of their scalar coefficients without expanding the kinematic coefficient field. Every coefficient is expanded and reassembled exactly; no spin components or small coefficients are sampled away. Independent high-energy samples share one deadline and can run on separate workers. Large retained families can use the same exact coefficient separation to build fitting equations; correction unknowns are reassembled before extracting equations, so a condition such as x+y=0 retains its coupled freedom.",
-      "If Series assumes an exact numeric radical coefficient is zero, that assumption is accepted only after an exact algebraic zero certificate. A tiny genuine nonzero value, an unproved assumption, another warning or an insufficient expansion order keeps the result unresolved or on its original fallback. Details retain these certificates.",
-      "A successful ordinary result keeps the {externalMassRules, expression} form. There are no new internal on-shell conditions on this combined amplitude, so it may be simplified again with PrepareAmplitudes.",
-      "\"Output\" -> \"Details\" retains the candidate, equations, fitted family and validation. A timeout, unsupported direction space or unresolved free coefficient is not silently assigned an arbitrary value.",
-      "Exact identity proofs receive an allowance based on both the number and the size of retained affine directions. A small family containing a large expression can therefore receive more proof time, still within the stage's TimeConstraint. Details records FamilyIdentityProofBudget, including DirectionCount, LargestDirectionLeafCount and AllocatedSeconds. This changes resource allocation only: an unproved direction is retained, and genuine undetermined interactions are not discarded.",
-      "For a large coherent-spin direction whose original symbolic proof is expensive, a bounded retry factors numerator spectators and compacts each physical-pole group using ordinary identities. It keeps the original direction and the reduction route, then requires the existing generic symbolic external-kinematics certificate on the compact expression. It does not use internal shells or sampled zeros as a proof; an unfinished attempt retains the direction.",
-      "A late serial fallback can prove supported identities on a dense symbolic external rest/null chart using complete exact Laurent-polynomial arithmetic. It chooses angle or square null-spinor axes from the expression, then verifies external shells, conservation, spinor reconstruction, typed homogeneity, coefficient coverage and a nonzero off-cut denominator domain. Unit normalization requires exact mass/coupling witnesses; it is not a numerical phase-space test. The optional local runtime uses Python 3, a C++17 compiler and Boost headers. Missing tools, unsupported structure or any resource limit preserve the unproved direction. All preparation, compilation and evaluation remain inside the existing shared deadline.",
-      "Use model-local \"ParameterRules\" only for numerical sampling. An explicit \"RandomSeed\" replays the run; Automatic records a newly chosen time-based seed in details.",
-      "This stage cannot establish an unknown interaction merely because it would improve high-energy behavior. The model and supplied direction space determine what is being solved."
+      "Physical residues do not always determine an amplitude completely. A combination of corrections can vanish on all physical poles while still changing the amplitude elsewhere. This stage uses high-energy growth, spurious-pole cancellation and explicit reference independence to constrain the freedom retained by [CompleteFactorization](paclet:HEPCAT/ref/CompleteFactorization).",
+      "For the staged workflow, pass detailed factorization output so the remaining family is available. Passing only one displayed amplitude can lose alternative directions that were present in the fit. An advanced calculation can instead supply a justified `\"CorrectionBasis\"` explicitly.",
+      "The ordinary successful output is `{externalMassRules, expression}`. It can be simplified again with [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes), using ordinary external identities only, and checked with [CheckAmplitudes](paclet:HEPCAT/ref/CheckAmplitudes)."
     ],
     "examples": [
       {
-        "description": "Retain the factorization family and pass it into the high-energy stage.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\namplitudes = diagramAmplitudes[diagrams];\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nprepared = PrepareAmplitudes[amplitudes, qedModel, \"ReturnDetails\" -> True];\nfactorized = CompleteFactorization[prepared, channels, qedModel, \"ReturnDetails\" -> True];\nCompleteHighEnergy[factorized, channels, qedModel, \"Output\" -> \"Details\"]",
+        "description": "Retain the factorization family and pass it into the high-energy stage. The ordinary output keeps the external mass rules next to the completed expression.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\namplitudes = DiagramAmplitudes[diagrams];\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nprepared = PrepareAmplitudes[amplitudes, qedModel, \"ReturnDetails\" -> True];\nfactorized = CompleteFactorization[prepared, channels, qedModel, \"ReturnDetails\" -> True];\nCompleteHighEnergy[factorized, channels, qedModel]",
         "evaluate": false
       },
       {
@@ -1431,11 +1504,30 @@
       "PrepareAmplitudes",
       "ConstructAmplitude"
     ],
-    "guide": "AmplitudeConstruction"
+    "guide": "AmplitudeConstruction",
+    "detail_sections": [
+      {
+        "title": "The physical conditions",
+        "paragraphs": [
+          "The automatic high-energy bound is `E^(4-n)` for a renormalizable tree amplitude with `n` external particles. The comparison takes fixed-angle high-energy limits while holding masses and couplings fixed. Supply `\"HighEnergyBound\"` when your theory requires a different stated growth condition.",
+          "A proposed correction is also checked against the original physical channels. Removing a spurious singularity or improving energy growth is not allowed to spoil factorization. Explicit Xi references are varied when present, and apparent denominator poles must satisfy the supported cancellation checks.",
+          "Only directions supported by the model and the supplied calculation are considered. The function does not create an unrestricted contact-interaction basis or infer new QED interactions. If the stated constraints leave a genuine free interaction, that freedom must remain unresolved rather than being assigned an arbitrary number."
+        ]
+      },
+      {
+        "title": "Reading the result",
+        "paragraphs": [
+          "Use `\"Output\" -> \"Details\"` to inspect the candidate, fitted family, equations and independent validation. This is the appropriate output when an ordinary call returns `Failure`: it lets you distinguish an insufficient direction space, an unfixed coefficient, an unsupported check and a computation that reached its time limit.",
+          "Large expressions may be tested through a conservative upper bound on their high-energy power rather than an explicitly measured leading power. Such a report labels the quantity `\"ObservedPowerUpperBound\"`; it should not be read as an exact leading exponent. The report states which method completed.",
+          "The code can remove a retained direction after an exact identity certificate, but a few numerical zeros do not establish an identity. Unfinished proofs keep the direction. The same distinction applies when interpreting a successful sampled check of the final amplitude.",
+          "Defaults choose finite effort automatically. Set an integer `\"RandomSeed\"` to replay sampled kinematics, or adjust `\"TimeConstraint\"` for a longer calculation. A timeout remains visible in the result; it does not silently turn an undetermined family into a completed amplitude."
+        ]
+      }
+    ]
   },
   {
     "name": "ConstructAmplitude",
-    "summary": "Construct, complete, simplify and validate an amplitude from its process and two models.",
+    "summary": "Construct and check an amplitude from its external process and the models supplying its interactions and known lower-point amplitudes.",
     "syntaxes": [
       {
         "input": "ConstructAmplitude[process, diagramModel, factorizationModel]",
@@ -1451,17 +1543,9 @@
       }
     ],
     "details": [
-      "The process is an ordered all-ingoing particle list. Use the diagram model for vertices and a factorization model containing the complete lower-point amplitudes. Four-point QED can use the three-point model for both roles; five-point QED needs the model containing complete four-point amplitudes for factorization.",
-      "The stages generate and prepare diagram amplitudes, generate and prepare channel continuations, complete physical factorization, complete high-energy behavior, simplify the completed amplitude with ordinary external identities, and run the final checks.",
-      "Original residue targets, discarded preparation remainders and residual affine freedom are retained between stages. Final preparation never puts a combined amplitude's internal propagators on shell.",
-      "A bare expression is returned only when every required final check passes. An opposite-sign, failed, unresolved or underdetermined case remains a Failure or detailed diagnostic report, not an alleged validated result.",
-      "The defaults choose bounded resources automatically according to multiplicity and workload. Routine examples need only the three main arguments. \"TimeConstraint\", \"Parallelization\" and \"MaxKernels\" can override the automatic choices.",
-      "\"PolePreference\" controls reference choices and representation preferences through preparation and completion. For example, \"AllPhysical\" asks the workflow to favor physical-only denominator forms.",
-      "Progress shows the current stage, its elapsed time and the total elapsed time. The final printed report shows time, the chosen seed and test results before the expression. \"ProgressReporting\" -> False and \"PrintReport\" -> False suppress these displays.",
-      "\"RandomSeed\" -> Automatic chooses one time-based run seed from which stage seeds are derived. Give an integer to reproduce sampling and inspect \"Details\" to preserve the actual seed.",
-      "\"FeynmanModel\" can supply an independent off-shell benchmark. It is a separate semantic input and cannot be guessed from the constructive factorization model.",
-      "Advanced stage-specific options are supplied in \"PreparationOptions\", \"ChannelPreparationOptions\", \"FactorizationOptions\", \"HighEnergyOptions\", \"FinalPreparationOptions\", \"CheckOptions\" and \"FeynmanPreparationOptions\". These are optional refinements, not required boilerplate.",
-      "Identical boson and fermion symmetry is inferred from the process identities and the model. Fixed photon helicities are distinct process choices; amplitudes differing by those choices can later be exported together with WriteSPINASProcess."
+      "This is the main entry point when you want HEPCAT to carry out the complete constructive workflow. Supply an ordered all-ingoing process list, a diagram model and a factorization model. Routine calls need only those three arguments; the algorithm chooses its effort settings automatically.",
+      "The diagram model supplies the interactions used by [CreateDiagrams](paclet:HEPCAT/ref/CreateDiagrams). The factorization model supplies complete lower-point amplitudes used by [FactorizationAmplitudeChannels](paclet:HEPCAT/ref/FactorizationAmplitudeChannels). They can be the same model at four points, but the factorization model must contain enough higher-point information for larger processes.",
+      "A successful ordinary call returns the final bare expression after all required checks pass. `\"Output\" -> \"Amplitude\"` instead returns `{externalMassRules, expression}`, which you can pass to [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes) again. `\"Output\" -> \"Details\"` retains the stage results, timings, seed and validation report."
     ],
     "examples": [
       {
@@ -1473,11 +1557,6 @@
         "description": "Choose a physical-pole representation and retain the complete run report.",
         "input": "qedModel = ReadModel[modelDirectory, 2];\nknownQEDModel = ReadModel[modelDirectory, 3];\nConstructAmplitude[{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"}, qedModel, knownQEDModel, \"PolePreference\" -> \"AllPhysical\", \"Output\" -> \"Details\", \"RandomSeed\" -> 314159]",
         "evaluate": false
-      },
-      {
-        "description": "Inspect automatic resource defaults without running a construction.",
-        "input": "Options[ConstructAmplitude]",
-        "evaluate": true
       }
     ],
     "related": [
@@ -1489,7 +1568,33 @@
       "CheckAmplitudes",
       "WriteSPINASProcess"
     ],
-    "guide": "AmplitudeConstruction"
+    "guide": "AmplitudeConstruction",
+    "detail_sections": [
+      {
+        "title": "What happens during a construction",
+        "paragraphs": [
+          "HEPCAT generates the diagrams and prepares their expressions, then builds the known factorization channels. [CompleteFactorization](paclet:HEPCAT/ref/CompleteFactorization) solves any physical residue deficits, and [CompleteHighEnergy](paclet:HEPCAT/ref/CompleteHighEnergy) constrains the retained freedom using full-amplitude conditions. The completed expression is prepared again with external identities and passed through [CheckAmplitudes](paclet:HEPCAT/ref/CheckAmplitudes).",
+          "The stages pass more than their displayed expressions to one another. Original channel targets, discarded preparation remainders and remaining correction directions are retained. In particular, the final simplification does not apply diagram-local internal-shell conditions to the assembled amplitude.",
+          "The progress display names the current stage and shows both its elapsed time and the total time. At the end, the function prints the total time, run seed and check results before returning. `\"ProgressReporting\" -> False` and `\"PrintReport\" -> False` suppress those displays when running a script."
+        ]
+      },
+      {
+        "title": "Useful choices",
+        "paragraphs": [
+          "`\"PolePreference\" -> \"AllPhysical\"` asks the workflow to favor a final representation with physical denominator poles. `\"AllSpurious\"` and the other supported reference choices favor different intermediate forms. This is a preference within the available search, not permission to relax a physical check or a promise of a globally shortest answer.",
+          "Use `\"FeynmanModel\" -> feynmanModel` when you have an independent [FeynmanModel](paclet:HEPCAT/ref/FeynmanModel) for the same process and want a full-amplitude comparison as well. That model is a separate physical input and is not guessed from the constructive model.",
+          "`\"Parallelization\"` and `\"MaxKernels\"` control the use of local workers. `\"TimeConstraint\"` changes the overall budget. An integer `\"RandomSeed\"` replays the sampled kinematics; Automatic chooses and records a seed for the run. You do not need numerical parameter rules unless you want values different from those in the models."
+        ]
+      },
+      {
+        "title": "If construction does not complete",
+        "paragraphs": [
+          "A failed, opposite-sign, unresolved or underdetermined check prevents the ordinary call from returning an allegedly validated amplitude. Request `\"Output\" -> \"Details\"` to see which stage stopped and why. A missing lower-point input, an insufficient correction space and an exhausted time limit require different remedies.",
+          "When you want to understand an intermediate expression, use the individual functions rather than increasing every resource option. Start with diagrams, inspect their prepared pairs, then examine factorization details. The tutorial on constructing an amplitude in stages shows that sequence and explains how to keep the information needed by the following stage.",
+          "Advanced stage options can be supplied through `\"PreparationOptions\"`, `\"FactorizationOptions\"`, `\"HighEnergyOptions\"`, `\"FinalPreparationOptions\"`, `\"CheckOptions\"` and their channel/Feynman counterparts. These are overrides for a specific investigation, not required setup for every calculation."
+        ]
+      }
+    ]
   },
   {
     "name": "ReadVertices",
@@ -1517,7 +1622,8 @@
       "ReadModel",
       "ReadModel"
     ],
-    "guide": "ModelsAndParameters"
+    "guide": "ModelsAndParameters",
+    "visibility": "internal"
   },
   {
     "name": "ConvertVertex",
@@ -1545,7 +1651,8 @@
       "ConvertAmplitude",
       "ReadModel"
     ],
-    "guide": "ModelsAndParameters"
+    "guide": "ModelsAndParameters",
+    "visibility": "internal"
   },
   {
     "name": "CompareAmpToSquaredAmp",
@@ -1573,7 +1680,8 @@
       "CheckAmplitudes",
       "CheckAmplitudes"
     ],
-    "guide": "LegacyAmplitudeSearch"
+    "guide": "LegacyAmplitudeSearch",
+    "visibility": "internal"
   },
   {
     "name": "DeleteRandomConstructiveAmplitude",
@@ -1601,7 +1709,8 @@
       "ComplicateAmplitude",
       "CheckAmplitudes"
     ],
-    "guide": "LegacyAmplitudeSearch"
+    "guide": "LegacyAmplitudeSearch",
+    "visibility": "internal"
   },
   {
     "name": "CheckLengthConstructive",
@@ -1629,7 +1738,8 @@
       "SpinorExpressionComplexity",
       "CheckAmplitudes"
     ],
-    "guide": "LegacyAmplitudeSearch"
+    "guide": "LegacyAmplitudeSearch",
+    "visibility": "internal"
   },
   {
     "name": "CheckNumberOfSpinors",
@@ -1657,7 +1767,8 @@
       "SpinorChain",
       "CheckAmplitudes"
     ],
-    "guide": "LegacyAmplitudeSearch"
+    "guide": "LegacyAmplitudeSearch",
+    "visibility": "internal"
   },
   {
     "name": "CreateRandomConstructiveSpinorProduct",
@@ -1685,7 +1796,8 @@
       "ComplicateAmplitude",
       "CheckAmplitudes"
     ],
-    "guide": "LegacyAmplitudeSearch"
+    "guide": "LegacyAmplitudeSearch",
+    "visibility": "internal"
   },
   {
     "name": "CreateRandomMassFactor",
@@ -1713,7 +1825,8 @@
       "ModelParameter",
       "CheckAmplitudes"
     ],
-    "guide": "LegacyAmplitudeSearch"
+    "guide": "LegacyAmplitudeSearch",
+    "visibility": "internal"
   },
   {
     "name": "CreateRandomConstructiveAmplitudeTerm",
@@ -1741,7 +1854,8 @@
       "ComplicateAmplitude",
       "CheckAmplitudes"
     ],
-    "guide": "LegacyAmplitudeSearch"
+    "guide": "LegacyAmplitudeSearch",
+    "visibility": "internal"
   },
   {
     "name": "AddRandomConstructiveAmplitudeTerm",
@@ -1769,7 +1883,8 @@
       "ApplySpinorIdentity",
       "CheckAmplitudes"
     ],
-    "guide": "LegacyAmplitudeSearch"
+    "guide": "LegacyAmplitudeSearch",
+    "visibility": "internal"
   },
   {
     "name": "CreateInitialRandomPopulationConstructiveAmplitudes",
@@ -1797,7 +1912,8 @@
       "ConstructAmplitude",
       "CheckAmplitudes"
     ],
-    "guide": "LegacyAmplitudeSearch"
+    "guide": "LegacyAmplitudeSearch",
+    "visibility": "internal"
   },
   {
     "name": "RandomDeleteSpinorProduct",
@@ -1825,7 +1941,8 @@
       "ApplySpinorIdentity",
       "CheckAmplitudes"
     ],
-    "guide": "LegacyAmplitudeSearch"
+    "guide": "LegacyAmplitudeSearch",
+    "visibility": "internal"
   },
   {
     "name": "RandomAddSpinorProduct",
@@ -1853,7 +1970,8 @@
       "ApplySpinorIdentity",
       "CheckAmplitudes"
     ],
-    "guide": "LegacyAmplitudeSearch"
+    "guide": "LegacyAmplitudeSearch",
+    "visibility": "internal"
   },
   {
     "name": "RandomChangeCoefficientSpinorProduct",
@@ -1881,7 +1999,8 @@
       "CompleteFactorization",
       "CheckAmplitudes"
     ],
-    "guide": "LegacyAmplitudeSearch"
+    "guide": "LegacyAmplitudeSearch",
+    "visibility": "internal"
   },
   {
     "name": "MateConstructiveAmplitudes",
@@ -1909,7 +2028,8 @@
       "ConstructAmplitude",
       "CheckAmplitudes"
     ],
-    "guide": "LegacyAmplitudeSearch"
+    "guide": "LegacyAmplitudeSearch",
+    "visibility": "internal"
   },
   {
     "name": "MakeNRandomChanges",
@@ -1937,7 +2057,8 @@
       "ComplicateAmplitude",
       "CheckAmplitudes"
     ],
-    "guide": "LegacyAmplitudeSearch"
+    "guide": "LegacyAmplitudeSearch",
+    "visibility": "internal"
   },
   {
     "name": "FindAmp",
@@ -1965,6 +2086,7 @@
       "ConstructAmplitude",
       "CheckAmplitudes"
     ],
-    "guide": "LegacyAmplitudeSearch"
+    "guide": "LegacyAmplitudeSearch",
+    "visibility": "internal"
   }
 ]

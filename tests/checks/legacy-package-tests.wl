@@ -60,7 +60,7 @@ legacyPublicFunctions = {
   "ConstructiveDiagram", "SChannelDiagram", "TChannelDiagram", "UChannelDiagram",
   "FactorizationPartitions", "LookupAmplitude", "ExpandXFactors", "FactorizationAmplitudeChannels",
   "SimplifyFactorizationChannels", "ExpandMomHatAlt", "SumResiduesAlt", "UnHatSpinors",
-  "CreateDiagrams", "CreateArrowDiagram", "CreateArrowDiagrams", "diagramAmplitude", "diagramAmplitudes"
+  "CreateDiagrams", "CreateArrowDiagram", "CreateArrowDiagrams", "diagramAmplitude", "DiagramAmplitudes"
 };
 Do[legacyCheck["legacy public function is defined: " <> name, legacyDefinitionQ[name]],
   {name, legacyPublicFunctions}];
@@ -73,7 +73,7 @@ legacyProtectedFunctions = {
   "MakeIndicesExplicit", "SymmetrizeSpins", "SymmetrizeSpin", "SquareAmplitude", "ReadModel",
   "ReadVariables", "ReadFunctions", "ReadParticles", "ParticleMass",
   "SChannelDiagram", "TChannelDiagram", "UChannelDiagram", "ConstructiveDiagram",
-  "CreateDiagrams", "CreateArrowDiagram", "CreateArrowDiagrams", "diagramAmplitude", "diagramAmplitudes"
+  "CreateDiagrams", "CreateArrowDiagram", "CreateArrowDiagrams", "diagramAmplitude", "DiagramAmplitudes"
 };
 Do[legacyCheck["legacy public symbol remains protected: " <> name, legacyProtectedQ[name]],
   {name, legacyProtectedFunctions}];

@@ -760,7 +760,7 @@ acKnownNumeratorDotCount[pair_] := Module[{declared, external, known, terms},
   Total[Function[term, Length[Select[Cases[Numerator[term], _MomProd, {0, Infinity}],
     Function[product, MemberQ[known, Sort[List @@ product]]]]]] /@ terms]
 ];
-acDotQEDPairs = diagramAmplitudes[CreateDiagrams[
+acDotQEDPairs = DiagramAmplitudes[CreateDiagrams[
   {"e", "E", "A.+", "A.+", "A.+"}, prModel]];
 acDotQEDPrepared = PrepareAmplitudes[acDotQEDPairs, prModel,
   "PolePreference" -> "AllSpurious", "MaxSteps" -> 0,
@@ -1083,8 +1083,8 @@ Print["Checking scalar-tree completion and exact linear refinement."];
 acScalarModel = {{{"Scalar", "s", "s", 1, 0, acScalarMass, 0, 1, 1, "", ""}},
   {{"s", "s", "s", "", acCubicCoupling, 1}}, {}, {}};
 acSum[pairs_] := Total[(ReduceSpinContractions[Last[#]] /. First[#]) & /@ pairs];
-acScalarFourPairs = diagramAmplitudes[CreateDiagrams[ConstantArray["s", 4], acScalarModel]];
-acScalarFivePairs = diagramAmplitudes[CreateDiagrams[ConstantArray["s", 5], acScalarModel]];
+acScalarFourPairs = DiagramAmplitudes[CreateDiagrams[ConstantArray["s", 4], acScalarModel]];
+acScalarFivePairs = DiagramAmplitudes[CreateDiagrams[ConstantArray["s", 5], acScalarModel]];
 acScalarFour = acSum[acScalarFourPairs]; acScalarFive = acSum[acScalarFivePairs];
 acScalarKnownModel = ReplacePart[acScalarModel, 2 -> Join[acScalarModel[[2]],
   {Join[ConstantArray["s", 4], {1, acScalarFour}]}]];
@@ -1353,7 +1353,7 @@ check["reference choices introducing unsupported repeated physical poles are rej
       #["Verification"]["HigherOrderPropagators"] =!= {} &&
         #["Verification"]["Diagnostics"] =!= {} &]];
 (* The caller explicitly chooses a shared generic reference through preparation. *)
-acQEDCommonPairs = diagramAmplitudes[CreateDiagrams[{"e", "E", "A.+", "A.+"}, prModel]];
+acQEDCommonPairs = DiagramAmplitudes[CreateDiagrams[{"e", "E", "A.+", "A.+"}, prModel]];
 acQEDPipelinePrepared = PrepareAmplitudes[acQEDCommonPairs, prModel,
   "PolePreference" -> "Xi", "ProgressReporting" -> False, "Output" -> "Details"];
 acQEDPipelinePairs = PrepareAmplitudes[acQEDCommonPairs, prModel,
@@ -1369,7 +1369,7 @@ acQEDPipelineFactor = acFactor[acQEDPipelinePrepared, prFourPointChannels, prMod
   "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}];
 acQEDPipelineComplete = acEnergy[acQEDPipelineFactor, prFourPointChannels, prModel,
   "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}];
-check["the full pipeline prepares actual QED diagramAmplitudes output",
+check["the full pipeline prepares actual QED DiagramAmplitudes output",
   acQEDPipelinePrepared["Status"] === "PREPARED" &&
     Length[acQEDPipelinePrepared["PreparedAmplitudes"]] === 2];
 check["the prepared QED diagrams pass simultaneous factorization completion",
@@ -1381,7 +1381,7 @@ check["actual QED diagrams pass all final conditions through the staged pipeline
 
 (* Reproduce the notebook's five-point AllSpurious construction without a supplied answer. *)
 Print["Preparing the actual five-point AllSpurious diagrams."];
-acQEDFivePairs = diagramAmplitudes[CreateDiagrams[prParticles, prModel]];
+acQEDFivePairs = DiagramAmplitudes[CreateDiagrams[prParticles, prModel]];
 acQEDFivePrepared = PrepareAmplitudes[acQEDFivePairs, prModel,
   "PolePreference" -> "AllSpurious", "ProgressReporting" -> False];
 acQEDFiveSaved = acQEDFivePrepared;
@@ -1445,7 +1445,7 @@ check["the reconstructed expression equals H on an external-shell chart away fro
 
 (* Exercise the notebook's completed result, not only a supplied known answer. *)
 acQEDFeynmanModel = ReadModel[FileNameJoin[{root, "model_feynman"}], 2];
-acQEDFeynmanPairs = diagramAmplitudes[CreateDiagrams[prParticles, acQEDFeynmanModel]];
+acQEDFeynmanPairs = DiagramAmplitudes[CreateDiagrams[prParticles, acQEDFeynmanModel]];
 Do[
   acQEDFeynmanPrepared = PrepareAmplitudes[acQEDFeynmanPairs, acQEDFeynmanModel,
     "PolePreference" -> acReferenceMode, "ProgressReporting" -> False,
@@ -1769,7 +1769,7 @@ check["CRT defaults do not replace the existing direct block API and bad-prime c
 
 Print["Completing the four-fermion single-photon process from actual diagrams."];
 acFourFermionParticles = {"e", "E", "E", "e", "A.+"};
-acFourFermionPairs = diagramAmplitudes[CreateDiagrams[acFourFermionParticles, prModel]];
+acFourFermionPairs = DiagramAmplitudes[CreateDiagrams[acFourFermionParticles, prModel]];
 acFourFermionPreparation = PrepareAmplitudes[acFourFermionPairs, prModel,
   "PolePreference" -> Automatic, "MaxSteps" -> 0,
   "ProgressReporting" -> False, "ReturnDetails" -> True];
@@ -1794,7 +1794,7 @@ acFourFermionEnergy = acEnergy[acFourFermionFactorization["Amplitude"], acFourFe
   prFixtureModel, "Samples" -> 1, "ValidationSamples" -> 1, "TimeConstraint" -> 180];
 check["four-fermion completion satisfies high-energy and reference requirements",
   acFourFermionEnergy["Status"] === "COMPLETE" && acAllPass[acFourFermionEnergy["AfterReport"]]];
-acFourFermionFeynman = PrepareAmplitudes[diagramAmplitudes[
+acFourFermionFeynman = PrepareAmplitudes[DiagramAmplitudes[
     CreateDiagrams[acFourFermionParticles, acQEDFeynmanModel]], acQEDFeynmanModel,
   "PolePreference" -> "AllPhysical", "MaxSteps" -> 0, "ProgressReporting" -> False];
 acFourFermionFinal = CheckAmplitudes[acFourFermionEnergy["Amplitude"],
@@ -1845,7 +1845,7 @@ check["the Mixed result equals H without setting either internal denominator on 
 (* Mixed photon helicities are different from Mixed reference selection. *)
 Print["Checking mixed photon helicities from cyclic diagram preparation."];
 acMixedHelicityParticles = {"e", "E", "A.+", "A.+", "A.-"};
-acMixedHelicityPairs = diagramAmplitudes[CreateDiagrams[acMixedHelicityParticles, prModel]];
+acMixedHelicityPairs = DiagramAmplitudes[CreateDiagrams[acMixedHelicityParticles, prModel]];
 acMixedHelicityChannels = FactorizationAmplitudeChannels[acMixedHelicityParticles, prFixtureModel];
 acMixedHelicityOrdinaryPrepared = PrepareAmplitudes[acMixedHelicityPairs, prModel,
   "PolePreference" -> "Cyclic", "MaxSteps" -> 0,

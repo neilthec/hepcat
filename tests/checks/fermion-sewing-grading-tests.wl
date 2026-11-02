@@ -31,7 +31,7 @@ fRows=Table[ReplacePart[fm[[2,1]],{1->flavors[[i,2]],2->flavors[[i,1]]}],{i,3}];
 cm=ReplacePart[cm,{1->cParticles,2->cRows}];fm=ReplacePart[fm,{1->fParticles,2->fRows}];
 rows4=Table[
  process=Join[flavors[[pair[[1]],{1,2}]],flavors[[pair[[2]],{2,1}]]];
- diagrams=diagramAmplitudes[CreateDiagrams[process,cm]];
+ diagrams=DiagramAmplitudes[CreateDiagrams[process,cm]];
  amp=Total[(ReduceSpinContractions[Last[#]]/.First[#])&/@diagrams];
  fsCheck["mixed-flavor lower amplitude comes from one cubic photon diagram "<>ToString[process,InputForm],Length[diagrams]===1 && FreeQ[amp,_xFactor|_xTildeFactor]];
  Join[process,{1,amp}],{pair,Subsets[Range[3],{2}]}];
@@ -41,7 +41,7 @@ channels=FactorizationAmplitudeChannels[process6,known];
 targets=ConstructiveDiagrams`Private`residueSimpleInputs[0,channels,known]["Targets"];
 ferm=SelectFirst[targets,# ["Cut"]==={1,2,3}&];
 fsCheck["six distinct fermions give six genuine fermion factorization channels",Length[targets]===6 && ferm["Cut"]==={1,2,3}];
-raw=diagramAmplitudes[CreateDiagrams[process6,fm]];
+raw=DiagramAmplitudes[CreateDiagrams[process6,fm]];
 fsCheck["independent mixed-flavor Feynman construction contains six cubic diagrams",Length[raw]===6];
 converted=FeynmanToSpinorProducts[raw,"TimeConstraint"->120];
 If[FailureQ[converted],Print[converted];Exit[2]];
@@ -96,7 +96,7 @@ fsCheck["unpaired Dirac lower amplitudes return a public failure before multiply
 (* Verify the lower data independently before using it in a larger cut. *)
 Do[
  fsProcess=Drop[fsRow,-2];
- fsLowerFeynman=FeynmanToSpinorProducts[diagramAmplitudes[CreateDiagrams[fsProcess,fm]],
+ fsLowerFeynman=FeynmanToSpinorProducts[DiagramAmplitudes[CreateDiagrams[fsProcess,fm]],
    "TimeConstraint"->30]/.{fMass->cMass,fCharge->cCharge};
  fsLowerReport=CheckAmplitudes[
    {Thread[Mass/@Range[4]->ConstantArray[cMass,4]],fsRow[[-2]]fsRow[[-1]]},
@@ -114,7 +114,7 @@ Do[
    Build these from ordinary off-shell Feynman diagrams, not from sewing. *)
 fsRows5=Flatten[Table[Module[{p,raw5,prepared5,a},
  p=Join[flavors[[pair[[1]],{1,2}]],flavors[[pair[[2]],{2,1}]],{photon}];
- raw5=diagramAmplitudes[CreateDiagrams[p,fm]];
+ raw5=DiagramAmplitudes[CreateDiagrams[p,fm]];
  prepared5=PrepareAmplitudes[raw5,fm,"PolePreference"->"AllPhysical",
    "InternalOnShell"->False,"MaxSteps"->0,"TimeConstraint"->30,
    "Parallelization"->False,"ReturnDetails"->True,"ProgressReporting"->False];
@@ -139,7 +139,7 @@ If[Length[fsRows5]===6 && AllTrue[fsRows5,ListQ],
  fsCheck["all nine mixed photon and fermion cuts agree for every one of 64 spin components",
    Length[fsTargets9]===9 && MatchQ[fsCoherentRows,{{_List,6,"PASS",True}..}] && Length[fsCoherentRows]===9];
  fsAntiProcess=ReplacePart[process6,{2->process6[[4]],4->process6[[2]]}];
- fsAntiFeynman=FeynmanToSpinorProducts[diagramAmplitudes[CreateDiagrams[fsAntiProcess,fm]],
+ fsAntiFeynman=FeynmanToSpinorProducts[DiagramAmplitudes[CreateDiagrams[fsAntiProcess,fm]],
    "TimeConstraint"->60]/.{fMass->cMass,fCharge->cCharge};
  fsAntiAmp=Total[Last/@fsAntiFeynman];
  fsAntiChannels=FactorizationAmplitudeChannels[fsAntiProcess,fsKnown5];

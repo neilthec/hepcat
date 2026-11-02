@@ -474,7 +474,7 @@ check["automatic scalar comparisons agree in the physical diagram convention",
   prScalarPassReport["Summary"] === <|"PASS" -> 3|>];
 prScalarDiagramAmplitude = Total[
   (ReduceSpinContractions[Last[#]] /. First[#]) & /@
-    diagramAmplitudes[prScalarDiagrams]];
+    DiagramAmplitudes[prScalarDiagrams]];
 prScalarDiagramReport = CheckPhysicalResidues[prScalarDiagramAmplitude,
   prScalarChannels, prScalarModel, "Output" -> "Summary", "Samples" -> 2,
   "ParameterRules" -> {cubicCoupling -> 2, scalarMass -> 1}, "TimeConstraint" -> 15];
@@ -1016,7 +1016,7 @@ check["the two internal photon helicities combine before residue evaluation",
   Length[prFourFermionTargets] === 2 && AllTrue[prFourFermionTargets,
     FreeQ[#["StateSum"], _xFactor | _xTildeFactor] &]];
 prFourFermionAmplitude = Total[(ReduceSpinContractions[Last[#]] /. First[#]) & /@
-  diagramAmplitudes[CreateDiagrams[{"e", "E", "e", "E"}, prModel]]];
+  DiagramAmplitudes[CreateDiagrams[{"e", "E", "e", "E"}, prModel]]];
 prFourFermionReport = prDetailedReport[prFourFermionAmplitude, prFourFermionTargets,
   "Samples" -> 2, "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "TimeConstraint" -> 30];
 check["identical-four-fermion diagrams and channels agree with the physical sewing phase",
@@ -1036,7 +1036,7 @@ prMixedTargets = Select[prAdaptedTargets[{"e", "E", "m", "M"}, prMixedModel],
 prMixedPhotonDiagrams = Select[CreateDiagrams[{"e", "E", "m", "M"}, prMixedModel],
   AllTrue[Values[#["Propagators"]], #["Mass"] === 0 &] &];
 prMixedPhotonAmplitude = Total[(ReduceSpinContractions[Last[#]] /. First[#]) & /@
-  diagramAmplitudes[prMixedPhotonDiagrams]];
+  DiagramAmplitudes[prMixedPhotonDiagrams]];
 prMixedPhotonReport = prDetailedReport[prMixedPhotonAmplitude, prMixedTargets,
   "Samples" -> 2, "ParameterRules" -> ModelParameterRules[prMixedModel,
     {"Me" -> 1, "Mm" -> 2, "EE" -> 1}], "TimeConstraint" -> 30];
@@ -1073,7 +1073,7 @@ Do[
     0, prFiveFermionChannels, prFixtureModel]["Targets"];
   prFiveElectronTargets = Select[prFiveFermionTargets, #["Mass"] === prElectronMass &];
   prFiveFermionAmplitude = Total[(ReduceSpinContractions[Last[#]] /. First[#]) & /@
-    diagramAmplitudes[CreateDiagrams[particles, prModel]]];
+    DiagramAmplitudes[CreateDiagrams[particles, prModel]]];
   prFiveElectronReport = prDetailedReport[prFiveFermionAmplitude, prFiveElectronTargets,
     "Samples" -> 2, "ParameterRules" -> {prElectronMass -> 1, prElectricCharge -> 1}, "TimeConstraint" -> 30];
   check["five-point four-fermion electron cuts agree after graph and Wick sign repairs " <>

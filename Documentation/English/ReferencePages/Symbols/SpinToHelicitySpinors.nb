@@ -7,8 +7,8 @@ Notebook[
         "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
      GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
    "AnchorBarGrid"], Cell["SpinToHelicitySpinors", "ObjectName"],
-  Cell["Applies legacy spin-to-helicity expansions to selected massive \
-particle spinors.", "Notes"],
+  Cell[TextData[{"Applies legacy spin-to-helicity expansions to selected \
+massive particle spinors."}], "Notes"],
   Cell[TextData[{Cell[BoxData[RowBox[{"SpinToHelicitySpinors", "[", "expr",
          ",", " ", "{", "particle", ",", " ", "spin", ",", " ", "helicity",
          "}", "]"}]], "InlineFormula"], "  ",
@@ -17,34 +17,30 @@ particle spinors.", "Notes"],
          ",", " ", "specification1", ",", " ", "specification2", ",", " ",
          "...", "]"}]], "InlineFormula"], "  ",
      "applies up to four specifications in sequence."}], "Usage"],
-  Cell["Details", "NotesSection"], Cell["This older routine uses energy, \
-momentum magnitude, masses and auxiliary Zeta spinors. The source describes \
-it as implemented only to linear order, so do not treat it as a universal \
-exact massive-to-massless replacement.", "Notes"],
-  Cell["Use ChooseSpinIndex and ExtractEnergy for explicit physical spin \
-components without relying on this expansion.", "Notes"],
+  Cell["Details", "NotesSection"],
+  Cell[TextData[{"This is an earlier high-energy expansion that expresses \
+supported massive-spin states through helicity and auxiliary reference \
+spinors. It is useful only within the expansion order and spin cases \
+implemented by the routine."}], "Notes"],
+  Cell[TextData[{"This older routine uses energy, momentum magnitude, masses \
+and auxiliary Zeta spinors. The source describes it as implemented only to \
+linear order, so do not treat it as a universal exact massive-to-massless \
+replacement."}], "Notes"],
+  Cell[TextData[{"Use ", ButtonBox["ChooseSpinIndex", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ChooseSpinIndex"], " and ",
+     ButtonBox["ExtractEnergy", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ExtractEnergy"], " for explicit \
+physical spin components without relying on this expansion."}], "Notes"],
   Cell["Examples", "PrimaryExamplesSection"],
-  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
-     Cell["Evaluate this setup once before the examples. The paths refer to \
-the local HEPCAT checkout; no model parameters are assigned global numerical \
-values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
-         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
-         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
-         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
-         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
-         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
-         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
-         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
-         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
-         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
-         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
-         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
-         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
-         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
-         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
-      "Input", InitializationCell -> True]}, Open]],
+  Cell[CellGroupData[{Cell["Load HEPCAT if needed", "ExampleSubsection"],
+     Cell["Skip this setup if HEPCAT is already loaded. These examples assume \
+the checkout is in ~/code/hepcat; change the paths if yours is elsewhere. \
+Evaluate loading in its own cell before the calculation.", "ExampleText"],
+     Cell[BoxData[RowBox[{"Get", "[", "\"~/code/hepcat/source/HEPCAT.wl\"",
+         "]", ";"}]], "Input", InitializationCell -> True]}, Closed]],
   Cell["Basic Examples", "ExampleSection"],
-  Cell["Inspect the supported spin-one negative-helicity conversion.",
+  Cell[TextData[
+    {"Inspect the supported spin-one negative-helicity conversion."}],
    "ExampleText"], Cell[BoxData[RowBox[{"SpinToHelicitySpinors", "[",
       "SpinorChain", "[", "Spinor", "[", "\"Spin\"", ",", " ", "\"Angle\"",
       ",", " ", "1", "]", ",", " ", "Spinor", "[", "\"Helicity\"", ",", " ",

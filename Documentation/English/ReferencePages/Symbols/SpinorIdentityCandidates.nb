@@ -8,66 +8,77 @@ Notebook[
         "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
      GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
    "AnchorBarGrid"], Cell["SpinorIdentityCandidates", "ObjectName"],
-  Cell["Enumerates legal symbolic identity edits for a diagram or amplitude \
-expression.", "Notes"],
+  Cell[TextData[{"Lists the identity steps available for a spinor expression \
+under its declared mass and momentum assumptions."}], "Notes"],
   Cell[TextData[{Cell[BoxData[RowBox[{"SpinorIdentityCandidates", "[", "{",
          "massRules", ",", " ", "expr", "}", ",", " ", "opts", "]"}]],
       "InlineFormula"], "  ", "returns available exact edit associations."}],
-   "Usage"], Cell["Details", "NotesSection"], Cell["The input pair is a list \
-of mass replacement rules together with its expression, as returned for one \
-diagram by diagramAmplitudes.", "Notes"], Cell["The string option \
-\"OnShellChannels\"->Automatic permits only the diagram's declared internal \
-channels. Use \"OnShellChannels\"->{} for an ordinary combined amplitude \
-whose internal lines must remain off shell.", "Notes"],
-  Cell["The string option \"MomentumConservation\" defaults to True. Set it \
-False when the external momentum information does not justify a conservation \
-replacement.", "Notes"], Cell["Each edit records a name and symbolic \
-replacement. The function canonicalizes chains and applies linearity before \
-enumeration. It does not score the edits or promise that the first is a \
-useful simplification.", "Notes"], Cell["PropDen factors remain opaque. Use \
-the same options when applying an edit with ApplySpinorIdentity.", "Notes"],
+   "Usage"], Cell["Details", "NotesSection"],
+  Cell[TextData[{"The input is {massRules, expression}, the same two-part \
+representation used for one diagram or one prepared amplitude. The result is \
+a list of associations describing individual exact edits. It does not apply \
+the entire list or automatically choose the best move."}], "Notes"],
+  Cell[TextData[{"Use the Name field to understand the kind of identity and \
+inspect its Subtract and Insert expressions to see what changes. Apply a \
+selected association using ", ButtonBox["ApplySpinorIdentity",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ApplySpinorIdentity"], "; that function verifies \
+that the edit is still legal for the current expression."}], "Notes"],
+  Cell[TextData[{"Chains are canonicalized and supported momentum sums are \
+distributed before moves are enumerated. The displayed candidate list can \
+therefore describe the normalized form of the input, rather than its original \
+typesetting."}], "Notes"], Cell[TextData[{"The candidate mechanism is useful \
+for an explicit derivation: keep the input, selected edit, and output at each \
+step. For an automatic preparation workflow with progress reporting, start \
+with ", ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], " instead."}],
+   "Notes"], Cell["Choosing the allowed assumptions", "NotesSection"],
+  Cell[TextData[{"The string option \"OnShellChannels\"->Automatic uses only \
+the internal channels declared by the supplied mass rules. This is \
+appropriate while working on that particular diagram or selected channel. For \
+a completed sum whose internal momenta must remain off shell, use \
+\"OnShellChannels\"->{}."}], "Notes"],
+  Cell[TextData[{"The string option \"MomentumConservation\" defaults to True \
+and uses the external-leg information available in the state. Set it to False \
+if you are studying an isolated algebraic expression without the \
+corresponding conserved process."}], "Notes"],
+  Cell[TextData[{"Use the same settings when applying a candidate. An \
+identity generated with one set of channel assumptions must not be replayed \
+as if it were valid with a different set. Physical ",
+     ButtonBox["PropDen", BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/PropDen"],
+     " factors remain protected in either mode."}], "Notes"],
   Cell["Options", "NotesSection"],
   Cell[BoxData[GridBox[{{Cell["Option", "TableHeader"],
        Cell["Default", "TableHeader"], Cell["Meaning", "TableHeader"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"OnShellChannels\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
-           "InlineFormula"]}], "TableText"], Cell["Internal cuts legal for an \
-explicit identity edit or scramble. Automatic reads the current diagram \
-pair's internal mass rules; use {} for a combined amplitude with no allowed \
-internal-shell identities.", "TableText"]},
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{"Internal cuts legal for an explicit identity edit or \
+scramble. Automatic reads the current diagram pair's internal mass rules; use \
+{} for a combined amplitude with no allowed internal-shell identities."}],
+        "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"MomentumConservation\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"True"}]], "InlineFormula"]}],
-        "TableText"], Cell["Whether identities may use the complete declared \
-external momentum sum. The operation uses the known external-leg list rather \
-than imposing unrelated internal cut conditions.", "TableText"]}},
-     GridBoxAlignment -> {"Columns" -> {Left, Left, Left}},
-     GridBoxItemSize -> {"Columns" -> {Scaled[0.23], Scaled[0.19],
-         Scaled[0.58]}}, GridBoxDividers ->
-      {"Rows" -> {False, True, {False}, False}}]], "3ColumnTableMod"],
-  Cell["Examples", "PrimaryExamplesSection"],
-  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
-     Cell["Evaluate this setup once before the examples. The paths refer to \
-the local HEPCAT checkout; no model parameters are assigned global numerical \
-values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
-         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
-         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
-         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
-         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
-         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
-         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
-         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
-         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
-         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
-         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
-         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
-         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
-         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
-         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
-      "Input", InitializationCell -> True]}, Open]],
+        "TableText"], Cell[TextData[{"Whether identities may use the complete \
+declared external momentum sum. The operation uses the known external-leg \
+list rather than imposing unrelated internal cut conditions."}],
+        "TableText"]}}, GridBoxAlignment ->
+      {"Columns" -> {Left, Left, Left}}, GridBoxItemSize ->
+      {"Columns" -> {Scaled[0.23], Scaled[0.19], Scaled[0.58]}},
+     GridBoxDividers -> {"Rows" -> {False, True, {False}, False}}]],
+   "3ColumnTableMod"], Cell["Examples", "PrimaryExamplesSection"],
+  Cell[CellGroupData[{Cell["Load HEPCAT if needed", "ExampleSubsection"],
+     Cell["Skip this setup if HEPCAT is already loaded. These examples assume \
+the checkout is in ~/code/hepcat; change the paths if yours is elsewhere. \
+Evaluate loading in its own cell before the calculation.", "ExampleText"],
+     Cell[BoxData[RowBox[{"Get", "[", "\"~/code/hepcat/source/HEPCAT.wl\"",
+         "]", ";"}]], "Input", InitializationCell -> True]}, Closed]],
   Cell["Basic Examples", "ExampleSection"],
-  Cell["List identities without internal-shell or conservation assumptions.",
+  Cell[TextData[
+    {"List identities without internal-shell or conservation assumptions."}],
    "ExampleText"], Cell[BoxData[RowBox[{"SpinorIdentityCandidates", "[", "{",
       "{", "}", ",", " ", "SpinorChain", "[", "Spinor", "[", "\"Helicity\"",
       ",", " ", "\"Angle\"", ",", " ", "1", "]", ",", " ", "Spinor", "[",
@@ -134,7 +145,8 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
      "uri" -> "HEPCAT/ref/SpinorIdentityCandidates",
      "title" -> "SpinorIdentityCandidates", "type" -> "Symbol",
      "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" -> "Enumerates legal symbolic identity edits for a diagram or \
-amplitude expression.", "keywords" -> {"HEPCAT", "SpinorIdentityCandidates",
+     "summary" -> "Lists the identity steps available for a spinor expression \
+under its declared mass and momentum assumptions.",
+     "keywords" -> {"HEPCAT", "SpinorIdentityCandidates",
        "spinor amplitudes"}, "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

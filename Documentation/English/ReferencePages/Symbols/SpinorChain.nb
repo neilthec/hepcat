@@ -7,8 +7,8 @@ Notebook[
         "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
      GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
    "AnchorBarGrid"], Cell["SpinorChain", "ObjectName"],
-  Cell["Represents an angle or square spinor bracket, optionally with an \
-ordered sequence of momentum insertions.", "Notes"],
+  Cell[TextData[{"Represents a spinor bracket or an ordered spinor chain with \
+momentum insertions."}], "Notes"],
   Cell[TextData[{Cell[BoxData[RowBox[{"SpinorChain", "[", "left", ",", " ",
          "right", "]"}]], "InlineFormula"], "  ",
      "represents a bracket with two spinor endpoints."}], "Usage"],
@@ -16,42 +16,70 @@ ordered sequence of momentum insertions.", "Notes"],
          "Mom", "[", "i1", "]", ",", " ", "Mom", "[", "i2", "]", ",", " ",
          "...", ",", " ", "right", "]"}]], "InlineFormula"], "  ",
      "represents a momentum chain with its given order."}], "Usage"],
-  Cell["Details", "NotesSection"], Cell["Angle and square are represented by \
-Spinor endpoints with type \"Angle\" or \"Square\". An even number of \
-momentum insertions connects equal chiralities; an odd number connects \
-opposite chiralities.", "Notes"], Cell["SpinorChain already has readable \
-notebook formatting. Keep the expression itself for algebra, substitution and \
-export.", "Notes"], Cell["ReduceSpinorProducts applies ordinary spinor \
-identities. ReduceSpinContractions first sews explicit contracted spin \
-indices. Neither a displayed bracket nor a reference spinor alone specifies a \
-physical process.", "Notes"], Cell["Examples", "PrimaryExamplesSection"],
-  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
-     Cell["Evaluate this setup once before the examples. The paths refer to \
-the local HEPCAT checkout; no model parameters are assigned global numerical \
-values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
-         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
-         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
-         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
-         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
-         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
-         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
-         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
-         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
-         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
-         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
-         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
-         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
-         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
-         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
-      "Input", InitializationCell -> True]}, Open]],
-  Cell["Basic Examples", "ExampleSection"], Cell["Write a square bracket.",
-   "ExampleText"], Cell[BoxData[RowBox[{"SpinorChain", "[", "Spinor", "[",
+  Cell["Details", "NotesSection"],
+  Cell[TextData[{"The first and last arguments are ",
+     ButtonBox["Spinor", BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/Spinor"], " objects. The intervening arguments, \
+when present, are momentum insertions written with ",
+     ButtonBox["Mom", BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/Mom"],
+     ". For example, a square endpoint on leg 1, ",
+     Cell[BoxData[RowBox[{"Mom", "[", "2", "]"}]], "InlineFormula"],
+     ", and an angle endpoint on leg 3 represent [1|p2|3>."}], "Notes"],
+  Cell[TextData[{"The endpoint types and number of momentum insertions \
+determine the chain's chirality. Keep the momentum arguments in their \
+intended order: p2 p3 and p3 p2 are matrix products, and their difference is \
+controlled by spinor identities rather than ordinary commutativity."}],
+   "Notes"], Cell[TextData[{"HEPCAT displays complete chains in angle and \
+square bracket notation. The underlying typed expression is retained, so \
+functions can distinguish an external particle label from a spin index or a \
+momentum label."}], "Notes"],
+  Cell[TextData[{"Constructing a chain records the expression; it does not \
+request every available simplification. Use ",
+     ButtonBox["ReduceSpinorProducts", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReduceSpinorProducts"],
+     " for algebraic reduction, or ", ButtonBox["SpinorIdentityCandidates",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/SpinorIdentityCandidates"], " and ",
+     ButtonBox["ApplySpinorIdentity", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ApplySpinorIdentity"],
+     " when you want to choose and record individual identity steps."}],
+   "Notes"], Cell["Momentum sums inside a chain", "NotesSection"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"Mom", "[", "Multiparticle", "[", "2",
+         ",", " ", "3", "]", "]"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "records", " ", "p2", "+", "p3", " ", "in",
+         " ", "one", " ", "slot", ".", " ", "It", " ", "represents", " ",
+         "the", " ", "same", " ", "linear", " ", "momentum", " ",
+         "insertion", " ", "as", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"Mom", "[", "2", "]", "+", "Mom", "[", "3", "]"}]],
+      "InlineFormula"], ". The reducer can distribute such a slot when doing \
+so is useful, while preserving the order of the remaining insertions."}],
+   "Notes"], Cell[TextData[{"A chain containing a composite momentum is not \
+by itself an instruction to put that momentum on shell. Diagram-specific \
+internal-shell information is supplied separately through ",
+     ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], "."}], "Notes"],
+  Cell["Examples", "PrimaryExamplesSection"],
+  Cell[CellGroupData[{Cell["Load HEPCAT if needed", "ExampleSubsection"],
+     Cell["Skip this setup if HEPCAT is already loaded. These examples assume \
+the checkout is in ~/code/hepcat; change the paths if yours is elsewhere. \
+Evaluate loading in its own cell before the calculation.", "ExampleText"],
+     Cell[BoxData[RowBox[{"Get", "[", "\"~/code/hepcat/source/HEPCAT.wl\"",
+         "]", ";"}]], "Input", InitializationCell -> True]}, Closed]],
+  Cell["Basic Examples", "ExampleSection"], Cell["Writing chains",
+   "ExampleSubsection"],
+  Cell[TextData[
+    {
+     "Build the square bracket [12] from its two typed massless endpoints."}]\
+, "ExampleText"], Cell[BoxData[RowBox[{"SpinorChain", "[", "Spinor", "[",
       "\"Helicity\"", ",", " ", "\"Square\"", ",", " ", "1", "]", ",", " ",
       "Spinor", "[", "\"Helicity\"", ",", " ", "\"Square\"", ",", " ", "2",
       "]", "]"}]], "Input"],
   Cell[BoxData[TemplateBox[{TemplateBox[{"\"[\"", "1"}, "RowDefault"],
       TemplateBox[{"2", "\"]\""}, "RowDefault"]}, "RowDefault"]], "Output"],
-  Cell["Write [1|p2|3>.", "ExampleText"],
+  Cell["Writing chains", "ExampleSubsection"],
+  Cell[TextData[{"Keep p2 as a matrix insertion between a square spinor on \
+leg 1 and an angle spinor on leg 3, giving [1|p2|3>."}], "ExampleText"],
   Cell[BoxData[RowBox[{"SpinorChain", "[", "Spinor", "[", "\"Helicity\"",
       ",", " ", "\"Square\"", ",", " ", "1", "]", ",", " ", "Mom", "[", "2",
       "]", ",", " ", "Spinor", "[", "\"Helicity\"", ",", " ", "\"Angle\"",
@@ -59,13 +87,15 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
   Cell[BoxData[TemplateBox[{TemplateBox[{"\"[\"", "1"}, "RowDefault"],
       "\"|\"", SubscriptBox["p", "2"], "\"|\"",
       TemplateBox[{"3", "\"\[RightAngleBracket]\""}, "RowDefault"]},
-     "RowDefault"]], "Output"],
-  Cell["Reduce a repeated massless angle endpoint.", "ExampleText"],
-  Cell[BoxData[RowBox[{"ReduceSpinorProducts", "[", "SpinorChain", "[",
-      "Spinor", "[", "\"Helicity\"", ",", " ", "\"Angle\"", ",", " ", "1",
-      "]", ",", " ", "Spinor", "[", "\"Helicity\"", ",", " ", "\"Angle\"",
-      ",", " ", "1", "]", "]", "]"}]], "Input"],
-  Cell[BoxData[RowBox[{"0"}]], "Output"], Cell["See Also", "SeeAlsoSection"],
+     "RowDefault"]], "Output"], Cell["Reducing a chain",
+   "ExampleSubsection"],
+  Cell[TextData[{"Reduce a repeated massless angle endpoint."}],
+   "ExampleText"], Cell[BoxData[RowBox[{"ReduceSpinorProducts", "[",
+      "SpinorChain", "[", "Spinor", "[", "\"Helicity\"", ",", " ",
+      "\"Angle\"", ",", " ", "1", "]", ",", " ", "Spinor", "[",
+      "\"Helicity\"", ",", " ", "\"Angle\"", ",", " ", "1", "]", "]", "]"}]],
+   "Input"], Cell[BoxData[RowBox[{"0"}]], "Output"],
+  Cell["See Also", "SeeAlsoSection"],
   Cell[TextData[{ButtonBox["Spinor", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/Spinor"], "  \[Bullet]  ",
      ButtonBox["ReduceSpinorProducts", BaseStyle -> "Link",
@@ -86,8 +116,8 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/SpinorChain", "title" -> "SpinorChain",
      "type" -> "Symbol", "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT",
-     "language" -> "en", "summary" -> "Represents an angle or square spinor \
-bracket, optionally with an ordered sequence of momentum insertions.",
+     "language" -> "en", "summary" -> "Represents a spinor bracket or an \
+ordered spinor chain with momentum insertions.",
      "keywords" -> {"HEPCAT", "SpinorChain", "spinor amplitudes"},
      "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

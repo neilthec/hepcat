@@ -400,7 +400,7 @@ check["representation reporting respects an exhausted explicit shared clock",
     MissingQ[arPreferenceExhausted["AchievedPhysicalDenominators"]] &&
     arPreferenceExhausted["PreferenceFallbackReason"] === None];
 arPreferencePhysicalDiagrams = PrepareAmplitudes[
-  diagramAmplitudes[CreateDiagrams[arProcess4, arDiagramModel]], arDiagramModel,
+  DiagramAmplitudes[CreateDiagrams[arProcess4, arDiagramModel]], arDiagramModel,
   "PolePreference" -> "AllPhysical", "ProgressReporting" -> False, "Parallelization" -> False];
 arPreferencePhysicalSource = CompleteFactorization[arPreferencePhysicalDiagrams,
   FactorizationAmplitudeChannels[arProcess4, arDiagramModel], arDiagramModel,

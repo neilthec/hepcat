@@ -575,7 +575,7 @@ Cell[BoxData[
  RowBox[{"amps", "=", 
   RowBox[{"Simplify", "[", 
    RowBox[{"ReduceSpinContractions", "[", 
-    RowBox[{"diagramAmplitudes", "[", "diags", "]"}], "]"}], "]"}]}]], "Input",\
+    RowBox[{"DiagramAmplitudes", "[", "diags", "]"}], "]"}], "]"}]}]], "Input",\
 
  CellChangeTimes->{{3.99986950802459*^9, 3.999869529602919*^9}},
  CellLabel->
@@ -1480,7 +1480,7 @@ Cell[BoxData[
  RowBox[{"amps", "=", 
   RowBox[{"Simplify", "[", 
    RowBox[{"ReduceSpinContractions", "[", 
-    RowBox[{"diagramAmplitudes", "[", "diags", "]"}], "]"}], "]"}]}]], "Input",\
+    RowBox[{"DiagramAmplitudes", "[", "diags", "]"}], "]"}], "]"}]}]], "Input",\
 
  CellLabel->
   "In[598]:=",ExpressionUUID->"34a0b122-d32f-464c-bbe8-774cb6085717"],

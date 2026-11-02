@@ -7,56 +7,124 @@ Notebook[
         "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
      GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
    "AnchorBarGrid"], Cell["ReadModel", "ObjectName"],
-  Cell[
-   "Read a constructive amplitude model or an imported CalcHEP Feynman \
-model.", "Notes"],
+  Cell[TextData[{"Load the particle content, amplitudes and parameters of a \
+model for use throughout HEPCAT."}], "Notes"],
   Cell[TextData[{Cell[BoxData[RowBox[{"ReadModel", "[", "directory", ",",
          " ", "number", "]"}]], "InlineFormula"], "  ",
      "Read the numbered model files from a directory."}], "Usage"],
-  Cell["Details", "NotesSection"], Cell["A constructive model is the \
-four-element list {particles, amplitudes, variables, functions}. Its data \
-come from prtclsN.mdl, ampsN.mdl, varsN.mdl and funcN.mdl. Keep this list and \
-pass it to other HEPCAT functions.", "Notes"], Cell["When lgrngN.mdl is \
-present and ampsN.mdl is absent, the reader recognizes a CalcHEP model and \
-returns FeynmanModel[particles, vertices, variables, functions]. Bare Feynman \
-vertices are not complete lower-point amplitudes for constructive \
-factorization.", "Notes"], Cell["Parameters are inert model-local \
-ModelParameter objects. Reading two models does not assign global symbols \
-such as Me or EE, and one model cannot silently change another model's \
-values.", "Notes"], Cell["Use the QED model containing three-point vertices \
-for diagrams. Use a model containing complete four-point amplitudes when \
-factorizing a five-point process, and complete five-point amplitudes when \
-factorizing a six-point process. An amplitude missing from the supplied \
-factorization model is treated as zero.", "Notes"],
-  Cell["The reader reports malformed, unavailable or unterminated model \
-tables as failures rather than executing arbitrary expressions from model \
-text.", "Notes"], Cell["Examples", "PrimaryExamplesSection"],
-  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
-     Cell["Evaluate this setup once before the examples. The paths refer to \
-the local HEPCAT checkout; no model parameters are assigned global numerical \
-values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
-         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
-         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
-         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
-         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
-         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
-         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
-         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
-         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
-         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
-         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
-         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
-         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
-         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
-         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
-      "Input", InitializationCell -> True]}, Open]],
-  Cell["Basic Examples", "ExampleSection"],
-  Cell["Read the bundled QED three-point model and see its four sections.",
+  Cell["Details", "NotesSection"],
+  Cell[TextData[{"Start a calculation by reading a model once and giving the \
+resulting value a name, for example ",
+     Cell[BoxData[RowBox[{"qedModel", " ", "=", " ", "ReadModel", "[",
+         "modelDirectory", ",", " ", "2", "]"}]], "InlineFormula"],
+     ". Pass that value to ", ButtonBox["CreateDiagrams",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/CreateDiagrams"],
+     ", ", ButtonBox["ConstructAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ConstructAmplitude"], " and the other \
+model-dependent functions. You can keep several models in the same \
+Mathematica session."}], "Notes"],
+  Cell[TextData[{"The first argument is the directory containing the model \
+tables; the second is the number in their filenames. A constructive model \
+numbered ", Cell[BoxData[RowBox[{"2"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "uses", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"prtcls2", ".", "mdl"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{",", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"amps2", ".", "mdl"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{",", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"vars2", ".", "mdl"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "and", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"func2", ".", "mdl"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{".", " ", "The", " ", "returned", " ", "list", " ",
+         "is", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"{", "particles", ",", " ", "amplitudes", ",", " ",
+         "variables", ",", " ", "functions", "}"}]], "InlineFormula"], ". \
+Usually you can pass it on unchanged rather than unpacking its tables."}],
+   "Notes"], Cell[TextData[{"Particle names in a process are strings from \
+that model, including their case and helicity suffixes. In the bundled QED \
+model, ", Cell[BoxData[RowBox[{"\"e\""}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "and", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"\"E\""}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "are", " ", "the", " ", "electron", " ",
+         "and", " ", "its", " ", "antiparticle", ",", " ", "while", " "}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{"\"A.+\""}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "and", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"\"A.-\""}]], "InlineFormula"], " select photon \
+helicities. HEPCAT numbers legs by their positions in the process list and \
+takes all external momenta as ingoing."}], "Notes"],
+  Cell["Choosing the right amplitudes for a calculation", "NotesSection"],
+  Cell[TextData[{"The model used to draw diagrams supplies the allowed \
+interactions. A separate model used for ",
+     ButtonBox["FactorizationAmplitudeChannels", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/FactorizationAmplitudeChannels"], " \
+must supply complete lower-point amplitudes. A five-point factorization \
+channel can contain a complete four-point amplitude, so a list containing \
+only three-point vertices is not sufficient for that purpose."}], "Notes"],
+  Cell[TextData[{"For the bundled QED examples, model ",
+     Cell[BoxData[RowBox[{"2"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "supplies", " ", "the", " ", "three", "-",
+         "point", " ", "vertices", ".", " ", "Model", " "}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{"3"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "also", " ", "contains", " ", "known", " ",
+         "higher", "-", "point", " ", "amplitudes", " ", "and", " ", "is",
+         " ", "used", " ", "as", " ", "factorization", " ", "input", " ",
+         "for", " ", "the", " ", "larger", " ", "examples", ".", " ", "The",
+         " ", "required", " ", "information", " ", "is", " ", "determined",
+         " ", "by", " ", "the", " ", "process", ",", " ", "not", " ", "by",
+         " ", "a", " ", "special", " ", "meaning", " ", "attached", " ",
+         "to", " ", "the", " ", "numbers", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"2"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "and", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"3"}]], "InlineFormula"], "."}], "Notes"],
+  Cell[TextData[{"An amplitude absent from the factorization model is treated \
+as zero. Check that the model contains the lower-point results you intend to \
+use; HEPCAT cannot distinguish an intentionally zero amplitude from one that \
+has not yet been entered. ", ButtonBox["AppendModelAmplitudes",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/AppendModelAmplitudes"],
+     " adds already established results to a constructive model."}],
+   "Notes"], Cell["Parameters and Feynman models", "NotesSection"],
+  Cell[TextData[{"Masses and couplings remain symbolic ",
+     ButtonBox["ModelParameter", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ModelParameter"], " objects belonging \
+to this model. Reading a model does not assign numerical values to global \
+names such as ", Cell[BoxData[RowBox[{"Me"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "or", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"EE"}]], "InlineFormula"], ". Use ",
+     ButtonBox["ModelParameterRules", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ModelParameterRules"],
+     " when you want numerical substitutions or local overrides."}],
+   "Notes"], Cell[TextData[{"A directory containing ",
+     Cell[BoxData[RowBox[{"lgrngN", ".", "mdl"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "but", " ", "no", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"ampsN", ".", "mdl"}]], "InlineFormula"],
+     " is read as a CalcHEP Feynman model. The result has the head ",
+     ButtonBox["FeynmanModel", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/FeynmanModel"], ", allowing the same \
+diagram-generation interface to choose Feynman rules. Its bare vertices are \
+not a replacement for complete lower-point amplitudes in constructive \
+factorization."}], "Notes"],
+  Cell[TextData[
+    {"Missing files, malformed expressions and unterminated tables return ",
+     Cell[BoxData[RowBox[{"Failure"}]], "InlineFormula"], ". Inspect that \
+result before continuing; a failed read is not an empty or zero model."}],
+   "Notes"], Cell["Examples", "PrimaryExamplesSection"],
+  Cell[CellGroupData[{Cell["Load HEPCAT if needed", "ExampleSubsection"],
+     Cell["Skip this setup if HEPCAT is already loaded. These examples assume \
+the checkout is in ~/code/hepcat; change the paths if yours is elsewhere. \
+Evaluate loading in its own cell before the calculation.", "ExampleText"],
+     Cell[BoxData[RowBox[{"Get", "[", "\"~/code/hepcat/source/HEPCAT.wl\"",
+         "]", ";", "\n", "modelDirectory", " ", "=", " ",
+         "\"~/code/hepcat/models\"", ";"}]], "Input",
+      InitializationCell -> True]}, Closed]], Cell["Basic Examples",
+   "ExampleSection"],
+  Cell[TextData[
+    {"Read the bundled QED three-point model and see its four sections."}],
    "ExampleText"], Cell[BoxData[RowBox[{"qedModel", " ", "=", " ",
       "ReadModel", "[", "modelDirectory", ",", " ", "2", "]", ";", "\n",
       "Length", "[", "qedModel", "]"}]], "Input"],
   Cell[BoxData[RowBox[{"4"}]], "Output"],
-  Cell["Retrieve a mass and its locally resolved numerical value.",
+  Cell[TextData[
+    {"Retrieve a mass and its locally resolved numerical value."}],
    "ExampleText"], Cell[BoxData[RowBox[{"qedModel", " ", "=", " ",
       "ReadModel", "[", "modelDirectory", ",", " ", "2", "]", ";", "\n",
       "me", " ", "=", " ", "ModelParameter", "[", "qedModel", ",", " ",
@@ -85,7 +153,8 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/ReadModel", "title" -> "ReadModel",
      "type" -> "Symbol", "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT",
-     "language" -> "en", "summary" -> "Read a constructive amplitude model or \
-an imported CalcHEP Feynman model.", "keywords" -> {"HEPCAT", "ReadModel",
-       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
+     "language" -> "en", "summary" -> "Load the particle content, amplitudes \
+and parameters of a model for use throughout HEPCAT.",
+     "keywords" -> {"HEPCAT", "ReadModel", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

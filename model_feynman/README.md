@@ -33,7 +33,7 @@ After loading HEPCAT, a simple massive-electron example is:
 ```wolfram
 model = ReadModel[FileNameJoin[{hepcatDirectory, "model_feynman"}], 1];
 diagrams = CreateDiagrams[{"e", "E", "A.+", "A.-"}, model];
-feynmanPairs = diagramAmplitudes[diagrams];
+feynmanPairs = DiagramAmplitudes[diagrams];
 spinorPairs = FeynmanToSpinorProducts[feynmanPairs];
 amplitude = Total[Last /@ spinorPairs];
 ```

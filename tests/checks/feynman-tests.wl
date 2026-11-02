@@ -204,7 +204,7 @@ Do[
       Together[First[ffLightHiggsRows][[-2]] +
         ffStockCharge ffLightMass/(2 ffStockWMass ffStockWeakSine)] === 0];
   ffLightHiggsDiagrams = CreateDiagrams[{ffLightParticle, ffLightAntiparticle, "h"}, ffStockModel];
-  ffLightHiggsPairs = diagramAmplitudes[ffLightHiggsDiagrams];
+  ffLightHiggsPairs = DiagramAmplitudes[ffLightHiggsDiagrams];
   ffLightHiggsSpinors = FeynmanToSpinorProducts[ffLightHiggsPairs];
   ffCheck["the massive light-fermion Higgs vertex generates a nonzero spinor amplitude without helicities " <>
       ffLightParticle,
@@ -258,7 +258,7 @@ Do[
 ffLightHiggsExchangeDiagrams = Select[
   CreateDiagrams[{"e", "E", "M", "m"}, ffStockModel],
   MemberQ[Lookup[Values[#["Propagators"]], "Particle"], "h"] &];
-ffLightHiggsExchangePairs = diagramAmplitudes[ffLightHiggsExchangeDiagrams];
+ffLightHiggsExchangePairs = DiagramAmplitudes[ffLightHiggsExchangeDiagrams];
 ffCheck["the massive SM now generates the electron-muon Higgs-exchange channel",
   Length[ffLightHiggsExchangeDiagrams] === 1 && ffFiniteQ[ffLightHiggsExchangePairs] &&
     !FreeQ[ffLightHiggsExchangePairs, PropDen[Mom[_Multiparticle], _ModelParameter]] &&
@@ -286,9 +286,9 @@ ffFiveDiagrams = CreateDiagrams[{"e", "E", "A.+", "A.+", "A.-"}, ffQEDModel];
 ffCheck["Feynman QED three-point diagram uses a helicity alias", Length[ffThreeDiagrams] === 1];
 ffCheck["Feynman QED four-point trees have two electron orderings", Length[ffFourDiagrams] === 2];
 ffCheck["Feynman QED five-point trees have six electron orderings", Length[ffFiveDiagrams] === 6];
-ffThreePairs = diagramAmplitudes[ffThreeDiagrams];
-ffFourPairs = diagramAmplitudes[ffFourDiagrams];
-ffFivePairs = diagramAmplitudes[ffFiveDiagrams];
+ffThreePairs = DiagramAmplitudes[ffThreeDiagrams];
+ffFourPairs = DiagramAmplitudes[ffFourDiagrams];
+ffFivePairs = DiagramAmplitudes[ffFiveDiagrams];
 Do[
   {ffMultiplicity, ffPairs} = ffPairCase;
   ffCheck["Feynman diagram output keeps ordinary mass-rule pairs " <> ToString[ffMultiplicity],
@@ -314,7 +314,7 @@ Do[
     {{{2, 4}, {1, 3}}, 1}, {{{1, 6}, {3, 2}, {5, 4}}, 1},
     {{{1, 6}, {3, 4}, {5, 2}}, -1}}}];
 ffScalarDiagrams = CreateDiagrams[{"h", "h", "h", "h"}, ffModel];
-ffScalarPairs = diagramAmplitudes[ffScalarDiagrams];
+ffScalarPairs = DiagramAmplitudes[ffScalarDiagrams];
 ffCheck["cubic scalar exchanges coexist with the actual quartic contact",
   Length[ffScalarDiagrams] === 4 &&
     Count[ffScalarDiagrams, d_ /; Length[d["Propagators"]] === 0] === 1];
@@ -327,7 +327,7 @@ ffCheck["scalar tree amplitudes retain the vertex and propagator i-factor normal
 ffVectorDiagrams = CreateDiagrams[{"e", "E", "e", "E"}, ffModel];
 ffZDiagrams = Select[ffVectorDiagrams,
   MemberQ[Lookup[Values[#["Propagators"]], "Particle"], "Z"] &];
-ffZPairs = diagramAmplitudes[ffZDiagrams];
+ffZPairs = DiagramAmplitudes[ffZDiagrams];
 ffCheck["massive-vector exchange includes the longitudinal unitary-gauge numerator",
   Length[ffZDiagrams] === 2 && !FreeQ[ffZPairs,
     LorentzMomentum[Mom[_Multiparticle], _]]];
@@ -337,12 +337,12 @@ ffCheck["physical SM trees omit internal ghosts, Goldstones, and auxiliary tenso
     FreeQ[Flatten[Lookup[Values[#["Propagators"]], "Particle"] & /@ ffPhysicalSM],
       name_String /; StringContainsQ[name, ".f" | ".c" | ".C" | ".t"]]];
 ffQuarkDiagrams = CreateDiagrams[{"u", "U", "C", "c"}, ffStockModel];
-ffQuarkPairs = diagramAmplitudes[ffQuarkDiagrams];
+ffQuarkPairs = DiagramAmplitudes[ffQuarkDiagrams];
 ffCheck["colored exchange retains an explicit nonzero color structure",
   ffQuarkDiagrams =!= {} && ffFiniteQ[ffQuarkPairs] &&
     !FreeQ[ffQuarkPairs, _ColorGenerator | _ColorStructure]];
 ffGluonDiagrams = CreateDiagrams[{"G.+", "G.+", "G.-", "G.-"}, ffStockModel];
-ffGluonPairs = diagramAmplitudes[ffGluonDiagrams];
+ffGluonPairs = DiagramAmplitudes[ffGluonDiagrams];
 ffCheck["four-gluon trees retain the nonabelian interactions instead of returning zero",
   ListQ[ffGluonDiagrams] && ffGluonDiagrams =!= {} && ffFiniteQ[ffGluonPairs] &&
     !FreeQ[ffGluonPairs, _ColorStructure]];
@@ -361,7 +361,7 @@ Do[CopyFile[FileNameJoin[{ffTemporaryDirectory, stem <> "91.mdl"}],
   FileNameJoin[{ffTemporaryDirectory, stem <> "93.mdl"}]], {stem, {"vars", "func"}}];
 ffDerivativeModel = ReadModel[ffTemporaryDirectory, 93];
 ffDerivativeDiagrams = CreateDiagrams[{"b", "d", "a", "c"}, ffDerivativeModel];
-ffDerivativePairs = diagramAmplitudes[ffDerivativeDiagrams];
+ffDerivativePairs = DiagramAmplitudes[ffDerivativeDiagrams];
 ffCheck["derivative scalar Feynman contact generates one diagram",
   Length[ffDerivativeDiagrams] === 1];
 ffCheck["Feynman vertex relabeling changes typed slots, not coefficients or powers",
@@ -376,7 +376,7 @@ ffWrite["lgrng94.mdl", {"Odd-derivative fixture", "P1 | P2 | P3 | P4 | Factor | 
 Do[CopyFile[FileNameJoin[{ffTemporaryDirectory, ffStem <> "91.mdl"}],
   FileNameJoin[{ffTemporaryDirectory, ffStem <> "94.mdl"}]], {ffStem, {"vars", "func"}}];
 ffOddDerivativeModel = ReadModel[ffTemporaryDirectory, 94];
-ffOddDerivativePairs = diagramAmplitudes[CreateDiagrams[{"A.+", "a", "b"}, ffOddDerivativeModel]];
+ffOddDerivativePairs = DiagramAmplitudes[CreateDiagrams[{"A.+", "a", "b"}, ffOddDerivativeModel]];
 ffOddDerivativeExpression = Last[First[ffOddDerivativePairs]];
 ffOddChargeParameter = ModelParameter[ffOddDerivativeModel, "ffCharge"];
 ffOddDerivativeIndex = First[Cases[ffOddDerivativeExpression,
@@ -403,7 +403,7 @@ ffPhiMassParameter = ModelParameter[ffPhiModel, "ffPhiMass"];
 ffCheck["an internal derivative slot retains its raw momentum-square identity",
   ffPhiModel[[2, 1, -1]] === LorentzScalarProduct[Mom[1], Mom[1]]];
 ffPhiDiagrams = CreateDiagrams[{"a", "a", "a", "a"}, ffPhiModel];
-ffPhiPairs = diagramAmplitudes[ffPhiDiagrams];
+ffPhiPairs = DiagramAmplitudes[ffPhiDiagrams];
 ffCheck["the internal derivative fixture generates all three scalar exchanges",
   Length[ffPhiDiagrams] === 3 && ffFiniteQ[ffPhiPairs]];
 ffCheck["an exchanged scalar mass occurs only in physical propagators, never its derivative numerator",
@@ -656,7 +656,7 @@ ffCheck["opposite photon polarizations retain the CSM relative phase",
     Together[ffNumericSpinorExpression[ffPolarizationNorm] - 1] === 0];
 Do[
   ffBenchmarkDiagrams = CreateDiagrams[ffBenchmarkParticles, ffMassiveQEDModel];
-  ffBenchmarkPairs = diagramAmplitudes[ffBenchmarkDiagrams];
+  ffBenchmarkPairs = DiagramAmplitudes[ffBenchmarkDiagrams];
   ffBenchmarkSpinorPairs = FeynmanToSpinorProducts[ffBenchmarkPairs,
     "ReduceSpinorProducts" -> False];
   ffCheck["complete QED conversion keeps mass-rule pairs at " <> ToString[Length[ffBenchmarkParticles]] <> " points",
@@ -814,7 +814,7 @@ ffWardChart = ffWardChartReport["Chart"] /.
   ffWardChartReport["Chart"]["PoleVariable"] -> 7;
 Do[
   ffWardDiagrams = CreateDiagrams[ffWardParticles, ffWardModel];
-  ffWardAmplitude = Total[Last /@ diagramAmplitudes[ffWardDiagrams]];
+  ffWardAmplitude = Total[Last /@ DiagramAmplitudes[ffWardDiagrams]];
   ffWardColorRules = If[First[ffWardParticles] === "u",
     {ColorIndex[1] -> 1, ColorIndex[2] -> 2, ColorIndex[3] -> 1, ColorIndex[4] -> 3},
     {ColorIndex[1] -> 1, ColorIndex[2] -> 2, ColorIndex[3] -> 1, ColorIndex[4] -> 2}];
@@ -841,13 +841,13 @@ ffCheck["the independent massive-electron QED benchmark is a model, not a patche
     (ModelParameter[ffPhysicalQED, "Me"] /. ModelParameterRules[ffPhysicalQED]) === 1/2000 &&
     (ModelParameter[ffPhysicalQED, "EE"] /. ModelParameterRules[ffPhysicalQED]) === 31333/100000];
 ffPhysicalFiveDiagrams = CreateDiagrams[{"e", "E", "A.+", "A.+", "A.+"}, ffPhysicalQED];
-ffPhysicalFivePairs = diagramAmplitudes[ffPhysicalFiveDiagrams];
+ffPhysicalFivePairs = DiagramAmplitudes[ffPhysicalFiveDiagrams];
 ffPhysicalFiveConverted = FeynmanToSpinorProducts[ffPhysicalFivePairs,
   "ReduceSpinorProducts" -> False, "TimeConstraint" -> 90];
 ffPhysicalFiveAmplitude = Total[ffPhysicalFiveConverted[[All, 2]]];
 ffPhysicalFourProcesses = {{"e", "E", "A.+", "A.+"}, {"e", "E", "A.+", "A.-"}};
 ffPhysicalFourAmplitudes = Table[
-  ffPhysicalFourPairs = diagramAmplitudes[CreateDiagrams[ffPhysicalFourParticles, ffPhysicalQED]];
+  ffPhysicalFourPairs = DiagramAmplitudes[CreateDiagrams[ffPhysicalFourParticles, ffPhysicalQED]];
   Total[FeynmanToSpinorProducts[ffPhysicalFourPairs,
     "ReduceSpinorProducts" -> False][[All, 2]]],
   {ffPhysicalFourParticles, ffPhysicalFourProcesses}];
@@ -889,7 +889,7 @@ Do[
   {ffProcessIndex, 2}, {ffSpin1, 2}, {ffSpin2, 2}];
 
 (* Check the massive stock model too, without altering its particle table. *)
-ffMassiveWardPairs = diagramAmplitudes[
+ffMassiveWardPairs = DiagramAmplitudes[
   CreateDiagrams[{"e", "E", "A.+", "A.-"}, ffStockModel]];
 ffMassiveWardRules = ModelParameterRules[ffStockModel, {"Me" -> 1, "EE" -> 1}];
 Do[

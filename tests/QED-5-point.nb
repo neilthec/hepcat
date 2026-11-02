@@ -834,7 +834,7 @@ Cell[CellGroupData[{
 Cell[BoxData[
  RowBox[{"amps", "=", 
   RowBox[{"ReduceSpinContractions", "[", 
-   RowBox[{"diagramAmplitudes", "[", "diags", "]"}], "]"}]}]], "Input",
+   RowBox[{"DiagramAmplitudes", "[", "diags", "]"}], "]"}]}]], "Input",
  CellChangeTimes->{{3.99986950802459*^9, 3.999869529602919*^9}, {
   4.000997247857242*^9, 4.000997249171118*^9}},
  CellLabel->"In[70]:=",ExpressionUUID->"4823f631-f5d1-4224-af06-c00da52b68bb"],
@@ -1452,7 +1452,7 @@ massRules,\n    \"NumeratorShells\" -> {Multiparticle[1, aa], Multiparticle[2, c
    Cell["Six Photon Orderings", "Subsection"], Cell["For an ordering (a,b,c), the internal momenta \
 are p1+pa and -(p2+pc). Their numerator conditions are (p1+pa)^2=Me^2 and (p2+pc)^2=Me^2. A_i \
 denotes PropDen[p1+pi,Me], B_i denotes PropDen[p2+pi,Me], and K_i denotes [i|p1 p2|i]. These A_i \
-and B_i are never set to zero.", "Text"], Cell["q5Input = diagramAmplitudes[diags];\nq5Routes = \
+and B_i are never set to zero.", "Text"], Cell["q5Input = DiagramAmplitudes[diags];\nq5Routes = \
 q5Route /@ q5Input;\nGrid[Prepend[({#[\"PhotonOrder\"], #[\"NumeratorShells\"], #[\"Result\"]} & /@ \
 q5Routes),\n  {\"Photon Order\", \"Numerator Shells\", \"Reduced Diagram\"}], Alignment -> Left]", 
     "Input"], Cell["The determinant form of Schouten gives <b|p1|a]<a|p1|b] - <a|p1|a]<b|p1|b] = \
@@ -1578,7 +1578,7 @@ determinant, \"FirstInternalNumeratorShell\" -> firstShell,\n    \
 \"ComplementaryPropagatorMomentum\" -> result|>;\n  <|\"PhotonOrder\" -> order, \"References\" -> \
 {bb, cc, aa},\n    \"NumeratorShells\" -> {Multiparticle[1, aa], Multiparticle[2, cc]},\n    \
 \"Stages\" -> stages, \"Result\" -> result|>\n];", "Input"]}, Closed]], 
-   Cell["q5CyclicInput = diagramAmplitudes[diags];\nq5CyclicRoutes = q5CyclicRoute /@ \
+   Cell["q5CyclicInput = DiagramAmplitudes[diags];\nq5CyclicRoutes = q5CyclicRoute /@ \
 q5CyclicInput;\nq5CyclicRoutes[[1]][\"References\"]", "Input"], 
    Cell["The middle reference is changed using the two-dimensional Schouten identity. For Q=p2+pc, \
 Y(c,Q,b) = <cb> Y(a,Q,b)/<ab> - <ca> Y(b,Q,b)/<ab>. External equal-mass shells and momentum \
@@ -1745,7 +1745,7 @@ cyclicProduct,\n    \"ExactRemainder\" -> remainder,\n    \"ReducedDiagram\" -> 
 {Multiparticle[1, a], Multiparticle[2, c]},\n    \"Raw\" -> refs, \"Product\" -> commonProduct, \
 \"Result\" -> reduced,\n    \"Remainder\" -> remainder, \"Stages\" -> stages|>\n];", "Input"]}, 
      Closed]], Cell["Six Diagrams With One Xi", "Subsection"], 
-   Cell["q5CommonInput = diagramAmplitudes[diags];\nq5CommonRoutes = q5CommonRoute /@ \
+   Cell["q5CommonInput = DiagramAmplitudes[diags];\nq5CommonRoutes = q5CommonRoute /@ \
 q5CommonInput;\nq5CommonRawSum = Total[Lookup[q5CommonRoutes, \"Raw\"]];\nq5CommonReducedSum = \
 Total[Lookup[q5CommonRoutes, \"Result\"]];\nGrid[Prepend[({#[\"PhotonOrder\"], \
 #[\"CommonReference\"], #[\"Result\"]} & /@ q5CommonRoutes),\n  {\"Photon Order\", \"Common Xi\", \
@@ -1879,7 +1879,7 @@ q5CommonProof[\"RawCommonSumEqualsThreeTermH\"],\n  \"CommonEqualsCyclic\" -> \
             ",", RowBox[{"\"CommonEqualsCyclic\"", "", "True"}], ",", 
             RowBox[{"\"TwiceCommonEqualsMomentumReference\"", "", "True"}]}], ""}]], 
        "Output"]}, Open]], Cell[CellGroupData[{Cell["Checks Against The Generated Diagrams", 
-       "Subsection"], Cell["The checks below use the actual diagramAmplitudes output. There are 72 \
+       "Subsection"], Cell["The checks below use the actual DiagramAmplitudes output. There are 72 \
 exact per-diagram double-cut checks (six orders, four masses, three regular common references) with \
 original PropDen factors kept opaque, plus 12 exact full-sum checks on external-shell kinematics \
 with every original propagator nonzero. These checks validate the common-reference calculation; \
@@ -1956,7 +1956,7 @@ independently with ordinary QED diagrams.", "Text"],
    Cell[CellGroupData[{Cell["Generate The Six Mixed Diagrams", "Subsection"], 
       Cell["q5MixedModel = ReadModel[FileNameJoin[{DirectoryName[$HEPCATpath], \"models\"}], \
 1];\nq5MixedDiagrams = CreateDiagrams[\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \
-q5MixedModel];\nq5MixedInput = diagramAmplitudes[q5MixedDiagrams];\nq5MixedRaw = \
+q5MixedModel];\nq5MixedInput = DiagramAmplitudes[q5MixedDiagrams];\nq5MixedRaw = \
 (ReduceSpinContractions[Last[#]] /. First[#] &) /@ q5MixedInput;\n<|\"DiagramCount\" -> \
 Length[q5MixedRaw], \"RawLeafCounts\" -> (LeafCount /@ q5MixedRaw)|>", "Input"], 
       Cell[BoxData[RowBox[{"", RowBox[{RowBox[{"\"DiagramCount\"", "", "6"}], ",", 
@@ -2381,7 +2381,7 @@ Cell[CellGroupData[{
 
   Cell["Mixed Photon Helicities: e, E, A.+, A.+, A.-", "Subsection"],
   Cell["The same helper file also contains the explicit mixed-helicity reconstruction discussed above. Start with the six actual diagram amplitudes, rather than substituting a pre-existing final expression.", "Text"],
-  Cell["q5MixedExampleParticles = {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\"};\nq5MixedExampleDiagrams = CreateDiagrams[q5MixedExampleParticles, q5IdentityVertexModel];\nq5MixedExampleInput = diagramAmplitudes[q5MixedExampleDiagrams];\nq5MixedExampleRoute = qedFivePointMixedRoute[q5MixedExampleInput];\nLength[q5MixedExampleDiagrams]", "Input"],
+  Cell["q5MixedExampleParticles = {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\"};\nq5MixedExampleDiagrams = CreateDiagrams[q5MixedExampleParticles, q5IdentityVertexModel];\nq5MixedExampleInput = DiagramAmplitudes[q5MixedExampleDiagrams];\nq5MixedExampleRoute = qedFivePointMixedRoute[q5MixedExampleInput];\nLength[q5MixedExampleDiagrams]", "Input"],
   Cell["Each diagram first acquires its seed numerator using its own internal shells. The displayed local completion is another allowed numerator representative: it vanishes because it contains the indicated on-shell factor of that same diagram. This choice is explicit. It is not an ordinary off-shell identity on the raw sum. The subsequent cancellation of spurious denominators uses only external shells and momentum conservation; the earlier independent current calculation and the residue checks select the physical completion.", "Text"],
   Cell["Grid[({#[[1]], (nice[#[[2]]] /. nice[parameter_Symbol] :> parameter)} & /@ {\n  {\"Generated diagram\", First[q5MixedExampleRoute[\"RawDiagrams\"]]},\n  {\"Seed numerator\", First[q5MixedExampleRoute[\"LocalSeedNumerators\"]]},\n  {\"Added numerator multiple\", First[q5MixedExampleRoute[\"LocalCompletionNumerators\"]]},\n  {\"Its on-shell factor\", First[q5MixedExampleRoute[\"OnShellFactorUsed\"]]}}),\n  Alignment -> Left]", "Input"],
   Cell["q5MixedExampleAmplitude = q5MixedExampleRoute[\"Final\"];\n(q5MixedExampleAmplitude // nice) /. nice[parameter_Symbol] :> parameter", "Input"],

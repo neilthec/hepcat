@@ -1,6 +1,5 @@
-(* Check the authored Help catalog and generated notebooks without evaluating
-   examples or opening a front end. The separate registration suite checks
-   package loading, F1 links and the local Documentation Center search index. *)
+(* Validate reviewed public Help content and its generated native notebooks.
+   This suite parses examples while held; it never evaluates example cells. *)
 dcRoot = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 dcSourceDirectory = FileNameJoin[{dcRoot, "source"}];
 dcCatalogDirectory = FileNameJoin[{dcRoot, "Documentation", "Source"}];
@@ -13,27 +12,22 @@ dcCheck[name_, assertion_] := Module[{result},
   result = TimeConstrained[Quiet[Check[assertion, $Failed]], 30, $TimedOut];
   If[!TrueQ[result], AppendTo[dcFailures, name]; Print["FAIL: ", name]]
 ];
-
 dcNonemptyStringQ[value_] := StringQ[value] && StringLength[StringTrim[value]] > 0;
 dcStringListQ[value_] := ListQ[value] && AllTrue[value, dcNonemptyStringQ];
-(* Parsing in an isolated context prevents names in an example from becoming
-   Global symbols before the package is loaded. HoldComplete prevents input
-   cells, Notebook expressions and source declarations from executing. *)
+dcPublicQ[entry_Association] := Lookup[entry, "visibility", "public"] === "public";
+dcVisibilityQ[entry_Association] := MemberQ[{"public", "internal"}, Lookup[entry, "visibility", "public"]];
+(* Parsing in a dedicated context keeps held examples from creating Global
+   symbols before HEPCAT is loaded by the separate registration suite. *)
 dcHeldParse[text_String] := Block[
   {$Context = "HEPCATDocumentationSyntax`", $ContextPath = {"System`"}},
   Quiet[Check[ToExpression[text, InputForm, HoldComplete], $Failed]]
 ];
 dcHeldParse[_] := $Failed;
-(* A multiline Input cell is one expression. Parentheses retain its complete
-   CompoundExpression, instead of a held argument sequence whose first item
-   could accidentally be selected by a box-building callback. *)
 dcHeldInputParse[text_String] := dcHeldParse["(" <> text <> "\n)"];
 dcHeldInputParse[_] := $Failed;
 dcParseableQ[text_] := Head[dcHeldInputParse[text]] === HoldComplete;
-dcHeldSymbolName[HoldComplete[s_Symbol]] := SymbolName[Unevaluated[s]];
+dcHeldSymbolName[HoldComplete[s_Symbol]] := If[AtomQ[Unevaluated[s]], SymbolName[Unevaluated[s]], Nothing];
 dcShortName[name_String] := Last[StringSplit[name, "`"]];
-(* Generated Input boxes are literal source strings or flat native token
-   RowBoxes. Neither representation evaluates a HEPCAT symbol's MakeBoxes. *)
 dcInputSource[HoldComplete[code_String]] := code;
 dcInputSource[HoldComplete[RowBox[tokens : {___String}]]] := StringJoin[tokens];
 dcInputSource[_] := $Failed;
@@ -45,190 +39,211 @@ dcInitializationSources[notebook_] := Cases[notebook,
     dcInputSource[HoldComplete[boxes]], Infinity];
 dcAssignedNames[held_] := DeleteDuplicates[dcHeldSymbolName /@ Cases[held,
   HoldPattern[Set[s_Symbol, _]] :> HoldComplete[s], Infinity]];
+dcRichStrings[text_String] := {text};
+dcRichStrings[TextData[parts_List]] := Flatten[dcRichStrings /@ parts];
+dcRichStrings[_] := {};
+dcProseStrings[notebook_] := Flatten[Cases[notebook,
+  HoldPattern[Cell[content_, style_String, ___]] /;
+      MemberQ[{"Notes", "Usage", "ExampleText", "GuideAbstract", "GuideText", "TechNoteText", "TableText"}, style] :>
+    dcRichStrings[content], Infinity]];
+dcProseLinks[notebook_] := DeleteDuplicates[Flatten[Cases[notebook,
+  HoldPattern[Cell[content_, style_String, ___]] /;
+      MemberQ[{"Notes", "Usage", "ExampleText", "GuideAbstract", "GuideText", "TechNoteText", "TableText"}, style] :>
+    Cases[HoldComplete[content], HoldPattern[ButtonData -> uri_String] :> uri, Infinity], Infinity]]];
+dcAuthoredLinks[value_] := DeleteDuplicates[Flatten[StringCases[#,
+    RegularExpression["\\[[^\\]]+\\]\\((paclet:HEPCAT/[^\\s)]+)\\)"] -> "$1"] & /@
+  Cases[value, _String, Infinity]]];
 
 dcAuthoredFiles = Sort[FileNames["*.json", dcCatalogDirectory]];
 dcCatalogFiles = Select[dcAuthoredFiles,
   !MemberQ[{"guides", "tutorials", "option-descriptions", "example-results"}, FileBaseName[#]] &];
 dcCheck["reference catalogs are present", dcCatalogFiles =!= {}];
-dcCatalogs = Table[Quiet[Check[Import[file, "RawJSON"], $Failed]], {file, dcCatalogFiles}];
-dcCheck["each reference catalog is a nonempty list of page associations",
+dcCatalogs = Quiet[Check[Import[#, "RawJSON"], $Failed]] & /@ dcCatalogFiles;
+dcCheck["reference catalogs are nonempty lists of page associations",
   AllTrue[dcCatalogs, ListQ[#] && # =!= {} && AllTrue[#, AssociationQ] &]];
-If[!AllTrue[dcCatalogs, ListQ[#] && AllTrue[#, AssociationQ] &],
-  Print["Cannot validate malformed reference catalogs."]; Exit[1]];
-dcPages = Join @@ dcCatalogs;
+If[!AllTrue[dcCatalogs, ListQ[#] && AllTrue[#, AssociationQ] &], Exit[1]];
+dcAllPages = Join @@ dcCatalogs;
+dcPages = Select[dcAllPages, dcPublicQ];
+dcAllPageNames = Lookup[dcAllPages, "name", Missing["Name"]];
 dcPageNames = Lookup[dcPages, "name", Missing["Name"]];
-dcCheck["every reference page has a nonempty unique symbol name",
-  dcStringListQ[dcPageNames] && DuplicateFreeQ[dcPageNames]];
+dcRetiredNames = Flatten[Lookup[dcAllPages, "retiredNames", {}]];
+dcHiddenNames = DeleteDuplicates[Join[
+  Lookup[Select[dcAllPages, !dcPublicQ[#] &], "name", {}], dcRetiredNames]];
+dcCoveredNames = DeleteDuplicates[Join[dcAllPageNames, dcRetiredNames]];
+dcCheck["all catalog names are nonempty and unique",
+  dcStringListQ[dcAllPageNames] && DuplicateFreeQ[dcAllPageNames]];
+dcCheck["visibility is public or internal, with public as the default",
+  AllTrue[dcAllPages, dcVisibilityQ] && dcPublicQ[<|"name" -> "fixture"|>]];
+dcCheck["retired names are explicitly classified and never public pages",
+  AllTrue[dcAllPages, dcStringListQ[Lookup[#, "retiredNames", {}]] &] &&
+    DuplicateFreeQ[dcRetiredNames] && Intersection[dcRetiredNames, dcPageNames] === {}];
+dcCoreNames = {"ReadModel", "CreateDiagrams", "DiagramAmplitudes", "CreateArrowDiagrams",
+  "Spinor", "SpinorChain", "Mom", "Mass", "MomProd", "PropDen", "ReduceSpinContractions",
+  "ReduceSpinorProducts", "ApplyToNumerator", "PrepareAmplitudes", "CompleteFactorization",
+  "CompleteHighEnergy", "ConstructAmplitude", "CheckAmplitudes", "PlainText", "TeX", "SPINAS",
+  "WriteSPINASProcess", "ValidateMadGraph"};
+dcCheck["the core user workflow retains public reference pages", Complement[dcCoreNames, dcPageNames] === {}];
+dcCheck["renamed user functions record the two retired spellings",
+  MemberQ[dcRetiredNames, "diagramAmplitudes"] && MemberQ[dcRetiredNames, "applyToNumerator"]];
 
-Do[
-  With[{pageName = Lookup[page, "name", "<unnamed>"]},
-    dcCheck["summary for " <> pageName,
-      dcNonemptyStringQ[Lookup[page, "summary", Missing["Summary"]]]];
-    dcCheck["syntax and descriptions for " <> pageName,
-      With[{syntaxes = Lookup[page, "syntaxes", {}]},
-        ListQ[syntaxes] && syntaxes =!= {} && AllTrue[syntaxes,
-          AssociationQ[#] && dcNonemptyStringQ[Lookup[#, "input", ""]] &&
-            dcNonemptyStringQ[Lookup[#, "description", ""]] &]]];
-    dcCheck["details for " <> pageName,
-      With[{details = Lookup[page, "details", {}]}, details =!= {} && dcStringListQ[details]]];
-    dcCheck["examples and descriptions for " <> pageName,
-      With[{examples = Lookup[page, "examples", {}]},
-        ListQ[examples] && examples =!= {} && AllTrue[examples,
-          AssociationQ[#] && dcNonemptyStringQ[Lookup[#, "input", ""]] &&
-            dcNonemptyStringQ[Lookup[#, "description", ""]] &&
-            MemberQ[{True, False}, Lookup[#, "evaluate", Missing["Evaluate"]]] &]]];
-    dcCheck["held example syntax for " <> pageName,
-      AllTrue[Lookup[Lookup[page, "examples", {}], "input", {}], dcParseableQ]];
-    dcCheck["related references and guide for " <> pageName,
-      dcStringListQ[Lookup[page, "related", Missing["Related"]]] &&
-        dcNonemptyStringQ[Lookup[page, "guide", ""]]];
-    dcCheck["generated reference notebook for " <> pageName,
-      FileExistsQ[FileNameJoin[{dcReferenceDirectory, pageName <> ".nb"}]]]
-  ],
-  {page, dcPages}
-];
+Do[With[{pageName = page["name"]},
+  dcCheck["public summary and syntax: " <> pageName,
+    dcNonemptyStringQ[Lookup[page, "summary", ""]] &&
+      With[{syntaxes = Lookup[page, "syntaxes", {}]}, ListQ[syntaxes] && syntaxes =!= {} &&
+        AllTrue[syntaxes, AssociationQ[#] && dcNonemptyStringQ[Lookup[#, "input", ""]] &&
+          dcNonemptyStringQ[Lookup[#, "description", ""]] &]]];
+  dcCheck["public explanatory details: " <> pageName,
+    With[{details = Lookup[page, "details", {}], sections = Lookup[page, "detail_sections", {}]},
+      dcStringListQ[details] && (details =!= {} || sections =!= {}) && ListQ[sections] &&
+        AllTrue[sections, AssociationQ[#] && dcNonemptyStringQ[Lookup[#, "title", ""]] &&
+          dcStringListQ[Lookup[#, "paragraphs", None]] && Lookup[#, "paragraphs", {}] =!= {} &]]];
+  dcCheck["public examples and optional section headings: " <> pageName,
+    With[{examples = Lookup[page, "examples", {}]}, ListQ[examples] && examples =!= {} &&
+      AllTrue[examples, AssociationQ[#] && dcNonemptyStringQ[Lookup[#, "input", ""]] &&
+        dcNonemptyStringQ[Lookup[#, "description", ""]] &&
+        MemberQ[{True, False}, Lookup[#, "evaluate", None]] &&
+        (!KeyExistsQ[#, "section"] || dcNonemptyStringQ[#["section"]]) &]]];
+  dcCheck["held public example syntax: " <> pageName,
+    AllTrue[Lookup[Lookup[page, "examples", {}], "input", {}], dcParseableQ]];
+  dcCheck["public related references: " <> pageName,
+    dcStringListQ[Lookup[page, "related", None]] &&
+      Complement[Lookup[page, "related", {}], dcPageNames] === {} &&
+      dcNonemptyStringQ[Lookup[page, "guide", ""]]];
+  dcCheck["generated public reference: " <> pageName,
+    FileExistsQ[FileNameJoin[{dcReferenceDirectory, pageName <> ".nb"}]]]
+], {page, dcPages}];
+dcCheck["hidden and retired reference pages are not deployed",
+  Intersection[dcHiddenNames, FileBaseName /@ FileNames["*.nb", dcReferenceDirectory]] === {}];
+dcCheck["the deployed reference set is exactly the reviewed public catalog",
+  Sort[FileBaseName /@ FileNames["*.nb", dcReferenceDirectory]] === Sort[dcPageNames]];
 
-(* Read the literal protected-name list while held. Do not evaluate symbol
-   values to discover API names: a symbol may have its own definition. *)
-dcLoaderSource = Quiet[Check[Import[FileNameJoin[{dcSourceDirectory, "HEPCAT.wl"}], "Text"], $Failed]];
-dcLoaderHeld = dcHeldParse[dcLoaderSource];
+(* A classified internal symbol still counts as reviewed API inventory. A
+   declaration must not silently disappear merely because it is protected. *)
+dcLoaderHeld = dcHeldParse[Import[FileNameJoin[{dcSourceDirectory, "HEPCAT.wl"}], "Text"]];
 dcProtectedLists = Cases[dcLoaderHeld,
   HoldPattern[Apply[Protect, Map[ToExpression, names : {__String}]]] :> names, Infinity];
-dcCheck["the package's protected public API declaration is found", dcProtectedLists =!= {}];
+dcCheck["the protected API inventory can be inspected", dcProtectedLists =!= {}];
 dcProtectedNames = DeleteDuplicates[dcShortName /@ Flatten[dcProtectedLists]];
-dcCheck["all protected public APIs have reference pages",
-  Complement[dcProtectedNames, dcPageNames] === {}];
-If[Complement[dcProtectedNames, dcPageNames] =!= {},
-  Print["Undocumented protected APIs: ", Complement[dcProtectedNames, dcPageNames]]];
-
+dcCheck["every protected name is documented or explicitly classified",
+  Complement[dcProtectedNames, dcCoveredNames] === {}];
 dcSourceFiles = Sort[FileNames["*.wl", dcSourceDirectory]];
-dcSourceHeld = dcHeldParse[Quiet[Check[Import[#, "Text"], $Failed]]] & /@ dcSourceFiles;
-dcCheck["all package source declarations can be inspected while held",
-  AllTrue[dcSourceHeld, Head[#] === HoldComplete &]];
+dcSourceHeld = dcHeldParse[Import[#, "Text"]] & /@ dcSourceFiles;
+dcCheck["all source declarations can be parsed while held", AllTrue[dcSourceHeld, Head[#] === HoldComplete &]];
 dcUsageSymbols = Flatten[Cases[#,
-    HoldPattern[Set[MessageName[s_Symbol, "usage"], _String]] :> HoldComplete[s], Infinity] & /@ dcSourceHeld];
+  HoldPattern[Set[MessageName[s_Symbol, "usage"], _String]] :> HoldComplete[s], Infinity] & /@ dcSourceHeld];
 dcUsageNames = DeleteDuplicates[dcHeldSymbolName /@ dcUsageSymbols];
-dcCheck["explicit public usage declarations are found", dcUsageNames =!= {}];
-dcCheck["all explicitly documented public APIs have reference pages",
-  Complement[dcUsageNames, dcPageNames] === {}];
-If[Complement[dcUsageNames, dcPageNames] =!= {},
-  Print["Undocumented usage declarations: ", Complement[dcUsageNames, dcPageNames]]];
+dcCheck["usage declarations exist and are all reviewed",
+  dcUsageNames =!= {} && Complement[dcUsageNames, dcCoveredNames] === {}];
+dcSourceSymbolNames = DeleteDuplicates[dcHeldSymbolName /@ Flatten[
+  Cases[#, s_Symbol :> HoldComplete[s], Infinity, Heads -> True] & /@ dcSourceHeld]];
+dcCheck["every public catalog symbol occurs in the actual package sources",
+  Complement[dcPageNames, dcSourceSymbolNames] === {}];
 
-(* These active older helpers predate ::usage and the protected-name inventory.
-   Keep their Help available while avoiding exposure of formatter building
-   blocks, matching predicates and private implementation details. *)
-dcLegacyBaseFunctions = {
-  "PlainText", "lPlainText", "SPINAS", "lSPINAS", "CreateSPName",
-  "CreateSPInitializationStatement", "CreateSPUpdateStatement",
-  "InitializeSPINASSpinorProducts", "UpdateSPINASSpinorProducts", "DeclareSPINASSpinorProducts",
-  "ReducexFactors", "xFactorReduced", "xTildeFactorReduced", "ExtractMandelstahm", "ReduceColor",
-  "SpinToHelicitySpinors", "MomProdExplicit", "MakeIndicesImplicit", "PermuteParticles",
-  "ConvertStringHattedAmplitude", "ComplexifyMomenta", "ExpandComplexMomenta",
-  "ReplaceSpinorZ", "UnhatMomenta"
-};
-dcCheck["retained active legacy Base APIs have reference pages",
-  Complement[dcLegacyBaseFunctions, dcPageNames] === {}];
-
-dcGuides = Quiet[Check[Import[FileNameJoin[{dcCatalogDirectory, "guides.json"}], "RawJSON"], $Failed]];
-dcTutorials = Quiet[Check[Import[FileNameJoin[{dcCatalogDirectory, "tutorials.json"}], "RawJSON"], $Failed]];
+dcAllGuides = Import[FileNameJoin[{dcCatalogDirectory, "guides.json"}], "RawJSON"];
+dcTutorials = Import[FileNameJoin[{dcCatalogDirectory, "tutorials.json"}], "RawJSON"];
 dcCheck["guide and tutorial catalogs are nonempty lists of associations",
-  AllTrue[{dcGuides, dcTutorials}, ListQ[#] && # =!= {} && AllTrue[#, AssociationQ] &]];
-If[!ListQ[dcGuides] || !ListQ[dcTutorials],
-  Print["Cannot validate malformed guide or tutorial catalogs."]; Exit[1]];
-dcGuideNames = Lookup[dcGuides, "name", Missing["Name"]];
-dcTutorialNames = Lookup[dcTutorials, "name", Missing["Name"]];
-dcCheck["guide and tutorial names are nonempty and unique",
-  dcStringListQ[dcGuideNames] && DuplicateFreeQ[dcGuideNames] &&
-    dcStringListQ[dcTutorialNames] && DuplicateFreeQ[dcTutorialNames]];
-dcCheck["every reference page links to a known guide",
-  Complement[Lookup[dcPages, "guide"], dcGuideNames] === {}];
-dcCheck["the main guide and drill-down symbol index are present",
+  AllTrue[{dcAllGuides, dcTutorials}, ListQ[#] && # =!= {} && AllTrue[#, AssociationQ] &]];
+If[!ListQ[dcAllGuides] || !ListQ[dcTutorials], Exit[1]];
+dcGuides = Select[dcAllGuides, dcPublicQ];
+dcGuideNames = Lookup[dcGuides, "name", {}];
+dcHiddenGuideNames = Lookup[Select[dcAllGuides, !dcPublicQ[#] &], "name", {}];
+dcTutorialNames = Lookup[dcTutorials, "name", {}];
+dcCheck["guide names and visibility are explicit and valid",
+  dcStringListQ[Lookup[dcAllGuides, "name", {}]] && DuplicateFreeQ[Lookup[dcAllGuides, "name", {}]] &&
+    AllTrue[dcAllGuides, dcVisibilityQ] && dcStringListQ[dcTutorialNames] && DuplicateFreeQ[dcTutorialNames]];
+dcCheck["public pages use public guides", Complement[Lookup[dcPages, "guide", {}], dcGuideNames] === {}];
+dcCheck["the main guide and reference index remain available",
   MemberQ[dcGuideNames, "HEPCAT"] && MemberQ[dcGuideNames, "ReferenceIndex"]];
-Do[
-  With[{name = Lookup[guide, "name", "<unnamed>"]},
-    dcCheck["guide title, summary and introduction: " <> name,
-      dcNonemptyStringQ[Lookup[guide, "title", ""]] &&
-        dcNonemptyStringQ[Lookup[guide, "summary", ""]] &&
-        dcStringListQ[Lookup[guide, "paragraphs", {}]]];
-    dcCheck["generated guide notebook: " <> name,
-      FileExistsQ[FileNameJoin[{dcDocumentationDirectory, "Guides", name <> ".nb"}]]];
-    dcCheck["guide symbol and topic links: " <> name,
-      AllTrue[Lookup[guide, "sections", {}],
-        AssociationQ[#] && dcNonemptyStringQ[Lookup[#, "title", ""]] &&
-          Complement[Lookup[#, "functions", {}], dcPageNames] === {} &&
-          Complement[Lookup[#, "guides", {}], dcGuideNames] === {} &&
-          Complement[Lookup[#, "tutorials", {}], dcTutorialNames] === {} &] &&
-        Complement[Lookup[guide, "tutorials", {}], dcTutorialNames] === {}]
-  ], {guide, dcGuides}];
-Do[
-  With[{name = Lookup[tutorial, "name", "<unnamed>"]},
-    dcCheck["tutorial title, summary and sections: " <> name,
-      dcNonemptyStringQ[Lookup[tutorial, "title", ""]] &&
-        dcNonemptyStringQ[Lookup[tutorial, "summary", ""]] &&
-        ListQ[Lookup[tutorial, "sections", None]] && Lookup[tutorial, "sections", {}] =!= {}];
-    dcCheck["generated tutorial notebook: " <> name,
-      FileExistsQ[FileNameJoin[{dcDocumentationDirectory, "Tutorials", name <> ".nb"}]]];
-    dcCheck["tutorial held example syntax: " <> name,
+dcCheck["hidden guide pages are not deployed",
+  AllTrue[dcHiddenGuideNames, !FileExistsQ[FileNameJoin[{dcDocumentationDirectory, "Guides", # <> ".nb"}]] &]];
+dcCheck["the deployed guide set matches public visibility",
+  Sort[FileBaseName /@ FileNames["*.nb", FileNameJoin[{dcDocumentationDirectory, "Guides"}]]] === Sort[dcGuideNames]];
+Do[With[{name = guide["name"]},
+  dcCheck["public guide introduction and links: " <> name,
+    dcNonemptyStringQ[Lookup[guide, "title", ""]] && dcNonemptyStringQ[Lookup[guide, "summary", ""]] &&
+      dcStringListQ[Lookup[guide, "paragraphs", None]] &&
+      AllTrue[Lookup[guide, "sections", {}], AssociationQ[#] &&
+        dcNonemptyStringQ[Lookup[#, "title", ""]] &&
+        Complement[Lookup[#, "functions", {}], dcPageNames] === {} &&
+        Complement[Lookup[#, "guides", {}], dcGuideNames] === {} &&
+        Complement[Lookup[#, "tutorials", {}], dcTutorialNames] === {} &] &&
+      Complement[Lookup[guide, "tutorials", {}], dcTutorialNames] === {}]
+], {guide, dcGuides}];
+Do[With[{name = tutorial["name"]},
+  dcCheck["tutorial prose, examples and links: " <> name,
+    dcNonemptyStringQ[Lookup[tutorial, "title", ""]] && dcNonemptyStringQ[Lookup[tutorial, "summary", ""]] &&
+      ListQ[Lookup[tutorial, "sections", None]] && Lookup[tutorial, "sections", {}] =!= {} &&
       AllTrue[Flatten[Lookup[Lookup[tutorial, "sections", {}], "examples", {}]],
         AssociationQ[#] && dcNonemptyStringQ[Lookup[#, "description", ""]] &&
-          dcParseableQ[Lookup[#, "input", Missing["Input"]]] &]];
-    dcCheck["tutorial symbol and guide links: " <> name,
+          dcParseableQ[Lookup[#, "input", None]] &] &&
       Complement[Lookup[tutorial, "related", {}], dcPageNames] === {} &&
-        Complement[Lookup[tutorial, "guides", {}], dcGuideNames] === {}]
-  ], {tutorial, dcTutorials}];
+      Complement[Lookup[tutorial, "guides", {}], dcGuideNames] === {}];
+  dcCheck["generated tutorial: " <> name,
+    FileExistsQ[FileNameJoin[{dcDocumentationDirectory, "Tutorials", name <> ".nb"}]]]
+], {tutorial, dcTutorials}];
+dcUsageRegistryHeld = dcHeldParse[Import[FileNameJoin[{dcDocumentationDirectory, "SymbolUsage.wl"}], "Text"]];
+dcRegistryNames = dcShortName /@ Cases[dcUsageRegistryHeld,
+  HoldPattern[Rule[name_String, _String]] :> name, Infinity];
+dcCheck["the usage registry contains exactly public names",
+  Sort[dcRegistryNames] === Sort[dcPageNames] && Intersection[dcRegistryNames, dcHiddenNames] === {}];
 dcAuthoredContent = Quiet[Check[Import[#, "RawJSON"], $Failed]] & /@ dcAuthoredFiles;
 dcCheck["all authored content is valid JSON", FreeQ[dcAuthoredContent, $Failed]];
-dcCatalogStrings = Cases[dcAuthoredContent, _String, Infinity];
-dcCheck["authored documentation content contains no em dashes",
-  AllTrue[dcCatalogStrings, !StringContainsQ[#, FromCharacterCode[8212]] &]];
+dcCheck["authored documentation has no em dashes",
+  AllTrue[Cases[dcAuthoredContent, _String, Infinity], !StringContainsQ[#, FromCharacterCode[8212]] &]];
 
 dcNotebookFiles = Sort[FileNames["*.nb", dcDocumentationDirectory, Infinity]];
-dcCheck["the generated Help notebook collection exists", dcNotebookFiles =!= {}];
-dcNotebooks = Table[
-  dcHeldParse[Quiet[Check[Import[file, "Text"], $Failed]]], {file, dcNotebookFiles}];
-Do[
-  With[{path = dcNotebookFiles[[i]], notebook = dcNotebooks[[i]]},
-    dcCheck["valid held notebook: " <> FileNameDrop[path, FileNameDepth[dcRoot]],
-      MatchQ[notebook, HoldComplete[_Notebook]]]
-  ], {i, Length[dcNotebookFiles]}];
-
+dcCheck["the native Help notebooks exist", dcNotebookFiles =!= {}];
+dcNotebooks = dcHeldParse[Import[#, "Text"]] & /@ dcNotebookFiles;
+dcCheck["all generated Help notebooks parse while held", AllTrue[dcNotebooks, MatchQ[#, HoldComplete[_Notebook]] &]];
 dcNotebookByPath = AssociationThread[dcNotebookFiles, dcNotebooks];
-dcCheckInputRoundtrip[notebook_, examples_List, label_String] := Module[
-  {generated, authored, generatedExamples, initialization},
-  generated = dcInputSources[notebook];
-  authored = Lookup[examples, "input", {}];
-  generatedExamples = If[Length[generated] >= Length[authored],
-    Take[generated, -Length[authored]], {}];
-  dcCheck["literal generated Input sources: " <> label,
-    generated =!= {} && AllTrue[generated, dcNonemptyStringQ]];
-  dcCheck["authored examples survive unchanged: " <> label,
-    generatedExamples === authored];
-  dcCheck["held generated Input roundtrip: " <> label,
-    Length[generatedExamples] === Length[authored] &&
-      AllTrue[generatedExamples, dcParseableQ] &&
-      And @@ MapThread[SameQ[dcHeldInputParse[#1], dcHeldInputParse[#2]] &,
-        {generatedExamples, authored}]];
+dcCheckInputRoundtrip[notebook_, examples_List, label_String, commonSetup_: True] := Module[
+  {generated, authored, generatedExamples, initialization, expectedVariables, initializationHeld},
+  generated = dcInputSources[notebook]; authored = Lookup[examples, "input", {}];
+  generatedExamples = If[Length[authored] === 0, {}, If[Length[generated] >= Length[authored], Take[generated, -Length[authored]], {}]];
+  dcCheck["authored Input source survives unchanged: " <> label, generatedExamples === authored];
+  dcCheck["held Input source roundtrip: " <> label,
+    AllTrue[generated, dcNonemptyStringQ] && AllTrue[generatedExamples, dcParseableQ] &&
+      And @@ MapThread[SameQ[dcHeldInputParse[#1], dcHeldInputParse[#2]] &, {generatedExamples, authored}]];
   initialization = dcInitializationSources[notebook];
-  dcCheck["complete multiline common setup: " <> label,
-    initialization =!= {} && AllTrue[initialization, dcNonemptyStringQ] &&
-      Complement[{"hepcatDirectory", "modelDirectory", "feynmanModelDirectory"},
-        dcAssignedNames[dcHeldInputParse[First[initialization]]]] === {}]
+  If[TrueQ[commonSetup],
+    expectedVariables = Select[{"hepcatDirectory", "modelDirectory", "feynmanModelDirectory"},
+      StringContainsQ[StringRiffle[authored, "\n"], #] &];
+    initializationHeld = If[Length[initialization] === 1, dcHeldInputParse[First[initialization]], $Failed];
+    dcCheck["short loading and only required directory variables: " <> label,
+      Length[initialization] === 1 &&
+        !FreeQ[initializationHeld, HoldPattern[Get["~/code/hepcat/source/HEPCAT.wl"]]] &&
+        Sort[dcAssignedNames[initializationHeld]] === Sort[expectedVariables]];
+    dcCheck["optional common setup is collapsed: " <> label,
+      !FreeQ[notebook, HoldPattern[CellGroupData[
+        {___, Cell[_, "Input", ___, InitializationCell -> True, ___], ___}, Closed]]]],
+    dcCheck["Getting Started does not duplicate the common loading panel: " <> label, initialization === {}]
+  ]
 ];
-Do[
-  dcCheckInputRoundtrip[
-    Lookup[dcNotebookByPath, FileNameJoin[{dcReferenceDirectory, page["name"] <> ".nb"}], $Failed],
-    Lookup[page, "examples", {}], "reference " <> page["name"]],
-  {page, dcPages}];
-Do[
-  dcCheckInputRoundtrip[
-    Lookup[dcNotebookByPath,
-      FileNameJoin[{dcDocumentationDirectory, "Tutorials", tutorial["name"] <> ".nb"}], $Failed],
-    Flatten[Lookup[Lookup[tutorial, "sections", {}], "examples", {}]],
-    "tutorial " <> tutorial["name"]],
-  {tutorial, dcTutorials}];
+Do[With[{notebook = Lookup[dcNotebookByPath, FileNameJoin[{dcReferenceDirectory, page["name"] <> ".nb"}], $Failed]},
+  dcCheckInputRoundtrip[notebook, Lookup[page, "examples", {}], "reference " <> page["name"]];
+  dcCheck["detail subsections survive generation: " <> page["name"],
+    AllTrue[Lookup[page, "detail_sections", {}], !FreeQ[notebook, Cell[#["title"], "NotesSection"]] &]];
+  dcCheck["example subsections survive generation: " <> page["name"],
+    AllTrue[Select[Lookup[page, "examples", {}], KeyExistsQ[#, "section"] &],
+      !FreeQ[notebook, Cell[#["section"], "ExampleSubsection"]] &]];
+  dcCheck["inline public function links are native links in prose: " <> page["name"],
+    Complement[Select[dcAuthoredLinks[KeyTake[page, {"summary", "details", "detail_sections", "examples", "syntaxes"}]],
+      StringStartsQ[#, "paclet:HEPCAT/ref/"] && MemberQ[dcPageNames, Last[StringSplit[#, "/"]]] &],
+      dcProseLinks[notebook]] === {}]
+], {page, dcPages}];
+Do[dcCheckInputRoundtrip[
+  Lookup[dcNotebookByPath, FileNameJoin[{dcDocumentationDirectory, "Tutorials", tutorial["name"] <> ".nb"}], $Failed],
+  Flatten[Lookup[Lookup[tutorial, "sections", {}], "examples", {}]], "tutorial " <> tutorial["name"],
+  tutorial["name"] =!= "GettingStarted"], {tutorial, dcTutorials}];
+dcCheck["major workflow explanations contain native inline function links",
+  AllTrue[{"ReadModel", "PrepareAmplitudes", "CompleteFactorization", "WriteSPINASProcess"},
+    dcProseLinks[Lookup[dcNotebookByPath, FileNameJoin[{dcReferenceDirectory, # <> ".nb"}], $Failed]] =!= {} &]];
+dcCheck["rendered prose has no unprocessed Markdown links or code delimiters",
+  AllTrue[Flatten[dcProseStrings /@ dcNotebooks],
+    !StringContainsQ[#, RegularExpression["\\[[^\\]]+\\]\\((?:paclet:|https?://)"] | RegularExpression["`[^`\\n]+`"]] &]];
 
-(* Only local HEPCAT paclet links belong to this package. Wolfram's own ref
-   links and external web links are resolved by Mathematica, not this test. *)
+(* Native Wolfram and external links resolve outside this checkout. HEPCAT's
+   own links must lead only to deployed public pages. *)
 dcLocalLinks = DeleteDuplicates[Cases[dcNotebooks,
   link_String /; StringStartsQ[link, "paclet:HEPCAT"] :> link, Infinity]];
 dcLinkTarget[link_String] := Module[{relative, parts},
@@ -240,15 +255,12 @@ dcLinkTarget[link_String] := Module[{relative, parts},
   Switch[First[parts],
     "ref", FileNameJoin[{dcReferenceDirectory, Last[parts] <> ".nb"}],
     "guide", FileNameJoin[{dcDocumentationDirectory, "Guides", Last[parts] <> ".nb"}],
-    "tutorial", FileNameJoin[{dcDocumentationDirectory, "Tutorials", Last[parts] <> ".nb"}],
-    _, $Failed]
+    "tutorial", FileNameJoin[{dcDocumentationDirectory, "Tutorials", Last[parts] <> ".nb"}], _, $Failed]
 ];
-dcCheck["the generated pages contain local documentation links", dcLocalLinks =!= {}];
-Do[
-  With[{target = dcLinkTarget[link]},
-    dcCheck["local paclet link exists: " <> link, StringQ[target] && FileExistsQ[target]]
-  ], {link, dcLocalLinks}];
-
+dcCheck["the generated pages contain documentation links", dcLocalLinks =!= {}];
+Do[With[{target = dcLinkTarget[link]},
+  dcCheck["local documentation target exists: " <> link, StringQ[target] && FileExistsQ[target]]
+], {link, dcLocalLinks}];
 Print["Documentation content: ", dcChecks - Length[dcFailures], " / ", dcChecks, " checks passed."];
 If[dcFailures =!= {}, Print["Failures: ", dcFailures]; Exit[1]];
 Print["HEPCAT_TEST_COMPLETED:documentation-content-tests.wl"];

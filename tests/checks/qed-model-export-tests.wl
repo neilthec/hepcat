@@ -43,7 +43,7 @@ qmeAllPass[report_] := AssociationQ[report] &&
 qmeVerify[particles_List, overrides_, seed_Integer] := Module[
   {amplitude = qmeLookup[particles], channels, feynman, report},
   channels = FactorizationAmplitudeChannels[particles, qmeModel];
-  feynman = PrepareAmplitudes[diagramAmplitudes[
+  feynman = PrepareAmplitudes[DiagramAmplitudes[
       CreateDiagrams[particles, qmeFeynmanModel]], qmeFeynmanModel,
     "PolePreference" -> "IndependentXi", "MaxSteps" -> 0,
     "ProgressReporting" -> False];

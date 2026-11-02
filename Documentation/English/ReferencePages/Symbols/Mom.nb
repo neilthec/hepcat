@@ -7,36 +7,52 @@ Notebook[
         "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
      GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
    "AnchorBarGrid"], Cell["Mom", "ObjectName"],
-  Cell["Represents a momentum insertion in HEPCAT spinor algebra.", "Notes"],
+  Cell[TextData[
+    {"Represents a momentum in a spinor chain or a propagator."}], "Notes"],
   Cell[TextData[{Cell[BoxData[RowBox[{"Mom", "[", "i", "]"}]],
-      "InlineFormula"], "  ",
-     "constructs the corresponding symbolic object."}], "Usage"],
-  Cell["Details", "NotesSection"], Cell["Mom[Multiparticle[i,j,...]] is the \
-sum of the listed particle momenta. A composite label does not make that sum \
-an on-shell external momentum.", "Notes"], Cell["Use Mom inside SpinorChain \
-or PropDen. Use MomProd for a Lorentz scalar product.", "Notes"],
+      "InlineFormula"], "  ", "denotes the four-momentum of particle i."}],
+   "Usage"], Cell["Details", "NotesSection"],
+  Cell[TextData[{"Mom[i] denotes the momentum of particle i in the ordered \
+external-particle list. Place it between the endpoints of a ",
+     ButtonBox["SpinorChain", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SpinorChain"],
+     " to represent a momentum matrix, or inside ",
+     ButtonBox["PropDen", BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/PropDen"],
+     " to identify the momentum carried by a propagator."}], "Notes"],
+  Cell[TextData[{"Mom[Multiparticle[1, 3]] denotes p1+p3. The ",
+     ButtonBox["Multiparticle", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/Multiparticle"], " head preserves the \
+list of constituent legs so diagram, channel, and crossing functions can \
+interpret the sum correctly."}], "Notes"],
+  Cell[TextData[{"To write a Lorentz scalar product, use ",
+     Cell[BoxData[RowBox[{"MomProd", "[", "i", ",", " ", "j", "]"}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{",", " ", "with", " ",
+         "particle", " ", "labels", " ", "as", " ", "arguments", ".", " ",
+         "See", " ", "[", "MomProd", "]", "(", "paclet", ":", "HEPCAT", "/",
+         "ref", "/", "MomProd", ")", " ", "for", " ", "scalar", " ",
+         "products", ".", " "}]], "InlineFormula"],
+     ButtonBox["MomProd", BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/MomProd"], " for scalar products. ",
+     Cell[BoxData[RowBox[{"Mom", "[", "i", "]", " ", "Mom", "[", "j", "]"}]],
+      "InlineFormula"], " is ordinary multiplication of symbolic expressions \
+and does not mean the scalar product."}], "Notes"],
+  Cell[TextData[{"An external label carries the usual external mass identity. \
+A sum of momenta is generally off shell; diagram-local assumptions must be \
+supplied by the diagram's mass rules when using ",
+     ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], "."}], "Notes"],
   Cell["Examples", "PrimaryExamplesSection"],
-  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
-     Cell["Evaluate this setup once before the examples. The paths refer to \
-the local HEPCAT checkout; no model parameters are assigned global numerical \
-values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
-         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
-         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
-         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
-         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
-         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
-         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
-         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
-         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
-         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
-         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
-         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
-         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
-         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
-         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
-      "Input", InitializationCell -> True]}, Open]],
+  Cell[CellGroupData[{Cell["Load HEPCAT if needed", "ExampleSubsection"],
+     Cell["Skip this setup if HEPCAT is already loaded. These examples assume \
+the checkout is in ~/code/hepcat; change the paths if yours is elsewhere. \
+Evaluate loading in its own cell before the calculation.", "ExampleText"],
+     Cell[BoxData[RowBox[{"Get", "[", "\"~/code/hepcat/source/HEPCAT.wl\"",
+         "]", ";"}]], "Input", InitializationCell -> True]}, Closed]],
   Cell["Basic Examples", "ExampleSection"],
-  Cell["Inspect a symbolic example.", "ExampleText"],
+  Cell[TextData[{"Insert p2 between a square spinor on leg 1 and an angle \
+spinor on leg 3. This represents [1|p2|3>, without evaluating a numerical \
+momentum."}], "ExampleText"],
   Cell[BoxData[RowBox[{"SpinorChain", "[", "Spinor", "[", "\"Helicity\"",
       ",", " ", "\"Square\"", ",", " ", "1", "]", ",", " ", "Mom", "[", "2",
       "]", ",", " ", "Spinor", "[", "\"Helicity\"", ",", " ", "\"Angle\"",
@@ -62,8 +78,7 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/Mom", "title" -> "Mom", "type" -> "Symbol",
      "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" ->
-      "Represents a momentum insertion in HEPCAT spinor algebra.",
+     "summary" -> "Represents a momentum in a spinor chain or a propagator.",
      "keywords" -> {"HEPCAT", "Mom", "spinor amplitudes"},
      "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

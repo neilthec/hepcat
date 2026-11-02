@@ -126,7 +126,7 @@ check["an empty physical basis remains empty with a complete span report",
 
 builder=ConstructiveDiagrams`Private`completionPhysicalChannelBasis;
 scalarModel={{{"Scalar","s","s",1,0,m,0,1,1,"",""}},{{"s","s","s","",g,1}},{},{}};
-scalarPairs=diagramAmplitudes[CreateDiagrams[ConstantArray["s",4],scalarModel]];
+scalarPairs=DiagramAmplitudes[CreateDiagrams[ConstantArray["s",4],scalarModel]];
 scalarChannels=FactorizationAmplitudeChannels[ConstantArray["s",4],scalarModel];
 scalarNorm=ConstructiveDiagrams`Private`completionNormalizeInput[scalarPairs,scalarChannels,scalarModel];
 identityPlan=<|"Order"->1,"Permutations"->{{}}|>;

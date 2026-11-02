@@ -126,7 +126,7 @@ replayPermutedRoute[path_, original_] := Module[{verified, states, edits, ids},
 (* The notebook's Z example needs explicit composite-momentum edits before
    endpoint mass identities can act. This tests the legal path, not a model. *)
 zCompositeDiagrams = ubSelect[CreateDiagrams[{"e", "E", "M", "m"}, ubModel], "Z", False];
-zCompositePairs = diagramAmplitudes[zCompositeDiagrams];
+zCompositePairs = DiagramAmplitudes[zCompositeDiagrams];
 zCompositeRules = First[zCompositePairs][[1]];
 zCompositeOriginal = ConstructiveDiagrams`Private`canonicalAmplitude[
   ReduceSpinContractions[Total[zCompositePairs[[All, 2]]]], zCompositeRules];
@@ -151,7 +151,7 @@ check["curated Z endpoint agrees with the reference without a spinor reducer",
   ConstructiveDiagrams`Private`samePoly[
     ExtractMandelstahm[Last[zCuratedRoute["States"]]] /. MW -> MZ CW,
     ubReference["e E -> M m", "Z"]]];
-quarkZPairs = diagramAmplitudes[ubSelect[
+quarkZPairs = DiagramAmplitudes[ubSelect[
   CreateDiagrams[{"u", "U", "C", "c"}, ubModel], "Z", False]];
 quarkZRoute = SelectFirst[allCuratedRoutes, #["Name"] === "u, U, C, c / Z exchange" &];
 check["handwritten quark Z path begins at fresh public diagrams",
@@ -169,7 +169,7 @@ check["handwritten quark Z path preserves its off-shell denominator",
 check["handwritten quark Z endpoint removes every momentum insertion",
   FreeQ[Cases[Last[quarkZRoute["States"]], _SpinorChain, Infinity], _Mom]];
 eezhCuratedPairs = ReduceSpinContractions[
-  diagramAmplitudes[CreateDiagrams[{"e", "E", "Z", "h"}, ubModel]]];
+  DiagramAmplitudes[CreateDiagrams[{"e", "E", "Z", "h"}, ubModel]]];
 check["fresh eeZh diagrams contain all three handwritten channels", Length[eezhCuratedPairs] === 3];
 eezhCuratedStepCounts = <|"Z" -> 52, "e:T" -> 10, "e:U" -> 4|>;
 Do[
@@ -201,7 +201,7 @@ Do[
   {eezhCuratedPair, eezhCuratedPairs}
 ];
 eezzCuratedPairs = ReduceSpinContractions[
-  diagramAmplitudes[CreateDiagrams[{"e", "E", "Z", "Z"}, ubModel]]];
+  DiagramAmplitudes[CreateDiagrams[{"e", "E", "Z", "Z"}, ubModel]]];
 eezzElectronPairs = Select[eezzCuratedPairs,
   !FreeQ[#[[2]], PropDen[Mom[Multiparticle[1, 3] | Multiparticle[1, 4]], Me]] &];
 eezzElectronRoutes = Select[allCuratedRoutes,
@@ -261,7 +261,7 @@ Do[
   {eezzCuratedJob, eezzCuratedJobs}];
 (* Handwritten electron exchange with two external Higgs bosons. *)
 eehhCuratedPairs = ReduceSpinContractions[
-  diagramAmplitudes[CreateDiagrams[{"e", "E", "h", "h"}, ubModel]]];
+  DiagramAmplitudes[CreateDiagrams[{"e", "E", "h", "h"}, ubModel]]];
 eehhElectronPairs = Select[eehhCuratedPairs,
   !FreeQ[#[[2]], PropDen[Mom[Multiparticle[1, 3] | Multiparticle[1, 4]], Me]] &];
 eehhElectronRoutes = Select[allCuratedRoutes,
@@ -315,7 +315,7 @@ Print["Checking the massive-vector diagram boundaries and endpoints."];
 eewwCuratedRoute = SelectFirst[allCuratedRoutes,
   #["Name"] === "e, E, W-, W+ / Z exchange" &, $Failed];
 eewwCuratedDiagrams = ubSelect[CreateDiagrams[{"e", "E", "W-", "W+"}, ubModel], "Z", False];
-eewwCuratedPairs = ReduceSpinContractions[diagramAmplitudes[eewwCuratedDiagrams]];
+eewwCuratedPairs = ReduceSpinContractions[DiagramAmplitudes[eewwCuratedDiagrams]];
 check["fresh eeWW Z diagrams have one matching curated route",
   AssociationQ[eewwCuratedRoute] && Length[eewwCuratedPairs] === 1];
 If[AssociationQ[eewwCuratedRoute] && Length[eewwCuratedPairs] === 1,
@@ -356,7 +356,7 @@ curatedPermutationReplayQ[permutedStates_, originalEdits_, ids_] := Module[{stat
 Print["Checking the bosonic Z path and its exact permutation replays."];
 zhwwCuratedRoute = SelectFirst[allCuratedRoutes, #["Name"] === "Z, h, W-, W+ / Z exchange" &, $Failed];
 zhwwCuratedDiagrams = ubSelect[CreateDiagrams[{"Z", "h", "W-", "W+"}, ubModel], "Z:S", False];
-zhwwCuratedPairs = ReduceSpinContractions[diagramAmplitudes[zhwwCuratedDiagrams]];
+zhwwCuratedPairs = ReduceSpinContractions[DiagramAmplitudes[zhwwCuratedDiagrams]];
 check["fresh bosonic Z exchange has one matching curated route",
   AssociationQ[zhwwCuratedRoute] && Length[zhwwCuratedPairs] === 1];
 If[AssociationQ[zhwwCuratedRoute] && Length[zhwwCuratedPairs] === 1,
@@ -406,7 +406,7 @@ chargedCurrentRoutes = Select[allCuratedRoutes,
 check["both charged-current W exchange routes are retained", Length[chargedCurrentRoutes] === 2];
 Do[
   chargedCurrentDiagrams = ubSelect[CreateDiagrams[chargedCurrentSpecification[[2]], ubModel], "W+", False];
-  chargedCurrentPairs = ReduceSpinContractions[diagramAmplitudes[chargedCurrentDiagrams]];
+  chargedCurrentPairs = ReduceSpinContractions[DiagramAmplitudes[chargedCurrentDiagrams]];
   chargedCurrentRoute = SelectFirst[chargedCurrentRoutes,
     #["Name"] === chargedCurrentSpecification[[1]] &, $Failed];
   check["fresh charged-current boundary " <> chargedCurrentSpecification[[1]],
@@ -473,7 +473,7 @@ Do[
   newCuratedRoute = SelectFirst[allCuratedRoutes, #["Name"] === newCuratedName &, $Failed];
   newCuratedDiagrams = ubSelect[CreateDiagrams[newCuratedSpecification[[2]], ubModel],
     newCuratedSpecification[[4]], False];
-  newCuratedPairs = ReduceSpinContractions[diagramAmplitudes[newCuratedDiagrams]];
+  newCuratedPairs = ReduceSpinContractions[DiagramAmplitudes[newCuratedDiagrams]];
   check["new curated route has one independent diagram boundary " <> newCuratedName,
     AssociationQ[newCuratedRoute] && Length[newCuratedPairs] === 1];
   If[AssociationQ[newCuratedRoute] && Length[newCuratedPairs] === 1,
@@ -548,7 +548,7 @@ If[ListQ[electronPhotonRoutes] && Length[electronPhotonRoutes] === 3,
   electronPhotonRoute = Last[electronPhotonRoutes];
   electronPhotonStates = electronPhotonRoute["States"];
   electronPhotonDiagrams = CreateDiagrams[{"e", "E", "A.+", "A.+"}, ubModel];
-  electronPhotonPairs = diagramAmplitudes[electronPhotonDiagrams];
+  electronPhotonPairs = DiagramAmplitudes[electronPhotonDiagrams];
   electronPhotonPoles = {
     PropDen[Mom[Multiparticle[1, 3]], Me],
     PropDen[Mom[Multiparticle[1, 4]], Me]};
@@ -646,7 +646,7 @@ check["opposite-helicity photon example has three curated paths",
     validRoutesQ[oppositePhotonRoutes]];
 If[ListQ[oppositePhotonRoutes] && Length[oppositePhotonRoutes] === 3,
   oppositePhotonPoles = {PropDen[Mom[Multiparticle[1, 3]], Me], PropDen[Mom[Multiparticle[1, 4]], Me]};
-  oppositePhotonPairs = diagramAmplitudes[CreateDiagrams[{"e", "E", "A.+", "A.-"}, ubModel]];
+  oppositePhotonPairs = DiagramAmplitudes[CreateDiagrams[{"e", "E", "A.+", "A.-"}, ubModel]];
   oppositePhotonPrepared = Table[
     pair = SelectFirst[oppositePhotonPairs, !FreeQ[#[[2]], pole] &];
     ConstructiveDiagrams`Private`canonicalAmplitude[ReduceSpinContractions[pair[[2]]] /.

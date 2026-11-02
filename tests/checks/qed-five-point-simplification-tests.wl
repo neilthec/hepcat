@@ -214,7 +214,7 @@ qftPreparationOwnChecks[assigned_, prepared_, poles_List, geometry_, massSamples
 qftPreparationFixtures = Table[Module[{particles, diagrams, pairs},
   particles = ReplacePart[qftParts, 5 -> helicity];
   diagrams = If[helicity === "A.+", qftDiagrams, CreateDiagrams[particles, qftDiagramModel]];
-  pairs = If[helicity === "A.+", qftRoute["ActualDiagramAmplitudes"], diagramAmplitudes[diagrams]];
+  pairs = If[helicity === "A.+", qftRoute["ActualDiagramAmplitudes"], DiagramAmplitudes[diagrams]];
   <|"Helicity" -> helicity, "Particles" -> particles, "Diagrams" -> diagrams,
     "Pairs" -> pairs, "Hash" -> Hash[pairs, "SHA256"],
     "Geometry" -> (qftPreparationGeometry /@ diagrams)|>],
@@ -339,12 +339,12 @@ check["ordinary preparation preserves the best known complete amplitude without 
    their own two internal shells, then prove the global equality without
    using any internal shell conditions. *)
 qftMixedParts = {"e", "E", "A.+", "A.+", "A.-"};
-qftMixedPairs = diagramAmplitudes[CreateDiagrams[qftMixedParts, qftDiagramModel]];
+qftMixedPairs = DiagramAmplitudes[CreateDiagrams[qftMixedParts, qftDiagramModel]];
 qftMixedRoute = qedFivePointMixedRoute[qftMixedPairs];
 check["the mixed route rejects an empty input",
   FailureQ[qedFivePointMixedRoute[{}]]];
 check["the mixed route rejects the all-positive photon sector",
-  FailureQ[qedFivePointMixedRoute[diagramAmplitudes[CreateDiagrams[
+  FailureQ[qedFivePointMixedRoute[DiagramAmplitudes[CreateDiagrams[
     {"e", "E", "A.+", "A.+", "A.+"}, qftDiagramModel]]]]];
 check["the mixed route rejects duplicate orderings instead of omitting a diagram",
   FailureQ[qedFivePointMixedRoute[ReplacePart[qftMixedPairs,

@@ -40,7 +40,7 @@ If[piValid,
   (* Rebuild the independent Feynman benchmark after construction. This is only
      validation, never a reconstruction input or replacement answer. *)
   piFeynman = PrepareAmplitudes[
-    diagramAmplitudes[CreateDiagrams[piProcess, qedFeynmanModel]], qedFeynmanModel];
+    DiagramAmplitudes[CreateDiagrams[piProcess, qedFeynmanModel]], qedFeynmanModel];
   piCheck = CheckAmplitudes[{piExternal, qed6PPPM}, piChannels, factorizationModel,
     "FeynmanAmplitudes" -> piFeynman, "FeynmanModel" -> qedFeynmanModel,
     "Output" -> "Details"];

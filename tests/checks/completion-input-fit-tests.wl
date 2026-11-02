@@ -28,7 +28,7 @@ ciAttemptSpaces[report_] := Lookup[ciAttempts[report], "Mode", {}];
    overlapping records deliberately share exactly one signed, weighted term. *)
 ciScalarModel = {{{"Scalar", "s", "s", 1, 0, ciMass, 0, 1, 1, "", ""}},
   {{"s", "s", "s", "", ciCoupling, 1}}, {}, {}};
-ciScalarPairs = diagramAmplitudes[CreateDiagrams[ConstantArray["s", 4], ciScalarModel]];
+ciScalarPairs = DiagramAmplitudes[CreateDiagrams[ConstantArray["s", 4], ciScalarModel]];
 ciScalarChannels = FactorizationAmplitudeChannels[ConstantArray["s", 4], ciScalarModel];
 ciScalarTerms = Last /@ ciScalarPairs;
 ciScalarTree = Total[ciScalarTerms];
@@ -246,7 +246,7 @@ check["the QED rescaling succeeds before constructing channel continuations",
 check["the QED input fit checks every original physical channel independently",
   Length[ciQEDDoubled["ValidationReport"]["Channels"]] === 6 &&
     ciPass[ciQEDDoubled["ValidationReport"]]];
-ciQEDRaw = diagramAmplitudes[CreateDiagrams[prParticles, prModel]];
+ciQEDRaw = DiagramAmplitudes[CreateDiagrams[prParticles, prModel]];
 ciQEDPrepared = PrepareAmplitudes[ciQEDRaw, prModel,
   "PolePreference" -> "AllPhysical", "MaxSteps" -> 0,
   "TimeConstraint" -> 20, "ReferenceTimeConstraint" -> 5,

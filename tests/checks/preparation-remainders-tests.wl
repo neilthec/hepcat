@@ -132,7 +132,7 @@ check["empty preparations return aligned empty remainder data",
    must recover that lost pole from the recorded difference, not an answer. *)
 rrCubicModel = {{{"Scalar", "s", "s", 1, 0, rrMass, 0, 1, 1, "", ""}},
   {{"s", "s", "s", "", rrCoupling, 1}}, {}, {}};
-rrCubicPairs = diagramAmplitudes[CreateDiagrams[ConstantArray["s", 4], rrCubicModel]];
+rrCubicPairs = DiagramAmplitudes[CreateDiagrams[ConstantArray["s", 4], rrCubicModel]];
 rrCubicChannels = FactorizationAmplitudeChannels[ConstantArray["s", 4], rrCubicModel];
 rrCubicTerms = Last /@ rrCubicPairs;
 rrCubicTree = Total[rrCubicTerms];
@@ -281,7 +281,7 @@ check["atomic inexact complex coefficients also leave the exact preflight undeci
    retained common-reference direction still undergoes the ordinary full
    six-channel fit and held-out validation. *)
 Get[FileNameJoin[{root, "tests", "QED-5-point-residues.wl"}]];
-rrQEDRaw = diagramAmplitudes[CreateDiagrams[prParticles, prModel]];
+rrQEDRaw = DiagramAmplitudes[CreateDiagrams[prParticles, prModel]];
 rrQEDPrepared = PrepareAmplitudes[rrQEDRaw, prModel,
   "PolePreference" -> "AllPhysical", "MaxReferenceChoices" -> 1,
   "ReferenceTimeConstraint" -> 5, "MaxSteps" -> 0,

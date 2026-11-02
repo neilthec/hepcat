@@ -235,7 +235,7 @@ qaFeynmanModel = ReadModel[FileNameJoin[{root, "model_feynman"}], 2];
 qaElectronRow = First[FirstPosition[qaFeynmanModel[[1, All, 2]], "e"]];
 qaProcesses = {{"e", "E", "A.+", "A.+"}, {"e", "E", "A.+", "A.-"},
   {"e", "E", "A.+", "A.+", "A.+"}, {"e", "E", "A.+", "A.+", "A.-"}};
-qaRawBenchmarks = diagramAmplitudes[CreateDiagrams[#, qaFeynmanModel]] & /@ qaProcesses;
+qaRawBenchmarks = DiagramAmplitudes[CreateDiagrams[#, qaFeynmanModel]] & /@ qaProcesses;
 qaSpinorBenchmarks = FeynmanToSpinorProducts[#,
   "ReduceSpinorProducts" -> False, "TimeConstraint" -> 90] & /@ qaRawBenchmarks;
 check["independent benchmarks come from two four-point and six five-point diagrams",
@@ -341,7 +341,7 @@ check["independent Feynman references survive ordinary preparation as distinct p
       Spinor["Xi", _, id_] :> id, Infinity]]] === {3, 4, 5}];
 qaMasslessFeynmanModel = qaFeynmanModel;
 qaMasslessFeynmanModel[[1, qaElectronRow, 6]] = 0;
-qaMasslessFeynmanPairs = diagramAmplitudes[CreateDiagrams[
+qaMasslessFeynmanPairs = DiagramAmplitudes[CreateDiagrams[
   {"e", "E", "A.+", "A.-"}, qaMasslessFeynmanModel]];
 qaMasslessUnspecified = Quiet[PrepareAmplitudes[qaMasslessFeynmanPairs, qaMasslessFeynmanModel,
   "PolePreference" -> None, "MaxSteps" -> 0, "ProgressReporting" -> False]];
@@ -360,7 +360,7 @@ check["the checker diagnoses raw Feynman conversion requiring unspecified helici
   qaStatus[qaMasslessRawCheck] === "UNRESOLVED"];
 qaKnownFour = Table[With[{row = SelectFirst[prFixtureModel[[2]],
       Take[#, 4] === qaProcesses[[i]] &]}, Times @@ row[[-2 ;; -1]]], {i, 2}];
-qaConstructiveMixedPairs = diagramAmplitudes[CreateDiagrams[Last[qaProcesses], prModel]];
+qaConstructiveMixedPairs = DiagramAmplitudes[CreateDiagrams[Last[qaProcesses], prModel]];
 qaKnownMixed = qedFivePointMixedRoute[qaConstructiveMixedPairs]["Final"];
 qaKnownAmplitudes = Join[qaKnownFour, {prH, qaKnownMixed}];
 qaKnownChannels = FactorizationAmplitudeChannels[#, If[Length[#] === 4,
@@ -453,7 +453,7 @@ check["rational off-cut chart sampling preserves the caller's random state",
    but must still test every coherent spin coefficient away from every pole. *)
 Print["Checking independent four-fermion/photon Feynman amplitudes at model defaults."];
 qaFourFermionParticles = {"e", "E", "E", "e", "A.+"};
-qaFourFermionRaw = diagramAmplitudes[CreateDiagrams[
+qaFourFermionRaw = DiagramAmplitudes[CreateDiagrams[
   qaFourFermionParticles, qaFeynmanModel]];
 qaFourFermionReferenceModes = {"IndependentXi", "AllPhysical"};
 qaFourFermionPrepared = Table[PrepareAmplitudes[qaFourFermionRaw, qaFeynmanModel,

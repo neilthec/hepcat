@@ -36,7 +36,7 @@ vertexMomentumDiagrams = CreateDiagrams[{"b", "d", "a", "c"}, vertexMomentumMode
 check["permuted derivative contact generates exactly one diagram",
   Length[vertexMomentumDiagrams] === 1];
 check["diagram amplitude relabels momenta and masses without changing coefficients or powers",
-  Last[First[diagramAmplitudes[vertexMomentumDiagrams]]] ===
+  Last[First[DiagramAmplitudes[vertexMomentumDiagrams]]] ===
     2 (MomProd[3, 1]^2 + 3 vertexMass[1]^2)];
 ubMediator[d_] := Module[{props = Values[d["Propagators"]], particle},
   If[props === {}, Return["contact"]];
@@ -134,7 +134,7 @@ Do[
         !FreeQ[unresolvedXAmplitudes, Mass[_Multiparticle]]];
     check["diagram amplitude resolves external and multiparticle masses " <> ToString[xParticles, InputForm],
       FreeQ[expandedXAmplitudes, _Mass]];
-    bulkXAmplitudes = diagramAmplitudes[xDiagrams];
+    bulkXAmplitudes = DiagramAmplitudes[xDiagrams];
     check["unpaired bulk diagrams retain their rules and resolved expressions " <> ToString[xParticles, InputForm],
       bulkXAmplitudes === MapThread[
         {ConstructiveDiagrams`diagramMassReplacements[#1], #2} &, {xDiagrams, expectedXAmplitudes}]];
@@ -152,7 +152,7 @@ mixedMassExpected = Function[diag, Module[{rules = ConstructiveDiagrams`diagramM
 check["mixed diagram fixtures have different masses for the same leg",
   DeleteDuplicates[Mass[2] /. mixedMassExpected[[All, 1]]] === {Me, Mu}];
 check["bulk amplitudes use per-diagram masses rather than a shared rule union",
-  diagramAmplitudes[mixedMassDiagrams] === mixedMassExpected];
+  DiagramAmplitudes[mixedMassDiagrams] === mixedMassExpected];
 Do[
   pairedMassDiagrams = ubSelect[CreateDiagrams[pairedParticles[[pairedPermutation]], ubModel], "A", False];
   check["massless-vector mass fixture has generic diagrams " <> ToString[{pairedParticles, pairedPermutation}, InputForm],
@@ -166,7 +166,7 @@ Do[
       ConstructiveDiagrams`diagramMassReplacements[_] := {};
       diagramAmplitude[pairedMassDiagram]
     ];
-    resolvedPairedMass = diagramAmplitudes[{pairedMassDiagram}];
+    resolvedPairedMass = DiagramAmplitudes[{pairedMassDiagram}];
     check["paired vector shortcut introduces a known external mass " <> ToString[{pairedParticles, pairedPermutation, pairedMassRules}, InputForm],
       !FreeQ[unresolvedPairedMass, Mass[_Integer]]];
     check["paired vector shortcut resolves its mass and retains its rules " <> ToString[{pairedParticles, pairedPermutation, pairedMassRules}, InputForm],
@@ -184,7 +184,7 @@ test = <|"Particles" -> {"u", "U", "C", "c"}|>;
 diagrams = CreateDiagrams[test["Particles"], ubModel];
 photon = ubSelect[diagrams, "A", False];
 check["real diagram selection", Length[photon] > 0 && AllTrue[photon, ubMediator[#] === "A" &]];
-pairedPhotonAmplitudes = diagramAmplitudes[photon];
+pairedPhotonAmplitudes = DiagramAmplitudes[photon];
 resolvedHelicityDiagrams[diag_] :=
   ConstructiveDiagrams`resolveDiagramHelicities[diag, #] & /@
     Lookup[diag, "HelicityAssignments", {}];
@@ -240,7 +240,7 @@ check["photon exchange is one generic diagram with two correlated assignments",
 rawPairedPhotonAmplitudes = Block[{ConstructiveDiagrams`expandExternalXFactors},
   Clear[ConstructiveDiagrams`expandExternalXFactors];
   ConstructiveDiagrams`expandExternalXFactors[expr_, n_] := expr;
-  diagramAmplitudes[photon]
+  DiagramAmplitudes[photon]
 ];
 check["generic internal massless-vector shortcut stays unchanged and x free",
   Length[pairedPhotonAmplitudes] === 1 && pairedPhotonAmplitudes === rawPairedPhotonAmplitudes &&
@@ -252,7 +252,7 @@ check["generic diagrams preserve their mass rules", pairedPhotonAmplitudes[[1, 1
 unsupportedPairAmplitudes = Block[{ConstructiveDiagrams`masslessSpin1PairAmplitude},
   Clear[ConstructiveDiagrams`masslessSpin1PairAmplitude];
   ConstructiveDiagrams`masslessSpin1PairAmplitude[_] := Missing["UnsupportedMasslessSpin1"];
-  diagramAmplitudes[photon]
+  DiagramAmplitudes[photon]
 ];
 check["unsupported shortcut retains both correlated helicity contributions in one entry",
   Length[unsupportedPairAmplitudes] === 1 &&
@@ -270,13 +270,13 @@ If[ListQ[fivePointPairDiagrams],
     AllTrue[fivePointPhotonDiagrams, Length[Lookup[#, "HelicityAssignments", {}]] === 2 &]];
   fivePointIndividualAmplitudes =
     {ConstructiveDiagrams`diagramMassReplacements[#], diagramAmplitude[#]} & /@ fivePointPhotonDiagrams;
-  fivePointPairedAmplitudes = diagramAmplitudes[fivePointPhotonDiagrams];
+  fivePointPairedAmplitudes = DiagramAmplitudes[fivePointPhotonDiagrams];
   check["four-point shortcut rejects higher-point input", AllTrue[fivePointPhotonDiagrams,
     MissingQ[ConstructiveDiagrams`masslessSpin1PairAmplitude[#]] &]];
   check["five-point API preserves all amplitudes and mass rules",
     fivePointPairedAmplitudes === fivePointIndividualAmplitudes];
   check["higher-point retention does not depend on diagram order",
-    diagramAmplitudes[Reverse[fivePointPhotonDiagrams]] === Reverse[fivePointIndividualAmplitudes]];
+    DiagramAmplitudes[Reverse[fivePointPhotonDiagrams]] === Reverse[fivePointIndividualAmplitudes]];
 ];
 partialPhoton = Join[First[photon], <|"HelicityAssignments" ->
   Take[First[photon]["HelicityAssignments"], 1]|>];
@@ -285,9 +285,9 @@ check["incomplete generic assignment cannot trigger the complete photon shortcut
   ConstructiveDiagrams`Private`samePoly[partialPhotonAmplitude, diagramAmplitude[First[photonComponents]]] &&
     !FreeQ[partialPhotonAmplitude, _xFactor | _xTildeFactor]];
 check["legacy resolved list still combines the complete four-point photon exchange",
-  diagramAmplitudes[photonComponents] === pairedPhotonAmplitudes];
+  DiagramAmplitudes[photonComponents] === pairedPhotonAmplitudes];
 check["legacy missing-partner list retains its one resolved component",
-  diagramAmplitudes[Take[photonComponents, 1]] ===
+  DiagramAmplitudes[Take[photonComponents, 1]] ===
     {{ConstructiveDiagrams`diagramMassReplacements[First[photonComponents]],
       diagramAmplitude[First[photonComponents]]}}];
 massiveIndexEdgeA = UndirectedEdge[7, 8];
@@ -390,7 +390,7 @@ Do[
         FreeQ[multiVectorReference, _Missing] &&
           Expand[ReduceSpinorProducts[multiVectorAmplitude - multiVectorReference]] === 0];
       check["two-vector singular and bulk APIs agree " <> multiVectorLabel,
-        diagramAmplitudes[{multiVectorDiagram}] ===
+        DiagramAmplitudes[{multiVectorDiagram}] ===
           {{ConstructiveDiagrams`diagramMassReplacements[multiVectorDiagram], multiVectorAmplitude}}];
       check["two-vector output retains every off-shell propagator " <> multiVectorLabel,
         Sort[DeleteDuplicates[Cases[multiVectorAmplitude, _PropDen, Infinity]]] ===
@@ -484,7 +484,7 @@ photonTestSelected = ubSelect[photonTestDiagrams, "A", False];
 photonReference = ubReference[photonTest["SourceName"], "A"];
 photonTestComponents = Join @@ (resolvedHelicityDiagrams /@ photonTestSelected);
 photonSingleSum = ReduceSpinContractions[Total[diagramAmplitude /@ photonTestComponents]];
-photonPairedSum = ReduceSpinContractions[Total[diagramAmplitudes[photonTestSelected][[All, 2]]]];
+photonPairedSum = ReduceSpinContractions[Total[DiagramAmplitudes[photonTestSelected][[All, 2]]]];
 check["resolved photon components retain the internal x-factor obstruction",
   !FreeQ[photonSingleSum, _xFactor | _xTildeFactor] &&
     ubCompare[photonSingleSum, photonReference, photonTest["Masses"]]["Equivalence"] === "Unresolved"];
@@ -589,8 +589,8 @@ Block[{Global`state = "notebook state", Global`leg = "notebook leg",
       Flatten[Names /@ obsoleteDiagramTemporaryPatterns] === {}];
     reloadDiagrams = CreateDiagrams[{"e", "E", "M", "m"}, ubModel];
     check["diagram helpers still work while notebook variables have values " <> ToString[reloadIndex],
-      Length[reloadDiagrams] === 3 && Length[diagramAmplitudes[reloadDiagrams]] === 3 &&
-        FreeQ[diagramAmplitudes[reloadDiagrams], _Missing | _xFactor | _xTildeFactor]],
+      Length[reloadDiagrams] === 3 && Length[DiagramAmplitudes[reloadDiagrams]] === 3 &&
+        FreeQ[DiagramAmplitudes[reloadDiagrams], _Missing | _xFactor | _xTildeFactor]],
     {reloadIndex, 2}]
 ];
 Print[<|"Checks" -> checks, "Failed" -> Length[failures], "Failures" -> failures|>];

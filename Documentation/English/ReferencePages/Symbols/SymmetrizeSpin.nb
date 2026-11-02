@@ -7,49 +7,49 @@ Notebook[
         "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
      GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
    "AnchorBarGrid"], Cell["SymmetrizeSpin", "ObjectName"],
-  Cell[
-   "Inserts and symmetrizes the little-group indices of one massive \
-particle.", "Notes"],
+  Cell[TextData[{"Assigns and symmetrizes the little-group indices of one \
+massive external particle."}], "Notes"],
   Cell[TextData[{Cell[BoxData[RowBox[{"SymmetrizeSpin", "[", "expr", ",",
          " ", "i", ",", " ", "{", "indices", "}", "]"}]], "InlineFormula"],
      "  ", "averages the distinct index permutations for particle i."}],
-   "Usage"], Cell["Details", "NotesSection"], Cell["The routine acts on the \
-implicit massive spinor factors of the specified particle. It supports one \
-through four indices.", "Notes"], Cell["The average is over distinct \
-permutations, so coincident index labels retain their proper normalization. \
-This is little-group symmetrization, not a permutation of identical external \
-particles.", "Notes"],
-  Cell[
-   "Use ChooseSpinIndex to select a normalized physical spin projection.",
+   "Usage"], Cell["Details", "NotesSection"],
+  Cell[TextData[{"Supply the leg number and a list of one through four index \
+labels. The function inserts those labels into the particle's implicit \
+massive spinors and averages over their distinct permutations."}], "Notes"],
+  Cell[TextData[{"Repeated labels have the correct permutation normalization: \
+{i,i} has one distinct assignment, rather than two separately counted copies. \
+This matters when spin-one and higher-spin expressions contain coinciding \
+spin indices."}], "Notes"],
+  Cell[TextData[{"This is the symmetry of the spinor indices belonging to a \
+single massive particle. It is not Bose or Fermi exchange of two external \
+particles. Use ", ButtonBox["ChooseSpinIndex", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ChooseSpinIndex"], " when you want a \
+normalized physical projection such as the spin-one longitudinal state."}],
+   "Notes"],
+  Cell[TextData[
+    {"To supply index lists in external-particle order for several legs, use \
+", ButtonBox["SymmetrizeSpins", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SymmetrizeSpins"],
+     ". The unsymmetrized insertion operation is ",
+     ButtonBox["MakeIndicesExplicit", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/MakeIndicesExplicit"], "."}],
    "Notes"], Cell["Examples", "PrimaryExamplesSection"],
-  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
-     Cell["Evaluate this setup once before the examples. The paths refer to \
-the local HEPCAT checkout; no model parameters are assigned global numerical \
-values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
-         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
-         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
-         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
-         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
-         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
-         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
-         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
-         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
-         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
-         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
-         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
-         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
-         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
-         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
-      "Input", InitializationCell -> True]}, Open]],
+  Cell[CellGroupData[{Cell["Load HEPCAT if needed", "ExampleSubsection"],
+     Cell["Skip this setup if HEPCAT is already loaded. These examples assume \
+the checkout is in ~/code/hepcat; change the paths if yours is elsewhere. \
+Evaluate loading in its own cell before the calculation.", "ExampleText"],
+     Cell[BoxData[RowBox[{"Get", "[", "\"~/code/hepcat/source/HEPCAT.wl\"",
+         "]", ";"}]], "Input", InitializationCell -> True]}, Closed]],
   Cell["Basic Examples", "ExampleSection"],
-  Cell["Symmetrize a pair of massive spin indices.", "ExampleText"],
-  Cell[BoxData[RowBox[{"SymmetrizeSpin", "[", "SpinorChain", "[", "Spinor",
-      "[", "\"Spin\"", ",", " ", "\"Angle\"", ",", " ", "1", "]", ",", " ",
-      "Spinor", "[", "\"Helicity\"", ",", " ", "\"Angle\"", ",", " ", "3",
-      "]", "]", " ", "SpinorChain", "[", "Spinor", "[", "\"Spin\"", ",", " ",
-      "\"Square\"", ",", " ", "1", "]", ",", " ", "Spinor", "[",
-      "\"Helicity\"", ",", " ", "\"Square\"", ",", " ", "4", "]", "]", ",",
-      " ", "1", ",", " ", "{", "i", ",", " ", "j", "}", "]"}]], "Input"],
+  Cell[TextData[{"Symmetrize a pair of massive spin indices."}],
+   "ExampleText"], Cell[BoxData[RowBox[{"SymmetrizeSpin", "[", "SpinorChain",
+      "[", "Spinor", "[", "\"Spin\"", ",", " ", "\"Angle\"", ",", " ", "1",
+      "]", ",", " ", "Spinor", "[", "\"Helicity\"", ",", " ", "\"Angle\"",
+      ",", " ", "3", "]", "]", " ", "SpinorChain", "[", "Spinor", "[",
+      "\"Spin\"", ",", " ", "\"Square\"", ",", " ", "1", "]", ",", " ",
+      "Spinor", "[", "\"Helicity\"", ",", " ", "\"Square\"", ",", " ", "4",
+      "]", "]", ",", " ", "1", ",", " ", "{", "i", ",", " ", "j", "}",
+      "]"}]], "Input"],
   Cell[BoxData[RowBox[{RowBox[{FractionBox["1", "2"], " ",
         TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"",
             TemplateBox[{StyleBox["1", Bold, StripOnInput -> False], "j"},
@@ -70,7 +70,8 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
                StripOnInput -> False], "j"}, "Superscript",
              SyntaxForm -> SuperscriptBox]}, "RowDefault"],
           TemplateBox[{"4", "\"]\""}, "RowDefault"]}, "RowDefault"]}]}]],
-   "Output"], Cell["Keep a repeated index with unit permutation weight.",
+   "Output"],
+  Cell[TextData[{"Keep a repeated index with unit permutation weight."}],
    "ExampleText"], Cell[BoxData[RowBox[{"SymmetrizeSpin", "[", "SpinorChain",
       "[", "Spinor", "[", "\"Spin\"", ",", " ", "\"Angle\"", ",", " ", "1",
       "]", ",", " ", "Spinor", "[", "\"Helicity\"", ",", " ", "\"Angle\"",
@@ -99,8 +100,8 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/SymmetrizeSpin", "title" -> "SymmetrizeSpin",
      "type" -> "Symbol", "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT",
-     "language" -> "en", "summary" -> "Inserts and symmetrizes the \
-little-group indices of one massive particle.",
+     "language" -> "en", "summary" -> "Assigns and symmetrizes the \
+little-group indices of one massive external particle.",
      "keywords" -> {"HEPCAT", "SymmetrizeSpin", "spinor amplitudes"},
      "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

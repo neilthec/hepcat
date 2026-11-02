@@ -1089,7 +1089,7 @@ simplifyQuarkAWffCombined[diags_List, masses_List] := Module[
   {m2, m3, m4, amps, a1, b1, a2, b2, a3, b3, a1p, b1p, a2p, b2p, a3p, b3p},
   {m2, m3, m4} = masses[[{2, 3, 4}]];
   amps = UnhatMomenta[UnHatSpinors[ExpandXFactors[
-    ReduceSpinContractions[diagramAmplitudes[diags][[All, 2]]], 4]]];
+    ReduceSpinContractions[DiagramAmplitudes[diags][[All, 2]]], 4]]];
   amps = amps /. {
     Mass[Multiparticle[2, 4]] -> m3, Mass[Multiparticle[1, 2]] -> m2,
     Mass[Multiparticle[1, 3]] -> m3, Mass[Multiparticle[3, 4]] -> m2,
@@ -9083,7 +9083,7 @@ Cell[CellGroupData[{
 
 Cell[BoxData[
  RowBox[{"amps", "=", 
-  RowBox[{"diagramAmplitudes", "[", "diags", "]"}]}]], "Input",
+  RowBox[{"DiagramAmplitudes", "[", "diags", "]"}]}]], "Input",
  CellChangeTimes->{{3.999011817620388*^9, 3.999011818478238*^9}},
  CellLabel->
   "In[5612]:=",ExpressionUUID->"a0e6ef24-4e8b-4d08-b2ca-f1b510574761"],

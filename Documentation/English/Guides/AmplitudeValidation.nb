@@ -7,70 +7,87 @@ Notebook[
      GridBoxAlignment -> {"Columns" -> {Left, Right}},
      GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
    "AnchorBarGrid"], Cell["Checking Amplitudes", "GuideTitle"],
-  Cell["Compare physical residues, spurious poles, high-energy behavior, \
-references and Feynman results.", "GuideAbstract"],
-  Cell["CheckAmplitudes takes an amplitude, compact factorization channels \
-and a model. The normal output is a readable report; request Residues, \
-Summary or Details when you need the actual sampled comparisons.",
-   "GuideAbstract"], Cell["The checker identifies physical poles from the \
-supplied channels and discovers additional candidate spurious factors in the \
-amplitude. It also supports high-energy behavior, external reference-spinor \
-independence and comparison with an independent Feynman expression. The \
-available metadata and kinematic support determine which checks can be \
-completed.", "GuideAbstract"], Cell["PASS means the selected check passed at \
-the sampled points within its tolerance. Opp Sign identifies a residue that \
-differs by an overall sign. FAIL and unresolved or skipped checks must be \
-inspected; none should be silently interpreted as agreement.",
-   "GuideAbstract"], Cell["Automatic seeds vary between runs. Set RandomSeed \
-explicitly to replay a diagnostic. Numerical approaches to a spurious pole \
-should avoid other physical singularities and use enough precision to \
-separate a true divergence from cancellation error.", "GuideAbstract"],
-  Cell["Check the Complete Result", "GuideFunctionsSubsection"],
+  Cell[TextData[{"Compare physical residues, spurious poles, high-energy \
+behavior, references and Feynman results."}], "GuideAbstract"],
   Cell[TextData[{ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"], ": ", "Check \
-physical residues, apparent spurious poles, high-energy growth and reference \
-dependence."}], "GuideText"],
-  Cell[TextData[{ButtonBox["CheckPhysicalResidues", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/CheckPhysicalResidues"], ": ",
-     "Use the earlier name for the combined amplitude checker."}],
-   "GuideText"], Cell["Inspect a Pole", "GuideFunctionsSubsection"],
+      ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"], " answers a \
+practical question: is this proposed amplitude consistent with the supplied \
+lower-point amplitudes and the expected behavior of the complete process? Its \
+compact table is intended to be read first. Request more detail only for a \
+comparison that you want to investigate."}], "GuideAbstract"],
+  Cell[TextData[{"Physical-pole checks compare the residue of the complete \
+expression with the product specified by each factorization channel. Apparent \
+poles in the formula that are absent from the supplied physical channels are \
+examined as possible spurious poles. High-energy and explicit \
+reference-spinor checks test different properties and are reported \
+separately. Passing one kind of check does not replace the others."}],
+   "GuideAbstract"],
+  Cell[TextData[{"Use ", Cell[BoxData[RowBox[{"\"Output\"", " ", "->", " ",
+         "\"Residues\""}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "to", " ", "see", " ", "the", " ", "compared",
+         " ", "samples", ",", " ", "or", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"\"Output\"", " ", "->", " ", "\"Details\""}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{" ", "for", " ", "the", " ",
+         "complete", " ", "diagnostic", " ", "record", ".", " "}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{"\"Opp Sign\""}]],
+      "InlineFormula"], " is useful information: it means the comparison has \
+the opposite overall sign at the tested samples. An unresolved result means \
+that the check did not establish its conclusion within its supported method \
+or resource limit."}], "GuideAbstract"],
+  Cell[TextData[{"The numerical choices come from the model by default. An \
+explicit random seed makes a run repeatable; it does not make a sampled check \
+an analytic proof. For an independent benchmark, supply compatible Feynman \
+amplitudes, or export numerical code and use ", ButtonBox["ValidateMadGraph",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ValidateMadGraph"],
+     " and the CalcHEP comparison provided by ",
+     ButtonBox["WriteSPINASProcess", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/WriteSPINASProcess"], "."}],
+   "GuideAbstract"], Cell["Check the Complete Result",
+   "GuideFunctionsSubsection"],
+  Cell[TextData[{ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"], ": ", "Check a \
+proposed amplitude against physical factorization, spurious-pole, high-energy \
+and reference-spinor conditions."}], "GuideText"],
+  Cell["Inspect a Pole", "GuideFunctionsSubsection"],
   Cell[TextData[{ButtonBox["PhysicalPoleResidue", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/PhysicalPoleResidue"], ": ", "Extract \
-a single- or compatible multiple-pole coefficient with explicit kinematic \
-scope."}], "GuideText"],
+the coefficient of one physical propagator pole, or of compatible \
+simultaneous poles."}], "GuideText"],
   Cell[TextData[{ButtonBox["FactorizationAmplitudeChannels",
       BaseStyle -> "Link", ButtonData ->
-       "paclet:HEPCAT/ref/FactorizationAmplitudeChannels"], ": ", "Sew known \
-lower-point amplitudes into the physical factorization channels."}],
-   "GuideText"], Cell[TextData[{ButtonBox["PropDen", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/PropDen"], ": ",
-     "Represents an off-shell physical propagator denominator."}],
+       "paclet:HEPCAT/ref/FactorizationAmplitudeChannels"], ": ", "Build the \
+known lower-point amplitude products that a full amplitude must reproduce at \
+its physical poles."}], "GuideText"],
+  Cell[TextData[{ButtonBox["PropDen", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PropDen"], ": ", "Represents a \
+physical propagator denominator without putting its momentum on shell."}],
    "GuideText"], Cell["Independent Feynman Comparison",
    "GuideFunctionsSubsection"],
   Cell[TextData[{ButtonBox["ReadModel", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/ReadModel"], ": ", "Read a \
-constructive amplitude model or an imported CalcHEP Feynman model."}],
+      ButtonData -> "paclet:HEPCAT/ref/ReadModel"], ": ", "Load the particle \
+content, amplitudes and parameters of a model for use throughout HEPCAT."}],
    "GuideText"], Cell[TextData[{ButtonBox["FeynmanToSpinorProducts",
       BaseStyle -> "Link", ButtonData ->
-       "paclet:HEPCAT/ref/FeynmanToSpinorProducts"], ": ", "Converts \
-contracted Feynman amplitudes to spinor products without imposing internal \
-mass shells."}], "GuideText"],
+       "paclet:HEPCAT/ref/FeynmanToSpinorProducts"], ": ", "Rewrites a \
+contracted Feynman amplitude in HEPCAT angle/square spinor notation while \
+retaining internal virtualities."}], "GuideText"],
   Cell[TextData[{ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], ": ", "Simplify \
-diagram pairs or factorization rows while retaining their physical \
-assumptions."}], "GuideText"], Cell["Independent Numerical Benchmarks",
-   "GuideFunctionsSubsection"], Cell["Compare exported spinor amplitudes with \
-an independent matrix-element generator, including individual massless \
-helicities.", "GuideText"],
-  Cell[TextData[{ButtonBox["ValidateMadGraph", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/ValidateMadGraph"], ": ", "Compares \
-exported HEPCAT/SPINAS amplitudes with independent MadGraph matrix elements \
-on common random phase-space points, separately for each massless-helicity \
-combination."}], "GuideText"],
+diagram expressions, factorization channels or a completed amplitude before \
+the next calculation stage."}], "GuideText"],
+  Cell["Independent Numerical Benchmarks", "GuideFunctionsSubsection"],
+  Cell[TextData[{"Compare exported spinor amplitudes with an independent \
+matrix-element generator, including individual massless helicities."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ValidateMadGraph",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ValidateMadGraph"], ": ", "Checks a HEPCAT/SPINAS \
+amplitude against an independently generated MadGraph result at common random \
+physical momenta."}], "GuideText"],
   Cell[TextData[{ButtonBox["WriteSPINASProcess", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/WriteSPINASProcess"], ": ", "Writes a \
-complete, readable C++ process using SPINAS, with optional CalcHEP and \
-MadGraph validation and numerical integration."}], "GuideText"],
+runnable SPINAS C++ process from a spinor amplitude or a complete set of its \
+helicity amplitudes."}], "GuideText"],
   Cell[TextData[{ButtonBox["Formatting, Model Output and SPINAS Export",
       BaseStyle -> "Link", ButtonData ->
        "paclet:HEPCAT/guide/FormattingAndExport"]}], "GuideMoreAbout"],

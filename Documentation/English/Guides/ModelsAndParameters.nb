@@ -7,91 +7,90 @@ Notebook[
      GridBoxAlignment -> {"Columns" -> {Left, Right}},
      GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
    "AnchorBarGrid"], Cell["Models and Model-Local Parameters", "GuideTitle"],
-  Cell["Read model tables, retrieve known amplitudes and save new results.",
-   "GuideAbstract"], Cell["ReadModel returns one model value that contains \
-particles, amplitudes or vertices, independent variables and dependent \
-functions. Pass that value to calculations. Reading a model does not assign \
-global masses or couplings.", "GuideAbstract"],
-  Cell["Use the model built from elementary amplitudes to generate diagrams. \
-For factorization, supply complete known lower-point amplitudes in the model. \
-For five-point QED, the bundled three-point diagram model and the model that \
-also contains four-point amplitudes have different jobs.", "GuideAbstract"],
-  Cell["Read and Inspect Models", "GuideFunctionsSubsection"],
+  Cell[TextData[
+    {"Read model tables, retrieve known amplitudes and save new results."}],
+   "GuideAbstract"],
+  Cell[TextData[{"Use ", ButtonBox["ReadModel", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReadModel"], " as the entry point for \
+a model directory. It reads the related model tables together, resolves their \
+parameter names consistently, and returns an object that you pass to \
+subsequent functions. The component-file readers are implementation details \
+of that operation."}], "GuideAbstract"],
+  Cell[TextData[{"You can keep several models in one Mathematica session. A \
+parameter such as the electron mass belongs to its model; loading a second \
+model does not overwrite a global electron-mass value. ",
+     ButtonBox["ModelParameter", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ModelParameter"], ", ",
+     ButtonBox["ModelFunction", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ModelFunction"], " and ",
+     ButtonBox["ModelParameterRules", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ModelParameterRules"], " let you \
+inspect those symbolic quantities and their numerical assignments."}],
+   "GuideAbstract"], Cell[TextData[{"The distinction between an interaction \
+and a complete amplitude matters. Use elementary interactions for ",
+     ButtonBox["CreateDiagrams", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CreateDiagrams"],
+     ". Use complete known amplitudes for ",
+     ButtonBox["FactorizationAmplitudeChannels", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/FactorizationAmplitudeChannels"], ". \
+For example, a five-point factorization channel can require a known \
+four-point amplitude, even though the five-point diagrams are built from \
+three-point vertices."}], "GuideAbstract"],
+  Cell[TextData[{"After obtaining and checking a new result, ",
+     ButtonBox["AppendModelAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/AppendModelAmplitudes"], " can write \
+it to the factorization model for a later higher-point calculation. Check the \
+particle order, helicities and overall sign before saving. ",
+     ButtonBox["LookupAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/LookupAmplitude"],
+     " retrieves a stored expression for inspection or export."}],
+   "GuideAbstract"], Cell["Read and Inspect Models",
+   "GuideFunctionsSubsection"],
   Cell[TextData[{ButtonBox["ReadModel", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/ReadModel"], ": ", "Read a \
-constructive amplitude model or an imported CalcHEP Feynman model."}],
-   "GuideText"], Cell[TextData[{ButtonBox["ReadParticles",
-      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/ReadParticles"],
-     ": ",
-     "Read particle and antiparticle declarations from a model table."}],
-   "GuideText"], Cell[TextData[{ButtonBox["ReadAmplitudes",
-      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/ReadAmplitudes"],
-     ": ", "Read complete constructive amplitudes and their separate overall \
-factors."}], "GuideText"],
-  Cell[TextData[{ButtonBox["ReadVariables", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/ReadVariables"], ": ", "Read a model \
-variable table without assigning global parameter values."}], "GuideText"],
-  Cell[TextData[{ButtonBox["ReadFunctions", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/ReadFunctions"], ": ",
-     "Read the dependent parameter expressions in a model function table."}],
+      ButtonData -> "paclet:HEPCAT/ref/ReadModel"], ": ", "Load the particle \
+content, amplitudes and parameters of a model for use throughout HEPCAT."}],
    "GuideText"], Cell[TextData[{ButtonBox["ParticleMass",
       BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/ParticleMass"],
-     ": ", "Look up a particle or antiparticle mass in a particle table."}],
+     ": ", "Find the mass declared for a particle or antiparticle."}],
    "GuideText"], Cell[TextData[{ButtonBox["FeynmanModel",
       BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/FeynmanModel"],
-     ": ", "Represents a model specified by off-shell Feynman rules."}],
-   "GuideText"], Cell["Parameters Stay with Their Model",
-   "GuideFunctionsSubsection"],
+     ": ", "Represents a model of particles and Feynman-rule vertices read \
+from CalcHEP model tables."}], "GuideText"],
+  Cell["Parameters Stay with Their Model", "GuideFunctionsSubsection"],
+  Cell[TextData[{"Inspect or override numerical assignments without replacing \
+symbolic masses and couplings throughout the notebook."}], "GuideText"],
   Cell[TextData[{ButtonBox["ModelParameter", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/ModelParameter"], ": ",
-     "Represent and retrieve a parameter belonging to one model."}],
+      ButtonData -> "paclet:HEPCAT/ref/ModelParameter"], ": ", "Refer to a \
+mass, coupling or other parameter belonging to a particular model."}],
    "GuideText"], Cell[TextData[{ButtonBox["ModelFunction",
       BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/ModelFunction"],
-     ": ", "Retain an external model function call as inert data."}],
+     ": ", "Keep a model-supplied external function as symbolic data."}],
    "GuideText"], Cell[TextData[{ButtonBox["ModelParameterName",
       BaseStyle -> "Link", ButtonData ->
        "paclet:HEPCAT/ref/ModelParameterName"], ": ",
-     "Get the string name of a model-local parameter."}], "GuideText"],
+     "Return the string name of a model-local parameter."}], "GuideText"],
   Cell[TextData[{ButtonBox["ModelParameterRules", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/ModelParameterRules"], ": ", "Resolve \
-model parameters numerically without changing the symbolic amplitude or \
-global session."}], "GuideText"], Cell["Known Amplitudes and Text Input",
+      ButtonData -> "paclet:HEPCAT/ref/ModelParameterRules"], ": ", "Obtain \
+numerical parameter substitutions while keeping model definitions local."}],
+   "GuideText"], Cell["Known Amplitudes and Text Input",
    "GuideFunctionsSubsection"],
   Cell[TextData[{ButtonBox["LookupAmplitude", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/LookupAmplitude"], ": ", "Retrieve a \
-complete model amplitude with its external labels reassigned."}],
-   "GuideText"], Cell[TextData[{ButtonBox["ConvertAmplitude",
-      BaseStyle -> "Link", ButtonData ->
-       "paclet:HEPCAT/ref/ConvertAmplitude"], ": ", "Convert a constructive \
-model row from text into typed spinor notation."}], "GuideText"],
-  Cell[TextData[{ButtonBox["ConvertAmplitudeOld", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/ConvertAmplitudeOld"], ": ",
-     "Access the historical string converter retained for compatibility."}],
+stored lower-point amplitude with a specified particle numbering."}],
    "GuideText"], Cell[TextData[{ButtonBox["ConvertStringAmplitude",
       BaseStyle -> "Link", ButtonData ->
-       "paclet:HEPCAT/ref/ConvertStringAmplitude"], ": ", "Parses legacy \
-compact bracket notation into typed HEPCAT spinor expressions."}],
+       "paclet:HEPCAT/ref/ConvertStringAmplitude"], ": ", "Reads a compact \
+spinor-bracket string and constructs a typed HEPCAT expression."}],
    "GuideText"], Cell[TextData[{ButtonBox["ConvertStringHattedAmplitude",
       BaseStyle -> "Link", ButtonData ->
        "paclet:HEPCAT/ref/ConvertStringHattedAmplitude"], ": ", "Parses a \
 legacy bracket expression and marks its spinors and momenta as shifted."}],
-   "GuideText"], Cell[TextData[{ButtonBox["AddOppositeHelicityAmplitudes",
-      BaseStyle -> "Link", ButtonData ->
-       "paclet:HEPCAT/ref/AddOppositeHelicityAmplitudes"], ": ", "Mechanicall\
-y add angle-square conjugate rows with reversed massless helicities."}],
    "GuideText"], Cell["Extend a Factorization Model",
    "GuideFunctionsSubsection"],
   Cell[TextData[{ButtonBox["AppendModelAmplitudes", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/AppendModelAmplitudes"], ": ", "Append \
-validated text representations of supplied amplitudes to a constructive model \
-file."}], "GuideText"], Cell["More Functions and Symbols",
-   "GuideFunctionsSubsection"],
-  Cell[TextData[{ButtonBox["ReadVertices", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/ReadVertices"], ": ",
-     "Reserved historical vertex-reader name."}], "GuideText"],
-  Cell[TextData[{ButtonBox["ConvertVertex", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/ConvertVertex"], ": ",
-     "Reserved historical vertex-converter name."}], "GuideText"],
+      ButtonData -> "paclet:HEPCAT/ref/AppendModelAmplitudes"], ": ", "Add \
+established amplitude expressions to a constructive model for later \
+factorization calculations."}], "GuideText"],
   Cell["Tutorials", "GuideTutorialsSection"],
   Cell[TextData[{ButtonBox["Getting Started with HEPCAT",
       BaseStyle -> "Link", ButtonData ->

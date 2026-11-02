@@ -33,7 +33,7 @@ Public API:
 \"ShowPropagatorExpressions\")
   CreateArrowDiagrams[{diag1, diag2, ...}]
   diagramAmplitude[diag]
-  diagramAmplitudes[{diag1, diag2, ...}]
+  DiagramAmplitudes[{diag1, diag2, ...}]
 
 Each test cell should evaluate to True.  Drawing cells are for visual \
 inspection.\
@@ -316,7 +316,7 @@ Cell[BoxData["True"], "Output",
 
 Cell[CellGroupData[{
 
-Cell["Length[diagramAmplitudes[diags]] === 2", "Input",
+Cell["Length[DiagramAmplitudes[diags]] === 2", "Input",
  CellLabel->"In[20]:=",ExpressionUUID->"af32a12b-be96-49bd-a67e-aeaef47e1329"],
 
 Cell[BoxData["True"], "Output",

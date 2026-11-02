@@ -1024,7 +1024,7 @@ UnHatSpinors[amp_]:=amp/.SpinorHat[a__]:>Spinor[a]
 (* ::Text:: *)
 (*Tree diagrams are built by recursively combining currents through model vertices. External legs are labeled from the start, so there is no n! leaf permutation, no enumeration of unlabeled Prufer trees, and no scan over the full particle list for every internal line.*)
 (*Feynman rules, propagators, and spin indices are attached afterwards. Tree uniqueness is decided by the bipartition of external legs on each internal line, so graph isomorphism is not needed.*)
-(*Public API: CreateDiagrams, CreateArrowDiagram, CreateArrowDiagrams, diagramAmplitude, diagramAmplitudes.*)
+(*Public API: CreateDiagrams, CreateArrowDiagram, CreateArrowDiagrams, DiagramAmplitudes.*)
 
 
 (* ::Subsubsection::Closed:: *)
@@ -1146,8 +1146,8 @@ buildModelData[model_] := Module[
 CreateDiagrams::usage = "CreateDiagrams[{p1, p2, ...}, model] generates tree-level diagrams. Constructive models use one generic internal photon/gluon containing both helicities. FeynmanModel inputs instead use off-shell Feynman propagators and unitary gauge for massive vectors; external helicities remain fixed.";
 CreateArrowDiagram::usage = "CreateArrowDiagram[diag] draws a labeled tree diagram. Options: \"ShowVertexExpressions\", \"ShowPropagatorExpressions\".";
 CreateArrowDiagrams::usage = "CreateArrowDiagrams[{diag1, diag2, ...}] draws a list of diagrams.";
-diagramAmplitude::usage = "diagramAmplitude[diag] returns its amplitude. Constructive diagrams sum internal photon/gluon helicities and expand external x factors. Feynman diagrams retain ordered Dirac chains, Lorentz/color tensors, and fully off-shell internal numerators. Use diagramAmplitudes for a complete process.";
-diagramAmplitudes::usage = "diagramAmplitudes[diagrams] returns {{massRules, amplitude}, ...}, one entry per generated diagram. Constructive diagrams sum internal photon/gluon helicities, including the simplified supported four-point exchanges and legacy helicity-resolved lists. Feynman diagrams retain their exact off-shell tensor amplitudes. Known mass rules are applied and retained for external legs and internal lines.";
+diagramAmplitude::usage = "diagramAmplitude[diag] returns its amplitude. Constructive diagrams sum internal photon/gluon helicities and expand external x factors. Feynman diagrams retain ordered Dirac chains, Lorentz/color tensors, and fully off-shell internal numerators. Use DiagramAmplitudes for a complete process.";
+DiagramAmplitudes::usage = "DiagramAmplitudes[diagrams] returns {{massRules, amplitude}, ...}, one entry per generated diagram. Constructive diagrams sum internal photon/gluon helicities, including the simplified supported four-point exchanges and legacy helicity-resolved lists. Feynman diagrams retain their exact off-shell tensor amplitudes. Known mass rules are applied and retained for external legs and internal lines.";
 
 
 
@@ -2099,7 +2099,7 @@ genericFermionCurrentAmplitude[diag_] := Module[
     Length[diag["ExternalParticles"]]] /. diagramMassReplacements[diag]
 ];
 
-diagramAmplitudes[diags_List] := Module[{n, used, out, i, key, j, paired},
+DiagramAmplitudes[diags_List] := Module[{n, used, out, i, key, j, paired},
   n = Length[diags];
   used = ConstantArray[False, n];
   out = {};
@@ -2321,7 +2321,7 @@ Scan[If[Names[#] =!= {}, Remove[#]] &, DeleteDuplicates[
 
 DiagramAmplitudeRecords::usage = "DiagramAmplitudeRecords[diagrams] retains each diagram's original expression, physical propagators, numerator conditions and mass rules. The string option SimplificationFunction accepts a function on {massRules, expression}; its default is Identity. NumeratorOnShellChannels declares any internal conditions used by that function; no internal-shell simplification is applied automatically.";
 PhysicalPoleResidue::usage = "PhysicalPoleResidue[expression, channel] extracts a pole coefficient. A list of channels extracts a compatible multiple-pole coefficient. Without a coherent KinematicMap the result is only FORMAL. A map f[expression, channels, poleVariables] must evaluate all spinors, momenta and propagators consistently near the selected cuts. KinematicKind distinguishes Sample from Symbolic charts. StructuralCoefficient -> True also computes the formal opaque-propagator coefficient by default; False skips that optional symbolic calculation and returns Missing[NotRequested] in its field without changing the mapped physical residue or kinematic validation. No internal on-shell condition is inferred from diagram mass rules.";
-CheckAmplitudes::usage = "CheckAmplitudes[diagramAmplitudes, channels, model] checks physical residues against the ordinary rows returned by FactorizationAmplitudeChannels, automatically discovers apparent denominator poles, and tests high-energy growth and explicit Xi reference-spinor independence of the complete summed amplitude. Only supplied channels certify physical poles; other supported denominator poles are tested for cancellation while physical propagators remain nonzero. The physical comparison applies the sewing factor -1 from (i A_L)(i A_R)(i/PropDen)/i. HighEnergyCheck -> Automatic checks growth at sampled real, fixed-angle, momentum-conserving kinematics with external masses and couplings held fixed. Large supported reference-free expressions may certify a conservative all-spin upper bound; ObservedPower remains missing when only ObservedPowerUpperBound is certified. Unsupported or inconclusive bounds use the exact Laurent expansion. HighEnergyBound -> Automatic assumes the renormalizable-tree bound E^(4-n); a numerical exponent overrides it, and HighEnergyCheck -> False disables this diagnostic. HighEnergySamples and HighEnergyTimeConstraint control the energy test. ReferenceCheck -> Automatic varies all literal Xi labels simultaneously at sampled conserved external kinematics away from physical poles, holding momenta and external spin states fixed. ReferenceSamples and ReferenceTimeConstraint control this test; ReferenceCheck -> False disables it. An expression without explicit reference spinors has no explicit Xi dependence; this is not a Ward-identity proof. ParameterRules -> Automatic uses numerical variables and dependent functions from the supplied model. An explicit rule list overrides selected model parameters; dependent functions are recomputed. Numerical values are used only for checking, leaving the amplitude symbolic. PASS denotes agreement, finiteness, acceptable growth or reference independence at the recorded kinematic samples, not a generic analytic proof. Opp Sign diagnoses an overall opposite sign in physical residues or a supplied Feynman comparison. Unsupported calculations and timeouts remain UNRESOLVED. Output -> \"HighEnergy\" shows energy samples, \"References\" shows reference comparisons, \"Residues\" shows physical and spurious-pole samples, \"Summary\" returns combined counts and \"Details\" retains all diagnostics. SpuriousPoles -> Automatic discovers denominators; a list overrides discovery and {} disables spurious checks. Set SpuriousPoles -> {}, HighEnergyCheck -> False and ReferenceCheck -> False for the legacy physical-only report. Samples, RandomSeed, ParameterRules and TimeConstraint control pole comparisons. Inputs remain unchanged and no amplitude correction or new interaction is added.";
+CheckAmplitudes::usage = "CheckAmplitudes[amplitudes, channels, model] checks physical residues against the ordinary rows returned by FactorizationAmplitudeChannels, automatically discovers apparent denominator poles, and tests high-energy growth and explicit Xi reference-spinor independence of the complete summed amplitude. Only supplied channels certify physical poles; other supported denominator poles are tested for cancellation while physical propagators remain nonzero. The physical comparison applies the sewing factor -1 from (i A_L)(i A_R)(i/PropDen)/i. HighEnergyCheck -> Automatic checks growth at sampled real, fixed-angle, momentum-conserving kinematics with external masses and couplings held fixed. Large supported reference-free expressions may certify a conservative all-spin upper bound; ObservedPower remains missing when only ObservedPowerUpperBound is certified. Unsupported or inconclusive bounds use the exact Laurent expansion. HighEnergyBound -> Automatic assumes the renormalizable-tree bound E^(4-n); a numerical exponent overrides it, and HighEnergyCheck -> False disables this diagnostic. HighEnergySamples and HighEnergyTimeConstraint control the energy test. ReferenceCheck -> Automatic varies all literal Xi labels simultaneously at sampled conserved external kinematics away from physical poles, holding momenta and external spin states fixed. ReferenceSamples and ReferenceTimeConstraint control this test; ReferenceCheck -> False disables it. An expression without explicit reference spinors has no explicit Xi dependence; this is not a Ward-identity proof. ParameterRules -> Automatic uses numerical variables and dependent functions from the supplied model. An explicit rule list overrides selected model parameters; dependent functions are recomputed. Numerical values are used only for checking, leaving the amplitude symbolic. PASS denotes agreement, finiteness, acceptable growth or reference independence at the recorded kinematic samples, not a generic analytic proof. Opp Sign diagnoses an overall opposite sign in physical residues or a supplied Feynman comparison. Unsupported calculations and timeouts remain UNRESOLVED. Output -> \"HighEnergy\" shows energy samples, \"References\" shows reference comparisons, \"Residues\" shows physical and spurious-pole samples, \"Summary\" returns combined counts and \"Details\" retains all diagnostics. SpuriousPoles -> Automatic discovers denominators; a list overrides discovery and {} disables spurious checks. Set SpuriousPoles -> {}, HighEnergyCheck -> False and ReferenceCheck -> False for the legacy physical-only report. Samples, RandomSeed, ParameterRules and TimeConstraint control pole comparisons. Inputs remain unchanged and no amplitude correction or new interaction is added.";
 DiagramAmplitudeRecords::args = "Expected a list of diagram associations and valid diagram-local simplification options.";
 PhysicalPoleResidue::args = "Expected channel associations with Cut, Complement, Mass and ExternalLegs, and valid diagnostic options.";
 CheckAmplitudes::args = "Expected diagram amplitudes, the ordinary channel rows returned by FactorizationAmplitudeChannels, a model, and valid comparison options.";
@@ -2656,7 +2656,7 @@ residueSimpleInputs[amplitudes_, channelRows_List, model_List] := Module[
     ListQ[amplitudes] && AllTrue[amplitudes, residueAmplitudePairQ], amplitudes,
     !ListQ[amplitudes], {{{}, amplitudes}},
     True, Return[Failure["InvalidAmplitudes", <|
-      "MessageTemplate" -> "Supply an expression or the mass-rule/expression pairs from diagramAmplitudes."|>]]
+      "MessageTemplate" -> "Supply an expression or the mass-rule/expression pairs from DiagramAmplitudes."|>]]
   ];
   If[!AllTrue[channelRows, ListQ[#] && Length[#] >= 7 &&
       MatchQ[#[[-3]], Multiparticle[__Integer]] &],
@@ -2694,7 +2694,7 @@ residueSimpleInputs[amplitudes_, channelRows_List, model_List] := Module[
     Return[Failure["InvalidAmplitudes", <|"MessageTemplate" -> "An amplitude calculation failed."|>]]];
   If[external === {} && !TrueQ[Total[expressions] === 0],
     Return[Failure["ExternalMassesRequired", <|
-      "MessageTemplate" -> "With no channel rows, supply the diagramAmplitudes mass-rule/expression pairs so the external masses are known."|>]]];
+      "MessageTemplate" -> "With no channel rows, supply the DiagramAmplitudes mass-rule/expression pairs so the external masses are known."|>]]];
   targets = Map[Function[row,
     cut = List @@ row[[-3]]; mass = row[[-2]];
     If[!DuplicateFreeQ[cut] || Length[cut] < 2 || Length[cut] > Length[external] - 2 ||
@@ -2761,7 +2761,7 @@ Options[DiagramAmplitudeRecords] = {"SimplificationFunction" -> Identity,
   "NumeratorOnShellChannels" -> {}};
 diagramAmplitudeRecord[diagram_, index_, function_, declared_] := Module[
     {pair, transformed, channels, physicalDenominator, conditions, externalRules},
-    pair = First[diagramAmplitudes[{diagram}]];
+    pair = First[DiagramAmplitudes[{diagram}]];
     transformed = withProtectedPropagators[Last[pair],
       Function[protected, function[{First[pair], protected}]]];
     If[!MatchQ[transformed, {_List, _}] || First[transformed] =!= First[pair],
@@ -16070,7 +16070,7 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
   workflow[] := Catch[
     diagramData = run["Generating diagrams", CreateDiagrams[process, diagramModel]];
     require[diagramData];
-    diagramPairs = run["Building diagram amplitudes", diagramAmplitudes[diagramData]];
+    diagramPairs = run["Building diagram amplitudes", DiagramAmplitudes[diagramData]];
     require[diagramPairs];
     If[diagramPairs === {}, diagramPairs = {{external, 0}}];
     diagramPreparation = run["Preparing diagrams", PrepareAmplitudes[diagramPairs, diagramModel,
@@ -16104,7 +16104,7 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     If[feynmanModel =!= None,
       feynmanDiagrams = run["Generating Feynman diagrams", CreateDiagrams[process, feynmanModel]];
       require[feynmanDiagrams];
-      feynmanPairs = run["Building Feynman amplitudes", diagramAmplitudes[feynmanDiagrams]];
+      feynmanPairs = run["Building Feynman amplitudes", DiagramAmplitudes[feynmanDiagrams]];
       require[feynmanPairs];
       If[feynmanPairs === {}, feynmanPairs = {{Thread[(Mass /@ Range[Length[process]]) ->
         constructExternalMasses[process, feynmanModel]], 0}}];

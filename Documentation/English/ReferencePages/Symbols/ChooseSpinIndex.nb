@@ -7,50 +7,55 @@ Notebook[
         "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
      GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
    "AnchorBarGrid"], Cell["ChooseSpinIndex", "ObjectName"],
-  Cell["Selects a physical spin projection for one external massive \
-particle.", "Notes"],
+  Cell[TextData[
+    {
+     "Selects one physical spin projection of a massive external particle."}]\
+, "Notes"],
   Cell[TextData[{Cell[BoxData[RowBox[{"ChooseSpinIndex", "[", "expr", ",",
          " ", "i", ",", " ", "projection", "]"}]], "InlineFormula"], "  ",
      "inserts the explicit spin-index combination for particle i."}],
-   "Usage"], Cell["Details", "NotesSection"], Cell["Supported projections \
-include spin one half (+1/2 or -1/2) and spin one (+1,0,-1). The longitudinal \
-spin-one state is a normalized sum of the two mixed index assignments.",
-   "Notes"], Cell["These values are physical spin projections, not the \
-doubled-spin integers used by the generated SPINAS C++ interface.", "Notes"],
-  Cell["The function works with implicit massive Spinor indices and expands \
-the input to apply the supported patterns. It is not a sum over spins.",
-   "Notes"], Cell["Examples", "PrimaryExamplesSection"],
-  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
-     Cell["Evaluate this setup once before the examples. The paths refer to \
-the local HEPCAT checkout; no model parameters are assigned global numerical \
-values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
-         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
-         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
-         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
-         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
-         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
-         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
-         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
-         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
-         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
-         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
-         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
-         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
-         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
-         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
-      "Input", InitializationCell -> True]}, Open]],
+   "Usage"], Cell["Details", "NotesSection"],
+  Cell[TextData[{"The particle argument identifies the external leg. The last \
+argument is its physical spin projection, such as +1/2 or -1/2 for a fermion, \
+or +1, 0 and -1 for a spin-one particle."}], "Notes"],
+  Cell[TextData[
+    {"The input should contain that particle's implicit massive ",
+     ButtonBox["Spinor", BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/Spinor"], " factors. HEPCAT replaces them by the \
+appropriate explicit little-group components. For the longitudinal spin-one \
+state it uses the normalized sum of the two mixed index assignments."}],
+   "Notes"], Cell[TextData[{"This selects a state; it does not sum over \
+states or average incoming spins. It also differs from merely naming indices \
+with ", ButtonBox["MakeIndicesExplicit", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/MakeIndicesExplicit"], "."}],
+   "Notes"], Cell[TextData[{"The generated ", ButtonBox["SPINAS",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/SPINAS"], " \
+interface uses doubled-spin integers, while this symbolic function uses \
+physical half-integer values. Thus a positive spin-half state is selected \
+here by 1/2, not by the C++ label 1. To select several legs in particle \
+order, use ", ButtonBox["ChooseSpinIndices", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ChooseSpinIndices"], "."}], "Notes"],
+  Cell["Examples", "PrimaryExamplesSection"],
+  Cell[CellGroupData[{Cell["Load HEPCAT if needed", "ExampleSubsection"],
+     Cell["Skip this setup if HEPCAT is already loaded. These examples assume \
+the checkout is in ~/code/hepcat; change the paths if yours is elsewhere. \
+Evaluate loading in its own cell before the calculation.", "ExampleText"],
+     Cell[BoxData[RowBox[{"Get", "[", "\"~/code/hepcat/source/HEPCAT.wl\"",
+         "]", ";"}]], "Input", InitializationCell -> True]}, Closed]],
   Cell["Basic Examples", "ExampleSection"],
-  Cell["Choose the positive spin-half state of leg 1.", "ExampleText"],
-  Cell[BoxData[RowBox[{"ChooseSpinIndex", "[", "SpinorChain", "[", "Spinor",
-      "[", "\"Spin\"", ",", " ", "\"Angle\"", ",", " ", "1", "]", ",", " ",
-      "Spinor", "[", "\"Helicity\"", ",", " ", "\"Angle\"", ",", " ", "3",
-      "]", "]", ",", " ", "1", ",", " ", "1", "/", "2", "]"}]], "Input"],
+  Cell[TextData[{"Choose the positive spin-half state of leg 1."}],
+   "ExampleText"], Cell[BoxData[RowBox[{"ChooseSpinIndex", "[",
+      "SpinorChain", "[", "Spinor", "[", "\"Spin\"", ",", " ", "\"Angle\"",
+      ",", " ", "1", "]", ",", " ", "Spinor", "[", "\"Helicity\"", ",", " ",
+      "\"Angle\"", ",", " ", "3", "]", "]", ",", " ", "1", ",", " ", "1",
+      "/", "2", "]"}]], "Input"],
   Cell[BoxData[TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"",
         TemplateBox[{StyleBox["1", Bold, StripOnInput -> False],
           FractionBox["1", "2"]}, "Superscript", SyntaxForm ->
           SuperscriptBox]}, "RowDefault"], TemplateBox[
        {"3", "\"\[RightAngleBracket]\""}, "RowDefault"]}, "RowDefault"]],
-   "Output"], Cell["Choose the longitudinal state of a spin-one leg.",
+   "Output"],
+  Cell[TextData[{"Choose the longitudinal state of a spin-one leg."}],
    "ExampleText"], Cell[BoxData[RowBox[{"ChooseSpinIndex", "[",
       "SpinorChain", "[", "Spinor", "[", "\"Spin\"", ",", " ", "\"Angle\"",
       ",", " ", "1", "]", ",", " ", "Spinor", "[", "\"Helicity\"", ",", " ",
@@ -98,7 +103,7 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
      "uri" -> "HEPCAT/ref/ChooseSpinIndex", "title" -> "ChooseSpinIndex",
      "type" -> "Symbol", "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT",
      "language" -> "en", "summary" ->
-      "Selects a physical spin projection for one external massive particle."\
-, "keywords" -> {"HEPCAT", "ChooseSpinIndex", "spinor amplitudes"},
+      "Selects one physical spin projection of a massive external particle.",
+     "keywords" -> {"HEPCAT", "ChooseSpinIndex", "spinor amplitudes"},
      "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

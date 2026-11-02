@@ -340,7 +340,7 @@ Cell[CellGroupData[{
 
 Cell["\<\
 diagrams = CreateDiagrams[particles, diagramModel];
-rawAmplitudes = diagramAmplitudes[diagrams];
+rawAmplitudes = DiagramAmplitudes[diagrams];
 Length[rawAmplitudes]\
 \>", "Input",
  CellLabel->
@@ -2331,7 +2331,7 @@ compares the two complete amplitudes away from all poles. Automatic chooses the 
 
 Cell["\<\
 feynmanDiagrams = CreateDiagrams[particles, qedFeynmanModel];
-feynmanPairs = diagramAmplitudes[feynmanDiagrams];
+feynmanPairs = DiagramAmplitudes[feynmanDiagrams];
 CreateArrowDiagrams[feynmanDiagrams];\
 \>", "Input",
  CellChangeTimes->{4.002021562043014*^9},
@@ -4765,7 +4765,7 @@ Cell["2. Build the Diagram Amplitudes", "Subsection", ExpressionUUID->"3dcc5fe4-
 
 Cell["The full list is saved in ppmRawAmplitudes. Each entry contains its mass replacements and its expression. Change [[1]] to inspect a different diagram, or evaluate the list variable to see all of them.", "Text", ExpressionUUID->"45d448bb-b657-4757-b6bb-1829ed8679f7"],
 
-Cell["ppmRawAmplitudes = diagramAmplitudes[ppmDiagrams];\nppmRawAmplitudes[[1]]", "Input", ExpressionUUID->"f7bc8700-fe3f-4b82-b6d0-796689121d64"],
+Cell["ppmRawAmplitudes = DiagramAmplitudes[ppmDiagrams];\nppmRawAmplitudes[[1]]", "Input", ExpressionUUID->"f7bc8700-fe3f-4b82-b6d0-796689121d64"],
 
 Cell["3. Prepare Each Diagram", "Subsection", ExpressionUUID->"1516e290-e068-4cc6-90b9-88728b311fe8"],
 
@@ -4815,7 +4815,7 @@ Cell["9. Compare with Feynman Diagrams and Run the Final Checks", "Subsection", 
 
 Cell["The Feynman result is generated independently after construction. Its internal lines stay off shell, and preparation uses one consistent reference prescription across all its diagrams.", "Text", ExpressionUUID->"1fee2583-c1bf-48e5-994b-3653bcbef490"],
 
-Cell["ppmFeynmanDiagrams = CreateDiagrams[ppmParticles, qedFeynmanModel];\nppmFeynmanAmplitudes = diagramAmplitudes[ppmFeynmanDiagrams];\nppmPreparedFeynman = PrepareAmplitudes[\n  ppmFeynmanAmplitudes, qedFeynmanModel, \"InternalOnShell\" -> False];\nppmPreparedFeynman[[1]]", "Input", ExpressionUUID->"001afc0d-8f96-465c-a48e-be9e54b6f048"],
+Cell["ppmFeynmanDiagrams = CreateDiagrams[ppmParticles, qedFeynmanModel];\nppmFeynmanAmplitudes = DiagramAmplitudes[ppmFeynmanDiagrams];\nppmPreparedFeynman = PrepareAmplitudes[\n  ppmFeynmanAmplitudes, qedFeynmanModel, \"InternalOnShell\" -> False];\nppmPreparedFeynman[[1]]", "Input", ExpressionUUID->"001afc0d-8f96-465c-a48e-be9e54b6f048"],
 
 Cell["CheckAmplitudes[ppmFinalAmplitude, ppmChannels, factorizationModel,\n  \"FeynmanAmplitudes\" -> ppmPreparedFeynman, \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"01dfda5a-220d-4eac-adb7-dfd6f8f90033"]
 
@@ -4859,7 +4859,7 @@ Cell[CellGroupData[{
 
 Cell["\<\
 diagrams = CreateDiagrams[particles, diagramModel];
-rawAmplitudes = diagramAmplitudes[diagrams];
+rawAmplitudes = DiagramAmplitudes[diagrams];
 Length[rawAmplitudes]\
 \>", "Input",
  CellLabel->"In[55]:=",ExpressionUUID->"c6db4d2f-e35d-4bd4-ad8c-2df45c39c940"],
@@ -11022,7 +11022,7 @@ conditions are applied. Each photon keeps one fixed Xi across all diagrams.\
 
 Cell["\<\
 feynmanDiagrams = CreateDiagrams[particles, qedFeynmanModel];
-feynmanPairs = diagramAmplitudes[feynmanDiagrams];
+feynmanPairs = DiagramAmplitudes[feynmanDiagrams];
 CreateArrowDiagrams[feynmanDiagrams];\
 \>", "Input",
  CellChangeTimes->{4.002021940157158*^9},
@@ -13705,7 +13705,7 @@ Cell[CellGroupData[{
 
 Cell["\<\
 diagrams = CreateDiagrams[particles, diagramModel];
-rawAmplitudes = diagramAmplitudes[diagrams];
+rawAmplitudes = DiagramAmplitudes[diagrams];
 Length[rawAmplitudes]\
 \>", "Input",
  CellLabel->"In[87]:=",ExpressionUUID->"6427db48-6319-432e-a5b6-5921c1f3110c"],
@@ -18839,7 +18839,7 @@ conditions are applied. Each photon keeps one fixed Xi across all diagrams.\
 
 Cell["\<\
 feynmanDiagrams = CreateDiagrams[particles, qedFeynmanModel];
-feynmanPairs = diagramAmplitudes[feynmanDiagrams];
+feynmanPairs = DiagramAmplitudes[feynmanDiagrams];
 CreateArrowDiagrams[feynmanDiagrams];\
 \>", "Input",
  CellChangeTimes->{4.002021940157158*^9},
@@ -21586,7 +21586,7 @@ Cell[CellGroupData[{
 Cell["\<\
 mixedParticles = {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\"};
 mixedDiagrams = CreateDiagrams[mixedParticles, diagramModel];
-mixedRawAmplitudes = diagramAmplitudes[mixedDiagrams];
+mixedRawAmplitudes = DiagramAmplitudes[mixedDiagrams];
 mixedWorkedRoute = qedFivePointMixedRoute[mixedRawAmplitudes];
 mixedWorkedAmplitude = mixedWorkedRoute[\"Final\"];
 mixedWorkedAmplitude\
@@ -23965,7 +23965,7 @@ Cell[CellGroupData[{
 
 Cell["\<\
 diagrams = CreateDiagrams[particles, diagramModel];
-rawAmplitudes = diagramAmplitudes[diagrams];
+rawAmplitudes = DiagramAmplitudes[diagrams];
 Length[rawAmplitudes]\
 \>", "Input",
  CellLabel->
@@ -25040,7 +25040,7 @@ Cell["Independent Feynman Benchmark", "Subsection",ExpressionUUID->"29fe5b44-c35
 
 Cell["\<\
 feynmanDiagrams = CreateDiagrams[particles, qedFeynmanModel];
-feynmanPairs = diagramAmplitudes[feynmanDiagrams];
+feynmanPairs = DiagramAmplitudes[feynmanDiagrams];
 CreateArrowDiagrams[feynmanDiagrams];\
 \>", "Input",
  CellChangeTimes->{4.002021562043014*^9},
@@ -27504,7 +27504,7 @@ Cell["Earlier Step-by-Step Work (Optional)", "Section", ExpressionUUID->"c32d308
   }, Open]],
   Cell[CellGroupData[{
     Cell["2. Generate the Diagrams", "Section"],
-    Cell["diagrams = CreateDiagrams[particles, diagramModel];\nrawAmplitudes = diagramAmplitudes[diagrams];\nLength[rawAmplitudes]", "Input"],
+    Cell["diagrams = CreateDiagrams[particles, diagramModel];\nrawAmplitudes = DiagramAmplitudes[diagrams];\nLength[rawAmplitudes]", "Input"],
     Cell[CellGroupData[{
       Cell["View the diagrams", "Subsection"],
       Cell["CreateArrowDiagrams[diagrams]", "Input"]
@@ -27522,7 +27522,7 @@ Cell["Earlier Step-by-Step Work (Optional)", "Section", ExpressionUUID->"c32d308
   }, Open]],
   Cell[CellGroupData[{
     Cell["5. Verify the Completed Amplitude", "Section"],
-    Cell["feynmanDiagrams = CreateDiagrams[particles, qedFeynmanModel];\nfeynmanPairs = diagramAmplitudes[feynmanDiagrams];\npreparedFeynman = PrepareAmplitudes[feynmanPairs, qedFeynmanModel,\n  \"PolePreference\" -> \"AllSpurious\"];", "Input"],
+    Cell["feynmanDiagrams = CreateDiagrams[particles, qedFeynmanModel];\nfeynmanPairs = DiagramAmplitudes[feynmanDiagrams];\npreparedFeynman = PrepareAmplitudes[feynmanPairs, qedFeynmanModel,\n  \"PolePreference\" -> \"AllSpurious\"];", "Input"],
     Cell["Clear[constructedAmplitude, constructionChecks];\nIf[FailureQ[factorization] || factorization === $Failed,\n  factorization,\n  constructedAmplitude = factorization;\n  constructionChecks = CheckAmplitudes[\n    constructedAmplitude, channels, factorizationModel,\n    \"FeynmanAmplitudes\" -> preparedFeynman,\n    \"FeynmanModel\" -> qedFeynmanModel,\n    \"Output\" -> \"Details\"];\n  constructionChecks[\"Table\"]]", "Input"],
     Cell[CellGroupData[{
       Cell["Inspect the Completed Amplitude", "Subsection"],
@@ -27599,7 +27599,7 @@ Cell["Independent Feynman Comparison", "Subsection", ExpressionUUID->"11e3506a-f
 
 Cell["This optional calculation generates an independent Feynman amplitude. Preparation uses shared photon references and leaves all internal Feynman lines off shell. The final checker includes the Feynman comparison as well as its usual tests.", "Text", ExpressionUUID->"9e73059b-7afa-5c69-b230-437c4c1dc723"],
 
-Cell["qed6PPPMWorkedFeynman = PrepareAmplitudes[\n  diagramAmplitudes[CreateDiagrams[\n    {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.-\"}, qedFeynmanModel]], qedFeynmanModel];\nCheckAmplitudes[qed6PPPMReducedWorked, qed6PPPMWorkedChannels, factorizationModel,\n  \"FeynmanAmplitudes\" -> qed6PPPMWorkedFeynman, \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"53d9a0fc-2671-52e3-bb9c-004ad97d93e2"]
+Cell["qed6PPPMWorkedFeynman = PrepareAmplitudes[\n  DiagramAmplitudes[CreateDiagrams[\n    {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.-\"}, qedFeynmanModel]], qedFeynmanModel];\nCheckAmplitudes[qed6PPPMReducedWorked, qed6PPPMWorkedChannels, factorizationModel,\n  \"FeynmanAmplitudes\" -> qed6PPPMWorkedFeynman, \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"53d9a0fc-2671-52e3-bb9c-004ad97d93e2"]
 
 }, Closed]]
 
@@ -27638,7 +27638,7 @@ new universal completion algorithm.", "Text"], Cell["Physical residues, independ
    Cell[CellGroupData[{Cell["1. Diagrams and Preparation", "Section"],
       Cell["particles = {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \
 \"A.-\"};\ndiagrams = CreateDiagrams[particles, diagramModel];\nrawAmplitudes \
-= diagramAmplitudes[diagrams];\nLength[rawAmplitudes]", "Input"],
+= DiagramAmplitudes[diagrams];\nLength[rawAmplitudes]", "Input"],
       Cell["Keep the original 24 diagram expressions for comparison. Preparation \
 in the next cell is optional and can be skipped to reproduce the compact \
 result quickly. The lower-amplitude construction in step 3 does not use the \
@@ -28700,7 +28700,7 @@ lower-amplitude recursion above is a different, justified construction.",
 constructive amplitude. Their internal lines remain off shell. Keep all \
 checker rows visible: PASS means agreement at the tested samples; an \
 unsupported factor or timeout is UNRESOLVED, not success.", "Text"],
-      Cell["feynmanDiagrams = CreateDiagrams[particles, qedFeynmanModel];\nfeynmanPairs = diagramAmplitudes[feynmanDiagrams];\npreparedFeynman = PrepareAmplitudes[feynmanPairs, qedFeynmanModel,\n  \"PolePreference\" -> \"AllSpurious\"];", "Input"], Cell["constructionChecks = CheckAmplitudes[\n  constructedAmplitude, channels, factorizationModel,\n  \"FeynmanAmplitudes\" -> preparedFeynman,\n  \"FeynmanModel\" -> qedFeynmanModel, \"Output\" -> \"Details\"];\nconstructionChecks[\"Table\"]",
+      Cell["feynmanDiagrams = CreateDiagrams[particles, qedFeynmanModel];\nfeynmanPairs = DiagramAmplitudes[feynmanDiagrams];\npreparedFeynman = PrepareAmplitudes[feynmanPairs, qedFeynmanModel,\n  \"PolePreference\" -> \"AllSpurious\"];", "Input"], Cell["constructionChecks = CheckAmplitudes[\n  constructedAmplitude, channels, factorizationModel,\n  \"FeynmanAmplitudes\" -> preparedFeynman,\n  \"FeynmanModel\" -> qedFeynmanModel, \"Output\" -> \"Details\"];\nconstructionChecks[\"Table\"]",
        "Input"], Cell[CellGroupData[
         {Cell["Inspect the Constructed Expression", "Subsection"],
          Cell["constructedAmplitude", "Input"]}, Closed]]}, Open]]
@@ -28753,7 +28753,7 @@ Cell["Regenerate the Off-Shell Reference and Check It", "Subsection", Expression
 
 Cell["This optional calculation starts again from the independent Dirac diagrams. Feynman preparation shares photon references across all diagrams and never applies internal on-shell conditions. Its bounded reductions can return a different equivalent representation from the stored 38-group formula. These currents are a derivation reference and benchmark, not replacement factorization data.", "Text", ExpressionUUID->"ef6bd53f-f113-5917-a13d-44fc32b40a63"],
 
-Cell["qed6PPMMOffShellDiagrams = diagramAmplitudes[CreateDiagrams[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \"A.-\"}, qedFeynmanModel]];\nqed6PPMMOffShellPrepared = PrepareAmplitudes[\n  qed6PPMMOffShellDiagrams, qedFeynmanModel, \"PolePreference\" -> \"AllPhysical\"];", "Input", ExpressionUUID->"c0bbc173-539f-56f9-ae4f-e38fcf74caaf"],
+Cell["qed6PPMMOffShellDiagrams = DiagramAmplitudes[CreateDiagrams[\n  {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\", \"A.-\"}, qedFeynmanModel]];\nqed6PPMMOffShellPrepared = PrepareAmplitudes[\n  qed6PPMMOffShellDiagrams, qedFeynmanModel, \"PolePreference\" -> \"AllPhysical\"];", "Input", ExpressionUUID->"c0bbc173-539f-56f9-ae4f-e38fcf74caaf"],
 
 Cell["CheckAmplitudes[qed6PPMMPhysicalReference, qed6PPMMPhysicalChannels, factorizationModel,\n  \"FeynmanAmplitudes\" -> qed6PPMMOffShellPrepared, \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"b6b1ceb1-e311-540d-894f-2858a08d9bab"]
 

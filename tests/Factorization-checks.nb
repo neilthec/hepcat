@@ -166,7 +166,7 @@ product of lower-point amplitudes divided by the propagator denominator.\
 \>", "Text",ExpressionUUID->"02a10b14-0491-4168-a588-6a047cf67561"],
 
 Cell["\<\
-fourPointDiagramAmplitudes = diagramAmplitudes[fourPointDiagrams];
+fourPointDiagramAmplitudes = DiagramAmplitudes[fourPointDiagrams];
 fourPointChannels = FactorizationAmplitudeChannels[
   fourPointParticles, qedDiagramModel];\
 \>", "Input",
@@ -765,7 +765,7 @@ Cell["Generate the six diagrams in the usual way.", "Text",ExpressionUUID->"fea1
 Cell["\<\
 fivePointParticles = {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"};
 fivePointDiagrams = CreateDiagrams[fivePointParticles, qedDiagramModel];
-fivePointDiagramAmplitudes = diagramAmplitudes[fivePointDiagrams];\
+fivePointDiagramAmplitudes = DiagramAmplitudes[fivePointDiagrams];\
 \>", "Input",
  CellLabel->"In[74]:=",ExpressionUUID->"b85c76fd-6583-442b-835e-02ad7be84bc7"],
 
@@ -5346,7 +5346,7 @@ Cell[CellGroupData[{
 
 Cell["\<\
 Get[FileNameJoin[{hepcatDirectory, \"tests\", \"QED-5-point-residues.wl\"}]];
-qedMixedDiagramAmplitudes = diagramAmplitudes[CreateDiagrams[
+qedMixedDiagramAmplitudes = DiagramAmplitudes[CreateDiagrams[
   {\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\"}, qedDiagramModel]];
 qedMixedDerivation = qedFivePointMixedRoute[qedMixedDiagramAmplitudes];
 qedFivePointMixedAmplitude = qedMixedDerivation[\"Final\"];
@@ -6813,7 +6813,7 @@ qedPrepareFivePointDiagrams[pairs_List] := Total[
 
 qedFivePointPrepared = Association@Table[
   With[{completed = qedFivePointCompleted[name]},
-    With[{pairs = diagramAmplitudes[CreateDiagrams[
+    With[{pairs = DiagramAmplitudes[CreateDiagrams[
           completed[\"Particles\"], qedDiagramModel]]},
       With[{amplitude = qedPrepareFivePointDiagrams[pairs]},
         name -> <|\"Particles\" -> completed[\"Particles\"],
@@ -8883,7 +8883,7 @@ Cell[CellGroupData[{
 Cell["\<\
 qedFourFermionPhoton = Association@Table[
   With[{particles = {\"e\", \"E\", \"e\", \"E\", helicity}},
-    With[{pairs = diagramAmplitudes[CreateDiagrams[
+    With[{pairs = DiagramAmplitudes[CreateDiagrams[
           particles, qedDiagramModel]],
         channels = FactorizationAmplitudeChannels[
           particles, qedFactorizationModel]},

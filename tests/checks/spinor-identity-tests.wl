@@ -544,65 +544,65 @@ Block[{ConstructiveDiagrams`Private`legalMoves},
 numeratorDt = s - mass^2;
 numeratorDu = t - mass^2;
 check["numerator substitutions do not combine separate poles",
-  ConstructiveDiagrams`applyToNumerator[a/numeratorDt + b/numeratorDu,
+  ConstructiveDiagrams`ApplyToNumerator[a/numeratorDt + b/numeratorDu,
     {s -> mass^2, t -> mass^2}] === a/numeratorDt + b/numeratorDu];
 check["matching numerator and denominator symbols only changes numerator",
-  ConstructiveDiagrams`applyToNumerator[x^2/(x + y), x -> z] === z^2/(x + y)];
+  ConstructiveDiagrams`ApplyToNumerator[x^2/(x + y), x -> z] === z^2/(x + y)];
 check["factored numerator sums remain factored",
-  ConstructiveDiagrams`applyToNumerator[c (x + y)/p,
+  ConstructiveDiagrams`ApplyToNumerator[c (x + y)/p,
     {x -> u, y -> v, p -> 0}] === c (u + v)/p];
 check["rules can match a whole unexpanded numerator sum",
-  ConstructiveDiagrams`applyToNumerator[(x + y)/p, x + y -> z] === z/p];
+  ConstructiveDiagrams`ApplyToNumerator[(x + y)/p, x + y -> z] === z/p];
 check["polynomial numerator powers are not expanded to expose new matches",
-  ConstructiveDiagrams`applyToNumerator[(x + y)^2/p, x^2 -> z] ===
+  ConstructiveDiagrams`ApplyToNumerator[(x + y)^2/p, x^2 -> z] ===
     (x + y)^2/p];
 check["whole numerator identities apply to each existing top-level term",
-  ConstructiveDiagrams`applyToNumerator[(x + y)^2/p + (x + y)/q,
+  ConstructiveDiagrams`ApplyToNumerator[(x + y)^2/p + (x + y)/q,
     x + y -> z] === z^2/p + z/q];
 check["rational numerical denominators are preserved",
-  ConstructiveDiagrams`applyToNumerator[3 x/7 + 2 y/5, {x -> u, y -> v}] ===
+  ConstructiveDiagrams`ApplyToNumerator[3 x/7 + 2 y/5, {x -> u, y -> v}] ===
     3 u/7 + 2 v/5];
 check["numerator powers are replaced without touching denominator powers",
-  ConstructiveDiagrams`applyToNumerator[x^3/(x + y)^2, x -> z] === z^3/(x + y)^2];
+  ConstructiveDiagrams`ApplyToNumerator[x^3/(x + y)^2, x -> z] === z^3/(x + y)^2];
 check["denominator-free expressions accept numerator identities",
-  ConstructiveDiagrams`applyToNumerator[x^2 + y, x -> z] === z^2 + y];
+  ConstructiveDiagrams`ApplyToNumerator[x^2 + y, x -> z] === z^2 + y];
 check["zero has an ordinary zero numerator",
-  ConstructiveDiagrams`applyToNumerator[0, x -> z] === 0];
+  ConstructiveDiagrams`ApplyToNumerator[0, x -> z] === 0];
 check["delayed numerator rules are supported",
-  ConstructiveDiagrams`applyToNumerator[MomProd[1, 2]/p + MomProd[2, 3]/q,
+  ConstructiveDiagrams`ApplyToNumerator[MomProd[1, 2]/p + MomProd[2, 3]/q,
     MomProd[i_, j_] :> i + j] === 3/p + 5/q];
 numeratorFactored = (x + y) (u + v)/(p + q);
 check["empty numerator rules preserve the exact factored expression",
-  ConstructiveDiagrams`applyToNumerator[numeratorFactored, {}] === numeratorFactored];
+  ConstructiveDiagrams`ApplyToNumerator[numeratorFactored, {}] === numeratorFactored];
 check["identities matching a whole denominator atom never apply to it",
-  ConstructiveDiagrams`applyToNumerator[x/f[x], f[_] -> 0] === x/f[x]];
+  ConstructiveDiagrams`ApplyToNumerator[x/f[x], f[_] -> 0] === x/f[x]];
 numeratorPropagator = PropDen[Mom[Multiparticle[1, 3]], Mass[1] + Mass[2]];
 numeratorMomentum = Mom[Multiparticle[1, 3]];
 check["composite momentum substitutions keep propagator contents unchanged",
-  ConstructiveDiagrams`applyToNumerator[numeratorMomentum/numeratorPropagator^2,
+  ConstructiveDiagrams`ApplyToNumerator[numeratorMomentum/numeratorPropagator^2,
     Mom[Multiparticle[i_, j_]] :> Mom[i] + Mom[j]] ===
     (Mom[1] + Mom[3])/numeratorPropagator^2];
 check["numerator mass substitutions do not put propagators on shell",
-  ConstructiveDiagrams`applyToNumerator[Mass[1] numeratorMomentum/numeratorPropagator,
+  ConstructiveDiagrams`ApplyToNumerator[Mass[1] numeratorMomentum/numeratorPropagator,
     {Mass[_] -> Me, Mom[Multiparticle[i_, j_]] :> Mom[i] + Mom[j]}] ===
     Me (Mom[1] + Mom[3])/numeratorPropagator];
 check["inverse sum contents are not expanded into new denominator factors",
-  ConstructiveDiagrams`applyToNumerator[x/((p + q)^2 (r + s)),
+  ConstructiveDiagrams`ApplyToNumerator[x/((p + q)^2 (r + s)),
     {p -> 0, q -> 0, r -> 0, s -> 0}] === x/((p + q)^2 (r + s))];
 check["numerator API has the public package context",
-  Context[ConstructiveDiagrams`applyToNumerator] === "ConstructiveDiagrams`"];
+  Context[ConstructiveDiagrams`ApplyToNumerator] === "ConstructiveDiagrams`"];
 check["numerator API is protected after package loading",
-  MemberQ[Attributes[ConstructiveDiagrams`applyToNumerator], Protected]];
+  MemberQ[Attributes[ConstructiveDiagrams`ApplyToNumerator], Protected]];
 (* Only this deliberately colliding notebook-helper fixture suppresses shadows. *)
-Quiet[ToExpression["Global`applyToNumerator[_, _] := \"notebook helper\""]];
+Quiet[ToExpression["Global`ApplyToNumerator[_, _] := \"notebook helper\""]];
 Quiet[Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]]];
 check["package reload retains its public numerator implementation",
-  ConstructiveDiagrams`applyToNumerator[x/p + y/q, {x -> u, y -> v}] === u/p + v/q];
+  ConstructiveDiagrams`ApplyToNumerator[x/p + y/q, {x -> u, y -> v}] === u/p + v/q];
 check["package reload does not alter an existing notebook helper",
-  Global`applyToNumerator[x/p, {}] === "notebook helper"];
+  Global`ApplyToNumerator[x/p, {}] === "notebook helper"];
 check["package reload restores numerator API protection",
-  MemberQ[Attributes[ConstructiveDiagrams`applyToNumerator], Protected]];
-ClearAll[Global`applyToNumerator];
+  MemberQ[Attributes[ConstructiveDiagrams`ApplyToNumerator], Protected]];
+ClearAll[Global`ApplyToNumerator];
 
 complementEdits[expr_, rules_List] := Block[{ConstructiveDiagrams`Private`$useMomentumConservation = True},
   Select[ConstructiveDiagrams`Private`scalarMomentumConservationMoves[expr, rules],

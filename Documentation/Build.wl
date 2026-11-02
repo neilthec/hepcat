@@ -9,7 +9,8 @@ Needs["CodeParser`"];
 Begin["HEPCATDocumentationBuild`Private`"];
 
 $BuildResult = Module[{documentationRoot, repositoryRoot, sourceRoot, outputRoot, catalogFiles,
-    catalog, byName, guides, tutorials, optionDescriptions, exampleResults, guideTitles, tutorialTitles, readJSON, inputBoxes, outputBoxes, normalizeText,
+    catalog, allCatalog, byName, guides, allGuides, tutorials, optionDescriptions, exampleResults, guideTitles, tutorialTitles, readJSON, inputBoxes, outputBoxes, normalizeText,
+    richText, plainText, publicQ, hiddenNames, staleFiles, detailCells,
     inlineCode, link, linksCell, metadata, anchor, setupCode, setupCells,
     exampleCells, symbolPage, guidePage, tutorialPage, optionsCells,
     notebook, savePage, usage, indexResult, counts, optionDescription},
@@ -21,13 +22,16 @@ $BuildResult = Module[{documentationRoot, repositoryRoot, sourceRoot, outputRoot
   readJSON[name_, default_: {}] := With[{file = FileNameJoin[{sourceRoot, name}]},
     If[FileExistsQ[file], Import[file, "RawJSON"], default]];
   catalogFiles = {"base.json", "model.json", "feynman-export.json"};
-  catalog = Flatten[readJSON /@ catalogFiles, 1];
+  allCatalog = Flatten[readJSON /@ catalogFiles, 1];
+  publicQ[entry_Association] := Lookup[entry, "visibility", "public"] === "public";
+  catalog = Select[allCatalog, publicQ];
   If[catalog === {} || !VectorQ[catalog, AssociationQ],
     Return[Failure["MissingCatalog", <|"MessageTemplate" -> "HEPCAT documentation catalogs are missing."|>]]];
   If[!DuplicateFreeQ[Lookup[catalog, "name"]],
     Return[Failure["DuplicateReferenceNames", <|"MessageTemplate" -> "Reference-page names must be unique."|>]]];
   byName = AssociationThread[Lookup[catalog, "name"], catalog];
-  guides = readJSON["guides.json"];
+  allGuides = readJSON["guides.json"];
+  guides = Select[allGuides, publicQ];
   tutorials = readJSON["tutorials.json"];
   optionDescriptions = readJSON["option-descriptions.json", <||>];
   exampleResults = readJSON["example-results.json", <||>];
@@ -66,11 +70,37 @@ $BuildResult = Module[{documentationRoot, repositoryRoot, sourceRoot, outputRoot
     TextData[Riffle[link[#, kind] & /@ names, "  •  "]], style];
   (* Native Help search displays label separately from type; a missing label
      makes its result-cell renderer reject an otherwise valid search hit. *)
+  plainText[text_String] := StringReplace[text, {
+    RegularExpression["\\[([^\\]]+)\\]\\([^)]*\\)"] -> "$1", "`" -> ""}];
+  richText[text_String] := Module[{positions, pieces = {}, start = 1, token, parts, uri},
+    positions = StringPosition[text, RegularExpression[
+      "\\[[^\\]]+\\]\\((?:paclet:[^\\s)]+|https?://[^\\s)]+)\\)|`[^`\\n]+`"]];
+    Do[
+      If[position[[1]] > start, AppendTo[pieces, StringTake[text, {start, position[[1]] - 1}]]];
+      token = StringTake[text, position];
+      If[StringStartsQ[token, "`"],
+        AppendTo[pieces, inlineCode[StringTake[token, {2, -2}]]],
+        parts = First[StringCases[token,
+          RegularExpression["^\\[([^\\]]+)\\]\\(([^)]+)\\)$"] -> {"$1", "$2"}]];
+        uri = parts[[2]];
+        If[StringStartsQ[uri, "paclet:HEPCAT/ref/"] &&
+            !KeyExistsQ[byName, StringDrop[uri, StringLength["paclet:HEPCAT/ref/"]]],
+          AppendTo[pieces, inlineCode[parts[[1]]]],
+          AppendTo[pieces, ButtonBox[parts[[1]], BaseStyle -> "Link", ButtonData -> uri]]]
+      ];
+      start = position[[2]] + 1,
+      {position, positions}];
+    If[start <= StringLength[text], AppendTo[pieces, StringDrop[text, start - 1]]];
+    TextData[pieces]
+  ];
+  detailCells[sections_List] := Flatten[Map[Function[section,
+    Join[{Cell[section["title"], "NotesSection"]},
+      Cell[richText[#], "Notes"] & /@ Lookup[section, "paragraphs", {}]]], sections], 1];
   metadata[name_, title_, type_, summary_, kind_] := {
     "Metadata" -> {"context" -> "ConstructiveDiagrams`", "uri" -> "HEPCAT/" <> kind <> "/" <> name,
       "title" -> title, "type" -> type, "label" -> "HEPCAT " <> type,
       "paclet" -> "HEPCAT", "language" -> "en",
-      "summary" -> summary, "keywords" -> {"HEPCAT", name, "spinor amplitudes"},
+      "summary" -> plainText[summary], "keywords" -> {"HEPCAT", name, "spinor amplitudes"},
       "status" -> "None", "index" -> True}};
   anchor[label_, guide_: "HEPCAT"] := Cell[BoxData[GridBox[{{
     Cell["HEPCAT " <> label, "PacletNameCell"],
@@ -78,24 +108,22 @@ $BuildResult = Module[{documentationRoot, repositoryRoot, sourceRoot, outputRoot
       link[guide, "guide", "Related Guide"]}], "AnchorBar"]}},
       GridBoxAlignment -> {"Columns" -> {Left, Right}},
       GridBoxItemSize -> {"Columns" -> {Scaled[.42], Scaled[.58]}}]], "AnchorBarGrid"];
-  setupCode = StringRiffle[{
-    "If[!StringQ[Global`$HEPCATpath] || !DirectoryQ[Global`$HEPCATpath],",
-    "  Global`$HEPCATpath = FileNameJoin[{First[PacletFind[\"HEPCAT\"]][\"Location\"], \"source\"}]];",
-    "If[!MemberQ[$Packages, \"ConstructiveDiagrams`\"],",
-    "  Get[FileNameJoin[{Global`$HEPCATpath, \"HEPCAT.wl\"}]]];",
-    "hepcatDirectory = ParentDirectory[Global`$HEPCATpath];",
-    "modelDirectory = FileNameJoin[{hepcatDirectory, \"models\"}];",
-    "feynmanModelDirectory = FileNameJoin[{hepcatDirectory, \"model_feynman\"}];"
-  }, "\n"];
-  setupCells[] := Cell[CellGroupData[{
-    Cell["Load HEPCAT", "ExampleSubsection"],
-    Cell["Evaluate this setup once before the examples. The paths refer to the local HEPCAT checkout; no model parameters are assigned global numerical values.", "ExampleText"],
-    Cell[BoxData[inputBoxes[setupCode]], "Input", InitializationCell -> True]
-  }, Open]];
+  setupCode = "Get[\"~/code/hepcat/source/HEPCAT.wl\"];";
+  setupCells[examples_List] := Module[{inputs = StringRiffle[Lookup[examples, "input", {}], "\n"], lines},
+    lines = {setupCode};
+    If[StringContainsQ[inputs, "hepcatDirectory"], AppendTo[lines, "hepcatDirectory = \"~/code/hepcat\";"]];
+    If[StringContainsQ[inputs, "modelDirectory"], AppendTo[lines, "modelDirectory = \"~/code/hepcat/models\";"]];
+    If[StringContainsQ[inputs, "feynmanModelDirectory"], AppendTo[lines, "feynmanModelDirectory = \"~/code/hepcat/model_feynman\";"]];
+    Cell[CellGroupData[{
+      Cell["Load HEPCAT if needed", "ExampleSubsection"],
+      Cell["Skip this setup if HEPCAT is already loaded. These examples assume the checkout is in ~/code/hepcat; change the paths if yours is elsewhere. Evaluate loading in its own cell before the calculation.", "ExampleText"],
+      Cell[BoxData[inputBoxes[StringRiffle[lines, "\n"]]], "Input", InitializationCell -> True]
+    }, Closed]]
+  ];
   exampleCells[examples_List] := Flatten[Map[
     Function[example,
-      Join[{
-        Cell[Lookup[example, "description", ""], "ExampleText"],
+      Join[If[KeyExistsQ[example, "section"], {Cell[example["section"], "ExampleSubsection"]}, {}], {
+        Cell[richText[Lookup[example, "description", ""]], "ExampleText"],
         Cell[BoxData[inputBoxes[example["input"]]], "Input"]},
         With[{output = Lookup[exampleResults, example["input"], Missing[]]},
           If[StringQ[output] && StringLength[output] <= 2000 && output =!= "$Failed",
@@ -117,7 +145,7 @@ $BuildResult = Module[{documentationRoot, repositoryRoot, sourceRoot, outputRoot
       With[{optionName = ToString[First[rule], InputForm]},
         {Cell[TextData[{inlineCode[optionName]}], "TableText"],
          Cell[TextData[{inlineCode[ToString[Last[rule], InputForm]]}], "TableText"],
-         Cell[optionDescription[name, StringReplace[optionName, "\"" -> ""]], "TableText"]}
+         Cell[richText[optionDescription[name, StringReplace[optionName, "\"" -> ""]]], "TableText"]}
       ]], rules];
     {Cell["Options", "NotesSection"], Cell[BoxData[GridBox[
       Prepend[rows, {Cell["Option", "TableHeader"], Cell["Default", "TableHeader"], Cell["Meaning", "TableHeader"]}],
@@ -134,13 +162,14 @@ $BuildResult = Module[{documentationRoot, repositoryRoot, sourceRoot, outputRoot
     cells = Join[{
       anchor["SYMBOL", Lookup[entry, "guide", "HEPCAT"]],
       Cell[name, "ObjectName"],
-      Cell[entry["summary"], "Notes"]},
-      Map[Cell[TextData[{inlineCode[#["input"]], "  ", #["description"]}], "Usage"] &,
+      Cell[richText[entry["summary"]], "Notes"]},
+      Map[Cell[TextData[Join[{inlineCode[#["input"]], "  "}, First[richText[#["description"]]]]], "Usage"] &,
         Lookup[entry, "syntaxes", {}]],
       {Cell["Details", "NotesSection"]},
-      Cell[#, "Notes"] & /@ Lookup[entry, "details", {}],
+      Cell[richText[#], "Notes"] & /@ Lookup[entry, "details", {}],
+      detailCells[Lookup[entry, "detail_sections", {}]],
       optionsCells[name],
-      {Cell["Examples", "PrimaryExamplesSection"], setupCells[],
+      {Cell["Examples", "PrimaryExamplesSection"], setupCells[Lookup[entry, "examples", {}]],
        Cell["Basic Examples", "ExampleSection"]},
       exampleCells[Lookup[entry, "examples", {}]],
       If[Lookup[entry, "related", {}] === {}, {},
@@ -153,7 +182,7 @@ $BuildResult = Module[{documentationRoot, repositoryRoot, sourceRoot, outputRoot
   guidePage[entry_Association] := Module[{cells, sections},
     sections = Flatten[Map[Function[section,
       Join[{Cell[section["title"], "GuideFunctionsSubsection"]},
-        If[Lookup[section, "description", ""] === "", {}, {Cell[section["description"], "GuideText"]}],
+        If[Lookup[section, "description", ""] === "", {}, {Cell[richText[section["description"]], "GuideText"]}],
         Map[Function[name, Cell[TextData[{link[name], ": ",
           Lookup[Lookup[byName, name, <||>], "summary", "Reference documentation."]}], "GuideText"]],
           Lookup[section, "functions", {}]],
@@ -161,8 +190,8 @@ $BuildResult = Module[{documentationRoot, repositoryRoot, sourceRoot, outputRoot
         If[Lookup[section, "tutorials", {}] === {}, {}, {linksCell[section["tutorials"], "GuideTutorial", "tutorial"]}]
       ]], Lookup[entry, "sections", {}]], 1];
     cells = Join[{anchor["GUIDE"], Cell[entry["title"], "GuideTitle"],
-      Cell[entry["summary"], "GuideAbstract"]},
-      Cell[#, "GuideAbstract"] & /@ Lookup[entry, "paragraphs", {}], sections,
+      Cell[richText[entry["summary"]], "GuideAbstract"]},
+      Cell[richText[#], "GuideAbstract"] & /@ Lookup[entry, "paragraphs", {}], sections,
       If[Lookup[entry, "tutorials", {}] === {}, {},
         Join[{Cell["Tutorials", "GuideTutorialsSection"]},
           {linksCell[entry["tutorials"], "GuideTutorial", "tutorial"]}]]];
@@ -171,10 +200,14 @@ $BuildResult = Module[{documentationRoot, repositoryRoot, sourceRoot, outputRoot
   tutorialPage[entry_Association] := Module[{cells, sections},
     sections = Flatten[Map[Function[section,
       Join[{Cell[section["title"], "TechNoteSection"]},
-        Cell[#, "TechNoteText"] & /@ Lookup[section, "paragraphs", {}],
+        Cell[richText[#], "TechNoteText"] & /@ Lookup[section, "paragraphs", {}],
         exampleCells[Lookup[section, "examples", {}]]]], Lookup[entry, "sections", {}]], 1];
     cells = Join[{anchor["TUTORIAL"], Cell[entry["title"], "TechNoteTitle"],
-      Cell[entry["summary"], "TechNoteText"], setupCells[]}, sections,
+      Cell[richText[entry["summary"]], "TechNoteText"]},
+      If[entry["name"] === "GettingStarted", {},
+        {setupCells[Flatten[Lookup[Lookup[entry, "sections", {}], "examples", {}], 1]]}]
+    ];
+    cells = Join[cells, sections,
       If[Lookup[entry, "related", {}] === {}, {},
         {Cell["Related Functions", "SeeAlsoSection"], linksCell[entry["related"], "SeeAlso"]}],
       If[Lookup[entry, "guides", {}] === {}, {},
@@ -187,13 +220,22 @@ $BuildResult = Module[{documentationRoot, repositoryRoot, sourceRoot, outputRoot
     Put[expression, path];
     normalizeText[path]
   ];
+  (* Remove only retired generated pages named by the reviewed catalogs.
+     Keeping their files would leave internal helpers searchable after rebuild. *)
+  hiddenNames = DeleteDuplicates[Join[
+    Lookup[Select[allCatalog, !publicQ[#] &], "name", {}],
+    Flatten[Lookup[allCatalog, "retiredNames", {}]]]];
+  staleFiles = Join[
+    FileNameJoin[{outputRoot, "ReferencePages", "Symbols", # <> ".nb"}] & /@ hiddenNames,
+    FileNameJoin[{outputRoot, "Guides", # <> ".nb"}] & /@ Lookup[Select[allGuides, !publicQ[#] &], "name", {}]];
+  Scan[If[FileExistsQ[#], DeleteFile[#]] &, staleFiles];
   Scan[savePage[symbolPage[#], {"ReferencePages", "Symbols"}, #["name"]] &, catalog];
   Scan[savePage[guidePage[#], {"Guides"}, #["name"]] &, guides];
   Scan[savePage[tutorialPage[#], {"Tutorials"}, #["name"]] &, tutorials];
   usage = Association@Map[Function[entry,
     "ConstructiveDiagrams`" <> entry["name"] -> StringRiffle[Join[
-      (#["input"] <> " " <> #["description"] &) /@ Lookup[entry, "syntaxes", {}],
-      {entry["summary"]}], "\n"]], catalog];
+      (#["input"] <> " " <> plainText[#["description"]] &) /@ Lookup[entry, "syntaxes", {}],
+      {plainText[entry["summary"]]}], "\n"]], catalog];
   Put[usage, FileNameJoin[{outputRoot, "SymbolUsage.wl"}]];
   normalizeText[FileNameJoin[{outputRoot, "SymbolUsage.wl"}]];
   Get[FileNameJoin[{repositoryRoot, "source", "HEPCAT-Documentation.wl"}]];

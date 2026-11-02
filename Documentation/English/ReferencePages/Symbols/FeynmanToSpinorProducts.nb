@@ -7,8 +7,9 @@ Notebook[
         "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
      GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
    "AnchorBarGrid"], Cell["FeynmanToSpinorProducts", "ObjectName"],
-  Cell["Converts contracted Feynman amplitudes to spinor products without \
-imposing internal mass shells.", "Notes"],
+  Cell[TextData[{"Rewrites a contracted Feynman amplitude in HEPCAT \
+angle/square spinor notation while retaining internal virtualities."}],
+   "Notes"],
   Cell[TextData[{Cell[BoxData[RowBox[{"FeynmanToSpinorProducts", "[",
          "expression", "]"}]], "InlineFormula"], "  ",
      "converts a contracted Feynman tensor expression."}], "Usage"],
@@ -18,89 +19,172 @@ imposing internal mass shells.", "Notes"],
   Cell[TextData[{Cell[BoxData[RowBox[{"FeynmanToSpinorProducts", "[",
          "amplitudes", "]"}]], "InlineFormula"], "  ",
      "converts a list of amplitude pairs."}], "Usage"],
-  Cell["Details", "NotesSection"], Cell["The external convention is u = \
-(-|p>,|p]), bar v = (<p|,-[p|), gamma5 = diag(-1,+1). All momenta remain \
-incoming in the symbolic result.", "Notes"], Cell["Lorentz indices must be \
-fully contracted. Unsupported tensors, free indices and unsupported fields \
-return Failure rather than a partially converted amplitude.", "Notes"],
-  Cell["Internal Feynman slashes and propagators remain off shell. Conversion \
-applies ordinary algebra and external wavefunction conventions only.",
-   "Notes"], Cell["Use the string option \"FermionHelicities\" for massless \
-Dirac external fields. \"ReferenceSpinors\" supplies per-leg references; \
-Automatic retains independent generic Xi references.", "Notes"],
-  Cell["Raw diagrams can also be passed directly to PrepareAmplitudes with \
-their FeynmanModel. That route performs conversion before reference selection \
-and reduction.", "Notes"], Cell["For gauge invariance, use one reference \
-assignment per external gauge leg for the entire Feynman sum, rather than \
-optimizing separate Feynman diagrams independently.", "Notes"],
+  Cell["Details", "NotesSection"],
+  Cell[TextData[{"Use ", Cell[BoxData[RowBox[{"FeynmanToSpinorProducts"}]],
+      "InlineFormula"], " when you have a Feynman tensor expression and want \
+to compare it with, or simplify it using, HEPCAT's ",
+     ButtonBox["SpinorChain", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SpinorChain"], " algebra. The \
+converter handles the external wavefunctions, ordered Dirac matrices and \
+Lorentz contractions together."}], "Notes"],
+  Cell[TextData[{"A bare expression gives a bare spinor expression. A ",
+     Cell[BoxData[RowBox[{"{", "massRules", ",", " ", "expression", "}"}]],
+      "InlineFormula"], " pair keeps the same mass-rule list and converts its \
+expression. A list of pairs is converted item by item, so the diagram labels \
+and their associated external masses remain available."}], "Notes"],
+  Cell[TextData[{"For an ordinary workflow, read a ",
+     ButtonBox["FeynmanModel", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/FeynmanModel"], ", generate diagrams \
+and obtain their amplitudes, then convert those amplitudes. You can instead \
+pass the raw amplitudes and the Feynman model to ",
+     ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], ", which includes \
+conversion before its reference selection and reduction."}], "Notes"],
+  Cell["What the conversion preserves", "NotesSection"],
+  Cell[TextData[{"All momenta remain incoming. The external convention is ",
+     Cell[BoxData[RowBox[{"u", "=", "(", "-", "|", "p", ">", ",", "|", "p",
+         "]", ")"}]], "InlineFormula"], Cell[BoxData[RowBox[{",", " "}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{"bar", " ", "v", "=", "(", "<",
+         "p", "|", ",", "-", "[", "p", "|", ")"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "and", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"gamma5", "=", "diag", "(", "-", "1", ",", "+",
+         "1", ")"}]], "InlineFormula"],
+     ". These conventions fix the component signs in the result."}],
+   "Notes"], Cell[TextData[{"Internal Feynman momenta and propagators remain \
+off shell. Ordinary gamma-matrix identities, Lorentz contractions and \
+external equations of motion are applied; the converter does not set an \
+internal momentum square to its propagator mass."}], "Notes"],
+  Cell[TextData[{"Massive external spin labels remain in the resulting \
+spinors. A massive vector retains two symmetric ",
+     ButtonBox["VectorSpinIndex", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/VectorSpinIndex"], " labels. Explicit \
+color tensors are also retained, so conversion by itself is not a color or \
+spin sum."}], "Notes"], Cell["Helicities and reference spinors",
+   "NotesSection"],
+  Cell[TextData[{"For a massless Dirac external fermion, use ",
+     Cell[BoxData[RowBox[{"\"FermionHelicities\"", " ", "->", " ", "{",
+         "leg", " ", "->", " ", "-", "1", "/", "2", ",", " ", "...", "}"}]],
+      "InlineFormula"], " or the corresponding positive half-integer \
+helicity. The values are physical helicities, rather than the doubled integer \
+labels used by exported C++ routines. Massive fermions retain their spin \
+indices without this selection."}], "Notes"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"\"ReferenceSpinors\"", " ", "->", " ",
+         "Automatic"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "leaves", " ", "an", " ", "independent", " ",
+         "auxiliary", " ", "Xi", " ", "spinor", " ", "for", " ", "each", " ",
+         "massless", "-", "vector", " ", "leg", ".", " ", "Supply", " ",
+         "rules", " ", "such", " ", "as", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"{", "3", " ", "->", " ", "4", ",", " ", "4", " ",
+         "->", " ", "3", "}"}]], "InlineFormula"], " to use other massless \
+external legs as references; the chosen reference must give a nonzero \
+denominator."}], "Notes"], Cell[TextData[{"Use the same reference assignment \
+for each external gauge leg in every diagram of a Feynman sum. Gauge \
+cancellation is a property of the full amplitude. Independently optimizing \
+the references of separate Feynman diagrams can spoil that comparison."}],
+   "Notes"], Cell[TextData[{"For the higher-level choices ",
+     Cell[BoxData[RowBox[{"\"AllPhysical\""}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "and", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"\"AllSpurious\""}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{",", " ", "use", " ", "the", " "}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{"\"PolePreference\""}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{" ", "option", " ", "of", " ",
+         "[", "PrepareAmplitudes", "]", "(", "paclet", ":", "HEPCAT", "/",
+         "ref", "/", "PrepareAmplitudes", ")", ".", " ", "The", " ",
+         "converter", " ", "itself", " ", "accepts", " "}]],
+      "InlineFormula"], ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"],
+     ". The converter itself accepts ",
+     Cell[BoxData[RowBox[{"\"ReferenceSpinors\""}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{",", " ", "not", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"\"PolePreference\""}]], "InlineFormula"], "."}],
+   "Notes"], Cell["Reduction and incomplete conversions", "NotesSection"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"\"ReduceSpinorProducts\"", " ", "->",
+         " ", "True"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "applies", " ", "[", "ReduceSpinorProducts",
+         "]", "(", "paclet", ":", "HEPCAT", "/", "ref", "/",
+         "ReduceSpinorProducts", ")", " ", "to", " ", "the", " ",
+         "converted", " ", "expression", " ", "and", " ", "uses", " ", "the",
+         " ", "external", " ", "masses", " ", "recorded", " ", "by", " ",
+         "its", " ", "wavefunctions", ".", " ", "Set", " ", "the", " ",
+         "option", " ", "to", " "}]], "InlineFormula"],
+     ButtonBox["ReduceSpinorProducts", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReduceSpinorProducts"], " to the \
+converted expression and uses the external masses recorded by its \
+wavefunctions. Set the option to ", Cell[BoxData[RowBox[{"False"}]],
+      "InlineFormula"], " when you want to inspect the direct result before \
+that ordinary reduction."}], "Notes"],
+  Cell[TextData[{"A complete amplitude has every Lorentz index contracted \
+exactly twice in each term. Free indices, unsupported endpoints or operators, \
+and unsupported fields return ", Cell[BoxData[RowBox[{"Failure"}]],
+      "InlineFormula"], ". These failures identify information that must be \
+supplied or a form that the converter cannot yet handle."}], "Notes"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"\"MaxExpandedTerms\""}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{" ", "bounds", " ", "the", " ",
+         "exact", " ", "Lorentz", " ", "expansion", " ", "and", " "}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{"\"TimeConstraint\""}]],
+      "InlineFormula"], " bounds the conversion time. Exceeding either limit \
+returns a diagnostic failure; the converter does not present a partial \
+contraction as the complete amplitude."}], "Notes"],
   Cell["Options", "NotesSection"],
   Cell[BoxData[GridBox[{{Cell["Option", "TableHeader"],
        Cell["Default", "TableHeader"], Cell["Meaning", "TableHeader"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"FermionHelicities\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"{", "}"}]], "InlineFormula"]}],
-        "TableText"], Cell["Leg-to-helicity rules or an association \
+        "TableText"], Cell[TextData[{"Leg-to-helicity rules or an association \
 specifying massless Dirac external states for Feynman conversion. Required \
-missing massless-fermion helicities are reported rather than guessed.",
+missing massless-fermion helicities are reported rather than guessed."}],
         "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"ReferenceSpinors\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
-           "InlineFormula"]}], "TableText"], Cell["Explicit leg-to-reference \
-rules or an association for Feynman-to-spinor conversion. Automatic \
-introduces independent Xi references; use another eligible massless leg or an \
-explicit Spinor. This lower-level conversion option is separate from the \
-workflow's PolePreference.", "TableText"]},
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{"Explicit leg-to-reference rules or an association for \
+Feynman-to-spinor conversion. Automatic introduces independent Xi references; \
+use another eligible massless leg or an explicit Spinor. This lower-level \
+conversion option is separate from the workflow's PolePreference."}],
+        "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"ReduceSpinorProducts\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"True"}]], "InlineFormula"]}],
-        "TableText"], Cell["Whether Feynman-to-spinor conversion applies \
-ordinary ReduceSpinorProducts identities after converting the tensor \
-structure. These identities do not impose internal-line on-shell conditions."\
-, "TableText"]},
+        "TableText"], Cell[TextData[{"Whether Feynman-to-spinor conversion \
+applies ordinary ReduceSpinorProducts identities after converting the tensor \
+structure. These identities do not impose internal-line on-shell conditions."}\
+], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"MaxExpandedTerms\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"100000"}]], "InlineFormula"]}],
-        "TableText"], Cell["Maximum number of expanded tensor terms allowed \
-during Feynman-to-spinor conversion. Exceeding the bound reports failure \
-rather than returning an unsupported partial conversion.", "TableText"]},
+        "TableText"], Cell[TextData[{"Maximum number of expanded tensor terms \
+allowed during Feynman-to-spinor conversion. Exceeding the bound reports \
+failure rather than returning an unsupported partial conversion."}],
+        "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"TimeConstraint\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"60"}]], "InlineFormula"]}],
-        "TableText"], Cell["Maximum elapsed time allowed by the operation or \
-stage. Where Automatic is supported it selects a finite workload-dependent \
-budget; explicit seconds or supported Infinity override it. A timeout is \
-reported, never treated as a successful amplitude.", "TableText"]}},
-     GridBoxAlignment -> {"Columns" -> {Left, Left, Left}},
-     GridBoxItemSize -> {"Columns" -> {Scaled[0.23], Scaled[0.19],
-         Scaled[0.58]}}, GridBoxDividers ->
-      {"Rows" -> {False, True, {False}, False}}]], "3ColumnTableMod"],
-  Cell["Examples", "PrimaryExamplesSection"],
-  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
-     Cell["Evaluate this setup once before the examples. The paths refer to \
-the local HEPCAT checkout; no model parameters are assigned global numerical \
-values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
-         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
-         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
-         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
-         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
-         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
-         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
-         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
-         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
-         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
-         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
-         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
-         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
-         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
-         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
-      "Input", InitializationCell -> True]}, Open]],
-  Cell["Basic Examples", "ExampleSection"],
-  Cell["Convert a scalar massive-fermion bilinear.", "ExampleText"],
-  Cell[BoxData[RowBox[{"FeynmanToSpinorProducts", "[", "DiracChain", "[",
-      "FermionBar", "[", "1", ",", " ", "m", ",", " ", "\"Dirac\"", "]", ",",
-      " ", "DiracWord", "[", "]", ",", " ", "FermionKet", "[", "2", ",", " ",
-      "m", ",", " ", "\"Dirac\"", "]", "]", "]"}]], "Input"],
+        "TableText"], Cell[TextData[{"Maximum elapsed time allowed by the \
+operation or stage. Where Automatic is supported it selects a finite \
+workload-dependent budget; explicit seconds or supported Infinity override \
+it. A timeout is reported, never treated as a successful amplitude."}],
+        "TableText"]}}, GridBoxAlignment ->
+      {"Columns" -> {Left, Left, Left}}, GridBoxItemSize ->
+      {"Columns" -> {Scaled[0.23], Scaled[0.19], Scaled[0.58]}},
+     GridBoxDividers -> {"Rows" -> {False, True, {False}, False}}]],
+   "3ColumnTableMod"], Cell["Examples", "PrimaryExamplesSection"],
+  Cell[CellGroupData[{Cell["Load HEPCAT if needed", "ExampleSubsection"],
+     Cell["Skip this setup if HEPCAT is already loaded. These examples assume \
+the checkout is in ~/code/hepcat; change the paths if yours is elsewhere. \
+Evaluate loading in its own cell before the calculation.", "ExampleText"],
+     Cell[BoxData[RowBox[{"Get", "[", "\"~/code/hepcat/source/HEPCAT.wl\"",
+         "]", ";", "\n", "feynmanModelDirectory", " ", "=", " ",
+         "\"~/code/hepcat/model_feynman\"", ";"}]], "Input",
+      InitializationCell -> True]}, Closed]], Cell["Basic Examples",
+   "ExampleSection"],
+  Cell[TextData[{"Convert a scalar massive-fermion bilinear."}],
+   "ExampleText"], Cell[BoxData[RowBox[{"FeynmanToSpinorProducts", "[",
+      "DiracChain", "[", "FermionBar", "[", "1", ",", " ", "m", ",", " ",
+      "\"Dirac\"", "]", ",", " ", "DiracWord", "[", "]", ",", " ",
+      "FermionKet", "[", "2", ",", " ", "m", ",", " ", "\"Dirac\"", "]", "]",
+      "]"}]], "Input"],
   Cell[BoxData[RowBox[
      {RowBox[{"-", TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"",
             StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"],
@@ -110,24 +194,32 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
            StripOnInput -> False]}, "RowDefault"],
         TemplateBox[{StyleBox["2", Bold, StripOnInput -> False], "\"]\""},
          "RowDefault"]}, "RowDefault"]}]], "Output"],
-  Cell["Generate and convert the four-point QED diagrams.", "ExampleText"],
-  Cell[BoxData[RowBox[{"fm", " ", "=", " ", "ReadModel", "[",
-      "feynmanModelDirectory", ",", " ", "2", "]", ";", "\n",
+  Cell[TextData[{"Generate and convert the four-point QED diagrams."}],
+   "ExampleText"], Cell[BoxData[RowBox[{"fm", " ", "=", " ", "ReadModel",
+      "[", "feynmanModelDirectory", ",", " ", "2", "]", ";", "\n",
       "feynmanDiagrams", " ", "=", " ", "CreateDiagrams", "[", "{", "\"e\"",
       ",", " ", "\"E\"", ",", " ", "\"A.+\"", ",", " ", "\"A.-\"", "}", ",",
       " ", "fm", "]", ";", "\n", "feynmanPairs", " ", "=", " ",
-      "diagramAmplitudes", "[", "feynmanDiagrams", "]", ";", "\n", "Head",
+      "DiagramAmplitudes", "[", "feynmanDiagrams", "]", ";", "\n", "Head",
       " ", "/@", " ", "FeynmanToSpinorProducts", "[", "feynmanPairs", "]"}]],
    "Input"], Cell[BoxData[RowBox[{"{", "List", ",", " ", "List", "}"}]],
-   "Output"], Cell["See Also", "SeeAlsoSection"],
+   "Output"], Cell["Inspecting the conversion", "ExampleSubsection"],
+  Cell[TextData[{"Disable the final ordinary reduction to inspect the direct \
+angle/square representation of a numerator."}], "ExampleText"],
+  Cell[BoxData[RowBox[{"FeynmanToSpinorProducts", "[", "DiracChain", "[",
+      "FermionBar", "[", "1", ",", " ", "m", ",", " ", "\"Dirac\"", "]", ",",
+      " ", "DiracWord", "[", "DiracSlash", "[", "Mom", "[", "3", "]", "]",
+      "]", ",", " ", "FermionKet", "[", "2", ",", " ", "m", ",", " ",
+      "\"Dirac\"", "]", "]", ",", " ", "\"ReduceSpinorProducts\"", " ", "->",
+      " ", "False", "]"}]], "Input"], Cell["See Also", "SeeAlsoSection"],
   Cell[TextData[{ButtonBox["FeynmanModel", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/FeynmanModel"], "  \[Bullet]  ",
      ButtonBox["DiracChain", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/DiracChain"], "  \[Bullet]  ",
      ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], "  \[Bullet]  ",
-     ButtonBox["diagramAmplitudes", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/diagramAmplitudes"], "  \[Bullet]  ",
+     ButtonBox["DiagramAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/DiagramAmplitudes"], "  \[Bullet]  ",
      ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"]}], "SeeAlso"],
   Cell["Related Guides", "MoreAboutSection"],
@@ -143,8 +235,8 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
      "uri" -> "HEPCAT/ref/FeynmanToSpinorProducts",
      "title" -> "FeynmanToSpinorProducts", "type" -> "Symbol",
      "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" -> "Converts contracted Feynman amplitudes to spinor products \
-without imposing internal mass shells.", "keywords" ->
-      {"HEPCAT", "FeynmanToSpinorProducts", "spinor amplitudes"},
-     "status" -> "None", "index" -> True}},
+     "summary" -> "Rewrites a contracted Feynman amplitude in HEPCAT \
+angle/square spinor notation while retaining internal virtualities.",
+     "keywords" -> {"HEPCAT", "FeynmanToSpinorProducts",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

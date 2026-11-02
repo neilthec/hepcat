@@ -7,63 +7,68 @@ Notebook[
      GridBoxAlignment -> {"Columns" -> {Left, Right}},
      GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
    "AnchorBarGrid"], Cell["Kinematics, References and On-Shell Conditions",
-   "TechNoteTitle"], Cell["Keep external kinematics, channel residues and \
-diagram numerator assumptions distinct.", "TechNoteText"],
-  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
-     Cell["Evaluate this setup once before the examples. The paths refer to \
-the local HEPCAT checkout; no model parameters are assigned global numerical \
-values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
-         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
-         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
-         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
-         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
-         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
-         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
-         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
-         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
-         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
-         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
-         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
-         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
-         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
-         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
-      "Input", InitializationCell -> True]}, Open]],
+   "TechNoteTitle"], Cell[TextData[{"Keep external kinematics, channel \
+residues and diagram numerator assumptions distinct."}], "TechNoteText"],
+  Cell[CellGroupData[{Cell["Load HEPCAT if needed", "ExampleSubsection"],
+     Cell["Skip this setup if HEPCAT is already loaded. These examples assume \
+the checkout is in ~/code/hepcat; change the paths if yours is elsewhere. \
+Evaluate loading in its own cell before the calculation.", "ExampleText"],
+     Cell[BoxData[RowBox[{"Get", "[", "\"~/code/hepcat/source/HEPCAT.wl\"",
+         "]", ";"}]], "Input", InitializationCell -> True]}, Closed]],
   Cell["All External Momenta Are Incoming", "TechNoteSection"],
-  Cell["HEPCAT analytic formulas obey p1 + p2 + ... = 0 with every external \
-momentum incoming. Reordering particles changes labels; crossing reverses a \
-momentum and its spinor conventions. Use ReverseMomentum for symbolic \
-crossing and give WriteSPINASProcess the physical incoming-to-outgoing \
-process.", "TechNoteText"], Cell["For the angle/square convention used here, \
-a crossed massless momentum reverses the angle spinor sign while the square \
-spinor is unchanged. Do not reverse only Mom insertions and leave its spinors \
-unchanged.", "TechNoteText"], Cell["External and Internal Conditions",
-   "TechNoteSection"], Cell["ReduceSpinorProducts uses ordinary spinor \
-identities and external mass algebra. Process-wide momentum conservation is \
-handled in PrepareAmplitudes, where the process labels are available.",
-   "TechNoteText"], Cell["A diagram pair carries a mass replacement list. An \
-internal entry records a numerator condition for that diagram. \
-PrepareAmplitudes can use it aggressively while preserving discarded \
-remainders in the detailed report. PropDen objects keep the actual \
-propagators off shell.", "TechNoteText"], Cell["A factorization channel puts \
-its cut momentum on shell when its residue is compared with a product of \
-lower-point amplitudes. It does not put every internal line of the \
-lower-point amplitudes on shell.", "TechNoteText"],
-  Cell["A final amplitude with an external mass list can be prepared again. \
-Without internal entries, preparation must not invent diagram-specific \
-internal conditions. Feynman diagram internals remain off shell throughout.",
-   "TechNoteText"], Cell["Reference Choices", "TechNoteSection"],
-  Cell["PolePreference controls reference choices and biases later \
-representation searches. AllSpurious uses suitable massless references when \
-available; AllPhysical uses spinor-momentum references that create admissible \
-physical denominators; Mixed searches both kinds. Automatic chooses from the \
-supported choices.", "TechNoteText"], Cell["Constructive diagram \
-representatives may use different reference choices while completion restores \
-the required full-channel constraints. Feynman diagrams are not separately \
-gauge invariant, so their full sum must use a consistent external reference \
-assignment.", "TechNoteText"], Cell["Reference independence of the final \
-result is a real test. Leaving an unresolved xi in an expression is not \
-automatically a failure, but the checker must vary admissible reference \
-spinors and compare the complete amplitude.", "TechNoteText"],
+  Cell[TextData[{"HEPCAT writes analytic amplitudes with every external \
+momentum incoming. Consequently momentum conservation is the sum of those \
+incoming momenta equal to zero. The particle order supplies the labels: \
+relabeling the external list changes what 1, 2 and the other integers mean."}]\
+, "TechNoteText"], Cell[TextData[{"Use ", ButtonBox["ReverseMomentum",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ReverseMomentum"], " when you explicitly cross a \
+symbolic external momentum. The transformation also includes its spinor \
+convention. ", ButtonBox["WriteSPINASProcess", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/WriteSPINASProcess"], " performs the \
+crossing automatically from the physical incoming-to-outgoing process, so \
+give that exporter the original all-incoming formula."}], "TechNoteText"],
+  Cell["External and Internal Conditions", "TechNoteSection"],
+  Cell[TextData[{"External mass-shell conditions describe the external \
+particles of the complete amplitude. These are valid during ordinary spinor \
+reduction. Internal-shell conditions have a narrower role: in the \
+constructive diagram workflow they identify a numerator representative for a \
+particular diagram, or the residue on a specified factorization cut."}],
+   "TechNoteText"],
+  Cell[TextData[{"The physical propagator denominators stay off shell. ",
+     ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], " uses only the \
+internal conditions actually supplied with an individual constructive item. A \
+completed expression has external mass rules only, and a Feynman diagram has \
+no constructive internal-shell assumptions."}], "TechNoteText"],
+  Cell[TextData[{"Simplifying a factorization channel on its own cut may \
+change its continuation away from that pole. Keep the original channels as \
+the residue targets. This is why ", ButtonBox["CompleteFactorization",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/CompleteFactorization"], " can use prepared \
+expressions as useful sources while retaining the original obligations for \
+validation."}], "TechNoteText"], Cell["Reference Choices",
+   "TechNoteSection"], Cell[TextData[{"Reference spinors describe the \
+massless external polarization choice. The ",
+     Cell[BoxData[RowBox[{"\"PolePreference\""}]], "InlineFormula"],
+     " option of ", ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], " controls how \
+those choices are made and also guides the later completion search. \
+AllPhysical favors references with physical denominator structure; \
+AllSpurious favors suitable massless-particle references; Mixed allows both \
+kinds."}], "TechNoteText"],
+  Cell[TextData[{"A compact individual diagram can be a useful starting point \
+even when its reference denominators introduce apparent spurious poles. Those \
+poles must cancel in the complete correct amplitude. ",
+     ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"], " discovers \
+supported denominator poles and reports whether the sampled comparisons \
+establish the required finiteness."}], "TechNoteText"],
+  Cell[TextData[{"Feynman diagrams require a consistent reference choice for \
+each massless external leg across the diagram sum. A constructive numerator \
+preparation may make different local choices. In either case, inspect the \
+complete result and its checks rather than judging correctness from the \
+appearance of one diagram."}], "TechNoteText"],
   Cell["Related Functions", "SeeAlsoSection"],
   Cell[TextData[{ButtonBox["ReverseMomentum", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ReverseMomentum"], "  \[Bullet]  ",

@@ -300,7 +300,7 @@ qedFivePointMixedRoute[pairs_List] := Module[
     Return[Failure["IncompleteQEDMixedFivePointDiagrams", <||>]]];
   (* This is a certified worked route, not a completion of arbitrary input.
      Verify the actual six expressions before selecting their representatives. *)
-  expectedPairs = diagramAmplitudes[CreateDiagrams[
+  expectedPairs = DiagramAmplitudes[CreateDiagrams[
     {"e", "E", "A.+", "A.+", "A.-"}, ReadModel[FileNameJoin[{prRoot, "models"}], 2]]];
   expectedRaw = (ReduceSpinContractions[Last[#]] /. First[#] &) /@ expectedPairs;
   canonicalReferences[expression_] := expression /.
@@ -543,7 +543,7 @@ q5FourFermionPhotonRoute[diagrams_List] := Module[
       !AllTrue[diagrams, #["ExternalParticles"] === particles &],
     Return[Failure["QEDFourFermionPhotonScope", <|
       "MessageTemplate" -> "Supply diagrams for two e, two E and a positive-helicity photon in slot 5."|>]]];
-  actual = diagramAmplitudes[diagrams];
+  actual = DiagramAmplitudes[diagrams];
   If[Length[actual] =!= Length[diagrams] || Length[diagrams] =!= 8,
     Return[Failure["IncompleteQEDFivePointDiagrams", <||>]]];
   orient[ends_List] := If[particles[[First[ends]]] === "e", ends, Reverse[ends]];
@@ -658,7 +658,7 @@ q5FourFermionPhotonRoute[diagrams_List] := Module[
    independent Feynman diagrams before these entries are used at six points. *)
 qedFivePointModelAmplitudes[] := Module[
   {mixed, radiation, dual, amplitudes, particles, factor, removeFactor},
-  mixed = qedFivePointMixedRoute[diagramAmplitudes[CreateDiagrams[
+  mixed = qedFivePointMixedRoute[DiagramAmplitudes[CreateDiagrams[
     {"e", "E", "A.+", "A.+", "A.-"}, prModel]]];
   If[FailureQ[mixed], Return[mixed]];
   radiation = q5FourFermionPhotonRoute[CreateDiagrams[

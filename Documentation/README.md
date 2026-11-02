@@ -10,11 +10,11 @@ functions, and links back to the guides.
 Load the package normally:
 
 ```wolfram
-Global`$HEPCATpath = FileNameJoin[{hepcatDirectory, "source"}];
-Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
+Get["~/code/hepcat/source/HEPCAT.wl"]
 ```
 
-The loader registers the documentation from this checkout. It does not open
+Change the path if your checkout is elsewhere. The loader finds its companion
+source files and registers the documentation from this checkout. It does not open
 windows, rebuild the index, install anything into the Mathematica application,
 or evaluate examples. A checkout containing only the source still loads.
 
@@ -89,7 +89,18 @@ Generated pages retain the native title, type, category label, summary, context
 and URI metadata required by the search display. Neither suite changes model
 data or runs a construction job.
 
-Keep reference pages honest about limits. Reserved compatibility names have no
-callable implementation on this branch and are labeled accordingly. A numerical
+Catalog entries default to public. Mark implementation helpers and reserved names
+with `"visibility": "internal"`; they remain in the reviewed inventory but have no
+public page, search entry or generated usage text. Use `retiredNames` only to
+remove obsolete generated page files, not to create callable aliases.
+
+Write explanations around what a reader supplies, what the function returns,
+and how the result fits the next step. Put links such as
+`[ReadModel](paclet:HEPCAT/ref/ReadModel)` directly into the prose. Group longer
+explanations with `detail_sections`, and use example `section` headings for
+applications and possible issues. The builder converts these to native Help
+cells and links. Setup is collapsed and includes only the paths an example needs.
+
+Keep reference pages honest about limits. A numerical
 PASS is evidence from sampled kinematics, not an analytic proof. Document the
 scope of internal on-shell assumptions and protect actual propagator denominators.

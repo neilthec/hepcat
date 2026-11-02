@@ -7,37 +7,32 @@ Notebook[
         "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
      GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
    "AnchorBarGrid"], Cell["UnHatSpinors", "ObjectName"],
-  Cell["Removes SpinorHat markers while leaving shifted momenta unchanged.",
+  Cell[TextData[
+    {"Removes SpinorHat markers while leaving shifted momenta unchanged."}],
    "Notes"],
   Cell[TextData[{Cell[BoxData[RowBox[{"UnHatSpinors", "[", "expr", "]"}]],
       "InlineFormula"], "  ", "replaces each SpinorHat by Spinor."}],
-   "Usage"], Cell["Details", "NotesSection"], Cell["This is a symbolic head \
-replacement used by legacy shift calculations. It does not determine a shift \
-or remove MomHat and scalar-product markers.", "Notes"],
-  Cell["Use UnhatMomenta when the intended operation also removes its \
-supported shifted momentum heads. Neither operation proves equality between \
-different kinematics.", "Notes"], Cell["Examples", "PrimaryExamplesSection"],
-  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
-     Cell["Evaluate this setup once before the examples. The paths refer to \
-the local HEPCAT checkout; no model parameters are assigned global numerical \
-values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
-         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
-         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
-         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
-         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
-         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
-         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
-         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
-         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
-         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
-         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
-         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
-         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
-         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
-         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
-      "Input", InitializationCell -> True]}, Open]],
+   "Usage"], Cell["Details", "NotesSection"],
+  Cell[TextData[{"Use this to remove the shifted-spinor labels only. Shifted \
+momenta and their scalar products remain in their existing form, allowing a \
+derivation to treat those two parts separately."}], "Notes"],
+  Cell[TextData[{"This is a symbolic head replacement used by legacy shift \
+calculations. It does not determine a shift or remove ",
+     ButtonBox["MomHat", BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/MomHat"], " and scalar-product markers."}],
+   "Notes"], Cell[TextData[{"Use ", ButtonBox["UnhatMomenta",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/UnhatMomenta"], " \
+when the intended operation also removes its supported shifted momentum \
+heads. Neither operation proves equality between different kinematics."}],
+   "Notes"], Cell["Examples", "PrimaryExamplesSection"],
+  Cell[CellGroupData[{Cell["Load HEPCAT if needed", "ExampleSubsection"],
+     Cell["Skip this setup if HEPCAT is already loaded. These examples assume \
+the checkout is in ~/code/hepcat; change the paths if yours is elsewhere. \
+Evaluate loading in its own cell before the calculation.", "ExampleText"],
+     Cell[BoxData[RowBox[{"Get", "[", "\"~/code/hepcat/source/HEPCAT.wl\"",
+         "]", ";"}]], "Input", InitializationCell -> True]}, Closed]],
   Cell["Basic Examples", "ExampleSection"],
-  Cell["Unhat only the spinor endpoints.", "ExampleText"],
+  Cell[TextData[{"Unhat only the spinor endpoints."}], "ExampleText"],
   Cell[BoxData[RowBox[{"UnHatSpinors", "[", "SpinorChain", "[", "SpinorHat",
       "[", "\"Helicity\"", ",", " ", "\"Square\"", ",", " ", "1", "]", ",",
       " ", "MomHat", "[", "2", "]", ",", " ", "SpinorHat", "[",

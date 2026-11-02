@@ -7,38 +7,35 @@ Notebook[
         "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
      GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
    "AnchorBarGrid"], Cell["MakeIndicesImplicit", "ObjectName"],
-  Cell["Removes supported explicit upper massive spin indices from chains.",
-   "Notes"],
+  Cell[TextData[{"Removes the supported explicit upper massive-spin indices \
+from spinor chains."}], "Notes"],
   Cell[TextData[{Cell[BoxData[RowBox[{"MakeIndicesImplicit", "[", "expr",
          "]"}]], "InlineFormula"], "  ", "replaces explicit upper-index \
 massive Spinor occurrences with their implicit form."}], "Usage"],
-  Cell["Details", "NotesSection"], Cell["This legacy helper prints a warning: \
-it assumes that all indices to be removed are upper and uncontracted. It is \
-not a safe inverse of an arbitrary contraction or spin sum.", "Notes"],
-  Cell["Lower indices and already contracted structures require the correct \
-algebra rather than erasing their labels.", "Notes"],
-  Cell["Examples", "PrimaryExamplesSection"],
-  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
-     Cell["Evaluate this setup once before the examples. The paths refer to \
-the local HEPCAT checkout; no model parameters are assigned global numerical \
-values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
-         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
-         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
-         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
-         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
-         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
-         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
-         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
-         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
-         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
-         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
-         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
-         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
-         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
-         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
-      "Input", InitializationCell -> True]}, Open]],
+  Cell["Details", "NotesSection"],
+  Cell[TextData[{"This restores the compact external-state notation after an \
+explicit-index calculation. The supported upper-index ",
+     ButtonBox["Spinor", BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/Spinor"], " factors are replaced by the \
+corresponding massive spinors with their indices omitted."}], "Notes"],
+  Cell[TextData[{"Omitting an index does not perform a sum over it and does \
+not undo a physical spin projection. If the index was needed to distinguish \
+components, preserve the explicit expression before suppressing that \
+information."}], "Notes"], Cell[TextData[{"For the opposite operation, use ",
+     ButtonBox["MakeIndicesExplicit", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/MakeIndicesExplicit"],
+     ". To sew repeated indices by a spin-sum identity, use ",
+     ButtonBox["ReduceSpinContractions", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReduceSpinContractions"], "."}],
+   "Notes"], Cell["Examples", "PrimaryExamplesSection"],
+  Cell[CellGroupData[{Cell["Load HEPCAT if needed", "ExampleSubsection"],
+     Cell["Skip this setup if HEPCAT is already loaded. These examples assume \
+the checkout is in ~/code/hepcat; change the paths if yours is elsewhere. \
+Evaluate loading in its own cell before the calculation.", "ExampleText"],
+     Cell[BoxData[RowBox[{"Get", "[", "\"~/code/hepcat/source/HEPCAT.wl\"",
+         "]", ";"}]], "Input", InitializationCell -> True]}, Closed]],
   Cell["Basic Examples", "ExampleSection"],
-  Cell["Remove an uncontracted upper index.", "ExampleText"],
+  Cell[TextData[{"Remove an uncontracted upper index."}], "ExampleText"],
   Cell[BoxData[RowBox[{"MakeIndicesImplicit", "[", "SpinorChain", "[",
       "Spinor", "[", "\"Spin\"", ",", " ", "\"Upper\"", ",", " ",
       "\"Angle\"", ",", " ", "1", ",", " ", "j", "]", ",", " ", "Spinor",
@@ -68,8 +65,7 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
      "uri" -> "HEPCAT/ref/MakeIndicesImplicit",
      "title" -> "MakeIndicesImplicit", "type" -> "Symbol",
      "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" ->
-      "Removes supported explicit upper massive spin indices from chains.",
-     "keywords" -> {"HEPCAT", "MakeIndicesImplicit", "spinor amplitudes"},
-     "status" -> "None", "index" -> True}},
+     "summary" -> "Removes the supported explicit upper massive-spin indices \
+from spinor chains.", "keywords" -> {"HEPCAT", "MakeIndicesImplicit",
+       "spinor amplitudes"}, "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

@@ -7,44 +7,49 @@ Notebook[
         "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
      GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
    "AnchorBarGrid"], Cell["ColorIndex", "ObjectName"],
-  Cell["Labels an external color state.", "Notes"],
+  Cell[TextData[
+    {"Identifies the external leg associated with a symbolic color index."}],
+   "Notes"],
   Cell[TextData[{Cell[BoxData[RowBox[{"ColorIndex", "[", "leg", "]"}]],
       "InlineFormula"], "  ", "labels an external color state."}], "Usage"],
-  Cell["Details", "NotesSection"], Cell["External color labels survive \
-symbolic Feynman conversion. Internal color labels are local dummy indices.",
-   "Notes"], Cell["An unresolved external color tensor is not a numerical \
-color sum. The current complete SPINAS exporter refuses color-stripped \
-families when a full color sum is required.", "Notes"],
+  Cell["Details", "NotesSection"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"ColorIndex", "[", "leg", "]"}]],
+      "InlineFormula"], " labels an external color slot in a raw or converted \
+Feynman amplitude. It can appear in ", ButtonBox["ColorDelta",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/ColorDelta"],
+     ", ", ButtonBox["ColorGenerator", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ColorGenerator"], " and ",
+     ButtonBox["ColorStructure", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ColorStructure"], " tensors."}],
+   "Notes"], Cell[TextData[{"External color labels remain in the symbolic \
+expression. Internal color indices are local dummy labels whose repeated \
+occurrences describe contractions between vertices."}], "Notes"],
+  Cell[TextData[{ButtonBox["FeynmanToSpinorProducts", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/FeynmanToSpinorProducts"], " converts \
+the Lorentz and spinor part while retaining explicit color tensors. A \
+remaining color index does not imply that a numerical sum over external \
+colors has already been carried out."}], "Notes"],
+  Cell[TextData[{"The complete numerical ", ButtonBox["WriteSPINASProcess",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/WriteSPINASProcess"], " exporter currently accepts \
+colorless amplitudes. Resolve the required color treatment before attempting \
+a numerical export of a colored process."}], "Notes"],
   Cell["Examples", "PrimaryExamplesSection"],
-  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
-     Cell["Evaluate this setup once before the examples. The paths refer to \
-the local HEPCAT checkout; no model parameters are assigned global numerical \
-values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
-         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
-         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
-         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
-         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
-         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
-         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
-         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
-         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
-         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
-         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
-         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
-         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
-         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
-         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
-      "Input", InitializationCell -> True]}, Open]],
+  Cell[CellGroupData[{Cell["Load HEPCAT if needed", "ExampleSubsection"],
+     Cell["Skip this setup if HEPCAT is already loaded. These examples assume \
+the checkout is in ~/code/hepcat; change the paths if yours is elsewhere. \
+Evaluate loading in its own cell before the calculation.", "ExampleText"],
+     Cell[BoxData[RowBox[{"Get", "[", "\"~/code/hepcat/source/HEPCAT.wl\"",
+         "]", ";"}]], "Input", InitializationCell -> True]}, Closed]],
   Cell["Basic Examples", "ExampleSection"],
-  Cell["Construct the symbolic object.", "ExampleText"],
-  Cell[BoxData[RowBox[{"ColorDelta", "[", "ColorIndex", "[", "1", "]", ",",
-      " ", "ColorIndex", "[", "2", "]", "]"}]], "Input"],
+  Cell[TextData[
+    {"Attach the two external color labels to a color identity tensor."}],
+   "ExampleText"], Cell[BoxData[RowBox[{"ColorDelta", "[", "ColorIndex", "[",
+      "1", "]", ",", " ", "ColorIndex", "[", "2", "]", "]"}]], "Input"],
   Cell[BoxData[RowBox[{"ColorDelta", "[", "ColorIndex", "[", "1", "]", ",",
       " ", "ColorIndex", "[", "2", "]", "]"}]], "Output"],
   Cell["See Also", "SeeAlsoSection"],
-  Cell[TextData[{ButtonBox["ColorIndex", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/ColorIndex"], "  \[Bullet]  ",
-     ButtonBox["ColorDelta", BaseStyle -> "Link",
+  Cell[TextData[{ButtonBox["ColorDelta", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ColorDelta"], "  \[Bullet]  ",
      ButtonBox["ColorGenerator", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ColorGenerator"], "  \[Bullet]  ",
@@ -63,7 +68,8 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/ColorIndex", "title" -> "ColorIndex",
      "type" -> "Symbol", "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT",
-     "language" -> "en", "summary" -> "Labels an external color state.",
+     "language" -> "en", "summary" ->
+      "Identifies the external leg associated with a symbolic color index.",
      "keywords" -> {"HEPCAT", "ColorIndex", "spinor amplitudes"},
      "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

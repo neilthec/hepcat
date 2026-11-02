@@ -8,39 +8,46 @@ Notebook[
         "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
      GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
    "AnchorBarGrid"], Cell["SpinorExpressionComplexity", "ObjectName"],
-  Cell["Returns a scalar complexity score for a spinor expression.",
-   "Notes"],
+  Cell[TextData[{"Scores the size of a spinor expression, with extra weight \
+for momentum insertions and scalar momentum products."}], "Notes"],
   Cell[TextData[{Cell[BoxData[RowBox[{"SpinorExpressionComplexity", "[",
          "expr", "]"}]], "InlineFormula"], "  ", "counts terms, momentum \
 insertions and scalar momentum products with the package's simplification \
 weights."}], "Usage"], Cell["Details", "NotesSection"],
-  Cell["Composite momentum slots contribute their implicit branches: \
-Mom[Multiparticle[1,3]] is not treated as a single elementary insertion.",
-   "Notes"], Cell["Physical PropDen factors are opaque to this score. The \
-measure is a heuristic for selecting smaller algebraic representations, not \
-an invariant of the amplitude or a proof of minimality.", "Notes"],
+  Cell[TextData[{"Use this to compare intermediate forms produced by ",
+     ButtonBox["ReduceSpinorProducts", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReduceSpinorProducts"], ", ",
+     ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], ", or a manually \
+chosen identity route. A smaller value generally favors fewer terms and fewer \
+momentum insertions."}], "Notes"],
+  Cell[TextData[
+    {"The score accounts for branches hidden in composite momentum slots. ",
+     Cell[BoxData[RowBox[{"Mom", "[", "Multiparticle", "[", "1", ",", "3",
+         "]", "]"}]], "InlineFormula"], " inside a chain represents two \
+momentum contributions, so packing a sum into a single label does not make it \
+artificially inexpensive."}], "Notes"],
+  Cell[TextData[{"Physical ", ButtonBox["PropDen", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PropDen"], " factors are treated as \
+opaque. The score measures a practical algebraic representation, not \
+numerical stability, high-energy behavior, or whether the amplitude is \
+physically correct. Use ", ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"],
+     " for those separate tests."}], "Notes"],
+  Cell[TextData[{"Two equivalent expressions can have different scores, and \
+the lower-scoring intermediate form need not lie on the shortest route to the \
+final answer. Retain useful alternative routes when a temporary increase \
+exposes a later cancellation."}], "Notes"],
   Cell["Examples", "PrimaryExamplesSection"],
-  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
-     Cell["Evaluate this setup once before the examples. The paths refer to \
-the local HEPCAT checkout; no model parameters are assigned global numerical \
-values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
-         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
-         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
-         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
-         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
-         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
-         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
-         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
-         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
-         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
-         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
-         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
-         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
-         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
-         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
-      "Input", InitializationCell -> True]}, Open]],
+  Cell[CellGroupData[{Cell["Load HEPCAT if needed", "ExampleSubsection"],
+     Cell["Skip this setup if HEPCAT is already loaded. These examples assume \
+the checkout is in ~/code/hepcat; change the paths if yours is elsewhere. \
+Evaluate loading in its own cell before the calculation.", "ExampleText"],
+     Cell[BoxData[RowBox[{"Get", "[", "\"~/code/hepcat/source/HEPCAT.wl\"",
+         "]", ";"}]], "Input", InitializationCell -> True]}, Closed]],
   Cell["Basic Examples", "ExampleSection"],
-  Cell["Compare a bracket with a chain containing two momentum insertions.",
+  Cell[TextData[
+    {"Compare a bracket with a chain containing two momentum insertions."}],
    "ExampleText"], Cell[BoxData[RowBox[{"{", "SpinorExpressionComplexity",
       "[", "SpinorChain", "[", "Spinor", "[", "\"Helicity\"", ",", " ",
       "\"Angle\"", ",", " ", "1", "]", ",", " ", "Spinor", "[",
@@ -51,7 +58,7 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
       ",", " ", "Spinor", "[", "\"Helicity\"", ",", " ", "\"Angle\"", ",",
       " ", "2", "]", "]", "]", "}"}]], "Input"],
   Cell[BoxData[RowBox[{"{", "1", ",", " ", "9", "}"}]], "Output"],
-  Cell["Inspect a single expression's score.", "ExampleText"],
+  Cell[TextData[{"Inspect a single expression's score."}], "ExampleText"],
   Cell[BoxData[RowBox[{"SpinorExpressionComplexity", "[", "SpinorChain", "[",
       "Spinor", "[", "\"Helicity\"", ",", " ", "\"Angle\"", ",", " ", "1",
       "]", ",", " ", "Spinor", "[", "\"Helicity\"", ",", " ", "\"Angle\"",
@@ -77,8 +84,8 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
      "uri" -> "HEPCAT/ref/SpinorExpressionComplexity",
      "title" -> "SpinorExpressionComplexity", "type" -> "Symbol",
      "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT", "language" -> "en",
-     "summary" ->
-      "Returns a scalar complexity score for a spinor expression.",
+     "summary" -> "Scores the size of a spinor expression, with extra weight \
+for momentum insertions and scalar momentum products.",
      "keywords" -> {"HEPCAT", "SpinorExpressionComplexity",
        "spinor amplitudes"}, "status" -> "None", "index" -> True}},
  StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]

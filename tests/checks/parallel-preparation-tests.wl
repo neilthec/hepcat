@@ -75,7 +75,7 @@ If[ppProgress["Execution"]["Mode"] === "Parallel",
     Sort[Lookup[ppCompleted, "Item"]] === Range[4] &&
       Lookup[ppCompleted, "Completed"] === Range[4]]];
 ppFeynmanModel = ReadModel[FileNameJoin[{root, "model_feynman"}], 2];
-ppFeynmanPairs = diagramAmplitudes[CreateDiagrams[{"e", "E", "A.+", "A.-"}, ppFeynmanModel]];
+ppFeynmanPairs = DiagramAmplitudes[CreateDiagrams[{"e", "E", "A.+", "A.-"}, ppFeynmanModel]];
 ppFeynmanPrepare[opts___] := PrepareAmplitudes[ppFeynmanPairs, ppFeynmanModel, opts,
   "PolePreference" -> "AllSpurious", "MaxSteps" -> 0,
   "TimeConstraint" -> Infinity, "ProgressReporting" -> False, "ReturnDetails" -> True];

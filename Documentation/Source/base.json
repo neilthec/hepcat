@@ -1,7 +1,7 @@
 [
   {
     "name": "Spinor",
-    "summary": "Represents a massless helicity spinor, a massive spin spinor, or an auxiliary reference spinor.",
+    "summary": "Represents an angle or square spinor belonging to an external particle or an auxiliary reference.",
     "syntaxes": [
       {
         "input": "Spinor[\"Helicity\", type, i]",
@@ -21,20 +21,24 @@
       }
     ],
     "details": [
-      "Spinors form the endpoints of SpinorChain. HEPCAT displays complete chains in angle and square bracket notation automatically.",
-      "External particle labels and little-group indices have different roles. In the five-argument form, the fourth argument labels the particle and the fifth labels its spin index.",
-      "HEPCAT uses all external momenta incoming. Use ReverseMomentum to cross legs in complete amplitude expressions; changing a particle label is not crossing."
+      "A spinor is an endpoint of a [SpinorChain](paclet:HEPCAT/ref/SpinorChain). Use the string \"Angle\" for a ket written |i> and \"Square\" for a ket written |i]. When that spinor is the first endpoint of a chain, HEPCAT displays the corresponding bra automatically. You do not need a separate symbol for a bra.",
+      "The first argument tells HEPCAT what the spinor represents. \"Helicity\" denotes a massless particle. \"Spin\" denotes a massive particle with little-group spin indices. \"Xi\" denotes a reference spinor, such as one used to write a photon polarization.",
+      "The integer particle label refers to the particle's position in your ordered process. Thus, leg 3 is the third particle in that list; it is not a particle name, a helicity, or a spin index.",
+      "In Spinor[\"Spin\", \"Upper\", \"Angle\", 1, j], the label 1 identifies the external particle and j identifies its little-group component. [MakeIndicesExplicit](paclet:HEPCAT/ref/MakeIndicesExplicit) inserts such indices into an expression. [ChooseSpinIndex](paclet:HEPCAT/ref/ChooseSpinIndex) instead selects a physical spin projection.",
+      "An Xi label identifies a reference, not necessarily an external leg with that number. [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes) can choose and substitute reference spinors for a complete diagram or channel calculation."
     ],
     "examples": [
       {
         "description": "Form the angle bracket <12>.",
         "input": "SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]]",
-        "evaluate": true
+        "evaluate": true,
+        "section": "Massless brackets"
       },
       {
         "description": "Display a massive spinor with an explicit upper index.",
         "input": "SpinorChain[Spinor[\"Spin\", \"Upper\", \"Angle\", 1, j], Spinor[\"Helicity\", \"Angle\", 3]]",
-        "evaluate": true
+        "evaluate": true,
+        "section": "Massive spin indices"
       }
     ],
     "related": [
@@ -43,11 +47,19 @@
       "ChooseSpinIndex",
       "ReverseMomentum"
     ],
-    "guide": "SpinorAlgebra"
+    "guide": "SpinorAlgebra",
+    "detail_sections": [
+      {
+        "title": "Momentum and crossing conventions",
+        "paragraphs": [
+          "Analytic HEPCAT expressions use all external momenta incoming. To convert selected external momenta to the physical outgoing convention, apply [ReverseMomentum](paclet:HEPCAT/ref/ReverseMomentum) to the complete expression. Replacing particle labels alone does not supply the angle-spinor signs required by crossing."
+        ]
+      }
+    ]
   },
   {
     "name": "SpinorChain",
-    "summary": "Represents an angle or square spinor bracket, optionally with an ordered sequence of momentum insertions.",
+    "summary": "Represents a spinor bracket or an ordered spinor chain with momentum insertions.",
     "syntaxes": [
       {
         "input": "SpinorChain[left, right]",
@@ -59,26 +71,30 @@
       }
     ],
     "details": [
-      "Angle and square are represented by Spinor endpoints with type \"Angle\" or \"Square\". An even number of momentum insertions connects equal chiralities; an odd number connects opposite chiralities.",
-      "SpinorChain already has readable notebook formatting. Keep the expression itself for algebra, substitution and export.",
-      "ReduceSpinorProducts applies ordinary spinor identities. ReduceSpinContractions first sews explicit contracted spin indices. Neither a displayed bracket nor a reference spinor alone specifies a physical process."
+      "The first and last arguments are [Spinor](paclet:HEPCAT/ref/Spinor) objects. The intervening arguments, when present, are momentum insertions written with [Mom](paclet:HEPCAT/ref/Mom). For example, a square endpoint on leg 1, `Mom[2]`, and an angle endpoint on leg 3 represent [1|p2|3>.",
+      "The endpoint types and number of momentum insertions determine the chain's chirality. Keep the momentum arguments in their intended order: p2 p3 and p3 p2 are matrix products, and their difference is controlled by spinor identities rather than ordinary commutativity.",
+      "HEPCAT displays complete chains in angle and square bracket notation. The underlying typed expression is retained, so functions can distinguish an external particle label from a spin index or a momentum label.",
+      "Constructing a chain records the expression; it does not request every available simplification. Use [ReduceSpinorProducts](paclet:HEPCAT/ref/ReduceSpinorProducts) for algebraic reduction, or [SpinorIdentityCandidates](paclet:HEPCAT/ref/SpinorIdentityCandidates) and [ApplySpinorIdentity](paclet:HEPCAT/ref/ApplySpinorIdentity) when you want to choose and record individual identity steps."
     ],
     "examples": [
       {
-        "description": "Write a square bracket.",
+        "description": "Build the square bracket [12] from its two typed massless endpoints.",
         "input": "SpinorChain[Spinor[\"Helicity\", \"Square\", 1], Spinor[\"Helicity\", \"Square\", 2]]",
-        "evaluate": true
+        "evaluate": true,
+        "section": "Writing chains"
       },
       {
-        "description": "Write [1|p2|3>.",
+        "description": "Keep p2 as a matrix insertion between a square spinor on leg 1 and an angle spinor on leg 3, giving [1|p2|3>.",
         "input": "SpinorChain[Spinor[\"Helicity\", \"Square\", 1], Mom[2], Spinor[\"Helicity\", \"Angle\", 3]]",
-        "evaluate": true
+        "evaluate": true,
+        "section": "Writing chains"
       },
       {
         "description": "Reduce a repeated massless angle endpoint.",
         "input": "ReduceSpinorProducts[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 1]]]",
         "evaluate": true,
-        "expected": "0"
+        "expected": "0",
+        "section": "Reducing a chain"
       }
     ],
     "related": [
@@ -87,11 +103,20 @@
       "ReduceSpinContractions",
       "PlainText"
     ],
-    "guide": "SpinorAlgebra"
+    "guide": "SpinorAlgebra",
+    "detail_sections": [
+      {
+        "title": "Momentum sums inside a chain",
+        "paragraphs": [
+          "`Mom[Multiparticle[2, 3]]` records p2+p3 in one slot. It represents the same linear momentum insertion as `Mom[2]+Mom[3]`. The reducer can distribute such a slot when doing so is useful, while preserving the order of the remaining insertions.",
+          "A chain containing a composite momentum is not by itself an instruction to put that momentum on shell. Diagram-specific internal-shell information is supplied separately through [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes)."
+        ]
+      }
+    ]
   },
   {
     "name": "SpinorTrace",
-    "summary": "Represents the ordered chiral trace of momentum matrices.",
+    "summary": "Represents an ordered chiral trace of momentum matrices.",
     "syntaxes": [
       {
         "input": "SpinorTrace[Mom[i1], Mom[i2], ...]",
@@ -99,12 +124,13 @@
       }
     ],
     "details": [
-      "The order of momentum arguments matters. Trace reductions use HEPCAT's alternating two-component matrix conventions; this is not an ordinary Mathematica Tr of symbolic vectors.",
-      "ReduceSpinorProducts reduces supported traces and preserves chiral ordering. ExtractEnergy can turn supported chains and traces into explicit two-component matrix expressions."
+      "Each argument is a momentum insertion written with [Mom](paclet:HEPCAT/ref/Mom). `SpinorTrace[Mom[1], Mom[2]]` is the two-momentum chiral trace; HEPCAT's reduction convention gives `2 MomProd[1, 2]`. It is not the four-component Dirac trace with an extra factor of two.",
+      "Longer traces retain the order of their momentum matrices. Apply [ReduceSpinorProducts](paclet:HEPCAT/ref/ReduceSpinorProducts) to use the supported trace and Clifford identities, or [ExtractEnergy](paclet:HEPCAT/ref/ExtractEnergy) to evaluate supported traces in explicit components.",
+      "Trace manipulations follow the same external on-shell convention as spinor chains. An internal propagator is not put on shell merely because its momentum appears in a trace."
     ],
     "examples": [
       {
-        "description": "Reduce a two-momentum trace.",
+        "description": "Reduce a two-momentum chiral trace to a scalar momentum product.",
         "input": "ReduceSpinorProducts[SpinorTrace[Mom[1], Mom[2]]]",
         "evaluate": true
       },
@@ -123,20 +149,22 @@
   },
   {
     "name": "Mom",
-    "summary": "Represents a momentum insertion in HEPCAT spinor algebra.",
+    "summary": "Represents a momentum in a spinor chain or a propagator.",
     "syntaxes": [
       {
         "input": "Mom[i]",
-        "description": "constructs the corresponding symbolic object."
+        "description": "denotes the four-momentum of particle i."
       }
     ],
     "details": [
-      "Mom[Multiparticle[i,j,...]] is the sum of the listed particle momenta. A composite label does not make that sum an on-shell external momentum.",
-      "Use Mom inside SpinorChain or PropDen. Use MomProd for a Lorentz scalar product."
+      "Mom[i] denotes the momentum of particle i in the ordered external-particle list. Place it between the endpoints of a [SpinorChain](paclet:HEPCAT/ref/SpinorChain) to represent a momentum matrix, or inside [PropDen](paclet:HEPCAT/ref/PropDen) to identify the momentum carried by a propagator.",
+      "Mom[Multiparticle[1, 3]] denotes p1+p3. The [Multiparticle](paclet:HEPCAT/ref/Multiparticle) head preserves the list of constituent legs so diagram, channel, and crossing functions can interpret the sum correctly.",
+      "To write a Lorentz scalar product, use `MomProd[i, j]`, with particle labels as arguments. See [MomProd](paclet:HEPCAT/ref/MomProd) for scalar products. `Mom[i] Mom[j]` is ordinary multiplication of symbolic expressions and does not mean the scalar product.",
+      "An external label carries the usual external mass identity. A sum of momenta is generally off shell; diagram-local assumptions must be supplied by the diagram's mass rules when using [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes)."
     ],
     "examples": [
       {
-        "description": "Inspect a symbolic example.",
+        "description": "Insert p2 between a square spinor on leg 1 and an angle spinor on leg 3. This represents [1|p2|3>, without evaluating a numerical momentum.",
         "input": "SpinorChain[Spinor[\"Helicity\", \"Square\", 1], Mom[2], Spinor[\"Helicity\", \"Angle\", 3]]",
         "evaluate": true
       }
@@ -150,20 +178,22 @@
   },
   {
     "name": "Mass",
-    "summary": "Represents the symbolic mass assigned to a particle or a channel.",
+    "summary": "Represents an external-particle mass or the assigned mass of an internal channel.",
     "syntaxes": [
       {
         "input": "Mass[i]",
-        "description": "constructs the corresponding symbolic object."
+        "description": "denotes the on-shell mass assigned to external particle i."
       }
     ],
     "details": [
-      "Mass[Multiparticle[i,j,...]] labels a channel mass. Diagram mass replacement rules supply its value. The symbol by itself does not impose that channel's on-shell condition.",
-      "Models provide mass parameters, which are separate from these kinematic placeholders. Preparation applies the appropriate replacement rules."
+      "Mass[i] is the kinematic mass placeholder for external leg i. It is distinct from a model parameter such as the electron mass: the model's replacement list connects the placeholder to the appropriate parameter.",
+      "Mass[Multiparticle[1, 3]] labels the mass assigned to the channel carrying p1+p3. A diagram may therefore contain both external mass replacements and a replacement for this channel mass.",
+      "The replacement Mass[Multiparticle[1, 3]] -> m does not, on its own, assert that every occurrence of p1+p3 has invariant mass m. [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes) uses the declared channel information only within the permitted numerator scope. It keeps the actual [PropDen](paclet:HEPCAT/ref/PropDen) off shell.",
+      "Use [ParticleMass](paclet:HEPCAT/ref/ParticleMass) to ask a model for a particle's mass, and [ModelParameterRules](paclet:HEPCAT/ref/ModelParameterRules) when you need the model's numerical parameter values."
     ],
     "examples": [
       {
-        "description": "Inspect a symbolic example.",
+        "description": "Compare the external mass label for particle 1 with the channel-mass label for p1+p3. They are separate placeholders even when a particular model assigns them the same parameter.",
         "input": "{Mass[1], Mass[Multiparticle[1, 3]]}",
         "evaluate": true
       }
@@ -177,28 +207,28 @@
   },
   {
     "name": "Multiparticle",
-    "summary": "Labels a sum of external particle momenta.",
+    "summary": "Labels the sum of a specified set of external momenta.",
     "syntaxes": [
       {
         "input": "Multiparticle[i1, i2, ...]",
-        "description": "constructs the corresponding symbolic object."
+        "description": "identifies the sum p_i1+p_i2+... as a typed channel label."
       }
     ],
     "details": [
-      "Mom[Multiparticle[i,j]] denotes p_i+p_j. Mass[Multiparticle[i,j]] labels the corresponding channel mass.",
-      "Keep Multiparticle as a typed label, rather than replacing every occurrence with Plus: propagators and mass replacement lists rely on this structure."
+      "Multiparticle[1, 3] is a channel label. Inside [Mom](paclet:HEPCAT/ref/Mom) it means p1+p3; inside [Mass](paclet:HEPCAT/ref/Mass) it identifies the mass assigned to that channel. The labels always refer to positions in the external-particle list.",
+      "This typed label lets [CreateDiagrams](paclet:HEPCAT/ref/CreateDiagrams), [FactorizationAmplitudeChannels](paclet:HEPCAT/ref/FactorizationAmplitudeChannels), and the amplitude checker recognize a channel without guessing which ordinary integer sums denote momenta.",
+      "Keep the typed label in stored amplitudes and mass rules. For algebra inside a chain, [ReduceSpinorProducts](paclet:HEPCAT/ref/ReduceSpinorProducts) can distribute a composite momentum into its individual insertions when useful. A composite label does not impose an internal on-shell condition."
     ],
     "examples": [
       {
-        "description": "Inspect a symbolic example.",
+        "description": "Record the channel momentum p1+p3 as one typed momentum sum.",
         "input": "Mom[Multiparticle[1, 3]]",
         "evaluate": true
       }
     ],
     "related": [
       "Mom",
-      "Mass",
-      "MultiparticleDiff"
+      "Mass"
     ],
     "guide": "SpinorAlgebra"
   },
@@ -226,7 +256,8 @@
       "Multiparticle",
       "Mom"
     ],
-    "guide": "SpinorAlgebra"
+    "guide": "SpinorAlgebra",
+    "visibility": "internal"
   },
   {
     "name": "Particle",
@@ -252,7 +283,8 @@
       "CreateDiagrams",
       "Spinor"
     ],
-    "guide": "SpinorAlgebra"
+    "guide": "SpinorAlgebra",
+    "visibility": "internal"
   },
   {
     "name": "MomHat",
@@ -260,16 +292,17 @@
     "syntaxes": [
       {
         "input": "MomHat[i]",
-        "description": "constructs the corresponding symbolic object."
+        "description": "MomHat[i] is the marked momentum used while deriving a supported complex deformation."
       }
     ],
     "details": [
-      "This is the shifted counterpart of Mom used by the legacy complex-deformation utilities. Merely adding a hat does not choose or solve a shift.",
-      "UnhatMomenta removes the marker; ExpandComplexMomenta applies supported special-case shift formulas."
+      "MomHat[i] is the marked momentum used while deriving a supported complex deformation. It records that a momentum is shifted; it does not specify the deformation parameter or solve its on-shell constraints.",
+      "This is the shifted counterpart of [Mom](paclet:HEPCAT/ref/Mom) used by the legacy complex-deformation utilities. Merely adding a hat does not choose or solve a shift.",
+      "[UnhatMomenta](paclet:HEPCAT/ref/UnhatMomenta) removes the marker; [ExpandComplexMomenta](paclet:HEPCAT/ref/ExpandComplexMomenta) applies supported special-case shift formulas."
     ],
     "examples": [
       {
-        "description": "Inspect a symbolic example.",
+        "description": "Mark an ordinary momentum for a complex deformation; this does not yet specify or evaluate its shift.",
         "input": "ComplexifyMomenta[Mom[1]]",
         "evaluate": true
       }
@@ -304,7 +337,8 @@
       "Mom",
       "MomHat"
     ],
-    "guide": "SpinorAlgebra"
+    "guide": "SpinorAlgebra",
+    "visibility": "internal"
   },
   {
     "name": "En",
@@ -312,15 +346,17 @@
     "syntaxes": [
       {
         "input": "En[i]",
-        "description": "constructs the corresponding symbolic object."
+        "description": "denotes the energy of external particle i."
       }
     ],
     "details": [
-      "ExtractEnergy returns expressions in En[i], MomMagnitude[i], Theta[i] and Phi[i]. Supply consistent numerical on-shell kinematics before numerical evaluation."
+      "En[i] denotes the energy of external leg i in the explicit component basis used by [ExtractEnergy](paclet:HEPCAT/ref/ExtractEnergy).",
+      "The spatial momentum convention is p {Sin[theta] Cos[phi], Sin[theta] Sin[phi], Cos[theta]}. These labels keep the particle number visible until you substitute a numerical or symbolic configuration.",
+      "For example, replace En[1] -> Sqrt[p^2+m^2] when evaluating a chosen configuration. Supply consistent energy, momentum magnitude, external mass and angles; assigning one coordinate does not generate or enforce momentum conservation."
     ],
     "examples": [
       {
-        "description": "Inspect a symbolic example.",
+        "description": "Express p1 dot p2 in the energy-angle basis. The two En labels retain the external energy values until you substitute a configuration.",
         "input": "ExtractEnergy[MomProd[1, 2], {{1}, {2}}]",
         "evaluate": true
       }
@@ -339,15 +375,17 @@
     "syntaxes": [
       {
         "input": "MomMagnitude[i]",
-        "description": "constructs the corresponding symbolic object."
+        "description": "denotes the magnitude of the three-momentum of external particle i."
       }
     ],
     "details": [
-      "This is the nonnegative spatial momentum magnitude used by explicit spinor evaluation. For a real on-shell massive leg, it obeys p_i^2=En[i]^2-Mass[i]^2."
+      "MomMagnitude[i] denotes the magnitude of the three-momentum of external leg i in the explicit component basis used by [ExtractEnergy](paclet:HEPCAT/ref/ExtractEnergy).",
+      "The spatial momentum convention is p {Sin[theta] Cos[phi], Sin[theta] Sin[phi], Cos[theta]}. These labels keep the particle number visible until you substitute a numerical or symbolic configuration.",
+      "For example, replace MomMagnitude[1] -> p when evaluating a chosen configuration. Supply consistent energy, momentum magnitude, external mass and angles; assigning one coordinate does not generate or enforce momentum conservation."
     ],
     "examples": [
       {
-        "description": "Inspect a symbolic example.",
+        "description": "Inspect the coordinate label for the magnitude of particle 1's three-momentum before substituting a configuration.",
         "input": "InputForm[MomMagnitude[1]]",
         "evaluate": true
       }
@@ -366,15 +404,17 @@
     "syntaxes": [
       {
         "input": "Theta[i]",
-        "description": "constructs the corresponding symbolic object."
+        "description": "denotes the polar angle measured from the positive z axis of external particle i."
       }
     ],
     "details": [
-      "ExtractEnergy uses the spherical momentum convention (E,p sin(theta) cos(phi),p sin(theta) sin(phi),p cos(theta))."
+      "Theta[i] denotes the polar angle measured from the positive z axis of external leg i in the explicit component basis used by [ExtractEnergy](paclet:HEPCAT/ref/ExtractEnergy).",
+      "The spatial momentum convention is p {Sin[theta] Cos[phi], Sin[theta] Sin[phi], Cos[theta]}. These labels keep the particle number visible until you substitute a numerical or symbolic configuration.",
+      "For example, replace Theta[1] -> Pi/3 when evaluating a chosen configuration. Supply consistent energy, momentum magnitude, external mass and angles; assigning one coordinate does not generate or enforce momentum conservation."
     ],
     "examples": [
       {
-        "description": "Inspect a symbolic example.",
+        "description": "Inspect the polar-angle label for particle 1. Numerical substitutions use radians.",
         "input": "InputForm[Theta[1]]",
         "evaluate": true
       }
@@ -392,15 +432,17 @@
     "syntaxes": [
       {
         "input": "Phi[i]",
-        "description": "constructs the corresponding symbolic object."
+        "description": "denotes the azimuthal angle in the x-y plane of external particle i."
       }
     ],
     "details": [
-      "The angle appears in the complex phases of two-component spinors and in the spatial momentum components used by ExtractEnergy."
+      "Phi[i] denotes the azimuthal angle in the x-y plane of external leg i in the explicit component basis used by [ExtractEnergy](paclet:HEPCAT/ref/ExtractEnergy).",
+      "The spatial momentum convention is p {Sin[theta] Cos[phi], Sin[theta] Sin[phi], Cos[theta]}. These labels keep the particle number visible until you substitute a numerical or symbolic configuration.",
+      "For example, replace Phi[1] -> Pi/4 when evaluating a chosen configuration. Supply consistent energy, momentum magnitude, external mass and angles; assigning one coordinate does not generate or enforce momentum conservation."
     ],
     "examples": [
       {
-        "description": "Inspect a symbolic example.",
+        "description": "Inspect the azimuthal-angle label for particle 1. Numerical substitutions use radians.",
         "input": "InputForm[Phi[1]]",
         "evaluate": true
       }
@@ -435,7 +477,8 @@
       "ModelParameter",
       "ConstructiveAmplitude"
     ],
-    "guide": "SpinorAlgebra"
+    "guide": "SpinorAlgebra",
+    "visibility": "internal"
   },
   {
     "name": "rr",
@@ -460,7 +503,8 @@
       "nice",
       "SpinorZ"
     ],
-    "guide": "SpinorAlgebra"
+    "guide": "SpinorAlgebra",
+    "visibility": "internal"
   },
   {
     "name": "sigma",
@@ -485,7 +529,8 @@
       "ExtractEnergy1",
       "SpinorTrace"
     ],
-    "guide": "SpinorAlgebra"
+    "guide": "SpinorAlgebra",
+    "visibility": "internal"
   },
   {
     "name": "delta",
@@ -510,24 +555,26 @@
       "sigma",
       "nice"
     ],
-    "guide": "SpinorAlgebra"
+    "guide": "SpinorAlgebra",
+    "visibility": "internal"
   },
   {
     "name": "SpinorEps",
-    "summary": "Represents an explicit little-group epsilon tensor.",
+    "summary": "Represents the antisymmetric tensor used to raise and lower massive little-group indices.",
     "syntaxes": [
       {
         "input": "SpinorEps[variance, i, j]",
-        "description": "constructs the corresponding symbolic object."
+        "description": "represents the antisymmetric little-group tensor with the given index variance."
       }
     ],
     "details": [
-      "The variance is \"Upper\" or \"Lower\". ReduceSpinContractions implements supported raising and lowering contractions with explicit massive spinor indices.",
-      "Do not confuse these little-group indices with external particle labels."
+      "The variance argument is \"Upper\" or \"Lower\". The other two arguments are little-group index labels, not external-particle labels. These tensors arise when explicit massive spinor indices are contracted.",
+      "For ordinary amplitude calculations, start with implicit massive spinors and use [MakeIndicesExplicit](paclet:HEPCAT/ref/MakeIndicesExplicit) or [ChooseSpinIndex](paclet:HEPCAT/ref/ChooseSpinIndex) as needed. Apply [ReduceSpinContractions](paclet:HEPCAT/ref/ReduceSpinContractions) to sew the supported repeated indices rather than replacing their signs by hand.",
+      "Little-group index contraction and permutation of identical external particles are different operations. Symmetrizing the indices of one massive particle is handled by [SymmetrizeSpin](paclet:HEPCAT/ref/SymmetrizeSpin)."
     ],
     "examples": [
       {
-        "description": "Inspect a symbolic example.",
+        "description": "Write a lower little-group epsilon tensor with the two symbolic spin indices i and j.",
         "input": "InputForm[SpinorEps[\"Lower\", i, j]]",
         "evaluate": true
       }
@@ -563,24 +610,26 @@
       "ReplaceSpinorZ",
       "ComplexifyMomenta"
     ],
-    "guide": "SpinorAlgebra"
+    "guide": "SpinorAlgebra",
+    "visibility": "internal"
   },
   {
     "name": "Mandelstahm",
-    "summary": "Represents the scalar invariant (p_i+p_j)^2.",
+    "summary": "Represents the two-particle invariant (p_i+p_j)^2.",
     "syntaxes": [
       {
         "input": "Mandelstahm[i, j]",
-        "description": "constructs the corresponding symbolic object."
+        "description": "denotes the invariant (p_i+p_j)^2."
       }
     ],
     "details": [
-      "The package uses the spelling Mandelstahm in this symbol name. The displayed notation is s_ij.",
-      "ExtractMandelstahm converts scalar products to these invariants. Its default four-point mode also identifies complementary pairs; specify the true multiplicity for higher-point expressions."
+      "Mandelstahm[i, j] is HEPCAT's historical spelling of a Mandelstam invariant. It denotes the invariant itself, not the massive propagator denominator: the latter is Mandelstahm[i, j]-m^2.",
+      "Use [ExtractMandelstahm](paclet:HEPCAT/ref/ExtractMandelstahm) to convert supported [MomProd](paclet:HEPCAT/ref/MomProd) and [PropDen](paclet:HEPCAT/ref/PropDen) expressions to this notation. Supply the multiplicity when working beyond four particles, since complementary two-particle invariants coincide only in the four-point case.",
+      "External momenta are all incoming. Crossing a leg therefore changes the momentum combination represented by an invariant; apply [ReverseMomentum](paclet:HEPCAT/ref/ReverseMomentum) to the typed amplitude before interpreting its physical scattering channels."
     ],
     "examples": [
       {
-        "description": "Inspect a symbolic example.",
+        "description": "Write the invariant carried by the pair of incoming momenta p1 and p2.",
         "input": "ExtractMandelstahm[2 MomProd[1, 3], 5]",
         "evaluate": true
       }
@@ -598,15 +647,16 @@
     "syntaxes": [
       {
         "input": "MandelstahmHat[i, j]",
-        "description": "constructs the corresponding symbolic object."
+        "description": "This is the invariant built from the correspondingly deformed momenta."
       }
     ],
     "details": [
-      "ExtractMandelstahm converts MomProdHat12 and supported hatted propagators to this form. The hat is a deformation marker, not a numerical value."
+      "This is the invariant built from the correspondingly deformed momenta. It is a marker used during a complex-shift calculation, rather than a numerical function of a deformation parameter.",
+      "[ExtractMandelstahm](paclet:HEPCAT/ref/ExtractMandelstahm) converts [MomProdHat12](paclet:HEPCAT/ref/MomProdHat12) and supported hatted propagators to this form. The hat is a deformation marker, not a numerical value."
     ],
     "examples": [
       {
-        "description": "Inspect a symbolic example.",
+        "description": "Keep the invariant of the shifted pair (1,3) symbolic during a complex-deformation derivation.",
         "input": "InputForm[MandelstahmHat[1, 3]]",
         "evaluate": true
       }
@@ -640,7 +690,8 @@
       "zMinus",
       "ComplexifyMomenta"
     ],
-    "guide": "SpinorAlgebra"
+    "guide": "SpinorAlgebra",
+    "visibility": "internal"
   },
   {
     "name": "zMinus",
@@ -665,11 +716,12 @@
       "zPlus",
       "ComplexifyMomenta"
     ],
-    "guide": "SpinorAlgebra"
+    "guide": "SpinorAlgebra",
+    "visibility": "internal"
   },
   {
     "name": "ConstructiveAmplitude",
-    "summary": "Stores a legacy amplitude as a coupling, numerator and denominator.",
+    "summary": "Stores an earlier amplitude representation as coupling, numerator and denominator.",
     "syntaxes": [
       {
         "input": "ConstructiveAmplitude[coupling, numerator, denominator]",
@@ -677,8 +729,9 @@
       }
     ],
     "details": [
-      "Notebook formatting displays the quotient, while the underlying expression retains its three fields. Use InputForm or List@@expression to inspect them.",
-      "Some older index and squaring helpers preserve this wrapper. Current construction and completion workflows normally use {massRules,expression} records."
+      "ConstructiveAmplitude[coupling,numerator,denominator] represents coupling numerator/denominator. It appears in earlier model and symbolic-manipulation workflows.",
+      "The current preparation and completion workflow normally uses a pair {massRules,expression} or the ordinary expression itself, rather than requiring this wrapper. Follow the input format shown on [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes) for a new calculation.",
+      "When inspecting an older expression, keep its coupling and denominator while manipulating the numerator. A wrapper's presence does not establish a diagram-specific on-shell assumption or validate the amplitude."
     ],
     "examples": [
       {
@@ -697,13 +750,13 @@
     "related": [
       "SquareAmplitude",
       "PrepareAmplitudes",
-      "diagramAmplitudes"
+      "DiagramAmplitudes"
     ],
     "guide": "SpinorAlgebra"
   },
   {
     "name": "PropDen",
-    "summary": "Represents an off-shell physical propagator denominator.",
+    "summary": "Represents a physical propagator denominator without putting its momentum on shell.",
     "syntaxes": [
       {
         "input": "PropDen[Mom[channel], m]",
@@ -715,8 +768,10 @@
       }
     ],
     "details": [
-      "PropDen is kept opaque by the modern spinor reducer and identity tools. Diagram-local internal on-shell identities act on numerators and must not set the denominator of the current diagram to zero.",
-      "A denominator records the actual momentum and propagating mass. It is not merely a shorthand for a channel's on-shell condition."
+      "PropDen[Mom[Multiparticle[1, 3]], m] represents (p1+p3)^2-m^2. In an amplitude, divide by this object. The momentum and mass remain explicit, allowing [PhysicalPoleResidue](paclet:HEPCAT/ref/PhysicalPoleResidue) and [CheckAmplitudes](paclet:HEPCAT/ref/CheckAmplitudes) to identify the corresponding physical pole.",
+      "The three-argument form adds the width term +I m width. Keep this sign convention when comparing with external numerical code. A package or library using another width convention needs an explicit conversion rather than an unannounced sign change.",
+      "Modern reduction and identity functions treat the arguments of PropDen as protected. Diagram-local internal on-shell identities can simplify a numerator, but must never replace the diagram's own denominator by zero.",
+      "[ExtractMandelstahm](paclet:HEPCAT/ref/ExtractMandelstahm) can rewrite supported two-particle denominators in invariant notation. This is an algebraic change of representation, not a residue evaluation or an internal-shell assumption."
     ],
     "examples": [
       {
@@ -742,7 +797,7 @@
   },
   {
     "name": "MomProd",
-    "summary": "Represents a Lorentz scalar product of particle or composite momenta.",
+    "summary": "Represents the Lorentz scalar product of two external or composite momenta.",
     "syntaxes": [
       {
         "input": "MomProd[i, j]",
@@ -754,9 +809,10 @@
       }
     ],
     "details": [
-      "The arguments are particle labels, rather than Mom wrappers. The scalar product is symmetric and bilinear for supported signed and composite labels.",
-      "MomProd[i,i] evaluates to Mass[i]^2. This is the external mass identity for a single label. No diagram-specific internal channel condition is inferred from MomProd[i,j].",
-      "For the diagram with (p_i+p_j)^2=m_channel^2, PrepareAmplitudes can separately apply 2 p_i.p_j=m_channel^2-m_i^2-m_j^2 in its numerator."
+      "MomProd[i, j] means p_i dot p_j. Its arguments are particle or channel labels, without [Mom](paclet:HEPCAT/ref/Mom) wrappers. For example, MomProd[Multiparticle[1, 2], 3] denotes (p1+p2) dot p3.",
+      "Supported signed and composite arguments are handled bilinearly, and the scalar product is symmetric. For a single external leg, MomProd[i, i] becomes `Mass[i]^2` using its external on-shell identity.",
+      "MomProd[1, 3] does not automatically know which internal channel belongs to a particular diagram. If that diagram declares (p1+p3)^2=m_channel^2, [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes) can use `2 MomProd[1,3]=m_channel^2-Mass[1]^2-Mass[3]^2` in the diagram's numerator.",
+      "[ExtractMandelstahm](paclet:HEPCAT/ref/ExtractMandelstahm) expresses supported scalar products in terms of s invariants. Keeping MomProd in a numerator is also valid and can make later spinor reductions easier."
     ],
     "examples": [
       {
@@ -785,11 +841,12 @@
     "syntaxes": [
       {
         "input": "MomProdHat1[i, j]",
-        "description": "represents a scalar product with the first momentum shifted and the second unshifted."
+        "description": "MomProdHat1[i,j] marks p_i dot p_j when only the first momentum is deformed."
       }
     ],
     "details": [
-      "These markers are used by ComplexifyMomenta and ExpandComplexMomenta. They distinguish which scalar-product factors belong to a deformation.",
+      "MomProdHat1[i,j] marks p_i dot p_j when only the first momentum is deformed. It keeps that case distinct from a product with both momenta shifted.",
+      "These markers are used by [ComplexifyMomenta](paclet:HEPCAT/ref/ComplexifyMomenta) and [ExpandComplexMomenta](paclet:HEPCAT/ref/ExpandComplexMomenta). They distinguish which scalar-product factors belong to a deformation.",
       "The marker is not a prescription for an arbitrary shift. Use the supported deformation utilities with consistent masses and shift legs."
     ],
     "examples": [
@@ -812,11 +869,12 @@
     "syntaxes": [
       {
         "input": "MomProdHat2[i, j]",
-        "description": "represents a scalar product with the first momentum unshifted and the second shifted."
+        "description": "MomProdHat2[i,j] marks p_i dot p_j when only the second momentum is deformed."
       }
     ],
     "details": [
-      "These markers are used by ComplexifyMomenta and ExpandComplexMomenta. They distinguish which scalar-product factors belong to a deformation.",
+      "MomProdHat2[i,j] marks p_i dot p_j when only the second momentum is deformed. This distinction is needed when expanding a supported complex shift.",
+      "These markers are used by [ComplexifyMomenta](paclet:HEPCAT/ref/ComplexifyMomenta) and [ExpandComplexMomenta](paclet:HEPCAT/ref/ExpandComplexMomenta). They distinguish which scalar-product factors belong to a deformation.",
       "The marker is not a prescription for an arbitrary shift. Use the supported deformation utilities with consistent masses and shift legs."
     ],
     "examples": [
@@ -839,11 +897,12 @@
     "syntaxes": [
       {
         "input": "MomProdHat12[i, j]",
-        "description": "represents a scalar product with both momenta shifted."
+        "description": "MomProdHat12[i,j] marks a scalar product in which both momenta belong to the deformation."
       }
     ],
     "details": [
-      "These markers are used by ComplexifyMomenta and ExpandComplexMomenta. They distinguish which scalar-product factors belong to a deformation.",
+      "MomProdHat12[i,j] marks a scalar product in which both momenta belong to the deformation. It is not an instruction to replace that scalar product by zero.",
+      "These markers are used by [ComplexifyMomenta](paclet:HEPCAT/ref/ComplexifyMomenta) and [ExpandComplexMomenta](paclet:HEPCAT/ref/ExpandComplexMomenta). They distinguish which scalar-product factors belong to a deformation.",
       "The marker is not a prescription for an arbitrary shift. Use the supported deformation utilities with consistent masses and shift legs."
     ],
     "examples": [
@@ -874,8 +933,9 @@
       }
     ],
     "details": [
-      "The argument conventions mirror Spinor. Supported hatted identities and complex-shift substitutions preserve chirality and explicit index placement.",
-      "A hat alone does not specify the shift parameter or an on-shell solution. UnhatMomenta removes the marker without proving that a shifted expression equals the original."
+      "SpinorHat has the endpoint forms of [Spinor](paclet:HEPCAT/ref/Spinor), with an additional meaning that the external state belongs to a complex deformation. Construct a consistent shifted expression before expanding its particular deformation formulas.",
+      "The argument conventions mirror [Spinor](paclet:HEPCAT/ref/Spinor). Supported hatted identities and complex-shift substitutions preserve chirality and explicit index placement.",
+      "A hat alone does not specify the shift parameter or an on-shell solution. [UnhatMomenta](paclet:HEPCAT/ref/UnhatMomenta) removes the marker without proving that a shifted expression equals the original."
     ],
     "examples": [
       {
@@ -915,7 +975,8 @@
       "ReduceSpinorProducts",
       "SpinorChain"
     ],
-    "guide": "SpinorAlgebra"
+    "guide": "SpinorAlgebra",
+    "visibility": "internal"
   },
   {
     "name": "SpinorTraceReduced",
@@ -941,7 +1002,8 @@
       "ReduceSpinorProducts",
       "SpinorTrace"
     ],
-    "guide": "SpinorAlgebra"
+    "guide": "SpinorAlgebra",
+    "visibility": "internal"
   },
   {
     "name": "xFactor",
@@ -949,12 +1011,13 @@
     "syntaxes": [
       {
         "input": "xFactor[massiveLegOrComposite, masslessLegOrComposite]",
-        "description": "records the ordered x-factor labels."
+        "description": "records the ordered massive-pair and massless-vector labels of the three-point building block."
       }
     ],
     "details": [
-      "x-factors carry reference-spinor information until expanded or reduced. Modern diagramAmplitudes expands supported external x-factors before returning amplitudes.",
-      "For existing expressions, ExpandXFactors requires the diagram and model information. The older ReducexFactors utility uses four-point channel assumptions explicitly."
+      "xFactor records the angle-reference three-point building block used when a massless vector couples to a massive pair. Its ordered arguments identify the associated massive and massless momentum labels.",
+      "These objects can appear when reading constructive vertices or working through older intermediate expressions. Current diagram preparation normally replaces their reference-dependent representation as part of its amplitude workflow.",
+      "Use [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes) for a process-aware calculation. The older [ReducexFactors](paclet:HEPCAT/ref/ReducexFactors) function supports particular four-point channel formulas and needs that channel's information explicitly; it is not a general identity for every higher-point expression."
     ],
     "examples": [
       {
@@ -964,10 +1027,9 @@
       }
     ],
     "related": [
-      "ExpandXFactors",
       "xTildeFactor",
       "ReducexFactors",
-      "diagramAmplitudes"
+      "DiagramAmplitudes"
     ],
     "guide": "SpinorAlgebra"
   },
@@ -977,12 +1039,13 @@
     "syntaxes": [
       {
         "input": "xTildeFactor[massiveLegOrComposite, masslessLegOrComposite]",
-        "description": "records the ordered x-factor labels."
+        "description": "records the ordered massive-pair and massless-vector labels of the three-point building block."
       }
     ],
     "details": [
-      "x-factors carry reference-spinor information until expanded or reduced. Modern diagramAmplitudes expands supported external x-factors before returning amplitudes.",
-      "For existing expressions, ExpandXFactors requires the diagram and model information. The older ReducexFactors utility uses four-point channel assumptions explicitly."
+      "xTildeFactor records the square-reference three-point building block used when a massless vector couples to a massive pair. Its ordered arguments identify the associated massive and massless momentum labels.",
+      "These objects can appear when reading constructive vertices or working through older intermediate expressions. Current diagram preparation normally replaces their reference-dependent representation as part of its amplitude workflow.",
+      "Use [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes) for a process-aware calculation. The older [ReducexFactors](paclet:HEPCAT/ref/ReducexFactors) function supports particular four-point channel formulas and needs that channel's information explicitly; it is not a general identity for every higher-point expression."
     ],
     "examples": [
       {
@@ -992,36 +1055,36 @@
       }
     ],
     "related": [
-      "ExpandXFactors",
       "xFactor",
       "ReducexFactors",
-      "diagramAmplitudes"
+      "DiagramAmplitudes"
     ],
     "guide": "SpinorAlgebra"
   },
   {
-    "name": "applyToNumerator",
-    "summary": "Applies rules or a function to the numerator of each additive term in its existing form.",
+    "name": "ApplyToNumerator",
+    "summary": "Applies replacement rules to each existing additive term's numerator while preserving its denominator.",
     "syntaxes": [
       {
-        "input": "applyToNumerator[expr, rules]",
+        "input": "ApplyToNumerator[expr, rules]",
         "description": "applies one replacement rule or a list of rules to each term's numerator."
       }
     ],
     "details": [
-      "The function does not first combine denominators with Together and does not expand the expression. Each term of the sum as supplied is handled independently.",
-      "The denominator of each existing term is preserved. This makes it useful when applying diagram-local numerator identities while keeping physical propagators off shell.",
-      "Ordinary Mathematica evaluation of the input still occurs before the function receives it. It cannot undo simplifications already made by the evaluator."
+      "Use this when an identity is allowed in a diagram numerator but must not act on its propagator. The function visits the additive terms already present in the expression and applies your replacement rule or rule list to each numerator.",
+      "It does not call Together or Expand first. A factored sum inside one term therefore stays within that numerator; separate rational terms are not merged into a common fraction before applying the rules.",
+      "Only the stated replacement is requested. The denominator of each visited term is restored unchanged, although ordinary Mathematica evaluation can simplify the resulting expression afterward.",
+      "This function does not decide whether your rules are valid identities or which internal channel is on shell. For a general diagram-preparation calculation, [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes) obtains those assumptions from the item's declared mass rules and protects [PropDen](paclet:HEPCAT/ref/PropDen) factors."
     ],
     "examples": [
       {
         "description": "Replace numerator symbols without altering their denominators.",
-        "input": "applyToNumerator[(a + b)/d + c/e, {a -> x, c -> y}]",
+        "input": "ApplyToNumerator[(a + b)/d + c/e, {a -> x, c -> y}]",
         "evaluate": true
       },
       {
         "description": "Transform a factored numerator without expansion.",
-        "input": "applyToNumerator[(a + b)^2/d, {a -> x}]",
+        "input": "ApplyToNumerator[(a + b)^2/d, {a -> x}]",
         "evaluate": true
       }
     ],
@@ -1029,11 +1092,14 @@
       "ReduceSpinorProducts",
       "PrepareAmplitudes"
     ],
-    "guide": "IdentitiesAndSimplification"
+    "guide": "IdentitiesAndSimplification",
+    "retiredNames": [
+      "applyToNumerator"
+    ]
   },
   {
     "name": "ReduceSpinContractions",
-    "summary": "Sews contracted massive or massless spinor indices into shorter momentum chains.",
+    "summary": "Contracts repeated spin indices and joins the associated spinor factors into momentum chains.",
     "syntaxes": [
       {
         "input": "ReduceSpinContractions[expr]",
@@ -1041,9 +1107,10 @@
       }
     ],
     "details": [
-      "Apply this to diagram products before ordinary spinor reduction. Matching repeated upper and lower massive indices are contracted with HEPCAT's epsilon and completeness conventions.",
-      "Massless completeness also joins a pair of chains through a matching helicity leg. Powers and spectator factors are supported.",
-      "This function contracts indices already present in the expression. It does not average initial spins, add symmetry factors, or choose a process."
+      "Use this after sewing lower-point amplitudes or forming products that contain contracted massive or massless spinors. The function applies the supported spin sums and little-group epsilon contractions, replacing those index contractions by shorter typed spinor chains.",
+      "This is the usual first algebraic step for a diagram amplitude. The result may still contain several momentum insertions and reducible brackets; follow it with [ReduceSpinorProducts](paclet:HEPCAT/ref/ReduceSpinorProducts) for ordinary spinor identities.",
+      "The function does not choose reference spinors, generate factorization channels, or impose a diagram's internal-shell conditions. [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes) coordinates those preparation steps using the model and each item's declared mass rules.",
+      "A repeated spin index has a mathematical contraction meaning. Keep external spin indices distinct until you intend to sum them, or choose a definite component with [ChooseSpinIndex](paclet:HEPCAT/ref/ChooseSpinIndex)."
     ],
     "examples": [
       {
@@ -1066,7 +1133,7 @@
   },
   {
     "name": "ReduceSpinorProducts",
-    "summary": "Reduces spinor chains and traces using ordinary identities and external on-shell conditions.",
+    "summary": "Simplifies spinor chains, traces and products using ordinary identities and external-particle on-shell conditions.",
     "syntaxes": [
       {
         "input": "ReduceSpinorProducts[expr]",
@@ -1074,27 +1141,29 @@
       }
     ],
     "details": [
-      "The reducer handles chain reversal, momentum-slot linearity, supported Clifford contractions, external Dirac equations, Schouten contractions and exact polynomial/rational simplifications.",
-      "It does not infer total momentum conservation and does not impose diagram-local internal on-shell conditions. PrepareAmplitudes supplies process information for those additional operations.",
-      "Momentum sums and Multiparticle insertions can be expanded where useful. Shared scalar factors and opaque physical PropDen factors are retained where possible.",
-      "Automatic rules have a directed simplification order and finite expansion limits. The result is not a proof of a globally minimal form. For an explicit derivation, retain each SpinorIdentityCandidates edit and its assumptions."
+      "Use ReduceSpinorProducts when you already have a spinor expression and want routine algebraic simplification. It handles supported chain reversals, momentum-slot linearity, Clifford contractions, external Dirac equations, and product identities while comparing useful factored and expanded forms.",
+      "The input and output are ordinary HEPCAT expressions. A repeated external momentum inside a chain can become an external mass squared; an external momentum next to its own massless endpoint can make the chain vanish. Model-specific mass values can be substituted with ordinary replacement rules.",
+      "The function does not need a model or a complete process, so it cannot infer total momentum conservation from a list of external legs. For diagram or factorization preparation with that information available, use [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes)."
     ],
     "examples": [
       {
         "description": "Remove a diagonal massless angle bracket.",
         "input": "ReduceSpinorProducts[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 1]]]",
         "evaluate": true,
-        "expected": "0"
+        "expected": "0",
+        "section": "Elementary reductions"
       },
       {
         "description": "Contract adjacent copies of an external momentum.",
         "input": "ReduceSpinorProducts[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Mom[3], Mom[3], Spinor[\"Helicity\", \"Angle\", 2]]]",
-        "evaluate": true
+        "evaluate": true,
+        "section": "Momentum insertions"
       },
       {
         "description": "Distribute a momentum sum in a chain.",
         "input": "ReduceSpinorProducts[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Mom[2] + Mom[3], Spinor[\"Helicity\", \"Square\", 4]]]",
-        "evaluate": true
+        "evaluate": true,
+        "section": "Momentum sums"
       }
     ],
     "related": [
@@ -1103,11 +1172,27 @@
       "ApplySpinorIdentity",
       "SpinorExpressionComplexity"
     ],
-    "guide": "IdentitiesAndSimplification"
+    "guide": "IdentitiesAndSimplification",
+    "detail_sections": [
+      {
+        "title": "Which on-shell conditions are used?",
+        "paragraphs": [
+          "Only the external-particle identities belong to this process-independent reducer. It does not infer that a composite internal momentum has the propagating particle's mass. Those additional numerator assumptions are local to a diagram or selected factorization channel and are supplied separately by [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes).",
+          "The reducer protects [PropDen](paclet:HEPCAT/ref/PropDen) arguments, so simplifying a numerator does not also put the corresponding denominator on shell. The same ordinary reduction can therefore be applied to a completed, combined amplitude."
+        ]
+      },
+      {
+        "title": "Choosing a form and following the calculation",
+        "paragraphs": [
+          "There may be many equivalent forms with different numbers of terms and momentum insertions. The reducer uses finite, directed passes and bounded expansion. It aims to improve a practical complexity measure; it cannot promise the globally shortest possible formula.",
+          "If a useful identity is not chosen automatically, inspect [SpinorIdentityCandidates](paclet:HEPCAT/ref/SpinorIdentityCandidates) and apply a selected edit with [ApplySpinorIdentity](paclet:HEPCAT/ref/ApplySpinorIdentity). Keeping that edit and its before/after expressions gives a derivation you can inspect and replay. [SpinorExpressionComplexity](paclet:HEPCAT/ref/SpinorExpressionComplexity) provides a consistent score for comparing intermediate forms."
+        ]
+      }
+    ]
   },
   {
     "name": "SimplifySpinorProducts",
-    "summary": "Runs the older iterative momentum-conservation and spinor simplifier.",
+    "summary": "Runs the earlier iterative simplifier with explicitly declared external momenta and optional internal-channel information.",
     "syntaxes": [
       {
         "input": "SimplifySpinorProducts[expr, opts]",
@@ -1115,10 +1200,11 @@
       }
     ],
     "details": [
-      "This older routine contains specialized three- and four-point momentum-conservation rules. For current general diagram workflows, use PrepareAmplitudes; for process-independent algebra, use ReduceSpinorProducts.",
-      "Its option keys are symbols: Momenta, InternalLines, InternalLineOnShell, nTimes, massReplacementRules and PrintWarnings. This differs from the string option names used by the modern preparation and identity APIs.",
-      "Defaults include Momenta->{1,2,3,4}, InternalLines->{1,2}, InternalLineOnShell->False and nTimes->10. Turning on InternalLineOnShell changes the allowed numerator assumptions and must be restricted to an individual diagram.",
-      "The routine may print its conservation assumptions. Disable PrintWarnings when they have already been inspected."
+      "This function is retained for calculations built around HEPCAT's earlier three- and four-point simplification workflow. Unlike [ReduceSpinorProducts](paclet:HEPCAT/ref/ReduceSpinorProducts), it is supplied a list of external momenta and can use its implemented momentum-conservation rules.",
+      "For a new general diagram calculation, prefer [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes). That function keeps process information and diagram-local assumptions with their amplitudes, chooses references, and reports preparation progress. For algebra without a process or model, use [ReduceSpinorProducts](paclet:HEPCAT/ref/ReduceSpinorProducts).",
+      "The option names here are symbols, such as Momenta, InternalLines, InternalLineOnShell, nTimes, massReplacementRules and PrintWarnings. The newer preparation and identity functions instead use string option names. Copy the syntax of the function you are actually calling.",
+      "Defaults assume Momenta->{1,2,3,4}, InternalLines->{1,2}, InternalLineOnShell->False and nTimes->10. Change the external list when it does not describe your process. InternalLineOnShell->True permits additional channel assumptions and must be confined to that individual diagram.",
+      "The function can print the momentum-conservation and channel assumptions it uses. Inspect those assumptions before suppressing the messages with PrintWarnings->False."
     ],
     "examples": [
       {
@@ -1142,7 +1228,7 @@
   },
   {
     "name": "ExtractMandelstahm",
-    "summary": "Rewrites scalar momentum products and supported two-particle propagators using s invariants.",
+    "summary": "Rewrites supported scalar momentum products and two-particle propagators in terms of s invariants.",
     "syntaxes": [
       {
         "input": "ExtractMandelstahm[expr]",
@@ -1154,9 +1240,10 @@
       }
     ],
     "details": [
-      "For i different from j, MomProd[i,j] becomes (Mandelstahm[i,j]-Mass[i]^2-Mass[j]^2)/2.",
-      "The default four-point mode identifies s34=s12, s24=s13 and s23=s14. These equalities require four-point momentum conservation; specify the actual higher multiplicity when they do not apply.",
-      "This is an explicit representation conversion. It need not make an expression simpler, and differs from diagram-local internal on-shell reduction."
+      "This is useful when you want to display a result in conventional channel invariants or compare it with a formula written that way. For distinct labels i and j, the conversion uses `2 MomProd[i,j]=Mandelstahm[i,j]-Mass[i]^2-Mass[j]^2`.",
+      "The one-argument form assumes four-point kinematics. At four points it also identifies complementary invariants, such as s34=s12. For a five- or six-point expression, supply the actual multiplicity as the second argument to avoid those four-point identifications.",
+      "A supported [PropDen](paclet:HEPCAT/ref/PropDen)[Mom[Multiparticle[i,j]],m] becomes [Mandelstahm](paclet:HEPCAT/ref/Mandelstahm)[i,j]-m^2. Its pole is retained. The conversion does not set s_ij to an internal mass squared.",
+      "This representation is not always the easiest one to simplify further. [ReduceSpinorProducts](paclet:HEPCAT/ref/ReduceSpinorProducts) and [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes) can work with momentum products left in their typed form."
     ],
     "examples": [
       {
@@ -1180,7 +1267,7 @@
   },
   {
     "name": "ReducexFactors",
-    "summary": "Reduces legacy x-factor expressions using an explicitly declared four-point channel.",
+    "summary": "Reduces the supported legacy four-point x-factor formulas for an explicitly specified channel.",
     "syntaxes": [
       {
         "input": "ReducexFactors[expr, opts]",
@@ -1188,9 +1275,10 @@
       }
     ],
     "details": [
-      "The lowercase x in ReducexFactors is part of the actual function name. The default symbolic options are Momenta->{1,2,3,4}, ChannelMomenta->{1,4} and ChannelMass->Mchannel.",
-      "These are older specialized four-point identities. Supply the correct channel and do not use them to assume unrelated internal lines are on shell in a summed amplitude.",
-      "For current diagram output, external x-factor expansion is normally already performed by diagramAmplitudes; see ExpandXFactors for an explicit model-aware operation."
+      "An x-factor is the three-point massless-vector building block carried in older constructive expressions. This routine combines the supported formulas using the external momenta and channel information you supply.",
+      "Its defaults are Momenta->{1,2,3,4}, ChannelMomenta->{1,4}, and ChannelMass->Mchannel. These describe a particular four-point channel. They must be changed when that is not the channel in your expression.",
+      "This is a specialized four-point routine, not a general expansion of every possible multi-particle x-factor. For current diagram calculations, [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes) handles reference choices in the context of the actual process.",
+      "When comparing two completed amplitudes, do not use a channel-specific x-factor reduction as an unrestricted off-shell identity. Keep its chosen channel assumptions with the calculation."
     ],
     "examples": [
       {
@@ -1207,14 +1295,13 @@
     "related": [
       "xFactor",
       "xTildeFactor",
-      "ExpandXFactors",
       "PrepareAmplitudes"
     ],
     "guide": "IdentitiesAndSimplification"
   },
   {
     "name": "ReduceColor",
-    "summary": "Reduces legacy SU(3) generator and structure-constant expressions to traces.",
+    "summary": "Applies the supported fundamental SU(3) color identities and writes the result in trace form.",
     "syntaxes": [
       {
         "input": "ReduceColor[expr]",
@@ -1222,9 +1309,9 @@
       }
     ],
     "details": [
-      "This older helper works with colorT, colorf and colorTrace heads, not the newer Feynman ColorGenerator and ColorStructure representation.",
-      "The rules use SU(3) numerical coefficients, including Tr[1]=3 and the 1/3 completeness term. It is not a general SU(N) reducer.",
-      "Repeated adjoint indices trigger completeness identities; uncontracted traces can remain symbolic."
+      "Use this on the older symbolic generator and structure-constant expressions produced by HEPCAT's color algebra. The implementation contains the fundamental-generator trace and completeness identities of its SU(3) convention.",
+      "The result is still an amplitude-level color expression. It is not a sum over all external colors, an average over incoming colors, or a replacement for the phase-space symmetry factors of identical particles.",
+      "The tensor objects used by a CalcHEP [FeynmanModel](paclet:HEPCAT/ref/FeynmanModel) have a separate typed representation. Do not assume that this legacy reducer implements every identity for those tensors or for another gauge group."
     ],
     "examples": [
       {
@@ -1248,7 +1335,7 @@
   },
   {
     "name": "SchoutenRewrite",
-    "summary": "Constructs the generalized Schouten identity for two chains at specified momentum splits.",
+    "summary": "Rewrites a product of two spinor chains using a chosen generalized Schouten identity.",
     "syntaxes": [
       {
         "input": "SchoutenRewrite[c1, c2, {m, n}]",
@@ -1256,9 +1343,10 @@
       }
     ],
     "details": [
-      "m and n count the momentum insertions before the split in c1 and c2. Zero is the split next to the first endpoint; the full insertion count is the split next to the last endpoint.",
-      "Invalid chains, out-of-range splits and incompatible split chiralities return $Failed. Explicit spin-index labels and variances are preserved.",
-      "The returned expression is an identity with no internal-shell or momentum-conservation assumption. It is not necessarily simpler."
+      "Supply two chains and the split positions {m,n}. Each number counts the momentum insertions before the split in its chain: zero means next to the first endpoint, and the full insertion count means next to the last endpoint.",
+      "For chains without momentum insertions, {0,0} gives the familiar two-component Schouten relation between products of angle brackets or products of square brackets. With longer chains, the split determines which matrix strings accompany the recombined endpoints.",
+      "The result is an expression equal to the product of the original two chains. To use it inside a larger amplitude, replace that product there. [SchoutenCandidates](paclet:HEPCAT/ref/SchoutenCandidates) finds eligible locations and packages the corresponding edits for you.",
+      "The split chiralities must agree. Invalid chains, incompatible chiralities, and out-of-range positions return $Failed. This identity does not need momentum conservation or an internal on-shell condition, and it may increase the displayed number of terms."
     ],
     "examples": [
       {
@@ -1282,7 +1370,7 @@
   },
   {
     "name": "SchoutenCandidates",
-    "summary": "Lists exact generalized Schouten edits available in an expression.",
+    "summary": "Finds the generalized Schouten replacements that can be applied to products of chains in an expression.",
     "syntaxes": [
       {
         "input": "SchoutenCandidates[expr]",
@@ -1290,9 +1378,10 @@
       }
     ],
     "details": [
-      "Each edit includes its Name, Subtract, Insert, Chains and Splits. The Subtract and Insert expressions include the appropriate spectator factors.",
-      "The function does not choose the best edit and does not use a neural model. No internal on-shell condition is assumed.",
-      "Inspect an edit by applying expr-edit[\"Subtract\"]+edit[\"Insert\"]. For the modern context-validated editing API, use SpinorIdentityCandidates and ApplySpinorIdentity."
+      "Use this when a cancellation seems to require rearranging spinor pairings but you do not want to choose the chain pair and split positions by hand. The function searches the supported products and returns a list of edit associations.",
+      "Each edit records Name, Subtract, Insert, Chains and Splits. Its local algebraic action replaces the Subtract expression by Insert at the selected location. These records let you inspect both the identity and the chains to which it applies.",
+      "The list is a list of possibilities, not a simplification ranking. A valid Schouten move can initially make the expression longer. Compare the resulting whole expression, including cancellations with its other terms, rather than the inserted piece alone.",
+      "For a wider set of legal identities and application-time validation, use [SpinorIdentityCandidates](paclet:HEPCAT/ref/SpinorIdentityCandidates) together with [ApplySpinorIdentity](paclet:HEPCAT/ref/ApplySpinorIdentity). Schouten generation itself uses no internal-shell assumption."
     ],
     "examples": [
       {
@@ -1315,7 +1404,7 @@
   },
   {
     "name": "SpinorIdentityCandidates",
-    "summary": "Enumerates legal symbolic identity edits for a diagram or amplitude expression.",
+    "summary": "Lists the identity steps available for a spinor expression under its declared mass and momentum assumptions.",
     "syntaxes": [
       {
         "input": "SpinorIdentityCandidates[{massRules, expr}, opts]",
@@ -1323,11 +1412,10 @@
       }
     ],
     "details": [
-      "The input pair is a list of mass replacement rules together with its expression, as returned for one diagram by diagramAmplitudes.",
-      "The string option \"OnShellChannels\"->Automatic permits only the diagram's declared internal channels. Use \"OnShellChannels\"->{} for an ordinary combined amplitude whose internal lines must remain off shell.",
-      "The string option \"MomentumConservation\" defaults to True. Set it False when the external momentum information does not justify a conservation replacement.",
-      "Each edit records a name and symbolic replacement. The function canonicalizes chains and applies linearity before enumeration. It does not score the edits or promise that the first is a useful simplification.",
-      "PropDen factors remain opaque. Use the same options when applying an edit with ApplySpinorIdentity."
+      "The input is {massRules, expression}, the same two-part representation used for one diagram or one prepared amplitude. The result is a list of associations describing individual exact edits. It does not apply the entire list or automatically choose the best move.",
+      "Use the Name field to understand the kind of identity and inspect its Subtract and Insert expressions to see what changes. Apply a selected association using [ApplySpinorIdentity](paclet:HEPCAT/ref/ApplySpinorIdentity); that function verifies that the edit is still legal for the current expression.",
+      "Chains are canonicalized and supported momentum sums are distributed before moves are enumerated. The displayed candidate list can therefore describe the normalized form of the input, rather than its original typesetting.",
+      "The candidate mechanism is useful for an explicit derivation: keep the input, selected edit, and output at each step. For an automatic preparation workflow with progress reporting, start with [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes) instead."
     ],
     "examples": [
       {
@@ -1342,11 +1430,21 @@
       "ComplicateAmplitude",
       "PrepareAmplitudes"
     ],
-    "guide": "IdentitiesAndSimplification"
+    "guide": "IdentitiesAndSimplification",
+    "detail_sections": [
+      {
+        "title": "Choosing the allowed assumptions",
+        "paragraphs": [
+          "The string option \"OnShellChannels\"->Automatic uses only the internal channels declared by the supplied mass rules. This is appropriate while working on that particular diagram or selected channel. For a completed sum whose internal momenta must remain off shell, use \"OnShellChannels\"->{}.",
+          "The string option \"MomentumConservation\" defaults to True and uses the external-leg information available in the state. Set it to False if you are studying an isolated algebraic expression without the corresponding conserved process.",
+          "Use the same settings when applying a candidate. An identity generated with one set of channel assumptions must not be replayed as if it were valid with a different set. Physical [PropDen](paclet:HEPCAT/ref/PropDen) factors remain protected in either mode."
+        ]
+      }
+    ]
   },
   {
     "name": "ApplySpinorIdentity",
-    "summary": "Applies a currently legal identity edit and returns the new expression.",
+    "summary": "Applies one validated identity step to a spinor expression.",
     "syntaxes": [
       {
         "input": "ApplySpinorIdentity[{massRules, expr}, edit, opts]",
@@ -1354,14 +1452,15 @@
       }
     ],
     "details": [
-      "An edit must be legal for the supplied expression and for the same on-shell and momentum-conservation settings used during enumeration. Stale or incompatible edits return $Failed and a message.",
-      "The returned value is the new expression. Preserve the massRules yourself when forming the next state pair.",
-      "Keep a list of Before, After and the edit association when building a reproducible derivation. An edit's availability does not mean that it improves the complexity measure."
+      "First obtain a candidate from [SpinorIdentityCandidates](paclet:HEPCAT/ref/SpinorIdentityCandidates) for the current {massRules, expression} pair. Pass that association as the second argument, using the same \"OnShellChannels\" and \"MomentumConservation\" options.",
+      "The result is the new expression, not a new pair. Retain the mass rules yourself when making the next state: {massRules, newExpression}. Keeping the rule list explicit makes it clear which diagram-local assumptions each step was allowed to use.",
+      "The function checks the candidate against the current legal moves. A stale candidate from an earlier expression, an incompatible assumption set, or an invalid edit produces $Failed and a message rather than silently changing the formula.",
+      "A legal move need not make the expression shorter. To explore a route, record Before, After, and the candidate association. [SpinorExpressionComplexity](paclet:HEPCAT/ref/SpinorExpressionComplexity) can help compare forms, while a sequence of recorded identities provides the actual algebraic justification."
     ],
     "examples": [
       {
-        "description": "Choose and apply a legal edit.",
-        "input": "Module[{pair = {{}, SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]] SpinorChain[Spinor[\"Helicity\", \"Angle\", 3], Spinor[\"Helicity\", \"Angle\", 4]]}, edits}, edits = SpinorIdentityCandidates[pair, \"OnShellChannels\" -> {}, \"MomentumConservation\" -> False]; ApplySpinorIdentity[pair, First[edits], \"OnShellChannels\" -> {}, \"MomentumConservation\" -> False]]",
+        "description": "Select the available Schouten edit and apply it to the same starting expression. No internal-shell or momentum-conservation assumption is used.",
+        "input": "state = {{},\n  SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]]\n  SpinorChain[Spinor[\"Helicity\", \"Angle\", 3], Spinor[\"Helicity\", \"Angle\", 4]]};\nedits = SpinorIdentityCandidates[state,\n  \"OnShellChannels\" -> {}, \"MomentumConservation\" -> False];\nApplySpinorIdentity[state, First[edits],\n  \"OnShellChannels\" -> {}, \"MomentumConservation\" -> False]",
         "evaluate": true
       }
     ],
@@ -1374,7 +1473,7 @@
   },
   {
     "name": "SpinorExpressionComplexity",
-    "summary": "Returns a scalar complexity score for a spinor expression.",
+    "summary": "Scores the size of a spinor expression, with extra weight for momentum insertions and scalar momentum products.",
     "syntaxes": [
       {
         "input": "SpinorExpressionComplexity[expr]",
@@ -1382,8 +1481,10 @@
       }
     ],
     "details": [
-      "Composite momentum slots contribute their implicit branches: Mom[Multiparticle[1,3]] is not treated as a single elementary insertion.",
-      "Physical PropDen factors are opaque to this score. The measure is a heuristic for selecting smaller algebraic representations, not an invariant of the amplitude or a proof of minimality."
+      "Use this to compare intermediate forms produced by [ReduceSpinorProducts](paclet:HEPCAT/ref/ReduceSpinorProducts), [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes), or a manually chosen identity route. A smaller value generally favors fewer terms and fewer momentum insertions.",
+      "The score accounts for branches hidden in composite momentum slots. `Mom[Multiparticle[1,3]]` inside a chain represents two momentum contributions, so packing a sum into a single label does not make it artificially inexpensive.",
+      "Physical [PropDen](paclet:HEPCAT/ref/PropDen) factors are treated as opaque. The score measures a practical algebraic representation, not numerical stability, high-energy behavior, or whether the amplitude is physically correct. Use [CheckAmplitudes](paclet:HEPCAT/ref/CheckAmplitudes) for those separate tests.",
+      "Two equivalent expressions can have different scores, and the lower-scoring intermediate form need not lie on the shortest route to the final answer. Retain useful alternative routes when a temporary increase exposes a later cancellation."
     ],
     "examples": [
       {
@@ -1406,7 +1507,7 @@
   },
   {
     "name": "ComplicateAmplitude",
-    "summary": "Generates a model-free random sequence of reversible symbolic identities.",
+    "summary": "Generates an equivalent expression by applying a random sequence of reversible identity steps.",
     "syntaxes": [
       {
         "input": "ComplicateAmplitude[{massRules, expr}, n]",
@@ -1418,21 +1519,25 @@
       }
     ],
     "details": [
-      "The returned association contains MassRules, Original, Expression and Steps. With \"RecordSteps\"->True it also includes Trajectory, whose entries contain Before, After and Candidate.",
-      "The string options \"OnShellChannels\" and \"MomentumConservation\" have the same meaning as in SpinorIdentityCandidates. RandomSeed is a symbolic option; Automatic uses the ordinary random state.",
-      "The routine is useful for testing identity replay and generating exact equivalent forms. Random scrambling need not monotonically increase complexity, and fewer than n moves can occur when no eligible move remains."
+      "This is useful for checking that a simplifier or a recorded derivation can recover an equivalent form. The input is {massRules, expression}; the second argument is the maximum number of random edits and defaults to 5.",
+      "The returned association contains \"MassRules\", \"Original\", \"Expression\", and \"Steps\". \"Original\" is the canonicalized starting expression, \"Expression\" is the last expression reached, and \"Steps\" is the number of moves actually made.",
+      "Set the string option \"RecordSteps\"->True to retain \"Trajectory\". Each trajectory entry contains \"Before\", \"After\", and \"Candidate\", so the random calculation can be inspected as an identity derivation rather than just compared at its endpoints.",
+      "An explicit integer RandomSeed makes the random choices repeatable. Automatic uses the ordinary random state within the routine's local random scope. The random path does not have to increase complexity at every step, and it can stop early when there are no eligible moves.",
+      "The \"OnShellChannels\" and \"MomentumConservation\" string options have the same scope as in [SpinorIdentityCandidates](paclet:HEPCAT/ref/SpinorIdentityCandidates). For a completed amplitude, explicitly forbid internal-shell assumptions with \"OnShellChannels\"->{}."
     ],
     "examples": [
       {
         "description": "Generate and retain a short repeatable identity trajectory.",
         "input": "ComplicateAmplitude[{{}, SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]] SpinorChain[Spinor[\"Helicity\", \"Angle\", 3], Spinor[\"Helicity\", \"Angle\", 4]]}, 2, RandomSeed -> 17, \"RecordSteps\" -> True, \"OnShellChannels\" -> {}, \"MomentumConservation\" -> False]",
-        "evaluate": true
+        "evaluate": true,
+        "section": "Recording an identity route"
       },
       {
         "description": "Request no edits.",
         "input": "ComplicateAmplitude[{{}, SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]]}, 0][\"Steps\"]",
         "evaluate": true,
-        "expected": "0"
+        "expected": "0",
+        "section": "Controlling the step count"
       }
     ],
     "related": [
@@ -1444,7 +1549,7 @@
   },
   {
     "name": "ReverseMomentum",
-    "summary": "Crosses selected external legs in complete spinor amplitude expressions.",
+    "summary": "Crosses selected external momenta, including their spinor signs, in a complete amplitude expression.",
     "syntaxes": [
       {
         "input": "ReverseMomentum[expr, i]",
@@ -1456,26 +1561,35 @@
       }
     ],
     "details": [
-      "HEPCAT constructs all momenta incoming. Crossing an outgoing leg changes each angle spinor on that leg by a minus sign, leaves its square spinors unchanged, and reverses its explicit momentum insertions.",
-      "Every repeated occurrence in a chain is counted. Scalar products and propagator momenta are crossed consistently, while coefficients, powers, mass labels and spin-index labels are retained.",
-      "The operation targets supported amplitude structures, including chains, traces, scalar products and propagators. A standalone Mom[i] or Spinor object is not crossed by this legacy interface; use complete expressions.",
-      "Reference Xi labels and complex-shift hats are not ordinary external-leg occurrences. Do not use ReverseMomentum as a general relabeling function."
+      "HEPCAT derives analytic amplitudes with every external momentum incoming. If the numerical scattering process treats legs 3, 4 and 5 as outgoing, ReverseMomentum[expression, {3,4,5}] converts the supported typed momentum and spinor occurrences for those legs.",
+      "In HEPCAT's convention the angle spinor of a crossed leg changes sign while its square spinor does not. Explicit momentum insertions also change sign. The function counts every affected occurrence, including repeated insertions in a chain, and transforms composite momentum sums inside chains and propagators.",
+      "Apply crossing to the complete expression, including its denominators. A label permutation is a different operation and is handled by [PermuteParticles](paclet:HEPCAT/ref/PermuteParticles).",
+      "When exporting a physical incoming -> outgoing process through [WriteSPINASProcess](paclet:HEPCAT/ref/WriteSPINASProcess), supply the analytic all-incoming expression. The exporter performs this conversion itself. Pre-crossing that expression and asking the exporter to cross it again would count the signs twice."
     ],
     "examples": [
       {
-        "description": "Cross an angle-bracket leg.",
+        "description": "Cross leg 2 in <12>. Its angle spinor changes sign.",
         "input": "ReverseMomentum[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]], 2]",
-        "evaluate": true
+        "evaluate": true,
+        "section": "Crossing spinors"
       },
       {
-        "description": "Cross the explicit momentum in a chain.",
+        "description": "Cross the momentum inserted on leg 2 in [1|p2|3>, without crossing either endpoint.",
         "input": "ReverseMomentum[SpinorChain[Spinor[\"Helicity\", \"Square\", 1], Mom[2], Spinor[\"Helicity\", \"Angle\", 3]], 2]",
-        "evaluate": true
+        "evaluate": true,
+        "section": "Crossing momentum insertions"
       },
       {
         "description": "Cross a propagator momentum.",
         "input": "ReverseMomentum[1/PropDen[Mom[1] + Mom[3], m], 3]",
-        "evaluate": true
+        "evaluate": true,
+        "section": "Crossing propagators"
+      },
+      {
+        "description": "Cross both leg 2 and leg 3 in the same chain. The momentum insertion and the angle endpoint each contribute a sign.",
+        "input": "ReverseMomentum[SpinorChain[Spinor[\"Helicity\", \"Square\", 1], Mom[2], Spinor[\"Helicity\", \"Angle\", 3]], {2, 3}]",
+        "evaluate": true,
+        "section": "Crossing several legs"
       }
     ],
     "related": [
@@ -1487,7 +1601,7 @@
   },
   {
     "name": "PermuteParticles",
-    "summary": "Cyclically relabels the specified external particles in typed amplitude expressions.",
+    "summary": "Cyclically relabels selected external particles in typed spinor and momentum expressions.",
     "syntaxes": [
       {
         "input": "PermuteParticles[expr, {i1, i2, ..., in}]",
@@ -1495,9 +1609,10 @@
       }
     ],
     "details": [
-      "This function applies one cycle. It does not sum all permutations and does not automatically multiply by a fermion-exchange sign.",
-      "Typed momentum, mass, invariant, spinor and x-factor labels are relabeled. Numerical coefficients and explicit little-group indices are preserved. Xi reference labels are not treated as external particles.",
-      "Apply a sequence of cycles or construct the appropriate exact replacement when a different permutation is required."
+      "The list {1,3,4} means 1 goes to 3, 3 goes to 4, and 4 goes to 1. Labels not in the list retain their values. Use a two-element list to interchange two legs.",
+      "The function changes supported particle labels in spinors, momenta, masses, momentum products, scalar invariants and x-factors. A little-group spin index is not a particle number and is left intact. Use this typed relabeling rather than replacing every integer in an expression.",
+      "A relabeling does not reverse a momentum and does not by itself supply the statistics sign required when comparing amplitudes under exchange of identical fermions. Apply [ReverseMomentum](paclet:HEPCAT/ref/ReverseMomentum) for crossing, and keep the process's Bose or Fermi exchange convention explicit when testing a physical symmetry.",
+      "When relabeling a whole diagram or process, keep its particle list, external mass assignments, channel rules and expression consistent. An expression with newly numbered legs must be compared against the correspondingly numbered process."
     ],
     "examples": [
       {
@@ -1542,11 +1657,12 @@
       "SpinorChain",
       "ReduceSpinorProducts"
     ],
-    "guide": "SpinorAlgebra"
+    "guide": "SpinorAlgebra",
+    "visibility": "internal"
   },
   {
     "name": "ChooseSpinIndex",
-    "summary": "Selects a physical spin projection for one external massive particle.",
+    "summary": "Selects one physical spin projection of a massive external particle.",
     "syntaxes": [
       {
         "input": "ChooseSpinIndex[expr, i, projection]",
@@ -1554,9 +1670,10 @@
       }
     ],
     "details": [
-      "Supported projections include spin one half (+1/2 or -1/2) and spin one (+1,0,-1). The longitudinal spin-one state is a normalized sum of the two mixed index assignments.",
-      "These values are physical spin projections, not the doubled-spin integers used by the generated SPINAS C++ interface.",
-      "The function works with implicit massive Spinor indices and expands the input to apply the supported patterns. It is not a sum over spins."
+      "The particle argument identifies the external leg. The last argument is its physical spin projection, such as +1/2 or -1/2 for a fermion, or +1, 0 and -1 for a spin-one particle.",
+      "The input should contain that particle's implicit massive [Spinor](paclet:HEPCAT/ref/Spinor) factors. HEPCAT replaces them by the appropriate explicit little-group components. For the longitudinal spin-one state it uses the normalized sum of the two mixed index assignments.",
+      "This selects a state; it does not sum over states or average incoming spins. It also differs from merely naming indices with [MakeIndicesExplicit](paclet:HEPCAT/ref/MakeIndicesExplicit).",
+      "The generated [SPINAS](paclet:HEPCAT/ref/SPINAS) interface uses doubled-spin integers, while this symbolic function uses physical half-integer values. Thus a positive spin-half state is selected here by 1/2, not by the C++ label 1. To select several legs in particle order, use [ChooseSpinIndices](paclet:HEPCAT/ref/ChooseSpinIndices)."
     ],
     "examples": [
       {
@@ -1579,7 +1696,7 @@
   },
   {
     "name": "ChooseSpinIndices",
-    "summary": "Selects spin projections in external-particle order.",
+    "summary": "Selects physical spin projections for successive massive external particles.",
     "syntaxes": [
       {
         "input": "ChooseSpinIndices[expr, projection1, projection2, ...]",
@@ -1587,8 +1704,9 @@
       }
     ],
     "details": [
-      "Supply projections as separate arguments, rather than as one list. Each projection has the physical spin units used by ChooseSpinIndex.",
-      "For noncontiguous or selected legs, call ChooseSpinIndex directly. The routine does not infer spins from a model."
+      "The projection arguments correspond to external legs 1, 2, and so on. The function applies [ChooseSpinIndex](paclet:HEPCAT/ref/ChooseSpinIndex) in that order, using the physical projections rather than doubled-spin C++ labels.",
+      "Use this when the desired spin configuration is most naturally written in external-particle order. To select only one particular leg, call [ChooseSpinIndex](paclet:HEPCAT/ref/ChooseSpinIndex) directly so the intended particle number is explicit.",
+      "The resulting expression is one selected spin configuration. Summing or averaging the squared amplitudes over a set of configurations remains a separate operation; [WriteSPINASProcess](paclet:HEPCAT/ref/WriteSPINASProcess) supplies that numerical interface for complete exported processes."
     ],
     "examples": [
       {
@@ -1606,7 +1724,7 @@
   },
   {
     "name": "MakeIndicesExplicit",
-    "summary": "Replaces implicit massive spin indices with specified explicit upper indices.",
+    "summary": "Inserts specified upper little-group indices into the implicit massive spinors of an expression.",
     "syntaxes": [
       {
         "input": "MakeIndicesExplicit[expr, i, {indices}]",
@@ -1618,9 +1736,10 @@
       }
     ],
     "details": [
-      "The supported patterns contain one through four spin indices per particle, corresponding to spin one half through spin two. A scalar leg can have an empty index list.",
-      "This is index insertion, not a symmetrized spin state. Use SymmetrizeSpin or ChooseSpinIndex for those operations.",
-      "ConstructiveAmplitude wrappers are supported by acting on their numerator. The implementation expands relevant expressions before matching."
+      "Use this when deriving a spin sum or when you need to see which massive-spinor occurrence carries which little-group index. For one spin-half leg, supply one index; higher-spin states need the corresponding list of two, three or four indices.",
+      "The two-argument form takes a list of index lists in external-particle order. An empty list can be used for a scalar leg. The three-argument form acts on one explicitly numbered particle.",
+      "Index insertion does not symmetrize the state or select a normalized physical projection. Use [SymmetrizeSpin](paclet:HEPCAT/ref/SymmetrizeSpin) for index symmetrization and [ChooseSpinIndex](paclet:HEPCAT/ref/ChooseSpinIndex) for a definite physical spin state.",
+      "The implementation expands the relevant products while matching implicit factors. Internal spin contractions should be handled with [ReduceSpinContractions](paclet:HEPCAT/ref/ReduceSpinContractions) before assigning the remaining external indices."
     ],
     "examples": [
       {
@@ -1643,7 +1762,7 @@
   },
   {
     "name": "MakeIndicesImplicit",
-    "summary": "Removes supported explicit upper massive spin indices from chains.",
+    "summary": "Removes the supported explicit upper massive-spin indices from spinor chains.",
     "syntaxes": [
       {
         "input": "MakeIndicesImplicit[expr]",
@@ -1651,8 +1770,9 @@
       }
     ],
     "details": [
-      "This legacy helper prints a warning: it assumes that all indices to be removed are upper and uncontracted. It is not a safe inverse of an arbitrary contraction or spin sum.",
-      "Lower indices and already contracted structures require the correct algebra rather than erasing their labels."
+      "This restores the compact external-state notation after an explicit-index calculation. The supported upper-index [Spinor](paclet:HEPCAT/ref/Spinor) factors are replaced by the corresponding massive spinors with their indices omitted.",
+      "Omitting an index does not perform a sum over it and does not undo a physical spin projection. If the index was needed to distinguish components, preserve the explicit expression before suppressing that information.",
+      "For the opposite operation, use [MakeIndicesExplicit](paclet:HEPCAT/ref/MakeIndicesExplicit). To sew repeated indices by a spin-sum identity, use [ReduceSpinContractions](paclet:HEPCAT/ref/ReduceSpinContractions)."
     ],
     "examples": [
       {
@@ -1670,7 +1790,7 @@
   },
   {
     "name": "SymmetrizeSpin",
-    "summary": "Inserts and symmetrizes the little-group indices of one massive particle.",
+    "summary": "Assigns and symmetrizes the little-group indices of one massive external particle.",
     "syntaxes": [
       {
         "input": "SymmetrizeSpin[expr, i, {indices}]",
@@ -1678,9 +1798,10 @@
       }
     ],
     "details": [
-      "The routine acts on the implicit massive spinor factors of the specified particle. It supports one through four indices.",
-      "The average is over distinct permutations, so coincident index labels retain their proper normalization. This is little-group symmetrization, not a permutation of identical external particles.",
-      "Use ChooseSpinIndex to select a normalized physical spin projection."
+      "Supply the leg number and a list of one through four index labels. The function inserts those labels into the particle's implicit massive spinors and averages over their distinct permutations.",
+      "Repeated labels have the correct permutation normalization: {i,i} has one distinct assignment, rather than two separately counted copies. This matters when spin-one and higher-spin expressions contain coinciding spin indices.",
+      "This is the symmetry of the spinor indices belonging to a single massive particle. It is not Bose or Fermi exchange of two external particles. Use [ChooseSpinIndex](paclet:HEPCAT/ref/ChooseSpinIndex) when you want a normalized physical projection such as the spin-one longitudinal state.",
+      "To supply index lists in external-particle order for several legs, use [SymmetrizeSpins](paclet:HEPCAT/ref/SymmetrizeSpins). The unsymmetrized insertion operation is [MakeIndicesExplicit](paclet:HEPCAT/ref/MakeIndicesExplicit)."
     ],
     "examples": [
       {
@@ -1703,7 +1824,7 @@
   },
   {
     "name": "SymmetrizeSpins",
-    "summary": "Symmetrizes massive little-group indices using a list in external-particle order.",
+    "summary": "Symmetrizes massive little-group indices for a list of external particles.",
     "syntaxes": [
       {
         "input": "SymmetrizeSpins[expr, indexLists]",
@@ -1711,8 +1832,9 @@
       }
     ],
     "details": [
-      "Supply one list per particle. Empty lists describe particles without massive spin indices.",
-      "The function preserves a ConstructiveAmplitude wrapper when present and acts on its numerator. It does not impose identical-particle exchange symmetry."
+      "The index list at position i belongs to external leg i. For example, {{i},{j,k},{}} describes one spin-half leg, one spin-one leg, and one scalar leg.",
+      "The function applies [SymmetrizeSpin](paclet:HEPCAT/ref/SymmetrizeSpin) to each particle. It averages distinct assignments within each particle, including the proper treatment of repeated labels.",
+      "This does not sum over physical external spin configurations or symmetrize identical particles. Those operations have different normalization and statistics factors. [SquareAmplitude](paclet:HEPCAT/ref/SquareAmplitude) uses these little-group manipulations when constructing a symbolic conjugate product."
     ],
     "examples": [
       {
@@ -1730,7 +1852,7 @@
   },
   {
     "name": "ExpandSummation",
-    "summary": "Expands supported contracted massive spin indices into explicit plus/minus half components.",
+    "summary": "Writes supported contracted massive-spin indices as explicit two-component sums.",
     "syntaxes": [
       {
         "input": "ExpandSummation[expr]",
@@ -1738,9 +1860,9 @@
       }
     ],
     "details": [
-      "The input is expanded before the supported matching index patterns are replaced. A repeated upper/lower index on the same particle is resolved into its two spin-half components.",
-      "This exposes component sums instead of sewing them into momentum insertions. ReduceSpinContractions is usually the more compact alternative.",
-      "The routine does not insert an initial spin average or an identical-particle symmetry factor."
+      "Use this when you want to inspect a contraction component by component. Eligible repeated symbolic little-group indices are expanded into the +1/2 and -1/2 components used by HEPCAT.",
+      "The input is expanded before the matching contraction patterns are applied. This can be useful for checking a small spin sum but can make a large expression much longer.",
+      "For routine sewing, [ReduceSpinContractions](paclet:HEPCAT/ref/ReduceSpinContractions) usually gives a more compact expression directly in spinor chains. [ChooseSpinIndex](paclet:HEPCAT/ref/ChooseSpinIndex) selects a physical state instead of expanding a repeated-index sum."
     ],
     "examples": [
       {
@@ -1758,7 +1880,7 @@
   },
   {
     "name": "SquareAmplitude",
-    "summary": "Forms the amplitude times its Hermitian conjugate with explicit massive indices.",
+    "summary": "Constructs an amplitude times its Hermitian conjugate, retaining the massive-spin contractions to be reduced.",
     "syntaxes": [
       {
         "input": "SquareAmplitude[expr, spins]",
@@ -1766,9 +1888,10 @@
       }
     ],
     "details": [
-      "The input should have implicit, uncontracted external massive spin indices, with internal contractions already reduced. The supported spin magnitudes are 0,1/2,1,3/2 and 2.",
-      "The function makes indices explicit in one copy, symmetrizes the other and conjugates the first. It returns their product; further ReduceSpinContractions and ReduceSpinorProducts may be required.",
-      "This helper does not perform an initial spin average or multiply identical-particle phase-space factors. It is not intended for complex-shifted external states."
+      "Supply an expression with implicit external massive indices and a list of physical spin magnitudes in particle order. The supported values are 0, 1/2, 1, 3/2 and 2. Internal spin contractions should already have been reduced.",
+      "The function makes one copy's massive indices explicit, symmetrizes the corresponding indices in the other copy, conjugates the first, and multiplies the two. The result can still contain spin contractions; follow it with [ReduceSpinContractions](paclet:HEPCAT/ref/ReduceSpinContractions) and [ReduceSpinorProducts](paclet:HEPCAT/ref/ReduceSpinorProducts) as needed.",
+      "Scalar couplings are conjugated as part of the Hermitian conjugate. A symbolic coupling g is therefore not assumed real unless that property has been established separately.",
+      "No initial-state spin average, identical-particle phase-space divisor, or external color sum is inserted here. [WriteSPINASProcess](paclet:HEPCAT/ref/WriteSPINASProcess) provides explicit spin sums and the declared scattering normalization for numerical work. Complex-shifted external-state expressions are outside this helper's intended scope."
     ],
     "examples": [
       {
@@ -1792,7 +1915,7 @@
   },
   {
     "name": "ExtractEnergy",
-    "summary": "Evaluates supported spinor chains as explicit energy-angle matrix expressions.",
+    "summary": "Evaluates supported spinor expressions in an explicit energy, momentum-angle and spin basis.",
     "syntaxes": [
       {
         "input": "ExtractEnergy[expr, particleSpins]",
@@ -1804,39 +1927,46 @@
       }
     ],
     "details": [
-      "A massless or scalar entry can be {particle}. A massive spin entry is {particle,spin,projection}, using physical spin values such as {1,1/2,1/2}.",
-      "Results use En[i], MomMagnitude[i], Theta[i] and Phi[i]. The spatial momentum convention is p(sin(theta)cos(phi),sin(theta)sin(phi),cos(theta)).",
-      "Internally, ExtractEnergy1 substitutes momentum matrices and ExtractEnergy2 substitutes spinor rows and columns; the final pass evaluates Dot and Tr.",
-      "Supply a complete and consistent on-shell configuration for numerical use. The function does not generate phase space or enforce total momentum conservation.",
-      "The optional string option \"MassRules\" defaults to {}. Supply external masses, for example {Mass[1] -> me}, when evaluating highly boosted massive spinors. The known mass allows the small component sqrt(E-p) to be evaluated as abs(m)/sqrt(E+p) for supported positive-energy on-shell input.",
-      "Rounded energy and momentum alone cannot recover a small mass once E-p has lost its significant digits. A supplied mass is physical input, not a mass inferred from that subtraction. Numerical consistency checks gate this stable route; they cannot independently establish a tiny mass from rounded data.",
-      "The default symbolic formulas are unchanged. Signed-energy, complex and unsupported off-shell inputs retain their branch-sensitive expressions. Supplying external masses does not put a composite momentum or a propagator denominator on shell.",
-      "The mass-aware route also stabilizes supported external scalar products and scalar energy factors already produced by SpinToHelicitySpinors. It supports constructing the expression symbolically and substituting numerical kinematics afterward."
+      "Use this to inspect a bracket numerically or compare an identity at a chosen set of momenta. It replaces supported momentum matrices and spinor endpoints by two-component expressions and evaluates the resulting matrix products and traces.",
+      "The particle list tells HEPCAT which external labels to evaluate. An entry {i} handles a massless or scalar leg. A massive spin entry {i, spin, projection}, such as {1,1/2,1/2}, also chooses its physical spin component.",
+      "The result uses [En](paclet:HEPCAT/ref/En)[i], [MomMagnitude](paclet:HEPCAT/ref/MomMagnitude)[i], [Theta](paclet:HEPCAT/ref/Theta)[i] and [Phi](paclet:HEPCAT/ref/Phi)[i]. The spatial momentum is p {Sin[theta] Cos[phi], Sin[theta] Sin[phi], Cos[theta]}. Substitute a complete, consistent set of these values after constructing the expression.",
+      "The function evaluates the supplied configuration; it does not generate conserved phase space or repair inconsistent momenta. To compare complete scattering amplitudes at controlled kinematics, use [CheckAmplitudes](paclet:HEPCAT/ref/CheckAmplitudes)."
     ],
     "examples": [
       {
         "description": "Evaluate an angle bracket in explicit massless components.",
         "input": "ExtractEnergy[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]], {{1}, {2}}]",
-        "evaluate": true
+        "evaluate": true,
+        "section": "Explicit components"
       },
       {
         "description": "Evaluate a scalar momentum product.",
         "input": "ExtractEnergy[MomProd[1, 2], {{1}, {2}}]",
-        "evaluate": true
+        "evaluate": true,
+        "section": "Explicit components"
       },
       {
         "description": "Retain a tiny massive spinor component after machine energy and momentum have rounded to the same value. The result is nonzero because the mass is supplied independently.",
         "input": "energyExpression = ExtractEnergy[\n  SpinorChain[Spinor[\"Spin\", \"Upper\", \"Angle\", 1, 1/2],\n    Spinor[\"Helicity\", \"Angle\", 2]], {{1}, {2}},\n  \"MassRules\" -> {Mass[1] -> 1/2000, Mass[2] -> 0}];\nenergyExpression /. {En[1] -> 10.^12, MomMagnitude[1] -> 10.^12,\n  Theta[1] -> 0., Phi[1] -> 0., En[2] -> 1.,\n  MomMagnitude[2] -> 1., Theta[2] -> 0., Phi[2] -> 0.}",
-        "evaluate": true
+        "evaluate": true,
+        "section": "Highly boosted massive particles"
       }
     ],
     "related": [
-      "ExtractEnergy1",
-      "ExtractEnergy2",
       "En",
       "MomMagnitude"
     ],
-    "guide": "SpinorAlgebra"
+    "guide": "SpinorAlgebra",
+    "detail_sections": [
+      {
+        "title": "Masses and highly boosted particles",
+        "paragraphs": [
+          "Supply known external masses through the string option `\"MassRules\" -> {Mass[1] -> me, ...}`. For supported positive-energy, on-shell numerical input, HEPCAT can then evaluate the small spinor component sqrt(E-p) as Abs[m]/sqrt(E+p), avoiding subtraction of almost equal numbers.",
+          "The supplied mass is independent physical input. Once rounded energy and momentum values have become equal, their difference cannot recover a tiny mass. The numerical consistency checks protect the stable substitution but do not prove that tiny mass from rounded data.",
+          "Symbolic formulas, signed-energy inputs, and unsupported branches retain their corresponding expressions. Supplying external masses does not impose an internal propagator's mass shell."
+        ]
+      }
+    ]
   },
   {
     "name": "ExtractEnergy1",
@@ -1870,7 +2000,8 @@
       "ExtractEnergy2",
       "MomProdExplicit"
     ],
-    "guide": "SpinorAlgebra"
+    "guide": "SpinorAlgebra",
+    "visibility": "internal"
   },
   {
     "name": "ExtractEnergy2",
@@ -1903,7 +2034,8 @@
       "ExtractEnergy1",
       "ChooseSpinIndex"
     ],
-    "guide": "SpinorAlgebra"
+    "guide": "SpinorAlgebra",
+    "visibility": "internal"
   },
   {
     "name": "MomProdExplicit",
@@ -1930,7 +2062,8 @@
       "ExtractEnergy",
       "ExtractEnergy1"
     ],
-    "guide": "SpinorAlgebra"
+    "guide": "SpinorAlgebra",
+    "visibility": "internal"
   },
   {
     "name": "SpinToHelicitySpinors",
@@ -1946,8 +2079,9 @@
       }
     ],
     "details": [
+      "This is an earlier high-energy expansion that expresses supported massive-spin states through helicity and auxiliary reference spinors. It is useful only within the expansion order and spin cases implemented by the routine.",
       "This older routine uses energy, momentum magnitude, masses and auxiliary Zeta spinors. The source describes it as implemented only to linear order, so do not treat it as a universal exact massive-to-massless replacement.",
-      "Use ChooseSpinIndex and ExtractEnergy for explicit physical spin components without relying on this expansion."
+      "Use [ChooseSpinIndex](paclet:HEPCAT/ref/ChooseSpinIndex) and [ExtractEnergy](paclet:HEPCAT/ref/ExtractEnergy) for explicit physical spin components without relying on this expansion."
     ],
     "examples": [
       {
@@ -1965,7 +2099,7 @@
   },
   {
     "name": "ConvertStringAmplitude",
-    "summary": "Parses legacy compact bracket notation into typed HEPCAT spinor expressions.",
+    "summary": "Reads a compact spinor-bracket string and constructs a typed HEPCAT expression.",
     "syntaxes": [
       {
         "input": "ConvertStringAmplitude[text, masses]",
@@ -1977,9 +2111,10 @@
       }
     ],
     "details": [
-      "Examples include <12>, [12], <1|p2|3], p1.p2, s12 and x12. The compact grammar was designed around single-digit external labels and specialized composite notation.",
-      "A zero mass selects \"Helicity\" and a nonzero mass selects \"Spin\". Explicit ^ or _ index markers in supported bracket notation become upper or lower little-group indices.",
-      "The parser finishes with ToExpression, so parse only trusted input. For modern model persistence, prefer PlainText[expr,\"Model\"] together with the model reader."
+      "Use this when importing a formula written in the older compact bracket notation. The mass list is in particle order and tells the reader whether a leg should be represented by a massless helicity spinor or a massive spinor.",
+      "The result contains ordinary typed objects such as [SpinorChain](paclet:HEPCAT/ref/SpinorChain), [Spinor](paclet:HEPCAT/ref/Spinor) and [Mom](paclet:HEPCAT/ref/Mom), so it can be passed to the algebra and preparation functions.",
+      "The optional symbolic option InternalMasses supplies mass information for supported composite endpoint labels. It is input information for interpreting the formula, not permission to put every internal line on shell.",
+      "For readable output use [PlainText](paclet:HEPCAT/ref/PlainText). When storing a new exact amplitude in a model, use `PlainText[expression,\"Model\"]` or [AppendModelAmplitudes](paclet:HEPCAT/ref/AppendModelAmplitudes) rather than relying on ambiguous handwritten compact strings."
     ],
     "examples": [
       {
@@ -2010,7 +2145,7 @@
       }
     ],
     "details": [
-      "The compact grammar, mass-list interpretation and trusted-input requirement are the same as ConvertStringAmplitude.",
+      "The compact grammar, mass-list interpretation and trusted-input requirement are the same as [ConvertStringAmplitude](paclet:HEPCAT/ref/ConvertStringAmplitude).",
       "This marks deformation heads only; it does not choose a shift or solve a pole equation."
     ],
     "examples": [
@@ -2041,7 +2176,8 @@
       }
     ],
     "details": [
-      "This is a symbolic marking step, not a complete general complex shift. ExpandComplexMomenta implements the supported continuation cases.",
+      "Use this at the symbolic marking stage of an earlier complex-shift derivation. It changes the supported ordinary spinor and momentum heads into their shifted counterparts, leaving the actual supported shift expansion to [ExpandComplexMomenta](paclet:HEPCAT/ref/ExpandComplexMomenta).",
+      "This is a symbolic marking step, not a complete general complex shift. [ExpandComplexMomenta](paclet:HEPCAT/ref/ExpandComplexMomenta) implements the supported continuation cases.",
       "The two-leg form distinguishes scalar products with one or both deformed momenta. Do not assume that arbitrary reference or mixed hatted objects have been transformed."
     ],
     "examples": [
@@ -2073,7 +2209,8 @@
       }
     ],
     "details": [
-      "This is a head replacement, not an evaluation of a shift parameter. It does not automatically remove the one-slot MomProdHat1 or MomProdHat2 markers.",
+      "Use this when a derivation has reached the stage at which its complex-deformation labels should be removed. It replaces the standard [SpinorHat](paclet:HEPCAT/ref/SpinorHat), [MomHat](paclet:HEPCAT/ref/MomHat) and [MomProdHat12](paclet:HEPCAT/ref/MomProdHat12) heads by their ordinary counterparts.",
+      "This is a head replacement, not an evaluation of a shift parameter. It does not automatically remove the one-slot [MomProdHat1](paclet:HEPCAT/ref/MomProdHat1) or [MomProdHat2](paclet:HEPCAT/ref/MomProdHat2) markers.",
       "Use it only when the mathematical operation being performed justifies returning those objects to their unshifted form."
     ],
     "examples": [
@@ -2099,6 +2236,7 @@
       }
     ],
     "details": [
+      "Use this to expand one of the particular massive or massless deformation cases implemented by the earlier shift machinery. The shifted particle pairs, their masses, companion legs and channel mass are mathematical input to that chosen construction.",
       "The pair arguments identify the shifted legs and their masses; k and l identify the companion legs used by the construction, and mik is the corresponding channel mass.",
       "This is a collection of specialized massive/massless cases. It is not a generic solver for an arbitrary complex deformation. Preserve the original expression and verify the assumptions when using it.",
       "For an expression without any matching shifted object, the input remains unchanged."
@@ -2127,7 +2265,8 @@
       }
     ],
     "details": [
-      "The result is a sum of a massive spinor bracket and a chain with Mom[k], divided by mi mj. The original upper/lower little-group indices are retained.",
+      "This helper belongs to the supported massive complex-shift calculation. It replaces the two-index auxiliary object associated with the specified massive legs and companion leg; it is not a general identity for arbitrary reference spinors.",
+      "The result is a sum of a massive spinor bracket and a chain with `Mom[k]`, divided by mi mj. The original upper/lower little-group indices are retained.",
       "If either mass is zero, this particular replacement is not applied. It is not a generic rule for all SpinorZ forms."
     ],
     "examples": [
@@ -2138,7 +2277,6 @@
       }
     ],
     "related": [
-      "SpinorZ",
       "ComplexifyMomenta",
       "ExpandComplexMomenta"
     ],
@@ -2146,7 +2284,7 @@
   },
   {
     "name": "nice",
-    "summary": "Formats legacy HEPCAT objects in readable notebook notation.",
+    "summary": "Produces the older display form for supported HEPCAT expressions.",
     "syntaxes": [
       {
         "input": "nice[expr]",
@@ -2154,7 +2292,9 @@
       }
     ],
     "details": [
-      "Complete SpinorChain expressions already have automatic notebook formatting. Applying nice is normally unnecessary, and its display objects should not replace algebraic expressions in calculations."
+      "This formatter is retained for notebooks that explicitly request the earlier notation. Current spinor chains already have notebook formatting, so an ordinary [SpinorChain](paclet:HEPCAT/ref/SpinorChain) expression can usually be displayed directly.",
+      "Use the original typed expression for subsequent calculation. A display transformation is not a simplification or an identity proof, and applying it does not reduce the number of momentum insertions.",
+      "For text outside a notebook use [PlainText](paclet:HEPCAT/ref/PlainText), and for a LaTeX string use [TeX](paclet:HEPCAT/ref/TeX)."
     ],
     "examples": [
       {
@@ -2168,7 +2308,8 @@
       "TeX",
       "PlainText"
     ],
-    "guide": "FormattingAndExport"
+    "guide": "FormattingAndExport",
+    "visibility": "internal"
   },
   {
     "name": "lnice",
@@ -2193,31 +2334,32 @@
       "nice",
       "SpinorChain"
     ],
-    "guide": "FormattingAndExport"
+    "guide": "FormattingAndExport",
+    "visibility": "internal"
   },
   {
     "name": "TeX",
-    "summary": "Converts supported HEPCAT expressions into a LaTeX string.",
+    "summary": "Converts supported HEPCAT spinor expressions to a LaTeX string.",
     "syntaxes": [
       {
         "input": "TeX[expr]",
-        "description": "returns the corresponding formatted output."
+        "description": "returns LaTeX source text for the supported expression."
       }
     ],
     "details": [
-      "This is the legacy LaTeX formatter for spinors, momentum chains, masses and scalar factors. It returns a string for inclusion in a document; keep the original expression for symbolic work."
+      "Use this when placing a symbolic result in a paper or a LaTeX derivation. The formatter writes supported brackets, momentum insertions, masses, propagators and scalar invariants in their mathematical notation.",
+      "The output is source text, not a compiled document. Insert the string into an appropriate LaTeX math environment and check the resulting formula. Formatting does not simplify the amplitude or verify an identity.",
+      "This older formatter covers a defined set of HEPCAT expression forms. Keep a copy of the typed expression for subsequent algebra, and use [PlainText](paclet:HEPCAT/ref/PlainText) with \"Model\" for model-file output rather than importing the LaTeX string as a model expression."
     ],
     "examples": [
       {
-        "description": "Format a small spinor example.",
+        "description": "Write the LaTeX source for an angle bracket.",
         "input": "TeX[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]]]",
         "evaluate": true
       }
     ],
     "related": [
-      "lTeX",
-      "PlainText",
-      "nice"
+      "PlainText"
     ],
     "guide": "FormattingAndExport"
   },
@@ -2244,7 +2386,8 @@
       "TeX",
       "SpinorChain"
     ],
-    "guide": "FormattingAndExport"
+    "guide": "FormattingAndExport",
+    "visibility": "internal"
   },
   {
     "name": "lPlainText",
@@ -2269,31 +2412,32 @@
       "PlainText",
       "SpinorChain"
     ],
-    "guide": "FormattingAndExport"
+    "guide": "FormattingAndExport",
+    "visibility": "internal"
   },
   {
     "name": "SPINAS",
-    "summary": "Formats a supported expression as a legacy SPINAS C++ expression string.",
+    "summary": "Converts supported chains and algebra to the earlier SPINAS C++ expression notation.",
     "syntaxes": [
       {
         "input": "SPINAS[expr]",
-        "description": "returns the corresponding formatted output."
+        "description": "returns a C++ expression using the older named-product convention."
       }
     ],
     "details": [
-      "This formatter emits .v() calls and scalar arithmetic for already declared spinor products. It does not create a complete process class, cross external legs, configure spin sums, or build a program. WriteSPINASProcess is the complete exporter."
+      "This expression formatter is retained for older scripts that assemble their own C++ process files. It returns text referring to named spinor products; it does not by itself construct those objects, assign momenta, compile code, or supply a complete spin sum.",
+      "For a new numerical process, prefer [WriteSPINASProcess](paclet:HEPCAT/ref/WriteSPINASProcess). That function writes a complete class with product initialization, momentum updates, crossing, parameter handling, normalization and optional independent validation.",
+      "Do not interpret a successfully formatted string as a numerical or physical validation. The supported syntax is narrower than that of the complete exporter, and the earlier formatter does not provide all of its safeguards."
     ],
     "examples": [
       {
-        "description": "Format a small spinor example.",
+        "description": "Write a named spinor-product call for the massless angle bracket <12>.",
         "input": "SPINAS[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]]]",
         "evaluate": true
       }
     ],
     "related": [
-      "WriteSPINASProcess",
-      "CreateSPName",
-      "InitializeSPINASSpinorProducts"
+      "WriteSPINASProcess"
     ],
     "guide": "FormattingAndExport"
   },
@@ -2320,11 +2464,12 @@
       "SPINAS",
       "CreateSPName"
     ],
-    "guide": "FormattingAndExport"
+    "guide": "FormattingAndExport",
+    "visibility": "internal"
   },
   {
     "name": "PlainText",
-    "summary": "Writes readable bracket notation or explicit model-readable amplitude text.",
+    "summary": "Converts a spinor expression to readable bracket text or exact model-file syntax.",
     "syntaxes": [
       {
         "input": "PlainText[expr]",
@@ -2336,20 +2481,23 @@
       }
     ],
     "details": [
-      "The ordinary form uses angle and square bracket notation. Model mode inserts explicit multiplication and typed forms where compact notation would be ambiguous.",
-      "Model mode returns Failure for unsupported or inexact objects rather than silently emitting an ambiguous model expression. Exact symbolic coefficients and rational numbers are preferred.",
-      "The output is a string. For a complete C++ process, use WriteSPINASProcess; for adding amplitudes to a factorization model, use AppendModelAmplitudes."
+      "PlainText[expression] returns a string using compact angle and square brackets. It is useful for a plain-text derivation, a message, or a quick inspection of a formula outside the notebook display.",
+      "PlainText[expression,\"Model\"] has a different purpose: it writes a supported exact expression so the model reader can recover its meaning. It inserts explicit multiplication and typed forms wherever compact bracket notation would be ambiguous.",
+      "Model mode refuses unsupported or inexact objects with Failure. Use exact rational coefficients and symbolic model parameters when saving a reusable analytic amplitude; machine decimal approximations may have already discarded information.",
+      "To append a known amplitude to a factorization model, use [AppendModelAmplitudes](paclet:HEPCAT/ref/AppendModelAmplitudes), which also checks the model entry. To generate a complete numerical C++ project, use [WriteSPINASProcess](paclet:HEPCAT/ref/WriteSPINASProcess). PlainText by itself only returns text and writes no files."
     ],
     "examples": [
       {
         "description": "Write a readable bracket expression.",
         "input": "PlainText[2 SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]]]",
-        "evaluate": true
+        "evaluate": true,
+        "section": "Readable text"
       },
       {
         "description": "Write an exact expression in model syntax.",
         "input": "PlainText[(2/3) SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]], \"Model\"]",
-        "evaluate": true
+        "evaluate": true,
+        "section": "Model-file text"
       }
     ],
     "related": [
@@ -2383,7 +2531,8 @@
       "SPINAS",
       "WriteSPINASProcess"
     ],
-    "guide": "FormattingAndExport"
+    "guide": "FormattingAndExport",
+    "visibility": "internal"
   },
   {
     "name": "CreateSPInitializationStatement",
@@ -2409,7 +2558,8 @@
       "SPINAS",
       "WriteSPINASProcess"
     ],
-    "guide": "FormattingAndExport"
+    "guide": "FormattingAndExport",
+    "visibility": "internal"
   },
   {
     "name": "CreateSPUpdateStatement",
@@ -2434,7 +2584,8 @@
       "SPINAS",
       "WriteSPINASProcess"
     ],
-    "guide": "FormattingAndExport"
+    "guide": "FormattingAndExport",
+    "visibility": "internal"
   },
   {
     "name": "InitializeSPINASSpinorProducts",
@@ -2460,7 +2611,8 @@
       "SPINAS",
       "WriteSPINASProcess"
     ],
-    "guide": "FormattingAndExport"
+    "guide": "FormattingAndExport",
+    "visibility": "internal"
   },
   {
     "name": "UpdateSPINASSpinorProducts",
@@ -2486,7 +2638,8 @@
       "SPINAS",
       "WriteSPINASProcess"
     ],
-    "guide": "FormattingAndExport"
+    "guide": "FormattingAndExport",
+    "visibility": "internal"
   },
   {
     "name": "DeclareSPINASSpinorProducts",
@@ -2512,7 +2665,8 @@
       "SPINAS",
       "WriteSPINASProcess"
     ],
-    "guide": "FormattingAndExport"
+    "guide": "FormattingAndExport",
+    "visibility": "internal"
   },
   {
     "name": "HelicitySpinorHat",
@@ -2539,7 +2693,8 @@
       "SpinorHat",
       "Spinor"
     ],
-    "guide": "LegacyAmplitudeSearch"
+    "guide": "LegacyAmplitudeSearch",
+    "visibility": "internal"
   },
   {
     "name": "SpinSpinorHat",
@@ -2566,7 +2721,8 @@
       "SpinorHat",
       "Spinor"
     ],
-    "guide": "LegacyAmplitudeSearch"
+    "guide": "LegacyAmplitudeSearch",
+    "visibility": "internal"
   },
   {
     "name": "rSpinor",
@@ -2593,7 +2749,8 @@
       "ReverseMomentum",
       "Spinor"
     ],
-    "guide": "LegacyAmplitudeSearch"
+    "guide": "LegacyAmplitudeSearch",
+    "visibility": "internal"
   },
   {
     "name": "MomProdL",
@@ -2620,7 +2777,8 @@
       "MomProd",
       "ReverseMomentum"
     ],
-    "guide": "LegacyAmplitudeSearch"
+    "guide": "LegacyAmplitudeSearch",
+    "visibility": "internal"
   },
   {
     "name": "MomProdR",
@@ -2647,7 +2805,8 @@
       "MomProd",
       "ReverseMomentum"
     ],
-    "guide": "LegacyAmplitudeSearch"
+    "guide": "LegacyAmplitudeSearch",
+    "visibility": "internal"
   },
   {
     "name": "ReduceXFactorsP",
@@ -2674,7 +2833,8 @@
       "ExpandXFactors",
       "ReducexFactors"
     ],
-    "guide": "LegacyAmplitudeSearch"
+    "guide": "LegacyAmplitudeSearch",
+    "visibility": "internal"
   },
   {
     "name": "ReduceXFactorsM",
@@ -2701,7 +2861,8 @@
       "ExpandXFactors",
       "ReducexFactors"
     ],
-    "guide": "LegacyAmplitudeSearch"
+    "guide": "LegacyAmplitudeSearch",
+    "visibility": "internal"
   },
   {
     "name": "Output",
@@ -2728,7 +2889,8 @@
       "TeX",
       "nice"
     ],
-    "guide": "FormattingAndExport"
+    "guide": "FormattingAndExport",
+    "visibility": "internal"
   },
   {
     "name": "ExpandMomHatAlt",
@@ -2740,7 +2902,8 @@
       }
     ],
     "details": [
-      "A MomHat insertion in a chain becomes Mom plus z MomQ. A shifted composite propagator is expressed using its unshifted PropDen and the channel roots zPlus and zMinus.",
+      "This is the expansion step for the supported all-line-shift momentum markers. It rewrites the recognized shifted propagators and chain insertions, using the conventions of the earlier deformation code.",
+      "A [MomHat](paclet:HEPCAT/ref/MomHat) insertion in a chain becomes [Mom](paclet:HEPCAT/ref/Mom) plus z MomQ. A shifted composite propagator is expressed using its unshifted [PropDen](paclet:HEPCAT/ref/PropDen) and the channel roots zPlus and zMinus.",
       "This legacy all-line-shift helper uses the package symbol ConstructiveDiagrams`z. It does not determine the auxiliary q momenta or solve for the roots.",
       "Preserve the shift definitions and assumptions alongside the result. This is separate from ordinary amplitude preparation."
     ],
@@ -2757,10 +2920,7 @@
       }
     ],
     "related": [
-      "ComplexifyMomenta",
-      "MomQ",
-      "zPlus",
-      "zMinus"
+      "ComplexifyMomenta"
     ],
     "guide": "SpinorAlgebra"
   },
@@ -2774,8 +2934,9 @@
       }
     ],
     "details": [
-      "This is a symbolic head replacement used by legacy shift calculations. It does not determine a shift or remove MomHat and scalar-product markers.",
-      "Use UnhatMomenta when the intended operation also removes its supported shifted momentum heads. Neither operation proves equality between different kinematics."
+      "Use this to remove the shifted-spinor labels only. Shifted momenta and their scalar products remain in their existing form, allowing a derivation to treat those two parts separately.",
+      "This is a symbolic head replacement used by legacy shift calculations. It does not determine a shift or remove [MomHat](paclet:HEPCAT/ref/MomHat) and scalar-product markers.",
+      "Use [UnhatMomenta](paclet:HEPCAT/ref/UnhatMomenta) when the intended operation also removes its supported shifted momentum heads. Neither operation proves equality between different kinematics."
     ],
     "examples": [
       {
@@ -2818,7 +2979,8 @@
       "xFactor",
       "xTildeFactor"
     ],
-    "guide": "IdentitiesAndSimplification"
+    "guide": "IdentitiesAndSimplification",
+    "visibility": "internal"
   },
   {
     "name": "xTildeFactorReduced",
@@ -2847,7 +3009,8 @@
       "xFactor",
       "xTildeFactor"
     ],
-    "guide": "IdentitiesAndSimplification"
+    "guide": "IdentitiesAndSimplification",
+    "visibility": "internal"
   },
   {
     "name": "colorT",
@@ -2874,7 +3037,8 @@
       "ColorGenerator",
       "ColorStructure"
     ],
-    "guide": "SpinorAlgebra"
+    "guide": "SpinorAlgebra",
+    "visibility": "internal"
   },
   {
     "name": "colorf",
@@ -2901,7 +3065,8 @@
       "ColorGenerator",
       "ColorStructure"
     ],
-    "guide": "SpinorAlgebra"
+    "guide": "SpinorAlgebra",
+    "visibility": "internal"
   },
   {
     "name": "colorTrace",
@@ -2928,6 +3093,7 @@
       "ColorGenerator",
       "ColorStructure"
     ],
-    "guide": "SpinorAlgebra"
+    "guide": "SpinorAlgebra",
+    "visibility": "internal"
   }
 ]

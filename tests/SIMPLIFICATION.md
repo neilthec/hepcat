@@ -21,7 +21,7 @@ notebooks are preserved on the `ml-simplify` branch at commit `54f6920`.
 After loading HEPCAT, enumerate exact edits and apply a selected edit:
 
 ```wolfram
-pair = First[diagramAmplitudes[diagrams]];
+pair = First[DiagramAmplitudes[diagrams]];
 edits = SpinorIdentityCandidates[pair];
 If[edits =!= {}, next = ApplySpinorIdentity[pair, First[edits]]];
 SpinorExpressionComplexity[pair[[2]]]
@@ -37,7 +37,7 @@ Use the same options when generating and applying edits.
 identities. `ComplicateAmplitude` remains a model-free way to exercise legal
 identities with a reproducible random seed.
 
-The existing `applyToNumerator[expr, rules]` applies rules to the numerator of
+The existing `ApplyToNumerator[expr, rules]` applies rules to the numerator of
 each existing term without combining or expanding the terms.
 
 ## Automatic Reduction
@@ -688,7 +688,7 @@ the original compact factorization channels and the model:
 
 ```wolfram
 diagrams = CreateDiagrams[particles, diagramModel];
-amplitudes = diagramAmplitudes[diagrams];
+amplitudes = DiagramAmplitudes[diagrams];
 channels = FactorizationAmplitudeChannels[particles, factorizationModel];
 CheckAmplitudes[amplitudes, channels, factorizationModel]
 ```
@@ -715,7 +715,7 @@ Supply a separately calculated, spinor-converted Feynman amplitude to add an
 off-cut equality test to the same report:
 
 ```wolfram
-feynmanPairs = diagramAmplitudes[CreateDiagrams[particles, qedFeynmanModel]];
+feynmanPairs = DiagramAmplitudes[CreateDiagrams[particles, qedFeynmanModel]];
 preparedFeynman = PrepareAmplitudes[feynmanPairs, qedFeynmanModel,
   "PolePreference" -> "IndependentXi", "MaxSteps" -> 0];
 CheckAmplitudes[finalAmplitude, channels, factorizationModel,
@@ -1139,7 +1139,7 @@ reductions; full amplitude completion remains a separate stage.
 For `e,E,A.+,A.+,A.-`, use:
 
 ```wolfram
-pairs = diagramAmplitudes[CreateDiagrams[
+pairs = DiagramAmplitudes[CreateDiagrams[
   {"e", "E", "A.+", "A.+", "A.-"}, qedDiagramModel]];
 mixedRoute = qedFivePointMixedRoute[pairs];
 mixedRoute["Final"]
@@ -1503,7 +1503,7 @@ force agreement.
 particles = {"e", "E", "A.+", "A.+", "A.+"};
 qedDiagramModel = ReadModel[FileNameJoin[{hepcatDirectory, "models"}], 2];
 qedFactorizationModel = ReadModel[FileNameJoin[{hepcatDirectory, "models"}], 3];
-pairs = diagramAmplitudes[CreateDiagrams[particles, qedDiagramModel]];
+pairs = DiagramAmplitudes[CreateDiagrams[particles, qedDiagramModel]];
 diagramPreparation = PrepareAmplitudes[pairs, qedDiagramModel,
   "ReturnDetails" -> True];
 prepared = diagramPreparation["PreparedAmplitudes"];
@@ -1629,7 +1629,7 @@ For a massless external particle `a`, the physical choice is
 are never put on shell or replaced. The selection excludes each diagram's
 own channels, including their momentum-conservation complements, and uses
 physical channels represented by the supplied diagram set. Supply the full
-`diagramAmplitudes` output so those alternatives are available.
+`DiagramAmplitudes` output so those alternatives are available.
 
 The massless-spinor choices exclude self-reference and massless-pair channels
 already known to be physical, which matters for gluons. `Automatic` falls back
@@ -1929,7 +1929,7 @@ already pass gets two inexpensive proposals with `"InputReweighting" -> Automati
    can propose `A+B+C`, while the original input remains `A+2B+C`.
 
 Identical terms can carry a genuine physical multiplicity. Neither proposal
-is an automatic identity or a change to how `diagramAmplitudes` adds diagrams.
+is an automatic identity or a change to how `DiagramAmplitudes` adds diagrams.
 All original physical-channel targets, including expected zero residues, must
 hold on fresh exact sampled charts, in all coherent massive-spin components
 and for every validation parameter set. A seed that already passes is retained.

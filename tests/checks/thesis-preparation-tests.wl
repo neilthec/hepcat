@@ -119,7 +119,7 @@ check["the thesis normalization is read from the cubic model vertex",
 
 tpParticles = {"e", "E", "A.+", "A.+", "A.+", "A.+"};
 tpDiagrams = CreateDiagrams[tpParticles, tpModel];
-tpRaw = diagramAmplitudes[tpDiagrams];
+tpRaw = DiagramAmplitudes[tpDiagrams];
 tpRawHash = Hash[tpRaw, "SHA256"];
 tpCuts[pair_] := Sort[DeleteDuplicates[First /@ DeleteMissing[
   ConstructiveDiagrams`Private`residuePropagatorKey[#, Range[6]] & /@
@@ -195,7 +195,7 @@ If[!MissingQ[tpRaw3456],
 
 (* The six-point improvement must preserve the established five-point
    AllSpurious compactness bound, using the same cubic model as its fixture. *)
-tpFiveRaw = diagramAmplitudes[CreateDiagrams[
+tpFiveRaw = DiagramAmplitudes[CreateDiagrams[
   {"e", "E", "A.+", "A.+", "A.+"}, tpModel]];
 tpFivePrepared = TimeConstrained[PrepareAmplitudes[tpFiveRaw, tpModel,
   "PolePreference" -> "AllSpurious", "ProgressReporting" -> False], 120, $TimedOut];
@@ -532,7 +532,7 @@ check["per-chain authorized cuts preserve original propagators exactly",
    compare numerators only on each original diagram's own two cuts. They do
    not substitute the known completed amplitude for the diagram expressions. *)
 tpMixedParticles = {"e", "E", "A.+", "A.+", "A.-"};
-tpMixedRaw = diagramAmplitudes[CreateDiagrams[tpMixedParticles, tpModel]];
+tpMixedRaw = DiagramAmplitudes[CreateDiagrams[tpMixedParticles, tpModel]];
 tpMixedRawHash = Hash[tpMixedRaw, "SHA256"];
 tpMixedReport = TimeConstrained[PrepareAmplitudes[tpMixedRaw, tpModel,
   "PolePreference" -> "AllPhysical", "MaxSteps" -> 0,
@@ -960,7 +960,7 @@ tpSixOrder[pair_] := Module[{sets, nested},
 ];
 Do[
   tpSixParticles = Join[{"e", "E"}, tpSixHelicities];
-  tpSixRaw = diagramAmplitudes[CreateDiagrams[tpSixParticles, tpModel]];
+  tpSixRaw = DiagramAmplitudes[CreateDiagrams[tpSixParticles, tpModel]];
   tpSixOrders = tpSixOrder /@ tpSixRaw;
   tpSixWantedOrders = If[Count[tpSixHelicities, "A.-"] === 1,
     {{3, 4, 5, 6}, {3, 6, 4, 5}}, {{3, 4, 5, 6}, {3, 5, 4, 6}}];
@@ -1140,7 +1140,7 @@ tpFourOwnChart[diagram_, mass_, sample_Integer] := Module[
 Do[
   tpFourParticles = {"e", "E", "E", "e", "A.+", tpFourSecondPhoton};
   tpFourDiagrams = CreateDiagrams[tpFourParticles, tpModel];
-  tpFourRaw = diagramAmplitudes[tpFourDiagrams];
+  tpFourRaw = DiagramAmplitudes[tpFourDiagrams];
   tpFourRawHash = Hash[tpFourRaw, "SHA256"];
   tpFourClasses = tpFourTopology /@ tpFourDiagrams;
   tpFourSelectedIndices = (FirstPosition[tpFourClasses, #][[1]] &) /@
@@ -1326,7 +1326,7 @@ tpSFOffcutChart[mass_,sample_Integer] := Module[
 
 tpSFParticles = {"e", "E", "e", "E", "e", "E"};
 tpSFDiagrams = CreateDiagrams[tpSFParticles, tpModel];
-tpSFRaw = diagramAmplitudes[tpSFDiagrams];
+tpSFRaw = DiagramAmplitudes[tpSFDiagrams];
 tpSFRawHash = Hash[tpSFRaw, "SHA256"];
 tpSFTopology = tpSFLineData /@ tpSFDiagrams;
 tpSFSigns = ConstructiveDiagrams`diagramFermionSign /@ tpSFDiagrams;

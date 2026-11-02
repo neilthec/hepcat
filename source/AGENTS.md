@@ -20,7 +20,13 @@ are relative to the repository root, not to this file.
 
 ## Keep Mathematica Help Current
 
-Documentation is part of every package improvement. When adding or changing a
+Documentation is part of every package improvement. Public functions use full
+CamelCase names. Explicitly classify internal helpers with `"visibility":
+"internal"` in the documentation catalogs; do not publish a Help page merely
+because a name is protected or has a usage message. Do not restore the removed
+`diagramAmplitudes` or `applyToNumerator` spellings as compatibility aliases.
+Write concrete explanations, runnable examples and links to related functions.
+ When adding or changing a
 public function, option, default, input/output format, or supported workflow,
 update the relevant reference pages, examples, guides and tutorials in
 `Documentation/Source` in the same change. Document limitations and failures
@@ -41,7 +47,7 @@ include the documentation updates in the same commit as the implementation.
 - `source/HEPCAT-Parameters.wl`: inert model-local parameters and functions,
   parameter lookup, local numerical rules and generic parameter formatting.
 - `source/HEPCAT-Base.wl`: spinor algebra, `ReduceSpinContractions`,
-  `ReduceSpinorProducts`, `SimplifySpinorProducts`, `applyToNumerator`, and the
+  `ReduceSpinorProducts`, `SimplifySpinorProducts`, `ApplyToNumerator`, and the
   section **Symbolic Spinor Identities** containing explicit identity edits.
 - `source/HEPCAT-Model.wl`: model loading, diagram construction, factorization,
   and **Physical Residue Diagnostics**, including spurious-pole, high-energy,
@@ -92,12 +98,11 @@ earlier machine-learning simplifier is preserved on the `ml-simplify` branch.
 
 ## Load and Run
 
-Determine the absolute repository root and assign it to `hepcatDirectory`.
-Use a working, licensed Wolfram kernel, then load the package as follows:
+Use a working, licensed Wolfram kernel. Load the checkout with one command,
+changing the path if needed:
 
 ```wolfram
-Global`$HEPCATpath = FileNameJoin[{hepcatDirectory, "source"}];
-Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
+Get["~/code/hepcat/source/HEPCAT.wl"]
 ```
 
 Evaluate package loading before parsing code that uses its symbols. In a
@@ -111,18 +116,19 @@ the usual direct executable is
 Check local availability; do not change licensing or terminate the user's
 interactive Mathematica kernel to make a test run.
 
-For example, the existing five-point electron/photon QED setup is:
+For model paths in the following examples, assign `hepcatDirectory` to the
+repository root. The existing five-point electron/photon QED setup is:
 
 ```wolfram
 particles = {"e", "E", "A.+", "A.+", "A.+"};
 diagramModel = ReadModel[FileNameJoin[{hepcatDirectory, "models"}], 2];
 factorizationModel = ReadModel[FileNameJoin[{hepcatDirectory, "models"}], 3];
 diagrams = CreateDiagrams[particles, diagramModel];
-pairs = diagramAmplitudes[diagrams];
+pairs = DiagramAmplitudes[diagrams];
 ```
 
 `pairs` contains `{massRules, expression}` for each diagram. Use the plural
-`diagramAmplitudes` public entry point for complete diagram calculations.
+`DiagramAmplitudes` public entry point for complete diagram calculations.
 `CreateArrowDiagrams[diagrams]` displays the diagrams.
 
 ## Independent Feynman Benchmark
@@ -130,13 +136,13 @@ pairs = diagramAmplitudes[diagrams];
 `ReadModel` also recognizes a CalcHEP `lgrng*.mdl` model and returns
 `FeynmanModel[particles, vertices, variables, functions]`, not the constructive
 model's four-element list. The four parts keep their positional organization.
-Use the same `CreateDiagrams` and `diagramAmplitudes` entry points; the explicit
+Use the same `CreateDiagrams` and `DiagramAmplitudes` entry points; the explicit
 model head selects Feynman tensors and ordered Dirac chains. For example:
 
 ```wolfram
 feynmanModel = ReadModel[FileNameJoin[{hepcatDirectory, "model_feynman"}], 1];
 feynmanDiagrams = CreateDiagrams[{"e", "E", "A.+", "A.-"}, feynmanModel];
-feynmanPairs = diagramAmplitudes[feynmanDiagrams];
+feynmanPairs = DiagramAmplitudes[feynmanDiagrams];
 spinorPairs = FeynmanToSpinorProducts[feynmanPairs,
   "TimeConstraint" -> 60];
 preparedFeynman = PrepareAmplitudes[feynmanPairs, feynmanModel,
@@ -359,7 +365,7 @@ using it. Ask about uncertain conventions; do not silently invent a rule.
   continuation and the single-pole residues of the full sum. Record that change
   and any off-cut remainder explicitly. Do not label it an ordinary off-cut
   identity; validate the resulting full amplitude in all channels.
-- `applyToNumerator[expr, rules]` acts on the numerator of each existing additive
+- `ApplyToNumerator[expr, rules]` acts on the numerator of each existing additive
   term without `Together` or `Expand`. Preserve this behavior. The older
   reduction/simplification routines apply many identities internally; calling
   one is not, by itself, a transparent elementary derivation.

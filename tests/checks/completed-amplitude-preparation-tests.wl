@@ -129,7 +129,7 @@ check["a Feynman model does not permit splitting a completed amplitude's shared 
    are on shell merely because their propagators occur in the expression. *)
 cpCubicModel = {{{"Scalar", "s", "s", 1, 0, cpMass, 0, 1, 1, "", ""}},
   {{"s", "s", "s", "", cpCoupling, 1}}, {}, {}};
-cpCubicPairs = diagramAmplitudes[CreateDiagrams[ConstantArray["s", 4], cpCubicModel]];
+cpCubicPairs = DiagramAmplitudes[CreateDiagrams[ConstantArray["s", 4], cpCubicModel]];
 cpCubicChannels = FactorizationAmplitudeChannels[ConstantArray["s", 4], cpCubicModel];
 cpTree = Total[Last /@ cpCubicPairs];
 cpCompleted = CompleteFactorization[cpTree, cpCubicChannels, cpCubicModel,
@@ -203,7 +203,7 @@ check["the checker accepts either the final prepared pair or its bare expression
 (* A shared-Xi all-positive QED continuation is known to require that literal
    correlation. Re-preparation must not split it into unrelated per-leg Xi's. *)
 Get[FileNameJoin[{root, "tests", "QED-5-point-residues.wl"}]];
-cpQEDPairs = diagramAmplitudes[CreateDiagrams[prParticles, prModel]];
+cpQEDPairs = DiagramAmplitudes[CreateDiagrams[prParticles, prModel]];
 cpQEDExternal = ConstructiveDiagrams`Private`preparationExternalRules[First[First[cpQEDPairs]]];
 cpQEDContracted = Map[Function[pair,
   ConstructiveDiagrams`Private`preparationNumerators[Last[pair], Function[num,

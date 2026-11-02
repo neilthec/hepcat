@@ -207,7 +207,7 @@ check["unsupported source presentation remains an explicit rejection and does no
    particle-name exception. Repetition here is a deliberate normalization test. *)
 csQED = ReadModel[FileNameJoin[{root, "models"}], 2];
 csQEDProcess = {"e", "E", "E", "e"};
-csQEDPairs = PrepareAmplitudes[diagramAmplitudes[CreateDiagrams[csQEDProcess, csQED]], csQED,
+csQEDPairs = PrepareAmplitudes[DiagramAmplitudes[CreateDiagrams[csQEDProcess, csQED]], csQED,
   "PolePreference" -> None, "MaxSteps" -> 0, "Parallelization" -> False, "ProgressReporting" -> False];
 csQEDChannels = FactorizationAmplitudeChannels[csQEDProcess, csQED];
 csRepeatedPairs = Flatten[ConstantArray[csQEDPairs, 6], 1];
@@ -244,7 +244,7 @@ csFailedAdmission = Internal`InheritedBlock[{ConstructiveDiagrams`Private`comple
   CompleteFactorization[csRepeated, csQEDChannels, csQED, Sequence @@ csCFOptions]];
 check["a failed admitted proposal preserves its cap event exactly once", Count[csFailedAdmission["CapChanges"], csAdmissionEvent] === 1 && csFailedAdmission["EffectiveMaxCorrectionTerms"] >= 256];
 
-csPairs = diagramAmplitudes[CreateDiagrams[ConstantArray["s", 4], csModel]];
+csPairs = DiagramAmplitudes[CreateDiagrams[ConstantArray["s", 4], csModel]];
 csAmplitude = Total[(ReduceSpinContractions[Last[#]] /. First[#]) & /@ csPairs];
 (* Exercise the projected-seed hook without a large six-fermion benchmark.
    The mock performs the exact identity expr==expr; only gating, deadline and

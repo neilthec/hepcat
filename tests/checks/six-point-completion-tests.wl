@@ -667,7 +667,7 @@ check["the balanced example passes fresh coherent-spin two-leg and three-leg cut
 
 (* Generated only after the constructive expression, and used only as a check. *)
 sixBalancedFeynmanModel = ReadModel[FileNameJoin[{root, "model_feynman"}], 2];
-sixBalancedFeynmanRaw = diagramAmplitudes[CreateDiagrams[sixBalancedParticles, sixBalancedFeynmanModel]];
+sixBalancedFeynmanRaw = DiagramAmplitudes[CreateDiagrams[sixBalancedParticles, sixBalancedFeynmanModel]];
 sixBalancedFeynmanPrepared = PrepareAmplitudes[sixBalancedFeynmanRaw, sixBalancedFeynmanModel,
   "PolePreference" -> "AllSpurious", "MaxSteps" -> 0, "TimeConstraint" -> 60,
   "ProgressReporting" -> False];
@@ -690,7 +690,7 @@ sixCompactCheck[name_, value_] := (sixCompactChecks++; check[name, value]);
 Print["Preparing twenty-four fresh all-positive physical-reference diagrams."];
 sixCompactDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 2];
 sixCompactDiagrams = CreateDiagrams[sixParticles, sixCompactDiagramModel];
-sixCompactRaw = diagramAmplitudes[sixCompactDiagrams];
+sixCompactRaw = DiagramAmplitudes[sixCompactDiagrams];
 sixCompactRawSaved = sixCompactRaw;
 sixCompactPreparation = PrepareAmplitudes[sixCompactRaw, sixCompactDiagramModel,
   "PolePreference" -> "AllPhysical", "MaxSteps" -> 0,
@@ -841,7 +841,7 @@ sixCompactCheck["disabling companions preserves the existing general channel rec
 (* This independent benchmark is generated after the constructive solve and
    never supplied as fitting data. Internal Feynman lines remain off shell. *)
 sixCompactFeynmanModel = sixBalancedFeynmanModel;
-sixCompactFeynmanRaw = diagramAmplitudes[CreateDiagrams[sixParticles, sixCompactFeynmanModel]];
+sixCompactFeynmanRaw = DiagramAmplitudes[CreateDiagrams[sixParticles, sixCompactFeynmanModel]];
 sixCompactFeynmanPrepared = PrepareAmplitudes[sixCompactFeynmanRaw, sixCompactFeynmanModel,
   "PolePreference" -> "AllSpurious", "MaxSteps" -> 0, "TimeConstraint" -> 60,
   "ProgressReporting" -> False];
@@ -897,7 +897,7 @@ If[Environment["HEPCAT_TEST_FULL_BALANCED_SIX_POINT"] === "1",
 If[Environment["HEPCAT_TEST_FULL_SIX_POINT"] === "1",
   Print["Preparing the actual six-point electron/four-photon diagrams."];
   sixFullDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 2];
-  sixFullPairs = diagramAmplitudes[CreateDiagrams[sixParticles, sixFullDiagramModel]];
+  sixFullPairs = DiagramAmplitudes[CreateDiagrams[sixParticles, sixFullDiagramModel]];
   sixFullPrepared = PrepareAmplitudes[sixFullPairs, sixFullDiagramModel,
     "PolePreference" -> "AllSpurious", "MaxSteps" -> 12,
     "ProgressReporting" -> False];
@@ -934,7 +934,7 @@ If[Environment["HEPCAT_TEST_FULL_SIX_POINT"] === "1",
 If[Environment["HEPCAT_TEST_FULL_MIXED_SIX_POINT"] === "1",
   Print["Preparing twenty-four mixed-helicity six-point diagrams."];
   sixMixedDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 2];
-  sixMixedRaw = diagramAmplitudes[CreateDiagrams[sixMixedParticles, sixMixedDiagramModel]];
+  sixMixedRaw = DiagramAmplitudes[CreateDiagrams[sixMixedParticles, sixMixedDiagramModel]];
   sixMixedRawBefore = sixMixedRaw;
   sixMixedPrepared = PrepareAmplitudes[sixMixedRaw, sixMixedDiagramModel,
     "PolePreference" -> "AllSpurious", "MaxSteps" -> 12,
@@ -963,7 +963,7 @@ If[Environment["HEPCAT_TEST_FULL_MIXED_SIX_POINT"] === "1",
       sixMixedCompletion["RefinementHistory"] =!= {} &&
         Last[sixMixedCompletion["RefinementHistory"]]["Status"] === "COMPLETE"];
     sixMixedFeynmanModel = ReadModel[FileNameJoin[{root, "model_feynman"}], 2];
-    sixMixedFeynmanRaw = diagramAmplitudes[
+    sixMixedFeynmanRaw = DiagramAmplitudes[
       CreateDiagrams[sixMixedParticles, sixMixedFeynmanModel]];
     sixMixedFeynmanPrepared = PrepareAmplitudes[sixMixedFeynmanRaw, sixMixedFeynmanModel,
       "PolePreference" -> "AllSpurious", "MaxSteps" -> 0,

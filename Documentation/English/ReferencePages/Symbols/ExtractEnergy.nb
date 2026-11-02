@@ -7,8 +7,8 @@ Notebook[
         "AnchorBar"]}}, GridBoxAlignment -> {"Columns" -> {Left, Right}},
      GridBoxItemSize -> {"Columns" -> {Scaled[0.42], Scaled[0.58]}}]],
    "AnchorBarGrid"], Cell["ExtractEnergy", "ObjectName"],
-  Cell["Evaluates supported spinor chains as explicit energy-angle matrix \
-expressions.", "Notes"],
+  Cell[TextData[{"Evaluates supported spinor expressions in an explicit \
+energy, momentum-angle and spin basis."}], "Notes"],
   Cell[TextData[{Cell[BoxData[RowBox[{"ExtractEnergy", "[", "expr", ",", " ",
          "particleSpins", "]"}]], "InlineFormula"], "  ", "substitutes \
 momentum matrices and two-component spinors for the listed particles."}],
@@ -18,68 +18,69 @@ momentum matrices and two-component spinors for the listed particles."}],
          "Mass", "[", "i", "]", " ", "->", " ", "mass", ",", " ", "...", "}",
          "]"}]], "InlineFormula"], "  ", "supplies known external on-shell \
 masses for stable numerical evaluation."}], "Usage"],
-  Cell["Details", "NotesSection"], Cell["A massless or scalar entry can be \
-{particle}. A massive spin entry is {particle,spin,projection}, using \
-physical spin values such as {1,1/2,1/2}.", "Notes"],
-  Cell["Results use En[i], MomMagnitude[i], Theta[i] and Phi[i]. The spatial \
-momentum convention is p(sin(theta)cos(phi),sin(theta)sin(phi),cos(theta)).",
-   "Notes"], Cell["Internally, ExtractEnergy1 substitutes momentum matrices \
-and ExtractEnergy2 substitutes spinor rows and columns; the final pass \
-evaluates Dot and Tr.", "Notes"], Cell["Supply a complete and consistent \
-on-shell configuration for numerical use. The function does not generate \
-phase space or enforce total momentum conservation.", "Notes"],
-  Cell["The optional string option \"MassRules\" defaults to {}. Supply \
-external masses, for example {Mass[1] -> me}, when evaluating highly boosted \
-massive spinors. The known mass allows the small component sqrt(E-p) to be \
-evaluated as abs(m)/sqrt(E+p) for supported positive-energy on-shell input.",
-   "Notes"], Cell["Rounded energy and momentum alone cannot recover a small \
-mass once E-p has lost its significant digits. A supplied mass is physical \
-input, not a mass inferred from that subtraction. Numerical consistency \
-checks gate this stable route; they cannot independently establish a tiny \
-mass from rounded data.", "Notes"], Cell["The default symbolic formulas are \
-unchanged. Signed-energy, complex and unsupported off-shell inputs retain \
-their branch-sensitive expressions. Supplying external masses does not put a \
-composite momentum or a propagator denominator on shell.", "Notes"],
-  Cell["The mass-aware route also stabilizes supported external scalar \
-products and scalar energy factors already produced by SpinToHelicitySpinors. \
-It supports constructing the expression symbolically and substituting \
-numerical kinematics afterward.", "Notes"], Cell["Options", "NotesSection"],
+  Cell["Details", "NotesSection"],
+  Cell[TextData[{"Use this to inspect a bracket numerically or compare an \
+identity at a chosen set of momenta. It replaces supported momentum matrices \
+and spinor endpoints by two-component expressions and evaluates the resulting \
+matrix products and traces."}], "Notes"],
+  Cell[TextData[{"The particle list tells HEPCAT which external labels to \
+evaluate. An entry {i} handles a massless or scalar leg. A massive spin entry \
+{i, spin, projection}, such as {1,1/2,1/2}, also chooses its physical spin \
+component."}], "Notes"],
+  Cell[TextData[{"The result uses ", ButtonBox["En", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/En"], "[i], ",
+     ButtonBox["MomMagnitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/MomMagnitude"], "[i], ",
+     ButtonBox["Theta", BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/Theta"], "[i] and ", ButtonBox["Phi",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/Phi"], "[i]. The \
+spatial momentum is p {Sin[theta] Cos[phi], Sin[theta] Sin[phi], Cos[theta]}. \
+Substitute a complete, consistent set of these values after constructing the \
+expression."}], "Notes"], Cell[TextData[{"The function evaluates the supplied \
+configuration; it does not generate conserved phase space or repair \
+inconsistent momenta. To compare complete scattering amplitudes at controlled \
+kinematics, use ", ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"], "."}], "Notes"],
+  Cell["Masses and highly boosted particles", "NotesSection"],
+  Cell[TextData[{"Supply known external masses through the string option ",
+     Cell[BoxData[RowBox[{"\"MassRules\"", " ", "->", " ", "{", "Mass", "[",
+         "1", "]", " ", "->", " ", "me", ",", " ", "...", "}"}]],
+      "InlineFormula"], ". For supported positive-energy, on-shell numerical \
+input, HEPCAT can then evaluate the small spinor component sqrt(E-p) as \
+Abs[m]/sqrt(E+p), avoiding subtraction of almost equal numbers."}], "Notes"],
+  Cell[TextData[{"The supplied mass is independent physical input. Once \
+rounded energy and momentum values have become equal, their difference cannot \
+recover a tiny mass. The numerical consistency checks protect the stable \
+substitution but do not prove that tiny mass from rounded data."}], "Notes"],
+  Cell[TextData[{"Symbolic formulas, signed-energy inputs, and unsupported \
+branches retain their corresponding expressions. Supplying external masses \
+does not impose an internal propagator's mass shell."}], "Notes"],
+  Cell["Options", "NotesSection"],
   Cell[BoxData[GridBox[{{Cell["Option", "TableHeader"],
        Cell["Default", "TableHeader"], Cell["Meaning", "TableHeader"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"MassRules\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"{", "}"}]], "InlineFormula"]}],
-        "TableText"], Cell["Known external on-shell masses for ExtractEnergy \
-numerical evaluation, supplied as {Mass[leg] -> mass, ...}. The default {} \
-preserves the existing energy-angle formulas. Supplied masses permit stable \
-small spinor components and supported momentum expressions; they do not \
-impose internal propagator shells.", "TableText"]}},
+        "TableText"], Cell[TextData[{"Known external on-shell masses for \
+ExtractEnergy numerical evaluation, supplied as {Mass[leg] -> mass, ...}. The \
+default {} preserves the existing energy-angle formulas. Supplied masses \
+permit stable small spinor components and supported momentum expressions; \
+they do not impose internal propagator shells."}], "TableText"]}},
      GridBoxAlignment -> {"Columns" -> {Left, Left, Left}},
      GridBoxItemSize -> {"Columns" -> {Scaled[0.23], Scaled[0.19],
          Scaled[0.58]}}, GridBoxDividers ->
       {"Rows" -> {False, True, {False}, False}}]], "3ColumnTableMod"],
   Cell["Examples", "PrimaryExamplesSection"],
-  Cell[CellGroupData[{Cell["Load HEPCAT", "ExampleSubsection"],
-     Cell["Evaluate this setup once before the examples. The paths refer to \
-the local HEPCAT checkout; no model parameters are assigned global numerical \
-values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
-         "[", "Global`$HEPCATpath", "]", " ", "||", " ", "!", "DirectoryQ",
-         "[", "Global`$HEPCATpath", "]", ",", "\n", " ", " ",
-         "Global`$HEPCATpath", " ", "=", " ", "FileNameJoin", "[", "{",
-         "First", "[", "PacletFind", "[", "\"HEPCAT\"", "]", "]", "[",
-         "\"Location\"", "]", ",", " ", "\"source\"", "}", "]", "]", ";",
-         "\n", "If", "[", "!", "MemberQ", "[", "$Packages", ",", " ",
-         "\"ConstructiveDiagrams`\"", "]", ",", "\n", " ", " ", "Get", "[",
-         "FileNameJoin", "[", "{", "Global`$HEPCATpath", ",", " ",
-         "\"HEPCAT.wl\"", "}", "]", "]", "]", ";", "\n", "hepcatDirectory",
-         " ", "=", " ", "ParentDirectory", "[", "Global`$HEPCATpath", "]",
-         ";", "\n", "modelDirectory", " ", "=", " ", "FileNameJoin", "[",
-         "{", "hepcatDirectory", ",", " ", "\"models\"", "}", "]", ";", "\n",
-         "feynmanModelDirectory", " ", "=", " ", "FileNameJoin", "[", "{",
-         "hepcatDirectory", ",", " ", "\"model_feynman\"", "}", "]", ";"}]],
-      "Input", InitializationCell -> True]}, Open]],
-  Cell["Basic Examples", "ExampleSection"],
-  Cell["Evaluate an angle bracket in explicit massless components.",
+  Cell[CellGroupData[{Cell["Load HEPCAT if needed", "ExampleSubsection"],
+     Cell["Skip this setup if HEPCAT is already loaded. These examples assume \
+the checkout is in ~/code/hepcat; change the paths if yours is elsewhere. \
+Evaluate loading in its own cell before the calculation.", "ExampleText"],
+     Cell[BoxData[RowBox[{"Get", "[", "\"~/code/hepcat/source/HEPCAT.wl\"",
+         "]", ";"}]], "Input", InitializationCell -> True]}, Closed]],
+  Cell["Basic Examples", "ExampleSection"], Cell["Explicit components",
+   "ExampleSubsection"],
+  Cell[TextData[
+    {"Evaluate an angle bracket in explicit massless components."}],
    "ExampleText"], Cell[BoxData[RowBox[{"ExtractEnergy", "[", "SpinorChain",
       "[", "Spinor", "[", "\"Helicity\"", ",", " ", "\"Angle\"", ",", " ",
       "1", "]", ",", " ", "Spinor", "[", "\"Helicity\"", ",", " ",
@@ -93,10 +94,11 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
       ")", "*", "Cos", "[", "Theta", "[", "1", "]", "/", "2", "]", "*",
       "Sqrt", "[", "En", "[", "1", "]", "]", "*", "Sqrt", "[", "En", "[",
       "2", "]", "]", "*", "Sin", "[", "Theta", "[", "2", "]", "/", "2",
-      "]"}]], "Output"], Cell["Evaluate a scalar momentum product.",
-   "ExampleText"], Cell[BoxData[RowBox[{"ExtractEnergy", "[", "MomProd", "[",
-      "1", ",", " ", "2", "]", ",", " ", "{", "{", "1", "}", ",", " ", "{",
-      "2", "}", "}", "]"}]], "Input"],
+      "]"}]], "Output"], Cell["Explicit components", "ExampleSubsection"],
+  Cell[TextData[{"Evaluate a scalar momentum product."}], "ExampleText"],
+  Cell[BoxData[RowBox[{"ExtractEnergy", "[", "MomProd", "[", "1", ",", " ",
+      "2", "]", ",", " ", "{", "{", "1", "}", ",", " ", "{", "2", "}", "}",
+      "]"}]], "Input"],
   Cell[BoxData[RowBox[{"En", "[", "1", "]", "*", "En", "[", "2", "]", " ",
       "-", " ", "Cos", "[", "Theta", "[", "1", "]", "]", "*", "Cos", "[",
       "Theta", "[", "2", "]", "]", "*", "MomMagnitude", "[", "1", "]", "*",
@@ -108,36 +110,34 @@ values.", "ExampleText"], Cell[BoxData[RowBox[{"If", "[", "!", "StringQ",
       "MomMagnitude", "[", "2", "]", "*", "Sin", "[", "Phi", "[", "1", "]",
       "]", "*", "Sin", "[", "Phi", "[", "2", "]", "]", "*", "Sin", "[",
       "Theta", "[", "1", "]", "]", "*", "Sin", "[", "Theta", "[", "2", "]",
-      "]"}]], "Output"], Cell["Retain a tiny massive spinor component after \
-machine energy and momentum have rounded to the same value. The result is \
-nonzero because the mass is supplied independently.", "ExampleText"],
-  Cell[BoxData[RowBox[{"energyExpression", " ", "=", " ", "ExtractEnergy",
-      "[", "\n", " ", " ", "SpinorChain", "[", "Spinor", "[", "\"Spin\"",
-      ",", " ", "\"Upper\"", ",", " ", "\"Angle\"", ",", " ", "1", ",", " ",
-      "1", "/", "2", "]", ",", "\n", " ", " ", " ", " ", "Spinor", "[",
-      "\"Helicity\"", ",", " ", "\"Angle\"", ",", " ", "2", "]", "]", ",",
-      " ", "{", "{", "1", "}", ",", " ", "{", "2", "}", "}", ",", "\n", " ",
-      " ", "\"MassRules\"", " ", "->", " ", "{", "Mass", "[", "1", "]", " ",
-      "->", " ", "1", "/", "2000", ",", " ", "Mass", "[", "2", "]", " ",
-      "->", " ", "0", "}", "]", ";", "\n", "energyExpression", " ", "/.",
-      " ", "{", "En", "[", "1", "]", " ", "->", " ", "10.", "^", "12", ",",
-      " ", "MomMagnitude", "[", "1", "]", " ", "->", " ", "10.", "^", "12",
-      ",", "\n", " ", " ", "Theta", "[", "1", "]", " ", "->", " ", "0.", ",",
-      " ", "Phi", "[", "1", "]", " ", "->", " ", "0.", ",", " ", "En", "[",
-      "2", "]", " ", "->", " ", "1.", ",", "\n", " ", " ", "MomMagnitude",
-      "[", "2", "]", " ", "->", " ", "1.", ",", " ", "Theta", "[", "2", "]",
-      " ", "->", " ", "0.", ",", " ", "Phi", "[", "2", "]", " ", "->", " ",
-      "0.", "}"}]], "Input"],
+      "]"}]], "Output"], Cell["Highly boosted massive particles",
+   "ExampleSubsection"], Cell[TextData[{"Retain a tiny massive spinor \
+component after machine energy and momentum have rounded to the same value. \
+The result is nonzero because the mass is supplied independently."}],
+   "ExampleText"], Cell[BoxData[RowBox[{"energyExpression", " ", "=", " ",
+      "ExtractEnergy", "[", "\n", " ", " ", "SpinorChain", "[", "Spinor",
+      "[", "\"Spin\"", ",", " ", "\"Upper\"", ",", " ", "\"Angle\"", ",",
+      " ", "1", ",", " ", "1", "/", "2", "]", ",", "\n", " ", " ", " ", " ",
+      "Spinor", "[", "\"Helicity\"", ",", " ", "\"Angle\"", ",", " ", "2",
+      "]", "]", ",", " ", "{", "{", "1", "}", ",", " ", "{", "2", "}", "}",
+      ",", "\n", " ", " ", "\"MassRules\"", " ", "->", " ", "{", "Mass", "[",
+      "1", "]", " ", "->", " ", "1", "/", "2000", ",", " ", "Mass", "[", "2",
+      "]", " ", "->", " ", "0", "}", "]", ";", "\n", "energyExpression", " ",
+      "/.", " ", "{", "En", "[", "1", "]", " ", "->", " ", "10.", "^", "12",
+      ",", " ", "MomMagnitude", "[", "1", "]", " ", "->", " ", "10.", "^",
+      "12", ",", "\n", " ", " ", "Theta", "[", "1", "]", " ", "->", " ",
+      "0.", ",", " ", "Phi", "[", "1", "]", " ", "->", " ", "0.", ",", " ",
+      "En", "[", "2", "]", " ", "->", " ", "1.", ",", "\n", " ", " ",
+      "MomMagnitude", "[", "2", "]", " ", "->", " ", "1.", ",", " ", "Theta",
+      "[", "2", "]", " ", "->", " ", "0.", ",", " ", "Phi", "[", "2", "]",
+      " ", "->", " ", "0.", "}"}]], "Input"],
   Cell[BoxData[RowBox[{"5.*^-10", " ", "+", " ", "0.", "*", "I"}]],
    "Output"], Cell["See Also", "SeeAlsoSection"],
-  Cell[TextData[{ButtonBox["ExtractEnergy1", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/ExtractEnergy1"], "  \[Bullet]  ",
-     ButtonBox["ExtractEnergy2", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/ExtractEnergy2"], "  \[Bullet]  ",
-     ButtonBox["En", BaseStyle -> "Link", ButtonData ->
-       "paclet:HEPCAT/ref/En"], "  \[Bullet]  ", ButtonBox["MomMagnitude",
-      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/MomMagnitude"]}],
-   "SeeAlso"], Cell["Related Guides", "MoreAboutSection"],
+  Cell[TextData[{ButtonBox["En", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/En"], "  \[Bullet]  ",
+     ButtonBox["MomMagnitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/MomMagnitude"]}], "SeeAlso"],
+  Cell["Related Guides", "MoreAboutSection"],
   Cell[TextData[{ButtonBox["Spinors, Momenta and Spin Sums",
       BaseStyle -> "Link", ButtonData ->
        "paclet:HEPCAT/guide/SpinorAlgebra"], "  \[Bullet]  ",
@@ -148,8 +148,8 @@ nonzero because the mass is supplied independently.", "ExampleText"],
  TaggingRules -> {"Metadata" -> {"context" -> "ConstructiveDiagrams`",
      "uri" -> "HEPCAT/ref/ExtractEnergy", "title" -> "ExtractEnergy",
      "type" -> "Symbol", "label" -> "HEPCAT Symbol", "paclet" -> "HEPCAT",
-     "language" -> "en", "summary" -> "Evaluates supported spinor chains as \
-explicit energy-angle matrix expressions.", "keywords" ->
-      {"HEPCAT", "ExtractEnergy", "spinor amplitudes"}, "status" -> "None",
-     "index" -> True}}, StyleDefinitions -> FrontEnd`FileName[{"Wolfram"},
-   "Reference.nb"]]
+     "language" -> "en", "summary" -> "Evaluates supported spinor expressions \
+in an explicit energy, momentum-angle and spin basis.",
+     "keywords" -> {"HEPCAT", "ExtractEnergy", "spinor amplitudes"},
+     "status" -> "None", "index" -> True}},
+ StyleDefinitions -> FrontEnd`FileName[{"Wolfram"}, "Reference.nb"]]
