@@ -112,6 +112,9 @@ Do[With[{pageName = page["name"]},
   dcCheck["generated public reference: " <> pageName,
     FileExistsQ[FileNameJoin[{dcReferenceDirectory, pageName <> ".nb"}]]]
 ], {page, dcPages}];
+dcCheck["nice and ExpandMomHatAlt remain implementation-only helpers",
+  ContainsAll[dcHiddenNames, {"nice", "ExpandMomHatAlt"}] &&
+    Intersection[dcPageNames, {"nice", "ExpandMomHatAlt"}] === {}];
 dcCheck["hidden and retired reference pages are not deployed",
   Intersection[dcHiddenNames, FileBaseName /@ FileNames["*.nb", dcReferenceDirectory]] === {}];
 dcCheck["the deployed reference set is exactly the reviewed public catalog",

@@ -2924,7 +2924,8 @@
     "related": [
       "ComplexifyMomenta"
     ],
-    "guide": "SpinorAlgebra"
+    "guide": "SpinorAlgebra",
+    "visibility": "internal"
   },
   {
     "name": "UnHatSpinors",

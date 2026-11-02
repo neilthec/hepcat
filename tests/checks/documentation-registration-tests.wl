@@ -174,6 +174,9 @@ drHiddenGuides = Lookup[Select[drAllGuides, !drPublicQ[#] &], "name", {}];
 drHiddenURIs = Join[("HEPCAT/ref/" <> # &) /@ drHiddenNames,
   ("HEPCAT/guide/" <> # &) /@ drHiddenGuides];
 drIndexedURIs = If[ListQ[drAllSearchMatches], Cases[drAllSearchMatches, {_, _, _, uri_String, _, _} :> uri], {}];
+drCheck["nice and ExpandMomHatAlt are excluded from public Help registration",
+  ContainsAll[drHiddenNames, {"nice", "ExpandMomHatAlt"}] &&
+    Intersection[drPublicNames, {"nice", "ExpandMomHatAlt"}] === {}];
 drCheck["internal and retired pages are absent from native search",
   Intersection[drHiddenURIs, drIndexedURIs] === {}];
 drCheck["every public symbol is present in native search",

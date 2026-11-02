@@ -151,7 +151,6 @@
           "UnhatMomenta",
           "ExpandComplexMomenta",
           "ReplaceSpinorZ",
-          "ExpandMomHatAlt",
           "UnHatSpinors"
         ],
         "guides": [],
@@ -699,7 +698,6 @@
         "functions": [
           "En",
           "ExpandComplexMomenta",
-          "ExpandMomHatAlt",
           "ExpandSummation",
           "ExtractEnergy",
           "ExtractMandelstahm"

@@ -198,17 +198,14 @@ chains and algebra to the earlier SPINAS C++ expression notation.",
 human-readable text.\nPlainText[expr, \"Model\"] returns explicit text \
 suitable for storing a supported exact expression in a HEPCAT \
 model.\nConverts a spinor expression to readable bracket text or exact \
-model-file syntax.", "ConstructiveDiagrams`ExpandMomHatAlt" -> "ExpandMomHatA\
-lt[expr] rewrites shifted composite propagators and chain momentum \
-insertions.\nExpands supported all-line-shift momentum and propagator \
-markers.", "ConstructiveDiagrams`UnHatSpinors" -> "UnHatSpinors[expr] \
-replaces each SpinorHat by Spinor.\nRemoves SpinorHat markers while leaving \
-shifted momenta unchanged.", "ConstructiveDiagrams`ReadModel" -> "ReadModel[d\
-irectory, number] Read the numbered model files from a directory.\nLoad the \
-particle content, amplitudes and parameters of a model for use throughout \
-HEPCAT.", "ConstructiveDiagrams`ParticleMass" -> "ParticleMass[name, \
-particles] Return the mass declared for a particle name.\nFind the mass \
-declared for a particle or antiparticle.",
+model-file syntax.", "ConstructiveDiagrams`UnHatSpinors" -> "UnHatSpinors[exp\
+r] replaces each SpinorHat by Spinor.\nRemoves SpinorHat markers while \
+leaving shifted momenta unchanged.", "ConstructiveDiagrams`ReadModel" -> "Rea\
+dModel[directory, number] Read the numbered model files from a \
+directory.\nLoad the particle content, amplitudes and parameters of a model \
+for use throughout HEPCAT.", "ConstructiveDiagrams`ParticleMass" -> "Particle\
+Mass[name, particles] Return the mass declared for a particle name.\nFind the \
+mass declared for a particle or antiparticle.",
  "ConstructiveDiagrams`AppendModelAmplitudes" -> "AppendModelAmplitudes[direc\
 tory, number, entries] Append {particles, amplitude} or {particles, factor, \
 amplitudeOverFactor} entries to ampsN.mdl.\nAdd established amplitude \

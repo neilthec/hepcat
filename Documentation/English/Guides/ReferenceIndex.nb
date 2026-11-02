@@ -131,13 +131,9 @@ external particle in explicit spinor formulas."}], "GuideText"],
       ButtonData -> "paclet:HEPCAT/ref/ExpandComplexMomenta"], ": ", "Expands \
 supported legacy complex-shift formulas with specified masses and companion \
 legs."}], "GuideText"],
-  Cell[TextData[{ButtonBox["ExpandMomHatAlt", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/ExpandMomHatAlt"], ": ",
-     "Expands supported all-line-shift momentum and propagator markers."}],
-   "GuideText"], Cell[TextData[{ButtonBox["ExpandSummation",
-      BaseStyle -> "Link", ButtonData ->
-       "paclet:HEPCAT/ref/ExpandSummation"], ": ", "Writes supported \
-contracted massive-spin indices as explicit two-component sums."}],
+  Cell[TextData[{ButtonBox["ExpandSummation", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ExpandSummation"], ": ", "Writes \
+supported contracted massive-spin indices as explicit two-component sums."}],
    "GuideText"], Cell[TextData[{ButtonBox["ExtractEnergy",
       BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/ExtractEnergy"],
      ": ", "Evaluates supported spinor expressions in an explicit energy, \
