@@ -116,6 +116,21 @@ lnBudgetProbe = Block[{ConstructiveDiagrams`Private`completionExactLeftNullContr
 check["the optional precheck receives only the remaining existing solver deadline",
   Length[lnObservedBudgets] === 1 && 0 < First[lnObservedBudgets] <= 1/10 && MissingQ[lnBudgetProbe]];
 lnObservedBudgets = {};
+lnLargeBudgetProbe = Block[{ConstructiveDiagrams`Private`completionExactLeftNullContradiction =
+    Function[{matrix, constant, seconds, prime}, AppendTo[lnObservedBudgets, seconds];
+      Missing["ControlledCertificateDecline"]]},
+  lnCRT[PadRight[lnMatrix, {3, 877}], lnConstant, 60, {3, 5, 7}]];
+check["a wide modular contradiction can use more than twenty seconds without extending its clock",
+  MissingQ[lnLargeBudgetProbe] && Length[lnObservedBudgets] === 1 &&
+    20 < First[lnObservedBudgets] <= 30];
+lnObservedBudgets = {};
+lnCappedBudgetProbe = Block[{ConstructiveDiagrams`Private`completionExactLeftNullContradiction =
+    Function[{matrix, constant, seconds, prime}, AppendTo[lnObservedBudgets, seconds];
+      Missing["ControlledCertificateDecline"]]},
+  lnCRT[PadRight[lnMatrix, {3, 1600}], lnConstant, 600, {3, 5, 7}]];
+check["the contradiction attempt retains its finite independent ceiling",
+  MissingQ[lnCappedBudgetProbe] && lnObservedBudgets === {120.}];
+lnObservedBudgets = {};
 lnExpired = Block[{ConstructiveDiagrams`Private`completionExactLeftNullContradiction =
     Function[{matrix, constant, seconds, prime}, AppendTo[lnObservedBudgets, seconds];
       Missing["UnexpectedCertificateCall"]]}, lnCRT[PadRight[IdentityMatrix[96], {96, 128}],

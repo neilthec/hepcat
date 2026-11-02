@@ -93,10 +93,13 @@ left-null contradiction certificate instead of computing its full affine \
 solution. Every original coefficient column and the nonzero constant residual \
 are checked exactly. If no exact matrix rank was computed, details report \
 Rank as Missing and give RankLowerBound separately; successful and \
-underdetermined solutions retain their exact-rank and full-family checks.",
-   "Notes"], Cell["Automatic effort settings bound runtime and correction \
-size. An unresolved result normally returns a concise Failure rather than an \
-unchecked amplitude. Detailed reports distinguish complete, incomplete and \
+underdetermined solutions retain their exact-rank and full-family checks. Its \
+optional contradiction proof scales with the actual matrix width, stays \
+within half the remaining solver clock, and has a 120-second ceiling. A \
+modular rank gap alone is never accepted as an exact proof.", "Notes"],
+  Cell["Automatic effort settings bound runtime and correction size. An \
+unresolved result normally returns a concise Failure rather than an unchecked \
+amplitude. Detailed reports distinguish complete, incomplete and \
 underdetermined cases.", "Notes"], Cell["Physical residue agreement leaves \
 any genuine pole-free or residue-preserving freedom for CompleteHighEnergy \
 and other stated physical constraints. No universal uniqueness claim follows \

@@ -2567,6 +2567,12 @@ the previous unresolved-value rules. This shortcut changes no equation, rank
 certificate, validation sample or tolerance. A balanced six-point regression
 retained literally identical exact matrix and right-hand-side entries while
 reducing preprocessing from 129.4 to 60.9 seconds in the measured run.
+If a modular augmented-rank gap appears, its exact contradiction proof now
+receives an allowance based on matrix width rather than a fixed twenty
+seconds. This remains within half the remaining solver clock and a finite
+120-second ceiling. The terminal result still needs an exact witness covering
+every original coefficient column and a nonzero constant residual; failed
+proofs retain the existing fallback, and an explicit clock is never extended.
 
 Completion uses a private forward-product normalization policy for coefficient
 construction, while public preparation retains useful factored polynomials.

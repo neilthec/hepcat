@@ -6966,7 +6966,13 @@ completionCertifiedModularReduce[matrix_List, constant_List, seconds_: 60,
       If[MemberQ[pivots, columns + 1] && !TrueQ[contradictionAttempted],
         contradictionAttempted = True;
         proof = bounded[completionExactLeftNullContradiction[matrix, constant,
-          Min[20., Max[0.001, deadline - AbsoluteTime[]]], prime]];
+          (* Only a modular augmented-rank gap opens this proof attempt.
+             A fixed twenty seconds was too short to certify wider systems,
+             leaving repeated modular gaps with no possible CRT solution.
+             Scale the optional proof allowance with the actual column count,
+             inside at most half the existing remaining solver clock. *)
+          Min[Max[20., Min[120., columns/8.]],
+            Max[0.001, (deadline - AbsoluteTime[])/2]], prime]];
         If[AssociationQ[proof] && Lookup[proof, "Status", None] === "INCONSISTENT" &&
             TrueQ[Lookup[proof, "ExactAllColumnCertificate", False]], Throw[proof, tag]]];
       If[pivots === {} || MemberQ[pivots, columns + 1], Continue[]];

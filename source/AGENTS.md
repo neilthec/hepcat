@@ -1103,8 +1103,12 @@ Integer row scaling must be included in the witness replay. Such a terminal
 contradiction may report `Rank -> Missing["NotComputedFromContradictionCertificate"]`
 and an honest `RankLowerBound`; never label a modular lower bound as exact rank.
 Successful and underdetermined solves must still certify their complete affine
-families and exact ranks. Failed or timed-out witness attempts retain the old
-exact-solver fallback inside the existing deadline. Ordinary
+families and exact ranks. After a modular augmented-rank gap, the optional
+exact contradiction allowance scales with the actual column count, uses at
+most half the remaining solver clock, and never exceeds 120 seconds. It does
+not extend an explicit deadline or turn a modular gap into a proof. Failed or
+timed-out witness attempts retain the old exact-solver fallback inside the
+existing deadline. Ordinary
 external-shell and conservation identities remove only provably zero
 correction directions. Retain every unproved or genuinely residue-invisible
 direction for later constraints. Typed `PropDen` poles are checked throughout
