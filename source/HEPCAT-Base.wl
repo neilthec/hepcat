@@ -1590,8 +1590,154 @@ rspElementaryContractionQ[body_] := AnyTrue[Cases[{body}, _SpinorChain | _Spinor
         First[#] === Last[#] &]
   ]]];
 
+(* Ordinary Schouten identities with an untouched momentum tail. This pass
+   never uses momentum conservation or an internal mass shell. Explicit spin
+   labels and variance survive every endpoint flip. Inverse factors are opaque. *)
+rspDiracSchoutenReduction[expression_, externalRules_List : {}, seconds_ : 1] := Module[
+  {started = AbsoluteTime[], rules, supported, physical, normal, rank, finite,
+   contract, reduce, scalarCofactor, completed, result = expression, history = {}, timedOut = False},
+  rules = Cases[externalRules, rule : HoldPattern[Mass[_Integer] -> value_] /;
+    rspScalarQ[value] && FreeQ[value, _Mass | Indeterminate | ComplexInfinity | _DirectedInfinity] :> rule];
+  rules = First /@ Select[GatherBy[DeleteDuplicates[rules], First], Length[#] === 1 &];
+  supported[s_] := MatchQ[s, Spinor["Spin" | "Helicity" | "Xi", "Angle" | "Square", _] |
+    Spinor["Spin", "Upper" | "Lower", "Angle" | "Square", _, _]];
+  physical[s_] := MatchQ[s, Spinor["Spin" | "Helicity", "Angle" | "Square", _Integer] |
+    Spinor["Spin", "Upper" | "Lower", "Angle" | "Square", _Integer, _]];
+  finite[value_] := FreeQ[value, $Failed | $Aborted | _TerminatedEvaluation |
+    Indeterminate | ComplexInfinity | _DirectedInfinity];
+  normal[value_] := Expand[value /. chain_SpinorChain :>
+    If[rspContractionBudgetQ[chain], rspNormalizeContraction[chain], chain]] /. rules;
+  rank[value_] := {expressionComplexity[value], LeafCount[value]};
+  (* Numerical and factored scalar masses need not remain one literal Times
+     factor. Division is allowed only when it introduces no inverse factor. *)
+  scalarCofactor[value_, mass_] := Module[{quotient, inverses, oldInverses},
+    If[mass === 0 || !rspScalarQ[mass], Return[Missing["InvalidExternalMass"]]];
+    quotient = Cancel[value/mass];
+    inverses = Cases[{quotient}, p : Power[_, exponent_] /; !TrueQ[exponent >= 0], Infinity];
+    oldInverses = Cases[{value}, p : Power[_, exponent_] /; !TrueQ[exponent >= 0], Infinity];
+    If[!finite[quotient] || Complement[inverses, oldInverses] =!= {} ||
+        !TrueQ[Expand[value - mass quotient] === 0],
+      Missing["NoScalarMassFactor"], quotient]];
+  contract[value_Plus] := Module[
+    {current = value, terms, chains, bare, chain, firstWitness, secondWitness,
+     a, b, r, s, mass, massB, word, prefix, suffix, tail, sign, leg, rest,
+     massTerm, tailTerm, dotTerms, expected, expectedTerms, source, rhs, trial,
+     best, bestRank, chosen, lhs, cofactor, orientation},
+    If[!rspExpansionBudgetQ[value] || rspSandwichExpansionCount[value] > 256, Return[value]];
+    current = normal[value];
+    Do[
+      terms = If[Head[current] === Plus, List @@ current, {current}];
+      If[Length[terms] > 128, Break[]];
+      best = current; bestRank = rank[current]; chosen = None;
+      Do[
+        chains = chainsIn[terms[[index]]]; If[Length[chains] > 12, Continue[]];
+        Do[
+          If[Length[bare] =!= 2 || !(3 <= Length[chain] <= 6), Continue[]];
+          a = bare[[endpoint]]; b = bare[[3 - endpoint]];
+          If[!physical[a] || !supported[b] || rspSpinorType[a] =!= rspSpinorType[b], Continue[]];
+          leg = rspSpinorLeg[a]; mass = If[a[[1]] === "Helicity", 0, Mass[leg] /. rules];
+          If[mass === 0, Continue[]];
+          firstWitness = rspLiteralFactorCofactor[terms[[index]], bare];
+          If[MissingQ[firstWitness], Continue[]];
+          secondWitness = rspLiteralFactorCofactor[firstWitness["Cofactor"], chain];
+          If[MissingQ[secondWitness], Continue[]]; rest = secondWitness["Cofactor"];
+          Do[
+            {r, s} = orientation[[1, {1, -1}]];
+            word = Rest[Most[orientation[[1]]]];
+            If[!AllTrue[{r, s}, supported] || rspSpinorType[r] =!= rspSpinorType[a] ||
+                !AllTrue[word, MatchQ[#, Mom[_Integer]] &], Continue[]];
+            Do[
+              If[word[[position]] =!= Mom[leg], Continue[]];
+              prefix = Take[word, position - 1]; suffix = Drop[word, position];
+              tail = Join[prefix, suffix];
+              sign = If[endpoint === 1, 1, -1] orientation[[2]];
+              massTerm = sign (-1)^Length[prefix] rest mass SpinorChain[r, b] *
+                (SpinorChain @@ Join[{rspFlipSpinor[a]}, tail, {s}]);
+              tailTerm = sign (-1)^Length[prefix] rest SpinorChain[a, r] *
+                (SpinorChain @@ Join[{b, Mom[leg]}, tail, {s}]);
+              dotTerms = Total[Table[2 sign (-1)^(Length[prefix] - j) rest *
+                MomProd[prefix[[j, 1]], leg] SpinorChain[a, b] *
+                (SpinorChain @@ Join[{r}, Delete[prefix, j], suffix, {s}]), {j, Length[prefix]}]];
+              expected = normal[massTerm + dotTerms];
+              expectedTerms = If[Head[expected] === Plus, List @@ expected, {expected}];
+              If[Intersection[expectedTerms, -Delete[terms, index]] === {}, Continue[]];
+              rhs = massTerm + tailTerm + dotTerms;
+              If[!rspExpansionBudgetQ[rhs], Continue[]];
+              trial = normal[current - terms[[index]] + rhs];
+              If[finite[trial] && rspSandwichExpansionCount[trial] <= 256 &&
+                  OrderedQ[{rank[trial], bestRank}] && rank[trial] =!= bestRank,
+                best = trial; bestRank = rank[trial];
+                chosen = <|"Identity" -> "TailDiracSchouten", "Subtract" -> terms[[index]],
+                  "Insert" -> rhs, "ExternalLeg" -> leg, "MomentumPosition" -> position,
+                  "MomentumWord" -> word, "CliffordRemainder" -> dotTerms,
+                  "LiteralFactorWitnesses" -> {firstWitness, secondWitness},
+                  "InternalOnShellConditions" -> {}|>], {position, Length[word]}],
+            {orientation, {{List @@ chain, 1}, {Reverse[List @@ chain], (-1)^(Length[chain] - 1)}}}],
+          {bare, chains}, {chain, chains}, {endpoint, 2}],
+        {index, Length[terms]}];
+      (* A second identity packs both external endpoint equations without
+         dropping the scalar-product term. No equality of the masses is used. *)
+      Do[
+        chains = chainsIn[term]; If[Length[chains] > 12, Continue[]];
+        Do[
+          If[Length[bare] =!= 2 || Length[chain] =!= 3 || !MatchQ[chain[[2]], Mom[_Integer]], Continue[]];
+          a = bare[[endpoint]]; r = bare[[3 - endpoint]];
+          If[!physical[a] || !supported[r] || rspSpinorType[a] =!= rspSpinorType[r], Continue[]];
+          Do[
+            If[First[orientation] =!= r, Continue[]]; b = rspFlipSpinor[Last[orientation]];
+            If[!physical[b] || rspSpinorType[b] =!= rspSpinorType[a] ||
+                rspSpinorLeg[a] === rspSpinorLeg[b] || chain[[2]] =!= Mom[rspSpinorLeg[a]], Continue[]];
+            mass = If[a[[1]] === "Helicity", 0, Mass[rspSpinorLeg[a]] /. rules];
+            massB = If[b[[1]] === "Helicity", 0, Mass[rspSpinorLeg[b]] /. rules];
+            If[mass === 0 || massB === 0, Continue[]];
+            firstWitness = rspLiteralFactorCofactor[term, bare]; If[MissingQ[firstWitness], Continue[]];
+            secondWitness = rspLiteralFactorCofactor[firstWitness["Cofactor"], chain];
+            If[MissingQ[secondWitness], Continue[]];
+            rest = scalarCofactor[secondWitness["Cofactor"], massB]; If[MissingQ[rest], Continue[]];
+            cofactor = -If[endpoint === 1, 1, -1] rest;
+            lhs = 2 MomProd[rspSpinorLeg[a], rspSpinorLeg[b]] SpinorChain[a, r] SpinorChain[b, r] -
+              mass SpinorChain[b, r] SpinorChain[r, Mom[rspSpinorLeg[b]], rspFlipSpinor[a]] -
+              massB SpinorChain[a, r] SpinorChain[r, Mom[rspSpinorLeg[a]], rspFlipSpinor[b]];
+            rhs = SpinorChain[a, b] SpinorChain[r, Mom[rspSpinorLeg[a]], Mom[rspSpinorLeg[b]], r];
+            expected = normal[cofactor lhs];
+            expectedTerms = If[Head[expected] === Plus, List @@ expected, {expected}];
+            If[Length[Intersection[expectedTerms, terms]] < 2, Continue[]];
+            trial = normal[current - cofactor lhs + cofactor rhs];
+            If[finite[trial] && OrderedQ[{rank[trial], bestRank}] && rank[trial] =!= bestRank,
+              best = trial; bestRank = rank[trial];
+              chosen = <|"Identity" -> "DoubleEndpointDiracSchouten", "Subtract" -> cofactor lhs,
+                "Insert" -> cofactor rhs, "ExternalLegs" -> {rspSpinorLeg[a], rspSpinorLeg[b]},
+                "LiteralFactorWitnesses" -> {firstWitness, secondWitness},
+                "InternalOnShellConditions" -> {}|>],
+            {orientation, {List @@ chain, Reverse[List @@ chain]}}],
+          {bare, chains}, {chain, chains}, {endpoint, 2}], {term, terms}];
+      If[chosen === None, Break[]];
+      AppendTo[history, Join[chosen, <|"Before" -> current, "After" -> best,
+        "ExternalMassRules" -> rules|>]]; current = best,
+      {pass, 16}]; current];
+  contract[value_] := value;
+  reduce[value_Plus] := contract[Map[reduce, value]];
+  reduce[value_Times] := Map[reduce, value];
+  reduce[Power[base_, exponent_Integer?Positive]] := Power[reduce[base], exponent];
+  reduce[value_] := value;
+  completed = TimeConstrained[withProtectedPropagators[expression, Function[body,
+    Module[{inverses, tokens},
+      inverses = DeleteDuplicates[Cases[{body}, p : Power[_, n_] /; !TrueQ[n >= 0], Infinity]];
+      tokens = Table[Unique["diracSchoutenInverse"], {Length[inverses]}];
+      result = reduce[body /. Thread[inverses -> tokens]];
+      <|"Amplitude" -> result, "Route" -> history|> /. Thread[tokens -> inverses]]]],
+    Max[0.000001, seconds], timedOut = True; <|"Amplitude" -> expression, "Route" -> {}|>];
+  result = completed["Amplitude"]; history = completed["Route"];
+  If[!finite[result], result = expression];
+  If[result === expression, history = {}];
+  <|"Amplitude" -> result, "Route" -> history, "TimedOut" -> timedOut,
+    "ExternalMassRules" -> rules, "InternalOnShellConditions" -> {},
+    "ElapsedTime" -> AbsoluteTime[] - started|>
+];
+
 rspProductReductionCandidates[body_, retainOriginal_ : False] := Module[
-  {factored, linear, reduced, contracted, normalize, legacy = Missing["DistributionBudget"]},
+  {factored, linear, reduced, contracted, normalize, alternatives, ordinary,
+   legacy = Missing["DistributionBudget"]},
   normalize[node_] := normalize[node] = rspNormalizeContraction[node];
   factored = rspFactoredContractions[body, normalize];
   (* The complete legacy route remains a competitor whenever its prospective
@@ -1611,11 +1757,21 @@ rspProductReductionCandidates[body_, retainOriginal_ : False] := Module[
       5, Missing["DistributionBudget"]]];
   If[!FreeQ[legacy, _TerminatedEvaluation | $Aborted | $Failed | Indeterminate |
       ComplexInfinity | _DirectedInfinity], legacy = Missing["UnfinishedReduction"]];
-  If[MissingQ[legacy], Return[DeleteDuplicates[Join[{factored},
-    If[TrueQ[retainOriginal] && !FreeQ[body, _Plus], {body}, {}]]]]];
-  If[!TrueQ[retainOriginal] || FreeQ[body, _Plus], Return[{legacy}]];
-  DeleteDuplicates[Join[{legacy, factored},
-    If[!TrueQ[rspElementaryContractionQ[body]], {body}, {}]]]
+  alternatives = If[MissingQ[legacy], DeleteDuplicates[Join[{factored},
+    If[TrueQ[retainOriginal] && !FreeQ[body, _Plus], {body}, {}]]],
+    If[!TrueQ[retainOriginal] || FreeQ[body, _Plus], {legacy},
+      DeleteDuplicates[Join[{legacy, factored},
+        If[!TrueQ[rspElementaryContractionQ[body]], {body}, {}]]]]];
+  (* Without a model, an endpoint mass must be visible as Mass[i]. Named
+     model parameters are handled once by preparation's explicit mass rules,
+     rather than repeatedly probing them in completion's scalar algebra. *)
+  If[!TrueQ[$rspCanonicalProductBasis] && !FreeQ[body, _Plus] &&
+      !FreeQ[body, Mass[_Integer]] &&
+      !FreeQ[body, chain_SpinorChain /; Length[chain] >= 4] &&
+      rspExpansionBudgetQ[body] && rspSandwichExpansionCount[body] <= 128,
+    ordinary = rspDiracSchoutenReduction[body, {}, 0.4];
+    If[Lookup[ordinary, "Route", {}] =!= {}, AppendTo[alternatives, ordinary["Amplitude"]]]];
+  DeleteDuplicates[alternatives]
 ];
 
 rspBestReduction[candidates_List, factor_ : True] := Module[{best, rank, next, nextRank},

@@ -24,7 +24,7 @@ fpciSeeds = <|"PPP" -> 410071, "MMM" -> 410071,
 (* These are upper bounds achieved by independently checked constructions,
    not formulas supplied to the constructor. They detect a common regression
    even when both members of a helicity pair become equally complicated. *)
-fpciComplexityBounds = <|"PPP" -> 27, "MMM" -> 27, "PPM" -> 103, "PMM" -> 103,
+fpciComplexityBounds = <|"PPP" -> 27, "MMM" -> 27, "PPM" -> 71, "PMM" -> 71,
   "FourFermionP" -> 160, "FourFermionM" -> 160|>;
 fpciSelection = Environment["HEPCAT_FIVE_POINT_INTEGRATION_CASES"];
 fpciSelection = If[MemberQ[{$Failed, ""}, fpciSelection], Keys[fpciCases],

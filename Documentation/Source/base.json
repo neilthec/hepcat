@@ -1143,6 +1143,7 @@
     "details": [
       "Use ReduceSpinorProducts when you already have a spinor expression and want routine algebraic simplification. It handles supported chain reversals, momentum-slot linearity, Clifford contractions, external Dirac equations, and product identities while comparing useful factored and expanded forms.",
       "The input and output are ordinary HEPCAT expressions. A repeated external momentum inside a chain can become an external mass squared; an external momentum next to its own massless endpoint can make the chain vanish. Model-specific mass values can be substituted with ordinary replacement rules.",
+      "Ordinary Dirac and Schouten identities can simplify a sum even when a momentum chain has a trailing momentum word. The reducer also compares a contraction using both external endpoint equations, retaining its scalar-product term. Both angle and square chains, unequal masses and explicit massive spin indices use the same identities. These bounded passes do not assume that an internal line is on shell.",
       "The function does not need a model or a complete process, so it cannot infer total momentum conservation from a list of external legs. For diagram or factorization preparation with that information available, use [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes)."
     ],
     "examples": [
@@ -1185,6 +1186,7 @@
         "title": "Choosing a form and following the calculation",
         "paragraphs": [
           "There may be many equivalent forms with different numbers of terms and momentum insertions. The reducer uses finite, directed passes and bounded expansion. It aims to improve a practical complexity measure; it cannot promise the globally shortest possible formula.",
+          "The additional sum contractions are directional: the complete candidate must have a lower complexity score, or the same score with fewer expression leaves. Inverse spinor factors and propagator denominators remain protected. Positive powers are handled using their literal multiplicity, so taking one factor out of a square does not remove both copies. A distribution budget skips a large sum before expanding it.",
           "If a useful identity is not chosen automatically, inspect [SpinorIdentityCandidates](paclet:HEPCAT/ref/SpinorIdentityCandidates) and apply a selected edit with [ApplySpinorIdentity](paclet:HEPCAT/ref/ApplySpinorIdentity). Keeping that edit and its before/after expressions gives a derivation you can inspect and replay. [SpinorExpressionComplexity](paclet:HEPCAT/ref/SpinorExpressionComplexity) provides a consistent score for comparing intermediate forms."
         ]
       }

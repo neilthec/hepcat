@@ -13173,6 +13173,307 @@ preparationReferenceSelections[choices_List, limit_Integer] := Module[
       {j, Length[sizes]}]], indices]|>
 ];
 
+(* A bounded ordinary route combines endpoint Schouten contractions with
+   declared external conservation. Typed physical denominators remain off shell.
+   Complementary momentum slots and Gordon pairs are explored only here, never
+   by ReduceSpinorProducts. Every accepted whole result has a replay route. *)
+(* Join a witnessed massless spinor pair only after its forward split
+   reconstructs the original product exactly, including reversal signs. *)
+preparationInverseMasslessPair[c1_, c2_]  := Module[{records = {}, parts, source = c1 c2, orient,
+    first, second, one, two, k, sign, chain, split, cert},
+  If[!AllTrue[{c1, c2}, Head[#] === SpinorChain && 2 <= Length[#] <= 6 && AllTrue[Rest[Most[List@@#]],
+        MatchQ[#, Mom[_Integer]]&]&], Return[{}]];
+  orient[c_] := {{List@@c, 1}, {Reverse[List@@c], If[OddQ[Length[c]-2], 1, -1]}};
+  Do[
+    {one, two} = {oa[[1]], ob[[1]]};
+    sign = oa[[2]]ob[[2]];
+    If[!MatchQ[Last[one], Spinor["Helicity", "Angle"|"Square", _Integer]] || !MatchQ[First[two],
+        Spinor["Helicity", "Angle"|"Square", _Integer]] ||
+      rspSpinorLeg[Last[one]] =!= rspSpinorLeg[First[two]] || rspSpinorType[Last[one]] === rspSpinorType[First[two]],
+      Continue[]];
+    k = rspSpinorLeg[Last[one]];
+    If[!FreeQ[Join[Rest[Most[one]], Rest[Most[two]]], Mom[k]], Continue[]];
+    parts = Join[Most[one], {Mom[k]}, Rest[two]];
+    chain = SpinorChain@@parts;
+    split = rspSplitMasslessMomentum[chain, k];
+    If[MissingQ[split], Continue[]];
+    cert = TrueQ[canonicalChains[sign split-source] === 0];
+    If[cert, AppendTo[records, <|"Source" -> source, "Chain" -> chain, "Sign" -> sign, "Leg" -> k,
+        "Position" -> Length[one], "ExactForwardSplitIdentity" -> True|>]],
+    {order, {{c1, c2}, {c2, c1}}}, {oa, orient[First[order]]}, {ob, orient[Last[order]]}];
+  DeleteDuplicatesBy[records, {#["Chain"], #["Sign"], #["Position"]}&]
+  ];
+(* Equal literal cofactors and equal chain words identify a linear momentum
+   slot. Structural keys, rather than hash equality, certify every group. *)
+preparationInverseMasslessSums[num_, limit_:64]  := Module[{terms, records = {}, chains, w1,
+    w2, cofactor, numeric, rest, key, newparts, group, chosen, coeffs, legs, composite, insert,
+    subtract, parts},
+  If[!rspExpansionBudgetQ[num] || rspSandwichExpansionCount[num]>256, Return[{}]];
+  terms = If[Head[Expand[num]] === Plus, List@@Expand[num], {Expand[num]}];
+  If[Length[terms]>96, Return[{}]];
+  Do[chains = chainsIn[terms[[index]]];
+    If[Length[chains]>8, Continue[]];
+    Do[
+      w1 = rspLiteralFactorCofactor[terms[[index]], chains[[i]]];
+      If[MissingQ[w1], Continue[]];
+      w2 = rspLiteralFactorCofactor[w1["Cofactor"], chains[[j]]];
+      If[MissingQ[w2], Continue[]];
+      cofactor = w2["Cofactor"];
+      numeric = Times@@Select[If[Head[cofactor] === Times, List@@cofactor, {cofactor}], NumberQ];
+      rest = Cancel[cofactor/numeric];
+      Do[newparts = ReplacePart[List@@record["Chain"], record["Position"] -> preparationMasslessStitchHole];
+        key = {rest, newparts};
+        AppendTo[records, Join[record, <|"Key" -> key, "SourceIndex" -> index, "Term" -> terms[[index]],
+          "Cofactor" -> rest, "Coefficient" -> numeric record["Sign"]|>]],
+        {record, preparationInverseMasslessPair[chains[[i]], chains[[j]]]}],
+      {i, Length[chains]}, {j, i+1, Length[chains]}],
+    {index, Length[terms]}];
+  records = GatherBy[records, #["Key"]&];
+  records = Select[DeleteDuplicatesBy[#, {#["SourceIndex"]}&]&/@records, Length[#] >= 2&];
+  records = Select[records, DuplicateFreeQ[Lookup[#, "Leg"]] && Length[DeleteDuplicates[Lookup[#,
+          "Coefficient"]]] === 1&];
+  Take[Map[Function[group,
+        chosen = First[group];
+        legs = Sort[Lookup[group, "Leg"]];
+        composite = Mom[Multiparticle@@legs];
+        parts = ReplacePart[List@@chosen["Chain"], chosen["Position"] -> composite];
+        insert = chosen["Cofactor"]chosen["Coefficient"](SpinorChain@@parts);
+        subtract = Total[Lookup[group, "Term"]];
+        <|"Subtract" -> subtract, "Insert" -> insert, "Group" -> group, "Legs" -> legs, "DenominatorPreserved" -> True,
+        "ExactForwardSplitIdentity" -> True|>], records], UpTo[limit]]
+  ];
+(* This trial is called only with complete external metadata and explicit
+   momentum conservation. A short complement can expose an endpoint pair. *)
+preparationConservedStitchTrial[expression_, rules_List, seconds_:8, common_:False, double_:False]  := Module[{started = AbsoluteTime[],
+    body, terms, groups, key, denominators, numerators, best = expression, bestRank, records,
+    trial, reduced, proposal, rank, history = {}, i, n = 0},
+  bestRank = preparationRank[best];
+  If[!rspExpansionBudgetQ[expression] || rspSandwichExpansionCount[expression]>256, Return[<|"Amplitude" -> expression,
+      "Rank" -> bestRank, "History" -> {}, "Candidates" -> 0|>]];
+  key[t_] := Times@@Select[If[Head[t] === Times, List@@t, {t}], MatchQ[#, Power[_PropDen, _Integer?Negative]]&];
+  TimeConstrained[
+    body = withProtectedPropagators[expression, Expand];
+    terms = If[Head[body] === Plus, List@@body, {body}];
+    groups = If[TrueQ[common], With[{fraction = Together[expression]}, <|1/Denominator[fraction] -> {fraction}|>],
+      GroupBy[terms, key]];
+    denominators = Keys[groups];
+    numerators = MapThread[Expand[Total[#1]/#2]&, {Values[groups], denominators}];
+    Do[records = preparationInverseMasslessSums[numerators[[i]], 32];
+      n += Length[records];
+      Do[
+        trial = numerators[[i]]-record["Subtract"]+record["Insert"];
+        reduced = preparationConservedMomentumChains[trial, rules, True, {}, False];
+        reduced = preparationFactorizedSpinorProducts[reduced, rules];
+        If[TrueQ[double], reduced = rspDiracSchoutenReduction[reduced, rules, 1]["Amplitude"]];
+        proposal = Total[denominators ReplacePart[numerators, i -> reduced]];
+        rank = preparationRank[proposal];
+        If[preparationBetterQ[rank, bestRank], best = proposal;
+          bestRank = rank;
+          AppendTo[history, <|"Denominator" -> denominators[[i]], "Record" -> record, "AfterNumerator" -> reduced|>];
+          numerators[[i]] = reduced],
+        {record, records}],
+      {i, Length[numerators]}], seconds, Null];
+  <|"Amplitude" -> best, "Rank" -> bestRank, "Candidates" -> n, "History" -> history, "ElapsedTime" -> AbsoluteTime[]-started|>
+  ];
+(* The same-momentum determinant is an ordinary Schouten rewrite. Its
+   vector square is retained until external mass rules can evaluate it. *)
+preparationCommonMomentumDeterminants[expr_, externalRules_List:{}]  := Module[{rules = preparationExternalRules[externalRules],
+    normal, reduce, contract},
+  normal[x_] := Expand[x/.c_SpinorChain :> If[rspContractionBudgetQ[c], rspNormalizeContraction[c],
+      c]]/.rules;
+  contract[x_Plus] := Module[{current = x, terms, chains, w1, w2, cofactor, rhs, proposal, best,
+      rank, bestRank},
+    If[!rspExpansionBudgetQ[x] || rspSandwichExpansionCount[x]>256, Return[x]];
+    Do[current = normal[current];
+      terms = If[Head[current] === Plus, List@@current, {current}];
+      If[Length[terms]>128, Break[]];
+      best = current;
+      bestRank = preparationRank[current];
+      Do[chains = Select[chainsIn[term], Length[#] === 3 && MatchQ[#[[2]], Mom[_Integer]]&];
+        Do[If[chains[[i, 2]] =!= chains[[j, 2]], Continue[]];
+          w1 = rspLiteralFactorCofactor[term, chains[[i]]];
+          If[MissingQ[w1], Continue[]];
+          w2 = rspLiteralFactorCofactor[w1["Cofactor"], chains[[j]]];
+          If[MissingQ[w2], Continue[]];
+          cofactor = w2["Cofactor"];
+          rhs = SchoutenRewrite[chains[[i]], chains[[j]], {1, 1}];
+          If[rhs === $Failed, Continue[]];
+          rhs = normal[cofactor rhs];
+          proposal = normal[current-term+rhs];
+          rank = preparationRank[proposal];
+          If[preparationBetterQ[rank, bestRank], best = proposal;
+          bestRank = rank], {i, Length[chains]}, {j, i+1, Length[chains]}], {term, terms}];
+      If[best === current, Break[]];
+      current = best, {8}];
+    current];
+  contract[x_] := x;
+  reduce[x_Plus] := contract[Map[reduce, x]];
+  reduce[x_Times] := Map[reduce, x];
+  reduce[Power[x_, p_Integer?Positive]] := Power[reduce[x], p];
+  reduce[x_] := x;
+  withProtectedPropagators[expr, reduce]
+  ];
+(* Contract a newly exposed bracket-diagonal pair before the general
+   forward product normal form can distribute its useful common factor. *)
+preparationBracketDiagonalProducts[expression_]  := Module[{reduce, steps = 0, tag = Unique["onlyDiagonal"]},
+  reduce[x_Plus] := Map[reduce, x];
+  reduce[x_List] := Map[reduce, x];
+  reduce[Power[x_, p_Integer?Positive]] := Power[reduce[x], p];
+  reduce[x_Times] := Module[{factors = List@@x, chains, first, second, rhs, one, two, trial,
+      nodeTag = Unique["oneDiagonal"]}, chains = chainsIn[x];
+    Catch[
+      Do[first = chains[[i]];
+        second = chains[[j]];
+        rhs = rspBracketDiagonalPair[first, second];
+        If[MissingQ[rhs], rhs = rspBracketDiagonalPair[second, first]];
+        If[MissingQ[rhs], Continue[]];
+        one = rspLiteralFactorCofactor[x, first];
+        If[MissingQ[one], Continue[]];
+        two = rspLiteralFactorCofactor[one["Cofactor"], second];
+        If[MissingQ[two], Continue[]];
+        steps++;
+        If[steps>128, Throw[expression, tag]];
+        trial = two["Cofactor"]rhs;
+        Throw[reduce[Expand[trial]], nodeTag],
+        {i, Length[chains]}, {j, i+1, Length[chains]}];
+      x, nodeTag]];
+  reduce[x_] := x;
+  Catch[reduce[expression], tag]
+  ];
+(* Schouten plus both external endpoint equations and total momentum
+   conservation give a Gordon pair. Alternate chiral orientations can have
+   very different later contractions, so compare a bounded set as wholes. *)
+preparationGordonConservationTrial[expression_, externalRules_List, seconds_:4]  := Module[
+  {rules = preparationExternalRules[externalRules], external, normal, body, num, den, terms,
+    candidates = {}, angle, square, chains, b, a, r, s, ma, mb, w1, w2, cf, lhs, rhs, subtract,
+    insert, expected, expectedTerms, orA, orS, used = {}, applied = {}, proposal, props, dotRules,
+    reduced, started = AbsoluteTime[], chosen, groups, choices, best = expression, bestRank = preparationRank[expression],
+    bestApplied = {}, candidateRank},
+  external = Sort[DeleteDuplicates[externalIndices[rules]]];
+  If[!preparationScalarExternalRulesQ[rules] || !rspExpansionBudgetQ[expression] || rspSandwichExpansionCount[expression]>256,
+    Return[<|"Amplitude" -> expression, "History" -> {}|>]];
+  normal[x_] := Expand[x/.c_SpinorChain :> If[rspContractionBudgetQ[c], rspNormalizeContraction[c],
+      c]]/.rules;
+  body = Together[expression];
+  {num, den} = {Numerator[body], Denominator[body]};
+  If[!rspExpansionBudgetQ[num] || rspSandwichExpansionCount[num]>256, Return[<|"Amplitude" -> expression,
+      "History" -> {}|>]];
+  num = normal[num];
+  terms = If[Head[num] === Plus, List@@num, {num}];
+  If[Length[terms]>96, Return[<|"Amplitude" -> expression, "History" -> {}|>]];
+  TimeConstrained[
+    Do[chains = Select[chainsIn[term], Length[#] === 2&];
+      Do[If[angle === square, Continue[]];
+        Do[
+          {b, r} = orA;
+          {a, s} = {rspFlipSpinor[orS[[1]]], orS[[2]]};
+          If[!MatchQ[a, Spinor["Spin", "Angle"|"Square", _Integer]|Spinor["Spin", "Upper"|"Lower",
+          "Angle"|"Square", _Integer, _]] || !MatchQ[b, Spinor["Spin", "Angle"|"Square", _Integer]|Spinor["Spin",
+          "Upper"|"Lower", "Angle"|"Square", _Integer, _]] || rspSpinorType[a] =!= rspSpinorType[b] || rspSpinorType[r] =!= rspSpinorType[a] ||
+          rspSpinorType[s] === rspSpinorType[a] || rspSpinorLeg[a] === rspSpinorLeg[b], Continue[]];
+          ma = Mass[rspSpinorLeg[a]]/.rules;
+          mb = Mass[rspSpinorLeg[b]]/.rules;
+          If[ma === 0 || mb === 0 || !FreeQ[{ma, mb}, _Mass], Continue[]];
+          w1 = rspLiteralFactorCofactor[term, angle];
+          If[MissingQ[w1], Continue[]];
+          w2 = rspLiteralFactorCofactor[w1["Cofactor"], square];
+          If[MissingQ[w2], Continue[]];
+          lhs = ma SpinorChain[b, r]SpinorChain[rspFlipSpinor[a], s]+mb SpinorChain[a, r]SpinorChain[rspFlipSpinor[b],
+          s];
+          cf = If[orA === List@@angle, 1, -1]If[orS === List@@square, 1, -1]w2["Cofactor"]/ma;
+          expected = normal[cf lhs];
+          expectedTerms = If[Head[expected] === Plus, List@@expected, {expected}];
+          If[Length[expectedTerms] =!= 2 || !ContainsAll[terms, expectedTerms], Continue[]];
+          rhs = -SpinorChain[a, b]SpinorChain[r, Mom[rspSpinorLeg[a]], s]-SpinorChain[a, r]Total[SpinorChain[b,
+          Mom[#], s]&/@Complement[external, {rspSpinorLeg[a], rspSpinorLeg[b]}]];
+          rhs = normal[cf rhs];
+          rhs = rhs/.c_SpinorChain :> Module[{out = c, split}, Do[If[(Mass[leg]/.rules) === 0,
+          split = rspSplitMasslessMomentum[out, leg];
+          If[!MissingQ[split], out = split;
+          Break[]]], {leg, external}];
+          out];
+          rhs = normal[rhs];
+          AppendTo[candidates, <|"Subtract" -> expected, "Insert" -> rhs, "Terms" -> expectedTerms,
+          "a" -> a, "b" -> b, "r" -> r, "s" -> s|>],
+          {orA, {List@@angle, Reverse[List@@angle]}}, {orS, {List@@square, Reverse[List@@square]}}],
+        {angle, chains}, {square, chains}], {term, terms}];
+    candidates = DeleteDuplicatesBy[candidates, {#["Subtract"], #["Insert"]}&];
+    groups = GatherBy[candidates, #["Subtract"]&];
+    groups = Take[groups, UpTo[4]];
+    choices = If[groups === {}, {{}}, Take[Tuples[Take[#, UpTo[4]]&/@groups], UpTo[32]]];
+    Do[proposal = num;
+      used = {};
+      applied = {};
+      Do[If[Intersection[record["Terms"], used] =!= {}, Continue[]];
+        proposal = normal[proposal-record["Subtract"]+record["Insert"]];
+        used = Join[used, record["Terms"]];
+        AppendTo[applied, record], {record, choice}];
+      reduced = preparationBracketDiagonalProducts[proposal]/.rules;
+      props = DeleteDuplicates[Cases[{expression}, _PropDen, Infinity]];
+      dotRules = (#["Rule"]&)/@Select[preparationVirtualityTrials[reduced, rules, props, False],
+        AssociationQ[#] && Lookup[#, "Kind", None] === "DirectDefinition"&];
+      reduced = normal[reduced/.dotRules];
+      reduced = preparationCommonMomentumDeterminants[reduced, rules];
+      reduced = Cancel[reduced/den];
+      candidateRank = preparationRank[reduced];
+      If[preparationBetterQ[candidateRank, bestRank], best = reduced;
+        bestRank = candidateRank;
+        bestApplied = applied], {choice, choices}];
+    , seconds, Null];
+  <|"Amplitude" -> best, "Rank" -> bestRank, "History" -> bestApplied, "Candidates" -> Length[candidates],
+  "ElapsedTime" -> AbsoluteTime[]-started|>
+  ];
+
+preparationDiracSchoutenCompaction[expression_, externalRules_List, conserve_, seconds_,
+    checkpoint_ : None] := Module[
+  {started = AbsoluteTime[], rules = preparationExternalRules[externalRules],
+   best = expression, bestRank = preparationRank[expression], route = {}, timedOut = False,
+   publish = checkpoint,
+   remaining, accept, report, before, sourceLegs, declared, conservationAllowed, inverseSafe},
+  remaining[] := If[seconds === Infinity, 4, Max[0, seconds - (AbsoluteTime[] - started)]];
+  accept[record_, operation_] := Module[{candidate = Lookup[record, "Amplitude", best], rank},
+    If[!residueFiniteQ[candidate], Return[Null]];
+    rank = preparationRank[candidate];
+    If[preparationBetterQ[rank, bestRank],
+      AppendTo[route, <|"Operation" -> operation, "Before" -> best, "After" -> candidate,
+        "IdentityRoute" -> Lookup[record, "Route", Lookup[record, "History", {}]],
+        "ExternalMassRules" -> rules, "InternalOnShellConditions" -> {},
+        "MomentumConservation" -> MemberQ[{"ConservedMasslessStitch", "ConservedGordonPairs"}, operation]|>];
+      best = candidate; bestRank = rank;
+      If[publish =!= None, publish[<|"Amplitude" -> best, "Rank" -> bestRank,
+        "Route" -> route, "TimedOut" -> False|>]]]];
+  If[!TrueQ[seconds > 0] || LeafCount[expression] > 6000 || FreeQ[expression, _Plus] ||
+      FreeQ[expression, chain_SpinorChain /; Length[chain] >= 4] ||
+      !preparationScalarExternalRulesQ[rules] || !rspExpansionBudgetQ[expression] ||
+      rspSandwichExpansionCount[expression] > 256,
+    Return[<|"Amplitude" -> best, "Rank" -> bestRank, "Route" -> {}, "TimedOut" -> False|>]];
+  declared = Sort[DeleteDuplicates[externalIndices[rules]]];
+  sourceLegs = Sort[DeleteDuplicates[Cases[{expression},
+    Spinor["Spin" | "Helicity", "Angle" | "Square", i_Integer] |
+      Spinor["Spin", "Upper" | "Lower", "Angle" | "Square", i_Integer, _] :> i, Infinity]]];
+  sourceLegs = Union[sourceLegs, Cases[{expression}, Mom[i_Integer] :> i, Infinity],
+    Flatten[Cases[{expression}, Mom[Multiparticle[labels__Integer]] :> {labels}, Infinity]],
+    Flatten[Cases[{expression}, MomProd[a_, b_] :>
+      Cases[{a, b}, _Integer, Infinity], Infinity]]];
+  conservationAllowed = TrueQ[conserve] && Length[declared] >= 3 && ContainsAll[declared, sourceLegs];
+  inverseSafe = FreeQ[expression, Power[base_, exponent_] /;
+    !TrueQ[exponent >= 0] && Head[base] =!= PropDen &&
+      !FreeQ[base, _SpinorChain | _SpinorTrace | _Mom | _MomProd]];
+  TimeConstrained[
+    report = rspDiracSchoutenReduction[best, rules, Min[1, remaining[]]];
+    accept[report, "TailAndDoubleEndpointSchouten"];
+    If[conservationAllowed && inverseSafe && remaining[] > 0.01,
+      report = preparationConservedStitchTrial[best, rules, Min[1, remaining[]], True, True];
+      accept[report, "ConservedMasslessStitch"]];
+    If[conservationAllowed && inverseSafe && remaining[] > 0.01,
+      report = preparationGordonConservationTrial[best, rules, Min[2, remaining[]]];
+      accept[report, "ConservedGordonPairs"]],
+    Max[0.000001, seconds], timedOut = True];
+  <|"Amplitude" -> best, "Rank" -> bestRank, "Route" -> route, "TimedOut" -> timedOut,
+    "ExternalMassRules" -> rules, "MomentumConservationAllowed" -> conservationAllowed,
+    "InternalOnShellConditions" -> {}, "ElapsedTime" -> AbsoluteTime[] - started|>
+];
+
 DownValues[preparationReferenceTrial] = {};
 preparationReferenceTrial[expr_, rules_List, dotRules_List, auxiliary_List : {}, conserve_ : False,
     jointRules_List : {}, checkpoint_ : None] :=
@@ -13489,7 +13790,8 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
    eligibleOriginal, admittedOriginal = False, initialCandidate,
    contractionTimedOut = False,
    completedBest = None, completedBestRank, completedBestSource, rememberCompleted, snapshotRank,
-   rankSnapshots = 0, groupedCompaction, fractionCompaction, fractionSeconds, pairNormalization},
+   rankSnapshots = 0, groupedCompaction, fractionCompaction, fractionSeconds, pairNormalization,
+   diracCompaction},
   progressMetadata = Join[<|"Item" -> index, "Items" -> count, "InputType" -> kind|>,
     If[MemberQ[{"Diagram", "FeynmanDiagram"}, kind], <|"Diagram" -> index, "Diagrams" -> count|>, <||>]];
   channels = If[TrueQ[options["InternalOnShell"]],
@@ -13730,6 +14032,24 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
       "After" -> expression, "InternalOnShellIdentity" -> False|>];
     rememberCompleted[expression, stage];
     event[stage];
+    If[TrueQ[wholeAmplitude] || kind === "Amplitude",
+      stage = "OrdinaryEndpointSchoutenCompaction";
+      before = If[completedBest =!= None &&
+        preparationBetterQ[completedBestRank, snapshotRank[expression]], completedBest, expression];
+      diracCompaction = preparationDiracSchoutenCompaction[before,
+        preparationExternalRules[rules], options["MomentumConservation"],
+        If[options["TimeConstraint"] === Infinity, 4,
+          Max[0.000001, Min[4, options["TimeConstraint"] - (AbsoluteTime[] - started)]]],
+        Function[record, diracCompaction = record;
+          rememberCompleted[record["Amplitude"], "OrdinaryEndpointSchoutenCompaction"]]];
+      after = Lookup[diracCompaction, "Amplitude", before];
+      If[residueFiniteQ[after] && preparationBetterQ[snapshotRank[after], snapshotRank[before]],
+        expression = after];
+      AppendTo[reductions, <|"Operation" -> stage, "Before" -> before,
+        "After" -> expression, "IdentityRoute" -> Lookup[diracCompaction, "Route", {}],
+        "SearchTimedOut" -> Lookup[diracCompaction, "TimedOut", False],
+        "InternalOnShellIdentity" -> False, "OnShellChannels" -> {}|>];
+      rememberCompleted[expression, stage]; event[stage]];
     If[(TrueQ[wholeAmplitude] || kind === "Amplitude") && TrueQ[options["MomentumConservation"]],
       stage = "SingleMomentumConservation";
       before = If[completedBest =!= None &&

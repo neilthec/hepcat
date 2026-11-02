@@ -2949,3 +2949,29 @@ and independent Feynman comparison. The suite checks successful construction,
 physical denominators, known complexity ceilings and matching complexity for
 opposite helicities. `HEPCAT_FIVE_POINT_INTEGRATION_CASES` can select a comma-separated
 subset. Timings are reported separately from correctness assertions.
+
+
+### Bounded endpoint contractions on completed amplitudes
+
+A completed amplitude can need several ordinary identities before its shorter
+form becomes visible. Preparation now tries a bounded route combining
+Schouten and external Dirac contractions with massless-chain joining and
+Gordon rearrangements. The first contractions are process independent and
+also belong to `ReduceSpinorProducts`. The conservation-dependent steps stay
+in `PrepareAmplitudes`, where the full external mass list is available.
+They are disabled by `"MomentumConservation" -> False` and are not used when
+the expression refers to an undeclared external leg.
+
+The pass protects physical propagators and inverse spinor factors. It retains
+only a strictly improved complete expression and records its identity route,
+external mass declarations and use of conservation. It does not add internal
+on-shell assumptions to a completed amplitude. Both angle and square
+orientations compete within the same bounded trial allowance, avoiding a
+representation preference for one photon helicity.
+
+The five-point construction integration suite uses a complexity ceiling of 71
+for both mixed electron/three-photon helicity sectors. Its answers are generated
+from the models and checked against every original factorization channel and
+an independent Feynman calculation. No benchmark formula is supplied to the
+constructor. The bound detects a regression in simplicity even if both
+opposite-helicity sectors become equally complicated.

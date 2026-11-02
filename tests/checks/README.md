@@ -98,6 +98,16 @@ accepted candidates require an exact ordinary-identity replay and a strict rank
 improvement. Preparation supplies momentum-conservation relations from its
 external leg set. Standalone reduction receives no implicit conservation rule.
 
+`dirac-schouten-reduction-tests.wl` checks bounded endpoint sum contractions
+using ordinary external identities. Its controls cover both bracket chiralities,
+unequal masses, explicit spin-index variance, literal positive powers and
+protected inverse factors. Conservation-dependent preparation is tested
+separately from the process-independent reducer and requires complete external
+metadata. The opt-in `five-point-construction-integration-tests.wl` constructs
+all six independent five-point QED helicity sectors through the notebook API,
+requiring full physical checks, independent Feynman agreement and matched
+complexity ceilings for opposite helicities.
+
 `shared-matrix-cofactor-tests.wl` verifies the general two-by-two shared-matrix
 diagonal identity, both chiral word orientations, explicit spin variance,
 literal spectator witnesses, virtuality preservation and bounded whole-amplitude

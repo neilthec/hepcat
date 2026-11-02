@@ -49,6 +49,18 @@ denominator appears in the expression."}], "Notes"],
 ordinary contraction and external-particle identities. Preparation \
 additionally knows the complete external leg list and can try \
 momentum-conservation reductions."}], "Notes"],
+  Cell[TextData[{"Some reductions become shorter only after several \
+identities work together. For a completed amplitude, a bounded \
+endpoint-contraction pass can combine Schouten identities with external Dirac \
+equations, join massless spinor products into a momentum chain, and use \
+declared external momentum conservation to contract the result. Angle and \
+square forms are considered on the same footing. A completed trial is kept \
+only when its whole-expression complexity improves; the diagnostic report \
+records the accepted route. These are ordinary identities, so they do not put \
+any internal propagator on shell. Set ",
+     Cell[BoxData[RowBox[{"\"MomentumConservation\"", " ", "->", " ",
+         "False"}]], "InlineFormula"], " to exclude the steps that need the \
+complete external momentum sum."}], "Notes"],
   Cell[TextData[{"With ", Cell[BoxData[RowBox[{"\"InternalOnShell\"", " ",
          "->", " ", "True"}]], "InlineFormula"],
      Cell[BoxData[RowBox[{",", " ", "constructive", " ", "numerator", " ",

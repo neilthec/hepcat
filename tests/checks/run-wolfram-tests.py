@@ -18,6 +18,7 @@ TEST_SUITES = (
     "spinor-identity-tests.wl", "spin-contraction-guard-tests.wl",
     "ordinary-identity-normalization-tests.wl",
     "shared-matrix-cofactor-tests.wl", "paired-spectator-tests.wl",
+    "dirac-schouten-reduction-tests.wl",
     "preparation-ranking-tests.wl", "ordinary-pair-pole-tests.wl",
     "native-laurent-identity-tests.wl",
     "native-rest-null-dual-tests.wl",
