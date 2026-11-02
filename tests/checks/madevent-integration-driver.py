@@ -5,12 +5,14 @@ helper performs actual survey/refine and unweighted-event runs, then checks
 parameter-card changes. It never alters the installed MadGraph tree.
 """
 import argparse
+import contextlib
 import gzip
 import importlib.util
 import json
 import math
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 
@@ -93,12 +95,56 @@ def inspect_events(process, name):
             "EventFile": str(path)}
 
 
+def require_compatible_rates(actual, expected, message):
+    ratio = actual["CrossSectionPB"] / expected["CrossSectionPB"]
+    error = math.hypot(actual["IntegrationErrorPB"] / actual["CrossSectionPB"],
+                       expected["IntegrationErrorPB"] / expected["CrossSectionPB"])
+    require(abs(ratio - 1) <= max(.1, 6 * error), message)
+    return ratio
+
+
+def inspect_bundle(process):
+    manifest = json.loads((process / "hepcat-madevent.json").read_text())
+    bundle = manifest.get("Bundle", {})
+    require(bundle.get("Version") == 1, "Missing supported portable HEPCAT/SPINAS bundle")
+    require(bundle.get("Libraries") and bundle.get("Sources"), "The portable bundle lacks its amplitude sources or libraries")
+    for name in bundle["Libraries"] + bundle["Sources"]:
+        require(not Path(name).is_absolute(), "A bundle dependency is pinned to its original absolute path")
+        path = process / name
+        require(path.is_file() and not path.is_symlink(), "A bundled dependency is missing or is still an external symlink: " + name)
+        require(path.resolve().is_relative_to(process.resolve()), "A bundle dependency escapes the process directory")
+    link = manifest.get("LinkConfiguration", {})
+    require(link.get("RelativeTo") == "MadEventDirectory", "The numerical linker still depends on the exported build directory")
+    require(link.get("Libraries") == bundle["Libraries"], "Native linking does not use the bundled amplitude libraries")
+    return bundle
+
+
+@contextlib.contextmanager
+def unavailable_originals(paths):
+    """Temporarily remove only the integration suite's private dependencies."""
+    moved = []
+    try:
+        for path in paths:
+            require(path.is_dir(), "Missing private dependency fixture: " + str(path))
+            hidden = path.with_name("." + path.name + "-unavailable-for-relocation")
+            require(not hidden.exists(), "A previous hidden integration fixture already exists")
+            path.rename(hidden)
+            moved.append((path, hidden))
+        require(all(not path.exists() for path, _ in moved), "An original dependency remained available")
+        yield
+    finally:
+        for path, hidden in reversed(moved):
+            if hidden.exists():
+                hidden.rename(path)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project", type=Path, required=True)
     parser.add_argument("--launcher", type=Path, required=True)
     parser.add_argument("--scaled-project", type=Path, required=True)
     parser.add_argument("--scaled-launcher", type=Path, required=True)
+    parser.add_argument("--spinas-fixture", type=Path, required=True)
     parser.add_argument("--timeout", type=float, default=900)
     args = parser.parse_args()
     project = args.project.resolve()
@@ -106,6 +152,8 @@ def main():
     workspace = project / "build"
     require(workspace.is_dir(), "The compiled export must have a build directory")
     runtime = load_runtime(project)
+    configuration = json.loads((project / "madevent-config.json").read_text())
+    session_name = configuration.get("SessionDirectory", "madevent")
     runs = []
 
     def launch(arguments, log_name):
@@ -115,12 +163,13 @@ def main():
         require(result.returncode == 0, "MadEvent launch failed; inspect " + str(project / log_name))
 
     launch(["--prepare"], "madevent-prepare-test.log")
-    process = workspace / "madevent"
+    process = workspace / session_name
     require(process.is_dir(), "MadEvent was not created in the launch directory")
-    require(not (project / "madevent").exists(), "MadEvent unexpectedly wrote to the exported source directory")
+    require(not (project / session_name).exists(), "MadEvent unexpectedly wrote to the exported source directory")
     require((workspace / ".hepcat-madevent-support").is_dir(), "Private staging did not follow the launch directory")
     manifest_path = process / "hepcat-madevent.json"
     manifest = json.loads(manifest_path.read_text())
+    inspect_bundle(process)
     require(manifest.get("Status") == "READY", "Native numerical process is not READY")
     require(manifest.get("Backend") == "HEPCAT SPINAS", "Wrong numerical matrix element")
     require(manifest.get("WorkingDirectory") == str(workspace), "Working-directory metadata does not match the launch location")
@@ -189,8 +238,10 @@ def main():
                 timeout=args.timeout)
         require(result.returncode == 0, "Scaled MadEvent launch failed; inspect " + str(log_path))
     launch_scaled(["--prepare"], "madevent-prepare-test.log")
-    scaled_process = scaled_workspace / "madevent"
-    require(scaled_process.is_dir() and not (scaled_project / "madevent").exists(),
+    scaled_configuration = json.loads((scaled_project / "madevent-config.json").read_text())
+    scaled_session_name = scaled_configuration.get("SessionDirectory", "madevent")
+    scaled_process = scaled_workspace / scaled_session_name
+    require(scaled_process.is_dir() and not (scaled_project / scaled_session_name).exists(),
             "The scaled export did not keep output in its launch directory")
     scaled_commands = scaled_project / "hepcat_scaled.commands"
     scaled_commands.write_text("generate_events hepcat_scaled -f\nquit\n")
@@ -206,11 +257,82 @@ def main():
     require(abs(scaled_ratio / 4 - 1) <= max(.1, 6 * scaled_error),
             "A doubled HEPCAT amplitude did not produce four times the rate; possible native-matrix fallback")
     runs.append(scaled)
+
+    # Copy only the numerical process, then make every private source/build
+    # dependency inaccessible. The installed MadGraph and system toolchain stay.
+    original_process = process
+    relocation_workspace = project.parent / "relocated-run"
+    relocation_workspace.mkdir()
+    process = relocation_workspace / session_name
+    shutil.move(str(original_process), str(process))
+    inspect_bundle(process)
+    for row in runs:
+        event = Path(row["EventFile"])
+        if event.is_relative_to(original_process):
+            row["EventFile"] = str(process / event.relative_to(original_process))
+    rebuilt = []
+    for matrix in process.glob("SubProcesses/P*/matrix.f"):
+        directory = matrix.parent
+        for candidate in (directory / "matrix.o", directory / "madevent"):
+            if candidate.exists():
+                candidate.unlink()
+        rebuilt.append(str(directory.relative_to(process)))
+    require(rebuilt, "No native subprocess was available to force a relocated rebuild")
+    native_launcher = process / "bin" / "madevent"
+    python = configuration.get("PythonExecutable") or sys.executable
+
+    def native_integrate(name, card_commands=None):
+        commands = relocation_workspace / (name + ".commands")
+        if card_commands:
+            commands.write_text("generate_events " + name + "\n0\n" +
+                "\n".join(card_commands) + "\ndone\nquit\n")
+        else:
+            commands.write_text("generate_events " + name + " -f\nquit\n")
+        log_path = relocation_workspace / (name + ".log")
+        with log_path.open("w") as log:
+            result = subprocess.run([python, str(native_launcher), str(commands)],
+                cwd=process, stdout=log, stderr=subprocess.STDOUT, timeout=args.timeout)
+        require(result.returncode == 0, "Relocated native MadEvent failed; inspect " + str(log_path))
+        if card_commands:
+            require("Failed to update dependent parameter" not in log_path.read_text(),
+                    "The relocated native card editor could not load its model dependencies")
+        row = inspect_events(process, name)
+        require(row["Events"] == 20, "A relocated run did not produce its requested LHE events")
+        require(all(value == 9 for value in row["ElectronSpinUP"]), "Relocated massive spin labels changed")
+        require(json.loads((process / "hepcat-madevent.json").read_text())["MatrixHashes"] == hashes_before,
+                "Relocation changed the raw SPINAS matrix hook")
+        runs.append(row)
+        return row
+
+    spinas_fixture = args.spinas_fixture.resolve()
+    with unavailable_originals([project, scaled_project, spinas_fixture]):
+        relocated = native_integrate("hepcat_relocated_rebuild")
+        require(all(abs(mass - 2) < 1e-10 for mass in relocated["ElectronMasses"]),
+                "The moved bundle lost its current parameter card")
+        relocated_ratio = require_compatible_rates(relocated, massive,
+                "The moved/rebuilt numerical process changed the same-parameter cross section")
+        require(all((process / name / "madevent").is_file() and
+                    (process / name / "matrix.o").is_file() for name in rebuilt),
+                "The native subprocess was not actually rebuilt from bundled libraries")
+        rebound = native_integrate("hepcat_relocated_parameters", [
+            "set mass 11 1", "set yukawa 11 1",
+            "set sminputs 1 " + format(alpha_inverse, ".17g")])
+        require(all(abs(mass - 1) < 1e-10 for mass in rebound["ElectronMasses"]),
+                "A mass update after relocation did not reach the events")
+        rebound_ratio = require_compatible_rates(rebound, baseline,
+                "Mass/charge updates after relocation did not recover the independent baseline rate")
+
     report = {"Status": "PASS", "Runs": runs, "ChargeRateRatio": ratio,
-              "WorkingDirectory": str(workspace), "MadEventDirectory": str(process),
+              "WorkingDirectory": str(workspace), "InitialMadEventDirectory": str(original_process),
+              "MadEventDirectory": str(process), "SessionDirectory": session_name,
               "ScaledWorkingDirectory": str(scaled_workspace),
+              "ScaledSessionDirectory": scaled_session_name,
               "ScaledAmplitudeRateRatio": scaled_ratio, "ExpectedScaledAmplitudeRateRatio": 4,
               "ExpectedChargeRateRatio": 16,
+              "Relocation": {"Status": "PASS", "OriginalDependenciesUnavailable": True,
+                  "BundleDirectory": str(process), "NativeEntryPoint": str(native_launcher),
+                  "ForcedSubprocessRebuilds": rebuilt, "SameParameterRateRatio": relocated_ratio,
+                  "ReboundBaselineRateRatio": rebound_ratio},
               "Scope": "Genuine LO MadEvent integration and LHE output using the exported HEPCAT/SPINAS matrix element."}
     output = project / "madevent-integration-test.json"
     output.write_text(json.dumps(report, indent=2) + "\n")

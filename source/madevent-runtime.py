@@ -322,6 +322,10 @@ def check(interface):
         path = root / row['Path']
         if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != row['SHA256']:
             fail(interface, 'HEPCAT MATRIX was changed or regenerated. Re-export before running.')
+    for row in report.get('Bundle', {}).get('LibraryHashes', []):
+        path = root / row['Path']
+        if root.resolve() not in path.resolve().parents or not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != row['SHA256']:
+            fail(interface, 'A bundled HEPCAT/SPINAS library is missing or changed: ' + str(path))
     card = getattr(interface, 'run_card', None)
     if card is not None:
         # MG RunCard is a ConfigFile, not dict.get(key, default).
@@ -354,6 +358,14 @@ def install(cls):
                 return
             fail(self, 'MadSpin and reweighting require additional spin/color adapters; they are unsupported for this HEPCAT backend.')
         setattr(cls, name, no_spin_correlations)
+
+
+def show_paths():
+    root = Path(__file__).resolve().parents[2]
+    print('MadEvent process directory: ' + str(root), flush=True)
+    print('  HTML:   ' + str(root / 'index.html'), flush=True)
+    print('  Events: ' + str(root / 'Events'), flush=True)
+    print('  Cards:  ' + str(root / 'Cards'), flush=True)
 ''')
     launcher = process / "bin" / "madevent"
     text = launcher.read_text()
@@ -361,7 +373,10 @@ def install(cls):
     if anchor not in text:
         raise MadEventSetupError("Unsupported native MadEvent launcher.")
     if "hepcat_guard.install(cmd_interface.MadEventCmd)" not in text:
-        launcher.write_text(text.replace(anchor, anchor + "\nimport internal.hepcat_madevent_guard as hepcat_guard\nhepcat_guard.install(cmd_interface.MadEventCmd)", 1))
+        text = text.replace(anchor, anchor + "\nimport internal.hepcat_madevent_guard as hepcat_guard\nhepcat_guard.install(cmd_interface.MadEventCmd)", 1)
+    if "hepcat_guard.show_paths()" not in text:
+        text = text.replace("hepcat_guard.install(cmd_interface.MadEventCmd)", "hepcat_guard.install(cmd_interface.MadEventCmd)\nhepcat_guard.show_paths()", 1)
+    launcher.write_text(text)
     generator = process / "bin" / "generate_events"
     if generator.is_file():
         text = generator.read_text()
@@ -369,7 +384,10 @@ def install(cls):
         if anchor not in text:
             raise MadEventSetupError("Unsupported native MadEvent generate_events launcher.")
         if "hepcat_guard.install(ME.MadEventCmd)" not in text:
-            generator.write_text(text.replace(anchor, anchor + "\nimport hepcat_madevent_guard as hepcat_guard\nhepcat_guard.install(ME.MadEventCmd)", 1))
+            text = text.replace(anchor, anchor + "\nimport hepcat_madevent_guard as hepcat_guard\nhepcat_guard.install(ME.MadEventCmd)", 1)
+        if "hepcat_guard.show_paths()" not in text:
+            text = text.replace("hepcat_guard.install(ME.MadEventCmd)", "hepcat_guard.install(ME.MadEventCmd)\nhepcat_guard.show_paths()", 1)
+        generator.write_text(text)
 
 
 def load_link_configuration(config):
@@ -391,6 +409,112 @@ def load_link_configuration(config):
     return data
 
 
+def bundle_library_sources(link):
+    """Prefer SPINAS's static archive without changing ordinary project links."""
+    originals = [Path(value) for value in link["Libraries"]]
+    preferred = link.get("SPINASStaticLibrary")
+    if preferred and Path(preferred).is_file():
+        originals[-1] = Path(preferred)
+    elif originals[-1].suffix != ".a":
+        candidate = originals[-1].parent / "libspinas.a"
+        if candidate.is_file():
+            originals[-1] = candidate
+    return originals
+
+
+def library_source_hashes(link):
+    return [{"Name": path.name, "SHA256": hashlib.sha256(path.read_bytes()).hexdigest()}
+            for path in bundle_library_sources(link)]
+
+
+def bundle_dependencies(process, config, link):
+    """Copy the amplitude and SPINAS dependencies into a native process."""
+    process = Path(process)
+    project = Path(config["ProcessDirectory"]).expanduser().resolve()
+    library_directory = process / "lib" / "hepcat"
+    source_directory = process / "Source" / "HEPCAT"
+    library_directory.mkdir(parents=True, exist_ok=True)
+    source_directory.mkdir(parents=True, exist_ok=True)
+    originals = bundle_library_sources(link)
+
+    libraries, hashes = [], []
+    shared = False
+    for original in originals:
+        destination = library_directory / original.name
+        if destination.is_symlink():
+            destination.unlink()
+        if not destination.is_file() or hashlib.sha256(destination.read_bytes()).digest() != hashlib.sha256(original.read_bytes()).digest():
+            shutil.copy2(original, destination)
+            # A content change must force native relinking even for archives
+            # delivered with an old or reproducible source timestamp.
+            destination.touch()
+        if destination.suffix != ".a":
+            shared = True
+            destination.chmod(destination.stat().st_mode | 0o200)
+            if sys.platform == "darwin":
+                tool = shutil.which("install_name_tool")
+                if not tool:
+                    raise MadEventSetupError("A shared SPINAS library needs install_name_tool for a movable MadEvent process; alternatively build libspinas.a.")
+                subprocess.run([tool, "-id", "@rpath/" + destination.name, str(destination)], check=True)
+                signer = shutil.which("codesign")
+                if signer:
+                    subprocess.run([signer, "--force", "--sign", "-", str(destination)], check=True,
+                                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            else:
+                reader = shutil.which("readelf")
+                if not reader:
+                    raise MadEventSetupError("A shared SPINAS library needs readelf to verify relocation, or provide libspinas.a.")
+                dynamic = subprocess.check_output([reader, "-d", str(destination)], text=True)
+                match = re.search(r"\(SONAME\).*?\[([^\]]+)\]", dynamic)
+                if match and "/" in match.group(1):
+                    patcher = shutil.which("patchelf")
+                    if not patcher:
+                        raise MadEventSetupError("The shared SPINAS library has an absolute SONAME. Provide libspinas.a or patchelf to make it relocatable.")
+                    subprocess.run([patcher, "--set-soname", destination.name, str(destination)], check=True)
+                elif match and match.group(1) != destination.name:
+                    alias = library_directory / match.group(1)
+                    if Path(match.group(1)).name != match.group(1):
+                        raise MadEventSetupError("Invalid shared-library SONAME.")
+                    shutil.copy2(destination, alias)
+                    hashes.append({"Path": str(alias.relative_to(process)), "SHA256": hashlib.sha256(alias.read_bytes()).hexdigest()})
+        relative = str(destination.relative_to(process))
+        libraries.append(relative)
+        hashes.append({"Path": relative, "SHA256": hashlib.sha256(destination.read_bytes()).hexdigest()})
+
+    headers = link.get("SPINASIncludeDirectory")
+    candidates = ([Path(headers)] if headers else []) + [
+        originals[-1].parent.parent / "include",
+        originals[-1].parent.parent / "include" / "spinas"]
+    include = next((path for path in candidates if (path / "spinas.h").is_file()), None)
+    if include is None:
+        raise MadEventSetupError("Cannot find SPINAS headers to package. Reconfigure the export with SPINASIncludeDirectory in its link metadata.")
+    shutil.copytree(include, source_directory / "spinas", dirs_exist_ok=True,
+                    ignore=shutil.ignore_patterns("__pycache__", "*.pyc", "._*"))
+    for path in sorted(list(project.glob("*.cpp")) + list(project.glob("*.hpp"))):
+        shutil.copy2(path, source_directory / path.name)
+    # These are generator/provenance tools, not required by bin/madevent.
+    for name in ("madevent-runtime.py", "madgraph-runtime.py"):
+        if (project / name).is_file():
+            shutil.copy2(project / name, source_directory / name)
+    metadata = {key: value for key, value in config.items()
+                if not key.startswith("_") and key not in
+                ("ProcessDirectory", "BridgeLibrary", "BridgeLinkFile", "Executable")}
+    (source_directory / "amplitude.json").write_text(json.dumps(metadata, indent=2) + "\n")
+    sources = [str(path.relative_to(process)) for path in sorted(source_directory.rglob("*")) if path.is_file()]
+    local = {"Libraries": libraries, "CXXRuntime": link["CXXRuntime"],
+             "RuntimeLibraryDirectories": ["lib/hepcat"] if shared else [],
+             "RelativeTo": "MadEventDirectory"}
+    bundle = {"Version": 1, "Libraries": libraries, "LibraryHashes": hashes,
+              "SourceLibraryHashes": library_source_hashes(link), "Sources": sources}
+    (source_directory / "link.json").write_text(json.dumps(local, indent=2) + "\n")
+    card = process / "Cards" / "proc_card_mg5.dat"
+    if card.is_file() and (process / "bin" / "internal" / "ufomodel").is_dir():
+        text = card.read_text().replace("\\\n", "")
+        text = re.sub(r"(?m)^import model [^\n]+$", "import model ./bin/internal/ufomodel-full", text)
+        card.write_text(text)
+    return bundle, local
+
+
 def patch_linking(process, link):
     # MG's legacy template can request macOS 10.8 even when the linked C++
     # archives use the current SDK's stack probes. Match the private numerical
@@ -401,11 +525,26 @@ def patch_linking(process, link):
             raise MadEventSetupError("Cannot establish the macOS link target.")
         options = process / "Source" / "make_opts"
         options.write_text(re.sub(r"(?m)^MACFLAG=.*$", "MACFLAG=-mmacosx-version-min=" + version, options.read_text()))
-    libraries = link["Libraries"]
-    flags = [shlex.quote(p) for p in libraries] + ["-l" + link["CXXRuntime"]]
-    flags += [shlex.quote("-Wl,-rpath," + p) for p in link.get("RuntimeLibraryDirectories", [])]
+    relative = link.get("RelativeTo") == "MadEventDirectory"
+    libraries = [("../../" + path) if relative else path for path in link["Libraries"]]
+    flags = []
+    for path in libraries:
+        if relative and sys.platform != "darwin" and not path.endswith(".a"):
+            flags += ["-L" + shlex.quote(str(Path(path).parent)), "-l:" + shlex.quote(Path(path).name)]
+        else:
+            flags.append(shlex.quote(path))
+    flags.append("-l" + link["CXXRuntime"])
+    if relative and link.get("RuntimeLibraryDirectories"):
+        if sys.platform == "darwin":
+            flags.append("-Wl,-rpath,@loader_path/../../lib/hepcat")
+        else:
+            flags.append("-Wl,-rpath,'$$ORIGIN/../../lib/hepcat'")
+    elif not relative:
+        flags += [shlex.quote("-Wl,-rpath," + p) for p in link.get("RuntimeLibraryDirectories", [])]
     path = process / "SubProcesses" / "makefile"
     text = path.read_text()
+    text = re.sub(r"\n# HEPCAT: link the exported amplitude after native objects and libraries\.\n"
+                  r"(?:FFLAGS[^\n]*\n)?LINKLIBS[^\n]*\n\$\(PROG\):[^\n]*\n?", "\n", text)
     text += "\n# HEPCAT: link the exported amplitude after native objects and libraries.\n"
     text += "FFLAGS += -ffixed-line-length-none\n"
     text += "LINKLIBS += " + " ".join(flags) + "\n"
@@ -433,20 +572,30 @@ def prepare(data, root=None):
     link = load_link_configuration(config)
     workspace = Path(root or Path.cwd()).expanduser().resolve()
     workspace.mkdir(parents=True, exist_ok=True)
-    final = workspace / "madevent"
+    session = config.get("SessionDirectory", "madevent")
+    if not isinstance(session, str) or not re.fullmatch(r"[A-Za-z0-9_.-]+", session) or session in (".", ".."):
+        raise MadEventSetupError("SessionDirectory must be a simple process-directory name.")
+    final = workspace / session
     fingerprint = configuration_fingerprint(config, link)
     if final.exists():
         manifest = final / "hepcat-madevent.json"
         if not manifest.is_file():
             raise MadEventSetupError("Refusing to overwrite a MadEvent directory without HEPCAT ownership metadata.")
         report = json.loads(manifest.read_text())
-        if report.get("ConfigurationSHA256") != fingerprint:
+        legacy_link = {key: link[key] for key in ("Libraries", "CXXRuntime", "RuntimeLibraryDirectories") if key in link}
+        if report.get("ConfigurationSHA256") not in (fingerprint, configuration_fingerprint(config, legacy_link)):
             raise MadEventSetupError("Export metadata changed or this MadEvent directory belongs to another process: " +
                 str(final) + ". Launch from a different directory or select --work-directory DIR.")
         for row in report.get("MatrixHashes", []):
             path = final / row["Path"]
             if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != row["SHA256"]:
                 raise MadEventSetupError("A private MATRIX was modified or regenerated; refusing to run it.")
+        previous_sources = report.get("Bundle", {}).get("SourceLibraryHashes")
+        if not report.get("Bundle") or (previous_sources is not None and previous_sources != library_source_hashes(link)):
+            bundle, local_link = bundle_dependencies(final, config, link)
+            patch_linking(final, local_link)
+            report.update(Bundle=bundle, LinkConfiguration=local_link, ConfigurationSHA256=fingerprint)
+            (final / "hepcat-madevent.json").write_text(json.dumps(report, indent=2) + "\n")
         install_runtime_guard(final)
         return dict(report, MadEventDirectory=str(final), WorkingDirectory=str(workspace))
     support = workspace / ".hepcat-madevent-support"
@@ -513,7 +662,8 @@ def prepare(data, root=None):
             raise MadEventSetupError("Only scalar MadEvent SIMD width1 is supported by this C interface.")
         expressions = fortran_parameter_expressions(process, config["ParameterNames"], matches)
         patch_reports = [patch_subprocess(matrix.parent, config, expressions) for matrix in matrices]
-        patch_linking(process, link)
+        bundle, local_link = bundle_dependencies(process, config, link)
+        patch_linking(process, local_link)
         patch_event_spins(process, config)
         install_runtime_guard(process)
         for card in ("run_card.dat", "run_card_default.dat"):
@@ -525,7 +675,8 @@ def prepare(data, root=None):
         report = {"Status": "READY", "Backend": "HEPCAT SPINAS", "Process": process_string,
                   "MadEventDirectory": str(final), "WorkingDirectory": str(workspace),
                   "ExportDirectory": str(project), "ConfigurationSHA256": fingerprint,
-                  "ParameterMatching": matches, "RuntimeParameterSymbols": expressions, "LinkConfiguration": link,
+                  "ParameterMatching": matches, "RuntimeParameterSymbols": expressions,
+                  "LinkConfiguration": local_link, "Bundle": bundle,
                   "MassMatching": mass_matching, "Subprocesses": patch_reports,
                   "MatrixHashes": hashes, "UnsupportedPolarizationLegs": sorted(set(config["_MassiveLegs"]) & {1, 2} | set(config["_FixedIncomingLegs"])),
                   "MassiveLHE_SPINUP": 9, "PhysicalPDGs": pdgs,
@@ -613,7 +764,7 @@ def main(argv=None):
             if not any(p.is_file() and p.stat().st_mtime_ns >= started_ns for p in events):
                 raise MadEventSetupError("Native MadEvent returned without new unweighted LHE events for " + args.run + ". Inspect its run log and cards.")
         return 0
-    except (MadEventSetupError, OSError, ValueError, KeyError) as error:
+    except (MadEventSetupError, OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
         print("HEPCAT MadEvent: " + str(error), file=sys.stderr)
         return 1
 

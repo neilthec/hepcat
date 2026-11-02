@@ -57,7 +57,7 @@ If[AssociationQ[smeSelected],
   If[smeNumerical["Status"] =!= "AVAILABLE", Print["NUMERICAL CONFIGURATION: ", InputForm[smeNumerical]]];
   smeReference = smeSelectedManifest["MadGraphValidation"];
   smeCheck["numerical sessions are resolved at launch rather than pinned to the export",
-    smeNumerical["SessionDirectory"] === "madevent" &&
+    smeNumerical["SessionDirectory"] === "PROC_madevent_stub" &&
       smeNumerical["SessionDirectoryBase"] === "WorkingDirectory"];
   smeCheck["both workflows preserve the explicitly chosen model and particle sector",
     smeNumerical["Status"] === "AVAILABLE" &&
@@ -68,7 +68,7 @@ If[AssociationQ[smeSelected],
       {"madgraph-validation.cpp", "madgraph-runtime.py", "madevent-spinas.cpp",
        "madevent-main.cpp", "madevent-runtime.py", "madevent-config.json"}, FileExistsQ]];
   smeCheck["topology generation remains lazy during source-only export",
-    !DirectoryQ[FileNameJoin[{smeSelected["Directory"], "madevent"}]] &&
+    !DirectoryQ[FileNameJoin[{smeSelected["Directory"], smeNumerical["SessionDirectory"]}]] &&
       FileNames["*", smeFakeMG, Infinity] === {FileNameJoin[{smeFakeMG, "bin"}],
         FileNameJoin[{smeFakeMG, "bin", "mg5_aMC"}]}];
   smeCheck["the numerical adapter keeps the raw matrix element separate from averaging",
@@ -82,6 +82,10 @@ If[AssociationQ[smeSelected],
       StringContainsQ[cmake, "madevent_stub_madevent_matrix STATIC"] &&
         StringContainsQ[cmake, "add_executable(madevent_stub_madevent"] &&
         StringContainsQ[cmake, "madevent-link.json"]]];
+  smeCheck["the generated link metadata identifies headers and a static SPINAS archive for bundling",
+    With[{cmake = Import[smeSelected["Files"]["CMake"], "Text"]},
+      StringContainsQ[cmake, "SPINASIncludeDirectory"] &&
+        StringContainsQ[cmake, "SPINASStaticLibrary"]]];
 ];
 
 smeFixed = smeExport["fixed-outgoing", {"e", "E"} -> {"A.+", "A"},

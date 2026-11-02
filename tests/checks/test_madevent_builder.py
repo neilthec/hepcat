@@ -55,22 +55,45 @@ class MadEventBuilderTests(unittest.TestCase):
         (project / "build").mkdir(parents=True, exist_ok=True)
         library = project / "build" / "libfixture.a"
         library.touch()
+        headers = self.directory / "spinas-dependency" / "include"
+        headers.mkdir(parents=True, exist_ok=True)
+        (headers / "spinas.h").write_text("// standalone SPINAS header fixture\n")
+        (headers / "types.h").write_text("// scalar and complex types fixture\n")
+        for filename in ("process.cpp", "process.hpp", "madevent-spinas.cpp",
+                         "spinas-runtime.hpp", "spinas-validation.hpp"):
+            (project / filename).write_text("// exported amplitude source: " + filename + "\n")
         (project / "build" / "madevent-link.json").write_text(json.dumps({
-            "Libraries": [str(library)], "CXXRuntime": "c++"}))
+            "Libraries": [str(library)], "CXXRuntime": "c++",
+            "SPINASIncludeDirectory": str(headers)}))
         return project
 
     def make_owned_run(self, workspace, config=None):
         config = self.config if config is None else config
         self.make_export(config)
-        process = workspace / "madevent"
+        process = workspace / config.get("SessionDirectory", "madevent")
         (process / "bin" / "internal").mkdir(parents=True)
         (process / "Cards").mkdir()
         (process / "bin" / "madevent").write_text("import internal.madevent_interface as cmd_interface\n")
         matrix = process / "matrix.f"
         matrix.write_text("SPINAS numerical hook\n")
+        local_library = process / "lib" / "hepcat" / "libfixture.a"
+        local_library.parent.mkdir(parents=True)
+        local_library.write_bytes(b"self-contained archive fixture\n")
+        source = process / "Source" / "HEPCAT" / "process.hpp"
+        source.parent.mkdir(parents=True)
+        source.write_text("// bundled amplitude declarations\n")
+        relative_library = str(local_library.relative_to(process))
+        bundle = {"Version": 1, "Libraries": [relative_library],
+                  "Sources": [str(source.relative_to(process))],
+                  "LibraryHashes": [{"Path": relative_library,
+                                     "SHA256": hashlib.sha256(local_library.read_bytes()).hexdigest()}]}
         normalized = builder.validate_config(config)
         report = {"Status": "READY", "MadEventDirectory": str(process.resolve()),
                   "WorkingDirectory": str(workspace.resolve()),
+                  "Bundle": bundle,
+                  "LinkConfiguration": {"Libraries": [relative_library],
+                      "CXXRuntime": "c++", "RuntimeLibraryDirectories": [],
+                      "RelativeTo": "MadEventDirectory"},
                   "ConfigurationSHA256": builder.configuration_fingerprint(
                       normalized, builder.load_link_configuration(normalized)),
                   "MatrixHashes": [{"Path": "matrix.f", "SHA256": hashlib.sha256(matrix.read_bytes()).hexdigest()}]}
@@ -352,6 +375,23 @@ class MadEventBuilderTests(unittest.TestCase):
         with self.assertRaisesRegex(builder.MadEventSetupError, "metadata changed"):
             builder.prepare(other)
 
+    def test_process_named_sessions_can_share_a_working_directory(self):
+        first = dict(self.config, SessionDirectory="PROC_first")
+        second = dict(self.config, SessionDirectory="PROC_second",
+                      ProcessDirectory=str(self.directory / "second export"))
+        first_process, first_report = self.make_owned_run(self.directory, first)
+        second_process, second_report = self.make_owned_run(self.directory, second)
+        (first_process / "Cards" / "run_card.dat").write_text("first process controls\n")
+        (second_process / "Cards" / "run_card.dat").write_text("second process controls\n")
+        self.assertEqual(builder.prepare(first), first_report)
+        self.assertEqual(builder.prepare(second), second_report)
+        self.assertEqual((first_process / "Cards" / "run_card.dat").read_text(), "first process controls\n")
+        self.assertEqual((second_process / "Cards" / "run_card.dat").read_text(), "second process controls\n")
+        for name in [".", "..", "/absolute/output", "parent/output", "bad\nname"]:
+            with self.subTest(name=name):
+                with self.assertRaisesRegex(builder.MadEventSetupError, "SessionDirectory"):
+                    builder.prepare(dict(self.config, SessionDirectory=name))
+
     def test_relative_source_paths_follow_configuration_not_output_directory(self):
         process, report = self.make_owned_run(self.directory)
         project = Path(self.config["ProcessDirectory"])
@@ -363,6 +403,214 @@ class MadEventBuilderTests(unittest.TestCase):
         self.assertEqual(status, 0)
         self.assertIn(str(process / "Events"), output.getvalue())
         self.assertFalse((project / "madevent").exists())
+
+    def test_bundle_keeps_sources_headers_and_archives_after_export_removal(self):
+        project = self.make_export()
+        original = project / "build" / "libfixture.a"
+        original.write_bytes(b"independent compiled amplitude archive\n")
+        config = builder.validate_config(self.config)
+        link = builder.load_link_configuration(config)
+        process = self.directory / "bundle"
+        process.mkdir()
+        bundle, local_link = builder.bundle_dependencies(process, config, link)
+        self.assertEqual(bundle["Version"], 1)
+        self.assertTrue(bundle["Libraries"])
+        self.assertEqual(local_link["RelativeTo"], "MadEventDirectory")
+        self.assertEqual(local_link["Libraries"], bundle["Libraries"])
+        for name in bundle["Libraries"] + bundle["Sources"]:
+            self.assertFalse(Path(name).is_absolute())
+            path = process / name
+            self.assertTrue(path.is_file(), name)
+            self.assertFalse(path.is_symlink(), name)
+            self.assertTrue(path.resolve().is_relative_to(process.resolve()), name)
+        for name in ("process.cpp", "process.hpp", "madevent-spinas.cpp"):
+            self.assertTrue((process / "Source" / "HEPCAT" / name).is_file())
+        self.assertTrue((process / "Source" / "HEPCAT" / "spinas" / "spinas.h").is_file())
+        self.assertNotIn(str(project), json.dumps(local_link))
+        self.assertNotIn(str(self.directory / "spinas-dependency"), json.dumps(local_link))
+        self.assertEqual((process / bundle["Libraries"][0]).read_bytes(), original.read_bytes())
+        for row in bundle["LibraryHashes"]:
+            self.assertEqual(row["SHA256"], hashlib.sha256((process / row["Path"]).read_bytes()).hexdigest())
+        shutil.rmtree(project)
+        shutil.rmtree(self.directory / "spinas-dependency")
+        self.assertTrue(all((process / name).is_file() for name in bundle["Libraries"] + bundle["Sources"]))
+
+    def test_bundle_dereferences_external_library_and_header_symlinks(self):
+        project = self.make_export()
+        original = project / "build" / "libfixture.a"
+        actual = self.directory / "actual-library.a"
+        actual.write_bytes(b"archive behind a build-tree symlink\n")
+        original.unlink()
+        original.symlink_to(actual)
+        header = self.directory / "actual-header.h"
+        header.write_text("// header outside the include tree\n")
+        include = self.directory / "spinas-dependency" / "include"
+        (include / "external.h").symlink_to(header)
+        process = self.directory / "bundle"
+        process.mkdir()
+        config = builder.validate_config(self.config)
+        bundle, _ = builder.bundle_dependencies(process, config, builder.load_link_configuration(config))
+        archived = process / bundle["Libraries"][0]
+        copied_header = process / "Source" / "HEPCAT" / "spinas" / "external.h"
+        self.assertFalse(archived.is_symlink())
+        self.assertEqual(archived.read_bytes(), actual.read_bytes())
+        self.assertFalse(copied_header.is_symlink())
+        self.assertEqual(copied_header.read_text(), header.read_text())
+        actual.unlink()
+        header.unlink()
+        self.assertTrue(archived.is_file() and copied_header.is_file())
+
+    def test_bundle_prefers_available_static_spinas_over_shared_build_library(self):
+        project = self.make_export()
+        shared = project / "build" / "libspinas_shared.dylib"
+        shared.write_bytes(b"not needed when a static SPINAS archive exists\n")
+        static = project / "build" / "libspinas.a"
+        static.write_bytes(b"standalone SPINAS archive\n")
+        config = builder.validate_config(self.config)
+        link = builder.load_link_configuration(config)
+        link.update(Libraries=[str(shared)], SPINASStaticLibrary=str(static))
+        process = self.directory / "bundle"
+        process.mkdir()
+        bundle, local_link = builder.bundle_dependencies(process, config, link)
+        self.assertEqual([Path(name).name for name in bundle["Libraries"]], ["libspinas.a"])
+        self.assertEqual(local_link.get("RuntimeLibraryDirectories", []), [])
+        self.assertEqual((process / bundle["Libraries"][0]).read_bytes(), static.read_bytes())
+
+    def test_cached_process_refreshes_changed_libraries_and_preserves_user_data(self):
+        process, report = self.make_owned_run(self.directory)
+        project = Path(self.config["ProcessDirectory"])
+        original = project / "build" / "libfixture.a"
+        original.write_bytes(b"first compiled amplitude\n")
+        (process / "Source" / "make_opts").write_text("MACFLAG=-mmacosx-version-min=10.8\n")
+        (process / "SubProcesses").mkdir()
+        makefile = process / "SubProcesses" / "makefile"
+        makefile.write_text("LINKLIBS = -lmodel\n")
+        config = builder.validate_config(self.config)
+        link = builder.load_link_configuration(config)
+        bundle, local_link = builder.bundle_dependencies(process, config, link)
+        builder.patch_linking(process, local_link)
+        report.update(Bundle=bundle, LinkConfiguration=local_link)
+        manifest = process / "hepcat-madevent.json"
+        manifest.write_text(json.dumps(report))
+        run_card = process / "Cards" / "run_card.dat"
+        run_card.write_text("my selected beam energies and cuts\n")
+        param_card = process / "Cards" / "param_card.dat"
+        param_card.write_text("my updated masses and couplings\n")
+        event = process / "Events" / "previous_run" / "unweighted_events.lhe"
+        event.parent.mkdir(parents=True)
+        event.write_text("previous numerical results\n")
+
+        original.write_bytes(b"recompiled, corrected amplitude\n")
+        (project / "process.cpp").write_text("// corrected generated amplitude\n")
+        with mock.patch.object(builder, "reference_runtime", side_effect=AssertionError(
+                "refresh must not regenerate the native process")):
+            refreshed = builder.prepare(self.config)
+        self.assertNotEqual(refreshed["Bundle"]["SourceLibraryHashes"],
+                            bundle["SourceLibraryHashes"])
+        self.assertEqual(refreshed["Bundle"]["SourceLibraryHashes"],
+                         builder.library_source_hashes(link))
+        self.assertEqual((process / refreshed["Bundle"]["Libraries"][0]).read_bytes(),
+                         original.read_bytes())
+        self.assertEqual((process / "Source" / "HEPCAT" / "process.cpp").read_text(),
+                         "// corrected generated amplitude\n")
+        self.assertEqual(run_card.read_text(), "my selected beam energies and cuts\n")
+        self.assertEqual(param_card.read_text(), "my updated masses and couplings\n")
+        self.assertEqual(event.read_text(), "previous numerical results\n")
+        self.assertEqual(makefile.read_text().count("# HEPCAT: link"), 1)
+        self.assertEqual(json.loads(manifest.read_text())["Bundle"], refreshed["Bundle"])
+        with mock.patch.object(builder, "bundle_dependencies", side_effect=AssertionError(
+                "an unchanged compiled amplitude must keep its cached bundle")):
+            self.assertEqual(builder.prepare(self.config), refreshed)
+
+    @unittest.skipUnless(sys.platform == "darwin", "Mach-O shared-library relocation is macOS-specific")
+    def test_shared_only_bundle_relinks_and_runs_after_originals_are_removed(self):
+        compiler = shutil.which("c++")
+        make = shutil.which("make")
+        if not compiler or not make or not shutil.which("install_name_tool"):
+            self.skipTest("A C++ compiler, make and install_name_tool are required")
+        project = self.make_export()
+        shared = project / "build" / "libspinas_shared.dylib"
+        source = project / "probe.cpp"
+        source.write_text('extern "C" double hepcat_bundle_probe() { return 6.25; }\n')
+        result = subprocess.run([compiler, "-dynamiclib", str(source),
+            "-Wl,-install_name," + str(shared), "-o", str(shared)],
+            capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        config = builder.validate_config(self.config)
+        link = builder.load_link_configuration(config)
+        link["Libraries"] = [str(shared)]
+        process = self.directory / "shared-process"
+        (process / "Source").mkdir(parents=True)
+        (process / "Source" / "make_opts").write_text("MACFLAG=-mmacosx-version-min=10.8\n")
+        subprocess_directory = process / "SubProcesses" / "P0"
+        subprocess_directory.mkdir(parents=True)
+        (subprocess_directory / "main.cpp").write_text(
+            '#include <iostream>\nextern "C" double hepcat_bundle_probe();\n'
+            'int main() { std::cout << hepcat_bundle_probe() << "\\n"; }\n')
+        (process / "SubProcesses" / "makefile").write_text(
+            "CXX := " + compiler + "\nPROG := madevent\nLINKLIBS =\n"
+            "$(PROG): main.o\n\t$(CXX) main.o $(LINKLIBS) -o $(PROG)\n"
+            "main.o: main.cpp\n\t$(CXX) -c main.cpp -o main.o\n")
+        bundle, local_link = builder.bundle_dependencies(process, config, link)
+        self.assertEqual(local_link["RuntimeLibraryDirectories"], ["lib/hepcat"])
+        self.assertEqual([Path(name).name for name in bundle["Libraries"]], [shared.name])
+        builder.patch_linking(process, local_link)
+
+        def build_and_run(directory):
+            result = subprocess.run([make, "-f", "../makefile"], cwd=directory,
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            environment = {key: value for key, value in os.environ.items()
+                           if not key.startswith("DYLD_")}
+            result = subprocess.run([str(directory / "madevent")], cwd=directory,
+                                    env=environment, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual(result.stdout.strip(), "6.25")
+
+        build_and_run(subprocess_directory)
+        moved = self.directory / "moved-shared-process"
+        process.rename(moved)
+        shutil.rmtree(project)
+        shutil.rmtree(self.directory / "spinas-dependency")
+        subprocess_directory = moved / "SubProcesses" / "P0"
+        (subprocess_directory / "main.o").unlink()
+        (subprocess_directory / "madevent").unlink()
+        build_and_run(subprocess_directory)
+
+    def test_bundled_make_links_are_relative_to_subprocess_directories(self):
+        process = self.directory / "bundle"
+        (process / "SubProcesses").mkdir(parents=True)
+        (process / "Source").mkdir()
+        (process / "Source" / "make_opts").write_text("MACFLAG=-mmacosx-version-min=10.8\n")
+        makefile = process / "SubProcesses" / "makefile"
+        makefile.write_text("LINKLIBS = -lmodel\n")
+        builder.patch_linking(process, {"Libraries": ["lib/hepcat/libfixture.a"],
+            "CXXRuntime": "c++", "RuntimeLibraryDirectories": [],
+            "RelativeTo": "MadEventDirectory"})
+        text = makefile.read_text()
+        self.assertIn("../../lib/hepcat/libfixture.a", text)
+        self.assertNotIn(str(self.directory), text)
+        self.assertIn("$(PROG):", text)
+
+    def test_native_bundle_guard_uses_only_local_files_after_export_removal(self):
+        process, report = self.make_owned_run(self.directory)
+        builder.install_runtime_guard(process)
+        shutil.rmtree(Path(self.config["ProcessDirectory"]))
+        shutil.rmtree(self.directory / "spinas-dependency")
+        path = process / "bin" / "internal" / "hepcat_madevent_guard.py"
+        spec = importlib.util.spec_from_file_location("hepcat_portable_guard_fixture", path)
+        guard = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(guard)
+        class Interface:
+            InvalidCmd = RuntimeError
+            me_dir = str(process)
+            run_card = None
+        interface = Interface()
+        guard.check(interface)
+        library = process / report["Bundle"]["Libraries"][0]
+        library.write_bytes(b"changed numerical amplitude archive\n")
+        with self.assertRaises(RuntimeError):
+            guard.check(interface)
 
     def test_native_error_exit_zero_does_not_become_success(self):
         cases = [("missing-events", ["--run", "run_01"], "missing", 1),

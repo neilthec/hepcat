@@ -526,6 +526,10 @@ Unsupported input returns `Failure` before writing project files.
 The separate `n_calchep` numerical target must use the supplied SPINAS squared
 amplitude directly through CalcHEP's numerical ABI. Do not invoke the symbolic
 generator or require a counterpart CalcHEP model for this integration backend.
+Deploy an actual executable copy at `results/n_calchep` in the exported project,
+not a symlink to its build tree. This `results` directory holds the runnable
+CalcHEP numerical session. Keep validation and example executables in `build`.
+Retain the external CalcHEP and system runtime dependencies when moving results.
 Keep model inputs and dependent constraints synchronized with SPINAS mass and
 parameter updates. Numerical workers need separate process caches; preserve
 incoming/outgoing leg order, selected helicities and normalization exactly once.
@@ -538,10 +542,22 @@ export also creates a `<ProcessName>_madevent` launcher alongside the independen
 MadGraph validator. `source/madevent-runtime.py` lazily creates a private native
 LO MadEvent process and replaces its raw fixed-spin MATRIX with the exported
 SPINAS amplitude. Its default working directory is the caller's current
-directory: launching from `build` creates `build/madevent`. Keep exported source
+directory: launching from `build` creates `build/PROC_<ProcessName>`, such as
+`build/PROC_eeAA`. Keep exported source
 and library paths independent of that output workspace. `--work-directory DIR`
 selects another workspace; print full card, HTML and event locations at startup.
 Preserve earlier sessions rather than moving or overwriting their results.
+The prepared `PROC_<ProcessName>` directory must contain every HEPCAT/SPINAS runtime
+dependency, including its amplitude sources and headers, private model support
+and numerical libraries. Prefer the actual static SPINAS archive when packaging;
+do not leave its linking instructions pointed at the disposable export/build
+directory or SPINAS checkout. The initial outer launcher may use the export, but
+the prepared directory's `bin/madevent` must run after moving that whole folder
+and making the original export/build unavailable. Keep MadGraph and system tools
+external. Validate fresh event generation, live parameter changes and a forced
+subprocess rebuild after relocation; merely running a cached executable is not
+enough. Preserve existing cards, events and matrix-integrity guards during any
+upgrade of an owned session.
 Keep MadEvent's averaging, final identical-species factor,
 phase-space maps, cuts and event generation; never call `amp2` inside MATRIX or
 fall back to HELAS after a failed evaluation. Synchronize current evaluated UFO

@@ -44,6 +44,14 @@ check["the numerical engine has its own availability report",
 check["source export includes readable numerical adapter and runtime files",
   AllTrue[Lookup[snUnavailable["Files"], {"CalcHEPNumericalSource", "CalcHEPNumericalRuntime"}, ""],
     StringQ[#] && FileExistsQ[#] &]];
+check["the numerical executable and session are exposed in results",
+  snUnavailable["CalcHEPNumerical"]["Executable"] === FileNameJoin[{snUnavailable["Directory"], "results", "n_calchep"}] &&
+    snUnavailable["CalcHEPNumerical"]["SessionDirectory"] === FileNameJoin[{snUnavailable["Directory"], "results"}]];
+snGeneratedCMake = Import[snUnavailable["Files"]["CMake"], "Text"];
+check["CMake copies the runnable numerical executable instead of linking it into build",
+  StringContainsQ[snGeneratedCMake, "set(CALCHEP_SESSION \"${CMAKE_CURRENT_SOURCE_DIR}/results\")"] &&
+    StringContainsQ[snGeneratedCMake, "-E copy \"$<TARGET_FILE:n_calchep>\""] &&
+    !StringContainsQ[snGeneratedCMake, "create_symlink \"$<TARGET_FILE:n_calchep>\""]];
 snAdapter = Import[snUnavailable["Files"]["CalcHEPNumericalSource"], "Text"];
 check["the numerical adapter calls SPINAS rather than symbolic CalcHEP generation",
   StringContainsQ[snAdapter, "numerical_unavailable"] &&
@@ -106,10 +114,16 @@ If[StringQ[snCalcHEP] && DirectoryQ[snCalcHEP] &&
       If[!snSucceeded[snUnitRun], Print["NUMERICAL RUNTIME UNIT: ", snUnitRun]],
       Print["NUMERICAL RUNTIME COMPILER: ", snUnitCompiled]],
     {snUnitPrecision, {"double", "long-double"}}];
+  snLegacyDirectory = CreateDirectory[FileNameJoin[{snPath["numerical_bridge"], "calchep"}],
+    CreateIntermediateDirectories -> True];
+  snLegacyMarker = FileNameJoin[{snLegacyDirectory, "previous-run.txt"}];
+  Export[snLegacyMarker, "keep the earlier session", "Text"];
   snBuilt = snExport["numerical_bridge", snNumericRoot, "Build" -> True];
   check["the public exporter builds n_calchep using only the numerical CalcHEP installation",
     AssociationQ[snBuilt] && DirectoryQ[snBuilt["Directory"]]];
   If[AssociationQ[snBuilt],
+    check["building the results copy preserves earlier calchep sessions",
+      FileExistsQ[snLegacyMarker] && Import[snLegacyMarker, "Text"] === "keep the earlier session"];
     snManifest = Import[snBuilt["Files"]["Manifest"], "RawJSON"];
     snConfiguration = Lookup[snManifest, "CalcHEPNumerical", <||>];
     check["numerical availability is independent of the disabled symbolic counterpart model",
@@ -122,10 +136,31 @@ If[StringQ[snCalcHEP] && DirectoryQ[snCalcHEP] &&
       snExecutable = First[If[snPreferred === {}, snBinaries, snPreferred]];
       snBinaryHash = FileHash[snExecutable, "SHA256"];
       snRunDirectory = DirectoryName[snExecutable];
+      check["the runnable results executable is a regular file rather than a symlink",
+        snExecutable === FileNameJoin[{snBuilt["Directory"], "results", "n_calchep"}] &&
+          snSucceeded[snRun[{"/bin/sh", "-c", "test -f \"$1\" && test ! -L \"$1\"", "check-copy", snExecutable}]]];
       snStarted = snRun[{"/usr/bin/env", "nParProc=1", snExecutable, "-blind", "0"}, snRunDirectory];
       check["the real CalcHEP numerical menu starts headlessly with the SPINAS interface",
         snSucceeded[snStarted] && FileExistsQ[FileNameJoin[{snRunDirectory, "session.dat"}]]];
       If[!snSucceeded[snStarted], Print["NUMERICAL STARTUP: ", snStarted]];
+
+      (* A copied numerical process must not need its original export build. *)
+      snDetachedDirectory = CreateDirectory[snPath["detached-results"]];
+      snDetachedExecutable = FileNameJoin[{snDetachedDirectory, "n_calchep"}];
+      snCopied = snRun[{"/bin/cp", snExecutable, snDetachedExecutable}];
+      snBuildDirectory = FileNameJoin[{snBuilt["Directory"], "build"}];
+      snHiddenBuild = FileNameJoin[{snBuilt["Directory"], "build-unavailable"}];
+      snHidden = Quiet[Check[RenameDirectory[snBuildDirectory, snHiddenBuild], $Failed]];
+      check["the relocation probe makes the original build unavailable", StringQ[snHidden]];
+      If[StringQ[snHidden],
+        snDetachedRun = CheckAbort[
+          snRun[{"/usr/bin/env", "nParProc=1", snDetachedExecutable, "-blind", "0"}, snDetachedDirectory],
+          RenameDirectory[snHiddenBuild, snBuildDirectory]; Abort[]];
+        RenameDirectory[snHiddenBuild, snBuildDirectory];
+        check["the copied numerical executable starts outside the export without its build directory",
+          snSucceeded[snCopied] && snSucceeded[snDetachedRun] &&
+            FileExistsQ[FileNameJoin[{snDetachedDirectory, "session.dat"}]]];
+        If[!snSucceeded[snDetachedRun], Print["DETACHED NUMERICAL STARTUP: ", snDetachedRun]]];
 
       snParameterOrder = snManifest["ParameterOrder"];
       snMassIndex = First[FirstPosition[snParameterOrder, "Me"]] - 1;

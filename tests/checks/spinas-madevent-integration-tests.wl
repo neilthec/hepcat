@@ -14,6 +14,20 @@ smeiSpinas = Replace[Environment["HEPCAT_SPINAS_DIRECTORY"],
   $Failed | "" -> FileNameJoin[{ParentDirectory[smeiRoot], "spinas"}]];
 smeiMadGraph = Replace[Environment["HEPCAT_MADGRAPH_DIRECTORY"],
   $Failed | "" -> FileNameJoin[{ParentDirectory[smeiRoot], "MadGraph"}]];
+(* A private header/library installation can be made unavailable during the
+   relocation test without touching the user's real SPINAS checkout. *)
+smeiSpinasLibraries = Select[FileNameJoin[{smeiSpinas, #, "libspinas.a"}] & /@
+  {"build", "lib"}, FileExistsQ];
+smeiCheck["a static SPINAS library is available for the private dependency fixture",
+  smeiSpinasLibraries =!= {}];
+If[smeiSpinasLibraries === {}, Print["No static SPINAS library found in ", smeiSpinas]; Exit[1]];
+smeiSpinasFixture = CreateDirectory[FileNameJoin[{smeiTemporary, "spinas-dependency"}]];
+CopyDirectory[FileNameJoin[{smeiSpinas, "include"}], FileNameJoin[{smeiSpinasFixture, "include"}]];
+CreateDirectory[FileNameJoin[{smeiSpinasFixture, "build"}]];
+CopyFile[First[smeiSpinasLibraries], FileNameJoin[{smeiSpinasFixture, "build", "libspinas.a"}]];
+If[FileExistsQ[FileNameJoin[{smeiSpinas, "build", "CMakeCache.txt"}]],
+  CopyFile[FileNameJoin[{smeiSpinas, "build", "CMakeCache.txt"}],
+    FileNameJoin[{smeiSpinasFixture, "build", "CMakeCache.txt"}]]];
 smeiModel = ReadModel[FileNameJoin[{smeiRoot, "models"}], 3];
 smeiModelBefore = smeiModel;
 smeiProcesses = Join[{"e", "E"}, #] & /@
@@ -24,7 +38,7 @@ Print["Building the public eeAA SPINAS export and its MadEvent numerical bridge.
 smeiWrite[name_String, entries_] := WriteSPINASProcess[FileNameJoin[{smeiTemporary, name}],
   {"e", "E"} -> {"A", "A"}, entries, smeiModel,
   "ProcessName" -> name, "ParameterRules" -> {"Me" -> 1, "EE" -> 1/3},
-  "SPINASDirectory" -> smeiSpinas, "MadGraphDirectory" -> smeiMadGraph,
+  "SPINASDirectory" -> smeiSpinasFixture, "MadGraphDirectory" -> smeiMadGraph,
   "MadGraphModel" -> "sm-full", "MadGraphAllowedParticles" -> {11, 22},
   "CalcHEPDirectory" -> None, "CalcHEPModel" -> None,
   "Build" -> True, "ReturnDetails" -> True];
@@ -49,6 +63,7 @@ smeiRun = RunProcess[{smeiConfiguration["PythonExecutable"], smeiDriver,
   "--project", smeiExport["Directory"], "--launcher", smeiConfiguration["Executable"],
   "--scaled-project", smeiScaledExport["Directory"],
   "--scaled-launcher", smeiScaledExport["MadEventNumerical"]["Executable"],
+  "--spinas-fixture", smeiSpinasFixture,
   "--timeout", "900"}];
 smeiCheck["native survey/refine, unweighted events and parameter changes succeed",
   smeiRun["ExitCode"] === 0 && StringContainsQ[smeiRun["StandardOutput"], "MADEVENT_INTEGRATION_PASS"]];
@@ -58,15 +73,22 @@ smeiReportPath = FileNameJoin[{smeiExport["Directory"], "madevent-integration-te
 smeiCheck["integration success is backed by a saved numerical report", FileExistsQ[smeiReportPath]];
 If[FileExistsQ[smeiReportPath],
   smeiReport = Import[smeiReportPath, "RawJSON"];
-  smeiCheck["all four genuine numerical runs return their requested LHE events",
-    smeiReport["Status"] === "PASS" && Length[smeiReport["Runs"]] === 4 &&
+  smeiCheck["all six genuine numerical runs return their requested LHE events",
+    smeiReport["Status"] === "PASS" && Length[smeiReport["Runs"]] === 6 &&
       AllTrue[smeiReport["Runs"], #["Events"] === 20 && NumericQ[#["CrossSectionPB"]] &&
         #["CrossSectionPB"] > 0 && FileExistsQ[#["EventFile"]] &]];
   smeiCheck["the binary writes its session and events beneath the directory it was launched from",
     smeiReport["WorkingDirectory"] === FileNameJoin[{smeiExport["Directory"], "build"}] &&
-      smeiReport["MadEventDirectory"] === FileNameJoin[{smeiExport["Directory"], "build", "madevent"}] &&
-      !DirectoryQ[FileNameJoin[{smeiExport["Directory"], "madevent"}]] &&
+      smeiReport["InitialMadEventDirectory"] === FileNameJoin[{smeiExport["Directory"], "build", "PROC_eeAA"}] &&
+      smeiReport["SessionDirectory"] === "PROC_eeAA" &&
+      !DirectoryQ[FileNameJoin[{smeiExport["Directory"], "PROC_eeAA"}]] &&
       smeiReport["ScaledWorkingDirectory"] === FileNameJoin[{smeiScaledExport["Directory"], "build"}]];
+  smeiCheck["the moved process rebuilds and generates events without its old export or SPINAS installation",
+    smeiReport["Relocation"]["Status"] === "PASS" &&
+      TrueQ[smeiReport["Relocation"]["OriginalDependenciesUnavailable"]] &&
+      Length[smeiReport["Relocation"]["ForcedSubprocessRebuilds"]] > 0 &&
+      FileExistsQ[smeiReport["Relocation"]["NativeEntryPoint"]] &&
+      DirectoryQ[smeiReport["Relocation"]["BundleDirectory"]]];
   smeiCheck["doubling the live QED charge produces the expected rate scaling",
     Abs[smeiReport["ChargeRateRatio"]/16 - 1] < 1/5];
   smeiCheck["the integration uses the supplied amplitude rather than falling back to native HELAS",
