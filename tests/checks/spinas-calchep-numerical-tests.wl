@@ -47,6 +47,11 @@ check["source export includes readable numerical adapter and runtime files",
 check["the numerical executable and session are exposed in results",
   snUnavailable["CalcHEPNumerical"]["Executable"] === FileNameJoin[{snUnavailable["Directory"], "results", "n_calchep"}] &&
     snUnavailable["CalcHEPNumerical"]["SessionDirectory"] === FileNameJoin[{snUnavailable["Directory"], "results"}]];
+check["the saved manifest names the same results session as the runnable export",
+  snUnavailableManifest["CalcHEPNumerical"]["SessionDirectory"] === "results"];
+check["question-mark help names the runnable results copy",
+  StringContainsQ[WriteSPINASProcess::usage, "results/n_calchep"] &&
+    !StringContainsQ[WriteSPINASProcess::usage, "calchep/n_calchep"]];
 snGeneratedCMake = Import[snUnavailable["Files"]["CMake"], "Text"];
 check["CMake copies the runnable numerical executable instead of linking it into build",
   StringContainsQ[snGeneratedCMake, "set(CALCHEP_SESSION \"${CMAKE_CURRENT_SOURCE_DIR}/results\")"] &&

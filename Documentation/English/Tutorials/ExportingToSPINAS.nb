@@ -93,20 +93,20 @@ purpose: it connects CalcHEP's numerical integration machinery to the HEPCAT \
 SPINAS matrix element without CalcHEP symbolically regenerating that matrix \
 element. Generated parameter and mass interfaces keep the runtime values \
 consistent.", "TechNoteText"], Cell["After building, enter the exported \
-project's results directory and run ./n_calchep. The actual executable is \
-copied there, so it does not disappear when the original build directory is \
-removed. This folder holds the numerical run's settings and output; \
-validation and example programs stay in build. Keep the installed CalcHEP and \
-system runtime dependencies available.", "TechNoteText"],
-  Cell["Validate Each Photon Helicity with MadGraph", "TechNoteSection"],
-  Cell["ValidateMadGraph provides an independent numerical check using \
-MadGraph's own generated matrix element. It fixes each massless helicity \
-combination, sums massive-particle spins and evaluates both implementations \
-on exactly the same physical momenta. Masses, couplings, initial-state \
-averages and identical-particle factors must agree.", "TechNoteText"],
-  Cell["Select the MadGraph installation, UFO model and particle content \
-explicitly. The example uses sm-full for a massive electron and then \
-MadGraphAllowedParticles -> {11,22} to choose only the \
+project's results directory alongside build (from build, use cd ../results) \
+and run ./n_calchep. The actual executable is copied there, so it does not \
+disappear when the original build directory is removed. This folder holds the \
+numerical run's settings and output; validation and example programs stay in \
+build. Keep the installed CalcHEP and system runtime dependencies available."\
+, "TechNoteText"], Cell["Validate Each Photon Helicity with MadGraph",
+   "TechNoteSection"], Cell["ValidateMadGraph provides an independent \
+numerical check using MadGraph's own generated matrix element. It fixes each \
+massless helicity combination, sums massive-particle spins and evaluates both \
+implementations on exactly the same physical momenta. Masses, couplings, \
+initial-state averages and identical-particle factors must agree.",
+   "TechNoteText"], Cell["Select the MadGraph installation, UFO model and \
+particle content explicitly. The example uses sm-full for a massive electron \
+and then MadGraphAllowedParticles -> {11,22} to choose only the \
 electron/positron/photon sector. Without that filter the full Standard Model \
 also contains weak exchange in four-fermion processes. Parameter overrides \
 and maps must match the chosen reference theory; no fitted ratio hides a \
@@ -149,37 +149,38 @@ next-to-leading-order or matched calculation. Massive-spin correlations \
 cannot be inferred from a spin-summed result or from treating the two \
 libraries' spin bases as identical.", "TechNoteText"],
   Cell["Request \"Build\" -> True in the same export call. For ProcessName -> \
-\"eeAA\", enter build and run ./eeAA_madevent --prepare. The default output \
-workspace is the directory from which you run the launcher, so this creates \
-build/PROC_eeAA. The PROC_ name follows ProcessName for other processes. The \
-launcher prints the full card, HTML and event-output locations. The first \
-generation step can take longer than later runs because MadEvent builds its \
-integration code.", "TechNoteText"], Cell["From the same build directory, \
-./eeAA_madevent opens the numerical interface and ./eeAA_madevent --run \
-run_01 generates events. Under that working directory, \
-PROC_eeAA/Cards/run_card.dat controls beam energies, cuts, event counts, \
-integration settings and the random seed; PROC_eeAA/Cards/param_card.dat \
-controls numerical model inputs. Open PROC_eeAA/index.html for progress and \
-results, and find the event file in PROC_eeAA/Events/run_01.",
-   "TechNoteText"], Cell["Use --work-directory DIR to select another output \
-workspace, or --command-file path to run a normal MadEvent command file. \
-Existing sessions are retained where they were created; use their own \
-bin/madevent program to continue a prepared process. Repeated launches in the \
-same workspace preserve its cards and events.", "TechNoteText"],
-  Cell["After --prepare finishes, move or copy the whole PROC_eeAA directory \
-to the location where you want to keep the numerical process. Enter that \
-directory and run ./bin/madevent. Its amplitude sources, headers, \
-HEPCAT/SPINAS numerical libraries and private model support are included, so \
-the original exported project, build directory and SPINAS checkout can be \
-removed without breaking the prepared process. Keep the external MadGraph \
-installation, Python, Fortran toolchain and system libraries available. The \
-outer eeAA_madevent program is the initial setup launcher; the complete \
-prepared directory is the unit to move. Move it between runs while no \
-integration or compilation is active.", "TechNoteText"],
-  Cell["The independent comparison remains available through \
-ValidateMadGraph[exportDirectory] and the generated eeAA_validate_madgraph \
-program. The two workflows share the export and selected model while \
-performing different calculations.", "TechNoteText"],
+\"eeAA\", enter build and run ./eeAA_madevent --prepare. Compiling the \
+launcher alone does not create the native MadEvent directory; this \
+preparation command does. The default output workspace is the directory from \
+which you run the launcher, so this creates build/PROC_eeAA. The PROC_ name \
+follows ProcessName for other processes. The launcher prints the full card, \
+HTML and event-output locations. The first generation step can take longer \
+than later runs because MadEvent builds its integration code.",
+   "TechNoteText"], Cell["From the same build directory, ./eeAA_madevent \
+opens the numerical interface and ./eeAA_madevent --run run_01 generates \
+events. Under that working directory, PROC_eeAA/Cards/run_card.dat controls \
+beam energies, cuts, event counts, integration settings and the random seed; \
+PROC_eeAA/Cards/param_card.dat controls numerical model inputs. Open \
+PROC_eeAA/index.html for progress and results, and find the event file in \
+PROC_eeAA/Events/run_01.", "TechNoteText"], Cell["Use --work-directory DIR to \
+select another output workspace, or --command-file path to run a normal \
+MadEvent command file. Existing sessions are retained where they were \
+created; use their own bin/madevent program to continue a prepared process. \
+Repeated launches in the same workspace preserve its cards and events.",
+   "TechNoteText"], Cell["After --prepare finishes, move or copy the whole \
+PROC_eeAA directory to the location where you want to keep the numerical \
+process. Enter that directory and run ./bin/madevent. Its amplitude sources, \
+headers, HEPCAT/SPINAS numerical libraries and private model support are \
+included, so the original exported project, build directory and SPINAS \
+checkout can be removed without breaking the prepared process. Keep the \
+external MadGraph installation, Python, Fortran toolchain and system \
+libraries available. The outer eeAA_madevent program is the initial setup \
+launcher; the complete prepared directory is the unit to move. Move it \
+between runs while no integration or compilation is active.",
+   "TechNoteText"], Cell["The independent comparison remains available \
+through ValidateMadGraph[exportDirectory] and the generated \
+eeAA_validate_madgraph program. The two workflows share the export and \
+selected model while performing different calculations.", "TechNoteText"],
   Cell["Export the numerical MadEvent bridge and the independent validator \
 together. Set the installation and model explicitly; this example selects \
 only electrons, positrons and photons.", "ExampleText"],
