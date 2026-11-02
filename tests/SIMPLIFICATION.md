@@ -2560,6 +2560,14 @@ the finite pass limit, or clock exhaustion. Details retain `CheckpointIterations
 checkpoint survives an interrupted later search. This exposes successive
 ordinary Schouten steps without claiming a stationary or global minimum.
 
+Large simultaneous fits use direct exact zero decisions for integer, rational
+and Gaussian-rational scalar coefficients. Other algebraic values keep their
+usual algebraic normalization; approximate, symbolic and invalid values retain
+the previous unresolved-value rules. This shortcut changes no equation, rank
+certificate, validation sample or tolerance. A balanced six-point regression
+retained literally identical exact matrix and right-hand-side entries while
+reducing preprocessing from 129.4 to 60.9 seconds in the measured run.
+
 Completion uses a private forward-product normalization policy for coefficient
 construction, while public preparation retains useful factored polynomials.
 A presentation preference must not implicitly redefine the proposal coordinates.

@@ -4746,6 +4746,14 @@ highEnergyDirectionBasis[vector_List] := Module[
 ];
 
 highEnergyZeroState[expression_] := Module[{reduced},
+  (* Exact scalar coefficients already have a decidable zero state. Large
+     sampled systems contain these leaves hundreds of thousands of times;
+     algebraic-number normalization adds no information for them. *)
+  If[expression === 0, Return["Zero"]];
+  If[MatchQ[expression, _Integer | _Rational] ||
+      Head[expression] === Complex &&
+        MatchQ[Re[expression], _Integer | _Rational] &&
+        MatchQ[Im[expression], _Integer | _Rational], Return["Nonzero"]];
   reduced = Quiet[Check[RootReduce[expression], $Failed]];
   Which[reduced === 0, "Zero",
     reduced =!= $Failed && FreeQ[reduced, _Real] &&

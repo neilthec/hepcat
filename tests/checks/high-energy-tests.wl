@@ -10,6 +10,27 @@ checks = 0; failures = {};
 check[name_, value_] := (checks++; If[!TrueQ[value], AppendTo[failures, name];
   Print["FAIL: ", name]]);
 
+heLegacyZeroState[value_] := Module[{reduced = Quiet[Check[RootReduce[value], $Failed]]},
+  Which[reduced === 0, "Zero", reduced =!= $Failed && FreeQ[reduced, _Real] &&
+    TrueQ[Element[reduced, Algebraics]], "Nonzero", True, "Unknown"]];
+heExactScalars = DeleteDuplicates[Flatten[Table[
+  {a/b, a/b + I c/(b + 1)}, {a, -3, 3}, {b, 1, 4}, {c, -2, 2}]]];
+check["exact rational and Gaussian coefficients retain their original zero classification",
+  (ConstructiveDiagrams`Private`highEnergyZeroState /@ heExactScalars) ===
+    (heLegacyZeroState /@ heExactScalars)];
+check["large and arbitrarily small exact coefficients retain their exact nonzero state",
+  AllTrue[{10^1000, -1/10^1000, I/10^1000, (10^1000 + I)/7},
+    ConstructiveDiagrams`Private`highEnergyZeroState[#] === "Nonzero" &] &&
+    ConstructiveDiagrams`Private`highEnergyZeroState[0] === "Zero"];
+check["exact rational classification needs no algebraic normalization",
+  Trace[ConstructiveDiagrams`Private`highEnergyZeroState[1/10^100], _RootReduce] === {} &&
+    Trace[ConstructiveDiagrams`Private`highEnergyZeroState[(2 + 3 I)/7], _RootReduce] === {}];
+heOtherScalars = {Sqrt[2], -Sqrt[3], Root[#^3 - 2 &, 1], 1 + I Sqrt[2],
+  heUnspecifiedScalar, 0., 1.25, Infinity, Indeterminate};
+check["algebraic, symbolic, approximate and invalid coefficients keep the original fallback",
+  Quiet[(ConstructiveDiagrams`Private`highEnergyZeroState /@ heOtherScalars) ===
+    (heLegacyZeroState /@ heOtherScalars)]];
+
 heScalarModel = {{{"Scalar", "s", "s", 1, 0, 1, 0, 1, 1, "", ""}},
   {}, {}, {}};
 heMassRules[n_Integer] := Thread[(Mass /@ Range[n]) -> ConstantArray[1, n]];

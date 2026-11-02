@@ -100,7 +100,11 @@ unchecked amplitude. Detailed reports distinguish complete, incomplete and \
 underdetermined cases.", "Notes"], Cell["Physical residue agreement leaves \
 any genuine pole-free or residue-preserving freedom for CompleteHighEnergy \
 and other stated physical constraints. No universal uniqueness claim follows \
-from sampled residues alone.", "Notes"], Cell["Options", "NotesSection"],
+from sampled residues alone.", "Notes"], Cell["Exact integer, rational and \
+Gaussian-rational coefficients have exact zero decisions without a numerical \
+tolerance. Other algebraic coefficients retain algebraic normalization; \
+approximate or unresolved symbolic values are not silently accepted as exact \
+proof.", "Notes"], Cell["Options", "NotesSection"],
   Cell[BoxData[GridBox[{{Cell["Option", "TableHeader"],
        Cell["Default", "TableHeader"], Cell["Meaning", "TableHeader"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"CorrectionBasis\""}]],

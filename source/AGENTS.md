@@ -1073,6 +1073,11 @@ disables this choice. Cleanup must compare complete ranks and retain the
 original compact form if ordinary reduction expands it into a worse result.
 Interrupted work commits only a completed point and cannot turn validated
 success into failure.
+Exact integer, rational and Gaussian-rational scalar leaves have directly
+decidable zero states. Keep their cheap exact path; do not repeatedly normalize
+each such coefficient as a general algebraic number in large sampled systems.
+Other algebraic, approximate, symbolic or invalid inputs retain the original
+normalization and unresolved-value rules. No tolerance replaces an exact test.
 Exact common algebraic units may be removed from matrix columns and the right-hand
 side for rational elimination; restore the original coefficient and free-variable
 scales in solution rules. Large rational systems first try a bounded, 60-second
