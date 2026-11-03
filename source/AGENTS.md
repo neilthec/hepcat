@@ -214,6 +214,18 @@ a process-specific known expression to make the wrapper appear successful.
 `tests/QED-5-point-construction.nb` uses one wrapper call per process; earlier
 manual calculations remain in collapsed groups.
 
+Construction prioritizes a completed validated amplitude, then efficiency,
+then a shorter representation. A supplied independent `FeynmanModel` can
+validate a fixed factorization or high-energy candidate before every alternative
+in its affine family has been classified. Such selection requires all normal
+physical, spurious, high-energy and reference checks, plus the independent
+Feynman comparison, at the ordinary parameter-validation sets. Preserve every
+unclassified direction in details and state that uniqueness was not proved.
+The benchmark never supplies construction terms or fitted coefficients.
+Without that explicit independent benchmark, completion retains its strict
+unresolved-family behavior. Standalone `CompleteHighEnergy` still reports
+genuine remaining contact freedom as underdetermined.
+
 Keep presentation and correction-coordinate construction distinct. Completion's
 private forward-product scope must not leak into public preparation. A large
 physical basis may normalize each existing column as a whole and prune exact
@@ -795,8 +807,8 @@ generic Xi0), `"IndependentXi"` (one per external particle), and `None` (unchang
 make the other choices explicit. The details record assignments and unavailable
 choices are PARTIAL, not silently accepted. Supply the complete diagram set when choosing
 physical references, so alternative physical channels can be identified.
-Optimized modes rank reduced complete diagram expressions by complexity, term
-count and expression size. `"MaxReferenceChoices" -> Automatic` currently resolves
+Optimized modes rank reduced complete diagram expressions by weighted
+complexity, expression size, then additive grouping. `"MaxReferenceChoices" -> Automatic` currently resolves
 to 64 tested assignments per diagram. `"ReferenceTimeConstraint" -> Automatic` uses the smaller
 of five seconds and one third of the remaining per-diagram time. Explicit positive
 values or `Infinity` remain subject to the shared diagram deadline. Progress shows
@@ -1327,6 +1339,14 @@ Single-null preparation may use up to two thirds of that native-proof allowance;
 verification receives the actual remainder, with no extension of the total.
 An unavailable backend or any unproved coordinate still uses the existing
 portfolio; a failed certificate must never remove that coordinate.
+Opposite homogeneous massless spin weights may instead choose a mixed null
+chart with a massive rest frame. Keep exact external shells, the nonzero
+rest-sandwich patch, generic internal virtualities, complete coherent spin
+coefficients and scalar-specialization witnesses. Its optional early native
+proofs use at most forty-five seconds per direction and ninety seconds in total,
+always at most one third of the existing family clock, preserving the remainder
+for established fallback methods. No particle names or known amplitude enter
+this eligibility or proof. An exhausted certificate remains unproved.
 
 A late serial exact-Laurent fallback has a 120-second ceiling per retained
 direction, including chart construction, export, compilation and verification;
@@ -1397,11 +1417,23 @@ task authorizes it or a necessary change has been discussed.
 
 Keep source changes general across processes and multiplicities and follow the
 existing section structure. Add focused regressions for new identities or fixes.
-For source changes, run the regression suites from the repository root:
+Use risk-based, tiered testing. During development, run the directly affected
+identity, stage or policy suites, using saved intermediate inputs when they
+avoid rebuilding unchanged stages. At completion, run a small cross-multiplicity
+safety set and the affected full process, including a relevant opposite helicity.
+Broader full constructions run once after a substantial shared change settles,
+not after every edit. Expand testing when failures or an affected dependency
+justify it; do not repeat passing expensive runs for unrelated edits.
+
+From the repository root, select the needed suites with repeated `--suite`:
 
 ```sh
-python3 tests/checks/run-wolfram-tests.py --timeout 300
+python3 tests/checks/run-wolfram-tests.py --timeout 300 --suite preparation-ranking-tests.wl
 ```
+
+Omitting `--suite` runs the full standard collection and is not required for
+every improvement. Report development, focused testing and broader validation
+time separately when their cost is significant.
 
 The runner accepts `--kernel /absolute/path/to/WolframKernel`. Report the checks
 actually executed, failures, and limitations. Do not claim verification based

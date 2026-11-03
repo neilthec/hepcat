@@ -55,18 +55,28 @@ expression after all required checks pass. ",
      Cell[BoxData[RowBox[{"\"Output\"", " ", "->", " ", "\"Details\""}]],
       "InlineFormula"],
      " retains the stage results, timings, seed and validation report."}],
-   "Notes"], Cell["What happens during a construction", "NotesSection"],
-  Cell[TextData[{"HEPCAT generates the diagrams and prepares their \
-expressions, then builds the known factorization channels. ",
+   "Notes"], Cell[TextData[{"An explicit ",
+     Cell[BoxData[RowBox[{"\"FeynmanModel\""}]], "InlineFormula"], " also \
+allows the wrapper to validate one fixed factorization or high-energy \
+representative before proving every alternative in its retained affine family \
+equivalent. Every standard check and the independent Feynman comparison must \
+pass at the normal validation parameter assignments. This is sampled \
+validation of that expression, not a uniqueness proof or a change to the \
+strict behavior of ", ButtonBox["CompleteHighEnergy", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CompleteHighEnergy"],
+     " on its own."}], "Notes"], Cell["What happens during a construction",
+   "NotesSection"], Cell[TextData[{"HEPCAT generates the diagrams and \
+prepares their expressions, then builds the known factorization channels. ",
      ButtonBox["CompleteFactorization", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/CompleteFactorization"],
-     " solves any physical residue deficits, and ",
+     " solves any physical residue deficits. The usual route then uses ",
      ButtonBox["CompleteHighEnergy", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/CompleteHighEnergy"], " constrains the \
-retained freedom using full-amplitude conditions. The completed expression is \
-prepared again with external identities and passed through ",
+      ButtonData -> "paclet:HEPCAT/ref/CompleteHighEnergy"], ", prepares the \
+completed expression with external identities and runs ",
      ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"], "."}], "Notes"],
+      ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"], ". When an explicit \
+independent Feynman model is supplied, the wrapper can instead validate an \
+already fixed representative as described below."}], "Notes"],
   Cell[TextData[{"The stages pass more than their displayed expressions to \
 one another. Original channel targets, discarded preparation remainders and \
 remaining correction directions are retained. In particular, the final \
@@ -80,7 +90,50 @@ total time, run seed and check results before returning. ",
      Cell[BoxData[RowBox[{" ", "and", " "}]], "InlineFormula"],
      Cell[BoxData[RowBox[{"\"PrintReport\"", " ", "->", " ", "False"}]],
       "InlineFormula"], " suppress those displays when running a script."}],
-   "Notes"], Cell["Useful choices", "NotesSection"],
+   "Notes"], Cell["Checking one fixed representative", "NotesSection"],
+  Cell[TextData[{"A factorization solve can leave an affine family: one \
+particular expression plus free coefficients multiplying other expressions. \
+Some of those directions may vanish by ordinary identities, but certifying \
+every direction can take longer than checking the particular expression \
+itself. With an explicit ", Cell[BoxData[RowBox[{"\"FeynmanModel\""}]],
+      "InlineFormula"], ", the wrapper may first try that fixed factorization \
+point when free coordinates remain. It may also try a finite fixed candidate \
+retained by an unresolved or underdetermined high-energy stage."}], "Notes"],
+  Cell[TextData[{"Acceptance requires the complete physical-channel report, \
+automatic spurious-pole checks, the high-energy bound, reference independence \
+and independent Feynman agreement. The check is repeated at the normal \
+independent validation parameter assignments; it is not just a favorable \
+evaluation at the fitting parameters. These checks use the existing shared \
+clock. A failed, incomplete or timed-out attempt falls through to the \
+remaining completion workflow when time remains."}], "Notes"],
+  Cell[TextData[{"The Feynman expression is generated once and reused only as \
+a benchmark. It supplies no correction terms, fitted coefficients or \
+replacement answer. The selected expression is the fixed constructive \
+candidate that passed validation. Its unproved family directions are \
+retained; they are not silently declared zero."}], "Notes"],
+  Cell[TextData[{"Request ",
+     Cell[BoxData[RowBox[{"\"Output\"", " ", "->", " ", "\"Details\""}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{" ", "and", " ", "inspect",
+         " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"\"RepresentativeSelection\""}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{".", " ", "It", " ", "records", " ", "the", " ",
+         "source", " ", "stage", ",", " ", "retained", " ", "family", ",",
+         " ", "free", " ", "coordinates", ",", " ", "validation", " ",
+         "reports", " ", "and", " ", "explicit", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"\"UniquenessEstablished\"", " ", "->", " ",
+         "False"}]], "InlineFormula"], ". A successful selection means the \
+chosen point passed the supported checks, not that every point in the family \
+is equivalent or that the formula has received a generic analytic proof."}],
+   "Notes"], Cell[TextData[{"Without an explicit ",
+     Cell[BoxData[RowBox[{"\"FeynmanModel\""}]], "InlineFormula"],
+     ", the ordinary strict completion path is unchanged. Calling ",
+     ButtonBox["CompleteHighEnergy", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CompleteHighEnergy"], " directly also \
+remains strict: genuine acceptable-growth contact freedom or unfinished \
+identity proofs still produce an underdetermined or unresolved report. This \
+wrapper policy does not infer an unknown contact interaction or prove that \
+its coefficient vanishes."}], "Notes"], Cell["Useful choices",
+   "NotesSection"],
   Cell[TextData[{Cell[BoxData[RowBox[{"\"PolePreference\"", " ", "->", " ",
          "\"AllPhysical\""}]], "InlineFormula"],
      Cell[BoxData[RowBox[{" ", "asks", " ", "the", " ", "workflow", " ",
@@ -110,12 +163,15 @@ is a separate physical input and is not guessed from the constructive model."}\
 and records a seed for the run. You do not need numerical parameter rules \
 unless you want values different from those in the models."}], "Notes"],
   Cell["If construction does not complete", "NotesSection"],
-  Cell[TextData[{"A failed, opposite-sign, unresolved or underdetermined \
-check prevents the ordinary call from returning an allegedly validated \
-amplitude. Request ", Cell[BoxData[RowBox[{"\"Output\"", " ", "->", " ",
-         "\"Details\""}]], "InlineFormula"], " to see which stage stopped and \
-why. A missing lower-point input, an insufficient correction space and an \
-exhausted time limit require different remedies."}], "Notes"],
+  Cell[TextData[{"A failed, opposite-sign or unresolved mandatory comparison \
+prevents the ordinary call from returning an allegedly validated amplitude. \
+An unfinished proof about the full affine family is a different issue: only \
+an explicit independent Feynman model permits the separately checked \
+fixed-point route above. Request ",
+     Cell[BoxData[RowBox[{"\"Output\"", " ", "->", " ", "\"Details\""}]],
+      "InlineFormula"], " to see which stage stopped, which representative \
+was tried and why. A missing lower-point input, an insufficient correction \
+space and an exhausted time limit require different remedies."}], "Notes"],
   Cell[TextData[{"When you want to understand an intermediate expression, use \
 the individual functions rather than increasing every resource option. Start \
 with diagrams, inspect their prepared pairs, then examine factorization \
@@ -320,7 +376,8 @@ the checkout is in ~/code/hepcat; change the paths if yours is elsewhere. \
 Evaluate loading in its own cell before the calculation.", "ExampleText"],
      Cell[BoxData[RowBox[{"Get", "[", "\"~/code/hepcat/source/HEPCAT.wl\"",
          "]", ";", "\n", "modelDirectory", " ", "=", " ",
-         "\"~/code/hepcat/models\"", ";"}]], "Input",
+         "\"~/code/hepcat/models\"", ";", "\n", "feynmanModelDirectory", " ",
+         "=", " ", "\"~/code/hepcat/model_feynman\"", ";"}]], "Input",
       InitializationCell -> True]}, Closed]], Cell["Basic Examples",
    "ExampleSection"], Cell[TextData[{"Construct the four-point QED \
 positive-helicity amplitude with normal automatic defaults."}],
@@ -345,6 +402,19 @@ report."}], "ExampleText"],
       "\"RandomSeed\"", " ", "->", " ", "314159", "]"}]], "Input"],
   Cell["This example writes files, starts a longer calculation, or requires \
 an optional external tool. Evaluate it when you want to perform that \
+operation.", "ExampleText"],
+  Cell[TextData[{"Include an independent Feynman model and inspect whether a \
+fixed representative was selected. Set feynmanModelDirectory to the directory \
+containing your matching Feynman model."}], "ExampleText"],
+  Cell[BoxData[RowBox[{"feynmanModel", " ", "=", " ", "ReadModel", "[",
+      "feynmanModelDirectory", ",", " ", "2", "]", ";", "\n", "report", " ",
+      "=", " ", "ConstructAmplitude", "[", "{", "\"e\"", ",", " ", "\"E\"",
+      ",", " ", "\"A.+\"", ",", " ", "\"A.+\"", "}", ",", " ", "qedModel",
+      ",", " ", "qedModel", ",", " ", "\"FeynmanModel\"", " ", "->", " ",
+      "feynmanModel", ",", " ", "\"Output\"", " ", "->", " ", "\"Details\"",
+      "]", ";", "\n", "report", "[", "\"RepresentativeSelection\"", "]"}]],
+   "Input"], Cell["This example writes files, starts a longer calculation, or \
+requires an optional external tool. Evaluate it when you want to perform that \
 operation.", "ExampleText"], Cell["See Also", "SeeAlsoSection"],
   Cell[TextData[{ButtonBox["ReadModel", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ReadModel"], "  \[Bullet]  ",

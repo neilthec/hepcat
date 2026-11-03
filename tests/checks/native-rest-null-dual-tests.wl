@@ -73,5 +73,119 @@ check["fixed spin projections remain unsupported", ndPrepare[
 check["neither fixed null bracket can erase inhomogeneous little-group weights",
   AllTrue[{ndSquare/ndMass - 1, ndAngle/ndMass + 1},
     ndPrepare[#, ndRules, 2]["Status"] === "NOT_PROVED" &]];
+
+(* The mixed chart fixes an angle line and a square line independently.
+   Its exact tests use unequal symbolic masses and every massive-spin tensor
+   coefficient, rather than one helicity projection or numerical momenta. *)
+ndMixedChart = ConstructiveDiagrams`Private`completionHERestMixedNullSymbolicChart;
+ndMixedCases = <|
+  "five-point unequal-mass" -> <|"Rules" -> {Mass[1] -> ndMassA,
+    Mass[2] -> ndMassB, Mass[3] -> ndMassC, Mass[4] -> 0, Mass[5] -> 0},
+    "Pivots" -> {4, 5}|>,
+  "six-point relabeled" -> <|"Rules" -> {Mass[8] -> ndMassA,
+    Mass[23] -> ndMassB, Mass[3] -> 0, Mass[11] -> 0, Mass[17] -> 0,
+    Mass[31] -> 0}, "Pivots" -> {31, 3}|>|>;
+Do[
+  ndMixedRules = ndMixedCases[case]["Rules"];
+  ndMixedPivots = ndMixedCases[case]["Pivots"];
+  ndMixed = ndMixedChart[ndMixedRules, ndMixedPivots, kind];
+  ndLabel = case <> " " <> kind;
+  check[ndLabel <> " mixed chart is constructed", AssociationQ[ndMixed]];
+  If[!AssociationQ[ndMixed], Continue[]];
+  ndExternal = Sort[First[#][[1]] & /@ ndMixedRules];
+  ndNull = Select[ndExternal, TrueQ[(Mass[#] /. ndMixedRules) === 0] &];
+  ndMassive = Complement[ndExternal, ndNull];
+  ndAnchor = ndMixed["RestFrameLeg"];
+  {ndAngleAxis, ndSquareAxis} = ndMixedPivots;
+  check[ndLabel <> " preserves every declared unequal external shell",
+    AllTrue[ndExternal, ndZero[
+      Det[ndMixed["Momenta"][#]] - (Mass[#] /. ndMixedRules)^2] &] &&
+    Lookup[ndMixed["Masses"], ndMassive] === ((Mass /@ ndMassive) /. ndMixedRules)];
+  check[ndLabel <> " preserves exact conservation and each null outer product",
+    AllTrue[Flatten[Total[Values[ndMixed["Momenta"]]]], ndZero] &&
+    AllTrue[ndNull, Function[leg, AllTrue[Flatten[
+      Outer[Times, ndMixed["Angle"][leg], ndMixed["Square"][leg]] -
+        ndMixed["Momenta"][leg]], ndZero]]]];
+  check[ndLabel <> " fixes the requested opposite chiral axes without reordering labels",
+    ndMixed["NullAxisLegs"] === ndMixedPivots &&
+    ndMixed["Angle"][ndAngleAxis] === {1, 0} &&
+    ndMixed["Square"][ndSquareAxis] === {1, 0} &&
+    ndMixed["NullAxisChirality"] === "Mixed" &&
+    ndMixed["MassiveSpinorBasis"] === kind];
+  check[ndLabel <> " retains both independent massive-spin columns and Dirac orientations",
+    AllTrue[ndMassive, Function[leg,
+      With[{p = ndMixed["Momenta"][leg], a = ndMixed["AngleBasis"][leg],
+        s = ndMixed["SquareBasis"][leg], m = Mass[leg] /. ndMixedRules},
+        ndZero[Det[a] - m] && ndZero[Det[s] - m] &&
+        AllTrue[Flatten[p.ndJ.s + m a], ndZero] &&
+        AllTrue[Flatten[ndAdj[p].a + m ndJ.s], ndZero] &&
+        AllTrue[Flatten[a.ndJ.Transpose[s] - p], ndZero]]]]];
+  ndMixedNullInvariant = Cancel[Together[Det[
+    ndMixed["Momenta"][ndAngleAxis] + ndMixed["Momenta"][ndSquareAxis]]]];
+  ndMixedRestVirtuality = Cancel[Together[Det[
+    ndMixed["Momenta"][ndAnchor] + ndMixed["Momenta"][ndAngleAxis]] -
+      (Mass[ndAnchor] /. ndMixedRules)^2]];
+  check[ndLabel <> " does not impose collinearity or an internal rest-null shell",
+    !ndZero[ndMixedNullInvariant] && !ndZero[ndMixedRestVirtuality] &&
+    !FreeQ[ndMixedNullInvariant, Alternatives @@ ndMixed["ExternalIdentityCoordinates"]] &&
+    !FreeQ[ndMixedRestVirtuality, Alternatives @@ ndMixed["ExternalIdentityCoordinates"]]];
+  ndMixedSandwich = ConstructiveDiagrams`Private`spuriousEvaluateCurve[
+    SpinorChain[Spinor["Helicity", "Angle", ndAngleAxis], Mom[ndAnchor],
+      Spinor["Helicity", "Square", ndSquareAxis]], ndMixed, {}];
+  check[ndLabel <> " records a nonempty dense mixed-sandwich patch",
+    ndMixed["OriginalMixedNullSandwichRequiredNonzero"] ===
+      {ndAngleAxis, ndAnchor, ndSquareAxis} &&
+    !ndZero[ndMixedSandwich] &&
+    AllTrue[ndMixed["DenseDomainNonzeroExpressions"], !ndZero[#] &] &&
+    ndMixed["ResidualGaugeDimension"] === 1];
+  ndMixedSpinLists = Table[Intersection[ndMixed["SpinVariables"],
+    Cases[Join[ndMixed["Angle"][leg], ndMixed["Square"][leg]], _Symbol, Infinity]],
+    {leg, ndMassive}];
+  check[ndLabel <> " gives each massive leg its own independent coherent-spin variable",
+    AllTrue[ndMixedSpinLists, Length[#] === 1 &] &&
+    Length[ndMixed["SpinVariables"]] === Length[ndMassive] &&
+    DuplicateFreeQ[Join[ndMixed["SpinVariables"], ndMixed["ExternalIdentityCoordinates"]]]];
+  If[AllTrue[ndMixedSpinLists, Length[#] === 1 &],
+    ndMixedSpins = First /@ ndMixedSpinLists;
+    ndMixedTensor = Times @@ Table[
+      ndMixed["Angle"][leg][[1]] + ndAngleWeight[leg] ndMixed["Angle"][leg][[2]] +
+      ndSquareWeight[leg] ndMixed["Square"][leg][[1]] +
+      ndCrossWeight[leg] ndMixed["Square"][leg][[2]], {leg, ndMassive}];
+    check[ndLabel <> " reconstructs every coherent massive-spin tensor coefficient",
+      PolynomialQ[ndMixedTensor, ndMixedSpins] &&
+      AllTrue[Tuples[{0, 1}, Length[ndMassive]], Function[bits,
+        ndZero[Fold[Function[{value, variablePower},
+          Coefficient[value, First[variablePower], Last[variablePower]]],
+          ndMixedTensor, Transpose[{ndMixedSpins, bits}]] -
+          Times @@ MapThread[Function[{leg, bit},
+            ndMixed["AngleBasis"][leg][[1, bit + 1]] +
+            ndAngleWeight[leg] ndMixed["AngleBasis"][leg][[2, bit + 1]] +
+            ndSquareWeight[leg] ndMixed["SquareBasis"][leg][[1, bit + 1]] +
+            ndCrossWeight[leg] ndMixed["SquareBasis"][leg][[2, bit + 1]]],
+            {ndMassive, bits}]]]]]];
+  check[ndLabel <> " uses only exact external kinematics",
+    ndMixed["NumericalKinematicSamples"] === 0 && ndMixed["InternalOnShellConditions"] === {} &&
+    ndMixed["ExternalMassShellsValidated"] === True &&
+    ndMixed["MomentumConservationValidated"] === True &&
+    FreeQ[ndMixed["Momenta"], _Real]],
+  {case, Keys[ndMixedCases]}, {kind, {"Angle", "Square"}}];
+ndMixedGuardRules = ndMixedCases["five-point unequal-mass"]["Rules"];
+check["mixed chart declines malformed or repeated null pivots before assigning axes",
+  AllTrue[{{}, {4}, {4, 5, 6}, {4, 4}, {1, 5}, {4, 99}, 4},
+    ndMixedChart[ndMixedGuardRules, #] === $Failed &]];
+check["mixed chart declines duplicate mass metadata",
+  ndMixedChart[Append[ndMixedGuardRules, Mass[1] -> ndOtherMass]] === $Failed];
+check["mixed chart declines approximate or unresolved external masses",
+  ndMixedChart[ndMixedGuardRules /. ndMassA -> 1.0] === $Failed &&
+  ndMixedChart[ndMixedGuardRules /. ndMassA -> Mass[99]] === $Failed];
+check["mixed chart requires two massive and two null external momenta",
+  ndMixedChart[ndMixedGuardRules /. {ndMassA -> 0, ndMassB -> 0}] === $Failed &&
+  ndMixedChart[ReplacePart[ndMixedGuardRules, 4 -> (Mass[4] -> ndFourthMass)]] === $Failed];
+check["mixed chart declines an unsupported massive-spin basis",
+  ndMixedChart[ndMixedGuardRules, Automatic, "Invalid"] === $Failed];
+ndMixedAutomatic = ndMixedChart[ndMixedGuardRules];
+check["mixed chart automatic pivots use the declared null legs deterministically",
+  ndMixedAutomatic["NullAxisLegs"] === {4, 5} &&
+    ndMixedAutomatic["OriginalMixedNullSandwichRequiredNonzero"] === {4, 1, 5}];
 Print["Native rest/null dual checks: ", checks, "; failures: ", Length[failures]];
 If[failures === {}, Print["HEPCAT_TEST_COMPLETED:native-rest-null-dual-tests.wl"]; Quit[0], Print[failures]; Quit[1]];

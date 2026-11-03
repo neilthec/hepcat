@@ -174,7 +174,13 @@ prepared in parallel; set ", Cell[BoxData[RowBox[{"\"Parallelization\"", " ",
          " ", "use", " "}]], "InlineFormula"],
      Cell[BoxData[RowBox[{"\"MaxKernels\""}]], "InlineFormula"],
      " to reduce the worker count."}], "Notes"],
-  Cell[TextData[{"If preparation stops at a limit, inspect its status before \
+  Cell[TextData[{"The ranking compares weighted complexity first, expression \
+size second, and additive grouping third. This favors a shorter expression \
+tree when two forms have the same weighted complexity, even if it uses more \
+separate fractions. On eligible completed inputs, a short initial pass also \
+tries ordinary grouping by existing physical poles before heavier \
+exploration; it retains a completed improvement if later optional work \
+reaches its limit. If preparation stops at a limit, inspect its status before \
 assuming all requested reductions were completed. Giving more time permits a \
 larger search but does not prove that a shorter expression exists. ",
      ButtonBox["SpinorExpressionComplexity", BaseStyle -> "Link",

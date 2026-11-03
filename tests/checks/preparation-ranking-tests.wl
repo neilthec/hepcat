@@ -1,4 +1,6 @@
-(* Ranking measures completed expressions independently of reduction-search expansion budgets. *)
+(* Ranking measures completed expressions independently of reduction-search
+   expansion budgets. Equal weighted scores prefer expression size, then
+   additive groups; the diagnostic tuple keeps its existing field order. *)
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
@@ -29,9 +31,10 @@ Do[rkValue = value; rkMeasured = rkRank[rkValue];
     SpinorChain[Spinor["Helicity", "Square", 3], Spinor["Helicity", "Square", 4]]^2/
       PropDen[Mom[Multiparticle[1, 3]], rkMass]}}];
 check["tagged weighted ties are unchanged", !rkBetter[{2, 3, 4, "SpinorExpressionComplexity"}, {2, 3, 4, "SpinorExpressionComplexity"}]];
-check["equal-complexity candidates still use the established term and leaf tie breaks",
-  rkBetter[{2, 2, 9, "SpinorExpressionComplexity"}, {2, 3, 4, "SpinorExpressionComplexity"}] &&
-  rkBetter[{2, 2, 8, "SpinorExpressionComplexity"}, {2, 2, 9, "SpinorExpressionComplexity"}]];
+check["equal-complexity candidates prefer smaller expressions before fewer additive groups",
+  rkBetter[{2, 3, 4, "SpinorExpressionComplexity"}, {2, 2, 9, "SpinorExpressionComplexity"}] &&
+  rkBetter[{2, 2, 8, "SpinorExpressionComplexity"}, {2, 2, 9, "SpinorExpressionComplexity"}] &&
+  rkBetter[{2, 2, 8, "SpinorExpressionComplexity"}, {2, 3, 8, "SpinorExpressionComplexity"}]];
 rkOpaque = (rkX + rkY + rkZ)^1000000;
 rkOpaqueTime = First[AbsoluteTiming[rkOpaqueRank = rkRank[rkOpaque]]];
 check["an enormous unexpanded power retains a bounded opaque fallback",

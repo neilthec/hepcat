@@ -10,6 +10,30 @@ opDefinitions = ConstructiveDiagrams`Private`preparationPropagatorDefinitions;
 opTrials = ConstructiveDiagrams`Private`preparationVirtualityTrials;
 opBlock = ConstructiveDiagrams`Private`preparationCrossDenominatorBlock;
 opCompact = ConstructiveDiagrams`Private`preparationOrdinaryPoleCompaction;
+check["equal weighted complexity prefers fewer expression leaves over one dense fraction",
+  ConstructiveDiagrams`Private`preparationBetterQ[
+    {71, 7, 318, "SpinorExpressionComplexity"},
+    {71, 1, 647, "SpinorExpressionComplexity"}] &&
+  !ConstructiveDiagrams`Private`preparationBetterQ[
+    {71, 1, 647, "SpinorExpressionComplexity"},
+    {71, 7, 318, "SpinorExpressionComplexity"}]];
+check["weighted complexity remains the primary simplification objective",
+  ConstructiveDiagrams`Private`preparationBetterQ[
+    {70, 7, 900, "SpinorExpressionComplexity"},
+    {71, 1, 318, "SpinorExpressionComplexity"}]];
+check["additive groups break an otherwise exact score and size tie",
+  ConstructiveDiagrams`Private`preparationBetterQ[
+    {71, 3, 318, "SpinorExpressionComplexity"},
+    {71, 7, 318, "SpinorExpressionComplexity"}] &&
+  !ConstructiveDiagrams`Private`preparationBetterQ[
+    {71, 3, 318, "SpinorExpressionComplexity"},
+    {71, 3, 318, "SpinorExpressionComplexity"}]];
+check["different measured and fallback metrics remain incomparable",
+  !ConstructiveDiagrams`Private`preparationBetterQ[
+    {71, 1, 100, "LeafCountFallback"},
+    {71, 7, 318, "SpinorExpressionComplexity"}]];
+check["legacy three-field ranks use the same size-first tie policy",
+  ConstructiveDiagrams`Private`preparationBetterQ[{71, 7, 318}, {71, 1, 647}]];
 opRules = Table[Mass[i] -> Symbol["opMass" <> ToString[i]], {i, 6}];
 opDot[i_, j_] := MomProd @@ Sort[{i, j}];
 opProp[legs_List, mass_] := PropDen[Mom[Multiparticle @@ legs], mass];
@@ -330,6 +354,26 @@ opModelHash = Hash[opQEDModel, "SHA256"];
 opPrevious = QEDSixPointPPPMPreviousExample[opQEDModel];
 opCompactTarget = QEDSixPointPPPMCompactExample[opQEDModel];
 opPreviousHash = Hash[opPrevious, "SHA256"];
+opEarlyPreparation = PrepareAmplitudes[opPrevious, opQEDModel,
+  "PolePreference" -> None, "InternalOnShell" -> False, "MaxSteps" -> 0,
+  "TimeConstraint" -> 6, "Parallelization" -> False,
+  "ReturnDetails" -> True, "ProgressReporting" -> False];
+opEarlyReductions = First[opEarlyPreparation["ItemReports"]]["Reductions"];
+check["completed external inputs retain an early original grouped-pole competitor",
+  AnyTrue[opEarlyReductions,
+    Lookup[#, "Operation", None] === "OriginalGroupedOrdinaryPoleCompaction" &&
+      TrueQ[Lookup[#, "AlternativeRoute", False]] &&
+      Lookup[#, "OnShellChannels", None] === {} &&
+      !TrueQ[Lookup[#, "InternalOnShellIdentity", True]] &]];
+check["the bounded early portfolio never replaces its input by a worse complete checkpoint",
+  With[{inputRank = ConstructiveDiagrams`Private`preparationRank[Last[opPrevious]],
+      outputRank = ConstructiveDiagrams`Private`preparationRank[opEarlyPreparation["Amplitude"]]},
+    outputRank === inputRank ||
+      ConstructiveDiagrams`Private`preparationBetterQ[outputRank, inputRank]] &&
+    First[opEarlyPreparation["ItemReports"]]["InternalOnShellConditions"] === {}];
+check["sorting expression candidates agrees with the preparation rank comparison",
+  ConstructiveDiagrams`Private`preparationSortKey[Last[opPrevious]] ===
+    ConstructiveDiagrams`Private`preparationRank[Last[opPrevious]][[{1, 3, 2, 4}]]];
 check["the worked regression starts with the earlier eighteen-term numerator form",
   Head[Last[opPrevious]] === Plus && Length[Last[opPrevious]] === 18 &&
     SpinorExpressionComplexity[Last[opPrevious]] === 1128];

@@ -8393,7 +8393,7 @@ completionReducedPhysicalSourceBasis[normalized_Association, reducedChannels_,
       normalization = Join[normalization, <|"RejectedPresentationColumns" -> rejected|>]];
     (* Cheaper columns are offered first to the exact pivot solve. Ordering and
        formal pruning preserve this complete finite proposal's functional span. *)
-    projected = SortBy[completionNormalizeBasis[projected], preparationRank];
+    projected = SortBy[completionNormalizeBasis[projected], preparationSortKey];
     basis = completionIndependentBasis[projected, If[seconds === Infinity, 15, Max[0.000001, remaining[]]]];
     If[AssociationQ[selectedChannels] && ListQ[Lookup[selectedChannels, "Sources", None]],
       (* A selected-cut numerator is one correlated continuation. Keep each
@@ -8408,7 +8408,7 @@ completionReducedPhysicalSourceBasis[normalized_Association, reducedChannels_,
         {source, DeleteDuplicates[selectedChannels["Sources"]]}];
       selectedControls = SortBy[completionNormalizeBasis[
         completionCompactExchangeProject[#["Expression"], exchangePlan] & /@ selectedRecords],
-        preparationRank];
+        preparationSortKey];
       If[!AllTrue[selectedControls, supportedQ],
         AppendTo[diagnostics, "Selected-source exchange projection exposed an unsupported denominator."];
         Throw[False, tag]];
@@ -8639,6 +8639,8 @@ completionChooseFamilyPoint[candidate_, directions_List, free_List, seconds_ : 2
     rows = Transpose[Lookup[#, keys, 0] & /@ columns];
     regularRows = Select[Range[Length[keys]], FreeQ[Denominator[keys[[#]]], _PropDen] &];
     movableRows = Complement[Range[Length[keys]], regularRows];
+    If[movableRows === {},
+      Throw["No pole-bearing coefficients are available for reweighting; the original regular expression is retained.", tag]];
     costs = ({expressionComplexity[#], LeafCount[#]} & /@ keys);
     density = Count[Rest[#], Except[0]] & /@ rows;
     orders = {
@@ -11781,12 +11783,20 @@ preparationRank[expr_] := Module[
 
 preparationBetterQ[left_List, right_List] := Module[{a, b},
   If[Length[left] === 3 && Length[right] === 3,
-    Return[left =!= right && OrderedQ[{left, right}]]];
+    a = left[[{1, 3, 2}]]; b = right[[{1, 3, 2}]];
+    Return[a =!= b && OrderedQ[{a, b}]]];
   If[Length[left] =!= 4 || Length[right] =!= 4 || Last[left] =!= Last[right] ||
       !MemberQ[{"SpinorExpressionComplexity", "LeafCountFallback"}, Last[left]], Return[False]];
-  a = Take[left, 3]; b = Take[right, 3];
+  (* A smaller syntax tree is usually cheaper to reduce and certify than a
+     single dense fraction. Additive grouping breaks ties only after size;
+     the rank's public diagnostic field order remains unchanged. *)
+  a = left[[{1, 3, 2}]]; b = right[[{1, 3, 2}]];
   a =!= b && OrderedQ[{a, b}]
 ];
+
+preparationRankKey[rank_List] := If[Length[rank] === 4,
+  rank[[{1, 3, 2, 4}]], If[Length[rank] === 3, rank[[{1, 3, 2}]], rank]];
+preparationSortKey[expression_] := preparationRankKey[preparationRank[expression]];
 
 (* Expose an existing propagator by its exact definition, not by putting it on
    shell. Only numerator scalar products and declared external masses are used. *)
@@ -12553,7 +12563,7 @@ preparationScalarPoleBlock[expression_, higher_PropDen, externalRules_List,
           If[preparationBetterQ[candidate["Rank"], bestRecord["Rank"]], bestRecord = checkpoint];
           AppendTo[next, <|"Poly" -> trial, "Route" -> checkpoint["Route"], "Rank" -> candidate["Rank"]|>],
           {monomial, If[Head[id] === Plus, List @@ id, {id}]}], {relation, relations}], {state, beam}];
-      If[next === {}, Break[]]; beam = Take[SortBy[next, #["Rank"] &], UpTo[8]], {depth, 4}]; True, tag],
+      If[next === {}, Break[]]; beam = Take[SortBy[next, preparationRankKey[#["Rank"]] &], UpTo[8]], {depth, 4}]; True, tag],
     268435456, False], available[], False];
   (* No scoped physical-virtuality token escapes in amplitudes OR replay data. *)
   If[ListQ[restore], bestRecord = bestRecord /. restore];
@@ -13599,7 +13609,7 @@ preparationReferenceSearch[expr_, rules_List, model_List, pairs_List, requested_
     If[KeyExistsQ[best, "ReducedRank"],
       <|"Complexity" -> First[best["ReducedRank"]], "Terms" -> best["ReducedRank"][[2]],
         "BestReference" -> Join[best, <|"Search" -> snapshot["TimeConstraint"],
-          "Alternatives" -> SortBy[alternatives, {#["Rank"], #["ChoiceIndex"]} &]|>]|>, <||>]]];
+          "Alternatives" -> SortBy[alternatives, {preparationRankKey[#["Rank"]], #["ChoiceIndex"]} &]|>]|>, <||>]]];
   record[candidate_, explored_] := Module[{rank, position, row, previous},
     If[!AssociationQ[currentReport] || !residueFiniteQ[candidate], Return[Null]];
     rank = preparationRank[candidate];
@@ -13658,7 +13668,7 @@ preparationReferenceSearch[expr_, rules_List, model_List, pairs_List, requested_
   If[!TrueQ[search["Exhaustive"]], AppendTo[diagnostics,
     "Reference selection was bounded; only completed reduction candidates were ranked, and optional routes or admissible assignments may remain unexplored."]];
   Join[best, <|"Search" -> search,
-    "Alternatives" -> SortBy[alternatives, {#["Rank"], #["ChoiceIndex"]} &],
+    "Alternatives" -> SortBy[alternatives, {preparationRankKey[#["Rank"]], #["ChoiceIndex"]} &],
     "Diagnostics" -> Join[Lookup[best, "Diagnostics", {}], diagnostics]|>]
 ];
 
@@ -14087,6 +14097,30 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
     event[stage];
     If[TrueQ[wholeAmplitude] || kind === "Amplitude",
       rememberCompleted[expression, "CompletedExternalReferenceInput"];
+      (* Preserve a cheap ordinary-pole route from the original grouped
+         input before optional normalization can distribute its cancellations.
+         It is a competitor, so the established active route stays intact. *)
+      If[TrueQ[eligibleOriginal] && TrueQ[admittedOriginal] && channels === {} &&
+          500 <= LeafCount[initialCandidate] <= 24000 &&
+          !FreeQ[initialCandidate, chain_SpinorChain /;
+            Length[chain] === 4 && First[chain] === Last[chain]] &&
+          AnyTrue[DeleteDuplicates[Cases[initialCandidate, _PropDen, Infinity]],
+            With[{legs = residueMomentumLegsFromExpression[First[#]]},
+              ListQ[legs] && Length[legs] >= 3] &],
+        stage = "OriginalGroupedOrdinaryPoleCompaction";
+        before = initialCandidate;
+        groupedCompaction = preparationOrdinaryPoleCompaction[before,
+          preparationExternalRules[rules], options["MomentumConservation"],
+          If[options["TimeConstraint"] === Infinity, 3,
+            Max[0.000001, Min[3, (options["TimeConstraint"] - (AbsoluteTime[] - started))/5]]]];
+        after = Lookup[groupedCompaction, "Amplitude", before];
+        If[residueFiniteQ[after], rememberCompleted[after, stage]];
+        AppendTo[reductions, <|"Operation" -> stage, "Before" -> before,
+          "After" -> after, "AlternativeRoute" -> True,
+          "InternalOnShellIdentity" -> False, "OnShellChannels" -> {},
+          "IdentityRoute" -> Lookup[groupedCompaction, "Route", {}],
+          "SearchTimedOut" -> Lookup[groupedCompaction, "TimedOut", False]|>];
+        event[stage]];
       If[!TrueQ[options["InternalOnShell"]] || knownInternalChannels[rules] === {},
         stage = "OrdinaryPairVirtualityCancellation";
         before = expression;
@@ -15760,12 +15794,25 @@ completionHEClearTypedDenominators[expression_] := Module[
 ];
 
 completionHEPrepareNativeIdentity[expression_, rules_List, seconds_: 30] := Module[
-  {started = AbsoluteTime[], failure, left, work, result, tag = Unique["nativeIdentityPreparation"]},
+  {started = AbsoluteTime[], failure, left, work, result, rationalPrepared = Missing["NotAttempted"],
+   restPrepared = Missing["NotAttempted"], tag = Unique["nativeIdentityPreparation"]},
   failure[reason_] := <|"Status" -> "NOT_PROVED", "Method" -> reason|>;
   If[!(NumericQ[seconds] && TrueQ[0 < seconds < Infinity]), Return[failure["NativePreparationBudget"]]];
   If[Count[preparationExternalRules[rules], HoldPattern[Mass[_Integer] -> 0]] === 1,
     Return[completionHEPrepareSingleNullNativeIdentity[expression, rules, seconds]]];
   left[] := Max[0.000001, seconds - (AbsoluteTime[] - started)];
+  If[Lookup[completionHEMixedNullAxisChoice[expression, rules], "Status", None] === "AVAILABLE",
+    rationalPrepared = completionHEPrepareMixedNullNativeIdentity[expression, rules, left[]];
+    If[Lookup[rationalPrepared, "Status", None] === "PREPARED" ||
+        AbsoluteTime[] - started >= seconds, Return[rationalPrepared]];
+    (* A mixed-axis polynomial can be larger than its same-chirality form.
+       Try the existing dense null axes with the same rational certificates
+       before the older normalized Laurent exporter, within this clock. *)
+    restPrepared = completionHEPrepareRestNullNativeIdentity[expression, rules, left[]];
+    If[Lookup[restPrepared, "Status", None] === "PREPARED" ||
+        AbsoluteTime[] - started >= seconds,
+      Return[Join[restPrepared, <|"MixedRationalAttempt" ->
+        KeyTake[rationalPrepared, {"Status", "Method", "PreparationSeconds"}]|>]]]];
   work[] := Module[{external, weights, normalized, chart, cleared, mapped, coefficients,
       denominators, roots, dag, pivots, axisChoice, unsupported},
     external = Sort[Cases[rules, HoldPattern[Mass[i_Integer] -> _] :> i]];
@@ -15813,10 +15860,125 @@ completionHEPrepareNativeIdentity[expression_, rules_List, seconds_: 30] := Modu
       "InternalOnShellConditions" -> {}|>
   ];
   result = TimeConstrained[MemoryConstrained[Catch[work[], tag], 536870912,
-      failure["NativePreparationMemoryLimit"]], seconds, failure["NativePreparationTimeConstraint"]];
-  Join[result, <|"PreparationSeconds" -> AbsoluteTime[] - started|>]
+      failure["NativePreparationMemoryLimit"]], left[], failure["NativePreparationTimeConstraint"]];
+  Join[result, <|"PreparationSeconds" -> AbsoluteTime[] - started,
+    "MixedRationalAttempt" -> If[AssociationQ[rationalPrepared],
+      KeyTake[rationalPrepared, {"Status", "Method", "PreparationSeconds"}], rationalPrepared]|>]
 ];
 
+
+(* Keep opposite massless spinor types constant on a dense mixed-axis patch.
+   After putting one massive momentum at rest, an undotted null line and a
+   dotted null line can both be e1 when their rest-momentum pairing is nonzero.
+   Conservation then fixes one entry of another massive shell linearly. The
+   two remaining null momenta share one free entry, so no physical invariant
+   or internal virtuality is fixed. *)
+completionHERestMixedNullSymbolicChart[rules_List, nullPivots_: Automatic,
+    massiveKind_: "Angle"] := Module[
+  {external, masses, null, massive, anchor, dependent, free, momenta = <||>,
+   angle = <||>, square = <||>, angleBasis = <||>, squareBasis = <||>,
+   variables = {}, spins = {}, patches = {}, new, shell, a, b, c, p, total, rest,
+   shared, angleLeg, squareLeg, pivots, basis, sBasis, spin,
+   epsilon = {{0, 1}, {-1, 0}}, zero, shells, conservation, bases, nullProducts},
+  external = Sort[Cases[rules, HoldPattern[Mass[i_Integer] -> _] :> i]];
+  If[Length[external] < 4 || !DuplicateFreeQ[external] ||
+      !MemberQ[{"Angle", "Square"}, massiveKind], Return[$Failed]];
+  masses = AssociationThread[external, (Mass /@ external) /. rules];
+  If[!FreeQ[Values[masses], _Mass | _Real | _Missing | _Failure] ||
+      !residueFiniteQ[Values[masses]], Return[$Failed]];
+  null = Select[external, masses[#] === 0 &]; massive = Complement[external, null];
+  If[Length[null] < 2 || Length[massive] < 2, Return[$Failed]];
+  pivots = If[nullPivots === Automatic, Take[null, 2], nullPivots];
+  If[!MatchQ[pivots, {_Integer, _Integer}] || !DuplicateFreeQ[pivots] ||
+      !ContainsAll[null, pivots], Return[$Failed]];
+  {angleLeg, squareLeg} = pivots;
+  anchor = First[massive]; dependent = Last[massive];
+  new[] := With[{value = Unique["mixedNullIdentityCoordinate"]},
+    AppendTo[variables, value]; value];
+  shell[mass_] := (a = new[]; b = new[]; c = new[]; AppendTo[patches, a];
+    {{a, b}, {c, (mass^2 + b c)/a}});
+  AssociateTo[momenta, anchor -> masses[anchor] IdentityMatrix[2]];
+  free = Complement[external, {anchor, dependent, angleLeg, squareLeg}];
+  Do[AssociateTo[momenta, leg -> shell[masses[leg]]], {leg, free}];
+  rest = Total[Values[momenta]];
+  a = new[]; b = new[]; shared = new[]; AppendTo[patches, b];
+  p = {{a, b}, {(-a rest[[2, 2]] - masses[dependent]^2)/b, -rest[[2, 2]]}};
+  AssociateTo[momenta, dependent -> p]; total = -rest - p;
+  AssociateTo[momenta, {
+    angleLeg -> {{shared, total[[1, 2]]}, {0, 0}},
+    squareLeg -> {{total[[1, 1]] - shared, 0}, {total[[2, 1]], 0}}}];
+  AssociateTo[angle, angleLeg -> {1, 0}];
+  AssociateTo[square, angleLeg -> {shared, total[[1, 2]]}];
+  AssociateTo[square, squareLeg -> {1, 0}];
+  AssociateTo[angle, squareLeg -> {total[[1, 1]] - shared, total[[2, 1]]}];
+  zero[value_] := TrueQ[Cancel[Together[value]] === 0];
+  Do[
+    p = momenta[leg];
+    If[masses[leg] === 0,
+      If[!MemberQ[pivots, leg],
+        AssociateTo[angle, leg -> p[[All, 1]]];
+        AssociateTo[square, leg -> {1, p[[1, 2]]/p[[1, 1]]}]],
+      basis = {{masses[leg], 0}, {0, 1}};
+      If[massiveKind === "Angle",
+        sBasis = epsilon.residueAdjugate[p].basis/masses[leg],
+        sBasis = basis; basis = -p.epsilon.sBasis/masses[leg]];
+      spin = Unique["mixedNullIdentitySpin"]; AppendTo[spins, spin];
+      AssociateTo[angleBasis, leg -> basis]; AssociateTo[squareBasis, leg -> sBasis];
+      AssociateTo[angle, leg -> basis.{1, spin}];
+      AssociateTo[square, leg -> sBasis.{1, spin}]],
+    {leg, external}];
+  shells = AssociationThread[external,
+    zero[Det[momenta[#]] - masses[#]^2] & /@ external];
+  conservation = AllTrue[Flatten[Total[Values[momenta]]], zero];
+  nullProducts = AssociationThread[null, AllTrue[
+    Flatten[Outer[Times, angle[#], square[#]] - momenta[#]], zero] & /@ null];
+  bases = AssociationThread[massive, Function[leg,
+    zero[Det[angleBasis[leg]] - masses[leg]] && zero[Det[squareBasis[leg]] - masses[leg]] &&
+      AllTrue[Flatten[angleBasis[leg].epsilon.Transpose[squareBasis[leg]] - momenta[leg]], zero] &&
+      AllTrue[Flatten[squareBasis[leg] - epsilon.residueAdjugate[momenta[leg]].
+        angleBasis[leg]/masses[leg]], zero]] /@ massive];
+  If[!And @@ Join[Values[shells], Values[nullProducts], Values[bases], {conservation}],
+    Return[$Failed]];
+  <|"Momenta" -> momenta, "Masses" -> masses, "Angle" -> angle, "Square" -> square,
+    "AngleBasis" -> angleBasis, "SquareBasis" -> squareBasis, "SpinVariables" -> spins,
+    "NullAxisLegs" -> pivots, "NullAxisChirality" -> "Mixed",
+    "MassiveSpinorBasis" -> massiveKind, "RestFrameLeg" -> anchor,
+    "DependentShellLegs" -> {dependent, angleLeg, squareLeg},
+    "PoleVariable" -> Unique["unusedMixedNullIdentityPole"], "ReferenceSeed" -> 0,
+    "CoherentVectorSpinIndices" -> True, "ExternalIdentityCoordinates" -> variables,
+    "ExternalMassShellsValidated" -> True, "ExternalMassShellChecks" -> shells,
+    "MomentumConservationValidated" -> True, "ExternalSpinorBasesValidated" -> bases,
+    "NullSpinorProductsValidated" -> nullProducts, "InternalOnShellConditions" -> {},
+    "DenseDomainNonzeroExpressions" -> Join[Lookup[masses, massive], patches,
+      {shared, total[[1, 1]] - shared}],
+    "CoverageMethod" -> "MassiveRestAndMixedNullLinesOnNonzeroMixedSandwichPatch",
+    "OriginalMixedNullSandwichRequiredNonzero" -> {angleLeg, anchor, squareLeg},
+    "ResidualGaugeDimension" -> 1, "NumericalKinematicSamples" -> 0|>
+];
+
+(* A coordinate preference, not a restriction on the allowed identity. Only
+   opposite nonzero homogeneous massless weights favor this chart; their
+   inexpensive spinor types are fixed independently. *)
+completionHEMixedNullAxisChoice[expression_, rules_List] := Module[
+  {external, null, massive, weights, byLeg, angles, squares},
+  external = Sort[Cases[preparationExternalRules[rules], HoldPattern[Mass[i_Integer] -> _] :> i]];
+  null = Select[external, TrueQ[(Mass[#] /. rules) === 0] &];
+  massive = Complement[external, null];
+  If[Length[massive] < 2 || Length[null] < 2,
+    Return[<|"Status" -> "UNAVAILABLE", "Reason" -> "MixedNullMassInventory"|>]];
+  weights = completionExternalSpinWeights[expression, rules];
+  If[!ListQ[weights] || Length[weights] =!= Length[external] || !AllTrue[weights, IntegerQ],
+    Return[<|"Status" -> "UNAVAILABLE", "Reason" -> "MasslessSpinHomogeneity"|>]];
+  byLeg = AssociationThread[external, weights];
+  angles = Select[null, TrueQ[byLeg[#] > 0] &];
+  squares = Select[null, TrueQ[byLeg[#] < 0] &];
+  If[angles === {} || squares === {},
+    Return[<|"Status" -> "UNAVAILABLE", "Reason" -> "NoOppositeMasslessSpinWeights"|>]];
+  <|"Status" -> "AVAILABLE", "NullAxisLegs" -> {First[angles], First[squares]},
+    "AngleAxisLeg" -> First[angles], "SquareAxisLeg" -> First[squares],
+    "ExternalSpinWeights" -> weights,
+    "Method" -> "OppositeHomogeneousMasslessWeights"|>
+];
 
 (* One massive rest momentum and one nonzero null axis leave a residual axial
    rotation. Keeping it avoids a square root in the two dependent shell solve.
@@ -16082,15 +16244,25 @@ completionHEScalarNonzeroWitnesses[factors_List, variables_List, scalarMap_Assoc
   Join[result, <|"ElapsedTime" -> AbsoluteTime[] - started|>]
 ];
 
-completionHEPrepareSingleNullNativeIdentity[expression_, rules_List, seconds_: 20] := Module[
+completionHEPrepareSingleNullNativeIdentity[expression_, rules_List, seconds_: 20] :=
+  completionHEPrepareRationalNativeIdentity[expression, rules, seconds, "SingleNull"];
+
+completionHEPrepareMixedNullNativeIdentity[expression_, rules_List, seconds_: 20] :=
+  completionHEPrepareRationalNativeIdentity[expression, rules, seconds, "MixedNull"];
+
+completionHEPrepareRestNullNativeIdentity[expression_, rules_List, seconds_: 20] :=
+  completionHEPrepareRationalNativeIdentity[expression, rules, seconds, "Null"];
+
+completionHEPrepareRationalNativeIdentity[expression_, rules_List, seconds_, chartKind_] := Module[
   {started = AbsoluteTime[], failure, remaining, work, result, tag = Unique["singleNullNativePreparation"]},
   failure[reason_] := <|"Status" -> "NOT_PROVED", "Method" -> reason|>;
-  If[!TrueQ[NumericQ[seconds] && 0 < seconds < Infinity], Return[failure["NativePreparationBudget"]]];
+  If[!TrueQ[NumericQ[seconds] && 0 < seconds < Infinity] ||
+      !MemberQ[{"SingleNull", "MixedNull", "Null"}, chartKind], Return[failure["NativePreparationBudget"]]];
   remaining[] := Max[0.000001, seconds - (AbsoluteTime[] - started)];
   work[] := Module[{external, weights, unsupported, scalarMap, resolved, mappedRules, chart,
       axisChoice, atoms, tokens, opaque, restore, together, numerator, denominator,
       factorQ, denominatorFactors, typedReconstruction, mapped, mappedDenominators,
-      coefficients, roots, lifted, variables, nonzeroWitnesses, dag, denominatorClearing},
+      coefficients, roots, lifted, variables, nonzeroWitnesses, dag, denominatorClearing, mixedChoice},
     external = Sort[Cases[rules, HoldPattern[Mass[i_Integer] -> _] :> i]];
     unsupported = !FreeQ[expression, _Real | _SpinorHat | _MomHat | _xFactor | _xTildeFactor |
       Spinor["Xi" | "Zeta", ___]] || AnyTrue[Cases[expression, spinor_Spinor /;
@@ -16107,9 +16279,18 @@ completionHEPrepareSingleNullNativeIdentity[expression_, rules_List, seconds_: 2
       Throw[Join[failure["UnsupportedExactScalarMapping"], <|"ScalarVariableCertificate" -> scalarMap|>], tag]];
     resolved = scalarMap["Expression"]; mappedRules = scalarMap["ExternalMassRules"];
     axisChoice = completionHENativeNullAxisChoice[expression, rules];
-    chart = completionHERestSingleNullSymbolicChart[mappedRules, Automatic, Automatic, Automatic,
-      axisChoice["Chirality"], axisChoice["Chirality"]];
-    If[!AssociationQ[chart], Throw[failure["UnsupportedRestSingleNullChart"], tag]];
+    Which[chartKind === "SingleNull",
+      chart = completionHERestSingleNullSymbolicChart[mappedRules, Automatic, Automatic, Automatic,
+        axisChoice["Chirality"], axisChoice["Chirality"]],
+      chartKind === "MixedNull",
+      mixedChoice = completionHEMixedNullAxisChoice[expression, rules];
+      If[Lookup[mixedChoice, "Status", None] =!= "AVAILABLE",
+        Throw[Join[failure["UnsupportedMixedNullWeights"], <|"MixedNullAxisSelection" -> mixedChoice|>], tag]];
+      chart = completionHERestMixedNullSymbolicChart[mappedRules,
+        mixedChoice["NullAxisLegs"], axisChoice["Chirality"]],
+      True, chart = completionHERestNullSymbolicChart[mappedRules,
+        completionHEPreferredNullPivots[expression, rules], axisChoice["Chirality"]]];
+    If[!AssociationQ[chart], Throw[failure["UnsupportedRest" <> chartKind <> "Chart"], tag]];
     variables = Join[chart["ExternalIdentityCoordinates"], scalarMap["Variables"]];
     If[Length[variables] > 16 || !DuplicateFreeQ[variables], Throw[failure["NativeVariableLimit"], tag]];
     atoms = DeleteDuplicates[Cases[resolved, _SpinorChain | _SpinorTrace | _MomProd |
@@ -16140,7 +16321,8 @@ completionHEPrepareSingleNullNativeIdentity[expression_, rules_List, seconds_: 2
     If[residueUnmappedQ[{mapped, mappedDenominators}] || !residueFiniteQ[{mapped, mappedDenominators}] ||
         !FreeQ[{mapped, mappedDenominators}, _Real | _Missing | _Failure],
       Throw[failure["UnsupportedSingleNullMapping"], tag]];
-    coefficients = amplitudeCoherentPolynomialRules[mapped, chart["SpinVariables"], Min[6, remaining[]]];
+    coefficients = amplitudeCoherentPolynomialRules[mapped, chart["SpinVariables"],
+      Min[If[chartKind === "MixedNull", 12, 6], remaining[]]];
     If[Lookup[coefficients, "Status", None] =!= "COMPLETE" ||
         !TrueQ[coefficients["FullCoefficientCoverage"]] || !TrueQ[coefficients["ReconstructionVerified"]],
       Throw[Join[failure["IncompleteCoherentPolynomial"],
@@ -16159,11 +16341,12 @@ completionHEPrepareSingleNullNativeIdentity[expression_, rules_List, seconds_: 2
     dag = completionHELaurentDAG[roots, variables, Min[6, remaining[]]];
     If[Lookup[dag, "Status", None] =!= "COMPLETE" || !TrueQ[dag["EveryNodeRoundTrip"]],
       Throw[Join[failure["UnsupportedLaurentExport"], <|"LaurentExport" -> dag|>], tag]];
-    <|"Status" -> "PREPARED", "Method" -> "DenseRestSingleNullTypedPolynomialIdentity",
+    <|"Status" -> "PREPARED", "Method" -> ("DenseRest" <> chartKind <> "TypedPolynomialIdentity"),
       "DAG" -> dag, "CoefficientRootCount" -> coefficients["ComponentCount"],
       "DenominatorRootIndices" -> Range[coefficients["ComponentCount"] + 1, Length[roots]],
       "CoefficientMonomials" -> coefficients["ComponentMonomials"], "ExternalSpinWeights" -> weights,
       "Chart" -> chart, "NullAxisChiralitySelection" -> axisChoice,
+      "MixedNullAxisSelection" -> If[chartKind === "MixedNull", mixedChoice, Missing["NotRequested"]],
       "ScalarVariableCertificate" -> scalarMap, "RationalLiftCertificate" -> KeyDrop[lifted, "Numerators"],
       "ScalarSpecializationCertificate" -> nonzeroWitnesses, "DenominatorClearing" -> denominatorClearing,
       "PolynomialExtraction" -> KeyDrop[coefficients, "CoefficientRules"],
@@ -16171,7 +16354,7 @@ completionHEPrepareSingleNullNativeIdentity[expression_, rules_List, seconds_: 2
       "NumericalKinematicSamples" -> 0, "CoherentSpinSamples" -> 0, "InternalOnShellConditions" -> {}|>
   ];
   result = TimeConstrained[MemoryConstrained[Catch[work[], tag], 536870912,
-      failure["SingleNullPreparationMemoryLimit"]], seconds, failure["SingleNullPreparationTimeConstraint"]];
+      failure[chartKind <> "PreparationMemoryLimit"]], seconds, failure[chartKind <> "PreparationTimeConstraint"]];
   Join[result, <|"PreparationSeconds" -> AbsoluteTime[] - started|>]
 ];
 
@@ -16283,15 +16466,19 @@ completionHENativeZeroDirection[expression_, rules_List, model_List, seconds_] :
      roots; the native evaluation is short. Reserve one third of the existing
      total for verification without increasing that total or the family clock. *)
   prepared = completionHEPrepareNativeIdentity[expression, rules,
-    Min[30, If[Count[preparationExternalRules[rules], HoldPattern[Mass[_Integer] -> 0]] === 1,
+    Min[30, If[Count[preparationExternalRules[rules], HoldPattern[Mass[_Integer] -> 0]] === 1 ||
+        Lookup[completionHEMixedNullAxisChoice[expression, rules], "Status", None] === "AVAILABLE",
       2 allowance/3, allowance/3]]];
   If[Lookup[prepared, "Status", None] =!= "PREPARED", Return[Join[prepared,
     <|"OriginalDirection" -> expression, "NativeProofBudget" -> allowance,
       "ElapsedTime" -> AbsoluteTime[] - started|>]]];
   proof = completionHENativeLaurentRun[prepared, Max[0, allowance - (AbsoluteTime[] - started)]];
   Join[proof, <|"Method" -> If[Lookup[proof, "Status", None] === "PROVED_ZERO",
-      If[Lookup[prepared, "Method", None] === "DenseRestSingleNullTypedPolynomialIdentity",
-        "DenseRestSingleNullNativePolynomialIdentity", "DenseRestNullNativeLaurentIdentity"],
+      Switch[Lookup[prepared, "Method", None],
+        "DenseRestSingleNullTypedPolynomialIdentity", "DenseRestSingleNullNativePolynomialIdentity",
+        "DenseRestMixedNullTypedPolynomialIdentity", "DenseRestMixedNullNativePolynomialIdentity",
+        "DenseRestNullTypedPolynomialIdentity", "DenseRestNullNativePolynomialIdentity",
+        _, "DenseRestNullNativeLaurentIdentity"],
       Lookup[proof, "Method", "NativeProofUnfinished"]],
     "OriginalDirection" -> expression,
     "PreparationCertificate" -> Join[KeyDrop[prepared, "DAG"],
@@ -16309,7 +16496,8 @@ completionHEPruneIdentityFamily[family_, parameters_List, rules_List, model_List
    retryEntries, retryJobs, retryWorker, retryObserve, retryDispatch, retryResults, left, reduction,
    nativeSummary, nativeJobs, nativeProof, previousCertificate, nativeAttempted = 0, nativeCertified = 0,
    earlyNativeSummary, earlyNativeCertificates = <||>, earlyNativeRecords = {}, earlyNativeJobs,
-   earlyNativeStarted, earlyNativeDeadline, earlyNativeBudget, earlyNativeProof, earlyNativeLeft},
+   earlyNativeStarted, earlyNativeDeadline, earlyNativeBudget, earlyNativeProof, earlyNativeLeft,
+   earlyNativeSingleNull, earlyNativeMixedNull, earlyNativePerDirection},
   center = family /. Thread[parameters -> 0];
   If[ListQ[knownDirections] && Length[knownDirections] === Length[parameters] &&
       FreeQ[knownDirections, Alternatives @@ parameters] &&
@@ -16336,15 +16524,23 @@ completionHEPruneIdentityFamily[family_, parameters_List, rules_List, model_List
      optional backend on the master before spending the worker-proof budget.
      Every unproved coordinate still enters the original proof/fitting paths. *)
   earlyNativeStarted = AbsoluteTime[];
-  earlyNativeBudget = If[seconds === Infinity, 30, Max[0, Min[30, seconds/3]]];
+  earlyNativeSingleNull = Count[preparationExternalRules[rules], HoldPattern[Mass[_Integer] -> 0]] === 1;
+  earlyNativeMixedNull = TrueQ[$KernelID === 0] && !earlyNativeSingleNull &&
+    TrueQ[seconds > 0] && AnyTrue[Take[jobs, UpTo[8]], Function[index,
+      With[{choice = completionHEMixedNullAxisChoice[directions[[index]], rules]},
+        AssociationQ[choice] && Lookup[choice, "Status", None] === "AVAILABLE"]]];
+  earlyNativePerDirection = If[earlyNativeMixedNull, 45, 20];
+  earlyNativeBudget = If[seconds === Infinity, If[earlyNativeMixedNull, 90, 30],
+    Max[0, Min[If[earlyNativeMixedNull, 90, 30], seconds/3]]];
   earlyNativeDeadline = Min[deadline, earlyNativeStarted + earlyNativeBudget];
   earlyNativeJobs = If[TrueQ[$KernelID === 0] && earlyNativeBudget > 3 &&
-      Count[preparationExternalRules[rules], HoldPattern[Mass[_Integer] -> 0]] === 1 &&
+      (earlyNativeSingleNull || earlyNativeMixedNull) &&
       Length[preparationExternalRules[rules]] >= 4 &&
       AssociationQ[completionHENativeRuntimeSources[]],
-    Take[Select[jobs, 5000 <= LeafCount[directions[[#]]] <= 50000 &], UpTo[4]], {}];
+    Take[Select[jobs, 5000 <= LeafCount[directions[[#]]] <= 50000 &],
+      UpTo[If[earlyNativeMixedNull, 8, 4]]], {}];
   Do[
-    earlyNativeLeft = Max[0, Min[20, earlyNativeDeadline - AbsoluteTime[]]];
+    earlyNativeLeft = Max[0, Min[earlyNativePerDirection, earlyNativeDeadline - AbsoluteTime[]]];
     If[earlyNativeLeft <= 3, Break[]];
     If[progress =!= None, progress[<|"Stage" -> "HighEnergy",
       "Phase" -> "Certifying coherent identities with exact polynomial arithmetic",
@@ -16360,6 +16556,8 @@ completionHEPruneIdentityFamily[family_, parameters_List, rules_List, model_List
   earlyNativeSummary = <|"Attempted" -> Length[earlyNativeRecords],
     "Certified" -> Length[earlyNativeCertificates], "Records" -> earlyNativeRecords,
     "Execution" -> "SerialMasterOnly", "MaximumTotalSeconds" -> earlyNativeBudget,
+    "MaximumSecondsPerDirection" -> earlyNativePerDirection,
+    "RemainingPortfolioBudgetReserved" -> True,
     "SharedDeadline" -> deadline, "ElapsedTime" -> AbsoluteTime[] - earlyNativeStarted|>;
   jobs = Select[jobs, !KeyExistsQ[earlyNativeCertificates, #] &];
   completed = Length[earlyNativeCertificates]; proved = completed;
@@ -16834,7 +17032,7 @@ End[];
 
 Begin["ConstructiveDiagrams`"];
 
-ConstructAmplitude::usage = "ConstructAmplitude[process, diagramModel, factorizationModel] generates and prepares diagrams and factorization channels, completes factorization and high-energy behavior, prepares each completed expression with external identities only, then checks the final amplitude. The ordinary result is the bare expression only when every required final check passes. Output -> Amplitude returns {externalMassRules, expression}; Details retains stage results, timings and diagnostics. ProgressReporting -> True displays the current stage, its elapsed time and total elapsed time. At the end PrintReport -> True prints total time, then the test table, before returning the expression. FeynmanModel -> None optionally supplies an independent model whose diagrams are prepared and compared too. PreparationOptions, ChannelPreparationOptions, FinalPreparationOptions, FactorizationOptions, HighEnergyOptions, CheckOptions and FeynmanPreparationOptions pass options to individual stages. TimeConstraint -> Automatic selects a finite overall budget from the process and workload; individual stages resolve their own automatic limits. Explicit values override those choices. PolePreference, ParameterRules, HighEnergyBound, Samples, ValidationSamples, RandomSeed, Parallelization and MaxKernels provide common settings. The original channels remain the residue targets, discarded preparation terms and affine completion freedom are retained, and final preparation never applies internal-shell identities. Failed, opposite-sign, unresolved and underdetermined results are not returned as validated amplitudes.";
+ConstructAmplitude::usage = "ConstructAmplitude[process, diagramModel, factorizationModel] generates and prepares diagrams and factorization channels, completes factorization and high-energy behavior, prepares each completed expression with external identities only, then checks the final amplitude. The ordinary result is the bare expression only when every required final check passes. Output -> Amplitude returns {externalMassRules, expression}; Details retains stage results, timings and diagnostics. ProgressReporting -> True displays the current stage, its elapsed time and total elapsed time. At the end PrintReport -> True prints total time, then the test table, before returning the expression. FeynmanModel -> None optionally supplies an independent model whose diagrams are prepared and compared too. PreparationOptions, ChannelPreparationOptions, FinalPreparationOptions, FactorizationOptions, HighEnergyOptions, CheckOptions and FeynmanPreparationOptions pass options to individual stages. TimeConstraint -> Automatic selects a finite overall budget from the process and workload; individual stages resolve their own automatic limits. Explicit values override those choices. PolePreference, ParameterRules, HighEnergyBound, Samples, ValidationSamples, RandomSeed, Parallelization and MaxKernels provide common settings. The original channels remain the residue targets, discarded preparation terms and affine completion freedom are retained, and final preparation never applies internal-shell identities. Failed, opposite-sign and unresolved checks never produce a validated amplitude. When FeynmanModel is supplied, a fixed factorization or high-energy candidate can be selected after every mandatory check and independent Feynman comparison passes; its unclassified affine family remains in Details and no uniqueness is claimed. Without that independent benchmark, unresolved completion freedom remains a failure.";
 ConstructAmplitude::usage = ConstructAmplitude::usage <>
   " RandomSeed -> Automatic chooses one time-based run seed. The stages derive their seeds from that value, with explicit stage overrides honored. Details records RandomSeed and PrintReport prints it with the final timing; an explicit integer reproduces the sample choices.";
 ConstructAmplitude::args = "Expected a process with at least four model particle names, a diagram model, a constructive factorization model, and valid construction options.";
@@ -16905,6 +17103,21 @@ constructPreparationUsableQ[report_] := Module[{items, keepReferences},
         Lookup[#["PolePreference"], "Status", None] === "COMPLETE") &]
 ];
 
+(* Alternate validation assignments must override only values that changed
+   from the caller's base assignment. Preserve each independent model's own
+   defaults, and use name rules only for these deliberately shared changes. *)
+constructValidationOverrides[model_List, overrides_, assignment_List] := Module[
+  {base = residueParameterRules[model, overrides], changed, named, declared},
+  If[!ListQ[base], Return[$Failed]];
+  declared = DeleteDuplicates[Cases[model, _ModelParameter, Infinity]];
+  changed = Select[assignment, !MemberQ[base, #] &];
+  named = Map[Function[rule, With[{key = First[rule]},
+    If[Head[key] === ModelParameter && MemberQ[declared, key],
+      ModelParameterName[key], key] -> Last[rule]]], changed];
+  If[named === {} && overrides === Automatic, Automatic,
+    Join[named, Replace[overrides, Automatic -> {}]]]
+];
+
 constructAllChecksPassQ[report_, pair_, channels_List, model_List, benchmark_] := Module[
   {inputs, expected, actual, checks},
   If[!AssociationQ[report] || !ListQ[Lookup[report, "Checks", None]] ||
@@ -16936,6 +17149,9 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
    result, report, failure = None, tag = Unique["amplitudeConstruction"],
    save, emit, child, remaining, stageOptions, run, require, requirePreparation, prepareFinal, workflow,
    completed = False, resultStatus, totalTime, resourceResolution, requestedOptions,
+   prepareBenchmark, benchmarkReady = False, validateRepresentative,
+   representativeSelection = <|"Attempted" -> False, "Selected" -> False|>,
+   representativeAttempts = {},
    representationInputs, physicalRepresentation = Missing["NotValidated"], representationReason = None},
   output = options["Output"]; enabled = options["ProgressReporting"];
   callback = options["ProgressFunction"]; printReport = options["PrintReport"];
@@ -17076,6 +17292,79 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     If[!preparationPairQ[pair],
       constructFailure[currentStage, {"Final preparation did not return an external-mass amplitude pair."}], pair]
   ];
+  (* A supplied independent benchmark can establish a particular amplitude
+     without classifying every alternative in its fitted affine family. Never
+     use that benchmark as a source, fit target or substitute expression. *)
+  prepareBenchmark[] := If[benchmarkReady, benchmark,
+    feynmanDiagrams = run["Generating Feynman diagrams", CreateDiagrams[process, feynmanModel]];
+    require[feynmanDiagrams];
+    feynmanPairs = run["Building Feynman amplitudes", DiagramAmplitudes[feynmanDiagrams]];
+    require[feynmanPairs];
+    If[feynmanPairs === {}, feynmanPairs = {{Thread[(Mass /@ Range[Length[process]]) ->
+      constructExternalMasses[process, feynmanModel]], 0}}];
+    feynmanPrepared = run["Preparing Feynman amplitudes", PrepareAmplitudes[feynmanPairs, feynmanModel,
+      Sequence @@ stageOptions[PrepareAmplitudes, options["FeynmanPreparationOptions"],
+        <|"ReturnDetails" -> True, "InternalOnShell" -> False, "ExternalParticles" -> Automatic|>]]];
+    requirePreparation[feynmanPrepared];
+    benchmark = feynmanPrepared["PreparedAmplitudes"]; benchmarkReady = True; benchmark
+  ];
+  validateRepresentative[source_Association, origin_String, budget_] := Module[
+    {pair, parameters, parameterRules, validationSets, validationReports = {}, settings,
+     checked, selected = True, began, allowance, left, record, i = 1, seedBase, overrides},
+    If[feynmanModel === None || !MemberQ[{"COMPLETE", "UNDERDETERMINED", "UNRESOLVED"},
+        Lookup[source, "Status", None]] ||
+        !ListQ[Lookup[source, "ExternalMassRules", None]] ||
+        !KeyExistsQ[source, "Amplitude"], Return[False]];
+    pair = {source["ExternalMassRules"], source["Amplitude"]};
+    parameters = Lookup[source, "FreeParameters", {}];
+    If[!preparationPairQ[pair] || !residueFiniteQ[Last[pair]] ||
+        !ListQ[parameters] || parameters =!= {} &&
+          !FreeQ[Last[pair], Alternatives @@ parameters], Return[False]];
+    parameterRules = Lookup[constructRuleOptions[options["CheckOptions"]], "ParameterRules",
+      options["ParameterRules"]];
+    validationSets = completionValidationRuleSets[factorizationModel, parameterRules,
+      Lookup[constructRuleOptions[options["HighEnergyOptions"]], "ValidationParameterRules", Automatic]];
+    If[!ListQ[validationSets] || validationSets === {}, Return[False]];
+    prepareBenchmark[];
+    began = AbsoluteTime[];
+    allowance = Min[budget, remaining[]];
+    left[] := Max[0, allowance - (AbsoluteTime[] - began)];
+    seedBase = Lookup[constructRuleOptions[options["CheckOptions"]], "RandomSeed",
+      options["RandomSeed"] + 2000003] /. Automatic -> options["RandomSeed"] + 2000003;
+    While[i <= Length[validationSets] && selected,
+      If[left[] <= 0.001, selected = False; Break[]];
+      overrides = constructValidationOverrides[factorizationModel, parameterRules, validationSets[[i]]];
+      If[overrides === $Failed, selected = False; Break[]];
+      settings = Join[constructRuleOptions[options["CheckOptions"]],
+        <|"Output" -> "Details", "SpuriousPoles" -> Automatic,
+          "HighEnergyCheck" -> True, "ReferenceCheck" -> True,
+          "ParameterRules" -> overrides,
+          "RandomSeed" -> seedBase + 104729 (i - 1),
+          "FeynmanAmplitudes" -> benchmark, "FeynmanModel" -> feynmanModel|>];
+      finalPair = pair;
+      checked = run["Validating " <> ToLowerCase[origin] <> " representative" <>
+          If[Length[validationSets] > 1, " (" <> ToString[i] <> "/" <> ToString[Length[validationSets]] <> ")", ""],
+        TimeConstrained[CheckAmplitudes[pair, channels, factorizationModel,
+          Sequence @@ stageOptions[CheckAmplitudes, settings]], Max[0.000001, left[]],
+          Missing["RepresentativeValidationTimeConstraint"]]];
+      AppendTo[validationReports, <|"ParameterRules" -> validationSets[[i]],
+        "CheckParameterOverrides" -> overrides, "Report" -> checked|>];
+      selected = constructAllChecksPassQ[checked, pair, channels, factorizationModel, benchmark];
+      i++];
+    selected = selected && Length[validationReports] === Length[validationSets];
+    record = <|"Attempted" -> True, "Selected" -> selected, "SourceStage" -> origin,
+      "SourceStatus" -> Lookup[source, "Status", None],
+      "Scope" -> "IndependentlySampledValidatedPointNotFamilyUniqueness",
+      "BenchmarkUsedForConstruction" -> False, "UniquenessEstablished" -> False,
+      "RetainedFreeParameters" -> parameters,
+      "RetainedFamilyAmplitude" -> Lookup[source, "FamilyAmplitude", Last[pair]],
+      "RetainedDirections" -> Lookup[source, "RemainingBasis", {}],
+      "ValidationReports" -> validationReports, "ElapsedTime" -> AbsoluteTime[] - began|>;
+    AppendTo[representativeAttempts, record];
+    representativeSelection = record; save["Representative selection", record];
+    If[selected, checkReport = First[validationReports]["Report"]];
+    selected
+  ];
   workflow[] := Catch[
     diagramData = run["Generating diagrams", CreateDiagrams[process, diagramModel]];
     require[diagramData];
@@ -17101,27 +17390,22 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     factorizedPair = run["Preparing factorization result", prepareFinal[finalPair]];
     require[factorizedPair]; finalPair = factorizedPair;
     factorization = constructPreparedFamily[factorization, factorizedPair];
+    If[feynmanModel =!= None && Lookup[factorization, "FreeParameters", {}] =!= {} &&
+        validateRepresentative[factorization, "Factorization", Min[60, remaining[]/10]],
+      completed = True; Throw[finalPair, tag]];
     highEnergy = run["Completing high-energy behavior", CompleteHighEnergy[factorization,
       channelPreparation, factorizationModel, Sequence @@ stageOptions[CompleteHighEnergy,
         options["HighEnergyOptions"], <|"Output" -> "Details", "RandomSeed" -> Lookup[
           constructRuleOptions[options["HighEnergyOptions"]], "RandomSeed", options["RandomSeed"] + 1000033] /.
             Automatic -> options["RandomSeed"] + 1000033|>]]];
+    If[AssociationQ[highEnergy] && Lookup[highEnergy, "Status", None] =!= "COMPLETE" &&
+        validateRepresentative[highEnergy, "HighEnergy", remaining[]],
+      completed = True; Throw[finalPair, tag]];
     require[highEnergy, {"COMPLETE"}];
     finalPair = {highEnergy["ExternalMassRules"], highEnergy["Amplitude"]};
     finalPair = run["Preparing final amplitude", prepareFinal[finalPair]];
     require[finalPair];
-    If[feynmanModel =!= None,
-      feynmanDiagrams = run["Generating Feynman diagrams", CreateDiagrams[process, feynmanModel]];
-      require[feynmanDiagrams];
-      feynmanPairs = run["Building Feynman amplitudes", DiagramAmplitudes[feynmanDiagrams]];
-      require[feynmanPairs];
-      If[feynmanPairs === {}, feynmanPairs = {{Thread[(Mass /@ Range[Length[process]]) ->
-        constructExternalMasses[process, feynmanModel]], 0}}];
-      feynmanPrepared = run["Preparing Feynman amplitudes", PrepareAmplitudes[feynmanPairs, feynmanModel,
-        Sequence @@ stageOptions[PrepareAmplitudes, options["FeynmanPreparationOptions"],
-          <|"ReturnDetails" -> True, "InternalOnShell" -> False, "ExternalParticles" -> Automatic|>]]];
-      requirePreparation[feynmanPrepared];
-      benchmark = feynmanPrepared["PreparedAmplitudes"]];
+    If[feynmanModel =!= None, prepareBenchmark[]];
     checkSettings = Join[constructRuleOptions[options["CheckOptions"]], <|
       "Output" -> "Details", "SpuriousPoles" -> Automatic,
       "HighEnergyCheck" -> True, "ReferenceCheck" -> True,
@@ -17176,6 +17460,8 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     "AchievedPhysicalDenominators" -> physicalRepresentation,
     "PreferenceFallbackReason" -> representationReason,
     "Stages" -> stages, "ResourcePolicy" -> resourceResolution["ResourcePolicy"],
+    "RepresentativeSelection" -> representativeSelection,
+    "RepresentativeSelectionAttempts" -> representativeAttempts,
     "RequestedOptions" -> requestedOptions, "Failure" -> failure|>;
   If[output === "Details", Return[report]];
   If[!completed, Return[failure]];

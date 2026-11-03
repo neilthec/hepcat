@@ -161,16 +161,97 @@ check["unproved late native work preserves the complete original axis", niFamily
 niFixture = Get[FileNameJoin[{root, "tests", "checks", "fixtures", "high-energy-four-fermion-native-zero.wl"}]][niMass, niCoupling];
 niFixturePrepared = ConstructiveDiagrams`Private`completionHEPrepareNativeIdentity[niFixture, niRules, 20];
 check["the actual retained direction has complete typed, coherent and reversible preparation", niFixturePrepared["Status"] === "PREPARED" &&
-  niFixturePrepared["CoefficientRootCount"] === 15 && niFixturePrepared["DenominatorRootIndices"] === Range[16, 27] &&
-  niFixturePrepared["MassNormalization"]["HomogeneousMassDimension"] === -2 &&
-  niFixturePrepared["MassNormalization"]["ScalarFactorRules"] === {niCoupling -> 4} &&
-  niFixturePrepared["DAG"]["EveryNodeRoundTrip"]];
+  niFixturePrepared["PolynomialExtraction"]["FullCoefficientCoverage"] &&
+  niFixturePrepared["PolynomialExtraction"]["ReconstructionVerified"] &&
+  niFixturePrepared["DAG"]["EveryNodeRoundTrip"] &&
+  Which[niFixturePrepared["Method"] === "DenseRestNullTypedLaurentIdentity",
+    niFixturePrepared["CoefficientRootCount"] === 15 &&
+      niFixturePrepared["DenominatorRootIndices"] === Range[16, 27] &&
+      niFixturePrepared["MassNormalization"]["HomogeneousMassDimension"] === -2 &&
+      niFixturePrepared["MassNormalization"]["ScalarFactorRules"] === {niCoupling -> 4},
+    niFixturePrepared["Method"] === "DenseRestMixedNullTypedPolynomialIdentity",
+    niFixturePrepared["CoefficientRootCount"] === 16 &&
+      niFixturePrepared["MassNormalizationUsed"] === False &&
+      niFixturePrepared["ScalarVariableCertificate"]["ExactScalarRoundTrip"] &&
+      niFixturePrepared["ScalarSpecializationCertificate"]["EveryFactorNonzeroAfterNumericRestoration"],
+    True, False]];
 If[Environment["HEPCAT_TEST_NATIVE_FULL_DIRECTION"] === "1" && niOptionalAvailable,
   niFixtureProof = ConstructiveDiagrams`Private`completionHENativeZeroDirection[niFixture, niRules, {}, 120];
   check["actual difficult affine identity is proved with every coefficient and denominator root", niFixtureProof["Status"] === "PROVED_ZERO" &&
-    niFixtureProof["NativeCertificate"]["RootCount"] === 27 && niFixtureProof["NativeCertificate"]["RunStatus"] === "COMPLETE" &&
+    niFixtureProof["NativeCertificate"]["RootCount"] === niFixturePrepared["DAG"]["RootCount"] &&
+    niFixtureProof["NativeCertificate"]["RunStatus"] === "COMPLETE" &&
     niFixtureProof["NativeCertificate"]["AllExpectedStatuses"] && niFixtureProof["ElapsedTime"] <= 120],
   Print["SKIP: set HEPCAT_TEST_NATIVE_FULL_DIRECTION=1 for the actual bounded 90-second native proof."]];
+(* The saved six-point failure contained ordinary identities that were hard
+   in a same-chirality chart. Mixed axes must prove them without selecting a
+   numerical phase-space or parameter point, and must preserve genuine terms. *)
+niMixedFixture = Get[FileNameJoin[{root, "tests", "checks", "fixtures",
+  "high-energy-six-point-mixed-null-zero.wl"}]][niMass, niCoupling];
+niMixedRules = niMixedFixture["ExternalMassRules"];
+niMixedChoice = ConstructiveDiagrams`Private`completionHEMixedNullAxisChoice[
+  First[niMixedFixture["Directions"]], niMixedRules];
+check["mixed axes are chosen from homogeneous spin weights rather than labels",
+  niMixedChoice["Status"] === "AVAILABLE" && niMixedChoice["NullAxisLegs"] === {4, 3}];
+niMixedRelabel = <|1 -> 2, 2 -> 7, 3 -> 4, 4 -> 9, 5 -> 11, 6 -> 13|>;
+niMixedRelabeledRules = ConstructiveDiagrams`Private`relabelLegs[niMixedRules, niMixedRelabel];
+niMixedCases = <|
+  "ActualLargeDirection" -> {First[niMixedFixture["Directions"]], niMixedRules},
+  "RelabeledNonhomogeneousScalarMultiple" -> {
+    ConstructiveDiagrams`Private`relabelLegs[
+      (1 + niMass + niCoupling^2) Last[niMixedFixture["Directions"]], niMixedRelabel],
+    niMixedRelabeledRules}|>;
+If[niOptionalAvailable,
+  KeyValueMap[Function[{name, data},
+    niMixedProof = ConstructiveDiagrams`Private`completionHENativeZeroDirection[
+      First[data], Last[data], {}, 45];
+    check[name <> " has a complete exact mixed-null identity certificate",
+      niMixedProof["Status"] === "PROVED_ZERO" &&
+      niMixedProof["Method"] === "DenseRestMixedNullNativePolynomialIdentity" &&
+      TrueQ[niMixedProof["CompleteCoherentCoefficientCoverage"]] &&
+      TrueQ[niMixedProof["DenominatorFactorsProvedNonzero"]] &&
+      niMixedProof["NumericalKinematicSamples"] === 0 &&
+      niMixedProof["CoherentSpinSamples"] === 0 &&
+      niMixedProof["InternalOnShellConditions"] === {}];
+    niMixedCertificate = Lookup[niMixedProof, "PreparationCertificate", <||>];
+    check[name <> " retains complete scalar and coherent reconstruction",
+      niMixedCertificate["MassNormalizationUsed"] === False &&
+      niMixedCertificate["NumericalParameterSubstitutions"] === {} &&
+      TrueQ[niMixedCertificate["ScalarVariableCertificate"]["ExactScalarRoundTrip"]] &&
+      TrueQ[niMixedCertificate["PolynomialExtraction"]["FullCoefficientCoverage"]] &&
+      TrueQ[niMixedCertificate["PolynomialExtraction"]["ReconstructionVerified"]] &&
+      niMixedCertificate["CoefficientRootCount"] === 4 &&
+      Length[niMixedCertificate["CoefficientMonomials"]] === 4];
+    check[name <> " verifies every rational-clearing and denominator obligation",
+      TrueQ[niMixedCertificate["RationalLiftCertificate"]["ReconstructionVerified"]] &&
+      TrueQ[niMixedCertificate["ScalarSpecializationCertificate"]["EveryFactorNonzeroAfterNumericRestoration"]] &&
+      niMixedCertificate["ScalarSpecializationCertificate"]["FactorCount"] ===
+        Length[niMixedCertificate["DenominatorRootIndices"]] &&
+      niMixedCertificate["ScalarSpecializationCertificate"]["WitnessCount"] ===
+        Length[niMixedCertificate["DenominatorRootIndices"]]];
+    check[name <> " preserves the original exact direction and bounded clock",
+      niMixedProof["OriginalDirection"] === First[data] &&
+      niMixedProof["NativeProofBudget"] === 45 && niMixedProof["ElapsedTime"] < 46]
+  ], niMixedCases];
+  niMixedDeformation = SpinorChain[niA[1], niA[2]] *
+    SpinorChain[Spinor["Helicity", "Square", 3], Mom[1],
+      Spinor["Helicity", "Angle", 4]]^2 *
+    SpinorChain[Spinor["Helicity", "Angle", 5], Spinor["Helicity", "Angle", 6]]^2/10^30;
+  niMixedNonzero = ConstructiveDiagrams`Private`completionHENativeZeroDirection[
+    Last[niMixedFixture["Directions"]] + niMixedDeformation, niMixedRules, {}, 45];
+  check["an actual deformed direction is retained when exact expansion does not close",
+    niMixedNonzero["Status"] === "NOT_PROVED" &&
+    niMixedNonzero["OriginalDirection"] === Last[niMixedFixture["Directions"]] + niMixedDeformation &&
+    ConstructiveDiagrams`Private`completionExternalSpinWeights[
+      Last[niMixedFixture["Directions"]] + niMixedDeformation, niMixedRules] ===
+      ConstructiveDiagrams`Private`completionExternalSpinWeights[Last[niMixedFixture["Directions"]], niMixedRules]];
+  niMixedSmallNonzero = ConstructiveDiagrams`Private`completionHENativeZeroDirection[
+    niMixedDeformation, niMixedRules, {}, 20];
+  check["a tiny same-weight six-point tensor is explicitly proved nonzero",
+    niMixedSmallNonzero["Status"] === "NOT_PROVED" &&
+    AnyTrue[Lookup[Lookup[niMixedSmallNonzero, "NativeCertificate", <||>], "Roots", {}],
+      Lookup[#, "ExpectedStatus", None] === "ZERO" && Lookup[#, "Status", None] === "NONZERO" &]],
+  Print["SKIP: optional exact mixed-null runtime is unavailable: ", niOptionalReason]];
+
 Print["CHECKS: ", checks, "; FAILURES: ", Length[failures]];
 If[failures =!= {}, Print[InputForm[failures]]; Exit[1]];
 Print["HEPCAT_TEST_COMPLETED:native-laurent-identity-tests.wl"];

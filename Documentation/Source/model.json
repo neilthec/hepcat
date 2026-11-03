@@ -1365,7 +1365,7 @@
           "Use the ordinary output for inspection or a short calculation. Use `\"ReturnDetails\" -> True` when passing preparation information into [CompleteFactorization](paclet:HEPCAT/ref/CompleteFactorization). `\"Output\" -> \"Expression\"` returns a bare sum; details preserve the item reports, reference assignments and retained differences.",
           "A final bounded regrouping can shorten the written result without changing its expanded terms or momentum insertions. It groups terms by their existing physical propagators and factors shared spinor coefficients. A regular piece can be combined with an existing pole group when that makes the whole expression smaller. Every accepted rewrite has an exact rational-algebra identity check with the spinor chains treated as independent objects; no additional on-shell or momentum-conservation condition is used, and no new spinor denominator is introduced. This is a presentation improvement, so [SpinorExpressionComplexity](paclet:HEPCAT/ref/SpinorExpressionComplexity) can remain unchanged even when the expression is shorter. The same search can group propagators in two levels, first by a mass class or by whether their channels contain a declared external leg, then by the remaining pole factors. This exposes short exchange-current blocks that can be obscured by one large common denominator. The groups are inferred from the supplied expression; no known amplitude is substituted.",
           "Normal resource settings are automatic. The live display shows progress through the items. Independent diagrams or channels can be prepared in parallel; set `\"Parallelization\" -> False` to keep the work on the main kernel, or use `\"MaxKernels\"` to reduce the worker count.",
-          "If preparation stops at a limit, inspect its status before assuming all requested reductions were completed. Giving more time permits a larger search but does not prove that a shorter expression exists. [SpinorExpressionComplexity](paclet:HEPCAT/ref/SpinorExpressionComplexity) provides the ranking measure used to compare candidate forms."
+          "The ranking compares weighted complexity first, expression size second, and additive grouping third. This favors a shorter expression tree when two forms have the same weighted complexity, even if it uses more separate fractions. On eligible completed inputs, a short initial pass also tries ordinary grouping by existing physical poles before heavier exploration; it retains a completed improvement if later optional work reaches its limit. If preparation stops at a limit, inspect its status before assuming all requested reductions were completed. Giving more time permits a larger search but does not prove that a shorter expression exists. [SpinorExpressionComplexity](paclet:HEPCAT/ref/SpinorExpressionComplexity) provides the ranking measure used to compare candidate forms."
         ]
       }
     ]
@@ -1553,7 +1553,8 @@
     "details": [
       "This is the main entry point when you want HEPCAT to carry out the complete constructive workflow. Supply an ordered all-ingoing process list, a diagram model and a factorization model. Routine calls need only those three arguments; the algorithm chooses its effort settings automatically.",
       "The diagram model supplies the interactions used by [CreateDiagrams](paclet:HEPCAT/ref/CreateDiagrams). The factorization model supplies complete lower-point amplitudes used by [FactorizationAmplitudeChannels](paclet:HEPCAT/ref/FactorizationAmplitudeChannels). They can be the same model at four points, but the factorization model must contain enough higher-point information for larger processes.",
-      "A successful ordinary call returns the final bare expression after all required checks pass. `\"Output\" -> \"Amplitude\"` instead returns `{externalMassRules, expression}`, which you can pass to [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes) again. `\"Output\" -> \"Details\"` retains the stage results, timings, seed and validation report."
+      "A successful ordinary call returns the final bare expression after all required checks pass. `\"Output\" -> \"Amplitude\"` instead returns `{externalMassRules, expression}`, which you can pass to [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes) again. `\"Output\" -> \"Details\"` retains the stage results, timings, seed and validation report.",
+      "An explicit `\"FeynmanModel\"` also allows the wrapper to validate one fixed factorization or high-energy representative before proving every alternative in its retained affine family equivalent. Every standard check and the independent Feynman comparison must pass at the normal validation parameter assignments. This is sampled validation of that expression, not a uniqueness proof or a change to the strict behavior of [CompleteHighEnergy](paclet:HEPCAT/ref/CompleteHighEnergy) on its own."
     ],
     "examples": [
       {
@@ -1564,6 +1565,11 @@
       {
         "description": "Choose a physical-pole representation and retain the complete run report.",
         "input": "qedModel = ReadModel[modelDirectory, 2];\nknownQEDModel = ReadModel[modelDirectory, 3];\nConstructAmplitude[{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"}, qedModel, knownQEDModel, \"PolePreference\" -> \"AllPhysical\", \"Output\" -> \"Details\", \"RandomSeed\" -> 314159]",
+        "evaluate": false
+      },
+      {
+        "description": "Include an independent Feynman model and inspect whether a fixed representative was selected. Set feynmanModelDirectory to the directory containing your matching Feynman model.",
+        "input": "feynmanModel = ReadModel[feynmanModelDirectory, 2];\nreport = ConstructAmplitude[{\"e\", \"E\", \"A.+\", \"A.+\"}, qedModel, qedModel, \"FeynmanModel\" -> feynmanModel, \"Output\" -> \"Details\"];\nreport[\"RepresentativeSelection\"]",
         "evaluate": false
       }
     ],
@@ -1581,9 +1587,19 @@
       {
         "title": "What happens during a construction",
         "paragraphs": [
-          "HEPCAT generates the diagrams and prepares their expressions, then builds the known factorization channels. [CompleteFactorization](paclet:HEPCAT/ref/CompleteFactorization) solves any physical residue deficits, and [CompleteHighEnergy](paclet:HEPCAT/ref/CompleteHighEnergy) constrains the retained freedom using full-amplitude conditions. The completed expression is prepared again with external identities and passed through [CheckAmplitudes](paclet:HEPCAT/ref/CheckAmplitudes).",
+          "HEPCAT generates the diagrams and prepares their expressions, then builds the known factorization channels. [CompleteFactorization](paclet:HEPCAT/ref/CompleteFactorization) solves any physical residue deficits. The usual route then uses [CompleteHighEnergy](paclet:HEPCAT/ref/CompleteHighEnergy), prepares the completed expression with external identities and runs [CheckAmplitudes](paclet:HEPCAT/ref/CheckAmplitudes). When an explicit independent Feynman model is supplied, the wrapper can instead validate an already fixed representative as described below.",
           "The stages pass more than their displayed expressions to one another. Original channel targets, discarded preparation remainders and remaining correction directions are retained. In particular, the final simplification does not apply diagram-local internal-shell conditions to the assembled amplitude.",
           "The progress display names the current stage and shows both its elapsed time and the total time. At the end, the function prints the total time, run seed and check results before returning. `\"ProgressReporting\" -> False` and `\"PrintReport\" -> False` suppress those displays when running a script."
+        ]
+      },
+      {
+        "title": "Checking one fixed representative",
+        "paragraphs": [
+          "A factorization solve can leave an affine family: one particular expression plus free coefficients multiplying other expressions. Some of those directions may vanish by ordinary identities, but certifying every direction can take longer than checking the particular expression itself. With an explicit `\"FeynmanModel\"`, the wrapper may first try that fixed factorization point when free coordinates remain. It may also try a finite fixed candidate retained by an unresolved or underdetermined high-energy stage.",
+          "Acceptance requires the complete physical-channel report, automatic spurious-pole checks, the high-energy bound, reference independence and independent Feynman agreement. The check is repeated at the normal independent validation parameter assignments; it is not just a favorable evaluation at the fitting parameters. These checks use the existing shared clock. A failed, incomplete or timed-out attempt falls through to the remaining completion workflow when time remains.",
+          "The Feynman expression is generated once and reused only as a benchmark. It supplies no correction terms, fitted coefficients or replacement answer. The selected expression is the fixed constructive candidate that passed validation. Its unproved family directions are retained; they are not silently declared zero.",
+          "Request `\"Output\" -> \"Details\"` and inspect `\"RepresentativeSelection\"`. It records the source stage, retained family, free coordinates, validation reports and explicit `\"UniquenessEstablished\" -> False`. A successful selection means the chosen point passed the supported checks, not that every point in the family is equivalent or that the formula has received a generic analytic proof.",
+          "Without an explicit `\"FeynmanModel\"`, the ordinary strict completion path is unchanged. Calling [CompleteHighEnergy](paclet:HEPCAT/ref/CompleteHighEnergy) directly also remains strict: genuine acceptable-growth contact freedom or unfinished identity proofs still produce an underdetermined or unresolved report. This wrapper policy does not infer an unknown contact interaction or prove that its coefficient vanishes."
         ]
       },
       {
@@ -1597,7 +1613,7 @@
       {
         "title": "If construction does not complete",
         "paragraphs": [
-          "A failed, opposite-sign, unresolved or underdetermined check prevents the ordinary call from returning an allegedly validated amplitude. Request `\"Output\" -> \"Details\"` to see which stage stopped and why. A missing lower-point input, an insufficient correction space and an exhausted time limit require different remedies.",
+          "A failed, opposite-sign or unresolved mandatory comparison prevents the ordinary call from returning an allegedly validated amplitude. An unfinished proof about the full affine family is a different issue: only an explicit independent Feynman model permits the separately checked fixed-point route above. Request `\"Output\" -> \"Details\"` to see which stage stopped, which representative was tried and why. A missing lower-point input, an insufficient correction space and an exhausted time limit require different remedies.",
           "When you want to understand an intermediate expression, use the individual functions rather than increasing every resource option. Start with diagrams, inspect their prepared pairs, then examine factorization details. The tutorial on constructing an amplitude in stages shows that sequence and explains how to keep the information needed by the following stage.",
           "Advanced stage options can be supplied through `\"PreparationOptions\"`, `\"FactorizationOptions\"`, `\"HighEnergyOptions\"`, `\"FinalPreparationOptions\"`, `\"CheckOptions\"` and their channel/Feynman counterparts. These are overrides for a specific investigation, not required setup for every calculation."
         ]

@@ -1375,6 +1375,26 @@ factorization model must contain constructive lower-point amplitudes. Particle
 helicity aliases such as `A.+` are resolved against the underlying Feynman
 particle declarations without adding model globals.
 
+With an explicit `"FeynmanModel"`, the wrapper can test one fixed constructive
+representative before spending its clock proving every retained family direction
+identically zero. It first considers the prepared factorization point when that
+report has free coordinates. It can also test a finite point retained by an
+unresolved or underdetermined high-energy stage. Acceptance requires every
+physical channel, automatic spurious-pole cancellation, high-energy behavior,
+reference independence and independent Feynman agreement at the normal
+validation parameter assignments. A failed or incomplete attempt continues the
+remaining workflow when its shared time budget allows.
+
+The benchmark is generated once and used only for validation. It is not a source
+of correction terms, fitted coefficients or a replacement formula. Details keep
+`"RepresentativeSelection"` and its attempts, including the source stage, original
+family, free coordinates, unproved directions and validation reports. A selected
+point explicitly has `"UniquenessEstablished" -> False`: passing numerical checks
+is not a generic analytic proof that every family member is equivalent. Without
+an explicit Feynman model, strict completion is unchanged. Standalone
+`CompleteHighEnergy` also remains strict and retains genuine acceptable-growth
+contact freedom as `"UNDERDETERMINED"`.
+
 `"Samples"`, `"ValidationSamples"`, `"ParameterRules"`, `"HighEnergyBound"`,
 `"RandomSeed"`, `"Parallelization"` and `"MaxKernels"` provide common settings.
 `"MaxKernels" -> Automatic` uses Mathematica's processor count, available
@@ -1604,7 +1624,7 @@ preparationDetails["DiagramReports"][[1]]["PolePreference"]
 ```
 
 The optimized modes reduce each tested complete diagram expression before
-ranking it by complexity, term count and expression size. They do not choose
+ranking it by weighted complexity, expression size, then additive grouping. They do not choose
 references merely by the apparent size of the reference denominator. The search
 is finite and bounded: `"MaxReferenceChoices" -> Automatic` currently resolves
 to 64 assignments per diagram. `"ReferenceTimeConstraint" -> Automatic` allows the smaller
@@ -1673,7 +1693,7 @@ composite momenta by their conservation complements. The external labels come
 only from the supplied mass rules, not from a guessed particle count. A trial
 may expand temporarily: automatic spinor reduction and the permitted local
 shell reductions run before the whole result is ranked. Only a strictly lower
-complexity, term-count and expression-size rank is accepted, preventing cycles.
+weighted-complexity, expression-size and additive-group rank is accepted, preventing cycles.
 These alternatives share the existing `"MaxCandidates"`, `"MaxSteps"` and
 per-diagram time limits with the local identity edits. All inverse factors,
 including reciprocal expressions inside a numerator sum, are protected during

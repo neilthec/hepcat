@@ -43,7 +43,14 @@ check["actual four-point QED construction completes every stage",
     caDetails["PreferenceFallbackReason"] === None];
 If[!AssociationQ[caDetails] || Lookup[caDetails, "Status", None] =!= "COMPLETE",
   Print["Cannot continue construction assertions: ", caDetails];
-  If[checks =!= 40, AppendTo[failures, "Not every construction assertion executed."]];
+  If[checks =!= 62, AppendTo[failures, "Not every construction assertion executed."]];
+If[failures =!= {} && ValueQ[caPolicySelected],
+  caPolicyDiagnosticDirectory = CreateDirectory[];
+  Put[<|"Early" -> caPolicySelected, "Late" -> caPolicyLate,
+    "Unresolved" -> caPolicyUnresolved, "ExpectedValidationSets" -> caPolicyValidationSets,
+    "Expression" -> caExpression, "Model" -> caModel, "FeynmanModel" -> caFeynmanModel|>,
+    FileNameJoin[{caPolicyDiagnosticDirectory, "representative-policy-failure.wl"}]];
+  Print["Representative policy diagnostics: ", caPolicyDiagnosticDirectory]];
 Print["CHECKS: ", checks, "; FAILURES: ", Length[failures]]; Quit[1]];
 check["details retain the same process and reusable external-mass pair",
   caDetails["Process"] === caProcess4 &&
@@ -232,9 +239,184 @@ check["a genuinely forbidden process still validates the zero amplitude",
     caZero["Checks"]["Channels"] === {} &&
     caZero["Checks"]["HighEnergyCheck"]["Status"] === "PASS" &&
     caZero["Checks"]["ReferenceCheck"]["Status"] === "PASS"];
+(* Selecting one fully checked point is distinct from proving that its whole
+   affine family is unique. Policy branches use real four-point expressions;
+   only stage snapshots are controlled, while all amplitude checks remain real. *)
+caPolicyParameter = Unique["representativeFreedom"];
+caPolicyDirection = caOrdinaryRedex;
+caPolicyCF = Join[caDetails["Stages"]["Completing factorization"], <|
+  "Status" -> "COMPLETE", "Amplitude" -> caExpression,
+  "ExternalMassRules" -> First[caDetails["AmplitudePair"]],
+  "FamilyAmplitude" -> caExpression + caPolicyParameter caPolicyDirection,
+  "FreeParameters" -> {caPolicyParameter}, "RemainingBasis" -> {caPolicyDirection},
+  "CorrectionBasis" -> {caPolicyDirection}, "Correction" -> 0|>];
+caPolicyUnfinishedHE = Join[caPolicyCF, <|"Status" -> "UNDERDETERMINED",
+  "Diagnostics" -> {"Controlled unfinished ordinary identity proof."}|>];
+caPolicyNoFreeCF = Join[caPolicyCF, <|"FamilyAmplitude" -> caExpression,
+  "FreeParameters" -> {}, "RemainingBasis" -> {}|>];
+caPolicyCompleteHE = Join[caPolicyNoFreeCF, <|"Status" -> "COMPLETE"|>];
+caPolicyOriginalDefinitions = {DownValues[CompleteFactorization], DownValues[CompleteHighEnergy],
+  Attributes[CompleteFactorization], Attributes[CompleteHighEnergy]};
+caPolicyRun[cf_Association, he_Association, useBenchmark_, opts___Rule] := Module[{},
+  caPolicyCFCalls = 0; caPolicyHECalls = 0;
+  caPolicyCFSource = cf; caPolicyHESource = he;
+  Internal`InheritedBlock[{CompleteFactorization, CompleteHighEnergy},
+    Unprotect[CompleteFactorization, CompleteHighEnergy];
+    DownValues[CompleteFactorization] = {
+      HoldPattern[CompleteFactorization[___]] :>
+        (caPolicyCFCalls++; caPolicyCFSource)};
+    DownValues[CompleteHighEnergy] = {
+      HoldPattern[CompleteHighEnergy[___]] :>
+        (caPolicyHECalls++; caPolicyHESource)};
+    caRun4[Sequence @@ Normal[Join[<|"Output" -> "Details",
+      "FeynmanModel" -> If[TrueQ[useBenchmark], caFeynmanModel, None],
+      "FeynmanPreparationOptions" -> {"MaxSteps" -> 0, "TimeConstraint" -> 20},
+      "HighEnergyOptions" -> {"TimeConstraint" -> 60}|>, Association[{opts}]]]]
+  ]
+];
+caPolicySelected = caPolicyRun[caPolicyCF, caPolicyUnfinishedHE, True];
+caPolicySelectedHECalls = caPolicyHECalls;
+caPolicySelection = caPolicySelected["RepresentativeSelection"];
+check["an independent benchmark can validate a fixed factorization point before unfinished family proofs",
+  caPolicySelected["Status"] === "COMPLETE" && caPolicySelectedHECalls === 0 &&
+    caPolicySelection["Selected"] === True && caPolicySelection["SourceStage"] === "Factorization" &&
+    AllTrue[caPolicySelected["Checks"]["Checks"], #["Status"] === "PASS" &]];
+check["sampled representative selection explicitly disclaims family uniqueness and benchmark fitting",
+  caPolicySelection["Scope"] === "IndependentlySampledValidatedPointNotFamilyUniqueness" &&
+    caPolicySelection["UniquenessEstablished"] === False &&
+    caPolicySelection["BenchmarkUsedForConstruction"] === False];
+check["successful point validation retains every original free coordinate and unproved direction",
+  caPolicySelection["RetainedFreeParameters"] === {caPolicyParameter} &&
+    caPolicySelection["RetainedDirections"] === {caPolicyDirection} &&
+    Together[caPolicySelection["RetainedFamilyAmplitude"] - caExpression -
+      caPolicyParameter caPolicyDirection] === 0 &&
+    caPolicySelected["Stages"]["Completing factorization"]["RemainingBasis"] === {caPolicyDirection}];
+caPolicyValidationSets = ConstructiveDiagrams`Private`completionValidationRuleSets[
+  caModel, caRules, Automatic];
+caPolicyValidationReports = caPolicySelection["ValidationReports"];
+check["point selection preserves the normal independent parameter-validation assignments",
+  Length[caPolicyValidationSets] === 2 &&
+    Lookup[caPolicyValidationReports, "ParameterRules"] === caPolicyValidationSets &&
+    AllTrue[caPolicyValidationReports, Function[entry,
+      Length[entry["Report"]["Channels"]] === 2 &&
+        AllTrue[entry["Report"]["Checks"], #["Status"] === "PASS" &] &&
+        entry["Report"]["FeynmanCheck"]["Status"] === "PASS"]]];
+check["the selected point is unchanged by choosing a representative and contains no free coefficient",
+  Together[caPolicySelected["Amplitude"] - caExpression] === 0 &&
+    FreeQ[caPolicySelected["Amplitude"], caPolicyParameter]];
+caPolicyBaseRules = ConstructiveDiagrams`Private`residueParameterRules[caModel, Automatic];
+caPolicyMassKey = ModelParameter[caModel, "Me"];
+caPolicyChargeKey = ModelParameter[caModel, "EE"];
+caPolicyAlternateRules = (First[#] -> If[First[#] === caPolicyMassKey, 2 Last[#], Last[#]]) & /@
+  caPolicyBaseRules;
+check["automatic validation does not copy constructive defaults into the independent benchmark",
+  ConstructiveDiagrams`Private`constructValidationOverrides[caModel, Automatic, caPolicyBaseRules] === Automatic &&
+    ConstructiveDiagrams`Private`constructValidationOverrides[caModel, Automatic, Reverse[caPolicyBaseRules]] === Automatic];
+caPolicySharedOverride = ConstructiveDiagrams`Private`constructValidationOverrides[
+  caModel, Automatic, caPolicyAlternateRules];
+check["alternate assignments share only deliberately changed parameter values",
+  caPolicySharedOverride === {"Me" -> 2 (caPolicyMassKey /. caPolicyBaseRules)} &&
+    FreeQ[caPolicySharedOverride, caPolicyChargeKey | "EE"]];
+caPolicyScopedOverride = {caPolicyChargeKey -> 17/13};
+check["caller-supplied scoped overrides retain their original model identity",
+  ConstructiveDiagrams`Private`constructValidationOverrides[caModel, caPolicyScopedOverride,
+    ConstructiveDiagrams`Private`residueParameterRules[caModel, caPolicyScopedOverride]] === caPolicyScopedOverride];
+caPolicyForeignMassKey = ModelParameter[caFeynmanModel, "Me"];
+caPolicyForeignOverride = ConstructiveDiagrams`Private`constructValidationOverrides[
+  caModel, Automatic, Append[caPolicyBaseRules, caPolicyForeignMassKey -> 9]];
+check["a foreign-model validation assignment cannot silently change the constructive parameter",
+  caPolicyForeignOverride === {caPolicyForeignMassKey -> 9} &&
+    (caPolicyMassKey /. ConstructiveDiagrams`Private`residueParameterRules[caModel, caPolicyForeignOverride]) ===
+      (caPolicyMassKey /. caPolicyBaseRules)];
+check["recorded parameter overrides resolve each intended validation value in both models",
+  AllTrue[caPolicyValidationReports, Function[entry,
+    (caPolicyMassKey /. ConstructiveDiagrams`Private`residueParameterRules[
+       caModel, entry["CheckParameterOverrides"]]) === (caPolicyMassKey /. entry["ParameterRules"]) &&
+    (caPolicyForeignMassKey /. ConstructiveDiagrams`Private`residueParameterRules[
+       List @@ caFeynmanModel, entry["CheckParameterOverrides"]]) === (caPolicyMassKey /. entry["ParameterRules"])]]];
+caPolicyLate = caPolicyRun[caPolicyNoFreeCF, caPolicyUnfinishedHE, True];
+check["an underdetermined high-energy stage can still yield an independently validated fixed point",
+  caPolicyLate["Status"] === "COMPLETE" && caPolicyHECalls === 1 &&
+    caPolicyLate["RepresentativeSelection"]["SourceStage"] === "HighEnergy" &&
+    caPolicyLate["RepresentativeSelection"]["SourceStatus"] === "UNDERDETERMINED" &&
+    caPolicyLate["RepresentativeSelection"]["RetainedDirections"] === {caPolicyDirection}];
+caPolicyUnresolved = caPolicyRun[caPolicyNoFreeCF,
+  Join[caPolicyUnfinishedHE, <|"Status" -> "UNRESOLVED"|>], True];
+check["an unresolved proof status needs the same full fixed-point validation rather than silent promotion",
+  caPolicyUnresolved["Status"] === "COMPLETE" &&
+    caPolicyUnresolved["RepresentativeSelection"]["SourceStatus"] === "UNRESOLVED" &&
+    caPolicyUnresolved["RepresentativeSelection"]["UniquenessEstablished"] === False &&
+    AllTrue[caPolicyUnresolved["Checks"]["Checks"], #["Status"] === "PASS" &]];
+caPolicyStrict = caPolicyRun[caPolicyCF, caPolicyUnfinishedHE, False];
+check["without an explicit independent Feynman model unfinished high-energy completion still fails strictly",
+  caPolicyStrict["Status"] === "FAILED" && caPolicyHECalls === 1 &&
+    !TrueQ[caPolicyStrict["RepresentativeSelection"]["Attempted"]] &&
+    FailureQ[caPolicyStrict["Failure"]]];
+caPolicyNoFree = caPolicyRun[caPolicyNoFreeCF, caPolicyCompleteHE, True];
+check["a factorization report without free coordinates retains the ordinary high-energy workflow",
+  caPolicyNoFree["Status"] === "COMPLETE" && caPolicyHECalls === 1 &&
+    !TrueQ[caPolicyNoFree["RepresentativeSelection"]["Attempted"]]];
+caPolicyWrongCF = Join[caPolicyCF, <|"Amplitude" -> -caExpression,
+  "FamilyAmplitude" -> -caExpression + caPolicyParameter caPolicyDirection|>];
+caPolicyWrongHE = Join[caPolicyUnfinishedHE, <|"Amplitude" -> -caExpression,
+  "FamilyAmplitude" -> -caExpression + caPolicyParameter caPolicyDirection|>];
+caPolicyRejected = caPolicyRun[caPolicyWrongCF, caPolicyWrongHE, True];
+check["a benchmark disagreement cannot turn an unfinished candidate into a successful amplitude",
+  caPolicyRejected["Status"] === "FAILED" && caPolicyHECalls === 1 &&
+    Length[caPolicyRejected["RepresentativeSelectionAttempts"]] === 2 &&
+    AllTrue[caPolicyRejected["RepresentativeSelectionAttempts"], !TrueQ[#["Selected"]] &] &&
+    caPolicyRejected["RepresentativeSelection"]["RetainedDirections"] === {caPolicyDirection}];
+caPolicyRecovered = caPolicyRun[caPolicyWrongCF, caPolicyCompleteHE, True];
+check["failed early point validation continues to ordinary completion instead of discarding its recovery path",
+  caPolicyRecovered["Status"] === "COMPLETE" && caPolicyHECalls === 1 &&
+    !TrueQ[caPolicyRecovered["RepresentativeSelection"]["Selected"]] &&
+    AllTrue[caPolicyRecovered["Checks"]["Checks"], #["Status"] === "PASS" &]];
+check["one independent Feynman benchmark is reused after a rejected early representative",
+  Count[Lookup[caPolicyRecovered["StageTimings"], "Stage"], "Generating Feynman diagrams"] === 1 &&
+    Count[Lookup[caPolicyRecovered["StageTimings"], "Stage"], "Preparing Feynman amplitudes"] === 1];
+caPolicyChannels = FactorizationAmplitudeChannels[caProcess4, caModel];
+caPolicyBenchmark = caWithFeynman["Stages"]["Preparing Feynman amplitudes"]["PreparedAmplitudes"];
+caPolicyGate[changes_Association] := ConstructiveDiagrams`Private`constructAllChecksPassQ[
+  Join[caWithFeynman["Checks"], changes], caWithFeynman["AmplitudePair"], caPolicyChannels,
+  caModel, caPolicyBenchmark];
+check["representative validation cannot omit an original physical channel",
+  !caPolicyGate[<|"Channels" -> Rest[caWithFeynman["Checks"]["Channels"]]|>]];
+check["a missing or unresolved independent Feynman comparison cannot validate a representative",
+  !caPolicyGate[<|"FeynmanCheck" -> <|"Status" -> "UNRESOLVED"|>|>] &&
+    !caPolicyGate[<|"FeynmanCheck" -> Missing["NotRun"]|>]];
+check["high-energy, reference and automatic spurious-discovery obligations remain mandatory",
+  !caPolicyGate[<|"HighEnergyCheck" -> <|"Status" -> "UNRESOLVED"|>|>] &&
+    !caPolicyGate[<|"ReferenceCheck" -> <|"Status" -> "FAIL"|>|>] &&
+    !caPolicyGate[<|"AutomaticPoleDiscovery" -> False|>]];
+caPolicyScalarModel = caModel;
+caPolicyScalarModel[[1]] = Append[caPolicyScalarModel[[1]],
+  {"representative-policy scalar", "policy_scalar", "policy_scalar", 1000, 0, 0, 0, 1, 1, "h", "h"}];
+caPolicyScalarRules = Thread[(Mass /@ Range[4]) -> ConstantArray[0, 4]];
+caPolicyContact = <|"Amplitude" -> 7, "FamilyAmplitude" -> 7 + caPolicyParameter,
+  "FreeParameters" -> {caPolicyParameter}, "RemainingBasis" -> {1},
+  "ExternalMassRules" -> caPolicyScalarRules,
+  "ExternalParticles" -> ConstantArray["policy_scalar", 4]|>;
+caPolicyContactResult = CompleteHighEnergy[caPolicyContact, {}, caPolicyScalarModel,
+  "Samples" -> 1, "ValidationSamples" -> 1, "Parallelization" -> False,
+  "ProgressReporting" -> False, "TimeConstraint" -> 30, "Output" -> "Details"];
+check["standalone high-energy completion still retains genuine acceptable-growth contact freedom",
+  caPolicyContactResult["Status"] === "UNDERDETERMINED" &&
+    caPolicyContactResult["FreeParameters"] === {caPolicyParameter} &&
+    caPolicyContactResult["RemainingBasis"] === {1}];
+check["controlled stage probes restore all public completion definitions and attributes",
+  caPolicyOriginalDefinitions === {DownValues[CompleteFactorization], DownValues[CompleteHighEnergy],
+    Attributes[CompleteFactorization], Attributes[CompleteHighEnergy]}];
+
 check["the constructor never mutates either supplied model",
   caModel === caOriginalModel && caFactorizationModel === caOriginalFactorizationModel];
-If[checks =!= 40, AppendTo[failures, "Not every construction assertion executed."]];
+If[checks =!= 62, AppendTo[failures, "Not every construction assertion executed."]];
+If[failures =!= {} && ValueQ[caPolicySelected],
+  caPolicyDiagnosticDirectory = CreateDirectory[];
+  Put[<|"Early" -> caPolicySelected, "Late" -> caPolicyLate,
+    "Unresolved" -> caPolicyUnresolved, "ExpectedValidationSets" -> caPolicyValidationSets,
+    "Expression" -> caExpression, "Model" -> caModel, "FeynmanModel" -> caFeynmanModel|>,
+    FileNameJoin[{caPolicyDiagnosticDirectory, "representative-policy-failure.wl"}]];
+  Print["Representative policy diagnostics: ", caPolicyDiagnosticDirectory]];
 Print["CHECKS: ", checks, "; FAILURES: ", Length[failures]];
 If[failures =!= {}, Print[failures]];
 If[failures === {}, Print["HEPCAT_TEST_COMPLETED:construct-amplitude-tests.wl"]];

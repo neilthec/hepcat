@@ -1,64 +1,127 @@
-(* Opt-in expensive regression: the exact notebook call must discover its result.
-   No example formula, prior amplitude, supplied correction basis or saved
-   preparation report is loaded into this construction. *)
+(* Opt-in public six-point parity regressions. Construction receives fresh
+   models, never a prior amplitude, supplied correction basis or saved report.
+   Replay controls change only the seed and diagnostic output, not resources. *)
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
 $HistoryLength = 0;
-checks = 0; failures = {};
-SetAttributes[check, HoldRest];
-check[name_, value_] := (checks++; If[!TrueQ[value], AppendTo[failures, name]; Print["FAIL: ", name]]);
-diagramModel = ReadModel[FileNameJoin[{root, "models"}], 2];
-factorizationModel = ReadModel[FileNameJoin[{root, "models"}], 3];
-qedFeynmanModel = ReadModel[FileNameJoin[{root, "model_feynman"}], 2];
-piModelsBefore = {diagramModel, factorizationModel, qedFeynmanModel};
-piProcess = {"e", "E", "A.+", "A.+", "A.+", "A.-"};
-piStarted = AbsoluteTime[];
-qed6PPPM = ConstructAmplitude[
-  {"e", "E", "A.+", "A.+", "A.+", "A.-"},
-  diagramModel, factorizationModel,
-  "PolePreference" -> "AllPhysical",
-  "FeynmanModel" -> qedFeynmanModel];
-piWall = AbsoluteTime[] - piStarted;
-piValid = !FailureQ[qed6PPPM] && qed6PPPM =!= $Failed &&
-  !AssociationQ[qed6PPPM] && !ListQ[qed6PPPM] && FreeQ[qed6PPPM, _ConstructAmplitude];
-check["the exact notebook call returns a validated expression with ordinary Automatic resources", piValid];
-If[piValid,
-  piChannels = FactorizationAmplitudeChannels[piProcess, factorizationModel];
-  piExternal = Thread[(Mass /@ Range[6]) -> {
-    ModelParameter[factorizationModel, "Me"], ModelParameter[factorizationModel, "Me"], 0, 0, 0, 0}];
-  piNormalized = ConstructiveDiagrams`Private`completionNormalizeInput[
-    {piExternal, qed6PPPM}, piChannels, factorizationModel];
-  piPhysical = AssociationQ[piNormalized] &&
-    ConstructiveDiagrams`Private`completionPhysicalDenominatorOnlyQ[qed6PPPM, piNormalized];
-  piComplexity = SpinorExpressionComplexity[qed6PPPM];
-  check["the freshly discovered result contains only declared physical denominator factors", TrueQ[piPhysical]];
-  check["the freshly discovered result reaches the verified compact complexity benchmark", piComplexity <= 327];
-  check["no unresolved reference, shifted or on-cut-only spinors survive",
-    FreeQ[qed6PPPM, Spinor["Xi" | "Zeta", ___] | _SpinorHat | _MomHat | _xFactor | _xTildeFactor |
-      Spinor[_, "Angle" | "Square", _Multiparticle, ___]]];
-  (* Rebuild the independent Feynman benchmark after construction. This is only
-     validation, never a reconstruction input or replacement answer. *)
-  piFeynman = PrepareAmplitudes[
-    DiagramAmplitudes[CreateDiagrams[piProcess, qedFeynmanModel]], qedFeynmanModel];
-  piCheck = CheckAmplitudes[{piExternal, qed6PPPM}, piChannels, factorizationModel,
-    "FeynmanAmplitudes" -> piFeynman, "FeynmanModel" -> qedFeynmanModel,
-    "Output" -> "Details"];
-  check["independently regenerated physical, spurious, high-energy, reference and Feynman checks pass",
-    AssociationQ[piCheck] && AllTrue[piCheck["Checks"], #["Status"] === "PASS" &]];
-  check["the independent Feynman amplitude comparison is present and passes",
-    AssociationQ[piCheck] && Lookup[Lookup[piCheck, "FeynmanCheck", <||>], "Status", None] === "PASS"];
-  piSummary = <|"WallSeconds" -> piWall, "PhysicalOnly" -> piPhysical,
-    "Complexity" -> piComplexity, "Leaves" -> LeafCount[qed6PPPM],
-    "Groups" -> If[Head[qed6PPPM] === Plus, Length[qed6PPPM], 1],
-    "IndependentChecks" -> Lookup[piCheck, "Summary", Missing["Unavailable"]]|>;
-  Print["EXACT PHYSICAL CONSTRUCTION RESULT: ", InputForm[piSummary]]];
-check["fresh construction and checks leave all supplied models unchanged",
-  {diagramModel, factorizationModel, qedFeynmanModel} === piModelsBefore];
-Print["PHYSICAL CONSTRUCTION INTEGRATION CHECKS: ", checks, "; FAILURES: ", Length[failures]];
-If[failures === {}, Print["HEPCAT_TEST_COMPLETED:physical-construction-integration-tests.wl"],
-  piFailureDirectory = CreateDirectory[];
-  Put[<|"Amplitude" -> qed6PPPM, "Failures" -> failures,
-    "WallSeconds" -> piWall|>, FileNameJoin[{piFailureDirectory, "construction-failure.m"}]];
-  Print[failures]; Print["CONSTRUCTION DIAGNOSTICS: ", piFailureDirectory]];
-Quit[If[failures === {}, 0, 1]];
+piChecks = 0; piFailures = {}; piQualityFailures = {}; piResults = <||>;
+SetAttributes[piCheck, HoldRest];
+piCheck[name_, assertion_] := (piChecks++;
+  If[!TrueQ[assertion], AppendTo[piFailures, name]; Print["FAIL: ", name]]);
+SetAttributes[piQualityCheck, HoldRest];
+piQualityCheck[name_, assertion_] := If[!TrueQ[assertion],
+  AppendTo[piQualityFailures, name]; Print["QUALITY REGRESSION: ", name]];
+piCases = <|
+  "PPPM" -> {"e", "E", "A.+", "A.+", "A.+", "A.-"},
+  "PMMM" -> {"e", "E", "A.+", "A.-", "A.-", "A.-"}|>;
+(* These reproduce the user's saved successful and failed notebook runs. *)
+piSeeds = <|"PPPM" -> 7000974597326515410, "PMMM" -> 6600655340731863618|>;
+piSelection = Environment["HEPCAT_PHYSICAL_INTEGRATION_CASES"];
+piSelection = If[MemberQ[{$Failed, ""}, piSelection], Keys[piCases],
+  StringTrim /@ StringSplit[piSelection, ","]];
+If[piSelection === {} || !AllTrue[piSelection, KeyExistsQ[piCases, #] &],
+  Print["Unknown physical integration case: ", piSelection]; Exit[2]];
+piSeedSelection = Environment["HEPCAT_PHYSICAL_INTEGRATION_SEEDS"];
+piSeedWords = If[MemberQ[{$Failed, ""}, piSeedSelection], {},
+  StringTrim /@ StringSplit[piSeedSelection, ","]];
+If[Length[piSeedWords] > 4 || !AllTrue[piSeedWords,
+    # === "Automatic" || StringMatchQ[#, DigitCharacter ..] &],
+  Print["Provide at most four integer seeds, or Automatic."]; Exit[2]];
+piSeedSweep = DeleteDuplicates[If[# === "Automatic", Automatic, FromDigits[#]] & /@ piSeedWords];
+piRuns = Flatten[Table[<|"Case" -> name, "Seed" -> seed,
+    "ResultKey" -> If[piSeedSweep === {}, name, name <> "@" <> ToString[seed]]|>,
+  {name, piSelection}, {seed, If[piSeedSweep === {}, {piSeeds[name]}, piSeedSweep]}], 1];
+piStrictQuality = Environment["HEPCAT_PHYSICAL_INTEGRATION_STRICT_QUALITY"] === "1";
+piDiagnosticDirectory = CreateDirectory[];
+piDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 2];
+piFactorizationModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+piFeynmanModel = ReadModel[FileNameJoin[{root, "model_feynman"}], 2];
+piModelsBefore = {piDiagramModel, piFactorizationModel, piFeynmanModel};
+piSourceFiles = Sort[Join[FileNames["*.wl", FileNameJoin[{root, "source"}]],
+  FileNames["laurent-proof-*", FileNameJoin[{root, "source"}]]]];
+piSourceHashes = Association[(# -> FileHash[#, "SHA256", "HexString"] &) /@ piSourceFiles];
+piModelFiles = Sort[Join[FileNames["*.mdl", FileNameJoin[{root, "models"}]],
+  FileNames["*.mdl", FileNameJoin[{root, "model_feynman"}]]]];
+piModelHashes = Association[(# -> FileHash[#, "SHA256", "HexString"] &) /@ piModelFiles];
+piStageFixture[stage_] := If[AssociationQ[stage], KeyTake[stage,
+  {"Status", "Amplitude", "OriginalExpression", "ExternalMassRules", "FamilyAmplitude",
+   "FreeParameters", "RemainingBasis", "CorrectionBasis", "CorrectionSpace", "RandomSeed",
+   "ParameterRules", "PolePreference", "Diagnostics", "ElapsedSeconds"}], stage];
+Do[
+  piCase = piRun["Case"]; piSeed = piRun["Seed"]; piKey = piRun["ResultKey"];
+  Print["BEGIN PHYSICAL CONSTRUCTION: ", piKey, "; seed: ", piSeed];
+  piStarted = AbsoluteTime[];
+  piReport = ConstructAmplitude[piCases[piCase], piDiagramModel, piFactorizationModel,
+    "PolePreference" -> "AllPhysical", "FeynmanModel" -> piFeynmanModel,
+    "RandomSeed" -> piSeed, "Output" -> "Details"];
+  piWall = AbsoluteTime[] - piStarted;
+  piComplete = AssociationQ[piReport] && Lookup[piReport, "Status", None] === "COMPLETE";
+  piCheck[piKey <> ": the public construction completes with ordinary Automatic resources", piComplete];
+  piSummary = <|"Case" -> piCase, "RequestedSeed" -> piSeed,
+    "SourceHashes" -> piSourceHashes, "ModelHashes" -> piModelHashes,
+    "RandomSeed" -> If[AssociationQ[piReport], Lookup[piReport, "RandomSeed", Missing["Unavailable"]],
+      Missing["Unavailable"]], "WallSeconds" -> piWall, "PhysicsEstablished" -> False, "QualityStatus" -> "NOT RUN"|>;
+  If[piComplete,
+    piPair = piReport["AmplitudePair"];
+    piChannels = FactorizationAmplitudeChannels[piCases[piCase], piFactorizationModel];
+    piNormalized = ConstructiveDiagrams`Private`completionNormalizeInput[
+      piPair, piChannels, piFactorizationModel];
+    piCheck[piKey <> ": only external mass declarations accompany the final expression",
+      MatchQ[piPair, {_List, _}] && FreeQ[First[piPair], _Multiparticle]];
+    piCheckReport = Lookup[piReport, "Checks", <||>];
+    piRows = Lookup[piCheckReport, "Checks", {}];
+    piPhysicalRows = Lookup[piCheckReport, "Channels", {}];
+    piChannelsPass = Length[piChannels] === 14 && Length[piPhysicalRows] === 14 &&
+      AllTrue[piPhysicalRows, Lookup[#, "Status", None] === "PASS" &];
+    piCheck[piKey <> ": all fourteen original physical channels are checked and pass", piChannelsPass];
+    piAllPass = ListQ[piRows] && piRows =!= {} &&
+      AllTrue[piRows, Lookup[#, "Status", None] === "PASS" &];
+    piMandatoryPresent = AllTrue[{"HighEnergyCheck", "ReferenceCheck"},
+      Lookup[Lookup[piCheckReport, #, <||>], "Status", None] === "PASS" &] &&
+      ListQ[Lookup[piCheckReport, "SpuriousChecks", None]];
+    piCheck[piKey <> ": every mandatory final condition is present and passes", piAllPass && piMandatoryPresent];
+    piFeynmanPass = Lookup[Lookup[piCheckReport, "FeynmanCheck", <||>], "Status", None] === "PASS";
+    piCheck[piKey <> ": the independently generated Feynman comparison is present and passes", piFeynmanPass];
+    piCheck[piKey <> ": no unresolved reference, shifted or on-cut-only spinor survives",
+      FreeQ[Last[piPair], Spinor["Xi" | "Zeta", ___] | _SpinorHat | _MomHat |
+        _xFactor | _xTildeFactor | Spinor[_, "Angle" | "Square", _Multiparticle, ___]]];
+    piPhysical = TrueQ[ConstructiveDiagrams`Private`completionPhysicalDenominatorOnlyQ[
+      Last[piPair], piNormalized]];
+    piComplexity = SpinorExpressionComplexity[Last[piPair]];
+    piQualityCheck[piKey <> ": AllPhysical contains only declared physical inverse factors", piPhysical];
+    piQualityCheck[piKey <> ": complexity reaches the verified parity benchmark of 327", piComplexity <= 327];
+    piSummary = Join[piSummary, <|"PhysicsEstablished" -> (piAllPass && piMandatoryPresent && piFeynmanPass && piChannelsPass),
+      "PhysicalOnly" -> piPhysical, "CompactnessSatisfied" -> (piComplexity <= 327),
+      "QualityStatus" -> If[piPhysical && piComplexity <= 327, "PASS", "FAIL"],
+      "Complexity" -> piComplexity, "Leaves" -> LeafCount[Last[piPair]],
+      "StageTimings" -> Lookup[piReport, "StageTimings", {}],
+      "Checks" -> Lookup[piCheckReport, "Summary", <||>]|>],
+    (* Keep an unresolved affine family reusable for focused proof tests, without
+       serializing unrelated sample histories or ever feeding it to this run. *)
+    piStages = If[AssociationQ[piReport], Lookup[piReport, "Stages", <||>], <||>];
+    piFailureFixture = <|"Process" -> piCases[piCase], "RequestedSeed" -> piSeed,
+      "SourceHashes" -> piSourceHashes, "ModelHashes" -> piModelHashes,
+      "FactorizationModel" -> piFactorizationModel,
+      "Failure" -> If[AssociationQ[piReport], Lookup[piReport, "Failure", None], piReport],
+      "FactorizationFamily" -> piStageFixture[Lookup[piStages, "Completing factorization", Missing["NotRun"]]],
+      "HighEnergyFamily" -> piStageFixture[Lookup[piStages, "Completing high-energy behavior", Missing["NotRun"]]],
+      "Summary" -> piSummary|>;
+    Put[piFailureFixture, FileNameJoin[{piDiagnosticDirectory, piKey <> "-failure-family.wl"}]];
+    Print["Failure family: ", FileNameJoin[{piDiagnosticDirectory, piKey <> "-failure-family.wl"}]]
+  ];
+  AssociateTo[piResults, piKey -> piSummary];
+  Put[piSummary, FileNameJoin[{piDiagnosticDirectory, piKey <> "-summary.wl"}]];
+  Print["PHYSICAL CONSTRUCTION RESULT: ", ToString[piSummary, System`InputForm]],
+  {piRun, piRuns}];
+piCheck["construction and checks leave every supplied model unchanged",
+  piModelsBefore === {piDiagramModel, piFactorizationModel, piFeynmanModel}];
+piCheck["source files stay unchanged throughout the sequential comparison",
+  piSourceHashes === Association[(# -> FileHash[#, "SHA256", "HexString"] &) /@ piSourceFiles]];
+If[piStrictQuality, Do[piCheck["strict representation quality: " <> name, False], {name, piQualityFailures}]];
+Print["PHYSICAL CONSTRUCTION RESULTS: ", ToString[piResults, System`InputForm]];
+Print["PHYSICS CHECKS: ", piChecks, "; FAILURES: ", Length[piFailures],
+  "; REPRESENTATION QUALITY FAILURES: ", Length[piQualityFailures]];
+Print["Reports retained in: ", piDiagnosticDirectory];
+If[piFailures === {}, Print["HEPCAT_TEST_COMPLETED:physical-construction-integration-tests.wl"], Print[piFailures]];
+Quit[If[piFailures === {}, 0, 1]];

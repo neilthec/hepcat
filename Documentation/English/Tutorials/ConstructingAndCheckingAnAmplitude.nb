@@ -162,9 +162,20 @@ you want to perform that operation.", "ExampleText"],
 supported workflow in one call. The defaults choose the normal resource \
 settings, so you do not need to copy a long list of tuning options into every \
 calculation."}], "TechNoteText"],
-  Cell[TextData[{"Run with normal automatic defaults."}], "ExampleText"],
-  Cell[BoxData[RowBox[{"ConstructAmplitude", "[", "process", ",", " ",
-      "qedModel", ",", " ", "qedModel", "]"}]], "Input"],
+  Cell[TextData[{"When you also have an independent Feynman model for the \
+same theory, pass it through ", Cell[BoxData[RowBox[{"\"FeynmanModel\""}]],
+      "InlineFormula"], ". The wrapper can then check a fixed factorization \
+or high-energy candidate without first proving that every free family \
+direction is zero. It still requires every standard check and independent \
+Feynman agreement at the normal validation parameter assignments. This is \
+validation of the selected expression, not a uniqueness proof, and the \
+retained family remains in the detailed report. The explicit ",
+     ButtonBox["CompleteHighEnergy", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CompleteHighEnergy"],
+     " stage above remains strict when called on its own."}],
+   "TechNoteText"], Cell[TextData[{"Run with normal automatic defaults."}],
+   "ExampleText"], Cell[BoxData[RowBox[{"ConstructAmplitude", "[", "process",
+      ",", " ", "qedModel", ",", " ", "qedModel", "]"}]], "Input"],
   Cell["This example writes files, starts a longer calculation, or requires \
 an optional external tool. Evaluate it when you want to perform that \
 operation.", "ExampleText"], Cell["Related Functions", "SeeAlsoSection"],

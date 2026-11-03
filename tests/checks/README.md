@@ -177,6 +177,56 @@ larger external runner timeout. Report each case's actual result and timings;
 passing the component suites alone does not establish that a full construction
 finishes.
 
+## Test Tiers and Cross-Multiplicity Changes
+
+A passing helper suite is evidence for that helper, not a statement that every
+process can be constructed. In particular, the default six-point suite includes
+one real compact all-positive construction and independent checks. Its assertion
+count is not a count of successful six-point processes. The balanced-helicity
+worked example uses explicit lower-point recursion, and the optional older
+mixed-helicity probes have their own resource settings. Keep these results
+separate from fresh public `ConstructAmplitude` runs.
+
+Choose tests according to what a change can affect:
+
+| Tier | When | Required coverage |
+| --- | --- | --- |
+| Focused identities | While developing a local identity or proof | Exact equality, nonzero controls, both chiralities, relabeling, mass scope, powers and bounded failure. |
+| Shared algorithm sentinels | Before accepting changes to reduction, preparation, completion or checker scheduling | Four-point mixed photons and four fermions; all six five-point QED sectors; six-point all-positive plus a mixed-helicity case. |
+| Full construction matrix | Before claiming a multiplicity or process family is working | Exact public calls for every claimed sector, with all mandatory checks and independent Feynman comparison. At six points the notebook has five electron/four-photon representatives, three four-fermion/two-photon representatives and six fermions. |
+| Reproducibility and performance | For the affected cases after a shared change | Original failing seed, an independent fixed seed and an Automatic run; source/model hashes, stage timings and final expression metrics. |
+
+Physics correctness, efficiency and expression quality are separate results.
+A complete physics result must check every physical channel, spurious-pole
+cancellation, the high-energy bound, reference independence and the requested
+independent benchmark. No check may be skipped to report success. A valid but
+large expression remains a simplification issue; a timeout is not evidence that
+the amplitude is wrong or the theory needs a new interaction. `AllPhysical`
+representation and known achievable complexity ceilings should be reported
+explicitly even when the physics checks pass.
+
+Run parity partners in both orders when comparing speed, recording whether the
+worker pool was cold or warm. Use one source snapshot without competing heavy
+kernels. Runtime measurements should be compared as repeated broad ranges,
+not an assertion that opposite helicities take exactly the same number of
+seconds. Keep a hard external timeout to clean up an unfinished process, but
+do not silently extend the user's calculation limit or lower sample counts.
+Promote each reported failure into a focused regression and retain enough of
+its actual affine family to replay the failing proof without rerunning the
+entire construction. Those retained reports are diagnostic inputs to focused
+tests, never answers supplied to the fresh-construction integration tests.
+
+`construct-amplitude-tests.wl` also distinguishes validating one fixed point
+from certifying its entire affine family. Controlled stage reports retain real
+four-point amplitudes, while the actual mandatory and independent Feynman checks
+run without substitutions. The tests cover early factorization-point selection,
+late unresolved/underdetermined high-energy candidates, complete parameter
+validation, retained unproved directions, wrong-sign rejection and benchmark
+reuse. Without an explicit Feynman model the strict workflow still fails on an
+unfinished high-energy stage. A separate genuine scalar contact-family probe
+requires standalone `CompleteHighEnergy` to remain `UNDERDETERMINED`. Successful
+point selection explicitly disclaims benchmark fitting and family uniqueness.
+
 ## Full Process Construction
 
 Construction resource defaults are automatic. Focused tests must distinguish the
@@ -214,19 +264,39 @@ invariant trials must not claim that those trials were performed.
 the structural reconstruction guard, mismatched metadata, nonlinear families,
 proof-budget exhaustion and removal only after an exact zero certificate.
 
-The expensive fresh mixed-helicity six-point construction is opt-in:
+The expensive fresh six-point parity construction suite is opt-in:
 
 ```sh
-python3 tests/checks/run-wolfram-tests.py --suite physical-construction-integration-tests.wl --timeout 2400
+HEPCAT_PHYSICAL_INTEGRATION_CASES=PPPM,PMMM python3 tests/checks/run-wolfram-tests.py --suite physical-construction-integration-tests.wl --timeout 3600
 ```
 
-This executes the exact ordinary notebook call with `AllPhysical` and its
-Feynman model. It loads no prior amplitude, prepared cache, example helper or
-supplied correction basis and sets no numerical resource overrides. The test
-requires only physical denominators and complexity at most 327, then rebuilds
-the independent Feynman benchmark and reruns all amplitude checks. Its result
-must be reported separately from the worked-example fixture tests. Normal
-constructor options and defaults are unchanged.
+`PPPM` and `PMMM` are the notebook's `e,E,+++-` and `e,E,+---` calls,
+with `AllPhysical` and the independent Feynman model. The suite adds only a
+replay seed and diagnostic output, not numerical resource overrides. Its
+default seeds reproduce the saved positive result and opposite-helicity
+high-energy failure. Select either case individually while developing. No prior
+amplitude, prepared cache, example helper or supplied correction basis enters
+construction.
+
+Every physical channel and mandatory final check must be present and pass,
+including the independent Feynman comparison. The suite separately reports
+whether the result has only physical inverse factors and achieves the known
+parity complexity ceiling of 327. Representation-quality misses are visible
+as `QUALITY REGRESSION`, rather than being described as failed physics.
+Set `HEPCAT_PHYSICAL_INTEGRATION_STRICT_QUALITY=1` when accepting a simplification
+change to make these quality conditions mandatory for the suite's exit status.
+Success at sampled kinematics does not establish uniqueness of a retained
+affine family or prove an unfinished identity.
+
+`HEPCAT_PHYSICAL_INTEGRATION_SEEDS` accepts up to four comma-separated integer
+seeds, or `Automatic`. For example, use `Automatic` for the ordinary time-based
+seed path. Results record the resolved seed, source and model hashes, total and
+stage timings, complexity, leaves and check summary. Failure reports retain the
+actual factorization and high-energy families in a temporary diagnostic file,
+without unrelated sample histories. Preserve the printed paths when reporting
+a regression. These opt-in results must be reported separately from the
+worked-example fixture tests; normal constructor defaults are unchanged.
+
 The verified fresh ordinary call on 2026-10-30 took 272.251 seconds and produced seven
 groups with complexity 327 and 1,575 leaves, all denominators physical. The
 integration suite passed all seven assertions; its independently regenerated
