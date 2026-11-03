@@ -26,6 +26,10 @@ fpciSeeds = <|"PPP" -> 410071, "MMM" -> 410071,
    even when both members of a helicity pair become equally complicated. *)
 fpciComplexityBounds = <|"PPP" -> 27, "MMM" -> 27, "PPM" -> 71, "PMM" -> 71,
   "FourFermionP" -> 160, "FourFermionM" -> 160|>;
+(* Keep the independently verified pole-block grouping visible in the public
+   result, rather than testing only its private helper. This bound permits
+   minor scalar presentation differences while rejecting the older nesting. *)
+fpciLeafBounds = <|"PPM" -> 330, "PMM" -> 330|>;
 fpciSelection = Environment["HEPCAT_FIVE_POINT_INTEGRATION_CASES"];
 fpciSelection = If[MemberQ[{$Failed, ""}, fpciSelection], Keys[fpciCases],
   StringTrim /@ StringSplit[fpciSelection, ","]];
@@ -66,6 +70,9 @@ Do[
     fpciComplexity = SpinorExpressionComplexity[Last[fpciPair]];
     fpciCheck[fpciCase <> ": the result is no more complicated than the known achievable form",
       fpciComplexity <= fpciComplexityBounds[fpciCase]];
+    If[KeyExistsQ[fpciLeafBounds, fpciCase],
+      fpciCheck[fpciCase <> ": the public result retains compact pole-block grouping",
+        LeafCount[Last[fpciPair]] <= fpciLeafBounds[fpciCase]]];
     AssociateTo[fpciResults, fpciCase -> <|"Complexity" -> fpciComplexity,
       "Leaves" -> LeafCount[Last[fpciPair]], "Seconds" -> fpciElapsed,
       "StageTimings" -> fpciReport["StageTimings"], "Summary" -> fpciReport["Checks"]["Summary"]|>],

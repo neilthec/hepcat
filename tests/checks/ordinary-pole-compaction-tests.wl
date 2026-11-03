@@ -126,6 +126,112 @@ opUnfinished = opCollect[opUnfinishedInput, 1];
 check["an unfinished rational calculation cannot become an accepted improvement",
   opUnfinished["Status"] =!= "IMPROVED" && opUnfinished["Amplitude"] === opUnfinishedInput];
 
+(* Presentation compaction is exact rational algebra on independent spinor and
+   propagator atoms. This fixture is the seven-term mixed five-point result. *)
+opDisplay = ConstructiveDiagrams`Private`preparationPoleDisplayGrouping;
+opDisplayMass = ModelParameter["displayMass", "ordinary-pole-tests", "Real"];
+opDisplayCharge = ModelParameter["displayCharge", "ordinary-pole-tests", "Real"];
+opDisplaySpinor[i_, chirality_] := Spinor[If[i <= 2, "Spin", "Helicity"], chirality, i];
+opDisplayAngle[i_, j_] := SpinorChain[opDisplaySpinor[i, "Angle"], opDisplaySpinor[j, "Angle"]];
+opDisplaySquare[i_, j_] := SpinorChain[opDisplaySpinor[i, "Square"], opDisplaySpinor[j, "Square"]];
+opDisplayChain[i_] := SpinorChain[opDisplaySpinor[i, "Square"], Mom[1], opDisplaySpinor[5, "Angle"]];
+opDisplayDouble[i_] := SpinorChain[opDisplaySpinor[i, If[i === 5, "Angle", "Square"]],
+  Mom[1], Mom[2], opDisplaySpinor[i, If[i === 5, "Angle", "Square"]]];
+opDisplayDen[i_, j_] := PropDen[Mom[Multiparticle @@ Sort[{i, j}]], opDisplayMass];
+opDisplayRules = {Mass[1] -> opDisplayMass, Mass[2] -> opDisplayMass,
+  Mass[3] -> 0, Mass[4] -> 0, Mass[5] -> 0};
+opDisplayInput = 2 Sqrt[2] opDisplayCharge^3/(opDisplayDen[1, 3] opDisplayDen[1, 4]) * (
+  opDisplayMass opDisplayAngle[1, 5] opDisplayAngle[2, 5] opDisplaySquare[3, 4]^2/opDisplayDen[2, 5] +
+  (opDisplayMass opDisplayAngle[1, 5] opDisplayAngle[2, 5] opDisplaySquare[3, 4]^2 -
+   opDisplayAngle[1, 5] opDisplayAngle[2, 5] opDisplaySquare[4, 5] opDisplayChain[4] opDisplayDouble[3]/
+      (opDisplayMass opDisplayDen[2, 3]) +
+   opDisplayAngle[1, 2] opDisplayChain[4]^2 opDisplayDouble[3]/(opDisplayMass opDisplayDen[2, 3]) -
+   opDisplayAngle[1, 5] opDisplayAngle[2, 5] opDisplaySquare[3, 5] opDisplayChain[3] opDisplayDouble[4]/
+      (opDisplayMass opDisplayDen[2, 4]) +
+   opDisplayAngle[1, 2] opDisplayChain[3]^2 opDisplayDouble[4]/(opDisplayMass opDisplayDen[2, 4]) +
+   opDisplayMass opDisplayAngle[1, 2] opDisplaySquare[3, 4]^2 opDisplayDouble[5]/opDisplayDen[2, 5])/
+    opDisplayDen[1, 5]);
+opDisplayReport = opDisplay[opDisplayInput, opDisplayRules, 1];
+opDisplayResult = opDisplayReport["Amplitude"];
+check["pole-star grouping preserves weighted complexity while shortening the actual mixed result",
+  SpinorExpressionComplexity[opDisplayInput] === 71 && LeafCount[opDisplayInput] === 423 &&
+  opDisplayReport["Status"] === "IMPROVED" && SpinorExpressionComplexity[opDisplayResult] === 71 &&
+  LeafCount[opDisplayResult] <= 320];
+check["display grouping is an exact identity with no kinematic assumptions",
+  Together[opDisplayResult - opDisplayInput] === 0 && opDisplayReport["InternalOnShellConditions"] === {}];
+check["the accepted display route retains its independent-atom equality certificate",
+  Length[opDisplayReport["Route"]] === 1 &&
+  First[opDisplayReport["Route"]]["After"] === opDisplayResult &&
+  First[opDisplayReport["Route"]]["Before"] === opDisplayInput &&
+  First[opDisplayReport["Route"]]["EquivalenceProof"]["Method"] ===
+    "ExactIndependentAtomRationalIdentity" &&
+  First[opDisplayReport["Route"]]["EquivalenceProof"]["NormalForm"] === 0];
+opDisplayProps = DeleteDuplicates[Cases[opDisplayInput, _PropDen, Infinity]];
+check["presentation does not manufacture a new physical propagator",
+  ContainsAll[opDisplayProps, DeleteDuplicates[Cases[opDisplayResult, _PropDen, Infinity]]]];
+opDisplayLabels = AssociationThread[Range[5], {8, 3, 11, 7, 2}];
+opRelabel = ConstructiveDiagrams`Private`relabelLegs;
+opRelabeledInput = opRelabel[opDisplayInput, opDisplayLabels];
+opRelabeledRules = opRelabel[opDisplayRules, opDisplayLabels];
+opRelabeledReport = opDisplay[opRelabeledInput, opRelabeledRules, 1];
+check["pole stars do not depend on a fixed leg number or ordering",
+  opRelabeledReport["Status"] === "IMPROVED" &&
+  Together[opRelabeledReport["Amplitude"] - opRelabeledInput] === 0 &&
+  LeafCount[opRelabeledReport["Amplitude"]] < LeafCount[opRelabeledInput]];
+opDisplayInverse = opDisplayAngle[3, 4] + opDisplayAngle[3, 5];
+opDisplayInverseInput = opDisplayInput/(opInverseCoefficient^2 opDisplayInverse^2);
+opDisplayInverseReport = opDisplay[opDisplayInverseInput, opDisplayRules, 1];
+check["inverse spinor sums and scalar coefficient powers are retained exactly",
+  Together[opDisplayInverseReport["Amplitude"] - opDisplayInverseInput] === 0 &&
+  !FreeQ[opDisplayInverseReport["Amplitude"], Power[opDisplayInverse, -2]] &&
+  !FreeQ[opDisplayInverseReport["Amplitude"], Power[opInverseCoefficient, -2]] &&
+  Together[opInverseCoefficient D[opDisplayInverseReport["Amplitude"], opInverseCoefficient] +
+    2 opDisplayInverseReport["Amplitude"]] === 0];
+check["no new singular spinor factor is introduced by rational presentation",
+  AllTrue[Cases[opDisplayInverseReport["Amplitude"],
+    Power[base_, exponent_] /; !TrueQ[exponent >= 0] && !FreeQ[base, _SpinorChain] :> base,
+    Infinity], # === opDisplayInverse &]];
+opOtherParameter = ModelParameter["displayMass", "another-model", "Real"];
+opParameterInput = opDisplayInput /. opDisplayMass -> opOtherParameter;
+opParameterReport = opDisplay[opParameterInput, opDisplayRules, 1];
+check["equally named parameters from different models remain distinct scalar atoms",
+  Together[opParameterReport["Amplitude"] - opParameterInput] === 0 &&
+    FreeQ[opParameterReport["Amplitude"], opDisplayMass] &&
+    !FreeQ[opParameterReport["Amplitude"], opOtherParameter]];
+opCompoundInput = opDisplayInput /. opDisplayDen[1, 3] ->
+  PropDen[Mom[Multiparticle[1, 3, 4]], opAnotherInternalMass];
+opCompoundReport = opDisplay[opCompoundInput, opDisplayRules, 1];
+check["the same algebra accepts compound physical cuts and unrelated internal masses",
+  Together[opCompoundReport["Amplitude"] - opCompoundInput] === 0 &&
+  ContainsAll[DeleteDuplicates[Cases[opCompoundInput, _PropDen, Infinity]],
+    DeleteDuplicates[Cases[opCompoundReport["Amplitude"], _PropDen, Infinity]]]];
+check["zero amplitudes and zero coefficients remain zero",
+  opDisplay[0 opDisplayInput, opDisplayRules, 1]["Amplitude"] === 0];
+check["a disabled presentation allowance returns the exact input",
+  opDisplay[opDisplayInput, opDisplayRules, 0]["Amplitude"] === opDisplayInput];
+opProfileGuardTouchedRank = False;
+opDisplayHuge = (opDisplayAngle[1, 3] + opDisplayAngle[2, 4])^100000/opDisplayDen[1, 3];
+opDisplayHugeReport = Block[{ConstructiveDiagrams`Private`preparationRank},
+  ConstructiveDiagrams`Private`preparationRank[___] := (opProfileGuardTouchedRank = True; {0, 0, 0, "fake"});
+  opDisplay[opDisplayHuge, opDisplayRules, 1]];
+check["huge compact positive powers are rejected before scoring or expansion",
+  opDisplayHugeReport["Amplitude"] === opDisplayHuge && !opProfileGuardTouchedRank &&
+  opDisplayHugeReport["Expansions"] === 0 && opDisplayHugeReport["StopReason"] === "ExpansionLimit"];
+opDisplayMonomial = opDisplayChain[3]^100000/opDisplayDen[1, 3];
+opMonomialReport = opDisplay[opDisplayMonomial, opDisplayRules, 0.05];
+check["a huge monomial degree retains the input within the bounded fallback",
+  opMonomialReport["Amplitude"] === opDisplayMonomial && opMonomialReport["Status"] === "UNCHANGED"];
+opDisplayTimeout = opDisplay[opDisplayInput, opDisplayRules, 0.000001];
+check["an interrupted display search keeps an expression with a complete proof checkpoint",
+  Together[opDisplayTimeout["Amplitude"] - opDisplayInput] === 0 &&
+  (opDisplayTimeout["Status"] === "UNCHANGED" ||
+    (Length[opDisplayTimeout["Route"]] === 1 &&
+      First[opDisplayTimeout["Route"]]["After"] === opDisplayTimeout["Amplitude"] &&
+      First[opDisplayTimeout["Route"]]["EquivalenceProof"]["NormalForm"] === 0))];
+check["nonfinite inputs cannot become a display improvement",
+  With[{report = opDisplay[opDisplayInput + $TimedOut, opDisplayRules, 1]},
+    report["Status"] === "UNCHANGED" && report["Amplitude"] === opDisplayInput + $TimedOut]];
+
 (* Start with the earlier validated expression, not a fitted answer or /tmp cache.
    The model-specific functions below are example fixtures only. The function
    under test remains the process-independent ordinary compactor. *)

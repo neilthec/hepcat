@@ -13776,6 +13776,118 @@ preparationRemainderData[prepared_, reductions_List, history_List,
     "DenominatorsKeptOffShell" -> True, "Diagnostics" -> diagnostics|>
 ];
 
+(* Pure rational regrouping after ordinary identities have finished. Each
+   external-leg pole star is only a presentation competitor. Propagators and
+   spinor chains are independent atoms in the exact equality certificate. *)
+preparationPoleDisplayGrouping[expression_, externalRules_List, seconds_ : 1] := Module[
+  {started = AbsoluteTime[], budget, checkpoint, outcome, stopTag = Unique["poleDisplayLimit"],
+   props, external, support, scalarInverse, scalarFactor, inverseChains, inverseTokens,
+   protected, atoms, tokens, forward, backward, formal, chainTokens, backbones,
+   signature, inverseAllowedQ, localFactor, inspect, profile, common, coefficient,
+   normalized, terms, groups, grouped, regular, denominator, merged, candidate,
+   candidates = 0, expansions = 0, exactProofs = 0},
+  checkpoint = <|"Amplitude" -> expression, "Route" -> {}, "Status" -> "UNCHANGED"|>;
+  budget = If[NumericQ[seconds] && TrueQ[seconds > 0], Min[1, seconds], 0];
+  If[budget <= 0 || LeafCount[expression] > 12000 || !residueFiniteQ[expression] ||
+      !preparationScalarExternalRulesQ[externalRules] ||
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace],
+    Return[Join[checkpoint, <|"TimedOut" -> False, "ElapsedTime" -> AbsoluteTime[] - started,
+      "InternalOnShellConditions" -> {}|>]]];
+  outcome = TimeConstrained[MemoryConstrained[Catch[
+    profile = rspExpansionProfile[expression, 128, 24000];
+    If[!TrueQ[profile[[1]] <= 128 && profile[[2]] <= 24000],
+      Throw["ExpansionLimit", stopTag]];
+    checkpoint = Join[checkpoint, <|"Rank" -> preparationRank[expression]|>];
+    If[expression === 0, Throw["Complete", stopTag]];
+    props = DeleteDuplicates[Cases[expression,
+      Power[prop_PropDen, _Integer?Negative] :> prop, Infinity]];
+    external = DeleteDuplicates[Cases[externalRules, HoldPattern[Mass[i_Integer] -> _] :> i]];
+    If[props === {} || external === {}, Throw["Complete", stopTag]];
+    support[prop_] := Replace[prop[[1]], {
+      Mom[Multiparticle[ii__Integer]] :> {ii}, Mom[i_Integer] :> {i}, _ :> {}}];
+    (* Literal inverse coefficients are algebraic factors, not on-shell masses.
+       Existing inverse spinor expressions are protected as complete objects. *)
+    scalarFactor = Times @@ Select[If[Head[expression] === Times, List @@ expression, {expression}],
+      FreeQ[#, _SpinorChain | _SpinorTrace | _PropDen | _MomProd | _Mom |
+        _Spinor | _SpinorHat | _MomHat | _xFactor | _xTildeFactor] &];
+    scalarInverse = Times @@ DeleteDuplicates[Cases[expression/scalarFactor,
+      Power[base_, n_Integer?Negative] /;
+        FreeQ[base, _SpinorChain | _SpinorTrace | _PropDen | _MomProd | _Mom |
+          _Spinor | _SpinorHat | _MomHat | _xFactor | _xTildeFactor] :> base^-n, Infinity]];
+    inverseChains = DeleteDuplicates[Cases[expression,
+      inverse : Power[base_, n_] /; !TrueQ[n >= 0] &&
+        !FreeQ[base, _SpinorChain | _SpinorTrace] :> inverse, Infinity]];
+    inverseTokens = Table[Unique["keptDisplayInverse"], Length[inverseChains]];
+    protected = expression /. Thread[inverseChains -> inverseTokens];
+    atoms = DeleteDuplicates[Cases[protected,
+      _SpinorChain | _SpinorTrace | _PropDen | _ModelParameter, Infinity]];
+    tokens = Table[Unique["poleDisplayAtom"], Length[atoms]];
+    forward = Thread[atoms -> tokens];
+    backward = Join[Thread[tokens -> atoms], Thread[inverseTokens -> inverseChains]];
+    formal = protected /. forward;
+    chainTokens = Cases[atoms, _SpinorChain | _SpinorTrace] /. forward;
+    backbones = DeleteDuplicates[Join[{1}, Table[
+      Times @@ Select[props, MemberQ[support[#], leg] &], {leg, Take[external, UpTo[8]]}]]];
+    signature[term_] := Sort[Cases[term, Power[z_, n_Integer?Negative] /;
+      MemberQ[props /. forward, z] :> {z, n}, Infinity]];
+    inverseAllowedQ[value_] := AllTrue[Cases[value,
+      Power[base_, exponent_] /; !TrueQ[exponent >= 0] :> base, Infinity],
+      FreeQ[#, _PropDen | _SpinorChain | _SpinorTrace] || MemberQ[props, #] ||
+        MemberQ[First /@ inverseChains, #] &];
+    localFactor[node_] := If[Head[node] =!= Plus, node,
+      First[MinimalBy[Prepend[(Collect[node, #, Factor] & /@
+        Take[Select[chainTokens, !FreeQ[node, #] &], UpTo[12]]), node],
+        LeafCount[# /. backward] &]]];
+    inspect[proposal_, backbone_, absorbed_] := Module[{value, rank, proof, record},
+      If[candidates >= 12, Throw["CandidateLimit", stopTag]];
+      candidates++; value = proposal /. backward;
+      If[!residueFiniteQ[value] || !inverseAllowedQ[value] ||
+          !ContainsAll[props, DeleteDuplicates[Cases[value,
+            Power[prop_PropDen, _Integer?Negative] :> prop, Infinity]]], Return[Null]];
+      rank = preparationRank[value];
+      If[!preparationBetterQ[rank, checkpoint["Rank"]], Return[Null]];
+      proof = Together[proposal - formal]; exactProofs++;
+      If[proof =!= 0, Return[Null]];
+      record = <|"Operation" -> "RegroupExistingPoleBlocks", "Before" -> expression,
+        "After" -> value, "PoleStar" -> backbone, "AbsorbedRegularBlock" -> absorbed,
+        "InternalOnShellConditions" -> {}, "EquivalenceProof" -> <|
+          "Method" -> "ExactIndependentAtomRationalIdentity", "NormalForm" -> proof,
+          "AtomSubstitutions" -> forward,
+          "ProtectedInverseSubstitutions" -> Thread[inverseChains -> inverseTokens]|>|>;
+      (* Publish the expression and its complete proof in a single assignment. *)
+      checkpoint = <|"Amplitude" -> value, "Rank" -> rank, "Route" -> {record},
+        "Status" -> "IMPROVED"|>];
+    Do[
+      common = backbone scalarInverse /. forward;
+      coefficient = scalarFactor /. forward;
+      normalized = formal common/coefficient;
+      profile = rspExpansionProfile[normalized /. backward, 128, 24000];
+      If[!TrueQ[profile[[1]] <= 128 && profile[[2]] <= 24000], Continue[]];
+      terms = Expand[normalized]; expansions++;
+      terms = If[Head[terms] === Plus, List @@ terms, {terms}];
+      If[Length[terms] > 128, Continue[]];
+      groups = GatherBy[terms, signature];
+      grouped = Map[Function[group, With[
+        {den = Times @@ (#[[1]]^-#[[2]] & /@ signature[First[group]])},
+        Factor[Total[group] den]/den]], groups];
+      inspect[coefficient Total[grouped]/common, backbone, False];
+      regular = SelectFirst[Range[Length[groups]], signature[First[groups[[#]]]] === {} &,
+        Missing["NoRegularBlock"]];
+      If[!MissingQ[regular], Do[
+        If[index === regular, Continue[]];
+        denominator = Times @@ (#[[1]]^-#[[2]] & /@ signature[First[groups[[index]]]]);
+        merged = Factor[(Total[groups[[index]]] + Total[groups[[regular]]]) denominator]/denominator;
+        candidate = coefficient (Total[Delete[grouped, {{index}, {regular}}]] + merged)/common;
+        candidate = MapAll[localFactor, candidate];
+        inspect[candidate, backbone, True], {index, Length[groups]}]],
+      {backbone, backbones}];
+    "Complete", stopTag], 134217728, "MemoryLimit"], budget, "TimeLimit"];
+  Join[checkpoint, <|"TimedOut" -> MemberQ[{"TimeLimit", "MemoryLimit"}, outcome],
+    "StopReason" -> outcome, "ElapsedTime" -> AbsoluteTime[] - started,
+    "Candidates" -> candidates, "Expansions" -> expansions, "ExactProofs" -> exactProofs,
+    "InternalOnShellConditions" -> {}|>]
+];
+
 preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pairs_, kind_,
     wholeAmplitude_ : False] := Module[
   {rules = preparationCanonicalMassRules[First[pair]], original = Last[pair], expression = Last[pair],
@@ -13791,7 +13903,7 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
    contractionTimedOut = False,
    completedBest = None, completedBestRank, completedBestSource, rememberCompleted, snapshotRank,
    rankSnapshots = 0, groupedCompaction, fractionCompaction, fractionSeconds, pairNormalization,
-   diracCompaction},
+   diracCompaction, displayCompaction, displaySeconds},
   progressMetadata = Join[<|"Item" -> index, "Items" -> count, "InputType" -> kind|>,
     If[MemberQ[{"Diagram", "FeynmanDiagram"}, kind], <|"Diagram" -> index, "Diagrams" -> count|>, <||>]];
   channels = If[TrueQ[options["InternalOnShell"]],
@@ -14217,6 +14329,23 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
       "BeforeRank" -> snapshotRank[before], "AfterRank" -> completedBestRank,
       "SelectionOnly" -> True, "InternalOnShellIdentity" -> False,
       "OnShellChannels" -> channels, "ReferenceChoice" -> options["PolePreference"]|>]];
+  (* A final presentation-only competitor sees the selected whole amplitude.
+     It applies no kinematic identity and cannot extend an exhausted item clock. *)
+  If[TrueQ[outcome] && (TrueQ[wholeAmplitude] || kind === "Amplitude"),
+    displaySeconds = If[options["TimeConstraint"] === Infinity, 1,
+      Max[0, Min[1, options["TimeConstraint"] - (AbsoluteTime[] - started)]]];
+    If[displaySeconds > 0.01,
+      before = expression;
+      displayCompaction = preparationPoleDisplayGrouping[before,
+        preparationExternalRules[rules], displaySeconds];
+      after = Lookup[displayCompaction, "Amplitude", before];
+      If[residueFiniteQ[after] && preparationBetterQ[snapshotRank[after], snapshotRank[before]],
+        expression = after;
+        AppendTo[reductions, <|"Operation" -> "OrdinaryPoleDisplayGrouping", "Before" -> before,
+          "After" -> expression, "InternalOnShellIdentity" -> False, "OnShellChannels" -> {},
+          "IdentityRoute" -> Lookup[displayCompaction, "Route", {}],
+          "SearchTimedOut" -> Lookup[displayCompaction, "TimedOut", False]|>];
+        rememberCompleted[expression, "OrdinaryPoleDisplayGrouping"]]]];
   event[Which[TrueQ[outcome], "Prepared", referenceFailure, "Reference choice unavailable",
     conversionFailure, "Feynman conversion unavailable",
     invalid, "Invalid reduction retained previous state",

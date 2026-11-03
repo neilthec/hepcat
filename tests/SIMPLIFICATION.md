@@ -2975,3 +2975,23 @@ from the models and checked against every original factorization channel and
 an independent Feynman calculation. No benchmark formula is supplied to the
 constructor. The bound detects a regression in simplicity even if both
 opposite-helicity sectors become equally complicated.
+
+
+### Ordinary rational pole-block grouping
+
+Completed amplitudes also receive a short, bounded rational regrouping. It
+tries sets of existing physical propagators sharing a declared external leg,
+groups the remaining terms by their pole supports, and factors literal spinor
+coefficients. A regular block can be absorbed into one of those existing pole
+blocks when the complete expression rank improves. The result must pass an
+exact rational identity check in which spinor chains, traces and typed
+propagators are independent atoms. No external conservation, diagram-local
+shell rule or reference replacement is used by this step.
+
+Inverse spinor factors remain opaque; the rewrite may not introduce a new
+spinor denominator or an inverse of a combined propagator expression. Expansion,
+input size, candidate count and elapsed time have finite guards, and only a
+completed, verified checkpoint may replace the input. A smaller written form
+need not have fewer expanded terms: the mixed five-point examples retain
+complexity 71 and seven expanded terms while using fewer expression leaves.
+This is not evidence that their momentum content is minimal.
