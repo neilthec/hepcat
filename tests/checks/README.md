@@ -106,7 +106,20 @@ separately from the process-independent reducer and requires complete external
 metadata. The opt-in `five-point-construction-integration-tests.wl` constructs
 all six independent five-point QED helicity sectors through the notebook API,
 requiring full physical checks, independent Feynman agreement and matched
-complexity ceilings for opposite helicities.
+complexity ceilings for opposite helicities. The four-fermion defaults retain
+the seeds from the saved positive result and negative timeout. Set
+`HEPCAT_FIVE_POINT_INTEGRATION_CASES=FourFermionP,FourFermionM` to run just
+that pair. `HEPCAT_FIVE_POINT_INTEGRATION_SEEDS` accepts up to eight comma-separated
+integer seeds for a reproducible sweep. Result-size ceilings also guard the
+compact paired-current grouping, so equally complicated outputs cannot pass
+merely because their helicities match.
+
+`five-point-identity-proof-tests.wl` checks both the ordinary dense proof
+portfolio and the exact single-null native route, including the failed-seed
+family, relabeling, full coherent spins, independent parameter scopes,
+reciprocal radicals, fraction-free reconstruction and nonzero denominator
+witnesses. A deliberately nonzero tensor must remain unproved. The native
+backend is optional; an unavailable tool must retain the original direction.
 
 `shared-matrix-cofactor-tests.wl` verifies the general two-by-two shared-matrix
 diagonal identity, both chiral word orientations, explicit spin variance,

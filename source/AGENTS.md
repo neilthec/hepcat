@@ -1310,6 +1310,24 @@ They fit exact equations on sampled kinematics and validate independently;
 they are not generic symbolic reconstruction or uniqueness proofs.
 Independent exact identity proofs for retained affine directions may run in
 parallel within one shared deadline, with at most ninety seconds per job.
+A supported single-null external chart may run an early serial exact polynomial
+proof before the ordinary worker portfolio. It fixes one nonzero massive
+momentum to its rest frame and orients the one massless momentum; the two
+remaining shell equations have a nonzero linear-solve Jacobian. Keep the dense
+patch conditions, complete coherent-spin reconstruction, and original typed
+covariance and massless-weight guards. Scalar parameters remain independent
+formal variables, with exact restoration of every mapped model parameter and
+algebraic coefficient. Preserve reciprocal-radical relations. Fraction-free
+lifting must verify each denominator-factor reconstruction and prove all
+clearing denominators nonzero as polynomials, alongside every zero spin
+coefficient. No numerical kinematics or internal shell may enter this proof.
+The early portfolio has a shared allowance of at most thirty seconds and at
+most twenty seconds per direction, clipped to the original family deadline.
+Single-null preparation may use up to two thirds of that native-proof allowance;
+verification receives the actual remainder, with no extension of the total.
+An unavailable backend or any unproved coordinate still uses the existing
+portfolio; a failed certificate must never remove that coordinate.
+
 A late serial exact-Laurent fallback has a 120-second ceiling per retained
 direction, including chart construction, export, compilation and verification;
 its native evaluation is capped at ninety seconds and 1 GiB. Both limits are

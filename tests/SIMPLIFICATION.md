@@ -2995,3 +2995,30 @@ completed, verified checkpoint may replace the input. A smaller written form
 need not have fewer expanded terms: the mixed five-point examples retain
 complexity 71 and seven expanded terms while using fewer expression leaves.
 This is not evidence that their momentum content is minimal.
+
+
+### Stable identity proofs for one external massless particle
+
+Four-fermion radiation can leave a compact particular amplitude together with
+large affine directions that are zero only after ordinary identities. Proving
+these directions is part of high-energy completion, not an extra physical
+correction. It must not depend on finding a fortunate helicity representation
+or sampled seed.
+
+For supported single-null kinematics, a dense rational chart uses a nonzero
+massive momentum at rest and the massless momentum along one axis. Two other
+mass shells are solved on a nonzero-Jacobian patch. All coherent massive spin
+variables and scalar parameters remain formal. Exact fraction-free lifting
+removes the chart's rational denominators, recording their reconstruction and
+nonzero obligations. The optional native polynomial engine then certifies all
+spin coefficients together with those denominator obligations. A failure or
+missing tool leaves the direction intact and preserves the ordinary fallbacks.
+The early proof work consumes the existing family deadline and has a finite
+allowance; it never increases the user's requested time limit.
+
+Final preparation also tries hierarchical pole groups. They come from typed
+propagator mass classes and channels containing or disjoint from declared
+external legs. Grouping the remaining denominators inside these blocks can
+expose the paired exchange currents of radiation amplitudes without a stored
+answer, a reference choice, or an on-shell assumption. Every accepted
+regrouping still has the independent-atom rational equality certificate.

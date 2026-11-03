@@ -232,6 +232,95 @@ check["nonfinite inputs cannot become a display improvement",
   With[{report = opDisplay[opDisplayInput + $TimedOut, opDisplayRules, 1]},
     report["Status"] === "UNCHANGED" && report["Amplitude"] === opDisplayInput + $TimedOut]];
 
+(* A synthetic four-block tensor, with unrelated exchange and radiation
+   masses, exercises denominator partitioning without any model lookup or
+   process-specific identity. Its dense fraction must return to readable blocks. *)
+opPairedRules = Join[Table[Mass[i] -> opPairedMass, {i, 4}], {Mass[5] -> 0}];
+opPairedSpin[i_, kind_] := Spinor[If[i === 5, "Helicity", "Spin"], kind, i];
+opPairedAngle[i_, j_] := SpinorChain[opPairedSpin[i, "Angle"], opPairedSpin[j, "Angle"]];
+opPairedSquare[i_, j_] := SpinorChain[opPairedSpin[i, "Square"], opPairedSpin[j, "Square"]];
+opPairedExchange[i_, j_] := PropDen[Mom[Multiparticle @@ Sort[{i, j}]], opExchangeMass];
+opPairedRadiation[i_] := PropDen[Mom[Multiparticle[i, 5]], opRadiationMass];
+opPairedBlock[{a_, b_, c_, d_}] := (
+  opPairedSquare[a, 5] (opPairedAngle[b, c] opPairedSquare[d, 5] +
+    opPairedAngle[b, d] opPairedSquare[c, 5])/opPairedRadiation[a] -
+  opPairedSquare[b, 5] (opPairedAngle[a, c] opPairedSquare[d, 5] +
+    opPairedAngle[a, d] opPairedSquare[c, 5])/opPairedRadiation[b] +
+  SpinorChain[opPairedSpin[5, "Square"], Mom[b], Mom[a], opPairedSpin[5, "Square"]] *
+    (opPairedAngle[b, c] opPairedSquare[a, d] + opPairedAngle[b, d] opPairedSquare[a, c] +
+      opPairedAngle[a, d] opPairedSquare[b, c] + opPairedAngle[a, c] opPairedSquare[b, d])/
+    (opPairedRadiation[a] opPairedRadiation[b]))/opPairedExchange[c, d];
+opPairedForm = opPairedCharge^3 Total[opPairedBlock /@
+  {{1, 2, 3, 4}, {2, 4, 1, 3}, {1, 3, 2, 4}, {3, 4, 1, 2}}];
+opPairedDense = Together[opPairedForm];
+opPairedReport = opDisplay[opPairedDense, opPairedRules, 1];
+check["hierarchical grouping restores compact exchange blocks from a dense fraction",
+  opPairedReport["Status"] === "IMPROVED" &&
+    LeafCount[opPairedReport["Amplitude"]] < 1000 &&
+    LeafCount[opPairedDense] > 2000 &&
+    MemberQ[Lookup[opPairedReport["Route"], "GroupingMode"], "HierarchicalPolePartition"]];
+check["denominator partitioning changes neither the full tensor nor weighted complexity",
+  Together[opPairedReport["Amplitude"] - opPairedDense] === 0 &&
+    SpinorExpressionComplexity[opPairedReport["Amplitude"]] === 160 &&
+    opPairedReport["InternalOnShellConditions"] === {}];
+check["the grouping checkpoint contains a complete independent-atom proof",
+  Length[opPairedReport["Route"]] === 1 &&
+    First[opPairedReport["Route"]]["Before"] === opPairedDense &&
+    First[opPairedReport["Route"]]["After"] === opPairedReport["Amplitude"] &&
+    First[opPairedReport["Route"]]["EquivalenceProof"]["Method"] ===
+      "ExactIndependentAtomRationalIdentity" &&
+    First[opPairedReport["Route"]]["EquivalenceProof"]["NormalForm"] === 0 &&
+    opPairedReport["Candidates"] <= 12];
+opPairedPoles = DeleteDuplicates[Cases[opPairedDense, _PropDen, Infinity]];
+check["both unrelated propagator mass classes and the original pole inventory survive",
+  Sort[DeleteDuplicates[Cases[opPairedReport["Amplitude"], _PropDen, Infinity]]] ===
+      Sort[opPairedPoles] &&
+    !FreeQ[opPairedReport["Amplitude"], opExchangeMass] &&
+    !FreeQ[opPairedReport["Amplitude"], opRadiationMass]];
+opPairedRelabeled = opRelabel[opPairedDense, opDisplayLabels];
+opPairedRelabeledRules = opRelabel[opPairedRules, opDisplayLabels];
+opPairedRelabeledReport = opDisplay[opPairedRelabeled, opPairedRelabeledRules, 1];
+check["hierarchical pole partitions work after nonconsecutive particle relabeling",
+  opPairedRelabeledReport["Status"] === "IMPROVED" &&
+    Together[opPairedRelabeledReport["Amplitude"] - opPairedRelabeled] === 0 &&
+    LeafCount[opPairedRelabeledReport["Amplitude"]] < 1000];
+opPairedIndexed = opPairedDense /. Spinor["Spin", kind_, leg_Integer] :>
+  Spinor["Spin", If[OddQ[leg], "Upper", "Lower"], kind, leg, opPairedIndex[leg]];
+opPairedIndexedReport = opDisplay[opPairedIndexed, opPairedRules, 1];
+check["factorization of pole blocks retains every explicit spin slot and its variance",
+  Together[opPairedIndexedReport["Amplitude"] - opPairedIndexed] === 0 &&
+    Sort[DeleteDuplicates[Cases[opPairedIndexedReport["Amplitude"],
+      Spinor["Spin", _, _, _, _], Infinity]]] ===
+    Sort[DeleteDuplicates[Cases[opPairedIndexed, Spinor["Spin", _, _, _, _], Infinity]]]];
+opPairedRegular = opPairedDense + opPairedContact;
+opPairedRegularReport = opDisplay[opPairedRegular, opPairedRules, 1];
+check["a pole-free spectator is retained while exchange blocks are regrouped",
+  Together[opPairedRegularReport["Amplitude"] - opPairedRegular] === 0 &&
+    Together[D[opPairedRegularReport["Amplitude"], opPairedContact]] === 1];
+check["sign placement removes redundant wrappers while retaining the paired-current tree",
+  LeafCount[opPairedReport["Amplitude"]] <= LeafCount[opPairedForm] &&
+    AnyTrue[opPairedReport["Route"], TrueQ[Lookup[#, "SignPlacementChanged", False]] &]];
+opPairedAgain = opDisplay[opPairedReport["Amplitude"], opPairedRules, 1];
+check["a second bounded grouping pass retains the same sign-normalized expression",
+  opPairedAgain["Amplitude"] === opPairedReport["Amplitude"]];
+check["nonconsecutive labels reach the same sign-normalized presentation size",
+  LeafCount[opPairedRelabeledReport["Amplitude"]] <= LeafCount[opPairedForm]];
+opPairedInverse = opPairedAngle[1, 5] + opPairedAngle[2, 5];
+opPairedPowerInput = -opPairedDense opPairedAngle[1, 5]^2/
+  (opPairedInverse^3 opPairedInverseParameter^2);
+opPairedPowerReport = opDisplay[opPairedPowerInput, opPairedRules, 1];
+check["sign placement preserves a positive chain power and complete inverse powers",
+  opPairedPowerReport["Status"] === "IMPROVED" &&
+    Together[opPairedPowerReport["Amplitude"] - opPairedPowerInput] === 0 &&
+    !FreeQ[opPairedPowerReport["Amplitude"], Power[opPairedAngle[1, 5], 2]] &&
+    !FreeQ[opPairedPowerReport["Amplitude"], Power[opPairedInverse, -3]] &&
+    !FreeQ[opPairedPowerReport["Amplitude"], Power[opPairedInverseParameter, -2]]];
+check["the sign optimizer does not inspect or split a protected inverse spinor sum",
+  AllTrue[Cases[opPairedPowerReport["Amplitude"],
+    Power[base_, exponent_] /; !TrueQ[exponent >= 0] && !FreeQ[base, _SpinorChain] :> base,
+    Infinity], # === opPairedInverse &] &&
+    First[opPairedPowerReport["Route"]]["EquivalenceProof"]["NormalForm"] === 0];
+
 (* Start with the earlier validated expression, not a fitted answer or /tmp cache.
    The model-specific functions below are example fixtures only. The function
    under test remains the process-independent ordinary compactor. *)

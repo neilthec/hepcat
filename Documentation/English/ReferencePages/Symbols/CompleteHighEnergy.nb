@@ -65,9 +65,10 @@ contact-interaction basis or infer new QED interactions. If the stated \
 constraints leave a genuine free interaction, that freedom must remain \
 unresolved rather than being assigned an arbitrary number."}], "Notes"],
   Cell[TextData[{"Redundant correction directions are removed only after \
-exact identity proofs. The proof first tries ordinary external reductions, \
-then chooses economical massive-spinor coordinates and checks every \
-coherent-spin coefficient. Angle and square basis choices describe the same \
+exact identity proofs. The proof portfolio combines ordinary external \
+reductions with economical massive-spinor coordinates, checking every \
+coherent-spin coefficient. A supported large direction may use the faster \
+coordinate proof first. Angle and square basis choices describe the same \
 complete spin tensor; they are calculation choices, not assumptions that the \
 theory is parity invariant."}], "Notes"],
   Cell[TextData[{"When a conservative high-energy certificate already \
@@ -75,8 +76,19 @@ establishes the requested bound for every component, expensive series \
 expansions are unnecessary. Fresh validation directions and the supplied \
 parameter-validation sets are still checked. A failed or unfinished \
 certificate falls back to the existing calculation and never turns an \
-unresolved result into PASS."}], "Notes"], Cell["Reading the result",
-   "NotesSection"],
+unresolved result into PASS."}], "Notes"],
+  Cell[TextData[{"A retained factorization direction can be zero by ordinary \
+identities even when its displayed expression is large. For a supported \
+process with one massless external leg and at least three massive legs, the \
+exact proof portfolio can first use a massive rest frame and a null momentum \
+axis, then clear coordinate denominators and check the entire coherent spin \
+polynomial. This is a generic external-kinematics identity proof with model \
+parameters retained, rather than a test at a numerical phase-space point. It \
+does not put an internal line on shell. The optional native arithmetic \
+backend shares the existing stage deadline; if it is unavailable or cannot \
+establish the certificate, the original direction remains available to the \
+other proof and completion paths."}], "Notes"],
+  Cell["Reading the result", "NotesSection"],
   Cell[TextData[{"Use ", Cell[BoxData[RowBox[{"\"Output\"", " ", "->", " ",
          "\"Details\""}]], "InlineFormula"],
      Cell[BoxData[RowBox[{" ", "to", " ", "inspect", " ", "the", " ",

@@ -158,15 +158,20 @@ independent objects; no additional on-shell or momentum-conservation \
 condition is used, and no new spinor denominator is introduced. This is a \
 presentation improvement, so ", ButtonBox["SpinorExpressionComplexity",
       BaseStyle -> "Link", ButtonData ->
-       "paclet:HEPCAT/ref/SpinorExpressionComplexity"],
-     " can remain unchanged even when the expression is shorter."}],
-   "Notes"], Cell[TextData[{"Normal resource settings are automatic. The live \
-display shows progress through the items. Independent diagrams or channels \
-can be prepared in parallel; set ",
-     Cell[BoxData[RowBox[{"\"Parallelization\"", " ", "->", " ", "False"}]],
-      "InlineFormula"], Cell[BoxData[RowBox[{" ", "to", " ", "keep", " ",
-         "the", " ", "work", " ", "on", " ", "the", " ", "main", " ",
-         "kernel", ",", " ", "or", " ", "use", " "}]], "InlineFormula"],
+       "paclet:HEPCAT/ref/SpinorExpressionComplexity"], " can remain \
+unchanged even when the expression is shorter. The same search can group \
+propagators in two levels, first by a mass class or by whether their channels \
+contain a declared external leg, then by the remaining pole factors. This \
+exposes short exchange-current blocks that can be obscured by one large \
+common denominator. The groups are inferred from the supplied expression; no \
+known amplitude is substituted."}], "Notes"],
+  Cell[TextData[{"Normal resource settings are automatic. The live display \
+shows progress through the items. Independent diagrams or channels can be \
+prepared in parallel; set ", Cell[BoxData[RowBox[{"\"Parallelization\"", " ",
+         "->", " ", "False"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "to", " ", "keep", " ", "the", " ", "work",
+         " ", "on", " ", "the", " ", "main", " ", "kernel", ",", " ", "or",
+         " ", "use", " "}]], "InlineFormula"],
      Cell[BoxData[RowBox[{"\"MaxKernels\""}]], "InlineFormula"],
      " to reduce the worker count."}], "Notes"],
   Cell[TextData[{"If preparation stops at a limit, inspect its status before \

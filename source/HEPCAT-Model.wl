@@ -13784,7 +13784,9 @@ preparationPoleDisplayGrouping[expression_, externalRules_List, seconds_ : 1] :=
    props, external, support, scalarInverse, scalarFactor, inverseChains, inverseTokens,
    protected, atoms, tokens, forward, backward, formal, chainTokens, backbones,
    signature, inverseAllowedQ, localFactor, inspect, profile, common, coefficient,
+   signedForms, chooseSignedForm,
    normalized, terms, groups, grouped, regular, denominator, merged, candidate,
+   partitionSets, selectedPoles, selectedGroups, outside, localTerms, innerGroups,
    candidates = 0, expansions = 0, exactProofs = 0},
   checkpoint = <|"Amplitude" -> expression, "Route" -> {}, "Status" -> "UNCHANGED"|>;
   budget = If[NumericQ[seconds] && TrueQ[seconds > 0], Min[1, seconds], 0];
@@ -13838,18 +13840,43 @@ preparationPoleDisplayGrouping[expression_, externalRules_List, seconds_ : 1] :=
       First[MinimalBy[Prepend[(Collect[node, #, Factor] & /@
         Take[Select[chainTokens, !FreeQ[node, #] &], UpTo[12]]), node],
         LeafCount[# /. backward] &]]];
-    inspect[proposal_, backbone_, absorbed_] := Module[{value, rank, proof, record},
+    (* Carry both signs through the existing sum/product tree. This can remove
+       redundant minus wrappers without reversing a bracket or distributing a
+       product. Every inverse and every typed contraction stays indivisible. *)
+    chooseSignedForm[values_List] := First[MinimalBy[DeleteDuplicates[values],
+      LeafCount[# /. backward] &]];
+    signedForms[value_Plus] := Module[{pairs = signedForms /@ (List @@ value), positive, negative},
+      positive = Total[pairs[[All, 1]]]; negative = Total[pairs[[All, 2]]];
+      {chooseSignedForm[{value, positive, -negative}],
+        chooseSignedForm[{-value, negative, -positive}]}];
+    signedForms[value_Times] := Module[{states = {1, -1}, options, next},
+      Do[options = signedForms[factor];
+        next = {chooseSignedForm[{states[[1]] options[[1]], states[[2]] options[[2]]}],
+          chooseSignedForm[{states[[1]] options[[2]], states[[2]] options[[1]]}]};
+        states = next, {factor, List @@ value}];
+      {chooseSignedForm[{value, First[states]}], chooseSignedForm[{-value, Last[states]}]}];
+    signedForms[value : Power[base_, exponent_Integer?Positive]] := Module[
+      {options = signedForms[base], positive, negative},
+      positive = If[EvenQ[exponent],
+        chooseSignedForm[{options[[1]]^exponent, options[[2]]^exponent}], options[[1]]^exponent];
+      negative = If[OddQ[exponent], options[[2]]^exponent, -positive];
+      {chooseSignedForm[{value, positive}], chooseSignedForm[{-value, negative}]}];
+    signedForms[value_] := {value, -value};
+    inspect[proposal_, backbone_, absorbed_, mode_ : "PoleStar"] := Module[
+      {value, rank, proof, record, compactProposal},
       If[candidates >= 12, Throw["CandidateLimit", stopTag]];
-      candidates++; value = proposal /. backward;
+      candidates++; compactProposal = First[signedForms[proposal]];
+      value = compactProposal /. backward;
       If[!residueFiniteQ[value] || !inverseAllowedQ[value] ||
           !ContainsAll[props, DeleteDuplicates[Cases[value,
             Power[prop_PropDen, _Integer?Negative] :> prop, Infinity]]], Return[Null]];
       rank = preparationRank[value];
       If[!preparationBetterQ[rank, checkpoint["Rank"]], Return[Null]];
-      proof = Together[proposal - formal]; exactProofs++;
+      proof = Together[compactProposal - formal]; exactProofs++;
       If[proof =!= 0, Return[Null]];
       record = <|"Operation" -> "RegroupExistingPoleBlocks", "Before" -> expression,
         "After" -> value, "PoleStar" -> backbone, "AbsorbedRegularBlock" -> absorbed,
+        "GroupingMode" -> mode, "SignPlacementChanged" -> (compactProposal =!= proposal),
         "InternalOnShellConditions" -> {}, "EquivalenceProof" -> <|
           "Method" -> "ExactIndependentAtomRationalIdentity", "NormalForm" -> proof,
           "AtomSubstitutions" -> forward,
@@ -13881,6 +13908,38 @@ preparationPoleDisplayGrouping[expression_, externalRules_List, seconds_ : 1] :=
         candidate = MapAll[localFactor, candidate];
         inspect[candidate, backbone, True], {index, Length[groups]}]],
       {backbone, backbones}];
+    (* Keep a selected exchange-pole block intact while factoring its other
+       denominator signatures separately. The subset suggestions use literal
+       masses and supports only; they assert no mass shell or particle type. *)
+    coefficient = scalarFactor /. forward;
+    normalized = formal/coefficient;
+    profile = rspExpansionProfile[normalized /. backward, 128, 24000];
+    If[TrueQ[profile[[1]] <= 128 && profile[[2]] <= 24000],
+      terms = Expand[normalized]; expansions++;
+      terms = If[Head[terms] === Plus, List @@ terms, {terms}];
+      If[Length[terms] <= 128,
+        partitionSets = DeleteDuplicates[Join[
+          GatherBy[props, Rest[List @@ #] &],
+          Flatten[Table[{
+            Select[props, MemberQ[support[#], leg] &],
+            Select[props, !MemberQ[support[#], leg] &]},
+            {leg, Take[external, UpTo[8]]}], 1], List /@ props]];
+        partitionSets = Select[partitionSets, # =!= {} && Length[#] < Length[props] &];
+        Do[
+          If[candidates >= 12, Throw["CandidateLimit", stopTag]];
+          selectedPoles = partition /. forward;
+          selectedGroups = GatherBy[terms, Function[term,
+            Select[signature[term], MemberQ[selectedPoles, First[#]] &]]];
+          candidate = coefficient Total[Map[Function[group,
+            outside = Times @@ (#[[1]]^#[[2]] & /@
+              Select[signature[First[group]], MemberQ[selectedPoles, First[#]] &]);
+            localTerms = Cancel[#/outside] & /@ group;
+            innerGroups = GatherBy[localTerms, signature];
+            outside Total[Map[Function[inner, With[
+              {inverse = Times @@ (#[[1]]^#[[2]] & /@ signature[First[inner]])},
+              inverse Factor[Expand[Total[inner]/inverse]]]], innerGroups]]], selectedGroups]];
+          inspect[candidate, Times @@ partition, False, "HierarchicalPolePartition"],
+          {partition, Take[partitionSets, UpTo[12]]}]]];
     "Complete", stopTag], 134217728, "MemoryLimit"], budget, "TimeLimit"];
   Join[checkpoint, <|"TimedOut" -> MemberQ[{"TimeLimit", "MemoryLimit"}, outcome],
     "StopReason" -> outcome, "ElapsedTime" -> AbsoluteTime[] - started,
@@ -15704,6 +15763,8 @@ completionHEPrepareNativeIdentity[expression_, rules_List, seconds_: 30] := Modu
   {started = AbsoluteTime[], failure, left, work, result, tag = Unique["nativeIdentityPreparation"]},
   failure[reason_] := <|"Status" -> "NOT_PROVED", "Method" -> reason|>;
   If[!(NumericQ[seconds] && TrueQ[0 < seconds < Infinity]), Return[failure["NativePreparationBudget"]]];
+  If[Count[preparationExternalRules[rules], HoldPattern[Mass[_Integer] -> 0]] === 1,
+    Return[completionHEPrepareSingleNullNativeIdentity[expression, rules, seconds]]];
   left[] := Max[0.000001, seconds - (AbsoluteTime[] - started)];
   work[] := Module[{external, weights, normalized, chart, cleared, mapped, coefficients,
       denominators, roots, dag, pivots, axisChoice, unsupported},
@@ -15756,6 +15817,363 @@ completionHEPrepareNativeIdentity[expression_, rules_List, seconds_: 30] := Modu
   Join[result, <|"PreparationSeconds" -> AbsoluteTime[] - started|>]
 ];
 
+
+(* One massive rest momentum and one nonzero null axis leave a residual axial
+   rotation. Keeping it avoids a square root in the two dependent shell solve.
+   The two shell equations are linear in the second-row entries once the first
+   row is free; their Jacobian is K11 b - K12 a. Only external shells are used. *)
+completionHERestSingleNullSymbolicChart[rules_List, rest_: Automatic,
+    nullLeg_: Automatic, dependent_: Automatic, nullKind_: "Angle", massiveKind_: "Angle"] := Module[
+  {external, masses, null, massive, anchor, photon, final, free, momenta = <||>,
+   angle = <||>, square = <||>, angleBasis = <||>, squareBasis = <||>, variables = {},
+   spins = {}, patches = {}, new, shell, z, a, b, c, d, total, delta, denominator,
+   first, mass, basis, conjugate, spin, epsilon = {{0, 1}, {-1, 0}}, zero,
+   shells, conservation, bases, nullProducts, linearWitness, domain},
+  external = Sort[Cases[rules, HoldPattern[Mass[i_Integer] -> _] :> i]];
+  If[Length[external] < 4 || Length[external] > 8 || !DuplicateFreeQ[external] ||
+      !MemberQ[{"Angle", "Square"}, nullKind] || !MemberQ[{"Angle", "Square"}, massiveKind], Return[$Failed]];
+  masses = AssociationThread[external, (Mass /@ external) /. rules];
+  If[!FreeQ[Values[masses], _Mass | _Real | _Missing | _Failure] ||
+      !residueFiniteQ[Values[masses]], Return[$Failed]];
+  null = Select[external, masses[#] === 0 &]; massive = Complement[external, null];
+  If[Length[null] =!= 1 || Length[massive] < 3, Return[$Failed]];
+  anchor = Replace[rest, Automatic -> First[massive]];
+  photon = Replace[nullLeg, Automatic -> First[null]];
+  If[!MemberQ[massive, anchor] || !MemberQ[null, photon], Return[$Failed]];
+  final = Replace[dependent, Automatic -> Take[Complement[massive, {anchor}], -2]];
+  If[!MatchQ[final, {_Integer, _Integer}] || !DuplicateFreeQ[final] ||
+      !ContainsAll[Complement[massive, {anchor}], final], Return[$Failed]];
+  new[] := With[{value = Unique["singleNullIdentityCoordinate"]}, AppendTo[variables, value]; value];
+  shell[m_] := Module[{aa = new[], bb = new[], cc = new[]},
+    AppendTo[patches, aa]; {{aa, bb}, {cc, (m^2 + bb cc)/aa}}];
+  z = new[]; AppendTo[patches, z];
+  AssociateTo[momenta, {anchor -> masses[anchor] IdentityMatrix[2], photon -> {{z, 0}, {0, 0}}}];
+  If[nullKind === "Angle", AssociateTo[angle, photon -> {1, 0}]; AssociateTo[square, photon -> {z, 0}],
+    AssociateTo[angle, photon -> {z, 0}]; AssociateTo[square, photon -> {1, 0}]];
+  free = Complement[external, {anchor, photon}, final];
+  Do[AssociateTo[momenta, leg -> shell[masses[leg]]], {leg, free}];
+  total = Total[Values[momenta]]; a = new[]; b = new[];
+  delta = masses[final[[2]]]^2 - Det[total] - masses[final[[1]]]^2;
+  denominator = total[[1, 1]] b - total[[1, 2]] a;
+  c = (delta a - total[[2, 2]] a^2 - total[[1, 1]] masses[final[[1]]]^2 +
+      total[[2, 1]] a b)/denominator;
+  d = (masses[final[[1]]]^2 + b c)/a; first = {{a, b}, {c, d}};
+  patches = Join[patches, {a, denominator}];
+  AssociateTo[momenta, {final[[1]] -> first, final[[2]] -> (-total - first)}];
+  zero[value_] := TrueQ[Cancel[Together[value]] === 0];
+  linearWitness = zero[denominator c - (delta a - total[[2, 2]] a^2 -
+    total[[1, 1]] masses[final[[1]]]^2 + total[[2, 1]] a b)];
+  Do[
+    mass = masses[leg]; basis = {{mass, 0}, {0, 1}};
+    If[massiveKind === "Angle", conjugate = epsilon.residueAdjugate[momenta[leg]].basis/mass,
+      conjugate = basis; basis = -momenta[leg].epsilon.conjugate/mass];
+    spin = Unique["singleNullIdentitySpin"]; AppendTo[spins, spin];
+    AssociateTo[angleBasis, leg -> basis]; AssociateTo[squareBasis, leg -> conjugate];
+    AssociateTo[angle, leg -> basis.{1, spin}]; AssociateTo[square, leg -> conjugate.{1, spin}],
+    {leg, massive}];
+  shells = AssociationThread[external, zero[Det[momenta[#]] - masses[#]^2] & /@ external];
+  conservation = AllTrue[Flatten[Total[Values[momenta]]], zero];
+  nullProducts = <|photon -> AllTrue[Flatten[Outer[Times, angle[photon], square[photon]] - momenta[photon]], zero]|>;
+  bases = AssociationThread[massive, Function[leg,
+      zero[Det[angleBasis[leg]] - masses[leg]] && zero[Det[squareBasis[leg]] - masses[leg]] &&
+      AllTrue[Flatten[angleBasis[leg].epsilon.Transpose[squareBasis[leg]] - momenta[leg]], zero] &&
+      AllTrue[Flatten[squareBasis[leg] - epsilon.residueAdjugate[momenta[leg]].angleBasis[leg]/masses[leg]], zero]
+    ] /@ massive];
+  domain = DeleteDuplicates[Join[Lookup[masses, massive], patches]];
+  If[!And @@ Join[Values[shells], Values[bases], Values[nullProducts], {conservation, linearWitness}] ||
+      AnyTrue[domain, zero], Return[$Failed]];
+  <|"Momenta" -> momenta, "Masses" -> masses, "Angle" -> angle, "Square" -> square,
+    "AngleBasis" -> angleBasis, "SquareBasis" -> squareBasis, "SpinVariables" -> spins,
+    "NullAxisLegs" -> {photon}, "NullAxisChirality" -> nullKind, "RestFrameLeg" -> anchor,
+    "DependentShellLegs" -> final, "MassiveSpinorBasis" -> massiveKind,
+    "PoleVariable" -> Unique["unusedSingleNullIdentityPole"], "ReferenceSeed" -> 0,
+    "CoherentVectorSpinIndices" -> True, "AllowCutSpinors" -> False,
+    "ExternalIdentityCoordinates" -> variables, "ExternalMassShellsValidated" -> True,
+    "ExternalMassShellChecks" -> shells, "MomentumConservationValidated" -> conservation,
+    "ExternalSpinorBasesValidated" -> bases, "NullSpinorProductsValidated" -> nullProducts,
+    "DenseDomainNonzeroExpressions" -> domain,
+    "CoverageMethod" -> "MassiveRestAndSingleNullAxisOnNonzeroRestNullInvariantPatch",
+    "OriginalRestNullInvariantRequiredNonzero" -> {anchor, photon},
+    "DependentShellLinearReconstruction" -> linearWitness,
+    "DependentShellJacobian" -> denominator, "ResidualGaugeDimension" -> 1,
+    "NumericalKinematicSamples" -> 0, "InternalOnShellConditions" -> {}|>
+];
+
+(* Replace exact scalar atoms by independent indeterminates, retaining every
+   mass and coupling. Positive rational radicals use common prime-root units;
+   e.g. Sqrt[2] and 1/Sqrt[2] become u and u/2, with u restored to Sqrt[2].
+   A polynomial zero in these independent variables is a stronger statement.
+   No algebraic relation is guessed and no mass is set to a numerical value. *)
+completionHEExactScalarVariables[expression_, rules_List: {}, seconds_: 3] := Module[
+  {started = AbsoluteTime[], failure, work, result, tag = Unique["exactScalarVariables"]},
+  failure[reason_] := <|"Status" -> "UNSUPPORTED", "Reason" -> reason|>;
+  If[!TrueQ[NumericQ[seconds] && seconds > 0] || LeafCount[{expression, rules}] > 100000,
+    Return[failure["ScalarMappingBudget"]]];
+  work[] := Module[{collect, scalars, radicals, plain, supportedRadicalQ, data, orders,
+      primeVariables, ordinaryVariables, variables, forward, backward, rootRule, witnesses,
+      mapped, mappedRules, numericBackward, source},
+    collect[value_] := Which[
+      Head[value] === ModelParameter, {value},
+      Head[value] === PropDen, Flatten[collect /@ Rest[List @@ value]],
+      MatchQ[value, _SpinorChain | _SpinorTrace | _MomProd | _Mandelstahm | _Mom], {},
+      IntegerQ[value] || Head[value] === Rational, {},
+      MemberQ[{Plus, Times}, Head[value]], Flatten[collect /@ List @@ value],
+      Head[value] === Power && IntegerQ[Last[value]], collect[First[value]],
+      NumericQ[value] && FreeQ[value, _Real], {value},
+      Head[value] === Symbol, {value}, True, Throw[failure["UnsupportedScalarNode"], tag]];
+    source = expression /. rules;
+    scalars = DeleteDuplicates[Join[collect[source], Flatten[collect /@ (Last /@ rules)]]];
+    If[Length[scalars] > 16, Throw[failure["ScalarVariableLimit"], tag]];
+    supportedRadicalQ[value_] := MatchQ[value, Power[_Integer | _Rational, _Rational]] &&
+      TrueQ[First[value] > 0] && Denominator[Last[value]] <= 16 && Abs[Numerator[Last[value]]] <= 4096 &&
+      Max[IntegerLength[Numerator[First[value]], 2], IntegerLength[Denominator[First[value]], 2]] <= 32;
+    radicals = Select[scalars, supportedRadicalQ]; plain = Complement[scalars, radicals];
+    data = Function[root, Association[Rule @@@ Map[
+        {#[[1]], #[[2]] Last[root]} &, FactorInteger[First[root]]]]] /@ radicals;
+    orders = If[data === {}, <||>, Merge[Map[Map[Denominator, #] &, data], Apply[LCM]]];
+    If[AnyTrue[Values[orders], # > 16 &], Throw[failure["SharedRadicalOrderLimit"], tag]];
+    primeVariables = AssociationThread[Keys[orders], Table[Unique["exactRadicalUnit"], {Length[orders]}]];
+    ordinaryVariables = Table[Unique["exactScalarVariable"], {Length[plain]}];
+    variables = Join[ordinaryVariables, Values[primeVariables]];
+    If[Length[variables] > 16, Throw[failure["ScalarVariableLimit"], tag]];
+    backward = Join[Thread[ordinaryVariables -> plain], KeyValueMap[
+      #2 -> #1^(1/orders[#1]) &, primeVariables]];
+    rootRule[root_] := Module[{powers = data[[First[FirstPosition[radicals, root]]]]},
+      root -> Times @@ KeyValueMap[Function[{prime, exponent}, With[
+        {whole = Floor[exponent], order = orders[prime]},
+        prime^whole primeVariables[prime]^((exponent - whole) order)]], powers]];
+    forward = Join[Thread[plain -> ordinaryVariables], rootRule /@ radicals];
+    witnesses = Function[rule, Module[{restored = Last[rule] /. backward, same, algebraic},
+      same = SameQ[restored, First[rule]];
+      algebraic = !same && NumericQ[First[rule]] && FreeQ[First[rule], _Real] &&
+        TrueQ[RootReduce[restored - First[rule]] === 0];
+      <|"Rule" -> rule, "ExactSameQ" -> same, "ExactNumericRootReduce" -> algebraic,
+        "Verified" -> (same || algebraic)|>]] /@ forward;
+    If[!AllTrue[witnesses, TrueQ[# ["Verified"]] &], Throw[failure["ScalarRoundTripFailed"], tag]];
+    mapped = source /. Dispatch[forward]; mappedRules = rules /. Dispatch[forward];
+    numericBackward = Select[backward, NumericQ[Last[#]] && FreeQ[Last[#], _Real] &];
+    <|"Status" -> "COMPLETE", "Expression" -> mapped, "ExternalMassRules" -> mappedRules,
+      "Variables" -> variables, "ForwardRules" -> forward, "BackwardRules" -> backward,
+      "ExternalMassDefinitionsApplied" -> rules, "ResolvedExpression" -> source,
+      "NumericRestorationRules" -> numericBackward, "RuleWitnesses" -> witnesses,
+      "PrimeRootOrders" -> orders, "PrimeRootVariables" -> primeVariables,
+      "ExactScalarRoundTrip" -> True, "SharedRationalRootUnits" -> True,
+      "IndependentScalarIndeterminates" -> True, "MassNormalizationUsed" -> False,
+      "NumericalParameterSubstitutions" -> {}, "NumericalKinematicSamples" -> 0|>
+  ];
+  result = TimeConstrained[MemoryConstrained[Catch[work[], tag], 134217728,
+      failure["ScalarMappingMemoryLimit"]], seconds, failure["ScalarMappingTimeLimit"]];
+  Join[result, <|"ElapsedTime" -> AbsoluteTime[] - started|>]
+];
+
+(* Fraction-free lifting avoids expanding the large coherent coefficients.
+   The denominator of every child is a map of actual positive factors. Plus
+   nodes verify the common-denominator powers locally; inverse nodes retain
+   every newly inverted numerator as a nonzero obligation. *)
+completionHEClearRationalRoots[roots_List, variables_List, seconds_: 5] := Module[
+  {started = AbsoluteTime[], failure, work, result, tag = Unique["rationalRootLift"]},
+  failure[reason_] := <|"Status" -> "UNSUPPORTED", "Reason" -> reason|>;
+  If[!TrueQ[NumericQ[seconds] && seconds > 0] || roots === {} ||
+      Length[roots] > 512 || Length[variables] > 16 || !DuplicateFreeQ[variables] ||
+      !AllTrue[variables, MatchQ[#, _Symbol] &] || !FreeQ[roots, _Real] ||
+      !residueFiniteQ[roots], Return[failure["UnsupportedRationalRootInput"]]];
+  work[] := Module[{fraction, factors, product, powerMap, positive, records = {}, inversions = {},
+      nodeCount = 0, degrees, degree, pairs, additional, rootNodes, inputVariables, checked = True},
+    product[association_] := Times @@ KeyValueMap[Power, association];
+    positive[association_] := AllTrue[Values[association], IntegerQ[#] && # >= 0 &];
+    powerMap[association_, power_] := Map[power # &, association];
+    factors[value_] := Which[value === 1, <||>, Head[value] === Times,
+      Merge[factors /@ List @@ value, Total],
+      Head[value] === Power && IntegerQ[Last[value]] && Last[value] > 0,
+      powerMap[factors[First[value]], Last[value]], True, <|value -> 1|>];
+    degree[value_] := degree[value] = Which[
+      IntegerQ[value] || Head[value] === Rational, 0, MemberQ[variables, value], 1,
+      Head[value] === Plus, Max[Prepend[degree /@ List @@ value, 0]],
+      Head[value] === Times, Total[degree /@ List @@ value],
+      Head[value] === Power && IntegerQ[Last[value]] && Last[value] >= 0,
+        Last[value] degree[First[value]], True, Throw[failure["NonPolynomialLift"], tag]];
+    fraction[value_] := fraction[value] = Module[
+      {id = ++nodeCount, parts, pair, common, missing, local = True, power, atomFactors, childIds = {}, operation},
+      If[nodeCount > 50000, Throw[failure["RationalLiftNodeLimit"], tag]];
+      Which[
+        IntegerQ[value] || Head[value] === Rational,
+          If[Max[IntegerLength[Abs[Numerator[value]], 2], IntegerLength[Denominator[value], 2]] > 4096,
+            Throw[failure["RationalLiftCoefficientLimit"], tag]];
+          pair = {value, <||>}; operation = "ExactRational",
+        MemberQ[variables, value], pair = {value, <||>}; operation = "DeclaredVariable",
+        Head[value] === Times,
+          parts = fraction /@ List @@ value; childIds = parts[[All, 3]];
+          pair = {Times @@ parts[[All, 1]], Merge[parts[[All, 2]], Total]};
+          local = SameQ[Times @@ (product /@ parts[[All, 2]]), product[pair[[2]]]];
+          operation = "Product",
+        Head[value] === Plus,
+          parts = fraction /@ List @@ value; childIds = parts[[All, 3]];
+          common = Merge[parts[[All, 2]], Max];
+          missing = Function[part, Association @ KeyValueMap[
+              #1 -> (#2 - Lookup[part[[2]], #1, 0]) &, common]] /@ parts;
+          local = AllTrue[missing, positive] && AllTrue[MapThread[
+            SameQ[product[#1] product[#2[[2]]], product[common]] &, {missing, parts}], TrueQ];
+          pair = {Total[MapThread[#1[[1]] product[#2] &, {parts, missing}]], common};
+          operation = "CommonDenominatorSum",
+        Head[value] === Power && IntegerQ[Last[value]] && Abs[Last[value]] <= 1000000,
+          parts = fraction[First[value]]; childIds = {parts[[3]]}; power = Last[value];
+          If[power >= 0,
+            pair = {parts[[1]]^power, powerMap[parts[[2]], power]};
+            local = SameQ[product[parts[[2]]]^power, product[pair[[2]]]]; operation = "NonnegativeIntegerPower",
+            If[parts[[1]] === 0, Throw[failure["ZeroInvertedNumerator"], tag]];
+            atomFactors = factors[parts[[1]]];
+            local = SameQ[product[atomFactors], parts[[1]]];
+            AppendTo[inversions, parts[[1]]];
+            pair = {product[parts[[2]]]^(-power), powerMap[atomFactors, -power]};
+            operation = "IntegerInverse"],
+        True, Throw[failure["UnsupportedRationalLiftNode"], tag]];
+      local = TrueQ[local] && positive[pair[[2]]]; checked = checked && local;
+      If[!local, Throw[failure["LocalDenominatorReconstructionFailed"], tag]];
+      If[degree[pair[[1]]] > 4096 || degree[product[pair[[2]]]] > 4096,
+        Throw[failure["RationalLiftDegreeLimit"], tag]];
+      AppendTo[records, <|"Node" -> id, "Operation" -> operation, "Children" -> childIds,
+        "DenominatorPowers" -> pair[[2]], "LocalFactorReconstruction" -> local,
+        "PositiveDenominatorPowers" -> positive[pair[[2]]]|>];
+      {pair[[1]], pair[[2]], id}];
+    pairs = fraction /@ roots;
+    additional = DeleteDuplicates[Join[Flatten[Keys /@ pairs[[All, 2]]], inversions]];
+    If[AnyTrue[additional, # === 0 &], Throw[failure["ZeroClearingFactor"], tag]];
+    inputVariables = DeleteDuplicates[Cases[{roots}, symbol_Symbol /; !MemberQ[{Plus, Times, Power}, symbol], Infinity]];
+    <|"Status" -> "COMPLETE", "Numerators" -> pairs[[All, 1]],
+      "RootDenominatorPowers" -> pairs[[All, 2]], "RootNodes" -> pairs[[All, 3]],
+      "AdditionalNonzeroFactors" -> additional, "NodeCount" -> nodeCount,
+      "LocalWitnesses" -> records, "LocalFactorReconstruction" -> checked,
+      "ReconstructionVerified" -> checked, "AllPowersNonnegative" -> True,
+      "AllVariablesDeclared" -> True, "MaximumTotalDegree" -> Max[degree /@ Join[pairs[[All, 1]], additional]],
+      "NumericalKinematicSamples" -> 0, "InternalOnShellConditions" -> {}|>
+  ];
+  result = TimeConstrained[MemoryConstrained[Catch[work[], tag], 268435456,
+      failure["RationalLiftMemoryLimit"]], seconds, failure["RationalLiftTimeLimit"]];
+  Join[result, <|"ElapsedTime" -> AbsoluteTime[] - started|>]
+];
+
+(* Exact scalar specializations must not turn a generically nonzero clearing
+   factor into the zero polynomial. One nonzero exact coefficient suffices;
+   no kinematic or parameter point is sampled. *)
+completionHEScalarNonzeroWitnesses[factors_List, variables_List, scalarMap_Association, seconds_] := Module[
+  {started = AbsoluteTime[], numeric = Lookup[scalarMap, "NumericRestorationRules", {}],
+   free, witnesses = {}, value, coefficients, witness, result, failure,
+   tag = Unique["singleNullNonzeroWitness"]},
+  failure[reason_] := <|"Status" -> "UNSUPPORTED", "Reason" -> reason|>;
+  free = Complement[variables, First /@ numeric];
+  result = TimeConstrained[MemoryConstrained[Catch[
+    Do[
+      value = factor /. Dispatch[numeric];
+      coefficients = If[free === {}, {value}, Last /@ CoefficientRules[Expand[value], free]];
+      witness = SelectFirst[coefficients, Function[coefficient,
+        NumericQ[coefficient] && FreeQ[coefficient, _Real] &&
+          With[{algebraic = RootReduce[coefficient]},
+            TrueQ[Element[algebraic, Algebraics]] && TrueQ[algebraic != 0]]],
+        Missing["NoExactNonzeroCoefficient"]];
+      If[MissingQ[witness], Throw[failure["ScalarSpecializationMayVanish"], tag]];
+      AppendTo[witnesses, <|"Factor" -> factor, "ExactNonzeroCoefficient" -> witness,
+        "AlgebraicMembershipVerified" -> True,
+        "NumericConstantsRestored" -> True, "KinematicSamples" -> 0|>], {factor, factors}];
+    If[Length[witnesses] =!= Length[factors], Throw[failure["IncompleteScalarWitnessSet"], tag]];
+    <|"Status" -> "COMPLETE", "Witnesses" -> witnesses,
+      "FactorCount" -> Length[factors], "WitnessCount" -> Length[witnesses],
+      "EveryFactorNonzeroAfterNumericRestoration" -> True, "NumericalKinematicSamples" -> 0|>, tag],
+    134217728, failure["ScalarSpecializationMemoryLimit"]], seconds, failure["ScalarSpecializationTimeLimit"]];
+  Join[result, <|"ElapsedTime" -> AbsoluteTime[] - started|>]
+];
+
+completionHEPrepareSingleNullNativeIdentity[expression_, rules_List, seconds_: 20] := Module[
+  {started = AbsoluteTime[], failure, remaining, work, result, tag = Unique["singleNullNativePreparation"]},
+  failure[reason_] := <|"Status" -> "NOT_PROVED", "Method" -> reason|>;
+  If[!TrueQ[NumericQ[seconds] && 0 < seconds < Infinity], Return[failure["NativePreparationBudget"]]];
+  remaining[] := Max[0.000001, seconds - (AbsoluteTime[] - started)];
+  work[] := Module[{external, weights, unsupported, scalarMap, resolved, mappedRules, chart,
+      axisChoice, atoms, tokens, opaque, restore, together, numerator, denominator,
+      factorQ, denominatorFactors, typedReconstruction, mapped, mappedDenominators,
+      coefficients, roots, lifted, variables, nonzeroWitnesses, dag, denominatorClearing},
+    external = Sort[Cases[rules, HoldPattern[Mass[i_Integer] -> _] :> i]];
+    unsupported = !FreeQ[expression, _Real | _SpinorHat | _MomHat | _xFactor | _xTildeFactor |
+      Spinor["Xi" | "Zeta", ___]] || AnyTrue[Cases[expression, spinor_Spinor /;
+        First[List @@ spinor] === "Spin", Infinity], Function[spinor,
+          With[{data = List @@ spinor}, With[{position = First[FirstPosition[data, "Angle" | "Square"]]},
+            !MatchQ[Drop[data, position + 1], {} | {VectorSpinIndex[_, 1 | 2]}]]]]];
+    unsupported = unsupported || !completionHEMasslessHelicityTagsQ[expression, rules];
+    weights = completionExternalSpinWeights[expression, rules];
+    If[unsupported || !ListQ[weights] || Length[weights] =!= Length[external] ||
+        !AllTrue[weights, IntegerQ] || !completionHECovariantScalarQ[expression, external],
+      Throw[failure["UnsupportedCovarianceOrSpinHomogeneity"], tag]];
+    scalarMap = completionHEExactScalarVariables[expression, preparationExternalRules[rules], Min[3, remaining[]]];
+    If[Lookup[scalarMap, "Status", None] =!= "COMPLETE",
+      Throw[Join[failure["UnsupportedExactScalarMapping"], <|"ScalarVariableCertificate" -> scalarMap|>], tag]];
+    resolved = scalarMap["Expression"]; mappedRules = scalarMap["ExternalMassRules"];
+    axisChoice = completionHENativeNullAxisChoice[expression, rules];
+    chart = completionHERestSingleNullSymbolicChart[mappedRules, Automatic, Automatic, Automatic,
+      axisChoice["Chirality"], axisChoice["Chirality"]];
+    If[!AssociationQ[chart], Throw[failure["UnsupportedRestSingleNullChart"], tag]];
+    variables = Join[chart["ExternalIdentityCoordinates"], scalarMap["Variables"]];
+    If[Length[variables] > 16 || !DuplicateFreeQ[variables], Throw[failure["NativeVariableLimit"], tag]];
+    atoms = DeleteDuplicates[Cases[resolved, _SpinorChain | _SpinorTrace | _MomProd |
+      _Mandelstahm | _PropDen | _Mom, {0, Infinity}]];
+    tokens = Table[Unique["singleNullPrimitive"], {Length[atoms]}]; restore = Dispatch[Thread[tokens -> atoms]];
+    opaque = resolved /. Dispatch[Thread[atoms -> tokens]];
+    If[!SameQ[opaque /. restore, resolved], Throw[failure["PrimitiveRoundTripFailed"], tag]];
+    together = Together[opaque];
+    typedReconstruction = TrueQ[Cancel[Together[opaque - Numerator[together]/Denominator[together]]] === 0];
+    If[!typedReconstruction, Throw[failure["TypedDenominatorReconstructionFailed"], tag]];
+    numerator = Numerator[together] /. restore; denominator = Denominator[together] /. restore;
+    factorQ[value_] := Which[
+      IntegerQ[value] || Head[value] === Rational, value =!= 0,
+      MemberQ[scalarMap["Variables"], value], True,
+      Head[value] === PropDen, Length[value] === 2 && MatchQ[First[value], _Mom] &&
+        FreeQ[Last[value], _SpinorChain | _SpinorTrace | _Mom | _MomProd | _PropDen],
+      Head[value] === Times, AllTrue[List @@ value, factorQ],
+      Head[value] === Power && IntegerQ[Last[value]] && Last[value] > 0, factorQ[First[value]],
+      True, False];
+    If[!factorQ[denominator], Throw[failure["UnsupportedTypedDenominator"], tag]];
+    denominatorFactors = DeleteDuplicates[Join[Cases[denominator, _PropDen, {0, Infinity}],
+      Select[scalarMap["Variables"], !FreeQ[denominator, #] &]]];
+    denominatorClearing = <|"Numerator" -> numerator, "Denominator" -> denominator,
+      "DenominatorFactors" -> denominatorFactors, "ExactRationalReconstruction" -> typedReconstruction,
+      "PrimitiveRestorationExact" -> True, "InternalOnShellConditions" -> {}|>;
+    mapped = spuriousEvaluateCurve[numerator, chart, {}];
+    mappedDenominators = spuriousEvaluateCurve[#, chart, {}] & /@ denominatorFactors;
+    If[residueUnmappedQ[{mapped, mappedDenominators}] || !residueFiniteQ[{mapped, mappedDenominators}] ||
+        !FreeQ[{mapped, mappedDenominators}, _Real | _Missing | _Failure],
+      Throw[failure["UnsupportedSingleNullMapping"], tag]];
+    coefficients = amplitudeCoherentPolynomialRules[mapped, chart["SpinVariables"], Min[6, remaining[]]];
+    If[Lookup[coefficients, "Status", None] =!= "COMPLETE" ||
+        !TrueQ[coefficients["FullCoefficientCoverage"]] || !TrueQ[coefficients["ReconstructionVerified"]],
+      Throw[Join[failure["IncompleteCoherentPolynomial"],
+        <|"PolynomialExtraction" -> KeyDrop[coefficients, "CoefficientRules"]|>], tag]];
+    roots = Join[Last /@ coefficients["CoefficientRules"], mappedDenominators,
+      chart["DenseDomainNonzeroExpressions"]];
+    lifted = completionHEClearRationalRoots[roots, variables, Min[5, remaining[]]];
+    If[Lookup[lifted, "Status", None] =!= "COMPLETE" || !TrueQ[lifted["ReconstructionVerified"]],
+      Throw[Join[failure["IncompleteRationalLifting"], <|"RationalLiftCertificate" -> lifted|>], tag]];
+    roots = Join[lifted["Numerators"], lifted["AdditionalNonzeroFactors"]];
+    nonzeroWitnesses = completionHEScalarNonzeroWitnesses[
+      Drop[roots, coefficients["ComponentCount"]], variables, scalarMap, Min[3, remaining[]]];
+    If[Lookup[nonzeroWitnesses, "Status", None] =!= "COMPLETE",
+      Throw[Join[failure["UnverifiedScalarSpecialization"],
+        <|"ScalarSpecializationCertificate" -> nonzeroWitnesses|>], tag]];
+    dag = completionHELaurentDAG[roots, variables, Min[6, remaining[]]];
+    If[Lookup[dag, "Status", None] =!= "COMPLETE" || !TrueQ[dag["EveryNodeRoundTrip"]],
+      Throw[Join[failure["UnsupportedLaurentExport"], <|"LaurentExport" -> dag|>], tag]];
+    <|"Status" -> "PREPARED", "Method" -> "DenseRestSingleNullTypedPolynomialIdentity",
+      "DAG" -> dag, "CoefficientRootCount" -> coefficients["ComponentCount"],
+      "DenominatorRootIndices" -> Range[coefficients["ComponentCount"] + 1, Length[roots]],
+      "CoefficientMonomials" -> coefficients["ComponentMonomials"], "ExternalSpinWeights" -> weights,
+      "Chart" -> chart, "NullAxisChiralitySelection" -> axisChoice,
+      "ScalarVariableCertificate" -> scalarMap, "RationalLiftCertificate" -> KeyDrop[lifted, "Numerators"],
+      "ScalarSpecializationCertificate" -> nonzeroWitnesses, "DenominatorClearing" -> denominatorClearing,
+      "PolynomialExtraction" -> KeyDrop[coefficients, "CoefficientRules"],
+      "MassNormalizationUsed" -> False, "NumericalParameterSubstitutions" -> {},
+      "NumericalKinematicSamples" -> 0, "CoherentSpinSamples" -> 0, "InternalOnShellConditions" -> {}|>
+  ];
+  result = TimeConstrained[MemoryConstrained[Catch[work[], tag], 536870912,
+      failure["SingleNullPreparationMemoryLimit"]], seconds, failure["SingleNullPreparationTimeConstraint"]];
+  Join[result, <|"PreparationSeconds" -> AbsoluteTime[] - started|>]
+];
 
 completionHENativeRuntimeSources[] := Module[{directory, names, paths},
   directory = If[StringQ[Global`$HEPCATpath], Global`$HEPCATpath, ""];
@@ -15861,13 +16279,20 @@ completionHENativeZeroDirection[expression_, rules_List, model_List, seconds_] :
   allowance = If[NumericQ[seconds] && TrueQ[0 < seconds < Infinity], Min[120, seconds], 0];
   If[!TrueQ[$KernelID === 0] || allowance <= 0, Return[<|"Status" -> "NOT_PROVED",
     "Method" -> "SerialNativeBudgetUnavailable"|>]];
-  prepared = completionHEPrepareNativeIdentity[expression, rules, Min[30, allowance/3]];
+  (* The single-null chart spends most of its time constructing polynomial
+     roots; the native evaluation is short. Reserve one third of the existing
+     total for verification without increasing that total or the family clock. *)
+  prepared = completionHEPrepareNativeIdentity[expression, rules,
+    Min[30, If[Count[preparationExternalRules[rules], HoldPattern[Mass[_Integer] -> 0]] === 1,
+      2 allowance/3, allowance/3]]];
   If[Lookup[prepared, "Status", None] =!= "PREPARED", Return[Join[prepared,
     <|"OriginalDirection" -> expression, "NativeProofBudget" -> allowance,
       "ElapsedTime" -> AbsoluteTime[] - started|>]]];
   proof = completionHENativeLaurentRun[prepared, Max[0, allowance - (AbsoluteTime[] - started)]];
   Join[proof, <|"Method" -> If[Lookup[proof, "Status", None] === "PROVED_ZERO",
-      "DenseRestNullNativeLaurentIdentity", Lookup[proof, "Method", "NativeProofUnfinished"]],
+      If[Lookup[prepared, "Method", None] === "DenseRestSingleNullTypedPolynomialIdentity",
+        "DenseRestSingleNullNativePolynomialIdentity", "DenseRestNullNativeLaurentIdentity"],
+      Lookup[proof, "Method", "NativeProofUnfinished"]],
     "OriginalDirection" -> expression,
     "PreparationCertificate" -> Join[KeyDrop[prepared, "DAG"],
       <|"DAG" -> KeyDrop[prepared["DAG"], "Text"]|>],
@@ -15882,7 +16307,9 @@ completionHEPruneIdentityFamily[family_, parameters_List, rules_List, model_List
    center, arrays, settings, jobs, deadline, allowance, worker, dispatch, results, resultByIndex,
    completed = 0, proved = 0, executionSettings, observe, zeroIndices, retrySummary,
    retryEntries, retryJobs, retryWorker, retryObserve, retryDispatch, retryResults, left, reduction,
-   nativeSummary, nativeJobs, nativeProof, previousCertificate, nativeAttempted = 0, nativeCertified = 0},
+   nativeSummary, nativeJobs, nativeProof, previousCertificate, nativeAttempted = 0, nativeCertified = 0,
+   earlyNativeSummary, earlyNativeCertificates = <||>, earlyNativeRecords = {}, earlyNativeJobs,
+   earlyNativeStarted, earlyNativeDeadline, earlyNativeBudget, earlyNativeProof, earlyNativeLeft},
   center = family /. Thread[parameters -> 0];
   If[ListQ[knownDirections] && Length[knownDirections] === Length[parameters] &&
       FreeQ[knownDirections, Alternatives @@ parameters] &&
@@ -15904,6 +16331,38 @@ completionHEPruneIdentityFamily[family_, parameters_List, rules_List, model_List
   jobs = SortBy[Range[Length[parameters]], LeafCount[directions[[#]]] &];
   deadline = If[seconds === Infinity, Infinity, started + Max[0, seconds]];
   allowance = If[seconds === Infinity, 90, Min[90, Max[8, seconds]]];
+  (* A dense rest-frame chart with one declared null leg can certify a large
+     coherent identity much faster as exact polynomial arithmetic. Try that
+     optional backend on the master before spending the worker-proof budget.
+     Every unproved coordinate still enters the original proof/fitting paths. *)
+  earlyNativeStarted = AbsoluteTime[];
+  earlyNativeBudget = If[seconds === Infinity, 30, Max[0, Min[30, seconds/3]]];
+  earlyNativeDeadline = Min[deadline, earlyNativeStarted + earlyNativeBudget];
+  earlyNativeJobs = If[TrueQ[$KernelID === 0] && earlyNativeBudget > 3 &&
+      Count[preparationExternalRules[rules], HoldPattern[Mass[_Integer] -> 0]] === 1 &&
+      Length[preparationExternalRules[rules]] >= 4 &&
+      AssociationQ[completionHENativeRuntimeSources[]],
+    Take[Select[jobs, 5000 <= LeafCount[directions[[#]]] <= 50000 &], UpTo[4]], {}];
+  Do[
+    earlyNativeLeft = Max[0, Min[20, earlyNativeDeadline - AbsoluteTime[]]];
+    If[earlyNativeLeft <= 3, Break[]];
+    If[progress =!= None, progress[<|"Stage" -> "HighEnergy",
+      "Phase" -> "Certifying coherent identities with exact polynomial arithmetic",
+      "Operation" -> "Early exact identity proof", "Completed" -> Length[earlyNativeRecords],
+      "Total" -> Length[earlyNativeJobs], "ProofSecondsAvailable" -> earlyNativeLeft|>]];
+    earlyNativeProof = completionHENativeZeroDirection[directions[[index]], rules, model, earlyNativeLeft];
+    AppendTo[earlyNativeRecords, Join[<|"Index" -> index|>,
+      KeyTake[earlyNativeProof, {"Status", "Method", "ElapsedTime"}]]];
+    If[AssociationQ[earlyNativeProof] && Lookup[earlyNativeProof, "Status", None] === "PROVED_ZERO",
+      AssociateTo[earlyNativeCertificates, index -> Join[earlyNativeProof,
+        <|"ProofScheduling" -> "EarlySerialMasterSingleNull"|>]]],
+    {index, earlyNativeJobs}];
+  earlyNativeSummary = <|"Attempted" -> Length[earlyNativeRecords],
+    "Certified" -> Length[earlyNativeCertificates], "Records" -> earlyNativeRecords,
+    "Execution" -> "SerialMasterOnly", "MaximumTotalSeconds" -> earlyNativeBudget,
+    "SharedDeadline" -> deadline, "ElapsedTime" -> AbsoluteTime[] - earlyNativeStarted|>;
+  jobs = Select[jobs, !KeyExistsQ[earlyNativeCertificates, #] &];
+  completed = Length[earlyNativeCertificates]; proved = completed;
   worker = With[{d = directions, p = parameters, r = rules, m = model,
       until = deadline, perDirection = allowance}, Function[index, Module[{left, proof},
     left = If[until === Infinity, perDirection, Max[0, Min[perDirection, until - AbsoluteTime[]]]];
@@ -15925,14 +16384,14 @@ completionHEPruneIdentityFamily[family_, parameters_List, rules_List, model_List
     If[progress =!= None, progress[<|"Stage" -> "HighEnergy",
       "Phase" -> "Proving identity-zero family directions",
       "Operation" -> "Certifying ordinary identities", "Completed" -> completed,
-      "Total" -> total, "ProvedZero" -> proved,
+      "Total" -> Length[parameters], "ProvedZero" -> proved,
       "RetainedDirections" -> completed - proved|>]]);
   dispatch = amplitudeParallelMap[worker, jobs, executionSettings, observe];
   results = Lookup[dispatch, "Results", {}];
-  resultByIndex = Association[Map[Function[result,
+  resultByIndex = Join[earlyNativeCertificates, Association[Map[Function[result,
     If[AssociationQ[result] && IntegerQ[Lookup[result, "Index", None]] &&
         AssociationQ[Lookup[result, "Certificate", None]],
-      result["Index"] -> result["Certificate"], Nothing]], results]];
+      result["Index"] -> result["Certificate"], Nothing]], results]]];
   certificates = MapIndexed[Function[{parameter, index}, Join[
     <|"Parameter" -> parameter|>, Lookup[resultByIndex, First[index],
       <|"Status" -> "NOT_PROVED", "Method" -> "ProofWorkerUnavailable"|>]]], parameters];
@@ -16016,7 +16475,7 @@ completionHEPruneIdentityFamily[family_, parameters_List, rules_List, model_List
       "Execution" -> Lookup[retryDispatch, "Execution", <||>]|>;
     kept = Select[Range[Length[parameters]], certificates[[#]]["Status"] =!= "PROVED_ZERO" &]];
 
-  (* The optional exact native backend runs only here, on the master after
+  (* Remaining exact native retries run on the master after
      both small-memory worker batches. Its compiler, preprocessing, exact
      verification and evaluation share the original family deadline. A failed
      or unavailable backend retains the original coordinate and its history. *)
@@ -16049,6 +16508,7 @@ completionHEPruneIdentityFamily[family_, parameters_List, rules_List, model_List
     "RemovedParameters" -> removed, "Certificates" -> certificates, "AffineFamily" -> True,
     "Execution" -> Lookup[dispatch, "Execution", <||>],
     "CertifiedZeroSpanRetry" -> retrySummary, "NativeLaurentRetry" -> nativeSummary,
+    "EarlyNativeIdentityProofs" -> earlyNativeSummary,
     "ElapsedTime" -> (AbsoluteTime[] - started)|>
 ];
 
