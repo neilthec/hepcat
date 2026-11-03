@@ -345,6 +345,101 @@ check["the sign optimizer does not inspect or split a protected inverse spinor s
     Infinity], # === opPairedInverse &] &&
     First[opPairedPowerReport["Route"]]["EquivalenceProof"]["NormalForm"] === 0];
 
+(* Bare massless bracket cancellation uses only external scalar conservation.
+   Distinct external and propagator masses prevent a hidden internal-shell
+   substitution or a four-point equal-mass assumption. *)
+opCancelBracket = ConstructiveDiagrams`Private`preparationMasslessBracketCancellation;
+opBracketRules = {Mass[8] -> opMassA, Mass[2] -> opMassB, Mass[11] -> 0, Mass[5] -> 0};
+opBracketP = PropDen[Mom[Multiparticle[8, 11]], opInternalMassP];
+opBracketQ = PropDen[Mom[Multiparticle[5, 8]], opInternalMassQ];
+opBracketScalar = opBracketP + opBracketQ + opInternalMassP^2 + opInternalMassQ^2 -
+  opMassA^2 - opMassB^2;
+opBracketCofactor = SpinorChain[Spinor["Spin", "Angle", 8], Spinor["Spin", "Angle", 2]];
+opBracketChart = ConstructiveDiagrams`Private`completionHERestMixedNullSymbolicChart[
+  opBracketRules, {11, 5}];
+Do[
+  opBracket = SpinorChain[Spinor["Helicity", kind, 11], Spinor["Helicity", kind, 5]];
+  opOpposite = SpinorChain @@ (ConstructiveDiagrams`Private`rspFlipSpinor /@ List @@ opBracket);
+  opBracketInput = opBracketScalar opBracketCofactor/(opBracket opBracketP opBracketQ);
+  opBracketResult = opCancelBracket[opBracketInput, opBracketRules, True, 1];
+  check[kind <> " bracket cancellation works with unequal masses and nonconsecutive labels",
+    opBracketResult["Status"] === "IMPROVED" &&
+      Together[opBracketResult["Amplitude"] - opOpposite opBracketCofactor/(opBracketP opBracketQ)] === 0];
+  check[kind <> " cancellation agrees on generic exact conserved external momenta and every coherent spin",
+    TrueQ[Cancel[Together[ConstructiveDiagrams`Private`spuriousEvaluateCurve[
+      opBracketResult["Amplitude"] - opBracketInput, opBracketChart, {}]]] === 0]];
+  check[kind <> " cancellation preserves the actual physical denominators off shell",
+    !FreeQ[opBracketResult["Amplitude"], opBracketP^-1] &&
+      !FreeQ[opBracketResult["Amplitude"], opBracketQ^-1] &&
+      opBracketResult["InternalOnShellConditions"] === {} &&
+      First[opBracketResult["Route"]]["PolynomialDivisionZero"] === 0];
+  check[kind <> " propagation sums are not canceled without declared momentum conservation",
+    opCancelBracket[opBracketInput, opBracketRules, False, 1]["Amplitude"] === opBracketInput];
+  opCoherentBracketInput = opBracketInput /.
+    Spinor["Helicity", chirality_, leg_] :> Spinor["Spin", chirality, leg];
+  check[kind <> " zero-mass coherent Spin endpoints do not license a scalar bracket invariant",
+    opCancelBracket[opCoherentBracketInput, opBracketRules, True, 1]["Amplitude"] ===
+      opCoherentBracketInput];
+  opBracketRemainderInput = (opBracketScalar + opRegularRemainder) opBracketCofactor/
+    (opBracket opBracketP opBracketQ);
+  opBracketRemainderResult = opCancelBracket[opBracketRemainderInput, opBracketRules, True, 1];
+  check[kind <> " a nonzero polynomial remainder keeps its original inverse bracket",
+    opBracketRemainderResult["Status"] === "IMPROVED" &&
+      Together[opBracketRemainderResult["Amplitude"] -
+        (opOpposite + opRegularRemainder/opBracket) opBracketCofactor/(opBracketP opBracketQ)] === 0 &&
+      !FreeQ[opBracketRemainderResult["Amplitude"], opBracket^-1] &&
+      First[opBracketRemainderResult["Route"]]["Remainder"] =!= 0];
+  opBracketPowerInput = (-2 MomProd[5, 11])^2 opBracketCofactor/(opBracket^2 opBracketP);
+  opBracketPowerResult = opCancelBracket[opBracketPowerInput, opBracketRules, False, 1];
+  check[kind <> " an inverse bracket square cancels by ordinary invariant division",
+    opBracketPowerResult["Status"] === "IMPROVED" &&
+      Together[opBracketPowerResult["Amplitude"] - opOpposite^2 opBracketCofactor/opBracketP] === 0];
+  opBracketInverseSpectator = (opBracketCofactor + opSpectatorScalar)^-3/opInverseParameter^2;
+  opBracketProtected = opCancelBracket[opBracketInput opBracketInverseSpectator, opBracketRules, True, 1];
+  check[kind <> " unrelated inverse sums and scalar inverse powers remain intact",
+    opBracketProtected["Status"] === "IMPROVED" &&
+      Together[opBracketProtected["Amplitude"] -
+        opOpposite opBracketCofactor opBracketInverseSpectator/(opBracketP opBracketQ)] === 0 &&
+      !FreeQ[opBracketProtected["Amplitude"], (opBracketCofactor + opSpectatorScalar)^-3] &&
+      !FreeQ[opBracketProtected["Amplitude"], opInverseParameter^-2]],
+  {kind, {"Angle", "Square"}}];
+Do[
+  opManyRules = Table[Mass[i] -> Which[i === 3 || i === 4, 0,
+    i === 1, opMassA, i === 2, opMassB, True, opExtraMass[i]], {i, count}];
+  opManyBracket = SpinorChain[Spinor["Helicity", "Angle", 3], Spinor["Helicity", "Angle", 4]];
+  opManyOpposite = SpinorChain[Spinor["Helicity", "Square", 3], Spinor["Helicity", "Square", 4]];
+  opManyPole = PropDen[Mom[Multiparticle[1, 3]], opDifferentInternalMass];
+  opManyConservation = opMassA^2 + Total[MomProd[1, #] & /@ Range[2, count]];
+  opManyInput = (-2 MomProd[3, 4] + opConservationCoefficient opManyConservation)/
+    (opManyBracket opManyPole);
+  opManyResult = opCancelBracket[opManyInput, opManyRules, True, 1];
+  check[{"invariant cancellation uses the complete external leg list", count},
+    opManyResult["Status"] === "IMPROVED" &&
+      Together[opManyResult["Amplitude"] - opManyOpposite/opManyPole] === 0 &&
+      opManyResult["InternalOnShellConditions"] === {}],
+  {count, {5, 6}}];
+check["incomplete external metadata cannot license bracket cancellation",
+  opCancelBracket[opBracketInput, DeleteCases[opBracketRules, HoldPattern[Mass[2] -> _]], True, 1]["Amplitude"] ===
+    opBracketInput];
+opBracketMissingVectorLeg = opBracketInput SpinorChain[
+  Spinor["Spin", "Angle", 29, VectorSpinIndex[29, 1]], Spinor["Spin", "Angle", 8]];
+check["an undeclared vector-spin endpoint cannot license smaller-process conservation",
+  opCancelBracket[opBracketMissingVectorLeg, opBracketRules, True, 1]["Amplitude"] ===
+    opBracketMissingVectorLeg];
+opBracketMissingInvariantLeg = opBracketInput Mandelstahm[2, 29];
+check["an undeclared Mandelstam leg cannot license smaller-process conservation",
+  opCancelBracket[opBracketMissingInvariantLeg, opBracketRules, True, 1]["Amplitude"] ===
+    opBracketMissingInvariantLeg];
+check["massive bracket endpoints are not treated as a massless invariant",
+  opCancelBracket[opBracketInput, opBracketRules /. (Mass[11] -> 0) -> (Mass[11] -> opNullMass), True, 1]["Amplitude"] ===
+    opBracketInput];
+check["approximate external masses cannot certify exact invariant cancellation",
+  opCancelBracket[opBracketInput, opBracketRules /. opMassA -> 0.5, True, 1]["Amplitude"] === opBracketInput];
+check["zero budget and huge prospective numerator expansions retain the original input",
+  opCancelBracket[opBracketInput, opBracketRules, True, 0]["Amplitude"] === opBracketInput &&
+    With[{large = opBracketInput (opBracketCofactor + opOtherChain)^100000},
+      opCancelBracket[large, opBracketRules, True, 1]["Amplitude"] === large]];
+
 (* Start with the earlier validated expression, not a fitted answer or /tmp cache.
    The model-specific functions below are example fixtures only. The function
    under test remains the process-independent ordinary compactor. *)

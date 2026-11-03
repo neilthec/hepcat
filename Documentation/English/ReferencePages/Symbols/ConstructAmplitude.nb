@@ -31,6 +31,20 @@ out the complete constructive workflow. Supply an ordered all-ingoing process \
 list, a diagram model and a factorization model. Routine calls need only \
 those three arguments; the algorithm chooses its effort settings \
 automatically."}], "Notes"],
+  Cell[TextData[{"The default ",
+     Cell[BoxData[RowBox[{"\"PolePreference\"", " ", "->", " ",
+         "\"AllPhysical\""}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "favors", " ", "a", " ", "final", " ", "form",
+         " ", "whose", " ", "denominator", " ", "factors", " ", "are", " ",
+         "physical", " ", "propagators", ".", " ", "Use", " "}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{"\"PolePreference\"", " ", "->",
+         " ", "\"AllSpurious\""}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "to", " ", "favor", " ", "admissible", " ",
+         "massless", "-", "reference", " ", "forms", " ", "instead", ",",
+         " ", "or", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"\"Mixed\""}]], "InlineFormula"], " to admit both. \
+The requested choice is passed through preparation and completion; every \
+result must still pass the same mandatory checks."}], "Notes"],
   Cell[TextData[{"The diagram model supplies the interactions used by ",
      ButtonBox["CreateDiagrams", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/CreateDiagrams"], ". The factorization \
@@ -64,7 +78,15 @@ pass at the normal validation parameter assignments. This is sampled \
 validation of that expression, not a uniqueness proof or a change to the \
 strict behavior of ", ButtonBox["CompleteHighEnergy", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/CompleteHighEnergy"],
-     " on its own."}], "Notes"], Cell["What happens during a construction",
+     " on its own."}], "Notes"],
+  Cell[TextData[{"The final display reports the run seed, total time, ",
+     ButtonBox["SpinorExpressionComplexity", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SpinorExpressionComplexity"], " score \
+and check table before returning the expression. Detailed output stores the \
+same score as ", Cell[BoxData[RowBox[{"\"Complexity\""}]], "InlineFormula"],
+     ". If the bounded complexity measurement cannot finish, that entry is an \
+explanatory Missing value; it is never replaced by a different size measure \
+such as LeafCount."}], "Notes"], Cell["What happens during a construction",
    "NotesSection"], Cell[TextData[{"HEPCAT generates the diagrams and \
 prepares their expressions, then builds the known factorization channels. ",
      ButtonBox["CompleteFactorization", BaseStyle -> "Link",
@@ -83,14 +105,14 @@ remaining correction directions are retained. In particular, the final \
 simplification does not apply diagram-local internal-shell conditions to the \
 assembled amplitude."}], "Notes"],
   Cell[TextData[{"The progress display names the current stage and shows both \
-its elapsed time and the total time. At the end, the function prints the \
-total time, run seed and check results before returning. ",
-     Cell[BoxData[RowBox[{"\"ProgressReporting\"", " ", "->", " ",
-         "False"}]], "InlineFormula"],
-     Cell[BoxData[RowBox[{" ", "and", " "}]], "InlineFormula"],
-     Cell[BoxData[RowBox[{"\"PrintReport\"", " ", "->", " ", "False"}]],
-      "InlineFormula"], " suppress those displays when running a script."}],
-   "Notes"], Cell["Checking one fixed representative", "NotesSection"],
+its elapsed time and the total time. At the end, the function prints the run \
+seed, total time, final complexity score and check results before returning. \
+", Cell[BoxData[RowBox[{"\"ProgressReporting\"", " ", "->", " ", "False"}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{" ", "and", " "}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{"\"PrintReport\"", " ", "->",
+         " ", "False"}]], "InlineFormula"],
+     " suppress those displays when running a script."}], "Notes"],
+  Cell["Checking one fixed representative", "NotesSection"],
   Cell[TextData[{"A factorization solve can leave an affine family: one \
 particular expression plus free coefficients multiplying other expressions. \
 Some of those directions may vanish by ordinary identities, but certifying \
@@ -136,14 +158,18 @@ its coefficient vanishes."}], "Notes"], Cell["Useful choices",
    "NotesSection"],
   Cell[TextData[{Cell[BoxData[RowBox[{"\"PolePreference\"", " ", "->", " ",
          "\"AllPhysical\""}]], "InlineFormula"],
-     Cell[BoxData[RowBox[{" ", "asks", " ", "the", " ", "workflow", " ",
-         "to", " ", "favor", " ", "a", " ", "final", " ", "representation",
-         " ", "with", " ", "physical", " ", "denominator", " ", "poles", ".",
-         " "}]], "InlineFormula"], Cell[BoxData[RowBox[{"\"AllSpurious\""}]],
-      "InlineFormula"], " and the other supported reference choices favor \
-different intermediate forms. This is a preference within the available \
-search, not permission to relax a physical check or a promise of a globally \
-shortest answer."}], "Notes"],
+     Cell[BoxData[RowBox[{" ", "is", " ", "the", " ", "default", ".", " ",
+         "It", " ", "favors", " ", "a", " ", "final", " ", "representation",
+         " ", "with", " ", "physical", " ", "propagator", " ",
+         "denominators", ".", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"\"AllSpurious\""}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "favors", " ", "admissible", " ", "massless",
+         "-", "reference", " ", "denominators", ",", " ", "while", " "}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{"\"Mixed\""}]],
+      "InlineFormula"], " admits both. These choices guide preparation and \
+completion; none weakens a mandatory check or promises a globally shortest \
+expression. Details report whether the requested physical-only representation \
+was achieved."}], "Notes"],
   Cell[TextData[{"Use ", Cell[BoxData[RowBox[{"\"FeynmanModel\"", " ", "->",
          " ", "feynmanModel"}]], "InlineFormula"],
      " when you have an independent ", ButtonBox["FeynmanModel",
@@ -195,13 +221,15 @@ investigation, not required setup for every calculation."}], "Notes"],
        Cell["Default", "TableHeader"], Cell["Meaning", "TableHeader"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"PolePreference\""}]],
            "InlineFormula"]}], "TableText"],
-       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+       Cell[TextData[{Cell[BoxData[RowBox[{"\"AllPhysical\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{"Reference and representation preference shared by \
-preparation and completion. Automatic compares or inherits admissible \
-choices; \"AllPhysical\", \"AllSpurious\" and \"Mixed\" bias pole forms, \
-while cyclic/common/independent reference choices and None are also \
-available. Required checks remain unchanged."}], "TableText"]},
+preparation and completion. ConstructAmplitude defaults to \"AllPhysical\"; \
+choose \"AllSpurious\" or \"Mixed\" explicitly for a different preference. \
+The individual preparation/completion functions retain their own Automatic \
+comparison or inheritance rules. Cyclic/common/independent reference choices \
+and None are also available. Required checks remain unchanged."}],
+        "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"ParameterRules\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
@@ -388,31 +416,43 @@ positive-helicity amplitude with normal automatic defaults."}],
       "qedModel", "]"}]], "Input"], Cell["This example writes files, starts a \
 longer calculation, or requires an optional external tool. Evaluate it when \
 you want to perform that operation.", "ExampleText"],
-  Cell[TextData[
-    {"Choose a physical-pole representation and retain the complete run \
-report."}], "ExampleText"],
+  Cell[TextData[{"Retain the complete run report while using the default \
+physical-pole preference."}], "ExampleText"],
   Cell[BoxData[RowBox[{"qedModel", " ", "=", " ", "ReadModel", "[",
       "modelDirectory", ",", " ", "2", "]", ";", "\n", "knownQEDModel", " ",
       "=", " ", "ReadModel", "[", "modelDirectory", ",", " ", "3", "]", ";",
       "\n", "ConstructAmplitude", "[", "{", "\"e\"", ",", " ", "\"E\"", ",",
       " ", "\"A.+\"", ",", " ", "\"A.+\"", ",", " ", "\"A.+\"", "}", ",",
-      " ", "qedModel", ",", " ", "knownQEDModel", ",", " ",
-      "\"PolePreference\"", " ", "->", " ", "\"AllPhysical\"", ",", " ",
-      "\"Output\"", " ", "->", " ", "\"Details\"", ",", " ",
-      "\"RandomSeed\"", " ", "->", " ", "314159", "]"}]], "Input"],
-  Cell["This example writes files, starts a longer calculation, or requires \
-an optional external tool. Evaluate it when you want to perform that \
-operation.", "ExampleText"],
+      " ", "qedModel", ",", " ", "knownQEDModel", ",", " ", "\"Output\"",
+      " ", "->", " ", "\"Details\"", ",", " ", "\"RandomSeed\"", " ", "->",
+      " ", "314159", "]"}]], "Input"], Cell["This example writes files, \
+starts a longer calculation, or requires an optional external tool. Evaluate \
+it when you want to perform that operation.", "ExampleText"],
   Cell[TextData[{"Include an independent Feynman model and inspect whether a \
 fixed representative was selected. Set feynmanModelDirectory to the directory \
 containing your matching Feynman model."}], "ExampleText"],
-  Cell[BoxData[RowBox[{"feynmanModel", " ", "=", " ", "ReadModel", "[",
-      "feynmanModelDirectory", ",", " ", "2", "]", ";", "\n", "report", " ",
-      "=", " ", "ConstructAmplitude", "[", "{", "\"e\"", ",", " ", "\"E\"",
-      ",", " ", "\"A.+\"", ",", " ", "\"A.+\"", "}", ",", " ", "qedModel",
-      ",", " ", "qedModel", ",", " ", "\"FeynmanModel\"", " ", "->", " ",
-      "feynmanModel", ",", " ", "\"Output\"", " ", "->", " ", "\"Details\"",
-      "]", ";", "\n", "report", "[", "\"RepresentativeSelection\"", "]"}]],
+  Cell[BoxData[RowBox[{"qedModel", " ", "=", " ", "ReadModel", "[",
+      "modelDirectory", ",", " ", "2", "]", ";", "\n", "feynmanModel", " ",
+      "=", " ", "ReadModel", "[", "feynmanModelDirectory", ",", " ", "2",
+      "]", ";", "\n", "report", " ", "=", " ", "ConstructAmplitude", "[",
+      "{", "\"e\"", ",", " ", "\"E\"", ",", " ", "\"A.+\"", ",", " ",
+      "\"A.+\"", "}", ",", " ", "qedModel", ",", " ", "qedModel", ",", " ",
+      "\"FeynmanModel\"", " ", "->", " ", "feynmanModel", ",", " ",
+      "\"Output\"", " ", "->", " ", "\"Details\"", "]", ";", "\n", "report",
+      "[", "\"RepresentativeSelection\"", "]"}]], "Input"],
+  Cell["This example writes files, starts a longer calculation, or requires \
+an optional external tool. Evaluate it when you want to perform that \
+operation.", "ExampleText"],
+  Cell[TextData[{"Request an admissible spurious-pole representation \
+explicitly. The checker still requires cancellation of all discovered \
+spurious poles."}], "ExampleText"],
+  Cell[BoxData[RowBox[{"qedModel", " ", "=", " ", "ReadModel", "[",
+      "modelDirectory", ",", " ", "2", "]", ";", "\n", "knownQEDModel", " ",
+      "=", " ", "ReadModel", "[", "modelDirectory", ",", " ", "3", "]", ";",
+      "\n", "ConstructAmplitude", "[", "{", "\"e\"", ",", " ", "\"E\"", ",",
+      " ", "\"A.+\"", ",", " ", "\"A.+\"", ",", " ", "\"A.-\"", "}", ",",
+      " ", "qedModel", ",", " ", "knownQEDModel", ",", " ",
+      "\"PolePreference\"", " ", "->", " ", "\"AllSpurious\"", "]"}]],
    "Input"], Cell["This example writes files, starts a longer calculation, or \
 requires an optional external tool. Evaluate it when you want to perform that \
 operation.", "ExampleText"], Cell["See Also", "SeeAlsoSection"],
@@ -429,8 +469,10 @@ operation.", "ExampleText"], Cell["See Also", "SeeAlsoSection"],
      ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"], "  \[Bullet]  ",
      ButtonBox["WriteSPINASProcess", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/WriteSPINASProcess"]}], "SeeAlso"],
-  Cell["Related Guides", "MoreAboutSection"],
+      ButtonData -> "paclet:HEPCAT/ref/WriteSPINASProcess"], "  \[Bullet]  ",
+     ButtonBox["SpinorExpressionComplexity", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SpinorExpressionComplexity"]}],
+   "SeeAlso"], Cell["Related Guides", "MoreAboutSection"],
   Cell[TextData[{ButtonBox["Constructing and Completing Amplitudes",
       BaseStyle -> "Link", ButtonData ->
        "paclet:HEPCAT/guide/AmplitudeConstruction"], "  \[Bullet]  ",

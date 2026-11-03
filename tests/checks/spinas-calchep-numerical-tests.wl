@@ -53,10 +53,11 @@ check["question-mark help names the runnable results copy",
   StringContainsQ[WriteSPINASProcess::usage, "build/results/n_calchep"] &&
     !StringContainsQ[WriteSPINASProcess::usage, "calchep/n_calchep"]];
 snGeneratedCMake = Import[snUnavailable["Files"]["CMake"], "Text"];
-check["CMake copies the runnable numerical executable instead of linking it into build",
+check["CMake links directly into results for single and multiple configurations",
   StringContainsQ[snGeneratedCMake, "set(CALCHEP_SESSION \"${CMAKE_CURRENT_BINARY_DIR}/results\")"] &&
-    StringContainsQ[snGeneratedCMake, "-E copy \"$<TARGET_FILE:n_calchep>\""] &&
-    !StringContainsQ[snGeneratedCMake, "create_symlink \"$<TARGET_FILE:n_calchep>\""]];
+    StringContainsQ[snGeneratedCMake, "RUNTIME_OUTPUT_DIRECTORY \"${CALCHEP_SESSION}$<0:>\""] &&
+    !StringContainsQ[snGeneratedCMake, "-E copy \"$<TARGET_FILE:n_calchep>\""] &&
+    StringContainsQ[snGeneratedCMake, "-E remove -f \"${CMAKE_CURRENT_BINARY_DIR}/n_calchep\""]];
 snAdapter = Import[snUnavailable["Files"]["CalcHEPNumericalSource"], "Text"];
 check["the numerical adapter calls SPINAS rather than symbolic CalcHEP generation",
   StringContainsQ[snAdapter, "numerical_unavailable"] &&
@@ -138,7 +139,8 @@ If[StringQ[snCalcHEP] && DirectoryQ[snCalcHEP] &&
       Lookup[snConfiguration, "Status", None] === "AVAILABLE" &&
         Lookup[Lookup[snManifest, "CalcHEPValidation", <||>], "Status", None] === "UNAVAILABLE"];
     snBinaries = FileNames["n_calchep", snBuilt["Directory"], Infinity];
-    check["the generated project contains a genuine n_calchep executable", snBinaries =!= {}];
+    check["the generated project has exactly one numerical launcher in results",
+      snBinaries === {FileNameJoin[{snBuilt["Directory"], "build", "results", "n_calchep"}]}];
     If[snBinaries =!= {},
       snPreferred = Select[snBinaries, DirectoryQ[FileNameJoin[{DirectoryName[#], "aux"}]] &];
       snExecutable = First[If[snPreferred === {}, snBinaries, snPreferred]];

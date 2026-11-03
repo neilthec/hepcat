@@ -51,7 +51,9 @@ smeiCheck["Build True prepares the movable native process before any launcher ru
     FileNames["unweighted_events*", FileNameJoin[{smeiExport["Directory"], "build", "PROC_eeAA", "Events"}], Infinity] === {}];
 smeiConfiguration = smeiExport["MadEventNumerical"];
 smeiCheck["the chosen numerical model and launcher are available",
-  smeiConfiguration["Status"] === "AVAILABLE" && FileExistsQ[smeiConfiguration["Executable"]]];
+  smeiConfiguration["Status"] === "AVAILABLE" && FileExistsQ[smeiConfiguration["Executable"]] &&
+    smeiConfiguration["Executable"] === FileNameJoin[{smeiExport["Directory"], "build", "PROC_eeAA", "bin", "madevent"}] &&
+    !FileExistsQ[FileNameJoin[{smeiExport["Directory"], "build", "eeAA_madevent"}]]];
 If[!TrueQ[smeiConfiguration["Status"] === "AVAILABLE"],
   Print["CONFIGURATION FAILURE: ", InputForm[smeiConfiguration]]; Exit[1]];
 smeiScaledFamily = {First[#], 2 Last[#]} & /@ smeiFamily;
@@ -64,9 +66,8 @@ If[!AssociationQ[smeiScaledExport], Print["SCALED EXPORT FAILURE: ", InputForm[s
 smeiDriver = FileNameJoin[{smeiRoot, "tests", "checks", "madevent-integration-driver.py"}];
 Print["Running native MadEvent integration, charge rebinding and mass rebinding checks."];
 smeiRun = RunProcess[{smeiConfiguration["PythonExecutable"], smeiDriver,
-  "--project", smeiExport["Directory"], "--launcher", smeiConfiguration["Executable"],
+  "--project", smeiExport["Directory"],
   "--scaled-project", smeiScaledExport["Directory"],
-  "--scaled-launcher", smeiScaledExport["MadEventNumerical"]["Executable"],
   "--spinas-fixture", smeiSpinasFixture,
   "--timeout", "900"}];
 smeiCheck["native survey/refine, unweighted events and parameter changes succeed",

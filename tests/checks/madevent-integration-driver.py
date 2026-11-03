@@ -141,14 +141,11 @@ def unavailable_originals(paths):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--project", type=Path, required=True)
-    parser.add_argument("--launcher", type=Path, required=True)
     parser.add_argument("--scaled-project", type=Path, required=True)
-    parser.add_argument("--scaled-launcher", type=Path, required=True)
     parser.add_argument("--spinas-fixture", type=Path, required=True)
     parser.add_argument("--timeout", type=float, default=900)
     args = parser.parse_args()
     project = args.project.resolve()
-    launcher = args.launcher.resolve()
     workspace = project / "build"
     require(workspace.is_dir(), "The compiled export must have a build directory")
     runtime = load_runtime(project)
@@ -158,7 +155,9 @@ def main():
 
     def launch(arguments, log_name):
         with (project / log_name).open("w") as log:
-            result = subprocess.run([str(launcher)] + arguments, cwd=workspace,
+            result = subprocess.run([configuration.get("PythonExecutable") or sys.executable,
+                str(project / "madevent-runtime.py"), "--configuration",
+                str(project / "madevent-config.json")] + arguments, cwd=workspace,
                 stdout=log, stderr=subprocess.STDOUT, timeout=args.timeout)
         require(result.returncode == 0, "MadEvent launch failed; inspect " + str(project / log_name))
 
@@ -228,12 +227,14 @@ def main():
     # A silent fallback to MG's own HELAS expression would leave this rate
     # unchanged instead of producing the required factor of four.
     scaled_project = args.scaled_project.resolve()
-    scaled_launcher = args.scaled_launcher.resolve()
+    scaled_configuration = json.loads((scaled_project / "madevent-config.json").read_text())
     scaled_workspace = scaled_project / "build"
     def launch_scaled(arguments, log_name):
         log_path = scaled_project / log_name
         with log_path.open("w") as log:
-            result = subprocess.run([str(scaled_launcher)] + arguments,
+            result = subprocess.run([scaled_configuration.get("PythonExecutable") or sys.executable,
+                str(scaled_project / "madevent-runtime.py"), "--configuration",
+                str(scaled_project / "madevent-config.json")] + arguments,
                 cwd=scaled_workspace, stdout=log, stderr=subprocess.STDOUT,
                 timeout=args.timeout)
         require(result.returncode == 0, "Scaled MadEvent launch failed; inspect " + str(log_path))

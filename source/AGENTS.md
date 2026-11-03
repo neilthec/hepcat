@@ -88,10 +88,13 @@ factorization model. Resource/effort options default to `Automatic`; do not put
 numeric tuning bags into user examples merely to restate normal behavior.
 `FeynmanModel` is an optional semantic input selecting an independent benchmark,
 not a resource setting that can be guessed from a constructive model.
-With no explicit pole prescription in construction or its preparation inputs,
-automatic completion may first try compact physical sources, then fall back to
-the inferred reference choice within the shared deadline. Explicit pole choices
-must remain authoritative independently of resource overrides.
+`ConstructAmplitude` defaults to `"PolePreference" -> "AllPhysical"`. An explicit
+`"AllSpurious"`, `"Mixed"` or another supported choice must remain authoritative
+through preparation and completion, independently of resource overrides. The
+individual preparation/completion functions retain their own `Automatic`
+comparison or inheritance rules. Final output reports the ordinary
+`SpinorExpressionComplexity` score, or an honest Missing value if its bounded
+measurement cannot finish; never substitute a leaf count for that score.
 
 The active symbolic workflow does not require neural models or training. The
 earlier machine-learning simplifier is preserved on the `ml-simplify` branch.
@@ -544,7 +547,9 @@ Unsupported input returns `Failure` before writing project files.
 The separate `n_calchep` numerical target must use the supplied SPINAS squared
 amplitude directly through CalcHEP's numerical ABI. Do not invoke the symbolic
 generator or require a counterpart CalcHEP model for this integration backend.
-Deploy an actual executable copy at `build/results/n_calchep`, not a symlink.
+Link the numerical executable directly at `build/results/n_calchep`, not a symlink
+or a duplicate in the build root. Keep this location for multi-configuration
+generators as well as ordinary single-configuration builds.
 Resolve `results` relative to `CMAKE_CURRENT_BINARY_DIR`, including a custom
 build directory. Generated numerical files must stay out of the source tree.
 This `results` directory holds the runnable CalcHEP numerical session. Keep
@@ -559,21 +564,19 @@ gauge-restoration operations must not silently change the supplied amplitude.
 Test genuine numerical integration and parameter changes in private workspaces,
 without modifying the installed CalcHEP or the user's exported formulas.
 With an explicitly configured MadGraph model, the same `WriteSPINASProcess`
-export also creates a `<ProcessName>_madevent` launcher alongside the independent
-MadGraph validator. `source/madevent-runtime.py` lazily creates a private native
-LO MadEvent process and replaces its raw fixed-spin MATRIX with the exported
-SPINAS amplitude. Its default workspace is the compiled project's build
-directory, determined from the build metadata. Launching `./build/eeAA_madevent`
-from source must still create `build/PROC_eeAA`; the caller's current directory
-must not select the default workspace. Keep exported source and library paths
-independent of that output workspace. `--work-directory DIR` explicitly selects
-another workspace; print full card, HTML and event locations at startup.
+export configures a private native LO MadEvent process. CMake calls
+`source/madevent-runtime.py` directly during the normal build, replacing its
+raw fixed-spin MATRIX with the exported SPINAS amplitude. The only runtime
+launcher is `build/PROC_<ProcessName>/bin/madevent`; do not create a duplicate
+`<ProcessName>_madevent` executable in the build root. Validation/test binaries
+remain there. The builder receives the actual CMake build's link metadata,
+so alternative build directories retain their own numerical sessions.
 Preserve earlier sessions rather than moving or overwriting their results.
 The prepared `PROC_<ProcessName>` directory must contain every HEPCAT/SPINAS runtime
 dependency, including its amplitude sources and headers, private model support
 and numerical libraries. Prefer the actual static SPINAS archive when packaging;
 do not leave its linking instructions pointed at the disposable export/build
-directory or SPINAS checkout. The initial outer launcher may use the export, but
+directory or SPINAS checkout. The build-time Python helper may use the export, but
 the prepared directory's `bin/madevent` must run after moving that whole folder
 and making the original export/build unavailable. Move a prepared process
 outside its containing build directory before deleting that build directory

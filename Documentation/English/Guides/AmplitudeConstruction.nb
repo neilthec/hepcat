@@ -28,14 +28,21 @@ time."}], "GuideAbstract"],
 remaining allowed freedom to address the high-energy conditions while \
 retaining the other constraints."}], "GuideAbstract"],
   Cell[TextData[
-    {"For an ordinary calculation, start with the defaults. Set ",
-     Cell[BoxData[RowBox[{"\"PolePreference\""}]], "InlineFormula"], " when \
-you want to favor a form with physical or spurious reference poles. A \
-preference guides the search; the final checks still decide whether the \
-proposed result is acceptable. A clock, an insufficient correction space or \
-an unresolved comparison can prevent completion, and the function reports \
-that rather than returning an unchecked result as a success."}],
-   "GuideAbstract"], Cell[TextData[{"If you supply an independent ",
+    {"For an ordinary calculation, start with the defaults, including ",
+     Cell[BoxData[RowBox[{"\"PolePreference\"", " ", "->", " ",
+         "\"AllPhysical\""}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{".", " ", "Set", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"\"PolePreference\"", " ", "->", " ",
+         "\"AllSpurious\""}]], "InlineFormula"], " or another supported \
+choice when you want a different representation preference. The final checks \
+still decide whether the proposed result is acceptable. A clock, an \
+insufficient correction space or an unresolved comparison can prevent \
+completion, and the function reports that rather than returning an unchecked \
+result as a success. Successful output includes the final ",
+     ButtonBox["SpinorExpressionComplexity", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/SpinorExpressionComplexity"],
+     " score with its timing and checks."}], "GuideAbstract"],
+  Cell[TextData[{"If you supply an independent ",
      Cell[BoxData[RowBox[{"\"FeynmanModel\""}]], "InlineFormula"], ", ",
      ButtonBox["ConstructAmplitude", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ConstructAmplitude"], " can validate \

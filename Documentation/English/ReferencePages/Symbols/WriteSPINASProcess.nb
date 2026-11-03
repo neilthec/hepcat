@@ -222,11 +222,13 @@ independent validation."}], "Notes"],
      Cell[BoxData[RowBox[{"CalcHEPModel"}]], "InlineFormula"],
      " is not required for this numerical backend."}], "Notes"],
   Cell[TextData[{"When the CalcHEP numerical libraries are available, the \
-build places the actual executable copy at ",
+build links the executable directly at ",
      Cell[BoxData[RowBox[{"build", "/", "results", "/", "n", "_",
          "calchep"}]], "InlineFormula"],
-     Cell[BoxData[RowBox[{".", " ", "From", " ", "the", " ", "build", " ",
-         "directory", ",", " ", "enter", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{",", " ", "without", " ", "a", " ", "second", " ",
+         "copy", " ", "in", " ", "the", " ", "build", " ", "root", ".", " ",
+         "From", " ", "the", " ", "build", " ", "directory", ",", " ",
+         "enter", " "}]], "InlineFormula"],
      Cell[BoxData[RowBox[{"results"}]], "InlineFormula"],
      Cell[BoxData[RowBox[{" ", "and", " ", "run", " "}]], "InlineFormula"],
      Cell[BoxData[RowBox[{".", "/", "n", "_", "calchep"}]], "InlineFormula"],
@@ -249,33 +251,30 @@ HEPCAT/SPINAS amplitude. Independent MadGraph validation remains a separate \
 calculation using MadGraph's own amplitude."}], "Notes"],
   Cell[TextData[{"For a process named ", Cell[BoxData[RowBox[{"eeAA"}]],
       "InlineFormula"], Cell[BoxData[RowBox[{",", " ", "a", " ", "normal",
-         " ", "build", " ", "creates", " "}]], "InlineFormula"],
-     Cell[BoxData[RowBox[{"build", "/", "eeAA", "_", "madevent"}]],
-      "InlineFormula"], Cell[BoxData[RowBox[{" ", "and", " ", "prepares",
-         " ", "the", " ", "movable", " "}]], "InlineFormula"],
-     Cell[BoxData[RowBox[{"build", "/", "PROC", "_", "eeAA"}]],
-      "InlineFormula"], Cell[BoxData[RowBox[{" ", "numerical", " ",
-         "process", ".", " ", "This", " ", "compiles", " ", "MadEvent", " ",
-         "with", " ", "the", " ", "exported", " ", "HEPCAT", "/", "SPINAS",
-         " ", "amplitude", " ", "but", " ", "does", " ", "not", " ",
-         "generate", " ", "events", ".", " ", "Enter", " "}]],
+         " ", "build", " ", "prepares", " ", "the", " ", "movable", " "}]],
       "InlineFormula"], Cell[BoxData[RowBox[{"build", "/", "PROC", "_",
          "eeAA"}]], "InlineFormula"],
-     Cell[BoxData[RowBox[{" ", "and", " ", "run", " "}]], "InlineFormula"],
-     Cell[BoxData[RowBox[{".", "/", "bin", "/", "madevent"}]],
-      "InlineFormula"], " for the native menu."}], "Notes"],
-  Cell[TextData[{"The default workspace is the compiled export's build \
-directory, regardless of the current shell directory. Thus ",
-     Cell[BoxData[RowBox[{".", "/", "build", "/", "eeAA", "_", "madevent"}]],
-      "InlineFormula"], Cell[BoxData[RowBox[{" ", "from", " ", "the", " ",
-         "exported", " ", "source", " ", "directory", " ", "still", " ",
-         "uses", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "numerical", " ", "process", ".", " ", "Its",
+         " ", "native", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"bin", "/", "madevent"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "is", " ", "the", " ", "only", " ", "runtime",
+         " ", "launcher", ";", " ", "no", " ", "duplicate", " "}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{"eeAA", "_", "madevent"}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{" ", "executable", " ", "is",
+         " ", "created", " ", "in", " ", "the", " ", "build", " ", "root",
+         ".", " ", "This", " ", "compiles", " ", "MadEvent", " ", "with",
+         " ", "the", " ", "exported", " ", "HEPCAT", "/", "SPINAS", " ",
+         "amplitude", " ", "but", " ", "does", " ", "not", " ", "generate",
+         " ", "events", ".", " ", "Enter", " "}]], "InlineFormula"],
      Cell[BoxData[RowBox[{"build", "/", "PROC", "_", "eeAA"}]],
-      "InlineFormula"], Cell[BoxData[RowBox[{".", " ", "Use", " "}]],
-      "InlineFormula"], Cell[BoxData[RowBox[{"--", "work", "-", "directory",
-         " ", "DIR"}]], "InlineFormula"], " to select another workspace \
-explicitly. The launcher prints the card, HTML and event locations."}],
-   "Notes"], Cell[TextData[{"After preparation, enter ",
+      "InlineFormula"], Cell[BoxData[RowBox[{" ", "and", " ", "run", " "}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{".", "/", "bin", "/",
+         "madevent"}]], "InlineFormula"], " for the native menu."}],
+   "Notes"], Cell[TextData[{"CMake calls the Python builder directly and \
+keeps the numerical process in its build directory, including a custom build \
+location. The build prints the card, HTML and event locations. Validation and \
+example executables stay in the build root."}], "Notes"],
+  Cell[TextData[{"After preparation, enter ",
      Cell[BoxData[RowBox[{"PROC", "_", "eeAA"}]], "InlineFormula"],
      Cell[BoxData[RowBox[{" ", "and", " ", "run", " "}]], "InlineFormula"],
      Cell[BoxData[RowBox[{".", "/", "bin", "/", "madevent"}]],
@@ -308,13 +307,14 @@ cards and events. An explicit CMake setting ",
      Cell[BoxData[RowBox[{" ", "skips", " ", "automatic", " ", "preparation",
          " ", "for", " ", "a", " ", "C", "++", "-", "only", " ", "build",
          ";", " "}]], "InlineFormula"],
-     Cell[BoxData[RowBox[{".", "/", "build", "/", "eeAA", "_", "madevent",
-         " ", "--", "prepare"}]], "InlineFormula"], " can prepare it later. \
-An incompatible existing session is reported rather than overwritten."}],
-   "Notes"], Cell[TextData[{"Current support is colorless leading-order tree \
-simulation. Fixed massless helicities are retained, massive spins are summed, \
-and incoming averages and final identical-particle factors are applied once. \
-NLO matching, massive polarized beams, MadSpin and coherent production-decay \
+     Cell[BoxData[RowBox[{"cmake", " ", "--", "build", " ", "build", " ",
+         "--", "target", " ", "eeAA", "_", "madevent", "_", "process"}]],
+      "InlineFormula"], " can prepare it later. An incompatible existing \
+session is reported rather than overwritten."}], "Notes"],
+  Cell[TextData[{"Current support is colorless leading-order tree simulation. \
+Fixed massless helicities are retained, massive spins are summed, and \
+incoming averages and final identical-particle factors are applied once. NLO \
+matching, massive polarized beams, MadSpin and coherent production-decay \
 correlations require additional interfaces and are not supplied by this \
 bridge."}], "Notes"], Cell["Options", "NotesSection"],
   Cell[BoxData[GridBox[{{Cell["Option", "TableHeader"],

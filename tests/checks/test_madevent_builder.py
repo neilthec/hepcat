@@ -52,6 +52,7 @@ class MadEventBuilderTests(unittest.TestCase):
     def make_export(self, config=None):
         config = self.config if config is None else config
         project = Path(config["ProcessDirectory"])
+        project.mkdir(parents=True, exist_ok=True)
         link_path = Path(config["BridgeLinkFile"])
         if not link_path.is_absolute():
             link_path = project / link_path
@@ -414,6 +415,25 @@ class MadEventBuilderTests(unittest.TestCase):
         self.assertEqual((process / "Cards" / "run_card.dat").read_text(), "requested run controls\n")
         self.assertEqual(builder.prepare(config, root=workspace), report)
         self.assertFalse((project / "build" / "madevent").exists())
+
+    def test_cli_uses_the_selected_cmake_build_link_file(self):
+        build = self.directory / "custom build"
+        config = dict(self.config, SessionDirectory="PROC_eeAA",
+                      SessionDirectoryBase="BuildDirectory",
+                      BridgeLinkFile=str(build / "madevent-link.json"))
+        process, _ = self.make_owned_run(build, config)
+        project = Path(config["ProcessDirectory"])
+        saved = dict(config, BridgeLinkFile="obsolete build/madevent-link.json")
+        path = project / "madevent-config.json"
+        path.write_text(json.dumps(saved))
+        with contextlib.redirect_stdout(io.StringIO()):
+            status = builder.main(["--configuration", str(path),
+                "--bridge-link-file", str(build / "madevent-link.json"), "--prepare"])
+        self.assertEqual(status, 0)
+        self.assertTrue((process / "bin" / "madevent").is_file())
+        self.assertFalse((project / "build" / "PROC_eeAA").exists())
+        self.assertEqual(json.loads(path.read_text())["BridgeLinkFile"],
+                         "obsolete build/madevent-link.json")
 
     def test_one_workspace_cannot_mix_different_exported_amplitudes(self):
         self.make_owned_run(self.directory)

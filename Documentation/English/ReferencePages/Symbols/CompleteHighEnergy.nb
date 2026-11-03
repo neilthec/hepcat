@@ -134,10 +134,12 @@ interaction ansatz."}], "TableText"]},
        Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{"Reference and representation preference shared by \
-preparation and completion. Automatic compares or inherits admissible \
-choices; \"AllPhysical\", \"AllSpurious\" and \"Mixed\" bias pole forms, \
-while cyclic/common/independent reference choices and None are also \
-available. Required checks remain unchanged."}], "TableText"]},
+preparation and completion. ConstructAmplitude defaults to \"AllPhysical\"; \
+choose \"AllSpurious\" or \"Mixed\" explicitly for a different preference. \
+The individual preparation/completion functions retain their own Automatic \
+comparison or inheritance rules. Cyclic/common/independent reference choices \
+and None are also available. Required checks remain unchanged."}],
+        "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"ParameterRules\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],

@@ -1313,7 +1313,8 @@
     "details": [
       "This is the preparation step between generating expressions and completing an amplitude. It contracts spin indices, chooses requested reference spinors, reduces spinor products and tries bounded improving identities. Unlike [CompleteFactorization](paclet:HEPCAT/ref/CompleteFactorization), it does not add missing physical contributions.",
       "Accepted inputs are one `{massRules, expression}` pair, a list of such diagram pairs, or the compact rows returned by [FactorizationAmplitudeChannels](paclet:HEPCAT/ref/FactorizationAmplitudeChannels). The ordinary output keeps the same format. You can inspect one prepared diagram or channel without unpacking a large report.",
-      "The mass declarations are part of the meaning of an input. A diagram may declare several internal cuts; a factorization row declares only its selected cut; a completed amplitude should carry external mass rules only. Preparation does not infer new on-shell conditions merely because a denominator appears in the expression."
+      "The mass declarations are part of the meaning of an input. A diagram may declare several internal cuts; a factorization row declares only its selected cut; a completed amplitude should carry external mass rules only. Preparation does not infer new on-shell conditions merely because a denominator appears in the expression.",
+      "For a complete amplitude, preparation can cancel a massless angle- or square-bracket denominator whose invariant factor becomes visible only after terms are combined. It expands numerator propagators by their exact definitions and uses the declared external masses and, when enabled, total momentum conservation. Physical propagator denominators remain off shell. Any nonzero polynomial remainder retains its original bracket denominator, so this pass does not discard regular terms or impose an internal shell condition. The bounded pass keeps the input when it finds no improvement. Standalone [ReduceSpinorProducts](paclet:HEPCAT/ref/ReduceSpinorProducts) still does not infer momentum conservation."
     ],
     "examples": [
       {
@@ -1552,9 +1553,11 @@
     ],
     "details": [
       "This is the main entry point when you want HEPCAT to carry out the complete constructive workflow. Supply an ordered all-ingoing process list, a diagram model and a factorization model. Routine calls need only those three arguments; the algorithm chooses its effort settings automatically.",
+      "The default `\"PolePreference\" -> \"AllPhysical\"` favors a final form whose denominator factors are physical propagators. Use `\"PolePreference\" -> \"AllSpurious\"` to favor admissible massless-reference forms instead, or `\"Mixed\"` to admit both. The requested choice is passed through preparation and completion; every result must still pass the same mandatory checks.",
       "The diagram model supplies the interactions used by [CreateDiagrams](paclet:HEPCAT/ref/CreateDiagrams). The factorization model supplies complete lower-point amplitudes used by [FactorizationAmplitudeChannels](paclet:HEPCAT/ref/FactorizationAmplitudeChannels). They can be the same model at four points, but the factorization model must contain enough higher-point information for larger processes.",
       "A successful ordinary call returns the final bare expression after all required checks pass. `\"Output\" -> \"Amplitude\"` instead returns `{externalMassRules, expression}`, which you can pass to [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes) again. `\"Output\" -> \"Details\"` retains the stage results, timings, seed and validation report.",
-      "An explicit `\"FeynmanModel\"` also allows the wrapper to validate one fixed factorization or high-energy representative before proving every alternative in its retained affine family equivalent. Every standard check and the independent Feynman comparison must pass at the normal validation parameter assignments. This is sampled validation of that expression, not a uniqueness proof or a change to the strict behavior of [CompleteHighEnergy](paclet:HEPCAT/ref/CompleteHighEnergy) on its own."
+      "An explicit `\"FeynmanModel\"` also allows the wrapper to validate one fixed factorization or high-energy representative before proving every alternative in its retained affine family equivalent. Every standard check and the independent Feynman comparison must pass at the normal validation parameter assignments. This is sampled validation of that expression, not a uniqueness proof or a change to the strict behavior of [CompleteHighEnergy](paclet:HEPCAT/ref/CompleteHighEnergy) on its own.",
+      "The final display reports the run seed, total time, [SpinorExpressionComplexity](paclet:HEPCAT/ref/SpinorExpressionComplexity) score and check table before returning the expression. Detailed output stores the same score as `\"Complexity\"`. If the bounded complexity measurement cannot finish, that entry is an explanatory Missing value; it is never replaced by a different size measure such as LeafCount."
     ],
     "examples": [
       {
@@ -1563,13 +1566,18 @@
         "evaluate": false
       },
       {
-        "description": "Choose a physical-pole representation and retain the complete run report.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nknownQEDModel = ReadModel[modelDirectory, 3];\nConstructAmplitude[{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"}, qedModel, knownQEDModel, \"PolePreference\" -> \"AllPhysical\", \"Output\" -> \"Details\", \"RandomSeed\" -> 314159]",
+        "description": "Retain the complete run report while using the default physical-pole preference.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nknownQEDModel = ReadModel[modelDirectory, 3];\nConstructAmplitude[{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"}, qedModel, knownQEDModel, \"Output\" -> \"Details\", \"RandomSeed\" -> 314159]",
         "evaluate": false
       },
       {
         "description": "Include an independent Feynman model and inspect whether a fixed representative was selected. Set feynmanModelDirectory to the directory containing your matching Feynman model.",
-        "input": "feynmanModel = ReadModel[feynmanModelDirectory, 2];\nreport = ConstructAmplitude[{\"e\", \"E\", \"A.+\", \"A.+\"}, qedModel, qedModel, \"FeynmanModel\" -> feynmanModel, \"Output\" -> \"Details\"];\nreport[\"RepresentativeSelection\"]",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nfeynmanModel = ReadModel[feynmanModelDirectory, 2];\nreport = ConstructAmplitude[{\"e\", \"E\", \"A.+\", \"A.+\"}, qedModel, qedModel, \"FeynmanModel\" -> feynmanModel, \"Output\" -> \"Details\"];\nreport[\"RepresentativeSelection\"]",
+        "evaluate": false
+      },
+      {
+        "description": "Request an admissible spurious-pole representation explicitly. The checker still requires cancellation of all discovered spurious poles.",
+        "input": "qedModel = ReadModel[modelDirectory, 2];\nknownQEDModel = ReadModel[modelDirectory, 3];\nConstructAmplitude[{\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\"}, qedModel, knownQEDModel, \"PolePreference\" -> \"AllSpurious\"]",
         "evaluate": false
       }
     ],
@@ -1580,7 +1588,8 @@
       "CompleteFactorization",
       "CompleteHighEnergy",
       "CheckAmplitudes",
-      "WriteSPINASProcess"
+      "WriteSPINASProcess",
+      "SpinorExpressionComplexity"
     ],
     "guide": "AmplitudeConstruction",
     "detail_sections": [
@@ -1589,7 +1598,7 @@
         "paragraphs": [
           "HEPCAT generates the diagrams and prepares their expressions, then builds the known factorization channels. [CompleteFactorization](paclet:HEPCAT/ref/CompleteFactorization) solves any physical residue deficits. The usual route then uses [CompleteHighEnergy](paclet:HEPCAT/ref/CompleteHighEnergy), prepares the completed expression with external identities and runs [CheckAmplitudes](paclet:HEPCAT/ref/CheckAmplitudes). When an explicit independent Feynman model is supplied, the wrapper can instead validate an already fixed representative as described below.",
           "The stages pass more than their displayed expressions to one another. Original channel targets, discarded preparation remainders and remaining correction directions are retained. In particular, the final simplification does not apply diagram-local internal-shell conditions to the assembled amplitude.",
-          "The progress display names the current stage and shows both its elapsed time and the total time. At the end, the function prints the total time, run seed and check results before returning. `\"ProgressReporting\" -> False` and `\"PrintReport\" -> False` suppress those displays when running a script."
+          "The progress display names the current stage and shows both its elapsed time and the total time. At the end, the function prints the run seed, total time, final complexity score and check results before returning. `\"ProgressReporting\" -> False` and `\"PrintReport\" -> False` suppress those displays when running a script."
         ]
       },
       {
@@ -1605,7 +1614,7 @@
       {
         "title": "Useful choices",
         "paragraphs": [
-          "`\"PolePreference\" -> \"AllPhysical\"` asks the workflow to favor a final representation with physical denominator poles. `\"AllSpurious\"` and the other supported reference choices favor different intermediate forms. This is a preference within the available search, not permission to relax a physical check or a promise of a globally shortest answer.",
+          "`\"PolePreference\" -> \"AllPhysical\"` is the default. It favors a final representation with physical propagator denominators. `\"AllSpurious\"` favors admissible massless-reference denominators, while `\"Mixed\"` admits both. These choices guide preparation and completion; none weakens a mandatory check or promises a globally shortest expression. Details report whether the requested physical-only representation was achieved.",
           "Use `\"FeynmanModel\" -> feynmanModel` when you have an independent [FeynmanModel](paclet:HEPCAT/ref/FeynmanModel) for the same process and want a full-amplitude comparison as well. That model is a separate physical input and is not guessed from the constructive model.",
           "`\"Parallelization\"` and `\"MaxKernels\"` control the use of local workers. `\"TimeConstraint\"` changes the overall budget. An integer `\"RandomSeed\"` replays the sampled kinematics; Automatic chooses and records a seed for the run. You do not need numerical parameter rules unless you want values different from those in the models."
         ]

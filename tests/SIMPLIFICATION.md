@@ -626,13 +626,16 @@ the independent comparison above: integration does not generate a symbolic
 CalcHEP process and needs no equivalent `CalcHEPModel`.
 
 With numerical CalcHEP libraries installed, the ordinary `"Build" -> True`
-export builds `build/n_calchep` and creates a separate `calchep` session
-directory. Start the program from that directory:
+export builds the runtime directly in `build/results/n_calchep`, alongside its
+CalcHEP numerical settings and outputs. Start the program from that directory:
 
 ```sh
-cd /path/to/exported/process/calchep
+cd /path/to/exported/process/build/results
 ./n_calchep
 ```
+
+There is no second `n_calchep` at the build root. Validation and example binaries
+remain in the build directory.
 
 Use CalcHEP's usual numerical menus to choose beams, inputs, cuts, histograms
 and integration settings. Its existing scripts also work from this directory:
@@ -1344,9 +1347,17 @@ generates and prepares the factorization channels, completes factorization,
 prepares that result, completes high-energy behavior, prepares once more,
 and runs the final checks. Ordinary output is the validated expression.
 The notebook display shows the current stage, its elapsed time and total
-elapsed time, refreshing once per second. At the end it prints total time,
-then the test table, before returning the expression. In a terminal, stage
+elapsed time, refreshing once per second. At the end it prints the run seed,
+total time, the final `SpinorExpressionComplexity` score and the test table,
+before returning the expression. Details retain that score as `"Complexity"`;
+a bounded measurement that cannot finish returns an explanatory Missing value. In a terminal, stage
 start/end messages and throttled child updates include both elapsed times.
+
+The construction default is `"PolePreference" -> "AllPhysical"`. Request
+`"AllSpurious"` explicitly when you want admissible massless-reference forms,
+or `"Mixed"` to admit both. The choice guides preparation and completion without
+changing any required validation. The individual stage functions keep their
+own Automatic behavior when called separately.
 
 The original factorization rows remain the physical-residue targets, while
 prepared channels and discarded remainders help completion.
@@ -3042,3 +3053,14 @@ external legs. Grouping the remaining denominators inside these blocks can
 expose the paired exchange currents of radiation amplitudes without a stored
 answer, a reference choice, or an on-shell assumption. Every accepted
 regrouping still has the independent-atom rational equality certificate.
+
+### Canceling apparent massless-bracket denominators
+
+Whole-amplitude preparation can expose an invariant factor only visible after
+combining numerator terms, then cancel a matching angle- or square-bracket
+denominator. This uses exact propagator definitions, declared external masses
+and the known external momentum-conservation relation when enabled. Physical
+propagator denominators remain off shell. A nonzero polynomial remainder keeps
+its original bracket denominator; no regular term is discarded. The bounded
+pass retains the input when no improvement is established. Standalone
+`ReduceSpinorProducts` still receives no implicit momentum-conservation rule.

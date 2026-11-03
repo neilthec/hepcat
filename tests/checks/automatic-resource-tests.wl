@@ -110,9 +110,10 @@ check["factorization's public resource controls default to Automatic",
 check["high-energy completion's public resource controls default to Automatic",
   AllTrue[{"TimeConstraint", "MaxCorrectionTerms", "Samples", "ValidationSamples"},
     (# /. Options[CompleteHighEnergy]) === Automatic &]];
-check["the constructor's sample, time, pole and worker settings are automatic",
-  AllTrue[{"TimeConstraint", "Samples", "ValidationSamples", "PolePreference", "Parallelization", "MaxKernels"},
-    (# /. Options[ConstructAmplitude]) === Automatic &]];
+check["the constructor defaults to physical poles with automatic resource settings",
+  ("PolePreference" /. Options[ConstructAmplitude]) === "AllPhysical" &&
+    AllTrue[{"TimeConstraint", "Samples", "ValidationSamples", "Parallelization", "MaxKernels"},
+      (# /. Options[ConstructAmplitude]) === Automatic &]];
 
 (* Discover an actual projected physical basis before falling back to a
    smaller space. This generic source catalog has two exact formal directions. *)

@@ -710,6 +710,8 @@ def prepare(data, root=None):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--configuration", required=True, type=Path)
+    parser.add_argument("--bridge-link-file", type=Path,
+                        help="Use numerical link metadata from this CMake build directory.")
     parser.add_argument("--work-directory", type=Path,
                         help="Create or reuse PROC_<ProcessName>/ under this directory (new exports default to their build directory).")
     parser.add_argument("--prepare", action="store_true", help="Generate and build MadEvent without launching a run.")
@@ -731,6 +733,8 @@ def main(argv=None):
             source = Path(config["ProcessDirectory"]).expanduser()
             if not source.is_absolute():
                 config["ProcessDirectory"] = str((base / source).resolve())
+        if args.bridge_link_file is not None:
+            config["BridgeLinkFile"] = str(args.bridge_link_file.expanduser().resolve())
         if args.timeout is not None:
             config["TimeConstraint"] = args.timeout
         report = prepare(config, root=args.work_directory)

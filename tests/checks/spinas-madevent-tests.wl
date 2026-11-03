@@ -58,7 +58,9 @@ If[AssociationQ[smeSelected],
   smeReference = smeSelectedManifest["MadGraphValidation"];
   smeCheck["numerical sessions default to the compiled build directory",
     smeNumerical["SessionDirectory"] === "PROC_madevent_stub" &&
-      smeNumerical["SessionDirectoryBase"] === "BuildDirectory"];
+      smeNumerical["SessionDirectoryBase"] === "BuildDirectory" &&
+      smeNumerical["Executable"] === FileNameJoin[{smeSelected["Directory"], "build",
+        "PROC_madevent_stub", "bin", "madevent"}]];
   smeCheck["both workflows preserve the explicitly chosen model and particle sector",
     smeNumerical["Status"] === "AVAILABLE" &&
       And @@ (smeNumerical[#] === smeReference[#] & /@
@@ -66,7 +68,9 @@ If[AssociationQ[smeSelected],
   smeCheck["both workflows ship their independent runtime files together",
     AllTrue[FileNameJoin[{smeSelected["Directory"], #}] & /@
       {"madgraph-validation.cpp", "madgraph-runtime.py", "madevent-spinas.cpp",
-       "madevent-main.cpp", "madevent-runtime.py", "madevent-config.json"}, FileExistsQ]];
+       "madevent-runtime.py", "madevent-config.json"}, FileExistsQ]];
+  smeCheck["source-only export does not emit an unused C++ launcher",
+    !FileExistsQ[FileNameJoin[{smeSelected["Directory"], "madevent-main.cpp"}]]];
   smeCheck["topology generation remains lazy during source-only export",
     !DirectoryQ[FileNameJoin[{smeSelected["Directory"], smeNumerical["SessionDirectory"]}]] &&
       !DirectoryQ[FileNameJoin[{smeSelected["Directory"], "build", smeNumerical["SessionDirectory"]}]] &&
@@ -78,17 +82,17 @@ If[AssociationQ[smeSelected],
         !StringContainsQ[source, "process->amp2("]]];
   smeCheck["normalization metadata retains one initial average and one photon factorial",
     smeNumerical["InitialSpinAverage"] == 4 && smeNumerical["SymmetryFactor"] == 1/2];
-  smeCheck["the optional static matrix bridge and launcher share the ordinary process library",
+  smeCheck["the optional static matrix bridge shares the ordinary process library without a duplicate launcher",
     With[{cmake = Import[smeSelected["Files"]["CMake"], "Text"]},
       StringContainsQ[cmake, "madevent_stub_madevent_matrix STATIC"] &&
-        StringContainsQ[cmake, "add_executable(madevent_stub_madevent"] &&
+        !StringContainsQ[cmake, "add_executable(madevent_stub_madevent"] &&
         StringContainsQ[cmake, "madevent-link.json"]]];
   smeCheck["an ordinary build prepares the native process without generating events",
     With[{cmake = Import[smeSelected["Files"]["CMake"], "Text"]},
       StringContainsQ[cmake, "option(HEPCAT_PREPARE_MADEVENT"] &&
-        StringContainsQ[cmake, "madevent_stub_madevent_process ALL"] &&
-        StringContainsQ[cmake, "madevent_stub_madevent>\" --prepare"] &&
-        StringContainsQ[cmake, "DEPENDS madevent_stub_madevent madevent_stub_madevent_matrix madevent_stub_process"] &&
+        StringContainsQ[cmake, "set(HEPCAT_MADEVENT_DEFAULT_TARGET ALL)"] &&
+        StringContainsQ[cmake, "--bridge-link-file \"${CMAKE_CURRENT_BINARY_DIR}/madevent-link.json\" --prepare"] &&
+        StringContainsQ[cmake, "DEPENDS madevent_stub_madevent_matrix madevent_stub_process"] &&
         !StringContainsQ[cmake, "--run "]]];
   smeCheck["the generated link metadata identifies headers and a static SPINAS archive for bundling",
     With[{cmake = Import[smeSelected["Files"]["CMake"], "Text"]},

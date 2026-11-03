@@ -41,6 +41,18 @@ A diagram may declare several internal cuts; a factorization row declares \
 only its selected cut; a completed amplitude should carry external mass rules \
 only. Preparation does not infer new on-shell conditions merely because a \
 denominator appears in the expression."}], "Notes"],
+  Cell[TextData[{"For a complete amplitude, preparation can cancel a massless \
+angle- or square-bracket denominator whose invariant factor becomes visible \
+only after terms are combined. It expands numerator propagators by their \
+exact definitions and uses the declared external masses and, when enabled, \
+total momentum conservation. Physical propagator denominators remain off \
+shell. Any nonzero polynomial remainder retains its original bracket \
+denominator, so this pass does not discard regular terms or impose an \
+internal shell condition. The bounded pass keeps the input when it finds no \
+improvement. Standalone ", ButtonBox["ReduceSpinorProducts",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ReduceSpinorProducts"],
+     " still does not infer momentum conservation."}], "Notes"],
   Cell["On-shell conditions and protected denominators", "NotesSection"],
   Cell[TextData[{ButtonBox["ReduceSpinContractions", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ReduceSpinContractions"], " and ",
@@ -194,10 +206,12 @@ larger search but does not prove that a shorter expression exists. ",
        Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{"Reference and representation preference shared by \
-preparation and completion. Automatic compares or inherits admissible \
-choices; \"AllPhysical\", \"AllSpurious\" and \"Mixed\" bias pole forms, \
-while cyclic/common/independent reference choices and None are also \
-available. Required checks remain unchanged."}], "TableText"]},
+preparation and completion. ConstructAmplitude defaults to \"AllPhysical\"; \
+choose \"AllSpurious\" or \"Mixed\" explicitly for a different preference. \
+The individual preparation/completion functions retain their own Automatic \
+comparison or inheritance rules. Cyclic/common/independent reference choices \
+and None are also available. Required checks remain unchanged."}],
+        "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"ExternalParticles\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],

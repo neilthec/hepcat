@@ -6,7 +6,7 @@
 Begin["ConstructiveDiagrams`"];
 ValidateMadGraph::usage = "ValidateMadGraph[directory] independently checks an exported SPINAS process against MadGraph at shared random physical momenta, with a separate result for every exported massless-helicity combination. ValidateMadGraph[particles, amplitude, model] checks one fixed-helicity all-ingoing expression. ValidateMadGraph[incoming -> outgoing, amplitudeEntries, model] first exports and builds a private SPINAS project. Massive spins are summed, not compared in potentially different spin bases. MadGraphPoints defaults to 1000 per helicity and MadGraphSeed -> Automatic chooses and reports a fresh replayable seed. Output -> Table returns a readable per-helicity table; Summary gives result counts and Details retains the complete numerical report and failed momenta. Specify MadGraphDirectory and MadGraphModel explicitly. MadGraphAllowedParticles -> All retains the selected theory; a list of positive absolute PDG codes, such as {11,22}, restricts intermediate particle types and includes their antiparticles. No theory or particle restriction is inferred from the HEPCAT model. MadGraphParameterMap and MadGraphParameterRules handle different parameter names or reference inputs. Squared amplitudes are compared, so overall phases do not affect the result. Colorless tree processes are supported; unsupported or unavailable comparisons are never reported as passing. This is numerical validation, not an analytic proof.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " Generated projects also expose validate_madgraph(options) and a process_validate_madgraph executable for independent fixed-massless-helicity validation. Specify MadGraphDirectory and MadGraphModel to select the independent installation and UFO theory. MadGraphAllowedParticles -> All retains all model particles; {11,22}, for example, restricts to electrons, positrons and photons using absolute PDG codes. MadGraphParameterMap relates differently named HEPCAT and UFO parameters; MadGraphParameterRules supplies explicit UFO external input values. RunMadGraphValidation -> True builds and runs MadGraphPoints -> 1000 shared points per helicity with MadGraphSeed -> Automatic. Fixed incoming or outgoing helicities are supported, and massive external spins are summed. Numerical mismatches remain FAIL, including losses of floating-point precision. When both reference checks are requested, both run independently even if the first fails. A failed requested check returns Failure with ExportResult retaining both reports and the generated files. Ordinary SPINAS execution does not require MadGraph.";
-WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " The same explicit MadGraph configuration also writes a process_madevent launcher. It creates a PROC_<ProcessName> directory in the compiled export's build directory by default and supplies the exported HEPCAT/SPINAS matrix element to MadEvent integration, unweighting and event output. Build -> True compiles the launcher and prepares build/PROC_<ProcessName> without generating events; --prepare safely reuses that process, and --work-directory DIR chooses a different working directory. The launcher prints the full HTML and event-output locations. Run and parameter cards adjust cuts, beams, masses and couplings. Fixed massless helicities and summed massive spins retain their specified averaging and symmetry factors. Current numerical coverage is colorless leading-order tree amplitudes; coherent decay sewing, NLO matching and a MadGraph massive-spin basis are not provided. The independent MadGraph validator continues to use MadGraph's own amplitude.";
+WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " The same explicit MadGraph configuration also configures a PROC_<ProcessName> numerical process. An ordinary build creates that directory in the compiled export's build directory by default and supplies the exported HEPCAT/SPINAS matrix element to MadEvent integration, unweighting and event output. Build -> True prepares build/PROC_<ProcessName> without generating events. Run its bin/madevent native launcher; no process_madevent executable is created in the build root. The build prints the full HTML and event-output locations. Run and parameter cards adjust cuts, beams, masses and couplings. Fixed massless helicities and summed massive spins retain their specified averaging and symmetry factors. Current numerical coverage is colorless leading-order tree amplitudes; coherent decay sewing, NLO matching and a MadGraph massive-spin basis are not provided. The independent MadGraph validator continues to use MadGraph's own amplitude.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " After preparation, move or copy the complete PROC_<ProcessName> directory, for example PROC_eeAA, and start its bin/madevent program. The prepared directory contains the required HEPCAT/SPINAS amplitude files and libraries and no longer depends on the original exported project or build directory. MadGraph, Python, the Fortran toolchain and system libraries remain external prerequisites.";
 Options[WriteSPINASProcess] = Join[Options[WriteSPINASProcess], {
   "MadGraphDirectory" -> None, "MadGraphModel" -> None, "MadGraphAllowedParticles" -> All,
@@ -197,7 +197,7 @@ spinasMadEventConfiguration[dir_String, name_String, ir_Association, config_Asso
     "ParameterRules" -> Map[N, config["ParameterRules"]],
     "BridgeLibrary" -> FileNameJoin[{dir, "build", "lib" <> name <> "_madevent_matrix.a"}],
     "BridgeLinkFile" -> FileNameJoin[{dir, "build", "madevent-link.json"}],
-    "Executable" -> FileNameJoin[{dir, "build", name <> "_madevent"}],
+    "Executable" -> FileNameJoin[{dir, "build", "PROC_" <> name, "bin", "madevent"}],
     "SessionDirectory" -> "PROC_" <> name, "SessionDirectoryBase" -> "BuildDirectory",
     "ParameterDefaults" -> defaults,
     "Parameters" -> MapThread[<|"Name" -> #1, "Value" -> #2|> &, {ir["ParameterNames"], defaults}],
@@ -276,27 +276,12 @@ spinasMadEventSource[name_String, ir_Association, config_Association] := Module[
     "  process.reset(); momenta_ready = false;", "  if (answer) *answer = 0;", "  return 1;", "}", ""}, "\n"]
 ];
 
-spinasMadEventMain[name_String, config_Association, dir_String] := StringRiffle[{
-  "// Start the private MadEvent session with the exported HEPCAT/SPINAS matrix element.",
-  "#include <cerrno>", "#include <cstring>", "#include <iostream>", "#include <string>",
-  "#include <vector>", "#include <unistd.h>", "", "int main(int argc, char** argv) {",
-  "  std::vector<std::string> arguments = {", "    " <> spinasCppQuoted[config["PythonExecutable"]] <> ",",
-  "    " <> spinasCppQuoted[FileNameJoin[{dir, "madevent-runtime.py"}]] <> ",",
-  "    \"--configuration\", " <> spinasCppQuoted[FileNameJoin[{dir, "madevent-config.json"}]] <> "};",
-  "  for (int i = 1; i < argc; ++i) arguments.push_back(argv[i]);",
-  "  std::vector<char*> command;", "  for (auto& argument : arguments) command.push_back(&argument[0]);",
-  "  command.push_back(nullptr);", "  execv(command[0], command.data());",
-  "  std::cerr << \"Could not start the MadEvent integration helper: \" << std::strerror(errno) << '\\n';",
-  "  return 2;", "}", ""}, "\n"];
-
 spinasMadEventCMake[name_String, config_Association] := If[config["Status"] =!= "AVAILABLE", "",
   StringRiffle[{
     "", "# MadEvent uses this raw fixed-spin kernel; the reference validator stays independent.",
     "# A static archive also supports an existing SPINAS library built without PIC.",
     "add_library(" <> name <> "_madevent_matrix STATIC madevent-spinas.cpp)",
     "target_link_libraries(" <> name <> "_madevent_matrix PUBLIC " <> name <> "_process)",
-    "add_executable(" <> name <> "_madevent madevent-main.cpp)",
-    "add_dependencies(" <> name <> "_madevent " <> name <> "_madevent_matrix)",
     "if(APPLE AND CMAKE_CXX_COMPILER_ID MATCHES \"Clang\")",
     "  set(HEPCAT_MADEVENT_CXX_RUNTIME \"c++\")", "else()",
     "  set(HEPCAT_MADEVENT_CXX_RUNTIME \"stdc++\")", "endif()",
@@ -316,32 +301,37 @@ spinasMadEventCMake[name_String, config_Association] := If[config["Status"] =!= 
     "# Prepare the movable native process during an ordinary build, without running events.",
     "# Repeated builds retain its existing cards and event runs.",
     "option(HEPCAT_PREPARE_MADEVENT \"Prepare the native HEPCAT MadEvent process during the build\" ON)",
+    "set(HEPCAT_MADEVENT_DEFAULT_TARGET)",
     "if(HEPCAT_PREPARE_MADEVENT)",
-    "  add_custom_target(" <> name <> "_madevent_process ALL",
-    "    COMMAND \"$<TARGET_FILE:" <> name <> "_madevent>\" --prepare",
-    "    DEPENDS " <> name <> "_madevent " <> name <> "_madevent_matrix " <> name <> "_process",
-    "    WORKING_DIRECTORY \"${CMAKE_CURRENT_BINARY_DIR}\"",
-    "    COMMENT \"Preparing PROC_" <> name <> " with the HEPCAT/SPINAS amplitude\"",
-    "    VERBATIM USES_TERMINAL)",
-    "endif()", ""}, "\n"]];
+    "  set(HEPCAT_MADEVENT_DEFAULT_TARGET ALL)",
+    "endif()",
+    "add_custom_target(" <> name <> "_madevent_process ${HEPCAT_MADEVENT_DEFAULT_TARGET}",
+    "  COMMAND " <> spinasCppQuoted[config["PythonExecutable"]] <>
+      " \"${CMAKE_CURRENT_SOURCE_DIR}/madevent-runtime.py\"",
+    "    --configuration \"${CMAKE_CURRENT_SOURCE_DIR}/madevent-config.json\"",
+    "    --bridge-link-file \"${CMAKE_CURRENT_BINARY_DIR}/madevent-link.json\" --prepare",
+    "  COMMAND ${CMAKE_COMMAND} -E remove -f \"${CMAKE_CURRENT_BINARY_DIR}/" <> name <> "_madevent\"",
+    "  DEPENDS " <> name <> "_madevent_matrix " <> name <> "_process",
+    "  WORKING_DIRECTORY \"${CMAKE_CURRENT_BINARY_DIR}\"",
+    "  COMMENT \"Preparing PROC_" <> name <> " with the HEPCAT/SPINAS amplitude\"",
+    "  VERBATIM USES_TERMINAL)", ""}, "\n"]];
 
 spinasMadEventProject[dir_String, name_String, ir_Association, config_Association] :=
   If[config["Status"] =!= "AVAILABLE", <|"Files" -> <||>, "Contents" -> <||>|>, <|
-    "Files" -> AssociationThread[{"MadEventBuilder", "MadEventSource", "MadEventMain", "MadEventConfiguration"},
-      FileNameJoin[{dir, #}] & /@ {"madevent-runtime.py", "madevent-spinas.cpp", "madevent-main.cpp", "madevent-config.json"}],
+    "Files" -> AssociationThread[{"MadEventBuilder", "MadEventSource", "MadEventConfiguration"},
+      FileNameJoin[{dir, #}] & /@ {"madevent-runtime.py", "madevent-spinas.cpp", "madevent-config.json"}],
     "Contents" -> <|"MadEventBuilder" -> Import[FileNameJoin[{$spinasExportSourceDirectory, "madevent-runtime.py"}], "Text"],
       "MadEventSource" -> spinasMadEventSource[name, ir, config],
-      "MadEventMain" -> spinasMadEventMain[name, config, dir],
       "MadEventConfiguration" -> ExportString[config, "RawJSON"]|>|>];
 
 spinasMadEventREADME[name_String, config_Association] := If[config["Status"] =!= "AVAILABLE", "", StringRiffle[{
   "", "## MadEvent integration using the HEPCAT amplitude", "",
-  "The same MadGraphDirectory, MadGraphModel, particle restriction and parameter matching also configure a numerical MadEvent backend. Build the project, enter `build`, then run `./" <> name <> "_madevent`. The normal build also prepares the native process without running events. The build creates `build/PROC_" <> name <> "/`; later launcher calls reuse it, including when started from the exported project root. Generated numerical files stay in the build directory by default. The launcher prints the full working, HTML and event-output locations. MadGraph supplies the phase-space mappings, integration, cuts, unweighting and Les Houches event output; the supplied HEPCAT/SPINAS expression is its numerical matrix element. The independent reference validator remains unchanged.",
-  "From `build`, run `./" <> name <> "_madevent` for the native interactive menu. Use `./" <> name <> "_madevent --prepare` to verify or reuse preparation without starting a run, `--command-file commands.txt` for standard MadEvent commands, or `--run run_name` to generate events. `--work-directory DIR` chooses another working directory. `--run-card FILE` and `--param-card FILE` select cards before a run; `--help` lists the launcher options. Within the selected working directory, `PROC_" <> name <> "/Cards` contains the adjustable cards, `PROC_" <> name <> "/index.html` is the HTML entry page, and `PROC_" <> name <> "/Events/run_name` contains the generated events.",
-  "After the build finishes, the complete `PROC_" <> name <> "` directory is a movable numerical process. Copy or move that whole directory, enter it, and run `./bin/madevent`. Its HEPCAT/SPINAS amplitude sources, headers, numerical libraries and private model support are included. The prepared process does not need the original exported project, its `build` directory or the original SPINAS checkout. MadGraph, Python, the Fortran toolchain and system libraries remain external prerequisites. Move the directory between runs, while no integration or compilation is using it.",
-  "Repeated builds and launches reuse the selected session, cards and events. For an intentional C++-only build, configure CMake with `-DHEPCAT_PREPARE_MADEVENT=OFF`; the launcher can still prepare the process later. Existing sessions elsewhere are left in place. To continue an already prepared session, enter that directory and use its `bin/madevent` directly. Earlier directory names are not changed automatically. The outer `" <> name <> "_madevent` executable is still the initial preparation launcher and uses the exported project. The complete prepared MadEvent directory is the unit to move and keep.",
-  "The matrix kernel receives current evaluated UFO model parameters on every call, including parameter-card updates. It reuses one SPINAS cache per numerical thread and updates masses before momenta. Unsupported mappings, complex parameters, changed massless/massive categories or failed evaluations stop the run. The installed MadGraph source and models are not edited.",
-  "The returned kernel is raw |amp|^2 for each selected helicity and each massive spin. MadEvent performs incoming averaging and final identical-species factors exactly once, with the fixed-incoming-helicity average adjusted. Selected outgoing helicities remain labeled contributions. Massive spins are summed in the SPINAS basis; this interface does not provide spin-correlated decays or an identified MadGraph massive-spin basis. Current coverage is colorless leading-order tree amplitudes, not NLO or matched showers. The generated `madevent-spinas.cpp` and `madevent-main.cpp` show the numerical interface explicitly.", ""}, "\n"]];
+  "The explicitly selected MadGraph configuration also supplies the numerical MadEvent backend. An ordinary build prepares `build/PROC_" <> name <> "` without running events. This directory contains the native launcher; there is no duplicate `" <> name <> "_madevent` executable in the build root. The independent MadGraph validator continues to use MadGraph's own amplitude.",
+  "From the exported project, run `cd build/PROC_" <> name <> "` and `./bin/madevent` for the native interactive menu. Its `Cards/run_card.dat` controls beams, cuts and events; `Cards/param_card.dat` controls model inputs. The HTML entry page is `index.html`, and generated events are in `Events/run_name`.",
+  "The complete `PROC_" <> name <> "` directory is a movable numerical process. Its HEPCAT/SPINAS amplitude sources, headers, numerical libraries and private model support are included. It does not need the original export, build directory or SPINAS checkout. MadGraph, Python, the Fortran toolchain and system libraries remain external requirements. Move the whole directory between runs, while no integration or compilation is using it.",
+  "Repeated builds retain the process, cards and events. Configure with `-DHEPCAT_PREPARE_MADEVENT=OFF` for a C++-only build; prepare later with `cmake --build build --target " <> name <> "_madevent_process`. CMake calls the Python builder directly. An incompatible existing session is reported rather than overwritten. Earlier sessions elsewhere remain in place.",
+  "The matrix kernel receives current evaluated UFO parameters on every call, including parameter-card changes. It reuses one SPINAS cache per numerical thread and updates masses before momenta. Unsupported mappings, complex parameters, changed massless/massive categories or failed evaluations stop the run. The installed MadGraph model is not edited.",
+  "The kernel returns raw |amp|^2 for each selected helicity and massive spin. MadEvent applies incoming averages and identical-species factors once. Selected outgoing helicities remain labeled contributions. Current support is colorless leading-order tree simulation; coherent decays, NLO matching and a MadGraph massive-spin basis require additional interfaces. The generated `madevent-spinas.cpp` shows the numerical kernel.", ""}, "\n"]];
 
 (* ::Subsection::Closed:: *)
 (*Mathematica Entry Point*)

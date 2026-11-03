@@ -33,6 +33,7 @@ caRun4[opts___Rule] := ConstructAmplitude[caProcess4, caModel, caModel,
 check["the public constructor exposes simple output and parallel controls",
   DownValues[ConstructAmplitude] =!= {} &&
     ("Output" /. Options[ConstructAmplitude]) === "Expression" &&
+    ("PolePreference" /. Options[ConstructAmplitude]) === "AllPhysical" &&
     ("Parallelization" /. Options[ConstructAmplitude]) === Automatic &&
     ("MaxKernels" /. Options[ConstructAmplitude]) === Automatic];
 caDetails = caRun4["Output" -> "Details"];
@@ -40,10 +41,11 @@ check["actual four-point QED construction completes every stage",
   AssociationQ[caDetails] && caDetails["Status"] === "COMPLETE" &&
     caDetails["RequestedPolePreference"] === "AllPhysical" &&
     caDetails["AchievedPhysicalDenominators"] === True &&
-    caDetails["PreferenceFallbackReason"] === None];
+    caDetails["PreferenceFallbackReason"] === None &&
+    caDetails["Complexity"] === SpinorExpressionComplexity[caDetails["Amplitude"]]];
 If[!AssociationQ[caDetails] || Lookup[caDetails, "Status", None] =!= "COMPLETE",
   Print["Cannot continue construction assertions: ", caDetails];
-  If[checks =!= 62, AppendTo[failures, "Not every construction assertion executed."]];
+  If[checks =!= 63, AppendTo[failures, "Not every construction assertion executed."]];
 If[failures =!= {} && ValueQ[caPolicySelected],
   caPolicyDiagnosticDirectory = CreateDirectory[];
   Put[<|"Early" -> caPolicySelected, "Late" -> caPolicyLate,
@@ -150,12 +152,22 @@ check["total progress time never moves backwards",
 caPrinted = {};
 caPrintedResult = Block[{Print = (AppendTo[caPrinted, HoldComplete[##]] &)},
   caRun4["PrintReport" -> True]];
-check["end-of-run output records the seed then total time and tests before returning the expression",
-  Length[caPrinted] >= 3 &&
+check["end-of-run output records seed, total time, complexity and tests before returning the expression",
+  Length[caPrinted] >= 4 &&
     StringContainsQ[ToString[First[caPrinted], InputForm], "Random seed"] &&
-    StringContainsQ[ToString[caPrinted[[-2]], InputForm], "Total"] &&
+    StringContainsQ[ToString[caPrinted[[-3]], InputForm], "Total"] &&
+    With[{score = caDetails["Complexity"]},
+      caPrinted[[-2]] === HoldComplete[Row[{"Complexity: ", score}]]] &&
     StringContainsQ[ToString[Last[caPrinted], InputForm], "PASS"] &&
     Together[caPrintedResult - caExpression] === 0];
+caSpuriousDetails = caRun4["PolePreference" -> "AllSpurious", "Output" -> "Details"];
+check["an explicit spurious-pole preference reaches preparation and completion",
+  caSpuriousDetails["Status"] === "COMPLETE" &&
+    caSpuriousDetails["RequestedPolePreference"] === "AllSpurious" &&
+    AllTrue[{"Preparing diagrams", "Preparing factorization channels"},
+      caSpuriousDetails["Stages"][#]["Options"]["PolePreference"] === "AllSpurious" &] &&
+    caSpuriousDetails["Stages"]["Completing factorization"]["PolePreference"] === "AllSpurious" &&
+    caSpuriousDetails["Checks"]["Summary"]["PASS"] >= 4];
 caFeynmanModel = ReadModel[FileNameJoin[{root, "model_feynman"}], 2];
 caWithFeynman = caRun4["FeynmanModel" -> caFeynmanModel, "Output" -> "Details",
   "FeynmanPreparationOptions" -> {"MaxSteps" -> 0, "TimeConstraint" -> 20}];
@@ -409,7 +421,7 @@ check["controlled stage probes restore all public completion definitions and att
 
 check["the constructor never mutates either supplied model",
   caModel === caOriginalModel && caFactorizationModel === caOriginalFactorizationModel];
-If[checks =!= 62, AppendTo[failures, "Not every construction assertion executed."]];
+If[checks =!= 63, AppendTo[failures, "Not every construction assertion executed."]];
 If[failures =!= {} && ValueQ[caPolicySelected],
   caPolicyDiagnosticDirectory = CreateDirectory[];
   Put[<|"Early" -> caPolicySelected, "Late" -> caPolicyLate,

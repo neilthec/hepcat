@@ -11798,6 +11798,116 @@ preparationRankKey[rank_List] := If[Length[rank] === 4,
   rank[[{1, 3, 2, 4}]], If[Length[rank] === 3, rank[[{1, 3, 2}]], rank]];
 preparationSortKey[expression_] := preparationRankKey[preparationRank[expression]];
 
+(* Cancel a massless reference bracket through its ordinary scalar invariant.
+   Only numerator propagators are expanded. Physical denominators and every
+   nonzero polynomial remainder retain their original off-shell meaning. *)
+preparationMasslessBracketCancellation[expression_, externalRules_List,
+    conserve_ : True, seconds_ : 1] := Module[
+  {external = preparationExternalRules[externalRules], legs, physicalSpinors, sourceLegs, targets,
+   budget, started = AbsoluteTime[], checkpoint, outcome, inverse, inverseTokens,
+   protected, atoms, tokens, forward, backward, together, originalNumerator,
+   denominator, props, definitions, dots, matrix, transformed, coefficients,
+   values, dotRules, pivot, targetDot, target, opposite, power, reducedDenominator,
+   invariant, numerator, quotient, remainder, candidate, rank, reconstruction},
+  checkpoint = <|"Amplitude" -> expression, "Route" -> {}, "Status" -> "UNCHANGED"|>;
+  budget = If[seconds === Infinity, 1,
+    If[NumericQ[seconds] && TrueQ[seconds > 0], Min[1, seconds], 0]];
+  If[budget <= 0 || LeafCount[expression] > 8000 ||
+      !preparationScalarExternalRulesQ[external] || !FreeQ[external, _Real] ||
+      !rspExpansionBudgetQ[expression] ||
+      !FreeQ[expression, _SpinorHat | _MomHat | _MomQ | _sigma | _colorT |
+        _colorTrace | _Dot | _NonCommutativeMultiply], Return[checkpoint]];
+  legs = externalIndices[external];
+  If[Length[legs] < 2 || Length[legs] > 16, Return[checkpoint]];
+  (* Physical endpoints can carry explicit variance or vector-spin slots.
+     Use their typed leg accessor instead of assuming an argument count. *)
+  physicalSpinors = DeleteDuplicates[Cases[{expression},
+    spinor : Spinor["Spin" | "Helicity", ___] :> spinor, Infinity]];
+  sourceLegs = rspSpinorLeg /@ physicalSpinors;
+  If[!AllTrue[sourceLegs, IntegerQ], Return[checkpoint]];
+  sourceLegs = Union[sourceLegs,
+    Cases[{expression}, Mom[i_Integer] :> i, Infinity],
+    Flatten[Cases[{expression}, Mom[Multiparticle[ii__Integer]] :> {ii}, Infinity]],
+    Flatten[Cases[{expression}, MomProd[a_, b_] :> Cases[{a, b}, _Integer, Infinity], Infinity]],
+    Flatten[Cases[{expression}, Mandelstahm[ii___] :> Cases[{ii}, _Integer, Infinity], Infinity]]];
+  If[!ContainsAll[legs, sourceLegs], Return[checkpoint]];
+  targets = DeleteDuplicates[Cases[expression,
+    Power[chain_SpinorChain, _Integer?Negative] /;
+      Length[chain] === 2 &&
+      AllTrue[List @@ chain, MatchQ[#, Spinor["Helicity", "Angle" | "Square", _Integer]] &] &&
+      rspSpinorType[First[chain]] === rspSpinorType[Last[chain]] &&
+      rspSpinorLeg[First[chain]] =!= rspSpinorLeg[Last[chain]] &&
+      AllTrue[List @@ chain, TrueQ[(Mass[rspSpinorLeg[#]] /. external) === 0] &] :> chain, Infinity]];
+  If[targets === {}, Return[checkpoint]];
+  outcome = TimeConstrained[MemoryConstrained[
+    checkpoint = Join[checkpoint, <|"Rank" -> preparationRank[expression]|>];
+    Do[
+      (* Other inverse sums remain opaque even when their powers are large. *)
+      inverse = DeleteDuplicates[Cases[{expression}, inv : Power[base_, exponent_] /;
+        !TrueQ[exponent >= 0] && base =!= chain && Head[base] =!= PropDen :> inv, Infinity]];
+      inverseTokens = Table[Unique["keptBracketCancellationInverse"], Length[inverse]];
+      protected = expression /. Thread[inverse -> inverseTokens];
+      atoms = DeleteDuplicates[Cases[protected, _SpinorChain | _SpinorTrace | _PropDen | _ModelParameter, Infinity]];
+      tokens = Table[Unique["bracketCancellationAtom"], Length[atoms]];
+      forward = Thread[atoms -> tokens];
+      backward = Join[Thread[tokens -> atoms], Thread[inverseTokens -> inverse]];
+      target = chain /. forward;
+      If[!MemberQ[tokens, target], Continue[]];
+      together = Together[protected /. forward];
+      originalNumerator = Numerator[together]; denominator = Denominator[together];
+      power = Exponent[denominator, target];
+      If[!IntegerQ[power] || power < 1 || power > 4, Continue[]];
+      props = Select[atoms, Head[#] === PropDen && Length[#] === 2 &&
+        With[{members = residueMomentumLegsFromExpression[First[#]]},
+          ListQ[members] && DuplicateFreeQ[members] && ContainsAll[legs, members]] &];
+      definitions = (Rule[# /. forward,
+        preparationPropagatorDefinitions[#, external] /. forward] &) /@ props;
+      targetDot = orderedDot[rspSpinorLeg[First[chain]], rspSpinorLeg[Last[chain]]];
+      dots = Append[DeleteCases[orderedDot @@@ Subsets[legs, {2}], targetDot], targetDot];
+      dotRules = {};
+      If[TrueQ[conserve] && Length[legs] >= 4,
+        matrix = Table[Boole[MemberQ[List @@ dot, leg]], {leg, legs}, {dot, dots}];
+        transformed = RowReduce[Join[matrix, IdentityMatrix[Length[legs]], 2]];
+        coefficients = transformed[[All, 1 ;; Length[dots]]];
+        values = Expand[transformed[[All, Length[dots] + 1 ;;]].
+          (-((Mass /@ legs /. external)^2))] /. forward;
+        Do[pivot = SelectFirst[Range[Length[dots]], coefficients[[row, #]] =!= 0 &, None];
+          If[pivot =!= None, AppendTo[dotRules, dots[[pivot]] -> Expand[values[[row]] -
+            Total[MapThread[Times, {ReplacePart[coefficients[[row]], pivot -> 0], dots}]]]]],
+          {row, Length[coefficients]}]];
+      numerator = Expand[(originalNumerator /. definitions) /. dotRules];
+      If[!rspExpansionBudgetQ[numerator] || LeafCount[numerator] > 24000, Continue[]];
+      invariant = Unique["canceledMasslessPairInvariant"];
+      If[!PolynomialQ[numerator /. targetDot -> invariant, invariant], Continue[]];
+      {quotient, remainder} = PolynomialQuotientRemainder[
+        numerator /. targetDot -> invariant, (-2 invariant)^power, invariant];
+      If[quotient === 0, Continue[]];
+      reconstruction = Expand[(numerator /. targetDot -> invariant) -
+        quotient (-2 invariant)^power - remainder];
+      If[reconstruction =!= 0, Continue[]];
+      reducedDenominator = Cancel[denominator/target^power];
+      opposite = SpinorChain[rspFlipSpinor[First[chain]], rspFlipSpinor[Last[chain]]];
+      candidate = ((quotient opposite^power + remainder/target^power)/reducedDenominator /.
+        invariant -> targetDot) /. backward;
+      If[!residueFiniteQ[candidate], Continue[]];
+      rank = preparationRank[candidate];
+      If[preparationBetterQ[rank, checkpoint["Rank"]],
+        checkpoint = <|"Amplitude" -> candidate, "Rank" -> rank, "Status" -> "IMPROVED",
+          "Route" -> {<|"Operation" -> "MasslessBracketInvariantCancellation",
+            "Before" -> expression, "After" -> candidate, "Bracket" -> chain,
+            "OppositeBracket" -> opposite, "Power" -> power,
+            "NumeratorPropagatorDefinitions" -> (definitions /. backward),
+            "ExternalConservationRules" -> (dotRules /. backward),
+            "Quotient" -> (quotient /. invariant -> targetDot /. backward),
+            "Remainder" -> (remainder /. invariant -> targetDot /. backward),
+            "PolynomialDivisionZero" -> reconstruction,
+            "ExternalMassRules" -> external, "MomentumConservation" -> TrueQ[conserve],
+            "InternalOnShellConditions" -> {}|>}|>],
+      {chain, Take[targets, UpTo[4]]}]; True, 134217728, False], budget, False];
+  Join[checkpoint, <|"TimedOut" -> !TrueQ[outcome],
+    "ElapsedTime" -> AbsoluteTime[] - started, "InternalOnShellConditions" -> {}|>]
+];
+
 (* Expose an existing propagator by its exact definition, not by putting it on
    shell. Only numerator scalar products and declared external masses are used. *)
 preparationExternalVirtualities[expression_, externalRules_List] := Module[
@@ -14097,6 +14207,21 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
     event[stage];
     If[TrueQ[wholeAmplitude] || kind === "Amplitude",
       rememberCompleted[expression, "CompletedExternalReferenceInput"];
+      If[channels === {} && !FreeQ[expression, Power[_SpinorChain, _Integer?Negative]],
+        stage = "OrdinaryMasslessBracketCancellation";
+        before = expression;
+        groupedCompaction = preparationMasslessBracketCancellation[before,
+          preparationExternalRules[rules], options["MomentumConservation"],
+          If[options["TimeConstraint"] === Infinity, 1,
+            Max[0.000001, Min[1, (options["TimeConstraint"] - (AbsoluteTime[] - started))/5]]]];
+        after = Lookup[groupedCompaction, "Amplitude", before];
+        If[residueFiniteQ[after] && preparationBetterQ[snapshotRank[after], snapshotRank[before]],
+          expression = after];
+        AppendTo[reductions, <|"Operation" -> stage, "Before" -> before,
+          "After" -> expression, "InternalOnShellIdentity" -> False, "OnShellChannels" -> {},
+          "IdentityRoute" -> Lookup[groupedCompaction, "Route", {}],
+          "SearchTimedOut" -> Lookup[groupedCompaction, "TimedOut", False]|>];
+        rememberCompleted[expression, stage]; event[stage]];
       (* Preserve a cheap ordinary-pole route from the original grouped
          input before optional normalization can distribute its cancellations.
          It is a competitor, so the established active route stays intact. *)
@@ -17032,13 +17157,13 @@ End[];
 
 Begin["ConstructiveDiagrams`"];
 
-ConstructAmplitude::usage = "ConstructAmplitude[process, diagramModel, factorizationModel] generates and prepares diagrams and factorization channels, completes factorization and high-energy behavior, prepares each completed expression with external identities only, then checks the final amplitude. The ordinary result is the bare expression only when every required final check passes. Output -> Amplitude returns {externalMassRules, expression}; Details retains stage results, timings and diagnostics. ProgressReporting -> True displays the current stage, its elapsed time and total elapsed time. At the end PrintReport -> True prints total time, then the test table, before returning the expression. FeynmanModel -> None optionally supplies an independent model whose diagrams are prepared and compared too. PreparationOptions, ChannelPreparationOptions, FinalPreparationOptions, FactorizationOptions, HighEnergyOptions, CheckOptions and FeynmanPreparationOptions pass options to individual stages. TimeConstraint -> Automatic selects a finite overall budget from the process and workload; individual stages resolve their own automatic limits. Explicit values override those choices. PolePreference, ParameterRules, HighEnergyBound, Samples, ValidationSamples, RandomSeed, Parallelization and MaxKernels provide common settings. The original channels remain the residue targets, discarded preparation terms and affine completion freedom are retained, and final preparation never applies internal-shell identities. Failed, opposite-sign and unresolved checks never produce a validated amplitude. When FeynmanModel is supplied, a fixed factorization or high-energy candidate can be selected after every mandatory check and independent Feynman comparison passes; its unclassified affine family remains in Details and no uniqueness is claimed. Without that independent benchmark, unresolved completion freedom remains a failure.";
+ConstructAmplitude::usage = "ConstructAmplitude[process, diagramModel, factorizationModel] generates and prepares diagrams and factorization channels, completes factorization and high-energy behavior, prepares each completed expression with external identities only, then checks the final amplitude. The ordinary result is the bare expression only when every required final check passes. Output -> Amplitude returns {externalMassRules, expression}; Details retains stage results, timings and diagnostics. ProgressReporting -> True displays the current stage, its elapsed time and total elapsed time. At the end PrintReport -> True prints total time, the final SpinorExpressionComplexity score and the test table before returning the expression. FeynmanModel -> None optionally supplies an independent model whose diagrams are prepared and compared too. PreparationOptions, ChannelPreparationOptions, FinalPreparationOptions, FactorizationOptions, HighEnergyOptions, CheckOptions and FeynmanPreparationOptions pass options to individual stages. TimeConstraint -> Automatic selects a finite overall budget from the process and workload; individual stages resolve their own automatic limits. Explicit values override those choices. PolePreference -> AllPhysical is the default; AllSpurious prefers massless-reference forms, and Mixed admits both. This preference is shared by preparation and completion without weakening validation. ParameterRules, HighEnergyBound, Samples, ValidationSamples, RandomSeed, Parallelization and MaxKernels provide common settings. The original channels remain the residue targets, discarded preparation terms and affine completion freedom are retained, and final preparation never applies internal-shell identities. Failed, opposite-sign and unresolved checks never produce a validated amplitude. When FeynmanModel is supplied, a fixed factorization or high-energy candidate can be selected after every mandatory check and independent Feynman comparison passes; its unclassified affine family remains in Details and no uniqueness is claimed. Without that independent benchmark, unresolved completion freedom remains a failure.";
 ConstructAmplitude::usage = ConstructAmplitude::usage <>
   " RandomSeed -> Automatic chooses one time-based run seed. The stages derive their seeds from that value, with explicit stage overrides honored. Details records RandomSeed and PrintReport prints it with the final timing; an explicit integer reproduces the sample choices.";
 ConstructAmplitude::args = "Expected a process with at least four model particle names, a diagram model, a constructive factorization model, and valid construction options.";
 
 Options[ConstructAmplitude] = {
-  "PolePreference" -> Automatic, "ParameterRules" -> Automatic, "HighEnergyBound" -> Automatic,
+  "PolePreference" -> "AllPhysical", "ParameterRules" -> Automatic, "HighEnergyBound" -> Automatic,
   "BoseSymmetryGroups" -> Automatic, "FermionSymmetryGroups" -> Automatic,
   "Samples" -> Automatic, "ValidationSamples" -> Automatic, "RandomSeed" -> Automatic,
   "Parallelization" -> Automatic, "MaxKernels" -> Automatic,
@@ -17066,6 +17191,11 @@ constructExternalMasses[process_List, model_] := Module[{parts, names, spin, res
 constructSecondsQ[value_] := value === Infinity || NumericQ[value] &&
   TrueQ[Element[value, Reals] && 0 < value < Infinity];
 constructDuration[seconds_] := ToString[NumberForm[N[seconds], {12, 1}], StandardForm] <> " s";
+(* Reporting must not delay a validated large result indefinitely. A failed
+   measurement is explicit; a leaf count is not the requested complexity. *)
+constructComplexity[expr_] := TimeConstrained[MemoryConstrained[
+  SpinorExpressionComplexity[expr], 268435456, Missing["ComplexityMemoryLimit"]],
+  2, Missing["ComplexityTimeLimit"]];
 constructFailure[stage_, diagnostics_List] := Failure["AmplitudeConstructionFailed", <|
   "MessageTemplate" -> "Amplitude construction stopped at `1`. No validated final expression was produced.",
   "MessageParameters" -> {stage}, "Stage" -> stage, "Status" -> "FAILED",
@@ -17149,6 +17279,7 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
    result, report, failure = None, tag = Unique["amplitudeConstruction"],
    save, emit, child, remaining, stageOptions, run, require, requirePreparation, prepareFinal, workflow,
    completed = False, resultStatus, totalTime, resourceResolution, requestedOptions,
+   finalComplexity = Missing["NotValidated"],
    prepareBenchmark, benchmarkReady = False, validateRepresentative,
    representativeSelection = <|"Attempted" -> False, "Selected" -> False|>,
    representativeAttempts = {},
@@ -17442,16 +17573,19 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
       representationReason = If[physicalRepresentation === False,
         "AllPhysical was not achieved: the validated expression still displays apparent spurious denominators.",
         "The final physical-only denominator representation could not be established within its classification budget."]]];
+  If[completed, finalComplexity = constructComplexity[Last[finalPair]]];
   totalTime = AbsoluteTime[] - started;
   If[TrueQ[printReport],
     If[StringQ[representationReason], Print[representationReason]];
     Print[Row[{"Random seed: ", options["RandomSeed"]}]];
     Print[Row[{"Total time: ", constructDuration[totalTime]}]];
+    If[completed, Print[Row[{"Complexity: ", If[IntegerQ[finalComplexity], finalComplexity,
+      "not measured within the reporting budget"]}]]];
     Print[If[AssociationQ[checkReport] && KeyExistsQ[checkReport, "Table"], checkReport["Table"],
       Dataset[{<|"Check" -> "Final amplitude tests", "Status" -> "NOT RUN",
         "StoppedAt" -> currentStage|>}]]]];
   report = <|"Status" -> If[completed, "COMPLETE", "FAILED"], "Process" -> process,
-    "RandomSeed" -> options["RandomSeed"],
+    "RandomSeed" -> options["RandomSeed"], "Complexity" -> finalComplexity,
     "Amplitude" -> If[completed, Last[finalPair], Missing["NotValidated"]],
     "AmplitudePair" -> If[completed, finalPair, Missing["NotValidated"]],
     "CandidateAmplitude" -> If[completed, Missing["NotNeeded"], finalPair],
