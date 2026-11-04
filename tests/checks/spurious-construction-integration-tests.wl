@@ -11,8 +11,8 @@ cases = <|
   "MMM" -> {{"e", "E", "A.-", "A.-", "A.-"}, 1866157270020603678, 6, 3, 30},
   "PPM" -> {{"e", "E", "A.+", "A.+", "A.-"}, 9188430219292690389, 6, 8, 133},
   "PMM" -> {{"e", "E", "A.+", "A.-", "A.-"}, 3418550451434630771, 6, 8, 133},
-  "P" -> {{"e", "E", "E", "e", "A.+"}, 8126805240028689964, 8, 1, 220},
-  "M" -> {{"e", "E", "E", "e", "A.-"}, 5310282517098944578, 8, 1, 220}|>;
+  "P" -> {{"e", "E", "E", "e", "A.+"}, 8126805240028689964, 8, 0, 168},
+  "M" -> {{"e", "E", "E", "e", "A.-"}, 5310282517098944578, 8, 0, 168}|>;
 requested = Environment["HEPCAT_SPURIOUS_INTEGRATION_CASES"];
 selected = If[MemberQ[{$Failed, ""}, requested], Keys[cases], StringSplit[requested, ","]];
 If[selected === {} || !ContainsAll[Keys[cases], selected], Quit[2]];
@@ -24,7 +24,8 @@ Do[
     "PolePreference" -> "AllSpurious", "FeynmanModel" -> benchmark,
     "RandomSeed" -> seed, "Output" -> "Details", "ProgressReporting" -> False, "PrintReport" -> False];
   checks = report["Checks"];
-  If[report["Status"] =!= "COMPLETE" || report["AchievedPhysicalDenominators"] =!= False ||
+  If[report["Status"] =!= "COMPLETE" || report["AchievedPhysicalDenominators"] =!= (spurious === 0) ||
+      !FreeQ[report["Amplitude"], (Spinor | SpinorHat)["Xi", ___]] ||
       !IntegerQ[report["Complexity"]] || report["Complexity"] > ceiling ||
       Length[checks["Channels"]] =!= physical ||
       Length[checks["SpuriousChecks"]] =!= spurious ||

@@ -339,13 +339,29 @@ check["Automatic falls back to certified physical references when only one exter
     Flatten[Lookup[Lookup[acReferenceSingle["DiagramReports"], "PolePreference"], "Assignments"], 1][[All, "Target"]] ===
       {2, 1} && FreeQ[acReferenceSingle["Amplitude"], Spinor["Xi", ___]]];
 acReferenceSingleSpurious = acReferencePrepare[acReferenceSinglePairs, "AllSpurious"];
-check["AllSpurious with a single massless leg never creates a zero self-bracket",
-  acReferenceSingleSpurious["Status"] === "PARTIAL" &&
-    FreeQ[acReferenceSingleSpurious["Amplitude"], Indeterminate | ComplexInfinity | _DirectedInfinity]];
-check["an unavailable constructive reference choice cannot silently return unchanged Xi spinors",
-  FailureQ[PrepareAmplitudes[acReferenceSinglePairs, prModel,
+check["AllSpurious falls back to eligible physical references without leaving Xi",
+  acReferenceSingleSpurious["Status"] === "PREPARED" &&
+    Lookup[Flatten[Lookup[Lookup[acReferenceSingleSpurious["DiagramReports"],
+      "PolePreference"], "Assignments"], 1], "Mode"] === {"AllPhysical", "AllPhysical"} &&
+    FreeQ[acReferenceSingleSpurious["Amplitude"],
+      Spinor["Xi", ___] | Indeterminate | ComplexInfinity | _DirectedInfinity]];
+acReferenceThreeNullRules = Take[acReferenceRules, 5];
+acReferenceFallbackPair = {acReferenceThreeNullRules,
+  acReferenceRatio["Angle", 43, 3, 1] acReferenceRatio["Square", 44, 5, 2]};
+acReferenceFallbackInventory = {acReferenceFallbackPair,
+  {Append[acReferenceThreeNullRules, Mass[Multiparticle[3, 5]] -> 0], 0},
+  {Append[acReferenceThreeNullRules, Mass[Multiparticle[4, 5]] -> 0], 0},
+  {Append[acReferenceThreeNullRules, Mass[Multiparticle[1, 5]] -> prElectronMass], 0}};
+acReferenceFallback = acReferencePrepare[acReferenceFallbackInventory, "AllSpurious"];
+check["AllSpurious uses a physical fallback only on legs without spurious choices",
+  acReferenceFallback["Status"] === "PREPARED" &&
+    Sort[Lookup[acReferenceAssignments[acReferenceFallback], {"Leg", "Mode", "Target"}]] ===
+      {{3, "AllSpurious", 4}, {5, "AllPhysical", 1}} &&
+    FreeQ[acReferenceFallback["Amplitude"], Spinor["Xi", ___]]];
+check["an unavailable constructive reference cannot reuse its own cut or return Xi",
+  FailureQ[PrepareAmplitudes[Take[acReferenceSinglePairs, 1], prModel,
     "PolePreference" -> "AllSpurious", "ProgressReporting" -> False]] &&
-    FailureQ[PrepareAmplitudes[acReferenceSinglePairs, prModel,
+    FailureQ[PrepareAmplitudes[Take[acReferenceSinglePairs, 1], prModel,
       "PolePreference" -> "AllSpurious", "Output" -> "Expression",
       "ProgressReporting" -> False]]];
 check["unsupported reference choices are rejected before preparation",

@@ -11082,7 +11082,7 @@ End[];
 
 Begin["ConstructiveDiagrams`"];
 
-PrepareAmplitudes::usage = "PrepareAmplitudes[items, model] prepares diagram amplitude pairs or compact factorization-channel rows, preserving their input formats. Each element is prepared independently by ReduceSpinContractions, PolePreference replacement and ReduceSpinorProducts with physical propagators protected. AllSpurious compares eligible other-massless-particle references, AllPhysical compares momentum-insertion references giving physical poles outside that element's own cuts, and Mixed compares both types per external leg. Automatic compares admissible physical and spurious references and keeps the best completed trial. Cyclic and ReverseCyclic retain fixed reproducible spurious choices; Xi uses one common Xi0, IndependentXi one generic reference per external particle, and None retains input references. The best completed trial is ranked after ordinary spinor reduction and diagram-local numerator-shell reductions. MaxReferenceChoices -> Automatic resolves to a bounded 64-trial allowance; ReferenceTimeConstraint -> Automatic uses at most five seconds and one third of the remaining per-element TimeConstraint, shared with subsequent preparation. This is a bounded finite-reference search, not a global-minimum claim. ReturnDetails -> False is the default; True exposes inputs, assignments, tested alternatives, search limits, reductions and diagnostics. InternalOnShell -> True reduces known numerator scalar products using only that element's mass rules, including two-leg complements when MomentumConservation is True, before and after spinor reduction even at MaxSteps -> 0. False disables these internal-shell reductions and edits. Unknown invariants and denominators are not put on shell. A bounded improving identity search follows. Output -> \"Expression\" returns the prepared sum; \"Amplitudes\" preserves input formats; \"Details\" and ReturnDetails -> True request diagnostics. ReturnDetails takes precedence. Unavailable reference choices or an overall timeout remain PARTIAL. ProgressReporting, ProgressFunction, MaxSteps, MaxCandidates and MomentumConservation control preparation. No model vertices or factorization corrections are added.";
+PrepareAmplitudes::usage = "PrepareAmplitudes[items, model] prepares diagram amplitude pairs or compact factorization-channel rows, preserving their input formats. Each element is prepared independently by ReduceSpinContractions, PolePreference replacement and ReduceSpinorProducts with physical propagators protected. AllSpurious compares eligible other-massless-particle references and uses a physical reference for any leg without one. AllPhysical compares momentum-insertion references giving physical poles outside that element's own cuts, and Mixed compares both types per external leg. Automatic compares admissible physical and spurious references and keeps the best completed trial. Cyclic and ReverseCyclic retain fixed reproducible spurious choices; Xi uses one common Xi0, IndependentXi one generic reference per external particle, and None retains input references. The best completed trial is ranked after ordinary spinor reduction and diagram-local numerator-shell reductions. MaxReferenceChoices -> Automatic resolves to a bounded 64-trial allowance; ReferenceTimeConstraint -> Automatic uses at most five seconds and one third of the remaining per-element TimeConstraint, shared with subsequent preparation. This is a bounded finite-reference search, not a global-minimum claim. ReturnDetails -> False is the default; True exposes inputs, assignments, tested alternatives, search limits, reductions and diagnostics. InternalOnShell -> True reduces known numerator scalar products using only that element's mass rules, including two-leg complements when MomentumConservation is True, before and after spinor reduction even at MaxSteps -> 0. False disables these internal-shell reductions and edits. Unknown invariants and denominators are not put on shell. A bounded improving identity search follows. Output -> \"Expression\" returns the prepared sum; \"Amplitudes\" preserves input formats; \"Details\" and ReturnDetails -> True request diagnostics. ReturnDetails takes precedence. Unavailable reference choices or an overall timeout remain PARTIAL. ProgressReporting, ProgressFunction, MaxSteps, MaxCandidates and MomentumConservation control preparation. No model vertices or factorization corrections are added.";
 PrepareAmplitudes::args = "Expected diagram {massRules, expression} pairs or compact factorization-channel rows, a model, and valid preparation options. All elements must declare consistent external masses.";
 PrepareAmplitudes::usage = PrepareAmplitudes::usage <>
   " Ordinary ReduceSpinorProducts acts on the whole expression, including auxiliary denominators, with PropDen protected. Only external mass replacements act globally; internal replacements remain numerator-only. With MomentumConservation -> True, the bounded identity search also tries consistent whole-numerator external momentum eliminations and composite complements. Each trial is reduced before a strictly improving whole-expression rank is required. These trials use only declared external mass labels, share MaxSteps, MaxCandidates and the per-element time limit, and protect inverse factors from conservation and internal-shell substitutions. MomentumConservation -> False disables them.";
@@ -11091,9 +11091,9 @@ PrepareAmplitudes::usage = PrepareAmplitudes::usage <>
 PrepareAmplitudes::usage = PrepareAmplitudes::usage <>
   " Input elements are detected individually: diagram {massRules, expression} pairs or compact factorization rows {m1, ..., mn, Multiparticle[cut], exchangedMass, expression}. The default output preserves each input element's format and metadata. Factorization rows supply only external shells and their selected cut; other propagators do not introduce shell assumptions. Channel 1/z factors and sewing signs are unchanged. Cut-only reductions preserve the selected residue, not an off-cut identity. Details add InputType, ElementTypes, ItemReports and ChannelReports.";
 PrepareAmplitudes::usage = PrepareAmplitudes::usage <>
-  " An unavailable reference choice returns Failure for ordinary output, for diagrams and channels alike; detailed output retains PARTIAL expressions and diagnostics. AllSpurious needs another eligible massless external particle. With a single external photon, use Automatic or AllPhysical for constructive preparation.";
+  " An unavailable reference choice returns Failure for ordinary output, for diagrams and channels alike; detailed output retains PARTIAL expressions and diagnostics. With a single external photon, AllSpurious uses the same eligible physical references as AllPhysical.";
 PrepareAmplitudes::usage = PrepareAmplitudes::usage <>
-  " With a FeynmanModel, only diagram pairs are accepted. Raw Feynman tensors are converted to spinor products before reference replacement and reduction; FermionHelicities supplies the helicities of massless Dirac external fields. Feynman preparation defaults to ordinary reduction with effective MaxSteps -> 0 unless MaxSteps is supplied explicitly; eager identity-route generation for large chains is opt-in. Feynman preparation always keeps every internal numerator and denominator off shell, regardless of InternalOnShell, and returns external-only mass rules. Existing propagators supply a separate reference-choice inventory, never shell assumptions. All Feynman diagrams use the same reference assignment per external leg: Automatic uses a fixed massless-particle cycle, or independent generic Xi references when fewer than two massless particles are available. AllSpurious and cyclic choices are deterministic rather than optimized separately per diagram. AllPhysical uses deterministic momentum-insertion references from the shared process pole inventory, preferring massive external targets; its reference poles may coincide with a diagram's existing propagators. Xi, IndependentXi and None retain their meanings. Shared Mixed Feynman choices remain unimplemented and PARTIAL. Failed or timed-out conversion, or an unavailable requested reference choice, remains PARTIAL in details and returns Failure for ordinary output.";
+  " With a FeynmanModel, only diagram pairs are accepted. Raw Feynman tensors are converted to spinor products before reference replacement and reduction; FermionHelicities supplies the helicities of massless Dirac external fields. Feynman preparation defaults to ordinary reduction with effective MaxSteps -> 0 unless MaxSteps is supplied explicitly; eager identity-route generation for large chains is opt-in. Feynman preparation always keeps every internal numerator and denominator off shell, regardless of InternalOnShell, and returns external-only mass rules. Existing propagators supply a separate reference-choice inventory, never shell assumptions. All Feynman diagrams use the same reference assignment per external leg: Automatic uses a fixed massless-particle cycle, or independent generic Xi references when fewer than two massless particles are available. AllSpurious and cyclic choices are deterministic rather than optimized separately per diagram. AllSpurious falls back to a shared physical reference for each leg without a spurious choice. AllPhysical uses deterministic momentum-insertion references from the shared process pole inventory, preferring massive external targets; its reference poles may coincide with a diagram's existing propagators. Xi, IndependentXi and None retain their meanings. Shared Mixed Feynman choices remain unimplemented and PARTIAL. Failed or timed-out conversion, or an unavailable requested reference choice, remains PARTIAL in details and returns Failure for ordinary output.";
 PrepareAmplitudes::usage = PrepareAmplitudes::usage <>
   " Detailed output also retains RemainderData for every item. It separates the fixed-reference reduction difference from reference-continuation choices and retains each completed reduction and identity-step remainder without expanding it. ShellRemainder is the exact algebraic difference between the selected fixed-reference expression and the returned prepared expression, not a claim of off-cut equality. ReferenceContinuations retain common-Xi and, when unambiguous, shared per-external-leg Xi source expressions before internal-shell reductions. These are proposed continuations requiring full-amplitude validation. Partial preparation and missing or ambiguous reference information remain explicit. Ordinary amplitude-pair and channel-row outputs stay unchanged; pass detailed preparation reports to completion to use the retained data.";
 PrepareAmplitudes::usage = PrepareAmplitudes::usage <>
@@ -13193,7 +13193,8 @@ preparationReferences[expr_, rules_List, model_List, pairs_List, requested_, for
         spurious = (<|"Leg" -> a, "Mode" -> If[choice === "FeynmanCyclic", "Cyclic", "AllSpurious"],
           "Target" -> #|> &) /@ options;
         physical = {};
-        If[MemberQ[{Automatic, "AllPhysical", "Mixed"}, choice],
+        If[MemberQ[{Automatic, "AllPhysical", "Mixed"}, choice] ||
+            requested === "AllSpurious" && spurious === {},
           (* Feynman references may repeat a diagram's pole: no internal shell
              identity is used, and the assignment must be shared across diagrams. *)
           options = Select[DeleteCases[external, a],
@@ -13202,7 +13203,8 @@ preparationReferences[expr_, rules_List, model_List, pairs_List, requested_, for
           physical = (<|"Leg" -> a, "Mode" -> "AllPhysical", "Target" -> #|> &) /@ options];
         eligible = Switch[choice,
           "AllPhysical", physical, "Mixed", Join[spurious, physical],
-          Automatic, Join[spurious, physical], _, spurious];
+          Automatic, Join[spurious, physical],
+          "AllSpurious", If[spurious === {}, physical, spurious], _, spurious];
         If[eligible === {}, fail["No " <> ToString[choice, InputForm] <>
           " reference is supported for external leg " <> ToString[a] <>
           " by the supplied diagram pole inventory."]]];
@@ -17167,7 +17169,7 @@ End[];
 
 Begin["ConstructiveDiagrams`"];
 
-ConstructAmplitude::usage = "ConstructAmplitude[process, diagramModel, factorizationModel] generates and prepares diagrams and factorization channels, completes factorization and high-energy behavior, prepares each completed expression with external identities only, then checks the final amplitude. The ordinary result is the bare expression only when every required final check passes. Output -> Amplitude returns {externalMassRules, expression}; Details retains stage results, timings and diagnostics. ProgressReporting -> True displays the current stage, its elapsed time and total elapsed time. At the end PrintReport -> True prints total time, the final SpinorExpressionComplexity score and the test table before returning the expression. FeynmanModel -> None optionally supplies an independent model whose diagrams are prepared and compared too. PreparationOptions, ChannelPreparationOptions, FinalPreparationOptions, FactorizationOptions, HighEnergyOptions, CheckOptions and FeynmanPreparationOptions pass options to individual stages. TimeConstraint -> Automatic selects a finite overall budget from the process and workload; individual stages resolve their own automatic limits. Explicit values override those choices. PolePreference -> AllPhysical is the default; AllSpurious prefers massless-reference forms, and Mixed admits both. This preference is shared by preparation and completion without weakening validation. ParameterRules, HighEnergyBound, Samples, ValidationSamples, RandomSeed, Parallelization and MaxKernels provide common settings. The original channels remain the residue targets, discarded preparation terms and affine completion freedom are retained, and final preparation never applies internal-shell identities. Failed, opposite-sign and unresolved checks never produce a validated amplitude. When FeynmanModel is supplied, a fixed factorization or high-energy candidate can be selected after every mandatory check and independent Feynman comparison passes; its unclassified affine family remains in Details and no uniqueness is claimed. Without that independent benchmark, unresolved completion freedom remains a failure.";
+ConstructAmplitude::usage = "ConstructAmplitude[process, diagramModel, factorizationModel] generates and prepares diagrams and factorization channels, completes factorization and high-energy behavior, prepares each completed expression with external identities only, then checks the final amplitude. The ordinary result is the bare expression only when every required final check passes. Output -> Amplitude returns {externalMassRules, expression}; Details retains stage results, timings and diagnostics. ProgressReporting -> True displays the current stage, its elapsed time and total elapsed time. At the end PrintReport -> True prints total time, the final SpinorExpressionComplexity score and the test table before returning the expression. FeynmanModel -> None optionally supplies an independent model whose diagrams are prepared and compared too. PreparationOptions, ChannelPreparationOptions, FinalPreparationOptions, FactorizationOptions, HighEnergyOptions, CheckOptions and FeynmanPreparationOptions pass options to individual stages. TimeConstraint -> Automatic selects a finite overall budget from the process and workload; individual stages resolve their own automatic limits. Explicit values override those choices. PolePreference -> AllPhysical is the default; AllSpurious prefers massless-reference forms and uses eligible physical replacements when needed. Mixed admits both. Final expressions resolve auxiliary Xi unless Xi, IndependentXi or None is requested. These choices leave validation intact. ParameterRules, HighEnergyBound, Samples, ValidationSamples, RandomSeed, Parallelization and MaxKernels provide common settings. The original channels remain the residue targets, discarded preparation terms and affine completion freedom are retained, and final preparation never applies internal-shell identities. Failed, opposite-sign and unresolved checks never produce a validated amplitude. When FeynmanModel is supplied, a fixed factorization or high-energy candidate can be selected after every mandatory check and independent Feynman comparison passes; its unclassified affine family remains in Details and no uniqueness is claimed. Without that independent benchmark, unresolved completion freedom remains a failure.";
 ConstructAmplitude::usage = ConstructAmplitude::usage <>
   " RandomSeed -> Automatic chooses one time-based run seed. The stages derive their seeds from that value, with explicit stage overrides honored. Details records RandomSeed and PrintReport prints it with the final timing; an explicit integer reproduces the sample choices.";
 ConstructAmplitude::args = "Expected a process with at least four model particle names, a diagram model, a constructive factorization model, and valid construction options.";
@@ -17400,62 +17402,10 @@ constructSpuriousOrbitForms[pairs_List, preparation_Association, plan_Associatio
   SortBy[DeleteDuplicatesBy[forms, #["Expression"] &], preparationSortKey[#["Expression"]] &]
 ];
 
-(* A null momentum k and two emission virtualities d_a=2 p_a.k and
-   d_b=2 p_b.k admit a reference-spinor partial fraction. Schouten on the
-   two projected momenta proves it for either chirality. Only terms already
-   containing both matching propagators and the diagonal sandwich are split. *)
-constructSingleReferenceForm[pair_List, channels_List, model_List] := Module[
-  {external = First[pair], expression = Last[pair], legs, input, poles, null,
-   emission, split, terms, groups, key, result},
-  legs = externalIndices[external];
-  null = Select[legs, (Mass[#] /. external) === 0 &];
-  If[Length[null] =!= 1 || !preparationScalarExternalRulesQ[external] ||
-      LeafCount[expression] > 8000 || !rspExpansionBudgetQ[expression] ||
-      !FreeQ[expression, Spinor["Xi", ___]], Return[pair]];
-  input = residueSimpleInputs[pair, channels, model];
-  If[!AssociationQ[input], Return[pair]];
-  poles = DeleteDuplicates[residueCanonicalPropagators[Lookup[input["Targets"], "Propagator"], legs]];
-  emission[i_] := residueCanonicalPropagators[
-    PropDen[Mom[Multiparticle @@ Sort[{i, First[null]}]], Mass[i] /. external], legs];
-  split[term_Times] := Module[{chain, state, chirality, k, a, b, da, db, spectator, reference, bracket},
-    chain = SelectFirst[List @@ term, MatchQ[#,
-      SpinorChain[Spinor["Helicity", "Angle" | "Square", _Integer],
-        Mom[_Integer], Mom[_Integer], Spinor["Helicity", "Angle" | "Square", _Integer]]] &&
-      First[#] === Last[#] &, None];
-    If[chain === None, Return[Map[split, term]]];
-    state = First[chain];
-    {chirality, k} = (List @@ state)[[{2, 3}]];
-    {b, a} = First /@ (List @@ chain)[[{2, 3}]];
-    If[k =!= First[null] || a === b || !ContainsAll[DeleteCases[legs, k], {a, b}], Return[term]];
-    {da, db} = emission /@ {a, b};
-    If[da === db || !ContainsAll[poles, {da, db}] || !ContainsAll[List @@ term, {1/da, 1/db}],
-      Return[Map[split, term]]];
-    spectator = term da db/chain;
-    chirality = If[chirality === "Angle", "Square", "Angle"];
-    reference = Spinor["Xi", chirality, 0];
-    bracket = SpinorChain[reference, Spinor["Helicity", chirality, k]];
-    spectator (SpinorChain[reference, Mom[a], state]/(da bracket) -
-      SpinorChain[reference, Mom[b], state]/(db bracket))
-  ];
-  split[sum_Plus] := Map[split, sum];
-  split[term_] := term;
-  expression = residueCanonicalPropagators[expression, legs];
-  result = split[expression];
-  If[!FreeQ[result, Spinor["Xi", ___]], Return[{external, result}]];
-  result = preparationProtectedDenominators[expression, Expand];
-  terms = If[Head[result] === Plus, List @@ result, {result}];
-  If[Length[terms] > 128, Return[pair]];
-  result = Total[split /@ terms];
-  If[FreeQ[result, Spinor["Xi", ___]], Return[pair]];
-  key[term_] := Times @@ Cases[If[Head[term] === Times, List @@ term, {term}],
-    Power[_PropDen, _Integer?Negative]];
-  groups = GroupBy[If[Head[result] === Plus, List @@ result, {result}], key];
-  result = Total[KeyValueMap[Function[{pole, group}, pole FactorTerms[Total[group]/pole]], groups]];
-  {external, result}
-];
-
-constructSpuriousBracketFormQ[expression_] := !FreeQ[expression,
-  Power[chain_SpinorChain, _Integer?Negative] /; !FreeQ[chain, Spinor["Helicity", _, _Integer]]];
+constructSpuriousBracketFormQ[expression_] :=
+  FreeQ[expression, (Spinor | SpinorHat)["Xi", ___]] &&
+  !FreeQ[expression, Power[chain_SpinorChain, _Integer?Negative] /;
+    !FreeQ[chain, Spinor["Helicity", _, _Integer]]];
 
 ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     opts : OptionsPattern[]] := Module[
@@ -17471,7 +17421,8 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
    completed = False, resultStatus, totalTime, resourceResolution, requestedOptions,
    finalComplexity = Missing["NotValidated"],
    prepareBenchmark, benchmarkReady = False, validateRepresentative, effectivePolePreference,
-   completeEnergy, recoverReciprocalReferences, trySpuriousForms, trySingleReferenceForm,
+   retainFinalReferences, resolveFinalReferences,
+   completeEnergy, recoverReciprocalReferences, trySpuriousForms,
    representativeSelection = <|"Attempted" -> False, "Selected" -> False|>,
    representativeAttempts = {},
    representationInputs, physicalRepresentation = Missing["NotValidated"], representationReason = None},
@@ -17515,8 +17466,13 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
       physicalParticleMass[#, factorizationModel[[1]]] & /@ process, MissingQ],
     Return[Failure["UnknownExternalParticle", <|"MessageTemplate" ->
       "Every process particle must occur in both supplied models."|>]]];
+  (* With one null leg the preparation fallback is necessarily physical.
+     Give the completion solver the corresponding physical correction space. *)
   effectivePolePreference = If[options["PolePreference"] === "AllSpurious" &&
     Count[external, 0] === 1, "AllPhysical", options["PolePreference"]];
+  retainFinalReferences = MemberQ[{"Xi", "IndependentXi", None}, options["PolePreference"]] ||
+    MemberQ[{"Xi", "IndependentXi", None},
+      Lookup[constructRuleOptions[options["FinalPreparationOptions"]], "PolePreference", Automatic]];
   external = Thread[(Mass /@ Range[Length[process]]) -> external];
   checkSettings = constructRuleOptions[options["CheckOptions"]];
   If[!MemberQ[{Automatic, True}, Lookup[checkSettings, "HighEnergyCheck", Automatic]] ||
@@ -17542,7 +17498,8 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
       "Stage" -> currentStage, "StageElapsed" -> AbsoluteTime[] - stageStarted,
       "TotalElapsed" -> AbsoluteTime[] - started|>]]);
   stageOptions[function_, bag_, forced_: <||>] := Module[{settings, limit, common},
-    common = <|"PolePreference" -> effectivePolePreference,
+    common = <|"PolePreference" -> If[MemberQ[{CompleteFactorization, CompleteHighEnergy}, function],
+        effectivePolePreference, options["PolePreference"]],
       "BoseSymmetryGroups" -> options["BoseSymmetryGroups"],
       "FermionSymmetryGroups" -> options["FermionSymmetryGroups"],
       "ExternalParticles" -> process, "ParameterRules" -> options["ParameterRules"],
@@ -17616,6 +17573,23 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     If[!preparationPairQ[pair],
       constructFailure[currentStage, {"Final preparation did not return an external-mass amplitude pair."}], pair]
   ];
+  (* A retained continuation can still have a literal Xi. Substitute it
+     consistently on the completed expression before the mandatory checks. *)
+  resolveFinalReferences[pair_List] := Module[{inventory, replacement, choice, candidate},
+    If[retainFinalReferences || FreeQ[Last[pair], (Spinor | SpinorHat)["Xi", ___]], Return[pair]];
+    choice = Replace[options["PolePreference"], Automatic -> "AllSpurious"];
+    inventory = preparationInputPair[#, "FactorizationChannel"] & /@ channels;
+    replacement = TimeConstrained[
+      preparationReferences[Last[pair], First[pair], factorizationModel, inventory,
+        choice, {}, False, True], Min[5, Max[0.000001, remaining[]]], $Failed];
+    candidate = If[AssociationQ[replacement], Lookup[replacement, "Expression", $Failed], $Failed];
+    If[AssociationQ[replacement] && replacement["Status"] === "COMPLETE" &&
+        residueFiniteQ[candidate] && FreeQ[candidate, (Spinor | SpinorHat)["Xi", ___]],
+      {First[pair], candidate},
+      constructFailure["Resolving final references", Join[
+        {"No consistent external replacement was established for the remaining Xi spinors."},
+        If[AssociationQ[replacement], Lookup[replacement, "Diagnostics", {}], {}]]]]
+  ];
   (* A supplied independent benchmark can establish a particular amplitude
      without classifying every alternative in its fitted affine family. Never
      use that benchmark as a source, fit target or substitute expression. *)
@@ -17647,6 +17621,8 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     If[!preparationPairQ[pair] || !residueFiniteQ[Last[pair]] ||
         !ListQ[parameters] || parameters =!= {} &&
           !FreeQ[Last[pair], Alternatives @@ parameters], Return[False]];
+    pair = resolveFinalReferences[pair];
+    If[FailureQ[pair], Return[False]];
     parameterRules = Lookup[constructRuleOptions[options["CheckOptions"]], "ParameterRules",
       options["ParameterRules"]];
     validationSets = completionValidationRuleSets[factorizationModel, parameterRules,
@@ -17793,19 +17769,6 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     If[!accepted, finalPair = previousPair];
     accepted
   ];
-  trySingleReferenceForm[pair_] := Module[{proposed, previousPair = finalPair, selected},
-    If[options["PolePreference"] =!= "AllSpurious" || effectivePolePreference =!= "AllPhysical" ||
-        !preparationPairQ[pair] || remaining[] <= 1, Return[False]];
-    proposed = run["Forming single-photon reference fractions",
-      TimeConstrained[constructSingleReferenceForm[pair, channels, factorizationModel],
-        Min[4, remaining[]], pair]];
-    If[!preparationPairQ[proposed] || proposed === pair, Return[False]];
-    selected = validateRepresentative[<|"Status" -> "COMPLETE", "ExternalMassRules" -> First[proposed],
-        "Amplitude" -> Last[proposed], "FreeParameters" -> {}|>,
-      "Single-photon spurious", Min[60, remaining[]], False];
-    If[!selected, finalPair = previousPair];
-    selected
-  ];
   workflow[] := Catch[
     diagramData = run["Generating diagrams", CreateDiagrams[process, diagramModel]];
     require[diagramData];
@@ -17833,21 +17796,20 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     require[factorizedPair]; finalPair = factorizedPair;
     factorization = constructPreparedFamily[factorization, factorizedPair];
     If[feynmanModel =!= None && Lookup[factorization, "FreeParameters", {}] =!= {} &&
-        (trySingleReferenceForm[factorizedPair] ||
-          validateRepresentative[factorization, "Factorization", Min[60, remaining[]/10]]),
+        validateRepresentative[factorization, "Factorization", Min[60, remaining[]/10]],
       completed = True; Throw[finalPair, tag]];
     highEnergy = completeEnergy["Completing high-energy behavior"];
     highEnergy = recoverReciprocalReferences[];
     If[AssociationQ[highEnergy] && Lookup[highEnergy, "Status", None] =!= "COMPLETE" &&
-        (feynmanModel =!= None && Lookup[highEnergy, "FreeParameters", {}] === {} &&
-          trySingleReferenceForm[{highEnergy["ExternalMassRules"], highEnergy["Amplitude"]}] ||
-          validateRepresentative[highEnergy, "HighEnergy", remaining[]]),
+        validateRepresentative[highEnergy, "HighEnergy", remaining[]],
       completed = True; Throw[finalPair, tag]];
     require[highEnergy, {"COMPLETE"}];
     finalPair = {highEnergy["ExternalMassRules"], highEnergy["Amplitude"]};
     finalPair = run["Preparing final amplitude", prepareFinal[finalPair]];
     require[finalPair];
-    If[trySingleReferenceForm[finalPair], completed = True; Throw[finalPair, tag]];
+    If[!retainFinalReferences && !FreeQ[Last[finalPair], (Spinor | SpinorHat)["Xi", ___]],
+      With[{resolved = run["Resolving final references", resolveFinalReferences[finalPair]]},
+        require[resolved]; finalPair = resolved]];
     If[feynmanModel =!= None, prepareBenchmark[]];
     checkSettings = Join[constructRuleOptions[options["CheckOptions"]], <|
       "Output" -> "Details", "SpuriousPoles" -> Automatic,

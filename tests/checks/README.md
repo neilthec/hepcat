@@ -934,9 +934,10 @@ answer are used by the optional test.
 
 This opt-in suite replays the QED notebook calls with both same-helicity
 three-photon cases, both mixed-helicity cases and both single-photon
-four-fermion cases. Each result must retain the requested bracket
-denominators, stay within the recorded complexity ceiling, pass every
-physical and spurious pole check, and pass the high-energy, reference and
+four-fermion cases. The three-photon results must retain their apparent
+bracket poles. Both single-photon results must use physical denominators.
+All results must be Xi-free, stay within the recorded complexity ceilings,
+and pass the physical and spurious pole, high-energy, reference and
 independent Feynman checks. The suite supplies no final expressions.
 
 ```sh

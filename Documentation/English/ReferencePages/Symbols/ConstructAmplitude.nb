@@ -43,8 +43,10 @@ automatically."}], "Notes"],
          "massless", "-", "reference", " ", "forms", " ", "instead", ",",
          " ", "or", " "}]], "InlineFormula"],
      Cell[BoxData[RowBox[{"\"Mixed\""}]], "InlineFormula"], " to admit both. \
-The requested choice is passed through preparation and completion; every \
-result must still pass the same mandatory checks."}], "Notes"],
+When no spurious reference is eligible for a leg, AllSpurious uses a physical \
+replacement. Final expressions have no auxiliary Xi unless the caller \
+explicitly chooses Xi, IndependentXi or None. Every result must still pass \
+the same mandatory checks."}], "Notes"],
   Cell[TextData[{"The diagram model supplies the interactions used by ",
      ButtonBox["CreateDiagrams", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/CreateDiagrams"], ". The factorization \
@@ -181,11 +183,10 @@ after checking the physical residues, spurious-pole cancellation, high-energy \
 behavior, reference independence and any supplied Feynman comparison. \
 Exchange symmetry is preserved by projection or verified by exact external \
 identities."}], "Notes"], Cell[TextData[{"With a single massless leg there is \
-no other external massless reference spinor. The constructor first builds a \
-physical-pole expression and, where the emission propagators and numerator \
-permit, tries an equivalent split into current fractions sharing one \
-auxiliary Xi. The same checks apply to this presentation, including variation \
-of the auxiliary reference."}], "Notes"],
+no second massless external spinor to use as a reference. AllSpurious can \
+therefore return a physical-only expression, with the auxiliary reference \
+resolved. Use Xi, IndependentXi or None explicitly for workflows that retain \
+auxiliary references."}], "Notes"],
   Cell[TextData[{"Use ", Cell[BoxData[RowBox[{"\"FeynmanModel\"", " ", "->",
          " ", "feynmanModel"}]], "InlineFormula"],
      " when you have an independent ", ButtonBox["FeynmanModel",
