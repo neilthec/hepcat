@@ -17169,7 +17169,7 @@ End[];
 
 Begin["ConstructiveDiagrams`"];
 
-ConstructAmplitude::usage = "ConstructAmplitude[process, diagramModel, factorizationModel] generates and prepares diagrams and factorization channels, completes factorization and high-energy behavior, prepares each completed expression with external identities only, then checks the final amplitude. The ordinary result is the bare expression only when every required final check passes. Output -> Amplitude returns {externalMassRules, expression}; Details retains stage results, timings and diagnostics. ProgressReporting -> True displays the current stage, its elapsed time and total elapsed time. At the end PrintReport -> True prints total time, the final SpinorExpressionComplexity score and the test table before returning the expression. FeynmanModel -> None optionally supplies an independent model whose diagrams are prepared and compared too. PreparationOptions, ChannelPreparationOptions, FinalPreparationOptions, FactorizationOptions, HighEnergyOptions, CheckOptions and FeynmanPreparationOptions pass options to individual stages. TimeConstraint -> Automatic selects a finite overall budget from the process and workload; individual stages resolve their own automatic limits. Explicit values override those choices. PolePreference -> AllPhysical is the default; AllSpurious prefers massless-reference forms and uses eligible physical replacements when needed. Mixed admits both. Final expressions resolve auxiliary Xi unless Xi, IndependentXi or None is requested. These choices leave validation intact. ParameterRules, HighEnergyBound, Samples, ValidationSamples, RandomSeed, Parallelization and MaxKernels provide common settings. The original channels remain the residue targets, discarded preparation terms and affine completion freedom are retained, and final preparation never applies internal-shell identities. Failed, opposite-sign and unresolved checks never produce a validated amplitude. When FeynmanModel is supplied, a fixed factorization or high-energy candidate can be selected after every mandatory check and independent Feynman comparison passes; its unclassified affine family remains in Details and no uniqueness is claimed. Without that independent benchmark, unresolved completion freedom remains a failure.";
+ConstructAmplitude::usage = "ConstructAmplitude[process, diagramModel, factorizationModel] generates and prepares diagrams and factorization channels, completes factorization and high-energy behavior, prepares each completed expression with external identities only, then checks the final amplitude. The ordinary result is the bare expression only when every required final check passes. Output -> Amplitude returns {externalMassRules, expression}; Details retains stage results, timings and diagnostics. ProgressReporting -> True displays the current stage, its elapsed time and total elapsed time. At the end PrintReport -> True prints total time, the final SpinorExpressionComplexity score and the test table before returning the expression. FeynmanModel -> None optionally supplies an independent model whose diagrams are prepared and compared too. PreparationOptions, ChannelPreparationOptions, FinalPreparationOptions, FactorizationOptions, HighEnergyOptions, CheckOptions and FeynmanPreparationOptions pass options to individual stages. TimeConstraint -> Automatic selects a finite overall budget from the process and workload; individual stages resolve their own automatic limits. Explicit values override those choices. PolePreference -> AllPhysical is the default; AllSpurious prefers massless-reference forms and uses eligible physical replacements when needed. Mixed admits both. Final expressions resolve auxiliary Xi unless Xi, IndependentXi or None is requested. These choices leave validation intact. ParameterRules, HighEnergyBound, Samples, ValidationSamples, RandomSeed, Parallelization and MaxKernels provide common settings. The original channels remain the residue targets, discarded preparation terms and affine completion freedom are retained, and final preparation never applies internal-shell identities. Failed, opposite-sign and unresolved checks never produce a validated amplitude. For larger AllSpurious results with a FeynmanModel, a bounded compound-pole exchange reduction can propose a shorter form for independent validation. When FeynmanModel is supplied, a fixed factorization or high-energy candidate can be selected after every mandatory check and independent Feynman comparison passes; its unclassified affine family remains in Details and no uniqueness is claimed. Without that independent benchmark, unresolved completion freedom remains a failure.";
 ConstructAmplitude::usage = ConstructAmplitude::usage <>
   " RandomSeed -> Automatic chooses one time-based run seed. The stages derive their seeds from that value, with explicit stage overrides honored. Details records RandomSeed and PrintReport prints it with the final timing; an explicit integer reproduces the sample choices.";
 ConstructAmplitude::args = "Expected a process with at least four model particle names, a diagram model, a constructive factorization model, and valid construction options.";
@@ -17407,6 +17407,127 @@ constructSpuriousBracketFormQ[expression_] :=
   !FreeQ[expression, Power[chain_SpinorChain, _Integer?Negative] /;
     !FreeQ[chain, Spinor["Helicity", _, _Integer]]];
 
+(* Schouten reduces two adjacent emission orders against the same reference
+   leg. The remaining 2x2 determinant is the external endpoint mass squared.
+   The central virtuality in the numerator is an ordinary off-shell identity. *)
+spuriousCentralCutGroupReduction[expression_, externalRules_List, central_PropDen] := Module[
+  {legs = externalIndices[externalRules], cut, sides, expanded, terms, profile,
+   unchanged = <|"Amplitude" -> expression, "Status" -> "UNCHANGED"|>,
+   rational, factors, groupKey, reduceGroup, reduceSide, candidates, best},
+  cut = residueMomentumLegsFromExpression[First[central]];
+  If[!ListQ[cut] || !SubsetQ[legs, cut] || LeafCount[expression] > 6000 ||
+      !preparationScalarExternalRulesQ[externalRules], Return[unchanged]];
+  sides = Select[{cut, Complement[legs, cut]}, Length[#] === 3 &&
+    Count[(Mass /@ #) /. externalRules, 0] === 2 &];
+  If[sides === {}, Return[unchanged]];
+  profile = rspExpansionProfile[expression, 48, 12000];
+  If[profile[[1]] > 48 || profile[[2]] > 12000, Return[unchanged]];
+  expanded = canonicalChains[residueCanonicalPropagators[Expand[expression], legs]];
+  terms = If[Head[expanded] === Plus, List @@ expanded, {expanded}];
+  If[Length[terms] > 48, Return[unchanged]];
+  factors[term_] := If[Head[term] === Times, List @@ term, {term}];
+  rational[body_, operation_] := Module[{atoms, symbols},
+    atoms = DeleteDuplicates[Cases[{body}, _SpinorChain | _PropDen | _ModelParameter |
+      _MomProd, Infinity]];
+    symbols = Table[Unique["spuriousCutAtom"], {Length[atoms]}];
+    operation[body /. Thread[atoms -> symbols]] /. Thread[symbols -> atoms]];
+  groupKey[term_, excluded_List] := Sort[Complement[
+    Cases[factors[term], HoldPattern[Power[p_PropDen, -1]] :> p], excluded]];
+  reduceGroup[inputGroup_List, endpoint_Integer, {a_Integer, b_Integer}, mass_, {u_PropDen, v_PropDen}] :=
+    Module[{sum = Total[inputGroup], c, chirality, opposite, h, insert, same, ba, ca, cb,
+      xa, xb, left, right, common, sensitive, target = Total[inputGroup], rewrite},
+      If[Length[inputGroup] < 2 || !And[!FreeQ[sum, 1/u], !FreeQ[sum, 1/v]], Return[sum]];
+      Do[
+        opposite = If[chirality === "Angle", "Square", "Angle"];
+        h[kind_, i_, j_] := SpinorChain[Spinor["Helicity", kind, i], Spinor["Helicity", kind, j]];
+        insert[i_, j_] := SpinorChain[Spinor["Helicity", chirality, i], Mom[endpoint],
+          Spinor["Helicity", opposite, j]];
+        same = h[chirality, a, b]; ba = h[opposite, a, b];
+        ca = h[opposite, a, c]; cb = h[opposite, b, c];
+        xa = insert[a, c]; xb = insert[b, c];
+        left = canonicalChains[((same + xa/cb) xb/(v ca) - (same - xb/ca) xa/(u cb))/central];
+        right = canonicalChains[(-mass^2 same^2/central + xa xb/(ca cb))/(u v)];
+        If[!AllTrue[Cases[canonicalChains[{xa, xb}], _SpinorChain, Infinity], !FreeQ[sum, #] &], Continue[]];
+        (* Atomization tests a formal rational quotient. The spectator must
+           be independent of the local brackets and virtualities. *)
+        common = rational[sum/left, Together];
+        sensitive = DeleteDuplicates[Join[{u, v, central}, Cases[canonicalChains[{same, ba, ca, cb, xa, xb}],
+          _SpinorChain, Infinity]]];
+        If[residueFiniteQ[common] && FreeQ[common, Alternatives @@ sensitive],
+          rewrite = FactorTerms[common right];
+          If[preparationBetterQ[preparationRank[rewrite], preparationRank[target]], target = rewrite]],
+        {c, Select[Complement[legs, {a, b, endpoint}], (Mass[#] /. externalRules) === 0 &]},
+        {chirality, {"Square", "Angle"}}];
+      target
+    ];
+  reduceSide[side_List] := Module[{a, b, endpoint, mass, u, v, groups, reduced},
+    {a, b} = Select[side, (Mass[#] /. externalRules) === 0 &];
+    endpoint = First[Complement[side, {a, b}]];
+    mass = Mass[endpoint] /. externalRules;
+    If[!residueExactZero[mass^2 - Last[central]^2], Return[expression]];
+    {u, v} = residueCanonicalPropagators[
+      (PropDen[Mom[Multiparticle @@ Sort[{endpoint, #}]], mass] & /@ {a, b}), legs];
+    groups = GatherBy[terms, groupKey[#, {u, v, central}] &];
+    reduced = reduceGroup[#, endpoint, {a, b}, mass, {u, v}] & /@ groups;
+    If[reduced === Total /@ groups, expression, FactorTerms[Total[reduced]]]];
+  candidates = Select[reduceSide /@ sides,
+    preparationBetterQ[preparationRank[#], preparationRank[expression]] &];
+  If[candidates === {}, Return[unchanged]];
+  best = First[MinimalBy[candidates, preparationSortKey]];
+  <|"Amplitude" -> best, "Status" -> "IMPROVED",
+    "Scope" -> "ExternalSchoutenAndMomentumDeterminant"|>
+];
+
+(* Reuse one reduced continuation only when the input compound poles form
+   a complete signed exchange orbit. The global result still needs independent
+   amplitude checks, since equal pole support does not imply equal regular terms. *)
+constructSpuriousGroupOrbit[expression_, external_List, plan_Association,
+    physicalPropagators_List] := Module[
+  {legs = externalIndices[external], null, source, factors, sum, terms, cuts, byCut, physical,
+   regular, centers, orbit, candidates, local, candidate},
+  If[Length[legs] < 6 || plan["Order"] <= 1 || LeafCount[expression] > 12000 ||
+      !constructSpuriousBracketFormQ[expression] || !preparationScalarExternalRulesQ[external],
+    Return[Missing["UnsupportedSpuriousGroups"]]];
+  null = Select[legs, (Mass[#] /. external) === 0 &];
+  If[Length[null] < 3, Return[Missing["UnsupportedSpuriousGroups"]]];
+  source = residueCanonicalPropagators[expression, legs];
+  physical = DeleteDuplicates[residueCanonicalPropagators[physicalPropagators, legs]];
+  terms = Which[Head[source] === Plus, List @@ source,
+    Head[source] === Times,
+    factors = List @@ source; sum = Cases[factors, _Plus];
+    If[Length[sum] =!= 1 || !FreeQ[DeleteCases[factors, _Plus], _PropDen],
+      Return[Missing["UnsupportedSpuriousGroups"]]];
+    (Times @@ DeleteCases[factors, _Plus]) (List @@ First[sum]),
+    True, Return[Missing["UnsupportedSpuriousGroups"]]];
+  If[Length[terms] > 64, Return[Missing["UnsupportedSpuriousGroups"]]];
+  cuts[term_] := Select[DeleteDuplicates[Cases[term,
+    Power[p_PropDen, -1] :> p, {0, Infinity}]], Function[prop,
+    With[{cut = residueMomentumLegsFromExpression[First[prop]]},
+      MemberQ[physical, prop] && ListQ[cut] && AnyTrue[{cut, Complement[legs, cut]},
+        Length[#] === 3 && Length[Intersection[#, null]] === 2 &]]]];
+  byCut = GroupBy[terms, cuts];
+  If[AnyTrue[Keys[byCut], Length[#] > 1 &], Return[Missing["UnsupportedSpuriousGroups"]]];
+  regular = If[KeyExistsQ[byCut, {}], Total[byCut[{}]], 0];
+  centers = Flatten[DeleteCases[Keys[byCut], {}], 1];
+  If[Length[centers] < 2 || Length[centers] > 12, Return[Missing["UnsupportedSpuriousGroups"]]];
+  orbit = DeleteDuplicates[residueCanonicalPropagators[
+    Fold[completionBoseCycle, First[centers], #] & /@ plan["Permutations"], legs]];
+  If[Sort[orbit] =!= Sort[centers], Return[Missing["UnsupportedSpuriousGroups"]]];
+  candidates = Reap[Do[
+    local = spuriousCentralCutGroupReduction[Total[byCut[{central}]], external, central];
+    If[AssociationQ[local] && local["Status"] === "IMPROVED",
+      candidate = FactorTerms[regular + canonicalChains[residueCanonicalPropagators[
+        Length[centers] completionBoseProject[local["Amplitude"], plan], legs]]];
+      If[constructSpuriousBracketFormQ[candidate] &&
+          preparationBetterQ[preparationRank[candidate], preparationRank[expression]],
+        Sow[<|"Amplitude" -> candidate, "Method" -> "ReducedCompoundPoleOrbit",
+          "SourcePropagator" -> central, "OrbitSize" -> Length[centers],
+          "LocalReduction" -> local|>]]],
+    {central, Sort[centers]}]][[2]];
+  If[candidates === {}, Missing["NoImprovingSpuriousGroup"],
+    First[MinimalBy[First[candidates], preparationSortKey[#["Amplitude"]] &]]]
+];
+
 ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     opts : OptionsPattern[]] := Module[
   {options = Join[Association[Options[ConstructAmplitude]], Association[Reverse[{opts}]]],
@@ -17422,7 +17543,8 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
    finalComplexity = Missing["NotValidated"],
    prepareBenchmark, benchmarkReady = False, validateRepresentative, effectivePolePreference,
    retainFinalReferences, resolveFinalReferences,
-   completeEnergy, recoverReciprocalReferences, trySpuriousForms,
+   completeEnergy, recoverReciprocalReferences, trySpuriousForms, tryCompactSpuriousResult,
+   finishConstruction,
    representativeSelection = <|"Attempted" -> False, "Selected" -> False|>,
    representativeAttempts = {},
    representationInputs, physicalRepresentation = Missing["NotValidated"], representationReason = None},
@@ -17827,14 +17949,42 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
         Lookup[checkReport, "Summary", Missing["NoTestSummary"]]}], tag]];
     completed = True; finalPair,
     tag];
+  tryCompactSpuriousResult[] := Module[
+    {proposal, selected, previousPair = finalPair, previousSelection = representativeSelection},
+    If[!completed || options["PolePreference"] =!= "AllSpurious" || Length[process] < 6 ||
+        feynmanModel === None || remaining[] <= 2 || LeafCount[Last[finalPair]] > 12000 ||
+        !constructSpuriousBracketFormQ[Last[finalPair]], Return[False]];
+    proposal = run["Reducing spurious compound-pole groups", TimeConstrained[
+      MemoryConstrained[Module[{input, plan},
+        input = completionNormalizeInput[finalPair, channels, factorizationModel];
+        If[!AssociationQ[input], Return[Missing["UnsupportedSpuriousGroups"]]];
+        plan = completionExchangePlan[input, factorizationModel, options["BoseSymmetryGroups"],
+          options["FermionSymmetryGroups"], process];
+        If[!AssociationQ[plan], Return[Missing["UnsupportedSpuriousGroups"]]];
+        constructSpuriousGroupOrbit[Last[finalPair], First[finalPair], plan,
+          Lookup[input["Targets"], "Propagator", {}]]],
+        134217728, Missing["SpuriousGroupMemoryLimit"]],
+      Min[8, remaining[]], Missing["SpuriousGroupTimeConstraint"]]];
+    If[!AssociationQ[proposal], Return[False]];
+    selected = validateRepresentative[Join[proposal, <|"Status" -> "COMPLETE",
+      "ExternalMassRules" -> First[finalPair], "FreeParameters" -> {}|>],
+      "Reduced compound-pole orbit", Min[45, remaining[]]];
+    If[selected,
+      save["Compact spurious form", proposal],
+      finalPair = previousPair; representativeSelection = previousSelection;
+      save["Representative selection", previousSelection]];
+    selected
+  ];
+  finishConstruction[] := Module[{value = workflow[]},
+    If[tryCompactSpuriousResult[], finalPair, value]];
   result = If[TrueQ[enabled] && callback === Automatic && $FrontEnd =!= Null,
-    Monitor[workflow[], Refresh[Grid[{
+    Monitor[finishConstruction[], Refresh[Grid[{
       {"Stage", currentStage},
       {"Stage elapsed", constructDuration[AbsoluteTime[] - stageStarted]},
       {"Total elapsed", constructDuration[AbsoluteTime[] - started]},
       {"Progress", Row[{Lookup[lastEvent, "Stage", ""], " ", Lookup[lastEvent, "Operation", ""],
         " ", Lookup[lastEvent, "Completed", ""], If[KeyExistsQ[lastEvent, "Total"], "/", ""],
-        Lookup[lastEvent, "Total", ""]}]}}, Alignment -> Left], UpdateInterval -> 1]], workflow[]];
+        Lookup[lastEvent, "Total", ""]}]}}, Alignment -> Left], UpdateInterval -> 1]], finishConstruction[]];
   failure = If[completed, None, If[FailureQ[result], result,
     constructFailure[currentStage, {"Construction ended without a validated amplitude."}]]];
   If[completed,

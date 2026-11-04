@@ -948,6 +948,16 @@ python3 tests/checks/run-wolfram-tests.py \
 Set `HEPCAT_SPURIOUS_INTEGRATION_CASES=P,M` to replay only the single-photon
 cases. The other case names are `PPP`, `MMM`, `PPM` and `PMM`.
 
+Select `PPPP6` to replay the six-point, four-positive-photon notebook call
+with factorization model 4. It requires the general compound-pole orbit
+reduction, complexity at most 120, and all 23 checks including the independent
+Feynman comparison.
+
+```sh
+HEPCAT_SPURIOUS_INTEGRATION_CASES=PPPP6 python3 tests/checks/run-wolfram-tests.py \
+  --suite spurious-construction-integration-tests.wl --timeout 720
+```
+
 ## Repaired Legacy Bugs
 
 The five formerly expected-failure probes now run as ordinary regression
