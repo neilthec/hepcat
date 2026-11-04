@@ -2321,7 +2321,7 @@ Scan[If[Names[#] =!= {}, Remove[#]] &, DeleteDuplicates[
 
 DiagramAmplitudeRecords::usage = "DiagramAmplitudeRecords[diagrams] retains each diagram's original expression, physical propagators, numerator conditions and mass rules. The string option SimplificationFunction accepts a function on {massRules, expression}; its default is Identity. NumeratorOnShellChannels declares any internal conditions used by that function; no internal-shell simplification is applied automatically.";
 PhysicalPoleResidue::usage = "PhysicalPoleResidue[expression, channel] extracts a pole coefficient. A list of channels extracts a compatible multiple-pole coefficient. Without a coherent KinematicMap the result is only FORMAL. A map f[expression, channels, poleVariables] must evaluate all spinors, momenta and propagators consistently near the selected cuts. KinematicKind distinguishes Sample from Symbolic charts. StructuralCoefficient -> True also computes the formal opaque-propagator coefficient by default; False skips that optional symbolic calculation and returns Missing[NotRequested] in its field without changing the mapped physical residue or kinematic validation. No internal on-shell condition is inferred from diagram mass rules.";
-CheckAmplitudes::usage = "CheckAmplitudes[amplitudes, channels, model] checks physical residues against the ordinary rows returned by FactorizationAmplitudeChannels, automatically discovers apparent denominator poles, and tests high-energy growth and explicit Xi reference-spinor independence of the complete summed amplitude. Only supplied channels certify physical poles; other supported denominator poles are tested for cancellation while physical propagators remain nonzero. The physical comparison applies the sewing factor -1 from (i A_L)(i A_R)(i/PropDen)/i. HighEnergyCheck -> Automatic checks growth at sampled real, fixed-angle, momentum-conserving kinematics with external masses and couplings held fixed. Large supported reference-free expressions may certify a conservative all-spin upper bound; ObservedPower remains missing when only ObservedPowerUpperBound is certified. Unsupported or inconclusive bounds use the exact Laurent expansion. HighEnergyBound -> Automatic assumes the renormalizable-tree bound E^(4-n); a numerical exponent overrides it, and HighEnergyCheck -> False disables this diagnostic. HighEnergySamples and HighEnergyTimeConstraint control the energy test. ReferenceCheck -> Automatic varies all literal Xi labels simultaneously at sampled conserved external kinematics away from physical poles, holding momenta and external spin states fixed. ReferenceSamples and ReferenceTimeConstraint control this test; ReferenceCheck -> False disables it. An expression without explicit reference spinors has no explicit Xi dependence; this is not a Ward-identity proof. ParameterRules -> Automatic uses numerical variables and dependent functions from the supplied model. An explicit rule list overrides selected model parameters; dependent functions are recomputed. Numerical values are used only for checking, leaving the amplitude symbolic. PASS denotes agreement, finiteness, acceptable growth or reference independence at the recorded kinematic samples, not a generic analytic proof. Opp Sign diagnoses an overall opposite sign in physical residues or a supplied Feynman comparison. Unsupported calculations and timeouts remain UNRESOLVED. Output -> \"HighEnergy\" shows energy samples, \"References\" shows reference comparisons, \"Residues\" shows physical and spurious-pole samples, \"Summary\" returns combined counts and \"Details\" retains all diagnostics. SpuriousPoles -> Automatic discovers denominators; a list overrides discovery and {} disables spurious checks. Set SpuriousPoles -> {}, HighEnergyCheck -> False and ReferenceCheck -> False for the legacy physical-only report. Samples, RandomSeed, ParameterRules and TimeConstraint control pole comparisons. Inputs remain unchanged and no amplitude correction or new interaction is added.";
+CheckAmplitudes::usage = "CheckAmplitudes[amplitudes, channels, model] checks physical residues against the ordinary rows returned by FactorizationAmplitudeChannels, automatically discovers apparent denominator poles, and tests high-energy growth and explicit Xi reference-spinor independence of the complete summed amplitude. Only supplied channels certify physical poles; other supported denominator poles are tested for cancellation while physical propagators remain nonzero. The physical comparison applies the sewing factor -1 from (i A_L)(i A_R)(i/PropDen)/i. HighEnergyCheck -> Automatic checks growth at sampled real, fixed-angle, momentum-conserving kinematics with external masses and couplings held fixed. Large supported reference-free expressions may certify a conservative all-spin upper bound, including massless bracket denominators whose leading coefficients are exactly nonzero in the sampled directions; ObservedPower remains missing when only ObservedPowerUpperBound is certified. Unsupported or inconclusive bounds use the exact Laurent expansion. HighEnergyBound -> Automatic assumes the renormalizable-tree bound E^(4-n); a numerical exponent overrides it, and HighEnergyCheck -> False disables this diagnostic. HighEnergySamples and HighEnergyTimeConstraint control the energy test. ReferenceCheck -> Automatic varies all literal Xi labels simultaneously at sampled conserved external kinematics away from physical poles, holding momenta and external spin states fixed. ReferenceSamples and ReferenceTimeConstraint control this test; ReferenceCheck -> False disables it. An expression without explicit reference spinors has no explicit Xi dependence; this is not a Ward-identity proof. ParameterRules -> Automatic uses numerical variables and dependent functions from the supplied model. An explicit rule list overrides selected model parameters; dependent functions are recomputed. Numerical values are used only for checking, leaving the amplitude symbolic. PASS denotes agreement, finiteness, acceptable growth or reference independence at the recorded kinematic samples, not a generic analytic proof. Opp Sign diagnoses an overall opposite sign in physical residues or a supplied Feynman comparison. Unsupported calculations and timeouts remain UNRESOLVED. Output -> \"HighEnergy\" shows energy samples, \"References\" shows reference comparisons, \"Residues\" shows physical and spurious-pole samples, \"Summary\" returns combined counts and \"Details\" retains all diagnostics. SpuriousPoles -> Automatic discovers denominators; a list overrides discovery and {} disables spurious checks. Set SpuriousPoles -> {}, HighEnergyCheck -> False and ReferenceCheck -> False for the legacy physical-only report. Samples, RandomSeed, ParameterRules and TimeConstraint control pole comparisons. Inputs remain unchanged and no amplitude correction or new interaction is added.";
 DiagramAmplitudeRecords::args = "Expected a list of diagram associations and valid diagram-local simplification options.";
 PhysicalPoleResidue::args = "Expected channel associations with Cut, Complement, Mass and ExternalLegs, and valid diagnostic options.";
 CheckAmplitudes::args = "Expected diagram amplitudes, the ordinary channel rows returned by FactorizationAmplitudeChannels, a model, and valid comparison options.";
@@ -4962,16 +4962,17 @@ highEnergyRegroupTerms[expr_, seconds_] := Module[
 ];
 
 (* A structural upper bound can avoid expanding a large coherent spin tensor.
-   Every external spinor is O(E^(1/2)), every momentum is O(E), and a
-   nondegenerate multiparticle propagator is Theta(E^2). Only a strict typed
-   polynomial numerator and verified propagator denominators are admitted.
-   An inconclusive bound always returns to the existing Laurent calculation. *)
+   Every external spinor is O(E^(1/2)) and every momentum is O(E). Inverse
+   propagators and inverse external massless brackets must have exact nonzero
+   leading coefficients on the sampled chart. This says nothing about their
+   finite-energy poles; those are checked separately. An inconclusive bound
+   always returns to the existing Laurent calculation. *)
 highEnergyUpperBoundCertificate[expr_, chart_Association, parameterRules_List, bound_] := Module[
   {tag = Unique[], t = Lookup[chart, "PoleVariable", Missing[]],
    variables = Lookup[chart, "SpinVariables", {}], external, checks, work,
    constantQ, polynomialInSpinsQ, finitePolynomialQ, scaledValue, momentum, endpoint, primitive,
-   propagator, weight, degree, value, parts,
-   spinors = <||>, primitives = <||>, poles = <||>,
+   propagator, masslessBracket, weight, degree, value, parts,
+   spinors = <||>, primitives = <||>, poles = <||>, brackets = <||>,
    reject, result, masses, massiveLegs, basis},
   reject[reason_] := Throw[<|"Status" -> "NOT_CERTIFIED", "Reason" -> reason|>, tag];
   result = Catch[
@@ -5042,11 +5043,26 @@ highEnergyUpperBoundCertificate[expr_, chart_Association, parameterRules_List, b
         reject["DegenerateLeadingPropagator"]];
       AssociateTo[poles, k -> <|"Cut" -> c, "Complement" -> other,
         "Mass" -> p[[2]], "LeadingInvariant" -> inv|>]; 2];
+    masslessBracket[chain_SpinorChain] := Module[{legs, mapped, leading},
+      If[KeyExistsQ[brackets, chain], Return[1]];
+      If[!MatchQ[chain, SpinorChain[Spinor["Helicity", "Angle", _Integer],
+          Spinor["Helicity", "Angle", _Integer]] |
+        SpinorChain[Spinor["Helicity", "Square", _Integer],
+          Spinor["Helicity", "Square", _Integer]]], reject["UnsupportedInverseSpinorChain"]];
+      legs = Last /@ (List @@ chain);
+      If[!DuplicateFreeQ[legs] || !AllTrue[legs, Lookup[masses, #, Missing[]] === 0 &],
+        reject["UnsupportedInverseSpinorChain"]];
+      mapped = residueEvaluateChart[chain, chart, {}];
+      leading = scaledValue[mapped, 2];
+      If[!constantQ[leading] || highEnergyZeroState[leading] =!= "Nonzero",
+        reject["DegenerateLeadingMasslessBracket"]];
+      AssociateTo[brackets, chain -> <|"Bracket" -> chain, "LeadingCoefficient" -> leading|>]; 1];
     weight[x_] := weight[x] = Which[
       constantQ[x], 0,
       Head[x] === Plus, Max[weight /@ List @@ x],
       Head[x] === Times, Total[weight /@ List @@ x],
       MatchQ[x, Power[_PropDen, _Integer?Negative]], x[[2]] propagator[x[[1]]],
+      MatchQ[x, Power[_SpinorChain, _Integer?Negative]], x[[2]] masslessBracket[x[[1]]],
       Head[x] === PropDen && Length[x] === 2 && constantQ[x[[2]]],
         momentum[x[[1]]]; primitive[x]; 2,
       MatchQ[x, Power[_Mom, _Integer?EvenQ]] && x[[2]] >= 0,
@@ -5078,7 +5094,8 @@ highEnergyUpperBoundCertificate[expr_, chart_Association, parameterRules_List, b
       "CoherentSpinLegs" -> Keys[Lookup[chart, "ExternalSpinVectors", <||>]],
       "MassiveSpinBasisBoundVerified" -> True, "MassiveSpinBasisLegs" -> massiveLegs,
       "CheckedExternalSpinors" -> Length[spinors], "CheckedNumeratorPrimitives" -> Length[primitives],
-      "GenericPropagators" -> Values[poles], "InternalOnShellConditions" -> {},
+      "GenericPropagators" -> Values[poles], "MasslessBracketDenominators" -> Values[brackets],
+      "InternalOnShellConditions" -> {},
       "Scope" -> "ConservativeGenericFixedAngleUpperBoundAllSuppliedSpinComponents"|>, tag];
   result
 ];
@@ -17169,7 +17186,7 @@ End[];
 
 Begin["ConstructiveDiagrams`"];
 
-ConstructAmplitude::usage = "ConstructAmplitude[process, diagramModel, factorizationModel] generates and prepares diagrams and factorization channels, completes factorization and high-energy behavior, prepares each completed expression with external identities only, then checks the final amplitude. The ordinary result is the bare expression only when every required final check passes. Output -> Amplitude returns {externalMassRules, expression}; Details retains stage results, timings and diagnostics. ProgressReporting -> True displays the current stage, its elapsed time and total elapsed time. At the end PrintReport -> True prints total time, the final SpinorExpressionComplexity score and the test table before returning the expression. FeynmanModel -> None optionally supplies an independent model whose diagrams are prepared and compared too. PreparationOptions, ChannelPreparationOptions, FinalPreparationOptions, FactorizationOptions, HighEnergyOptions, CheckOptions and FeynmanPreparationOptions pass options to individual stages. TimeConstraint -> Automatic selects a finite overall budget from the process and workload; individual stages resolve their own automatic limits. Explicit values override those choices. PolePreference -> AllPhysical is the default; AllSpurious prefers massless-reference forms and uses eligible physical replacements when needed. Mixed admits both. Final expressions resolve auxiliary Xi unless Xi, IndependentXi or None is requested. These choices leave validation intact. ParameterRules, HighEnergyBound, Samples, ValidationSamples, RandomSeed, Parallelization and MaxKernels provide common settings. The original channels remain the residue targets, discarded preparation terms and affine completion freedom are retained, and final preparation never applies internal-shell identities. Failed, opposite-sign and unresolved checks never produce a validated amplitude. With AllSpurious and a FeynmanModel, supported massive fermion lines with one opposite-helicity massless vector can first try a compact common-reference current derived from the diagram vertices. The current must pass the same amplitude checks before it is selected. For mixed helicities on a supported cubic vector line, a bounded off-shell construction uses the model vertices and shared massless references and returns the first validated form. For larger AllSpurious results with a FeynmanModel, a bounded compound-pole exchange reduction can propose a shorter form for independent validation. When FeynmanModel is supplied, a fixed factorization or high-energy candidate can be selected after every mandatory check and independent Feynman comparison passes; its unclassified affine family remains in Details and no uniqueness is claimed. Without that independent benchmark, unresolved completion freedom remains a failure.";
+ConstructAmplitude::usage = "ConstructAmplitude[process, diagramModel, factorizationModel] generates and prepares diagrams and factorization channels, completes factorization and high-energy behavior, prepares each completed expression with external identities only, then checks the final amplitude. The ordinary result is the bare expression only when every required final check passes. Output -> Amplitude returns {externalMassRules, expression}; Details retains stage results, timings and diagnostics. ProgressReporting -> True displays the current stage, its elapsed time and total elapsed time. At the end PrintReport -> True prints total time, the final SpinorExpressionComplexity score and the test table before returning the expression. FeynmanModel -> None optionally supplies an independent model whose diagrams are prepared and compared too. PreparationOptions, ChannelPreparationOptions, FinalPreparationOptions, FactorizationOptions, HighEnergyOptions, CheckOptions and FeynmanPreparationOptions pass options to individual stages. TimeConstraint -> Automatic selects a finite overall budget from the process and workload; individual stages resolve their own automatic limits. Explicit values override those choices. PolePreference -> AllPhysical is the default; AllSpurious prefers massless-reference forms and uses eligible physical replacements when needed. Mixed admits both. Final expressions resolve auxiliary Xi unless Xi, IndependentXi or None is requested. These choices leave validation intact. ParameterRules, HighEnergyBound, Samples, ValidationSamples, RandomSeed, Parallelization and MaxKernels provide common settings. The original channels remain the residue targets, discarded preparation terms and affine completion freedom are retained, and final preparation never applies internal-shell identities. Failed, opposite-sign and unresolved checks never produce a validated amplitude. With AllSpurious and a FeynmanModel, supported massive fermion lines with one opposite-helicity massless vector can first try a compact common-reference current derived from the diagram vertices. The current must pass the same amplitude checks before it is selected. For mixed helicities on a supported cubic vector line, a bounded off-shell construction uses the model vertices and shared massless references and returns the first validated form. Two supported massive fermion currents coupled to two equal-helicity massless vectors can use an off-shell candidate derived from the same model, with matching diagram cuts and independent validation. For larger AllSpurious results with a FeynmanModel, a bounded compound-pole exchange reduction can propose a shorter form for independent validation. When FeynmanModel is supplied, a fixed factorization or high-energy candidate can be selected after every mandatory check and independent Feynman comparison passes; its unclassified affine family remains in Details and no uniqueness is claimed. Without that independent benchmark, unresolved completion freedom remains a failure.";
 ConstructAmplitude::usage = ConstructAmplitude::usage <>
   " RandomSeed -> Automatic chooses one time-based run seed. The stages derive their seeds from that value, with explicit stage overrides honored. Details records RandomSeed and PrintReport prints it with the final timing; an explicit integer reproduces the sample choices.";
 ConstructAmplitude::args = "Expected a process with at least four model particle names, a diagram model, a constructive factorization model, and valid construction options.";
@@ -17559,6 +17576,78 @@ constructOffShellVectorLineForm[orders_List, endpoints_List, helicities_Associat
   If[!residueFiniteQ[expression] || !constructSpuriousBracketFormQ[expression],
     Return[Missing["UnsupportedVectorCurrent"]]];
   <|"Expression" -> expression, "Method" -> "OffShellVectorLine",
+    "ReferenceAssignments" -> references|>
+];
+
+(* Lift a pair of massive Dirac currents when every participating vertex is
+   certified to be the standard colorless vector coupling. The model and
+   the original cut inventory determine the candidate. The separate
+   Feynman benchmark is used only by the normal validation stage. *)
+constructOffShellVectorCurrents[diagrams_List, process_List, model_List, external_List] := Module[
+  {legs = externalIndices[external], vectors, matter, fermion, vector, photonNames,
+   base, vertices, expected, coupling, particles, lifted, liftedDiagrams, signatures,
+   pairs, converted, references, expression},
+  If[Length[legs] =!= 6 || diagrams === {} || Length[diagrams] > 64 ||
+      !preparationScalarExternalRulesQ[external] || Length[model] < 4,
+    Return[Missing["UnsupportedVectorCurrents"]]];
+  vectors = Select[legs, (Mass[#] /. external) === 0 &];
+  matter = Complement[legs, vectors];
+  If[Length[vectors] =!= 2 || Length[DeleteDuplicates[process[[vectors]]]] =!= 1,
+    Return[Missing["UnsupportedVectorCurrents"]]];
+  fermion = SelectFirst[model[[1]], Length[#] === 11 && #[[5]] === 1 && #[[8]] === 1 &&
+    #[[6]] =!= 0 && #[[2]] =!= #[[3]] && Sort[process[[matter]]] ===
+      Sort[Join[#[[{2, 3}]], #[[{2, 3}]]]] &, None];
+  vector = SelectFirst[model[[1]], Length[#] === 11 && #[[5]] === 2 &&
+    #[[6]] === 0 && #[[8]] === 1 && MemberQ[#[[{2, 3}]], process[[First[vectors]]]] &, None];
+  If[fermion === None || vector === None || !AllTrue[matter,
+      (Mass[#] /. external) === fermion[[6]] &], Return[Missing["UnsupportedVectorCurrents"]]];
+  photonNames = vector[[{2, 3}]];
+  If[!StringEndsQ[First[photonNames], ".+"] ||
+      Last[photonNames] =!= StringDrop[First[photonNames], -1] <> "-",
+    Return[Missing["UnsupportedVectorCurrents"]]];
+  base = StringDrop[First[photonNames], -2];
+  If[!feynmanIdentifierQ[base] || MemberQ[fermion[[{2, 3}]], base],
+    Return[Missing["UnsupportedVectorCurrents"]]];
+  vertices = DeleteDuplicates[Lookup[Flatten[Values /@ Lookup[diagrams, "VertexStructures"], 2],
+    "ModelRow", Missing["VertexModelRow"]]];
+  expected = Join[fermion[[{2, 3}]], {#, ""}] & /@ photonNames;
+  If[!AllTrue[vertices, ListQ[#] && Length[#] === 6 &] ||
+      Sort[Take[#, 4] & /@ vertices] =!= Sort[expected],
+    Return[Missing["UnsupportedVectorCurrents"]]];
+  vertices = SortBy[vertices, First@FirstPosition[photonNames, #[[3]]] &];
+  If[!AllTrue[vertices, standardFermionVectorVertexQ[<|"ModelRow" -> #|>] &] ||
+      FreeQ[vertices[[1, -1]], _xFactor] || FreeQ[vertices[[2, -1]], _xTildeFactor] ||
+      !residueExactZero[vertices[[1, -2]] - vertices[[2, -2]]] ||
+      !FreeQ[vertices[[1, -2]], _Spinor | _SpinorChain | _Mom | _MomProd | _PropDen],
+    Return[Missing["UnsupportedVectorCurrents"]]];
+  coupling = vertices[[1, -2]]/Sqrt[2];
+  particles = {fermion, ReplacePart[vector, {2 -> base, 3 -> base, 9 -> "G"}]};
+  lifted = ConstructiveDiagrams`FeynmanModel[particles,
+    {{fermion[[3]], fermion[[2]], base, "", coupling,
+      ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]]}},
+    model[[3]], model[[4]]];
+  liftedDiagrams = CreateDiagrams[process, lifted];
+  If[!ListQ[liftedDiagrams] || Length[liftedDiagrams] =!= Length[diagrams],
+    Return[Missing["UnsupportedVectorCurrents"]]];
+  signatures[data_] := Sort[Map[Function[diagram, Sort[Map[Function[prop,
+    {Sort[{prop["Particle"], prop["Antiparticle"]} /. Thread[photonNames -> base]],
+      residueCanonicalPropagators[PropDen[Mom[prop["Index"]], prop["Mass"]], legs]}],
+      Values[diagram["Propagators"]]]]], data]];
+  If[signatures[liftedDiagrams] =!= signatures[diagrams],
+    Return[Missing["UnsupportedVectorCurrents"]]];
+  pairs = DiagramAmplitudes[liftedDiagrams];
+  If[!ListQ[pairs], Return[Missing["UnsupportedVectorCurrents"]]];
+  converted = ConstructiveDiagrams`FeynmanToSpinorProducts[pairs, "ReferenceSpinors" -> Automatic,
+    "ReduceSpinorProducts" -> False, "TimeConstraint" -> 25];
+  If[!ListQ[converted], Return[Missing["UnsupportedVectorCurrents"]]];
+  references = Thread[vectors -> Reverse[vectors]];
+  expression = canonicalChains[residueCanonicalPropagators[
+    Total[Last /@ converted] /. Spinor["Xi", kind_, leg_Integer] :>
+      Spinor["Helicity", kind, leg /. references], legs]];
+  expression = preparationGroupedPropagatorForm[FactorTerms[expression]];
+  If[!residueFiniteQ[expression] || !constructSpuriousBracketFormQ[expression],
+    Return[Missing["UnsupportedVectorCurrents"]]];
+  <|"Expression" -> expression, "Method" -> "OffShellVectorCurrents",
     "ReferenceAssignments" -> references|>
 ];
 
@@ -18050,21 +18139,29 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
           "HighEnergyOptions", "FinalPreparationOptions", "FeynmanPreparationOptions"},
           constructRuleOptions[options[#]] === <||> &],
       Return[False]];
-    proposal = run["Building vector-line candidate",
-      TimeConstrained[MemoryConstrained[constructVectorLineForm[diagramData, process, diagramModel,
-        external], 134217728, Missing["VectorCurrentMemoryLimit"]],
-        Min[40, remaining[]], Missing["VectorCurrentTimeConstraint"]]];
+    proposal = run["Building vector-line candidate", TimeConstrained[
+      With[{line = MemoryConstrained[
+          constructVectorLineForm[diagramData, process, diagramModel, external],
+          134217728, Missing["VectorCurrentMemoryLimit"]]},
+        If[MissingQ[line], MemoryConstrained[
+          constructOffShellVectorCurrents[diagramData, process, diagramModel, external],
+          268435456, Missing["VectorCurrentMemoryLimit"]], line]],
+      Min[40, remaining[]], Missing["VectorCurrentTimeConstraint"]]];
     If[!AssociationQ[proposal], Return[False]];
-    {origin, allowance} = If[proposal["Method"] === "OffShellVectorLine",
-      {"Off-shell vector line", 200}, {"Common-chirality current", 90}];
+    {origin, allowance} = Switch[proposal["Method"],
+      "OffShellVectorLine", {"Off-shell vector line", 200},
+      "OffShellVectorCurrents", {"Off-shell vector currents", 240},
+      _, {"Common-chirality current", 90}];
     channels = run["Generating factorization channels", FactorizationAmplitudeChannels[process, factorizationModel]];
     require[channels];
     prepareBenchmark[True];
     checked = validateRepresentative[Join[KeyDrop[proposal, "Expression"], <|"Status" -> "COMPLETE",
       "Amplitude" -> proposal["Expression"], "ExternalMassRules" -> external, "FreeParameters" -> {}|>],
       origin, Min[allowance, remaining[]]];
-    If[checked, save[If[proposal["Method"] === "OffShellVectorLine",
-      "Off-shell vector form", "Compact spurious form"], KeyDrop[proposal, "Expression"]],
+    If[checked, save[Switch[proposal["Method"],
+      "OffShellVectorLine", "Off-shell vector form",
+      "OffShellVectorCurrents", "Off-shell vector currents",
+      _, "Compact spurious form"], KeyDrop[proposal, "Expression"]],
       finalPair = previousPair; representativeSelection = previousSelection;
       save["Representative selection", previousSelection]; benchmarkReady = False];
     checked
@@ -18134,7 +18231,8 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     {proposal, selected, previousPair = finalPair, previousSelection = representativeSelection},
     If[!completed || options["PolePreference"] =!= "AllSpurious" || Length[process] < 6 ||
         feynmanModel === None || remaining[] <= 2 ||
-        Lookup[representativeSelection, "SourceStage", None] === "Off-shell vector line" ||
+        MemberQ[{"Off-shell vector line", "Off-shell vector currents"},
+          Lookup[representativeSelection, "SourceStage", None]] ||
         LeafCount[Last[finalPair]] > 12000 ||
         !constructSpuriousBracketFormQ[Last[finalPair]], Return[False]];
     proposal = run["Reducing spurious compound-pole groups", TimeConstrained[

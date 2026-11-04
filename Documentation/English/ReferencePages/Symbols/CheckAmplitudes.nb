@@ -147,6 +147,10 @@ with several massive-spin legs, where separate Laurent expansions would be \
 expensive. The report then says \[OpenCurlyDoubleQuote]At \
 most\[CloseCurlyDoubleQuote] and records an upper-bound certificate; it does \
 not claim to have measured a leading power."}], "Notes"],
+  Cell[TextData[{"An inverse bracket between two massless external legs can \
+be included in that bound only if its leading coefficient is exactly nonzero \
+along the sampled high-energy direction. Whether the corresponding spurious \
+pole cancels is checked separately."}], "Notes"],
   Cell["Options", "NotesSection"],
   Cell[BoxData[GridBox[{{Cell["Option", "TableHeader"],
        Cell["Default", "TableHeader"], Cell["Meaning", "TableHeader"]},

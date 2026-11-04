@@ -195,6 +195,11 @@ numerator. The constructor chooses shared massless references, checks the \
 complete result against the original factorization channels and independent \
 Feynman model, and returns the validated expression without a separate \
 compact-form search on this route."}], "Notes"],
+  Cell[TextData[{"For two massive Dirac fermion pairs and two equal-helicity \
+vectors, AllSpurious can also build an off-shell candidate from the standard \
+colorless vector vertices in the diagram model. It checks that the candidate \
+uses the same diagram cuts and passes the factorization, spurious-pole, \
+reference, high-energy and independent Feynman checks."}], "Notes"],
   Cell[TextData[{"For larger AllSpurious results with an independent Feynman \
 model, the constructor can group terms by their compound physical poles. If \
 the groups form a complete exchange orbit, it tries Schouten and an external \

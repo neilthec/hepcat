@@ -980,6 +980,19 @@ HEPCAT_SPURIOUS_INTEGRATION_CASES=PPMM6 python3 tests/checks/run-wolfram-tests.p
   --suite spurious-construction-integration-tests.wl --timeout 720
 ```
 
+Select `FourFermionsPP6,FourFermionsPM6,FourFermionsMM6` for the three
+Max Spurious four-fermion, two-photon cases with factorization model 4.
+Each replay requires all 20 physical residues and the independent Feynman,
+spurious-pole, reference and high-energy checks to pass. It also validates
+the separately worked current formulas, whose complexity ceilings are
+1360, 1664 and 1360 respectively. The constructor is never given those formulas.
+
+```sh
+HEPCAT_SPURIOUS_INTEGRATION_CASES=FourFermionsPP6,FourFermionsPM6,FourFermionsMM6 \
+  python3 tests/checks/run-wolfram-tests.py \
+  --suite spurious-construction-integration-tests.wl --timeout 1800
+```
+
 ## Repaired Legacy Bugs
 
 The five formerly expected-failure probes now run as ordinary regression

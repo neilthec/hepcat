@@ -52,7 +52,7 @@ check["unknown coefficients are not counted as fixed numerical constants", pcDec
 check["unknown or singular propagator masses are not certified",
   pcDecline[pcSix /. PropDen[p_, 1] :> PropDen[p, pcUnknownMass]] &&
     pcDecline[pcSix /. PropDen[p_, 1] :> PropDen[p, Infinity]]];
-check["inverse spinor brackets and scalar invariants use the exact fallback",
+check["inverse massive spinor brackets and scalar invariants use the exact fallback",
   pcDecline[pcSix/pcSpinAngle[1, 3]] && pcDecline[pcSix/MomProd[1, 2]]];
 check["negative powers of sums and unsupported heads use the exact fallback",
   pcDecline[pcSix/(1 + MomProd[1, 2])] && pcDecline[pcFunction[pcSix]]];
@@ -104,20 +104,27 @@ check["above-bound counting falls back and a tiny genuine E squared term still f
     pcLargeBadResult["UpperBoundAttempt"]["Status"] === "NOT_CERTIFIED"];
 pcLargeSpurious = pcLarge/pcAngle[1, 3];
 pcLargeReference = pcLarge /. Spinor["Helicity", "Angle", 1] -> Spinor["Xi", "Angle", 1];
-check["large spurious-denominator and reference expressions also decline the shortcut",
-  LeafCount[pcLargeSpurious] >= 5000 && LeafCount[pcLargeReference] >= 5000 &&
-    ConstructiveDiagrams`Private`highEnergyUpperBoundCertificate[
-      pcLargeSpurious, pcLargeChart, {}, 0]["Status"] === "NOT_CERTIFIED" &&
+check["large explicit-reference expressions decline the shortcut",
+  LeafCount[pcLargeReference] >= 5000 &&
     ConstructiveDiagrams`Private`highEnergyUpperBoundCertificate[
       pcLargeReference, pcLargeChart, {}, 0]["Status"] === "NOT_CERTIFIED"];
 pcSpuriousChart = ConstructiveDiagrams`Private`highEnergyAutomaticChart[
   pcLargeSpurious, pcMasslessMetadata, 1, 1733, {}];
-pcSpuriousFallback = TimeConstrained[ConstructiveDiagrams`Private`highEnergyOneSample[
+pcSpuriousSample = TimeConstrained[ConstructiveDiagrams`Private`highEnergyOneSample[
   pcLargeSpurious, pcSpuriousChart, {}, -1], 30, $TimedOut];
-check["a large inverse-bracket expression is still measured by the exact fallback",
-  AssociationQ[pcSpuriousFallback] && pcSpuriousFallback["Status"] === "PASS" &&
-    pcSpuriousFallback["Method"] === "ExactFixedAngleLaurentExpansion" &&
-    pcSpuriousFallback["ObservedPower"] === -1];
+check["a nondegenerate massless bracket contributes one inverse power of energy",
+  AssociationQ[pcSpuriousSample] && pcSpuriousSample["Status"] === "PASS" &&
+    pcSpuriousSample["Method"] === "ConservativeExternalPowerCounting" &&
+    MissingQ[pcSpuriousSample["ObservedPower"]] &&
+    pcSpuriousSample["ObservedPowerUpperBound"] === -1 &&
+    MatchQ[pcSpuriousSample["UpperBoundCertificate"]["MasslessBracketDenominators"],
+      {KeyValuePattern[{"Bracket" -> pcAngle[1, 3], "LeadingCoefficient" -> Except[0]}]}]];
+pcSameAngle = Join[pcSpuriousChart["Angle"], <|3 -> pcSpuriousChart["Angle"][1]|>];
+pcDegenerateBracket = ConstructiveDiagrams`Private`highEnergyUpperBoundCertificate[
+  pcLargeSpurious, Join[pcSpuriousChart, <|"Angle" -> pcSameAngle|>], {}, -1];
+check["a vanishing leading massless bracket is rejected",
+  pcDegenerateBracket["Status"] === "NOT_CERTIFIED" &&
+    pcDegenerateBracket["Reason"] === "DegenerateLeadingMasslessBracket"];
 pcReferenceChart = ConstructiveDiagrams`Private`highEnergyAutomaticChart[
   pcLargeReference, pcMasslessMetadata, 1, 1733, {}];
 pcReferenceFallback = TimeConstrained[ConstructiveDiagrams`Private`highEnergyOneSample[

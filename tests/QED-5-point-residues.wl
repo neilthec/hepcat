@@ -1626,5 +1626,93 @@ QEDSixPointPPMMSpuriousExample[model_] := Module[
   {Thread[Mass /@ Range[6] -> {mass, mass, 0, 0, 0, 0}], amplitude}
 ];
 
+(* Worked six-point e,E,E,e examples. For each signed fermion matching,
+   partition the two photons between its currents. Contract each pair of
+   currents across the virtual photon. Adding the two orders on the same
+   line uses external Dirac and Schouten identities; no cut is imposed. *)
+QEDSixPointFourFermionSpuriousExample[model_, helicities : ("PP" | "PM" | "MM")] := Module[
+  {mass = ModelParameter[model, "Me"], charge = ModelParameter[model, "EE"],
+   photons = {5, 6}, spin, angle, square, sandwich, denominator, electronPole,
+   contraction, exchange, amplitude,
+   sameSoft, sameSpin, sameTriple, sameScalar, sameShift, sameCurrent,
+   mixedSoft, mixedShift, mixedRemainder, mixedCurrent, mixedProduct},
+  spin[kind_, leg_] := Spinor[If[leg <= 4, "Spin", "Helicity"], kind, leg];
+  angle[i_, j_] := If[i === j, 0, SpinorChain[spin["Angle", i], spin["Angle", j]]];
+  square[i_, j_] := If[i === j, 0, SpinorChain[spin["Square", i], spin["Square", j]]];
+  sandwich[chirality_, i_, momenta_List, opposite_, j_] :=
+    SpinorChain[spin[chirality, i], Sequence @@ (Mom /@ momenta), spin[opposite, j]];
+  denominator[m_, legs_List] := PropDen[Mom[Multiparticle @@ Sort[legs]], m];
+  electronPole[leg_, emitted__Integer] := denominator[mass, {leg, emitted}];
+
+  (* A current entry {coefficient, angle leg, square leg} represents an
+     outer product. Contract two such entries by closing both brackets. *)
+  contraction[left_List, right_List] := Total[Flatten[Table[
+    l[[1]] r[[1]] angle[l[[2]], r[[2]]] square[l[[3]], r[[3]]],
+    {l, left}, {r, right}], 1]];
+
+  (* Equal helicities: cancel the leg-5 reference bracket in every scalar
+     current. Retain the leg-6 reciprocal denominator for same-line emissions. *)
+  sameSoft[a_, b_, i_, split_] := If[i === 5 || split,
+    -sandwich["Square", i, {b, a}, "Square", i]/(electronPole[a, i] electronPole[b, i]),
+    (sandwich["Square", i, {a}, "Angle", 5]/electronPole[a, i] -
+      sandwich["Square", i, {b}, "Angle", 5]/electronPole[b, i])/angle[i, 5]];
+  sameSpin[p_, i_] := square[i, p]/electronPole[p, i];
+  sameTriple[p_, i_, j_] := electronPole[p, i, j] electronPole[p, i] electronPole[p, j];
+  sameScalar[a_, b_, {}] := 1;
+  sameScalar[a_, b_, {i_}] := sameSoft[a, b, i, True];
+  sameScalar[a_, b_, {i_, j_}] := sameSoft[a, b, i, False] sameSoft[a, b, j, False] -
+    mass^2 square[i, j]^2 (1/sameTriple[a, i, j] + 1/sameTriple[b, i, j]);
+  sameShift[p_, q_, {}] := {};
+  sameShift[p_, q_, {i_}] := {{sameSpin[p, i], i}};
+  sameShift[p_, q_, {i_, j_}] := {
+    {sameSpin[p, i] sameSoft[p, q, j, False] + mass square[i, j]^2 angle[i, p]/sameTriple[p, i, j], i},
+    {sameSpin[p, j] sameSoft[p, q, i, False] + mass square[j, i]^2 angle[j, p]/sameTriple[p, j, i], j}};
+  sameCurrent[a_, b_, emitted_List] := Join[
+    {{sameScalar[a, b, emitted], a, b}, {sameScalar[a, b, emitted], b, a}},
+    ({#[[1]], b, #[[2]]} & /@ sameShift[a, b, emitted]),
+    ({If[Length[emitted] === 1, -#[[1]], #[[1]]], a, #[[2]]} & /@ sameShift[b, a, emitted])];
+
+  (* Mixed helicities: cancel the reference brackets in the scalar
+     current product by Schouten. Keep them in the spin-shift terms. *)
+  mixedSoft[a_, b_, photon_, physical_] := If[physical,
+    If[photon === 5, -sandwich["Square", 5, {b, a}, "Square", 5],
+      sandwich["Angle", 6, {b, a}, "Angle", 6]]/
+      (electronPole[a, photon] electronPole[b, photon]),
+    (sandwich["Square", 5, {a}, "Angle", 6]/electronPole[a, photon] -
+      sandwich["Square", 5, {b}, "Angle", 6]/electronPole[b, photon])/
+      If[photon === 5, angle[5, 6], square[5, 6]]];
+  mixedShift[p_, 5, sign_] := sign square[5, p]/electronPole[p, 5];
+  mixedShift[p_, 6, sign_] := -sign angle[6, p]/electronPole[p, 6];
+  mixedCurrent[a_, b_, shifted_List] := Function[{i, j},
+    {Times @@ (With[{p = If[# === 5, j, i]}, mixedShift[p, #, If[p === a, 1, -1]]] & /@ shifted),
+     If[MemberQ[shifted, 6], 6, i], If[MemberQ[shifted, 5], 5, j]}] @@@ {{a, b}, {b, a}};
+  mixedRemainder[a_, b_, c_, d_] := Total[Table[With[
+    {chi = sandwich["Square", 5, {i}, "Angle", 6], j = If[i === a, b, a]},
+    chi contraction[{{chi, i, j}, {chi, j, i}, {-square[5, 6] angle[6, i], 6, j},
+        {angle[5, 6] square[5, i], j, 5}}, mixedCurrent[c, d, {}]]/
+      (electronPole[i, 5] electronPole[i, 6] electronPole[i, 5, 6])], {i, {a, b}}]];
+  mixedProduct[a_, b_, c_, d_, left_List, right_List] := Module[{physical, soft, leading},
+    soft[x_, y_, unshifted_, cancel_] := Times @@ (mixedSoft[x, y, #, cancel] & /@ unshifted);
+    leading = Total[Flatten[Table[
+      physical = leftShift === {} && rightShift === {};
+      soft[a, b, Complement[left, leftShift], physical] soft[c, d, Complement[right, rightShift], physical]
+        contraction[mixedCurrent[a, b, leftShift], mixedCurrent[c, d, rightShift]],
+      {leftShift, Subsets[left]}, {rightShift, Subsets[right]}], 1]];
+    leading + Which[left === photons, mixedRemainder[a, b, c, d],
+      right === photons, mixedRemainder[c, d, a, b], True, 0]];
+
+  exchange[a_, b_, c_, d_] := Total[Function[left,
+    With[{right = Complement[photons, left]},
+      If[helicities === "PM", mixedProduct[a, b, c, d, left, right],
+        contraction[sameCurrent[a, b, left], sameCurrent[c, d, right]]]/
+        denominator[0, Join[{a, b}, left]]]] /@ Subsets[photons]];
+  amplitude = If[helicities === "PM", 4, -4] charge^4
+    (exchange[1, 2, 4, 3] - exchange[1, 3, 4, 2]);
+  If[helicities === "MM", amplitude = amplitude /.
+    Spinor[kind_, chirality : ("Angle" | "Square"), leg_] :>
+      Spinor[kind, If[chirality === "Angle", "Square", "Angle"], leg]];
+  {Thread[(Mass /@ Range[6]) -> {mass, mass, mass, mass, 0, 0}], amplitude}
+];
+
 <|"Amplitudes" -> <|"H" -> prH, "S2" -> prS2, "OldPermutation" -> prOldPermutation|>,
   "FactorizationTargets" -> prElectronTargets, "ReportFunction" -> q5ResidueReport|>
