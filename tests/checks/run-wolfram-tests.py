@@ -68,6 +68,7 @@ TEST_SUITES = (
 # regressions. Select them explicitly and give the external runner enough time.
 INTEGRATION_TEST_SUITES = ("physical-construction-integration-tests.wl",
                           "five-point-construction-integration-tests.wl",
+                          "spurious-construction-integration-tests.wl",
                           "fermion-construction-integration-tests.wl",
                           "spinas-calchep-integration-tests.wl",
                           "spinas-madgraph-integration-tests.wl",

@@ -170,13 +170,22 @@ its coefficient vanishes."}], "Notes"], Cell["Useful choices",
 completion; none weakens a mandatory check or promises a globally shortest \
 expression. Details report whether the requested physical-only representation \
 was achieved."}], "Notes"],
-  Cell[TextData[{"For four-point processes with two reciprocal massless \
-references and two crossed physical propagators, a residue-passing candidate \
-can still have uncanceled bracket poles. When the external masses permit the \
-sum of the two virtualities to equal the bracket product, the constructor can \
-retry high-energy completion with alternate diagram preparations expressed in \
-the requested bracket form. The final checks include both branches of the \
-apparent bracket pole."}], "Notes"],
+  Cell[TextData[{"For four-point processes with reciprocal massless \
+references, the constructor can repair uncanceled bracket poles with \
+alternate diagram preparations. Ordinary final reduction cancels a removable \
+bracket product even under this preference."}], "Notes"],
+  Cell[TextData[{"For a supported five-point process with three massless \
+legs, the constructor tries compact reference choices related by exchange, or \
+a complete sum of shifted factorization channels. It keeps a candidate only \
+after checking the physical residues, spurious-pole cancellation, high-energy \
+behavior, reference independence and any supplied Feynman comparison. \
+Exchange symmetry is preserved by projection or verified by exact external \
+identities."}], "Notes"], Cell[TextData[{"With a single massless leg there is \
+no other external massless reference spinor. The constructor first builds a \
+physical-pole expression and, where the emission propagators and numerator \
+permit, tries an equivalent split into current fractions sharing one \
+auxiliary Xi. The same checks apply to this presentation, including variation \
+of the auxiliary reference."}], "Notes"],
   Cell[TextData[{"Use ", Cell[BoxData[RowBox[{"\"FeynmanModel\"", " ", "->",
          " ", "feynmanModel"}]], "InlineFormula"],
      " when you have an independent ", ButtonBox["FeynmanModel",

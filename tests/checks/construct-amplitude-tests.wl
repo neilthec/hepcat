@@ -259,11 +259,12 @@ Do[
     "PolePreference" -> "AllSpurious", "FeynmanModel" -> caFeynmanModel,
     "RandomSeed" -> Last[helicities], "Output" -> "Details",
     "Parallelization" -> False, "ProgressReporting" -> False, "PrintReport" -> False];
-  check["opposite photon helicities validate both reciprocal brackets " <> ToString[First[helicities]],
-    caMixed["Status"] === "COMPLETE" && caMixed["AchievedPhysicalDenominators"] === False &&
-      caMixed["Checks"]["Summary"] === <|"PASS" -> 7|> &&
+  check["opposite photon helicities cancel the reciprocal bracket product " <> ToString[First[helicities]],
+    caMixed["Status"] === "COMPLETE" && caMixed["AchievedPhysicalDenominators"] === True &&
+      caMixed["Complexity"] <= 14 &&
+      caMixed["Checks"]["Summary"] === <|"PASS" -> 5|> &&
       Length[caMixed["Checks"]["Channels"]] === 2 &&
-      Lookup[caMixed["Checks"]["SpuriousChecks"], "Status"] === {"PASS", "PASS"} &&
+      caMixed["Checks"]["SpuriousChecks"] === {} &&
       caMixed["Checks"]["FeynmanCheck"]["Status"] === "PASS"],
   {helicities, {{{"A.+", "A.-"}, 6478803515844867618},
     {{"A.-", "A.+"}, 4641830399587009873}}}];

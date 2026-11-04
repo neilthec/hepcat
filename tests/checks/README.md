@@ -930,6 +930,23 @@ serial optional regression is a reproducibility test, not a claim that this
 long command has already been timed end to end. No cached rows or stored
 answer are used by the optional test.
 
+## Five-Point Spurious-Pole Construction
+
+This opt-in suite replays the QED notebook calls with both same-helicity
+three-photon cases, both mixed-helicity cases and both single-photon
+four-fermion cases. Each result must retain the requested bracket
+denominators, stay within the recorded complexity ceiling, pass every
+physical and spurious pole check, and pass the high-energy, reference and
+independent Feynman checks. The suite supplies no final expressions.
+
+```sh
+python3 tests/checks/run-wolfram-tests.py \
+  --suite spurious-construction-integration-tests.wl --timeout 720
+```
+
+Set `HEPCAT_SPURIOUS_INTEGRATION_CASES=P,M` to replay only the single-photon
+cases. The other case names are `PPP`, `MMM`, `PPM` and `PMM`.
+
 ## Repaired Legacy Bugs
 
 The five formerly expected-failure probes now run as ordinary regression
