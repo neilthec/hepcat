@@ -182,7 +182,14 @@ a complete sum of shifted factorization channels. It keeps a candidate only \
 after checking the physical residues, spurious-pole cancellation, high-energy \
 behavior, reference independence and any supplied Feynman comparison. \
 Exchange symmetry is preserved by projection or verified by exact external \
-identities."}], "Notes"], Cell[TextData[{"For larger AllSpurious results with \
+identities."}], "Notes"], Cell[TextData[{"With AllSpurious and an independent \
+Feynman model, a complete line of cubic vector emissions from one massive \
+fermion pair can be combined before individual diagram preparation. When one \
+vector has the opposite helicity, the constructor tries shared external \
+references and groups adjacent emission orders using external identities. It \
+reads the masses and couplings from the diagram model and uses the Feynman \
+model only for validation. If the attempt fails, ordinary construction \
+continues."}], "Notes"], Cell[TextData[{"For larger AllSpurious results with \
 an independent Feynman model, the constructor can group terms by their \
 compound physical poles. If the groups form a complete exchange orbit, it \
 tries Schouten and an external momentum determinant to reduce one group, then \

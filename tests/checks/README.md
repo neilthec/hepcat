@@ -958,6 +958,17 @@ HEPCAT_SPURIOUS_INTEGRATION_CASES=PPPP6 python3 tests/checks/run-wolfram-tests.p
   --suite spurious-construction-integration-tests.wl --timeout 720
 ```
 
+Select `PPPM6,PMMM6` to replay both six-point mixed-helicity notebook calls
+with three photons of one helicity and one of the other. The tests use
+factorization model 4 and require a common chiral vector current with
+complexity at most 528, no Xi, 14 physical residues, four apparent pole
+cancellations and all three remaining checks.
+
+```sh
+HEPCAT_SPURIOUS_INTEGRATION_CASES=PPPM6,PMMM6 python3 tests/checks/run-wolfram-tests.py \
+  --suite spurious-construction-integration-tests.wl --timeout 720
+```
+
 ## Repaired Legacy Bugs
 
 The five formerly expected-failure probes now run as ordinary regression

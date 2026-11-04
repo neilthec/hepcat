@@ -13,15 +13,20 @@ cases = <|
   "PMM" -> {{"e", "E", "A.+", "A.-", "A.-"}, 3418550451434630771, 6, 8, 133},
   "P" -> {{"e", "E", "E", "e", "A.+"}, 8126805240028689964, 8, 0, 168},
   "M" -> {{"e", "E", "E", "e", "A.-"}, 5310282517098944578, 8, 0, 168},
-  "PPPP6" -> {{"e", "E", "A.+", "A.+", "A.+", "A.+"}, 1658277745900164952, 14, 6, 120}|>;
+  "PPPP6" -> {{"e", "E", "A.+", "A.+", "A.+", "A.+"}, 1658277745900164952, 14, 6, 120},
+  "PPPM6" -> {{"e", "E", "A.+", "A.+", "A.+", "A.-"}, 4493323141101633411, 14, 4, 528},
+  "PMMM6" -> {{"e", "E", "A.+", "A.-", "A.-", "A.-"}, 3640391260799291343, 14, 4, 528}|>;
+sixPointMethods = <|"PPPP6" -> "ReducedCompoundPoleOrbit",
+  "PPPM6" -> "CommonChiralVectorLine", "PMMM6" -> "CommonChiralVectorLine"|>;
 requested = Environment["HEPCAT_SPURIOUS_INTEGRATION_CASES"];
-selected = If[MemberQ[{$Failed, ""}, requested], DeleteCases[Keys[cases], "PPPP6"], StringSplit[requested, ","]];
+selected = If[MemberQ[{$Failed, ""}, requested],
+  Select[Keys[cases], !KeyExistsQ[sixPointMethods, #] &], StringSplit[requested, ","]];
 If[selected === {} || !ContainsAll[Keys[cases], selected], Quit[2]];
 failures = {};
 Do[
   {process, seed, physical, spurious, ceiling} = cases[name];
   Print["BEGIN ", name];
-  factorization = ReadModel[modelDirectory, If[name === "PPPP6", 4, 3]];
+  factorization = ReadModel[modelDirectory, If[KeyExistsQ[sixPointMethods, name], 4, 3]];
   report = ConstructAmplitude[process, diagrams, factorization,
     "PolePreference" -> "AllSpurious", "FeynmanModel" -> benchmark,
     "RandomSeed" -> seed, "Output" -> "Details", "ProgressReporting" -> False, "PrintReport" -> False];
@@ -32,8 +37,8 @@ Do[
       Length[checks["Channels"]] =!= physical ||
       Length[checks["SpuriousChecks"]] =!= spurious ||
       checks["Summary"] =!= <|"PASS" -> physical + spurious + 3|> ||
-      name === "PPPP6" && Lookup[report["Stages"]["Compact spurious form"],
-        "Method", None] =!= "ReducedCompoundPoleOrbit",
+      KeyExistsQ[sixPointMethods, name] && Lookup[report["Stages"]["Compact spurious form"],
+        "Method", None] =!= sixPointMethods[name],
     AppendTo[failures, name]];
   Print[name, " ", report["Status"], " complexity ", report["Complexity"],
     " ", checks["Summary"], " seconds ", report["TotalTime"]];
