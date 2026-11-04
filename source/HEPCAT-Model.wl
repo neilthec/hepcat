@@ -18005,8 +18005,7 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
   ];
   tryChiralSpuriousForm[] := Module[
     {proposal, checked, previousPair = finalPair, previousSelection = representativeSelection},
-    If[options["PolePreference"] =!= "AllSpurious" || Length[process] < 6 ||
-        !completionModelQ[diagramModel] || feynmanModel === None || remaining[] <= 5 ||
+    If[!completionModelQ[diagramModel] || feynmanModel === None || remaining[] <= 5 ||
         options["BoseSymmetryGroups"] =!= Automatic || options["FermionSymmetryGroups"] =!= Automatic ||
         !AllTrue[{"PreparationOptions", "ChannelPreparationOptions", "FactorizationOptions",
           "HighEnergyOptions", "FinalPreparationOptions", "FeynmanPreparationOptions"},
@@ -18034,7 +18033,8 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     diagramPairs = run["Building diagram amplitudes", DiagramAmplitudes[diagramData]];
     require[diagramPairs];
     If[diagramPairs === {}, diagramPairs = {{external, 0}}];
-    If[tryChiralSpuriousForm[], completed = True; Throw[finalPair, tag]];
+    If[options["PolePreference"] === "AllSpurious" && Length[process] >= 6 &&
+        tryChiralSpuriousForm[], completed = True; Throw[finalPair, tag]];
     diagramPreparation = run["Preparing diagrams", PrepareAmplitudes[diagramPairs, diagramModel,
       Sequence @@ stageOptions[PrepareAmplitudes, options["PreparationOptions"],
         <|"ReturnDetails" -> True, "ExternalParticles" ->
