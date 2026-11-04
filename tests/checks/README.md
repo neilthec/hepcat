@@ -969,6 +969,17 @@ HEPCAT_SPURIOUS_INTEGRATION_CASES=PPPM6,PMMM6 python3 tests/checks/run-wolfram-t
   --suite spurious-construction-integration-tests.wl --timeout 720
 ```
 
+Select `PPMM6` to replay the balanced six-point Max Spurious calculation
+with factorization model 4. This case requires the off-shell vector-line
+route, four apparent pole cancellations and all 21 checks. The automatic
+result has no complexity ceiling. The same test independently checks the
+separate hard-coded worked form and its complexity ceiling of 1044.
+
+```sh
+HEPCAT_SPURIOUS_INTEGRATION_CASES=PPMM6 python3 tests/checks/run-wolfram-tests.py \
+  --suite spurious-construction-integration-tests.wl --timeout 720
+```
+
 ## Repaired Legacy Bugs
 
 The five formerly expected-failure probes now run as ordinary regression

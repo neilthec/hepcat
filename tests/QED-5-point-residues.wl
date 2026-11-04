@@ -1581,5 +1581,50 @@ QEDSixPointPPMMPhysicalCurrentIdentities[model_] := Module[
    eq[pole[1, 3, 5], pole[1, 3] + pole[1, 5] + 2 MomProd[3, 5]]}
 ];
 
+(* Fixed six-point + + - - example in a common-reference photon gauge.
+   Six two-emission blocks share their central propagators. The regular
+   remainder comes from the single nonzero polarization pair contraction.
+   This worked expression is independent of the construction algorithm. *)
+QEDSixPointPPMMSpuriousExample[model_] := Module[
+  {mass = ModelParameter[model, "Me"], charge = ModelParameter[model, "EE"],
+   spin, angle, square, pole, aRef, sRef, refDen, sandwich, x, contact, emission,
+   pair, contraction, split, regular, amplitude},
+  spin[kind_, leg_] := Spinor[If[leg <= 2, "Spin", "Helicity"], kind, leg];
+  angle[i_, j_] := If[i === j, 0, SpinorChain[spin["Angle", i], spin["Angle", j]]];
+  square[i_, j_] := If[i === j, 0, SpinorChain[spin["Square", i], spin["Square", j]]];
+  pole[legs__Integer] := PropDen[Mom[Multiparticle @@ Sort[{legs}]], mass];
+  aRef = <|3 -> 5, 4 -> 5, 5 -> 5, 6 -> 6|>;
+  sRef = <|3 -> 3, 4 -> 4, 5 -> 3, 6 -> 3|>;
+  refDen = <|3 -> angle[3, 5], 4 -> angle[4, 5], 5 -> square[3, 5], 6 -> square[3, 6]|>;
+  sandwich[i_, p_Integer, j_] := If[p <= 2,
+    SpinorChain[spin["Square", i], Mom[p], spin["Angle", j]], square[i, p] angle[p, j]];
+  x[i_, momenta__Integer] := Total[sandwich[sRef[i], #, aRef[i]] & /@ {momenta}]/refDen[i];
+  contact[i_, j_] := -angle[aRef[i], aRef[j]] square[sRef[i], sRef[j]]/(refDen[i] refDen[j]);
+  emission[p_, i_] := {x[i, p], -Boole[i === 5] angle[5, p], -Boole[i === 6] angle[6, p]};
+  pair[p_, i_, j_] := Module[{center = pole[p, i, j],
+     den = pole[p, i] pole[p, j], chi, scalar, si, sj},
+    Which[
+      j <= 4,
+      {(x[i, p] x[j, p] center - mass^2 square[i, j]^2)/den, 0, 0},
+      i <= 4,
+      chi = sandwich[i, p, j];
+      scalar = (x[i, p] x[j, p] center + chi^2)/den;
+      sj = -angle[j, p] (x[i, p] center + square[i, j] chi)/den;
+      {scalar, If[j === 5, sj, 0], If[j === 6, sj, 0]},
+      True,
+      scalar = (x[i, p] x[j, p] center - mass^2 angle[i, j]^2)/den;
+      si = (-angle[i, p] x[j, p] center + mass angle[i, j]^2 square[i, p])/den;
+      sj = (-angle[j, p] x[i, p] center + mass angle[i, j]^2 square[j, p])/den;
+      {scalar, si, sj}]];
+  contraction[left_List, right_List] := Sum[
+    left[[i]] right[[j]] angle[{1, 5, 6}[[i]], {2, 5, 6}[[j]]], {i, 3}, {j, 3}];
+  split[sub_List] := contraction[pair[1, Sequence @@ sub],
+    pair[2, Sequence @@ Complement[{3, 4, 5, 6}, sub]]]/pole[1, Sequence @@ sub];
+  regular = contact[4, 6] (contraction[emission[1, 3], emission[2, 5]]/(pole[1, 3] pole[2, 5]) +
+    contraction[emission[1, 5], emission[2, 3]]/(pole[1, 5] pole[2, 3]));
+  amplitude = -4 charge^4/mass (Total[split /@ Subsets[{3, 4, 5, 6}, {2}]] + regular);
+  {Thread[Mass /@ Range[6] -> {mass, mass, 0, 0, 0, 0}], amplitude}
+];
+
 <|"Amplitudes" -> <|"H" -> prH, "S2" -> prS2, "OldPermutation" -> prOldPermutation|>,
   "FactorizationTargets" -> prElectronTargets, "ReportFunction" -> q5ResidueReport|>
