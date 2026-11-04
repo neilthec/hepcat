@@ -406,10 +406,12 @@ behavior, and test construction followed by later numerical replacement.
 Use a vertex model for diagrams and a model containing complete known
 lower-point amplitudes for factorization. Do not treat a known four-point
 amplitude as a new diagram vertex. In the current QED examples, model 2 is the
-cubic diagram model and suffices for four-point factorization; model 3 includes
-the complete four- and five-point electron/photon amplitudes needed for
-five- and six-point factorization. For other
-processes, inspect the model rather than assuming these example choices apply.
+cubic diagram model and suffices for four-point factorization. Model 3 contains
+the physical-pole QED amplitudes through six points. Model 4 contains the same
+cubic vertices and the four- and five-point results constructed with
+`"PolePreference" -> "AllSpurious"`. It supplies lower-point data for
+five- and six-point factorization. For other processes, inspect the model
+before selecting the lower-point data.
 
 Model parameters are inert data stored in the model, not globally assigned
 symbols. Use `ModelParameter[model, "Me"]` to retrieve a parameter,

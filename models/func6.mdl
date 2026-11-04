@@ -1,0 +1,15 @@
+SM
+ Constraints 
+ Name  |> Expression                                                                        <|
+CW     |Sqrt[1-SW^2] % cos of the Weinberg angle
+GF     |EE^2/(2*SW*MW)^2/Sqrt[2] %  experimental value 1.166E-5 [1/GeV^2]
+MZ     |MW/CW % Z boson mass
+B00000 |1-2*SW^2
+B00001 |1-4*SW^2+4*SW^4
+gLe    |-1.0+2.0*SW^2
+gRe    |2.0*SW^2
+gLu    |1.0-4.0/3.0*SW*SW
+gRu    |-4.0/3.0*SW*SW
+gLd    |-1.0+2.0/3.0*SW*SW
+gRd    |2.0/3.0*SW*SW
+==============================================================================================
