@@ -116,12 +116,11 @@ bc79fa19d6792772af2948585b673a998d4f95927eaad", "Real"], Editable ->
             InterpretationBox[RowBox[{"(", RowBox[{RowBox[{"-",
                    SuperscriptBox[InterpretationBox["Me", ModelParameter[
                       "Me", "c290c11592fdb153523bc79fa19d6792772af2948585b673\
-a998d4f95927eaad", "Real"], Editable -> False], "2"]}], "+",
-                 SubsuperscriptBox["p", RowBox[{"1", ",", "3"}], "2"]}],
-               ")"}], PropDen[Mom[Multiparticle[1, 3]], ModelParameter["Me",
-               "c290c11592fdb153523bc79fa19d6792772af2948585b673a998d4f95927e\
-aad", "Real"]], Editable -> False]}]}], "]"}], "}"}]], "Output"],
-  Cell["See Also", "SeeAlsoSection"],
+a998d4f95927eaad", "Real"], Editable -> False], "2"]}], "+", SubscriptBox[
+                  "\"s\"", "\"13\""]}], ")"}], PropDen[Mom[Multiparticle[1,
+                3]], ModelParameter["Me", "c290c11592fdb153523bc79fa19d679277\
+2af2948585b673a998d4f95927eaad", "Real"]], Editable -> False]}]}], "]"}],
+      "}"}]], "Output"], Cell["See Also", "SeeAlsoSection"],
   Cell[TextData[{ButtonBox["CreateDiagrams", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/CreateDiagrams"], "  \[Bullet]  ",
      ButtonBox["DiagramAmplitudes", BaseStyle -> "Link",

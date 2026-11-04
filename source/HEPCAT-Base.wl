@@ -174,29 +174,13 @@ PropDen /: MakeBoxes[denominator_PropDen, form : (StandardForm | TraditionalForm
         RowBox[{"(", ToBoxes[display, form], ")"}], ToBoxes[display, form]]},
       InterpretationBox[boxes, denominator, Editable -> False]]];
 nice[PropDen[p_, m_]] := ConstructiveDiagrams`Private`nicePropagator[p, m];
-nice[PropDen[p_, m_, w_]] := If[w === 0 || m === 0 && FreeQ[w, Indeterminate | _DirectedInfinity],
-  nice[PropDen[p, m]], nice[p]^2 - m^2 + I m w];
-
-(* Keep mass assumptions local to this display, including inside products and sums. *)
-nice[expression_, externalMassRules_List] := RawBoxes[Block[
-  {ConstructiveDiagrams`Private`$niceExternalMassRules = externalMassRules},
-  ToBoxes[expression, StandardForm]]];
+nice[PropDen[p_, m_, w_]] := nice[PropDen[p, m]] + I m w;
 
 Begin["ConstructiveDiagrams`Private`"];
 
-$niceExternalMassRules = {};
-nicePropagator[momentum_, mass_] := Module[{legs, label, masses},
-  legs = residueMomentumLegsFromExpression[momentum];
-  If[!ListQ[legs] || !DuplicateFreeQ[legs], Return[nice[momentum]^2 - mass^2]];
-  label = plainTextParticleLabels[legs];
-  If[mass === 0, Return[Subscript["s", label]]];
-  If[Length[legs] === 2 && $niceExternalMassRules =!= {},
-    masses = (Cases[$niceExternalMassRules, HoldPattern[Mass[#] -> value_] :> value] &) /@ legs;
-    If[MatchQ[masses, {{_}, {_}}],
-      masses = First /@ masses;
-      If[Count[masses, 0] === 1 && FreeQ[{mass, masses}, _Real | _Mass | _Missing | $Failed] &&
-          SameQ[mass^2, Total[masses^2]], Return[Subscript["\[Tau]", label]]]]];
-  nice[momentum]^2 - mass^2
+nicePropagator[momentum_, mass_] := Module[{legs = residueMomentumLegsFromExpression[momentum]},
+  If[ListQ[legs] && DuplicateFreeQ[legs] && (Length[legs] > 1 || mass === 0),
+    Subscript["s", plainTextParticleLabels[legs]], nice[momentum]^2] - mass^2
 ];
 
 End[];

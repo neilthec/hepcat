@@ -24,14 +24,12 @@ remain explicit, allowing ", ButtonBox["PhysicalPoleResidue",
      ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"],
      " to identify the corresponding physical pole."}], "Notes"],
-  Cell[TextData[{"In the typeset display, an unweighted channel with zero \
-propagator mass is shown as s with the channel labels in its subscript. For \
-example, s123 denotes (p1+p2+p3)^2. With explicit external mass rules, the \
-display uses tau for a two-particle channel when one leg is massless and the \
-other has the propagator mass, so the denominator is exactly 2 pi dot pj. To \
-supply those rules, use ", Cell[BoxData[RowBox[{"nice", "[", "expression",
-         ",", " ", "externalMassRules", "]"}]], "InlineFormula"], ". Copying \
-the typeset propagator recovers the typed PropDen expression."}], "Notes"],
+  Cell[TextData[{"The typeset display writes the square of a sum of external \
+momenta as s with the channel labels in its subscript. For example, s123 \
+denotes (p1+p2+p3)^2, and the denominator displays as s123 minus the \
+propagator mass squared. A zero propagator mass leaves just s123. A supplied \
+width contributes its usual imaginary term. Copying the typeset propagator \
+recovers the typed PropDen expression."}], "Notes"],
   Cell[TextData[{"The three-argument form adds the width term +I m width. \
 Keep this sign convention when comparing with external numerical code. A \
 package or library using another width convention needs an explicit \
