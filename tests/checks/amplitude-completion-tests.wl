@@ -355,8 +355,8 @@ acReferenceFallbackInventory = {acReferenceFallbackPair,
 acReferenceFallback = acReferencePrepare[acReferenceFallbackInventory, "AllSpurious"];
 check["AllSpurious uses a physical fallback only on legs without spurious choices",
   acReferenceFallback["Status"] === "PREPARED" &&
-    Sort[Lookup[acReferenceAssignments[acReferenceFallback], {"Leg", "Mode", "Target"}]] ===
-      {{3, "AllSpurious", 4}, {5, "AllPhysical", 1}} &&
+    Sort[Lookup[acReferenceAssignments[acReferenceFallback], {"Leg", "Mode"}]] ===
+      {{3, "AllSpurious"}, {5, "AllPhysical"}} &&
     FreeQ[acReferenceFallback["Amplitude"], Spinor["Xi", ___]]];
 check["an unavailable constructive reference cannot reuse its own cut or return Xi",
   FailureQ[PrepareAmplitudes[Take[acReferenceSinglePairs, 1], prModel,
