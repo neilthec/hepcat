@@ -17267,6 +17267,37 @@ constructAllChecksPassQ[report_, pair_, channels_List, model_List, benchmark_] :
     Lookup[report["FeynmanCheck"], "Status", None] === "PASS"
 ];
 
+(* For four legs with two massless reference legs a,b, the crossed virtualities
+   satisfy d1+d2 = -s_ab = <ab>[ab] when the external and internal mass squares
+   balance. This is an external identity, with neither propagator on shell. *)
+constructReciprocalPoleData[external_List, channels_List, model_List] := Module[
+  {legs = externalIndices[external], null, massive, input, props, cuts, brackets},
+  If[Length[legs] =!= 4 || !preparationScalarExternalRulesQ[external], Return[None]];
+  null = Select[legs, (Mass[#] /. external) === 0 &];
+  If[Length[null] =!= 2, Return[None]];
+  massive = Complement[legs, null];
+  input = residueSimpleInputs[{external, 0}, channels, model];
+  If[!AssociationQ[input], Return[None]];
+  props = DeleteDuplicates[residueCanonicalPropagators[
+    Lookup[input["Targets"], "Propagator"], legs]];
+  cuts = First[residuePropagatorKey[PropDen[Mom[Multiparticle[First[massive], #]], 0], legs]] & /@ null;
+  If[Length[props] =!= 2 ||
+      Sort[First[residuePropagatorKey[#, legs]] & /@ props] =!= Sort[cuts] ||
+      !residueExactZero[Total[(Mass[#] /. external)^2 & /@ massive] - Total[(Last[#]^2 & /@ props)]],
+    Return[None]];
+  brackets = Function[kind, SpinorChain @@ (Spinor["Helicity", kind, #] & /@ null)] /@
+    {"Angle", "Square"};
+  <|"ExternalLegs" -> legs, "Propagators" -> props, "Brackets" -> brackets|>
+];
+
+constructSplitReciprocalSource[expression_, poleData_Association] := Module[
+  {props = poleData["Propagators"], numerator},
+  numerator = Cancel[residueCanonicalPropagators[expression, poleData["ExternalLegs"]] (Times @@ props)];
+  If[!residueFiniteQ[numerator] || numerator === 0 || !FreeQ[numerator, _PropDen],
+    Return[Nothing]];
+  FactorTerms[numerator] Total[1/props]/(Times @@ poleData["Brackets"])
+];
+
 ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     opts : OptionsPattern[]] := Module[
   {options = Join[Association[Options[ConstructAmplitude]], Association[Reverse[{opts}]]],
@@ -17281,6 +17312,7 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
    completed = False, resultStatus, totalTime, resourceResolution, requestedOptions,
    finalComplexity = Missing["NotValidated"],
    prepareBenchmark, benchmarkReady = False, validateRepresentative,
+   completeEnergy, recoverReciprocalReferences, reciprocalRecovered = False,
    representativeSelection = <|"Attempted" -> False, "Selected" -> False|>,
    representativeAttempts = {},
    representationInputs, physicalRepresentation = Missing["NotValidated"], representationReason = None},
@@ -17496,6 +17528,46 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     If[selected, checkReport = First[validationReports]["Report"]];
     selected
   ];
+  completeEnergy[name_, overrides_: <||>] := run[name, CompleteHighEnergy[factorization,
+    channelPreparation, factorizationModel, Sequence @@ stageOptions[CompleteHighEnergy,
+      options["HighEnergyOptions"], Join[<|"Output" -> "Details", "RandomSeed" -> Lookup[
+        constructRuleOptions[options["HighEnergyOptions"]], "RandomSeed", options["RandomSeed"] + 1000033] /.
+          Automatic -> options["RandomSeed"] + 1000033|>, overrides]]]];
+  recoverReciprocalReferences[] := Module[
+    {poleData, failedPoles, alternative, basis, repaired, deadline, prepLimit, energyLimit},
+    If[options["PolePreference"] =!= "AllSpurious" || Length[process] =!= 4 ||
+        !completionModelQ[diagramModel] || !AssociationQ[highEnergy] ||
+        highEnergy["Status"] =!= "UNRESOLVED" || highEnergy["FreeParameters"] =!= {} ||
+        Lookup[constructRuleOptions[options["HighEnergyOptions"]], "CorrectionBasis", Automatic] =!= Automatic ||
+        Lookup[constructRuleOptions[options["FactorizationOptions"]], "CorrectionBasis", Automatic] =!= Automatic,
+      Return[highEnergy]];
+    failedPoles = Lookup[Select[Lookup[Lookup[highEnergy, "BeforeReport", <||>], "SpuriousChecks", {}],
+      Lookup[#, "Status", None] === "FAIL" &], "Pole", {}];
+    poleData = constructReciprocalPoleData[First[factorizedPair], channels, factorizationModel];
+    If[!AssociationQ[poleData] || !ContainsAll[failedPoles, poleData["Brackets"]] || remaining[] <= 1,
+      Return[highEnergy]];
+    deadline = AbsoluteTime[] + Min[30, remaining[]];
+    prepLimit = Replace[Lookup[constructRuleOptions[options["PreparationOptions"]],
+      "TimeConstraint", Automatic], Automatic -> Infinity];
+    alternative = run["Preparing alternate reference sources",
+      PrepareAmplitudes[diagramPairs, diagramModel, Sequence @@ stageOptions[PrepareAmplitudes,
+        options["PreparationOptions"], <|"PolePreference" -> "AllPhysical", "ReturnDetails" -> True,
+          "ExternalParticles" -> process, "TimeConstraint" -> Min[prepLimit, 10, deadline - AbsoluteTime[]]|>]]];
+    If[!constructPreparationUsableQ[alternative], Return[highEnergy]];
+    basis = TimeConstrained[
+      constructSplitReciprocalSource[#, poleData] & /@ (Last /@ alternative["PreparedAmplitudes"]),
+      Max[0.000001, deadline - AbsoluteTime[]], {}];
+    If[basis === {} || AbsoluteTime[] >= deadline, Return[highEnergy]];
+    (* Include the center as a direction so the solve can replace it when its
+       residues agree but its off-cut continuation has genuine spurious poles. *)
+    basis = DeleteDuplicates[Append[basis, Last[factorizedPair]]];
+    energyLimit = Replace[Lookup[constructRuleOptions[options["HighEnergyOptions"]],
+      "TimeConstraint", Automatic], Automatic -> Infinity];
+    repaired = completeEnergy["Repairing reciprocal reference poles", <|"CorrectionBasis" -> basis,
+      "TimeConstraint" -> Min[energyLimit, deadline - AbsoluteTime[]]|>];
+    If[AssociationQ[repaired] && repaired["Status"] === "COMPLETE",
+      reciprocalRecovered = True; repaired, highEnergy]
+  ];
   workflow[] := Catch[
     diagramData = run["Generating diagrams", CreateDiagrams[process, diagramModel]];
     require[diagramData];
@@ -17524,18 +17596,18 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     If[feynmanModel =!= None && Lookup[factorization, "FreeParameters", {}] =!= {} &&
         validateRepresentative[factorization, "Factorization", Min[60, remaining[]/10]],
       completed = True; Throw[finalPair, tag]];
-    highEnergy = run["Completing high-energy behavior", CompleteHighEnergy[factorization,
-      channelPreparation, factorizationModel, Sequence @@ stageOptions[CompleteHighEnergy,
-        options["HighEnergyOptions"], <|"Output" -> "Details", "RandomSeed" -> Lookup[
-          constructRuleOptions[options["HighEnergyOptions"]], "RandomSeed", options["RandomSeed"] + 1000033] /.
-            Automatic -> options["RandomSeed"] + 1000033|>]]];
+    highEnergy = completeEnergy["Completing high-energy behavior"];
+    highEnergy = recoverReciprocalReferences[];
     If[AssociationQ[highEnergy] && Lookup[highEnergy, "Status", None] =!= "COMPLETE" &&
         validateRepresentative[highEnergy, "HighEnergy", remaining[]],
       completed = True; Throw[finalPair, tag]];
     require[highEnergy, {"COMPLETE"}];
     finalPair = {highEnergy["ExternalMassRules"], highEnergy["Amplitude"]};
-    finalPair = run["Preparing final amplitude", prepareFinal[finalPair]];
-    require[finalPair];
+    (* The alternate sources were already prepared. General final preparation
+       would combine the two fractions and erase their requested brackets. *)
+    If[!reciprocalRecovered,
+      finalPair = run["Preparing final amplitude", prepareFinal[finalPair]];
+      require[finalPair]];
     If[feynmanModel =!= None, prepareBenchmark[]];
     checkSettings = Join[constructRuleOptions[options["CheckOptions"]], <|
       "Output" -> "Details", "SpuriousPoles" -> Automatic,

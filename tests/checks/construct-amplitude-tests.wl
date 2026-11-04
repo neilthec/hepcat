@@ -45,7 +45,7 @@ check["actual four-point QED construction completes every stage",
     caDetails["Complexity"] === SpinorExpressionComplexity[caDetails["Amplitude"]]];
 If[!AssociationQ[caDetails] || Lookup[caDetails, "Status", None] =!= "COMPLETE",
   Print["Cannot continue construction assertions: ", caDetails];
-  If[checks =!= 63, AppendTo[failures, "Not every construction assertion executed."]];
+  If[checks =!= 66, AppendTo[failures, "Not every construction assertion executed."]];
 If[failures =!= {} && ValueQ[caPolicySelected],
   caPolicyDiagnosticDirectory = CreateDirectory[];
   Put[<|"Early" -> caPolicySelected, "Late" -> caPolicyLate,
@@ -251,6 +251,33 @@ check["a genuinely forbidden process still validates the zero amplitude",
     caZero["Checks"]["Channels"] === {} &&
     caZero["Checks"]["HighEnergyCheck"]["Status"] === "PASS" &&
     caZero["Checks"]["ReferenceCheck"]["Status"] === "PASS"];
+(* Replay both failed notebook seeds with real diagram and factorization
+   models. The independent Feynman expression is used only for the final check. *)
+Do[
+  caMixedProcess = Join[{"e", "E"}, First[helicities]];
+  caMixed = ConstructAmplitude[caMixedProcess, caModel, caModel,
+    "PolePreference" -> "AllSpurious", "FeynmanModel" -> caFeynmanModel,
+    "RandomSeed" -> Last[helicities], "Output" -> "Details",
+    "Parallelization" -> False, "ProgressReporting" -> False, "PrintReport" -> False];
+  check["opposite photon helicities validate both reciprocal brackets " <> ToString[First[helicities]],
+    caMixed["Status"] === "COMPLETE" && caMixed["AchievedPhysicalDenominators"] === False &&
+      caMixed["Checks"]["Summary"] === <|"PASS" -> 7|> &&
+      Length[caMixed["Checks"]["Channels"]] === 2 &&
+      Lookup[caMixed["Checks"]["SpuriousChecks"], "Status"] === {"PASS", "PASS"} &&
+      caMixed["Checks"]["FeynmanCheck"]["Status"] === "PASS"],
+  {helicities, {{{"A.+", "A.-"}, 6478803515844867618},
+    {{"A.-", "A.+"}, 4641830399587009873}}}];
+
+caMixedPhysical = ConstructAmplitude[{"e", "E", "A.+", "A.-"}, caModel, caModel,
+  "FeynmanModel" -> caFeynmanModel, "RandomSeed" -> 6478803515844867618,
+  "Output" -> "Details", "Parallelization" -> False,
+  "ProgressReporting" -> False, "PrintReport" -> False];
+check["the same mixed-helicity process still validates with the default physical representation",
+  caMixedPhysical["Status"] === "COMPLETE" &&
+    caMixedPhysical["AchievedPhysicalDenominators"] === True &&
+    caMixedPhysical["Checks"]["Summary"] === <|"PASS" -> 5|> &&
+    caMixedPhysical["Checks"]["SpuriousChecks"] === {}];
+
 (* Selecting one fully checked point is distinct from proving that its whole
    affine family is unique. Policy branches use real four-point expressions;
    only stage snapshots are controlled, while all amplitude checks remain real. *)
@@ -421,7 +448,7 @@ check["controlled stage probes restore all public completion definitions and att
 
 check["the constructor never mutates either supplied model",
   caModel === caOriginalModel && caFactorizationModel === caOriginalFactorizationModel];
-If[checks =!= 63, AppendTo[failures, "Not every construction assertion executed."]];
+If[checks =!= 66, AppendTo[failures, "Not every construction assertion executed."]];
 If[failures =!= {} && ValueQ[caPolicySelected],
   caPolicyDiagnosticDirectory = CreateDirectory[];
   Put[<|"Early" -> caPolicySelected, "Late" -> caPolicyLate,
