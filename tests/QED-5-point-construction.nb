@@ -22,9 +22,22 @@ Cell["Setup", "Section",ExpressionUUID->"4816341a-7984-4b8b-988a-1a38dedfcf65"],
 Cell[CellGroupData[{
 
 Cell["\<\
-hepcatDirectory = ParentDirectory[NotebookDirectory[]];
-$HEPCATpath = FileNameJoin[{hepcatDirectory, \"source\"}];
-Get[FileNameJoin[{$HEPCATpath, \"HEPCAT.wl\"}]];\
+Module[{notebookFolder, checkoutFolders, loader},
+  notebookFolder = Quiet[NotebookDirectory[], NotebookDirectory::nosv];
+  checkoutFolders = {ExpandFileName[\"~/code/hepcat\"]};
+  If[StringQ[notebookFolder],
+    PrependTo[checkoutFolders, ParentDirectory[notebookFolder]]];
+  loader = SelectFirst[
+    FileNameJoin[{#, \"source\", \"HEPCAT.wl\"}] & /@ checkoutFolders,
+    FileExistsQ[#] && !DirectoryQ[#] &];
+  If[MissingQ[loader],
+    Failure[\"HEPCATSourceNotFound\", <|
+      \"MessageTemplate\" -> \"HEPCAT was not found. Edit the fallback checkout path in Setup.\",
+      \"CheckoutFolders\" -> checkoutFolders|>],
+    $HEPCATpath = DirectoryName[loader];
+    hepcatDirectory = ParentDirectory[$HEPCATpath];
+    Get[loader]]
+]\
 \>", "Input",
  CellLabel->
   "In[104]:=",ExpressionUUID->"502400f7-a148-4769-998b-3289c5a54045"],
