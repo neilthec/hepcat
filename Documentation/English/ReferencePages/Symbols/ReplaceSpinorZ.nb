@@ -39,19 +39,23 @@ Evaluate loading in its own cell before the calculation.", "ExampleText"],
       ",", " ", "i", ",", " ", "j", "]", ",", " ", "{", "1", ",", " ", "m1",
       "}", ",", " ", "{", "2", ",", " ", "m2", "}", ",", " ", "3", "]"}]],
    "Input"], Cell[BoxData[FractionBox[
-     RowBox[{RowBox[{"m1", " ", TemplateBox[
-          {TemplateBox[{"\"[\"", SubscriptBox[StyleBox["1", Bold,
-               StripOnInput -> False], "i"]}, "RowDefault"],
-           TemplateBox[{TemplateBox[{StyleBox["2", Bold, StripOnInput ->
-                 False], "j"}, "Superscript", SyntaxForm -> SuperscriptBox],
-             "\"]\""}, "RowDefault"]}, "RowDefault"]}], "+",
-       TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"",
-           SubscriptBox[StyleBox["1", Bold, StripOnInput -> False], "i"]},
-          "RowDefault"], "\"|\"", SubscriptBox["p", "3"], "\"|\"",
-         TemplateBox[{TemplateBox[{StyleBox["2", Bold, StripOnInput ->
-               False], "j"}, "Superscript", SyntaxForm -> SuperscriptBox],
-           "\"]\""}, "RowDefault"]}, "RowDefault"]}],
-     RowBox[{"m1", " ", "m2"}]]], "Output"],
+     RowBox[{RowBox[{"m1", " ", InterpretationBox[TemplateBox[
+           {TemplateBox[{"\"[\"", SubscriptBox[StyleBox["1", Bold,
+                StripOnInput -> False], "i"]}, "RowDefault"],
+            TemplateBox[{TemplateBox[{StyleBox["2", Bold, StripOnInput ->
+                  False], "j"}, "Superscript", SyntaxForm -> SuperscriptBox],
+              "\"]\""}, "RowDefault"]}, "RowDefault"],
+          SpinorChain[Spinor["Spin", "Lower", "Square", 1, i],
+           Spinor["Spin", "Upper", "Square", 2, j]], Editable -> False]}],
+       "+", InterpretationBox[TemplateBox[
+         {TemplateBox[{"\"\[LeftAngleBracket]\"", SubscriptBox[
+             StyleBox["1", Bold, StripOnInput -> False], "i"]},
+           "RowDefault"], "3", TemplateBox[{TemplateBox[
+             {StyleBox["2", Bold, StripOnInput -> False], "j"},
+             "Superscript", SyntaxForm -> SuperscriptBox], "\"]\""},
+           "RowDefault"]}, "RowDefault"], SpinorChain[Spinor["Spin", "Lower",
+          "Angle", 1, i], Mom[3], Spinor["Spin", "Upper", "Square", 2, j]],
+        Editable -> False]}], RowBox[{"m1", " ", "m2"}]]], "Output"],
   Cell["See Also", "SeeAlsoSection"],
   Cell[TextData[{ButtonBox["ComplexifyMomenta", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ComplexifyMomenta"], "  \[Bullet]  ",

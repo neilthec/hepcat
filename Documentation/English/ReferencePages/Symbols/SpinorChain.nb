@@ -25,15 +25,16 @@ when present, are momentum insertions written with ",
        "paclet:HEPCAT/ref/Mom"],
      ". For example, a square endpoint on leg 1, ",
      Cell[BoxData[RowBox[{"Mom", "[", "2", "]"}]], "InlineFormula"],
-     ", and an angle endpoint on leg 3 represent [1|p2|3>."}], "Notes"],
+     ", and an angle endpoint on leg 3 display as [123>."}], "Notes"],
   Cell[TextData[{"The endpoint types and number of momentum insertions \
 determine the chain's chirality. Keep the momentum arguments in their \
 intended order: p2 p3 and p3 p2 are matrix products, and their difference is \
 controlled by spinor identities rather than ordinary commutativity."}],
-   "Notes"], Cell[TextData[{"HEPCAT displays complete chains in angle and \
-square bracket notation. The underlying typed expression is retained, so \
-functions can distinguish an external particle label from a spin index or a \
-momentum label."}], "Notes"],
+   "Notes"], Cell[TextData[{"In the typeset display, the middle labels give \
+the momentum insertions in order. For example, [1234] is a square chain with \
+p2 followed by p3. Parentheses group a summed momentum into one slot and \
+commas separate multi-digit labels. The typed expression retains the endpoint \
+chirality, momenta and spin indices."}], "Notes"],
   Cell[TextData[{"Constructing a chain records the expression; it does not \
 request every available simplification. Use ",
      ButtonBox["ReduceSpinorProducts", BaseStyle -> "Link",
@@ -75,20 +76,23 @@ Evaluate loading in its own cell before the calculation.", "ExampleText"],
       "\"Helicity\"", ",", " ", "\"Square\"", ",", " ", "1", "]", ",", " ",
       "Spinor", "[", "\"Helicity\"", ",", " ", "\"Square\"", ",", " ", "2",
       "]", "]"}]], "Input"],
-  Cell[BoxData[TemplateBox[{TemplateBox[{"\"[\"", "1"}, "RowDefault"],
-      TemplateBox[{"2", "\"]\""}, "RowDefault"]}, "RowDefault"]], "Output"],
-  Cell["Writing chains", "ExampleSubsection"],
+  Cell[BoxData[InterpretationBox[TemplateBox[
+      {TemplateBox[{"\"[\"", "1"}, "RowDefault"], TemplateBox[{"2", "\"]\""},
+        "RowDefault"]}, "RowDefault"], SpinorChain[Spinor["Helicity",
+       "Square", 1], Spinor["Helicity", "Square", 2]], Editable -> False]],
+   "Output"], Cell["Writing chains", "ExampleSubsection"],
   Cell[TextData[{"Keep p2 as a matrix insertion between a square spinor on \
-leg 1 and an angle spinor on leg 3, giving [1|p2|3>."}], "ExampleText"],
+leg 1 and an angle spinor on leg 3, giving [123>."}], "ExampleText"],
   Cell[BoxData[RowBox[{"SpinorChain", "[", "Spinor", "[", "\"Helicity\"",
       ",", " ", "\"Square\"", ",", " ", "1", "]", ",", " ", "Mom", "[", "2",
       "]", ",", " ", "Spinor", "[", "\"Helicity\"", ",", " ", "\"Angle\"",
       ",", " ", "3", "]", "]"}]], "Input"],
-  Cell[BoxData[TemplateBox[{TemplateBox[{"\"[\"", "1"}, "RowDefault"],
-      "\"|\"", SubscriptBox["p", "2"], "\"|\"",
-      TemplateBox[{"3", "\"\[RightAngleBracket]\""}, "RowDefault"]},
-     "RowDefault"]], "Output"], Cell["Reducing a chain",
-   "ExampleSubsection"],
+  Cell[BoxData[InterpretationBox[TemplateBox[
+      {TemplateBox[{"\"[\"", "1"}, "RowDefault"], "2",
+       TemplateBox[{"3", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+      "RowDefault"], SpinorChain[Spinor["Helicity", "Square", 1], Mom[2],
+      Spinor["Helicity", "Angle", 3]], Editable -> False]], "Output"],
+  Cell["Reducing a chain", "ExampleSubsection"],
   Cell[TextData[{"Reduce a repeated massless angle endpoint."}],
    "ExampleText"], Cell[BoxData[RowBox[{"ReduceSpinorProducts", "[",
       "SpinorChain", "[", "Spinor", "[", "\"Helicity\"", ",", " ",

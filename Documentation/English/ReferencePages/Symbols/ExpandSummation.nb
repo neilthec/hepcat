@@ -44,26 +44,34 @@ Evaluate loading in its own cell before the calculation.", "ExampleText"],
       ",", " ", "Spinor", "[", "\"Helicity\"", ",", " ", "\"Square\"", ",",
       " ", "4", "]", "]", "]"}]], "Input"],
   Cell[BoxData[RowBox[
-     {RowBox[{TemplateBox[{TemplateBox[{"\"[\"", SubscriptBox[
-             StyleBox["1", Bold, StripOnInput -> False],
-             RowBox[{"-", FractionBox["1", "2"]}]]}, "RowDefault"],
-          TemplateBox[{"4", "\"]\""}, "RowDefault"]}, "RowDefault"], " ",
-        TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"",
-            TemplateBox[{StyleBox["1", Bold, StripOnInput -> False],
-              RowBox[{"-", FractionBox["1", "2"]}]}, "Superscript",
-             SyntaxForm -> SuperscriptBox]}, "RowDefault"],
-          TemplateBox[{"3", "\"\[RightAngleBracket]\""}, "RowDefault"]},
-         "RowDefault"]}], "+",
-      RowBox[{TemplateBox[{TemplateBox[{"\"[\"", SubscriptBox[
-             StyleBox["1", Bold, StripOnInput -> False], FractionBox["1",
-              "2"]]}, "RowDefault"], TemplateBox[{"4", "\"]\""},
-           "RowDefault"]}, "RowDefault"], " ", TemplateBox[
-         {TemplateBox[{"\"\[LeftAngleBracket]\"", TemplateBox[
-             {StyleBox["1", Bold, StripOnInput -> False], FractionBox["1",
-               "2"]}, "Superscript", SyntaxForm -> SuperscriptBox]},
-           "RowDefault"], TemplateBox[{"3", "\"\[RightAngleBracket]\""},
-           "RowDefault"]}, "RowDefault"]}]}]], "Output"],
-  Cell["See Also", "SeeAlsoSection"],
+     {RowBox[{InterpretationBox[TemplateBox[
+          {TemplateBox[{"\"[\"", SubscriptBox[StyleBox["1", Bold,
+               StripOnInput -> False], RowBox[{"-", FractionBox["1",
+                 "2"]}]]}, "RowDefault"], TemplateBox[{"4", "\"]\""},
+            "RowDefault"]}, "RowDefault"], SpinorChain[Spinor["Spin",
+           "Lower", "Square", 1, -2^(-1)], Spinor["Helicity", "Square", 4]],
+         Editable -> False], " ", InterpretationBox[TemplateBox[
+          {TemplateBox[{"\"\[LeftAngleBracket]\"", TemplateBox[
+              {StyleBox["1", Bold, StripOnInput -> False], RowBox[
+                {"-", FractionBox["1", "2"]}]}, "Superscript",
+              SyntaxForm -> SuperscriptBox]}, "RowDefault"],
+           TemplateBox[{"3", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+          "RowDefault"], SpinorChain[Spinor["Spin", "Upper", "Angle", 1,
+           -2^(-1)], Spinor["Helicity", "Angle", 3]], Editable -> False]}],
+      "+", RowBox[{InterpretationBox[TemplateBox[
+          {TemplateBox[{"\"[\"", SubscriptBox[StyleBox["1", Bold,
+               StripOnInput -> False], FractionBox["1", "2"]]},
+            "RowDefault"], TemplateBox[{"4", "\"]\""}, "RowDefault"]},
+          "RowDefault"], SpinorChain[Spinor["Spin", "Lower", "Square", 1,
+           1/2], Spinor["Helicity", "Square", 4]], Editable -> False], " ",
+        InterpretationBox[TemplateBox[{TemplateBox[
+            {"\"\[LeftAngleBracket]\"", TemplateBox[{StyleBox["1", Bold,
+                StripOnInput -> False], FractionBox["1", "2"]},
+              "Superscript", SyntaxForm -> SuperscriptBox]}, "RowDefault"],
+           TemplateBox[{"3", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+          "RowDefault"], SpinorChain[Spinor["Spin", "Upper", "Angle", 1,
+           1/2], Spinor["Helicity", "Angle", 3]], Editable -> False]}]}]],
+   "Output"], Cell["See Also", "SeeAlsoSection"],
   Cell[TextData[{ButtonBox["ReduceSpinContractions", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ReduceSpinContractions"],
      "  \[Bullet]  ", ButtonBox["ChooseSpinIndex", BaseStyle -> "Link",

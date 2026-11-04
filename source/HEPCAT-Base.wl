@@ -64,10 +64,12 @@ nice[SpinorHat["Spin","Upper","Square",a_,J_]]:=Row[List[Superscript[Style[OverH
 lnice[SpinorHat["Spin","Upper","Square",a_,J_]]:=Row[List["[",Superscript[Style[OverHat[nice[a]],Bold],J]]]
 nice[sigma[i_]]:=Subscript["\[Sigma]",ToString[i]]
 nice[delta]:="\[Delta]"
-Format[SpinorChain[a__]]:=nice[SpinorChain[a]]
+Format[SpinorChain[a__], OutputForm] := nice[SpinorChain[a]];
 (*Format[SpinorChainReduced[a__]]:=nice[SpinorChain[a]]*)
-nice[SpinorChain[a_,c_]]:=Row[List[lnice[a],nice[c]]]
-nice[SpinorChain[a_,b__,c_]]:=Row[List[lnice[a],"|",((nice[#]&/@List[b])/.List[d__]:>d),"|",nice[c]]]
+SpinorChain /: MakeBoxes[chain : SpinorChain[_, ___, _], form : (StandardForm | TraditionalForm)] :=
+  With[{boxes = ToBoxes[nice[chain], form]}, InterpretationBox[boxes, chain, Editable -> False]];
+nice[SpinorChain[left_, momenta___, right_]] :=
+  ConstructiveDiagrams`Private`niceSpinorChain[left, {momenta}, right];
 Format[SpinorTrace[a__]]:=nice[SpinorTrace[a]]
 nice[SpinorTrace[a__]]:=Row[List["Tr(",((nice[#]&/@List[a])/.List[b__]:>b),")"]]
 Format[xFactor[a__]]:=nice[xFactor[a]]
@@ -110,6 +112,45 @@ nice[MomProd[a_,b_]]:=Subscript[p, a] . Subscript[p, b]
 Format[MomHat[a_]]:=nice[MomHat[a]]
 nice[MomHat[a_]]:=Subscript[OverHat[p], a]
 nice[MomHat[Multiparticle[a__]]]:=Subscript[OverHat[p], a]
+
+Begin["ConstructiveDiagrams`Private`"];
+
+(* Return a displayed slot and its particle labels. A parenthesized sum
+   occupies one slot, while a hat marks a shifted momentum. *)
+niceSpinorChainMomentum[slot_] := Module[{terms, formatTerm, rendered, signed},
+  formatTerm[term_] := Module[{negative, momentum, labels, display},
+    negative = MatchQ[term, Times[-1, _Mom | _MomHat]];
+    momentum = If[negative, -term, term];
+    If[!MatchQ[momentum, (Mom | MomHat)[_Integer | Multiparticle[__Integer]]],
+      Return[$Failed]];
+    labels = rspMomentumLabels[First[momentum]];
+    If[!AllTrue[labels, # >= 0 &], Return[$Failed]];
+    display = If[Length[labels] === 1, First[labels], Row[{"(", Row[labels, "+"], ")"}]];
+    If[Head[momentum] === MomHat, display = OverHat[display]];
+    {negative, display, labels}
+  ];
+  terms = If[Head[slot] === Plus, List @@ slot, {slot}];
+  rendered = formatTerm /@ terms;
+  If[MemberQ[rendered, $Failed], Return[$Failed]];
+  If[Length[rendered] === 1 && !rendered[[1, 1]], Return[Rest[First[rendered]]]];
+  signed = Flatten[({If[First[#], "-", "+"], #[[2]]} &) /@ rendered, 1];
+  If[First[signed] === "+", signed = Rest[signed]];
+  {Row[Join[{"("}, signed, {")"}]], Flatten[Last /@ rendered]}
+];
+
+niceSpinorChain[left_, momenta_List, right_] := Module[
+  {leftEnd = lnice[left], rightEnd = nice[right], slots, labels, separator},
+  slots = niceSpinorChainMomentum /@ momenta;
+  If[!MatchQ[leftEnd, Row[{_, _}]] || !MatchQ[rightEnd, Row[{_, _}]] || MemberQ[slots, $Failed],
+    Return[If[momenta === {}, Row[{leftEnd, rightEnd}],
+      Row[Join[{leftEnd, "|"}, nice /@ momenta, {"|", rightEnd}]]]]];
+  labels = Join[rspSpinorLeg /@ {left, right}, Flatten[Last /@ slots]];
+  separator = If[AllTrue[labels, IntegerQ[#] && 0 <= # <= 9 &], "", ","];
+  Row[Join[{leftEnd}, First /@ slots, {rightEnd}], separator]
+];
+
+End[];
+
 Format[MomProdHat1[a__]]:=nice[MomProdHat1[a]]
 Format[MomProdHat2[a__]]:=nice[MomProdHat2[a]]
 Format[MomProdHat12[a__]]:=nice[MomProdHat12[a]]
@@ -126,9 +167,39 @@ nice[a_/;NumberQ[a]]:=a
 Output[zp]:=nice[zp]
 nice[zp]:=Subscript[ToString[z],p]
 nice[{a___}]:=Map[nice,{a}]
-Format[PropDen[a__]]:=nice[PropDen[a]]
-nice[PropDen[p_,m_]]:=nice[p]^2-m^2
-nice[PropDen[p_,m_,w_]]:=nice[p]^2-m^2+I m w
+Format[PropDen[a__], OutputForm] := nice[PropDen[a]];
+PropDen /: MakeBoxes[denominator_PropDen, form : (StandardForm | TraditionalForm)] :=
+  With[{display = nice[denominator]},
+    With[{boxes = If[Head[display] === Plus,
+        RowBox[{"(", ToBoxes[display, form], ")"}], ToBoxes[display, form]]},
+      InterpretationBox[boxes, denominator, Editable -> False]]];
+nice[PropDen[p_, m_]] := ConstructiveDiagrams`Private`nicePropagator[p, m];
+nice[PropDen[p_, m_, w_]] := If[w === 0 || m === 0 && FreeQ[w, Indeterminate | _DirectedInfinity],
+  nice[PropDen[p, m]], nice[p]^2 - m^2 + I m w];
+
+(* Keep mass assumptions local to this display, including inside products and sums. *)
+nice[expression_, externalMassRules_List] := RawBoxes[Block[
+  {ConstructiveDiagrams`Private`$niceExternalMassRules = externalMassRules},
+  ToBoxes[expression, StandardForm]]];
+
+Begin["ConstructiveDiagrams`Private`"];
+
+$niceExternalMassRules = {};
+nicePropagator[momentum_, mass_] := Module[{legs, label, masses},
+  legs = residueMomentumLegsFromExpression[momentum];
+  If[!ListQ[legs] || !DuplicateFreeQ[legs], Return[nice[momentum]^2 - mass^2]];
+  label = plainTextParticleLabels[legs];
+  If[mass === 0, Return[Subscript["s", label]]];
+  If[Length[legs] === 2 && $niceExternalMassRules =!= {},
+    masses = (Cases[$niceExternalMassRules, HoldPattern[Mass[#] -> value_] :> value] &) /@ legs;
+    If[MatchQ[masses, {{_}, {_}}],
+      masses = First /@ masses;
+      If[Count[masses, 0] === 1 && FreeQ[{mass, masses}, _Real | _Mass | _Missing | $Failed] &&
+          SameQ[mass^2, Total[masses^2]], Return[Subscript["\[Tau]", label]]]]];
+  nice[momentum]^2 - mass^2
+];
+
+End[];
 Format[Coupling[a_]]:=nice[Coupling[a]]
 nice[Coupling[a_]]:=Subscript["g", a]
 Format[Mandelstahm[i_,j_]]:=nice[Mandelstahm[i,j]]

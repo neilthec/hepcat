@@ -49,11 +49,13 @@ Evaluate loading in its own cell before the calculation.", "ExampleText"],
   Cell[BoxData[FractionBox[
      RowBox[{RowBox[{"(", RowBox[{SubscriptBox["\[ScriptCapitalE]", "1"],
            "+", SubscriptBox["p", "1"]}], ")"}], " ",
-       SuperscriptBox[TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"",
-            "1"}, "RowDefault"], TemplateBox[
-           {"3", "\"\[RightAngleBracket]\""}, "RowDefault"]}, "RowDefault"],
-        "2"]}], RowBox[{"2", " ", SubscriptBox["\[ScriptCapitalE]", "1"]}]]],
-   "Output"], Cell["See Also", "SeeAlsoSection"],
+       SuperscriptBox[InterpretationBox[TemplateBox[
+          {TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, "RowDefault"],
+           TemplateBox[{"3", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+          "RowDefault"], SpinorChain[Spinor["Helicity", "Angle", 1],
+          Spinor["Helicity", "Angle", 3]], Editable -> False], "2"]}],
+     RowBox[{"2", " ", SubscriptBox["\[ScriptCapitalE]", "1"]}]]], "Output"],
+  Cell["See Also", "SeeAlsoSection"],
   Cell[TextData[{ButtonBox["ChooseSpinIndex", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ChooseSpinIndex"], "  \[Bullet]  ",
      ButtonBox["ExtractEnergy", BaseStyle -> "Link",
