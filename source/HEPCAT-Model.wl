@@ -17194,6 +17194,8 @@ Begin["ConstructiveDiagrams`"];
 ConstructAmplitude::usage = "ConstructAmplitude[process, diagramModel, factorizationModel] generates and prepares diagrams and factorization channels, completes factorization and high-energy behavior, prepares each completed expression with external identities only, then checks the final amplitude. The ordinary result is the bare expression only when every required final check passes. Output -> Amplitude returns {externalMassRules, expression}; Details retains stage results, timings and diagnostics. ProgressReporting -> True displays the current stage, its elapsed time and total elapsed time. At the end PrintReport -> True prints total time, the final SpinorExpressionComplexity score and the test table before returning the expression. FeynmanModel -> None optionally supplies an independent model whose diagrams are prepared and compared too. PreparationOptions, ChannelPreparationOptions, FinalPreparationOptions, FactorizationOptions, HighEnergyOptions, CheckOptions and FeynmanPreparationOptions pass options to individual stages. TimeConstraint -> Automatic selects a finite overall budget from the process and workload; individual stages resolve their own automatic limits. Explicit values override those choices. PolePreference -> AllPhysical is the default; AllSpurious prefers massless-reference forms and uses eligible physical replacements when needed. Mixed admits both. Final expressions resolve auxiliary Xi unless Xi, IndependentXi or None is requested. These choices leave validation intact. ParameterRules, HighEnergyBound, Samples, ValidationSamples, RandomSeed, Parallelization and MaxKernels provide common settings. The original channels remain the residue targets, discarded preparation terms and affine completion freedom are retained, and final preparation never applies internal-shell identities. Failed, opposite-sign and unresolved checks never produce a validated amplitude. With AllSpurious and a FeynmanModel, supported massive fermion lines with one opposite-helicity massless vector can first try a compact common-reference current derived from the diagram vertices. The current must pass the same amplitude checks before it is selected. For mixed helicities on a supported cubic vector line, a bounded off-shell construction uses the model vertices and shared massless references and returns the first validated form. For supported diagrams with two massive fermion lines and two external massless vectors, AllSpurious can group the photon attachments and contract the currents before expanding their spinor products. The constructor verifies the original cuts and exchange signs and accepts the result after independent validation. For supported six-fermion trees with no external vector legs, AllSpurious can combine the ordered fermion exchanges over their common physical vector propagators. The candidate is returned only after the original channel checks and independent Feynman comparison pass. A supported line with four external vectors of the same helicity can combine adjacent emission orders in pairs before validation. For larger AllPhysical processes with a supplied FeynmanModel, a certified minimal massive fermion line with same-helicity colorless vectors can combine photon subsets through ordinary off-shell Dirac identities. Every original residue and independent Feynman comparison must pass before this candidate is returned. For larger AllSpurious results with a FeynmanModel, a bounded compound-pole exchange reduction can propose a shorter form for independent validation. When FeynmanModel is supplied, a fixed factorization or high-energy candidate can be selected after every mandatory check and independent Feynman comparison passes; its unclassified affine family remains in Details and no uniqueness is claimed. Without that independent benchmark, unresolved completion freedom remains a failure.";
 ConstructAmplitude::usage = ConstructAmplitude::usage <>
   " RandomSeed -> Automatic chooses one time-based run seed. The stages derive their seeds from that value, with explicit stage overrides honored. Details records RandomSeed and PrintReport prints it with the final timing; an explicit integer reproduces the sample choices.";
+ConstructAmplitude::usage = ConstructAmplitude::usage <>
+  " For larger AllSpurious lines with equal-helicity colorless vectors and a supplied FeynmanModel, a bounded terminal-pair and subset current uses the certified cubic vertices, external Dirac identities and momentum conservation. It keeps every internal propagator off shell and resolves all auxiliary references. Every original residue, apparent spurious pole, high-energy condition and independent Feynman comparison must pass before the candidate is returned.";
 ConstructAmplitude::args = "Expected a process with at least four model particle names, a diagram model, a constructive factorization model, and valid construction options.";
 
 Options[ConstructAmplitude] = {
@@ -18021,6 +18023,59 @@ constructSameChiralPairSplit[endpoints_List, vectors_List, kind_Integer,
   <|"Expression" -> expression, "Method" -> "SameChiralPairSplit", "Chirality" -> chirality|>
 ];
 
+(* Sum equal-chirality emissions by their terminal pair and the remaining
+   scalar-like Dirac current. The pair contraction is the ordinary 2x2
+   determinant identity, not a new scalar/contact interaction in the model.
+   Extracting the eikonal product before recursion combines all leading
+   orders once. Only external shells and total conservation enter. *)
+constructSameChiralSpuriousSubsetCurrent[endpoints_List, vectors_List, kind_Integer,
+    mass_, vertexFactors_List] := Module[
+  {left, right, chirality, dual, spin, bracket, insertion, pole, ratio,
+   emission, leading, weight, current, expression},
+  If[Length[endpoints] =!= 2 || Length[vectors] < 2 ||
+      !DuplicateFreeQ[Join[endpoints, vectors]] ||
+      !AllTrue[Join[endpoints, vectors], IntegerQ] || !MemberQ[{1, 2}, kind] ||
+      Length[vertexFactors] =!= Length[vectors] || 2^Length[vectors] > 128 ||
+      TrueQ[mass === 0], Return[Missing["UnsupportedSpuriousChiralSubsets"]]];
+  {left, right} = endpoints;
+  chirality = {"Angle", "Square"}[[kind]];
+  dual = {"Square", "Angle"}[[kind]];
+  spin[type_, leg_] := Spinor[If[MemberQ[endpoints, leg], "Spin", "Helicity"], type, leg];
+  bracket[type_, i_, j_] := If[i === j, 0, SpinorChain[spin[type, i], spin[type, j]]];
+  insertion[reference_, p_, i_] := If[p === reference || p === i, 0,
+    SpinorChain[spin[chirality, reference], Mom[p], spin[dual, i]]];
+  pole[p_, subset_List] := PropDen[Mom[Multiparticle @@ Sort[Prepend[subset, p]]], mass];
+  ratio[reference_, i_, p_] := insertion[reference, p, i]/bracket[chirality, reference, i];
+  leading[reference_, subset_List] := Times @@ (ratio[reference, #, left] & /@ subset);
+  emission[reference_, subset_List, i_] := Module[{direct, complement},
+    direct = Prepend[DeleteCases[subset, i], left];
+    complement = Prepend[DeleteCases[Complement[vectors, subset], reference], right];
+    If[Length[complement] < Length[direct],
+      -Total[ratio[reference, i, #] & /@ complement],
+      Total[ratio[reference, i, #] & /@ direct]]
+  ];
+  weight[reference_, subset_List, pair_List] := weight[reference, subset, pair] =
+    (leading[reference, Complement[subset, pair]] + Total[Function[i,
+      pole[left, {i}] emission[reference, subset, i]
+        weight[reference, DeleteCases[subset, i], pair]] /@ Complement[subset, pair]]) /
+      pole[left, subset];
+  current[reference_, subset_List] := current[reference, subset] =
+    (leading[reference, subset] - mass^2 Total[Function[pair,
+      bracket[dual, Sequence @@ pair]^2 weight[reference, subset, pair]] /@
+        Subsets[subset, {2}]]) / (Times @@ (pole[left, {#}] & /@ subset));
+  expression = (Times @@ vertexFactors) mass bracket[chirality, left, right] *
+    Total[Function[pair, bracket[dual, Sequence @@ pair]/bracket[chirality, Sequence @@ pair] *
+      Total[current[#, Complement[vectors, pair]]/pole[right, {#}] & /@ pair]] /@
+        Subsets[vectors, {2}]];
+  expression = canonicalChains[residueCanonicalPropagators[expression, Sort[Join[endpoints, vectors]]]];
+  If[!residueFiniteQ[expression] || !constructSpuriousBracketFormQ[expression],
+    Return[Missing["UnsupportedSpuriousChiralSubsets"]]];
+  <|"Expression" -> expression, "Method" -> "SameChiralSpuriousSubsetCurrent",
+    "Chirality" -> chirality, "CurrentSubsets" -> Length[DownValues[current]],
+    "PairSubsets" -> Length[DownValues[weight]],
+    "Scope" -> "OffShellDiracLineExternalIdentities"|>
+];
+
 (* Ordinary second-order Dirac algebra groups a same-chirality line by its
    first two-emission block. The apparent pair interaction is a rearrangement
    of the certified cubic diagrams, not an additional model vertex. Eikonal
@@ -18070,10 +18125,10 @@ constructPhysicalChiralCurrent[endpoints_List, vectors_List, kind_Integer, mass_
 constructVectorLineForm[diagrams_List, process_List, model_List, external_List,
     polePreference_: "AllSpurious"] := Module[
   {legs = externalIndices[external], massive, null, fermion, vector, endpoints, mass,
-   vertexCoupling, vertices, kinds, sameChirality, majority, opposite, common, ref, angle, square,
+   vertexCoupling, vertices, kinds, sameChirality, largerSameChirality, majority, opposite, common, ref, angle, square,
    bracket, insertion, spin, legSpin, angle12, spinTerm, x, reference, pole, plusPair,
    mixedPair, pairBlock, scalarCurrent, subsetTerm, propagatorOrder, orders, candidate, coefficient},
-  If[Length[legs] < 6 || Length[diagrams] > If[polePreference === "AllPhysical", 5040, 120] ||
+  If[Length[legs] < 6 || Length[diagrams] > 5040 ||
       !preparationScalarExternalRulesQ[external], Return[Missing["UnsupportedChiralLine"]]];
   null = Select[legs, (Mass[#] /. external) === 0 &];
   massive = Complement[legs, null];
@@ -18104,8 +18159,11 @@ constructVectorLineForm[diagrams_List, process_List, model_List, external_List,
       (Length[null] < 5 || 2^Length[null] > 128 || !SameQ @@ kinds),
     Return[Missing["UnsupportedPhysicalChiralLine"]]];
   sameChirality = Length[null] === 4 && SameQ @@ kinds;
+  largerSameChirality = Length[null] > 4 && 2^Length[null] <= 128 && SameQ @@ kinds;
+  If[polePreference =!= "AllPhysical" && Length[diagrams] > 120 && !largerSameChirality,
+    Return[Missing["UnsupportedChiralLine"]]];
   majority = SelectFirst[{1, 2}, Count[kinds, #] === Length[null] - 1 &, None];
-  If[polePreference =!= "AllPhysical" && majority === None && !sameChirality && (Length[diagrams] > 24 ||
+  If[polePreference =!= "AllPhysical" && majority === None && !sameChirality && !largerSameChirality && (Length[diagrams] > 24 ||
       Min[Count[kinds, 1], Count[kinds, 2]] < 2), Return[Missing["UnsupportedChiralLine"]]];
   (* Every source must be an ordered cubic chain on the same Dirac line.
      Its successive cut differences are the emitted external vector legs. *)
@@ -18134,6 +18192,8 @@ constructVectorLineForm[diagrams_List, process_List, model_List, external_List,
     Return[constructPhysicalChiralCurrent[endpoints, null, First[kinds], mass, Last /@ vertices]]];
   If[sameChirality,
     Return[constructSameChiralPairSplit[endpoints, null, First[kinds], mass, Last /@ vertices]]];
+  If[largerSameChirality,
+    Return[constructSameChiralSpuriousSubsetCurrent[endpoints, null, First[kinds], mass, Last /@ vertices]]];
   If[majority === None,
     Return[constructOffShellVectorLineForm[orders, endpoints,
       AssociationThread[null, 3 - 2 kinds], mass, Last /@ vertices]]];
@@ -18612,6 +18672,7 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     {origin, allowance} = Switch[proposal["Method"],
       "OffShellVectorLine", {"Off-shell vector line", 200},
       "SameChiralPairSplit", {"Same-chirality pair split", 120},
+      "SameChiralSpuriousSubsetCurrent", {"Same-chirality spurious subsets", Infinity},
       "GroupedVectorCurrents", {"Grouped vector currents", 180},
       "OffShellVectorCurrents", {"Off-shell vector currents", 240},
       "OffShellFermionExchange", {"Off-shell fermion exchange", 240},
@@ -18619,7 +18680,9 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     If[!ListQ[channels],
       channels = run["Generating factorization channels", FactorizationAmplitudeChannels[process, factorizationModel]];
       require[channels]];
-    prepareBenchmark[True];
+    prepareBenchmark[If[proposal["Method"] === "SameChiralSpuriousSubsetCurrent", "SpinorProducts", True]];
+    If[proposal["Method"] === "SameChiralSpuriousSubsetCurrent",
+      allowance = Max[180, 20 Length[channels]]];
     checked = validateRepresentative[Join[KeyDrop[proposal, "Expression"], <|"Status" -> "COMPLETE",
       "Amplitude" -> proposal["Expression"], "ExternalMassRules" -> external, "FreeParameters" -> {}|>],
       origin, Min[allowance, remaining[]]];
@@ -18702,7 +18765,8 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     If[!completed || options["PolePreference"] =!= "AllSpurious" || Length[process] < 6 ||
         feynmanModel === None || remaining[] <= 2 ||
         MemberQ[{"Off-shell vector line", "Grouped vector currents",
-          "Off-shell vector currents", "Off-shell fermion exchange", "Same-chirality pair split"},
+          "Off-shell vector currents", "Off-shell fermion exchange", "Same-chirality pair split",
+          "Same-chirality spurious subsets"},
           Lookup[representativeSelection, "SourceStage", None]] ||
         LeafCount[Last[finalPair]] > 12000 ||
         !constructSpuriousBracketFormQ[Last[finalPair]], Return[False]];

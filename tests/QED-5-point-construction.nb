@@ -36503,7 +36503,30 @@ difference 6.18 x 10^-12. A new evaluation chooses and reports its own seed."\
           GridBoxItemSize -> {"Columns" -> {{Automatic}},
             "Rows" -> {{Automatic}}}], "Grid"]], "Output"]}, Open]]}, Open],
  CellTags -> "QEDSevenPointAllPhysicalVerified"]
+,
 
+Cell[CellGroupData[{
+
+Cell["Seven-Point Amplitudes (Max Spurious)", "Title", ExpressionUUID->"9bc60008-45e0-448a-b346-31464a7882b6"],
+
+Cell["The AllSpurious factorization model now includes the complete six-point amplitudes needed here. The diagram model still supplies only the cubic vertices. This calculation chooses massless-particle reference spinors where useful and validates the full seven-point result before returning it.", "Text", ExpressionUUID->"b0ce96ed-d8ca-4bec-a0a0-2cf81ad8ef0d"],
+
+Cell["e,E,A.+,A.+,A.+,A.+,A.+", "Chapter", ExpressionUUID->"591df50a-be28-4c16-bcce-d2c3ba90d55f"],
+
+Cell["A fresh automatic construction completed with complexity 1160. All 43 required checks passed: 30 physical channels, 10 apparent spurious poles, high-energy behavior, reference independence and agreement with independent Feynman diagrams. A separate MadGraph comparison passed at 1000 random points; its largest relative difference was 8.93 x 10^-11. These are sampled validation results, not a proof that no shorter algebraic form exists.", "Text", CellTags->"QEDSevenPointAllSpuriousVerified", ExpressionUUID->"f68238e8-8869-4561-bef3-dae6fd971659"]
+
+Cell["factorizationModelSpurious = ReadModel[FileNameJoin[{hepcatDirectory, \"models\"}], 4];\nqed7SpuriousParticles = {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.+\", \"A.+\"};\nqed7PPPPPSpurious = ConstructAmplitude[\n  qed7SpuriousParticles, diagramModel, factorizationModelSpurious,\n  \"PolePreference\" -> \"AllSpurious\",\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"0945396d-382e-46dc-8c36-a4da31f8bf99"],
+
+Cell["SpinorExpressionComplexity[qed7PPPPPSpurious]", "Input", ExpressionUUID->"61aa19bf-bd0c-4297-ade3-2c67a1c83c03"],
+
+Cell["Repeat the complete checks independently if you want to inspect this result after editing it. The automatic constructor already runs these checks before accepting its expression.", "Text", ExpressionUUID->"bcaa7ac1-3e92-4ce8-af90-e664613f81fa"],
+
+Cell["qed7PPPPPSpuriousChecks = CheckAmplitudes[\n  qed7PPPPPSpurious,\n  FactorizationAmplitudeChannels[qed7SpuriousParticles, factorizationModelSpurious],\n  factorizationModelSpurious,\n  \"FeynmanAmplitudes\" -> DiagramAmplitudes[CreateDiagrams[\n    qed7SpuriousParticles, qedFeynmanModel]],\n  \"FeynmanModel\" -> qedFeynmanModel, \"Output\" -> \"Summary\"]", "Input", ExpressionUUID->"5f5f27cb-c58d-4291-8d5e-882c4c489fc5"],
+
+Cell["Compare the fixed all-positive photon helicities with independent MadGraph amplitudes at the random points selected above. The massive electron spins are summed, and an overall amplitude phase is allowed.", "Text", ExpressionUUID->"38661ab9-6a05-4054-ada0-258bc98cba24"],
+
+Cell["qed7PPPPPSpuriousMadGraph = If[\n  ValueQ[qed7PPPPPSpurious] && FreeQ[qed7PPPPPSpurious,\n    _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[qed7SpuriousParticles, qed7PPPPPSpurious,\n    factorizationModelSpurious, Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]]", "Input", ExpressionUUID->"769054b4-0029-4139-b3dc-ce8fdd6e6a84"]
+}, Open  ]]
 },
 WindowSize->{1010, 911},
 WindowMargins->{{37, Automatic}, {Automatic, 0}},

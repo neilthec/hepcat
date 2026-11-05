@@ -408,9 +408,9 @@ lower-point amplitudes for factorization. Do not treat a known four-point
 amplitude as a new diagram vertex. In the current QED examples, model 2 is the
 cubic diagram model and suffices for four-point factorization. Model 3 contains
 the physical-pole QED amplitudes through six points. Model 4 contains the same
-cubic vertices and the four- and five-point results constructed with
-`"PolePreference" -> "AllSpurious"`. It supplies lower-point data for
-five- and six-point factorization. For other processes, inspect the model
+cubic vertices and the four-, five- and six-point results constructed with
+`"PolePreference" -> "AllSpurious"`. It supplies lower-point data through
+seven-point factorization. For other processes, inspect the model
 before selecting the lower-point data.
 
 Model parameters are inert data stored in the model, not globally assigned

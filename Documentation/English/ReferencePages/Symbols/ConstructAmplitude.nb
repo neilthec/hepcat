@@ -222,8 +222,21 @@ returned early only after all ordinary checks and the independent Feynman \
 comparison pass. If that attempt fails, the usual completion continues."}],
    "Notes"], Cell[TextData[{"For four external vectors of the same helicity \
 on a supported fermion line, AllSpurious can combine adjacent emission orders \
-in pairs. The result is checked against the original factorization channels \
-and the independent Feynman model before it is returned."}], "Notes"],
+in pairs. For larger supported lines, it combines terminal pairs with \
+memoized subsets of the remaining emissions. A two-dimensional momentum \
+determinant collects repeated leading products, and external momentum \
+conservation shortens the remaining insertions. The construction uses the \
+supplied cubic vertices; it does not read a known final answer or add a new \
+interaction. All propagators remain off shell in this route."}], "Notes"],
+  Cell[TextData[{"These same-helicity subset proposals use external massless \
+reference spinors rather than leaving auxiliary Xi symbols. The existing \
+bounded topology checks require the complete ordered cubic diagram inventory. \
+An independent FeynmanModel is required, and every original physical channel, \
+discovered spurious pole, high-energy bound, reference check and \
+full-amplitude comparison must pass at both validation parameter assignments. \
+Unsupported interactions, incomplete inventories and exhausted budgets \
+continue through the ordinary completion workflow. A compact expression found \
+this way is not a proof of absolute minimality."}], "Notes"],
   Cell[TextData[{"For larger AllSpurious results with an independent Feynman \
 model, the constructor can group terms by their compound physical poles. If \
 the groups form a complete exchange orbit, it tries Schouten and an external \

@@ -1183,3 +1183,28 @@ Feynman agreement at both mass assignments, physical denominators only and
 complexity at most 820. It supplies no answer or correction basis. The separate
 notebook MadGraph cell compares 1000 physical points at the fixed photon
 helicities with massive electron spins summed.
+
+### Seven-point spurious chiral current and saved lower amplitudes
+
+`spurious-chiral-current-tests.wl` checks the ordinary two-dimensional
+determinant identity behind the same-helicity scalar-subset recurrence,
+including its three-emission spectator sum, both chiralities, typed label
+permutations and resource guards. Exact off-cut comparisons cover two masses
+and both spinor chiralities. The established five- and six-point scores remain
+30 and 120; the seven-point spurious current has score 1160. Incomplete or
+duplicated cubic diagram sets cannot certify this direct route.
+
+The opt-in `seven-point-spurious-construction-integration-tests.wl` runs the
+actual notebook construction with model 4, automatic effort settings and the
+independent Feynman model. It requires every one of the thirty physical
+channels, every discovered spurious pole, the high-energy and reference checks,
+and full Feynman agreement at both validation assignments. No answer or
+correction basis is supplied. The notebook also has a separate fixed-helicity
+MadGraph validation cell.
+
+The opt-in `qed-spurious-model-export-tests.wl` rereads all nine independent
+six-point sectors from model 4, checks their canonical scores and full amplitude
+conditions against Feynman diagrams, and tests representative signed particle
+permutations at a changed electron mass and charge. The stored entries cover
+all four-photon helicity sectors, two-photon four-fermion sectors and the
+six-fermion amplitude. Higher-point rows never become new diagram vertices.
