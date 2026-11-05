@@ -8,7 +8,9 @@ Module[{sourceDirectory = If[ValueQ[Global`$HEPCATpath], Global`$HEPCATpath,
     DirectoryName[ExpandFileName[$InputFileName]]], sourceFiles, missingFiles},
 sourceFiles = If[StringQ[sourceDirectory],
   FileNameJoin[{sourceDirectory, #}] & /@ {"HEPCAT-Base.wl", "HEPCAT-Parameters.wl", "HEPCAT-Model.wl", "HEPCAT-Feynman.wl", "HEPCAT-SPINAS.wl", "HEPCAT-MadGraph.wl"}, {}];
-missingFiles = Select[sourceFiles, !FileExistsQ[#] || DirectoryQ[#] &];
+missingFiles = Select[Join[sourceFiles, If[StringQ[sourceDirectory],
+  {FileNameJoin[{sourceDirectory, "HEPCAT-SPINAS-Optimize.wl"}]}, {}]],
+  !FileExistsQ[#] || DirectoryQ[#] &];
 If[!StringQ[sourceDirectory] || missingFiles =!= {},
   Message[Get::noopen, If[StringQ[sourceDirectory], StringRiffle[missingFiles, ", "],
     "the source directory specified by Global`$HEPCATpath"]];

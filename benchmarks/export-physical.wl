@@ -1,7 +1,8 @@
 (* Export the saved, verified all-physical QED formulas for timing.
    Run with WolframKernel -script benchmarks/export-physical.wl.
    Optional arguments: --output DIR, --source DIR, --spinas DIR,
-     --calchep DIR, --madgraph DIR, --configuration MANIFEST.
+     --calchep DIR, --madgraph DIR, --configuration MANIFEST,
+     --code-style Optimized|Readable.
    The configuration manifest is an existing WriteSPINASProcess export. Its
    explicitly selected reference installations/models are retained by default.
    No amplitude is constructed, simplified, fitted or changed by this script. *)
@@ -13,13 +14,16 @@ benchmarkArguments = If[$ScriptCommandLine =!= {}, Rest[$ScriptCommandLine],
 benchmarkOptions = <||>;
 If[OddQ[Length[benchmarkArguments]], Print["Expected option/value argument pairs."]; Quit[1]];
 Do[
-  If[!MemberQ[{"--output", "--source", "--spinas", "--calchep", "--madgraph", "--configuration"}, benchmarkArguments[[benchmarkArgumentIndex]]],
+  If[!MemberQ[{"--output", "--source", "--spinas", "--calchep", "--madgraph", "--configuration", "--code-style"}, benchmarkArguments[[benchmarkArgumentIndex]]],
     Print["Unknown option: ", benchmarkArguments[[benchmarkArgumentIndex]]]; Quit[1]];
   AssociateTo[benchmarkOptions, benchmarkArguments[[benchmarkArgumentIndex]] -> benchmarkArguments[[benchmarkArgumentIndex + 1]]],
   {benchmarkArgumentIndex, 1, Length[benchmarkArguments], 2}];
 benchmarkOutput = ExpandFileName[Lookup[benchmarkOptions, "--output",
   FileNameJoin[{benchmarkRepository, "benchmarks", "build-physical-double", "exports"}]]];
 benchmarkSource = ExpandFileName[Lookup[benchmarkOptions, "--source", FileNameJoin[{benchmarkRepository, "source"}]]];
+benchmarkCodeStyle = Lookup[benchmarkOptions, "--code-style", "Optimized"];
+If[!MemberQ[{"Optimized", "Readable"}, benchmarkCodeStyle],
+  Print["--code-style must be Optimized or Readable."]; Quit[1]];
 benchmarkSPINAS = ExpandFileName[Lookup[benchmarkOptions, "--spinas", FileNameJoin[{DirectoryName[benchmarkRepository], "spinas"}]]];
 benchmarkConfigurationFile = ExpandFileName[Lookup[benchmarkOptions, "--configuration",
   FileNameJoin[{benchmarkRepository, "tests", "spinas-output", "eeAA", "manifest.json"}]]];
@@ -75,6 +79,7 @@ Do[
   benchmarkExport = WriteSPINASProcess[benchmarkDirectory,
     {"e", "E"} -> ConstantArray["A", photons], benchmarkEntries, benchmarkModel,
     "SPINASDirectory" -> benchmarkSPINAS, "Precision" -> "Double", "ProcessName" -> benchmarkName,
+    "CodeStyle" -> benchmarkCodeStyle,
     "CalcHEPDirectory" -> ExpandFileName[Lookup[benchmarkOptions, "--calchep", benchmarkCH["CalcHEPDirectory"]]],
     "CalcHEPModel" -> {benchmarkCH["ModelDirectory"], benchmarkCH["ModelNumber"]},
     "CalcHEPAllowedParticles" -> {11,22},
@@ -86,6 +91,7 @@ Do[
   If[FailureQ[benchmarkExport] || benchmarkExport === $Failed, Print[InputForm[benchmarkExport]]; Quit[1]];
   benchmarkProvenance = <|
     "Representation" -> "AllPhysical", "Precision" -> "Double", "Photons" -> photons,
+    "CodeStyle" -> benchmarkCodeStyle,
     "AmplitudeSource" -> "ReadModel[models,3] and LookupAmplitude; unchanged saved complete amplitudes",
     "ModelFilesSHA256" -> benchmarkFileHashes,
     "InputHelicitySectors" -> Select[benchmarkRecords, Length[#["Particles"]] === photons + 2 &],
@@ -93,6 +99,7 @@ Do[
     "ShellScope" -> "External masses only; no internal on-shell substitutions during export",
     "SourceDirectory" -> benchmarkSource,
     "ExporterSHA256" -> FileHash[FileNameJoin[{benchmarkSource, "HEPCAT-SPINAS.wl"}], "SHA256", "HexString"],
+    "OptimizationBackendSHA256" -> FileHash[FileNameJoin[{benchmarkSource, "HEPCAT-SPINAS-Optimize.wl"}], "SHA256", "HexString"],
     "ReferenceConfigurationSHA256" -> FileHash[benchmarkConfigurationFile, "SHA256", "HexString"]|>;
   Export[FileNameJoin[{benchmarkDirectory, "benchmark-amplitudes.json"}], benchmarkProvenance, "RawJSON"];
   Print["Exported N=", photons, " complete all-physical family: ", benchmarkDirectory],

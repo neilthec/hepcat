@@ -2359,7 +2359,7 @@ amplitudeResolveRandomSeed[seed_] := seed;
 $amplitudeParallelSourceDirectory = DirectoryName[$InputFileName];
 amplitudeParallelSignature[] := Module[{required, optional},
   required = FileNameJoin[{$amplitudeParallelSourceDirectory, #}] & /@
-    {"HEPCAT.wl", "HEPCAT-Base.wl", "HEPCAT-Parameters.wl", "HEPCAT-Model.wl", "HEPCAT-Feynman.wl", "HEPCAT-SPINAS.wl", "spinas-runtime.hpp"};
+    {"HEPCAT.wl", "HEPCAT-Base.wl", "HEPCAT-Parameters.wl", "HEPCAT-Model.wl", "HEPCAT-Feynman.wl", "HEPCAT-SPINAS.wl", "HEPCAT-SPINAS-Optimize.wl", "spinas-runtime.hpp"};
   optional = {"laurent-proof-runtime.cpp", "laurent-proof-runtime.py",
     "laurent-proof-factor.py", "laurent-proof-verify.py"};
   Quiet[Check[Hash[Join[FileHash /@ required, Function[name,

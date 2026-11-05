@@ -23,10 +23,20 @@ class."}], "Usage"],
 res the physical process and crosses its outgoing legs automatically."}],
    "Usage"], Cell["Details", "NotesSection"],
   Cell[TextData[{Cell[BoxData[RowBox[{"WriteSPINASProcess"}]],
-      "InlineFormula"], " takes an amplitude that you have already obtained \
-and writes a C++ project for evaluating it numerically with SPINAS. The \
-project includes a readable process class, an example program, build \
-instructions and a manifest describing the exported process."}], "Notes"],
+      "InlineFormula"], Cell[BoxData[RowBox[{" ", "takes", " ", "an", " ",
+         "amplitude", " ", "that", " ", "you", " ", "have", " ", "already",
+         " ", "obtained", " ", "and", " ", "writes", " ", "a", " ", "C",
+         "++", " ", "project", " ", "for", " ", "evaluating", " ", "it", " ",
+         "numerically", " ", "with", " ", "SPINAS", ".", " ", "The", " ",
+         "default", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"\"CodeStyle\"", " ", "->", " ",
+         "\"Optimized\""}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "organizes", " ", "numerical", " ", "work",
+         " ", "for", " ", "reuse", ".", " ", "Select", " "}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{"\"CodeStyle\"", " ", "->", " ",
+         "\"Readable\""}]], "InlineFormula"], " when you want to follow the \
+original formulas in the source. Both projects include the same process \
+interface, example program, build instructions and manifest."}], "Notes"],
   Cell[TextData[{"The usual input is ",
      Cell[BoxData[RowBox[{"incoming", " ", "->", " ", "outgoing"}]],
       "InlineFormula"], Cell[BoxData[RowBox[{",", " ", "a", " ", "list", " ",
@@ -47,6 +57,66 @@ amplitude with ", ButtonBox["ConstructAmplitude", BaseStyle -> "Link",
      ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"],
      " before using it in a simulation."}], "Notes"],
+  Cell["Choose optimized or readable numerical code", "NotesSection"],
+  Cell[TextData[{"The default ",
+     Cell[BoxData[RowBox[{"\"CodeStyle\"", " ", "->", " ",
+         "\"Optimized\""}]], "InlineFormula"], " is a numerical \
+code-generation backend. It analyzes the expressions you supply and tracks \
+which calculations depend on model parameters, momenta or spin labels. It \
+uses no process-name templates, known QED answers, additional on-shell \
+substitutions or amplitude fitting. ", ButtonBox["ConstructAmplitude",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ConstructAmplitude"], " and ",
+     ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"],
+     " remain the tools for changing a symbolic amplitude."}], "Notes"],
+  Cell[TextData[{"The optimized native layout precomputes the spin components \
+of supported SPINAS products into direct-access tables. Shared arithmetic \
+that is independent of spin can be computed once per momentum point; repeated \
+spin-dependent arithmetic stays in its proper amplitude or projection scope. \
+Real arithmetic is used only where the form and validated inputs establish \
+reality. Genuine complex parameters, widths and branch-sensitive operations \
+retain their complex semantics."}], "Notes"],
+  Cell[TextData[{"Select ", Cell[BoxData[RowBox[{"\"CodeStyle\"", " ", "->",
+         " ", "\"Readable\""}]], "InlineFormula"], " for the direct helicity \
+formulas with familiar parameter, spinor-product and denominator names. This \
+mode retains the existing numerical-constant and model-factor caches. The \
+difference between modes is how a supplied expression is evaluated, not which \
+amplitude is exported."}], "Notes"],
+  Cell[TextData[{"The generated class keeps the same ",
+     Cell[BoxData[RowBox[{"set", "_", "parameters"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{",", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"set", "_", "momenta"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{",", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"amp"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{",", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"spin", "_", "sum"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "and", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"amp2"}]], "InlineFormula"], " conventions in both \
+modes. Parameter updates invalidate old kinematics, and copies rebuild their \
+own caches. Generated single-configuration builds default to Release; an \
+explicit CMAKE_BUILD_TYPE choice is respected. No fast-math option is \
+enabled. Floating-point grouping can affect last-bit rounding, so compare \
+numerical tolerances rather than requiring identical bits."}], "Notes"],
+  Cell[TextData[{"The manifest and detailed result record ",
+     Cell[BoxData[RowBox[{"CodeStyle"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "as", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"Optimized"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "or", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"Readable"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{".", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"CodeLayout"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "separately", " ", "identifies", " ",
+         "native", " ", "or", " ", "canonical", " ", "dispatch", ".", " ",
+         "The", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"Optimization"}]], "InlineFormula"], " entry \
+records applied work sharing and unsupported or bounded fallback cases. A \
+difficult structure keeps its supported evaluator when an optimization cannot \
+be established; do not interpret the mode name as a promise of the fastest \
+possible code for every process."}], "Notes"],
+  Cell[TextData[{"Reload HEPCAT and export a project again to apply a new \
+generation mode. Recompiling C++ files that were generated earlier does not \
+rerun the exporter."}], "Notes"],
   Cell["Choosing the process and helicity coverage", "NotesSection"],
   Cell[TextData[{"The concatenated incoming and outgoing lists fix the \
 numbered leg order. A physical ",
@@ -412,6 +482,15 @@ reserved generated members."}], "TableText"]},
        Cell[TextData[{"Floating-point type used by exported SPINAS code. \
 Automatic reads the local library build configuration; \"Double\" and \
 \"LongDouble\" must match the library being linked."}], "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"CodeStyle\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"\"Optimized\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{"SPINAS code-generation mode. \"Optimized\", the \
+default, analyzes each supplied process and shares numerical work by \
+parameter, momentum and spin dependence. \"Readable\" keeps the direct \
+formula layout. Both expose the same amplitude and spin-sum interfaces; the \
+manifest reports the layout and applied optimizations."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"Build\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"False"}]], "InlineFormula"]}],
@@ -658,7 +737,20 @@ explicitly; this example selects only electrons, positrons and photons."}],
       " ", "{", "11", ",", " ", "22", "}", "]"}]], "Input"],
   Cell["This example writes files, starts a longer calculation, or requires \
 an optional external tool. Evaluate it when you want to perform that \
-operation.", "ExampleText"], Cell["See Also", "SeeAlsoSection"],
+operation.", "ExampleText"], Cell["Choose the numerical code layout",
+   "ExampleSubsection"], Cell[TextData[{"Use the same complete amplitude \
+entries to request formula-oriented readable C++ instead of the optimized \
+default. This writes a separate project."}], "ExampleText"],
+  Cell[BoxData[RowBox[{"readableDirectory", " ", "=", " ", "CreateDirectory",
+      "[", "]", ";", "\n", "WriteSPINASProcess", "[", "readableDirectory",
+      ",", " ", "{", "\"e\"", ",", " ", "\"E\"", "}", " ", "->", " ", "{",
+      "\"A\"", ",", " ", "\"A\"", "}", ",", " ", "entries", ",", " ",
+      "knownModel", ",", " ", "\"ProcessName\"", " ", "->", " ",
+      "\"eeAA_readable\"", ",", " ", "\"CodeStyle\"", " ", "->", " ",
+      "\"Readable\"", "]"}]], "Input"], Cell["This example writes files, \
+starts a longer calculation, or requires an optional external tool. Evaluate \
+it when you want to perform that operation.", "ExampleText"],
+  Cell["See Also", "SeeAlsoSection"],
   Cell[TextData[{ButtonBox["SPINAS", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/SPINAS"], "  \[Bullet]  ",
      ButtonBox["PlainText", BaseStyle -> "Link",

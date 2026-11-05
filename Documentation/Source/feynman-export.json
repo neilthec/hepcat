@@ -693,7 +693,7 @@
       }
     ],
     "details": [
-      "`WriteSPINASProcess` takes an amplitude that you have already obtained and writes a C++ project for evaluating it numerically with SPINAS. The project includes a readable process class, an example program, build instructions and a manifest describing the exported process.",
+      "`WriteSPINASProcess` takes an amplitude that you have already obtained and writes a C++ project for evaluating it numerically with SPINAS. The default `\"CodeStyle\" -> \"Optimized\"` organizes numerical work for reuse. Select `\"CodeStyle\" -> \"Readable\"` when you want to follow the original formulas in the source. Both projects include the same process interface, example program, build instructions and manifest.",
       "The usual input is `incoming -> outgoing`, a list of `{{particles, amplitude}, ...}` entries, and the HEPCAT model. This form states the physical reaction explicitly and lets the exporter combine its helicity sectors. Each entry still uses HEPCAT's all-incoming particle ordering and formula.",
       "The ordinary return value is the output directory. Use `\"ReturnDetails\" -> True` to obtain the generated file paths, normalization information, build results and any requested validation reports.",
       "The exporter translates the supplied amplitude; it does not derive missing contributions to it. Obtain and check the amplitude with [ConstructAmplitude](paclet:HEPCAT/ref/ConstructAmplitude) or [CheckAmplitudes](paclet:HEPCAT/ref/CheckAmplitudes) before using it in a simulation."
@@ -734,6 +734,12 @@
         "input": "madGraphDirectory = FileNameJoin[{ParentDirectory[hepcatDirectory], \"MadGraph\"}];\nWriteSPINASProcess[exportDirectory, {\"e\", \"E\"} -> {\"A\", \"A\"}, entries, knownModel, \"ProcessName\" -> \"eeAA\", \"Overwrite\" -> True, \"Build\" -> True, \"MadGraphDirectory\" -> madGraphDirectory, \"MadGraphModel\" -> \"sm-full\", \"MadGraphAllowedParticles\" -> {11, 22}]",
         "evaluate": false,
         "section": "Prepare MadEvent integration"
+      },
+      {
+        "section": "Choose the numerical code layout",
+        "description": "Use the same complete amplitude entries to request formula-oriented readable C++ instead of the optimized default. This writes a separate project.",
+        "input": "readableDirectory = CreateDirectory[];\nWriteSPINASProcess[readableDirectory, {\"e\", \"E\"} -> {\"A\", \"A\"}, entries, knownModel, \"ProcessName\" -> \"eeAA_readable\", \"CodeStyle\" -> \"Readable\"]",
+        "evaluate": false
       }
     ],
     "related": [
@@ -746,6 +752,17 @@
     ],
     "guide": "FormattingAndExport",
     "detail_sections": [
+      {
+        "title": "Choose optimized or readable numerical code",
+        "paragraphs": [
+          "The default `\"CodeStyle\" -> \"Optimized\"` is a numerical code-generation backend. It analyzes the expressions you supply and tracks which calculations depend on model parameters, momenta or spin labels. It uses no process-name templates, known QED answers, additional on-shell substitutions or amplitude fitting. [ConstructAmplitude](paclet:HEPCAT/ref/ConstructAmplitude) and [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes) remain the tools for changing a symbolic amplitude.",
+          "The optimized native layout precomputes the spin components of supported SPINAS products into direct-access tables. Shared arithmetic that is independent of spin can be computed once per momentum point; repeated spin-dependent arithmetic stays in its proper amplitude or projection scope. Real arithmetic is used only where the form and validated inputs establish reality. Genuine complex parameters, widths and branch-sensitive operations retain their complex semantics.",
+          "Select `\"CodeStyle\" -> \"Readable\"` for the direct helicity formulas with familiar parameter, spinor-product and denominator names. This mode retains the existing numerical-constant and model-factor caches. The difference between modes is how a supplied expression is evaluated, not which amplitude is exported.",
+          "The generated class keeps the same `set_parameters`, `set_momenta`, `amp`, `spin_sum` and `amp2` conventions in both modes. Parameter updates invalidate old kinematics, and copies rebuild their own caches. Generated single-configuration builds default to Release; an explicit CMAKE_BUILD_TYPE choice is respected. No fast-math option is enabled. Floating-point grouping can affect last-bit rounding, so compare numerical tolerances rather than requiring identical bits.",
+          "The manifest and detailed result record `CodeStyle` as `Optimized` or `Readable`. `CodeLayout` separately identifies native or canonical dispatch. The `Optimization` entry records applied work sharing and unsupported or bounded fallback cases. A difficult structure keeps its supported evaluator when an optimization cannot be established; do not interpret the mode name as a promise of the fastest possible code for every process.",
+          "Reload HEPCAT and export a project again to apply a new generation mode. Recompiling C++ files that were generated earlier does not rerun the exporter."
+        ]
+      },
       {
         "title": "Choosing the process and helicity coverage",
         "paragraphs": [

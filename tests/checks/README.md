@@ -597,6 +597,16 @@ diagram model is unchanged.
 
 ## SPINAS Process Export
 
+`spinas-optimized-tests.wl` compiles both numerical export modes and compares
+complex amplitudes, complete helicity families and spin sums at the same
+kinematics. Its C++ oracle covers model/mass updates, copies, invalid/stale
+calls, higher-spin projections, long/composite chains, traces, complex widths
+and branch-sensitive roots. It includes tiny imaginary propagator masses to
+reject unproved real coercions. The tests use generic model fixtures as well
+as saved four-, five- and six-point QED amplitudes; optimizer metadata must
+show that native work sharing actually ran. Canonical fallback is tested
+explicitly. This is a numerical export regression, not new amplitude physics.
+
 `spinas-scalar-cache-tests.wl` checks that closed numerical constants become
 immutable class constants, while model-only scalar factors are refreshed after
 parameter changes. Native and canonical exports are compiled against a direct

@@ -53,9 +53,58 @@ the emitted C++ scalar type and the linked library must be double precision;
 CMake checks their actual link compatibility. Equal mantissa widths alone are
 insufficient to identify the C++ type on platforms such as macOS arm64.
 
-The generated exporter caches fixed numerical constants once and refreshes
-model-only factors when masses or couplings change. Spinor and momentum
-dependence is retained on its ordinary per-point/per-spin update path.
+The exporter defaults to `"CodeStyle" -> "Optimized"`. It analyzes the supplied
+expressions, precomputes required spinor-product components once per momentum
+point, and shares repeated arithmetic at the appropriate parameter, point or
+spin level. The public amplitude interface still validates its arguments; the
+generated spin sum uses a private kernel with its already validated spin states.
+This avoids repeating accessor and validation work without changing the formulas.
+
+Choose `"CodeStyle" -> "Readable"` in `WriteSPINASProcess` to retain direct
+formula output. Both modes cache numerical constants and parameter-only factors,
+and preserve complex amplitudes, phases and spin projections. Optimization is
+bounded: oversized arithmetic graphs or canonical-dispatch projects retain a
+supported evaluator, with the applied work and fallback reason recorded in the
+manifest. Neither mode uses unsafe floating-point reassociation or fast-math.
+
+To compare the modes, export the same saved formulas into separate directories:
+
+```sh
+/Applications/Wolfram.app/Contents/MacOS/WolframKernel \
+  -script benchmarks/export-physical.wl \
+  --output "$benchmark_dir/readable-exports" --code-style Readable
+/Applications/Wolfram.app/Contents/MacOS/WolframKernel \
+  -script benchmarks/export-physical.wl \
+  --output "$benchmark_dir/optimized-exports" --code-style Optimized
+```
+
+Configure a separate benchmark build for each set, selecting its three export
+directories with `HEPCAT_PROCESS_DIRECTORIES` as above. Run them serially with
+the same explicit seed, energy, point count and repetitions. The metadata records
+`CodeStyle`, `CodeLayout`, optimization diagnostics and the formula hashes.
+Compare the total setting-momenta plus spin-sum time: precomputing all spin
+components can be a tradeoff when only one massive-spin configuration is needed.
+The timing results, rather than the mode name, determine the benefit for a process.
+
+On the development Mac (arm64, Apple Clang 21, double precision, `-O3`), the
+2026-11-05 comparison gave the following medians for 10,000 points and nine
+repetitions, using seed `202611051342` at 100 GeV. Both modes used the same
+all-physical formulas and identical saved momenta. Every point agreed with the
+independent CalcHEP and MadGraph implementations within the benchmark tolerance.
+
+| Photons | Readable SPINAS (s) | Optimized SPINAS (s) | Speedup |
+| --- | ---: | ---: | ---: |
+| 2 | 0.006643 | 0.006263 | 1.06 |
+| 3 | 0.030851 | 0.022522 | 1.37 |
+| 4 | 0.764442 | 0.237815 | 3.21 |
+
+For four photons the same optimized run measured 0.253515 s for CalcHEP and
+0.452404 s for the independent MadGraph interface described below. These are
+observations for these formulas and interfaces, not universal backend rankings.
+The local raw files are under `build-physical-double/readable-mode/readable*`
+and `build-physical-double/optimized-mode/optimized*`; the paired table is
+`build-physical-double/code-style-comparison.csv`. These generated files are
+excluded from Git and can be recreated with the workflow above.
 
 ## Benchmark other existing exports
 

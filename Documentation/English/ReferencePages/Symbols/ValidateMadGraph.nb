@@ -234,6 +234,15 @@ reserved generated members."}], "TableText"]},
        Cell[TextData[{"Floating-point type used by exported SPINAS code. \
 Automatic reads the local library build configuration; \"Double\" and \
 \"LongDouble\" must match the library being linked."}], "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"CodeStyle\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"\"Optimized\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{"SPINAS code-generation mode. \"Optimized\", the \
+default, analyzes each supplied process and shares numerical work by \
+parameter, momentum and spin dependence. \"Readable\" keeps the direct \
+formula layout. Both expose the same amplitude and spin-sum interfaces; the \
+manifest reports the layout and applied optimizations."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"Build\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"False"}]], "InlineFormula"]}],

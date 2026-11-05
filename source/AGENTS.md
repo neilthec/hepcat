@@ -492,11 +492,22 @@ The grouped class exposes `amp(spins)` and positional `amp(ds1, ds2, ...)`,
 raw `spin_sum()`, and `amp2()` including the incoming spin/helicity average and
 the final identical-species factorials. Count species independently of helicity;
 include identical fermions, and never average or remove amplitude terms.
+`CodeStyle -> "Optimized"` is the default numerical backend; `"Readable"`
+keeps the direct formula layout. Both use the same public amplitude, spin-sum,
+parameter and momentum interfaces. Optimizations depend on typed expressions
+and declared runtime dependencies, never process names or known QED answers.
+The optimized native layout can store product components and shared arithmetic
+once per point, with spin-dependent work kept in its proper projection scope.
+Preserve complex branches, widths, exact spin-slot mappings and parameter
+invalidation. Do not use fast-math or discard imaginary parts inferred from
+numerical defaults. Unsupported forms keep their correct evaluator and expose
+the fallback in optimization diagnostics.
 Ordinary projects use native persistent `particle` and `sproduct` members,
-direct helicity branches in `amp`, and explicit spin loops in `spin_sum`.
+helicity branches in `amp`, and explicit spin loops in `spin_sum`.
 Role-preserving leg maps are resolved during generation. Very large families
 retain canonical dispatch to bound duplicated source; the manifest's
-`CodeStyle` identifies the selected representation.
+`CodeLayout` identifies the selected representation. `CodeStyle` records the
+user's optimized/readable choice, and `Optimization` reports what was applied.
 Complex `amp` values preserve phases and explicit spin labels for future
 coherent production-decay contraction. Spin-summed probabilities cannot replace
 that contraction; no correlated production-decay engine is currently implied.

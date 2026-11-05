@@ -596,9 +596,10 @@ WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " CMakeExecutable -> Au
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " WriteSPINASProcess[directory, incomingNames -> outgoingNames, amplitudeEntries, model] explicitly describes the physical process. The entries still contain all-ingoing particle lists and un-crossed formulas in that same leg order, with incoming legs first. Outgoing charged particle names are checked against the conjugate all-ingoing species. Generic massless names such as A sum their helicities; A.+ or A.- selects one. The established HEPCAT/SPINAS helicity sign convention is retained, and ReverseMomentum crosses outgoing momenta and angle spinors exactly once. FixedHelicities -> {leg -> doubledHelicity, ...} selects massless legs in either grouped overload. Only unfixed incoming helicities are averaged. A selected outgoing helicity gives a labeled contribution with the same identical-species phase-space factor. Complex amp calls preserve phases and include no spin sums, incoming averages or phase-space factors; coherent production-decay sewing is not performed by this exporter. Runnable projects currently require two incoming particles.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " Generated projects also contain validate_calchep(options) and a process_validate_calchep executable for an independent, seeded 1000-point comparison with an on-the-fly CalcHEP process. CalcHEPDirectory -> None and CalcHEPModel -> None leave reference validation unconfigured. Select the installation directory and CalcHEPModel -> {directory, number} explicitly. CalcHEPDirectory -> Automatic consults CALCHEP_ROOT or CALCHEP only. CalcHEPAllowedParticles -> All keeps the selected reference theory intact; an explicit list of positive absolute PDG codes, such as {11,22}, restricts internal particle types and includes their antiparticles. RunCalcHEPValidation -> True builds and runs this check, using CalcHEPPoints -> 1000 and CalcHEPSeed -> Automatic by default. Automatic chooses a seed from the time when validation runs and reports the concrete seed for replay; an explicit unsigned 64-bit integer fixes it. Complete unpolarized colorless processes are supported; fixed-helicity or color-stripped comparisons report unavailable. Ordinary SPINAS execution does not require CalcHEP.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " If the CalcHEP numerical libraries are available, Build -> True links the runnable executable directly at build/results/n_calchep; there is no duplicate launcher in the build root. From build, enter results and run ./n_calchep. This uses CalcHEP's numerical menus, VEGAS, cuts and histograms with the exported SPINAS matrix element, without CalcHEP symbolic generation or a CalcHEPModel counterpart. Independent model parameters remain adjustable, dependent functions are recomputed, and mass/width changes are propagated. Fixed helicities remain labeled contributions. The ordinary SPINAS project remains usable without CalcHEP.";
+WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " CodeStyle -> Optimized is the default numerical backend: it analyzes expression dependencies to share per-point and per-spin calculations. CodeStyle -> Readable preserves the direct formula layout. Both retain identical complex-amplitude and spin-sum conventions. The manifest separates CodeStyle from CodeLayout and records optimization diagnostics.";
 Options[WriteSPINASProcess] = {"SPINASDirectory" -> Automatic,
   "IncomingLegs" -> {1, 2}, "FixedHelicities" -> Automatic, "ParameterRules" -> Automatic,
-  "ProcessName" -> "hepcat_process", "Precision" -> Automatic,
+  "ProcessName" -> "hepcat_process", "Precision" -> Automatic, "CodeStyle" -> "Optimized",
   "Build" -> False, "RunExamples" -> False, "CMakeExecutable" -> Automatic, "Overwrite" -> False,
   "CalcHEPDirectory" -> None, "CalcHEPModel" -> None, "CalcHEPAllowedParticles" -> All,
   "RunCalcHEPValidation" -> False, "CalcHEPPoints" -> 1000, "CalcHEPSeed" -> Automatic,
@@ -616,7 +617,7 @@ spinasCppIdentifierQ[name_String] := StringMatchQ[name, RegularExpression["[A-Za
     "edit_cache", "rebuild_cache", "list_install_components",
     "leg_count", "parameter_count", "default_parameters", "default_spins", "incoming_legs",
     "get_parameters", "masses", "set_parameters", "set_momenta", "set_masses", "initialize_products",
-    "amp", "spin_sum", "amp2", "validate_calchep", "validate_madgraph", "n_calchep",
+    "amp", "amp_unchecked", "spin_sum", "amp2", "validate_calchep", "validate_madgraph", "n_calchep",
     "helicity_count", "helicity_configurations", "incoming_spin_average", "symmetry_factor", "ParticleView",
     "parameters", "external_masses", "momenta", "particles", "momenta_ready", "component",
     "cdouble", "ldouble", "FourMomentum", "checked_mass", "validate_momenta", "finite_complex",
@@ -1037,7 +1038,7 @@ spinasNativeCachePlan[ir_Association, reservedNames_List : {}] := Module[
     "InputIndex" -> 1, "LegPermutation" -> Range[n], "FermionSign" -> 1|>}];
   used = Join[reservedNames, Lookup[Lookup[ir, "ConstantCaches", {}], "Name", {}],
     Lookup[Lookup[ir, "ParameterCaches", {}], "Name", {}], {"parameters", "external_masses", "momenta", "momenta_ready", "initialize_products",
-    "amp", "spin_sum", "amp2", "component", "numerator", "denominator", "values", "spins",
+    "amp", "amp_unchecked", "helicity_key", "spin_sum", "amp2", "component", "numerator", "denominator", "values", "spins",
     "set_parameters", "set_momenta", "set_masses", "get_parameters", "validate_calchep", "validate_madgraph",
     "amplitude", "result", "validation", "other", "ranks", "originally_massless", "check_spin"},
     Table["p" <> ToString[i], {i, n}],
@@ -1235,7 +1236,11 @@ spinasNativeProjectHeader[name_String, ir_Association, plan_Association] := Modu
     Table["  spinas::particle p" <> ToString[i] <> ";", {i, n}], {
     "", "  // Spinor-product and scalar caches. Updated once in set_momenta(...)."},
     ("  " <> # &) /@ Lookup[plan, "ProductDeclarations", {}],
-    ("  " <> # &) /@ Lookup[plan, "ScalarDeclarations", {}], {
+    ("  " <> # &) /@ Lookup[plan, "ScalarDeclarations", {}],
+    ("  " <> # &) /@ Lookup[plan, "PointDeclarations", {}],
+    If[TrueQ[Lookup[plan, "Optimized", False]],
+      Join[{"", "  // Internal kernel for already validated spin configurations."},
+        spinasReadableCppLines["cdouble amp_unchecked(" <> spinasNativeScalarArguments[n] <> ");"]], {}], {
     "", "  void initialize_products();", "};", "", "} // namespace hepcat_generated", ""}];
   StringRiffle[lines, "\n"]
 ];
@@ -1247,9 +1252,10 @@ spinasNativeProjectSource[name_String, ir_Association, plan_Association] := Modu
    defaults, originalMassless, massCpp, family, initialAverage, symmetryFactor,
    massLines, massChecks, index, higher, helicityLegs, condition, branch, expression,
    fallback, branchBody, indent, projectionLoops, normalization, states,
-   spinLines, loops, loopLegs, prefix, configurations, coefficients},
+   spinLines, loops, loopLegs, prefix, configurations, coefficients, optimized, dispatch, dispatchKey},
   add[values_List] := (lines = Join[lines, values]);
   family = TrueQ[Lookup[ir, "Family", False]];
+  optimized = TrueQ[Lookup[plan, "Optimized", False]];
   massIndices = spinasNativeMassParameterIndices[ir]; realOrder = spinasNativeParameterOrder[ir];
   realArguments = StringRiffle[("const ldouble& value_" <> params[[#, "Alias"]] &) /@ realOrder, ", "];
   massArguments = spinasNativeMassArguments[ir, plan];
@@ -1326,6 +1332,9 @@ spinasNativeProjectSource[name_String, ir_Association, plan_Association] := Modu
   add[("  " <> # &) /@ plan["ProductUpdates"]];
   If[plan["ScalarUpdates"] =!= {}, add[{"", "  // Propagator denominators and scalar invariants."}];
     add[Flatten[spinasReadableCppLines[#] & /@ plan["ScalarUpdates"]]]];
+  If[Lookup[plan, "PointUpdates", {}] =!= {},
+    add[{"", "  // Optimized per-point product components and shared arithmetic."}];
+    add[Flatten[spinasReadableCppLines[#] & /@ plan["PointUpdates"]]]];
   add[{"  momenta_ready = true;", "}", ""}];
   add[spinasReadableCppLines["void " <> name <> "::set_momenta(" <> pointerArguments <> ") {", ""]];
   add[{"  Momenta values;"}];
@@ -1340,17 +1349,32 @@ spinasNativeProjectSource[name_String, ir_Association, plan_Association] := Modu
       add[{"  if (ds" <> ToString[i] <> " != " <> ToString[-ranks[[i]]] <> " && ds" <> ToString[i] <> " != " <>
         ToString[ranks[[i]]] <> ") throw std::invalid_argument(\"Invalid massless helicity.\");"}],
       add[{"  check_spin(" <> ToString[ranks[[i]]] <> ", ds" <> ToString[i] <> ");"}]], {i, n}];
+  If[optimized,
+    add[spinasReadableCppLines["return amp_unchecked(" <> spinasNativeScalarValues[n] <> ");"]];
+    add[{"}", "", "// Numerical kernel; public amp and spin_sum validate their inputs first."}];
+    add[spinasReadableCppLines["cdouble " <> name <> "::amp_unchecked(" <> spinasNativeScalarArguments[n] <> ") {", ""]]];
   higher = Select[Range[n], ranks[[#]] > 1 && !TrueQ[masses[[#]] == 0] &];
   helicityLegs = Select[Range[n], ranks[[#]] > 0 && TrueQ[masses[[#]] == 0] &];
   normalization = If[higher === {}, "ldouble(1.0L)", StringRiffle[
     ("spinor_normalization(" <> ToString[ranks[[#]]] <> ", ds" <> ToString[#] <> ")") & /@ higher, " * "]];
+  dispatch = optimized && 0 < Length[helicityLegs] <= 63;
+  If[dispatch,
+    dispatchKey = StringRiffle[MapIndexed[
+      "(ds" <> ToString[#1] <> " > 0 ? (1ULL << " <> ToString[First[#2] - 1] <> ") : 0ULL)" &,
+      helicityLegs], " | "];
+    add[spinasReadableCppLines["const unsigned long long helicity_key = " <> dispatchKey <> ";"]];
+    add[{"  switch (helicity_key) {"}]];
   Do[
     condition = StringRiffle[("ds" <> ToString[#] <> If[branch["Helicities"][[#]] > 0, " > 0", " < 0"]) & /@ helicityLegs, " && "];
-    If[condition =!= "", add[{"", "  " <> If[index === 1, "if", "else if"] <> " (" <> condition <> ") {"}]];
+    If[dispatch,
+      dispatchKey = Total[MapIndexed[If[branch["Helicities"][[#1]] > 0, 2^(First[#2] - 1), 0] &, helicityLegs]];
+      add[{"", "  case " <> ToString[dispatchKey] <> "ULL: {"}],
+      If[condition =!= "", add[{"", "  " <> If[index === 1, "if", "else if"] <> " (" <> condition <> ") {"}]]];
     indent = If[condition === "", "  ", "    "];
     expression = spinasNativeExpression[branch["ExpressionPieces"], Lookup[branch, "FermionSign", 1]];
     If[higher === {},
       add[Flatten[spinasReadableCppLines[#, indent] & /@ Lookup[branch, "FallbackStatements", {}]]];
+      add[Flatten[spinasReadableCppLines[#, indent] & /@ Lookup[branch, "LocalStatements", {}]]];
       add[spinasReadableCppLines["return " <> expression <> ";", indent]],
       add[{indent <> "cdouble amplitude(0, 0);"}];
       Do[add[{indent <> "const auto assignments" <> ToString[i] <> " = spinor_assignments(" <>
@@ -1360,13 +1384,17 @@ spinasNativeProjectSource[name_String, ir_Association, plan_Association] := Modu
         add[Table[indent <> "const int ds" <> ToString[i] <> "_" <> ToString[j] <> " = indices" <>
           ToString[i] <> "[" <> ToString[j - 1] <> "];", {j, ranks[[i]]}]], {i, higher}];
       add[Flatten[spinasReadableCppLines[#, indent] & /@ Lookup[branch, "FallbackStatements", {}]]];
+      add[Flatten[spinasReadableCppLines[#, indent] & /@ Lookup[branch, "LocalStatements", {}]]];
       add[spinasReadableCppLines["amplitude += " <> expression <> ";", indent]];
       Do[indent = StringDrop[indent, -2]; add[{indent <> "}"}], {Length[higher]}];
       add[spinasReadableCppLines["return (" <> normalization <> ") * amplitude;", indent]]];
     If[condition =!= "", add[{"  }"}]], {index, Length[branches]}, {branch, {branches[[index]]}}];
-  If[helicityLegs =!= {}, add[{"  throw std::invalid_argument(\"This exported process does not contain the selected helicities.\");"}]];
+  If[helicityLegs =!= {},
+    add[{If[dispatch, "  default: ", "  "] <> "throw std::invalid_argument(\"This exported process does not contain the selected helicities.\");"}]];
+  If[dispatch, add[{"  }"}]];
   add[{"}", "", "// Explicit spin and helicity sums.", "ldouble " <> name <> "::spin_sum() {",
     "  ldouble result = 0;", "  cdouble amplitude;"}];
+  If[optimized, add[{"  if (!momenta_ready) throw std::logic_error(\"Call set_momenta before spin_sum.\");"}]];
   states = If[family, ir["HelicityStates"], Table[If[TrueQ[masses[[i]] == 0], {ir["Helicities"][[i]]}, {0}], {i, n}]];
   loopLegs = Select[Range[n], ranks[[#]] > 0 && (!TrueQ[masses[[#]] == 0] || Length[states[[#]]] > 1) &];
   Do[If[!MemberQ[loopLegs, i], add[{"  const int j" <> ToString[i] <> " = " <>
@@ -1376,7 +1404,7 @@ spinasNativeProjectSource[name_String, ir_Association, plan_Association] := Modu
       " <= " <> ToString[ranks[[i]]] <> "; j" <> ToString[i] <> " += " <>
       ToString[If[TrueQ[masses[[i]] == 0], 2 ranks[[i]], 2]] <> ") {"}];
     indent = indent <> "  ", {i, loopLegs}];
-  add[spinasReadableCppLines["amplitude = amp(" <> spinasNativeScalarValues[n, "j"] <> ");", indent]];
+  add[spinasReadableCppLines["amplitude = " <> If[optimized, "amp_unchecked", "amp"] <> "(" <> spinasNativeScalarValues[n, "j"] <> ");", indent]];
   add[{indent <> "result += std::norm(amplitude);"}];
   Do[indent = StringDrop[indent, -2]; add[{indent <> "}"}], {Length[loopLegs]}];
   add[{"  return result;", "}", "", "ldouble " <> name <> "::amp2() {",
@@ -1401,19 +1429,34 @@ spinasNativeStyleQ[name_String, ir_Association] := Module[{components, branches,
   branches <= 64 && estimate <= 8000000
 ];
 
-spinasProjectCode[name_String, input_Association] := Module[{plan, family, ir = spinasMergeScalarCaches[input, {name}]},
+spinasProjectCode[name_String, input_Association, style_String : "Optimized"] := Module[
+  {plan, family, ir = spinasMergeScalarCaches[input, {name}], optimization},
   family = TrueQ[Lookup[ir, "Family", False]];
   If[spinasNativeStyleQ[name, ir],
     plan = spinasNativeCachePlan[ir, {name}];
+    If[style === "Optimized",
+      plan = spinasOptimizeNativePlan[ir, Join[plan, <|"ReservedNames" -> {name}|>]];
+      If[AssociationQ[plan], plan = Join[plan, <|"Optimized" -> True,
+        "OptimizationReport" -> Join[Lookup[plan, "OptimizationReport", <||>],
+          <|"CheckedPublicAmplitude" -> True, "UncheckedInternalSpinSumKernel" -> True|>]|>]]];
+    If[FailureQ[plan], Return[plan]];
+    optimization = If[style === "Optimized", Lookup[plan, "OptimizationReport", <||>],
+      <|"Status" -> "Readable", "Note" -> "Direct formula layout with shared numerical constants and model factors."|>];
     <|"Header" -> spinasNativeProjectHeader[name, ir, plan],
       "Source" -> spinasNativeProjectSource[name, ir, plan],
       "Style" -> "NativeSPINAS", "ProductCacheCount" -> Length[plan["Products"]],
-      "ScalarCacheCount" -> Length[plan["Scalars"]],
+      "ScalarCacheCount" -> Length[plan["Scalars"]], "Optimization" -> optimization,
       "DirectMatrixFallback" -> plan["HasDirectFallback"]|>,
+    optimization = If[style === "Optimized",
+      <|"Status" -> "Partial", "Reason" -> "Canonical dispatch retains its supported evaluator and shared constant/parameter caches."|>,
+      <|"Status" -> "Readable"|>];
+    If[style === "Optimized" && DownValues[spinasOptimizeCanonicalIR] =!= {},
+      ir = spinasOptimizeCanonicalIR[ir];
+      optimization = Lookup[ir, "OptimizationReport", optimization]];
     <|"Header" -> If[family, spinasCanonicalFamilyProjectHeader[name, ir], spinasCanonicalProjectHeader[name, ir]],
       "Source" -> If[family, spinasCanonicalFamilyProjectSource[name, ir], spinasCanonicalProjectSource[name, ir]],
       "Style" -> "CanonicalDispatch", "ProductCacheCount" -> 0, "ScalarCacheCount" -> 0,
-      "DirectMatrixFallback" -> True|>]
+      "Optimization" -> optimization, "DirectMatrixFallback" -> True|>]
 ];
 
 spinasProjectHeader[name_String, ir_Association] := spinasProjectCode[name, ir]["Header"];
@@ -1600,6 +1643,9 @@ spinasProjectMain[name_String] := StringRiffle[{
 spinasProjectCMake[name_String, root_String, precision_String] := StringRiffle[{
   "cmake_minimum_required(VERSION 3.10)", "project(" <> name <> " LANGUAGES CXX)",
   "set(CMAKE_CXX_STANDARD 11)", "set(CMAKE_CXX_STANDARD_REQUIRED ON)",
+  "if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)",
+  "  set(CMAKE_BUILD_TYPE Release CACHE STRING \"Build type (Release, Debug, RelWithDebInfo)\" FORCE)",
+  "endif()",
   "set(SPINAS_ROOT " <> spinasCppQuoted[StringReplace[root,"\\"->"/"]] <> " CACHE PATH \"SPINAS checkout or installation prefix\")",
   "find_path(SPINAS_INCLUDE_DIR spinas.h HINTS \"${SPINAS_ROOT}/include\")",
   "find_library(SPINAS_LIBRARY NAMES spinas spinas_shared HINTS \"${SPINAS_ROOT}/build\" \"${SPINAS_ROOT}/lib\")",
@@ -1623,12 +1669,13 @@ spinasProjectREADME[name_String, ir_Association, precision_String] := StringRiff
   "HEPCAT's explicit +i*m*width denominator convention is preserved rather than replaced by SPINAS's opposite-width convention.", "",
   "## Read the formulas", "",
   If[spinasNativeStyleQ[name, ir],
-    "process.cpp uses persistent native particle and sproduct members, with bracket names such as a12a and s314a. set_momenta updates product caches, scalar invariants and propagators. amp has direct helicity branches using .v(...), and spin_sum uses explicit spin loops. Composite or long chains retain direct momentum matrices without an internal on-shell assumption.",
+    "process.cpp uses persistent native particle and sproduct members, with bracket names such as a12a and s314a. set_momenta updates product caches, scalar invariants and propagators. amp selects helicity formulas using native accessors or optimized component tables, and spin_sum uses explicit spin loops. Composite or long chains retain direct momentum matrices without an internal on-shell assumption.",
     "process.cpp names products such as a12a and s314a, with bracket comments. This project uses canonical formula dispatch to bound source size. Local products are evaluated per component and helicity-related formulas reuse signed leg maps."],
-  "Model parameters have readable names and long formulas use numerator and denominator blocks. Massive tensor projections retain their normalization. Export formatting does not simplify or change the supplied amplitude. The manifest records the selected CodeStyle.", "",
+  "Model parameters have readable names and long formulas use numerator and denominator blocks. Massive tensor projections retain their normalization. Export formatting does not simplify or change the supplied amplitude. The manifest records the selected CodeStyle, generation CodeLayout, and optimization diagnostics. CodeStyle Optimized shares numerical work; Readable keeps the direct formula layout.", "",
   "## Build and run", "", "```sh", "cmake -S . -B build -DSPINAS_ROOT=/path/to/spinas",
   "cmake --build build --parallel", "./build/" <> name, "ctest --test-dir build --output-on-failure", "```", "",
   "This project uses the " <> precision <> " SPINAS ABI. It must match the library build; re-export with Precision if required.",
+  "Single-configuration builds default to Release. Select -DCMAKE_BUILD_TYPE=Debug explicitly for debugging, or --config Release with a multi-configuration generator.",
   "The ordinary example and generated process library link the selected SPINAS library. The numerical backends described below create their own runnable output directories.", "",
   "## Use the process", "", "Include process.hpp and link the generated process library plus SPINAS.",
   "The class is hepcat_generated::" <> name <> ". Construct it with model defaults or a Parameters array.",
@@ -2136,6 +2183,7 @@ WriteSPINASProcess[directory_String, process : {___String}, amplitude_, model_, 
   If[Complement[Keys[options],First /@ Options[WriteSPINASProcess]] =!= {} ||
       !StringQ[name] || !TrueQ[spinasCppIdentifierQ[name]] || StringTrim[directory] === "" || !AllTrue[{overwrite,examples,details,buildRequested},MemberQ[{True,False},#]&] ||
       !MemberQ[{Automatic,"LongDouble","Double"},OptionValue["Precision"]] ||
+      !MemberQ[{"Optimized", "Readable"}, OptionValue["CodeStyle"]] ||
       !(OptionValue["SPINASDirectory"]===Automatic || StringQ[OptionValue["SPINASDirectory"]]) ||
       !(cmake === Automatic || (StringQ[cmake] && StringTrim[cmake] =!= "")) ||
       !spinasCalcHEPOptionsQ[fullOptions] || !spinasMadGraphOptionsQ[fullOptions],
@@ -2177,7 +2225,8 @@ WriteSPINASProcess[directory_String, process : {___String}, amplitude_, model_, 
   If[!TrueQ[overwrite] && AnyTrue[Values[files],FileExistsQ],
     Return[Failure["SPINASFilesExist",<|"MessageTemplate"->"Generated project files already exist. Use Overwrite -> True to replace them.","Directory"->dir|>]]];
   If[FileExistsQ[dir] && !DirectoryQ[dir],Return[Failure["SPINASDirectory",<|"Directory"->dir|>]]];
-  code = spinasProjectCode[name, ir];
+  code = spinasProjectCode[name, ir, OptionValue["CodeStyle"]];
+  If[FailureQ[code], Return[code]];
   code = Join[code, <|"Header" -> spinasMadGraphHeader[code["Header"]]|>];
   manifest = <|"Generator"->"HEPCAT WriteSPINASProcess", "Process"->process,
     "IncomingLegs"->ir["IncomingLegs"], "Class"->name, "Precision"->precision,
@@ -2189,12 +2238,13 @@ WriteSPINASProcess[directory_String, process : {___String}, amplitude_, model_, 
     "MadGraphValidation" -> Join[madgraph, <|"Normalization" -> N[madgraph["Normalization"]]|>],
     "MadEventNumerical" -> madevent,
     "CalcHEPNumerical" -> spinasCalcHEPNumericalPublicConfiguration[numerical],
-    "CodeStyle" -> code["Style"]|>;
+    "CodeStyle" -> OptionValue["CodeStyle"], "CodeLayout" -> code["Style"],
+    "Optimization" -> code["Optimization"]|>;
   contents = <|"Header"->code["Header"], "Source"->code["Source"],
     "Demo"->spinasProjectMain[name], "Runtime"->Import[runtime,"Text"],
     "CMake"->spinasProjectCMake[name,root,precision] <> spinasCalcHEPCMake[name,calchep] <>
       spinasCalcHEPNumericalCMake[name, numerical] <> spinasMadGraphCMake[name] <> spinasMadEventCMake[name, madevent],
-    "README"->spinasProjectREADME[name,ir,precision] <> spinasCalcHEPREADME[name,calchep] <>
+    "README"->"Code generation mode: " <> OptionValue["CodeStyle"] <> ".\n\n" <> spinasProjectREADME[name,ir,precision] <> spinasCalcHEPREADME[name,calchep] <>
       spinasCalcHEPNumericalREADME[numerical] <> spinasMadGraphREADME[name, madgraph] <> spinasMadEventREADME[name, madevent]|>;
   contents = Join[contents, validationProject["Contents"], numericalProject["Contents"], madgraphProject["Contents"], madeventProject["Contents"]];
   If[!AllTrue[Values[contents],StringQ],Return[Failure["SPINASGeneration",<|"MessageTemplate"->"The C++ project could not be generated."|>]]];
@@ -2211,7 +2261,8 @@ WriteSPINASProcess[directory_String, process : {___String}, amplitude_, model_, 
     "CalcHEPNumerical" -> Join[spinasCalcHEPNumericalPublicConfiguration[numerical],
       <|"Executable" -> FileNameJoin[{dir, "build", "results", "n_calchep"}],
         "SessionDirectory" -> FileNameJoin[{dir, "build", "results"}]|>],
-    "CodeStyle" -> code["Style"]|>;
+    "CodeStyle" -> OptionValue["CodeStyle"], "CodeLayout" -> code["Style"],
+    "Optimization" -> code["Optimization"]|>;
   If[TrueQ[buildRequested] || TrueQ[examples] || (TrueQ[fullOptions["RunCalcHEPValidation"]] || TrueQ[fullOptions["RunMadGraphValidation"]]),
     build = spinasProjectBuild[dir,name,root,examples,cmake,calchep["CalcHEPDirectory"]]; If[FailureQ[build],Return[build]];
     result = Join[result,build]];
@@ -2569,6 +2620,7 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
       !StringQ[name] || !TrueQ[spinasCppIdentifierQ[name]] || StringTrim[directory] === "" ||
       !AllTrue[Lookup[options, {"Overwrite", "RunExamples", "ReturnDetails", "Build"}], MemberQ[{True, False}, #] &] ||
       !MemberQ[{Automatic, "LongDouble", "Double"}, options["Precision"]] ||
+      !MemberQ[{"Optimized", "Readable"}, options["CodeStyle"]] ||
       !(options["SPINASDirectory"] === Automatic || StringQ[options["SPINASDirectory"]]) ||
       !(cmake === Automatic || (StringQ[cmake] && StringTrim[cmake] =!= "")) ||
       !spinasCalcHEPOptionsQ[options] || !spinasMadGraphOptionsQ[options],
@@ -2604,7 +2656,8 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
   If[!TrueQ[options["Overwrite"]] && AnyTrue[Values[files], FileExistsQ],
     Return[Failure["SPINASFilesExist", <|"MessageTemplate" -> "Generated project files already exist. Use Overwrite -> True to replace them.", "Directory" -> dir|>]]];
   If[FileExistsQ[dir] && !DirectoryQ[dir], Return[Failure["SPINASDirectory", <|"Directory" -> dir|>]]];
-  code = spinasProjectCode[name, ir];
+  code = spinasProjectCode[name, ir, options["CodeStyle"]];
+  If[FailureQ[code], Return[code]];
   code = Join[code, <|"Header" -> spinasMadGraphHeader[code["Header"]]|>];
   manifest = <|"Generator" -> "HEPCAT WriteSPINASProcess", "HelicityFamily" -> True,
     "Process" -> ir["Process"], "InputProcesses" -> ir["InputProcesses"],
@@ -2622,7 +2675,8 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
     "MadGraphValidation" -> Join[madgraph, <|"Normalization" -> N[madgraph["Normalization"]]|>],
     "MadEventNumerical" -> madevent,
     "CalcHEPNumerical" -> spinasCalcHEPNumericalPublicConfiguration[numerical],
-    "CodeStyle" -> code["Style"]|>;
+    "CodeStyle" -> options["CodeStyle"], "CodeLayout" -> code["Style"],
+    "Optimization" -> code["Optimization"]|>;
   If[AssociationQ[ir["PhysicalProcess"]], manifest = Join[manifest,
     KeyTake[ir, {"PhysicalProcess", "ProcessDescription"}]]];
   contents = <|"Header" -> code["Header"],
@@ -2630,7 +2684,7 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
     "Runtime" -> Import[runtime, "Text"],
     "CMake" -> spinasProjectCMake[name, root, precision] <> spinasCalcHEPCMake[name, calchep] <>
       spinasCalcHEPNumericalCMake[name, numerical] <> spinasMadGraphCMake[name] <> spinasMadEventCMake[name, madevent],
-    "README" -> spinasFamilyProjectREADME[name, ir, precision] <> spinasCalcHEPREADME[name, calchep] <>
+    "README" -> "Code generation mode: " <> options["CodeStyle"] <> ".\n\n" <> spinasFamilyProjectREADME[name, ir, precision] <> spinasCalcHEPREADME[name, calchep] <>
       spinasCalcHEPNumericalREADME[numerical] <> spinasMadGraphREADME[name, madgraph] <> spinasMadEventREADME[name, madevent]|>;
   contents = Join[contents, validationProject["Contents"], numericalProject["Contents"], madgraphProject["Contents"], madeventProject["Contents"]];
   If[!AllTrue[Values[contents], StringQ], Return[Failure["SPINASGeneration", <|"MessageTemplate" -> "The C++ project could not be generated."|>]]];
@@ -2648,7 +2702,8 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
     "CalcHEPNumerical" -> Join[spinasCalcHEPNumericalPublicConfiguration[numerical],
       <|"Executable" -> FileNameJoin[{dir, "build", "results", "n_calchep"}],
         "SessionDirectory" -> FileNameJoin[{dir, "build", "results"}]|>],
-    "CodeStyle" -> code["Style"]|>,
+    "CodeStyle" -> options["CodeStyle"], "CodeLayout" -> code["Style"],
+    "Optimization" -> code["Optimization"]|>,
     KeyTake[ir, {"HelicityConfigurations", "InputBranchCount", "GeneratedBranchCount",
       "InitialSpinAverage", "SymmetryFactor", "FinalStateSymmetryDivisor", "FixedHelicities"}]];
   If[AssociationQ[ir["PhysicalProcess"]], result = Join[result,
@@ -2667,5 +2722,7 @@ WriteSPINASProcess[directory_String, physicalProcess_Rule, entries_List, model_,
   spinasWriteFamily[directory, entries, model, {opts}, physicalProcess];
 
 WriteSPINASProcess[___] := (Message[WriteSPINASProcess::args];$Failed);
+Get[FileNameJoin[{$spinasExportSourceDirectory, "HEPCAT-SPINAS-Optimize.wl"}]];
+
 End[];
 End[];

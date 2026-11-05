@@ -124,6 +124,9 @@ def main():
         declarations.append('void add_' + name + '(std::vector<hepcat_benchmark::Entry>&);')
         registrations.append('  add_' + name + '(entries);')
         record = {'N': n, 'Export': str(directory), 'Precision': data['Precision'],
+                  'CodeStyle': data.get('CodeStyle', 'Legacy'),
+                  'CodeLayout': data.get('CodeLayout', data.get('CodeStyle', 'Unspecified')),
+                  'Optimization': data.get('Optimization', {'Status': 'Legacy'}),
                   'SHA256': {f: sha(directory / f) for f in ('manifest.json', 'process.hpp', 'process.cpp')}}
         amplitude_source = directory / 'benchmark-amplitudes.json'
         if amplitude_source.is_file():

@@ -45,7 +45,7 @@ TEST_SUITES = (
     "spinas-madgraph-tests.wl",
     "spinas-madevent-tests.wl",
     "spinas-calchep-numerical-tests.wl",
-    "spinas-native-project-tests.wl", "spinas-scalar-cache-tests.wl",
+    "spinas-native-project-tests.wl", "spinas-scalar-cache-tests.wl", "spinas-optimized-tests.wl",
     "spinas-polarization-tests.wl",
     "amplitude-check-tests.wl",
     "model-isolation-tests.wl",
