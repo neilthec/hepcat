@@ -35,7 +35,7 @@ TEST_SUITES = (
     "exact-left-null-contradiction-tests.wl",
     "completion-structured-source-tests.wl",
     "physical-pole-completion-tests.wl", "schouten-sum-sign-tests.wl",
-    "compact-physical-source-tests.wl", "retained-affine-coefficients-tests.wl",
+    "compact-physical-source-tests.wl", "chiral-current-tests.wl", "retained-affine-coefficients-tests.wl",
     "null-pair-shift-tests.wl", "null-channel-completion-tests.wl",
     "bose-symmetry-tests.wl", "fermion-symmetry-tests.wl",
     "model-parameter-tests.wl", "feynman-tests.wl", "feynman-coefficient-comparison-tests.wl", "spinas-export-tests.wl",
@@ -67,6 +67,7 @@ TEST_SUITES = (
 # These execute full expensive notebook constructions rather than component
 # regressions. Select them explicitly and give the external runner enough time.
 INTEGRATION_TEST_SUITES = ("physical-construction-integration-tests.wl",
+                          "seven-point-construction-integration-tests.wl",
                           "five-point-construction-integration-tests.wl",
                           "spurious-construction-integration-tests.wl",
                           "fermion-construction-integration-tests.wl",

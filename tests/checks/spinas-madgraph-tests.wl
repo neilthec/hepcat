@@ -153,6 +153,37 @@ smgCheck["helicity labels are readable rather than hidden nested lists",
 smgCheck["detailed output preserves the raw doubled-helicity vectors",
   ConstructiveDiagrams`Private`spinasMadGraphValidationOutput[smgPresentationReport, "Details"] === smgPresentationReport];
 
+(* Exercise a real CMake build with an unrelated failing ALL target. *)
+smgCMake = ConstructiveDiagrams`Private`spinasProjectCMakeExecutable[Automatic];
+If[StringQ[smgCMake],
+  smgBuildDirectory = CreateDirectory[smgPath["validation-target-only"]];
+  Export[FileNameJoin[{smgBuildDirectory, "manifest.json"}],
+    <|"Class" -> "validation_only", "MadGraphValidation" ->
+      <|"Status" -> "AVAILABLE", "Reason" -> ""|>|>, "RawJSON"];
+  Export[FileNameJoin[{smgBuildDirectory, "CMakeLists.txt"}], StringRiffle[{
+    "cmake_minimum_required(VERSION 3.16)",
+    "project(validation_target_only NONE)",
+    "add_custom_target(validation_only_validate_madgraph",
+    "  COMMAND \"${CMAKE_COMMAND}\" -E touch \"${CMAKE_BINARY_DIR}/comparison.built\")",
+    "add_custom_target(unrelated_madevent ALL",
+    "  COMMAND \"${CMAKE_COMMAND}\" -E touch \"${CMAKE_BINARY_DIR}/unrelated.started\"",
+    "  COMMAND \"${CMAKE_COMMAND}\" -E false)"}, "\n"], "Text"];
+  smgValidationOnly = Block[{
+    ConstructiveDiagrams`Private`spinasRunMadGraphValidation =
+      Function[{directory, name, config, supplied}, smgPresentationReport]},
+    ValidateMadGraph[smgBuildDirectory, "CMakeExecutable" -> smgCMake,
+      "Output" -> "Details"]];
+  smgCheck["public validation builds its executable without unrelated event-generation targets",
+    AssociationQ[smgValidationOnly] && smgValidationOnly["Status"] === "PASS" &&
+      FileExistsQ[FileNameJoin[{smgBuildDirectory, "build", "comparison.built"}]] &&
+      !FileExistsQ[FileNameJoin[{smgBuildDirectory, "build", "unrelated.started"}]]];
+  smgOrdinaryBuild = ConstructiveDiagrams`Private`spinasProjectBuild[
+    smgBuildDirectory, "validation_only", "", False, smgCMake];
+  smgCheck["ordinary project builds retain all requested integration targets",
+    FailureQ[smgOrdinaryBuild] &&
+      FileExistsQ[FileNameJoin[{smgBuildDirectory, "build", "unrelated.started"}]]],
+  Print["SKIP: validation target build needs an installed CMake executable."]];
+
 smgCalls = {};
 smgCombined = Block[{
   ConstructiveDiagrams`Private`spinasRunCalcHEPValidation = Function[{directory, name, config},

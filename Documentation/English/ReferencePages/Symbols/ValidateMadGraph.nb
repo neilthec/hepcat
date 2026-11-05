@@ -43,7 +43,9 @@ met the stated numerical tolerance."}], "Notes"],
      ButtonBox["WriteSPINASProcess", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/WriteSPINASProcess"], ". The \
 amplitude-and-model forms first make a private export, build the numerical \
-code and run the comparison."}], "Notes"],
+code and run the comparison. Only the comparison executable and its \
+dependencies are built for validation, so preparing an optional MadEvent \
+integration is a separate operation."}], "Notes"],
   Cell[TextData[{"The comparison is a numerical test over sampled phase \
 space. It provides an independent diagnostic of a proposed expression, rather \
 than a proof of equality for every kinematic point."}], "Notes"],

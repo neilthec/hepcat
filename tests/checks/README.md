@@ -1148,3 +1148,19 @@ reported as unsupported before any invalid sign enters an amplitude.
 expansion without splitting coupled unknown equations. It covers exact tiny
 coefficients, full spin tensors, nonlinear or singular unknowns, unsupported
 metadata, deadlines and the unchanged exact fallback.
+
+### Seven-point physical chiral current
+
+`chiral-current-tests.wl` verifies the general same-helicity subset current,
+an exact symbolic two-dimensional determinant identity, typed particle-label
+permutations, angle/square duality, physical denominators, and rejection of
+incomplete or duplicated diagram inventories. It also checks that numerical
+spinor primitives are reused only within the same exact chart evaluation.
+
+The opt-in `seven-point-construction-integration-tests.wl` replays the ordinary
+seven-point all-positive notebook call from its original failing seed. It
+requires all 30 physical channels plus high-energy, reference and independent
+Feynman agreement at both mass assignments, physical denominators only and
+complexity at most 820. It supplies no answer or correction basis. The separate
+notebook MadGraph cell compares 1000 physical points at the fixed photon
+helicities with massive electron spins summed.

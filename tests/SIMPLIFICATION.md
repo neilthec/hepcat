@@ -2287,6 +2287,36 @@ component at `m=2, EE=3`. Internal Feynman lines remained off shell and no
 normalization was fitted. The unchanged regression tests cover the other
 five- and six-point QED examples; these three cases are the timed comparison.
 
+### All-Physical Same-Helicity Currents Beyond Six Points
+
+For a complete ordered minimal massive fermion line with five or more
+same-helicity colorless vectors, `ConstructAmplitude` can first combine the
+emissions by photon subsets. It verifies the actual model vertices and the
+complete nested propagator inventory before using this route. The scalar-like
+two-emission block is an exact second-order Dirac rearrangement of the cubic
+vertices, not an added interaction in the model. Every propagator remains off
+shell. Ordinary two-dimensional determinant identities and external momentum
+conservation combine the eikonal factors before the remaining subset currents
+are expanded. Couplings and massive endpoint labels come from the model.
+
+This route currently requires the supplied independent `FeynmanModel`, ordinary
+stage controls and automatic exchange groups. It is tried only beyond the
+existing four-, five- and six-point construction routes. Unsupported topologies
+continue through the usual preparation and completion stages. The candidate
+must pass every original channel and all final checks at both normal validation
+parameter assignments. Independent Feynman diagrams are converted once with no
+internal shell reduction and keep their independent reference spinors during
+comparison. The benchmark never supplies terms or coefficients.
+
+For `e,E,A.+,A.+,A.+,A.+,A.+`, the current gives complexity 820 and only physical
+propagators. This is the most compact form established by the recorded identity
+route, with no proof of a global minimum. All 30 physical channels, high-energy
+growth, the reference diagnostic and independent Feynman comparison pass.
+The final expression also agrees with MadGraph on 1000 random physical points
+at the specified five positive photon helicities, summing massive electron
+spins. `tests/QED-5-point-construction.nb` contains the ordinary construction
+call and the independent MadGraph test.
+
 ### Compact All-Positive Six-Point Result
 
 For `e,E,A.+,A.+,A.+,A.+`, physical-reference preparation gives 24 one-term

@@ -1571,8 +1571,8 @@ spinasProjectCMakeExecutable[option_] := Module[
 ];
 DownValues[spinasProjectBuild] = {};
 spinasProjectBuild[directory_String, name_String, root_String, runExamples_, cmakeOption_:Automatic,
-    calchepRoot_:Automatic] := Module[
-  {cmake, configure, build, run, executable, configureArguments},
+    calchepRoot_:Automatic, buildTargets_:All] := Module[
+  {cmake, configure, build, run, executable, configureArguments, buildArguments},
   cmake = spinasProjectCMakeExecutable[cmakeOption];
   If[FailureQ[cmake], Return[cmake]];
   configureArguments = {cmake,"-S",directory,"-B",FileNameJoin[{directory,"build"}]};
@@ -1585,7 +1585,10 @@ spinasProjectBuild[directory_String, name_String, root_String, runExamples_, cma
   If[Lookup[configure,"ExitCode",-1] =!= 0, Return[Failure["SPINASBuild", <|
     "MessageTemplate" -> "CMake could not configure the generated process.", "Directory" -> directory,
     "CommandResult" -> configure|>]]];
-  build = spinasProjectCommand[{cmake,"--build",FileNameJoin[{directory,"build"}],"--parallel"}];
+  buildArguments = {cmake, "--build", FileNameJoin[{directory, "build"}], "--parallel"};
+  If[buildTargets =!= All,
+    buildArguments = Join[buildArguments, {"--target"}, Flatten[{buildTargets}]]];
+  build = spinasProjectCommand[buildArguments];
   If[Lookup[build,"ExitCode",-1] =!= 0, Return[Failure["SPINASBuild", <|
     "MessageTemplate" -> "The generated process did not compile or link.", "Directory" -> directory,
     "CommandResult" -> build|>]]];

@@ -81,6 +81,16 @@ validation of that expression, not a uniqueness proof or a change to the \
 strict behavior of ", ButtonBox["CompleteHighEnergy", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/CompleteHighEnergy"],
      " on its own."}], "Notes"],
+  Cell[TextData[{"For a complete minimal massive fermion line with five or \
+more same-helicity colorless vectors, the AllPhysical pole preference can \
+combine emission subsets using ordinary Dirac and two-dimensional determinant \
+identities. This keeps physical propagators off shell and uses the actual \
+model vertices. The direct route currently requires an explicit FeynmanModel \
+option and is selected only after every original physical channel, \
+high-energy bound, reference check and Feynman comparison passes. Detailed \
+output records a stage named Physical chiral current. Unsupported \
+interactions or incomplete ordered-diagram sets continue through the ordinary \
+completion workflow."}], "Notes"],
   Cell[TextData[{"The final display reports the run seed, total time, ",
      ButtonBox["SpinorExpressionComplexity", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/SpinorExpressionComplexity"], " score \
