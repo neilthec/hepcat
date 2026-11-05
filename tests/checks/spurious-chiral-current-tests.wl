@@ -134,6 +134,33 @@ scCheck["duplicated orderings cannot replace a missing ordered diagram",
 scCheck["the scalar subset bound rejects eight external vectors before expansion",
   MissingQ[ConstructiveDiagrams`Private`constructSameChiralSpuriousSubsetCurrent[
     {1, 2}, Range[3, 10], 1, scMass, ConstantArray[-Sqrt[2] scCharge, 8]]]];
+(* The readable QED example must follow its supplied model rather than
+   hard-coded values or globals, without certifying its own prediction. *)
+Get[FileNameJoin[{scRoot, "tests", "QED-5-point-residues.wl"}]];
+scExample = QEDAllPositiveSpuriousExample[scDiagramModel, 3];
+scCheck["the formula example retains external mass declarations",
+  MatchQ[scExample, {_List, _}] &&
+    First[scExample] === Thread[Mass /@ Range[5] -> {scMass, scMass, 0, 0, 0}]];
+scCheck["the formula example preserves the known three-photon score",
+  SpinorExpressionComplexity[Last[scExample]] === 30];
+scScopedParameters = (# -> ModelParameter[ModelParameterName[#], "SpuriousFormulaTest", #[[3]]]) & /@
+  DeleteDuplicates[Cases[scDiagramModel, _ModelParameter, Infinity]];
+scCheck["formula examples preserve distinct model parameter scopes",
+  QEDAllPositiveSpuriousExample[scDiagramModel /. scScopedParameters, 3] ===
+    (scExample /. scScopedParameters)];
+scCheck["unrelated globals do not affect the example prediction",
+  Block[{Global`Me = "other mass", Global`EE = "other charge"},
+    QEDAllPositiveSpuriousExample[scDiagramModel, 3]] === scExample];
+scScaledModel = scDiagramModel;
+scScaledModel[[2, All, -2]] = 2 scScaledModel[[2, All, -2]];
+scScaled = QEDAllPositiveSpuriousExample[scScaledModel, 3];
+scCheck["the cubic coefficient is obtained from the model at every emission",
+  First[scScaled] === First[scExample] && Expand[Last[scScaled] - 8 Last[scExample]] === 0];
+scCheck["unsupported examples fail instead of returning a purported amplitude",
+  AllTrue[{QEDAllPositiveSpuriousExample[scDiagramModel, 1],
+    QEDAllPositiveSpuriousExample[scDiagramModel, 8],
+    QEDAllPositiveSpuriousExample[scDiagramModel, "six"],
+    QEDAllPositiveSpuriousExample[{{}, {}, {}, {}}, 3]}, FailureQ]];
 Print["SPURIOUS CHIRAL CURRENT CHECKS: ", scChecks, "; FAILURES: ", Length[scFailures]];
 If[scFailures === {}, Print["HEPCAT_TEST_COMPLETED:spurious-chiral-current-tests.wl"], Print[scFailures]];
 Quit[If[scFailures === {}, 0, 1]];

@@ -409,8 +409,10 @@ amplitude as a new diagram vertex. In the current QED examples, model 2 is the
 cubic diagram model and suffices for four-point factorization. Model 3 contains
 the physical-pole QED amplitudes through six points. Model 4 contains the same
 cubic vertices and the four-, five- and six-point results constructed with
-`"PolePreference" -> "AllSpurious"`. It supplies lower-point data through
-seven-point factorization. For other processes, inspect the model
+`"PolePreference" -> "AllSpurious"`. It also stores the verified seven-point
+electron pair with five positive-helicity photons, supplying all lower-point
+data for the eight-point all-positive pilot. The other seven-point helicity
+sectors are not implied. For other processes, inspect the model
 before selecting the lower-point data.
 
 Model parameters are inert data stored in the model, not globally assigned

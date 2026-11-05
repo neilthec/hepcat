@@ -63,6 +63,13 @@ supplying all known nonzero lower-point amplitudes. A CalcHEP ",
       ButtonData -> "paclet:HEPCAT/ref/FeynmanModel"], " contains bare \
 vertices, so it is not accepted as the factorization model."}], "Notes"],
   Cell["Preparation and interpretation", "NotesSection"],
+  Cell[TextData[{"A sewn channel product is already valid before optional \
+algebraic simplification. For large expressions, the final ordinary \
+simplification attempt has a short finite budget. A timeout retains the \
+complete original product, including every propagator and regular term, \
+rather than delaying the whole channel inventory indefinitely. Small channel \
+expressions keep the established simplification path. No internal on-shell \
+assumption is added by this performance safeguard."}], "Notes"],
   Cell[TextData[{ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], " can simplify \
 channel rows without changing their compact format. Such a row declares only \

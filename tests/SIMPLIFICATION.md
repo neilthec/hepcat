@@ -3113,3 +3113,302 @@ propagator denominators remain off shell. A nonzero polynomial remainder keeps
 its original bracket denominator; no regular term is discarded. The bounded
 pass retains the input when no improvement is established. Standalone
 `ReduceSpinorProducts` still receives no implicit momentum-conservation rule.
+
+### All-positive QED amplitudes with massless reference denominators
+
+Consider the all-ingoing amplitude
+
+\[
+\mathcal A_N(1_e,2_E,3^+,\ldots,(N+2)^+),\qquad N\geq2.
+\]
+
+The massive spin indices on legs 1 and 2 are retained in \(\langle12\rangle\).
+The external conditions are \(p_1^2=p_2^2=m^2\), \(p_i^2=0\) for every photon,
+and \(p_1+p_2+\sum_{i=3}^{N+2}p_i=0\). No internal propagator is put on shell.
+The formulas below use HEPCAT's all-ingoing signs and cubic coupling
+\(-\sqrt2 e\). Crossing to a numerical incoming/outgoing process must be done
+once, by the existing exporter.
+
+Write \(\mathcal P=\{3,\ldots,N+2\}\). For a subset \(S\) of photons, use the
+ordinary massive propagator denominator
+
+\[
+t_{1S}=\left(p_1+\sum_{i\in S}p_i\right)^2-m^2,
+\qquad t_{2r}=(p_2+p_r)^2-m^2.
+\]
+
+Thus \(t_{1\{i\}}=t_{1i}\). Also \(s_{ab}=(p_a+p_b)^2\). These symbols are
+denominators or invariants, not extra kinematic assumptions.
+
+#### A current that sums ordered emissions
+
+For a massless reference leg \(r\notin S\), let \(J_r(S)\) sum the ordered
+emissions in \(S\) along the massive line starting at leg 1, with all these
+photons using the angle reference \(\langle r|\). Its empty-set value and
+recursion are
+
+\[
+J_r(\varnothing)=1,
+\]
+
+\[
+J_r(S)=\frac1{t_{1S}}\sum_{i\in S}J_r(S\setminus\{i\})
+\frac{\left\langle r\left|p_1+\sum_{j\in S\setminus\{i\}}p_j\right|i\right]}
+{\langle ri\rangle},\qquad S\ne\varnothing.
+\]
+
+Each term chooses the final emission \(i\). The earlier emissions are already
+summed in \(J_r(S\setminus\{i\})\). Equivalently, an explicit nonrecursive
+finite sum is
+
+\[
+J_r(S)=\sum_{\pi\in\operatorname{Perm}(S)}
+\prod_{k=1}^{|S|}
+\frac{\left\langle r\left|p_1+\sum_{\ell<k}p_{\pi_\ell}
+\right|\pi_k\right]}
+{\langle r\pi_k\rangle\,t_{1\{\pi_1,\ldots,\pi_k\}}}.
+\]
+
+This has \(|S|!\) ordered products. Memoizing subsets avoids constructing
+every ordering separately, while the determinant reduction below collects
+repeated products algebraically. The scalar-like current is a rearrangement
+of the Dirac line algebra. It does not add a scalar particle or an independent
+QED contact interaction to the theory.
+
+The first two nonempty cases are
+
+\[
+J_r(\{a\})=\frac{\langle r|p_1|a]}{\langle ra\rangle t_{1a}},
+\]
+
+\[
+J_r(\{a,b\})=\frac1{t_{1a}t_{1b}}
+\left(\frac{\langle r|p_1|a]\langle r|p_1|b]}
+{\langle ra\rangle\langle rb\rangle}
+-\frac{m^2[ab]^2}{t_{1ab}}\right).
+\]
+
+The second formula is the useful compact form of the two ordered emissions.
+It follows from an ordinary two-dimensional momentum determinant, with
+\(\det p_1=m^2\). It uses no internal-shell identity.
+
+#### The determinant identity and an arbitrary-size induction
+
+The two-emission identity can be written entirely with brackets:
+
+\[
+t_{1a}\frac{\langle r|p_b|a]\langle r|p_1|b]}
+{\langle ra\rangle\langle rb\rangle}
++t_{1b}\frac{\langle r|p_a|b]\langle r|p_1|a]}
+{\langle ra\rangle\langle rb\rangle}
+=s_{ab}\frac{\langle r|p_1|a]\langle r|p_1|b]}
+{\langle ra\rangle\langle rb\rangle}-m^2[ab]^2.
+\]
+
+For a larger set \(S\), expand each shifted insertion in the ordered-current
+recursion into its \(p_1\) term and its individual photon momenta. Group the
+cross terms for \(a\) and \(b\) together and apply this identity, leaving all
+other factors untouched. Finally use the external invariant relation
+
+\[
+t_{1S}=\sum_{i\in S}t_{1i}+\sum_{\{a,b\}\subset S}s_{ab}.
+\]
+
+This gives the following identity for any finite \(S\):
+
+\[
+\begin{aligned}
+&\sum_{i\in S}t_{1i}
+\frac{\left\langle r\left|p_1+\sum_{j\in S\setminus\{i\}}p_j\right|i\right]}
+{\langle ri\rangle}
+\prod_{k\in S\setminus\{i\}}\frac{\langle r|p_1|k]}{\langle rk\rangle}
+\\
+&\quad=t_{1S}\prod_{i\in S}\frac{\langle r|p_1|i]}{\langle ri\rangle}
+-m^2\sum_{\{a,b\}\subset S}[ab]^2
+\prod_{k\in S\setminus\{a,b\}}\frac{\langle r|p_1|k]}{\langle rk\rangle}.
+\end{aligned}
+\]
+
+This step is a symbolic identity: it is the sum of the two-emission identities
+multiplied by spectator products. It does not extrapolate from a particular
+number of photons or depend on total momentum conservation.
+
+To collect the repeated leading product only once, introduce one necessary
+auxiliary current \(W_r(S;\{a,b\})\), defined when \(\{a,b\}\subseteq S\):
+
+\[
+W_r(\{a,b\};\{a,b\})=\frac1{t_{1ab}},
+\]
+
+\[
+\begin{aligned}
+W_r(S;\{a,b\})=\frac1{t_{1S}}\Bigg[
+&\prod_{k\in S\setminus\{a,b\}}\frac{\langle r|p_1|k]}{\langle rk\rangle}
+\\
+&+\sum_{i\in S\setminus\{a,b\}}t_{1i}
+\frac{\left\langle r\left|p_1+\sum_{j\in S\setminus\{i\}}p_j\right|i\right]}
+{\langle ri\rangle}
+W_r(S\setminus\{i\};\{a,b\})\Bigg].
+\end{aligned}
+\]
+
+Then the compact scalar current is
+
+\[
+J_r(S)=\frac1{\prod_{i\in S}t_{1i}}
+\left[\prod_{i\in S}\frac{\langle r|p_1|i]}{\langle ri\rangle}
+-m^2\sum_{\{a,b\}\subset S}[ab]^2W_r(S;\{a,b\})\right].
+\]
+
+Empty products are 1 and empty sums are 0, so this also gives the stated
+empty-set and one-emission cases without referring to \(W\).
+
+The proof is induction on \(|S|\). Substitute the compact expression for
+each smaller \(J_r(S\setminus\{i\})\) into the ordered-current recursion.
+The identity above collects its leading products. For each fixed pair
+\(\{a,b\}\), the remaining correction terms are exactly the numerator in the
+recursion defining \(W_r(S;\{a,b\})\). The two descriptions of \(J\) are
+therefore algebraically equal for arbitrary finite \(S\).
+
+A further ordinary identity shortens individual insertions in the complete
+amplitude. Because \(r\notin S\), momentum conservation gives
+
+\[
+\left\langle r\left|p_1+\sum_{j\in S\setminus\{i\}}p_j\right|i\right]
+=-\left\langle r\left|p_2+
+\sum_{j\in\mathcal P\setminus(S\cup\{r\})}p_j\right|i\right].
+\]
+
+The omitted \(p_i\) and \(p_r\) insertions vanish by their external massless
+Dirac equations. HEPCAT chooses the side with fewer momentum terms. This
+changes no propagator or internal-shell assumption.
+
+#### The general terminal-pair amplitude
+
+The proposed all-\(N\) representation of the complete fermion amplitude is
+
+\[
+\boxed{\displaystyle
+\mathcal A_N=(-\sqrt2 e)^N m\langle12\rangle
+\sum_{\{c,d\}\subset\mathcal P}\frac{[cd]}{\langle cd\rangle}
+\left[\frac{J_c(\mathcal P\setminus\{c,d\})}{t_{2c}}
++\frac{J_d(\mathcal P\setminus\{c,d\})}{t_{2d}}\right].}
+\]
+
+The sum is over unordered pairs. Every reference is an actual external
+photon, so there is no auxiliary Xi left in the answer. The bracket poles are
+apparent reference poles and must cancel in the complete amplitude. The
+factor \((-\sqrt2 e)^N\) comes from the specified cubic vertices, not a fitted
+normalization. For a supported model with different scalar vertex factors,
+HEPCAT uses their product in the same position.
+
+This expression combines the two possible terminal photon orders before
+summing the remaining scalar currents. At four emitted photons it reproduces
+the previously verified pair-split expression. It is a general recursive
+formula. We have not established a comparably short nonrecursive product
+formula. Its mathematical description stays short while its fully substituted
+expression can grow substantially.
+
+There are two distinct proof statements. The equivalence of the ordered and
+compact scalar-current recursions was proved above for arbitrary set size.
+The terminal-pair sewing formula for the complete Dirac amplitude is the
+all-multiplicity proposal being tested. The finite checks below do not replace
+a complete arbitrary-multiplicity proof of that sewing step.
+
+For two photons \(\{c,d\}\), both scalar currents are 1. Momentum conservation
+gives \(t_{2c}=t_{1d}\), \(t_{2d}=t_{1c}\), and
+\(t_{1c}+t_{1d}=-s_{cd}=\langle cd\rangle[cd]\). The formula therefore reduces
+without internal-shell assumptions to
+
+\[
+\mathcal A_2=\frac{2e^2m\langle12\rangle[cd]^2}{t_{1c}t_{1d}}.
+\]
+
+Thus its normalization and the removable four-point reference pole are explicit.
+
+#### Verification status and the new six-photon test
+
+Before testing six photons, the expression was fixed using only the cases
+through five photons. The established checks include:
+
+- Exact symbolic two- and three-emission determinant identities in both
+  angle/square chiralities.
+- Exact off-pole comparisons of the terminal-pair formula with the physical
+  current through five photons. At five photons these cover three independent
+  rational charts, two electron masses and both spinor chiralities.
+- A full seven-point construction at five photons, with all 30 physical
+  channels and all ten apparent reference poles checked, plus high-energy,
+  explicit-reference and independent Feynman comparisons. All 43 rows pass at
+  both validation assignments.
+- Independent MadGraph agreement at 1,000 physical points for five positive
+  photons, with the massive fermion spins summed. The maximum relative
+  difference was about \(8.93\times10^{-11}\).
+
+The five-photon complexity is 1160, reduced from 3240 before collecting the
+scalar-current products. A bounded external-only preparation search found no
+further improvement; this is a best found form, not a global minimality proof.
+
+The six-photon test must calculate the eight-point case independently, not
+call the same recursion twice. The direct Feynman calculation has 720 ordered
+fermion-line diagrams. Their internal numerators and propagators remain off
+shell. Independent MadGraph matrix elements provide a separate numerical test.
+For physical-residue checks, complete lower-point input through seven points
+is needed; an incomplete model must not silently remove channels from the test.
+The expected complete physical-channel inventory is 62, and the formula can
+have all 15 photon-pair bracket factors before their cancellations are checked.
+
+The independent eight-point reference was generated and saved before the
+dedicated six-photon prediction comparison. Creating the 720 Feynman diagrams
+and their shared cyclic massless references took about 154 seconds. The
+unchanged general recurrence then generated the six-photon prediction in
+about 27 seconds, with complexity 28050, 518341 expression leaves, all 15
+photon-pair reference factors and no Xi spinors. No coefficient was adjusted
+from the eight-point calculation.
+
+Four exact off-pole comparisons pass against the actual 720-diagram Feynman
+sum: two sample charts at electron mass 1 and two at mass 3/2, with charge
+2/7. The differences vanish for all four coefficients of the coherent
+massive-spin polynomial. Every external shell and momentum-conservation
+condition is checked, while all 62 physical propagators and every reference
+denominator remain nonzero. These are genuine off-cut comparisons, not checks
+made after imposing an internal shell. They supply new evidence for the
+six-photon prediction, not a global analytic equality proof.
+
+The separate independent MadGraph comparison passes all 1000 physical points,
+with maximum relative difference approximately \(8.36\times10^{-12}\) and seed
+`202611050806`. This compares the requested positive photon helicities with
+massive fermion spins summed, allowing an overall amplitude phase.
+
+A full 80-row residue/spurious/high-energy/reference/Feynman checker attempt
+hit its external 400-second time limit. It did not produce an 80-PASS report
+and is not counted as passing. That unfinished diagnostic is separate from
+the successful exact off-cut Feynman comparisons and independent MadGraph
+validation; it does not establish a failure of the amplitude either. No
+arbitrary-multiplicity proof is inferred from the successful finite tests.
+
+A small exact collinear-current probe also checked the normalization of the
+candidate Ward relations with zero, one and two spectator emissions. On
+\(\langle ab\rangle=0\), with \(|a\rangle=z|b\rangle\), those tested
+relations give residues \(zJ_a(T)\) and \(-J_b(T)/z\) for a photon attached
+to the two possible reference currents.
+This is evidence for a possible recursive spurious-pole cancellation proof;
+it is not being asserted as an established arbitrary-multiplicity theorem.
+
+The notebook-facing example uses the same implementation:
+
+```wolfram
+Get[FileNameJoin[{hepcatDirectory, "tests", "QED-5-point-residues.wl"}]];
+formulaPrediction = QEDAllPositiveSpuriousExample[factorizationModelSpurious, 6];
+```
+
+The second argument counts photons, so this returns an eight-point amplitude
+pair `{externalMassRules, expression}`. It obtains the cubic coefficient from
+the supplied model. This call is a formula prediction, not a second independent
+derivation or a validation. Its result must be compared with independent
+Feynman diagrams and the amplitude checks before being accepted.
+
+The implementation is `constructSameChiralSpuriousSubsetCurrent` in
+`source/HEPCAT-Model.wl`. Its numerical resource guard currently admits at most
+128 photon subsets. That implementation limit is separate from the mathematical
+set recursion. The focused regression file is
+`tests/checks/spurious-chiral-current-tests.wl`.

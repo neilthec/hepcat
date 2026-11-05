@@ -1714,5 +1714,45 @@ QEDSixPointFourFermionSpuriousExample[model_, helicities : ("PP" | "PM" | "MM")]
   {Thread[(Mass /@ Range[6]) -> {mass, mass, mass, mass, 0, 0}], amplitude}
 ];
 
+(* ::Section::Closed:: *)
+(* All-positive massless-reference formula. Prediction example, not a reference calculation. *)
+
+(* The arbitrary-photon formula is described in tests/SIMPLIFICATION.md.
+   This helper uses the production subset recurrence rather than maintaining
+   a second implementation. Its result has not been validated by this call;
+   compare it with independent diagrams and CheckAmplitudes/ValidateMadGraph.
+   All momenta are ingoing, with e,E in slots 1,2 and photons after them. *)
+QEDAllPositiveSpuriousExample[model_, photonCount_Integer] := Module[
+  {mass, vertex, vertexFactor, proposal, photons, spinTarget},
+  If[!MatchQ[model, {_List, _List, _List, _List}] || photonCount < 2,
+    Return[Failure["QEDAllPositiveSpuriousArguments", <|"MessageTemplate" ->
+      "Supply a constructive QED model and at least two positive-helicity photons."|>]]];
+  mass = ModelParameter[model, "Me"];
+  If[!MatchQ[mass, _ModelParameter],
+    Return[Failure["QEDExampleParameters", <|"MessageTemplate" ->
+      "The QED example requires a declared electron mass parameter Me."|>]]];
+  spinTarget = xFactor[1, 2] SpinorChain[
+    Spinor["Spin", "Angle", 1], Spinor["Spin", "Angle", 2]];
+  vertex = LookupAmplitude[{{"e", 1}, {"E", 2}, {"A.+", 3}}, model,
+    False, Table[Unique["qedPositiveSpin"], {4}]];
+  vertexFactor = Cancel[vertex/spinTarget];
+  If[vertexFactor === 0 || !TrueQ[ConstructiveDiagrams`Private`rspScalarQ[vertexFactor]] ||
+      !TrueQ[ConstructiveDiagrams`Private`residueFiniteQ[vertexFactor]] ||
+      TrueQ[ConstructiveDiagrams`Private`residueUnmappedQ[vertexFactor]],
+    Return[Failure["QEDExampleVertex", <|"MessageTemplate" ->
+      "The model must contain the minimal positive-helicity e,E,A.+ cubic vertex."|>]]];
+  photons = Range[3, photonCount + 2];
+  proposal = ConstructiveDiagrams`Private`constructSameChiralSpuriousSubsetCurrent[
+    {1, 2}, photons, 1, mass, ConstantArray[vertexFactor, photonCount]];
+  If[!AssociationQ[proposal] || !KeyExistsQ[proposal, "Expression"],
+    Return[Failure["QEDAllPositiveSpuriousAllowance", <|"MessageTemplate" ->
+      "The example exceeds the supported bounded scalar-subset allowance.",
+      "PhotonCount" -> photonCount|>]]];
+  {Thread[Mass /@ Range[photonCount + 2] -> Join[{mass, mass}, ConstantArray[0, photonCount]]],
+    proposal["Expression"]}
+];
+QEDAllPositiveSpuriousExample[___] := Failure["QEDAllPositiveSpuriousArguments", <|
+  "MessageTemplate" -> "Supply a constructive QED model and an integer photon count of at least two."|>];
+
 <|"Amplitudes" -> <|"H" -> prH, "S2" -> prS2, "OldPermutation" -> prOldPermutation|>,
   "FactorizationTargets" -> prElectronTargets, "ReportFunction" -> q5ResidueReport|>

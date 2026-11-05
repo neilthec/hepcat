@@ -29,7 +29,7 @@ lookup[process_] := LookupAmplitude[
 rows = Select[model[[2]], Length[DeleteCases[Drop[#, -2], ""]] === 6 &];
 check["all nine independent six-point multisets occur exactly once",
   Length[rows] === 9 &&
-    Sort[Sort[Drop[#, -2]] & /@ rows] === Sort[Sort /@ processes]];
+    Sort[Sort[DeleteCases[Drop[#, -2], ""]] & /@ rows] === Sort[Sort /@ processes]];
 entries = Table[{processes[[i]], lookup[processes[[i]]]}, {i, Length[processes]}];
 Do[
   check["saved amplitude is compact and reference free " <> ToString[i],

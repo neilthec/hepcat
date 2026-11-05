@@ -36513,7 +36513,7 @@ Cell["The AllSpurious factorization model now includes the complete six-point am
 
 Cell["e,E,A.+,A.+,A.+,A.+,A.+", "Chapter", ExpressionUUID->"591df50a-be28-4c16-bcce-d2c3ba90d55f"],
 
-Cell["A fresh automatic construction completed with complexity 1160. All 43 required checks passed: 30 physical channels, 10 apparent spurious poles, high-energy behavior, reference independence and agreement with independent Feynman diagrams. A separate MadGraph comparison passed at 1000 random points; its largest relative difference was 8.93 x 10^-11. These are sampled validation results, not a proof that no shorter algebraic form exists.", "Text", CellTags->"QEDSevenPointAllSpuriousVerified", ExpressionUUID->"f68238e8-8869-4561-bef3-dae6fd971659"]
+Cell["A fresh automatic construction completed with complexity 1160. All 43 required checks passed: 30 physical channels, 10 apparent spurious poles, high-energy behavior, reference independence and agreement with independent Feynman diagrams. A separate MadGraph comparison passed at 1000 random points; its largest relative difference was 8.93 x 10^-11. These are sampled validation results, not a proof that no shorter algebraic form exists.", "Text", CellTags->"QEDSevenPointAllSpuriousVerified", ExpressionUUID->"f68238e8-8869-4561-bef3-dae6fd971659"],
 
 Cell["factorizationModelSpurious = ReadModel[FileNameJoin[{hepcatDirectory, \"models\"}], 4];\nqed7SpuriousParticles = {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\", \"A.+\", \"A.+\"};\nqed7PPPPPSpurious = ConstructAmplitude[\n  qed7SpuriousParticles, diagramModel, factorizationModelSpurious,\n  \"PolePreference\" -> \"AllSpurious\",\n  \"FeynmanModel\" -> qedFeynmanModel]", "Input", ExpressionUUID->"0945396d-382e-46dc-8c36-a4da31f8bf99"],
 
@@ -36526,6 +36526,42 @@ Cell["qed7PPPPPSpuriousChecks = CheckAmplitudes[\n  qed7PPPPPSpurious,\n  Factor
 Cell["Compare the fixed all-positive photon helicities with independent MadGraph amplitudes at the random points selected above. The massive electron spins are summed, and an overall amplitude phase is allowed.", "Text", ExpressionUUID->"38661ab9-6a05-4054-ada0-258bc98cba24"],
 
 Cell["qed7PPPPPSpuriousMadGraph = If[\n  ValueQ[qed7PPPPPSpurious] && FreeQ[qed7PPPPPSpurious,\n    _Failure | _Missing | $Failed | $Aborted | _ConstructAmplitude],\n  ValidateMadGraph[qed7SpuriousParticles, qed7PPPPPSpurious,\n    factorizationModelSpurious, Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No successful constructive result is available yet\"]]", "Input", ExpressionUUID->"769054b4-0029-4139-b3dc-ce8fdd6e6a84"]
+}, Open  ]]
+,
+
+Cell[CellGroupData[{
+
+Cell["All-Positive Photons: A General AllSpurious Formula", "Title", ExpressionUUID->"6b58ba82-a993-470b-93b6-db34742a3c09"],
+
+Cell["The proposed terminal-pair formula defines an amplitude candidate at any photon count, subject to the finite implementation allowance. It has been tested through six photons; a complete proof for every photon count is still open. Its derivation is in tests/SIMPLIFICATION.md. The example helper evaluates that formula; it does not itself certify an amplitude. The six-photon case below is an eight-point process. We obtain an independent expression from all 720 Feynman diagrams before evaluating the prediction. All internal numerators and denominators stay off shell in that reference calculation.", "Text", ExpressionUUID->"b5c9719a-851d-4a0c-989d-f9dd1fbde2eb"],
+
+Cell["e,E,A.+,A.+,A.+,A.+,A.+,A.+", "Chapter", ExpressionUUID->"85045e6e-468e-4d93-996e-3f6211287875"],
+
+Cell["qed8PositiveParticles = Join[{\"e\", \"E\"}, ConstantArray[\"A.+\", 6]];\nqed8IndependentDiagrams = CreateDiagrams[qed8PositiveParticles, qedFeynmanModel];\nqed8IndependentRaw = DiagramAmplitudes[qed8IndependentDiagrams];\nLength[qed8IndependentRaw]", "Input", ExpressionUUID->"e5d26dd5-a5e1-44e7-99e9-21bdf1d982ce"],
+
+Cell["The reference spinors use the next photon cyclically. The same choice for each external photon is used in every Feynman diagram. Conversion took about 154 seconds in the verification run. The semicolon keeps the large independent expression from filling the notebook.", "Text", ExpressionUUID->"d1cf735e-db06-432f-9f72-9a0196f31834"],
+
+Cell["qed8IndependentSpurious = FeynmanToSpinorProducts[\n  qed8IndependentRaw,\n  \"ReferenceSpinors\" -> Thread[Range[3, 8] -> RotateLeft[Range[3, 8]]],\n  \"ReduceSpinorProducts\" -> False, \"TimeConstraint\" -> 300];", "Input", ExpressionUUID->"a84aaef7-b1e4-488e-b08a-2f11b4edaf64"],
+
+Cell["Now evaluate the general formula at six photons. The five-photon formula had complexity 1160; the expanded six-photon expression has complexity 28050 and contains 15 apparent photon-pair poles. The compact mathematical formula keeps its repeated subset currents explicit. Neither statement asserts global algebraic minimality.", "Text", ExpressionUUID->"1df78b07-8909-4c11-89d0-9a6c3aaaa0b9"],
+
+Cell["Get[FileNameJoin[{hepcatDirectory, \"tests\", \"QED-5-point-residues.wl\"}]];\nfactorizationModelSpurious = ReadModel[FileNameJoin[{hepcatDirectory, \"models\"}], 4];\nqed8PositiveSpuriousPair = QEDAllPositiveSpuriousExample[factorizationModelSpurious, 6];\nqed8PositiveSpurious = Last[qed8PositiveSpuriousPair];\nSpinorExpressionComplexity[qed8PositiveSpurious]", "Input", ExpressionUUID->"79611824-5d6f-4902-8574-3b596ab017ec"],
+
+Cell["Independent validation at regular off-pole kinematics compared this prediction with the freshly obtained 720-diagram sum. All four coherent massive-spin coefficients agreed exactly at four rational sample points, using electron masses 1 and 3/2. Every external shell and momentum-conservation condition was checked, with all physical propagators and reference denominators nonzero. These exact samples test the prediction and are not a generic analytic proof.", "Text", ExpressionUUID->"1edc9fbd-b320-4fd8-b182-2ed5162acf02"],
+
+Cell["Optional: Complete Pole and High-Energy Checks", "Section", ExpressionUUID->"bc415d09-5395-4599-8207-1c027416a707"],
+
+Cell["Model 4 now also stores the verified seven-point all-positive amplitude needed for the 3+7 channels. No eight-point answer is stored in the model. The independent off-pole equality and MadGraph tests pass. This separate 80-row pole and high-energy study did not finish within the tested 400-second overall budget, so no complete passing report is claimed for it. The optional cell below has that same overall guard and returns a visible time-limit result if it expires.", "Text", ExpressionUUID->"a2861e9c-7a82-4c03-8267-cf23966ec558"],
+
+Cell["qed8PositiveChannels = FactorizationAmplitudeChannels[\n  qed8PositiveParticles, factorizationModelSpurious];\nLength[qed8PositiveChannels]", "Input", ExpressionUUID->"d8beb9f3-8146-4fc8-b8a3-8e9d3ecc5741"],
+
+Cell["qed8PositiveSpuriousChecks = TimeConstrained[\n  CheckAmplitudes[qed8PositiveSpuriousPair, qed8PositiveChannels,\n    factorizationModelSpurious,\n    \"FeynmanAmplitudes\" -> qed8IndependentSpurious,\n    \"FeynmanModel\" -> qedFeynmanModel,\n    \"TimeConstraint\" -> 300, \"Output\" -> \"Summary\"],\n  400, Missing[\"TimeLimit\", \"The optional full check did not complete within 400 seconds\"]]", "Input", ExpressionUUID->"b08c1171-af1d-4eb8-8ee3-83e7ce85820b"],
+
+Cell["Independent MadGraph Comparison", "Section", ExpressionUUID->"30be4587-d7ed-44be-abd3-ab17a54c09be"],
+
+Cell["An independent MadGraph comparison passed all 1000 random physical points at seed 202611050806. The largest relative difference was 8.36 x 10^-12. The six photon helicities are fixed positive, the massive electron spins are summed, and an overall amplitude phase is allowed. The cell uses the shared validation settings, which select a fresh seed unless you override it.", "Text", ExpressionUUID->"1edb4dee-9e0d-4be3-ab2f-9017d1b31927"],
+
+Cell["qed8PositiveSpuriousMadGraph = If[\n  ValueQ[qed8PositiveSpurious] && FreeQ[qed8PositiveSpurious,\n    _Failure | _Missing | $Failed | $Aborted | _QEDAllPositiveSpuriousExample],\n  ValidateMadGraph[qed8PositiveParticles, qed8PositiveSpurious,\n    factorizationModelSpurious, Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No formula prediction is available yet\"]]", "Input", ExpressionUUID->"b8c75b50-bbce-45a1-891b-b03954f6fb52"]
 }, Open  ]]
 },
 WindowSize->{1010, 911},

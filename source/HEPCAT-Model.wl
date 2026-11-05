@@ -807,9 +807,20 @@ expandExternalXFactors[newExp,n]
 
 
 (* ::Input::Initialization:: *)
+(* A channel is already an exact sewn product. Simplification is optional:
+   large lower-point rational formulas must not spend unbounded time combining
+   denominators here. A timed-out attempt keeps the complete original product,
+   with every propagator and regular term intact. Small channels retain the
+   established simplification path. No shell assumption is added. *)
+ConstructiveDiagrams`Private`factorizationChannelSimplify[expression_] :=
+  If[LeafCount[expression] <= 12000, Simplify[expression],
+    TimeConstrained[Simplify[expression], 0.25, expression]];
+
 DownValues[FactorizationAmplitudeChannels] = {};
 Options[FactorizationAmplitudeChannels] = {};
 FactorizationAmplitudeChannels::usage = "FactorizationAmplitudeChannels[particles, model] returns one row for each nonzero factorization channel: the external masses, channel momentum combination, exchanged mass, and sewn product of lower-point amplitudes divided by z and the propagator denominator. Amplitudes absent from the supplied model are zero.";
+FactorizationAmplitudeChannels::usage = FactorizationAmplitudeChannels::usage <>
+  " For large sewn products, ordinary simplification has a short finite budget. If that optional step times out, the complete exact product is retained with every propagator intact; channel generation does not add internal-shell assumptions.";
 FactorizationAmplitudeChannels[particles_List,model_]:=Module[{partitions,j,i,k,channel,momenta1,momenta2,amp1,amp2,amp12A,amp12B,fermionSewingSign,fermionSewingTag=Unique["factorizationSewing"],amplitude={},masses={},xFactorReverseProtect,xFactorReverseProtectInverse,Multipart,XiN=1,massReplacements={}},
 Catch[
 If[TrueQ[ConstructiveDiagrams`Private`feynmanModelQ[model]],
@@ -872,7 +883,7 @@ Do[AppendTo[massReplacements,Mass[j]->masses[[j]]],{j,1,Length[masses]}];
 AppendTo[massReplacements,Mass[momenta2]->model[[1,j,6]]];
 AppendTo[massReplacements,Mass[momenta1]->model[[1,j,6]]];
 (*Print[massReplacements];*)
-AppendTo[amplitude,Flatten[{masses,momenta2,model[[1,j,6]],ExpandXFactors[Simplify[(amp12A+amp12B)/z/PropDen[Mom[momenta2],model[[1,j,6]]]],Length[particles]]}]/.massReplacements];
+AppendTo[amplitude,Flatten[{masses,momenta2,model[[1,j,6]],ExpandXFactors[ConstructiveDiagrams`Private`factorizationChannelSimplify[(amp12A+amp12B)/z/PropDen[Mom[momenta2],model[[1,j,6]]]],Length[particles]]}]/.massReplacements];
 ];
 (*Print[Expand[amplitude[[-1]]]]];*)
 ,{j,1,Length[model[[1]]]},{i,1,Length[partitions]}];

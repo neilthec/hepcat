@@ -643,6 +643,7 @@
       {
         "title": "Preparation and interpretation",
         "paragraphs": [
+          "A sewn channel product is already valid before optional algebraic simplification. For large expressions, the final ordinary simplification attempt has a short finite budget. A timeout retains the complete original product, including every propagator and regular term, rather than delaying the whole channel inventory indefinitely. Small channel expressions keep the established simplification path. No internal on-shell assumption is added by this performance safeguard.",
           "[PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes) can simplify channel rows without changing their compact format. Such a row declares only its selected internal cut; it does not put every other propagator in the product on shell. Request preparation details if you will pass those reductions to completion, so the original channel targets remain available.",
           "Different channels overlap on multiple poles. Adding their products as independent diagrams would generally double count those overlaps. [CompleteFactorization](paclet:HEPCAT/ref/CompleteFactorization) instead solves the channel conditions together, starting from the diagram expression and a bounded space of possible corrections."
         ]

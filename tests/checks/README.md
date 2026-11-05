@@ -1208,3 +1208,37 @@ conditions against Feynman diagrams, and tests representative signed particle
 permutations at a changed electron mass and charge. The stored entries cover
 all four-photon helicity sectors, two-photon four-fermion sectors and the
 six-fermion amplitude. Higher-point rows never become new diagram vertices.
+
+### General all-positive formula and independent eight-point test
+
+The equations and proof scope are in `tests/SIMPLIFICATION.md`. The ordered
+scalar-current and determinant-collected subset recurrences are related by
+ordinary identities. The terminal-pair formula for the complete fermion
+amplitude remains an all-multiplicity proposal tested through six photons.
+`QEDAllPositiveSpuriousExample` in the worked-example file returns a formula
+prediction, not a validated amplitude. Focused current tests cover its model
+scoping, cubic-coupling scaling, argument guards and established small cases.
+
+The opt-in `eight-point-spurious-independent-tests.wl` obtains all 720 actual
+Feynman diagrams with shared cyclic massless references before computing the
+general formula at six photons. It compares every coherent massive-spin
+coefficient at two exact off-cut charts for each of two masses. The charts
+check all external shells and conservation and avoid all 62 physical poles
+and reference denominators. A previously obtained independent WXF reference
+can be selected with `HEPCAT_EIGHT_SPURIOUS_REFERENCE`; its saved provenance,
+model and conversion-source hashes must match. This is an explicit reuse of
+independent diagram data, not a cached passing assertion. The notebook adds
+the separate 1000-point MadGraph test, which passed with maximum relative
+difference about 8.36e-12. The expanded formula has complexity 28050.
+
+The optional full 80-row eight-point checker did not finish within its tested
+400-second outer budget. Neither the independent-comparison suite nor the
+notebook labels that unfinished report a pass. The mathematical all-N
+statement, finite equality tests and complete checker are distinct obligations.
+
+`factorization-simplification-budget-tests.wl` checks that large optional
+channel simplification retains the exact complete sewn product on timeout,
+while small-channel output and sewing conventions remain unchanged. The
+62 eight-point channel rows now generate in about 53 seconds in the measured
+run. `qed-construction-notebook-tests.wl` checks actual cell/group structure:
+adjacent cells without a comma can parse as multiplication and must fail.
