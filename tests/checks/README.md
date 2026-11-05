@@ -993,6 +993,17 @@ HEPCAT_SPURIOUS_INTEGRATION_CASES=FourFermionsPP6,FourFermionsPM6,FourFermionsMM
   --suite spurious-construction-integration-tests.wl --timeout 1800
 ```
 
+Select `SixF6` to replay the six-fermion Max Spurious notebook call with
+factorization model 4. The result must have only physical denominators, a
+complexity of at most 3168, and all 21 checks passing, including 18 physical
+residues and the independent Feynman comparison. The test requires the
+grouped off-shell exchange route to derive this form from the diagram model.
+
+```sh
+HEPCAT_SPURIOUS_INTEGRATION_CASES=SixF6 python3 tests/checks/run-wolfram-tests.py \
+  --suite spurious-construction-integration-tests.wl --timeout 720
+```
+
 ## Repaired Legacy Bugs
 
 The five formerly expected-failure probes now run as ordinary regression

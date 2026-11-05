@@ -1238,6 +1238,25 @@ The off-cut tests kept every physical propagator nonzero. These checks
 validate the reduction; completion and validation of the summed amplitude
 remain separate steps.
 
+For the supported six-fermion `ConstructAmplitude` call with `"AllSpurious"`
+and a separate Feynman model, the constructor can now try the complete
+off-shell sum directly. It reads the four cubic coupling factors, signed
+fermion pairing and three physical propagators from each diagram. For a
+given central line it combines the two attachment orders over their shared
+photon denominators, keeping a separate electron propagator for each order.
+The numerator uses the external Dirac equation and the Clifford
+anticommutator; none of the three internal momenta is put on shell.
+
+For the electron/positron example, this groups 36 diagrams into 18 terms and
+gives complexity 3168. An exact ordinary-identity comparison with the
+independent Dirac numerators used external mass shells and momentum
+conservation, with all internal propagators left off shell. The constructor
+checks all 18 physical residues, high-energy growth, reference independence,
+and independent Feynman agreement before returning the compact result. No
+apparent poles are introduced and there are no external photon references to
+choose. If validation of the grouped sum does not complete, ordinary
+construction continues.
+
 ### Automatic Physical and Spurious Checks
 
 The ordinary call checks physical residues and discovers apparent spurious

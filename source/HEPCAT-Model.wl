@@ -17186,7 +17186,7 @@ End[];
 
 Begin["ConstructiveDiagrams`"];
 
-ConstructAmplitude::usage = "ConstructAmplitude[process, diagramModel, factorizationModel] generates and prepares diagrams and factorization channels, completes factorization and high-energy behavior, prepares each completed expression with external identities only, then checks the final amplitude. The ordinary result is the bare expression only when every required final check passes. Output -> Amplitude returns {externalMassRules, expression}; Details retains stage results, timings and diagnostics. ProgressReporting -> True displays the current stage, its elapsed time and total elapsed time. At the end PrintReport -> True prints total time, the final SpinorExpressionComplexity score and the test table before returning the expression. FeynmanModel -> None optionally supplies an independent model whose diagrams are prepared and compared too. PreparationOptions, ChannelPreparationOptions, FinalPreparationOptions, FactorizationOptions, HighEnergyOptions, CheckOptions and FeynmanPreparationOptions pass options to individual stages. TimeConstraint -> Automatic selects a finite overall budget from the process and workload; individual stages resolve their own automatic limits. Explicit values override those choices. PolePreference -> AllPhysical is the default; AllSpurious prefers massless-reference forms and uses eligible physical replacements when needed. Mixed admits both. Final expressions resolve auxiliary Xi unless Xi, IndependentXi or None is requested. These choices leave validation intact. ParameterRules, HighEnergyBound, Samples, ValidationSamples, RandomSeed, Parallelization and MaxKernels provide common settings. The original channels remain the residue targets, discarded preparation terms and affine completion freedom are retained, and final preparation never applies internal-shell identities. Failed, opposite-sign and unresolved checks never produce a validated amplitude. With AllSpurious and a FeynmanModel, supported massive fermion lines with one opposite-helicity massless vector can first try a compact common-reference current derived from the diagram vertices. The current must pass the same amplitude checks before it is selected. For mixed helicities on a supported cubic vector line, a bounded off-shell construction uses the model vertices and shared massless references and returns the first validated form. Two supported massive fermion currents coupled to two equal-helicity massless vectors can use an off-shell candidate derived from the same model, with matching diagram cuts and independent validation. For larger AllSpurious results with a FeynmanModel, a bounded compound-pole exchange reduction can propose a shorter form for independent validation. When FeynmanModel is supplied, a fixed factorization or high-energy candidate can be selected after every mandatory check and independent Feynman comparison passes; its unclassified affine family remains in Details and no uniqueness is claimed. Without that independent benchmark, unresolved completion freedom remains a failure.";
+ConstructAmplitude::usage = "ConstructAmplitude[process, diagramModel, factorizationModel] generates and prepares diagrams and factorization channels, completes factorization and high-energy behavior, prepares each completed expression with external identities only, then checks the final amplitude. The ordinary result is the bare expression only when every required final check passes. Output -> Amplitude returns {externalMassRules, expression}; Details retains stage results, timings and diagnostics. ProgressReporting -> True displays the current stage, its elapsed time and total elapsed time. At the end PrintReport -> True prints total time, the final SpinorExpressionComplexity score and the test table before returning the expression. FeynmanModel -> None optionally supplies an independent model whose diagrams are prepared and compared too. PreparationOptions, ChannelPreparationOptions, FinalPreparationOptions, FactorizationOptions, HighEnergyOptions, CheckOptions and FeynmanPreparationOptions pass options to individual stages. TimeConstraint -> Automatic selects a finite overall budget from the process and workload; individual stages resolve their own automatic limits. Explicit values override those choices. PolePreference -> AllPhysical is the default; AllSpurious prefers massless-reference forms and uses eligible physical replacements when needed. Mixed admits both. Final expressions resolve auxiliary Xi unless Xi, IndependentXi or None is requested. These choices leave validation intact. ParameterRules, HighEnergyBound, Samples, ValidationSamples, RandomSeed, Parallelization and MaxKernels provide common settings. The original channels remain the residue targets, discarded preparation terms and affine completion freedom are retained, and final preparation never applies internal-shell identities. Failed, opposite-sign and unresolved checks never produce a validated amplitude. With AllSpurious and a FeynmanModel, supported massive fermion lines with one opposite-helicity massless vector can first try a compact common-reference current derived from the diagram vertices. The current must pass the same amplitude checks before it is selected. For mixed helicities on a supported cubic vector line, a bounded off-shell construction uses the model vertices and shared massless references and returns the first validated form. Two supported massive fermion currents coupled to two equal-helicity massless vectors can use an off-shell candidate derived from the same model, with matching diagram cuts and independent validation. For supported six-fermion trees with no external vector legs, AllSpurious can combine the ordered fermion exchanges over their common physical vector propagators. The candidate is returned only after the original channel checks and independent Feynman comparison pass. For larger AllSpurious results with a FeynmanModel, a bounded compound-pole exchange reduction can propose a shorter form for independent validation. When FeynmanModel is supplied, a fixed factorization or high-energy candidate can be selected after every mandatory check and independent Feynman comparison passes; its unclassified affine family remains in Details and no uniqueness is claimed. Without that independent benchmark, unresolved completion freedom remains a failure.";
 ConstructAmplitude::usage = ConstructAmplitude::usage <>
   " RandomSeed -> Automatic chooses one time-based run seed. The stages derive their seeds from that value, with explicit stage overrides honored. Details records RandomSeed and PrintReport prints it with the final timing; an explicit integer reproduces the sample choices.";
 ConstructAmplitude::args = "Expected a process with at least four model particle names, a diagram model, a constructive factorization model, and valid construction options.";
@@ -17649,6 +17649,121 @@ constructOffShellVectorCurrents[diagrams_List, process_List, model_List, externa
     Return[Missing["UnsupportedVectorCurrents"]]];
   <|"Expression" -> expression, "Method" -> "OffShellVectorCurrents",
     "ReferenceAssignments" -> references|>
+];
+
+(* Contract two standard vector currents with a central off-shell Dirac
+   numerator. The external Dirac equation and the Clifford anticommutator
+   reduce the routed momentum p_a+p_b+p_x before the spin sum is expanded. *)
+sixFermionOrderedCurrent[mass_, {a_, b_}, {x_, y_}, {c_, d_}] := Module[
+  {spin, angle, square, sandwich, current, attachedSquare, attachedAngle},
+  spin[kind_, leg_] := Spinor["Spin", kind, leg];
+  angle[i_, j_] := SpinorChain[spin["Angle", i], spin["Angle", j]];
+  square[i_, j_] := SpinorChain[spin["Square", i], spin["Square", j]];
+  sandwich[i_, k_, j_] := SpinorChain[spin["Square", i], Mom[k], spin["Angle", j]];
+  current[i_, j_] := angle[j, d] square[i, c] + angle[j, c] square[i, d];
+  attachedSquare[j_] := square[b, x] (mass square[a, j] + sandwich[j, b, a]) +
+    square[a, x] (mass square[b, j] + sandwich[j, a, b]);
+  attachedAngle[j_] := angle[b, x] (mass angle[a, j] + sandwich[a, b, j]) +
+    angle[a, x] (mass angle[b, j] + sandwich[b, a, j]);
+  angle[y, d] attachedSquare[c] + angle[y, c] attachedSquare[d] +
+    square[y, d] attachedAngle[c] + square[y, c] attachedAngle[d] -
+    (current[x, y] + current[y, x]) (sandwich[a, x, b] + sandwich[b, x, a])
+];
+
+(* Read the actual graph, the four coupling factors and the exchange sign.
+   Require the complete two-vector attachment inventory, including both
+   orders, before using the contracted current representation. *)
+constructOffShellFermionExchangeForm[diagrams_List, process_List, model_List, external_List] := Module[
+  {legs = externalIndices[external], unsupported = Missing["UnsupportedSixFermionCurrents"],
+   matter, mass, species, vertexFactor, topology, pole, records, expected, groups, expression},
+  If[legs =!= Range[6] || Length[process] =!= 6 || Length[diagrams] =!= 36 ||
+      !preparationScalarExternalRulesQ[external], Return[unsupported]];
+  matter = SelectFirst[model[[1]], Length[#] === 11 && #[[5]] === 1 &&
+    #[[6]] =!= 0 && #[[8]] === 1 && #[[2]] =!= #[[3]] &&
+    Sort[process] === Sort[Flatten[ConstantArray[#[[{2, 3}]], 3]]] &, None];
+  If[matter === None, Return[unsupported]];
+  mass = matter[[6]]; species = matter[[{2, 3}]];
+  If[(Mass /@ legs /. external) =!= ConstantArray[mass, 6], Return[unsupported]];
+  pole[cut_List, m_] := residueCanonicalPropagators[PropDen[Mom[Multiparticle @@ Sort[cut]], m], legs];
+  vertexFactor[structures_List, edge_, helicities_List] := Module[{rows, coupling},
+    If[Length[structures] =!= 2 || !AllTrue[structures, AssociationQ], Return[unsupported]];
+    rows = Lookup[structures, "ModelRow", None];
+    If[!AllTrue[rows, MatchQ[#, {_, _, _, "", _, _}] && Take[#, 2] === species &&
+        FreeQ[Last[#], Spinor["Helicity", ___]] &] ||
+        Sort[rows[[All, 3]]] =!= Sort[helicities] ||
+        Length[DeleteDuplicates[Take[#, 2] & /@ Lookup[structures, "IncidentLegs", {}]]] =!= 1 ||
+        !AllTrue[structures, Length[#["IncidentLegs"]] === 3 &&
+          Last[#["IncidentLegs"]]["Source"] === edge && standardFermionVectorVertexQ[#] &] ||
+        !DuplicateFreeQ[FreeQ[#, _xFactor] & /@ rows] ||
+        !residueExactZero[Subtract @@ rows[[All, -2]]], Return[unsupported]];
+    coupling = rows[[1, -2]];
+    If[!rspScalarQ[coupling] || !residueFiniteQ[coupling], unsupported, coupling]
+  ];
+  topology[diagram_Association] := Module[
+    {graph = diagram["Graph"], photonEdges, fermionEdge, names, vector, helicities,
+     structures = diagram["VertexStructures"], vertices = diagram["InternalVertices"], props, paths,
+     center, sidePaths, ends, left, right, inner, outer, connections, factors, sign, cuts},
+    If[diagram["ExternalParticles"] =!= process || !AssociationQ[structures] ||
+        Length[vertices] =!= 4 || Sort[Keys[structures]] =!= Sort[vertices], Return[unsupported]];
+    props = diagram["Propagators"];
+    If[!AssociationQ[props] || Length[props] =!= 3, Return[unsupported]];
+    photonEdges = Select[Keys[props], props[#]["Spin2"] === 2 && props[#]["Mass"] === 0 &&
+      props[#]["Particle"] === props[#]["Antiparticle"] &];
+    fermionEdge = Complement[Keys[props], photonEdges];
+    If[Length[photonEdges] =!= 2 || Length[fermionEdge] =!= 1, Return[unsupported]];
+    fermionEdge = First[fermionEdge];
+    If[props[fermionEdge]["Spin2"] =!= 1 || props[fermionEdge]["Mass"] =!= mass ||
+        Sort[Lookup[props[fermionEdge], {"Particle", "Antiparticle"}]] =!= Sort[species] ||
+        Sort[diagram["HelicitySumEdges"]] =!= Sort[photonEdges], Return[unsupported]];
+    names = DeleteDuplicates[props[#]["Particle"] & /@ photonEdges];
+    If[Length[names] =!= 1 || !StringQ[First[names]], Return[unsupported]];
+    names = First[names];
+    vector = SelectFirst[model[[1]], Length[#] === 11 && #[[5]] === 2 &&
+      #[[6]] === 0 && #[[8]] === 1 && Sort[#[[{2, 3}]]] === Sort[(names <> # &) /@ {".+", ".-"}] &, None];
+    If[vector === None, Return[unsupported]];
+    helicities = vector[[{2, 3}]];
+    If[Sort[Lookup[#, photonEdges] & /@ diagram["HelicityAssignments"]] =!= Sort[Tuples[helicities, 2]],
+      Return[unsupported]];
+    paths = ConstructiveDiagrams`diagramFermionLines[diagram];
+    If[!MatchQ[paths, {{_Integer, _Integer} ..}] || Length[paths] =!= 3 ||
+        !AllTrue[paths, process[[#]] === species &], Return[unsupported]];
+    paths = FindShortestPath[graph, First[#], Last[#]] & /@ paths;
+    If[Sort[Length /@ paths] =!= {3, 3, 4}, Return[unsupported]];
+    center = SelectFirst[paths, Length[#] === 4 &];
+    sidePaths = Select[paths, Length[#] === 3 &];
+    inner = center[[{2, 3}]]; outer = sidePaths[[All, 2]];
+    If[UndirectedEdge @@ Sort[inner] =!= fermionEdge, Return[unsupported]];
+    connections = Function[v, Select[photonEdges, MemberQ[List @@ #, v] &]] /@ inner;
+    If[Length /@ connections =!= {1, 1} || !DuplicateFreeQ[Flatten[connections]], Return[unsupported]];
+    connections = First /@ connections;
+    ends = MapThread[First[Complement[List @@ #1, {#2}]] &, {connections, inner}];
+    If[Sort[ends] =!= Sort[outer], Return[unsupported]];
+    {left, right} = (#[[{1, -1}]] &) /@ (sidePaths[[First@FirstPosition[outer, #]]] & /@ ends);
+    center = center[[{1, -1}]];
+    cuts = {pole[left, 0], pole[right, 0], pole[Append[left, First[center]], mass]};
+    If[Sort[cuts] =!= Sort[(residueCanonicalPropagators[PropDen[Mom[#["Index"]], #["Mass"]], legs] &) /@
+        Values[props]], Return[unsupported]];
+    factors = Flatten[MapThread[Function[{edge, endpoints},
+      vertexFactor[structures[#], edge, helicities] & /@ endpoints], {connections, Transpose[{inner, ends}]}]];
+    sign = ConstructiveDiagrams`diagramFermionSign[diagram];
+    If[AnyTrue[factors, MissingQ] || !MemberQ[{-1, 1}, sign], Return[unsupported]];
+    <|"Center" -> center, "Left" -> left, "Right" -> right,
+      "PhotonPoles" -> Times @@ Take[cuts, 2], "FermionPole" -> Last[cuts],
+      "Coefficient" -> -sign Times @@ factors|>
+  ];
+  records = topology /@ diagrams;
+  If[!AllTrue[records, AssociationQ], Return[unsupported]];
+  expected = Function[bars, With[{lines = Transpose[{Flatten[Position[process, First[species]]], bars}]},
+    Flatten[Function[center, (Join[{center}, #] &) /@ Permutations[DeleteCases[lines, center]]] /@ lines, 1]]] /@
+      Permutations[Flatten[Position[process, Last[species]]]];
+  If[Sort[Lookup[#, {"Center", "Left", "Right"}] & /@ records] =!= Sort[Flatten[expected, 1]],
+    Return[unsupported]];
+  groups = GatherBy[records, {#["Center"], #["PhotonPoles"]} &];
+  expression = Total[Function[group, Total[Function[record,
+    record["Coefficient"] sixFermionOrderedCurrent[mass, record["Left"], record["Center"], record["Right"]]/
+      record["FermionPole"]] /@ group]/First[group]["PhotonPoles"]] /@ groups];
+  If[residueFiniteQ[expression],
+    <|"Expression" -> expression, "Method" -> "OffShellFermionExchange"|>, unsupported]
 ];
 
 (* A cubic vector current on one Dirac line admits a common chiral reference:
@@ -18144,13 +18259,16 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
           constructVectorLineForm[diagramData, process, diagramModel, external],
           134217728, Missing["VectorCurrentMemoryLimit"]]},
         If[MissingQ[line], MemoryConstrained[
-          constructOffShellVectorCurrents[diagramData, process, diagramModel, external],
+          With[{currents = constructOffShellVectorCurrents[diagramData, process, diagramModel, external]},
+            If[MissingQ[currents],
+              constructOffShellFermionExchangeForm[diagramData, process, diagramModel, external], currents]],
           268435456, Missing["VectorCurrentMemoryLimit"]], line]],
       Min[40, remaining[]], Missing["VectorCurrentTimeConstraint"]]];
     If[!AssociationQ[proposal], Return[False]];
     {origin, allowance} = Switch[proposal["Method"],
       "OffShellVectorLine", {"Off-shell vector line", 200},
       "OffShellVectorCurrents", {"Off-shell vector currents", 240},
+      "OffShellFermionExchange", {"Off-shell fermion exchange", 240},
       _, {"Common-chirality current", 90}];
     channels = run["Generating factorization channels", FactorizationAmplitudeChannels[process, factorizationModel]];
     require[channels];
@@ -18161,6 +18279,7 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     If[checked, save[Switch[proposal["Method"],
       "OffShellVectorLine", "Off-shell vector form",
       "OffShellVectorCurrents", "Off-shell vector currents",
+      "OffShellFermionExchange", "Off-shell fermion exchange",
       _, "Compact spurious form"], KeyDrop[proposal, "Expression"]],
       finalPair = previousPair; representativeSelection = previousSelection;
       save["Representative selection", previousSelection]; benchmarkReady = False];
@@ -18231,7 +18350,7 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     {proposal, selected, previousPair = finalPair, previousSelection = representativeSelection},
     If[!completed || options["PolePreference"] =!= "AllSpurious" || Length[process] < 6 ||
         feynmanModel === None || remaining[] <= 2 ||
-        MemberQ[{"Off-shell vector line", "Off-shell vector currents"},
+        MemberQ[{"Off-shell vector line", "Off-shell vector currents", "Off-shell fermion exchange"},
           Lookup[representativeSelection, "SourceStage", None]] ||
         LeafCount[Last[finalPair]] > 12000 ||
         !constructSpuriousBracketFormQ[Last[finalPair]], Return[False]];
