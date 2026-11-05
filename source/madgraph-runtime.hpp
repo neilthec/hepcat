@@ -63,6 +63,8 @@ struct MadGraphConfiguration {
   // once, identically on both sides. The MG bridge returns raw |M|^2.
   ldouble normalization = 1;
   unsigned preparation_timeout_seconds = 600;
+  // Preserve ordinary validation builds; timing clients can request 1, 2 or 3.
+  int optimization_level = 0;
 };
 
 struct MadGraphHelicityReport {
@@ -231,7 +233,8 @@ class Reference {
 public:
   typedef int (*Initialize)();
   typedef void (*Evaluate)(const double*, const int*, double*);
-  explicit Reference(const std::string& path) : handle_(nullptr), evaluate_(nullptr) {
+  typedef void (*EvaluateSum)(const double*, double*);
+  explicit Reference(const std::string& path) : handle_(nullptr), evaluate_(nullptr), evaluate_sum_(nullptr) {
     handle_ = dlopen(path.c_str(), RTLD_NOW | RTLD_LOCAL);
     if (!handle_) {
       const char* error = dlerror();
@@ -240,6 +243,8 @@ public:
     }
     Initialize initialize = reinterpret_cast<Initialize>(dlsym(handle_, "hepcat_mg_initialize"));
     evaluate_ = reinterpret_cast<Evaluate>(dlsym(handle_, "hepcat_mg_evaluate"));
+    // Optional so older independently compiled references remain usable.
+    evaluate_sum_ = reinterpret_cast<EvaluateSum>(dlsym(handle_, "hepcat_mg_evaluate_sum"));
     if (!initialize || !evaluate_) {
       dlclose(handle_); handle_ = nullptr;
       throw std::runtime_error("The MadGraph reference does not provide the expected C interface.");
@@ -255,11 +260,21 @@ public:
     evaluate_(momenta.data(), helicities.data(), &answer);
     return answer;
   }
+  bool has_sum() const { return evaluate_sum_ != nullptr; }
+  // Raw exhaustive |M|^2 sum; callers apply averages and symmetry factors once.
+  double evaluate_sum(const std::vector<double>& momenta) const {
+    if (!evaluate_sum_)
+      throw std::runtime_error("This MadGraph reference lacks the exhaustive spin-sum interface; rebuild it.");
+    double answer = std::numeric_limits<double>::quiet_NaN();
+    evaluate_sum_(momenta.data(), &answer);
+    return answer;
+  }
   Reference(const Reference&) = delete;
   Reference& operator=(const Reference&) = delete;
 private:
   void* handle_;
   Evaluate evaluate_;
+  EvaluateSum evaluate_sum_;
 };
 #endif
 
@@ -290,6 +305,8 @@ void validate_configuration(const Process& process, const MadGraphConfiguration&
   const auto incoming = Process::incoming_legs();
   if (count < 2 || config.leg_order[0] != incoming[0] || config.leg_order[1] != incoming[1])
     throw std::invalid_argument("MadGraph must receive the declared incoming legs first and in order.");
+  if (config.optimization_level < 0 || config.optimization_level > 3)
+    throw std::invalid_argument("The MadGraph optimization level must be from zero through three.");
   if (!std::isfinite(config.normalization) || config.normalization <= 0)
     throw std::invalid_argument("The common MadGraph validation normalization must be finite and positive.");
   if (config.python_executable.empty() || config.helper_path.empty()
@@ -361,6 +378,7 @@ void write_configuration(const std::string& path, const Process& process,
   }
   if (!config.fortran_compiler.empty())
     out << ",\n\"FortranCompiler\":" << json_string(config.fortran_compiler);
+  out << ",\n\"OptimizationLevel\":" << config.optimization_level;
   out << ",\n\"TimeConstraint\":"
       << (preparation_timeout ? preparation_timeout : config.preparation_timeout_seconds)
       << "\n}\n";

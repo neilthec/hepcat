@@ -3,7 +3,8 @@
 
 This helper never evaluates a HEPCAT expression. It imports an independently
 specified UFO model, generates ordinary MadGraph standalone Fortran, matches
-its numerical inputs, and exposes the raw fixed-helicity squared amplitude.
+its numerical inputs, and exposes raw fixed-helicity and exhaustive spin-summed
+squared amplitudes, without initial averages or final symmetry factors.
 Only its private output directory is modified. No optional MG tools are needed.
 """
 
@@ -226,6 +227,7 @@ def checked_configuration(data):
             raise ValidationSetupError("MadGraphParameterMap source is not used by this HEPCAT export: " + source)
         normalized_map[key] = normalized_name(target)
     name_map = normalized_map
+    optimization_flags(data.get("OptimizationLevel", 0))
     seconds = real_number(data.get("TimeConstraint", 600), "TimeConstraint")
     if seconds <= 0:
         raise ValidationSetupError("TimeConstraint must be positive.")
@@ -449,6 +451,76 @@ def fortran_literal(value):
     return "'" + value.replace("'", "''") + "'"
 
 
+def optimization_flags(level):
+    """Keep validation defaults unchanged; timing clients can request -O3."""
+    if isinstance(level, bool) or not isinstance(level, int) or level not in range(4):
+        raise ValidationSetupError("OptimizationLevel must be an integer from 0 through 3.")
+    return "-w -fPIC -ffixed-line-length-none" + (" -O" + str(level) if level else "")
+
+
+def complete_helicity_table(matrix_source, nexternal):
+    """Read the actual generated state inventory, independently of HEPCAT.
+
+    MATRIX returns raw |M|^2. SMATRIX adds averages and may prune helicities
+    after a few points. Reuse its complete NHEL table while bypassing those
+    stateful heuristics and its denominator, so every state is always summed.
+    """
+    # Current MG repeats NHEL in GET_NHEL. Read the SMATRIX unit only.
+    unit = re.search(r"^ {6}SUBROUTINE\s+[A-Z0-9_]*SMATRIX\s*\(.*?^ {6}END[ \t]*$",
+                     matrix_source, re.I | re.M | re.S)
+    if unit:
+        matrix_source = unit.group(0)
+    source = " ".join(line[6:] for line in matrix_source.splitlines()
+                      if len(line) > 6 and line[0] not in "cC*!")
+    count = re.search(r"PARAMETER\s*\(\s*NCOMB\s*=\s*(\d+)\s*\)", source, re.I)
+    rows = re.findall(r"DATA\s*\(\s*NHEL\s*\(\s*I\s*,\s*(\d+)\s*\)\s*,"
+                      r"\s*I\s*=\s*1\s*,\s*(\d+)\s*\)\s*/([^/]+)/", source, re.I)
+    if not count or not rows:
+        raise ValidationSetupError("MadGraph's complete standalone helicity table was not found.")
+    expected = int(count.group(1))
+    table = {}
+    for index, length, values in rows:
+        index = int(index)
+        if int(length) != nexternal or index in table:
+            raise ValidationSetupError("MadGraph's standalone helicity table has inconsistent dimensions.")
+        tokens = values.replace(" ", "").split(",")
+        if len(tokens) != nexternal or not all(re.fullmatch(r"[+-]?\d+", token) for token in tokens):
+            raise ValidationSetupError("MadGraph's standalone helicity table contains unsupported entries.")
+        table[index] = [int(token) for token in tokens]
+    if set(table) != set(range(1, expected + 1)):
+        raise ValidationSetupError("MadGraph's standalone helicity table is incomplete.")
+    return [table[index] for index in range(1, expected + 1)]
+
+
+def summed_bridge(matrix_name, table, nexternal):
+    """One native call evaluates the exact sum of every generated spin state."""
+    declarations = []
+    for index, row in enumerate(table, 1):
+        # Free-form continuations also keep large external multiplicities valid.
+        chunks = [row[begin:begin + 16] for begin in range(0, len(row), 16)]
+        values = ", &\n    ".join(",".join(map(str, chunk)) for chunk in chunks)
+        declarations.append("  data (helicities(leg," + str(index) + "),leg=1," +
+                            str(nexternal) + ") / &\n    " + values + " /")
+    return """
+! Raw exhaustive spin/color sum. No pruning, sampling, average or factorial.
+subroutine hepcat_mg_evaluate_sum(p, answer) bind(C, name="hepcat_mg_evaluate_sum")
+  use iso_c_binding
+  implicit none
+  real(c_double), intent(in) :: p(4,""" + str(nexternal) + """)
+  real(c_double), intent(out) :: answer
+  integer(c_int) :: color(""" + str(nexternal) + """)
+  integer(c_int), save :: helicities(""" + str(nexternal) + "," + str(len(table)) + """)
+  integer :: leg, state
+  double precision, external :: """ + matrix_name + "\n" + "\n".join(declarations) + """
+  color = 1
+  answer = 0d0
+  do state = 1, """ + str(len(table)) + """
+    answer = answer + """ + matrix_name + """(p, helicities(:,state), color)
+  enddo
+end subroutine
+"""
+
+
 def build_reference(data, output):
     root, pdgs, masses, used, rules, name_map, seconds = checked_configuration(data)
     deadline = time.monotonic() + seconds
@@ -507,13 +579,18 @@ def build_reference(data, output):
         update_card(card, updates, external, card_module)
         actual_masses, evaluated_values = verify_model_values(model, card, masses, pdgs, used, targets, matches, model_reader)
         preserved_widths += check_other_widths(model, external, evaluated_values, targets, matrix_source)
-    flags = "-w -fPIC -ffixed-line-length-none"
+    level = data.get("OptimizationLevel", 0)
+    flags = optimization_flags(level)
+    helicity_table = complete_helicity_table(matrix_source, len(pdgs))
     make = shutil.which("make")
     if not make:
         raise ValidationSetupError("make was not found; install the developer command-line tools.")
     make_options = ["FC=" + shlex.quote(compiler), "FFLAGS=" + flags]
-    run_logged([make, "-j2"] + make_options, process_root / "Source", output / "build.log", deadline, environment)
-    run_logged([make, "matrix.o"] + make_options, matrix.parent, output / "build.log", deadline, environment)
+    # MG export may already have compiled model/HELAS objects with its default
+    # flags. A timing build must not silently reuse those unoptimized archives.
+    rebuild = ["-B"] if level else []
+    run_logged([make, "-j2"] + rebuild + make_options, process_root / "Source", output / "build.log", deadline, environment)
+    run_logged([make, "matrix.o"] + rebuild + make_options, matrix.parent, output / "build.log", deadline, environment)
     nexternal = len(pdgs)
     card_path = str(card.resolve())
     if len(card_path) > 500:
@@ -541,10 +618,10 @@ subroutine hepcat_mg_evaluate(p, helicities, answer) bind(C, name="hepcat_mg_eva
   color = 1
   answer = """ + match.group(1) + """(p, helicities, color)
 end subroutine
-""")
+""" + summed_bridge(match.group(1), helicity_table, nexternal))
     library = output / ("libhepcat_madgraph.dylib" if sys.platform == "darwin" else "libhepcat_madgraph.so")
     link_mode = "-dynamiclib" if sys.platform == "darwin" else "-shared"
-    run_logged([compiler, link_mode, "-fPIC", "-o", library, bridge, matrix.parent / "matrix.o",
+    run_logged([compiler, link_mode] + shlex.split(flags) + ["-o", library, bridge, matrix.parent / "matrix.o",
                 process_root / "lib" / "libmodel.a", process_root / "lib" / "libdhelas.a"],
                output, output / "build.log", deadline, environment)
     # Fortran card I/O can terminate a process on malformed input. Probe it in a
@@ -567,7 +644,9 @@ end subroutine
             "ZeroedWidths": zeroed_widths, "PreservedWidths": preserved_widths,
             "ParameterRules": {re.sub(r"^mdl_", "", external[k].name): v for k, v in updates.items()},
             "CouplingOrders": orders, "Scope": "Complete tree amplitude within the supplied UFO expansion limits and declared allowed particle content.",
-            "Normalization": "Raw fixed-helicity, color-summed squared amplitude; no initial averages or final symmetry factor."}
+            "Normalization": "Raw fixed-helicity, color-summed squared amplitude; no initial averages or final symmetry factor.",
+            "SpinSum": "Exhaustive generated helicity table; no pruning, sampling, initial average or final symmetry factor.",
+            "HelicityStates": len(helicity_table), "OptimizationLevel": level, "FortranFlags": flags}
 
 
 def main():

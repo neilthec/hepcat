@@ -37,6 +37,26 @@ int main(int argc, char* argv[]) {
       hepcat_spinas::CalcHEPProcess process(model,2,external,parameters);
       qed = process.squared_amplitude(point);
     }
+    {
+      // The benchmark must compare optimized kernels without modifying the
+      // selected installation or keeping compiler flags in the environment.
+      const std::string original_directory = calchepDir;
+      const char* original_flags_pointer = std::getenv("CFLAGS");
+      const bool flags_present = original_flags_pointer != NULL;
+      const std::string original_flags = flags_present ? original_flags_pointer : "";
+      hepcat_spinas::CalcHEPProcess process(model, 2, external, parameters,
+          1.0, false, {11, 22}, 3);
+      const double optimized = process.squared_amplitude(point);
+      const char* current_flags = std::getenv("CFLAGS");
+      if (!std::isfinite(optimized) || std::abs(optimized - qed) > 1e-10 * std::abs(qed) ||
+          std::string(calchepDir) != original_directory ||
+          (current_flags != NULL) != flags_present ||
+          (current_flags && current_flags != original_flags)) return 9;
+      std::ifstream flags((process.work_directory() + "/optimized-calchep/FlagsForSh").c_str());
+      const std::string flags_text((std::istreambuf_iterator<char>(flags)), std::istreambuf_iterator<char>());
+      if (flags_text.find("CFLAGS=\"$CFLAGS -O3\"") == std::string::npos) return 10;
+      std::cout << "CALCHEP_PRIVATE_OPTIMIZATION_PASS\n";
+    }
     std::cout << std::setprecision(17) << "SM=" << sm << "\nRESTRICTED_SM=" << restricted
               << "\nPURE_QED=" << qed << '\n';
     if (!std::isfinite(sm) || !std::isfinite(restricted) || !std::isfinite(qed) ||

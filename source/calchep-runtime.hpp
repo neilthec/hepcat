@@ -152,6 +152,54 @@ class Workspace {
   bool keep_;
 };
 
+// A benchmark can request optimized matrix-element compilation without editing
+// the installation's FlagsForSh or changing the process environment. CalcHEP's
+// newProcess script finds its installation from its own path, so this private
+// overlay supplies that script and flags while sharing read-only support files.
+inline std::string optimized_compiler_installation(
+    const std::string& installation, const std::string& workspace, int level) {
+  const std::string directory = workspace + "/optimized-calchep";
+  if (mkdir(directory.c_str(), 0700) || mkdir((directory + "/sbin").c_str(), 0700)) {
+    throw std::runtime_error(error_message("Create private CalcHEP compiler directory"));
+  }
+  const char* shared[] = {"bin", "include", "lib", "sbin/make-j"};
+  for (const char* name : shared) {
+    if (symlink((installation + "/" + name).c_str(), (directory + "/" + name).c_str())) {
+      throw std::runtime_error(error_message("Link private CalcHEP compiler support"));
+    }
+  }
+  const char* copied[] = {"FlagsForSh", "sbin/newProcess"};
+  for (const char* name : copied) {
+    std::ifstream input((installation + "/" + name).c_str(), std::ios::binary);
+    std::ofstream output((directory + "/" + name).c_str(), std::ios::binary);
+    if (!input || !output) throw std::runtime_error("Cannot copy private CalcHEP compiler configuration.");
+    output << input.rdbuf();
+    if (!output || input.bad()) throw std::runtime_error("Cannot save private CalcHEP compiler configuration.");
+  }
+  if (chmod((directory + "/sbin/newProcess").c_str(), 0700)) {
+    throw std::runtime_error(error_message("Make private CalcHEP compiler script executable"));
+  }
+  std::ofstream flags((directory + "/FlagsForSh").c_str(), std::ios::app);
+  flags << "\n# HEPCAT call-local matrix-element optimization.\n"
+        << "CFLAGS=\"$CFLAGS -O" << level << "\"\nexport CFLAGS\n";
+  if (!flags) throw std::runtime_error("Cannot save private CalcHEP optimization flags.");
+  return directory;
+}
+
+class CompilerInstallation {
+ public:
+  explicit CompilerInstallation(const std::string& directory)
+      : previous_(calchepDir), directory_(directory) {
+    if (!directory_.empty()) calchepDir = &directory_[0];
+  }
+  ~CompilerInstallation() { calchepDir = previous_; }
+  CompilerInstallation(const CompilerInstallation&) = delete;
+  CompilerInstallation& operator=(const CompilerInstallation&) = delete;
+ private:
+  char* previous_;
+  std::string directory_;
+};
+
 class WorkingDirectory {
  public:
   explicit WorkingDirectory(const std::string& path) : descriptor_(open(".", O_RDONLY)) {
@@ -324,16 +372,23 @@ class CalcHEPProcess {
   // Physical ordering is two incoming legs followed by all outgoing legs.
   // sqme already includes initial spin/color averages and the final identical-
   // particle factorial. Do not multiply those factors a second time.
+  // Level 0 preserves installation compiler flags; 1, 2 or 3 appends -Olevel
+  // in a private workspace for this process only, useful for timing studies.
   CalcHEPProcess(const std::string& model_directory, int model_number,
                  const std::vector<int>& physical_pdgs,
                  const std::vector<CalcHEPParameter>& parameters,
                  double strong_coupling = 1.0, bool keep_work_files = false,
-                 const std::vector<int>& allowed_particle_pdgs = std::vector<int>())
+                 const std::vector<int>& allowed_particle_pdgs = std::vector<int>(),
+                 int optimization_level = 0)
       : lock_(calchep_detail::session_mutex(), std::try_to_lock),
         workspace_(keep_work_files), matrix_element_(NULL), pdgs_(physical_pdgs),
-        strong_coupling_(strong_coupling), allowed_pdgs_(allowed_particle_pdgs) {
+        strong_coupling_(strong_coupling), allowed_pdgs_(allowed_particle_pdgs),
+        optimization_level_(optimization_level) {
     if (!lock_.owns_lock()) {
       throw std::runtime_error("Another CalcHEP validation session is active; run validators sequentially.");
+    }
+    if (optimization_level_ < 0 || optimization_level_ > 3) {
+      throw std::invalid_argument("CalcHEP optimization level must be 0 (installation default), 1, 2 or 3.");
     }
     if (pdgs_.size() < 4 || pdgs_.size() > maxNp) {
       throw std::invalid_argument("CalcHEP validation requires two incoming and at least two outgoing legs.");
@@ -481,8 +536,14 @@ class CalcHEPProcess {
     // The fourth argument filters virtual particles. The fifth instead filters
     // unspecified outgoing states and must not be used for an internal cut.
     // Unitary gauge; do not add t-channel Breit-Wigner factors.
-    matrix_element_ = getMEcode(0, 1, process.data(),
-        excluded_names_.empty() ? NULL : excluded.data(), excluded_output, library);
+    {
+      const std::string compiler_directory = optimization_level_ == 0 ? std::string() :
+          calchep_detail::optimized_compiler_installation(
+              calchepDir, workspace_.path(), optimization_level_);
+      calchep_detail::CompilerInstallation compiler(compiler_directory);
+      matrix_element_ = getMEcode(0, 1, process.data(),
+          excluded_names_.empty() ? NULL : excluded.data(), excluded_output, library);
+    }
     if (!matrix_element_) {
       throw std::runtime_error("CalcHEP could not generate " + process_ + " in " + workspace_.path());
     }
@@ -589,6 +650,7 @@ class CalcHEPProcess {
   std::string process_;
   std::vector<int> allowed_pdgs_;
   std::vector<std::string> excluded_names_;
+  int optimization_level_;
 };
 
 } // namespace hepcat_spinas

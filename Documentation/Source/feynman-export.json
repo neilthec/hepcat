@@ -806,6 +806,14 @@
           "Repeated builds reuse the prepared process and retain its cards and events. An explicit CMake setting `-DHEPCAT_PREPARE_MADEVENT=OFF` skips automatic preparation for a C++-only build; `cmake --build build --target eeAA_madevent_process` can prepare it later. An incompatible existing session is reported rather than overwritten.",
           "Current support is colorless leading-order tree simulation. Fixed massless helicities are retained, massive spins are summed, and incoming averages and final identical-particle factors are applied once. NLO matching, massive polarized beams, MadSpin and coherent production-decay correlations require additional interfaces and are not supplied by this bridge."
         ]
+      },
+      {
+        "title": "Measuring numerical evaluation speed",
+        "paragraphs": [
+          "The repository includes a separate C++ timing program in `benchmarks/`. It compares complete exported electron-positron to photon helicity families with independent CalcHEP and MadGraph matrix elements on the same saved phase-space points. See `benchmarks/README.md` for the build and run commands. Configure both reference models and their explicit electron/photon restrictions in [WriteSPINASProcess](paclet:HEPCAT/ref/WriteSPINASProcess) before running it.",
+          "The default measurement uses 10,000 common RAMBO points at each available photon count, full spin and helicity sums, optimized private reference builds and repeated serial timing sweeps. The CSV output contains elapsed times and three curves normalized to the two-photon case. Setup, compilation, point generation and correctness checks are excluded from the timers. An incomplete helicity family or a numerical disagreement is rejected rather than included in a performance comparison.",
+          "This benchmark measures numerical amplitude evaluation, not cross-section integration or event generation. Its MadGraph reference uses an exhaustive standalone helicity sum, not the HEPCAT matrix installed into MadEvent. Scalar precision, parameters, compiler settings, source hashes and random seed are saved so timing claims can be interpreted and repeated."
+        ]
       }
     ],
     "visibility": "public"

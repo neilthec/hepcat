@@ -5,6 +5,8 @@ loading, spin sums, comparison and reporting code. They do not reproduce the
 comparison algorithm. All generated fixtures live in one temporary directory.
 """
 
+import ctypes
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -26,6 +28,7 @@ extern "C" void hepcat_mg_evaluate(const double*, const int* h, double* answer) 
   }
   *answer = REFERENCE_VALUE;
 }
+@SUM_INTERFACE@
 '''
 
 
@@ -53,6 +56,7 @@ try:
     assert config["ParameterMap"] == {"coupling": "g"}
     assert config["ParameterRules"] == {"other": 7}
     assert config["TimeConstraint"] > 0
+    assert config["OptimizationLevel"] == (3 if mode == "optimized" else 0)
     coupling = config["Parameters"][0]["Value"]
     assert config["Parameters"][0]["Name"] == "coupling"
     assert coupling in (1, 3)
@@ -130,6 +134,25 @@ int main(int argc, char** argv) {
   config.parameter_map = {{"coupling", "g"}};
   config.parameter_rules = {{"other", 7}};
   config.normalization = ldouble(0.125L);
+  if (mode == "optimized") config.optimization_level = 3;
+  if (mode == "bad_optimization") config.optimization_level = 4;
+  if (mode == "sum_api" || mode == "legacy_sum_api") {
+    const std::string library = directory + (mode == "sum_api" ? "/good" : "/legacy") + @LIBRARY_SUFFIX@;
+    madgraph_detail::Reference reference(library);
+    if (mode == "legacy_sum_api") {
+      try {
+        reference.evaluate_sum(std::vector<double>(16));
+      } catch (const std::runtime_error&) {
+        std::cout << "{\"HasSum\":" << (reference.has_sum() ? "true" : "false")
+                  << ",\"Rejected\":true}";
+        return 0;
+      }
+      return 4;
+    }
+    std::cout << "{\"HasSum\":" << (reference.has_sum() ? "true" : "false")
+              << ",\"RawSum\":" << reference.evaluate_sum(std::vector<double>(16)) << "}";
+    return 0;
+  }
 
   Process process;
   if (mode == "global_phase") process.phase_mode = 1;
@@ -188,17 +211,21 @@ class MadGraphRuntimeTests(unittest.TestCase):
         cls.suffix = ".dylib" if sys.platform == "darwin" else ".so"
         shared_flags = ["-dynamiclib"] if sys.platform == "darwin" else ["-shared", "-fPIC"]
         for name, value, init in (("good", 1, 0), ("wrong", 2, 0),
-                                  ("updated", 9, 0), ("bad_init", 1, 1)):
+                                  ("updated", 9, 0), ("bad_init", 1, 1), ("legacy", 1, 0)):
             source = cls.directory / (name + ".cpp")
             source.write_text(REFERENCE_SOURCE.replace("REFERENCE_VALUE", str(value))
-                              .replace("INIT_STATUS", str(init)))
+                              .replace("INIT_STATUS", str(init))
+                              .replace("@SUM_INTERFACE@", "" if name == "legacy" else
+                                       'extern "C" void hepcat_mg_evaluate_sum(const double*, double* answer) '
+                                       '{ *answer = 16 * ' + str(value) + '; }'))
             cls.compile([compiler, "-std=c++11"] + shared_flags +
                         [str(source), "-o", str(cls.directory / (name + cls.suffix))])
         (cls.directory / "helper.py").write_text(HELPER_SOURCE)
         source = (DRIVER_SOURCE
                   .replace("@RUNTIME_HEADER@", json.dumps(str(cls.repository / "source/madgraph-runtime.hpp")))
                   .replace("@FIXTURE_DIRECTORY@", json.dumps(str(cls.directory)))
-                  .replace("@PYTHON_EXECUTABLE@", json.dumps(sys.executable)))
+                  .replace("@PYTHON_EXECUTABLE@", json.dumps(sys.executable))
+                  .replace("@LIBRARY_SUFFIX@", json.dumps(cls.suffix)))
         driver = cls.directory / "driver.cpp"
         driver.write_text(source)
         cls.executable = cls.directory / "runtime-test"
@@ -223,6 +250,22 @@ class MadGraphRuntimeTests(unittest.TestCase):
                                 timeout=20)
         self.assertEqual(result.returncode, 0, result.stderr)
         return json.loads(result.stdout)
+
+    def test_raw_native_sum_has_no_averages_or_symmetry_factor(self):
+        report = self.run_case("sum_api")
+        self.assertTrue(report["HasSum"])
+        self.assertEqual(report["RawSum"], 16)
+
+    def test_older_fixed_helicity_reference_stays_loadable(self):
+        report = self.run_case("legacy_sum_api")
+        self.assertFalse(report["HasSum"])
+        self.assertTrue(report["Rejected"])
+
+    def test_optimized_configuration_reaches_builder(self):
+        self.assertEqual(self.run_case("optimized")["Status"], "PASS")
+        report = self.run_case("bad_optimization")
+        self.assertEqual(report["Status"], "ERROR")
+        self.assertIn("optimization", report["Message"])
 
     def test_all_massless_helicity_rows_pass(self):
         report = self.run_case("pass")
@@ -325,6 +368,73 @@ class MadGraphRuntimeTests(unittest.TestCase):
         self.assertEqual(report["Status"], "ERROR")
         self.assertFalse(report["Passed"])
         self.assertIn("initialize", report["Message"])
+
+
+
+class SummedBridgeTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        path = Path(__file__).resolve().parents[2] / "source/madgraph-runtime.py"
+        spec = importlib.util.spec_from_file_location("hepcat_madgraph_sum_builder", path)
+        cls.builder = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.builder)
+
+    def test_optimization_is_an_explicit_bounded_integer(self):
+        for level in range(4):
+            flags = self.builder.optimization_flags(level)
+            self.assertEqual("-O" + str(level) in flags, level != 0)
+        for level in (-1, 4, True, False, "3", 3.0, None):
+            with self.subTest(level=level):
+                with self.assertRaises(self.builder.ValidationSetupError):
+                    self.builder.optimization_flags(level)
+
+    def test_complete_generated_helicity_table_including_continuations(self):
+        source = """      PARAMETER (NCOMB=2)
+C     DATA (NHEL(I,9),I=1,4)/0,0,0,0/
+      DATA (NHEL(I,1),I=1,4)/-1,1,
+     $ -1,1/
+      DATA (NHEL(I,2),I=1,4)/1,-1,1,-1/
+"""
+        expected = [[-1, 1, -1, 1], [1, -1, 1, -1]]
+        self.assertEqual(self.builder.complete_helicity_table(source, 4), expected)
+        repeated_unit = ("      SUBROUTINE SMATRIX(P,ANS)\n" + source +
+                         "      END\n      SUBROUTINE GET_NHEL(H)\n" + source + "      END\n")
+        self.assertEqual(self.builder.complete_helicity_table(repeated_unit, 4), expected)
+        for changed in (source.replace("NCOMB=2", "NCOMB=3"),
+                        source.replace("I=1,4", "I=1,3"),
+                        source.replace("NHEL(I,2)", "NHEL(I,1)")):
+            with self.subTest(source=changed):
+                with self.assertRaises(self.builder.ValidationSetupError):
+                    self.builder.complete_helicity_table(changed, 4)
+
+    def test_compiled_sum_really_visits_every_state_without_normalization(self):
+        compiler = shutil.which("gfortran") or shutil.which("/opt/homebrew/bin/gfortran")
+        if not compiler:
+            self.skipTest("GNU Fortran is required for the native spin-sum fixture.")
+        table = [[-1, -1], [-1, 1], [1, -1], [1, 1]]
+        source = self.builder.summed_bridge("fixture_matrix", table, 2) + """
+double precision function fixture_matrix(p, h, color)
+  use iso_c_binding
+  implicit none
+  real(c_double) :: p(4,2)
+  integer(c_int) :: h(2), color(2)
+  fixture_matrix = (h(1) + 2*h(2))**2
+end function
+"""
+        with tempfile.TemporaryDirectory(prefix="hepcat-native-mg-sum-") as temporary:
+            path = Path(temporary)
+            (path / "bridge.f90").write_text(source)
+            library = path / ("fixture.dylib" if sys.platform == "darwin" else "fixture.so")
+            mode = "-dynamiclib" if sys.platform == "darwin" else "-shared"
+            result = subprocess.run([compiler, mode, "-fPIC", "-O3", str(path / "bridge.f90"),
+                                     "-o", str(library)], text=True, capture_output=True, timeout=60)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            reference = ctypes.CDLL(str(library))
+            reference.hepcat_mg_evaluate_sum.argtypes = [ctypes.POINTER(ctypes.c_double),
+                                                       ctypes.POINTER(ctypes.c_double)]
+            answer = ctypes.c_double()
+            reference.hepcat_mg_evaluate_sum((ctypes.c_double * 8)(), ctypes.byref(answer))
+            self.assertEqual(answer.value, 20)
 
 
 if __name__ == "__main__":

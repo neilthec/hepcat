@@ -316,7 +316,36 @@ Fixed massless helicities are retained, massive spins are summed, and \
 incoming averages and final identical-particle factors are applied once. NLO \
 matching, massive polarized beams, MadSpin and coherent production-decay \
 correlations require additional interfaces and are not supplied by this \
-bridge."}], "Notes"], Cell["Options", "NotesSection"],
+bridge."}], "Notes"], Cell["Measuring numerical evaluation speed",
+   "NotesSection"],
+  Cell[TextData[{"The repository includes a separate C++ timing program in ",
+     Cell[BoxData[RowBox[{"benchmarks", "/"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{".", " ", "It", " ", "compares", " ", "complete",
+         " ", "exported", " ", "electron", "-", "positron", " ", "to", " ",
+         "photon", " ", "helicity", " ", "families", " ", "with", " ",
+         "independent", " ", "CalcHEP", " ", "and", " ", "MadGraph", " ",
+         "matrix", " ", "elements", " ", "on", " ", "the", " ", "same", " ",
+         "saved", " ", "phase", "-", "space", " ", "points", ".", " ", "See",
+         " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"benchmarks", "/", "README", ".", "md"}]],
+      "InlineFormula"], " for the build and run commands. Configure both \
+reference models and their explicit electron/photon restrictions in ",
+     ButtonBox["WriteSPINASProcess", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/WriteSPINASProcess"],
+     " before running it."}], "Notes"],
+  Cell[TextData[{"The default measurement uses 10,000 common RAMBO points at \
+each available photon count, full spin and helicity sums, optimized private \
+reference builds and repeated serial timing sweeps. The CSV output contains \
+elapsed times and three curves normalized to the two-photon case. Setup, \
+compilation, point generation and correctness checks are excluded from the \
+timers. An incomplete helicity family or a numerical disagreement is rejected \
+rather than included in a performance comparison."}], "Notes"],
+  Cell[TextData[{"This benchmark measures numerical amplitude evaluation, not \
+cross-section integration or event generation. Its MadGraph reference uses an \
+exhaustive standalone helicity sum, not the HEPCAT matrix installed into \
+MadEvent. Scalar precision, parameters, compiler settings, source hashes and \
+random seed are saved so timing claims can be interpreted and repeated."}],
+   "Notes"], Cell["Options", "NotesSection"],
   Cell[BoxData[GridBox[{{Cell["Option", "TableHeader"],
        Cell["Default", "TableHeader"], Cell["Meaning", "TableHeader"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"SPINASDirectory\""}]],
