@@ -740,6 +740,12 @@
         "description": "Use the same complete amplitude entries to request formula-oriented readable C++ instead of the optimized default. This writes a separate project.",
         "input": "readableDirectory = CreateDirectory[];\nWriteSPINASProcess[readableDirectory, {\"e\", \"E\"} -> {\"A\", \"A\"}, entries, knownModel, \"ProcessName\" -> \"eeAA_readable\", \"CodeStyle\" -> \"Readable\"]",
         "evaluate": false
+      },
+      {
+        "section": "Reuse conjugate helicities in the spin sum",
+        "description": "For the tree-level vector-coupling QED family above, explicitly declare its known helicity-conjugation symmetry. Every complex helicity amplitude is still exported. The shortcut affects only the summed or averaged result.",
+        "input": "symmetricDirectory = CreateDirectory[];\nWriteSPINASProcess[symmetricDirectory, {\"e\", \"E\"} -> {\"A\", \"A\"}, entries, knownModel, \"ProcessName\" -> \"eeAA_symmetric\", \"HelicitySymmetry\" -> \"Conjugation\"]",
+        "evaluate": false
       }
     ],
     "related": [
@@ -780,6 +786,18 @@
           "For a helicity family, `amp2()` also averages over unfixed incoming states and includes the final identical-species factorials once. For an unpolarized electron/positron pair producing two identical photons, these factors give `(1/8) Sum[|amp|^2]`: an initial `1/4` spin average and a final `1/2!` symmetry factor.",
           "Fixing an incoming massless helicity removes its averaging factor. A selected outgoing helicity remains a partial contribution with the same full identical-species factorial convention. The manifest records the selection and normalization.",
           "The symmetric spinor components describing one massive vector state are combined before squaring that state. Separate external vector polarizations are then summed as probabilities. The exported complex amplitudes retain the information needed for explicit spin-state calculations; a production-decay sewing engine is not supplied."
+        ]
+      },
+      {
+        "title": "Reuse opposite helicities without losing polarized amplitudes",
+        "paragraphs": [
+          "A complete helicity family can sometimes be evaluated with less work. In tree-level QED with real vector couplings, reversing every photon helicity gives the same squared result after summing the fermion spins. For example, `++-` and `--+` form a pair. The summed evaluator may calculate one member and count it twice. Incoming averages and identical-particle factors keep their existing values.",
+          "`\"HelicitySymmetry\" -> Automatic` makes a bounded exact algebraic attempt to establish this relation between the formulas that you supplied. An unproved relation keeps the exhaustive evaluator. This is a conservative optimization: a numerical agreement at a few points, a real numerical default or a particle spin does not establish the symmetry.",
+          "Use `\"HelicitySymmetry\" -> \"Conjugation\"` when you know that the complete requested spin sum has this symmetry, as for the real-coupling tree-level vector QED example above. This setting is your physical assertion, not a test of an arbitrary theory. Do not use it for unrelated weak or parity-violating interactions without establishing their relation. `\"HelicitySymmetry\" -> None` always retains exhaustive summation.",
+          "Pairing reverses all selected massless helicities simultaneously at the same momenta. Merely rearranging plus and minus labels is different: identical-particle exchange must also exchange the corresponding momenta. Only partners present in the requested coverage can be paired. A fixed or otherwise unpaired selection remains exhaustive; missing helicity amplitudes are never invented.",
+          "Every individual complex `amp(...)` branch and the full `helicity_configurations()` inventory remain available. This preserves polarized amplitudes and their phases for spin correlations. The shortcut is used only inside `spin_sum()` and therefore `amp2()`, where all massive external spins are summed. Both `\"Readable\"` and `\"Optimized\"` code styles support it.",
+          "The generated shortcut checks that all current parameter values are exactly real. A complex parameter update uses the exhaustive sum for those values; it is not rounded to a real value to keep the shortcut active. Nonzero or symbolic propagator widths disable pairing. This guard does not prove a user-declared symmetry between independent real couplings.",
+          "Inspect `HelicitySummation` in the manifest or detailed export result to see the paired assignments, independent evaluation count and proof or declaration mode. Fewer amplitude evaluations do not guarantee a factor-of-two speedup: momentum setup and shared numerical tables still take time."
         ]
       },
       {

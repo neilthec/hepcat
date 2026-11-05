@@ -471,7 +471,7 @@ For a complete physical process use the grouped overload
 It combines massless-helicity variants into one class, derives equivalent
 arrangements by typed identical-particle permutations within the incoming or
 outgoing legs, and refuses incomplete helicity coverage before writing files.
-It does not infer opposite helicities by parity or silently supply zeros.
+It does not invent missing opposite-helicity amplitudes or silently supply zeros.
 The physical-process form is
 `WriteSPINASProcess[outputDirectory, incomingNames -> outgoingNames, entries, model]`.
 Each entry still contains its all-ingoing particle list and expression. The
@@ -494,6 +494,26 @@ The grouped class exposes `amp(spins)` and positional `amp(ds1, ds2, ...)`,
 raw `spin_sum()`, and `amp2()` including the incoming spin/helicity average and
 the final identical-species factorials. Count species independently of helicity;
 include identical fermions, and never average or remove amplitude terms.
+`"HelicitySymmetry" -> Automatic` makes a bounded exact algebraic attempt to
+certify global massless-helicity conjugation between actual exported formulas;
+unproved pairs retain exhaustive summation. `None` disables this optimization.
+`"Conjugation"` is an explicit physical assertion by the caller, appropriate
+for the real-coupling tree-level vector QED benchmark, not a general inference
+from model names, numerical defaults, PDG codes or particle spins. It relates
+the squared result after summing every massive external spin. Reverse all
+massless helicities simultaneously at the same momenta; do not replace arbitrary
+helicity permutations by multiplicities. Pair only partners included in the
+requested selection, leaving fixed or unpaired coverage exhaustive. Preserve
+all public complex `amp` branches and the complete helicity inventory for
+polarized results and coherent spin correlations. Apply supported pairing in
+both Readable and Optimized spin sums. Nonzero or symbolic widths disable it;
+the runtime shortcut also requires every current model parameter to be exactly
+real, otherwise it must execute the exhaustive evaluator. Do not infer reality
+from defaults or discard an imaginary part. Reality alone does not prove a
+user-declared symmetry between independent real couplings. Record pairs,
+independent evaluation counts and proof/declaration mode in `HelicitySummation`.
+Check the reduced raw and normalized sums against an independent exhaustive
+public-amplitude enumeration, and retain an asymmetric-coupling negative case.
 `CodeStyle -> "Optimized"` is the default numerical backend; `"Readable"`
 keeps the direct formula layout. Both use the same public amplitude, spin-sum,
 parameter and momentum interfaces. Optimizations depend on typed expressions

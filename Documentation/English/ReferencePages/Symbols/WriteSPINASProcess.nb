@@ -193,6 +193,77 @@ vector state are combined before squaring that state. Separate external \
 vector polarizations are then summed as probabilities. The exported complex \
 amplitudes retain the information needed for explicit spin-state \
 calculations; a production-decay sewing engine is not supplied."}], "Notes"],
+  Cell["Reuse opposite helicities without losing polarized amplitudes",
+   "NotesSection"], Cell[TextData[{"A complete helicity family can sometimes \
+be evaluated with less work. In tree-level QED with real vector couplings, \
+reversing every photon helicity gives the same squared result after summing \
+the fermion spins. For example, ", Cell[BoxData[RowBox[{"++", "-"}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{" ", "and", " "}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{"--", "+"}]], "InlineFormula"],
+     " form a pair. The summed evaluator may calculate one member and count \
+it twice. Incoming averages and identical-particle factors keep their \
+existing values."}], "Notes"],
+  Cell[TextData[{Cell[BoxData[RowBox[{"\"HelicitySymmetry\"", " ", "->", " ",
+         "Automatic"}]], "InlineFormula"], " makes a bounded exact algebraic \
+attempt to establish this relation between the formulas that you supplied. An \
+unproved relation keeps the exhaustive evaluator. This is a conservative \
+optimization: a numerical agreement at a few points, a real numerical default \
+or a particle spin does not establish the symmetry."}], "Notes"],
+  Cell[TextData[{"Use ", Cell[BoxData[RowBox[{"\"HelicitySymmetry\"", " ",
+         "->", " ", "\"Conjugation\""}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "when", " ", "you", " ", "know", " ", "that",
+         " ", "the", " ", "complete", " ", "requested", " ", "spin", " ",
+         "sum", " ", "has", " ", "this", " ", "symmetry", ",", " ", "as",
+         " ", "for", " ", "the", " ", "real", "-", "coupling", " ", "tree",
+         "-", "level", " ", "vector", " ", "QED", " ", "example", " ",
+         "above", ".", " ", "This", " ", "setting", " ", "is", " ", "your",
+         " ", "physical", " ", "assertion", ",", " ", "not", " ", "a", " ",
+         "test", " ", "of", " ", "an", " ", "arbitrary", " ", "theory", ".",
+         " ", "Do", " ", "not", " ", "use", " ", "it", " ", "for", " ",
+         "unrelated", " ", "weak", " ", "or", " ", "parity", "-",
+         "violating", " ", "interactions", " ", "without", " ",
+         "establishing", " ", "their", " ", "relation", ".", " "}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{"\"HelicitySymmetry\"", " ",
+         "->", " ", "None"}]], "InlineFormula"],
+     " always retains exhaustive summation."}], "Notes"],
+  Cell[TextData[{"Pairing reverses all selected massless helicities \
+simultaneously at the same momenta. Merely rearranging plus and minus labels \
+is different: identical-particle exchange must also exchange the \
+corresponding momenta. Only partners present in the requested coverage can be \
+paired. A fixed or otherwise unpaired selection remains exhaustive; missing \
+helicity amplitudes are never invented."}], "Notes"],
+  Cell[TextData[{"Every individual complex ",
+     Cell[BoxData[RowBox[{"amp", "(", "...", ")"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "branch", " ", "and", " ", "the", " ", "full",
+         " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"helicity", "_", "configurations", "(", ")"}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{" ", "inventory", " ", "remain",
+         " ", "available", ".", " ", "This", " ", "preserves", " ",
+         "polarized", " ", "amplitudes", " ", "and", " ", "their", " ",
+         "phases", " ", "for", " ", "spin", " ", "correlations", ".", " ",
+         "The", " ", "shortcut", " ", "is", " ", "used", " ", "only", " ",
+         "inside", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"spin", "_", "sum", "(", ")"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "and", " ", "therefore", " "}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{"amp2", "(", ")"}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{",", " ", "where", " ", "all",
+         " ", "massive", " ", "external", " ", "spins", " ", "are", " ",
+         "summed", ".", " ", "Both", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"\"Readable\""}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "and", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"\"Optimized\""}]], "InlineFormula"],
+     " code styles support it."}], "Notes"],
+  Cell[TextData[{"The generated shortcut checks that all current parameter \
+values are exactly real. A complex parameter update uses the exhaustive sum \
+for those values; it is not rounded to a real value to keep the shortcut \
+active. Nonzero or symbolic propagator widths disable pairing. This guard \
+does not prove a user-declared symmetry between independent real couplings."}]\
+, "Notes"], Cell[TextData[{"Inspect ",
+     Cell[BoxData[RowBox[{"HelicitySummation"}]], "InlineFormula"], " in the \
+manifest or detailed export result to see the paired assignments, independent \
+evaluation count and proof or declaration mode. Fewer amplitude evaluations \
+do not guarantee a factor-of-two speedup: momentum setup and shared numerical \
+tables still take time."}], "Notes"],
   Cell["Writing, building and changing model parameters", "NotesSection"],
   Cell[TextData[{"By default the exporter writes source only. ",
      Cell[BoxData[RowBox[{"\"Build\"", " ", "->", " ", "True"}]],
@@ -491,7 +562,20 @@ default, analyzes each supplied process and shares numerical work by \
 parameter, momentum and spin dependence. \"Readable\" keeps the direct \
 formula layout. Both expose the same amplitude and spin-sum interfaces; the \
 manifest reports the layout and applied optimizations."}], "TableText"]},
-      {Cell[TextData[{Cell[BoxData[RowBox[{"\"Build\""}]],
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"HelicitySymmetry\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{"Spin-sum reuse of globally reversed massless \
+helicities. Automatic attempts a bounded exact algebraic certificate and \
+otherwise keeps exhaustive summation. None disables reuse. \"Conjugation\" \
+explicitly asserts the relation for the requested complete massive-spin sum, \
+as in real-coupling tree-level vector QED. Every complex amplitude remains \
+exported. Only present conjugate partners are paired; fixed or unpaired \
+selections remain exhaustive. Nonzero or symbolic widths disable pairing, and \
+any nonreal current parameter makes the generated evaluator use the \
+exhaustive sum. HelicitySummation in the manifest records what was applied."}]\
+, "TableText"]}, {Cell[TextData[{Cell[BoxData[RowBox[{"\"Build\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"False"}]], "InlineFormula"]}],
         "TableText"], Cell[TextData[{"Whether to configure and compile the \
@@ -750,7 +834,21 @@ default. This writes a separate project."}], "ExampleText"],
       "\"Readable\"", "]"}]], "Input"], Cell["This example writes files, \
 starts a longer calculation, or requires an optional external tool. Evaluate \
 it when you want to perform that operation.", "ExampleText"],
-  Cell["See Also", "SeeAlsoSection"],
+  Cell["Reuse conjugate helicities in the spin sum", "ExampleSubsection"],
+  Cell[TextData[{"For the tree-level vector-coupling QED family above, \
+explicitly declare its known helicity-conjugation symmetry. Every complex \
+helicity amplitude is still exported. The shortcut affects only the summed or \
+averaged result."}], "ExampleText"],
+  Cell[BoxData[RowBox[{"symmetricDirectory", " ", "=", " ",
+      "CreateDirectory", "[", "]", ";", "\n", "WriteSPINASProcess", "[",
+      "symmetricDirectory", ",", " ", "{", "\"e\"", ",", " ", "\"E\"", "}",
+      " ", "->", " ", "{", "\"A\"", ",", " ", "\"A\"", "}", ",", " ",
+      "entries", ",", " ", "knownModel", ",", " ", "\"ProcessName\"", " ",
+      "->", " ", "\"eeAA_symmetric\"", ",", " ", "\"HelicitySymmetry\"", " ",
+      "->", " ", "\"Conjugation\"", "]"}]], "Input"],
+  Cell["This example writes files, starts a longer calculation, or requires \
+an optional external tool. Evaluate it when you want to perform that \
+operation.", "ExampleText"], Cell["See Also", "SeeAlsoSection"],
   Cell[TextData[{ButtonBox["SPINAS", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/SPINAS"], "  \[Bullet]  ",
      ButtonBox["PlainText", BaseStyle -> "Link",

@@ -150,12 +150,18 @@ int run(int kind, const std::array<int,Process::leg_count>& ranks,
   const ldouble energy = hepcat_spinas::example_center_of_mass_energy(process.masses(), incoming);
   unsigned comparisons = 0;
   for (unsigned sample=0; sample<3; ++sample) {
-    const unsigned parameter_trials = kind == 5 ? 2 : 1;
+    const unsigned parameter_trials = kind == 5 || kind == 9 ? 2 : 1;
     for (unsigned trial=0; trial<parameter_trials; ++trial) {
       auto parameters = Process::default_parameters();
       cdouble plus(ldouble(1.L)/ldouble(3.L),ldouble(1.L)/ldouble(5.L));
       cdouble minus(ldouble(2.L)/ldouble(7.L),-ldouble(1.L)/ldouble(11.L));
-      if (trial != 0) {
+      if (kind == 9) {
+        const cdouble coupling = trial == 0 ? cdouble(ldouble(1)/3, 0)
+          : cdouble(ldouble(2)/7, ldouble(1)/5);
+        parameters.at(std::size_t(plus_index)) = coupling;
+        plus = coupling + cdouble(0, 1);
+        minus = coupling - cdouble(0, 1);
+      } else if (trial != 0) {
         plus=cdouble(2,-ldouble(1.L)/ldouble(3.L));
         minus=cdouble(-4,ldouble(1.L)/ldouble(7.L));
         parameters.at(std::size_t(plus_index))=plus;
@@ -171,7 +177,7 @@ int run(int kind, const std::array<int,Process::leg_count>& ranks,
         if (leg == N) {
           const cdouble calculated = process.amp(spins);
           const cdouble expected = kind == 3 ? calculated :
-            oracle<N>::value(point,process.masses(),spins,kind,plus,minus);
+            oracle<N>::value(point,process.masses(),spins,kind == 9 ? 5 : kind,plus,minus);
           if (kind == 2) {
             // Crossing-dependent overall phases do not enter an unpolarized sum.
             if (!close(cdouble(std::norm(calculated),0),cdouble(std::norm(expected),0),"incoming photon norm")) return false;

@@ -93,6 +93,7 @@ void write_results(const Options& options, const std::vector<Result>& results) {
     << ",\n\"Timing\":\"Serial wall time, set_momenta plus fully summed squared amplitude; median of full sweeps\""
     << ",\n\"Excluded\":\"Code generation, compilation, initialization, phase-space generation, validation, warmup, output\""
     << ",\n\"Normalization\":\"Incoming spin average 1/4, outgoing identical-photon factor 1/N!\""
+    << ",\n\"SPINASSpinSumValidation\":\"Every point checked against exhaustive public complex amplitudes over all spins and photon helicities\""
     << ",\n\"MadGraphSum\":\"Exhaustive native MATRIX loop over full generated NHEL inventory; no helicity sampling or recycling\""
     << ",\n\"ReferencePrecision\":\"double\",\n\"SPINASPrecisionBits\":" << std::numeric_limits<Real>::digits
 #ifdef WITH_LONG_DOUBLE

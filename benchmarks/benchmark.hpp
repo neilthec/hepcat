@@ -230,17 +230,30 @@ Result run_process(const Options& options, Configuration config) {
   std::cout << "N=" << photons << ": checking all points, including the full helicity sums..." << std::endl;
   std::ofstream checks(options.output + "-values-N" + std::to_string(photons) + ".csv");
   if (!checks) throw std::runtime_error("Cannot write the squared-amplitude comparisons.");
-  checks << "point,spinas,calchep,madgraph,calchep_relative_error,madgraph_relative_error\n"
+  checks << "point,spinas,spinas_exhaustive,calchep,madgraph,calchep_relative_error,madgraph_relative_error\n"
          << std::setprecision(std::numeric_limits<Real>::max_digits10);
   std::size_t failures = 0;
   for (std::size_t index = 0; index < options.points; ++index) {
     for (std::size_t backend = 0; backend < 3; ++backend) values[backend][index] = evaluate(backend, index);
+    // Check the optimized sum against every public complex helicity amplitude.
+    // This independent enumeration is validation only, outside all timers.
+    Real exhaustive = 0;
+    for (auto spins : Process::helicity_configurations())
+      for (int first = -1; first <= 1; first += 2)
+        for (int second = -1; second <= 1; second += 2) {
+          spins[0] = first;
+          spins[1] = second;
+          exhaustive += std::norm(process.amp(spins));
+        }
+    exhaustive *= normalization;
+    if (relative_error(values[0][index], exhaustive) > options.tolerance)
+      throw std::runtime_error("Helicity-reused result disagrees with exhaustive public amplitudes.");
     const Real ch_error = relative_error(values[0][index], values[1][index]);
     const Real mg_error = relative_error(values[0][index], values[2][index]);
     result.maximum_relative_error[0] = std::max(result.maximum_relative_error[0], ch_error);
     result.maximum_relative_error[1] = std::max(result.maximum_relative_error[1], mg_error);
     if (ch_error > options.tolerance || mg_error > options.tolerance) ++failures;
-    checks << index + 1 << ',' << values[0][index] << ',' << values[1][index] << ','
+    checks << index + 1 << ',' << values[0][index] << ',' << exhaustive << ',' << values[1][index] << ','
            << values[2][index] << ',' << ch_error << ',' << mg_error << '\n';
   }
   checks.close();

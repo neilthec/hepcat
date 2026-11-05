@@ -32,6 +32,8 @@ sfExport[name_String, records_List, model_:Automatic, opts___] := WriteSPINASPro
 sfFourProcesses = Join[{"e", "E"}, #] & /@
   {{"A.+", "A.+"}, {"A.+", "A.-"}, {"A.-", "A.-"}};
 sfFour = sfRecords[sfFourProcesses];
+check["helicity symmetry uses the conservative automatic default",
+  ("HelicitySymmetry" /. Options[WriteSPINASProcess]) === Automatic];
 sfPlain = sfExport["family_plain", sfFour];
 check["one project accepts three independent two-photon helicity representatives",
   AssociationQ[sfPlain] && DirectoryQ[sfPlain["Directory"]]];
@@ -61,6 +63,38 @@ check["the generated header exposes spin-array and native-style amplitude calls"
   AllTrue[{"amp(const Spins&", "spin_sum()", "amp2()", "incoming_spin_average",
     "symmetry_factor", "helicity_configurations"}, StringContainsQ[sfHeader, #] &] &&
     StringCount[sfHeader, "amp("] >= 2];
+sfNoSymmetry = sfExport["family_exhaustive", sfFour, sfModel, "HelicitySymmetry" -> None];
+check["None retains an exhaustive complete helicity family",
+  AssociationQ[sfNoSymmetry] && !TrueQ[sfNoSymmetry["HelicitySummation"]["Active"]] &&
+    sfNoSymmetry["HelicitySummation"]["Method"] === "Exhaustive" &&
+    Length[sfNoSymmetry["HelicityConfigurations"]] === 4];
+sfConjugation = sfExport["family_conjugation", sfFour, sfModel,
+  "HelicitySymmetry" -> "Conjugation"];
+check["declared QED conjugation halves only the summed evaluation inventory",
+  AssociationQ[sfConjugation] &&
+    TrueQ[sfConjugation["HelicitySummation"]["CompletePairing"]] &&
+    Length[sfConjugation["HelicitySummation"]["Pairs"]] === 2 &&
+    Length[sfConjugation["HelicitySummation"]["RepresentativeConfigurations"]] === 2 &&
+    Length[sfConjugation["HelicityConfigurations"]] === 4 &&
+    sfConjugation["InputBranchCount"] === 3 && sfConjugation["GeneratedBranchCount"] === 1];
+sfCanonicalConjugation = sfExport["p1", sfFour, sfModel,
+  "HelicitySymmetry" -> "Conjugation"];
+check["the canonical layout retains the declared conjugation shortcut",
+  AssociationQ[sfCanonicalConjugation] &&
+    sfCanonicalConjugation["CodeLayout"] === "CanonicalDispatch" &&
+    TrueQ[sfCanonicalConjugation["HelicitySummation"]["CompletePairing"]]];
+sfFixedConjugation = sfExport["family_fixed_conjugation", sfFour, sfModel,
+  "HelicitySymmetry" -> "Conjugation", "FixedHelicities" -> {3 -> 2}];
+check["a selected helicity set without its reversed partners stays exhaustive",
+  AssociationQ[sfFixedConjugation] &&
+    !TrueQ[sfFixedConjugation["HelicitySummation"]["Active"]] &&
+    Length[sfFixedConjugation["HelicityConfigurations"]] === 2 &&
+    StringContainsQ[sfFixedConjugation["HelicitySummation"]["Reason"], "not closed"]];
+sfBadSymmetryPath = sfPath["invalid_helicity_symmetry"];
+sfBadSymmetry = Quiet[WriteSPINASProcess[sfBadSymmetryPath, sfFour, sfModel,
+  "HelicitySymmetry" -> "GuessFromSpins", "SPINASDirectory" -> sfSpinas]];
+check["unsupported helicity symmetry fails before writing a project",
+  FailureQ[sfBadSymmetry] && !DirectoryQ[sfBadSymmetryPath]];
 sfFiles = Values[sfPlain["Files"]];
 sfBefore = AssociationMap[BinaryReadList[#, "Byte"] &, sfFiles];
 sfRefused = sfExport["family_plain", ({First[#], 2 Last[#]} & /@ sfFour)];
@@ -187,6 +221,30 @@ sfCouplings = {
   {{"e", "E", "A.-", "z"}, sfGM SpinorChain[Spinor["Spin", "Square", 1],
      Mom[2], Spinor["Helicity", "Angle", 3]] SpinorChain[
      Spinor["Spin", "Angle", 2], Spinor["Helicity", "Angle", 3]]}};
+sfAsymmetric = sfExport["family_asymmetric_symmetry", sfCouplings, sfGeneric];
+check["automatic symmetry never merges independent complex helicity couplings",
+  AssociationQ[sfAsymmetric] &&
+    !TrueQ[sfAsymmetric["HelicitySummation"]["Active"]] &&
+    Length[sfAsymmetric["HelicityConfigurations"]] === 2];
+(* These conjugate prefactors have equal moduli only on the real-G domain.
+   A complex parameter update makes the exhaustive fallback observable. *)
+sfRealityCouplings = sfCouplings /. {sfGP -> sfGP + I, sfGM -> sfGP - I};
+sfRealityConjugation = sfExport["family_reality_guard", sfRealityCouplings, sfGeneric,
+  "HelicitySymmetry" -> "Conjugation"];
+check["declared paired sums record the runtime real-parameter requirement",
+  AssociationQ[sfRealityConjugation] &&
+    TrueQ[sfRealityConjugation["HelicitySummation"]["CompletePairing"]] &&
+    TrueQ[sfRealityConjugation["HelicitySummation"]["ParameterRealityRequired"]]];
+sfWidth = ModelParameter["FamilyWidth", "spinas-family-tests", "Real"];
+sfWidthModel = sfModel;
+sfWidthModel[[3]] = Append[sfWidthModel[[3]], {sfWidth, 1/15}];
+sfWidthEntries = sfFour /. HoldPattern[PropDen[p_, mass_]] :> PropDen[p, mass, sfWidth];
+sfWidthConjugation = sfExport["family_width_conjugation", sfWidthEntries, sfWidthModel,
+  "HelicitySymmetry" -> "Conjugation"];
+check["nonzero or unresolved propagator widths retain exhaustive sums",
+  AssociationQ[sfWidthConjugation] &&
+    !TrueQ[sfWidthConjugation["HelicitySummation"]["Active"]] &&
+    StringContainsQ[sfWidthConjugation["HelicitySummation"]["Reason"], "width"]];
 sfMasslessFermions = {
   {{"r", "r", "n.+", "n.+"}, sfS[3, 4]},
   {{"r", "r", "n.+", "n.-"}, SpinorChain[
@@ -207,6 +265,7 @@ sfOracle[report_Association, name_String, kind_Integer, ranks_List, helicities_I
   If[kind === 5,
     plus = First[FirstPosition[names, "FamilyGP", {0}]] - 1;
     minus = First[FirstPosition[names, "FamilyGM", {0}]] - 1];
+  If[kind === 9, plus = First[FirstPosition[names, "FamilyGP", {0}]] - 1];
   main = StringRiffle[{
     "#include \"process.hpp\"", "#include \"spinas-family-reference.hpp\"",
     "int main() { try { return hepcat_family_reference::run<hepcat_generated::" <> name <> ">(" <>
@@ -251,6 +310,21 @@ sfBuildAndCompare[name_String, records_List, model_, kind_Integer, ranks_List,
 ];
 
 If[sfNativeAvailable,
+  sfConjugationOracle = sfOracle[sfConjugation, "family_conjugation", 1,
+    {1, 1, 2, 2}, 4, 4, 2];
+  check["paired native sums equal exhaustive public amplitudes for every helicity",
+    !sfFailed[sfConjugationOracle] &&
+      StringContainsQ[sfConjugationOracle["StandardOutput"], "FAMILY_COMPARISONS=48"]];
+  sfCanonicalOracle = sfOracle[sfCanonicalConjugation, "p1", 1,
+    {1, 1, 2, 2}, 4, 4, 2];
+  check["paired canonical sums equal exhaustive public amplitudes for every helicity",
+    !sfFailed[sfCanonicalOracle] &&
+      StringContainsQ[sfCanonicalOracle["StandardOutput"], "FAMILY_COMPARISONS=48"]];
+  sfRealityOracle = sfOracle[sfRealityConjugation, "family_reality_guard", 9,
+    {1, 1, 2, 0}, 2, 4, 1];
+  check["real parameter pairing and complex parameter fallback both match the full sum",
+    !sfFailed[sfRealityOracle] &&
+      StringContainsQ[sfRealityOracle["StandardOutput"], "FAMILY_COMPARISONS=48"]];
   sfZeroOracle = sfOracle[sfExplicitZero, "explicit_zero_sectors", 7, {1, 1, 2, 2}, 4, 4, 2];
   check["every explicit zero helicity compiles and has zero amplitude and spin sum",
     !sfFailed[sfZeroOracle] &&

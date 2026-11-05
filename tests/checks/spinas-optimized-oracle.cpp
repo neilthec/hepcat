@@ -89,11 +89,19 @@ void compare(const char* label, const std::array<int, Readable::leg_count>& rank
         try { optimized.amp(invalid); } catch(const std::invalid_argument&) { bad_b=true; }
         if(!bad_a || !bad_b) throw std::runtime_error("Invalid public helicity accepted");
       }
+      // Use the public complex amplitudes as an exhaustive oracle, independently
+      // of any symmetry shortcut shared by the two generated spin sums.
+      ldouble readable_exhaustive = 0;
+      ldouble optimized_exhaustive = 0;
       for (const auto& helicities : Readable::helicity_configurations()) {
         spins = helicities;
         std::function<void(unsigned)> visit = [&](unsigned leg) {
           if (leg == Readable::leg_count) {
-            same(readable.amp(spins), optimized.amp(spins), label);
+            const cdouble readable_amplitude = readable.amp(spins);
+            const cdouble optimized_amplitude = optimized.amp(spins);
+            same(readable_amplitude, optimized_amplitude, label);
+            readable_exhaustive += std::norm(readable_amplitude);
+            optimized_exhaustive += std::norm(optimized_amplitude);
             return;
           }
           if (readable.masses()[leg] == 0 || ranks[leg] == 0) {
@@ -107,6 +115,16 @@ void compare(const char* label, const std::array<int, Readable::leg_count>& rank
       }
       same(cdouble(readable.spin_sum()), cdouble(optimized.spin_sum()), "raw spin sum");
       same(cdouble(readable.amp2()), cdouble(optimized.amp2()), "normalized spin sum");
+      same(cdouble(readable.spin_sum()), cdouble(readable_exhaustive),
+           "readable raw spin sum versus exhaustive public amplitudes");
+      same(cdouble(optimized.spin_sum()), cdouble(optimized_exhaustive),
+           "optimized raw spin sum versus exhaustive public amplitudes");
+      const ldouble normalization = Readable::symmetry_factor() /
+                                   Readable::incoming_spin_average();
+      same(cdouble(readable.amp2()), cdouble(normalization * readable_exhaustive),
+           "readable normalized spin sum versus exhaustive public amplitudes");
+      same(cdouble(optimized.amp2()), cdouble(normalization * optimized_exhaustive),
+           "optimized normalized spin sum versus exhaustive public amplitudes");
       spins = Readable::default_spins();
       Readable readable_copy(readable);
       Optimized optimized_copy(optimized);

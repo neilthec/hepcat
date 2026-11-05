@@ -2,7 +2,8 @@
    Run with WolframKernel -script benchmarks/export-physical.wl.
    Optional arguments: --output DIR, --source DIR, --spinas DIR,
      --calchep DIR, --madgraph DIR, --configuration MANIFEST,
-     --code-style Optimized|Readable, --representation AllPhysical|AllSpurious.
+     --code-style Optimized|Readable, --representation AllPhysical|AllSpurious,
+     --helicity-symmetry Conjugation|Automatic|None.
    The configuration manifest is an existing WriteSPINASProcess export. Its
    explicitly selected reference installations/models are retained by default.
    No amplitude is constructed, simplified, fitted or changed by this script. *)
@@ -14,7 +15,7 @@ benchmarkArguments = If[$ScriptCommandLine =!= {}, Rest[$ScriptCommandLine],
 benchmarkOptions = <||>;
 If[OddQ[Length[benchmarkArguments]], Print["Expected option/value argument pairs."]; Quit[1]];
 Do[
-  If[!MemberQ[{"--output", "--source", "--spinas", "--calchep", "--madgraph", "--configuration", "--code-style", "--representation"}, benchmarkArguments[[benchmarkArgumentIndex]]],
+  If[!MemberQ[{"--output", "--source", "--spinas", "--calchep", "--madgraph", "--configuration", "--code-style", "--representation", "--helicity-symmetry"}, benchmarkArguments[[benchmarkArgumentIndex]]],
     Print["Unknown option: ", benchmarkArguments[[benchmarkArgumentIndex]]]; Quit[1]];
   AssociateTo[benchmarkOptions, benchmarkArguments[[benchmarkArgumentIndex]] -> benchmarkArguments[[benchmarkArgumentIndex + 1]]],
   {benchmarkArgumentIndex, 1, Length[benchmarkArguments], 2}];
@@ -26,6 +27,13 @@ benchmarkOutput = ExpandFileName[Lookup[benchmarkOptions, "--output",
   FileNameJoin[{benchmarkRepository, "benchmarks",
     If[benchmarkRepresentation === "AllPhysical", "build-physical-double", "build-spurious-double"], "exports"}]]];
 benchmarkSource = ExpandFileName[Lookup[benchmarkOptions, "--source", FileNameJoin[{benchmarkRepository, "source"}]]];
+(* These saved models are tree-level vectorlike QED. This is an explicit
+   theory declaration, not a symmetry fitted from the timing samples. *)
+benchmarkHelicitySymmetryName = Lookup[benchmarkOptions, "--helicity-symmetry", "Conjugation"];
+If[!MemberQ[{"Conjugation", "Automatic", "None"}, benchmarkHelicitySymmetryName],
+  Print["--helicity-symmetry must be Conjugation, Automatic or None."]; Quit[1]];
+benchmarkHelicitySymmetry = Switch[benchmarkHelicitySymmetryName,
+  "Automatic", Automatic, "None", None, _, "Conjugation"];
 benchmarkCodeStyle = Lookup[benchmarkOptions, "--code-style", "Optimized"];
 If[!MemberQ[{"Optimized", "Readable"}, benchmarkCodeStyle],
   Print["--code-style must be Optimized or Readable."]; Quit[1]];
@@ -96,7 +104,7 @@ Do[
   benchmarkExport = WriteSPINASProcess[benchmarkDirectory,
     {"e", "E"} -> ConstantArray["A", photons], benchmarkEntries, benchmarkModel,
     "SPINASDirectory" -> benchmarkSPINAS, "Precision" -> "Double", "ProcessName" -> benchmarkName,
-    "CodeStyle" -> benchmarkCodeStyle,
+    "CodeStyle" -> benchmarkCodeStyle, "HelicitySymmetry" -> benchmarkHelicitySymmetry,
     "CalcHEPDirectory" -> ExpandFileName[Lookup[benchmarkOptions, "--calchep", benchmarkCH["CalcHEPDirectory"]]],
     "CalcHEPModel" -> {benchmarkCH["ModelDirectory"], benchmarkCH["ModelNumber"]},
     "CalcHEPAllowedParticles" -> {11,22},
@@ -108,7 +116,8 @@ Do[
   If[FailureQ[benchmarkExport] || benchmarkExport === $Failed, Print[InputForm[benchmarkExport]]; Quit[1]];
   benchmarkProvenance = <|
     "Representation" -> benchmarkRepresentation, "Precision" -> "Double", "Photons" -> photons,
-    "CodeStyle" -> benchmarkCodeStyle,
+    "CodeStyle" -> benchmarkCodeStyle, "HelicitySymmetry" -> benchmarkHelicitySymmetryName,
+    "HelicitySymmetryScope" -> "Declared tree-level vectorlike QED with real parameters; complete massive-spin sums",
     "AmplitudeSource" -> "ReadModel[models," <> ToString[benchmarkModelNumber] <>
       "] and LookupAmplitude; unchanged saved complete amplitudes",
     "ModelNumber" -> benchmarkModelNumber,

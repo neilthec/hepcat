@@ -597,9 +597,10 @@ WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " WriteSPINASProcess[di
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " Generated projects also contain validate_calchep(options) and a process_validate_calchep executable for an independent, seeded 1000-point comparison with an on-the-fly CalcHEP process. CalcHEPDirectory -> None and CalcHEPModel -> None leave reference validation unconfigured. Select the installation directory and CalcHEPModel -> {directory, number} explicitly. CalcHEPDirectory -> Automatic consults CALCHEP_ROOT or CALCHEP only. CalcHEPAllowedParticles -> All keeps the selected reference theory intact; an explicit list of positive absolute PDG codes, such as {11,22}, restricts internal particle types and includes their antiparticles. RunCalcHEPValidation -> True builds and runs this check, using CalcHEPPoints -> 1000 and CalcHEPSeed -> Automatic by default. Automatic chooses a seed from the time when validation runs and reports the concrete seed for replay; an explicit unsigned 64-bit integer fixes it. Complete unpolarized colorless processes are supported; fixed-helicity or color-stripped comparisons report unavailable. Ordinary SPINAS execution does not require CalcHEP.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " If the CalcHEP numerical libraries are available, Build -> True links the runnable executable directly at build/results/n_calchep; there is no duplicate launcher in the build root. From build, enter results and run ./n_calchep. This uses CalcHEP's numerical menus, VEGAS, cuts and histograms with the exported SPINAS matrix element, without CalcHEP symbolic generation or a CalcHEPModel counterpart. Independent model parameters remain adjustable, dependent functions are recomputed, and mass/width changes are propagated. Fixed helicities remain labeled contributions. The ordinary SPINAS project remains usable without CalcHEP.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " CodeStyle -> Optimized is the default numerical backend: it analyzes expression dependencies to share per-point and per-spin calculations. CodeStyle -> Readable preserves the direct formula layout. Both retain identical complex-amplitude and spin-sum conventions. The manifest separates CodeStyle from CodeLayout and records optimization diagnostics.";
+WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " HelicitySymmetry -> Automatic reuses conjugate helicity contributions only when a bounded exact algebraic certificate succeeds. None keeps exhaustive sums. Conjugation explicitly declares the simultaneous helicity-reversal symmetry of the supplied family, as for tree-level vectorlike QED with real parameters and complete massive-spin sums. This declaration is a theory assumption, not an inference from numerical samples. Every individual complex amp and every helicity branch remains available. Selected helicity sets must contain both members of each pair; unsupported selections and nonzero-width expressions retain exhaustive sums. Any nonreal runtime parameter disables reuse. The manifest records the summation plan and its assumptions.";
 Options[WriteSPINASProcess] = {"SPINASDirectory" -> Automatic,
   "IncomingLegs" -> {1, 2}, "FixedHelicities" -> Automatic, "ParameterRules" -> Automatic,
-  "ProcessName" -> "hepcat_process", "Precision" -> Automatic, "CodeStyle" -> "Optimized",
+  "ProcessName" -> "hepcat_process", "Precision" -> Automatic, "CodeStyle" -> "Optimized", "HelicitySymmetry" -> Automatic,
   "Build" -> False, "RunExamples" -> False, "CMakeExecutable" -> Automatic, "Overwrite" -> False,
   "CalcHEPDirectory" -> None, "CalcHEPModel" -> None, "CalcHEPAllowedParticles" -> All,
   "RunCalcHEPValidation" -> False, "CalcHEPPoints" -> 1000, "CalcHEPSeed" -> Automatic,
@@ -1040,7 +1041,7 @@ spinasNativeCachePlan[ir_Association, reservedNames_List : {}] := Module[
     Lookup[Lookup[ir, "ParameterCaches", {}], "Name", {}], {"parameters", "external_masses", "momenta", "momenta_ready", "initialize_products",
     "amp", "amp_unchecked", "helicity_key", "spin_sum", "amp2", "component", "numerator", "denominator", "values", "spins",
     "set_parameters", "set_momenta", "set_masses", "get_parameters", "validate_calchep", "validate_madgraph",
-    "amplitude", "result", "validation", "other", "ranks", "originally_massless", "check_spin"},
+    "amplitude", "result", "validation", "other", "ranks", "originally_massless", "check_spin", "helicity_pair_reuse"},
     Table["p" <> ToString[i], {i, n}],
     Table["assignments" <> ToString[i], {i, n}], Table["indices" <> ToString[i], {i, n}],
     Flatten[Table[Join[{"ds" <> ToString[i]},
@@ -1245,6 +1246,36 @@ spinasNativeProjectHeader[name_String, ir_Association, plan_Association] := Modu
   StringRiffle[lines, "\n"]
 ];
 
+(* Keep the full amplitude inventory; only the incoherent summation uses pairs.
+   A runtime parameter check protects the real-parameter certificate after edits. *)
+spinasHelicitySumCppPlan[ir_Association, array_:False] := Module[
+  {report = Lookup[ir, "HelicitySummation", <||>], active, configs, pivot,
+   condition, accessor, guard, full, skip, weighted},
+  active = TrueQ[Lookup[report, "Active", False]];
+  If[!active, Return[<|"Active" -> False, "CompletePairing" -> False,
+    "GuardLines" -> {}, "SkipLines" -> {}, "Weight" -> "ldouble(1)",
+    "ReturnLine" -> "  return result;", "PivotLeg" -> 0|>]];
+  pivot = report["PivotLeg"];
+  full = TrueQ[report["CompletePairing"]];
+  accessor[i_] := If[TrueQ[array], "helicities[" <> ToString[i - 1] <> "]", "j" <> ToString[i]];
+  condition[rows_List] := StringRiffle[Map[Function[row, "(" <>
+    StringRiffle[Table[If[TrueQ[ir["MassValues"][[i]] == 0] && ir["Spin2"][[i]] > 0,
+      accessor[i] <> " == " <> ToString[row[[i]]], Nothing], {i, ir["LegCount"]}], " && "] <> ")"], rows], " || "];
+  guard = If[ir["ParameterSymbols"] === {}, "true", StringRiffle[
+    Table["std::imag(parameters[" <> ToString[i - 1] <> "]) == ldouble(0)",
+      {i, Length[ir["ParameterSymbols"]]}], " && "]];
+  skip = If[full, accessor[pivot] <> " < 0", condition[report["SkippedConfigurations"]]];
+  weighted = If[full, "ldouble(1)", "((helicity_pair_reuse && (" <>
+    condition[Lookup[report["Pairs"], "Representative", {}]] <> ")) ? ldouble(2) : ldouble(1))"];
+  <|"Active" -> True, "CompletePairing" -> full, "PivotLeg" -> pivot,
+    "GuardLines" -> Join[{"  // Reuse conjugate helicities only in this complete spin sum.",
+      "  // Nonreal parameter updates retain the exhaustive evaluator."},
+      spinasReadableCppLines["const bool helicity_pair_reuse = " <> guard <> ";"]],
+    "SkipLines" -> spinasReadableCppLines["if (helicity_pair_reuse && (" <> skip <> ")) continue;", "", 96],
+    "Weight" -> weighted,
+    "ReturnLine" -> If[full, "  return helicity_pair_reuse ? ldouble(2) * result : result;", "  return result;"]|>
+];
+
 spinasNativeProjectSource[name_String, ir_Association, plan_Association] := Module[
   {n = ir["LegCount"], ranks = ir["Spin2"], masses = ir["MassValues"], params = plan["Parameters"],
    branches = plan["Branches"], lines = {}, add, definitions, massIndices, realOrder,
@@ -1252,10 +1283,11 @@ spinasNativeProjectSource[name_String, ir_Association, plan_Association] := Modu
    defaults, originalMassless, massCpp, family, initialAverage, symmetryFactor,
    massLines, massChecks, index, higher, helicityLegs, condition, branch, expression,
    fallback, branchBody, indent, projectionLoops, normalization, states,
-   spinLines, loops, loopLegs, prefix, configurations, coefficients, optimized, dispatch, dispatchKey},
+   spinLines, loops, loopLegs, prefix, configurations, coefficients, optimized, dispatch, dispatchKey, helicitySum, lower},
   add[values_List] := (lines = Join[lines, values]);
   family = TrueQ[Lookup[ir, "Family", False]];
   optimized = TrueQ[Lookup[plan, "Optimized", False]];
+  helicitySum = spinasHelicitySumCppPlan[ir];
   massIndices = spinasNativeMassParameterIndices[ir]; realOrder = spinasNativeParameterOrder[ir];
   realArguments = StringRiffle[("const ldouble& value_" <> params[[#, "Alias"]] &) /@ realOrder, ", "];
   massArguments = spinasNativeMassArguments[ir, plan];
@@ -1395,19 +1427,26 @@ spinasNativeProjectSource[name_String, ir_Association, plan_Association] := Modu
   add[{"}", "", "// Explicit spin and helicity sums.", "ldouble " <> name <> "::spin_sum() {",
     "  ldouble result = 0;", "  cdouble amplitude;"}];
   If[optimized, add[{"  if (!momenta_ready) throw std::logic_error(\"Call set_momenta before spin_sum.\");"}]];
+  add[helicitySum["GuardLines"]];
   states = If[family, ir["HelicityStates"], Table[If[TrueQ[masses[[i]] == 0], {ir["Helicities"][[i]]}, {0}], {i, n}]];
   loopLegs = Select[Range[n], ranks[[#]] > 0 && (!TrueQ[masses[[#]] == 0] || Length[states[[#]]] > 1) &];
   Do[If[!MemberQ[loopLegs, i], add[{"  const int j" <> ToString[i] <> " = " <>
       ToString[If[ranks[[i]] == 0, 0, First[states[[i]]]]] <> ";"}]], {i, n}];
   indent = "  ";
-  Do[add[{indent <> "for (int j" <> ToString[i] <> " = " <> ToString[-ranks[[i]]] <> "; j" <> ToString[i] <>
+  Do[lower = If[TrueQ[helicitySum["CompletePairing"]] && i === helicitySum["PivotLeg"],
+      "(helicity_pair_reuse ? " <> ToString[ranks[[i]]] <> " : " <> ToString[-ranks[[i]]] <> ")",
+      ToString[-ranks[[i]]]];
+    add[{indent <> "for (int j" <> ToString[i] <> " = " <> lower <> "; j" <> ToString[i] <>
       " <= " <> ToString[ranks[[i]]] <> "; j" <> ToString[i] <> " += " <>
       ToString[If[TrueQ[masses[[i]] == 0], 2 ranks[[i]], 2]] <> ") {"}];
     indent = indent <> "  ", {i, loopLegs}];
+  If[TrueQ[helicitySum["Active"]] && !TrueQ[helicitySum["CompletePairing"]],
+    add[(indent <> # &) /@ helicitySum["SkipLines"]]];
   add[spinasReadableCppLines["amplitude = " <> If[optimized, "amp_unchecked", "amp"] <> "(" <> spinasNativeScalarValues[n, "j"] <> ");", indent]];
-  add[{indent <> "result += std::norm(amplitude);"}];
+  add[spinasReadableCppLines["result += " <> If[TrueQ[helicitySum["Active"]] && !TrueQ[helicitySum["CompletePairing"]],
+    helicitySum["Weight"] <> " * ", ""] <> "std::norm(amplitude);", indent]];
   Do[indent = StringDrop[indent, -2]; add[{indent <> "}"}], {Length[loopLegs]}];
-  add[{"  return result;", "}", "", "ldouble " <> name <> "::amp2() {",
+  add[{helicitySum["ReturnLine"], "}", "", "ldouble " <> name <> "::amp2() {",
     "  // Initial-state average: 1/" <> ToString[initialAverage, InputForm] <> ".",
     "  // Final-state identical-particle factor: " <> ToString[symmetryFactor, InputForm] <> "."}];
   coefficients = Together[symmetryFactor/initialAverage];
@@ -2184,6 +2223,7 @@ WriteSPINASProcess[directory_String, process : {___String}, amplitude_, model_, 
       !StringQ[name] || !TrueQ[spinasCppIdentifierQ[name]] || StringTrim[directory] === "" || !AllTrue[{overwrite,examples,details,buildRequested},MemberQ[{True,False},#]&] ||
       !MemberQ[{Automatic,"LongDouble","Double"},OptionValue["Precision"]] ||
       !MemberQ[{"Optimized", "Readable"}, OptionValue["CodeStyle"]] ||
+      !MemberQ[{Automatic, None, "Conjugation"}, OptionValue["HelicitySymmetry"]] ||
       !(OptionValue["SPINASDirectory"]===Automatic || StringQ[OptionValue["SPINASDirectory"]]) ||
       !(cmake === Automatic || (StringQ[cmake] && StringTrim[cmake] =!= "")) ||
       !spinasCalcHEPOptionsQ[fullOptions] || !spinasMadGraphOptionsQ[fullOptions],
@@ -2447,6 +2487,117 @@ spinasFamilyIR[entries_List, model_List, options_Association, physicalSpec_:Auto
       "FinalStateSpecies" -> (First /@ finalSpecies)|>], tag]
 ];
 
+(* ::Subsection::Closed:: *)
+(*Certified Helicity Sums*)
+
+(* Reversing an ordinary chain is an exact identity. This normalization only
+   chooses its printed direction; it does not apply a mass shell or alter a
+   momentum insertion. *)
+spinasHelicityParityCanonical[expression_] := expression /. chain_SpinorChain :>
+  With[{items = List @@ chain},
+    If[OrderedQ[{items, Reverse[items]}], chain,
+      (-1)^(Length[items] - 1) Apply[SpinorChain, Reverse[items]]]];
+
+spinasHelicityParityFlip[expression_] := expression /.
+  Spinor[before___, kind:("Angle" | "Square"), after___] :>
+    Spinor[before, If[kind === "Angle", "Square", "Angle"], after];
+
+(* Automatic requires an exact paired-form identity. Explicit Conjugation is a
+   theory assertion by the caller, not a symmetry inferred from sampled values.
+   Both keep every amp branch and require real runtime scalar parameters. *)
+spinasHelicitySumPlan[ir_Association, selection_] := Module[
+  {configurations = Lookup[ir, "HelicityConfigurations", {}], n, ranks, massless,
+   legs, pivot = 0, flip, partners, pairs = {}, skipped,
+   representatives, components, branches, expressions, parameters, reason = "",
+   cache = <||>, expressionCache = <||>, branchFor, branchExpression, certificate,
+   started, remaining, candidates, pair, result, active, complete, base, heads,
+   selectionName = If[selection === Automatic, "Automatic", If[selection === None, "None", selection]]},
+  base[why_] := <|"Method" -> "Exhaustive", "Status" -> "NotApplied",
+    "Selection" -> selectionName,
+    "Active" -> False, "PivotLeg" -> pivot, "CompletePairing" -> False,
+    "Pairs" -> {}, "RepresentativeConfigurations" -> configurations,
+    "SkippedConfigurations" -> {}, "ParameterRealityRequired" -> False,
+    "Reason" -> why|>;
+  If[selection === None, Return[base["Helicity-sum symmetry was disabled."]]];
+  If[!TrueQ[Lookup[ir, "Family", False]] || configurations === {},
+    Return[base["A complete grouped helicity family is required."]]];
+  n = ir["LegCount"]; ranks = ir["Spin2"];
+  massless = TrueQ[# == 0] & /@ ir["MassValues"];
+  legs = Select[Range[n], massless[[#]] && ranks[[#]] > 0 &];
+  If[legs === {}, Return[base["There are no summed massless helicities."]]];
+  pivot = First[legs];
+  flip[configuration_List] := MapIndexed[
+    If[MemberQ[legs, First[#2]], -#1, #1] &, configuration];
+  partners = flip /@ configurations;
+  If[!AllTrue[partners, MemberQ[configurations, #] &],
+    Return[base["The selected helicities are not closed under simultaneous reversal."]]];
+  components = Lookup[ir, "FamilyComponents", {}];
+  expressions = Lookup[components, "OriginalExpression", {}];
+  If[!FreeQ[expressions, HoldPattern[PropDen[_, _, width_]] /; !TrueQ[width == 0]],
+    Return[base["A nonzero or unresolved propagator width prevents this conjugation shortcut."]]];
+  candidates = Select[configurations, #[[pivot]] > 0 &];
+  If[selection === "Conjugation",
+    pairs = (<|"Representative" -> #, "Partner" -> flip[#]|> & /@ candidates);
+    reason = "The caller asserted simultaneous helicity conjugation for this theory and spin sum.",
+    If[selection =!= Automatic, Return[base["Unsupported helicity-sum symmetry selection."]]];
+    If[Length[configurations] > 64,
+      Return[base["The bounded automatic certificate supports at most 64 helicity branches."]]];
+    parameters = DeleteDuplicates[Flatten[Lookup[components, "ParameterSymbols", {}], 1]];
+    heads = DeleteDuplicates[Cases[expressions,
+      value_ /; !AtomQ[value] :> Head[value], Infinity]];
+    If[!AllTrue[parameters, MatchQ[#, ModelParameter[_, _, "Real"]] &] ||
+        !SubsetQ[{List, Plus, Times, Power, SpinorChain, Spinor, Mom, Mass,
+          PropDen, Multiparticle, MomProd, Mandelstahm, ModelParameter}, heads] ||
+        !FreeQ[expressions, _Complex] ||
+        !FreeQ[expressions, power:Power[_, exponent_] /;
+          !IntegerQ[exponent] && (!NumberQ[power] || !TrueQ[Im[power] == 0])],
+      Return[base["Automatic certification requires declared real scalar inputs and real coefficients."]]];
+    branches = ir["Branches"];
+    branchFor[configuration_List] := SelectFirst[branches,
+      Lookup[#, "Helicities", {}] === configuration &, Missing["NoBranch"]];
+    branchExpression[configuration_List] := Module[{branch, key, value},
+      branch = branchFor[configuration];
+      If[!AssociationQ[branch], Return[$Failed]];
+      key = ToString[Hash[{branch["InputIndex"], branch["LegPermutation"],
+        branch["FermionSign"]}, "SHA256"]];
+      If[KeyExistsQ[expressionCache, key], Return[expressionCache[key]]];
+      value = branch["FermionSign"] relabelLegs[
+        expressions[[branch["InputIndex"]]],
+        AssociationThread[Range[n], branch["LegPermutation"]]];
+      value = spinasHelicityParityCanonical[value];
+      AssociateTo[expressionCache, key -> value]; value];
+    certificate[representative_List, partner_List] := Module[{key, left, right, value},
+      key = ToString[Hash[{branchFor[representative], branchFor[partner]}, "SHA256"]];
+      If[KeyExistsQ[cache, key], Return[cache[key]]];
+      left = branchExpression[representative]; right = branchExpression[partner];
+      If[left === $Failed || right === $Failed, Return[False]];
+      left = spinasHelicityParityCanonical[spinasHelicityParityFlip[left]];
+      value = TrueQ[Expand[left - right] === 0 || Expand[left + right] === 0];
+      If[!value, value = TrueQ[Together[left - right] === 0 || Together[left + right] === 0]];
+      AssociateTo[cache, key -> value]; value];
+    started = AbsoluteTime[];
+    Do[
+      remaining = 3. - (AbsoluteTime[] - started);
+      If[remaining <= 0, Break[]];
+      result = TimeConstrained[certificate[pair, flip[pair]], Min[0.3, remaining], False];
+      If[TrueQ[result], AppendTo[pairs,
+        <|"Representative" -> pair, "Partner" -> flip[pair]|>]],
+      {pair, candidates}];
+    reason = "Only exact paired-form identities certified within the bounded automatic budget are reused.";
+  ];
+  skipped = Lookup[pairs, "Partner", {}];
+  representatives = Select[configurations, !MemberQ[skipped, #] &];
+  active = pairs =!= {}; complete = active && 2 Length[pairs] === Length[configurations];
+  <|"Method" -> If[active, If[selection === "Conjugation",
+      "UserDeclaredConjugation", "CertifiedConjugation"], "Exhaustive"],
+    "Selection" -> selectionName,
+    "Status" -> If[complete, "Applied", If[active, "Partial", "NotApplied"]],
+    "Active" -> active, "PivotLeg" -> pivot, "CompletePairing" -> complete,
+    "Pairs" -> pairs, "RepresentativeConfigurations" -> representatives,
+    "SkippedConfigurations" -> skipped, "ParameterRealityRequired" -> active,
+    "Reason" -> reason|>
+];
+
 spinasCanonicalFamilyProjectHeader[name_String, ir_Association] := Module[{header, scalarArguments, scalarValues, declarations},
   header = spinasCanonicalProjectHeader[name, ir];
   scalarArguments = StringRiffle[Table["int ds" <> ToString[i], {i, ir["LegCount"]}], ", "];
@@ -2474,7 +2625,8 @@ spinasCanonicalFamilyProjectHeader[name_String, ir_Association] := Module[{heade
 spinasCanonicalFamilyProjectSource[name_String, ir_Association] := Module[
   {n = ir["LegCount"], ranks = ir["Spin2"], components = ir["FamilyComponents"],
    branches = ir["Branches"], prefix, componentCode, configurationRows,
-   permutationRows, sourceIndices, signs, rankArray, dispatchCases, helicityLabel},
+   permutationRows, sourceIndices, signs, rankArray, dispatchCases, helicityLabel, helicitySum},
+  helicitySum = spinasHelicitySumCppPlan[ir, True];
   prefix = First[StringSplit[spinasCanonicalProjectSource[name, ir], "cdouble " <> name <> "::component(", 2]];
   prefix = StringReplace[prefix, "constexpr std::size_t " <> name <> "::parameter_count;" ->
     "constexpr std::size_t " <> name <> "::parameter_count;\nconstexpr std::size_t " <> name <> "::helicity_count;"];
@@ -2565,8 +2717,9 @@ spinasCanonicalFamilyProjectSource[name_String, ir_Association] := Module[
     "// Sum all requested massless helicities and massive external spins.",
     "ldouble " <> name <> "::spin_sum() {",
     "  static const std::array<int, leg_count> ranks = " <> rankArray <> ";",
-    "  ldouble result = 0;", "",
+    "  ldouble result = 0;", "", Sequence @@ helicitySum["GuardLines"],
     "  for (const auto& helicities : helicity_configurations()) {",
+    Sequence @@ If[TrueQ[helicitySum["Active"]], ("    " <> # &) /@ helicitySum["SkipLines"], {}],
     "    Spins spins = default_spins();",
     "    for (std::size_t i = 0; i < leg_count; ++i) {",
     "      if (external_masses[i] == 0) {",
@@ -2581,8 +2734,10 @@ spinasCanonicalFamilyProjectSource[name_String, ir_Association] := Module[
     "        spins[leg] = spin;",
     "        value += sum(leg + 1);", "      }",
     "      return value;", "    };", "",
-    "    result += sum(0);", "  }",
-    "  return result;", "}", "",
+    Sequence @@ spinasReadableCppLines["result += " <>
+      If[TrueQ[helicitySum["Active"]] && !TrueQ[helicitySum["CompletePairing"]],
+        helicitySum["Weight"] <> " * ", ""] <> "sum(0);", "    "], "  }",
+    helicitySum["ReturnLine"], "}", "",
     "// Initial-state average and final-state identical-particle phase-space factor.",
     "ldouble " <> name <> "::amp2() {",
     "  return spin_sum() * symmetry_factor() / incoming_spin_average();", "}", "",
@@ -2593,6 +2748,17 @@ spinasFamilyProjectMain[name_String] := StringReplace[spinasProjectMain[name], {
   "fixed massless helicities." -> "all exported massless helicities.",
   "fixed-helicity, initial-spin-averaged |M|^2" -> "spin/helicity-summed, initial-averaged, symmetry-weighted |M|^2",
   "No identical-particle phase-space factor is included." -> "The final-state identical-particle symmetry factor is included in amp2()."}];
+spinasHelicitySumREADME[ir_Association] := Module[{plan = Lookup[ir, "HelicitySummation", <||>]},
+  If[!TrueQ[Lookup[plan, "Active", False]], Return["\nHelicity sums are exhaustive; no conjugation shortcut was enabled.\n"]];
+  "\nHelicity summation reuses " <> ToString[Length[plan["Pairs"]]] <>
+    " conjugate pairs while retaining every individual complex amp branch. " <>
+    If[Lookup[plan, "Method", ""] === "UserDeclaredConjugation",
+      "The caller declared simultaneous helicity-reversal symmetry; this is a theory assumption. ",
+      "The reused pairs passed a bounded exact algebraic certificate. "] <>
+    "Nonreal parameter updates automatically use the exhaustive sum. " <>
+    "See HelicitySummation in manifest.json for the pairs and assumptions.\n"
+];
+
 spinasFamilyProjectREADME[name_String, ir_Association, precision_String] := StringReplace[
   spinasProjectREADME[name, ir, precision], {
     "## Build and run" ->
@@ -2621,6 +2787,7 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
       !AllTrue[Lookup[options, {"Overwrite", "RunExamples", "ReturnDetails", "Build"}], MemberQ[{True, False}, #] &] ||
       !MemberQ[{Automatic, "LongDouble", "Double"}, options["Precision"]] ||
       !MemberQ[{"Optimized", "Readable"}, options["CodeStyle"]] ||
+      !MemberQ[{Automatic, None, "Conjugation"}, options["HelicitySymmetry"]] ||
       !(options["SPINASDirectory"] === Automatic || StringQ[options["SPINASDirectory"]]) ||
       !(cmake === Automatic || (StringQ[cmake] && StringTrim[cmake] =!= "")) ||
       !spinasCalcHEPOptionsQ[options] || !spinasMadGraphOptionsQ[options],
@@ -2630,6 +2797,7 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
   ir = spinasFamilyIR[entries, data,
     KeyTake[options, {"IncomingLegs", "ParameterRules", "FixedHelicities"}], physicalSpec];
   If[FailureQ[ir], Return[ir]];
+  ir = Join[ir, <|"HelicitySummation" -> spinasHelicitySumPlan[ir, options["HelicitySymmetry"]]|>];
   calchep = spinasCalcHEPConfiguration[ir, data, options];
   numerical = spinasCalcHEPNumericalConfiguration[ir, data, options];
   madgraph = spinasMadGraphConfiguration[ir, data, options, calchep];
@@ -2666,6 +2834,7 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
     "ParameterDefaults" -> (<|"Real" -> N[Re[#]], "Imaginary" -> N[Im[#]]|> & /@ ir["ParameterDefaults"]),
     "Masses" -> N[ir["MassValues"]], "Spin2" -> ir["Spin2"],
     "HelicityConfigurations" -> ir["HelicityConfigurations"], "Branches" -> ir["Branches"],
+    "HelicitySummation" -> ir["HelicitySummation"],
     "FixedHelicities" -> Association[(ToString[First[#]] -> Last[#]) & /@ ir["FixedHelicities"]],
     "InputBranchCount" -> ir["InputBranchCount"], "GeneratedBranchCount" -> ir["GeneratedBranchCount"],
     "InitialSpinAverage" -> ir["InitialSpinAverage"], "SymmetryFactor" -> N[ir["SymmetryFactor"]],
@@ -2684,7 +2853,7 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
     "Runtime" -> Import[runtime, "Text"],
     "CMake" -> spinasProjectCMake[name, root, precision] <> spinasCalcHEPCMake[name, calchep] <>
       spinasCalcHEPNumericalCMake[name, numerical] <> spinasMadGraphCMake[name] <> spinasMadEventCMake[name, madevent],
-    "README" -> "Code generation mode: " <> options["CodeStyle"] <> ".\n\n" <> spinasFamilyProjectREADME[name, ir, precision] <> spinasCalcHEPREADME[name, calchep] <>
+    "README" -> "Code generation mode: " <> options["CodeStyle"] <> ".\n\n" <> spinasFamilyProjectREADME[name, ir, precision] <> spinasHelicitySumREADME[ir] <> spinasCalcHEPREADME[name, calchep] <>
       spinasCalcHEPNumericalREADME[numerical] <> spinasMadGraphREADME[name, madgraph] <> spinasMadEventREADME[name, madevent]|>;
   contents = Join[contents, validationProject["Contents"], numericalProject["Contents"], madgraphProject["Contents"], madeventProject["Contents"]];
   If[!AllTrue[Values[contents], StringQ], Return[Failure["SPINASGeneration", <|"MessageTemplate" -> "The C++ project could not be generated."|>]]];
@@ -2703,6 +2872,7 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
       <|"Executable" -> FileNameJoin[{dir, "build", "results", "n_calchep"}],
         "SessionDirectory" -> FileNameJoin[{dir, "build", "results"}]|>],
     "CodeStyle" -> options["CodeStyle"], "CodeLayout" -> code["Style"],
+    "HelicitySummation" -> ir["HelicitySummation"],
     "Optimization" -> code["Optimization"]|>,
     KeyTake[ir, {"HelicityConfigurations", "InputBranchCount", "GeneratedBranchCount",
       "InitialSpinAverage", "SymmetryFactor", "FinalStateSymmetryDivisor", "FixedHelicities"}]];

@@ -243,7 +243,20 @@ default, analyzes each supplied process and shares numerical work by \
 parameter, momentum and spin dependence. \"Readable\" keeps the direct \
 formula layout. Both expose the same amplitude and spin-sum interfaces; the \
 manifest reports the layout and applied optimizations."}], "TableText"]},
-      {Cell[TextData[{Cell[BoxData[RowBox[{"\"Build\""}]],
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"HelicitySymmetry\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{"Spin-sum reuse of globally reversed massless \
+helicities. Automatic attempts a bounded exact algebraic certificate and \
+otherwise keeps exhaustive summation. None disables reuse. \"Conjugation\" \
+explicitly asserts the relation for the requested complete massive-spin sum, \
+as in real-coupling tree-level vector QED. Every complex amplitude remains \
+exported. Only present conjugate partners are paired; fixed or unpaired \
+selections remain exhaustive. Nonzero or symbolic widths disable pairing, and \
+any nonreal current parameter makes the generated evaluator use the \
+exhaustive sum. HelicitySummation in the manifest records what was applied."}]\
+, "TableText"]}, {Cell[TextData[{Cell[BoxData[RowBox[{"\"Build\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"False"}]], "InlineFormula"]}],
         "TableText"], Cell[TextData[{"Whether to configure and compile the \

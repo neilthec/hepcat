@@ -118,31 +118,51 @@ and metadata with the combined table. Each curve is normalized to its own N=2
 time. The `AllSpurious` label describes the saved representation preference;
 individual sectors can still have only physical poles after cancellation.
 
-The 2026-11-05 four-way run on the Apple M3 development Mac, with Apple Clang
-21 Release `-O3`, gave these seconds for 10,000 points (median of nine serial
-full sweeps). The center-of-mass energy was 100 GeV and the time-derived saved
-seed was `1793918752098091000`. Model defaults were Me = 0.0005 GeV and EE = 0.31333.
+The 2026-11-05 run with conjugate-helicity reuse on the Apple M3 development
+Mac, with Apple Clang 21 Release `-O3`, gave these seconds for 10,000 points
+(median of nine serial full sweeps). The center-of-mass energy was 100 GeV and
+the saved seed was `1793918752098091000`. Model defaults were Me = 0.0005 GeV
+and EE = 0.31333. All points and source formulas are unchanged from the earlier
+exhaustive-summation benchmark.
 
 | Photons | HEPCAT/SPINAS AllPhysical (s) | HEPCAT/SPINAS AllSpurious (s) | CalcHEP (s) | MadGraph (s) |
 | --- | ---: | ---: | ---: | ---: |
-| 2 | 0.006137 | 0.005338 | 0.002948 | 0.013862 |
-| 3 | 0.022125 | 0.027845 | 0.020787 | 0.072682 |
-| 4 | 0.235735 | 0.176184 | 0.250278 | 0.446573 |
+| 2 | 0.005841 | 0.005091 | 0.003237 | 0.014576 |
+| 3 | 0.017703 | 0.020816 | 0.021676 | 0.075635 |
+| 4 | 0.124803 | 0.108535 | 0.250112 | 0.446138 |
+
+The saved models are tree-level vectorlike QED, so this benchmark explicitly
+uses `"HelicitySymmetry" -> "Conjugation"`. This is a declared theory symmetry,
+not a symmetry fitted to samples. It evaluates 2, 4 and 8 representative photon
+configurations while retaining all 4, 8 and 16 complex helicity amplitudes.
+The ordinary exporter defaults to `Automatic`, which only reuses pairs proved
+by bounded exact algebra. Use `None` for an exhaustive evaluator; the export
+script accepts `--helicity-symmetry None` to reproduce that comparison.
+Nonreal runtime parameters restore exhaustive sums. Fixed selections lacking
+the reversed helicities also remain exhaustive.
 
 Every one of the 30,000 points agreed across all four methods; the largest
-relative difference was 2.62e-10. Point-file hashes were identical between
-the paired runs. CalcHEP and MadGraph table entries use the physical run's nine
-sweeps, with the separately repeated reference statistics retained as a stability
-check. Timing includes momentum setup and complete spin/helicity sums, excluding
-all generation, compilation, initialization and validation. MadGraph uses the
-exhaustive native MATRIX interface described below, with no helicity sampling or
-recycling. This comparison measures matrix-element evaluation, not event throughput.
+relative difference was 2.62e-10. Each shortened SPINAS sum was independently
+checked against the exhaustive sum of its public complex amplitudes outside
+timing. Point-file and source-amplitude hashes match the earlier run. CalcHEP
+and MadGraph table entries use the physical run's nine sweeps; separately
+repeated reference statistics are retained as a stability check. Timing includes
+momentum setup and complete spin/helicity sums, excluding generation,
+compilation, initialization and validation. MadGraph uses the exhaustive native
+MATRIX interface described below, without helicity sampling or recycling.
+These are matrix-element evaluation timings, not event throughput.
+
+For four photons, AllPhysical fell from 0.235735 s to 0.124803 s (1.89 times
+faster), and AllSpurious from 0.176184 s to 0.108535 s (1.62 times faster).
+The smaller two-photon gain reflects the unchanged momentum/product setup.
 
 The local combined table and complete provenance are
-`build-fourway-double/fourway.csv` and `build-fourway-double/fourway-summary.json`.
-The CSV also gives each method's growth relative to its own N=2 baseline. Raw
-repetitions, identical point sets and pointwise comparisons remain in that build
-directory. These generated artifacts are excluded from Git.
+`build-fourway-helicity-double/fourway.csv` and
+`build-fourway-helicity-double/fourway-summary.json`. The CSV also gives each
+method's growth relative to its own N=2 baseline. Raw repetitions, identical
+points, exhaustive comparisons and before/after speedups remain in that build
+directory. The earlier exhaustive run is retained in `build-fourway-double`.
+These generated artifacts are excluded from Git.
 
 ## Readable versus optimized export timings
 
