@@ -1,8 +1,8 @@
-(* Export the saved, verified all-physical QED formulas for timing.
+(* Export saved QED formulas for timing, without changing their representation.
    Run with WolframKernel -script benchmarks/export-physical.wl.
    Optional arguments: --output DIR, --source DIR, --spinas DIR,
      --calchep DIR, --madgraph DIR, --configuration MANIFEST,
-     --code-style Optimized|Readable.
+     --code-style Optimized|Readable, --representation AllPhysical|AllSpurious.
    The configuration manifest is an existing WriteSPINASProcess export. Its
    explicitly selected reference installations/models are retained by default.
    No amplitude is constructed, simplified, fitted or changed by this script. *)
@@ -14,12 +14,17 @@ benchmarkArguments = If[$ScriptCommandLine =!= {}, Rest[$ScriptCommandLine],
 benchmarkOptions = <||>;
 If[OddQ[Length[benchmarkArguments]], Print["Expected option/value argument pairs."]; Quit[1]];
 Do[
-  If[!MemberQ[{"--output", "--source", "--spinas", "--calchep", "--madgraph", "--configuration", "--code-style"}, benchmarkArguments[[benchmarkArgumentIndex]]],
+  If[!MemberQ[{"--output", "--source", "--spinas", "--calchep", "--madgraph", "--configuration", "--code-style", "--representation"}, benchmarkArguments[[benchmarkArgumentIndex]]],
     Print["Unknown option: ", benchmarkArguments[[benchmarkArgumentIndex]]]; Quit[1]];
   AssociateTo[benchmarkOptions, benchmarkArguments[[benchmarkArgumentIndex]] -> benchmarkArguments[[benchmarkArgumentIndex + 1]]],
   {benchmarkArgumentIndex, 1, Length[benchmarkArguments], 2}];
+benchmarkRepresentation = Lookup[benchmarkOptions, "--representation", "AllPhysical"];
+If[!MemberQ[{"AllPhysical", "AllSpurious"}, benchmarkRepresentation],
+  Print["--representation must be AllPhysical or AllSpurious."]; Quit[1]];
+benchmarkModelNumber = If[benchmarkRepresentation === "AllPhysical", 3, 4];
 benchmarkOutput = ExpandFileName[Lookup[benchmarkOptions, "--output",
-  FileNameJoin[{benchmarkRepository, "benchmarks", "build-physical-double", "exports"}]]];
+  FileNameJoin[{benchmarkRepository, "benchmarks",
+    If[benchmarkRepresentation === "AllPhysical", "build-physical-double", "build-spurious-double"], "exports"}]]];
 benchmarkSource = ExpandFileName[Lookup[benchmarkOptions, "--source", FileNameJoin[{benchmarkRepository, "source"}]]];
 benchmarkCodeStyle = Lookup[benchmarkOptions, "--code-style", "Optimized"];
 If[!MemberQ[{"Optimized", "Readable"}, benchmarkCodeStyle],
@@ -39,8 +44,8 @@ If[Lookup[benchmarkCH, "Status", ""] =!= "AVAILABLE" || Lookup[benchmarkMG, "Sta
   Print["The manifest must explicitly configure both independent references and the electron/photon restriction {11,22}."]; Quit[1]];
 Get[FileNameJoin[{benchmarkSource, "HEPCAT.wl"}]];
 benchmarkModelDirectory = FileNameJoin[{benchmarkRepository, "models"}];
-benchmarkModel = ReadModel[benchmarkModelDirectory, 3];
-If[!ListQ[benchmarkModel], Print["Could not load QED factorization model 3."]; Quit[1]];
+benchmarkModel = ReadModel[benchmarkModelDirectory, benchmarkModelNumber];
+If[!ListQ[benchmarkModel], Print["Could not load QED factorization model ", benchmarkModelNumber, "."]; Quit[1]];
 benchmarkMass = ModelParameter[benchmarkModel, "Me"];
 benchmarkLookup[particles_] := LookupAmplitude[
   MapIndexed[{#1, First[#2]} &, particles], benchmarkModel, False,
@@ -49,9 +54,17 @@ benchmarkPhysicalPoleQ[PropDen[Mom[Multiparticle[labels__Integer]], mass_], legs
   DuplicateFreeQ[cut] && SubsetQ[Range[legs], cut] && 2 <= Length[cut] <= legs - 2 &&
     Count[cut, 1 | 2] === 1 && mass === benchmarkMass];
 benchmarkPhysicalPoleQ[_, _] := False;
+benchmarkInverseCategory[base_, legs_Integer] := Which[
+  benchmarkPhysicalPoleQ[base, legs], "PhysicalElectronPropagator",
+  MatchQ[base, _ModelParameter], "ModelParameter",
+  NumberQ[base], "NumericalConstant",
+  MatchQ[base, _SpinorChain], "SpinorProduct",
+  !FreeQ[base, _SpinorChain], "CompositeSpinorExpression",
+  !FreeQ[base, _PropDen | _MomProd], "ScalarInvariantExpression",
+  True, "OtherExpression"];
 benchmarkFileHashes = Association@Table[
   filename -> FileHash[FileNameJoin[{benchmarkModelDirectory, filename}], "SHA256", "HexString"],
-  {filename, {"amps3.mdl", "prtcls3.mdl", "vars3.mdl", "func3.mdl"}}];
+  {filename, (# <> ToString[benchmarkModelNumber] <> ".mdl" & /@ {"amps", "prtcls", "vars", "func"})}];
 benchmarkRecords = {};
 Do[
   benchmarkEntries = Table[
@@ -59,10 +72,11 @@ Do[
     benchmarkExpression = benchmarkLookup[benchmarkParticles];
     If[benchmarkExpression === 0 || !FreeQ[benchmarkExpression, _Failure | $Failed | Spinor["Xi", ___] | _xFactor | _xTildeFactor],
       Print["Missing or unsupported saved amplitude: ", benchmarkParticles]; Quit[1]];
-    benchmarkInverseBases = DeleteDuplicates[Cases[benchmarkExpression, Power[base_, exponent_?Negative] :> base, Infinity]];
+    benchmarkInversePowers = DeleteDuplicates[Cases[benchmarkExpression, inverse : Power[_, _?Negative] :> inverse, Infinity]];
+    benchmarkInverseBases = DeleteDuplicates[First /@ benchmarkInversePowers];
     benchmarkBadBases = Select[benchmarkInverseBases,
       !MatchQ[#, _ModelParameter] && !benchmarkPhysicalPoleQ[#, photons + 2] &];
-    If[benchmarkBadBases =!= {},
+    If[benchmarkRepresentation === "AllPhysical" && benchmarkBadBases =!= {},
       Print["Nonphysical denominator in ", benchmarkParticles, ": ", InputForm[benchmarkBadBases]]; Quit[1]];
     AppendTo[benchmarkRecords, <|
       "Particles" -> benchmarkParticles,
@@ -70,8 +84,11 @@ Do[
       "ExpressionLeaves" -> LeafCount[benchmarkExpression],
       "ExpressionSHA256" -> Hash[benchmarkExpression, "SHA256", "HexString"],
       "PhysicalPoleCuts" -> (Cases[#, Multiparticle[labels__] :> {labels}, Infinity][[1]] & /@
-        Select[benchmarkInverseBases, Head[#] === PropDen &]),
-      "NonkinematicInverseFactors" -> (ModelParameterName /@ Select[benchmarkInverseBases, Head[#] === ModelParameter &])|>];
+        Select[benchmarkInverseBases, benchmarkPhysicalPoleQ[#, photons + 2] &]),
+      "NonkinematicInverseFactors" -> (ModelParameterName /@ Select[benchmarkInverseBases, Head[#] === ModelParameter &]),
+      "InverseFactors" -> (<|"Base" -> ToString[#[[1]], InputForm],
+        "Exponent" -> ToString[#[[2]], InputForm],
+        "Category" -> benchmarkInverseCategory[#[[1]], photons + 2]|> & /@ benchmarkInversePowers)|>];
     {benchmarkParticles, benchmarkExpression},
     {negative, 0, photons}];
   benchmarkName = "ee" <> StringRepeat["A", photons];
@@ -90,9 +107,11 @@ Do[
     "MadGraphParameterMap" -> Normal[Lookup[benchmarkMG, "ParameterMap", <||>]], "Overwrite" -> True];
   If[FailureQ[benchmarkExport] || benchmarkExport === $Failed, Print[InputForm[benchmarkExport]]; Quit[1]];
   benchmarkProvenance = <|
-    "Representation" -> "AllPhysical", "Precision" -> "Double", "Photons" -> photons,
+    "Representation" -> benchmarkRepresentation, "Precision" -> "Double", "Photons" -> photons,
     "CodeStyle" -> benchmarkCodeStyle,
-    "AmplitudeSource" -> "ReadModel[models,3] and LookupAmplitude; unchanged saved complete amplitudes",
+    "AmplitudeSource" -> "ReadModel[models," <> ToString[benchmarkModelNumber] <>
+      "] and LookupAmplitude; unchanged saved complete amplitudes",
+    "ModelNumber" -> benchmarkModelNumber,
     "ModelFilesSHA256" -> benchmarkFileHashes,
     "InputHelicitySectors" -> Select[benchmarkRecords, Length[#["Particles"]] === photons + 2 &],
     "CompletePhotonHelicityCount" -> 2^photons,
@@ -102,7 +121,7 @@ Do[
     "OptimizationBackendSHA256" -> FileHash[FileNameJoin[{benchmarkSource, "HEPCAT-SPINAS-Optimize.wl"}], "SHA256", "HexString"],
     "ReferenceConfigurationSHA256" -> FileHash[benchmarkConfigurationFile, "SHA256", "HexString"]|>;
   Export[FileNameJoin[{benchmarkDirectory, "benchmark-amplitudes.json"}], benchmarkProvenance, "RawJSON"];
-  Print["Exported N=", photons, " complete all-physical family: ", benchmarkDirectory],
+  Print["Exported N=", photons, " complete ", benchmarkRepresentation, " family: ", benchmarkDirectory],
   {photons, 2, 4}];
-Print["All physical double-precision exports are ready. Build the numerical benchmark separately."];
+Print[benchmarkRepresentation, " double-precision exports are ready. Build the numerical benchmark separately."];
 Quit[0];

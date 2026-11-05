@@ -25,7 +25,11 @@ and MadGraph installations and reference models. Its default is
 `tests/spinas-output/eeAA/manifest.json`; use `--configuration /path/to/manifest.json`
 to select another. Optional `--calchep` and `--madgraph` override installation
 paths; HEPCAT selects a compatible Python for the chosen MadGraph installation.
-Source formulas always come from model 3 in this checkout.
+Source formulas come from model 3 by default. `--representation AllSpurious`
+selects the saved formulas in model 4 instead, without applying further identities.
+Both selections record every inverse factor, including composite spinor
+denominators, in their amplitude sidecars. Only `AllPhysical` requires every
+kinematic inverse factor to be a physical electron propagator.
 
 Build a private double-precision SPINAS library and a separate benchmark:
 
@@ -85,6 +89,62 @@ the same explicit seed, energy, point count and repetitions. The metadata record
 Compare the total setting-momenta plus spin-sum time: precomputing all spin
 components can be a tradeoff when only one massive-spin configuration is needed.
 The timing results, rather than the mode name, determine the benefit for a process.
+
+## Compare physical and spurious formulas with both reference generators
+
+Export the complete saved families into separate directories:
+
+```sh
+/Applications/Wolfram.app/Contents/MacOS/WolframKernel \
+  -script benchmarks/export-physical.wl --representation AllPhysical \
+  --output "$benchmark_dir/physical-exports"
+/Applications/Wolfram.app/Contents/MacOS/WolframKernel \
+  -script benchmarks/export-physical.wl --representation AllSpurious \
+  --output "$benchmark_dir/spurious-exports"
+```
+
+Configure and build a separate benchmark for each export set using the preceding
+CMake recipe. Run the two benchmarks serially with the same explicit seed,
+`--points 10000 --repeats 9 --warmup 100 --energy 100`. Both exports default to
+optimized double-precision SPINAS code. Each run independently checks every point
+against CalcHEP and MadGraph before accepting a timing row.
+
+Before making a four-column table, require matching point-file hashes, model
+parameters and precision, and compare the two saved SPINAS value columns directly.
+Use the physical and spurious SPINAS medians and the reference medians from one
+designated run. Keep the second run's reference times as repeatability evidence;
+do not select whichever reference timing is faster. Preserve both raw result sets
+and metadata with the combined table. Each curve is normalized to its own N=2
+time. The `AllSpurious` label describes the saved representation preference;
+individual sectors can still have only physical poles after cancellation.
+
+The 2026-11-05 four-way run on the Apple M3 development Mac, with Apple Clang
+21 Release `-O3`, gave these seconds for 10,000 points (median of nine serial
+full sweeps). The center-of-mass energy was 100 GeV and the time-derived saved
+seed was `1793918752098091000`. Model defaults were Me = 0.0005 GeV and EE = 0.31333.
+
+| Photons | HEPCAT/SPINAS AllPhysical (s) | HEPCAT/SPINAS AllSpurious (s) | CalcHEP (s) | MadGraph (s) |
+| --- | ---: | ---: | ---: | ---: |
+| 2 | 0.006137 | 0.005338 | 0.002948 | 0.013862 |
+| 3 | 0.022125 | 0.027845 | 0.020787 | 0.072682 |
+| 4 | 0.235735 | 0.176184 | 0.250278 | 0.446573 |
+
+Every one of the 30,000 points agreed across all four methods; the largest
+relative difference was 2.62e-10. Point-file hashes were identical between
+the paired runs. CalcHEP and MadGraph table entries use the physical run's nine
+sweeps, with the separately repeated reference statistics retained as a stability
+check. Timing includes momentum setup and complete spin/helicity sums, excluding
+all generation, compilation, initialization and validation. MadGraph uses the
+exhaustive native MATRIX interface described below, with no helicity sampling or
+recycling. This comparison measures matrix-element evaluation, not event throughput.
+
+The local combined table and complete provenance are
+`build-fourway-double/fourway.csv` and `build-fourway-double/fourway-summary.json`.
+The CSV also gives each method's growth relative to its own N=2 baseline. Raw
+repetitions, identical point sets and pointwise comparisons remain in that build
+directory. These generated artifacts are excluded from Git.
+
+## Readable versus optimized export timings
 
 On the development Mac (arm64, Apple Clang 21, double precision, `-O3`), the
 2026-11-05 comparison gave the following medians for 10,000 points and nine
