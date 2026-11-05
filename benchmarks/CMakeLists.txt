@@ -34,6 +34,25 @@ if(NOT CONFIGURE_STATUS EQUAL 0)
   message(FATAL_ERROR "Benchmark configuration failed: ${CONFIGURE_ERROR}")
 endif()
 include("${GENERATED_DIRECTORY}/projects.cmake")
+# A matching mantissa width does not establish C++ ABI compatibility. In
+# particular, macOS arm64 double and long double have equal precision but
+# different mangled parameter types. Check the actual linked SPINAS library.
+include(CheckCXXSourceCompiles)
+include(CMakePushCheckState)
+cmake_push_check_state(RESET)
+set(CMAKE_REQUIRED_INCLUDES "${SPINAS_INCLUDE_DIR}")
+set(CMAKE_REQUIRED_LIBRARIES "${SPINAS_LIBRARY}")
+if(BENCHMARK_LONG_DOUBLE)
+  set(CMAKE_REQUIRED_DEFINITIONS -DWITH_LONG_DOUBLE)
+endif()
+unset(HEPCAT_SPINAS_PRECISION_MATCHES CACHE)
+check_cxx_source_compiles("#include <spinas.h>
+int main() { spinas::particle p(ldouble(1)); return p.get_mass() > 0 ? 0 : 1; }"
+  HEPCAT_SPINAS_PRECISION_MATCHES)
+cmake_pop_check_state()
+if(NOT HEPCAT_SPINAS_PRECISION_MATCHES)
+  message(FATAL_ERROR "The SPINAS library does not match the exported scalar precision. Select a matching SPINAS_LIBRARY.")
+endif()
 add_executable(qed_photon_benchmark qed-photons.cpp ${BENCHMARK_SOURCES}
   "${CALCHEP_ROOT}/include/VandPgate.c")
 target_include_directories(qed_photon_benchmark PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}"

@@ -123,8 +123,16 @@ def main():
         sources.extend([directory / 'process.cpp', generated])
         declarations.append('void add_' + name + '(std::vector<hepcat_benchmark::Entry>&);')
         registrations.append('  add_' + name + '(entries);')
-        provenance.append({'N': n, 'Export': str(directory), 'Precision': data['Precision'],
-                           'SHA256': {f: sha(directory / f) for f in ('manifest.json', 'process.hpp', 'process.cpp')}})
+        record = {'N': n, 'Export': str(directory), 'Precision': data['Precision'],
+                  'SHA256': {f: sha(directory / f) for f in ('manifest.json', 'process.hpp', 'process.cpp')}}
+        amplitude_source = directory / 'benchmark-amplitudes.json'
+        if amplitude_source.is_file():
+            record['AmplitudeSource'] = json.loads(amplitude_source.read_text())
+            record['SHA256']['benchmark-amplitudes.json'] = sha(amplitude_source)
+        else:
+            record['AmplitudeSource'] = {'PolePreference': 'Unspecified',
+                                         'Note': 'Existing export; representation was not independently classified.'}
+        provenance.append(record)
     registry = args.output / 'registry.cpp'
     registry.write_text('#include "benchmark.hpp"\n' + '\n'.join(declarations) +
                         '\nnamespace hepcat_benchmark {\nvoid register_processes(std::vector<Entry>& entries) {\n' +
@@ -146,6 +154,8 @@ def main():
     for directory, data, _ in projects:
         inputs.extend(directory.glob('*.hpp'))
         inputs.extend(directory / f for f in ('process.cpp', 'manifest.json'))
+        if (directory / 'benchmark-amplitudes.json').is_file():
+            inputs.append(directory / 'benchmark-amplitudes.json')
         ch = data['CalcHEPValidation']
         model_inputs.extend(Path(ch['ModelDirectory']) / (prefix + str(ch['ModelNumber']) + '.mdl')
                             for prefix in ('vars', 'func', 'prtcls', 'lgrng', 'extlib'))

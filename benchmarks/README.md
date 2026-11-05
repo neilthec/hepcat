@@ -10,7 +10,54 @@ The calculation and timers are C++: [qed-photons.cpp](qed-photons.cpp) and
 existing export manifests and writes build adapters. It neither changes the
 amplitudes nor regenerates or overwrites the user's exported projects.
 
-## Build and run
+## All-physical expressions in double precision
+
+`export-physical.wl` reads the saved amplitudes from QED factorization model 3.
+It checks that every kinematic denominator is a physical electron propagator,
+then exports the complete helicity families for two, three and four photons.
+It does not reconstruct or simplify a formula. The `benchmark-amplitudes.json`
+sidecar records the model files, expressions, complexity scores and pole cuts.
+The timing metadata includes this provenance, so a physical-pole calculation
+cannot be confused with an unclassified earlier export.
+
+The script uses an existing export manifest for the explicitly selected CalcHEP
+and MadGraph installations and reference models. Its default is
+`tests/spinas-output/eeAA/manifest.json`; use `--configuration /path/to/manifest.json`
+to select another. Optional `--calchep` and `--madgraph` override installation
+paths; HEPCAT selects a compatible Python for the chosen MadGraph installation.
+Source formulas always come from model 3 in this checkout.
+
+Build a private double-precision SPINAS library and a separate benchmark:
+
+```sh
+benchmark_dir="$PWD/benchmarks/build-physical-double"
+cmake -S "$HOME/code/spinas" -B "$benchmark_dir/spinas" \
+  -DCMAKE_BUILD_TYPE=Release -DPRECISION_TYPE=DOUBLE -DBUILD_TESTING=OFF
+cmake --build "$benchmark_dir/spinas" --target spinas_static --parallel
+/Applications/Wolfram.app/Contents/MacOS/WolframKernel \
+  -script benchmarks/export-physical.wl
+cmake -S benchmarks -B "$benchmark_dir/optimized" \
+  -DCALCHEP_ROOT="$HOME/code/CalcHEP/calchep_3.9.2" \
+  -DSPINAS_ROOT="$HOME/code/spinas" \
+  -DSPINAS_LIBRARY="$benchmark_dir/spinas/libspinas.a" \
+  "-DHEPCAT_PROCESS_DIRECTORIES=$benchmark_dir/exports/eeAA;$benchmark_dir/exports/eeAAA;$benchmark_dir/exports/eeAAAA"
+cmake --build "$benchmark_dir/optimized" --parallel
+ctest --test-dir "$benchmark_dir/optimized" --output-on-failure
+cd "$benchmark_dir/optimized"
+./qed_photon_benchmark --output physical-double
+```
+
+Adjust the Wolfram executable and installation paths for another computer.
+This leaves the existing SPINAS library and notebook exports unchanged. Both
+the emitted C++ scalar type and the linked library must be double precision;
+CMake checks their actual link compatibility. Equal mantissa widths alone are
+insufficient to identify the C++ type on platforms such as macOS arm64.
+
+The generated exporter caches fixed numerical constants once and refreshes
+model-only factors when masses or couplings change. Spinor and momentum
+dependence is retained on its ordinary per-point/per-spin update path.
+
+## Benchmark other existing exports
 
 First export a complete helicity family for each photon count with
 `WriteSPINASProcess`. Configure both validation backends in those exports:
@@ -31,8 +78,10 @@ cd benchmarks/build
 ./qed_photon_benchmark
 ```
 
-The default exports are `tests/spinas-output/eeAA`, `eeAAA`, and `eeAAAA`:
-N=2,3,4. These cover every helicity. The newer N=5 and N=6 all-positive
+The generic CMake defaults use `tests/spinas-output/eeAA`, `eeAAA`, and `eeAAAA`:
+N=2,3,4. Their representation is whatever the user last exported. The original
+timing run used spurious-pole formulas. Use the separate workflow above for the
+explicitly verified all-physical set. The newer N=5 and N=6 all-positive
 formulas alone are **not** complete helicity sums. Add those multiplicities
 when all their independent helicity sectors have been constructed and exported.
 The program rejects incomplete families rather than comparing them with the

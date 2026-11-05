@@ -95,6 +95,11 @@ void write_results(const Options& options, const std::vector<Result>& results) {
     << ",\n\"Normalization\":\"Incoming spin average 1/4, outgoing identical-photon factor 1/N!\""
     << ",\n\"MadGraphSum\":\"Exhaustive native MATRIX loop over full generated NHEL inventory; no helicity sampling or recycling\""
     << ",\n\"ReferencePrecision\":\"double\",\n\"SPINASPrecisionBits\":" << std::numeric_limits<Real>::digits
+#ifdef WITH_LONG_DOUBLE
+    << ",\n\"SPINASScalarType\":\"long double\""
+#else
+    << ",\n\"SPINASScalarType\":\"double\""
+#endif
     << ",\n\"LogicalProcessors\":" << std::thread::hardware_concurrency()
     << ",\n\"System\":" << madgraph_detail::json_string(have_machine ? std::string(machine.sysname) + " " + machine.release + " " + machine.machine : "unknown")
     << ",\n\"Build\":" << madgraph_detail::read_text(HEPCAT_BENCHMARK_BUILD_INFO)

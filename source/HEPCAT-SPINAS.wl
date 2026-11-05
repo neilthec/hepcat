@@ -42,7 +42,9 @@ spinasProcessIR[process_List, amplitude_, model_List, options_Association] := Mo
    rows, masses, massRules, massValues, parameterRules, declared, usedParameters = {},
    parameterDefaults, parameterCpp, parameterNames, expression, original, crossed,
    weights, helicities, spin2, indexed, spinIndices, implicit, indexRules = {},
-   emit, emitParameter, emitVector, emitDot, momentumCoefficients, endpoint, chainCode,
+   emit, emitRaw, emitParameter, emitVector, emitDot, momentumCoefficients, endpoint, chainCode,
+   closedScalarQ, parameterScalarQ, cacheConstant, cacheParameter,
+   constantCaches = {}, parameterCaches = {},
    traceCode, chains = {}, chainStatements = {}, chainNames = {}, chainCpp, expressionCpp, massCpp,
    scalarExpressions = {}, scalarStatements = {}, scalarNames = {}, scalarComments = {},
    usedNames = {}, allocateName, cacheScalar, emitProduct, emitQuotient, emitSum,
@@ -61,8 +63,37 @@ spinasProcessIR[process_List, amplitude_, model_List, options_Association] := Mo
     name = allocateName[base]; AppendTo[scalarExpressions, value]; AppendTo[scalarNames, name];
     AppendTo[scalarComments, spinasReadableMath[value]];
     AppendTo[scalarStatements, "const cdouble " <> name <> " = " <> code <> ";"]; name];
-  emitProduct[values_List] := If[values === {}, "ldouble(1.0L)",
-    StringRiffle[emit /@ values, " * "]];
+  closedScalarQ[value_] := NumberQ[value] || MemberQ[{Pi, E}, value] ||
+    (MemberQ[{Plus, Times, Power, Conjugate, Re, Im, Abs,
+        Sin, Cos, Tan, ArcSin, ArcCos, ArcTan, Exp, Log, Sinh, Cosh, Tanh}, Head[value]] &&
+      AllTrue[List @@ value, closedScalarQ]);
+  parameterScalarQ[value_] := closedScalarQ[value] || Head[value] === ModelParameter ||
+    (MemberQ[{Plus, Times, Power, Conjugate, Re, Im, Abs,
+        Sin, Cos, Tan, ArcSin, ArcCos, ArcTan, Exp, Log, Sinh, Cosh, Tanh}, Head[value]] &&
+      AllTrue[List @@ value, parameterScalarQ]);
+  cacheConstant[value_] := Module[{position, name, code, base},
+    position = FirstPosition[Lookup[constantCaches, "Expression", {}], value, Missing["New"], {1}];
+    If[!MissingQ[position], Return[constantCaches[[First[position]]]["Name"]]];
+    base = Which[value === Pi, "constant_pi", value === E, "constant_e",
+      MatchQ[value, Power[_Integer?Positive, 1/2]], "constant_sqrt" <> ToString[First[value]],
+      True, "scalar_constant_" <> ToString[Length[constantCaches] + 1]];
+    name = allocateName[base];
+    code = If[MatchQ[value, Power[_, 1/2]] && NumberQ[First[value]] &&
+        TrueQ[Im[First[value]] == 0 && Re[First[value]] >= 0],
+      "std::sqrt(" <> spinasCppNumber[First[value]] <> ")", emitRaw[value]];
+    AppendTo[constantCaches, <|"Expression" -> value, "Name" -> name, "Initializer" -> code|>]; name];
+  cacheParameter[value_] := Module[{position, name, code},
+    position = FirstPosition[Lookup[parameterCaches, "Expression", {}], value, Missing["New"], {1}];
+    If[!MissingQ[position], Return[parameterCaches[[First[position]]]["Name"]]];
+    name = allocateName["parameter_factor_" <> ToString[Length[parameterCaches] + 1]];
+    code = emitRaw[value];
+    AppendTo[parameterCaches, <|"Expression" -> value, "Name" -> name, "Initializer" -> code|>]; name];
+  emitProduct[values_List] := Module[{pure, other},
+    If[values === {}, Return["ldouble(1.0L)"]];
+    pure = Select[values, parameterScalarQ]; other = Select[values, !parameterScalarQ[#] &];
+    If[other =!= {} && !FreeQ[pure, _ModelParameter] && Length[pure] > 1,
+      StringRiffle[Join[{emit[Times @@ pure]}, emit /@ other], " * "],
+      StringRiffle[emit /@ values, " * "]]];
   emitQuotient[value_] := Module[{top = Numerator[value], bottom = Denominator[value], topCode, bottomCode},
     topCode = If[Head[top] === Times, emitProduct[List @@ top], emit[top]];
     If[bottom === 1, Return[topCode]];
@@ -317,6 +348,11 @@ spinasProcessIR[process_List, amplitude_, model_List, options_Association] := Mo
         If[EvenQ[First[#2]], "true", "false"] <> ")" &, items];
       "matrix_trace(" <> StringRiffle[matrices, " * "] <> ")"];
     emit[value_] := Which[
+      !NumberQ[value] && closedScalarQ[value], cacheConstant[value],
+      !AtomQ[value] && Head[value] =!= ModelParameter && parameterScalarQ[value] &&
+        !FreeQ[value, _ModelParameter], cacheParameter[value],
+      True, emitRaw[value]];
+    emitRaw[value_] := Which[
       Head[value] === ModelParameter, emitParameter[value],
       IntegerQ[value], "ldouble(" <> ToString[value] <> ".0L)",
       Head[value] === Rational, "ldouble(" <> ToString[Numerator[value]] <> ".0L / " <> ToString[Denominator[value]] <> ".0L)",
@@ -380,6 +416,7 @@ spinasProcessIR[process_List, amplitude_, model_List, options_Association] := Mo
       "MassValues" -> massValues, "MassCpp" -> massCpp,
       "ParameterNames" -> parameterNames, "ParameterSymbols" -> usedParameters,
       "ParameterDefaults" -> parameterDefaults, "ParameterCppDefaults" -> parameterCpp,
+      "ConstantCaches" -> constantCaches, "ParameterCaches" -> parameterCaches,
       "ExpressionCpp" -> expressionCpp, "ExpressionPieces" -> expressionPieces,
       "ChainStatements" -> chainStatements, "Chains" -> chains, "ChainNames" -> chainNames,
       "ScalarExpressions" -> scalarExpressions, "ScalarNames" -> scalarNames,
@@ -485,6 +522,8 @@ spinasReadableComponentBody[ir_Association, family_:False] := Module[
    addSection, name, base, suffix, text, pieces, terms, signs, code, prefix, emitted,
    chains = Lookup[ir, "Chains", {}], scalars = Lookup[ir, "ScalarStatements", {}]},
   used = Join[Lookup[ir, "ChainNames", {}], Lookup[ir, "ScalarNames", {}],
+    Lookup[Lookup[ir, "ConstantCaches", {}], "Name", {}],
+    Lookup[Lookup[ir, "ParameterCaches", {}], "Name", {}],
     {"numerator", "denominator", "spinor_spins", "particle_view"},
     Table["p" <> ToString[i], {i, n}],
     Flatten[Table[If[ranks[[i]] > 1,
@@ -922,6 +961,68 @@ spinasNativeEndpoint[spinor_Spinor, rank_Integer] := Module[{items = List @@ spi
     "Upper" -> (position === 2 || items[[2]] === "Upper"), "Rank" -> rank|>
 ];
 
+(* Constants are class-static and parameter factors are refreshed whenever
+   model values change. Merge component-local cache names without relying on
+   printed parameter names, default values, particle labels or helicities. *)
+spinasMergeScalarCaches[ir_Association, reservedNames_List : {}] := Module[
+  {components, used, allocate, keys = {}, constants = {}, parameters = {}, maps = {},
+   component, entries, mapping, position, name, entry, updated, rewrite, rewritten},
+  If[TrueQ[Lookup[ir, "ScalarCachesMerged", False]], Return[ir]];
+  components = If[TrueQ[Lookup[ir, "Family", False]], ir["FamilyComponents"], {ir}];
+  used = Join[reservedNames, Flatten[Lookup[components, "ChainNames", {}]],
+    Flatten[Lookup[components, "ScalarNames", {}]], spinasReadableIdentifier /@ ir["ParameterNames"],
+    {"parameters", "external_masses", "momenta", "momenta_ready", "component", "amp", "amp2", "spin_sum"},
+    Table["p" <> ToString[i], {i, ir["LegCount"]}]];
+  allocate[base_String] := Module[{chosen = base, suffix = 1},
+    While[MemberQ[used, chosen], suffix++; chosen = base <> "_" <> ToString[suffix]];
+    AppendTo[used, chosen]; chosen];
+  Do[
+    entries = Join[(Join[#, <|"Kind" -> "Constant"|>] &) /@ Lookup[component, "ConstantCaches", {}],
+      (Join[#, <|"Kind" -> "Parameter"|>] &) /@ Lookup[component, "ParameterCaches", {}]];
+    mapping = {};
+    Do[
+      position = FirstPosition[keys, {entry["Kind"], entry["Expression"]}, Missing["New"], {1}];
+      If[MissingQ[position],
+        name = allocate[entry["Name"]]; AppendTo[keys, {entry["Kind"], entry["Expression"]}];
+        updated = Join[entry, <|"Name" -> name|>];
+        If[entry["Kind"] === "Constant", AppendTo[constants, updated], AppendTo[parameters, updated]],
+        name = SelectFirst[Join[constants, parameters],
+          #["Kind"] === entry["Kind"] && #["Expression"] === entry["Expression"] &]["Name"]];
+      AppendTo[mapping, entry["Name"] -> name], {entry, entries}];
+    rewrite[text_String] := spinasNativeTokenReplace[text, mapping];
+    Do[
+      If[entry["Kind"] === "Constant",
+        constants = Map[If[#["Kind"] === entry["Kind"] && #["Expression"] === entry["Expression"],
+          Join[#, <|"Initializer" -> rewrite[entry["Initializer"]]|>], #] &, constants],
+        parameters = Map[If[#["Kind"] === entry["Kind"] && #["Expression"] === entry["Expression"],
+          Join[#, <|"Initializer" -> rewrite[entry["Initializer"]]|>], #] &, parameters]], {entry, entries}];
+    rewritten = Join[component, <|
+      "ExpressionCpp" -> rewrite[component["ExpressionCpp"]],
+      "ExpressionPieces" -> <|
+        "NumeratorTerms" -> (rewrite /@ component["ExpressionPieces"]["NumeratorTerms"]),
+        "NumeratorSigns" -> component["ExpressionPieces"]["NumeratorSigns"],
+        "Denominator" -> rewrite[component["ExpressionPieces"]["Denominator"]],
+        "UnitDenominator" -> component["ExpressionPieces"]["UnitDenominator"]|>,
+      "ChainStatements" -> (rewrite /@ component["ChainStatements"]),
+      "ScalarStatements" -> (rewrite /@ component["ScalarStatements"]),
+      "MassCpp" -> (rewrite /@ component["MassCpp"])|>];
+    AppendTo[maps, rewritten], {component, components}];
+  updated = Join[ir, KeyTake[First[maps], {"MassCpp"}], <|"ConstantCaches" -> constants, "ParameterCaches" -> parameters,
+    "ScalarCachesMerged" -> True|>];
+  If[TrueQ[Lookup[ir, "Family", False]], Join[updated, <|"FamilyComponents" -> maps|>],
+    Join[First[maps], KeyTake[updated, {"ConstantCaches", "ParameterCaches", "ScalarCachesMerged"}]]]
+];
+
+spinasScalarCacheHeader[ir_Association] := Join[
+  ("  static const cdouble " <> #["Name"] <> ";" &) /@ Lookup[ir, "ConstantCaches", {}],
+  ("  cdouble " <> #["Name"] <> ";" &) /@ Lookup[ir, "ParameterCaches", {}]];
+spinasScalarConstantDefinitions[name_String, ir_Association] := Flatten[
+  spinasReadableCppLines["const cdouble " <> name <> "::" <> #["Name"] <> " = " <> #["Initializer"] <> ";", ""] & /@
+    Lookup[ir, "ConstantCaches", {}]];
+spinasScalarParameterUpdates[ir_Association, rules_List : {}] := Flatten[
+  spinasReadableCppLines[#["Name"] <> " = " <> StringReplace[#["Initializer"], rules] <> ";"] & /@
+    Lookup[ir, "ParameterCaches", {}]];
+
 spinasNativeCachePlan[ir_Association, reservedNames_List : {}] := Module[
   {n = ir["LegCount"], ranks = ir["Spin2"], components, branches, family,
    used, allocate, products = {}, productKeys = {}, scalars = {}, scalarKeys = {},
@@ -934,7 +1035,8 @@ spinasNativeCachePlan[ir_Association, reservedNames_List : {}] := Module[
   components = If[family, ir["FamilyComponents"], {ir}];
   branches = If[family, ir["Branches"], {<|"Helicities" -> ir["Helicities"],
     "InputIndex" -> 1, "LegPermutation" -> Range[n], "FermionSign" -> 1|>}];
-  used = Join[reservedNames, {"parameters", "external_masses", "momenta", "momenta_ready", "initialize_products",
+  used = Join[reservedNames, Lookup[Lookup[ir, "ConstantCaches", {}], "Name", {}],
+    Lookup[Lookup[ir, "ParameterCaches", {}], "Name", {}], {"parameters", "external_masses", "momenta", "momenta_ready", "initialize_products",
     "amp", "spin_sum", "amp2", "component", "numerator", "denominator", "values", "spins",
     "set_parameters", "set_momenta", "set_masses", "get_parameters", "validate_calchep", "validate_madgraph",
     "amplitude", "result", "validation", "other", "ranks", "originally_massless", "check_spin"},
@@ -1127,7 +1229,8 @@ spinasNativeProjectHeader[name_String, ir_Association, plan_Association] := Modu
     "private:", "  Parameters parameters;", "  std::array<ldouble, leg_count> external_masses;",
     "  Momenta momenta;", "  bool momenta_ready = false;", "",
     "  // Model parameters."},
-    ("  cdouble " <> #["Alias"] <> ";" &) /@ params, {
+    ("  cdouble " <> #["Alias"] <> ";" &) /@ params,
+    If[spinasScalarCacheHeader[ir] === {}, {}, Join[{"", "  // Constants and model-only factors."}, spinasScalarCacheHeader[ir]]], {
     "", "  // External particles."},
     Table["  spinas::particle p" <> ToString[i] <> ";", {i, n}], {
     "", "  // Spinor-product and scalar caches. Updated once in set_momenta(...)."},
@@ -1166,7 +1269,8 @@ spinasNativeProjectSource[name_String, ir_Association, plan_Association] := Modu
     "namespace hepcat_generated {", "using namespace hepcat_spinas;", "",
     "constexpr std::size_t " <> name <> "::leg_count;",
     "constexpr std::size_t " <> name <> "::parameter_count;",
-    "constexpr std::size_t " <> name <> "::helicity_count;", "",
+    "constexpr std::size_t " <> name <> "::helicity_count;", ""}];
+  add[spinasScalarConstantDefinitions[name, ir]]; add[{"",
     name <> "::" <> name <> "() : " <> name <> "(default_parameters()) {}", "",
     name <> "::" <> name <> "(const Parameters& values) {", "  set_parameters(values);", "}", ""}];
   If[spinasNativeRealConstructorQ[ir, plan],
@@ -1196,6 +1300,9 @@ spinasNativeProjectSource[name_String, ir_Association, plan_Association] := Modu
     "      throw std::invalid_argument(\"Model parameters must be finite.\");", "    }", "  }",
     "  momenta_ready = false;", "  parameters = values;"}];
   add[("  " <> #["Alias"] <> " = parameters[" <> ToString[#["Index"]] <> "];" &) /@ params];
+  If[Lookup[ir, "ParameterCaches", {}] =!= {},
+    add[{"", "  // Recompute model-only factors once after parameter changes."}];
+    add[spinasScalarParameterUpdates[ir, plan["ParameterRules"]]]];
   add[MapIndexed["  external_masses[" <> ToString[First[#2] - 1] <> "] = checked_mass(cdouble(" <> #1 <> "));" &, massCpp]];
   Do[
     If[ranks[[i]] > 0,
@@ -1294,7 +1401,7 @@ spinasNativeStyleQ[name_String, ir_Association] := Module[{components, branches,
   branches <= 64 && estimate <= 8000000
 ];
 
-spinasProjectCode[name_String, ir_Association] := Module[{plan, family},
+spinasProjectCode[name_String, input_Association] := Module[{plan, family, ir = spinasMergeScalarCaches[input, {name}]},
   family = TrueQ[Lookup[ir, "Family", False]];
   If[spinasNativeStyleQ[name, ir],
     plan = spinasNativeCachePlan[ir, {name}];
@@ -1340,6 +1447,7 @@ spinasCanonicalProjectHeader[name_String, ir_Association] := StringRiffle[{
   "  Parameters parameters;", "  std::array<ldouble, leg_count> external_masses;",
   "  Momenta momenta;", "  std::array<spinas::particle, leg_count> particles;",
   "  bool momenta_ready = false;", "",
+  Sequence @@ spinasScalarCacheHeader[ir], "",
   "  cdouble component(const std::vector<std::vector<int>>& spinor_spins);",
   "};", "", "} // namespace hepcat_generated", ""}, "\n"];
 
@@ -1361,6 +1469,7 @@ spinasCanonicalProjectSource[name_String, ir_Association] := Module[
     "using namespace hepcat_spinas;", "",
     "constexpr std::size_t " <> name <> "::leg_count;",
     "constexpr std::size_t " <> name <> "::parameter_count;", "",
+    Sequence @@ spinasScalarConstantDefinitions[name, ir], "",
     "// Model parameters and external states.",
     name <> "::" <> name <> "() : " <> name <> "(default_parameters()) {}", "",
     name <> "::" <> name <> "(const Parameters& values) {",
@@ -1378,7 +1487,7 @@ spinasCanonicalProjectSource[name_String, ir_Association] := Module[
     "    if (!finite_complex(value)) {",
     "      throw std::invalid_argument(\"Model parameters must be finite.\");",
     "    }", "  }",
-    "  parameters = values;", ""}, massLines, {"",
+    "  parameters = values;", ""}, spinasScalarParameterUpdates[ir], massLines, {"",
     "  static const std::array<int, leg_count> ranks = " <> spinasCppArray[ToString /@ spin2] <> ";",
     "  static const std::array<bool, leg_count> originally_massless = " <>
       spinasCppArray[If[TrueQ[#==0],"true","false"]& /@ massValues] <> ";",
@@ -2254,11 +2363,16 @@ spinasFamilyIR[entries_List, model_List, options_Association, physicalSpec_:Auto
         ("parameters[" <> ToString[First[FirstPosition[symbols, #1]] - 1] <> "]") &, local]];
     rebind[component_Association] := Join[component, <|
       "ExpressionCpp" -> rewriteCpp[component["ExpressionCpp"], component["ParameterSymbols"]],
-      "ExpressionPieces" -> (component["ExpressionPieces"] /.
-        text_String :> rewriteCpp[text, component["ParameterSymbols"]]),
+      "ExpressionPieces" -> <|
+        "NumeratorTerms" -> (rewriteCpp[#, component["ParameterSymbols"]] & /@ component["ExpressionPieces"]["NumeratorTerms"]),
+        "NumeratorSigns" -> component["ExpressionPieces"]["NumeratorSigns"],
+        "Denominator" -> rewriteCpp[component["ExpressionPieces"]["Denominator"], component["ParameterSymbols"]],
+        "UnitDenominator" -> component["ExpressionPieces"]["UnitDenominator"]|>,
       "ChainStatements" -> (rewriteCpp[#, component["ParameterSymbols"]] & /@ component["ChainStatements"]),
       "ScalarStatements" -> (rewriteCpp[#, component["ParameterSymbols"]] & /@ component["ScalarStatements"]),
       "MassCpp" -> (rewriteCpp[#, component["ParameterSymbols"]] & /@ component["MassCpp"]),
+      "ParameterCaches" -> (Join[#, <|"Initializer" -> rewriteCpp[#["Initializer"], component["ParameterSymbols"]]|>] & /@
+        Lookup[component, "ParameterCaches", {}]),
       "ParameterSymbols" -> symbols, "ParameterNames" -> names,
       "ParameterDefaults" -> defaults|>];
     components = rebind /@ components; first = First[components];

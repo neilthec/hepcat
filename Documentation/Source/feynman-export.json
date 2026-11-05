@@ -808,6 +808,14 @@
         ]
       },
       {
+        "title": "Reusing constants and parameter factors",
+        "paragraphs": [
+          "Generated code separates quantities by when they can change. Fixed numerical factors, including algebraic constants such as Sqrt[2], are stored as const values and initialized once. Supported products, powers and other factors that depend only on model parameters are cached when set_parameters is called, rather than recalculated for each spin and helicity. These changes preserve the supplied formula and its complex branches; they do not apply additional spinor identities or internal on-shell conditions.",
+          "Changing masses or couplings refreshes the parameter caches and invalidates the momentum state. Copies and assignments rebuild caches against their own parameters and particles. Call set_momenta again after changing parameters. Momentum-dependent and spin-dependent values stay on their existing update paths, so an optimization cannot accidentally reuse a value from another phase-space point.",
+          "The numerical speed of a compact symbolic formula also depends on repeated divisions, shared intermediate expressions and generated function calls. Spinor products already cache their contractions. Repeated calls to the same product therefore often repeat cache access, rather than the full contraction. The benchmark described below measures the complete generated evaluation, including these costs."
+        ]
+      },
+      {
         "title": "Measuring numerical evaluation speed",
         "paragraphs": [
           "The repository includes a separate C++ timing program in `benchmarks/`. It compares complete exported electron-positron to photon helicity families with independent CalcHEP and MadGraph matrix elements on the same saved phase-space points. See `benchmarks/README.md` for the build and run commands. Configure both reference models and their explicit electron/photon restrictions in [WriteSPINASProcess](paclet:HEPCAT/ref/WriteSPINASProcess) before running it.",

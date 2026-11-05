@@ -597,6 +597,15 @@ diagram model is unchanged.
 
 ## SPINAS Process Export
 
+`spinas-scalar-cache-tests.wl` checks that closed numerical constants become
+immutable class constants, while model-only scalar factors are refreshed after
+parameter changes. Native and canonical exports are compiled against a direct
+complex-valued formula, including branch-sensitive roots, model/cache name
+collisions and copied process objects. The native lifecycle suite also checks
+eager family rebinding when different helicity components use different mass
+powers under initially identical cache names. No kinematic or spin-dependent
+quantity may enter the parameter-only caches.
+
 `spinas-native-project-tests.wl` checks native persistent product caches and
 direct helicity formulas against independent complex-amplitude calculations.
 Its compiled projects cover changing momenta and parameters, the mass setter,
