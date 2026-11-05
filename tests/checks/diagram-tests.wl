@@ -549,6 +549,33 @@ Do[
     {"e", "E", "e", "E", "A.-"}, {"A.+", "E", "e", "e", "E"},
     {"e", "A.-", "E", "E", "e"}}}
 ];
+(* The grouped route follows charged lines through a label permutation.
+   One pair of identical fermions is transposed in this ordering. *)
+Module[{model = ReadModel[FileNameJoin[{root, "models"}], 2],
+    permutation = {5, 4, 2, 6, 1, 3}, legs = Range[6], process, shuffled,
+    mass, rules, shuffledRules, graphs, candidate, shuffledCandidate, mapped, canonical},
+  mass = ModelParameter[model, "Me"];
+  rules = Thread[(Mass /@ legs) -> {mass, mass, mass, mass, 0, 0}];
+  shuffledRules = Thread[(Mass /@ legs) -> Last /@ rules[[permutation]]];
+  canonical[expression_] := ConstructiveDiagrams`Private`canonicalChains[
+    ConstructiveDiagrams`Private`residueCanonicalPropagators[Expand[expression], legs]];
+  Do[
+    process = Join[{"e", "E", "E", "e"}, helicities];
+    shuffled = process[[permutation]];
+    graphs = CreateDiagrams[process, model];
+    candidate = ConstructiveDiagrams`Private`constructGroupedVectorCurrents[
+      graphs, process, model, rules];
+    shuffledCandidate = ConstructiveDiagrams`Private`constructGroupedVectorCurrents[
+      CreateDiagrams[shuffled, model], shuffled, model, shuffledRules];
+    check[{"grouped vector currents follow signed external relabeling", helicities},
+      AssociationQ[candidate] && AssociationQ[shuffledCandidate] && (
+        mapped = ConstructiveDiagrams`Private`relabelLegs[candidate["Expression"],
+          AssociationThread[permutation, legs]];
+        Expand[canonical[shuffledCandidate["Expression"]] + canonical[mapped]] === 0)];
+    check[{"grouped currents require each attachment exactly once", helicities},
+      MissingQ[ConstructiveDiagrams`Private`constructGroupedVectorCurrents[
+        Append[Most[graphs], First[graphs]], process, model, rules]]],
+    {helicities, {{"A.+", "A.+"}, {"A.+", "A.-"}, {"A.-", "A.-"}}}]];
 sixFermionDiagrams = CreateDiagrams[{"e", "E", "e", "E", "e", "E"}, qedSignModel];
 check["six-fermion trees use all six matching determinant signs",
   Length[sixFermionDiagrams] === 36 &&

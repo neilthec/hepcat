@@ -948,13 +948,13 @@ python3 tests/checks/run-wolfram-tests.py \
 Set `HEPCAT_SPURIOUS_INTEGRATION_CASES=P,M` to replay only the single-photon
 cases. The other case names are `PPP`, `MMM`, `PPM` and `PMM`.
 
-Select `PPPP6` to replay the six-point, four-positive-photon notebook call
-with factorization model 4. It requires the general compound-pole orbit
-reduction, complexity at most 120, and all 23 checks including the independent
-Feynman comparison.
+Select `PPPP6,MMMM6` to replay the six-point calls with four photons of
+the same helicity, using factorization model 4. Both replays require the
+direct pair contraction, complexity at most 120, and all 23 checks including
+the independent Feynman comparison.
 
 ```sh
-HEPCAT_SPURIOUS_INTEGRATION_CASES=PPPP6 python3 tests/checks/run-wolfram-tests.py \
+HEPCAT_SPURIOUS_INTEGRATION_CASES=PPPP6,MMMM6 python3 tests/checks/run-wolfram-tests.py \
   --suite spurious-construction-integration-tests.wl --timeout 720
 ```
 
@@ -982,10 +982,11 @@ HEPCAT_SPURIOUS_INTEGRATION_CASES=PPMM6 python3 tests/checks/run-wolfram-tests.p
 
 Select `FourFermionsPP6,FourFermionsPM6,FourFermionsMM6` for the three
 Max Spurious four-fermion, two-photon cases with factorization model 4.
-Each replay requires all 20 physical residues and the independent Feynman,
-spurious-pole, reference and high-energy checks to pass. It also validates
-the separately worked current formulas, whose complexity ceilings are
-1360, 1664 and 1360 respectively. The constructor is never given those formulas.
+Each replay requires the grouped current route to construct a result with
+complexity at most 1216, 1632 and 1216 respectively. All 20 physical residues,
+the spurious poles, reference independence, high-energy behavior and the
+independent Feynman comparison must pass. The regression also checks the
+separately worked formulas as independent examples.
 
 ```sh
 HEPCAT_SPURIOUS_INTEGRATION_CASES=FourFermionsPP6,FourFermionsPM6,FourFermionsMM6 \

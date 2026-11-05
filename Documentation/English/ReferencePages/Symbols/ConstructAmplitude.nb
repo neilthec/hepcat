@@ -195,11 +195,14 @@ numerator. The constructor chooses shared massless references, checks the \
 complete result against the original factorization channels and independent \
 Feynman model, and returns the validated expression without a separate \
 compact-form search on this route."}], "Notes"],
-  Cell[TextData[{"For two massive Dirac fermion pairs and two equal-helicity \
-vectors, AllSpurious can also build an off-shell candidate from the standard \
-colorless vector vertices in the diagram model. It checks that the candidate \
-uses the same diagram cuts and passes the factorization, spurious-pole, \
-reference, high-energy and independent Feynman checks."}], "Notes"],
+  Cell[TextData[{"With AllSpurious and an independent Feynman model, a \
+supported tree with two massive Dirac fermion lines and two external massless \
+vectors can combine the photon attachments on each line before contracting \
+the currents. Both equal and opposite photon helicities are supported. The \
+constructor reads the couplings, poles and exchange signs from the original \
+diagrams, then checks the grouped result against the original factorization \
+channels and the independent Feynman model. If the grouped candidate fails a \
+check, construction continues along the other available routes."}], "Notes"],
   Cell[TextData[{"For a supported six-fermion tree with two massless vector \
 exchanges, AllSpurious can group the two orders of attachment on each central \
 fermion line over their common vector propagators. There are no external \
@@ -207,17 +210,21 @@ photon references in this case, so the compact result uses physical \
 propagators only. The grouped sum is built from the diagram model and \
 returned early only after all ordinary checks and the independent Feynman \
 comparison pass. If that attempt fails, the usual completion continues."}],
-   "Notes"], Cell[TextData[{"For larger AllSpurious results with an \
-independent Feynman model, the constructor can group terms by their compound \
-physical poles. If the groups form a complete exchange orbit, it tries \
-Schouten and an external momentum determinant to reduce one group, then uses \
-exchange symmetry to propose the complete expression. The original validated \
-result remains available if the proposal is unavailable, longer, or fails any \
-check."}], "Notes"], Cell[TextData[{"With a single massless leg there is no \
-second massless external spinor to use as a reference. AllSpurious can \
-therefore return a physical-only expression, with the auxiliary reference \
-resolved. Use Xi, IndependentXi or None explicitly for workflows that retain \
-auxiliary references."}], "Notes"],
+   "Notes"], Cell[TextData[{"For four external vectors of the same helicity \
+on a supported fermion line, AllSpurious can combine adjacent emission orders \
+in pairs. The result is checked against the original factorization channels \
+and the independent Feynman model before it is returned."}], "Notes"],
+  Cell[TextData[{"For larger AllSpurious results with an independent Feynman \
+model, the constructor can group terms by their compound physical poles. If \
+the groups form a complete exchange orbit, it tries Schouten and an external \
+momentum determinant to reduce one group, then uses exchange symmetry to \
+propose the complete expression. The original validated result remains \
+available if the proposal is unavailable, longer, or fails any check."}],
+   "Notes"], Cell[TextData[{"With a single massless leg there is no second \
+massless external spinor to use as a reference. AllSpurious can therefore \
+return a physical-only expression, with the auxiliary reference resolved. Use \
+Xi, IndependentXi or None explicitly for workflows that retain auxiliary \
+references."}], "Notes"],
   Cell[TextData[{"Use ", Cell[BoxData[RowBox[{"\"FeynmanModel\"", " ", "->",
          " ", "feynmanModel"}]], "InlineFormula"],
      " when you have an independent ", ButtonBox["FeynmanModel",

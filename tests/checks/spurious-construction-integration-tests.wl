@@ -15,14 +15,16 @@ cases = <|
   "P" -> {{"e", "E", "E", "e", "A.+"}, 8126805240028689964, 8, 0, 168},
   "M" -> {{"e", "E", "E", "e", "A.-"}, 5310282517098944578, 8, 0, 168},
   "PPPP6" -> {{"e", "E", "A.+", "A.+", "A.+", "A.+"}, 1658277745900164952, 14, 6, 120},
+  "MMMM6" -> {{"e", "E", "A.-", "A.-", "A.-", "A.-"}, 4452583888334340141, 14, 6, 120},
   "PPPM6" -> {{"e", "E", "A.+", "A.+", "A.+", "A.-"}, 4493323141101633411, 14, 4, 528},
   "PMMM6" -> {{"e", "E", "A.+", "A.-", "A.-", "A.-"}, 3640391260799291343, 14, 4, 528},
   "PPMM6" -> {{"e", "E", "A.+", "A.+", "A.-", "A.-"}, 202611040608, 14, 4, Infinity},
-  "FourFermionsPP6" -> {{"e", "E", "E", "e", "A.+", "A.+"}, 9008490858615875420, 20, Automatic, Infinity},
-  "FourFermionsPM6" -> {{"e", "E", "E", "e", "A.+", "A.-"}, 8315759881186794091, 20, Automatic, Infinity},
-  "FourFermionsMM6" -> {{"e", "E", "E", "e", "A.-", "A.-"}, 7049700354755523172, 20, Automatic, Infinity},
+  "FourFermionsPP6" -> {{"e", "E", "E", "e", "A.+", "A.+"}, 9008490858615875420, 20, 1, 1216},
+  "FourFermionsPM6" -> {{"e", "E", "E", "e", "A.+", "A.-"}, 8315759881186794091, 20, 2, 1632},
+  "FourFermionsMM6" -> {{"e", "E", "E", "e", "A.-", "A.-"}, 7049700354755523172, 20, 1, 1216},
   "SixF6" -> {{"e", "E", "e", "E", "e", "E"}, 579024387046450637, 18, 0, 3168}|>;
-sixPointMethods = <|"PPPP6" -> "ReducedCompoundPoleOrbit",
+sixPointMethods = <|"PPPP6" -> "SameChiralPairSplit",
+  "MMMM6" -> "SameChiralPairSplit",
   "PPPM6" -> "CommonChiralVectorLine", "PMMM6" -> "CommonChiralVectorLine",
   "PPMM6" -> "OffShellVectorLine", "SixF6" -> "OffShellFermionExchange"|>;
 fourFermionForms = <|"FourFermionsPP6" -> {"PP", 1, 1360},
@@ -52,6 +54,8 @@ Do[
       KeyExistsQ[sixPointMethods, name] && Lookup[report["Stages"][
         Switch[name, "PPMM6", "Off-shell vector form", "SixF6", "Off-shell fermion exchange",
           _, "Compact spurious form"]], "Method", None] =!= sixPointMethods[name] ||
+      KeyExistsQ[fourFermionForms, name] &&
+        Lookup[report["Stages"]["Grouped vector currents"], "Method", None] =!= "GroupedVectorCurrents" ||
       name === "SixF6" && (LeafCount[report["Amplitude"]] > 20500 ||
         Lookup[report["RepresentativeSelection"], "BenchmarkUsedForConstruction", None] =!= False),
     AppendTo[failures, name]];
