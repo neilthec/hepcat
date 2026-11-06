@@ -356,12 +356,14 @@ fsMixedRules = {Mass[1] -> prElectronMass, Mass[2] -> prElectronMass,
 fsMixedPrepared = PrepareAmplitudes[{fsMixedRules, fsMixedOriginal}, prModel,
   "PolePreference" -> None, "MaxSteps" -> 0,
   "TimeConstraint" -> 30, "ProgressReporting" -> False, "ReturnDetails" -> True];
+(* The retained scalar momentum square contains two momenta, matching two
+   insertions. Its corrected weight adds six to both former scores. *)
 check["the saved mixed-helicity fixture retains the off-shell square that exposed the bug",
-  SpinorExpressionComplexity[fsMixedOriginal] === 148 &&
+  SpinorExpressionComplexity[fsMixedOriginal] === 154 &&
     !FreeQ[fsMixedOriginal, Mom[Multiparticle[1, 2]]^2]];
 check["ordinary completed preparation reaches the improved mixed-helicity form",
   fsMixedPrepared["Status"] === "PREPARED" &&
-    SpinorExpressionComplexity[fsMixedPrepared["Amplitude"]] <= 70 &&
+    SpinorExpressionComplexity[fsMixedPrepared["Amplitude"]] <= 76 &&
     LeafCount[fsMixedPrepared["Amplitude"]] <= 591];
 check["the mixed-helicity simplification uses no internal shell condition",
   fsMixedPrepared["Options"]["InternalOnShell"] === False &&

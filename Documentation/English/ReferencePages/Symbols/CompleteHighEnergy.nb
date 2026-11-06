@@ -139,30 +139,34 @@ recombined through their exact original coefficient map. Every source part is \
 reconstructed exactly, every Laurent coefficient keeps its remainder-order \
 certificate, and all original correction coordinates and constant offsets \
 stay coupled. Exact numerical coefficients are simplified by ordinary algebra \
-before solving, with an exact replay of every replacement. A failed \
-certificate cannot become a passing equation, and the existing expansion \
-remains available when the bounded shared calculation is unsupported."}],
-   "Notes"], Cell[TextData[{"For larger spin tensors, the high-energy \
-equations are formed from separate exact scalar Laurent series. The \
-correction coefficients remain coupled in each spin-component equation, \
-including its constant term; they are not tested independently or estimated \
-from a few spin assignments. For supported large tensors, finite Laurent \
-series are used as the coefficient field before the spin polynomial is \
-multiplied out. Their remainder orders and conservative leading-power bounds \
-are retained through every product, so a positive power that later multiplies \
-a negative power is not lost. Every coefficient must cover the requested \
-order before its remainder is removed. The same certified engine supports \
-fitting and the final high-energy check; a bounded unsupported attempt \
-retains the ordinary route, while an unproved scalar-series zero assumption \
-remains unresolved."}], "Notes"],
-  Cell[TextData[{"After an energy chart fixes some correction coefficients, \
-later charts and model-consistent parameter assignments can use the exact \
-affine family that remains. The first equations stay in their original \
-coordinates, and every later restricted equation is retained alongside them. \
-A reduction is used only when its complete free-coordinate map and every \
-retained equation are verified exactly; otherwise the previous family remains \
-in use. All requested charts, parameter assignments and final independent \
-validation checks are still evaluated."}], "Notes"],
+before solving, with an exact replay of every replacement. Within one energy \
+chart, completed certified scalar series are reused for identical exact \
+expressions, variables and requested orders. This saves repeated work across \
+monomials without changing their equations. The bounded cache is cleared \
+before the next chart or parameter assignment; failures and approximate \
+inputs are not stored. A failed certificate cannot become a passing equation, \
+and the existing expansion remains available when the bounded shared \
+calculation is unsupported."}], "Notes"],
+  Cell[TextData[{"For larger spin tensors, the high-energy equations are \
+formed from separate exact scalar Laurent series. The correction coefficients \
+remain coupled in each spin-component equation, including its constant term; \
+they are not tested independently or estimated from a few spin assignments. \
+For supported large tensors, finite Laurent series are used as the \
+coefficient field before the spin polynomial is multiplied out. Their \
+remainder orders and conservative leading-power bounds are retained through \
+every product, so a positive power that later multiplies a negative power is \
+not lost. Every coefficient must cover the requested order before its \
+remainder is removed. The same certified engine supports fitting and the \
+final high-energy check; a bounded unsupported attempt retains the ordinary \
+route, while an unproved scalar-series zero assumption remains unresolved."}]\
+, "Notes"], Cell[TextData[{"After an energy chart fixes some correction \
+coefficients, later charts and model-consistent parameter assignments can use \
+the exact affine family that remains. The first equations stay in their \
+original coordinates, and every later restricted equation is retained \
+alongside them. A reduction is used only when its complete free-coordinate \
+map and every retained equation are verified exactly; otherwise the previous \
+family remains in use. All requested charts, parameter assignments and final \
+independent validation checks are still evaluated."}], "Notes"],
   Cell[TextData[{"The ordinary successful output is ",
      Cell[BoxData[RowBox[{"{", "externalMassRules", ",", " ", "expression",
          "}"}]], "InlineFormula"], ". It can be simplified again with ",

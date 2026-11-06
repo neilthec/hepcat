@@ -211,8 +211,8 @@ check["trace composite momentum counts implicit terms",
   SpinorExpressionComplexity[traceSum] === 18 &&
     SpinorExpressionComplexity[traceSum] === SpinorExpressionComplexity[
       SpinorTrace[Mom[1], Mom[3]] + SpinorTrace[Mom[2], Mom[3]]]];
-check["implicit branches also weight spectator scalar products",
-  SpinorExpressionComplexity[MomProd[1, 4] expr] === 18 &&
+check["implicit branches count both momenta in spectator scalar products",
+  SpinorExpressionComplexity[MomProd[1, 4] expr] === 26 &&
     SpinorExpressionComplexity[MomProd[1, 4] expr] ===
       SpinorExpressionComplexity[explicitMomenta[MomProd[1, 4] expr]]];
 cancellingSum = expr - Global`identityTestChain[Mom[2]];

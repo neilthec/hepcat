@@ -17,9 +17,9 @@ check["the real preferred expression lies beyond the identity-expansion leaf bud
   ConstructiveDiagrams`Private`rspExpansionProfile[rkPreferred, 4096, 200000][[2]] > 24000];
 check["both real alternatives receive bounded weighted-complexity measurements",
   Last[rkPreferredRank] === "SpinorExpressionComplexity" && Last[rkLeafSmallerRank] === "SpinorExpressionComplexity"];
-check["the actual lower-complexity form keeps its expected score", First[rkPreferredRank] === 2478];
+check["the actual lower-complexity form keeps its expected score", First[rkPreferredRank] === 2618];
 check["the leaf-smaller alternative really has worse weighted complexity",
-  First[rkLeafSmallerRank] === 2552 && LeafCount[rkLeafSmaller] < LeafCount[rkPreferred]];
+  First[rkLeafSmallerRank] === 2688 && LeafCount[rkLeafSmaller] < LeafCount[rkPreferred]];
 check["smaller leaves cannot replace the actual better physical expression", !rkBetter[rkLeafSmallerRank, rkPreferredRank]];
 check["the better physical expression is accepted in the opposite direction", rkBetter[rkPreferredRank, rkLeafSmallerRank]];
 Do[rkValue = value; rkMeasured = rkRank[rkValue];
@@ -72,7 +72,7 @@ rkPrepared = PrepareAmplitudes[{rkRules, rkReal["Preferred"]}, rkModel,
   "Parallelization" -> False, "ProgressReporting" -> False, "ReturnDetails" -> True];
 check["element snapshots no longer impose the reducer's smaller ranking budget",
   AssociationQ[rkPrepared] && Last[First[rkPrepared["ItemReports"]]["PreparedRank"]] === "SpinorExpressionComplexity" &&
-  First[First[rkPrepared["ItemReports"]]["PreparedRank"]] <= 2478];
+  First[First[rkPrepared["ItemReports"]]["PreparedRank"]] <= 2618];
 Print[checks, " preparation-ranking checks; ", Length[failures], " failures."];
 If[failures =!= {}, Print[failures]; Quit[1]];
 Print["HEPCAT_TEST_COMPLETED:preparation-ranking-tests.wl"]; Quit[0];

@@ -1177,9 +1177,13 @@ Do[
       Length[tpFourProps] === 3 &&
         ContainsAll[DeleteDuplicates[Cases[tpFourExpression, _PropDen, Infinity]], tpFourProps]];
     (* These bounds were measured with the public preparation budgets above.
-       A more compact manually derived current is not substituted into it. *)
+       A more compact manually derived current is not substituted into it.
+       The positive SeparateLines fixture still has its original 584 leaves
+       and old score 59. Its two p.q numerator factors now correctly cost two
+       insertions each, adding eight to its score without changing the formula
+       or the independent coherent-spin certificate below. *)
     tpFourQualityLimit = If[tpFourSecondPhoton === "A.+",
-      {8, 56, 59}[[tpFourPosition]], {56, 58, 57}[[tpFourPosition]]];
+      {8, 56, 67}[[tpFourPosition]], {56, 58, 57}[[tpFourPosition]]];
     check[{"four-fermion two-photon preparation retains its measured bounded quality",
         tpFourSecondPhoton, tpFourClasses[[tpFourIndex]]},
       SpinorExpressionComplexity[tpFourExpression] <= tpFourQualityLimit &&

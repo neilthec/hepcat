@@ -116,6 +116,17 @@ its physical validation with ", ButtonBox["CheckAmplitudes",
      Cell[BoxData[RowBox[{"True"}]], "InlineFormula"], " requests the \
 parallel route. This execution choice does not alter the identity rules or \
 the order of returned items."}], "Notes"],
+  Cell[TextData[{"For a supported four-leg massive tensor with two spinor \
+endpoints per external leg, preparation also tries a bounded combination of \
+Schouten, external Dirac and momentum-conservation identities. This can \
+remove momentum products or several insertions together even when no single \
+greedy edit improves the expression. It uses the supplied expression and \
+external masses, without a known target amplitude. An optimizer may propose \
+coefficients, but an exact rational replay through the ordinary identities is \
+required before accepting the result. Physical propagator arguments and other \
+kinematic inverse factors remain protected, and the route adds no \
+internal-shell assumption. Unsupported sectors keep the existing route. \
+Detailed output records the accepted identity certificates."}], "Notes"],
   Cell["On-shell conditions and protected denominators", "NotesSection"],
   Cell[TextData[{ButtonBox["ReduceSpinContractions", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ReduceSpinContractions"], " and ",

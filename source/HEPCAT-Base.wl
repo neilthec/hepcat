@@ -3963,7 +3963,7 @@ SchoutenRewrite::usage = "SchoutenRewrite[c1, c2, {m, n}] rewrites two spinor ch
 SchoutenCandidates::usage = "SchoutenCandidates[expr] lists exact generalized Schouten edits with Name, Subtract, Insert, Chains and Splits. No internal on-shell condition is assumed.";
 SpinorIdentityCandidates::usage = "SpinorIdentityCandidates[{massRules, expr}] lists exact symbolic identity edits. OnShellChannels -> Automatic uses that diagram's internal mass rules; use an empty list for a combined amplitude. MomentumConservation defaults to True. Both option names are strings. PropDen factors remain opaque.";
 ApplySpinorIdentity::usage = "ApplySpinorIdentity[{massRules, expr}, edit, opts] applies a currently legal identity edit and returns the resulting expression. The input is canonicalized exactly as in SpinorIdentityCandidates, using the same options. Invalid or stale edits return $Failed.";
-SpinorExpressionComplexity::usage = "SpinorExpressionComplexity[expr] measures terms, momentum insertions and momentum products, including the branches implicit in composite momentum slots. PropDen factors remain opaque.";
+SpinorExpressionComplexity::usage = "SpinorExpressionComplexity[expr] measures additive terms and numerator momenta, including the branches implicit in composite chain and trace momentum slots. Each insertion contributes one momentum unit; MomProd, Mandelstahm and a momentum square contribute two. Positive powers count every occurrence. Each implicit monomial costs one plus four times its numerator momentum degree. Inverse factors and PropDen arguments remain opaque.";
 ComplicateAmplitude::usage = "ComplicateAmplitude[{massRules, expr}, nSteps, opts] applies random reversible symbolic identities. RandomSeed controls reproducibility and the string option RecordSteps -> True retains Trajectory. It uses the same diagram-local OnShellChannels and MomentumConservation options as SpinorIdentityCandidates.";
 ApplySpinorIdentity::edit = "The supplied edit is not legal for this expression and its current on-shell and momentum-conservation options.";
 ApplySpinorIdentity::args = "Expected {massRules, expression}, an identity-edit association, and optional identity settings.";
@@ -4893,13 +4893,27 @@ complexityMomentumMultiplicity[Mom[label_]] := Max[1, Length[momentumMembers[lab
 complexityMomentumMultiplicity[_] := 1;
 momentumBranchCount[slots_List] := Times @@ (complexityMomentumMultiplicity /@ slots);
 
+(* Count numerator momentum degree rather than occurrences of a head. A scalar
+   product contains two momenta and its square contains four. Inverse factors
+   are not numerator insertions, irrespective of the heads inside their bases. *)
+numeratorMomentumDegree[_PropDen] := 0;
+numeratorMomentumDegree[chain_SpinorChain] := Max[0, Length[chain] - 2];
+numeratorMomentumDegree[trace_SpinorTrace] := Length[trace];
+numeratorMomentumDegree[_MomProd | _Mandelstahm] := 2;
+numeratorMomentumDegree[_Mom] := 1;
+numeratorMomentumDegree[Power[base_, exponent_Integer?Positive]] :=
+  exponent numeratorMomentumDegree[base];
+numeratorMomentumDegree[_Power] := 0;
+numeratorMomentumDegree[product_Times] := Total[numeratorMomentumDegree /@ List @@ product];
+numeratorMomentumDegree[sum_Plus] := Max[0, Max[numeratorMomentumDegree /@ List @@ sum]];
+numeratorMomentumDegree[_] := 0;
+
 (* Count the branches hidden in composite slots without constructing them.
    A product's slots multiply branch counts, including repeated chain factors. *)
 monomialComplexity[mon_] := Module[{slots, branches},
   slots = Flatten[momentumSlots /@ Join[chainsIn[mon], tracesIn[mon]], 1];
   branches = momentumBranchCount[slots];
-  branches*(1 + 4*Length[slots] + 4*Count[{mon}, _MomProd, Infinity] +
-    2*Count[{mon}, Power[Mom[Multiparticle[__]], 2], Infinity])
+  branches*(1 + 4*numeratorMomentumDegree[mon])
 ];
 expressionComplexity[expr_] := withProtectedPropagators[expr,
   Function[body, Total[monomialComplexity /@ monomialsOf[body]]]];
@@ -5177,4 +5191,308 @@ ComplicateAmplitude[pair:{_List, _}, nSteps_Integer:5, OptionsPattern[]] :=
     scramblePair[pair, Max[0, nSteps], OptionValue[RandomSeed], OptionValue["RecordSteps"]]
   ];
 
+End[];
+
+Begin["ConstructiveDiagrams`Private`"];
+(* A finite quotient of ordinary four-leg spinor identities. Repeated
+   endpoints describe coherent massive vectors, not distinct dummy particles.
+   The numerical LP proposes coefficients in an exact identity space only;
+   every accepted candidate is reconstructed with rational coefficients. *)
+rspFourLegTensorReduction[expression_, externalRules_List, conserve_ : True,
+    seconds_ : 3, checkpoint_ : None] := Module[
+  {started = AbsoluteTime[], budget, remaining, stopTag = Unique["tensorLimit"],
+   best, bestRank, outcome, rules, groupedRules, legs, masses, massScale,
+   otherMasses, ratios, massMap, ratioRestore, normalizedMasses, normalizedRules,
+   inverses, inverseTokens, inverseForward, inverseRestore, propagators,
+   propTokens, propForward, propRestore, protected, terms,
+   linearityNodes, linearityRules, branchCount, prospectiveBranches,
+   groups, groupKeys, numerators, working, groupRoutes, sourceNumerators,
+   dotRules, squares, x, y, supported, finiteQ, factors, chainsOf, slotCounts,
+   eligibleMonomialQ, coordinateRules, rank, better, normalizeChain, chainRecords,
+   normalize, pairIdentities, splitTerm, coefficientKey, ratioFreeQ, restore,
+   inspectWhole, optimizeSector, groupKey, sectorData, sectors, sectorWorking,
+   sectorRoutes, scalar, polynomial, normalized, sourceCheck, report, newNumerator,
+   currentGroup, currentSector, record, accepted = 0},
+  best = <|"Amplitude" -> expression, "Route" -> {}, "Status" -> "UNCHANGED"|>;
+  rules = Cases[externalRules, rule : HoldPattern[Mass[_Integer] -> _] :> rule];
+  groupedRules = GatherBy[DeleteDuplicates[rules], First];
+  legs = Sort[Cases[rules, HoldPattern[Mass[leg_Integer] -> _] :> leg]];
+  If[!TrueQ[conserve] || !TrueQ[NumericQ[seconds] && seconds > 0] ||
+      Length[legs] =!= 4 || !DuplicateFreeQ[legs] ||
+      AnyTrue[groupedRules, Length[#] =!= 1 &] ||
+      AnyTrue[rules, !MatchQ[Last[#], _Symbol | _ModelParameter | _Integer | _Rational] || Last[#] === 0 &] ||
+      LeafCount[expression] > 28000 ||
+      !FreeQ[expression, Power[_SpinorChain, n_Integer /; n > 4]] ||
+      !FreeQ[expression, _SpinorTrace | _SpinorHat | _MomHat | _MomQ | _SpinorEps |
+        _sigma | _Dot | _NonCommutativeMultiply | _xFactor | _xTildeFactor |
+        _ColorGenerator | _ColorDelta | _ColorStructure | _ColorTrace],
+    Return[Join[best, <|"TimedOut" -> False, "ElapsedTime" -> AbsoluteTime[] - started,
+      "InternalOnShellConditions" -> {}|>]]];
+  (* Numerical mass values are also ordinary coefficients and leg labels.
+     A global replacement for a distinct numerical mass is not a typed mass
+     abstraction: for example, replacing mass value 3 would relabel leg 3.
+     Keep the ordinary preparation route for this unsupported encoding. *)
+  masses = (Mass /@ legs) /. rules;
+  If[AnyTrue[Rest[DeleteDuplicates[masses]], NumberQ],
+    Return[Join[best, <|"TimedOut" -> False,
+      "StopReason" -> "UnsupportedNumericMassAbstraction",
+      "ElapsedTime" -> AbsoluteTime[] - started,
+      "InternalOnShellConditions" -> {}|>]]];
+  budget = Min[10, seconds];
+  remaining[] := Max[0.000001, budget - (AbsoluteTime[] - started)];
+  finiteQ[value_] := FreeQ[value, $Failed | $Aborted | $TimedOut | Indeterminate | _DirectedInfinity];
+  factors[value_] := If[Head[value] === Times, List @@ value, {value}];
+  supported[spinor_] := MatchQ[spinor, Spinor["Spin", "Angle" | "Square", _Integer]] &&
+    MemberQ[legs, spinorLeg[spinor]];
+  chainsOf[value_] := Flatten[Map[Function[factor, Which[
+      Head[factor] === SpinorChain, {factor},
+      MatchQ[factor, Power[_SpinorChain, _Integer?Positive]],
+        ConstantArray[First[factor], Last[factor]], True, {}]], factors[value]], 1];
+  slotCounts[value_] := Counts[Flatten[(spinorLeg /@ {First[#], Last[#]} &) /@ chainsOf[value]]];
+  eligibleMonomialQ[value_] := Module[{chains = chainsOf[value], counts = slotCounts[value]},
+    Length[chains] === 4 && Lookup[counts, legs, 0] === ConstantArray[2, 4] &&
+      AllTrue[chains, 2 <= Length[#] <= 4 && validChainQ[#] &&
+        AllTrue[{First[#], Last[#]}, supported] &&
+        AllTrue[Rest[Most[List @@ #]], MatchQ[#, Mom[_Integer]] && MemberQ[legs, First[#]] &] &]];
+  rank[value_] := {expressionComplexity[value], LeafCount[value]};
+  better[a_, b_] := a =!= b && OrderedQ[{a, b}];
+  coordinateRules[value_] := Select[Merge[Map[Function[term, With[
+      {parts = factors[term]}, Association[(Times @@ Select[parts, !NumberQ[#] &]) ->
+        (Times @@ Select[parts, NumberQ])]]],
+      If[Head[value] === Plus, List @@ value, {value}]], Total], # =!= 0 &];
+  outcome = TimeConstrained[MemoryConstrained[Catch[
+    inverses = DeleteDuplicates[Cases[{expression}, value : Power[base_, exponent_] /;
+      !TrueQ[exponent >= 0] && Head[base] =!= PropDen && !FreeQ[base,
+        _PropDen | _SpinorChain | _MomProd | _Mom | _Spinor] :> value, Infinity]];
+    inverseTokens = Table[Unique["tensorInverse"], Length[inverses]];
+    inverseForward = Thread[inverses -> inverseTokens]; inverseRestore = Thread[inverseTokens -> inverses];
+    protected = expression /. inverseForward;
+    (* A propagator and its inverse must denote the same opaque atom. This
+       preserves exact rational cancellation without changing either its
+       momentum argument or its mass and width. Composite inverse bases stay
+       protected as complete objects above. *)
+    propagators = DeleteDuplicates[Cases[protected, _PropDen, Infinity]];
+    propTokens = Table[Unique["tensorPropagator"], Length[propagators]];
+    propForward = Thread[propagators -> propTokens]; propRestore = Thread[propTokens -> propagators];
+    protected = protected /. propForward;
+    (* Expand only declared linear momentum slots. Composite sums denote
+       external momentum addition, not an internal on-shell mass. Estimate
+       the full implicit distribution before constructing the chain rules. *)
+    branchCount[node_SpinorChain] := Min[513,
+      Times @@ (Length[rspLinearMomentumTerms[#]] & /@ Rest[Most[List @@ node]])];
+    branchCount[node_Plus] := Min[513, Total[branchCount /@ List @@ node]];
+    branchCount[node_Times] := Min[513, Times @@ (branchCount /@ List @@ node)];
+    branchCount[Power[node_, n_Integer?Positive]] := Min[513, branchCount[node]^Min[10, n]];
+    branchCount[_] := 1;
+    linearityNodes = DeleteDuplicates[Cases[protected, _SpinorChain, Infinity]];
+    If[AnyTrue[linearityNodes, Function[chain,
+        AnyTrue[Rest[Most[List @@ chain]], Function[slot,
+          With[{parts = rspLinearMomentumTerms[slot]}, !ListQ[parts] ||
+            !AllTrue[parts, MatchQ[#, {_Integer | _Rational, Mom[_Integer]}] &&
+              MemberQ[legs, #[[2, 1]]] &]]]]]],
+      Throw["UnsupportedMomentumLinearity", stopTag]];
+    prospectiveBranches = branchCount[protected];
+    If[prospectiveBranches > 512, Throw["LinearityExpansionLimit", stopTag]];
+    linearityRules = (Function[chain, chain -> rspLinearChain[chain]]) /@ linearityNodes;
+    protected = protected /. linearityRules;
+    If[rspSandwichExpansionCount[protected] > 512,
+      Throw["ExpansionLimit", stopTag]];
+    terms = Expand[protected]; terms = If[Head[terms] === Plus, List @@ terms, {terms}];
+    If[Length[terms] > 512 || !AllTrue[terms, eligibleMonomialQ], Throw["IneligibleSector", stopTag]];
+    (* Whole inverse factors remain independent spectators in every stage. *)
+    groupKey[term_] := Times @@ Select[factors[term], Function[factor,
+      MemberQ[inverseTokens, factor] || MatchQ[factor, Power[token_, _Integer?Positive] /;
+        MemberQ[inverseTokens, token]] || MatchQ[factor,
+          Power[token_, _Integer?Negative] /; MemberQ[propTokens, token]]]];
+    groups = GatherBy[terms, groupKey]; groupKeys = groupKey[First[#]] & /@ groups;
+    If[Length[groups] > 12, Throw["GroupLimit", stopTag]];
+    numerators = MapThread[Expand[Total[#1]/#2] &, {groups, groupKeys}];
+    If[AnyTrue[numerators, !FreeQ[#, Alternatives @@ inverseTokens] &],
+      Throw["UnsupportedInversePosition", stopTag]];
+    masses = (Mass /@ legs) /. rules; massScale = First[masses];
+    otherMasses = DeleteCases[DeleteDuplicates[masses], massScale];
+    ratios = Table[Unique["tensorMassRatio"], Length[otherMasses]];
+    massMap = Thread[otherMasses -> (massScale ratios)];
+    ratioRestore = Thread[ratios -> otherMasses/massScale];
+    normalizedMasses = masses /. Thread[otherMasses -> ratios] /. massScale -> 1;
+    normalizedRules = Thread[(Mass /@ legs) -> normalizedMasses]; squares = normalizedMasses^2;
+    {x, y} = {MomProd @@ legs[[{1, 2}]], MomProd @@ legs[[{1, 3}]]};
+    dotRules = Flatten[MapThread[Function[{pair, value},
+      {MomProd @@ pair -> value, MomProd @@ Reverse[pair] -> value}],
+      {Subsets[legs, {2}], {x, y, -squares[[1]] - x - y,
+        (squares[[4]] - squares[[1]] - squares[[2]] - squares[[3]])/2 - x - y,
+        (squares[[1]] - squares[[2]] + squares[[3]] - squares[[4]])/2 + y,
+        (squares[[1]] + squares[[2]] - squares[[3]] - squares[[4]])/2 + x}}]];
+    dotRules = Join[dotRules, Thread[(MomProd[#, #] & /@ legs) -> squares]];
+    restore[value_] := ((value /. {chain_SpinorChain :>
+        chain/massScale^(Length[chain] - 2), product_MomProd :> product/massScale^2}) /.
+      ratioRestore);
+    ratioFreeQ[value_] := FreeQ[value, Alternatives @@ ratios];
+    splitTerm[term_] := With[{parts = factors[term]},
+      {Times @@ Select[parts, FreeQ[#, _SpinorChain | _MomProd] &],
+        Times @@ Select[parts, !FreeQ[#, _SpinorChain | _MomProd] &]}];
+    coefficientKey[pair_] := Times @@ Select[factors[First[pair]], !NumberQ[#] && ratioFreeQ[#] &];
+    chainRecords = <||>;
+    normalizeChain[chain_SpinorChain] := normalizeChain[chain] = Module[
+      {parts = List @@ chain, eliminate, slots, conserved, reduced},
+      If[Length[chain] === 2, Return[canonicalChain[chain]]];
+      eliminate = Last[Complement[legs, spinorLeg /@ {First[chain], Last[chain]}]];
+      slots = Rest[Most[parts]] /. Mom[eliminate] -> -Total[Mom /@ DeleteCases[legs, eliminate]];
+      conserved = SpinorChain @@ Join[{First[parts]}, slots, {Last[parts]}];
+      reduced = canonicalChains[Expand[ReduceSpinorProducts[conserved] /. normalizedRules]];
+      reduced = Expand[reduced /. dotRules];
+      AssociateTo[chainRecords, chain -> <|"Before" -> chain,
+        "EliminatedMomentum" -> eliminate, "AfterConservation" -> conserved,
+        "AfterChainwiseExternalDirac" -> reduced,
+        "ExternalMassRules" -> normalizedRules, "ScalarConservationRules" -> dotRules,
+        "InternalOnShellConditions" -> {}|>]; reduced];
+    normalize[value_] := Expand[canonicalChains[Expand[
+      value /. chain_SpinorChain :> normalizeChain[chain]]] /. normalizedRules /. dotRules];
+    pairIdentities[first_SpinorChain, second_SpinorChain] := pairIdentities[first, second] = Module[
+      {output = {}, lhs = normalize[first second], rhs, normalizedRHS, identity, nodes},
+      Do[rhs = SchoutenRewrite[first, second, {leftSplit, rightSplit}];
+        If[rhs === $Failed, Continue[]]; normalizedRHS = normalize[rhs];
+        identity = Expand[lhs - normalizedRHS];
+        If[identity =!= 0,
+          nodes = DeleteDuplicates[Cases[{first, second, rhs}, _SpinorChain, Infinity]];
+          AppendTo[output, <|"Identity" -> identity,
+            "Method" -> "OfficialSchoutenRewriteAndChainwiseExternalDirac",
+            "Chains" -> {first, second}, "Splits" -> {leftSplit, rightSplit},
+            "BeforeNormalization" -> (first second - rhs),
+            "NormalizedLeft" -> lhs, "NormalizedRight" -> normalizedRHS,
+            "ChainNormalization" -> Lookup[chainRecords, nodes, Nothing],
+            "InternalOnShellConditions" -> {}|>]],
+        {leftSplit, 0, Length[first] - 2}, {rightSplit, 0, Length[second] - 2}];
+      DeleteDuplicatesBy[output, #["Identity"] &]];
+    bestRank = rank[expression]; working = numerators;
+    groupRoutes = ConstantArray[{}, Length[groups]]; sourceNumerators = numerators;
+    inspectWhole[groupIndex_, newValue_, newRoute_] := Module[{candidate, candidateRank, routes, result},
+      working[[groupIndex]] = newValue; groupRoutes[[groupIndex]] = newRoute;
+      candidate = (Total[groupKeys working] /. propRestore) /. inverseRestore;
+      If[!finiteQ[candidate] || !FreeQ[candidate, Alternatives @@ Join[ratios, inverseTokens, propTokens]], Return[Null]];
+      candidateRank = rank[candidate]; If[!better[candidateRank, bestRank], Return[Null]];
+      routes = Flatten[groupRoutes, 1];
+      result = <|"Amplitude" -> candidate, "Status" -> "IMPROVED", "Rank" -> candidateRank,
+        "Route" -> {<|"Operation" -> "BoundedFourLegTensorIdentityQuotient",
+          "Before" -> expression, "After" -> candidate,
+          "ExternalMassRules" -> rules, "MassScale" -> massScale,
+          "MassScaleRequiredNonzero" -> True, "OtherMassDefinitions" -> massMap,
+          "RatioDefinitions" -> ratioRestore, "NormalizedExternalMassRules" -> normalizedRules,
+          "ScalarConservationRules" -> dotRules,
+          "ProtectedInverses" -> Join[inverseForward,
+            Thread[(#^-1 & /@ propagators) -> (#^-1 & /@ propTokens)]],
+          "ProtectedPropagatorAtoms" -> propForward,
+          "MomentumSlotLinearityRules" -> linearityRules,
+          "ProspectiveExpandedTerms" -> prospectiveBranches,
+          "GroupCertificates" -> routes, "InternalOnShellConditions" -> {},
+          "ExactFormalReplay" -> True|>}|>;
+      bestRank = candidateRank; best = result; accepted++;
+      If[checkpoint =!= None, checkpoint[result]]];
+    optimizeSector[input_, callback_] := Module[
+      {source = normalize[input], sourceCoordinates, front, seen = <||>, rows = {},
+       rowWitnesses = {}, rowMap, allRows, witnesses, coordinates, keys, index,
+       entries, matrix, vector, weights, lpMatrix, costs, inequalities, proposal,
+       coefficients, candidate, factored, candidateRank, sectorBest = input,
+       sectorBestRank = rank[input], sectorRecord, cofactor, identity, frontier,
+       chains, used, residual, nodes, witnessFirst, witnessSecond, limited = False, columnCount, rowCount},
+      sourceCoordinates = coordinateRules[source]; front = Keys[sourceCoordinates];
+      If[Length[front] > 768, Return[Null]];
+      nodes = DeleteDuplicates[Cases[input, _SpinorChain, Infinity]];
+      Do[
+        frontier = {};
+        Do[
+          If[remaining[] < 0.005 || Length[rows] >= 2400, limited = True; Break[]];
+          If[KeyExistsQ[seen, monomial], Continue[]]; AssociateTo[seen, monomial -> True];
+          chains = chainsOf[monomial]; If[Length[chains] =!= 4, Continue[]];
+          Do[witnessFirst = rspLiteralFactorCofactor[monomial, chains[[i]]];
+            If[!AssociationQ[witnessFirst], Continue[]];
+            witnessSecond = rspLiteralFactorCofactor[witnessFirst["Cofactor"], chains[[j]]];
+            If[!AssociationQ[witnessSecond], Continue[]];
+            cofactor = witnessSecond["Cofactor"];
+            Do[identity = Expand[cofactor pair["Identity"]];
+              If[identity === 0, Continue[]]; AppendTo[rows, identity];
+              AppendTo[rowWitnesses, Join[pair, <|"Cofactor" -> cofactor, "LiteralCofactorWitnesses" -> {witnessFirst, witnessSecond}|>]];
+              frontier = Join[frontier, Select[Keys[coordinateRules[identity]], !KeyExistsQ[seen, #] &]],
+              {pair, pairIdentities[chains[[i]], chains[[j]]]}],
+            {i, Length[chains]}, {j, i + 1, Length[chains]}], {monomial, front}];
+        If[rows === {} || remaining[] < 0.01, Break[]];
+        rowMap = AssociationThread[rows, rowWitnesses]; allRows = Keys[rowMap]; witnesses = Values[rowMap];
+        coordinates = coordinateRules /@ allRows;
+        keys = Union[Keys[sourceCoordinates], Flatten[Keys /@ coordinates]];
+        {columnCount, rowCount} = {Length[keys], Length[allRows]};
+        If[columnCount > 2400 || rowCount > 2400, Break[]];
+        index = AssociationThread[keys, Range[columnCount]];
+        entries = Flatten[MapIndexed[Function[{row, position}, KeyValueMap[
+          Function[{key, coefficient}, {index[key], First[position]} -> coefficient], row]], coordinates]];
+        If[Length[entries] > 24000, Break[]];
+        matrix = SparseArray[entries, {columnCount, rowCount}];
+        vector = Normal[SparseArray[KeyValueMap[index[#1] -> #2 &, sourceCoordinates], {columnCount}]];
+        If[!VectorQ[Flatten[Values /@ coordinates], MatchQ[#, _Integer | _Rational] &] ||
+            !VectorQ[vector, MatchQ[#, _Integer | _Rational] &], Break[]];
+        weights = expressionComplexity /@ keys;
+        costs = Join[weights, weights, ConstantArray[0, rowCount]];
+        lpMatrix = Join[IdentityMatrix[columnCount, SparseArray],
+          -IdentityMatrix[columnCount, SparseArray], -matrix, 2];
+        inequalities = SparseArray[{Band[{1, 1}] -> 1.}, {2 columnCount, 2 columnCount + rowCount}];
+        proposal = Quiet[Check[LinearOptimization[N[costs],
+          {inequalities, ConstantArray[0., 2 columnCount]}, {N[lpMatrix], -N[vector]},
+          "PrimalMinimizer", Method -> "CLP", Tolerance -> 10^-10], $Failed]];
+        If[VectorQ[proposal, NumericQ] && Length[proposal] === 2 columnCount + rowCount,
+          Do[
+            coefficients = Map[If[Abs[#] < tolerance, 0, Rationalize[#, tolerance]] &,
+              Take[proposal, -rowCount]];
+            candidate = Expand[source + Total[MapThread[Times, {coefficients, allRows}]]];
+            factored = Factor[candidate]; candidateRank = rank[factored];
+            If[!finiteQ[factored] || !better[candidateRank, sectorBestRank], Continue[]];
+            residual = Expand[candidate - source - coefficients.allRows];
+            If[residual =!= 0 || Expand[factored - candidate] =!= 0, Continue[]];
+            used = Select[Range[rowCount], coefficients[[#]] =!= 0 &];
+            sectorRecord = <|"Input" -> input, "NormalizedSource" -> source,
+              "Candidate" -> factored, "Depth" -> depth,
+              "SourceChainNormalization" -> Lookup[chainRecords, nodes, Nothing],
+              "IdentityCoefficients" -> coefficients[[used]],
+              "OrdinaryIdentities" -> allRows[[used]], "IdentityWitnesses" -> witnesses[[used]],
+              "ExactLinearCombinationResidual" -> residual,
+              "ExactFactorizationResidual" -> 0, "InternalOnShellConditions" -> {}|>;
+            sectorBest = factored; sectorBestRank = candidateRank;
+            callback[sectorBest, sectorRecord], {tolerance, {10^-4, 10^-6}}]];
+        front = DeleteDuplicates[frontier];
+        If[front === {} || limited || remaining[] < 0.02, Break[]], {depth, 2}];
+      Null];
+    Do[
+      If[remaining[] < 0.01, Break[]]; currentGroup = g;
+      polynomial = Expand[(numerators[[g]] /. rules /. massMap) /.
+        {chain_SpinorChain :> massScale^(Length[chain] - 2) chain,
+          product_MomProd :> massScale^2 product}];
+      sectorData = splitTerm /@ If[Head[polynomial] === Plus, List @@ polynomial, {polynomial}];
+      sectors = Map[Function[cohort, With[{coefficient = coefficientKey[First[cohort]]},
+        <|"Coefficient" -> coefficient,
+          "Polynomial" -> Expand[Total[(First[#]/coefficient) Last[#] & /@ cohort]]|>]],
+        GatherBy[sectorData, coefficientKey]];
+      If[Length[sectors] > 16, Continue[]];
+      sourceCheck = Expand[Total[(#["Coefficient"] restore[#["Polynomial"]]) & /@ sectors] -
+        (numerators[[g]] /. rules)];
+      If[sourceCheck =!= 0, Continue[]];
+      sectorWorking = Lookup[sectors, "Polynomial"];
+      sectorRoutes = ConstantArray[None, Length[sectors]];
+      Do[
+        If[remaining[] < 0.01, Break[]]; currentSector = s;
+        optimizeSector[sectorWorking[[s]], Function[{newSector, certificate},
+          sectorWorking[[currentSector]] = newSector;
+          sectorRoutes[[currentSector]] = certificate;
+          newNumerator = Factor[Total[MapThread[#1 restore[#2] &,
+            {Lookup[sectors, "Coefficient"], sectorWorking}]]];
+          record = <|"GroupIndex" -> currentGroup,
+            "InverseSpectator" -> ((groupKeys[[currentGroup]] /. propRestore) /. inverseRestore),
+            "OriginalNumerator" -> numerators[[currentGroup]], "NewNumerator" -> newNumerator,
+            "ExactMassScalingReconstructionResidual" -> sourceCheck,
+            "CoefficientSectors" -> sectors, "SectorCertificates" -> sectorRoutes,
+            "InternalOnShellConditions" -> {}|>;
+          inspectWhole[currentGroup, newNumerator, {record}]]],
+        {s, Length[sectors]}], {g, Length[groups]}];
+    "Complete", stopTag], 536870912, "MemoryLimit"], remaining[], "TimeLimit"];
+  Join[best, <|"TimedOut" -> MemberQ[{"TimeLimit", "MemoryLimit"}, outcome],
+    "StopReason" -> outcome, "ElapsedTime" -> AbsoluteTime[] - started,
+    "AcceptedCandidates" -> accepted, "InternalOnShellConditions" -> {}|>]
+];
 End[];

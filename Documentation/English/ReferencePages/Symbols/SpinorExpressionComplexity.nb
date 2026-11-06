@@ -19,8 +19,19 @@ weights."}], "Usage"], Cell["Details", "NotesSection"],
       ButtonData -> "paclet:HEPCAT/ref/ReduceSpinorProducts"], ", ",
      ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], ", or a manually \
-chosen identity route. A smaller value generally favors fewer terms and fewer \
-momentum insertions."}], "Notes"],
+chosen identity route. The score is the sum, over implicit monomials, of one \
+plus four times the numerator momentum degree. This gives an explicit penalty \
+to momentum factors, whether they occur inside or outside spinor chains."}],
+   "Notes"],
+  Cell[TextData[
+    {"Each chain or trace momentum insertion contributes one unit. ",
+     ButtonBox["MomProd", BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/MomProd"], ", ", ButtonBox["Mandelstahm",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/Mandelstahm"], " \
+and a squared momentum contribute two units. Positive powers count every \
+factor, so a scalar product squared contributes four units. A single \
+insertion therefore scores 5, while one scalar product scores 9, the same as \
+two insertions. Mass factors carry no momentum cost."}], "Notes"],
   Cell[TextData[
     {"The score accounts for branches hidden in composite momentum slots. ",
      Cell[BoxData[RowBox[{"Mom", "[", "Multiparticle", "[", "1", ",", "3",
@@ -28,10 +39,12 @@ momentum insertions."}], "Notes"],
 momentum contributions, so packing a sum into a single label does not make it \
 artificially inexpensive."}], "Notes"],
   Cell[TextData[{"Physical ", ButtonBox["PropDen", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/PropDen"], " factors are treated as \
-opaque. The score measures a practical algebraic representation, not \
-numerical stability, high-energy behavior, or whether the amplitude is \
-physically correct. Use ", ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PropDen"], " factors and inverse \
+kinematic factors are opaque to the numerator count. A momentum appearing \
+only in a denominator does not count as a numerator insertion. The score \
+measures a practical algebraic representation, not numerical stability, \
+high-energy behavior, or whether the amplitude is physically correct. Use ",
+     ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"],
      " for those separate tests."}], "Notes"],
   Cell[TextData[{"Two equivalent expressions can have different scores, and \
@@ -63,7 +76,15 @@ Evaluate loading in its own cell before the calculation.", "ExampleText"],
       "Spinor", "[", "\"Helicity\"", ",", " ", "\"Angle\"", ",", " ", "1",
       "]", ",", " ", "Spinor", "[", "\"Helicity\"", ",", " ", "\"Angle\"",
       ",", " ", "2", "]", "]", "]"}]], "Input"],
-  Cell[BoxData[RowBox[{"1"}]], "Output"], Cell["See Also", "SeeAlsoSection"],
+  Cell[BoxData[RowBox[{"1"}]], "Output"],
+  Cell[TextData[
+    {"Count momenta consistently inside chains and in scalar products."}],
+   "ExampleText"], Cell[BoxData[RowBox[{"{", "SpinorExpressionComplexity",
+      "[", "MomProd", "[", "1", ",", "2", "]", "]", ",", " ",
+      "SpinorExpressionComplexity", "[", "MomProd", "[", "1", ",", "2", "]",
+      "^", "2", "]", "}"}]], "Input"],
+  Cell[BoxData[RowBox[{"{", "9", ",", " ", "17", "}"}]], "Output"],
+  Cell["See Also", "SeeAlsoSection"],
   Cell[TextData[{ButtonBox["ReduceSpinorProducts", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ReduceSpinorProducts"],
      "  \[Bullet]  ", ButtonBox["SpinorIdentityCandidates",

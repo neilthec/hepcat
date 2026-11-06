@@ -146,6 +146,32 @@ pairs = DiagramAmplitudes[diagrams];
 `DiagramAmplitudes` public entry point for complete diagram calculations.
 `CreateArrowDiagrams[diagrams]` displays the diagrams.
 
+## Massive Four-Leg Tensor Reduction
+
+Preparation can use a bounded ordinary identity quotient for four declared
+nonzero external masses and eight external spinor slots, two on each leg.
+`rspFourLegTensorReduction` is private and must not become a process-specific
+formula lookup. Pair Schouten identities, chainwise external Dirac contraction
+and declared momentum conservation supply its rows. Numerical optimization is
+only a proposal step; exact rational linear replay, literal cofactor witnesses,
+reversible mass scaling and complete reconstruction are mandatory. Keep model
+parameters symbolic and all internal lines off shell in this route. Preserve
+physical propagator arguments and whole composite/spinor inverse factors.
+Never abstract a distinct numerical mass through a global number replacement:
+the same number can be a leg label or an unrelated coefficient. Such mass
+encodings must retain the ordinary route until the abstraction is typed.
+Only complete, strictly improving candidates may be published or retained on a
+timeout. Unsupported inputs keep the established route. The independent WW/ZZ
+input fixtures contain no compact target answer. Do not rerun all symbolic row
+proofs after every small edit: use the focused regression suite, then the
+independent symbolic certificate and public construction for a changed route.
+
+`SpinorExpressionComplexity` charges four per numerator momentum unit plus one
+per implicit monomial. An insertion counts one, a dot product or invariant two,
+and positive powers multiply the count. Inverse factors are excluded. Old
+literal score bounds must be recalibrated only with measured unchanged formulas
+and retained algebraic/physical checks, not relaxed to hide a regression.
+
 ## Independent Feynman Benchmark
 
 `ReadModel` also recognizes a CalcHEP `lgrng*.mdl` model and returns
@@ -1554,8 +1580,12 @@ quiet fallback after a rejected exact-zero assumption.
 Dense affine energy charts may reuse exact typed monomials before mapping or
 series expansion. Verify the complete original affine reconstruction, retain
 every coefficient coordinate and coherent-spin component, and check each jet's
-coverage before composing the original coupled equations. Sharing work is not
-permission to fit independent coefficients to the monomials. Numerical
+coverage before composing the original coupled equations. Certified scalar
+series may be reused under exact expression, variable and order keys within
+one energy chart. Keep this bounded cache dynamically scoped to the chart;
+never retain failures, approximate inputs, or state between charts and parameter
+assignments. A timeout or abort must restore the prior cache state. Sharing
+work is not permission to fit independent coefficients to the monomials. Numerical
 coefficient assembly can create large unevaluated sums of exact numbers. A
 call-local cache may combine distinct numbers with ordinary algebra before the
 linear solve, provided every replacement replays exactly and every row and

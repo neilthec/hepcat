@@ -5402,7 +5402,39 @@ highEnergyScalarSeriesCompleteQ[value_, variable_Symbol, order_Integer] := Modul
    assumed quantity must then be certified exactly; other messages retain the
    ordinary Check failure path. The inherited system definition is restored on
    return, timeout or abort. *)
+(* Scalar jets repeat across many typed monomials on one energy chart.
+   The optional cache is dynamically scoped by the atom-row caller below;
+   exact expressions, the chart variable and the requested order form its key. *)
 highEnergyCertifiedScalarSeries[expression_, variable_Symbol, order_Integer] := Module[
+  {key, value, statistics},
+  If[!ValueQ[$highEnergyScalarSeriesCache] ||
+      !AssociationQ[$highEnergyScalarSeriesCache] || !FreeQ[expression, _Real] ||
+      !residueFiniteQ[expression],
+    Return[highEnergyCertifiedScalarSeriesUncached[expression, variable, order]]];
+  key = {expression, variable, order};
+  statistics = ValueQ[$highEnergyScalarSeriesCacheStatistics] &&
+    AssociationQ[$highEnergyScalarSeriesCacheStatistics];
+  If[KeyExistsQ[$highEnergyScalarSeriesCache, key],
+    If[statistics, AssociateTo[$highEnergyScalarSeriesCacheStatistics,
+      "Hits" -> (Lookup[$highEnergyScalarSeriesCacheStatistics, "Hits", 0] + 1)]];
+    Return[$highEnergyScalarSeriesCache[[Key[key]]]]];
+  If[statistics, AssociateTo[$highEnergyScalarSeriesCacheStatistics,
+    "Misses" -> (Lookup[$highEnergyScalarSeriesCacheStatistics, "Misses", 0] + 1)]];
+  value = highEnergyCertifiedScalarSeriesUncached[expression, variable, order];
+  If[Length[$highEnergyScalarSeriesCache] < 4096 && AssociationQ[value] &&
+      Lookup[value, "Status", None] === "COMPLETE" &&
+      TrueQ[Lookup[value, "RequestedOrderCovered", False]] &&
+      KeyExistsQ[value, "Series"] && residueFiniteQ[value["Series"]] &&
+      highEnergyScalarSeriesCompleteQ[value["Series"], variable, order],
+    AssociateTo[$highEnergyScalarSeriesCache, key -> value];
+    If[statistics, AssociateTo[$highEnergyScalarSeriesCacheStatistics,
+      "Stores" -> (Lookup[$highEnergyScalarSeriesCacheStatistics, "Stores", 0] + 1)]]];
+  value
+];
+
+(* Preserve the original certified expansion, including every intercepted
+   and exactly proved Series zero assumption. Failures are never cached. *)
+highEnergyCertifiedScalarSeriesUncached[expression_, variable_Symbol, order_Integer] := Module[
   {assumptions = {}, capture, value, arguments, numbers, reduced, proofs = {}, record,
    rejection, tag = Unique["seriesZeroCertificate"]},
   SetAttributes[capture, HoldAll];
@@ -13302,7 +13334,7 @@ preparationMasslessBracketCancellation[expression_, externalRules_List,
 (* Expose an existing propagator by its exact definition, not by putting it on
    shell. Only numerator scalar products and declared external masses are used. *)
 preparationExternalVirtualities[expression_, externalRules_List] := Module[
-  {external = externalIndices[externalRules], props, replacements, pair, mass, trial},
+  {external = externalIndices[externalRules], props, replacements, pair, mass, widthShift, trial},
   If[LeafCount[expression] > 24000 || FreeQ[expression, _MomProd] ||
       rspSandwichExpansionCount[expression] > 256, Return[expression]];
   props = DeleteDuplicates[Cases[expression, _PropDen, Infinity]];
@@ -13311,7 +13343,9 @@ preparationExternalVirtualities[expression_, externalRules_List] := Module[
     If[!ListQ[pair] || Length[pair] =!= 2 || !DuplicateFreeQ[pair] ||
         !ContainsAll[external, pair], Missing["NotPairPole"],
       pair = Sort[pair]; mass = prop[[2]];
-      orderedDot @@ pair -> (prop + mass^2 -
+      (* PropDen includes +i m width; expose its real virtuality exactly. *)
+      widthShift = If[Length[prop] === 3, I mass prop[[3]], 0];
+      orderedDot @@ pair -> (prop + mass^2 - widthShift -
         (Mass[First[pair]] /. externalRules)^2 -
         (Mass[Last[pair]] /. externalRules)^2)/2]], props]];
   replacements = DeleteDuplicatesBy[replacements, First];
@@ -15614,7 +15648,8 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
    completedBest = None, completedBestRank, completedBestSource, rememberCompleted, snapshotRank,
    rankSnapshots = 0, groupedCompaction, fractionCompaction, fractionSeconds, pairNormalization,
    diracCompaction, displayCompaction, displaySeconds, modelCompaction, conservationCompaction,
-   currentCompaction, schoutenCompaction},
+   currentCompaction, schoutenCompaction, tensorTrial, tensorCheckpoint = None,
+   tensorSource, tensorSeconds, tensorReport, tensorLabel},
   progressMetadata = Join[<|"Item" -> index, "Items" -> count, "InputType" -> kind|>,
     If[MemberQ[{"Diagram", "FeynmanDiagram"}, kind], <|"Diagram" -> index, "Diagrams" -> count|>, <||>]];
   channels = If[TrueQ[options["InternalOnShell"]],
@@ -15633,6 +15668,31 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
   rememberCompleted[value_, label_] := Module[{valueRank = snapshotRank[value]},
     If[completedBest === None || preparationBetterQ[valueRank, completedBestRank],
       completedBest = value; completedBestRank = valueRank; completedBestSource = label]];
+  (* A complete tensor packet may first enlarge individual chain products.
+     Compare only certified endpoints, before greedy reference or fraction
+     searches consume the item budget. The helper never adds a cut shell. *)
+  tensorTrial[source_, label_, allowance_] := Module[{external = preparationExternalRules[rules]},
+    If[!TrueQ[options["MomentumConservation"]] || Length[external] =!= 4 ||
+        AnyTrue[Last /@ external, TrueQ[# === 0] &], Return[Null]];
+    tensorSeconds = If[options["TimeConstraint"] === Infinity, allowance,
+      Min[allowance, Max[0, options["TimeConstraint"] - (AbsoluteTime[] - started)]/2]];
+    If[tensorSeconds <= 0.01, Return[Null]];
+    stage = label; tensorSource = source; tensorLabel = label; tensorCheckpoint = None;
+    tensorReport = rspFourLegTensorReduction[source, external, True, tensorSeconds,
+      Function[record, tensorCheckpoint = record;
+        If[AssociationQ[record] && residueFiniteQ[Lookup[record, "Amplitude", $Failed]],
+          rememberCompleted[record["Amplitude"], label]]]];
+    after = Lookup[tensorReport, "Amplitude", source];
+    If[AssociationQ[tensorReport] && residueFiniteQ[after] &&
+        preparationBetterQ[snapshotRank[after], snapshotRank[expression]],
+      before = expression; expression = after;
+      AppendTo[reductions, <|"Operation" -> label, "Before" -> source,
+        "PreviousActiveExpression" -> before, "After" -> after,
+        "InternalOnShellIdentity" -> False, "OnShellChannels" -> {},
+        "IdentityRoute" -> Lookup[tensorReport, "Route", {}],
+        "SearchTimedOut" -> Lookup[tensorReport, "TimedOut", False]|>];
+      rememberCompleted[expression, label]];
+    event[label]];
   If[TrueQ[eligibleOriginal] && !TrueQ[options["InternalOnShell"]] &&
       options["PolePreference"] === None,
     initialCandidate = preparationNumerators[original,
@@ -15700,6 +15760,10 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
       "After" -> expression, "InternalOnShellIdentity" -> False,
       "OptionalExpansionTimedOut" -> contractionTimedOut|>];
     event[stage];
+    If[TrueQ[eligibleOriginal] && (TrueQ[wholeAmplitude] || kind === "Amplitude"),
+      tensorTrial[preparationNumerators[original, Function[num,
+        preparationReplaceMasses[num, preparationExternalRules[rules]]]],
+        "OriginalFourLegTensorIdentities", 6]];
     stage = "PolePreference";
     before = expression;
     referenceInput = expression;
@@ -15883,6 +15947,8 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
     AppendTo[reductions, <|"Operation" -> stage, "Before" -> before,
       "After" -> expression, "InternalOnShellIdentity" -> False|>];
     event[stage];
+    If[!TrueQ[wholeAmplitude] && kind =!= "Amplitude",
+      tensorTrial[expression, "OrdinaryFourLegTensorIdentities", 3]];
     reduceInvariants["AfterSpinorProducts"];
     stage = "CancelAuxiliaryReferencePoles";
     before = expression;
@@ -16036,6 +16102,16 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
   (* The outer item clock may expire during a later short fraction search.
      Its callback published the last complete expression and replay atomically,
      so retain that checkpoint even if the continuation itself could not return. *)
+  If[!TrueQ[outcome] && MemberQ[{"OriginalFourLegTensorIdentities",
+      "OrdinaryFourLegTensorIdentities"}, stage] && AssociationQ[tensorCheckpoint],
+    after = Lookup[tensorCheckpoint, "Amplitude", expression];
+    If[residueFiniteQ[after],
+      rememberCompleted[after, tensorLabel];
+      AppendTo[reductions, <|"Operation" -> tensorLabel, "Before" -> tensorSource,
+        "After" -> after, "AlternativeRoute" -> True,
+        "InternalOnShellIdentity" -> False, "OnShellChannels" -> {},
+        "IdentityRoute" -> Lookup[tensorCheckpoint, "Route", {}],
+        "SearchTimedOut" -> True, "OuterClockCheckpoint" -> True|>]]];
   If[!TrueQ[outcome] && stage === "OriginalFractionSpinorIdentities" &&
       AssociationQ[fractionCompaction] && KeyExistsQ[fractionCompaction, "Amplitude"] &&
       residueFiniteQ[fractionCompaction["Amplitude"]],
@@ -16685,7 +16761,7 @@ completionHEAffineAtomLaurentEligibleQ[trial_, unknowns_List, metadata_Associati
 completionHEAffineAtomLaurentRows[trial_, chart_Association, rules_List,
     unknowns_List, threshold_, seconds_:60] := Module[
   {started = AbsoluteTime[], tag = Unique["affineAtomLaurent"], remaining, result,
-   scalar, monomial, work, sourceParts = 0, completed = 0},
+   scalar, monomial, work, sourceParts = 0, completed = 0, scalarCacheReport},
   remaining[] := Max[0, seconds - (AbsoluteTime[] - started)];
   work[] := Catch[Module[
     {arrays, parts, expanded, terms, atoms, positions, coefficients, entries, sourceMap,
@@ -16782,10 +16858,21 @@ completionHEAffineAtomLaurentRows[trial_, chart_Association, rules_List,
         "SameConservedEnergyChartForAllAtoms"->True,
         "NumericCoefficientReplay"->canonical["Certificate"]|>|>
   ],tag];
-  result = Internal`WithLocalSettings[Null,
-    TimeConstrained[MemoryConstrained[work[],805306368,Missing["TypedAtomMemoryGuard"]],
-      seconds,Missing["TypedAtomTimeConstraint"]], Clear[scalar,monomial]];
-  If[AssociationQ[result],Join[result,<|"ElapsedTime"->AbsoluteTime[]-started|>],result]
+  (* Each call describes one fixed chart and parameter assignment. Block
+     restores prior state on completion, timeout and abort; nothing is shared
+     with the next chart, model or construction. *)
+  result = Block[{$highEnergyScalarSeriesCache = <||>,
+      $highEnergyScalarSeriesCacheStatistics = <|"Hits" -> 0, "Misses" -> 0, "Stores" -> 0|>},
+    With[{answer = Internal`WithLocalSettings[Null,
+        TimeConstrained[MemoryConstrained[work[],805306368,Missing["TypedAtomMemoryGuard"]],
+          seconds,Missing["TypedAtomTimeConstraint"]], Clear[scalar,monomial]]},
+      scalarCacheReport = Join[$highEnergyScalarSeriesCacheStatistics,
+        <|"Entries" -> Length[$highEnergyScalarSeriesCache], "EntryLimit" -> 4096,
+          "ExactExpressionVariableOrderKeys" -> True,
+          "OnlyCompleteCertifiedSeries" -> True, "Scope" -> "SingleEnergyChart"|>];
+      answer]];
+  If[AssociationQ[result],Join[result,<|"ElapsedTime"->AbsoluteTime[]-started,
+    "ScalarSeriesCache" -> scalarCacheReport|>],result]
 ];
 
 completionHEEnergyConstraints[trial_, unknowns_List, metadata_Association,

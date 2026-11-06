@@ -79,6 +79,27 @@ expose an external Dirac or massless rank-one contraction. The accepted result
 still has to improve the completed expression, and all inverse factors remain
 protected. These finite searches record the exact identity route and do not
 change the process-independent contract of `ReduceSpinorProducts`.
+Four-leg tensors with two external spinor slots on each massive leg also admit
+an exact, bounded identity-space search in preparation. It combines ordinary
+Schouten identities, chainwise external Dirac contractions and declared momentum
+conservation before comparing complete candidates. This captures reductions
+that temporarily expand a chain or move scalar momentum products back into
+spinor products. The search uses no known amplitude or numerical kinematics.
+Its numerical optimizer only proposes coefficients: exact rational identity
+replay, reversible mass scaling and reconstruction are required for acceptance.
+Propagators stay off shell and their arguments remain unchanged. Other kinematic
+inverse factors remain opaque. Four-fermion sectors, massless legs, undeclared
+momenta, unsupported spin indices and larger multiplicities retain their
+existing reduction route. The finite clock retains the best complete checkpoint.
+This context-dependent search belongs to `PrepareAmplitudes`, not standalone
+`ReduceSpinorProducts`.
+
+The complexity score counts numerator momentum degree consistently: each chain
+or trace insertion contributes one unit; `MomProd`, `Mandelstahm` and a momentum
+square contribute two. Positive integer powers count every factor, and inverse
+factors do not contribute to numerator degree. Each implicit monomial costs
+`1 + 4*degree`, including the established composite chain branching factor.
+
 Shared scalar content is extracted from polynomial sums before applying the
 existing Schouten rules, so preexpanded coefficient-weighted identities are
 recognized too. This adds no inverse Schouten rewrite or denominator combination.
@@ -2881,6 +2902,14 @@ cancellation and explicit Xi reference independence. Physical constraints
 are imposed again, so a high-energy correction cannot knowingly spoil the
 fitted factorization conditions. The default `"HighEnergyBound" -> Automatic`
 uses `E^(4-n)`; change it when the theory requires a different bound.
+
+For a large affine spin tensor, the energy calculation can share repeated
+typed monomials while retaining their original coupled coefficients. It also
+reuses completed, certified scalar series under exact expression, energy
+variable and requested-order keys within one chart. The bounded cache does
+not survive the chart, a changed parameter assignment, a timeout or an abort.
+Failures and approximate expressions are not cached. Every original spin
+component, Laurent-order certificate and equation remains required.
 
 Resource defaults are `Automatic`, using the finite workload policy described
 above. Fit sampling starts at four, independent validation remains four, and

@@ -114,13 +114,20 @@ Do[
     {dsMethod, {If[dsFixture === dsTail, "TailDiracSchouten", "DoubleEndpointDiracSchouten"]}}],
   {dsKind, {"Angle", "Square"}}, {dsMode, {"Coherent", "Upper", "Lower", "Mixed"}}];
 
-(* An interior endpoint momentum needs its complete Clifford remainder. *)
+(* Positions two and three need the complete Clifford remainder. Position
+   one is already a leading endpoint, so ordinary normalization can leave no
+   strictly improving recorded edit when p.q costs two momentum insertions.
+   Require its exact value and nonworsened rank rather than an invented route. *)
 Do[
   dsWord = Insert[{Mom[2], Mom[5]}, Mom[1], dsPosition];
   dsFixture = dsMakeTail[dsKind, "Coherent", dsWord, dsPosition];
   dsReport = dsReduce[dsFixture["Input"]];
-  dsCheck[{"an interior pivot keeps every anticommutation term", dsKind, dsPosition},
-    dsReport["Route"] =!= {} &&
+  dsCheck[{If[dsPosition === 1,
+      "a leading pivot preserves its exact value without requiring a redundant edit",
+      "an interior pivot keeps every anticommutation term"], dsKind, dsPosition},
+    If[dsPosition === 1,
+      !dsBetter[dsRank[dsFixture["Input"]], dsRank[dsReport["Amplitude"]]],
+      dsReport["Route"] =!= {}] &&
       dsZero[dsValue[dsReport["Amplitude"] - dsFixture["Expected"], dsChart[2]]] &&
       AllTrue[dsReport["Route"], dsReplayQ[#, dsChart[2]] &]],
   {dsKind, {"Angle", "Square"}}, {dsPosition, 3}];
