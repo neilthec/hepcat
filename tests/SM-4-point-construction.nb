@@ -6,7 +6,7 @@ calls. The 132 construction calls explicitly cover every photon/gluon \
 helicity combination. Reference links open the matching original formulas and \
 S/T/U derivation in the closed appendix; its return links bring you back. The \
 original notebook file is unchanged.", "Text"], 
-  Cell["Saved independent comparisons currently pass for 68 of the 74 process \
+  Cell["Saved independent comparisons currently pass for 69 of the 74 process \
 families. Each saved PASS uses 1000 CalcHEP points and 1000 MadGraph points \
 for every explicit massless-helicity configuration. The h h h h and \
 four-gluon sections retain separate numerical diagnostics, including the \
@@ -30124,18 +30124,1174 @@ project to spinasOutputDirectory when you rerun it. Full report: \
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm67"], 
      Cell["Z, h, W+, W-", "Subsection"], Cell["sm67Particles = {\"Z\", \"h\", \
 \"W+\", \"W-\"};\nsm67Amplitude = ConstructAmplitude[sm67Particles, sm, sm]", 
-      "Input"], Cell[CellGroupData[{Cell["Inspect the stages (optional)", 
-         "Subsection"], Cell["These cells expose the first helicity \
-calculation. ConstructAmplitude already performs these stages internally. Use \
-them when investigating a result rather than rerunning them after every \
-successful construction.", "Text"], Cell["sm67Diagrams = \
-CreateDiagrams[sm67Particles, sm];\nCreateArrowDiagrams[sm67Diagrams]", 
-         "Input"], Cell[
-         "sm67DiagramAmplitudes = DiagramAmplitudes[sm67Diagrams]", "Input"], 
-        Cell[
-         "sm67PreparedDiagrams = PrepareAmplitudes[sm67DiagramAmplitudes, \
-sm]", "Input"], Cell["sm67Channels = \
-FactorizationAmplitudeChannels[sm67Particles, sm];\nsm67Channels", "Input"], 
+      "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
+          RowBox[{SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
+               "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd7\
+7e7", "Real"], Editable -> False], "2"], " ", RowBox[
+             {"(", RowBox[{FractionBox[RowBox[{InterpretationBox["MW", 
+                    ModelParameter["MW", "30a3398a0cbb88a8e4517e90d53df2fd406\
+e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], " ", 
+                   InterpretationBox["MZ", ModelParameter["MZ", "30a3398a0cbb\
+88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> 
+                     False], " ", RowBox[{"(", RowBox[{RowBox[{RowBox[
+                          {"-", "4"}], " ", SuperscriptBox[InterpretationBox[
+                          "MW", ModelParameter["MW", "30a3398a0cbb88a8e4517e9\
+0d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], 
+                          "2"], " ", InterpretationBox["MZ", ModelParameter[
+                          "MZ", "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396\
+af82ff422d9b7ebd77e7", "Real"], Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", StyleBox["3", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["4", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          3], Spinor["Spin", "Angle", 4]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["3", Bold, StripOnInput -> False], 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                          SpinorChain[Spinor["Spin", "Square", 1], Spinor[
+                          "Spin", "Square", 3]], Editable -> False], " ", 
+                         InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          StyleBox["1", Bold, StripOnInput -> False]}, 
+                          "RowDefault"], TemplateBox[{StyleBox["4", Bold, 
+                          StripOnInput -> False], "\"]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Square", 
+                          1], Spinor["Spin", "Square", 4]], Editable -> 
+                          False]}], "-", RowBox[{"4", " ", SuperscriptBox[
+                          InterpretationBox["MW", ModelParameter["MW", "30a33\
+98a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], "2"], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", StyleBox["3", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["4", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          3], Spinor["Spin", "Angle", 4]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["3", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["4", Bold, StripOnInput -> False], 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                          SpinorChain[Spinor["Spin", "Square", 3], Spinor[
+                          "Spin", "Square", 4]], Editable -> False], " ", 
+                         InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          StyleBox["1", Bold, StripOnInput -> False]}, 
+                          "RowDefault"], "4", TemplateBox[{StyleBox["1", 
+                          Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Square", 
+                          1], Mom[4], Spinor["Spin", "Angle", 1]], 
+                          Editable -> False]}], "+", RowBox[{SuperscriptBox[
+                          InterpretationBox["MZ", ModelParameter["MZ", "30a33\
+98a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], "2"], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["3", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 3]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["4", Bold, StripOnInput -> False], 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                          SpinorChain[Spinor["Spin", "Square", 1], Spinor[
+                          "Spin", "Square", 4]], Editable -> False], " ", 
+                         InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          StyleBox["3", Bold, StripOnInput -> False]}, 
+                          "RowDefault"], "1", TemplateBox[{StyleBox["4", 
+                          Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Square", 
+                          3], Mom[1], Spinor["Spin", "Angle", 4]], 
+                          Editable -> False]}], "+", RowBox[
+                        {InterpretationBox["MZ", ModelParameter["MZ", "30a339\
+8a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{"\"[\"", StyleBox["1", 
+                          Bold, StripOnInput -> False]}, "RowDefault"], 
+                          TemplateBox[{StyleBox["4", Bold, StripOnInput -> 
+                          False], "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                          SpinorChain[Spinor["Spin", "Square", 1], Spinor[
+                          "Spin", "Square", 4]], Editable -> False], " ", 
+                         InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          StyleBox["1", Bold, StripOnInput -> False]}, 
+                          "RowDefault"], "4", TemplateBox[{StyleBox["3", 
+                          Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Square", 
+                          1], Mom[4], Spinor["Spin", "Angle", 3]], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{"\"[\"", StyleBox["3", 
+                          Bold, StripOnInput -> False]}, "RowDefault"], "1", 
+                          TemplateBox[{StyleBox["4", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 3], Mom[1], Spinor["Spin", 
+                          "Angle", 4]], Editable -> False]}], "+", RowBox[
+                        {InterpretationBox["MW", ModelParameter["MW", "30a339\
+8a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", InterpretationBox["MZ", 
+                          ModelParameter["MZ", "30a3398a0cbb88a8e4517e90d53df\
+2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], " ", 
+                         InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          StyleBox["1", Bold, StripOnInput -> False]}, 
+                          "RowDefault"], TemplateBox[{StyleBox["3", Bold, 
+                          StripOnInput -> False], "\"]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Square", 
+                          1], Spinor["Spin", "Square", 3]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["4", Bold, StripOnInput -> False], 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                          SpinorChain[Spinor["Spin", "Square", 1], Spinor[
+                          "Spin", "Square", 4]], Editable -> False], " ", 
+                         InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          StyleBox["4", Bold, StripOnInput -> False]}, 
+                          "RowDefault"], "1", TemplateBox[{StyleBox["3", 
+                          Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Square", 
+                          4], Mom[1], Spinor["Spin", "Angle", 3]], 
+                          Editable -> False]}], "+", RowBox[
+                        {InterpretationBox["MZ", ModelParameter["MZ", "30a339\
+8a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["4", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 4]], Editable -> 
+                          False], " ", RowBox[{"(", RowBox[{RowBox[{RowBox[
+                          {"-", "4"}], " ", SuperscriptBox[InterpretationBox[
+                          "MW", ModelParameter["MW", "30a3398a0cbb88a8e4517e9\
+0d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], 
+                          "2"], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"\[LeftAngleBracket]\"", StyleBox[
+                          "1", Bold, StripOnInput -> False]}, "RowDefault"], 
+                          TemplateBox[{StyleBox["3", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Angle", 1], Spinor["Spin", "Angle", 3]], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{"\"[\"", StyleBox["3", 
+                          Bold, StripOnInput -> False]}, "RowDefault"], 
+                          TemplateBox[{StyleBox["4", Bold, StripOnInput -> 
+                          False], "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                          SpinorChain[Spinor["Spin", "Square", 3], Spinor[
+                          "Spin", "Square", 4]], Editable -> False]}], "+", 
+                          RowBox[{InterpretationBox["MW", ModelParameter[
+                          "MW", "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396\
+af82ff422d9b7ebd77e7", "Real"], Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{
+                          "\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["3", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 3]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["3", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], "1", 
+                          TemplateBox[{StyleBox["4", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 3], Mom[1], Spinor["Spin", 
+                          "Angle", 4]], Editable -> False]}], "+", RowBox[
+                          {InterpretationBox["MZ", ModelParameter["MZ", "30a3\
+398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{"\"[\"", StyleBox["1", 
+                          Bold, StripOnInput -> False]}, "RowDefault"], 
+                          TemplateBox[{StyleBox["3", Bold, StripOnInput -> 
+                          False], "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                          SpinorChain[Spinor["Spin", "Square", 1], Spinor[
+                          "Spin", "Square", 3]], Editable -> False], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"[\"", StyleBox["4", Bold, StripOnInput -> 
+                          False]}, "RowDefault"], "1", TemplateBox[{StyleBox[
+                          "3", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Square", 
+                          4], Mom[1], Spinor["Spin", "Angle", 3]], 
+                          Editable -> False]}], "+", RowBox[
+                          {InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"[\"", StyleBox["3", Bold, StripOnInput -> 
+                          False]}, "RowDefault"], "4", TemplateBox[{StyleBox[
+                          "1", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Square", 
+                          3], Mom[4], Spinor["Spin", "Angle", 1]], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{"\"[\"", StyleBox["4", 
+                          Bold, StripOnInput -> False]}, "RowDefault"], "1", 
+                          TemplateBox[{StyleBox["3", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 4], Mom[1], Spinor["Spin", 
+                          "Angle", 3]], Editable -> False]}]}], ")"}]}]}], 
+                     ")"}]}], RowBox[{SqrtBox["2"], " ", InterpretationBox[
+                    RowBox[{"(", RowBox[{RowBox[{"-", SuperscriptBox[
+                          InterpretationBox["MW", ModelParameter["MW", "30a33\
+98a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], "2"]}], "+", SubscriptBox[
+                         "\"s\"", "\"14\""]}], ")"}], PropDen[Mom[
+                      Multiparticle[1, 4]], ModelParameter["MW", "30a3398a0cb\
+b88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"]], Editable -> 
+                     False]}]], "+", FractionBox[RowBox[{InterpretationBox[
+                    "MW", ModelParameter["MW", "30a3398a0cbb88a8e4517e90d53df\
+2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], " ", 
+                   InterpretationBox["MZ", ModelParameter["MZ", "30a3398a0cbb\
+88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> 
+                     False], " ", RowBox[{"(", RowBox[{RowBox[
+                        {InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          StyleBox["3", Bold, StripOnInput -> False]}, 
+                          "RowDefault"], TemplateBox[{StyleBox["4", Bold, 
+                          StripOnInput -> False], "\"]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Square", 
+                          3], Spinor["Spin", "Square", 4]], Editable -> 
+                          False], " ", RowBox[{"(", RowBox[{RowBox[{RowBox[
+                          {"-", "2"}], " ", SuperscriptBox[InterpretationBox[
+                          "MZ", ModelParameter["MZ", "30a3398a0cbb88a8e4517e9\
+0d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], 
+                          "3"], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"\[LeftAngleBracket]\"", StyleBox[
+                          "1", Bold, StripOnInput -> False]}, "RowDefault"], 
+                          TemplateBox[{StyleBox["3", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Angle", 1], Spinor["Spin", "Angle", 3]], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{
+                          "\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["4", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 4]], Editable -> 
+                          False]}], "-", RowBox[{InterpretationBox["MZ", 
+                          ModelParameter["MZ", "30a3398a0cbb88a8e4517e90d53df\
+2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], " ", 
+                          InterpretationBox[RowBox[{"(", RowBox[{RowBox[{"-", 
+                          SuperscriptBox[InterpretationBox["MZ", 
+                          ModelParameter["MZ", "30a3398a0cbb88a8e4517e90d53df\
+2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"]}], 
+                          "+", SubscriptBox["\"s\"", "\"12\""]}], ")"}], 
+                          PropDen[Mom[Multiparticle[1, 2]], ModelParameter[
+                          "MZ", "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396\
+af82ff422d9b7ebd77e7", "Real"]], Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{
+                          "\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["3", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 3]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"\[LeftAngleBracket]\"", StyleBox[
+                          "1", Bold, StripOnInput -> False]}, "RowDefault"], 
+                          TemplateBox[{StyleBox["4", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Angle", 1], Spinor["Spin", "Angle", 4]], 
+                          Editable -> False]}], "-", RowBox[{"2", " ", 
+                          InterpretationBox["MW", ModelParameter["MW", "30a33\
+98a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", SuperscriptBox[
+                          InterpretationBox["MZ", ModelParameter["MZ", "30a33\
+98a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], "2"], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{
+                          "\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["4", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 4]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["3", Bold, StripOnInput -> False], 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                          SpinorChain[Spinor["Spin", "Square", 1], Spinor[
+                          "Spin", "Square", 3]], Editable -> False]}], "-", 
+                          RowBox[{InterpretationBox["MW", ModelParameter[
+                          "MW", "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396\
+af82ff422d9b7ebd77e7", "Real"], Editable -> False], " ", InterpretationBox[
+                          RowBox[{"(", RowBox[{RowBox[{"-", SuperscriptBox[
+                          InterpretationBox["MZ", ModelParameter["MZ", "30a33\
+98a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], "2"]}], "+", SubscriptBox[
+                          "\"s\"", "\"12\""]}], ")"}], PropDen[Mom[
+                          Multiparticle[1, 2]], ModelParameter["MZ", "30a3398\
+a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"]], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{
+                          "\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["4", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 4]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["3", Bold, StripOnInput -> False], 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                          SpinorChain[Spinor["Spin", "Square", 1], Spinor[
+                          "Spin", "Square", 3]], Editable -> False]}], "-", 
+                          RowBox[{"2", " ", InterpretationBox["MW", 
+                          ModelParameter["MW", "30a3398a0cbb88a8e4517e90d53df\
+2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], " ", 
+                          SuperscriptBox[InterpretationBox["MZ", 
+                          ModelParameter["MZ", "30a3398a0cbb88a8e4517e90d53df\
+2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["3", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 3]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["4", Bold, StripOnInput -> False], 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                          SpinorChain[Spinor["Spin", "Square", 1], Spinor[
+                          "Spin", "Square", 4]], Editable -> False]}], "-", 
+                          RowBox[{InterpretationBox["MW", ModelParameter[
+                          "MW", "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396\
+af82ff422d9b7ebd77e7", "Real"], Editable -> False], " ", InterpretationBox[
+                          RowBox[{"(", RowBox[{RowBox[{"-", SuperscriptBox[
+                          InterpretationBox["MZ", ModelParameter["MZ", "30a33\
+98a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], "2"]}], "+", SubscriptBox[
+                          "\"s\"", "\"12\""]}], ")"}], PropDen[Mom[
+                          Multiparticle[1, 2]], ModelParameter["MZ", "30a3398\
+a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"]], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{
+                          "\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["3", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 3]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["4", Bold, StripOnInput -> False], 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                          SpinorChain[Spinor["Spin", "Square", 1], Spinor[
+                          "Spin", "Square", 4]], Editable -> False]}], "-", 
+                          RowBox[{SuperscriptBox[InterpretationBox["MZ", 
+                          ModelParameter["MZ", "30a3398a0cbb88a8e4517e90d53df\
+2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["4", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 4]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], "2", 
+                          TemplateBox[{StyleBox["3", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 1], Mom[2], Spinor["Spin", 
+                          "Angle", 3]], Editable -> False]}], "+", RowBox[
+                          {InterpretationBox["MW", ModelParameter["MW", "30a3\
+398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", InterpretationBox["MZ", 
+                          ModelParameter["MZ", "30a3398a0cbb88a8e4517e90d53df\
+2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"[\"", StyleBox["1", Bold, StripOnInput -> 
+                          False]}, "RowDefault"], TemplateBox[{StyleBox["4", 
+                          Bold, StripOnInput -> False], "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 1], Spinor["Spin", "Square", 4]], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{"\"[\"", StyleBox["1", 
+                          Bold, StripOnInput -> False]}, "RowDefault"], "2", 
+                          TemplateBox[{StyleBox["3", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 1], Mom[2], Spinor["Spin", 
+                          "Angle", 3]], Editable -> False]}], "-", RowBox[
+                          {SuperscriptBox[InterpretationBox["MZ", 
+                          ModelParameter["MZ", "30a3398a0cbb88a8e4517e90d53df\
+2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["3", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 3]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], "2", 
+                          TemplateBox[{StyleBox["4", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 1], Mom[2], Spinor["Spin", 
+                          "Angle", 4]], Editable -> False]}], "+", RowBox[
+                          {InterpretationBox["MW", ModelParameter["MW", "30a3\
+398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", InterpretationBox["MZ", 
+                          ModelParameter["MZ", "30a3398a0cbb88a8e4517e90d53df\
+2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"[\"", StyleBox["1", Bold, StripOnInput -> 
+                          False]}, "RowDefault"], TemplateBox[{StyleBox["3", 
+                          Bold, StripOnInput -> False], "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 1], Spinor["Spin", "Square", 3]], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{"\"[\"", StyleBox["1", 
+                          Bold, StripOnInput -> False]}, "RowDefault"], "2", 
+                          TemplateBox[{StyleBox["4", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 1], Mom[2], Spinor["Spin", 
+                          "Angle", 4]], Editable -> False]}], "+", RowBox[
+                          {InterpretationBox["MW", ModelParameter["MW", "30a3\
+398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", InterpretationBox["MZ", 
+                          ModelParameter["MZ", "30a3398a0cbb88a8e4517e90d53df\
+2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["4", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 4]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["3", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], "2", 
+                          TemplateBox[{StyleBox["1", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 3], Mom[2], Spinor["Spin", 
+                          "Angle", 1]], Editable -> False]}], "+", RowBox[
+                          {InterpretationBox["MW", ModelParameter["MW", "30a3\
+398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{"\"[\"", StyleBox["1", 
+                          Bold, StripOnInput -> False]}, "RowDefault"], "2", 
+                          TemplateBox[{StyleBox["4", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 1], Mom[2], Spinor["Spin", 
+                          "Angle", 4]], Editable -> False], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"[\"", StyleBox["3", Bold, StripOnInput -> 
+                          False]}, "RowDefault"], "2", TemplateBox[{StyleBox[
+                          "1", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Square", 
+                          3], Mom[2], Spinor["Spin", "Angle", 1]], 
+                          Editable -> False]}], "+", RowBox[
+                          {InterpretationBox["MW", ModelParameter["MW", "30a3\
+398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", InterpretationBox["MZ", 
+                          ModelParameter["MZ", "30a3398a0cbb88a8e4517e90d53df\
+2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["3", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 3]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["4", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], "2", 
+                          TemplateBox[{StyleBox["1", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 4], Mom[2], Spinor["Spin", 
+                          "Angle", 1]], Editable -> False]}], "+", RowBox[
+                          {InterpretationBox["MW", ModelParameter["MW", "30a3\
+398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{"\"[\"", StyleBox["1", 
+                          Bold, StripOnInput -> False]}, "RowDefault"], "2", 
+                          TemplateBox[{StyleBox["3", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 1], Mom[2], Spinor["Spin", 
+                          "Angle", 3]], Editable -> False], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"[\"", StyleBox["4", Bold, StripOnInput -> 
+                          False]}, "RowDefault"], "2", TemplateBox[{StyleBox[
+                          "1", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Square", 
+                          4], Mom[2], Spinor["Spin", "Angle", 1]], 
+                          Editable -> False]}]}], ")"}]}], "+", RowBox[
+                        {InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", StyleBox["3", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["4", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          3], Spinor["Spin", "Angle", 4]], Editable -> 
+                          False], " ", RowBox[{"(", RowBox[{RowBox[{RowBox[
+                          {"-", "2"}], " ", InterpretationBox["MW", 
+                          ModelParameter["MW", "30a3398a0cbb88a8e4517e90d53df\
+2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], " ", 
+                          SuperscriptBox[InterpretationBox["MZ", 
+                          ModelParameter["MZ", "30a3398a0cbb88a8e4517e90d53df\
+2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["4", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 4]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["3", Bold, StripOnInput -> False], 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                          SpinorChain[Spinor["Spin", "Square", 1], Spinor[
+                          "Spin", "Square", 3]], Editable -> False]}], "-", 
+                          RowBox[{InterpretationBox["MW", ModelParameter[
+                          "MW", "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396\
+af82ff422d9b7ebd77e7", "Real"], Editable -> False], " ", InterpretationBox[
+                          RowBox[{"(", RowBox[{RowBox[{"-", SuperscriptBox[
+                          InterpretationBox["MZ", ModelParameter["MZ", "30a33\
+98a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], "2"]}], "+", SubscriptBox[
+                          "\"s\"", "\"12\""]}], ")"}], PropDen[Mom[
+                          Multiparticle[1, 2]], ModelParameter["MZ", "30a3398\
+a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"]], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{
+                          "\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["4", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 4]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["3", Bold, StripOnInput -> False], 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                          SpinorChain[Spinor["Spin", "Square", 1], Spinor[
+                          "Spin", "Square", 3]], Editable -> False]}], "-", 
+                          RowBox[{"2", " ", InterpretationBox["MW", 
+                          ModelParameter["MW", "30a3398a0cbb88a8e4517e90d53df\
+2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], " ", 
+                          SuperscriptBox[InterpretationBox["MZ", 
+                          ModelParameter["MZ", "30a3398a0cbb88a8e4517e90d53df\
+2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["3", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 3]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["4", Bold, StripOnInput -> False], 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                          SpinorChain[Spinor["Spin", "Square", 1], Spinor[
+                          "Spin", "Square", 4]], Editable -> False]}], "-", 
+                          RowBox[{InterpretationBox["MW", ModelParameter[
+                          "MW", "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396\
+af82ff422d9b7ebd77e7", "Real"], Editable -> False], " ", InterpretationBox[
+                          RowBox[{"(", RowBox[{RowBox[{"-", SuperscriptBox[
+                          InterpretationBox["MZ", ModelParameter["MZ", "30a33\
+98a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], "2"]}], "+", SubscriptBox[
+                          "\"s\"", "\"12\""]}], ")"}], PropDen[Mom[
+                          Multiparticle[1, 2]], ModelParameter["MZ", "30a3398\
+a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"]], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{
+                          "\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["3", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 3]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["4", Bold, StripOnInput -> False], 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                          SpinorChain[Spinor["Spin", "Square", 1], Spinor[
+                          "Spin", "Square", 4]], Editable -> False]}], "-", 
+                          RowBox[{"2", " ", SuperscriptBox[InterpretationBox[
+                          "MZ", ModelParameter["MZ", "30a3398a0cbb88a8e4517e9\
+0d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], 
+                          "3"], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["3", Bold, StripOnInput -> False], 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                          SpinorChain[Spinor["Spin", "Square", 1], Spinor[
+                          "Spin", "Square", 3]], Editable -> False], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"[\"", StyleBox["1", Bold, StripOnInput -> 
+                          False]}, "RowDefault"], TemplateBox[{StyleBox["4", 
+                          Bold, StripOnInput -> False], "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 1], Spinor["Spin", "Square", 4]], 
+                          Editable -> False]}], "-", RowBox[
+                          {InterpretationBox["MZ", ModelParameter["MZ", "30a3\
+398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", InterpretationBox[RowBox[
+                          {"(", RowBox[{RowBox[{"-", SuperscriptBox[
+                          InterpretationBox["MZ", ModelParameter["MZ", "30a33\
+98a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], "2"]}], "+", SubscriptBox[
+                          "\"s\"", "\"12\""]}], ")"}], PropDen[Mom[
+                          Multiparticle[1, 2]], ModelParameter["MZ", "30a3398\
+a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"]], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{"\"[\"", StyleBox["1", 
+                          Bold, StripOnInput -> False]}, "RowDefault"], 
+                          TemplateBox[{StyleBox["3", Bold, StripOnInput -> 
+                          False], "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                          SpinorChain[Spinor["Spin", "Square", 1], Spinor[
+                          "Spin", "Square", 3]], Editable -> False], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"[\"", StyleBox["1", Bold, StripOnInput -> 
+                          False]}, "RowDefault"], TemplateBox[{StyleBox["4", 
+                          Bold, StripOnInput -> False], "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 1], Spinor["Spin", "Square", 4]], 
+                          Editable -> False]}], "+", RowBox[
+                          {InterpretationBox["MW", ModelParameter["MW", "30a3\
+398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", InterpretationBox["MZ", 
+                          ModelParameter["MZ", "30a3398a0cbb88a8e4517e90d53df\
+2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"[\"", StyleBox["1", Bold, StripOnInput -> 
+                          False]}, "RowDefault"], TemplateBox[{StyleBox["4", 
+                          Bold, StripOnInput -> False], "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 1], Spinor["Spin", "Square", 4]], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{"\"[\"", StyleBox["1", 
+                          Bold, StripOnInput -> False]}, "RowDefault"], "2", 
+                          TemplateBox[{StyleBox["3", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 1], Mom[2], Spinor["Spin", 
+                          "Angle", 3]], Editable -> False]}], "+", RowBox[
+                          {InterpretationBox["MW", ModelParameter["MW", "30a3\
+398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", InterpretationBox["MZ", 
+                          ModelParameter["MZ", "30a3398a0cbb88a8e4517e90d53df\
+2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"[\"", StyleBox["1", Bold, StripOnInput -> 
+                          False]}, "RowDefault"], TemplateBox[{StyleBox["3", 
+                          Bold, StripOnInput -> False], "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 1], Spinor["Spin", "Square", 3]], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{"\"[\"", StyleBox["1", 
+                          Bold, StripOnInput -> False]}, "RowDefault"], "2", 
+                          TemplateBox[{StyleBox["4", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 1], Mom[2], Spinor["Spin", 
+                          "Angle", 4]], Editable -> False]}], "+", RowBox[
+                          {InterpretationBox["MW", ModelParameter["MW", "30a3\
+398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", InterpretationBox["MZ", 
+                          ModelParameter["MZ", "30a3398a0cbb88a8e4517e90d53df\
+2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["4", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 4]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["3", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], "2", 
+                          TemplateBox[{StyleBox["1", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 3], Mom[2], Spinor["Spin", 
+                          "Angle", 1]], Editable -> False]}], "-", RowBox[
+                          {SuperscriptBox[InterpretationBox["MZ", 
+                          ModelParameter["MZ", "30a3398a0cbb88a8e4517e90d53df\
+2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"[\"", StyleBox["1", Bold, StripOnInput -> 
+                          False]}, "RowDefault"], TemplateBox[{StyleBox["4", 
+                          Bold, StripOnInput -> False], "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 1], Spinor["Spin", "Square", 4]], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{"\"[\"", StyleBox["3", 
+                          Bold, StripOnInput -> False]}, "RowDefault"], "2", 
+                          TemplateBox[{StyleBox["1", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 3], Mom[2], Spinor["Spin", 
+                          "Angle", 1]], Editable -> False]}], "+", RowBox[
+                          {InterpretationBox["MW", ModelParameter["MW", "30a3\
+398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{"\"[\"", StyleBox["1", 
+                          Bold, StripOnInput -> False]}, "RowDefault"], "2", 
+                          TemplateBox[{StyleBox["4", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 1], Mom[2], Spinor["Spin", 
+                          "Angle", 4]], Editable -> False], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"[\"", StyleBox["3", Bold, StripOnInput -> 
+                          False]}, "RowDefault"], "2", TemplateBox[{StyleBox[
+                          "1", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Square", 
+                          3], Mom[2], Spinor["Spin", "Angle", 1]], 
+                          Editable -> False]}], "+", RowBox[
+                          {InterpretationBox["MW", ModelParameter["MW", "30a3\
+398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", InterpretationBox["MZ", 
+                          ModelParameter["MZ", "30a3398a0cbb88a8e4517e90d53df\
+2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["3", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 3]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["4", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], "2", 
+                          TemplateBox[{StyleBox["1", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 4], Mom[2], Spinor["Spin", 
+                          "Angle", 1]], Editable -> False]}], "-", RowBox[
+                          {SuperscriptBox[InterpretationBox["MZ", 
+                          ModelParameter["MZ", "30a3398a0cbb88a8e4517e90d53df\
+2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"[\"", StyleBox["1", Bold, StripOnInput -> 
+                          False]}, "RowDefault"], TemplateBox[{StyleBox["3", 
+                          Bold, StripOnInput -> False], "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 1], Spinor["Spin", "Square", 3]], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{"\"[\"", StyleBox["4", 
+                          Bold, StripOnInput -> False]}, "RowDefault"], "2", 
+                          TemplateBox[{StyleBox["1", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 4], Mom[2], Spinor["Spin", 
+                          "Angle", 1]], Editable -> False]}], "+", RowBox[
+                          {InterpretationBox["MW", ModelParameter["MW", "30a3\
+398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{"\"[\"", StyleBox["1", 
+                          Bold, StripOnInput -> False]}, "RowDefault"], "2", 
+                          TemplateBox[{StyleBox["3", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 1], Mom[2], Spinor["Spin", 
+                          "Angle", 3]], Editable -> False], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"[\"", StyleBox["4", Bold, StripOnInput -> 
+                          False]}, "RowDefault"], "2", TemplateBox[{StyleBox[
+                          "1", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Square", 
+                          4], Mom[2], Spinor["Spin", "Angle", 1]], 
+                          Editable -> False]}]}], ")"}]}]}], ")"}]}], 
+                 RowBox[{SqrtBox["2"], " ", InterpretationBox[RowBox[
+                     {"(", RowBox[{RowBox[{"-", SuperscriptBox[
+                          InterpretationBox["MZ", ModelParameter["MZ", "30a33\
+98a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], "2"]}], "+", SubscriptBox[
+                         "\"s\"", "\"12\""]}], ")"}], PropDen[Mom[
+                      Multiparticle[1, 2]], ModelParameter["MZ", "30a3398a0cb\
+b88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"]], Editable -> 
+                     False]}]], "+", FractionBox[RowBox[{SqrtBox["2"], " ", 
+                   InterpretationBox["MW", ModelParameter["MW", "30a3398a0cbb\
+88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> 
+                     False], " ", InterpretationBox["MZ", ModelParameter[
+                     "MZ", "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82f\
+f422d9b7ebd77e7", "Real"], Editable -> False], " ", RowBox[{"(", RowBox[
+                      {RowBox[{InterpretationBox["MW", ModelParameter["MW", "\
+30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", StyleBox["3", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["4", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          3], Spinor["Spin", "Angle", 4]], Editable -> 
+                          False], " ", RowBox[{"(", RowBox[{RowBox[
+                          {SuperscriptBox[InterpretationBox["MZ", 
+                          ModelParameter["MZ", "30a3398a0cbb88a8e4517e90d53df\
+2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["3", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 3]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["4", Bold, StripOnInput -> False], 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                          SpinorChain[Spinor["Spin", "Square", 1], Spinor[
+                          "Spin", "Square", 4]], Editable -> False]}], "-", 
+                          RowBox[{"3", " ", InterpretationBox["MW", 
+                          ModelParameter["MW", "30a3398a0cbb88a8e4517e90d53df\
+2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], " ", 
+                          InterpretationBox["MZ", ModelParameter["MZ", "30a33\
+98a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{"\"[\"", StyleBox["1", 
+                          Bold, StripOnInput -> False]}, "RowDefault"], 
+                          TemplateBox[{StyleBox["3", Bold, StripOnInput -> 
+                          False], "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                          SpinorChain[Spinor["Spin", "Square", 1], Spinor[
+                          "Spin", "Square", 3]], Editable -> False], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"[\"", StyleBox["1", Bold, StripOnInput -> 
+                          False]}, "RowDefault"], TemplateBox[{StyleBox["4", 
+                          Bold, StripOnInput -> False], "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 1], Spinor["Spin", "Square", 4]], 
+                          Editable -> False]}], "+", RowBox[{"2", " ", 
+                          InterpretationBox["MW", ModelParameter["MW", "30a33\
+98a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{"\"[\"", StyleBox["3", 
+                          Bold, StripOnInput -> False]}, "RowDefault"], 
+                          TemplateBox[{StyleBox["4", Bold, StripOnInput -> 
+                          False], "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                          SpinorChain[Spinor["Spin", "Square", 3], Spinor[
+                          "Spin", "Square", 4]], Editable -> False], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"[\"", StyleBox["1", Bold, StripOnInput -> 
+                          False]}, "RowDefault"], "3", TemplateBox[{StyleBox[
+                          "1", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Square", 
+                          1], Mom[3], Spinor["Spin", "Angle", 1]], 
+                          Editable -> False]}], "+", RowBox[
+                          {InterpretationBox["MZ", ModelParameter["MZ", "30a3\
+398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{
+                          "\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["3", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 3]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["4", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], "3", 
+                          TemplateBox[{StyleBox["1", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 4], Mom[3], Spinor["Spin", 
+                          "Angle", 1]], Editable -> False]}]}], ")"}]}], "+", 
+                       RowBox[{InterpretationBox["MZ", ModelParameter["MZ", "\
+30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", RowBox[{"(", RowBox[
+                          {RowBox[{RowBox[{"-", "3"}], " ", SuperscriptBox[
+                          InterpretationBox["MW", ModelParameter["MW", "30a33\
+98a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], "2"], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{
+                          "\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["3", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 3]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"\[LeftAngleBracket]\"", StyleBox[
+                          "1", Bold, StripOnInput -> False]}, "RowDefault"], 
+                          TemplateBox[{StyleBox["4", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Angle", 1], Spinor["Spin", "Angle", 4]], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{"\"[\"", StyleBox["3", 
+                          Bold, StripOnInput -> False]}, "RowDefault"], 
+                          TemplateBox[{StyleBox["4", Bold, StripOnInput -> 
+                          False], "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                          SpinorChain[Spinor["Spin", "Square", 3], Spinor[
+                          "Spin", "Square", 4]], Editable -> False]}], "+", 
+                          RowBox[{InterpretationBox["MW", ModelParameter[
+                          "MW", "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396\
+af82ff422d9b7ebd77e7", "Real"], Editable -> False], " ", InterpretationBox[
+                          "MZ", ModelParameter["MZ", "30a3398a0cbb88a8e4517e9\
+0d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["4", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 4]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["3", Bold, StripOnInput -> False], 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                          SpinorChain[Spinor["Spin", "Square", 1], Spinor[
+                          "Spin", "Square", 3]], Editable -> False], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"[\"", StyleBox["3", Bold, StripOnInput -> 
+                          False]}, "RowDefault"], TemplateBox[{StyleBox["4", 
+                          Bold, StripOnInput -> False], "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 3], Spinor["Spin", "Square", 4]], 
+                          Editable -> False]}], "+", RowBox[
+                          {InterpretationBox["MW", ModelParameter["MW", "30a3\
+398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{"\"[\"", StyleBox["1", 
+                          Bold, StripOnInput -> False]}, "RowDefault"], 
+                          TemplateBox[{StyleBox["3", Bold, StripOnInput -> 
+                          False], "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                          SpinorChain[Spinor["Spin", "Square", 1], Spinor[
+                          "Spin", "Square", 3]], Editable -> False], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"[\"", StyleBox["3", Bold, StripOnInput -> 
+                          False]}, "RowDefault"], TemplateBox[{StyleBox["4", 
+                          Bold, StripOnInput -> False], "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 3], Spinor["Spin", "Square", 4]], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{"\"[\"", StyleBox["1", 
+                          Bold, StripOnInput -> False]}, "RowDefault"], "3", 
+                          TemplateBox[{StyleBox["4", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 1], Mom[3], Spinor["Spin", 
+                          "Angle", 4]], Editable -> False]}], "+", RowBox[
+                          {InterpretationBox["MZ", ModelParameter["MZ", "30a3\
+398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{
+                          "\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["4", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 4]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["4", Bold, StripOnInput -> False], 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                          SpinorChain[Spinor["Spin", "Square", 1], Spinor[
+                          "Spin", "Square", 4]], Editable -> False], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"[\"", StyleBox["3", Bold, StripOnInput -> 
+                          False]}, "RowDefault"], "1", TemplateBox[{StyleBox[
+                          "3", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Square", 
+                          3], Mom[1], Spinor["Spin", "Angle", 3]], 
+                          Editable -> False]}], "+", RowBox[
+                          {InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"[\"", StyleBox["1", Bold, StripOnInput -> 
+                          False]}, "RowDefault"], TemplateBox[{StyleBox["3", 
+                          Bold, StripOnInput -> False], "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 1], Spinor["Spin", "Square", 3]], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{"\"[\"", StyleBox["1", 
+                          Bold, StripOnInput -> False]}, "RowDefault"], "3", 
+                          TemplateBox[{StyleBox["4", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 1], Mom[3], Spinor["Spin", 
+                          "Angle", 4]], Editable -> False], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"[\"", StyleBox["4", Bold, StripOnInput -> 
+                          False]}, "RowDefault"], "1", TemplateBox[{StyleBox[
+                          "3", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Square", 
+                          4], Mom[1], Spinor["Spin", "Angle", 3]], 
+                          Editable -> False]}], "-", RowBox[
+                          {InterpretationBox["MW", ModelParameter["MW", "30a3\
+398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", SuperscriptBox[
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["3", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 3]], Editable -> 
+                          False], "2"], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["4", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], "2", 
+                          TemplateBox[{StyleBox["4", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 4], Mom[2], Spinor["Spin", 
+                          "Angle", 4]], Editable -> False]}], "+", RowBox[
+                          {"2", " ", InterpretationBox["MZ", ModelParameter[
+                          "MZ", "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396\
+af82ff422d9b7ebd77e7", "Real"], Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{
+                          "\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["3", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 3]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["3", Bold, StripOnInput -> False], 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                          SpinorChain[Spinor["Spin", "Square", 1], Spinor[
+                          "Spin", "Square", 3]], Editable -> False], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"[\"", StyleBox["4", Bold, StripOnInput -> 
+                          False]}, "RowDefault"], "2", TemplateBox[{StyleBox[
+                          "4", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Square", 
+                          4], Mom[2], Spinor["Spin", "Angle", 4]], 
+                          Editable -> False]}], "-", RowBox[
+                          {InterpretationBox["MW", ModelParameter["MW", "30a3\
+398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", SuperscriptBox[
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"[\"", StyleBox["1", Bold, StripOnInput -> 
+                          False]}, "RowDefault"], TemplateBox[{StyleBox["3", 
+                          Bold, StripOnInput -> False], "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 1], Spinor["Spin", "Square", 3]], 
+                          Editable -> False], "2"], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{"\"[\"", StyleBox["4", 
+                          Bold, StripOnInput -> False]}, "RowDefault"], "2", 
+                          TemplateBox[{StyleBox["4", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 4], Mom[2], Spinor["Spin", 
+                          "Angle", 4]], Editable -> False]}], "+", RowBox[
+                          {InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["3", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 3]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["3", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], "1", 
+                          TemplateBox[{StyleBox["4", Bold, StripOnInput -> 
+                          False], "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Spin", "Square", 3], Mom[1], Spinor["Spin", 
+                          "Angle", 4]], Editable -> False], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"[\"", StyleBox["4", Bold, StripOnInput -> 
+                          False]}, "RowDefault"], "3", TemplateBox[{StyleBox[
+                          "1", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Square", 
+                          4], Mom[3], Spinor["Spin", "Angle", 1]], 
+                          Editable -> False]}], "-", RowBox[
+                          {InterpretationBox["MZ", ModelParameter["MZ", "30a3\
+398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[{
+                          "\"\[LeftAngleBracket]\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["3", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Angle", 
+                          1], Spinor["Spin", "Angle", 3]], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", StyleBox["1", Bold, 
+                          StripOnInput -> False]}, "RowDefault"], TemplateBox[
+                          {StyleBox["3", Bold, StripOnInput -> False], 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                          SpinorChain[Spinor["Spin", "Square", 1], Spinor[
+                          "Spin", "Square", 3]], Editable -> False], " ", 
+                          InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"[\"", StyleBox["4", Bold, StripOnInput -> 
+                          False]}, "RowDefault"], "3", TemplateBox[{StyleBox[
+                          "4", Bold, StripOnInput -> False], 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Spin", "Square", 
+                          4], Mom[3], Spinor["Spin", "Angle", 4]], 
+                          Editable -> False]}]}], ")"}]}]}], ")"}]}], 
+                 InterpretationBox[RowBox[{"(", RowBox[{RowBox[{"-", 
+                        SuperscriptBox[InterpretationBox["MW", ModelParameter[
+                          "MW", "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396\
+af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"]}], "+", SubscriptBox[
+                       "\"s\"", "\"13\""]}], ")"}], PropDen[Mom[Multiparticle[
+                     1, 3]], ModelParameter["MW", "30a3398a0cbb88a8e4517e90d5\
+3df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"]], Editable -> False]]}], 
+              ")"}]}], RowBox[{"2", " ", SuperscriptBox[InterpretationBox[
+              "MW", ModelParameter["MW", "30a3398a0cbb88a8e4517e90d53df2fd406\
+e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "3"], " ", 
+            SuperscriptBox[InterpretationBox["MZ", ModelParameter["MZ", "30a3\
+398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+              Editable -> False], "3"], " ", SuperscriptBox[InterpretationBox[
+              "SW", ModelParameter["SW", "30a3398a0cbb88a8e4517e90d53df2fd406\
+e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"]}]]}]], 
+      "Output", CellLabel -> "Saved result:", GeneratedCell -> True, 
+      CellAutoOverwrite -> True, CellTags -> "hepcat-cache-amplitude-sm67", 
+      TaggingRules -> <|"ConstructionReport" -> "/Users/neil/Documents/Codex/\
+2026-09-24/help-me-make-this-response-more/output/sm-four-point-validation/sm\
+67-proof-precondition-default-construction.wl", "ValidationReport" -> "/Users\
+/neil/Documents/Codex/2026-09-24/help-me-make-this-response-more/output/sm-fo\
+ur-point-validation/sm67-export.wl"|>], 
+     Cell[CellGroupData[{Cell["Inspect the stages (optional)", "Subsection"], 
+        Cell["These cells expose the first helicity calculation. \
+ConstructAmplitude already performs these stages internally. Use them when \
+investigating a result rather than rerunning them after every successful \
+construction.", "Text"], Cell["sm67Diagrams = CreateDiagrams[sm67Particles, \
+sm];\nCreateArrowDiagrams[sm67Diagrams]", "Input"], 
+        Cell["sm67DiagramAmplitudes = DiagramAmplitudes[sm67Diagrams]", 
+         "Input"], Cell["sm67PreparedDiagrams = \
+PrepareAmplitudes[sm67DiagramAmplitudes, sm]", "Input"], 
+        Cell["sm67Channels = FactorizationAmplitudeChannels[sm67Particles, \
+sm];\nsm67Channels", "Input"], 
         Cell["sm67Checks = CheckAmplitudes[sm67Amplitude, sm67Channels, sm]", 
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
@@ -30148,7 +31304,25 @@ FileNameJoin[{spinasOutputDirectory, \"sm67_ZhWpWm\"}],\n  {\"Z\", \"h\"} -> \
 {\"W-\", \"W+\"},\n  {\n  {{\"Z\", \"h\", \"W+\", \"W-\"}, sm67Amplitude}\n  \
 }, sm,\n  \"ProcessName\" -> \"sm67_ZhWpWm\", Sequence @@ \
 validationOptions];\nIf[AssociationQ[sm67Export], sm67Export[\"Directory\"], \
-sm67Export]", "Input"]}, Open]], 
+sm67Export]", "Input"], Cell["Saved independent validation. These results \
+come from \
+/Users/neil/Documents/Codex/2026-09-24/help-me-make-this-response-more/output\
+/sm-four-point-validation/spinas/sm67_ZhWpWm; the input above writes a fresh \
+project to spinasOutputDirectory when you rerun it. Full report: \
+/Users/neil/Documents/Codex/2026-09-24/help-me-make-this-response-more/output\
+/sm-four-point-validation/sm67-export.wl", "Text", 
+      CellTags -> "hepcat-cache-validation-source-sm67"], 
+     Cell[BoxData[TagBox[GridBox[{{"\"Reference\"", 
+           "\"Doubled massless helicities\"", "\"Status\"", 
+           "\"Compared points\""}, {"\"CalcHEP\"", 
+           "\"All exported helicities\"", "\"PASS\"", "1000"}, 
+          {"\"MadGraph\"", "\"{0, 0, 0, 0}\"", "\"PASS\"", "1000"}}, 
+         GridBoxAlignment -> {"Columns" -> {{Left}}}, AutoDelete -> False, 
+         GridBoxFrame -> {"Columns" -> {{True}}, "Rows" -> {{True}}}, 
+         GridBoxItemSize -> {"Columns" -> {{Automatic}}, 
+           "Rows" -> {{Automatic}}}], "Grid"]], "Print", 
+      GeneratedCell -> True, CellAutoOverwrite -> True, 
+      CellTags -> "hepcat-cache-validation-table-sm67"]}, Open]], 
   Cell[CellGroupData[{Cell["68. A, A, W-, W+", "Section", 
       CellTags -> "construction-sm68"], Cell["All-ingoing ordering: A.+, A.+, \
 W-, W+. Physical export: A, A -> W+, W-.", "Text"], 
@@ -130910,7 +132084,7 @@ s12[13]<34>[24][132>+(-1[12]<34>[34][132>)/(CWMZ^3 ) \
      "sm33", "sm34", "sm35", "sm36", "sm37", "sm38", "sm39", "sm40", "sm41", 
      "sm42", "sm43", "sm44", "sm45", "sm46", "sm47", "sm48", "sm49", "sm50", 
      "sm51", "sm52", "sm53", "sm54", "sm55", "sm56", "sm57", "sm58", "sm59", 
-     "sm60", "sm61C", "sm61", "sm62", "sm64", "sm65", "sm66", "sm68", 
+     "sm60", "sm61C", "sm61", "sm62", "sm64", "sm65", "sm66", "sm67", "sm68", 
      "sm70"}, "CachedValidatedAmplitudes" -> {"sm01", "sm02", "sm03", "sm04", 
      "sm05", "sm06", "sm07", "sm08", "sm09", "sm10", "sm11", "sm12", "sm13", 
      "sm14", "sm15", "sm16", "sm17", "sm18", "sm19", "sm20", "sm21", "sm22", 
@@ -130925,6 +132099,6 @@ s12[13]<34>[24][132>+(-1[12]<34>[34][132>)/(CWMZ^3 ) \
      "sm51MM", "sm52PP", "sm52PM", "sm52MP", "sm52MM", "sm53", "sm54", 
      "sm55", "sm56", "sm57P", "sm57M", "sm58P", "sm58M", "sm59P", "sm59M", 
      "sm60", "sm61C", "sm61", "sm62P", "sm62M", "sm64", "sm65", "sm66P", 
-     "sm66M", "sm68PP", "sm68PM", "sm68MP", "sm68MM", "sm70"}, 
-   "CachedAt" -> "2026-11-06T03:42:18", "OriginalManualProcessSections" -> 
+     "sm66M", "sm67", "sm68PP", "sm68PM", "sm68MP", "sm68MM", "sm70"}, 
+   "CachedAt" -> "2026-11-06T04:09:35", "OriginalManualProcessSections" -> 
     73, "IndependentExports" -> 74, "ReferenceNavigation" -> True|>]
