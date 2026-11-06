@@ -42,16 +42,21 @@ bare expression, one ", Cell[BoxData[RowBox[{"{", "externalMassRules", ",",
      Cell[BoxData[RowBox[{" ", "means", " ", "a", " ", "residue", " ", "or",
          " ", "full", "-", "amplitude", " ", "comparison", " ", "agrees",
          " ", "after", " ", "an", " ", "overall", " ", "sign", " ",
-         "reversal", ";", " ", "it", " ", "is", " ", "useful", " ",
-         "diagnostic", " ", "information", ",", " ", "not", " ", "a", " ",
-         "passing", " ", "result", ".", " "}]], "InlineFormula"],
-     Cell[BoxData[RowBox[{"UNRESOLVED"}]], "InlineFormula"], " means the \
-requested calculation could not establish a result, for example because a \
-form is unsupported or a time limit was reached."}], "Notes"],
-  Cell[TextData[{"The function reports what the supplied expression does. It \
-does not change a sign, fit a normalization, simplify away a discrepancy by a \
-new internal-shell assumption or repair the amplitude. To determine \
-corrections from the known channels, use ",
+         "reversal", ";", " ", "the", " ", "expressions", " ", "are", " ",
+         "left", " ", "unchanged", ".", " ", "Opposite", " ", "signs", " ",
+         "require", " ", "investigation", " ", "before", " ", "these", " ",
+         "amplitudes", " ", "are", " ", "used", " ", "together", " ", "in",
+         " ", "factorization", ".", " ", "One", " ", "isolated", " ",
+         "amplitude", " ", "comparison", " ", "does", " ", "not", " ",
+         "establish", " ", "a", " ", "consistent", " ", "convention", " ",
+         "for", " ", "the", " ", "whole", " ", "model", ".", " "}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{"UNRESOLVED"}]],
+      "InlineFormula"], " means the requested calculation could not establish \
+a result, for example because a form is unsupported or a time limit was \
+reached."}], "Notes"], Cell[TextData[{"The function reports what the supplied \
+expression does. It does not change a sign, fit a normalization, simplify \
+away a discrepancy by a new internal-shell assumption or repair the \
+amplitude. To determine corrections from the known channels, use ",
      ButtonBox["CompleteFactorization", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/CompleteFactorization"], "."}],
    "Notes"], Cell[TextData[{"An amplitude with explicit SU(3) color tensors \
@@ -144,16 +149,40 @@ propagator poles with no internal-shell substitutions. ",
      ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"],
      " provide the conversion and ordinary preparation steps."}], "Notes"],
-  Cell[TextData[{"All four standard categories are enabled by their automatic \
-defaults when applicable. For a deliberately narrower physical-residue-only \
-report, set ", Cell[BoxData[RowBox[{"\"SpuriousPoles\"", " ", "->", " ", "{",
-         "}"}]], "InlineFormula"], Cell[BoxData[RowBox[{",", " "}]],
-      "InlineFormula"], Cell[BoxData[RowBox[{"\"HighEnergyCheck\"", " ",
-         "->", " ", "False"}]], "InlineFormula"],
-     Cell[BoxData[RowBox[{" ", "and", " "}]], "InlineFormula"],
-     Cell[BoxData[RowBox[{"\"ReferenceCheck\"", " ", "->", " ", "False"}]],
-      "InlineFormula"], ". A missing or disabled test must not be interpreted \
-as a successful check of that property."}], "Notes"],
+  Cell[TextData[{"A Feynman comparison checks every coherent massive-spin \
+coefficient at each requested off-cut sample. A common overall minus remains \
+visible as ", Cell[BoxData[RowBox[{"Opp", " ", "Sign"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{",", " ", "with", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"OverallSign", " ", "->", " ", "-", "1"}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{" ", "in", " ", "its", " ",
+         "detailed", " ", "report", ".", " ", "The", " ", "checker", " ",
+         "does", " ", "not", " ", "fit", " ", "a", " ", "normalization", " ",
+         "or", " ", "change", " ", "either", " ", "expression", ".", " ",
+         "[", "ConstructAmplitude", "]", "(", "paclet", ":", "HEPCAT", "/",
+         "ref", "/", "ConstructAmplitude", ")", " ", "requires", " ",
+         "strict", " ", "agreement", ",", " ", "so", " "}]],
+      "InlineFormula"], ButtonBox["ConstructAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ConstructAmplitude"],
+     " requires strict agreement, so ",
+     Cell[BoxData[RowBox[{"Opp", " ", "Sign"}]], "InlineFormula"], " prevents \
+a validated result. With color, every independent coefficient must have the \
+same sign: relative sign changes alter interference. Before reusing \
+lower-point amplitudes, align the underlying vertex and external-state \
+conventions across the model rather than flipping individual final formulas."}\
+], "Notes"], Cell[TextData[{"All four standard categories are enabled by \
+their automatic defaults when applicable. For a deliberately narrower \
+physical-residue-only report, set ",
+     Cell[BoxData[RowBox[{"\"SpuriousPoles\"", " ", "->", " ", "{", "}"}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{",", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"\"HighEnergyCheck\"", " ", "->", " ", "False"}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{" ", "and", " "}]],
+      "InlineFormula"], Cell[BoxData[RowBox[{"\"ReferenceCheck\"", " ", "->",
+         " ", "False"}]], "InlineFormula"], ". A missing or disabled test \
+must not be interpreted as a successful check of that property."}], "Notes"],
+  Cell[TextData[{"A colored physical-residue-only report still includes every \
+physical channel and its status. Disabling optional categories removes only \
+those categories; it does not remove the physical comparison rows or their \
+residue samples."}], "Notes"],
   Cell[TextData[{"Automatic scheduling takes the number of coherent \
 massive-spin components into account. A short expression can still represent \
 sixteen or more components; those checks can reuse an existing worker pool \

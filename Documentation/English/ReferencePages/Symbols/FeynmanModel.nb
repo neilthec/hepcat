@@ -71,7 +71,24 @@ model containing complete lower-point amplitudes to ",
       ButtonData -> "paclet:HEPCAT/ref/FactorizationAmplitudeChannels"], ". A \
 table of Feynman vertices describes the interactions, and is not itself a \
 table of those complete amplitudes."}], "Notes"],
-  Cell["Examples", "PrimaryExamplesSection"],
+  Cell["Consistent field conventions", "NotesSection"],
+  Cell[TextData[{"A lower-point amplitude becomes an ingredient of \
+higher-point factorization. Its sign must therefore follow one consistent \
+convention throughout the model. The bundled constructive SM vertices use the \
+same charged-current sign as the unchanged CalcHEP vertex table, for both W \
+charges and all fermion generations. All values live in the model tables; the \
+generic reader and converter contain no SM-specific sign adjustment."}],
+   "Notes"], Cell[TextData[{"A consistent field-basis change must be applied \
+at every vertex. For example, reversing both charged W fields multiplies \
+every complete tree by the product of its external W phases. Each internal W \
+pairs W+ with W-, so its two minus signs cancel. The same argument holds for \
+products of lower-point amplitudes on every factorization channel, at any \
+multiplicity. Regenerate lower-point amplitudes from the corrected vertices \
+instead of flipping final formulas one by one. ",
+     ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"], " retains an \
+unexplained opposite sign as a diagnostic that prevents a validated \
+construction."}], "Notes"], Cell["Examples", "PrimaryExamplesSection"],
   Cell[CellGroupData[{Cell["Load HEPCAT if needed", "ExampleSubsection"],
      Cell["Skip this setup if HEPCAT is already loaded. These examples assume \
 the checkout is in ~/code/hepcat; change the paths if yours is elsewhere. \

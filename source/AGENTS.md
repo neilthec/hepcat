@@ -744,6 +744,26 @@ scalar numerator convention before tolerance tests, so an exact tiny rational
 coefficient is not rounded to zero. Retain every mixed monomial, every requested
 sample and the complete difference and opposite-sign diagnostic.
 
+Keep the vertex and external-state convention consistent across a model before
+using lower-point amplitudes in higher-point sewing. An isolated common overall
+minus is not evidence that the models use a consistent convention. Keep
+`Opp Sign` visible and leave both amplitudes unchanged; construction requires
+strict `PASS`, including independent Feynman comparisons. The constructive SM models 1 and 6
+use `-EE/(MW*SW)` at all twelve charged-current vertices, matching the unmodified
+CalcHEP field basis. The model-wide correction is the same as `W+ -> -W+`,
+`W- -> -W-` at every constructive vertex. Each internal W contributes the
+phase product +1, so the same external phase relates complete trees and sewn
+lower amplitudes at every multiplicity. Do not flip individual final amplitudes
+or add process-specific converter rules. Keep the CalcHEP model unchanged and regenerate affected constructive
+lower-point amplitudes from the corrected vertices. No SM four-point amplitudes
+have been added to the model tables yet.
+All independent color coefficients must share the same comparison sign;
+opposite relative signs change interference and remain failures.
+Imported derivative momenta already follow the incoming field slots; do not
+add another global momentum reversal. CalcHEP's automatic three-octet color
+tensor is `-I ColorStructure`, separate from its vertex factor. Charged
+electroweak and nonabelian photon/gluon Ward tests cover these signs.
+
 `CheckPhysicalResidues` remains a compatibility alias for `CheckAmplitudes`.
 
 Numerical checks and completion use the supplied model's parameter values and

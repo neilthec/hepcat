@@ -88,6 +88,9 @@ check["a uniform minus sign is reported without changing either amplitude",
     AllTrue[qaOpposite["FeynmanCheck"]["Samples"],
       #["CalculatedAmplitude"] === 1 && #["FeynmanAmplitude"] === -1 &&
         #["OppositeSignDifference"] === 0 &]];
+check["the overall-sign diagnostic does not declare model-wide convention equivalence",
+  qaOpposite["FeynmanCheck"]["OverallSign"] === -1 &&
+    !KeyExistsQ[qaOpposite["FeynmanCheck"], "ConventionEquivalent"]];
 check["two zero amplitudes pass rather than being called opposite sign",
   qaStatus[qaReport[qaPair[0], {}, qaScalarModel, 0]] === "PASS"];
 check["a zero versus nonzero amplitude fails",

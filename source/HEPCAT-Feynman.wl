@@ -345,9 +345,11 @@ feynmanNormalizeWords[expr_] := expr /. word_DiracWord :>
     (If[MatchQ[#, _DiracSlash], feynmanSlashWord[#[[1]]], DiracWord[#]] &) /@ List @@ word];
 
 feynmanRelabelVertex[expr_, ordered_List] := Module[{momenta, indices, result},
-  (* CalcHEP vertex p_i points outwards; stored HEPCAT leg momenta point inwards.
-     Propagator momentum flow is separate and is not reversed here. *)
-  momenta = -Lookup[ordered, "Momentum"];
+  (* Source-table momentum slots belong to the differentiated Fourier-space
+     fields. Attached ports already carry those incoming field momenta.
+     CalcHEP's outgoing graph-edge labels refer to conjugate particles and
+     must not introduce a second reversal here. Propagator flow is separate. *)
+  momenta = Lookup[ordered, "Momentum"];
   indices = Lookup[ordered, "LorentzIndices"];
   If[!AllTrue[Cases[expr, _LorentzIndex, Infinity],
       MatchQ[#, LorentzIndex[_Integer] | LorentzIndex[_Integer, 2]] &&
@@ -377,7 +379,8 @@ feynmanVertexColor[ordered_List, md_Association] := Module[{colored, dimensions,
     colored === {}, 1,
     Length[colored] === 2 && dimensions === {8, 8}, ColorDelta @@ indices,
     Length[colored] === 2 && Sort[dimensions] === {-3, 3}, ColorDelta @@ indices,
-    Length[colored] === 3 && dimensions === {8, 8, 8}, I (ColorStructure @@ indices),
+    (* CalcHEP supplies -i f in the source table's ordered color slots. *)
+    Length[colored] === 3 && dimensions === {8, 8, 8}, -I (ColorStructure @@ indices),
     Length[colored] === 3 && Sort[dimensions] === {-3, 3, 8},
       anti = First[FirstPosition[dimensions, -3]];
       fund = First[FirstPosition[dimensions, 3]];

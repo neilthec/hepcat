@@ -1,5 +1,33 @@
 # HEPCAT Regression Tests
 
+## Charged electroweak construction
+
+`feynman-vertex-convention-tests.wl` checks derivative momentum slots, the
+documented CalcHEP adjoint phase and exact photon Ward identities for charged
+quark and lepton processes. `amplitude-check-tests.wl` and the color tests
+retain the visible `Opp Sign` diagnostic. Construction requires strict sign
+agreement with both physical residues and an independent Feynman benchmark.
+`sm-field-convention-tests.wl` checks the common SM field basis and its
+compatibility with higher-point sewing.
+
+The expensive `sm-charged-current-integration-tests.wl` constructs both
+`U,d,Z,W+` and `D,u,Z,W-` from fresh models, with all mandatory checks and an
+independent Feynman model. It is opt-in and supplies no known amplitude.
+For one case while developing, run:
+
+```sh
+HEPCAT_SM_CHARGED_CURRENT_CASES=one python3 tests/checks/run-wolfram-tests.py \
+  --suite sm-charged-current-integration-tests.wl --timeout 600
+```
+
+Use `both` or omit that variable for both cases; allow a larger outer timeout
+for the complete batch. `HEPCAT_SM_CHARGED_CURRENT_SEEDS` selects up to eight
+comma-separated replay seeds. Full diagnostic reports are written to the
+temporary directory printed by the suite. This test is not added to every
+small identity-edit validation run.
+
+## Running the suites
+
 Run the complete Wolfram suite from the repository root:
 
 ```sh

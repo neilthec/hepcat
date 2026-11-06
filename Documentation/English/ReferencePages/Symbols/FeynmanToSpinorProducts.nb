@@ -40,6 +40,13 @@ pass the raw amplitudes and the Feynman model to ",
      ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], ", which includes \
 conversion before its reference selection and reduction."}], "Notes"],
+  Cell[TextData[{"Imported derivative vertices retain the momentum signs \
+attached to their incoming field slots. There is no extra reversal when \
+relabeling a CalcHEP rule. Internal propagator momenta remain off shell. \
+CalcHEP's automatic three-octet color factor is minus i times its ordered \
+structure constant; this phase is separate from the vertex factor. Charged \
+electroweak photon Ward identities and nonabelian QCD Ward identities test \
+these conventions together."}], "Notes"],
   Cell["What the conversion preserves", "NotesSection"],
   Cell[TextData[{"All momenta remain incoming. The external convention is ",
      Cell[BoxData[RowBox[{"u", "=", "(", "-", "|", "p", ">", ",", "|", "p",

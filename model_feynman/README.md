@@ -112,10 +112,12 @@ Tree propagators have zero widths; the source width declarations are retained
 as model information, not inserted into their denominators. Massive vectors
 currently convert as spin-index tensors, not selected helicity eigenstates.
 
-CalcHEP's vertex momentum slots point outward. The adapter reverses those
-slots once to HEPCAT's all-ingoing convention; it does not reverse the separate
-fermion-propagator momentum flow. This matters for odd-derivative interactions
-such as the three-gluon vertex.
+CalcHEP vertex momentum slots follow the incoming field arguments used by the
+adapter. The attached momenta already carry their field-flow signs; the adapter
+does not reverse them again. It also preserves the separate fermion-propagator
+momentum flow. The automatic three-adjoint tensor is `-I ColorStructure`, as in
+the CalcHEP manual. Charged electroweak photon Ward identities and nonabelian
+Ward identities test these relative signs independently of a supplied amplitude.
 Raw scalar momentum products use inert `LorentzScalarProduct` until attachment.
 Composite internal momenta are expanded into external momenta before ordinary
 `MomProd` identities are allowed; internal momentum squares are never replaced
@@ -137,3 +139,21 @@ CalcHEP's local `help/s_mdl_3.txt`, `help/s_mdl_4.txt` and
 color structures and gauge choices. Preserve this attribution and document
 local model changes. No explicit license file was found in this local installation; confirm
 redistribution terms before publishing the imported files as a separate bundle.
+
+## Shared SM convention
+
+The CalcHEP vertex table is retained in its source field basis. The constructive
+SM tables `models/amps1.mdl` and `models/amps6.mdl` use the same charged-current
+sign: `-EE/(MW*SW)` for both W charges and every quark and lepton generation.
+Exact cubic comparisons test this agreement, with neutral and bosonic controls.
+The generic Feynman importer does not infer a process-dependent phase or alter
+this model's vertex factors to fit a constructive expression.
+
+All lower-point amplitudes used for factorization must follow this same model
+convention. Changing the sign of both charged W fields at every constructive
+vertex multiplies each complete tree by the product of its external W phases:
+every internal W contributes `(-1)*(-1) = +1`. This also holds for products of
+lower amplitudes on each channel, at any multiplicity. A sign correction belongs
+at the vertices and must be propagated by recalculation; it must not be fitted
+separately to final amplitudes. `Opp Sign` remains a diagnostic that prevents a
+validated `ConstructAmplitude` result until the convention is resolved.

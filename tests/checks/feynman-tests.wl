@@ -415,8 +415,8 @@ ffOddDerivativeExpression = Last[First[ffOddDerivativePairs]];
 ffOddChargeParameter = ModelParameter[ffOddDerivativeModel, "ffCharge"];
 ffOddDerivativeIndex = First[Cases[ffOddDerivativeExpression,
   PolarizationVector[1, index_, 0, 1] :> index, Infinity]];
-ffCheck["CalcHEP's outgoing derivative momenta are reversed for HEPCAT's incoming legs",
-  Expand[ffOddDerivativeExpression + ffOddChargeParameter
+ffCheck["CalcHEP vertex momentum slots use attached incoming fields without a second reversal",
+  Expand[ffOddDerivativeExpression - ffOddChargeParameter
     PolarizationVector[1, ffOddDerivativeIndex, 0, 1]
     (LorentzMomentum[Mom[2], ffOddDerivativeIndex] -
       LorentzMomentum[Mom[3], ffOddDerivativeIndex])] === 0];

@@ -668,6 +668,19 @@ colorScalarCurrentProjectionCertificate[diagrams_List, model_List,
     "Representations"->representations|>
 ];
 
+(* A field convention multiplies the complete amplitude by one phase, not
+   each color coefficient independently. Opposite relative color signs must
+   therefore remain failures even when the separate magnitudes agree. *)
+colorFeynmanSignAgreement[checks_List] := Module[{rows, signs},
+  rows = Select[checks, Lookup[#, "Type", None] === "Feynman" &];
+  If[rows === {} || !AllTrue[rows, MemberQ[{"PASS", "Opp Sign"},
+      Lookup[#, "Status", None]] && ListQ[Lookup[#, "MatchingSigns", None]] &],
+    Return[<|"Status" -> "NotEstablished", "MatchingSigns" -> {}|>]];
+  signs = Fold[Intersection, {1, -1}, Lookup[rows, "MatchingSigns"]];
+  <|"Status" -> If[signs === {}, "FAIL", "PASS"], "MatchingSigns" -> signs,
+    "Scope" -> "OneOverallSignForEveryIndependentColorCoefficient"|>
+];
+
 colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List,
     settings_Association] := Module[
   {started = AbsoluteTime[], diagrams, pairs, channels, reps, data, reports = {},
@@ -676,7 +689,7 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
    callback = settings["ProgressFunction"], tag = Unique["colorConstruction"], zeroResult,
    currentColorCertificate, feynmanModel = Lookup[settings,"FeynmanModel",None],
    feynmanDiagrams, feynmanRaw, feynmanPrepared, feynmanPairs = {}, benchmarkSettings,
-   benchmarkSeconds},
+   benchmarkSeconds, phaseAgreement},
   Catch[
   seconds = Replace[settings["TimeConstraint"], Automatic ->
     amplitudeAutomaticSettings["Construction", settings,
@@ -775,6 +788,13 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
   summary = Merge[Lookup[Lookup[reports, "Checks"], "Summary"], Total];
   combinedChecks = Flatten[MapIndexed[Function[{item,index},
     (Join[#, <|"ColorCoefficient" -> First[index]|>] &) /@ item["Checks"]["Checks"]], reports],1];
+  phaseAgreement = colorFeynmanSignAgreement[combinedChecks];
+  If[Lookup[phaseAgreement, "Status", None] === "FAIL" ||
+      feynmanModel =!= None && Lookup[phaseAgreement, "Status", None] =!= "PASS",
+    Throw[colorFailure["InconsistentFeynmanColorPhases",
+      "The independent color coefficients require different Feynman signs. No common overall phase relates the full amplitudes.",
+      <|"ColorBasis" -> data["Basis"], "Reports" -> reports,
+        "PhaseAgreement" -> phaseAgreement|>], tag]];
   checkRows = Map[Function[row, <|"Color" -> row["ColorCoefficient"],
     "Type" -> row["Type"], "Test" -> row["Pole"], "Status" -> row["Status"]|>], combinedChecks];
   report = <|"Status" -> "COMPLETE", "Process" -> process, "Amplitude" -> expression,
@@ -784,6 +804,7 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
     "FeynmanModel" -> feynmanModel,
     "FeynmanPreparation" -> If[feynmanModel===None,Missing["NotRequested"],feynmanPrepared],
     "Checks" -> <|"Summary" -> summary, "Checks" -> combinedChecks,
+      "FeynmanPhaseAgreement" -> phaseAgreement,
       "Table" -> Dataset[checkRows, MaxItems -> {All,All}],
       "Scope" -> "EveryIndependentColorCoefficient"|>|>;
   If[TrueQ[settings["PrintReport"]], Print["Total time: ", Round[report["TotalTime"], 0.1], " s"];
@@ -794,7 +815,7 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
 colorCheckAmplitudes[amplitudes_, channels_List, model_List, supplied_Association] := Module[
   {normalized, external, indices, reps, candidates, tensors, data, reports, options,
    output, checks, rows, combined, summary, report, benchmarkPairs = {},
-   benchmarkEnabled, coefficientOptions, benchmarkSeconds},
+   benchmarkEnabled, coefficientOptions, benchmarkSeconds, phaseAgreement},
   options = Join[Association[Options[CheckAmplitudes]], supplied]; output = options["Output"];
   benchmarkEnabled = options["FeynmanAmplitudes"] =!= None;
   If[benchmarkEnabled,
@@ -831,18 +852,26 @@ colorCheckAmplitudes[amplitudes_, channels_List, model_List, supplied_Associatio
     Return[colorFailure["ColorChecks", "An independent color coefficient could not be checked.",
       <|"Reports" -> reports|>]]];
   checks = Flatten[MapIndexed[Function[{item,index},
-    (Join[#, <|"ColorCoefficient" -> First[index]|>] &) /@ Lookup[item,"Checks",{}]], reports],1];
-  summary = Counts[Lookup[checks,"Status"]];
+    (Join[#, <|"ColorCoefficient" -> First[index]|>] &) /@
+      Lookup[item,"Checks", (Join[#, <|"Type" -> "Physical",
+        "Pole" -> Lookup[#, "CutCondition", Lookup[#, "Cut", Missing["UnspecifiedCut"]]]|>] &) /@
+          Lookup[item,"Channels",{}]]], reports],1];
+  phaseAgreement = colorFeynmanSignAgreement[checks];
+  If[Lookup[phaseAgreement, "Status", None] === "FAIL",
+    AppendTo[checks, <|"Type" -> "Feynman", "Pole" -> "Common overall color phase",
+      "ColorCoefficient" -> All, "Status" -> "FAIL", "MatchingSigns" -> {},
+      "Diagnostics" -> {"Different signs on independent color coefficients change their coherent interference; this is not an overall amplitude phase."}|>]];
+  summary = Counts[Lookup[checks,"Status",{}]];
   rows = Map[Function[row, <|"Color" -> row["ColorCoefficient"],
     "Type" -> row["Type"], "Test" -> row["Pole"], "Status" -> row["Status"]|>], checks];
   report = <|"ColorBasis" -> data["Basis"], "ColorGramMatrix" -> data["GramMatrix"],
     "ColorCoefficientReports" -> reports, "Checks" -> checks, "Summary" -> summary,
-    "Table" -> Dataset[rows, MaxItems -> {All,All}],
+    "Table" -> Dataset[rows, MaxItems -> {All,All}], "FeynmanPhaseAgreement" -> phaseAgreement,
     "Scope" -> "EveryIndependentColorCoefficient"|>;
   Switch[output, "Details", report, "Summary", summary, "Table", report["Table"],
     _, Dataset[MapIndexed[Function[{item,index}, <|"Color" -> First[index],
       "Result" -> Switch[output,
-        "Residues", residueUnifiedSamples[item["Channels"],item["SpuriousChecks"]],
+        "Residues", residueUnifiedSamples[item["Channels"],Lookup[item,"SpuriousChecks",{}]],
         "HighEnergy", item["HighEnergyTable"], "References", item["ReferenceTable"],
         "Feynman", Lookup[item,"FeynmanTable",Dataset[{}]],
         _, Missing["NotAvailable"]]|>], reports], MaxItems -> {All,All}]]

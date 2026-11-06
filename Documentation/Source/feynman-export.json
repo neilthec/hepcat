@@ -48,6 +48,13 @@
           "The supported physical tree backend uses unitary-gauge massive-vector propagators and excludes Goldstone and ghost exchange consistently. Model interactions and particle data still come from the supplied CalcHEP tables. Unsupported Majorana flow or higher-spin fields return `Failure`.",
           "For a factorization check, supply a constructive model containing complete lower-point amplitudes to [FactorizationAmplitudeChannels](paclet:HEPCAT/ref/FactorizationAmplitudeChannels). A table of Feynman vertices describes the interactions, and is not itself a table of those complete amplitudes."
         ]
+      },
+      {
+        "title": "Consistent field conventions",
+        "paragraphs": [
+          "A lower-point amplitude becomes an ingredient of higher-point factorization. Its sign must therefore follow one consistent convention throughout the model. The bundled constructive SM vertices use the same charged-current sign as the unchanged CalcHEP vertex table, for both W charges and all fermion generations. All values live in the model tables; the generic reader and converter contain no SM-specific sign adjustment.",
+          "A consistent field-basis change must be applied at every vertex. For example, reversing both charged W fields multiplies every complete tree by the product of its external W phases. Each internal W pairs W+ with W-, so its two minus signs cancel. The same argument holds for products of lower-point amplitudes on every factorization channel, at any multiplicity. Regenerate lower-point amplitudes from the corrected vertices instead of flipping final formulas one by one. [CheckAmplitudes](paclet:HEPCAT/ref/CheckAmplitudes) retains an unexplained opposite sign as a diagnostic that prevents a validated construction."
+        ]
       }
     ],
     "visibility": "public"
@@ -678,7 +685,8 @@
     "details": [
       "Use `FeynmanToSpinorProducts` when you have a Feynman tensor expression and want to compare it with, or simplify it using, HEPCAT's [SpinorChain](paclet:HEPCAT/ref/SpinorChain) algebra. The converter handles the external wavefunctions, ordered Dirac matrices and Lorentz contractions together.",
       "A bare expression gives a bare spinor expression. A `{massRules, expression}` pair keeps the same mass-rule list and converts its expression. A list of pairs is converted item by item, so the diagram labels and their associated external masses remain available.",
-      "For an ordinary workflow, read a [FeynmanModel](paclet:HEPCAT/ref/FeynmanModel), generate diagrams and obtain their amplitudes, then convert those amplitudes. You can instead pass the raw amplitudes and the Feynman model to [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes), which includes conversion before its reference selection and reduction."
+      "For an ordinary workflow, read a [FeynmanModel](paclet:HEPCAT/ref/FeynmanModel), generate diagrams and obtain their amplitudes, then convert those amplitudes. You can instead pass the raw amplitudes and the Feynman model to [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes), which includes conversion before its reference selection and reduction.",
+      "Imported derivative vertices retain the momentum signs attached to their incoming field slots. There is no extra reversal when relabeling a CalcHEP rule. Internal propagator momenta remain off shell. CalcHEP's automatic three-octet color factor is minus i times its ordered structure constant; this phase is separate from the vertex factor. Charged electroweak photon Ward identities and nonabelian QCD Ward identities test these conventions together."
     ],
     "examples": [
       {

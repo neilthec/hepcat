@@ -6441,6 +6441,9 @@ amplitudeFeynmanReport[inputs_Association, supplied_, model_List, samples_Intege
       "Full-amplitude samples prefer exact rational complex momenta, with real center-of-mass kinematics as a fallback. High-energy checks retain real scattering kinematics.",
       "No internal on-shell conditions, sewing sign or fitted normalization are applied. PASS is sampled agreement of every coherent massive-spin coefficient, not a generic analytic proof."}];
   Join[base, <|"Status" -> status, "Samples" -> results, "MatchingSigns" -> signs,
+    "OverallSign" -> Which[!MemberQ[{"PASS", "Opp Sign"}, status], Missing["NotEstablished"],
+      MemberQ[signs, 1], 1, MemberQ[signs, -1], -1,
+      True, Missing["NotEstablished"]],
     "CompletedSamples" -> Length[results], "FeynmanExpression" -> benchmark,
     "Diagnostics" -> DeleteDuplicates[diagnostics]|>], tag]
 ];

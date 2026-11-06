@@ -90,6 +90,20 @@ check["public factorization sews the same color indices before spinor reduction"
     !FreeQ[colorChannels, _ColorDelta] && FreeQ[colorChannels, _Failure]];
 colorProjection = ConstructiveDiagrams`Private`colorProjectionData[colorPairs,
   colorChannels, {3,-3,1,1}];
+cbPhysicalExternal = ConstructiveDiagrams`Private`preparationExternalRules[First[First[colorPairs]]];
+cbPhysicalOnly = CheckAmplitudes[{cbPhysicalExternal,0},colorChannels,model,
+  "SpuriousPoles"->{},"HighEnergyCheck"->False,"ReferenceCheck"->False,
+  "Samples"->1,"RandomSeed"->314159,"Parallelization"->False,"Output"->"Details"];
+check["colored physical-only diagnostics retain every failing channel",
+  AssociationQ[cbPhysicalOnly] && cbPhysicalOnly["Summary"]===<|"FAIL"->2|> &&
+    Length[cbPhysicalOnly["Checks"]]===2 &&
+    AllTrue[cbPhysicalOnly["Checks"],#["Type"]==="Physical"&]];
+cbPhysicalResidues = CheckAmplitudes[{cbPhysicalExternal,0},colorChannels,model,
+  "SpuriousPoles"->{},"HighEnergyCheck"->False,"ReferenceCheck"->False,
+  "Samples"->1,"RandomSeed"->314159,"Parallelization"->False,"Output"->"Residues"];
+check["colored physical-only residue output does not require spurious rows",
+  Head[cbPhysicalResidues]===Dataset &&
+    FreeQ[Normal[cbPhysicalResidues],Missing["KeyAbsent", "SpuriousChecks"]|_ConstructiveDiagrams`Private`residueUnifiedSamples]];
 check["the public quark-photon sources share one exact color direction",
   AssociationQ[colorProjection] && colorProjection["GramMatrix"] === {{3}} &&
     FreeQ[{colorProjection["ProjectedDiagrams"], colorProjection["ProjectedChannels"]},
@@ -141,6 +155,14 @@ check["an undefined independent benchmark parameter remains unresolved",
 cbWrongSign = cbCompare[d1,-d1];
 check["opposite-sign colored benchmark disagreements remain visible",
   AssociationQ[cbWrongSign] && cbWrongSign["Summary"]===<|"Opp Sign"->1|>];
+check["one common colored Feynman minus remains a sign diagnostic",
+  cbWrongSign["FeynmanPhaseAgreement"]["MatchingSigns"] === {-1} &&
+    AllTrue[cbWrongSign["Checks"], Lookup[#, "Status", None] === "Opp Sign" &]];
+cbRelativeSign = cbCompare[d1+d2,d1-d2];
+check["different signs on independent color coefficients cannot pass as an overall phase",
+  cbRelativeSign["FeynmanPhaseAgreement"]["Status"] === "FAIL" &&
+    Lookup[cbRelativeSign["Summary"], "FAIL", 0] === 1 &&
+    !AllTrue[cbRelativeSign["Checks"], Lookup[#, "Status", None] === "PASS" &]];
 cbBefore = {cbScalarModel,cbFeynmanModel,cbExternal};
 cbVisible = CheckAmplitudes[{cbExternal,d1},{},cbScalarModel,
   "FeynmanAmplitudes"->{cbExternal,d1},"FeynmanModel"->cbFeynmanModel,

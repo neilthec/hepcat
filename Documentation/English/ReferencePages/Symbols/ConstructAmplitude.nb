@@ -315,6 +315,15 @@ fixed-point route above. Request ",
       "InlineFormula"], " to see which stage stopped, which representative \
 was tried and why. A missing lower-point input, an insufficient correction \
 space and an exhausted time limit require different remedies."}], "Notes"],
+  Cell[TextData[{"An independent Feynman comparison must use the same vertex \
+and external-state convention as the constructive model. ",
+     Cell[BoxData[RowBox[{"Opp", " ", "Sign"}]], "InlineFormula"], " is \
+useful diagnostic information, but it prevents a validated construction just \
+like another failed check. Align conventions at the model level: an arbitrary \
+sign change to one lower-point amplitude can alter relative signs when that \
+amplitude is sewn into a higher-point channel. The bundled constructive SM \
+vertices use the same charged-current sign as the unchanged CalcHEP model. No \
+sign is fitted to a process or changed by the checker."}], "Notes"],
   Cell[TextData[{"When you want to understand an intermediate expression, use \
 the individual functions rather than increasing every resource option. Start \
 with diagrams, inspect their prepared pairs, then examine factorization \

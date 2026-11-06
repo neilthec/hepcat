@@ -55,7 +55,8 @@ TEST_SUITES = (
     "spinas-native-project-tests.wl", "spinas-scalar-cache-tests.wl", "spinas-optimized-tests.wl",
     "spinas-polarization-tests.wl",
     "amplitude-check-tests.wl",
-    "model-isolation-tests.wl",
+    "model-isolation-tests.wl", "feynman-vertex-convention-tests.wl",
+    "sm-field-convention-tests.wl",
     "plain-text-tests.wl", "model-export-tests.wl", "qed-model-export-tests.wl",
     "six-point-completion-tests.wl",
     "preparation-remainders-tests.wl",
@@ -73,7 +74,8 @@ TEST_SUITES = (
 
 # These execute full expensive notebook constructions rather than component
 # regressions. Select them explicitly and give the external runner enough time.
-INTEGRATION_TEST_SUITES = ("physical-construction-integration-tests.wl",
+INTEGRATION_TEST_SUITES = ("sm-charged-current-integration-tests.wl",
+                          "physical-construction-integration-tests.wl",
                           "seven-point-construction-integration-tests.wl",
                           "seven-point-spurious-construction-integration-tests.wl",
                           "qed-spurious-model-export-tests.wl",
