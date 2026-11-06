@@ -17797,6 +17797,13 @@ completionHERawParameterIdentityProof[expression_, rules_List, model_List, secon
     seconds, Null]; result
 ];
 
+(* The raw prefix already has its own deadline. Do not fraction its
+   best-ranked chart a second time; complete tensor proofs need that allowance.
+   Other portfolios retain their established reserve for alternative charts. *)
+completionHEPreferredChartAllowance[left_, firstChoice_, choices_Integer] :=
+  If[TrueQ[firstChoice] && choices > 1 && !TrueQ[$completionHEKeepRawModelParameters],
+    2 left/3, left];
+
 completionHEZeroDirection[expression_, rules_List, model_List, seconds_] := Module[
   {started = AbsoluteTime[], candidate = expression, prepared, result,
    unsupported, remaining, ordinaryBudget, weights, grouped, work, symbolicProof,
@@ -17973,8 +17980,8 @@ completionHEZeroDirection[expression_, rules_List, model_List, seconds_] := Modu
     Do[
       left = Min[remaining[], Max[0, allowance - (AbsoluteTime[] - began)]];
       If[left <= 0.000001, Break[]];
-      proof = symbolicProof[value, If[index === 1 && Length[choices] > 1,
-        2 left/3, left], choices[[index]]];
+      proof = symbolicProof[value, completionHEPreferredChartAllowance[
+        left, index === 1, Length[choices]], choices[[index]]];
       AppendTo[attempts, Join[choices[[index]], KeyTake[proof, {"Status", "Method"}]]];
       If[proof["Status"] === "PROVED_ZERO" || proof["Method"] === "NonzeroSymbolicExternalChart",
         Return[Join[proof, <|"ChartAttempts" -> attempts, "ChartPlanning" -> costs|>]]], {index, Length[choices]}];

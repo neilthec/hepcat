@@ -159,5 +159,21 @@ Internal`InheritedBlock[{ConstructiveDiagrams`Private`completionHEOrdinarySource
 check["a successful original numerator keeps an unavailable reduction record honestly",
   cnRawWithoutReduction["Status"] === "PROVED_ZERO" &&
     MissingQ[cnRawWithoutReduction["RawModelParameterProof"]["OrdinaryReduction"]]];
+cnChartAllowance = ConstructiveDiagrams`Private`completionHEPreferredChartAllowance;
+check["the bounded raw prefix gives its preferred chart the complete existing allowance",
+  Block[{ConstructiveDiagrams`Private`$completionHEKeepRawModelParameters = True},
+    cnChartAllowance[12,True,2] === 12]];
+check["ordinary portfolios retain their established alternative-chart reserve",
+  Block[{ConstructiveDiagrams`Private`$completionHEKeepRawModelParameters = False},
+    cnChartAllowance[12,True,2] === 8]];
+check["a single chart and later alternatives retain only their actual remaining allowance",
+  Block[{ConstructiveDiagrams`Private`$completionHEKeepRawModelParameters = True},
+    cnChartAllowance[5,False,2] === 5 && cnChartAllowance[7,True,1] === 7] &&
+  Block[{ConstructiveDiagrams`Private`$completionHEKeepRawModelParameters = False},
+    cnChartAllowance[5,False,2] === 5 && cnChartAllowance[7,True,1] === 7]];
+check["preferred-chart allocation never extends its supplied portfolio clock",
+  And @@ Flatten[Table[Block[{ConstructiveDiagrams`Private`$completionHEKeepRawModelParameters = raw},
+    With[{allocation = cnChartAllowance[budget,first,count]}, 0 <= allocation <= budget]],
+    {raw,{False,True}},{budget,{1/10,3,30}},{first,{False,True}},{count,{1,2}}]]];
 Print["CHECKS: ", checks]; Print["FAILURES: ", Length[failures]];
 If[failures =!= {}, Print["FAILED_CHECKS: ", failures]]; Print["HEPCAT_TEST_COMPLETED:high-energy-source-normalization-tests.wl"]; Quit[If[failures === {}, 0, 1]];

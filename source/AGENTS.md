@@ -1544,7 +1544,9 @@ one exact algebraic point of the same dense chart; this establishes a nonempty
 generic domain, never amplitude zero. Record that witness separately from the
 symbolic zero certificate. The raw prefix uses at most thirty seconds and half
 the original per-direction allowance; the declared-model fallback keeps the
-remaining time. No overall or stage deadline is extended.
+remaining time. Its best-ranked chart may use that existing portfolio allowance
+without another fractional split; ordinary nonraw portfolios keep their
+alternative-chart reserve. No overall or stage deadline is extended.
 Retain the original proof form. Try cheap scalar grouping and bounded
 Schouten identities on that original before ordinary preparation; a form ranked
 best for display can be much harder to certify symbolically. Modest compact

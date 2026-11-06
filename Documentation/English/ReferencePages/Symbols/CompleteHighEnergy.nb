@@ -118,20 +118,23 @@ with no internal on-shell assumption. Rational denominators may be cleared to \
 make that proof cheaper. A separate exact nonzero witness on the same \
 conserved chart certifies the denominator's nonempty generic domain; it is \
 never used as evidence that an amplitude vanishes. This prefix and the \
-declared-model fallback share the original proof deadline. Large retained \
-vector-source columns can be shortened before fitting by grouping terms with \
-the same original propagators and non-mass couplings. Ordinary spinor \
-identities then see the complete external-mass partners together. Each column \
-keeps its single correction coefficient; its expanded terms are not assigned \
-independent coefficients. Only declared external masses enter this reduction. \
-The original complete columns remain available, and a bounded or unsupported \
-reduction leaves its original column unchanged. The same ordinary grouping \
-can precondition a large vector direction before its exact identity proof. \
-The shorter expression must still receive an exact zero certificate before a \
-coefficient is removed; the full original direction and the reduction steps \
-stay in the report, and an unfinished proof keeps the original fallback."}],
-   "Notes"], Cell[TextData[{"For a large affine vector family, repeated typed \
-spinor monomials can be expanded once on the same conserved energy chart and \
+declared-model fallback share the original proof deadline. The preferred \
+exact chart can use its existing prefix allowance without another fractional \
+split, which avoids interrupting a complete tensor proof just before it \
+finishes. Large retained vector-source columns can be shortened before \
+fitting by grouping terms with the same original propagators and non-mass \
+couplings. Ordinary spinor identities then see the complete external-mass \
+partners together. Each column keeps its single correction coefficient; its \
+expanded terms are not assigned independent coefficients. Only declared \
+external masses enter this reduction. The original complete columns remain \
+available, and a bounded or unsupported reduction leaves its original column \
+unchanged. The same ordinary grouping can precondition a large vector \
+direction before its exact identity proof. The shorter expression must still \
+receive an exact zero certificate before a coefficient is removed; the full \
+original direction and the reduction steps stay in the report, and an \
+unfinished proof keeps the original fallback."}], "Notes"],
+  Cell[TextData[{"For a large affine vector family, repeated typed spinor \
+monomials can be expanded once on the same conserved energy chart and \
 recombined through their exact original coefficient map. Every source part is \
 reconstructed exactly, every Laurent coefficient keeps its remainder-order \
 certificate, and all original correction coordinates and constant offsets \
