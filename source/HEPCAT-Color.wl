@@ -373,7 +373,7 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
       "Construct the explicit color amplitude without the optional internal Feynman benchmark; use independent CalcHEP and MadGraph validation for this workflow."]]];
   seconds = Replace[settings["TimeConstraint"], Automatic ->
     amplitudeAutomaticSettings["Construction", settings,
-      amplitudeResourceMetrics[{}, {}, process]]["Settings"]["TimeConstraint"]];
+      amplitudeConstructionResourceMetrics[process,factorizationModel]]["Settings"]["TimeConstraint"]];
   deadline = started + seconds;
   diagrams = CreateDiagrams[process, diagramModel];
   If[FailureQ[diagrams], Return[diagrams]];

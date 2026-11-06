@@ -131,6 +131,33 @@ limitedColor = ConstructAmplitude[colorParticles,model,model,
   "TimeConstraint"->10^-6,"PrintReport"->False,"ProgressReporting"->False];
 check["an unfinished color coefficient never becomes an assembled successful amplitude",
   FailureQ[limitedColor] && FreeQ[limitedColor,_Dot|Missing["NotValidated"]]];
+(* Probe only the shared-clock bridge. The deliberate child failure prevents
+   this test from manufacturing a physical amplitude or repeating an SM fit. *)
+cbClockModel=ReadModel[FileNameJoin[{root,"models"}],1];
+cbClockProcess={"u","U","W-","W+"};
+cbClockSettings=Join[Association[Options[ConstructAmplitude]],
+ <|"Output"->"Details","PrintReport"->False,"ProgressReporting"->False|>];
+cbGenericClock=ConstructiveDiagrams`Private`amplitudeAutomaticSettings["Construction",cbClockSettings,
+ ConstructiveDiagrams`Private`amplitudeResourceMetrics[{}, {},cbClockProcess]]["Settings"]["TimeConstraint"];
+cbModelClock=ConstructiveDiagrams`Private`amplitudeAutomaticSettings["Construction",cbClockSettings,
+ ConstructiveDiagrams`Private`amplitudeConstructionResourceMetrics[cbClockProcess,cbClockModel]]["Settings"]["TimeConstraint"];
+cbProbeClock[settings_]:=Internal`InheritedBlock[{ConstructiveDiagrams`ConstructAmplitude},
+ cbReceivedClock=Missing["NoChild"];
+ Unprotect[ConstructiveDiagrams`ConstructAmplitude];
+ Clear[ConstructiveDiagrams`ConstructAmplitude];
+ ConstructiveDiagrams`ConstructAmplitude[_,_,_,probeOptions___Rule]:=(
+  cbReceivedClock=Lookup[Association[{probeOptions}],"TimeConstraint"];
+  Failure["DeliberatelyStoppedClockProbe",<||>]);
+ Protect[ConstructiveDiagrams`ConstructAmplitude];
+ ConstructiveDiagrams`Private`colorConstructAmplitude[cbClockProcess,cbClockModel,cbClockModel,settings];
+ cbReceivedClock];
+cbAutomaticChildClock=cbProbeClock[cbClockSettings];
+check["colored construction forwards its model-aware massive-spin allowance",
+ NumericQ[cbAutomaticChildClock] && cbModelClock>cbGenericClock &&
+ cbAutomaticChildClock>cbGenericClock && cbAutomaticChildClock<=cbModelClock];
+cbExplicitChildClock=cbProbeClock[Join[cbClockSettings,<|"TimeConstraint"->10|>]];
+check["colored construction keeps an explicit shared clock authoritative",
+ NumericQ[cbExplicitChildClock] && 0<cbExplicitChildClock<=10];
 Print["COLOR BASIS CHECKS: ", checks, "; FAILURES: ", Length[failures]];
 If[failures === {}, Print["HEPCAT_TEST_COMPLETED:color-basis-tests.wl"], Print[failures]];
 Quit[If[failures === {}, 0, 1]];
