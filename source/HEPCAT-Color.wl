@@ -294,14 +294,19 @@ colorExpressionTerms[expression_] := Module[{walk, multiply, result, tag = Uniqu
       Select[result, Last[#] =!= 0 &]]]
 ];
 
-colorProjectionData[pairs_List, channels_List, representations_List] := Module[
-  {diagramTerms, channelTerms, terms, counts, data, coordinates, offset = 0, split,
-   diagramCoordinates, channelCoordinates, rank},
+(* Include independent benchmark tensors in the same exact basis. A tensor
+   present only in the benchmark must remain a separate zero candidate
+   coefficient, not disappear because the diagram/channel basis omits it. *)
+colorProjectionData[pairs_List, channels_List, representations_List,
+    benchmarkPairs_List: {}] := Module[
+  {diagramTerms, channelTerms, benchmarkTerms, terms, counts, data, coordinates,
+   offset = 0, split, diagramCoordinates, channelCoordinates, benchmarkCoordinates, rank},
   diagramTerms = colorExpressionTerms[Last[#]] & /@ pairs;
   channelTerms = colorExpressionTerms[Last[#]] & /@ channels;
-  If[AnyTrue[Join[diagramTerms, channelTerms], FailureQ],
-    Return[SelectFirst[Join[diagramTerms, channelTerms], FailureQ]]];
-  terms = Join[diagramTerms, channelTerms]; counts = Length /@ terms;
+  benchmarkTerms = colorExpressionTerms[Last[#]] & /@ benchmarkPairs;
+  If[AnyTrue[Join[diagramTerms, channelTerms, benchmarkTerms], FailureQ],
+    Return[SelectFirst[Join[diagramTerms, channelTerms, benchmarkTerms], FailureQ]]];
+  terms = Join[diagramTerms, channelTerms, benchmarkTerms]; counts = Length /@ terms;
   If[Total[counts] === 0, Return[colorFailure["ZeroColorProjection",
     "A zero expression without any color tensor needs a nonzero channel or diagram to define its color basis."]]];
   data = colorTensorBasis[First /@ Flatten[terms, 1], representations];
@@ -313,13 +318,38 @@ colorProjectionData[pairs_List, channels_List, representations_List] := Module[
       Total[MapThread[#1 Last[#2] &, {Take[coordinates, {start, offset}], terms[[i]]}]]]],
     {i, Length[terms]}];
   diagramCoordinates = Take[split, Length[pairs]];
-  channelCoordinates = Drop[split, Length[pairs]];
+  channelCoordinates = Take[Drop[split, Length[pairs]], Length[channels]];
+  benchmarkCoordinates = Drop[split, Length[pairs] + Length[channels]];
   Join[data, <|"DiagramCoefficients" -> diagramCoordinates,
     "ChannelCoefficients" -> channelCoordinates,
+    "FeynmanCoefficients" -> benchmarkCoordinates,
     "ProjectedDiagrams" -> Table[MapThread[{First[#1], #2[[i]]} &,
       {pairs, diagramCoordinates}], {i, rank}],
     "ProjectedChannels" -> Table[MapThread[Append[Most[#1], #2[[i]]] &,
-      {channels, channelCoordinates}], {i, rank}]|>]
+      {channels, channelCoordinates}], {i, rank}],
+    "ProjectedFeynmanAmplitudes" -> Table[MapThread[{First[#1], #2[[i]]} &,
+      {benchmarkPairs, benchmarkCoordinates}], {i, rank}]|>]
+];
+
+(* Preserve benchmark model scopes and external mass declarations here.
+   Numerical resolution and mass agreement remain the scalar checker's job. *)
+colorFeynmanPairs[input_, seconds_] := Module[{value = input, pairs},
+  If[AssociationQ[value], value = Which[
+    KeyExistsQ[value, "PreparedAmplitudes"], value["PreparedAmplitudes"],
+    KeyExistsQ[value, "Amplitude"], {Lookup[value, "ExternalMassRules", {}], value["Amplitude"]},
+    True, Failure["InvalidFeynmanInput", <||>]]];
+  If[FailureQ[value] || value === $Failed,
+    Return[colorFailure["InvalidFeynmanInput", "Supply a complete independent Feynman expression or amplitude pairs."]]];
+  pairs = Which[residueAmplitudePairQ[value], {value},
+    ListQ[value] && AllTrue[value, residueAmplitudePairQ], value,
+    !ListQ[value], {{{}, value}},
+    True, Return[colorFailure["InvalidFeynmanInput", "Supply a complete independent Feynman expression or amplitude pairs."]]];
+  If[TrueQ[feynmanRawExpressionQ[pairs]],
+    pairs = ConstructiveDiagrams`FeynmanToSpinorProducts[pairs,
+      "ReduceSpinorProducts" -> False, "TimeConstraint" -> seconds]];
+  If[!ListQ[pairs] || !AllTrue[pairs, residueAmplitudePairQ] ||
+      !residueFiniteQ[pairs],
+    colorFailure["InvalidFeynmanInput", "The colored Feynman benchmark did not convert completely; prepare its external helicities first when required."], pairs]
 ];
 
 (* Each coefficient of an exact independent color basis has its own ordinary
@@ -366,11 +396,10 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
    options, report, amplitudes, expression, external, summary, output = settings["Output"],
    deadline, seconds, rank, projected, combinedChecks, checkRows,
    callback = settings["ProgressFunction"], tag = Unique["colorConstruction"], zeroResult,
-   currentColorCertificate},
+   currentColorCertificate, feynmanModel = Lookup[settings,"FeynmanModel",None],
+   feynmanDiagrams, feynmanRaw, feynmanPrepared, feynmanPairs = {}, benchmarkSettings,
+   benchmarkSeconds},
   Catch[
-  If[Lookup[settings, "FeynmanModel", None] =!= None,
-    Return[colorFailure["ColoredFeynmanProjection",
-      "Construct the explicit color amplitude without the optional internal Feynman benchmark; use independent CalcHEP and MadGraph validation for this workflow."]]];
   seconds = Replace[settings["TimeConstraint"], Automatic ->
     amplitudeAutomaticSettings["Construction", settings,
       amplitudeConstructionResourceMetrics[process,factorizationModel]]["Settings"]["TimeConstraint"]];
@@ -382,21 +411,59 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
   If[FailureQ[pairs] || FailureQ[channels], Return[SelectFirst[{pairs, channels}, FailureQ]]];
   reps = colorParticleRepresentation[#, diagramModel] & /@ process;
   If[AnyTrue[reps, FailureQ], Return[SelectFirst[reps, FailureQ]]];
-  If[FreeQ[{pairs,channels}, _ColorDelta | _ColorGenerator | _ColorStructure] &&
+  If[feynmanModel =!= None,
+    If[TrueQ[settings["ProgressReporting"]], Print["Building independent colored Feynman benchmark."]];
+    feynmanDiagrams = CreateDiagrams[process,feynmanModel];
+    If[FailureQ[feynmanDiagrams], Return[feynmanDiagrams]];
+    feynmanRaw = DiagramAmplitudes[feynmanDiagrams];
+    If[FailureQ[feynmanRaw] || feynmanRaw === $Failed, Return[feynmanRaw]];
+    If[feynmanRaw === {}, feynmanRaw = {{Thread[(Mass /@ Range[Length[process]]) ->
+      constructExternalMasses[process,feynmanModel]],0}}];
+    benchmarkSettings = Join[
+      Association[Select[Normal[settings],MemberQ[First /@ Options[PrepareAmplitudes],First[#]] &]],
+      constructRuleOptions[settings["FeynmanPreparationOptions"]],
+      <|"ReturnDetails"->True,"Output"->"Amplitudes","InternalOnShell"->False,
+        "ExternalParticles"->Automatic|>];
+    benchmarkSeconds = Replace[Lookup[benchmarkSettings,"TimeConstraint",Automatic],
+      Automatic -> Max[0.001,deadline-AbsoluteTime[]]];
+    benchmarkSettings["TimeConstraint"] = Min[benchmarkSeconds,Max[0.001,deadline-AbsoluteTime[]]];
+    If[Length[settings["FeynmanPreparationOptions"]]===0,
+      (* A benchmark needs an exact off-shell expression, not a costly
+         simplification search. Shared per-leg Xi references remain literal
+         for the independent full-amplitude checker. *)
+      feynmanPairs = ConstructiveDiagrams`FeynmanToSpinorProducts[feynmanRaw,
+        "ReduceSpinorProducts"->False,"TimeConstraint"->benchmarkSettings["TimeConstraint"]];
+      If[!ListQ[feynmanPairs] || !AllTrue[feynmanPairs,residueAmplitudePairQ] ||
+          !residueFiniteQ[feynmanPairs],
+        Return[colorFailure["ColoredFeynmanConversion",
+          "The independent Feynman benchmark did not convert completely.",
+          <|"Report"->feynmanPairs|>]]];
+      feynmanPrepared = <|"Status"->"PREPARED","PreparedAmplitudes"->feynmanPairs,
+        "Method"->"ExactOffShellConversionWithoutReduction","InternalOnShell"->False|>,
+      feynmanPrepared = PrepareAmplitudes[feynmanRaw,feynmanModel,
+        Sequence @@ Normal[benchmarkSettings]];
+      If[!constructPreparationUsableQ[feynmanPrepared],
+        Return[colorFailure["ColoredFeynmanPreparation",
+          "The independent Feynman benchmark did not prepare completely.",
+          <|"Report"->feynmanPrepared|>]]];
+      feynmanPairs = feynmanPrepared["PreparedAmplitudes"]]];
+  If[FreeQ[{pairs,channels,feynmanPairs}, _ColorDelta | _ColorGenerator | _ColorStructure] &&
       AllTrue[Last /@ pairs, TrueQ[# === 0] &] &&
       AllTrue[Last /@ channels, TrueQ[# === 0] &],
     external = Thread[(Mass /@ Range[Length[process]]) -> constructExternalMasses[process,diagramModel]];
-    projected = <|"Diagrams" -> diagrams, "DiagramAmplitudes" -> {{external,0}}, "Channels" -> channels|>;
+    projected = Join[<|"Diagrams" -> diagrams, "DiagramAmplitudes" -> {{external,0}}, "Channels" -> channels|>,
+      If[feynmanModel===None,<||>,<|"FeynmanAmplitudes"->feynmanPairs|>]];
     zeroResult = Block[{$colorConstructingProjection = True, $colorConstructionInput = projected},
       ConstructAmplitude[process,diagramModel,factorizationModel,Sequence @@ Normal[settings]]];
     Return[zeroResult]];
-  data = colorProjectionData[pairs, channels, reps];
+  data = colorProjectionData[pairs, channels, reps, feynmanPairs];
   If[FailureQ[data], Return[data]];
   rank = Length[data["Basis"]];
   If[rank === 0,
     external = Thread[(Mass /@ Range[Length[process]]) -> constructExternalMasses[process,diagramModel]];
-    projected = <|"Diagrams" -> diagrams, "DiagramAmplitudes" -> {{external,0}},
-      "Channels" -> (Append[Most[#],0] & /@ channels)|>;
+    projected = Join[<|"Diagrams" -> diagrams, "DiagramAmplitudes" -> {{external,0}},
+      "Channels" -> (Append[Most[#],0] & /@ channels)|>,
+      If[feynmanModel===None,<||>,<|"FeynmanAmplitudes"->feynmanPairs|>]];
     Return[Block[{$colorConstructingProjection = True, $colorConstructionInput = projected},
       ConstructAmplitude[process,diagramModel,factorizationModel,Sequence @@ Normal[settings]]]]];
   currentColorCertificate = colorScalarCurrentProjectionCertificate[
@@ -414,6 +481,8 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
     projected = <|"Diagrams" -> diagrams, "DiagramAmplitudes" -> data["ProjectedDiagrams"][[i]],
       "Channels" -> data["ProjectedChannels"][[i]],
       "ColorProjectionCertificate" -> currentColorCertificate|>;
+    If[feynmanModel =!= None,
+      AssociateTo[projected,"FeynmanAmplitudes"->data["ProjectedFeynmanAmplitudes"][[i]]]];
     report = Block[{$colorConstructingProjection = True, $colorConstructionInput = projected},
       ConstructAmplitude[process, diagramModel, factorizationModel, Sequence @@ Normal[options]]];
     AppendTo[reports, report];
@@ -434,6 +503,8 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
     "AmplitudePair" -> {external, expression}, "TotalTime" -> AbsoluteTime[] - started,
     "Complexity" -> constructComplexity[expression], "ColorBasis" -> data["Basis"],
     "ColorGramMatrix" -> data["GramMatrix"], "ColorCoefficientReports" -> reports,
+    "FeynmanModel" -> feynmanModel,
+    "FeynmanPreparation" -> If[feynmanModel===None,Missing["NotRequested"],feynmanPrepared],
     "Checks" -> <|"Summary" -> summary, "Checks" -> combinedChecks,
       "Table" -> Dataset[checkRows, MaxItems -> {All,All}],
       "Scope" -> "EveryIndependentColorCoefficient"|>|>;
@@ -444,11 +515,18 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
 
 colorCheckAmplitudes[amplitudes_, channels_List, model_List, supplied_Association] := Module[
   {normalized, external, indices, reps, candidates, tensors, data, reports, options,
-   output, checks, rows, combined, summary, report},
+   output, checks, rows, combined, summary, report, benchmarkPairs = {},
+   benchmarkEnabled, coefficientOptions, benchmarkSeconds},
+  options = Join[Association[Options[CheckAmplitudes]], supplied]; output = options["Output"];
+  benchmarkEnabled = options["FeynmanAmplitudes"] =!= None;
+  If[benchmarkEnabled,
+    benchmarkSeconds = Replace[options["FeynmanTimeConstraint"],Automatic -> options["TimeConstraint"]];
+    benchmarkPairs = colorFeynmanPairs[options["FeynmanAmplitudes"],benchmarkSeconds];
+    If[FailureQ[benchmarkPairs],Return[benchmarkPairs]]];
   normalized = completionNormalizeInput[amplitudes, channels, model];
   If[FailureQ[normalized] || !AssociationQ[normalized], Return[normalized]];
   external = normalized["ExternalMassRules"];
-  tensors = Cases[{amplitudes, channels}, _ColorDelta | _ColorGenerator | _ColorStructure, Infinity];
+  tensors = Cases[{amplitudes, channels, benchmarkPairs}, _ColorDelta | _ColorGenerator | _ColorStructure, Infinity];
   indices = DeleteDuplicates[Cases[tensors, ColorIndex[i_Integer] :> i, Infinity]];
   reps = Table[If[!MemberQ[indices, i], 1,
     candidates = DeleteDuplicates[Abs[#[[8]]] & /@ Select[model[[1]],
@@ -458,18 +536,18 @@ colorCheckAmplitudes[amplitudes_, channels_List, model_List, supplied_Associatio
       Return[colorFailure["AmbiguousExternalColor",
         "External mass metadata does not uniquely determine an explicit color index's representation.",
         <|"Leg" -> i|>]]]], {i, Length[external]}];
-  data = colorProjectionData[{{external, normalized["Expression"]}}, channels, reps];
+  data = colorProjectionData[{{external, normalized["Expression"]}}, channels, reps, benchmarkPairs];
   If[FailureQ[data], Return[data]];
   If[data["Basis"] === {}, Return[Block[{$colorCheckingProjection = True},
     CheckAmplitudes[{external,0},Append[Most[#],0] & /@ channels,model,
       Sequence @@ Normal[supplied]]]]];
-  options = Join[Association[Options[CheckAmplitudes]], supplied]; output = options["Output"];
-  If[options["FeynmanAmplitudes"] =!= None, Return[colorFailure["ColoredFeynmanProjection",
-    "Use the independent numerical CalcHEP or MadGraph comparison for the full color amplitude."]]];
   options["Output"] = "Details";
-  reports = Table[Block[{$colorCheckingProjection = True},
-    CheckAmplitudes[First[data["ProjectedDiagrams"][[i]]],
-      data["ProjectedChannels"][[i]], model, Sequence @@ Normal[options]]],
+  reports = Table[
+    coefficientOptions = If[benchmarkEnabled,
+      Join[options,<|"FeynmanAmplitudes"->data["ProjectedFeynmanAmplitudes"][[i]]|>],options];
+    Block[{$colorCheckingProjection = True},
+      CheckAmplitudes[First[data["ProjectedDiagrams"][[i]]],
+        data["ProjectedChannels"][[i]], model, Sequence @@ Normal[coefficientOptions]]],
     {i, Length[data["Basis"]]}];
   If[AnyTrue[reports, FailureQ[#] || !AssociationQ[#] &],
     Return[colorFailure["ColorChecks", "An independent color coefficient could not be checked.",
@@ -488,6 +566,7 @@ colorCheckAmplitudes[amplitudes_, channels_List, model_List, supplied_Associatio
       "Result" -> Switch[output,
         "Residues", residueUnifiedSamples[item["Channels"],item["SpuriousChecks"]],
         "HighEnergy", item["HighEnergyTable"], "References", item["ReferenceTable"],
+        "Feynman", Lookup[item,"FeynmanTable",Dataset[{}]],
         _, Missing["NotAvailable"]]|>], reports], MaxItems -> {All,All}]]
 ];
 

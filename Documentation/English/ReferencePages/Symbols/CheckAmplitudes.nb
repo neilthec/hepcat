@@ -63,13 +63,18 @@ colored representations; ambiguous metadata returns Failure. For a full \
 numerical comparison, ", ButtonBox["WriteSPINASProcess", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/WriteSPINASProcess"],
      " retains the interference between those coefficients."}], "Notes"],
-  Cell["What is checked", "NotesSection"],
-  Cell[TextData[{"Physical poles are defined by the supplied factorization \
-channels. At each pole, the checker compares the residue of the full \
-amplitude with the sewn product of complete lower-point amplitudes. It \
-accounts for HEPCAT's amplitude and propagator conventions, including the \
-sewing minus sign. Every other propagator is kept away from its pole during \
-an ordinary single-pole comparison."}], "Notes"],
+  Cell[TextData[{"For a colored candidate with an optional Feynman benchmark, \
+the independent color basis is built from the candidate, original channel \
+targets and benchmark together. Every coefficient is compared, including a \
+color direction appearing only in the benchmark. Supply \"FeynmanModel\" for \
+a benchmark read from a different model; its parameters are not borrowed from \
+the constructive model."}], "Notes"], Cell["What is checked",
+   "NotesSection"], Cell[TextData[{"Physical poles are defined by the \
+supplied factorization channels. At each pole, the checker compares the \
+residue of the full amplitude with the sewn product of complete lower-point \
+amplitudes. It accounts for HEPCAT's amplitude and propagator conventions, \
+including the sewing minus sign. Every other propagator is kept away from its \
+pole during an ordinary single-pole comparison."}], "Notes"],
   Cell[TextData[{"For an all-massless four-point cut, the exact sample charts \
 cover both valid complex branches. Charts where every Mandelstam invariant \
 vanishes are not used as generic single-pole tests. The expected residue must \

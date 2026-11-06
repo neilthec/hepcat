@@ -226,7 +226,41 @@ Do[
       (ModelParameter[ffConstructiveSM, ffMassValueCase[[1]]] /.
         ModelParameterRules[ffConstructiveSM]) === ffMassValueCase[[2]]],
   {ffMassValueCase, {{"Me", 1/2000}, {"Mm", 21/200},
-    {"Mu", 27/12500}, {"Md", 47/10000}}}];
+    {"Mu", 27/12500}, {"Md", 47/10000},
+    {"Mc", 13/10}, {"Mb", 21/5}, {"Ms", 19/200}}}];
+ffStockNumericalRules = ModelParameterRules[ffStockModel];
+ffConstructiveSMRules = ModelParameterRules[ffConstructiveSM];
+Do[
+  ffMatchingSMRow = SelectFirst[ffConstructiveSM[[1]],
+    #[[4]] === ffStockParticleRow[[4]] &, Missing["UnknownSMParticle"]];
+  ffCheck["the independent SM default mass matches the constructive particle " <>
+      ffStockParticleRow[[2]],
+    ListQ[ffMatchingSMRow] &&
+      NumericQ[ffStockParticleRow[[6]] /. ffStockNumericalRules] &&
+      Together[(ffStockParticleRow[[6]] /. ffStockNumericalRules) -
+        (ffMatchingSMRow[[6]] /. ffConstructiveSMRules)] === 0],
+  {ffStockParticleRow, ffStockModel[[1]]}];
+ffRequiredSMParameters = DeleteDuplicates[Cases[
+  Join[ffStockModel[[1, All, 6]], ffStockModel[[2, All, -2]]],
+  _ModelParameter, Infinity]];
+ffCheck["all SM tree masses and vertex parameters resolve without external running functions",
+  AllTrue[ffRequiredSMParameters, NumericQ[# /. ffStockNumericalRules] &]];
+Do[
+  {ffFixedParticle, ffFixedAntiparticle, ffFixedMassName} = ffFixedQuark;
+  ffFixedHiggsRows = Select[ffStockModel[[2]],
+    Take[#, 4] === {ffFixedAntiparticle, ffFixedParticle, "h", ""} &];
+  ffCheck["the fixed SM quark Higgs coupling retains its matching mass " <> ffFixedParticle,
+    Length[ffFixedHiggsRows] === 1 && Last[First[ffFixedHiggsRows]] === 1 &&
+      Together[First[ffFixedHiggsRows][[-2]] + ffStockCharge
+        ModelParameter[ffStockModel, ffFixedMassName]/(2 ffStockWMass ffStockWeakSine)] === 0],
+  {ffFixedQuark, {{"c", "C", "Mc"}, {"b", "B", "Mb"}, {"s", "S", "Ms"}}}];
+ffFixedMassOverrideRules = ModelParameterRules[ffStockModel,
+  {"Mc" -> 7/5, "Mb" -> 9/2, "Ms" -> 1/10}];
+ffCheck["fixed SM quark masses remain local adjustable model inputs",
+  (ModelParameter[ffStockModel, #] /. ffFixedMassOverrideRules & /@ {"Mc", "Mb", "Ms"}) ===
+    {7/5, 9/2, 1/10} &&
+  (ModelParameter[ffStockModel, #] /. ModelParameterRules[ffStockModel] & /@ {"Mc", "Mb", "Ms"}) ===
+    {13/10, 21/5, 19/200}];
 ffGoldstoneCommon = I ffStockCharge/(2 ffStockWMass ffStockWeakSine);
 ffChargedGoldstoneCommon = I ffStockCharge Sqrt[2]/(4 ffStockWMass ffStockWeakSine);
 ffGoldstoneCases = {

@@ -19,6 +19,10 @@ composite momenta."}], "Notes"],
 or channel labels, without ", ButtonBox["Mom", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/Mom"], " wrappers. For example, \
 MomProd[Multiparticle[1, 2], 3] denotes (p1+p2) dot p3."}], "Notes"],
+  Cell[TextData[{"The displayed scalar product keeps its ",
+     Cell[BoxData[RowBox[{"MomProd"}]], "InlineFormula"], " meaning when \
+copied or read back from a notebook, so it remains usable by the symbolic and \
+numerical tools."}], "Notes"],
   Cell[TextData[{"Supported signed and composite arguments are handled \
 bilinearly, and the scalar product is symmetric. For a single external leg, \
 MomProd[i, i] becomes ", Cell[BoxData[RowBox[{"Mass", "[", "i", "]", "^",
@@ -47,13 +51,14 @@ Evaluate loading in its own cell before the calculation.", "ExampleText"],
   Cell[TextData[{"Expand a composite scalar product."}], "ExampleText"],
   Cell[BoxData[RowBox[{"MomProd", "[", "Multiparticle", "[", "1", ",", " ",
       "2", "]", ",", " ", "3", "]"}]], "Input"],
-  Cell[BoxData[RowBox[{RowBox[{SubscriptBox["p", "1"], ".",
-        SubscriptBox["p", "3"]}], "+", RowBox[{SubscriptBox["p", "2"], ".",
-        SubscriptBox["p", "3"]}]}]], "Output"],
-  Cell[TextData[{"Use the external mass identity."}], "ExampleText"],
-  Cell[BoxData[RowBox[{"MomProd", "[", "1", ",", " ", "1", "]"}]], "Input"],
-  Cell[BoxData[SubsuperscriptBox["M", "1", "2"]], "Output"],
-  Cell["See Also", "SeeAlsoSection"],
+  Cell[BoxData[RowBox[{InterpretationBox[RowBox[{SubscriptBox["p", "1"], ".",
+         SubscriptBox["p", "3"]}], MomProd[1, 3], Editable -> False], "+",
+      InterpretationBox[RowBox[{SubscriptBox["p", "2"], ".",
+         SubscriptBox["p", "3"]}], MomProd[2, 3], Editable -> False]}]],
+   "Output"], Cell[TextData[{"Use the external mass identity."}],
+   "ExampleText"], Cell[BoxData[RowBox[{"MomProd", "[", "1", ",", " ", "1",
+      "]"}]], "Input"], Cell[BoxData[SubsuperscriptBox["M", "1", "2"]],
+   "Output"], Cell["See Also", "SeeAlsoSection"],
   Cell[TextData[{ButtonBox["Mom", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/Mom"], "  \[Bullet]  ",
      ButtonBox["Mass", BaseStyle -> "Link", ButtonData ->

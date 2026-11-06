@@ -129,9 +129,14 @@ validated coefficients. Details retain the basis, its interference matrix and \
 the coefficient reports. ", ButtonBox["WriteSPINASProcess",
       BaseStyle -> "Link", ButtonData ->
        "paclet:HEPCAT/ref/WriteSPINASProcess"], " can export this full \
-expression and compare its coherent color sum with CalcHEP and MadGraph. The \
-optional internal FeynmanModel benchmark is currently unavailable for this \
-projected construction route."}], "Notes"],
+expression and compare its coherent color sum with CalcHEP and MadGraph. An \
+explicit \"FeynmanModel\" also works for this colored route. Its independent \
+diagrams are converted once and projected into a common exact color basis \
+together with the constructive diagrams and original channels. The basis \
+includes structures present only in the benchmark, so a missing color \
+component cannot escape the comparison. Each coefficient retains the separate \
+benchmark model and its parameter scope; the benchmark is used for \
+validation, not as a construction source."}], "Notes"],
   Cell["What happens during a construction", "NotesSection"],
   Cell[TextData[{"HEPCAT generates the diagrams and prepares their \
 expressions, then builds the known factorization channels. ",
@@ -567,7 +572,22 @@ spurious poles."}], "ExampleText"],
       "\"PolePreference\"", " ", "->", " ", "\"AllSpurious\"", "]"}]],
    "Input"], Cell["This example writes files, starts a longer calculation, or \
 requires an optional external tool. Evaluate it when you want to perform that \
-operation.", "ExampleText"], Cell["See Also", "SeeAlsoSection"],
+operation.", "ExampleText"],
+  Cell["Include the independent SM Feynman calculation",
+   "ExampleSubsection"], Cell[TextData[{"Use the massive SM Feynman-rule \
+model for a colored four-quark construction. The reference includes the same \
+fixed quark masses and their Higgs couplings; its internal propagators remain \
+off shell."}], "ExampleText"],
+  Cell[BoxData[RowBox[{"sm", " ", "=", " ", "ReadModel", "[",
+      "modelDirectory", ",", " ", "1", "]", ";", "\n", "smFeynman", " ", "=",
+      " ", "ReadModel", "[", "feynmanModelDirectory", ",", " ", "1", "]",
+      ";", "\n", "ConstructAmplitude", "[", "{", "\"u\"", ",", " ", "\"U\"",
+      ",", " ", "\"C\"", ",", " ", "\"c\"", "}", ",", " ", "sm", ",", " ",
+      "sm", ",", "\n", " ", " ", "\"FeynmanModel\"", " ", "->", " ",
+      "smFeynman", "]"}]], "Input"], Cell["This example writes files, starts \
+a longer calculation, or requires an optional external tool. Evaluate it when \
+you want to perform that operation.", "ExampleText"],
+  Cell["See Also", "SeeAlsoSection"],
   Cell[TextData[{ButtonBox["ReadModel", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ReadModel"], "  \[Bullet]  ",
      ButtonBox["CreateDiagrams", BaseStyle -> "Link",

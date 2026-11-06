@@ -811,7 +811,8 @@
     ],
     "details": [
       "MomProd[i, j] means p_i dot p_j. Its arguments are particle or channel labels, without [Mom](paclet:HEPCAT/ref/Mom) wrappers. For example, MomProd[Multiparticle[1, 2], 3] denotes (p1+p2) dot p3.",
-      "Supported signed and composite arguments are handled bilinearly, and the scalar product is symmetric. For a single external leg, MomProd[i, i] becomes `Mass[i]^2` using its external on-shell identity.",
+      "The displayed scalar product keeps its `MomProd` meaning when copied or read back from a notebook, so it remains usable by the symbolic and numerical tools.",
+    "Supported signed and composite arguments are handled bilinearly, and the scalar product is symmetric. For a single external leg, MomProd[i, i] becomes `Mass[i]^2` using its external on-shell identity.",
       "MomProd[1, 3] does not automatically know which internal channel belongs to a particular diagram. If that diagram declares (p1+p3)^2=m_channel^2, [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes) can use `2 MomProd[1,3]=m_channel^2-Mass[1]^2-Mass[3]^2` in the diagram's numerator.",
       "[ExtractMandelstahm](paclet:HEPCAT/ref/ExtractMandelstahm) expresses supported scalar products in terms of s invariants. Keeping MomProd in a numerator is also valid and can make later spinor reductions easier."
     ],

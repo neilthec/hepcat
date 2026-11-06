@@ -14,8 +14,8 @@ notebooks are preserved on the `ml-simplify` branch at commit `54f6920`.
 - `tests/SM-4-point-simplification-test.nb`: the retained four-point reference
   cases and worked examples, without a neural benchmark.
 - `tests/SM-4-point-construction.nb`: individual SM process calculations with
-  `ConstructAmplitude`, followed by generated SPINAS comparisons against
-  CalcHEP and MadGraph. The setup keeps installation paths in one place. Links
+  `ConstructAmplitude` with the independent massive SM Feynman model, followed
+  by generated SPINAS comparisons against CalcHEP and MadGraph. The setup keeps installation paths in one place. Links
   open the matching original formulas and manual S/T/U derivation. Saved
   coverage and precision diagnostics distinguish completed comparisons from
   calculations that still need evaluation or investigation.
@@ -746,6 +746,19 @@ individually minimized diagram by diagram.
 `"FeynmanSamples" -> Automatic` uses `"Samples"`; `"FeynmanTimeConstraint" -> Automatic`
 uses the ordinary `"TimeConstraint"`.
 Without `"FeynmanAmplitudes"`, no Feynman benchmark is generated or run.
+
+Colored comparisons use one exact independent tensor basis for the candidate,
+original channels and converted Feynman sum. This includes benchmark-only color
+directions, so a missing tensor is tested as a missing coefficient. The
+constructor accepts `"FeynmanModel"` for colored processes too and converts the
+independent diagrams once before checking their projected coefficients. The
+reference never supplies construction terms.
+
+The SM construction notebook loads `model_feynman` model 1 in Setup and requests
+this benchmark for every explicit helicity. Its local fixed charm, bottom and
+strange masses match constructive model 1; all mass-dependent Higgs couplings
+are preserved. Saved tables without a Feynman row precede this addition and
+should be refreshed by rerunning the relevant construction cell.
 
 For rational tree amplitudes, the comparison prefers exact rational complex
 momenta to avoid expensive square-root arithmetic, especially with several

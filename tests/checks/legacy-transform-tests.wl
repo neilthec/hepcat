@@ -424,6 +424,37 @@ check["display Xi and hatted spinor styles", nice[Spinor["Xi", "Angle", 3]] ===
  Row[{Subscript[\[Xi], 3], "\[RightAngleBracket]"}] &&
  nice[SpinorHat["Helicity", "Angle", 3]] === Row[{OverHat[3], "\[RightAngleBracket]"}]];
 check["display r-spinor labels", nice[rr[3, 4]] === Subscript["r", "34"]];
+(* Displayed momentum products must remain typed scalar products when copied
+   or imported from notebook boxes, not become Dot[Subscript[p,...],...]. *)
+ltScalarBoxExpressions = {
+ MomProd[3, 4],
+ 3 MomProd[3, 4]^2 + 2 MomProd[1, 4],
+ MomProd[10, 12] - MomProd[1, 3],
+ MomProd[ltScalarLeftLabel, ltScalarRightLabel],
+ MomProd[Multiparticle[1, 2, 3], 4],
+ 1/(1 + MomProd[3, 4]) + 2/MomProd[1, 4]^2,
+ -MomProd[1, 4],
+ (MomProd[3, 4] - ModelParameter["MZ", "boxRoundTrip", "Real"]
+   ModelParameter["MW", "boxRoundTrip", "Real"]) ltB["Angle", 1, 2]};
+Do[
+ check["scalar-product notebook round trip " <> ToString[ltBoxForm] <> " " <> ToString[ltBoxIndex],
+  With[{expected = ltScalarBoxExpressions[[ltBoxIndex]]},
+   ReleaseHold[ToExpression[ToBoxes[expected, ltBoxForm], ltBoxForm, HoldComplete]] === expected]],
+ {ltBoxForm, {StandardForm, TraditionalForm}}, {ltBoxIndex, Length[ltScalarBoxExpressions]}];
+Do[
+ ltScalarBoxes = Replace[ToBoxes[MomProd[3, 4], ltBoxForm],
+   FormBox[inside_, TraditionalForm] :> inside];
+ check["scalar-product display retains its original notation " <> ToString[ltBoxForm],
+  Replace[ltScalarBoxes, InterpretationBox[visible_, _, ___] :> visible] ===
+   ToBoxes[nice[MomProd[3, 4]], ltBoxForm]];
+ check["scalar-product display has an exact noneditable interpretation " <> ToString[ltBoxForm],
+  MatchQ[ltScalarBoxes, InterpretationBox[_, MomProd[3, 4], Editable -> False]]],
+ {ltBoxForm, {StandardForm, TraditionalForm}}];
+check["scalar-product OutputForm remains the existing p-dot-p display",
+ ToString[MomProd[3, 4], OutputForm] === ToString[nice[MomProd[3, 4]], OutputForm]];
+check["scalar-product InputForm remains an executable typed expression",
+ ToExpression[ToString[MomProd[3, 4], InputForm], InputForm, HoldComplete] ===
+  HoldComplete[MomProd[3, 4]]];
 Do[
  ltTeXBracket = If[ltType === "Angle", "\\rangle ", "\\rbrack "];
  ltPlainBracket = If[ltType === "Angle", ">", "]"];
@@ -473,8 +504,8 @@ check["color two contracted two-generator traces",
 check["color generators separated by a spectator generator obey the SU3 Fierz term",
  ReduceColor[colorTrace[colorT[ltA], colorT[ltBColor], colorT[ltA], colorT[ltBColor]]] === -2/3];
 
-If[checks =!= 225, AppendTo[failures,
-  {"suite did not reach every check", "Expected" -> 225, "Actual" -> checks}]];
+If[checks =!= 247, AppendTo[failures,
+  {"suite did not reach every check", "Expected" -> 247, "Actual" -> checks}]];
 Print["Legacy transformations: ", checks, " checks, ", Length[failures], " failures."];
 If[failures =!= {}, Print[failures]];
 Print["HEPCAT_TEST_COMPLETED:legacy-transform-tests.wl"];

@@ -107,7 +107,12 @@ Format[Theta[a_]]:=nice[Theta[a]]
 nice[Theta[a_]]:=Subscript[\[Theta],a]
 Format[Phi[a_]]:=nice[Phi[a]]
 nice[Phi[a_]]:=Subscript[\[Phi],a]
-Format[MomProd[a__]]:=nice[MomProd[a]]
+Format[MomProd[a__], OutputForm] := nice[MomProd[a]];
+(* Preserve the scalar-product head when a displayed result is copied or read
+   back from a notebook. The visible p_i . p_j notation remains unchanged. *)
+MomProd /: MakeBoxes[product : MomProd[_, _], form : (StandardForm | TraditionalForm)] :=
+  With[{boxes = ToBoxes[nice[product], form]},
+    InterpretationBox[boxes, product, Editable -> False]];
 nice[MomProd[a_,b_]]:=Subscript[p, a] . Subscript[p, b]
 Format[MomHat[a_]]:=nice[MomHat[a]]
 nice[MomHat[a_]]:=Subscript[OverHat[p], a]

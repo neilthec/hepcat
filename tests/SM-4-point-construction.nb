@@ -15,7 +15,7 @@ Feynman-rule proofs, while their original numerical FAIL rows and precision \
 diagnostics remain visible. Sections without a saved completed result still \
 need a successful construction.", "Text", 
    CellTags -> "hepcat-validation-coverage"], Cell["Run Setup first, then \
-evaluate one process section at a time. Each construction stores its \
+evaluate one process section at a time. Every construction now requests the independent SM Feynman model. Saved tables without a Feynman row predate this addition; rerun that calculation cell to see the new comparison. Each construction stores its \
 amplitude and prints its physical-pole, spurious-pole, high-energy and \
 reference tests. The C++ export below each family builds the code and \
 compares 1000 shared phase-space points with CalcHEP and MadGraph. Saved PASS \
@@ -30,7 +30,7 @@ appropriate sums and initial averages.", "Text"],
   Cell[CellGroupData[{Cell["Setup", "Section"], Cell["hepcatDirectory = \
 ExpandFileName[\"~/code/hepcat\"];\nGet[FileNameJoin[{hepcatDirectory, \
 \"source\", \"HEPCAT.wl\"}]]", "Input"], 
-     Cell["sm = ReadModel[FileNameJoin[{hepcatDirectory, \"models\"}], 1];", 
+     Cell["sm = ReadModel[FileNameJoin[{hepcatDirectory, \"models\"}], 1];\nsmFeynman = ReadModel[FileNameJoin[{hepcatDirectory, \"model_feynman\"}], 1];",
       "Input"], Cell["Model 1 supplies the SM elementary amplitudes used for \
 both diagrams and four-point factorization. The independent programs use \
 their own SM Feynman rules. Change the following paths for another \
@@ -81,7 +81,7 @@ supply hard-coded answers to ConstructAmplitude.", "Text"]}, Open]],
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm01"], 
      Cell["u, U, C, c", "Subsection"], Cell["sm01Particles = {\"u\", \"U\", \
-\"C\", \"c\"};\nsm01Amplitude = ConstructAmplitude[sm01Particles, sm, sm]", 
+\"C\", \"c\"};\nsm01Amplitude = ConstructAmplitude[sm01Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[
         {RowBox[{"-", FractionBox[RowBox[{"2", " ", RowBox[{"ColorGenerator", 
                 "[", RowBox[{RowBox[{"ColorIndex", "[", "2", "]"}], ",", 
@@ -665,7 +665,7 @@ sm];\nCreateArrowDiagrams[sm01Diagrams]", "Input"],
 PrepareAmplitudes[sm01DiagramAmplitudes, sm]", "Input"], 
         Cell["sm01Channels = FactorizationAmplitudeChannels[sm01Particles, \
 sm];\nsm01Channels", "Input"], 
-        Cell["sm01Checks = CheckAmplitudes[sm01Amplitude, sm01Channels, sm]", 
+        Cell["sm01FeynmanDiagrams = CreateDiagrams[sm01Particles, smFeynman];\nsm01FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm01FeynmanDiagrams], smFeynman];\nsm01Checks = CheckAmplitudes[sm01Amplitude, sm01Channels, sm, \"FeynmanAmplitudes\" -> sm01FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -707,7 +707,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm02"], 
      Cell["u, U, U, u", "Subsection"], Cell["sm02Particles = {\"u\", \"U\", \
-\"U\", \"u\"};\nsm02Amplitude = ConstructAmplitude[sm02Particles, sm, sm]", 
+\"U\", \"u\"};\nsm02Amplitude = ConstructAmplitude[sm02Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[
         {RowBox[{RowBox[{"ColorGenerator", "[", RowBox[{RowBox[{"ColorIndex", 
                  "[", "2", "]"}], ",", RowBox[{"ColorIndex", "[", "1", "]"}], 
@@ -2356,7 +2356,7 @@ CreateDiagrams[sm02Particles, sm];\nCreateArrowDiagrams[sm02Diagrams]",
          "sm02PreparedDiagrams = PrepareAmplitudes[sm02DiagramAmplitudes, \
 sm]", "Input"], Cell["sm02Channels = \
 FactorizationAmplitudeChannels[sm02Particles, sm];\nsm02Channels", "Input"], 
-        Cell["sm02Checks = CheckAmplitudes[sm02Amplitude, sm02Channels, sm]", 
+        Cell["sm02FeynmanDiagrams = CreateDiagrams[sm02Particles, smFeynman];\nsm02FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm02FeynmanDiagrams], smFeynman];\nsm02Checks = CheckAmplitudes[sm02Amplitude, sm02Channels, sm, \"FeynmanAmplitudes\" -> sm02FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -2398,7 +2398,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm03"], 
      Cell["u, U, S, s", "Subsection"], Cell["sm03Particles = {\"u\", \"U\", \
-\"S\", \"s\"};\nsm03Amplitude = ConstructAmplitude[sm03Particles, sm, sm]", 
+\"S\", \"s\"};\nsm03Amplitude = ConstructAmplitude[sm03Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[
         {RowBox[{"-", FractionBox[RowBox[{"2", " ", RowBox[{"ColorGenerator", 
                 "[", RowBox[{RowBox[{"ColorIndex", "[", "2", "]"}], ",", 
@@ -3097,7 +3097,7 @@ sm];\nCreateArrowDiagrams[sm03Diagrams]", "Input"],
 PrepareAmplitudes[sm03DiagramAmplitudes, sm]", "Input"], 
         Cell["sm03Channels = FactorizationAmplitudeChannels[sm03Particles, \
 sm];\nsm03Channels", "Input"], 
-        Cell["sm03Checks = CheckAmplitudes[sm03Amplitude, sm03Channels, sm]", 
+        Cell["sm03FeynmanDiagrams = CreateDiagrams[sm03Particles, smFeynman];\nsm03FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm03FeynmanDiagrams], smFeynman];\nsm03Checks = CheckAmplitudes[sm03Amplitude, sm03Channels, sm, \"FeynmanAmplitudes\" -> sm03FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -3139,7 +3139,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm04"], 
      Cell["u, U, D, d", "Subsection"], Cell["sm04Particles = {\"u\", \"U\", \
-\"D\", \"d\"};\nsm04Amplitude = ConstructAmplitude[sm04Particles, sm, sm]", 
+\"D\", \"d\"};\nsm04Amplitude = ConstructAmplitude[sm04Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[
         {RowBox[{RowBox[{"ColorGenerator", "[", RowBox[{RowBox[{"ColorIndex", 
                  "[", "2", "]"}], ",", RowBox[{"ColorIndex", "[", "1", "]"}], 
@@ -3892,7 +3892,7 @@ sm];\nCreateArrowDiagrams[sm04Diagrams]", "Input"],
 PrepareAmplitudes[sm04DiagramAmplitudes, sm]", "Input"], 
         Cell["sm04Channels = FactorizationAmplitudeChannels[sm04Particles, \
 sm];\nsm04Channels", "Input"], 
-        Cell["sm04Checks = CheckAmplitudes[sm04Amplitude, sm04Channels, sm]", 
+        Cell["sm04FeynmanDiagrams = CreateDiagrams[sm04Particles, smFeynman];\nsm04FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm04FeynmanDiagrams], smFeynman];\nsm04Checks = CheckAmplitudes[sm04Amplitude, sm04Channels, sm, \"FeynmanAmplitudes\" -> sm04FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -3937,7 +3937,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
 D, S, s, consistently in every channel.", "Text", 
       CellTags -> "manual-order-note-sm05"], Cell["d, D, S, s", 
       "Subsection"], Cell["sm05Particles = {\"d\", \"D\", \"S\", \
-\"s\"};\nsm05Amplitude = ConstructAmplitude[sm05Particles, sm, sm]", 
+\"s\"};\nsm05Amplitude = ConstructAmplitude[sm05Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[
         {RowBox[{"-", FractionBox[RowBox[{"2", " ", RowBox[{"ColorGenerator", 
                 "[", RowBox[{RowBox[{"ColorIndex", "[", "2", "]"}], ",", 
@@ -4521,7 +4521,7 @@ sm];\nCreateArrowDiagrams[sm05Diagrams]", "Input"],
 PrepareAmplitudes[sm05DiagramAmplitudes, sm]", "Input"], 
         Cell["sm05Channels = FactorizationAmplitudeChannels[sm05Particles, \
 sm];\nsm05Channels", "Input"], 
-        Cell["sm05Checks = CheckAmplitudes[sm05Amplitude, sm05Channels, sm]", 
+        Cell["sm05FeynmanDiagrams = CreateDiagrams[sm05Particles, smFeynman];\nsm05FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm05FeynmanDiagrams], smFeynman];\nsm05Checks = CheckAmplitudes[sm05Amplitude, sm05Channels, sm, \"FeynmanAmplitudes\" -> sm05FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -4563,7 +4563,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm06"], 
      Cell["d, D, D, d", "Subsection"], Cell["sm06Particles = {\"d\", \"D\", \
-\"D\", \"d\"};\nsm06Amplitude = ConstructAmplitude[sm06Particles, sm, sm]", 
+\"D\", \"d\"};\nsm06Amplitude = ConstructAmplitude[sm06Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[
         {RowBox[{RowBox[{"ColorGenerator", "[", RowBox[{RowBox[{"ColorIndex", 
                  "[", "2", "]"}], ",", RowBox[{"ColorIndex", "[", "1", "]"}], 
@@ -6212,7 +6212,7 @@ CreateDiagrams[sm06Particles, sm];\nCreateArrowDiagrams[sm06Diagrams]",
          "sm06PreparedDiagrams = PrepareAmplitudes[sm06DiagramAmplitudes, \
 sm]", "Input"], Cell["sm06Channels = \
 FactorizationAmplitudeChannels[sm06Particles, sm];\nsm06Channels", "Input"], 
-        Cell["sm06Checks = CheckAmplitudes[sm06Amplitude, sm06Channels, sm]", 
+        Cell["sm06FeynmanDiagrams = CreateDiagrams[sm06Particles, smFeynman];\nsm06FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm06FeynmanDiagrams], smFeynman];\nsm06Checks = CheckAmplitudes[sm06Amplitude, sm06Channels, sm, \"FeynmanAmplitudes\" -> sm06FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -6254,7 +6254,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm07"], 
      Cell["u, U, E, e", "Subsection"], Cell["sm07Particles = {\"u\", \"U\", \
-\"E\", \"e\"};\nsm07Amplitude = ConstructAmplitude[sm07Particles, sm, sm]", 
+\"E\", \"e\"};\nsm07Amplitude = ConstructAmplitude[sm07Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[{RowBox[{"ColorDelta", "[", 
            RowBox[{RowBox[{"ColorIndex", "[", "1", "]"}], ",", 
              RowBox[{"ColorIndex", "[", "2", "]"}]}], "]"}], " ", 
@@ -6875,7 +6875,7 @@ CreateDiagrams[sm07Particles, sm];\nCreateArrowDiagrams[sm07Diagrams]",
          "sm07PreparedDiagrams = PrepareAmplitudes[sm07DiagramAmplitudes, \
 sm]", "Input"], Cell["sm07Channels = \
 FactorizationAmplitudeChannels[sm07Particles, sm];\nsm07Channels", "Input"], 
-        Cell["sm07Checks = CheckAmplitudes[sm07Amplitude, sm07Channels, sm]", 
+        Cell["sm07FeynmanDiagrams = CreateDiagrams[sm07Particles, smFeynman];\nsm07FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm07FeynmanDiagrams], smFeynman];\nsm07Checks = CheckAmplitudes[sm07Amplitude, sm07Channels, sm, \"FeynmanAmplitudes\" -> sm07FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -6918,7 +6918,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm08"], 
      Cell["u, U, Ne, ne", "Subsection"], Cell["sm08Particles = {\"u\", \"U\", \
-\"Ne\", \"ne\"};\nsm08Amplitude = ConstructAmplitude[sm08Particles, sm, sm]", 
+\"Ne\", \"ne\"};\nsm08Amplitude = ConstructAmplitude[sm08Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
           RowBox[{RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", 
                   "[", "1", "]"}], ",", RowBox[{"ColorIndex", "[", "2", 
@@ -6988,7 +6988,7 @@ sm];\nCreateArrowDiagrams[sm08Diagrams]", "Input"],
 PrepareAmplitudes[sm08DiagramAmplitudes, sm]", "Input"], 
         Cell["sm08Channels = FactorizationAmplitudeChannels[sm08Particles, \
 sm];\nsm08Channels", "Input"], 
-        Cell["sm08Checks = CheckAmplitudes[sm08Amplitude, sm08Channels, sm]", 
+        Cell["sm08FeynmanDiagrams = CreateDiagrams[sm08Particles, smFeynman];\nsm08FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm08FeynmanDiagrams], smFeynman];\nsm08Checks = CheckAmplitudes[sm08Amplitude, sm08Channels, sm, \"FeynmanAmplitudes\" -> sm08FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -7030,7 +7030,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm09"], 
      Cell["d, D, E, e", "Subsection"], Cell["sm09Particles = {\"d\", \"D\", \
-\"E\", \"e\"};\nsm09Amplitude = ConstructAmplitude[sm09Particles, sm, sm]", 
+\"E\", \"e\"};\nsm09Amplitude = ConstructAmplitude[sm09Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[{RowBox[{"ColorDelta", "[", 
            RowBox[{RowBox[{"ColorIndex", "[", "1", "]"}], ",", 
              RowBox[{"ColorIndex", "[", "2", "]"}]}], "]"}], " ", 
@@ -7652,7 +7652,7 @@ CreateDiagrams[sm09Particles, sm];\nCreateArrowDiagrams[sm09Diagrams]",
          "sm09PreparedDiagrams = PrepareAmplitudes[sm09DiagramAmplitudes, \
 sm]", "Input"], Cell["sm09Channels = \
 FactorizationAmplitudeChannels[sm09Particles, sm];\nsm09Channels", "Input"], 
-        Cell["sm09Checks = CheckAmplitudes[sm09Amplitude, sm09Channels, sm]", 
+        Cell["sm09FeynmanDiagrams = CreateDiagrams[sm09Particles, smFeynman];\nsm09FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm09FeynmanDiagrams], smFeynman];\nsm09Checks = CheckAmplitudes[sm09Amplitude, sm09Channels, sm, \"FeynmanAmplitudes\" -> sm09FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -7695,7 +7695,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm10"], 
      Cell["d, D, Ne, ne", "Subsection"], Cell["sm10Particles = {\"d\", \"D\", \
-\"Ne\", \"ne\"};\nsm10Amplitude = ConstructAmplitude[sm10Particles, sm, sm]", 
+\"Ne\", \"ne\"};\nsm10Amplitude = ConstructAmplitude[sm10Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
           RowBox[{RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", 
                   "[", "1", "]"}], ",", RowBox[{"ColorIndex", "[", "2", 
@@ -7765,7 +7765,7 @@ sm];\nCreateArrowDiagrams[sm10Diagrams]", "Input"],
 PrepareAmplitudes[sm10DiagramAmplitudes, sm]", "Input"], 
         Cell["sm10Channels = FactorizationAmplitudeChannels[sm10Particles, \
 sm];\nsm10Channels", "Input"], 
-        Cell["sm10Checks = CheckAmplitudes[sm10Amplitude, sm10Channels, sm]", 
+        Cell["sm10FeynmanDiagrams = CreateDiagrams[sm10Particles, smFeynman];\nsm10FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm10FeynmanDiagrams], smFeynman];\nsm10Checks = CheckAmplitudes[sm10Amplitude, sm10Channels, sm, \"FeynmanAmplitudes\" -> sm10FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -7807,7 +7807,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm11"], 
      Cell["e, E, M, m", "Subsection"], Cell["sm11Particles = {\"e\", \"E\", \
-\"M\", \"m\"};\nsm11Amplitude = ConstructAmplitude[sm11Particles, sm, sm]", 
+\"M\", \"m\"};\nsm11Amplitude = ConstructAmplitude[sm11Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[
         {RowBox[{"-", FractionBox[RowBox[{"2", " ", SuperscriptBox[
                InterpretationBox["EE", ModelParameter["EE", "30a3398a0cbb88a8\
@@ -8276,7 +8276,7 @@ CreateDiagrams[sm11Particles, sm];\nCreateArrowDiagrams[sm11Diagrams]",
          "sm11PreparedDiagrams = PrepareAmplitudes[sm11DiagramAmplitudes, \
 sm]", "Input"], Cell["sm11Channels = \
 FactorizationAmplitudeChannels[sm11Particles, sm];\nsm11Channels", "Input"], 
-        Cell["sm11Checks = CheckAmplitudes[sm11Amplitude, sm11Channels, sm]", 
+        Cell["sm11FeynmanDiagrams = CreateDiagrams[sm11Particles, smFeynman];\nsm11FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm11FeynmanDiagrams], smFeynman];\nsm11Checks = CheckAmplitudes[sm11Amplitude, sm11Channels, sm, \"FeynmanAmplitudes\" -> sm11FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -8318,7 +8318,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm12"], 
      Cell["e, E, E, e", "Subsection"], Cell["sm12Particles = {\"e\", \"E\", \
-\"E\", \"e\"};\nsm12Amplitude = ConstructAmplitude[sm12Particles, sm, sm]", 
+\"E\", \"e\"};\nsm12Amplitude = ConstructAmplitude[sm12Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[FractionBox[
         RowBox[{RowBox[{"-", FractionBox[RowBox[{SuperscriptBox[
                 InterpretationBox["EE", ModelParameter["EE", "30a3398a0cbb88a\
@@ -9770,7 +9770,7 @@ CreateDiagrams[sm12Particles, sm];\nCreateArrowDiagrams[sm12Diagrams]",
          "sm12PreparedDiagrams = PrepareAmplitudes[sm12DiagramAmplitudes, \
 sm]", "Input"], Cell["sm12Channels = \
 FactorizationAmplitudeChannels[sm12Particles, sm];\nsm12Channels", "Input"], 
-        Cell["sm12Checks = CheckAmplitudes[sm12Amplitude, sm12Channels, sm]", 
+        Cell["sm12FeynmanDiagrams = CreateDiagrams[sm12Particles, smFeynman];\nsm12FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm12FeynmanDiagrams], smFeynman];\nsm12Checks = CheckAmplitudes[sm12Amplitude, sm12Channels, sm, \"FeynmanAmplitudes\" -> sm12FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -9817,7 +9817,7 @@ calls. This section uses Nm/nm, matching that section's intended \
 muon-neutrino final state; the next section covers electron neutrinos.", 
       "Text"], Cell["e, E, Nm, nm", "Subsection"], Cell["sm13Particles = \
 {\"e\", \"E\", \"Nm\", \"nm\"};\nsm13Amplitude = \
-ConstructAmplitude[sm13Particles, sm, sm]", "Input"], 
+ConstructAmplitude[sm13Particles, sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"],
      Cell[BoxData[RowBox[{"-", FractionBox[RowBox[
            {SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
                "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd7\
@@ -9884,7 +9884,7 @@ CreateDiagrams[sm13Particles, sm];\nCreateArrowDiagrams[sm13Diagrams]",
          "sm13PreparedDiagrams = PrepareAmplitudes[sm13DiagramAmplitudes, \
 sm]", "Input"], Cell["sm13Channels = \
 FactorizationAmplitudeChannels[sm13Particles, sm];\nsm13Channels", "Input"], 
-        Cell["sm13Checks = CheckAmplitudes[sm13Amplitude, sm13Channels, sm]", 
+        Cell["sm13FeynmanDiagrams = CreateDiagrams[sm13Particles, smFeynman];\nsm13FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm13FeynmanDiagrams], smFeynman];\nsm13Checks = CheckAmplitudes[sm13Amplitude, sm13Channels, sm, \"FeynmanAmplitudes\" -> sm13FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -9927,7 +9927,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm14"], 
      Cell["e, E, Ne, ne", "Subsection"], Cell["sm14Particles = {\"e\", \"E\", \
-\"Ne\", \"ne\"};\nsm14Amplitude = ConstructAmplitude[sm14Particles, sm, sm]", 
+\"Ne\", \"ne\"};\nsm14Amplitude = ConstructAmplitude[sm14Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
           RowBox[{SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
                "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd7\
@@ -10035,7 +10035,7 @@ CreateDiagrams[sm14Particles, sm];\nCreateArrowDiagrams[sm14Diagrams]",
          "sm14PreparedDiagrams = PrepareAmplitudes[sm14DiagramAmplitudes, \
 sm]", "Input"], Cell["sm14Channels = \
 FactorizationAmplitudeChannels[sm14Particles, sm];\nsm14Channels", "Input"], 
-        Cell["sm14Checks = CheckAmplitudes[sm14Amplitude, sm14Channels, sm]", 
+        Cell["sm14FeynmanDiagrams = CreateDiagrams[sm14Particles, smFeynman];\nsm14FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm14FeynmanDiagrams], smFeynman];\nsm14Checks = CheckAmplitudes[sm14Amplitude, sm14Channels, sm, \"FeynmanAmplitudes\" -> sm14FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -10078,7 +10078,7 @@ Nm, nm. Physical export: ne, Ne -> nm, Nm.", "Text"],
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm15"], 
      Cell["ne, Ne, Nm, nm", "Subsection"], Cell["sm15Particles = {\"ne\", \
 \"Ne\", \"Nm\", \"nm\"};\nsm15Amplitude = ConstructAmplitude[sm15Particles, \
-sm, sm]", "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
+sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
           RowBox[{SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
                "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd7\
 7e7", "Real"], Editable -> False], "2"], " ", SuperscriptBox[
@@ -10124,7 +10124,7 @@ CreateDiagrams[sm15Particles, sm];\nCreateArrowDiagrams[sm15Diagrams]",
          "sm15PreparedDiagrams = PrepareAmplitudes[sm15DiagramAmplitudes, \
 sm]", "Input"], Cell["sm15Channels = \
 FactorizationAmplitudeChannels[sm15Particles, sm];\nsm15Channels", "Input"], 
-        Cell["sm15Checks = CheckAmplitudes[sm15Amplitude, sm15Channels, sm]", 
+        Cell["sm15FeynmanDiagrams = CreateDiagrams[sm15Particles, smFeynman];\nsm15FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm15FeynmanDiagrams], smFeynman];\nsm15Checks = CheckAmplitudes[sm15Amplitude, sm15Channels, sm, \"FeynmanAmplitudes\" -> sm15FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -10167,7 +10167,7 @@ Ne, ne. Physical export: ne, Ne -> ne, Ne.", "Text"],
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm16"], 
      Cell["ne, Ne, Ne, ne", "Subsection"], Cell["sm16Particles = {\"ne\", \
 \"Ne\", \"Ne\", \"ne\"};\nsm16Amplitude = ConstructAmplitude[sm16Particles, \
-sm, sm]", "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
+sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
           RowBox[{SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
                "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd7\
 7e7", "Real"], Editable -> False], "2"], " ", SuperscriptBox[
@@ -10222,7 +10222,7 @@ CreateDiagrams[sm16Particles, sm];\nCreateArrowDiagrams[sm16Diagrams]",
          "sm16PreparedDiagrams = PrepareAmplitudes[sm16DiagramAmplitudes, \
 sm]", "Input"], Cell["sm16Channels = \
 FactorizationAmplitudeChannels[sm16Particles, sm];\nsm16Channels", "Input"], 
-        Cell["sm16Checks = CheckAmplitudes[sm16Amplitude, sm16Channels, sm]", 
+        Cell["sm16FeynmanDiagrams = CreateDiagrams[sm16Particles, smFeynman];\nsm16FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm16FeynmanDiagrams], smFeynman];\nsm16Checks = CheckAmplitudes[sm16Amplitude, sm16Channels, sm, \"FeynmanAmplitudes\" -> sm16FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -10264,7 +10264,7 @@ fresh project to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm17"], 
      Cell["u, D, T, b", "Subsection"], Cell["sm17Particles = {\"u\", \"D\", \
-\"T\", \"b\"};\nsm17Amplitude = ConstructAmplitude[sm17Particles, sm, sm]", 
+\"T\", \"b\"};\nsm17Amplitude = ConstructAmplitude[sm17Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[{RowBox[{"ColorDelta", "[", 
            RowBox[{RowBox[{"ColorIndex", "[", "1", "]"}], ",", 
              RowBox[{"ColorIndex", "[", "2", "]"}]}], "]"}], " ", 
@@ -10371,7 +10371,7 @@ CreateDiagrams[sm17Particles, sm];\nCreateArrowDiagrams[sm17Diagrams]",
          "sm17PreparedDiagrams = PrepareAmplitudes[sm17DiagramAmplitudes, \
 sm]", "Input"], Cell["sm17Channels = \
 FactorizationAmplitudeChannels[sm17Particles, sm];\nsm17Channels", "Input"], 
-        Cell["sm17Checks = CheckAmplitudes[sm17Amplitude, sm17Channels, sm]", 
+        Cell["sm17FeynmanDiagrams = CreateDiagrams[sm17Particles, smFeynman];\nsm17FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm17FeynmanDiagrams], smFeynman];\nsm17Checks = CheckAmplitudes[sm17Amplitude, sm17Channels, sm, \"FeynmanAmplitudes\" -> sm17FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -10413,7 +10413,7 @@ Nl.", "Text"], Cell[TextData[{"Original reference: ",
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm18"], 
      Cell["d, U, L, nl", "Subsection"], Cell["sm18Particles = {\"d\", \"U\", \
-\"L\", \"nl\"};\nsm18Amplitude = ConstructAmplitude[sm18Particles, sm, sm]", 
+\"L\", \"nl\"};\nsm18Amplitude = ConstructAmplitude[sm18Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
           RowBox[{RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", 
                   "[", "1", "]"}], ",", RowBox[{"ColorIndex", "[", "2", 
@@ -10501,7 +10501,7 @@ sm];\nCreateArrowDiagrams[sm18Diagrams]", "Input"],
 PrepareAmplitudes[sm18DiagramAmplitudes, sm]", "Input"], 
         Cell["sm18Channels = FactorizationAmplitudeChannels[sm18Particles, \
 sm];\nsm18Channels", "Input"], 
-        Cell["sm18Checks = CheckAmplitudes[sm18Amplitude, sm18Channels, sm]", 
+        Cell["sm18FeynmanDiagrams = CreateDiagrams[sm18Particles, smFeynman];\nsm18FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm18FeynmanDiagrams], smFeynman];\nsm18Checks = CheckAmplitudes[sm18Amplitude, sm18Channels, sm, \"FeynmanAmplitudes\" -> sm18FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -10545,7 +10545,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm19"], 
      Cell["m, Nm, E, ne", "Subsection"], Cell["sm19Particles = {\"m\", \
 \"Nm\", \"E\", \"ne\"};\nsm19Amplitude = ConstructAmplitude[sm19Particles, \
-sm, sm]", "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
+sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
           RowBox[{SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
                "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd7\
 7e7", "Real"], Editable -> False], "2"], " ", RowBox[
@@ -10608,7 +10608,7 @@ CreateDiagrams[sm19Particles, sm];\nCreateArrowDiagrams[sm19Diagrams]",
          "sm19PreparedDiagrams = PrepareAmplitudes[sm19DiagramAmplitudes, \
 sm]", "Input"], Cell["sm19Channels = \
 FactorizationAmplitudeChannels[sm19Particles, sm];\nsm19Channels", "Input"], 
-        Cell["sm19Checks = CheckAmplitudes[sm19Amplitude, sm19Channels, sm]", 
+        Cell["sm19FeynmanDiagrams = CreateDiagrams[sm19Particles, smFeynman];\nsm19FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm19FeynmanDiagrams], smFeynman];\nsm19Checks = CheckAmplitudes[sm19Amplitude, sm19Channels, sm, \"FeynmanAmplitudes\" -> sm19FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -10650,7 +10650,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm20"], 
      Cell["e, E, h, h", "Subsection"], Cell["sm20Particles = {\"e\", \"E\", \
-\"h\", \"h\"};\nsm20Amplitude = ConstructAmplitude[sm20Particles, sm, sm]", 
+\"h\", \"h\"};\nsm20Amplitude = ConstructAmplitude[sm20Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
           RowBox[{SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
                "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd7\
@@ -10796,7 +10796,7 @@ sm];\nCreateArrowDiagrams[sm20Diagrams]", "Input"],
 PrepareAmplitudes[sm20DiagramAmplitudes, sm]", "Input"], 
         Cell["sm20Channels = FactorizationAmplitudeChannels[sm20Particles, \
 sm];\nsm20Channels", "Input"], 
-        Cell["sm20Checks = CheckAmplitudes[sm20Amplitude, sm20Channels, sm]", 
+        Cell["sm20FeynmanDiagrams = CreateDiagrams[sm20Particles, smFeynman];\nsm20FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm20FeynmanDiagrams], smFeynman];\nsm20Checks = CheckAmplitudes[sm20Amplitude, sm20Channels, sm, \"FeynmanAmplitudes\" -> sm20FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -10838,7 +10838,7 @@ to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm21"], 
      Cell["u, U, h, h", "Subsection"], Cell["sm21Particles = {\"u\", \"U\", \
-\"h\", \"h\"};\nsm21Amplitude = ConstructAmplitude[sm21Particles, sm, sm]", 
+\"h\", \"h\"};\nsm21Amplitude = ConstructAmplitude[sm21Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[FractionBox[
         RowBox[{RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", "[", 
                 "1", "]"}], ",", RowBox[{"ColorIndex", "[", "2", "]"}]}], 
@@ -10993,7 +10993,7 @@ CreateDiagrams[sm21Particles, sm];\nCreateArrowDiagrams[sm21Diagrams]",
          "sm21PreparedDiagrams = PrepareAmplitudes[sm21DiagramAmplitudes, \
 sm]", "Input"], Cell["sm21Channels = \
 FactorizationAmplitudeChannels[sm21Particles, sm];\nsm21Channels", "Input"], 
-        Cell["sm21Checks = CheckAmplitudes[sm21Amplitude, sm21Channels, sm]", 
+        Cell["sm21FeynmanDiagrams = CreateDiagrams[sm21Particles, smFeynman];\nsm21FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm21FeynmanDiagrams], smFeynman];\nsm21Checks = CheckAmplitudes[sm21Amplitude, sm21Channels, sm, \"FeynmanAmplitudes\" -> sm21FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -11035,7 +11035,7 @@ to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm22"], 
      Cell["d, D, h, h", "Subsection"], Cell["sm22Particles = {\"d\", \"D\", \
-\"h\", \"h\"};\nsm22Amplitude = ConstructAmplitude[sm22Particles, sm, sm]", 
+\"h\", \"h\"};\nsm22Amplitude = ConstructAmplitude[sm22Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[FractionBox[
         RowBox[{RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", "[", 
                 "1", "]"}], ",", RowBox[{"ColorIndex", "[", "2", "]"}]}], 
@@ -11190,7 +11190,7 @@ sm];\nCreateArrowDiagrams[sm22Diagrams]", "Input"],
 PrepareAmplitudes[sm22DiagramAmplitudes, sm]", "Input"], 
         Cell["sm22Channels = FactorizationAmplitudeChannels[sm22Particles, \
 sm];\nsm22Channels", "Input"], 
-        Cell["sm22Checks = CheckAmplitudes[sm22Amplitude, sm22Channels, sm]", 
+        Cell["sm22FeynmanDiagrams = CreateDiagrams[sm22Particles, smFeynman];\nsm22FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm22FeynmanDiagrams], smFeynman];\nsm22Checks = CheckAmplitudes[sm22Amplitude, sm22Channels, sm, \"FeynmanAmplitudes\" -> sm22FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -11233,7 +11233,7 @@ h.", "Text"], Cell[TextData[{"Original reference: ",
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm23"], 
      Cell["e, E, A.+, h", "Subsection"], Cell["sm23PParticles = {\"e\", \
 \"E\", \"A.+\", \"h\"};\nsm23PAmplitude = ConstructAmplitude[sm23PParticles, \
-sm, sm]", "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
+sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
           RowBox[{SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
                "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd7\
 7e7", "Real"], Editable -> False], "2"], " ", InterpretationBox["Me", 
@@ -11320,7 +11320,7 @@ AhP-cubic-default-construction.wl", "ValidationReport" -> "/Users/neil/Docume\
 nts/Codex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-val\
 idation/sm23-export.wl"|>], Cell["e, E, A.-, h", "Subsection"], 
      Cell["sm23MParticles = {\"e\", \"E\", \"A.-\", \"h\"};\nsm23MAmplitude = \
-ConstructAmplitude[sm23MParticles, sm, sm]", "Input"], 
+ConstructAmplitude[sm23MParticles, sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"],
      Cell[BoxData[RowBox[{"-", FractionBox[RowBox[
            {SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
                "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd7\
@@ -11423,7 +11423,7 @@ PrepareAmplitudes[sm23DiagramAmplitudes, sm]", "Input"],
         Cell["sm23Channels = FactorizationAmplitudeChannels[sm23PParticles, \
 sm];\nsm23Channels", "Input"], 
         Cell[
-         "sm23Checks = CheckAmplitudes[sm23PAmplitude, sm23Channels, sm]", 
+         "sm23FeynmanDiagrams = CreateDiagrams[sm23PParticles, smFeynman];\nsm23FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm23FeynmanDiagrams], smFeynman];\nsm23Checks = CheckAmplitudes[sm23PAmplitude, sm23Channels, sm, \"FeynmanAmplitudes\" -> sm23FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -11468,7 +11468,7 @@ h.", "Text"], Cell[TextData[{"Original reference: ",
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm24"], 
      Cell["u, U, A.+, h", "Subsection"], Cell["sm24PParticles = {\"u\", \
 \"U\", \"A.+\", \"h\"};\nsm24PAmplitude = ConstructAmplitude[sm24PParticles, \
-sm, sm]", "Input"], Cell[BoxData[FractionBox[RowBox[{SqrtBox["2"], " ", 
+sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[FractionBox[RowBox[{SqrtBox["2"], " ",
           RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", "[", "1", 
                 "]"}], ",", RowBox[{
                 "ConstructiveDiagrams`Private`colorInternalIndex", "[", 
@@ -11550,7 +11550,7 @@ date.wl", "ValidationReport" -> "/Users/neil/Documents/Codex/2026-09-24/help-\
 me-make-this-response-more/output/sm-four-point-validation/sm24-export.wl"|>]\
 , Cell["u, U, A.-, h", "Subsection"], Cell["sm24MParticles = {\"u\", \"U\", \
 \"A.-\", \"h\"};\nsm24MAmplitude = ConstructAmplitude[sm24MParticles, sm, \
-sm]", "Input"], Cell[BoxData[FractionBox[RowBox[{SqrtBox["2"], " ", 
+sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[FractionBox[RowBox[{SqrtBox["2"], " ",
           RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", "[", "1", 
                 "]"}], ",", RowBox[{
                 "ConstructiveDiagrams`Private`colorInternalIndex", "[", 
@@ -11644,7 +11644,7 @@ CreateDiagrams[sm24PParticles, sm];\nCreateArrowDiagrams[sm24Diagrams]",
 sm]", "Input"], Cell["sm24Channels = \
 FactorizationAmplitudeChannels[sm24PParticles, sm];\nsm24Channels", "Input"], 
         Cell[
-         "sm24Checks = CheckAmplitudes[sm24PAmplitude, sm24Channels, sm]", 
+         "sm24FeynmanDiagrams = CreateDiagrams[sm24PParticles, smFeynman];\nsm24FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm24FeynmanDiagrams], smFeynman];\nsm24Checks = CheckAmplitudes[sm24PAmplitude, sm24Channels, sm, \"FeynmanAmplitudes\" -> sm24FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -11689,7 +11689,7 @@ h.", "Text"], Cell[TextData[{"Original reference: ",
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm25"], 
      Cell["d, D, A.+, h", "Subsection"], Cell["sm25PParticles = {\"d\", \
 \"D\", \"A.+\", \"h\"};\nsm25PAmplitude = ConstructAmplitude[sm25PParticles, \
-sm, sm]", "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
+sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
           RowBox[{RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", 
                   "[", "1", "]"}], ",", RowBox[
                  {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
@@ -11768,7 +11768,7 @@ ff422d9b7ebd77e7", "Real"], Editable -> False], "2"]}], "+", SubscriptBox[
 ents/Codex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-va\
 lidation/sm25-export.wl"|>], Cell["d, D, A.-, h", "Subsection"], 
      Cell["sm25MParticles = {\"d\", \"D\", \"A.-\", \"h\"};\nsm25MAmplitude = \
-ConstructAmplitude[sm25MParticles, sm, sm]", "Input"], 
+ConstructAmplitude[sm25MParticles, sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"],
      Cell[BoxData[RowBox[{"-", FractionBox[RowBox[
            {RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", "[", 
                   "1", "]"}], ",", RowBox[
@@ -11862,7 +11862,7 @@ PrepareAmplitudes[sm25DiagramAmplitudes, sm]", "Input"],
         Cell["sm25Channels = FactorizationAmplitudeChannels[sm25PParticles, \
 sm];\nsm25Channels", "Input"], 
         Cell[
-         "sm25Checks = CheckAmplitudes[sm25PAmplitude, sm25Channels, sm]", 
+         "sm25FeynmanDiagrams = CreateDiagrams[sm25PParticles, smFeynman];\nsm25FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm25FeynmanDiagrams], smFeynman];\nsm25Checks = CheckAmplitudes[sm25PAmplitude, sm25Channels, sm, \"FeynmanAmplitudes\" -> sm25FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -11906,7 +11906,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm26"], 
      Cell["e, E, Z, h", "Subsection"], Cell["sm26Particles = {\"e\", \"E\", \
-\"Z\", \"h\"};\nsm26Amplitude = ConstructAmplitude[sm26Particles, sm, sm]", 
+\"Z\", \"h\"};\nsm26Amplitude = ConstructAmplitude[sm26Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[FractionBox[
         RowBox[{SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
              "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e\
@@ -12369,7 +12369,7 @@ sm];\nCreateArrowDiagrams[sm26Diagrams]", "Input"],
 PrepareAmplitudes[sm26DiagramAmplitudes, sm]", "Input"], 
         Cell["sm26Channels = FactorizationAmplitudeChannels[sm26Particles, \
 sm];\nsm26Channels", "Input"], 
-        Cell["sm26Checks = CheckAmplitudes[sm26Amplitude, sm26Channels, sm]", 
+        Cell["sm26FeynmanDiagrams = CreateDiagrams[sm26Particles, smFeynman];\nsm26FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm26FeynmanDiagrams], smFeynman];\nsm26Checks = CheckAmplitudes[sm26Amplitude, sm26Channels, sm, \"FeynmanAmplitudes\" -> sm26FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -12413,7 +12413,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm27"], 
      Cell["ne, Ne, Z, h", "Subsection"], Cell["sm27Particles = {\"ne\", \
 \"Ne\", \"Z\", \"h\"};\nsm27Amplitude = ConstructAmplitude[sm27Particles, sm, \
-sm]", "Input"], Cell[BoxData[FractionBox[
+sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[FractionBox[
         RowBox[{SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
              "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e\
 7", "Real"], Editable -> False], "2"], " ", SuperscriptBox[
@@ -12460,7 +12460,7 @@ sm];\nCreateArrowDiagrams[sm27Diagrams]", "Input"],
 PrepareAmplitudes[sm27DiagramAmplitudes, sm]", "Input"], 
         Cell["sm27Channels = FactorizationAmplitudeChannels[sm27Particles, \
 sm];\nsm27Channels", "Input"], 
-        Cell["sm27Checks = CheckAmplitudes[sm27Amplitude, sm27Channels, sm]", 
+        Cell["sm27FeynmanDiagrams = CreateDiagrams[sm27Particles, smFeynman];\nsm27FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm27FeynmanDiagrams], smFeynman];\nsm27Checks = CheckAmplitudes[sm27Amplitude, sm27Channels, sm, \"FeynmanAmplitudes\" -> sm27FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -12502,7 +12502,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm28"], 
      Cell["u, U, Z, h", "Subsection"], Cell["sm28Particles = {\"u\", \"U\", \
-\"Z\", \"h\"};\nsm28Amplitude = ConstructAmplitude[sm28Particles, sm, sm]", 
+\"Z\", \"h\"};\nsm28Amplitude = ConstructAmplitude[sm28Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[FractionBox[
         RowBox[{RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", "[", 
                 "1", "]"}], ",", RowBox[{"ColorIndex", "[", "2", "]"}]}], 
@@ -12967,7 +12967,7 @@ sm];\nCreateArrowDiagrams[sm28Diagrams]", "Input"],
 PrepareAmplitudes[sm28DiagramAmplitudes, sm]", "Input"], 
         Cell["sm28Channels = FactorizationAmplitudeChannels[sm28Particles, \
 sm];\nsm28Channels", "Input"], 
-        Cell["sm28Checks = CheckAmplitudes[sm28Amplitude, sm28Channels, sm]", 
+        Cell["sm28FeynmanDiagrams = CreateDiagrams[sm28Particles, smFeynman];\nsm28FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm28FeynmanDiagrams], smFeynman];\nsm28Checks = CheckAmplitudes[sm28Amplitude, sm28Channels, sm, \"FeynmanAmplitudes\" -> sm28FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -13009,7 +13009,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm29"], 
      Cell["d, D, Z, h", "Subsection"], Cell["sm29Particles = {\"d\", \"D\", \
-\"Z\", \"h\"};\nsm29Amplitude = ConstructAmplitude[sm29Particles, sm, sm]", 
+\"Z\", \"h\"};\nsm29Amplitude = ConstructAmplitude[sm29Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[FractionBox[
         RowBox[{RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", "[", 
                 "1", "]"}], ",", RowBox[{"ColorIndex", "[", "2", "]"}]}], 
@@ -13474,7 +13474,7 @@ sm];\nCreateArrowDiagrams[sm29Diagrams]", "Input"],
 PrepareAmplitudes[sm29DiagramAmplitudes, sm]", "Input"], 
         Cell["sm29Channels = FactorizationAmplitudeChannels[sm29Particles, \
 sm];\nsm29Channels", "Input"], 
-        Cell["sm29Checks = CheckAmplitudes[sm29Amplitude, sm29Channels, sm]", 
+        Cell["sm29FeynmanDiagrams = CreateDiagrams[sm29Particles, smFeynman];\nsm29FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm29FeynmanDiagrams], smFeynman];\nsm29Checks = CheckAmplitudes[sm29Amplitude, sm29Channels, sm, \"FeynmanAmplitudes\" -> sm29FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -13518,7 +13518,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm30"], 
      Cell["e, E, A.+, A.+", "Subsection"], Cell["sm30PPParticles = {\"e\", \
 \"E\", \"A.+\", \"A.+\"};\nsm30PPAmplitude = \
-ConstructAmplitude[sm30PPParticles, sm, sm]", "Input"], 
+ConstructAmplitude[sm30PPParticles, sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"],
      Cell[BoxData[FractionBox[RowBox[{"2", " ", SuperscriptBox[
            InterpretationBox["EE", ModelParameter["EE", 
              "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e\
@@ -13559,7 +13559,7 @@ fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"]}],
 dex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-validatio\
 n/sm30-export.wl"|>], Cell["e, E, A.+, A.-", "Subsection"], 
      Cell["sm30PMParticles = {\"e\", \"E\", \"A.+\", \
-\"A.-\"};\nsm30PMAmplitude = ConstructAmplitude[sm30PMParticles, sm, sm]", 
+\"A.-\"};\nsm30PMAmplitude = ConstructAmplitude[sm30PMParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[FractionBox[
         RowBox[{SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
              "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e\
@@ -13649,7 +13649,7 @@ fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"]}],
 dex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-validatio\
 n/sm30-export.wl"|>], Cell["e, E, A.-, A.+", "Subsection"], 
      Cell["sm30MPParticles = {\"e\", \"E\", \"A.-\", \
-\"A.+\"};\nsm30MPAmplitude = ConstructAmplitude[sm30MPParticles, sm, sm]", 
+\"A.+\"};\nsm30MPAmplitude = ConstructAmplitude[sm30MPParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[FractionBox[
         RowBox[{SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
              "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e\
@@ -13739,7 +13739,7 @@ fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"]}],
 dex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-validatio\
 n/sm30-export.wl"|>], Cell["e, E, A.-, A.-", "Subsection"], 
      Cell["sm30MMParticles = {\"e\", \"E\", \"A.-\", \
-\"A.-\"};\nsm30MMAmplitude = ConstructAmplitude[sm30MMParticles, sm, sm]", 
+\"A.-\"};\nsm30MMAmplitude = ConstructAmplitude[sm30MMParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[FractionBox[RowBox[{"2", " ", 
           SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
              "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e\
@@ -13790,8 +13790,7 @@ sm];\nCreateArrowDiagrams[sm30Diagrams]", "Input"],
 PrepareAmplitudes[sm30DiagramAmplitudes, sm]", "Input"], 
         Cell["sm30Channels = FactorizationAmplitudeChannels[sm30PPParticles, \
 sm];\nsm30Channels", "Input"], 
-        Cell["sm30Checks = CheckAmplitudes[sm30PPAmplitude, sm30Channels, \
-sm]", "Input"]}, Closed]], Cell["C++ export and independent validation", 
+        Cell["sm30FeynmanDiagrams = CreateDiagrams[sm30PPParticles, smFeynman];\nsm30FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm30FeynmanDiagrams], smFeynman];\nsm30Checks = CheckAmplitudes[sm30PPAmplitude, sm30Channels, sm, \"FeynmanAmplitudes\" -> sm30FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]", "Input"]}, Closed]], Cell["C++ export and independent validation",
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
 family. The saved Export variable keeps the build and both independent \
@@ -13839,7 +13838,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm31"], 
      Cell["u, U, A.+, A.+", "Subsection"], Cell["sm31PPParticles = {\"u\", \
 \"U\", \"A.+\", \"A.+\"};\nsm31PPAmplitude = \
-ConstructAmplitude[sm31PPParticles, sm, sm]", "Input"], 
+ConstructAmplitude[sm31PPParticles, sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"],
      Cell[BoxData[FractionBox[RowBox[{"8", " ", RowBox[{"ColorDelta", "[", 
             RowBox[{RowBox[{"ColorIndex", "[", "1", "]"}], ",", 
               RowBox[{"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
@@ -13888,7 +13887,7 @@ fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"]}],
 odex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-validati\
 on/sm31-export.wl"|>], Cell["u, U, A.+, A.-", "Subsection"], 
      Cell["sm31PMParticles = {\"u\", \"U\", \"A.+\", \
-\"A.-\"};\nsm31PMAmplitude = ConstructAmplitude[sm31PMParticles, sm, sm]", 
+\"A.-\"};\nsm31PMAmplitude = ConstructAmplitude[sm31PMParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[FractionBox[RowBox[{"4", " ", 
           RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", "[", "1", 
                 "]"}], ",", RowBox[{
@@ -13988,7 +13987,7 @@ fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"]}],
 odex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-validati\
 on/sm31-export.wl"|>], Cell["u, U, A.-, A.+", "Subsection"], 
      Cell["sm31MPParticles = {\"u\", \"U\", \"A.-\", \
-\"A.+\"};\nsm31MPAmplitude = ConstructAmplitude[sm31MPParticles, sm, sm]", 
+\"A.+\"};\nsm31MPAmplitude = ConstructAmplitude[sm31MPParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[FractionBox[RowBox[{"4", " ", 
           RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", "[", "1", 
                 "]"}], ",", RowBox[{
@@ -14088,7 +14087,7 @@ fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"]}],
 odex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-validati\
 on/sm31-export.wl"|>], Cell["u, U, A.-, A.-", "Subsection"], 
      Cell["sm31MMParticles = {\"u\", \"U\", \"A.-\", \
-\"A.-\"};\nsm31MMAmplitude = ConstructAmplitude[sm31MMParticles, sm, sm]", 
+\"A.-\"};\nsm31MMAmplitude = ConstructAmplitude[sm31MMParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[FractionBox[RowBox[{"8", " ", 
           RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", "[", "1", 
                 "]"}], ",", RowBox[{
@@ -14148,8 +14147,7 @@ sm];\nCreateArrowDiagrams[sm31Diagrams]", "Input"],
 PrepareAmplitudes[sm31DiagramAmplitudes, sm]", "Input"], 
         Cell["sm31Channels = FactorizationAmplitudeChannels[sm31PPParticles, \
 sm];\nsm31Channels", "Input"], 
-        Cell["sm31Checks = CheckAmplitudes[sm31PPAmplitude, sm31Channels, \
-sm]", "Input"]}, Closed]], Cell["C++ export and independent validation", 
+        Cell["sm31FeynmanDiagrams = CreateDiagrams[sm31PPParticles, smFeynman];\nsm31FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm31FeynmanDiagrams], smFeynman];\nsm31Checks = CheckAmplitudes[sm31PPAmplitude, sm31Channels, sm, \"FeynmanAmplitudes\" -> sm31FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]", "Input"]}, Closed]], Cell["C++ export and independent validation",
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
 family. The saved Export variable keeps the build and both independent \
@@ -14197,7 +14195,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm32"], 
      Cell["d, D, A.+, A.+", "Subsection"], Cell["sm32PPParticles = {\"d\", \
 \"D\", \"A.+\", \"A.+\"};\nsm32PPAmplitude = \
-ConstructAmplitude[sm32PPParticles, sm, sm]", "Input"], 
+ConstructAmplitude[sm32PPParticles, sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"],
      Cell[BoxData[FractionBox[RowBox[{"2", " ", RowBox[{"ColorDelta", "[", 
             RowBox[{RowBox[{"ColorIndex", "[", "1", "]"}], ",", 
               RowBox[{"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
@@ -14246,7 +14244,7 @@ fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"]}],
 odex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-validati\
 on/sm32-export.wl"|>], Cell["d, D, A.+, A.-", "Subsection"], 
      Cell["sm32PMParticles = {\"d\", \"D\", \"A.+\", \
-\"A.-\"};\nsm32PMAmplitude = ConstructAmplitude[sm32PMParticles, sm, sm]", 
+\"A.-\"};\nsm32PMAmplitude = ConstructAmplitude[sm32PMParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[FractionBox[
         RowBox[{RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", "[", 
                 "1", "]"}], ",", RowBox[{
@@ -14346,7 +14344,7 @@ fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"]}],
 odex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-validati\
 on/sm32-export.wl"|>], Cell["d, D, A.-, A.+", "Subsection"], 
      Cell["sm32MPParticles = {\"d\", \"D\", \"A.-\", \
-\"A.+\"};\nsm32MPAmplitude = ConstructAmplitude[sm32MPParticles, sm, sm]", 
+\"A.+\"};\nsm32MPAmplitude = ConstructAmplitude[sm32MPParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[FractionBox[
         RowBox[{RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", "[", 
                 "1", "]"}], ",", RowBox[{
@@ -14446,7 +14444,7 @@ fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"]}],
 odex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-validati\
 on/sm32-export.wl"|>], Cell["d, D, A.-, A.-", "Subsection"], 
      Cell["sm32MMParticles = {\"d\", \"D\", \"A.-\", \
-\"A.-\"};\nsm32MMAmplitude = ConstructAmplitude[sm32MMParticles, sm, sm]", 
+\"A.-\"};\nsm32MMAmplitude = ConstructAmplitude[sm32MMParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[FractionBox[RowBox[{"2", " ", 
           RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", "[", "1", 
                 "]"}], ",", RowBox[{
@@ -14506,8 +14504,7 @@ sm];\nCreateArrowDiagrams[sm32Diagrams]", "Input"],
 PrepareAmplitudes[sm32DiagramAmplitudes, sm]", "Input"], 
         Cell["sm32Channels = FactorizationAmplitudeChannels[sm32PPParticles, \
 sm];\nsm32Channels", "Input"], 
-        Cell["sm32Checks = CheckAmplitudes[sm32PPAmplitude, sm32Channels, \
-sm]", "Input"]}, Closed]], Cell["C++ export and independent validation", 
+        Cell["sm32FeynmanDiagrams = CreateDiagrams[sm32PPParticles, smFeynman];\nsm32FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm32FeynmanDiagrams], smFeynman];\nsm32Checks = CheckAmplitudes[sm32PPAmplitude, sm32Channels, sm, \"FeynmanAmplitudes\" -> sm32FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]", "Input"]}, Closed]], Cell["C++ export and independent validation",
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
 family. The saved Export variable keeps the build and both independent \
@@ -14555,7 +14552,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm33"], 
      Cell["u, U, G.+, G.+", "Subsection"], Cell["sm33PPParticles = {\"u\", \
 \"U\", \"G.+\", \"G.+\"};\nsm33PPAmplitude = \
-ConstructAmplitude[sm33PPParticles, sm, sm]", "Input"], 
+ConstructAmplitude[sm33PPParticles, sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"],
      Cell[BoxData[RowBox[{RowBox[{"-", FractionBox[
             RowBox[{"2", " ", RowBox[{"ColorGenerator", "[", RowBox[
                  {RowBox[{"ColorIndex", "[", "2", "]"}], ",", RowBox[
@@ -14648,7 +14645,7 @@ b88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable ->
 odex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-validati\
 on/sm33-export.wl"|>], Cell["u, U, G.+, G.-", "Subsection"], 
      Cell["sm33PMParticles = {\"u\", \"U\", \"G.+\", \
-\"G.-\"};\nsm33PMAmplitude = ConstructAmplitude[sm33PMParticles, sm, sm]", 
+\"G.-\"};\nsm33PMAmplitude = ConstructAmplitude[sm33PMParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[
         {FractionBox[RowBox[{"2", " ", "\[ImaginaryI]", " ", 
             RowBox[{"ColorGenerator", "[", RowBox[{RowBox[{"ColorIndex", "[", 
@@ -14802,7 +14799,7 @@ b88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable ->
 odex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-validati\
 on/sm33-export.wl"|>], Cell["u, U, G.-, G.+", "Subsection"], 
      Cell["sm33MPParticles = {\"u\", \"U\", \"G.-\", \
-\"G.+\"};\nsm33MPAmplitude = ConstructAmplitude[sm33MPParticles, sm, sm]", 
+\"G.+\"};\nsm33MPAmplitude = ConstructAmplitude[sm33MPParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[
         {RowBox[{"-", FractionBox[RowBox[{"2", " ", "\[ImaginaryI]", " ", 
               RowBox[{"ColorGenerator", "[", RowBox[{RowBox[{"ColorIndex", 
@@ -14959,7 +14956,7 @@ b88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable ->
 odex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-validati\
 on/sm33-export.wl"|>], Cell["u, U, G.-, G.-", "Subsection"], 
      Cell["sm33MMParticles = {\"u\", \"U\", \"G.-\", \
-\"G.-\"};\nsm33MMAmplitude = ConstructAmplitude[sm33MMParticles, sm, sm]", 
+\"G.-\"};\nsm33MMAmplitude = ConstructAmplitude[sm33MMParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[
         {RowBox[{"-", FractionBox[RowBox[{"2", " ", RowBox[{"ColorGenerator", 
                 "[", RowBox[{RowBox[{"ColorIndex", "[", "2", "]"}], ",", 
@@ -15062,8 +15059,7 @@ sm];\nCreateArrowDiagrams[sm33Diagrams]", "Input"],
 PrepareAmplitudes[sm33DiagramAmplitudes, sm]", "Input"], 
         Cell["sm33Channels = FactorizationAmplitudeChannels[sm33PPParticles, \
 sm];\nsm33Channels", "Input"], 
-        Cell["sm33Checks = CheckAmplitudes[sm33PPAmplitude, sm33Channels, \
-sm]", "Input"]}, Closed]], Cell["C++ export and independent validation", 
+        Cell["sm33FeynmanDiagrams = CreateDiagrams[sm33PPParticles, smFeynman];\nsm33FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm33FeynmanDiagrams], smFeynman];\nsm33Checks = CheckAmplitudes[sm33PPAmplitude, sm33Channels, sm, \"FeynmanAmplitudes\" -> sm33FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]", "Input"]}, Closed]], Cell["C++ export and independent validation",
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
 family. The saved Export variable keeps the build and both independent \
@@ -15110,7 +15106,7 @@ e.", "Text"], Cell[TextData[{"Original reference: ",
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm34"], 
      Cell["A.+, e, Z, E", "Subsection"], Cell["sm34PParticles = {\"A.+\", \
 \"e\", \"Z\", \"E\"};\nsm34PAmplitude = ConstructAmplitude[sm34PParticles, \
-sm, sm]", "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
+sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
           RowBox[{SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
                "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd7\
 7e7", "Real"], Editable -> False], "2"], " ", RowBox[
@@ -15225,7 +15221,7 @@ b88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable ->
 ex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-validation\
 /sm34-export.wl"|>], Cell["A.-, e, Z, E", "Subsection"], 
      Cell["sm34MParticles = {\"A.-\", \"e\", \"Z\", \"E\"};\nsm34MAmplitude = \
-ConstructAmplitude[sm34MParticles, sm, sm]", "Input"], 
+ConstructAmplitude[sm34MParticles, sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"],
      Cell[BoxData[RowBox[{"-", FractionBox[RowBox[
            {SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
                "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd7\
@@ -15358,7 +15354,7 @@ PrepareAmplitudes[sm34DiagramAmplitudes, sm]", "Input"],
         Cell["sm34Channels = FactorizationAmplitudeChannels[sm34PParticles, \
 sm];\nsm34Channels", "Input"], 
         Cell[
-         "sm34Checks = CheckAmplitudes[sm34PAmplitude, sm34Channels, sm]", 
+         "sm34FeynmanDiagrams = CreateDiagrams[sm34PParticles, smFeynman];\nsm34FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm34FeynmanDiagrams], smFeynman];\nsm34Checks = CheckAmplitudes[sm34PAmplitude, sm34Channels, sm, \"FeynmanAmplitudes\" -> sm34FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -15406,7 +15402,7 @@ compare those formulas with this ordering, relabel the old particle numbers \
 {1, 2, 3, 4} as {1, 3, 4, 2}.", "Text", CellTags -> 
        "manual-order-note-sm35"], Cell["A.+, u, Z, U", "Subsection"], 
      Cell["sm35PParticles = {\"A.+\", \"u\", \"Z\", \"U\"};\nsm35PAmplitude = \
-ConstructAmplitude[sm35PParticles, sm, sm]", "Input"], 
+ConstructAmplitude[sm35PParticles, sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"],
      Cell[BoxData[FractionBox[RowBox[{"2", " ", RowBox[{"ColorDelta", "[", 
             RowBox[{RowBox[{"ColorIndex", "[", "2", "]"}], ",", 
               RowBox[{"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
@@ -15532,7 +15528,7 @@ struction.wl", "ValidationReport" -> "/Users/neil/Documents/Codex/2026-09-24/\
 help-me-make-this-response-more/output/sm-four-point-validation/sm35-export.w\
 l"|>], Cell["A.-, u, Z, U", "Subsection"], Cell["sm35MParticles = {\"A.-\", \
 \"u\", \"Z\", \"U\"};\nsm35MAmplitude = ConstructAmplitude[sm35MParticles, \
-sm, sm]", "Input"], Cell[BoxData[FractionBox[
+sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[FractionBox[
         RowBox[{"2", " ", RowBox[{"ColorDelta", "[", 
             RowBox[{RowBox[{"ColorIndex", "[", "2", "]"}], ",", 
               RowBox[{"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
@@ -15676,7 +15672,7 @@ CreateDiagrams[sm35PParticles, sm];\nCreateArrowDiagrams[sm35Diagrams]",
 sm]", "Input"], Cell["sm35Channels = \
 FactorizationAmplitudeChannels[sm35PParticles, sm];\nsm35Channels", "Input"], 
         Cell[
-         "sm35Checks = CheckAmplitudes[sm35PAmplitude, sm35Channels, sm]", 
+         "sm35FeynmanDiagrams = CreateDiagrams[sm35PParticles, smFeynman];\nsm35FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm35FeynmanDiagrams], smFeynman];\nsm35Checks = CheckAmplitudes[sm35PAmplitude, sm35Channels, sm, \"FeynmanAmplitudes\" -> sm35FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -15721,7 +15717,7 @@ d.", "Text"], Cell[TextData[{"Original reference: ",
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm36"], 
      Cell["A.+, d, Z, D", "Subsection"], Cell["sm36PParticles = {\"A.+\", \
 \"d\", \"Z\", \"D\"};\nsm36PAmplitude = ConstructAmplitude[sm36PParticles, \
-sm, sm]", "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
+sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
           RowBox[{RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", 
                   "[", "2", "]"}], ",", RowBox[
                  {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
@@ -15846,7 +15842,7 @@ b88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable ->
 dex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-validatio\
 n/sm36-export.wl"|>], Cell["A.-, d, Z, D", "Subsection"], 
      Cell["sm36MParticles = {\"A.-\", \"d\", \"Z\", \"D\"};\nsm36MAmplitude = \
-ConstructAmplitude[sm36MParticles, sm, sm]", "Input"], 
+ConstructAmplitude[sm36MParticles, sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"],
      Cell[BoxData[RowBox[{"-", FractionBox[RowBox[
            {RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", "[", 
                   "2", "]"}], ",", RowBox[
@@ -15989,7 +15985,7 @@ PrepareAmplitudes[sm36DiagramAmplitudes, sm]", "Input"],
         Cell["sm36Channels = FactorizationAmplitudeChannels[sm36PParticles, \
 sm];\nsm36Channels", "Input"], 
         Cell[
-         "sm36Checks = CheckAmplitudes[sm36PAmplitude, sm36Channels, sm]", 
+         "sm36FeynmanDiagrams = CreateDiagrams[sm36PParticles, smFeynman];\nsm36FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm36FeynmanDiagrams], smFeynman];\nsm36Checks = CheckAmplitudes[sm36PAmplitude, sm36Channels, sm, \"FeynmanAmplitudes\" -> sm36FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -16033,7 +16029,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm37"], 
      Cell["e, E, Z, Z", "Subsection"], Cell["sm37Particles = {\"e\", \"E\", \
-\"Z\", \"Z\"};\nsm37Amplitude = ConstructAmplitude[sm37Particles, sm, sm]", 
+\"Z\", \"Z\"};\nsm37Amplitude = ConstructAmplitude[sm37Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[FractionBox[
         RowBox[{RowBox[{"-", FractionBox[RowBox[{SuperscriptBox[
                 InterpretationBox["EE", ModelParameter["EE", "30a3398a0cbb88a\
@@ -16417,7 +16413,7 @@ CreateDiagrams[sm37Particles, sm];\nCreateArrowDiagrams[sm37Diagrams]",
          "sm37PreparedDiagrams = PrepareAmplitudes[sm37DiagramAmplitudes, \
 sm]", "Input"], Cell["sm37Channels = \
 FactorizationAmplitudeChannels[sm37Particles, sm];\nsm37Channels", "Input"], 
-        Cell["sm37Checks = CheckAmplitudes[sm37Amplitude, sm37Channels, sm]", 
+        Cell["sm37FeynmanDiagrams = CreateDiagrams[sm37Particles, smFeynman];\nsm37FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm37FeynmanDiagrams], smFeynman];\nsm37Checks = CheckAmplitudes[sm37Amplitude, sm37Channels, sm, \"FeynmanAmplitudes\" -> sm37FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -16461,7 +16457,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm38"], 
      Cell["ne, Ne, Z, Z", "Subsection"], Cell["sm38Particles = {\"ne\", \
 \"Ne\", \"Z\", \"Z\"};\nsm38Amplitude = ConstructAmplitude[sm38Particles, sm, \
-sm]", "Input"], Cell[BoxData[FractionBox[
+sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[FractionBox[
         RowBox[{SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
              "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e\
 7", "Real"], Editable -> False], "2"], " ", RowBox[
@@ -16608,7 +16604,7 @@ CreateDiagrams[sm38Particles, sm];\nCreateArrowDiagrams[sm38Diagrams]",
          "sm38PreparedDiagrams = PrepareAmplitudes[sm38DiagramAmplitudes, \
 sm]", "Input"], Cell["sm38Channels = \
 FactorizationAmplitudeChannels[sm38Particles, sm];\nsm38Channels", "Input"], 
-        Cell["sm38Checks = CheckAmplitudes[sm38Amplitude, sm38Channels, sm]", 
+        Cell["sm38FeynmanDiagrams = CreateDiagrams[sm38Particles, smFeynman];\nsm38FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm38FeynmanDiagrams], smFeynman];\nsm38Checks = CheckAmplitudes[sm38Amplitude, sm38Channels, sm, \"FeynmanAmplitudes\" -> sm38FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -16650,7 +16646,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm39"], 
      Cell["u, U, Z, Z", "Subsection"], Cell["sm39Particles = {\"u\", \"U\", \
-\"Z\", \"Z\"};\nsm39Amplitude = ConstructAmplitude[sm39Particles, sm, sm]", 
+\"Z\", \"Z\"};\nsm39Amplitude = ConstructAmplitude[sm39Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[FractionBox[
         RowBox[{RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", "[", 
                 "1", "]"}], ",", RowBox[{"ColorIndex", "[", "2", "]"}]}], 
@@ -17061,7 +17057,7 @@ sm];\nCreateArrowDiagrams[sm39Diagrams]", "Input"],
 PrepareAmplitudes[sm39DiagramAmplitudes, sm]", "Input"], 
         Cell["sm39Channels = FactorizationAmplitudeChannels[sm39Particles, \
 sm];\nsm39Channels", "Input"], 
-        Cell["sm39Checks = CheckAmplitudes[sm39Amplitude, sm39Channels, sm]", 
+        Cell["sm39FeynmanDiagrams = CreateDiagrams[sm39Particles, smFeynman];\nsm39FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm39FeynmanDiagrams], smFeynman];\nsm39Checks = CheckAmplitudes[sm39Amplitude, sm39Channels, sm, \"FeynmanAmplitudes\" -> sm39FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -17103,7 +17099,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm40"], 
      Cell["d, D, Z, Z", "Subsection"], Cell["sm40Particles = {\"d\", \"D\", \
-\"Z\", \"Z\"};\nsm40Amplitude = ConstructAmplitude[sm40Particles, sm, sm]", 
+\"Z\", \"Z\"};\nsm40Amplitude = ConstructAmplitude[sm40Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[FractionBox[
         RowBox[{RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", "[", 
                 "1", "]"}], ",", RowBox[{"ColorIndex", "[", "2", "]"}]}], 
@@ -17514,7 +17510,7 @@ sm];\nCreateArrowDiagrams[sm40Diagrams]", "Input"],
 PrepareAmplitudes[sm40DiagramAmplitudes, sm]", "Input"], 
         Cell["sm40Channels = FactorizationAmplitudeChannels[sm40Particles, \
 sm];\nsm40Channels", "Input"], 
-        Cell["sm40Checks = CheckAmplitudes[sm40Amplitude, sm40Channels, sm]", 
+        Cell["sm40FeynmanDiagrams = CreateDiagrams[sm40Particles, smFeynman];\nsm40FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm40FeynmanDiagrams], smFeynman];\nsm40Checks = CheckAmplitudes[sm40Amplitude, sm40Channels, sm, \"FeynmanAmplitudes\" -> sm40FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -17557,7 +17553,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm41"], 
      Cell["e, E, W-, W+", "Subsection"], Cell["sm41Particles = {\"e\", \"E\", \
-\"W-\", \"W+\"};\nsm41Amplitude = ConstructAmplitude[sm41Particles, sm, sm]", 
+\"W-\", \"W+\"};\nsm41Amplitude = ConstructAmplitude[sm41Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[
         {RowBox[{"-", FractionBox[RowBox[{SuperscriptBox[InterpretationBox[
                 "EE", ModelParameter["EE", "30a3398a0cbb88a8e4517e90d53df2fd4\
@@ -19088,7 +19084,7 @@ sm];\nCreateArrowDiagrams[sm41Diagrams]", "Input"],
 PrepareAmplitudes[sm41DiagramAmplitudes, sm]", "Input"], 
         Cell["sm41Channels = FactorizationAmplitudeChannels[sm41Particles, \
 sm];\nsm41Channels", "Input"], 
-        Cell["sm41Checks = CheckAmplitudes[sm41Amplitude, sm41Channels, sm]", 
+        Cell["sm41FeynmanDiagrams = CreateDiagrams[sm41Particles, smFeynman];\nsm41FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm41FeynmanDiagrams], smFeynman];\nsm41Checks = CheckAmplitudes[sm41Amplitude, sm41Channels, sm, \"FeynmanAmplitudes\" -> sm41FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -19131,7 +19127,7 @@ W-, W+. Physical export: ne, Ne -> W+, W-.", "Text"],
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm42"], 
      Cell["ne, Ne, W-, W+", "Subsection"], Cell["sm42Particles = {\"ne\", \
 \"Ne\", \"W-\", \"W+\"};\nsm42Amplitude = ConstructAmplitude[sm42Particles, \
-sm, sm]", "Input"], Cell[BoxData[FractionBox[
+sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[FractionBox[
         RowBox[{SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
              "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e\
 7", "Real"], Editable -> False], "2"], " ", RowBox[
@@ -19330,7 +19326,7 @@ CreateDiagrams[sm42Particles, sm];\nCreateArrowDiagrams[sm42Diagrams]",
          "sm42PreparedDiagrams = PrepareAmplitudes[sm42DiagramAmplitudes, \
 sm]", "Input"], Cell["sm42Channels = \
 FactorizationAmplitudeChannels[sm42Particles, sm];\nsm42Channels", "Input"], 
-        Cell["sm42Checks = CheckAmplitudes[sm42Amplitude, sm42Channels, sm]", 
+        Cell["sm42FeynmanDiagrams = CreateDiagrams[sm42Particles, smFeynman];\nsm42FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm42FeynmanDiagrams], smFeynman];\nsm42Checks = CheckAmplitudes[sm42Amplitude, sm42Channels, sm, \"FeynmanAmplitudes\" -> sm42FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -19373,7 +19369,7 @@ fresh project to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm43"], 
      Cell["u, U, W-, W+", "Subsection"], Cell["sm43Particles = {\"u\", \"U\", \
-\"W-\", \"W+\"};\nsm43Amplitude = ConstructAmplitude[sm43Particles, sm, sm]", 
+\"W-\", \"W+\"};\nsm43Amplitude = ConstructAmplitude[sm43Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[{RowBox[{"ColorDelta", "[", 
            RowBox[{RowBox[{"ColorIndex", "[", "1", "]"}], ",", 
              RowBox[{"ColorIndex", "[", "2", "]"}]}], "]"}], " ", 
@@ -20981,7 +20977,7 @@ sm];\nCreateArrowDiagrams[sm43Diagrams]", "Input"],
 PrepareAmplitudes[sm43DiagramAmplitudes, sm]", "Input"], 
         Cell["sm43Channels = FactorizationAmplitudeChannels[sm43Particles, \
 sm];\nsm43Channels", "Input"], 
-        Cell["sm43Checks = CheckAmplitudes[sm43Amplitude, sm43Channels, sm]", 
+        Cell["sm43FeynmanDiagrams = CreateDiagrams[sm43Particles, smFeynman];\nsm43FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm43FeynmanDiagrams], smFeynman];\nsm43Checks = CheckAmplitudes[sm43Amplitude, sm43Channels, sm, \"FeynmanAmplitudes\" -> sm43FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -21024,7 +21020,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm44"], 
      Cell["d, D, W-, W+", "Subsection"], Cell["sm44Particles = {\"d\", \"D\", \
-\"W-\", \"W+\"};\nsm44Amplitude = ConstructAmplitude[sm44Particles, sm, sm]", 
+\"W-\", \"W+\"};\nsm44Amplitude = ConstructAmplitude[sm44Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[{RowBox[{"ColorDelta", "[", 
            RowBox[{RowBox[{"ColorIndex", "[", "1", "]"}], ",", 
              RowBox[{"ColorIndex", "[", "2", "]"}]}], "]"}], " ", 
@@ -22267,7 +22263,7 @@ sm];\nCreateArrowDiagrams[sm44Diagrams]", "Input"],
 PrepareAmplitudes[sm44DiagramAmplitudes, sm]", "Input"], 
         Cell["sm44Channels = FactorizationAmplitudeChannels[sm44Particles, \
 sm];\nsm44Channels", "Input"], 
-        Cell["sm44Checks = CheckAmplitudes[sm44Amplitude, sm44Channels, sm]", 
+        Cell["sm44FeynmanDiagrams = CreateDiagrams[sm44Particles, smFeynman];\nsm44FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm44FeynmanDiagrams], smFeynman];\nsm44Checks = CheckAmplitudes[sm44Amplitude, sm44Channels, sm, \"FeynmanAmplitudes\" -> sm44FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -22310,7 +22306,7 @@ U.", "Text"], Cell[TextData[{"Original reference: ",
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm45"], 
      Cell["h, G.+, U, u", "Subsection"], Cell["sm45PParticles = {\"h\", \
 \"G.+\", \"U\", \"u\"};\nsm45PAmplitude = ConstructAmplitude[sm45PParticles, \
-sm, sm]", "Input"], Cell[BoxData[FractionBox[
+sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[FractionBox[
         RowBox[{RowBox[{"ColorDelta", "[", RowBox[
              {RowBox[{"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
                 RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", 
@@ -22395,7 +22391,7 @@ fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"]}],
 date.wl", "ValidationReport" -> "/Users/neil/Documents/Codex/2026-09-24/help-\
 me-make-this-response-more/output/sm-four-point-validation/sm45-export.wl"|>]\
 , Cell["h, G.-, U, u", "Subsection"], Cell["sm45MParticles = {\"h\", \"G.-\", \
-\"U\", \"u\"};\nsm45MAmplitude = ConstructAmplitude[sm45MParticles, sm, sm]", 
+\"U\", \"u\"};\nsm45MAmplitude = ConstructAmplitude[sm45MParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[FractionBox[
         RowBox[{RowBox[{"ColorDelta", "[", RowBox[
              {RowBox[{"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
@@ -22495,7 +22491,7 @@ CreateDiagrams[sm45PParticles, sm];\nCreateArrowDiagrams[sm45Diagrams]",
 sm]", "Input"], Cell["sm45Channels = \
 FactorizationAmplitudeChannels[sm45PParticles, sm];\nsm45Channels", "Input"], 
         Cell[
-         "sm45Checks = CheckAmplitudes[sm45PAmplitude, sm45Channels, sm]", 
+         "sm45FeynmanDiagrams = CreateDiagrams[sm45PParticles, smFeynman];\nsm45FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm45FeynmanDiagrams], smFeynman];\nsm45Checks = CheckAmplitudes[sm45PAmplitude, sm45Channels, sm, \"FeynmanAmplitudes\" -> sm45FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -22540,7 +22536,7 @@ D.", "Text"], Cell[TextData[{"Original reference: ",
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm46"], 
      Cell["h, G.+, D, d", "Subsection"], Cell["sm46PParticles = {\"h\", \
 \"G.+\", \"D\", \"d\"};\nsm46PAmplitude = ConstructAmplitude[sm46PParticles, \
-sm, sm]", "Input"], Cell[BoxData[FractionBox[
+sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[FractionBox[
         RowBox[{RowBox[{"ColorDelta", "[", RowBox[
              {RowBox[{"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
                 RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", 
@@ -22626,7 +22622,7 @@ ent-construction.wl", "ValidationReport" -> "/Users/neil/Documents/Codex/2026\
 -09-24/help-me-make-this-response-more/output/sm-four-point-validation/sm46-e\
 xport.wl"|>], Cell["h, G.-, D, d", "Subsection"], Cell["sm46MParticles = \
 {\"h\", \"G.-\", \"D\", \"d\"};\nsm46MAmplitude = \
-ConstructAmplitude[sm46MParticles, sm, sm]", "Input"], 
+ConstructAmplitude[sm46MParticles, sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"],
      Cell[BoxData[FractionBox[RowBox[{RowBox[{"ColorDelta", "[", 
             RowBox[{RowBox[{
                 "ConstructiveDiagrams`Private`colorInternalIndex", "[", 
@@ -22726,7 +22722,7 @@ CreateDiagrams[sm46PParticles, sm];\nCreateArrowDiagrams[sm46Diagrams]",
 sm]", "Input"], Cell["sm46Channels = \
 FactorizationAmplitudeChannels[sm46PParticles, sm];\nsm46Channels", "Input"], 
         Cell[
-         "sm46Checks = CheckAmplitudes[sm46PAmplitude, sm46Channels, sm]", 
+         "sm46FeynmanDiagrams = CreateDiagrams[sm46PParticles, smFeynman];\nsm46FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm46FeynmanDiagrams], smFeynman];\nsm46Checks = CheckAmplitudes[sm46PAmplitude, sm46Channels, sm, \"FeynmanAmplitudes\" -> sm46FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -22771,7 +22767,7 @@ u.", "Text"], Cell[TextData[{"Original reference: ",
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm47"], 
      Cell["G.+, u, Z, U", "Subsection"], Cell["sm47PParticles = {\"G.+\", \
 \"u\", \"Z\", \"U\"};\nsm47PAmplitude = ConstructAmplitude[sm47PParticles, \
-sm, sm]", "Input"], Cell[BoxData[FractionBox[
+sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[FractionBox[
         RowBox[{RowBox[{"ColorDelta", "[", RowBox[
              {RowBox[{"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
                 RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", 
@@ -22900,7 +22896,7 @@ ruction.wl", "ValidationReport" -> "/Users/neil/Documents/Codex/2026-09-24/he\
 lp-me-make-this-response-more/output/sm-four-point-validation/sm47-export.wl"\
 |>], Cell["G.-, u, Z, U", "Subsection"], Cell["sm47MParticles = {\"G.-\", \
 \"u\", \"Z\", \"U\"};\nsm47MAmplitude = ConstructAmplitude[sm47MParticles, \
-sm, sm]", "Input"], Cell[BoxData[FractionBox[
+sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[FractionBox[
         RowBox[{RowBox[{"ColorDelta", "[", RowBox[
              {RowBox[{"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
                 RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", 
@@ -23045,7 +23041,7 @@ PrepareAmplitudes[sm47DiagramAmplitudes, sm]", "Input"],
         Cell["sm47Channels = FactorizationAmplitudeChannels[sm47PParticles, \
 sm];\nsm47Channels", "Input"], 
         Cell[
-         "sm47Checks = CheckAmplitudes[sm47PAmplitude, sm47Channels, sm]", 
+         "sm47FeynmanDiagrams = CreateDiagrams[sm47PParticles, smFeynman];\nsm47FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm47FeynmanDiagrams], smFeynman];\nsm47Checks = CheckAmplitudes[sm47PAmplitude, sm47Channels, sm, \"FeynmanAmplitudes\" -> sm47FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -23090,7 +23086,7 @@ d.", "Text"], Cell[TextData[{"Original reference: ",
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm48"], 
      Cell["G.+, d, Z, D", "Subsection"], Cell["sm48PParticles = {\"G.+\", \
 \"d\", \"Z\", \"D\"};\nsm48PAmplitude = ConstructAmplitude[sm48PParticles, \
-sm, sm]", "Input"], Cell[BoxData[FractionBox[
+sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[FractionBox[
         RowBox[{RowBox[{"ColorDelta", "[", RowBox[
              {RowBox[{"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
                 RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", 
@@ -23219,7 +23215,7 @@ ruction.wl", "ValidationReport" -> "/Users/neil/Documents/Codex/2026-09-24/he\
 lp-me-make-this-response-more/output/sm-four-point-validation/sm48-export.wl"\
 |>], Cell["G.-, d, Z, D", "Subsection"], Cell["sm48MParticles = {\"G.-\", \
 \"d\", \"Z\", \"D\"};\nsm48MAmplitude = ConstructAmplitude[sm48MParticles, \
-sm, sm]", "Input"], Cell[BoxData[FractionBox[
+sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[FractionBox[
         RowBox[{RowBox[{"ColorDelta", "[", RowBox[
              {RowBox[{"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
                 RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", 
@@ -23364,7 +23360,7 @@ PrepareAmplitudes[sm48DiagramAmplitudes, sm]", "Input"],
         Cell["sm48Channels = FactorizationAmplitudeChannels[sm48PParticles, \
 sm];\nsm48Channels", "Input"], 
         Cell[
-         "sm48Checks = CheckAmplitudes[sm48PAmplitude, sm48Channels, sm]", 
+         "sm48FeynmanDiagrams = CreateDiagrams[sm48PParticles, smFeynman];\nsm48FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm48FeynmanDiagrams], smFeynman];\nsm48Checks = CheckAmplitudes[sm48PAmplitude, sm48Channels, sm, \"FeynmanAmplitudes\" -> sm48FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -23410,7 +23406,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm49"], 
      Cell["G.+, u, A.+, U", "Subsection"], Cell["sm49PPParticles = {\"G.+\", \
 \"u\", \"A.+\", \"U\"};\nsm49PPAmplitude = \
-ConstructAmplitude[sm49PPParticles, sm, sm]", "Input"], 
+ConstructAmplitude[sm49PPParticles, sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"],
      Cell[BoxData[FractionBox[RowBox[{"4", " ", RowBox[{"ColorDelta", "[", 
             RowBox[{RowBox[{
                 "ConstructiveDiagrams`Private`colorInternalIndex", "[", 
@@ -23464,7 +23460,7 @@ fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"]}],
 ex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-validation\
 /sm49-export.wl"|>], Cell["G.+, u, A.-, U", "Subsection"], 
      Cell["sm49PMParticles = {\"G.+\", \"u\", \"A.-\", \
-\"U\"};\nsm49PMAmplitude = ConstructAmplitude[sm49PMParticles, sm, sm]", 
+\"U\"};\nsm49PMAmplitude = ConstructAmplitude[sm49PMParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[FractionBox[RowBox[{"4", " ", 
           RowBox[{"ColorDelta", "[", RowBox[
              {RowBox[{"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
@@ -23539,7 +23535,7 @@ fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"]}],
 ex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-validation\
 /sm49-export.wl"|>], Cell["G.-, u, A.+, U", "Subsection"], 
      Cell["sm49MPParticles = {\"G.-\", \"u\", \"A.+\", \
-\"U\"};\nsm49MPAmplitude = ConstructAmplitude[sm49MPParticles, sm, sm]", 
+\"U\"};\nsm49MPAmplitude = ConstructAmplitude[sm49MPParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[FractionBox[RowBox[{"4", " ", 
           RowBox[{"ColorDelta", "[", RowBox[
              {RowBox[{"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
@@ -23616,7 +23612,7 @@ fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"]}],
 ex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-validation\
 /sm49-export.wl"|>], Cell["G.-, u, A.-, U", "Subsection"], 
      Cell["sm49MMParticles = {\"G.-\", \"u\", \"A.-\", \
-\"U\"};\nsm49MMAmplitude = ConstructAmplitude[sm49MMParticles, sm, sm]", 
+\"U\"};\nsm49MMAmplitude = ConstructAmplitude[sm49MMParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[FractionBox[RowBox[{"4", " ", 
           RowBox[{"ColorDelta", "[", RowBox[
              {RowBox[{"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
@@ -23680,8 +23676,7 @@ sm];\nCreateArrowDiagrams[sm49Diagrams]", "Input"],
 PrepareAmplitudes[sm49DiagramAmplitudes, sm]", "Input"], 
         Cell["sm49Channels = FactorizationAmplitudeChannels[sm49PPParticles, \
 sm];\nsm49Channels", "Input"], 
-        Cell["sm49Checks = CheckAmplitudes[sm49PPAmplitude, sm49Channels, \
-sm]", "Input"]}, Closed]], Cell["C++ export and independent validation", 
+        Cell["sm49FeynmanDiagrams = CreateDiagrams[sm49PPParticles, smFeynman];\nsm49FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm49FeynmanDiagrams], smFeynman];\nsm49Checks = CheckAmplitudes[sm49PPAmplitude, sm49Channels, sm, \"FeynmanAmplitudes\" -> sm49FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]", "Input"]}, Closed]], Cell["C++ export and independent validation",
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
 family. The saved Export variable keeps the build and both independent \
@@ -23729,7 +23724,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm50"], 
      Cell["G.+, d, A.+, D", "Subsection"], Cell["sm50PPParticles = {\"G.+\", \
 \"d\", \"A.+\", \"D\"};\nsm50PPAmplitude = \
-ConstructAmplitude[sm50PPParticles, sm, sm]", "Input"], 
+ConstructAmplitude[sm50PPParticles, sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"],
      Cell[BoxData[RowBox[{"-", FractionBox[RowBox[{"2", " ", 
             RowBox[{"ColorDelta", "[", RowBox[{RowBox[
                  {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
@@ -23781,7 +23776,7 @@ ff422d9b7ebd77e7", "Real"], Editable -> False], "2"]}], "+", SubscriptBox[
 ex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-validation\
 /sm50-export.wl"|>], Cell["G.+, d, A.-, D", "Subsection"], 
      Cell["sm50PMParticles = {\"G.+\", \"d\", \"A.-\", \
-\"D\"};\nsm50PMAmplitude = ConstructAmplitude[sm50PMParticles, sm, sm]", 
+\"D\"};\nsm50PMAmplitude = ConstructAmplitude[sm50PMParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
           RowBox[{"2", " ", RowBox[{"ColorDelta", "[", RowBox[{
                 RowBox[{"ConstructiveDiagrams`Private`colorInternalIndex", 
@@ -23854,7 +23849,7 @@ ff422d9b7ebd77e7", "Real"], Editable -> False], "2"]}], "+", SubscriptBox[
 ex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-validation\
 /sm50-export.wl"|>], Cell["G.-, d, A.+, D", "Subsection"], 
      Cell["sm50MPParticles = {\"G.-\", \"d\", \"A.+\", \
-\"D\"};\nsm50MPAmplitude = ConstructAmplitude[sm50MPParticles, sm, sm]", 
+\"D\"};\nsm50MPAmplitude = ConstructAmplitude[sm50MPParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
           RowBox[{"2", " ", RowBox[{"ColorDelta", "[", RowBox[{
                 RowBox[{"ConstructiveDiagrams`Private`colorInternalIndex", 
@@ -23929,7 +23924,7 @@ ff422d9b7ebd77e7", "Real"], Editable -> False], "2"]}], "+", SubscriptBox[
 ex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-validation\
 /sm50-export.wl"|>], Cell["G.-, d, A.-, D", "Subsection"], 
      Cell["sm50MMParticles = {\"G.-\", \"d\", \"A.-\", \
-\"D\"};\nsm50MMAmplitude = ConstructAmplitude[sm50MMParticles, sm, sm]", 
+\"D\"};\nsm50MMAmplitude = ConstructAmplitude[sm50MMParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
           RowBox[{"2", " ", RowBox[{"ColorDelta", "[", RowBox[{
                 RowBox[{"ConstructiveDiagrams`Private`colorInternalIndex", 
@@ -23992,8 +23987,7 @@ sm];\nCreateArrowDiagrams[sm50Diagrams]", "Input"],
 PrepareAmplitudes[sm50DiagramAmplitudes, sm]", "Input"], 
         Cell["sm50Channels = FactorizationAmplitudeChannels[sm50PPParticles, \
 sm];\nsm50Channels", "Input"], 
-        Cell["sm50Checks = CheckAmplitudes[sm50PPAmplitude, sm50Channels, \
-sm]", "Input"]}, Closed]], Cell["C++ export and independent validation", 
+        Cell["sm50FeynmanDiagrams = CreateDiagrams[sm50PPParticles, smFeynman];\nsm50FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm50FeynmanDiagrams], smFeynman];\nsm50Checks = CheckAmplitudes[sm50PPAmplitude, sm50Channels, sm, \"FeynmanAmplitudes\" -> sm50FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]", "Input"]}, Closed]], Cell["C++ export and independent validation",
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
 family. The saved Export variable keeps the build and both independent \
@@ -24041,7 +24035,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm51"], 
      Cell["G.+, u, G.+, U", "Subsection"], Cell["sm51PPParticles = {\"G.+\", \
 \"u\", \"G.+\", \"U\"};\nsm51PPAmplitude = \
-ConstructAmplitude[sm51PPParticles, sm, sm]", "Input"], 
+ConstructAmplitude[sm51PPParticles, sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"],
      Cell[BoxData[RowBox[{RowBox[{"-", FractionBox[
             RowBox[{"2", " ", RowBox[{"ColorGenerator", "[", RowBox[
                  {RowBox[{"ColorIndex", "[", "4", "]"}], ",", RowBox[
@@ -24134,7 +24128,7 @@ b88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable ->
 nts/Codex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-val\
 idation/sm51-export.wl"|>], Cell["G.+, u, G.-, U", "Subsection"], 
      Cell["sm51PMParticles = {\"G.+\", \"u\", \"G.-\", \
-\"U\"};\nsm51PMAmplitude = ConstructAmplitude[sm51PMParticles, sm, sm]", 
+\"U\"};\nsm51PMAmplitude = ConstructAmplitude[sm51PMParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[
         {FractionBox[RowBox[{"2", " ", "\[ImaginaryI]", " ", 
             RowBox[{"ColorGenerator", "[", RowBox[{RowBox[{"ColorIndex", "[", 
@@ -24301,7 +24295,7 @@ b88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable ->
 nts/Codex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-val\
 idation/sm51-export.wl"|>], Cell["G.-, u, G.+, U", "Subsection"], 
      Cell["sm51MPParticles = {\"G.-\", \"u\", \"G.+\", \
-\"U\"};\nsm51MPAmplitude = ConstructAmplitude[sm51MPParticles, sm, sm]", 
+\"U\"};\nsm51MPAmplitude = ConstructAmplitude[sm51MPParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[
         {RowBox[{"-", FractionBox[RowBox[{"2", " ", "\[ImaginaryI]", " ", 
               RowBox[{"ColorGenerator", "[", RowBox[{RowBox[{"ColorIndex", 
@@ -24473,7 +24467,7 @@ b88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable ->
 nts/Codex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-val\
 idation/sm51-export.wl"|>], Cell["G.-, u, G.-, U", "Subsection"], 
      Cell["sm51MMParticles = {\"G.-\", \"u\", \"G.-\", \
-\"U\"};\nsm51MMAmplitude = ConstructAmplitude[sm51MMParticles, sm, sm]", 
+\"U\"};\nsm51MMAmplitude = ConstructAmplitude[sm51MMParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[
         {RowBox[{"-", FractionBox[RowBox[{"2", " ", RowBox[{"ColorGenerator", 
                 "[", RowBox[{RowBox[{"ColorIndex", "[", "4", "]"}], ",", 
@@ -24576,8 +24570,7 @@ sm];\nCreateArrowDiagrams[sm51Diagrams]", "Input"],
 PrepareAmplitudes[sm51DiagramAmplitudes, sm]", "Input"], 
         Cell["sm51Channels = FactorizationAmplitudeChannels[sm51PPParticles, \
 sm];\nsm51Channels", "Input"], 
-        Cell["sm51Checks = CheckAmplitudes[sm51PPAmplitude, sm51Channels, \
-sm]", "Input"]}, Closed]], Cell["C++ export and independent validation", 
+        Cell["sm51FeynmanDiagrams = CreateDiagrams[sm51PPParticles, smFeynman];\nsm51FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm51FeynmanDiagrams], smFeynman];\nsm51Checks = CheckAmplitudes[sm51PPAmplitude, sm51Channels, sm, \"FeynmanAmplitudes\" -> sm51FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]", "Input"]}, Closed]], Cell["C++ export and independent validation",
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
 family. The saved Export variable keeps the build and both independent \
@@ -24625,7 +24618,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm52"], 
      Cell["G.+, d, G.+, D", "Subsection"], Cell["sm52PPParticles = {\"G.+\", \
 \"d\", \"G.+\", \"D\"};\nsm52PPAmplitude = \
-ConstructAmplitude[sm52PPParticles, sm, sm]", "Input"], 
+ConstructAmplitude[sm52PPParticles, sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"],
      Cell[BoxData[RowBox[{RowBox[{"-", FractionBox[
             RowBox[{"2", " ", RowBox[{"ColorGenerator", "[", RowBox[
                  {RowBox[{"ColorIndex", "[", "4", "]"}], ",", RowBox[
@@ -24718,7 +24711,7 @@ b88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable ->
 nts/Codex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-val\
 idation/sm52-export.wl"|>], Cell["G.+, d, G.-, D", "Subsection"], 
      Cell["sm52PMParticles = {\"G.+\", \"d\", \"G.-\", \
-\"D\"};\nsm52PMAmplitude = ConstructAmplitude[sm52PMParticles, sm, sm]", 
+\"D\"};\nsm52PMAmplitude = ConstructAmplitude[sm52PMParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[
         {FractionBox[RowBox[{"2", " ", "\[ImaginaryI]", " ", 
             RowBox[{"ColorGenerator", "[", RowBox[{RowBox[{"ColorIndex", "[", 
@@ -24885,7 +24878,7 @@ b88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable ->
 nts/Codex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-val\
 idation/sm52-export.wl"|>], Cell["G.-, d, G.+, D", "Subsection"], 
      Cell["sm52MPParticles = {\"G.-\", \"d\", \"G.+\", \
-\"D\"};\nsm52MPAmplitude = ConstructAmplitude[sm52MPParticles, sm, sm]", 
+\"D\"};\nsm52MPAmplitude = ConstructAmplitude[sm52MPParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[
         {RowBox[{"-", FractionBox[RowBox[{"2", " ", "\[ImaginaryI]", " ", 
               RowBox[{"ColorGenerator", "[", RowBox[{RowBox[{"ColorIndex", 
@@ -25057,7 +25050,7 @@ b88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable ->
 nts/Codex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-val\
 idation/sm52-export.wl"|>], Cell["G.-, d, G.-, D", "Subsection"], 
      Cell["sm52MMParticles = {\"G.-\", \"d\", \"G.-\", \
-\"D\"};\nsm52MMAmplitude = ConstructAmplitude[sm52MMParticles, sm, sm]", 
+\"D\"};\nsm52MMAmplitude = ConstructAmplitude[sm52MMParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[
         {RowBox[{"-", FractionBox[RowBox[{"2", " ", RowBox[{"ColorGenerator", 
                 "[", RowBox[{RowBox[{"ColorIndex", "[", "4", "]"}], ",", 
@@ -25160,8 +25153,7 @@ sm];\nCreateArrowDiagrams[sm52Diagrams]", "Input"],
 PrepareAmplitudes[sm52DiagramAmplitudes, sm]", "Input"], 
         Cell["sm52Channels = FactorizationAmplitudeChannels[sm52PPParticles, \
 sm];\nsm52Channels", "Input"], 
-        Cell["sm52Checks = CheckAmplitudes[sm52PPAmplitude, sm52Channels, \
-sm]", "Input"]}, Closed]], Cell["C++ export and independent validation", 
+        Cell["sm52FeynmanDiagrams = CreateDiagrams[sm52PPParticles, smFeynman];\nsm52FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm52FeynmanDiagrams], smFeynman];\nsm52Checks = CheckAmplitudes[sm52PPAmplitude, sm52Channels, sm, \"FeynmanAmplitudes\" -> sm52FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]", "Input"]}, Closed]], Cell["C++ export and independent validation",
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
 family. The saved Export variable keeps the build and both independent \
@@ -25209,7 +25201,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm53"], 
      Cell["ne, E, W-, h", "Subsection"], Cell["sm53Particles = {\"ne\", \
 \"E\", \"W-\", \"h\"};\nsm53Amplitude = ConstructAmplitude[sm53Particles, sm, \
-sm]", "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
+sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
           RowBox[{SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
                "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd7\
 7e7", "Real"], Editable -> False], "2"], " ", RowBox[
@@ -25327,7 +25319,7 @@ CreateDiagrams[sm53Particles, sm];\nCreateArrowDiagrams[sm53Diagrams]",
          "sm53PreparedDiagrams = PrepareAmplitudes[sm53DiagramAmplitudes, \
 sm]", "Input"], Cell["sm53Channels = \
 FactorizationAmplitudeChannels[sm53Particles, sm];\nsm53Channels", "Input"], 
-        Cell["sm53Checks = CheckAmplitudes[sm53Amplitude, sm53Channels, sm]", 
+        Cell["sm53FeynmanDiagrams = CreateDiagrams[sm53Particles, smFeynman];\nsm53FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm53FeynmanDiagrams], smFeynman];\nsm53Checks = CheckAmplitudes[sm53Amplitude, sm53Channels, sm, \"FeynmanAmplitudes\" -> sm53FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -25369,7 +25361,7 @@ h.", "Text"], Cell[TextData[{"Original reference: ",
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm54"], 
      Cell["u, D, W-, h", "Subsection"], Cell["sm54Particles = {\"u\", \"D\", \
-\"W-\", \"h\"};\nsm54Amplitude = ConstructAmplitude[sm54Particles, sm, sm]", 
+\"W-\", \"h\"};\nsm54Amplitude = ConstructAmplitude[sm54Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
           RowBox[{RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", 
                   "[", "1", "]"}], ",", RowBox[{"ColorIndex", "[", "2", 
@@ -25526,7 +25518,7 @@ CreateDiagrams[sm54Particles, sm];\nCreateArrowDiagrams[sm54Diagrams]",
          "sm54PreparedDiagrams = PrepareAmplitudes[sm54DiagramAmplitudes, \
 sm]", "Input"], Cell["sm54Channels = \
 FactorizationAmplitudeChannels[sm54Particles, sm];\nsm54Channels", "Input"], 
-        Cell["sm54Checks = CheckAmplitudes[sm54Amplitude, sm54Channels, sm]", 
+        Cell["sm54FeynmanDiagrams = CreateDiagrams[sm54Particles, smFeynman];\nsm54FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm54FeynmanDiagrams], smFeynman];\nsm54Checks = CheckAmplitudes[sm54Amplitude, sm54Channels, sm, \"FeynmanAmplitudes\" -> sm54FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -25570,7 +25562,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm55"], 
      Cell["Ne, e, W+, h", "Subsection"], Cell["sm55Particles = {\"Ne\", \
 \"e\", \"W+\", \"h\"};\nsm55Amplitude = ConstructAmplitude[sm55Particles, sm, \
-sm]", "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
+sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
           RowBox[{SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
                "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd7\
 7e7", "Real"], Editable -> False], "2"], " ", RowBox[
@@ -25686,7 +25678,7 @@ CreateDiagrams[sm55Particles, sm];\nCreateArrowDiagrams[sm55Diagrams]",
          "sm55PreparedDiagrams = PrepareAmplitudes[sm55DiagramAmplitudes, \
 sm]", "Input"], Cell["sm55Channels = \
 FactorizationAmplitudeChannels[sm55Particles, sm];\nsm55Channels", "Input"], 
-        Cell["sm55Checks = CheckAmplitudes[sm55Amplitude, sm55Channels, sm]", 
+        Cell["sm55FeynmanDiagrams = CreateDiagrams[sm55Particles, smFeynman];\nsm55FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm55FeynmanDiagrams], smFeynman];\nsm55Checks = CheckAmplitudes[sm55Amplitude, sm55Channels, sm, \"FeynmanAmplitudes\" -> sm55FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -25728,7 +25720,7 @@ h.", "Text"], Cell[TextData[{"Original reference: ",
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm56"], 
      Cell["U, d, W+, h", "Subsection"], Cell["sm56Particles = {\"U\", \"d\", \
-\"W+\", \"h\"};\nsm56Amplitude = ConstructAmplitude[sm56Particles, sm, sm]", 
+\"W+\", \"h\"};\nsm56Amplitude = ConstructAmplitude[sm56Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
           RowBox[{RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", 
                   "[", "2", "]"}], ",", RowBox[{"ColorIndex", "[", "1", 
@@ -25885,7 +25877,7 @@ CreateDiagrams[sm56Particles, sm];\nCreateArrowDiagrams[sm56Diagrams]",
          "sm56PreparedDiagrams = PrepareAmplitudes[sm56DiagramAmplitudes, \
 sm]", "Input"], Cell["sm56Channels = \
 FactorizationAmplitudeChannels[sm56Particles, sm];\nsm56Channels", "Input"], 
-        Cell["sm56Checks = CheckAmplitudes[sm56Amplitude, sm56Channels, sm]", 
+        Cell["sm56FeynmanDiagrams = CreateDiagrams[sm56Particles, smFeynman];\nsm56FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm56FeynmanDiagrams], smFeynman];\nsm56Checks = CheckAmplitudes[sm56Amplitude, sm56Channels, sm, \"FeynmanAmplitudes\" -> sm56FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -25929,7 +25921,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm57"], 
      Cell["A.+, W+, U, d", "Subsection"], Cell["sm57PParticles = {\"A.+\", \
 \"W+\", \"U\", \"d\"};\nsm57PAmplitude = ConstructAmplitude[sm57PParticles, \
-sm, sm]", "Input"], Cell[BoxData[FractionBox[RowBox[{SqrtBox["2"], " ", 
+sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[FractionBox[RowBox[{SqrtBox["2"], " ",
           RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", "[", "4", 
                 "]"}], ",", RowBox[{"ColorIndex", "[", "3", "]"}]}], "]"}], 
           " ", SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
@@ -26032,7 +26024,7 @@ ruction.wl", "ValidationReport" -> "/Users/neil/Documents/Codex/2026-09-24/he\
 lp-me-make-this-response-more/output/sm-four-point-validation/sm57-export.wl"\
 |>], Cell["A.-, W+, U, d", "Subsection"], Cell["sm57MParticles = {\"A.-\", \
 \"W+\", \"U\", \"d\"};\nsm57MAmplitude = ConstructAmplitude[sm57MParticles, \
-sm, sm]", "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
+sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
           RowBox[{SqrtBox["2"], " ", RowBox[{"ColorDelta", "[", 
               RowBox[{RowBox[{"ColorIndex", "[", "4", "]"}], ",", 
                 RowBox[{"ColorIndex", "[", "3", "]"}]}], "]"}], " ", 
@@ -26258,7 +26250,7 @@ PrepareAmplitudes[sm57DiagramAmplitudes, sm]", "Input"],
         Cell["sm57Channels = FactorizationAmplitudeChannels[sm57PParticles, \
 sm];\nsm57Channels", "Input"], 
         Cell[
-         "sm57Checks = CheckAmplitudes[sm57PAmplitude, sm57Channels, sm]", 
+         "sm57FeynmanDiagrams = CreateDiagrams[sm57PParticles, smFeynman];\nsm57FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm57FeynmanDiagrams], smFeynman];\nsm57Checks = CheckAmplitudes[sm57PAmplitude, sm57Channels, sm, \"FeynmanAmplitudes\" -> sm57FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -26303,7 +26295,7 @@ Ne, e. Physical export: A, W+ -> ne, E.", "Text"],
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm58"], 
      Cell["A.+, W+, Ne, e", "Subsection"], Cell["sm58PParticles = {\"A.+\", \
 \"W+\", \"Ne\", \"e\"};\nsm58PAmplitude = ConstructAmplitude[sm58PParticles, \
-sm, sm]", "Input"], Cell[BoxData[FractionBox[RowBox[{SqrtBox["2"], " ", 
+sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[FractionBox[RowBox[{SqrtBox["2"], " ",
           SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
              "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e\
 7", "Real"], Editable -> False], "2"], " ", InterpretationBox[
@@ -26373,7 +26365,7 @@ truction.wl", "ValidationReport" -> "/Users/neil/Documents/Codex/2026-09-24/h\
 elp-me-make-this-response-more/output/sm-four-point-validation/sm58-export.wl\
 "|>], Cell["A.-, W+, Ne, e", "Subsection"], Cell["sm58MParticles = {\"A.-\", \
 \"W+\", \"Ne\", \"e\"};\nsm58MAmplitude = ConstructAmplitude[sm58MParticles, \
-sm, sm]", "Input"], Cell[BoxData[FractionBox[RowBox[{SqrtBox["2"], " ", 
+sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[FractionBox[RowBox[{SqrtBox["2"], " ",
           SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
              "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e\
 7", "Real"], Editable -> False], "2"], " ", InterpretationBox[
@@ -26452,7 +26444,7 @@ CreateDiagrams[sm58PParticles, sm];\nCreateArrowDiagrams[sm58Diagrams]",
 sm]", "Input"], Cell["sm58Channels = \
 FactorizationAmplitudeChannels[sm58PParticles, sm];\nsm58Channels", "Input"], 
         Cell[
-         "sm58Checks = CheckAmplitudes[sm58PAmplitude, sm58Channels, sm]", 
+         "sm58FeynmanDiagrams = CreateDiagrams[sm58PParticles, smFeynman];\nsm58FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm58FeynmanDiagrams], smFeynman];\nsm58Checks = CheckAmplitudes[sm58PAmplitude, sm58Channels, sm, \"FeynmanAmplitudes\" -> sm58FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -26497,7 +26489,7 @@ A.+, W-. Physical export: E, ne -> A, W+.", "Text"],
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm59"], 
      Cell["E, ne, A.+, W-", "Subsection"], Cell["sm59PParticles = {\"E\", \
 \"ne\", \"A.+\", \"W-\"};\nsm59PAmplitude = \
-ConstructAmplitude[sm59PParticles, sm, sm]", "Input"], 
+ConstructAmplitude[sm59PParticles, sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"],
      Cell[BoxData[RowBox[{"-", FractionBox[RowBox[
            {SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
                "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd7\
@@ -26578,7 +26570,7 @@ b88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable ->
 ts/Codex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-vali\
 dation/sm59-export.wl"|>], Cell["E, ne, A.-, W-", "Subsection"], 
      Cell["sm59MParticles = {\"E\", \"ne\", \"A.-\", \"W-\"};\nsm59MAmplitude \
-= ConstructAmplitude[sm59MParticles, sm, sm]", "Input"], 
+= ConstructAmplitude[sm59MParticles, sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"],
      Cell[BoxData[RowBox[{"-", FractionBox[RowBox[{SqrtBox["2"], " ", 
             SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", "30a3\
 398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
@@ -26681,7 +26673,7 @@ PrepareAmplitudes[sm59DiagramAmplitudes, sm]", "Input"],
         Cell["sm59Channels = FactorizationAmplitudeChannels[sm59PParticles, \
 sm];\nsm59Channels", "Input"], 
         Cell[
-         "sm59Checks = CheckAmplitudes[sm59PAmplitude, sm59Channels, sm]", 
+         "sm59FeynmanDiagrams = CreateDiagrams[sm59PParticles, smFeynman];\nsm59FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm59FeynmanDiagrams], smFeynman];\nsm59Checks = CheckAmplitudes[sm59PAmplitude, sm59Channels, sm, \"FeynmanAmplitudes\" -> sm59FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -26727,7 +26719,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm60"], 
      Cell["E, ne, Z, W-", "Subsection"], Cell["sm60Particles = {\"E\", \
 \"ne\", \"Z\", \"W-\"};\nsm60Amplitude = ConstructAmplitude[sm60Particles, \
-sm, sm]", "Input"], Cell[BoxData[FractionBox[
+sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[FractionBox[
         RowBox[{FractionBox[RowBox[{SuperscriptBox[InterpretationBox["EE", 
                ModelParameter["EE", "30a3398a0cbb88a8e4517e90d53df2fd406e010f\
 b396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"], " ", 
@@ -27082,7 +27074,7 @@ CreateDiagrams[sm60Particles, sm];\nCreateArrowDiagrams[sm60Diagrams]",
          "sm60PreparedDiagrams = PrepareAmplitudes[sm60DiagramAmplitudes, \
 sm]", "Input"], Cell["sm60Channels = \
 FactorizationAmplitudeChannels[sm60Particles, sm];\nsm60Channels", "Input"], 
-        Cell["sm60Checks = CheckAmplitudes[sm60Amplitude, sm60Channels, sm]", 
+        Cell["sm60FeynmanDiagrams = CreateDiagrams[sm60Particles, smFeynman];\nsm60FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm60FeynmanDiagrams], smFeynman];\nsm60Checks = CheckAmplitudes[sm60Amplitude, sm60Channels, sm, \"FeynmanAmplitudes\" -> sm60FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -27127,7 +27119,7 @@ W-.", "Text"], Cell[TextData[{"Original reference: ",
 have separate constructions and C++ validations here.", "Text", 
       CellTags -> "manual-order-note-sm61"], Cell["U, d, Z, W+", 
       "Subsection"], Cell["sm61Particles = {\"U\", \"d\", \"Z\", \
-\"W+\"};\nsm61Amplitude = ConstructAmplitude[sm61Particles, sm, sm]", 
+\"W+\"};\nsm61Amplitude = ConstructAmplitude[sm61Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[FractionBox[
         RowBox[{RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", "[", 
                 "2", "]"}], ",", RowBox[{"ColorIndex", "[", "1", "]"}]}], 
@@ -28101,7 +28093,7 @@ sm];\nCreateArrowDiagrams[sm61Diagrams]", "Input"],
 PrepareAmplitudes[sm61DiagramAmplitudes, sm]", "Input"], 
         Cell["sm61Channels = FactorizationAmplitudeChannels[sm61Particles, \
 sm];\nsm61Channels", "Input"], 
-        Cell["sm61Checks = CheckAmplitudes[sm61Amplitude, sm61Channels, sm]", 
+        Cell["sm61FeynmanDiagrams = CreateDiagrams[sm61Particles, smFeynman];\nsm61FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm61FeynmanDiagrams], smFeynman];\nsm61Checks = CheckAmplitudes[sm61Amplitude, sm61Channels, sm, \"FeynmanAmplitudes\" -> sm61FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -28144,7 +28136,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
                HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
             "InlineFormula"], "."}], "Text", CellTags -> 
           "manual-link-sm61C"], Cell["sm61CParticles = {\"D\", \"u\", \"Z\", \
-\"W-\"};\nsm61CAmplitude = ConstructAmplitude[sm61CParticles, sm, sm]", 
+\"W-\"};\nsm61CAmplitude = ConstructAmplitude[sm61CParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
          "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
              RowBox[{RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", 
                      "[", "2", "]"}], ",", RowBox[{"ColorIndex", "[", "1", 
@@ -29156,7 +29148,7 @@ contains copied photon calls. The current negative-helicity calculation uses \
 G.- throughout.", "Text", CellTags -> "manual-order-note-sm62"], 
      Cell["G.+, W+, U, d", "Subsection"], Cell["sm62PParticles = {\"G.+\", \
 \"W+\", \"U\", \"d\"};\nsm62PAmplitude = ConstructAmplitude[sm62PParticles, \
-sm, sm]", "Input"], Cell[BoxData[FractionBox[RowBox[{SqrtBox["2"], " ", 
+sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[FractionBox[RowBox[{SqrtBox["2"], " ",
           RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", "[", "4", 
                 "]"}], ",", RowBox[{
                 "ConstructiveDiagrams`Private`colorInternalIndex", "[", 
@@ -29228,7 +29220,7 @@ ruction.wl", "ValidationReport" -> "/Users/neil/Documents/Codex/2026-09-24/he\
 lp-me-make-this-response-more/output/sm-four-point-validation/sm62-export.wl"\
 |>], Cell["G.-, W+, U, d", "Subsection"], Cell["sm62MParticles = {\"G.-\", \
 \"W+\", \"U\", \"d\"};\nsm62MAmplitude = ConstructAmplitude[sm62MParticles, \
-sm, sm]", "Input"], Cell[BoxData[FractionBox[RowBox[{SqrtBox["2"], " ", 
+sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[FractionBox[RowBox[{SqrtBox["2"], " ",
           RowBox[{"ColorDelta", "[", RowBox[{RowBox[{"ColorIndex", "[", "4", 
                 "]"}], ",", RowBox[{
                 "ConstructiveDiagrams`Private`colorInternalIndex", "[", 
@@ -29351,7 +29343,7 @@ CreateDiagrams[sm62PParticles, sm];\nCreateArrowDiagrams[sm62Diagrams]",
 sm]", "Input"], Cell["sm62Channels = \
 FactorizationAmplitudeChannels[sm62PParticles, sm];\nsm62Channels", "Input"], 
         Cell[
-         "sm62Checks = CheckAmplitudes[sm62PAmplitude, sm62Channels, sm]", 
+         "sm62FeynmanDiagrams = CreateDiagrams[sm62PParticles, smFeynman];\nsm62FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm62FeynmanDiagrams], smFeynman];\nsm62Checks = CheckAmplitudes[sm62PAmplitude, sm62Channels, sm, \"FeynmanAmplitudes\" -> sm62FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -29395,7 +29387,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm63"], 
      Cell["h, h, h, h", "Subsection"], Cell["sm63Particles = {\"h\", \"h\", \
-\"h\", \"h\"};\nsm63Amplitude = ConstructAmplitude[sm63Particles, sm, sm]", 
+\"h\", \"h\"};\nsm63Amplitude = ConstructAmplitude[sm63Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
           RowBox[{"3", " ", SuperscriptBox[InterpretationBox["EE", 
               ModelParameter["EE", "30a3398a0cbb88a8e4517e90d53df2fd406e010fb\
@@ -29463,7 +29455,7 @@ sm];\nCreateArrowDiagrams[sm63Diagrams]", "Input"],
 PrepareAmplitudes[sm63DiagramAmplitudes, sm]", "Input"], 
         Cell["sm63Channels = FactorizationAmplitudeChannels[sm63Particles, \
 sm];\nsm63Channels", "Input"], 
-        Cell["sm63Checks = CheckAmplitudes[sm63Amplitude, sm63Channels, sm]", 
+        Cell["sm63FeynmanDiagrams = CreateDiagrams[sm63Particles, smFeynman];\nsm63FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm63FeynmanDiagrams], smFeynman];\nsm63Checks = CheckAmplitudes[sm63Amplitude, sm63Channels, sm, \"FeynmanAmplitudes\" -> sm63FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -29526,7 +29518,7 @@ The raw failure and its numerical diagnostics are preserved below.", "Text",
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm64"], 
      Cell["h, h, Z, Z", "Subsection"], Cell["sm64Particles = {\"h\", \"h\", \
-\"Z\", \"Z\"};\nsm64Amplitude = ConstructAmplitude[sm64Particles, sm, sm]", 
+\"Z\", \"Z\"};\nsm64Amplitude = ConstructAmplitude[sm64Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[FractionBox[
         RowBox[{SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
              "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e\
@@ -29704,7 +29696,7 @@ CreateDiagrams[sm64Particles, sm];\nCreateArrowDiagrams[sm64Diagrams]",
          "sm64PreparedDiagrams = PrepareAmplitudes[sm64DiagramAmplitudes, \
 sm]", "Input"], Cell["sm64Channels = \
 FactorizationAmplitudeChannels[sm64Particles, sm];\nsm64Channels", "Input"], 
-        Cell["sm64Checks = CheckAmplitudes[sm64Amplitude, sm64Channels, sm]", 
+        Cell["sm64FeynmanDiagrams = CreateDiagrams[sm64Particles, smFeynman];\nsm64FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm64FeynmanDiagrams], smFeynman];\nsm64Checks = CheckAmplitudes[sm64Amplitude, sm64Channels, sm, \"FeynmanAmplitudes\" -> sm64FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -29750,7 +29742,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
 3 and 4 relative to the ordering used here.", "Text", 
       CellTags -> "manual-order-note-sm65"], Cell["h, h, W-, W+", 
       "Subsection"], Cell["sm65Particles = {\"h\", \"h\", \"W-\", \
-\"W+\"};\nsm65Amplitude = ConstructAmplitude[sm65Particles, sm, sm]", 
+\"W+\"};\nsm65Amplitude = ConstructAmplitude[sm65Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[FractionBox[
         RowBox[{SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
              "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e\
@@ -29942,7 +29934,7 @@ CreateDiagrams[sm65Particles, sm];\nCreateArrowDiagrams[sm65Diagrams]",
          "sm65PreparedDiagrams = PrepareAmplitudes[sm65DiagramAmplitudes, \
 sm]", "Input"], Cell["sm65Channels = \
 FactorizationAmplitudeChannels[sm65Particles, sm];\nsm65Channels", "Input"], 
-        Cell["sm65Checks = CheckAmplitudes[sm65Amplitude, sm65Channels, sm]", 
+        Cell["sm65FeynmanDiagrams = CreateDiagrams[sm65Particles, smFeynman];\nsm65FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm65FeynmanDiagrams], smFeynman];\nsm65Checks = CheckAmplitudes[sm65Amplitude, sm65Channels, sm, \"FeynmanAmplitudes\" -> sm65FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -29985,7 +29977,7 @@ W+, W-. Physical export: A, h -> W-, W+.", "Text"],
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm66"], 
      Cell["A.+, h, W+, W-", "Subsection"], Cell["sm66PParticles = {\"A.+\", \
 \"h\", \"W+\", \"W-\"};\nsm66PAmplitude = ConstructAmplitude[sm66PParticles, \
-sm, sm]", "Input"], Cell[BoxData[FractionBox[RowBox[{SqrtBox["2"], " ", 
+sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[FractionBox[RowBox[{SqrtBox["2"], " ",
           SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
              "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e\
 7", "Real"], Editable -> False], "2"], " ", InterpretationBox[
@@ -30060,7 +30052,7 @@ truction.wl", "ValidationReport" -> "/Users/neil/Documents/Codex/2026-09-24/h\
 elp-me-make-this-response-more/output/sm-four-point-validation/sm66-export.wl\
 "|>], Cell["A.-, h, W+, W-", "Subsection"], Cell["sm66MParticles = {\"A.-\", \
 \"h\", \"W+\", \"W-\"};\nsm66MAmplitude = ConstructAmplitude[sm66MParticles, \
-sm, sm]", "Input"], Cell[BoxData[FractionBox[RowBox[{SqrtBox["2"], " ", 
+sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell[BoxData[FractionBox[RowBox[{SqrtBox["2"], " ",
           SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
              "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e\
 7", "Real"], Editable -> False], "2"], " ", InterpretationBox[
@@ -30149,7 +30141,7 @@ CreateDiagrams[sm66PParticles, sm];\nCreateArrowDiagrams[sm66Diagrams]",
 sm]", "Input"], Cell["sm66Channels = \
 FactorizationAmplitudeChannels[sm66PParticles, sm];\nsm66Channels", "Input"], 
         Cell[
-         "sm66Checks = CheckAmplitudes[sm66PAmplitude, sm66Channels, sm]", 
+         "sm66FeynmanDiagrams = CreateDiagrams[sm66PParticles, smFeynman];\nsm66FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm66FeynmanDiagrams], smFeynman];\nsm66Checks = CheckAmplitudes[sm66PAmplitude, sm66Channels, sm, \"FeynmanAmplitudes\" -> sm66FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -30194,7 +30186,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm67"], 
      Cell["Z, h, W+, W-", "Subsection"], Cell["sm67Particles = {\"Z\", \"h\", \
-\"W+\", \"W-\"};\nsm67Amplitude = ConstructAmplitude[sm67Particles, sm, sm]", 
+\"W+\", \"W-\"};\nsm67Amplitude = ConstructAmplitude[sm67Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
           RowBox[{SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
                "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd7\
@@ -31363,7 +31355,7 @@ sm];\nCreateArrowDiagrams[sm67Diagrams]", "Input"],
 PrepareAmplitudes[sm67DiagramAmplitudes, sm]", "Input"], 
         Cell["sm67Channels = FactorizationAmplitudeChannels[sm67Particles, \
 sm];\nsm67Channels", "Input"], 
-        Cell["sm67Checks = CheckAmplitudes[sm67Amplitude, sm67Channels, sm]", 
+        Cell["sm67FeynmanDiagrams = CreateDiagrams[sm67Particles, smFeynman];\nsm67FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm67FeynmanDiagrams], smFeynman];\nsm67Checks = CheckAmplitudes[sm67Amplitude, sm67Channels, sm, \"FeynmanAmplitudes\" -> sm67FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -31406,7 +31398,7 @@ W-, W+. Physical export: A, A -> W+, W-.", "Text"],
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm68"], 
      Cell["A.+, A.+, W-, W+", "Subsection"], Cell["sm68PPParticles = \
 {\"A.+\", \"A.+\", \"W-\", \"W+\"};\nsm68PPAmplitude = \
-ConstructAmplitude[sm68PPParticles, sm, sm]", "Input"], 
+ConstructAmplitude[sm68PPParticles, sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"],
      Cell[BoxData[FractionBox[RowBox[{"2", " ", SuperscriptBox[
            InterpretationBox["EE", ModelParameter["EE", 
              "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e\
@@ -31445,7 +31437,7 @@ fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"]}],
 dex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-validatio\
 n/sm68-export.wl"|>], Cell["A.+, A.-, W-, W+", "Subsection"], 
      Cell["sm68PMParticles = {\"A.+\", \"A.-\", \"W-\", \
-\"W+\"};\nsm68PMAmplitude = ConstructAmplitude[sm68PMParticles, sm, sm]", 
+\"W+\"};\nsm68PMAmplitude = ConstructAmplitude[sm68PMParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[{FractionBox["1", "2"], " ", 
          RowBox[{"(", RowBox[{FractionBox[RowBox[{"2", " ", SuperscriptBox[
                  InterpretationBox["EE", ModelParameter["EE", "30a3398a0cbb88\
@@ -31560,7 +31552,7 @@ df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"]], Editable -> False]}]]}],
 dex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-validatio\
 n/sm68-export.wl"|>], Cell["A.-, A.+, W-, W+", "Subsection"], 
      Cell["sm68MPParticles = {\"A.-\", \"A.+\", \"W-\", \
-\"W+\"};\nsm68MPAmplitude = ConstructAmplitude[sm68MPParticles, sm, sm]", 
+\"W+\"};\nsm68MPAmplitude = ConstructAmplitude[sm68MPParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[{FractionBox["1", "2"], " ", 
          RowBox[{"(", RowBox[{FractionBox[RowBox[{"2", " ", SuperscriptBox[
                  InterpretationBox["EE", ModelParameter["EE", "30a3398a0cbb88\
@@ -31675,7 +31667,7 @@ df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"]], Editable -> False]}]]}],
 dex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-validatio\
 n/sm68-export.wl"|>], Cell["A.-, A.-, W-, W+", "Subsection"], 
      Cell["sm68MMParticles = {\"A.-\", \"A.-\", \"W-\", \
-\"W+\"};\nsm68MMAmplitude = ConstructAmplitude[sm68MMParticles, sm, sm]", 
+\"W+\"};\nsm68MMAmplitude = ConstructAmplitude[sm68MMParticles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[FractionBox[RowBox[{"2", " ", 
           SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
              "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e\
@@ -31724,8 +31716,7 @@ sm];\nCreateArrowDiagrams[sm68Diagrams]", "Input"],
 PrepareAmplitudes[sm68DiagramAmplitudes, sm]", "Input"], 
         Cell["sm68Channels = FactorizationAmplitudeChannels[sm68PPParticles, \
 sm];\nsm68Channels", "Input"], 
-        Cell["sm68Checks = CheckAmplitudes[sm68PPAmplitude, sm68Channels, \
-sm]", "Input"]}, Closed]], Cell["C++ export and independent validation", 
+        Cell["sm68FeynmanDiagrams = CreateDiagrams[sm68PPParticles, smFeynman];\nsm68FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm68FeynmanDiagrams], smFeynman];\nsm68Checks = CheckAmplitudes[sm68PPAmplitude, sm68Channels, sm, \"FeynmanAmplitudes\" -> sm68FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]", "Input"]}, Closed]], Cell["C++ export and independent validation",
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
 family. The saved Export variable keeps the build and both independent \
@@ -31773,7 +31764,7 @@ W-, W+. Physical export: A, Z -> W+, W-.", "Text"],
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm69"], 
      Cell["A.+, Z, W-, W+", "Subsection"], Cell["sm69PParticles = {\"A.+\", \
 \"Z\", \"W-\", \"W+\"};\nsm69PAmplitude = ConstructAmplitude[sm69PParticles, \
-sm, sm]", "Input"], Cell["Saved completed construction: 388.1 s; complexity \
+sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell["Saved completed construction: 388.1 s; complexity \
 85. These are its actual final checker results; full report: \
 /Users/neil/Documents/Codex/2026-09-24/help-me-make-this-response-more/output\
 /sm-four-point-validation/final-sm69P-original-seed-construction.wl", "Text", 
@@ -32983,7 +32974,7 @@ nal-sm69P-original-seed-construction.wl", "ValidationReport" -> "/Users/neil/\
 Documents/Codex/2026-09-24/help-me-make-this-response-more/output/sm-four-poi\
 nt-validation/sm69-export.wl"|>], Cell["A.-, Z, W-, W+", "Subsection"], 
      Cell["sm69MParticles = {\"A.-\", \"Z\", \"W-\", \"W+\"};\nsm69MAmplitude \
-= ConstructAmplitude[sm69MParticles, sm, sm]", "Input"], 
+= ConstructAmplitude[sm69MParticles, sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"],
      Cell["Saved completed construction: 649.3 s; complexity 127. These are \
 its actual final checker results; full report: \
 /Users/neil/Documents/Codex/2026-09-24/help-me-make-this-response-more/output\
@@ -34155,7 +34146,7 @@ PrepareAmplitudes[sm69DiagramAmplitudes, sm]", "Input"],
         Cell["sm69Channels = FactorizationAmplitudeChannels[sm69PParticles, \
 sm];\nsm69Channels", "Input"], 
         Cell[
-         "sm69Checks = CheckAmplitudes[sm69PAmplitude, sm69Channels, sm]", 
+         "sm69FeynmanDiagrams = CreateDiagrams[sm69PParticles, smFeynman];\nsm69FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm69FeynmanDiagrams], smFeynman];\nsm69Checks = CheckAmplitudes[sm69PAmplitude, sm69Channels, sm, \"FeynmanAmplitudes\" -> sm69FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -34199,7 +34190,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm70"], 
      Cell["Z, Z, Z, Z", "Subsection"], Cell["sm70Particles = {\"Z\", \"Z\", \
-\"Z\", \"Z\"};\nsm70Amplitude = ConstructAmplitude[sm70Particles, sm, sm]", 
+\"Z\", \"Z\"};\nsm70Amplitude = ConstructAmplitude[sm70Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
           RowBox[{SuperscriptBox[InterpretationBox["EE", ModelParameter["EE", 
                "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd7\
@@ -34330,7 +34321,7 @@ CreateDiagrams[sm70Particles, sm];\nCreateArrowDiagrams[sm70Diagrams]",
          "sm70PreparedDiagrams = PrepareAmplitudes[sm70DiagramAmplitudes, \
 sm]", "Input"], Cell["sm70Channels = \
 FactorizationAmplitudeChannels[sm70Particles, sm];\nsm70Channels", "Input"], 
-        Cell["sm70Checks = CheckAmplitudes[sm70Amplitude, sm70Channels, sm]", 
+        Cell["sm70FeynmanDiagrams = CreateDiagrams[sm70Particles, smFeynman];\nsm70FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm70FeynmanDiagrams], smFeynman];\nsm70Checks = CheckAmplitudes[sm70Amplitude, sm70Channels, sm, \"FeynmanAmplitudes\" -> sm70FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -34373,7 +34364,7 @@ project to spinasOutputDirectory when you rerun it. Full report: \
             HyperlinkAction -> "Recycled"}, "HyperlinkTemplate"]], 
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm71"], 
      Cell["Z, Z, W-, W+", "Subsection"], Cell["sm71Particles = {\"Z\", \"Z\", \
-\"W-\", \"W+\"};\nsm71Amplitude = ConstructAmplitude[sm71Particles, sm, sm]", 
+\"W-\", \"W+\"};\nsm71Amplitude = ConstructAmplitude[sm71Particles, sm, sm, \"FeynmanModel\" -> smFeynman]",
       "Input"], Cell["Saved completed construction: 825.4 s; complexity 1757. \
 These are its actual final checker results; full report: \
 /Users/neil/Documents/Codex/2026-09-24/help-me-make-this-response-more/output\
@@ -44805,7 +44796,7 @@ sm];\nCreateArrowDiagrams[sm71Diagrams]", "Input"],
 PrepareAmplitudes[sm71DiagramAmplitudes, sm]", "Input"], 
         Cell["sm71Channels = FactorizationAmplitudeChannels[sm71Particles, \
 sm];\nsm71Channels", "Input"], 
-        Cell["sm71Checks = CheckAmplitudes[sm71Amplitude, sm71Channels, sm]", 
+        Cell["sm71FeynmanDiagrams = CreateDiagrams[sm71Particles, smFeynman];\nsm71FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm71FeynmanDiagrams], smFeynman];\nsm71Checks = CheckAmplitudes[sm71Amplitude, sm71Channels, sm, \"FeynmanAmplitudes\" -> sm71FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -44848,7 +44839,7 @@ W-, W-. Physical export: W+, W+ -> W+, W+.", "Text"],
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm72"], 
      Cell["W+, W+, W-, W-", "Subsection"], Cell["sm72Particles = {\"W+\", \
 \"W+\", \"W-\", \"W-\"};\nsm72Amplitude = ConstructAmplitude[sm72Particles, \
-sm, sm]", "Input"], Cell["Saved completed construction: 789.7 s; complexity \
+sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"], Cell["Saved completed construction: 789.7 s; complexity \
 1976. These are its actual final checker results; full report: \
 /Users/neil/Documents/Codex/2026-09-24/help-me-make-this-response-more/output\
 /sm-four-point-validation/final-sm72-original-seed-construction.wl", "Text", 
@@ -58440,7 +58431,7 @@ sm];\nCreateArrowDiagrams[sm72Diagrams]", "Input"],
 PrepareAmplitudes[sm72DiagramAmplitudes, sm]", "Input"], 
         Cell["sm72Channels = FactorizationAmplitudeChannels[sm72Particles, \
 sm];\nsm72Channels", "Input"], 
-        Cell["sm72Checks = CheckAmplitudes[sm72Amplitude, sm72Channels, sm]", 
+        Cell["sm72FeynmanDiagrams = CreateDiagrams[sm72Particles, smFeynman];\nsm72FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm72FeynmanDiagrams], smFeynman];\nsm72Checks = CheckAmplitudes[sm72Amplitude, sm72Channels, sm, \"FeynmanAmplitudes\" -> sm72FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \
@@ -58483,7 +58474,7 @@ G.-, G.-. Physical export: G, G -> G, G.", "Text"],
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm73"], 
      Cell["G.+, G.+, G.+, G.+", "Subsection"], Cell["sm73PPPPParticles = \
 {\"G.+\", \"G.+\", \"G.+\", \"G.+\"};\nsm73PPPPAmplitude = \
-ConstructAmplitude[sm73PPPPParticles, sm, sm]", "Input"], 
+ConstructAmplitude[sm73PPPPParticles, sm, sm, \"FeynmanModel\" -> smFeynman]", "Input"],
      Cell[BoxData["0"], "Output", CellLabel -> "Saved completed result:", 
       GeneratedCell -> True, CellAutoOverwrite -> True, 
       CellTags -> "hepcat-cache-amplitude-sm73PPPP", 
@@ -58497,7 +58488,7 @@ alidation/sm73-export.wl", "ValidationClass" ->
 help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
 ynman-reference.wl"|>], Cell["G.+, G.+, G.+, G.-", "Subsection"], 
      Cell["sm73PPPMParticles = {\"G.+\", \"G.+\", \"G.+\", \
-\"G.-\"};\nsm73PPPMAmplitude = ConstructAmplitude[sm73PPPMParticles, sm, sm]"\
+\"G.-\"};\nsm73PPPMAmplitude = ConstructAmplitude[sm73PPPMParticles, sm, sm, \"FeynmanModel\" -> smFeynman]"\
 , "Input"], Cell[BoxData["0"], "Output", CellLabel -> 
        "Saved completed result:", GeneratedCell -> True, 
       CellAutoOverwrite -> True, CellTags -> 
@@ -58512,7 +58503,7 @@ export.wl", "ValidationClass" ->
 help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
 ynman-reference.wl"|>], Cell["G.+, G.+, G.-, G.+", "Subsection"], 
      Cell["sm73PPMPParticles = {\"G.+\", \"G.+\", \"G.-\", \
-\"G.+\"};\nsm73PPMPAmplitude = ConstructAmplitude[sm73PPMPParticles, sm, sm]"\
+\"G.+\"};\nsm73PPMPAmplitude = ConstructAmplitude[sm73PPMPParticles, sm, sm, \"FeynmanModel\" -> smFeynman]"\
 , "Input"], Cell[BoxData["0"], "Output", CellLabel -> 
        "Saved completed result:", GeneratedCell -> True, 
       CellAutoOverwrite -> True, CellTags -> 
@@ -58527,7 +58518,7 @@ export.wl", "ValidationClass" ->
 help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
 ynman-reference.wl"|>], Cell["G.+, G.+, G.-, G.-", "Subsection"], 
      Cell["sm73PPMMParticles = {\"G.+\", \"G.+\", \"G.-\", \
-\"G.-\"};\nsm73PPMMAmplitude = ConstructAmplitude[sm73PPMMParticles, sm, sm]"\
+\"G.-\"};\nsm73PPMMAmplitude = ConstructAmplitude[sm73PPMMParticles, sm, sm, \"FeynmanModel\" -> smFeynman]"\
 , "Input"], Cell[BoxData[RowBox[
         {RowBox[{RowBox[{"ColorStructure", "[", RowBox[{RowBox[
                 {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
@@ -58720,7 +58711,7 @@ export.wl", "ValidationClass" ->
 help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
 ynman-reference.wl"|>], Cell["G.+, G.-, G.+, G.+", "Subsection"], 
      Cell["sm73PMPPParticles = {\"G.+\", \"G.-\", \"G.+\", \
-\"G.+\"};\nsm73PMPPAmplitude = ConstructAmplitude[sm73PMPPParticles, sm, sm]"\
+\"G.+\"};\nsm73PMPPAmplitude = ConstructAmplitude[sm73PMPPParticles, sm, sm, \"FeynmanModel\" -> smFeynman]"\
 , "Input"], Cell[BoxData["0"], "Output", CellLabel -> 
        "Saved completed result:", GeneratedCell -> True, 
       CellAutoOverwrite -> True, CellTags -> 
@@ -58735,7 +58726,7 @@ export.wl", "ValidationClass" ->
 help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
 ynman-reference.wl"|>], Cell["G.+, G.-, G.+, G.-", "Subsection"], 
      Cell["sm73PMPMParticles = {\"G.+\", \"G.-\", \"G.+\", \
-\"G.-\"};\nsm73PMPMAmplitude = ConstructAmplitude[sm73PMPMParticles, sm, sm]"\
+\"G.-\"};\nsm73PMPMAmplitude = ConstructAmplitude[sm73PMPMParticles, sm, sm, \"FeynmanModel\" -> smFeynman]"\
 , "Input"], Cell[BoxData[RowBox[
         {RowBox[{RowBox[{"ColorStructure", "[", RowBox[{RowBox[
                 {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
@@ -58928,7 +58919,7 @@ alidation/sm73-export.wl", "ValidationClass" ->
 help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
 ynman-reference.wl"|>], Cell["G.+, G.-, G.-, G.+", "Subsection"], 
      Cell["sm73PMMPParticles = {\"G.+\", \"G.-\", \"G.-\", \
-\"G.+\"};\nsm73PMMPAmplitude = ConstructAmplitude[sm73PMMPParticles, sm, sm]"\
+\"G.+\"};\nsm73PMMPAmplitude = ConstructAmplitude[sm73PMMPParticles, sm, sm, \"FeynmanModel\" -> smFeynman]"\
 , "Input"], Cell[BoxData[RowBox[
         {RowBox[{"2", " ", RowBox[{"ColorStructure", "[", 
              RowBox[{RowBox[{"ConstructiveDiagrams`Private`colorInternalIndex\
@@ -59092,7 +59083,7 @@ export.wl", "ValidationClass" ->
 help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
 ynman-reference.wl"|>], Cell["G.+, G.-, G.-, G.-", "Subsection"], 
      Cell["sm73PMMMParticles = {\"G.+\", \"G.-\", \"G.-\", \
-\"G.-\"};\nsm73PMMMAmplitude = ConstructAmplitude[sm73PMMMParticles, sm, sm]"\
+\"G.-\"};\nsm73PMMMAmplitude = ConstructAmplitude[sm73PMMMParticles, sm, sm, \"FeynmanModel\" -> smFeynman]"\
 , "Input"], Cell[BoxData["0"], "Output", CellLabel -> 
        "Saved completed result:", GeneratedCell -> True, 
       CellAutoOverwrite -> True, CellTags -> 
@@ -59107,7 +59098,7 @@ export.wl", "ValidationClass" ->
 help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
 ynman-reference.wl"|>], Cell["G.-, G.+, G.+, G.+", "Subsection"], 
      Cell["sm73MPPPParticles = {\"G.-\", \"G.+\", \"G.+\", \
-\"G.+\"};\nsm73MPPPAmplitude = ConstructAmplitude[sm73MPPPParticles, sm, sm]"\
+\"G.+\"};\nsm73MPPPAmplitude = ConstructAmplitude[sm73MPPPParticles, sm, sm, \"FeynmanModel\" -> smFeynman]"\
 , "Input"], Cell[BoxData["0"], "Output", CellLabel -> 
        "Saved completed result:", GeneratedCell -> True, 
       CellAutoOverwrite -> True, CellTags -> 
@@ -59122,7 +59113,7 @@ export.wl", "ValidationClass" ->
 help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
 ynman-reference.wl"|>], Cell["G.-, G.+, G.+, G.-", "Subsection"], 
      Cell["sm73MPPMParticles = {\"G.-\", \"G.+\", \"G.+\", \
-\"G.-\"};\nsm73MPPMAmplitude = ConstructAmplitude[sm73MPPMParticles, sm, sm]"\
+\"G.-\"};\nsm73MPPMAmplitude = ConstructAmplitude[sm73MPPMParticles, sm, sm, \"FeynmanModel\" -> smFeynman]"\
 , "Input"], Cell[BoxData[RowBox[
         {RowBox[{"-", FractionBox[RowBox[{RowBox[{"ColorStructure", "[", 
                 RowBox[{RowBox[
@@ -59283,7 +59274,7 @@ alidation/sm73-export.wl", "ValidationClass" ->
 help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
 ynman-reference.wl"|>], Cell["G.-, G.+, G.-, G.+", "Subsection"], 
      Cell["sm73MPMPParticles = {\"G.-\", \"G.+\", \"G.-\", \
-\"G.+\"};\nsm73MPMPAmplitude = ConstructAmplitude[sm73MPMPParticles, sm, sm]"\
+\"G.+\"};\nsm73MPMPAmplitude = ConstructAmplitude[sm73MPMPParticles, sm, sm, \"FeynmanModel\" -> smFeynman]"\
 , "Input"], Cell[BoxData[RowBox[
         {RowBox[{RowBox[{"ColorStructure", "[", RowBox[{RowBox[
                 {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
@@ -59468,7 +59459,7 @@ export.wl", "ValidationClass" ->
 help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
 ynman-reference.wl"|>], Cell["G.-, G.+, G.-, G.-", "Subsection"], 
      Cell["sm73MPMMParticles = {\"G.-\", \"G.+\", \"G.-\", \
-\"G.-\"};\nsm73MPMMAmplitude = ConstructAmplitude[sm73MPMMParticles, sm, sm]"\
+\"G.-\"};\nsm73MPMMAmplitude = ConstructAmplitude[sm73MPMMParticles, sm, sm, \"FeynmanModel\" -> smFeynman]"\
 , "Input"], Cell[BoxData["0"], "Output", CellLabel -> 
        "Saved completed result:", GeneratedCell -> True, 
       CellAutoOverwrite -> True, CellTags -> 
@@ -59483,7 +59474,7 @@ export.wl", "ValidationClass" ->
 help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
 ynman-reference.wl"|>], Cell["G.-, G.-, G.+, G.+", "Subsection"], 
      Cell["sm73MMPPParticles = {\"G.-\", \"G.-\", \"G.+\", \
-\"G.+\"};\nsm73MMPPAmplitude = ConstructAmplitude[sm73MMPPParticles, sm, sm]"\
+\"G.+\"};\nsm73MMPPAmplitude = ConstructAmplitude[sm73MMPPParticles, sm, sm, \"FeynmanModel\" -> smFeynman]"\
 , "Input"], Cell[BoxData[RowBox[
         {RowBox[{RowBox[{"ColorStructure", "[", RowBox[{RowBox[
                 {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
@@ -59668,7 +59659,7 @@ export.wl", "ValidationClass" ->
 help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
 ynman-reference.wl"|>], Cell["G.-, G.-, G.+, G.-", "Subsection"], 
      Cell["sm73MMPMParticles = {\"G.-\", \"G.-\", \"G.+\", \
-\"G.-\"};\nsm73MMPMAmplitude = ConstructAmplitude[sm73MMPMParticles, sm, sm]"\
+\"G.-\"};\nsm73MMPMAmplitude = ConstructAmplitude[sm73MMPMParticles, sm, sm, \"FeynmanModel\" -> smFeynman]"\
 , "Input"], Cell[BoxData["0"], "Output", CellLabel -> 
        "Saved completed result:", GeneratedCell -> True, 
       CellAutoOverwrite -> True, CellTags -> 
@@ -59683,7 +59674,7 @@ export.wl", "ValidationClass" ->
 help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
 ynman-reference.wl"|>], Cell["G.-, G.-, G.-, G.+", "Subsection"], 
      Cell["sm73MMMPParticles = {\"G.-\", \"G.-\", \"G.-\", \
-\"G.+\"};\nsm73MMMPAmplitude = ConstructAmplitude[sm73MMMPParticles, sm, sm]"\
+\"G.+\"};\nsm73MMMPAmplitude = ConstructAmplitude[sm73MMMPParticles, sm, sm, \"FeynmanModel\" -> smFeynman]"\
 , "Input"], Cell[BoxData["0"], "Output", CellLabel -> 
        "Saved completed result:", GeneratedCell -> True, 
       CellAutoOverwrite -> True, CellTags -> 
@@ -59698,7 +59689,7 @@ export.wl", "ValidationClass" ->
 help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
 ynman-reference.wl"|>], Cell["G.-, G.-, G.-, G.-", "Subsection"], 
      Cell["sm73MMMMParticles = {\"G.-\", \"G.-\", \"G.-\", \
-\"G.-\"};\nsm73MMMMAmplitude = ConstructAmplitude[sm73MMMMParticles, sm, sm]"\
+\"G.-\"};\nsm73MMMMAmplitude = ConstructAmplitude[sm73MMMMParticles, sm, sm, \"FeynmanModel\" -> smFeynman]"\
 , "Input"], Cell[BoxData["0"], "Output", CellLabel -> 
        "Saved completed result:", GeneratedCell -> True, 
       CellAutoOverwrite -> True, CellTags -> 
@@ -59725,7 +59716,7 @@ CreateDiagrams[sm73PPPPParticles, sm];\nCreateArrowDiagrams[sm73Diagrams]",
 sm]", "Input"], Cell["sm73Channels = \
 FactorizationAmplitudeChannels[sm73PPPPParticles, sm];\nsm73Channels", 
          "Input"], Cell[
-         "sm73Checks = CheckAmplitudes[sm73PPPPAmplitude, sm73Channels, sm]", 
+         "sm73FeynmanDiagrams = CreateDiagrams[sm73PPPPParticles, smFeynman];\nsm73FeynmanAmplitudes = PrepareAmplitudes[DiagramAmplitudes[sm73FeynmanDiagrams], smFeynman];\nsm73Checks = CheckAmplitudes[sm73PPPPAmplitude, sm73Channels, sm, \"FeynmanAmplitudes\" -> sm73FeynmanAmplitudes, \"FeynmanModel\" -> smFeynman]",
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
 have completed successfully. One C++ class contains the complete helicity \

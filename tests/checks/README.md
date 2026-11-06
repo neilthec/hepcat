@@ -818,7 +818,11 @@ This is not a complete numerical benchmark grid for every SM process. The local
 SM restores electron, muon, up and down masses together with their Higgs and
 Goldstone couplings. Tests compare the four massive Higgs vertices with the
 constructive model and check massive-electron photon Ward identities.
-Running-quark-mass functions for other flavors are imported symbolically.
+The local independent SM uses fixed charm, bottom and strange masses matching
+constructive model 1, with their mass-dependent Higgs couplings unchanged.
+Tests verify that every physical tree mass and vertex parameter resolves
+locally. External running-mass functions in other imported models remain
+symbolic unless that model supplies their numerical implementation.
 
 `CheckAmplitudes` is the canonical combined checker; `CheckPhysicalResidues`
 remains a compatibility name. The opt-in `"FeynmanAmplitudes"` comparison uses
@@ -1338,8 +1342,19 @@ constraints and ordinary Schouten factorization during denominator discovery.
 
 `sm-construction-notebook-tests.wl` checks the SM worked notebook as held data:
 the original process inventory, explicit helicity calls, grouped CH/MG exports,
-the massive-quark reference model and inactive historical derivations. It does
-not run 131 constructions or count cached tables as new physics tests.
+the massive-quark reference model, an explicit Feynman model on every
+construction and retained optional stage check, and inactive historical
+derivations. It does not run 132 constructions or count cached tables as new
+physics tests.
+
+The independent SM benchmark is a validation gate, not a correction source.
+A fresh `u,U,C,c` construction passes all 12 checks, including its two color
+coefficients' Feynman comparisons. A fresh `U,d,Z,W+` construction currently
+passes its physical-cut, high-energy and reference checks but fails the
+full off-cut Feynman comparison. Its pre-high-energy result disagrees too;
+this is an exposed construction discrepancy, not a passing validation or a
+reason to change the benchmark's sign. Resolve it before claiming all SM
+four-point constructions have independent Feynman agreement.
 
 `color-basis-tests.wl` checks exact SU(3) contractions and the color tensors in
 public diagrams and channels. `spinas-color-tests.wl` also compiles a process

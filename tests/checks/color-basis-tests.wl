@@ -94,6 +94,62 @@ check["the public quark-photon sources share one exact color direction",
   AssociationQ[colorProjection] && colorProjection["GramMatrix"] === {{3}} &&
     FreeQ[{colorProjection["ProjectedDiagrams"], colorProjection["ProjectedChannels"]},
       _ColorDelta | _ColorGenerator | _ColorStructure]];
+cbExternal = Thread[(Mass /@ Range[4]) -> 0];
+cbBenchmarkProjection = ConstructiveDiagrams`Private`colorProjectionData[
+  {{cbExternal,d1}}, {}, {3,-3,3,-3}, {{cbExternal,d1+d2}}];
+check["the common color basis retains an independent benchmark-only tensor",
+  AssociationQ[cbBenchmarkProjection] && Length[cbBenchmarkProjection["Basis"]]===2 &&
+    cbBenchmarkProjection["DiagramCoefficients"]==={{1,0}} &&
+    cbBenchmarkProjection["FeynmanCoefficients"]==={{1,1}} &&
+    cbBenchmarkProjection["ProjectedFeynmanAmplitudes"]===
+      {{{cbExternal,1}},{{cbExternal,1}}}];
+cbCoupling = ModelParameter["colorCoupling","color-candidate-scope","Real"];
+cbForeignCoupling = ModelParameter["colorCoupling","color-benchmark-scope","Real"];
+cbScalarModel = {{{"colored scalar","s","S",90001,0,0,0,3,"","s","S"}},
+  {},{{cbCoupling,3,"candidate coupling"}}, {}};
+cbFeynmanModel = FeynmanModel @@ ReplacePart[cbScalarModel,
+  3 -> {{cbForeignCoupling,3,"independent benchmark coupling"}}];
+cbCompare[candidate_,benchmark_,benchmarkModel_:cbFeynmanModel] :=
+  CheckAmplitudes[{cbExternal,candidate},{},cbScalarModel,
+    "FeynmanAmplitudes"->{cbExternal,benchmark},"FeynmanModel"->benchmarkModel,
+    "SpuriousPoles"->{},"HighEnergyCheck"->False,"ReferenceCheck"->False,
+    "Samples"->1,"FeynmanSamples"->1,"RandomSeed"->314159,
+    "Parallelization"->False,"TimeConstraint"->15,"Output"->"Details"];
+cbMatching = cbCompare[cbCoupling d1,cbForeignCoupling d1];
+check["colored Feynman comparison resolves parameters in independent model scopes",
+  AssociationQ[cbMatching] && cbMatching["Summary"]===<|"PASS"->1|> &&
+    First[cbMatching["Checks"]]["Type"]==="Feynman"];
+cbWrongRelative = cbCompare[d1+2d2,d1+3d2];
+check["a wrong relative color coefficient fails the independent benchmark",
+  AssociationQ[cbWrongRelative] && Lookup[cbWrongRelative["Summary"],"FAIL",0]===1 &&
+    Lookup[cbWrongRelative["Summary"],"PASS",0]===1];
+cbMissingTensor = cbCompare[d1,d1+d2];
+check["a color tensor absent from the candidate cannot disappear from validation",
+  AssociationQ[cbMissingTensor] && Length[cbMissingTensor["ColorBasis"]]===2 &&
+    Lookup[cbMissingTensor["Summary"],"FAIL",0]===1];
+cbZeroCandidate = cbCompare[0,d1];
+check["a zero candidate with a nonzero colored benchmark is still tested",
+  AssociationQ[cbZeroCandidate] && cbZeroCandidate["Summary"]===<|"FAIL"->1|>];
+cbDifferent = cbCompare[cbCoupling d1,cbCoupling d1,
+  FeynmanModel @@ ReplacePart[cbScalarModel,3->{{cbCoupling,7,"different benchmark value"}}]];
+check["copied parameter references cannot borrow the candidate model value",
+  AssociationQ[cbDifferent] && cbDifferent["Summary"]===<|"FAIL"->1|>];
+cbUnresolved = cbCompare[cbCoupling d1,cbCoupling d1,
+  FeynmanModel @@ ReplacePart[cbScalarModel,3->{}]];
+check["an undefined independent benchmark parameter remains unresolved",
+  AssociationQ[cbUnresolved] && cbUnresolved["Summary"]===<|"UNRESOLVED"->1|>];
+cbWrongSign = cbCompare[d1,-d1];
+check["opposite-sign colored benchmark disagreements remain visible",
+  AssociationQ[cbWrongSign] && cbWrongSign["Summary"]===<|"Opp Sign"->1|>];
+cbBefore = {cbScalarModel,cbFeynmanModel,cbExternal};
+cbVisible = CheckAmplitudes[{cbExternal,d1},{},cbScalarModel,
+  "FeynmanAmplitudes"->{cbExternal,d1},"FeynmanModel"->cbFeynmanModel,
+  "SpuriousPoles"->{},"HighEnergyCheck"->False,"ReferenceCheck"->False,
+  "Samples"->1,"RandomSeed"->314159,"Parallelization"->False,
+  "TimeConstraint"->15,"Output"->"Feynman"];
+check["colored Feynman sample output is available without mutating inputs",
+  Head[cbVisible]===Dataset && FreeQ[Normal[cbVisible],Missing["NotAvailable"]] &&
+    cbBefore==={cbScalarModel,cbFeynmanModel,cbExternal}];
 Do[
   currentProcess=currentSpec[[1]];
   currentDiagrams=CreateDiagrams[currentProcess,model];
@@ -122,6 +178,20 @@ check["current color projection keeps a nontrivial exact basis phase",
 check["singular color amplitude retains every internally summed contribution",
   And @@ MapThread[TrueQ[Expand[#1 - Last[#2]] === 0] &,
     {diagramAmplitude /@ colorDiagrams, colorPairs}]];
+cbSMFeynman = ReadModel[FileNameJoin[{root,"model_feynman"}],1];
+cbConstructed = ConstructAmplitude[{"u","U","A.+","A.-"},model,model,
+  "FeynmanModel"->cbSMFeynman,"Output"->"Details","RandomSeed"->314159,
+  "Parallelization"->False,"TimeConstraint"->60,
+  "PrintReport"->False,"ProgressReporting"->False];
+check["the ordinary colored constructor includes the independent SM Feynman comparison",
+  AssociationQ[cbConstructed] && cbConstructed["Status"]==="COMPLETE" &&
+    Length[cbConstructed["ColorBasis"]]===1 &&
+    Count[cbConstructed["Checks"]["Checks"],
+      a_Association /; Lookup[a,"Type",None]==="Feynman" && Lookup[a,"Status",None]==="PASS"]===1];
+check["projected Feynman comparison preserves off-cut evaluation and never fits normalization",
+  AssociationQ[cbConstructed] && AllTrue[Select[cbConstructed["Checks"]["Checks"],
+    Lookup[#,"Type",None]==="Feynman" &],
+    Lookup[#,"InternalOnShell",True]===False && Lookup[#,"NormalizationFitted",True]===False &]];
 zeroTree = ConstructAmplitude[ConstantArray["G.+",4],model,model,
   "Output"->"Details","PrintReport"->False,"ProgressReporting"->False];
 check["a source-forbidden colored tree is checked as zero without an invented basis",

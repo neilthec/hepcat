@@ -178,8 +178,10 @@ The local SM restores e, muon, u and d masses together with their Higgs and
 Goldstone couplings, matching the existing massive-generation rules.
 The light-quark defaults are fixed MSbar inputs at 2 GeV, shared with the
 constructive model files, not automatic running or pole-mass measurements.
-Neutrinos remain massless. External running-mass
-functions such as `MbEff` are imported symbolically, not implemented numerically.
+Neutrinos remain massless. The independent local SM uses fixed charm, bottom
+and strange masses matching constructive model 1, retaining their Higgs
+couplings. Other imported external running-mass functions remain symbolic
+unless a numerical implementation is supplied by that model.
 
 Raw Feynman vertices are not complete lower-point amplitudes. Continue to use
 the constructive model containing known lower-point amplitudes for
@@ -232,6 +234,10 @@ physical, spurious, high-energy and reference checks, plus the independent
 Feynman comparison, at the ordinary parameter-validation sets. Preserve every
 unclassified direction in details and state that uniqueness was not proved.
 The benchmark never supplies construction terms or fitted coefficients.
+Colored optional benchmarks are converted once and projected into a common
+exact color basis with diagrams and original channels, including benchmark-only
+tensors. Keep each projected benchmark coefficient and its Feynman model
+parameter scope attached; do not discard a direction absent from the candidate.
 Without that explicit independent benchmark, completion retains its strict
 unresolved-family behavior. Standalone `CompleteHighEnergy` still reports
 genuine remaining contact freedom as underdetermined.

@@ -3837,7 +3837,7 @@ CheckAmplitudes[amplitudes_, channelRows_List, model_List,
       !(benchmarkSeconds === Automatic || benchmarkSeconds === Infinity ||
         TrueQ[NumericQ[benchmarkSeconds] && benchmarkSeconds > 0]),
     Message[CheckAmplitudes::args]; Return[$Failed]];
-  If[!TrueQ[$colorCheckingProjection] && !FreeQ[{amplitudes,channelRows},
+  If[!TrueQ[$colorCheckingProjection] && !FreeQ[{amplitudes,channelRows,benchmark},
       _ConstructiveDiagrams`ColorDelta | _ConstructiveDiagrams`ColorGenerator |
         _ConstructiveDiagrams`ColorStructure],
     Return[colorCheckAmplitudes[amplitudes,channelRows,model,Association[{opts}]]]];
@@ -21374,6 +21374,12 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
      without classifying every alternative in its fitted affine family. Never
      use that benchmark as a source, fit target or substitute expression. *)
   prepareBenchmark[raw_: False] := If[benchmarkReady, benchmark,
+    (* Color projection supplies the independent coefficient in the exact
+       common tensor basis. Never regenerate the full color tensor here. *)
+    If[TrueQ[$colorConstructingProjection] && AssociationQ[$colorConstructionInput] &&
+        KeyExistsQ[$colorConstructionInput,"FeynmanAmplitudes"],
+      benchmark = $colorConstructionInput["FeynmanAmplitudes"];
+      benchmarkReady = True; Return[benchmark]];
     If[!ListQ[feynmanPairs],
       feynmanDiagrams = run["Generating Feynman diagrams", CreateDiagrams[process, feynmanModel]];
       require[feynmanDiagrams];

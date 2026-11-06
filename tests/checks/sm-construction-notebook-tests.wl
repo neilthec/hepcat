@@ -5,6 +5,9 @@ checks = 0; failures = {};
 check[name_, value_] := (checks++; If[!TrueQ[value], AppendTo[failures,name]]);
 path = FileNameJoin[{root,"tests","SM-4-point-construction.nb"}];
 held = Quiet[Check[ToExpression[Import[path,"Text"],InputForm,HoldComplete],$Failed]];
+(* Front-end notebook comments can parse as top-level Null entries. Remove
+   only those comments, keeping any unexpected executable expression visible. *)
+held = DeleteCases[held,Null,{1}];
 check["the SM construction notebook parses as one held notebook",
   MatchQ[held,HoldComplete[_Notebook]]];
 active = Cases[held, Cell[text_String,"Input",opts___] /;
@@ -17,8 +20,22 @@ check["the manual process inventory has at least 132 explicit helicity calls",
   Length[constructions] >= 132];
 check["the SM calls use the same declared cubic model for four-point factorization",
   AllTrue[constructions, MatchQ[#,HoldComplete[_,sm,sm,_List]] &]];
-check["no optional Feynman converter is silently made mandatory",
-  FreeQ[constructions,HoldPattern["FeynmanModel"->_]]];
+check["the separate massive SM Feynman model is loaded in Setup",
+  !FreeQ[parsed,HoldPattern[Set[smFeynman,
+    ReadModel[FileNameJoin[{hepcatDirectory,"model_feynman"}],1]]]]];
+check["every SM construction explicitly requests its independent Feynman model",
+  AllTrue[constructions,
+    Count[#,HoldPattern["FeynmanModel"->smFeynman],Infinity]===1 &]];
+stageChecks = Flatten[Cases[#,HoldPattern[CheckAmplitudes[a_,c_,m_,opts___]] :>
+  HoldComplete[a,c,m,{opts}],Infinity] & /@ parsed];
+check["every retained optional stage checker includes an independent Feynman comparison",
+  Length[stageChecks]>=72 && AllTrue[stageChecks,
+    Count[#,HoldPattern["FeynmanModel"->smFeynman],Infinity]===1 &&
+      Count[#,HoldPattern["FeynmanAmplitudes"->_],Infinity]===1 &]];
+check["optional inspection cells generate their own off-shell Feynman diagrams",
+  Count[parsed,HoldPattern[CreateDiagrams[_,smFeynman]],Infinity]>=Length[stageChecks]];
+check["the notebook distinguishes older cached tables from newly requested Feynman checks",
+  StringContainsQ[Import[path,"Text"],"Saved tables without a Feynman row predate this addition"]];
 exports = Flatten[Cases[#,HoldPattern[WriteSPINASProcess[args___]] :>
   HoldComplete[args],Infinity] & /@ parsed];
 check["each original process and the additional charge conjugate have a numerical export", Length[exports] >= 74];
@@ -42,7 +59,7 @@ sections = Cases[held,Cell[_,"Section",opts___] /;
 check["every original process remains separately visible",Length[sections]>=73];
 check["the extra original charge-conjugate process is constructed independently",
   AnyTrue[active,StringContainsQ[#,"sm61CParticles = {\"D\", \"u\", \"Z\", \"W-\"}"] &&
-    StringContainsQ[#,"ConstructAmplitude[sm61CParticles, sm, sm]"] &]];
+    StringContainsQ[#,"ConstructAmplitude[sm61CParticles, sm, sm,"] &]];
 check["the extra charged process has its own SPINAS class and export",
   AnyTrue[active,StringContainsQ[#,"sm61CExport = WriteSPINASProcess["] &&
     StringContainsQ[#,"\"ProcessName\" -> \"sm61C\""] &]];
@@ -50,8 +67,15 @@ cellTags = Flatten[Cases[held,HoldPattern[Rule[CellTags,value_]] :> value,Infini
 referenceTargets = Cases[held,
   TemplateBox[{_,{_String,target_String},___},"HyperlinkTemplate",___] :> target,Infinity];
 manualTargets = Select[referenceTargets,StringStartsQ[#,"manual-sm"] &];
-check["every current family links to an existing original reference cell",
-  Length[manualTargets] >= 74 && AllTrue[manualTargets,MemberQ[cellTags,#] &]];
+check["every retained reference button links to an existing original cell",
+  manualTargets =!= {} && AllTrue[manualTargets,MemberQ[cellTags,#] &]];
+constructionTags = Select[cellTags,StringQ[#] && StringStartsQ[#,"construction-sm"] &];
+check["all original family references remain available even if an optional button is removed",
+  Length[DeleteDuplicates[constructionTags]]>=74 &&
+    AllTrue[DeleteDuplicates[constructionTags],
+      (* The additional charge-conjugate family shares its original manual section. *)
+      MemberQ[cellTags,StringReplace[#,
+        {"construction-"->"manual-",RegularExpression["C$"]->""}]] &]];
 check["the original references link back to every current calculation",
   Length[DeleteDuplicates[Select[referenceTargets,StringStartsQ[#,"construction-sm"] &]]] >= 74];
 Print["SM NOTEBOOK CHECKS: ",checks,"; FAILURES: ",Length[failures]];

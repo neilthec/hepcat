@@ -4,7 +4,8 @@ The four `*1.mdl` files originate from stock model 1, named `SM`, from
 `/Users/neil/code/CalcHEP/calchep_3.9.0/models/`. They contain particles,
 Lagrangian vertices, parameters and dependent functions. The local version
 restores electron, muon, up- and down-quark masses and their Higgs/Goldstone
-couplings as described below. Models 2 and 3 in that installation add effective
+couplings, and uses fixed charm, bottom and strange masses matching the
+constructive SM benchmark, as described below. Models 2 and 3 in that installation add effective
 Higgs interactions and are not this baseline.
 
 These are raw CalcHEP Feynman-rule files, not HEPCAT constructive amplitude
@@ -67,7 +68,7 @@ The local SM uses the following fixed defaults, in GeV:
 
 The quark defaults are the central values in the
 [PDG 2026 quark summary](https://pdg.lbl.gov/2026/tables/rpp2026-sum-quarks.pdf).
-The same `Mu`/`Md` values were added to constructive models 1, 4 and 5, whose
+The same `Mu`/`Md` values are present in constructive SM model 1, whose
 particle tables and Higgs amplitudes already treated these quarks as massive
 but previously omitted their numerical definitions. These are fixed input
 defaults, not pole-mass measurements or automatic QCD evolution with `Q`.
@@ -79,8 +80,18 @@ raw tables for consistency; unitary-gauge tree generation excludes them.
 Neutrinos remain massless, matching the constructive models.
 Tests cover the mass definitions, Yukawa relations, the massive three-point
 vertices, Higgs exchange and electromagnetic/color Ward identities.
-Running-quark-mass functions in `func1.mdl` are external CalcHEP functions;
-symbolic import does not provide their numerical implementation.
+For the independent four-point SM comparison, this local model uses fixed
+`Mc = 1.3`, `Mb = 4.2` and `Ms = 0.095` GeV, exactly as constructive model 1.
+Their Higgs and Goldstone vertices still depend on the same mass parameters;
+only the numerical input convention changes. The stock `McEff`, `MbEff` and
+`MqEff` constraints were removed from this local copy and replaced by those
+explicit variables. This makes both the Wolfram comparison and the native
+CalcHEP reference evaluate the same declared tree-level model, without silently
+borrowing unresolved masses from the amplitude being checked. The installed
+CalcHEP model is unchanged. The remaining `LamQCD` initializer is retained as
+source model data; it does not enter these tree vertices. Other imported
+external functions remain symbolic unless an implementation or explicit
+model-local input is supplied.
 
 ## Gauge and Scope
 
