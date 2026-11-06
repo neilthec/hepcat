@@ -6,12 +6,14 @@ calls. The 132 construction calls explicitly cover every photon/gluon \
 helicity combination. Reference links open the matching original formulas and \
 S/T/U derivation in the closed appendix; its return links bring you back. The \
 original notebook file is unchanged.", "Text"], 
-  Cell["Saved independent comparisons currently pass for 69 of the 74 process \
-families. Each saved PASS uses 1000 CalcHEP points and 1000 MadGraph points \
-for every explicit massless-helicity configuration. The h h h h and \
-four-gluon sections retain separate numerical diagnostics, including the \
-original failing points. Sections without saved PASS output still need a \
-completed validated calculation.", "Text", 
+  Cell["Saved construction outputs are available for 71 of 74 process \
+families (128 of 132 explicit helicity calculations). Independent CalcHEP and \
+MadGraph comparisons pass the unchanged numerical thresholds for 69 families, \
+at 1000 points for every explicit massless-helicity configuration. The h h h \
+h and four-gluon families have completed amplitudes and separate exact \
+Feynman-rule proofs, while their original numerical FAIL rows and precision \
+diagnostics remain visible. Sections without a saved completed result still \
+need a successful construction.", "Text", 
    CellTags -> "hepcat-validation-coverage"], Cell["Run Setup first, then \
 evaluate one process section at a time. Each construction stores its \
 amplitude and prints its physical-pole, spurious-pole, high-energy and \
@@ -29394,18 +29396,73 @@ project to spinasOutputDirectory when you rerun it. Full report: \
          "InlineFormula"], "."}], "Text", CellTags -> "manual-link-sm63"], 
      Cell["h, h, h, h", "Subsection"], Cell["sm63Particles = {\"h\", \"h\", \
 \"h\", \"h\"};\nsm63Amplitude = ConstructAmplitude[sm63Particles, sm, sm]", 
-      "Input"], Cell[CellGroupData[{Cell["Inspect the stages (optional)", 
-         "Subsection"], Cell["These cells expose the first helicity \
-calculation. ConstructAmplitude already performs these stages internally. Use \
-them when investigating a result rather than rerunning them after every \
-successful construction.", "Text"], Cell["sm63Diagrams = \
-CreateDiagrams[sm63Particles, sm];\nCreateArrowDiagrams[sm63Diagrams]", 
-         "Input"], Cell[
-         "sm63DiagramAmplitudes = DiagramAmplitudes[sm63Diagrams]", "Input"], 
-        Cell[
-         "sm63PreparedDiagrams = PrepareAmplitudes[sm63DiagramAmplitudes, \
-sm]", "Input"], Cell["sm63Channels = \
-FactorizationAmplitudeChannels[sm63Particles, sm];\nsm63Channels", "Input"], 
+      "Input"], Cell[BoxData[RowBox[{"-", FractionBox[
+          RowBox[{"3", " ", SuperscriptBox[InterpretationBox["EE", 
+              ModelParameter["EE", "30a3398a0cbb88a8e4517e90d53df2fd406e010fb\
+396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"], " ", 
+            SuperscriptBox[InterpretationBox["Mh", ModelParameter["Mh", "30a3\
+398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+              Editable -> False], "2"], " ", RowBox[{"(", RowBox[{"1", "+", 
+                FractionBox[RowBox[{"3", " ", SuperscriptBox[
+                    InterpretationBox["Mh", ModelParameter["Mh", "30a3398a0cb\
+b88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> 
+                      False], "2"]}], InterpretationBox[RowBox[{"(", 
+                    RowBox[{RowBox[{"-", SuperscriptBox[InterpretationBox[
+                          "Mh", ModelParameter["Mh", "30a3398a0cbb88a8e4517e9\
+0d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], 
+                         "2"]}], "+", SubscriptBox["\"s\"", "\"12\""]}], 
+                    ")"}], PropDen[Mom[Multiparticle[1, 2]], ModelParameter[
+                    "Mh", "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff\
+422d9b7ebd77e7", "Real"]], Editable -> False]], "+", FractionBox[
+                 RowBox[{"3", " ", SuperscriptBox[InterpretationBox["Mh", 
+                     ModelParameter["Mh", "30a3398a0cbb88a8e4517e90d53df2fd40\
+6e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"]}], 
+                 InterpretationBox[RowBox[{"(", RowBox[{RowBox[{"-", 
+                        SuperscriptBox[InterpretationBox["Mh", ModelParameter[
+                          "Mh", "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396\
+af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"]}], "+", SubscriptBox[
+                       "\"s\"", "\"13\""]}], ")"}], PropDen[Mom[Multiparticle[
+                     1, 3]], ModelParameter["Mh", "30a3398a0cbb88a8e4517e90d5\
+3df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"]], Editable -> False]], "+", 
+                FractionBox[RowBox[{"3", " ", SuperscriptBox[
+                    InterpretationBox["Mh", ModelParameter["Mh", "30a3398a0cb\
+b88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> 
+                      False], "2"]}], InterpretationBox[RowBox[{"(", 
+                    RowBox[{RowBox[{"-", SuperscriptBox[InterpretationBox[
+                          "Mh", ModelParameter["Mh", "30a3398a0cbb88a8e4517e9\
+0d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], 
+                         "2"]}], "+", SubscriptBox["\"s\"", "\"14\""]}], 
+                    ")"}], PropDen[Mom[Multiparticle[1, 4]], ModelParameter[
+                    "Mh", "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff\
+422d9b7ebd77e7", "Real"]], Editable -> False]]}], ")"}]}], 
+          RowBox[{"4", " ", SuperscriptBox[InterpretationBox["MW", 
+              ModelParameter["MW", "30a3398a0cbb88a8e4517e90d53df2fd406e010fb\
+396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"], " ", 
+            SuperscriptBox[InterpretationBox["SW", ModelParameter["SW", "30a3\
+398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], 
+              Editable -> False], "2"]}]]}]], "Output", 
+      CellLabel -> "Saved completed result:", GeneratedCell -> True, 
+      CellAutoOverwrite -> True, CellTags -> "hepcat-cache-amplitude-sm63", 
+      TaggingRules -> <|"ConstructionReport" -> "/Users/neil/Documents/Codex/\
+2026-09-24/help-me-make-this-response-more/output/sm-four-point-validation/hh\
+hh.wl", "ValidationReport" -> "/Users/neil/Documents/Codex/2026-09-24/help-me\
+-make-this-response-more/output/sm-four-point-validation/hhhh-export.wl", 
+        "ValidationClass" -> 
+         "PrecisionQualified;RawNumericalFailureRetained", 
+        "SymbolicReferenceReport" -> "/Users/neil/Documents/Codex/2026-09-24/\
+help-me-make-this-response-more/output/sm-four-point-validation/hhhh-feynman-\
+reference-diagnostic.wl"|>], Cell[CellGroupData[
+       {Cell["Inspect the stages (optional)", "Subsection"], 
+        Cell["These cells expose the first helicity calculation. \
+ConstructAmplitude already performs these stages internally. Use them when \
+investigating a result rather than rerunning them after every successful \
+construction.", "Text"], Cell["sm63Diagrams = CreateDiagrams[sm63Particles, \
+sm];\nCreateArrowDiagrams[sm63Diagrams]", "Input"], 
+        Cell["sm63DiagramAmplitudes = DiagramAmplitudes[sm63Diagrams]", 
+         "Input"], Cell["sm63PreparedDiagrams = \
+PrepareAmplitudes[sm63DiagramAmplitudes, sm]", "Input"], 
+        Cell["sm63Channels = FactorizationAmplitudeChannels[sm63Particles, \
+sm];\nsm63Channels", "Input"], 
         Cell["sm63Checks = CheckAmplitudes[sm63Amplitude, sm63Channels, sm]", 
          "Input"]}, Closed]], Cell["C++ export and independent validation", 
       "Subsection"], Cell["Run this cell after all helicity amplitudes above \
@@ -29443,7 +29500,21 @@ MadGraph passes all 1000 points. Re-evaluating the unchanged HEPCAT formula \
 at 80-digit precision supports a cancellation-roundoff explanation, but does \
 not independently validate CalcHEP at high precision. The original failing \
 point and report are retained; no tolerance was relaxed and no point was \
-discarded.", "Text", CellTags -> "hepcat-hhhh-roundoff-note"]}, Open]], 
+discarded.", "Text", CellTags -> "hepcat-hhhh-roundoff-note"], 
+     Cell["This saved amplitude came from a completed construction. MadGraph \
+passes all 1000 points. CalcHEP retains one numerical FAIL near an amplitude \
+zero; the independent exact Feynman-rule comparison gives difference zero. \
+The raw failure and its numerical diagnostics are preserved below.", "Text", 
+      CellTags -> "hepcat-precision-qualified-note-sm63"], 
+     Cell[BoxData[TagBox[GridBox[{{"\"Reference\"", 
+           "\"Raw numerical status\"", "\"Compared points\""}, 
+          {"\"CalcHEP\"", "\"FAIL\"", "1000"}, {"\"MadGraph\"", "\"PASS\"", 
+           "1000"}}, GridBoxAlignment -> {"Columns" -> {{Left}}}, 
+         AutoDelete -> False, GridBoxFrame -> {"Columns" -> {{True}}, 
+           "Rows" -> {{True}}}, GridBoxItemSize -> 
+          {"Columns" -> {{Automatic}}, "Rows" -> {{Automatic}}}], "Grid"]], 
+      "Print", CellTags -> "hepcat-precision-qualified-numerical-table-sm63", 
+      GeneratedCell -> True, CellAutoOverwrite -> True]}, Open]], 
   Cell[CellGroupData[{Cell["64. h, h, Z, Z", "Section", 
       CellTags -> "construction-sm64"], 
      Cell["All-ingoing ordering: h, h, Z, Z. Physical export: h, h -> Z, Z.", 
@@ -31992,52 +32063,1235 @@ G.-, G.-. Physical export: G, G -> G, G.", "Text"],
      Cell["G.+, G.+, G.+, G.+", "Subsection"], Cell["sm73PPPPParticles = \
 {\"G.+\", \"G.+\", \"G.+\", \"G.+\"};\nsm73PPPPAmplitude = \
 ConstructAmplitude[sm73PPPPParticles, sm, sm]", "Input"], 
-     Cell["G.+, G.+, G.+, G.-", "Subsection"], Cell["sm73PPPMParticles = \
-{\"G.+\", \"G.+\", \"G.+\", \"G.-\"};\nsm73PPPMAmplitude = \
-ConstructAmplitude[sm73PPPMParticles, sm, sm]", "Input"], 
-     Cell["G.+, G.+, G.-, G.+", "Subsection"], Cell["sm73PPMPParticles = \
-{\"G.+\", \"G.+\", \"G.-\", \"G.+\"};\nsm73PPMPAmplitude = \
-ConstructAmplitude[sm73PPMPParticles, sm, sm]", "Input"], 
-     Cell["G.+, G.+, G.-, G.-", "Subsection"], Cell["sm73PPMMParticles = \
-{\"G.+\", \"G.+\", \"G.-\", \"G.-\"};\nsm73PPMMAmplitude = \
-ConstructAmplitude[sm73PPMMParticles, sm, sm]", "Input"], 
-     Cell["G.+, G.-, G.+, G.+", "Subsection"], Cell["sm73PMPPParticles = \
-{\"G.+\", \"G.-\", \"G.+\", \"G.+\"};\nsm73PMPPAmplitude = \
-ConstructAmplitude[sm73PMPPParticles, sm, sm]", "Input"], 
-     Cell["G.+, G.-, G.+, G.-", "Subsection"], Cell["sm73PMPMParticles = \
-{\"G.+\", \"G.-\", \"G.+\", \"G.-\"};\nsm73PMPMAmplitude = \
-ConstructAmplitude[sm73PMPMParticles, sm, sm]", "Input"], 
-     Cell["G.+, G.-, G.-, G.+", "Subsection"], Cell["sm73PMMPParticles = \
-{\"G.+\", \"G.-\", \"G.-\", \"G.+\"};\nsm73PMMPAmplitude = \
-ConstructAmplitude[sm73PMMPParticles, sm, sm]", "Input"], 
-     Cell["G.+, G.-, G.-, G.-", "Subsection"], Cell["sm73PMMMParticles = \
-{\"G.+\", \"G.-\", \"G.-\", \"G.-\"};\nsm73PMMMAmplitude = \
-ConstructAmplitude[sm73PMMMParticles, sm, sm]", "Input"], 
-     Cell["G.-, G.+, G.+, G.+", "Subsection"], Cell["sm73MPPPParticles = \
-{\"G.-\", \"G.+\", \"G.+\", \"G.+\"};\nsm73MPPPAmplitude = \
-ConstructAmplitude[sm73MPPPParticles, sm, sm]", "Input"], 
-     Cell["G.-, G.+, G.+, G.-", "Subsection"], Cell["sm73MPPMParticles = \
-{\"G.-\", \"G.+\", \"G.+\", \"G.-\"};\nsm73MPPMAmplitude = \
-ConstructAmplitude[sm73MPPMParticles, sm, sm]", "Input"], 
-     Cell["G.-, G.+, G.-, G.+", "Subsection"], Cell["sm73MPMPParticles = \
-{\"G.-\", \"G.+\", \"G.-\", \"G.+\"};\nsm73MPMPAmplitude = \
-ConstructAmplitude[sm73MPMPParticles, sm, sm]", "Input"], 
-     Cell["G.-, G.+, G.-, G.-", "Subsection"], Cell["sm73MPMMParticles = \
-{\"G.-\", \"G.+\", \"G.-\", \"G.-\"};\nsm73MPMMAmplitude = \
-ConstructAmplitude[sm73MPMMParticles, sm, sm]", "Input"], 
-     Cell["G.-, G.-, G.+, G.+", "Subsection"], Cell["sm73MMPPParticles = \
-{\"G.-\", \"G.-\", \"G.+\", \"G.+\"};\nsm73MMPPAmplitude = \
-ConstructAmplitude[sm73MMPPParticles, sm, sm]", "Input"], 
-     Cell["G.-, G.-, G.+, G.-", "Subsection"], Cell["sm73MMPMParticles = \
-{\"G.-\", \"G.-\", \"G.+\", \"G.-\"};\nsm73MMPMAmplitude = \
-ConstructAmplitude[sm73MMPMParticles, sm, sm]", "Input"], 
-     Cell["G.-, G.-, G.-, G.+", "Subsection"], Cell["sm73MMMPParticles = \
-{\"G.-\", \"G.-\", \"G.-\", \"G.+\"};\nsm73MMMPAmplitude = \
-ConstructAmplitude[sm73MMMPParticles, sm, sm]", "Input"], 
-     Cell["G.-, G.-, G.-, G.-", "Subsection"], Cell["sm73MMMMParticles = \
-{\"G.-\", \"G.-\", \"G.-\", \"G.-\"};\nsm73MMMMAmplitude = \
-ConstructAmplitude[sm73MMMMParticles, sm, sm]", "Input"], 
-     Cell[CellGroupData[{Cell["Inspect the stages (optional)", "Subsection"], 
+     Cell[BoxData["0"], "Output", CellLabel -> "Saved completed result:", 
+      GeneratedCell -> True, CellAutoOverwrite -> True, 
+      CellTags -> "hepcat-cache-amplitude-sm73PPPP", 
+      TaggingRules -> <|"ConstructionReport" -> "/Users/neil/Documents/Codex/\
+2026-09-24/help-me-make-this-response-more/output/sm-four-point-validation/sm\
+73PPPP-gluon-stable-construction.wl", "ValidationReport" -> "/Users/neil/Docu\
+ments/Codex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-v\
+alidation/sm73-export.wl", "ValidationClass" -> 
+         "PrecisionQualified;RawNumericalFailureRetained", 
+        "SymbolicReferenceReport" -> "/Users/neil/Documents/Codex/2026-09-24/\
+help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
+ynman-reference.wl"|>], Cell["G.+, G.+, G.+, G.-", "Subsection"], 
+     Cell["sm73PPPMParticles = {\"G.+\", \"G.+\", \"G.+\", \
+\"G.-\"};\nsm73PPPMAmplitude = ConstructAmplitude[sm73PPPMParticles, sm, sm]"\
+, "Input"], Cell[BoxData["0"], "Output", CellLabel -> 
+       "Saved completed result:", GeneratedCell -> True, 
+      CellAutoOverwrite -> True, CellTags -> 
+       "hepcat-cache-amplitude-sm73PPPM", TaggingRules -> 
+       <|"ConstructionReport" -> "/Users/neil/Documents/Codex/2026-09-24/help\
+-me-make-this-response-more/output/sm-four-point-validation/sm73PPPM-gluon-st\
+able-construction.wl", "ValidationReport" -> "/Users/neil/Documents/Codex/202\
+6-09-24/help-me-make-this-response-more/output/sm-four-point-validation/sm73-\
+export.wl", "ValidationClass" -> 
+         "PrecisionQualified;RawNumericalFailureRetained", 
+        "SymbolicReferenceReport" -> "/Users/neil/Documents/Codex/2026-09-24/\
+help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
+ynman-reference.wl"|>], Cell["G.+, G.+, G.-, G.+", "Subsection"], 
+     Cell["sm73PPMPParticles = {\"G.+\", \"G.+\", \"G.-\", \
+\"G.+\"};\nsm73PPMPAmplitude = ConstructAmplitude[sm73PPMPParticles, sm, sm]"\
+, "Input"], Cell[BoxData["0"], "Output", CellLabel -> 
+       "Saved completed result:", GeneratedCell -> True, 
+      CellAutoOverwrite -> True, CellTags -> 
+       "hepcat-cache-amplitude-sm73PPMP", TaggingRules -> 
+       <|"ConstructionReport" -> "/Users/neil/Documents/Codex/2026-09-24/help\
+-me-make-this-response-more/output/sm-four-point-validation/sm73PPMP-gluon-st\
+able-construction.wl", "ValidationReport" -> "/Users/neil/Documents/Codex/202\
+6-09-24/help-me-make-this-response-more/output/sm-four-point-validation/sm73-\
+export.wl", "ValidationClass" -> 
+         "PrecisionQualified;RawNumericalFailureRetained", 
+        "SymbolicReferenceReport" -> "/Users/neil/Documents/Codex/2026-09-24/\
+help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
+ynman-reference.wl"|>], Cell["G.+, G.+, G.-, G.-", "Subsection"], 
+     Cell["sm73PPMMParticles = {\"G.+\", \"G.+\", \"G.-\", \
+\"G.-\"};\nsm73PPMMAmplitude = ConstructAmplitude[sm73PPMMParticles, sm, sm]"\
+, "Input"], Cell[BoxData[RowBox[
+        {RowBox[{RowBox[{"ColorStructure", "[", RowBox[{RowBox[
+                {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
+                 RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", 
+                   "8"}], "]"}], ",", RowBox[{"ColorIndex", "[", "2", "]"}], 
+               ",", RowBox[{"ColorIndex", "[", "4", "]"}]}], "]"}], " ", 
+           RowBox[{"ColorStructure", "[", RowBox[{RowBox[
+                {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
+                 RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", 
+                   "8"}], "]"}], ",", RowBox[{"ColorIndex", "[", "3", "]"}], 
+               ",", RowBox[{"ColorIndex", "[", "1", "]"}]}], "]"}], " ", 
+           SuperscriptBox[InterpretationBox["GG", ModelParameter["GG", 
+              "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77\
+e7", "Real"], Editable -> False], "2"], " ", RowBox[
+            {"(", RowBox[{FractionBox[RowBox[{FractionBox[RowBox[
+                    {SuperscriptBox[InterpretationBox[TemplateBox[
+                        {TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, 
+                          "RowDefault"], TemplateBox[{"4", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                        "RowDefault"], SpinorChain[Spinor["Helicity", 
+                         "Angle", 1], Spinor["Helicity", "Angle", 4]], 
+                       Editable -> False], "2"], " ", SuperscriptBox[
+                      InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "1"}, "RowDefault"], TemplateBox[{"2", "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[
+                        Spinor["Helicity", "Square", 1], Spinor["Helicity", 
+                         "Square", 2]], Editable -> False], "3"]}], 
+                   RowBox[{InterpretationBox[TemplateBox[{TemplateBox[
+                         {"\"[\"", "2"}, "RowDefault"], TemplateBox[{"3", 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                      SpinorChain[Spinor["Helicity", "Square", 2], Spinor[
+                        "Helicity", "Square", 3]], Editable -> False], " ", 
+                     InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "3"}, "RowDefault"], "4", TemplateBox[{"1", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                       "RowDefault"], SpinorChain[Spinor["Helicity", 
+                        "Square", 3], Mom[4], Spinor["Helicity", "Angle", 
+                        1]], Editable -> False]}]], "+", FractionBox[
+                   RowBox[{SuperscriptBox[InterpretationBox[TemplateBox[
+                        {TemplateBox[{"\"\[LeftAngleBracket]\"", "3"}, 
+                          "RowDefault"], TemplateBox[{"4", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                        "RowDefault"], SpinorChain[Spinor["Helicity", 
+                         "Angle", 3], Spinor["Helicity", "Angle", 4]], 
+                       Editable -> False], "3"], " ", SuperscriptBox[
+                      InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "1"}, "RowDefault"], TemplateBox[{"4", "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[
+                        Spinor["Helicity", "Square", 1], Spinor["Helicity", 
+                         "Square", 4]], Editable -> False], "2"]}], 
+                   RowBox[{InterpretationBox[TemplateBox[{TemplateBox[
+                         {"\"\[LeftAngleBracket]\"", "2"}, "RowDefault"], 
+                        TemplateBox[{"3", "\"\[RightAngleBracket]\""}, 
+                         "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                        "Helicity", "Angle", 2], Spinor["Helicity", "Angle", 
+                        3]], Editable -> False], " ", InterpretationBox[
+                      TemplateBox[{TemplateBox[{"\"[\"", "4"}, "RowDefault"], 
+                        "1", TemplateBox[{"2", "\"\[RightAngleBracket]\""}, 
+                         "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                        "Helicity", "Square", 4], Mom[1], Spinor["Helicity", 
+                        "Angle", 2]], Editable -> False]}]]}], 
+                InterpretationBox[SubscriptBox["\"s\"", "\"14\""], 
+                 PropDen[Mom[Multiparticle[1, 4]], 0], Editable -> False]], 
+               "+", FractionBox[RowBox[{RowBox[{"-", FractionBox[RowBox[
+                      {SuperscriptBox[InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"\[LeftAngleBracket]\"", "3"}, 
+                          "RowDefault"], TemplateBox[{"4", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Helicity", 
+                          "Angle", 3], Spinor["Helicity", "Angle", 4]], 
+                         Editable -> False], "3"], " ", SuperscriptBox[
+                        InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "1"}, "RowDefault"], TemplateBox[{"3", "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Helicity", "Square", 1], Spinor["Helicity", 
+                          "Square", 3]], Editable -> False], "2"]}], 
+                     RowBox[{InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", "2"}, "RowDefault"], 
+                          TemplateBox[{"4", "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Helicity", "Angle", 2], Spinor["Helicity", 
+                          "Angle", 4]], Editable -> False], " ", 
+                       InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "3"}, "RowDefault"], "1", TemplateBox[{"2", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                         "RowDefault"], SpinorChain[Spinor["Helicity", 
+                          "Square", 3], Mom[1], Spinor["Helicity", "Angle", 
+                          2]], Editable -> False]}]]}], "+", FractionBox[
+                   RowBox[{SuperscriptBox[InterpretationBox[TemplateBox[
+                        {TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, 
+                          "RowDefault"], TemplateBox[{"3", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                        "RowDefault"], SpinorChain[Spinor["Helicity", 
+                         "Angle", 1], Spinor["Helicity", "Angle", 3]], 
+                       Editable -> False], "2"], " ", SuperscriptBox[
+                      InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "1"}, "RowDefault"], TemplateBox[{"2", "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[
+                        Spinor["Helicity", "Square", 1], Spinor["Helicity", 
+                         "Square", 2]], Editable -> False], "3"]}], 
+                   RowBox[{InterpretationBox[TemplateBox[{TemplateBox[
+                         {"\"[\"", "2"}, "RowDefault"], TemplateBox[{"4", 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                      SpinorChain[Spinor["Helicity", "Square", 2], Spinor[
+                        "Helicity", "Square", 4]], Editable -> False], " ", 
+                     InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "4"}, "RowDefault"], "3", TemplateBox[{"1", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                       "RowDefault"], SpinorChain[Spinor["Helicity", 
+                        "Square", 4], Mom[3], Spinor["Helicity", "Angle", 
+                        1]], Editable -> False]}]]}], InterpretationBox[
+                 SubscriptBox["\"s\"", "\"13\""], PropDen[Mom[Multiparticle[
+                    1, 3]], 0], Editable -> False]]}], ")"}]}], "+", 
+         RowBox[{"2", " ", RowBox[{"ColorStructure", "[", 
+             RowBox[{RowBox[{"ColorIndex", "[", "2", "]"}], ",", RowBox[
+                {"ColorIndex", "[", "1", "]"}], ",", RowBox[
+                {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
+                 RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", 
+                   "8"}], "]"}]}], "]"}], " ", RowBox[{"ColorStructure", "[", 
+             RowBox[{RowBox[{"ColorIndex", "[", "4", "]"}], ",", RowBox[
+                {"ColorIndex", "[", "3", "]"}], ",", RowBox[
+                {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
+                 RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", 
+                   "8"}], "]"}]}], "]"}], " ", SuperscriptBox[
+            InterpretationBox["GG", ModelParameter["GG", "30a3398a0cbb88a8e45\
+17e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], 
+            "2"], " ", SuperscriptBox[InterpretationBox[TemplateBox[
+              {TemplateBox[{"\"\[LeftAngleBracket]\"", "3"}, "RowDefault"], 
+               TemplateBox[{"4", "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+              "RowDefault"], SpinorChain[Spinor["Helicity", "Angle", 3], 
+              Spinor["Helicity", "Angle", 4]], Editable -> False], "3"], " ", 
+           RowBox[{"(", RowBox[{RowBox[{"-", FractionBox[InterpretationBox[
+                   TemplateBox[{TemplateBox[{"\"[\"", "1"}, "RowDefault"], 
+                     TemplateBox[{"4", "\"]\""}, "RowDefault"]}, 
+                    "RowDefault"], SpinorChain[Spinor["Helicity", "Square", 
+                     1], Spinor["Helicity", "Square", 4]], Editable -> 
+                    False], RowBox[{InterpretationBox[SubscriptBox["\"s\"", 
+                      "\"14\""], PropDen[Mom[Multiparticle[1, 4]], 0], 
+                     Editable -> False], " ", InterpretationBox[TemplateBox[
+                      {TemplateBox[{"\"\[LeftAngleBracket]\"", "2"}, 
+                        "RowDefault"], TemplateBox[{"3", 
+                         "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                      "RowDefault"], SpinorChain[Spinor["Helicity", "Angle", 
+                       2], Spinor["Helicity", "Angle", 3]], Editable -> 
+                      False], " ", RowBox[{"(", RowBox[{InterpretationBox[
+                         TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"", 
+                          "1"}, "RowDefault"], TemplateBox[{"2", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Helicity", 
+                          "Angle", 1], Spinor["Helicity", "Angle", 2]], 
+                         Editable -> False], "+", FractionBox[RowBox[
+                          {InterpretationBox[SubscriptBox["\"s\"", "\"14\""], 
+                          PropDen[Mom[Multiparticle[1, 4]], 0], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"\[LeftAngleBracket]\"", "2"}, 
+                          "RowDefault"], TemplateBox[{"3", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Helicity", 
+                          "Angle", 2], Spinor["Helicity", "Angle", 3]], 
+                          Editable -> False]}], InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", "1"}, "RowDefault"], "4", 
+                          TemplateBox[{"3", "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Helicity", "Square", 1], Mom[4], Spinor[
+                          "Helicity", "Angle", 3]], Editable -> False]]}], 
+                      ")"}]}]]}], "+", FractionBox[SuperscriptBox[
+                 InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", "1"}, 
+                     "RowDefault"], TemplateBox[{"2", "\"]\""}, 
+                     "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                    "Helicity", "Square", 1], Spinor["Helicity", "Square", 
+                    2]], Editable -> False], "2"], RowBox[{InterpretationBox[
+                   SubscriptBox["\"s\"", "\"12\""], PropDen[Mom[Multiparticle[
+                      1, 2]], 0], Editable -> False], " ", InterpretationBox[
+                   TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"", "3"}, 
+                      "RowDefault"], "1", "2", TemplateBox[{"4", 
+                       "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                    "RowDefault"], SpinorChain[Spinor["Helicity", "Angle", 
+                     3], Mom[1], Mom[2], Spinor["Helicity", "Angle", 4]], 
+                   Editable -> False]}]]}], ")"}]}]}]], "Output", 
+      CellLabel -> "Saved completed result:", GeneratedCell -> True, 
+      CellAutoOverwrite -> True, CellTags -> 
+       "hepcat-cache-amplitude-sm73PPMM", TaggingRules -> 
+       <|"ConstructionReport" -> "/Users/neil/Documents/Codex/2026-09-24/help\
+-me-make-this-response-more/output/sm-four-point-validation/sm73PPMM-gluon-st\
+able-construction.wl", "ValidationReport" -> "/Users/neil/Documents/Codex/202\
+6-09-24/help-me-make-this-response-more/output/sm-four-point-validation/sm73-\
+export.wl", "ValidationClass" -> 
+         "PrecisionQualified;RawNumericalFailureRetained", 
+        "SymbolicReferenceReport" -> "/Users/neil/Documents/Codex/2026-09-24/\
+help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
+ynman-reference.wl"|>], Cell["G.+, G.-, G.+, G.+", "Subsection"], 
+     Cell["sm73PMPPParticles = {\"G.+\", \"G.-\", \"G.+\", \
+\"G.+\"};\nsm73PMPPAmplitude = ConstructAmplitude[sm73PMPPParticles, sm, sm]"\
+, "Input"], Cell[BoxData["0"], "Output", CellLabel -> 
+       "Saved completed result:", GeneratedCell -> True, 
+      CellAutoOverwrite -> True, CellTags -> 
+       "hepcat-cache-amplitude-sm73PMPP", TaggingRules -> 
+       <|"ConstructionReport" -> "/Users/neil/Documents/Codex/2026-09-24/help\
+-me-make-this-response-more/output/sm-four-point-validation/sm73PMPP-gluon-st\
+able-construction.wl", "ValidationReport" -> "/Users/neil/Documents/Codex/202\
+6-09-24/help-me-make-this-response-more/output/sm-four-point-validation/sm73-\
+export.wl", "ValidationClass" -> 
+         "PrecisionQualified;RawNumericalFailureRetained", 
+        "SymbolicReferenceReport" -> "/Users/neil/Documents/Codex/2026-09-24/\
+help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
+ynman-reference.wl"|>], Cell["G.+, G.-, G.+, G.-", "Subsection"], 
+     Cell["sm73PMPMParticles = {\"G.+\", \"G.-\", \"G.+\", \
+\"G.-\"};\nsm73PMPMAmplitude = ConstructAmplitude[sm73PMPMParticles, sm, sm]"\
+, "Input"], Cell[BoxData[RowBox[
+        {RowBox[{RowBox[{"ColorStructure", "[", RowBox[{RowBox[
+                {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
+                 RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", 
+                   "8"}], "]"}], ",", RowBox[{"ColorIndex", "[", "2", "]"}], 
+               ",", RowBox[{"ColorIndex", "[", "1", "]"}]}], "]"}], " ", 
+           RowBox[{"ColorStructure", "[", RowBox[{RowBox[
+                {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
+                 RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", 
+                   "8"}], "]"}], ",", RowBox[{"ColorIndex", "[", "3", "]"}], 
+               ",", RowBox[{"ColorIndex", "[", "4", "]"}]}], "]"}], " ", 
+           SuperscriptBox[InterpretationBox["GG", ModelParameter["GG", 
+              "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77\
+e7", "Real"], Editable -> False], "2"], " ", RowBox[
+            {"(", RowBox[{RowBox[{"-", FractionBox[RowBox[{FractionBox[
+                     RowBox[{SuperscriptBox[InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, 
+                          "RowDefault"], TemplateBox[{"4", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Helicity", 
+                          "Angle", 1], Spinor["Helicity", "Angle", 4]], 
+                         Editable -> False], "2"], " ", SuperscriptBox[
+                        InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "1"}, "RowDefault"], TemplateBox[{"3", "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Helicity", "Square", 1], Spinor["Helicity", 
+                          "Square", 3]], Editable -> False], "3"]}], 
+                     RowBox[{InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"[\"", "2"}, "RowDefault"], TemplateBox[{"3", 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                        SpinorChain[Spinor["Helicity", "Square", 2], Spinor[
+                          "Helicity", "Square", 3]], Editable -> False], " ", 
+                       InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "2"}, "RowDefault"], "4", TemplateBox[{"1", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                         "RowDefault"], SpinorChain[Spinor["Helicity", 
+                          "Square", 2], Mom[4], Spinor["Helicity", "Angle", 
+                          1]], Editable -> False]}]], "+", FractionBox[
+                     RowBox[{SuperscriptBox[InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"\[LeftAngleBracket]\"", "2"}, 
+                          "RowDefault"], TemplateBox[{"4", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Helicity", 
+                          "Angle", 2], Spinor["Helicity", "Angle", 4]], 
+                         Editable -> False], "3"], " ", SuperscriptBox[
+                        InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "1"}, "RowDefault"], TemplateBox[{"4", "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Helicity", "Square", 1], Spinor["Helicity", 
+                          "Square", 4]], Editable -> False], "2"]}], 
+                     RowBox[{InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", "2"}, "RowDefault"], 
+                          TemplateBox[{"3", "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Helicity", "Angle", 2], Spinor["Helicity", 
+                          "Angle", 3]], Editable -> False], " ", 
+                       InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "4"}, "RowDefault"], "1", TemplateBox[{"3", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                         "RowDefault"], SpinorChain[Spinor["Helicity", 
+                          "Square", 4], Mom[1], Spinor["Helicity", "Angle", 
+                          3]], Editable -> False]}]]}], InterpretationBox[
+                   SubscriptBox["\"s\"", "\"14\""], PropDen[Mom[Multiparticle[
+                      1, 4]], 0], Editable -> False]]}], "+", FractionBox[
+                RowBox[{RowBox[{"-", FractionBox[RowBox[{SuperscriptBox[
+                        InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", "2"}, "RowDefault"], 
+                          TemplateBox[{"4", "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Helicity", "Angle", 2], Spinor["Helicity", 
+                          "Angle", 4]], Editable -> False], "3"], " ", 
+                       SuperscriptBox[InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", "1"}, "RowDefault"], 
+                          TemplateBox[{"2", "\"]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Helicity", 
+                          "Square", 1], Spinor["Helicity", "Square", 2]], 
+                         Editable -> False], "2"]}], RowBox[
+                      {InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", "3"}, "RowDefault"], 
+                          TemplateBox[{"4", "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Helicity", "Angle", 3], Spinor["Helicity", 
+                          "Angle", 4]], Editable -> False], " ", 
+                       InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "2"}, "RowDefault"], "1", TemplateBox[{"3", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                         "RowDefault"], SpinorChain[Spinor["Helicity", 
+                          "Square", 2], Mom[1], Spinor["Helicity", "Angle", 
+                          3]], Editable -> False]}]]}], "+", FractionBox[
+                   RowBox[{SuperscriptBox[InterpretationBox[TemplateBox[
+                        {TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, 
+                          "RowDefault"], TemplateBox[{"2", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                        "RowDefault"], SpinorChain[Spinor["Helicity", 
+                         "Angle", 1], Spinor["Helicity", "Angle", 2]], 
+                       Editable -> False], "2"], " ", SuperscriptBox[
+                      InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "1"}, "RowDefault"], TemplateBox[{"3", "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[
+                        Spinor["Helicity", "Square", 1], Spinor["Helicity", 
+                         "Square", 3]], Editable -> False], "3"]}], 
+                   RowBox[{InterpretationBox[TemplateBox[{TemplateBox[
+                         {"\"[\"", "3"}, "RowDefault"], TemplateBox[{"4", 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                      SpinorChain[Spinor["Helicity", "Square", 3], Spinor[
+                        "Helicity", "Square", 4]], Editable -> False], " ", 
+                     InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "4"}, "RowDefault"], "2", TemplateBox[{"1", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                       "RowDefault"], SpinorChain[Spinor["Helicity", 
+                        "Square", 4], Mom[2], Spinor["Helicity", "Angle", 
+                        1]], Editable -> False]}]]}], InterpretationBox[
+                 SubscriptBox["\"s\"", "\"12\""], PropDen[Mom[Multiparticle[
+                    1, 2]], 0], Editable -> False]]}], ")"}]}], "+", 
+         RowBox[{"2", " ", RowBox[{"ColorStructure", "[", 
+             RowBox[{RowBox[{"ColorIndex", "[", "3", "]"}], ",", RowBox[
+                {"ColorIndex", "[", "1", "]"}], ",", RowBox[
+                {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
+                 RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", 
+                   "8"}], "]"}]}], "]"}], " ", RowBox[{"ColorStructure", "[", 
+             RowBox[{RowBox[{"ColorIndex", "[", "4", "]"}], ",", RowBox[
+                {"ColorIndex", "[", "2", "]"}], ",", RowBox[
+                {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
+                 RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", 
+                   "8"}], "]"}]}], "]"}], " ", SuperscriptBox[
+            InterpretationBox["GG", ModelParameter["GG", "30a3398a0cbb88a8e45\
+17e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], 
+            "2"], " ", SuperscriptBox[InterpretationBox[TemplateBox[
+              {TemplateBox[{"\"\[LeftAngleBracket]\"", "2"}, "RowDefault"], 
+               TemplateBox[{"4", "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+              "RowDefault"], SpinorChain[Spinor["Helicity", "Angle", 2], 
+              Spinor["Helicity", "Angle", 4]], Editable -> False], "3"], " ", 
+           RowBox[{"(", RowBox[{FractionBox[InterpretationBox[TemplateBox[
+                  {TemplateBox[{"\"[\"", "1"}, "RowDefault"], TemplateBox[
+                    {"4", "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                 SpinorChain[Spinor["Helicity", "Square", 1], Spinor[
+                   "Helicity", "Square", 4]], Editable -> False], 
+                RowBox[{InterpretationBox[SubscriptBox["\"s\"", "\"14\""], 
+                   PropDen[Mom[Multiparticle[1, 4]], 0], Editable -> False], 
+                  " ", InterpretationBox[TemplateBox[{TemplateBox[
+                      {"\"\[LeftAngleBracket]\"", "2"}, "RowDefault"], 
+                     TemplateBox[{"3", "\"\[RightAngleBracket]\""}, 
+                      "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                     "Helicity", "Angle", 2], Spinor["Helicity", "Angle", 
+                     3]], Editable -> False], " ", RowBox[{"(", RowBox[
+                     {InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", "1"}, "RowDefault"], 
+                         TemplateBox[{"3", "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[
+                        Spinor["Helicity", "Angle", 1], Spinor["Helicity", 
+                         "Angle", 3]], Editable -> False], "-", FractionBox[
+                       RowBox[{InterpretationBox[SubscriptBox["\"s\"", 
+                          "\"14\""], PropDen[Mom[Multiparticle[1, 4]], 0], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", "2"}, "RowDefault"], 
+                          TemplateBox[{"3", "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Helicity", "Angle", 2], Spinor["Helicity", 
+                          "Angle", 3]], Editable -> False]}], 
+                       InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "1"}, "RowDefault"], "4", TemplateBox[{"2", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                         "RowDefault"], SpinorChain[Spinor["Helicity", 
+                          "Square", 1], Mom[4], Spinor["Helicity", "Angle", 
+                          2]], Editable -> False]]}], ")"}]}]], "+", 
+               FractionBox[SuperscriptBox[InterpretationBox[TemplateBox[
+                   {TemplateBox[{"\"[\"", "1"}, "RowDefault"], TemplateBox[
+                     {"3", "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                  SpinorChain[Spinor["Helicity", "Square", 1], Spinor[
+                    "Helicity", "Square", 3]], Editable -> False], "2"], 
+                RowBox[{InterpretationBox[SubscriptBox["\"s\"", "\"13\""], 
+                   PropDen[Mom[Multiparticle[1, 3]], 0], Editable -> False], 
+                  " ", InterpretationBox[TemplateBox[{TemplateBox[
+                      {"\"\[LeftAngleBracket]\"", "2"}, "RowDefault"], "1", 
+                     "3", TemplateBox[{"4", "\"\[RightAngleBracket]\""}, 
+                      "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                     "Helicity", "Angle", 2], Mom[1], Mom[3], Spinor[
+                     "Helicity", "Angle", 4]], Editable -> False]}]]}], 
+             ")"}]}]}]], "Output", CellLabel -> "Saved completed result:", 
+      GeneratedCell -> True, CellAutoOverwrite -> True, 
+      CellTags -> "hepcat-cache-amplitude-sm73PMPM", 
+      TaggingRules -> <|"ConstructionReport" -> "/Users/neil/Documents/Codex/\
+2026-09-24/help-me-make-this-response-more/output/sm-four-point-validation/sm\
+73PMPM-gluon-stable-construction.wl", "ValidationReport" -> "/Users/neil/Docu\
+ments/Codex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-v\
+alidation/sm73-export.wl", "ValidationClass" -> 
+         "PrecisionQualified;RawNumericalFailureRetained", 
+        "SymbolicReferenceReport" -> "/Users/neil/Documents/Codex/2026-09-24/\
+help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
+ynman-reference.wl"|>], Cell["G.+, G.-, G.-, G.+", "Subsection"], 
+     Cell["sm73PMMPParticles = {\"G.+\", \"G.-\", \"G.-\", \
+\"G.+\"};\nsm73PMMPAmplitude = ConstructAmplitude[sm73PMMPParticles, sm, sm]"\
+, "Input"], Cell[BoxData[RowBox[
+        {RowBox[{"2", " ", RowBox[{"ColorStructure", "[", 
+             RowBox[{RowBox[{"ConstructiveDiagrams`Private`colorInternalIndex\
+", "[", RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", "8"}], 
+                 "]"}], ",", RowBox[{"ColorIndex", "[", "3", "]"}], ",", 
+               RowBox[{"ColorIndex", "[", "1", "]"}]}], "]"}], " ", 
+           RowBox[{"ColorStructure", "[", RowBox[{RowBox[
+                {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
+                 RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", 
+                   "8"}], "]"}], ",", RowBox[{"ColorIndex", "[", "4", "]"}], 
+               ",", RowBox[{"ColorIndex", "[", "2", "]"}]}], "]"}], " ", 
+           SuperscriptBox[InterpretationBox["GG", ModelParameter["GG", 
+              "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77\
+e7", "Real"], Editable -> False], "2"], " ", SuperscriptBox[
+            InterpretationBox[TemplateBox[{TemplateBox[
+                {"\"\[LeftAngleBracket]\"", "2"}, "RowDefault"], TemplateBox[
+                {"3", "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+              "RowDefault"], SpinorChain[Spinor["Helicity", "Angle", 2], 
+              Spinor["Helicity", "Angle", 3]], Editable -> False], "3"], " ", 
+           RowBox[{"(", RowBox[{FractionBox[InterpretationBox[TemplateBox[
+                  {TemplateBox[{"\"[\"", "1"}, "RowDefault"], TemplateBox[
+                    {"3", "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                 SpinorChain[Spinor["Helicity", "Square", 1], Spinor[
+                   "Helicity", "Square", 3]], Editable -> False], 
+                RowBox[{InterpretationBox[SubscriptBox["\"s\"", "\"13\""], 
+                   PropDen[Mom[Multiparticle[1, 3]], 0], Editable -> False], 
+                  " ", InterpretationBox[TemplateBox[{TemplateBox[
+                      {"\"\[LeftAngleBracket]\"", "2"}, "RowDefault"], 
+                     TemplateBox[{"4", "\"\[RightAngleBracket]\""}, 
+                      "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                     "Helicity", "Angle", 2], Spinor["Helicity", "Angle", 
+                     4]], Editable -> False], " ", RowBox[{"(", RowBox[
+                     {InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", "1"}, "RowDefault"], 
+                         TemplateBox[{"4", "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[
+                        Spinor["Helicity", "Angle", 1], Spinor["Helicity", 
+                         "Angle", 4]], Editable -> False], "-", FractionBox[
+                       RowBox[{InterpretationBox[SubscriptBox["\"s\"", 
+                          "\"13\""], PropDen[Mom[Multiparticle[1, 3]], 0], 
+                          Editable -> False], " ", InterpretationBox[
+                          TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", "2"}, "RowDefault"], 
+                          TemplateBox[{"4", "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Helicity", "Angle", 2], Spinor["Helicity", 
+                          "Angle", 4]], Editable -> False]}], 
+                       InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "1"}, "RowDefault"], "3", TemplateBox[{"2", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                         "RowDefault"], SpinorChain[Spinor["Helicity", 
+                          "Square", 1], Mom[3], Spinor["Helicity", "Angle", 
+                          2]], Editable -> False]]}], ")"}]}]], "+", 
+               FractionBox[SuperscriptBox[InterpretationBox[TemplateBox[
+                   {TemplateBox[{"\"[\"", "1"}, "RowDefault"], TemplateBox[
+                     {"4", "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                  SpinorChain[Spinor["Helicity", "Square", 1], Spinor[
+                    "Helicity", "Square", 4]], Editable -> False], "2"], 
+                RowBox[{InterpretationBox[SubscriptBox["\"s\"", "\"14\""], 
+                   PropDen[Mom[Multiparticle[1, 4]], 0], Editable -> False], 
+                  " ", InterpretationBox[TemplateBox[{TemplateBox[
+                      {"\"\[LeftAngleBracket]\"", "2"}, "RowDefault"], "1", 
+                     "4", TemplateBox[{"3", "\"\[RightAngleBracket]\""}, 
+                      "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                     "Helicity", "Angle", 2], Mom[1], Mom[4], Spinor[
+                     "Helicity", "Angle", 3]], Editable -> False]}]]}], 
+             ")"}]}], "-", RowBox[{FractionBox["2", "3"], " ", 
+           RowBox[{"ColorStructure", "[", RowBox[{RowBox[
+                {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
+                 RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", 
+                   "8"}], "]"}], ",", RowBox[{"ColorIndex", "[", "2", "]"}], 
+               ",", RowBox[{"ColorIndex", "[", "1", "]"}]}], "]"}], " ", 
+           RowBox[{"ColorStructure", "[", RowBox[{RowBox[
+                {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
+                 RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", 
+                   "8"}], "]"}], ",", RowBox[{"ColorIndex", "[", "4", "]"}], 
+               ",", RowBox[{"ColorIndex", "[", "3", "]"}]}], "]"}], " ", 
+           SuperscriptBox[InterpretationBox["GG", ModelParameter["GG", 
+              "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77\
+e7", "Real"], Editable -> False], "2"], " ", RowBox[
+            {"(", RowBox[{FractionBox[RowBox[{RowBox[{"-", FractionBox[
+                     RowBox[{SuperscriptBox[InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"\[LeftAngleBracket]\"", "2"}, 
+                          "RowDefault"], TemplateBox[{"3", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Helicity", 
+                          "Angle", 2], Spinor["Helicity", "Angle", 3]], 
+                         Editable -> False], "3"], " ", SuperscriptBox[
+                        InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "1"}, "RowDefault"], TemplateBox[{"2", "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Helicity", "Square", 1], Spinor["Helicity", 
+                          "Square", 2]], Editable -> False], "2"]}], 
+                     RowBox[{InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", "3"}, "RowDefault"], 
+                          TemplateBox[{"4", "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Helicity", "Angle", 3], Spinor["Helicity", 
+                          "Angle", 4]], Editable -> False], " ", 
+                       InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "2"}, "RowDefault"], "1", TemplateBox[{"4", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                         "RowDefault"], SpinorChain[Spinor["Helicity", 
+                          "Square", 2], Mom[1], Spinor["Helicity", "Angle", 
+                          4]], Editable -> False]}]]}], "+", FractionBox[
+                   RowBox[{SuperscriptBox[InterpretationBox[TemplateBox[
+                        {TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, 
+                          "RowDefault"], TemplateBox[{"2", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                        "RowDefault"], SpinorChain[Spinor["Helicity", 
+                         "Angle", 1], Spinor["Helicity", "Angle", 2]], 
+                       Editable -> False], "2"], " ", SuperscriptBox[
+                      InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "1"}, "RowDefault"], TemplateBox[{"4", "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[
+                        Spinor["Helicity", "Square", 1], Spinor["Helicity", 
+                         "Square", 4]], Editable -> False], "3"]}], 
+                   RowBox[{InterpretationBox[TemplateBox[{TemplateBox[
+                         {"\"[\"", "3"}, "RowDefault"], TemplateBox[{"4", 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                      SpinorChain[Spinor["Helicity", "Square", 3], Spinor[
+                        "Helicity", "Square", 4]], Editable -> False], " ", 
+                     InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "3"}, "RowDefault"], "2", TemplateBox[{"1", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                       "RowDefault"], SpinorChain[Spinor["Helicity", 
+                        "Square", 3], Mom[2], Spinor["Helicity", "Angle", 
+                        1]], Editable -> False]}]]}], InterpretationBox[
+                 SubscriptBox["\"s\"", "\"12\""], PropDen[Mom[Multiparticle[
+                    1, 2]], 0], Editable -> False]], "+", FractionBox[
+                RowBox[{SuperscriptBox[InterpretationBox[TemplateBox[
+                     {TemplateBox[{"\"\[LeftAngleBracket]\"", "2"}, 
+                       "RowDefault"], TemplateBox[{"3", 
+                        "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                     "RowDefault"], SpinorChain[Spinor["Helicity", "Angle", 
+                      2], Spinor["Helicity", "Angle", 3]], Editable -> 
+                     False], "3"], " ", SuperscriptBox[InterpretationBox[
+                    TemplateBox[{TemplateBox[{"\"[\"", "1"}, "RowDefault"], 
+                      TemplateBox[{"4", "\"]\""}, "RowDefault"]}, 
+                     "RowDefault"], SpinorChain[Spinor["Helicity", "Square", 
+                      1], Spinor["Helicity", "Square", 4]], Editable -> 
+                     False], "2"]}], RowBox[{InterpretationBox[SubscriptBox[
+                    "\"s\"", "\"14\""], PropDen[Mom[Multiparticle[1, 4]], 0], 
+                   Editable -> False], " ", InterpretationBox[TemplateBox[
+                    {TemplateBox[{"\"\[LeftAngleBracket]\"", "2"}, 
+                      "RowDefault"], "1", "4", TemplateBox[{"3", 
+                       "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                    "RowDefault"], SpinorChain[Spinor["Helicity", "Angle", 
+                     2], Mom[1], Mom[4], Spinor["Helicity", "Angle", 3]], 
+                   Editable -> False]}]]}], ")"}]}]}]], "Output", 
+      CellLabel -> "Saved completed result:", GeneratedCell -> True, 
+      CellAutoOverwrite -> True, CellTags -> 
+       "hepcat-cache-amplitude-sm73PMMP", TaggingRules -> 
+       <|"ConstructionReport" -> "/Users/neil/Documents/Codex/2026-09-24/help\
+-me-make-this-response-more/output/sm-four-point-validation/sm73PMMP-gluon-st\
+able-construction.wl", "ValidationReport" -> "/Users/neil/Documents/Codex/202\
+6-09-24/help-me-make-this-response-more/output/sm-four-point-validation/sm73-\
+export.wl", "ValidationClass" -> 
+         "PrecisionQualified;RawNumericalFailureRetained", 
+        "SymbolicReferenceReport" -> "/Users/neil/Documents/Codex/2026-09-24/\
+help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
+ynman-reference.wl"|>], Cell["G.+, G.-, G.-, G.-", "Subsection"], 
+     Cell["sm73PMMMParticles = {\"G.+\", \"G.-\", \"G.-\", \
+\"G.-\"};\nsm73PMMMAmplitude = ConstructAmplitude[sm73PMMMParticles, sm, sm]"\
+, "Input"], Cell[BoxData["0"], "Output", CellLabel -> 
+       "Saved completed result:", GeneratedCell -> True, 
+      CellAutoOverwrite -> True, CellTags -> 
+       "hepcat-cache-amplitude-sm73PMMM", TaggingRules -> 
+       <|"ConstructionReport" -> "/Users/neil/Documents/Codex/2026-09-24/help\
+-me-make-this-response-more/output/sm-four-point-validation/sm73PMMM-gluon-st\
+able-construction.wl", "ValidationReport" -> "/Users/neil/Documents/Codex/202\
+6-09-24/help-me-make-this-response-more/output/sm-four-point-validation/sm73-\
+export.wl", "ValidationClass" -> 
+         "PrecisionQualified;RawNumericalFailureRetained", 
+        "SymbolicReferenceReport" -> "/Users/neil/Documents/Codex/2026-09-24/\
+help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
+ynman-reference.wl"|>], Cell["G.-, G.+, G.+, G.+", "Subsection"], 
+     Cell["sm73MPPPParticles = {\"G.-\", \"G.+\", \"G.+\", \
+\"G.+\"};\nsm73MPPPAmplitude = ConstructAmplitude[sm73MPPPParticles, sm, sm]"\
+, "Input"], Cell[BoxData["0"], "Output", CellLabel -> 
+       "Saved completed result:", GeneratedCell -> True, 
+      CellAutoOverwrite -> True, CellTags -> 
+       "hepcat-cache-amplitude-sm73MPPP", TaggingRules -> 
+       <|"ConstructionReport" -> "/Users/neil/Documents/Codex/2026-09-24/help\
+-me-make-this-response-more/output/sm-four-point-validation/sm73MPPP-gluon-st\
+able-construction.wl", "ValidationReport" -> "/Users/neil/Documents/Codex/202\
+6-09-24/help-me-make-this-response-more/output/sm-four-point-validation/sm73-\
+export.wl", "ValidationClass" -> 
+         "PrecisionQualified;RawNumericalFailureRetained", 
+        "SymbolicReferenceReport" -> "/Users/neil/Documents/Codex/2026-09-24/\
+help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
+ynman-reference.wl"|>], Cell["G.-, G.+, G.+, G.-", "Subsection"], 
+     Cell["sm73MPPMParticles = {\"G.-\", \"G.+\", \"G.+\", \
+\"G.-\"};\nsm73MPPMAmplitude = ConstructAmplitude[sm73MPPMParticles, sm, sm]"\
+, "Input"], Cell[BoxData[RowBox[
+        {RowBox[{"-", FractionBox[RowBox[{RowBox[{"ColorStructure", "[", 
+                RowBox[{RowBox[
+                   {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
+                    RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", 
+                      "8"}], "]"}], ",", RowBox[{"ColorIndex", "[", "1", 
+                    "]"}], ",", RowBox[{"ColorIndex", "[", "3", "]"}]}], 
+                "]"}], " ", RowBox[{"ColorStructure", "[", RowBox[
+                 {RowBox[{"ConstructiveDiagrams`Private`colorInternalIndex", 
+                    "[", RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], 
+                      ",", "8"}], "]"}], ",", RowBox[{"ColorIndex", "[", "2", 
+                    "]"}], ",", RowBox[{"ColorIndex", "[", "4", "]"}]}], 
+                "]"}], " ", SuperscriptBox[InterpretationBox["GG", 
+                ModelParameter["GG", "30a3398a0cbb88a8e4517e90d53df2fd406e010\
+fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"], " ", 
+              RowBox[{"(", RowBox[{FractionBox[RowBox[{SuperscriptBox[
+                      InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", "1"}, "RowDefault"], 
+                         TemplateBox[{"4", "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[
+                        Spinor["Helicity", "Angle", 1], Spinor["Helicity", 
+                         "Angle", 4]], Editable -> False], "3"], " ", 
+                     SuperscriptBox[InterpretationBox[TemplateBox[
+                        {TemplateBox[{"\"[\"", "1"}, "RowDefault"], 
+                         TemplateBox[{"3", "\"]\""}, "RowDefault"]}, 
+                        "RowDefault"], SpinorChain[Spinor["Helicity", 
+                         "Square", 1], Spinor["Helicity", "Square", 3]], 
+                       Editable -> False], "2"]}], RowBox[{InterpretationBox[
+                      TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"", 
+                          "2"}, "RowDefault"], TemplateBox[{"4", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                       "RowDefault"], SpinorChain[Spinor["Helicity", "Angle", 
+                        2], Spinor["Helicity", "Angle", 4]], Editable -> 
+                       False], " ", InterpretationBox[TemplateBox[
+                       {TemplateBox[{"\"[\"", "1"}, "RowDefault"], "3", 
+                        TemplateBox[{"2", "\"\[RightAngleBracket]\""}, 
+                         "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                        "Helicity", "Square", 1], Mom[3], Spinor["Helicity", 
+                        "Angle", 2]], Editable -> False]}]], "+", FractionBox[
+                   RowBox[{SuperscriptBox[InterpretationBox[TemplateBox[
+                        {TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, 
+                          "RowDefault"], TemplateBox[{"3", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                        "RowDefault"], SpinorChain[Spinor["Helicity", 
+                         "Angle", 1], Spinor["Helicity", "Angle", 3]], 
+                       Editable -> False], "2"], " ", SuperscriptBox[
+                      InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "2"}, "RowDefault"], TemplateBox[{"3", "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[
+                        Spinor["Helicity", "Square", 2], Spinor["Helicity", 
+                         "Square", 3]], Editable -> False], "3"]}], 
+                   RowBox[{InterpretationBox[TemplateBox[{TemplateBox[
+                         {"\"[\"", "2"}, "RowDefault"], TemplateBox[{"4", 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                      SpinorChain[Spinor["Helicity", "Square", 2], Spinor[
+                        "Helicity", "Square", 4]], Editable -> False], " ", 
+                     InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "4"}, "RowDefault"], "1", TemplateBox[{"3", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                       "RowDefault"], SpinorChain[Spinor["Helicity", 
+                        "Square", 4], Mom[1], Spinor["Helicity", "Angle", 
+                        3]], Editable -> False]}]]}], ")"}]}], 
+            InterpretationBox[SubscriptBox["\"s\"", "\"13\""], 
+             PropDen[Mom[Multiparticle[1, 3]], 0], Editable -> False]]}], 
+         "+", RowBox[{RowBox[{"ColorStructure", "[", 
+             RowBox[{RowBox[{"ConstructiveDiagrams`Private`colorInternalIndex\
+", "[", RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", "8"}], 
+                 "]"}], ",", RowBox[{"ColorIndex", "[", "1", "]"}], ",", 
+               RowBox[{"ColorIndex", "[", "2", "]"}]}], "]"}], " ", 
+           RowBox[{"ColorStructure", "[", RowBox[{RowBox[
+                {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
+                 RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", 
+                   "8"}], "]"}], ",", RowBox[{"ColorIndex", "[", "3", "]"}], 
+               ",", RowBox[{"ColorIndex", "[", "4", "]"}]}], "]"}], " ", 
+           RowBox[{"(", RowBox[{RowBox[{"-", FractionBox[RowBox[{"2", " ", 
+                    SuperscriptBox[InterpretationBox["GG", ModelParameter[
+                       "GG", "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af8\
+2ff422d9b7ebd77e7", "Real"], Editable -> False], "2"], " ", SuperscriptBox[
+                     InterpretationBox[TemplateBox[{TemplateBox[
+                         {"\"\[LeftAngleBracket]\"", "1"}, "RowDefault"], 
+                        TemplateBox[{"4", "\"\[RightAngleBracket]\""}, 
+                         "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                        "Helicity", "Angle", 1], Spinor["Helicity", "Angle", 
+                        4]], Editable -> False], "3"], " ", SuperscriptBox[
+                     InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "1"}, "RowDefault"], TemplateBox[{"2", "\"]\""}, 
+                         "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                        "Helicity", "Square", 1], Spinor["Helicity", 
+                        "Square", 2]], Editable -> False], "2"]}], 
+                  RowBox[{"3", " ", InterpretationBox[SubscriptBox["\"s\"", 
+                      "\"12\""], PropDen[Mom[Multiparticle[1, 2]], 0], 
+                     Editable -> False], " ", InterpretationBox[TemplateBox[
+                      {TemplateBox[{"\"\[LeftAngleBracket]\"", "3"}, 
+                        "RowDefault"], TemplateBox[{"4", 
+                         "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                      "RowDefault"], SpinorChain[Spinor["Helicity", "Angle", 
+                       3], Spinor["Helicity", "Angle", 4]], Editable -> 
+                      False], " ", InterpretationBox[TemplateBox[
+                      {TemplateBox[{"\"[\"", "1"}, "RowDefault"], "2", 
+                       TemplateBox[{"3", "\"\[RightAngleBracket]\""}, 
+                        "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                       "Helicity", "Square", 1], Mom[2], Spinor["Helicity", 
+                       "Angle", 3]], Editable -> False]}]]}], "+", RowBox[
+                {FractionBox["2", "3"], " ", SuperscriptBox[InterpretationBox[
+                   "GG", ModelParameter["GG", "30a3398a0cbb88a8e4517e90d53df2\
+fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], "2"], " ", 
+                 SuperscriptBox[InterpretationBox[TemplateBox[{TemplateBox[
+                      {"\"[\"", "2"}, "RowDefault"], TemplateBox[{"3", 
+                       "\"]\""}, "RowDefault"]}, "RowDefault"], SpinorChain[
+                    Spinor["Helicity", "Square", 2], Spinor["Helicity", 
+                     "Square", 3]], Editable -> False], "3"], " ", 
+                 RowBox[{"(", RowBox[{FractionBox[SuperscriptBox[
+                       InterpretationBox[TemplateBox[{TemplateBox[
+                          {"\"\[LeftAngleBracket]\"", "1"}, "RowDefault"], 
+                          TemplateBox[{"2", "\"\[RightAngleBracket]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                          "Helicity", "Angle", 1], Spinor["Helicity", 
+                          "Angle", 2]], Editable -> False], "2"], RowBox[
+                       {InterpretationBox[SubscriptBox["\"s\"", "\"12\""], 
+                         PropDen[Mom[Multiparticle[1, 2]], 0], Editable -> 
+                          False], " ", InterpretationBox[TemplateBox[
+                          {TemplateBox[{"\"[\"", "3"}, "RowDefault"], 
+                          TemplateBox[{"4", "\"]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Helicity", 
+                          "Square", 3], Spinor["Helicity", "Square", 4]], 
+                         Editable -> False], " ", InterpretationBox[
+                         TemplateBox[{TemplateBox[{"\"[\"", "4"}, 
+                          "RowDefault"], "1", TemplateBox[{"2", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                          "RowDefault"], SpinorChain[Spinor["Helicity", 
+                          "Square", 4], Mom[1], Spinor["Helicity", "Angle", 
+                          2]], Editable -> False]}]], "-", FractionBox[
+                      SuperscriptBox[InterpretationBox[TemplateBox[
+                         {TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, 
+                          "RowDefault"], TemplateBox[{"4", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                         "RowDefault"], SpinorChain[Spinor["Helicity", 
+                          "Angle", 1], Spinor["Helicity", "Angle", 4]], 
+                        Editable -> False], "2"], RowBox[{InterpretationBox[
+                         SubscriptBox["\"s\"", "\"14\""], PropDen[Mom[
+                          Multiparticle[1, 4]], 0], Editable -> False], " ", 
+                        InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "2"}, "RowDefault"], "1", "4", TemplateBox[{"3", 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                         SpinorChain[Spinor["Helicity", "Square", 2], Mom[1], 
+                          Mom[4], Spinor["Helicity", "Square", 3]], 
+                         Editable -> False]}]]}], ")"}]}]}], ")"}]}]}]], 
+      "Output", CellLabel -> "Saved completed result:", 
+      GeneratedCell -> True, CellAutoOverwrite -> True, 
+      CellTags -> "hepcat-cache-amplitude-sm73MPPM", 
+      TaggingRules -> <|"ConstructionReport" -> "/Users/neil/Documents/Codex/\
+2026-09-24/help-me-make-this-response-more/output/sm-four-point-validation/sm\
+73MPPM-gluon-stable-construction.wl", "ValidationReport" -> "/Users/neil/Docu\
+ments/Codex/2026-09-24/help-me-make-this-response-more/output/sm-four-point-v\
+alidation/sm73-export.wl", "ValidationClass" -> 
+         "PrecisionQualified;RawNumericalFailureRetained", 
+        "SymbolicReferenceReport" -> "/Users/neil/Documents/Codex/2026-09-24/\
+help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
+ynman-reference.wl"|>], Cell["G.-, G.+, G.-, G.+", "Subsection"], 
+     Cell["sm73MPMPParticles = {\"G.-\", \"G.+\", \"G.-\", \
+\"G.+\"};\nsm73MPMPAmplitude = ConstructAmplitude[sm73MPMPParticles, sm, sm]"\
+, "Input"], Cell[BoxData[RowBox[
+        {RowBox[{RowBox[{"ColorStructure", "[", RowBox[{RowBox[
+                {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
+                 RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", 
+                   "8"}], "]"}], ",", RowBox[{"ColorIndex", "[", "1", "]"}], 
+               ",", RowBox[{"ColorIndex", "[", "2", "]"}]}], "]"}], " ", 
+           RowBox[{"ColorStructure", "[", RowBox[{RowBox[
+                {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
+                 RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", 
+                   "8"}], "]"}], ",", RowBox[{"ColorIndex", "[", "4", "]"}], 
+               ",", RowBox[{"ColorIndex", "[", "3", "]"}]}], "]"}], " ", 
+           SuperscriptBox[InterpretationBox["GG", ModelParameter["GG", 
+              "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77\
+e7", "Real"], Editable -> False], "2"], " ", RowBox[
+            {"(", RowBox[{FractionBox[RowBox[{FractionBox[RowBox[
+                    {SuperscriptBox[InterpretationBox[TemplateBox[
+                        {TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, 
+                          "RowDefault"], TemplateBox[{"3", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                        "RowDefault"], SpinorChain[Spinor["Helicity", 
+                         "Angle", 1], Spinor["Helicity", "Angle", 3]], 
+                       Editable -> False], "3"], " ", SuperscriptBox[
+                      InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "1"}, "RowDefault"], TemplateBox[{"2", "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[
+                        Spinor["Helicity", "Square", 1], Spinor["Helicity", 
+                         "Square", 2]], Editable -> False], "2"]}], 
+                   RowBox[{InterpretationBox[TemplateBox[{TemplateBox[
+                         {"\"\[LeftAngleBracket]\"", "3"}, "RowDefault"], 
+                        TemplateBox[{"4", "\"\[RightAngleBracket]\""}, 
+                         "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                        "Helicity", "Angle", 3], Spinor["Helicity", "Angle", 
+                        4]], Editable -> False], " ", InterpretationBox[
+                      TemplateBox[{TemplateBox[{"\"[\"", "1"}, "RowDefault"], 
+                        "2", TemplateBox[{"4", "\"\[RightAngleBracket]\""}, 
+                         "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                        "Helicity", "Square", 1], Mom[2], Spinor["Helicity", 
+                        "Angle", 4]], Editable -> False]}]], "-", FractionBox[
+                   RowBox[{SuperscriptBox[InterpretationBox[TemplateBox[
+                        {TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, 
+                          "RowDefault"], TemplateBox[{"2", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                        "RowDefault"], SpinorChain[Spinor["Helicity", 
+                         "Angle", 1], Spinor["Helicity", "Angle", 2]], 
+                       Editable -> False], "2"], " ", SuperscriptBox[
+                      InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "2"}, "RowDefault"], TemplateBox[{"4", "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[
+                        Spinor["Helicity", "Square", 2], Spinor["Helicity", 
+                         "Square", 4]], Editable -> False], "3"]}], 
+                   RowBox[{InterpretationBox[TemplateBox[{TemplateBox[
+                         {"\"[\"", "3"}, "RowDefault"], TemplateBox[{"4", 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                      SpinorChain[Spinor["Helicity", "Square", 3], Spinor[
+                        "Helicity", "Square", 4]], Editable -> False], " ", 
+                     InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "3"}, "RowDefault"], "1", TemplateBox[{"2", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                       "RowDefault"], SpinorChain[Spinor["Helicity", 
+                        "Square", 3], Mom[1], Spinor["Helicity", "Angle", 
+                        2]], Editable -> False]}]]}], InterpretationBox[
+                 SubscriptBox["\"s\"", "\"12\""], PropDen[Mom[Multiparticle[
+                    1, 2]], 0], Editable -> False]], "-", FractionBox[
+                RowBox[{FractionBox[RowBox[{SuperscriptBox[InterpretationBox[
+                       TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"", 
+                          "1"}, "RowDefault"], TemplateBox[{"3", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                        "RowDefault"], SpinorChain[Spinor["Helicity", 
+                         "Angle", 1], Spinor["Helicity", "Angle", 3]], 
+                       Editable -> False], "3"], " ", SuperscriptBox[
+                      InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "1"}, "RowDefault"], TemplateBox[{"4", "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[
+                        Spinor["Helicity", "Square", 1], Spinor["Helicity", 
+                         "Square", 4]], Editable -> False], "2"]}], 
+                   RowBox[{InterpretationBox[TemplateBox[{TemplateBox[
+                         {"\"\[LeftAngleBracket]\"", "2"}, "RowDefault"], 
+                        TemplateBox[{"3", "\"\[RightAngleBracket]\""}, 
+                         "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                        "Helicity", "Angle", 2], Spinor["Helicity", "Angle", 
+                        3]], Editable -> False], " ", InterpretationBox[
+                      TemplateBox[{TemplateBox[{"\"[\"", "1"}, "RowDefault"], 
+                        "4", TemplateBox[{"2", "\"\[RightAngleBracket]\""}, 
+                         "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                        "Helicity", "Square", 1], Mom[4], Spinor["Helicity", 
+                        "Angle", 2]], Editable -> False]}]], "+", FractionBox[
+                   RowBox[{SuperscriptBox[InterpretationBox[TemplateBox[
+                        {TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, 
+                          "RowDefault"], TemplateBox[{"4", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                        "RowDefault"], SpinorChain[Spinor["Helicity", 
+                         "Angle", 1], Spinor["Helicity", "Angle", 4]], 
+                       Editable -> False], "2"], " ", SuperscriptBox[
+                      InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "2"}, "RowDefault"], TemplateBox[{"4", "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[
+                        Spinor["Helicity", "Square", 2], Spinor["Helicity", 
+                         "Square", 4]], Editable -> False], "3"]}], 
+                   RowBox[{InterpretationBox[TemplateBox[{TemplateBox[
+                         {"\"[\"", "2"}, "RowDefault"], TemplateBox[{"3", 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                      SpinorChain[Spinor["Helicity", "Square", 2], Spinor[
+                        "Helicity", "Square", 3]], Editable -> False], " ", 
+                     InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "3"}, "RowDefault"], "1", TemplateBox[{"4", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                       "RowDefault"], SpinorChain[Spinor["Helicity", 
+                        "Square", 3], Mom[1], Spinor["Helicity", "Angle", 
+                        4]], Editable -> False]}]]}], InterpretationBox[
+                 SubscriptBox["\"s\"", "\"14\""], PropDen[Mom[Multiparticle[
+                    1, 4]], 0], Editable -> False]]}], ")"}]}], "-", 
+         FractionBox[RowBox[{RowBox[{"ColorStructure", "[", 
+              RowBox[{RowBox[{"ColorIndex", "[", "3", "]"}], ",", 
+                RowBox[{"ColorIndex", "[", "1", "]"}], ",", RowBox[
+                 {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
+                  RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", 
+                    "8"}], "]"}]}], "]"}], " ", RowBox[{"ColorStructure", 
+              "[", RowBox[{RowBox[{"ColorIndex", "[", "4", "]"}], ",", 
+                RowBox[{"ColorIndex", "[", "2", "]"}], ",", RowBox[
+                 {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
+                  RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", 
+                    "8"}], "]"}]}], "]"}], " ", SuperscriptBox[
+             InterpretationBox["GG", ModelParameter["GG", "30a3398a0cbb88a8e4\
+517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], 
+             "2"], " ", RowBox[{"(", RowBox[{FractionBox[RowBox[
+                  {SuperscriptBox[InterpretationBox[TemplateBox[{TemplateBox[
+                        {"\"\[LeftAngleBracket]\"", "1"}, "RowDefault"], 
+                       TemplateBox[{"3", "\"\[RightAngleBracket]\""}, 
+                        "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                       "Helicity", "Angle", 1], Spinor["Helicity", "Angle", 
+                       3]], Editable -> False], "3"], " ", SuperscriptBox[
+                    InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                         "1"}, "RowDefault"], TemplateBox[{"4", "\"]\""}, 
+                        "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                       "Helicity", "Square", 1], Spinor["Helicity", "Square", 
+                       4]], Editable -> False], "2"]}], RowBox[
+                  {InterpretationBox[TemplateBox[{TemplateBox[
+                       {"\"\[LeftAngleBracket]\"", "2"}, "RowDefault"], 
+                      TemplateBox[{"3", "\"\[RightAngleBracket]\""}, 
+                       "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                      "Helicity", "Angle", 2], Spinor["Helicity", "Angle", 
+                      3]], Editable -> False], " ", InterpretationBox[
+                    TemplateBox[{TemplateBox[{"\"[\"", "1"}, "RowDefault"], 
+                      "4", TemplateBox[{"2", "\"\[RightAngleBracket]\""}, 
+                       "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                      "Helicity", "Square", 1], Mom[4], Spinor["Helicity", 
+                      "Angle", 2]], Editable -> False]}]], "+", FractionBox[
+                 RowBox[{SuperscriptBox[InterpretationBox[TemplateBox[
+                      {TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, 
+                        "RowDefault"], TemplateBox[{"4", 
+                         "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                      "RowDefault"], SpinorChain[Spinor["Helicity", "Angle", 
+                       1], Spinor["Helicity", "Angle", 4]], Editable -> 
+                      False], "2"], " ", SuperscriptBox[InterpretationBox[
+                     TemplateBox[{TemplateBox[{"\"[\"", "2"}, "RowDefault"], 
+                       TemplateBox[{"4", "\"]\""}, "RowDefault"]}, 
+                      "RowDefault"], SpinorChain[Spinor["Helicity", "Square", 
+                       2], Spinor["Helicity", "Square", 4]], Editable -> 
+                      False], "3"]}], RowBox[{InterpretationBox[TemplateBox[
+                     {TemplateBox[{"\"[\"", "2"}, "RowDefault"], TemplateBox[
+                       {"3", "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                    SpinorChain[Spinor["Helicity", "Square", 2], Spinor[
+                      "Helicity", "Square", 3]], Editable -> False], " ", 
+                   InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", "3"}, 
+                       "RowDefault"], "1", TemplateBox[{"4", 
+                        "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                     "RowDefault"], SpinorChain[Spinor["Helicity", "Square", 
+                      3], Mom[1], Spinor["Helicity", "Angle", 4]], 
+                    Editable -> False]}]]}], ")"}]}], InterpretationBox[
+           SubscriptBox["\"s\"", "\"14\""], PropDen[Mom[Multiparticle[1, 4]], 
+            0], Editable -> False]]}]], "Output", 
+      CellLabel -> "Saved completed result:", GeneratedCell -> True, 
+      CellAutoOverwrite -> True, CellTags -> 
+       "hepcat-cache-amplitude-sm73MPMP", TaggingRules -> 
+       <|"ConstructionReport" -> "/Users/neil/Documents/Codex/2026-09-24/help\
+-me-make-this-response-more/output/sm-four-point-validation/sm73MPMP-gluon-st\
+able-construction.wl", "ValidationReport" -> "/Users/neil/Documents/Codex/202\
+6-09-24/help-me-make-this-response-more/output/sm-four-point-validation/sm73-\
+export.wl", "ValidationClass" -> 
+         "PrecisionQualified;RawNumericalFailureRetained", 
+        "SymbolicReferenceReport" -> "/Users/neil/Documents/Codex/2026-09-24/\
+help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
+ynman-reference.wl"|>], Cell["G.-, G.+, G.-, G.-", "Subsection"], 
+     Cell["sm73MPMMParticles = {\"G.-\", \"G.+\", \"G.-\", \
+\"G.-\"};\nsm73MPMMAmplitude = ConstructAmplitude[sm73MPMMParticles, sm, sm]"\
+, "Input"], Cell[BoxData["0"], "Output", CellLabel -> 
+       "Saved completed result:", GeneratedCell -> True, 
+      CellAutoOverwrite -> True, CellTags -> 
+       "hepcat-cache-amplitude-sm73MPMM", TaggingRules -> 
+       <|"ConstructionReport" -> "/Users/neil/Documents/Codex/2026-09-24/help\
+-me-make-this-response-more/output/sm-four-point-validation/sm73MPMM-gluon-st\
+able-construction.wl", "ValidationReport" -> "/Users/neil/Documents/Codex/202\
+6-09-24/help-me-make-this-response-more/output/sm-four-point-validation/sm73-\
+export.wl", "ValidationClass" -> 
+         "PrecisionQualified;RawNumericalFailureRetained", 
+        "SymbolicReferenceReport" -> "/Users/neil/Documents/Codex/2026-09-24/\
+help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
+ynman-reference.wl"|>], Cell["G.-, G.-, G.+, G.+", "Subsection"], 
+     Cell["sm73MMPPParticles = {\"G.-\", \"G.-\", \"G.+\", \
+\"G.+\"};\nsm73MMPPAmplitude = ConstructAmplitude[sm73MMPPParticles, sm, sm]"\
+, "Input"], Cell[BoxData[RowBox[
+        {RowBox[{RowBox[{"ColorStructure", "[", RowBox[{RowBox[
+                {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
+                 RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", 
+                   "8"}], "]"}], ",", RowBox[{"ColorIndex", "[", "1", "]"}], 
+               ",", RowBox[{"ColorIndex", "[", "3", "]"}]}], "]"}], " ", 
+           RowBox[{"ColorStructure", "[", RowBox[{RowBox[
+                {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
+                 RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", 
+                   "8"}], "]"}], ",", RowBox[{"ColorIndex", "[", "4", "]"}], 
+               ",", RowBox[{"ColorIndex", "[", "2", "]"}]}], "]"}], " ", 
+           SuperscriptBox[InterpretationBox["GG", ModelParameter["GG", 
+              "30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77\
+e7", "Real"], Editable -> False], "2"], " ", RowBox[
+            {"(", RowBox[{FractionBox[RowBox[{FractionBox[RowBox[
+                    {SuperscriptBox[InterpretationBox[TemplateBox[
+                        {TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, 
+                          "RowDefault"], TemplateBox[{"2", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                        "RowDefault"], SpinorChain[Spinor["Helicity", 
+                         "Angle", 1], Spinor["Helicity", "Angle", 2]], 
+                       Editable -> False], "3"], " ", SuperscriptBox[
+                      InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "1"}, "RowDefault"], TemplateBox[{"3", "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[
+                        Spinor["Helicity", "Square", 1], Spinor["Helicity", 
+                         "Square", 3]], Editable -> False], "2"]}], 
+                   RowBox[{InterpretationBox[TemplateBox[{TemplateBox[
+                         {"\"\[LeftAngleBracket]\"", "2"}, "RowDefault"], 
+                        TemplateBox[{"4", "\"\[RightAngleBracket]\""}, 
+                         "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                        "Helicity", "Angle", 2], Spinor["Helicity", "Angle", 
+                        4]], Editable -> False], " ", InterpretationBox[
+                      TemplateBox[{TemplateBox[{"\"[\"", "1"}, "RowDefault"], 
+                        "3", TemplateBox[{"4", "\"\[RightAngleBracket]\""}, 
+                         "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                        "Helicity", "Square", 1], Mom[3], Spinor["Helicity", 
+                        "Angle", 4]], Editable -> False]}]], "-", FractionBox[
+                   RowBox[{SuperscriptBox[InterpretationBox[TemplateBox[
+                        {TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, 
+                          "RowDefault"], TemplateBox[{"3", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                        "RowDefault"], SpinorChain[Spinor["Helicity", 
+                         "Angle", 1], Spinor["Helicity", "Angle", 3]], 
+                       Editable -> False], "2"], " ", SuperscriptBox[
+                      InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "3"}, "RowDefault"], TemplateBox[{"4", "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[
+                        Spinor["Helicity", "Square", 3], Spinor["Helicity", 
+                         "Square", 4]], Editable -> False], "3"]}], 
+                   RowBox[{InterpretationBox[TemplateBox[{TemplateBox[
+                         {"\"[\"", "2"}, "RowDefault"], TemplateBox[{"4", 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                      SpinorChain[Spinor["Helicity", "Square", 2], Spinor[
+                        "Helicity", "Square", 4]], Editable -> False], " ", 
+                     InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "2"}, "RowDefault"], "1", TemplateBox[{"3", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                       "RowDefault"], SpinorChain[Spinor["Helicity", 
+                        "Square", 2], Mom[1], Spinor["Helicity", "Angle", 
+                        3]], Editable -> False]}]]}], InterpretationBox[
+                 SubscriptBox["\"s\"", "\"13\""], PropDen[Mom[Multiparticle[
+                    1, 3]], 0], Editable -> False]], "+", FractionBox[
+                RowBox[{FractionBox[RowBox[{SuperscriptBox[InterpretationBox[
+                       TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"", 
+                          "1"}, "RowDefault"], TemplateBox[{"2", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                        "RowDefault"], SpinorChain[Spinor["Helicity", 
+                         "Angle", 1], Spinor["Helicity", "Angle", 2]], 
+                       Editable -> False], "3"], " ", SuperscriptBox[
+                      InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "1"}, "RowDefault"], TemplateBox[{"4", "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[
+                        Spinor["Helicity", "Square", 1], Spinor["Helicity", 
+                         "Square", 4]], Editable -> False], "2"]}], 
+                   RowBox[{InterpretationBox[TemplateBox[{TemplateBox[
+                         {"\"\[LeftAngleBracket]\"", "2"}, "RowDefault"], 
+                        TemplateBox[{"3", "\"\[RightAngleBracket]\""}, 
+                         "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                        "Helicity", "Angle", 2], Spinor["Helicity", "Angle", 
+                        3]], Editable -> False], " ", InterpretationBox[
+                      TemplateBox[{TemplateBox[{"\"[\"", "1"}, "RowDefault"], 
+                        "4", TemplateBox[{"3", "\"\[RightAngleBracket]\""}, 
+                         "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                        "Helicity", "Square", 1], Mom[4], Spinor["Helicity", 
+                        "Angle", 3]], Editable -> False]}]], "+", FractionBox[
+                   RowBox[{SuperscriptBox[InterpretationBox[TemplateBox[
+                        {TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, 
+                          "RowDefault"], TemplateBox[{"4", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                        "RowDefault"], SpinorChain[Spinor["Helicity", 
+                         "Angle", 1], Spinor["Helicity", "Angle", 4]], 
+                       Editable -> False], "2"], " ", SuperscriptBox[
+                      InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "3"}, "RowDefault"], TemplateBox[{"4", "\"]\""}, 
+                          "RowDefault"]}, "RowDefault"], SpinorChain[
+                        Spinor["Helicity", "Square", 3], Spinor["Helicity", 
+                         "Square", 4]], Editable -> False], "3"]}], 
+                   RowBox[{InterpretationBox[TemplateBox[{TemplateBox[
+                         {"\"[\"", "2"}, "RowDefault"], TemplateBox[{"3", 
+                          "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                      SpinorChain[Spinor["Helicity", "Square", 2], Spinor[
+                        "Helicity", "Square", 3]], Editable -> False], " ", 
+                     InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                          "2"}, "RowDefault"], "1", TemplateBox[{"4", 
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                       "RowDefault"], SpinorChain[Spinor["Helicity", 
+                        "Square", 2], Mom[1], Spinor["Helicity", "Angle", 
+                        4]], Editable -> False]}]]}], InterpretationBox[
+                 SubscriptBox["\"s\"", "\"14\""], PropDen[Mom[Multiparticle[
+                    1, 4]], 0], Editable -> False]]}], ")"}]}], "+", 
+         FractionBox[RowBox[{RowBox[{"ColorStructure", "[", 
+              RowBox[{RowBox[{"ColorIndex", "[", "2", "]"}], ",", 
+                RowBox[{"ColorIndex", "[", "1", "]"}], ",", RowBox[
+                 {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
+                  RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", 
+                    "8"}], "]"}]}], "]"}], " ", RowBox[{"ColorStructure", 
+              "[", RowBox[{RowBox[{"ColorIndex", "[", "4", "]"}], ",", 
+                RowBox[{"ColorIndex", "[", "3", "]"}], ",", RowBox[
+                 {"ConstructiveDiagrams`Private`colorInternalIndex", "[", 
+                  RowBox[{RowBox[{"{", RowBox[{"5", ",", "6"}], "}"}], ",", 
+                    "8"}], "]"}]}], "]"}], " ", SuperscriptBox[
+             InterpretationBox["GG", ModelParameter["GG", "30a3398a0cbb88a8e4\
+517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7", "Real"], Editable -> False], 
+             "2"], " ", RowBox[{"(", RowBox[{FractionBox[RowBox[
+                  {SuperscriptBox[InterpretationBox[TemplateBox[{TemplateBox[
+                        {"\"\[LeftAngleBracket]\"", "1"}, "RowDefault"], 
+                       TemplateBox[{"2", "\"\[RightAngleBracket]\""}, 
+                        "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                       "Helicity", "Angle", 1], Spinor["Helicity", "Angle", 
+                       2]], Editable -> False], "3"], " ", SuperscriptBox[
+                    InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", 
+                         "1"}, "RowDefault"], TemplateBox[{"4", "\"]\""}, 
+                        "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                       "Helicity", "Square", 1], Spinor["Helicity", "Square", 
+                       4]], Editable -> False], "2"]}], RowBox[
+                  {InterpretationBox[TemplateBox[{TemplateBox[
+                       {"\"\[LeftAngleBracket]\"", "2"}, "RowDefault"], 
+                      TemplateBox[{"3", "\"\[RightAngleBracket]\""}, 
+                       "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                      "Helicity", "Angle", 2], Spinor["Helicity", "Angle", 
+                      3]], Editable -> False], " ", InterpretationBox[
+                    TemplateBox[{TemplateBox[{"\"[\"", "1"}, "RowDefault"], 
+                      "4", TemplateBox[{"3", "\"\[RightAngleBracket]\""}, 
+                       "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
+                      "Helicity", "Square", 1], Mom[4], Spinor["Helicity", 
+                      "Angle", 3]], Editable -> False]}]], "+", FractionBox[
+                 RowBox[{SuperscriptBox[InterpretationBox[TemplateBox[
+                      {TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, 
+                        "RowDefault"], TemplateBox[{"4", 
+                         "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                      "RowDefault"], SpinorChain[Spinor["Helicity", "Angle", 
+                       1], Spinor["Helicity", "Angle", 4]], Editable -> 
+                      False], "2"], " ", SuperscriptBox[InterpretationBox[
+                     TemplateBox[{TemplateBox[{"\"[\"", "3"}, "RowDefault"], 
+                       TemplateBox[{"4", "\"]\""}, "RowDefault"]}, 
+                      "RowDefault"], SpinorChain[Spinor["Helicity", "Square", 
+                       3], Spinor["Helicity", "Square", 4]], Editable -> 
+                      False], "3"]}], RowBox[{InterpretationBox[TemplateBox[
+                     {TemplateBox[{"\"[\"", "2"}, "RowDefault"], TemplateBox[
+                       {"3", "\"]\""}, "RowDefault"]}, "RowDefault"], 
+                    SpinorChain[Spinor["Helicity", "Square", 2], Spinor[
+                      "Helicity", "Square", 3]], Editable -> False], " ", 
+                   InterpretationBox[TemplateBox[{TemplateBox[{"\"[\"", "2"}, 
+                       "RowDefault"], "1", TemplateBox[{"4", 
+                        "\"\[RightAngleBracket]\""}, "RowDefault"]}, 
+                     "RowDefault"], SpinorChain[Spinor["Helicity", "Square", 
+                      2], Mom[1], Spinor["Helicity", "Angle", 4]], 
+                    Editable -> False]}]]}], ")"}]}], InterpretationBox[
+           SubscriptBox["\"s\"", "\"14\""], PropDen[Mom[Multiparticle[1, 4]], 
+            0], Editable -> False]]}]], "Output", 
+      CellLabel -> "Saved completed result:", GeneratedCell -> True, 
+      CellAutoOverwrite -> True, CellTags -> 
+       "hepcat-cache-amplitude-sm73MMPP", TaggingRules -> 
+       <|"ConstructionReport" -> "/Users/neil/Documents/Codex/2026-09-24/help\
+-me-make-this-response-more/output/sm-four-point-validation/sm73MMPP-gluon-st\
+able-construction.wl", "ValidationReport" -> "/Users/neil/Documents/Codex/202\
+6-09-24/help-me-make-this-response-more/output/sm-four-point-validation/sm73-\
+export.wl", "ValidationClass" -> 
+         "PrecisionQualified;RawNumericalFailureRetained", 
+        "SymbolicReferenceReport" -> "/Users/neil/Documents/Codex/2026-09-24/\
+help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
+ynman-reference.wl"|>], Cell["G.-, G.-, G.+, G.-", "Subsection"], 
+     Cell["sm73MMPMParticles = {\"G.-\", \"G.-\", \"G.+\", \
+\"G.-\"};\nsm73MMPMAmplitude = ConstructAmplitude[sm73MMPMParticles, sm, sm]"\
+, "Input"], Cell[BoxData["0"], "Output", CellLabel -> 
+       "Saved completed result:", GeneratedCell -> True, 
+      CellAutoOverwrite -> True, CellTags -> 
+       "hepcat-cache-amplitude-sm73MMPM", TaggingRules -> 
+       <|"ConstructionReport" -> "/Users/neil/Documents/Codex/2026-09-24/help\
+-me-make-this-response-more/output/sm-four-point-validation/sm73MMPM-gluon-st\
+able-construction.wl", "ValidationReport" -> "/Users/neil/Documents/Codex/202\
+6-09-24/help-me-make-this-response-more/output/sm-four-point-validation/sm73-\
+export.wl", "ValidationClass" -> 
+         "PrecisionQualified;RawNumericalFailureRetained", 
+        "SymbolicReferenceReport" -> "/Users/neil/Documents/Codex/2026-09-24/\
+help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
+ynman-reference.wl"|>], Cell["G.-, G.-, G.-, G.+", "Subsection"], 
+     Cell["sm73MMMPParticles = {\"G.-\", \"G.-\", \"G.-\", \
+\"G.+\"};\nsm73MMMPAmplitude = ConstructAmplitude[sm73MMMPParticles, sm, sm]"\
+, "Input"], Cell[BoxData["0"], "Output", CellLabel -> 
+       "Saved completed result:", GeneratedCell -> True, 
+      CellAutoOverwrite -> True, CellTags -> 
+       "hepcat-cache-amplitude-sm73MMMP", TaggingRules -> 
+       <|"ConstructionReport" -> "/Users/neil/Documents/Codex/2026-09-24/help\
+-me-make-this-response-more/output/sm-four-point-validation/sm73MMMP-gluon-st\
+able-construction.wl", "ValidationReport" -> "/Users/neil/Documents/Codex/202\
+6-09-24/help-me-make-this-response-more/output/sm-four-point-validation/sm73-\
+export.wl", "ValidationClass" -> 
+         "PrecisionQualified;RawNumericalFailureRetained", 
+        "SymbolicReferenceReport" -> "/Users/neil/Documents/Codex/2026-09-24/\
+help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
+ynman-reference.wl"|>], Cell["G.-, G.-, G.-, G.-", "Subsection"], 
+     Cell["sm73MMMMParticles = {\"G.-\", \"G.-\", \"G.-\", \
+\"G.-\"};\nsm73MMMMAmplitude = ConstructAmplitude[sm73MMMMParticles, sm, sm]"\
+, "Input"], Cell[BoxData["0"], "Output", CellLabel -> 
+       "Saved completed result:", GeneratedCell -> True, 
+      CellAutoOverwrite -> True, CellTags -> 
+       "hepcat-cache-amplitude-sm73MMMM", TaggingRules -> 
+       <|"ConstructionReport" -> "/Users/neil/Documents/Codex/2026-09-24/help\
+-me-make-this-response-more/output/sm-four-point-validation/sm73MMMM-gluon-st\
+able-construction.wl", "ValidationReport" -> "/Users/neil/Documents/Codex/202\
+6-09-24/help-me-make-this-response-more/output/sm-four-point-validation/sm73-\
+export.wl", "ValidationClass" -> 
+         "PrecisionQualified;RawNumericalFailureRetained", 
+        "SymbolicReferenceReport" -> "/Users/neil/Documents/Codex/2026-09-24/\
+help-me-make-this-response-more/output/sm-four-point-validation/gluon-zero-fe\
+ynman-reference.wl"|>], Cell[CellGroupData[
+       {Cell["Inspect the stages (optional)", "Subsection"], 
         Cell["These cells expose the first helicity calculation. \
 ConstructAmplitude already performs these stages internally. Use them when \
 investigating a result rather than rerunning them after every successful \
@@ -32153,7 +33407,13 @@ unaltered report are saved in \
          GridBoxItemSize -> {"Columns" -> {{Automatic}}, 
            "Rows" -> {{Automatic}}}], "Grid"]], "Print", 
       CellTags -> "hepcat-gluon-numerical-table", GeneratedCell -> True, 
-      CellAutoOverwrite -> True]}, Open]], 
+      CellAutoOverwrite -> True], Cell["All 16 saved helicity amplitudes came \
+from completed constructions. CalcHEP passes the summed 1000-point \
+comparison. MadGraph passes the six nonzero helicity sectors; the ten zero \
+sectors retain their raw numerical FAIL rows from tiny floating-point \
+residuals. Independent exact Feynman-rule checks show that all ten vanish. \
+The numerical table and original failure data remain unchanged.", "Text", 
+      CellTags -> "hepcat-precision-qualified-note-sm73"]}, Open]], 
   Cell[CellGroupData[{Cell["Original formulas and manual derivations", 
       "Chapter"], Cell["These are the unchanged contents copied from \
 SM-4-point.nb. Original input cells are inactive so that old model numbers, \
@@ -132100,5 +133360,36 @@ s12[13]<34>[24][132>+(-1[12]<34>[34][132>)/(CWMZ^3 ) \
      "sm55", "sm56", "sm57P", "sm57M", "sm58P", "sm58M", "sm59P", "sm59M", 
      "sm60", "sm61C", "sm61", "sm62P", "sm62M", "sm64", "sm65", "sm66P", 
      "sm66M", "sm67", "sm68PP", "sm68PM", "sm68MP", "sm68MM", "sm70"}, 
-   "CachedAt" -> "2026-11-06T04:09:35", "OriginalManualProcessSections" -> 
-    73, "IndependentExports" -> 74, "ReferenceNavigation" -> True|>]
+   "CachedAt" -> "2026-11-06T04:53:53", "OriginalManualProcessSections" -> 
+    73, "IndependentExports" -> 74, "ReferenceNavigation" -> True, 
+   "CachedPrecisionQualifiedFamilies" -> {"sm63", "sm73"}, 
+   "CachedPrecisionQualifiedAmplitudes" -> {"sm63", "sm73PPPP", "sm73PPPM", 
+     "sm73PPMP", "sm73PPMM", "sm73PMPP", "sm73PMPM", "sm73PMMP", "sm73PMMM", 
+     "sm73MPPP", "sm73MPPM", "sm73MPMP", "sm73MPMM", "sm73MMPP", "sm73MMPM", 
+     "sm73MMMP", "sm73MMMM"}, "CachedConstructionFamilies" -> 
+    {"sm01", "sm02", "sm03", "sm04", "sm05", "sm06", "sm07", "sm08", "sm09", 
+     "sm10", "sm11", "sm12", "sm13", "sm14", "sm15", "sm16", "sm17", "sm18", 
+     "sm19", "sm20", "sm21", "sm22", "sm23", "sm24", "sm25", "sm26", "sm27", 
+     "sm28", "sm29", "sm30", "sm31", "sm32", "sm33", "sm34", "sm35", "sm36", 
+     "sm37", "sm38", "sm39", "sm40", "sm41", "sm42", "sm43", "sm44", "sm45", 
+     "sm46", "sm47", "sm48", "sm49", "sm50", "sm51", "sm52", "sm53", "sm54", 
+     "sm55", "sm56", "sm57", "sm58", "sm59", "sm60", "sm61C", "sm61", "sm62", 
+     "sm64", "sm65", "sm66", "sm67", "sm68", "sm70", "sm63", "sm73"}, 
+   "CachedCompletedAmplitudes" -> {"sm01", "sm02", "sm03", "sm04", "sm05", 
+     "sm06", "sm07", "sm08", "sm09", "sm10", "sm11", "sm12", "sm13", "sm14", 
+     "sm15", "sm16", "sm17", "sm18", "sm19", "sm20", "sm21", "sm22", "sm23P", 
+     "sm23M", "sm24P", "sm24M", "sm25P", "sm25M", "sm26", "sm27", "sm28", 
+     "sm29", "sm30PP", "sm30PM", "sm30MP", "sm30MM", "sm31PP", "sm31PM", 
+     "sm31MP", "sm31MM", "sm32PP", "sm32PM", "sm32MP", "sm32MM", "sm33PP", 
+     "sm33PM", "sm33MP", "sm33MM", "sm34P", "sm34M", "sm35P", "sm35M", 
+     "sm36P", "sm36M", "sm37", "sm38", "sm39", "sm40", "sm41", "sm42", 
+     "sm43", "sm44", "sm45P", "sm45M", "sm46P", "sm46M", "sm47P", "sm47M", 
+     "sm48P", "sm48M", "sm49PP", "sm49PM", "sm49MP", "sm49MM", "sm50PP", 
+     "sm50PM", "sm50MP", "sm50MM", "sm51PP", "sm51PM", "sm51MP", "sm51MM", 
+     "sm52PP", "sm52PM", "sm52MP", "sm52MM", "sm53", "sm54", "sm55", "sm56", 
+     "sm57P", "sm57M", "sm58P", "sm58M", "sm59P", "sm59M", "sm60", "sm61C", 
+     "sm61", "sm62P", "sm62M", "sm64", "sm65", "sm66P", "sm66M", "sm67", 
+     "sm68PP", "sm68PM", "sm68MP", "sm68MM", "sm70", "sm63", "sm73PPPP", 
+     "sm73PPPM", "sm73PPMP", "sm73PPMM", "sm73PMPP", "sm73PMPM", "sm73PMMP", 
+     "sm73PMMM", "sm73MPPP", "sm73MPPM", "sm73MPMP", "sm73MPMM", "sm73MMPP", 
+     "sm73MMPM", "sm73MMMP", "sm73MMMM"}|>]
