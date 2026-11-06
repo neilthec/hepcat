@@ -4908,6 +4908,250 @@ expressionTermCounts[expr_] := withProtectedPropagators[expr, Function[body,
     "ExpandedTerms" -> Total[momentumBranchCount[
       Flatten[momentumSlots /@ Join[chainsIn[#], tracesIn[#]], 1]] & /@ mons]|>]]];
 
+(* A shared off-shell channel vector exposes complete current-divergence
+   cancellations before its two external momenta are expanded again. This is
+   a four-leg, ordinary-identity trial: no internal line is put on shell. *)
+rspChannelCurrentNormalization[expression_, externalRules_List,
+    conserve_ : True, seconds_ : 2] := Module[
+  {started = AbsoluteTime[], best = expression, bestRank, rules, grouped, external,
+   remaining, finite, rank, inverseQ, inverses, tokens, restore, key, positive, body, terms, groups, keys,
+   numerators, working, cuts, cut, complement, channel, changes, transform,
+   proposal, normalized, factored, candidate, candidateRank, coefficientResidual,
+   groupRoute = {}, route = {}, outcome, affineResidual, replaced, changed,
+   i, allowedSpinor, momentumReplacement, endpointLegs, parts, raw, reduced},
+  rank[value_] := {expressionComplexity[value], LeafCount[value]};
+  finite[value_] := FreeQ[value, $Failed | $Aborted | _TerminatedEvaluation |
+    Indeterminate | ComplexInfinity | _DirectedInfinity];
+  remaining[] := Max[0.000001, seconds - (AbsoluteTime[] - started)];
+  rules = Cases[externalRules, rule : HoldPattern[Mass[_Integer] -> value_] /;
+    rspScalarQ[value] && FreeQ[value, _Mass | _Real | Indeterminate |
+      ComplexInfinity | _DirectedInfinity] :> rule];
+  grouped = GatherBy[DeleteDuplicates[rules], First];
+  external = Sort[Cases[rules, HoldPattern[Mass[leg_Integer] -> _] :> leg]];
+  If[!TrueQ[conserve] || !TrueQ[seconds > 0] || Length[external] =!= 4 ||
+      !DuplicateFreeQ[external] || AnyTrue[grouped, Length[#] =!= 1 &] ||
+      LeafCount[expression] > 16000 || !rspExpansionBudgetQ[expression] ||
+      rspSandwichExpansionCount[expression] > 256 ||
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _SpinorTrace |
+        _SpinorHat | _MomHat | _MomQ] ||
+      FreeQ[expression, chain_SpinorChain /; Length[chain] === 3],
+    Return[<|"Amplitude" -> expression, "Status" -> "UNCHANGED", "Route" -> {},
+      "ElapsedTime" -> AbsoluteTime[] - started, "TimedOut" -> False|>]];
+  allowedSpinor[value_] := MatchQ[value,
+    Spinor["Spin" | "Helicity", "Angle" | "Square", _Integer] |
+    Spinor["Spin", "Upper" | "Lower", "Angle" | "Square", _Integer, _]] &&
+      MemberQ[external, rspSpinorLeg[value]];
+  inverses = DeleteDuplicates[Cases[{expression}, power : Power[_, exponent_] /;
+    !TrueQ[exponent >= 0], Infinity]];
+  tokens = Table[Unique["currentProtectedInverse"], {Length[inverses]}];
+  restore[value_] := value /. Thread[tokens -> inverses];
+  inverseQ[value_] := MemberQ[tokens, value] ||
+    MatchQ[value, Power[_, exponent_] /; !TrueQ[exponent >= 0]];
+  key[term_] := Times @@ Select[If[Head[term] === Times, List @@ term, {term}], inverseQ];
+  positive[term_] := Times @@ Select[If[Head[term] === Times, List @@ term, {term}], !inverseQ[#] &];
+  outcome = TimeConstrained[MemoryConstrained[
+    bestRank = rank[expression];
+    body = Expand[expression /. Thread[inverses -> tokens]];
+    terms = If[Head[body] === Plus, List @@ body, {body}];
+    If[Length[terms] > 256, Return[<|"Amplitude" -> best, "Status" -> "UNCHANGED",
+      "Route" -> {}, "ElapsedTime" -> AbsoluteTime[] - started, "TimedOut" -> False|>]];
+    groups = GroupBy[terms, key];
+    If[Length[groups] > 64, Return[<|"Amplitude" -> best, "Status" -> "UNCHANGED",
+      "Route" -> {}, "ElapsedTime" -> AbsoluteTime[] - started, "TimedOut" -> False|>]];
+    keys = Keys[groups]; numerators = Total[positive /@ #] & /@ Values[groups];
+    Do[
+      cuts = DeleteDuplicates[Cases[restore[keys[[i]]],
+        PropDen[Mom[Multiparticle[labels__Integer]], ___] :> Sort[{labels}], Infinity]];
+      cuts = Select[cuts, Length[#] === 2 && DuplicateFreeQ[#] && SubsetQ[external, #] &];
+      If[cuts === {}, Continue[]];
+      Do[
+        complement = Complement[external, cut]; channel = Unique["offShellCurrentVector"];
+        changes = {};
+        transform[chain_SpinorChain] := Module[
+          {ends, leg, side, partner, sign, affine, momentumResidual, rawChain, newChain},
+          If[Length[chain] =!= 3 || !MatchQ[chain[[2]], Mom[_Integer]] ||
+              !AllTrue[{First[chain], Last[chain]}, allowedSpinor], Return[chain]];
+          leg = chain[[2, 1]];
+          If[!MemberQ[external, leg], Return[chain]];
+          side = If[MemberQ[cut, leg], cut, complement];
+          partner = First[DeleteCases[side, leg]];
+          If[!MemberQ[rspSpinorLeg /@ {First[chain], Last[chain]}, partner], Return[chain]];
+          sign = If[side === cut, 1, -1]; affine = sign Mom[channel] - Mom[partner];
+          (* The affine vector identity is checked before any spinor or mass
+             equation is used. Complement rewrites use only sum p_i = 0. *)
+          momentumResidual = Expand[(sign Total[Mom /@ cut] - Mom[partner] - Mom[leg]) /.
+            Mom[Last[external]] -> -Total[Mom /@ Most[external]]];
+          If[momentumResidual =!= 0, Return[chain]];
+          rawChain = ReplacePart[chain, 2 -> affine];
+          newChain = Expand[rawChain /. c_SpinorChain :>
+            If[rspContractionBudgetQ[c], rspNormalizeContraction[c], c]] /. rules;
+          If[!finite[newChain], Return[chain]];
+          AppendTo[changes, <|"Before" -> chain, "AffineMomentum" -> affine,
+            "After" -> newChain, "MomentumLeg" -> leg, "EndpointPartner" -> partner,
+            "ExactMomentumResidual" -> momentumResidual,
+            "ExternalDiracNormalization" -> True, "ExternalMassRules" -> rules,
+            "InternalOnShellConditions" -> {}|>];
+          newChain];
+        proposal = Expand[numerators[[i]] /. chain_SpinorChain :> transform[chain]];
+        If[changes === {}, Continue[]];
+        factored = Factor[proposal];
+        coefficientResidual = Expand[factored - proposal];
+        If[coefficientResidual =!= 0, Continue[]];
+        normalized = factored /. Mom[channel] -> Mom[Multiparticle @@ cut];
+        If[!finite[normalized], Continue[]];
+        working = ReplacePart[numerators, i -> normalized];
+        candidate = restore[Total[keys working]]; candidateRank = rank[candidate];
+        If[!OrderedQ[{candidateRank, bestRank}] || candidateRank === bestRank, Continue[]];
+        groupRoute = <|"Operation" -> "OrdinaryCommonOffShellChannelVector",
+          "Denominator" -> restore[keys[[i]]], "Channel" -> cut, "Complement" -> complement,
+          "TemporaryMomentum" -> Mom[channel], "MomentumDefinition" -> Total[Mom /@ cut],
+          "ChainRewrites" -> changes, "BeforeNumerator" -> numerators[[i]],
+          "AfterNumerator" -> normalized, "ExactCoefficientCollectionResidual" -> 0,
+          "ExactFormalReplay" -> True, "DenominatorPreserved" -> True,
+          "MomentumConservation" -> True, "InternalOnShellConditions" -> {}|>;
+        {best, bestRank, route, numerators} =
+          {candidate, candidateRank, Append[route, groupRoute], working},
+        {cut, cuts}],
+      {i, Length[numerators]}]; True,
+    256000000, False], remaining[], False];
+  <|"Amplitude" -> best, "Status" -> If[route === {}, "UNCHANGED", "IMPROVED"],
+    "Route" -> route, "ElapsedTime" -> AbsoluteTime[] - started,
+    "TimedOut" -> !TrueQ[outcome]|>
+];
+
+(* A short exact lookahead can expose a Dirac contraction only after a
+   Schouten rewrite has temporarily enlarged a numerator. Momentum
+   conservation remains caller-supplied and never enters the standalone
+   ReduceSpinorProducts normal form. *)
+rspFourLegSchoutenLookahead[expression_, externalRules_List,
+    conserve_ : True, seconds_ : 1.5] := Module[
+  {started = AbsoluteTime[], rules, grouped, external, massless, supported,
+   best = expression, bestRank, route = {}, finite, rank, available,
+   inverses, tokens, restore, protected, cores = {}, walk, normal,
+   outcome, source, path, states, next, moves, raw, reduced, alternatives,
+   candidate, candidateRank, state, move, trial, normalization, chainRules,
+   coreIndex, depth, elimination, changed, target},
+  finite[value_] := FreeQ[value, $Failed | $Aborted | _TerminatedEvaluation |
+    Indeterminate | ComplexInfinity | _DirectedInfinity];
+  rank[value_] := {expressionComplexity[value], LeafCount[value]};
+  available[] := Max[0.000001, seconds - (AbsoluteTime[] - started)];
+  rules = Cases[externalRules, rule : HoldPattern[Mass[_Integer] -> value_] /;
+    rspScalarQ[value] && FreeQ[value, _Mass | _Real | Indeterminate |
+      ComplexInfinity | _DirectedInfinity] :> rule];
+  grouped = GatherBy[DeleteDuplicates[rules], First];
+  external = Sort[Cases[rules, HoldPattern[Mass[leg_Integer] -> _] :> leg]];
+  massless = Cases[rules, HoldPattern[Mass[leg_Integer] -> 0] :> leg];
+  If[!TrueQ[conserve] || !TrueQ[seconds > 0] || Length[external] =!= 4 ||
+      !DuplicateFreeQ[external] || AnyTrue[grouped, Length[#] =!= 1 &] || massless === {} ||
+      LeafCount[expression] > 12000 || !rspExpansionBudgetQ[expression] ||
+      rspSandwichExpansionCount[expression] > 256 ||
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _SpinorTrace |
+        _SpinorHat | _MomHat | _MomQ] ||
+      FreeQ[expression, chain_SpinorChain /; Length[chain] === 3],
+    Return[<|"Amplitude" -> expression, "Status" -> "UNCHANGED", "Route" -> {},
+      "ElapsedTime" -> AbsoluteTime[] - started, "TimedOut" -> False|>]];
+  supported[spinor_] := MatchQ[spinor,
+    Spinor["Spin" | "Helicity", "Angle" | "Square", _Integer] |
+    Spinor["Spin", "Upper" | "Lower", "Angle" | "Square", _Integer, _]] &&
+      MemberQ[external, rspSpinorLeg[spinor]];
+  inverses = DeleteDuplicates[Cases[{expression}, value : Power[_, exponent_] /;
+    !TrueQ[exponent >= 0], Infinity]];
+  tokens = Table[Unique["schoutenProtectedInverse"], {Length[inverses]}];
+  restore[value_] := value /. Thread[tokens -> inverses];
+  protected = expression /. Thread[inverses -> tokens];
+  (* Descend through arithmetic only, never through a chain, color tensor,
+     propagator argument or spin-index label. *)
+  walk[value_Plus, position_] := (AppendTo[cores, {position, value}];
+    MapIndexed[walk[#1, Join[position, #2]] &, List @@ value]; Null);
+  walk[value_Times, position_] := (MapIndexed[walk[#1, Join[position, #2]] &,
+    List @@ value]; Null);
+  walk[Power[value_, exponent_Integer?Positive], position_] := walk[value, Append[position, 1]];
+  walk[_, _] := Null;
+  normal[value_] := Module[{working = value, before, nodes, replacements, record = {}, split, expanded, factored},
+    (* Normalize each chain before eliminating a momentum that is already an
+       external Dirac endpoint. Whole-product rewriting can undo the useful
+       intermediate Schouten representation. *)
+    Do[
+      before = working; nodes = DeleteDuplicates[Cases[{working}, _SpinorChain, Infinity]];
+      replacements = Function[chain, chain -> ReduceSpinorProducts[chain]] /@ nodes;
+      working = Expand[working /. replacements] /. rules;
+      AppendTo[record, <|"Operation" -> "ChainwiseExternalDirac",
+        "ChainRules" -> replacements, "ExternalMassRules" -> rules|>];
+      If[pass === 2, Break[]];
+      Do[
+        nodes = DeleteDuplicates[Cases[{working}, _SpinorChain, Infinity]];
+        replacements = Function[chain, Module[{result = chain},
+          Do[split = rspSplitMasslessMomentum[chain, leg];
+            If[!MissingQ[split], result = split; Break[]], {leg, massless}];
+          chain -> result]] /@ nodes;
+        working = Expand[working /. replacements];
+        AppendTo[record, <|"Operation" -> "DeclaredExternalMasslessRankOne",
+          "ChainRules" -> replacements, "MasslessExternalLegs" -> massless|>], {2}], {pass, 2}];
+    factored = Factor[working];
+    If[!finite[factored] || Expand[factored - working] =!= 0,
+      Return[Missing["IncompleteOrdinaryNormalization"]]];
+    <|"Amplitude" -> factored, "Route" -> record,
+      "ExactCoefficientCollectionResidual" -> 0, "InternalOnShellConditions" -> {}|>
+  ];
+  outcome = TimeConstrained[MemoryConstrained[
+    bestRank = rank[expression]; walk[protected, {}];
+    cores = Select[cores, Function[item, Module[{body = Last[item], chains},
+      chains = DeleteDuplicates[Cases[body, _SpinorChain, Infinity]];
+      2 <= Length[body] <= 12 && LeafCount[body] <= 1200 &&
+        rspSandwichExpansionCount[body] <= 32 && Length[chains] <= 10 &&
+        AnyTrue[chains, Length[#] === 3 &] && AllTrue[chains,
+          MemberQ[{2, 3}, Length[#]] && AllTrue[{First[#], Last[#]}, supported] &&
+            AllTrue[Rest[Most[List @@ #]], MatchQ[#, Mom[_Integer]] &&
+              MemberQ[external, #[[1]]] &] &]]]];
+    cores = Take[SortBy[cores, LeafCount[Last[#]] &], UpTo[8]];
+    Do[
+      {path, source} = cores[[coreIndex]];
+      states = {<|"Expression" -> Expand[source], "Route" -> {}|>};
+      Do[
+        next = {};
+        Do[
+          moves = Take[SchoutenCandidates[state["Expression"]], UpTo[64]];
+          Do[
+            raw = Expand[state["Expression"] - move["Subtract"] + move["Insert"]];
+            If[LeafCount[raw] > 2400 || rspSandwichExpansionCount[raw] > 64, Continue[]];
+            reduced = normal[raw]; If[!AssociationQ[reduced], Continue[]];
+            alternatives = {<|"Amplitude" -> reduced["Amplitude"],
+              "Normalization" -> reduced, "EliminatedMomentum" -> None|>};
+            Do[
+              changed = reduced["Amplitude"] /. chain_SpinorChain :>
+                (SpinorChain @@ Join[{First[chain]},
+                  Rest[Most[List @@ chain]] /. Mom[elimination] ->
+                    -Total[Mom /@ DeleteCases[external, elimination]], {Last[chain]}]);
+              normalization = normal[changed];
+              If[AssociationQ[normalization], AppendTo[alternatives,
+                <|"Amplitude" -> normalization["Amplitude"], "Normalization" -> normalization,
+                  "EliminatedMomentum" -> elimination|>]], {elimination, external}];
+            Do[
+              target = trial["Amplitude"];
+              candidate = restore[ReplacePart[protected, path -> target]];
+              candidateRank = rank[candidate];
+              normalization = Append[state["Route"], <|"SchoutenEdit" -> move,
+                "Before" -> state["Expression"], "AfterSchouten" -> raw,
+                "BeforeConservation" -> reduced, "AfterConservation" -> trial["Normalization"],
+                "EliminatedMomentum" -> trial["EliminatedMomentum"], "ExternalLegs" -> external,
+                "MomentumConservation" -> True, "InternalOnShellConditions" -> {}|>];
+              If[finite[candidate] && OrderedQ[{candidateRank, bestRank}] && candidateRank =!= bestRank,
+                {best, bestRank, route} = {candidate, candidateRank,
+                  {<|"Operation" -> "BoundedOrdinarySchoutenLookahead", "Position" -> path,
+                    "Before" -> source, "After" -> target, "Steps" -> normalization,
+                    "ExactFormalReplay" -> True, "DenominatorsPreserved" -> True,
+                    "InternalOnShellConditions" -> {}|>}}];
+              AppendTo[next, <|"Expression" -> target, "Route" -> normalization|>],
+              {trial, alternatives}], {move, moves}], {state, states}];
+        If[next === {}, Break[]];
+        states = Take[SortBy[DeleteDuplicatesBy[next, #["Expression"] &],
+          rank[#["Expression"]] &], UpTo[16]], {depth, 2}],
+      {coreIndex, Length[cores]}]; True,
+    256000000, False], available[], False];
+  <|"Amplitude" -> best, "Status" -> If[route === {}, "UNCHANGED", "IMPROVED"],
+    "Route" -> route, "ElapsedTime" -> AbsoluteTime[] - started, "TimedOut" -> !TrueQ[outcome]|>
+];
+
 (* Random scrambles use only reversible symbolic edits. *)
 scramblePair[{rules_List, amp_}, n_, seed_, record_] := Module[
   {original = canonicalAmplitude[amp, rules], expr, moves, pick, next, history = {}},

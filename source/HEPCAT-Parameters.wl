@@ -87,6 +87,107 @@ modelExpandParameterDefinitions[expression_, model_List, overrides_: Automatic] 
   result
 ];
 
+(* Declared functions can cancel scalar coefficients without changing a
+   propagator's mass or a typed contraction. Keep their original names when
+   expanding them is less compact. Independent variable values never enter
+   this presentation-only competitor. *)
+preparationModelScalarCompaction[expression_, model_, seconds_ : 0.5] := Module[
+  {started = AbsoluteTime[], budget, remaining, checkpoint, outcome, inverses,
+   inverseTokens, protected, atoms, tokens, forward, backward, formal, profile,
+   definitions, active, expandedOriginal, local, simplify, rank, candidate,
+   inspect, trialRank, proof, coefficientCalls = 0, touched = {}, modes,
+   overrides, supplied, rows},
+  checkpoint = <|"Amplitude" -> expression, "Status" -> "UNCHANGED", "Route" -> {}|>;
+  budget = If[NumericQ[seconds] && TrueQ[seconds > 0], Min[1, seconds], 0];
+  If[budget <= 0 || LeafCount[expression] > 12000 ||
+      !ListQ[model] || Length[model] =!= 4 || !ListQ[model[[3]]] || !ListQ[model[[4]]] ||
+      FreeQ[expression, _ModelParameter] ||
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma],
+    Return[Join[checkpoint, <|"TimedOut" -> False, "ElapsedTime" -> AbsoluteTime[] - started,
+      "InternalOnShellConditions" -> {}|>]]];
+  remaining[] := Max[0.000001, budget - (AbsoluteTime[] - started)];
+  outcome = TimeConstrained[MemoryConstrained[
+    (* A constructor may explicitly override a dependent parameter. It then
+       remains an independent symbolic input for this call, including when
+       expanding another parameter transitively depends on it. *)
+    overrides = If[ValueQ[$preparationModelParameterOverrides],
+      $preparationModelParameterOverrides, Automatic];
+    rows = Select[Join[model[[3]], model[[4]]], ListQ[#] && Length[#] >= 2 &&
+      modelParameterQ[First[#]] &];
+    supplied = modelParameterOverrideRules[Replace[overrides, Automatic -> {}], First /@ rows];
+    definitions = If[ListQ[supplied], Select[model[[4]], ListQ[#] && Length[#] >= 2 &&
+      modelParameterQ[First[#]] && !MemberQ[First /@ supplied, First[#]] &&
+      FreeQ[#[[2]], _ModelFunction] &], {}];
+    active = Intersection[First /@ definitions,
+      DeleteDuplicates[Cases[expression, _ModelParameter, {0, Infinity}]]];
+    If[active === {}, "NoDependentCoefficients",
+      (* An inverse containing typed kinematics is one opaque object. In
+         particular, no dependent mass is substituted inside PropDen. *)
+      inverses = DeleteDuplicates[Cases[expression,
+        inverse : Power[base_, exponent_] /; !TrueQ[exponent >= 0] &&
+          !FreeQ[base, _SpinorChain | _SpinorTrace | _PropDen | _MomProd |
+            _Mom | _Mass | _Spinor | _SpinorHat | _MomHat | _MomQ |
+            _xFactor | _xTildeFactor | _Mandelstahm | _ColorGenerator |
+            _ColorDelta | _ColorStructure | _ColorTrace] :> inverse, {0, Infinity}]];
+      inverseTokens = Table[Unique["modelCoefficientInverse"], Length[inverses]];
+      protected = expression /. Thread[inverses -> inverseTokens];
+      atoms = DeleteDuplicates[Cases[protected,
+        _SpinorChain | _SpinorTrace | _PropDen | _MomProd | _Mom | _Mass |
+          _Spinor | _SpinorHat | _MomHat | _MomQ | _xFactor | _xTildeFactor |
+          _Mandelstahm | _ColorGenerator | _ColorDelta | _ColorStructure |
+          _ColorTrace, {0, Infinity}]];
+      tokens = Table[Unique["modelCoefficientAtom"], Length[atoms]];
+      forward = Join[Thread[atoms -> tokens], Thread[inverses -> inverseTokens]];
+      backward = Join[Thread[tokens -> atoms], Thread[inverseTokens -> inverses]];
+      formal = protected /. Thread[atoms -> tokens];
+      profile = rspExpansionProfile[formal, 256, 24000];
+      If[profile[[1]] > 256 || profile[[2]] > 24000, "ExpansionLimit",
+        definitions = DeleteCases[Map[Function[parameter,
+          With[{value = modelExpandParameterDefinitions[parameter, model, overrides]},
+            If[FailureQ[value] || value === parameter, Nothing, parameter -> value]]], active], Nothing];
+        If[definitions === {}, "NoDependentCoefficients",
+          rank[value_] := preparationRank[value];
+          checkpoint = Join[checkpoint, <|"Rank" -> rank[expression]|>];
+          expandedOriginal = modelExpandParameterDefinitions[formal, model, overrides];
+          If[FailureQ[expandedOriginal], "InvalidModelDefinitions",
+            simplify[value_] := Factor[Cancel[value]];
+            local[value_, mode_] := Module[{present, choices, best = value, bestRank, nextRank},
+              If[++coefficientCalls > 256, Return[value]];
+              present = Select[definitions, !FreeQ[value, First[#]] &];
+              If[present === {}, Return[value]];
+              touched = Union[touched, First /@ present];
+              If[mode === "ExpandCoefficients", Return[simplify[value /. present]]];
+              bestRank = rank[value];
+              choices = DeleteDuplicates[Join[{simplify[value /. present]},
+                simplify[value /. #] & /@ Take[present, UpTo[12]]]];
+              Do[nextRank = rank[choice];
+                If[preparationBetterQ[nextRank, bestRank], best = choice; bestRank = nextRank],
+                {choice, choices}]; best];
+            inspect[value_, mode_] := Module[{restored},
+              restored = value /. backward;
+              If[!FreeQ[restored, _Collect | _Factor | _Cancel] || !residueFiniteQ[restored], Return[Null]];
+              trialRank = rank[restored];
+              If[!preparationBetterQ[trialRank, checkpoint["Rank"]], Return[Null]];
+              proof = modelExpandParameterDefinitions[value, model, overrides];
+              If[FailureQ[proof], Return[Null]];
+              proof = Together[proof - expandedOriginal];
+              If[proof =!= 0, Return[Null]];
+              checkpoint = <|"Amplitude" -> restored, "Rank" -> trialRank, "Status" -> "IMPROVED",
+                "Route" -> {<|"Operation" -> "CompactDeclaredScalarCoefficients", "Mode" -> mode,
+                  "Before" -> expression, "After" -> restored, "InternalOnShellConditions" -> {},
+                  "EquivalenceProof" -> <|"Method" -> "ExactIndependentAtomModelDefinitionIdentity",
+                    "NormalForm" -> proof, "DependentParameterDefinitions" -> definitions,
+                    "ProtectedAtomSubstitutions" -> forward|>|>}|>];
+            modes = {"SelectiveDefinitions", "ExpandCoefficients"};
+            Do[candidate = Collect[formal, Join[tokens, inverseTokens], Function[value, local[value, mode]]];
+              inspect[candidate, mode], {mode, modes}];
+            "Complete"]]]], 134217728, "MemoryLimit"], remaining[], "TimeLimit"];
+  Join[checkpoint, <|"TimedOut" -> MemberQ[{"TimeLimit", "MemoryLimit"}, outcome],
+    "StopReason" -> outcome, "ElapsedTime" -> AbsoluteTime[] - started,
+    "CoefficientCalls" -> coefficientCalls, "DependentParametersConsidered" -> touched,
+    "InternalOnShellConditions" -> {}|>]
+];
+
 modelExpressionNumber[text_String] := Module[
   {parts, mantissa, exponent = 0, point, scale = 0, sign = 1},
   parts = StringSplit[text, RegularExpression["[eE]|\\*\\^"]];

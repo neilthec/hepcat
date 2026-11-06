@@ -2646,7 +2646,7 @@ amplitudeParallelPoolBuild[limit_Integer, warmOnly_] := Module[
       "Saved package sources changed after this kernel loaded HEPCAT. Reload the package before using parallel workers; this call uses the loaded serial definitions."}|>]];
   If[TrueQ[warmOnly] && Length[$amplitudeParallelKernels] < 2,
     Return[<|"Kernels" -> {}, "StartupTime" -> 0.,
-      "Diagnostics" -> {"Small completion jobs use parallel workers only after the pool is warm."}|>]];
+      "Diagnostics" -> {"Small jobs use parallel workers only after the pool is warm."}|>]];
   needed = Max[0, limit - Length[$amplitudeParallelKernels]];
   If[needed > 0 && !TrueQ[warmOnly],
     before = Kernels[];
@@ -14396,8 +14396,10 @@ preparationConservationTrial[expr_, edit_Association, rules_List] := Module[
 
 (* Conservation in one-insertion sandwiches can expose a null-momentum
    factorization without expanding longer words or scalar momentum squares. *)
-preparationSingleMomentumConservation[expression_, rules_List, seconds_: 2] := Module[
-  {external = externalIndices[rules], used, trial, best = expression, bestRank, rank},
+preparationSingleMomentumConservation[expression_, rules_List, seconds_: 2,
+    checkpoint_ : None] := Module[
+  {external = externalIndices[rules], used, trial, conserved, nullReduced, spinorReduced,
+   best = expression, bestRank, rank},
   If[Length[external] < 3 || LeafCount[expression] > 24000 ||
       rspSandwichExpansionCount[expression] > 128, Return[expression]];
   used = preparationProtectedDenominators[expression, Function[body,
@@ -14409,16 +14411,152 @@ preparationSingleMomentumConservation[expression_, rules_List, seconds_: 2] := M
   bestRank = preparationRank[expression];
   TimeConstrained[
     Do[
-      trial = preparationNumerators[expression, Function[num, num /.
+      conserved = preparationNumerators[expression, Function[num, num /.
         (chain_SpinorChain /; Length[chain] === 3 && chain[[2]] === Mom[anchor]) :>
           SpinorChain[chain[[1]], -Total[Mom /@ DeleteCases[external, anchor]], chain[[-1]]]]];
-      trial = preparationMasslessMomentumTrial[trial, rules, {}, {}];
-      trial = preparationSpinorProducts[trial, rules];
-      trial = preparationCompactExternalSums[trial, Min[0.5, seconds/2], rules];
+      nullReduced = preparationMasslessMomentumTrial[conserved, rules, {}, {}];
+      spinorReduced = preparationSpinorProducts[nullReduced, rules];
+      trial = preparationCompactExternalSums[spinorReduced, Min[0.5, seconds/2], rules];
       If[residueFiniteQ[trial], rank = preparationRank[trial];
-        If[preparationBetterQ[rank, bestRank], best = trial; bestRank = rank]],
+        If[preparationBetterQ[rank, bestRank], best = trial; bestRank = rank;
+          If[Head[checkpoint] === Function, checkpoint[<|"Amplitude" -> best, "Rank" -> rank,
+            "Route" -> {<|"Operation" -> "ConservedSingleMomentumSandwich",
+              "Before" -> expression, "Anchor" -> anchor, "ExternalLegs" -> external,
+              "MomentumReplacement" -> (Mom[anchor] -> -Total[Mom /@ DeleteCases[external, anchor]]),
+              "AfterConservation" -> conserved, "AfterNullMomentumReduction" -> nullReduced,
+              "AfterExternalSpinorProducts" -> spinorReduced, "After" -> trial,
+              "ExternalMassRules" -> rules, "InternalOnShellIdentity" -> False,
+              "OnShellChannels" -> {}, "ExactForwardReplay" -> True|>}|>]]]],
       {anchor, used}], seconds, Null];
   best
+];
+
+(* Revisit conservation after scalar and identity compaction have exposed new
+   cancellations. Whole-amplitude and fixed-propagator-group routes compete;
+   each accepted route keeps its exact conservation and external-only replay. *)
+preparationFinalConservationCompaction[expression_, rules_List,
+    conserve_ : True, seconds_ : 2] := Module[
+  {started = AbsoluteTime[], best, bestRank, available, remember, whole,
+   body, terms, key, groups, keys, numerators, working, source, candidate,
+   local, localBest, routes = {}, groupedRoute, literalResidual, outcome,
+   colorTerms, colorGroups, colorKeys, colorCoefficients, colorResults, colorTrial,
+   externalRules = preparationExternalRules[rules]},
+  best = <|"Amplitude" -> expression, "Status" -> "UNCHANGED", "Route" -> {}|>;
+  If[!TrueQ[conserve] || !TrueQ[NumericQ[seconds] && seconds > 0] ||
+      LeafCount[expression] > 24000 || !preparationScalarExternalRulesQ[externalRules] ||
+      FreeQ[expression, chain_SpinorChain /;
+        Length[chain] === 3 && MatchQ[chain[[2]], Mom[_Integer]]] ||
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma], Return[best]];
+  available[] := Max[0.000001, seconds - (AbsoluteTime[] - started)];
+  bestRank = TimeConstrained[preparationRank[expression], available[], $TimedOut];
+  If[bestRank === $TimedOut, Return[Join[best,
+    <|"ElapsedTime" -> AbsoluteTime[] - started, "TimedOut" -> True|>]]];
+  remember[record_Association] := Module[{rank = preparationRank[record["Amplitude"]]},
+    If[residueFiniteQ[record["Amplitude"]] && preparationBetterQ[rank, bestRank],
+      bestRank = rank; best = Join[record, <|"Rank" -> rank, "Status" -> "IMPROVED"|>]]];
+  If[!FreeQ[expression, _ColorGenerator | _ColorDelta | _ColorStructure | _ColorTrace],
+    outcome = TimeConstrained[
+      colorTerms = colorExpressionTerms[expression];
+      If[FailureQ[colorTerms] || Length[colorTerms] > 64, Return[best]];
+      colorGroups = GroupBy[colorTerms, First];
+      colorKeys = Keys[colorGroups];
+      colorCoefficients = Total[#[[All, 2]]] & /@ Values[colorGroups];
+      literalResidual = Expand[expression - Total[colorKeys colorCoefficients]];
+      If[literalResidual =!= 0, Return[best]];
+      colorResults = Table[preparationFinalConservationCompaction[
+        colorCoefficients[[index]], externalRules, True, available[]], {index, Length[colorCoefficients]}];
+      colorTrial = Total[colorKeys Lookup[colorResults, "Amplitude"]];
+      remember[<|"Amplitude" -> colorTrial, "Route" -> {<|
+        "Operation" -> "UnchangedColorTensorCoefficientConservation",
+        "ColorBasis" -> colorKeys, "CoefficientRoutes" -> Lookup[colorResults, "Route"],
+        "ExactColorReconstructionResidual" -> literalResidual,
+        "InternalOnShellIdentity" -> False, "OnShellChannels" -> {},
+        "ExactForwardReplay" -> True|>}|>]; True, available[], False];
+    Return[Join[best, <|"ElapsedTime" -> AbsoluteTime[] - started, "TimedOut" -> !TrueQ[outcome]|>]]];
+  outcome = TimeConstrained[MemoryConstrained[
+    whole = None;
+    preparationSingleMomentumConservation[expression, externalRules, Min[0.6, available[]/3],
+      Function[record, whole = record; remember[record]]];
+    If[FreeQ[expression, _PropDen] || rspSandwichExpansionCount[expression] > 4096,
+      Return[best]];
+    key[term_] := Times @@ Select[If[Head[term] === Times, List @@ term, {term}],
+      MatchQ[#, Power[_PropDen, _Integer?Negative]] &];
+    body = withProtectedPropagators[expression, Expand];
+    terms = If[Head[body] === Plus, List @@ body, {body}];
+    groups = GroupBy[terms, key];
+    If[Length[groups] > 24, Return[best]];
+    keys = Keys[groups];
+    numerators = MapThread[Expand[Total[#1]/#2] &, {Values[groups], keys}];
+    literalResidual = Expand[body - Total[keys numerators]];
+    If[literalResidual =!= 0, Return[best]];
+    working = numerators;
+    Do[
+      If[available[] < 0.01, Break[]];
+      source = numerators[[index]];
+      If[LeafCount[source] > 6000, Continue[]];
+      localBest = None;
+      local = preparationSingleMomentumConservation[source, externalRules,
+        Min[0.5, available[]], Function[record, localBest = record]];
+      If[!AssociationQ[localBest] || local === source, Continue[]];
+      working[[index]] = local;
+      groupedRoute = <|"Operation" -> "ConservedPropagatorGroupNumerator",
+        "PropagatorFactor" -> keys[[index]], "BeforeNumerator" -> source,
+        "AfterNumerator" -> local, "CoefficientRoute" -> localBest["Route"],
+        "ExactGroupedNumeratorResidual" -> literalResidual,
+        "InternalOnShellIdentity" -> False, "OnShellChannels" -> {},
+        "ExactForwardReplay" -> True|>;
+      AppendTo[routes, groupedRoute];
+      candidate = Total[keys working];
+      remember[<|"Amplitude" -> candidate, "Route" -> routes|>],
+      {index, Reverse[SortBy[Range[Length[numerators]], LeafCount[numerators[[#]]] &]]}];
+    True, 268435456, False], available[], False];
+  Join[best, <|"ElapsedTime" -> AbsoluteTime[] - started, "TimedOut" -> !TrueQ[outcome]|>]
+];
+
+(* Canonical color tensors are independent coefficients, so the ordinary
+   channel-current identity can act on each scalar coefficient unchanged. *)
+preparationChannelCurrentCompaction[expression_, rules_List,
+    conserve_ : True, seconds_ : 2, normalizer_ : rspChannelCurrentNormalization] := Module[
+  {started = AbsoluteTime[], best, bestRank, external = preparationExternalRules[rules],
+   available, terms, groups, tensors, coefficients, working, reports = {}, record,
+   candidate, rank, reconstruction, outcome},
+  best = <|"Amplitude" -> expression, "Status" -> "UNCHANGED", "Route" -> {}|>;
+  If[!TrueQ[conserve] || !TrueQ[NumericQ[seconds] && seconds > 0] ||
+      Length[externalIndices[external]] =!= 4 ||
+      LeafCount[expression] > 24000 || !preparationScalarExternalRulesQ[external], Return[best]];
+  available[] := Max[0.000001, seconds - (AbsoluteTime[] - started)];
+  outcome = TimeConstrained[MemoryConstrained[
+    bestRank = preparationRank[expression];
+    If[FreeQ[expression, _ColorGenerator | _ColorDelta | _ColorStructure | _ColorTrace],
+      record = normalizer[expression, external, True, available[]];
+      rank = preparationRank[record["Amplitude"]];
+      If[residueFiniteQ[record["Amplitude"]] && preparationBetterQ[rank, bestRank],
+        best = record];
+      Return[Join[best, <|"ElapsedTime" -> AbsoluteTime[] - started,
+        "TimedOut" -> Lookup[record, "TimedOut", False]|>]]];
+    terms = colorExpressionTerms[expression];
+    If[FailureQ[terms] || Length[terms] > 64, Return[best]];
+    groups = GroupBy[terms, First]; tensors = Keys[groups];
+    coefficients = Total[#[[All, 2]]] & /@ Values[groups];
+    reconstruction = Expand[expression - Total[tensors coefficients]];
+    If[reconstruction =!= 0, Return[best]];
+    working = coefficients;
+    Do[
+      If[available[] < 0.01, Break[]];
+      record = normalizer[coefficients[[index]], external, True, available[]];
+      working[[index]] = record["Amplitude"];
+      AppendTo[reports, <|"Tensor" -> tensors[[index]], "CoefficientRoute" -> record["Route"]|>];
+      candidate = Total[tensors working]; rank = preparationRank[candidate];
+      If[residueFiniteQ[candidate] && preparationBetterQ[rank, bestRank],
+        bestRank = rank;
+        best = <|"Amplitude" -> candidate, "Status" -> "IMPROVED", "Route" -> {<|
+          "Operation" -> "UnchangedColorTensorOrdinaryIdentities", "ScalarNormalizer" -> normalizer,
+          "ColorBasis" -> tensors, "CoefficientRoutes" -> reports,
+          "ExactColorReconstructionResidual" -> reconstruction,
+          "InternalOnShellConditions" -> {}, "ExactFormalReplay" -> True|>}|>],
+      {index, Length[coefficients]}];
+    True, 268435456, False], available[], False];
+  Join[best, <|"ElapsedTime" -> AbsoluteTime[] - started, "TimedOut" -> !TrueQ[outcome]|>]
 ];
 
 preparationSearchCandidates[expr_, rules_List, shellOptions_List, conserve_, limit_] := Module[
@@ -15472,7 +15610,8 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
    contractionTimedOut = False,
    completedBest = None, completedBestRank, completedBestSource, rememberCompleted, snapshotRank,
    rankSnapshots = 0, groupedCompaction, fractionCompaction, fractionSeconds, pairNormalization,
-   diracCompaction, displayCompaction, displaySeconds},
+   diracCompaction, displayCompaction, displaySeconds, modelCompaction, conservationCompaction,
+   currentCompaction, schoutenCompaction},
   progressMetadata = Join[<|"Item" -> index, "Items" -> count, "InputType" -> kind|>,
     If[MemberQ[{"Diagram", "FeynmanDiagram"}, kind], <|"Diagram" -> index, "Diagrams" -> count|>, <||>]];
   channels = If[TrueQ[options["InternalOnShell"]],
@@ -15937,6 +16076,77 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
       "BeforeRank" -> snapshotRank[before], "AfterRank" -> completedBestRank,
       "SelectionOnly" -> True, "InternalOnShellIdentity" -> False,
       "OnShellChannels" -> channels, "ReferenceChoice" -> options["PolePreference"]|>]];
+  (* Keep a common off-shell channel vector until complete external current
+     divergences have been collected. Its exact route never adds a cut shell. *)
+  If[TrueQ[outcome] && (TrueQ[wholeAmplitude] || kind === "Amplitude") &&
+      TrueQ[options["MomentumConservation"]],
+    displaySeconds = If[options["TimeConstraint"] === Infinity, 2,
+      Max[0, Min[2, options["TimeConstraint"] - (AbsoluteTime[] - started)]]];
+    If[displaySeconds > 0.01,
+      before = expression;
+      currentCompaction = preparationChannelCurrentCompaction[before,
+        preparationExternalRules[rules], True, displaySeconds];
+      after = Lookup[currentCompaction, "Amplitude", before];
+      If[residueFiniteQ[after] && preparationBetterQ[snapshotRank[after], snapshotRank[before]],
+        expression = after;
+        AppendTo[reductions, <|"Operation" -> "GenericChannelCurrentNormalization", "Before" -> before,
+          "After" -> expression, "InternalOnShellIdentity" -> False, "OnShellChannels" -> {},
+          "IdentityRoute" -> Lookup[currentCompaction, "Route", {}],
+          "SearchTimedOut" -> Lookup[currentCompaction, "TimedOut", False]|>];
+        rememberCompleted[expression, "GenericChannelCurrentNormalization"]]]];
+  (* A small ordinary Schouten lookahead can cross one intermediate expansion
+     before the shorter whole current becomes visible. *)
+  If[TrueQ[outcome] && (TrueQ[wholeAmplitude] || kind === "Amplitude") &&
+      TrueQ[options["MomentumConservation"]] && Length[externalIndices[rules]] === 4 &&
+      MemberQ[Last /@ preparationExternalRules[rules], 0],
+    displaySeconds = If[options["TimeConstraint"] === Infinity, 1.5,
+      Max[0, Min[1.5, options["TimeConstraint"] - (AbsoluteTime[] - started)]]];
+    If[displaySeconds > 0.01,
+      before = expression;
+      schoutenCompaction = preparationChannelCurrentCompaction[before,
+        preparationExternalRules[rules], True, displaySeconds, rspFourLegSchoutenLookahead];
+      after = Lookup[schoutenCompaction, "Amplitude", before];
+      If[residueFiniteQ[after] && preparationBetterQ[snapshotRank[after], snapshotRank[before]],
+        expression = after;
+        AppendTo[reductions, <|"Operation" -> "OrdinaryFourLegSchoutenLookahead", "Before" -> before,
+          "After" -> expression, "InternalOnShellIdentity" -> False, "OnShellChannels" -> {},
+          "IdentityRoute" -> Lookup[schoutenCompaction, "Route", {}],
+          "SearchTimedOut" -> Lookup[schoutenCompaction, "TimedOut", False]|>];
+        rememberCompleted[expression, "OrdinaryFourLegSchoutenLookahead"]]]];
+  (* Simplify dependent scalar coefficients without specializing numerical
+     model values or replacing masses inside any propagator. *)
+  If[TrueQ[outcome] && (TrueQ[wholeAmplitude] || kind === "Amplitude"),
+    displaySeconds = If[options["TimeConstraint"] === Infinity, 0.5,
+      Max[0, Min[0.5, options["TimeConstraint"] - (AbsoluteTime[] - started)]]];
+    If[displaySeconds > 0.01,
+      before = expression;
+      modelCompaction = preparationModelScalarCompaction[before, model, displaySeconds];
+      after = Lookup[modelCompaction, "Amplitude", before];
+      If[residueFiniteQ[after] && preparationBetterQ[snapshotRank[after], snapshotRank[before]],
+        expression = after;
+        AppendTo[reductions, <|"Operation" -> "DeclaredModelScalarCompaction", "Before" -> before,
+          "After" -> expression, "InternalOnShellIdentity" -> False, "OnShellChannels" -> {},
+          "IdentityRoute" -> Lookup[modelCompaction, "Route", {}],
+          "SearchTimedOut" -> Lookup[modelCompaction, "TimedOut", False]|>];
+        rememberCompleted[expression, "DeclaredModelScalarCompaction"]]]];
+  (* Late scalar collection can expose coherent conservation cancellations
+     that were absent during the earlier numerator search. *)
+  If[TrueQ[outcome] && (TrueQ[wholeAmplitude] || kind === "Amplitude") &&
+      TrueQ[options["MomentumConservation"]],
+    displaySeconds = If[options["TimeConstraint"] === Infinity, 2,
+      Max[0, Min[2, options["TimeConstraint"] - (AbsoluteTime[] - started)]]];
+    If[displaySeconds > 0.01,
+      before = expression;
+      conservationCompaction = preparationFinalConservationCompaction[before,
+        preparationExternalRules[rules], True, displaySeconds];
+      after = Lookup[conservationCompaction, "Amplitude", before];
+      If[residueFiniteQ[after] && preparationBetterQ[snapshotRank[after], snapshotRank[before]],
+        expression = after;
+        AppendTo[reductions, <|"Operation" -> "FinalCoherentMomentumConservation", "Before" -> before,
+          "After" -> expression, "InternalOnShellIdentity" -> False, "OnShellChannels" -> {},
+          "IdentityRoute" -> Lookup[conservationCompaction, "Route", {}],
+          "SearchTimedOut" -> Lookup[conservationCompaction, "TimedOut", False]|>];
+        rememberCompleted[expression, "FinalCoherentMomentumConservation"]]]];
   (* A final presentation-only competitor sees the selected whole amplitude.
      It applies no kinematic identity and cannot extend an exhausted item clock. *)
   If[TrueQ[outcome] && (TrueQ[wholeAmplitude] || kind === "Amplitude"),
@@ -15978,6 +16188,21 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
     "GeneratedCandidates" -> generated, "InspectedCandidates" -> inspected,
     "IdentitySearchCompleted" -> identityStageComplete, "StopReason" -> stop,
     "ElapsedTime" -> AbsoluteTime[] - started, "Diagnostics" -> diagnostics|>]
+];
+
+(* Starting a local pool costs more than ordinary reduction of a small
+   batch. Do not initialize the parallel tools for cold, tiny Automatic
+   preparation; an existing package pool remains reusable. Explicit True
+   and larger batches retain the processor and license based worker limit. *)
+preparationParallelSettings[pairs_List, options_Association] := Module[
+  {settings = KeyTake[options, {"Parallelization", "MaxKernels"}], leaves, small, warm},
+  leaves = Total[LeafCount[Last[#]] & /@ pairs];
+  small = leaves < 4000;
+  warm = ListQ[$amplitudeParallelKernels] && Length[$amplitudeParallelKernels] >= 2;
+  If[Lookup[settings, "Parallelization", Automatic] === Automatic && small,
+    settings = Join[settings, <|"WarmOnly" -> True|>];
+    If[!TrueQ[warm], settings["Parallelization"] = False]];
+  settings
 ];
 
 PrepareAmplitudes[items_List, model_, opts : OptionsPattern[]] := Module[
@@ -16067,7 +16292,7 @@ PrepareAmplitudes[items_List, model_, opts : OptionsPattern[]] := Module[
         If[$KernelID === 0, localOptions, silentOptions], localModel, localInventory,
         job[[3]], whole], <|"WorkerKernel" -> $KernelID|>, job[[4]]]]];
   dispatch = amplitudeParallelMap[worker, jobs,
-    KeyTake[options, {"Parallelization", "MaxKernels"}],
+    preparationParallelSettings[pairs, options],
     Function[{report, index, total},
       completedItems++;
       If[Lookup[report, "WorkerKernel", 0] =!= 0,
@@ -21340,10 +21565,11 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     value
   );
   prepareFinal[value_, overrides_: <||>] := Module[{prepared, pair},
-    prepared = PrepareAmplitudes[value, factorizationModel,
+    prepared = Block[{$preparationModelParameterOverrides = options["ParameterRules"]},
+      PrepareAmplitudes[value, factorizationModel,
       Sequence @@ stageOptions[PrepareAmplitudes, options["FinalPreparationOptions"],
         Join[<|"InternalOnShell" -> False, "PolePreference" -> None,
-          "ReturnDetails" -> True, "Output" -> "Amplitudes"|>, overrides]]];
+          "ReturnDetails" -> True, "Output" -> "Amplitudes"|>, overrides]]]];
     If[FailureQ[prepared] || prepared === $Failed, Return[prepared]];
     pair = If[AssociationQ[prepared],
       save[currentStage <> " details", prepared];

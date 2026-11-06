@@ -21,6 +21,14 @@ notebooks are preserved on the `ml-simplify` branch at commit `54f6920`.
   calculations that still need evaluation or investigation.
 - `tests/QED-5-point.nb`: the five-point calculations, unchanged.
 - `tests/checks/`: symbolic regression suites and their timeout runner.
+- `tests/sm-four-point-simplification-audit.wl`: opt-in audit of all 132 saved
+  SM four-point helicity results. It reads notebook cells as data, prepares
+  completed amplitudes using external identities only, and writes a CSV
+  comparison plus WXF expressions. Set
+  `HEPCAT_SM_AUDIT_OUTPUT` to choose the output directory. It changes neither
+  the worked notebook nor any model file and does not rerun independent
+  physical checks. `HEPCAT_SM_AUDIT_DETAILS=1` additionally writes the larger
+  WXF file containing full preparation reports and identity routes.
 
 ## Identity Tools
 
@@ -55,6 +63,22 @@ ones, retaining explicit spin-index labels and variance. Existing Clifford
 contractions and external Dirac identities shorten chains; trace reductions
 preserve their chiral ordering, including contractions across the trace boundary.
 Physical `PropDen` factors remain opaque.
+Completed-amplitude preparation also revisits coherent momentum-conservation
+routes within unchanged denominator groups, including separate canonical color
+coefficients. This can expose cancellations missed by a greedy single-chain
+edit. Declared dependent model functions supply exact scalar coefficient
+identities without substituting independent numerical defaults or changing a
+propagator's mass or width. Both competitors retain only a strictly better
+completed result within finite budgets. Their recorded identity routes are
+available with `"ReturnDetails" -> True`; a complexity score is a search
+criterion, not a proof of global minimality.
+For four external legs it can keep a channel vector off shell while contracting
+external current endpoints. Small numerator sums with declared massless legs
+also admit bounded Schouten lookahead: a temporarily larger intermediate may
+expose an external Dirac or massless rank-one contraction. The accepted result
+still has to improve the completed expression, and all inverse factors remain
+protected. These finite searches record the exact identity route and do not
+change the process-independent contract of `ReduceSpinorProducts`.
 Shared scalar content is extracted from polynomial sums before applying the
 existing Schouten rules, so preexpanded coefficient-weighted identities are
 recognized too. This adds no inverse Schouten rewrite or denominator combination.
