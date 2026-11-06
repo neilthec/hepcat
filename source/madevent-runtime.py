@@ -286,6 +286,18 @@ def set_card_value(path, key, value):
     path.write_text(text)
 
 
+def initialize_run_cards(process):
+    """Select pointlike external beams for a newly generated numerical session."""
+    for filename in ("run_card.dat", "run_card_default.dat"):
+        card = process / "Cards" / filename
+        # MG can choose a photon PDF for only one of two incoming particles.
+        # The exported process specifies elementary particles, not hadron beams.
+        # Existing sessions return before this initializer and keep user cards.
+        for key, value in (("lpp1", "0"), ("lpp2", "0"),
+                           ("nhel", "0"), ("hel_recycling", ".False.")):
+            set_card_value(card, key, value)
+
+
 def patch_event_spins(process, config):
     path = process / "SubProcesses" / "unwgt.f"
     text = path.read_text()
@@ -673,9 +685,7 @@ def prepare(data, root=None):
         patch_linking(process, local_link)
         patch_event_spins(process, config)
         install_runtime_guard(process)
-        for card in ("run_card.dat", "run_card_default.dat"):
-            set_card_value(process / "Cards" / card, "nhel", "0")
-            set_card_value(process / "Cards" / card, "hel_recycling", ".False.")
+        initialize_run_cards(process)
         options = process / "Cards" / "me5_configuration.txt"
         options.write_text(options.read_text() + "\n# HEPCAT: serial default; the user can select native multicore mode.\nrun_mode = 0\nnb_core = 1\nautomatic_html_opening = False\nnotification_center = False\n")
         hashes = [{"Path": str(matrix.relative_to(process)), "SHA256": hashlib.sha256(matrix.read_bytes()).hexdigest()} for matrix in matrices]
@@ -695,6 +705,16 @@ def prepare(data, root=None):
             raise MadEventSetupError("make was not found.")
         flags = "-w -fPIC -ffixed-line-length-none"
         make_options = ["FC=" + compiler, "FFLAGS=" + flags]
+        # Native treatcards can report an invalid card while exiting zero.
+        # Generate and verify includes before starting parallel Fortran builds.
+        cards_log = support / "cards.log"
+        ref.run_logged([python, process / "bin" / "madevent", "treatcards", "all"],
+                       process, cards_log, deadline, environment)
+        missing_includes = [name for name in ("run_card.inc", "param_card.inc")
+                            if not (process / "Source" / name).is_file()]
+        if missing_includes:
+            raise MadEventSetupError("MadEvent did not generate " + ", ".join(missing_includes) +
+                                     "; inspect " + str(cards_log))
         ref.run_logged([make, "-j2"] + make_options, process / "Source", support / "build.log", deadline, environment)
         for matrix in matrices:
             ref.run_logged([make, "madevent"] + make_options, matrix.parent, support / "build.log", deadline, environment)

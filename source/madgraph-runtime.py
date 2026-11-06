@@ -752,12 +752,16 @@ def build_reference(data, output):
     with (output / "model.log").open("w") as log, contextlib.redirect_stdout(log), contextlib.redirect_stderr(log):
         model, model_path, restriction, model_reader, card_module = read_model(root, data["MadGraphModel"])
         names = []
-        for pdg in pdgs:
+        for slot, pdg in enumerate(pdgs):
             if pdg not in model["particle_dict"]:
                 raise ValidationSetupError("The MadGraph model has no particle with PDG " + str(pdg))
             particle = model["particle_dict"][pdg]
             if abs(particle.get("color")) != 1:
-                raise ValidationSetupError("This validator currently supports colorless external particles only.")
+                representations = data.get("ColorRepresentations", [])
+                if not data.get("FullColor") or len(representations) != len(pdgs):
+                    raise ValidationSetupError("Colored external particles require a certified coherent HEPCAT color amplitude.")
+                if abs(representations[slot]) != abs(particle.get("color")):
+                    raise ValidationSetupError("The HEPCAT and MadGraph external color representations disagree.")
             name = particle.get_name()
             if not re.fullmatch(r"[A-Za-z0-9_~+.\-]+", name):
                 raise ValidationSetupError("Unsupported MadGraph command particle name: " + name)

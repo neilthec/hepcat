@@ -88,7 +88,12 @@ sides. Validation uses a private HEPCAT process copy and a private UFO model \
 copy, including explicit, matched and dependent particle widths. This keeps a \
 finite-width resummation prescription out of the tree-level comparison and \
 does not change the caller's simulation parameters or installed MadGraph \
-model."}], "Notes"], Cell["Providing the reaction and the reference theory",
+model."}], "Notes"], Cell[TextData[{"Supported complete SU(3) color \
+amplitudes are compared after summing their coherent color square and \
+applying the incoming color averages. The validator retains separate \
+massless-helicity comparisons. A stripped quark or gluon formula is not a \
+complete color amplitude and remains unavailable for that comparison."}],
+   "Notes"], Cell["Providing the reaction and the reference theory",
    "NotesSection"], Cell[TextData[{"Use the same ",
      Cell[BoxData[RowBox[{"incoming", " ", "->", " ", "outgoing"}]],
       "InlineFormula"], ", helicity entries and model as for ",
@@ -205,11 +210,12 @@ their supplied values. The detailed reference report records this choice."}],
       "InlineFormula"], " gives the complete report, including reference \
 setup, helicity selection, numerical errors and failed momenta. These reports \
 help distinguish a theory mismatch from a sampling or numerical problem."}],
-   "Notes"], Cell[TextData[{"The current validator supports colorless tree \
-processes with two incoming particles, at least two outgoing particles and \
-external spins through one. It requires MadGraph, a Fortran compiler, SPINAS \
-and the normal C++ build tools. Ordinary source-only SPINAS exports remain \
-available without those reference tools."}], "Notes"],
+   "Notes"], Cell[TextData[{"The validator supports colorless tree processes \
+and certified coherent SU(3) color sums, with two incoming particles, at \
+least two outgoing particles and external spins through one. It requires \
+MadGraph, a Fortran compiler, SPINAS and the normal C++ build tools. Ordinary \
+source-only SPINAS exports remain available without those reference tools."}]\
+, "Notes"],
   Cell[TextData[{Cell[BoxData[RowBox[{"\"TimeConstraint\"", " ", "->", " ",
          "600"}]], "InlineFormula"], " bounds MadGraph reference preparation. \
 It does not impose a single deadline on the complete CMake build and all \

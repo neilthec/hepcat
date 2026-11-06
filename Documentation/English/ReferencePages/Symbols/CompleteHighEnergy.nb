@@ -32,7 +32,22 @@ can lose alternative directions that were present in the fit. An advanced \
 calculation can instead supply a justified ",
      Cell[BoxData[RowBox[{"\"CorrectionBasis\""}]], "InlineFormula"],
      " explicitly."}], "Notes"],
-  Cell[TextData[{"The ordinary successful output is ",
+  Cell[TextData[{"Detailed preparation and factorization reports also retain \
+the expressions discarded by diagram-local or channel-local shell reductions. \
+The high-energy stage can fit those source differences before relying on \
+reweighting the prepared pole terms. This matters when the lost piece is \
+regular at a physical pole and is therefore invisible to that residue. The \
+correction must still satisfy every original physical channel, high-energy \
+condition, spurious-pole check and reference test. This does not introduce \
+independent contact interactions into the theory."}], "Notes"],
+  Cell[TextData[{"When the model has dependent masses or couplings, automatic \
+supplementary parameter assignments vary independent inputs and recompute the \
+declared functions. Explicit local overrides stay fixed. The same correction \
+coefficients are fitted simultaneously across these assignments, so a \
+cancellation that occurs only at the default numerical masses does not \
+masquerade as a symbolic identity. These are additional exact sampled \
+constraints and independent checks, rather than an analytic uniqueness \
+proof."}], "Notes"], Cell[TextData[{"The ordinary successful output is ",
      Cell[BoxData[RowBox[{"{", "externalMassRules", ",", " ", "expression",
          "}"}]], "InlineFormula"], ". It can be simplified again with ",
      ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",

@@ -80,6 +80,11 @@ check["automatic sample counts respond to the number of fitted directions",
 check["more retained freedom increases the high-energy budget",
   arPolicy["HighEnergy", arRequests, arLarge]["Settings"]["TimeConstraint"] >
     arPolicy["Factorization", arRequests, arLarge]["Settings"]["TimeConstraint"]];
+check["retained shell-source work receives a finite automatic high-energy allowance",
+  arPolicy["HighEnergy", arRequests, Join[arFive, <|"RetainedSourceRecords" -> 12|>]]["Settings"]["TimeConstraint"] >
+    arPolicy["HighEnergy", arRequests, arFive]["Settings"]["TimeConstraint"] &&
+    arPolicy["HighEnergy", <|"TimeConstraint" -> 17|>,
+      Join[arFive, <|"RetainedSourceRecords" -> 12|>]]["Settings"]["TimeConstraint"] === 17];
 arOversized = arPolicy["Factorization", arRequests,
   Join[arSix, <|"BasisDirections" -> 100000|>]];
 check["an exceeded automatic correction ceiling remains explicit",
@@ -457,7 +462,7 @@ If[Environment["HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION"] === "1",
       AllTrue[arMixedReport["Checks"]["Checks"], #["Status"] === "PASS" &] &&
       arMixedReport["Checks"]["FeynmanCheck"]["Status"] === "PASS"],
   Print["SKIP: set HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION=1 for the full AllPhysical mixed six-point constructor regression."]];
-arExpected = 67 + If[Environment["HEPCAT_TEST_FULL_AUTOMATIC_CONSTRUCTION"] === "1", 2, 0] +
+arExpected = 68 + If[Environment["HEPCAT_TEST_FULL_AUTOMATIC_CONSTRUCTION"] === "1", 2, 0] +
   If[Environment["HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION"] === "1", 3, 0];
 If[checks =!= arExpected, AppendTo[failures, "Not every automatic-resource assertion executed."]];
 Print["AUTOMATIC RESOURCE CHECKS: ", checks, "; FAILURES: ", Length[failures]];

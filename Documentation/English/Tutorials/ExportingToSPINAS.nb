@@ -182,7 +182,14 @@ native numerical interface. Cards/run_card.dat controls beam energies, cuts, \
 event counts, integration settings and the random seed; Cards/param_card.dat \
 controls numerical model inputs. Open index.html for progress and results, \
 and find each run beneath Events, for example Events/run_01."}],
-   "TechNoteText"], Cell[TextData[{"Use the native MadEvent commands and card \
+   "TechNoteText"], Cell[TextData[{"New numerical sessions use pointlike \
+beams (lpp1 = lpp2 = 0) for the elementary incoming particles specified in \
+the export. This avoids an implicit photon-PDF choice for one beam and a \
+different PDF choice for the other. Beam energies and cuts remain in the \
+native run card. You can choose supported beam distributions there later; \
+rebuilding an existing session preserves your cards and events. The builder \
+generates and checks the native card include files before compiling Fortran."}\
+], "TechNoteText"], Cell[TextData[{"Use the native MadEvent commands and card \
 files to configure and run the calculation. Repeated preparation preserves \
 existing cards and events. The numerical integration and event generation use \
 the exported HEPCAT/SPINAS amplitude, while the separate validation \

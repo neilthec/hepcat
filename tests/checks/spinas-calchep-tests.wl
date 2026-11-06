@@ -61,7 +61,7 @@ check["explicitly disabled CalcHEP directories never trigger discovery",
 scSelectedSource = ConstructiveDiagrams`Private`spinasCalcHEPSource["calchep_selected", scIR, scExplicit];
 check["the generated runtime receives the explicit restriction and reports excluded native names",
   StringContainsQ[scSelectedSource, "const std::vector<int> allowed_particle_pdgs = {11, 22};"] &&
-    StringContainsQ[scSelectedSource, "false, allowed_particle_pdgs)"] &&
+    StringContainsQ[scSelectedSource, "false, allowed_particle_pdgs, 0, {"] &&
     StringContainsQ[scSelectedSource, "excluded_particle_names()"]];
 scReordered = ConstructiveDiagrams`Private`spinasCalcHEPConfiguration[
   Join[scIR, <|"IncomingLegs" -> {2, 1}|>], scModel, scOptions];

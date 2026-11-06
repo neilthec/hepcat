@@ -56,6 +56,9 @@ include the documentation updates in the same commit as the implementation.
 - `source/HEPCAT-Feynman.wl`: CalcHEP model parsing, unitary-gauge tree
   amplitudes and exact Feynman-to-spinor conversion. See
   `model_feynman/README.md` for the imported SM's scope and usage.
+- `source/HEPCAT-Color.wl`: exact SU(3) vertex tensors, internal-color sewing,
+  independent color bases and coherent interference. Constructive colored
+  diagrams and channels retain these tensors before helicities are combined.
 - `source/HEPCAT-MadGraph.wl`, `source/madgraph-runtime.py`, and
   `source/madgraph-runtime.hpp`: independent, per-massless-helicity MadGraph
   validation of exported SPINAS amplitudes and the `ValidateMadGraph` entry
@@ -606,9 +609,16 @@ amplitude or its crossing convention. Do not claim a speedup over hand-written
 SPINAS processes without measuring it. CalcHEP wrappers should expose named
 model parameters and short evaluator functions; reusable validation plumbing
 belongs in the runtime headers.
-Colored families are currently rejected because no full color sum or average
-is available; do not invent color factors from the number of external colors.
-Resolve auxiliary spinors, shifts and explicit color tensors first.
+Colored families require explicit complete SU(3) tensors. The exporter forms
+one certified color basis across helicities, including color-label permutations,
+and contracts its Hermitian interference matrix before the spin sum. Never
+replace that matrix with a guessed multiplicity or discard interference.
+Resolve auxiliary spinors and shifts first, while retaining color tensors.
+The generated color_amplitudes(spins), amp(spins,colors) and
+color_spin_sum(spins) methods preserve individual amplitudes and the coherent
+color norm. Incoming color averages enter amp2 exactly once. Bare stripped
+colored formulas remain unsupported for complete independent validation.
+Colored Monte Carlo event adapters remain unavailable pending color-flow support.
 Unsupported input returns `Failure` before writing project files.
 The separate `n_calchep` numerical target must use the supplied SPINAS squared
 amplitude directly through CalcHEP's numerical ABI. Do not invoke the symbolic
@@ -1458,9 +1468,11 @@ direction. Remove a direction only on an exact
 ordinary-identity or generic symbolic external-kinematics certificate, never
 because its physical or high-energy numerical samples happened to vanish. Use
 `"ValidationParameterRules" -> {rules1, rules2, ...}` for additional
-theory-consistent parameter assignments. Automatic mass-rescaled validation
-is used only when the model has no declared parameter relations; otherwise
-only the supplied assignment is checked. Mass and coupling dependence is
+theory-consistent parameter assignments. Models with dependent parameters may
+use bounded supplementary independent-input assignments, recomputing every
+declared function and preserving explicit local overrides. The same correction
+coefficients must satisfy all admitted assignments; a zero occurring at only
+one numerical parameter point is not an identity. Mass and coupling dependence is
 not established merely by testing one numeric assignment.
 
 With ordinary output, `CompleteFactorization` returns the amplitude on success

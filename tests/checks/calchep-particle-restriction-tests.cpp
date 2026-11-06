@@ -70,6 +70,24 @@ int main(int argc, char* argv[]) {
       model, 1, staged_workspace.path());
     check_particle_widths(read_file(staged_model + "/prtcls1.mdl"), true);
     if (read_file(model + "/prtcls1.mdl") != original_particles) return 11;
+    {
+      const std::string original_functions = read_file(model + "/func1.mdl");
+      const std::vector<hepcat_spinas::CalcHEPParameter> masses = {
+        {"Mb", 4.2}, {"Mc", 1.3}, {"Ms", 0.095}, {"CW", 0.9}};
+      const auto promoted = hepcat_spinas::calchep_detail::promote_private_mass_inputs(
+          staged_model, masses, {"Mb", "Mc", "Ms", "CW"});
+      const std::string functions = read_file(staged_model + "/func1.mdl");
+      const std::string variables = read_file(staged_model + "/vars1.mdl");
+      if (promoted.size() != 3 || functions.find("MbEff(") != std::string::npos ||
+          functions.find("McEff(") != std::string::npos || functions.find("MqEff(") != std::string::npos ||
+          functions.find("sqrt(1-SW^2)") == std::string::npos ||
+          variables.find("Matched independent HEPCAT mass") == std::string::npos ||
+          read_file(model + "/func1.mdl") != original_functions) return 14;
+      // Repeating the matching step must not duplicate an already promoted input.
+      if (!hepcat_spinas::calchep_detail::promote_private_mass_inputs(
+            staged_model, masses, {"Mb", "Mc", "Ms"}).empty()) return 15;
+      std::cout << "CALCHEP_PRIVATE_PRIMITIVE_MASS_SCHEME_PASS\n";
+    }
 
     const std::vector<int> external = {11, -11, 11, -11};
     const std::vector<hepcat_spinas::CalcHEPParameter> parameters = {{"Me",1.0},{"EE",1.0/3.0}};
@@ -116,6 +134,23 @@ int main(int argc, char* argv[]) {
       const std::string flags_text((std::istreambuf_iterator<char>(flags)), std::istreambuf_iterator<char>());
       if (flags_text.find("CFLAGS=\"$CFLAGS -O3\"") == std::string::npos) return 10;
       std::cout << "CALCHEP_PRIVATE_OPTIMIZATION_PASS\n";
+    }
+    {
+      // Native constraints and every dependent Yukawa remain tied to the
+      // explicitly matched masses after private numerical-scheme conversion.
+      auto values = parameters;
+      values.push_back({"Mb", 4.2}); values.push_back({"Mc", 1.3}); values.push_back({"Ms", 0.095});
+      hepcat_spinas::CalcHEPProcess process(model, 1, {11,-11,5,-5}, values,
+          1.0, false, {}, 0, {"Mb", "Mc", "Ms"});
+      if (process.promoted_mass_parameters().size() != 3 ||
+          process.mass_scheme_summary().find("Mb=") == std::string::npos ||
+          std::abs(process.masses()[2] - 4.2L) > 1e-12) return 16;
+      for (const auto& mass : process.promoted_mass_parameters()) {
+        double actual;
+        if (findVal(mass.name.c_str(), &actual) ||
+            !hepcat_spinas::calchep_detail::parameter_agrees(actual, mass.value)) return 17;
+      }
+      std::cout << "CALCHEP_PRIVATE_MASS_CONSTRAINT_RECOMPUTATION_PASS\n";
     }
     {
       // A deliberately enormous Z width in an independent private model must

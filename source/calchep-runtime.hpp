@@ -367,6 +367,84 @@ inline std::string stage_model(const std::string& directory, int number,
   return destination;
 }
 
+// A reference may express a fermion mass as a running constraint while the
+// supplied theory declares that same mass as an independent input. Change
+// only that numerical mass scheme in the private model. Every downstream
+// vertex/Yukawa expression continues to use the same mass parameter name.
+inline std::vector<CalcHEPParameter> promote_private_mass_inputs(
+    const std::string& staged, const std::vector<CalcHEPParameter>& parameters,
+    const std::vector<std::string>& independent_masses) {
+  if (independent_masses.empty() || parameters.empty()) return {};
+  std::vector<std::string> variables, functions, particles;
+  const auto read_lines = [](const std::string& path) {
+    std::ifstream input(path.c_str());
+    if (!input) throw std::runtime_error("Cannot read a private CalcHEP model table: " + path);
+    std::vector<std::string> lines;
+    std::string line;
+    while (std::getline(input, line)) lines.push_back(line);
+    return lines;
+  };
+  variables = read_lines(staged + "/vars1.mdl");
+  functions = read_lines(staged + "/func1.mdl");
+  particles = read_lines(staged + "/prtcls1.mdl");
+  if (variables.size() < 3 || functions.size() < 3 || particles.size() < 3)
+    throw std::runtime_error("A private CalcHEP model table is incomplete.");
+  std::vector<std::string> mass_names;
+  for (std::size_t row = 3; row < particles.size(); ++row) {
+    const auto fields = split_table_fields(particles[row]);
+    if (fields.size() > 5) mass_names.push_back(fields[5]);
+  }
+  std::vector<CalcHEPParameter> promoted;
+  for (const auto& parameter : parameters) {
+    if (std::find(independent_masses.begin(), independent_masses.end(), parameter.name) == independent_masses.end() ||
+        std::find(mass_names.begin(), mass_names.end(), parameter.name) == mass_names.end()) continue;
+    bool already_input = false;
+    for (std::size_t row = 3; row < variables.size(); ++row) {
+      const auto fields = split_table_fields(variables[row]);
+      if (fields.size() >= 2 && fields[0] == parameter.name) already_input = true;
+    }
+    if (already_input) continue;
+    std::vector<std::size_t> definitions;
+    for (std::size_t row = 3; row < functions.size(); ++row) {
+      const auto fields = split_table_fields(functions[row]);
+      if (fields.size() >= 2 && fields[0] == parameter.name) definitions.push_back(row);
+    }
+    if (definitions.empty()) continue;
+    if (definitions.size() != 1 || !std::isfinite(parameter.value) || parameter.value < 0)
+      throw std::invalid_argument("Ambiguous or invalid matched CalcHEP mass input: " + parameter.name);
+    functions.erase(functions.begin() + definitions.front());
+    std::ostringstream input_row;
+    input_row.precision(std::numeric_limits<double>::max_digits10);
+    input_row << parameter.name << " | " << parameter.value
+              << " | Matched independent HEPCAT mass; private validation model";
+    auto position = variables.end();
+    for (auto row = variables.begin() + 3; row != variables.end(); ++row) {
+      const std::string trimmed = trim_table_field(*row);
+      if (trimmed.size() >= 4 && trimmed.find_first_not_of("=+-|") == std::string::npos) {
+        position = row;
+        break;
+      }
+    }
+    variables.insert(position, input_row.str());
+    promoted.push_back(parameter);
+  }
+  if (promoted.empty()) return promoted;
+  const auto write_lines = [](const std::string& path, const std::vector<std::string>& lines,
+                              const std::string& kind) {
+    std::ofstream output(path.c_str(), std::ios::trunc);
+    if (!output) throw std::runtime_error("Cannot write a private CalcHEP mass scheme: " + path);
+    output << lines[0] << '\n' << lines[1] << '\n';
+    std::ostringstream body;
+    for (std::size_t row = 3; row < lines.size(); ++row) body << lines[row] << '\n';
+    std::istringstream input(body.str());
+    write_compact_model_table(output, lines[2], input, kind);
+    if (!output) throw std::runtime_error("Could not finish a private CalcHEP mass scheme: " + path);
+  };
+  write_lines(staged + "/vars1.mdl", variables, "Variables");
+  write_lines(staged + "/func1.mdl", functions, "Constraints");
+  return promoted;
+}
+
 inline bool safe_particle_name(const std::string& name) {
   if (name.empty()) return false;
   for (const char character : name) {
@@ -399,7 +477,8 @@ class CalcHEPProcess {
                  const std::vector<CalcHEPParameter>& parameters,
                  double strong_coupling = 1.0, bool keep_work_files = false,
                  const std::vector<int>& allowed_particle_pdgs = std::vector<int>(),
-                 int optimization_level = 0)
+                 int optimization_level = 0,
+                 const std::vector<std::string>& independent_mass_parameters = std::vector<std::string>())
       : lock_(calchep_detail::session_mutex(), std::try_to_lock),
         workspace_(keep_work_files), matrix_element_(NULL), pdgs_(physical_pdgs),
         strong_coupling_(strong_coupling), allowed_pdgs_(allowed_particle_pdgs),
@@ -433,6 +512,8 @@ class CalcHEPProcess {
     }
     const std::string staged = calchep_detail::stage_model(
         model_directory, model_number, workspace_.path());
+    promoted_mass_parameters_ = calchep_detail::promote_private_mass_inputs(
+        staged, parameters, independent_mass_parameters);
     calchep_detail::WorkingDirectory working_directory(workspace_.path());
     try {
       initialize(staged, parameters);
@@ -456,6 +537,16 @@ class CalcHEPProcess {
   const std::string& work_directory() const { return workspace_.path(); }
   const std::vector<int>& allowed_particle_pdgs() const { return allowed_pdgs_; }
   const std::vector<std::string>& excluded_particle_names() const { return excluded_names_; }
+  const std::vector<CalcHEPParameter>& promoted_mass_parameters() const { return promoted_mass_parameters_; }
+  std::string mass_scheme_summary() const {
+    if (promoted_mass_parameters_.empty()) return "";
+    std::ostringstream summary;
+    summary.precision(std::numeric_limits<double>::max_digits10);
+    summary << "Private CalcHEP independent mass inputs:";
+    for (const auto& parameter : promoted_mass_parameters_)
+      summary << ' ' << parameter.name << '=' << parameter.value;
+    return summary.str();
+  }
 
   template <typename Real, std::size_t Size>
   double squared_amplitude(const std::array<std::array<Real, 4>, Size>& momenta) {
@@ -670,6 +761,7 @@ class CalcHEPProcess {
   std::string process_;
   std::vector<int> allowed_pdgs_;
   std::vector<std::string> excluded_names_;
+  std::vector<CalcHEPParameter> promoted_mass_parameters_;
   int optimization_level_;
 };
 

@@ -38,8 +38,8 @@ TEST_SUITES = (
     "compact-physical-source-tests.wl", "chiral-current-tests.wl", "spurious-chiral-current-tests.wl", "retained-affine-coefficients-tests.wl",
     "null-pair-shift-tests.wl", "null-channel-completion-tests.wl",
     "bose-symmetry-tests.wl", "fermion-symmetry-tests.wl",
-    "model-parameter-tests.wl", "feynman-tests.wl", "feynman-coefficient-comparison-tests.wl", "spinas-export-tests.wl",
-    "spinas-helicity-family-tests.wl",
+    "model-parameter-tests.wl", "color-basis-tests.wl", "feynman-tests.wl", "feynman-coefficient-comparison-tests.wl", "spinas-export-tests.wl",
+    "spinas-helicity-family-tests.wl", "spinas-color-tests.wl",
     "spinas-build-tools-tests.wl",
     "spinas-calchep-tests.wl",
     "spinas-madgraph-tests.wl",
@@ -77,6 +77,7 @@ INTEGRATION_TEST_SUITES = ("physical-construction-integration-tests.wl",
                           "spinas-calchep-integration-tests.wl",
                           "spinas-madgraph-integration-tests.wl",
                           "spinas-chiral-integration-tests.wl",
+                          "spinas-color-integration-tests.wl",
                           "spinas-madevent-integration-tests.wl")
 
 

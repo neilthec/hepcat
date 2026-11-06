@@ -21,6 +21,24 @@ smAngle = Spinor["Helicity", "Angle", 31]; smSquare = Spinor["Helicity", "Square
 smLeft = SpinorChain[smAngle, Mom[7], Mom[19], smAngle];
 smRight = SpinorChain[smSquare, Mom[11], Mom[19], smSquare];
 smInputHash = Hash[{smLeft, smRight}, "SHA256"];
+smOpenChart = <|"Momenta" -> <|19 -> Array[smOpenQ, {2, 2}]|>,
+  "Angle" -> Association[Table[i -> Array[smOpenAngle[i], 2], {i, {31, 37, 43, 47}}]],
+  "Square" -> Association[Table[i -> Array[smOpenSquare[i], 2], {i, {31, 37, 43, 47}}]]|>;
+smOpenProofs = Table[Module[{opposite, a, b, c, d, left, right, result, difference},
+  opposite = If[kind === "Angle", "Square", "Angle"];
+  {a, b, c, d} = {Spinor["Spin", kind, 31], Spinor["Spin", opposite, 37],
+    Spinor["Spin", kind, 43], Spinor["Spin", opposite, 47]};
+  left = SpinorChain[a, Mom[19], b]; right = SpinorChain[c, Mom[19], d];
+  right = If[reverse, Reverse[right], right];
+  result = ConstructiveDiagrams`Private`completionSharedMomentumDeterminantPair[left, right];
+  difference = left right - result["Expression"];
+  difference = difference /. chain_SpinorChain :>
+    ConstructiveDiagrams`Private`residueChartChain[chain, smOpenChart];
+  difference = difference /. MomProd[19, 19] -> Det[smOpenChart["Momenta"][19]];
+  AssociationQ[result] && Expand[difference] === 0 && result["InternalOnShellConditions"] === {}],
+  {kind, {"Angle", "Square"}}, {reverse, {False, True}}];
+check["shared momentum determinants hold for arbitrary four massive endpoints in both chiralities",
+  And @@ Flatten[smOpenProofs]];
 smResult = smPair[smLeft, smRight];
 check["opposite diagonal words supply an ordinary candidate", AssociationQ[smResult]];
 check["arbitrary independent matrices and endpoint spinors prove the determinant identity",

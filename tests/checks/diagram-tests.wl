@@ -2,6 +2,10 @@
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
+(* These historical fixtures compare stripped spinor-current algebra. The
+   public color-dressed path and its interference are checked independently
+   by color-basis-tests and the colored construction/export integration. *)
+ConstructiveDiagrams`Private`$colorScalarDiagrams = True;
 (* Bind imported parameter data to the legacy symbols of this reference fixture.
    This test-only binding is not part of model reading or amplitude generation. *)
 ubLegacyFixtureModel[model_] := model /. ((# -> Symbol["Global`" <> ModelParameterName[#]]) & /@

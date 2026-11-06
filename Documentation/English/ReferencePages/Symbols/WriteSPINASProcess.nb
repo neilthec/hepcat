@@ -335,15 +335,17 @@ again."}], "Notes"],
          "True"}]], "InlineFormula"], " permits replacing generated project \
 files in an existing export directory. Keep saved calculations or hand-edited \
 C++ files separately if you want to preserve them."}], "Notes"],
-  Cell[TextData[{"Current complete exports are colorless tree processes with \
-two incoming particles and at least two outgoing particles. Resolve auxiliary \
-Xi spinors, hats, explicit color tensors and unsupported functions before \
-export. Unsupported input returns ", Cell[BoxData[RowBox[{"Failure"}]],
-      "InlineFormula"], " rather than a partly usable numerical process."}],
-   "Notes"], Cell["Independent validation with CalcHEP or MadGraph",
-   "NotesSection"], Cell[TextData[{"Independent validation compares the \
-exported numerical expression with a separately generated reference amplitude \
-at the same physical phase-space points. ", ButtonBox["ValidateMadGraph",
+  Cell[TextData[{"Complete exports support colorless tree amplitudes and \
+supported explicit SU(3) color amplitudes, with two incoming particles and at \
+least two outgoing particles. Resolve auxiliary Xi spinors, hats and \
+unsupported functions before export. Keep the color tensors of a colored \
+amplitude: removing them loses interference information. Unsupported input \
+returns ", Cell[BoxData[RowBox[{"Failure"}]], "InlineFormula"],
+     " rather than a partly usable numerical process."}], "Notes"],
+  Cell["Independent validation with CalcHEP or MadGraph", "NotesSection"],
+  Cell[TextData[{"Independent validation compares the exported numerical \
+expression with a separately generated reference amplitude at the same \
+physical phase-space points. ", ButtonBox["ValidateMadGraph",
       BaseStyle -> "Link", ButtonData ->
        "paclet:HEPCAT/ref/ValidateMadGraph"], " is the Mathematica entry \
 point for a per-massless-helicity MadGraph comparison. A common overall \
@@ -381,6 +383,14 @@ Model would also allow its other exchanges."}], "Notes"],
 on both sides. Parameter maps relate different names, and explicit reference \
 parameter rules resolve numerical inputs when needed. Inspect the detailed \
 reference report if matching is ambiguous."}], "Notes"],
+  Cell[TextData[{"If the supplied model declares a particle mass as an \
+independent input but CalcHEP computes the same named mass through a \
+running-mass constraint, validation uses the supplied fixed value in its \
+private CalcHEP copy. Only matched particle-mass parameters are moved from \
+constraints to inputs; downstream Higgs/Yukawa expressions keep the same mass \
+reference and are recalculated normally. Electroweak coupling constraints are \
+not promoted. The numerical report records every such mass and its value, and \
+the original CalcHEP tables stay unchanged."}], "Notes"],
   Cell[TextData[{"Automatic seeds are chosen when validation runs and are \
 reported for replay. Requested mismatches, unavailable checks and evaluation \
 errors return ", Cell[BoxData[RowBox[{"Failure"}]], "InlineFormula"], "; \
@@ -462,6 +472,13 @@ calculation using MadGraph's own amplitude."}], "Notes"],
 keeps the numerical process in its build directory, including a custom build \
 location. The build prints the card, HTML and event locations. Validation and \
 example executables stay in the build root."}], "Notes"],
+  Cell[TextData[{"New numerical sessions use pointlike beams (lpp1 = lpp2 = \
+0) for the elementary incoming particles specified in the export. This avoids \
+an implicit photon-PDF choice for one beam and a different PDF choice for the \
+other. Beam energies and cuts remain in the native run card. You can choose \
+supported beam distributions there later; rebuilding an existing session \
+preserves your cards and events. The builder generates and checks the native \
+card include files before compiling Fortran."}], "Notes"],
   Cell[TextData[{"After preparation, enter ",
      Cell[BoxData[RowBox[{"PROC", "_", "eeAA"}]], "InlineFormula"],
      Cell[BoxData[RowBox[{" ", "and", " ", "run", " "}]], "InlineFormula"],
@@ -552,7 +569,37 @@ cross-section integration or event generation. Its MadGraph reference uses an \
 exhaustive standalone helicity sum, not the HEPCAT matrix installed into \
 MadEvent. Scalar precision, parameters, compiler settings, source hashes and \
 random seed are saved so timing claims can be interpreted and repeated."}],
-   "Notes"], Cell["Options", "NotesSection"],
+   "Notes"], Cell["Colored amplitudes and their interference",
+   "NotesSection"],
+  Cell[TextData[{"Supply the complete expression returned by ",
+     ButtonBox["ConstructAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ConstructAmplitude"], ", including its \
+color tensors. HEPCAT forms one exact SU(3) basis shared by the supplied \
+helicity expressions. If identical-particle permutations supply another \
+helicity arrangement, both momentum labels and ", ButtonBox["ColorIndex",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/ColorIndex"],
+     " labels are transformed before that basis is formed."}], "Notes"],
+  Cell[TextData[{"In C++, color_amplitudes(spins) returns the complex \
+coefficients of that basis. amp(spins, colors) evaluates the full amplitude \
+for specified external color indices: 1 through 3 for quarks, 1 through 8 for \
+gluons, and 1 for singlets. Calling amp(spins) without colors is ambiguous \
+for a colored process and is rejected."}], "Notes"],
+  Cell[TextData[{"color_spin_sum(spins) sums the absolute square over colors \
+while retaining the chosen spin assignment. It includes cross terms between \
+the basis coefficients through an exact Hermitian interference matrix. \
+spin_sum() then sums spins and helicities. amp2() applies the incoming spin \
+and color averages and the final identical-particle symmetry factor once. A \
+sum of separate squared color coefficients would generally be incorrect."}],
+   "Notes"], Cell[TextData[{"Independent CalcHEP and MadGraph validation \
+supports these complete color sums. Colored event generation through the \
+CalcHEP and MadEvent numerical adapters remains unavailable until their event \
+and color-flow interfaces support the complete representation. Validation \
+availability does not imply that event generation is enabled."}], "Notes"],
+  Cell[TextData[{"The supported color representations are the SU(3) singlet, \
+fundamental, antifundamental and adjoint. Missing tensors, inconsistent index \
+dimensions or ambiguous vertex invariants return Failure. A bare stripped \
+amplitude is never assigned a guessed universal color factor."}], "Notes"],
+  Cell["Options", "NotesSection"],
   Cell[BoxData[GridBox[{{Cell["Option", "TableHeader"],
        Cell["Default", "TableHeader"], Cell["Meaning", "TableHeader"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"SPINASDirectory\""}]],

@@ -29,12 +29,12 @@ occurrences describe contractions between vertices."}], "Notes"],
 the Lorentz and spinor part while retaining explicit color tensors. A \
 remaining color index does not imply that a numerical sum over external \
 colors has already been carried out."}], "Notes"],
-  Cell[TextData[{"The complete numerical ", ButtonBox["WriteSPINASProcess",
+  Cell[TextData[{"The numerical ", ButtonBox["WriteSPINASProcess",
       BaseStyle -> "Link", ButtonData ->
-       "paclet:HEPCAT/ref/WriteSPINASProcess"], " exporter currently accepts \
-colorless amplitudes. Resolve the required color treatment before attempting \
-a numerical export of a colored process."}], "Notes"],
-  Cell["Examples", "PrimaryExamplesSection"],
+       "paclet:HEPCAT/ref/WriteSPINASProcess"], " exporter accepts supported \
+complete SU(3) color expressions and preserves their interference. \
+Color-stripped expressions do not supply enough information for a complete \
+color sum."}], "Notes"], Cell["Examples", "PrimaryExamplesSection"],
   Cell[CellGroupData[{Cell["Load HEPCAT if needed", "ExampleSubsection"],
      Cell["Skip this setup if HEPCAT is already loaded. These examples assume \
 the checkout is in ~/code/hepcat; change the paths if yours is elsewhere. \

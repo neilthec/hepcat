@@ -103,6 +103,20 @@ check["simultaneous parameter samples eliminate accidental fixed-mass coefficien
   mpOneAssignment["Status"] === "UNDERDETERMINED" &&
     mpJointSolution["Status"] === "COMPLETE" && mpJointSolution["FreeParameters"] === {} &&
     ({mpFitA, mpFitB} /. mpJointSolution["SolutionRules"]) === {0, 0}];
+mpDefinitionModel = ReadModel[FileNameJoin[{root, "models"}], 1];
+mpDefinitionIdentity = ModelParameter[mpDefinitionModel, "gLe"] -
+  ModelParameter[mpDefinitionModel, "gRe"] + 1;
+mpDefinitionProof = ConstructiveDiagrams`Private`completionHEZeroDirection[
+  mpDefinitionIdentity, {}, mpDefinitionModel, 2];
+check["identity proofs may use exact declared model definitions without numerical assignments",
+  mpDefinitionProof["Status"] === "PROVED_ZERO" &&
+    mpDefinitionProof["ModelDefinitionExpansion"]["NumericalParameterAssignments"] === {} &&
+    mpDefinitionProof["ModelDefinitionExpansion"]["InternalOnShellConditions"] === {}];
+mpOverriddenIdentityModel = ConstructiveDiagrams`Private`completionIdentityModel[
+  mpDefinitionModel, {"gLe" -> 3}];
+check["a directly overridden coupling cannot retain its obsolete model identity in a proof",
+  ConstructiveDiagrams`Private`completionHEZeroDirection[
+    mpDefinitionIdentity, {}, mpOverriddenIdentityModel, 2]["Status"] === "NOT_PROVED"];
 
 (* The same resolved rules feed every category of the public checker. *)
 mpScalarPairs = DiagramAmplitudes[CreateDiagrams[ConstantArray["s", 4], mpModel]];

@@ -213,6 +213,26 @@ class MadEventBuilderTests(unittest.TestCase):
         self.assertEqual(text.count("= nhel"), 1)
         self.assertIn(".False. = hel_recycling", text)
 
+    def test_new_sessions_use_pointlike_beams_without_changing_energies_or_cuts(self):
+        process = self.directory / "new-session"
+        (process / "Cards").mkdir(parents=True)
+        for name in ("run_card.dat", "run_card_default.dat"):
+            (process / "Cards" / name).write_text(
+                " 2 = lpp1 ! photon PDF chosen by MG\n"
+                " 0 = lpp2 ! pointlike W beam\n"
+                " 100 = ebeam1\n 200 = ebeam2\n 5 = ptj\n"
+                " 1 = nhel\n True = hel_recycling\n")
+        builder.initialize_run_cards(process)
+        for name in ("run_card.dat", "run_card_default.dat"):
+            text = (process / "Cards" / name).read_text()
+            self.assertIn("0 = lpp1", text)
+            self.assertIn("0 = lpp2", text)
+            self.assertIn("0 = nhel", text)
+            self.assertIn(".False. = hel_recycling", text)
+            self.assertIn("100 = ebeam1", text)
+            self.assertIn("200 = ebeam2", text)
+            self.assertIn("5 = ptj", text)
+
     def test_native_run_card_api_and_matrix_integrity_are_guarded(self):
         process = self.directory / "madevent"
         (process / "bin" / "internal").mkdir(parents=True)

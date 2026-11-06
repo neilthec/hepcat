@@ -336,6 +336,17 @@ check["reloading clears the legacy List-only completion definition in an existin
     rrZero[ConstructiveDiagrams`Private`residueCanonicalPropagators[
       rrReloadedCompletion["Amplitude"] - rrCubicTree, Range[4]]]];
 
+rrContourRecord = <|"InputType" -> "FactorizationChannel", "HasInternalConditions" -> True,
+  "MassRules" -> rrRules, "OnShellChannels" -> {{{1, 2}, 1}},
+  "FixedReferenceExpression" -> 1/(ConstructiveDiagrams`z rrDen),
+  "ShellRemainder" -> 1/(ConstructiveDiagrams`z rrDen)|>;
+rrHEContours = ConstructiveDiagrams`Private`completionHESourceRemainders[
+  <|"ExternalMassRules" -> rrExternal, "RemainderData" -> {},
+    "ChannelRemainderData" -> {rrContourRecord}|>, 2];
+check["high-energy channel remainders use the residue checker's contour and sewing convention",
+  FreeQ[rrHEContours["Basis"], ConstructiveDiagrams`z] &&
+    rrZero[Total[rrHEContours["Basis"]] + 1/rrDen]];
+
 Print[checks, " preparation-remainders checks; ", Length[failures], " failures."];
 If[failures =!= {}, Print[failures]; Quit[1]];
 Print["HEPCAT_TEST_COMPLETED:preparation-remainders-tests.wl"];

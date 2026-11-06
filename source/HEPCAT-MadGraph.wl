@@ -4,7 +4,7 @@
 (*Independent MadGraph Validation*)
 
 Begin["ConstructiveDiagrams`"];
-ValidateMadGraph::usage = "ValidateMadGraph[directory] independently checks an exported SPINAS process against MadGraph at shared random physical momenta, with a separate result for every exported massless-helicity combination. ValidateMadGraph[particles, amplitude, model] checks one fixed-helicity all-ingoing expression. ValidateMadGraph[incoming -> outgoing, amplitudeEntries, model] first exports and builds a private SPINAS project. Massive spins are summed, not compared in potentially different spin bases. MadGraphPoints defaults to 1000 per helicity and MadGraphSeed -> Automatic chooses and reports a fresh replayable seed. Output -> Table returns a readable per-helicity table; Summary gives result counts and Details retains the complete numerical report and failed momenta. Specify MadGraphDirectory and MadGraphModel explicitly. Validation builds its comparison executable independently of optional MadEvent event-generation targets. MadGraphAllowedParticles -> All retains the selected theory; a list of positive absolute PDG codes, such as {11,22}, restricts intermediate particle types and includes their antiparticles. No theory or particle restriction is inferred from the HEPCAT model. MadGraphParameterMap and MadGraphParameterRules handle different parameter names or reference inputs. Squared amplitudes are compared, so overall phases do not affect the result. Colorless tree processes are supported; unsupported or unavailable comparisons are never reported as passing. This is numerical validation, not an analytic proof.";
+ValidateMadGraph::usage = "ValidateMadGraph[directory] independently checks an exported SPINAS process against MadGraph at shared random physical momenta, with a separate result for every exported massless-helicity combination. ValidateMadGraph[particles, amplitude, model] checks one fixed-helicity all-ingoing expression. ValidateMadGraph[incoming -> outgoing, amplitudeEntries, model] first exports and builds a private SPINAS project. Massive spins are summed, not compared in potentially different spin bases. MadGraphPoints defaults to 1000 per helicity and MadGraphSeed -> Automatic chooses and reports a fresh replayable seed. Output -> Table returns a readable per-helicity table; Summary gives result counts and Details retains the complete numerical report and failed momenta. Specify MadGraphDirectory and MadGraphModel explicitly. Validation builds its comparison executable independently of optional MadEvent event-generation targets. MadGraphAllowedParticles -> All retains the selected theory; a list of positive absolute PDG codes, such as {11,22}, restricts intermediate particle types and includes their antiparticles. No theory or particle restriction is inferred from the HEPCAT model. MadGraphParameterMap and MadGraphParameterRules handle different parameter names or reference inputs. Squared amplitudes are compared, so overall phases do not affect the result. Colorless tree processes and certified coherent SU(3) color sums are supported; unsupported or unavailable comparisons are never reported as passing. This is numerical validation, not an analytic proof.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " Generated projects also expose validate_madgraph(options) and a process_validate_madgraph executable for independent fixed-massless-helicity validation. Specify MadGraphDirectory and MadGraphModel to select the independent installation and UFO theory. MadGraphAllowedParticles -> All retains all model particles; {11,22}, for example, restricts to electrons, positrons and photons using absolute PDG codes. MadGraphParameterMap relates differently named HEPCAT and UFO parameters; MadGraphParameterRules supplies explicit UFO external input values. RunMadGraphValidation -> True builds and runs MadGraphPoints -> 1000 shared points per helicity with MadGraphSeed -> Automatic. Fixed incoming or outgoing helicities are supported, and massive external spins are summed. Numerical mismatches remain FAIL, including losses of floating-point precision. When both reference checks are requested, both run independently even if the first fails. A failed requested check returns Failure with ExportResult retaining both reports and the generated files. Ordinary SPINAS execution does not require MadGraph.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " The same explicit MadGraph configuration also configures a PROC_<ProcessName> numerical process. An ordinary build creates that directory in the compiled export's build directory by default and supplies the exported HEPCAT/SPINAS matrix element to MadEvent integration, unweighting and event output. Build -> True prepares build/PROC_<ProcessName> without generating events. Run its bin/madevent native launcher; no process_madevent executable is created in the build root. The build prints the full HTML and event-output locations. Run and parameter cards adjust cuts, beams, masses and couplings. Fixed massless helicities and summed massive spins retain their specified averaging and symmetry factors. Current numerical coverage is colorless leading-order tree amplitudes; coherent decay sewing, NLO matching and a MadGraph massive-spin basis are not provided. The independent MadGraph validator continues to use MadGraph's own amplitude.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " After preparation, move or copy the complete PROC_<ProcessName> directory, for example PROC_eeAA, and start its bin/madevent program. The prepared directory contains the required HEPCAT/SPINAS amplitude files and libraries and no longer depends on the original exported project or build directory. MadGraph, Python, the Fortran toolchain and system libraries remain external prerequisites.";
@@ -107,7 +107,7 @@ spinasMadGraphSMInputRules[data_List, options_Association] := Module[
 
 spinasMadGraphConfiguration[ir_Association, data_List, supplied_Association, physical_Association] := Module[
   {options = Join[Association[Options[WriteSPINASProcess]], supplied], root, python, model,
-   reasons = {}, normalization, family = TrueQ[Lookup[ir, "Family", False]], helicities, allowed},
+   reasons = {}, normalization, family = TrueQ[Lookup[ir, "Family", False]], helicities, allowed, colored},
   root = spinasMadGraphRoot[options["MadGraphDirectory"]];
   python = spinasMadGraphPython[root];
   model = options["MadGraphModel"];
@@ -118,12 +118,16 @@ spinasMadGraphConfiguration[ir_Association, data_List, supplied_Association, phy
   If[allowed =!= {} && Complement[Abs[physical["PhysicalPDGs"]], allowed] =!= {},
     AppendTo[reasons, "MadGraphAllowedParticles must include every external particle type (absolute PDG codes)."]];
   If[root =!= "" && python === "", AppendTo[reasons, "A supported Python 3.10 or later interpreter was not found."]];
-  If[TrueQ[ir["ColorStripped"]], AppendTo[reasons, "A color-stripped expression is not a complete color-summed amplitude."]];
+  colored = AnyTrue[If[family, First[ir["InputProcesses"]], ir["Process"]],
+    With[{row = colorParticleRow[#, data]}, ListQ[row] && row[[8]] =!= 1] &];
+  If[TrueQ[ir["ColorStripped"]] || colored && !TrueQ[Lookup[Lookup[ir, "ColorData", <||>], "Certified", False]],
+    AppendTo[reasons, "A color-stripped expression is not a complete color-summed amplitude."]];
   If[AnyTrue[ir["ParameterDefaults"], !TrueQ[Im[#] == 0] &],
     AppendTo[reasons, "MadGraph validation currently requires real model inputs."]];
   If[AnyTrue[ir["Spin2"], # > 2 &], AppendTo[reasons, "MadGraph validation currently supports external spins through one."]];
   normalization = If[family, ir["SymmetryFactor"]/ir["InitialSpinAverage"],
-    1/(Times @@ (If[TrueQ[ir["MassValues"][[#]] == 0], 1, ir["Spin2"][[#]] + 1] & /@ ir["IncomingLegs"]))];
+    1/(Times @@ (If[TrueQ[ir["MassValues"][[#]] == 0], 1, ir["Spin2"][[#]] + 1] & /@ ir["IncomingLegs"]))] /
+      Lookup[Lookup[ir, "ColorData", <||>], "InitialColorAverage", 1];
   helicities = If[family, ir["HelicityConfigurations"], {ir["Helicities"]}];
   <|"Status" -> If[reasons === {}, "AVAILABLE", "UNAVAILABLE"], "Reason" -> StringRiffle[reasons, " "],
     "MadGraphDirectory" -> root, "PythonExecutable" -> python,
@@ -134,6 +138,8 @@ spinasMadGraphConfiguration[ir_Association, data_List, supplied_Association, phy
     "PhysicalPDGs" -> physical["PhysicalPDGs"],
     "AllowedParticlePDGs" -> allowed, "LegOrder" -> physical["LegOrder"],
     "Spin2" -> ir["Spin2"], "HelicityConfigurations" -> helicities,
+    "FullColor" -> TrueQ[Lookup[Lookup[ir, "ColorData", <||>], "Certified", False]],
+    "ColorRepresentations" -> Lookup[Lookup[ir, "ColorData", <||>], "Representations", {}],
     "ParameterNames" -> ir["ParameterNames"], "Normalization" -> normalization,
     "WidthParameterIndices" -> spinasValidationWidthIndices[ir, data],
     "WidthPolicy" -> "Zero widths in private validation copies; simulation settings are retained.",
@@ -162,6 +168,8 @@ spinasMadGraphSource[name_String, config_Association, dir_String] := StringRiffl
   "  config.allowed_particle_pdgs = " <> spinasMadGraphCppList[config["AllowedParticlePDGs"]] <> ";",
   "  config.leg_order = " <> spinasMadGraphCppList[config["LegOrder"] - 1] <> ";",
   "  config.spin2 = " <> spinasMadGraphCppList[config["Spin2"]] <> ";",
+  "  config.full_color = " <> If[TrueQ[Lookup[config, "FullColor", False]], "true", "false"] <> ";",
+  "  config.color_representations = " <> spinasMadGraphCppList[Lookup[config, "ColorRepresentations", {}]] <> ";",
   "  config.parameter_names = {" <> StringRiffle[spinasCppQuoted /@ config["ParameterNames"], ", "] <> "};",
   "  config.helicities = {" <> StringRiffle[spinasMadGraphCppList /@ config["HelicityConfigurations"], ", "] <> "};",
   "  config.normalization = " <> spinasCppReal[config["Normalization"]] <> ";",
@@ -237,7 +245,9 @@ spinasMadEventConfiguration[dir_String, name_String, ir_Association, config_Asso
   symmetry = If[family, ir["SymmetryFactor"],
     1/(Times @@ (Factorial /@ Values[Counts[Drop[config["PhysicalPDGs"], 2]]]))];
   defaults = N[Re[ir["ParameterDefaults"]]];
-  Join[config, <|"Backend" -> "HEPCAT/SPINAS", "ProcessName" -> name, "ProcessDirectory" -> dir,
+  Join[config, If[KeyExistsQ[ir, "ColorData"], <|"Status" -> "UNAVAILABLE",
+    "Reason" -> "Colored MadEvent integration requires a color-flow event adapter. Independent color-summed validation remains available."|>, <||>],
+    <|"Backend" -> "HEPCAT/SPINAS", "ProcessName" -> name, "ProcessDirectory" -> dir,
     "Normalization" -> N[config["Normalization"]],
     "ParameterRules" -> Map[N, config["ParameterRules"]],
     "BridgeLibrary" -> FileNameJoin[{dir, "build", "lib" <> name <> "_madevent_matrix.a"}],

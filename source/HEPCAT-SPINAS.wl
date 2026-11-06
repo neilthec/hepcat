@@ -629,11 +629,12 @@ End[];
 
 Begin["ConstructiveDiagrams`"];
 WriteSPINASProcess::usage = "WriteSPINASProcess[directory, particles, amplitude, model] writes a complete C++11 SPINAS process project for two incoming and at least two outgoing particles. The amplitude uses HEPCAT's all-ingoing convention; IncomingLegs -> {1,2} selects physical incoming legs and outgoing legs are crossed automatically, including angle-spinor signs. The project contains process.hpp, process.cpp, main.cpp, a deterministic physical phase-space example generator, CMakeLists.txt, README.md and manifest.json. SPINASDirectory -> Automatic looks for SPINAS_ROOT or the sibling spinas checkout; an explicit path overrides it. Model parameter defaults come from ModelParameterRules; ParameterRules overrides them locally. ProcessName sets a C++ class/executable name. Build -> True configures and links the project against the existing SPINAS library; RunExamples -> True also builds and runs three sample points. Precision -> Automatic reads the local SPINAS build configuration; LongDouble and Double are explicit choices. Overwrite -> False protects existing project files. ReturnDetails -> False normally returns the output directory; True adds file paths and build/run results. Fixed massless helicities are retained. amp2 averages incoming massive spins and sums outgoing massive spins at those fixed helicities, without an identical-particle phase-space factor or color sums/averages. Unsupported expressions return Failure before files are written; this function does not complete or validate the physical amplitude.";
-WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " The family overload WriteSPINASProcess[directory, {{particles1, amplitude1}, ...}, model] combines helicity-related amplitudes into one class. It fills identical-species, same-role massless leg permutations with their proper statistics sign, without inferring parity or missing zero amplitudes. Incomplete coverage is rejected before writing files. amp(ds1,...,dsn) and amp(Spins) select doubled spins and helicities; spin_sum sums all external spin/helicity states; amp2 also averages incoming states and includes the outgoing identical-species factorial factor, including identical fermions. Ordinary projects use persistent native SPINAS products and direct helicity branches; very large families retain canonical dispatch to bound source size. Colored families are currently refused because a full color sum is not implemented. The original four-argument fixed-helicity overload retains its existing spin-sum and symmetry-factor conventions.";
+WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " The family overload WriteSPINASProcess[directory, {{particles1, amplitude1}, ...}, model] combines helicity-related amplitudes into one class. It fills identical-species, same-role massless leg permutations with their proper statistics sign, without inferring parity or missing zero amplitudes. Incomplete coverage is rejected before writing files. amp(ds1,...,dsn) and amp(Spins) select doubled spins and helicities; spin_sum sums all external spin/helicity states; amp2 also averages incoming states and includes the outgoing identical-species factorial factor, including identical fermions. Ordinary projects use persistent native SPINAS products and direct helicity branches; very large families retain canonical dispatch to bound source size. Color-stripped colored families are refused; full color families must retain their explicit color tensors. The original four-argument fixed-helicity overload retains its existing spin-sum and symmetry-factor conventions.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " Massless fermions marked L or R in the model contain only their physical chirality: particle and antiparticle helicities are opposite. Outgoing massless fermion helicities are crossed from the all-ingoing amplitude to the physical outgoing antiparticle. This leaves the established photon-helicity convention unchanged. A one-state chiral species is complete without a FixedHelicities selection and is not averaged over a nonexistent second state. CalcHEP can compare such complete chiral processes; a genuine restriction of a two-state species remains polarized and is unavailable to its unpolarized comparison.";
+WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " Full color amplitudes may contain ColorDelta, ColorGenerator and ColorStructure with ColorIndex[leg]. A joint exact SU(3) basis preserves color interference and transforms its tensors with identical-particle helicity permutations. The generated class exposes color_amplitudes(spins), amp(spins,colors) and color_spin_sum(spins); spin_sum sums the coherent color square over spins and helicities, while amp2 additionally applies the incoming color average exactly once. A colored amp(spins) without explicit colors is ambiguous and is rejected. Independent CalcHEP and MadGraph comparisons support these certified full color sums. A bare stripped colored expression remains unsupported for family validation. Colored MadEvent and CalcHEP numerical integration are reported unavailable until their event adapters support the complete color representation.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " CMakeExecutable -> Automatic searches PATH and standard installation locations, including the macOS CMake application and Homebrew, so desktop Mathematica need not inherit the shell's PATH. An explicit full path selects another CMake installation. A missing build tool is reported before generating files; source-only export does not require CMake.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " WriteSPINASProcess[directory, incomingNames -> outgoingNames, amplitudeEntries, model] explicitly describes the physical process. The entries still contain all-ingoing particle lists and un-crossed formulas in that same leg order, with incoming legs first. Outgoing charged particle names are checked against the conjugate all-ingoing species. Generic massless names such as A sum their helicities; A.+ or A.- selects one. The established HEPCAT/SPINAS helicity sign convention is retained, and ReverseMomentum crosses outgoing momenta and angle spinors exactly once. FixedHelicities -> {leg -> doubledHelicity, ...} selects massless legs in either grouped overload. Only unfixed incoming helicities are averaged. A selected outgoing helicity gives a labeled contribution with the same identical-species phase-space factor. Complex amp calls preserve phases and include no spin sums, incoming averages or phase-space factors; coherent production-decay sewing is not performed by this exporter. Runnable projects currently require two incoming particles.";
-WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " Generated projects also contain validate_calchep(options) and a process_validate_calchep executable for an independent, seeded 1000-point comparison with an on-the-fly CalcHEP process. CalcHEPDirectory -> None and CalcHEPModel -> None leave reference validation unconfigured. Select the installation directory and CalcHEPModel -> {directory, number} explicitly. CalcHEPDirectory -> Automatic consults CALCHEP_ROOT or CALCHEP only. CalcHEPAllowedParticles -> All keeps the selected reference theory intact; an explicit list of positive absolute PDG codes, such as {11,22}, restricts internal particle types and includes their antiparticles. RunCalcHEPValidation -> True builds and runs this check, using CalcHEPPoints -> 1000 and CalcHEPSeed -> Automatic by default. Automatic chooses a seed from the time when validation runs and reports the concrete seed for replay; an explicit unsigned 64-bit integer fixes it. Complete unpolarized colorless processes are supported; fixed-helicity or color-stripped comparisons report unavailable. Ordinary SPINAS execution does not require CalcHEP.";
+WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " Generated projects also contain validate_calchep(options) and a process_validate_calchep executable for an independent, seeded 1000-point comparison with an on-the-fly CalcHEP process. CalcHEPDirectory -> None and CalcHEPModel -> None leave reference validation unconfigured. Select the installation directory and CalcHEPModel -> {directory, number} explicitly. CalcHEPDirectory -> Automatic consults CALCHEP_ROOT or CALCHEP only. CalcHEPAllowedParticles -> All keeps the selected reference theory intact; an explicit list of positive absolute PDG codes, such as {11,22}, restricts internal particle types and includes their antiparticles. RunCalcHEPValidation -> True builds and runs this check, using CalcHEPPoints -> 1000 and CalcHEPSeed -> Automatic by default. Automatic chooses a seed from the time when validation runs and reports the concrete seed for replay; an explicit unsigned 64-bit integer fixes it. Complete unpolarized colorless processes and certified coherent SU(3) color sums are supported; genuinely polarized restrictions and stripped colored expressions report unavailable. Ordinary SPINAS execution does not require CalcHEP.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " If the CalcHEP numerical libraries are available, Build -> True links the runnable executable directly at build/results/n_calchep; there is no duplicate launcher in the build root. From build, enter results and run ./n_calchep. This uses CalcHEP's numerical menus, VEGAS, cuts and histograms with the exported SPINAS matrix element, without CalcHEP symbolic generation or a CalcHEPModel counterpart. Independent model parameters remain adjustable, dependent functions are recomputed, and mass/width changes are propagated. Fixed helicities remain labeled contributions. The ordinary SPINAS project remains usable without CalcHEP.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " CodeStyle -> Optimized is the default numerical backend: it analyzes expression dependencies to share per-point and per-spin calculations. CodeStyle -> Readable preserves the direct formula layout. Both retain identical complex-amplitude and spin-sum conventions. The manifest separates CodeStyle from CodeLayout and records optimization diagnostics.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " HelicitySymmetry -> Automatic reuses conjugate helicity contributions only when a bounded exact algebraic certificate succeeds. None keeps exhaustive sums. Conjugation explicitly declares the simultaneous helicity-reversal symmetry of the supplied family, as for tree-level vectorlike QED with real parameters and complete massive-spin sums. This declaration is a theory assumption, not an inference from numerical samples. Every individual complex amp and every helicity branch remains available. Selected helicity sets must contain both members of each pair; unsupported selections and nonzero-width expressions retain exhaustive sums. Any nonreal runtime parameter disables reuse. The manifest records the summation plan and its assumptions.";
@@ -759,8 +760,9 @@ spinasCalcHEPConfiguration[ir_Association, data_List, supplied_Association] := M
   If[allowed =!= {} && !AllTrue[physical, MemberQ[allowed, Abs[#]] &],
     available = False; AppendTo[reasons, "CalcHEPAllowedParticles excludes an external particle type."]];
   massless = TrueQ[# == 0] & /@ ir["MassValues"];
-  If[TrueQ[Lookup[ir, "ColorStripped", False]] ||
-      AnyTrue[rows, Length[#] >= 8 && #[[8]] =!= 1 &],
+  If[!TrueQ[Lookup[Lookup[ir, "ColorData", <||>], "Certified", False]] &&
+      (TrueQ[Lookup[ir, "ColorStripped", False]] ||
+      AnyTrue[rows, Length[#] >= 8 && #[[8]] =!= 1 &]),
     available = False; AppendTo[reasons, "A color-stripped SPINAS expression cannot be compared with CalcHEP's full color sum."]];
   If[TrueQ[Lookup[ir, "Family", False]],
     If[ir["HelicityStates"] =!= ir["ModelHelicityStates"], available = False;
@@ -770,6 +772,8 @@ spinasCalcHEPConfiguration[ir_Association, data_List, supplied_Association] := M
       available = False; AppendTo[reasons, "Export the complete helicity family for an unpolarized CalcHEP comparison."]];
     groups = Gather[physical[[outgoing]]]; symmetry = 1/(Times @@ (Factorial[Length[#]] & /@ groups));
     factor = symmetry];
+  If[TrueQ[Lookup[ir, "FixedColorFormula", False]],
+    factor = 1/(Times @@ (Factorial[Length[#]] & /@ Gather[physical[[outgoing]]]))];
   If[AnyTrue[ir["ParameterDefaults"], !TrueQ[Im[#] == 0] &],
     available = False; AppendTo[reasons, "The CalcHEP parameter interface requires real model inputs."]];
   If[root === "", AppendTo[reasons, "CalcHEP was not found; set CalcHEPDirectory or CALCHEP_ROOT before building validation."]];
@@ -781,6 +785,8 @@ spinasCalcHEPConfiguration[ir_Association, data_List, supplied_Association] := M
     "ProcessDescription" -> StringRiffle[physicalNames[[incoming]], ", "] <> " -> " <>
       StringRiffle[physicalNames[[outgoing]], ", "],
     "ParameterNames" -> ir["ParameterNames"], "SPINASNormalizationFactor" -> factor,
+    "IndependentMassParameters" -> (ModelParameterName /@ Intersection[ir["ParameterSymbols"],
+      Intersection[First /@ data[[3]], DeleteDuplicates[data[[1, All, 6]]]]]),
     "WidthParameterIndices" -> spinasValidationWidthIndices[ir, data],
     "WidthPolicy" -> "ZeroWidthsForIndependentValidation",
     "Points" -> options["CalcHEPPoints"],
@@ -849,7 +855,8 @@ spinasCalcHEPSource[name_String, ir_Association, config_Association] := Module[
     "    };", "",
     "    // Generate and compile the CalcHEP process in its private workspace.",
     "    hepcat_spinas::CalcHEPProcess calchep_process(",
-    "      model_directory, model_number, particle_pdgs, model_parameters, " <> strongCode <> ", false, allowed_particle_pdgs);",
+    "      model_directory, model_number, particle_pdgs, model_parameters, " <> strongCode <> ", false, allowed_particle_pdgs, 0, {" <>
+      StringRiffle[spinasCppQuoted /@ Lookup[config, "IndependentMassParameters", {}], ", "] <> "});",
     "    if (!allowed_particle_pdgs.empty()) {",
     "      std::cout << \"CalcHEP excluded internal particles:\";",
     "      for (const auto& excluded_particle : calchep_process.excluded_particle_names())",
@@ -863,9 +870,12 @@ spinasCalcHEPSource[name_String, ir_Association, config_Association] := Module[
     "      return static_cast<ldouble>(calchep_process.squared_amplitude(",
     "        " <> referencePoint <> "));", "    };", "",
     "    // Both results include the initial average and final symmetry factor.",
-    "    return hepcat_spinas::compare_squared_amplitudes(",
+    "    auto report = hepcat_spinas::compare_squared_amplitudes(",
     "      spinas_process.masses(), incoming_legs(),",
     "      spinas_squared, calchep_squared, options, &std::cout);",
+    "    const auto mass_scheme = calchep_process.mass_scheme_summary();",
+    "    if (!mass_scheme.empty()) { report.message += \" \" + mass_scheme; std::cout << mass_scheme << '\\n'; }",
+    "    return report;",
     "  } catch (const std::exception& error) {",
     "    return hepcat_spinas::failed_validation(options, error.what());", "  }", "#else",
     "  return hepcat_spinas::unavailable_validation(options,",
@@ -936,7 +946,7 @@ spinasCalcHEPREADME[name_String, config_Association] := StringRiffle[{
   "CalcHEPSeed -> Automatic chooses a seed from the current time when the validation executable runs, not when its source is exported. The report prints the actual Seed for replay. Set CalcHEPSeed to an unsigned 64-bit integer to choose a fixed executable default, or use --seed to override it for one run. In C++, assign options.seed directly; zero is a valid explicit seed.", "",
   "```sh", "./build/" <> name <> "_validate_calchep", "./build/" <> name <> "_validate_calchep --points 1000 --seed 12345", "```", "",
   "Link the " <> name <> "_calchep_validation library when calling the method from your own C++ program. Configure -DCALCHEP_ROOT=/path/to/calchep if it was not found. This separate backend keeps the ordinary SPINAS process usable without CalcHEP.",
-  "Spin/color averaging and the final-state identical-particle factor follow CalcHEP's documented squared-matrix-element convention. This implementation validates complete unpolarized colorless processes; fixed-helicity and color-stripped comparisons report unavailable. It does not guess a missing helicity or fit a normalization ratio.",
+  "Spin/color averaging and the final-state identical-particle factor follow CalcHEP's documented squared-matrix-element convention. This implementation validates complete unpolarized colorless processes and certified coherent SU(3) color sums; genuinely polarized restrictions and stripped colored comparisons report unavailable. It does not guess a missing helicity or fit a normalization ratio.",
   "The default relative tolerance is 1e-7; the default absolute tolerance is zero, so tiny wrong amplitudes cannot pass through an absolute floor. Failed points and their full momenta are printed. This random diagnostic is not a uniformly weighted phase-space integration or an analytic equality proof.",
   "Model selection: " <> If[config["ModelNumber"] > 0,
     config["ModelDirectory"] <> ", model " <> ToString[config["ModelNumber"]], "not configured"] <> ".",
@@ -1669,7 +1679,10 @@ spinasDemandPointPlan[ir_Association, input_Association] := Module[
 ];
 
 spinasProjectCode[name_String, input_Association, style_String : "Optimized"] := Module[
-  {plan, family, ir = spinasMergeScalarCaches[input, {name}], optimization},
+  {plan, family, ir, optimization},
+  If[TrueQ[Lookup[Lookup[input, "ColorData", <||>], "Certified", False]],
+    Return[spinasColorProjectCode[name, input, style]]];
+  ir = spinasMergeScalarCaches[input, {name}];
   family = TrueQ[Lookup[ir, "Family", False]];
   If[spinasNativeStyleQ[name, ir],
     plan = spinasNativeCachePlan[ir, {name}];
@@ -2192,6 +2205,7 @@ spinasCalcHEPNumericalConfiguration[ir_Association, data_List, supplied_Associat
           (spinasBareHelicityName[particle[[2]]] === spinasBareHelicityName[particle[[3]]]),
         "States" -> If[TrueQ[ir["MassValues"][[i]] == 0],
           If[family, Length[ir["HelicityStates"][[i]]], 1], particle[[5]] + 1]|>, {i, order}];
+    If[KeyExistsQ[ir, "ColorData"], fail["Numerical integration for a coherent color basis is not enabled yet; independent CalcHEP and MadGraph validation remains available."]];
     If[TrueQ[Lookup[ir, "ColorStripped", False]] || AnyTrue[legs, #["Color"] =!= 1 &],
       fail["Numerical CalcHEP integration requires a complete color sum; color-stripped matrix elements are not supported."]];
     expressions = If[family, Lookup[ir["FamilyComponents"], "CrossedExpression"], {ir["CrossedExpression"]}];
@@ -2436,6 +2450,8 @@ WriteSPINASProcess[directory_String, process : {___String}, amplitude_, model_, 
     Message[WriteSPINASProcess::args]; Return[$Failed]];
   data = If[Head[model] === FeynmanModel,List @@ model,model];
   If[!ListQ[data],Return[Failure["InvalidModel",<||>]]];
+  If[!FreeQ[amplitude, _ColorDelta | _ColorGenerator | _ColorStructure],
+    Return[spinasWriteFamily[directory, {{process, amplitude}}, model, {opts}, Automatic, True]]];
   ir = spinasProcessIR[process,amplitude,data,<|"IncomingLegs"->OptionValue["IncomingLegs"],
     "ParameterRules"->OptionValue["ParameterRules"]|>];
   If[FailureQ[ir],Return[ir]];
@@ -2536,6 +2552,195 @@ spinasFixedHelicities[selection_, ranks_List, massless_List] := Module[{rules},
     Association[rules]]
 ];
 spinasBareHelicityName[name_String] := StringReplace[name, RegularExpression["\\.[+-]$"] -> ""];
+
+spinasColorInput[amplitude_] := Module[{rules = {}, walk, expression, tag = Unique["colorInput"]},
+  walk[value_, depth_:0] := Which[
+    depth > 32, Throw[colorFailure["SPINASColorInput", "Amplitude input nesting is too deep."], tag],
+    AssociationQ[value] && KeyExistsQ[value, "Status"] &&
+      !MemberQ[{"COMPLETE", "PREPARED", "PASS", "CONSTRUCTED"}, value["Status"]],
+      Throw[colorFailure["SPINASColorInput", "Export a complete amplitude, not an unsuccessful report."], tag],
+    AssociationQ[value] && KeyExistsQ[value, "Amplitude"], walk[value["Amplitude"], depth + 1],
+    AssociationQ[value] && KeyExistsQ[value, "PreparedAmplitudes"], walk[value["PreparedAmplitudes"], depth + 1],
+    MatchQ[value, {_List, _}] && AllTrue[First[value], MatchQ[#, _Rule] &],
+      rules = Join[rules, First[value]]; walk[Last[value], depth + 1],
+    ListQ[value] && value =!= {} && AllTrue[value, MatchQ[#, {_List, _}] &],
+      Total[walk[#, depth + 1] & /@ value],
+    FailureQ[value] || AssociationQ[value] || ListQ[value],
+      Throw[colorFailure["SPINASColorInput", "Expected a spinor expression or amplitude pair."], tag],
+    True, value];
+  Catch[expression = walk[amplitude]; {rules, expression}, tag]
+];
+
+(* Close helicities before separating color coefficients. A gluon-leg
+   permutation also permutes its color index; scalar-only closure would lose
+   interference. Each scalar coefficient then uses the ordinary exporter. *)
+spinasColorFamilyIR[entries_List, model_List, options_Association, physicalSpec_] := Module[
+  {plain = model, inputs, terms, proxies, stub, closed, source, image, relabel, process,
+   allTerms, basis, lengths, offsets, coefficients, helpers, symbols, defaults, names,
+   incomingAverage, representations, nb, first},
+  If[entries === {} || !AllTrue[entries, MatchQ[#, {_List, _}] &],
+    Return[colorFailure["SPINASColorInput", "Provide particle lists and full color amplitudes."]]];
+  inputs = spinasColorInput[Last[#]] & /@ entries;
+  If[AnyTrue[inputs, FailureQ], Return[SelectFirst[inputs, FailureQ]]];
+  terms = colorAmplitudeTerms[Last[#]] & /@ inputs;
+  If[AnyTrue[terms, FailureQ], Return[SelectFirst[terms, FailureQ]]];
+  terms = Select[#, Last[#] =!= 0 &] & /@ terms;
+  plain[[1]] = ReplacePart[#, 8 -> 1] & /@ plain[[1]];
+  proxies = MapThread[{First[#1], {First[#2], If[#3 === {}, 0, #3[[1, 2]]]}} &, {entries, inputs, terms}];
+  stub = spinasFamilyIR[proxies, plain, options, physicalSpec];
+  If[FailureQ[stub], Return[stub]];
+  representations = colorParticleRepresentation[#, model] & /@ First[First[entries]];
+  If[AnyTrue[representations, FailureQ], Return[SelectFirst[representations, FailureQ]]];
+  closed = Table[
+    source = branch["InputIndex"]; image = branch["LegPermutation"];
+    relabel = AssociationThread[Range[Length[image]], image];
+    process = Table[entries[[source, 1, First[FirstPosition[image, i]]]], {i, Length[image]}];
+    {process, {replaceVertexIndices[First[inputs[[source]]], relabel],
+      branch["FermionSign"] replaceVertexIndices[Last[inputs[[source]]], relabel] /.
+        ColorIndex[i_Integer] :> ColorIndex[image[[i]]]}}, {branch, stub["Branches"]}];
+  terms = colorAmplitudeTerms[#[[2, 2]]] & /@ closed;
+  If[AnyTrue[terms, FailureQ], Return[SelectFirst[terms, FailureQ]]];
+  terms = Select[#, Last[#] =!= 0 &] & /@ terms;
+  lengths = Length /@ terms; offsets = Most[FoldList[Plus, 0, lengths]];
+  allTerms = Flatten[terms, 1];
+  If[allTerms === {}, Return[colorFailure["SPINASColorInput", "A full-color family needs at least one declared nonzero tensor sector."]]];
+  basis = colorTensorBasis[First /@ allTerms, representations];
+  If[FailureQ[basis], Return[basis]];
+  nb = Length[basis["Basis"]];
+  coefficients = MapThread[If[#1 === {}, ConstantArray[0, nb],
+    (Last /@ #1).basis["DiagramCoordinates"][[Range[#2 + 1, #2 + Length[#1]]]]] &, {terms, offsets}];
+  helpers = Table[spinasFamilyIR[MapThread[{First[#1], {#1[[2, 1]], #2[[i]]}} &,
+      {closed, coefficients}], plain, options, physicalSpec], {i, nb}];
+  If[AnyTrue[helpers, FailureQ], Return[SelectFirst[helpers, FailureQ]]];
+  helpers = Join[#, <|"HelicitySummation" -> spinasHelicitySumPlan[#, None]|>] & /@ helpers;
+  first = First[helpers];
+  symbols = DeleteDuplicates[Flatten[Lookup[helpers, "ParameterSymbols"], 1]];
+  names = ModelParameterName /@ symbols;
+  If[!DuplicateFreeQ[names], Return[colorFailure["SPINASColorParameters", "Color components contain ambiguous parameter names."]]];
+  defaults = Table[With[{component = SelectFirst[helpers, MemberQ[#["ParameterSymbols"], symbol] &]},
+    component["ParameterDefaults"][[First[FirstPosition[component["ParameterSymbols"], symbol]]]]], {symbol, symbols}];
+  incomingAverage = Times @@ Abs[representations[[first["IncomingLegs"]]]];
+  Join[first, <|"ColorStripped" -> False, "ParameterSymbols" -> symbols, "ParameterNames" -> names,
+    "ParameterDefaults" -> defaults, "ColorData" -> Join[basis,
+      <|"Certified" -> True, "InitialColorAverage" -> incomingAverage,
+        "Helpers" -> helpers, "Coefficients" -> coefficients|>],
+    "InputProcesses" -> (First /@ entries),
+    "InputBranchCount" -> Length[entries], "GeneratedBranchCount" -> stub["GeneratedBranchCount"],
+    "FamilyComponents" -> Flatten[Lookup[helpers, "FamilyComponents"], 1]|>]
+];
+
+(* A small coherent wrapper reuses the ordinary native class for each color
+   coefficient. Colorless exporters and their optimized numerical path are
+   unchanged. The wrapper sums interference before any spin or color average. *)
+spinasColorProjectCode[name_String, ir_Association, style_String] := Module[
+  {color = ir["ColorData"], helpers, names, code, first, n = ir["LegCount"], k,
+   parameters, declarations, header, source, lines, add, mappings, gram, tensors,
+   dimensions, scalarArguments, scalarValues, configurations},
+  helpers = color["Helpers"]; k = Length[helpers];
+  names = Table[name <> "_color_" <> ToString[i], {i, k}];
+  code = MapThread[spinasProjectCode[#1, #2, style] &, {names, helpers}];
+  If[AnyTrue[code, FailureQ], Return[SelectFirst[code, FailureQ]]];
+  first = First[names]; parameters = Length[ir["ParameterNames"]];
+  mappings = Table[(First[FirstPosition[ir["ParameterSymbols"], #]] - 1 &) /@ helpers[[i]]["ParameterSymbols"], {i, k}];
+  gram = color["GramMatrix"];
+  tensors = colorTensorVector[#, color["Representations"]] & /@ color["Basis"];
+  dimensions = Abs[color["Representations"]];
+  scalarArguments = StringRiffle[Table["int ds" <> ToString[i], {i, n}], ", "];
+  scalarValues = spinasCppArray[Table["ds" <> ToString[i], {i, n}]];
+  header = StringRiffle[Join[Lookup[code, "Header"], {
+    "#include <functional>", "#include <limits>", "#include <stdexcept>",
+    "namespace hepcat_generated {", "class " <> name <> " {", "public:",
+    "  static constexpr std::size_t leg_count = " <> ToString[n] <> ";",
+    "  static constexpr std::size_t parameter_count = " <> ToString[parameters] <> ";",
+    "  static constexpr std::size_t helicity_count = " <> ToString[Length[ir["HelicityConfigurations"]]] <> ";",
+    "  static constexpr std::size_t color_basis_count = " <> ToString[k] <> ";",
+    "  using Parameters = std::array<cdouble, parameter_count>;",
+    "  using Momenta = hepcat_spinas::Momenta<leg_count>;",
+    "  using Spins = std::array<int, leg_count>;",
+    "  using Colors = std::array<int, leg_count>;",
+    "  using ColorAmplitudes = std::array<cdouble, color_basis_count>;",
+    "  " <> name <> "() : " <> name <> "(default_parameters()) {}",
+    "  explicit " <> name <> "(const Parameters& values) { set_parameters(values); }",
+    "  static Parameters default_parameters();",
+    "  static Spins default_spins() { return " <> first <> "::default_spins(); }",
+    "  static std::array<std::size_t, 2> incoming_legs() { return " <> first <> "::incoming_legs(); }",
+    "  static std::array<Spins, helicity_count> helicity_configurations() { return " <> first <> "::helicity_configurations(); }",
+    "  static ldouble incoming_spin_average() { return " <> spinasCppReal[ir["InitialSpinAverage"]] <> "; }",
+    "  static ldouble incoming_color_average() { return " <> spinasCppReal[color["InitialColorAverage"]] <> "; }",
+    "  static ldouble symmetry_factor() { return " <> spinasCppReal[ir["SymmetryFactor"]] <> "; }",
+    "  const Parameters& get_parameters() const { return parameters; }",
+    "  const std::array<ldouble, leg_count>& masses() const { return component_1.masses(); }",
+    "  void set_parameters(const Parameters& values);",
+    "  void set_momenta(const Momenta& momenta);",
+    "  void set_widths_enabled(bool enabled);",
+    "  ColorAmplitudes color_amplitudes(const Spins& spins);",
+    "  // Explicit colors are 1..3 for quarks, 1..8 for gluons, 1 for singlets.",
+    "  cdouble amp(const Spins& spins, const Colors& colors);",
+    "  cdouble amp(const Spins&) { throw std::invalid_argument(\"A colored amplitude needs explicit colors; use amp(spins,colors), color_amplitudes or color_spin_sum.\"); }",
+    "  ldouble color_spin_sum(const Spins& spins);",
+    "  ldouble spin_sum();", "  ldouble amp2();",
+    "  hepcat_spinas::ValidationReport validate_calchep(const hepcat_spinas::ValidationOptions& options = hepcat_spinas::ValidationOptions());",
+    "private:", "  Parameters parameters;",
+    Sequence @@ Table["  " <> names[[i]] <> " component_" <> ToString[i] <> ";", {i, k}],
+    "  static cdouble color_tensor(std::size_t basis, const Colors& colors);",
+    "};", "} // namespace hepcat_generated", ""}], "\n"];
+  lines = {}; add[x_] := (lines = Join[lines, Flatten[{x}]]);
+  add[{"namespace hepcat_generated {", "using namespace hepcat_spinas;",
+    "constexpr std::size_t " <> name <> "::leg_count;",
+    "constexpr std::size_t " <> name <> "::parameter_count;",
+    "constexpr std::size_t " <> name <> "::helicity_count;",
+    "constexpr std::size_t " <> name <> "::color_basis_count;",
+    name <> "::Parameters " <> name <> "::default_parameters() { return Parameters{{"}];
+  add[MapIndexed["  " <> spinasCppComplex[#1] <> If[First[#2] < parameters, ",", ""] <> " // " <>
+    ir["ParameterNames"][[First[#2]]] &, ir["ParameterDefaults"]]];
+  add[{"}}; }", "void " <> name <> "::set_parameters(const Parameters& values) {"}];
+  Do[add["  component_" <> ToString[i] <> ".set_parameters(" <> names[[i]] <> "::Parameters" <>
+    spinasCppArray[("values[" <> ToString[#] <> "]" &) /@ mappings[[i]]] <> ");"], {i, k}];
+  add[{"  parameters = values;", "}", "void " <> name <> "::set_momenta(const Momenta& momenta) {"}];
+  add[Table["  component_" <> ToString[i] <> ".set_momenta(momenta);", {i, k}]];
+  add[{"}", "void " <> name <> "::set_widths_enabled(bool enabled) {"}];
+  add[Table["  component_" <> ToString[i] <> ".set_widths_enabled(enabled);", {i, k}]];
+  add[{"}", name <> "::ColorAmplitudes " <> name <> "::color_amplitudes(const Spins& spins) {",
+    "  return ColorAmplitudes" <> spinasCppArray[Table["component_" <> ToString[i] <> ".amp(spins)", {i, k}]] <> ";", "}",
+    "ldouble " <> name <> "::color_spin_sum(const Spins& spins) {",
+    "  const auto a = color_amplitudes(spins);", "  cdouble value(0,0);", "  ldouble scale = 0;"}];
+  Do[If[gram[[i,j]] =!= 0, add[{"  { const cdouble term = std::conj(a[" <> ToString[i-1] <> "]) * " <>
+    spinasCppComplex[N[gram[[i,j]], 24]] <> " * a[" <> ToString[j-1] <> "];",
+    "    value += term; scale += std::abs(term); }"}]], {i,k},{j,k}];
+  add[{"  const ldouble tolerance = 256 * std::numeric_limits<ldouble>::epsilon() * scale;",
+    "  if (std::abs(value.imag()) > tolerance || value.real() < -tolerance)",
+    "    throw std::runtime_error(\"The coherent color sum is not real and nonnegative.\");",
+    "  return std::max(ldouble(0), value.real());", "}",
+    "ldouble " <> name <> "::spin_sum() {", "  ldouble total = 0;",
+    "  static const std::array<int,leg_count> ranks = " <> spinasCppArray[ToString /@ ir["Spin2"]] <> ";",
+    "  for (auto spins : helicity_configurations()) {",
+    "    std::function<ldouble(std::size_t)> sum = [&](std::size_t leg) -> ldouble {",
+    "      if (leg == leg_count) return color_spin_sum(spins);",
+    "      if (masses()[leg] == 0 || ranks[leg] == 0) return sum(leg+1);",
+    "      ldouble value = 0;",
+    "      for (int ds = -ranks[leg]; ds <= ranks[leg]; ds += 2) { spins[leg] = ds; value += sum(leg+1); }",
+    "      return value;", "    };", "    total += sum(0);", "  }", "  return total;", "}",
+    "ldouble " <> name <> "::amp2() { return spin_sum() * symmetry_factor() / (incoming_spin_average() * incoming_color_average()); }",
+    "cdouble " <> name <> "::amp(const Spins& spins, const Colors& colors) {",
+    "  const auto a = color_amplitudes(spins); cdouble result(0,0);",
+    "  for (std::size_t i=0;i<color_basis_count;++i) result += a[i] * color_tensor(i,colors);",
+    "  return result;", "}",
+    "cdouble " <> name <> "::color_tensor(std::size_t basis, const Colors& colors) {",
+    "  static const std::array<int,leg_count> dimensions = " <> spinasCppArray[ToString /@ dimensions] <> ";",
+    "  std::size_t index = 0;",
+    "  for (std::size_t leg=0;leg<leg_count;++leg) {",
+    "    if (colors[leg]<1 || colors[leg]>dimensions[leg]) throw std::invalid_argument(\"External color index is out of range.\");",
+    "    index = index * dimensions[leg] + colors[leg] - 1;", "  }", "  switch (basis) {"}];
+  Do[add["  case " <> ToString[i-1] <> ": switch (index) {"];
+    add[MapIndexed[If[#1 === 0, Nothing, "    case " <> ToString[First[#2]-1] <> ": return " <> spinasCppComplex[N[#1, 24]] <> ";"] &, tensors[[i]]]];
+    add["    default: return cdouble(0,0); }"], {i,k}];
+  add[{"  default: throw std::invalid_argument(\"Color basis index is out of range.\");", "  }", "}", "} // namespace hepcat_generated", ""}];
+  source = StringRiffle[Join[Lookup[code, "Source"], lines], "\n"];
+  <|"Header" -> header, "Source" -> source, "Style" -> "CoherentColorBasis",
+    "Optimization" -> <|"Status" -> "CoherentColorBasis", "ColorBasisCount" -> k,
+      "ScalarComponents" -> Lookup[code, "Optimization"]|>|>
+];
+
 spinasFamilyIR[entries_List, model_List, options_Association, physicalSpec_:Automatic] := Module[
   {tag = Unique["spinasFamily"], fail, components, first, process, n, incoming,
    rows, rowFor, species, massless, ranks, states, groups,
@@ -2974,11 +3179,12 @@ spinasFamilyProjectREADME[name_String, ir_Association, precision_String] := Stri
     "The executable prints three deterministic" ->
       "Only canonical supplied formulas are compiled. Identical-particle-related helicity branches use role-preserving leg permutations, including the fermion exchange sign. No parity relation or missing zero amplitude is inferred.\n\nThe executable prints three deterministic"}];
 
-spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpec_] := Module[
+spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpec_, fixedColorFormula_:False] := Module[
   {options = Join[Association[Options[WriteSPINASProcess]], Association[Reverse[Flatten[opts]]]],
    name, root, precision, ir, dir = ExpandFileName[directory], data, runtime,
    files, contents, written, result, build, cmake, manifest, calchep, validationProject,
-   numerical, numericalProject, madgraph, madgraphProject, madevent, madeventProject, code},
+   numerical, numericalProject, madgraph, madgraphProject, madevent, madeventProject, code,
+   proxy, input, terms, plain, selected, specified},
   name = options["ProcessName"];
   cmake = options["CMakeExecutable"];
   If[Complement[First /@ Flatten[opts], First /@ Options[WriteSPINASProcess]] =!= {} ||
@@ -2993,10 +3199,27 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
     Message[WriteSPINASProcess::args]; Return[$Failed]];
   data = If[Head[model] === FeynmanModel, List @@ model, model];
   If[!ListQ[data], Return[Failure["InvalidModel", <||>]]];
-  ir = spinasFamilyIR[entries, data,
+  If[TrueQ[fixedColorFormula],
+    input = spinasColorInput[entries[[1, 2]]]; If[FailureQ[input], Return[input]];
+    terms = colorAmplitudeTerms[Last[input]]; If[FailureQ[terms], Return[terms]];
+    plain = data; plain[[1]] = ReplacePart[#, 8 -> 1] & /@ plain[[1]];
+    proxy = spinasProcessIR[entries[[1, 1]], {First[input], SelectFirst[Last /@ terms, # =!= 0 &, 0]}, plain,
+      KeyTake[options, {"IncomingLegs", "ParameterRules"}]];
+    If[FailureQ[proxy], Return[proxy]];
+    selected = Association[Table[If[TrueQ[proxy["MassValues"][[i]] == 0] && proxy["Spin2"][[i]] > 0,
+      i -> proxy["Helicities"][[i]], Nothing], {i, proxy["LegCount"]}]];
+    specified = spinasFixedHelicities[options["FixedHelicities"], proxy["Spin2"], TrueQ[# == 0] & /@ proxy["MassValues"]];
+    If[FailureQ[specified], Return[specified]];
+    If[AnyTrue[Normal[specified], selected[First[#]] =!= Last[#] &],
+      Return[colorFailure["SPINASHelicities", "FixedHelicities conflicts with the supplied amplitude."]]];
+    options = Join[options, <|"FixedHelicities" -> Normal[selected]|>]];
+  ir = If[FreeQ[entries, _ColorDelta | _ColorGenerator | _ColorStructure], spinasFamilyIR, spinasColorFamilyIR][entries, data,
     KeyTake[options, {"IncomingLegs", "ParameterRules", "FixedHelicities"}], physicalSpec];
   If[FailureQ[ir], Return[ir]];
-  ir = Join[ir, <|"HelicitySummation" -> spinasHelicitySumPlan[ir, options["HelicitySymmetry"]]|>];
+  If[TrueQ[fixedColorFormula], ir = Join[ir, <|"FixedColorFormula" -> True,
+    "SymmetryFactor" -> 1, "FinalStateSymmetryDivisor" -> 1|>]];
+  ir = Join[ir, <|"HelicitySummation" -> spinasHelicitySumPlan[ir,
+    If[KeyExistsQ[ir, "ColorData"], None, options["HelicitySymmetry"]]]|>];
   calchep = spinasCalcHEPConfiguration[ir, data, options];
   numerical = spinasCalcHEPNumericalConfiguration[ir, data, options];
   madgraph = spinasMadGraphConfiguration[ir, data, options, calchep];
@@ -3047,12 +3270,25 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
     "Optimization" -> code["Optimization"]|>;
   If[AssociationQ[ir["PhysicalProcess"]], manifest = Join[manifest,
     KeyTake[ir, {"PhysicalProcess", "ProcessDescription"}]]];
+  If[KeyExistsQ[ir, "ColorData"], manifest = Join[manifest, <|
+    "FullColor" -> True, "ColorRepresentations" -> ir["ColorData"]["Representations"],
+    "ColorBasisCount" -> Length[ir["ColorData"]["Basis"]],
+    "InitialColorAverage" -> ir["ColorData"]["InitialColorAverage"],
+    "ColorGramMatrix" -> Map[<|"Real" -> N[Re[#]], "Imaginary" -> N[Im[#]]|> &,
+      ir["ColorData"]["GramMatrix"], {2}],
+    "SpinSumConvention" -> "Coherent color-basis contraction, followed by all requested helicities and massive spins. amp2 applies incoming spin and color averages and the final identical-species factor exactly once."|>]];
   contents = <|"Header" -> code["Header"],
-    "Source" -> code["Source"], "Demo" -> spinasFamilyProjectMain[name],
+    "Source" -> code["Source"], "Demo" -> If[KeyExistsQ[ir, "ColorData"],
+      StringReplace[spinasFamilyProjectMain[name], {
+        "const auto amplitude = process.amp(spins);" -> "const auto amplitude = process.color_amplitudes(spins).front();",
+        "amplitude(default doubled spins)" -> "first color coefficient(default doubled spins)"}], spinasFamilyProjectMain[name]],
     "Runtime" -> Import[runtime, "Text"],
     "CMake" -> spinasProjectCMake[name, root, precision] <> spinasCalcHEPCMake[name, calchep] <>
       spinasCalcHEPNumericalCMake[name, numerical] <> spinasMadGraphCMake[name] <> spinasMadEventCMake[name, madevent],
-    "README" -> "Code generation mode: " <> options["CodeStyle"] <> ".\n\n" <> spinasFamilyProjectREADME[name, ir, precision] <> spinasHelicitySumREADME[ir] <> spinasCalcHEPREADME[name, calchep] <>
+    "README" -> "Code generation mode: " <> options["CodeStyle"] <> ".\n\n" <>
+      If[KeyExistsQ[ir, "ColorData"],
+        "## Coherent color amplitudes\n\nThis export keeps every independent SU(3) color coefficient. `color_amplitudes(spins)` returns those complex coefficients. `amp(spins, colors)` supplies explicit external color indices (1..3 for quarks, 1..8 for gluons, 1 for singlets). `color_spin_sum(spins)` contracts the exact Hermitian Gram matrix, including interference. `spin_sum()` then sums all requested spin/helicity configurations; `amp2()` applies incoming spin/color averages and the final identical-species factor exactly once. `amp(spins)` without colors is rejected. The example prints the first color coefficient and the full averaged square. Independent CalcHEP and MadGraph validations compare complete color sums. Colored event generation remains unavailable until a color-flow adapter is provided.\n\n", ""] <>
+      spinasFamilyProjectREADME[name, ir, precision] <> spinasHelicitySumREADME[ir] <> spinasCalcHEPREADME[name, calchep] <>
       spinasCalcHEPNumericalREADME[numerical] <> spinasMadGraphREADME[name, madgraph] <> spinasMadEventREADME[name, madevent]|>;
   contents = Join[contents, validationProject["Contents"], numericalProject["Contents"], madgraphProject["Contents"], madeventProject["Contents"]];
   If[!AllTrue[Values[contents], StringQ], Return[Failure["SPINASGeneration", <|"MessageTemplate" -> "The C++ project could not be generated."|>]]];

@@ -41,13 +41,21 @@ the list unchanged to ", ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
 functions interpret the channel information and sewing convention. Do not \
 remove ", Cell[BoxData[RowBox[{"z"}]], "InlineFormula"], ", fit an overall \
 sign or simply sum the channel expressions to make a candidate full \
-amplitude."}], "Notes"], Cell["Supplying enough lower-point information",
-   "NotesSection"], Cell[TextData[{"For four-point factorization, the lower \
-amplitudes have three legs. At five points, a channel can involve a \
-three-point and a complete four-point amplitude. At six points, complete \
-four- and five-point amplitudes can be needed. The diagram model can still \
-contain only the allowed vertices; the factorization model serves a different \
-purpose."}], "Notes"], Cell[TextData[{"The bundled QED model ",
+amplitude."}], "Notes"], Cell[TextData[{"Colored channels sew the internal \
+color indices as well as the internal spin state. The expression therefore \
+retains the same explicit SU(3) tensors as ", ButtonBox["DiagramAmplitudes",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/DiagramAmplitudes"], ". This is important when \
+photon, gluon and weak exchange contribute to the same reaction: their color \
+tensors interfere differently. Missing or ambiguous color information is not \
+replaced by an overall multiplicity."}], "Notes"],
+  Cell["Supplying enough lower-point information", "NotesSection"],
+  Cell[TextData[{"For four-point factorization, the lower amplitudes have \
+three legs. At five points, a channel can involve a three-point and a \
+complete four-point amplitude. At six points, complete four- and five-point \
+amplitudes can be needed. The diagram model can still contain only the \
+allowed vertices; the factorization model serves a different purpose."}],
+   "Notes"], Cell[TextData[{"The bundled QED model ",
      Cell[BoxData[RowBox[{"2"}]], "InlineFormula"],
      Cell[BoxData[RowBox[{" ", "supplies", " ", "three", "-", "point", " ",
          "vertices", ".", " ", "Model", " "}]], "InlineFormula"],

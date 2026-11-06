@@ -32,9 +32,10 @@ with ", ButtonBox["ColorIndex", BaseStyle -> "Link",
      "; internal slots are local contraction labels."}], "Notes"],
   Cell[TextData[{"An explicit generator tensor carries color-state \
 information. A numerical squared matrix element still requires the \
-appropriate contractions, sums and incoming-state averages. The current \
-complete SPINAS process exporter is restricted to colorless amplitudes."}],
-   "Notes"], Cell["Examples", "PrimaryExamplesSection"],
+appropriate contractions, sums and incoming-state averages. The complete \
+SPINAS process exporter supports explicit SU(3) color amplitudes and retains \
+their coherent interference."}], "Notes"],
+  Cell["Examples", "PrimaryExamplesSection"],
   Cell[CellGroupData[{Cell["Load HEPCAT if needed", "ExampleSubsection"],
      Cell["Skip this setup if HEPCAT is already loaded. These examples assume \
 the checkout is in ~/code/hepcat; change the paths if yours is elsewhere. \

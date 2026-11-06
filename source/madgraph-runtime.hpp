@@ -53,6 +53,8 @@ struct MadGraphConfiguration {
   // no particle-content restriction is inferred from the HEPCAT amplitude.
   std::vector<int> allowed_particle_pdgs;
   std::vector<int> spin2;
+  bool full_color = false;
+  std::vector<int> color_representations;
   // Original leg order: doubled massless helicities, zero for summed massive
   // particles and scalars. The exporter supplies every requested combination.
   std::vector<std::vector<int> > helicities;
@@ -283,6 +285,8 @@ private:
 template <class Process>
 void validate_configuration(const Process& process, const MadGraphConfiguration& config) {
   const std::size_t count = Process::leg_count;
+  if (config.full_color && config.color_representations.size() != count)
+    throw std::invalid_argument("A certified color process needs one representation per external leg.");
   if (config.leg_order.size() != count || config.physical_pdgs.size() != count
       || config.spin2.size() != count || config.helicities.empty()
       || config.parameter_names.size() != process.get_parameters().size())
@@ -363,6 +367,12 @@ void write_configuration(const std::string& path, const Process& process,
     if (i) out << ',';
     out << config.physical_pdgs[i];
   }
+  out << "],\n\"FullColor\":" << (config.full_color ? "true" : "false")
+      << ",\n\"ColorRepresentations\":[";
+  if (config.full_color) for (std::size_t i = 0; i < config.leg_order.size(); ++i) {
+    if (i) out << ',';
+    out << config.color_representations.at(config.leg_order[i]);
+  }
   out << "],\n\"Masses\":[";
   for (std::size_t i = 0; i < config.leg_order.size(); ++i) {
     if (i) out << ',';
@@ -431,6 +441,15 @@ ldouble sum_massive_spins(const Process& process, const MadGraphConfiguration& c
 inline int madgraph_helicity(int doubled, int spin2) {
   return spin2 == 2 ? doubled / 2 : doubled;
 }
+
+// A certified colored process contracts its complete color basis coherently.
+// Existing colorless and user-written processes retain their ordinary amp.
+template <class Process>
+auto squared_amplitude(Process& process, const typename Process::Spins& spins, int)
+    -> decltype(process.color_spin_sum(spins)) { return process.color_spin_sum(spins); }
+template <class Process>
+auto squared_amplitude(Process& process, const typename Process::Spins& spins, long)
+    -> decltype(std::norm(process.amp(spins))) { return std::norm(process.amp(spins)); }
 
 } // namespace madgraph_detail
 
@@ -506,7 +525,7 @@ MadGraphValidationReport validate_madgraph(
           auto spins = base_spins;
           return config.normalization * madgraph_detail::sum_massive_spins(
             process, config, spins, 0, [&](const typename Process::Spins& state) {
-              return std::norm(process.amp(state));
+              return madgraph_detail::squared_amplitude(process, state, 0);
             });
         },
         [&](const Momenta<Process::leg_count>& momenta) {

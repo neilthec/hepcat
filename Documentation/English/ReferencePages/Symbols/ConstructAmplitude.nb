@@ -98,9 +98,22 @@ and check table before returning the expression. Detailed output stores the \
 same score as ", Cell[BoxData[RowBox[{"\"Complexity\""}]], "InlineFormula"],
      ". If the bounded complexity measurement cannot finish, that entry is an \
 explanatory Missing value; it is never replaced by a different size measure \
-such as LeafCount."}], "Notes"], Cell["What happens during a construction",
-   "NotesSection"], Cell[TextData[{"HEPCAT generates the diagrams and \
-prepares their expressions, then builds the known factorization channels. ",
+such as LeafCount."}], "Notes"],
+  Cell[TextData[{"For colored constructive processes, the function separates \
+an exact independent SU(3) color basis and constructs each scalar spinor \
+coefficient against the correspondingly projected channels. Every coefficient \
+must pass the ordinary physical-pole, spurious-pole, high-energy and \
+reference checks. The output is the full sum of color tensors times their \
+validated coefficients. Details retain the basis, its interference matrix and \
+the coefficient reports. ", ButtonBox["WriteSPINASProcess",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/WriteSPINASProcess"], " can export this full \
+expression and compare its coherent color sum with CalcHEP and MadGraph. The \
+optional internal FeynmanModel benchmark is currently unavailable for this \
+projected construction route."}], "Notes"],
+  Cell["What happens during a construction", "NotesSection"],
+  Cell[TextData[{"HEPCAT generates the diagrams and prepares their \
+expressions, then builds the known factorization channels. ",
      ButtonBox["CompleteFactorization", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/CompleteFactorization"],
      " solves any physical residue deficits. The usual route then uses ",

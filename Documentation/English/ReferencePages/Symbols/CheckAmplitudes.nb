@@ -54,7 +54,16 @@ new internal-shell assumption or repair the amplitude. To determine \
 corrections from the known channels, use ",
      ButtonBox["CompleteFactorization", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/CompleteFactorization"], "."}],
-   "Notes"], Cell["What is checked", "NotesSection"],
+   "Notes"], Cell[TextData[{"An amplitude with explicit SU(3) color tensors \
+is checked in an exact independent color basis, with a Color column \
+identifying each coefficient in the report. The coefficients are tested \
+separately rather than treating a sum of different tensors as one scalar \
+amplitude. External mass metadata and the supplied model must determine the \
+colored representations; ambiguous metadata returns Failure. For a full \
+numerical comparison, ", ButtonBox["WriteSPINASProcess", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/WriteSPINASProcess"],
+     " retains the interference between those coefficients."}], "Notes"],
+  Cell["What is checked", "NotesSection"],
   Cell[TextData[{"Physical poles are defined by the supplied factorization \
 channels. At each pole, the checker compares the residue of the full \
 amplitude with the sewn product of complete lower-point amplitudes. It \
