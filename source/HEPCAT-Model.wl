@@ -5619,7 +5619,7 @@ highEnergyLaurentJetVerifiedQ[report_, variable_Symbol, spins_List,
 ];
 
 highEnergyLaurentJetEligibleQ[mapped_, spinVariables_List] := Module[{degrees,bound},
-  If[spinVariables === {} || LeafCount[mapped] < 500000, Return[False]];
+  If[spinVariables === {} || LeafCount[mapped] < 100000, Return[False]];
   degrees=completionHECoherentComponentDegrees[mapped,spinVariables];
   If[!ListQ[degrees] || !AllTrue[degrees,IntegerQ[#] && #>=0&] ||
       Max[degrees]<2,Return[False]];
@@ -7916,6 +7916,41 @@ completionAlgebraicNonzeroCertificate[value_] := Module[{parts, proofs, real, im
       TrueQ[Element[reduced, Algebraics]],
     <|"Method" -> "ExactAlgebraicRootReduction", "Value" -> value, "ReducedValue" -> reduced|>,
     Missing["NoExactAlgebraicNonzeroProof"]]
+];
+
+(* An exact sampled coefficient can be an unevaluated sum of thousands of
+   rational terms. Canonicalize DISTINCT numbers before the affine solve.
+   This changes neither rows nor coordinates. Every replacement has an exact
+   ordinary-algebra replay; a guard or timeout retains the original matrix. *)
+completionCanonicalNumericCoefficientMatrix[matrix_List, seconds_: 20] := Module[
+  {started = AbsoluteTime[], original = matrix, distinct, values, cache, normalized,
+   replay, remaining, outcome, fallback = Missing["NoCertifiedNumericMatrixNormalization"]},
+  remaining[] := Max[0, seconds - (AbsoluteTime[] - started)];
+  If[!TrueQ[NumericQ[seconds] && seconds > 0] || !MatrixQ[matrix] ||
+      Times @@ Dimensions[matrix] > 65536 || LeafCount[matrix] > 12000000 ||
+      !FreeQ[matrix, _Real] || !AllTrue[Flatten[matrix], NumericQ] ||
+      !residueFiniteQ[matrix], Return[fallback]];
+  outcome = TimeConstrained[MemoryConstrained[
+    distinct = DeleteDuplicates[Flatten[matrix]];
+    values = Together /@ distinct;
+    If[!AllTrue[values, NumericQ] || !residueFiniteQ[values], Return[fallback]];
+    replay = And @@ MapThread[(Together[#1 - #2] === 0) &, {distinct, values}];
+    If[!TrueQ[replay], Return[fallback]];
+    cache = AssociationThread[distinct, values];
+    normalized = Map[cache[[Key[#]]] &, matrix, {2}];
+    If[Dimensions[normalized] =!= Dimensions[original], Return[fallback]];
+    <|"Status" -> "COMPLETE", "Matrix" -> normalized,
+      "Method" -> "DistinctExactNumericalCoefficientsWithOrdinaryAlgebraReplay",
+      "OriginalDimensions" -> Dimensions[original], "Dimensions" -> Dimensions[normalized],
+      "OriginalLeaves" -> LeafCount[original], "ReducedLeaves" -> LeafCount[normalized],
+      "DistinctCoefficients" -> Length[distinct], "NumericalApproximation" -> False,
+      "GaussianRationalMatrix" -> AllTrue[Flatten[normalized], completionGaussianRationalQ],
+      "Certificate" -> <|"EveryDistinctCoefficientReplayedExactly" -> True,
+        "AllRowsRetained" -> True, "AllCoordinatesRetained" -> True,
+        "NoSampledZerosDiscarded" -> True, "NoNonzeroRowScaling" -> True|>,
+      "ElapsedSeconds" -> AbsoluteTime[] - started|>,
+    805306368, fallback], Max[0.000001, remaining[]], fallback];
+  outcome
 ];
 
 completionAlgebraicRowUnits[matrix_List, constant_List, seconds_: 5] := Module[
@@ -16334,10 +16369,128 @@ completionHEEnergyAffineRestriction[originalTrial_, originalVariables_List,
   TimeConstrained[work[], seconds, fallback]
 ];
 
+(* Expand the typed affine sources before substituting an energy chart. This
+   shares repeated short spinor monomials without changing their coefficients
+   or assigning independent correction parameters to the expanded atoms. *)
+completionHEAffineAtomLaurentEligibleQ[trial_, unknowns_List, metadata_Association] := Module[
+  {metrics, degrees},
+  If[Length[unknowns] <= 16 || LeafCount[trial] < 30000 || !FreeQ[trial, _Real], Return[False]];
+  metrics = amplitudeResourceMetrics[<|"Amplitude" -> trial,
+    "ExternalMassRules" -> Lookup[metadata, "ExternalMassRules", {}]|>];
+  degrees = Values[Lookup[metrics, "CoherentSpinDegrees", <||>]];
+  Lookup[metrics, "CoherentComponents", 1] >= 27 && AnyTrue[degrees, # >= 2 &]
+];
+
+completionHEAffineAtomLaurentRows[trial_, chart_Association, rules_List,
+    unknowns_List, threshold_, seconds_:60] := Module[
+  {started = AbsoluteTime[], tag = Unique["affineAtomLaurent"], remaining, result,
+   scalar, monomial, work, sourceParts = 0, completed = 0},
+  remaining[] := Max[0, seconds - (AbsoluteTime[] - started)];
+  work[] := Catch[Module[
+    {arrays, parts, expanded, terms, atoms, positions, coefficients, entries, sourceMap,
+     reconstruction, variable = chart["PoleVariable"], spins = chart["SpinVariables"],
+     order = Max[0, Ceiling[threshold]], atomJets = {}, atomCertificates = {}, atom,
+     mapped, report, record, coefficientRows = {}, keys, keyPositions, atomMatrix,
+     matrix, canonical, selected, rows, certificates = {}, finite, data, power, value,
+     jetStarted, jetSeconds, composeStarted, composeSeconds, exactMap = True},
+    arrays = Quiet[Check[CoefficientArrays[trial, unknowns], $Failed]];
+    If[!ListQ[arrays] || arrays === {} || Length[arrays] > 2,
+      Throw[Missing["NoAffineTypedAtomMap"], tag]];
+    parts = Prepend[If[Length[arrays] === 2, Normal[arrays[[2]]],
+      ConstantArray[0, Length[unknowns]]], Normal[First[arrays]]];
+    sourceParts = Length[parts];
+    If[Length[parts] =!= Length[unknowns]+1 || !FreeQ[parts, Alternatives @@ unknowns] ||
+        LeafCount[parts] > 4000000, Throw[Missing["TypedAtomAffineGuard"], tag]];
+    expanded = Expand /@ parts;
+    terms = If[Head[#] === Plus, List @@ #, If[# === 0, {}, {#}]] & /@ expanded;
+    If[Total[Length /@ terms] > 65536 || !FreeQ[terms, _Real],
+      Throw[Missing["TypedAtomExpansionGuard"], tag]];
+    scalar[term_] := scalar[term] = Times @@ Select[
+      If[Head[term] === Times, List @@ term, {term}], NumericQ[#] &&
+        Precision[#] === Infinity && residueFiniteQ[#] &];
+    monomial[term_] := monomial[term] = Cancel[term/scalar[term]];
+    atoms = DeleteDuplicates[monomial /@ Flatten[terms, 1]];
+    If[Length[atoms] > 4096 || atoms === {}, Throw[Missing["TypedAtomCatalogGuard"], tag]];
+    positions = AssociationThread[atoms, Range[Length[atoms]]];
+    coefficients = GroupBy[({positions[[Key[monomial[#]]]], scalar[#]} &) /@ #,
+      First -> Last, Total] & /@ terms;
+    entries = Flatten[MapIndexed[Function[{row,index}, KeyValueMap[
+      ({First[index],#1} -> #2) &, row]], coefficients], 1];
+    sourceMap = SparseArray[entries, {Length[parts], Length[atoms]}];
+    reconstruction = MapThread[TrueQ[Expand[#1-#2] === 0] &, {parts, sourceMap.atoms}];
+    If[!And @@ reconstruction, Throw[Missing["UnverifiedTypedAtomReconstruction"], tag]];
+    jetStarted = AbsoluteTime[];
+    Do[If[remaining[] <= 0, Throw[Missing["TypedAtomTimeConstraint"], tag]];
+      mapped = residueEvaluateChart[atom, chart, rules];
+      report = highEnergyLaurentJetCoefficients[mapped, variable, spins, {}, order,
+        Max[12,order+8], Min[5, Max[0.000001,remaining[]]]];
+      If[MatchQ[report, Failure["JetUncertifiedAtomSeries", _Association]], Throw[report, tag]];
+      If[!highEnergyLaurentJetVerifiedQ[report, variable, spins, {}, order],
+        Throw[Missing["UnverifiedTypedAtomJet"], tag]];
+      AppendTo[atomJets, First[report["CoefficientJets"]]];
+      certificates = Join[certificates, Lookup[report,"ZeroAssumptionCertificates",{}]];
+      AppendTo[atomCertificates, KeyTake[report, {"ComponentCount", "RequestedOrder",
+        "FullCoefficientCoverage", "FullAffineReconstruction", "Certificate"}]];
+      completed++, {atom, atoms}];
+    jetSeconds = AbsoluteTime[] - jetStarted;
+    (* Every atom's complete jet has passed before any finite coefficient is
+       extracted. Fractional powers remain unsupported, rather than ignored. *)
+    finite[jetRecord_Association] := Module[{out = <||>},
+      KeyValueMap[Function[{spin,jet},
+        If[Head[jet] === SeriesData,
+          data = List @@ jet;
+          Do[power = (data[[4]]+j-1)/data[[6]]; value = data[[3,j]];
+            If[value =!= 0 && !IntegerQ[power], Throw[Missing["NonIntegerTypedAtomLaurentPower"], tag]];
+            If[value =!= 0 && power < Ceiling[threshold], AssociateTo[out,{power,spin}->value]],
+            {j,Length[data[[3]]]}],
+          If[jet =!= 0,
+            If[!FreeQ[jet,variable], Throw[Missing["UnexpandedTypedAtomJet"], tag]];
+            If[0 < Ceiling[threshold], AssociateTo[out,{0,spin}->jet]]]]], jetRecord]; out];
+    coefficientRows = finite /@ atomJets;
+    keys = Union @@ (Keys /@ coefficientRows);
+    If[keys === {}, Return[<|"Status"->"COMPLETE", "Rows"->{}, "RowKeys"->{},
+      "Method"->"ExactTypedAffineAtomsBeforeEnergyMapping",
+      "OriginalCoordinates"->unknowns, "AtomCount"->Length[atoms],
+      "ExactAffineReconstruction"->True, "FullCoefficientCoverage"->True,
+      "ZeroAssumptionCertificates"->certificates|>]];
+    keyPositions = AssociationThread[keys,Range[Length[keys]]];
+    atomMatrix = SparseArray[Flatten[MapIndexed[Function[{row,index},KeyValueMap[
+      ({First[index],keyPositions[[Key[#1]]]}->#2)&,row]],coefficientRows],1],
+      {Length[atoms],Length[keys]}];
+    composeStarted = AbsoluteTime[];
+    matrix = Transpose[Normal[sourceMap.atomMatrix]];
+    composeSeconds = AbsoluteTime[]-composeStarted;
+    canonical = completionCanonicalNumericCoefficientMatrix[matrix, Max[0.000001,remaining[]]];
+    If[!AssociationQ[canonical] || Lookup[canonical,"Status",None] =!= "COMPLETE",
+      Throw[Missing["UncertifiedTypedAtomNumericComposition"],tag]];
+    matrix = canonical["Matrix"];
+    rows = Map[First[#]+Rest[#].unknowns&,matrix];
+    selected = Flatten[Position[rows,Except[0],{1},Heads->False]];
+    <|"Status"->"COMPLETE", "Rows"->rows[[selected]], "RowKeys"->keys[[selected]],
+      "Method"->"ExactTypedAffineAtomsBeforeEnergyMapping",
+      "OriginalCoordinates"->unknowns, "SourceParts"->Length[parts], "AtomCount"->Length[atoms],
+      "CompletedAtoms"->completed, "ExactAffineReconstruction"->True,
+      "FullCoefficientCoverage"->True, "AtomJetSeconds"->jetSeconds,
+      "ExactCompositionSeconds"->composeSeconds,
+      "ZeroAssumptionCertificates"->certificates,
+      "NumericComposition"->KeyDrop[canonical,"Matrix"],
+      "Certificate"-><|"EveryOriginalAffinePartReconstructed"->And@@reconstruction,
+        "ConstantPartIncluded"->True, "AllOriginalCoordinatesRetained"->True,
+        "NoIndependentAtomCorrectionParameters"->True,
+        "AllAtomJetCertificatesVerified"->True, "NormalOnlyAfterFullCoverage"->True,
+        "SameConservedEnergyChartForAllAtoms"->True,
+        "NumericCoefficientReplay"->canonical["Certificate"]|>|>
+  ],tag];
+  result = Internal`WithLocalSettings[Null,
+    TimeConstrained[MemoryConstrained[work[],805306368,Missing["TypedAtomMemoryGuard"]],
+      seconds,Missing["TypedAtomTimeConstraint"]], Clear[scalar,monomial]];
+  If[AssociationQ[result],Join[result,<|"ElapsedTime"->AbsoluteTime[]-started|>],result]
+];
+
 completionHEEnergyConstraints[trial_, unknowns_List, metadata_Association,
     samples_Integer, seed_Integer, rules_List, bound_, callback_, enabled_] := Catch[Module[
   {rows = {}, charts = {}, chart, mapped, coefficients, workingTrial = trial,
-   workingUnknowns = unknowns, partial, restriction, priorRules, reductions = {}},
+   workingUnknowns = unknowns, partial, restriction, priorRules, reductions = {}, atomic},
   partial = <|"Status" -> If[unknowns === {}, "COMPLETE", "UNDERDETERMINED"],
     "SolutionRules" -> {}, "FreeParameters" -> unknowns, "Rank" -> 0, "Diagnostics" -> {}|>;
   Do[
@@ -16348,16 +16501,25 @@ completionHEEnergyConstraints[trial_, unknowns_List, metadata_Association,
     chart = highEnergyAutomaticChart[workingTrial, metadata, sample, seed, rules];
     If[FailureQ[chart], Throw[<|"Status" -> "UNRESOLVED", "Equations" -> rows,
       "Samples" -> charts, "Diagnostics" -> {chart}|>]];
-    mapped = residueEvaluateChart[workingTrial, chart, rules];
-    coefficients = completionHELaurentRows[mapped, chart["PoleVariable"],
-      chart["SpinVariables"], workingUnknowns, -2 bound];
+    atomic = If[completionHEAffineAtomLaurentEligibleQ[workingTrial,workingUnknowns,metadata],
+      completionHEAffineAtomLaurentRows[workingTrial,chart,rules,workingUnknowns,-2 bound,60],
+      Missing["ExistingEnergyExpansionPreferred"]];
+    If[MatchQ[atomic,Failure["JetUncertifiedAtomSeries",_Association]],
+      Throw[<|"Status"->"UNRESOLVED","Equations"->rows,"Samples"->charts,"Diagnostics"->{atomic}|>]];
+    coefficients = If[AssociationQ[atomic] && Lookup[atomic,"Status",None]==="COMPLETE",
+      atomic["Rows"],
+      mapped = residueEvaluateChart[workingTrial, chart, rules];
+      completionHELaurentRows[mapped, chart["PoleVariable"],
+        chart["SpinVariables"], workingUnknowns, -2 bound]];
     If[FailureQ[coefficients], Throw[<|"Status" -> "UNRESOLVED", "Equations" -> rows,
       "Samples" -> charts, "Diagnostics" -> {coefficients}|>]];
     rows = Join[rows, coefficients];
     AppendTo[charts, <|"Sample" -> sample, "Chart" -> chart,
       "EquationCount" -> Length[coefficients], "OriginalCorrectionCoordinates" -> unknowns,
       "WorkingCorrectionCoordinates" -> workingUnknowns,
-      "PriorAffineRestrictionRules" -> priorRules|>];
+      "PriorAffineRestrictionRules" -> priorRules,
+      "LaurentExpansion" -> If[AssociationQ[atomic],KeyDrop[atomic,{"Rows","RowKeys"}],
+        <|"Method"->"ExistingWholeMappedFamily","TypedAtomAttempt"->atomic|>]|>];
     restriction = completionHEEnergyAffineRestriction[trial, unknowns, partial,
       coefficients, rows, 2];
     If[AssociationQ[restriction] && Lookup[restriction, "Status", None] === "INCONSISTENT",
@@ -18875,6 +19037,91 @@ completionHEIdentityProofBudget[family_, parameters_List, directions_, seconds_]
 (* A complete projected source union may exceed a lightweight initial cap.
    Reuse it only under the public Automatic ceiling, after exact formal
    dependency removal. No sampled rank or discarded physical direction enters. *)
+(* A source coordinate can contain hundreds of ordinary mass partners. Reduce
+   complete groups before fitting it, rather than promoting its expanded terms
+   to independent unknowns. Group keys preserve every inverse propagator and
+   every non-mass coupling. Only declared EXTERNAL masses are omitted from the
+   key; they are never omitted from the expression passed to the reducer. *)
+completionHEOrdinarySourceGroupKey[term_, externalRules_List] := Module[
+  {factors, propagators, scalar, masses, spectator, pieces},
+  factors = If[Head[term] === Times, List @@ term, {term}];
+  propagators = Times @@ Select[factors, MatchQ[#, Power[_PropDen, _Integer?Negative]] &];
+  scalar = Times @@ Select[factors, rspScalarQ[#] && FreeQ[#, _PropDen] &];
+  masses = DeleteCases[DeleteDuplicates[Last /@ preparationExternalRules[externalRules]], _?NumberQ];
+  spectator = If[masses === {}, scalar, scalar /. Thread[masses -> 1]];
+  pieces = If[Head[spectator] === Times, List @@ spectator, {spectator}];
+  {propagators, Times @@ DeleteCases[pieces, _?NumberQ]}
+];
+
+completionHEOrdinarySourceColumn[expression_, rules_List, seconds_] := Module[
+  {external = preparationExternalRules[rules], started = AbsoluteTime[], expanded, terms,
+   groups, sums, current, candidate = expression, completed = 0, replay = False,
+   outcome, remaining, count = 0, originalLeaves = LeafCount[expression], report},
+  remaining[] := Max[0, seconds - (AbsoluteTime[] - started)];
+  report[] := <|"Expression" -> candidate,
+    "Status" -> If[candidate === expression, "UNCHANGED", "IMPROVED"],
+    "OriginalLeaves" -> originalLeaves, "ReducedLeaves" -> LeafCount[candidate],
+    "Groups" -> count, "CompletedGroups" -> completed,
+    "ExactFormalRegrouping" -> replay,
+    "ExternalMassRules" -> external, "InternalOnShellConditions" -> {},
+    "CoefficientCoordinatesSplit" -> False,
+    "Reduction" -> "OrdinarySpinorProductsAndDeclaredExternalMassPartners",
+    "TimedOut" -> TrueQ[remaining[] <= 0], "ElapsedTime" -> AbsoluteTime[] - started|>;
+  If[!TrueQ[seconds > 0] || external === {} ||
+      !preparationMassRulesConsistentQ[external] || !residueFiniteQ[expression] ||
+      originalLeaves > 200000 || rspSandwichExpansionCount[expression] > 4096,
+    Return[report[]]];
+  outcome = TimeConstrained[MemoryConstrained[
+    expanded = preparationProtectedDenominators[expression, Expand];
+    terms = If[Head[expanded] === Plus, List @@ expanded, If[expanded === 0, {}, {expanded}]];
+    If[Length[terms] <= 4096,
+      groups = Values[GroupBy[terms, completionHEOrdinarySourceGroupKey[#, external] &]];
+      count = Length[groups];
+      If[count <= 64,
+        sums = Total /@ groups;
+        replay = TrueQ[Expand[expanded - Total[sums]] === 0];
+        If[replay,
+          current = sums;
+          Do[If[remaining[] <= 0, Break[]];
+            If[rspSandwichExpansionCount[sums[[i]]] <= 256,
+              current[[i]] = TimeConstrained[MemoryConstrained[
+                preparationSpinorProducts[sums[[i]], external], 268435456, sums[[i]]],
+                Min[3, Max[0.000001, remaining[]]], sums[[i]]];
+              If[!residueFiniteQ[current[[i]]], current[[i]] = sums[[i]]]];
+            completed++;
+            With[{proposal = Total[current]},
+              If[residueFiniteQ[proposal] && LeafCount[proposal] < LeafCount[candidate],
+                candidate = proposal]], {i, count}]]]];
+    True, 805306368, False], seconds, False];
+  report[]
+];
+
+completionHEOrdinarySourceEligibleQ[basis_List, metrics_Association] :=
+  Length[basis] > 0 && Lookup[metrics, "CoherentComponents", 1] >= 27 &&
+    AnyTrue[Values[Lookup[metrics, "CoherentSpinDegrees", <||>]], # >= 2 &] &&
+    Total[LeafCount /@ basis] >= 100000 && Max[LeafCount /@ basis] >= 2500;
+
+completionHEOrdinarySourceColumns[basis_List, rules_List, seconds_, callback_: None] := Module[
+  {started = AbsoluteTime[], result = basis, leaves = LeafCount /@ basis,
+   indices, records = {}, item, remaining, count = 0},
+  remaining[] := Max[0, seconds - (AbsoluteTime[] - started)];
+  indices = SortBy[Select[Range[Length[basis]], leaves[[#]] >= 2500 &], -leaves[[#]] &];
+  Do[If[remaining[] <= 0, Break[]]; count++;
+    If[callback =!= None, callback[<|"Phase" -> "Normalizing retained source columns",
+      "Current" -> count, "Total" -> Length[indices], "Column" -> index|>]];
+    item = completionHEOrdinarySourceColumn[basis[[index]], rules, Min[8, remaining[]]];
+    If[AssociationQ[item] && residueFiniteQ[item["Expression"]], result[[index]] = item["Expression"]];
+    AppendTo[records, Join[<|"Column" -> index|>, KeyDrop[item, "Expression"]]], {index, indices}];
+  <|"Basis" -> result, "OriginalBasis" -> basis,
+    "Status" -> If[result === basis, "UNCHANGED", "IMPROVED"],
+    "OriginalColumns" -> Length[basis], "RetainedColumns" -> Length[result],
+    "OriginalLeaves" -> Total[leaves], "ReducedLeaves" -> Total[LeafCount /@ result],
+    "ColumnRecords" -> records, "ColumnCoordinatesPreserved" -> True,
+    "ExpandedTermsAssignedIndependentCoefficients" -> False,
+    "InternalOnShellConditions" -> {}, "Fallback" -> "OriginalColumnOnGuardOrTimeout",
+    "ElapsedTime" -> AbsoluteTime[] - started|>
+];
+
 completionHEMaterializedBasisAdmission[basis_List,inherited_List,limit_Integer,ceiling_,seconds_] := Module[
   {reduced=basis,admission,before=Length[basis]},
   If[IntegerQ[ceiling] && Length[basis]+Length[inherited]>limit && TrueQ[seconds>0],
@@ -18898,7 +19145,8 @@ completionHighEnergyWork[input_, channels_List, model_List, settings_Association
    retainedProofs, proofReasons, establishedNonzero, proofSummary, familyProofBudget,
    sourceRemainders, automaticBasis = Missing["ExplicitBasis"], proofModel,
    sequentialReduction, sequentialReductions = <||>, retainCurrentFamily, reciprocalFirst = False,
-   beforeChecks, reciprocalData, basisAdmission, effectiveLimit=settings["MaxCorrectionTerms"]},
+   beforeChecks, reciprocalData, basisAdmission, effectiveLimit=settings["MaxCorrectionTerms"],
+   sourceNormalization, sourceMetrics},
   report = <|"Stage" -> "HighEnergy", "Status" -> "UNRESOLVED",
     "Amplitude" -> original, "OriginalExpression" -> Lookup[normalized, "OriginalExpression", original],
     "ExternalMassRules" -> normalized["ExternalMassRules"],
@@ -18991,6 +19239,16 @@ completionHighEnergyWork[input_, channels_List, model_List, settings_Association
   basisAdmission=completionHEMaterializedBasisAdmission[basis,inheritedBasis,effectiveLimit,
     Lookup[settings,"AutomaticCorrectionTermCeiling",None],Min[5,settings["TimeConstraint"]/20]];
   basis=basisAdmission["Basis"];effectiveLimit=basisAdmission["EffectiveMaxCorrectionTerms"];
+  If[settings["CorrectionBasis"] === Automatic && basis =!= {},
+    sourceMetrics = amplitudeResourceMetrics[<|"Amplitude" -> Total[basis],
+      "ExternalMassRules" -> normalized["ExternalMassRules"]|>];
+    If[completionHEOrdinarySourceEligibleQ[basis, sourceMetrics],
+      sourceNormalization = completionHEOrdinarySourceColumns[basis,
+        normalized["ExternalMassRules"], Min[120, settings["TimeConstraint"]/5],
+        Function[event, completionProgress[callback, enabled, Join[<|"Stage" -> "HighEnergy"|>, event]]]];
+      basis = sourceNormalization["Basis"];
+      report = Join[report, <|"OrdinarySourceNormalization" -> KeyDrop[sourceNormalization, "Basis"]|>];
+      retain[report]]];
   report=Join[report,<|"EffectiveMaxCorrectionTerms"->effectiveLimit,
     "BasisAdmission"->KeyDrop[basisAdmission,"Basis"],
     "CapChanges"->(basisAdmission["CapChanges"] /. "ReuseCompleteExchangeUnion"->"ReuseCompleteHighEnergyUnion")|>];
@@ -19374,6 +19632,8 @@ ConstructAmplitude::usage = ConstructAmplitude::usage <>
   " RandomSeed -> Automatic chooses one time-based run seed. The stages derive their seeds from that value, with explicit stage overrides honored. Details records RandomSeed and PrintReport prints it with the final timing; an explicit integer reproduces the sample choices.";
 ConstructAmplitude::usage = ConstructAmplitude::usage <>
   " For larger AllSpurious lines with equal-helicity colorless vectors and a supplied FeynmanModel, a bounded terminal-pair and subset current uses the certified cubic vertices, external Dirac identities and momentum conservation. It keeps every internal propagator off shell and resolves all auxiliary references. Every original residue, apparent spurious pole, high-energy condition and independent Feynman comparison must pass before the candidate is returned.";
+ConstructAmplitude::usage = ConstructAmplitude::usage <>
+  " If an automatic high-energy timeout retains a fully solved point with every affine coordinate classified, a separate Validating retained HE candidate stage may use the remaining overall budget. It rechecks every original parameter assignment with the normal independent seeds and sample counts, and leaves the original child UNRESOLVED in Details. Explicit high-energy limits, unfinished classifications and known failed held-out checks cannot use this recovery. Final preparation and final checking remain required.";
 ConstructAmplitude::args = "Expected a process with at least four model particle names, a diagram model, a constructive factorization model, and valid construction options.";
 
 Options[ConstructAmplitude] = {
@@ -19423,6 +19683,99 @@ constructPreparedFamily[report_Association, pair_List] := Module[
   Join[report, <|"Amplitude" -> prepared, "FamilyAmplitude" -> family,
     "ExternalMassRules" -> First[pair],
     "Correction" -> Lookup[report, "Correction", 0] + prepared - old|>]
+];
+
+(* A timed-out automatic child may have finished its entire exact fit and
+   classified every coordinate, yet lack independent validation. Such a point
+   can only be admitted to a NEW parent-budget validation stage. Its original
+   child status remains UNRESOLVED. Use the recorded fit parameter assignments
+   and the original independent seeds; resolving a full numerical parameter
+   list again would freeze primitive variations and silently drop tests. *)
+constructRetainedHighEnergyCheckpoint[h_] := Module[
+ {deny,policy,requested,resolved,groups,names={"Physical","HighEnergy","Spurious","Reference"},
+  assignments,sets,linear,oldFree,prune,removed,certificates,knownChecks,failed},
+ deny[reason_] := Failure["RetainedHECheckpointNotAdmitted",<|"Reason"->reason|>];
+ If[!AssociationQ[h] || Lookup[h,"Stage",None]=!="HighEnergy" ||
+    Lookup[h,"Status",None]=!="UNRESOLVED",Return[deny["NotUnresolvedHighEnergyStage"]]];
+ policy=Lookup[h,"ResourcePolicy",<||>];requested=Lookup[policy,"Requested",<||>];resolved=Lookup[policy,"Resolved",<||>];
+ If[Lookup[requested,"TimeConstraint",None]=!=Automatic,Return[deny["ExplicitHighEnergyTimeConstraint"]]];
+ If[!MemberQ[Lookup[h,"Diagnostics",{}],
+    "High-energy completion exceeded TimeConstraint. The best retained candidate is provided for inspection, not claimed complete."],
+   Return[deny["NotRetainedStageTimeout"]]];
+ If[Lookup[h,"FreeParameters",None]=!={} || Lookup[h,"RemainingBasis",None]=!={} ||
+    !KeyExistsQ[h,"Amplitude"] || Lookup[h,"FamilyAmplitude",None]=!=h["Amplitude"] ||
+    !residueFiniteQ[h["Amplitude"]] ||
+    !preparationScalarExternalRulesQ[Lookup[h,"ExternalMassRules",{}]],
+   Return[deny["NotFullyClassifiedFinitePoint"]]];
+ groups=Lookup[h,"ConstraintData",<||>];
+ If[!AssociationQ[groups] || !ContainsAll[Keys[groups],names] ||
+    !AllTrue[Lookup[groups,names],AssociationQ[#]&&Lookup[#,"Status",None]==="COMPLETE"&],
+   Return[deny["MissingCompletedConstraintGroup"]]];
+ assignments=Lookup[#,"ParameterAssignments",{}]&/@Lookup[groups,names];
+ If[AnyTrue[assignments,!ListQ[#]||#==={}||!AllTrue[#,AssociationQ[#]&&
+      ListQ[Lookup[#,"ParameterRules",None]]&&AssociationQ[Lookup[#,"Report",None]]&&
+      Lookup[#["Report"],"Status",None]==="COMPLETE"&]&],
+   Return[deny["UnrecordedOrIncompleteParameterAssignments"]]];
+ sets=Lookup[#,"ParameterRules"]&/@assignments;
+ If[!AllTrue[Rest[sets],SameQ[#,First[sets]]&],Return[deny["DifferentConstraintParameterAssignments"]]];
+ linear=Lookup[h,"LinearSystem",<||>];oldFree=Lookup[linear,"FreeParameters",None];
+ If[!AssociationQ[linear] || !MemberQ[{"COMPLETE","UNDERDETERMINED"},Lookup[linear,"Status",None]] ||
+    !ListQ[oldFree],Return[deny["NoSolvedExactLinearSystem"]]];
+ If[oldFree=!={},
+   prune=Lookup[h,"SolvedFamilyIdentityReduction",<||>];removed=Lookup[prune,"RemovedParameters",{}];
+   certificates=Lookup[prune,"Certificates",{}];
+   If[!TrueQ[Lookup[prune,"AffineFamily",False]] || Lookup[prune,"FreeParameters",None]=!={} ||
+      Sort[removed]=!=Sort[oldFree] || !TrueQ[Lookup[Lookup[prune,"FamilyRepresentationCertificate",<||>],
+       "OnlyCertifiedZeroDirectionsRemoved",False]] ||
+      !AllTrue[oldFree,Function[parameter,AnyTrue[certificates,
+        AssociationQ[#]&&Lookup[#,"Parameter",None]===parameter&&Lookup[#,"Status",None]==="PROVED_ZERO"&&
+        Lookup[#,"InternalOnShellConditions",None]==={}&]]],Return[deny["UnclassifiedOrUnprovedRemainingCoordinate"]]]];
+ knownChecks=KeyTake[h,{"AfterReport","ValidationReports","FamilyValidation"}];
+ failed=Cases[knownChecks,a_Association /; MemberQ[{"FAIL","Opp Sign"},Lookup[a,"Status",None]],Infinity];
+ If[failed=!={},Return[deny["KnownFailedIndependentValidation"]]];
+ If[!IntegerQ[Lookup[h,"RandomSeed",None]] || !IntegerQ[Lookup[resolved,"ValidationSamples",None]] ||
+      resolved["ValidationSamples"]<=0 || !NumericQ[Lookup[h,"ExpectedPower",None]],
+   Return[deny["MissingExactValidationSettings"]]];
+ <|"Status"->"ELIGIBLE","Amplitude"->h["Amplitude"],"ExternalMassRules"->h["ExternalMassRules"],
+   "ValidationParameterAssignments"->First[sets],"ValidationSamples"->resolved["ValidationSamples"],
+   "HighEnergyBound"->h["ExpectedPower"],"RandomSeed"->h["RandomSeed"],
+   "UniqueWithinRetainedSourceFamily"->True,"OriginalHighEnergyStatus"->h["Status"],
+   "ValidationSeeds"->Table[h["RandomSeed"]+104729 i,{i,Length[First[sets]]}],
+   "Certificate"-><|"AllFourFitGroupsComplete"->True,"EveryRetainedCoordinateClassified"->True,
+     "RemovedCoordinatesProvedByOrdinaryExternalIdentities"->True,"NoKnownFailedIndependentCheck"->True,
+     "OriginalFittedParameterAssignmentsRetained"->True,"NoChildCompletionClaimed"->True|>|>
+];
+
+constructValidateRetainedHighEnergy[h_,channels_List,model_List,seconds_,parallel_:Automatic,maxKernels_:Automatic,callback_:Automatic] := Module[
+ {admission=constructRetainedHighEnergyCheckpoint[h],began=AbsoluteTime[],remaining,reports={},
+  normalized,settings,report,seed,assignments,index=1,status="UNRESOLVED"},
+ If[FailureQ[admission],Return[admission]];
+ remaining[]:=Max[0,seconds-(AbsoluteTime[]-began)];
+ normalized=<|"ExternalMassRules"->admission["ExternalMassRules"]|>;
+ assignments=admission["ValidationParameterAssignments"];
+ While[index<=Length[assignments]&&remaining[]>0.001,
+   settings=<|"ParameterRules"->assignments[[index]],
+     "ValidationSamples"->admission["ValidationSamples"],"HighEnergyBound"->admission["HighEnergyBound"],
+     "Parallelization"->parallel,"MaxKernels"->maxKernels,"TimeConstraint"->remaining[]|>;
+   seed=admission["ValidationSeeds"][[index]];
+   completionProgress[callback,True,<|"Stage"->"RetainedHighEnergyValidation",
+     "Phase"->"IndependentValidation","Completed"->index-1,"Total"->Length[assignments]|>];
+   report=TimeConstrained[completionHECheck[admission["Amplitude"],
+     normalized,channels,model,settings,seed],Max[0.000001,remaining[]],Missing["ParentValidationTimeConstraint"]];
+   AppendTo[reports,<|"ParameterRules"->assignments[[index]],"RandomSeed"->seed,
+     "Samples"->admission["ValidationSamples"],"Report"->report|>];
+   If[!constructAllChecksPassQ[report,{admission["ExternalMassRules"],admission["Amplitude"]},
+       channels,model,None],Break[]];index++];
+ If[Length[reports]===Length[assignments] && AllTrue[reports,
+    constructAllChecksPassQ[#["Report"],{admission["ExternalMassRules"],admission["Amplitude"]},
+      channels,model,None]&],status="COMPLETE"];
+ <|"Stage"->"Validating retained HE candidate","Status"->status,
+   "OriginalHighEnergyStatus"->Lookup[h,"Status",None],"Amplitude"->admission["Amplitude"],
+   "ExternalMassRules"->admission["ExternalMassRules"],"ValidationReports"->reports,
+   "RequestedParameterAssignments"->Length[assignments],"CompletedParameterAssignments"->Length[reports],
+   "CandidateAdmission"->KeyDrop[admission,{"Amplitude","ExternalMassRules","ValidationParameterAssignments"}],
+   "TimeBudgetScope"->"RemainingOverallConstructionBudgetNotExpiredChildStage",
+   "ElapsedSeconds"->AbsoluteTime[]-began|>
 ];
 
 (* A bounded heuristic search need not finish to supply a valid snapshot.
@@ -20427,7 +20780,8 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
    started = AbsoluteTime[], stageStarted, currentStage = "Starting", lastEvent = <||>,
    lastPrinted = 0., timings = {}, stages = <||>, output, enabled, callback, printReport,
    diagramData, diagramPairs, diagramPreparation, channels, channelPreparation,
-   factorization, factorizedPair, highEnergy, finalPair = Missing["NotConstructed"],
+   factorization, factorizedPair, highEnergy, highEnergyRecovery, recoveryAdmission,
+   finalPair = Missing["NotConstructed"],
    feynmanModel, feynmanDiagrams, feynmanPairs, feynmanPrepared,
    benchmark = None, checkReport = Missing["NotRun"], external, checkSettings,
    result, report, failure = None, tag = Unique["amplitudeConstruction"],
@@ -20917,11 +21271,21 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
       completed = True; Throw[finalPair, tag]];
     highEnergy = completeEnergy["Completing high-energy behavior"];
     highEnergy = recoverReciprocalReferences[];
-    If[AssociationQ[highEnergy] && Lookup[highEnergy, "Status", None] =!= "COMPLETE" &&
-        validateRepresentative[highEnergy, "HighEnergy", remaining[]],
-      completed = True; Throw[finalPair, tag]];
-    require[highEnergy, {"COMPLETE"}];
-    finalPair = {highEnergy["ExternalMassRules"], highEnergy["Amplitude"]};
+    recoveryAdmission=If[Lookup[constructRuleOptions[options["HighEnergyOptions"]],
+        "TimeConstraint",Automatic]===Automatic,
+      constructRetainedHighEnergyCheckpoint[highEnergy],Missing["ExplicitHighEnergyLimit"]];
+    If[AssociationQ[recoveryAdmission] && Lookup[recoveryAdmission,"Status",None]==="ELIGIBLE",
+      highEnergyRecovery=run["Validating retained HE candidate",
+        constructValidateRetainedHighEnergy[highEnergy,channels,factorizationModel,remaining[],
+          Lookup[constructRuleOptions[options["HighEnergyOptions"]],"Parallelization",options["Parallelization"]],
+          Lookup[constructRuleOptions[options["HighEnergyOptions"]],"MaxKernels",options["MaxKernels"]],child]];
+      require[highEnergyRecovery,{"COMPLETE"}];
+      finalPair={highEnergyRecovery["ExternalMassRules"],highEnergyRecovery["Amplitude"]},
+      If[AssociationQ[highEnergy] && Lookup[highEnergy, "Status", None] =!= "COMPLETE" &&
+          validateRepresentative[highEnergy, "HighEnergy", remaining[]],
+        completed = True; Throw[finalPair, tag]];
+      require[highEnergy, {"COMPLETE"}];
+      finalPair = {highEnergy["ExternalMassRules"], highEnergy["Amplitude"]}];
     finalPair = run["Preparing final amplitude", prepareFinal[finalPair]];
     require[finalPair];
     If[!retainFinalReferences && !FreeQ[Last[finalPair], (Spinor | SpinorHat)["Xi", ___]],

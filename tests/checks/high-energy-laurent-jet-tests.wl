@@ -71,6 +71,16 @@ check["mixed degree-one and degree-two legs qualify without species names",
 check["small degree-two tensors still retain the established engine",
  !ConstructiveDiagrams`Private`highEnergyLaurentJetEligibleQ[(1+ju)^2(1+jv)^2(1+jw)^2,{ju,jv,jw}]];
 Clear[largeJetField,fermionTensor];
+jetBoundaryTensor=(1+ju)^2(1+jv)^2(1+jw)^2;
+jetBoundaryFixture[count_Integer]:=(jetBoundaryField@@Range[count-LeafCount[jetBoundaryTensor]-1])jetBoundaryTensor;
+belowBoundary=jetBoundaryFixture[99999];atBoundary=jetBoundaryFixture[100000];
+check["threshold fixtures have exactly the intended mapped leaf inventories",
+ LeafCount[belowBoundary]===99999&&LeafCount[atBoundary]===100000];
+check["a higher-spin tensor below the measured work threshold retains the old route",
+ !ConstructiveDiagrams`Private`highEnergyLaurentJetEligibleQ[belowBoundary,{ju,jv,jw}]];
+check["a higher-spin tensor at the measured threshold admits certified jets",
+ ConstructiveDiagrams`Private`highEnergyLaurentJetEligibleQ[atBoundary,{ju,jv,jw}]];
+Clear[belowBoundary,atBoundary];
 limited=ConstructiveDiagrams`Private`highEnergyLaurentJetCoefficients[Sum[jc[i]ju,{i,18}],jt,js,Table[jc[i],{i,18}],0,12,1];
 check["bounded dense-affine admission returns explicit failure",FailureQ[limited]&&limited[[1]]==="JetAffineWorkLimit"];
 Print["CHECKS: ",checks,"; FAILURES: ",Length[failures]];If[failures=!={},Print[failures]];If[failures=!={},Quit[1]];Print["HEPCAT_TEST_COMPLETED:high-energy-laurent-jet-tests.wl"];Quit[0];

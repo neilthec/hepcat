@@ -1194,6 +1194,21 @@ off-shell Feynman diagrams, with no supplied six-point answer.
 An explicit negative case checks that unpaired Dirac lower amplitudes are
 reported as unsupported before any invalid sign enters an amplitude.
 
+`completion-numeric-matrix-tests.wl` checks exact coefficient-matrix
+extraction for affine completion systems. Repeated algebraic entries share
+certified exact normalization, while coupled rows, tiny exact values and all
+original coordinates are preserved. Non-numerical and approximate inputs retain
+the established solver route, and the exact matrix reconstruction is replayed.
+
+`retained-high-energy-validation-tests.wl` checks the constructor's separate
+validation stage for a fully solved point retained by an automatic high-energy
+timeout. Every fit group and coordinate classification must be complete. The
+original parameter assignments, seeds and held-out sample counts are retained;
+explicit child limits, known failed checks, unfinished identity proofs and an
+exhausted parent deadline block selection. The original child remains
+unresolved, and all requested independent assignments must pass before the
+wrapper continues with its ordinary final preparation and checks.
+
 `high-energy-laurent-jet-tests.wl` checks the shared exact Laurent-jet engine
 used before spin-polynomial convolution. Independent native-series oracles
 cover every affine and spin coefficient; adversarial cases include a positive
@@ -1204,6 +1219,21 @@ points are exercised. The bounded tensor-work admission preserves the
 established path for small tensors and for tensors whose coherent legs all
 have degree one, including six-fermion QED. Higher-degree mixed-spin tensors
 are tested independently of particle names.
+
+`high-energy-source-normalization-tests.wl` checks bounded ordinary reduction
+of large retained source columns. Grouping keeps the original propagators and
+couplings, bringing only declared external-mass partners together. Every column
+keeps its coefficient position, including a column that reduces to zero. Tests
+cover external-only shell scope, original-column fallback and progress records.
+
+`high-energy-affine-atom-tests.wl` checks the exact shared-atom route for large
+affine vector tensors. Typed source parts reconstruct exactly before mapping;
+all atoms use one energy chart and strict Laurent-jet coverage. The final rows
+retain the original coupled coordinates and constant offset. Independent native
+series tests cover more than sixteen unknowns, tiny exact coefficients, allowed
+boundary powers, nonlinear families, fractional powers, deadlines and terminal
+uncertified scalar-series assumptions. Six degree-one fermion legs keep their
+established energy engine.
 
 `high-energy-laurent-rows-tests.wl` checks large affine-family coefficient
 expansion without splitting coupled unknown equations. It covers exact tiny

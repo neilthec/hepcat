@@ -91,6 +91,17 @@ validation of that expression, not a uniqueness proof or a change to the \
 strict behavior of ", ButtonBox["CompleteHighEnergy", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/CompleteHighEnergy"],
      " on its own."}], "Notes"],
+  Cell[TextData[{"An automatic high-energy stage can finish its exact fit and \
+prove every remaining direction zero, then reach its deadline during \
+independent validation. The wrapper may use the remaining overall budget for \
+a separate visible stage, Validating retained HE candidate. Every original \
+fit parameter assignment is rechecked with the normal held-out seeds and \
+sample counts, including all physical poles, apparent spurious poles, \
+high-energy growth and reference independence. The original child stays \
+UNRESOLVED in Details. An explicit high-energy time limit, an unfinished \
+coordinate classification or a known failed held-out check prevents this \
+recovery. Only complete validation allows the ordinary final preparation and \
+final checks to continue."}], "Notes"],
   Cell[TextData[{"For a complete minimal massive fermion line with five or \
 more same-helicity colorless vectors, the AllPhysical pole preference can \
 combine emission subsets using ordinary Dirac and two-dimensional determinant \

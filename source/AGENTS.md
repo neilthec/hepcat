@@ -1461,6 +1461,11 @@ those coordinates in the original family expression. Keep its factorization;
 rebuilding a center plus every derivative direction can needlessly duplicate
 large source expressions. The retained basis and exact certificates remain.
 
+Large retained vector-source columns may first group terms by unchanged physical
+propagators and non-mass couplings, stripping declared external masses only from
+the grouping key. Apply ordinary external identities to the complete groups;
+keep every original column coefficient and original-column fallback. Never turn
+each expanded term into an independent correction parameter in this step.
 Large affine high-energy fits may expand exact scalar coefficients before
 reassembling the spin polynomial. Keep correction unknowns coupled when forming
 equations: a row such as x+y is one equation, not two separate zero coefficients.
@@ -1481,6 +1486,17 @@ content and canonical eligibility must be verified before reuse.
 Every Laurent route, including whole-expression fallbacks, must certify Series
 zero assumptions even when the caller disables their warnings. Never accept a
 quiet fallback after a rejected exact-zero assumption.
+Dense affine energy charts may reuse exact typed monomials before mapping or
+series expansion. Verify the complete original affine reconstruction, retain
+every coefficient coordinate and coherent-spin component, and check each jet's
+coverage before composing the original coupled equations. Sharing work is not
+permission to fit independent coefficients to the monomials. Numerical
+coefficient assembly can create large unevaluated sums of exact numbers. A
+call-local cache may combine distinct numbers with ordinary algebra before the
+linear solve, provided every replacement replays exactly and every row and
+coordinate remains. Do not substitute floating-point tolerances, discard tiny
+exact entries, or infer zero from sampled evaluations. Unsupported work and
+exhausted normalization budgets retain the original route and all obligations.
 Retain the original proof form. Try cheap scalar grouping and bounded
 Schouten identities on that original before ordinary preparation; a form ranked
 best for display can be much harder to certify symbolically. Modest compact
