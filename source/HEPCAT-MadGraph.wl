@@ -8,6 +8,7 @@ ValidateMadGraph::usage = "ValidateMadGraph[directory] independently checks an e
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " Generated projects also expose validate_madgraph(options) and a process_validate_madgraph executable for independent fixed-massless-helicity validation. Specify MadGraphDirectory and MadGraphModel to select the independent installation and UFO theory. MadGraphAllowedParticles -> All retains all model particles; {11,22}, for example, restricts to electrons, positrons and photons using absolute PDG codes. MadGraphParameterMap relates differently named HEPCAT and UFO parameters; MadGraphParameterRules supplies explicit UFO external input values. RunMadGraphValidation -> True builds and runs MadGraphPoints -> 1000 shared points per helicity with MadGraphSeed -> Automatic. Fixed incoming or outgoing helicities are supported, and massive external spins are summed. Numerical mismatches remain FAIL, including losses of floating-point precision. When both reference checks are requested, both run independently even if the first fails. A failed requested check returns Failure with ExportResult retaining both reports and the generated files. Ordinary SPINAS execution does not require MadGraph.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " The same explicit MadGraph configuration also configures a PROC_<ProcessName> numerical process. An ordinary build creates that directory in the compiled export's build directory by default and supplies the exported HEPCAT/SPINAS matrix element to MadEvent integration, unweighting and event output. Build -> True prepares build/PROC_<ProcessName> without generating events. Run its bin/madevent native launcher; no process_madevent executable is created in the build root. The build prints the full HTML and event-output locations. Run and parameter cards adjust cuts, beams, masses and couplings. Fixed massless helicities and summed massive spins retain their specified averaging and symmetry factors. Current numerical coverage is colorless leading-order tree amplitudes; coherent decay sewing, NLO matching and a MadGraph massive-spin basis are not provided. The independent MadGraph validator continues to use MadGraph's own amplitude.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " After preparation, move or copy the complete PROC_<ProcessName> directory, for example PROC_eeAA, and start its bin/madevent program. The prepared directory contains the required HEPCAT/SPINAS amplitude files and libraries and no longer depends on the original exported project or build directory. MadGraph, Python, the Fortran toolchain and system libraries remain external prerequisites.";
+ValidateMadGraph::usage = ValidateMadGraph::usage <> " Derived scalar couplings follow the supplied model definitions. For an explicitly selected sm or sm-full reference, verified tree-level model relations translate e, MW and sin(theta_W) into inverse alpha, Gf and MZ; explicit MadGraphParameterRules override these values. The reference must still supply compatible particle masses, Yukawa interactions and flavor mixing.";
 Options[WriteSPINASProcess] = Join[Options[WriteSPINASProcess], {
   "MadGraphDirectory" -> None, "MadGraphModel" -> None, "MadGraphAllowedParticles" -> All,
   "MadGraphParameterRules" -> Automatic, "MadGraphParameterMap" -> Automatic,
@@ -77,6 +78,33 @@ spinasMadGraphOptionsQ[options_Association] :=
   (options["MadGraphSeed"] === Automatic || IntegerQ[options["MadGraphSeed"]] &&
     0 <= options["MadGraphSeed"] <= 18446744073709551615);
 
+(* The supplied model can use MW, sin(theta_W) and e as its independent inputs,
+   while the explicitly selected standard SM UFO uses MZ, Gf and inverse alpha.
+   Translate only when the model itself verifies those tree-level relations.
+   Arbitrary UFO models and explicitly overridden constraints are left alone. *)
+spinasMadGraphSMInputRules[data_List, options_Association] := Module[
+  {selected = options["MadGraphModel"], names, parameter, ee, sw, mw, mz, gf,
+   expanded, resolved, values, rules, supplied, suppliedNames},
+  If[!StringQ[selected] || !MemberQ[{"sm", "sm-full"}, ToLowerCase[FileNameTake[selected]]],
+    Return[<||>]];
+  names = DeleteDuplicates[Cases[Join[data[[3]], data[[4]]], _ModelParameter, Infinity]];
+  parameter[name_] := With[{matches = Select[names,
+      ToLowerCase[ModelParameterName[#]] === name &]},
+    If[Length[matches] === 1, First[matches], Missing["Absent"]]];
+  {ee, sw, mw, mz, gf} = parameter /@ {"ee", "sw", "mw", "mz", "gf"};
+  If[AnyTrue[{ee, sw, mw, mz, gf}, MissingQ], Return[<||>]];
+  expanded = modelExpandParameterDefinitions[{mz, gf}, data, options["ParameterRules"]];
+  If[FailureQ[expanded] || !TrueQ[Together[expanded[[1]] - mw/Sqrt[1-sw^2]] === 0] ||
+      !TrueQ[Together[expanded[[2]] - ee^2/(4 sw^2 mw^2 Sqrt[2])] === 0], Return[<||>]];
+  resolved = ModelParameterRules[data, options["ParameterRules"]];
+  values = Quiet[N[{4 Pi/ee^2, gf, mz} /. resolved, 24]];
+  If[!AllTrue[values, NumberQ[#] && TrueQ[Im[#] == 0 && Re[#] > 0] &], Return[<||>]];
+  rules = Association[Thread[{"aEWM1", "Gf", "MZ"} -> values]];
+  supplied = Association[Replace[options["MadGraphParameterRules"], Automatic -> {}]];
+  suppliedNames = ToLowerCase /@ Keys[supplied];
+  Join[KeySelect[rules, !MemberQ[suppliedNames, ToLowerCase[#]] &], supplied]
+];
+
 spinasMadGraphConfiguration[ir_Association, data_List, supplied_Association, physical_Association] := Module[
   {options = Join[Association[Options[WriteSPINASProcess]], supplied], root, python, model,
    reasons = {}, normalization, family = TrueQ[Lookup[ir, "Family", False]], helicities, allowed},
@@ -100,7 +128,8 @@ spinasMadGraphConfiguration[ir_Association, data_List, supplied_Association, phy
   <|"Status" -> If[reasons === {}, "AVAILABLE", "UNAVAILABLE"], "Reason" -> StringRiffle[reasons, " "],
     "MadGraphDirectory" -> root, "PythonExecutable" -> python,
     "MadGraphModel" -> If[StringQ[model], model, ""],
-    "ParameterRules" -> Association[Replace[options["MadGraphParameterRules"], Automatic -> {}]],
+    "ParameterRules" -> Join[spinasMadGraphSMInputRules[data, options],
+      Association[Replace[options["MadGraphParameterRules"], Automatic -> {}]]],
     "ParameterMap" -> Association[Replace[options["MadGraphParameterMap"], Automatic -> {}]],
     "PhysicalPDGs" -> physical["PhysicalPDGs"],
     "AllowedParticlePDGs" -> allowed, "LegOrder" -> physical["LegOrder"],

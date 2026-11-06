@@ -68,7 +68,7 @@ s    |S    |h    |     |-Ms*EE/(2*MW*SW)              |<12>+[12]
 b    |B    |h    |     |-Mb*EE/(2*MW*SW)              |<12>+[12]
 u    |U    |h    |     |-Mu*EE/(2*MW*SW)              |<12>+[12]
 c    |C    |h    |     |-Mc*EE/(2*MW*SW)              |<12>+[12]
-t    |T    |h    |     |-Mt*EE/(2*MW*SW)              |<12>+[12]
+t    |T    |h    |     |-Mtp*EE/(2*MW*SW)             |<12>+[12]
 W+   |W-   |h    |     |-EE/(MW*SW)                   |<12>*[12]
 Z    |Z    |h    |     |-EE/(MW*SW)                   |<12>*[12]
 h    |h    |h    |     |-3*EE*Mh^2/(2*MW*SW)          |1

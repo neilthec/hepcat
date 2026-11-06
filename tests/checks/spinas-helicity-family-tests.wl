@@ -251,6 +251,58 @@ sfMasslessFermions = {
      Spinor["Helicity", "Angle", 4], Mom[1], Spinor["Helicity", "Square", 3]]},
   {{"r", "r", "n.-", "n.-"}, sfA[3, 4]}};
 
+sfChiralModel = sfGeneric;
+sfChiralModel[[1]] = Join[sfChiralModel[[1]], {
+  {"left Weyl", "nL", "NL", 904, 1, 0, 0, 1, "L", "n_L", "N_L"},
+  {"right Weyl", "nR", "NR", 905, 1, 0, 0, 1, "R", "n_R", "N_R"}}];
+sfChiralAmplitude = SpinorChain[Spinor["Helicity", "Angle", 3],
+  Mom[1], Spinor["Helicity", "Square", 4]];
+sfChiralEntries = {{{"r", "r", "nL", "NL"}, sfChiralAmplitude}};
+sfChiral = sfExport["family_chiral", sfChiralEntries, sfChiralModel];
+check["a left Weyl species needs one physical outgoing particle-antiparticle branch",
+  AssociationQ[sfChiral] && sfChiral["HelicityConfigurations"] === {{0, 0, 1, -1}} &&
+    sfChiral["InitialSpinAverage"] === 1 && sfChiral["FinalStateSymmetryDivisor"] === 1];
+sfChiralIncoming = sfExport["family_chiral_incoming", {
+  {{"nL", "NL", "r", "r"}, SpinorChain[Spinor["Helicity", "Angle", 1],
+    Mom[3], Spinor["Helicity", "Square", 2]]}}, sfChiralModel];
+check["incoming Weyl particle and antiparticle retain opposite helicities without a spin average",
+  AssociationQ[sfChiralIncoming] &&
+    sfChiralIncoming["HelicityConfigurations"] === {{-1, 1, 0, 0}} &&
+    sfChiralIncoming["InitialSpinAverage"] === 1 &&
+    sfChiralIncoming["FinalStateSymmetryDivisor"] === 2];
+sfRightChiral = sfExport["family_right_chiral", {
+  {{"r", "r", "nR", "NR"}, SpinorChain[Spinor["Helicity", "Square", 3],
+    Mom[1], Spinor["Helicity", "Angle", 4]]}}, sfChiralModel];
+check["right Weyl species reverse both particle and antiparticle helicities",
+  AssociationQ[sfRightChiral] && sfRightChiral["HelicityConfigurations"] === {{0, 0, -1, 1}}];
+sfChiralZero = sfExport["family_chiral_zero", {{{"r", "r", "nL", "NL"}, 0}}, sfChiralModel];
+check["an explicit zero chiral amplitude gets its unique helicities from the model",
+  AssociationQ[sfChiralZero] && sfChiralZero["HelicityConfigurations"] === {{0, 0, 1, -1}}];
+sfChiralWrongPath = sfPath["family_chiral_wrong"];
+sfChiralWrong = WriteSPINASProcess[sfChiralWrongPath,
+  {{{"r", "r", "nL", "NL"}, SpinorChain[Spinor["Helicity", "Square", 3],
+    Mom[1], Spinor["Helicity", "Angle", 4]]}}, sfChiralModel,
+  "ParameterRules" -> sfRules, "SPINASDirectory" -> sfSpinas];
+check["a wrong-chirality amplitude is rejected before writing files",
+  FailureQ[sfChiralWrong] && !DirectoryQ[sfChiralWrongPath]];
+sfChiralOptions = Join[Association[Options[WriteSPINASProcess]],
+  <|"ParameterRules" -> sfRules, "CalcHEPModel" -> {FileNameJoin[{root, "model_feynman"}], 1}|>];
+sfChiralIR = ConstructiveDiagrams`Private`spinasFamilyIR[
+  sfChiralEntries, sfChiralModel, sfChiralOptions];
+sfChiralFixedIR = ConstructiveDiagrams`Private`spinasFamilyIR[
+  sfChiralEntries, sfChiralModel, Join[sfChiralOptions, <|"FixedHelicities" -> {3 -> 1}|>]];
+check["a complete one-state chiral family is eligible for unpolarized CalcHEP comparison",
+  AssociationQ[sfChiralIR] && TrueQ[ConstructiveDiagrams`Private`spinasCalcHEPConfiguration[
+    sfChiralIR, sfChiralModel, sfChiralOptions]["Supported"]]];
+check["selecting the only physical chiral helicity is not a polarization restriction",
+  AssociationQ[sfChiralFixedIR] && TrueQ[ConstructiveDiagrams`Private`spinasCalcHEPConfiguration[
+    sfChiralFixedIR, sfChiralModel, sfChiralOptions]["Supported"]]];
+sfChiralSingleIR = ConstructiveDiagrams`Private`spinasProcessIR[
+  First[First[sfChiralEntries]], sfChiralAmplitude, sfChiralModel, sfChiralOptions];
+check["the single-formula overload can compare a complete chiral process with CalcHEP",
+  AssociationQ[sfChiralSingleIR] && TrueQ[ConstructiveDiagrams`Private`spinasCalcHEPConfiguration[
+    sfChiralSingleIR, sfChiralModel, sfChiralOptions]["Supported"]]];
+
 sfCompiler = sfRun[{"c++", "--version"}];
 sfLibraries = Select[FileNameJoin[{sfSpinas, #, "libspinas.a"}] & /@ {"build", "lib"}, FileExistsQ];
 sfNativeAvailable = !sfFailed[sfCompiler] && sfLibraries =!= {} &&

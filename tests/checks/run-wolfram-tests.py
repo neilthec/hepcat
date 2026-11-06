@@ -76,6 +76,7 @@ INTEGRATION_TEST_SUITES = ("physical-construction-integration-tests.wl",
                           "fermion-construction-integration-tests.wl",
                           "spinas-calchep-integration-tests.wl",
                           "spinas-madgraph-integration-tests.wl",
+                          "spinas-chiral-integration-tests.wl",
                           "spinas-madevent-integration-tests.wl")
 
 

@@ -80,6 +80,30 @@ check["resolving model defaults and overrides never assigns global parameter val
   AllTrue[{mpMassBase, mpMassShift, mpMass, mpCoupling, mpDerivedCoupling},
     OwnValues[#] === {} &] && mpModel === mpSavedModel];
 
+mpValidationSets = ConstructiveDiagrams`Private`completionValidationRuleSets[
+  mpModel, Automatic, Automatic];
+check["automatic alternate assignments recompute derived masses and couplings",
+  Length[mpValidationSets] === 3 && AllTrue[mpValidationSets,
+    ({mpMass - mpMassBase - 1, mpDerivedCoupling - 2 mpCoupling} /. #) === {0, 0} &] &&
+    Length[DeleteDuplicates[(mpMassBase/mpMass /. #) & /@ mpValidationSets]] === 3];
+mpFixedValidationSets = ConstructiveDiagrams`Private`completionValidationRuleSets[
+  mpModel, {mpMassBase -> 4}, Automatic];
+check["automatic fitting preserves explicit independent parameter overrides",
+  AllTrue[mpFixedValidationSets, (mpMassBase /. #) === 4 && (mpMass /. #) === 5 &]];
+mpFitA = Unique["parameterFitA"]; mpFitB = Unique["parameterFitB"];
+mpOneAssignment = ConstructiveDiagrams`Private`completionSolveLinear[
+  {mpFitA mpMassBase^2 + mpFitB mpMass^2} /. First[mpValidationSets], {mpFitA, mpFitB}];
+mpAllAssignments = ConstructiveDiagrams`Private`completionParameterConstraintSets[
+  Function[{assignment, seed}, <|"Status" -> "COMPLETE",
+    "Equations" -> ({mpFitA mpMassBase^2 + mpFitB mpMass^2} /. assignment),
+    "Samples" -> {seed}, "Diagnostics" -> {}|>], mpValidationSets, 1729];
+mpJointSolution = ConstructiveDiagrams`Private`completionSolveLinear[
+  mpAllAssignments["Equations"], {mpFitA, mpFitB}];
+check["simultaneous parameter samples eliminate accidental fixed-mass coefficient freedom",
+  mpOneAssignment["Status"] === "UNDERDETERMINED" &&
+    mpJointSolution["Status"] === "COMPLETE" && mpJointSolution["FreeParameters"] === {} &&
+    ({mpFitA, mpFitB} /. mpJointSolution["SolutionRules"]) === {0, 0}];
+
 (* The same resolved rules feed every category of the public checker. *)
 mpScalarPairs = DiagramAmplitudes[CreateDiagrams[ConstantArray["s", 4], mpModel]];
 mpScalarAmplitude = Total[(ReduceSpinContractions[Last[#]] /. First[#]) & /@ mpScalarPairs];

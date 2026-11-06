@@ -49,6 +49,40 @@ integration is a separate operation."}], "Notes"],
   Cell[TextData[{"The comparison is a numerical test over sampled phase \
 space. It provides an independent diagnostic of a proposed expression, rather \
 than a proof of equality for every kinematic point."}], "Notes"],
+  Cell[TextData[{"Derived scalar couplings are expanded using the supplied \
+model's definitions before C++ export. For example, a neutral-current \
+coupling defined in terms of the weak mixing angle remains tied to that \
+angle, rather than becoming an unrelated parameter that the reference \
+generator cannot recognize. Explicit local parameter overrides remain \
+authoritative. When you explicitly select the standard ",
+     Cell[BoxData[RowBox[{"sm"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "or", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"sm", "-", "full"}]], "InlineFormula"], " UFO and \
+the supplied model verifies its usual tree-level electroweak relations, \
+HEPCAT translates the model's electric charge, W mass and weak mixing angle \
+into the UFO's inverse-alpha, Fermi-constant and Z-mass inputs. Other UFOs \
+retain their explicitly configured inputs; ",
+     ButtonBox["ModelParameterRules", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ModelParameterRules"],
+     " shows the model-local numerical values."}], "Notes"],
+  Cell[TextData[{"The independently selected reference model must contain the \
+same masses, interactions and flavor mixing as the constructive model. Stock \
+MadGraph ", Cell[BoxData[RowBox[{"sm", "-", "full"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "still", " ", "treats", " ", "the", " ", "up",
+         ",", " ", "down", " ", "and", " ", "strange", " ", "quarks", " ",
+         "as", " ", "massless", ";", " ", "assigning", " ", "a", " ",
+         "numerical", " ", "mass", " ", "cannot", " ", "supply", " ", "an",
+         " ", "interaction", " ", "that", " ", "the", " ", "UFO", " ",
+         "omits", ".", " ", "Select", " ", "a", " ", "compatible", " ",
+         "massive", " ", "model", " ", "for", " ", "such", " ",
+         "comparisons", ".", " ", "A", " ", "diagonal", " ", "charged", "-",
+         "current", " ", "model", " ", "also", " ", "requires", " ",
+         "compatible", " ", "CKM", " ", "inputs", ",", " ", "for", " ",
+         "example", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"\"MadGraphParameterRules\"", " ", "->", " ", "{",
+         "\"lamWS\"", " ", "->", " ", "0", "}"}]], "InlineFormula"], " for \
+the stock SM UFO. These theory choices are never inferred by fitting \
+amplitude ratios."}], "Notes"],
   Cell[TextData[{"Tree-level comparisons set all widths to zero on both \
 sides. Validation uses a private HEPCAT process copy and a private UFO model \
 copy, including explicit, matched and dependent particle widths. This keeps a \

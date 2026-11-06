@@ -235,6 +235,52 @@ smgCheck["unrequested validation leaves an ordinary source export unchanged",
     <|"RunCalcHEPValidation" -> False, "RunMadGraphValidation" -> False|>] ===
       <|"Directory" -> smgDirectory|>];
 
+(* Reference parameter matching must see the defining scalar arithmetic, not
+   an unrelated coupling with a HEPCAT-only name. No external generator runs. *)
+smgP[name_] := ModelParameter[name, "validator-model-test", "Real"];
+smgDependencyModel = {{{"Scalar", "s", "s", 1, 0, smgP["mass"], 0, 1, "", "", ""}}, {},
+  {{smgP["mass"], 2, ""}, {smgP["g"], 3, ""}},
+  {{smgP["gSquared"], smgP["g"]^2, ""},
+   {smgP["gFourth"], smgP["gSquared"]^2, ""}}};
+smgExpand[value_, model_: smgDependencyModel, overrides_: Automatic] :=
+  ConstructiveDiagrams`Private`modelExpandParameterDefinitions[value, model, overrides];
+smgCheck["derived scalar parameters expand transitively without numerical substitution",
+  smgExpand[smgP["gFourth"]] === smgP["g"]^4];
+smgCheck["an explicitly overridden derived parameter remains an independent export input",
+  smgExpand[smgP["gFourth"], smgDependencyModel, {"gSquared" -> 7}] === smgP["gSquared"]^2];
+smgCyclicModel = ReplacePart[smgDependencyModel, {4, 1, 2} -> smgP["gFourth"]];
+smgCheck["a relevant dependency cycle fails instead of looping or inventing a value",
+  FailureQ[smgExpand[smgP["gFourth"], smgCyclicModel]] &&
+    smgExpand[smgP["mass"], smgCyclicModel] === smgP["mass"]];
+smgExternalFunctionModel = ReplacePart[smgDependencyModel,
+  {4, 1, 2} -> ModelFunction["runningMass", "validator-model-test", {smgP["mass"]}]];
+smgCheck["external model functions are retained rather than called by symbolic export",
+  smgExpand[smgP["gSquared"], smgExternalFunctionModel] === smgP["gSquared"]];
+smgDependencyIR = ConstructiveDiagrams`Private`spinasProcessIR[
+  ConstantArray["s", 4], smgP["gFourth"], smgDependencyModel,
+  <|"IncomingLegs" -> {1, 2}|>];
+smgCheck["the actual SPINAS emitter uses primitive model inputs for derived scalar couplings",
+  AssociationQ[smgDependencyIR] && Sort[smgDependencyIR["ParameterNames"]] === {"g", "mass"}];
+smgSMModel = ReadModel[FileNameJoin[{smgRoot, "models"}], 1];
+smgSMDefaults = ModelParameterRules[smgSMModel];
+smgSMOptions = Join[Association[Options[WriteSPINASProcess]], <|"MadGraphModel" -> "sm-full"|>];
+smgSMRules = ConstructiveDiagrams`Private`spinasMadGraphSMInputRules[smgSMModel, smgSMOptions];
+smgCheck["the selected SM reference obtains its EW input scheme from verified model constraints",
+  Sort[Keys[smgSMRules]] === Sort[{"Gf", "MZ", "aEWM1"}] &&
+    Abs[smgSMRules["Gf"] - N[ModelParameter[smgSMModel, "GF"] /. smgSMDefaults]] < 10^-15 &&
+    Abs[smgSMRules["MZ"] - N[ModelParameter[smgSMModel, "MZ"] /. smgSMDefaults]] < 10^-10];
+smgExplicitSMRules = ConstructiveDiagrams`Private`spinasMadGraphSMInputRules[smgSMModel,
+  Join[smgSMOptions, <|"MadGraphParameterRules" -> {"gf" -> 0.01, "lamWS" -> 0}|>]];
+smgCheck["explicit reference inputs remain authoritative without duplicate case aliases",
+  smgExplicitSMRules["gf"] === 0.01 && !KeyExistsQ[smgExplicitSMRules, "Gf"] &&
+    smgExplicitSMRules["lamWS"] === 0];
+smgCheck["a custom UFO never acquires guessed standard-model inputs",
+  ConstructiveDiagrams`Private`spinasMadGraphSMInputRules[smgSMModel,
+    Join[smgSMOptions, <|"MadGraphModel" -> "custom-ufo"|>]] === <||>];
+smgUndeclared = Complement[DeleteDuplicates[Cases[smgSMModel[[2]], _ModelParameter, Infinity]],
+  First /@ Join[smgSMModel[[3]], smgSMModel[[4]]]];
+smgCheck["all SM vertices including the top Yukawa use declared model parameters", smgUndeclared === {}];
+
 DeleteDirectory[smgTemporary, DeleteContents -> True];
 Print["MadGraph public surface: ", smgChecks - Length[smgFailures], " / ", smgChecks, " checks passed."];
 If[smgFailures =!= {}, Print["Failures: ", smgFailures]; Exit[1]];

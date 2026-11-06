@@ -73,15 +73,17 @@ template<> struct oracle<4> {
       return minus * first.v(spins[0]) * second.v(spins[1]);
     }
     if (kind == 6) {
-      if (spins[2] > 0 && spins[3] > 0) {
+      // Both massless fermions are outgoing. Crossing conjugates the
+      // species and reverses its physical helicity, unlike the photon label.
+      if (spins[2] < 0 && spins[3] < 0) {
         spinas::sproduct square(SQUARE, &p[2], &p[3]);
         return square.v();
       }
-      if (spins[2] < 0 && spins[3] < 0) {
+      if (spins[2] > 0 && spins[3] > 0) {
         spinas::sproduct angle(ANGLE, &p[2], &p[3]);
         return angle.v();
       }
-      if (spins[2] > 0) {
+      if (spins[2] < 0) {
         spinas::sproduct chain(ANGLE, &p[3], &p[0], &p[2]);
         return -chain.v();
       }

@@ -162,6 +162,23 @@ inventing a missing parity-related formula."}], "Notes"],
      Cell[BoxData[RowBox[{" ", "and", " "}]], "InlineFormula"],
      Cell[BoxData[RowBox[{"-", "2"}]], "InlineFormula"],
      ". This selection produces a labeled helicity contribution."}],
+   "Notes"], Cell[TextData[{"A massless fermion with ",
+     Cell[BoxData[RowBox[{"L"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "or", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"R"}]], "InlineFormula"], " in the model particle \
+table has one physical helicity for the particle and the opposite helicity \
+for its antiparticle. HEPCAT uses that model information when checking family \
+coverage and averaging incoming states. You do not need to supply a second, \
+unphysical neutrino state. A formula with the wrong chiral spinor weight is \
+rejected. Outgoing massless fermion helicity labels are crossed to the \
+physical process before the MadGraph comparison; the established photon \
+crossing convention is unchanged."}], "Notes"],
+  Cell[TextData[{"CalcHEP can compare a complete one-state chiral species \
+because its unpolarized sum already contains that one state. This differs \
+from selecting one photon helicity from a two-state photon species: a \
+genuinely polarized restriction still needs the fixed-helicity ",
+     ButtonBox["ValidateMadGraph", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ValidateMadGraph"], " comparison."}],
    "Notes"], Cell[TextData[{"The four-argument ",
      Cell[BoxData[RowBox[{"particles", ",", " ", "amplitude", ",", " ",
          "model"}]], "InlineFormula"], " form exports a single fixed-helicity \

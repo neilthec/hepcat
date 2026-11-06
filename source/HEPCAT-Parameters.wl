@@ -60,6 +60,33 @@ modelParameterScope[file_String] := Module[{base = FileBaseName[file], suffix},
   modelParameterScope[DirectoryName[ExpandFileName[file]], suffix]
 ];
 
+(* Numerical export must not turn a model's derived couplings into unrelated
+   adjustable inputs. Expand its ordinary scalar definitions before emitting
+   the amplitude. Explicit local overrides remain inputs. External functions
+   such as running-quark-mass routines are deliberately left as model data. *)
+modelExpandParameterDefinitions[expression_, model_List, overrides_: Automatic] := Module[
+  {rows, supplied, definitions, expanded = {}, resolve, result, tag = Unique["modelDependencies"]},
+  If[Length[model] =!= 4 || !ListQ[model[[3]]] || !ListQ[model[[4]]],
+    Return[Failure["InvalidModelParameters", <||>]]];
+  rows = Select[model[[4]], ListQ[#] && Length[#] >= 2 && modelParameterQ[First[#]] &];
+  supplied = modelParameterOverrideRules[Replace[overrides, Automatic -> {}],
+    First /@ Select[Join[model[[3]], rows], ListQ[#] && Length[#] >= 2 &]];
+  If[!ListQ[supplied], Return[Failure["InvalidModelParameterOverrides", <||>]]];
+  definitions = First[#] -> #[[2]] & /@ Select[rows,
+    !MemberQ[First /@ supplied, First[#]] && FreeQ[#[[2]], _ModelFunction] &];
+  resolve[parameter_ModelParameter, path_List] := Module[{cached, definition, value},
+    cached = SelectFirst[expanded, First[#] === parameter &, Missing["NotExpanded"]];
+    If[!MissingQ[cached], Return[Last[cached]]];
+    definition = SelectFirst[definitions, First[#] === parameter &, Missing["Independent"]];
+    If[MissingQ[definition], Return[parameter]];
+    If[MemberQ[path, parameter], Throw[Failure["CyclicModelParameters", <|
+      "Parameters" -> (ModelParameterName /@ Append[path, parameter])|>], tag]];
+    value = Last[definition] /. item_ModelParameter :> resolve[item, Append[path, parameter]];
+    AppendTo[expanded, parameter -> value]; value];
+  result = Catch[expression /. parameter_ModelParameter :> resolve[parameter, {}], tag];
+  result
+];
+
 modelExpressionNumber[text_String] := Module[
   {parts, mantissa, exponent = 0, point, scale = 0, sign = 1},
   parts = StringSplit[text, RegularExpression["[eE]|\\*\\^"]];
