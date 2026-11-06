@@ -1,0 +1,495 @@
+{
+  "Date": "2026-11-06",
+  "Status": "PASS",
+  "Scope": "One negative photon; all other photons positive; massive electron and positron.",
+  "TotalMadGraphPoints": 5200,
+  "StableReferencePolicy": "Choose the positive photon with maximal abs([r q])^2/E_q.",
+  "Runs": [
+    {
+      "Status": "PASS",
+      "Photons": 2,
+      "ExternalParticles": 4,
+      "Points": 1000,
+      "FailedPoints": 0,
+      "Seed": 19062028,
+      "Mass": 1,
+      "Charge": 0.3333333333333333,
+      "MinimumCenterOfMassEnergy": 10,
+      "MaximumCenterOfMassEnergy": 100,
+      "ScalarPrecisionBits": 53,
+      "MadGraphPrecisionBits": 53,
+      "RelativeTolerance": 1e-07,
+      "ElapsedSeconds": 0.035845792,
+      "ReferenceLibrary": "/private/tmp/hepcat-one-minus/mg-N2/libhepcat_madgraph.dylib",
+      "ValuesCSV": "/private/tmp/hepcat-one-minus/stable-N2-values.csv",
+      "PhaseSpaceCSV": "/private/tmp/hepcat-one-minus/stable-N2-points.csv",
+      "Normalization": "Raw sum over four massive-fermion spins; last photon negative, others positive; no initial averages or final symmetry factor.",
+      "ConstructiveGenerationUsed": false,
+      "Checks": {
+        "MadGraph": {
+          "MaximumRelativeError": 6.733525671805056e-14,
+          "Failures": 0
+        },
+        "SquareReference": {
+          "MaximumRelativeError": 1.865272354037909e-13,
+          "Failures": 0
+        },
+        "PositivePermutation": {
+          "MaximumRelativeError": 0,
+          "Failures": 0
+        },
+        "MinusRelocation": {
+          "MaximumRelativeError": 0,
+          "Failures": 0
+        },
+        "WardIdentity": {
+          "MaximumRelativeError": 5.424504531826323e-16,
+          "Failures": 0
+        }
+      }
+    },
+    {
+      "Status": "PASS",
+      "Photons": 3,
+      "ExternalParticles": 5,
+      "Points": 1000,
+      "FailedPoints": 0,
+      "Seed": 19062029,
+      "Mass": 1,
+      "Charge": 0.3333333333333333,
+      "MinimumCenterOfMassEnergy": 10,
+      "MaximumCenterOfMassEnergy": 100,
+      "ScalarPrecisionBits": 53,
+      "MadGraphPrecisionBits": 53,
+      "RelativeTolerance": 1e-07,
+      "ElapsedSeconds": 0.037870792,
+      "ReferenceLibrary": "/private/tmp/hepcat-one-minus/mg-N3/libhepcat_madgraph.dylib",
+      "ValuesCSV": "/private/tmp/hepcat-one-minus/stable-N3-values.csv",
+      "PhaseSpaceCSV": "/private/tmp/hepcat-one-minus/stable-N3-points.csv",
+      "Normalization": "Raw sum over four massive-fermion spins; last photon negative, others positive; no initial averages or final symmetry factor.",
+      "ConstructiveGenerationUsed": false,
+      "Checks": {
+        "MadGraph": {
+          "MaximumRelativeError": 1.6009774784264184e-12,
+          "Failures": 0
+        },
+        "SquareReference": {
+          "MaximumRelativeError": 3.386981685463477e-12,
+          "Failures": 0
+        },
+        "PositivePermutation": {
+          "MaximumRelativeError": 2.1423100723704524e-13,
+          "Failures": 0
+        },
+        "MinusRelocation": {
+          "MaximumRelativeError": 2.1423100723704524e-13,
+          "Failures": 0
+        },
+        "WardIdentity": {
+          "MaximumRelativeError": 2.653481718571982e-15,
+          "Failures": 0
+        }
+      }
+    },
+    {
+      "Status": "PASS",
+      "Photons": 4,
+      "ExternalParticles": 6,
+      "Points": 1000,
+      "FailedPoints": 0,
+      "Seed": 19062030,
+      "Mass": 1,
+      "Charge": 0.3333333333333333,
+      "MinimumCenterOfMassEnergy": 10,
+      "MaximumCenterOfMassEnergy": 100,
+      "ScalarPrecisionBits": 53,
+      "MadGraphPrecisionBits": 53,
+      "RelativeTolerance": 1e-07,
+      "ElapsedSeconds": 0.049768875,
+      "ReferenceLibrary": "/private/tmp/hepcat-one-minus/mg-N4/libhepcat_madgraph.dylib",
+      "ValuesCSV": "/private/tmp/hepcat-one-minus/stable-N4-values.csv",
+      "PhaseSpaceCSV": "/private/tmp/hepcat-one-minus/stable-N4-points.csv",
+      "Normalization": "Raw sum over four massive-fermion spins; last photon negative, others positive; no initial averages or final symmetry factor.",
+      "ConstructiveGenerationUsed": false,
+      "Checks": {
+        "MadGraph": {
+          "MaximumRelativeError": 2.957627150905457e-12,
+          "Failures": 0
+        },
+        "SquareReference": {
+          "MaximumRelativeError": 5.522169467810098e-12,
+          "Failures": 0
+        },
+        "PositivePermutation": {
+          "MaximumRelativeError": 7.48401571624923e-13,
+          "Failures": 0
+        },
+        "MinusRelocation": {
+          "MaximumRelativeError": 7.48401571624923e-13,
+          "Failures": 0
+        },
+        "WardIdentity": {
+          "MaximumRelativeError": 1.879010298939642e-15,
+          "Failures": 0
+        }
+      }
+    },
+    {
+      "Status": "PASS",
+      "Photons": 5,
+      "ExternalParticles": 7,
+      "Points": 1000,
+      "FailedPoints": 0,
+      "Seed": 19062031,
+      "Mass": 1,
+      "Charge": 0.3333333333333333,
+      "MinimumCenterOfMassEnergy": 10,
+      "MaximumCenterOfMassEnergy": 100,
+      "ScalarPrecisionBits": 53,
+      "MadGraphPrecisionBits": 53,
+      "RelativeTolerance": 1e-07,
+      "ElapsedSeconds": 0.0696645,
+      "ReferenceLibrary": "/private/tmp/hepcat-one-minus/mg-N5/libhepcat_madgraph.dylib",
+      "ValuesCSV": "/private/tmp/hepcat-one-minus/stable-N5-values.csv",
+      "PhaseSpaceCSV": "/private/tmp/hepcat-one-minus/stable-N5-points.csv",
+      "Normalization": "Raw sum over four massive-fermion spins; last photon negative, others positive; no initial averages or final symmetry factor.",
+      "ConstructiveGenerationUsed": false,
+      "Checks": {
+        "MadGraph": {
+          "MaximumRelativeError": 9.471933020038573e-12,
+          "Failures": 0
+        },
+        "SquareReference": {
+          "MaximumRelativeError": 1.2795839324284143e-11,
+          "Failures": 0
+        },
+        "PositivePermutation": {
+          "MaximumRelativeError": 4.180749628801899e-12,
+          "Failures": 0
+        },
+        "MinusRelocation": {
+          "MaximumRelativeError": 4.180749628801899e-12,
+          "Failures": 0
+        },
+        "WardIdentity": {
+          "MaximumRelativeError": 1.3885957351892405e-14,
+          "Failures": 0
+        }
+      }
+    },
+    {
+      "Status": "PASS",
+      "Photons": 6,
+      "ExternalParticles": 8,
+      "Points": 1000,
+      "FailedPoints": 0,
+      "Seed": 19062032,
+      "Mass": 1,
+      "Charge": 0.3333333333333333,
+      "MinimumCenterOfMassEnergy": 10,
+      "MaximumCenterOfMassEnergy": 100,
+      "ScalarPrecisionBits": 53,
+      "MadGraphPrecisionBits": 53,
+      "RelativeTolerance": 1e-07,
+      "ElapsedSeconds": 0.165835334,
+      "ReferenceLibrary": "/Users/neil/code/hepcat/benchmarks/build-all-positive-high-multiplicity/reference-N6/libhepcat_madgraph.dylib",
+      "ValuesCSV": "/private/tmp/hepcat-one-minus/stable-N6-values.csv",
+      "PhaseSpaceCSV": "/private/tmp/hepcat-one-minus/stable-N6-points.csv",
+      "Normalization": "Raw sum over four massive-fermion spins; last photon negative, others positive; no initial averages or final symmetry factor.",
+      "ConstructiveGenerationUsed": false,
+      "Checks": {
+        "MadGraph": {
+          "MaximumRelativeError": 3.1003926962486593e-09,
+          "Failures": 0
+        },
+        "SquareReference": {
+          "MaximumRelativeError": 1.1915412353497545e-10,
+          "Failures": 0
+        },
+        "PositivePermutation": {
+          "MaximumRelativeError": 9.795203531638236e-10,
+          "Failures": 0
+        },
+        "MinusRelocation": {
+          "MaximumRelativeError": 9.795203531638236e-10,
+          "Failures": 0
+        },
+        "WardIdentity": {
+          "MaximumRelativeError": 1.3668859491994178e-13,
+          "Failures": 0
+        }
+      }
+    },
+    {
+      "Status": "PASS",
+      "Photons": 7,
+      "ExternalParticles": 9,
+      "Points": 100,
+      "FailedPoints": 0,
+      "Seed": 19062033,
+      "Mass": 1,
+      "Charge": 0.3333333333333333,
+      "MinimumCenterOfMassEnergy": 10,
+      "MaximumCenterOfMassEnergy": 100,
+      "ScalarPrecisionBits": 53,
+      "MadGraphPrecisionBits": 53,
+      "RelativeTolerance": 1e-07,
+      "ElapsedSeconds": 0.078407708,
+      "ReferenceLibrary": "/Users/neil/code/hepcat/benchmarks/build-all-positive-high-multiplicity/reference-N7/libhepcat_madgraph.dylib",
+      "ValuesCSV": "/private/tmp/hepcat-one-minus/stable-N7-values.csv",
+      "PhaseSpaceCSV": "/private/tmp/hepcat-one-minus/stable-N7-points.csv",
+      "Normalization": "Raw sum over four massive-fermion spins; last photon negative, others positive; no initial averages or final symmetry factor.",
+      "ConstructiveGenerationUsed": false,
+      "Checks": {
+        "MadGraph": {
+          "MaximumRelativeError": 8.219538381851721e-10,
+          "Failures": 0
+        },
+        "SquareReference": {
+          "MaximumRelativeError": 5.237935496538346e-09,
+          "Failures": 0
+        },
+        "PositivePermutation": {
+          "MaximumRelativeError": 8.721966917262431e-10,
+          "Failures": 0
+        },
+        "MinusRelocation": {
+          "MaximumRelativeError": 8.721966917262431e-10,
+          "Failures": 0
+        },
+        "WardIdentity": {
+          "MaximumRelativeError": 4.690831197971202e-13,
+          "Failures": 0
+        }
+      }
+    },
+    {
+      "Status": "PASS",
+      "Photons": 8,
+      "ExternalParticles": 10,
+      "Points": 100,
+      "FailedPoints": 0,
+      "Seed": 19062034,
+      "Mass": 1.5,
+      "Charge": 0.3333333333333333,
+      "MinimumCenterOfMassEnergy": 10,
+      "MaximumCenterOfMassEnergy": 100,
+      "ScalarPrecisionBits": 53,
+      "MadGraphPrecisionBits": 53,
+      "RelativeTolerance": 1e-07,
+      "ElapsedSeconds": 0.399825709,
+      "ReferenceLibrary": "/Users/neil/code/hepcat/benchmarks/build-all-positive-high-multiplicity/reference-N8-split-v2/libhepcat_madgraph.dylib",
+      "ValuesCSV": "/private/tmp/hepcat-one-minus/stable-N8-values.csv",
+      "PhaseSpaceCSV": "/private/tmp/hepcat-one-minus/stable-N8-points.csv",
+      "Normalization": "Raw sum over four massive-fermion spins; last photon negative, others positive; no initial averages or final symmetry factor.",
+      "ConstructiveGenerationUsed": false,
+      "Checks": {
+        "MadGraph": {
+          "MaximumRelativeError": 3.902179287541424e-09,
+          "Failures": 0
+        },
+        "SquareReference": {
+          "MaximumRelativeError": 3.4833642159565257e-09,
+          "Failures": 0
+        },
+        "PositivePermutation": {
+          "MaximumRelativeError": 2.091803709193057e-09,
+          "Failures": 0
+        },
+        "MinusRelocation": {
+          "MaximumRelativeError": 2.091803709193057e-09,
+          "Failures": 0
+        },
+        "WardIdentity": {
+          "MaximumRelativeError": 3.474930510001723e-12,
+          "Failures": 0
+        }
+      }
+    }
+  ],
+  "OriginalN8Run": {
+    "Status": "FAIL",
+    "Photons": 8,
+    "ExternalParticles": 10,
+    "Points": 100,
+    "FailedPoints": 1,
+    "Seed": 19062034,
+    "Mass": 1.5,
+    "Charge": 0.3333333333333333,
+    "MinimumCenterOfMassEnergy": 10,
+    "MaximumCenterOfMassEnergy": 100,
+    "ScalarPrecisionBits": 53,
+    "MadGraphPrecisionBits": 53,
+    "RelativeTolerance": 1e-07,
+    "ElapsedSeconds": 0.358788542,
+    "ReferenceLibrary": "/Users/neil/code/hepcat/benchmarks/build-all-positive-high-multiplicity/reference-N8-split-v2/libhepcat_madgraph.dylib",
+    "ValuesCSV": "/private/tmp/hepcat-one-minus/final-N8-values.csv",
+    "PhaseSpaceCSV": "/private/tmp/hepcat-one-minus/final-N8-points.csv",
+    "Normalization": "Raw sum over four massive-fermion spins; last photon negative, others positive; no initial averages or final symmetry factor.",
+    "ConstructiveGenerationUsed": false,
+    "Checks": {
+      "MadGraph": {
+        "MaximumRelativeError": 3.902179287541424e-09,
+        "Failures": 0
+      },
+      "SquareReference": {
+        "MaximumRelativeError": 3.4833642159565257e-09,
+        "Failures": 0
+      },
+      "PositivePermutation": {
+        "MaximumRelativeError": 1.075042672583756e-07,
+        "Failures": 1
+      },
+      "MinusRelocation": {
+        "MaximumRelativeError": 1.075042672583756e-07,
+        "Failures": 1
+      },
+      "WardIdentity": {
+        "MaximumRelativeError": 3.474930510001723e-12,
+        "Failures": 0
+      }
+    }
+  },
+  "PrecisionReplay": {
+    "replay-N8-x86-projected": {
+      "Status": "PASS",
+      "Points": 100,
+      "FailedPoints": 0,
+      "ScalarPrecisionBits": 64,
+      "ScalarBytes": 16,
+      "ProjectedShells": true,
+      "InputPolicy": "Saved CSV components parsed to binary53 first, then cast to calculation type. No regeneration.",
+      "Mass": 1.5,
+      "Charge": 0.3333333333333333,
+      "Tolerance": 1e-07,
+      "MaxReferencePermutationRelocationWardErrors": [
+        1.2209362620263877e-12,
+        2.7569518451173456e-11,
+        2.7569518451173456e-11,
+        1.245514476276208e-15
+      ],
+      "Point46ReferencePermutationRelocationWardErrors": [
+        5.830799559882223e-13,
+        2.7569518451173456e-11,
+        2.7569518451173456e-11,
+        2.246743110693262e-16
+      ],
+      "MaxInputShellRelative": 6.174703762532855e-16,
+      "MaxEvaluatedShellRelative": 1.8508242388018913e-19,
+      "MaxInputConservationRelative": 3.3833914428422967e-16,
+      "MaxEvaluatedConservationRelative": 1.911483860452997e-19,
+      "MaximumMomentumComponentAdjustment": 1.0288644936018443e-14
+    },
+    "replay-N8-x86-raw": {
+      "Status": "PASS",
+      "Points": 100,
+      "FailedPoints": 0,
+      "ScalarPrecisionBits": 64,
+      "ScalarBytes": 16,
+      "ProjectedShells": false,
+      "InputPolicy": "Saved CSV components parsed to binary53 first, then cast to calculation type. No regeneration.",
+      "Mass": 1.5,
+      "Charge": 0.3333333333333333,
+      "Tolerance": 1e-07,
+      "MaxReferencePermutationRelocationWardErrors": [
+        1.6555351031949948e-12,
+        7.296593150635948e-11,
+        7.296593150635948e-11,
+        1.633800033353539e-15
+      ],
+      "Point46ReferencePermutationRelocationWardErrors": [
+        8.748578214380081e-13,
+        7.296593150635948e-11,
+        7.296593150635948e-11,
+        3.330754058892361e-16
+      ],
+      "MaxInputShellRelative": 6.174703762532855e-16,
+      "MaxEvaluatedShellRelative": 6.174703762532855e-16,
+      "MaxInputConservationRelative": 3.3833914428422967e-16,
+      "MaxEvaluatedConservationRelative": 3.3833914428422967e-16,
+      "MaximumMomentumComponentAdjustment": 0
+    },
+    "replay-N8-native-projected": {
+      "Status": "PASS",
+      "Points": 100,
+      "FailedPoints": 0,
+      "ScalarPrecisionBits": 53,
+      "ScalarBytes": 8,
+      "ProjectedShells": true,
+      "InputPolicy": "Saved CSV components parsed to binary53 first, then cast to calculation type. No regeneration.",
+      "Mass": 1.5,
+      "Charge": 0.3333333333333333,
+      "Tolerance": 1e-07,
+      "MaxReferencePermutationRelocationWardErrors": [
+        1.2792331329280008e-09,
+        6.971611115812195e-08,
+        6.971611115812195e-08,
+        1.1673885209049498e-12
+      ],
+      "Point46ReferencePermutationRelocationWardErrors": [
+        3.234280400406375e-10,
+        6.971611115812195e-08,
+        6.971611115812195e-08,
+        1.2019779473554155e-13
+      ],
+      "MaxInputShellRelative": 6.333188083469282e-16,
+      "MaxEvaluatedShellRelative": 3.037106901310048e-16,
+      "MaxInputConservationRelative": 3.6229235803886535e-16,
+      "MaxEvaluatedConservationRelative": 3.6202406521242227e-16,
+      "MaximumMomentumComponentAdjustment": 1.4210854715202004e-14
+    },
+    "replay-N8-native-raw": {
+      "Status": "FAIL",
+      "Points": 100,
+      "FailedPoints": 1,
+      "ScalarPrecisionBits": 53,
+      "ScalarBytes": 8,
+      "ProjectedShells": false,
+      "InputPolicy": "Saved CSV components parsed to binary53 first, then cast to calculation type. No regeneration.",
+      "Mass": 1.5,
+      "Charge": 0.3333333333333333,
+      "Tolerance": 1e-07,
+      "MaxReferencePermutationRelocationWardErrors": [
+        3.4833642159565257e-09,
+        1.075042672583756e-07,
+        1.075042672583756e-07,
+        3.474930510001723e-12
+      ],
+      "Point46ReferencePermutationRelocationWardErrors": [
+        2.359082971824216e-09,
+        1.075042672583756e-07,
+        1.075042672583756e-07,
+        9.081747841343623e-13
+      ],
+      "MaxInputShellRelative": 6.333188083469282e-16,
+      "MaxEvaluatedShellRelative": 6.333188083469282e-16,
+      "MaxInputConservationRelative": 3.6229235803886535e-16,
+      "MaxEvaluatedConservationRelative": 3.6229235803886535e-16,
+      "MaximumMomentumComponentAdjustment": 0
+    }
+  },
+  "ExactRationalChartChecks": {
+    "Checks": 32,
+    "Failures": 0,
+    "Scope": "Symbolic one-parameter external on-shell/conserving charts, four massive-spin components at four/five points; no internal shell."
+  },
+  "ComplexLowPointControls": {
+    "Photons3": {
+      "Points": 100,
+      "MaximumComponentError": 1.17917e-12,
+      "CommonPhase": 1
+    },
+    "Photons4": {
+      "Points": 100,
+      "MaximumComponentError": 1.89174e-12,
+      "CommonPhase": 1
+    }
+  },
+  "ArchiveDirectory": "/Users/neil/Documents/Codex/2026-09-24/help-me-make-this-response-more/output/one-minus-study",
+  "SourceSHA256": {
+    "benchmarks/one-minus-formulas.hpp": "ddd1386a27641a86aeff378a51b97716cb5a2cbc49bedb7ed18ef4a72d77666b",
+    "benchmarks/one-minus-validation.cpp": "ce6068dbac94d8ff99358c8c644a4dd37690c08cbe0e3246f1c1b8b1c3542f68",
+    "tests/QED-one-minus-formula.wl": "a7c782835350759fbeacdabd69e88e96ad0228db880b2f550408a5edee2f568a",
+    "benchmarks/one-minus-symbolic-tests.wl": "71c96253928c499ba6414e8fbff0d16b5b8474a34b737f5c0ac12ade81a6970d"
+  }
+}
