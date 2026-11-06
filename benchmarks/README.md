@@ -437,3 +437,28 @@ formatting control. The tested reference directories are `reference-N6`,
 sources, parameter cards and build logs are preserved. Generated artifacts
 remain outside Git; the evaluator, comparison program and replay instructions
 are versioned.
+
+## Independent published-formula checks
+
+These research controls use separately transcribed published amplitudes, not
+answers supplied to the constructive algorithm. Their equation and convention
+dictionaries distinguish known amplitude families from possible new ways of
+organizing the same answer.
+
+- [All-positive one-pair comparison](literature-all-positive/README.md):
+  Ochirov's all-multiplicity ordered formula, fully Abelianized, tested against
+  both subset formulas at two through six photons. Includes a separate literal
+  five-point Das-Zeng QED formula and rejected incomplete-permutation controls.
+- [One-negative one-pair comparison](literature-one-minus/README.md):
+  published primitives plus the complete BCJ permutation reconstruction at
+  two and three photons. Records polarization phases and massive-spinor
+  conventions explicitly, with independent primitive and BCJ controls.
+- [Four-fermion comparison](four-fermion-literature/README.md):
+  exact low-point published-primitive Abelianization, with both identical
+  fermion pairings retained. Its checked scope is stated separately from the
+  higher-multiplicity MadGraph validation of the current formula.
+
+The all-positive and one-negative numerical checks share SPINAS's low-level
+spinors with the tested code. They independently validate amplitude algebra
+and ordering, rather than providing a separate implementation of the spinor
+backend. Finite tests do not prove the general representation identities.

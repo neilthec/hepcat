@@ -1,0 +1,22 @@
+{
+"Source":"Ochirov arXiv:1802.06730v3 Eq.35, Abelianized complete permutation sum",
+"Photons":6,
+"Samples":1000,
+"ComplexSpinComparisons":4000,
+"Seed":180206736,
+"MantissaBits":53,
+"Masses":[0.1,1,1.5,3],
+"Charges":[0.3333333333333333,0.2857142857142857,-0.25,0.7],
+"EnergyOverMassRange":[8,80],
+"Tolerance":1e-7,
+"Failures":0,
+"WorstComplexPhysicalError":2.8690134926150539839e-11,
+"WorstComplexSpuriousError":2.8709173352601418053e-11,
+"WorstSquaredPhysicalError":3.7873563621597675784e-11,
+"WorstSquaredSpuriousError":3.8193406457383788655e-11,
+"WorstLiteratureCancellationCondition":155042.15673574098037,
+"DasZeng410Compared":false,
+"WorstDasZeng410Error":0,
+"NegativeControlIncompletePermutationError":1.3180860285815987343,
+"NegativeControlWrongCouplingError":0.875
+}
