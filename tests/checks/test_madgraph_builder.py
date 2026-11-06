@@ -1,8 +1,11 @@
 """Lightweight MadGraph-builder checks; no MadGraph installation is required."""
 import importlib.util
+import hashlib
+import json
 import math
 from pathlib import Path
 import sys
+import subprocess
 import tempfile
 import time
 from types import SimpleNamespace
@@ -71,6 +74,72 @@ class BuilderTests(unittest.TestCase):
         self.assertEqual(result[1], [11, -11, 22, 22])
         self.assertEqual(result[2], [.0005, .0005, 0, 0])
         self.assertEqual(result[3]["ee"], ("EE", .31333))
+
+    def test_jamp_split_is_explicit_bounded_and_defaults_to_native(self):
+        for value, expected in [(None, 0), (0, 0), (1, 1), (128, 128), (4096, 4096)]:
+            with self.subTest(value=value):
+                self.assertEqual(builder.jamp_split_setting(value), expected)
+                builder.checked_configuration(dict(self.config, JampSplit=value))
+        for value in [False, True, -1, 1.5, "128", [], {}, 4097]:
+            with self.subTest(value=value):
+                with self.assertRaisesRegex(builder.ValidationSetupError, "JampSplit"):
+                    builder.checked_configuration(dict(self.config, JampSplit=value))
+
+    def test_unselected_jamp_split_keeps_native_cli_and_writes_no_bootstrap(self):
+        output = self.directory / "output"
+        output.mkdir()
+        command_file = output / "generate.mg5"
+        for value in [0, None]:
+            command, metadata = builder.madgraph_generation_command(
+                self.directory, output, command_file, value)
+            self.assertEqual(command, [sys.executable, self.directory / "bin" / "mg5_aMC", "-s", command_file])
+            self.assertEqual(metadata, {"JampSplit": 0, "JampAccumulationPolicy": "NativeDefault", "JampBootstrap": None})
+        self.assertFalse((output / "native-jamp-bootstrap.py").exists())
+
+    def test_jamp_bootstrap_supplies_only_missing_or_nonpositive_native_split(self):
+        package = self.directory / "madgraph" / "iolibs"
+        package.mkdir(parents=True)
+        (package.parent / "__init__.py").touch()
+        (package / "__init__.py").touch()
+        native_source = """class ProcessExporterFortran:
+    def get_JAMP_lines(self, amplitudes, JAMP_format='JAMP(%s)', AMP_format='AMP(%s)', split=-1):
+        return [amplitudes, JAMP_format, AMP_format, split]
+"""
+        (package / "export_v4.py").write_text(native_source)
+        output = self.directory / "output"
+        output.mkdir()
+        result_file = output / "calls.json"
+        script = """import json
+from pathlib import Path
+import sys
+from madgraph.iolibs.export_v4 import ProcessExporterFortran
+native = ProcessExporterFortran()
+calls = [native.get_JAMP_lines([1,2]),
+         native.get_JAMP_lines([3], split=0),
+         native.get_JAMP_lines([4], split=7),
+         native.get_JAMP_lines([5], 'J(%s)', 'A(%s)', 9)]
+Path(sys.argv[-1]).write_text(json.dumps({'Calls': calls, 'Debug': __debug__}))
+"""
+        executable = self.directory / "bin" / "mg5_aMC"
+        executable.write_text(script)
+        command, metadata = builder.madgraph_generation_command(
+            self.directory, output, result_file, 128)
+        subprocess.run([str(item) for item in command], check=True, capture_output=True, text=True)
+        result = json.loads(result_file.read_text())
+        self.assertFalse(result["Debug"])
+        self.assertEqual(result["Calls"], [
+            [[1, 2], "JAMP(%s)", "AMP(%s)", 128],
+            [[3], "JAMP(%s)", "AMP(%s)", 128],
+            [[4], "JAMP(%s)", "AMP(%s)", 7],
+            [[5], "J(%s)", "A(%s)", 9]])
+        self.assertEqual((package / "export_v4.py").read_text(), native_source)
+        self.assertEqual(executable.read_text(), script)
+        self.assertFalse(list((self.directory / "madgraph").rglob("__pycache__")))
+        self.assertEqual(metadata["JampSplit"], 128)
+        bootstrap = metadata["JampBootstrap"]
+        self.assertEqual(bootstrap["PythonFlags"], ["-O"])
+        self.assertEqual(bootstrap["Source"], Path(bootstrap["Path"]).read_text())
+        self.assertEqual(bootstrap["SHA256"], hashlib.sha256(bootstrap["Source"].encode()).hexdigest())
 
     def test_reference_installation_and_model_are_always_explicit(self):
         for key in ("MadGraphDirectory", "MadGraphModel"):

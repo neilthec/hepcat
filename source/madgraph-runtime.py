@@ -11,6 +11,7 @@ Only its private output directory is modified. No optional MG tools are needed.
 import argparse
 import ast
 import contextlib
+import hashlib
 import json
 import math
 import os
@@ -229,6 +230,7 @@ def checked_configuration(data):
         normalized_map[key] = normalized_name(target)
     name_map = normalized_map
     optimization_flags(data.get("OptimizationLevel", 0))
+    jamp_split_setting(data.get("JampSplit"))
     seconds = real_number(data.get("TimeConstraint", 600), "TimeConstraint")
     if seconds <= 0:
         raise ValidationSetupError("TimeConstraint must be positive.")
@@ -611,6 +613,71 @@ def optimization_flags(level):
     return "-w -fPIC -ffixed-line-length-none" + (" -O" + str(level) if level else "")
 
 
+def jamp_split_setting(value):
+    """Optional native-exporter formatting for unusually large references."""
+    if value is None:
+        return 0
+    if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= 4096:
+        raise ValidationSetupError("JampSplit must be null or an integer from 0 through 4096.")
+    return value
+
+
+def madgraph_generation_command(root, output, command_file, split=0):
+    """Use native MG unchanged unless bounded JAMP statements were requested.
+
+    The opt-in bootstrap changes only the default split argument of MG's own
+    exporter. All graph, amplitude, color-coefficient and helicity definitions
+    remain native. Neither the installed MG files nor the generated matrix
+    formula is rewritten by this helper.
+    """
+    split = jamp_split_setting(split)
+    metadata = {"JampSplit": split, "JampAccumulationPolicy": "NativeDefault",
+                "JampBootstrap": None}
+    executable = root / "bin" / "mg5_aMC"
+    if not split:
+        return [sys.executable, executable, "-s", command_file], metadata
+    source = """# Private native-MadGraph exporter bootstrap. Installed files are unchanged.
+import functools
+import inspect
+from pathlib import Path
+import runpy
+import sys
+
+sys.dont_write_bytecode = True
+root = Path(ROOT_LITERAL)
+sys.path.insert(0, str(root))
+from madgraph.iolibs import export_v4
+
+original = export_v4.ProcessExporterFortran.get_JAMP_lines
+signature = inspect.signature(original)
+if "split" not in signature.parameters:
+    raise RuntimeError("The selected MadGraph exporter lacks its native JAMP split argument.")
+
+@functools.wraps(original)
+def bounded_jamp(self, *args, **kwargs):
+    bound = signature.bind(self, *args, **kwargs)
+    selected = bound.arguments.get("split", signature.parameters["split"].default)
+    if selected <= 0:
+        bound.arguments["split"] = SPLIT_LITERAL
+    return original(*bound.args, **bound.kwargs)
+
+export_v4.ProcessExporterFortran.get_JAMP_lines = bounded_jamp
+executable = root / "bin" / "mg5_aMC"
+sys.argv[0] = str(executable)
+runpy.run_path(str(executable), run_name="__main__")
+""".replace("ROOT_LITERAL", repr(str(root.resolve()))).replace("SPLIT_LITERAL", str(split))
+    bootstrap = output / "native-jamp-bootstrap.py"
+    bootstrap.write_text(source)
+    metadata.update({
+        "JampAccumulationPolicy": "Native exporter split argument with color-code optimization disabled; diagrams, coefficients and helicities unchanged.",
+        "JampBootstrap": {"Path": str(bootstrap.resolve()),
+                          "SHA256": hashlib.sha256(source.encode()).hexdigest(), "Source": source}})
+    # MG normally reexecutes its launcher with -O. Start in that same mode
+    # here, so its reexec cannot drop this process-local exporter wrapper.
+    metadata["JampBootstrap"]["PythonFlags"] = ["-O"]
+    return [sys.executable, "-O", bootstrap, "-s", command_file], metadata
+
+
 def complete_helicity_table(matrix_source, nexternal):
     """Read the actual generated state inventory, independently of HEPCAT.
 
@@ -676,6 +743,7 @@ end subroutine
 
 def build_reference(data, output):
     root, pdgs, masses, used, rules, name_map, seconds = checked_configuration(data)
+    jamp_split = jamp_split_setting(data.get("JampSplit"))
     deadline = time.monotonic() + seconds
     output.mkdir(parents=True, exist_ok=True)
     if (output / "process").exists() or (output / "reference-model").exists():
@@ -711,11 +779,12 @@ def build_reference(data, output):
         "set notification_center False --no_save", "set fortran_compiler " + compiler + " --no_save",
         "import model " + private_spec,
         "generate " + generation_process + " " + " ".join(name + "<=" + str(value) for name, value in sorted(orders.items())),
-        "output standalone process", "quit", ""]))
+        "output standalone process" + (" --jamp_optim=False" if jamp_split else ""), "quit", ""]))
     environment = dict(os.environ)
     environment["PYTHONDONTWRITEBYTECODE"] = "1"
     environment["PATH"] = str(Path(compiler).parent) + os.pathsep + environment.get("PATH", "")
-    run_logged([sys.executable, root / "bin" / "mg5_aMC", "-s", command_file], output,
+    generation_command, generation_metadata = madgraph_generation_command(root, output, command_file, jamp_split)
+    run_logged(generation_command, output,
                output / "generate.log", deadline, environment)
     process_root = output / "process"
     matrices = sorted((process_root / "SubProcesses").glob("P*/matrix.f"))
@@ -800,7 +869,8 @@ end subroutine
             "CouplingOrders": orders, "Scope": "Complete tree amplitude within the supplied UFO expansion limits and declared allowed particle content.",
             "Normalization": "Raw fixed-helicity, color-summed squared amplitude; no initial averages or final symmetry factor.",
             "SpinSum": "Exhaustive generated helicity table; no pruning, sampling, initial average or final symmetry factor.",
-            "HelicityStates": len(helicity_table), "OptimizationLevel": level, "FortranFlags": flags}
+            "HelicityStates": len(helicity_table), "OptimizationLevel": level, "FortranFlags": flags,
+            **generation_metadata}
 
 
 def main():

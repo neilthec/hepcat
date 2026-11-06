@@ -321,3 +321,119 @@ platforms `long double` has the same precision as `double`; on others it does
 not. Report this in the paper or repeat using matching double SPINAS exports.
 Build dependencies trigger CMake reconfiguration when measured sources, models,
 or libraries change. Rebuild before recording publication results.
+
+
+## Direct all-positive formula checks above six photons
+
+`all-positive-formulas.hpp` evaluates the previously fixed physical and spurious
+all-positive QED recurrences directly, using memoized photon subsets.
+`all-positive-validation.cpp` compares both with an independent MadGraph
+matrix element. It does not load Mathematica, generate HEPCAT diagrams, run
+preparation/completion, or expand the formulas into long symbolic expressions.
+The argument N counts photons: N=7 and N=8 mean nine and ten external particles.
+
+Both formulas take physical positive-energy momenta for incoming electron and
+positron and outgoing positive-helicity photons. The evaluator performs the
+all-ingoing crossing once, including photon angle-spinor signs. It retains
+all four massive spin amplitudes. The comparison uses the raw sum of their
+squared moduli on each side, with every photon fixed positive; it applies no
+initial average or identical-particle phase-space factor. An overall phase of
+the amplitude therefore cannot cause a false mismatch.
+
+Build against a matching SPINAS library. For this checkout's LongDouble build:
+
+```sh
+validation_dir="$PWD/benchmarks/build-all-positive-high-multiplicity"
+mkdir -p "$validation_dir"
+clang++ -O2 -std=c++11 -DWITH_LONG_DOUBLE \
+  -I"$HOME/code/spinas/include" -I"$HOME/code/spinas" -Isource \
+  benchmarks/all-positive-validation.cpp "$HOME/code/spinas/build/libspinas.a" \
+  -o "$validation_dir/all-positive-validation"
+"$validation_dir/all-positive-validation" --self-test
+```
+
+For a Double SPINAS library, omit `-DWITH_LONG_DOUBLE`. The controls compare
+both recurrences with the established two-, three- and four-photon formulas
+at two masses and charges and every massive spin. They also compare ordered
+and determinant-collected scalar currents.
+
+Generate a private MadGraph reference with the existing helper. For eight
+photons, save a JSON configuration such as:
+
+```json
+{
+  "MadGraphDirectory": "/path/to/MadGraph",
+  "MadGraphModel": "sm-full",
+  "PhysicalPDGs": [11, -11, 22, 22, 22, 22, 22, 22, 22, 22],
+  "AllowedParticlePDGs": [11, 22],
+  "Masses": [1.5, 1.5, 0, 0, 0, 0, 0, 0, 0, 0],
+  "Parameters": [{"Name": "Me", "Value": 1.5},
+                 {"Name": "EE", "Value": 0.3333333333333333}],
+  "ParameterRules": {},
+  "ParameterMap": {},
+  "JampSplit": 128,
+  "TimeConstraint": 7200
+}
+```
+
+Use a Python compatible with the selected MadGraph installation:
+
+```sh
+python3 source/madgraph-runtime.py --config /path/to/config.json \
+  --output "$validation_dir/reference-N8"
+"$validation_dir/all-positive-validation" --photons 8 --points 1000 \
+  --mass 1.5 --reference "$validation_dir/reference-N8/libhepcat_madgraph.dylib" \
+  --output "$validation_dir/N8"
+```
+
+Use the `.so` library suffix on Linux. For seven photons remove one photon and
+one zero mass from the configuration, then select `--photons 7`. Mass and charge
+must match the reference card; rebuilding with new configuration values makes
+those inputs explicit. Energy bounds default to 10 through 100 in the selected
+mass units. The default seed comes from the time and is printed and saved;
+`--seed INTEGER` replays a run. The report and CSV files retain every point and
+comparison, without retrying or discarding an inconvenient point. The default
+relative tolerance is 1e-7 with zero absolute tolerance.
+
+`JampSplit` is an optional internal reference-build setting, not a
+`ConstructAmplitude` option. It invokes MadGraph's own `get_JAMP_lines` split
+argument and disables its color-code reoptimization for that export. This
+keeps the native diagrams, coefficients and helicity states while writing
+bounded final-sum statements. A private bootstrap starts in MadGraph's normal
+optimized Python mode so its startup cannot bypass that setting. Installed
+MadGraph files are unchanged. Omit the setting, or use zero/null, to keep the
+ordinary reference generation unchanged. It does not alter MadEvent defaults.
+The helper records this policy and the bootstrap's source/hash in `result.json`.
+
+
+The 2026-11-05 direct tests passed all 1000 requested points per multiplicity:
+
+| Photons | External particles | Mass | AllPhysical max. relative difference | AllSpurious max. relative difference |
+| --- | --- | --- | ---: | ---: |
+| 6 (control) | 8 | 1 | 8.21e-12 | 8.21e-12 |
+| 7 | 9 | 1 | 4.77e-12 | 3.29e-11 |
+| 8 | 10 | 1.5 | 1.23e-11 | 1.45e-8 |
+
+Charge is 1/3, with logarithmically sampled center-of-mass energies from 10 to
+100. The spurious representation has larger numerical deviations in this
+sample, particularly at eight photons. Its worst original point is retained
+in the raw results; no relabeling was used to replace a value in the comparison.
+These are finite numerical tests, not an analytic all-N proof.
+
+MadGraph supplied 720, 5040 and 40320 native diagrams respectively. The
+seven-photon split-reference control agreed exactly with the original native
+output at every one of 4000 massive-spin evaluations. The split references
+have 40 and 315 final-sum statements at N=7 and N=8. Their matrix files are
+byte-identical to the original outside `GET_JAMP`. The original eight-photon
+compile was interrupted because of its single enormous sum, not because of
+a numerical discrepancy; it is not counted as a completed comparison.
+
+The local `build-all-positive-high-multiplicity/validation-summary.csv` and
+`validation-summary.json` retain all results, seeds, input/source hashes and
+reference metadata. The `N6-*`, `N7-*`, `N8-*` CSVs retain all common momenta
+and individual comparisons; `native-split-control.json` records the independent
+formatting control. The tested reference directories are `reference-N6`,
+`reference-N7`, and `reference-N8-split-v2`. Their configurations, generated
+sources, parameter cards and build logs are preserved. Generated artifacts
+remain outside Git; the evaluator, comparison program and replay instructions
+are versioned.

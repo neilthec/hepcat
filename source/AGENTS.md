@@ -415,6 +415,17 @@ data for the eight-point all-positive pilot. The other seven-point helicity
 sectors are not implied. For other processes, inspect the model
 before selecting the lower-point data.
 
+The direct all-positive formula tests in `benchmarks/all-positive-formulas.hpp`
+and `benchmarks/all-positive-validation.cpp` bypass constructive generation.
+They compare both fixed recurrences with independent MadGraph at seven and
+eight photons; these are numerical tests, not new model entries or an all-N
+proof. Their raw reports and reproducible seeds live in the benchmark build
+directory. For exceptionally large independent references, the internal JSON
+setting `JampSplit` opts into MadGraph's own bounded final-sum formatting through
+a private bootstrap. It preserves every native diagram, coefficient and
+helicity. Default reference generation and MadEvent remain unchanged; never
+replace the independent reference with the formula being tested.
+
 Model parameters are inert data stored in the model, not globally assigned
 symbols. Use `ModelParameter[model, "Me"]` to retrieve a parameter,
 `ModelParameterName[parameter]` for its name, and `ModelParameterRules[model]`

@@ -3412,3 +3412,47 @@ The implementation is `constructSameChiralSpuriousSubsetCurrent` in
 128 photon subsets. That implementation limit is separate from the mathematical
 set recursion. The focused regression file is
 `tests/checks/spurious-chiral-current-tests.wl`.
+
+#### Direct MadGraph tests at seven and eight photons
+
+Both previously fixed recurrences can be evaluated numerically without
+expanding a symbolic expression or calling constructive completion.
+`benchmarks/all-positive-formulas.hpp` implements the physical and spurious
+subset formulas with the same all-ingoing crossing conventions.
+`benchmarks/all-positive-validation.cpp` compares their squared amplitudes with
+native MadGraph, summing the four massive-fermion spins while fixing every
+outgoing photon positive. No initial average, identical-particle factor,
+normalization fit, absolute error floor or point rejection is used.
+
+The 2026-11-05 tests use charge 1/3, independent random physical points with
+center-of-mass energy between 10 and 100, and electron masses shown below.
+The existing six-photon case is a control for the numerical transcription.
+
+| Photons | External particles | Mass | Points | AllPhysical maximum relative difference | AllSpurious maximum relative difference |
+| --- | --- | --- | --- | --- | --- |
+| 6 | 8 | 1 | 1000 | 8.21e-12 | 8.21e-12 |
+| 7 | 9 | 1 | 1000 | 4.77e-12 | 3.29e-11 |
+| 8 | 10 | 1.5 | 1000 | 1.23e-11 | 1.45e-8 |
+
+Every point passes the existing 1e-7 relative tolerance. The spurious
+representation has larger numerical deviations in the eight-photon sample;
+the unmodified values and momenta are retained rather than replaced by a
+different labeling or a preferred representation. This extends the finite
+numerical evidence, not the scope of an analytic all-multiplicity proof.
+The models and constructive algorithms are unchanged.
+
+MadGraph generates 5040 and 40320 native diagrams for seven and eight photons.
+Its original eight-photon output placed the entire final sum in one roughly
+486 KB expression, making compilation impractically slow in this run. The
+optional private reference setting `JampSplit -> 128` uses MadGraph's native
+exporter to write bounded accumulation statements. It changes no HELAS call,
+diagram, coefficient or helicity state, and leaves installed MadGraph files
+untouched. A seven-photon control agrees exactly with the original reference
+for all 4000 individual spin evaluations at the same 1000 points. For both
+references, all generated matrix code outside `GET_JAMP` is byte-identical
+to the original. Normal reference-generation and MadEvent defaults retain
+their existing behavior.
+
+`benchmarks/README.md` gives the build and replay commands. Local raw results,
+seeds, momenta, reference metadata, source hashes and the native-formatting
+control are in `benchmarks/build-all-positive-high-multiplicity/`.
