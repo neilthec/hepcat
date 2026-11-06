@@ -249,7 +249,7 @@ inline std::vector<std::string> split_table_fields(const std::string& line) {
 }
 
 inline void write_compact_model_table(std::ostream& output, const std::string& header,
-                                      std::istream& input, const std::string& kind) {
+                                      std::istream& input, const std::string& kind, bool zero_widths = false) {
   const auto headings = split_table_fields(header);
   // External-library tables carry free-form commands/prototypes in one
   // column. A pipe inside such a command must not become a field separator.
@@ -258,6 +258,17 @@ inline void write_compact_model_table(std::ostream& output, const std::string& h
     const std::string remainder((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
     output << remainder;
     return;
+  }
+  std::size_t width_column = headings.size();
+  if (zero_widths && kind == "Particles") {
+    for (std::size_t index = 0; index < headings.size(); ++index) {
+      std::string heading = headings[index];
+      std::transform(heading.begin(), heading.end(), heading.begin(),
+        [](unsigned char c) { return c >= 'A' && c <= 'Z' ? c - 'A' + 'a' : c; });
+      if (heading == "width") width_column = index;
+    }
+    if (width_column == headings.size())
+      throw std::runtime_error("The CalcHEP particle table has no identifiable Width column.");
   }
   std::vector<std::size_t> widths;
   for (const auto& heading : headings) widths.push_back(heading.size());
@@ -272,6 +283,7 @@ inline void write_compact_model_table(std::ostream& output, const std::string& h
         throw std::runtime_error("A compact CalcHEP model row has more fields than its header.");
       }
       fields.resize(headings.size());
+      if (width_column < fields.size()) fields[width_column] = "0";
       for (std::size_t index = 0; index < fields.size(); ++index) {
         widths[index] = std::max(widths[index], fields[index].size());
       }
@@ -292,7 +304,7 @@ inline void write_compact_model_table(std::ostream& output, const std::string& h
 }
 
 inline void copy_model_table(const std::string& source, const std::string& destination,
-                             const std::string& kind, bool optional) {
+                             const std::string& kind, bool optional, bool zero_widths = false) {
   std::ifstream input(source.c_str(), std::ios::binary);
   if (!input && !optional) {
     throw std::runtime_error("Cannot read CalcHEP model table: " + source);
@@ -312,14 +324,22 @@ inline void copy_model_table(const std::string& source, const std::string& desti
     // HEPCAT also reads a compact two-header form. CalcHEP requires a table
     // kind between the title and pipe header. Only that missing line is added;
     // all parameter values, constraints and vertex field texts stay unchanged.
+    // Validation alone replaces particle Width fields by zero in this copy.
     // Compact header widths also need to cover their actual row contents.
     if (second.find('|') != std::string::npos) {
       output << kind << '\n';
-      write_compact_model_table(output, second, input, kind);
+      write_compact_model_table(output, second, input, kind, zero_widths);
     } else {
       output << second << '\n';
-      const std::string remainder((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
-      output << remainder;
+      if (zero_widths && kind == "Particles") {
+        std::string heading;
+        if (!std::getline(input, heading))
+          throw std::runtime_error("The CalcHEP particle table has no column header.");
+        write_compact_model_table(output, heading, input, kind, true);
+      } else {
+        const std::string remainder((std::istreambuf_iterator<char>(input)), std::istreambuf_iterator<char>());
+        output << remainder;
+      }
     }
   }
   if (!output) throw std::runtime_error("Could not finish private CalcHEP model table: " + destination);
@@ -342,7 +362,7 @@ inline std::string stage_model(const std::string& directory, int number,
     const std::string filename = std::string(prefixes[index]) + std::to_string(number) + ".mdl";
     copy_model_table(source + "/" + filename,
                      destination + "/" + std::string(prefixes[index]) + "1.mdl",
-                     kinds[index], index == 4);
+                     kinds[index], index == 4, index == 2);
   }
   return destination;
 }

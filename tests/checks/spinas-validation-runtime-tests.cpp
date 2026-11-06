@@ -48,6 +48,73 @@ int main() {
       random_kinematics(std::array<ldouble, 6>{{0, 1, 0.2L, 0.3L, 2, 0}},
         std::array<std::size_t, 2>{{1, 4}}));
 
+    // Independent division examples cover the optimization's real domain and
+    // the ranges where retaining the original complex division is essential.
+    const CachedDenominator real_denominator(cdouble(3, 0), true);
+    const cdouble ordinary_numerator(7, -11);
+    check("normal real denominators reuse their reciprocal",
+      real_denominator.uses_real_reciprocal() &&
+      std::abs(real_denominator.divide(ordinary_numerator) - ordinary_numerator/cdouble(3,0))
+        <= 8*std::numeric_limits<ldouble>::epsilon()*std::abs(ordinary_numerator/cdouble(3,0)));
+    const CachedDenominator declared_width(cdouble(3, 0), false);
+    check("a width-bearing expression never enables the real shortcut, even at zero imaginary value",
+      !declared_width.uses_real_reciprocal() &&
+      declared_width.divide(ordinary_numerator) == ordinary_numerator/cdouble(3,0));
+    const cdouble tiny_imaginary_denominator(3, std::numeric_limits<ldouble>::min());
+    const CachedDenominator nonreal_denominator(tiny_imaginary_denominator, true);
+    check("an arbitrarily small imaginary denominator is retained exactly",
+      !nonreal_denominator.uses_real_reciprocal() &&
+      nonreal_denominator.divide(ordinary_numerator) == ordinary_numerator/tiny_imaginary_denominator);
+    const cdouble width_value(3, -ldouble(0.125L));
+    const CachedDenominator finite_width(width_value, false);
+    check("finite-width division retains its complex phase",
+      !finite_width.uses_real_reciprocal() &&
+      finite_width.divide(ordinary_numerator) == ordinary_numerator/width_value);
+    const cdouble signed_zero(ldouble(-0.0L), ldouble(0));
+    const cdouble signed_expected = signed_zero/cdouble(-3,0);
+    const cdouble signed_observed = CachedDenominator(cdouble(-3,0),true).divide(signed_zero);
+    check("zero numerator components preserve the original division and signed zeros",
+      signed_expected == signed_observed &&
+      std::signbit(std::real(signed_expected)) == std::signbit(std::real(signed_observed)) &&
+      std::signbit(std::imag(signed_expected)) == std::signbit(std::imag(signed_observed)));
+    const ldouble largest = std::numeric_limits<ldouble>::max();
+    const ldouble smallest = std::numeric_limits<ldouble>::min();
+    const cdouble huge_numerator(largest/4, -largest/8);
+    const CachedDenominator huge_denominator(cdouble(largest/2,0),true);
+    check("subnormal reciprocal ranges retain scaled complex division",
+      !huge_denominator.uses_real_reciprocal() &&
+      huge_denominator.divide(huge_numerator) == huge_numerator/cdouble(largest/2,0));
+    const CachedDenominator tiny_denominator(cdouble(smallest/2,0),true);
+    const cdouble tiny_numerator(smallest/4,smallest/8);
+    check("subnormal denominator and numerator ranges retain scaled complex division",
+      !tiny_denominator.uses_real_reciprocal() &&
+      tiny_denominator.divide(tiny_numerator) == tiny_numerator/cdouble(smallest/2,0));
+    const cdouble underflow_numerator(smallest*2,smallest*3);
+    check("underflowing products use the original division",
+      CachedDenominator(cdouble(4,0),true).divide(underflow_numerator)
+        == underflow_numerator/cdouble(4,0));
+    const cdouble overflow_numerator(largest/2,largest/3);
+    const auto overflow_expected = overflow_numerator/cdouble(ldouble(0.25L),0);
+    const auto overflow_observed = CachedDenominator(cdouble(ldouble(0.25L),0),true).divide(overflow_numerator);
+    check("overflowing products use the original division",
+      std::isinf(std::real(overflow_observed)) == std::isinf(std::real(overflow_expected)) &&
+      std::isinf(std::imag(overflow_observed)) == std::isinf(std::imag(overflow_expected)));
+    const CachedDenominator exact_pole(cdouble(0,0),true);
+    check("an exact pole never enables reciprocal multiplication",
+      !exact_pole.uses_real_reciprocal());
+    const cdouble nonfinite_numerator(std::numeric_limits<ldouble>::quiet_NaN(), 1);
+    const auto nonfinite_expected = nonfinite_numerator/cdouble(3,0);
+    const auto nonfinite_observed = real_denominator.divide(nonfinite_numerator);
+    check("nonfinite numerator behavior remains the original complex division",
+      std::isnan(std::real(nonfinite_observed)) == std::isnan(std::real(nonfinite_expected)) &&
+      std::isnan(std::imag(nonfinite_observed)) == std::isnan(std::imag(nonfinite_expected)));
+    const cdouble infinite_value(std::numeric_limits<ldouble>::infinity(),0);
+    const CachedDenominator infinite_denominator(infinite_value,true);
+    check("nonfinite denominators retain the original complex evaluator",
+      !infinite_denominator.uses_real_reciprocal() &&
+      infinite_denominator.divide(ordinary_numerator) == ordinary_numerator/infinite_value);
+
+
     const ldouble epsilon = std::numeric_limits<ldouble>::epsilon();
     const ldouble wide = std::pow(ldouble(10),
       std::numeric_limits<ldouble>::max_exponent10/3);

@@ -60,6 +60,23 @@ smgCheck["even recognized QED data cannot silently select an installation, model
     smgDefaultMetadata["MadGraphDirectory"] === "" &&
     smgDefaultMetadata["MadGraphModel"] === "" &&
     smgDefaultMetadata["AllowedParticlePDGs"] === {}];
+smgCheck["MadGraph export metadata states the private zero-width validation policy",
+  KeyExistsQ[smgDefaultMetadata, "WidthParameterIndices"] &&
+    smgDefaultMetadata["WidthParameterIndices"] === {} &&
+    StringContainsQ[smgDefaultMetadata["WidthPolicy"], "private"]];
+smgWidthParameter = ModelParameter["gamma", "madgraph-width-role-fixture", "Real"];
+smgOtherParameter = ModelParameter["delta", "madgraph-width-role-fixture", "Real"];
+smgWidthIR = <|"OriginalExpression" ->
+    1/PropDen[Mom[Multiparticle[1, 3]], ModelParameter[smgModel, "Me"], smgWidthParameter],
+  "ParameterSymbols" -> {ModelParameter[smgModel, "EE"], smgWidthParameter, smgOtherParameter}|>;
+smgCheck["width roles use zero-based exported indices rather than parameter-name guesses",
+  ConstructiveDiagrams`Private`spinasValidationWidthIndices[smgWidthIR, smgModel] === {1}];
+smgCompoundWidthIR = Join[smgWidthIR, <|"OriginalExpression" ->
+  1/PropDen[Mom[Multiparticle[1, 3]], ModelParameter[smgModel, "Me"],
+    smgWidthParameter smgOtherParameter]|>];
+smgCheck["compound widths are disabled by the process hook without zeroing unrelated scalar inputs",
+  ConstructiveDiagrams`Private`spinasValidationWidthIndices[smgCompoundWidthIR, smgModel] === {}];
+
 smgCheck["the missing reference setup has a helpful diagnostic",
   StringQ[smgDefaultMetadata["Reason"]] && StringContainsQ[smgDefaultMetadata["Reason"], "MadGraphModel"] &&
     StringContainsQ[smgDefaultMetadata["Reason"], "MadGraphDirectory"]];

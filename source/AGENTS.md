@@ -520,6 +520,26 @@ parameter and momentum interfaces. Optimizations depend on typed expressions
 and declared runtime dependencies, never process names or known QED answers.
 The optimized native layout can store product components and shared arithmetic
 once per point, with spin-dependent work kept in its proper projection scope.
+Optimized preparation is demand driven: invalidate on every point, parameter,
+mass or width-mode update; prepare the complete dependency closure required by
+the shortened sum, then lazily complete other branches for public amp calls.
+The hot internal spin kernel must see initialized data without repeated cache
+checks. Copies must rebuild particle bindings, shared momentum-chain ownership
+and cache validity. An unsupported dependency analysis keeps the correct eager
+path. Real propagator arithmetic requires exact runtime reality and zero widths;
+a symbolic or nonzero width taints every containing denominator and retains
+complex evaluation, even if its imaginary term happens to vanish. Cached whole
+denominators must fall back to original division for singular, subnormal,
+nonfinite or unsafe reciprocal multiplication. Preserve sum-before-division.
+SPINAS momentum_chain support is optional at compile time; older headers use
+ordinary per-product updates. New headers and compiled SPINAS class layouts must
+match. No mutable global matrix cache is permitted.
+Independent CH/MG validation uses private zero-width process/model copies,
+including literal, symbolic and model-declared width inputs. Normal exported
+simulation widths remain enabled. Identify width parameters by model roles and
+PropDen structure, never by names such as WZ. Unsupported dependent width model
+rewriting must report setup failure, not a numerical PASS. Record this policy.
+
 Preserve complex branches, widths, exact spin-slot mappings and parameter
 invalidation. Do not use fast-math or discard imaginary parts inferred from
 numerical defaults. Unsupported forms keep their correct evaluator and expose

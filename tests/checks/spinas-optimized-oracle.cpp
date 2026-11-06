@@ -5,6 +5,7 @@
 #include <iostream>
 #include <map>
 #include <stdexcept>
+#include <utility>
 
 static unsigned comparisons = 0;
 
@@ -24,7 +25,8 @@ void set_values(Process& process, int round) {
   auto values = process.get_parameters();
   for (const auto& entry : parameter_indices<Process>()) {
     if (entry.first == "Me") values[entry.second] = ldouble(0.8L) + ldouble(round) / 5;
-    if (entry.first == "EE") values[entry.second] = ldouble(0.25L) + ldouble(round) / 30;
+    if (entry.first == "EE") values[entry.second] = cdouble(
+      ldouble(0.25L) + ldouble(round) / 30, round == 1 ? ldouble(0.11L) : ldouble(0));
     if (entry.first == "width") values[entry.second] = ldouble(0.03L) + ldouble(round) / 100;
     if (entry.first == "internal_mass") values[entry.second] = cdouble(ldouble(1.4L), round==1 ? ldouble(0.2L) : ldouble(0));
     if (entry.first == "momentum_factor_1") {
@@ -76,6 +78,18 @@ void compare(const char* label, const std::array<int, Readable::leg_count>& rank
         ldouble(50 + 7 * point_index), point_index + round * 11);
       readable.set_momenta(point);
       optimized.set_momenta(point);
+      // Exercise demand-driven preparation before public amp() requests the
+      // complementary helicities. The full enumeration below remains oracle.
+      const ldouble readable_early_amp2 = readable.amp2();
+      const ldouble optimized_early_amp2 = optimized.amp2();
+      const ldouble readable_early_sum = readable.spin_sum();
+      const ldouble optimized_early_sum = optimized.spin_sum();
+      Readable readable_early_copy(readable);
+      Optimized optimized_early_copy(optimized);
+      same(cdouble(readable_early_copy.spin_sum()), cdouble(readable_early_sum),
+           "readable copy after shortened sum");
+      same(cdouble(optimized_early_copy.spin_sum()), cdouble(optimized_early_sum),
+           "optimized copy after shortened sum");
       auto invalid = Readable::default_spins();
       invalid[0] = ranks[0] + 2;
       bool bad_a=false,bad_b=false;
@@ -119,8 +133,16 @@ void compare(const char* label, const std::array<int, Readable::leg_count>& rank
            "readable raw spin sum versus exhaustive public amplitudes");
       same(cdouble(optimized.spin_sum()), cdouble(optimized_exhaustive),
            "optimized raw spin sum versus exhaustive public amplitudes");
+      same(cdouble(readable_early_sum), cdouble(readable_exhaustive),
+           "readable early sum versus exhaustive public amplitudes");
+      same(cdouble(optimized_early_sum), cdouble(optimized_exhaustive),
+           "optimized early sum versus exhaustive public amplitudes");
       const ldouble normalization = Readable::symmetry_factor() /
                                    Readable::incoming_spin_average();
+      same(cdouble(readable_early_amp2), cdouble(normalization * readable_exhaustive),
+           "readable early amp2 versus exhaustive public amplitudes");
+      same(cdouble(optimized_early_amp2), cdouble(normalization * optimized_exhaustive),
+           "optimized early amp2 versus exhaustive public amplitudes");
       same(cdouble(readable.amp2()), cdouble(normalization * readable_exhaustive),
            "readable normalized spin sum versus exhaustive public amplitudes");
       same(cdouble(optimized.amp2()), cdouble(normalization * optimized_exhaustive),
@@ -129,6 +151,30 @@ void compare(const char* label, const std::array<int, Readable::leg_count>& rank
       Readable readable_copy(readable);
       Optimized optimized_copy(optimized);
       same(readable_copy.amp(spins), optimized_copy.amp(spins), "copy");
+      auto deferred_spins = spins;
+      for (const auto& helicities : Readable::helicity_configurations()) {
+        bool has_negative_pivot = false;
+        for (unsigned leg = 0; leg < Readable::leg_count; ++leg) {
+          if (readable.masses()[leg] != 0 || ranks[leg] == 0) continue;
+          has_negative_pivot = helicities[leg] < 0;
+          break;
+        }
+        if (!has_negative_pivot) continue;
+        for (unsigned leg = 0; leg < Readable::leg_count; ++leg)
+          if (readable.masses()[leg] == 0) deferred_spins[leg] = helicities[leg];
+        break;
+      }
+      same(readable_early_copy.amp(deferred_spins), optimized_early_copy.amp(deferred_spins),
+           "public omitted-helicity amplitude completes a copied shortened cache");
+      // Relocation must rebind both products and shared matrices to their owner.
+      Readable readable_relocated(std::move(readable_early_copy));
+      Optimized optimized_relocated(std::move(optimized_early_copy));
+      const auto relocated_point = hepcat_spinas::make_example_momenta(
+        readable.masses(), Readable::incoming_legs(), ldouble(65 + point_index), round + 23);
+      readable_relocated.set_momenta(relocated_point);
+      optimized_relocated.set_momenta(relocated_point);
+      same(readable_relocated.amp(deferred_spins), optimized_relocated.amp(deferred_spins),
+           "relocated process cache owns its particles");
       Readable readable_assignment;
       Optimized optimized_assignment;
       readable_assignment = readable;
@@ -144,6 +190,33 @@ void compare(const char* label, const std::array<int, Readable::leg_count>& rank
   optimized.set_momenta(point);
   same(readable.amp(Readable::default_spins()),
        optimized.amp(Optimized::default_spins()), "mass setter");
+  const auto readable_parameters = readable.get_parameters();
+  const auto optimized_parameters = optimized.get_parameters();
+  const auto with_widths = optimized.amp(Optimized::default_spins());
+  readable.set_widths_enabled(false);
+  optimized.set_widths_enabled(false);
+  require_uninitialized(readable);
+  require_uninitialized(optimized);
+  if (readable.get_parameters() != readable_parameters ||
+      optimized.get_parameters() != optimized_parameters)
+    throw std::runtime_error("Width selection changed model parameters");
+  readable.set_momenta(point);
+  optimized.set_momenta(point);
+  same(cdouble(readable.amp2()), cdouble(optimized.amp2()), "early zero-width amp2");
+  same(readable.amp(Readable::default_spins()),
+       optimized.amp(Optimized::default_spins()), "zero-width selection");
+  Readable zero_width_readable(readable);
+  Optimized zero_width_optimized(optimized);
+  same(zero_width_readable.amp(Readable::default_spins()),
+       zero_width_optimized.amp(Optimized::default_spins()), "copied zero-width selection");
+  readable.set_widths_enabled(true);
+  optimized.set_widths_enabled(true);
+  readable.set_momenta(point);
+  optimized.set_momenta(point);
+  same(optimized.amp(Optimized::default_spins()), with_widths,
+       "normal simulation widths restored");
+  same(readable.amp(Readable::default_spins()),
+       optimized.amp(Optimized::default_spins()), "restored-width selection");
 }
 
 template<class Process>

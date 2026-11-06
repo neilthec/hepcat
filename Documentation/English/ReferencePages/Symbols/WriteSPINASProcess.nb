@@ -70,13 +70,27 @@ substitutions or amplitude fitting. ", ButtonBox["ConstructAmplitude",
      ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"],
      " remain the tools for changing a symbolic amplitude."}], "Notes"],
-  Cell[TextData[{"The optimized native layout precomputes the spin components \
-of supported SPINAS products into direct-access tables. Shared arithmetic \
-that is independent of spin can be computed once per momentum point; repeated \
-spin-dependent arithmetic stays in its proper amplitude or projection scope. \
-Real arithmetic is used only where the form and validated inputs establish \
-reality. Genuine complex parameters, widths and branch-sensitive operations \
-retain their complex semantics."}], "Notes"],
+  Cell[TextData[{"The optimized native layout prepares numerical data when it \
+is needed. After set_momenta, the summed evaluator builds the product tables \
+and shared factors used by its selected helicity representatives. An \
+individual amp call can complete the remaining cache and still evaluates its \
+full complex amplitude. Changing momenta, masses, parameters or the width \
+setting invalidates the relevant data; copies bind their caches to their own \
+particles."}], "Notes"], Cell[TextData[{"For exactly real runtime parameters \
+and zero-width propagators, guarded arithmetic can form denominators with \
+real operations and reuse an inverse of a complete denominator across spin \
+evaluations. Nonzero or unresolved widths keep complex arithmetic. Any \
+nonreal parameter, singular or extreme value that makes reciprocal \
+multiplication unsuitable uses the original complex division. The exporter \
+preserves the complete denominator product and the order of sums; it does not \
+distribute a denominator across terms or enable fast-math."}], "Notes"],
+  Cell[TextData[{"With a compatible SPINAS library, brackets containing the \
+same ordered momentum sequence can share its intermediate matrix. The \
+generated process owns that matrix cache, updates it once when needed and \
+rebinds it on copying. Older SPINAS headers retain the ordinary \
+product-update path. Rebuild SPINAS after updating its headers and library \
+together; a mixture of old compiled libraries and new class layouts is not \
+supported."}], "Notes"],
   Cell[TextData[{"Select ", Cell[BoxData[RowBox[{"\"CodeStyle\"", " ", "->",
          " ", "\"Readable\""}]], "InlineFormula"], " for the direct helicity \
 formulas with familiar parameter, spinor-product and denominator names. This \
@@ -294,6 +308,12 @@ not install or rebuild the external library."}], "Notes"],
 overrides them for this export without assigning global values to the model's \
 parameters. The generated mass and parameter interfaces update the process \
 consistently when numerical values change."}], "Notes"],
+  Cell[TextData[{"The generated C++ method set_widths_enabled(false) removes \
+only propagator width terms, including literal or compound width expressions. \
+Normal processes start with widths enabled. Toggling this setting invalidates \
+the current momentum cache, so call set_momenta again before evaluating. The \
+stored parameter values are retained and can be used when widths are enabled \
+again."}], "Notes"],
   Cell[TextData[{Cell[BoxData[RowBox[{"\"Overwrite\"", " ", "->", " ",
          "True"}]], "InlineFormula"], " permits replacing generated project \
 files in an existing export directory. Keep saved calculations or hand-edited \
@@ -349,6 +369,13 @@ reported for replay. Requested mismatches, unavailable checks and evaluation \
 errors return ", Cell[BoxData[RowBox[{"Failure"}]], "InlineFormula"], "; \
 completing a source export or a C++ build is not reported as a successful \
 independent validation."}], "Notes"],
+  Cell[TextData[{"Independent tree-level validation uses zero widths in all \
+compared amplitudes. The validators make private copies, zero model-declared \
+width inputs and remove propagator width terms from the HEPCAT copy; their \
+private CalcHEP and MadGraph models also have zero particle widths. The \
+caller's process, installed model files and normal CalcHEP/MadEvent \
+simulation widths are left unchanged. Re-export a project to apply this \
+validation policy to newly generated code."}], "Notes"],
   Cell["Running CalcHEP integration with the HEPCAT amplitude",
    "NotesSection"], Cell[TextData[{"The numerical ",
      Cell[BoxData[RowBox[{"n", "_", "calchep"}]], "InlineFormula"],
@@ -384,6 +411,9 @@ automatic-width or gauge-restoring operations are reported."}], "Notes"],
 output. Move the complete directory elsewhere before deleting the enclosing \
 build tree if you want to keep it. Installed CalcHEP and system runtime \
 libraries remain required."}], "Notes"],
+  Cell[TextData[{"The independent tree-level validator uses private \
+zero-width copies. This integration program continues to use the widths \
+selected for the exported amplitude and its model."}], "Notes"],
   Cell["Running MadEvent integration with the HEPCAT amplitude",
    "NotesSection"], Cell[TextData[{"The MadEvent backend uses the explicitly \
 selected MadGraph model to obtain particle information, parameters and \

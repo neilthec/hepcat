@@ -9,6 +9,7 @@ Only its private output directory is modified. No optional MG tools are needed.
 """
 
 import argparse
+import ast
 import contextlib
 import json
 import math
@@ -234,12 +235,134 @@ def checked_configuration(data):
     return root, pdgs, masses, used, rules, name_map, seconds
 
 
-def private_ufo_copy(source, restriction, output):
+def zero_private_ufo_widths(directory, width_names):
+    """Rewrite only declared width Parameter.value arguments in a private UFO.
+
+    Preserve source spelling and comments. AST byte spans avoid evaluating the
+    model and also handle non-ASCII metadata before a value on the same line.
+    Unsupported dynamic declarations fail instead of claiming a widthless check.
+    """
+    wanted = {normalized_name(name) for name in width_names if normalized_name(name) != "zero"}
+    if not wanted:
+        return {}
+    path = directory / "parameters.py"
+    if not path.is_file():
+        raise ValidationSetupError("Cannot disable declared UFO widths: private parameters.py is missing.")
+    source = path.read_bytes()
+    try:
+        tree = ast.parse(source.decode("utf-8"), filename=str(path))
+    except (SyntaxError, UnicodeError) as error:
+        raise ValidationSetupError("Cannot inspect private UFO width declarations: " + str(error)) from error
+    constructors = {"Parameter"}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module and node.module.endswith("object_library"):
+            for alias in node.names:
+                if alias.name == "Parameter":
+                    constructors.add(alias.asname or alias.name)
+    lines = source.splitlines(keepends=True)
+    offsets = [0]
+    for line in lines:
+        offsets.append(offsets[-1] + len(line))
+    replacements, found, external_slots = [], set(), {}
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        constructor = (isinstance(node.func, ast.Name) and node.func.id in constructors) or (
+            isinstance(node.func, ast.Attribute) and node.func.attr == "Parameter")
+        if not constructor:
+            continue
+        keywords = {item.arg: item.value for item in node.keywords if item.arg is not None}
+        name_node = keywords.get("name")
+        if not isinstance(name_node, ast.Constant) or not isinstance(name_node.value, str):
+            continue
+        name = re.sub(r"^mdl_", "", name_node.value, flags=re.I).lower()
+        if name not in wanted:
+            continue
+        if name in found:
+            raise ValidationSetupError("Repeated private UFO width declaration: " + name_node.value)
+        nature_node, value_node = keywords.get("nature"), keywords.get("value")
+        if not isinstance(nature_node, ast.Constant) or nature_node.value not in ("external", "internal") or value_node is None:
+            raise ValidationSetupError("Cannot safely rewrite private UFO width " + name_node.value + ".")
+        if not hasattr(value_node, "end_lineno") or value_node.end_lineno is None:
+            raise ValidationSetupError("The Python AST cannot locate private UFO width values.")
+        start = offsets[value_node.lineno-1] + value_node.col_offset
+        end = offsets[value_node.end_lineno-1] + value_node.end_col_offset
+        replacement = b"0.0" if nature_node.value == "external" else b"'0.0'"
+        if nature_node.value == "external":
+            try:
+                block = ast.literal_eval(keywords["lhablock"])
+                code = ast.literal_eval(keywords["lhacode"])
+            except (KeyError, ValueError, TypeError, SyntaxError) as error:
+                raise ValidationSetupError("Cannot read the LHA slot for private UFO width " + name_node.value) from error
+            if not isinstance(block, str) or not isinstance(code, (list, tuple)) or not code or not all(
+                    isinstance(index, int) and not isinstance(index, bool) for index in code):
+                raise ValidationSetupError("Unsupported LHA slot for private UFO width " + name_node.value)
+            external_slots[name] = (block.lower(), tuple(code))
+        replacements.append((start, end, replacement))
+        found.add(name)
+    missing = wanted - found
+    if missing:
+        raise ValidationSetupError("Cannot safely rewrite declared UFO width parameters: " + ", ".join(sorted(missing)))
+    for start, end, replacement in sorted(replacements, reverse=True):
+        source = source[:start] + replacement + source[end:]
+    try:
+        ast.parse(source.decode("utf-8"), filename=str(path))
+    except (SyntaxError, UnicodeError) as error:
+        raise ValidationSetupError("Private UFO width rewrite produced invalid Python.") from error
+    path.write_bytes(source)
+    return external_slots
+
+
+def zero_private_width_restriction(path, external_slots):
+    # Restriction cards are applied after Parameter defaults. Override only the
+    # width slots, otherwise a selected card could restore a nonzero width.
+    slots = set(external_slots.values())
+    block, output = None, []
+    for line in path.read_text().splitlines(keepends=True):
+        body, separator, comment = line.partition("#")
+        fields = list(re.finditer(r"\S+", body))
+        words = [field.group(0) for field in fields]
+        value_index = None
+        if words and words[0].lower() == "block":
+            block = words[1].lower() if len(words) > 1 else None
+        elif words and words[0].lower() == "decay":
+            block = None
+            if len(words) >= 3:
+                try:
+                    if ("decay", (int(words[1]),)) in slots:
+                        value_index = 2
+                except ValueError:
+                    pass
+        elif block is not None and words:
+            for slot_block, code in slots:
+                if slot_block != block or len(words) != len(code)+1:
+                    continue
+                try:
+                    if tuple(int(word) for word in words[:-1]) == code:
+                        value_index = len(code)
+                except ValueError:
+                    continue
+        if value_index is not None:
+            field = fields[value_index]
+            body = body[:field.start()] + "0.0" + body[field.end():]
+        output.append(body + (separator + comment if separator else ""))
+    path.write_text("".join(output))
+
+
+def private_ufo_copy(source, restriction, output, validation_widths=None):
     target = output / "reference-model"
     shutil.copytree(source, target, ignore=shutil.ignore_patterns(
         "__pycache__", "*.pyc", "*.pyo", "*.pkl", "._*"))
+    # The MadEvent numerical adapter uses the default and retains all widths.
+    # Only independent validation passes this explicit private-copy override.
+    width_slots = None
+    if validation_widths is not None:
+        width_slots = zero_private_ufo_widths(target, validation_widths)
     if restriction:
-        shutil.copyfile(restriction, target / "restrict_hepcat.dat")
+        copied_restriction = target / "restrict_hepcat.dat"
+        shutil.copyfile(restriction, copied_restriction)
+        if width_slots is not None:
+            zero_private_width_restriction(copied_restriction, width_slots)
         return "./reference-model-hepcat"
     return "./reference-model-full"
 
@@ -310,45 +433,75 @@ def match_external_masses(model, pdgs, masses, external, updates):
     return updates, matches
 
 
-def bare_tree_widths(external, updates):
-    # HEPCAT PropDen[p,m] contains no Breit-Wigner width. Keep the independent
-    # reference at the same bare-tree prescription, with intentional overrides.
-    updates = dict(updates)
-    zeroed, preserved = [], []
-    for key, parameter in external.items():
-        if parameter.lhablock.lower() != "decay":
+def validation_width_parameters(model):
+    entries, external = parameter_index(model)
+    widths = {key: parameter for key, parameter in external.items()
+              if parameter.lhablock.lower() == "decay"}
+    for particle in model["particles"]:
+        name = particle.get("width")
+        key = normalized_name(name)
+        if key == "zero":
             continue
-        name = re.sub(r"^mdl_", "", parameter.name)
-        if key in updates:
-            preserved.append({"Name": name, "Value": updates[key]})
-        else:
+        if key not in entries:
+            raise ValidationSetupError("Declared particle width has no UFO parameter: " + name)
+        widths[key] = entries[key]
+    return widths
+
+
+def validation_zero_width_inputs(model, used, rules, name_map):
+    """Disable width-role inputs without changing unrelated masses or couplings."""
+    entries, external = parameter_index(model)
+    widths = validation_width_parameters(model)
+    zero_used = {}
+    for source, (name, value) in used.items():
+        target = name_map.get(source, source)
+        if source == "gg" and source not in name_map and target not in entries and "g" in entries:
+            target = "g"
+        zero_used[source] = (name, 0.0 if target in widths else value)
+    # External width rules become zero. Internal width rules are replaced by
+    # their private zero expression rather than sent through an external card.
+    zero_rules = {key: (0.0 if key in widths else value) for key, value in rules.items()
+                  if key not in widths or key in external}
+    for key, parameter in widths.items():
+        parameter.value = 0.0
+        if key not in external:
+            parameter.expr = "0.0"
+    return zero_used, zero_rules, widths
+
+
+def bare_tree_widths(external, updates, declared_widths=None):
+    # Validation always uses zero widths, including explicit and matched inputs.
+    updates = dict(updates)
+    widths = {key: parameter for key, parameter in external.items()
+              if parameter.lhablock.lower() == "decay"}
+    if declared_widths is not None:
+        widths.update(declared_widths)
+    zeroed = []
+    for key, parameter in widths.items():
+        if key in external:
             updates[key] = 0.0
-            zeroed.append({"Name": name, "Value": 0.0})
-    return updates, zeroed, preserved
+        row = {"Name": re.sub(r"^mdl_", "", parameter.name), "Value": 0.0}
+        if key not in external:
+            row["Dependent"] = True
+        zeroed.append(row)
+    return updates, zeroed, []
 
 
 def check_other_widths(model, external, values, targets, matrix_source):
-    # A dependent width cannot be zeroed by guessing which unrelated coupling
-    # to change. Diagnose only widths actually used by this subprocess.
-    matched = set(targets.values())
-    preserved = []
+    # Check every declared particle width, even unused or explicitly matched
+    # ones. An unsupported rewrite is a setup failure, never a numerical PASS.
     seen = set()
     for particle in model["particles"]:
         name = particle.get("width")
         key = normalized_name(name)
-        if key in seen or key == "zero" or (key in external and external[key].lhablock.lower() == "decay"):
+        if key in seen or key == "zero":
             continue
         seen.add(key)
-        if not re.search(r"\b" + re.escape(name) + r"\b", matrix_source, re.I):
-            continue
         value = complex(values.get(key, float("nan")))
-        if close_value(value, 0):
-            continue
-        if key not in matched:
-            raise ValidationSetupError("The subprocess uses nonzero dependent/non-DECAY width " + name +
-                ". Make it zero through MadGraphParameterRules, or map the corresponding HEPCAT width explicitly.")
-        preserved.append({"Name": re.sub(r"^mdl_", "", name), "Value": float(value.real), "Dependent": key not in external})
-    return preserved
+        if not close_value(value, 0):
+            raise ValidationSetupError("Validation requires zero particle width " + name +
+                "; the private UFO evaluates it to " + str(value) + ".")
+    return []
 
 
 def safe_card_number(value):
@@ -543,12 +696,13 @@ def build_reference(data, output):
             names.append(name)
         allowed = allowed_particle_types(data.get("AllowedParticlePDGs", []), pdgs)
         excluded = reference_particle_exclusions(model, allowed)
+        used, rules, declared_widths = validation_zero_width_inputs(model, used, rules, name_map)
         entries, external, updates, targets, matches = match_parameters(model, used, rules, name_map)
         updates, mass_matching = match_external_masses(model, pdgs, masses, external, updates)
         updates = synchronize_sm_yukawa(model, external, updates, rules)
-        updates, zeroed_widths, preserved_widths = bare_tree_widths(external, updates)
+        updates, zeroed_widths, preserved_widths = bare_tree_widths(external, updates, declared_widths)
         orders = complete_tree_orders(model, len(pdgs))
-        private_spec = private_ufo_copy(model_path, restriction, output)
+        private_spec = private_ufo_copy(model_path, restriction, output, declared_widths)
     process_string = " ".join(names[:2]) + " > " + " ".join(names[2:])
     generation_process = process_string + (" / " + " ".join(excluded) if excluded else "")
     command_file = output / "generate.mg5"
@@ -640,7 +794,7 @@ end subroutine
             "MadGraphVersion": madgraph_version(root), "MadGraphModelPath": str(model_path),
             "MadGraphRestriction": str(restriction) if restriction else None, "FortranCompiler": compiler,
             "ParameterMatching": matches, "MassMatching": mass_matching,
-            "WidthPolicy": "Bare tree: unmatched external DECAY widths are zero; explicit and matched HEPCAT widths are retained.",
+            "WidthPolicy": "Bare tree validation: all widths disabled. External DECAY inputs and every declared particle width are zero in a private UFO copy, including explicit, matched and dependent widths.",
             "ZeroedWidths": zeroed_widths, "PreservedWidths": preserved_widths,
             "ParameterRules": {re.sub(r"^mdl_", "", external[k].name): v for k, v in updates.items()},
             "CouplingOrders": orders, "Scope": "Complete tree amplitude within the supplied UFO expansion limits and declared allowed particle content.",

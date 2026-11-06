@@ -16,7 +16,7 @@ soLookup[particles_List] := LookupAmplitude[MapIndexed[{#1, First[#2]} &, partic
 soPath[name_String] := FileNameJoin[{soDirectory, name}];
 soArray[items_List] := "{{" <> StringRiffle[items, ","] <> "}}";
 soRecords = {};
-soExportPair[label_String, process_, expression_, model_, default_:False, classStem_:Automatic] := Module[
+soExportPair[label_String, process_, expression_, model_, default_:False, classStem_:Automatic, symmetry_:Automatic] := Module[
   {reports, name, report, manifest, mode, options},
   reports = Table[
     name = If[classStem === Automatic, label, classStem] <>
@@ -26,9 +26,11 @@ soExportPair[label_String, process_, expression_, model_, default_:False, classS
     report = If[process === "Family",
       WriteSPINASProcess[soPath[name], expression, model, Sequence @@ options,
         "ProcessName" -> name, "ParameterRules" -> soRules, "SPINASDirectory" -> soSpinas,
+        "HelicitySymmetry" -> symmetry,
         "CalcHEPDirectory" -> None, "CalcHEPModel" -> None, "ReturnDetails" -> True],
       WriteSPINASProcess[soPath[name], process, expression, model, Sequence @@ options,
         "ProcessName" -> name, "ParameterRules" -> soRules, "SPINASDirectory" -> soSpinas,
+        "HelicitySymmetry" -> symmetry,
         "CalcHEPDirectory" -> None, "CalcHEPModel" -> None, "ReturnDetails" -> True]];
     check[label <> " exports " <> mode, AssociationQ[report]];
     If[AssociationQ[report],
@@ -43,6 +45,23 @@ soExportPair[label_String, process_, expression_, model_, default_:False, classS
       If[mode === "Optimized" && label === "optimized_qed4",
         check["repeated six-point arithmetic has reusable point/spin factors",
           Total[Lookup[manifest["Optimization"], {"PointFactors", "SpinFactors"}, 0]] > 0]];
+      If[mode === "Optimized" && StringStartsQ[label, "optimized_qed"],
+        check[label <> " guards mutable zero-width masses and reuses real denominator expressions",
+          Lookup[manifest["Optimization"], "GuardedRealPropagatorCount", 0] > 0 &&
+          Lookup[manifest["Optimization"], "ReusableRealDenominators", 0] > 0]];
+      If[mode === "Optimized" && MemberQ[{"optimized_scalar", "optimized_tensor"}, label],
+        check[label <> " retains complex finite-width propagators",
+          Lookup[manifest["Optimization"], "ComplexWidthPropagatorCount", 0] > 0 &&
+          Lookup[manifest["Optimization"], "GuardedRealPropagatorCount", 0] === 0 &&
+          Lookup[manifest["Optimization"], "ReusableRealDenominators", 0] === 0]];
+      If[mode === "Optimized" && label === "optimized_conjugation",
+        With[{demand = Lookup[manifest["Optimization"], "DemandPreparation", <||>]},
+          check["explicit conjugation prepares a strictly smaller helicity dependency closure",
+            demand["Status"] === "Applied" &&
+              (demand["SummedPointAssignments"] < demand["AllPointAssignments"] ||
+               demand["SummedNativeProducts"] < demand["AllNativeProducts"])];
+          check["the demand fixture shares repeated inserted-momentum matrices",
+            demand["SharedMomentumChains"] > 0]]];
       AppendTo[soRecords, <|"Label" -> label, "Style" -> mode,
         "Class" -> name, "Report" -> report, "Manifest" -> manifest|>]],
     {mode, {"Readable", "Optimized"}}];
@@ -82,6 +101,14 @@ Do[
   soExportPair["optimized_qed" <> ToString[photons], "Family", soEntries, soModel, photons === 2],
   {photons, 2, 4}];
 
+(* Keep Automatic coverage above. This explicit theory declaration guarantees
+   the oracle below exercises a shortened cache and its runtime fallback. *)
+soDemandEntries = Table[soParticles = Join[{"e", "E"}, ConstantArray["A.+", 3 - negative],
+    ConstantArray["A.-", negative]];
+  {soParticles, soLookup[soParticles]}, {negative, 0, 3}];
+soExportPair["optimized_conjugation", "Family", soDemandEntries, soModel,
+  False, Automatic, "Conjugation"];
+
 soGeneric = soModel;
 soComplex = ModelParameter["momentum_factor_1", "optimized-export-fixture", "Complex"];
 soWidth = ModelParameter["width", "optimized-export-fixture", "Real"];
@@ -117,6 +144,43 @@ soExportPair["optimized_internal", ConstantArray["r", 4], soInternal, soGeneric]
 soTinyMass = 1/PropDen[Mom[Multiparticle[1, 3]], soMass];
 soExportPair["optimized_tiny_mass", ConstantArray["r", 4], soTinyMass, soGeneric];
 
+(* Width provenance, not an accidentally real value at one point, decides
+   whether a denominator is eligible for reciprocal reuse. *)
+soDenominatorPlan[expression_, model_] := Module[{ir, plan},
+  ir = ConstructiveDiagrams`Private`spinasProcessIR[ConstantArray["r", 4], expression, model,
+    <|"IncomingLegs" -> {1, 2}, "ParameterRules" -> soRules|>];
+  If[FailureQ[ir], Return[ir]];
+  ir = ConstructiveDiagrams`Private`spinasMergeScalarCaches[ir, {"denominator_fixture"}];
+  plan = ConstructiveDiagrams`Private`spinasNativeCachePlan[ir, {"denominator_fixture"}];
+  ConstructiveDiagrams`Private`spinasOptimizeNativePlan[ir, plan]];
+soLiteralZero = soDenominatorPlan[1/PropDen[Mom[Multiparticle[1, 3]], soMass, 0], soGeneric];
+check["an explicit zero width permits a guarded real denominator",
+  AssociationQ[soLiteralZero] &&
+    Lookup[soLiteralZero["OptimizationReport"], "GuardedRealPropagatorCount", 0] === 1 &&
+    Lookup[soLiteralZero["OptimizationReport"], "ReusableRealDenominators", 0] === 1];
+soSymbolicWidthModel = soGeneric;
+soSymbolicWidthModel[[3]] = soSymbolicWidthModel[[3]] /. {soWidth, _} :> {soWidth, 0};
+soSymbolicWidth = soDenominatorPlan[1/PropDen[Mom[Multiparticle[1, 3]], soMass, soWidth], soSymbolicWidthModel];
+check["a symbolic width stays complex even when its current model value is zero",
+  AssociationQ[soSymbolicWidth] &&
+    Lookup[soSymbolicWidth["OptimizationReport"], "GuardedRealPropagatorCount", 0] === 0 &&
+    Lookup[soSymbolicWidth["OptimizationReport"], "ComplexWidthPropagatorCount", 0] === 1 &&
+    Lookup[soSymbolicWidth["OptimizationReport"], "ReusableRealDenominators", 0] === 0];
+soMasslessWidth = soDenominatorPlan[1/PropDen[Mom[Multiparticle[1, 3]], 0, soWidth], soGeneric];
+check["a width-bearing propagator remains complex when a zero mass makes its imaginary term vanish",
+  AssociationQ[soMasslessWidth] &&
+    Lookup[soMasslessWidth["OptimizationReport"], "GuardedRealPropagatorCount", 0] === 0 &&
+    Lookup[soMasslessWidth["OptimizationReport"], "ComplexWidthPropagatorCount", 0] === 1 &&
+    Lookup[soMasslessWidth["OptimizationReport"], "ReusableRealDenominators", 0] === 0];
+soMixedWidth = soDenominatorPlan[1/(PropDen[Mom[Multiparticle[1, 3]], soMass] *
+  PropDen[Mom[Multiparticle[1, 4]], soMass, soWidth]), soGeneric];
+check["a width-bearing factor keeps its entire denominator product on the complex path",
+  AssociationQ[soMixedWidth] &&
+    Lookup[soMixedWidth["OptimizationReport"], "GuardedRealPropagatorCount", 0] === 1 &&
+    Lookup[soMixedWidth["OptimizationReport"], "ComplexWidthPropagatorCount", 0] === 1 &&
+    Lookup[soMixedWidth["OptimizationReport"], "ReusableRealDenominators", 0] === 0];
+
+
 (* Optimizer-generated names must not collide with either a class name or
    model parameter aliases. Keep helicity-dependent dispatch in this fixture. *)
 soReservedKernel = ModelParameter["amp_unchecked", "optimized-name-fixture", "Complex"];
@@ -145,7 +209,7 @@ soCanonical = WriteSPINASProcess[soPath["canonical_collision"], ConstantArray["r
 check["a canonical layout retains the optimized public request",
   AssociationQ[soCanonical] && soCanonical["CodeStyle"] === "Optimized" &&
     soCanonical["CodeLayout"] === "CanonicalDispatch"];
-If[Length[soRecords] =!= 22 || !AssociationQ[soCanonical],
+If[Length[soRecords] =!= 24 || !AssociationQ[soCanonical],
   Print["OPTIMIZED EXPORT SETUP FAILED: ", soDirectory]; Print[failures]; Quit[1]];
 
 soReadables = Select[soRecords, #["Style"] === "Readable" &];

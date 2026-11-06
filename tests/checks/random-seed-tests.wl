@@ -134,10 +134,19 @@ check["explicit per-stage seeds override inherited defaults without changing the
 rsPrinted = {};
 rsPrintedConstruction = Block[{Print = (AppendTo[rsPrinted, HoldComplete[##]] &)},
   rsConstruct["RandomSeed" -> 0, "PrintReport" -> True]];
+(* Identify report entries by their meaning: the complexity report belongs
+   between the timing and tests, so timing need not be the penultimate Print. *)
+rsSeedLines = Flatten[Position[rsPrinted, HoldComplete[Row[{"Random seed: ", 0}]], {1}]];
+rsTimingLines = Flatten[Position[rsPrinted, HoldComplete[Row[{"Total time: ", _}]], {1}]];
+rsComplexityLines = Flatten[Position[rsPrinted, HoldComplete[Row[{"Complexity: ", _Integer}]], {1}]];
+rsTestLines = Flatten[Position[rsPrinted, HoldComplete[_Dataset], {1}]];
 check["ordinary final construction output prints the actual replay seed before timing and tests",
-  rsPrintedConstruction["Status"] === "COMPLETE" && Length[rsPrinted] >= 3 &&
-    StringContainsQ[ToString[First[rsPrinted], InputForm], "Random seed"] &&
-    StringContainsQ[ToString[rsPrinted[[-2]], InputForm], "Total"] &&
+  rsPrintedConstruction["Status"] === "COMPLETE" && rsPrintedConstruction["RandomSeed"] === 0 &&
+    (Length /@ {rsSeedLines, rsTimingLines, rsComplexityLines, rsTestLines}) === {1, 1, 1, 1} &&
+    First[rsSeedLines] === 1 &&
+    First[rsSeedLines] < First[rsTimingLines] < First[rsComplexityLines] < First[rsTestLines] &&
+    First[rsTestLines] === Length[rsPrinted] &&
+    Last[rsPrinted] === With[{table = rsPrintedConstruction["Checks"]["Table"]}, HoldComplete[table]] &&
     StringContainsQ[ToString[Last[rsPrinted], InputForm], "PASS"]];
 
 Print["RANDOM SEED CHECKS: ", checks, "; FAILURES: ", Length[failures]];

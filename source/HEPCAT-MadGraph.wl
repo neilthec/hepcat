@@ -19,6 +19,18 @@ ValidateMadGraph::args = "Expected a generated SPINAS project directory, or inco
 
 Begin["ConstructiveDiagrams`Private`"];
 
+(* Width roles come from model particle rows and explicit propagators, never
+   from guessed parameter names. Indices refer to the exported parameter order. *)
+spinasValidationWidthIndices[ir_Association, data_List] := Module[
+  {expressions, widths, symbols = ir["ParameterSymbols"]},
+  expressions = If[TrueQ[Lookup[ir, "Family", False]],
+    Lookup[ir["FamilyComponents"], "OriginalExpression"], {ir["OriginalExpression"]}];
+  widths = DeleteDuplicates[Join[
+    Cases[expressions, HoldPattern[PropDen[_, _, width_]] :> width, Infinity],
+    If[Length[data] >= 1, (#[[7]] &) /@ Select[data[[1]], ListQ[#] && Length[#] >= 7 &], {}]]];
+  (First[#] - 1 &) /@ Select[MapIndexed[{First[#2], #1} &, symbols], MemberQ[widths, Last[#]] &]
+];
+
 (* ::Subsection::Closed:: *)
 (*Installation and Model Selection*)
 
@@ -94,6 +106,8 @@ spinasMadGraphConfiguration[ir_Association, data_List, supplied_Association, phy
     "AllowedParticlePDGs" -> allowed, "LegOrder" -> physical["LegOrder"],
     "Spin2" -> ir["Spin2"], "HelicityConfigurations" -> helicities,
     "ParameterNames" -> ir["ParameterNames"], "Normalization" -> normalization,
+    "WidthParameterIndices" -> spinasValidationWidthIndices[ir, data],
+    "WidthPolicy" -> "Zero widths in private validation copies; simulation settings are retained.",
     "Points" -> options["MadGraphPoints"], "Seed" -> Replace[options["MadGraphSeed"], Automatic -> "Automatic"]|>
 ];
 
@@ -121,7 +135,8 @@ spinasMadGraphSource[name_String, config_Association, dir_String] := StringRiffl
   "  config.spin2 = " <> spinasMadGraphCppList[config["Spin2"]] <> ";",
   "  config.parameter_names = {" <> StringRiffle[spinasCppQuoted /@ config["ParameterNames"], ", "] <> "};",
   "  config.helicities = {" <> StringRiffle[spinasMadGraphCppList /@ config["HelicityConfigurations"], ", "] <> "};",
-  "  config.normalization = " <> spinasCppReal[config["Normalization"]] <> ";"},
+  "  config.normalization = " <> spinasCppReal[config["Normalization"]] <> ";",
+  "  config.width_parameter_indices = " <> spinasMadGraphCppList[Lookup[config, "WidthParameterIndices", {}]] <> ";"},
   KeyValueMap["  config.parameter_rules[" <> spinasCppQuoted[#1] <> "] = " <> spinasCppReal[#2] <> ";" &, config["ParameterRules"]],
   KeyValueMap["  config.parameter_map[" <> spinasCppQuoted[#1] <> "] = " <> spinasCppQuoted[#2] <> ";" &, config["ParameterMap"]], {
   "  return hepcat_spinas::validate_madgraph(*this, config, options, &std::cout);",
@@ -176,6 +191,7 @@ spinasMadGraphREADME[name_String, config_Association] := StringRiffle[{
   "The actual time-based seed is printed and can be replayed. No normalization ratio is fitted. Initial averages and identical-species factors are applied once, using the same convention on both sides. Photon helicities use doubled labels +/-2 in the report. Fixed incoming and outgoing massless helicities are supported.",
   "Select the installation and UFO model explicitly with MadGraphDirectory and MadGraphModel when exporting. MadGraphAllowedParticles -> All retains the full selected model; a list such as {11,22} restricts particle types by absolute PDG code and includes their antiparticles. No QED model or restriction is inferred. Regenerate the project to change these stored settings.",
   "The reference is generated and compiled once in a private temporary workspace. The installed MadGraph source and its model files are not edited. Current SPINAS parameter and mass values are matched to the UFO inputs; unknown mappings or mismatched dependent couplings stop the check.",
+  "Validation uses zero widths on both sides. A private SPINAS copy disables propagator widths, and the private UFO copy sets all particle-width parameters and decay widths to zero, including dependent widths. This does not change the caller's parameters or the widths used by normal MadEvent simulation.",
   "The base comparison is colorless tree level. The ordinary process remains usable without MadGraph. A numerical FAIL, including floating-point cancellation in an exported formula, is not changed into a pass by fitting a scale or relaxing tolerances.",
   "Configuration: " <> config["Status"] <> If[config["Reason"] === "", "", ". " <> config["Reason"]], ""}, "\n"];
 

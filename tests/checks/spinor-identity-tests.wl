@@ -84,35 +84,35 @@ check["longer chains are penalized", SpinorExpressionComplexity[ch["Angle", 1, {
 (* Interior chains, composite momenta, scalar relations, and opaque poles. *)
 Clear[moves];
 rules = {Mass[1] -> m1, Mass[2] -> m2, Mass[3] -> m3, Mass[4] -> m4};
-chain[pp___] := SpinorChain[Spinor["Spin", "Angle", 1], pp,
+Global`identityTestChain[pp___] := SpinorChain[Spinor["Spin", "Angle", 1], pp,
   Spinor["Spin", If[EvenQ[Length[{pp}]], "Angle", "Square"], 4]];
 moves[expr_, rr_:rules] := SpinorIdentityCandidates[{rr, expr}, "MomentumConservation" -> False];
 apply[expr_, move_] := ConstructiveDiagrams`Private`applyCandidate[ConstructiveDiagrams`Private`canonicalChains[expr], move];
 same[a_, b_] := Expand[ConstructiveDiagrams`Private`canonicalChains[a - b]] === 0;
-expr = 3 chain[Mom[2], Mom[2]]^2;
+expr = 3 Global`identityTestChain[Mom[2], Mom[2]]^2;
 contract = Select[moves[expr], #["Name"] === "ChainSquare" && #["Direction"] === "Contract" &];
-check["one chain factor contracted", Length[contract] === 1 && same[apply[expr, First[contract]], 3 m2^2 chain[] chain[Mom[2], Mom[2]]]];
-expr = chain[Mom[2], Mom[3]];
+check["one chain factor contracted", Length[contract] === 1 && same[apply[expr, First[contract]], 3 m2^2 Global`identityTestChain[] Global`identityTestChain[Mom[2], Mom[2]]]];
+expr = Global`identityTestChain[Mom[2], Mom[3]];
 anti = Select[moves[expr], #["Name"] === "Anticommutation" &];
 check["adjacent swap", Length[anti] === 1 && same[apply[expr, First[anti]],
-  2 MomProd[2, 3] chain[] - chain[Mom[3], Mom[2]]]];
+  2 MomProd[2, 3] Global`identityTestChain[] - Global`identityTestChain[Mom[3], Mom[2]]]];
 check["identity agrees with independent reducer", Expand[ReduceSpinorProducts[expr - apply[expr, First[anti]]] /. rules] === 0];
 after = apply[expr, First[anti]];
 check["swap reverse reachable", AnyTrue[moves[after], same[apply[after, #], expr] &]];
-expansions = Select[moves[chain[]], #["Name"] === "ChainSquare" && #["Direction"] === "Expand" &];
+expansions = Select[moves[Global`identityTestChain[]], #["Name"] === "ChainSquare" && #["Direction"] === "Expand" &];
 check["bounded inverse insertions", Length[expansions] === 4];
 check["every insertion can contract back", AllTrue[expansions, Function[move,
-  With[{inserted = apply[chain[], move]}, AnyTrue[moves[inserted], same[apply[inserted, #], chain[]] &]]]]];
+  With[{inserted = apply[Global`identityTestChain[], move]}, AnyTrue[moves[inserted], same[apply[inserted, #], Global`identityTestChain[]] &]]]]];
 zeroRules = rules /. m2 -> 0;
-zeroMoves = Select[moves[chain[Mom[2], Mom[2]], zeroRules], #["Name"] === "ChainSquare" && #["Direction"] === "Contract" &];
-check["massless contraction", apply[chain[Mom[2], Mom[2]], First[zeroMoves]] === 0];
-check["no division by massless mass", Length[Select[moves[chain[], zeroRules], #["Name"] === "ChainSquare" && #["Direction"] === "Expand" &]] === 3];
-internal = chain[Mom[Multiparticle[2, 3]], Mom[Multiparticle[2, 3]]];
+zeroMoves = Select[moves[Global`identityTestChain[Mom[2], Mom[2]], zeroRules], #["Name"] === "ChainSquare" && #["Direction"] === "Contract" &];
+check["massless contraction", apply[Global`identityTestChain[Mom[2], Mom[2]], First[zeroMoves]] === 0];
+check["no division by massless mass", Length[Select[moves[Global`identityTestChain[], zeroRules], #["Name"] === "ChainSquare" && #["Direction"] === "Expand" &]] === 3];
+internal = Global`identityTestChain[Mom[Multiparticle[2, 3]], Mom[Multiparticle[2, 3]]];
 internalRules = Append[rules, Mass[Multiparticle[2, 3]] -> mz];
 on = Select[SpinorIdentityCandidates[{internalRules, internal}], #["Name"] === "ChainSquare" && #["Direction"] === "Contract" &];
 off = Select[SpinorIdentityCandidates[{internalRules, internal}, "OnShellChannels" -> {}], #["Name"] === "ChainSquare" && #["Direction"] === "Contract" &];
-check["internal mass when on shell", same[apply[internal, First[on]], mz^2 chain[]]];
-check["off shell square retained", same[apply[internal, First[off]], Mom[Multiparticle[2, 3]]^2 chain[]]];
+check["internal mass when on shell", same[apply[internal, First[on]], mz^2 Global`identityTestChain[]]];
+check["off shell square retained", same[apply[internal, First[off]], Mom[Multiparticle[2, 3]]^2 Global`identityTestChain[]]];
 long = SpinorChain[Spinor["Spin", "Angle", 1], Mom[2], Mom[3], Mom[2], Spinor["Spin", "Square", 4]];
 target = 2 MomProd[2, 3] SpinorChain[Spinor["Spin", "Angle", 1], Mom[2], Spinor["Spin", "Square", 4]] -
   m2^2 SpinorChain[Spinor["Spin", "Angle", 1], Mom[3], Spinor["Spin", "Square", 4]];
@@ -133,21 +133,21 @@ Do[
   {momenta, {{2, 3}, {3, 2}, {2, 2}, {2, 3, 3, 2}, {2, 3, 2, 3}}}];
 den = PropDen[Mom[Multiparticle[2, 3]], mz];
 shell = (mz^2 - m2^2 - m3^2)/2;
-expr = MomProd[2, 3] chain[]/den;
-target = shell chain[]/den;
+expr = MomProd[2, 3] Global`identityTestChain[]/den;
+target = shell Global`identityTestChain[]/den;
 check["diagram numerator on shell", AnyTrue[moves[expr, internalRules], same[apply[expr, #], target] &]];
 check["direct reverse on shell move", AnyTrue[Select[moves[target, internalRules], #["Name"] === "OnShell" &], same[apply[target, #], expr] &]];
-expr = MomProd[2, 3]^2 chain[]/den;
-check["dot power contracts one factor", AnyTrue[moves[expr, internalRules], same[apply[expr, #], shell MomProd[2, 3] chain[]/den] &]];
-powerTarget = shell MomProd[2, 3] chain[]/den;
+expr = MomProd[2, 3]^2 Global`identityTestChain[]/den;
+check["dot power contracts one factor", AnyTrue[moves[expr, internalRules], same[apply[expr, #], shell MomProd[2, 3] Global`identityTestChain[]/den] &]];
+powerTarget = shell MomProd[2, 3] Global`identityTestChain[]/den;
 check["dot power reverse reachable", AnyTrue[moves[powerTarget, internalRules], same[apply[powerTarget, #], expr] &]];
 check["all on shell moves preserve propagator", AllTrue[Select[moves[expr, internalRules], #["Name"] === "OnShell" &], !FreeQ[apply[expr, #], den] &]];
 check["no internal rule no on shell move", FreeQ[Lookup[moves[expr], "Name"], "OnShell"]];
 check["disabled internal channel", FreeQ[Lookup[SpinorIdentityCandidates[{internalRules, expr}, "OnShellChannels" -> {}], "Name"], "OnShell"]];
 zeroInternal = {Mass[1] -> 0, Mass[2] -> 0, Mass[3] -> 0, Mass[4] -> 0, Mass[Multiparticle[2, 3]] -> 0};
-expr = MomProd[2, 3] chain[]/den;
+expr = MomProd[2, 3] Global`identityTestChain[]/den;
 check["zero shell contraction", AnyTrue[moves[expr, zeroInternal], apply[expr, #] === 0 &]];
-check["zero shell no inverse division", FreeQ[moves[chain[]/den, zeroInternal], Indeterminate | ComplexInfinity]];
+check["zero shell no inverse division", FreeQ[moves[Global`identityTestChain[]/den, zeroInternal], Indeterminate | ComplexInfinity]];
 
 (* Check composite-momentum identities against an independent multilinear
    expansion, without relying on candidate generation or canonicalChains. *)
@@ -175,37 +175,37 @@ sumMoves[expr_, rr_:rules] := Select[
 reverseSumQ[before_, move_, rr_:rules] := With[{after = apply[before, move]},
   AnyTrue[sumMoves[after, rr], same[apply[after, #], before] &]];
 
-expr = chain[Mom[Multiparticle[2, 3]]];
+expr = Global`identityTestChain[Mom[Multiparticle[2, 3]]];
 split = Select[sumMoves[expr], #["Direction"] === "Expand" &];
 check["composite chain splits without momentum conservation or on shell", AnyTrue[split,
-  same[apply[expr, #], chain[Mom[2]] + chain[Mom[3]]] &]];
+  same[apply[expr, #], Global`identityTestChain[Mom[2]] + Global`identityTestChain[Mom[3]]] &]];
 check["composite split is independently linear", split =!= {} &&
   AllTrue[split, sameMomenta[expr, apply[expr, #]] &]];
 check["composite split retains local site", AllTrue[split,
   MatchQ[Lookup[#, "Site", None], {_Integer, _Integer, _Integer}] &]];
 check["composite split has exact reverse", split =!= {} && AllTrue[split, reverseSumQ[expr, #] &]];
 
-check["atomic complexity unchanged", SpinorExpressionComplexity[chain[Mom[2]]] === 5 &&
-  SpinorExpressionComplexity[chain[Mom[2], Mom[3]]] === 9];
+check["atomic complexity unchanged", SpinorExpressionComplexity[Global`identityTestChain[Mom[2]]] === 5 &&
+  SpinorExpressionComplexity[Global`identityTestChain[Mom[2], Mom[3]]] === 9];
 check["zero complexity unchanged", SpinorExpressionComplexity[0] === 0];
 check["two-member momentum counts two implicit terms",
   SpinorExpressionComplexity[expr] === 10 &&
     SpinorExpressionComplexity[expr] === SpinorExpressionComplexity[explicitMomenta[expr]]];
 check["three-member momentum counts three implicit terms",
-  SpinorExpressionComplexity[chain[Mom[Multiparticle[1, 2, 3]]]] === 15];
+  SpinorExpressionComplexity[Global`identityTestChain[Mom[Multiparticle[1, 2, 3]]]] === 15];
 check["pure composite splits do not increase complexity", AllTrue[split,
   SpinorExpressionComplexity[apply[expr, #]] === SpinorExpressionComplexity[expr] &]];
-twoSlots = chain[Mom[Multiparticle[1, 2]], Mom[Multiparticle[2, 3, 4]]];
+twoSlots = Global`identityTestChain[Mom[Multiparticle[1, 2]], Mom[Multiparticle[2, 3, 4]]];
 check["multiple composite slots multiply implicit terms",
   SpinorExpressionComplexity[twoSlots] === 54 &&
     SpinorExpressionComplexity[twoSlots] === SpinorExpressionComplexity[explicitMomenta[twoSlots]]];
-twoChains = chain[Mom[Multiparticle[1, 2]]] chain[Mom[Multiparticle[2, 3, 4]]];
+twoChains = Global`identityTestChain[Mom[Multiparticle[1, 2]]] Global`identityTestChain[Mom[Multiparticle[2, 3, 4]]];
 check["composite chain products multiply implicit terms",
   SpinorExpressionComplexity[twoChains] === 54 &&
     SpinorExpressionComplexity[twoChains] === SpinorExpressionComplexity[explicitMomenta[twoChains]]];
 check["composite chain powers count repeated factors",
-  SpinorExpressionComplexity[chain[Mom[Multiparticle[2, 3]]]^2] === 36 &&
-    SpinorExpressionComplexity[explicitMomenta[chain[Mom[Multiparticle[2, 3]]]^2]] === 27];
+  SpinorExpressionComplexity[Global`identityTestChain[Mom[Multiparticle[2, 3]]]^2] === 36 &&
+    SpinorExpressionComplexity[explicitMomenta[Global`identityTestChain[Mom[Multiparticle[2, 3]]]^2]] === 27];
 traceSum = SpinorTrace[Mom[Multiparticle[1, 2]], Mom[3]];
 check["trace composite momentum counts implicit terms",
   SpinorExpressionComplexity[traceSum] === 18 &&
@@ -215,38 +215,38 @@ check["implicit branches also weight spectator scalar products",
   SpinorExpressionComplexity[MomProd[1, 4] expr] === 18 &&
     SpinorExpressionComplexity[MomProd[1, 4] expr] ===
       SpinorExpressionComplexity[explicitMomenta[MomProd[1, 4] expr]]];
-cancellingSum = expr - chain[Mom[2]];
+cancellingSum = expr - Global`identityTestChain[Mom[2]];
 check["composite split exposes a complexity improvement", AllTrue[sumMoves[cancellingSum],
   If[Lookup[#, "Identity", None] === "Split",
     SpinorExpressionComplexity[apply[cancellingSum, #]] < SpinorExpressionComplexity[cancellingSum], True] &]];
 check["composite complexity independent of particle labels",
   SpinorExpressionComplexity[twoSlots] === SpinorExpressionComplexity[
     ConstructiveDiagrams`Private`relabelLegs[twoSlots, <|1 -> 11, 2 -> 27, 3 -> 43, 4 -> 68|>]]];
-opaqueDen = PropDen[Mom[Multiparticle[1, 2]], MomProd[1, 2] + chain[Mom[Multiparticle[2, 3]]]];
+opaqueDen = PropDen[Mom[Multiparticle[1, 2]], MomProd[1, 2] + Global`identityTestChain[Mom[Multiparticle[2, 3]]]];
 check["complexity excludes every propagator argument",
   SpinorExpressionComplexity[1/opaqueDen] === 1 &&
     SpinorExpressionComplexity[expr/opaqueDen] === SpinorExpressionComplexity[expr] &&
     SpinorExpressionComplexity[expr opaqueDen] === SpinorExpressionComplexity[expr]];
 
-expr = chain[Mom[2]];
+expr = Global`identityTestChain[Mom[2]];
 introduce = Select[sumMoves[expr], #["Direction"] === "Expand" &];
 check["atomic momentum introduces bundle difference", AnyTrue[introduce,
-  same[apply[expr, #], chain[Mom[Multiparticle[2, 3]]] - chain[Mom[3]]] &]];
+  same[apply[expr, #], Global`identityTestChain[Mom[Multiparticle[2, 3]]] - Global`identityTestChain[Mom[3]]] &]];
 check["bundle introduction is independently linear", introduce =!= {} &&
   AllTrue[introduce, sameMomenta[expr, apply[expr, #]] &]];
 check["introduced bundles have exact reverse", introduce =!= {} &&
   AllTrue[introduce, reverseSumQ[expr, #] &]];
 check["atomic introduction is linear in supplied legs", Length[introduce] === Length[rules] - 1];
-overlapping = chain[Mom[Multiparticle[2, 3]]] + chain[Mom[2]];
+overlapping = Global`identityTestChain[Mom[Multiparticle[2, 3]]] + Global`identityTestChain[Mom[2]];
 overlapSplit = Select[sumMoves[overlapping], Lookup[#, "Identity", None] === "Split" &];
 check["collection reverses a split after coefficients combine", overlapSplit =!= {} &&
   AllTrue[overlapSplit, reverseSumQ[overlapping, #] &]];
 check["collection with unequal coefficients remains a linear identity", AllTrue[
-  sumMoves[2 chain[Mom[2]] + chain[Mom[3]]],
-  sameMomenta[2 chain[Mom[2]] + chain[Mom[3]], apply[2 chain[Mom[2]] + chain[Mom[3]], #]] &]];
+  sumMoves[2 Global`identityTestChain[Mom[2]] + Global`identityTestChain[Mom[3]]],
+  sameMomenta[2 Global`identityTestChain[Mom[2]] + Global`identityTestChain[Mom[3]], apply[2 Global`identityTestChain[Mom[2]] + Global`identityTestChain[Mom[3]], #]] &]];
 check["permuted composite members normalize in chains", same[
-  ConstructiveDiagrams`Private`canonicalChains[chain[Mom[Multiparticle[3, 2]]]],
-  chain[Mom[Multiparticle[2, 3]]]]];
+  ConstructiveDiagrams`Private`canonicalChains[Global`identityTestChain[Mom[Multiparticle[3, 2]]]],
+  Global`identityTestChain[Mom[Multiparticle[2, 3]]]]];
 
 Do[
   expr = pair[[1]]; target = pair[[2]];
@@ -257,20 +257,20 @@ Do[
   check["collect reverse reachable " <> ToString[index], targetMoves =!= {} &&
     reverseSumQ[expr, First[targetMoves]]],
   {index, 3},
-  {pair, {{chain[Mom[2]] + chain[Mom[3]], chain[Mom[Multiparticle[2, 3]]]},
-    {chain[Mom[Multiparticle[2, 3]]] - chain[Mom[3]], chain[Mom[2]]},
-    {3 chain[Mom[2]]/den + 3 chain[Mom[3]]/den, 3 chain[Mom[Multiparticle[2, 3]]]/den}}[[{index}]]}
+  {pair, {{Global`identityTestChain[Mom[2]] + Global`identityTestChain[Mom[3]], Global`identityTestChain[Mom[Multiparticle[2, 3]]]},
+    {Global`identityTestChain[Mom[Multiparticle[2, 3]]] - Global`identityTestChain[Mom[3]], Global`identityTestChain[Mom[2]]},
+    {3 Global`identityTestChain[Mom[2]]/den + 3 Global`identityTestChain[Mom[3]]/den, 3 Global`identityTestChain[Mom[Multiparticle[2, 3]]]/den}}[[{index}]]}
 ];
 
 Do[
   check["explicit momentum multilinearity " <> ToString[index],
     same[ConstructiveDiagrams`Private`canonicalChains[pair[[1]]], pair[[2]]]],
   {index, 3},
-  {pair, {{chain[Mom[2] + Mom[3]], chain[Mom[2]] + chain[Mom[3]]},
-    {chain[2 Mom[2] - 3 Mom[3]], 2 chain[Mom[2]] - 3 chain[Mom[3]]},
-    {chain[Mom[2] + Mom[3], Mom[1] - 2 Mom[4]],
-      chain[Mom[2], Mom[1]] - 2 chain[Mom[2], Mom[4]] +
-      chain[Mom[3], Mom[1]] - 2 chain[Mom[3], Mom[4]]}}[[{index}]]}
+  {pair, {{Global`identityTestChain[Mom[2] + Mom[3]], Global`identityTestChain[Mom[2]] + Global`identityTestChain[Mom[3]]},
+    {Global`identityTestChain[2 Mom[2] - 3 Mom[3]], 2 Global`identityTestChain[Mom[2]] - 3 Global`identityTestChain[Mom[3]]},
+    {Global`identityTestChain[Mom[2] + Mom[3], Mom[1] - 2 Mom[4]],
+      Global`identityTestChain[Mom[2], Mom[1]] - 2 Global`identityTestChain[Mom[2], Mom[4]] +
+      Global`identityTestChain[Mom[3], Mom[1]] - 2 Global`identityTestChain[Mom[3], Mom[4]]}}[[{index}]]}
 ];
 
 manyRules = {Mass[11] -> m11, Mass[27] -> m27, Mass[43] -> m43,
@@ -296,9 +296,9 @@ Do[
   check["composite polynomial retains denominator " <> ToString[index],
     AllTrue[compositeMoves, !FreeQ[apply[expr, #], den] &]],
   {index, 3},
-  {sample, {3 chain[Mom[Multiparticle[2, 3]]]^2/den,
-    chain[Mom[Multiparticle[2, 3]], Mom[1]]/den,
-    chain[Mom[Multiparticle[2, 3]], Mom[Multiparticle[1, 4]]]/den}[[{index}]]}
+  {sample, {3 Global`identityTestChain[Mom[Multiparticle[2, 3]]]^2/den,
+    Global`identityTestChain[Mom[Multiparticle[2, 3]], Mom[1]]/den,
+    Global`identityTestChain[Mom[Multiparticle[2, 3]], Mom[Multiparticle[1, 4]]]/den}[[{index}]]}
 ];
 check["propagator only produces no momentum sum edits", sumMoves[1/den] === {}];
 check["canonical multilinearity leaves propagator untouched",
@@ -310,36 +310,36 @@ check["canonical multilinearity leaves propagator untouched",
 threeRules = Append[rules, Mass[Multiparticle[1, 2, 3]] -> mq];
 q3 = Mom[Multiparticle[1, 2, 3]];
 qValue = m1^2 + m2^2 + m3^2 + 2 MomProd[1, 2] + 2 MomProd[1, 3] + 2 MomProd[2, 3];
-qChain = chain[q3, q3];
+qChain = Global`identityTestChain[q3, q3];
 qContract = Select[moves[qChain, threeRules], #["Name"] === "ChainSquare" && #["Direction"] === "Contract" &];
 check["three-leg internal chain uses its supplied pole mass",
-  AnyTrue[qContract, same[apply[qChain, #], mq^2 chain[]] &]];
+  AnyTrue[qContract, same[apply[qChain, #], mq^2 Global`identityTestChain[]] &]];
 qDisabled = SpinorIdentityCandidates[{threeRules, qChain}, "OnShellChannels" -> {}, "MomentumConservation" -> False];
 check["three-leg chain stays off shell when channel disabled", AnyTrue[
   Select[qDisabled, #["Name"] === "ChainSquare" && #["Direction"] === "Contract" &],
-  same[apply[qChain, #], q3^2 chain[]] &]];
+  same[apply[qChain, #], q3^2 Global`identityTestChain[]] &]];
 check["three-leg shell selection accepts permuted channel labels", AnyTrue[
-  SpinorIdentityCandidates[{threeRules, q3^2 chain[]}, "OnShellChannels" -> {{3, 1, 2}}, "MomentumConservation" -> False],
-  same[apply[q3^2 chain[], #], mq^2 chain[]] &]];
-qSquareMoves = moves[q3^2 chain[], threeRules];
+  SpinorIdentityCandidates[{threeRules, q3^2 Global`identityTestChain[]}, "OnShellChannels" -> {{3, 1, 2}}, "MomentumConservation" -> False],
+  same[apply[q3^2 Global`identityTestChain[], #], mq^2 Global`identityTestChain[]] &]];
+qSquareMoves = moves[q3^2 Global`identityTestChain[], threeRules];
 check["three-leg scalar square expands into all pairwise invariants", AnyTrue[qSquareMoves,
-  same[apply[q3^2 chain[], #], qValue chain[]] &]];
+  same[apply[q3^2 Global`identityTestChain[], #], qValue Global`identityTestChain[]] &]];
 check["three-leg scalar square contracts on shell", AnyTrue[qSquareMoves,
-  same[apply[q3^2 chain[], #], mq^2 chain[]] &]];
+  same[apply[q3^2 Global`identityTestChain[], #], mq^2 Global`identityTestChain[]] &]];
 check["three-leg square expansion is reversible off shell", AnyTrue[
-  SpinorIdentityCandidates[{threeRules, qValue chain[]}, "OnShellChannels" -> {}, "MomentumConservation" -> False],
-  same[apply[qValue chain[], #], q3^2 chain[]] &]];
-check["three-leg scalar sum can contract directly to pole mass", AnyTrue[moves[qValue chain[], threeRules],
-  same[apply[qValue chain[], #], mq^2 chain[]] &]];
+  SpinorIdentityCandidates[{threeRules, qValue Global`identityTestChain[]}, "OnShellChannels" -> {}, "MomentumConservation" -> False],
+  same[apply[qValue Global`identityTestChain[], #], q3^2 Global`identityTestChain[]] &]];
+check["three-leg scalar sum can contract directly to pole mass", AnyTrue[moves[qValue Global`identityTestChain[], threeRules],
+  same[apply[qValue Global`identityTestChain[], #], mq^2 Global`identityTestChain[]] &]];
 check["three-leg scalar mass has direct square and invariant reverses",
-  AnyTrue[moves[mq^2 chain[], threeRules], same[apply[mq^2 chain[], #], q3^2 chain[]] &] &&
-  AnyTrue[moves[mq^2 chain[], threeRules], same[apply[mq^2 chain[], #], qValue chain[]] &]];
-check["three-leg scalar square power contracts one square", AnyTrue[moves[q3^4 chain[], threeRules],
-  same[apply[q3^4 chain[], #], mq^2 q3^2 chain[]] &]];
-check["three-leg zero-mass pole contracts without division", AnyTrue[moves[q3^2 chain[], threeRules /. mq -> 0],
-  apply[q3^2 chain[], #] === 0 &] && FreeQ[moves[chain[], threeRules /. mq -> 0], Indeterminate | ComplexInfinity]];
+  AnyTrue[moves[mq^2 Global`identityTestChain[], threeRules], same[apply[mq^2 Global`identityTestChain[], #], q3^2 Global`identityTestChain[]] &] &&
+  AnyTrue[moves[mq^2 Global`identityTestChain[], threeRules], same[apply[mq^2 Global`identityTestChain[], #], qValue Global`identityTestChain[]] &]];
+check["three-leg scalar square power contracts one square", AnyTrue[moves[q3^4 Global`identityTestChain[], threeRules],
+  same[apply[q3^4 Global`identityTestChain[], #], mq^2 q3^2 Global`identityTestChain[]] &]];
+check["three-leg zero-mass pole contracts without division", AnyTrue[moves[q3^2 Global`identityTestChain[], threeRules /. mq -> 0],
+  apply[q3^2 Global`identityTestChain[], #] === 0 &] && FreeQ[moves[Global`identityTestChain[], threeRules /. mq -> 0], Indeterminate | ComplexInfinity]];
 check["disabled three-leg shell has no pole-mass substitution", FreeQ[
-  Select[SpinorIdentityCandidates[{threeRules, q3^2 chain[]}, "OnShellChannels" -> {}, "MomentumConservation" -> False],
+  Select[SpinorIdentityCandidates[{threeRules, q3^2 Global`identityTestChain[]}, "OnShellChannels" -> {}, "MomentumConservation" -> False],
     #["Name"] === "OnShell" &], mq]];
 manyInternal = Append[manyRules, Mass[Multiparticle[92, 27, 68, 43]] -> mq4];
 manyQ = Mom[Multiparticle[27, 43, 68, 92]];
@@ -349,26 +349,26 @@ manyTarget = mq4^2 SpinorChain[Spinor["Spin", "Up", "Angle", 11, 7], Spinor["Spi
 check["four-leg subset mass works with sparse labels and explicit indices", AnyTrue[moves[manySquareChain, manyInternal],
   same[apply[manySquareChain, #], manyTarget] &]];
 
-scalarDot = MomProd[1, 2] chain[];
-scalarDotTarget = (-m1^2 - MomProd[1, 3] - MomProd[1, 4]) chain[];
+scalarDot = MomProd[1, 2] Global`identityTestChain[];
+scalarDotTarget = (-m1^2 - MomProd[1, 3] - MomProd[1, 4]) Global`identityTestChain[];
 scalarChoices = Select[SpinorIdentityCandidates[{rules, scalarDot}], #["Name"] === "MomentumConservation" &];
 check["scalar dot momentum conservation", AnyTrue[scalarChoices, same[apply[scalarDot, #], scalarDotTarget] &]];
 check["scalar dot conservation has exact reverse", AnyTrue[SpinorIdentityCandidates[{rules, scalarDotTarget}],
   same[apply[scalarDotTarget, #], scalarDot] &]];
 check["scalar conservation respects disabled option", FreeQ[Lookup[moves[scalarDot], "Name"], "MomentumConservation"]];
-scalarRow = (MomProd[1, 2] + MomProd[1, 3] + MomProd[1, 4]) chain[];
+scalarRow = (MomProd[1, 2] + MomProd[1, 3] + MomProd[1, 4]) Global`identityTestChain[];
 check["complete scalar row contracts", AnyTrue[SpinorIdentityCandidates[{rules, scalarRow}],
-  same[apply[scalarRow, #], -m1^2 chain[]] &]];
-check["scalar row contraction is reversible", AnyTrue[SpinorIdentityCandidates[{rules, -m1^2 chain[]}],
-  same[apply[-m1^2 chain[], #], scalarRow] &]];
-manyDot = MomProd[11, 27] chain[];
-manyDotTarget = (-m11^2 - Total[MomProd[11, #] & /@ {43, 68, 92, 105}]) chain[];
+  same[apply[scalarRow, #], -m1^2 Global`identityTestChain[]] &]];
+check["scalar row contraction is reversible", AnyTrue[SpinorIdentityCandidates[{rules, -m1^2 Global`identityTestChain[]}],
+  same[apply[-m1^2 Global`identityTestChain[], #], scalarRow] &]];
+manyDot = MomProd[11, 27] Global`identityTestChain[];
+manyDotTarget = (-m11^2 - Total[MomProd[11, #] & /@ {43, 68, 92, 105}]) Global`identityTestChain[];
 check["scalar conservation supports six sparse external labels", AnyTrue[SpinorIdentityCandidates[{manyRules, manyDot}],
   same[apply[manyDot, #], manyDotTarget] &]];
-unknownDen = PropDen[opaque[Mom[1], MomProd[1, 2], chain[Mom[2], Mom[3]]], unknownMass];
+unknownDen = PropDen[opaque[Mom[1], MomProd[1, 2], Global`identityTestChain[Mom[2], Mom[3]]], unknownMass];
 check["propagator-only scalar and chain identities are never proposed",
   SpinorIdentityCandidates[{threeRules, 1/unknownDen}] === {}];
-protectedScalar = q3^2 chain[]/unknownDen;
+protectedScalar = q3^2 Global`identityTestChain[]/unknownDen;
 check["all new scalar edits preserve unknown propagator contents", AllTrue[
   SpinorIdentityCandidates[{threeRules, protectedScalar}],
   DeleteDuplicates[Cases[apply[protectedScalar, #], _PropDen, Infinity]] === {unknownDen} &]];
@@ -377,16 +377,16 @@ check["scalar momentum conservation preserves unknown propagator contents", AllT
   SpinorIdentityCandidates[{rules, protectedConservation}],
   DeleteDuplicates[Cases[apply[protectedConservation, #], _PropDen, Infinity]] === {unknownDen} &]];
 placeholderDen = PropDen[opaque[Mom[0], Mom[1]], unknownMass];
-protectedRow = (chain[Mom[1]] + chain[Mom[2]] + chain[Mom[3]])/placeholderDen;
+protectedRow = (Global`identityTestChain[Mom[1]] + Global`identityTestChain[Mom[2]] + Global`identityTestChain[Mom[3]])/placeholderDen;
 rowChoices = Select[SpinorIdentityCandidates[{rules, protectedRow}],
   #["Name"] === "MomentumConservation" &];
 check["chain collection placeholder never enters unknown propagator", rowChoices =!= {} && AllTrue[rowChoices,
   DeleteDuplicates[Cases[apply[protectedRow, #], _PropDen, Infinity]] === {placeholderDen} &]];
 overlapDen = PropDen[opaque[Mom[1], Mass[1]], unknownMass];
-overlapChain = chain[Mom[Multiparticle[1, 2]], Mom[Multiparticle[1, 3]]]/overlapDen;
+overlapChain = Global`identityTestChain[Mom[Multiparticle[1, 2]], Mom[Multiparticle[1, 3]]]/overlapDen;
 overlapChoices = Select[moves[overlapChain], #["Name"] === "Anticommutation" &];
-overlapTarget = (2 (m1^2 + MomProd[1, 2] + MomProd[1, 3] + MomProd[2, 3]) chain[] -
-  chain[Mom[Multiparticle[1, 3]], Mom[Multiparticle[1, 2]]])/overlapDen;
+overlapTarget = (2 (m1^2 + MomProd[1, 2] + MomProd[1, 3] + MomProd[2, 3]) Global`identityTestChain[] -
+  Global`identityTestChain[Mom[Multiparticle[1, 3]], Mom[Multiparticle[1, 2]]])/overlapDen;
 check["overlapping composite anticommutation applies known external masses", overlapChoices =!= {} &&
   AnyTrue[overlapChoices, same[apply[overlapChain, #], overlapTarget] &] && AllTrue[overlapChoices,
     FreeQ[Expand[apply[overlapChain, #] overlapDen], _Mass] &]];
@@ -396,14 +396,14 @@ vectors = <|1 -> {1, 2, 3}, 2 -> {2, -1, 1}, 3 -> {-1, 3, 2}, 4 -> {-2, -4, -6}|
 scalarNumeric[ex_] := Expand[ex /. {
   MomProd[i_Integer, j_Integer] :> vectors[i].vectors[j],
   Power[Mom[Multiparticle[ii__Integer]], 2] :> With[{v = Total[vectors /@ {ii}]}, v.v],
-  chain[] -> 1} /. Thread[{m1, m2, m3, m4} ->
+  Global`identityTestChain[] -> 1} /. Thread[{m1, m2, m3, m4} ->
     Sqrt[(#. #) & /@ Values[vectors]]] /. mq -> Sqrt[Total[Values[vectors][[1 ;; 3]]].Total[Values[vectors][[1 ;; 3]]]]];
 check["scalar dot conservation independently agrees with exact conserved vectors", AllTrue[
   Select[scalarChoices, StringStartsQ[Lookup[#, "Identity", ""], "Scalar"] &],
   scalarNumeric[scalarDot - apply[scalarDot, #]] === 0 &]];
 check["subset square identities independently agree with exact conserved vectors", AllTrue[
   Select[qSquareMoves, MemberQ[{"ExpandSubset", "SubsetSquare"}, Lookup[#, "Identity", ""]] &],
-  scalarNumeric[q3^2 chain[] - apply[q3^2 chain[], #]] === 0 &]];
+  scalarNumeric[q3^2 Global`identityTestChain[] - apply[q3^2 Global`identityTestChain[], #]] === 0 &]];
 
 (* ::Section:: *)
 (* Typed particle permutations, including sparse labels and explicit indices. *)
@@ -596,6 +596,9 @@ check["numerator API is protected after package loading",
 (* Only this deliberately colliding notebook-helper fixture suppresses shadows. *)
 Quiet[ToExpression["Global`ApplyToNumerator[_, _] := \"notebook helper\""]];
 Quiet[Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]]];
+check["package reload preserves the test notebook's spinor-chain helper",
+  Global`identityTestChain[Mom[2], Mom[2]] ===
+    SpinorChain[Spinor["Spin", "Angle", 1], Mom[2], Mom[2], Spinor["Spin", "Angle", 4]]];
 check["package reload retains its public numerator implementation",
   ConstructiveDiagrams`ApplyToNumerator[x/p + y/q, {x -> u, y -> v}] === u/p + v/q];
 check["package reload does not alter an existing notebook helper",
@@ -961,23 +964,23 @@ check["six-leg legal edits retain the sixth leg", Length[sixCandidates] >= 3 &&
   AnyTrue[sixCandidates, !FreeQ[#["Subtract"], Spinor[_, _, 6]] &]];
 check["identity API has no policy stop action", FreeQ[Lookup[sixCandidates, "Name"], "Stop"]];
 publicPair = {{Mass[1] -> 1, Mass[2] -> 2, Mass[3] -> 3, Mass[4] -> 4},
-  chain[Mom[2], Mom[2]]};
+  Global`identityTestChain[Mom[2], Mom[2]]};
 publicEdits = SpinorIdentityCandidates[publicPair, "MomentumConservation" -> False];
 publicEdit = SelectFirst[publicEdits,
   #["Name"] === "ChainSquare" && Lookup[#, "Direction", ""] === "Contract" &];
 check["public identity application agrees with exact edit",
-  ApplySpinorIdentity[publicPair, publicEdit, "MomentumConservation" -> False] === 4 chain[]];
+  ApplySpinorIdentity[publicPair, publicEdit, "MomentumConservation" -> False] === 4 Global`identityTestChain[]];
 check["public identity application agrees with canonical edit semantics",
   ApplySpinorIdentity[publicPair, publicEdit, "MomentumConservation" -> False] ===
     ConstructiveDiagrams`Private`applyCandidate[
       ConstructiveDiagrams`Private`canonicalAmplitude[publicPair[[2]], publicPair[[1]]], publicEdit]];
 check["public identity application rejects stale edits", Quiet[
-  ApplySpinorIdentity[{publicPair[[1]], chain[Mom[3], Mom[3]]}, publicEdit,
+  ApplySpinorIdentity[{publicPair[[1]], Global`identityTestChain[Mom[3], Mom[3]]}, publicEdit,
     "MomentumConservation" -> False]] === $Failed];
 check["public identity application rejects fabricated edits", Quiet[
   ApplySpinorIdentity[publicPair, Join[publicEdit, <|"Insert" -> wrongResult|>],
     "MomentumConservation" -> False]] === $Failed];
-publicOpaque = PropDen[opaque[MomProd[2, 3], chain[Mom[2], Mom[2]]], Mass[2]];
+publicOpaque = PropDen[opaque[MomProd[2, 3], Global`identityTestChain[Mom[2], Mom[2]]], Mass[2]];
 publicOpaquePair = {publicPair[[1]], publicPair[[2]]/publicOpaque};
 publicOpaqueEdit = SelectFirst[SpinorIdentityCandidates[publicOpaquePair,
   "MomentumConservation" -> False],
@@ -985,7 +988,7 @@ publicOpaqueEdit = SelectFirst[SpinorIdentityCandidates[publicOpaquePair,
 publicOpaqueResult = ApplySpinorIdentity[publicOpaquePair, publicOpaqueEdit,
   "MomentumConservation" -> False];
 check["public identity application preserves every opaque propagator argument",
-  publicOpaqueResult === 4 chain[]/publicOpaque &&
+  publicOpaqueResult === 4 Global`identityTestChain[]/publicOpaque &&
     Cases[publicOpaqueResult, _PropDen, Infinity] === {publicOpaque}];
 symbolicScramble = ComplicateAmplitude[{sixRules, sixAmplitude}, 2,
   RandomSeed -> 3, "RecordSteps" -> True, "MomentumConservation" -> False];
@@ -998,7 +1001,7 @@ check["symbolic scramble uses only public legal identities",
 check["public identity application rejects Stop", Quiet[
   ApplySpinorIdentity[publicPair, <|"Name" -> "Stop", "Subtract" -> 0, "Insert" -> 0|>]] === $Failed];
 shellPublicPair = {Append[First[publicPair], Mass[Multiparticle[2, 3]] -> shellMass],
-  MomProd[2, 3] chain[]};
+  MomProd[2, 3] Global`identityTestChain[]};
 shellPublicEdit = SelectFirst[SpinorIdentityCandidates[shellPublicPair,
   "MomentumConservation" -> False], #["Name"] === "OnShell" &];
 check["an internal-shell edit is rejected when its channel is disabled", Quiet[

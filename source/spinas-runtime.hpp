@@ -32,6 +32,39 @@ inline ldouble mass2(const FourMomentum& momentum) {
 inline bool finite_complex(const cdouble& value) {
   return std::isfinite(std::real(value)) && std::isfinite(std::imag(value));
 }
+// Cache a real reciprocal once per momentum point. The original complex
+// denominator is retained for widths, nonreal parameters and exceptional
+// floating-point ranges. The caller must exclude width-bearing expressions.
+class CachedDenominator {
+  cdouble denominator_ = cdouble(1, 0);
+  ldouble reciprocal_ = 1;
+  bool real_reciprocal_ = false;
+
+ public:
+  CachedDenominator() = default;
+  explicit CachedDenominator(const cdouble& value, const bool allow_real = false)
+      : denominator_(value) {
+    if (!allow_real || std::imag(value) != ldouble(0) ||
+        !std::isnormal(std::real(value))) return;
+    const ldouble inverse = ldouble(1) / std::real(value);
+    if (!std::isnormal(inverse)) return;
+    reciprocal_ = inverse;
+    real_reciprocal_ = true;
+  }
+
+  bool uses_real_reciprocal() const { return real_reciprocal_; }
+
+  cdouble divide(const cdouble& numerator) const {
+    if (!real_reciprocal_ || !std::isnormal(std::real(numerator)) ||
+        !std::isnormal(std::imag(numerator)))
+      return numerator / denominator_;
+    const cdouble result = numerator * reciprocal_;
+    if (!std::isnormal(std::real(result)) || !std::isnormal(std::imag(result)))
+      return numerator / denominator_;
+    return result;
+  }
+};
+
 inline ldouble checked_mass(const cdouble& value) {
   const ldouble real=std::real(value);
   const ldouble imaginary=std::imag(value);

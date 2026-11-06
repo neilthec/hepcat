@@ -191,22 +191,127 @@ class BuilderTests(unittest.TestCase):
         self.assertEqual(zeroed, [{"Name": "WZ", "Value": 0}])
         self.assertEqual(preserved, [])
 
-    def test_explicit_or_matched_used_widths_are_preserved(self):
+    def test_explicit_or_matched_used_widths_are_always_zero_for_validation(self):
         external = {"wz": SimpleNamespace(name="mdl_WZ", lhablock="DECAY", lhacode=[23])}
         for value in [0, 2.5]:
             updates, zeroed, preserved = builder.bare_tree_widths(external, {"wz": value})
-            self.assertEqual(updates["wz"], value)
-            self.assertEqual(zeroed, [])
-            self.assertEqual(preserved, [{"Name": "WZ", "Value": value}])
+            self.assertEqual(updates["wz"], 0)
+            self.assertEqual(zeroed, [{"Name": "WZ", "Value": 0}])
+            self.assertEqual(preserved, [])
 
-    def test_unmatched_used_dependent_width_is_not_silently_zeroed(self):
+    def test_all_particle_widths_are_checked_even_matched_or_unused_ones(self):
         model = {"particles": [{"width": "mdl_WX"}]}
-        with self.assertRaisesRegex(builder.ValidationSetupError, "dependent/non-DECAY"):
-            builder.check_other_widths(model, {}, {"wx": 2}, {}, "call wave(mdl_WX)")
-        self.assertEqual(builder.check_other_widths(model, {}, {"wx": 0}, {}, "call wave(mdl_WX)"), [])
-        self.assertEqual(builder.check_other_widths(model, {}, {"wx": 2}, {}, "unrelated subprocess"), [])
-        self.assertEqual(builder.check_other_widths(model, {}, {"wx": 2}, {"width": "wx"},
-                         "call wave(mdl_WX)"), [{"Name": "WX", "Value": 2, "Dependent": True}])
+        for targets in [{}, {"width": "wx"}]:
+            for matrix in ["call wave(mdl_WX)", "unrelated subprocess"]:
+                with self.subTest(targets=targets, matrix=matrix):
+                    with self.assertRaisesRegex(builder.ValidationSetupError, "zero particle width"):
+                        builder.check_other_widths(model, {}, {"wx": 2}, targets, matrix)
+                    self.assertEqual(builder.check_other_widths(model, {}, {"wx": 0}, targets, matrix), [])
+
+    def width_model(self):
+        external = [SimpleNamespace(name="mdl_WZ", lhablock="DECAY", lhacode=[23], value=2.5),
+                    SimpleNamespace(name="mdl_WX", lhablock="CUSTOM", lhacode=[7], value=3),
+                    SimpleNamespace(name="GG", lhablock="COUPLINGS", lhacode=[1], value=.3)]
+        dependent = SimpleNamespace(name="mdl_WY", value=7, expr="GG*23")
+        return {"parameters": {("external",): external, (): [dependent]},
+                "particles": [{"width": name} for name in ["mdl_WZ", "mdl_WX", "mdl_WY", "ZERO"]]}
+
+    def test_particle_roles_cover_non_decay_and_dependent_widths(self):
+        model = self.width_model()
+        used = {"width": ("Width", 7), "gg": ("GG", .3)}
+        rules = {"wz": 5, "wx": 6, "wy": 7, "gg": .3}
+        zero_used, zero_rules, widths = builder.validation_zero_width_inputs(
+            model, used, rules, {"width": "wy"})
+        self.assertEqual(set(widths), {"wz", "wx", "wy"})
+        self.assertEqual(zero_used["width"], ("Width", 0))
+        self.assertEqual(zero_used["gg"], ("GG", .3))
+        self.assertEqual(zero_rules, {"wz": 0, "wx": 0, "gg": .3})
+        self.assertEqual(widths["wy"].expr, "0.0")
+        self.assertTrue(all(parameter.value == 0 for parameter in widths.values()))
+        entries, external = builder.parameter_index(model)
+        self.assertEqual(entries["gg"].value, .3)
+        updates, zeroed, preserved = builder.bare_tree_widths(external, {"wz": 9, "gg": .3}, widths)
+        self.assertEqual(updates, {"wz": 0, "wx": 0, "gg": .3})
+        self.assertEqual(preserved, [])
+        self.assertIn({"Name": "WY", "Value": 0, "Dependent": True}, zeroed)
+        # The explicit dictionaries supplied by the caller are not rewritten.
+        self.assertEqual(used["width"], ("Width", 7))
+        self.assertEqual(rules["wy"], 7)
+
+    def test_declared_width_without_parameter_fails_setup(self):
+        model = self.width_model()
+        model["particles"].append({"width": "missingWidth"})
+        with self.assertRaisesRegex(builder.ValidationSetupError, "no UFO parameter"):
+            builder.validation_width_parameters(model)
+
+    def ufo_fixture(self):
+        directory = self.directory / "ufo"
+        directory.mkdir()
+        text = ("from object_library import Parameter as UFOParameter\n"
+                "# Keep this comment and the unrelated coupling exactly.\n"
+                "WZ = UFOParameter(name='WZ', nature='external', value=2.5, texname='W_Z', lhablock='DECAY', lhacode=[23])\n"
+                "WX = UFOParameter(name='WX', nature='external', value=3.0, texname='W_X', lhablock='CUSTOM', lhacode=[7])\n"
+                "WY = UFOParameter(name='WY', texname='Γ_Y', nature='internal', value='GG*23')\n"
+                "GG = UFOParameter(name='GG', nature='external', value=0.3, texname='g')\n")
+        (directory / "parameters.py").write_text(text)
+        return directory, text
+
+    def test_validation_private_ufo_zeroes_only_width_values(self):
+        source, original = self.ufo_fixture()
+        output = self.directory / "validation"
+        output.mkdir()
+        restriction = self.directory / "restriction.dat"
+        restriction.write_text("# original restriction\n")
+        result = builder.private_ufo_copy(source, restriction, output, ["mdl_WZ", "WX", "WY"])
+        self.assertEqual(result, "./reference-model-hepcat")
+        private = (output / "reference-model" / "parameters.py").read_text()
+        self.assertEqual(private, original.replace("value=2.5", "value=0.0").replace(
+            "value=3.0", "value=0.0").replace("value='GG*23'", "value='0.0'"))
+        self.assertEqual((source / "parameters.py").read_text(), original)
+        self.assertEqual((output / "reference-model" / "restrict_hepcat.dat").read_bytes(), restriction.read_bytes())
+
+    def test_private_restriction_cannot_restore_a_width(self):
+        source, original = self.ufo_fixture()
+        output = self.directory / "validation-restricted"
+        output.mkdir()
+        restriction = self.directory / "restricted.dat"
+        card = ("DECAY 23 2.5 # declared width\n"
+                "DECAY 25 8.0 # another unchanged input\n"
+                "BLOCK CUSTOM\n  7 3.0 # declared non-DECAY width\n  8 4.0 # coupling\n"
+                "BLOCK MASS\n  23 91.0 # mass\n")
+        restriction.write_text(card)
+        builder.private_ufo_copy(source, restriction, output, ["WZ", "WX", "WY"])
+        private = (output / "reference-model" / "restrict_hepcat.dat").read_text()
+        self.assertEqual(private, card.replace("23 2.5", "23 0.0").replace("7 3.0", "7 0.0"))
+        self.assertEqual(restriction.read_text(), card)
+        self.assertEqual((source / "parameters.py").read_text(), original)
+
+    def test_normal_madevent_private_copy_keeps_widths_unchanged(self):
+        source, original = self.ufo_fixture()
+        restriction = self.directory / "normal-restriction.dat"
+        card = "DECAY 23 2.5\nBLOCK CUSTOM\n 7 3.0\n"
+        restriction.write_text(card)
+        for index, selected in enumerate([None, restriction]):
+            output = self.directory / ("madevent-" + str(index))
+            output.mkdir()
+            result = builder.private_ufo_copy(source, selected, output)
+            self.assertEqual(result, "./reference-model-hepcat" if selected else "./reference-model-full")
+            self.assertEqual((output / "reference-model" / "parameters.py").read_text(), original)
+            self.assertEqual((source / "parameters.py").read_text(), original)
+            if selected:
+                self.assertEqual((output / "reference-model" / "restrict_hepcat.dat").read_text(), card)
+
+    def test_unrewritable_or_missing_private_width_declarations_fail(self):
+        for body in ["WX = make_parameter(name='WX', nature='internal', value='2*G')\n",
+                     "WX = Parameter(name='WX', nature='internal', **other_arguments)\n",
+                     "WX = Parameter(name=dynamic_name, nature='internal', value='2*G')\n"]:
+            with self.subTest(body=body):
+                (self.directory / "parameters.py").write_text(body)
+                with self.assertRaisesRegex(builder.ValidationSetupError, "rewrite"):
+                    builder.zero_private_ufo_widths(self.directory, ["WX"])
+        (self.directory / "parameters.py").unlink()
+        with self.assertRaisesRegex(builder.ValidationSetupError, "parameters.py is missing"):
+            builder.zero_private_ufo_widths(self.directory, ["WX"])
 
     def test_release_provenance_comes_from_the_selected_installation(self):
         (self.directory / "VERSION").write_text("version = 3.8.1\ndate = 2026-10-09\n")

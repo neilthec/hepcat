@@ -386,7 +386,8 @@ spinasProcessIR[process_List, amplitude_, model_List, options_Association] := Mo
       Head[value] === PropDen && MemberQ[{2, 3}, Length[value]],
         cacheScalar[value, spinasScalarName[value],
           "mass2(" <> emitVector[First[value]] <> ") - (" <> emit[value[[2]]] <> ") * (" <> emit[value[[2]]] <> ")" <>
-          If[Length[value] === 3, " + cdouble(0.0L, 1.0L) * (" <> emit[value[[2]]] <> ") * (" <> emit[value[[3]]] <> ")", ""]],
+          If[Length[value] === 3, " + cdouble(0.0L, 1.0L) * (" <> emit[value[[2]]] <>
+            ") * (widths_enabled ? cdouble(" <> emit[value[[3]]] <> ") : cdouble(0, 0))", ""]],
       Head[value] === Conjugate && Length[value] === 1, "std::conj(cdouble(" <> emit[First[value]] <> "))",
       Head[value] === Re && Length[value] === 1, "std::real(cdouble(" <> emit[First[value]] <> "))",
       Head[value] === Im && Length[value] === 1, "std::imag(cdouble(" <> emit[First[value]] <> "))",
@@ -524,7 +525,7 @@ spinasReadableComponentBody[ir_Association, family_:False] := Module[
   used = Join[Lookup[ir, "ChainNames", {}], Lookup[ir, "ScalarNames", {}],
     Lookup[Lookup[ir, "ConstantCaches", {}], "Name", {}],
     Lookup[Lookup[ir, "ParameterCaches", {}], "Name", {}],
-    {"numerator", "denominator", "spinor_spins", "particle_view"},
+    {"numerator", "denominator", "spinor_spins", "particle_view", "widths_enabled"},
     Table["p" <> ToString[i], {i, n}],
     Flatten[Table[If[ranks[[i]] > 1,
       Table["ds" <> ToString[i] <> "_" <> ToString[j], {j, ranks[[i]]}],
@@ -619,6 +620,7 @@ spinasCppIdentifierQ[name_String] := StringMatchQ[name, RegularExpression["[A-Za
     "leg_count", "parameter_count", "default_parameters", "default_spins", "incoming_legs",
     "get_parameters", "masses", "set_parameters", "set_momenta", "set_masses", "initialize_products",
     "amp", "amp_unchecked", "spin_sum", "amp2", "validate_calchep", "validate_madgraph", "n_calchep",
+    "set_widths_enabled", "widths_enabled",
     "helicity_count", "helicity_configurations", "incoming_spin_average", "symmetry_factor", "ParticleView",
     "parameters", "external_masses", "momenta", "particles", "momenta_ready", "component",
     "cdouble", "ldouble", "FourMomentum", "checked_mass", "validate_momenta", "finite_complex",
@@ -740,6 +742,8 @@ spinasCalcHEPConfiguration[ir_Association, data_List, supplied_Association] := M
     "ProcessDescription" -> StringRiffle[physicalNames[[incoming]], ", "] <> " -> " <>
       StringRiffle[physicalNames[[outgoing]], ", "],
     "ParameterNames" -> ir["ParameterNames"], "SPINASNormalizationFactor" -> factor,
+    "WidthParameterIndices" -> spinasValidationWidthIndices[ir, data],
+    "WidthPolicy" -> "ZeroWidthsForIndependentValidation",
     "Points" -> options["CalcHEPPoints"],
     "Seed" -> Replace[options["CalcHEPSeed"], Automatic -> "Automatic"]|>
 ];
@@ -756,7 +760,7 @@ spinasCalcHEPSource[name_String, ir_Association, config_Association] := Module[
     "  return hepcat_spinas::unavailable_validation(options,",
     "    " <> spinasCppQuoted[config["Reason"]] <> ");", "}", "",
     "} // namespace hepcat_generated", ""}], "\n"]]];
-  used = {"spinas_process", "calchep_process", "parameters", "model_parameters", "model_directory",
+  used = {"spinas_process", "calchep_process", "parameters", "validation_parameters", "model_parameters", "model_directory",
     "model_number", "particle_pdgs", "allowed_particle_pdgs", "excluded_particle", "external_order", "options", "point", "final_state_factor",
     "spinas_squared", "calchep_squared", "name", "values"};
   aliases = Table[
@@ -784,7 +788,12 @@ spinasCalcHEPSource[name_String, ir_Association, config_Association] := Module[
   body = Join[{
     "#ifdef HEPCAT_HAS_CALCHEP", "  try {",
     "    // Work on a copy: the caller's momenta and caches stay unchanged.",
-    "    " <> name <> " spinas_process(*this);", "",
+    "    " <> name <> " spinas_process(*this);",
+    "    auto validation_parameters = spinas_process.get_parameters();"},
+    ("    validation_parameters[" <> ToString[#] <> "] = cdouble(0, 0);" &) /@
+      Lookup[config, "WidthParameterIndices", {}], {
+    "    spinas_process.set_parameters(validation_parameters);",
+    "    spinas_process.set_widths_enabled(false);", "",
     "    // Physical process: " <> StringReplace[config["ProcessDescription"],
       {"\n" -> " ", "\r" -> " ", "\\" -> "/"}],
     "    const std::string model_directory = " <> spinasCppQuoted[config["ModelDirectory"]] <> ";",
@@ -794,7 +803,7 @@ spinasCalcHEPSource[name_String, ir_Association, config_Association] := Module[
     "    const std::vector<int> allowed_particle_pdgs = {" <>
       StringRiffle[ToString /@ config["AllowedParticlePDGs"], ", "] <> "};", "",
     "    // Match the current SPINAS parameters to the CalcHEP model by name.",
-    "    const auto parameters = get_parameters();"}, parameterLines, {
+    "    const auto parameters = spinas_process.get_parameters();"}, parameterLines, {
     "    const std::vector<hepcat_spinas::CalcHEPParameter> model_parameters = {"},
     MapIndexed["      {" <> spinasCppQuoted[#1] <> ", " <> aliases[[First[#2]]] <> "}" <>
       If[First[#2] < Length[aliases], ",", ""] &, config["ParameterNames"]], {
@@ -884,6 +893,7 @@ spinasCalcHEPREADME[name_String, config_Association] := StringRiffle[{
   "", "## Independent CalcHEP validation", "",
   "Choose the CalcHEP installation with CalcHEPDirectory and its reference model with CalcHEPModel -> {directory, number}. Both default to None, so HEPCAT never guesses a reference installation or theory. Explicit CalcHEPDirectory -> Automatic uses only CALCHEP_ROOT or CALCHEP environment settings. CalcHEPAllowedParticles -> All retains the entire selected model; a list such as {11,22} explicitly restricts internal particles to electrons/positrons and photons. The chosen restriction is recorded in manifest.json. No reference model is rewritten or trimmed.", "",
   "The generated validate_calchep(options) method compares 1000 seeded random physical phase-space points by default. The same momentum values are sent to SPINAS and CalcHEP. The validator generates the CalcHEP process at runtime in a private temporary workspace and leaves the installation unchanged.", "",
+  "Validation sets every internal width to zero on both sides, using a private SPINAS copy and a private CalcHEP particle table. The caller's parameters and the normal n_calchep simulation widths remain unchanged.", "",
   "CalcHEPSeed -> Automatic chooses a seed from the current time when the validation executable runs, not when its source is exported. The report prints the actual Seed for replay. Set CalcHEPSeed to an unsigned 64-bit integer to choose a fixed executable default, or use --seed to override it for one run. In C++, assign options.seed directly; zero is a valid explicit seed.", "",
   "```sh", "./build/" <> name <> "_validate_calchep", "./build/" <> name <> "_validate_calchep --points 1000 --seed 12345", "```", "",
   "Link the " <> name <> "_calchep_validation library when calling the method from your own C++ program. Configure -DCALCHEP_ROOT=/path/to/calchep if it was not found. This separate backend keeps the ordinary SPINAS process usable without CalcHEP.",
@@ -1040,7 +1050,7 @@ spinasNativeCachePlan[ir_Association, reservedNames_List : {}] := Module[
   used = Join[reservedNames, Lookup[Lookup[ir, "ConstantCaches", {}], "Name", {}],
     Lookup[Lookup[ir, "ParameterCaches", {}], "Name", {}], {"parameters", "external_masses", "momenta", "momenta_ready", "initialize_products",
     "amp", "amp_unchecked", "helicity_key", "spin_sum", "amp2", "component", "numerator", "denominator", "values", "spins",
-    "set_parameters", "set_momenta", "set_masses", "get_parameters", "validate_calchep", "validate_madgraph",
+    "set_parameters", "set_momenta", "set_masses", "set_widths_enabled", "widths_enabled", "get_parameters", "validate_calchep", "validate_madgraph",
     "amplitude", "result", "validation", "other", "ranks", "originally_massless", "check_spin", "helicity_pair_reuse"},
     Table["p" <> ToString[i], {i, n}],
     Table["assignments" <> ToString[i], {i, n}], Table["indices" <> ToString[i], {i, n}],
@@ -1185,14 +1195,17 @@ spinasNativeExpression[pieces_Association, sign_:1] := Module[{terms, numerator}
   numerator = StringJoin[terms];
   If[Length[terms] > 1, numerator = "(" <> numerator <> ")"];
   If[!TrueQ[pieces["UnitDenominator"]],
-    numerator = "(" <> numerator <> ") / (" <> pieces["Denominator"] <> ")"];
+    numerator = If[StringQ[Lookup[pieces, "DenominatorCache", Missing["NotCached"]]],
+      pieces["DenominatorCache"] <> ".divide(" <> numerator <> ")",
+      "(" <> numerator <> ") / (" <> pieces["Denominator"] <> ")"]];
   If[sign === -1, "-(" <> numerator <> ")", numerator]
 ];
 
 spinasNativeProjectHeader[name_String, ir_Association, plan_Association] := Module[
   {n = ir["LegCount"], params = plan["Parameters"], realArguments, massArguments,
-   pointerArguments, fields, declarations, lines, family, branchCount},
+   pointerArguments, fields, declarations, lines, family, branchCount, demand},
   family = TrueQ[Lookup[ir, "Family", False]];
+  demand = Lookup[plan, "DemandPreparation", <||>];
   branchCount = Length[plan["Branches"]];
   realArguments = StringRiffle[("const ldouble& value_" <> params[[#, "Alias"]] &) /@
     spinasNativeParameterOrder[ir], ", "];
@@ -1218,7 +1231,9 @@ spinasNativeProjectHeader[name_String, ir_Association, plan_Association] := Modu
     "  static ldouble incoming_spin_average();", "  static ldouble symmetry_factor();", "",
     "  const Parameters& get_parameters() const { return parameters; }",
     "  const std::array<ldouble, leg_count>& masses() const { return external_masses; }", "",
-    "  void set_parameters(const Parameters& values);"}];
+    "  void set_parameters(const Parameters& values);",
+    "  // Disabling widths changes propagators only; parameters remain unchanged.",
+    "  void set_widths_enabled(bool enabled);"}];
   If[massArguments =!= "", lines = Join[lines,
     spinasReadableCppLines["void set_masses(" <> massArguments <> ");"]]];
   lines = Join[lines, {"  void set_momenta(const Momenta& values);"},
@@ -1229,20 +1244,29 @@ spinasNativeProjectHeader[name_String, ir_Association, plan_Association] := Modu
     "  hepcat_spinas::ValidationReport validate_calchep(",
     "    const hepcat_spinas::ValidationOptions& options = hepcat_spinas::ValidationOptions());", "",
     "private:", "  Parameters parameters;", "  std::array<ldouble, leg_count> external_masses;",
-    "  Momenta momenta;", "  bool momenta_ready = false;", "",
+    "  Momenta momenta;", "  bool momenta_ready = false;", "  bool widths_enabled = true;", "",
     "  // Model parameters."},
     ("  cdouble " <> #["Alias"] <> ";" &) /@ params,
     If[spinasScalarCacheHeader[ir] === {}, {}, Join[{"", "  // Constants and model-only factors."}, spinasScalarCacheHeader[ir]]], {
     "", "  // External particles."},
     Table["  spinas::particle p" <> ToString[i] <> ";", {i, n}], {
-    "", "  // Spinor-product and scalar caches. Updated once in set_momenta(...)."},
+    "", "  // Spinor-product and scalar caches. Prepared once per momentum point."},
     ("  " <> # &) /@ Lookup[plan, "ProductDeclarations", {}],
     ("  " <> # &) /@ Lookup[plan, "ScalarDeclarations", {}],
     ("  " <> # &) /@ Lookup[plan, "PointDeclarations", {}],
     If[TrueQ[Lookup[plan, "Optimized", False]],
       Join[{"", "  // Internal kernel for already validated spin configurations."},
         spinasReadableCppLines["cdouble amp_unchecked(" <> spinasNativeScalarArguments[n] <> ");"]], {}], {
-    "", "  void initialize_products();", "};", "", "} // namespace hepcat_generated", ""}];
+    ""}, If[TrueQ[Lookup[demand, "Active", False]], Join[{
+      "  // Each process owns its lazy point caches and shared middle matrices.",
+      "  bool " <> demand["AllFlag"] <> " = false;",
+      "  bool " <> demand["SumFlag"] <> " = false;"},
+      If[demand["SharedChains"] === {}, {}, Join[{"#ifdef SPINAS_HAS_MOMENTUM_CHAIN"},
+        ("  spinas::momentum_chain " <> #["Name"] <> ";" &) /@ demand["SharedChains"], {"#endif"}]],
+      ("  bool " <> #["Ready"] <> " = false;" &) /@ demand["SharedChains"], {
+      "  void " <> demand["AllMethod"] <> "();",
+      "  void " <> demand["SumMethod"] <> "();", ""}], {}], {
+    "  void initialize_products();", "};", "", "} // namespace hepcat_generated", ""}];
   StringRiffle[lines, "\n"]
 ];
 
@@ -1283,10 +1307,21 @@ spinasNativeProjectSource[name_String, ir_Association, plan_Association] := Modu
    defaults, originalMassless, massCpp, family, initialAverage, symmetryFactor,
    massLines, massChecks, index, higher, helicityLegs, condition, branch, expression,
    fallback, branchBody, indent, projectionLoops, normalization, states,
-   spinLines, loops, loopLegs, prefix, configurations, coefficients, optimized, dispatch, dispatchKey, helicitySum, lower},
+   spinLines, loops, loopLegs, prefix, configurations, coefficients, optimized, dispatch, dispatchKey, helicitySum, lower,
+   demand, demandActive, resetDemand, prepareChains},
   add[values_List] := (lines = Join[lines, values]);
   family = TrueQ[Lookup[ir, "Family", False]];
   optimized = TrueQ[Lookup[plan, "Optimized", False]];
+  demand = Lookup[plan, "DemandPreparation", <||>];
+  demandActive = TrueQ[Lookup[demand, "Active", False]];
+  resetDemand[] := If[demandActive, add[Join[{
+    "  " <> demand["AllFlag"] <> " = false;", "  " <> demand["SumFlag"] <> " = false;"},
+    ("  " <> #["Ready"] <> " = false;" &) /@ demand["SharedChains"]]]];
+  prepareChains[chains_List] := If[chains =!= {},
+    add[{"#ifdef SPINAS_HAS_MOMENTUM_CHAIN"}];
+    Do[add[{"  if (!" <> chain["Ready"] <> ") {", "    " <> chain["Name"] <> ".update();",
+      "    " <> chain["Ready"] <> " = true;", "  }"}], {chain, chains}];
+    add[{"#endif"}]];
   helicitySum = spinasHelicitySumCppPlan[ir];
   massIndices = spinasNativeMassParameterIndices[ir]; realOrder = spinasNativeParameterOrder[ir];
   realArguments = StringRiffle[("const ldouble& value_" <> params[[#, "Alias"]] &) /@ realOrder, ", "];
@@ -1316,9 +1351,10 @@ spinasNativeProjectSource[name_String, ir_Association, plan_Association] := Modu
     add[spinasReadableCppLines[": " <> name <> "(Parameters" <> ctorValues <> ") {}", "  "]]; add[{""}]];
   add[{"// Copies rebuild caches, so every sproduct points into its own process.",
     name <> "::" <> name <> "(const " <> name <> "& other) {",
+    "  widths_enabled = other.widths_enabled;",
     "  set_parameters(other.parameters);", "  if (other.momenta_ready) set_momenta(other.momenta);", "}", "",
     name <> "& " <> name <> "::operator=(const " <> name <> "& other) {",
-    "  if (this != &other) {", "    set_parameters(other.parameters);",
+    "  if (this != &other) {", "    widths_enabled = other.widths_enabled;", "    set_parameters(other.parameters);",
     "    if (other.momenta_ready) set_momenta(other.momenta);", "  }", "  return *this;", "}", "",
     name <> "::Parameters " <> name <> "::default_parameters() {", "  return Parameters{{"}];
   add[defaults]; add[{"  }};", "}", "",
@@ -1332,11 +1368,17 @@ spinasNativeProjectSource[name_String, ir_Association, plan_Association] := Modu
     "ldouble " <> name <> "::incoming_spin_average() {", "  return " <> spinasCppReal[initialAverage] <> ";", "}", "",
     "ldouble " <> name <> "::symmetry_factor() {", "  return " <> spinasCppReal[symmetryFactor] <> ";", "}", "",
     "void " <> name <> "::initialize_products() {"}];
+  If[demandActive && demand["SharedChains"] =!= {},
+    add[{"#ifdef SPINAS_HAS_MOMENTUM_CHAIN"}];
+    add[("  " <> #["Initialization"] &) /@ demand["SharedChains"]];
+    add[{"#endif"}]];
   add[("  " <> # &) /@ plan["ProductInitializers"]];
   add[{"}", "", "void " <> name <> "::set_parameters(const Parameters& values) {",
     "  for (const auto& value : values) {", "    if (!finite_complex(value)) {",
     "      throw std::invalid_argument(\"Model parameters must be finite.\");", "    }", "  }",
-    "  momenta_ready = false;", "  parameters = values;"}];
+    "  momenta_ready = false;"}];
+  resetDemand[];
+  add[{"  parameters = values;"}];
   add[("  " <> #["Alias"] <> " = parameters[" <> ToString[#["Index"]] <> "];" &) /@ params];
   If[Lookup[ir, "ParameterCaches", {}] =!= {},
     add[{"", "  // Recompute model-only factors once after parameter changes."}];
@@ -1350,6 +1392,11 @@ spinasNativeProjectSource[name_String, ir_Association, plan_Association] := Modu
         "      \"Changing between massive and massless spin states requires re-exporting the process.\");", "  }"}]];
     add[{"  p" <> ToString[i] <> " = spinas::particle(external_masses[" <> ToString[i - 1] <> "]);"}], {i, n}];
   add[{"  initialize_products();", "}", ""}];
+  add[{"void " <> name <> "::set_widths_enabled(bool enabled) {",
+    "  if (widths_enabled == enabled) return;", "  widths_enabled = enabled;",
+    "  momenta_ready = false;"}];
+  resetDemand[];
+  add[{"}", ""}];
   If[massArguments =!= "",
     add[spinasReadableCppLines["void " <> name <> "::set_masses(" <> massArguments <> ") {", ""]];
     add[{"  Parameters values = parameters;"}];
@@ -1358,16 +1405,34 @@ spinasNativeProjectSource[name_String, ir_Association, plan_Association] := Modu
   add[{"void " <> name <> "::set_momenta(const Momenta& values) {",
     "  const auto validation = validate_momenta(values, external_masses, incoming_legs());",
     "  if (!validation.valid) throw std::invalid_argument(validation.message);",
-    "  momenta_ready = false;", "  momenta = values;", "", "  // External particle momenta."}];
+    "  momenta_ready = false;"}];
+  resetDemand[];
+  add[{"  momenta = values;", "", "  // External particle momenta."}];
   add[Table["  p" <> ToString[i] <> ".set_momentum(momenta[" <> ToString[i - 1] <> "].data());", {i, n}]];
-  add[{"", "  // Invalidate the cached spinor products after every momentum update."}];
-  add[("  " <> # &) /@ plan["ProductUpdates"]];
+  If[!demandActive,
+    add[{"", "  // Invalidate the cached spinor products after every momentum update."}];
+    add[("  " <> # &) /@ plan["ProductUpdates"]]];
   If[plan["ScalarUpdates"] =!= {}, add[{"", "  // Propagator denominators and scalar invariants."}];
     add[Flatten[spinasReadableCppLines[#] & /@ plan["ScalarUpdates"]]]];
-  If[Lookup[plan, "PointUpdates", {}] =!= {},
+  If[!demandActive && Lookup[plan, "PointUpdates", {}] =!= {},
     add[{"", "  // Optimized per-point product components and shared arithmetic."}];
     add[Flatten[spinasReadableCppLines[#] & /@ plan["PointUpdates"]]]];
   add[{"  momenta_ready = true;", "}", ""}];
+  If[demandActive,
+    add[{"// Prepare only data used by the retained helicity contributions.",
+      "void " <> name <> "::" <> demand["SumMethod"] <> "() {",
+      "  if (" <> demand["SumFlag"] <> ") return;"}];
+    prepareChains[demand["SumChains"]];
+    add[("  " <> # &) /@ demand["SumProductUpdates"]];
+    add[Flatten[spinasReadableCppLines[#] & /@ demand["SumPointUpdates"]]];
+    add[{"  " <> demand["SumFlag"] <> " = true;", "}", "",
+      "// Individual amplitudes can lazily request the remaining helicities.",
+      "void " <> name <> "::" <> demand["AllMethod"] <> "() {",
+      "  if (" <> demand["AllFlag"] <> ") return;", "  " <> demand["SumMethod"] <> "();"}];
+    prepareChains[demand["RestChains"]];
+    add[("  " <> # &) /@ demand["RestProductUpdates"]];
+    add[Flatten[spinasReadableCppLines[#] & /@ demand["RestPointUpdates"]]];
+    add[{"  " <> demand["AllFlag"] <> " = true;", "}", ""}]];
   add[spinasReadableCppLines["void " <> name <> "::set_momenta(" <> pointerArguments <> ") {", ""]];
   add[{"  Momenta values;"}];
   add[Table["  std::copy(mom" <> ToString[i] <> ", mom" <> ToString[i] <> " + 4, values[" <> ToString[i - 1] <> "].begin());", {i, n}]];
@@ -1382,6 +1447,7 @@ spinasNativeProjectSource[name_String, ir_Association, plan_Association] := Modu
         ToString[ranks[[i]]] <> ") throw std::invalid_argument(\"Invalid massless helicity.\");"}],
       add[{"  check_spin(" <> ToString[ranks[[i]]] <> ", ds" <> ToString[i] <> ");"}]], {i, n}];
   If[optimized,
+    If[demandActive, add[{"  " <> demand["AllMethod"] <> "();"}]];
     add[spinasReadableCppLines["return amp_unchecked(" <> spinasNativeScalarValues[n] <> ");"]];
     add[{"}", "", "// Numerical kernel; public amp and spin_sum validate their inputs first."}];
     add[spinasReadableCppLines["cdouble " <> name <> "::amp_unchecked(" <> spinasNativeScalarArguments[n] <> ") {", ""]]];
@@ -1428,6 +1494,11 @@ spinasNativeProjectSource[name_String, ir_Association, plan_Association] := Modu
     "  ldouble result = 0;", "  cdouble amplitude;"}];
   If[optimized, add[{"  if (!momenta_ready) throw std::logic_error(\"Call set_momenta before spin_sum.\");"}]];
   add[helicitySum["GuardLines"]];
+  If[demandActive,
+    If[TrueQ[helicitySum["Active"]],
+      add[{"  if (helicity_pair_reuse) " <> demand["SumMethod"] <> "();",
+        "  else " <> demand["AllMethod"] <> "();"}],
+      add[{"  " <> demand["AllMethod"] <> "();"}]]];
   states = If[family, ir["HelicityStates"], Table[If[TrueQ[masses[[i]] == 0], {ir["Helicities"][[i]]}, {0}], {i, n}]];
   loopLegs = Select[Range[n], ranks[[#]] > 0 && (!TrueQ[masses[[#]] == 0] || Length[states[[#]]] > 1) &];
   Do[If[!MemberQ[loopLegs, i], add[{"  const int j" <> ToString[i] <> " = " <>
@@ -1468,6 +1539,96 @@ spinasNativeStyleQ[name_String, ir_Association] := Module[{components, branches,
   branches <= 64 && estimate <= 8000000
 ];
 
+(* Partition the generated point assignments by the helicity branches that
+   consume them. This is dependency bookkeeping, not an amplitude identity.
+   Unknown statement forms retain the original eager preparation. *)
+spinasDemandPointPlan[ir_Association, input_Association] := Module[
+  {plan = input, updates, declarations, names, parsed, definitions, owner, rhs,
+   branches, selected, texts, needed, pending, current, dependencies, allNative,
+   sumNative, products, productRules, productUpdates, groups, shared = {},
+   chainFor = <||>, used, allocate, groupsUsed, group, name, ready, key, sequence,
+   sumUpdates, restUpdates, sumProducts, restProducts, sumChains, restChains,
+   report, allFlag, sumFlag, allMethod, sumMethod, flagNames, initializers},
+  If[!TrueQ[Lookup[plan, "Optimized", False]], Return[plan]];
+  updates = Lookup[plan, "PointUpdates", {}];
+  declarations = Lookup[plan, "PointDeclarations", {}];
+  names = Flatten[StringCases[declarations,
+    RegularExpression["\\b([A-Za-z_][A-Za-z0-9_]*)\\s*(?:\\[[^\\]]*\\])*\\s*;\\s*$"] -> "$1"]];
+  parsed = Map[StringCases[StringTrim[#],
+    RegularExpression["^([A-Za-z_][A-Za-z0-9_]*)(?:\\[[0-9]+\\])*\\s*=\\s*([\\s\\S]*);$"] -> {"$1", "$2"}] &, updates];
+  If[updates === {} || !DuplicateFreeQ[names] || !AllTrue[parsed, Length[#] === 1 &] ||
+      !AllTrue[Flatten[parsed, 1], MemberQ[names, First[#]] &],
+    Return[Join[plan, <|"OptimizationReport" -> Join[Lookup[plan, "OptimizationReport", <||>],
+      <|"DemandPreparation" -> <|"Status" -> "NotApplied", "Reason" -> "Unsupported point-update layout."|>|>]|>]]];
+  parsed = First /@ parsed;
+  definitions = GroupBy[MapThread[{First[#1], #2, Last[#1]} &, {parsed, updates}], First];
+  branches = plan["Branches"];
+  selected = Lookup[Lookup[ir, "HelicitySummation", <||>], "RepresentativeConfigurations",
+    Lookup[branches, "Helicities", {}]];
+  branches = Select[branches, MemberQ[selected, #["Helicities"]] &];
+  texts = Flatten[Map[Join[{#["ExpressionCpp"]}, Lookup[#, "LocalStatements", {}],
+      Lookup[#, "FallbackStatements", {}]] &, branches]];
+  needed = Intersection[names, DeleteDuplicates[Flatten[StringCases[texts,
+    RegularExpression["[A-Za-z_][A-Za-z0-9_]*"]]]]];
+  pending = needed;
+  While[pending =!= {}, current = First[pending]; pending = Rest[pending];
+    dependencies = Intersection[names, DeleteDuplicates[Flatten[StringCases[
+      Lookup[definitions, current, {}][[All, 3]], RegularExpression["[A-Za-z_][A-Za-z0-9_]*"]]]]];
+    dependencies = Complement[dependencies, needed];
+    needed = Join[needed, dependencies]; pending = Join[pending, dependencies]];
+  sumUpdates = Pick[updates, MemberQ[needed, #] & /@ (First /@ parsed), True];
+  restUpdates = Pick[updates, MemberQ[needed, #] & /@ (First /@ parsed), False];
+  products = plan["Products"];
+  allNative = Lookup[products, "Name", {}];
+  sumNative = Intersection[allNative, DeleteDuplicates[Flatten[StringCases[
+    Join[texts, sumUpdates], RegularExpression["([A-Za-z_][A-Za-z0-9_]*)\\.v\\("] -> "$1"]]]];
+  used = DeleteDuplicates[Join[Lookup[plan, "ReservedNames", {}], names, allNative,
+    Lookup[plan["Parameters"], "Alias", {}],
+    Flatten[StringCases[Join[declarations, updates, Lookup[plan, "ScalarDeclarations", {}],
+      Lookup[plan, "ProductDeclarations", {}]], RegularExpression["[A-Za-z_][A-Za-z0-9_]*"]]],
+    {"amp", "amp2", "spin_sum", "amp_unchecked", "set_parameters", "set_masses", "set_momenta", "initialize_products"}]];
+  allocate[base_String] := Module[{value = base, suffix = 1},
+    While[MemberQ[used, value], suffix++; value = base <> "_" <> ToString[suffix]];
+    AppendTo[used, value]; value];
+  allFlag = allocate["all_point_cache_ready"]; sumFlag = allocate["summed_point_cache_ready"];
+  allMethod = allocate["prepare_all_point_cache"]; sumMethod = allocate["prepare_summed_point_cache"];
+  (* A shared middle matrix has no endpoint-spin dependency. It belongs to this
+     process instance and is rebound together with its sproducts after copying. *)
+  groups = Select[GatherBy[Select[products, Length[#["Key"][[6]]] >= 2 &],
+    {#["Key"][[1]], #["Key"][[6]]} &], Length[#] > 1 &];
+  Do[
+    key = First[group]["Key"]; sequence = key[[6]];
+    name = allocate["momentum_chain_" <> ToString[Length[shared] + 1]];
+    ready = allocate[name <> "_ready"];
+    AppendTo[shared, <|"Name" -> name, "Ready" -> ready,
+      "Initialization" -> name <> " = spinas::momentum_chain(" <>
+        If[TrueQ[key[[1]]], "::ANGLE", "::SQUARE"] <> ", {" <>
+        StringRiffle[("&p" <> ToString[#] &) /@ sequence, ", "] <> "});",
+      "Products" -> Lookup[group, "Name"]|>];
+    Do[AssociateTo[chainFor, product["Name"] -> name], {product, group}], {group, groups}];
+  productRules = Association@Table[product["Name"] ->
+    If[KeyExistsQ[chainFor, product["Name"]],
+      "#ifdef SPINAS_HAS_MOMENTUM_CHAIN\n  " <> product["Name"] <> ".update(" <>
+        chainFor[product["Name"]] <> ");\n#else\n  " <> product["Name"] <> ".update();\n#endif",
+      product["Name"] <> ".update();"], {product, products}];
+  productUpdates = Lookup[productRules, allNative, {}];
+  sumProducts = Lookup[productRules, sumNative, {}];
+  restProducts = Lookup[productRules, Complement[allNative, sumNative], {}];
+  sumChains = Select[shared, Intersection[#["Products"], sumNative] =!= {} &];
+  restChains = Select[shared, Intersection[#["Products"], Complement[allNative, sumNative]] =!= {} &];
+  report = <|"Status" -> "Applied", "KeptHelicityBranches" -> Length[branches],
+    "AllHelicityBranches" -> Length[plan["Branches"]], "SummedPointAssignments" -> Length[sumUpdates],
+    "AllPointAssignments" -> Length[updates], "SummedNativeProducts" -> Length[sumNative],
+    "AllNativeProducts" -> Length[allNative], "SharedMomentumChains" -> Length[shared]|>;
+  Join[plan, <|"ProductUpdates" -> productUpdates,
+    "DemandPreparation" -> <|"Active" -> True, "AllFlag" -> allFlag, "SumFlag" -> sumFlag,
+      "AllMethod" -> allMethod, "SumMethod" -> sumMethod,
+      "SumProductUpdates" -> sumProducts, "RestProductUpdates" -> restProducts,
+      "SumPointUpdates" -> sumUpdates, "RestPointUpdates" -> restUpdates,
+      "SharedChains" -> shared, "SumChains" -> sumChains, "RestChains" -> restChains|>,
+    "OptimizationReport" -> Join[Lookup[plan, "OptimizationReport", <||>], <|"DemandPreparation" -> report|>]|>]
+];
+
 spinasProjectCode[name_String, input_Association, style_String : "Optimized"] := Module[
   {plan, family, ir = spinasMergeScalarCaches[input, {name}], optimization},
   family = TrueQ[Lookup[ir, "Family", False]];
@@ -1479,6 +1640,7 @@ spinasProjectCode[name_String, input_Association, style_String : "Optimized"] :=
         "OptimizationReport" -> Join[Lookup[plan, "OptimizationReport", <||>],
           <|"CheckedPublicAmplitude" -> True, "UncheckedInternalSpinSumKernel" -> True|>]|>]]];
     If[FailureQ[plan], Return[plan]];
+    plan = spinasDemandPointPlan[ir, plan];
     optimization = If[style === "Optimized", Lookup[plan, "OptimizationReport", <||>],
       <|"Status" -> "Readable", "Note" -> "Direct formula layout with shared numerical constants and model factors."|>];
     <|"Header" -> spinasNativeProjectHeader[name, ir, plan],
@@ -1518,6 +1680,7 @@ spinasCanonicalProjectHeader[name_String, ir_Association] := StringRiffle[{
   "  const Parameters& get_parameters() const { return parameters; }",
   "  const std::array<ldouble, leg_count>& masses() const { return external_masses; }",
   "", "  void set_parameters(const Parameters& values);",
+  "  void set_widths_enabled(bool enabled);",
   "  void set_momenta(const Momenta& values);", "",
   "  // Complex amplitude for explicit doubled spins and helicities.",
   "  cdouble amp(const Spins& spins);",
@@ -1528,7 +1691,7 @@ spinasCanonicalProjectHeader[name_String, ir_Association] := StringRiffle[{
   "", "private:",
   "  Parameters parameters;", "  std::array<ldouble, leg_count> external_masses;",
   "  Momenta momenta;", "  std::array<spinas::particle, leg_count> particles;",
-  "  bool momenta_ready = false;", "",
+  "  bool momenta_ready = false;", "  bool widths_enabled = true;", "",
   Sequence @@ spinasScalarCacheHeader[ir], "",
   "  cdouble component(const std::vector<std::vector<int>>& spinor_spins);",
   "};", "", "} // namespace hepcat_generated", ""}, "\n"];
@@ -1579,7 +1742,10 @@ spinasCanonicalProjectSource[name_String, ir_Association] := Module[
     "        \"Changing between massive and massless spin states requires re-exporting the process.\");",
     "    }",
     "    particles[i] = spinas::particle(external_masses[i]);", "  }",
-    "}", "", "void " <> name <> "::set_momenta(const Momenta& values) {",
+    "}", "", "void " <> name <> "::set_widths_enabled(bool enabled) {",
+    "  if (widths_enabled == enabled) return;", "  widths_enabled = enabled;",
+    "  momenta_ready = false;", "}", "",
+    "void " <> name <> "::set_momenta(const Momenta& values) {",
     "  const auto validation = validate_momenta(values, external_masses, incoming_legs());",
     "  if (!validation.valid) {",
     "    throw std::invalid_argument(validation.message);", "  }",
@@ -1723,6 +1889,7 @@ spinasProjectREADME[name_String, ir_Association, precision_String] := StringRiff
     "After any parameter change, call set_momenta before evaluating the amplitude."],
   "Parameter array order: " <> If[ir["ParameterNames"] === {}, "none", StringRiffle[ir["ParameterNames"], ", "]] <> ".",
   "Defaults are a resolved snapshot of the supplied model. When changing parameters, keep dependent values consistent.",
+  "Widths are enabled by default. set_widths_enabled(false) disables the width terms in propagators without changing the stored parameters. Call set_momenta again after changing this setting. Independent CalcHEP and MadGraph validators do this only on a private process copy.",
   "Call set_momenta with an array of four-vectors, then amp with the doubled-spin array.",
   "Massless helicities are fixed by the exported process. Massive states are normalized symmetric spinor tensors.",
   "spin_sum sums all massive external spins. amp2 also averages incoming massive spins. Neither includes an identical-particle phase-space factor or a sum over other massless-helicity processes.",

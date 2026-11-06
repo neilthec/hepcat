@@ -3,10 +3,10 @@
 (* Dependency-aware numerical evaluation planning. No physics identities. *)
 Begin["ConstructiveDiagrams`Private`"];
 
-(* Conservative real arithmetic for native scalar caches. Never infer reality
-   from parameter defaults, declared parameter types, or checked external masses:
-   checked_mass tolerates tiny imaginary components. Parameter-dependent masses
-   therefore keep their original complex propagator arithmetic. *)
+(* A zero-width propagator can use real arithmetic after checking its current
+   mass exactly. Mutable parameters retain the original complex path. Any
+   nonzero or unresolved width remains complex even when its value happens to
+   produce a zero imaginary part at one point. *)
 spinasOptimizedMass2Prefix[statement_String] := Module[
   {found = StringPosition[statement, "mass2("], opening, depth = 0, index, character, closing = Missing["NotClosed"]},
   If[found === {}, Return[$Failed]];
@@ -19,32 +19,55 @@ spinasOptimizedMass2Prefix[statement_String] := Module[
   If[IntegerQ[closing], StringTake[statement, closing], $Failed]
 ];
 
-spinasOptimizedRealMass[ir_Association, mass_] := Module[{code},
+spinasOptimizedRealMass[ir_Association, mass_, parameters_List : {}] := Module[
+  {code, position, alias},
   If[NumberQ[mass] && TrueQ[Im[mass] == 0] && FreeQ[mass, Indeterminate | DirectedInfinity],
     code = spinasCppReal[mass];
-    If[StringQ[code], Return[<|"Code" -> code, "Proof" -> "Finite real numeric mass."|>]]];
+    If[StringQ[code], Return[<|"Code" -> code, "Guard" -> "true",
+      "AlwaysReal" -> True, "Proof" -> "Finite real numeric mass."|>]]];
+  position = FirstPosition[ir["ParameterSymbols"], mass, Missing["NotParameter"]];
+  If[Head[mass] === ModelParameter && !MissingQ[position] && Length[parameters] >= First[position],
+    alias = parameters[[First[position]]]["Alias"];
+    Return[<|"Code" -> "std::real(" <> alias <> ")",
+      "Guard" -> "(std::imag(" <> alias <> ") == ldouble(0) && std::isfinite(std::real(" <> alias <> ")))",
+      "AlwaysReal" -> False,
+      "Proof" -> "The current mass is exactly real and finite; otherwise retain the original complex expression."|>]];
   Missing["UnprovedRealMass"]
 ];
 
 spinasOptimizeRealScalars[ir_Association, input_Association] := Module[
   {plan = input, scalars = {}, realNames = {}, proofs = {}, entry, expression,
-   statement, prefix, mass, realQ, proof},
+   statement, original, prefix, mass, realQ, proof, realRhs, rhs, equal,
+   eligible = {}, guarded = {}, widthNames = {}},
   Do[
     expression = entry["Expression"]; statement = entry["Statement"];
-    realQ = False; proof = "";
+    original = statement; realQ = False; proof = "";
     Which[
       MatchQ[expression, _MomProd],
-        realQ = True; proof = "Lorentz product of real exported physical momenta.",
+        realQ = True; proof = "Lorentz product of real exported physical momenta.";
+        AppendTo[eligible, entry["Name"]],
       MatchQ[expression, _Mandelstahm],
-        realQ = True; proof = "Lorentz square of real exported physical momenta.",
+        realQ = True; proof = "Lorentz square of real exported physical momenta.";
+        AppendTo[eligible, entry["Name"]],
       Head[expression] === PropDen && MemberQ[{2, 3}, Length[expression]] &&
           (Length[expression] === 2 || TrueQ[expression[[3]] == 0]),
-        mass = spinasOptimizedRealMass[ir, expression[[2]]];
+        mass = spinasOptimizedRealMass[ir, expression[[2]], Lookup[plan, "Parameters", {}]];
         If[AssociationQ[mass],
           prefix = spinasOptimizedMass2Prefix[statement];
           If[StringQ[prefix],
             statement = prefix <> " - (" <> mass["Code"] <> ") * (" <> mass["Code"] <> ");";
-            realQ = True; proof = "Zero-width denominator; " <> mass["Proof"]]]
+            realQ = TrueQ[mass["AlwaysReal"]]; proof = "Zero-width denominator; " <> mass["Proof"];
+            If[!realQ,
+              equal = First[First[StringPosition[statement, "="]]];
+              realRhs = StringTrim[StringDrop[StringDrop[statement, -1], equal]];
+              equal = First[First[StringPosition[original, "="]]];
+              rhs = StringTrim[StringDrop[StringDrop[original, -1], equal]];
+              statement = entry["Name"] <> " = (" <> mass["Guard"] <> " ? cdouble(" <>
+                realRhs <> ", ldouble(0)) : (" <> rhs <> "));";
+              AppendTo[guarded, entry["Name"]]];
+            AppendTo[eligible, entry["Name"]]]],
+      Head[expression] === PropDen && Length[expression] === 3,
+        AppendTo[widthNames, entry["Name"]]
     ];
     If[realQ, AppendTo[realNames, entry["Name"]];
       AppendTo[proofs, <|"Name" -> entry["Name"], "Expression" -> expression, "Proof" -> proof|>]];
@@ -55,7 +78,9 @@ spinasOptimizeRealScalars[ir_Association, input_Association] := Module[
     "ScalarUpdates" -> Lookup[scalars, "Statement", {}],
     "CacheDeclarations" -> Join[Lookup[plan, "ProductDeclarations", {}],
       ((If[TrueQ[#["RealQ"]], "ldouble ", "cdouble "] <> #["Name"] <> ";") & /@ scalars)],
-    "RealScalarNames" -> realNames, "RealScalarProofs" -> proofs|>]
+    "RealScalarNames" -> realNames, "RealScalarProofs" -> proofs,
+    "RuntimeRealScalarNames" -> eligible, "GuardedRealPropagators" -> guarded,
+    "ComplexWidthPropagators" -> widthNames|>]
 ];
 
 (* Parse only ordered arithmetic emitted by HEPCAT. Calls and indexing remain
@@ -88,13 +113,15 @@ spinasOptimizeNativePlan[ir_Association, input_Association] := Module[
    product, key, leftMassive, rightMassive, name, original, existing, sign, calls,
    call, arguments, replacement, allTexts, branches, branch, updatedBranches = {},
    registry = <||>, nodes = <||>, nodeCount = 0, counts = <||>, roots, intern, parse,
-   text, parameterNames, scalarNames, realNames, fallbackNames, known, visit, walk,
+   text, parameterNames, scalarNames, realNames, eligibleNames, fallbackNames, known, visit, walk,
    pointSelected, pointVariables = <||>, pointDefinitions = {}, localSelected,
    localVariables, localDefinitions, render, preparePoint, prepareLocal, nodeIds,
    pointCap = 512, localCap = 512, candidates, massiveStates, rootIds, temp,
    localCount = 0, uniqueProducts = 0, duplicateProducts = 0, metadata, effectiveUses, effective, nextSelection,
    directDeclarations, directUpdates, directBranches, finishDirect, tag = Unique["spinasOptimize"], optimized,
-   expressionCharacters, nodeLimit = 40000, timeBudget = 30},
+   expressionCharacters, nodeLimit = 40000, timeBudget = 30,
+   reciprocalVariables = <||>, reciprocalSelected, reciprocalGuardName,
+   reciprocalGuard, prepareReciprocal, denominatorNode, cacheName, eligible},
   branches = plan["Branches"];
   allTexts = Join[Lookup[branches, "ExpressionCpp", {}],
     Flatten[Lookup[branches, "FallbackStatements", {}]], Lookup[plan, "ScalarUpdates", {}]];
@@ -170,6 +197,9 @@ spinasOptimizeNativePlan[ir_Association, input_Association] := Module[
       "CSESkipped" -> True, "Reason" -> reason, "PointProductTables" -> uniqueProducts,
       "ReversedMasslessProductsShared" -> duplicateProducts,
       "RealScalarCount" -> Length[Lookup[plan, "RealScalarNames", {}]],
+      "GuardedRealPropagatorCount" -> Length[Lookup[plan, "GuardedRealPropagators", {}]],
+      "ComplexWidthPropagatorCount" -> Length[Lookup[plan, "ComplexWidthPropagators", {}]],
+      "ReusableRealDenominators" -> 0,
       "ArithmeticNodeLimit" -> nodeLimit, "CSETimeConstraint" -> timeBudget|>|>];
   If[expressionCharacters > 250000, Return[finishDirect["Expression-size analysis allowance"]]];
   optimized = TimeConstrained[Catch[Block[{$RecursionLimit = 4096},
@@ -177,13 +207,16 @@ spinasOptimizeNativePlan[ir_Association, input_Association] := Module[
     Lookup[Lookup[ir, "ConstantCaches", {}], "Name", {}],
     Lookup[Lookup[ir, "ParameterCaches", {}], "Name", {}]];
   scalarNames = Lookup[plan["Scalars"], "Name", {}]; realNames = Lookup[plan, "RealScalarNames", {}];
+  eligibleNames = Join[parameterNames, Lookup[plan, "RuntimeRealScalarNames", {}],
+    {"ldouble", "cdouble", "std", "pow", "sqrt", "sin", "cos", "tan", "asin", "acos", "atan",
+      "exp", "log", "sinh", "cosh", "tanh", "conj", "real", "imag", "abs"}];
   fallbackNames = DeleteDuplicates[Flatten[StringCases[Flatten[Lookup[branches, "FallbackStatements", {}]],
     RegularExpression["const cdouble ([A-Za-z_][A-Za-z0-9_]*)"] -> "$1"]]];
   known = Join[parameterNames, scalarNames, tableNames,
     {"ldouble", "cdouble", "std", "pow", "sqrt", "sin", "cos", "tan", "asin", "acos", "atan",
       "exp", "log", "sinh", "cosh", "tanh", "conj", "real", "imag", "abs", "external_masses"}];
   intern[op_String, args___] := Module[
-    {values = {args}, cacheKey, found, dep, real, operationCost, item, identifiers, depth},
+    {values = {args}, cacheKey, found, dep, real, operationCost, item, identifiers, depth, reciprocalEligible},
     cacheKey = op <> ":" <> StringRiffle[ToString[#, InputForm] & /@ values, ","];
     found = Lookup[registry, cacheKey, Missing["New"]]; If[!MissingQ[found], Return[found]];
     If[op === "atom",
@@ -198,17 +231,20 @@ spinasOptimizeNativePlan[ir_Association, input_Association] := Module[
       real = MemberQ[realNames, item] ||
         (StringStartsQ[item, "ldouble("] && spinasOptEnclosedQ[StringDrop[item, StringLength["ldouble"]]]) ||
         StringMatchQ[item, RegularExpression["[0-9]+(?:\\.[0-9]*)?(?:[eE][+-]?[0-9]+)?[fFlL]?"]];
+      reciprocalEligible = dep <= 1 && AllTrue[identifiers, MemberQ[eligibleNames, #] &];
       depth = 0;
       operationCost = If[StringContainsQ[item, "std::pow" | "std::sqrt" | "std::exp" | "std::log"], 12, 0],
       depth = 1 + Max[Lookup[nodes[#], "Depth"] & /@ values];
       If[depth > 256, Throw["Arithmetic-depth analysis allowance", tag]];
       dep = Max[Lookup[nodes[#], "Dependency"] & /@ values];
       real = AllTrue[values, TrueQ[nodes[#]["RealQ"]] &];
+      reciprocalEligible = dep <= 1 && AllTrue[values, TrueQ[nodes[#]["ReciprocalEligible"]] &];
       operationCost = Switch[op, "/", If[real, 4, 16], "*", If[real, 1, 4], "neg", 1, _, If[real, 1, 2]] + Total[Lookup[nodes[#], "Cost"] & /@ values]];
     nodeCount++; If[nodeCount > nodeLimit, Throw["Arithmetic-node analysis allowance", tag]];
     AssociateTo[registry, cacheKey -> nodeCount];
     AssociateTo[nodes, nodeCount -> <|"Operation" -> op, "Arguments" -> values,
-      "Dependency" -> dep, "RealQ" -> real, "Cost" -> operationCost, "Depth" -> depth|>]; nodeCount];
+      "Dependency" -> dep, "RealQ" -> real, "ReciprocalEligible" -> reciprocalEligible,
+      "Cost" -> operationCost, "Depth" -> depth|>]; nodeCount];
   parse[source_String] := Module[{value = StringTrim[source], operators, first, at},
     While[spinasOptEnclosedQ[value], value = StringTrim[StringTake[value, {2, -2}]]];
     operators = spinasOptTopOperators[value, {"+", "-"}];
@@ -247,21 +283,48 @@ spinasOptimizeNativePlan[ir_Association, input_Association] := Module[
     nextSelection = Select[pointSelected, Lookup[effective, #, 0] >= 2 &];
     If[nextSelection === pointSelected, Break[]]; pointSelected = nextSelection,
     {16}];
-  render[node_Integer, local_Association : <||>, exclude_Integer : 0] := Module[{entry, args, operation},
+  render[node_Integer, local_Association : <||>, exclude_Integer : 0, useReciprocals_:True] := Module[{entry, args, operation},
     If[node =!= exclude && KeyExistsQ[pointVariables, node], Return[pointVariables[node]]];
     If[node =!= exclude && KeyExistsQ[local, node], Return[local[node]]];
     entry = nodes[node]; args = entry["Arguments"]; operation = entry["Operation"];
     If[operation === "atom", Return[First[args]]];
-    If[operation === "neg", Return["(-" <> render[First[args], local] <> ")"]];
-    "(" <> render[First[args], local] <> " " <> operation <> " " <> render[Last[args], local] <> ")"];
+    If[operation === "neg", Return["(-" <> render[First[args], local, 0, useReciprocals] <> ")"]];
+    If[TrueQ[useReciprocals] && operation === "/" && KeyExistsQ[reciprocalVariables, Last[args]],
+      Return[reciprocalVariables[Last[args]] <> ".divide(" <> render[First[args], local, 0, useReciprocals] <> ")"]];
+    "(" <> render[First[args], local, 0, useReciprocals] <> " " <> operation <> " " <>
+      render[Last[args], local, 0, useReciprocals] <> ")"];
   preparePoint[node_Integer] := Module[{entry = nodes[node], variable},
     If[KeyExistsQ[pointVariables, node], Return[]];
     If[entry["Operation"] =!= "atom", Scan[If[MemberQ[pointSelected, #], preparePoint[#]] &, entry["Arguments"]]];
     variable = allocate["point_factor_" <> ToString[Length[pointVariables] + 1]];
     AppendTo[pointDeclarations, If[TrueQ[entry["RealQ"]], "ldouble ", "cdouble "] <> variable <> ";"];
-    AppendTo[pointDefinitions, variable <> " = " <> render[node] <> ";"];
+    AppendTo[pointDefinitions, variable <> " = " <> render[node, <||>, 0, False] <> ";"];
     AssociateTo[pointVariables, node -> variable]];
   Scan[preparePoint, Sort[pointSelected]];
+  (* Cache a complete, unchanged point-only denominator. In particular, never
+     distribute a common division over a sum or break a denominator product. *)
+  reciprocalSelected = DeleteDuplicates[Join[
+    Cases[nodeIds, node_Integer /; nodes[node]["Operation"] === "/" &&
+      nodes[node]["Dependency"] === 2 &&
+      TrueQ[nodes[Last[nodes[node]["Arguments"]]]["ReciprocalEligible"]] :>
+        Last[nodes[node]["Arguments"]]],
+    Cases[Range[Length[roots]], index_Integer /;
+      !TrueQ[branches[[index]]["ExpressionPieces"]["UnitDenominator"]] &&
+      TrueQ[nodes[Last[roots[[index]]]]["ReciprocalEligible"]] :> Last[roots[[index]]]]]];
+  If[reciprocalSelected =!= {},
+    reciprocalGuardName = allocate["real_denominator_domain"];
+    reciprocalGuard = If[ir["ParameterSymbols"] === {}, "true", StringRiffle[
+      Table["std::imag(parameters[" <> ToString[index - 1] <> "]) == ldouble(0)",
+        {index, Length[ir["ParameterSymbols"]]}], " && "]];
+    PrependTo[pointDeclarations, "bool " <> reciprocalGuardName <> ";"];
+    PrependTo[pointUpdates, reciprocalGuardName <> " = " <> reciprocalGuard <> ";"]];
+  prepareReciprocal[node_Integer] := Module[{variable},
+    variable = allocate["point_denominator_" <> ToString[Length[reciprocalVariables] + 1]];
+    AppendTo[pointDeclarations, "hepcat_spinas::CachedDenominator " <> variable <> ";"];
+    AppendTo[pointDefinitions, variable <> " = hepcat_spinas::CachedDenominator(" <>
+      render[node, <||>, 0, False] <> ", " <> reciprocalGuardName <> ");"];
+    AssociateTo[reciprocalVariables, node -> variable]];
+  Scan[prepareReciprocal, reciprocalSelected];
   Do[
     rootIds = Join[First[roots[[branchIndex]]], {Last[roots[[branchIndex]]]}];
     counts = <||>;
@@ -289,6 +352,8 @@ spinasOptimizeNativePlan[ir_Association, input_Association] := Module[
     temp = Join[branch["ExpressionPieces"], <|
       "NumeratorTerms" -> (render[#, localVariables] & /@ First[roots[[branchIndex]]]),
       "Denominator" -> render[Last[roots[[branchIndex]]], localVariables]|>];
+    If[!TrueQ[temp["UnitDenominator"]] && KeyExistsQ[reciprocalVariables, Last[roots[[branchIndex]]]],
+      temp = Join[temp, <|"DenominatorCache" -> reciprocalVariables[Last[roots[[branchIndex]]]]|>]];
     AppendTo[updatedBranches, Join[branch, <|"ExpressionPieces" -> temp,
       "ExpressionCpp" -> spinasNativeExpression[temp, 1], "LocalStatements" -> localDefinitions|>]],
     {branchIndex, Length[branches]}];
@@ -297,8 +362,12 @@ spinasOptimizeNativePlan[ir_Association, input_Association] := Module[
     "PointProductTables" -> uniqueProducts, "ReversedMasslessProductsShared" -> duplicateProducts,
     "PointFactors" -> Length[pointVariables], "SpinFactors" -> localCount,
     "RealScalarCount" -> Length[Lookup[plan, "RealScalarNames", {}]],
+    "GuardedRealPropagatorCount" -> Length[Lookup[plan, "GuardedRealPropagators", {}]],
+    "ComplexWidthPropagatorCount" -> Length[Lookup[plan, "ComplexWidthPropagators", {}]],
+    "ReusableRealDenominators" -> Length[reciprocalVariables],
+    "ReciprocalPolicy" -> "Exactly real runtime parameters and width-free scalar denominators; original complex division outside the finite normal domain.",
     "PointFactorLimit" -> pointCap, "SpinFactorLimitPerBranch" -> localCap,
-    "OperationOrder" -> "Original ordered binary arithmetic; no reassociation or fast-math"|>;
+    "OperationOrder" -> "Original numerator and denominator products with guarded real reciprocal reuse; no fast-math"|>;
   Join[plan, <|"Branches" -> updatedBranches, "PointDeclarations" -> pointDeclarations,
     "PointUpdates" -> Join[pointUpdates, pointDefinitions], "OptimizationReport" -> metadata|>]
   ], tag, Function[{reason, thrownTag}, finishDirect[reason]]], timeBudget, finishDirect["Arithmetic analysis time allowance"]];

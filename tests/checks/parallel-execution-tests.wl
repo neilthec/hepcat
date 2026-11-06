@@ -168,7 +168,8 @@ If[$ProcessorCount >= 3 && ($MaxLicenseSubprocesses === Infinity ||
    a symbolic-only installation remains usable without those support files. *)
 peSignatureDirectory = CreateDirectory[];
 peRequiredSources = {"HEPCAT.wl", "HEPCAT-Base.wl", "HEPCAT-Parameters.wl",
-  "HEPCAT-Model.wl", "HEPCAT-Feynman.wl", "HEPCAT-SPINAS.wl", "spinas-runtime.hpp"};
+  "HEPCAT-Model.wl", "HEPCAT-Feynman.wl", "HEPCAT-SPINAS.wl",
+  "HEPCAT-SPINAS-Optimize.wl", "spinas-runtime.hpp"};
 Scan[CopyFile[FileNameJoin[{root, "source", #}], FileNameJoin[{peSignatureDirectory, #}]] &, peRequiredSources];
 peSignature[] := Block[{ConstructiveDiagrams`Private`$amplitudeParallelSourceDirectory = peSignatureDirectory},
   ConstructiveDiagrams`Private`amplitudeParallelSignature[]];

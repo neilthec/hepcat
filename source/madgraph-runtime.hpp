@@ -57,6 +57,8 @@ struct MadGraphConfiguration {
   // particles and scalars. The exporter supplies every requested combination.
   std::vector<std::vector<int> > helicities;
   std::vector<std::string> parameter_names;
+  // Model-declared width roles; validation changes only a private process copy.
+  std::vector<std::size_t> width_parameter_indices;
   std::map<std::string, double> parameter_rules;
   std::map<std::string, std::string> parameter_map;
   // Apply incoming averages and the chosen final-state symmetry convention
@@ -326,12 +328,36 @@ void validate_configuration(const Process& process, const MadGraphConfiguration&
   }
 }
 
+// Generated processes support disabling all propagator widths, including
+// literal and compound width expressions. Legacy custom test processes without
+// width roles need no mutation; declared roles require the complete interface.
+template <class Process>
+auto prepare_zero_width_validation(Process& process,
+    const std::vector<std::size_t>& indices, int)
+    -> decltype(process.set_widths_enabled(false),
+                process.set_parameters(process.get_parameters()), void()) {
+  auto parameters = process.get_parameters();
+  for (const auto index : indices) {
+    if (index >= parameters.size())
+      throw std::invalid_argument("A validation width parameter index is out of range.");
+    parameters[index] = cdouble(0, 0);
+  }
+  if (!indices.empty()) process.set_parameters(parameters);
+  process.set_widths_enabled(false);
+}
+template <class Process>
+void prepare_zero_width_validation(Process&,
+    const std::vector<std::size_t>& indices, long) {
+  if (!indices.empty())
+    throw std::invalid_argument("Re-export this process to validate with zero widths.");
+}
+
 template <class Process>
 void write_configuration(const std::string& path, const Process& process,
                          const MadGraphConfiguration& config, unsigned preparation_timeout = 0) {
   std::ofstream out(path.c_str());
   if (!out) throw std::runtime_error("Could not write the private MadGraph model configuration.");
-  out << "{\n\"MadGraphDirectory\":" << json_string(config.madgraph_directory)
+  out << "{\n\"ZeroWidths\":true,\n\"MadGraphDirectory\":" << json_string(config.madgraph_directory)
       << ",\n\"MadGraphModel\":" << json_string(config.model) << ",\n\"PhysicalPDGs\":[";
   for (std::size_t i = 0; i < config.physical_pdgs.size(); ++i) {
     if (i) out << ',';
@@ -410,7 +436,7 @@ inline int madgraph_helicity(int doubled, int spin2) {
 
 template <class Process>
 MadGraphValidationReport validate_madgraph(
-    Process& process, const MadGraphConfiguration& config,
+    Process& original_process, const MadGraphConfiguration& config,
     const MadGraphValidationOptions& options = MadGraphValidationOptions(), std::ostream* progress = nullptr) {
   MadGraphValidationReport result;
   result.seed = options.seed;
@@ -424,6 +450,8 @@ MadGraphValidationReport validate_madgraph(
   // validation serial even if independent C++ callers start at the same time.
   std::lock_guard<std::mutex> guard(madgraph_detail::reference_mutex());
   try {
+    Process process(original_process);
+    madgraph_detail::prepare_zero_width_validation(process, config.width_parameter_indices, 0);
     madgraph_detail::validate_configuration(process, config);
     if (!options.points || !std::isfinite(options.relative_tolerance) || options.relative_tolerance < 0
         || !std::isfinite(options.absolute_tolerance) || options.absolute_tolerance < 0)

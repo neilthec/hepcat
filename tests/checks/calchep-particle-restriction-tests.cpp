@@ -2,6 +2,58 @@
 #include <iostream>
 #include <iomanip>
 
+namespace {
+std::string read_file(const std::string& path) {
+  std::ifstream input(path.c_str(), std::ios::binary);
+  if (!input) throw std::runtime_error("Cannot read test model table: " + path);
+  return std::string(std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>());
+}
+
+void check_particle_widths(const std::string& table, const bool zero) {
+  std::istringstream input(table);
+  std::string line;
+  std::vector<std::string> header;
+  unsigned particles = 0;
+  bool found_nonzero = false;
+  while (std::getline(input, line)) {
+    if (line.find('|') == std::string::npos) continue;
+    const auto fields = hepcat_spinas::calchep_detail::split_table_fields(line);
+    if (header.empty()) { header = fields; continue; }
+    if (fields.size() < 7 || fields[1].empty()) continue;
+    ++particles;
+    const bool is_zero = fields[6] == "0";
+    found_nonzero = found_nonzero || !is_zero;
+    if (zero && !is_zero) throw std::runtime_error("A validation particle width was not zeroed.");
+  }
+  if (!particles || (!zero && !found_nonzero))
+    throw std::runtime_error("The particle-width fixture was not exercised.");
+}
+
+void test_width_table_staging() {
+  using namespace hepcat_spinas::calchep_detail;
+  Workspace workspace(false);
+  const std::string header = "Full Name|P|aP|number|spin2|mass|Width|color|aux|LaTeX|LaTeX anti|";
+  const std::string rows = "charged vector|V+|V-|24|2|MV|!WV|1|G|V+|V-|\n"
+    "neutral vector|Z|Z|23|2|MZ|0.75|1|G|Z|Z|\n"
+    "photon|A|A|22|2|0|0|1|G|A|A|\n";
+  for (unsigned native = 0; native < 2; ++native) {
+    const std::string source = workspace.path() + (native ? "/native.mdl" : "/compact.mdl");
+    const std::string staged = source + ".staged";
+    const std::string ordinary = source + ".ordinary";
+    const std::string original = "Width staging fixture\n" +
+      (native ? std::string("Particles\n") : std::string()) + header + "\n" + rows;
+    { std::ofstream file(source.c_str()); file << original; }
+    copy_model_table(source, staged, "Particles", false, true);
+    copy_model_table(source, ordinary, "Particles", false, false);
+    check_particle_widths(read_file(staged), true);
+    check_particle_widths(read_file(ordinary), false);
+    if (read_file(source) != original)
+      throw std::runtime_error("Width staging modified its source model.");
+  }
+  std::cout << "CALCHEP_ZERO_WIDTH_TABLE_FORMATS_PASS\n";
+}
+} // namespace
+
 // argv[1] contains the repository's independently selected CalcHEP model tables:
 // model 1 is the full SM and model 2 is massive-electron QED.
 int main(int argc, char* argv[]) {
@@ -11,6 +63,14 @@ int main(int argc, char* argv[]) {
   }
   try {
     const std::string model = argv[1];
+    test_width_table_staging();
+    const std::string original_particles = read_file(model + "/prtcls1.mdl");
+    hepcat_spinas::calchep_detail::Workspace staged_workspace(false);
+    const std::string staged_model = hepcat_spinas::calchep_detail::stage_model(
+      model, 1, staged_workspace.path());
+    check_particle_widths(read_file(staged_model + "/prtcls1.mdl"), true);
+    if (read_file(model + "/prtcls1.mdl") != original_particles) return 11;
+
     const std::vector<int> external = {11, -11, 11, -11};
     const std::vector<hepcat_spinas::CalcHEPParameter> parameters = {{"Me",1.0},{"EE",1.0/3.0}};
     const double momentum = std::sqrt(10000.0-1.0);
@@ -56,6 +116,43 @@ int main(int argc, char* argv[]) {
       const std::string flags_text((std::istreambuf_iterator<char>(flags)), std::istreambuf_iterator<char>());
       if (flags_text.find("CFLAGS=\"$CFLAGS -O3\"") == std::string::npos) return 10;
       std::cout << "CALCHEP_PRIVATE_OPTIMIZATION_PASS\n";
+    }
+    {
+      // A deliberately enormous Z width in an independent private model must
+      // not affect a zero-width validation. Keep the normal model untouched.
+      using namespace hepcat_spinas::calchep_detail;
+      Workspace fixture(false);
+      const char* prefixes[] = {"vars", "func", "prtcls", "lgrng", "extlib"};
+      const char* kinds[] = {"Variables", "Constraints", "Particles", "Lagrangian", "Libraries"};
+      for (unsigned index = 0; index < 5; ++index)
+        copy_model_table(model + "/" + prefixes[index] + "1.mdl",
+          fixture.path() + "/" + prefixes[index] + "1.mdl", kinds[index], index == 4);
+      const std::string particles_file = fixture.path() + "/prtcls1.mdl";
+      std::string particles = read_file(particles_file);
+      const auto z_width = particles.find("!wZ");
+      if (z_width == std::string::npos) return 12;
+      particles.replace(z_width, 3, " tW");
+      { std::ofstream file(particles_file.c_str()); file << particles; }
+      { std::ofstream file((fixture.path() + "/vars1.mdl").c_str(), std::ios::app);
+        file << "tW      |123.0        |Width sentinel for validation only\n"; }
+      double huge_width, zero_width;
+      {
+        auto values = parameters; values.push_back({"tW",123});
+        hepcat_spinas::CalcHEPProcess process(fixture.path(),1,external,values);
+        huge_width = process.squared_amplitude(point);
+        check_particle_widths(read_file(process.work_directory() + "/input_model/prtcls1.mdl"), true);
+      }
+      {
+        auto values = parameters; values.push_back({"tW",0});
+        hepcat_spinas::CalcHEPProcess process(fixture.path(),1,external,values);
+        zero_width = process.squared_amplitude(point);
+      }
+      if (read_file(particles_file) != particles ||
+          read_file(model + "/prtcls1.mdl") != original_particles ||
+          !std::isfinite(huge_width) ||
+          std::abs(huge_width-zero_width) > 1e-12*std::abs(zero_width) ||
+          std::abs(huge_width-sm) > 1e-12*std::abs(sm)) return 13;
+      std::cout << "CALCHEP_ZERO_WIDTH_SM_Z_PASS\n";
     }
     std::cout << std::setprecision(17) << "SM=" << sm << "\nRESTRICTED_SM=" << restricted
               << "\nPURE_QED=" << qed << '\n';

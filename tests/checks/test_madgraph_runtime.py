@@ -56,6 +56,12 @@ try:
     assert config["ParameterMap"] == {"coupling": "g"}
     assert config["ParameterRules"] == {"other": 7}
     assert config["TimeConstraint"] > 0
+    assert config["ZeroWidths"] is True
+    if mode == "width_parameter":
+        assert len(config["Parameters"]) == 2
+        assert config["Parameters"][1] == {"Name": "width", "Value": 0}
+    elif mode == "literal_width":
+        assert len(config["Parameters"]) == 1
     assert config["OptimizationLevel"] == (3 if mode == "optimized" else 0)
     coupling = config["Parameters"][0]["Value"]
     assert config["Parameters"][0]["Name"] == "coupling"
@@ -70,7 +76,8 @@ try:
     suffix = ".dylib" if sys.platform == "darwin" else ".so"
     shutil.copyfile(Path(__file__).parent / (library + suffix),
                     output / ("libhepcat_madgraph" + suffix))
-    result = {"Status": "READY", "MatchedCoupling": coupling}
+    result = {"Status": "READY", "MatchedCoupling": coupling,
+              "ZeroWidths": config["ZeroWidths"]}
 except Exception as error:
     result = {"Status": "ERROR", "Message": str(error)}
     (output / "build.log").write_text("Useful compiler/model diagnostic.\n")
@@ -108,6 +115,60 @@ struct Process {
     return parameters[0];
   }
 };
+
+// These fixtures have the generated width-control interface. Their normal
+// amplitudes deliberately disagree with the zero-width reference, so a PASS
+// requires the validator to disable literal widths and declared width roles.
+struct LiteralWidthProcess : Process {
+  bool widths_enabled = true;
+  bool momenta_ready = true;
+  unsigned parameter_updates = 0, width_updates = 0, momentum_updates = 0;
+  ldouble momentum_marker = 17;
+  void set_parameters(const Parameters& values) {
+    parameters = values; ++parameter_updates; momenta_ready = false;
+  }
+  void set_widths_enabled(bool enabled) {
+    widths_enabled = enabled; ++width_updates; momenta_ready = false;
+  }
+  void set_momenta(const hepcat_spinas::Momenta<4>& point) {
+    ++momentum_updates; momentum_marker = point[0][0]; momenta_ready = true;
+  }
+  cdouble amp(const Spins&) {
+    if (!momenta_ready) throw std::logic_error("Missing momenta in width fixture");
+    return (widths_enabled ? cdouble(2,1) : cdouble(1,0))*parameters[0];
+  }
+};
+
+struct ParameterWidthProcess : LiteralWidthProcess {
+  using Parameters = std::array<cdouble, 2>;
+  Parameters width_parameters = {{cdouble(1,0),cdouble(3.5L,0)}};
+  const Parameters& get_parameters() const { return width_parameters; }
+  void set_parameters(const Parameters& values) {
+    width_parameters = values; ++parameter_updates; momenta_ready = false;
+  }
+  cdouble amp(const Spins&) {
+    if (!momenta_ready) throw std::logic_error("Missing momenta in width fixture");
+    const bool nonzero_width = widths_enabled || width_parameters[1] != cdouble(0,0);
+    return (nonzero_width ? cdouble(2,1) : cdouble(1,0))*width_parameters[0];
+  }
+};
+
+template<class WidthProcess>
+void run_width_case(WidthProcess& process,
+                    const hepcat_spinas::MadGraphConfiguration& config,
+                    const hepcat_spinas::MadGraphValidationOptions& options) {
+  const auto original_parameters = process.get_parameters();
+  const cdouble original_amplitude = process.amp(typename WidthProcess::Spins{{-1,-1,-2,-2}});
+  const auto report = hepcat_spinas::validate_madgraph(process,config,options);
+  const bool preserved = process.get_parameters() == original_parameters &&
+    process.widths_enabled && process.momenta_ready && process.parameter_updates == 0 &&
+    process.width_updates == 0 && process.momentum_updates == 0 && process.momentum_marker == 17 &&
+    process.amp(typename WidthProcess::Spins{{-1,-1,-2,-2}}) == original_amplitude;
+  std::cout << "{\"Validation\":";
+  hepcat_spinas::write_madgraph_validation_report_json(report,std::cout);
+  std::cout << ",\"CallerPreserved\":" << (preserved ? "true" : "false")
+            << ",\"OriginalAmplitudeSquared\":" << std::norm(original_amplitude) << '}';
+}
 
 int main(int argc, char** argv) {
   using namespace hepcat_spinas;
@@ -153,6 +214,20 @@ int main(int argc, char** argv) {
               << ",\"RawSum\":" << reference.evaluate_sum(std::vector<double>(16)) << "}";
     return 0;
   }
+
+  if (mode == "literal_width") {
+    LiteralWidthProcess process;
+    run_width_case(process,config,options);
+    return 0;
+  }
+  if (mode == "width_parameter" || mode == "bad_width_index") {
+    ParameterWidthProcess process;
+    config.parameter_names.push_back("width");
+    config.width_parameter_indices = {mode == "bad_width_index" ? std::size_t(2) : std::size_t(1)};
+    run_width_case(process,config,options);
+    return 0;
+  }
+  if (mode == "legacy_width_roles") config.width_parameter_indices = {0};
 
   Process process;
   if (mode == "global_phase") process.phase_mode = 1;
@@ -357,6 +432,34 @@ class MadGraphRuntimeTests(unittest.TestCase):
         report = self.run_case("update_parameters")
         self.assertEqual(report["Status"], "PASS")
         self.assertEqual(json.loads(report["ReferenceBuildJSON"])["MatchedCoupling"], 3)
+
+    def test_widths_are_disabled_only_on_a_private_process_copy(self):
+        for mode in ("literal_width", "width_parameter"):
+            with self.subTest(mode=mode):
+                result = self.run_case(mode)
+                self.assertTrue(result["CallerPreserved"])
+                self.assertEqual(result["OriginalAmplitudeSquared"], 5)
+                report = result["Validation"]
+                self.assertEqual(report["Status"], "PASS")
+                self.assertTrue(report["Passed"])
+                self.assertTrue(json.loads(report["ReferenceBuildJSON"])["ZeroWidths"])
+                self.assertTrue(all(row["MaximumRelativeError"] == 0 for row in report["Rows"]))
+
+    def test_invalid_width_roles_fail_without_mutating_the_caller(self):
+        result = self.run_case("bad_width_index")
+        self.assertTrue(result["CallerPreserved"])
+        report = result["Validation"]
+        self.assertEqual(report["Status"], "ERROR")
+        self.assertIn("width parameter index", report["Message"])
+        self.assertFalse(report["Passed"])
+        self.assertEqual(report["Rows"], [])
+
+    def test_legacy_process_with_declared_width_roles_requires_reexport(self):
+        report = self.run_case("legacy_width_roles")
+        self.assertEqual(report["Status"], "ERROR")
+        self.assertFalse(report["Passed"])
+        self.assertIn("Re-export", report["Message"])
+        self.assertEqual(report["Rows"], [])
 
     def test_massive_vector_labels_are_converted(self):
         # The fake library refuses any ordinary helicity outside {-1,0,1}.
