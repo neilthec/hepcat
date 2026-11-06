@@ -24,6 +24,18 @@ propagators, external particles and mass rules together."}], "Notes"],
   Cell[TextData[{"Use it when you need to see which numerator assumptions \
 belong to a particular diagram, rather than to the complete summed amplitude. \
 The default does not apply a new internal-shell simplification."}], "Notes"],
+  Cell[TextData[{"For a four-massless-particle diagram whose two three-point \
+factors have no compatible generic cut branch, generation can select a zero \
+diagram-local on-shell representative. The record retains ",
+     Cell[BoxData[RowBox[{"OriginalSewnExpression"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{",", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"MasslessBranchCertificates"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "and", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"DiscardedSupportTerms"}]], "InlineFormula"], ". A \
+raw internal-spinor quotient can be undefined away from its branch, so this \
+is not claimed to be an ordinary off-cut identity or a known additive \
+remainder. The original vertex factors and propagators remain available for \
+inspection."}], "Notes"],
   Cell[TextData[{"An optional ",
      Cell[BoxData[RowBox[{"\"SimplificationFunction\""}]], "InlineFormula"],
      Cell[BoxData[RowBox[{" ", "acts", " ", "on", " ", "the", " "}]],

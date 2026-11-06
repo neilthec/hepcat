@@ -78,6 +78,17 @@ complete original product, including every propagator and regular term, \
 rather than delaying the whole channel inventory indefinitely. Small channel \
 expressions keep the established simplification path. No internal on-shell \
 assumption is added by this performance safeguard."}], "Notes"],
+  Cell[TextData[{"Massless three-point kinematics has two complex branches: \
+either the angle brackets vanish or the square brackets vanish. A helicity \
+amplitude can be supported on only one branch. Sewing keeps that information \
+from the original lower-point factors, before canceling ratios that could \
+otherwise turn an unsupported 0/0 expression into a nonzero answer."}],
+   "Notes"], Cell[TextData[{"At four points, two contributions supported on \
+different exhaustive branches can use one common continuation when an exact \
+symbolic external-spinor identity proves that it represents both. They are \
+not counted twice, summed blindly or averaged. Two lower factors requiring \
+incompatible branches have no generic single-cut contribution. The returned \
+channel rows retain their ordinary compact format."}], "Notes"],
   Cell[TextData[{ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], " can simplify \
 channel rows without changing their compact format. Such a row declares only \

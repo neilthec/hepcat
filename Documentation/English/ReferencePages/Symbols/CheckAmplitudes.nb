@@ -70,6 +70,10 @@ amplitude with the sewn product of complete lower-point amplitudes. It \
 accounts for HEPCAT's amplitude and propagator conventions, including the \
 sewing minus sign. Every other propagator is kept away from its pole during \
 an ordinary single-pole comparison."}], "Notes"],
+  Cell[TextData[{"For an all-massless four-point cut, the exact sample charts \
+cover both valid complex branches. Charts where every Mandelstam invariant \
+vanishes are not used as generic single-pole tests. The expected residue must \
+itself be regular on the selected branch."}], "Notes"],
   Cell[TextData[{"Apparent denominator poles not certified as physical by \
 those channels are examined for cancellation. The checker discovers supported \
 angle brackets, square brackets and other inverse factors from the \

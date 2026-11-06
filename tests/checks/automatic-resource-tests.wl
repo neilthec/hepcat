@@ -30,6 +30,22 @@ check["coherent-spin rows follow actual spinor states rather than masses alone",
     arMetrics[{arRules4, SpinorChain[
       Spinor["Spin", "Upper", "Angle", 1, -1/2],
       Spinor["Spin", "Upper", "Angle", 2, 1/2]]}]["CoherentComponents"] === 1];
+arVectorRules = {Mass[1]->0,Mass[2]->arMass,Mass[3]->arMass,Mass[4]->arMass};
+arThreeVectors = (SpinorChain[Spinor["Spin","Angle",2],Spinor["Spin","Angle",3]] +
+  2 SpinorChain[Spinor["Spin","Square",2],Spinor["Spin","Square",3]])^2 *
+  SpinorChain[Spinor["Spin","Square",4],Spinor["Helicity","Square",1]]^2;
+arVectorMetrics = arMetrics[{arVectorRules,arThreeVectors}];
+check["three shorthand massive vectors retain all twenty-seven coherent components",
+  arVectorMetrics["CoherentComponents"] === 27 &&
+    Lookup[arVectorMetrics["CoherentSpinDegrees"],{2,3,4}] === {2,2,2}];
+arVectorChannel = <|"Cut"->{1,3},"Complement"->{2,4},"ExternalLegs"->Range[4],
+  "ExternalMassRules"->{Mass[1]->0,Mass[2]->1,Mass[3]->2,Mass[4]->3},"Mass"->1,
+  "Propagator"->PropDen[Mom[Multiparticle[1,3]],1]|>;
+arVectorChart = ConstructiveDiagrams`Private`completionCutChart[arVectorChannel,1,9127,{}];
+arVectorMapped = arVectorChart["Map"][arThreeVectors,{arVectorChannel},{arVectorPole}];
+check["the exact checker maps all twenty-seven vector polynomial components independently of its resource estimate",
+  Length[ConstructiveDiagrams`Private`completionCoefficientEquations[arVectorMapped,
+    arVectorChart["SpinVariables"]]] === 27];
 arPrepared = <|"PreparedAmplitudes" -> {{arRules5, arExpression}, {arRules5, arExpression/7}},
   "ExternalMassRules" -> arRules5, "Amplitude" -> 8 arExpression/7,
   "RemainingBasis" -> Table[arExpression, 17], "CorrectionBasis" -> Table[arExpression, 9]|>;
@@ -43,6 +59,75 @@ check["an actual correction basis count replaces an earlier estimate",
 check["resource measurement does not modify caller reports or expressions",
   Hash[arPrepared, "SHA256"] === arPreparedHash &&
     arDetailed["ExpressionLeaves"] === LeafCount[arPrepared["Amplitude"]]];
+arLongDirection = Total[Table[arScalarCoefficient[index] SpinorChain[
+  Spinor["Spin", "Angle", 1], Mom[3], Spinor["Spin", "Square", 2]], {index, 1800}]];
+arRetainedReport = <|"Amplitude" -> arExpression, "ExternalMassRules" -> arRules4,
+  "FamilyAmplitude" -> arExpression + arFamilyCoefficient arLongDirection,
+  "RemainingBasis" -> {arLongDirection}, "FreeParameters" -> {arFamilyCoefficient}|>;
+arRetainedReportHash = Hash[arRetainedReport, "SHA256"];
+arCenterMetrics = arMetrics[arRetainedReport];
+arFamilyMetrics = ConstructiveDiagrams`Private`completionHighEnergyResourceMetrics[arRetainedReport];
+check["high-energy resource sizing measures the supplied family instead of only its fixed center",
+  arFamilyMetrics["ExpressionLeaves"] >= LeafCount[arRetainedReport["FamilyAmplitude"]] &&
+    arFamilyMetrics["RetainedFamilyExpressionLeaves"] === LeafCount[arRetainedReport["FamilyAmplitude"]] &&
+    arFamilyMetrics["FixedCenterExpressionLeaves"] === LeafCount[arExpression] &&
+    arFamilyMetrics["ResourceExpressionSource"] === "RetainedAffineFamily"];
+check["family-aware automatic time grows with measured work without changing ordinary stage metrics",
+  ConstructiveDiagrams`Private`amplitudeAutomaticSettings["HighEnergy",
+    <|"TimeConstraint" -> Automatic|>, arFamilyMetrics]["Settings"]["TimeConstraint"] >
+  ConstructiveDiagrams`Private`amplitudeAutomaticSettings["HighEnergy",
+    <|"TimeConstraint" -> Automatic|>, arCenterMetrics]["Settings"]["TimeConstraint"] &&
+    arMetrics[arRetainedReport]["ExpressionLeaves"] === LeafCount[arExpression]];
+arDirectionOnlyMetrics = ConstructiveDiagrams`Private`completionHighEnergyResourceMetrics[
+  KeyDrop[arRetainedReport, "FamilyAmplitude"]];
+check["retained direction work is measured even when no explicit full family field is supplied",
+  arDirectionOnlyMetrics["RetainedDirectionLeaves"] === LeafCount[arLongDirection] &&
+    ConstructiveDiagrams`Private`amplitudeAutomaticSettings["HighEnergy",
+      <|"TimeConstraint" -> Automatic|>, arDirectionOnlyMetrics]["Settings"]["TimeConstraint"] >
+    ConstructiveDiagrams`Private`amplitudeAutomaticSettings["HighEnergy",
+      <|"TimeConstraint" -> Automatic|>, arCenterMetrics]["Settings"]["TimeConstraint"]];
+arExplicitBasisMetrics = ConstructiveDiagrams`Private`completionHighEnergyResourceMetrics[
+  {arRules4, arExpression}, {}, {arLongDirection, 2 arLongDirection}];
+check["an explicit high-energy correction basis contributes its actual supplied work",
+  arExplicitBasisMetrics["BasisDirections"] === 2 &&
+    arExplicitBasisMetrics["ExplicitCorrectionBasisLeaves"] ===
+      Total[LeafCount /@ {arLongDirection, 2 arLongDirection}]];
+arFixedResourceRequest = <|"TimeConstraint" -> 11/3, "Samples" -> 1, "ValidationSamples" -> 2|>;
+check["larger retained families never change explicit high-energy clocks or sample controls",
+  ConstructiveDiagrams`Private`amplitudeAutomaticSettings["HighEnergy", arFixedResourceRequest,
+    arFamilyMetrics]["Settings"] === arFixedResourceRequest];
+check["family-aware measurement neither mutates its input nor changes plain amplitude estimates",
+  Hash[arRetainedReport, "SHA256"] === arRetainedReportHash &&
+    KeyTake[ConstructiveDiagrams`Private`completionHighEnergyResourceMetrics[{arRules4, arExpression}],
+      Keys[arFour]] === arFour];
+arSpinModel = {{{"vector", "v", "v", 1, 2, arMass},
+  {"fermion", "f", "F", 2, 1, arMass}, {"photon", "a+", "a-", 22, 2, 0},
+  {"scalar", "s", "s", 25, 0, arMass}}, {}, {}, {}};
+arSpinModelHash = Hash[arSpinModel, "SHA256"];
+arConstructionVectors = ConstructiveDiagrams`Private`amplitudeConstructionResourceMetrics[
+  {"v", "v", "v", "v"}, arSpinModel];
+arConstructionQED = ConstructiveDiagrams`Private`amplitudeConstructionResourceMetrics[
+  {"f", "F", "a+", "a-"}, arSpinModel];
+arConstructionMixedSpins = ConstructiveDiagrams`Private`amplitudeConstructionResourceMetrics[
+  {"f", "F", "v", "v"}, arSpinModel];
+check["construction estimates all massive model spin states before diagram generation",
+  arConstructionVectors["CoherentComponents"] === 81 &&
+    arConstructionMixedSpins["CoherentComponents"] === 36 &&
+    arConstructionQED["CoherentComponents"] === 4 &&
+    arConstructionVectors["CoherentSpinDegrees"] === AssociationThread[Range[4], {2, 2, 2, 2}]];
+check["fixed-helicity massless particles and massive scalars add no artificial coherent multiplicity",
+  ConstructiveDiagrams`Private`amplitudeConstructionResourceMetrics[
+    {"a+", "a-", "s", "s"}, arSpinModel]["CoherentComponents"] === 1];
+check["model-aware wrapper effort grows for vector tensors while the QED default and explicit clocks stay unchanged",
+  arPolicy["Construction", <|"TimeConstraint" -> Automatic|>, arConstructionVectors]["Settings"]["TimeConstraint"] >
+    arPolicy["Construction", <|"TimeConstraint" -> Automatic|>, arFour]["Settings"]["TimeConstraint"] &&
+  arPolicy["Construction", <|"TimeConstraint" -> Automatic|>, arConstructionQED]["Settings"]["TimeConstraint"] ===
+    arPolicy["Construction", <|"TimeConstraint" -> Automatic|>, arFour]["Settings"]["TimeConstraint"] &&
+  arPolicy["Construction", <|"TimeConstraint" -> 17|>, arConstructionVectors]["Settings"]["TimeConstraint"] === 17];
+check["model-aware resource measurement is read-only and unknown species retain the ordinary fallback",
+  Hash[arSpinModel, "SHA256"] === arSpinModelHash &&
+    ConstructiveDiagrams`Private`amplitudeConstructionResourceMetrics[
+      {"unknown", "f", "F", "s"}, arSpinModel] === arMetrics[{}, {}, {"unknown", "f", "F", "s"}]];
 arChannels = Table[<|"ExternalLegs" -> Range[6]|>, 14];
 check["channel metadata can supply multiplicity before diagram preparation",
   arMetrics[0, arChannels]["ExternalParticles"] === 6 &&
@@ -51,6 +136,10 @@ arRequests = <|"TimeConstraint" -> Automatic, "MaxCorrectionTerms" -> Automatic,
   "MaxSteps" -> Automatic, "Samples" -> Automatic, "ValidationSamples" -> Automatic,
   "MaxCandidates" -> Automatic, "MaxReferenceChoices" -> Automatic,
   "MaxRefinements" -> Automatic, "ProgressReporting" -> False|>;
+check["automatic effort accounts for coherent tensor work while explicit clocks stay authoritative",
+  arPolicy["Factorization",arRequests,arVectorMetrics]["Settings"]["TimeConstraint"] >
+    arPolicy["Factorization",arRequests,arFour]["Settings"]["TimeConstraint"] &&
+  arPolicy["Factorization",<|"TimeConstraint"->17|>,arVectorMetrics]["Settings"]["TimeConstraint"] === 17];
 arProfiles = arPolicy["Construction", arRequests, #] & /@ {arFour, arFive, arSix};
 check["all automatic construction profiles resolve to finite positive limits",
   AllTrue[arProfiles, arFinite[#["Settings"]["TimeConstraint"]] &&
@@ -184,6 +273,29 @@ check["an automatic ceiling need not be a power of two",
 check["an incomplete source checkpoint cannot raise a cap",
   ConstructiveDiagrams`Private`completionMaterializedBasisCap[
     Append[arUnionBasis, $TimedOut], Automatic, 256, 2048]["CapChanges"] === {}];
+
+arHEUnion=Table[arHEBasis[i],{i,300}];arHEHash=Hash[arHEUnion,"SHA256"];
+arHEAdmission=ConstructiveDiagrams`Private`completionHEMaterializedBasisAdmission[
+  arHEUnion,{},128,1024,2];
+check["the complete high-energy union can grow an Automatic cap inside its granted ceiling",
+  arHEAdmission["EffectiveMaxCorrectionTerms"]===512 && Length[arHEAdmission["Basis"]]===300];
+check["high-energy admission never samples, trims or changes the original sources",
+  Hash[arHEUnion,"SHA256"]===arHEHash && arHEAdmission["NumericalKinematicsUsed"]===False &&
+    arHEAdmission["TruncatedDirections"]===0];
+check["an explicit high-energy cap remains authoritative",
+  ConstructiveDiagrams`Private`completionHEMaterializedBasisAdmission[
+    arHEUnion,{},128,None,2]["EffectiveMaxCorrectionTerms"]===128];
+check["the high-energy union cannot exceed the Automatic hard ceiling",
+  ConstructiveDiagrams`Private`completionHEMaterializedBasisAdmission[
+    arHEUnion,{},128,256,2]["EffectiveMaxCorrectionTerms"]===128];
+check["inherited high-energy family coordinates count toward the same complete cap",
+  ConstructiveDiagrams`Private`completionHEMaterializedBasisAdmission[
+    Take[arHEUnion,200],Array[arHEInherited,100],128,1024,2]["EffectiveMaxCorrectionTerms"]===512];
+check["an exact formal duplicate can be removed before high-energy cap admission",
+  With[{admission=ConstructiveDiagrams`Private`completionHEMaterializedBasisAdmission[
+      {arHEA,arHEB,arHEA+arHEB},{},2,8,2]},
+    Length[admission["Basis"]]===2 && admission["EffectiveMaxCorrectionTerms"]===2 &&
+      admission["OriginalNewDirections"]===3 && admission["TruncatedDirections"]===0]];
 
 (* The controller must not rebuild a complete union merely because its initial
    heuristic cap was too small. This inert core never claims a fitted result. *)
@@ -462,7 +574,7 @@ If[Environment["HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION"] === "1",
       AllTrue[arMixedReport["Checks"]["Checks"], #["Status"] === "PASS" &] &&
       arMixedReport["Checks"]["FeynmanCheck"]["Status"] === "PASS"],
   Print["SKIP: set HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION=1 for the full AllPhysical mixed six-point constructor regression."]];
-arExpected = 68 + If[Environment["HEPCAT_TEST_FULL_AUTOMATIC_CONSTRUCTION"] === "1", 2, 0] +
+arExpected = 87 + If[Environment["HEPCAT_TEST_FULL_AUTOMATIC_CONSTRUCTION"] === "1", 2, 0] +
   If[Environment["HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION"] === "1", 3, 0];
 If[checks =!= arExpected, AppendTo[failures, "Not every automatic-resource assertion executed."]];
 Print["AUTOMATIC RESOURCE CHECKS: ", checks, "; FAILURES: ", Length[failures]];

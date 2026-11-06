@@ -82,6 +82,35 @@ check["fixed spin components cannot be certified only in a chosen rest frame",
   ConstructiveDiagrams`Private`completionHEZeroDirection[
     heFixedSpin, heRules, heModel, 10]["Status"] === "NOT_PROVED"];
 heParameter = Unique["identityFreedom"];
+heXi[kind_, leg_] := SpinorChain[Spinor["Xi", kind, 91], Spinor["Helicity", kind, leg]];
+heBracket[kind_, left_, right_] := SpinorChain[Spinor["Helicity", kind, left],
+  Spinor["Helicity", kind, right]];
+heXiSchouten = heXi["Angle", 3] heBracket["Angle", 4, 5] -
+  heXi["Angle", 4] heBracket["Angle", 3, 5] + heXi["Angle", 5] heBracket["Angle", 3, 4];
+heXiProof = ConstructiveDiagrams`Private`completionHEReferenceIdentityCertificate[
+  heXiSchouten, heRules, 5];
+check["reference identities retain all independent symbolic auxiliary coordinates",
+  heXiProof["Status"] === "PROVED_ZERO" && heXiProof["FullAuxiliaryReferenceCoordinates"] &&
+    Keys[heXiProof["ReferenceCoordinates"]] === {91} &&
+    Length[heXiProof["ReferenceCoordinates"][91]] === 4 &&
+    AllTrue[heXiProof["ReferenceCoordinates"][91], MatchQ[#, _Symbol] &]];
+check["an auxiliary-reference identity certificate uses no numerical kinematics or internal shells",
+  heXiProof["NumericalKinematicSamples"] === 0 && heXiProof["NumericalParameterAssignments"] === {} &&
+    heXiProof["InternalOnShellConditions"] === {} && heXiProof["ExactRationalNumerator"] === 0];
+check["the public identity-zero route can certify a shared-reference Schouten identity",
+  ConstructiveDiagrams`Private`completionHEZeroDirection[
+    heXiSchouten, heRules, heModel, 5]["Status"] === "PROVED_ZERO"];
+check["a genuine reference-dependent ratio is not declared zero",
+  ConstructiveDiagrams`Private`completionHEReferenceIdentityCertificate[
+    heXi["Angle", 3]/heXi["Angle", 4], heRules, 5]["Status"] === "NOT_PROVED"];
+heBadXiContraction = SpinorChain[Spinor["Xi", "Angle", 91], Spinor["Helicity", "Square", 3]];
+check["auxiliary coordinates cannot certify a noncovariant angle-square contraction",
+  !ConstructiveDiagrams`Private`completionHECovariantScalarQ[heBadXiContraction, Range[5], True] &&
+    ConstructiveDiagrams`Private`completionHEReferenceIdentityCertificate[
+      heBadXiContraction, heRules, 5]["Status"] === "NOT_PROVED"];
+check["an exhausted reference identity budget retains the unproved direction",
+  ConstructiveDiagrams`Private`completionHEReferenceIdentityCertificate[
+    heXiSchouten, heRules, 0]["Status"] === "NOT_PROVED"];
 heUnproved = ConstructiveDiagrams`Private`completionHEPruneIdentityFamily[
   7 + heParameter heConservationZero, {heParameter}, heRules, heModel, 0];
 check["an exhausted proof budget retains the complete correction direction",
@@ -94,6 +123,152 @@ check["non-affine input cannot be changed by reconstructing its first derivative
     heNonlinearResult["FamilyAmplitude"] === heNonlinearFamily &&
     heNonlinearResult["FreeParameters"] === {heParameter} &&
     heNonlinearResult["RemovedParameters"] === {}];
+(* Affine zero proofs must not expand a compact shared-source expression
+   into one copy of the source per remaining derivative coordinate. *)
+heFactoredParameters=Array[heFactoredCoordinate,3];
+heFactoredSource=Total[Array[heOpaqueSourceTerm,40]];
+heFactoredFamily=7+(2 heFactoredParameters[[1]]+3 heFactoredParameters[[2]]+
+  5 heFactoredParameters[[3]]) heFactoredSource+heFactoredParameters[[3]] MomProd[1,2];
+heFactoredUnproved=ConstructiveDiagrams`Private`completionHEPruneIdentityFamily[
+  heFactoredFamily,heFactoredParameters,heRules,heModel,0];
+heDerivativeRebuild=7+heFactoredParameters.(D[heFactoredFamily,#]&/@heFactoredParameters);
+check["an unproved affine family preserves its original shared-source factorization exactly",
+  heFactoredUnproved["FamilyAmplitude"]===heFactoredFamily &&
+    LeafCount[heFactoredUnproved["FamilyAmplitude"]]<LeafCount[heDerivativeRebuild]];
+check["expression preservation retains every unproved coordinate and its exact derivative",
+  heFactoredUnproved["FreeParameters"]===heFactoredParameters &&
+    heFactoredUnproved["RemainingBasis"]===(D[heFactoredFamily,#]&/@heFactoredParameters)];
+heFactoredIdentityFamily=7+Total[MapThread[Times,{{1,2,3},heFactoredParameters}]] MomProd[1,1]+
+  heFactoredParameters[[1]] Total[MomProd[1,#]&/@Range[2,5]]+
+  heFactoredParameters[[3]] MomProd[1,2];
+heFactoredCertified=Block[
+  {ConstructiveDiagrams`Private`$completionParallelSettings=<|"Parallelization"->False,"MaxKernels"->1|>,
+   ConstructiveDiagrams`Private`completionHEZeroDirection=Function[{expression,rules,model,seconds},
+     If[expression===heConservationZero,<|"Status"->"PROVED_ZERO","Method"->"OrdinaryExternalIdentities"|>,
+       <|"Status"->"NOT_PROVED","Method"->"NotAnIdentity"|>]]},
+  ConstructiveDiagrams`Private`completionHEPruneIdentityFamily[
+    heFactoredIdentityFamily,heFactoredParameters,heRules,heModel,2]];
+heFactoredExpected=heFactoredIdentityFamily/.First[heFactoredParameters]->0;
+check["a proved zero coordinate is removed by substitution in the original expression",
+  heFactoredCertified["RemovedParameters"]==={First[heFactoredParameters]} &&
+    heFactoredCertified["FamilyAmplitude"]===heFactoredExpected &&
+    heFactoredCertified["FreeParameters"]===Rest[heFactoredParameters]];
+check["kept derivative coordinates agree with the preserved factored family",
+  heFactoredCertified["RemainingBasis"]===(D[heFactoredExpected,#]&/@Rest[heFactoredParameters]) &&
+    Expand[heFactoredCertified["FamilyAmplitude"]-7-
+      Rest[heFactoredParameters].heFactoredCertified["RemainingBasis"]]===0];
+check["the factoring certificate references only proved-zero removed coordinates",
+  heFactoredCertified["FamilyRepresentationCertificate"]["RemovedCoordinateRules"]==={First[heFactoredParameters]->0} &&
+    heFactoredCertified["FamilyRepresentationCertificate"]["RemovedCertificatePositions"]==={1} &&
+    heFactoredCertified["Certificates"][[1,"Status"]]==="PROVED_ZERO"];
+check["an exhausted proof budget records no invented coordinate substitutions",
+  heFactoredUnproved["FamilyRepresentationCertificate"]["RemovedCoordinateRules"]==={} &&
+    TrueQ[heFactoredUnproved["FamilyRepresentationCertificate"]["OriginalAffineFactoringPreserved"]]];
+(* A small correlated source proposal is a search choice, never a change
+   to the original center, inherited family, factorization targets or model. *)
+heWholeCharge=ModelParameter[heDiagramModel,"EE"];
+heWholeValue=heWholeCharge^2 (MomProd[1,2]+MomProd[1,3])^5/PropDen[Mom[Multiparticle[1,2]],heMass];
+heWholeRecord=<|"InputType"->"Diagram","HasInternalConditions"->True,
+  "ShellRemainder"->heWholeValue,"OnShellChannels"->{{1,2}},"OffCutIdentityClaimed"->False|>;
+heWholeChannel=Join[heWholeRecord,<|"InputType"->"FactorizationChannel",
+  "ShellRemainder"->heWholeValue/ConstructiveDiagrams`z,"FixedReferenceExpression"->ConstructiveDiagrams`z|>];
+heWholeNormalized=<|"Expression"->1,"ExternalMassRules"->heRules,
+  "ExternalParticles"->{"e","E","A.+","A.-","A.+"},"Targets"->{},"Records"->{},
+  "RemainderData"->{heWholeRecord},"ChannelRemainderData"->{heWholeChannel}|>;
+heWholeOriginalHash=Hash[heWholeNormalized,"SHA256"];
+heWholeProposal=ConstructiveDiagrams`Private`completionHEWholeSourceRemainders[heWholeNormalized,heDiagramModel,5];
+check["whole-source proposals preserve model couplings and do not introduce independent interactions",
+  heWholeProposal["Status"]==="AVAILABLE" && heWholeProposal["Basis"]=!={} &&
+    !FreeQ[heWholeProposal["Basis"],heWholeCharge] &&
+    AllTrue[heWholeProposal["Sources"],TrueQ[#["ModelCouplingsPreserved"]] &&
+      #["NewIndependentInteraction"]===False && #["InternalConditionsReapplied"]===False&]];
+check["whole channel remainders use the same sewing contour as the complete source path",
+  AnyTrue[heWholeProposal["Sources"],#["InputType"]==="FactorizationChannel" &&
+    #["ContourMultiplier"]===-ConstructiveDiagrams`z&] && FreeQ[heWholeProposal["Basis"],ConstructiveDiagrams`z]];
+check["source proposal generation leaves every retained original record unchanged",
+  Hash[heWholeNormalized,"SHA256"]===heWholeOriginalHash && TrueQ[heWholeProposal["SourceCatalogComplete"]]];
+heWholeSynthetic=Join[heWholeProposal,<|"Basis"->{heWholeValue},"EstimatedAtomicDirections"->40|>];
+check["correlated proposals require a complete catalog and a substantially smaller finite space",
+  ConstructiveDiagrams`Private`completionHEWholeSourceEligibleQ[heWholeSynthetic,<|"CoherentComponents"->16|>] &&
+    !ConstructiveDiagrams`Private`completionHEWholeSourceEligibleQ[heWholeSynthetic,<|"CoherentComponents"->4|>] &&
+    !ConstructiveDiagrams`Private`completionHEWholeSourceEligibleQ[
+      Join[heWholeSynthetic,<|"SourceCatalogComplete"->False|>],<|"CoherentComponents"->81|>] &&
+    !ConstructiveDiagrams`Private`completionHEWholeSourceEligibleQ[
+      Join[heWholeSynthetic,<|"EstimatedAtomicDirections"->2|>],<|"CoherentComponents"->81|>]];
+check["an exhausted whole-source build cannot expose a partial correction catalog",
+  MissingQ[ConstructiveDiagrams`Private`completionHEWholeSourceRemainders[heWholeNormalized,heDiagramModel,0]]];
+heWholeInput=<|"Amplitude"->1,"FamilyAmplitude"->1+heParameter MomProd[1,2],
+  "FreeParameters"->{heParameter},"RemainingBasis"->{MomProd[1,2]},
+  "ExternalMassRules"->heRules,"ExternalParticles"->{"e","E","A.+","A.-","A.+"},
+  "RemainderData"->{heWholeRecord}|>;
+heWholeRun[basis_,pass_,preferredStatus_]:=Block[
+ {ConstructiveDiagrams`Private`completionHECubicBilinearSource=Function[Null,Missing["NotApplicable"],HoldAll],
+  ConstructiveDiagrams`Private`completionHEWholeSourcePreflightQ=Function[Null,True,HoldAll],
+  ConstructiveDiagrams`Private`completionHEWholeSourceEligibleQ=Function[{proposal,metrics},
+    AssociationQ[proposal] && Lookup[proposal,"Status",None]==="AVAILABLE"],
+  ConstructiveDiagrams`Private`completionHEWholeSourceRemainders=Function[Null,
+    heWholeBuilds++;heWholeSynthetic,HoldAll],
+  ConstructiveDiagrams`Private`completionHECheck=Function[Null,heWholeInitialChecks++;
+    <|"Checks"->{<|"Status"->Which[pass===True,"PASS",pass===False,"FAIL",True,pass]|>},"HighEnergyCheck"-><||>,"ReferenceCheck"-><||>|>,HoldAll],
+  ConstructiveDiagrams`Private`completionHighEnergyWork=Function[{input,channels,model,settings,normalized,retain},
+    AppendTo[heWholeCalls,<|"Basis"->settings["CorrectionBasis"],"TimeConstraint"->settings["TimeConstraint"],
+      "MaxCorrectionTerms"->settings["MaxCorrectionTerms"],"ReusedInitialCheck"->KeyExistsQ[settings,"BeforeReport"],
+      "IdentityProofStageTimeConstraint"->Lookup[settings,"IdentityProofStageTimeConstraint",Missing["NotNeeded"]],"OriginalInput"->input,
+      "FamilyAmplitude"->normalized["FamilyAmplitude"],"FreeParameters"->normalized["FreeParameters"]|>];
+    <|"Status"->If[settings["CorrectionBasis"]===Automatic,"COMPLETE",preferredStatus],
+      "Amplitude"->normalized["Expression"],"FamilyAmplitude"->normalized["FamilyAmplitude"],
+      "FreeParameters"->normalized["FreeParameters"],"RemainingBasis"->normalized["RemainingBasis"],
+      "ExternalMassRules"->normalized["ExternalMassRules"],"Diagnostics"->{}|>]},
+ CompleteHighEnergy[heWholeInput,{},heDiagramModel,"CorrectionBasis"->basis,
+   "TimeConstraint"->90,"MaxCorrectionTerms"->7,"Samples"->1,"ValidationSamples"->1,
+   "ProgressReporting"->False,"Output"->"Details","RandomSeed"->1729]];
+heWholeCalls={};heWholeBuilds=0;heWholeInitialChecks=0;
+heWholeFallback=heWholeRun[Automatic,False,"INCONSISTENT"];
+check["an inconsistent correlated proposal falls back to the original complete Automatic space",
+  Lookup[heWholeCalls,"Basis"]==={heWholeSynthetic["Basis"],Automatic} &&
+    heWholeFallback["Status"]==="COMPLETE" && heWholeInitialChecks===1];
+check["both attempts preserve the original center and every inherited family coordinate",
+  AllTrue[heWholeCalls,#["OriginalInput"]===heWholeInput &&
+    #["FamilyAmplitude"]===heWholeInput["FamilyAmplitude"] && #["FreeParameters"]==={heParameter}&] &&
+    heWholeFallback["FamilyAmplitude"]===heWholeInput["FamilyAmplitude"]];
+check["the small proposal shares the original clock and never overrides an explicit cap",
+  First[heWholeCalls]["TimeConstraint"]<=30 && Last[heWholeCalls]["TimeConstraint"]<=90 &&
+    Lookup[heWholeCalls,"MaxCorrectionTerms"]==={7,7} &&
+    First[heWholeFallback["AutomaticSourceAttempts"]]["FullOriginalSourcesRetainedForFallback"]===True];
+heWholeCalls={};heWholeBuilds=0;heWholeInitialChecks=0;
+heWholeAlreadyPass=heWholeRun[Automatic,True,"INCONSISTENT"];
+check["an already-passing point skips correlated source work and retains unresolved inherited freedom",
+  heWholeBuilds===0 && Lookup[heWholeCalls,"Basis"]==={Automatic} && heWholeInitialChecks===1 &&
+    heWholeAlreadyPass["FreeParameters"]==={heParameter} &&
+    heWholeAlreadyPass["FamilyAmplitude"]===heWholeInput["FamilyAmplitude"]];
+check["a passing baseline preserves proof effort while the outer shared clock remains authoritative",
+  0<First[heWholeCalls]["IdentityProofStageTimeConstraint"]<=90 &&
+    First[heWholeCalls]["IdentityProofStageTimeConstraint"]>=First[heWholeCalls]["TimeConstraint"] &&
+    First[heWholeCalls]["TimeConstraint"]<=90];
+heWholeCalls={};heWholeBuilds=0;heWholeInitialChecks=0;
+heWholeExplicit=heWholeRun[{1},False,"UNRESOLVED"];
+check["an explicitly supplied correction space bypasses every Automatic source proposal",
+  heWholeBuilds===0 && Lookup[heWholeCalls,"Basis"]==={{1}} && heWholeInitialChecks===0];
+heWholeCalls={};heWholeBuilds=0;heWholeInitialChecks=0;
+heWholeAccepted=heWholeRun[Automatic,False,"COMPLETE"];
+check["a fully completed correlated proposal avoids constructing the larger fallback",
+  heWholeAccepted["Status"]==="COMPLETE" && Length[heWholeCalls]===1 &&
+    First[heWholeAccepted["AutomaticSourceAttempts"]]["Status"]==="COMPLETE"];
+heWholeResolvedReport=<|"Checks"->{<|"Status"->"PASS"|>,<|"Status"->"FAIL"|>,<|"Status"->"Opp Sign"|>},
+  "HighEnergyCheck"-><||>,"ReferenceCheck"-><||>|>;
+check["only fully resolved original-point reports can be reused across source proposals",
+  ConstructiveDiagrams`Private`completionHEReusableInitialReportQ[heWholeResolvedReport]];
+check["an inconclusive or empty check report cannot become a definitive cached failure",
+  !ConstructiveDiagrams`Private`completionHEReusableInitialReportQ[
+    Join[heWholeResolvedReport,<|"Checks"->{<|"Status"->"UNRESOLVED"|>}|>]] &&
+    !ConstructiveDiagrams`Private`completionHEReusableInitialReportQ[
+      Join[heWholeResolvedReport,<|"Checks"->{}|>]]];
+heWholeCalls={};heWholeBuilds=0;heWholeInitialChecks=0;
+heWholeInconclusive=heWholeRun[Automatic,"UNRESOLVED","INCONSISTENT"];
+check["an inconclusive preferred baseline is retried by the full fallback without a stale cache",
+  heWholeBuilds===0 && Lookup[heWholeCalls,"Basis"]==={Automatic} &&
+    Lookup[heWholeCalls,"ReusedInitialCheck"]==={False} &&
+    heWholeInconclusive["FamilyAmplitude"]===heWholeInput["FamilyAmplitude"]];
 heScalarModel = heDiagramModel;
 heScalarModel[[1]] = Append[heScalarModel[[1]],
   {"identity-test scalar", "identity_scalar", "identity_scalar", 1000, 0, 0, 0, 1, 1, "h", "h"}];
@@ -491,7 +666,7 @@ If[heFreshNotebook, Do[
   Print["SKIP: set HEPCAT_TEST_NOTEBOOK_FOUR_FERMION=1 for the exact replayed notebook calls."]];
 check["identity pruning and construction preserve both supplied models",
   heOriginalModels === {heDiagramModel, heModel}];
-If[checks =!= 83 + If[heFullConstruction, 8, 0] + If[heFreshNotebook, 4, 0],
+If[checks =!= 110 + If[heFullConstruction, 8, 0] + If[heFreshNotebook, 4, 0],
   AppendTo[failures, "Not every enabled assertion executed."]];
 Print["CHECKS: ", checks, "; FAILURES: ", Length[failures]];
 If[failures =!= {}, Print[failures]];

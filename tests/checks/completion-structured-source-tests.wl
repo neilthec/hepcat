@@ -18,6 +18,12 @@ csChart = ConstructiveDiagrams`Private`completionCutChart[csSelected, 1, 1729, c
 csProfile = ConstructiveDiagrams`Private`completionComponentPoleProfile;
 csRegular = ConstructiveDiagrams`Private`completionCutRegularityEvaluator[csSelected, csChart];
 check["the test chart validates the selected cut", AssociationQ[csChart] && TrueQ[csChart["AutomaticCoherentChart"]]];
+check["diagonal exact-cut frames retain massive normalization and reconstruct every external momentum",
+  AllTrue[Keys[csChart["Chart"]["AngleBasis"]],Function[leg,
+    ConstructiveDiagrams`Private`residueExactZero[Det[csChart["Chart"]["AngleBasis"][leg]]-csChart["Chart"]["Masses"][leg]] &&
+    ConstructiveDiagrams`Private`residueExactZero[Det[csChart["Chart"]["SquareBasis"][leg]]-csChart["Chart"]["Masses"][leg]] &&
+    ConstructiveDiagrams`Private`residueExactZero[csChart["Chart"]["AngleBasis"][leg].{{0,1},{-1,0}}.
+      Transpose[csChart["Chart"]["SquareBasis"][leg]]-csChart["Chart"]["Momenta"][leg]]]]];
 check["a different explicit propagator is regular on this chart", csRegular[csProfile[2/csOtherPole, Range[4]]]];
 check["a polynomial numerator cannot create a missing pole", csRegular[csProfile[(1 + MomProd[1, 3]^2)/csOtherPole, Range[4]]]];
 check["a declared selected pole cannot use the zero shortcut", !csRegular[csProfile[1/csPole, Range[4]]]];
@@ -71,6 +77,62 @@ csStructuredNorm = ConstructiveDiagrams`Private`completionNormalizeInput[csStruc
 csStructuredNorm = Join[csStructuredNorm, <|"RemainderData" -> {
   <|"ShellRemainder" -> (3 + MomProd[1, 4])/csPole|>}|>];
 csPlan = ConstructiveDiagrams`Private`completionExchangePlan[csStructuredNorm, csModel, {}, {}, Automatic];
+csConservationSeed = <|"Basis"->{MomProd[1,3]/csPole},"RegularExpression"->7|>;
+csConservation = Block[{ConstructiveDiagrams`Private`$completionAutomaticCorrectionTermCeiling=None},
+  ConstructiveDiagrams`Private`completionMomentumConservationBasis[
+    csConservationSeed,csStructuredNorm,csPlan,32,32,5]];
+check["ordinary conservation closure exposes new source-derived numerator directions",
+  csConservation["Status"] === "AVAILABLE" && Length[csConservation["Basis"]]>1 &&
+    TrueQ[csConservation["OrdinaryRelationQuotient"]["OriginalSourceSpanPreserved"]]];
+check["conservation closure preserves fixed regular input and every physical denominator",
+  csConservation["RegularExpression"] === 7 &&
+    AllTrue[csConservation["Basis"],ConstructiveDiagrams`Private`completionPhysicalDenominatorOnlyQ[#,csStructuredNorm]&]];
+check["the conservation source catalog retains ordinary numerator-only replay provenance",
+  csConservation["RewriteRoutes"] =!= {} && AllTrue[csConservation["RewriteRoutes"],
+    TrueQ[#["NumeratorOnly"]] && #["InternalOnShellIdentity"] === False &]];
+csConservationQuotient=csConservation["OrdinaryRelationQuotient"];
+check["known construction identities remove redundant source coordinates without sampled pruning",
+  csConservationQuotient["Status"] === "COMPLETE" && csConservationQuotient["PrunedDirections"]>0 &&
+    TrueQ[csConservationQuotient["ReconstructionConstraintsVerified"]] &&
+    csConservationQuotient["NumericalKinematicsUsed"] === False &&
+    csConservationQuotient["ModelParameterSpecializationUsed"] === False];
+csConservationReplay=csConservationQuotient["OriginalBasis"] -
+  csConservationQuotient["ReconstructionMatrix"].csConservationQuotient["Basis"];
+check["a separate exact conserved chart verifies every retained source reconstruction",
+  ConstructiveDiagrams`Private`residueExactZero[
+    csChart["Map"][csConservationReplay,{csSelected},{csConservationTestPole}]]];
+check["the completion proposal certifies reconstruction of every original source direction",
+  TrueQ[csConservation["OriginalSourceSpanPreserved"]] &&
+    TrueQ[csConservation["SourceSpanCertificate"]["SourceColumnsInOriginalUnion"]] &&
+    TrueQ[csConservation["SourceSpanCertificate"]["ReconstructionConstraintsVerified"]]];
+csConservationAdmission=<|"Status"->"AVAILABLE","Basis"->{csA},
+  "RawDirectionCount"->8,"InitialDirections"->4,"OriginalSourceSpanPreserved"->True,
+  "SourceSpanCertificate"-><|"ReconstructionConstraintsVerified"->True|>|>;
+check["an exact quotient may shrink the basis while exposing new correction directions",
+  ConstructiveDiagrams`Private`completionConservationSpaceUsableQ[csConservationAdmission]];
+check["missing ordinary reconstruction prevents a conservation fallback",
+  !ConstructiveDiagrams`Private`completionConservationSpaceUsableQ[
+    KeyDrop[csConservationAdmission,"SourceSpanCertificate"]]];
+check["a false source-span certificate cannot admit the fallback",
+  !ConstructiveDiagrams`Private`completionConservationSpaceUsableQ[
+    Join[csConservationAdmission,<|"OriginalSourceSpanPreserved"->False|>]]];
+check["an unchanged source union does not retry an already inconsistent space",
+  !ConstructiveDiagrams`Private`completionConservationSpaceUsableQ[
+    Join[csConservationAdmission,<|"RawDirectionCount"->4|>]]];
+csConservationSmall = Block[{ConstructiveDiagrams`Private`$completionAutomaticCorrectionTermCeiling=None},
+  ConstructiveDiagrams`Private`completionMomentumConservationBasis[
+    csConservationSeed,csStructuredNorm,csPlan,2,2,5]];
+check["an explicit conservation-space cap rejects the whole proposal without trimming",
+  csConservationSmall["Status"] === "UNAVAILABLE" && csConservationSmall["Basis"] === {} &&
+    csConservationSmall["EffectiveMaxCorrectionTerms"] === 2];
+csConservationAutomatic = Block[{ConstructiveDiagrams`Private`$completionAutomaticCorrectionTermCeiling=32},
+  ConstructiveDiagrams`Private`completionMomentumConservationBasis[
+    csConservationSeed,csStructuredNorm,csPlan,2,2,5]];
+check["automatic admission reuses the complete conservation union inside its granted ceiling",
+  csConservationAutomatic["Status"] === "AVAILABLE" &&
+    csConservationAutomatic["Basis"] === csConservation["Basis"] &&
+    csConservationAutomatic["EffectiveMaxCorrectionTerms"] >= Length[csConservation["Basis"]] &&
+    Lookup[csConservationAutomatic["CapChanges"],"Operation"] === {"ReuseMomentumConservationClosure"}];
 csPreparedChannels = <|"Model" -> csModel, "OriginalAmplitudes" -> csChannels, "PreparedAmplitudes" -> csChannels|>;
 csStructured = Block[{ConstructiveDiagrams`Private`$completionAutomaticCorrectionTermCeiling = None},
   ConstructiveDiagrams`Private`completionStructuredPhysicalSourceBasis[

@@ -1451,6 +1451,16 @@ The rest/null identity chart can fix angle or square spinor axes, selected from
 typed massless-spinor occurrence counts. Both orientations need the same dense
 domain, external-shell, conservation, spinor-reconstruction and covariance
 certificates. A choice of cheaper coordinates is never a new shell condition.
+Automatic resource estimates must measure the retained high-energy family and
+its supplied directions, rather than only its displayed fixed representative.
+The overall constructor can use the model's massive external spin multiplicities
+before expressions exist. These estimates are resolved before their deadlines;
+explicit user limits and the shared outer deadline remain authoritative.
+When certified identity-zero coordinates are removed, substitute zero for only
+those coordinates in the original family expression. Keep its factorization;
+rebuilding a center plus every derivative direction can needlessly duplicate
+large source expressions. The retained basis and exact certificates remain.
+
 Large affine high-energy fits may expand exact scalar coefficients before
 reassembling the spin polynomial. Keep correction unknowns coupled when forming
 equations: a row such as x+y is one equation, not two separate zero coefficients.

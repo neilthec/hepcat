@@ -94,9 +94,43 @@ check["the public quark-photon sources share one exact color direction",
   AssociationQ[colorProjection] && colorProjection["GramMatrix"] === {{3}} &&
     FreeQ[{colorProjection["ProjectedDiagrams"], colorProjection["ProjectedChannels"]},
       _ColorDelta | _ColorGenerator | _ColorStructure]];
+Do[
+  currentProcess=currentSpec[[1]];
+  currentDiagrams=CreateDiagrams[currentProcess,model];
+  currentPairs=DiagramAmplitudes[currentDiagrams];
+  currentChannels=FactorizationAmplitudeChannels[currentProcess,model];
+  currentReps=ConstructiveDiagrams`Private`colorParticleRepresentation[#,model]& /@ currentProcess;
+  currentProjection=ConstructiveDiagrams`Private`colorProjectionData[
+    currentPairs,currentChannels,currentReps];
+  currentCertificate=ConstructiveDiagrams`Private`colorScalarCurrentProjectionCertificate[
+    currentDiagrams,model,currentProjection,currentReps];
+  check["scalar/vector current color flow is proved exactly: "<>ToString[currentProcess,InputForm],
+    AssociationQ[currentCertificate] && TrueQ[currentCertificate["Certified"]] &&
+      Head[currentCertificate["CanonicalTensor"]]===currentSpec[[2]] &&
+      currentCertificate["CommonDiagramCoordinate"]===1 &&
+      currentCertificate["DiagramCoordinates"]===ConstantArray[1,Length[currentDiagrams]]],
+  {currentSpec,{{{"u","U","A.+","h"},ColorDelta},
+    {{"h","G.+","U","u"},ColorGenerator}}}];
+check["a current color certificate cannot strip a nonunique tensor space",
+  MissingQ[ConstructiveDiagrams`Private`colorScalarCurrentProjectionCertificate[
+    currentDiagrams,model,Join[currentProjection,<|"Basis"->{1,2}|>],currentReps]]];
+currentRephased=ConstructiveDiagrams`Private`colorScalarCurrentProjectionCertificate[
+  currentDiagrams,model,Join[currentProjection,<|"Basis"->I currentProjection["Basis"]|>],currentReps];
+check["current color projection keeps a nontrivial exact basis phase",
+  AssociationQ[currentRephased] && currentRephased["CommonDiagramCoordinate"]===-I &&
+    currentRephased["CanonicalCoordinate"]===-I];
 check["singular color amplitude retains every internally summed contribution",
   And @@ MapThread[TrueQ[Expand[#1 - Last[#2]] === 0] &,
     {diagramAmplitude /@ colorDiagrams, colorPairs}]];
+zeroTree = ConstructAmplitude[ConstantArray["G.+",4],model,model,
+  "Output"->"Details","PrintReport"->False,"ProgressReporting"->False];
+check["a source-forbidden colored tree is checked as zero without an invented basis",
+  AssociationQ[zeroTree] && zeroTree["Status"]==="COMPLETE" &&
+    zeroTree["Amplitude"]===0 && FreeQ[zeroTree["Checks"]["Summary"],"FAIL"|"UNRESOLVED"]];
+limitedColor = ConstructAmplitude[colorParticles,model,model,
+  "TimeConstraint"->10^-6,"PrintReport"->False,"ProgressReporting"->False];
+check["an unfinished color coefficient never becomes an assembled successful amplitude",
+  FailureQ[limitedColor] && FreeQ[limitedColor,_Dot|Missing["NotValidated"]]];
 Print["COLOR BASIS CHECKS: ", checks, "; FAILURES: ", Length[failures]];
 If[failures === {}, Print["HEPCAT_TEST_COMPLETED:color-basis-tests.wl"], Print[failures]];
 Quit[If[failures === {}, 0, 1]];

@@ -346,6 +346,28 @@ rrHEContours = ConstructiveDiagrams`Private`completionHESourceRemainders[
 check["high-energy channel remainders use the residue checker's contour and sewing convention",
   FreeQ[rrHEContours["Basis"], ConstructiveDiagrams`z] &&
     rrZero[Total[rrHEContours["Basis"]] + 1/rrDen]];
+rrReferenceArtifact = rrReferenceRatio[71, 4];
+rrReferenceRecord = <|"InputType" -> "Diagram", "HasInternalConditions" -> True,
+  "MassRules" -> rrRules, "OnShellChannels" -> {{{1, 2}, 1}},
+  "FixedReferenceExpression" -> 7, "PreparedExpression" -> 7, "ShellRemainder" -> 0,
+  "ReferenceInputExpression" -> 7 + rrReferenceArtifact, "ReferenceContinuations" -> {}|>;
+rrHEReference = ConstructiveDiagrams`Private`completionHESourceRemainders[
+  <|"ExternalMassRules" -> rrExternal, "RemainderData" -> {rrReferenceRecord},
+    "ChannelRemainderData" -> {}|>, 2];
+check["high-energy corrections can retain the actual discarded reference-change difference",
+  rrHEReference["Basis"] === {rrReferenceArtifact} &&
+    First[rrHEReference["Sources"]]["ReferenceMode"] === "OriginalReferenceLabels" &&
+    First[rrHEReference["Sources"]]["InternalOnShellConditions"] === {} &&
+    TrueQ[First[rrHEReference["Sources"]]["RequiresFullAmplitudeValidation"]]];
+rrReferenceChannelRecord = Join[rrReferenceRecord, <|"InputType" -> "FactorizationChannel",
+  "FixedReferenceExpression" -> 7/ConstructiveDiagrams`z,
+  "ReferenceInputExpression" -> (7 + rrReferenceArtifact)/ConstructiveDiagrams`z|>];
+rrHEReferenceChannel = ConstructiveDiagrams`Private`completionHESourceRemainders[
+  <|"ExternalMassRules" -> rrExternal, "RemainderData" -> {},
+    "ChannelRemainderData" -> {rrReferenceChannelRecord}|>, 2];
+check["discarded reference changes use the same contour sign as the channel's physical residue",
+  FreeQ[rrHEReferenceChannel["Basis"], ConstructiveDiagrams`z] &&
+    rrZero[Total[rrHEReferenceChannel["Basis"]] + rrReferenceArtifact]];
 
 Print[checks, " preparation-remainders checks; ", Length[failures], " failures."];
 If[failures =!= {}, Print[failures]; Quit[1]];

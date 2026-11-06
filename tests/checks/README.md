@@ -308,7 +308,10 @@ high-energy proof timeout without changing the notebook call or its defaults.
 `automatic-resource-tests.wl` covers lightweight workload estimates, finite
 clock/cap resolution, coherent versus fixed-spin sample estimates, unchanged
 explicit overrides, public defaults, nested sample precedence and final-check
-deadlines. Its fresh four- and five-point constructors receive only the three
+deadlines. High-energy sizing measures retained families and directions before
+setting its deadline. Overall construction sizing uses massive external spin
+multiplicities from the model; fixed-helicity massless legs contribute one.
+The tests also retain the ordinary fallback for unavailable species metadata. Its fresh four- and five-point constructors receive only the three
 required arguments; a forbidden six-point process must still validate as zero.
 The larger nonzero six-point default construction is available with
 `HEPCAT_TEST_FULL_AUTOMATIC_CONSTRUCTION=1`; it uses the same option-free call
@@ -379,11 +382,15 @@ or unresolved final checks. It does not modify or execute the user's notebooks.
 from real undetermined interactions. It checks the generic symbolic external
 chart, momentum conservation, chirality and little-group safety, fixed-spin
 and branch exclusions, proof deadlines and retained scalar contact freedom.
-The routine suite has 83 assertions, including 29 generic null-pivot checks:
+The routine suite has 89 assertions, including 29 generic null-pivot checks:
 valid and invalid axis choices, opposite homogeneous-weight selection,
 conserved external mass shells and all 14 physical internal invariants remaining
 generically off shell. These checks use symbolic masses and no sampled
 phase-space assignments.
+The auxiliary-reference identity checks keep four independent symbolic
+coordinates for each Xi label. They certify a genuine shared-reference
+Schouten identity while refusing a nonzero reference ratio, noncovariant
+angle-square contraction and an exhausted proof clock.
 Additional checks cover alternative dependent external shells, a retained
 six-point identity, truthful unfinished-proof diagnostics, and symbolic
 coherent-spin coefficient proofs. Independent polynomial degree verification,
@@ -565,6 +572,30 @@ direct re-preparation with external mass rules only, and reference choices from
 physical propagators without inferring internal shells. It preserves literal
 shared-Xi correlations and compares a real five-point QED sum before and after
 preparation at independent exact off-cut points.
+`cubic-current-source-tests.wl` recovers scalar and pseudoscalar couplings from
+renamed model particles and checks the exact three-point vertex match. It
+rejects derivative scalar vertices and inconsistent vector-helicity couplings.
+Colored current proposals require the certified rank-one delta/generator flow;
+a rephased color basis must carry its inverse phase into the scalar coefficient.
+No reference-generator amplitude or numerical normalization fit supplies a source.
+
+`linear-row-normalization-tests.wl` checks certified nonzero algebraic row units,
+full affine solutions and nullspaces, tiny exact contradictions and bounded
+native fallback. It also checks that sequential coefficient elimination updates
+all earlier equation groups and retained family metadata. Large feedback systems
+normalize their original chart rows before composing the retained affine family
+with sparse exact matrices. Held-out cut checks use the same exact composition
+and test the whole free family, including a passing center with a failing free
+direction. Every original equation and coefficient coordinate is preserved;
+non-linear or uncertified inputs retain the established fallback.
+Rational reference-fit charts preserve external shells, momentum conservation
+and full massive-spin bases without adding internal-shell conditions.
+Per-chart and cross-parameter energy reductions retain the original equations
+and complete affine nullspace. The tests compare their intersection with the
+unrestricted route, including later charts and changed parameters that constrain
+surviving directions, plus a regular coefficient that must remain free. Every
+requested chart and parameter assignment is still evaluated.
+
 Exact coefficient-refinement tests include heavily scaled rows, algebraic
 right-hand sides, retained free coefficients and late contradictions.
 
@@ -1242,3 +1273,27 @@ while small-channel output and sewing conventions remain unchanged. The
 62 eight-point channel rows now generate in about 53 seconds in the measured
 run. `qed-construction-notebook-tests.wl` checks actual cell/group structure:
 adjacent cells without a comma can parse as multiplication and must fail.
+
+`massless-sewing-tests.wl` checks internal null-spinor orientation and inverse
+powers against exact two-by-two matrices, massless three-point branch support,
+symbolically certified common continuations and their retained source records.
+It also tests generic four-null cut charts, simultaneous principal-part
+constraints and ordinary Schouten factorization during denominator discovery.
+
+`sm-construction-notebook-tests.wl` checks the SM worked notebook as held data:
+the original process inventory, explicit helicity calls, grouped CH/MG exports,
+the massive-quark reference model and inactive historical derivations. It does
+not run 131 constructions or count cached tables as new physics tests.
+
+`color-basis-tests.wl` checks exact SU(3) contractions and the color tensors in
+public diagrams and channels. `spinas-color-tests.wl` also compiles a process
+and compares its coherent interference matrix with explicit external-color
+enumeration. The opt-in `spinas-color-integration-tests.wl` compares distinct
+and identical quarks and all quark/gluon helicities against independent
+CalcHEP and MadGraph. `spinas-chiral-integration-tests.wl` checks neutrino
+annihilation and crossed scattering against both programs. These optional
+suites require the selected installations and a built SPINAS library.
+
+`test_sm_reference_model.py` checks the independent UFO's light-quark masses,
+Higgs Yukawa interactions and unitary-gauge declaration without requiring a
+MadGraph installation. These are model-content checks, not amplitude validation.

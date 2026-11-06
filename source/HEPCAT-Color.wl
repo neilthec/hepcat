@@ -325,12 +325,48 @@ colorProjectionData[pairs_List, channels_List, representations_List] := Module[
 (* Each coefficient of an exact independent color basis has its own ordinary
    residue obligations. Statistics can mix these coefficients, so a scalar
    coefficient must never be independently Bose-averaged or antisymmetrized. *)
+(* A two-fermion scalar/vector current can be reused only after proving its
+   color flow. These exact contractions distinguish a common fundamental
+   delta/generator from a guessed color multiplicity or a stripped amplitude. *)
+colorScalarCurrentProjectionCertificate[diagrams_List, model_List,
+    data_Association, representations_List] := Module[
+  {fund, anti, adjoint, canonical, tensors, basis, coordinates, common},
+  If[Length[representations] =!= 4 || Length[Lookup[data,"Basis",{}]] =!= 1,
+    Return[Missing["NoRankOneCurrentColorFlow"]]];
+  fund = Flatten[Position[representations,3]];
+  anti = Flatten[Position[representations,-3]];
+  adjoint = Flatten[Position[representations,8]];
+  If[Length[fund] =!= 1 || Length[anti] =!= 1 || Length[adjoint] > 1 ||
+      Count[representations,1] =!= 2-Length[adjoint],
+    Return[Missing["NoFundamentalCurrentColorFlow"]]];
+  canonical = If[adjoint === {},
+    ColorDelta[ColorIndex[First[anti]],ColorIndex[First[fund]]],
+    ColorGenerator[ColorIndex[First[anti]],ColorIndex[First[fund]],
+      ColorIndex[First[adjoint]]]];
+  tensors = colorDiagramTensor[#,model] & /@ diagrams;
+  If[tensors === {} || AnyTrue[tensors,FailureQ],
+    Return[Missing["UnverifiedCurrentColorFlow"]]];
+  basis = colorTensorBasis[Join[data["Basis"],{canonical},tensors],representations];
+  If[FailureQ[basis] || Length[basis["Basis"]] =!= 1,
+    Return[Missing["NonuniqueCurrentColorFlow"]]];
+  coordinates = First /@ basis["DiagramCoordinates"];
+  common = Drop[coordinates,2];
+  If[common === {} || !TrueQ[SameQ @@ common] || TrueQ[First[common] === 0],
+    Return[Missing["DifferentDiagramColorFlows"]]];
+  <|"Certified"->True,"Method"->"ExactRankOneFundamentalColorFlow",
+    "Basis"->First[data["Basis"]],"CanonicalTensor"->canonical,
+    "CanonicalCoordinate"->coordinates[[2]],
+    "CommonDiagramCoordinate"->First[common],"DiagramCoordinates"->common,
+    "Representations"->representations|>
+];
+
 colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List,
     settings_Association] := Module[
   {started = AbsoluteTime[], diagrams, pairs, channels, reps, data, reports = {},
    options, report, amplitudes, expression, external, summary, output = settings["Output"],
    deadline, seconds, rank, projected, combinedChecks, checkRows,
-   callback = settings["ProgressFunction"], tag = Unique["colorConstruction"], zeroResult},
+   callback = settings["ProgressFunction"], tag = Unique["colorConstruction"], zeroResult,
+   currentColorCertificate},
   Catch[
   If[Lookup[settings, "FeynmanModel", None] =!= None,
     Return[colorFailure["ColoredFeynmanProjection",
@@ -357,6 +393,14 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
   data = colorProjectionData[pairs, channels, reps];
   If[FailureQ[data], Return[data]];
   rank = Length[data["Basis"]];
+  If[rank === 0,
+    external = Thread[(Mass /@ Range[Length[process]]) -> constructExternalMasses[process,diagramModel]];
+    projected = <|"Diagrams" -> diagrams, "DiagramAmplitudes" -> {{external,0}},
+      "Channels" -> (Append[Most[#],0] & /@ channels)|>;
+    Return[Block[{$colorConstructingProjection = True, $colorConstructionInput = projected},
+      ConstructAmplitude[process,diagramModel,factorizationModel,Sequence @@ Normal[settings]]]]];
+  currentColorCertificate = colorScalarCurrentProjectionCertificate[
+    diagrams,diagramModel,data,reps];
   If[TrueQ[settings["ProgressReporting"]], Print["Constructing ", rank,
     " independent color coefficients."]];
   Do[
@@ -368,7 +412,8 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
       "TimeConstraint" -> Max[0.001, deadline - AbsoluteTime[]]|>];
     If[TrueQ[settings["ProgressReporting"]], Print["Color coefficient ", i, "/", rank]];
     projected = <|"Diagrams" -> diagrams, "DiagramAmplitudes" -> data["ProjectedDiagrams"][[i]],
-      "Channels" -> data["ProjectedChannels"][[i]]|>;
+      "Channels" -> data["ProjectedChannels"][[i]],
+      "ColorProjectionCertificate" -> currentColorCertificate|>;
     report = Block[{$colorConstructingProjection = True, $colorConstructionInput = projected},
       ConstructAmplitude[process, diagramModel, factorizationModel, Sequence @@ Normal[options]]];
     AppendTo[reports, report];
@@ -415,6 +460,9 @@ colorCheckAmplitudes[amplitudes_, channels_List, model_List, supplied_Associatio
         <|"Leg" -> i|>]]]], {i, Length[external]}];
   data = colorProjectionData[{{external, normalized["Expression"]}}, channels, reps];
   If[FailureQ[data], Return[data]];
+  If[data["Basis"] === {}, Return[Block[{$colorCheckingProjection = True},
+    CheckAmplitudes[{external,0},Append[Most[#],0] & /@ channels,model,
+      Sequence @@ Normal[supplied]]]]];
   options = Join[Association[Options[CheckAmplitudes]], supplied]; output = options["Output"];
   If[options["FeynmanAmplitudes"] =!= None, Return[colorFailure["ColoredFeynmanProjection",
     "Use the independent numerical CalcHEP or MadGraph comparison for the full color amplitude."]]];

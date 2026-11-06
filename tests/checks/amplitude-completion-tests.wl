@@ -2263,10 +2263,24 @@ acSparseSingular = ConstructiveDiagrams`Private`completionSparseValidation[
   acSparseU/acAdaptiveDen^2, {acSparseU},
   <|"SolutionRules" -> {acSparseU -> 0}, "FreeParameters" -> {}|>, {}, {},
   acSparseNormalized, 1, 57013, acScalarRules, 15, Automatic, False];
-check["sparse validation still rejects a singular correction direction before fitting it to zero",
-  acSparseSingular["Report"]["Summary"] === <|"UNRESOLVED" -> 1|> &&
-    acSparseSingular["Feedback"]["Status"] === "UNRESOLVED" &&
-    !acSparseSingular["FamilyPass"]];
+check["canceling an unused higher-pole direction cannot hide a required nonzero residue",
+  acSparseSingular["Report"]["Summary"] === <|"FAIL" -> 1|> &&
+    acSparseSingular["Feedback"]["Status"] === "COMPLETE" &&
+    !acSparseSingular["FamilyPass"] &&
+    AllTrue[First[acSparseSingular["Report"]["Channels"]]["Samples"],
+      #["CalculatedResidue"] === 0 && !acZero[#["ExpectedResidue"]] &&
+        acZero[#["Difference"] + #["ExpectedResidue"]] &&
+        #["ConstraintMethod"] === "ExactRationalLaurent" &&
+        TrueQ[#["PrincipalPartCancellationVerified"]] &&
+        AllTrue[#["PrincipalPartCertificate"]["CandidatePrincipalEquations"], acZero] &]];
+acSparseSurvivingHigherPole = ConstructiveDiagrams`Private`completionSparseValidation[
+  acSparseU/acAdaptiveDen^2, {acSparseU},
+  <|"SolutionRules" -> {acSparseU -> 1}, "FreeParameters" -> {}|>, {}, {},
+  acSparseNormalized, 1, 57013, acScalarRules, 15, Automatic, False];
+check["a surviving higher pole never receives a regular sparse-validation certificate",
+  acSparseSurvivingHigherPole["Report"]["Summary"] === <|"UNRESOLVED" -> 1|> &&
+    acSparseSurvivingHigherPole["Feedback"]["Status"] === "UNRESOLVED" &&
+    !acSparseSurvivingHigherPole["FamilyPass"]];
 acSparseSpinNormalized = ConstructiveDiagrams`Private`completionNormalizeInput[
   0, prFourPointChannels, prModel];
 acSparseSpinValidation = ConstructiveDiagrams`Private`completionSparseValidation[
@@ -2280,6 +2294,32 @@ check["sparse validation certifies every coherent massive-spin component on all 
     AllTrue[Flatten[Lookup[acSparseSpinValidation["Report"]["Channels"], "Samples"]],
       Length[#["SpinVariables"]] === 2 && TrueQ[#["KinematicChecks"]["Valid"]] &&
         And @@ #["KinematicChecks"]["UncutChannelsRemainGeneric"] &]];
+acLargeSparseVariables = Table[Unique["heldOutCoefficient"], 128];
+acLargeSparseFree = Take[acLargeSparseVariables, -64];
+acLargeSparseSolution = <|"SolutionRules" -> Thread[
+  Take[acLargeSparseVariables, 64] -> -acLargeSparseFree],
+  "FreeParameters" -> acLargeSparseFree|>;
+acLargeSparseValidation = ConstructiveDiagrams`Private`completionSparseValidation[
+  (1 + Total[acLargeSparseVariables]) prFourPointAmplitude, acLargeSparseVariables,
+  acLargeSparseSolution, acLargeSparseFree, {}, acSparseSpinNormalized, 1, 57013,
+  ModelParameterRules[prModel, {"Me" -> 1, "EE" -> 1}], 15, Automatic, False];
+check["large sparse held-out validation certifies the full affine family before mapping a dense candidate",
+  acLargeSparseValidation["Report"]["Summary"] === <|"PASS" -> 2|> &&
+    TrueQ[acLargeSparseValidation["FamilyPass"]] &&
+    AllTrue[Flatten[Lookup[acLargeSparseValidation["Report"]["Channels"], "Samples"]],
+      #["AffineFamilyValidationCertificate"]["Method"] === "ExactSparseAffineMatrixComposition" &&
+        #["AffineFamilyValidationCertificate"]["AllOriginalEquationsRetained"] &&
+        #["AffineFamilyValidationCertificate"]["FreeParameters"] === acLargeSparseFree &]];
+acLargeSparseBadFamily = Join[acLargeSparseSolution, <|"SolutionRules" -> Thread[
+  Take[acLargeSparseVariables, 64] -> acLargeSparseFree]|>];
+acLargeSparseBadValidation = ConstructiveDiagrams`Private`completionSparseValidation[
+  (1 + Total[acLargeSparseVariables]) prFourPointAmplitude, acLargeSparseVariables,
+  acLargeSparseBadFamily, acLargeSparseFree, {}, acSparseSpinNormalized, 1, 57013,
+  ModelParameterRules[prModel, {"Me" -> 1, "EE" -> 1}], 15, Automatic, False];
+check["a large passing sparse representative still rejects a nonzero held-out affine-family direction",
+  acLargeSparseBadValidation["Report"]["Summary"] === <|"PASS" -> 2|> &&
+    !TrueQ[acLargeSparseBadValidation["FamilyPass"]] &&
+    acLargeSparseBadValidation["Feedback"]["Status"] === "COMPLETE"];
 (* Initial symmetry checks have no fitted variables, so their minimal solution
    needs only SolutionRules. An absent optional key must still yield a list of
    substitutions and evaluate every real QED cut, rather than leave jobs inert. *)
@@ -2443,7 +2483,12 @@ check["reference-dependent spurious artifacts can be removed despite acceptable 
     acAllPass[acReferenceRepair["AfterReport"]]];
 check["the final stage jointly uses spurious-pole and reference-independence constraints",
   acReferenceRepair["ConstraintData"]["Spurious"]["Equations"] =!= {} &&
-    acReferenceRepair["ConstraintData"]["Reference"]["Equations"] =!= {}];
+    (acReferenceRepair["ConstraintData"]["Reference"]["Equations"] =!= {} ||
+      (* Earlier exact constraints can already remove every reference-dependent
+         coefficient. The independent reference check remains mandatory. *)
+      acReferenceRepair["SequentialConstraintReductions"]["Spurious"]["Status"] === "COMPLETE" &&
+      acReferenceRepair["FreeParameters"] === {} &&
+      acReferenceRepair["AfterReport"]["ReferenceCheck"]["Status"] === "PASS")];
 acMassiveExternal = Thread[(Mass /@ Range[4]) -> ConstantArray[acScalarMass, 4]];
 acWrongMassFit = acEnergy[{acMassiveExternal, 7 + acScalarMass^2 MomProd[1, 2]}, {},
   acScalarModel, "ParameterRules" -> {acScalarMass -> 1},

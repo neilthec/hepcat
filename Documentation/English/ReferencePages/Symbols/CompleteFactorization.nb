@@ -63,23 +63,36 @@ directions from the supplied information and determines their coefficients \
 using all channel conditions at once. Diagram reweightings, terms retained \
 during preparation and alternative reference choices can supply useful \
 directions. The original lower-point channel products remain the targets \
-throughout."}], "Notes"], Cell[TextData[{"The function does not search every \
-imaginable expression and does not invent an unknown interaction. If a \
-required lower-point amplitude is absent from the model, or the available \
-correction directions cannot express a needed contribution, longer fitting \
-alone is not a guarantee of success."}], "Notes"],
-  Cell[TextData[{"For a small coherent-spin tensor, physical-pole completion \
-first tries a compact correction space from the already reduced channel \
-sources, including ordinary two-particle cuts. This avoids introducing a \
-large collection of redundant coordinates before it is needed. A proposal \
-still has to fit every original channel and pass independent validation; \
-larger tensor systems retain their correlated source route."}], "Notes"],
-  Cell["Retaining information for the following stages", "NotesSection"],
-  Cell[TextData[{"Detailed preparation reports are preferred when simplifying \
-aggressively. They keep the original diagram expressions and the pieces \
-discarded by diagram-local numerator-shell reductions. Completion tries \
-useful retained pieces before constructing broader alternatives, rather than \
-having to rediscover that information from a reduced sum."}], "Notes"],
+throughout."}], "Notes"], Cell[TextData[{"If the initial physical-pole space \
+is proved inconsistent, Automatic can try a bounded enlargement derived by \
+ordinary external momentum conservation in its numerator sources. Exact \
+rewrite records and a reconstruction of every original direction certify any \
+dependency removed from that enlarged space. Regular remainders stay \
+correlated with their source. This adds no independent contact interaction \
+and does not replace the original channel targets."}], "Notes"],
+  Cell[TextData[{"Individual correction directions can have higher poles that \
+cancel only in their fitted sum. When an exact rational Laurent expansion is \
+available, completion constrains all higher principal-part coefficients to \
+vanish and fits the finite simple-pole residue at the same time. This retains \
+useful correlated directions without accepting a higher-pole final amplitude \
+or a singular expected target."}], "Notes"],
+  Cell[TextData[{"The function does not search every imaginable expression \
+and does not invent an unknown interaction. If a required lower-point \
+amplitude is absent from the model, or the available correction directions \
+cannot express a needed contribution, longer fitting alone is not a guarantee \
+of success."}], "Notes"], Cell[TextData[{"For a small coherent-spin tensor, \
+physical-pole completion first tries a compact correction space from the \
+already reduced channel sources, including ordinary two-particle cuts. This \
+avoids introducing a large collection of redundant coordinates before it is \
+needed. A proposal still has to fit every original channel and pass \
+independent validation; larger tensor systems retain their correlated source \
+route."}], "Notes"], Cell["Retaining information for the following stages",
+   "NotesSection"], Cell[TextData[{"Detailed preparation reports are \
+preferred when simplifying aggressively. They keep the original diagram \
+expressions and the pieces discarded by diagram-local numerator-shell \
+reductions. Completion tries useful retained pieces before constructing \
+broader alternatives, rather than having to rediscover that information from \
+a reduced sum."}], "Notes"],
   Cell[TextData[{"Residue agreement can leave combinations of corrections \
 undetermined because they vanish on all tested physical poles. Request ",
      Cell[BoxData[RowBox[{"\"ReturnDetails\"", " ", "->", " ", "True"}]],
