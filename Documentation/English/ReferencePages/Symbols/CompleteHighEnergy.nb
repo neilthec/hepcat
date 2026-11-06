@@ -26,6 +26,16 @@ growth, spurious-pole cancellation and explicit reference independence to \
 constrain the freedom retained by ", ButtonBox["CompleteFactorization",
       BaseStyle -> "Link", ButtonData ->
        "paclet:HEPCAT/ref/CompleteFactorization"], "."}], "Notes"],
+  Cell[TextData[{"Finishing the fitted charts does not finish the \
+calculation: remaining directions still need exact identity classification \
+and the candidate still needs independent checks. For a large tensor with \
+higher-degree massive-spin legs, Automatic reserves finite time for that work \
+when it declares the high-energy and overall construction deadlines. The \
+overall constructor includes a second reserve for its closing validation \
+after the high-energy child returns. This keeps a full child allowance from \
+consuming the time needed by the wrapper's own checks. Neither reserve \
+relaxes a check, reduces sampling or extends an expired call. Explicit \
+deadlines remain unchanged."}], "Notes"],
   Cell[TextData[{"For the staged workflow, pass detailed factorization output \
 so the remaining family is available. Passing only one displayed amplitude \
 can lose alternative directions that were present in the fit. An advanced \
@@ -51,9 +61,16 @@ proof."}], "Notes"], Cell[TextData[{"Reference-independence fitting uses \
 exact rational external on-shell kinematics when available. All massive-spin \
 components remain in the fit, momentum conservation is checked exactly, and \
 no internal propagator is put on shell. This avoids expensive square-root \
-normalization factors in the linear equations. The final candidate still has \
-to pass independent physical-kinematics checks; these fitting samples are not \
-a proof of reference independence at every point."}], "Notes"],
+normalization factors in the linear equations. For a large affine family, the \
+constant term and original correction coefficients can be collected before \
+the spin polynomial is expanded. Their reference differences are recombined \
+before equations are extracted, so cancellations between coefficients remain \
+available. The original full-family reference baseline and random assignments \
+stay unchanged. A sufficient exact certificate can prove that every syntactic \
+inverse base is nonzero there; singular or unsupported cases retain the \
+original regularity check. The final candidate still has to pass independent \
+physical-kinematics checks; these fitting samples are not a proof of \
+reference independence at every point."}], "Notes"],
   Cell[TextData[{"For a supported four-point process containing a massive \
 Dirac pair, a scalar and a massless vector, automatic completion first tries \
 a minimal cubic-current continuation. The scalar and pseudoscalar couplings \
@@ -65,6 +82,13 @@ independent check. If it does not complete, the remaining stage time is used \
 for the broader retained-source fit. A colored current additionally requires \
 an exact rank-one fundamental color-flow projection certificate; its \
 coordinate and any basis phase are preserved."}], "Notes"],
+  Cell[TextData[{"Detailed output also records \
+ExactDerivativeZeroClassification when a fitted coefficient has an exactly \
+zero rational derivative before the ordinary identity portfolio runs. Its \
+witness is the original solved family, not the final expression after \
+coefficients were set to zero. Any later retained-candidate recovery replays \
+that original derivative and its solution map before combining the \
+certificate with the ordinary identity proofs."}], "Notes"],
   Cell[TextData[{"A direction containing auxiliary Xi spinors can be removed \
 only after an ordinary identity proof. The symbolic proof keeps independent \
 coordinates for every reference label, all coherent external spin components \
@@ -83,20 +107,31 @@ proposal immediately; later charts cannot repair it. The report retains the \
 contradiction and identifies charts that were not attempted. Accepted \
 amplitudes still require all requested charts, parameter assignments and \
 independent final checks."}], "Notes"],
-  Cell[TextData[{"Large retained vector-source columns can be shortened \
-before fitting by grouping terms with the same original propagators and \
-non-mass couplings. Ordinary spinor identities then see the complete \
-external-mass partners together. Each column keeps its single correction \
-coefficient; its expanded terms are not assigned independent coefficients. \
-Only declared external masses enter this reduction. The original complete \
-columns remain available, and a bounded or unsupported reduction leaves its \
-original column unchanged. The same ordinary grouping can precondition a \
-large vector direction before its exact identity proof. The shorter \
-expression must still receive an exact zero certificate before a coefficient \
-is removed; the full original direction and the reduction steps stay in the \
-report, and an unfinished proof keeps the original fallback."}], "Notes"],
-  Cell[TextData[{"For a large affine vector family, repeated typed spinor \
-monomials can be expanded once on the same conserved energy chart and \
+  Cell[TextData[{"When a large massive-vector identity contains derived model \
+parameters, the exact proof first makes a bounded attempt with those scalar \
+parameters still independent. This stronger ordinary identity can be much \
+easier to prove than an expression with unnecessary square roots from \
+expanded mass relations. Only a complete exact zero certificate removes a \
+direction; a failed attempt retains the original declared-model proof route \
+and the same overall deadline. The numerator identity remains fully symbolic, \
+with no internal on-shell assumption. Rational denominators may be cleared to \
+make that proof cheaper. A separate exact nonzero witness on the same \
+conserved chart certifies the denominator's nonempty generic domain; it is \
+never used as evidence that an amplitude vanishes. This prefix and the \
+declared-model fallback share the original proof deadline. Large retained \
+vector-source columns can be shortened before fitting by grouping terms with \
+the same original propagators and non-mass couplings. Ordinary spinor \
+identities then see the complete external-mass partners together. Each column \
+keeps its single correction coefficient; its expanded terms are not assigned \
+independent coefficients. Only declared external masses enter this reduction. \
+The original complete columns remain available, and a bounded or unsupported \
+reduction leaves its original column unchanged. The same ordinary grouping \
+can precondition a large vector direction before its exact identity proof. \
+The shorter expression must still receive an exact zero certificate before a \
+coefficient is removed; the full original direction and the reduction steps \
+stay in the report, and an unfinished proof keeps the original fallback."}],
+   "Notes"], Cell[TextData[{"For a large affine vector family, repeated typed \
+spinor monomials can be expanded once on the same conserved energy chart and \
 recombined through their exact original coefficient map. Every source part is \
 reconstructed exactly, every Laurent coefficient keeps its remainder-order \
 certificate, and all original correction coordinates and constant offsets \

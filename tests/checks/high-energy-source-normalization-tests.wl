@@ -103,5 +103,61 @@ cnNonzeroProof = ConstructiveDiagrams`Private`completionHEZeroDirection[
   cnVectorFixture["Expression"]+cnPerturbation,cnVectorFixture["ExternalMassRules"],{{},{},{},{}},5];
 check["an improved ordinary representative still requires its own exact zero proof",
   cnNonzeroProof["Status"] === "NOT_PROVED"];
+cnRawParameter = ModelParameter["rawCoupling", "ordinary-source-proof-test", "Real"];
+cnRawIndependent = ModelParameter["independentCoupling", "ordinary-source-proof-test", "Real"];
+cnRawFixture = cnVectorFixture["Expression"] /. vectorIdentityParameter1 -> cnRawParameter;
+cnRawModel = {{}, {}, {{cnRawIndependent, 1/3}}, {{cnRawParameter, Sqrt[1-cnRawIndependent^2]}}};
+cnRawProof = ConstructiveDiagrams`Private`completionHEZeroDirection[
+  cnRawFixture, cnVectorFixture["ExternalMassRules"], cnRawModel, 20];
+check["an independent-parameter identity is tried before derived model expansion",
+  cnRawProof["Status"] === "PROVED_ZERO" && KeyExistsQ[cnRawProof,"RawModelParameterProof"] &&
+    !KeyExistsQ[cnRawProof,"ModelDefinitionExpansion"]];
+check["the raw proof preserves its original expression and stronger assumption scope",
+  cnRawProof["RawModelParameterProof"]["OriginalExpression"] === cnRawFixture &&
+    cnRawProof["RawModelParameterProof"]["ModelDefinitionsUsed"] === {} &&
+    cnRawProof["RawModelParameterProof"]["NumericalParameterAssignments"] === {} &&
+    cnRawProof["InternalOnShellConditions"] === {}];
+cnModelOnlyTerm = First[List @@ Expand[cnRawFixture]];
+cnModelOnlyInput = cnRawFixture + (cnRawParameter-Sqrt[1-cnRawIndependent^2]) cnModelOnlyTerm;
+cnModelOnlyProof = ConstructiveDiagrams`Private`completionHEZeroDirection[
+  cnModelOnlyInput, cnVectorFixture["ExternalMassRules"], cnRawModel, 20];
+check["failure of the stronger raw identity retains model-definition fallback",
+  cnModelOnlyProof["Status"] === "PROVED_ZERO" && KeyExistsQ[cnModelOnlyProof,"ModelDefinitionExpansion"] &&
+    cnModelOnlyProof["RawParameterProofAttempt"]["Status"] === "NOT_PROVED"];
+check["raw-parameter recursion cannot change later proof calls",
+  !TrueQ[ConstructiveDiagrams`Private`$completionHEKeepRawModelParameters]];
+check["raw numerator clearing retains a separate exact nonzero-denominator certificate",
+  cnRawProof["RawModelParameterProof"]["ExactRationalRegrouping"] &&
+    cnRawProof["RawModelParameterProof"]["DenominatorNonzeroCertificate"]["Status"] === "PROVED_NONZERO" &&
+    cnRawProof["RawModelParameterProof"]["DenominatorNonzeroCertificate"]["AmplitudeZeroSamples"] === 0];
+cnDenominatorChart = ConstructiveDiagrams`Private`completionHESymbolicExternalChart[cnVectorFixture["ExternalMassRules"]];
+cnInvalidDenominator = ConstructiveDiagrams`Private`completionHERawDenominatorWitness[
+  PropDen[Mom[1], Mass[1] /. cnVectorFixture["ExternalMassRules"]], cnDenominatorChart, 2];
+check["an external on-shell zero cannot certify a nonempty cleared-denominator domain",
+  MissingQ[cnInvalidDenominator]];
+Internal`InheritedBlock[{ConstructiveDiagrams`Private`completionHERawDenominatorWitness},
+  Clear[ConstructiveDiagrams`Private`completionHERawDenominatorWitness];
+  ConstructiveDiagrams`Private`completionHERawDenominatorWitness[___] := Missing["UnprovedDenominator"];
+  cnUncertifiedRaw = ConstructiveDiagrams`Private`completionHERawParameterIdentityProof[
+    cnRawFixture,cnVectorFixture["ExternalMassRules"],cnRawModel,10]];
+check["a zero numerator alone cannot admit an uncertified denominator",
+  cnUncertifiedRaw["Status"] === "NOT_PROVED" &&
+    cnUncertifiedRaw["Method"] === "UncertifiedClearedDenominator"];
+Internal`InheritedBlock[{ConstructiveDiagrams`Private`completionHEOrdinarySourceColumn},
+  Clear[ConstructiveDiagrams`Private`completionHEOrdinarySourceColumn];
+  ConstructiveDiagrams`Private`completionHEOrdinarySourceColumn[___] := (Pause[2];<||>);
+  {cnRawDeadlineSeconds,cnRawDeadline} = AbsoluteTiming[
+    ConstructiveDiagrams`Private`completionHERawParameterIdentityProof[
+      cnRawFixture,cnVectorFixture["ExternalMassRules"],cnRawModel,1/10]]];
+check["raw numerator preparation shares its finite original proof deadline",
+  cnRawDeadline["Status"] === "NOT_PROVED" && cnRawDeadlineSeconds < 1];
+Internal`InheritedBlock[{ConstructiveDiagrams`Private`completionHEOrdinarySourceColumn},
+  Clear[ConstructiveDiagrams`Private`completionHEOrdinarySourceColumn];
+  ConstructiveDiagrams`Private`completionHEOrdinarySourceColumn[___] := Missing["NotPrepared"];
+  cnRawWithoutReduction = ConstructiveDiagrams`Private`completionHERawParameterIdentityProof[
+    0,cnRules,cnRawModel,3]];
+check["a successful original numerator keeps an unavailable reduction record honestly",
+  cnRawWithoutReduction["Status"] === "PROVED_ZERO" &&
+    MissingQ[cnRawWithoutReduction["RawModelParameterProof"]["OrdinaryReduction"]]];
 Print["CHECKS: ", checks]; Print["FAILURES: ", Length[failures]];
 If[failures =!= {}, Print["FAILED_CHECKS: ", failures]]; Print["HEPCAT_TEST_COMPLETED:high-energy-source-normalization-tests.wl"]; Quit[If[failures === {}, 0, 1]];

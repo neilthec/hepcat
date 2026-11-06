@@ -1298,6 +1298,19 @@ Respect the specified theory and report insufficient correction spaces or
 unfixed directions honestly. The default bound remains the renormalizable
 tree hypothesis `E^(4-n)` and can be overridden.
 
+Large reference fits may separate the constant offset and original affine
+correction coordinates before coherent-spin collection. Require exact affine
+reconstruction and every coherent polynomial certificate. Recombine all columns
+of each reference difference before extracting its equations: do not constrain
+columns independently. The full original family must use the same reference
+baseline, generic spin assignment, seed and attempt order as the established
+route. A sufficient baseline certificate may skip whole-expression cancellation
+only after checking the supported arithmetic and every syntactic inverse base,
+including negative rational powers, for exact nonzero values. Unknown, singular
+or unsupported cases retain the original full-expression regularity check;
+nonfinite coefficient differences remain failures. This changes representation
+work, not the constraints, validation assignments or on-shell scope.
+
 Before interpreting free coefficients as missing physics, distinguish true
 correction freedom from identity-zero expressions. High-energy completion
 first tries ordinary external preparation, then a bounded symbolic rational
@@ -1469,6 +1482,14 @@ never deduplicate whole derivation histories just to estimate work. Resolve
 this finite allowance once before the core clock, preserving all explicit
 limits, correction caps, fit samples and held-out samples. Do not extend an
 expired child deadline dynamically or introduce a process-name clock override.
+For high-massive-spin tensors (at least 27 coherent components and a massive
+leg of degree at least two), reserve finite classification/held-out work in
+Construction and HighEnergy before declaring their clocks. The private policy
+records the applied reserve; explicit clocks receive none. The constructor
+needs two copies of this reserve, for the child proof/validation and for the
+wrapper's closing validation. Each copy is bounded; preserve all exact proofs,
+parameter assignments and independent checks. A completed chart fit is not a completed amplitude. Degree-one-only
+fermion sectors retain their established budgets.
 When certified identity-zero coordinates are removed, substitute zero for only
 those coordinates in the original family expression. Keep its factorization;
 rebuilding a center plus every derivative direction can needlessly duplicate
@@ -1510,6 +1531,20 @@ linear solve, provided every replacement replays exactly and every row and
 coordinate remains. Do not substitute floating-point tolerances, discard tiny
 exact entries, or infer zero from sampled evaluations. Unsupported work and
 exhausted normalization budgets retain the original route and all obligations.
+Before expanding derived model parameters in a large massive-vector identity,
+try a bounded proof with the original scalar parameters independent. This is a
+stronger identity, so only an exact zero certificate is usable. A failed raw
+proof must fall through to the declared-model identities, never establish that
+the model-constrained direction is nonzero. Preserve the original direction,
+ordinary external-only reduction replay and full coherent-spin certificate;
+the raw attempt shares the original proof deadline. It may group ordinary
+external-mass partners and clear rational denominators before the full coherent
+numerator proof. Separately certify that the cleared denominator is nonzero at
+one exact algebraic point of the same dense chart; this establishes a nonempty
+generic domain, never amplitude zero. Record that witness separately from the
+symbolic zero certificate. The raw prefix uses at most thirty seconds and half
+the original per-direction allowance; the declared-model fallback keeps the
+remaining time. No overall or stage deadline is extended.
 Retain the original proof form. Try cheap scalar grouping and bounded
 Schouten identities on that original before ordinary preparation; a form ranked
 best for display can be much harder to certify symbolically. Modest compact

@@ -182,7 +182,8 @@ arSM43Resource=Join[arGeneratedSourceMetrics,<|"Channels"->4,"ExpressionLeaves"-
   "LargestItemLeaves"->1306,"RetainedDirections"->0,"RetainedSourceRecords"->8,
   "RetainedSourceWorkLeaves"->8948*9|>];
 check["the measured 36-state SM source workload gets a bounded allowance commensurate with its pending family",
-  250<=arPolicy["HighEnergy",<|"TimeConstraint"->Automatic|>,arSM43Resource]["Settings"]["TimeConstraint"]<=350];
+  arPolicy["HighEnergy",<|"TimeConstraint"->Automatic|>,arSM43Resource]["Settings"]["TimeConstraint"]===442 &&
+    arPolicy["HighEnergy",<|"TimeConstraint"->Automatic|>,arSM43Resource]["ResourcePolicy"]["PostFitReserve"]===100];
 arSM71Resource=Join[arGeneratedSourceMetrics,<|"Channels"->3,"CoherentComponents"->81,
   "ExpressionLeaves"->15910,"LargestItemLeaves"->15910,"RetainedDirections"->0,
   "RetainedSourceRecords"->6,"RetainedSourceWorkLeaves"->46648*21|>];
@@ -561,6 +562,46 @@ check["factorization source measurement leaves caller models and reports unchang
  Hash[arSourceReport,"SHA256"]===arSourceReportHash &&
  arFactorMeasured["ExpressionLeaves"]===LeafCount[arSourceExpression]];
 
+(* Exact classification and held-out validation remain work after fitting. *)
+arVectorReservePolicy=arPolicy["HighEnergy",<|"TimeConstraint"->Automatic|>,arSM71Resource];
+check["four-vector automatic HE includes the measured finite post-fit reserve",
+ arVectorReservePolicy["ResourcePolicy"]["PostFitReserve"]===160 &&
+ arVectorReservePolicy["Settings"]["TimeConstraint"]===868];
+check["constructor and HE reserve classification and validation before their clocks begin",
+ arPolicy["Construction",<|"TimeConstraint"->Automatic|>,arConstructionVectors]["ResourcePolicy"]["PostFitReserve"]===320 &&
+ arPolicy["Construction",<|"TimeConstraint"->Automatic|>,arConstructionVectors]["Settings"]["TimeConstraint"]===1250];
+check["three-vector coherent work receives the same structural reserve rule",
+ arPolicy["HighEnergy",<|"TimeConstraint"->Automatic|>,arVectorMetrics]["ResourcePolicy"]["PostFitReserve"]===90];
+check["a 64-component degree-one-only tensor receives no new reserve",
+ AllTrue[{"Construction","HighEnergy"},arPolicy[#,<|"TimeConstraint"->Automatic|>,arFactorFermionMetrics]["ResourcePolicy"]["PostFitReserve"]===0&]];
+check["explicit clocks do not inherit an automatic post-fit reserve",
+ AllTrue[{"Construction","HighEnergy"},arPolicy[#,<|"TimeConstraint"->41/7|>,arConstructionVectors]["Settings"]["TimeConstraint"]===41/7 &&
+ arPolicy[#,<|"TimeConstraint"->41/7|>,arConstructionVectors]["ResourcePolicy"]["PostFitReserve"]===0&]];
+check["factorization retains its separate prefit deadline without the HE reserve",
+ arFactorResolved["ResourcePolicy"]["PostFitReserve"]===0 &&
+ arPolicy["Factorization",<|"TimeConstraint"->Automatic|>,arConstructionVectors]["ResourcePolicy"]["PostFitReserve"]===0];
+arThreeVectorTail=Join[arVectorMetrics,<|"Channels"->2,"RetainedDirections"->96,
+ "RetainedSourceRecords"->4,"RetainedDirectionLeaves"->152000|>];
+arThreeVectorOuter=Join[arConstructionVectors,<|"CoherentComponents"->27,
+ "CoherentSpinDegrees"-><|2->2,3->2,4->2|>|>];
+check["three-vector overall allowance leaves time after prefix and full HE child",
+ arPolicy["Construction",<|"TimeConstraint"->Automatic|>,arThreeVectorOuter]["Settings"]["TimeConstraint"]===900 &&
+ arPolicy["HighEnergy",<|"TimeConstraint"->Automatic|>,arThreeVectorTail]["Settings"]["TimeConstraint"]===733 &&
+ 900-78-733>0];
+arFourVectorTail=Join[arSM71Resource,<|"RetainedSourceRecords"->12|>];
+check["four-vector overall allowance leaves a separate final-check margin",
+ arPolicy["HighEnergy",<|"TimeConstraint"->Automatic|>,arFourVectorTail]["Settings"]["TimeConstraint"]===916 &&
+ arPolicy["Construction",<|"TimeConstraint"->Automatic|>,arConstructionVectors]["Settings"]["TimeConstraint"]-70-916>0];
+arHugeTensor=Join[arConstructionVectors,<|"ExternalParticles"->10,"CoherentComponents"->10^9|>];
+check["automatic post-fit reserves have a finite process-independent ceiling",
+ AllTrue[{"Construction","HighEnergy"},arPolicy[#,<|"TimeConstraint"->Automatic|>,arHugeTensor]["ResourcePolicy"]["PostFitReserve"]===If[#==="Construction",1800,900] &&
+ arFinite[arPolicy[#,<|"TimeConstraint"->Automatic|>,arHugeTensor]["Settings"]["TimeConstraint"]]&]];
+check["post-fit reservation does not change caps or sampling obligations",
+ KeyTake[arPolicy["HighEnergy",arFactorRequests,arConstructionVectors]["Settings"],
+  {"MaxCorrectionTerms","Samples","ValidationSamples","MaxRefinements"}]===
+ KeyTake[arPolicy["HighEnergy",Join[arFactorRequests,<|"TimeConstraint"->41/7|>],arConstructionVectors]["Settings"],
+  {"MaxCorrectionTerms","Samples","ValidationSamples","MaxRefinements"}]];
+
 arDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 2];
 arFactorModel = ReadModel[FileNameJoin[{root, "models"}], 3];
 arModelHashes = Hash[#, "SHA256"] & /@ {arDiagramModel, arFactorModel};
@@ -748,7 +789,7 @@ If[Environment["HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION"] === "1",
       AllTrue[arMixedReport["Checks"]["Checks"], #["Status"] === "PASS" &] &&
       arMixedReport["Checks"]["FeynmanCheck"]["Status"] === "PASS"],
   Print["SKIP: set HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION=1 for the full AllPhysical mixed six-point constructor regression."]];
-arExpected = 116 + If[Environment["HEPCAT_TEST_FULL_AUTOMATIC_CONSTRUCTION"] === "1", 2, 0] +
+arExpected = 126 + If[Environment["HEPCAT_TEST_FULL_AUTOMATIC_CONSTRUCTION"] === "1", 2, 0] +
   If[Environment["HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION"] === "1", 3, 0];
 If[checks =!= arExpected, AppendTo[failures, "Not every automatic-resource assertion executed."]];
 Print["AUTOMATIC RESOURCE CHECKS: ", checks, "; FAILURES: ", Length[failures]];

@@ -29,6 +29,7 @@ TEST_SUITES = (
     "high-energy-tests.wl", "high-energy-power-counting-tests.wl", "high-energy-family-tests.wl", "cubic-current-source-tests.wl",
     "high-energy-compact-retry-tests.wl", "five-point-identity-proof-tests.wl",
     "reference-independence-tests.wl",
+    "reference-affine-row-tests.wl",
     "coherent-polynomial-rules-tests.wl", "high-energy-coefficient-series-tests.wl",
     "high-energy-dispatch-tests.wl", "high-energy-laurent-rows-tests.wl",
     "high-energy-laurent-jet-tests.wl",

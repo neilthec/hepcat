@@ -7188,7 +7188,7 @@ amplitudeAutomaticTermCap[metrics_Association] := Module[
 amplitudeAutomaticSettings[stage_String, requested_Association, metrics_Association] := Module[
   {n = Lookup[metrics, "ExternalParticles", 4], leaves, itemLeaves, channels, retained,
    base, work, time, defaults, autoKeys, resolved, requestedResources, resourceKeys,
-   cap, ceiling, basisCount, sourceRecords, tensorWork},
+   cap, ceiling, basisCount, sourceRecords, tensorWork, postFitReserve},
   leaves = Max[1, Lookup[metrics, "ExpressionLeaves", 1]];
   If[stage === "HighEnergy", leaves = Max[leaves,
       Lookup[metrics, "RetainedDirectionLeaves", 0],
@@ -7210,6 +7210,17 @@ amplitudeAutomaticSettings[stage_String, requested_Association, metrics_Associat
     "HighEnergy", base + work + Min[600, 2 retained + 8 sourceRecords],
     "Checks", Min[900, Max[60, base/2] + work],
     _, base + work];
+  (* Chart fitting is not the end of a complete higher-spin calculation.
+     Reserve bounded time for exact affine classification and the unchanged
+     independent checks before declaring either stage or overall deadlines. *)
+  postFitReserve=If[MemberQ[{"Construction","HighEnergy"},stage] &&
+      Lookup[metrics,"CoherentComponents",1]>=27 &&
+      AnyTrue[Values[Lookup[metrics,"CoherentSpinDegrees",<||>]],TrueQ[#>=2]&],
+    Min[900,Max[60,base/2]+tensorWork],0];
+  (* The wrapper must also close with its own independent final check after
+     the HE child returns. Reserve both phases in the overall clock. *)
+  postFitReserve=If[stage==="Construction",2 postFitReserve,postFitReserve];
+  time=time+postFitReserve;
   cap = amplitudeAutomaticTermCap[metrics]; ceiling = If[n < 6, 1024, 2048];
   defaults = <|"TimeConstraint" -> time, "MaxCorrectionTerms" -> cap,
     "MaxSteps" -> 0, "Samples" -> amplitudeAutomaticFitSamples[metrics],
@@ -7226,6 +7237,9 @@ amplitudeAutomaticSettings[stage_String, requested_Association, metrics_Associat
       "AutomaticOptions" -> autoKeys, "CorrectionTermCeiling" -> ceiling,
       "BasisExceedsAutomaticCeiling" -> (basisCount > ceiling || retained > ceiling),
       "ValidationSamplesReduced" -> False,
+      "PostFitReserveEstimate"->postFitReserve,
+      "PostFitReserve"->If[MemberQ[autoKeys,"TimeConstraint"],postFitReserve,0],
+      "ReserveResolutionPhase"->"BeforeStageAndOverallDeadlines",
       "Scope" -> "LightweightFiniteResourceHeuristicWithUnchangedExplicitOverrides"|>|>
 ];
 
@@ -16725,14 +16739,107 @@ completionHESpuriousConstraints[trial_, unknowns_List, normalized_Association,
     "Diagnostics" -> {}|>
 ]];
 
+(* Separate the affine correction coordinates before collecting coherent spin
+   monomials. Every column keeps its original coefficient; reference differences
+   are still recombined into one coupled equation for each spin monomial. *)
+completionHEReferenceAffineSpinCoefficients[mapped_, unknowns_List,
+    spinVariables_List, seconds_: 10] := Module[
+  {work, failure, tag = Unique["referenceAffineSpin"]},
+  failure[reason_] := <|"Status" -> "UNRESOLVED", "Reason" -> reason,
+    "FullCoefficientCoverage" -> False, "ReconstructionVerified" -> False|>;
+  If[unknowns === {} || !DuplicateFreeQ[unknowns] ||
+      !AllTrue[unknowns, MatchQ[#, _Symbol] &] ||
+      !FreeQ[spinVariables, Alternatives @@ unknowns] ||
+      !residueFiniteQ[mapped], Return[failure["UnsupportedAffineInput"]]];
+  work[] := Catch[Module[
+    {arrays, parts, replay, polynomials, coefficientSets, powers, vectors, value},
+    arrays = Quiet[Check[CoefficientArrays[mapped, unknowns], $Failed]];
+    If[!ListQ[arrays] || Length[arrays] > 2 || arrays === {},
+      Throw[failure["NonAffineCorrectionDependence"], tag]];
+    parts = If[Length[arrays] === 1,
+      Prepend[ConstantArray[0, Length[unknowns]], First[arrays]],
+      Prepend[Normal[arrays[[2]]], First[arrays]]];
+    If[Length[parts] =!= Length[unknowns] + 1 ||
+        !AllTrue[parts, residueFiniteQ[#] && FreeQ[#, Alternatives @@ unknowns] &],
+      Throw[failure["UnsupportedAffineCoefficients"], tag]];
+    replay = Quiet[Check[CoefficientArrays[
+      mapped - Prepend[unknowns, 1].parts, unknowns], $Failed]];
+    If[!ListQ[replay] || !AllTrue[Flatten[Normal /@ replay], residueExactZero],
+      Throw[failure["AffineReconstructionNotVerified"], tag]];
+    polynomials = amplitudeCoherentPolynomialRules[#, spinVariables, seconds] & /@ parts;
+    If[!AllTrue[polynomials, AssociationQ[#] && Lookup[#, "Status", None] === "COMPLETE" &&
+        TrueQ[Lookup[#, "FullCoefficientCoverage", False]] &&
+        TrueQ[Lookup[#, "ReconstructionVerified", False]] &],
+      Throw[failure["IncompleteCoherentPolynomial"], tag]];
+    coefficientSets = Association[#["CoefficientRules"]] & /@ polynomials;
+    powers = Union[Flatten[(First /@ #["CoefficientRules"] &) /@ polynomials, 1]];
+    vectors = Map[Function[power, power -> Map[Function[coefficients,
+      If[KeyExistsQ[coefficients, power], coefficients[power], 0]], coefficientSets]], powers];
+    <|"Status" -> "COMPLETE", "CoefficientVectors" -> vectors,
+      "AffineVariables" -> unknowns, "AffinePartCount" -> Length[parts],
+      "CoherentComponentCount" -> Length[powers], "FullCoefficientCoverage" -> True,
+      "ReconstructionVerified" -> True, "AffineReconstructionMethod" -> "ExactCoefficientArraysReplay",
+      "CoherentReconstructionMethod" -> "ExactOpaqueScalarPolynomialArithmetic",
+      "UnknownDegreeAtMostOne" -> True, "CoupledCorrectionCoordinates" -> True,
+      "InternalOnShellConditions" -> {}|>
+  ], tag];
+  TimeConstrained[MemoryConstrained[work[], 536870912,
+    failure["AffinePolynomialMemoryLimit"]], seconds, failure["AffinePolynomialTimeLimit"]]
+];
+
+(* This is a sufficient regularity certificate for the ORIGINAL full
+   expression, not a different reference baseline. Every syntactic inverse
+   base must be nonzero; uncertain cases keep the original full check. *)
+completionHEReferenceArithmeticDomain[mapped_, allowed_List] := Module[
+  {atoms, invalidHeads, invalidPowers, bases},
+  If[!residueFiniteQ[mapped] || !DuplicateFreeQ[allowed] ||
+      !AllTrue[allowed, MatchQ[#, _Symbol] &],
+    Return[<|"Status" -> "NOT_CERTIFIED", "Reason" -> "UnsupportedArithmeticInput"|>]];
+  atoms = DeleteDuplicates[Cases[mapped, _?AtomQ, {0, Infinity}]];
+  If[!AllTrue[atoms, NumberQ[#] || MemberQ[allowed, #] &],
+    Return[<|"Status" -> "NOT_CERTIFIED", "Reason" -> "UnsupportedArithmeticAtom"|>]];
+  invalidHeads = Cases[mapped,
+    head_[___] /; !MemberQ[{Plus, Times, Power, Rational, Complex}, head], {0, Infinity}, 1];
+  invalidPowers = Cases[mapped, Power[_, exponent_] /;
+    !MatchQ[exponent, _Integer | _Rational], {0, Infinity}, 1];
+  If[invalidHeads =!= {} || invalidPowers =!= {},
+    Return[<|"Status" -> "NOT_CERTIFIED", "Reason" -> "UnsupportedArithmeticOperation"|>]];
+  bases = DeleteDuplicates[Cases[mapped, Power[base_, exponent_] /;
+    MatchQ[exponent, _Integer | _Rational] && exponent < 0 :> base, {0, Infinity}]];
+  <|"Status" -> "CERTIFIED", "InverseBases" -> bases,
+    "FullExpressionArithmeticVerified" -> True,
+    "AllowedSymbols" -> allowed, "NegativeRationalPowersIncluded" -> True|>
+];
+
+completionHEReferenceRegularBaseline[domain_Association, baselineRules_List,
+    genericSpinRules_List] := Module[{values, states},
+  If[Lookup[domain, "Status", None] =!= "CERTIFIED" ||
+      !TrueQ[Lookup[domain, "FullExpressionArithmeticVerified", False]] ||
+      !TrueQ[Lookup[domain, "NegativeRationalPowersIncluded", False]] ||
+      !ListQ[Lookup[domain, "InverseBases", None]],
+    Return[<|"Status" -> "NOT_CERTIFIED"|>]];
+  values = domain["InverseBases"] /. baselineRules /. genericSpinRules;
+  If[!AllTrue[values, NumericQ[#] && residueFiniteQ[#] &],
+    Return[<|"Status" -> "NOT_CERTIFIED", "Reason" -> "UnresolvedInverseBase"|>]];
+  states = highEnergyZeroState /@ values;
+  If[!AllTrue[states, # === "Nonzero" &],
+    Return[<|"Status" -> "NOT_CERTIFIED", "Reason" -> "UnprovedNonzeroInverseBase"|>]];
+  <|"Status" -> "PROVED_REGULAR", "Method" -> "EveryOriginalSyntacticInverseBaseNonzero",
+    "FullExpressionArithmeticVerified" -> True, "InverseBases" -> domain["InverseBases"],
+    "ExactBaseValues" -> values, "ExactNonzeroStates" -> states,
+    "SameFullExpressionBaseline" -> True, "InternalOnShellConditions" -> {}|>
+];
+
 (* Generate linear equations directly. Classifying coefficients containing
    unsolved correction parameters would repeat expensive algebraic-number
    reductions only to conclude that those parameters are still unknown. *)
 completionHEReferenceRows[trial_, chart_Association, references_List,
-    sample_Integer, seed_Integer, rules_List] := BlockRandom[Catch[Module[
+    sample_Integer, seed_Integer, rules_List, unknowns_List: {}] := BlockRandom[Catch[Module[
   {coordinates, referenceVariables, symbolicChart, mapped, spinVariables,
    spinComponents, assignments, baselineRules, baselinePoint, genericSpin,
-   found = False, rows = {}, coefficients, differences = {}},
+   found = False, rows = {}, coefficients, differences = {}, affine = Missing["NotRequested"],
+   affineRoute = False, referencePattern, differenceVector,
+   baselineDomain = Missing["OriginalRoute"], baselineRegularity = Missing["OriginalRoute"]},
   coordinates = Association[(# -> Table[Unique["completionReference"], {4}]) & /@ references];
   referenceVariables = Flatten[Values[coordinates]];
   symbolicChart = Join[chart, <|"ReferenceOverrides" -> referenceOverrideVectors[coordinates]|>];
@@ -16741,21 +16848,43 @@ completionHEReferenceRows[trial_, chart_Association, references_List,
   If[!residueFiniteQ[mapped] || residueUnmappedQ[mapped] ||
       (spinVariables =!= {} && !PolynomialQ[mapped, spinVariables]),
     Return[Failure["UnsupportedReferenceSpinPolynomial", <||>]]];
-  spinComponents = If[spinVariables === {}, {{} -> mapped},
-    CoefficientRules[mapped, spinVariables]];
+  If[Length[unknowns] >= 16 && LeafCount[mapped] >= 5000,
+    affine = completionHEReferenceAffineSpinCoefficients[mapped, unknowns, spinVariables, 10];
+    affineRoute = AssociationQ[affine] && Lookup[affine, "Status", None] === "COMPLETE" &&
+      TrueQ[Lookup[affine, "FullCoefficientCoverage", False]] &&
+      TrueQ[Lookup[affine, "ReconstructionVerified", False]]];
+  spinComponents = If[TrueQ[affineRoute], affine["CoefficientVectors"],
+    If[spinVariables === {}, {{} -> mapped}, CoefficientRules[mapped, spinVariables]]];
+  If[TrueQ[affineRoute],
+    baselineDomain = TimeConstrained[completionHEReferenceArithmeticDomain[mapped,
+      Join[unknowns, referenceVariables, spinVariables]], 2, Missing["BaselineDomainTimeLimit"]]];
   Do[
     SeedRandom[Hash[{seed, sample, attempt, "ReferenceBaseline"}, "CRC32"]];
     assignments = Association[(# -> RandomChoice[DeleteCases[Range[-7, 7], 0], 4]) & /@ references];
     baselineRules = Thread[referenceVariables -> Flatten[Values[assignments]]];
     genericSpin = Thread[spinVariables -> Range[Length[spinVariables]]];
+    If[AssociationQ[baselineDomain],
+      baselineRegularity = TimeConstrained[completionHEReferenceRegularBaseline[
+        baselineDomain, baselineRules, genericSpin], 2, Missing["BaselineCertificateTimeLimit"]];
+      If[AssociationQ[baselineRegularity] &&
+          Lookup[baselineRegularity, "Status", None] === "PROVED_REGULAR",
+        found = True; Break[]]];
+    baselineRegularity = Missing["OriginalFullBaselineCheck"];
     baselinePoint = Quiet[Check[Cancel[Together[mapped /. baselineRules /. genericSpin]], $Failed]];
     If[residueFiniteQ[baselinePoint] &&
         highEnergyZeroState[Denominator[baselinePoint]] === "Nonzero",
       found = True; Break[]], {attempt, 0, 5}];
   If[!found, Return[Failure["NoRegularReferenceBaseline", <||>]]];
+  referencePattern = Alternatives @@ referenceVariables;
   Do[
-    coefficients = completionHEPolynomialRows[
-      Last[component] - (Last[component] /. baselineRules), referenceVariables];
+    coefficients = If[TrueQ[affineRoute],
+      differenceVector = Map[If[FreeQ[#, referencePattern], 0,
+        Cancel[Together[# - (# /. baselineRules)]]] &, Last[component]];
+      (* The scalar simplifications above are ordinary identities. Never turn
+         the columns into separate constraints: their cancellations matter. *)
+      completionHEPolynomialRows[Prepend[unknowns, 1].differenceVector, referenceVariables],
+      completionHEPolynomialRows[
+        Last[component] - (Last[component] /. baselineRules), referenceVariables]];
     If[FailureQ[coefficients], Throw[coefficients]];
     (* Exact algebraic zero tests and row reduction belong to the common
        linear solver, after the unknown coefficients have been separated. *)
@@ -16767,7 +16896,10 @@ completionHEReferenceRows[trial_, chart_Association, references_List,
     "Chart" -> chart, "ReferenceCoordinates" -> coordinates,
     "BaselineAssignments" -> assignments, "SpinVariables" -> spinVariables,
     "SpinComponents" -> differences, "EquationCount" -> Length[rows],
-    "Method" -> "ExactReferenceDifferenceBySpinComponent"|>
+    "Method" -> "ExactReferenceDifferenceBySpinComponent",
+    "CoefficientExtraction" -> If[TrueQ[affineRoute],
+      KeyDrop[affine, "CoefficientVectors"], <|"Method" -> "OriginalWholeSpinPolynomial"|>],
+    "BaselineRegularityCertificate" -> baselineRegularity|>
 ]]];
 
 (* Reference independence is an algebraic condition on external on-shell
@@ -16822,7 +16954,7 @@ completionHEReferenceConstraints[trial_, unknowns_List, normalized_Association,
     If[!referencePhysicalGenericQ[chart, Lookup[normalized, "Targets", {}], rules],
       Throw[<|"Status" -> "UNRESOLVED", "Equations" -> rows, "Samples" -> charts,
         "Diagnostics" -> {"A reference constraint sample lies on a physical pole."}|>]];
-    sampleData = completionHEReferenceRows[trial, chart, references, sample, seed, rules];
+    sampleData = completionHEReferenceRows[trial, chart, references, sample, seed, rules, unknowns];
     If[FailureQ[sampleData], Throw[<|"Status" -> "UNRESOLVED",
       "Equations" -> rows, "Samples" -> charts,
       "Diagnostics" -> {sampleData}|>]];
@@ -17590,6 +17722,81 @@ completionHEReferenceIdentityCertificate[expression_, rules_List, seconds_] := M
     <|"ElapsedTime" -> AbsoluteTime[] - started|>]
 ];
 
+(* A nonzero value at one exact point proves that a cleared denominator is not
+   identically zero on this same dense chart. It never proves amplitude zero. *)
+completionHERawDenominatorWitness[denominator_, chart_Association, seconds_] := Module[
+  {mapped, patches, parameters, placeholders, forward, backward, scalar, scalarPatches,
+   variables, assignment, value, patchValues, result = Missing["UncertifiedClearedDenominator"]},
+  If[!TrueQ[seconds > 0] || !TrueQ[Lookup[chart, "ExternalMassShellsValidated", False]] ||
+      !TrueQ[Lookup[chart, "MomentumConservationValidated", False]], Return[result]];
+  TimeConstrained[
+    mapped = spuriousEvaluateCurve[denominator, chart, {}];
+    If[!residueFiniteQ[mapped] || residueUnmappedQ[mapped] || !FreeQ[mapped, _Real], Return[result]];
+    patches = DeleteDuplicates[Join[DeleteCases[Values[chart["Masses"]], 0],
+      Denominator[Together[#]] & /@ Flatten[Values /@ Lookup[chart,
+        {"Momenta", "AngleBasis", "SquareBasis"}, <||>]]]];
+    parameters = DeleteDuplicates[Cases[{mapped, patches}, _ModelParameter, {0, Infinity}]];
+    placeholders = Table[Unique["rawDenominatorParameter"], {Length[parameters]}];
+    forward = Thread[parameters -> placeholders]; backward = Thread[placeholders -> parameters];
+    scalar = mapped /. forward; scalarPatches = patches /. forward;
+    variables = DeleteDuplicates[Cases[{scalar, scalarPatches}, symbol_Symbol /; Context[symbol] =!= "System`", {0, Infinity}]];
+    Do[
+      assignment = Thread[variables -> Table[offset + index, {index, Length[variables]}]];
+      value = scalar /. assignment;
+      If[NumericQ[value] && FreeQ[value, _Real] && residueFiniteQ[value],
+        value = RootReduce[value]; patchValues = scalarPatches /. assignment;
+        If[AllTrue[patchValues, NumericQ[#] && FreeQ[#, _Real] && residueFiniteQ[#] &],
+          patchValues = RootReduce /@ patchValues,
+          patchValues = {0}];
+        If[TrueQ[Element[value, Algebraics]] && value =!= 0 &&
+            AllTrue[patchValues, TrueQ[Element[#, Algebraics]] && # =!= 0 &],
+          result = <|"Status" -> "PROVED_NONZERO", "Method" -> "ExactAlgebraicNonzeroWitness",
+            "Denominator" -> denominator, "MappedDenominator" -> mapped,
+            "ExactWitnessRules" -> (assignment /. backward), "ExactWitnessValue" -> value,
+            "ChartDomainExpressions" -> patches, "ExactDomainValues" -> patchValues,
+            "WitnessOnDenseChartDomain" -> True,
+            "Purpose" -> "NonemptyGenericDenominatorDomainOnly", "AmplitudeZeroSamples" -> 0,
+            "ModelDefinitionsUsed" -> {}, "InternalOnShellConditions" -> {}|>; Break[]]],
+      {offset, 1, 3}], seconds, Null]; result
+];
+
+completionHERawParameterIdentityProof[expression_, rules_List, model_List, seconds_] := Module[
+  {started = AbsoluteTime[], left, reduction, candidate = expression, fraction, replay,
+   proof, chart, denominatorProof, result},
+  left[] := Max[0.000001, seconds - (AbsoluteTime[] - started)];
+  result = <|"Status" -> "NOT_PROVED", "Method" -> "RawParameterProofTimeConstraint"|>;
+  If[!TrueQ[seconds > 0] || !completionHECovariantScalarQ[expression,
+      Sort[Cases[rules, HoldPattern[Mass[leg_Integer] -> _] :> leg]]] ||
+      !completionHEMasslessHelicityTagsQ[expression, rules], Return[result]];
+  TimeConstrained[
+    reduction = completionHEOrdinarySourceColumn[expression, rules, Min[5, left[]/6]];
+    If[AssociationQ[reduction] && TrueQ[Lookup[reduction, "ExactFormalRegrouping", False]],
+      candidate = reduction["Expression"]];
+    fraction = TimeConstrained[Together[candidate], Min[2, left[]/8], $Failed];
+    If[fraction === $Failed || !residueFiniteQ[fraction], Return[result]];
+    replay = TimeConstrained[TrueQ[Together[candidate - fraction] === 0], Min[2, left[]/8], False];
+    If[!replay, Return[result]];
+    proof = Block[{$completionHEKeepRawModelParameters = True},
+      completionHEZeroDirection[Numerator[fraction], rules, model, Max[0.000001, left[] - 2]]];
+    If[Lookup[proof, "Status", None] =!= "PROVED_ZERO", Return[proof]];
+    chart = Lookup[proof, "Chart", Missing["NoChart"]];
+    If[!AssociationQ[chart], chart = completionHESymbolicExternalChart[rules]];
+    If[!AssociationQ[chart], Return[result]];
+    denominatorProof = completionHERawDenominatorWitness[Denominator[fraction], chart, Min[2, left[]]];
+    If[!AssociationQ[denominatorProof] || Lookup[denominatorProof, "Status", None] =!= "PROVED_NONZERO",
+      Return[<|"Status" -> "NOT_PROVED", "Method" -> "UncertifiedClearedDenominator"|>]];
+    result = Join[proof, <|"RawModelParameterProof" -> <|
+      "OriginalExpression" -> expression, "GroupedExpression" -> candidate,
+      "ProofExpression" -> Numerator[fraction], "ClearedDenominator" -> Denominator[fraction],
+      "ExactRationalRegrouping" -> replay, "DenominatorNonzeroCertificate" -> denominatorProof,
+      "OrdinaryReduction" -> If[AssociationQ[reduction], KeyDrop[reduction, "Expression"], reduction],
+      "IndependentScalarParameters" -> True, "ModelDefinitionsUsed" -> {},
+      "NumericalParameterAssignments" -> {}, "InternalOnShellConditions" -> {},
+      "RemovalRequiresIndependentExactZeroCertificate" -> True|>,
+      "InternalOnShellConditions" -> {}, "ElapsedTime" -> AbsoluteTime[] - started|>],
+    seconds, Null]; result
+];
+
 completionHEZeroDirection[expression_, rules_List, model_List, seconds_] := Module[
   {started = AbsoluteTime[], candidate = expression, prepared, result,
    unsupported, remaining, ordinaryBudget, weights, grouped, work, symbolicProof,
@@ -17597,12 +17804,29 @@ completionHEZeroDirection[expression_, rules_List, model_List, seconds_] := Modu
    compactStarted, compactBudget, compactLeft, compactValue, compactRecord,
    earlyCompacted = False, earlyBudget, earlyStarted, earlyBefore,
    compactRetry = Missing["NotRequested"], modelExpression, modelRules, modelProof, referenceProof,
-   ordinarySource, ordinarySourceProof, ordinarySourceBudget},
+   ordinarySource, ordinarySourceProof, ordinarySourceBudget, rawWeights, rawCoherentWork,
+   rawProof = Missing["NotAttempted"], rawBudget},
   If[residueExactZero[expression], Return[<|"Status" -> "PROVED_ZERO",
     "Method" -> "ExactRationalAlgebra", "InternalOnShellConditions" -> {},
     "ElapsedTime" -> (AbsoluteTime[] - started)|>]];
-  modelExpression = modelExpandParameterDefinitions[expression, model];
+  modelExpression = If[TrueQ[$completionHEKeepRawModelParameters], expression,
+    modelExpandParameterDefinitions[expression, model]];
   If[!FailureQ[modelExpression] && modelExpression =!= expression,
+    (* Model identities are a fallback. First try the stronger ordinary
+       identity with every scalar model parameter still independent. Expanding
+       dependent masses too early can introduce avoidable radical fields. *)
+    rawWeights = completionExternalSpinWeights[expression, rules];
+    If[ListQ[rawWeights] &&
+        Length[rawWeights] === Length[Cases[rules, HoldPattern[Mass[_Integer] -> _]]],
+      rawCoherentWork = Times @@ MapThread[
+        If[TrueQ[(Mass[#1] /. rules) === 0], 1, 1 + Max[0, #2]] &,
+        {Sort[Cases[rules, HoldPattern[Mass[i_Integer] -> _] :> i]], rawWeights}];
+      If[completionHEOrdinaryProofEligibleQ[expression, rules, rawWeights, rawCoherentWork] &&
+          seconds - (AbsoluteTime[] - started) > 3,
+        rawBudget = Min[30, (seconds - (AbsoluteTime[] - started))/2];
+        rawProof = completionHERawParameterIdentityProof[expression, rules, model, rawBudget];
+        If[Lookup[rawProof, "Status", None] === "PROVED_ZERO",
+          Return[Join[rawProof, <|"ElapsedTime" -> AbsoluteTime[] - started|>]]]]];
     modelRules = modelExpandParameterDefinitions[rules, model];
     If[!FailureQ[modelRules],
       modelProof = completionHEZeroDirection[modelExpression, modelRules, model,
@@ -17611,6 +17835,8 @@ completionHEZeroDirection[expression_, rules_List, model_List, seconds_] := Modu
         "Definitions" -> (First[#] -> #[[2]] & /@ model[[4]]),
         "OriginalExpression" -> expression, "ExpandedExpression" -> modelExpression,
         "NumericalParameterAssignments" -> {}, "InternalOnShellConditions" -> {}|>,
+        "RawParameterProofAttempt" -> If[AssociationQ[rawProof],
+          KeyTake[rawProof, {"Status", "Method", "ElapsedTime"}], rawProof],
         "ElapsedTime" -> (AbsoluteTime[] - started)|>]]]];
   If[!FreeQ[expression, Spinor["Xi", ___]],
     referenceProof = completionHEReferenceIdentityCertificate[expression, rules,
@@ -17767,7 +17993,8 @@ completionHEZeroDirection[expression_, rules_List, model_List, seconds_] := Modu
        retain every propagator off shell and do not require a full public
        preparation report, identity search or any internal-shell condition. *)
     If[compactEligible && remaining[] > 2,
-      earlyStarted = AbsoluteTime[]; earlyBudget = Min[4, remaining[]/8];
+      earlyStarted = AbsoluteTime[];
+      earlyBudget = Min[4, remaining[]/If[TrueQ[$completionHEKeepRawModelParameters], 4, 8]];
       compactRetry = <|"Status" -> "UNCHANGED", "Input" -> candidate,
         "Amplitude" -> candidate, "Route" -> {}, "CoherentComponentEstimate" -> coherentWork,
         "NumericalKinematicSamples" -> 0, "InternalOnShellConditions" -> {}|>;
@@ -19229,12 +19456,34 @@ completionHEMaterializedBasisAdmission[basis_List,inherited_List,limit_Integer,c
     "BasisReduction"->"ExactFormalLinearDependenceOnly"|>]
 ];
 
+(* Classify exact scalar-arithmetic redundancies before the more expensive
+   ordinary-identity portfolio. Retain the ORIGINAL solved family and each
+   actual derivative; differentiating an already fixed final point is not a
+   certificate for a discarded coordinate. *)
+completionHEExactDerivativeClassification[family_, parameters_List] := Module[
+  {kept={},removed={},certificates={},derivative,reduced},
+  Do[
+    derivative=D[family,parameter];
+    reduced=Quiet[Check[Cancel[Together[derivative]],$Failed]];
+    If[TrueQ[reduced===0],AppendTo[removed,parameter];
+      AppendTo[certificates,<|"Status"->"PROVED_ZERO","Parameter"->parameter,
+        "Method"->"ExactRationalDerivativeZero","DerivativeWitness"->derivative,
+        "ExactRationalDerivative"->0,"NumericalParameterAssignments"->{},
+        "NumericalKinematicSamples"->0,"InternalOnShellConditions"->{}|>],
+      AppendTo[kept,parameter]],{parameter,parameters}];
+  Join[<|"Method"->"ExactRationalAffineDerivativeClassification",
+    "OriginalFreeParameters"->parameters,"FreeParameters"->kept,
+    "RemovedParameters"->removed,"Certificates"->certificates,
+    "InternalOnShellConditions"->{},"NumericalParameterAssignments"->{}|>,
+    If[removed==={},<||>,<|"OriginalSolvedFamilyWitness"->family|>]]
+];
+
 completionHighEnergyWork[input_, channels_List, model_List, settings_Association,
     normalized_Association, retain_] := Module[
   {original = normalized["Expression"], metadata, before, basis, inheritedBasis,
    inheritedParameters, unknowns, trial, extra, bound, physical, energy,
    physicalSolution, physicalCandidate, spurious, reference, groups,
-   equations, solution, family, free, candidate,
+   equations, solution, family, free, candidate, exactDerivativeClassification,
    validation, validations, familyValidations = {}, familyValid = True,
    fitSamples = settings["Samples"], ruleSets, status, diagnostics = {}, callback = settings["ProgressFunction"],
    enabled = settings["ProgressReporting"], report, exchangePlan, familyReduction,
@@ -19480,8 +19729,15 @@ completionHighEnergyWork[input_, channels_List, model_List, settings_Association
       "No supported simultaneous correction was established within this bounded family."},
       Lookup[solution, "Diagnostics", {}]]|>]]];
   family = trial /. solution["SolutionRules"];
-  free = Select[Lookup[solution, "FreeParameters", {}],
-    !residueExactZero[D[family, #]] &];
+  exactDerivativeClassification=completionHEExactDerivativeClassification[
+    family,Lookup[solution,"FreeParameters",{}]];
+  free=exactDerivativeClassification["FreeParameters"];
+  If[exactDerivativeClassification["RemovedParameters"]=!={},
+    exactDerivativeClassification=Join[exactDerivativeClassification,<|
+      "OriginalTrialWitness"->trial,"OriginalCoordinates"->unknowns,
+      "SolutionRules"->solution["SolutionRules"]|>];
+    family=family/.Thread[exactDerivativeClassification["RemovedParameters"]->0];
+    report=Join[report,<|"ExactDerivativeZeroClassification"->exactDerivativeClassification|>]];
   If[free =!= {},
     familyReduction = completionHEPruneIdentityFamily[family, free,
       normalized["ExternalMassRules"], proofModel, Min[Max[30, 10 Length[free]], settings["TimeConstraint"]/2],
@@ -19787,9 +20043,45 @@ constructPreparedFamily[report_Association, pair_List] := Module[
    child status remains UNRESOLVED. Use the recorded fit parameter assignments
    and the original independent seeds; resolving a full numerical parameter
    list again would freeze primitive variations and silently drop tests. *)
+constructRetainedExactDerivativeClassification[h_Association, oldFree_List] := Module[
+  {data,removed,certificates,linear,rules,coordinates,witness,trial,derivative,matching,
+   verified,tag=Unique["exactDerivativeReplay"]},
+  If[!KeyExistsQ[h,"ExactDerivativeZeroClassification"],
+    Return[<|"RemovedParameters"->{},"Certificates"->{}|>]];
+  data=h["ExactDerivativeZeroClassification"];linear=Lookup[h,"LinearSystem",<||>];
+  If[!AssociationQ[data] || !AssociationQ[linear],Return[$Failed]];
+  removed=Lookup[data,"RemovedParameters",None];certificates=Lookup[data,"Certificates",None];
+  rules=Lookup[linear,"SolutionRules",None];coordinates=Lookup[data,"OriginalCoordinates",None];
+  If[!ListQ[removed] || removed==={} || !DuplicateFreeQ[removed] ||
+      !ContainsAll[oldFree,removed] || !ListQ[certificates] ||
+      Lookup[data,"OriginalFreeParameters",None]=!=oldFree ||
+      !ListQ[rules] || Lookup[data,"SolutionRules",None]=!=rules ||
+      !ListQ[coordinates] || !DuplicateFreeQ[coordinates] || !ContainsAll[coordinates,oldFree] ||
+      !KeyExistsQ[data,"OriginalSolvedFamilyWitness"] || !KeyExistsQ[data,"OriginalTrialWitness"] ||
+      Lookup[data,"InternalOnShellConditions",None]=!={} ||
+      Lookup[data,"NumericalParameterAssignments",None]=!={},Return[$Failed]];
+  trial=data["OriginalTrialWitness"];witness=data["OriginalSolvedFamilyWitness"];
+  If[!residueFiniteQ[{trial,witness}] || !SameQ[trial/.rules,witness],Return[$Failed]];
+  verified=Catch[Do[
+    matching=Select[certificates,AssociationQ[#] && Lookup[#,"Parameter",None]===parameter&];
+    If[Length[matching]=!=1,Throw[False,tag]];
+    matching=First[matching];derivative=D[witness,parameter];
+    If[Lookup[matching,"Status",None]=!="PROVED_ZERO" ||
+        Lookup[matching,"Method",None]=!="ExactRationalDerivativeZero" ||
+        !KeyExistsQ[matching,"DerivativeWitness"] ||
+        !SameQ[derivative,matching["DerivativeWitness"]] ||
+        Lookup[matching,"ExactRationalDerivative",None]=!=0 ||
+        Lookup[matching,"InternalOnShellConditions",None]=!={} ||
+        Lookup[matching,"NumericalParameterAssignments",None]=!={} ||
+        !residueExactZero[derivative],Throw[False,tag]],{parameter,removed}];True,tag];
+  If[!TrueQ[verified],Return[$Failed]];
+  data
+];
+
 constructRetainedHighEnergyCheckpoint[h_] := Module[
  {deny,policy,requested,resolved,groups,names={"Physical","HighEnergy","Spurious","Reference"},
-  assignments,sets,linear,oldFree,prune,removed,certificates,knownChecks,failed},
+  assignments,sets,linear,oldFree,prune,removed,certificates,knownChecks,failed,
+  exactClassification,exactRemoved,allRemoved,witness},
  deny[reason_] := Failure["RetainedHECheckpointNotAdmitted",<|"Reason"->reason|>];
  If[!AssociationQ[h] || Lookup[h,"Stage",None]=!="HighEnergy" ||
     Lookup[h,"Status",None]=!="UNRESOLVED",Return[deny["NotUnresolvedHighEnergyStage"]]];
@@ -19818,14 +20110,26 @@ constructRetainedHighEnergyCheckpoint[h_] := Module[
  If[!AssociationQ[linear] || !MemberQ[{"COMPLETE","UNDERDETERMINED"},Lookup[linear,"Status",None]] ||
     !ListQ[oldFree],Return[deny["NoSolvedExactLinearSystem"]]];
  If[oldFree=!={},
+   exactClassification=constructRetainedExactDerivativeClassification[h,oldFree];
+   If[exactClassification===$Failed,Return[deny["UnclassifiedOrUnprovedRemainingCoordinate"]]];
+   exactRemoved=exactClassification["RemovedParameters"];
    prune=Lookup[h,"SolvedFamilyIdentityReduction",<||>];removed=Lookup[prune,"RemovedParameters",{}];
    certificates=Lookup[prune,"Certificates",{}];
-   If[!TrueQ[Lookup[prune,"AffineFamily",False]] || Lookup[prune,"FreeParameters",None]=!={} ||
-      Sort[removed]=!=Sort[oldFree] || !TrueQ[Lookup[Lookup[prune,"FamilyRepresentationCertificate",<||>],
+   If[!ListQ[removed] || !ListQ[certificates] || Intersection[removed,exactRemoved]=!={},
+     Return[deny["UnclassifiedOrUnprovedRemainingCoordinate"]]];
+   allRemoved=Join[removed,exactRemoved];
+   If[Sort[allRemoved]=!=Sort[oldFree],Return[deny["UnclassifiedOrUnprovedRemainingCoordinate"]]];
+   If[removed=!={} && (!TrueQ[Lookup[prune,"AffineFamily",False]] ||
+      Lookup[prune,"FreeParameters",None]=!={} ||
+      !TrueQ[Lookup[Lookup[prune,"FamilyRepresentationCertificate",<||>],
        "OnlyCertifiedZeroDirectionsRemoved",False]] ||
-      !AllTrue[oldFree,Function[parameter,AnyTrue[certificates,
+      !AllTrue[removed,Function[parameter,AnyTrue[certificates,
         AssociationQ[#]&&Lookup[#,"Parameter",None]===parameter&&Lookup[#,"Status",None]==="PROVED_ZERO"&&
-        Lookup[#,"InternalOnShellConditions",None]==={}&]]],Return[deny["UnclassifiedOrUnprovedRemainingCoordinate"]]]];
+        Lookup[#,"InternalOnShellConditions",None]==={}&]]]),Return[deny["UnclassifiedOrUnprovedRemainingCoordinate"]]];
+   If[exactRemoved=!={},
+     witness=exactClassification["OriginalSolvedFamilyWitness"];
+     If[!SameQ[witness/.Thread[allRemoved->0],h["FamilyAmplitude"]],
+       Return[deny["UnclassifiedOrUnprovedRemainingCoordinate"]]]]];
  knownChecks=KeyTake[h,{"AfterReport","ValidationReports","FamilyValidation"}];
  failed=Cases[knownChecks,a_Association /; MemberQ[{"FAIL","Opp Sign"},Lookup[a,"Status",None]],Infinity];
  If[failed=!={},Return[deny["KnownFailedIndependentValidation"]]];

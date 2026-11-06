@@ -1207,7 +1207,11 @@ original parameter assignments, seeds and held-out sample counts are retained;
 explicit child limits, known failed checks, unfinished identity proofs and an
 exhausted parent deadline block selection. The original child remains
 unresolved, and all requested independent assignments must pass before the
-wrapper continues with its ordinary final preparation and checks.
+wrapper continues with its ordinary final preparation and checks. Exact
+rational-zero derivatives retain their pre-prune solved-family and pre-solve
+trial witnesses. Recovery replays those derivatives and the solution map;
+forged zero derivatives, missing witnesses, nonzero directions and
+final-fixed-point-only arguments remain rejected.
 
 `high-energy-laurent-jet-tests.wl` checks the shared exact Laurent-jet engine
 used before spin-polynomial convolution. Independent native-series oracles
@@ -1219,6 +1223,17 @@ points are exercised. The bounded tensor-work admission preserves the
 established path for small tensors and for tensors whose coherent legs all
 have degree one, including six-fermion QED. Higher-degree mixed-spin tensors
 are tested independently of particle names.
+
+`reference-affine-row-tests.wl` checks exact affine-first reference equations
+for large coherent-spin families. Every coefficient and the constant offset
+reconstructs exactly, while reference differences are recombined before any
+linear constraints are extracted. Coupled rational and inverse-reference
+examples prevent incorrectly setting separate columns to zero. Tests retain
+the original whole-family baseline assignments, generic-spin regularity test,
+small-family route and unsupported-input fallback. A sufficient baseline-domain
+certificate checks every syntactic inverse base of the original full expression,
+including negative rational powers. Singular, approximate, unknown or unsupported
+cases retain the original full-expression regularity check and reference choices.
 
 `high-energy-source-normalization-tests.wl` checks bounded ordinary reduction
 of large retained source columns. Grouping keeps the original propagators and

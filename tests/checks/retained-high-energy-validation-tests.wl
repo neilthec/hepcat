@@ -54,5 +54,56 @@ check["an exhausted parent budget cannot select a candidate",empty["Status"]==="
 check["recovery budget explicitly belongs to the parent",all["TimeBudgetScope"]==="RemainingOverallConstructionBudgetNotExpiredChildStage"];
 unique=admit[Join[h,<|"LinearSystem"-><|"Status"->"COMPLETE","FreeParameters"->{}|>,"SolvedFamilyIdentityReduction"->Missing["NoPruneNeeded"]|>]];
 check["a directly unique exact solution needs no artificial identity proof",AssociationQ[unique]&&unique["Status"]==="ELIGIBLE"];
+(* Exact derivative pruning must keep its PRE-prune witness. A final fixed
+   point has derivative zero trivially and cannot certify a discarded slot. *)
+edVariable=Unique["derivativeWitnessVariable"];
+edZero=(edVariable^2-1)/(edVariable-1)-edVariable-1;
+edFamily=u edZero+v MomProd[1,1];
+edClass=ConstructiveDiagrams`Private`completionHEExactDerivativeClassification[edFamily,{u,v}];
+check["exact rational zero derivatives are recorded before native pruning",
+ edClass["RemovedParameters"]==={u}&&edClass["FreeParameters"]==={v}&&
+ edClass["OriginalSolvedFamilyWitness"]===edFamily&&Length[edClass["Certificates"]]===1];
+check["the recorded derivative is the actual unfixed-family derivative",
+ First[edClass["Certificates"]]["DerivativeWitness"]===D[edFamily,u]&&
+ First[edClass["Certificates"]]["ExactRationalDerivative"]===0&&
+ First[edClass["Certificates"]]["InternalOnShellConditions"]==={}&&
+ First[edClass["Certificates"]]["NumericalParameterAssignments"]==={}];
+edData=Join[edClass,<|"OriginalTrialWitness"->edFamily,"OriginalCoordinates"->{u,v},"SolutionRules"->{}|>];
+edNative=Join[h["SolvedFamilyIdentityReduction"],<|"RemovedParameters"->{v},"Certificates"->{Last[certificates]}|>];
+edMixed=Join[h,<|"ExactDerivativeZeroClassification"->edData,"SolvedFamilyIdentityReduction"->edNative,
+ "LinearSystem"-><|"Status"->"UNDERDETERMINED","FreeParameters"->{u,v},"SolutionRules"->{}|>|>];
+check["exact derivative and native identity certificates jointly cover the original free coordinates",
+ AssociationQ[admit[edMixed]]&&admit[edMixed]["Status"]==="ELIGIBLE"];
+edForgedCert=Join[First[edData["Certificates"]],<|"DerivativeWitness"->0|>];
+check["a forged derivative value cannot replace replay of the actual original family",
+ rejected[Join[edMixed,<|"ExactDerivativeZeroClassification"->Join[edData,<|"Certificates"->{edForgedCert}|>]|>],
+ "UnclassifiedOrUnprovedRemainingCoordinate"]];
+edFinalOnly=Join[edData,<|"OriginalSolvedFamilyWitness"->0,"Certificates"->{edForgedCert}|>];
+check["differentiating only the fixed final point is insufficient",
+ rejected[Join[edMixed,<|"ExactDerivativeZeroClassification"->edFinalOnly|>],"UnclassifiedOrUnprovedRemainingCoordinate"]];
+edNonzeroFamily=u+v MomProd[1,1];
+edNonzeroCert=Join[First[edData["Certificates"]],<|"DerivativeWitness"->1|>];
+edNonzeroData=Join[edData,<|"OriginalTrialWitness"->edNonzeroFamily,
+ "OriginalSolvedFamilyWitness"->edNonzeroFamily,"Certificates"->{edNonzeroCert}|>];
+check["a nonzero original derivative is rejected even with an asserted zero status",
+ rejected[Join[edMixed,<|"ExactDerivativeZeroClassification"->edNonzeroData|>],"UnclassifiedOrUnprovedRemainingCoordinate"]];
+check["a missing pre-solve family witness blocks derivative-based recovery",
+ rejected[Join[edMixed,<|"ExactDerivativeZeroClassification"->KeyDrop[edData,"OriginalTrialWitness"]|>],
+ "UnclassifiedOrUnprovedRemainingCoordinate"]];
+check["native and derivative certificates cannot count one coordinate twice",
+ rejected[Join[edMixed,<|"SolvedFamilyIdentityReduction"->h["SolvedFamilyIdentityReduction"]|>],
+ "UnclassifiedOrUnprovedRemainingCoordinate"]];
+edOnlyFamily=u edZero;
+edOnlyData=Join[ConstructiveDiagrams`Private`completionHEExactDerivativeClassification[edOnlyFamily,{u}],
+ <|"OriginalTrialWitness"->edOnlyFamily,"OriginalCoordinates"->{u},"SolutionRules"->{}|>];
+edOnly=Join[KeyDrop[h,"SolvedFamilyIdentityReduction"],<|"ExactDerivativeZeroClassification"->edOnlyData,
+ "LinearSystem"-><|"Status"->"UNDERDETERMINED","FreeParameters"->{u},"SolutionRules"->{}|>|>];
+check["a family classified entirely by exact derivative identities needs no native proof placeholder",
+ AssociationQ[admit[edOnly]]&&admit[edOnly]["Status"]==="ELIGIBLE"];
+check["tiny exact nonzero derivatives are retained",
+ ConstructiveDiagrams`Private`completionHEExactDerivativeClassification[u/10^200,{u}]["RemovedParameters"]==={}];
+check["removing certified coordinates keeps the same rational family",
+ TrueQ[Cancel[Together[edFamily-(edFamily/.u->0)]]===0]];
+
 Print["CHECKS: ",checks,"; FAILURES: ",Length[failures]];If[failures=!={},Print[failures];Quit[1]];
 Print["HEPCAT_TEST_COMPLETED:retained-high-energy-validation-tests.wl"];Quit[0];
