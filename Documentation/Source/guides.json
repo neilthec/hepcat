@@ -501,6 +501,7 @@
           "ColorIndex",
           "ColorDelta",
           "ColorGenerator",
+          "ColorTrace",
           "ColorStructure"
         ],
         "guides": [],
@@ -661,6 +662,7 @@
           "ChooseSpinIndices",
           "ColorDelta",
           "ColorGenerator",
+          "ColorTrace",
           "ColorIndex",
           "ColorStructure",
           "CompleteFactorization",

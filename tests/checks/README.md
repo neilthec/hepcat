@@ -1356,6 +1356,16 @@ this is an exposed construction discrepancy, not a passing validation or a
 reason to change the benchmark's sign. Resolve it before claiming all SM
 four-point constructions have independent Feynman agreement.
 
+`color-reduction-tests.wl` checks the unified SU(3) trace algebra against
+independently written Gell-Mann matrices: normalization, Hermitian conjugation,
+real structure-constant phases, Fierz identities, longer closed cycles,
+powered/disconnected traces, explicit external-color sums and fixed numerical
+components. It also rejects ambiguous dimensions, malformed Einstein indices
+and exhausted expansion budgets without returning a partial certificate.
+`color-display-tests.wl` checks conventional automatic notation and exact
+StandardForm/TraditionalForm copying, including ordered indices and traces.
+The existing plain-text suite covers the corresponding PlainText/TeX output.
+
 `color-basis-tests.wl` checks exact SU(3) contractions and the color tensors in
 public diagrams and channels. `spinas-color-tests.wl` also compiles a process
 and compares its coherent interference matrix with explicit external-color

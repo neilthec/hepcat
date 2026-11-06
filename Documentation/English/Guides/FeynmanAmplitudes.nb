@@ -126,10 +126,14 @@ symmetric spinor indices describing one massive-vector state."}],
       BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/ColorGenerator"],
      ": ", "Represents a fundamental SU(3) generator with ordered quark and \
 gluon color slots."}], "GuideText"],
-  Cell[TextData[{ButtonBox["ColorStructure", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/ColorStructure"], ": ", "Represents \
-the SU(3) structure constant with three ordered adjoint color indices."}],
-   "GuideText"], Cell["Tutorials", "GuideTutorialsSection"],
+  Cell[TextData[{ButtonBox["ColorTrace", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ColorTrace"], ": ",
+     "Represents an ordered fundamental SU(3) generator trace."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ColorStructure",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/ColorStructure"],
+     ": ", "Represents the SU(3) structure constant with three ordered \
+adjoint color indices."}], "GuideText"], Cell["Tutorials",
+   "GuideTutorialsSection"],
   Cell[TextData[
     {ButtonBox["Comparing a Constructive Result with Feynman Diagrams",
       BaseStyle -> "Link", ButtonData ->

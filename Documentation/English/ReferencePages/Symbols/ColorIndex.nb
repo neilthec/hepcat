@@ -34,7 +34,12 @@ colors has already been carried out."}], "Notes"],
        "paclet:HEPCAT/ref/WriteSPINASProcess"], " exporter accepts supported \
 complete SU(3) color expressions and preserves their interference. \
 Color-stripped expressions do not supply enough information for a complete \
-color sum."}], "Notes"], Cell["Examples", "PrimaryExamplesSection"],
+color sum."}], "Notes"], Cell[TextData[{"Notebook output uses standard color \
+notation automatically and retains the exact symbolic object when copied. ",
+     ButtonBox["ReduceColor", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReduceColor"], " works on these same \
+tensors; no separate legacy color notation is needed."}], "Notes"],
+  Cell["Examples", "PrimaryExamplesSection"],
   Cell[CellGroupData[{Cell["Load HEPCAT if needed", "ExampleSubsection"],
      Cell["Skip this setup if HEPCAT is already loaded. These examples assume \
 the checkout is in ~/code/hepcat; change the paths if yours is elsewhere. \
@@ -46,9 +51,11 @@ Evaluate loading in its own cell before the calculation.", "ExampleText"],
     {"Attach the two external color labels to a color identity tensor."}],
    "ExampleText"], Cell[BoxData[RowBox[{"ColorDelta", "[", "ColorIndex", "[",
       "1", "]", ",", " ", "ColorIndex", "[", "2", "]", "]"}]], "Input"],
-  Cell[BoxData[RowBox[{"ColorDelta", "[", "ColorIndex", "[", "1", "]", ",",
-      " ", "ColorIndex", "[", "2", "]", "]"}]], "Output"],
-  Cell["See Also", "SeeAlsoSection"],
+  Cell[BoxData[InterpretationBox[SubscriptBox["\"\[Delta]\"",
+      TemplateBox[{SubscriptBox["\"c\"", "1"], "\",\"",
+        SubscriptBox["\"c\"", "2"]}, "RowDefault"]],
+     ColorDelta[ColorIndex[1], ColorIndex[2]], Editable -> False]],
+   "Output"], Cell["See Also", "SeeAlsoSection"],
   Cell[TextData[{ButtonBox["ColorDelta", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ColorDelta"], "  \[Bullet]  ",
      ButtonBox["ColorGenerator", BaseStyle -> "Link",
@@ -56,8 +63,12 @@ Evaluate loading in its own cell before the calculation.", "ExampleText"],
      ButtonBox["ColorStructure", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ColorStructure"], "  \[Bullet]  ",
      ButtonBox["FeynmanToSpinorProducts", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/FeynmanToSpinorProducts"]}],
-   "SeeAlso"], Cell["Related Guides", "MoreAboutSection"],
+      ButtonData -> "paclet:HEPCAT/ref/FeynmanToSpinorProducts"],
+     "  \[Bullet]  ", ButtonBox["ColorTrace", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ColorTrace"], "  \[Bullet]  ",
+     ButtonBox["ReduceColor", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReduceColor"]}], "SeeAlso"],
+  Cell["Related Guides", "MoreAboutSection"],
   Cell[TextData[{ButtonBox["Feynman Models and Spinor Conversion",
       BaseStyle -> "Link", ButtonData ->
        "paclet:HEPCAT/guide/FeynmanAmplitudes"], "  \[Bullet]  ",

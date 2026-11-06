@@ -3,7 +3,273 @@
 (* ::Section::Closed:: *)
 (*Exact SU(3) Tree Color*)
 
+(* A direct reload preserves the caller's symbol protection state. The main
+   package loader also loads this module before protecting public symbols. *)
+ConstructiveDiagrams`Private`$colorModuleProtected = Select[
+  {ConstructiveDiagrams`ColorTrace, ConstructiveDiagrams`ReduceColor,
+   ConstructiveDiagrams`ColorGenerator, ConstructiveDiagrams`ColorDelta,
+   ConstructiveDiagrams`ColorStructure, ConstructiveDiagrams`ColorIndex},
+  MemberQ[Attributes[#],Protected] &];
+Unprotect @@ ConstructiveDiagrams`Private`$colorModuleProtected;
+
+ColorTrace::usage = "ColorTrace[a,b,...] denotes the ordered fundamental SU(3) trace Tr(T^a T^b ...), with Tr(T^a T^b)=delta(a,b)/2. ReduceColor reduces its contracted indices.";
+ReduceColor::usage = "ReduceColor[expression] applies exact SU(3) trace, completeness and contraction identities to ColorGenerator, ColorStructure, ColorDelta and ColorTrace. ColorIndex labels remain external and unsummed. IndexDimensions can declare otherwise ambiguous dummy dimensions; MaxTerms bounds color expansion.";
+Options[ReduceColor] = {"IndexDimensions" -> {}, "SumExternalColors" -> False, "MaxTerms" -> 4096};
+
+ColorGenerator /: Conjugate[ColorGenerator[i_, j_, a_]] := ColorGenerator[j, i, a];
+ColorDelta /: Conjugate[ColorDelta[i_, j_]] := ColorDelta[i, j];
+ColorStructure /: Conjugate[ColorStructure[a_, b_, c_]] := ColorStructure[a, b, c];
+ColorTrace /: Conjugate[ColorTrace[labels___]] := ColorTrace @@ Reverse[{labels}];
+
 Begin["ConstructiveDiagrams`Private`"];
+
+(* ::Subsection::Closed:: *)
+(*Symbolic SU(3) contractions*)
+
+colorReductionObjectQ[value_] := MatchQ[value,
+  _ColorDelta | _ColorGenerator | _ColorStructure | _ColorTrace];
+colorReductionIndices[value_ColorTrace] := List @@ value;
+colorReductionIndices[value_] := If[colorReductionObjectQ[value], List @@ value, {}];
+colorReductionDummyQ[index_] := !MatchQ[index, _ColorIndex | _Integer];
+colorReductionWord[labels_List, left_, right_] := Module[{nodes},
+  If[labels === {}, Return[ColorDelta[left, right]]];
+  nodes = Join[{left}, Table[colorInternalIndex[Unique["trace"], 3], {Length[labels]-1}], {right}];
+  Times @@ MapThread[ColorGenerator, {Most[nodes], Rest[nodes], labels}]
+];
+(* Every occurrence has its own fundamental sum. In particular, expand a
+   trace power occurrence by occurrence before Times can combine factors:
+   (Sum_i M_ii)^2 is not Sum_i (M_ii)^2. *)
+colorExpandTraces[expression_] := Module[{walk},
+  walk[trace_ColorTrace] := If[Length[trace] === 0,3,
+    With[{start=colorInternalIndex[Unique["trace"],3]},
+      colorReductionWord[List @@ trace,start,start]]];
+  walk[Power[base_,exponent_Integer?Positive]] :=
+    Times @@ Table[walk[base],{exponent}];
+  walk[value_Times] := Times @@ (walk /@ List @@ value);
+  walk[value_Plus] := Plus @@ (walk /@ List @@ value);
+  walk[value_] := value;
+  walk[expression]
+];
+
+(* The conjugate amplitude is a second copy of every internal color sum.
+   Rename only tensor slots, term by term, so a scalar using the same symbol
+   as a color dummy is unchanged and external color states stay shared. *)
+colorFreshenConjugateDummies[expression_] := Module[{terms,freshTensor},
+  freshTensor[tensor_] := Module[{indices,dummies,rules},
+    indices=Flatten[colorReductionIndices /@ Flatten[Map[
+      If[MatchQ[#,Power[_,_Integer?Positive]],ConstantArray[#[[1]],#[[2]]],{#}] &,
+      If[Head[tensor]===Times,List @@ tensor,{tensor}]],1]];
+    dummies=Select[DeleteDuplicates[indices],Count[indices,#]===2 &&
+      (Head[#]===Symbol || MatchQ[#,colorInternalIndex[_,_]]) &];
+    rules=Map[Function[index,index -> If[MatchQ[index,colorInternalIndex[_,_]],
+      colorInternalIndex[Unique["conjugateColor"],Last[index]],Unique["conjugateColor"]]],dummies];
+    tensor /. object:(_ColorDelta|_ColorGenerator|_ColorStructure|_ColorTrace) :>
+      Map[Replace[#,rules] &,object]];
+  terms=colorExpressionTerms[expression];
+  If[FailureQ[terms],Return[terms]];
+  Total[(Last[#] freshTensor[First[#]]) & /@ terms]
+];
+
+(* Keep spinor and other scalar coefficients factored. Only color-bearing
+   polynomials are distributed, with an explicit user-controlled allowance. *)
+colorReductionTerms[expression_, maxTerms_, tag_] := Module[{walk, multiply},
+  multiply[left_List, right_List] := Module[{a,b},
+    If[Length[left] Length[right] > maxTerms,
+      Throw[colorFailure["ColorBudget", "The color reduction exceeded MaxTerms."], tag]];
+    Flatten[Table[{a[[1]] b[[1]], a[[2]] b[[2]]}, {a,left}, {b,right}],1]];
+  walk[value_] := Which[
+    FreeQ[value, _ColorDelta | _ColorGenerator | _ColorStructure | _ColorTrace], {{1,value}},
+    colorReductionObjectQ[value], {{value,1}},
+    Head[value] === Plus, With[{parts = Join @@ (walk /@ List @@ value)},
+      If[Length[parts] > maxTerms,
+        Throw[colorFailure["ColorBudget", "The color reduction exceeded MaxTerms."], tag]]; parts],
+    Head[value] === Times, Fold[multiply, {{1,1}}, walk /@ List @@ value],
+    Head[value] === Power && IntegerQ[value[[2]]] && value[[2]] >= 0,
+      Nest[multiply[#, walk[value[[1]]]] &, {{1,1}}, value[[2]]],
+    True, Throw[colorFailure["NonPolynomialColor",
+      "ReduceColor requires a polynomial in its explicit color tensors."], tag]];
+  walk[expression]
+];
+
+(* A repeated symbolic label is an Einstein dummy; integer labels specify
+   fixed components. External ColorIndex labels stay free even when repeated.
+   Dimensions are inferred before contractions
+   erase the tensors that distinguish fundamental from adjoint indices. *)
+colorReductionDimensions[objects_List, supplied_List, tag_] := Module[
+  {domains = Association[supplied], assign, indices, index, object, changed = True, get},
+  get[index_] := Lookup[domains, index, Missing["Dimension"]];
+  assign[index_Integer, dimension_] := If[!TrueQ[1 <= index <= dimension],
+    Throw[colorFailure["ColorIndices", "A fixed color component is outside its representation.",
+      <|"Index" -> index, "Dimension" -> dimension|>],tag]];
+  assign[index_, dimension_] := If[MissingQ[get[index]],
+    AssociateTo[domains,index -> dimension]; changed = True,
+    If[get[index] =!= dimension, Throw[colorFailure["ColorIndices",
+      "A color index has incompatible fundamental and adjoint dimensions.",
+      <|"Index" -> index|>],tag]]];
+  indices = Flatten[colorReductionIndices /@ objects];
+  If[AnyTrue[indices,NumberQ[#] && (!IntegerQ[#] || !TrueQ[1 <= # <= 8]) &],
+    Throw[colorFailure["ColorIndices", "A fixed SU(3) color component must be an integer from 1 through its representation dimension."],tag]];
+  Do[If[MatchQ[index,colorInternalIndex[_,_]],
+    If[!MemberQ[{3,8},Last[index]], Throw[colorFailure["ColorIndices",
+      "An internal color index must have dimension 3 or 8."],tag]];
+    assign[index,Last[index]]],{index,DeleteDuplicates[indices]}];
+  Do[Switch[Head[object],
+    ColorGenerator, MapThread[assign,{List @@ object,{3,3,8}}],
+    ColorStructure | ColorTrace, Scan[assign[#,8] &,List @@ object]],{object,objects}];
+  While[changed, changed = False;
+    Do[If[Head[object] === ColorDelta,
+      If[!MissingQ[get[object[[1]]]],assign[object[[2]],get[object[[1]]]]];
+      If[!MissingQ[get[object[[2]]]],assign[object[[1]],get[object[[2]]]]]],{object,objects}]];
+  Do[If[colorReductionDummyQ[index] && Count[indices,index] > 2,
+    Throw[colorFailure["ColorMultiplicity",
+      "An Einstein color dummy occurs more than twice in one term; use distinct contracted labels or an explicit sum.",
+      <|"Index" -> index, "Occurrences" -> Count[indices,index]|>],tag]],
+    {index,DeleteDuplicates[indices]}];
+  domains
+];
+
+colorReductionCanonicalTrace[labels_List] := Which[
+  labels === {}, 3,
+  VectorQ[labels,IntegerQ], Tr[Dot @@ colorSU3Generators[][[labels]]],
+  Length[labels] === 1, 0,
+  Length[labels] === 2, (ColorDelta @@ Sort[labels])/2,
+  True, ColorTrace @@ First[Sort[RotateLeft[labels,#] & /@ Range[0,Length[labels]-1]]]
+];
+
+colorReduceTensor[input_, supplied_, maxTerms_, tag_, sumExternal_] := Module[
+  {tensor=input,initialObjects, domains, reduce, factorsOf, dimension, remove,
+   external, indices, rules, descendants = 0, reduced},
+  factorsOf[value_] := Flatten[Map[
+    If[MatchQ[#,Power[_,_Integer?Positive]], ConstantArray[#[[1]],#[[2]]], {#}] &,
+    If[Head[value]===Times,List @@ value,{value}]],1];
+  initialObjects = Select[factorsOf[tensor],colorReductionObjectQ];
+  domains = colorReductionDimensions[initialObjects,supplied,tag];
+  dimension[index_] := If[MatchQ[index,colorInternalIndex[_,_]],Last[index],
+    Lookup[domains,index,Missing["Dimension"]]];
+  If[TrueQ[sumExternal],
+    indices=Flatten[colorReductionIndices /@ initialObjects];
+    external=Select[DeleteDuplicates[indices],MatchQ[#,_ColorIndex] &];
+    rules=Map[Function[index,
+      If[Count[indices,index]=!=2,Throw[colorFailure["ExternalColorMultiplicity",
+        "SumExternalColors requires paired external slots of a squared or interference color expression.",
+        <|"Index"->index|>],tag]];
+      If[MissingQ[dimension[index]],Throw[colorFailure["ColorDimensions",
+        "Declare an otherwise ambiguous external color dimension with IndexDimensions before summing it.",
+        <|"Index"->index|>],tag]];
+      index -> colorInternalIndex[Unique["externalColor"],dimension[index]]],external];
+    tensor=tensor /. rules];
+  remove[list_, positions_List] := Delete[list,List /@ Sort[positions]];
+  reduce[value_] := Module[
+    {factors, indices, frequency, deltas, generators, traces, position, d, x, y, other,
+     start, chain, used, edge, current, found, left, right, word, a, occurrences,
+     first, second, firstWord, secondWord, p, q, remainder, coefficient,
+     canonical, terms, done, exitTag=Unique["colorReduced"]},
+    done[answer_] := Throw[answer,exitTag];
+    Catch[
+    descendants++;
+    If[descendants > 128 maxTerms,
+      Throw[colorFailure["ColorBudget", "The color reduction exceeded its bounded contraction allowance."],tag]];
+    canonical = value /. {
+      trace_ColorTrace :> colorReductionCanonicalTrace[List @@ trace],
+      ColorDelta[i_Integer,j_Integer] :> KroneckerDelta[i,j],
+      delta : ColorDelta[i_,j_] /; !OrderedQ[{i,j}] :> ColorDelta[j,i],
+      ColorGenerator[i_Integer,j_Integer,a_Integer] :> colorSU3Generators[][[a,i,j]]};
+    If[canonical === 0, done[0]];
+    terms = colorReductionTerms[canonical,maxTerms,tag];
+    If[Length[terms] > 1, done[Total[(Last[#] reduce[First[#]]) & /@ terms]]];
+    coefficient = Last[First[terms]];
+    factors = Select[factorsOf[First[First[terms]]],colorReductionObjectQ];
+    If[factors === {},done[coefficient]];
+    indices = Flatten[colorReductionIndices /@ factors];
+    frequency[index_] := Count[indices,index];
+    deltas = Flatten[Position[factors,_ColorDelta,{1}]];
+    Do[
+      d = factors[[position]]; {x,y}=List @@ d;
+      If[x === y,
+        If[colorReductionDummyQ[x] && frequency[x]===2 && !MissingQ[dimension[x]],
+          done[coefficient dimension[x] reduce[Times @@ remove[factors,{position}]]]],
+        other = Which[colorReductionDummyQ[x] && frequency[x]===2,x,
+          colorReductionDummyQ[y] && frequency[y]===2,y,True,None];
+        If[other =!= None,
+          done[coefficient reduce[(Times @@ remove[factors,{position}]) /.
+            other -> If[other === x,y,x]]]]], {position,deltas}];
+
+    (* Follow a closed fundamental cycle of any length. Fixed external color
+       slots never qualify as its summed matrix-index links. *)
+    generators = Flatten[Position[factors,_ColorGenerator,{1}]];
+    Do[
+      start = factors[[position,1]];
+      If[!colorReductionDummyQ[start] || frequency[start]=!=2,Continue[]];
+      used={};word={};edge=position;found=False;
+      While[!MemberQ[used,edge],
+        AppendTo[used,edge];AppendTo[word,factors[[edge,3]]];
+        current=factors[[edge,2]];
+        If[current === start,found=True;Break[]];
+        If[!colorReductionDummyQ[current] || frequency[current]=!=2,Break[]];
+        chain=Select[generators,!MemberQ[used,#] && factors[[#,1]]===current &];
+        If[Length[chain]=!=1,Break[]];edge=First[chain]];
+      If[found,done[coefficient reduce[(Times @@ remove[factors,used])
+        (ColorTrace @@ word)]]],{position,generators}];
+
+    (* Completeness removes one repeated adjoint label at a time. It applies
+       within traces, between traces, and between open matrix words. *)
+    traces=Flatten[Position[factors,_ColorTrace,{1}]];
+    Do[
+      If[!colorReductionDummyQ[a] || frequency[a]=!=2 || dimension[a]=!=8,Continue[]];
+      occurrences=Join[
+        Flatten[Table[If[factors[[p,3]]===a,{{p,0}},{}],{p,generators}],1],
+        Flatten[Table[({p,First[#]} & /@ Position[List @@ factors[[p]],a,{1},Heads->False]),
+          {p,traces}],1]];
+      If[Length[occurrences]=!=2,Continue[]];
+      {first,second}=occurrences;
+      If[first[[1]]===second[[1]],
+        p=first[[1]];word=List @@ factors[[p]];{x,y}=Sort[{first[[2]],second[[2]]}];
+        firstWord=Take[word,{x+1,y-1}];
+        secondWord=Join[Drop[word,y],Take[word,x-1]];
+        remainder=Times @@ remove[factors,{p}];
+        done[coefficient (reduce[remainder (ColorTrace @@ firstWord)(ColorTrace @@ secondWord)]/2-
+          reduce[remainder (ColorTrace @@ Join[firstWord,secondWord])]/6)]];
+      {p,q}={first[[1]],second[[1]]};
+      remainder=Times @@ remove[factors,{p,q}];
+      Which[
+        first[[2]]===0 && second[[2]]===0,
+          {x,y}=Take[List @@ factors[[p]],2];{left,right}=Take[List @@ factors[[q]],2];
+          done[coefficient (reduce[remainder ColorDelta[x,right] ColorDelta[left,y]]/2-
+            reduce[remainder ColorDelta[x,y] ColorDelta[left,right]]/6)],
+        first[[2]]>0 && second[[2]]>0,
+          firstWord=Delete[RotateLeft[List @@ factors[[p]],first[[2]]-1],1];
+          secondWord=Delete[RotateLeft[List @@ factors[[q]],second[[2]]-1],1];
+          done[coefficient (reduce[remainder (ColorTrace @@ Join[firstWord,secondWord])]/2-
+            reduce[remainder (ColorTrace @@ firstWord)(ColorTrace @@ secondWord)]/6)],
+        True,
+          If[first[[2]]===0,{x,y}=Take[List @@ factors[[p]],2];
+            word=List @@ factors[[q]];position=second[[2]],
+            {x,y}=Take[List @@ factors[[q]],2];word=List @@ factors[[p]];position=first[[2]]];
+          firstWord=Delete[RotateLeft[word,position-1],1];
+          done[coefficient (reduce[remainder colorReductionWord[firstWord,x,y]]/2-
+            reduce[remainder ColorDelta[x,y](ColorTrace @@ firstWord)]/6)]];
+      ,{a,DeleteDuplicates[indices]}];
+    coefficient (Times @@ factors)
+    ,exitTag]
+  ];
+  reduced=reduce[tensor];
+  Total[(First[#] Last[#]) & /@ colorReductionTerms[reduced,maxTerms,tag]]
+];
+
+ConstructiveDiagrams`ReduceColor[expression_,OptionsPattern[]] := Module[
+  {dimensions=OptionValue["IndexDimensions"],sumExternal=OptionValue["SumExternalColors"],
+   maxTerms=OptionValue["MaxTerms"],tag=Unique["colorReduction"],terms},
+  If[AssociationQ[dimensions],dimensions=Normal[dimensions]];
+  If[!ListQ[dimensions] || !AllTrue[dimensions,MatchQ[#,Rule[_,3|8]] &] ||
+      !MemberQ[{True,False},sumExternal] || !(maxTerms===Infinity || IntegerQ[maxTerms] && maxTerms>0),
+    Return[colorFailure["ColorOptions","IndexDimensions must declare dimensions 3 or 8, SumExternalColors must be True or False, and MaxTerms must be positive or Infinity."]]];
+  If[AnyTrue[GatherBy[dimensions,First],Length[DeleteDuplicates[Last /@ #]]>1 &],
+    Return[colorFailure["ColorOptions","IndexDimensions contains conflicting declarations for one index."]]];
+  Catch[
+    terms=colorReductionTerms[expression /. ColorStructure[a_,b_,c_] :>
+      -2 I (ColorTrace[a,b,c]-ColorTrace[a,c,b]),maxTerms,tag];
+    Total[(Last[#] colorReduceTensor[First[#],dimensions,maxTerms,tag,sumExternal]) & /@ terms],tag]
+];
 
 (* This module keeps color separate from the spinor coefficients. In
    particular, different color tensors are never added as scalar diagrams.
@@ -111,7 +377,7 @@ colorDiagramTensor[diagram_Association, model_List] := Module[
 
 colorNormalizeInternalIndices[tensor_, representations_List] := Module[
   {objects, indices, unknown, domains = <||>, assign, dimension, changed, tag = Unique["colorIndices"]},
-  objects = Cases[tensor, _ColorDelta | _ColorGenerator | _ColorStructure, {0, Infinity}];
+  objects = Cases[tensor, _ColorDelta | _ColorGenerator | _ColorStructure | _ColorTrace, {0, Infinity}];
   indices = DeleteDuplicates[Flatten[List @@ # & /@ objects]];
   dimension[index_] := Lookup[domains, index, Missing["Dimension"]];
   assign[index_, value_] := If[MissingQ[dimension[index]],
@@ -145,14 +411,26 @@ colorNormalizeInternalIndices[tensor_, representations_List] := Module[
 ];
 
 colorTensorVector[input_, representations_List] := Module[
-  {tensor = colorNormalizeInternalIndices[input, representations], n = Length[representations], external, internal, indices, dimensions, states, internalStates,
-   generators = colorSU3Generators[], structure, rules, values, terms, stripped},
+  {tensor, n = Length[representations], external, internal, indices, dimensions, states, internalStates,
+   generators = colorSU3Generators[], structure, rules, values, terms, stripped, vectors},
+  terms=colorExpressionTerms[input];
+  If[FailureQ[terms],Return[terms]];
+  If[!FreeQ[input,_Real] || !AllTrue[terms,NumericQ[Last[#]] &],
+    Return[colorFailure["ColorTensor", "A color tensor must have exact numeric coefficients and supported tensor heads."]]];
+  If[terms==={},Return[ConstantArray[0,Times @@ Abs[representations]]]];
+  (* Dummy sums belong to a monomial, not to the union of labels in a sum.
+     Evaluate each color polynomial term before combining its vector. *)
+  If[Length[terms]>1,
+    vectors=Map[Function[term,With[{vector=colorTensorVector[First[term],representations]},
+      If[FailureQ[vector],vector,Last[term] vector]]],terms];
+    Return[If[AnyTrue[vectors,FailureQ],SelectFirst[vectors,FailureQ],Total[vectors]]]];
+  tensor=colorNormalizeInternalIndices[colorExpandTraces[input],representations];
   If[FailureQ[tensor], Return[tensor]];
-  stripped = tensor /. (_ColorDelta | _ColorGenerator | _ColorStructure) -> 1;
+  stripped = tensor /. (_ColorDelta | _ColorGenerator | _ColorStructure | _ColorTrace) -> 1;
   If[!NumericQ[stripped] || !FreeQ[tensor, _Real],
     Return[colorFailure["ColorTensor", "A color tensor must have exact numeric coefficients and supported tensor heads."]]];
   indices = DeleteDuplicates[Flatten[(List @@ # &) /@
-    Cases[tensor, _ColorDelta | _ColorGenerator | _ColorStructure, {0, Infinity}]]];
+    Cases[tensor, _ColorDelta | _ColorGenerator | _ColorStructure | _ColorTrace, {0, Infinity}]]];
   If[!AllTrue[indices, MatchQ[#, ColorIndex[i_Integer] /; 1 <= i <= n && Abs[representations[[i]]] > 1] ||
       MatchQ[#, colorInternalIndex[_, d_Integer] /; MemberQ[{1, 3, 8}, d]] &],
     Return[colorFailure["ColorIndices", "Color indices must identify declared external legs or dimensioned internal contractions."]]];
@@ -280,8 +558,8 @@ colorExpressionTerms[expression_] := Module[{walk, multiply, result, tag = Uniqu
     Throw[colorFailure["ColorBudget", "The color expansion exceeds 4096 tensor terms."], tag],
     Flatten[Table[{a[[1]] b[[1]], a[[2]] b[[2]]}, {a, left}, {b, right}], 1]];
   walk[value_] := Which[
-    FreeQ[value, _ColorDelta | _ColorGenerator | _ColorStructure], {{1, value}},
-    MatchQ[value, _ColorDelta | _ColorGenerator | _ColorStructure], {{value, 1}},
+    FreeQ[value, _ColorDelta | _ColorGenerator | _ColorStructure | _ColorTrace], {{1, value}},
+    MatchQ[value, _ColorDelta | _ColorGenerator | _ColorStructure | _ColorTrace], {{value, 1}},
     Head[value] === Plus, Join @@ (walk /@ List @@ value),
     Head[value] === Times, Fold[multiply, {{1, 1}}, walk /@ List @@ value],
     Head[value] === Power && IntegerQ[value[[2]]] && 0 <= value[[2]],
@@ -447,7 +725,7 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
           "The independent Feynman benchmark did not prepare completely.",
           <|"Report"->feynmanPrepared|>]]];
       feynmanPairs = feynmanPrepared["PreparedAmplitudes"]]];
-  If[FreeQ[{pairs,channels,feynmanPairs}, _ColorDelta | _ColorGenerator | _ColorStructure] &&
+  If[FreeQ[{pairs,channels,feynmanPairs}, _ColorDelta | _ColorGenerator | _ColorStructure | _ColorTrace] &&
       AllTrue[Last /@ pairs, TrueQ[# === 0] &] &&
       AllTrue[Last /@ channels, TrueQ[# === 0] &],
     external = Thread[(Mass /@ Range[Length[process]]) -> constructExternalMasses[process,diagramModel]];
@@ -526,7 +804,7 @@ colorCheckAmplitudes[amplitudes_, channels_List, model_List, supplied_Associatio
   normalized = completionNormalizeInput[amplitudes, channels, model];
   If[FailureQ[normalized] || !AssociationQ[normalized], Return[normalized]];
   external = normalized["ExternalMassRules"];
-  tensors = Cases[{amplitudes, channels, benchmarkPairs}, _ColorDelta | _ColorGenerator | _ColorStructure, Infinity];
+  tensors = Cases[{amplitudes, channels, benchmarkPairs}, _ColorDelta | _ColorGenerator | _ColorStructure | _ColorTrace, Infinity];
   indices = DeleteDuplicates[Cases[tensors, ColorIndex[i_Integer] :> i, Infinity]];
   reps = Table[If[!MemberQ[indices, i], 1,
     candidates = DeleteDuplicates[Abs[#[[8]]] & /@ Select[model[[1]],
@@ -570,4 +848,62 @@ colorCheckAmplitudes[amplitudes_, channels_List, model_List, supplied_Associatio
         _, Missing["NotAvailable"]]|>], reports], MaxItems -> {All,All}]]
 ];
 
+(* ::Section::Closed:: *)
+(*Color Tensor Display*)
+
+(* Display carries no contraction or model lookup. External indices use a
+   neutral c label, while dimensioned internal dummies distinguish fundamental
+   and adjoint sums. InterpretationBox preserves the exact typed expression. *)
+colorDisplayProtectedSymbols = Select[
+  {ColorIndex, ColorDelta, ColorGenerator, ColorStructure,
+    ConstructiveDiagrams`ColorTrace, ConstructiveDiagrams`nice},
+  MemberQ[Attributes[#], Protected] &];
+Unprotect @@ colorDisplayProtectedSymbols;
+
+colorDisplayLabel[label_List] := Row[Riffle[colorDisplayLabel /@ label, ","]];
+colorDisplayLabel[label_Symbol] := SymbolName[Unevaluated[label]];
+colorDisplayLabel[label_] := label;
+colorDisplayIndex[index : (_ColorIndex | _colorInternalIndex)] := nice[index];
+colorDisplayIndex[index_] := colorDisplayLabel[index];
+
+nice[ColorIndex[label_]] := Subscript["c", colorDisplayLabel[label]];
+nice[colorInternalIndex[label_, dimension_Integer]] :=
+  Subscript[Switch[dimension, 3, "d", 8, "a", _, "c"], colorDisplayLabel[label]];
+nice[ColorDelta[left_, right_]] :=
+  Subscript["\[Delta]", Row[{colorDisplayIndex[left], ",", colorDisplayIndex[right]}]];
+nice[ColorGenerator[anti_, fundamental_, adjoint_]] :=
+  Subscript[Row[{"(", Superscript["T", colorDisplayIndex[adjoint]], ")"}],
+    Row[{colorDisplayIndex[anti], ",", colorDisplayIndex[fundamental]}]];
+nice[ColorStructure[first_, second_, third_]] :=
+  Superscript["f", Row[Riffle[colorDisplayIndex /@ {first, second, third}, ","]]];
+nice[ConstructiveDiagrams`ColorTrace[labels___]] :=
+  Row[{"Tr(", Row[Riffle[(Superscript["T", colorDisplayIndex[#]] &) /@ {labels},
+    "\[ThinSpace]"]], ")"}];
+
+ColorIndex /: MakeBoxes[index : ColorIndex[_], form : (StandardForm | TraditionalForm)] :=
+  With[{boxes = ToBoxes[nice[index], form]},
+    InterpretationBox[boxes, index, Editable -> False]];
+ColorDelta /: MakeBoxes[tensor : ColorDelta[_, _], form : (StandardForm | TraditionalForm)] :=
+  With[{boxes = ToBoxes[nice[tensor], form]},
+    InterpretationBox[boxes, tensor, Editable -> False]];
+ColorGenerator /: MakeBoxes[tensor : ColorGenerator[_, _, _], form : (StandardForm | TraditionalForm)] :=
+  With[{boxes = ToBoxes[nice[tensor], form]},
+    InterpretationBox[boxes, tensor, Editable -> False]];
+ColorStructure /: MakeBoxes[tensor : ColorStructure[_, _, _], form : (StandardForm | TraditionalForm)] :=
+  With[{boxes = ToBoxes[nice[tensor], form]},
+    InterpretationBox[boxes, tensor, Editable -> False]];
+ConstructiveDiagrams`ColorTrace /: MakeBoxes[trace : ConstructiveDiagrams`ColorTrace[___],
+    form : (StandardForm | TraditionalForm)] :=
+  With[{boxes = ToBoxes[nice[trace], form]},
+    InterpretationBox[boxes, trace, Editable -> False]];
+colorInternalIndex /: MakeBoxes[index : colorInternalIndex[_, _Integer],
+    form : (StandardForm | TraditionalForm)] :=
+  With[{boxes = ToBoxes[nice[index], form]},
+    InterpretationBox[boxes, index, Editable -> False]];
+
+Protect @@ colorDisplayProtectedSymbols;
+Clear[colorDisplayProtectedSymbols];
+
 End[];
+Protect @@ ConstructiveDiagrams`Private`$colorModuleProtected;
+Clear[ConstructiveDiagrams`Private`$colorModuleProtected];

@@ -106,5 +106,8 @@
     "TimeConstraint": "Time budget in seconds for generating and compiling the independent MadGraph reference process. A timeout is an incomplete check, not PASS."
   },
   "MadGraphAllowedParticles": "All retains the full selected MadGraph theory. A nonempty list of unique positive absolute PDG codes, such as {11,22}, restricts the particle sector used for reference validation and MadEvent topology generation and includes antiparticles. Every external particle type must be present.",
-  "CalcHEPAllowedParticles": "All retains the full selected CalcHEP theory. A nonempty list of unique positive absolute PDG codes restricts the independent reference particle sector, including antiparticles. Every external type must be included."
+  "CalcHEPAllowedParticles": "All retains the full selected CalcHEP theory. A nonempty list of unique positive absolute PDG codes restricts the independent reference particle sector, including antiparticles. Every external type must be included.",
+  "IndexDimensions": "Optional rules assigning dimension 3 or 8 to color dummy indices. ReduceColor infers dimensions from tensor slots and generated internal labels; isolated delta loops need a declaration when their representation is ambiguous.",
+  "MaxTerms": "Maximum number of color-polynomial terms allowed during ReduceColor. The default 4096 bounds expansion and contraction work; exceeding it returns an explicit failure rather than a partial color certificate.",
+  "SumExternalColors": "Whether ReduceColor sums external ColorIndex slots in a squared or interfered color expression. False keeps them free. True requires paired occurrences and known dimensions, and performs the color sum without an incoming-state average."
 }

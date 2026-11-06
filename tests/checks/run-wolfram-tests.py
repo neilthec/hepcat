@@ -43,7 +43,7 @@ TEST_SUITES = (
     "null-pair-shift-tests.wl", "null-channel-completion-tests.wl",
     "bose-symmetry-tests.wl", "fermion-symmetry-tests.wl",
     "model-parameter-tests.wl", "linear-row-normalization-tests.wl",
-    "completion-numeric-matrix-tests.wl", "color-basis-tests.wl", "feynman-tests.wl", "feynman-coefficient-comparison-tests.wl", "spinas-export-tests.wl",
+    "completion-numeric-matrix-tests.wl", "color-basis-tests.wl", "color-reduction-tests.wl", "color-display-tests.wl", "feynman-tests.wl", "feynman-coefficient-comparison-tests.wl", "spinas-export-tests.wl",
     "spinas-helicity-family-tests.wl", "spinas-color-tests.wl",
     "spinas-build-tools-tests.wl",
     "spinas-calchep-tests.wl",

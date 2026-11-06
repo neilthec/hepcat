@@ -59,6 +59,11 @@ include the documentation updates in the same commit as the implementation.
 - `source/HEPCAT-Color.wl`: exact SU(3) vertex tensors, internal-color sewing,
   independent color bases and coherent interference. Constructive colored
   diagrams and channels retain these tensors before helicities are combined.
+  `ReduceColor` uses these same tensors and ordered `ColorTrace` words. Keep
+  external `ColorIndex` slots free unless an explicit squared-color sum is
+  requested. Fixed integer components are never Einstein dummies. The real
+  `ColorStructure` satisfies `[T_a,T_b] = I f_abc T_c`; a vertex's extra I
+  remains separate. Standard/TraditionalForm color boxes retain semantics.
 - `source/HEPCAT-MadGraph.wl`, `source/madgraph-runtime.py`, and
   `source/madgraph-runtime.hpp`: independent, per-massless-helicity MadGraph
   validation of exported SPINAS amplitudes and the `ValidateMadGraph` entry

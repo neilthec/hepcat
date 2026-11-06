@@ -35,7 +35,16 @@ phase-space divisor, or external color sum is inserted here. ",
       ButtonData -> "paclet:HEPCAT/ref/WriteSPINASProcess"], " provides \
 explicit spin sums and the declared scattering normalization for numerical \
 work. Complex-shifted external-state expressions are outside this helper's \
-intended scope."}], "Notes"], Cell["Examples", "PrimaryExamplesSection"],
+intended scope."}], "Notes"],
+  Cell[TextData[{"Canonical color tensors retain Hermitian conjugation. \
+Internally contracted color labels in the conjugate amplitude receive \
+independent dummy names, so their sums are not accidentally tied to the \
+original copy. External ColorIndex labels are retained; use ",
+     ButtonBox["ReduceColor", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ReduceColor"], " with ",
+     Cell[BoxData[RowBox[{"\"SumExternalColors\"", " ", "->", " ", "True"}]],
+      "InlineFormula"], " when a squared-color sum is wanted."}], "Notes"],
+  Cell["Examples", "PrimaryExamplesSection"],
   Cell[CellGroupData[{Cell["Load HEPCAT if needed", "ExampleSubsection"],
      Cell["Skip this setup if HEPCAT is already loaded. These examples assume \
 the checkout is in ~/code/hepcat; change the paths if yours is elsewhere. \

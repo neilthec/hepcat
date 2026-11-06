@@ -50,7 +50,8 @@ $BuildResult = Module[{documentationRoot, repositoryRoot, sourceRoot, outputRoot
     If[StringContainsQ[code, "HoldPattern[" | "RuleDelayed[" | ":>" | "Function["] ||
         !StringContainsQ[code, "SpinorChain[" | "Spinor[" | "ModelParameter[" |
           "ModelFunction[" | "ConstructiveAmplitude[" | "PropDen[" | "MomProd[" |
-          "Mandelstahm[" | "Mom[" | "Mass["], Return[inputBoxes[code]]];
+          "Mandelstahm[" | "Mom[" | "Mass[" | "ColorIndex[" | "ColorDelta[" |
+          "ColorGenerator[" | "ColorStructure[" | "ColorTrace["], Return[inputBoxes[code]]];
     boxes = CheckAbort[TimeConstrained[
       Quiet[Check[ToExpression["(" <> code <> "\n)", InputForm,
         Function[Null, ToBoxes[Defer[#], StandardForm], HoldAllComplete]], $Failed]],

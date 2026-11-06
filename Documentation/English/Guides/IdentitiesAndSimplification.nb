@@ -76,9 +76,9 @@ invariants."}], "GuideText"],
 supported legacy four-point x-factor formulas for an explicitly specified \
 channel."}], "GuideText"],
   Cell[TextData[{ButtonBox["ReduceColor", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/ReduceColor"], ": ", "Applies the \
-supported fundamental SU(3) color identities and writes the result in trace \
-form."}], "GuideText"], Cell["Inspect and Replay Identities",
+      ButtonData -> "paclet:HEPCAT/ref/ReduceColor"], ": ",
+     "Reduces contracted SU(3) color tensors and ordered generator traces."}]\
+, "GuideText"], Cell["Inspect and Replay Identities",
    "GuideFunctionsSubsection"],
   Cell[TextData[{"See which identity changes an expression, and retain the \
 step for a reproducible derivation."}], "GuideText"],

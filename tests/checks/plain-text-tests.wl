@@ -98,8 +98,63 @@ check["model plain text rejects inexact reals that the model reader would exacti
 check["ordinary plain text keeps a negative power base inside parentheses",
  PlainText[(-2)^ltTextExponent] === "(-2)^(ltTextExponent) "];
 
-If[checks =!= 39, AppendTo[failures,
-  {"suite did not reach every check", "Expected" -> 39, "Actual" -> checks}]];
+ltTextColorGenerator = ColorGenerator[ColorIndex[2], ColorIndex[1], ColorIndex[3]];
+ltTextColorTrace = ColorTrace[ColorIndex[3], ColorIndex[4]];
+ltTextFundamentalDummy = ConstructiveDiagrams`Private`colorInternalIndex[{1, 23}, 3];
+ltTextAdjointDummy = ConstructiveDiagrams`Private`colorInternalIndex[{12, 3}, 8];
+check["plain text displays an external color label without a wrapper",
+ PlainText[ColorIndex[12]] === "c_{12}"];
+check["plain text displays the color identity with distinct ordered labels",
+ PlainText[ColorDelta[ColorIndex[1], ColorIndex[2]]] === "delta_{c_{1},c_{2}}"];
+check["plain text preserves the antiquark quark and gluon generator slots",
+ PlainText[ltTextColorGenerator] === "(T^{c_{3}})_{c_{2},c_{1}}"];
+check["plain text displays real structure constants without an extra phase",
+ PlainText[ColorStructure[ColorIndex[3], ColorIndex[4], ColorIndex[5]]] ===
+  "f^{c_{3},c_{4},c_{5}}"];
+check["plain text preserves the ordered generators of a color trace",
+ PlainText[ltTextColorTrace] === "Tr(T^{c_{3}} T^{c_{4}})" &&
+ PlainText[ColorTrace[]] === "Tr()"];
+check["plain text separates internal edge labels and their representation types",
+ AllTrue[{"d_{1,23}", "a_{12,3}"},
+  StringContainsQ[PlainText[ColorGenerator[ColorIndex[1],
+    ltTextFundamentalDummy, ltTextAdjointDummy]], #] &]];
+check["plain text combines color factors with ordinary amplitude coefficients",
+ StringContainsQ[PlainText[ltTextCharge ltTextColorGenerator], "EE"] &&
+ StringContainsQ[PlainText[ltTextCharge ltTextColorGenerator], "*"] &&
+ StringContainsQ[PlainText[ltTextCharge ltTextColorGenerator], "(T^{c_{3}})"]];
+check["TeX displays an external color label without a wrapper",
+ TeX[ColorIndex[12]] === "c_{12}"];
+check["TeX displays the color identity with distinct ordered labels",
+ TeX[ColorDelta[ColorIndex[1], ColorIndex[2]]] === "\\delta_{c_{1},c_{2}}"];
+check["TeX preserves the antiquark quark and gluon generator slots",
+ TeX[ltTextColorGenerator] === "\\left(T^{c_{3}}\\right)_{c_{2},c_{1}}"];
+check["TeX displays real structure constants without an extra phase",
+ TeX[ColorStructure[ColorIndex[3], ColorIndex[4], ColorIndex[5]]] ===
+  "f^{c_{3},c_{4},c_{5}}"];
+check["TeX preserves the ordered generators of a color trace",
+ TeX[ltTextColorTrace] === "\\operatorname{Tr}\\left(T^{c_{3}}\\,T^{c_{4}}\\right)" &&
+ TeX[ColorTrace[]] === "\\operatorname{Tr}\\left(\\right)"];
+check["TeX separates internal edge labels and their representation types",
+ AllTrue[{"d_{1,23}", "a_{12,3}"},
+  StringContainsQ[TeX[ColorGenerator[ColorIndex[1],
+    ltTextFundamentalDummy, ltTextAdjointDummy]], #] &]];
+check["TeX combines color factors with ordinary amplitude coefficients",
+ StringQ[TeX[ltTextCharge ltTextColorGenerator]] &&
+ StringContainsQ[TeX[ltTextCharge ltTextColorGenerator], "EE"] &&
+ StringContainsQ[TeX[ltTextCharge ltTextColorGenerator], "T^{c_{3}}"]];
+check["readable color formatting never alters the underlying tensors",
+ With[{before = {ltTextColorGenerator, ltTextColorTrace}},
+  PlainText /@ before; TeX /@ before;
+  before === {ColorGenerator[ColorIndex[2], ColorIndex[1], ColorIndex[3]],
+   ColorTrace[ColorIndex[3], ColorIndex[4]]}]];
+check["lossless model text keeps unsupported color expressions explicitly rejected",
+ AllTrue[{ColorIndex[1], ColorDelta[ColorIndex[1], ColorIndex[2]],
+  ltTextColorGenerator, ColorStructure[ColorIndex[1], ColorIndex[2], ColorIndex[3]],
+  ltTextColorTrace, ColorGenerator[ColorIndex[1], ltTextFundamentalDummy, ColorIndex[3]]},
+  FailureQ[PlainText[#, "Model"]] &]];
+
+If[checks =!= 55, AppendTo[failures,
+  {"suite did not reach every check", "Expected" -> 55, "Actual" -> checks}]];
 Print["Plain text: ", checks, " checks, ", Length[failures], " failures."];
 If[failures =!= {}, Print[failures]];
 Print["HEPCAT_TEST_COMPLETED:plain-text-tests.wl"];

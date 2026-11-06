@@ -88,7 +88,7 @@ check["the public final-compaction path uses the same ordinary reduction",
  spBetter[spRank[ConstructiveDiagrams`Private`preparationCompactExternalSums[spSource,5,spExternal]],spRank[spSource]]];
 check["a zero time budget preserves the original checkpoint", spReduce[spSource,0,spExternal] === spSource];
 check["a polynomial without chains is unchanged", spReduce[(spX+spY)^2,1,{}] === (spX+spY)^2];
-check["noncommutative/color objects decline this scalar candidate", spReduce[spSource colorT[spColor],1,spExternal] === spSource colorT[spColor]];
+check["noncommutative/color objects decline this scalar candidate", spReduce[spSource ColorGenerator[spAnti,spFund,spColor],1,spExternal] === spSource ColorGenerator[spAnti,spFund,spColor]];
 check["large prospective expansion preserves the old checkpoint",
  spReduce[spSource (1+spX)^2048,1,spExternal] === spSource (1+spX)^2048];
 check["no temporary inverse token escapes", FreeQ[spResult,s_Symbol /; StringStartsQ[SymbolName[Unevaluated[s]],"spectatorInverse"]]];

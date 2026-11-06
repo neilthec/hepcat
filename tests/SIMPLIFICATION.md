@@ -443,8 +443,10 @@ outgoing species the symmetry factor is `1/n!`, counting
 all helicities together and including identical fermions. There is no incoming
 identical-particle factorial. Thus `eeAA` has `amp2() = spin_sum()/8`: four
 incoming spin states and two identical final photons. Three or four final
-photons contribute `1/6` or `1/24`, respectively. Colored families are currently
-rejected because the exporter has no general color-sum implementation.
+photons contribute `1/6` or `1/24`, respectively. Complete SU(3) color
+families retain their coherent interference through an exact tensor basis;
+the generated class additionally exposes color coefficients and explicit
+color-state amplitudes, and applies the incoming-color average exactly once.
 
 Fixing an outgoing helicity gives a labeled partial contribution with the same
 identical-species factor. Sum all labeled helicity sectors to recover the full
@@ -519,8 +521,10 @@ a doubled-spin array. Massless helicities are fixed by the exported process;
 massive states use normalized symmetric spinor tensors. `spin_sum` sums
 massive external spins and `amp2` also averages incoming massive spins.
 Neither includes an identical-particle phase-space factor, a sum over other
-massless helicities, or external color sums or averages. Colored processes
-require an explicitly color-stripped amplitude.
+massless helicities. Complete SU(3) color expressions use an exact shared
+color basis and its interference matrix; their spin sum includes the color
+sum, and `amp2` applies the incoming-color average. A bare stripped colored
+expression is insufficient for independent complete-process validation.
 
 Supply the analytic amplitude in HEPCAT's all-ingoing convention. C++ momenta
 have positive energies. The physical arrow form selects the incoming and
@@ -536,8 +540,9 @@ created. The generated `Parameters` array supports complex couplings; its
 order is recorded in the manifest and README. When changing its
 values, keep dependent parameters consistent. Complete spinor expressions,
 amplitude mass-rule pairs and successful preparation/completion reports are
-accepted. Resolve Xi/Zeta spinors, x factors, uncontracted spin/color tensors
-and unsupported model functions first. Unresolved or unsupported input returns
+accepted. Resolve Xi/Zeta spinors, x factors, unsupported spin tensors
+and unsupported model functions first. Supported explicit SU(3) color
+tensors and traces are retained by the coherent color exporter. Unresolved or unsupported input returns
 `Failure` before creating a partial project. Export supports massive spins
 through two and definite massless helicities, with two incoming legs and at
 least four external legs for the example generator. These demonstrations do
@@ -753,6 +758,28 @@ directions, so a missing tensor is tested as a missing coefficient. The
 constructor accepts `"FeynmanModel"` for colored processes too and converts the
 independent diagrams once before checking their projected coefficients. The
 reference never supplies construction terms.
+
+`ReduceColor` now uses this same canonical color representation throughout:
+`ColorGenerator[anti,fund,adjoint]`, `ColorStructure[a,b,c]`, `ColorDelta[i,j]`
+and ordered `ColorTrace[a,b,...]`. Its SU(3) convention is
+`Tr(T^a T^b)=delta(a,b)/2` and `[T^a,T^b]=I f(a,b,c) T^c`.
+Closed matrix-index cycles of arbitrary length and repeated adjoint dummies
+reduce with trace/completeness identities. Conjugation swaps a generator's
+fundamental slots and reverses a trace. Symbolic dummy labels are summed;
+integer components are fixed, and external `ColorIndex` slots stay free.
+Use `"SumExternalColors" -> True` on a squared/interfered color expression
+when a color sum is wanted. A pure delta norm needs `"IndexDimensions"` if
+no generator or typed internal index determines its dimension. This performs
+no incoming-color average. Invalid contractions and exhausted expansion
+budgets fail explicitly.
+
+Notebook expressions display these objects automatically as delta tensors,
+indexed generators, structure constants and ordered traces. Copying a displayed
+formula preserves the exact typed expression. `PlainText` and `TeX` also
+understand this notation. The old lowercase color algebra has been removed;
+its `colorf` represented `I f`, so historical expressions cannot be migrated
+by merely changing that head to `ColorStructure`. Historical manual notebooks
+remain unchanged.
 
 The SM construction notebook loads `model_feynman` model 1 in Setup and requests
 this benchmark for every explicit helicity. Its local fixed charm, bottom and

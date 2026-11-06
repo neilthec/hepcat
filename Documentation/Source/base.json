@@ -812,7 +812,7 @@
     "details": [
       "MomProd[i, j] means p_i dot p_j. Its arguments are particle or channel labels, without [Mom](paclet:HEPCAT/ref/Mom) wrappers. For example, MomProd[Multiparticle[1, 2], 3] denotes (p1+p2) dot p3.",
       "The displayed scalar product keeps its `MomProd` meaning when copied or read back from a notebook, so it remains usable by the symbolic and numerical tools.",
-    "Supported signed and composite arguments are handled bilinearly, and the scalar product is symmetric. For a single external leg, MomProd[i, i] becomes `Mass[i]^2` using its external on-shell identity.",
+      "Supported signed and composite arguments are handled bilinearly, and the scalar product is symmetric. For a single external leg, MomProd[i, i] becomes `Mass[i]^2` using its external on-shell identity.",
       "MomProd[1, 3] does not automatically know which internal channel belongs to a particular diagram. If that diagram declares (p1+p3)^2=m_channel^2, [PrepareAmplitudes](paclet:HEPCAT/ref/PrepareAmplitudes) can use `2 MomProd[1,3]=m_channel^2-Mass[1]^2-Mass[3]^2` in the diagram's numerator.",
       "[ExtractMandelstahm](paclet:HEPCAT/ref/ExtractMandelstahm) expresses supported scalar products in terms of s invariants. Keeping MomProd in a numerator is also valid and can make later spinor reductions easier."
     ],
@@ -1305,35 +1305,65 @@
   },
   {
     "name": "ReduceColor",
-    "summary": "Applies the supported fundamental SU(3) color identities and writes the result in trace form.",
+    "summary": "Reduces contracted SU(3) color tensors and ordered generator traces.",
     "syntaxes": [
       {
         "input": "ReduceColor[expr]",
-        "description": "applies supported fundamental-color trace and completeness identities."
+        "description": "reduces generator contractions, structure constants and traces in the canonical SU(3) representation."
+      },
+      {
+        "input": "ReduceColor[expr, \"IndexDimensions\" -> {i -> 3}]",
+        "description": "also supplies a dimension for a dummy index whose tensor context does not determine it."
       }
     ],
     "details": [
-      "Use this on the older symbolic generator and structure-constant expressions produced by HEPCAT's color algebra. The implementation contains the fundamental-generator trace and completeness identities of its SU(3) convention.",
-      "The result is still an amplitude-level color expression. It is not a sum over all external colors, an average over incoming colors, or a replacement for the phase-space symmetry factors of identical particles.",
-      "The tensor objects used by a CalcHEP [FeynmanModel](paclet:HEPCAT/ref/FeynmanModel) have a separate typed representation. Do not assume that this legacy reducer implements every identity for those tensors or for another gauge group."
+      "Use this with [ColorGenerator](paclet:HEPCAT/ref/ColorGenerator), [ColorStructure](paclet:HEPCAT/ref/ColorStructure), [ColorDelta](paclet:HEPCAT/ref/ColorDelta) and [ColorTrace](paclet:HEPCAT/ref/ColorTrace), the same color objects used by constructive diagrams and the Feynman comparison. There is one color representation for both workflows.",
+      "The normalization is `Tr(T^a T^b)=delta(a,b)/2` with three fundamental colors. Structure constants are real and satisfy `[T^a,T^b]=I f(a,b,c) T^c`. Thus `f(a,b,c)=-2 I (Tr(T^a T^b T^c)-Tr(T^a T^c T^b))`. An extra factor of I supplied by a vertex remains a separate coefficient.",
+      "Generator loops of any length become ordered traces. The SU(3) completeness identity contracts a repeated adjoint dummy between generators or traces. Hermitian conjugation swaps a generator's two fundamental slots, while conjugating a trace reverses its order. This also lets [SquareAmplitude](paclet:HEPCAT/ref/SquareAmplitude) form the correct conjugate color expression.",
+      "A repeated symbolic dummy label is summed, but an external [ColorIndex](paclet:HEPCAT/ref/ColorIndex) remains a free external color label by default. Literal positive integer indices are fixed matrix components, not dummy summation labels. A dummy used more than twice in one term is an invalid Einstein contraction and is reported explicitly.",
+      "Use `\"SumExternalColors\" -> True` on a squared or interfered color expression to sum its external ColorIndex slots explicitly. Each summed slot must occur twice. Dimensions are inferred from generator, trace and structure-constant slots; a pure delta loop may need `\"IndexDimensions\"`. This sum does not include an incoming-color average or a phase-space symmetry factor.",
+      "Generator, structure-constant and trace slots determine dummy dimensions automatically. A bare `ColorDelta[i,i]` cannot distinguish a fundamental loop from an adjoint loop, so it remains unresolved unless its dimension is supplied with `\"IndexDimensions\" -> {i -> 3}` or `{i -> 8}`. Generated internal indices already carry this information.",
+      "The optional `\"MaxTerms\"` limit defaults to 4096 and bounds color-polynomial expansion. An unsupported contraction or exceeded budget must not be interpreted as a numerical color certificate. Only SU(3) fundamental and adjoint identities are implemented."
     ],
     "examples": [
       {
-        "description": "Reduce the trace of a single SU(3) generator.",
-        "input": "ReduceColor[ConstructiveDiagrams`colorTrace[ConstructiveDiagrams`colorT[a]]]",
+        "description": "The trace of one SU(3) generator vanishes.",
+        "input": "ReduceColor[ColorTrace[a]]",
         "evaluate": true,
         "expected": "0"
       },
       {
-        "description": "Reduce the empty color trace.",
-        "input": "ReduceColor[ConstructiveDiagrams`colorTrace[]]",
+        "description": "The empty fundamental trace is the dimension of the fundamental representation.",
+        "input": "ReduceColor[ColorTrace[]]",
         "evaluate": true,
         "expected": "3"
+      },
+      {
+        "description": "Sum the repeated adjoint index in a two-generator trace.",
+        "input": "ReduceColor[ColorTrace[a, a]]",
+        "evaluate": true,
+        "expected": "4"
+      },
+      {
+        "description": "Resolve an otherwise ambiguous fundamental delta loop.",
+        "input": "ReduceColor[ColorDelta[i, i], \"IndexDimensions\" -> {i -> 3}]",
+        "evaluate": true,
+        "expected": "3"
+      },
+      {
+        "description": "Sum the external colors of a generator norm. Hermitian conjugation swaps its two fundamental slots.",
+        "input": "ReduceColor[ColorGenerator[ColorIndex[2], ColorIndex[1], ColorIndex[3]] Conjugate[ColorGenerator[ColorIndex[2], ColorIndex[1], ColorIndex[3]]], \"SumExternalColors\" -> True]",
+        "evaluate": true,
+        "expected": "4"
       }
     ],
     "related": [
+      "ColorTrace",
       "ColorGenerator",
-      "ColorStructure"
+      "ColorStructure",
+      "ColorDelta",
+      "ColorIndex",
+      "SquareAmplitude"
     ],
     "guide": "IdentitiesAndSimplification"
   },
@@ -1895,7 +1925,8 @@
       "Supply an expression with implicit external massive indices and a list of physical spin magnitudes in particle order. The supported values are 0, 1/2, 1, 3/2 and 2. Internal spin contractions should already have been reduced.",
       "The function makes one copy's massive indices explicit, symmetrizes the corresponding indices in the other copy, conjugates the first, and multiplies the two. The result can still contain spin contractions; follow it with [ReduceSpinContractions](paclet:HEPCAT/ref/ReduceSpinContractions) and [ReduceSpinorProducts](paclet:HEPCAT/ref/ReduceSpinorProducts) as needed.",
       "Scalar couplings are conjugated as part of the Hermitian conjugate. A symbolic coupling g is therefore not assumed real unless that property has been established separately.",
-      "No initial-state spin average, identical-particle phase-space divisor, or external color sum is inserted here. [WriteSPINASProcess](paclet:HEPCAT/ref/WriteSPINASProcess) provides explicit spin sums and the declared scattering normalization for numerical work. Complex-shifted external-state expressions are outside this helper's intended scope."
+      "No initial-state spin average, identical-particle phase-space divisor, or external color sum is inserted here. [WriteSPINASProcess](paclet:HEPCAT/ref/WriteSPINASProcess) provides explicit spin sums and the declared scattering normalization for numerical work. Complex-shifted external-state expressions are outside this helper's intended scope.",
+      "Canonical color tensors retain Hermitian conjugation. Internally contracted color labels in the conjugate amplitude receive independent dummy names, so their sums are not accidentally tied to the original copy. External ColorIndex labels are retained; use [ReduceColor](paclet:HEPCAT/ref/ReduceColor) with `\"SumExternalColors\" -> True` when a squared-color sum is wanted."
     ],
     "examples": [
       {
@@ -3015,90 +3046,6 @@
       "xTildeFactor"
     ],
     "guide": "IdentitiesAndSimplification",
-    "visibility": "internal"
-  },
-  {
-    "name": "colorT",
-    "summary": "Represents a fundamental SU(3) generator in the legacy color reducer.",
-    "syntaxes": [
-      {
-        "input": "colorT[args]",
-        "description": "forms the symbolic color object."
-      }
-    ],
-    "details": [
-      "These older color heads are interpreted by ReduceColor with its SU(3) trace conventions. The modern Feynman representation uses ColorGenerator, ColorStructure and ColorDelta instead.",
-      "Do not interchange the legacy and Feynman heads without verifying their normalization and factors of I."
-    ],
-    "examples": [
-      {
-        "description": "Apply a supported trace reduction.",
-        "input": "ReduceColor[colorT[a, i, j] colorT[b, j, i]]",
-        "evaluate": true
-      }
-    ],
-    "related": [
-      "ReduceColor",
-      "ColorGenerator",
-      "ColorStructure"
-    ],
-    "guide": "SpinorAlgebra",
-    "visibility": "internal"
-  },
-  {
-    "name": "colorf",
-    "summary": "Represents a structure-constant object in the legacy color trace convention.",
-    "syntaxes": [
-      {
-        "input": "colorf[args]",
-        "description": "forms the symbolic color object."
-      }
-    ],
-    "details": [
-      "These older color heads are interpreted by ReduceColor with its SU(3) trace conventions. The modern Feynman representation uses ColorGenerator, ColorStructure and ColorDelta instead.",
-      "Do not interchange the legacy and Feynman heads without verifying their normalization and factors of I."
-    ],
-    "examples": [
-      {
-        "description": "Apply a supported trace reduction.",
-        "input": "ReduceColor[colorf[a, b, c]]",
-        "evaluate": true
-      }
-    ],
-    "related": [
-      "ReduceColor",
-      "ColorGenerator",
-      "ColorStructure"
-    ],
-    "guide": "SpinorAlgebra",
-    "visibility": "internal"
-  },
-  {
-    "name": "colorTrace",
-    "summary": "Represents a trace of legacy colorT generators.",
-    "syntaxes": [
-      {
-        "input": "colorTrace[args]",
-        "description": "forms the symbolic color object."
-      }
-    ],
-    "details": [
-      "These older color heads are interpreted by ReduceColor with its SU(3) trace conventions. The modern Feynman representation uses ColorGenerator, ColorStructure and ColorDelta instead.",
-      "Do not interchange the legacy and Feynman heads without verifying their normalization and factors of I."
-    ],
-    "examples": [
-      {
-        "description": "Apply a supported trace reduction.",
-        "input": "ReduceColor[colorTrace[]]",
-        "evaluate": true
-      }
-    ],
-    "related": [
-      "ReduceColor",
-      "ColorGenerator",
-      "ColorStructure"
-    ],
-    "guide": "SpinorAlgebra",
     "visibility": "internal"
   }
 ]

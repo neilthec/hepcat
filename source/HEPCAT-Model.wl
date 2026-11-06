@@ -3839,7 +3839,7 @@ CheckAmplitudes[amplitudes_, channelRows_List, model_List,
     Message[CheckAmplitudes::args]; Return[$Failed]];
   If[!TrueQ[$colorCheckingProjection] && !FreeQ[{amplitudes,channelRows,benchmark},
       _ConstructiveDiagrams`ColorDelta | _ConstructiveDiagrams`ColorGenerator |
-        _ConstructiveDiagrams`ColorStructure],
+        _ConstructiveDiagrams`ColorStructure | _ConstructiveDiagrams`ColorTrace],
     Return[colorCheckAmplitudes[amplitudes,channelRows,model,Association[{opts}]]]];
   numericOptions = Join[{"RandomSeed" -> seed, "ParameterRules" -> parameters}, {opts}];
   inputs = residueSimpleInputs[amplitudes, channelRows, model];
@@ -12669,7 +12669,7 @@ preparationMultilinearIdentityNormalize[expression_, externalRules_List,
       !preparationScalarExternalRulesQ[externalRules] ||
       FreeQ[expression, chain_SpinorChain /; Length[chain] === 3] ||
       !FreeQ[expression, _SpinorTrace | _SpinorHat | _MomHat | _MomQ | _sigma |
-        _colorT | _colorTrace | _Dot | _NonCommutativeMultiply], Return[best]];
+        _ColorGenerator | _ColorDelta | _ColorStructure | _ColorTrace | _Dot | _NonCommutativeMultiply], Return[best]];
   available[] := Max[0.000001, seconds - (AbsoluteTime[] - started)];
   key[term_] := Times @@ Select[If[Head[term] === Times, List @@ term, {term}],
     MatchQ[#, Power[_PropDen, n_Integer?Negative]] &];
@@ -12743,7 +12743,7 @@ preparationPairedLiteralSpectators[expression_, externalRules_List,
       rspSandwichExpansionCount[expression] > 4096 ||
       !preparationScalarExternalRulesQ[externalRules] ||
       !FreeQ[expression, _SpinorTrace | _SpinorHat | _MomHat | _MomQ |
-        _SpinorZ | _SpinorEps | _sigma | _colorT | _colorTrace |
+        _SpinorZ | _SpinorEps | _sigma | _ColorGenerator | _ColorDelta | _ColorStructure | _ColorTrace |
         _Dot | _NonCommutativeMultiply] ||
       !FreeQ[expression, Power[_, exponent_] /;
         !TrueQ[exponent >= 0] && !IntegerQ[exponent]], Return[best]];
@@ -12864,7 +12864,7 @@ preparationSharedMatrixCofactors[expression_, externalRules_List,
       (slotDegree[expression] < 8 &&
         FreeQ[expression, chain_SpinorChain /; Length[chain] === 4 && First[chain] === Last[chain]]) ||
       !FreeQ[expression, _SpinorTrace | _SpinorHat | _MomHat | _MomQ |
-        _sigma | _colorT | _colorTrace | _Dot | _NonCommutativeMultiply], Return[best]];
+        _sigma | _ColorGenerator | _ColorDelta | _ColorStructure | _ColorTrace | _Dot | _NonCommutativeMultiply], Return[best]];
   available[] := Max[0.000001, seconds - (AbsoluteTime[] - started)];
   pairedCandidate = preparationPairedLiteralSpectators[expression, externalRules,
     conserve, Min[12, 2 available[]/3]];
@@ -13203,8 +13203,8 @@ preparationMasslessBracketCancellation[expression_, externalRules_List,
   If[budget <= 0 || LeafCount[expression] > 8000 ||
       !preparationScalarExternalRulesQ[external] || !FreeQ[external, _Real] ||
       !rspExpansionBudgetQ[expression] ||
-      !FreeQ[expression, _SpinorHat | _MomHat | _MomQ | _sigma | _colorT |
-        _colorTrace | _Dot | _NonCommutativeMultiply], Return[checkpoint]];
+      !FreeQ[expression, _SpinorHat | _MomHat | _MomQ | _sigma | _ColorGenerator | _ColorDelta | _ColorStructure |
+        _ColorTrace | _Dot | _NonCommutativeMultiply], Return[checkpoint]];
   legs = externalIndices[external];
   If[Length[legs] < 2 || Length[legs] > 16, Return[checkpoint]];
   (* Physical endpoints can carry explicit variance or vector-spin slots.
@@ -13341,7 +13341,7 @@ preparationDeterminantPairs[expression_, externalRules_List, maxPairs_: 8, secon
       "ElapsedTime" -> AbsoluteTime[] - started|>]]];
   initialLeaves = LeafCount[expression];
   If[initialLeaves > 12000 ||
-      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace] ||
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _ColorGenerator | _ColorDelta | _ColorStructure | _ColorTrace] ||
       !FreeQ[expression, Power[base_, exponent_] /; !TrueQ[exponent >= 0] &&
         !FreeQ[base, _PropDen | _SpinorChain | _SpinorTrace | _Mom | _MomProd]] ||
       !rspExpansionBudgetQ[expression],
@@ -13432,7 +13432,7 @@ preparationSparsePoleContent[expression_, seconds_: 0.5] := Module[
   If[LeafCount[expression] > 24000 || rspSandwichExpansionCount[expression] > 128 ||
       !FreeQ[expression, Power[base_, exponent_] /; !TrueQ[exponent >= 0] &&
         !FreeQ[base, _SpinorChain | _SpinorTrace | _SpinorHat]] ||
-      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace],
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _ColorGenerator | _ColorDelta | _ColorStructure | _ColorTrace],
     Return[expression]];
   props = DeleteDuplicates[Cases[expression, _PropDen, Infinity]];
   If[Length[props] < 2 || Length[props] > 64, Return[expression]];
@@ -13489,7 +13489,7 @@ preparationNumeratorSpectatorSums[expression_, seconds_ : 1, externalRules_List 
    maximumGroups = 24, maximumCollections = 16, maximumGroupLeaves = 10000,
    maximumAtoms = 64, maximumBranches = 1024},
   If[!TrueQ[seconds > 0] || LeafCount[expression] > 60000 || FreeQ[expression, _Plus] ||
-      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace |
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _ColorGenerator | _ColorDelta | _ColorStructure | _ColorTrace |
         _SpinorHat | _SpinorZ | _SpinorEps], Return[expression]];
   bestRank = preparationRank[best];
   TimeConstrained[MemoryConstrained[
@@ -13551,7 +13551,7 @@ preparationCompactExternalSums[expression_, seconds_: 5, externalRules_List : {}
    maximumAtoms = 512, maximumBranches = 2048, maximumLeaves = 200000},
   If[LeafCount[expression] > maximumLeaves || FreeQ[expression, _Plus] ||
       rspSandwichExpansionCount[expression] > maximumBranches ||
-      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace],
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _ColorGenerator | _ColorDelta | _ColorStructure | _ColorTrace],
     Return[expression]];
   best = preparationSparsePoleContent[expression, Min[0.5, seconds/3]];
   bestRank = preparationRank[best];
@@ -13589,7 +13589,7 @@ preparationCompactExternalSums[expression_, seconds_: 5, externalRules_List : {}
 preparationGroupedPropagatorForm[expression_, seconds_: 2] := Module[
   {profile, expanded, terms, groups, key, result},
   If[!TrueQ[seconds > 0] || LeafCount[expression] > 150000 ||
-      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace],
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _ColorGenerator | _ColorDelta | _ColorStructure | _ColorTrace],
     Return[expression]];
   profile = rspExpansionProfile[expression, 2048, 160000];
   If[profile[[1]] > 2048 || profile[[2]] > 160000, Return[expression]];
@@ -13620,7 +13620,7 @@ preparationWholeFractionSchouten[expression_, externalRules_List, seconds_ : 12]
     "Route" -> {}, "Status" -> "UNCHANGED"|>;
   If[!TrueQ[NumericQ[seconds] && seconds > 0] || LeafCount[expression] > 24000 ||
       !preparationScalarExternalRulesQ[external] ||
-      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace |
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _ColorGenerator | _ColorDelta | _ColorStructure | _ColorTrace |
         _SpinorHat | _MomHat | _MomQ | Spinor["Xi" | "Zeta", ___]], Return[bestRecord]];
   terms = If[Head[expression] === Plus, List @@ expression, {expression}];
   If[Length[terms] > 64, Return[bestRecord]];
@@ -13750,7 +13750,7 @@ preparationDenominatorSchouten[expression_, externalRules_List, seconds_: 15] :=
   bestRank = preparationRank[best];
   If[!TrueQ[seconds > 0] || LeafCount[expression] > 24000 ||
       !rspExpansionBudgetQ[expression] || rspSandwichExpansionCount[expression] > 256 ||
-      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace],
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _ColorGenerator | _ColorDelta | _ColorStructure | _ColorTrace],
     Return[<|"Amplitude" -> best, "Route" -> {}, "Status" -> "UNCHANGED",
       "ElapsedTime" -> AbsoluteTime[] - started|>]];
   key[term_] := Times @@ Select[If[Head[term] === Times, List @@ term, {term}],
@@ -13825,7 +13825,7 @@ preparationScalarExternalRulesQ[rules_List] := Module[{external = preparationExt
   preparationMassRulesConsistentQ[external] && AllTrue[external,
     residueFiniteQ[Last[#]] && FreeQ[Last[#], _List | _Association | _Rule | _RuleDelayed | _Spinor | _SpinorChain |
       _SpinorTrace | _Mom | _MomProd | _PropDen | _Mandelstahm | _Mass | _Dot |
-      _NonCommutativeMultiply | _sigma | _colorT | _colorTrace | Indeterminate |
+      _NonCommutativeMultiply | _sigma | _ColorGenerator | _ColorDelta | _ColorStructure | _ColorTrace | Indeterminate |
       ComplexInfinity | _DirectedInfinity] &]
 ];
 
@@ -13895,7 +13895,7 @@ preparationScalarSchoutenRelations[expression_, higher_PropDen, externalRules_Li
    scalarSign, virtualities, outcome, tag = Unique["scalarSchoutenRelations"]},
   If[!TrueQ[seconds > 0] || LeafCount[expression] > 8000 ||
       !preparationScalarExternalRulesQ[externalRules] ||
-      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace],
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _ColorGenerator | _ColorDelta | _ColorStructure | _ColorTrace],
     Return[{}]];
   external = preparationExternalRules[externalRules];
   orient[chain_SpinorChain] := Module[{parts = List @@ chain, left, right},
@@ -13975,7 +13975,7 @@ preparationScalarPoleBlock[expression_, higher_PropDen, externalRules_List,
     "PolynomialDivisionCertificate" -> True|>;
   If[!TrueQ[seconds > 0] || LeafCount[expression] > 8000 ||
       !preparationScalarExternalRulesQ[externalRules] ||
-      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace] ||
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _ColorGenerator | _ColorDelta | _ColorStructure | _ColorTrace] ||
       !FreeQ[expression, Power[base_, exponent_] /; !TrueQ[exponent >= 0] &&
         !FreeQ[base, _SpinorChain | _SpinorTrace | _SpinorHat]], Return[bestRecord]];
   external = preparationExternalRules[externalRules]; masses = DeleteDuplicates[Last /@ external];
@@ -14081,7 +14081,7 @@ preparationCrossDenominatorBlock[expression_, higher_PropDen, externalRules_List
   bestRecord = <|"Amplitude" -> expression, "Route" -> {}, "Status" -> "UNCHANGED"|>;
   If[!TrueQ[seconds > 0] || LeafCount[expression] > 8000 ||
       !rspExpansionBudgetQ[expression] || !preparationScalarExternalRulesQ[externalRules] ||
-      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace] ||
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _ColorGenerator | _ColorDelta | _ColorStructure | _ColorTrace] ||
       !FreeQ[expression, Power[base_, exponent_] /; !TrueQ[exponent >= 0] &&
         !FreeQ[base, _SpinorChain | _SpinorTrace | _SpinorHat]], Return[bestRecord]];
   external = preparationExternalRules[externalRules];
@@ -14132,7 +14132,7 @@ preparationCollectRegularRemainders[expression_, seconds_ : 2] := Module[
   best = <|"Amplitude" -> expression, "Route" -> {}, "Status" -> "UNCHANGED"|>;
   If[!TrueQ[seconds > 0] || LeafCount[expression] > 12000 || !rspExpansionBudgetQ[expression] ||
       !residueFiniteQ[expression] ||
-      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace],
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _ColorGenerator | _ColorDelta | _ColorStructure | _ColorTrace],
     Return[best]];
   available[] := Max[0.000001, seconds - (AbsoluteTime[] - started)];
   fold[input_] := Module[{sums, names},
@@ -14188,7 +14188,7 @@ preparationOrdinaryPoleCompaction[expression_, externalRules_List, conserve_ : T
   If[!TrueQ[seconds > 0] || LeafCount[expression] > 24000 ||
       !rspExpansionBudgetQ[expression] || rspSandwichExpansionCount[expression] > 512 ||
       !preparationScalarExternalRulesQ[externalRules] ||
-      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace] ||
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _ColorGenerator | _ColorDelta | _ColorStructure | _ColorTrace] ||
       !FreeQ[expression, Power[base_, exponent_] /; !TrueQ[exponent >= 0] &&
         !FreeQ[base, _SpinorChain | _SpinorTrace | _SpinorHat]], Return[bestRecord]];
   available[] := Max[0.000001, seconds - (AbsoluteTime[] - started)];
@@ -15302,7 +15302,7 @@ preparationPoleDisplayGrouping[expression_, externalRules_List, seconds_ : 1] :=
   budget = If[NumericQ[seconds] && TrueQ[seconds > 0], Min[1, seconds], 0];
   If[budget <= 0 || LeafCount[expression] > 12000 || !residueFiniteQ[expression] ||
       !preparationScalarExternalRulesQ[externalRules] ||
-      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace],
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _ColorGenerator | _ColorDelta | _ColorStructure | _ColorTrace],
     Return[Join[checkpoint, <|"TimedOut" -> False, "ElapsedTime" -> AbsoluteTime[] - started,
       "InternalOnShellConditions" -> {}|>]]];
   outcome = TimeConstrained[MemoryConstrained[Catch[

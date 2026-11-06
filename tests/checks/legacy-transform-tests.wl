@@ -493,16 +493,16 @@ Do[
    {ltLeftIndexed, {False, True}}, {ltRightIndexed, {False, True}}];
 
 (* SU(3) completeness: sum_a tr(Ta Ta)=4 and a closed color line has 3 states. *)
-check["color empty trace dimension", ReduceColor[colorTrace[]] === 3];
-check["color single-generator trace is zero", ReduceColor[colorTrace[colorT[ltA]]] === 0];
-check["color summed generator pair", ReduceColor[colorTrace[colorT[ltA], colorT[ltA]]] === 4];
+check["color empty trace dimension", ReduceColor[ColorTrace[]] === 3];
+check["color single-generator trace is zero", ReduceColor[ColorTrace[ltA]] === 0];
+check["color summed generator pair", ReduceColor[ColorTrace[ltA, ltA]] === 4];
 check["color explicit index loop reduces through the same SU3 normalization",
- ReduceColor[colorT[ltA, ltI, ltJ] colorT[ltA, ltJ, ltI]] === 4];
-check["color disconnected single traces vanish", ReduceColor[colorTrace[colorT[ltA]] colorTrace[colorT[ltBColor]]] === 0];
+ ReduceColor[ColorGenerator[ltI, ltJ, ltA] ColorGenerator[ltJ, ltI, ltA]] === 4];
+check["color disconnected single traces vanish", ReduceColor[ColorTrace[ltA] ColorTrace[ltBColor]] === 0];
 check["color two contracted two-generator traces",
- ReduceColor[colorTrace[colorT[ltA], colorT[ltBColor]]^2] === 2];
+ ReduceColor[ColorTrace[ltA, ltBColor]^2] === 2];
 check["color generators separated by a spectator generator obey the SU3 Fierz term",
- ReduceColor[colorTrace[colorT[ltA], colorT[ltBColor], colorT[ltA], colorT[ltBColor]]] === -2/3];
+ ReduceColor[ColorTrace[ltA, ltBColor, ltA, ltBColor]] === -2/3];
 
 If[checks =!= 247, AppendTo[failures,
   {"suite did not reach every check", "Expected" -> 247, "Actual" -> checks}]];

@@ -67,7 +67,7 @@ Protect @@ (ToExpression /@ {
   "PrepareAmplitudes", "PrepareDiagramAmplitudes", "CompleteFactorization", "CompleteHighEnergy", "ConstructAmplitude",
   "FeynmanModel", "DiracWord", "DiracGamma", "DiracGamma5", "DiracSlash",
   "LorentzIndex", "LorentzMetric", "LorentzMomentum", "LorentzScalarProduct", "DiracChain", "FermionBar", "FermionKet",
-  "PolarizationVector", "ColorDelta", "ColorGenerator", "ColorStructure", "ColorIndex",
+  "PolarizationVector", "ColorDelta", "ColorGenerator", "ColorStructure", "ColorIndex", "ColorTrace", "ReduceColor",
   "FeynmanToSpinorProducts", "VectorSpinIndex", "ValidateMadGraph"
 });
 EndPackage[];

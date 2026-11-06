@@ -32,6 +32,12 @@ check["incoming colors are averaged once and final identical gluons receive thei
 check["helicity closure permutes the full color amplitude", Length[ir["HelicityConfigurations"]] === 4 && ir["GeneratedBranchCount"] === 1];
 bad = ConstructiveDiagrams`Private`colorAmplitudeTerms[1/ColorDelta[ColorIndex[1], ColorIndex[2]]];
 check["a color-bearing denominator is rejected", FailureQ[bad]];
+traceTensor = ColorDelta[ColorIndex[2], ColorIndex[1]] ColorTrace[ColorIndex[3], ColorIndex[4]];
+traceEntries = ({First[#], traceTensor (Last[#] /. _ColorGenerator -> 1)} &) /@ entries;
+traceIR = ConstructiveDiagrams`Private`spinasColorFamilyIR[traceEntries, sm, options, Automatic];
+check["ordered traces export through the same exact coherent-color basis",
+  AssociationQ[traceIR] && TrueQ[traceIR["ColorData"]["Certified"]] &&
+    traceIR["ColorData"]["GramMatrix"] === {{6}}];
 report = WriteSPINASProcess[FileNameJoin[{directory, "coherent_color"}], entries, sm,
   "ProcessName" -> "coherent_color", "SPINASDirectory" -> spinas,
   "ParameterRules" -> {"Mu" -> 1, "GG" -> 1/3}, "Build" -> True, "RunExamples" -> True, "ReturnDetails" -> True];

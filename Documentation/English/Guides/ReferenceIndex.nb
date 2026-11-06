@@ -50,7 +50,10 @@ projections for successive massive external particles."}], "GuideText"],
       BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/ColorGenerator"],
      ": ", "Represents a fundamental SU(3) generator with ordered quark and \
 gluon color slots."}], "GuideText"],
-  Cell[TextData[{ButtonBox["ColorIndex", BaseStyle -> "Link",
+  Cell[TextData[{ButtonBox["ColorTrace", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ColorTrace"], ": ",
+     "Represents an ordered fundamental SU(3) generator trace."}],
+   "GuideText"], Cell[TextData[{ButtonBox["ColorIndex", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ColorIndex"], ": ",
      "Identifies the external leg associated with a symbolic color index."}],
    "GuideText"], Cell[TextData[{ButtonBox["ColorStructure",
@@ -270,17 +273,17 @@ physical propagator denominator without putting its momentum on shell."}],
       ButtonData -> "paclet:HEPCAT/ref/ReadModel"], ": ", "Load the particle \
 content, amplitudes and parameters of a model for use throughout HEPCAT."}],
    "GuideText"], Cell[TextData[{ButtonBox["ReduceColor", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/ReduceColor"], ": ", "Applies the \
-supported fundamental SU(3) color identities and writes the result in trace \
-form."}], "GuideText"],
-  Cell[TextData[{ButtonBox["ReduceSpinContractions", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/ReduceSpinContractions"], ": ", "Contr\
-acts repeated spin indices and joins the associated spinor factors into \
-momentum chains."}], "GuideText"],
-  Cell[TextData[{ButtonBox["ReduceSpinorProducts", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/ReduceSpinorProducts"], ": ", "Simplif\
-ies spinor chains, traces and products using ordinary identities and \
-external-particle on-shell conditions."}], "GuideText"],
+      ButtonData -> "paclet:HEPCAT/ref/ReduceColor"], ": ",
+     "Reduces contracted SU(3) color tensors and ordered generator traces."}]\
+, "GuideText"], Cell[TextData[{ButtonBox["ReduceSpinContractions",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ReduceSpinContractions"], ": ", "Contracts repeated \
+spin indices and joins the associated spinor factors into momentum chains."}]\
+, "GuideText"], Cell[TextData[{ButtonBox["ReduceSpinorProducts",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ReduceSpinorProducts"], ": ", "Simplifies spinor \
+chains, traces and products using ordinary identities and external-particle \
+on-shell conditions."}], "GuideText"],
   Cell[TextData[{ButtonBox["ReducexFactors", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ReducexFactors"], ": ", "Reduces the \
 supported legacy four-point x-factor formulas for an explicitly specified \

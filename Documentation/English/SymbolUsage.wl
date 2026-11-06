@@ -94,10 +94,12 @@ propagators in terms of s invariants.",
  "ConstructiveDiagrams`ReducexFactors" -> "ReducexFactors[expr, opts] applies \
 the supported xFactorReduced and xTildeFactorReduced rules.\nReduces the \
 supported legacy four-point x-factor formulas for an explicitly specified \
-channel.", "ConstructiveDiagrams`ReduceColor" -> "ReduceColor[expr] applies \
-supported fundamental-color trace and completeness identities.\nApplies the \
-supported fundamental SU(3) color identities and writes the result in trace \
-form.", "ConstructiveDiagrams`SchoutenRewrite" -> "SchoutenRewrite[c1, c2, \
+channel.", "ConstructiveDiagrams`ReduceColor" -> "ReduceColor[expr] reduces \
+generator contractions, structure constants and traces in the canonical SU(3) \
+representation.\nReduceColor[expr, \"IndexDimensions\" -> {i -> 3}] also \
+supplies a dimension for a dummy index whose tensor context does not \
+determine it.\nReduces contracted SU(3) color tensors and ordered generator \
+traces.", "ConstructiveDiagrams`SchoutenRewrite" -> "SchoutenRewrite[c1, c2, \
 {m, n}] returns an equivalent two-product expression when the split \
 chiralities agree.\nRewrites a product of two spinor chains using a chosen \
 generalized Schouten identity.", "ConstructiveDiagrams`SchoutenCandidates" ->
@@ -349,7 +351,10 @@ fundamental, adjoint] represents a fundamental SU(3) generator.\nRepresents a \
 fundamental SU(3) generator with ordered quark and gluon color slots.",
  "ConstructiveDiagrams`ColorStructure" -> "ColorStructure[a, b, c] represents \
 an SU(3) structure constant.\nRepresents the SU(3) structure constant with \
-three ordered adjoint color indices.",
+three ordered adjoint color indices.", "ConstructiveDiagrams`ColorTrace" -> "\
+ColorTrace[a, b, ...] represents Tr(T^a T^b ...) in the written \
+order.\nColorTrace[] represents the trace of the fundamental \
+identity.\nRepresents an ordered fundamental SU(3) generator trace.",
  "ConstructiveDiagrams`FeynmanToSpinorProducts" -> "FeynmanToSpinorProducts[e\
 xpression] converts a contracted Feynman tensor \
 expression.\nFeynmanToSpinorProducts[{massRules, expression}] preserves the \

@@ -237,6 +237,19 @@ TeX[delta]:="\\delta "
 TeX[SpinorChain[a_,c_]]:=lTeX[a]<>TeX[c]
 TeX[SpinorChain[a_,b__,c_]]:=lTeX[a]<>"\\lvert "<>((TeX[#]&/@List[b])/.List[d__]:>d)<>"\\rvert "<>TeX[c]
 TeX[SpinorTrace[a__]]:="\\mbox{Tr}\\left("<>((TeX[#]&/@List[a])/.List[b__]:>b)<>"\\right) "
+TeX[ConstructiveDiagrams`ColorIndex[label_]] :=
+  ConstructiveDiagrams`Private`colorTextIndex[ConstructiveDiagrams`ColorIndex[label], True];
+TeX[ConstructiveDiagrams`ColorDelta[left_, right_]] := "\\delta_{" <>
+  StringRiffle[ConstructiveDiagrams`Private`colorTextIndex[#, True] & /@ {left, right}, ","] <> "}";
+TeX[ConstructiveDiagrams`ColorGenerator[anti_, fundamental_, adjoint_]] :=
+  "\\left(T^{" <> ConstructiveDiagrams`Private`colorTextIndex[adjoint, True] <>
+  "}\\right)_{" <> StringRiffle[
+    ConstructiveDiagrams`Private`colorTextIndex[#, True] & /@ {anti, fundamental}, ","] <> "}";
+TeX[ConstructiveDiagrams`ColorStructure[a_, b_, c_]] := "f^{" <>
+  StringRiffle[ConstructiveDiagrams`Private`colorTextIndex[#, True] & /@ {a, b, c}, ","] <> "}";
+TeX[ConstructiveDiagrams`ColorTrace[labels___]] := "\\operatorname{Tr}\\left(" <>
+  StringRiffle[("T^{" <> ConstructiveDiagrams`Private`colorTextIndex[#, True] <> "}") & /@
+    {labels}, "\\,"] <> "\\right)";
 TeX[xFactor[a_,b_]]:="x_{"<>ToString[a]<>ToString[b]<>"} "
 TeX[xTildeFactor[a_,b_]]:="\\tilde{x}_{"<>ToString[a]<>ToString[b]<>"} "
 TeX[Mass[Multiparticle[a__]]]:="M_{"<>ToString[a]<>"} "
@@ -298,6 +311,18 @@ PlainText[delta]:="delta "
 PlainText[SpinorChain[a_,c_]]:=lPlainText[a]<>PlainText[c]
 PlainText[SpinorChain[a_,b__,c_]]:=lPlainText[a]<>"|"<>StringRiffle[PlainText/@{b},"|"]<>"|"<>PlainText[c]
 PlainText[SpinorTrace[a__]]:="Tr("<>StringRiffle[PlainText/@{a},","]<>")"
+PlainText[ConstructiveDiagrams`ColorIndex[label_]] :=
+  ConstructiveDiagrams`Private`colorTextIndex[ConstructiveDiagrams`ColorIndex[label], False];
+PlainText[ConstructiveDiagrams`ColorDelta[left_, right_]] := "delta_{" <>
+  StringRiffle[ConstructiveDiagrams`Private`colorTextIndex[#, False] & /@ {left, right}, ","] <> "}";
+PlainText[ConstructiveDiagrams`ColorGenerator[anti_, fundamental_, adjoint_]] :=
+  "(T^{" <> ConstructiveDiagrams`Private`colorTextIndex[adjoint, False] <> "})_{" <>
+  StringRiffle[ConstructiveDiagrams`Private`colorTextIndex[#, False] & /@ {anti, fundamental}, ","] <> "}";
+PlainText[ConstructiveDiagrams`ColorStructure[a_, b_, c_]] := "f^{" <>
+  StringRiffle[ConstructiveDiagrams`Private`colorTextIndex[#, False] & /@ {a, b, c}, ","] <> "}";
+PlainText[ConstructiveDiagrams`ColorTrace[labels___]] := "Tr(" <>
+  StringRiffle[("T^{" <> ConstructiveDiagrams`Private`colorTextIndex[#, False] <> "}") & /@
+    {labels}, " "] <> ")";
 PlainText[xFactor[a_,b_]]:="x_{"<>ToString[a]<>ToString[b]<>"} "
 PlainText[xTildeFactor[a_,b_]]:="tx_{"<>ToString[a]<>ToString[b]<>"} "
 PlainText[Mass[Multiparticle[a__]]]:="M_{"<>ConstructiveDiagrams`Private`plainTextParticleLabels[{a}]<>"} "
@@ -323,6 +348,19 @@ PlainText[a_String]:=a
 PlainText[expression_,"Model"]:=ConstructiveDiagrams`Private`amplitudeModelText[expression]
 
 Begin["ConstructiveDiagrams`Private`"];
+
+(* Readable color labels are presentation only. In particular, private dummy
+   indices are not admitted to the lossless constructive-model serializer. *)
+colorTextLabel[labels_List, tex_] := StringRiffle[colorTextLabel[#, tex] & /@ labels, ","];
+colorTextLabel[label_Symbol, _] := SymbolName[label];
+colorTextLabel[label_String, _] := label;
+colorTextLabel[label_, tex_] := With[{text = If[TrueQ[tex], TeX[label], PlainText[label]]},
+  If[StringQ[text], StringTrim[text], ToString[label, InputForm]]];
+colorTextIndex[ConstructiveDiagrams`ColorIndex[label_], tex_] :=
+  "c_{" <> colorTextLabel[label, tex] <> "}";
+colorTextIndex[colorInternalIndex[label_, dimension_Integer], tex_] :=
+  Switch[dimension, 3, "d", 8, "a", _, "c"] <> "_{" <> colorTextLabel[label, tex] <> "}";
+colorTextIndex[index_, tex_] := colorTextLabel[index, tex];
 
 plainTextParticleLabels[labels_List] := If[AllTrue[labels, IntegerQ[#] && 0 <= # <= 9 &],
   StringJoin[ToString /@ labels], StringRiffle[ToString /@ labels, ","]];
@@ -758,7 +796,7 @@ rspMomentumLabels[Multiparticle[items___]] := Flatten[rspMomentumLabels /@ {item
 rspMomentumLabels[label_] := {label};
 rspScalarQ[value_] := FreeQ[value, _Spinor|_SpinorHat|_SpinorChain|_SpinorChainReduced|
   _SpinorTrace|_SpinorTraceReduced|_Mom|_MomHat|_MomQ|_SpinorZ|_SpinorEps|
-  _sigma|_colorT|_colorTrace|_Dot|_NonCommutativeMultiply];
+  _sigma|_ColorGenerator | _ColorDelta | _ColorStructure|_ColorTrace|_Dot|_NonCommutativeMultiply];
 
 (* Normalize only typed momentum slots, before a composite can meet a mass rule. *)
 rspLinearMomentumTerms[arg_] := Module[{expanded = Expand[arg], factors, momenta, coefficient, terms = {}},
@@ -1277,7 +1315,7 @@ rspMultilinearIdentitySpace[expression_, externalRules_List] := Module[
    tag = Unique["ordinaryIdentitySpace"], supported, signature},
   If[LeafCount[expression] > 3500 || rspSandwichExpansionCount[expression] > 128 ||
       !FreeQ[expression, _PropDen | _SpinorTrace | _SpinorHat | _MomHat | _MomQ |
-        _SpinorZ | _SpinorEps | _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace] ||
+        _SpinorZ | _SpinorEps | _Dot | _NonCommutativeMultiply | _sigma | _ColorGenerator | _ColorDelta | _ColorStructure | _ColorTrace] ||
       !FreeQ[expression, Power[base_, exponent_] /; !TrueQ[exponent >= 0] &&
         !FreeQ[base, _SpinorChain | _Mom]], Return[Missing["UnsupportedIdentitySector"]]];
   If[AnyTrue[externalRules, Function[rule,
@@ -1588,7 +1626,7 @@ rspLocalFactorContent[expression_] := Module[
   {inverses, tokens, restore, reduce, protected, result, nodes = 0},
   If[LeafCount[expression] > 24000 || FreeQ[expression, _Plus] ||
       FreeQ[expression, _SpinorChain | _SpinorTrace] ||
-      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace],
+      !FreeQ[expression, _Dot | _NonCommutativeMultiply | _sigma | _ColorGenerator | _ColorDelta | _ColorStructure | _ColorTrace],
     Return[expression]];
   inverses = DeleteDuplicates[Cases[{expression}, power : Power[_, exponent_] /;
     !TrueQ[exponent >= 0], Infinity]];
@@ -1870,7 +1908,7 @@ rspReverseNormalizationFactor[expression_, massRules_List : {}, seconds_ : 2,
   scalarMassQ[value_] := finiteQ[value] && FreeQ[value, _List | _Association |
     _Rule | _RuleDelayed | _Spinor | _SpinorChain | _SpinorChainReduced |
     _SpinorTrace | _Mom | _MomProd | _PropDen | _Mandelstahm | _Mass |
-    _Dot | _NonCommutativeMultiply | _sigma | _colorT | _colorTrace];
+    _Dot | _NonCommutativeMultiply | _sigma | _ColorGenerator | _ColorDelta | _ColorStructure | _ColorTrace];
   externalRules = Select[massRules, MatchQ[#, HoldPattern[Mass[_Integer] -> _]] &];
   validMassRules = AllTrue[externalRules, scalarMassQ[Last[#]] &] &&
     AllTrue[GatherBy[externalRules, First], Length[DeleteDuplicates[Last /@ #]] === 1 &];
@@ -1902,7 +1940,7 @@ rspReverseNormalizationFactor[expression_, massRules_List : {}, seconds_ : 2,
       beamWidth <= 0 || depthLimit <= 0 || LeafCount[expression] > 6000 ||
       !rspExpansionBudgetQ[expression] || !finiteQ[expression] || !validMassRules ||
       !FreeQ[expression, _PropDen | _Dot | _NonCommutativeMultiply | _sigma |
-        _colorT | _colorTrace] || !inverseSafeQ[expression] ||
+        _ColorGenerator | _ColorDelta | _ColorStructure | _ColorTrace] || !inverseSafeQ[expression] ||
       !FreeQ[expression, number_?NumberQ /; Precision[number] =!= Infinity],
     Return[Join[best, <|"Status" -> "UNCHANGED", "TimedOut" -> False,
       "Generated" -> 0, "PairCount" -> 0, "NormalizedProductCount" -> 0,
@@ -2935,29 +2973,8 @@ xTildeFactor[pi,pj]xFactor[pk_,pl_]SpinorChain[Spinor["Spin","Square",pi],Spinor
 *)
 
 
-(* ::Subsubsection::Closed:: *)
-(*color Tracing*)
-
-
-(* ::Text:: *)
-(*These rules come from  Computer Physics Communications 48 (1988) 327- 334 and is the basis of CalcHEP.*)
-
-
-(* ::Input::Initialization:: *)
-ReduceColor[exp_]:=Module[{colorReplacementRules},
-colorReplacementRules={
-colorT[a_,k_,i_]colorT[b_,i_,k_]:>colorTrace[colorT[a],colorT[b]],
-colorT[a_,k_,i_]colorT[b_,i_,j_]colorT[c_,j_,k_]:>colorTrace[colorT[a],colorT[b],colorT[c]],
-colorT[a_,i_,j_]colorT[b_,j_,k_]colorT[c_,k_,l_]colorT[d_,l_,i_]:>colorTrace[colorT[a],colorT[b],colorT[c],colorT[d]],
-colorf[a_,b_,c_]:>2(colorTrace[colorT[a],colorT[b],colorT[c]]-colorTrace[colorT[a],colorT[c],colorT[b]]),
-colorTrace[X___,colorT[a_],Y___,colorT[a_],Z___]:>1/2 (colorTrace[Y]colorTrace[X,Z]-1/3 colorTrace[X,Y,Z]),
-colorTrace[X___,colorT[a_],Y___]colorTrace[Z___,colorT[a_],U___]:>1/2 (colorTrace[X,U,Z,Y]-1/3 colorTrace[X,Y]colorTrace[Z,U]),
-colorTrace[X___,colorT[a_],Y___]^2:>1/2 (colorTrace[X,Y,X,Y]-1/3 colorTrace[X,Y]colorTrace[X,Y]),
-colorTrace[colorT[a_]]->0,
-colorTrace[]->3
-};
-Expand[Expand[Expand[exp//.colorReplacementRules]//.colorReplacementRules]//.colorReplacementRules]//.colorReplacementRules
-];
+(* Color traces and tensor contractions use the shared canonical SU(3)
+   representation in HEPCAT-Color.wl. *)
 
 
 (* ::Subsection::Closed:: *)
@@ -3929,6 +3946,9 @@ Abs[spins[[ii]]]==2,AppendTo[indices,{ToExpression["i"<>ToString[ii]],ToExpressi
 
 ampHC=MakeIndicesExplicit[ampHC,indices];(*Print[ampHC];*)
 ampInd=SymmetrizeSpins[ampInd,indices];(*Print[ampInd];*)
+If[!FreeQ[ampHC,_ColorDelta|_ColorGenerator|_ColorStructure|_ColorTrace],
+  ampHC=ConstructiveDiagrams`Private`colorFreshenConjugateDummies[ampHC];
+  If[FailureQ[ampHC],Return[ampHC]]];
 ampHC=Conjugate[ampHC];(*Print[ampHC];*)
 
 ampHC ampInd/.{ConstructiveAmplitude[coupl_,numer_,denom_]->coupl numer/denom}

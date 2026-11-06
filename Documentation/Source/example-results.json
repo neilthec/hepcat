@@ -52,8 +52,6 @@
   "ExtractMandelstahm[Mandelstahm[3, 4]]": "Mandelstahm[1, 2]",
   "Options[ReducexFactors]": "{Momenta -> {1, 2, 3, 4}, ChannelMomenta -> {1, 4}, ChannelMass -> Mchannel}",
   "InputForm[ReducexFactors[xFactor[1, 2]]]": "InputForm[xFactorReduced[1, 2]]",
-  "ReduceColor[ConstructiveDiagrams`colorTrace[ConstructiveDiagrams`colorT[a]]]": "0",
-  "ReduceColor[ConstructiveDiagrams`colorTrace[]]": "3",
   "SchoutenRewrite[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]], SpinorChain[Spinor[\"Helicity\", \"Angle\", 3], Spinor[\"Helicity\", \"Angle\", 4]], {0, 0}]": "-(SpinorChain[Spinor[\"Helicity\", \"Angle\", 3], Spinor[\"Helicity\", \"Angle\", 2]]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 4], Spinor[\"Helicity\", \"Angle\", 1]]) + SpinorChain[Spinor[\"Helicity\", \"Angle\", 3], Spinor[\"Helicity\", \"Angle\", 1]]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 4], Spinor[\"Helicity\", \"Angle\", 2]]",
   "SchoutenCandidates[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]] SpinorChain[Spinor[\"Helicity\", \"Angle\", 3], Spinor[\"Helicity\", \"Angle\", 4]]]": "{<|\"Name\" -> \"Schouten\", \"Subtract\" -> SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 3], Spinor[\"Helicity\", \"Angle\", 4]], \"Insert\" -> -(SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 4]]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 2], Spinor[\"Helicity\", \"Angle\", 3]]) + SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 3]]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 2], Spinor[\"Helicity\", \"Angle\", 4]], \"Chains\" -> {SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]], SpinorChain[Spinor[\"Helicity\", \"Angle\", 3], Spinor[\"Helicity\", \"Angle\", 4]]}, \"Splits\" -> {0, 0}|>}",
   "Keys[First[SchoutenCandidates[SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]] SpinorChain[Spinor[\"Helicity\", \"Angle\", 3], Spinor[\"Helicity\", \"Angle\", 4]]]]]": "{\"Name\", \"Subtract\", \"Insert\", \"Chains\", \"Splits\"}",
@@ -120,9 +118,6 @@
   "UnHatSpinors[SpinorChain[SpinorHat[\"Helicity\", \"Square\", 1], MomHat[2], SpinorHat[\"Helicity\", \"Angle\", 3]]]": "SpinorChain[Spinor[\"Helicity\", \"Square\", 1], MomHat[2], Spinor[\"Helicity\", \"Angle\", 3]]",
   "xFactorReduced[1, Multiparticle[2, 3], Momenta -> {1, 2, 3, 4}, ChannelMomenta -> {1, 4}, ChannelMass -> m]": "(SpinorChain[Spinor[\"Helicity\", \"Square\", 4], Mom[1], Mom[2], Spinor[\"Helicity\", \"Square\", 4]] + SpinorChain[Spinor[\"Helicity\", \"Square\", 4], Mom[1], Mom[3], Spinor[\"Helicity\", \"Square\", 4]])/(2*(-m^2 + Mandelstahm[1, 4])*Mass[1])",
   "xTildeFactorReduced[1, Multiparticle[2, 3], Momenta -> {1, 2, 3, 4}, ChannelMomenta -> {1, 4}, ChannelMass -> m]": "(SpinorChain[Spinor[\"Helicity\", \"Angle\", 4], Mom[1], Mom[2], Spinor[\"Helicity\", \"Angle\", 4]] + SpinorChain[Spinor[\"Helicity\", \"Angle\", 4], Mom[1], Mom[3], Spinor[\"Helicity\", \"Angle\", 4]])/(2*(-m^2 + Mandelstahm[1, 4])*Mass[1])",
-  "ReduceColor[colorT[a, i, j] colorT[b, j, i]]": "colorTrace[colorT[a], colorT[b]]",
-  "ReduceColor[colorf[a, b, c]]": "2*colorTrace[colorT[a], colorT[b], colorT[c]] - 2*colorTrace[colorT[a], colorT[c], colorT[b]]",
-  "ReduceColor[colorTrace[]]": "3",
   "qedModel = ReadModel[modelDirectory, 2];\nLength[qedModel]": "4",
   "qedModel = ReadModel[modelDirectory, 2];\nme = ModelParameter[qedModel, \"Me\"];\nme /. ModelParameterRules[qedModel]": "1/2000",
   "variables = ReadVariables[FileNameJoin[{modelDirectory, \"vars2.mdl\"}]];\nFirst[variables]": "{ModelParameter[\"EE\", \"c290c11592fdb153523bc79fa19d6792772af2948585b673a998d4f95927eaad\", \"Real\"], 31333/100000, \"Electromagnetic coupling constant (<->1/128)\"}",
@@ -222,5 +217,11 @@
   "modelDirectory = \"~/code/hepcat/models\";\nqedModel = ReadModel[modelDirectory, 2];\nLength /@ qedModel": "{2, 2, 2, 0}",
   "pair = {{}, SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 2]] SpinorChain[Spinor[\"Helicity\", \"Angle\", 3], Spinor[\"Helicity\", \"Angle\", 4]]};\nedits = SpinorIdentityCandidates[pair, \"OnShellChannels\" -> {}, \"MomentumConservation\" -> False];\nLength[edits]": "1",
   "editedExpression = ApplySpinorIdentity[pair, First[edits], \"OnShellChannels\" -> {}, \"MomentumConservation\" -> False]": "-(SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 4]]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 2], Spinor[\"Helicity\", \"Angle\", 3]]) + SpinorChain[Spinor[\"Helicity\", \"Angle\", 1], Spinor[\"Helicity\", \"Angle\", 3]]*SpinorChain[Spinor[\"Helicity\", \"Angle\", 2], Spinor[\"Helicity\", \"Angle\", 4]]",
-  "SpinorExpressionComplexity /@ {pair[[2]], editedExpression}": "{1, 2}"
+  "SpinorExpressionComplexity /@ {pair[[2]], editedExpression}": "{1, 2}",
+  "ReduceColor[ColorTrace[a]]": "0",
+  "ReduceColor[ColorTrace[]]": "3",
+  "ReduceColor[ColorTrace[a, a]]": "4",
+  "ReduceColor[ColorDelta[i, i], \"IndexDimensions\" -> {i -> 3}]": "3",
+  "ReduceColor[ColorTrace[a, b, a, b]]": "-2/3",
+  "ColorTrace[ColorIndex[3], ColorIndex[4], ColorIndex[5]]": "ColorTrace[ColorIndex[3], ColorIndex[4], ColorIndex[5]]"
 }
