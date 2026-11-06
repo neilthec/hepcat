@@ -90,7 +90,11 @@ external-mass partners together. Each column keeps its single correction \
 coefficient; its expanded terms are not assigned independent coefficients. \
 Only declared external masses enter this reduction. The original complete \
 columns remain available, and a bounded or unsupported reduction leaves its \
-original column unchanged."}], "Notes"],
+original column unchanged. The same ordinary grouping can precondition a \
+large vector direction before its exact identity proof. The shorter \
+expression must still receive an exact zero certificate before a coefficient \
+is removed; the full original direction and the reduction steps stay in the \
+report, and an unfinished proof keeps the original fallback."}], "Notes"],
   Cell[TextData[{"For a large affine vector family, repeated typed spinor \
 monomials can be expanded once on the same conserved energy chart and \
 recombined through their exact original coefficient map. Every source part is \

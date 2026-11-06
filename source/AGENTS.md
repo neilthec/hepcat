@@ -75,6 +75,10 @@ include the documentation updates in the same commit as the implementation.
 - `tests/simplification-paths.wl`: curated four-point identity sequences.
 - `tests/SM-4-point-simplification-test.nb`, `tests/QED-5-point.nb`, and
   `tests/Factorization-checks.nb`: worked examples and user-facing usage.
+- `tests/SM-4-point-construction.nb`: separate construction and independent
+  CalcHEP/MadGraph comparisons for the process families in the original manual
+  SM notebook. Links retain the original S/T/U work. Read its saved coverage and
+  numerical diagnostics; an unevaluated cell is not a validated amplitude.
 - `tests/QED-5-point-residues.wl`: explicit QED routes and fixtures, including
   the seven-group six-point mixed-helicity worked derivation. These helpers
   are process-specific examples, not general simplifiers. The general ordinary
@@ -1456,6 +1460,15 @@ its supplied directions, rather than only its displayed fixed representative.
 The overall constructor can use the model's massive external spin multiplicities
 before expressions exist. These estimates are resolved before their deadlines;
 explicit user limits and the shared outer deadline remain authoritative.
+For factorization with a large massive higher-spin tensor, the fixed center
+alone is insufficient: measure original targets, prepared channels and the
+retained shell/reference slots actually available to the source generators.
+Weight that prefit work by coherent components and the unchanged
+model-consistent parameter-assignment count. Count record flags directly;
+never deduplicate whole derivation histories just to estimate work. Resolve
+this finite allowance once before the core clock, preserving all explicit
+limits, correction caps, fit samples and held-out samples. Do not extend an
+expired child deadline dynamically or introduce a process-name clock override.
 When certified identity-zero coordinates are removed, substitute zero for only
 those coordinates in the original family expression. Keep its factorization;
 rebuilding a center plus every derivative direction can needlessly duplicate

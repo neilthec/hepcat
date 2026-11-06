@@ -477,6 +477,90 @@ check["an explicit basis informs the initial automatic cap before any fit attemp
 
 (* Fresh public calls exercise the defaults without resource tuning, temporary
    caches, notebook outputs, known final amplitudes or global SetOptions. *)
+(* Factorization must size the retained source and parameter workload before
+   its single shared core deadline, not only the displayed fixed center. *)
+arFactorSourceMetrics=ConstructiveDiagrams`Private`completionFactorizationResourceMetrics;
+arFactorRequests=Association[Options[CompleteFactorization]];
+arFactorSM=ReadModel[FileNameJoin[{root,"models"}],1];
+arFactorMeasured=arFactorSourceMetrics[arSourceReport,arSourcePreparedChannels,arFactorSM,arFactorRequests];
+check["higher massive-spin factorization measures retained source slots before its deadline",
+ arFactorMeasured["FactorizationSourceWorkAdmitted"] &&
+ arFactorMeasured["FactorizationRetainedSourceLeaves"]===arExpectedSourceLeaves &&
+ arFactorMeasured["FactorizationRetainedSourceSlots"]===12 &&
+ arFactorMeasured["FactorizationResourceResolutionPhase"]==="BeforeCatalogConstructionAndCoreDeadline"];
+check["factorization weighting follows the actual coherent tensor and unchanged model assignments",
+ arFactorMeasured["FactorizationSourceCoherentWeight"]===9 &&
+ arFactorMeasured["FactorizationParameterAssignmentCount"]===Length[
+  ConstructiveDiagrams`Private`completionValidationRuleSets[arFactorSM,Automatic,Automatic]] &&
+ arFactorMeasured["FactorizationSourceAssignmentWeight"]===3/2 &&
+ arFactorMeasured["FactorizationSourceWorkLeaves"]===Ceiling[9*3/2*arExpectedSourceLeaves]];
+arFactorResolved=arPolicy["Factorization",arFactorRequests,arFactorMeasured];
+arFactorBaseline=arPolicy["Factorization",arFactorRequests,arMetrics[arSourceReport,arSourcePreparedChannels]];
+check["a pending coupled source family gets a larger finite automatic factorization allowance",
+ arFinite[arFactorResolved["Settings"]["TimeConstraint"]] &&
+ arFactorResolved["Settings"]["TimeConstraint"]>arFactorBaseline["Settings"]["TimeConstraint"]];
+check["the factorization source estimate does not change caps or fit and held-out samples",
+ KeyTake[arFactorResolved["Settings"],{"MaxCorrectionTerms","Samples","ValidationSamples","MaxRefinements"}]===
+ KeyTake[arFactorBaseline["Settings"],{"MaxCorrectionTerms","Samples","ValidationSamples","MaxRefinements"}]];
+check["an explicit factorization clock is unchanged despite large available sources",
+ arPolicy["Factorization",Join[arFactorRequests,<|"TimeConstraint"->17/3|>],arFactorMeasured]["Settings"]["TimeConstraint"]===17/3];
+check["the new factorization metric cannot change the wrapper's overall time policy",
+ arPolicy["Construction",arRequests,arFactorMeasured]["Settings"]["TimeConstraint"]===
+ arPolicy["Construction",arRequests,arMetrics[arSourceReport,arSourcePreparedChannels]]["Settings"]["TimeConstraint"]];
+check["unused derivation histories do not enter the factorization resource inventory",
+ arFactorSourceMetrics[arSourceReport/.arUnconsumedHistory->arDifferentUnusedHistory,
+ arSourcePreparedChannels,arFactorSM,arFactorRequests]===arFactorMeasured];
+check["explicit prepared channels remain authoritative over stale channel source metadata",
+ arFactorSourceMetrics[Join[arSourceReport,<|"ChannelRemainderData"->{}|>],
+ arSourcePreparedChannels,arFactorSM,arFactorRequests]===arFactorMeasured];
+arFactorExplicit=arFactorSourceMetrics[arSourceReport,arSourcePreparedChannels,arFactorSM,
+ Join[arFactorRequests,<|"CorrectionBasis"->{arExpression}|>]];
+check["an explicit correction basis disables unused automatic factorization source slots",
+ arFactorExplicit["FactorizationRetainedSourceLeaves"]===0 &&
+ arFactorExplicit["FactorizationRetainedSourceSlots"]===0 &&
+ arFactorExplicit["FactorizationPreparedChannelLeaves"]===0 &&
+ arFactorExplicit["FactorizationExplicitBasisLeaves"]===LeafCount[arExpression]];
+arFactorSingle=arFactorSourceMetrics[arSourceReport,arSourcePreparedChannels,arFactorSM,
+ Join[arFactorRequests,<|"ValidationParameterRules"->{}|>]];
+check["factorization counts actual requested parameter assignments rather than assuming three",
+ arFactorSingle["FactorizationParameterAssignmentCount"]===1 &&
+ arFactorSingle["FactorizationSourceAssignmentWeight"]===1 &&
+ arFactorSingle["FactorizationSourceWorkLeaves"]===9 arExpectedSourceLeaves];
+arFactorRawRows={Join[ConstantArray[arMass,4],{Multiparticle[1,3],arMass,arReferenceSlot}]};
+arFactorPreparedRows={Join[ConstantArray[arMass,4],{Multiparticle[1,3],arMass,arShellSlot}]};
+arFactorChannels=Join[arSourcePreparedChannels,<|"OriginalAmplitudes"->arFactorRawRows,
+ "PreparedAmplitudes"->arFactorPreparedRows|>];
+arFactorChannelMetrics=arFactorSourceMetrics[arSourceReport,arFactorChannels,arFactorSM,arFactorRequests];
+check["original residue targets and prepared channel sources are sized separately",
+ arFactorChannelMetrics["FactorizationOriginalChannelLeaves"]===LeafCount[arReferenceSlot] &&
+ arFactorChannelMetrics["FactorizationPreparedChannelLeaves"]===LeafCount[arShellSlot] &&
+ arFactorChannelMetrics["FactorizationSourceWorkLeaves"]===Ceiling[
+  9*3/2*(arExpectedSourceLeaves+LeafCount[arReferenceSlot]+LeafCount[arShellSlot])]];
+arFactorFermionLegs=Range[6];arFactorFermionRules=Thread[(Mass/@arFactorFermionLegs)->ConstantArray[arMass,6]];
+arFactorFermionExpr=Times@@(SpinorChain[Spinor["Spin","Angle",First[#]],Spinor["Spin","Square",Last[#]]]&/@Partition[arFactorFermionLegs,2]);
+arFactorFermionReport=Join[arSourceReport,<|"Amplitude"->arFactorFermionExpr,
+ "FamilyAmplitude"->arFactorFermionExpr,"ExternalMassRules"->arFactorFermionRules|>];
+arFactorFermionMetrics=arFactorSourceMetrics[arFactorFermionReport,{},arFactorSM,arFactorRequests];
+check["sixty-four-component fermion-only tensors keep the established factorization policy",
+ arFactorFermionMetrics["CoherentComponents"]===64 && !arFactorFermionMetrics["FactorizationSourceWorkAdmitted"] &&
+ arFactorFermionMetrics["FactorizationSourceWorkLeaves"]===0 &&
+ arPolicy["Factorization",arFactorRequests,arFactorFermionMetrics]["Settings"]===
+ arPolicy["Factorization",arFactorRequests,arMetrics[arFactorFermionReport]]["Settings"]];
+arFactorQEDReport=Join[arSourceReport,<|"Amplitude"->SpinorChain[Spinor["Spin","Angle",1],Spinor["Spin","Square",2]],
+ "ExternalMassRules"->arRules4|>];
+arFactorQEDMetrics=arFactorSourceMetrics[arFactorQEDReport,{},arFactorSM,arFactorRequests];
+check["primitive QED spin tensors do not acquire additional factorization source work",
+ arFactorQEDMetrics["CoherentComponents"]===4 && !arFactorQEDMetrics["FactorizationSourceWorkAdmitted"] &&
+ arPolicy["Factorization",arFactorRequests,arFactorQEDMetrics]["Settings"]===
+ arPolicy["Factorization",arFactorRequests,arMetrics[arFactorQEDReport]]["Settings"]];
+check["the source counter uses current channel flags without deduplicating complete histories",
+ arFactorMeasured["RetainedSourceRecords"]===4 &&
+ arMetrics[Join[arSourceReport,<|"ChannelRemainderData"->ConstantArray[arSourceRecord,99]|>],
+ arSourcePreparedChannels]["RetainedSourceRecords"]===4];
+check["factorization source measurement leaves caller models and reports unchanged",
+ Hash[arSourceReport,"SHA256"]===arSourceReportHash &&
+ arFactorMeasured["ExpressionLeaves"]===LeafCount[arSourceExpression]];
+
 arDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 2];
 arFactorModel = ReadModel[FileNameJoin[{root, "models"}], 3];
 arModelHashes = Hash[#, "SHA256"] & /@ {arDiagramModel, arFactorModel};
@@ -664,7 +748,7 @@ If[Environment["HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION"] === "1",
       AllTrue[arMixedReport["Checks"]["Checks"], #["Status"] === "PASS" &] &&
       arMixedReport["Checks"]["FeynmanCheck"]["Status"] === "PASS"],
   Print["SKIP: set HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION=1 for the full AllPhysical mixed six-point constructor regression."]];
-arExpected = 101 + If[Environment["HEPCAT_TEST_FULL_AUTOMATIC_CONSTRUCTION"] === "1", 2, 0] +
+arExpected = 116 + If[Environment["HEPCAT_TEST_FULL_AUTOMATIC_CONSTRUCTION"] === "1", 2, 0] +
   If[Environment["HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION"] === "1", 3, 0];
 If[checks =!= arExpected, AppendTo[failures, "Not every automatic-resource assertion executed."]];
 Print["AUTOMATIC RESOURCE CHECKS: ", checks, "; FAILURES: ", Length[failures]];

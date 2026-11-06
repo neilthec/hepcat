@@ -52,7 +52,17 @@ correction coefficients simultaneously."}], "Notes"],
       ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"], ". Use ",
      Cell[BoxData[RowBox[{"\"Output\"", " ", "->", " ", "\"Expression\""}]],
       "InlineFormula"], " if you specifically want the bare expression."}],
-   "Notes"], Cell["Why the channels are solved together", "NotesSection"],
+   "Notes"], Cell[TextData[{"For a large massive-spin tensor, a short \
+displayed starting expression can still lead to many coupled correction \
+directions. The automatic factorization allowance therefore measures the \
+original channel targets, prepared channel expressions and retained shell or \
+reference source slots before starting the core deadline. Its work estimate \
+also counts the model-consistent parameter assignments that the existing \
+fitter will use. It does not expand the sources or inspect unrelated \
+derivation histories. This estimate changes no correction cap, fit sample \
+count or held-out sample count; explicit stage limits and the overall \
+construction deadline remain authoritative."}], "Notes"],
+  Cell["Why the channels are solved together", "NotesSection"],
   Cell[TextData[{"A factorization channel determines an amplitude on one \
 pole. Extending its expression away from that pole is not unique, and \
 different channels can share double or higher simultaneous poles. Simply \

@@ -6963,10 +6963,13 @@ amplitudeResourceMetrics[input_, channelInput_: {}, process_: Automatic,
     retained = Length[Replace[Lookup[input, "RemainingBasis", {}], Except[_List] -> {}]];
     actualBasis = Length[Replace[Lookup[input, "CorrectionBasis", {}], Except[_List] -> {}]]];
   If[IntegerQ[basisDirections] && basisDirections >= 0, actualBasis = basisDirections];
-  sourceRecords = DeleteDuplicates[Join[
-    If[AssociationQ[input], Join[Lookup[input, "RemainderData", {}],
-      Lookup[input, "ChannelRemainderData", {}]], {}],
-    If[AssociationQ[channelInput], Lookup[channelInput, "RemainderData", {}], {}]]];
+  (* Count source flags directly. Whole-record deduplication fingerprints
+     unrelated derivation histories and can dominate a lightweight estimate.
+     An explicit prepared-channel report overrides stale inherited records. *)
+  sourceRecords = Join[
+    If[AssociationQ[input], Replace[Lookup[input,"RemainderData",{}],Except[_List]->{}],{}],
+    If[AssociationQ[channelInput],Replace[Lookup[channelInput,"RemainderData",{}],Except[_List]->{}],
+      If[AssociationQ[input],Replace[Lookup[input,"ChannelRemainderData",{}],Except[_List]->{}],{}]]];
   sourceRecords = Count[sourceRecords, record_Association /;
     TrueQ[Lookup[record, "HasInternalConditions", False]]];
   massByLeg = AssociationThread[If[externalLegs =!= {}, externalLegs, Range[Length[masses]]], masses];
@@ -7112,6 +7115,63 @@ completionHighEnergyResourceMetrics[input_, channels_: {}, correctionBasis_: Aut
     "ResourceExpressionSource" -> If[MissingQ[family], "InputExpression", "RetainedAffineFamily"]|>,sourceMetrics]
 ];
 
+(* Resolve the factorization clock from available source expression slots
+   before catalog construction or fitting. A short displayed center can seed
+   hundreds of coupled columns. The multiplier follows actual massive spin
+   components and the unchanged model-consistent parameter assignments. *)
+completionFactorizationResourceMetrics[input_,channelInput_,model_,requested_Association] := Module[
+  {basis=Lookup[requested,"CorrectionBasis",Automatic],metrics,degrees,eligible,
+   rawRows,preparedRows,expressionLeaves,channelLeaves,preparedLeaves,sourceMetrics,
+   sourceLeaves=0,sourceSlots=0,basisLeaves=0,sets={},assignmentCount=1,
+   coherentWeight=1,assignmentWeight=1,weighted=0,sourceScope},
+  metrics=amplitudeResourceMetrics[input,channelInput,
+    Lookup[requested,"ExternalParticles",Automatic],If[ListQ[basis],Length[basis],Automatic]];
+  degrees=Values[Lookup[metrics,"CoherentSpinDegrees",<||>]];
+  eligible=Lookup[metrics,"CoherentComponents",1]>=27 && AnyTrue[degrees,#>=2&];
+  If[!eligible,Return[Join[metrics,<|"FactorizationSourceWorkAdmitted"->False,
+    "FactorizationSourceWorkLeaves"->0,
+    "FactorizationSourceMetricScope"->"EstablishedSmallOrDegreeOneOnlyTensorPolicy"|>]]];
+  rawRows=Which[AssociationQ[channelInput],Replace[Lookup[channelInput,"OriginalAmplitudes",{}],Except[_List]->{}],
+    ListQ[channelInput],channelInput,True,{}];
+  preparedRows=If[AssociationQ[channelInput],Replace[Lookup[channelInput,"PreparedAmplitudes",{}],Except[_List]->{}],{}];
+  expressionLeaves[rows_List]:=Total[Map[Function[row,Which[
+    AssociationQ[row] && KeyExistsQ[row,"StateSum"],LeafCount[row["StateSum"]],
+    ListQ[row] && Length[row]>=2 && Last[row]=!=0,LeafCount[Last[row]],True,0]],rows]];
+  channelLeaves=expressionLeaves[rawRows];preparedLeaves=0;
+  If[basis===Automatic,
+    preparedLeaves=expressionLeaves[preparedRows];
+    sourceMetrics=completionHERetainedSourceMetrics[input,channelInput];
+    sourceLeaves=sourceMetrics["RetainedSourceExpressionLeaves"];
+    sourceSlots=sourceMetrics["RetainedSourceExpressionSlots"];
+    sourceScope="OriginalTargetsPreparedChannelsAndRetainedShellReferenceSlots",
+    If[ListQ[basis],basisLeaves=Total[LeafCount/@basis]];
+    sourceScope="OriginalTargetsAndExplicitCorrectionBasisWithoutAutomaticSourceSlots"];
+  If[completionModelQ[model],
+    sets=TimeConstrained[Quiet[Check[completionValidationRuleSets[model,
+      Lookup[requested,"ParameterRules",Automatic],
+      Lookup[requested,"ValidationParameterRules",Automatic]],{}]],1,{}];
+    If[ListQ[sets] && sets=!={},assignmentCount=Length[sets]]];
+  coherentWeight=Max[1,Ceiling[Lookup[metrics,"CoherentComponents",1]/4]];
+  (* The established spin-half/QED workload has four coherent components
+     and two automatic mass assignments. Do not reduce the old allowance
+     when the user intentionally restricts parameter validation. *)
+  assignmentWeight=Max[1,assignmentCount/2];
+  weighted=Ceiling[coherentWeight assignmentWeight
+    (channelLeaves+preparedLeaves+sourceLeaves+basisLeaves)];
+  Join[metrics,<|"FactorizationSourceWorkAdmitted"->True,
+    "FactorizationOriginalChannelLeaves"->channelLeaves,
+    "FactorizationPreparedChannelLeaves"->preparedLeaves,
+    "FactorizationRetainedSourceLeaves"->sourceLeaves,
+    "FactorizationRetainedSourceSlots"->sourceSlots,
+    "FactorizationExplicitBasisLeaves"->basisLeaves,
+    "FactorizationParameterAssignmentCount"->assignmentCount,
+    "FactorizationSourceCoherentWeight"->coherentWeight,
+    "FactorizationSourceAssignmentWeight"->assignmentWeight,
+    "FactorizationSourceWorkLeaves"->weighted,
+    "FactorizationSourceMetricScope"->sourceScope,
+    "FactorizationResourceResolutionPhase"->"BeforeCatalogConstructionAndCoreDeadline"|>]
+];
+
 amplitudeAutomaticFitSamples[metrics_Association] := Max[4,
   Ceiling[6 Max[0, Lookup[metrics, "BasisDirections", 0], Lookup[metrics, "RetainedDirections", 0]]/
     (5 Max[1, Lookup[metrics, "Channels", 0]] Max[1, Lookup[metrics, "CoherentComponents", 1]])]];
@@ -7134,6 +7194,7 @@ amplitudeAutomaticSettings[stage_String, requested_Association, metrics_Associat
       Lookup[metrics, "RetainedDirectionLeaves", 0],
       Lookup[metrics, "RetainedSourceWorkLeaves", 0]] +
     Lookup[metrics, "ExplicitCorrectionBasisLeaves", 0]];
+  If[stage==="Factorization",leaves=Max[leaves,Lookup[metrics,"FactorizationSourceWorkLeaves",0]]];
   itemLeaves = Max[1, Lookup[metrics, "LargestItemLeaves", leaves]];
   channels = Max[0, Lookup[metrics, "Channels", 0]];
   retained = Max[0, Lookup[metrics, "RetainedDirections", 0]];
@@ -7186,9 +7247,7 @@ amplitudeAutomaticFactorization[input_, channelInput_, model_, supplied_List] :=
   If[Complement[First /@ supplied, First /@ Options[CompleteFactorization]] =!= {} ||
       !MemberQ[{True, False}, details] || !MemberQ[{"Amplitude", "Expression", "Details"}, originalOutput],
     Return[completionFactorizationCore[input, channelInput, model, Sequence @@ resolvedSupplied]]];
-  metrics = amplitudeResourceMetrics[input, channelInput,
-    Lookup[requested, "ExternalParticles", Automatic],
-    If[ListQ[Lookup[requested, "CorrectionBasis", Automatic]], Length[requested["CorrectionBasis"]], Automatic]];
+  metrics = completionFactorizationResourceMetrics[input,channelInput,model,requested];
   resolution = amplitudeAutomaticSettings["Factorization", requested, metrics];
   settings = resolution["Settings"]; automaticKeys = resolution["ResourcePolicy"]["AutomaticOptions"];
   budget = settings["TimeConstraint"]; cap = settings["MaxCorrectionTerms"];
@@ -17537,9 +17596,11 @@ completionHEZeroDirection[expression_, rules_List, model_List, seconds_] := Modu
    symbolicPortfolio, chartForChoice, charts = <||>, earlyChoices, primitiveCount, coherentWork, compactEligible,
    compactStarted, compactBudget, compactLeft, compactValue, compactRecord,
    earlyCompacted = False, earlyBudget, earlyStarted, earlyBefore,
-   compactRetry = Missing["NotRequested"], modelExpression, modelRules, modelProof, referenceProof},
+   compactRetry = Missing["NotRequested"], modelExpression, modelRules, modelProof, referenceProof,
+   ordinarySource, ordinarySourceProof, ordinarySourceBudget},
   If[residueExactZero[expression], Return[<|"Status" -> "PROVED_ZERO",
-    "Method" -> "ExactRationalAlgebra", "ElapsedTime" -> (AbsoluteTime[] - started)|>]];
+    "Method" -> "ExactRationalAlgebra", "InternalOnShellConditions" -> {},
+    "ElapsedTime" -> (AbsoluteTime[] - started)|>]];
   modelExpression = modelExpandParameterDefinitions[expression, model];
   If[!FailureQ[modelExpression] && modelExpression =!= expression,
     modelRules = modelExpandParameterDefinitions[rules, model];
@@ -17571,6 +17632,27 @@ completionHEZeroDirection[expression_, rules_List, model_List, seconds_] := Modu
   coherentWork = Times @@ MapThread[If[TrueQ[(Mass[#1] /. rules) === 0], 1, 1 + Max[0, #2]] &,
     {Sort[Cases[rules, HoldPattern[Mass[i_Integer] -> _] :> i]], weights}];
   remaining[] := Max[0.000001, seconds - (AbsoluteTime[] - started)];
+  (* Ordinary grouping is a proof preconditioner, not a new zero test. Keep
+     the full original direction and require the existing exact portfolio to
+     certify its shorter ordinary representative before removing a coordinate. *)
+  If[completionHEOrdinaryProofEligibleQ[expression, rules, weights, coherentWork] &&
+      remaining[] > 3,
+    ordinarySourceBudget = Min[2, remaining[]/6];
+    ordinarySource = completionHEOrdinarySourceColumn[expression, rules, ordinarySourceBudget];
+    If[AssociationQ[ordinarySource] && TrueQ[ordinarySource["ExactFormalRegrouping"]] &&
+        LeafCount[ordinarySource["Expression"]] <= LeafCount[expression]/3,
+      ordinarySourceProof = completionHEZeroDirection[ordinarySource["Expression"], rules, model,
+        Min[10, remaining[]/3]];
+      If[Lookup[ordinarySourceProof, "Status", None] === "PROVED_ZERO",
+        Return[Join[ordinarySourceProof, <|"OrdinarySourcePreconditioning" -> <|
+          "OriginalExpression" -> expression, "ReducedExpression" -> ordinarySource["Expression"],
+          "Reduction" -> KeyDrop[ordinarySource,"Expression"],
+          "OriginalCoefficientCoordinatePreserved" -> True,
+          "PreconditionerMomentumConservation" -> False,
+          "InternalOnShellConditions" -> {},
+          "RemovalRequiresIndependentExactZeroCertificate" -> True|>,
+          "InternalOnShellConditions" -> {},
+          "ElapsedTime" -> AbsoluteTime[]-started|>]]]]];
   chartForChoice[choice_Association] := Module[
     {key = ToString[choice, InputForm], chart, massive, angle, square,
      angleBasis, squareBasis, mass, basis, vector, leg,
@@ -19056,7 +19138,7 @@ completionHEOrdinarySourceGroupKey[term_, externalRules_List] := Module[
 completionHEOrdinarySourceColumn[expression_, rules_List, seconds_] := Module[
   {external = preparationExternalRules[rules], started = AbsoluteTime[], expanded, terms,
    groups, sums, current, candidate = expression, completed = 0, replay = False,
-   outcome, remaining, count = 0, originalLeaves = LeafCount[expression], report},
+   outcome, remaining, count = 0, originalLeaves = LeafCount[expression], report, acceptedGroups = {}},
   remaining[] := Max[0, seconds - (AbsoluteTime[] - started)];
   report[] := <|"Expression" -> candidate,
     "Status" -> If[candidate === expression, "UNCHANGED", "IMPROVED"],
@@ -19065,6 +19147,11 @@ completionHEOrdinarySourceColumn[expression_, rules_List, seconds_] := Module[
     "ExactFormalRegrouping" -> replay,
     "ExternalMassRules" -> external, "InternalOnShellConditions" -> {},
     "CoefficientCoordinatesSplit" -> False,
+    "GroupReductions" -> If[count > 0 && Length[acceptedGroups] === count,
+      DeleteCases[MapIndexed[Function[{value,index}, If[value === sums[[First[index]]], Nothing,
+        <|"OriginalGroup" -> sums[[First[index]]], "ReducedGroup" -> value,
+          "Transformation" -> "preparationSpinorProducts",
+          "ExternalMassRules" -> external, "InternalOnShellConditions" -> {}|>]],acceptedGroups],Nothing], {}],
     "Reduction" -> "OrdinarySpinorProductsAndDeclaredExternalMassPartners",
     "TimedOut" -> TrueQ[remaining[] <= 0], "ElapsedTime" -> AbsoluteTime[] - started|>;
   If[!TrueQ[seconds > 0] || external === {} ||
@@ -19091,7 +19178,7 @@ completionHEOrdinarySourceColumn[expression_, rules_List, seconds_] := Module[
             completed++;
             With[{proposal = Total[current]},
               If[residueFiniteQ[proposal] && LeafCount[proposal] < LeafCount[candidate],
-                candidate = proposal]], {i, count}]]]];
+                candidate = proposal; acceptedGroups = current]], {i, count}]]]];
     True, 805306368, False], seconds, False];
   report[]
 ];
@@ -19100,6 +19187,15 @@ completionHEOrdinarySourceEligibleQ[basis_List, metrics_Association] :=
   Length[basis] > 0 && Lookup[metrics, "CoherentComponents", 1] >= 27 &&
     AnyTrue[Values[Lookup[metrics, "CoherentSpinDegrees", <||>]], # >= 2 &] &&
     Total[LeafCount /@ basis] >= 100000 && Max[LeafCount /@ basis] >= 2500;
+
+completionHEOrdinaryProofEligibleQ[expression_, rules_List, weights_List, coherentWork_] := Module[
+  {external = Sort[Cases[rules, HoldPattern[Mass[leg_Integer] -> _] :> leg]], massiveDegrees},
+  If[Length[external] =!= Length[weights] || !TrueQ[coherentWork >= 27] ||
+      LeafCount[expression] < 1000, Return[False]];
+  massiveDegrees = MapThread[If[TrueQ[(Mass[#1] /. rules) === 0], 0, #2] &,
+    {external, weights}];
+  AnyTrue[massiveDegrees, TrueQ[# >= 2] &]
+];
 
 completionHEOrdinarySourceColumns[basis_List, rules_List, seconds_, callback_: None] := Module[
   {started = AbsoluteTime[], result = basis, leaves = LeafCount /@ basis,

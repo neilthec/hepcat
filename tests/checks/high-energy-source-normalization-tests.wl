@@ -76,5 +76,32 @@ cnNoBudget = ConstructiveDiagrams`Private`completionHEOrdinarySourceColumns[cnCo
 check["a preprocessing timeout cannot truncate or replace unvisited columns",
   cnNoBudget["Basis"] === cnColumns && cnNoBudget["RetainedColumns"] === 3 &&
     cnNoBudget["ColumnRecords"] === {}];
+check["literal exact zeros declare their unrestricted algebraic scope",
+  ConstructiveDiagrams`Private`completionHEZeroDirection[0,cnRules,{{},{},{},{}},1]["InternalOnShellConditions"] === {}];
+cnVectorFixture = Get[FileNameJoin[{root,"tests","checks","fixtures","ordinary-vector-source-zero.wl"}]];
+cnVectorProof = ConstructiveDiagrams`Private`completionHEZeroDirection[
+  cnVectorFixture["Expression"],cnVectorFixture["ExternalMassRules"],{{},{},{},{}},8];
+check["ordinary preconditioning certifies a symbolic vector identity without model fitting",
+  cnVectorProof["Status"] === "PROVED_ZERO" && KeyExistsQ[cnVectorProof,"OrdinarySourcePreconditioning"]];
+check["the proof retains the original direction and complete external-only reduction replay",
+  cnVectorProof["OrdinarySourcePreconditioning"]["OriginalExpression"] === cnVectorFixture["Expression"] &&
+    cnVectorProof["InternalOnShellConditions"] === {} &&
+    cnVectorProof["OrdinarySourcePreconditioning"]["Reduction"]["GroupReductions"] =!= {} &&
+    AllTrue[cnVectorProof["OrdinarySourcePreconditioning"]["Reduction"]["GroupReductions"],
+      #["InternalOnShellConditions"] === {} &]];
+cnDegreeGuard = ConstructiveDiagrams`Private`completionHEOrdinaryProofEligibleQ;
+check["a degree-two massive tensor activates the proof preconditioner",
+  cnDegreeGuard[cnLarge,Thread[(Mass /@ Range[4])->1],{2,2,2,0},27]];
+check["massless photon degree cannot activate a six-fermion tensor",
+  !cnDegreeGuard[cnLarge,Join[Thread[(Mass /@ Range[6])->1],{Mass[7]->0}],{1,1,1,1,1,1,2},64]];
+check["a small ordinary direction does not acquire preprocessing overhead",
+  !cnDegreeGuard[cnInput,cnRules,{2,2,2,0,0},27]];
+cnPerturbation = SpinorChain[Spinor["Spin","Angle",1],Spinor["Spin","Angle",2]] *
+  SpinorChain[Spinor["Spin","Angle",2],Spinor["Spin","Angle",3]] *
+  SpinorChain[Spinor["Spin","Angle",3],Spinor["Spin","Angle",1]];
+cnNonzeroProof = ConstructiveDiagrams`Private`completionHEZeroDirection[
+  cnVectorFixture["Expression"]+cnPerturbation,cnVectorFixture["ExternalMassRules"],{{},{},{},{}},5];
+check["an improved ordinary representative still requires its own exact zero proof",
+  cnNonzeroProof["Status"] === "NOT_PROVED"];
 Print["CHECKS: ", checks]; Print["FAILURES: ", Length[failures]];
 If[failures =!= {}, Print["FAILED_CHECKS: ", failures]]; Print["HEPCAT_TEST_COMPLETED:high-energy-source-normalization-tests.wl"]; Quit[If[failures === {}, 0, 1]];

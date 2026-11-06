@@ -13,6 +13,12 @@ notebooks are preserved on the `ml-simplify` branch at commit `54f6920`.
   step-by-step simplification paths.
 - `tests/SM-4-point-simplification-test.nb`: the retained four-point reference
   cases and worked examples, without a neural benchmark.
+- `tests/SM-4-point-construction.nb`: individual SM process calculations with
+  `ConstructAmplitude`, followed by generated SPINAS comparisons against
+  CalcHEP and MadGraph. The setup keeps installation paths in one place. Links
+  open the matching original formulas and manual S/T/U derivation. Saved
+  coverage and precision diagnostics distinguish completed comparisons from
+  calculations that still need evaluation or investigation.
 - `tests/QED-5-point.nb`: the five-point calculations, unchanged.
 - `tests/checks/`: symbolic regression suites and their timeout runner.
 
