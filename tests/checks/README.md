@@ -1194,6 +1194,17 @@ off-shell Feynman diagrams, with no supplied six-point answer.
 An explicit negative case checks that unpaired Dirac lower amplitudes are
 reported as unsupported before any invalid sign enters an amplitude.
 
+`high-energy-laurent-jet-tests.wl` checks the shared exact Laurent-jet engine
+used before spin-polynomial convolution. Independent native-series oracles
+cover every affine and spin coefficient; adversarial cases include a positive
+power that later multiplies a negative power, repeated positive powers,
+indexed coefficients, tiny exact terms, incomplete remainder coverage and
+unproved scalar-zero assumptions. Both fitting and fixed-candidate entry
+points are exercised. The bounded tensor-work admission preserves the
+established path for small tensors and for tensors whose coherent legs all
+have degree one, including six-fermion QED. Higher-degree mixed-spin tensors
+are tested independently of particle names.
+
 `high-energy-laurent-rows-tests.wl` checks large affine-family coefficient
 expansion without splitting coupled unknown equations. It covers exact tiny
 coefficients, full spin tensors, nonlinear or singular unknowns, unsupported

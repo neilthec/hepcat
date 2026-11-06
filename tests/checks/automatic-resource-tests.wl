@@ -100,6 +100,96 @@ check["family-aware measurement neither mutates its input nor changes plain ampl
   Hash[arRetainedReport, "SHA256"] === arRetainedReportHash &&
     KeyTake[ConstructiveDiagrams`Private`completionHighEnergyResourceMetrics[{arRules4, arExpression}],
       Keys[arFour]] === arFour];
+(* Generated HE sources are small input slots even when their derivation
+   records contain large histories. Measure only slots actually read later. *)
+arSourceRules=Thread[(Mass/@Range[4])->ConstantArray[arMass,4]];
+arSourceExpression=SpinorChain[Spinor["Spin","Angle",1],Spinor["Spin","Angle",2]]*
+  SpinorChain[Spinor["Spin","Square",3],Spinor["Spin","Square",4]]^2;
+arShellSlot=(1+MomProd[1,3])^9;
+arReferenceSlot=Total[Table[arSourceScalar[i] MomProd[1,3],{i,220}]];
+arXiSlot=SpinorChain[Spinor["Xi","Angle",7],Spinor["Helicity","Angle",3]];
+arUnusedHistory=Array[arUnconsumedHistory,5000];
+arSourceRecord=<|"HasInternalConditions"->True,"ShellRemainder"->arShellSlot,
+  "FixedReferenceExpression"->arXiSlot,"ReferenceInputExpression"->arReferenceSlot,
+  "DerivationHistory"->arUnusedHistory,
+  "ReferenceContinuations"->{<|"Mode"->"AllPhysical","Expression"->arUnusedHistory|>,
+    <|"Mode"->"Xi","Expression"->arXiSlot|>,<|"Mode"->"Xi","Expression"->arUnusedHistory|>}|>;
+arNoShellRecord=<|"HasInternalConditions"->True,"ShellRemainder"->Missing["NoShellDifference"],
+  "FixedReferenceExpression"->arUnusedHistory,"ReferenceInputExpression"->arUnusedHistory,
+  "ReferenceContinuations"->{<|"Mode"->"Xi","Expression"->arXiSlot|>}|>;
+arChannelSourceRecord=<|"HasInternalConditions"->True,"ShellRemainder"->arShellSlot,
+  "FixedReferenceExpression"->arXiSlot,
+  "ReferenceContinuations"->{<|"Mode"->"Xi","Expression"->arXiSlot|>,
+    <|"Mode"->"Xi","Expression"->2 arXiSlot|>,<|"Mode"->"Mixed","Expression"->arUnusedHistory|>}|>;
+arChannelOverrideRecord=Join[arChannelSourceRecord,<|"ReferenceInputExpression"->arXiSlot|>];
+arSourceReport=<|"Amplitude"->arSourceExpression,"FamilyAmplitude"->arSourceExpression,
+  "ExternalMassRules"->arSourceRules,"RemainingBasis"->{},"FreeParameters"->{},
+  "RemainderData"->{arSourceRecord,arNoShellRecord},
+  "ChannelRemainderData"->{Join[arChannelSourceRecord,<|"ShellRemainder"->arUnusedHistory|>]}|>;
+arSourcePreparedChannels=<|"OriginalAmplitudes"->{},"RemainderData"->{arChannelSourceRecord,arChannelOverrideRecord}|>;
+arSourceReportHash=Hash[arSourceReport,"SHA256"];
+arSourceSlotMetrics=ConstructiveDiagrams`Private`completionHERetainedSourceMetrics[arSourceReport,arSourcePreparedChannels];
+arExpectedSourceLeaves=3 LeafCount[arShellSlot]+LeafCount[arReferenceSlot]+7 LeafCount[arXiSlot]+LeafCount[2 arXiSlot];
+check["HE source sizing counts only the shell and reference expressions consumed by its generators",
+  arSourceSlotMetrics["RetainedSourceExpressionLeaves"]===arExpectedSourceLeaves &&
+    arSourceSlotMetrics["RetainedSourceExpressionSlots"]===12];
+check["source sizing respects common-Xi selection and the channel reference-input override",
+  arSourceSlotMetrics["RetainedSourceSlotCounts"]===<|"ShellRemainder"->3,
+    "FixedReferenceExpression"->3,"ReferenceInputExpression"->2,"XiReferenceContinuation"->4|>];
+check["unconsumed histories and unused continuation modes do not enlarge the source estimate",
+  ConstructiveDiagrams`Private`completionHERetainedSourceMetrics[
+    arSourceReport/.arUnconsumedHistory->arDifferentUnusedHistory,arSourcePreparedChannels]===arSourceSlotMetrics];
+check["current prepared channels override stale channel provenance in an earlier completion report",
+  ConstructiveDiagrams`Private`completionHERetainedSourceMetrics[
+    Join[arSourceReport,<|"ChannelRemainderData"->{}|>],arSourcePreparedChannels]===arSourceSlotMetrics &&
+    ConstructiveDiagrams`Private`completionHERetainedSourceMetrics[arSourceReport,{}]["RetainedSourceExpressionLeaves"]>
+      ConstructiveDiagrams`Private`completionHERetainedSourceMetrics[
+        Join[arSourceReport,<|"ChannelRemainderData"->{}|>],{}]["RetainedSourceExpressionLeaves"]];
+arGeneratedSourceMetrics=ConstructiveDiagrams`Private`completionHighEnergyResourceMetrics[arSourceReport,arSourcePreparedChannels];
+check["generated source work uses the complete coherent tensor with the four-state QED baseline",
+  arGeneratedSourceMetrics["CoherentComponents"]===36 &&
+    arGeneratedSourceMetrics["RetainedSourceCoherentWeight"]===9 &&
+    arGeneratedSourceMetrics["RetainedSourceWorkLeaves"]===9 arExpectedSourceLeaves];
+check["large pending source families receive a larger finite allowance before their deadline is created",
+  arPolicy["HighEnergy",<|"TimeConstraint"->Automatic|>,arGeneratedSourceMetrics]["Settings"]["TimeConstraint"]>
+    arPolicy["HighEnergy",<|"TimeConstraint"->Automatic|>,
+      Join[arGeneratedSourceMetrics,<|"RetainedSourceWorkLeaves"->0|>]]["Settings"]["TimeConstraint"]];
+arExplicitSourceMetrics=ConstructiveDiagrams`Private`completionHighEnergyResourceMetrics[
+  arSourceReport,arSourcePreparedChannels,{arExpression}];
+check["an explicit correction basis disables unused automatic retained-source sizing",
+  arExplicitSourceMetrics["RetainedSourceExpressionLeaves"]===0 &&
+    arExplicitSourceMetrics["RetainedSourceExpressionSlots"]===0 &&
+    arExplicitSourceMetrics["RetainedSourceWorkLeaves"]===0];
+arQEDSourceMetrics=ConstructiveDiagrams`Private`completionHighEnergyResourceMetrics[
+  Join[arSourceReport,<|"Amplitude"->SpinorChain[Spinor["Spin","Angle",1],Spinor["Spin","Angle",2]],
+    "FamilyAmplitude"->SpinorChain[Spinor["Spin","Angle",1],Spinor["Spin","Angle",2]],"ExternalMassRules"->arRules4|>],arSourcePreparedChannels];
+check["the two-fermion QED spin tensor has unit source weight",
+  arQEDSourceMetrics["CoherentComponents"]===4 && arQEDSourceMetrics["RetainedSourceCoherentWeight"]===1];
+check["source measurement neither expands a factored source nor mutates caller history",
+  Head[arSourceReport["RemainderData"][[1,"ShellRemainder"]]]===Power &&
+    Hash[arSourceReport,"SHA256"]===arSourceReportHash];
+check["retained-source work affects HE only and leaves every other stage policy unchanged",
+  AllTrue[{"Construction","Preparation","Factorization","Checks"},
+    arPolicy[#,<|"TimeConstraint"->Automatic|>,arGeneratedSourceMetrics]["Settings"]===
+    arPolicy[#,<|"TimeConstraint"->Automatic|>,Join[arGeneratedSourceMetrics,<|"RetainedSourceWorkLeaves"->0|>]]["Settings"]&]];
+arGeneratedWithFamily=ConstructiveDiagrams`Private`completionHighEnergyResourceMetrics[
+  Join[arRetainedReport,<|"RemainderData"->{<|"HasInternalConditions"->True,"ShellRemainder"->1|>}|>]];
+check["the larger actual supplied family still dominates a tiny generated-source estimate",
+  arGeneratedWithFamily["RetainedDirectionLeaves"]===LeafCount[arLongDirection] &&
+    arPolicy["HighEnergy",<|"TimeConstraint"->Automatic|>,arGeneratedWithFamily]["Settings"]===
+    arPolicy["HighEnergy",<|"TimeConstraint"->Automatic|>,Join[arGeneratedWithFamily,<|"RetainedSourceWorkLeaves"->0|>]]["Settings"]];
+arSM43Resource=Join[arGeneratedSourceMetrics,<|"Channels"->4,"ExpressionLeaves"->1306,
+  "LargestItemLeaves"->1306,"RetainedDirections"->0,"RetainedSourceRecords"->8,
+  "RetainedSourceWorkLeaves"->8948*9|>];
+check["the measured 36-state SM source workload gets a bounded allowance commensurate with its pending family",
+  250<=arPolicy["HighEnergy",<|"TimeConstraint"->Automatic|>,arSM43Resource]["Settings"]["TimeConstraint"]<=350];
+arSM71Resource=Join[arGeneratedSourceMetrics,<|"Channels"->3,"CoherentComponents"->81,
+  "ExpressionLeaves"->15910,"LargestItemLeaves"->15910,"RetainedDirections"->0,
+  "RetainedSourceRecords"->6,"RetainedSourceWorkLeaves"->46648*21|>];
+check["the four-vector source catalog remains inside the existing finite Automatic work ceiling",
+  600<=arPolicy["HighEnergy",<|"TimeConstraint"->Automatic|>,arSM71Resource]["Settings"]["TimeConstraint"]<=900];
+check["generated-source measurements cannot extend any explicit clock, cap or sample setting",
+  arPolicy["HighEnergy",arFixedResourceRequest,arGeneratedSourceMetrics]["Settings"]===arFixedResourceRequest];
 arSpinModel = {{{"vector", "v", "v", 1, 2, arMass},
   {"fermion", "f", "F", 2, 1, arMass}, {"photon", "a+", "a-", 22, 2, 0},
   {"scalar", "s", "s", 25, 0, arMass}}, {}, {}, {}};
@@ -574,7 +664,7 @@ If[Environment["HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION"] === "1",
       AllTrue[arMixedReport["Checks"]["Checks"], #["Status"] === "PASS" &] &&
       arMixedReport["Checks"]["FeynmanCheck"]["Status"] === "PASS"],
   Print["SKIP: set HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION=1 for the full AllPhysical mixed six-point constructor regression."]];
-arExpected = 87 + If[Environment["HEPCAT_TEST_FULL_AUTOMATIC_CONSTRUCTION"] === "1", 2, 0] +
+arExpected = 101 + If[Environment["HEPCAT_TEST_FULL_AUTOMATIC_CONSTRUCTION"] === "1", 2, 0] +
   If[Environment["HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION"] === "1", 3, 0];
 If[checks =!= arExpected, AppendTo[failures, "Not every automatic-resource assertion executed."]];
 Print["AUTOMATIC RESOURCE CHECKS: ", checks, "; FAILURES: ", Length[failures]];

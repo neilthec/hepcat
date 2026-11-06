@@ -5432,10 +5432,269 @@ highEnergyCertifiedScalarSeries[expression_, variable_Symbol, order_Integer] := 
     "RequestedOrderCovered" -> True|>
 ];
 
+(* A Laurent jet is used as the coefficient field BEFORE coherent-spin
+   convolution. Every native scalar expansion is certified; finite arithmetic
+   keeps its SeriesData remainder. Conservative valuation bounds allocate each
+   child enough precision for later negative powers. In particular truncation
+   never lowers a known leading valuation. No Normal is taken until every
+   affine/spin coefficient strictly covers the requested order. *)
+highEnergyLaurentJetCoefficients[mapped_, variable_Symbol, spins_List, unknowns_List,
+    order_Integer, precision_Integer:12, seconds_:30] := Module[
+  {tag=Unique["laurentJet"],phase="Input",started=AbsoluteTime[],completed=0,
+   products=0,cacheEntries=0,atom,walkMemo,polyMemo,fieldMemo,lowerMemo,result,work},
+  work[]:=Catch[Module[
+    {arrays,parts,free,walk,tokens={},atoms={},abstract,back,atomReports,jets,replacement,
+     zero=ConstantArray[0,Length[spins]],constant,merge,multiply,power,convert,
+     records={},record,cache=<||>,key,coefficient,exponent,answer,field,
+     allCoverage,rows=<||>,rowKey,value,lowest,
+     clip,lower,tokenBounds,fieldProduct,polynomialProduct,seriesO,
+     componentCount=0,normalCount=0,certificates={},stageStarted,abstractSeconds,atomSeconds,ringSeconds},
+    If[!DuplicateFreeQ[Join[{variable},spins,unknowns]] || !AllTrue[spins,MatchQ[#,_Symbol]&] ||
+        !ConstructiveDiagrams`Private`residueFiniteQ[mapped] ||
+        ConstructiveDiagrams`Private`residueUnmappedQ[mapped],Throw[Failure["JetInvalidInput",<||>],tag]];
+    phase="AffineDecomposition";
+    If[Length[unknowns]>16,Throw[Failure["JetAffineWorkLimit",<|
+      "AffinePartCount"->Length[unknowns]+1|>],tag]];
+    arrays=If[unknowns==={}, {mapped},Quiet[Check[CoefficientArrays[mapped,unknowns],$Failed]]];
+    If[!ListQ[arrays] || arrays==={} || Length[arrays]>2,
+      Throw[Failure["JetNonlinearAffineFamily",<||>],tag]];
+    parts=Prepend[If[Length[arrays]===2,Normal[arrays[[2]]],ConstantArray[0,Length[unknowns]]],Normal[First[arrays]]];
+    If[Length[parts]=!=Length[unknowns]+1 || !FreeQ[parts,Alternatives@@unknowns],
+      Throw[Failure["JetIncompleteAffineMap",<||>],tag]];
+    (* The bounded admission prevents a dense affine nullspace from duplicating
+       the same large source tensor across dozens of coefficient fields. *)
+    If[Length[parts]>17,Throw[Failure["JetAffineWorkLimit",<|"AffinePartCount"->Length[parts]|>],tag]];
+    phase="ScalarAbstraction";stageStarted=AbsoluteTime[];
+    free[value_]:=FreeQ[value,Alternatives@@spins];
+    atom[value_]:=atom[value]=With[{token=Unique["jetScalar"]},
+      If[Length[tokens]>=4096,Throw[Failure["JetAtomLimit",<||>],tag]];
+      AppendTo[tokens,token];AppendTo[atoms,value];token];
+    walk[value_]/;free[value]:=If[NumberQ[value],value,atom[value]];
+    walk[value_Symbol]/;MemberQ[spins,value]:=value;
+    walk[value_Plus]:=Total[walkMemo/@List@@value];
+    walk[value_Times]:=Times@@(walkMemo/@List@@value);
+    walk[Power[value_,n_Integer]]/;n>=0:=walkMemo[value]^n;
+    walk[_]:=Throw[Failure["JetNonPolynomialSpinDependence",<||>],tag];
+    walkMemo[value_]:=walkMemo[value]=walk[value];
+    abstract=walkMemo/@parts;
+    back=Dispatch[Thread[tokens->atoms]];
+    If[!SameQ[abstract/.back,parts],Throw[Failure["JetScalarRoundtrip",<||>],tag]];
+    abstractSeconds=AbsoluteTime[]-stageStarted;
+
+    phase="AtomSeries";stageStarted=AbsoluteTime[];
+    atomReports=ConstructiveDiagrams`Private`highEnergyCertifiedScalarSeries[#,variable,precision]&/@atoms;
+    If[!AllTrue[atomReports,AssociationQ[#]&&Lookup[#,"Status",None]==="COMPLETE"&],
+      Throw[Failure["JetUncertifiedAtomSeries",<|"Reports"->(KeyDrop[#,"Series"]&/@atomReports)|>],tag]];
+    Do[If[atomReports[[i]]["ZeroAssumptionCertificates"]=!={},AppendTo[certificates,
+      <|"Atom"->i,"Certificates"->atomReports[[i]]["ZeroAssumptionCertificates"]|>]],{i,Length[atoms]}];
+    jets=Lookup[atomReports,"Series"];replacement=Dispatch[Thread[tokens->jets]];
+    atomSeconds=AbsoluteTime[]-stageStarted;
+
+    phase="JetSpinRing";stageStarted=AbsoluteTime[];
+    seriesO[power_] := SeriesData[variable,0,{},Numerator[power],Numerator[power],Denominator[power]];
+    clip[value_SeriesData,need_Integer]:=Module[{data=List@@value,last,first,count},
+      If[data[[1]]=!=variable || data[[2]]=!=0,Throw[Failure["JetBadSeriesDomain",<||>],tag]];
+      last=Min[data[[5]],Max[data[[4]],(need+1)data[[6]]]];
+      If[last===data[[5]],Return[value]];
+      first=Min[data[[4]],last];count=Max[0,Min[Length[data[[3]]],last-data[[4]]]];
+      SeriesData[variable,0,Take[data[[3]],count],first,last,data[[6]]]];
+    clip[value_,need_Integer]:=Module[{expanded,m,n},
+      If[FreeQ[value,variable],Return[value]];
+      expanded=Expand[value];m=Exponent[expanded,variable,Min];n=Exponent[expanded,variable];
+      If[!IntegerQ[m]||!IntegerQ[n]||!PolynomialQ[Expand[expanded variable^Max[0,-m]],variable],
+        Throw[Failure["JetUnsupportedExactCoefficient",<||>],tag]];
+      If[n<=need,Return[value]];
+      If[m>need,Return[seriesO[m]]];
+      SeriesData[variable,0,Table[Coefficient[expanded,variable,p],{p,m,need}],m,need+1,1]];
+    lower[value_?NumberQ]:=If[value===0,Infinity,0];
+    lower[value_Symbol]/;MemberQ[spins,value]:=0;
+    tokenBounds=AssociationThread[tokens,Map[Function[j,
+      If[j===0,Infinity,If[Head[j]===SeriesData,(List@@j)[[4]]/(List@@j)[[6]],
+        If[FreeQ[j,variable],0,Exponent[Expand[j],variable,Min]]]]],jets]];
+    lower[value_Symbol]/;KeyExistsQ[tokenBounds,value]:=tokenBounds[value];
+    lower[value_Plus]:=Min[lowerMemo/@List@@value];
+    lower[value_Times]:=Total[lowerMemo/@List@@value];
+    lower[Power[value_,n_Integer]]/;n>=0:=If[n===0,0,n lowerMemo[value]];
+    lower[_]:=Throw[Failure["JetUnsupportedValuation",<||>],tag];
+    lowerMemo[value_]:=lowerMemo[value]=lower[value];
+    fieldProduct[factors_List,need_Integer]:=Module[{bounds=lowerMemo/@factors,total,answer=1,partNeed},
+      If[MemberQ[bounds,Infinity],Return[0]];
+      total=Total[bounds];
+      Do[partNeed=Ceiling[need-(total-bounds[[i]])];
+        answer=clip[answer fieldMemo[factors[[i]],partNeed],Ceiling[need-Total[Drop[bounds,i]]]],
+        {i,Length[factors]}];answer];
+    field[value_?NumberQ,need_Integer]:=value;
+    field[value_Symbol,need_Integer]/;MemberQ[tokens,value]:=clip[value/.replacement,need];
+    field[value_Plus,need_Integer]:=clip[Total[fieldMemo[#,need]&/@List@@value],need];
+    field[value_Times,need_Integer]:=fieldProduct[List@@value,need];
+    field[Power[value_,n_Integer],need_Integer]/;n>=0:=If[n===0,1,
+      clip[fieldMemo[value,Ceiling[need-(n-1)lowerMemo[value]]]^n,need]];
+    field[_,_]:=Throw[Failure["JetUnsupportedFieldNode",<||>],tag];
+    fieldMemo[value_,need_Integer]:=fieldMemo[value,need]=field[value,need];
+    constant[value_,need_Integer]:=Association[Rule[zero,fieldMemo[value,need]]];
+    merge[items_List,need_Integer]:=Select[Map[clip[#,need]&,Merge[items,Total]],#=!=0&];
+    multiply[left_Association,right_Association,need_Integer]:=Module[{p,c,pieces},
+      products+=Length[left]Length[right];
+      If[products>10000000,Throw[Failure["JetConvolutionLimit",<||>],tag]];
+      If[left===<||>||right===<||>,Return[<||>]];
+      If[Length[left]===1,p=First[Keys[left]];c=First[Values[left]];
+        If[p===zero,Return[Select[Map[clip[c #,need]&,right],#=!=0&]]];
+        Return[Select[Association[KeyValueMap[Rule[p+#1,clip[c #2,need]]&,right]],#=!=0&]]];
+      If[Length[right]===1,p=First[Keys[right]];c=First[Values[right]];
+        If[p===zero,Return[Select[Map[clip[# c,need]&,left],#=!=0&]]];
+        Return[Select[Association[KeyValueMap[Rule[#1+p,clip[#2 c,need]]&,left]],#=!=0&]]];
+      pieces=Flatten[KeyValueMap[Function[{p,a},KeyValueMap[
+        Function[{q,b},Association[Rule[p+q,clip[a b,need]]]],right]],left],1];merge[pieces,need]];
+    polynomialProduct[factors_List,need_Integer]:=Module[{bounds=lowerMemo/@factors,total,answer=constant[1,need],partNeed},
+      If[MemberQ[bounds,Infinity],Return[constant[0,need]]];total=Total[bounds];
+      Do[partNeed=Ceiling[need-(total-bounds[[i]])];
+        answer=multiply[answer,polyMemo[factors[[i]],partNeed],Ceiling[need-Total[Drop[bounds,i]]]],
+        {i,Length[factors]}];answer];
+    power[base_,n_Integer,need_Integer]:=Module[{answer=constant[1,need],factor,bound=lowerMemo[base]},
+      If[n===0,Return[answer]];If[bound===Infinity,Return[constant[0,need]]];
+      factor=polyMemo[base,Ceiling[need-(n-1)bound]];
+      Do[answer=multiply[answer,factor,Ceiling[need-(n-i)bound]],{i,n}];answer];
+    convert[value_,need_Integer]/;free[value]:=constant[value,need];
+    convert[value_Symbol,need_Integer]/;MemberQ[spins,value]:=Association[Rule[
+      ReplacePart[zero,First[FirstPosition[spins,value]]->1],1]];
+    convert[value_Plus,need_Integer]:=merge[polyMemo[#,need]&/@List@@value,need];
+    convert[value_Times,need_Integer]:=polynomialProduct[List@@value,need];
+    convert[Power[value_,n_Integer],need_Integer]/;n>=0:=power[value,n,need];
+    convert[_,_]:=Throw[Failure["JetUnsupportedSpinNode",<||>],tag];
+    polyMemo[value_,need_Integer]:=polyMemo[value,need]=(
+      cacheEntries++;If[cacheEntries>40000,Throw[Failure["JetCacheLimit",<||>],tag]];convert[value,need]);
+    Do[record=polyMemo[part,order];If[!KeyExistsQ[record,zero],AssociateTo[record,zero->0]];
+      If[Length[record]>4096,Throw[Failure["JetPolynomialLimit",<||>],tag]];
+      AppendTo[records,record];componentCount+=Length[record];completed++;
+      Null,{part,abstract}];
+    ringSeconds=AbsoluteTime[]-stageStarted;phase="Coverage";
+    allCoverage=Flatten[Map[ConstructiveDiagrams`Private`highEnergyScalarSeriesCompleteQ[#,variable,order]&,
+      Values/@records,{2}]];
+    If[Length[records]=!=Length[parts] || Length[allCoverage]=!=componentCount || !And@@allCoverage,
+      Throw[Failure["JetIncompleteCoverage",<|"Covered"->Count[allCoverage,True],"Total"->Length[allCoverage],
+        "Precision"->precision,"Components"->componentCount|>],tag]];
+    <|"Status"->"COMPLETE","CoefficientJets"->records,
+      "Method"->"ExactContextAwareLaurentJetsBeforeSpinConvolution",
+      "AtomCount"->Length[atoms],"AffinePartCount"->Length[parts],"ComponentCount"->componentCount,
+      "CompletedParts"->completed,"Precision"->precision,"RequestedOrder"->order,
+      "FullCoefficientCoverage"->True,"FullAffineReconstruction"->True,
+      "OriginalCoordinates"->unknowns,"SpinVariables"->spins,
+      "AbstractSeconds"->abstractSeconds,"AtomSeconds"->atomSeconds,"RingSeconds"->ringSeconds,
+      "Products"->products,"CacheEntries"->cacheEntries,"ZeroAssumptionCertificates"->certificates,
+      "Certificate"-><|"ExactScalarRoundtrip"->True,"DegreeAtMostOneAffineMap"->True,
+        "ConstantAffinePartIncluded"->True,"AllSpinCoefficientsCovered"->True,
+        "RemainderOrdersPreserved"->True,"ValuationLowerBoundsPreserved"->True,
+        "ContextPrecisionUsesOtherFactorLowerBounds"->True,"NormalOnlyAfterAllCoverage"->True,
+        "ReconstructionMethod"->"ExactScalarRoundtripAndPolynomialRingRecursion"|>|>],tag];
+  result=Internal`WithLocalSettings[Null,
+    TimeConstrained[MemoryConstrained[Quiet[Check[work[],Failure["JetUncertifiedArithmeticMessage",<|"Phase"->phase|>]]],536870912,Failure["JetMemoryLimit",<|"Phase"->phase|>]],
+      seconds,Failure["JetTimeConstraint",<|"Phase"->phase,"CompletedParts"->completed,
+        "Products"->products,"CacheEntries"->cacheEntries|>]],Clear[atom,walkMemo,polyMemo,fieldMemo,lowerMemo]];
+  If[AssociationQ[result],Join[result,<|"ElapsedTime"->N[AbsoluteTime[]-started]|>],result]
+];
+
+
+highEnergyLaurentJetVerifiedQ[report_, variable_Symbol, spins_List,
+    unknowns_List, order_Integer] := Module[{records, proof, monomials},
+  If[!AssociationQ[report] || Lookup[report,"Status",None]=!="COMPLETE" ||
+      !TrueQ[Lookup[report,"FullCoefficientCoverage",False]] ||
+      !TrueQ[Lookup[report,"FullAffineReconstruction",False]] ||
+      Lookup[report,"RequestedOrder",None]=!=order ||
+      Lookup[report,"OriginalCoordinates",None]=!=unknowns ||
+      Lookup[report,"SpinVariables",None]=!=spins,Return[False]];
+  proof=Lookup[report,"Certificate",<||>];records=Lookup[report,"CoefficientJets",None];
+  If[!AssociationQ[proof] || !And@@(TrueQ[Lookup[proof,#,False]]& /@
+      {"ExactScalarRoundtrip","DegreeAtMostOneAffineMap","ConstantAffinePartIncluded",
+       "AllSpinCoefficientsCovered","RemainderOrdersPreserved",
+       "ValuationLowerBoundsPreserved","NormalOnlyAfterAllCoverage"}) ||
+      !ListQ[records] || Length[records]=!=Length[unknowns]+1 ||
+      Lookup[report,"CompletedParts",None]=!=Length[records] ||
+      !AllTrue[records,AssociationQ],Return[False]];
+  monomials=Flatten[Keys/@records,1];
+  AllTrue[records,KeyExistsQ[#,ConstantArray[0,Length[spins]]]&] &&
+    Lookup[report,"ComponentCount",None]===Length[monomials] &&
+    AllTrue[monomials,ListQ[#] && Length[#]===Length[spins] &&
+      AllTrue[#,IntegerQ[#] && #>=0&]&] &&
+    AllTrue[Flatten[Values/@records],highEnergyScalarSeriesCompleteQ[#,variable,order]&]
+];
+
+highEnergyLaurentJetEligibleQ[mapped_, spinVariables_List] := Module[{degrees,bound},
+  If[spinVariables === {} || LeafCount[mapped] < 500000, Return[False]];
+  degrees=completionHECoherentComponentDegrees[mapped,spinVariables];
+  If[!ListQ[degrees] || !AllTrue[degrees,IntegerQ[#] && #>=0&] ||
+      Max[degrees]<2,Return[False]];
+  (* A large number of degree-one legs can also have many components.
+     Keep every such established fermion-only path outside this new engine;
+     admission additionally requires a higher-degree coherent spin leg. *)
+  bound=Times@@(degrees+1);27 <= bound <= 4096
+];
+
+highEnergyLaurentJetExpansion[mapped_, variable_Symbol, spinVariables_List,
+    unknowns_List, order_Integer] := Module[{report, second, started = AbsoluteTime[]},
+  report = highEnergyLaurentJetCoefficients[mapped, variable, spinVariables, unknowns,
+    order, Max[12,order+8], 30];
+  (* A missed truncation order is never a zero coefficient. Retry the same
+     complete coefficient field once with more native scalar precision. *)
+  If[MatchQ[report,Failure["JetIncompleteCoverage",_Association]] &&
+      AbsoluteTime[]-started < 20,
+    second=highEnergyLaurentJetCoefficients[mapped,variable,spinVariables,unknowns,
+      order,Max[24,order+16],Max[1,30-(AbsoluteTime[]-started)]];report=second];
+  report
+];
+
+completionHELaurentJetRows[mapped_, variable_Symbol, spinVariables_List,
+    unknowns_List, threshold_] := Module[
+  {report, records, rows=<||>, value, lowest, coefficient, key, affine, order,
+   tag=Unique["jetRows"], result},
+  order=Max[0,Ceiling[threshold]];
+  report=highEnergyLaurentJetExpansion[mapped,variable,spinVariables,unknowns,order];
+  If[FailureQ[report],Return[report]];
+  If[!highEnergyLaurentJetVerifiedQ[report,variable,spinVariables,unknowns,order],
+    Return[Failure["JetUnverifiedCoefficientCoverage",<||>]]];
+  records=report["CoefficientJets"];affine=Prepend[unknowns,1];
+  result=Catch[Do[KeyValueMap[Function[{monomial,jet},
+    value=Expand[Normal[jet]];
+    If[!residueFiniteQ[value] || !FreeQ[value,_Series|_SeriesData|_ConditionalExpression],
+      Throw[Failure["JetBadNormal",<||>],tag]];
+    If[value=!=0,lowest=Exponent[value,variable,Min];
+      If[!IntegerQ[lowest] || !PolynomialQ[Expand[value variable^Max[0,-lowest]],variable],
+        Throw[Failure["JetNonIntegerLaurentPowers",<||>],tag]];
+      Do[key={power,monomial};coefficient=Coefficient[value,variable,power];
+        If[coefficient=!=0,AssociateTo[rows,key->
+          (If[KeyExistsQ[rows,key],rows[[Key[key]]],0]+affine[[i]] coefficient)]],
+        {power,lowest,Ceiling[threshold]-1}]]],records[[i]]],{i,Length[records]}];
+    rows=Select[rows,#=!=0&];
+    Join[KeyDrop[report,"CoefficientJets"],<|"Rows"->Values[rows],"RowKeys"->Keys[rows],
+      "CompletedComponents"->report["ComponentCount"],
+      "Method"->"ExactLaurentJetAffineSpinRows"|>],tag];
+  result
+];
+
 highEnergyScalarCoefficientSeries[mapped_, variable_Symbol, spinVariables_List,
     order_Integer] := Module[
   {started = AbsoluteTime[], polynomial, coefficients, completed = 0, pieces = {},
-   series, scalarResult, value, monomial, certificates = {}, tag = Unique["scalarCoefficientSeries"]},
+   series, scalarResult, value, monomial, certificates = {}, jet, records, monomials,
+   tag = Unique["scalarCoefficientSeries"]},
+  If[highEnergyLaurentJetEligibleQ[mapped,spinVariables],
+    jet=highEnergyLaurentJetExpansion[mapped,variable,spinVariables,{},order];
+    If[highEnergyLaurentJetVerifiedQ[jet,variable,spinVariables,{},order],
+      records=First[jet["CoefficientJets"]];monomials=Keys[records];
+      value=Total[KeyValueMap[(Times@@MapThread[Power,{spinVariables,#1}]) Normal[#2]&,records]];
+      If[!residueFiniteQ[value] || !FreeQ[value,_Series|_SeriesData|_ConditionalExpression],
+        Return[<|"Status"->"UNRESOLVED","Reason"->"InvalidNormalizedLaurentJetSeries"|>]];
+      Return[<|"Status"->"COMPLETE","Series"->value,
+        "Method"->"ExactLaurentJetsBeforeCoherentSpinConvolution",
+        "CompletedComponents"->Length[records],"ComponentCount"->Length[records],
+        "Polynomial"-><|"FullCoefficientCoverage"->True,"ReconstructionVerified"->True,
+          "ConstantCoefficientIncluded"->MemberQ[monomials,ConstantArray[0,Length[spinVariables]]],
+          "ComponentCount"->Length[records],"ComponentMonomials"->monomials,
+          "ReconstructionMethod"->"CertifiedScalarJetsAndExactPolynomialRingRecursion"|>,
+        "CertifiedSeriesZeroAssumptions"->jet["ZeroAssumptionCertificates"],
+        "LaurentJetCertificate"->jet["Certificate"],"NumericalSpinSamples"->0,
+        "ElapsedTime"->AbsoluteTime[]-started|>]];
+    If[MatchQ[jet,Failure["JetUncertifiedAtomSeries",_Association]],
+      Return[<|"Status"->"UNRESOLVED","Reason"->"UncertifiedScalarJetSeries",
+        "ScalarSeriesDiagnostic"->jet|>]]];
   polynomial = amplitudeCoherentPolynomialRules[mapped, spinVariables, 10];
   If[Lookup[polynomial, "Status", None] =!= "COMPLETE" ||
       !TrueQ[Lookup[polynomial, "FullCoefficientCoverage", False]] ||
@@ -5493,6 +5752,11 @@ highEnergyOneSample[expr_, chart_Association, parameterRules_List, bound_] := Mo
   order = Max[0, Ceiling[-2 bound]];
   If[variables =!= {} && LeafCount[mapped] >= 5000,
     coefficientExpansion = highEnergyScalarCoefficientSeries[mapped, t, variables, order]];
+  If[AssociationQ[coefficientExpansion] &&
+      Lookup[coefficientExpansion,"Reason",None]==="UncertifiedScalarJetSeries",
+    Return[<|"Status"->"UNRESOLVED","Diagnostics"->{
+      "A scalar Laurent-series zero assumption could not be certified exactly."},
+      "CoefficientExpansion"->coefficientExpansion|>]];
   If[AssociationQ[coefficientExpansion] &&
       Lookup[coefficientExpansion, "Status", None] === "COMPLETE",
     series = coefficientExpansion["Series"],
@@ -6777,13 +7041,47 @@ amplitudeConstructionResourceMetrics[process_List, model_List] := Module[
     "ResourceSpinSource" -> "ModelMassiveExternalStates"|>]
 ];
 
+(* Measure only expression slots read by the retained-source generators.
+   Channel preparation is authoritative over stale input channel provenance.
+   Do not hash, expand or traverse unrelated derivation histories. *)
+completionHERetainedSourceMetrics[input_,channels_] := Module[
+  {diagramRecords,channelRecords,slotLeaves=<||>,slotCounts=<||>,recordSlots,add,continuations},
+  diagramRecords=If[AssociationQ[input],Replace[Lookup[input,"RemainderData",{}],Except[_List]->{}],{}];
+  channelRecords=If[AssociationQ[channels],Replace[Lookup[channels,"RemainderData",{}],Except[_List]->{}],
+    If[AssociationQ[input],Replace[Lookup[input,"ChannelRemainderData",{}],Except[_List]->{}],{}]];
+  add[key_,value_] := If[!MissingQ[value],
+    AssociateTo[slotLeaves,key->(Lookup[slotLeaves,key,0]+LeafCount[value])];
+    AssociateTo[slotCounts,key->(Lookup[slotCounts,key,0]+1)]];
+  recordSlots[record_,diagram_] := Module[{internal},
+    If[!AssociationQ[record],Return[]];
+    internal=TrueQ[Lookup[record,"HasInternalConditions",False]] &&
+      !MissingQ[Lookup[record,"ShellRemainder",Missing["NoShellDifference"]]];
+    If[internal,Do[add[key,Lookup[record,key,Missing["NoSourceSlot"]]],
+      {key,{"ShellRemainder","FixedReferenceExpression","ReferenceInputExpression"}}]];
+    (* The common-reference proposal reads one Xi continuation per diagram;
+       channel alternatives are read only when no original reference input
+       overrides them, matching completionHESourceRemainders. *)
+    If[TrueQ[diagram] || internal && MissingQ[Lookup[record,"ReferenceInputExpression",Missing[]]] &&
+        !MissingQ[Lookup[record,"FixedReferenceExpression",Missing[]]],
+      continuations=Select[Replace[Lookup[record,"ReferenceContinuations",{}],Except[_List]->{}],
+        AssociationQ[#] && Lookup[#,"Mode",None]==="Xi" && KeyExistsQ[#,"Expression"]&];
+      If[TrueQ[diagram],continuations=Take[continuations,UpTo[1]]];
+      Do[add["XiReferenceContinuation",continuation["Expression"]],{continuation,continuations}]]];
+  Scan[recordSlots[#,True]&,diagramRecords];Scan[recordSlots[#,False]&,channelRecords];
+  <|"RetainedSourceExpressionLeaves"->Total[Values[slotLeaves]],
+    "RetainedSourceExpressionSlots"->Total[Values[slotCounts]],
+    "RetainedSourceSlotLeaves"->slotLeaves,"RetainedSourceSlotCounts"->slotCounts,
+    "RetainedSourceMetricScope"->"ConsumedShellAndReferenceSlotsWithoutDerivationHistory"|>
+];
+
 (* High-energy work operates on the retained affine family, not only its
-   displayed fixed representative. Measure that supplied family and its
-   directions before resolving the stage clock; do not expand or rebuild it. *)
+   displayed fixed representative. Measure that supplied family, directions
+   and available generated-source inputs before resolving the stage clock. *)
 completionHighEnergyResourceMetrics[input_, channels_: {}, correctionBasis_: Automatic] := Module[
   {center = amplitudeResourceMetrics[input, channels], metrics, view = input,
    family = Missing["NoRetainedFamily"], remaining = {}, explicit = {},
-   familyLeaves = 0, directionLeaves, explicitLeaves, largest, freeCount = 0},
+   familyLeaves = 0, directionLeaves, explicitLeaves, largest, freeCount = 0,
+   sourceMetrics,sourceWeight},
   If[AssociationQ[input],
     If[KeyExistsQ[input, "FamilyAmplitude"] && !MissingQ[input["FamilyAmplitude"]],
       family = input["FamilyAmplitude"]; familyLeaves = LeafCount[family];
@@ -6794,6 +7092,11 @@ completionHighEnergyResourceMetrics[input_, channels_: {}, correctionBasis_: Aut
   metrics = If[MissingQ[family], center, amplitudeResourceMetrics[view, channels]];
   directionLeaves = Total[LeafCount /@ remaining];
   explicitLeaves = Total[LeafCount /@ explicit];
+  sourceMetrics=If[correctionBasis===Automatic,completionHERetainedSourceMetrics[input,channels],
+    <|"RetainedSourceExpressionLeaves"->0,"RetainedSourceExpressionSlots"->0,
+      "RetainedSourceSlotLeaves"-><||>,"RetainedSourceSlotCounts"-><||>,
+      "RetainedSourceMetricScope"->"ExplicitCorrectionBasisDisablesAutomaticSourceGeneration"|>];
+  sourceWeight=Max[1,Ceiling[Lookup[metrics,"CoherentComponents",1]/4]];
   largest = Max[1, center["LargestItemLeaves"], metrics["LargestItemLeaves"], familyLeaves,
     Sequence @@ (LeafCount /@ remaining), Sequence @@ (LeafCount /@ explicit)];
   Join[metrics, <|"ExpressionLeaves" -> Max[center["ExpressionLeaves"], metrics["ExpressionLeaves"]],
@@ -6804,7 +7107,9 @@ completionHighEnergyResourceMetrics[input_, channels_: {}, correctionBasis_: Aut
     "RetainedFamilyExpressionLeaves" -> familyLeaves,
     "RetainedDirectionLeaves" -> directionLeaves,
     "ExplicitCorrectionBasisLeaves" -> explicitLeaves,
-    "ResourceExpressionSource" -> If[MissingQ[family], "InputExpression", "RetainedAffineFamily"]|>]
+    "RetainedSourceCoherentWeight"->sourceWeight,
+    "RetainedSourceWorkLeaves"->sourceWeight sourceMetrics["RetainedSourceExpressionLeaves"],
+    "ResourceExpressionSource" -> If[MissingQ[family], "InputExpression", "RetainedAffineFamily"]|>,sourceMetrics]
 ];
 
 amplitudeAutomaticFitSamples[metrics_Association] := Max[4,
@@ -6826,7 +7131,8 @@ amplitudeAutomaticSettings[stage_String, requested_Association, metrics_Associat
    cap, ceiling, basisCount, sourceRecords, tensorWork},
   leaves = Max[1, Lookup[metrics, "ExpressionLeaves", 1]];
   If[stage === "HighEnergy", leaves = Max[leaves,
-      Lookup[metrics, "RetainedDirectionLeaves", 0]] +
+      Lookup[metrics, "RetainedDirectionLeaves", 0],
+      Lookup[metrics, "RetainedSourceWorkLeaves", 0]] +
     Lookup[metrics, "ExplicitCorrectionBasisLeaves", 0]];
   itemLeaves = Max[1, Lookup[metrics, "LargestItemLeaves", leaves]];
   channels = Max[0, Lookup[metrics, "Channels", 0]];
@@ -15844,7 +16150,7 @@ completionHELaurentSeries[mapped_, variable_Symbol, spinVariables_List,
 
 (* Estimate tensor work without expanding its kinematic coefficient field.
    Three spin-one legs have 27 components, exceeding four spin-half legs. *)
-completionHECoherentComponentBound[expression_, variables_List] := Module[
+completionHECoherentComponentDegrees[expression_, variables_List] := Module[
   {zero = ConstantArray[0,Length[variables]], degree, result, tag = Unique["spinDegree"]},
   degree[value_] /; FreeQ[value,Alternatives@@variables] := zero;
   degree[value_Symbol] /; MemberQ[variables,value] :=
@@ -15853,8 +16159,12 @@ completionHECoherentComponentBound[expression_, variables_List] := Module[
   degree[value_Times] := Total[degree /@ (List@@value)];
   degree[Power[value_,n_Integer]] /; n>=0 := n degree[value];
   degree[_] := Throw[Missing["NonpolynomialSpinDependence"],tag];
-  result = Catch[degree[expression],tag];
-  If[MissingQ[result],result,Times@@(result+1)]
+  Catch[degree[expression],tag]
+];
+
+completionHECoherentComponentBound[expression_, variables_List] := Module[{degrees},
+  degrees=completionHECoherentComponentDegrees[expression,variables];
+  If[MissingQ[degrees],degrees,Times@@(degrees+1)]
 ];
 
 (* Keep the sparse spin/correction polynomial separated through Laurent
@@ -15936,9 +16246,13 @@ completionHEStreamingLaurentRows[mapped_, variable_Symbol, spinVariables_List,
 
 completionHELaurentRows[mapped_, variable_, spinVariables_List, unknowns_List,
     threshold_] := Catch[Module[{order, series, polynomial, lowest, rows = {}, coefficients, seriesReport,
-      streaming, componentBound},
+      streaming, componentBound, jets},
   If[!residueFiniteQ[mapped] || residueUnmappedQ[mapped],
     Return[Failure["UnsupportedLinearKinematics", <||>]]];
+  If[highEnergyLaurentJetEligibleQ[mapped,spinVariables],
+    jets=completionHELaurentJetRows[mapped,variable,spinVariables,unknowns,threshold];
+    If[AssociationQ[jets] && Lookup[jets,"Status",None]==="COMPLETE",Return[jets["Rows"]]];
+    If[MatchQ[jets,Failure["JetUncertifiedAtomSeries",_Association]],Return[jets]]];
   If[spinVariables=!={} && unknowns=!={} && LeafCount[mapped]>=5000,
     componentBound=If[Length[spinVariables]>=4,16,
       completionHECoherentComponentBound[mapped,spinVariables]];
@@ -15975,10 +16289,17 @@ completionHELaurentRows[mapped_, variable_, spinVariables_List, unknowns_List,
 completionHEEnergyAffineRestriction[originalTrial_, originalVariables_List,
     previous_Association, equations_List, retainedEquations_List, seconds_: 2] := Module[
   {fallback = Missing["NoCertifiedAffineRestriction"], work},
-  If[!TrueQ[seconds > 0] || Lookup[previous, "FreeParameters", {}] === {} ||
-      equations === {}, Return[fallback]];
+  If[!TrueQ[seconds > 0] || equations === {}, Return[fallback]];
   work[] := Module[{fit, free, rules, pivots, mapped, arrays, replay},
     fit = completionRefineLinear[previous, equations, seconds];
+    If[AssociationQ[fit] && Lookup[fit, "Status", None] === "INCONSISTENT",
+      Return[<|"Status" -> "INCONSISTENT", "LinearSystem" -> fit,
+        "InconsistencyCertificate" -> <|"Method" -> "ExactAffineLinearContradiction",
+          "OriginalCoordinates" -> originalVariables,
+          "PriorAffineRestrictionRules" -> Lookup[previous, "SolutionRules", {}],
+          "WorkingCoordinates" -> Lookup[previous, "FreeParameters", {}],
+          "ReachedEquations" -> retainedEquations, "LinearSystem" -> fit,
+          "UncheckedChartsClaimed" -> False|>|>]];
     If[!AssociationQ[fit] || !MemberQ[{"COMPLETE", "UNDERDETERMINED"},
         Lookup[fit, "Status", None]], Return[fallback]];
     free = Lookup[fit, "FreeParameters", {}]; rules = Lookup[fit, "SolutionRules", {}];
@@ -16037,14 +16358,20 @@ completionHEEnergyConstraints[trial_, unknowns_List, metadata_Association,
       "EquationCount" -> Length[coefficients], "OriginalCorrectionCoordinates" -> unknowns,
       "WorkingCorrectionCoordinates" -> workingUnknowns,
       "PriorAffineRestrictionRules" -> priorRules|>];
-    If[sample < samples,
-      restriction = completionHEEnergyAffineRestriction[trial, unknowns, partial,
-        coefficients, rows, 2];
-      If[AssociationQ[restriction],
-        workingTrial = restriction["FamilyAmplitude"];
-        workingUnknowns = restriction["FreeParameters"];
-        partial = restriction["LinearSystem"];
-        AppendTo[reductions, Join[<|"AfterSample" -> sample|>, restriction["Certificate"]]]]],
+    restriction = completionHEEnergyAffineRestriction[trial, unknowns, partial,
+      coefficients, rows, 2];
+    If[AssociationQ[restriction] && Lookup[restriction, "Status", None] === "INCONSISTENT",
+      Throw[<|"Status" -> "INCONSISTENT", "Equations" -> rows, "Samples" -> charts,
+        "SequentialAffineReductions" -> reductions, "OriginalCorrectionCoordinates" -> unknowns,
+        "RejectedAfterSample" -> sample, "UnvisitedSampleCount" -> samples - sample,
+        "AllRequestedChartsRetained" -> (sample === samples),
+        "InconsistencyCertificate" -> restriction["InconsistencyCertificate"],
+        "Diagnostics" -> {"The reached exact high-energy equations contradict this bounded affine source family. Additional charts cannot repair an exact linear inconsistency."}|>]];
+    If[AssociationQ[restriction],
+      workingTrial = restriction["FamilyAmplitude"];
+      workingUnknowns = restriction["FreeParameters"];
+      partial = restriction["LinearSystem"];
+      AppendTo[reductions, Join[<|"AfterSample" -> sample|>, restriction["Certificate"]]]],
     {sample, samples}];
   <|"Status" -> "COMPLETE", "Equations" -> rows, "Samples" -> charts,
     "SequentialAffineReductions" -> reductions,
@@ -16060,7 +16387,7 @@ completionHEEnergyConstraintSets[trial_, unknowns_List, metadata_Association,
     samples_Integer, seed_Integer, assignments_List, bound_, callback_, enabled_] := Module[
   {reports = {}, rows = {}, charts = {}, diagnostics = {}, workingTrial = trial,
    workingUnknowns = unknowns, partial, report, restriction, reductions = {},
-   valid, first, priorRules},
+   valid, first, priorRules, rejection = None},
   partial = <|"Status" -> If[unknowns === {}, "COMPLETE", "UNDERDETERMINED"],
     "SolutionRules" -> {}, "FreeParameters" -> unknowns, "Rank" -> 0, "Diagnostics" -> {}|>;
   Do[
@@ -16078,9 +16405,20 @@ completionHEEnergyConstraintSets[trial_, unknowns_List, metadata_Association,
     rows = Join[rows, Lookup[report, "Equations", {}]];
     charts = Join[charts, Lookup[report, "Samples", {}]];
     diagnostics = Join[diagnostics, Lookup[report, "Diagnostics", {}]];
+    If[Lookup[report, "Status", None] === "INCONSISTENT",
+      rejection = <|"RejectedAfterParameterSet" -> index,
+        "UnvisitedParameterAssignmentCount" -> Length[assignments] - index,
+        "InconsistencyCertificate" -> <|"Method" -> "ExactParameterFamilyIntersectionContradiction",
+          "OriginalCoordinates" -> unknowns, "PriorAffineRestrictionRules" -> priorRules,
+          "ReachedEquations" -> rows, "ChartContradiction" -> Lookup[report, "InconsistencyCertificate", <||>],
+          "UncheckedParameterAssignmentsClaimed" -> False|>|>; Break[]];
     If[index < Length[assignments] && Lookup[report, "Status", None] === "COMPLETE",
       restriction = completionHEEnergyAffineRestriction[trial, unknowns, partial,
         Lookup[report, "Equations", {}], rows, 2];
+      If[AssociationQ[restriction] && Lookup[restriction, "Status", None] === "INCONSISTENT",
+        rejection = <|"RejectedAfterParameterSet" -> index,
+          "UnvisitedParameterAssignmentCount" -> Length[assignments] - index,
+          "InconsistencyCertificate" -> restriction["InconsistencyCertificate"]|>; Break[]];
       If[AssociationQ[restriction],
         workingTrial = restriction["FamilyAmplitude"];
         workingUnknowns = restriction["FreeParameters"];
@@ -16089,8 +16427,9 @@ completionHEEnergyConstraintSets[trial_, unknowns_List, metadata_Association,
     {index, Length[assignments]}];
   valid = Select[Lookup[reports, "Report", {}], AssociationQ];
   first = If[valid === {}, <||>, First[valid]];
-  Join[first, <|"Status" -> If[Length[valid] === Length[assignments] &&
-      AllTrue[valid, Lookup[#, "Status", None] === "COMPLETE" &], "COMPLETE", "UNRESOLVED"],
+  Join[first, If[AssociationQ[rejection], rejection, <||>],
+    <|"Status" -> If[AssociationQ[rejection], "INCONSISTENT", If[Length[valid] === Length[assignments] &&
+      AllTrue[valid, Lookup[#, "Status", None] === "COMPLETE" &], "COMPLETE", "UNRESOLVED"]],
     "Equations" -> rows, "Samples" -> charts, "Diagnostics" -> DeleteDuplicates[diagnostics],
     "ParameterAssignments" -> reports, "SequentialParameterAffineReductions" -> reductions,
     "OriginalCorrectionCoordinates" -> unknowns,
@@ -18736,6 +19075,12 @@ completionHighEnergyWork[input_, channels_List, model_List, settings_Association
       report = Join[report, <|"PhysicalFamilyIdentityReduction" -> familyReduction|>]; retainCurrentFamily[]]];
   energy = completionHEEnergyConstraintSets[trial, unknowns, metadata, fitSamples,
     settings["RandomSeed"], ruleSets, bound, callback, enabled];
+  If[AssociationQ[energy] && Lookup[energy, "Status", None] === "INCONSISTENT",
+    report = Join[report, <|"ConstraintData" -> <|"Physical" -> physical, "HighEnergy" -> energy|>,
+      "HighEnergyInconsistencyCertificate" -> Lookup[energy, "InconsistencyCertificate", <||>]|>];
+    retain[report];
+    Return[Join[report, <|"Diagnostics" -> {
+      "The reached exact high-energy equations contradict the current bounded source family. Unvisited charts cannot repair this certified inconsistency; no complete amplitude is claimed."}|>]]];
   sequentialReduction = completionReduceConstraintFamily[trial, unknowns, energy];
   If[TrueQ[sequentialReduction["Reduced"]],
     trial = sequentialReduction["FamilyAmplitude"]; unknowns = sequentialReduction["FreeParameters"];
@@ -18866,7 +19211,9 @@ completionHighEnergyStage[input_, channels_List, model_List, requestedSettings_A
     KeyTake[requestedSettings, {"Parallelization", "MaxKernels"}]}, Module[
   {normalized, report, retained, remaining, rawExpression, started = AbsoluteTime[],
    resolution = amplitudeAutomaticSettings["HighEnergy", requestedSettings,
-     completionHighEnergyResourceMetrics[input, channels, requestedSettings["CorrectionBasis"]]], settings, seconds, output,
+     completionHighEnergyResourceMetrics[input,
+       If[AssociationQ[channelPreparation],channelPreparation,channels],
+       requestedSettings["CorrectionBasis"]]], settings, seconds, output,
    rules = residueParameterRules[model, requestedSettings["ParameterRules"]], effectiveSettings,
    cubicSource, preferredBudget, preferredStarted, preferredReport,
    sourceAttempts = {}, preferredProvenance = Missing["NoPreferredSource"],

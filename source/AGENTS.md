@@ -1464,6 +1464,14 @@ large source expressions. The retained basis and exact certificates remain.
 Large affine high-energy fits may expand exact scalar coefficients before
 reassembling the spin polynomial. Keep correction unknowns coupled when forming
 equations: a row such as x+y is one equation, not two separate zero coefficients.
+The certified Laurent-jet path keeps both remainder order and the known lowest
+power when clipping an intermediate series. Sibling precision calculations rely
+on both bounds. Every resulting spin coefficient must cover the requested order
+before Normal removes its remainder. Unproved native Series zero assumptions
+remain failures even under Quiet or Off. The initial fast-path admission uses
+structural coherent degrees and bounded affine work; it never truncates fitting
+coordinates. Degree-one-only sectors, including six-fermion QED, keep their
+established route, and unsupported fast-path work retains the ordinary fallback.
 Fingerprint cached correction catalogs by the ordered source expressions and
 scope actually consumed. Do not hash full retained preparation histories when
 only ShellRemainder values are used; their temporary copies can exhaust the

@@ -246,6 +246,34 @@ check["unsupported cross-assignment restrictions preserve the unrestricted full 
     energyVaryingFit["FreeParameters"] === energyVaryingFallbackFit["FreeParameters"] &&
     zero[(energyVariables /. energyVaryingFit["SolutionRules"]) -
       (energyVariables /. energyVaryingFallbackFit["SolutionRules"])]];
+energyContradiction = ConstructiveDiagrams`Private`completionHEEnergyAffineRestriction[
+  energyChartU, energyVariables, energyInitial, {energyChartU, energyChartU - 1},
+  {energyChartU, energyChartU - 1}, 2];
+check["exact inconsistent energy equations retain a replayable rejection certificate",
+  energyContradiction["Status"] === "INCONSISTENT" &&
+    energyContradiction["LinearSystem"]["Status"] === "INCONSISTENT" &&
+    energyContradiction["InconsistencyCertificate"]["ReachedEquations"] === {energyChartU, energyChartU - 1}];
+energyRejectedCalls = 0;
+energyRejectedCharts = Block[
+  {ConstructiveDiagrams`Private`completionHELaurentRows = Function[Null,
+    energyRejectedCalls++; {energyChartU, energyChartU - 1}, HoldAll]},
+  ConstructiveDiagrams`Private`completionHEEnergyConstraints[energyChartU MomProd[1, 2],
+    {energyChartU}, energyMetadata, 4, 93191, {}, 0, None, False]];
+check["a certified chart contradiction rejects the proposal without claiming unvisited charts",
+  energyRejectedCharts["Status"] === "INCONSISTENT" && energyRejectedCalls === 1 &&
+    energyRejectedCharts["RejectedAfterSample"] === 1 && energyRejectedCharts["UnvisitedSampleCount"] === 3 &&
+    !TrueQ[energyRejectedCharts["AllRequestedChartsRetained"]] &&
+    Length[energyRejectedCharts["Samples"]] === 1];
+energyRejectedParameters = ConstructiveDiagrams`Private`completionHEEnergyConstraintSets[
+  (energyChartU + energyChartScale) MomProd[1, 2], {energyChartU}, energyMetadata, 2, 93191,
+  {{energyChartScale -> 0}, {energyChartScale -> 1}, {energyChartScale -> 2}}, 0, None, False];
+check["a later parameter assignment can reject an exactly fixed earlier family immediately",
+  energyRejectedParameters["Status"] === "INCONSISTENT" &&
+    energyRejectedParameters["RejectedAfterParameterSet"] === 2 &&
+    energyRejectedParameters["UnvisitedParameterAssignmentCount"] === 1 &&
+    !TrueQ[energyRejectedParameters["AllRequestedParameterAssignmentsRetained"]] &&
+    Length[energyRejectedParameters["ParameterAssignments"]] === 2 &&
+    Length[energyRejectedParameters["Samples"]] === 3];
 Print[checks, " algebraic row-normalization checks; ", Length[failures], " failures."];
 If[failures =!= {}, Exit[1]];
 Print["HEPCAT_TEST_COMPLETED:linear-row-normalization-tests.wl"];

@@ -34,10 +34,13 @@ automatically."}], "Notes"],
   Cell[TextData[{"Automatic effort estimates use the model's massive external \
 spin states before diagrams are generated. Later stages measure the retained \
 affine family and its directions, including a supplied correction basis, \
-rather than only the displayed fixed expression. The limits remain finite, \
-explicit settings stay authoritative and the overall construction clock still \
-bounds every stage. Detailed output records the measurements used to choose \
-the automatic settings."}], "Notes"],
+rather than only the displayed fixed expression. High-energy estimates also \
+include the retained shell and reference expressions that can generate new \
+correction directions, weighted by the full coherent-spin workload, before \
+the stage clock is set. The limits remain finite, explicit settings stay \
+authoritative and the overall construction clock still bounds every stage. \
+Detailed output records the measurements used to choose the automatic \
+settings."}], "Notes"],
   Cell[TextData[{"The default ",
      Cell[BoxData[RowBox[{"\"PolePreference\"", " ", "->", " ",
          "\"AllPhysical\""}]], "InlineFormula"],

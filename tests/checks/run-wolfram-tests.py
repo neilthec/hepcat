@@ -31,6 +31,7 @@ TEST_SUITES = (
     "reference-independence-tests.wl",
     "coherent-polynomial-rules-tests.wl", "high-energy-coefficient-series-tests.wl",
     "high-energy-dispatch-tests.wl", "high-energy-laurent-rows-tests.wl",
+    "high-energy-laurent-jet-tests.wl",
     "amplitude-completion-tests.wl", "completion-input-fit-tests.wl",
     "exact-left-null-contradiction-tests.wl",
     "completion-structured-source-tests.wl",

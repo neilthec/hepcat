@@ -78,15 +78,24 @@ correlated terms. This attempt shares the stage deadline and the inherited \
 factorization family; if it does not complete, the full source space remains \
 available. Already-passing inputs skip this proposal, and an explicit \
 correction basis stays authoritative. Detailed output records the proposal \
-and its result."}], "Notes"],
+and its result. An exact contradiction in the reached equations rejects that \
+proposal immediately; later charts cannot repair it. The report retains the \
+contradiction and identifies charts that were not attempted. Accepted \
+amplitudes still require all requested charts, parameter assignments and \
+independent final checks."}], "Notes"],
   Cell[TextData[{"For larger spin tensors, the high-energy equations are \
 formed from separate exact scalar Laurent series. The correction coefficients \
 remain coupled in each spin-component equation, including its constant term; \
 they are not tested independently or estimated from a few spin assignments. \
-Keeping those rows separated avoids rebuilding and simplifying one very large \
-polynomial. Every coefficient must finish with its exact series certificate; \
-an unfinished calculation cannot certify the missing rows as zero."}],
-   "Notes"], Cell[TextData[{"After an energy chart fixes some correction \
+For supported large tensors, finite Laurent series are used as the \
+coefficient field before the spin polynomial is multiplied out. Their \
+remainder orders and conservative leading-power bounds are retained through \
+every product, so a positive power that later multiplies a negative power is \
+not lost. Every coefficient must cover the requested order before its \
+remainder is removed. The same certified engine supports fitting and the \
+final high-energy check; a bounded unsupported attempt retains the ordinary \
+route, while an unproved scalar-series zero assumption remains unresolved."}]\
+, "Notes"], Cell[TextData[{"After an energy chart fixes some correction \
 coefficients, later charts and model-consistent parameter assignments can use \
 the exact affine family that remains. The first equations stay in their \
 original coordinates, and every later restricted equation is retained \
