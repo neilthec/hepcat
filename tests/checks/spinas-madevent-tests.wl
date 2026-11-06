@@ -80,6 +80,11 @@ If[AssociationQ[smeSelected],
     With[{source = Import[FileNameJoin[{smeSelected["Directory"], "madevent-spinas.cpp"}], "Text"]},
       StringContainsQ[source, "std::norm(process->amp(spins))"] &&
         !StringContainsQ[source, "process->amp2("]]];
+  smeCheck["MadEvent outgoing-vector states are converted back to native SPINAS labels",
+    With[{source = Import[FileNameJoin[{smeSelected["Directory"], "madevent-spinas.cpp"}], "Text"]},
+      StringContainsQ[source, "massless[leg] && spin2[leg] == 2"] &&
+        StringContainsQ[source, "mg_leg >= Process::incoming_legs().size()"] &&
+        StringContainsQ[source, "spins[leg] = -spins[leg];"]]];
   smeCheck["normalization metadata retains one initial average and one photon factorial",
     smeNumerical["InitialSpinAverage"] == 4 && smeNumerical["SymmetryFactor"] == 1/2];
   smeCheck["the optional static matrix bridge shares the ordinary process library without a duplicate launcher",

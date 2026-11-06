@@ -171,8 +171,12 @@ for its antiparticle. HEPCAT uses that model information when checking family \
 coverage and averaging incoming states. You do not need to supply a second, \
 unphysical neutrino state. A formula with the wrong chiral spinor weight is \
 rejected. Outgoing massless fermion helicity labels are crossed to the \
-physical process before the MadGraph comparison; the established photon \
-crossing convention is unchanged."}], "Notes"],
+physical process. Photon and gluon labels retain the native SPINAS \
+convention: the MadGraph adapter converts an outgoing massless vector to \
+HELAS's opposite label, while incoming vector labels are unchanged. MadEvent \
+converts its labels back when calling the generated SPINAS amplitude. This \
+wavefunction convention conversion does not alter a formula, fit a \
+normalization or interchange the incoming and outgoing legs."}], "Notes"],
   Cell[TextData[{"CalcHEP can compare a complete one-state chiral species \
 because its unpolarized sum already contains that one state. This differs \
 from selecting one photon helicity from a two-state photon species: a \

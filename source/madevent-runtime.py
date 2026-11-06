@@ -567,6 +567,8 @@ def patch_linking(process, link):
 def configuration_fingerprint(config, link=None):
     keys = ("MadGraphDirectory", "MadGraphModel", "PhysicalPDGs", "AllowedParticlePDGs", "LegOrder", "Spin2", "Masses", "ParameterNames", "ParameterDefaults", "ParameterMap", "ParameterRules", "InitialSpinAverage", "SymmetryFactor", "HelicityConfigurations")
     payload = {k: config.get(k) for k in keys}
+    if config.get("MassParameterPDGs"):
+        payload["MassParameterPDGs"] = config["MassParameterPDGs"]
     payload["LinkConfiguration"] = link
     return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
 
@@ -646,7 +648,11 @@ def prepare(data, root=None):
                 names.append(name)
             allowed = ref.allowed_particle_types(config.get("AllowedParticlePDGs", []), pdgs)
             exclusions = ref.reference_particle_exclusions(model, allowed)
-            entries, external, updates, targets, matches = ref.match_parameters(model, used, rules, name_map)
+            mass_roles = (ref.checked_mass_parameter_roles(physical_config["MassParameterPDGs"])
+                          if physical_config.get("MassParameterPDGs") else {})
+            entries, external, updates, targets, matches = (
+                ref.match_parameters(model, used, rules, name_map, mass_roles) if mass_roles else
+                ref.match_parameters(model, used, rules, name_map))
             for target in targets.values():
                 if entries[target].type != "real":
                     raise MadEventSetupError("Complex UFO parameter " + entries[target].name + " requires a complex numerical adapter.")

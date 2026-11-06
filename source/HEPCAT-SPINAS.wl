@@ -1942,12 +1942,16 @@ spinasProjectREADME[name_String, ir_Association, precision_String] := StringRiff
   "Parameter array order: " <> If[ir["ParameterNames"] === {}, "none", StringRiffle[ir["ParameterNames"], ", "]] <> ".",
   "Defaults are a resolved snapshot of the supplied model. When changing parameters, keep dependent values consistent.",
   "Widths are enabled by default. set_widths_enabled(false) disables the width terms in propagators without changing the stored parameters. Call set_momenta again after changing this setting. Independent CalcHEP and MadGraph validators do this only on a private process copy.",
-  "Call set_momenta with an array of four-vectors, then amp with the doubled-spin array.",
+  If[KeyExistsQ[ir,"ColorData"],
+    "Call set_momenta with an array of four-vectors, then amp(spins, colors) with doubled spins and explicit external colors.",
+    "Call set_momenta with an array of four-vectors, then amp with the doubled-spin array."],
   "Massless helicities are fixed by the exported process. Massive states are normalized symmetric spinor tensors.",
   "spin_sum sums all massive external spins. amp2 also averages incoming massive spins. Neither includes an identical-particle phase-space factor or a sum over other massless-helicity processes.",
+  If[KeyExistsQ[ir,"ColorData"],
+    "The complete SU(3) color sum retains interference between basis coefficients. Incoming colors are averaged once in amp2.",
   If[TrueQ[ir["ColorStripped"]],
     "The process has colored external particles. This is a color-stripped amplitude; no color sum or average is inferred.",
-    "No color sum or average is inferred. Explicit color tensors must be resolved before export."],
+    "No color sum or average is inferred. Explicit color tensors must be resolved before export."]],
   "The executable prints three deterministic on-shell, conserved physical example points and checks that results are finite.",
   "These examples are numerical demonstrations, not a proof that the supplied amplitude is physically correct.", ""}, "\n"];
 
@@ -2406,7 +2410,10 @@ spinasCalcHEPNumericalPublicConfiguration[config_Association] := Join[
     "SelectedHelicities" -> Association[(ToString[First[#]] -> Last[#]) & /@
       Lookup[config, "SelectedHelicities", {}]]|>, <||>]];
 
-spinasCalcHEPNumericalREADME[config_Association] := StringRiffle[{
+spinasCalcHEPNumericalREADME[config_Association] := If[!TrueQ[Lookup[config,"Supported",False]],
+  "\n## CalcHEP numerical integration using the SPINAS amplitude\n\nUnavailable for this export: " <>
+    Lookup[config,"Reason","the numerical backend is not configured"] <> ". Independent amplitude validation is configured separately.\n",
+  StringRiffle[{
   "", "## CalcHEP numerical integration using the SPINAS amplitude", "",
   "When CalcHEP's numerical libraries are installed, the normal build links `n_calchep` directly in `build/results/`. There is no second launcher in the build root. The commands below start in `build`; from the exported project root, use `cd build/results` instead:",
   "", "```sh", "cd results", "./n_calchep", "```", "",
@@ -2429,7 +2436,7 @@ spinasCalcHEPNumericalREADME[config_Association] := StringRiffle[{
       Lookup[config, "OmittedParticleMetadata", {}] === {}, "",
     "Unrelated unresolved model constraints or particle metadata were omitted from the numerical menus. The manifest lists them under OmittedUnsupportedParameters and OmittedParticleMetadata. Every dependency used by the supplied amplitude and its external particles remains required."],
   If[TrueQ[config["Supported"]], "", "Numerical backend unavailable for this export: " <> config["Reason"]],
-  "Without numerical CalcHEP libraries this target is omitted; the ordinary SPINAS process and example executable still build. A later CMake configuration can select an installation with `-DCALCHEP_ROOT=/path/to/calchep`.", ""}, "\n"];
+  "Without numerical CalcHEP libraries this target is omitted; the ordinary SPINAS process and example executable still build. A later CMake configuration can select an installation with `-DCALCHEP_ROOT=/path/to/calchep`.", ""}, "\n"]];
 
 WriteSPINASProcess[directory_String, process : {___String}, amplitude_, model_, opts:OptionsPattern[]] := Module[
   {options = Association[{opts}], name = OptionValue["ProcessName"], root, precision, ir,
@@ -3171,11 +3178,16 @@ spinasFamilyProjectREADME[name_String, ir_Association, precision_String] := Stri
       If[ir["FixedHelicities"] === {}, "none", ToString[ir["FixedHelicities"], InputForm]] <> ".\n\n" <>
       "Complex amp calls have no averaging or phase-space factor. Keep and coherently contract these amplitudes for spin correlations; multiplying separate spin sums loses interference. This project does not implement production-decay sewing.\n\n## Build and run",
     "Massless helicities are fixed by the exported process. Massive states are normalized symmetric spinor tensors." ->
-      "The class includes every requested massless-helicity arrangement. Massive states use normalized symmetric spinor tensors. amp(ds1,...,dsn) and amp(Spins) accept doubled spins/helicities, as in native SPINAS processes.",
+      "The class includes every requested massless-helicity arrangement. Massive states use normalized symmetric spinor tensors. " <>
+      If[KeyExistsQ[ir,"ColorData"], "Use amp(Spins, Colors) for an individual colored amplitude.",
+        "amp(ds1,...,dsn) and amp(Spins) accept doubled spins/helicities, as in native SPINAS processes."],
     "spin_sum sums all massive external spins. amp2 also averages incoming massive spins. Neither includes an identical-particle phase-space factor or a sum over other massless-helicity processes." ->
       "spin_sum sums |amp|^2 over all external massive spins and the requested massless helicities. amp2 divides by the unfixed incoming spin/helicity multiplicity (" <>
       ToString[ir["InitialSpinAverage"]] <> ") and multiplies the final-state identical-particle factor (1/" <>
-      ToString[ir["FinalStateSymmetryDivisor"]] <> "). Fixed incoming helicities are not averaged. Identical particles are counted by species, including fermions, irrespective of helicity. A fixed outgoing helicity selects a labeled contribution to this fully symmetrized sum, not an automatically normalized tagged-particle cross section. No initial identical-particle factor is applied.",
+      ToString[ir["FinalStateSymmetryDivisor"]] <> "). " <>
+      If[KeyExistsQ[ir,"ColorData"], "spin_sum also includes the complete coherent color sum, and amp2 divides by the incoming color multiplicity (" <>
+        ToString[ir["ColorData"]["InitialColorAverage"]] <> ") once. ", ""] <>
+      "Fixed incoming helicities are not averaged. Identical particles are counted by species, including fermions, irrespective of helicity. A fixed outgoing helicity selects a labeled contribution to this fully symmetrized sum, not an automatically normalized tagged-particle cross section. No initial identical-particle factor is applied.",
     "The executable prints three deterministic" ->
       "Only canonical supplied formulas are compiled. Identical-particle-related helicity branches use role-preserving leg permutations, including the fermion exchange sign. No parity relation or missing zero amplitude is inferred.\n\nThe executable prints three deterministic"}];
 

@@ -173,6 +173,22 @@ def reference_particle_exclusions(model, allowed):
     return sorted(excluded)
 
 
+def checked_mass_parameter_roles(roles):
+    if not isinstance(roles, dict):
+        raise ValidationSetupError("MassParameterPDGs must be a model-parameter/PDG object.")
+    result = {}
+    for name, pdgs in roles.items():
+        key = normalized_name(name)
+        if key in result:
+            raise ValidationSetupError("Repeated case-insensitive mass-role parameter: " + name)
+        if not isinstance(pdgs, list) or not pdgs or any(
+                isinstance(pdg, bool) or not isinstance(pdg, int) or
+                pdg <= 0 or pdg > 2147483647 for pdg in pdgs):
+            raise ValidationSetupError("A mass role requires positive absolute particle PDG codes: " + name)
+        result[key] = sorted(set(pdgs))
+    return result
+
+
 def checked_configuration(data):
     if not isinstance(data, dict):
         raise ValidationSetupError("The MadGraph configuration must be a JSON object.")
@@ -229,6 +245,7 @@ def checked_configuration(data):
             raise ValidationSetupError("MadGraphParameterMap source is not used by this HEPCAT export: " + source)
         normalized_map[key] = normalized_name(target)
     name_map = normalized_map
+    checked_mass_parameter_roles(data.get("MassParameterPDGs", {}))
     optimization_flags(data.get("OptimizationLevel", 0))
     jamp_split_setting(data.get("JampSplit"))
     seconds = real_number(data.get("TimeConstraint", 600), "TimeConstraint")
@@ -369,8 +386,9 @@ def private_ufo_copy(source, restriction, output, validation_widths=None):
     return "./reference-model-full"
 
 
-def match_parameters(model, used, rules, name_map):
+def match_parameters(model, used, rules, name_map, mass_roles=None):
     entries, external = parameter_index(model)
+    mass_roles = {} if mass_roles is None else mass_roles
     updates = {}
     matches = []
     for key, value in rules.items():
@@ -380,9 +398,30 @@ def match_parameters(model, used, rules, name_map):
     targets = {}
     for source, (name, value) in used.items():
         target = name_map.get(source, source)
+        role_match = None
         # The conventional SM strong coupling is called G in the UFO.
         if source == "gg" and source not in name_map and target not in entries and "g" in entries:
             target = "g"
+        if source not in name_map and target not in entries and source in mass_roles:
+            role_targets = set()
+            particles = model.get("particle_dict") or {}
+            for pdg in mass_roles[source]:
+                particle = particles.get(pdg)
+                if particle is None:
+                    particle = particles.get(-pdg)
+                if particle is None:
+                    raise ValidationSetupError("The reference model has no particle for mass role " +
+                                               name + ": PDG " + str(pdg))
+                mass_name = normalized_name(particle.get("mass"))
+                if mass_name == "zero" and value != 0:
+                    raise ValidationSetupError("The reference particle for PDG " + str(pdg) +
+                                               " is massless, but HEPCAT mass " + name + " is nonzero.")
+                role_targets.add(mass_name)
+            if len(role_targets) != 1:
+                raise ValidationSetupError("HEPCAT mass " + name + " serves several PDGs with different "
+                                           "reference mass parameters. Supply an unambiguous MadGraphParameterMap.")
+            target = next(iter(role_targets))
+            role_match = {"Role": "ParticleMass", "PDGs": mass_roles[source]}
         if target not in entries:
             raise ValidationSetupError("No verified MadGraph counterpart for HEPCAT parameter " + name +
                 ". Supply MadGraphParameterMap and, if needed, MadGraphParameterRules.")
@@ -397,7 +436,10 @@ def match_parameters(model, used, rules, name_map):
             updates["aewm1"] = 4 * math.pi / (value * value)
         elif target == "g" and source == "gg" and "as" in external and "as" not in updates:
             updates["as"] = value * value / (4 * math.pi)
-        matches.append({"HEPCAT": name, "MadGraph": re.sub(r"^mdl_", "", entries[target].name), "RequestedValue": value})
+        match = {"HEPCAT": name, "MadGraph": re.sub(r"^mdl_", "", entries[target].name), "RequestedValue": value}
+        if role_match is not None:
+            match.update(role_match)
+        matches.append(match)
     updates = synchronize_sm_yukawa(model, external, updates, rules)
     return entries, external, updates, targets, matches
 
@@ -743,6 +785,7 @@ end subroutine
 
 def build_reference(data, output):
     root, pdgs, masses, used, rules, name_map, seconds = checked_configuration(data)
+    mass_roles = checked_mass_parameter_roles(data.get("MassParameterPDGs", {}))
     jamp_split = jamp_split_setting(data.get("JampSplit"))
     deadline = time.monotonic() + seconds
     output.mkdir(parents=True, exist_ok=True)
@@ -769,7 +812,7 @@ def build_reference(data, output):
         allowed = allowed_particle_types(data.get("AllowedParticlePDGs", []), pdgs)
         excluded = reference_particle_exclusions(model, allowed)
         used, rules, declared_widths = validation_zero_width_inputs(model, used, rules, name_map)
-        entries, external, updates, targets, matches = match_parameters(model, used, rules, name_map)
+        entries, external, updates, targets, matches = match_parameters(model, used, rules, name_map, mass_roles)
         updates, mass_matching = match_external_masses(model, pdgs, masses, external, updates)
         updates = synchronize_sm_yukawa(model, external, updates, rules)
         updates, zeroed_widths, preserved_widths = bare_tree_widths(external, updates, declared_widths)

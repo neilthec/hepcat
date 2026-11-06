@@ -203,6 +203,48 @@ Path(sys.argv[-1]).write_text(json.dumps({'Calls': calls, 'Debug': __debug__}))
         with self.assertRaisesRegex(builder.ValidationSetupError, "No verified"):
             builder.match_parameters(self.model, {"charge": ("charge", .31333)}, {}, {})
 
+    def test_mass_roles_match_different_names_without_mass_aliases(self):
+        model = {"name": "custom-mass-model", "parameters": {
+            ("external",): [SimpleNamespace(name="heavyPole", lhablock="MASS", lhacode=[6]),
+                             SimpleNamespace(name="tauMass", lhablock="MASS", lhacode=[15])],
+            (): []}, "particle_dict": {6: {"mass": "heavyPole"}, 15: {"mass": "tauMass"}}}
+        used = {"mtp": ("Mtp", 172.5), "ml": ("Ml", 1.777)}
+        class NativeModel(dict):
+            # MadGraph's Model.get accepts one argument, unlike dict.get.
+            def get(self, key):
+                return super().get(key)
+        model = NativeModel(model)
+        unused, external, updates, targets, matches = builder.match_parameters(
+            model, used, {}, {}, {"mtp": [6], "ml": [15]})
+        self.assertEqual(targets, {"mtp": "heavypole", "ml": "taumass"})
+        self.assertEqual(updates, {"heavypole": 172.5, "taumass": 1.777})
+        self.assertEqual(matches[0]["Role"], "ParticleMass")
+        self.assertEqual(matches[0]["PDGs"], [6])
+
+    def test_mass_roles_do_not_override_an_explicit_parameter_map(self):
+        model = dict(self.model, particle_dict={11: {"mass": "notDeclared"}})
+        unused, external, updates, targets, matches = builder.match_parameters(
+            model, {"unusualmass": ("unusualMass", .0005)}, {}, {"unusualmass": "me"},
+            {"unusualmass": [11]})
+        self.assertEqual(targets["unusualmass"], "me")
+
+    def test_mass_roles_reject_incompatible_zero_mass_and_ambiguous_targets(self):
+        for particles, roles in [({6: {"mass": "ZERO"}}, [6]),
+                                 ({6: {"mass": "Me"}, 15: {"mass": "ee"}}, [6, 15]),
+                                 ({}, [6])]:
+            with self.subTest(particles=particles):
+                with self.assertRaises(builder.ValidationSetupError):
+                    builder.match_parameters(dict(self.model, particle_dict=particles),
+                        {"unknownmass": ("unknownMass", 1.0)}, {}, {}, {"unknownmass": roles})
+
+    def test_mass_role_metadata_requires_typed_positive_pdgs(self):
+        self.assertEqual(builder.checked_mass_parameter_roles({"Mtp": [6, 6]}), {"mtp": [6]})
+        for roles in ([], {"M": []}, {"M": [True]}, {"M": [-6]},
+                      {"M": [1.5]}, {"M": [6], "m": [15]}):
+            with self.subTest(roles=roles):
+                with self.assertRaises(builder.ValidationSetupError):
+                    builder.checked_mass_parameter_roles(roles)
+
     def test_conflicting_external_override_is_refused(self):
         with self.assertRaisesRegex(builder.ValidationSetupError, "conflicts"):
             builder.match_parameters(self.model, {"me": ("Me", .0005)}, {"me": 1}, {})

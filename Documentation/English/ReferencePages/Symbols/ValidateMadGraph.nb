@@ -139,6 +139,12 @@ assignment separately. The table displays labels such as ",
      Cell[BoxData[RowBox[{"-", "2"}]], "InlineFormula"],
      Cell[BoxData[RowBox[{" ", "and", " "}]], "InlineFormula"],
      Cell[BoxData[RowBox[{"+", "2"}]], "InlineFormula"], " for photons."}],
+   "Notes"], Cell[TextData[{"These are native SPINAS labels. For an outgoing \
+massless photon or gluon, HELAS uses the opposite wavefunction label, so the \
+adapter converts it after applying the declared incoming/outgoing leg order. \
+Incoming vector labels retain their sign. This is a convention conversion, \
+not a change to the analytic amplitude or a fitted normalization. The \
+MadEvent callback applies the inverse conversion when it calls SPINAS."}],
    "Notes"], Cell[TextData[{"Massive spins are summed on each side. \
 Individual massive spin components can use different bases in MadGraph and \
 SPINAS, so their complex numbers are not compared component by component."}],
@@ -183,18 +189,23 @@ before loosening a tolerance."}], "Notes"],
   Cell["Matching parameters and widths", "NotesSection"],
   Cell[TextData[{"The HEPCAT model supplies its numerical inputs through ",
      ButtonBox["ModelParameterRules", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/ModelParameterRules"], ". ",
-     Cell[BoxData[RowBox[{"\"MadGraphParameterMap\"", " ", "->", " ", "{",
-         "\"HEPCATName\"", " ", "->", " ", "\"UFOName\"", ",", " ", "...",
-         "}"}]], "InlineFormula"],
-     Cell[BoxData[RowBox[{" ", "relates", " ", "differently", " ", "named",
-         " ", "parameters", ";", " "}]], "InlineFormula"],
+      ButtonData -> "paclet:HEPCAT/ref/ModelParameterRules"], ". When a \
+particle mass has a different parameter name in the UFO, validation can match \
+its declared particle PDG code to the reference model's mass input. An \
+explicit ", Cell[BoxData[RowBox[{"\"MadGraphParameterMap\"", " ", "->", " ",
+         "{", "\"HEPCATName\"", " ", "->", " ", "\"UFOName\"", ",", " ",
+         "...", "}"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "takes", " ", "precedence", " ", "and", " ",
+         "also", " ", "handles", " ", "other", " ", "differently", " ",
+         "named", " ", "parameters", ";", " "}]], "InlineFormula"],
      Cell[BoxData[RowBox[{"\"MadGraphParameterRules\""}]], "InlineFormula"],
-     " supplies explicit external UFO input values when necessary."}],
-   "Notes"], Cell[TextData[{"A name mapping does not by itself change a \
-derived UFO coupling to an arbitrary value. Its value must agree with the \
-selected model's independent inputs. Ambiguous or inconsistent matching \
-produces a diagnostic before the comparison can pass."}], "Notes"],
+     " supplies explicit external UFO input values when necessary. A nonzero \
+mass cannot be matched to a massless reference particle. A shared mass \
+parameter with conflicting reference inputs needs an explicit unambiguous \
+mapping."}], "Notes"], Cell[TextData[{"A name mapping does not by itself \
+change a derived UFO coupling to an arbitrary value. Its value must agree \
+with the selected model's independent inputs. Ambiguous or inconsistent \
+matching produces a diagnostic before the comparison can pass."}], "Notes"],
   Cell[TextData[{"The two sides must also use the same propagator-width \
 prescription. A bare ", ButtonBox["PropDen", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/PropDen"], " has no decay width, so \

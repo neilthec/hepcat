@@ -121,6 +121,25 @@ If[AssociationQ[miSelected],
   miCheck["only the two requested photon combinations are checked, and both agree",
     miPassed[miSelectedReport, 2, 30] &&
       AllTrue[miRows[miSelectedReport], #["Helicities"][[3]] === 2 &]]];
+Print["Checking incoming and outgoing photon helicities in QED Compton scattering."];
+miComptonProcesses = ({"e", #[[1]], "E", #[[2]]} &) /@
+  Tuples[{"A.+", "A.-"}, 2];
+miComptonEntries = {#, LookupAmplitude[Thread[{#, Range[4]}], miModel,
+  False, {miI, miJ, miK, miL}]} & /@ miComptonProcesses;
+miCompton = WriteSPINASProcess[miPath["madgraph_compton"],
+  {"e", "A"} -> {"e", "A"}, miComptonEntries, miModel,
+  "ProcessName" -> "madgraph_compton", "ParameterRules" -> miRules,
+  "SPINASDirectory" -> miSpinas, "MadGraphDirectory" -> miMadGraph,
+  "MadGraphModel" -> "sm-full", "MadGraphAllowedParticles" -> {11, 22},
+  "CalcHEPDirectory" -> None, "CalcHEPModel" -> None, "ReturnDetails" -> True];
+miCheck["the incoming/outgoing photon process exports all four polarized branches",
+  AssociationQ[miCompton]];
+If[AssociationQ[miCompton],
+  miComptonReport = ValidateMadGraph[miCompton["Directory"], "Output" -> "Details",
+    "MadGraphPoints" -> 40, "MadGraphSeed" -> 83927];
+  miCheck["Compton helicities agree separately after outgoing-vector convention conversion",
+    miPassed[miComptonReport, 4, 40]];
+  If[!miPassed[miComptonReport, 4, 40], Print["COMPTON REPORT: ", InputForm[miComptonReport]]]];
 Print["Checking photon-only QED exchange in a four-fermion process."];
 miFermionProcess = {"e", "E", "E", "e"};
 miFermionAmplitude = LookupAmplitude[Thread[{miFermionProcess, Range[4]}], miModel,

@@ -71,6 +71,7 @@ try:
     if mode == "cooperative_timeout":
         raise RuntimeError("The MadGraph preparation time limit expired.")
     library = ("wrong" if mode == "wrong" else
+               "polarized" if mode == "helicity_sensitive" else
                "bad_init" if mode == "bad_init" else
                "updated" if coupling == 3 else "good")
     suffix = ".dylib" if sys.platform == "darwin" else ".so"
@@ -105,6 +106,7 @@ struct Process {
   static std::array<std::size_t, 2> incoming_legs() { return {{0, 1}}; }
   void set_momenta(const hepcat_spinas::Momenta<4>&) {}
   cdouble amp(const Spins& spins) {
+    if (phase_mode == 3) return spins[2] < 0 ? cdouble(3, 0) : cdouble(1, 0);
     if (phase_mode == 1) return cdouble(0, 1) * parameters[0];
     if (phase_mode == 2) {
       const cdouble phases[4] = {cdouble(1, 0), cdouble(0, 1),
@@ -232,6 +234,7 @@ int main(int argc, char** argv) {
   Process process;
   if (mode == "global_phase") process.phase_mode = 1;
   if (mode == "helicity_phases") process.phase_mode = 2;
+  if (mode == "helicity_sensitive") process.phase_mode = 3;
   MadGraphValidationReport report;
   if (mode == "watchdog") {
     const std::string pid_file = directory + "/watchdog.pid";
@@ -286,13 +289,15 @@ class MadGraphRuntimeTests(unittest.TestCase):
         cls.suffix = ".dylib" if sys.platform == "darwin" else ".so"
         shared_flags = ["-dynamiclib"] if sys.platform == "darwin" else ["-shared", "-fPIC"]
         for name, value, init in (("good", 1, 0), ("wrong", 2, 0),
+                                  ("polarized", "(h[2] > 0 ? 9 : 1)", 0),
                                   ("updated", 9, 0), ("bad_init", 1, 1), ("legacy", 1, 0)):
             source = cls.directory / (name + ".cpp")
             source.write_text(REFERENCE_SOURCE.replace("REFERENCE_VALUE", str(value))
                               .replace("INIT_STATUS", str(init))
                               .replace("@SUM_INTERFACE@", "" if name == "legacy" else
                                        'extern "C" void hepcat_mg_evaluate_sum(const double*, double* answer) '
-                                       '{ *answer = 16 * ' + str(value) + '; }'))
+                                       '{ *answer = ' + ("80" if name == "polarized" else
+                                         '16 * ' + str(value)) + '; }'))
             cls.compile([compiler, "-std=c++11"] + shared_flags +
                         [str(source), "-o", str(cls.directory / (name + cls.suffix))])
         (cls.directory / "helper.py").write_text(HELPER_SOURCE)
@@ -364,6 +369,15 @@ class MadGraphRuntimeTests(unittest.TestCase):
                 self.assertEqual(report["Status"], "PASS")
                 self.assertTrue(all(row["MaximumRelativeError"] == 0
                                     for row in report["Rows"]))
+
+    def test_outgoing_vector_wavefunction_convention_is_converted(self):
+        # The fixture has unequal polarized rates, so a helicity swap cannot
+        # be hidden by parity or by the exhaustive helicity sum.
+        report = self.run_case("helicity_sensitive")
+        self.assertTrue(report["Passed"])
+        self.assertEqual(len(report["Rows"]), 4)
+        self.assertTrue(all(row["MaximumRelativeError"] == 0
+                            for row in report["Rows"]))
 
     def test_wrong_reference_fails_and_keeps_the_point(self):
         report = self.run_case("wrong")

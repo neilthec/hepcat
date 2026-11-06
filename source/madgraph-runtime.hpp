@@ -63,6 +63,8 @@ struct MadGraphConfiguration {
   std::vector<std::size_t> width_parameter_indices;
   std::map<std::string, double> parameter_rules;
   std::map<std::string, std::string> parameter_map;
+  // Names are model-local; PDG mass roles resolve different reference names.
+  std::map<std::string, std::vector<int> > mass_parameter_pdgs;
   // Apply incoming averages and the chosen final-state symmetry convention
   // once, identically on both sides. The MG bridge returns raw |M|^2.
   ldouble normalization = 1;
@@ -403,6 +405,18 @@ void write_configuration(const std::string& path, const Process& process,
     first = false;
     out << json_string(mapping.first) << ':' << json_string(mapping.second);
   }
+  out << "},\n\"MassParameterPDGs\":{";
+  first = true;
+  for (const auto& role : config.mass_parameter_pdgs) {
+    if (!first) out << ',';
+    first = false;
+    out << json_string(role.first) << ":[";
+    for (std::size_t i = 0; i < role.second.size(); ++i) {
+      if (i) out << ',';
+      out << role.second[i];
+    }
+    out << ']';
+  }
   out << '}';
   if (!config.allowed_particle_pdgs.empty()) {
     out << ",\n\"AllowedParticlePDGs\":[";
@@ -438,8 +452,15 @@ ldouble sum_massive_spins(const Process& process, const MadGraphConfiguration& c
   return result;
 }
 
-inline int madgraph_helicity(int doubled, int spin2) {
-  return spin2 == 2 ? doubled / 2 : doubled;
+// Native SPINAS vector labels follow the supplied all-ingoing spinor formula.
+// HELAS conjugates an outgoing vector wavefunction, so its massless outgoing
+// label is the opposite one. Incoming vectors and already-crossed fermion
+// states retain their sign. Massive vector spins are summed, not identified
+// individually across the two spin bases.
+inline int madgraph_helicity(int doubled, int spin2,
+                            bool incoming = true, bool massless = true) {
+  const int helicity = spin2 == 2 ? doubled / 2 : doubled;
+  return !incoming && massless && spin2 == 2 ? -helicity : helicity;
 }
 
 // A certified colored process contracts its complete color basis coherently.
@@ -539,7 +560,9 @@ MadGraphValidationReport validate_madgraph(
               std::vector<int> reference_helicities(Process::leg_count);
               for (std::size_t slot = 0; slot < Process::leg_count; ++slot) {
                 const std::size_t leg = config.leg_order[slot];
-                reference_helicities[slot] = madgraph_detail::madgraph_helicity(state[leg], config.spin2[leg]);
+                reference_helicities[slot] = madgraph_detail::madgraph_helicity(
+                  state[leg], config.spin2[leg], slot < Process::incoming_legs().size(),
+                  process.masses()[leg] == 0);
               }
               return static_cast<ldouble>(reference.evaluate(physical_momenta, reference_helicities));
             });

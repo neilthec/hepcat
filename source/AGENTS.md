@@ -496,6 +496,15 @@ The photon model row pairs opposite helicities, so blindly conjugating every
 outgoing model name would incorrectly interchange them. Keep helicity signs in
 the established exporter/native SPINAS convention and apply `ReverseMomentum`
 exactly once for outgoing momenta and angle spinors.
+The independent MadGraph adapter must translate this native SPINAS convention
+to HELAS wavefunctions: reverse only the outgoing massless-vector helicity
+label, after applying the explicit leg order. Incoming vectors retain their
+label; massless fermion states have already been crossed during export.
+The MadEvent callback performs the inverse vector-label conversion before
+selecting a SPINAS branch. Test incoming/outgoing Compton helicities separately:
+a complete helicity sum or a parity-symmetric annihilation process can conceal
+a wrong polarized assignment. Never fit a normalization or change a formula
+to repair a wavefunction convention mismatch.
 Generic massless names such as `A` request both helicities; `A.+` fixes a leg
 on either physical side. `"FixedHelicities" -> {leg -> doubledHelicity}` also
 works with either grouped form. Check complete coverage of the selected

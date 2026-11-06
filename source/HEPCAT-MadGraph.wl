@@ -17,6 +17,7 @@ Options[ValidateMadGraph] = Join[Options[WriteSPINASProcess], {
   "Output" -> "Table", "RelativeTolerance" -> 10^-7, "AbsoluteTolerance" -> 0,
   "MinimumEnergy" -> Automatic, "MaximumEnergy" -> Automatic, "TimeConstraint" -> 600}];
 ValidateMadGraph::args = "Expected a generated SPINAS project directory, or incoming particle names -> outgoing particle names, helicity amplitude entries and a model, with valid validation options.";
+ValidateMadGraph::usage = ValidateMadGraph::usage <> " Reports retain native SPINAS helicity labels. Outgoing massless-vector wavefunctions are mapped to HELAS's opposite label, while incoming vectors retain their label. The MadEvent callback applies the inverse conversion. The supplied amplitude and its normalization are unchanged.";
 
 Begin["ConstructiveDiagrams`Private`"];
 
@@ -105,6 +106,13 @@ spinasMadGraphSMInputRules[data_List, options_Association] := Module[
   Join[KeySelect[rules, !MemberQ[suppliedNames, ToLowerCase[#]] &], supplied]
 ];
 
+spinasMadGraphMassRoles[data_List] := Module[{rows, grouped},
+  rows = Select[data[[1]], ListQ[#] && Length[#] >= 6 && IntegerQ[#[[4]]] &&
+    #[[4]] =!= 0 && modelParameterQ[#[[6]]] &];
+  grouped = GroupBy[rows, ModelParameterName[#[[6]]] &, (Sort[DeleteDuplicates[Abs[#[[4]]] & /@ #]] &)];
+  grouped
+];
+
 spinasMadGraphConfiguration[ir_Association, data_List, supplied_Association, physical_Association] := Module[
   {options = Join[Association[Options[WriteSPINASProcess]], supplied], root, python, model,
    reasons = {}, normalization, family = TrueQ[Lookup[ir, "Family", False]], helicities, allowed, colored},
@@ -135,6 +143,7 @@ spinasMadGraphConfiguration[ir_Association, data_List, supplied_Association, phy
     "ParameterRules" -> Join[spinasMadGraphSMInputRules[data, options],
       Association[Replace[options["MadGraphParameterRules"], Automatic -> {}]]],
     "ParameterMap" -> Association[Replace[options["MadGraphParameterMap"], Automatic -> {}]],
+    "MassParameterPDGs" -> spinasMadGraphMassRoles[data],
     "PhysicalPDGs" -> physical["PhysicalPDGs"],
     "AllowedParticlePDGs" -> allowed, "LegOrder" -> physical["LegOrder"],
     "Spin2" -> ir["Spin2"], "HelicityConfigurations" -> helicities,
@@ -175,7 +184,9 @@ spinasMadGraphSource[name_String, config_Association, dir_String] := StringRiffl
   "  config.normalization = " <> spinasCppReal[config["Normalization"]] <> ";",
   "  config.width_parameter_indices = " <> spinasMadGraphCppList[Lookup[config, "WidthParameterIndices", {}]] <> ";"},
   KeyValueMap["  config.parameter_rules[" <> spinasCppQuoted[#1] <> "] = " <> spinasCppReal[#2] <> ";" &, config["ParameterRules"]],
-  KeyValueMap["  config.parameter_map[" <> spinasCppQuoted[#1] <> "] = " <> spinasCppQuoted[#2] <> ";" &, config["ParameterMap"]], {
+  KeyValueMap["  config.parameter_map[" <> spinasCppQuoted[#1] <> "] = " <> spinasCppQuoted[#2] <> ";" &, config["ParameterMap"]],
+  KeyValueMap["  config.mass_parameter_pdgs[" <> spinasCppQuoted[#1] <> "] = " <>
+    spinasMadGraphCppList[#2] <> ";" &, Lookup[config, "MassParameterPDGs", <||>]], {
   "  return hepcat_spinas::validate_madgraph(*this, config, options, &std::cout);",
   "}", "", "} // namespace hepcat_generated", ""}], "\n"];
 spinasMadGraphMain[name_String, config_Association] := StringRiffle[{
@@ -225,11 +236,11 @@ spinasMadGraphProject[dir_String, name_String, config_Association] := <|
 spinasMadGraphREADME[name_String, config_Association] := StringRiffle[{
   "", "## Independent MadGraph validation", "",
   "Run `./build/" <> name <> "_validate_madgraph` to compare the independent MadGraph matrix element at 1000 common random points for each exported massless-helicity combination. Massive spins are summed on both sides because their spin bases may differ. Use `--points`, `--seed`, `--relative-tolerance` and `--absolute-tolerance` to control a run; `--report result.json` preserves its full diagnostic data and failed momenta.",
-  "The actual time-based seed is printed and can be replayed. No normalization ratio is fitted. Initial averages and identical-species factors are applied once, using the same convention on both sides. Photon helicities use doubled labels +/-2 in the report. Fixed incoming and outgoing massless helicities are supported.",
+  "The actual time-based seed is printed and can be replayed. No normalization ratio is fitted. Initial averages and identical-species factors are applied once, using the same convention on both sides. Photon helicities use native SPINAS doubled labels +/-2 in the report. The adapter converts outgoing massless vector wavefunctions to HELAS's opposite label; incoming vectors retain their label. MadEvent performs the inverse conversion when calling SPINAS. Fixed incoming and outgoing massless helicities are supported.",
   "Select the installation and UFO model explicitly with MadGraphDirectory and MadGraphModel when exporting. MadGraphAllowedParticles -> All retains the full selected model; a list such as {11,22} restricts particle types by absolute PDG code and includes their antiparticles. No QED model or restriction is inferred. Regenerate the project to change these stored settings.",
   "The reference is generated and compiled once in a private temporary workspace. The installed MadGraph source and its model files are not edited. Current SPINAS parameter and mass values are matched to the UFO inputs; unknown mappings or mismatched dependent couplings stop the check.",
   "Validation uses zero widths on both sides. A private SPINAS copy disables propagator widths, and the private UFO copy sets all particle-width parameters and decay widths to zero, including dependent widths. This does not change the caller's parameters or the widths used by normal MadEvent simulation.",
-  "The base comparison is colorless tree level. The ordinary process remains usable without MadGraph. A numerical FAIL, including floating-point cancellation in an exported formula, is not changed into a pass by fitting a scale or relaxing tolerances.",
+  "The comparison supports colorless tree amplitudes and certified coherent SU(3) color sums. The ordinary process remains usable without MadGraph. A numerical FAIL, including floating-point cancellation in an exported formula, is not changed into a pass by fitting a scale or relaxing tolerances.",
   "Configuration: " <> config["Status"] <> If[config["Reason"] === "", "", ". " <> config["Reason"]], ""}, "\n"];
 
 (* ::Subsection::Closed:: *)
@@ -311,6 +322,9 @@ spinasMadEventSource[name_String, ir_Association, config_Association] := Module[
     "          (spin2[leg] == 2 && helicity != -1 && helicity != 1 && (massless[leg] || helicity != 0)))",
     "        throw std::invalid_argument(\"Invalid MadEvent external helicity.\");",
     "      spins[leg] = spin2[leg] == 2 ? 2*helicity : helicity;",
+    "      // Convert HELAS outgoing-vector labels back to native SPINAS labels.",
+    "      if (massless[leg] && spin2[leg] == 2 && mg_leg >= Process::incoming_legs().size())",
+    "        spins[leg] = -spins[leg];",
     "      if ((process->masses()[leg] == 0) != massless[leg])",
     "        throw std::invalid_argument(\"An external massless/massive category changed; regenerate this process.\");",
     "      for (std::size_t component = 0; component < 4; ++component) {",

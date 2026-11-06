@@ -263,6 +263,11 @@ smgCheck["the actual SPINAS emitter uses primitive model inputs for derived scal
   AssociationQ[smgDependencyIR] && Sort[smgDependencyIR["ParameterNames"]] === {"g", "mass"}];
 smgSMModel = ReadModel[FileNameJoin[{smgRoot, "models"}], 1];
 smgSMDefaults = ModelParameterRules[smgSMModel];
+smgSMRoles = ConstructiveDiagrams`Private`spinasMadGraphMassRoles[smgSMModel];
+smgCheck["reference mass matching uses model particle roles rather than hard-coded aliases",
+  smgSMRoles["Mtp"] === {6} && smgSMRoles["Ml"] === {15} &&
+    smgSMRoles["MW"] === {24} && smgSMRoles["MZ"] === {23} &&
+    !KeyExistsQ[smgSMRoles, "EE"]];
 smgSMOptions = Join[Association[Options[WriteSPINASProcess]], <|"MadGraphModel" -> "sm-full"|>];
 smgSMRules = ConstructiveDiagrams`Private`spinasMadGraphSMInputRules[smgSMModel, smgSMOptions];
 smgCheck["the selected SM reference obtains its EW input scheme from verified model constraints",
