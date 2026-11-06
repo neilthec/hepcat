@@ -118,8 +118,9 @@ and metadata with the combined table. Each curve is normalized to its own N=2
 time. The `AllSpurious` label describes the saved representation preference;
 individual sectors can still have only physical poles after cancellation.
 
-The 2026-11-05 run with conjugate-helicity reuse on the Apple M3 development
-Mac, with Apple Clang 21 Release `-O3`, gave these seconds for 10,000 points
+The 2026-11-05 run with demand-driven caches, shared momentum chains and
+guarded real denominators on the Apple M3 development Mac, with Apple Clang 21
+Release `-O3`, gave these seconds for 10,000 points
 (median of nine serial full sweeps). The center-of-mass energy was 100 GeV and
 the saved seed was `1793918752098091000`. Model defaults were Me = 0.0005 GeV
 and EE = 0.31333. All points and source formulas are unchanged from the earlier
@@ -127,9 +128,9 @@ exhaustive-summation benchmark.
 
 | Photons | HEPCAT/SPINAS AllPhysical (s) | HEPCAT/SPINAS AllSpurious (s) | CalcHEP (s) | MadGraph (s) |
 | --- | ---: | ---: | ---: | ---: |
-| 2 | 0.005841 | 0.005091 | 0.003237 | 0.014576 |
-| 3 | 0.017703 | 0.020816 | 0.021676 | 0.075635 |
-| 4 | 0.124803 | 0.108535 | 0.250112 | 0.446138 |
+| 2 | 0.002972 | 0.002549 | 0.002974 | 0.013884 |
+| 3 | 0.008849 | 0.016775 | 0.020658 | 0.072378 |
+| 4 | 0.078147 | 0.062394 | 0.249972 | 0.446684 |
 
 The saved models are tree-level vectorlike QED, so this benchmark explicitly
 uses `"HelicitySymmetry" -> "Conjugation"`. This is a declared theory symmetry,
@@ -144,7 +145,8 @@ the reversed helicities also remain exhaustive.
 Every one of the 30,000 points agreed across all four methods; the largest
 relative difference was 2.62e-10. Each shortened SPINAS sum was independently
 checked against the exhaustive sum of its public complex amplitudes outside
-timing. Point-file and source-amplitude hashes match the earlier run. CalcHEP
+timing; their largest relative difference was 1.47e-12. Point-file and
+source-amplitude hashes match the earlier run. CalcHEP
 and MadGraph table entries use the physical run's nine sweeps; separately
 repeated reference statistics are retained as a stability check. Timing includes
 momentum setup and complete spin/helicity sums, excluding generation,
@@ -152,17 +154,39 @@ compilation, initialization and validation. MadGraph uses the exhaustive native
 MATRIX interface described below, without helicity sampling or recycling.
 These are matrix-element evaluation timings, not event throughput.
 
-For four photons, AllPhysical fell from 0.235735 s to 0.124803 s (1.89 times
-faster), and AllSpurious from 0.176184 s to 0.108535 s (1.62 times faster).
-The smaller two-photon gain reflects the unchanged momentum/product setup.
+Compared with the preceding conjugate-helicity benchmark, the additional
+numerical setup changes gave these speedups:
+
+| Photons | AllPhysical speedup | AllSpurious speedup |
+| --- | ---: | ---: |
+| 2 | 1.97 | 2.00 |
+| 3 | 2.00 | 1.24 |
+| 4 | 1.60 | 1.74 |
+
+For four photons, AllPhysical fell from 0.124803 s to 0.078147 s, and AllSpurious
+from 0.108535 s to 0.062394 s. These gains include point preparation. The
+shortened sum prepares only its required product components and arithmetic;
+individual complex amplitudes remain available and fill any missing caches
+lazily. SPINAS obtains phases directly from Cartesian momenta and can share a
+repeated middle-momentum matrix across brackets. Generated code also works
+with older SPINAS headers through the ordinary per-product fallback, although
+that fallback does not share the new middle-matrix helper.
+
+Whole real denominator products cache their reciprocal only under exact runtime
+reality checks. Width-bearing propagators remain complex, including symbolic
+widths whose default happens to be zero. Singular, subnormal, nonfinite and
+unsafe multiplication cases retain the original complex division. Independent
+CalcHEP and MadGraph validation uses private zero-width models and process
+copies; normal numerical simulations retain their configured widths.
 
 The local combined table and complete provenance are
-`build-fourway-helicity-double/fourway.csv` and
-`build-fourway-helicity-double/fourway-summary.json`. The CSV also gives each
+`build-numerical-setup-double/fourway.csv` and
+`build-numerical-setup-double/fourway-summary.json`. The CSV also gives each
 method's growth relative to its own N=2 baseline. Raw repetitions, identical
-points, exhaustive comparisons and before/after speedups remain in that build
-directory. The earlier exhaustive run is retained in `build-fourway-double`.
-These generated artifacts are excluded from Git.
+points, exhaustive comparisons and `setup-speedup.csv` remain in that build
+directory. The preceding conjugate-helicity run is retained in
+`build-fourway-helicity-double`, and the earlier exhaustive run in
+`build-fourway-double`. These generated artifacts are excluded from Git.
 
 ## Readable versus optimized export timings
 
