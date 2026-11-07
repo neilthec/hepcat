@@ -34,7 +34,15 @@ directions and validation diagnostics."}], "Usage"],
 and the factorization model. The function compares the candidate's residue \
 with the expected lower-point product at every physical pole and solves for \
 correction coefficients simultaneously."}], "Notes"],
-  Cell[TextData[{"A successful ordinary result is ",
+  Cell[TextData[{"With ", Cell[BoxData[RowBox[{"\"PolePreference\"", " ",
+         "->", " ", "\"AllPhysical\""}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{",", " ", "the", " ", "pole", " ", "check", " ",
+         "treats", " ", "finite", " ", "numerical", " ", "factors", " ",
+         "such", " ", "as", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"1", "/", "Sqrt", "[", "2", "]"}]],
+      "InlineFormula"], " as scalar coefficients. Kinematic denominator \
+factors must still be integer powers of propagators supplied by the physical \
+channels."}], "Notes"], Cell[TextData[{"A successful ordinary result is ",
      Cell[BoxData[RowBox[{"{", "externalMassRules", ",", " ", "expression",
          "}"}]], "InlineFormula"],
      Cell[BoxData[RowBox[{".", " ", "It", " ", "contains", " ", "no", " ",

@@ -9254,7 +9254,7 @@ completionPolePreference[requested_, inputs___] := Module[
    catalog. It has the same conservative rules as the public-report predicate. *)
 completionPhysicalDenominatorPredicate[normalized_Association] := Module[
   {external = Lookup[normalized, "ExternalMassRules", {}], targets, legs, allowed,
-   baseQ, check},
+   baseQ, inverseQ, check},
   legs = Cases[external, HoldPattern[Mass[i_Integer] -> _] :> i];
   targets = completionTargets[Lookup[normalized, "Targets", {}]];
   allowed = residueChannelKey /@ Select[targets, KeyExistsQ[#, "ChannelExpression"] &];
@@ -9266,11 +9266,17 @@ completionPhysicalDenominatorPredicate[normalized_Association] := Module[
     MatchQ[value, Power[_, _Integer?Positive]], baseQ[First[value]],
     True, !poleKinematicFactorQ[value] && residueFiniteQ[value] &&
       !TrueQ[residueExactZero[value /. external]]];
+  (* Exact scalar coefficients can contain inverse roots after an exchange
+     projection. Their exponents say nothing about kinematic pole order. *)
+  inverseQ[{base_, exponent_}] :=
+    (NumericQ[base] && NumericQ[exponent] &&
+      !poleKinematicFactorQ[base^exponent] && residueFiniteQ[base^exponent]) ||
+    (IntegerQ[exponent] && exponent < 0 && baseQ[base]);
   check[expression_] := Module[{inverses, reciprocalFunctions},
     If[!residueFiniteQ[expression], Return[False]];
     inverses = Cases[{expression}, Power[base_, exponent_] /;
       !(NumericQ[exponent] && TrueQ[exponent >= 0]) :> {base, exponent}, Infinity];
-    If[!AllTrue[inverses, IntegerQ[Last[#]] && Last[#] < 0 && baseQ[First[#]] &], Return[False]];
+    If[!AllTrue[inverses, inverseQ], Return[False]];
     reciprocalFunctions = Cases[{expression}, value : ((Csc | Sec | Cot | Csch | Sech | Coth)[arg_]) /;
       poleKinematicFactorQ[arg] :> value, Infinity];
     reciprocalFunctions === {}];

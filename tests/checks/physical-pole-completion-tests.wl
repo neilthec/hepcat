@@ -31,10 +31,23 @@ check["Bracket inverse rejected",!phys[1/(p a),normalized]];
 check["Sum containing kinematic inverse rejected",!phys[1/(p+q),normalized]];
 check["Invariant inverse rejected",!phys[1/(p MomProd[1,3]),normalized]];
 check["Model coefficient inverse admitted",phys[1/(p (m^2+coupling^2)),normalized]];
+check["Exact numeric reciprocal power is a regular coefficient",phys[a/(Sqrt[2] p),normalized]];
+check["Fractional physical and spinor inverses are rejected",
+  !phys[1/Sqrt[p],normalized] && !phys[1/(p Sqrt[a]),normalized]];
 check["Regular terms admitted",phys[m+coupling a,normalized]];
 check["Mass declared zero inverse rejected",!phys[1/(p Mass[3]),normalized]];
 check["Symbolic inverse powers rejected",!phys[p^exponent,normalized]];
 check["Reciprocal kinematic functions rejected",!phys[Csc[MomProd[1,3]]/p,normalized]];
+(* An exchange average can turn Sqrt[2] into its reciprocal without adding a pole. *)
+ppRadicalExchangePlan = <|"Order" -> 2, "Permutations" -> {{}, {{3,4}}}, "Signs" -> {1,-1}|>;
+ppRadicalExchange = ConstructiveDiagrams`Private`completionCompactExchangeProject[
+  Sqrt[2]/p, ppRadicalExchangePlan];
+ppRadicalPartner = Join[channel, <|"Cut" -> {1,4}, "Complement" -> {2,3}, "Propagator" -> r|>];
+check["Exchange projection admits its exact reciprocal coefficient on known cuts",
+  Together[ppRadicalExchange - (1/p - 1/r)/Sqrt[2]] === 0 &&
+    phys[ppRadicalExchange, Join[normalized, <|"Targets" -> {channel, ppRadicalPartner}|>]]];
+check["Exchange projection still rejects an uncatalogued cut",
+  !phys[ppRadicalExchange, normalized]];
 (* Reducing a correction column must preserve that one coordinate, even when
    ordinary external identities rewrite its numerator as a multi-term sum. *)
 ppNormalizeColumns = ConstructiveDiagrams`Private`completionNormalizePhysicalColumns;
