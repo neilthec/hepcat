@@ -25,12 +25,67 @@ ftNoNewPoles[input_, output_] := Module[{original = ftInverses[input], retained}
       MemberQ[DeleteDuplicates[Cases[{input}, _PropDen, Infinity]], #] &]
 ];
 
+(* Typed coordinate frames are reversible ordinary relabelings. Recurse into
+   their completed core certificates rather than treating their metadata as
+   another direct quotient record. *)
+ftCoreRoutes[records_List] := Flatten[Map[Function[record,
+  Switch[Lookup[record, "Operation", None],
+    "TypedFrameFourLegTensorIdentities", ftCoreRoutes[record["CoreRoute"]],
+    "ExactInverseSpectatorFourLegTensorGroups",
+      Flatten[ftCoreRoutes[#["IdentityRoute"]] & /@ record["GroupCertificates"], 1],
+    _, {record}]], records], 1];
+ftCoreRoutes[report_Association] := ftCoreRoutes[report["Route"]];
+ftFrameReplay[record_Association] := Module[
+  {rename = ConstructiveDiagrams`Private`relabelLegs,
+   forward = record["ForwardLabelMap"], backward = record["InverseLabelMap"]},
+  TrueQ[record["ExactTypedRelabelingRoundTrip"]] &&
+    TrueQ[record["ExactRestoredEndpoint"]] &&
+    TrueQ[record["InverseArgumentsPreserved"]] &&
+    rename[record["Before"], forward] === record["RenamedBefore"] &&
+    rename[record["RenamedBefore"], backward] === record["Before"] &&
+    rename[record["ExternalMassRules"], forward] === record["RenamedExternalMassRules"] &&
+    rename[record["RenamedAfter"], backward] === record["After"] &&
+    ftNoNewPoles[record["Before"], record["After"]] &&
+    record["InternalOnShellConditions"] === {} &&
+    ftReplay[<|"Route" -> record["CoreRoute"]|>]
+];
+
+(* A larger complete expression may have reached the same ordinary core
+   through exact inverse-spectator groups. Replay the bookkeeping independently
+   before following each group's original core identity certificate. *)
+ftGroupReplay[record_Association] := Module[
+  {forward = record["ProtectedInverseMap"], restore, certificates,
+   reconstructedGroups},
+  restore = Reverse /@ forward;
+  certificates = record["GroupCertificates"];
+  reconstructedGroups = Fold[ReplacePart[#1, #2["GroupIndex"] -> #2["Amplitude"]] &,
+    record["OriginalGroups"], certificates];
+  (record["Before"] /. forward) === record["ProtectedExpression"] &&
+    Expand[record["ProtectedExpression"] - Total[record["ProtectedGroups"]]] === 0 &&
+    record["ExactProtectedGroupReconstructionResidual"] === 0 &&
+    (record["ProtectedGroups"] /. restore) === record["OriginalGroups"] &&
+    reconstructedGroups === record["UpdatedGroups"] &&
+    Total[record["UpdatedGroups"]] === record["After"] &&
+    AllTrue[certificates, Function[certificate,
+      certificate["OriginalGroup"] ===
+        record["OriginalGroups"][[certificate["GroupIndex"]]] &&
+      ftReplay[<|"Route" -> certificate["IdentityRoute"]|>]]] &&
+    TrueQ[record["InverseArgumentsPreserved"]] &&
+    TrueQ[record["StrictWholeExpressionRank"]] &&
+    ftNoNewPoles[record["Before"], record["After"]] &&
+    record["InternalOnShellConditions"] === {}
+];
+
 (* Recompute the exact algebraic certificates, without repeating the much
    slower symbolic proof of every row already used during development. *)
 ftReplay[report_] := Module[{route, groups, sectors, mass, restore, sourceChecks,
     linearChecks, numeratorChecks, sectorValues},
   If[!AssociationQ[report] || report["Route"] === {}, Return[False]];
   AllTrue[report["Route"], Function[record,
+    If[Lookup[record, "Operation", None] === "TypedFrameFourLegTensorIdentities",
+      ftFrameReplay[record],
+    If[Lookup[record, "Operation", None] === "ExactInverseSpectatorFourLegTensorGroups",
+      ftGroupReplay[record],
     route = record; groups = route["GroupCertificates"]; mass = route["MassScale"];
     restore[value_] := (value /. {chain_SpinorChain :>
       chain/mass^(Length[chain] - 2), product_MomProd :> product/mass^2}) /.
@@ -56,9 +111,9 @@ ftReplay[report_] := Module[{route, groups, sectors, mass, restore, sourceChecks
           group["NewNumerator"]] === 0], groups];
     AllTrue[sourceChecks, TrueQ] && AllTrue[linearChecks, TrueQ] &&
       AllTrue[numeratorChecks, TrueQ] && TrueQ[route["ExactFormalReplay"]] &&
-      route["InternalOnShellConditions"] === {}]]
+      route["InternalOnShellConditions"] === {}]]]]
 ];
-ftMassRoundTrip[report_] := AllTrue[report["Route"], Function[route,
+ftMassRoundTrip[report_] := AllTrue[ftCoreRoutes[report], Function[route,
   AllTrue[route["OtherMassDefinitions"],
     Cancel[(Last[#] /. route["RatioDefinitions"]) - First[#]] === 0 &] &&
   FreeQ[report["Amplitude"], Alternatives @@ (First /@ route["RatioDefinitions"])]]];
@@ -160,7 +215,7 @@ check["bounded ordinary momentum-slot linearity admits composite-vector numerato
   ftCompositeReport["Status"] === "IMPROVED" &&
     SpinorExpressionComplexity[ftCompositeReport["Amplitude"]] <
       SpinorExpressionComplexity[ftComposite] &&
-    AllTrue[ftCompositeReport["Route"], Function[route,
+    AllTrue[ftCoreRoutes[ftCompositeReport], Function[route,
       route["MomentumSlotLinearityRules"] =!= {} &&
         AllTrue[route["MomentumSlotLinearityRules"],
           Last[#] === ConstructiveDiagrams`Private`rspLinearChain[First[#]] &]]] &&

@@ -101,7 +101,12 @@ default bound is the renormalizable tree-level expectation ",
          " ", "your", " ", "theory", " ", "requires", " ", "another", " ",
          "bound", ",", " ", "state", " ", "it", " ", "with", " "}]],
       "InlineFormula"], Cell[BoxData[RowBox[{"\"HighEnergyBound\""}]],
-      "InlineFormula"], "."}], "Notes"],
+      "InlineFormula"], ". For supported homogeneous spin tensors, an exactly \
+certified constant rescaling can simplify the spinor basis used by this \
+growth test. The rescaling is independent of energy, so it preserves the \
+growth powers of every component. Details records ConstraintBasisRescaling \
+when used. Residue, reference and Feynman comparisons retain normalized \
+external states."}], "Notes"],
   Cell[TextData[{"When explicit Xi reference spinors remain, their choices \
 are varied together while the physical momenta and external spin states are \
 held fixed. An expression without explicit Xi objects has no explicit \

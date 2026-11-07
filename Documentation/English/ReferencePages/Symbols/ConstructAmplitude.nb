@@ -40,7 +40,14 @@ correction directions, weighted by the full coherent-spin workload, before \
 the stage clock is set. The limits remain finite, explicit settings stay \
 authoritative and the overall construction clock still bounds every stage. \
 Detailed output records the measurements used to choose the automatic \
-settings."}], "Notes"],
+settings."}], "Notes"], Cell[TextData[{"Inside a high-energy fit, the already \
+requested exact masses and couplings may be evaluated before the affine \
+matrix and repeated-term catalog are expanded. The original amplitude and \
+retained family remain symbolic outside that fitter. Each catalog receives a \
+work-based scheduling estimate and a finite hard allowance within the same \
+stage and overall clocks; all requested parameter assignments and independent \
+validations remain required. This internal scheduling needs no additional \
+user option."}], "Notes"],
   Cell[TextData[{"The default ",
      Cell[BoxData[RowBox[{"\"PolePreference\"", " ", "->", " ",
          "\"AllPhysical\""}]], "InlineFormula"],
@@ -86,22 +93,41 @@ expression after all required checks pass. ",
 allows the wrapper to validate one fixed factorization or high-energy \
 representative before proving every alternative in its retained affine family \
 equivalent. Every standard check and the independent Feynman comparison must \
-pass at the normal validation parameter assignments. This is sampled \
-validation of that expression, not a uniqueness proof or a change to the \
-strict behavior of ", ButtonBox["CompleteHighEnergy", BaseStyle -> "Link",
-      ButtonData -> "paclet:HEPCAT/ref/CompleteHighEnergy"],
-     " on its own."}], "Notes"],
-  Cell[TextData[{"An automatic high-energy stage can finish its exact fit and \
-prove every remaining direction zero, then reach its deadline during \
-independent validation. The wrapper may use the remaining overall budget for \
-a separate visible stage, Validating retained HE candidate. Every original \
-fit parameter assignment is rechecked with the normal held-out seeds and \
-sample counts, including all physical poles, apparent spurious poles, \
-high-energy growth and reference independence. The original child stays \
-UNRESOLVED in Details. An explicit high-energy time limit, an unfinished \
-coordinate classification or a known failed held-out check prevents this \
-recovery. Only complete validation allows the ordinary final preparation and \
-final checks to continue."}], "Notes"],
+pass at all resolved independent validation parameter assignments. This is \
+sampled validation of that expression, not a uniqueness proof or a change to \
+the strict behavior of ", ButtonBox["CompleteHighEnergy",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/CompleteHighEnergy"], " on its own. Before these \
+independent checks, a newly selected point receives ordinary final \
+preparation through ", ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"], ". An identical \
+point already prepared in the same call is reused. The unused affine family \
+remains available in Details; the simplification adds no internal-shell \
+assumptions and uses no benchmark terms."}], "Notes"],
+  Cell[TextData[{"With that explicit independent benchmark, the wrapper can \
+also propose a high-energy candidate after the first complete exact energy \
+chart has been solved together with the actual physical-channel constraints. \
+This is an early hypothesis: other energy directions and parameter \
+assignments may remain unvisited, spurious and reference fit groups may \
+remain unvisited, and unclassified correction coordinates remain recorded. \
+The wrapper prepares the fixed hypothesis and checks every original physical \
+channel, automatic spurious-pole cancellation, high-energy growth, reference \
+independence and full Feynman agreement at all normal validation parameter \
+assignments, including all three automatic assignments for the bundled SM. A \
+failed, incomplete or opposite-sign comparison returns to strict completion \
+in the original correction space. Neither one successful chart nor a rejected \
+hypothesis removes a direction or discharges an unvisited obligation."}],
+   "Notes"], Cell[TextData[{"A separate recovery route applies when an \
+automatic high-energy stage finishes its exact fit and proves every remaining \
+direction zero, then reaches its deadline during independent validation. The \
+wrapper may use the remaining overall budget for a separate visible stage, \
+Validating retained HE candidate. Every original fit parameter assignment is \
+rechecked with the normal held-out seeds and sample counts, including all \
+physical poles, apparent spurious poles, high-energy growth and reference \
+independence. The original child stays UNRESOLVED in Details. An explicit \
+high-energy time limit, an unfinished coordinate classification or a known \
+failed held-out check prevents this recovery. Only complete validation allows \
+the ordinary final preparation and final checks to continue."}], "Notes"],
   Cell[TextData[{"For a complete minimal massive fermion line with five or \
 more same-helicity colorless vectors, the AllPhysical pole preference can \
 combine emission subsets using ordinary Dirac and two-dimensional determinant \
@@ -172,18 +198,36 @@ itself. With an explicit ", Cell[BoxData[RowBox[{"\"FeynmanModel\""}]],
       "InlineFormula"], ", the wrapper may first try that fixed factorization \
 point when free coordinates remain. It may also try a finite fixed candidate \
 retained by an unresolved or underdetermined high-energy stage."}], "Notes"],
-  Cell[TextData[{"Acceptance requires the complete physical-channel report, \
-automatic spurious-pole checks, the high-energy bound, reference independence \
-and independent Feynman agreement. The check is repeated at the normal \
-independent validation parameter assignments; it is not just a favorable \
-evaluation at the fitting parameters. These checks use the existing shared \
-clock. A failed, incomplete or timed-out attempt falls through to the \
-remaining completion workflow when time remains."}], "Notes"],
+  Cell[TextData[{"The high-energy stage has a second opportunity to propose a \
+fixed point. Once one exact energy chart is complete, it can solve those rows \
+together with the physical-channel constraints already obtained and use the \
+resulting particular solution as a hypothesis. A complete chart covers its \
+supported spin components at its own fixed-angle kinematics; the remaining \
+fit charts, parameter assignments and unvisited spurious/reference fit groups \
+are still obligations. Details preserve the original affine coordinates, \
+every unclassified direction and the unvisited work. This proposal does not \
+claim that the full fit or the full family is complete."}], "Notes"],
+  Cell[TextData[{"The wrapper first simplifies the hypothesis with ordinary \
+external identities. Acceptance then requires ", ButtonBox["CheckAmplitudes",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/CheckAmplitudes"], " to pass the complete \
+physical-channel report, automatic spurious-pole checks, the high-energy \
+bound, reference independence and independent full-amplitude Feynman \
+comparison. The checks run at every normal independent validation parameter \
+assignment, including all three automatic assignments for the bundled SM, \
+with the normal held-out seeds and sample counts. The first fit chart is not \
+substituted for this validation."}], "Notes"],
   Cell[TextData[{"The Feynman expression is generated once and reused only as \
 a benchmark. It supplies no correction terms, fitted coefficients or \
 replacement answer. The selected expression is the fixed constructive \
 candidate that passed validation. Its unproved family directions are \
-retained; they are not silently declared zero."}], "Notes"],
+retained; they are not silently declared zero. These attempts share the \
+existing construction clock."}], "Notes"],
+  Cell[TextData[{"If the hypothesis fails any check, returns an opposite sign \
+or cannot finish validation, the wrapper continues strict completion from the \
+original correction space and retained input when time remains. It does not \
+continue from a first-chart restriction that has been mistaken for a complete \
+solution. An incomplete attempt never becomes a passing result."}], "Notes"],
   Cell[TextData[{"Request ",
      Cell[BoxData[RowBox[{"\"Output\"", " ", "->", " ", "\"Details\""}]],
       "InlineFormula"], Cell[BoxData[RowBox[{" ", "and", " ", "inspect",
@@ -194,10 +238,27 @@ retained; they are not silently declared zero."}], "Notes"],
          " ", "free", " ", "coordinates", ",", " ", "validation", " ",
          "reports", " ", "and", " ", "explicit", " "}]], "InlineFormula"],
      Cell[BoxData[RowBox[{"\"UniquenessEstablished\"", " ", "->", " ",
-         "False"}]], "InlineFormula"], ". A successful selection means the \
-chosen point passed the supported checks, not that every point in the family \
-is equivalent or that the formula has received a generic analytic proof."}],
-   "Notes"], Cell[TextData[{"Without an explicit ",
+         "False"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{".", " ", "A", " ", "successful", " ", "selection",
+         " ", "means", " ", "the", " ", "chosen", " ", "point", " ",
+         "passed", " ", "the", " ", "supported", " ", "checks", ",", " ",
+         "not", " ", "that", " ", "every", " ", "point", " ", "in", " ",
+         "the", " ", "family", " ", "is", " ", "equivalent", " ", "or", " ",
+         "that", " ", "the", " ", "formula", " ", "has", " ", "received",
+         " ", "a", " ", "generic", " ", "analytic", " ", "proof", ".", " ",
+         "The", " ", "high", "-", "energy", " ", "subreport", " ", "also",
+         " ", "retains", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"\"PointReadyCheckpoint\""}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{",", " ", "which", " ", "identifies", " ", "the",
+         " ", "completed", " ", "chart", " ", "and", " ", "unvisited", " ",
+         "work", ".", " ", "Its", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"\"AllFitGroupsComplete\"", " ", "->", " ",
+         "False"}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{" ", "and", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"\"FamilyUniquenessEstablished\"", " ", "->", " ",
+         "False"}]], "InlineFormula"], " describe the unfinished fit, even if \
+the wrapper later accepts the separately validated fixed point."}], "Notes"],
+  Cell[TextData[{"Without an explicit ",
      Cell[BoxData[RowBox[{"\"FeynmanModel\""}]], "InlineFormula"],
      ", the ordinary strict completion path is unchanged. Calling ",
      ButtonBox["CompleteHighEnergy", BaseStyle -> "Link",

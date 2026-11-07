@@ -45,7 +45,7 @@ check["actual four-point QED construction completes every stage",
     caDetails["Complexity"] === SpinorExpressionComplexity[caDetails["Amplitude"]]];
 If[!AssociationQ[caDetails] || Lookup[caDetails, "Status", None] =!= "COMPLETE",
   Print["Cannot continue construction assertions: ", caDetails];
-  If[checks =!= 66, AppendTo[failures, "Not every construction assertion executed."]];
+  If[checks =!= 82, AppendTo[failures, "Not every construction assertion executed."]];
 If[failures =!= {} && ValueQ[caPolicySelected],
   caPolicyDiagnosticDirectory = CreateDirectory[];
   Put[<|"Early" -> caPolicySelected, "Late" -> caPolicyLate,
@@ -321,6 +321,11 @@ check["an independent benchmark can validate a fixed factorization point before 
   caPolicySelected["Status"] === "COMPLETE" && caPolicySelectedHECalls === 0 &&
     caPolicySelection["Selected"] === True && caPolicySelection["SourceStage"] === "Factorization" &&
     AllTrue[caPolicySelected["Checks"]["Checks"], #["Status"] === "PASS" &]];
+check["an already prepared unchanged factorization point is not prepared twice",
+  Count[Lookup[caPolicySelected["StageTimings"], "Stage"],
+    "Preparing factorization result"] === 1 &&
+    Count[Lookup[caPolicySelected["StageTimings"], "Stage"],
+      "Preparing factorization representative"] === 0];
 check["sampled representative selection explicitly disclaims family uniqueness and benchmark fitting",
   caPolicySelection["Scope"] === "IndependentlySampledValidatedPointNotFamilyUniqueness" &&
     caPolicySelection["UniquenessEstablished"] === False &&
@@ -380,6 +385,45 @@ check["an underdetermined high-energy stage can still yield an independently val
     caPolicyLate["RepresentativeSelection"]["SourceStage"] === "HighEnergy" &&
     caPolicyLate["RepresentativeSelection"]["SourceStatus"] === "UNDERDETERMINED" &&
     caPolicyLate["RepresentativeSelection"]["RetainedDirections"] === {caPolicyDirection}];
+(* A late solver point must receive the same ordinary external-shell cleanup
+   as the normal completed-stage path before it can be returned early. The
+   redex is an identity zero, not an added interaction or fitted benchmark. *)
+caPolicyRedexHE = Join[caPolicyUnfinishedHE, <|
+  "Amplitude" -> caExpression + caOrdinaryRedex,
+  "FamilyAmplitude" -> caExpression + caOrdinaryRedex +
+    caPolicyParameter caPolicyDirection|>];
+caPolicyReprepared = caPolicyRun[caPolicyNoFreeCF, caPolicyRedexHE, True,
+  "FinalPreparationOptions" -> {"MaxSteps" -> 0, "MomentumConservation" -> False,
+    "TimeConstraint" -> 20}];
+caPolicyRepreparedSelection = caPolicyReprepared["RepresentativeSelection"];
+caPolicyRepreparedDetails = caPolicyReprepared["Stages"][
+  "Preparing highenergy representative details"];
+check["a late selected representative receives ordinary final preparation",
+  caPolicyReprepared["Status"] === "COMPLETE" && caPolicyHECalls === 1 &&
+    caPolicyRepreparedSelection["SourceStage"] === "HighEnergy" &&
+    Last[First[caPolicyRepreparedDetails["OriginalAmplitudes"]]] ===
+      caExpression + caOrdinaryRedex &&
+    Together[caPolicyReprepared["Amplitude"] - caExpression] === 0];
+check["selected-point cleanup honors explicit final-preparation controls",
+  caPolicyRepreparedDetails["Options"]["MaxSteps"] === 0 &&
+    caPolicyRepreparedDetails["Options"]["MomentumConservation"] === False &&
+    caPolicyRepreparedDetails["Options"]["TimeConstraint"] === 20 &&
+    caPolicyRepreparedDetails["Options"]["InternalOnShell"] === False &&
+    AllTrue[caPolicyRepreparedDetails["ItemReports"],
+      #["InternalOnShellChannels"] === {} &]];
+check["selected-point final preparation precedes every independent validation",
+  With[{stages = Lookup[caPolicyReprepared["StageTimings"], "Stage"]},
+    First[FirstPosition[stages, "Preparing highenergy representative"]] <
+      Min[Flatten[Position[stages, stage_String /;
+        StringStartsQ[stage, "Validating highenergy representative"]]]]] &&
+    AllTrue[caPolicyRepreparedSelection["ValidationReports"],
+      AllTrue[#["Report"]["Checks"], #["Status"] === "PASS" &] &]];
+check["ordinary selected-point cleanup retains the full original affine family",
+  caPolicyRepreparedSelection["RetainedFreeParameters"] === {caPolicyParameter} &&
+    caPolicyRepreparedSelection["RetainedDirections"] === {caPolicyDirection} &&
+    Together[caPolicyRepreparedSelection["RetainedFamilyAmplitude"] - caExpression -
+      caOrdinaryRedex - caPolicyParameter caPolicyDirection] === 0 &&
+    FreeQ[caPolicyReprepared["Amplitude"], caPolicyParameter]];
 caPolicyUnresolved = caPolicyRun[caPolicyNoFreeCF,
   Join[caPolicyUnfinishedHE, <|"Status" -> "UNRESOLVED"|>], True];
 check["an unresolved proof status needs the same full fixed-point validation rather than silent promotion",
@@ -447,9 +491,250 @@ check["controlled stage probes restore all public completion definitions and att
   caPolicyOriginalDefinitions === {DownValues[CompleteFactorization], DownValues[CompleteHighEnergy],
     Attributes[CompleteFactorization], Attributes[CompleteHighEnergy]}];
 
+(* A benchmark-backed constructor may propose one point before classifying
+   unused affine freedom. Point validation remains mandatory and independent. *)
+caPFStateBefore=OwnValues[ConstructiveDiagrams`Private`$completionHighEnergyPointFirst];
+caPFClassificationCalls=0;caPFPruneCalls=0;
+caPFCore=Internal`InheritedBlock[
+ {ConstructiveDiagrams`Private`completionHEExactDerivativeClassification,
+  ConstructiveDiagrams`Private`completionHEPruneIdentityFamily},
+ Clear[ConstructiveDiagrams`Private`completionHEExactDerivativeClassification,
+  ConstructiveDiagrams`Private`completionHEPruneIdentityFamily];
+ ConstructiveDiagrams`Private`completionHEPruneIdentityFamily[___]:=
+   (caPFPruneCalls++;Failure["UnexpectedPointFamilyPruning",<||>]);
+ ConstructiveDiagrams`Private`completionHEExactDerivativeClassification[___]:=
+   (caPFClassificationCalls++;Failure["UnexpectedPointClassification",<||>]);
+ Block[{ConstructiveDiagrams`Private`$completionHighEnergyPointFirst=True},
+  CompleteHighEnergy[caPolicyContact,{},caPolicyScalarModel,
+   "CorrectionBasis"->{},"Samples"->1,"ValidationSamples"->1,
+   "Parallelization"->False,"ProgressReporting"->False,"TimeConstraint"->30,"Output"->"Details"]]];
+check["point-first retains an unresolved fitted point and every unclassified affine coordinate",
+ caPFCore["Status"]==="UNRESOLVED"&&TrueQ[caPFCore["PointReady"]]&&
+ caPFCore["Amplitude"]===7&&caPFCore["FreeParameters"]==={caPolicyParameter}&&
+ caPFCore["RemainingBasis"]==={1}&&
+ Together[caPFCore["FamilyAmplitude"]-7-caPolicyParameter]===0&&
+ Length[caPFCore["ConstraintData"]]===4&&
+ caPFCore["ConstraintData"]["Physical"]["Status"]==="COMPLETE"&&
+ MissingQ[caPFCore["ConstraintData"]["Spurious"]]&&
+ MissingQ[caPFCore["ConstraintData"]["Reference"]]&&
+ caPFCore["PointReadyCheckpoint"]["CompletedEnergyCharts"]===1&&
+ caPFCore["PointReadyCheckpoint"]["UnvisitedFitGroups"]==={"Spurious","Reference"}&&
+ !TrueQ[caPFCore["PointReadyCheckpoint"]["AllFitGroupsComplete"]]&&
+ caPFClassificationCalls===0&&caPFPruneCalls===0&&
+ !TrueQ[caPFCore["PointReadyCheckpoint"]["FamilyUniquenessEstablished"]]&&
+ !TrueQ[caPFCore["PointReadyCheckpoint"]["IndependentPointValidationPerformed"]]];
+
+caPFIncomplete=Table[With[{fitStatus=status},Internal`InheritedBlock[
+ {ConstructiveDiagrams`Private`completionHEEnergyConstraintSets},
+ Clear[ConstructiveDiagrams`Private`completionHEEnergyConstraintSets];
+ ConstructiveDiagrams`Private`completionHEEnergyConstraintSets[___]:=
+  <|"Status"->fitStatus,"Equations"->{},"Samples"->{},"Diagnostics"->{"Controlled incomplete fit"}|>;
+ Block[{ConstructiveDiagrams`Private`$completionHighEnergyPointFirst=True},
+  CompleteHighEnergy[caPolicyContact,{},caPolicyScalarModel,
+   "CorrectionBasis"->{},"Samples"->1,"ValidationSamples"->1,
+   "Parallelization"->False,"ProgressReporting"->False,"TimeConstraint"->30,"Output"->"Details"]]]],
+ {status,{"UNRESOLVED","INCONSISTENT"}}];
+caPFIncompleteChart=Internal`InheritedBlock[
+ {ConstructiveDiagrams`Private`completionHELaurentRows},
+ Clear[ConstructiveDiagrams`Private`completionHELaurentRows];
+ ConstructiveDiagrams`Private`completionHELaurentRows[___]:=
+  Failure["UnverifiedFirstChartCoefficients",<||>];
+ Block[{ConstructiveDiagrams`Private`$completionHighEnergyPointFirst=True},
+  CompleteHighEnergy[caPolicyContact,{},caPolicyScalarModel,
+   "CorrectionBasis"->{},"Samples"->1,"ValidationSamples"->1,
+   "Parallelization"->False,"ProgressReporting"->False,"TimeConstraint"->30,"Output"->"Details"]]];
+caPFIncompletePhysical=Internal`InheritedBlock[
+ {ConstructiveDiagrams`Private`completionResidueConstraints},
+ Clear[ConstructiveDiagrams`Private`completionResidueConstraints];
+ ConstructiveDiagrams`Private`completionResidueConstraints[___]:=
+  <|"Status"->"UNRESOLVED","Equations"->{},"Samples"->{},"Diagnostics"->{"Controlled physical fit deadline"}|>;
+ Block[{ConstructiveDiagrams`Private`$completionHighEnergyPointFirst=True},
+  CompleteHighEnergy[caPolicyContact,{},caPolicyScalarModel,
+   "CorrectionBasis"->{},"Samples"->1,"ValidationSamples"->1,
+   "Parallelization"->False,"ProgressReporting"->False,"TimeConstraint"->30,"Output"->"Details"]]];
+check["incomplete or inconsistent fit groups cannot produce a ready-point checkpoint",
+ AllTrue[Join[caPFIncomplete,{caPFIncompleteChart,caPFIncompletePhysical}],AssociationQ[#]&&#["Status"]==="UNRESOLVED"&&
+  !TrueQ[Lookup[#,"PointReady",False]]&]];
+
+caPFBadParameter=Unique["growingPointDirection"];
+caPFNonemptyInput=Join[caPolicyContact,<|
+ "FamilyAmplitude"->7+caPFBadParameter MomProd[1,2]+caPolicyParameter,
+ "FreeParameters"->{caPFBadParameter,caPolicyParameter},
+ "RemainingBasis"->{MomProd[1,2],1}|>];
+caPFNonempty=Block[{ConstructiveDiagrams`Private`$completionHighEnergyPointFirst=True},
+ CompleteHighEnergy[caPFNonemptyInput,{},caPolicyScalarModel,
+  "CorrectionBasis"->{},"Samples"->4,"ValidationSamples"->1,
+  "ParameterRules"->{"EE"->1/3},
+  "ValidationParameterRules"->{{"EE"->1/2},{"EE"->2/3}},
+  "Parallelization"->False,"ProgressReporting"->False,"TimeConstraint"->30,"Output"->"Details"]];
+check["one nonempty energy chart fixes bad growth and retains the complete allowed affine freedom",
+ caPFNonempty["Status"]==="UNRESOLVED"&&TrueQ[caPFNonempty["PointReady"]]&&
+ caPFNonempty["Amplitude"]===7&&caPFNonempty["FamilyAmplitude"]===7+caPolicyParameter&&
+ caPFNonempty["FreeParameters"]==={caPolicyParameter}&&caPFNonempty["RemainingBasis"]==={1}&&
+ MemberQ[caPFNonempty["PointReadyCheckpoint"]["ReachedEnergySolutionRules"],caPFBadParameter->0]&&
+ caPFNonempty["PointReadyCheckpoint"]["OriginalCorrectionCoordinates"]==={caPFBadParameter,caPolicyParameter}&&
+ caPFNonempty["PointReadyCheckpoint"]["CompletedEnergyCharts"]===1&&
+ caPFNonempty["PointReadyCheckpoint"]["UnvisitedEnergyCharts"]===3&&
+ caPFNonempty["PointReadyCheckpoint"]["RequestedParameterAssignments"]===3&&
+ caPFNonempty["PointReadyCheckpoint"]["UnvisitedParameterAssignments"]===2&&
+ !TrueQ[caPFNonempty["PointReadyCheckpoint"]["AllRequestedParameterAssignmentsFit"]]&&
+ !TrueQ[caPFNonempty["PointReadyCheckpoint"]["IndependentPointValidationPerformed"]]];
+
+caPFReady=Join[caPolicyRedexHE,<|"Status"->"UNRESOLVED","PointReady"->True,
+ "PointReadyCheckpoint"-><|"AllFitGroupsComplete"->True,
+  "FamilyUniquenessEstablished"->False,"IndependentPointValidationPerformed"->False,
+  "BenchmarkUsedForConstruction"->False|>|>];
+caPFRun[ready_Association,strict_Association,useBenchmark_,action_String,opts___Rule]:=Module[{},
+ caPFModeHistory={};caPFInputHistory={};caPFReadySource=ready;caPFStrictSource=strict;
+ caPFAction=action;
+ Internal`InheritedBlock[{CompleteFactorization,CompleteHighEnergy},
+  Unprotect[CompleteFactorization,CompleteHighEnergy];
+  DownValues[CompleteFactorization]={HoldPattern[CompleteFactorization[___]]:>caPolicyNoFreeCF};
+  DownValues[CompleteHighEnergy]={HoldPattern[CompleteHighEnergy[args___]]:>
+   (AppendTo[caPFModeHistory,TrueQ[ConstructiveDiagrams`Private`$completionHighEnergyPointFirst]];
+    AppendTo[caPFInputHistory,First[{args}]];
+    Which[caPFAction==="Abort",Abort[],caPFAction==="Wait",Pause[30];caPFReadySource,
+      Last[caPFModeHistory],caPFReadySource,True,caPFStrictSource])};
+  caRun4[Sequence@@Normal[Join[<|"Output"->"Details",
+   "FeynmanModel"->If[TrueQ[useBenchmark],caFeynmanModel,None],
+   "FeynmanPreparationOptions"->{"MaxSteps"->0,"TimeConstraint"->20},
+   "HighEnergyOptions"->{"TimeConstraint"->60}|>,Association[{opts}]]]]]];
+(* Run the existing PointReady case while recording the actual worker scope.
+   Start preparation jobs with the opposite local setting, as a separate
+   kernel would not inherit the constructor's dynamic state. *)
+caSupportModes = {};
+caSupportStage = None;
+caSupportStateBefore = OwnValues[ConstructiveDiagrams`Private`$deferExactTensorSupportPolish];
+caPFSelected = Internal`InheritedBlock[{
+    ConstructiveDiagrams`Private`preparationOneAmplitude,
+    ConstructiveDiagrams`Private`amplitudeParallelMap},
+  DownValues[caSupportOriginalPrepare] =
+    DownValues[ConstructiveDiagrams`Private`preparationOneAmplitude] /.
+      HoldPattern[ConstructiveDiagrams`Private`preparationOneAmplitude] -> caSupportOriginalPrepare;
+  DownValues[caSupportOriginalMap] =
+    DownValues[ConstructiveDiagrams`Private`amplitudeParallelMap] /.
+      HoldPattern[ConstructiveDiagrams`Private`amplitudeParallelMap] -> caSupportOriginalMap;
+  Clear[ConstructiveDiagrams`Private`preparationOneAmplitude,
+    ConstructiveDiagrams`Private`amplitudeParallelMap];
+  ConstructiveDiagrams`Private`preparationOneAmplitude[arguments___] := (
+    AppendTo[caSupportModes, {caSupportStage,
+      TrueQ[ConstructiveDiagrams`Private`$deferExactTensorSupportPolish]}];
+    caSupportOriginalPrepare[arguments]);
+  ConstructiveDiagrams`Private`amplitudeParallelMap[worker_, jobs_List,
+      settings_Association, callback_: None] :=
+    If[MatchQ[jobs, {{_Integer, {_List, _}, _String, _Association} ..}],
+      With[{localWorker = worker,
+          initialMode = !TrueQ[ConstructiveDiagrams`Private`$deferExactTensorSupportPolish]},
+        caSupportOriginalMap[Function[item,
+          Block[{ConstructiveDiagrams`Private`$deferExactTensorSupportPolish = initialMode},
+            localWorker[item]]], jobs, settings, callback]],
+      caSupportOriginalMap[worker, jobs, settings, callback]];
+  caSupportResult = caPFRun[caPFReady,caPolicyCompleteHE,True,"Return",
+    "ProgressReporting" -> True,
+    "ProgressFunction" -> Function[event, If[event["Event"] === "StageStarted",
+      caSupportStage = event["Stage"]]],
+    "FinalPreparationOptions"->{"MaxSteps"->0,"MomentumConservation"->False,"TimeConstraint"->20}];
+  caSupportStage = "Standalone";
+  PrepareAmplitudes[caPair, caModel, "PolePreference" -> None,
+    "ProgressReporting" -> False, "Parallelization" -> False, "TimeConstraint" -> 1];
+  caSupportResult
+];
+caSupportStageModes[stage_String] := Cases[caSupportModes, {stage, mode_} :> mode];
+check["source and pre-energy preparation defer exact support on every worker",
+  AllTrue[{"Preparing diagrams", "Preparing factorization channels",
+      "Preparing factorization result", "Preparing Feynman amplitudes"},
+    Function[stage, With[{modes = caSupportStageModes[stage]},
+      modes =!= {} && AllTrue[modes, TrueQ]]]]];
+check["final candidate and standalone workers enable exact support",
+  caSupportStageModes["Preparing highenergy representative"] === {False} &&
+  caSupportStageModes["Standalone"] === {False}];
+check["private support policy preserves worker metadata and caller scope",
+  AllTrue[caPFSelected["Stages"]["Preparing diagrams"]["ItemReports"],
+    IntegerQ[Lookup[#, "WorkerKernel", None]] &] &&
+  FreeQ[Options[PrepareAmplitudes], "DeferExactTensorSupportPolish"] &&
+  OwnValues[ConstructiveDiagrams`Private`$deferExactTensorSupportPolish] === caSupportStateBefore];
+caPFSelectedModes=caPFModeHistory;
+check["an explicit benchmark validates the prepared fitted point with every normal independent obligation",
+ caPFSelected["Status"]==="COMPLETE"&&caPFSelectedModes==={True}&&
+ Together[caPFSelected["Amplitude"]-caExpression]===0&&
+ caPFSelected["RepresentativeSelection"]["RetainedFreeParameters"]==={caPolicyParameter}&&
+ caPFSelected["RepresentativeSelection"]["RetainedDirections"]==={caPolicyDirection}&&
+ Lookup[caPFSelected["RepresentativeSelection"]["ValidationReports"],"ParameterRules"]===caPolicyValidationSets&&
+ AllTrue[caPFSelected["RepresentativeSelection"]["ValidationReports"],
+  AllTrue[#["Report"]["Checks"],#["Status"]==="PASS"&]&&
+   #["Report"]["FeynmanCheck"]["Status"]==="PASS"&]&&
+ caPFSelected["Stages"]["Preparing highenergy representative details"]["Options"]["InternalOnShell"]===False&&
+ !TrueQ[caPFSelected["RepresentativeSelection"]["BenchmarkUsedForConstruction"]]];
+
+caPFWrong=Join[caPFReady,<|"Amplitude"->-caExpression,
+ "FamilyAmplitude"->-caExpression+caPolicyParameter caPolicyDirection|>];
+caPFRecovered=caPFRun[caPFWrong,caPolicyCompleteHE,True,"Return"];
+caPFRecoveredModes=caPFModeHistory;caPFRecoveredInputs=caPFInputHistory;
+check["a rejected fitted point resumes strict completion from the complete original source",
+ caPFRecovered["Status"]==="COMPLETE"&&caPFRecoveredModes==={True,False}&&
+ Length[caPFRecoveredInputs]===2&&SameQ@@caPFRecoveredInputs&&
+ !TrueQ[First[caPFRecovered["RepresentativeSelectionAttempts"]]["Selected"]]&&
+ KeyExistsQ[caPFRecovered["Stages"],"Rejected fitted high-energy representative"]&&
+ Together[caPFRecovered["Amplitude"]-caExpression]===0&&
+ AllTrue[caPFRecovered["Checks"]["Checks"],#["Status"]==="PASS"&]];
+
+caPFNoBenchmark=caPFRun[caPFReady,caPolicyUnfinishedHE,False,"Return"];
+caPFNoBenchmarkModes=caPFModeHistory;
+check["no-benchmark construction and standalone completion retain their strict contracts",
+ caPFNoBenchmark["Status"]==="FAILED"&&caPFNoBenchmarkModes==={False}&&
+ !TrueQ[caPFNoBenchmark["RepresentativeSelection"]["Selected"]]&&
+ caPolicyContactResult["Status"]==="UNDERDETERMINED"&&
+ !TrueQ[Lookup[caPolicyContactResult,"PointReady",False]]&&
+ caPolicyContactResult["FreeParameters"]==={caPolicyParameter}];
+
+caPFAbort=CheckAbort[caPFRun[caPFReady,caPolicyCompleteHE,True,"Abort"],"ABORTED"];
+caPFAfterAbort=OwnValues[ConstructiveDiagrams`Private`$completionHighEnergyPointFirst];
+caPFTimeout=TimeConstrained[caPFRun[caPFReady,caPolicyCompleteHE,True,"Wait"],8,"TIMED_OUT"];
+check["the private point-first mode cannot leak after normal return abort or timeout",
+ caPFAbort==="ABORTED"&&caPFTimeout==="TIMED_OUT"&&
+ caPFAfterAbort===caPFStateBefore&&
+ OwnValues[ConstructiveDiagrams`Private`$completionHighEnergyPointFirst]===caPFStateBefore];
+
+(* Static source contract. The tensor hook's complete call expression,
+   including its seed/rank arguments, must be in a disabled If branch for
+   unsupported external multiplicity. A guard inside tensorTrial is too late.
+   Inspect held definitions only; no amplitude or ranking function is called. *)
+caTensorCallsGuardedQ[] := Module[
+ {held, calls, assignments, guarded, gateConditionQ, ancestors, node, conditions},
+ held=With[{definition=DownValues[ConstructiveDiagrams`Private`preparationOneAmplitude]},
+   HoldComplete[definition]];
+ calls=Position[held,
+   HoldPattern[ConstructiveDiagrams`Private`tensorTrial[arguments___]] /;
+     FreeQ[HoldComplete[arguments],_Pattern],{0,Infinity},Heads->False];
+ assignments=Cases[held,
+   HoldPattern[Set[ConstructiveDiagrams`Private`tensorEligible,rhs_]] :>
+     HoldComplete[rhs],{0,Infinity}];
+ gateConditionQ[value_]:=MatchQ[value,
+   HoldComplete[TrueQ[ConstructiveDiagrams`Private`tensorEligible]] |
+   HoldComplete[And[___,TrueQ[ConstructiveDiagrams`Private`tensorEligible],___]]];
+ guarded[path_List]:=AnyTrue[Range[0,Length[path]-1],Function[length,
+   ancestors=Take[path,length];
+   If[path[[length+1]]=!=2,False,
+    node=Extract[held,ancestors,HoldComplete];
+    conditions=Cases[node,HoldComplete[If[condition_,_,___]] :>
+      HoldComplete[condition],{0}];
+    Length[conditions]===1&&gateConditionQ[First[conditions]]]]];
+ Length[calls]===2&&AllTrue[calls,guarded]&&Length[assignments]===1&&
+   !FreeQ[assignments,HoldPattern[SameQ[Length[_Symbol],4]]]&&
+   !FreeQ[assignments,HoldPattern[ConstructiveDiagrams`Private`preparationExternalRules[_]]]&&
+   FreeQ[assignments,_ConstructiveDiagrams`Private`snapshotRank |
+     _ConstructiveDiagrams`Private`preparationRank |
+     _ConstructiveDiagrams`Private`expressionComplexity |
+     _ConstructiveDiagrams`Private`preparationNumerators |
+     _ConstructiveDiagrams`Private`rspFourLegTensorReduction]
+];
+
+check["tensor eligibility guards complete eager seed and rank arguments",
+ caTensorCallsGuardedQ[]];
+
 check["the constructor never mutates either supplied model",
   caModel === caOriginalModel && caFactorizationModel === caOriginalFactorizationModel];
-If[checks =!= 66, AppendTo[failures, "Not every construction assertion executed."]];
+If[checks =!= 82, AppendTo[failures, "Not every construction assertion executed."]];
 If[failures =!= {} && ValueQ[caPolicySelected],
   caPolicyDiagnosticDirectory = CreateDirectory[];
   Put[<|"Early" -> caPolicySelected, "Late" -> caPolicyLate,

@@ -36,7 +36,11 @@ TEST_SUITES = (
     "high-energy-dispatch-tests.wl", "high-energy-laurent-rows-tests.wl",
     "high-energy-laurent-jet-tests.wl",
     "high-energy-scalar-cache-tests.wl",
+    "high-energy-constraint-basis-tests.wl",
+    "high-energy-tensor-zero-tests.wl",
     "high-energy-source-normalization-tests.wl", "high-energy-affine-atom-tests.wl",
+    "high-energy-fitting-specialization-tests.wl",
+    "high-energy-affine-chunk-tests.wl",
     "retained-high-energy-validation-tests.wl",
     "amplitude-completion-tests.wl", "completion-input-fit-tests.wl",
     "exact-left-null-contradiction-tests.wl",
@@ -59,6 +63,8 @@ TEST_SUITES = (
     "model-isolation-tests.wl", "feynman-vertex-convention-tests.wl",
     "sm-field-convention-tests.wl", "numerator-momentum-complexity-tests.wl",
     "four-leg-tensor-reduction-tests.wl",
+    "four-leg-tensor-continuation-tests.wl",
+    "four-leg-tensor-pole-group-tests.wl",
     "plain-text-tests.wl", "model-export-tests.wl", "qed-model-export-tests.wl",
     "six-point-completion-tests.wl",
     "preparation-remainders-tests.wl",
@@ -77,6 +83,7 @@ TEST_SUITES = (
 # These execute full expensive notebook constructions rather than component
 # regressions. Select them explicitly and give the external runner enough time.
 INTEGRATION_TEST_SUITES = ("sm-charged-current-integration-tests.wl",
+                          "sm-vector-construction-integration-tests.wl",
                           "physical-construction-integration-tests.wl",
                           "seven-point-construction-integration-tests.wl",
                           "seven-point-spurious-construction-integration-tests.wl",

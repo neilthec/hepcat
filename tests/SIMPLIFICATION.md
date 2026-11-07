@@ -87,12 +87,39 @@ that temporarily expand a chain or move scalar momentum products back into
 spinor products. The search uses no known amplitude or numerical kinematics.
 Its numerical optimizer only proposes coefficients: exact rational identity
 replay, reversible mass scaling and reconstruction are required for acceptance.
+If a numerical proposal identifies monomials that should cancel, preparation
+can solve that small subset of coefficient equations exactly. A cancellation
+must be literal zero in the original coordinates and pass the full identity
+replay. Failed or unfinished exact solves keep the ordinary candidates; small
+coefficients are never simply dropped.
+`ConstructAmplitude` uses this optional cleanup during final preparation so
+that choosing a display form does not change its earlier correction sources.
 Propagators stay off shell and their arguments remain unchanged. Other kinematic
 inverse factors remain opaque. Four-fermion sectors, massless legs, undeclared
 momenta, unsupported spin indices and larger multiplicities retain their
 existing reduction route. The finite clock retains the best complete checkpoint.
 This context-dependent search belongs to `PrepareAmplitudes`, not standalone
 `ReduceSpinorProducts`.
+Completed improvements can be revisited under several reversible typed label
+frames, changing which complementary momentum is eliminated by conservation.
+The passes share the original finite budget and retain only strictly better
+complete results. Each frame keeps its exact core replay and restores all
+external labels and inverse arguments. Whole amplitudes receive another
+ordinary tensor attempt after chain reduction, so an initially long chain
+does not permanently exclude the search.
+When only the whole-expression size or momentum-branching guards decline,
+preparation can protect the original inverse factors and group terms by those
+unchanged spectators. The same ordinary tensor identities then act on smaller
+numerators, with unchanged per-group guards and one shared allowance of up to
+ten seconds. Exact protected-sum reconstruction and each local replay are
+retained. A checkpoint is accepted only when the complete reassembled expression
+improves and no inverse argument changes. No process or model-name rules,
+numerical model rewrites or internal-shell assumptions enter this fallback.
+On the actual independently validated four-W construction, this grouping reduced
+complexity 3059 to 192; the result separately passed all normal checks and raw
+Feynman comparison at three model-consistent parameter assignments with new
+samples. This is a measured reduction, not a claim of a global minimum.
+
 
 The complexity score counts numerator momentum degree consistently: each chain
 or trace insertion contributes one unit; `MomProd`, `Mandelstahm` and a momentum
@@ -1500,11 +1527,35 @@ With an explicit `"FeynmanModel"`, the wrapper can test one fixed constructive
 representative before spending its clock proving every retained family direction
 identically zero. It first considers the prepared factorization point when that
 report has free coordinates. It can also test a finite point retained by an
-unresolved or underdetermined high-energy stage. Acceptance requires every
-physical channel, automatic spurious-pole cancellation, high-energy behavior,
-reference independence and independent Feynman agreement at the normal
-validation parameter assignments. A failed or incomplete attempt continues the
-remaining workflow when its shared time budget allows.
+unresolved or underdetermined high-energy stage.
+
+With this explicit independent benchmark, a first complete exact energy chart
+also provides a useful early proposal. Its rows are solved together with the
+actual physical-channel constraints already obtained, giving a fixed
+constructive hypothesis. The chart covers its supported spin components at its
+own kinematics. Other energy directions and parameter assignments remain
+unvisited, and the retained correction coordinates have not all been
+classified. Details keep those coordinates and obligations in the high-energy child
+report's `"PointReadyCheckpoint"`, including unvisited spurious and reference
+fit groups. `"AllFitGroupsComplete"` and `"FamilyUniquenessEstablished"` remain
+False there; this stage does not claim a complete fit or a completed amplitude
+family.
+
+The wrapper prepares that fixed hypothesis using ordinary external identities
+before validation. Acceptance requires every original physical channel,
+automatic spurious-pole cancellation, high-energy behavior, reference
+independence and independent full-amplitude Feynman agreement at **all** resolved
+independent validation parameter assignments. These include all three
+automatic assignments for the bundled SM. Normal held-out seeds and sample
+counts remain in force. Passing the first fit chart does not replace any of
+these checks.
+
+A failed, incomplete or opposite-sign hypothesis returns to strict completion
+in the **original correction space**, with its original retained input and
+unvisited obligations, when the shared time budget allows. The first-chart
+restriction is not promoted to a complete family or used to discard further
+work. The ordinary stage and final preparation never apply internal on-shell
+conditions to the assembled hypothesis.
 
 The benchmark is generated once and used only for validation. It is not a source
 of correction terms, fitted coefficients or a replacement formula. Details keep
@@ -2911,6 +2962,50 @@ not survive the chart, a changed parameter assignment, a timeout or an abort.
 Failures and approximate expressions are not cached. Every original spin
 component, Laurent-order certificate and equation remains required.
 
+For a single energy-fit assignment, the requested exact masses and couplings
+can also be inserted before the affine parts and repeated-monomial catalog
+are expanded. Equal coefficients then combine before a large intermediate
+matrix is built. The symbolic amplitude and its original correction family
+are unchanged outside the fitter, and every original coefficient remains
+coupled. `"FittingParameterSpecialization"` records this local evaluation;
+its reconstruction is at the recorded assignment, not an identity at every
+parameter value. Inexact or nonfinite values decline the shared-catalog
+shortcut. A detected parameter or mass rule involving a correction, energy or
+spin coordinate stops this energy fit as `UNRESOLVED`, with a
+`FittingCoordinateCollision` diagnostic, before whole-family mapping. Typed
+external mass rules do not replace integer particle labels or unrelated
+coefficients.
+
+The local catalog scheduling estimate scales with its measured work.
+`"ChartWorkloadBudget"` is this soft estimate; `"ChartTimeConstraint"` records
+the separate finite hard allowance. Both stay inside the same high-energy
+stage and overall construction deadlines. The soft estimate is not an extra
+hard deadline and cannot extend a shorter explicit allowance. No public option is added, and no Laurent
+coefficient, requested parameter assignment or validation check is omitted.
+
+If the whole affine family exceeds the single-catalog size guard, the
+calculation can split its original correction coordinates into bounded blocks.
+An exact reversible opaque-coefficient projection proves that the blocks
+reconstruct the original family. The constant part appears once, and every
+original coefficient appears once in the same order. Every block retains
+complete Laurent-order and spin coverage on the same chart and parameter
+assignment. Its coefficients keep their original normalization; matching
+Laurent/spin rows are summed across all blocks before one simultaneous solve.
+This retains cancellations between coefficients in different blocks. The
+initial catalog attempt and all blocks share one hard chart deadline and
+memory bound inside the existing stage deadline. A failed or incomplete block
+attempt returns `UNRESOLVED` with its diagnostic, retaining the original family
+and unfinished obligations. It does not retry the same oversized family via
+whole-expression mapping. Partial block coverage is not accepted, and no new
+public option or correction coefficient is added.
+
+A supported homogeneous tensor can also use an energy-only external spinor
+basis with constant angular normalization factors removed. Exact basis and
+spinor identities certify a single nonzero factor, independent of the energy
+variable, for the entire affine family. This preserves all growth powers and
+coupled equations. Details records `ConstraintBasisRescaling`. Physical-pole,
+reference and absolute Feynman comparisons retain normalized states.
+
 Resource defaults are `Automatic`, using the finite workload policy described
 above. Fit sampling starts at four, independent validation remains four, and
 explicit numeric settings are preserved. The retained family, rather than an
@@ -2931,6 +3026,11 @@ complete family. This avoids expanding a large family merely to extract the
 same coefficients again. Missing or inconsistent metadata takes the ordinary
 coefficient-extraction path; nonlinear families and unproved directions remain
 explicit. Reusing coefficients is not itself an identity-zero certificate.
+A bounded four-leg tensor attempt can prove an ordinary identity before
+expanding dependent model parameters. Only a literal zero with its complete
+replay removes a direction; the original direction stays in the certificate.
+A nonzero improvement remains available to the ordinary proof portfolio.
+
 Unrecognized identity-zero directions previously caused false `UNDERDETERMINED` results for some five-point
 helicity orderings. Completion now removes only directions with an exact
 external-identity certificate. The proof retains the original expression,

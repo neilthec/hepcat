@@ -132,7 +132,11 @@ unchanged. The same ordinary grouping can precondition a large vector \
 direction before its exact identity proof. The shorter expression must still \
 receive an exact zero certificate before a coefficient is removed; the full \
 original direction and the reduction steps stay in the report, and an \
-unfinished proof keeps the original fallback."}], "Notes"],
+unfinished proof keeps the original fallback. A short tensor-identity attempt \
+can prove a supported four-leg direction zero before those parameter \
+definitions are expanded. It removes a coordinate only when the complete \
+result is literally zero and the exact ordinary-identity route is retained; a \
+lower complexity alone is insufficient."}], "Notes"],
   Cell[TextData[{"For a large affine vector family, repeated typed spinor \
 monomials can be expanded once on the same conserved energy chart and \
 recombined through their exact original coefficient map. Every source part is \
@@ -146,7 +150,55 @@ monomials without changing their equations. The bounded cache is cleared \
 before the next chart or parameter assignment; failures and approximate \
 inputs are not stored. A failed certificate cannot become a passing equation, \
 and the existing expansion remains available when the bounded shared \
-calculation is unsupported."}], "Notes"],
+calculation is unsupported. Supported homogeneous spin tensors also admit \
+constant rescalings of outgoing massive spinor solutions in the energy \
+equations. Removing angular normalization radicals makes the series simpler. \
+Exact entrywise identities and one nonzero, energy-independent factor for the \
+entire affine family certify that every spin component and every forbidden \
+energy power is retained. Physical residues, reference tests and Feynman \
+comparisons use the normalized external states."}], "Notes"],
+  Cell[TextData[{"Within one energy fit, the exact masses and couplings \
+already requested for that parameter assignment can be inserted before the \
+affine parts and repeated-monomial catalog are expanded. Combining equal \
+coefficients earlier avoids building an unnecessarily large intermediate fit \
+matrix. This changes when those same numerical values are evaluated, not the \
+symbolic amplitude or its correction family. Every original affine coordinate \
+remains coupled. Inexact or nonfinite assignments decline this shared-catalog \
+shortcut. If the catalog detects a parameter or mass rule involving a \
+correction coefficient, energy coordinate or spin coordinate, the caller \
+instead stops the energy fit as UNRESOLVED with a FittingCoordinateCollision \
+diagnostic before whole-family mapping. Details records the local scope in ",
+     Cell[BoxData[RowBox[{"\"FittingParameterSpecialization\""}]],
+      "InlineFormula"], "; it does not claim an identity across all parameter \
+assignments. No integer particle labels or unrelated numerical coefficients \
+are replaced globally."}], "Notes"],
+  Cell[TextData[{"The private scheduling estimate for a catalog scales with \
+its measured work. Details records this soft estimate as ",
+     Cell[BoxData[RowBox[{"\"ChartWorkloadBudget\""}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{",", " ", "alongside", " ", "the", " ", "finite",
+         " ", "hard", " ", "allowance", " "}]], "InlineFormula"],
+     Cell[BoxData[RowBox[{"\"ChartTimeConstraint\""}]], "InlineFormula"], ". \
+Both remain inside the existing high-energy stage and overall construction \
+deadlines; a soft work estimate does not extend either clock or a shorter \
+explicit allowance. This scheduling choice changes no Laurent coverage, fit \
+equations, validation assignments or required checks, and requires no new \
+public option."}], "Notes"],
+  Cell[TextData[{"If the affine family exceeds the single-catalog size guard, \
+the energy calculation can use blocks of the original correction coordinates. \
+An exact reversible bookkeeping proof reconstructs the whole family from \
+those blocks, with the constant part included once and every coefficient \
+retained in its original order. Each block must complete the same Laurent \
+orders and spin coverage on the same chart. The resulting coefficients keep \
+their original normalization and are added across blocks before the \
+simultaneous solve, so cancellations between different correction coordinates \
+remain available. All blocks share one hard chart deadline and memory bound \
+within the existing stage deadline. No independent block coefficients, extra \
+fit assumptions or public options are introduced; Details retains the block \
+reconstruction and coverage certificates. If a block cannot finish or its \
+reconstruction or coverage certificate fails, the energy fit returns \
+UNRESOLVED with its diagnostic. The same oversized family is not sent back \
+through whole-expression mapping; the original symbolic family and its \
+unfinished obligations remain retained."}], "Notes"],
   Cell[TextData[{"For larger spin tensors, the high-energy equations are \
 formed from separate exact scalar Laurent series. The correction coefficients \
 remain coupled in each spin-component equation, including its constant term; \

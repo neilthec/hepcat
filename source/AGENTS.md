@@ -157,9 +157,33 @@ only a proposal step; exact rational linear replay, literal cofactor witnesses,
 reversible mass scaling and complete reconstruction are mandatory. Keep model
 parameters symbolic and all internal lines off shell in this route. Preserve
 physical propagator arguments and whole composite/spinor inverse factors.
+When the optimizer proposes that particular monomials vanish, a short exact
+linear solve may enforce those cancellations in the original identity space.
+Replay the proposed zeros exactly before the existing full identity replay and
+rank comparison. Never discard a small coefficient by numerical tolerance.
+An inconsistent or unfinished exact solve leaves the ordinary candidates intact.
+Within `ConstructAmplitude`, defer this optional cleanup while building and
+fitting the retained correction directions. Enable it in the final preparation
+of a fixed result. Forward the private defer setting in the preparation worker
+options so the serial and parallel paths use the same rules.
 Never abstract a distinct numerical mass through a global number replacement:
 the same number can be a leg label or an unrelated coefficient. Such mass
 encodings must retain the ordinary route until the abstraction is typed.
+The bounded facade can revisit completed improvements in several reversible
+typed label frames. Preserve each core replay inside its frame witness, map
+external mass rules in the same typed positions, and restore every inverse
+argument exactly. Frames share the caller clock and stop without an improving
+endpoint; neither couplings nor raw numerical coefficients are relabelled.
+When only the whole-expression size or momentum-branching guards decline,
+`rspFourLegTensorReduction` can group the original expression by exact inverse
+spectators and apply the same ordinary identities to the smaller numerators.
+The per-group guards are unchanged. All grouping, frames and groups share the
+caller's finite budget, capped at ten seconds; do not reset that deadline per
+group. Require exact protected-sum reconstruction, unchanged inverse arguments
+and a strictly improved full-expression rank at every published checkpoint.
+Retain each local core certificate in the outer group witness. This route must
+not depend on process names, model names, numerical model values or internal
+on-shell conditions.
 Only complete, strictly improving candidates may be published or retained on a
 timeout. Unsupported inputs keep the established route. The independent WW/ZZ
 input fixtures contain no compact target answer. Do not rerun all symbolic row
@@ -171,6 +195,10 @@ per implicit monomial. An insertion counts one, a dot product or invariant two,
 and positive powers multiply the count. Inverse factors are excluded. Old
 literal score bounds must be recalibrated only with measured unchanged formulas
 and retained algebraic/physical checks, not relaxed to hide a regression.
+The high-energy zero-proof portfolio may try this exact tensor quotient before
+expanding model definitions. Require a literal zero endpoint and the complete
+ordinary replay, retaining the original direction. A shorter nonzero expression
+is never a reason to discard its coefficient.
 
 ## Independent Feynman Benchmark
 
@@ -265,6 +293,26 @@ physical, spurious, high-energy and reference checks, plus the independent
 Feynman comparison, at the ordinary parameter-validation sets. Preserve every
 unclassified direction in details and state that uniqueness was not proved.
 The benchmark never supplies construction terms or fitted coefficients.
+
+Only with that explicit independent `FeynmanModel`, the wrapper may propose a
+fixed high-energy hypothesis after the first complete exact energy chart and
+the actual physical-channel constraints have supplied a particular solution.
+Keep every unclassified affine coordinate and every unvisited fit chart,
+parameter assignment and spurious/reference fit group in the detailed report.
+The high-energy child records this inventory in `PointReadyCheckpoint`; its
+`AllFitGroupsComplete` and `FamilyUniquenessEstablished` remain false. One complete chart is not a
+complete fit or a proof about the whole family. The parent wrapper must first
+prepare the hypothesis with ordinary external identities, then pass every
+normal physical, automatic spurious-pole, high-energy and reference check plus
+the independent full-amplitude Feynman comparison at all resolved independent
+validation assignments, including all three automatic assignments for the
+bundled SM. Preserve the usual held-out seeds, sample counts and signs. A
+rejected, incomplete or opposite-sign hypothesis must fall back to the ORIGINAL
+strict correction space and retained input. It must not silently discard
+unvisited obligations or continue as though the first-chart restriction were
+complete. Direct `CompleteHighEnergy` calls and construction without an explicit
+independent Feynman model retain their strict behavior.
+
 Colored optional benchmarks are converted once and projected into a common
 exact color basis with diagrams and original channels, including benchmark-only
 tensors. Keep each projected benchmark coefficient and its Feynman model
@@ -1577,11 +1625,53 @@ content and canonical eligibility must be verified before reuse.
 Every Laurent route, including whole-expression fallbacks, must certify Series
 zero assumptions even when the caller disables their warnings. Never accept a
 quiet fallback after a rejected exact-zero assumption.
+Energy constraints and growth diagnostics may use a separate constant basis
+normalization for homogeneous external spin tensors. Require exact entrywise
+Weyl-basis and actual-spinor identities, invertibility, homogeneous degrees
+for the full affine family and one nonzero energy-independent common factor.
+Keep all coherent components and requested Laurent powers. These unnormalized
+charts must never enter physical residues, reference comparisons, absolute
+Feynman comparisons or spin sums. Unsupported inputs keep normalized charts.
 Dense affine energy charts may reuse exact typed monomials before mapping or
 series expansion. Verify the complete original affine reconstruction, retain
 every coefficient coordinate and coherent-spin component, and check each jet's
-coverage before composing the original coupled equations. Certified scalar
-series may be reused under exact expression, variable and order keys within
+coverage before composing the original coupled equations. The fitter may apply
+its already requested exact scalar-parameter rules and typed external-mass
+rules before affine expansion and catalog-size checks. Preserve the original
+symbolic family outside the fitter and reconstruct the complete original
+family at that recorded assignment, not a claimed identity at all parameter
+values. Decline this catalog shortcut for inexact or nonfinite assignments.
+Propagate a detected parameter/mass rule collision with an affine coefficient,
+energy variable or coherent-spin coordinate as terminal `UNRESOLVED` with the
+`FittingCoordinateCollision` diagnostic, before whole-family mapping. Never
+replace numerical mass values globally: they can also be particle labels or
+unrelated coefficients. Keep the specialization local to one fit assignment
+and retain its `FittingParameterSpecialization` certificate. The chart's
+catalog scheduling estimate may scale with measured work. Record the soft
+`ChartWorkloadBudget` separately from the finite hard `ChartTimeConstraint`;
+keep both inside the unchanged high-energy and constructor deadlines. The
+soft estimate cannot extend a shorter explicit allowance or reduce coverage,
+sampling or obligations.
+This introduces no new public option.
+
+Only the original affine-size guard can open the coordinate-block catalog
+fallback. Prove the input affine, freeze coefficient expressions reversibly,
+and retain the exact opaque-coefficient round trip and whole-family block
+reconstruction. Include the center once and every original coefficient once,
+in its original order. Every block must certify complete spin and Laurent
+coverage on the same chart and fitting assignment. Preserve the original row
+normalization, sum matching Laurent/spin keys across all completed blocks,
+and only then solve the coupled system. Do not solve blocks independently or
+introduce new block coefficients. The initial catalog attempt and every block
+share one hard chart deadline, capped at 240 seconds or the remaining shorter
+allowance, and a memory bound inside the unchanged stage deadline. An
+unfinished block is not a complete set of equations. A failed or incomplete
+block attempt must return terminal `UNRESOLVED` with its diagnostic before any
+oversized whole-family mapping retry on that chart. Retain the original
+symbolic family and every unfinished obligation. Keep these certificates in
+Details; this adds no public option or physics assumption.
+
+Certified scalar series may be reused under exact expression, variable and order keys within
 one energy chart. Keep this bounded cache dynamically scoped to the chart;
 never retain failures, approximate inputs, or state between charts and parameter
 assignments. A timeout or abort must restore the prior cache state. Sharing

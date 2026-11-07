@@ -123,10 +123,32 @@ remove momentum products or several insertions together even when no single \
 greedy edit improves the expression. It uses the supplied expression and \
 external masses, without a known target amplitude. An optimizer may propose \
 coefficients, but an exact rational replay through the ordinary identities is \
-required before accepting the result. Physical propagator arguments and other \
-kinematic inverse factors remain protected, and the route adds no \
-internal-shell assumption. Unsupported sectors keep the existing route. \
-Detailed output records the accepted identity certificates."}], "Notes"],
+required before accepting the result. If its proposal identifies monomials \
+that should cancel, a small exact linear solve can enforce those zeros using \
+the same identities. Every cancellation must replay exactly. If that solve \
+fails, the ordinary candidates remain available; no small term is dropped by \
+tolerance. ", ButtonBox["ConstructAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ConstructAmplitude"], " uses this \
+optional cleanup on the final fixed expression, after it has built and fitted \
+the correction family. Physical propagator arguments and other kinematic \
+inverse factors remain protected, and the route adds no internal-shell \
+assumption. Unsupported sectors keep the existing route. Detailed output \
+records the accepted identity certificates. Within its shared time budget, \
+the search can revisit a shortened result and compare several reversible \
+choices of external-label frame. This exposes momentum-conservation \
+identities that a single canonical choice can miss. Each accepted endpoint \
+must strictly improve the complete expression and carry its exact replay. \
+Completed amplitudes are tried again after ordinary chain reduction, which \
+can make a previously unsupported long chain eligible. If the complete \
+four-leg expression exceeds the size or momentum-branching guard, preparation \
+can instead group its terms by their original inverse propagator spectators. \
+Each smaller numerator receives the same bounded ordinary identities; its \
+local guards are unchanged. The groups share one finite allowance of up to \
+ten seconds, and an accepted checkpoint must improve the rank of the complete \
+reassembled expression. Exact group reconstruction and inverse-preservation \
+certificates accompany the local identity routes. This changes algebraic \
+grouping, not the amplitude: no internal on-shell condition, process-specific \
+formula or numerical model substitution is introduced."}], "Notes"],
   Cell["On-shell conditions and protected denominators", "NotesSection"],
   Cell[TextData[{ButtonBox["ReduceSpinContractions", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ReduceSpinContractions"], " and ",

@@ -26,6 +26,21 @@ comma-separated replay seeds. Full diagnostic reports are written to the
 temporary directory printed by the suite. This test is not added to every
 small identity-edit validation run.
 
+The opt-in `sm-vector-construction-integration-tests.wl` runs the `ZZWW` and
+`WWWW` notebook constructions with automatic effort settings and no known
+formula. It checks every physical channel, the final high-energy and reference
+tests, the independent Feynman comparison, and the physical-only denominators
+and compact final scores. When the constructor selects a point in a retained
+affine family, the suite also checks all three validation parameter assignments.
+
+```sh
+python3 tests/checks/run-wolfram-tests.py \
+  --suite sm-vector-construction-integration-tests.wl --timeout 1800
+```
+
+Set `HEPCAT_SM_VECTOR_CASES=ZZWW` or `WWWW` to select one case. Use the
+four-leg tensor and high-energy component suites for quicker development checks.
+
 ## Running the suites
 
 Run the complete Wolfram suite from the repository root:

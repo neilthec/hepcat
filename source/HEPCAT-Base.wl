@@ -5194,11 +5194,57 @@ ComplicateAmplitude[pair:{_List, _}, nSteps_Integer:5, OptionsPattern[]] :=
 End[];
 
 Begin["ConstructiveDiagrams`Private`"];
+(* Use the numerical optimizer only to propose zero coordinates and identity
+   columns. Correct the rational seed in that exact column space, then replay
+   every proposed zero, including rows already zero in the seed. *)
+rspPolishExactIdentitySupport[identityMatrix_SparseArray, sourceVector_List,
+    proposal_List, seedCoefficients_List, seconds_] := Module[
+  {coordinateCount = Length[sourceVector], identityCount = Length[seedCoefficients],
+   exactRationalQ},
+  exactRationalQ[value_] := MatchQ[value, _Integer | _Rational];
+  If[!TrueQ[seconds >= .015] || Dimensions[identityMatrix] =!= {coordinateCount, identityCount} ||
+      Length[proposal] =!= 2 coordinateCount + identityCount,
+    Return[Missing["ExactSupportGuard"]]];
+  TimeConstrained[Module[
+    {activeColumns, proposedZeros, seedResidual, supportMatrix, activeRows,
+     correction, coefficients, exactResidual},
+    activeColumns = Flatten[Position[Abs[Take[proposal, -identityCount]],
+      value_ /; TrueQ[value > 10^-10], {1}, Heads -> False]];
+    proposedZeros = Select[Range[coordinateCount],
+      Abs[proposal[[#]]] + Abs[proposal[[coordinateCount + #]]] <=
+        10^-9 Max[1, Abs[sourceVector[[#]]]] &];
+    If[activeColumns === {} || proposedZeros === {} || Length[activeColumns] > 192 ||
+        Length[proposedZeros] > 1800 || !VectorQ[seedCoefficients, exactRationalQ] ||
+        !VectorQ[sourceVector, exactRationalQ] ||
+        !VectorQ[identityMatrix["NonzeroValues"], exactRationalQ],
+      Return[Missing["ExactSupportGuard"]]];
+    seedResidual = (sourceVector + identityMatrix.seedCoefficients)[[proposedZeros]];
+    If[seedResidual === ConstantArray[0, Length[proposedZeros]],
+      Return[Missing["AlreadyExactSupport"]]];
+    supportMatrix = identityMatrix[[proposedZeros, activeColumns]];
+    activeRows = Union[First /@ supportMatrix["NonzeroPositions"],
+      Flatten[Position[seedResidual, value_ /; value =!= 0, {1}, Heads -> False]]];
+    If[Length[activeRows] > 512, Return[Missing["ExactSupportRowGuard"]]];
+    correction = Quiet[Check[LinearSolve[supportMatrix[[activeRows, All]],
+      -seedResidual[[activeRows]]], $Failed]];
+    If[!VectorQ[correction, exactRationalQ] || Length[correction] =!= Length[activeColumns],
+      Return[Missing["InconsistentExactSupport"]]];
+    coefficients = ReplacePart[seedCoefficients,
+      Thread[activeColumns -> (seedCoefficients[[activeColumns]] + correction)]];
+    exactResidual = (sourceVector + identityMatrix.coefficients)[[proposedZeros]];
+    If[exactResidual =!= ConstantArray[0, Length[proposedZeros]],
+      Return[Missing["ExactSupportReplayFailed"]]];
+    <|"Coefficients" -> coefficients, "ZeroIndices" -> proposedZeros,
+      "ActiveColumns" -> activeColumns, "ExactSupportReplay" -> True|>
+  ], Min[.30, seconds], Missing["ExactSupportTimeLimit"]]
+];
+
+
 (* A finite quotient of ordinary four-leg spinor identities. Repeated
    endpoints describe coherent massive vectors, not distinct dummy particles.
    The numerical LP proposes coefficients in an exact identity space only;
    every accepted candidate is reconstructed with rational coefficients. *)
-rspFourLegTensorReduction[expression_, externalRules_List, conserve_ : True,
+rspFourLegTensorReductionCore[expression_, externalRules_List, conserve_ : True,
     seconds_ : 3, checkpoint_ : None] := Module[
   {started = AbsoluteTime[], budget, remaining, stopTag = Unique["tensorLimit"],
    best, bestRank, outcome, rules, groupedRules, legs, masses, massScale,
@@ -5393,7 +5439,7 @@ rspFourLegTensorReduction[expression_, externalRules_List, conserve_ : True,
        rowWitnesses = {}, rowMap, allRows, witnesses, coordinates, keys, index,
        entries, matrix, vector, weights, lpMatrix, costs, inequalities, proposal,
        coefficients, candidate, factored, candidateRank, sectorBest = input,
-       sectorBestRank = rank[input], sectorRecord, cofactor, identity, frontier,
+       sectorBestRank = rank[input], sectorRecord, supportPolish, cofactor, identity, frontier,
        chains, used, residual, nodes, witnessFirst, witnessSecond, limited = False, columnCount, rowCount},
       sourceCoordinates = coordinateRules[source]; front = Keys[sourceCoordinates];
       If[Length[front] > 768, Return[Null]];
@@ -5439,8 +5485,15 @@ rspFourLegTensorReduction[expression_, externalRules_List, conserve_ : True,
           "PrimalMinimizer", Method -> "CLP", Tolerance -> 10^-10], $Failed]];
         If[VectorQ[proposal, NumericQ] && Length[proposal] === 2 columnCount + rowCount,
           Do[
-            coefficients = Map[If[Abs[#] < tolerance, 0, Rationalize[#, tolerance]] &,
-              Take[proposal, -rowCount]];
+            supportPolish = None;
+            If[tolerance === "ExactSupport",
+              (* The preceding fine rational candidate supplies the seed. *)
+              supportPolish = rspPolishExactIdentitySupport[matrix, vector,
+                proposal, coefficients, remaining[]];
+              If[!AssociationQ[supportPolish], Continue[]];
+              coefficients = supportPolish["Coefficients"],
+              coefficients = Map[If[Abs[#] < tolerance, 0, Rationalize[#, tolerance]] &,
+                Take[proposal, -rowCount]]];
             candidate = Expand[source + Total[MapThread[Times, {coefficients, allRows}]]];
             factored = Factor[candidate]; candidateRank = rank[factored];
             If[!finiteQ[factored] || !better[candidateRank, sectorBestRank], Continue[]];
@@ -5454,8 +5507,14 @@ rspFourLegTensorReduction[expression_, externalRules_List, conserve_ : True,
               "OrdinaryIdentities" -> allRows[[used]], "IdentityWitnesses" -> witnesses[[used]],
               "ExactLinearCombinationResidual" -> residual,
               "ExactFactorizationResidual" -> 0, "InternalOnShellConditions" -> {}|>;
+            If[AssociationQ[supportPolish],
+              AssociateTo[sectorRecord, "ExactLPSupportPolish" -> Join[
+                KeyDrop[supportPolish, "Coefficients"],
+                <|"ProposedZeroMonomials" -> keys[[supportPolish["ZeroIndices"]]]|>]]];
             sectorBest = factored; sectorBestRank = candidateRank;
-            callback[sectorBest, sectorRecord], {tolerance, {10^-4, 10^-6}}]];
+            callback[sectorBest, sectorRecord],
+            {tolerance, If[TrueQ[$deferExactTensorSupportPolish],
+              {10^-4, 10^-6}, {10^-4, 10^-6, "ExactSupport"}]}]];
         front = DeleteDuplicates[frontier];
         If[front === {} || limited || remaining[] < 0.02, Break[]], {depth, 2}];
       Null];
@@ -5494,5 +5553,244 @@ rspFourLegTensorReduction[expression_, externalRules_List, conserve_ : True,
   Join[best, <|"TimedOut" -> MemberQ[{"TimeLimit", "MemoryLimit"}, outcome],
     "StopReason" -> outcome, "ElapsedTime" -> AbsoluteTime[] - started,
     "AcceptedCandidates" -> accepted, "InternalOnShellConditions" -> {}|>]
+];
+End[];
+
+Begin["ConstructiveDiagrams`Private`"];
+(* The exact quotient search is deliberately shallow. A shorter endpoint can
+   expose a fresh literal cofactor, and a different typed label frame changes
+   the complementary momentum chosen by the same ordinary identities. Keep
+   only monotone completed endpoints under one caller-owned deadline. *)
+rspFourLegTensorReductionFrames[expression_, externalRules_List, conserve_ : True,
+    seconds_ : 3, checkpoint_ : None] := Module[
+  {started = AbsoluteTime[], continuationCallback = checkpoint, budget, remaining, rules, legs, frames, best,
+   bestRank = None, rank, better, finiteQ, inversePowers, inverses,
+   inverseSafeQ, publish, source, prefix, forward, backward, renamed,
+   renamedRules, frame, trial, pass = 0, stale = 0, accepted = 0,
+   beforePass, attempts = {}, outcome, stop = "NoImprovingFrame", coreStop},
+  best = <|"Amplitude" -> expression, "Route" -> {}, "Status" -> "UNCHANGED"|>;
+  rules = Cases[externalRules, rule : HoldPattern[Mass[_Integer] -> _] :> rule];
+  legs = Sort[Cases[rules, HoldPattern[Mass[leg_Integer] -> _] :> leg]];
+  If[!TrueQ[conserve] || !TrueQ[NumericQ[seconds] && seconds > 0] ||
+      Length[legs] =!= 4 || !DuplicateFreeQ[legs] ||
+      MemberQ[Last /@ rules, 0],
+    Return[rspFourLegTensorReductionCore[expression, externalRules,
+      conserve, seconds, checkpoint]]];
+  budget = Min[10, seconds];
+  remaining[] := Max[0, budget - (AbsoluteTime[] - started)];
+  rank[value_] := {expressionComplexity[value], LeafCount[value]};
+  better[left_, right_] := left =!= right && OrderedQ[{left, right}];
+  finiteQ[value_] := FreeQ[value,
+    $Failed | $Aborted | $TimedOut | Indeterminate | _DirectedInfinity];
+  inversePowers[value_] := DeleteDuplicates[Cases[{value},
+    power : Power[base_, exponent_] /; !TrueQ[exponent >= 0] &&
+      !FreeQ[base, _PropDen | _SpinorChain | _SpinorTrace | _MomProd |
+        _Mandelstahm | _Mom | _Spinor] :> power, Infinity]];
+  inverseSafeQ[value_] := AllTrue[inversePowers[value], Function[inverse,
+    AnyTrue[inverses, Function[prior,
+      First[prior] === First[inverse] &&
+        (Last[prior] === Last[inverse] || TrueQ[
+          IntegerQ[Last[prior]] && IntegerQ[Last[inverse]] &&
+          Last[prior] <= Last[inverse] < 0])]]]];
+  frames = DeleteDuplicates[{legs, Reverse[legs], RotateRight[legs], RotateLeft[legs]}];
+  (* Each core callback belongs to one stable source and route prefix. A later
+     core checkpoint replaces that call's endpoint instead of appending an
+     incomplete route from another coordinate frame. *)
+  publish[record_Association] := Module[
+    {candidate, candidateRank, certificate, result, coreRoute, roundTrip},
+    If[Lookup[record, "Status", None] =!= "IMPROVED" ||
+        !ListQ[Lookup[record, "Route", None]] || record["Route"] === {} ||
+        !KeyExistsQ[record, "Amplitude"], Return[Null]];
+    coreRoute = record["Route"];
+    candidate = relabelLegs[record["Amplitude"], backward];
+    If[!finiteQ[candidate] || !inverseSafeQ[candidate], Return[Null]];
+    (* A core checkpoint has already passed every expansion guard. Until one
+       exists, do not eagerly expand the supplied input merely for ranking. *)
+    If[bestRank === None, bestRank = rank[expression]];
+    candidateRank = rank[candidate];
+    If[!better[candidateRank, bestRank], Return[Null]];
+    roundTrip = relabelLegs[renamed, backward];
+    If[roundTrip =!= source, Return[Null]];
+    certificate = <|"Operation" -> "TypedFrameFourLegTensorIdentities",
+      "Before" -> source, "After" -> candidate,
+      "ExternalMassRules" -> rules, "ForwardLabelMap" -> forward,
+      "InverseLabelMap" -> backward, "RenamedBefore" -> renamed,
+      "RenamedExternalMassRules" -> renamedRules,
+      "RenamedAfter" -> record["Amplitude"], "CoreRoute" -> coreRoute,
+      "ExactTypedRelabelingRoundTrip" -> True,
+      "ExactRestoredEndpoint" -> True, "InverseArgumentsPreserved" -> True,
+      "InternalOnShellConditions" -> {}|>;
+    result = <|"Amplitude" -> candidate, "Rank" -> candidateRank,
+      "Route" -> Append[prefix, certificate], "Status" -> "IMPROVED"|>;
+    (* Publish the complete amplitude and replay in one assignment. *)
+    {best, bestRank} = {result, candidateRank}; accepted++;
+    If[continuationCallback =!= None, continuationCallback[result]]
+  ];
+  outcome = TimeConstrained[
+    inverses = inversePowers[expression];
+    While[pass < 12 && remaining[] > 0.01,
+      pass++; beforePass = accepted;
+      source = best["Amplitude"]; prefix = best["Route"];
+      frame = frames[[Mod[pass - 1, Length[frames]] + 1]];
+      forward = AssociationThread[legs, frame];
+      backward = AssociationThread[frame, legs];
+      renamed = relabelLegs[source, forward];
+      renamedRules = relabelLegs[rules, forward];
+      trial = rspFourLegTensorReductionCore[renamed, renamedRules, True,
+        Min[3, Max[0.000001, remaining[]]], publish];
+      If[AssociationQ[trial], publish[trial]];
+      coreStop = If[AssociationQ[trial], Lookup[trial, "StopReason", "InputDeclined"],
+        "UnavailableCoreResult"];
+      AppendTo[attempts, Join[If[AssociationQ[trial],
+        KeyTake[trial, {"Status", "TimedOut", "StopReason", "ElapsedTime"}], <||>],
+        <|"Pass" -> pass, "LabelFrame" -> frame,
+          "AcceptedCheckpoints" -> (accepted - beforePass)|>]];
+      If[accepted === beforePass, stale++, stale = 0];
+      If[!MemberQ[{"Complete", "TimeLimit", "MemoryLimit"}, coreStop],
+        stop = coreStop; Break[]];
+      If[stale >= Length[frames], stop = "NoImprovingFrame"; Break[]];
+      stop = If[pass >= 12, "PassLimit", "SharedTimeBudget"]]; True,
+    Max[0.000001, remaining[]], False];
+  Join[best, <|"Iterations" -> attempts, "AcceptedCandidates" -> accepted,
+    "TimedOut" -> (!TrueQ[outcome] || remaining[] <= 0.01),
+    "StopReason" -> If[!TrueQ[outcome], "SharedTimeBudget", stop],
+    "ElapsedTime" -> AbsoluteTime[] - started,
+    "InternalOnShellConditions" -> {}|>]
+];
+End[];
+
+Begin["ConstructiveDiagrams`Private`"];
+(* Only the guarded four-massive-leg tensor scope may partition an oversized
+   expression. Complete inverse bases are spectators, including their widths. *)
+rspFourLegTensorPoleGroupCandidateQ[expression_, externalRules_List] := Module[
+  {rules, legs, masses, inverses},
+  rules = Cases[externalRules, rule : HoldPattern[Mass[_Integer] -> _] :> rule];
+  legs = Sort[Cases[rules, HoldPattern[Mass[leg_Integer] -> _] :> leg]];
+  If[Length[legs] =!= 4 || !DuplicateFreeQ[legs] ||
+      AnyTrue[rules, !MatchQ[Last[#], _Symbol | _ModelParameter | _Integer | _Rational] || Last[#] === 0 &] ||
+      LeafCount[expression] > 160000 ||
+      !FreeQ[expression, Power[_SpinorChain, n_Integer /; n > 4]] ||
+      !FreeQ[expression, _SpinorTrace | _SpinorHat | _MomHat | _MomQ | _SpinorEps |
+        _sigma | _Dot | _NonCommutativeMultiply | _xFactor | _xTildeFactor |
+        _ColorGenerator | _ColorDelta | _ColorStructure | _ColorTrace], Return[False]];
+  masses = (Mass /@ legs) /. rules;
+  If[AnyTrue[Rest[DeleteDuplicates[masses]], NumberQ], Return[False]];
+  If[LeafCount[expression] <= 28000 && rspSandwichExpansionCount[expression] <= 512,
+    Return[False]];
+  inverses = DeleteDuplicates[Cases[{expression},
+    power : Power[base_, exponent_] /; !TrueQ[exponent >= 0] &&
+      !FreeQ[base, _PropDen | _SpinorChain | _MomProd | _Mom | _Spinor] :> power, Infinity]];
+  Length[inverses] >= 2
+];
+
+(* Preserve the ordinary whole-packet search. If only its size guards decline,
+   exact inverse spectators can expose several smaller independent packets.
+   Every group uses the same ordinary identities and external mass scope. *)
+rspFourLegTensorReduction[expression_, externalRules_List, conserve_ : True,
+    seconds_ : 3, checkpoint_ : None] := Module[
+  {started = AbsoluteTime[], budget, remaining, continuationCallback = checkpoint,
+   whole, best, bestRank = None, rank, better, finiteQ, inversePowers, inverses,
+   inverseTokens, inverseForward, inverseRestore, inverseSafeQ, protected,
+   propagators, propTokens, propForward, propRestore,
+   terms, groupKey, groups, groupKeys, protectedGroups, sources, working,
+   groupReports, currentGroup, sourceGroup, groupRecord, groupTrial,
+   replay, outcome, stopTag = Unique["tensorGroups"], accepted = 0,
+   attempts = {}, publish},
+  whole = rspFourLegTensorReductionFrames[expression, externalRules, conserve, seconds, checkpoint];
+  If[!AssociationQ[whole] || Lookup[whole, "Status", None] === "IMPROVED" ||
+      !TrueQ[conserve] || !TrueQ[NumericQ[seconds] && seconds > 0] ||
+      !MemberQ[{"InputDeclined", "LinearityExpansionLimit", "ExpansionLimit",
+        "IneligibleSector", "GroupLimit"}, Lookup[whole, "StopReason", None]] ||
+      !rspFourLegTensorPoleGroupCandidateQ[expression, externalRules], Return[whole]];
+  budget = Min[10, seconds];
+  remaining[] := Max[0, budget - (AbsoluteTime[] - started)];
+  If[remaining[] <= 0.01, Return[whole]];
+  best = whole;
+  rank[value_] := {expressionComplexity[value], LeafCount[value]};
+  better[left_, right_] := left =!= right && OrderedQ[{left, right}];
+  finiteQ[value_] := FreeQ[value, $Failed | $Aborted | $TimedOut | Indeterminate | _DirectedInfinity];
+  inversePowers[value_] := DeleteDuplicates[Cases[{value},
+    power : Power[base_, exponent_] /; !TrueQ[exponent >= 0] &&
+      !FreeQ[base, _PropDen | _SpinorChain | _MomProd | _Mom | _Spinor] :> power, Infinity]];
+  inverseSafeQ[value_] := AllTrue[inversePowers[value], Function[inverse,
+    AnyTrue[inverses, Function[prior, First[prior] === First[inverse] &&
+      (Last[prior] === Last[inverse] || TrueQ[IntegerQ[Last[prior]] &&
+        IntegerQ[Last[inverse]] && Last[prior] <= Last[inverse] < 0])]]]];
+  publish[tensorGroupRecord_Association] := Module[
+    {candidate, candidateRank, nextWorking, nextReports, certificate, result},
+    If[Lookup[tensorGroupRecord, "Status", None] =!= "IMPROVED" ||
+        !ListQ[Lookup[tensorGroupRecord, "Route", None]] || tensorGroupRecord["Route"] === {} ||
+        !KeyExistsQ[tensorGroupRecord, "Amplitude"], Return[Null]];
+    nextWorking = ReplacePart[working, currentGroup -> tensorGroupRecord["Amplitude"]];
+    candidate = Total[nextWorking];
+    If[!finiteQ[candidate] || !inverseSafeQ[candidate], Return[Null]];
+    If[bestRank === None, bestRank = rank[expression]];
+    candidateRank = rank[candidate];
+    If[!better[candidateRank, bestRank], Return[Null]];
+    nextReports = ReplacePart[groupReports, currentGroup -> <|
+      "GroupIndex" -> currentGroup, "OriginalGroup" -> sourceGroup,
+      "Amplitude" -> tensorGroupRecord["Amplitude"],
+      "IdentityRoute" -> tensorGroupRecord["Route"]|>];
+    certificate = <|"Operation" -> "ExactInverseSpectatorFourLegTensorGroups",
+      "Before" -> expression, "After" -> candidate,
+      "ExternalMassRules" -> externalRules, "ProtectedInverseMap" -> Join[inverseForward, propForward],
+      "ProtectedExpression" -> protected, "ProtectedGroups" -> protectedGroups,
+      "GroupInverseSpectators" -> groupKeys, "OriginalGroups" -> sources,
+      "UpdatedGroups" -> nextWorking,
+      "GroupCertificates" -> DeleteCases[nextReports, None],
+      "ExactProtectedGroupReconstructionResidual" -> replay,
+      "InverseArgumentsPreserved" -> True, "StrictWholeExpressionRank" -> True,
+      "InternalOnShellConditions" -> {}|>;
+    result = <|"Amplitude" -> candidate, "Rank" -> candidateRank,
+      "Route" -> {certificate}, "Status" -> "IMPROVED"|>;
+    {working, groupReports, best, bestRank} = {nextWorking, nextReports, result, candidateRank};
+    accepted++;
+    If[continuationCallback =!= None, continuationCallback[result]]
+  ];
+  outcome = TimeConstrained[MemoryConstrained[Catch[
+    inverses = inversePowers[expression];
+    inverseTokens = Table[Unique["tensorGroupInverse"], Length[inverses]];
+    inverseForward = Thread[inverses -> inverseTokens];
+    inverseForward = Select[inverseForward, Head[First[First[#]]] =!= PropDen &];
+    inverseTokens = Last /@ inverseForward;
+    inverseRestore = Reverse /@ inverseForward;
+    protected = expression /. inverseForward;
+    (* Use one opaque atom in numerator and inverse, so literal propagator
+       cancellation remains ordinary rational algebra. *)
+    propagators = DeleteDuplicates[Cases[protected, _PropDen, Infinity]];
+    propTokens = Table[Unique["tensorGroupPropagator"], Length[propagators]];
+    propForward = Thread[propagators -> propTokens]; propRestore = Thread[propTokens -> propagators];
+    protected = protected /. propForward;
+    If[rspSandwichExpansionCount[protected] > 4096, Throw["GroupExpansionLimit", stopTag]];
+    terms = Expand[protected]; terms = If[Head[terms] === Plus, List @@ terms, {terms}];
+    If[Length[terms] > 4096, Throw["GroupExpansionLimit", stopTag]];
+    groupKey[term_] := Times @@ Select[If[Head[term] === Times, List @@ term, {term}],
+      MemberQ[inverseTokens, #] || MatchQ[#, Power[token_, _Integer?Positive] /;
+        MemberQ[inverseTokens, token]] || MatchQ[#, Power[token_, _Integer?Negative] /;
+        MemberQ[propTokens, token]] &];
+    groups = GatherBy[terms, groupKey];
+    If[Length[groups] < 2 || Length[groups] > 24, Throw["PoleGroupLimit", stopTag]];
+    groupKeys = groupKey[First[#]] & /@ groups;
+    protectedGroups = Total /@ groups;
+    replay = Expand[protected - Total[protectedGroups]];
+    If[replay =!= 0 || ((protected /. propRestore) /. inverseRestore) =!= expression,
+      Throw["UnverifiedPoleGroupReconstruction", stopTag]];
+    sources = (protectedGroups /. propRestore) /. inverseRestore; working = sources;
+    groupReports = ConstantArray[None, Length[sources]];
+    Do[If[remaining[] <= 0.01, Break[]]; currentGroup = group;
+      sourceGroup = sources[[group]];
+      groupTrial = rspFourLegTensorReductionFrames[sourceGroup, externalRules, True,
+        Min[3, Max[0.000001, remaining[]]], publish];
+      If[AssociationQ[groupTrial], publish[groupTrial]];
+      AppendTo[attempts, Join[<|"GroupIndex" -> group|>,
+        If[AssociationQ[groupTrial], KeyTake[groupTrial,
+          {"Status", "StopReason", "TimedOut", "ElapsedTime"}], <||>]]],
+      {group, Length[sources]}]; "Complete", stopTag], 536870912, "MemoryLimit"],
+    Max[0.000001, remaining[]], "TimeLimit"];
+  Join[best, <|"PoleGroupFallback" -> True, "AcceptedCandidates" -> accepted,
+    "GroupAttempts" -> attempts,
+    "WholeTensorAttempt" -> KeyTake[whole, {"Status", "StopReason", "TimedOut", "ElapsedTime"}],
+    "StopReason" -> outcome, "TimedOut" -> MemberQ[{"TimeLimit", "MemoryLimit"}, outcome],
+    "ElapsedTime" -> AbsoluteTime[] - started, "InternalOnShellConditions" -> {}|>]
 ];
 End[];
