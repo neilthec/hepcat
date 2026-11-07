@@ -2178,6 +2178,13 @@ capped at 60 seconds. Partial construction and size/time limits are recorded
 in details, not hidden by truncation. `MomentumDegree` in companion mappings
 counts chain/trace insertions, not the full high-energy degree of a term.
 
+For physical-pole construction with a single massless emission and identical
+fermions, the bounded companion trial can run before the wider fit. It
+prefers a channel form with more distinct chain/trace insertion groups.
+The displayed complexity score still ranks the final expression. The
+grouped proposal keeps the selected-cut checks, physical denominator
+inventory and held-out all-channel validation.
+
 Its automatic correction directions come from the actual input and sewn
 channel expressions, subject to `"MaxCorrectionTerms" -> 64`.
 The opt-in `"AlternativeChannels"` list supplies additional continuations only

@@ -10903,16 +10903,17 @@ completionSelectedChannelBasis[normalized_Association, references_Association,
    channel amplitude. This is a bounded correction space, not an identity or
    a new selected-cut continuation; every fitted result still needs all cuts. *)
 completionPeeledChannelBasis[normalized_Association, continuations_Association,
-    plan_Association, limit_Integer, rules_List, seed_Integer, seconds_ : 15] := Module[
+    plan_Association, limit_Integer, rules_List, seed_Integer, seconds_ : 15,
+    exposeDegrees_ : False] := Module[
   {external = normalized["ExternalMassRules"], legs, targets, knownKeys, variants,
    constructionLimit, proposals, regular = 0, core = 0, directions = {}, basis = {},
    checks = {}, mappings = {}, diagnostics = {}, finished, exceeded = False,
    inputCollected = False,
    source, channel, selected, anchor, emitted, selectedRules, dots, transformed,
-   verification, expanded, terms, groups, component, companion, projected,
+   verification, groups, component, companion, projected,
    sourceMap, key, candidateKey, mass, eligible, sourceCount = 0,
-   project, degree, index, peelPropagator, peel, simplePhysicalQ, available,
-   tag = Unique["peeledChannelSpace"], started = AbsoluteTime[]},
+   project, degree, degreeGroups, compareSources, index, peelPropagator, peel,
+   simplePhysicalQ, available, tag = Unique["peeledChannelSpace"], started = AbsoluteTime[]},
   legs = Sort[DeleteDuplicates[Cases[external, HoldPattern[Mass[i_Integer] -> _] :> i]]];
   targets = completionTargets[normalized["Targets"]];
   knownKeys = residueChannelKey /@ targets;
@@ -10943,6 +10944,22 @@ completionPeeledChannelBasis[normalized_Association, continuations_Association,
   degree[product_Times] := Total[degree /@ List @@ product];
   degree[Power[value_, power_Integer?Positive]] := power degree[value];
   degree[_] := 0;
+  degreeGroups[value_] := Module[{expanded, terms},
+    If[rspSandwichExpansionCount[value] > constructionLimit, Return[$Failed]];
+    expanded = preparationProtectedDenominators[value, Expand];
+    terms = If[Head[expanded] === Plus, List @@ expanded, {expanded}];
+    If[Length[terms] > constructionLimit, Return[$Failed]];
+    GroupBy[terms, degree, Total]];
+  (* Degree groups are fitted separately. A small displayed source can
+     conceal useful lower-degree groups inside its momentum chains. *)
+  compareSources[alternative_, current_] := Module[{newGroups, oldGroups},
+    If[TrueQ[exposeDegrees],
+      newGroups = degreeGroups[alternative]; oldGroups = degreeGroups[current];
+      If[newGroups === $Failed, Return[False]];
+      If[oldGroups === $Failed, Return[True]];
+      If[Length[newGroups] =!= Length[oldGroups],
+        Return[Length[newGroups] > Length[oldGroups]]]];
+    preparationBetterQ[preparationRank[alternative], preparationRank[current]]];
   index[value_Multiparticle] := Module[{members = List @@ value},
     If[VectorQ[members, IntegerQ] && DuplicateFreeQ[members] &&
         SubsetQ[members, selected],
@@ -11004,7 +11021,8 @@ completionPeeledChannelBasis[normalized_Association, continuations_Association,
       selectedRules = Join[external, {Mass[Multiparticle @@ selected] -> channel["Mass"]}];
       dots = preparationDotRules[selectedRules, True]; source = variant["Expression"];
       transformed = preparationConservedMomentumChains[source, selectedRules, True, dots];
-      transformed = preparationMasslessMomentumTrial[transformed, selectedRules, dots, {}];
+      transformed = preparationMasslessMomentumTrial[transformed, selectedRules, dots, {},
+        compareSources];
       verification = completionContinuationCheck[source, transformed, channel, targets,
         rules, seed + sourceCount];
       AppendTo[checks, <|"Cut" -> selected, "Mass" -> channel["Mass"],
@@ -11012,12 +11030,8 @@ completionPeeledChannelBasis[normalized_Association, continuations_Association,
         "Scope" -> "SelectedCutSourceNormalizationOnly"|>];
       sourceCount++;
       If[verification["Status"] =!= "PASS", Continue[]];
-      If[rspSandwichExpansionCount[transformed] > constructionLimit,
-        exceeded = True; Throw[False, tag]];
-      expanded = preparationProtectedDenominators[transformed, Expand];
-      terms = If[Head[expanded] === Plus, List @@ expanded, {expanded}];
-      If[Length[terms] > constructionLimit, exceeded = True; Throw[False, tag]];
-      groups = GroupBy[terms, degree, Total];
+      groups = degreeGroups[transformed];
+      If[groups === $Failed, exceeded = True; Throw[False, tag]];
       Do[
         companion = peel[groups[key]]; projected = project[companion];
         candidateKey = <|"Cut" -> selected, "Anchor" -> anchor, "EmittedLeg" -> emitted,
@@ -11583,7 +11597,8 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
    structuredPresentation, structuredCatalog,
    physicalSelected = Missing["NotRequested"], physicalReferences,
    companionSpace = Missing["NotRequested"], companionFit = Missing["NotRequested"],
-   companionStarted, companionBudget, companionBuildBudget, companionFitSeed, earlyCompanionAttempted = False,
+   companionStarted, companionBudget, companionBuildBudget, companionFitSeed,
+   ordinaryCompanionAttempted = False, compactEmissionCompanions,
    remainderSpace = Missing["NotRequested"], remainderFit = Missing["NotRequested"],
    remainderStarted, remainderBudget, remainderFitSeed, remainderProbe = Missing["NotRequested"],
    shiftedSpace = Missing["NotRequested"], shiftedFit = Missing["NotRequested"],
@@ -11753,15 +11768,23 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
               "EquationCount" -> Length[constraints["Equations"]]|>};
             space = inputAttempt["Mode"]; status = "COMPLETE"; familyMaterialized = True; Break[]],
           {proposal, inputProposals["Proposals"]}]]];
-    (* Large automatic jobs first try the small, source-derived companion
-       space. Starting with a wide valid family can waste most later time
-       proving algebraic identity directions. No explicit user choice changes. *)
+    (* Try grouped emission sources before the wide physical space when
+       one null leg radiates from exchange-related massive fermion lines.
+       The existing large-job policy and late fallback remain available. *)
+    compactEmissionCompanions = polePreference === "AllPhysical" &&
+      exchangePlan["FermionGroups"] =!= {} &&
+      Count[Last /@ normalized["ExternalMassRules"], 0] === 1 &&
+      AnyTrue[normalized["Targets"], Function[target, Length[target["Cut"]] === 2 &&
+        MemberQ[Mass /@ target["Cut"] /. normalized["ExternalMassRules"], 0] &&
+        !residueExactZero[target["Mass"]]]];
     If[status =!= "COMPLETE" && basisOption === Automatic && references === Automatic &&
-        TrueQ[$completionAutomaticPoleSearch] && companionOption === Automatic &&
-        (Length[normalized["Records"]] >= 12 || Length[normalized["Targets"]] >= 10),
-      earlyCompanionAttempted = True;
+        companionOption === Automatic && (compactEmissionCompanions ||
+          TrueQ[$completionAutomaticPoleSearch] &&
+            (Length[normalized["Records"]] >= 12 || Length[normalized["Targets"]] >= 10)),
+      ordinaryCompanionAttempted = !compactEmissionCompanions;
       completionProgress[callback, enabled, <|"Stage" -> "Trying compact automatic correction sources"|>];
-      continuations = completionChannelContinuations[normalized, model, rules, seed];
+      If[!compactEmissionCompanions,
+        continuations = completionChannelContinuations[normalized, model, rules, seed]];
         If[companionOption === Automatic,
           companionStarted = AbsoluteTime[];
           companionBudget = If[seconds === Infinity, Max[60, 10 Length[normalized["Targets"]]],
@@ -11769,8 +11792,12 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
               Max[0, seconds - (companionStarted - start)]/3]];
           companionBuildBudget = Min[Max[15, 3 Length[normalized["Targets"]]], companionBudget/2];
           completionProgress[callback, enabled, <|"Stage" -> "Preparing compact channel companions"|>];
-          companionSpace = TimeConstrained[completionPeeledChannelBasis[
-            normalized, continuations, exchangePlan, limit, rules, seed, companionBuildBudget],
+          companionSpace = TimeConstrained[
+            If[compactEmissionCompanions,
+              continuations = completionChannelContinuations[normalized, model, rules, seed]];
+            completionPeeledChannelBasis[
+              normalized, continuations, exchangePlan, limit, rules, seed, companionBuildBudget,
+              compactEmissionCompanions],
             Max[0.000001, companionBuildBudget], Missing["CompanionConstructionTimeout"]];
           remainingSeconds = companionBudget - (AbsoluteTime[] - companionStarted);
           If[AssociationQ[companionSpace] && ListQ[Lookup[companionSpace, "Basis", None]] &&
@@ -11786,7 +11813,8 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
               {normalized["ExternalMassRules"], project[companionSpace["RegularExpression"]]},
               checkRows, model, Sequence @@ Normal[completionChildResourceOptions[fallbackOptions]]], remainingSeconds,
               Missing["CompanionFitTimeout"]];
-            If[AssociationQ[companionFit] && companionFit["Status"] === "COMPLETE",
+            If[AssociationQ[companionFit] && companionFit["Status"] === "COMPLETE" &&
+                (!compactEmissionCompanions || TrueQ[companionFit["AchievedPhysicalDenominators"]]),
               candidate = companionFit["Amplitude"]; family = companionFit["FamilyAmplitude"];
               remaining = companionFit["RemainingBasis"]; free = companionFit["FreeParameters"];
               basis = companionFit["CorrectionBasis"];
@@ -12147,8 +12175,9 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
         {pair, shiftedPairs}]]];
     If[status =!= "COMPLETE" && basisOption === Automatic && references === Automatic,
         completionProgress[callback, enabled, <|"Stage" -> "Constructing channel continuations"|>];
-        continuations = completionChannelContinuations[normalized, model, rules, seed];
-        If[companionOption === Automatic && !TrueQ[earlyCompanionAttempted],
+        If[!KeyExistsQ[continuations, "Variants"],
+          continuations = completionChannelContinuations[normalized, model, rules, seed]];
+        If[companionOption === Automatic && !ordinaryCompanionAttempted,
           companionStarted = AbsoluteTime[];
           companionBudget = If[seconds === Infinity, Max[60, 10 Length[normalized["Targets"]]],
             Min[Max[60, 10 Length[normalized["Targets"]]],
@@ -13159,7 +13188,8 @@ preparationFactorizedReferenceTrial[expr_, rules_List, dotRules_List,
 (* External mass rules license rank-one momentum factors even when no helicity
    spinor witnessing that leg is visible. Splitting protects inverse factors;
    ordinary external-spinor normalization retains its existing inverse scope. *)
-preparationMasslessMomentumTrial[expr_, rules_List, dotRules_List, auxiliary_List] := Module[
+preparationMasslessMomentumTrial[expr_, rules_List, dotRules_List, auxiliary_List,
+    better_ : (preparationBetterQ[preparationRank[#1], preparationRank[#2]] &)] := Module[
   {massless, split, body, best, expanded, changed, count = 0,
    splitTag = Unique["masslessMomentumSplit"]},
   massless = Cases[Select[preparationExternalRules[rules], residueExactZero[Last[#]] &],
@@ -13190,7 +13220,7 @@ preparationMasslessMomentumTrial[expr_, rules_List, dotRules_List, auxiliary_Lis
       expanded = preparationCancelReferencePoles[
         preparationProtectedDenominators[expanded, Expand], rules, auxiliary];
       If[residueFiniteQ[expanded] &&
-          preparationBetterQ[preparationRank[expanded], preparationRank[best]], best = expanded]]];
+          TrueQ[better[expanded, best]], best = expanded]]];
   best
 ];
 

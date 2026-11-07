@@ -42,7 +42,14 @@ correction coefficients simultaneously."}], "Notes"],
      Cell[BoxData[RowBox[{"1", "/", "Sqrt", "[", "2", "]"}]],
       "InlineFormula"], " as scalar coefficients. Kinematic denominator \
 factors must still be integer powers of propagators supplied by the physical \
-channels."}], "Notes"], Cell[TextData[{"A successful ordinary result is ",
+channels."}], "Notes"], Cell[TextData[{"For single massless emission with \
+identical fermions, the automatic channel-companion fit can try grouped \
+lower-point sources before building the broader physical correction space. A \
+source form that exposes additional momentum-insertion groups can be useful \
+even when its displayed expression is longer. The grouped fit must satisfy \
+the original residues and physical denominator inventory, and the broader fit \
+remains available if it fails."}], "Notes"],
+  Cell[TextData[{"A successful ordinary result is ",
      Cell[BoxData[RowBox[{"{", "externalMassRules", ",", " ", "expression",
          "}"}]], "InlineFormula"],
      Cell[BoxData[RowBox[{".", " ", "It", " ", "contains", " ", "no", " ",
