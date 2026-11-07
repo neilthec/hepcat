@@ -1,5 +1,10 @@
 # QED photon timing benchmark
 
+For the separate complete `e- e+ -> e- e+ + N photons` comparison at
+`N=0,1,2`, see [the four-fermion benchmark](four-fermion/README.md). It
+includes both saved pole representations, independent CalcHEP/MadGraph,
+all spins/helicities, and absolute and normalized results.
+
 This program measures `e- e+ -> N photons` at the **same 10,000 saved phase-space
 points** in HEPCAT/SPINAS, independent CalcHEP, and independent MadGraph. Every
 point includes both photon helicities and both electron/positron spin states.
