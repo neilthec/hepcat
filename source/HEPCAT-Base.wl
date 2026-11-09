@@ -67,7 +67,8 @@ nice[delta]:="\[Delta]"
 Format[SpinorChain[a__], OutputForm] := nice[SpinorChain[a]];
 (*Format[SpinorChainReduced[a__]]:=nice[SpinorChain[a]]*)
 SpinorChain /: MakeBoxes[chain : SpinorChain[_, ___, _], form : (StandardForm | TraditionalForm)] :=
-  With[{boxes = ToBoxes[nice[chain], form]}, InterpretationBox[boxes, chain, Editable -> False]];
+  With[{boxes = ToBoxes[nice[chain], form]},
+    InterpretationBox[StyleBox[boxes, ShowStringCharacters -> False], chain, Editable -> False]];
 nice[SpinorChain[left_, momenta___, right_]] :=
   ConstructiveDiagrams`Private`niceSpinorChain[left, {momenta}, right];
 Format[SpinorTrace[a__]]:=nice[SpinorTrace[a]]
@@ -177,7 +178,8 @@ PropDen /: MakeBoxes[denominator_PropDen, form : (StandardForm | TraditionalForm
   With[{display = nice[denominator]},
     With[{boxes = If[Head[display] === Plus,
         RowBox[{"(", ToBoxes[display, form], ")"}], ToBoxes[display, form]]},
-      InterpretationBox[boxes, denominator, Editable -> False]]];
+      InterpretationBox[StyleBox[boxes, ShowStringCharacters -> False],
+        denominator, Editable -> False]]];
 nice[PropDen[p_, m_]] := ConstructiveDiagrams`Private`nicePropagator[p, m];
 nice[PropDen[p_, m_, w_]] := nice[PropDen[p, m]] + I m w;
 

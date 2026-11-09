@@ -423,6 +423,18 @@ check["display momentum and propagator preserve symbolic structure", nice[Mom[3]
 check["display Xi and hatted spinor styles", nice[Spinor["Xi", "Angle", 3]] ===
  Row[{Subscript[\[Xi], 3], "\[RightAngleBracket]"}] &&
  nice[SpinorHat["Helicity", "Angle", 3]] === Row[{OverHat[3], "\[RightAngleBracket]"}]];
+(* Dataset uses ShowStringCharacters -> True around symbolic test conditions. *)
+Do[
+ With[{condition = pole == 0, typedPole = pole},
+  check["pole notation hides string quotes within a validation table " <> ToString[form],
+   !FreeQ[ToBoxes[Style[condition, ShowStringCharacters -> True], form],
+    InterpretationBox[StyleBox[_, ShowStringCharacters -> False], typedPole, Editable -> False]]];
+  check["the displayed pole condition retains its typed expression " <> ToString[form],
+   ReleaseHold[ToExpression[ToBoxes[condition, form], form, HoldComplete]] === condition]],
+ {form, {StandardForm, TraditionalForm}},
+ {pole, {PropDen[Mom[Multiparticle[1, 2]], 0],
+   PropDen[Mom[Multiparticle[1, 3]], ModelParameter["Mh", "boxRoundTrip", "Real"]],
+   ltB["Angle", 2, 3]}}];
 check["display r-spinor labels", nice[rr[3, 4]] === Subscript["r", "34"]];
 (* Displayed momentum products must remain typed scalar products when copied
    or imported from notebook boxes, not become Dot[Subscript[p,...],...]. *)
@@ -504,8 +516,8 @@ check["color two contracted two-generator traces",
 check["color generators separated by a spectator generator obey the SU3 Fierz term",
  ReduceColor[ColorTrace[ltA, ltBColor, ltA, ltBColor]] === -2/3];
 
-If[checks =!= 247, AppendTo[failures,
-  {"suite did not reach every check", "Expected" -> 247, "Actual" -> checks}]];
+If[checks =!= 259, AppendTo[failures,
+  {"suite did not reach every check", "Expected" -> 259, "Actual" -> checks}]];
 Print["Legacy transformations: ", checks, " checks, ", Length[failures], " failures."];
 If[failures =!= {}, Print[failures]];
 Print["HEPCAT_TEST_COMPLETED:legacy-transform-tests.wl"];
