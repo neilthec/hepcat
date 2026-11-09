@@ -81,6 +81,18 @@ smgCheck["the missing reference setup has a helpful diagnostic",
   StringQ[smgDefaultMetadata["Reason"]] && StringContainsQ[smgDefaultMetadata["Reason"], "MadGraphModel"] &&
     StringContainsQ[smgDefaultMetadata["Reason"], "MadGraphDirectory"]];
 
+(* The export records exact symbolic zero branches without a numerical probe. *)
+smgZeroFamily = ReplacePart[smgFamily, {1, 2} -> 0];
+smgZeroFamily[[2, 2]] = 10^-40 smgZeroFamily[[2, 2]];
+smgZeroExport = WriteSPINASProcess[smgPath["exact-zero-helicity"],
+  {"e", "E"} -> {"A", "A"}, smgZeroFamily, smgModel,
+  "ProcessName" -> "madgraph_stub", "SPINASDirectory" -> smgSpinas, "ReturnDetails" -> True];
+smgCheck["the automatic absolute bound is restricted to exact symbolic zero",
+  AssociationQ[smgZeroExport] &&
+    smgMetadata[smgZeroExport]["ExactZeroHelicities"] === {{0, 0, 2, 2}} &&
+    ("ZeroAbsoluteTolerance" /. Options[ValidateMadGraph]) === 10^-22 &&
+    smgDefaultMetadata["ExactZeroHelicities"] === {}];
+
 smgExplicit = smgExportCase["explicit-QED-sector", "MadGraphDirectory" -> smgPath["missing-MadGraph"],
   "MadGraphModel" -> "sm-full", "MadGraphAllowedParticles" -> {11, 22}];
 smgCheck["explicit reference model and particle sector are preserved",

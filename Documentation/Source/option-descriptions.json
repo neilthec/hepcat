@@ -99,6 +99,7 @@
   "MadGraphSeed": "Random seed for the generated MadGraph comparison. Automatic chooses one time-based seed when validation runs and reports it; an explicit unsigned 64-bit integer, including zero, replays the samples.",
   "RelativeTolerance": "Maximum relative numerical difference allowed by the selected comparison. ValidateMadGraph defaults to 10^-7; this is applied independently to each tested massless-helicity combination.",
   "AbsoluteTolerance": "Optional absolute numerical comparison tolerance. ValidateMadGraph defaults to zero so a wrong tiny amplitude cannot pass through a fixed absolute floor.",
+  "ZeroAbsoluteTolerance": "Absolute bound on the reference squared amplitude for an exported exact-zero helicity. The default is 10^-22. Set this to zero for a strict replay.",
   "MinimumEnergy": "Lower center-of-mass energy used by ValidateMadGraph's random validation samples. Automatic chooses a value above the incoming and outgoing mass thresholds.",
   "MaximumEnergy": "Upper center-of-mass energy used by ValidateMadGraph's random validation samples. Automatic chooses a suitable range above threshold.",
   "MadGraphParameterMap": "Rules mapping HEPCAT model parameter names to external or derived MadGraph UFO parameter names. Automatic uses supported same-name and known-model matching; unresolved used parameters prevent a passing comparison.",

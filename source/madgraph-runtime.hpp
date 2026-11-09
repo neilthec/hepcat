@@ -32,6 +32,7 @@ namespace hepcat_spinas {
 struct MadGraphValidationOptions : ValidationOptions {
   // Zero keeps the per-project preparation budget.
   unsigned preparation_timeout_seconds = 0;
+  ldouble zero_absolute_tolerance = 1e-22L;
   MadGraphValidationOptions() = default;
   MadGraphValidationOptions(const ValidationOptions& base) : ValidationOptions(base) {}
 };
@@ -58,6 +59,8 @@ struct MadGraphConfiguration {
   // Original leg order: doubled massless helicities, zero for summed massive
   // particles and scalars. The exporter supplies every requested combination.
   std::vector<std::vector<int> > helicities;
+  // The exporter identifies these from symbolic zero expressions.
+  std::vector<std::vector<int> > exact_zero_helicities;
   std::vector<std::string> parameter_names;
   // Model-declared width roles; validation changes only a private process copy.
   std::vector<std::size_t> width_parameter_indices;
@@ -76,6 +79,8 @@ struct MadGraphConfiguration {
 struct MadGraphHelicityReport {
   std::vector<int> helicities;
   ValidationReport report;
+  bool expected_exact_zero = false;
+  ldouble zero_absolute_tolerance = 0;
 };
 
 struct MadGraphValidationReport {
@@ -321,6 +326,10 @@ void validate_configuration(const Process& process, const MadGraphConfiguration&
       || config.madgraph_directory.empty() || config.model.empty()
       || !config.preparation_timeout_seconds)
     throw std::invalid_argument("MadGraph validation needs its installation, model, Python and reference helper.");
+  for (const auto& zero : config.exact_zero_helicities) {
+    if (std::find(config.helicities.begin(), config.helicities.end(), zero) == config.helicities.end())
+      throw std::invalid_argument("A symbolic zero helicity is absent from the exported family.");
+  }
   for (const auto& row : config.helicities) {
     if (row.size() != count) throw std::invalid_argument("A MadGraph helicity row has the wrong length.");
     for (std::size_t leg = 0; leg < count; ++leg) {
@@ -494,7 +503,8 @@ MadGraphValidationReport validate_madgraph(
     madgraph_detail::prepare_zero_width_validation(process, config.width_parameter_indices, 0);
     madgraph_detail::validate_configuration(process, config);
     if (!options.points || !std::isfinite(options.relative_tolerance) || options.relative_tolerance < 0
-        || !std::isfinite(options.absolute_tolerance) || options.absolute_tolerance < 0)
+        || !std::isfinite(options.absolute_tolerance) || options.absolute_tolerance < 0
+        || !std::isfinite(options.zero_absolute_tolerance) || options.zero_absolute_tolerance < 0)
       throw std::invalid_argument("Validation needs a positive point count and finite nonnegative tolerances.");
     detail::validation_energy_range(process.masses(), Process::incoming_legs(), options);
     if (progress) *progress << "Preparing independent MadGraph reference...\n" << std::flush;
@@ -532,6 +542,14 @@ MadGraphValidationReport validate_madgraph(
     for (const auto& helicities : config.helicities) {
       MadGraphHelicityReport row;
       row.helicities = helicities;
+      row.expected_exact_zero = std::find(config.exact_zero_helicities.begin(),
+        config.exact_zero_helicities.end(), helicities) != config.exact_zero_helicities.end();
+      ValidationOptions comparison = options;
+      if (row.expected_exact_zero) {
+        row.zero_absolute_tolerance = options.zero_absolute_tolerance;
+        comparison.absolute_tolerance = row.zero_absolute_tolerance;
+        comparison.relative_tolerance = 0;
+      }
       if (progress) {
         *progress << "Checking doubled helicities:";
         for (int helicity : helicities) *progress << ' ' << helicity;
@@ -544,10 +562,13 @@ MadGraphValidationReport validate_madgraph(
         [&](const Momenta<Process::leg_count>& momenta) {
           process.set_momenta(momenta);
           auto spins = base_spins;
-          return config.normalization * madgraph_detail::sum_massive_spins(
+          const ldouble squared = madgraph_detail::sum_massive_spins(
             process, config, spins, 0, [&](const typename Process::Spins& state) {
               return madgraph_detail::squared_amplitude(process, state, 0);
             });
+          if (row.expected_exact_zero && squared != 0)
+            throw std::runtime_error("An exported symbolic zero evaluated to a nonzero squared amplitude.");
+          return config.normalization * squared;
         },
         [&](const Momenta<Process::leg_count>& momenta) {
           std::vector<double> physical_momenta(4 * Process::leg_count);
@@ -566,7 +587,7 @@ MadGraphValidationReport validate_madgraph(
               }
               return static_cast<ldouble>(reference.evaluate(physical_momenta, reference_helicities));
             });
-        }, options, progress);
+        }, comparison, progress);
       result.rows.push_back(row);
     }
     result.passed = !result.rows.empty();
@@ -598,8 +619,12 @@ inline void print_madgraph_validation_report(std::ostream& out, const MadGraphVa
     for (int h : row.helicities) out << ' ' << h;
     out << ": " << row.report.status << "; " << row.report.compared_points
         << '/' << row.report.requested_points << " points; max relative error "
-        << row.report.maximum_relative_error << "; mismatches " << row.report.mismatches
-        << "; evaluation errors " << row.report.evaluation_errors << '\n';
+        << row.report.maximum_relative_error << "; max absolute error "
+        << row.report.maximum_absolute_error << "; mismatches " << row.report.mismatches
+        << "; evaluation errors " << row.report.evaluation_errors;
+    if (row.expected_exact_zero)
+      out << "; symbolic zero, absolute tolerance " << row.zero_absolute_tolerance;
+    out << '\n';
     if (row.report.has_first_failure) {
       const auto& failure = row.report.first_failure;
       out << "    First failing point " << failure.point_index << ": " << failure.message << '\n';
@@ -628,7 +653,12 @@ inline void write_madgraph_validation_report_json(
       if (leg) out << ',';
       out << row.helicities[leg];
     }
-    out << "],\"Status\":" << json_string(value.status) << ",\"Passed\":"
+    out << "],\"ExpectedExactZero\":" << (row.expected_exact_zero ? "true" : "false");
+    if (row.expected_exact_zero) {
+      out << ",\"ZeroAbsoluteTolerance\":";
+      json_number(out, row.zero_absolute_tolerance);
+    }
+    out << ",\"Status\":" << json_string(value.status) << ",\"Passed\":"
         << (value.passed ? "true" : "false") << ",\"Points\":" << value.compared_points
         << ",\"RequestedPoints\":" << value.requested_points
         << ",\"GeneratedPoints\":" << value.generated_points

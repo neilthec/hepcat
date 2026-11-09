@@ -29492,7 +29492,15 @@ MadGraph passes all 1000 points. Re-evaluating the unchanged HEPCAT formula \
 at 80-digit precision supports a cancellation-roundoff explanation, but does \
 not independently validate CalcHEP at high precision. The original failing \
 point and report are retained; no tolerance was relaxed and no point was \
-discarded.", "Text", CellTags -> "hepcat-hhhh-roundoff-note"], 
+discarded.", "Text", CellTags -> "hepcat-hhhh-roundoff-note"],
+
+Cell["Precision replay at the saved CalcHEP point 933. The contact and Higgs-exchange contributions \
+nearly cancel here, so the squared result is sensitive to rounding. The same generated CalcHEP \
+evaluator and the same inputs reproduced the original relative difference of 1.74 x 10^-7 with \
+53-bit arithmetic. With 113-bit binary128 arithmetic in CalcHEP, the difference fell to 1.34 x \
+10^-11 and passed the original 10^-7 tolerance. This isolates the discrepancy to \
+finite-precision cancellation at this point. Other platforms and builds may give different \
+residuals. The independent symbolic comparison above gives exactly zero difference.", "Text", CellTags -> "hepcat-hhhh-extended-precision-replay"],
      Cell["This saved amplitude came from a completed construction. MadGraph \
 passes all 1000 points. CalcHEP retains one numerical FAIL near an amplitude \
 zero; the independent exact Feynman-rule comparison gives difference zero. \
@@ -59825,7 +59833,17 @@ comparison. MadGraph passes the six nonzero helicity sectors; the ten zero \
 sectors retain their raw numerical FAIL rows from tiny floating-point \
 residuals. Independent exact Feynman-rule checks show that all ten vanish. \
 The numerical table and original failure data remain unchanged.", "Text", 
-      CellTags -> "hepcat-precision-qualified-note-sm73"]}, Open]], 
+      CellTags -> "hepcat-precision-qualified-note-sm73"],
+
+Cell["The ten zero sectors above cancel analytically. MadGraph evaluates those cancellations \
+numerically, so small residuals are expected. The current validator recognizes any exported \
+exact symbolic zero, including zeros of all independent color coefficients, and applies an \
+absolute bound of 10^-22 only in those sectors. On the saved seed, all 16 sectors pass at 1000 \
+points each. The largest absolute squared-amplitude residual in the zero sectors is 3.39 x \
+10^-24. The six nonzero sectors use the ordinary comparison. Reports retain the measured \
+residuals and the applied bound. The table above records the original strict run. Re-export the process with the current \
+package to use the new comparison. Set \"ZeroAbsoluteTolerance\" -> 0 in ValidateMadGraph \
+to replay the strict comparison.", "Text", CellTags -> "hepcat-gluon-exact-zero-replay"]}, Open]],
   Cell[CellGroupData[{Cell["Original formulas and manual derivations", 
       "Chapter"], Cell["These are the unchanged contents copied from \
 SM-4-point.nb. Original input cells are inactive so that old model numbers, \

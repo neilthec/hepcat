@@ -5,7 +5,7 @@
 
 Begin["ConstructiveDiagrams`"];
 ValidateMadGraph::usage = "ValidateMadGraph[directory] independently checks an exported SPINAS process against MadGraph at shared random physical momenta, with a separate result for every exported massless-helicity combination. ValidateMadGraph[particles, amplitude, model] checks one fixed-helicity all-ingoing expression. ValidateMadGraph[incoming -> outgoing, amplitudeEntries, model] first exports and builds a private SPINAS project. Massive spins are summed, not compared in potentially different spin bases. MadGraphPoints defaults to 1000 per helicity and MadGraphSeed -> Automatic chooses and reports a fresh replayable seed. Output -> Table returns a readable per-helicity table; Summary gives result counts and Details retains the complete numerical report and failed momenta. Specify MadGraphDirectory and MadGraphModel explicitly. Validation builds its comparison executable independently of optional MadEvent event-generation targets. MadGraphAllowedParticles -> All retains the selected theory; a list of positive absolute PDG codes, such as {11,22}, restricts intermediate particle types and includes their antiparticles. No theory or particle restriction is inferred from the HEPCAT model. MadGraphParameterMap and MadGraphParameterRules handle different parameter names or reference inputs. Squared amplitudes are compared, so overall phases do not affect the result. Colorless tree processes and certified coherent SU(3) color sums are supported; unsupported or unavailable comparisons are never reported as passing. This is numerical validation, not an analytic proof.";
-WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " Generated projects also expose validate_madgraph(options) and a process_validate_madgraph executable for independent fixed-massless-helicity validation. Specify MadGraphDirectory and MadGraphModel to select the independent installation and UFO theory. MadGraphAllowedParticles -> All retains all model particles; {11,22}, for example, restricts to electrons, positrons and photons using absolute PDG codes. MadGraphParameterMap relates differently named HEPCAT and UFO parameters; MadGraphParameterRules supplies explicit UFO external input values. RunMadGraphValidation -> True builds and runs MadGraphPoints -> 1000 shared points per helicity with MadGraphSeed -> Automatic. Fixed incoming or outgoing helicities are supported, and massive external spins are summed. Numerical mismatches remain FAIL, including losses of floating-point precision. When both reference checks are requested, both run independently even if the first fails. A failed requested check returns Failure with ExportResult retaining both reports and the generated files. Ordinary SPINAS execution does not require MadGraph.";
+WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " Generated projects also expose validate_madgraph(options) and a process_validate_madgraph executable for independent fixed-massless-helicity validation. Specify MadGraphDirectory and MadGraphModel to select the independent installation and UFO theory. MadGraphAllowedParticles -> All retains all model particles; {11,22}, for example, restricts to electrons, positrons and photons using absolute PDG codes. MadGraphParameterMap relates differently named HEPCAT and UFO parameters; MadGraphParameterRules supplies explicit UFO external input values. RunMadGraphValidation -> True builds and runs MadGraphPoints -> 1000 shared points per helicity with MadGraphSeed -> Automatic. Fixed incoming or outgoing helicities are supported, and massive external spins are summed. The MadGraph validator allows a small absolute residual for exported exact-zero helicity sectors and records the residual and bound. When both reference checks are requested, both run independently even if the first fails. A failed requested check returns Failure with ExportResult retaining both reports and the generated files. Ordinary SPINAS execution does not require MadGraph.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " The same explicit MadGraph configuration also configures a PROC_<ProcessName> numerical process. An ordinary build creates that directory in the compiled export's build directory by default and supplies the exported HEPCAT/SPINAS matrix element to MadEvent integration, unweighting and event output. Build -> True prepares build/PROC_<ProcessName> without generating events. Run its bin/madevent native launcher; no process_madevent executable is created in the build root. The build prints the full HTML and event-output locations. Run and parameter cards adjust cuts, beams, masses and couplings. Fixed massless helicities and summed massive spins retain their specified averaging and symmetry factors. Current numerical coverage is colorless leading-order tree amplitudes; coherent decay sewing, NLO matching and a MadGraph massive-spin basis are not provided. The independent MadGraph validator continues to use MadGraph's own amplitude.";
 WriteSPINASProcess::usage = WriteSPINASProcess::usage <> " After preparation, move or copy the complete PROC_<ProcessName> directory, for example PROC_eeAA, and start its bin/madevent program. The prepared directory contains the required HEPCAT/SPINAS amplitude files and libraries and no longer depends on the original exported project or build directory. MadGraph, Python, the Fortran toolchain and system libraries remain external prerequisites.";
 ValidateMadGraph::usage = ValidateMadGraph::usage <> " Derived scalar couplings follow the supplied model definitions. For an explicitly selected sm or sm-full reference, verified tree-level model relations translate e, MW and sin(theta_W) into inverse alpha, Gf and MZ; explicit MadGraphParameterRules override these values. The reference must still supply compatible particle masses, Yukawa interactions and flavor mixing.";
@@ -15,6 +15,7 @@ Options[WriteSPINASProcess] = Join[Options[WriteSPINASProcess], {
   "RunMadGraphValidation" -> False, "MadGraphPoints" -> 1000, "MadGraphSeed" -> Automatic}];
 Options[ValidateMadGraph] = Join[Options[WriteSPINASProcess], {
   "Output" -> "Table", "RelativeTolerance" -> 10^-7, "AbsoluteTolerance" -> 0,
+  "ZeroAbsoluteTolerance" -> 10^-22,
   "MinimumEnergy" -> Automatic, "MaximumEnergy" -> Automatic, "TimeConstraint" -> 600}];
 ValidateMadGraph::args = "Expected a generated SPINAS project directory, or incoming particle names -> outgoing particle names, helicity amplitude entries and a model, with valid validation options.";
 ValidateMadGraph::usage = ValidateMadGraph::usage <> " Reports retain native SPINAS helicity labels. Outgoing massless-vector wavefunctions are mapped to HELAS's opposite label, while incoming vectors retain their label. The MadEvent callback applies the inverse conversion. The supplied amplitude and its normalization are unchanged.";
@@ -115,7 +116,8 @@ spinasMadGraphMassRoles[data_List] := Module[{rows, grouped},
 
 spinasMadGraphConfiguration[ir_Association, data_List, supplied_Association, physical_Association] := Module[
   {options = Join[Association[Options[WriteSPINASProcess]], supplied], root, python, model,
-   reasons = {}, normalization, family = TrueQ[Lookup[ir, "Family", False]], helicities, allowed, colored},
+   reasons = {}, normalization, family = TrueQ[Lookup[ir, "Family", False]],
+   helicities, exactZeroHelicities, allowed, colored},
   root = spinasMadGraphRoot[options["MadGraphDirectory"]];
   python = spinasMadGraphPython[root];
   model = options["MadGraphModel"];
@@ -137,6 +139,16 @@ spinasMadGraphConfiguration[ir_Association, data_List, supplied_Association, phy
     1/(Times @@ (If[TrueQ[ir["MassValues"][[#]] == 0], 1, ir["Spin2"][[#]] + 1] & /@ ir["IncomingLegs"]))] /
       Lookup[Lookup[ir, "ColorData", <||>], "InitialColorAverage", 1];
   helicities = If[family, ir["HelicityConfigurations"], {ir["Helicities"]}];
+  (* Inspect the symbolic branch before any numerical parameter substitution.
+     A coherent color sum requires every independent coefficient to vanish. *)
+  exactZeroHelicities = Which[
+    KeyExistsQ[ir, "ColorData"], Pick[helicities,
+      (AllTrue[#, # === 0 &] &) /@ ir["ColorData"]["Coefficients"], True],
+    family, Cases[ir["Branches"], branch_Association /;
+      ir["FamilyComponents"][[branch["InputIndex"]]]["OriginalExpression"] === 0 :>
+        branch["Helicities"]],
+    ir["OriginalExpression"] === 0, helicities,
+    True, {}];
   <|"Status" -> If[reasons === {}, "AVAILABLE", "UNAVAILABLE"], "Reason" -> StringRiffle[reasons, " "],
     "MadGraphDirectory" -> root, "PythonExecutable" -> python,
     "MadGraphModel" -> If[StringQ[model], model, ""],
@@ -147,6 +159,7 @@ spinasMadGraphConfiguration[ir_Association, data_List, supplied_Association, phy
     "PhysicalPDGs" -> physical["PhysicalPDGs"],
     "AllowedParticlePDGs" -> allowed, "LegOrder" -> physical["LegOrder"],
     "Spin2" -> ir["Spin2"], "HelicityConfigurations" -> helicities,
+    "ExactZeroHelicities" -> exactZeroHelicities,
     "FullColor" -> TrueQ[Lookup[Lookup[ir, "ColorData", <||>], "Certified", False]],
     "ColorRepresentations" -> Lookup[Lookup[ir, "ColorData", <||>], "Representations", {}],
     "ParameterNames" -> ir["ParameterNames"], "Normalization" -> normalization,
@@ -181,6 +194,8 @@ spinasMadGraphSource[name_String, config_Association, dir_String] := StringRiffl
   "  config.color_representations = " <> spinasMadGraphCppList[Lookup[config, "ColorRepresentations", {}]] <> ";",
   "  config.parameter_names = {" <> StringRiffle[spinasCppQuoted /@ config["ParameterNames"], ", "] <> "};",
   "  config.helicities = {" <> StringRiffle[spinasMadGraphCppList /@ config["HelicityConfigurations"], ", "] <> "};",
+  "  config.exact_zero_helicities = {" <> StringRiffle[
+    spinasMadGraphCppList /@ Lookup[config, "ExactZeroHelicities", {}], ", "] <> "};",
   "  config.normalization = " <> spinasCppReal[config["Normalization"]] <> ";",
   "  config.width_parameter_indices = " <> spinasMadGraphCppList[Lookup[config, "WidthParameterIndices", {}]] <> ";"},
   KeyValueMap["  config.parameter_rules[" <> spinasCppQuoted[#1] <> "] = " <> spinasCppReal[#2] <> ";" &, config["ParameterRules"]],
@@ -194,18 +209,20 @@ spinasMadGraphMain[name_String, config_Association] := StringRiffle[{
   "int main(int argc, char** argv) {", "  try {",
   "    if (hepcat_spinas::validation_help_requested(argc, argv)) {",
   "      hepcat_spinas::print_validation_usage(std::cout);",
-  "      std::cout << \"--report FILE --min-energy E --max-energy E --timeout SECONDS\\n\";", "      return 0;", "    }",
+  "      std::cout << \"--report FILE --min-energy E --max-energy E --timeout SECONDS --zero-absolute-tolerance X\\n\";", "      return 0;", "    }",
   "    hepcat_spinas::MadGraphValidationOptions options;",
   "    options.points = " <> ToString[config["Points"]] <> ";",
   If[config["Seed"] === "Automatic", "    // A fresh time-based seed is reported for every run.",
     "    options.seed = UINT64_C(" <> ToString[config["Seed"]] <> ");"],
   "    std::string report_file;", "    std::vector<char*> ordinary(1, argv[0]);",
   "    for (int i = 1; i < argc; ++i) {", "      const std::string flag(argv[i]);",
-  "      if (flag == \"--report\" || flag == \"--min-energy\" || flag == \"--max-energy\" || flag == \"--timeout\") {",
+  "      if (flag == \"--report\" || flag == \"--min-energy\" || flag == \"--max-energy\" ||",
+  "          flag == \"--timeout\" || flag == \"--zero-absolute-tolerance\") {",
   "        if (++i >= argc) throw std::invalid_argument(\"Missing validation option value.\");",
   "        if (flag == \"--report\") report_file = argv[i];",
   "        else if (flag == \"--min-energy\") options.minimum_center_of_mass_energy = std::stold(argv[i]);",
   "        else if (flag == \"--max-energy\") options.maximum_center_of_mass_energy = std::stold(argv[i]);",
+  "        else if (flag == \"--zero-absolute-tolerance\") options.zero_absolute_tolerance = std::stold(argv[i]);",
   "        else { const auto seconds = std::stoul(argv[i]);",
   "          if (seconds == 0 || seconds > 86400) throw std::invalid_argument(\"Timeout must be in [1,86400] seconds.\");",
   "          options.preparation_timeout_seconds = static_cast<unsigned>(seconds); }",
@@ -240,7 +257,7 @@ spinasMadGraphREADME[name_String, config_Association] := StringRiffle[{
   "Select the installation and UFO model explicitly with MadGraphDirectory and MadGraphModel when exporting. MadGraphAllowedParticles -> All retains the full selected model; a list such as {11,22} restricts particle types by absolute PDG code and includes their antiparticles. No QED model or restriction is inferred. Regenerate the project to change these stored settings.",
   "The reference is generated and compiled once in a private temporary workspace. The installed MadGraph source and its model files are not edited. Current SPINAS parameter and mass values are matched to the UFO inputs; unknown mappings or mismatched dependent couplings stop the check.",
   "Validation uses zero widths on both sides. A private SPINAS copy disables propagator widths, and the private UFO copy sets all particle-width parameters and decay widths to zero, including dependent widths. This does not change the caller's parameters or the widths used by normal MadEvent simulation.",
-  "The comparison supports colorless tree amplitudes and certified coherent SU(3) color sums. The ordinary process remains usable without MadGraph. A numerical FAIL, including floating-point cancellation in an exported formula, is not changed into a pass by fitting a scale or relaxing tolerances.",
+  "The comparison supports colorless tree amplitudes and certified coherent SU(3) color sums. Exported symbolic zero sectors use a separate absolute bound of 1e-22 on the squared result. The report retains the raw residual and applied bound. Use `--zero-absolute-tolerance 0` for a strict replay. Other sectors use the ordinary comparison tolerances.",
   "Configuration: " <> config["Status"] <> If[config["Reason"] === "", "", ". " <> config["Reason"]], ""}, "\n"];
 
 (* ::Subsection::Closed:: *)
@@ -405,11 +422,11 @@ spinasMadEventREADME[name_String, config_Association] := If[config["Status"] =!=
 (* ::Subsection::Closed:: *)
 (*Mathematica Entry Point*)
 
-spinasMadGraphRunOptionNames = {"Output", "RelativeTolerance", "AbsoluteTolerance",
+spinasMadGraphRunOptionNames = {"Output", "RelativeTolerance", "AbsoluteTolerance", "ZeroAbsoluteTolerance",
   "MinimumEnergy", "MaximumEnergy", "TimeConstraint", "MadGraphPoints", "MadGraphSeed", "CMakeExecutable"};
 spinasMadGraphValidationOptionsQ[options_Association] := spinasMadGraphOptionsQ[options] &&
   MemberQ[{"Table", "Summary", "Details"}, options["Output"]] &&
-  AllTrue[Lookup[options, {"RelativeTolerance", "AbsoluteTolerance"}],
+  AllTrue[Lookup[options, {"RelativeTolerance", "AbsoluteTolerance", "ZeroAbsoluteTolerance"}],
     NumberQ[#] && TrueQ[Im[#] == 0 && # >= 0] && FreeQ[#, Indeterminate | DirectedInfinity] &] &&
   AllTrue[Lookup[options, {"MinimumEnergy", "MaximumEnergy"}],
     # === Automatic || NumberQ[#] && TrueQ[Im[#] == 0 && # > 0] && FreeQ[#, Indeterminate | DirectedInfinity] &] &&
@@ -429,7 +446,8 @@ spinasMadGraphValidationOutput[report_Association, output_String] := Switch[outp
   _, Dataset[If[Lookup[report, "Rows", {}] === {},
     {KeyTake[report, {"Status", "Message"}]},
     Map[Join[<|"Helicities" -> spinasMadGraphHelicityLabel[#["Helicities"]]|>,
-      KeyTake[#, {"Status", "Points", "MaximumRelativeError"}]] &, report["Rows"]]],
+      KeyTake[#, {"Status", "Points", "MaximumRelativeError", "MaximumAbsoluteError"}],
+      <|"ZeroAbsoluteTolerance" -> Lookup[#, "ZeroAbsoluteTolerance", None]|>] &, report["Rows"]]],
     MaxItems -> {All, All}]];
 
 (* Do not let one independent reference failure suppress the other comparison.
@@ -469,6 +487,11 @@ spinasRunMadGraphValidation[directory_String, name_String, config_Association, s
     "--relative-tolerance", spinasMadGraphCLIReal[options["RelativeTolerance"]],
     "--absolute-tolerance", spinasMadGraphCLIReal[options["AbsoluteTolerance"]],
     "--timeout", ToString[options["TimeConstraint"]]};
+  If[KeyExistsQ[supplied, "ZeroAbsoluteTolerance"],
+    If[!KeyExistsQ[config, "ExactZeroHelicities"],
+      Return[Failure["MadGraphProjectConfiguration", <|"MessageTemplate" ->
+        "Regenerate this project to use ZeroAbsoluteTolerance."|>]]];
+    command = Join[command, {"--zero-absolute-tolerance", spinasMadGraphCLIReal[options["ZeroAbsoluteTolerance"]]}]];
   seed = Lookup[supplied, "MadGraphSeed", config["Seed"]];
   If[seed =!= Automatic && seed =!= "Automatic", command = Join[command, {"--seed", ToString[seed]}]];
   If[options["MinimumEnergy"] =!= Automatic, command = Join[command, {"--min-energy", spinasMadGraphCLIReal[options["MinimumEnergy"]]}]];

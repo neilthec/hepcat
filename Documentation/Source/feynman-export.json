@@ -1044,6 +1044,7 @@
         "paragraphs": [
           "`\"MadGraphPoints\" -> 1000` requests 1000 common physical points for every massless-helicity combination. `\"MadGraphSeed\" -> Automatic` selects a seed at run time and reports it. Supply an unsigned 64-bit integer, including zero, to repeat a particular sample sequence.",
           "`\"RelativeTolerance\" -> 10^-7` and `\"AbsoluteTolerance\" -> 0` are the default numerical tolerances. Nonfinite values, missing evaluations and runtime errors cannot count as a pass. The full report retains the first failing momenta and the concrete seed.",
+          "An exported helicity with an exactly zero symbolic amplitude uses a separate absolute test. For a colored amplitude, every independent color coefficient must be exactly zero. The default `\"ZeroAbsoluteTolerance\" -> 10^-22` bounds the reference squared amplitude in these sectors. The detailed report retains the maximum absolute residual and the applied bound. Use zero for a strict replay.",
           "Use `\"MinimumEnergy\"` and `\"MaximumEnergy\"` to restrict the sampled center-of-mass energies. Automatic choices lie above the process thresholds. These random points are validation probes, rather than an integration result or a cross section.",
           "A failure can expose numerical conditioning as well as an incorrect expression. At high energy, large cancellations or inverse small masses can make one form lose precision even when a more compact equivalent form is stable. Compare the failed values and momenta before loosening a tolerance."
         ]

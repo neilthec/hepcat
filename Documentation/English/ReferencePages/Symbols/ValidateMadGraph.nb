@@ -174,7 +174,13 @@ a particular sample sequence."}], "Notes"],
       "InlineFormula"], " are the default numerical tolerances. Nonfinite \
 values, missing evaluations and runtime errors cannot count as a pass. The \
 full report retains the first failing momenta and the concrete seed."}],
-   "Notes"],
+   "Notes"], Cell[TextData[{"An exported helicity with an exactly zero \
+symbolic amplitude uses a separate absolute test. For a colored amplitude, \
+every independent color coefficient must be exactly zero. The default ",
+     Cell[BoxData[RowBox[{"\"ZeroAbsoluteTolerance\"", " ", "->", " ", "10",
+         "^", "-", "22"}]], "InlineFormula"], " bounds the reference squared \
+amplitude in these sectors. The detailed report retains the maximum absolute \
+residual and the applied bound. Use zero for a strict replay."}], "Notes"],
   Cell[TextData[{"Use ", Cell[BoxData[RowBox[{"\"MinimumEnergy\""}]],
       "InlineFormula"], Cell[BoxData[RowBox[{" ", "and", " "}]],
       "InlineFormula"], Cell[BoxData[RowBox[{"\"MaximumEnergy\""}]],
@@ -471,6 +477,13 @@ independently to each tested massless-helicity combination."}],
         "TableText"], Cell[TextData[{"Optional absolute numerical comparison \
 tolerance. ValidateMadGraph defaults to zero so a wrong tiny amplitude cannot \
 pass through a fixed absolute floor."}], "TableText"]},
+      {Cell[TextData[{Cell[BoxData[RowBox[{"\"ZeroAbsoluteTolerance\""}]],
+           "InlineFormula"]}], "TableText"],
+       Cell[TextData[{Cell[BoxData[RowBox[{"1", "/",
+              "10000000000000000000000"}]], "InlineFormula"]}], "TableText"],
+       Cell[TextData[{"Absolute bound on the reference squared amplitude for \
+an exported exact-zero helicity. The default is 10^-22. Set this to zero for \
+a strict replay."}], "TableText"]},
       {Cell[TextData[{Cell[BoxData[RowBox[{"\"MinimumEnergy\""}]],
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"Automatic"}]],
