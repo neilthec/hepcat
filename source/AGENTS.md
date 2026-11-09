@@ -745,7 +745,9 @@ launcher is `build/PROC_<ProcessName>/bin/madevent`; do not create a duplicate
 `<ProcessName>_madevent` executable in the build root. Validation/test binaries
 remain there. The builder receives the actual CMake build's link metadata,
 so alternative build directories retain their own numerical sessions.
-Preserve earlier sessions rather than moving or overwriting their results.
+Reuse compatible sessions. An explicit `"Overwrite" -> True` may refresh an
+incompatible session owned by that export. Build the replacement first and
+retain the previous session intact beside it, with its cards and events.
 The prepared `PROC_<ProcessName>` directory must contain every HEPCAT/SPINAS runtime
 dependency, including its amplitude sources and headers, private model support
 and numerical libraries. Prefer the actual static SPINAS archive when packaging;

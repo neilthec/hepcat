@@ -573,7 +573,39 @@ def configuration_fingerprint(config, link=None):
     return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
 
 
-def prepare(data, root=None):
+def replace_session(process, final, report, previous_manifest):
+    """Publish a ready replacement while retaining the previous session intact."""
+    lock = final.with_name("." + final.name + ".refresh")
+    try:
+        lock.mkdir()
+    except FileExistsError as error:
+        raise MadEventSetupError("Another build is replacing " + str(final)) from error
+    try:
+        manifest = final / "hepcat-madevent.json"
+        if (final.is_symlink() or manifest.is_symlink() or not manifest.is_file()
+                or manifest.read_bytes() != previous_manifest):
+            raise MadEventSetupError("The previous MadEvent session changed during the build: " + str(final))
+        archive = Path(tempfile.mkdtemp(prefix=final.name + ".previous-", dir=final.parent))
+        previous = archive / final.name
+        try:
+            report["PreviousSessionDirectory"] = str(previous)
+            (process / "hepcat-madevent.json").write_text(json.dumps(report, indent=2) + "\n")
+            final.rename(previous)
+            try:
+                process.rename(final)
+            except OSError:
+                if not final.exists() and not final.is_symlink():
+                    previous.rename(final)
+                raise
+        finally:
+            if not previous.exists():
+                archive.rmdir()
+        print("Previous MadEvent session retained at: " + str(previous), flush=True)
+    finally:
+        lock.rmdir()
+
+
+def prepare(data, root=None, refresh_generated=False):
     """Build MadEvent under the compiled export, retaining its cards.
 
     New exports use the directory containing BridgeLinkFile as their default
@@ -598,31 +630,48 @@ def prepare(data, root=None):
         raise MadEventSetupError("SessionDirectory must be a simple process-directory name.")
     final = workspace / session
     fingerprint = configuration_fingerprint(config, link)
+    previous_manifest = None
+    if final.is_symlink():
+        raise MadEventSetupError("Refusing to overwrite a symbolic link at the MadEvent session path: " + str(final))
     if final.exists():
         manifest = final / "hepcat-madevent.json"
-        if not manifest.is_file():
+        if manifest.is_symlink() or not manifest.is_file():
             raise MadEventSetupError("Refusing to overwrite a MadEvent directory without HEPCAT ownership metadata.")
-        report = json.loads(manifest.read_text())
+        manifest_bytes = manifest.read_bytes()
+        report = json.loads(manifest_bytes)
+        if not isinstance(report, dict):
+            raise MadEventSetupError("Invalid HEPCAT MadEvent ownership metadata: " + str(manifest))
         legacy_link = {key: link[key] for key in ("Libraries", "CXXRuntime", "RuntimeLibraryDirectories") if key in link}
         if report.get("ConfigurationSHA256") not in (fingerprint, configuration_fingerprint(config, legacy_link)):
-            raise MadEventSetupError("Export metadata changed or this MadEvent directory belongs to another process: " +
-                str(final) + ". Select --work-directory DIR for a separate numerical session.")
+            old_export = report.get("ExportDirectory")
+            owned = (report.get("Status") == "READY" and report.get("Backend") == "HEPCAT SPINAS"
+                     and isinstance(old_export, str) and Path(old_export).resolve() == project)
+            if not (refresh_generated and owned):
+                raise MadEventSetupError("Export metadata changed or this MadEvent directory belongs to another process: " +
+                    str(final) + ". Select --work-directory DIR for a separate numerical session.")
+            previous_manifest = manifest_bytes
         for row in report.get("MatrixHashes", []):
             path = final / row["Path"]
             if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != row["SHA256"]:
                 raise MadEventSetupError("A private MATRIX was modified or regenerated; refusing to run it.")
-        previous_sources = report.get("Bundle", {}).get("SourceLibraryHashes")
-        if not report.get("Bundle") or (previous_sources is not None and previous_sources != library_source_hashes(link)):
-            bundle, local_link = bundle_dependencies(final, config, link)
-            patch_linking(final, local_link)
-            report.update(Bundle=bundle, LinkConfiguration=local_link, ConfigurationSHA256=fingerprint)
-            (final / "hepcat-madevent.json").write_text(json.dumps(report, indent=2) + "\n")
-        install_runtime_guard(final)
-        return dict(report, MadEventDirectory=str(final), WorkingDirectory=str(workspace))
+        if previous_manifest is None:
+            previous_sources = report.get("Bundle", {}).get("SourceLibraryHashes")
+            if not report.get("Bundle") or (previous_sources is not None and previous_sources != library_source_hashes(link)):
+                bundle, local_link = bundle_dependencies(final, config, link)
+                patch_linking(final, local_link)
+                report.update(Bundle=bundle, LinkConfiguration=local_link, ConfigurationSHA256=fingerprint)
+                (final / "hepcat-madevent.json").write_text(json.dumps(report, indent=2) + "\n")
+            install_runtime_guard(final)
+            return dict(report, MadEventDirectory=str(final), WorkingDirectory=str(workspace))
     support = workspace / ".hepcat-madevent-support"
-    if support.exists():
+    if refresh_generated:
+        # The old preparation directory can still contain a private UFO
+        # used by an earlier session. Generate into fresh private support.
+        support = Path(tempfile.mkdtemp(prefix=support.name + "-", dir=workspace))
+    elif support.exists():
         raise MadEventSetupError("A previous MadEvent preparation is incomplete. Inspect " + str(support) + " before removing or renaming it.")
-    support.mkdir()
+    else:
+        support.mkdir()
     deadline = time.monotonic() + config["TimeConstraint"]
     ref = reference_runtime()
     try:
@@ -726,7 +775,10 @@ def prepare(data, root=None):
             ref.run_logged([make, "madevent"] + make_options, matrix.parent, support / "build.log", deadline, environment)
         # Generation used a relative private UFO path. Keep that private source
         # stable, and move only the numerical project into its public location.
-        process.rename(final)
+        if previous_manifest is None:
+            process.rename(final)
+        else:
+            replace_session(process, final, report, previous_manifest)
         print("MadEvent ready: " + str(final / "bin" / "madevent"), flush=True)
         return report
     except ref.ValidationSetupError as error:
@@ -741,6 +793,8 @@ def main(argv=None):
     parser.add_argument("--work-directory", type=Path,
                         help="Create or reuse PROC_<ProcessName>/ under this directory (new exports default to their build directory).")
     parser.add_argument("--prepare", action="store_true", help="Generate and build MadEvent without launching a run.")
+    parser.add_argument("--refresh-generated", action="store_true",
+                        help="Replace an incompatible session owned by this export after preserving the previous session.")
     parser.add_argument("--command-file", type=Path, help="Native bin/madevent command script.")
     parser.add_argument("--run", help="Generate unweighted events with this native run name.")
     parser.add_argument("--run-card", type=Path)
@@ -763,7 +817,7 @@ def main(argv=None):
             config["BridgeLinkFile"] = str(args.bridge_link_file.expanduser().resolve())
         if args.timeout is not None:
             config["TimeConstraint"] = args.timeout
-        report = prepare(config, root=args.work_directory)
+        report = prepare(config, root=args.work_directory, refresh_generated=args.refresh_generated)
         process = Path(report["MadEventDirectory"])
         print("MadEvent output directory: " + str(process), flush=True)
         print("  HTML:   " + str(process / "index.html"), flush=True)

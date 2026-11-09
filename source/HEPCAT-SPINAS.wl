@@ -2512,7 +2512,7 @@ WriteSPINASProcess[directory_String, process : {___String}, amplitude_, model_, 
   contents = <|"Header"->code["Header"], "Source"->code["Source"],
     "Demo"->spinasProjectMain[name], "Runtime"->Import[runtime,"Text"],
     "CMake"->spinasProjectCMake[name,root,precision] <> spinasCalcHEPCMake[name,calchep] <>
-      spinasCalcHEPNumericalCMake[name, numerical] <> spinasMadGraphCMake[name] <> spinasMadEventCMake[name, madevent],
+      spinasCalcHEPNumericalCMake[name, numerical] <> spinasMadGraphCMake[name] <> spinasMadEventCMake[name, madevent, overwrite],
     "README"->"Code generation mode: " <> OptionValue["CodeStyle"] <> ".\n\n" <> spinasProjectREADME[name,ir,precision] <> spinasCalcHEPREADME[name,calchep] <>
       spinasCalcHEPNumericalREADME[numerical] <> spinasMadGraphREADME[name, madgraph] <> spinasMadEventREADME[name, madevent]|>;
   contents = Join[contents, validationProject["Contents"], numericalProject["Contents"], madgraphProject["Contents"], madeventProject["Contents"]];
@@ -3296,7 +3296,7 @@ spinasWriteFamily[directory_String, entries_List, model_, opts_List, physicalSpe
         "amplitude(default doubled spins)" -> "first color coefficient(default doubled spins)"}], spinasFamilyProjectMain[name]],
     "Runtime" -> Import[runtime, "Text"],
     "CMake" -> spinasProjectCMake[name, root, precision] <> spinasCalcHEPCMake[name, calchep] <>
-      spinasCalcHEPNumericalCMake[name, numerical] <> spinasMadGraphCMake[name] <> spinasMadEventCMake[name, madevent],
+      spinasCalcHEPNumericalCMake[name, numerical] <> spinasMadGraphCMake[name] <> spinasMadEventCMake[name, madevent, options["Overwrite"]],
     "README" -> "Code generation mode: " <> options["CodeStyle"] <> ".\n\n" <>
       If[KeyExistsQ[ir, "ColorData"],
         "## Coherent color amplitudes\n\nThis export keeps every independent SU(3) color coefficient. `color_amplitudes(spins)` returns those complex coefficients. `amp(spins, colors)` supplies explicit external color indices (1..3 for quarks, 1..8 for gluons, 1 for singlets). `color_spin_sum(spins)` contracts the exact Hermitian Gram matrix, including interference. `spin_sum()` then sums all requested spin/helicity configurations; `amp2()` applies incoming spin/color averages and the final identical-species factor exactly once. `amp(spins)` without colors is rejected. The example prints the first color coefficient and the full averaged square. Independent CalcHEP and MadGraph validations compare complete color sums. Colored event generation remains unavailable until a color-flow adapter is provided.\n\n", ""] <>

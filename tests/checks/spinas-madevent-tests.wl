@@ -98,12 +98,19 @@ If[AssociationQ[smeSelected],
         StringContainsQ[cmake, "set(HEPCAT_MADEVENT_DEFAULT_TARGET ALL)"] &&
         StringContainsQ[cmake, "--bridge-link-file \"${CMAKE_CURRENT_BINARY_DIR}/madevent-link.json\" --prepare"] &&
         StringContainsQ[cmake, "DEPENDS madevent_stub_madevent_matrix madevent_stub_process"] &&
-        !StringContainsQ[cmake, "--run "]]];
+        !StringContainsQ[cmake, "--run " | "--refresh-generated"]]];
   smeCheck["the generated link metadata identifies headers and a static SPINAS archive for bundling",
     With[{cmake = Import[smeSelected["Files"]["CMake"], "Text"]},
       StringContainsQ[cmake, "SPINASIncludeDirectory"] &&
         StringContainsQ[cmake, "SPINASStaticLibrary"]]];
 ];
+
+smeOverwrite = smeExport["combined", {"e", "E"} -> {"A", "A"},
+  "MadGraphDirectory" -> smeFakeMG, "MadGraphModel" -> "explicit-test-ufo",
+  "MadGraphAllowedParticles" -> {11, 22}, "Overwrite" -> True];
+smeCheck["Overwrite True authorizes refresh of an owned stale MadEvent session",
+  AssociationQ[smeOverwrite] &&
+    StringContainsQ[Import[smeOverwrite["Files"]["CMake"], "Text"], "--prepare --refresh-generated"]];
 
 smeFixed = smeExport["fixed-outgoing", {"e", "E"} -> {"A.+", "A"},
   "MadGraphDirectory" -> smeFakeMG, "MadGraphModel" -> "explicit-test-ufo"];

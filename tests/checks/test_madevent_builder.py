@@ -92,7 +92,8 @@ class MadEventBuilderTests(unittest.TestCase):
                   "LibraryHashes": [{"Path": relative_library,
                                      "SHA256": hashlib.sha256(local_library.read_bytes()).hexdigest()}]}
         normalized = builder.validate_config(config)
-        report = {"Status": "READY", "MadEventDirectory": str(process.resolve()),
+        report = {"Status": "READY", "Backend": "HEPCAT SPINAS",
+                  "ExportDirectory": config["ProcessDirectory"], "MadEventDirectory": str(process.resolve()),
                   "WorkingDirectory": str(workspace.resolve()),
                   "Bundle": bundle,
                   "LinkConfiguration": {"Libraries": [relative_library],
@@ -331,6 +332,68 @@ class MadEventBuilderTests(unittest.TestCase):
         (process / "matrix.f").write_text("regenerated HELAS matrix\n")
         with self.assertRaisesRegex(builder.MadEventSetupError, "modified or regenerated"):
             builder.prepare(self.config)
+
+    def test_refresh_owns_the_export_and_keeps_old_files_on_failed_preparation(self):
+        process, report = self.make_owned_run(self.directory)
+        card = process / "Cards" / "run_card.dat"
+        card.write_text("user controls\n")
+        manifest = process / "hepcat-madevent.json"
+        previous_support = self.directory / ".hepcat-madevent-support"
+        previous_support.mkdir()
+        changed = dict(self.config, MassParameterPDGs={"Me": [11]})
+        with self.assertRaisesRegex(builder.MadEventSetupError, "metadata changed"):
+            builder.prepare(changed)
+        # Model generation must be reached despite the previous support folder.
+        class FakeReference:
+            ValidationSetupError = ValueError
+
+            def checked_configuration(self, data):
+                raise ValueError("deliberate preparation failure")
+        with mock.patch.object(builder, "reference_runtime", return_value=FakeReference()):
+            with self.assertRaisesRegex(builder.MadEventSetupError, "deliberate preparation failure"):
+                builder.prepare(changed, refresh_generated=True)
+        self.assertEqual(json.loads(manifest.read_text()), report)
+        self.assertEqual(card.read_text(), "user controls\n")
+        self.assertTrue(previous_support.is_dir())
+        self.assertEqual(list(self.directory.glob("madevent.previous-*")), [])
+
+        foreign = dict(report, ExportDirectory=str(self.directory / "another-export"))
+        manifest.write_text(json.dumps(foreign))
+        with self.assertRaisesRegex(builder.MadEventSetupError, "metadata changed"):
+            builder.prepare(changed, refresh_generated=True)
+        manifest.unlink()
+        with self.assertRaisesRegex(builder.MadEventSetupError, "ownership"):
+            builder.prepare(changed, refresh_generated=True)
+
+    def test_ready_replacement_retains_the_previous_session_and_rolls_back_on_rename_error(self):
+        final, _ = self.make_owned_run(self.directory)
+        event = final / "Events" / "saved.lhe"
+        event.parent.mkdir()
+        event.write_text("original events\n")
+        previous = (final / "hepcat-madevent.json").read_bytes()
+        process = self.directory / "replacement"
+        process.mkdir()
+        (process / "new-matrix.f").write_text("new generated code\n")
+        original_rename = Path.rename
+
+        def fail_promotion(path, destination):
+            if path == process:
+                raise OSError("deliberate publish failure")
+            return original_rename(path, destination)
+
+        with mock.patch.object(Path, "rename", fail_promotion):
+            with self.assertRaisesRegex(OSError, "deliberate publish failure"):
+                builder.replace_session(process, final, {}, previous)
+        self.assertEqual(event.read_text(), "original events\n")
+        self.assertEqual((final / "hepcat-madevent.json").read_bytes(), previous)
+
+        report = {}
+        builder.replace_session(process, final, report, previous)
+        archived = Path(report["PreviousSessionDirectory"])
+        self.assertEqual((archived / "Events" / "saved.lhe").read_text(), "original events\n")
+        self.assertEqual((archived / "hepcat-madevent.json").read_bytes(), previous)
+        self.assertTrue((final / "new-matrix.f").is_file())
+        self.assertFalse(event.exists())
 
     def test_legacy_default_session_uses_launch_directory_and_preserves_export(self):
         project = self.make_export()
