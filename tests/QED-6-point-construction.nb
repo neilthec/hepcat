@@ -146,7 +146,7 @@ In[104]:=",ExpressionUUID->"8d0b4170-79ca-43c4-8e8f-37485758afbb"]
 
 Cell["Use the cubic QED model for every diagram calculation and for four-point factorization. The model containing known four- and five-point amplitudes supplies five- and six-point factorization. Neither model is changed.", "Text",ExpressionUUID->"e40be2b8-a07c-4c47-93ff-40449897d0a0"],
 
-Cell["diagramModel = ReadModel[FileNameJoin[{hepcatDirectory, \"models\"}], 2];\nfactorizationModel = ReadModel[FileNameJoin[{hepcatDirectory, \"models\"}], 3];\nelectronMass = ModelParameter[diagramModel, \"Me\"];\nelectricCharge = ModelParameter[diagramModel, \"EE\"];\n", "Input",
+Cell["diagramModel = ReadModel[FileNameJoin[{hepcatDirectory, \"models\"}], 2];\nfactorizationModel = ReadModel[FileNameJoin[{hepcatDirectory, \"models\"}], 3];\n", "Input",
  CellLabel->
   "In[107]:=",ExpressionUUID->"f61894d2-c74b-4610-a3de-e1941760c4ae"],
 
@@ -21460,7 +21460,10 @@ displayed explicitly rather than attributed to the automatic completion stage.\
 Cell[CellGroupData[{
 
 Cell["\<\
-allPlusWorkedAmplitude =
+allPlusWorkedAmplitude = With[{
+    electronMass = ModelParameter[diagramModel, \"Me\"],
+    electricCharge = ModelParameter[diagramModel, \"EE\"]
+  },
   2 Sqrt[2] electricCharge^3 electronMass *
     SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Spinor[\"Spin\", \"Angle\", \
 2]] *
@@ -21471,7 +21474,7 @@ allPlusWorkedAmplitude =
         Spinor[\"Helicity\", \"Square\", photon]] /
       PropDen[Mom[Multiparticle[2, photon]], electronMass]], {photon, {3, 4, 5}}]] /
     (Times @@ Table[PropDen[Mom[Multiparticle[1, photon]], electronMass],
-      {photon, {3, 4, 5}}]);
+      {photon, {3, 4, 5}}])];
 allPlusWorkedAmplitude\
 \>", "Input",
  CellLabel->

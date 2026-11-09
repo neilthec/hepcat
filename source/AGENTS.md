@@ -282,7 +282,7 @@ factorization-family freedom when modifying this workflow. Do not replace its
 original residue targets with prepared continuations, apply internal shell
 conditions after combining diagrams, disable a failing final check, or inject
 a process-specific known expression to make the wrapper appear successful.
-`tests/QED-5-point-construction.nb` uses one wrapper call per process; earlier
+`tests/QED-6-point-construction.nb` uses one wrapper call per process; earlier
 manual calculations remain in collapsed groups.
 
 Construction prioritizes a completed validated amplitude, then efficiency,

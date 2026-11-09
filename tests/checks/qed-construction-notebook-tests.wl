@@ -1,7 +1,7 @@
 (* Check native notebook cell structure as well as Wolfram syntax. Adjacent
    Cell[...] expressions can parse as Times without producing Syntax errors. *)
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
-notebookPath = FileNameJoin[{root, "tests", "QED-5-point-construction.nb"}];
+notebookPath = FileNameJoin[{root, "tests", "QED-6-point-construction.nb"}];
 checks = 0; failures = {};
 SetAttributes[check, HoldRest];
 check[name_, test_] := (checks++; If[!TrueQ[test],

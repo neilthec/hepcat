@@ -868,7 +868,7 @@ The detailed sample chart records `"SamplingConstruction"`. These are sampled
 analytic comparisons, not physical phase-space probabilities; the separate
 high-energy test continues to use real scattering kinematics.
 
-`tests/QED-5-point-construction.nb` constructs this benchmark independently for
+`tests/QED-6-point-construction.nb` constructs this benchmark independently for
 the all-plus and mixed-helicity three-photon cases and the identical-four-fermion
 single-photon case. It reads the separate
 massive-QED Feynman model 2. Each model retains its own mass and charge
@@ -2463,7 +2463,7 @@ route, with no proof of a global minimum. All 30 physical channels, high-energy
 growth, the reference diagnostic and independent Feynman comparison pass.
 The final expression also agrees with MadGraph on 1000 random physical points
 at the specified five positive photon helicities, summing massive electron
-spins. `tests/QED-5-point-construction.nb` contains the ordinary construction
+spins. `tests/QED-6-point-construction.nb` contains the ordinary construction
 call and the independent MadGraph test.
 
 ### Compact All-Positive Six-Point Result
@@ -2517,7 +2517,7 @@ These checks establish the recorded sample agreement; they are not a proof
 of a globally shortest representation.
 
 The six-point `e,E,A.+,A.+,A.+,A.+` section of
-`tests/QED-5-point-construction.nb` now uses the automatic defaults. Earlier
+`tests/QED-6-point-construction.nb` now uses the automatic defaults. Earlier
 benchmarks used explicit sample, correction-cap and clock settings. A historical broad-space
 run from 24 `AllSpurious` prepared diagrams completed in about 14 minutes,
 with 161 independent correction directions. All 14 physical channels and the retained affine
@@ -2809,7 +2809,7 @@ A presentation preference must not implicitly redefine the proposal coordinates.
 The private policy is dynamically scoped and restores the caller's state.
 
 The worked six-point process `e,E,A.+,A.+,A.+,A.-` illustrates the reduction in
-`QED-5-point-construction.nb`. Example-only formulas and the local identity route
+`QED-6-point-construction.nb`. Example-only formulas and the local identity route
 are in `QED-5-point-residues.wl`, through
 `QEDSixPointPPPMPreviousExample[model]`, `QEDSixPointPPPMCompactExample[model]`,
 and `QEDSixPointPPPMExampleProof[model]`. Production code never calls these
