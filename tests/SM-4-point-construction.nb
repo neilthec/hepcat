@@ -1,23 +1,23 @@
 (* Content-type: application/vnd.wolfram.mathematica *)
 
-Notebook[{Cell[CellGroupData[{Return[Cell["SM Four-Point Construction and Independent Validation",
-       "Title", ExpressionUUID -> "4b2f9c68-f5bd-47c0-95c9-309f103711ad"]],
-     Return[Cell["The 73 process sections contain 74 process families, including both charge-conjugate \
+Notebook[{Cell[CellGroupData[{Cell["SM Four-Point Construction and Independent Validation",
+       "Title", ExpressionUUID -> "4b2f9c68-f5bd-47c0-95c9-309f103711ad"],
+     Cell["The 73 process sections contain 74 process families, including both charge-conjugate \
 cases in the quark Z W section. The 132 construction calls cover the listed photon and gluon helicity \
 combinations. The original formulas and manual derivations remain in SM-4-point.nb.", "Text",
-       ExpressionUUID -> "4fc01ccb-5134-4fbf-82ff-b4c6d40517fc"]],
-     Return[Cell["Evaluate Setup first, then run the process sections. Each construction prints its \
+       ExpressionUUID -> "4fc01ccb-5134-4fbf-82ff-b4c6d40517fc"],
+     Cell["Evaluate Setup first, then run the process sections. Each construction prints its \
 pole, high-energy, reference-spinor and independent Feynman-diagram checks. The C++ export below each \
 family builds the process and runs the CalcHEP and MadGraph comparisons at 1000 phase-space points. The \
 tables are produced by these cells.", "Text", CellChangeTimes ->
         {{4.00323269713818*^9, 4.0032327267888813*^9}}, ExpressionUUID ->
-        "32c06b17-d088-42d5-b1a8-b26e5bd24c41"]], Return[Cell["The process lists in construction cells \
+        "32c06b17-d088-42d5-b1a8-b26e5bd24c41"], Cell["The process lists in construction cells \
 use all momenta ingoing. Each export also states a physical two-to-two process: legs 1 and 2 are \
 incoming and legs 3 and 4 are crossed to outgoing antiparticles. HEPCAT performs the momentum and spinor \
 crossing. External photon/gluon helicities are kept separately in the C++ amplitude, while \
 squared-amplitude validation uses the appropriate sums and initial averages.", "Text",
-       ExpressionUUID -> "6a35dae1-9591-47d4-85bc-2a708383338d"]],
-     Return[Cell[CellGroupData[{Cell["Setup", "Section", ExpressionUUID ->
+       ExpressionUUID -> "6a35dae1-9591-47d4-85bc-2a708383338d"],
+     Cell[CellGroupData[{Cell["Setup", "Section", ExpressionUUID ->
            "9464562d-3966-4c1c-b632-5c6d1cdcf5e0"], Cell[CellGroupData[
            {Cell["hepcatDirectory = \
 ExpandFileName[\"~/code/hepcat\"];\nGet[FileNameJoin[{hepcatDirectory, \"source\", \"HEPCAT.wl\"}]]",
@@ -68,7 +68,7 @@ their declared helicity spin states.", "Text", CellChangeTimes ->
            "b6f63a41-d53f-4c72-a936-56389c2a0536"], Cell["The independent MadGraph reference is the \
 local model_madgraph/sm UFO, including up-, down- and strange-quark masses and their Higgs couplings. \
 Its numerical inputs are matched to the constructive model.", "Text", CellChangeTimes ->
-           {4.0032332372241573*^9}, ExpressionUUID -> "0eb0d20c-d6f7-4d99-8a76-ddfc517fea29"]}, Open]]],
+           {4.0032332372241573*^9}, ExpressionUUID -> "0eb0d20c-d6f7-4d99-8a76-ddfc517fea29"]}, Open]],
      Cell[CellGroupData[{Cell["01. u, U, C, c", "Section", CellTags -> "construction-sm01",
          ExpressionUUID -> "72906c65-eff5-4bf0-8713-ec70c5941a6e"],
         Cell["All-ingoing ordering: u, U, C, c. Physical export: u, U -> c, C.", "Text",

@@ -10,6 +10,15 @@ held = Quiet[Check[ToExpression[Import[path,"Text"],InputForm,HoldComplete],$Fai
 held = DeleteCases[held,Null,{1}];
 check["the SM construction notebook parses as one held notebook",
   MatchQ[held,HoldComplete[_Notebook]]];
+check["notebook cell groups contain only cells",
+  FreeQ[held, HoldPattern[CellGroupData[children_List, _]] /;
+    !MatchQ[children, {___Cell}]]];
+check["the open Setup section appears before process 01",
+  MatchQ[held, HoldComplete[Notebook[{Cell[CellGroupData[{
+    Cell[_, "Title", ___], RepeatedNull[Cell[_, "Text", ___]],
+    Cell[CellGroupData[{Cell["Setup", "Section", ___], ___Cell}, Open], ___],
+    Cell[CellGroupData[{Cell[_, "Section", ___, CellTags -> "construction-sm01", ___],
+      ___Cell}, _], ___], ___Cell}, Open], ___]}, ___]]]];
 active = Cases[held, Cell[text_String,"Input",opts___] /;
   !MemberQ[{opts},Evaluatable->False] :> text, Infinity];
 parsed = ToExpression[#,InputForm,HoldComplete] & /@ active;
