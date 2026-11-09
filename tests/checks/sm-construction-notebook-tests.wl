@@ -26,16 +26,13 @@ check["the separate massive SM Feynman model is loaded in Setup",
 check["every SM construction explicitly requests its independent Feynman model",
   AllTrue[constructions,
     Count[#,HoldPattern["FeynmanModel"->smFeynman],Infinity]===1 &]];
-stageChecks = Flatten[Cases[#,HoldPattern[CheckAmplitudes[a_,c_,m_,opts___]] :>
-  HoldComplete[a,c,m,{opts}],Infinity] & /@ parsed];
-check["every retained optional stage checker includes an independent Feynman comparison",
-  Length[stageChecks]>=72 && AllTrue[stageChecks,
-    Count[#,HoldPattern["FeynmanModel"->smFeynman],Infinity]===1 &&
-      Count[#,HoldPattern["FeynmanAmplitudes"->_],Infinity]===1 &]];
-check["optional inspection cells generate their own off-shell Feynman diagrams",
-  Count[parsed,HoldPattern[CreateDiagrams[_,smFeynman]],Infinity]>=Length[stageChecks]];
-check["the notebook distinguishes older cached tables from newly requested Feynman checks",
-  StringContainsQ[Import[path,"Text"],"Saved tables without a Feynman row predate this addition"]];
+check["the notebook uses the direct construction workflow without optional stage cells",
+  FreeQ[held, Cell["Inspect the stages (optional)", "Subsection", ___]] &&
+    Count[parsed, HoldPattern[CreateDiagrams[__] | CheckAmplitudes[__]], Infinity] === 0];
+check["the notebook has no archived result cells or validation tables",
+  FreeQ[held, HoldPattern[CellTags -> tag_String] /;
+    StringStartsQ[tag, "hepcat-cache-" | "hepcat-precision-qualified-numerical-table-" |
+      "hepcat-hhhh-symbolic-table" | "hepcat-gluon-symbolic-table" | "hepcat-gluon-numerical-table"]]];
 exports = Flatten[Cases[#,HoldPattern[WriteSPINASProcess[args___]] :>
   HoldComplete[args],Infinity] & /@ parsed];
 check["each original process and the additional charge conjugate have a numerical export", Length[exports] >= 74];
@@ -49,10 +46,8 @@ check["both independent numerical comparisons are requested in the shared setup"
 check["the local massive-quark UFO and diagonal flavor mixing are explicit",
   AnyTrue[active,StringContainsQ[#,"model_madgraph"] &] &&
     AnyTrue[parsed,!FreeQ[#,HoldPattern["lamWS"->0]] &]];
-inactive = Cases[held,Cell[_,"Input",opts___] /;
-  MemberQ[{opts},Evaluatable->False],Infinity];
-check["the historical derivation inputs are retained but cannot evaluate",
-  Length[inactive] >= 857];
+check["only setup and live construction or export inputs remain",
+  Length[active] === 209 && Length[constructions] === 132 && Length[exports] === 74];
 sections = Cases[held,Cell[_,"Section",opts___] /;
   AnyTrue[{opts},MatchQ[#,CellTags->_String] &&
     StringStartsQ[Last[#],"construction-sm"] &],Infinity];
@@ -64,20 +59,15 @@ check["the extra charged process has its own SPINAS class and export",
   AnyTrue[active,StringContainsQ[#,"sm61CExport = WriteSPINASProcess["] &&
     StringContainsQ[#,"\"ProcessName\" -> \"sm61C\""] &]];
 cellTags = Flatten[Cases[held,HoldPattern[Rule[CellTags,value_]] :> value,Infinity]];
-referenceTargets = Cases[held,
-  TemplateBox[{_,{_String,target_String},___},"HyperlinkTemplate",___] :> target,Infinity];
-manualTargets = Select[referenceTargets,StringStartsQ[#,"manual-sm"] &];
-check["every retained reference button links to an existing original cell",
-  manualTargets =!= {} && AllTrue[manualTargets,MemberQ[cellTags,#] &]];
-constructionTags = Select[cellTags,StringQ[#] && StringStartsQ[#,"construction-sm"] &];
-check["all original family references remain available even if an optional button is removed",
-  Length[DeleteDuplicates[constructionTags]]>=74 &&
-    AllTrue[DeleteDuplicates[constructionTags],
-      (* The additional charge-conjugate family shares its original manual section. *)
-      MemberQ[cellTags,StringReplace[#,
-        {"construction-"->"manual-",RegularExpression["C$"]->""}]] &]];
-check["the original references link back to every current calculation",
-  Length[DeleteDuplicates[Select[referenceTargets,StringStartsQ[#,"construction-sm"] &]]] >= 74];
+constructionTags = Select[cellTags, StringQ[#] && StringStartsQ[#, "construction-sm"] &];
+check["all process families retain their navigation tags",
+  Length[DeleteDuplicates[constructionTags]] === 74];
+check["the removed manual appendix has no dangling links",
+  FreeQ[held, HoldPattern[CellTags -> tag_String] /; StringStartsQ[tag, "manual-link-"]] &&
+    FreeQ[held, TemplateBox[{_, {"SM-4-point-construction.nb", target_String}, ___},
+      "HyperlinkTemplate", ___] /; StringStartsQ[target, "manual-sm"]]];
+check["portable precision notes remain for the two near-zero comparisons",
+  ContainsAll[cellTags, {"hepcat-hhhh-extended-precision-replay", "hepcat-gluon-exact-zero-replay"}]];
 Print["SM NOTEBOOK CHECKS: ",checks,"; FAILURES: ",Length[failures]];
 If[failures==={},Print["HEPCAT_TEST_COMPLETED:sm-construction-notebook-tests.wl"],Print[failures]];
 Quit[If[failures==={},0,1]];
