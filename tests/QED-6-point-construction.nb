@@ -36534,37 +36534,73 @@ Cell["qed7PPPPPSpuriousMadGraph = If[\n  ValueQ[qed7PPPPPSpurious] && FreeQ[qed7
 
 Cell[CellGroupData[{
 
-Cell["All-Positive Photons: A General AllSpurious Formula", "Title", ExpressionUUID->"6b58ba82-a993-470b-93b6-db34742a3c09"],
+Cell["All-Positive Photons: General Formulas", "Title", ExpressionUUID->"649c7281-b702-4e7b-94cb-7fdee5f6a5a2"],
 
-Cell["The proposed terminal-pair formula defines an amplitude candidate at any photon count, subject to the finite implementation allowance. It has been tested through six photons; a complete proof for every photon count is still open. Its derivation is in tests/SIMPLIFICATION.md. The example helper evaluates that formula; it does not itself certify an amplitude. The six-photon case below is an eight-point process. We obtain an independent expression from all 720 Feynman diagrams before evaluating the prediction. All internal numerators and denominators stay off shell in that reference calculation.", "Text", ExpressionUUID->"b5c9719a-851d-4a0c-989d-f9dd1fbde2eb"],
+Cell["These formulas describe the massive QED process e, E and N positive-helicity photons, with all momenta incoming. They use the charge EE, the mass Me, and the normalization of the cubic QED model above. The formulas and their subset recurrences are defined here in the notebook.", "Text", ExpressionUUID->"c86408ff-7503-430a-80b4-d6e4f43f41ac"],
 
-Cell["e,E,A.+,A.+,A.+,A.+,A.+,A.+", "Chapter", ExpressionUUID->"85045e6e-468e-4d93-996e-3f6211287875"],
+Cell["The constructive four- and five-point results suggest a common pattern. The four-point result is proportional to m ⟨12⟩ [34]², with just one photon pair. At five points the physical-pole expression sums the three choices of that pair. Each term carries [ab]² and a factor from the remaining photon i. In the spurious form the pair contributes [ab]/⟨ab⟩, and there are two choices of which member of the pair sets the reference for i. At larger N, collect the remaining emissions into a current. Schouten and the momentum-matrix determinant combine paired emissions, giving the recurrences below.", "Text", ExpressionUUID->"94bf8c67-0f6f-4d13-9d56-f1cee7301363"],
 
-Cell["qed8PositiveParticles = Join[{\"e\", \"E\"}, ConstantArray[\"A.+\", 6]];\nqed8IndependentDiagrams = CreateDiagrams[qed8PositiveParticles, qedFeynmanModel];\nqed8IndependentRaw = DiagramAmplitudes[qed8IndependentDiagrams];\nLength[qed8IndependentRaw]", "Input", ExpressionUUID->"e5d26dd5-a5e1-44e7-99e9-21bdf1d982ce"],
+Cell["P is the full photon list {3, …, N+2}. Each sum over pairs counts an unordered pair once. The subscript on τ lists the momenta in an electron propagator, for example τ₁₃₄ = (p₁ + p₃ + p₄)² − m². All internal propagators stay off shell. The extension to unrestricted N is a conjecture supported by checks at finite multiplicity.", "Text", ExpressionUUID->"1159ad15-be89-425a-9857-5cfbdd7f6f65"],
 
-Cell["The reference spinors use the next photon cyclically. The same choice for each external photon is used in every Feynman diagram. Conversion took about 154 seconds in the verification run. The semicolon keeps the large independent expression from filling the notebook.", "Text", ExpressionUUID->"d1cf735e-db06-432f-9f72-9a0196f31834"],
+Cell[CellGroupData[{
 
-Cell["qed8IndependentSpurious = FeynmanToSpinorProducts[\n  qed8IndependentRaw,\n  \"ReferenceSpinors\" -> Thread[Range[3, 8] -> RotateLeft[Range[3, 8]]],\n  \"ReduceSpinorProducts\" -> False, \"TimeConstraint\" -> 300];", "Input", ExpressionUUID->"a84aaef7-b1e4-488e-b08a-2f11b4edaf64"],
+Cell["All-Positive Photons: A General AllPhysical Formula", "Section", ExpressionUUID->"33f759f6-2e18-419b-8599-06b906469926"],
 
-Cell["Now evaluate the general formula at six photons. The five-photon formula had complexity 1160; the expanded six-photon expression has complexity 28050 and contains 15 apparent photon-pair poles. The compact mathematical formula keeps its repeated subset currents explicit. Neither statement asserts global algebraic minimality.", "Text", ExpressionUUID->"1df78b07-8909-4c11-89d0-9a6c3aaaa0b9"],
+Cell[BoxData[FormBox[RowBox[{SubscriptBox["ℳ", "phys, N"], "=", FractionBox[RowBox[{SuperscriptBox["(√2 e)", "N"], " m ⟨12⟩"}], RowBox[{UnderscriptBox["∏", "i ∈ P"], SubscriptBox["τ", "1i"]}]], UnderscriptBox["∑", "{a,b} ⊂ P"], SuperscriptBox["[ab]", "2"], SubscriptBox["F", "P"], "(P ∖ {a,b})"}], TraditionalForm]], "DisplayFormula", ExpressionUUID->"9e1e138b-5ebb-4b6b-ad11-556880b266dc"],
 
-Cell["Get[FileNameJoin[{hepcatDirectory, \"tests\", \"QED-5-point-residues.wl\"}]];\nfactorizationModelSpurious = ReadModel[FileNameJoin[{hepcatDirectory, \"models\"}], 4];\nqed8PositiveSpuriousPair = QEDAllPositiveSpuriousExample[factorizationModelSpurious, 6];\nqed8PositiveSpurious = Last[qed8PositiveSpuriousPair];\nSpinorExpressionComplexity[qed8PositiveSpurious]", "Input", ExpressionUUID->"79611824-5d6f-4902-8574-3b596ab017ec"],
+Cell["The remaining current F uses only electron propagators. Its empty value is 1, and for a single remaining photon i it gives [i12i]/τ₂ᵢ. For two or more photons, the code starts with the product of those single-photon factors and subtracts the mass-squared pair contribution. The auxiliary pair weight sums over removing one or two photons outside the fixed pair. A weight with only that pair left equals 1.", "Text", ExpressionUUID->"075d5630-b762-4991-8ebd-4da9d3429111"],
 
-Cell["Independent validation at regular off-pole kinematics compared this prediction with the freshly obtained 720-diagram sum. All four coherent massive-spin coefficients agreed exactly at four rational sample points, using electron masses 1 and 3/2. Every external shell and momentum-conservation condition was checked, with all physical propagators and reference denominators nonzero. These exact samples test the prediction and are not a generic analytic proof.", "Text", ExpressionUUID->"1edc9fbd-b320-4fd8-b182-2ed5162acf02"],
+Cell["qedAllPositivePhysicalFormula[model_List, n_Integer /; n >= 2] := Module[\n  {photons = Range[3, n + 2], mass = ModelParameter[model, \"Me\"],\n   charge = ModelParameter[model, \"EE\"], square, angle, tau, sandwich,\n   emission, pairWeight, current, amplitude},\n  square[i_, j_] := SpinorChain[\n    Spinor[\"Helicity\", \"Square\", i], Spinor[\"Helicity\", \"Square\", j]];\n  angle = SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Spinor[\"Spin\", \"Angle\", 2]];\n  tau[leg_, subset_List] := PropDen[Mom[Multiparticle @@ Prepend[subset, leg]], mass];\n  sandwich[i_] := SpinorChain[\n    Spinor[\"Helicity\", \"Square\", i], Mom[1], Mom[2], Spinor[\"Helicity\", \"Square\", i]];\n  emission[i_, j_] := square[i, j] SpinorChain[\n    Spinor[\"Helicity\", \"Angle\", j], Mom[1], Spinor[\"Helicity\", \"Square\", i]];\n  pairWeight[subset_List, pair_List] := pairWeight[subset, pair] = Module[\n    {rest = Complement[subset, pair]},\n    (Times @@ (sandwich /@ rest)) +\n    Total[Function[i, Total[emission[i, #] & /@ Complement[photons, subset]]\n      tau[2, {i}]/tau[2, DeleteCases[subset, i]]\n      pairWeight[DeleteCases[subset, i], pair]] /@ rest] -\n    mass^2 Total[Function[ij, (square @@ ij)^2\n      (Times @@ (tau[2, {#}] & /@ ij))/tau[2, Complement[subset, ij]]\n      pairWeight[Complement[subset, ij], pair]] /@ Subsets[rest, {2}]]\n  ];\n  current[subset_List] := current[subset] =\n    (Times @@ (sandwich[#]/tau[2, {#}] & /@ subset)) -\n    If[Length[subset] < 2, 0,\n      mass^2 Total[Function[pair, (square @@ pair)^2\n        (Times @@ (tau[1, {#}] & /@ pair)) pairWeight[subset, pair]] /@\n        Subsets[subset, {2}]]/\n        (tau[2, subset] (Times @@ (tau[2, {#}] & /@ subset)))];\n  amplitude = (Sqrt[2] charge)^n mass angle/\n    (Times @@ (tau[1, {#}] & /@ photons)) *\n    Total[Function[pair, (square @@ pair)^2 current[Complement[photons, pair]]] /@\n      Subsets[photons, {2}]];\n  {Thread[Mass /@ Range[n + 2] -> Join[{mass, mass}, ConstantArray[0, n]]], amplitude}\n];", "Input", ExpressionUUID->"ba9b41c1-3a98-4f09-8d9d-b7f60d875f8e"]
+}, Open  ]],
 
-Cell["Optional: Complete Pole and High-Energy Checks", "Section", ExpressionUUID->"bc415d09-5395-4599-8207-1c027416a707"],
+Cell[CellGroupData[{
 
-Cell["Model 4 now also stores the verified seven-point all-positive amplitude needed for the 3+7 channels. No eight-point answer is stored in the model. The independent off-pole equality and MadGraph tests pass. This separate 80-row pole and high-energy study did not finish within the tested 400-second overall budget, so no complete passing report is claimed for it. The optional cell below has that same overall guard and returns a visible time-limit result if it expires.", "Text", ExpressionUUID->"a2861e9c-7a82-4c03-8267-cf23966ec558"],
+Cell["All-Positive Photons: A General AllSpurious Formula", "Section", ExpressionUUID->"96bc8234-8e50-4c5e-845f-094cf3e9da24"],
 
-Cell["qed8PositiveChannels = FactorizationAmplitudeChannels[\n  qed8PositiveParticles, factorizationModelSpurious];\nLength[qed8PositiveChannels]", "Input", ExpressionUUID->"d8beb9f3-8146-4fc8-b8a3-8e9d3ecc5741"],
+Cell[BoxData[FormBox[RowBox[{SubscriptBox["ℳ", "spur, N"], "=", SuperscriptBox["(−√2 e)", "N"], " m ⟨12⟩ ", UnderscriptBox["∑", "{a,b} ⊂ P"], FractionBox["[ab]", "⟨ab⟩"], RowBox[{"(", FractionBox[RowBox[{SubscriptBox["J", "a"], "(P ∖ {a,b})"}], SubscriptBox["τ", "2a"]], "+", FractionBox[RowBox[{SubscriptBox["J", "b"], "(P ∖ {a,b})"}], SubscriptBox["τ", "2b"]], ")"}]}], TraditionalForm]], "DisplayFormula", ExpressionUUID->"d11216f4-d565-4853-b8ca-77ee8155abd3"],
 
-Cell["qed8PositiveSpuriousChecks = TimeConstrained[\n  CheckAmplitudes[qed8PositiveSpuriousPair, qed8PositiveChannels,\n    factorizationModelSpurious,\n    \"FeynmanAmplitudes\" -> qed8IndependentSpurious,\n    \"FeynmanModel\" -> qedFeynmanModel,\n    \"TimeConstraint\" -> 300, \"Output\" -> \"Summary\"],\n  400, Missing[\"TimeLimit\", \"The optional full check did not complete within 400 seconds\"]]", "Input", ExpressionUUID->"b08c1171-af1d-4eb8-8ee3-83e7ce85820b"],
+Cell["The current J uses the indicated terminal photon as its spinor reference. Its empty value is 1, and its single-photon value is ⟨r|p₁|i]/(⟨ri⟩ τ₁ᵢ). For larger subsets, the pair weight collects the momentum determinant contributions. Momentum conservation lets the emission use the shorter of the two equivalent momentum sums. Every reference label belongs to an external photon, so only explicit photon brackets remain.", "Text", ExpressionUUID->"f37a0400-69ef-4e05-b77f-05d0afebdfa0"],
 
-Cell["Independent MadGraph Comparison", "Section", ExpressionUUID->"30be4587-d7ed-44be-abd3-ab17a54c09be"],
+Cell["qedAllPositiveSpuriousFormula[model_List, n_Integer /; n >= 2] := Module[\n  {photons = Range[3, n + 2], mass = ModelParameter[model, \"Me\"],\n   charge = ModelParameter[model, \"EE\"], square, angle, massiveAngle, tau,\n   ratio, leading, emission, pairWeight, current, amplitude},\n  square[i_, j_] := SpinorChain[\n    Spinor[\"Helicity\", \"Square\", i], Spinor[\"Helicity\", \"Square\", j]];\n  angle[i_, j_] := SpinorChain[\n    Spinor[\"Helicity\", \"Angle\", i], Spinor[\"Helicity\", \"Angle\", j]];\n  massiveAngle = SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Spinor[\"Spin\", \"Angle\", 2]];\n  tau[leg_, subset_List] := PropDen[Mom[Multiparticle @@ Prepend[subset, leg]], mass];\n  ratio[r_, p_, i_] := SpinorChain[\n    Spinor[\"Helicity\", \"Angle\", r], Mom[p], Spinor[\"Helicity\", \"Square\", i]]/angle[r, i];\n  leading[r_, subset_List] := Times @@ (ratio[r, 1, #] & /@ subset);\n  emission[r_, subset_List, i_] := Module[\n    {direct = Prepend[DeleteCases[subset, i], 1],\n     complement = Prepend[DeleteCases[Complement[photons, subset], r], 2]},\n    If[Length[complement] < Length[direct],\n      -Total[ratio[r, #, i] & /@ complement],\n      Total[ratio[r, #, i] & /@ direct]]\n  ];\n  pairWeight[r_, subset_List, pair_List] := pairWeight[r, subset, pair] =\n    (leading[r, Complement[subset, pair]] + Total[Function[i,\n      tau[1, {i}] emission[r, subset, i] pairWeight[r, DeleteCases[subset, i], pair]] /@\n        Complement[subset, pair]])/tau[1, subset];\n  current[r_, subset_List] := current[r, subset] =\n    (leading[r, subset] - mass^2 Total[Function[pair,\n      (square @@ pair)^2 pairWeight[r, subset, pair]] /@ Subsets[subset, {2}]])/\n      (Times @@ (tau[1, {#}] & /@ subset));\n  amplitude = (-Sqrt[2] charge)^n mass massiveAngle *\n    Total[Function[pair, (square @@ pair)/(angle @@ pair) *\n      Total[current[#, Complement[photons, pair]]/tau[2, {#}] & /@ pair]] /@\n        Subsets[photons, {2}]];\n  {Thread[Mass /@ Range[n + 2] -> Join[{mass, mass}, ConstantArray[0, n]]], amplitude}\n];", "Input", ExpressionUUID->"6ba01ade-8bff-4d1c-bdc8-7f8903e444db"]
+}, Open  ]],
 
-Cell["An independent MadGraph comparison passed all 1000 random physical points at seed 202611050806. The largest relative difference was 8.36 x 10^-12. The six photon helicities are fixed positive, the massive electron spins are summed, and an overall amplitude phase is allowed. The cell uses the shared validation settings, which select a fresh seed unless you override it.", "Text", ExpressionUUID->"1edb4dee-9e0d-4be3-ab2f-9017d1b31927"],
+Cell[CellGroupData[{
 
-Cell["qed8PositiveSpuriousMadGraph = If[\n  ValueQ[qed8PositiveSpurious] && FreeQ[qed8PositiveSpurious,\n    _Failure | _Missing | $Failed | $Aborted | _QEDAllPositiveSpuriousExample],\n  ValidateMadGraph[qed8PositiveParticles, qed8PositiveSpurious,\n    factorizationModelSpurious, Sequence @@ madGraphValidationOptions],\n  Missing[\"NotAvailable\", \"No formula prediction is available yet\"]]", "Input", ExpressionUUID->"b8c75b50-bbce-45a1-891b-b03954f6fb52"]
+Cell["Recovering the four- and five-point expressions", "Section", ExpressionUUID->"f5ecf221-d8e4-4637-8254-494d100c4da4"],
+
+Cell["At N = 2 the pair exhausts the photon list. Both formulas give 2 e² m ⟨12⟩ [34]²/(τ₁₃ τ₁₄) after using momentum conservation and τ₁₃ + τ₁₄ = ⟨34⟩[34]. At N = 3 each pair leaves one photon. The following cells display the two predictions for comparison with the constructive e,E,A.+,A.+,A.+ results above.", "Text", ExpressionUUID->"e7d9095a-875f-4b1b-83cc-73eb1fd29ad5"],
+
+Cell["qedAllPositivePhysicalFormula[diagramModel, 3][[2]]", "Input", ExpressionUUID->"197af22d-246d-40a1-97bd-031d2aec80e2"],
+
+Cell["qedAllPositiveSpuriousFormula[diagramModel, 3][[2]]", "Input", ExpressionUUID->"58216e35-ba50-4bf1-842c-ec02566cd98a"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Six-photon prediction", "Section", ExpressionUUID->"8ed7836e-7bfb-4d3f-8b93-c1dfecf542a1"],
+
+Cell["Change photonCount to evaluate a different multiplicity. The formulas return {external mass rules, amplitude}, ready for the HEPCAT checks. The assignments suppress the full expressions because their printed form grows with photon count.", "Text", ExpressionUUID->"05f0b638-cc7c-40d8-a92e-5376f5246d4b"],
+
+Cell["photonCount = 6;\nqedPositivePhotons = Join[{\"e\", \"E\"}, ConstantArray[\"A.+\", photonCount]];\nqedPositivePredictions = <|\n  \"AllPhysical\" -> qedAllPositivePhysicalFormula[diagramModel, photonCount],\n  \"AllSpurious\" -> qedAllPositiveSpuriousFormula[diagramModel, photonCount]\n|>;", "Input", ExpressionUUID->"77e28d1a-b6f5-43af-bb1a-af673cd968da"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Independent MadGraph comparison", "Section", ExpressionUUID->"7305d903-c446-4b12-b13e-d6fafb467f06"],
+
+Cell["Validate both predictions at the same random phase-space points. The photon helicities are fixed positive, and the check sums over the massive spins. The validation settings come from the setup above.", "Text", ExpressionUUID->"a9a345e5-3c69-4bc3-a8b1-88841e7b8b1c"],
+
+Cell["qedPositiveMadGraph = Map[\n  ValidateMadGraph[qedPositivePhotons, #[[2]], diagramModel,\n    Sequence @@ madGraphValidationOptions, \"MadGraphSeed\" -> 202611050806,\n    \"Output\" -> \"Details\"] &,\n  qedPositivePredictions];\nMap[If[AssociationQ[#], KeyTake[#, {\"Status\", \"Rows\"}], #] &, qedPositiveMadGraph]", "Input", ExpressionUUID->"354d3326-7450-40af-b6a1-4b2d0751a15c"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Optional factorization and Feynman checks at five points", "Section", ExpressionUUID->"4b74a44e-c775-455c-8557-04157c92782e"],
+
+Cell["This shorter check runs on three photons. It uses model 3 for the known lower-point amplitudes. The independent Feynman diagram sum enters only as a benchmark in CheckAmplitudes.", "Text", ExpressionUUID->"689ebe28-b704-4a1e-9fd1-9111313e07c8"],
+
+Cell["qedPositiveFivePoint = {\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"};\nqedPositiveFivePointChecks = With[\n  {channels = FactorizationAmplitudeChannels[qedPositiveFivePoint, factorizationModel],\n   benchmark = DiagramAmplitudes[CreateDiagrams[qedPositiveFivePoint, qedFeynmanModel]]},\n  Map[CheckAmplitudes[#[factorizationModel, 3], channels, factorizationModel,\n    \"FeynmanModel\" -> qedFeynmanModel,\n    \"FeynmanAmplitudes\" -> benchmark,\n    \"Output\" -> \"Summary\"] &,\n    <|\"AllPhysical\" -> qedAllPositivePhysicalFormula,\n      \"AllSpurious\" -> qedAllPositiveSpuriousFormula|>]\n]", "Input", ExpressionUUID->"74a42192-56c7-4a3d-87ed-37b67e91ed30"]
+}, Open  ]]
 }, Open  ]]
 },
 WindowSize->{1010, 911},
