@@ -481,10 +481,19 @@ spinasRunRequestedValidations[result_Association, directory_String, name_String,
     "FailedReferences" -> failures, "ExportResult" -> updated|>]]];
   updated
 ];
-spinasRunMadGraphValidation[directory_String, name_String, config_Association, supplied_Association : <||>] := Module[
-  {options = Join[Association[Options[ValidateMadGraph]], supplied], reportFile, command, run, report, seed},
+spinasMadGraphBuildDirectory[directory_String] := Module[
+  {source = FileNameJoin[{directory, "process.cpp"}]},
+  FileNameJoin[{directory,
+    If[FileType[source] === File && TrueQ[FileByteCount[source] >= 512 * 1024],
+      "build-madgraph-validation", "build"]}]
+];
+
+spinasRunMadGraphValidation[directory_String, name_String, config_Association,
+    supplied_Association : <||>, buildDirectory_:Automatic] := Module[
+  {options = Join[Association[Options[ValidateMadGraph]], supplied], reportFile, command, run, report, seed,
+   executableDirectory = Replace[buildDirectory, Automatic :> FileNameJoin[{directory, "build"}]]},
   reportFile = FileNameJoin[{directory, "madgraph-validation-report-" <> CreateUUID[] <> ".json"}];
-  command = {FileNameJoin[{directory, "build", name <> "_validate_madgraph" <> If[$OperatingSystem === "Windows", ".exe", ""]}],
+  command = {FileNameJoin[{executableDirectory, name <> "_validate_madgraph" <> If[$OperatingSystem === "Windows", ".exe", ""]}],
     "--points", ToString[Lookup[supplied, "MadGraphPoints", config["Points"]]], "--report", reportFile,
     "--relative-tolerance", spinasMadGraphCLIReal[options["RelativeTolerance"]],
     "--absolute-tolerance", spinasMadGraphCLIReal[options["AbsoluteTolerance"]],
@@ -521,7 +530,7 @@ spinasRunMadGraphValidation[directory_String, name_String, config_Association, s
 
 ValidateMadGraph[directory_String, opts : OptionsPattern[]] := Module[
   {supplied = Association[Reverse[{opts}]], options, dir = ExpandFileName[directory], manifest,
-   config, name, build, report},
+   config, name, build, report, buildDirectory, buildSettings},
   options = Join[Association[Options[ValidateMadGraph]], supplied];
   If[Complement[Keys[supplied], First /@ Options[ValidateMadGraph]] =!= {} ||
       !spinasMadGraphValidationOptionsQ[options], Message[ValidateMadGraph::args]; Return[$Failed]];
@@ -538,15 +547,22 @@ ValidateMadGraph[directory_String, opts : OptionsPattern[]] := Module[
   If[Complement[Keys[supplied], spinasMadGraphRunOptionNames] =!= {},
     Return[Failure["MadGraphProjectConfiguration", <|"MessageTemplate" ->
       "Model or installation changes require regenerating the project with WriteSPINASProcess; sampling options can be changed directly."|>]]];
+  buildDirectory = spinasMadGraphBuildDirectory[dir];
+  (* The private configuration has no compiler optimization flags. Its
+     separate cache leaves the normal simulation build intact. *)
+  buildSettings = If[FileNameTake[buildDirectory] === "build-madgraph-validation",
+    Print["Building the large SPINAS validator without the default Release optimization flags."];
+    <|"BuildDirectory" -> buildDirectory, "Configuration" -> "HEPCATValidation"|>, <||>];
   build = spinasProjectBuild[dir, name, "", False, options["CMakeExecutable"],
-    Automatic, name <> "_validate_madgraph"];
+    Automatic, name <> "_validate_madgraph", buildSettings];
   If[FailureQ[build], Return[build]];
-  report = spinasRunMadGraphValidation[dir, name, config, supplied];
+  report = spinasRunMadGraphValidation[dir, name, config, supplied, buildDirectory];
   If[FailureQ[report], Return[report]];
   spinasMadGraphValidationOutput[report, options["Output"]]
 ];
 ValidateMadGraph[process : (_Rule | {___String}), amplitude_, model_, opts : OptionsPattern[]] := Module[
-  {supplied = Association[Reverse[{opts}]], options, directory, exported, exportOptions, report},
+  {supplied = Association[Reverse[{opts}]], options, directory, exported, exportOptions,
+   arithmeticLeafLimit = 250000},
   options = Join[Association[Options[ValidateMadGraph]], supplied];
   If[Complement[Keys[supplied], First /@ Options[ValidateMadGraph]] =!= {} ||
       !spinasMadGraphValidationOptionsQ[options], Message[ValidateMadGraph::args]; Return[$Failed]];
@@ -554,7 +570,10 @@ ValidateMadGraph[process : (_Rule | {___String}), amplitude_, model_, opts : Opt
   exportOptions = Join[KeyTake[supplied, First /@ Options[WriteSPINASProcess]],
     <|"Build" -> False, "RunExamples" -> False, "RunCalcHEPValidation" -> False,
       "RunMadGraphValidation" -> False, "ReturnDetails" -> True|>];
-  exported = WriteSPINASProcess[directory, process, amplitude, model, Sequence @@ Normal[exportOptions]];
+  If[LeafCount[amplitude] >= arithmeticLeafLimit,
+    Print["Exporting the large amplitude for SPINAS validation."]];
+  exported = Block[{$spinasValidationArithmeticLeafLimit = arithmeticLeafLimit},
+    WriteSPINASProcess[directory, process, amplitude, model, Sequence @@ Normal[exportOptions]]];
   If[FailureQ[exported] || exported === $Failed, Return[exported]];
   ValidateMadGraph[directory, Sequence @@ Normal[KeyTake[options, spinasMadGraphRunOptionNames]]]
 ];

@@ -170,6 +170,23 @@ miShortcut = ValidateMadGraph[{"e", "E"} -> {"A", "A"}, miFamily, miModel,
 miCheck["the direct public shortcut honors the explicitly selected reference setup",
   miPassed[miShortcut, 4, 20] && miShortcut["Seed"] === 112233];
 
+miCompactTemporary = RegularExpression["\\bconst\\s+auto\\s+_hepcat_v[0-9]+\\b"];
+miCheck["small direct validation exports retain the ordinary arithmetic",
+  AssociationQ[miShortcut] && !StringContainsQ[
+    Import[FileNameJoin[{miShortcut["Directory"], "process.cpp"}], "Text"], miCompactTemporary]];
+
+Print["Checking compact validation arithmetic against independent MadGraph helicities."];
+miCompact = Block[{ConstructiveDiagrams`Private`$spinasValidationArithmeticLeafLimit = 0},
+  miExport["madgraph_compact", miFamily]];
+miCheck["the compact export writes local arithmetic temporaries",
+  AssociationQ[miCompact] && StringContainsQ[
+    Import[FileNameJoin[{miCompact["Directory"], "process.cpp"}], "Text"], miCompactTemporary]];
+If[AssociationQ[miCompact],
+  miCompactReport = ValidateMadGraph[miCompact["Directory"], "Output" -> "Details",
+    "MadGraphPoints" -> 20, "MadGraphSeed" -> 112233];
+  miCheck["compact arithmetic agrees with native MadGraph in every helicity sector",
+    miPassed[miCompactReport, 4, 20]]];
+
 Print["Checking that a genuine CalcHEP model mismatch does not suppress the independent MadGraph check."];
 miCalcHEP = Replace[Environment["HEPCAT_CALCHEP_DIRECTORY"], $Failed | "" ->
   FileNameJoin[{ParentDirectory[miRoot], "CalcHEP", "calchep_3.9.2"}]];

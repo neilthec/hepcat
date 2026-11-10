@@ -130,6 +130,13 @@ electron/positron/photon sector. Without that filter the full Standard Model \
 also contains weak exchange in four-fermion processes. Parameter overrides \
 and maps must match the chosen reference theory; no fitted ratio hides a \
 mismatch."}], "TechNoteText"],
+  Cell[TextData[{"Use the same ValidateMadGraph call for large expressions. \
+HEPCAT selects the build settings automatically and keeps its large \
+validation build separate from the regular simulation build. See ",
+     ButtonBox["ValidateMadGraph", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ValidateMadGraph"],
+     " for the build stages and the reference time limit."}],
+   "TechNoteText"],
   Cell[TextData[{"Validate the already exported process."}], "ExampleText"],
   Cell[BoxData[RowBox[{"madGraphDirectory", " ", "=", " ", "FileNameJoin",
       "[", "{", "ParentDirectory", "[", "hepcatDirectory", "]", ",", " ",

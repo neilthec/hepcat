@@ -210,7 +210,29 @@ If[StringQ[smgCMake],
     smgBuildDirectory, "validation_only", "", False, smgCMake];
   smgCheck["ordinary project builds retain all requested integration targets",
     FailureQ[smgOrdinaryBuild] &&
-      FileExistsQ[FileNameJoin[{smgBuildDirectory, "build", "unrelated.started"}]]],
+      FileExistsQ[FileNameJoin[{smgBuildDirectory, "build", "unrelated.started"}]]];
+
+  smgOrdinaryCache = FileNameJoin[{smgBuildDirectory, "build", "CMakeCache.txt"}];
+  smgOrdinaryCacheHash = FileHash[smgOrdinaryCache];
+  Export[FileNameJoin[{smgBuildDirectory, "process.cpp"}],
+    "/*" <> StringRepeat["x", 512*1024] <> "*/", "Text"];
+  smgLargeBuild = FileNameJoin[{smgBuildDirectory, "build-madgraph-validation"}];
+  smgLargeValidation = Block[{
+    ConstructiveDiagrams`Private`spinasRunMadGraphValidation =
+      Function[{directory, name, config, supplied, buildDirectory},
+        Join[smgPresentationReport, <|"Directory" -> directory, "BuildDirectory" -> buildDirectory|>]]},
+    ValidateMadGraph[smgBuildDirectory, "CMakeExecutable" -> smgCMake,
+      "Output" -> "Details"]];
+  smgCheck["large source uses a lightweight validation-only build",
+    AssociationQ[smgLargeValidation] && smgLargeValidation["Status"] === "PASS" &&
+      smgLargeValidation["Directory"] === smgBuildDirectory &&
+      smgLargeValidation["BuildDirectory"] === smgLargeBuild &&
+      FileExistsQ[FileNameJoin[{smgLargeBuild, "comparison.built"}]] &&
+      StringContainsQ[Import[FileNameJoin[{smgLargeBuild, "CMakeCache.txt"}], "Text"],
+        RegularExpression["(?m)^CMAKE_BUILD_TYPE:[^=]+=HEPCATValidation$"]] &&
+      !FileExistsQ[FileNameJoin[{smgLargeBuild, "unrelated.started"}]]];
+  smgCheck["large-source validation preserves the ordinary build configuration",
+    FileHash[smgOrdinaryCache] === smgOrdinaryCacheHash],
   Print["SKIP: validation target build needs an installed CMake executable."]];
 
 smgCalls = {};

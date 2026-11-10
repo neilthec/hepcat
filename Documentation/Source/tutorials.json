@@ -482,7 +482,8 @@
         "title": "Validate Each Photon Helicity with MadGraph",
         "paragraphs": [
           "ValidateMadGraph provides an independent numerical check using MadGraph's own generated matrix element. It fixes each massless helicity combination, sums massive-particle spins and evaluates both implementations on exactly the same physical momenta. Masses, couplings, initial-state averages and identical-particle factors must agree.",
-          "Select the MadGraph installation, UFO model and particle content explicitly. The example uses sm-full for a massive electron and then MadGraphAllowedParticles -> {11,22} to choose only the electron/positron/photon sector. Without that filter the full Standard Model also contains weak exchange in four-fermion processes. Parameter overrides and maps must match the chosen reference theory; no fitted ratio hides a mismatch."
+          "Select the MadGraph installation, UFO model and particle content explicitly. The example uses sm-full for a massive electron and then MadGraphAllowedParticles -> {11,22} to choose only the electron/positron/photon sector. Without that filter the full Standard Model also contains weak exchange in four-fermion processes. Parameter overrides and maps must match the chosen reference theory; no fitted ratio hides a mismatch.",
+          "Use the same ValidateMadGraph call for large expressions. HEPCAT selects the build settings automatically and keeps its large validation build separate from the regular simulation build. See [ValidateMadGraph](paclet:HEPCAT/ref/ValidateMadGraph) for the build stages and the reference time limit."
         ],
         "examples": [
           {

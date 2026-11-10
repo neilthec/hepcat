@@ -512,11 +512,18 @@ and `benchmarks/all-positive-validation.cpp` bypass constructive generation.
 They compare both fixed recurrences with independent MadGraph at seven and
 eight photons; these are numerical tests, not new model entries or an all-N
 proof. Their raw reports and reproducible seeds live in the benchmark build
-directory. For exceptionally large independent references, the internal JSON
-setting `JampSplit` opts into MadGraph's own bounded final-sum formatting through
-a private bootstrap. It preserves every native diagram, coefficient and
-helicity. Default reference generation and MadEvent remain unchanged; never
-replace the independent reference with the formula being tested.
+directory. Independent references with at least ten external legs default to
+MadGraph's bounded final-sum formatting through a private bootstrap when the
+installed exporter supports splitting. The internal JSON setting `JampSplit` can
+override this choice. The split preserves every native diagram, coefficient
+and helicity. Never replace the independent reference with the formula being
+tested.
+
+`ValidateMadGraph` compiles a generated `process.cpp` of at least 512 KiB
+without the default Release optimization flags in `build-madgraph-validation`.
+Keep this validation build separate from the normal simulation build and the
+MadEvent workflow. The reference preparation deadline applies to the MadGraph
+build stage.
 
 Model parameters are inert data stored in the model, not globally assigned
 symbols. Use `ModelParameter[model, "Me"]` to retrieve a parameter,

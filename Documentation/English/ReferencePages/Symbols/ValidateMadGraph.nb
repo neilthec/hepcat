@@ -232,11 +232,22 @@ and certified coherent SU(3) color sums, with two incoming particles, at \
 least two outgoing particles and external spins through one. It requires \
 MadGraph, a Fortran compiler, SPINAS and the normal C++ build tools. Ordinary \
 source-only SPINAS exports remain available without those reference tools."}]\
-, "Notes"],
+, "Notes"], Cell[TextData[{"When the crossed expression has at least 250,000 \
+leaves, the amplitude-and-model forms of ValidateMadGraph use local \
+temporaries to compute shared arithmetic once in the private C++ export."}],
+   "Notes"], Cell[TextData[{"For a generated process.cpp of at least 512 KiB, \
+validation compiles without the default Release optimization flags in a \
+separate build-madgraph-validation directory. This reduces compiler work on \
+long expressions and leaves the normal simulation build untouched. The \
+exported amplitude is the same."}], "Notes"],
+  Cell[TextData[{"For independent references with at least ten external legs, \
+HEPCAT uses the native MadGraph exporter to split long amplitude sums into \
+shorter accumulations when the installed exporter supports splitting. The \
+split retains the same diagrams, coefficients and helicities."}], "Notes"],
   Cell[TextData[{Cell[BoxData[RowBox[{"\"TimeConstraint\"", " ", "->", " ",
-         "600"}]], "InlineFormula"], " bounds MadGraph reference preparation. \
-It does not impose a single deadline on the complete CMake build and all \
-requested numerical samples."}], "Notes"],
+         "600"}]], "InlineFormula"], " bounds generation and compilation of \
+the MadGraph reference. HEPCAT's C++ export and build, and the evaluation of \
+the requested numerical samples, are separate stages."}], "Notes"],
   Cell[TextData[{"The directory form uses the process, model, parameter \
 matching and fixed-helicity selection saved in that export. You can vary \
 sampling controls such as points, seed, tolerances and energy bounds. To \
@@ -502,8 +513,9 @@ threshold."}], "TableText"]},
            "InlineFormula"]}], "TableText"],
        Cell[TextData[{Cell[BoxData[RowBox[{"600"}]], "InlineFormula"]}],
         "TableText"], Cell[TextData[{"Time budget in seconds for generating \
-and compiling the independent MadGraph reference process. A timeout is an \
-incomplete check, not PASS."}], "TableText"]}}, GridBoxAlignment ->
+and compiling the independent MadGraph reference process. The HEPCAT/SPINAS \
+C++ build and phase-space comparisons are separate stages. A timeout leaves \
+the check incomplete."}], "TableText"]}}, GridBoxAlignment ->
       {"Columns" -> {Left, Left, Left}}, GridBoxItemSize ->
       {"Columns" -> {Scaled[0.23], Scaled[0.19], Scaled[0.58]}},
      GridBoxDividers -> {"Rows" -> {False, True, {False}, False}}]],

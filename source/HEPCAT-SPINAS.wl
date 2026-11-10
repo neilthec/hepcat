@@ -66,7 +66,9 @@ spinasProcessIR[process_List, amplitude_, model_List, options_Association] := Mo
    rows, masses, massRules, massValues, parameterRules, declared, usedParameters = {},
    parameterDefaults, parameterCpp, parameterNames, expression, original, crossed,
    weights, helicities, modelHelicityStates, spin2, indexed, spinIndices, implicit, indexRules = {},
-   emit, emitRaw, emitParameter, emitVector, emitDot, momentumCoefficients, endpoint, chainCode,
+   emit, emitRaw, emitCurrent, emitCached, emitTemporary, crossValidationLeg,
+   compactArithmetic, collectArithmetic = False, arithmeticStatements = {},
+   emitParameter, emitVector, emitDot, momentumCoefficients, endpoint, chainCode,
    closedScalarQ, parameterScalarQ, cacheConstant, cacheParameter,
    constantCaches = {}, parameterCaches = {},
    traceCode, chains = {}, chainStatements = {}, chainNames = {}, chainCpp, expressionCpp, massCpp,
@@ -305,7 +307,14 @@ spinasProcessIR[process_List, amplitude_, model_List, options_Association] := Mo
       MomProd[a_, b_] :> spinasExportDot[spinasMomentumArgument[a], spinasMomentumArgument[b]],
       Mandelstahm[labels___] :> spinasExportSquare[Total[Mom /@ {labels}]],
       Power[vector_?spinasMomentumExpressionQ, 2] :> spinasExportSquare[vector]};
-    crossed = ReverseMomentum[protectedCrossing, outgoing] /. {
+    (* Reuse each atomic crossing while keeping the usual outgoing leg order. *)
+    crossValidationLeg[value_, leg_] := Module[{crossAtom},
+      crossAtom[input_] := crossAtom[input] = ReverseMomentum[input, leg];
+      value /. input : (_SpinorChain | _SpinorTrace | _PropDen | _MomProd) :> crossAtom[input]];
+    crossed = If[IntegerQ[$spinasValidationArithmeticLeafLimit] &&
+        LeafCount[protectedCrossing] >= $spinasValidationArithmeticLeafLimit,
+      Fold[crossValidationLeg, protectedCrossing, outgoing],
+      ReverseMomentum[protectedCrossing, outgoing]] /. {
       spinasExportDot[a_, b_] :> MomProd[spinasCrossVector[a, outgoing], spinasCrossVector[b, outgoing]],
       spinasExportSquare[vector_] :> spinasExportLorentzSquare[spinasCrossVector[vector, outgoing]]};
     emitParameter[parameter_] := Module[{position, matches, value = parameter},
@@ -378,10 +387,23 @@ spinasProcessIR[process_List, amplitude_, model_List, options_Association] := Mo
       matrices = MapIndexed["momentum_matrix(" <> emitVector[#1] <> ", " <>
         If[EvenQ[First[#2]], "true", "false"] <> ")" &, items];
       "matrix_trace(" <> StringRiffle[matrices, " * "] <> ")"];
-    emit[value_] := Which[
-      !NumberQ[value] && closedScalarQ[value], cacheConstant[value],
+    compactArithmetic = IntegerQ[$spinasValidationArithmeticLeafLimit] &&
+      LeafCount[crossed] >= $spinasValidationArithmeticLeafLimit;
+    (* Keep shared symbolic arithmetic before converting it to C++ text.
+       The local temporaries retain the original order within each operation. *)
+    emitTemporary[value_] := Module[{code = emitRaw[value], name},
+      name = "_hepcat_v" <> ToString[Length[arithmeticStatements] + 1];
+      AppendTo[arithmeticStatements, "const auto " <> name <> " = " <> code <> ";"];
+      name];
+    emit[value_] := If[collectArithmetic, emitCached[value], emitCurrent[value]];
+    emitCached[value_] := emitCached[value] = emitCurrent[value];
+    emitCurrent[value_] := Which[
+      !NumberQ[value] && closedScalarQ[value], Block[{collectArithmetic = False}, cacheConstant[value]],
       !AtomQ[value] && Head[value] =!= ModelParameter && parameterScalarQ[value] &&
-        !FreeQ[value, _ModelParameter], cacheParameter[value],
+        !FreeQ[value, _ModelParameter], Block[{collectArithmetic = False}, cacheParameter[value]],
+      collectArithmetic && MatchQ[value, _Plus | _Times | _Power], emitTemporary[value],
+      collectArithmetic && MatchQ[value, _PropDen | _MomProd],
+        Block[{collectArithmetic = False}, emitRaw[value]],
       True, emitRaw[value]];
     emitRaw[value_] := Which[
       Head[value] === ModelParameter, emitParameter[value],
@@ -428,12 +450,20 @@ spinasProcessIR[process_List, amplitude_, model_List, options_Association] := Mo
           "(cdouble(" <> emit[First[value]] <> "))",
       True, fail["The amplitude contains an unsupported scalar, tensor, color, or model-function structure.", value]];
     massCpp = emit /@ masses;
-    expressionCpp = emit[crossed];
-    numerator = Numerator[crossed]; denominator = Denominator[crossed];
-    numeratorTerms = If[Head[numerator] === Plus, List @@ numerator, {numerator}];
-    expressionPieces = <|"NumeratorTerms" -> (emit[If[spinasNegativeTermQ[#], -#, #]] & /@ numeratorTerms),
-      "NumeratorSigns" -> (If[spinasNegativeTermQ[#], -1, 1] & /@ numeratorTerms),
-      "Denominator" -> emit[denominator], "UnitDenominator" -> (denominator === 1)|>;
+    If[compactArithmetic,
+      collectArithmetic = True;
+      expressionCpp = emit[crossed];
+      collectArithmetic = False;
+      expressionCpp = "([&] { " <> StringRiffle[arithmeticStatements, " "] <>
+        " return cdouble(" <> expressionCpp <> "); }())";
+      expressionPieces = <|"NumeratorTerms" -> {expressionCpp}, "NumeratorSigns" -> {1},
+        "Denominator" -> "ldouble(1.0L)", "UnitDenominator" -> True|>,
+      expressionCpp = emit[crossed];
+      numerator = Numerator[crossed]; denominator = Denominator[crossed];
+      numeratorTerms = If[Head[numerator] === Plus, List @@ numerator, {numerator}];
+      expressionPieces = <|"NumeratorTerms" -> (emit[If[spinasNegativeTermQ[#], -#, #]] & /@ numeratorTerms),
+        "NumeratorSigns" -> (If[spinasNegativeTermQ[#], -1, 1] & /@ numeratorTerms),
+        "Denominator" -> emit[denominator], "UnitDenominator" -> (denominator === 1)|>];
     parameterDefaults = Map[Function[parameter,
       numerical = Quiet[N[parameter /. parameterRules, 24]];
       If[!NumberQ[numerical] || !FreeQ[numerical, Indeterminate | DirectedInfinity],
@@ -1989,11 +2019,18 @@ spinasProjectCMakeExecutable[option_] := Module[
 ];
 DownValues[spinasProjectBuild] = {};
 spinasProjectBuild[directory_String, name_String, root_String, runExamples_, cmakeOption_:Automatic,
-    calchepRoot_:Automatic, buildTargets_:All] := Module[
-  {cmake, configure, build, run, executable, configureArguments, buildArguments},
+    calchepRoot_:Automatic, buildTargets_:All, settings_Association : <||>] := Module[
+  {cmake, configure, build, run, executable, configureArguments, buildArguments,
+   buildDirectory = Lookup[settings, "BuildDirectory", FileNameJoin[{directory, "build"}]],
+   configuration = Lookup[settings, "Configuration", None]},
   cmake = spinasProjectCMakeExecutable[cmakeOption];
   If[FailureQ[cmake], Return[cmake]];
-  configureArguments = {cmake,"-S",directory,"-B",FileNameJoin[{directory,"build"}]};
+  configureArguments = {cmake, "-S", directory, "-B", buildDirectory};
+  If[StringQ[configuration],
+    configureArguments = Join[configureArguments, {
+      "-DCMAKE_BUILD_TYPE:STRING=" <> configuration,
+      "-DCMAKE_CONFIGURATION_TYPES:STRING=" <> configuration,
+      "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY_" <> ToUpperCase[configuration] <> ":PATH=" <> buildDirectory}]];
   (* A resolved checkout supersedes any prior generated build's cached root,
      header and library paths when the project is regenerated. *)
   If[root =!= "", configureArguments = Join[configureArguments,
@@ -2003,7 +2040,8 @@ spinasProjectBuild[directory_String, name_String, root_String, runExamples_, cma
   If[Lookup[configure,"ExitCode",-1] =!= 0, Return[Failure["SPINASBuild", <|
     "MessageTemplate" -> "CMake could not configure the generated process.", "Directory" -> directory,
     "CommandResult" -> configure|>]]];
-  buildArguments = {cmake, "--build", FileNameJoin[{directory, "build"}], "--parallel"};
+  buildArguments = {cmake, "--build", buildDirectory, "--parallel"};
+  If[StringQ[configuration], buildArguments = Join[buildArguments, {"--config", configuration}]];
   If[buildTargets =!= All,
     buildArguments = Join[buildArguments, {"--target"}, Flatten[{buildTargets}]]];
   build = spinasProjectCommand[buildArguments];
@@ -2012,7 +2050,7 @@ spinasProjectBuild[directory_String, name_String, root_String, runExamples_, cma
     "CommandResult" -> build|>]]];
   run = <|"Status" -> "NOT_REQUESTED"|>;
   If[TrueQ[runExamples],
-    executable = FileNameJoin[{directory,"build",name <> If[$OperatingSystem === "Windows",".exe",""]}];
+    executable = FileNameJoin[{buildDirectory, name <> If[$OperatingSystem === "Windows", ".exe", ""]}];
     run = spinasProjectCommand[{executable}];
     If[Lookup[run,"ExitCode",-1] =!= 0, Return[Failure["SPINASExamples", <|
       "MessageTemplate" -> "The compiled phase-space examples did not run successfully.",

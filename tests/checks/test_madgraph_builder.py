@@ -10,6 +10,7 @@ import tempfile
 import time
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 sys.dont_write_bytecode = True
 _HELPER = Path(__file__).resolve().parents[2] / "source" / "madgraph-runtime.py"
@@ -84,6 +85,19 @@ class BuilderTests(unittest.TestCase):
             with self.subTest(value=value):
                 with self.assertRaisesRegex(builder.ValidationSetupError, "JampSplit"):
                     builder.checked_configuration(dict(self.config, JampSplit=value))
+
+    def test_large_reference_automatically_uses_native_split_when_supported(self):
+        native = SimpleNamespace(get_JAMP_lines=lambda amplitudes, split=-1: None)
+        exporter = SimpleNamespace(ProcessExporterFortran=native)
+        with patch.dict(sys.modules, {"madgraph.iolibs.export_v4": exporter}):
+            self.assertEqual(builder.reference_jamp_split(self.config, 9), 0)
+            self.assertEqual(builder.reference_jamp_split(self.config, 10), 128)
+            for override, expected in [(None, 0), (0, 0), (64, 64)]:
+                with self.subTest(override=override):
+                    self.assertEqual(
+                        builder.reference_jamp_split(dict(self.config, JampSplit=override), 10), expected)
+            native.get_JAMP_lines = lambda amplitudes: None
+            self.assertEqual(builder.reference_jamp_split(self.config, 10), 0)
 
     def test_unselected_jamp_split_keeps_native_cli_and_writes_no_bootstrap(self):
         output = self.directory / "output"

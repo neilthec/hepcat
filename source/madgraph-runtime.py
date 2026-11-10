@@ -12,6 +12,7 @@ import argparse
 import ast
 import contextlib
 import hashlib
+import inspect
 import json
 import math
 import os
@@ -664,10 +665,24 @@ def jamp_split_setting(value):
     return value
 
 
+def reference_jamp_split(data, external_count):
+    """Bound large Fortran accumulations if the native exporter supports it."""
+    if "JampSplit" in data or external_count < 10:
+        return jamp_split_setting(data.get("JampSplit"))
+    # The selected MadGraph installation has already been loaded by read_model.
+    # Ten external legs can produce tens of thousands of terms in one sum.
+    try:
+        from madgraph.iolibs.export_v4 import ProcessExporterFortran
+        parameters = inspect.signature(ProcessExporterFortran.get_JAMP_lines).parameters
+    except (ImportError, AttributeError, TypeError, ValueError):
+        return 0
+    return 128 if "split" in parameters else 0
+
+
 def madgraph_generation_command(root, output, command_file, split=0):
     """Use native MG unchanged unless bounded JAMP statements were requested.
 
-    The opt-in bootstrap changes only the default split argument of MG's own
+    The private bootstrap changes only the default split argument of MG's own
     exporter. All graph, amplitude, color-coefficient and helicity definitions
     remain native. Neither the installed MG files nor the generated matrix
     formula is rewritten by this helper.
@@ -786,7 +801,6 @@ end subroutine
 def build_reference(data, output):
     root, pdgs, masses, used, rules, name_map, seconds = checked_configuration(data)
     mass_roles = checked_mass_parameter_roles(data.get("MassParameterPDGs", {}))
-    jamp_split = jamp_split_setting(data.get("JampSplit"))
     deadline = time.monotonic() + seconds
     output.mkdir(parents=True, exist_ok=True)
     if (output / "process").exists() or (output / "reference-model").exists():
@@ -794,6 +808,7 @@ def build_reference(data, output):
     compiler = find_compiler(data.get("FortranCompiler"))
     with (output / "model.log").open("w") as log, contextlib.redirect_stdout(log), contextlib.redirect_stderr(log):
         model, model_path, restriction, model_reader, card_module = read_model(root, data["MadGraphModel"])
+        jamp_split = reference_jamp_split(data, len(pdgs))
         names = []
         for slot, pdg in enumerate(pdgs):
             if pdg not in model["particle_dict"]:

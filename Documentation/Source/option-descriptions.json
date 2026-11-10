@@ -104,7 +104,7 @@
   "MaximumEnergy": "Upper center-of-mass energy used by ValidateMadGraph's random validation samples. Automatic chooses a suitable range above threshold.",
   "MadGraphParameterMap": "Rules mapping HEPCAT model parameter names to external or derived MadGraph UFO parameter names. Automatic uses supported same-name and known-model matching; unresolved used parameters prevent a passing comparison.",
   "ValidateMadGraph": {
-    "TimeConstraint": "Time budget in seconds for generating and compiling the independent MadGraph reference process. A timeout is an incomplete check, not PASS."
+    "TimeConstraint": "Time budget in seconds for generating and compiling the independent MadGraph reference process. The HEPCAT/SPINAS C++ build and phase-space comparisons are separate stages. A timeout leaves the check incomplete."
   },
   "MadGraphAllowedParticles": "All retains the full selected MadGraph theory. A nonempty list of unique positive absolute PDG codes, such as {11,22}, restricts the particle sector used for reference validation and MadEvent topology generation and includes antiparticles. Every external particle type must be present.",
   "CalcHEPAllowedParticles": "All retains the full selected CalcHEP theory. A nonempty list of unique positive absolute PDG codes restricts the independent reference particle sector, including antiparticles. Every external type must be included.",
