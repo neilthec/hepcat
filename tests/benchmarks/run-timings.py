@@ -2,8 +2,8 @@
 """Rebuild the two QED timing studies from saved models and explicit references.
 
 Read a notebook export's manifest for the user's CalcHEP/MadGraph selections,
-build a private double-precision SPINAS library, export unchanged models 3 and
-4, and run the independent comparisons before accepting any timing results.
+build a private double-precision SPINAS library, export unchanged models 4 and
+5, and run the independent comparisons before accepting any timing results.
 All generated files stay in the chosen output directory. Use --smoke for a
 short installation check, or --dry-run to inspect the commands without running
 them. Existing results are never deleted.

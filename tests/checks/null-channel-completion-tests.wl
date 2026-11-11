@@ -30,7 +30,7 @@ checks = 0; failures = {};
 check[name_, value_] := (checks++; If[!TrueQ[value], AppendTo[failures, name];
   Print["FAIL: ", name]]);
 
-model = ReadModel[FileNameJoin[{root, "models"}], 3]; modelBefore = model;
+model = ReadModel[FileNameJoin[{root, "models"}], 4]; modelBefore = model;
 process = {"e", "E", "A.+", "A.+", "A.-", "A.-"};
 channels = FactorizationAmplitudeChannels[process, model];
 normalized = ConstructiveDiagrams`Private`completionNormalizeInput[0, channels, model];
@@ -167,7 +167,7 @@ check["unknown continuation settings are rejected",
 check["model data remain unchanged after proposal generation and completion", model === modelBefore];
 
 If[Environment["HEPCAT_TEST_FULL_BALANCED_CONSTRUCTION"] === "1",
-  diagramModel = ReadModel[FileNameJoin[{root, "models"}], 2];
+  diagramModel = ReadModel[FileNameJoin[{root, "models"}], 3];
   feynmanModel = ReadModel[FileNameJoin[{root, "tests", "reference-models", "calchep"}], 2];
   constructed = ConstructAmplitude[process, diagramModel, model,
     "PolePreference" -> "AllSpurious", "FeynmanModel" -> feynmanModel,

@@ -25,7 +25,7 @@ along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
 
 root=DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];Get[FileNameJoin[{root,"source","HEPCAT.wl"}]];
 checks=0;failures={};SetAttributes[check,HoldRest];check[name_,value_]:=(checks++;If[!TrueQ[value],AppendTo[failures,name];Print["FAIL: ",name]]);
-m=ReadModel[FileNameJoin[{root,"models"}],2];
+m=ReadModel[FileNameJoin[{root,"models"}],3];
 {u,v}=Table[Unique["recoveryFree"],{2}];
 assignments=Table[ConstructiveDiagrams`Private`residueParameterRules[m,{"Me"->i,"EE"->1}],{i,1,3}];
 parameterReports=(<|"ParameterRules"->#,"Report"-><|"Status"->"COMPLETE"|>|>&/@assignments);

@@ -29,8 +29,8 @@ scChecks = 0; scFailures = {};
 SetAttributes[scCheck, HoldRest];
 scCheck[name_, test_] := (scChecks++;
   If[!TrueQ[test], AppendTo[scFailures, name]; Print["FAIL: ", name]]);
-scModel = ReadModel[FileNameJoin[{scRoot, "models"}], 3];
-scDiagramModel = ReadModel[FileNameJoin[{scRoot, "models"}], 2];
+scModel = ReadModel[FileNameJoin[{scRoot, "models"}], 4];
+scDiagramModel = ReadModel[FileNameJoin[{scRoot, "models"}], 3];
 scMass = ModelParameter[scModel, "Me"]; scCharge = ModelParameter[scModel, "EE"];
 scExpression[vectors_List, kind_:1] :=
   ConstructiveDiagrams`Private`constructSameChiralSpuriousSubsetCurrent[

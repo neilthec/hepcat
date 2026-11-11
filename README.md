@@ -22,7 +22,7 @@ reference pages and examples. `PacletInfo.wl` describes the Help package.
 | Directory | Contents |
 | --- | --- |
 | `source/` | Loader, spinor algebra and model/construction implementation. Additional modules, numerical adapters and exact-proof helpers are grouped under `internal/`. |
-| `models/` | Constructive SM model 1, elementary QED model 2, and QED factorization models 3 and 4 with physical and spurious pole representations. |
+| `models/` | SM elementary model 1 and factorization model 2, elementary QED model 3, and QED factorization models 4 and 5 with physical and spurious pole representations. |
 | `Documentation/` | Native Mathematica Help, its reviewed source and build instructions. |
 | `tests/` | The final QED and SM construction notebooks. |
 | `tests/checks/` | Automated function and integration tests, with known expressions and model variants under `fixtures/`. |
@@ -35,6 +35,14 @@ reference pages and examples. `PacletInfo.wl` describes the Help package.
 The local `papers/` directory holds development references. It is excluded by
 Git. Experimental models 5 and 6 are retained in
 `tests/checks/fixtures/models/` for development and regression tests.
+
+For SM five-point construction, use model 1 for diagrams and model 2 for
+factorization. Model 2 contains the complete nonzero four-point amplitudes,
+including the contributions of the elementary quartics. The quartic rows
+remain in model 1 and are replaced by the complete amplitudes in model 2.
+Vanishing amplitudes remain absent and use the normal zero lookup behavior.
+The coverage and validation provenance is described in the
+[SM catalog checks](tests/checks/README.md#sm-factorization-catalog).
 
 ## Run the automated checks
 

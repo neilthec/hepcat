@@ -29,7 +29,7 @@ $HistoryLength = 0;
 checks = 0; failures = {};
 SetAttributes[check, HoldRest];
 check[name_, value_] := (checks++; If[!TrueQ[value], AppendTo[failures, name]; Print["FAIL: ", name]]);
-raModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+raModel = ReadModel[FileNameJoin[{root, "models"}], 4];
 raMass = ModelParameter[raModel, "Me"];
 raRules = Thread[Mass /@ Range[4] -> {raMass, raMass, 0, 0}];
 raCoordinates = {Unique["retainedCoordinate"], Unique["retainedCoordinate"]};

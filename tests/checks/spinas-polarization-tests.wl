@@ -32,7 +32,7 @@ check[name_, value_] := (checks++; If[!TrueQ[value], AppendTo[failures, name]; P
 spDirectory = CreateDirectory[];
 spSpinas = Replace[Environment["HEPCAT_SPINAS_DIRECTORY"],
   $Failed | "" -> FileNameJoin[{ParentDirectory[root], "spinas"}]];
-spModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+spModel = ReadModel[FileNameJoin[{root, "models"}], 4];
 spModelBefore = spModel;
 spRules = {"Me" -> 1, "EE" -> 1/3};
 spLookup[process_List] := LookupAmplitude[Thread[{process, Range[Length[process]]}],

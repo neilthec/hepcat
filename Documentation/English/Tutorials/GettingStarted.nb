@@ -26,9 +26,9 @@ Change the path if your HEPCAT folder is elsewhere."}], "ExampleText"],
   Cell[TextData[{"A calculation begins with a model value returned by ",
      ButtonBox["ReadModel", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ReadModel"], ". The bundled model \
-numbered 2 supplies the QED interactions used in this example. Keep the \
-returned value in a notebook variable and pass it to the functions that need \
-the theory."}], "TechNoteText"],
+numbered 3 supplies the QED three-point interactions used in this example. \
+Keep the returned value in a notebook variable and pass it to the functions \
+that need the theory."}], "TechNoteText"],
   Cell[TextData[{"A constructive model has four parts: particle data, known \
 interactions or amplitudes, independent parameters and dependent functions. "\
 , Cell[BoxData[RowBox[{"Length", " ", "/@", " ", "qedModel"}]],
@@ -42,7 +42,7 @@ the amplitude itself. ", ButtonBox["ModelParameterRules",
     {"Locate the model directory and read the elementary QED model."}],
    "ExampleText"], Cell[BoxData[RowBox[{"modelDirectory", " ", "=", " ",
       "\"~/code/hepcat/models\"", ";", "\n", "qedModel", " ", "=", " ",
-      "ReadModel", "[", "modelDirectory", ",", " ", "2", "]", ";", "\n",
+      "ReadModel", "[", "modelDirectory", ",", " ", "3", "]", ";", "\n",
       "Length", " ", "/@", " ", "qedModel"}]], "Input"],
   Cell[BoxData[RowBox[{"{", "2", ",", " ", "2", ",", " ", "2", ",", " ", "0",
       "}"}]], "Output"],

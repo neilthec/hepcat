@@ -21,7 +21,8 @@ python3 tests/benchmarks/reproduction/verify.py
 
 It verifies input hashes and then:
 
-- Regenerates the 38 catalog representatives from models 3 and 4, tests
+- Regenerates the 38 catalog representatives from current models 4 and 5
+  using their frozen paper labels 3 and 4, tests
   exact rational formatter roundtrips and checks the long TeX expansions.
 - Checks the original SM comparison records: 74 CalcHEP and MadGraph family
   passes and 132 MadGraph helicity rows with 1,000 comparisons each. The
@@ -182,7 +183,11 @@ Historical absolute paths in records are provenance, not paths required on
 the reader's machine. The tools resolve the supplied data locally.
 
 Catalog/model changes should be checked deliberately: the default verification
-compares the present models 3 and 4 with the frozen paper catalog. A later
-model extension may require a new snapshot rather than changing historical
-results to make the test pass. New wall times, numerical last bits and compiler
+compares the present models 4 and 5 with the frozen paper catalog. The
+`--paper-model-labels` flag preserves the historical labels 3 and 4 solely for
+this hash comparison; the report records the current source filenames, model
+numbers and hashes. Running `catalog-build.py` or `catalog-check.py` directly
+uses current labels 4 and 5 by default. Historical evidence and its hashes
+remain unchanged. A later model extension may require a new snapshot rather
+than changing historical results to make the test pass. New wall times, numerical last bits and compiler
 details can vary across machines; keep the new metadata with a rerun.

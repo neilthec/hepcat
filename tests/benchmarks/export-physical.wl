@@ -45,7 +45,7 @@ Do[
 benchmarkRepresentation = Lookup[benchmarkOptions, "--representation", "AllPhysical"];
 If[!MemberQ[{"AllPhysical", "AllSpurious"}, benchmarkRepresentation],
   Print["--representation must be AllPhysical or AllSpurious."]; Quit[1]];
-benchmarkModelNumber = If[benchmarkRepresentation === "AllPhysical", 3, 4];
+benchmarkModelNumber = If[benchmarkRepresentation === "AllPhysical", 4, 5];
 benchmarkOutput = ExpandFileName[Lookup[benchmarkOptions, "--output",
   FileNameJoin[{benchmarkRepository, "tests", "benchmarks",
     If[benchmarkRepresentation === "AllPhysical", "build-physical-double", "build-spurious-double"], "exports"}]]];

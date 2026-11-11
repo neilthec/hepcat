@@ -290,7 +290,7 @@ check["unsupported source presentation remains an explicit rejection and does no
   csSupportedSubset["OriginalTargetCount"] === Length[csTargets] && csSupportedSubset["AllOriginalTargetsRetained"]];
 (* A real four-fermion input makes the structural gate eligible without a
    particle-name exception. Repetition here is a deliberate normalization test. *)
-csQED = ReadModel[FileNameJoin[{root, "models"}], 2];
+csQED = ReadModel[FileNameJoin[{root, "models"}], 3];
 csQEDProcess = {"e", "E", "E", "e"};
 csQEDPairs = PrepareAmplitudes[DiagramAmplitudes[CreateDiagrams[csQEDProcess, csQED]], csQED,
   "PolePreference" -> None, "MaxSteps" -> 0, "Parallelization" -> False, "ProgressReporting" -> False];

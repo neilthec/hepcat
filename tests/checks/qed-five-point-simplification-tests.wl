@@ -33,8 +33,8 @@ checks = 0; failures = {};
 check[name_, value_] := (checks++; If[!TrueQ[value], AppendTo[failures, name];
   Print["FAIL: ", name]]);
 qftModelDirectory = FileNameJoin[{root, "models"}];
-qftDiagramModel = ReadModel[qftModelDirectory, 2];
-qftFactorizationModel = ReadModel[qftModelDirectory, 3];
+qftDiagramModel = ReadModel[qftModelDirectory, 3];
+qftFactorizationModel = ReadModel[qftModelDirectory, 4];
 qftParity[expression_] := expression /.
   Spinor[type_, kind : ("Angle" | "Square"), rest___] :>
     Spinor[type, If[kind === "Angle", "Square", "Angle"], rest];

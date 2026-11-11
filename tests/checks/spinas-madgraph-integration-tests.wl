@@ -39,7 +39,7 @@ miSpinas = Replace[Environment["HEPCAT_SPINAS_DIRECTORY"],
   $Failed | "" -> FileNameJoin[{ParentDirectory[miRoot], "spinas"}]];
 miMadGraph = Replace[Environment["HEPCAT_MADGRAPH_DIRECTORY"],
   $Failed | "" -> FileNameJoin[{ParentDirectory[miRoot], "MadGraph"}]];
-miModel = ReadModel[FileNameJoin[{miRoot, "models"}], 3];
+miModel = ReadModel[FileNameJoin[{miRoot, "models"}], 4];
 miModelBefore = miModel;
 miRules = {"Me" -> 1, "EE" -> 1/3};
 miProcesses = Join[{"e", "E"}, #] & /@

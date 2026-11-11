@@ -625,8 +625,8 @@ check["post-fit reservation does not change caps or sampling obligations",
  KeyTake[arPolicy["HighEnergy",Join[arFactorRequests,<|"TimeConstraint"->41/7|>],arConstructionVectors]["Settings"],
   {"MaxCorrectionTerms","Samples","ValidationSamples","MaxRefinements"}]];
 
-arDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 2];
-arFactorModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+arDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+arFactorModel = ReadModel[FileNameJoin[{root, "models"}], 4];
 arModelHashes = Hash[#, "SHA256"] & /@ {arDiagramModel, arFactorModel};
 arProcess4 = {"e", "E", "A.+", "A.+"};
 arProcess5 = {"e", "E", "A.+", "A.+", "A.+"};

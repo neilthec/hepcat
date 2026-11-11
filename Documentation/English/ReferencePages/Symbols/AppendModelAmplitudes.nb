@@ -37,6 +37,24 @@ model-local ", ButtonBox["ModelParameter", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ModelParameter"], " objects with the \
 corresponding parameters of the target model before writing. Matching printed \
 names do not by themselves merge the two parameter scopes."}], "Notes"],
+  Cell[TextData[{"Complete amplitudes may retain their explicit ",
+     ButtonBox["ColorDelta", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ColorDelta"], ", ",
+     ButtonBox["ColorGenerator", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ColorGenerator"], ", ",
+     ButtonBox["ColorStructure", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ColorStructure"], " and ",
+     ButtonBox["ColorTrace", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ColorTrace"],
+     " tensors. Model text preserves external ", ButtonBox["ColorIndex",
+      BaseStyle -> "Link", ButtonData -> "paclet:HEPCAT/ref/ColorIndex"],
+     " slots and dimensioned internal contraction indices. ",
+     ButtonBox["LookupAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/LookupAmplitude"], " relabels the \
+external color slots and gives saved internal sums a fresh namespace for each \
+lookup. Sewing joins the cut color index to the other lower-point amplitude. \
+Cubic rows with implicit color continue to obtain their tensor from the model \
+particle declarations."}], "Notes"],
   Cell[TextData[{"The result reports the destination file and the numbers of \
 added and skipped entries. An identical existing entry is skipped. A \
 conflicting expression for the same particle multiset rejects the batch \
@@ -62,13 +80,13 @@ Evaluate loading in its own cell before the calculation.", "ExampleText"],
    "ExampleSection"], Cell[TextData[{"Append a known four-point result to a \
 temporary copy of the three-point QED model."}], "ExampleText"],
   Cell[BoxData[RowBox[{"qedModel", " ", "=", " ", "ReadModel", "[",
-      "modelDirectory", ",", " ", "2", "]", ";", "\n", "knownQEDModel", " ",
-      "=", " ", "ReadModel", "[", "modelDirectory", ",", " ", "3", "]", ";",
+      "modelDirectory", ",", " ", "3", "]", ";", "\n", "knownQEDModel", " ",
+      "=", " ", "ReadModel", "[", "modelDirectory", ",", " ", "4", "]", ";",
       "\n", "temporaryModelDirectory", " ", "=", " ", "CreateDirectory", "[",
       "]", ";", "\n", "Scan", "[", "CopyFile", "[", "FileNameJoin", "[", "{",
-      "modelDirectory", ",", " ", "#", " ", "<>", " ", "\"2.mdl\"", "}", "]",
+      "modelDirectory", ",", " ", "#", " ", "<>", " ", "\"3.mdl\"", "}", "]",
       ",", " ", "FileNameJoin", "[", "{", "temporaryModelDirectory", ",",
-      " ", "#", " ", "<>", " ", "\"2.mdl\"", "}", "]", "]", " ", "&", ",",
+      " ", "#", " ", "<>", " ", "\"3.mdl\"", "}", "]", "]", " ", "&", ",",
       " ", "{", "\"prtcls\"", ",", " ", "\"amps\"", ",", " ", "\"vars\"",
       ",", " ", "\"func\"", "}", "]", ";", "\n", "particles", " ", "=", " ",
       "{", "\"e\"", ",", " ", "\"E\"", ",", " ", "\"A.+\"", ",", " ",
@@ -79,14 +97,14 @@ temporary copy of the three-point QED model."}], "ExampleText"],
       "i4", "}", "]", ";", "\n",
       "(* Use parameters declared in the target copy. *)", "\n",
       "copiedModel", " ", "=", " ", "ReadModel", "[",
-      "temporaryModelDirectory", ",", " ", "2", "]", ";", "\n",
+      "temporaryModelDirectory", ",", " ", "3", "]", ";", "\n",
       "parameterMap", " ", "=", " ", "Thread", "[", "(", "First", " ", "/@",
       " ", "ModelParameterRules", "[", "knownQEDModel", "]", ")", " ", "->",
       " ", "(", "ModelParameter", "[", "copiedModel", ",", " ",
       "ModelParameterName", "[", "#", "]", "]", " ", "&", " ", "/@", " ",
       "(", "First", " ", "/@", " ", "ModelParameterRules", "[",
       "knownQEDModel", "]", ")", ")", "]", ";", "\n",
-      "AppendModelAmplitudes", "[", "temporaryModelDirectory", ",", " ", "2",
+      "AppendModelAmplitudes", "[", "temporaryModelDirectory", ",", " ", "3",
       ",", " ", "{", "{", "particles", ",", " ", "knownAmplitude", " ", "/.",
       " ", "parameterMap", "}", "}", "]"}]], "Input"],
   Cell["This example writes files, starts a longer calculation, or requires \
@@ -96,7 +114,7 @@ operation.", "ExampleText"],
     {
      "An empty batch leaves the target untouched and reports zero additions."}\
 ], "ExampleText"], Cell[BoxData[RowBox[{"AppendModelAmplitudes", "[",
-      "modelDirectory", ",", " ", "2", ",", " ", "{", "}", "]"}]], "Input"],
+      "modelDirectory", ",", " ", "3", ",", " ", "{", "}", "]"}]], "Input"],
   Cell["See Also", "SeeAlsoSection"],
   Cell[TextData[{ButtonBox["ReadModel", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/ReadModel"], "  \[Bullet]  ",

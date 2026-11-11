@@ -30,7 +30,7 @@ model, and the two A.+ entries specify the photon helicities. All analytic \
 momenta are incoming."}], "TechNoteText"],
   Cell[TextData[{"Use one model for both jobs in this four-point example."}],
    "ExampleText"], Cell[BoxData[RowBox[{"qedModel", " ", "=", " ",
-      "ReadModel", "[", "modelDirectory", ",", " ", "2", "]", ";", "\n",
+      "ReadModel", "[", "modelDirectory", ",", " ", "3", "]", ";", "\n",
       "process", " ", "=", " ", "{", "\"e\"", ",", " ", "\"E\"", ",", " ",
       "\"A.+\"", ",", " ", "\"A.+\"", "}", ";"}]], "Input"],
   Cell["Generate Diagrams and Channels", "TechNoteSection"],

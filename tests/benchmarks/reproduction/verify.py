@@ -293,7 +293,16 @@ def main():
     report['timing_comparisons'] = check_timing_values(args.data_directory)
     print('PASS: all four archived backends on 60,000 matched timing points', flush=True)
     subprocess.run([sys.executable, str(HERE / 'catalog-check.py'), '--models', str(args.models),
-                    '--output-directory', str(args.output_directory / 'catalog')], check=True)
+                    '--output-directory', str(args.output_directory / 'catalog'),
+                    '--paper-model-labels'], check=True)
+    report['catalog_sources'] = {
+        'scope': 'Frozen paper labels 3/4 identify the historical catalog only. Current model files 4/5 supply the unchanged expressions.',
+        'models': [
+            {'preference': preference, 'current_model': number,
+             'paper_model_label': number - 1,
+             'source_file': str(args.models / f'amps{number}.mdl'),
+             'source_sha256': sha(args.models / f'amps{number}.mdl')}
+            for number, preference in ((4, 'AllPhysical'), (5, 'AllSpurious'))]}
     claims = load(args.data_directory / 'published-values.json')
     for filename, expected in claims['catalog_outputs'].items():
         require(sha(args.output_directory / 'catalog' / filename) == expected,

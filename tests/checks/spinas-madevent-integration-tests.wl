@@ -51,7 +51,7 @@ CopyFile[First[smeiSpinasLibraries], FileNameJoin[{smeiSpinasFixture, "build", "
 If[FileExistsQ[FileNameJoin[{smeiSpinas, "build", "CMakeCache.txt"}]],
   CopyFile[FileNameJoin[{smeiSpinas, "build", "CMakeCache.txt"}],
     FileNameJoin[{smeiSpinasFixture, "build", "CMakeCache.txt"}]]];
-smeiModel = ReadModel[FileNameJoin[{smeiRoot, "models"}], 3];
+smeiModel = ReadModel[FileNameJoin[{smeiRoot, "models"}], 4];
 smeiModelBefore = smeiModel;
 smeiProcesses = Join[{"e", "E"}, #] & /@
   {{"A.+", "A.+"}, {"A.+", "A.-"}, {"A.-", "A.+"}, {"A.-", "A.-"}};

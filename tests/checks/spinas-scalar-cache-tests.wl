@@ -30,7 +30,7 @@ checks = 0; failures = {};
 SetAttributes[check, HoldRest];
 check[name_, value_] := (checks++; If[!TrueQ[value], AppendTo[failures,name]; Print["FAIL: ",name]]);
 scDirectory = CreateDirectory[];
-scModel = ReadModel[FileNameJoin[{root,"models"}],3];
+scModel = ReadModel[FileNameJoin[{root,"models"}],4];
 scMass = ModelParameter[scModel,"Me"]; scCharge = ModelParameter[scModel,"EE"];
 scCoupling = ModelParameter["constant_sqrt2","scalar-cache-fixture","Complex"];
 scModel[[1]] = Append[scModel[[1]], {"cache fixture scalar","r","r",992,0,scMass,0,1,1,"r","r"}];

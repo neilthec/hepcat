@@ -28,8 +28,8 @@ $HistoryLength = 0;
 checks = 0; failures = {};
 SetAttributes[check, HoldRest];
 check[name_, test_] := (checks++; If[!TrueQ[test], AppendTo[failures, name]; Print["FAIL: ", name]]);
-model = ReadModel[FileNameJoin[{root, "models"}], 3];
-diagramModel = ReadModel[FileNameJoin[{root, "models"}], 2];
+model = ReadModel[FileNameJoin[{root, "models"}], 4];
+diagramModel = ReadModel[FileNameJoin[{root, "models"}], 3];
 mass = ModelParameter[model, "Me"]; charge = ModelParameter[model, "EE"];
 current[photons_, kind_: 1] := ConstructiveDiagrams`Private`constructPhysicalChiralCurrent[
   {1, 2}, photons, kind, mass, ConstantArray[-Sqrt[2] charge, Length[photons]]]["Expression"];

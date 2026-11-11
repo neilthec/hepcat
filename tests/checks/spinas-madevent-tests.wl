@@ -34,7 +34,7 @@ smeCheck[name_, value_] := (smeChecks++; If[!TrueQ[value],
   AppendTo[smeFailures, name]; Print["FAIL: ", name]]);
 smeTemporary = CreateDirectory[];
 smePath[name_] := FileNameJoin[{smeTemporary, name}];
-smeModel = ReadModel[FileNameJoin[{smeRoot, "models"}], 3];
+smeModel = ReadModel[FileNameJoin[{smeRoot, "models"}], 4];
 smeModelBefore = smeModel;
 smeGlobalsBefore = {OwnValues[Global`Me], OwnValues[Global`EE]};
 smeSpinas = Replace[Environment["HEPCAT_SPINAS_DIRECTORY"],

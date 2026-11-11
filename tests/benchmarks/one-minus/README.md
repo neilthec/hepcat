@@ -66,7 +66,7 @@ Load the normal package and the research helper:
 ```wolfram
 Get["~/code/hepcat/source/HEPCAT.wl"];
 Get["~/code/hepcat/tests/checks/fixtures/QED-one-minus-formula.wl"];
-model = ReadModel["~/code/hepcat/models", 3];
+model = ReadModel["~/code/hepcat/models", 4];
 amplitude = QEDOneMinusFormula[4,
   ModelParameter[model, "Me"], ModelParameter[model, "EE"]];
 ```

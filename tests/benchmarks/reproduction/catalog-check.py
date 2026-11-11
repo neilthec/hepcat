@@ -28,7 +28,7 @@ if not __debug__:
  raise RuntimeError("Catalog verification requires Python assertions; run without -O or PYTHONOPTIMIZE.")
 sys.setrecursionlimit(20000)
 p=Path(__file__).parent
-# The builder consumes the shared --models and --output-directory options.
+# The builder consumes the shared --models, --output-directory and --paper-model-labels options.
 g=runpy.run_path(str(p/'catalog-build.py'))
 p=g['root']
 
@@ -85,7 +85,7 @@ selected=[]
 for row in g['entries']:
  particles=row['particles'];hel=[x for x in particles if x.startswith('A.')]
  if len(particles)!=6 or (hel and hel.count('A.-')>len(hel)/2):continue
- if len(hel)==4 and (hel.count('A.-')==0 or (hel.count('A.-')==1 and row['model']==4)):continue
+ if len(hel)==4 and (hel.count('A.-')==0 or (hel.count('A.-')==1 and row['preference']=='AllSpurious')):continue
  selected.append(row)
 assert len(sections)==len(selected)
 for row,sec in zip(selected,sections):

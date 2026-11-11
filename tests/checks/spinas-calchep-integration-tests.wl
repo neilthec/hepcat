@@ -40,7 +40,7 @@ If[ciCalcHEP === None,
   DeleteDirectory[ciDirectory, DeleteContents -> True];
   Print["SKIP: Set HEPCAT_CALCHEP_DIRECTORY to the explicit reference installation."];
   Print["HEPCAT_TEST_COMPLETED:spinas-calchep-integration-tests.wl"]; Quit[0]];
-ciModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+ciModel = ReadModel[FileNameJoin[{root, "models"}], 4];
 ciModelBefore = ciModel;
 ciRules = {"Me" -> 1, "EE" -> 1/3};
 ciCounterpart = {FileNameJoin[{root, "tests", "reference-models", "calchep"}], 2};

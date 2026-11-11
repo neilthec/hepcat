@@ -351,8 +351,8 @@ check["the one-direction grouped fallback still matches every original channel",
    every input afresh through the public wrapper, including an independent
    Feynman sum. No saved answer, notebook output, cache or helper supplies it. *)
 Print["Constructing the real five-point mixed-helicity QED regression."];
-ppQEDDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 2];
-ppQEDFactorizationModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+ppQEDDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+ppQEDFactorizationModel = ReadModel[FileNameJoin[{root, "models"}], 4];
 ppQEDFeynmanModel = ReadModel[FileNameJoin[{root, "tests", "reference-models", "calchep"}], 2];
 ppQEDModelsBefore = {ppQEDDiagramModel, ppQEDFactorizationModel, ppQEDFeynmanModel};
 ppQEDProcess = {"e", "E", "A.+", "A.+", "A.-"};

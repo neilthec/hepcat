@@ -111,10 +111,16 @@ def inspect(prefix, representation, points, export_root=None):
                 {tuple(sector['Particles']) for sector in sectors} == expected_sectors and
                 all(sector.get('ExpressionSHA256') for sector in sectors),
                 f'{prefix} N={photons}: canonical helicity source inventory is incomplete')
-        expected_model = 3 if representation == 'AllPhysical' else 4
-        require(all(f'{stem}{expected_model}.mdl' in source['ModelFilesSHA256']
-                    for stem in ['amps', 'prtcls', 'vars', 'func']),
-                f'{prefix} N={photons}: model provenance is missing')
+        # Retained sweeps predate the insertion of SM factorization model 2.
+        # Their declared 3/4 labels remain historical provenance; fresh exports
+        # declare the current physical/spurious model numbers 4/5.
+        allowed_models = {'AllPhysical': (3, 4), 'AllSpurious': (4, 5)}
+        expected_model = source.get('ModelNumber')
+        require(type(expected_model) is int and expected_model in allowed_models[representation],
+                f'{prefix} N={photons}: declared model provenance has the wrong representation')
+        require(set(source['ModelFilesSHA256']) == {
+                    f'{stem}{expected_model}.mdl' for stem in ['amps', 'prtcls', 'vars', 'func']},
+                f'{prefix} N={photons}: model provenance filenames disagree with the declared model')
         directory = (Path(export_root) / Path(item['Export']).name
                      if export_root is not None else Path(item['Export']))
         for filename, expected_hash in item['SHA256'].items():

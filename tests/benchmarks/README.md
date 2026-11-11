@@ -73,7 +73,7 @@ Use the separate SM notebook for the 74 SM families. Full high-multiplicity
 validations can take much longer than the timing check. Their point counts
 are chosen in the notebook; an interrupted run is not a completed validation.
 
-The timing exporter reads the unchanged complete formulas from models 3 and 4,
+The timing exporter reads the unchanged complete formulas from models 4 and 5,
 which are the physical- and spurious-pole catalogs. It does not use whatever
 amplitude variables happen to be present in an interactive kernel, and it does
 not reconstruct or simplify an amplitude during timing. This makes the formulas
@@ -156,7 +156,7 @@ runner above performs the ordinary complete workflow.
 
 ## All-physical expressions in double precision
 
-`export-physical.wl` reads the saved amplitudes from QED factorization model 3.
+`export-physical.wl` reads the saved amplitudes from QED factorization model 4.
 It checks that every kinematic denominator is a physical electron propagator,
 then exports the complete helicity families for two, three and four photons.
 It does not reconstruct or simplify a formula. The `benchmark-amplitudes.json`
@@ -169,8 +169,8 @@ and MadGraph installations and reference models. Its default is
 `tests/results/spinas-output/eeAA/manifest.json`; use `--configuration /path/to/manifest.json`
 to select another. Optional `--calchep` and `--madgraph` override installation
 paths; HEPCAT selects a compatible Python for the chosen MadGraph installation.
-Source formulas come from model 3 by default. `--representation AllSpurious`
-selects the saved formulas in model 4 instead, without applying further identities.
+Source formulas come from model 4 by default. `--representation AllSpurious`
+selects the saved formulas in model 5 instead, without applying further identities.
 Both selections record every inverse factor, including composite spinor
 denominators, in their amplitude sidecars. Only `AllPhysical` requires every
 kinematic inverse factor to be a physical electron propagator.

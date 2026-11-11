@@ -21,13 +21,13 @@
       {
         "title": "Read a Model",
         "paragraphs": [
-          "A calculation begins with a model value returned by [ReadModel](paclet:HEPCAT/ref/ReadModel). The bundled model numbered 2 supplies the QED interactions used in this example. Keep the returned value in a notebook variable and pass it to the functions that need the theory.",
+          "A calculation begins with a model value returned by [ReadModel](paclet:HEPCAT/ref/ReadModel). The bundled model numbered 3 supplies the QED three-point interactions used in this example. Keep the returned value in a notebook variable and pass it to the functions that need the theory.",
           "A constructive model has four parts: particle data, known interactions or amplitudes, independent parameters and dependent functions. `Length /@ qedModel` is a quick way to see the size of those parts, not the amplitude itself. [ModelParameterRules](paclet:HEPCAT/ref/ModelParameterRules) shows the numerical assignments used by numerical checks."
         ],
         "examples": [
           {
             "description": "Locate the model directory and read the elementary QED model.",
-            "input": "modelDirectory = \"~/code/hepcat/models\";\nqedModel = ReadModel[modelDirectory, 2];\nLength /@ qedModel",
+            "input": "modelDirectory = \"~/code/hepcat/models\";\nqedModel = ReadModel[modelDirectory, 3];\nLength /@ qedModel",
             "evaluate": true
           },
           {
@@ -99,7 +99,7 @@
         "examples": [
           {
             "description": "Use one model for both jobs in this four-point example.",
-            "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};",
+            "input": "qedModel = ReadModel[modelDirectory, 3];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};",
             "evaluate": true
           }
         ]
@@ -356,7 +356,7 @@
         "examples": [
           {
             "description": "Read both models and select a four-point process.",
-            "input": "qedModel = ReadModel[modelDirectory, 2];\nfeynmanModel = ReadModel[feynmanModelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};",
+            "input": "qedModel = ReadModel[modelDirectory, 3];\nfeynmanModel = ReadModel[feynmanModelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};",
             "evaluate": true
           }
         ]
@@ -436,7 +436,7 @@
         "examples": [
           {
             "description": "Collect the independent photon-helicity cases.",
-            "input": "knownModel = ReadModel[modelDirectory, 3];\nprocesses = {{\"e\", \"E\", \"A.+\", \"A.+\"}, {\"e\", \"E\", \"A.+\", \"A.-\"}, {\"e\", \"E\", \"A.-\", \"A.-\"}};\nentries = {#, LookupAmplitude[Thread[{#, Range[4]}], knownModel, False, {i1, i2, i3, i4}]} & /@ processes;",
+            "input": "knownModel = ReadModel[modelDirectory, 4];\nprocesses = {{\"e\", \"E\", \"A.+\", \"A.+\"}, {\"e\", \"E\", \"A.+\", \"A.-\"}, {\"e\", \"E\", \"A.-\", \"A.-\"}};\nentries = {#, LookupAmplitude[Thread[{#, Range[4]}], knownModel, False, {i1, i2, i3, i4}]} & /@ processes;",
             "evaluate": true
           }
         ]

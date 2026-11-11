@@ -86,7 +86,7 @@ rkOuter = Internal`InheritedBlock[{ConstructiveDiagrams`Private`expressionComple
   ConstructiveDiagrams`Private`expressionComplexity[_] := (Pause[1]; 1);
   TimeConstrained[rkRank[rkX + rkY], 0.02, Missing["OuterDeadline"]]];
 check["the enclosing operation's earlier deadline remains authoritative", rkOuter === Missing["OuterDeadline"]];
-rkModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+rkModel = ReadModel[FileNameJoin[{root, "models"}], 4];
 rkReal = Get[FileNameJoin[{root, "tests", "checks", "fixtures", "preparation-rank-physical.wl"}]][
   ModelParameter[rkModel, "Me"], ModelParameter[rkModel, "EE"]];
 rkRules = Thread[Mass /@ Range[6] -> {ModelParameter[rkModel, "Me"], ModelParameter[rkModel, "Me"], 0, 0, 0, 0}];

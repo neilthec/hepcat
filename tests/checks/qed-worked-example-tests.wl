@@ -30,7 +30,7 @@ $HistoryLength = 0; checks = 0; failures = {};
 SetAttributes[check, HoldRest];
 check[name_, value_] := (checks++; If[!TrueQ[value],
   AppendTo[failures, name]; Print["FAIL: ", name]]);
-qwModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+qwModel = ReadModel[FileNameJoin[{root, "models"}], 4];
 qwModelHash = Hash[qwModel, "SHA256"];
 qwMass = ModelParameter[qwModel, "Me"]; qwCharge = ModelParameter[qwModel, "EE"];
 qwBindings = DeleteDuplicates[Cases[qwModel, _ModelParameter, Infinity]];

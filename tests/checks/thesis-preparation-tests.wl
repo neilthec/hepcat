@@ -130,8 +130,8 @@ check["the branch estimate saturates instead of allocating an enormous sum",
   ConstructiveDiagrams`Private`rspSandwichExpansionCount[(tpAA + tpBB)^(10^9)] === 4097];
 
 (* Derive the coupling normalization from the supplied model, never from a fit.
-   The thesis uses e at each vertex; model 2 uses -Sqrt[2] EE. *)
-tpModel = ReadModel[FileNameJoin[{root, "models"}], 2];
+   The thesis uses e at each vertex; model 3 uses -Sqrt[2] EE. *)
+tpModel = ReadModel[FileNameJoin[{root, "models"}], 3];
 tpMass = ModelParameter[tpModel, "Me"];
 tpCharge = ModelParameter[tpModel, "EE"];
 tpVertex = SelectFirst[tpModel[[2]],

@@ -36,7 +36,7 @@ smgCheck[name_, assertion_] := Module[{result},
 smgRejectedQ[value_] := FailureQ[value] || value === $Failed;
 smgTemporary = CreateDirectory[];
 smgPath[name_] := FileNameJoin[{smgTemporary, name}];
-smgModel = ReadModel[FileNameJoin[{smgRoot, "models"}], 3];
+smgModel = ReadModel[FileNameJoin[{smgRoot, "models"}], 4];
 smgModelBefore = smgModel;
 smgGlobalsBefore = {OwnValues[Global`Me], OwnValues[Global`EE]};
 smgSpinas = Replace[Environment["HEPCAT_SPINAS_DIRECTORY"],

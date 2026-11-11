@@ -380,8 +380,8 @@ PlainText[expression_,"Model"]:=ConstructiveDiagrams`Private`amplitudeModelText[
 
 Begin["ConstructiveDiagrams`Private`"];
 
-(* Readable color labels are presentation only. In particular, private dummy
-   indices are not admitted to the lossless constructive-model serializer. *)
+(* Readable labels are presentation only. The model serializer below retains
+   the tensor heads and the dimensions of their internal contraction indices. *)
 colorTextLabel[labels_List, tex_] := StringRiffle[colorTextLabel[#, tex] & /@ labels, ","];
 colorTextLabel[label_Symbol, _] := SymbolName[label];
 colorTextLabel[label_String, _] := label;
@@ -408,7 +408,10 @@ amplitudeModelText[expression_] := Module[
    typedHeads, scalarHeads, compactChainQ, compactPropagatorQ, result},
   namePattern = RegularExpression["[A-Za-z_][A-Za-z_0-9]*"];
   typedHeads = {SpinorChain, Spinor, SpinorTrace, Mom, MomProd, Multiparticle,
-    Mass, PropDen, xFactor, xTildeFactor, Coupling, Mandelstahm, ConstructiveDiagrams`VectorSpinIndex};
+    Mass, PropDen, xFactor, xTildeFactor, Coupling, Mandelstahm, ConstructiveDiagrams`VectorSpinIndex,
+    ConstructiveDiagrams`ColorIndex, ConstructiveDiagrams`ColorDelta,
+    ConstructiveDiagrams`ColorGenerator, ConstructiveDiagrams`ColorStructure,
+    ConstructiveDiagrams`ColorTrace};
   scalarHeads = {Sin, Cos, Tan, ArcSin, ArcCos, ArcTan, Exp, Log, Abs};
   fail[value_] := Throw[Failure["UnsupportedPlainText", <|
     "MessageTemplate" -> "This object has no lossless model-text representation.",
@@ -453,6 +456,9 @@ amplitudeModelText[expression_] := Module[
       If[value[[2]] === 0, "", "("] <> "s" <>
         StringJoin[ToString /@ (List @@ value[[1, 1]])] <>
         If[value[[2]] === 0, "", "-" <> emit[value[[2]]] <> "^2)"],
+    MatchQ[value, colorInternalIndex[_, 3 | 8]],
+      "ColorInternalIndex[" <> emit[value[[1]]] <> "," <> emit[value[[2]]] <> "]",
+    ListQ[value], "List[" <> StringRiffle[emit /@ value, ","] <> "]",
     MemberQ[typedHeads, Head[value]] || MemberQ[scalarHeads, Head[value]],
       SymbolName[Head[value]] <> "[" <> StringRiffle[emit /@ (List @@ value), ","] <> "]",
     True, fail[value]];

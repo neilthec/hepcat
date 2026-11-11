@@ -176,7 +176,7 @@ class PairedBenchmarkTests(unittest.TestCase):
 
     def make_run(self, representation, prefix, exports):
         prefix.parent.mkdir(parents=True)
-        model_number = 3 if representation == 'AllPhysical' else 4
+        model_number = 4 if representation == 'AllPhysical' else 5
         metadata = {'Status': 'COMPLETE', 'ValidatedRows': 'PASS',
                     'RequestedPhotonCounts': [2, 3, 4], 'CompletedPhotonCounts': [2, 3, 4],
                     'Points': 2, 'Repetitions': 1, 'Tolerance': 1e-7,
@@ -203,7 +203,8 @@ class PairedBenchmarkTests(unittest.TestCase):
                         'MadGraphValidation': backend}
             (project / 'manifest.json').write_text(json.dumps(manifest))
             (project / 'process.cpp').write_text('// synthetic admission-test fixture\n')
-            source = {'Representation': representation, 'CompletePhotonHelicityCount': 2 ** n,
+            source = {'Representation': representation, 'ModelNumber': model_number,
+                      'CompletePhotonHelicityCount': 2 ** n,
                       'ReferenceConfigurationSHA256': 'shared-fixture',
                       'InputHelicitySectors': [{'Particles': ['e', 'E'] + ['A.+'] * (n - neg) + ['A.-'] * neg,
                                                'ExpressionSHA256': 'fixture'} for neg in range(n + 1)],
@@ -243,6 +244,38 @@ class PairedBenchmarkTests(unittest.TestCase):
         row = csv_rows(Path(str(self.args.output) + '.csv'))[0]
         self.assertEqual(float(row['CalcHEP_seconds']), .2)
         self.assertEqual(float(row['CalcHEP_relative_N2']), 1)
+
+    def test_legacy_model_numbers_are_read_as_declared_historical_provenance(self):
+        for prefix in (self.args.physical, self.args.spurious):
+            path = COMPARE.file_for(prefix, '-metadata.json')
+            metadata = json.loads(path.read_text())
+            for item in metadata['Build']['Exports']:
+                source = item['AmplitudeSource']
+                source['ModelNumber'] -= 1
+                source['ModelFilesSHA256'] = {
+                    f"{stem}{source['ModelNumber']}.mdl": 'fixture'
+                    for stem in ('amps', 'prtcls', 'vars', 'func')}
+            path.write_text(json.dumps(metadata))
+        with redirect_stdout(io.StringIO()):
+            COMPARE.compare(self.args)
+        self.assertTrue(Path(str(self.args.output) + '.csv').is_file())
+
+    def test_declared_model_must_match_representation_and_hashed_filenames(self):
+        path = COMPARE.file_for(self.args.physical, '-metadata.json')
+        metadata = json.loads(path.read_text())
+        source = metadata['Build']['Exports'][0]['AmplitudeSource']
+        source['ModelNumber'] = 5
+        path.write_text(json.dumps(metadata))
+        with self.assertRaisesRegex(ValueError, 'wrong representation'):
+            COMPARE.compare(self.args)
+        source['ModelNumber'] = 3
+        path.write_text(json.dumps(metadata))
+        with self.assertRaisesRegex(ValueError, 'filenames disagree'):
+            COMPARE.compare(self.args)
+        del source['ModelNumber']
+        path.write_text(json.dumps(metadata))
+        with self.assertRaisesRegex(ValueError, 'declared model provenance'):
+            COMPARE.compare(self.args)
 
     def test_different_points_are_rejected(self):
         COMPARE.file_for(self.args.spurious, '-points-N3.csv').write_text('different points')

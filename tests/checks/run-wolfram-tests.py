@@ -85,7 +85,7 @@ TEST_SUITES = (
     "four-leg-tensor-reduction-tests.wl",
     "four-leg-tensor-continuation-tests.wl",
     "four-leg-tensor-pole-group-tests.wl",
-    "plain-text-tests.wl", "model-export-tests.wl", "qed-model-export-tests.wl",
+    "plain-text-tests.wl", "model-export-tests.wl", "sm-factorization-model-tests.wl", "qed-model-export-tests.wl",
     "six-point-completion-tests.wl",
     "preparation-remainders-tests.wl",
     "completed-amplitude-preparation-tests.wl",
@@ -102,7 +102,8 @@ TEST_SUITES = (
 
 # These execute full expensive notebook constructions rather than component
 # regressions. Select them explicitly and give the external runner enough time.
-INTEGRATION_TEST_SUITES = ("sm-charged-current-integration-tests.wl",
+INTEGRATION_TEST_SUITES = ("sm-factorization-sewing-tests.wl",
+                          "sm-charged-current-integration-tests.wl",
                           "sm-vector-construction-integration-tests.wl",
                           "physical-construction-integration-tests.wl",
                           "seven-point-construction-integration-tests.wl",

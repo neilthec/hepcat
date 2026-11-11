@@ -599,7 +599,7 @@ check["grouped compound jobs preserve the supplied pole order and unresolved row
   Lookup[spMixedOrdering, "Pole"] === {spMixedChain, spAngle34, spScalarCompound, spUnsupportedChain} &&
     Lookup[spMixedOrdering, "Status"] === {"PASS", "PASS", "PASS", "UNRESOLVED"}];
 
-spBalancedModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+spBalancedModel = ReadModel[FileNameJoin[{root, "models"}], 4];
 spBalancedExample = qedBalancedSixPointAmplitude[spBalancedModel,
   "ReturnDetails" -> True, "ProgressReporting" -> False];
 spBalancedChannels = FactorizationAmplitudeChannels[spBalancedExample["Particles"], spBalancedModel];

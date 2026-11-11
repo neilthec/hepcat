@@ -30,7 +30,7 @@ study="$PWD/tests/benchmarks/build-four-fermion-double"
   -script tests/benchmarks/export-four-fermions.wl --output "$study/exports"
 ```
 
-The exporter reads complete amplitudes from models 3 and 4. It does not run
+The exporter reads complete amplitudes from models 4 and 5. It does not run
 construction or completion and does not alter the model files. It records
 their hashes and the exact supplied helicity sectors. It writes six distinct
 double-precision optimized process classes, named `ffffPhysical0` through

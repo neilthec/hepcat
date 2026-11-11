@@ -445,7 +445,7 @@ Evaluate loading in its own cell before the calculation.", "ExampleText"],
 pass it into the high-energy stage. The ordinary output keeps the external \
 mass rules next to the completed expression."}], "ExampleText"],
   Cell[BoxData[RowBox[{"qedModel", " ", "=", " ", "ReadModel", "[",
-      "modelDirectory", ",", " ", "2", "]", ";", "\n", "process", " ", "=",
+      "modelDirectory", ",", " ", "3", "]", ";", "\n", "process", " ", "=",
       " ", "{", "\"e\"", ",", " ", "\"E\"", ",", " ", "\"A.+\"", ",", " ",
       "\"A.+\"", "}", ";", "\n", "diagrams", " ", "=", " ", "CreateDiagrams",
       "[", "process", ",", " ", "qedModel", "]", ";", "\n", "amplitudes",

@@ -46,6 +46,39 @@ python3 tests/checks/run-wolfram-tests.py \
 Set `HEPCAT_SM_VECTOR_CASES=ZZWW` or `WWWW` to select one case. Use the
 four-leg tensor and high-energy component suites for quicker development checks.
 
+## SM factorization catalog
+
+Ordinary model 1 supplies the elementary SM vertices. Model 2 retains its
+71 cubic rows and supplies 357 nonzero complete four-point amplitudes in
+place of its three elementary quartic rows. The coverage audit includes all
+359 external particle and helicity multisets supported by the declared tree interactions, including
+the two vanishing three-plus/one-minus (and opposite) gluon cases, and the
+two additional vanishing all-same-helicity gluon cases. All four zero
+amplitudes are tested in the notebook and omitted from the model, since an
+unlisted amplitude is already zero. The elementary model remains
+unchanged and must still be used for diagram generation.
+
+`sm-factorization-model-tests.wl` reconstructs the tree inventory, verifies
+all 36 simultaneous quark/lepton generation permutations on every elementary
+vertex and particle mass/spin/color/chirality role, and compares every saved
+row exactly with its certified notebook source. The provenance is in
+`fixtures/sm-factorization-catalog.json`. The SM notebook supplies 138 explicit
+construction calls and 78 grouped CalcHEP/MadGraph exports. Generation-related
+rows inherit those validations through the exact certificates; they are not
+advertised as independent numerical runs of every flavor assignment.
+
+Use the existing native Feynman comparisons and numerical export cells to
+repeat the independent validations. The colored model-export tests check
+external-index relabeling, private contraction sums and cut-index sewing,
+including the distinction between complete color tensors and the implicit
+color tensor of an elementary cubic.
+
+The opt-in `sm-factorization-sewing-tests.wl` compares five-point Feynman
+residues with channels built from model 2, covering electrons, colored quarks,
+a gluon, and the complete four-Higgs amplitude. Run it with `--suite` and
+allow 600 seconds. Set `HEPCAT_SM_FACTOR_SEWING_CASES=higgs` for the short
+contact-contribution regression alone.
+
 ## Running the suites
 
 Run the complete Wolfram suite from the repository root:
@@ -820,7 +853,7 @@ or sum over other fixed massless helicities. The suite also checks zero
 amplitudes, scoped parameters despite same-named user globals, legacy
 formatting, overwrite protection and rejection before partial files are written.
 
-The mixed-helicity four-point entry in `models/amps3.mdl` has an explicit
+The mixed-helicity four-point entry in `models/amps4.mdl` has an explicit
 `-2 EE^2` coefficient, whereas native `SM/eeAA.cpp` uses `+2 e^2`.
 The exporter preserves the supplied amplitude's sign. Tests assert this
 algebraically identified relative minus for the imported model, and separately
@@ -1051,7 +1084,7 @@ Set `HEPCAT_SPURIOUS_INTEGRATION_CASES=P,M` to replay only the single-photon
 cases. The other case names are `PPP`, `MMM`, `PPM` and `PMM`.
 
 Select `PPPP6,MMMM6` to replay the six-point calls with four photons of
-the same helicity, using factorization model 4. Both replays require the
+the same helicity, using factorization model 5. Both replays require the
 direct pair contraction, complexity at most 120, and all 23 checks including
 the independent Feynman comparison.
 
@@ -1062,7 +1095,7 @@ HEPCAT_SPURIOUS_INTEGRATION_CASES=PPPP6,MMMM6 python3 tests/checks/run-wolfram-t
 
 Select `PPPM6,PMMM6` to replay both six-point mixed-helicity notebook calls
 with three photons of one helicity and one of the other. The tests use
-factorization model 4 and require a common chiral vector current with
+factorization model 5 and require a common chiral vector current with
 complexity at most 528, no Xi, 14 physical residues, four apparent pole
 cancellations and all three remaining checks.
 
@@ -1072,7 +1105,7 @@ HEPCAT_SPURIOUS_INTEGRATION_CASES=PPPM6,PMMM6 python3 tests/checks/run-wolfram-t
 ```
 
 Select `PPMM6` to replay the balanced six-point Max Spurious calculation
-with factorization model 4. This case requires the off-shell vector-line
+with factorization model 5. This case requires the off-shell vector-line
 route, four apparent pole cancellations and all 21 checks. The automatic
 result has no complexity ceiling. The same test independently checks the
 separate hard-coded worked form and its complexity ceiling of 1044.
@@ -1083,7 +1116,7 @@ HEPCAT_SPURIOUS_INTEGRATION_CASES=PPMM6 python3 tests/checks/run-wolfram-tests.p
 ```
 
 Select `FourFermionsPP6,FourFermionsPM6,FourFermionsMM6` for the three
-Max Spurious four-fermion, two-photon cases with factorization model 4.
+Max Spurious four-fermion, two-photon cases with factorization model 5.
 Each replay requires the grouped current route to construct a result with
 complexity at most 1216, 1632 and 1216 respectively. All 20 physical residues,
 the spurious poles, reference independence, high-energy behavior and the
@@ -1097,7 +1130,7 @@ HEPCAT_SPURIOUS_INTEGRATION_CASES=FourFermionsPP6,FourFermionsPM6,FourFermionsMM
 ```
 
 Select `SixF6` to replay the six-fermion Max Spurious notebook call with
-factorization model 4. The result must have only physical denominators, a
+factorization model 5. The result must have only physical denominators, a
 complexity of at most 3168, and all 21 checks passing, including 18 physical
 residues and the independent Feynman comparison. The test requires the
 grouped off-shell exchange route to derive this form from the diagram model.
@@ -1334,7 +1367,7 @@ and both spinor chiralities. The established five- and six-point scores remain
 duplicated cubic diagram sets cannot certify this direct route.
 
 The opt-in `seven-point-spurious-construction-integration-tests.wl` runs the
-actual notebook construction with model 4, automatic effort settings and the
+actual notebook construction with model 5, automatic effort settings and the
 independent Feynman model. It requires every one of the thirty physical
 channels, every discovered spurious pole, the high-energy and reference checks,
 and full Feynman agreement at both validation assignments. No answer or
@@ -1342,7 +1375,7 @@ correction basis is supplied. The notebook also has a separate fixed-helicity
 MadGraph validation cell.
 
 The opt-in `qed-spurious-model-export-tests.wl` rereads all nine independent
-six-point sectors from model 4, checks their canonical scores and full amplitude
+six-point sectors from model 5, checks their canonical scores and full amplitude
 conditions against Feynman diagrams, and tests representative signed particle
 permutations at a changed electron mass and charge. The stored entries cover
 all four-photon helicity sectors, two-photon four-fermion sectors and the

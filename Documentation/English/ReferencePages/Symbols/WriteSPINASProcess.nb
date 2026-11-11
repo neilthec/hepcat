@@ -834,7 +834,7 @@ files."}], "ExampleText"],
   Cell[TextData[{"Export a complete four-point photon-helicity family to a \
 temporary directory."}], "ExampleText"],
   Cell[BoxData[RowBox[{"knownModel", " ", "=", " ", "ReadModel", "[",
-      "modelDirectory", ",", " ", "3", "]", ";", "\n", "helicityProcesses",
+      "modelDirectory", ",", " ", "4", "]", ";", "\n", "helicityProcesses",
       " ", "=", " ", "{", "{", "\"e\"", ",", " ", "\"E\"", ",", " ",
       "\"A.+\"", ",", " ", "\"A.+\"", "}", ",", " ", "{", "\"e\"", ",", " ",
       "\"E\"", ",", " ", "\"A.+\"", ",", " ", "\"A.-\"", "}", ",", " ", "{",

@@ -29,7 +29,7 @@ checks = 0; failures = {};
 SetAttributes[check, HoldRest];
 check[name_, value_] := (checks++; If[!TrueQ[value], AppendTo[failures, name]; Print["FAIL: ", name]]);
 soDirectory = CreateDirectory[];
-soModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+soModel = ReadModel[FileNameJoin[{root, "models"}], 4];
 soMass = ModelParameter[soModel, "Me"]; soCharge = ModelParameter[soModel, "EE"];
 soSpinas = Replace[Environment["HEPCAT_SPINAS_DIRECTORY"],
   $Failed | "" -> FileNameJoin[{ParentDirectory[root], "spinas"}]];

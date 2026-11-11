@@ -775,7 +775,7 @@
       },
       {
         "description": "Export a complete four-point photon-helicity family to a temporary directory.",
-        "input": "knownModel = ReadModel[modelDirectory, 3];\nhelicityProcesses = {{\"e\", \"E\", \"A.+\", \"A.+\"}, {\"e\", \"E\", \"A.+\", \"A.-\"}, {\"e\", \"E\", \"A.-\", \"A.+\"}, {\"e\", \"E\", \"A.-\", \"A.-\"}};\nentries = {#, LookupAmplitude[Thread[{#, Range[4]}], knownModel, False, {i, j, k, l}]} & /@ helicityProcesses;\nexportDirectory = CreateDirectory[];\nWriteSPINASProcess[exportDirectory, {\"e\", \"E\"} -> {\"A\", \"A\"}, entries, knownModel, \"ProcessName\" -> \"eeAA\"]",
+        "input": "knownModel = ReadModel[modelDirectory, 4];\nhelicityProcesses = {{\"e\", \"E\", \"A.+\", \"A.+\"}, {\"e\", \"E\", \"A.+\", \"A.-\"}, {\"e\", \"E\", \"A.-\", \"A.+\"}, {\"e\", \"E\", \"A.-\", \"A.-\"}};\nentries = {#, LookupAmplitude[Thread[{#, Range[4]}], knownModel, False, {i, j, k, l}]} & /@ helicityProcesses;\nexportDirectory = CreateDirectory[];\nWriteSPINASProcess[exportDirectory, {\"e\", \"E\"} -> {\"A\", \"A\"}, entries, knownModel, \"ProcessName\" -> \"eeAA\"]",
         "evaluate": false,
         "section": "Export a complete helicity family"
       },
@@ -988,7 +988,7 @@
       },
       {
         "description": "Choose a MadGraph installation and explicitly select its QED sector, then validate the complete photon-helicity family. Replace this example sibling directory and model selection with your chosen installation and theory.",
-        "input": "madGraphDirectory = FileNameJoin[{ParentDirectory[hepcatDirectory], \"MadGraph\"}];\nknownModel = ReadModel[modelDirectory, 3];\nhelicityProcesses = {{\"e\", \"E\", \"A.+\", \"A.+\"}, {\"e\", \"E\", \"A.+\", \"A.-\"}, {\"e\", \"E\", \"A.-\", \"A.+\"}, {\"e\", \"E\", \"A.-\", \"A.-\"}};\nentries = {#, LookupAmplitude[Thread[{#, Range[4]}], knownModel, False, {i1, i2, i3, i4}]} & /@ helicityProcesses;\nValidateMadGraph[{\"e\", \"E\"} -> {\"A\", \"A\"}, entries, knownModel, \"MadGraphDirectory\" -> madGraphDirectory, \"MadGraphModel\" -> \"sm-full\", \"MadGraphAllowedParticles\" -> {11, 22}]",
+        "input": "madGraphDirectory = FileNameJoin[{ParentDirectory[hepcatDirectory], \"MadGraph\"}];\nknownModel = ReadModel[modelDirectory, 4];\nhelicityProcesses = {{\"e\", \"E\", \"A.+\", \"A.+\"}, {\"e\", \"E\", \"A.+\", \"A.-\"}, {\"e\", \"E\", \"A.-\", \"A.+\"}, {\"e\", \"E\", \"A.-\", \"A.-\"}};\nentries = {#, LookupAmplitude[Thread[{#, Range[4]}], knownModel, False, {i1, i2, i3, i4}]} & /@ helicityProcesses;\nValidateMadGraph[{\"e\", \"E\"} -> {\"A\", \"A\"}, entries, knownModel, \"MadGraphDirectory\" -> madGraphDirectory, \"MadGraphModel\" -> \"sm-full\", \"MadGraphAllowedParticles\" -> {11, 22}]",
         "evaluate": false,
         "section": "Validate a complete helicity family"
       },

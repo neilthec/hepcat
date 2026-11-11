@@ -253,7 +253,12 @@ parseModelExpression[input_String, scope_String] := Module[
     "Multiparticle" -> Multiparticle, "Mass" -> Mass, "PropDen" -> PropDen,
     "xFactor" -> xFactor, "xTildeFactor" -> xTildeFactor,
     "Coupling" -> Coupling, "Mandelstahm" -> Mandelstahm,
-    "VectorSpinIndex" -> ConstructiveDiagrams`VectorSpinIndex|>;
+    "VectorSpinIndex" -> ConstructiveDiagrams`VectorSpinIndex,
+    "ColorIndex" -> ConstructiveDiagrams`ColorIndex,
+    "ColorDelta" -> ConstructiveDiagrams`ColorDelta,
+    "ColorGenerator" -> ConstructiveDiagrams`ColorGenerator,
+    "ColorStructure" -> ConstructiveDiagrams`ColorStructure,
+    "ColorTrace" -> ConstructiveDiagrams`ColorTrace, "List" -> List|>;
   peek[] := If[position <= Length[tokens], tokens[[position]], EndOfFile];
   take[] := Module[{token = peek[]}, position++; token];
   expect[token_] := If[take[] =!= token, fail["Expected " <> token <> "."]];
@@ -263,6 +268,10 @@ parseModelExpression[input_String, scope_String] := Module[
           Length[arguments]] || !FreeQ[arguments, _Spinor | _SpinorChain | _Mom | _PropDen],
         fail["Invalid scalar function arguments."]];
       Lookup[scalarFunctions, name] @@ arguments,
+    name === "ColorInternalIndex",
+      If[Length[arguments] =!= 2 || !MemberQ[{3, 8}, Last[arguments]],
+        fail["An internal color index needs a label and dimension 3 or 8."]];
+      colorInternalIndex @@ arguments,
     KeyExistsQ[typedFunctions, name], Lookup[typedFunctions, name] @@ arguments,
     MemberQ[{"initQCD5", "MbEff", "McEff", "MqEff"}, name], ModelFunction[name, scope, arguments],
     True, fail["Unsupported model function: " <> name <> "."]];

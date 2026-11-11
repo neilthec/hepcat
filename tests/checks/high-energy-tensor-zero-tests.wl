@@ -28,7 +28,7 @@ Get[FileNameJoin[{root,"source","HEPCAT.wl"}]];
 $HistoryLength=0;checks=0;failures={};SetAttributes[check,HoldRest];
 check[name_,assertion_]:=(checks++;If[!TrueQ[assertion],AppendTo[failures,name];Print["FAIL: ",name]]);
 htzProof=ConstructiveDiagrams`Private`completionHEZeroDirection;
-htzModel=ReadModel[FileNameJoin[{root,"models"}],2];
+htzModel=ReadModel[FileNameJoin[{root,"models"}],3];
 htzMass=ModelParameter[htzModel,"Me"];
 htzRules=Thread[(Mass/@Range[4])->ConstantArray[htzMass,4]];
 htzA[i_,j_]:=SpinorChain[Spinor["Spin","Angle",i],Spinor["Spin","Angle",j]];

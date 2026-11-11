@@ -40,7 +40,7 @@ identical-particle permutations, provide the photon-helicity coverage for the \
 unpolarized physical process."}], "TechNoteText"],
   Cell[TextData[{"Collect the independent photon-helicity cases."}],
    "ExampleText"], Cell[BoxData[RowBox[{"knownModel", " ", "=", " ",
-      "ReadModel", "[", "modelDirectory", ",", " ", "3", "]", ";", "\n",
+      "ReadModel", "[", "modelDirectory", ",", " ", "4", "]", ";", "\n",
       "processes", " ", "=", " ", "{", "{", "\"e\"", ",", " ", "\"E\"", ",",
       " ", "\"A.+\"", ",", " ", "\"A.+\"", "}", ",", " ", "{", "\"e\"", ",",
       " ", "\"E\"", ",", " ", "\"A.+\"", ",", " ", "\"A.-\"", "}", ",", " ",

@@ -35,7 +35,7 @@ scRun[command_List] := Quiet[Check[RunProcess[command], <|"ExitCode" -> -1|>]];
 scSucceeded[report_] := AssociationQ[report] && Lookup[report, "ExitCode", -1] === 0;
 scSpinas = Replace[Environment["HEPCAT_SPINAS_DIRECTORY"],
   $Failed | "" -> FileNameJoin[{ParentDirectory[root], "spinas"}]];
-scModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+scModel = ReadModel[FileNameJoin[{root, "models"}], 4];
 scModelBefore = scModel;
 scGlobalsBefore = {OwnValues[Global`Me], OwnValues[Global`EE]};
 scRules = {"Me" -> 1, "EE" -> 1/3};

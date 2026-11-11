@@ -42,7 +42,7 @@ fsCheck["spectator shuffles associate under successive fermion sewing",
  {a,1,4},{b,1,4},{c,1,4}]]];
 fsCheck["malformed odd fermion words cannot yield an invented grading",
  ConstructiveDiagrams`Private`factorizationFermionReferenceSign[{{a,b,c},{d,e}}]===$Failed];
-cm=ReadModel[FileNameJoin[{fsRoot,"models"}],2];
+cm=ReadModel[FileNameJoin[{fsRoot,"models"}],3];
 fm=ReadModel[FileNameJoin[{fsRoot,"tests", "reference-models", "calchep"}],2];
 cMass=ModelParameter[cm,"Me"];cCharge=ModelParameter[cm,"EE"];
 fMass=ModelParameter[fm,"Me"];fCharge=ModelParameter[fm,"EE"];

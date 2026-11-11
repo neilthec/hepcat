@@ -26,6 +26,7 @@ Mathematica, an amplitude generator, or the full numerical precision study.
 from decimal import Decimal
 import importlib.util
 import io
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -106,6 +107,26 @@ class PublicationEvidenceTests(unittest.TestCase):
         verify.matches('1.23e-8', Decimal('1.234e-8'))
         with self.assertRaisesRegex(ValueError, 'differs'):
             verify.matches('1.23e-8', Decimal('1.236e-8'))
+
+    def test_current_catalog_and_explicit_paper_labels_share_unchanged_sources(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            catalogs = []
+            for name, flags in (('current', []), ('paper', ['--paper-model-labels'])):
+                output = Path(temporary) / name
+                result = subprocess.run(
+                    [sys.executable, str(TOOLS / 'catalog-build.py'),
+                     '--output-directory', str(output), *flags],
+                    capture_output=True, text=True, timeout=30)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                catalogs.append(json.loads((output / 'catalog-expressions.json').read_text()))
+            current, paper = catalogs
+            self.assertEqual({row['model'] for row in current}, {4, 5})
+            self.assertEqual({row['model'] for row in paper}, {3, 4})
+            self.assertEqual(paper, [{**row, 'model': row['model'] - 1} for row in current])
+            self.assertTrue(all(row['preference'] == {4: 'AllPhysical', 5: 'AllSpurious'}[row['model']]
+                                for row in current))
+            self.assertEqual((Path(temporary) / 'current/catalog-expanded.tex').read_bytes(),
+                             (Path(temporary) / 'paper/catalog-expanded.tex').read_bytes())
 
     def test_transcription_checker_rejects_disabled_assertions(self):
         environment = dict(os.environ, PYTHONDONTWRITEBYTECODE='1')

@@ -80,7 +80,7 @@ ssZero=ssPhysicalBracket[3,4] SpinorChain[ssPhysicalSquare[1],Mom[2],ssPhysicalA
  ssPhysicalBracket[1,3] SpinorChain[ssPhysicalSquare[4],Mom[2],ssPhysicalAngle[5]] -
  ssPhysicalBracket[1,4] SpinorChain[ssPhysicalSquare[3],Mom[2],ssPhysicalAngle[5]];
 check["completion null direction is a genuine external identity",ssMap[ssZero]===0];
-ssModel=ReadModel[FileNameJoin[{root,"models"}],2];
+ssModel=ReadModel[FileNameJoin[{root,"models"}],3];
 ssPrepared=PrepareAmplitudes[{ssRules,ssZero/(ssPole PropDen[Mom[Multiparticle[2,4]],ssMass]
  PropDen[Mom[Multiparticle[2,5]],ssMass])},ssModel,
  "InternalOnShell"->False,"PolePreference"->None,"MaxSteps"->0,

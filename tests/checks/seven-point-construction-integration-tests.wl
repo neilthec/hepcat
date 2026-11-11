@@ -25,8 +25,8 @@ along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Get[FileNameJoin[{root, "source", "HEPCAT.wl"}]];
 $HistoryLength = 0;
-diagrams = ReadModel[FileNameJoin[{root, "models"}], 2];
-model = ReadModel[FileNameJoin[{root, "models"}], 3];
+diagrams = ReadModel[FileNameJoin[{root, "models"}], 3];
+model = ReadModel[FileNameJoin[{root, "models"}], 4];
 benchmark = ReadModel[FileNameJoin[{root, "tests", "reference-models", "calchep"}], 2];
 before = {diagrams, model, benchmark};
 process = Join[{"e", "E"}, ConstantArray["A.+", 5]];

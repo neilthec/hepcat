@@ -87,7 +87,7 @@ into the QED paper outline rather than a separate research document.
 ```wolfram
 Get["~/code/hepcat/source/HEPCAT.wl"];
 Get["~/code/hepcat/tests/checks/fixtures/QED-four-fermion-all-plus-formula.wl"];
-model = ReadModel["~/code/hepcat/models", 3];
+model = ReadModel["~/code/hepcat/models", 4];
 amplitude = QEDFourFermionAllPlusFormula[3,
   ModelParameter[model, "Me"], ModelParameter[model, "EE"]];
 ```

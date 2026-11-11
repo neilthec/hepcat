@@ -519,7 +519,7 @@ check["paired photon matches the manual reference using ordinary algebra",
   FreeQ[photonPairedSum, _xFactor | _xTildeFactor] &&
     Expand[ExtractMandelstahm[photonPairedSum] - photonReference] === 0];
 
-qedSignModel = ubLegacyFixtureModel[ReadModel[FileNameJoin[{root, "models"}], 2]];
+qedSignModel = ubLegacyFixtureModel[ReadModel[FileNameJoin[{root, "models"}], 3]];
 (* Independent Wick check: follow graph paths, not the helper's port graph.
    For e/E lines the sign is the determinant parity of positron partners. *)
 qedWickSign[diag_] := Module[{electrons, positrons, partnerOrder, path},
@@ -578,7 +578,7 @@ Do[
 ];
 (* The grouped route follows charged lines through a label permutation.
    One pair of identical fermions is transposed in this ordering. *)
-Module[{model = ReadModel[FileNameJoin[{root, "models"}], 2],
+Module[{model = ReadModel[FileNameJoin[{root, "models"}], 3],
     permutation = {5, 4, 2, 6, 1, 3}, legs = Range[6], process, shuffled,
     mass, rules, shuffledRules, graphs, candidate, shuffledCandidate, mapped, canonical},
   mass = ModelParameter[model, "Me"];

@@ -52,7 +52,7 @@ Get[FileNameJoin[{ffSource,"HEPCAT.wl"}]];
 ffLookup[particles_,model_] := LookupAmplitude[MapIndexed[{#1,First[#2]}&,particles],
   model,False,{ffSpin1,ffSpin2,ffSpin3,ffSpin4}];
 Do[
- ffModelNumber = If[ffPreference==="AllPhysical",3,4];
+ ffModelNumber = If[ffPreference==="AllPhysical",4,5];
  ffModel = ReadModel[ffModels,ffModelNumber];
  If[!ListQ[ffModel],Print["Cannot read model ",ffModelNumber];Quit[1]];
  ffModelHashes = Association@Table[name->FileHash[FileNameJoin[{ffModels,name}],"SHA256","HexString"],

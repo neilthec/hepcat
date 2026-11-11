@@ -31,7 +31,7 @@ $HistoryLength = 0; fpChecks = 0; fpFailures = {};
 SetAttributes[fpCheck, HoldRest];
 fpCheck[name_, assertion_] := (fpChecks++; If[!TrueQ[assertion],
   AppendTo[fpFailures, name]; Print["FAIL: ", name]]);
-fpModel = ReadModel[FileNameJoin[{fpRoot, "models"}], 2];
+fpModel = ReadModel[FileNameJoin[{fpRoot, "models"}], 3];
 fpFixture = Get[FileNameJoin[{fpRoot, "tests", "checks", "fixtures",
   "high-energy-five-point-four-fermion-zero.wl"}]];
 (* Bind symbolic fixture parameters to this checkout's model scope, never

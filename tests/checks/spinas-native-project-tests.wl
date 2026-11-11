@@ -32,7 +32,7 @@ check[name_, value_] := (checks++; If[!TrueQ[value], AppendTo[failures, name]; P
 npDirectory = CreateDirectory[];
 npSpinas = Replace[Environment["HEPCAT_SPINAS_DIRECTORY"],
   $Failed | "" -> FileNameJoin[{ParentDirectory[root], "spinas"}]];
-npModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+npModel = ReadModel[FileNameJoin[{root, "models"}], 4];
 npMass = ModelParameter[npModel, "Me"]; npCharge = ModelParameter[npModel, "EE"];
 npRules = {"Me" -> 1, "EE" -> 1/3};
 npBefore = npModel;

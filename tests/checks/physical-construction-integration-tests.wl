@@ -57,8 +57,8 @@ piRuns = Flatten[Table[<|"Case" -> name, "Seed" -> seed,
   {name, piSelection}, {seed, If[piSeedSweep === {}, {piSeeds[name]}, piSeedSweep]}], 1];
 piStrictQuality = Environment["HEPCAT_PHYSICAL_INTEGRATION_STRICT_QUALITY"] === "1";
 piDiagnosticDirectory = CreateDirectory[];
-piDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 2];
-piFactorizationModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+piDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+piFactorizationModel = ReadModel[FileNameJoin[{root, "models"}], 4];
 piFeynmanModel = ReadModel[FileNameJoin[{root, "tests", "reference-models", "calchep"}], 2];
 piModelsBefore = {piDiagramModel, piFactorizationModel, piFeynmanModel};
 piSourceFiles = Sort[Join[FileNames["*.wl", FileNameJoin[{root, "source"}], Infinity],

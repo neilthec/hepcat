@@ -332,7 +332,7 @@ check["omitting the known SM contact exposes longitudinal E squared growth",
 (* The small default electron mass used to make this exact expansion exceed
    180 seconds before even one sample. The eight lower-amplitude recursion
    terms must still be summed before any growth coefficient is judged. *)
-heBalancedModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+heBalancedModel = ReadModel[FileNameJoin[{root, "models"}], 4];
 heBalancedData = qedBalancedSixPointAmplitude[heBalancedModel,
   "ReturnDetails" -> True, "ProgressReporting" -> False];
 heBalancedMetadata = <|"ExternalLegs" -> Range[6],

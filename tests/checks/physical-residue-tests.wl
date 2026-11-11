@@ -41,9 +41,9 @@ prDetailedReport[expression_, records_List, targets_List,
   ConstructiveDiagrams`Private`residueCheckReport[expression, targets, records, opts];
 
 check["diagram vertices come from the existing cubic QED model",
-  prModel === ReadModel[FileNameJoin[{root, "models"}], 2]];
+  prModel === ReadModel[FileNameJoin[{root, "models"}], 3]];
 check["five-point factorization uses the existing QED model with four-point amplitudes",
-  prFixtureModel === ReadModel[FileNameJoin[{root, "models"}], 3] &&
+  prFixtureModel === ReadModel[FileNameJoin[{root, "models"}], 4] &&
     MemberQ[prFixtureModel[[2]], prA4Row]];
 check["four-point factorization uses only the cubic QED model",
   prFourPointChannels === FactorizationAmplitudeChannels[

@@ -193,7 +193,7 @@ ffStockModel = ReadModel[FileNameJoin[{ffRoot, "tests", "reference-models", "cal
 ffCheck["the complete copied SM parses as Feynman rules",
   MatchQ[ffStockModel, FeynmanModel[_List, _List, _List, _List]] &&
     Length[ffStockModel[[2]]] === 139];
-ffConstructiveModel = ReadModel[FileNameJoin[{ffRoot, "models"}], 2];
+ffConstructiveModel = ReadModel[FileNameJoin[{ffRoot, "models"}], 3];
 ffConstructiveSM = ReadModel[FileNameJoin[{ffRoot, "models"}], 1];
 ffCheck["constructive models retain their original four-list representation",
   MatchQ[ffConstructiveModel, {_List, _List, _List, _List}] &&

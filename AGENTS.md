@@ -35,9 +35,10 @@ Paths in this guide are relative to the repository root.
 - `source/internal/export/` contains the C++ adapters and Python generators
   used by SPINAS, CalcHEP, and MadGraph exports.
 - `source/internal/proofs/` contains the optional exact Laurent proof tools.
-- `models/` contains the ordinary constructive models. Model 1 is the SM,
-  model 2 is elementary QED, and models 3 and 4 add known QED amplitudes with
-  physical and reference-based pole representations, respectively.
+- `models/` contains the ordinary constructive models. Model 1 supplies SM
+  elementary interactions, and model 2 supplies complete lower-point SM amplitudes
+  for factorization. Model 3 is elementary QED, and models 4 and 5 add known QED
+  amplitudes with physical and reference-based pole representations, respectively.
 - `tests/reference-models/` contains the matched CalcHEP and MadGraph models.
 - `tests/` contains the final QED six-point and SM four-point notebooks.
 - `tests/checks/` contains regression suites and `fixtures/` contains their

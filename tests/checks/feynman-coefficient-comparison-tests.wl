@@ -27,7 +27,7 @@ Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
 checks = 0; failures = {};
 check[name_, value_] := (checks++; If[!TrueQ[value], AppendTo[failures, name]; Print["FAIL: ", name]]);
-fcModel = ReadModel[FileNameJoin[{root, "models"}], 2];
+fcModel = ReadModel[FileNameJoin[{root, "models"}], 3];
 fcRules = ModelParameterRules[fcModel, {"Me" -> 1, "EE" -> 1}];
 fcChannels = FactorizationAmplitudeChannels[{"e", "E", "A.+", "A.+"}, fcModel];
 fcTargets = ConstructiveDiagrams`Private`residueSimpleInputs[0, fcChannels, fcModel]["Targets"];

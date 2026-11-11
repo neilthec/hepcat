@@ -34,7 +34,7 @@ sbDirectory = CreateDirectory[];
 sbPath[name_] := FileNameJoin[{sbDirectory, name}];
 sbSpinas = Replace[Environment["HEPCAT_SPINAS_DIRECTORY"],
   $Failed | "" -> FileNameJoin[{ParentDirectory[root], "spinas"}]];
-sbModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+sbModel = ReadModel[FileNameJoin[{root, "models"}], 4];
 sbRules = {"Me" -> 1, "EE" -> 1/3};
 sbProcesses = Join[{"e", "E"}, #] & /@
   {{"A.+", "A.+"}, {"A.+", "A.-"}, {"A.-", "A.-"}};

@@ -563,6 +563,37 @@ colorLowerAmplitudeTensor[tagged_List, row_List, model_List, external_List] := M
   colorVertexTensor[legs, model, row]
 ];
 
+(* A saved complete amplitude already carries its full color polynomial.
+   Its external slots follow the kinematic relabeling, while every lookup
+   receives a fresh namespace for its private internal contractions. *)
+colorRelabelModelAmplitude[expression_, tagged_List, row_List, model_List, external_List] := Module[
+  {rules = amplitudeParticleLabelRules[tagged, row], particles, slots, replacements,
+   dummies, namespace, dummyRules, label, representation, cut},
+  particles = DeleteCases[Drop[row, -2], ""];
+  slots = DeleteDuplicates[Cases[expression, index_ColorIndex :> index, Infinity]];
+  If[!AllTrue[slots, MatchQ[#, ColorIndex[_Integer]] &&
+      1 <= First[#] <= Length[particles] &],
+    Return[colorFailure["ColorModelAmplitude", "A saved external color slot is outside its particle list."]]];
+  replacements = Table[
+    label = First[slot] /. rules;
+    representation = colorParticleRepresentation[particles[[First[slot]]], model];
+    Which[
+      FailureQ[representation], representation,
+      Abs[representation] === 1,
+        colorFailure["ColorModelAmplitude", "A saved color slot belongs to a colorless particle."],
+      True,
+        cut = If[MatchQ[label, _Multiparticle],
+          If[external === {}, Sort[List @@ label], canonicalPhysicalCut[List @@ label, external]], None];
+        slot -> If[IntegerQ[label], ColorIndex[label], colorInternalIndex[cut, Abs[representation]]]],
+    {slot, slots}];
+  If[AnyTrue[replacements, FailureQ], Return[SelectFirst[replacements, FailureQ]]];
+  dummies = DeleteDuplicates[Cases[expression, index_colorInternalIndex :> index, Infinity]];
+  namespace = CreateUUID["modelColor-"];
+  dummyRules = (# -> colorInternalIndex[{namespace, First[#]}, Last[#]]) & /@ dummies;
+  expression /. object : (_ColorDelta | _ColorGenerator | _ColorStructure | _ColorTrace) :>
+    Map[Replace[#, Join[dummyRules, replacements]] &, object]
+];
+
 colorFactorizationChannels[process_List, model_List] := Module[{rows, failure},
   rows = Block[{$colorFactorizationEnabled = True, $colorExternalLegs = Range[Length[process]]},
     FactorizationAmplitudeChannels[process, model]];

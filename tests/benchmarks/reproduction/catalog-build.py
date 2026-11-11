@@ -1,4 +1,4 @@
-"""Transcribe frozen QED models into the machine-readable and literal TeX catalogs."""
+"""Transcribe saved QED models into machine-readable and literal TeX catalogs."""
 
 # HEPCAT - High Energy Physics Constructive Amplitude Tool
 #
@@ -30,18 +30,20 @@ package = Path(__file__).resolve().parent
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--models", type=Path, default=repository / "models")
 parser.add_argument("--output-directory", type=Path, default=repository / "tests/results/reproduction/catalog")
+parser.add_argument("--paper-model-labels", action="store_true",
+                    help="Read current models 4/5 but retain historical catalog labels 3/4 for frozen paper hashes.")
 args = parser.parse_args()
 root = args.output_directory
 root.mkdir(parents=True, exist_ok=True)
 entries=[]
-for model in [3,4]:
+for model, preference in [(4, "AllPhysical"), (5, "AllSpurious")]:
  p=args.models/f'amps{model}.mdl'
  for line in p.read_text().splitlines():
   f=[v.strip() for v in line.split('|')]
   if len(f)<6 or f[0]!='e':continue
   particles=[v for v in f[:-2] if v]
   if not 4<=len(particles)<=6:continue
-  entries.append(dict(model=model,preference='AllPhysical' if model==3 else 'AllSpurious',particles=particles,factor=f[-2],expression=f[-1],file_sha256=hashlib.sha256(p.read_bytes()).hexdigest()))
+  entries.append(dict(model=model - 1 if args.paper_model_labels else model,preference=preference,particles=particles,factor=f[-2],expression=f[-1],file_sha256=hashlib.sha256(p.read_bytes()).hexdigest()))
 (root/'catalog-expressions.json').write_text(json.dumps(entries,indent=2)+'\n')
 
 # A typography-only parser. Every symbolic token is retained, with no spinor identities.
@@ -123,7 +125,7 @@ for row in entries:
  if len(particles)!=6:continue
  hel=[x for x in particles if x.startswith('A.')]
  if hel and hel.count('A.-')>len(hel)/2:continue
- if len(hel)==4 and (hel.count('A.-')==0 or (hel.count('A.-')==1 and row['model']==4)):continue
+ if len(hel)==4 and (hel.count('A.-')==0 or (hel.count('A.-')==1 and row['preference']=='AllSpurious')):continue
  fermions={i+1 for i,p in enumerate(particles) if p in ['e','E']}
  n,t=parse(row['expression'],fermions); f,ft=parse(row['factor'])
  groups={}

@@ -68,7 +68,7 @@ Evaluate loading in its own cell before the calculation.", "ExampleText"],
   Cell[TextData[
     {"Get the two separately declared four-point diagram expressions."}],
    "ExampleText"], Cell[BoxData[RowBox[{"qedModel", " ", "=", " ",
-      "ReadModel", "[", "modelDirectory", ",", " ", "2", "]", ";", "\n",
+      "ReadModel", "[", "modelDirectory", ",", " ", "3", "]", ";", "\n",
       "process", " ", "=", " ", "{", "\"e\"", ",", " ", "\"E\"", ",", " ",
       "\"A.+\"", ",", " ", "\"A.+\"", "}", ";", "\n", "diagrams", " ", "=",
       " ", "CreateDiagrams", "[", "process", ",", " ", "qedModel", "]", ";",

@@ -44,8 +44,8 @@ Global`ficSelection = If[MemberQ[{$Failed, ""}, Global`ficSelection], Keys[Globa
   StringTrim /@ StringSplit[Global`ficSelection, ","]];
 If[!AllTrue[Global`ficSelection, KeyExistsQ[Global`ficCases, #] &],
   Print["Unknown fermion integration case: ", Global`ficSelection]; Quit[2]];
-Global`ficDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 2];
-Global`ficFactorizationModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+Global`ficDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+Global`ficFactorizationModel = ReadModel[FileNameJoin[{root, "models"}], 4];
 Global`ficFeynmanModel = ReadModel[FileNameJoin[{root, "tests", "reference-models", "calchep"}], 2];
 Global`ficModelsBefore = {Global`ficDiagramModel, Global`ficFactorizationModel, Global`ficFeynmanModel};
 Do[

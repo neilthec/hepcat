@@ -30,7 +30,7 @@ SetAttributes[check, HoldRest];
 check[name_, assertion_] := (checks++; If[!TrueQ[assertion], AppendTo[failures, name]; Print["FAIL: ", name]]);
 directory = CreateDirectory[];
 sm = ReadModel[FileNameJoin[{root, "models"}], 1];
-qed = ReadModel[FileNameJoin[{root, "models"}], 3];
+qed = ReadModel[FileNameJoin[{root, "models"}], 4];
 spinas = Replace[Environment["HEPCAT_SPINAS_DIRECTORY"], $Failed | "" -> FileNameJoin[{ParentDirectory[root], "spinas"}]];
 madgraph = FileNameJoin[{root, "tests", "reference-models", "madgraph", "sm"}];
 mgRoot = Replace[Environment["HEPCAT_MADGRAPH_DIRECTORY"], $Failed | "" -> FileNameJoin[{ParentDirectory[root], "MadGraph"}]];

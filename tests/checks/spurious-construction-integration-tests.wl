@@ -27,7 +27,7 @@ root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
 $HistoryLength = 0;
-diagrams = ReadModel[FileNameJoin[{root, "models"}], 2];
+diagrams = ReadModel[FileNameJoin[{root, "models"}], 3];
 modelDirectory = FileNameJoin[{root, "models"}];
 benchmark = ReadModel[FileNameJoin[{root, "tests", "reference-models", "calchep"}], 2];
 cases = <|
@@ -61,7 +61,7 @@ failures = {};
 Do[
   {process, seed, physical, spurious, ceiling} = cases[name];
   Print["BEGIN ", name];
-  factorization = ReadModel[modelDirectory, If[MemberQ[sixPointCases, name], 4, 3]];
+  factorization = ReadModel[modelDirectory, If[MemberQ[sixPointCases, name], 5, 4]];
   report = ConstructAmplitude[process, diagrams, factorization,
     "PolePreference" -> "AllSpurious", "FeynmanModel" -> benchmark,
     "RandomSeed" -> seed, "Output" -> "Details", "ProgressReporting" -> False, "PrintReport" -> False];

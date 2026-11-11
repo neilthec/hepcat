@@ -29,7 +29,7 @@ $HistoryLength = 0;
 checks = 0; failures = {};
 SetAttributes[check, HoldRest];
 check[name_, value_] := (checks++; If[!TrueQ[value], AppendTo[failures, name]; Print["FAIL: ", name]]);
-csModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+csModel = ReadModel[FileNameJoin[{root, "models"}], 4];
 csMass = ModelParameter[csModel, "Me"]; csCharge = ModelParameter[csModel, "EE"];
 csParticles = {"e", "E", "A.+", "A.+"};
 csChannels = FactorizationAmplitudeChannels[csParticles, csModel];

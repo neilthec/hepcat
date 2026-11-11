@@ -55,7 +55,7 @@ fsCheck["the optional large-expression heuristic has a finite short clock",
 fsCheck["the builtin simplifier is restored after the timeout probe",
   Simplify[(fsX^2 - 1)/(fsX - 1)] === 1 + fsX];
 
-fsModel = ReadModel[FileNameJoin[{fsRoot, "models"}], 2];
+fsModel = ReadModel[FileNameJoin[{fsRoot, "models"}], 3];
 fsBefore = fsModel;
 fsParticles = {"e", "E", "A.+", "A.+"};
 fsChannels = FactorizationAmplitudeChannels[fsParticles, fsModel];

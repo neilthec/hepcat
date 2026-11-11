@@ -226,8 +226,8 @@ check["a large fermion group cannot consume the shared budget before boson excha
 
 (* The saved QED formulas already carry Wick signs. Projection must leave
    their normalization and all independent physical checks unchanged. *)
-fsRealModel=ReadModel[FileNameJoin[{root,"models"}],3];
-fsDiagramModel=ReadModel[FileNameJoin[{root,"models"}],2];
+fsRealModel=ReadModel[FileNameJoin[{root,"models"}],4];
+fsDiagramModel=ReadModel[FileNameJoin[{root,"models"}],3];
 fsFeynmanModel=ReadModel[FileNameJoin[{root,"tests", "reference-models", "calchep"}],2];
 fsLookup[particles_List] := LookupAmplitude[MapIndexed[{#1,First[#2]}&,particles],
   fsRealModel,False,{fsSpin1,fsSpin2,fsSpin3,fsSpin4}];

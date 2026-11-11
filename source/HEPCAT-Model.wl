@@ -713,7 +713,7 @@ ConstructiveDiagrams`Private`amplitudeParticleLabelRules[tagged_List,row_List]:=
   rules
 ];
 
-LookupAmplitude[taggedParticles_List,model_,rightSide_,{i1_,i2_,i3_,i4_}]:=Module[{amp=0,i,j,k,replacements,doubleSpin,indices,buildReplacements,relabelIndex,relabelExpression},
+LookupAmplitude[taggedParticles_List,model_,rightSide_,{i1_,i2_,i3_,i4_}]:=Module[{amp=0,i,j,k,replacements,doubleSpin,indices,buildReplacements,relabelIndex,relabelExpression,explicitColor},
 (*Helper function*)
 relabelIndex[index_Integer]:=index/.replacements;
 relabelIndex[Multiparticle[labels___]]:=Multiparticle@@Flatten[
@@ -749,8 +749,16 @@ If[taggedParticles[[k,1]]===model[[2,i,j]],AppendTo[replacements,j->taggedPartic
 ,{k,1,Length[taggedParticles]},{j,1,Length[model[[2,i]]]-2}];*)
 replacements=buildReplacements[i];
 (*Print[replacements];*)
-amp=relabelExpression[model[[2,i,-2]]model[[2,i,-1]]];
-If[TrueQ[ConstructiveDiagrams`Private`$colorFactorizationEnabled],
+amp=model[[2,i,-2]]model[[2,i,-1]];
+explicitColor=!FreeQ[amp,_ColorDelta|_ColorGenerator|_ColorStructure|_ColorTrace];
+If[explicitColor,
+  amp=ConstructiveDiagrams`Private`colorRelabelModelAmplitude[
+    amp,taggedParticles,model[[2,i]],model,
+    If[TrueQ[ConstructiveDiagrams`Private`$colorFactorizationEnabled],
+      ConstructiveDiagrams`Private`$colorExternalLegs,{}]];
+  If[FailureQ[amp],Return[amp]]];
+amp=relabelExpression[amp];
+If[!explicitColor && amp=!=0 && TrueQ[ConstructiveDiagrams`Private`$colorFactorizationEnabled],
 amp=amp ConstructiveDiagrams`Private`colorLowerAmplitudeTensor[
   taggedParticles,model[[2,i]],model,
   ConstructiveDiagrams`Private`$colorExternalLegs]];

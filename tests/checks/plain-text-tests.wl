@@ -170,11 +170,11 @@ check["readable color formatting never alters the underlying tensors",
   PlainText /@ before; TeX /@ before;
   before === {ColorGenerator[ColorIndex[2], ColorIndex[1], ColorIndex[3]],
    ColorTrace[ColorIndex[3], ColorIndex[4]]}]];
-check["lossless model text keeps unsupported color expressions explicitly rejected",
+check["lossless model text round trips complete typed color expressions",
  AllTrue[{ColorIndex[1], ColorDelta[ColorIndex[1], ColorIndex[2]],
   ltTextColorGenerator, ColorStructure[ColorIndex[1], ColorIndex[2], ColorIndex[3]],
   ltTextColorTrace, ColorGenerator[ColorIndex[1], ltTextFundamentalDummy, ColorIndex[3]]},
-  FailureQ[PlainText[#, "Model"]] &]];
+  ConstructiveDiagrams`Private`parseModelExpression[PlainText[#, "Model"], "colorTextTest"] === # &]];
 
 If[checks =!= 55, AppendTo[failures,
   {"suite did not reach every check", "Expected" -> 55, "Actual" -> checks}]];

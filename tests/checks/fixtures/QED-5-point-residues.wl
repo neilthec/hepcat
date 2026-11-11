@@ -35,10 +35,10 @@ If[!MemberQ[$Packages, "ConstructiveDiagrams`"] ||
   Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]]
 ];
 
-(* Model 2 supplies the three-point diagram vertices. Model 3 also contains
+(* Model 3 supplies the three-point diagram vertices. Model 4 also contains
    the known four-point amplitudes needed for five-point factorization. *)
-prModel = ReadModel[FileNameJoin[{prRoot, "models"}], 2];
-prFixtureModel = ReadModel[FileNameJoin[{prRoot, "models"}], 3];
+prModel = ReadModel[FileNameJoin[{prRoot, "models"}], 3];
+prFixtureModel = ReadModel[FileNameJoin[{prRoot, "models"}], 4];
 prElectronMass = ModelParameter[prModel, "Me"];
 prElectricCharge = ModelParameter[prModel, "EE"];
 prAngle[i_, j_] := SpinorChain[Spinor["Helicity", "Angle", i],
@@ -201,7 +201,7 @@ prSewnValue[target_, i_, j_] := Module[{q, value},
     "PhysicalResidue" -> value|>
 ];
 
-(* Diagram vertices come only from model 2. Model 3's existing four-point
+(* Diagram vertices come only from model 3. Model 4's existing four-point
    amplitudes are used solely for five-point factorization targets. *)
 prDiagramRecords[] := DiagramAmplitudeRecords[CreateDiagrams[prParticles, prModel]];
 prDiagramReferenceRules[record_Association] := DeleteDuplicates[Cases[
@@ -324,7 +324,7 @@ qedFivePointMixedRoute[pairs_List] := Module[
   (* This is a certified worked route, not a completion of arbitrary input.
      Verify the actual six expressions before selecting their representatives. *)
   expectedPairs = DiagramAmplitudes[CreateDiagrams[
-    {"e", "E", "A.+", "A.+", "A.-"}, ReadModel[FileNameJoin[{prRoot, "models"}], 2]]];
+    {"e", "E", "A.+", "A.+", "A.-"}, ReadModel[FileNameJoin[{prRoot, "models"}], 3]]];
   expectedRaw = (ReduceSpinContractions[Last[#]] /. First[#] &) /@ expectedPairs;
   canonicalReferences[expression_] := expression /.
     prDiagramReferenceRules[<|"OriginalExpression" -> expression|>];
@@ -332,7 +332,7 @@ qedFivePointMixedRoute[pairs_List] := Module[
       (Cancel[Together[canonicalReferences[#1] - canonicalReferences[#2]]] === 0) &,
       {SortBy[raw, photonOrder], SortBy[expectedRaw, photonOrder]}],
     Return[Failure["QEDMixedFivePointScope", <|
-      "MessageTemplate" -> "This worked route accepts the standard model-2 raw diagrams, not arbitrary altered numerators."|>]]];
+      "MessageTemplate" -> "This worked route accepts the standard model-3 raw diagrams, not arbitrary altered numerators."|>]]];
   localSeed[order_] := With[{ij = DeleteCases[order, 5]},
     With[{i = ij[[1]], j = ij[[2]]},
       2 Sqrt[2] prElectricCharge^3 firstChain[i] secondChain[j]/(prElectronMass referenceGap) *

@@ -34,7 +34,7 @@ seDirectory = CreateDirectory[];
 seSpinas = Replace[Environment["HEPCAT_SPINAS_DIRECTORY"],
   $Failed | "" -> FileNameJoin[{ParentDirectory[root], "spinas"}]];
 seGlobalValuesBefore = {OwnValues[Global`Me], OwnValues[Global`EE]};
-seModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+seModel = ReadModel[FileNameJoin[{root, "models"}], 4];
 seMass = ModelParameter[seModel, "Me"];
 seCharge = ModelParameter[seModel, "EE"];
 seRules = {"Me" -> 1, "EE" -> 1/3};
@@ -379,7 +379,7 @@ seBuildAndCompare[name_String, process_List, amplitude_, model_, kind_Integer, h
 
 If[seNativeAvailable,
   seReports = {};
-  Print["CONVENTION: models/amps3.mdl has -2 EE^2 for mixed 4-point helicities; native SM/eeAA.cpp has +2 e^2. The exporter preserves the supplied sign. Numerical tests use this analytically specified relative minus, not a fitted phase."];
+  Print["CONVENTION: models/amps4.mdl has -2 EE^2 for mixed 4-point helicities; native SM/eeAA.cpp has +2 e^2. The exporter preserves the supplied sign. Numerical tests use this analytically specified relative minus, not a fitted phase."];
   Do[
     seProcess = Join[{"e", "E"}, helicities];
     seName = "ee_" <> StringJoin[If[# === "A.+", "p", "m"] & /@ helicities];

@@ -72,8 +72,8 @@ fpciRuns = Flatten[Table[<|"Case" -> case, "Seed" -> seed,
     "ResultKey" -> If[fpciSeedSweep === {}, case, case <> "@" <> ToString[seed]]|>,
   {case, fpciSelection}, {seed, If[fpciSeedSweep === {}, {fpciSeeds[case]}, fpciSeedSweep]}], 1];
 fpciDiagnosticDirectory = CreateDirectory[];
-fpciDiagramModel = ReadModel[FileNameJoin[{fpciRoot, "models"}], 2];
-fpciFactorizationModel = ReadModel[FileNameJoin[{fpciRoot, "models"}], 3];
+fpciDiagramModel = ReadModel[FileNameJoin[{fpciRoot, "models"}], 3];
+fpciFactorizationModel = ReadModel[FileNameJoin[{fpciRoot, "models"}], 4];
 fpciFeynmanModel = ReadModel[FileNameJoin[{fpciRoot, "tests", "reference-models", "calchep"}], 2];
 fpciModelsBefore = {fpciDiagramModel, fpciFactorizationModel, fpciFeynmanModel};
 Do[

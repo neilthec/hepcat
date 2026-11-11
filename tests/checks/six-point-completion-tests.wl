@@ -30,7 +30,7 @@ check[name_, value_] := (checks++;
   If[!TrueQ[value], AppendTo[failures, name]; Print["FAIL: ", name]]);
 
 sixParticles = {"e", "E", "A.+", "A.+", "A.+", "A.+"};
-sixModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+sixModel = ReadModel[FileNameJoin[{root, "models"}], 4];
 sixChannels = FactorizationAmplitudeChannels[sixParticles, sixModel];
 sixNormalized = ConstructiveDiagrams`Private`completionNormalizeInput[0, sixChannels, sixModel];
 sixRules = ConstructiveDiagrams`Private`residueParameterRules[sixModel, Automatic];
@@ -660,7 +660,7 @@ check["the balanced constructor reports eight steps and defaults to an ordinary 
   Lookup[sixBalancedEvents, "Completed"] === Range[0, 8] &&
     qedBalancedSixPointAmplitude[sixModel, "ProgressReporting" -> False] === sixBalancedExample["Amplitude"]];
 check["the balanced example rejects incomplete lower-point data",
-  FailureQ[qedBalancedSixPointAmplitude[ReadModel[FileNameJoin[{root, "models"}], 2],
+  FailureQ[qedBalancedSixPointAmplitude[ReadModel[FileNameJoin[{root, "models"}], 3],
     "ProgressReporting" -> False]]];
 sixBalancedZ = Unique["sixBalancedShiftTest"];
 sixBalancedDenominator = PropDen[Mom[Multiparticle[1, 5]], ModelParameter[sixModel, "Me"]];
@@ -711,7 +711,7 @@ check["the original default six-point regression inventory and all cut-evaluator
 sixCompactChecks = 0;
 sixCompactCheck[name_, value_] := (sixCompactChecks++; check[name, value]);
 Print["Preparing twenty-four fresh all-positive physical-reference diagrams."];
-sixCompactDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 2];
+sixCompactDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 3];
 sixCompactDiagrams = CreateDiagrams[sixParticles, sixCompactDiagramModel];
 sixCompactRaw = DiagramAmplitudes[sixCompactDiagrams];
 sixCompactRawSaved = sixCompactRaw;
@@ -919,7 +919,7 @@ If[Environment["HEPCAT_TEST_FULL_BALANCED_SIX_POINT"] === "1",
 
 If[Environment["HEPCAT_TEST_FULL_SIX_POINT"] === "1",
   Print["Preparing the actual six-point electron/four-photon diagrams."];
-  sixFullDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 2];
+  sixFullDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 3];
   sixFullPairs = DiagramAmplitudes[CreateDiagrams[sixParticles, sixFullDiagramModel]];
   sixFullPrepared = PrepareAmplitudes[sixFullPairs, sixFullDiagramModel,
     "PolePreference" -> "AllSpurious", "MaxSteps" -> 12,
@@ -956,7 +956,7 @@ If[Environment["HEPCAT_TEST_FULL_SIX_POINT"] === "1",
    equations enter construction, and the Feynman result is generated only later. *)
 If[Environment["HEPCAT_TEST_FULL_MIXED_SIX_POINT"] === "1",
   Print["Preparing twenty-four mixed-helicity six-point diagrams."];
-  sixMixedDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 2];
+  sixMixedDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 3];
   sixMixedRaw = DiagramAmplitudes[CreateDiagrams[sixMixedParticles, sixMixedDiagramModel]];
   sixMixedRawBefore = sixMixedRaw;
   sixMixedPrepared = PrepareAmplitudes[sixMixedRaw, sixMixedDiagramModel,

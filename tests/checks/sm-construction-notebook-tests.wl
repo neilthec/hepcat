@@ -48,8 +48,8 @@ parsed = ToExpression[#,InputForm,HoldComplete] & /@ active;
 check["all modern calculation inputs parse without execution", FreeQ[parsed,$Failed|_Syntax]];
 constructions = Flatten[Cases[#,HoldPattern[ConstructAmplitude[p_,d_,f_,opts___]] :>
   HoldComplete[p,d,f,{opts}],Infinity] & /@ parsed];
-check["the manual process inventory has at least 132 explicit helicity calls",
-  Length[constructions] >= 132];
+check["the manual process inventory has at least 138 explicit helicity calls",
+  Length[constructions] >= 138];
 check["the SM calls use the same declared cubic model for four-point factorization",
   AllTrue[constructions, MatchQ[#,HoldComplete[_,sm,sm,_List]] &]];
 check["the separate massive SM Feynman model is loaded in Setup",
@@ -67,7 +67,7 @@ check["the notebook has no archived result cells or validation tables",
       "hepcat-hhhh-symbolic-table" | "hepcat-gluon-symbolic-table" | "hepcat-gluon-numerical-table"]]];
 exports = Flatten[Cases[#,HoldPattern[WriteSPINASProcess[args___]] :>
   HoldComplete[args],Infinity] & /@ parsed];
-check["each original process and the additional charge conjugate have a numerical export", Length[exports] >= 74];
+check["each original process and the additional charge conjugate have a numerical export", Length[exports] >= 78];
 check["all exports state their incoming and outgoing particles",
   AllTrue[exports, MatchQ[#,HoldComplete[_,_Rule,_List,sm,___]] &]];
 check["reference tools retain the full selected SM rather than a QED restriction",
@@ -79,11 +79,11 @@ check["the local massive-quark UFO and diagonal flavor mixing are explicit",
   AnyTrue[active,StringContainsQ[#,"reference-models"] &] &&
     AnyTrue[parsed,!FreeQ[#,HoldPattern["lamWS"->0]] &]];
 check["only setup and live construction or export inputs remain",
-  Length[active] === 209 && Length[constructions] === 132 && Length[exports] === 74];
+  Length[active] === 219 && Length[constructions] === 138 && Length[exports] === 78];
 sections = Cases[held,Cell[_,"Section",opts___] /;
   AnyTrue[{opts},MatchQ[#,CellTags->_String] &&
     StringStartsQ[Last[#],"construction-sm"] &],Infinity];
-check["every original process remains separately visible",Length[sections]>=73];
+check["every original process remains separately visible",Length[sections]>=77];
 check["the extra original charge-conjugate process is constructed independently",
   AnyTrue[active,StringContainsQ[#,"sm61CParticles = {\"D\", \"u\", \"Z\", \"W-\"}"] &&
     StringContainsQ[#,"ConstructAmplitude[sm61CParticles, sm, sm,"] &]];
@@ -93,7 +93,7 @@ check["the extra charged process has its own SPINAS class and export",
 cellTags = Flatten[Cases[held,HoldPattern[Rule[CellTags,value_]] :> value,Infinity]];
 constructionTags = Select[cellTags, StringQ[#] && StringStartsQ[#, "construction-sm"] &];
 check["all process families retain their navigation tags",
-  Length[DeleteDuplicates[constructionTags]] === 74];
+  Length[DeleteDuplicates[constructionTags]] === 78];
 check["the removed manual appendix has no dangling links",
   FreeQ[held, HoldPattern[CellTags -> tag_String] /; StringStartsQ[tag, "manual-link-"]] &&
     FreeQ[held, TemplateBox[{_, {"SM-4-point-construction.nb", target_String}, ___},

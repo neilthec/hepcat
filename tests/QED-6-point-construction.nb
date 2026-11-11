@@ -349,10 +349,10 @@ supplies five- and six-point factorization. \
 40449897d0a0"],
 
 Cell["\<\
-diagramModel = ReadModel[FileNameJoin[{hepcatDirectory, \"models\"}], 2];
-factorizationModel = ReadModel[FileNameJoin[{hepcatDirectory, \"models\"}], 3];
+diagramModel = ReadModel[FileNameJoin[{hepcatDirectory, \"models\"}], 3];
+factorizationModel = ReadModel[FileNameJoin[{hepcatDirectory, \"models\"}], 4];
 factorizationModelSpurious = ReadModel[FileNameJoin[{hepcatDirectory, \
-\"models\"}], 4];
+\"models\"}], 5];
 \
 \>", "Input",
  CellChangeTimes->{{4.002815856960981*^9, 4.002815864610408*^9}},

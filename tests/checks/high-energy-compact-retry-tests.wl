@@ -28,7 +28,7 @@ Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
 $HistoryLength = 0; checks = 0; failures = {};
 SetAttributes[check, HoldRest];
 check[name_, value_] := (checks++; If[!TrueQ[value], AppendTo[failures, name]; Print["FAIL: ",name]]);
-hcModel = ReadModel[FileNameJoin[{root,"models"}],2];
+hcModel = ReadModel[FileNameJoin[{root,"models"}],3];
 hcRules = {Mass[1]->hcMass,Mass[2]->hcMass,Mass[3]->hcMass,Mass[4]->hcMass,Mass[5]->0,Mass[6]->0};
 (* These are two retained coordinates, not a stored physical amplitude. Only
    their common charge factor was removed; mass and spin dependence remain. *)

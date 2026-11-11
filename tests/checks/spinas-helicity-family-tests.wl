@@ -33,7 +33,7 @@ check[name_, value_] := (checks++; If[!TrueQ[value],
 sfDirectory = CreateDirectory[];
 sfSpinas = Replace[Environment["HEPCAT_SPINAS_DIRECTORY"],
   $Failed | "" -> FileNameJoin[{ParentDirectory[root], "spinas"}]];
-sfModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+sfModel = ReadModel[FileNameJoin[{root, "models"}], 4];
 sfMass = ModelParameter[sfModel, "Me"]; sfCharge = ModelParameter[sfModel, "EE"];
 sfRules = {"Me" -> 1, "EE" -> 1/3};
 sfModelBefore = sfModel;

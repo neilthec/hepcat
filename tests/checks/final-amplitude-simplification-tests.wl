@@ -120,7 +120,7 @@ check["the rational compactor declines a noncommutative expression",
 
 (* A self-contained version of the verified twelve-term all-positive six-point
    expression. This is a test fixture, never a process-specific production rule. *)
-fsModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+fsModel = ReadModel[FileNameJoin[{root, "models"}], 4];
 fsMass = ModelParameter[fsModel, "Me"]; fsCharge = ModelParameter[fsModel, "EE"];
 fsPhotons = Range[3, 6]; fsPairs = Subsets[fsPhotons, {2}];
 fsAngle12 = SpinorChain[Spinor["Spin", "Angle", 1], Spinor["Spin", "Angle", 2]];

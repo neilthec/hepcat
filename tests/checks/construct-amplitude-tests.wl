@@ -30,8 +30,8 @@ SetAttributes[check, HoldRest];
 check[name_, value_] := (checks++; If[!TrueQ[value],
   AppendTo[failures, name]; Print["FAIL: ", name]]);
 caFailureQ[value_] := FailureQ[value] || value === $Failed;
-caModel = ReadModel[FileNameJoin[{root, "models"}], 2];
-caFactorizationModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+caModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+caFactorizationModel = ReadModel[FileNameJoin[{root, "models"}], 4];
 caOriginalModel = caModel; caOriginalFactorizationModel = caFactorizationModel;
 caProcess4 = {"e", "E", "A.+", "A.+"};
 caProcess5 = {"e", "E", "A.+", "A.+", "A.+"};

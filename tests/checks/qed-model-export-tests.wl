@@ -31,7 +31,7 @@ Get[FileNameJoin[{root, "tests", "checks", "fixtures", "QED-5-point-residues.wl"
 checks = 0; failures = {};
 check[name_, value_] := (checks++; If[!TrueQ[value],
   AppendTo[failures, name]; Print["FAIL: ", name]]);
-qmeModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+qmeModel = ReadModel[FileNameJoin[{root, "models"}], 4];
 qmeFeynmanModel = ReadModel[FileNameJoin[{root, "tests", "reference-models", "calchep"}], 2];
 qmeEntries = qedFivePointModelAmplitudes[];
 qmeParts = First /@ qmeEntries;

@@ -9,20 +9,20 @@
       }
     ],
     "details": [
-      "Start a calculation by reading a model once and giving the resulting value a name, for example `qedModel = ReadModel[modelDirectory, 2]`. Pass that value to [CreateDiagrams](paclet:HEPCAT/ref/CreateDiagrams), [ConstructAmplitude](paclet:HEPCAT/ref/ConstructAmplitude) and the other model-dependent functions. You can keep several models in the same Mathematica session.",
-      "The first argument is the directory containing the model tables; the second is the number in their filenames. A constructive model numbered `2` uses `prtcls2.mdl`, `amps2.mdl`, `vars2.mdl` and `func2.mdl`. The returned list is `{particles, amplitudes, variables, functions}`. Usually you can pass it on unchanged rather than unpacking its tables.",
+      "Start a calculation by reading a model once and giving the resulting value a name, for example `qedModel = ReadModel[modelDirectory, 3]`. Pass that value to [CreateDiagrams](paclet:HEPCAT/ref/CreateDiagrams), [ConstructAmplitude](paclet:HEPCAT/ref/ConstructAmplitude) and the other model-dependent functions. You can keep several models in the same Mathematica session.",
+      "The first argument is the directory containing the model tables; the second is the number in their filenames. A constructive model numbered `3` uses `prtcls3.mdl`, `amps3.mdl`, `vars3.mdl` and `func3.mdl`. The returned list is `{particles, amplitudes, variables, functions}`. Usually you can pass it on unchanged rather than unpacking its tables.",
       "Particle names in a process are strings from that model, including their case and helicity suffixes. In the bundled QED model, `\"e\"` and `\"E\"` are the electron and its antiparticle, while `\"A.+\"` and `\"A.-\"` select photon helicities. HEPCAT numbers legs by their positions in the process list and takes all external momenta as ingoing."
     ],
     "examples": [
       {
         "description": "Read the bundled QED three-point model and see its four sections.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nLength[qedModel]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nLength[qedModel]",
         "evaluate": true,
         "expected": "4"
       },
       {
         "description": "Retrieve a mass and its locally resolved numerical value.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nme = ModelParameter[qedModel, \"Me\"];\nme /. ModelParameterRules[qedModel]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nme = ModelParameter[qedModel, \"Me\"];\nme /. ModelParameterRules[qedModel]",
         "evaluate": true
       }
     ],
@@ -39,7 +39,7 @@
         "title": "Choosing the right amplitudes for a calculation",
         "paragraphs": [
           "The model used to draw diagrams supplies the allowed interactions. A separate model used for [FactorizationAmplitudeChannels](paclet:HEPCAT/ref/FactorizationAmplitudeChannels) must supply complete lower-point amplitudes. A five-point factorization channel can contain a complete four-point amplitude, so a list containing only three-point vertices is not sufficient for that purpose.",
-          "For the bundled QED examples, model `2` supplies the three-point vertices. Model `3` also contains known higher-point amplitudes and is used as factorization input for the larger examples. The required information is determined by the process, not by a special meaning attached to the numbers `2` and `3`.",
+          "In the bundled SM, model `1` supplies elementary interactions for diagrams and model `2` supplies complete four-point amplitudes for factorization at five points. In QED, model `3` supplies the three-point vertices. Models `4` and `5` also contain known complete higher-point amplitudes, using physical and spurious pole representations, respectively. Use these QED models as factorization input for the larger examples. The filenames identify the bundled models; the lower-point amplitudes required for a calculation are determined by its process and multiplicity.",
           "An amplitude absent from the factorization model is treated as zero. Check that the model contains the lower-point results you intend to use; HEPCAT cannot distinguish an intentionally zero amplitude from one that has not yet been entered. [AppendModelAmplitudes](paclet:HEPCAT/ref/AppendModelAmplitudes) adds already established results to a constructive model."
         ]
       },
@@ -63,7 +63,7 @@
       }
     ],
     "details": [
-      "For ordinary calculations, use [ReadModel](paclet:HEPCAT/ref/ReadModel). `ReadVariables[file]` is useful when you are inspecting or building a model and need its independent parameters without loading the other tables. Give the complete filename, such as `vars2.mdl`.",
+      "For ordinary calculations, use [ReadModel](paclet:HEPCAT/ref/ReadModel). `ReadVariables[file]` is useful when you are inspecting or building a model and need its independent parameters without loading the other tables. Give the complete filename, such as `vars3.mdl`.",
       "The result is a list of `{parameter, value, comment}` rows. Each parameter is represented by a model-local [ModelParameter](paclet:HEPCAT/ref/ModelParameter), so reading the file does not set global Mathematica values. Use [ModelParameterName](paclet:HEPCAT/ref/ModelParameterName) to read its name as a string.",
       "These rows are declarations, not a complete numerical substitution scheme. [ModelParameterRules](paclet:HEPCAT/ref/ModelParameterRules) works on the complete model and also resolves dependent definitions and overrides. Use it when evaluating an amplitude numerically.",
       "The table must end with its normal separator. Malformed parameter names or expressions return `Failure`, rather than running code from the file."
@@ -71,7 +71,7 @@
     "examples": [
       {
         "description": "Inspect one declared variable.",
-        "input": "variables = ReadVariables[FileNameJoin[{modelDirectory, \"vars2.mdl\"}]];\nFirst[variables]",
+        "input": "variables = ReadVariables[FileNameJoin[{modelDirectory, \"vars3.mdl\"}]];\nFirst[variables]",
         "evaluate": true
       },
       {
@@ -106,12 +106,12 @@
     "examples": [
       {
         "description": "Inspect the QED dependent definitions.",
-        "input": "functions = ReadFunctions[FileNameJoin[{modelDirectory, \"func2.mdl\"}]];\nfunctions",
+        "input": "functions = ReadFunctions[FileNameJoin[{modelDirectory, \"func3.mdl\"}]];\nfunctions",
         "evaluate": true
       },
       {
         "description": "Resolve the complete model locally.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nModelParameterRules[qedModel]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nModelParameterRules[qedModel]",
         "evaluate": true
       }
     ],
@@ -141,7 +141,7 @@
     "examples": [
       {
         "description": "Read the particle table.",
-        "input": "particles = ReadParticles[FileNameJoin[{modelDirectory, \"prtcls2.mdl\"}]];\nparticles",
+        "input": "particles = ReadParticles[FileNameJoin[{modelDirectory, \"prtcls3.mdl\"}]];\nparticles",
         "evaluate": true
       },
       {
@@ -176,13 +176,13 @@
     "examples": [
       {
         "description": "Particle and antiparticle have the declared common mass.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nParticleMass[\"e\", qedModel[[1]]] === ParticleMass[\"E\", qedModel[[1]]]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nParticleMass[\"e\", qedModel[[1]]] === ParticleMass[\"E\", qedModel[[1]]]",
         "evaluate": true,
         "expected": "True"
       },
       {
         "description": "Distinguish model padding from an unknown name.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\n{ParticleMass[\"\", qedModel[[1]]], ParticleMass[\"not-a-particle\", qedModel[[1]]]}",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\n{ParticleMass[\"\", qedModel[[1]]], ParticleMass[\"not-a-particle\", qedModel[[1]]]}",
         "evaluate": true,
         "expected": "{0, -1}"
       }
@@ -210,7 +210,7 @@
     "examples": [
       {
         "description": "Read the QED vertex-amplitude rows explicitly.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nrows = ReadAmplitudes[FileNameJoin[{modelDirectory, \"amps2.mdl\"}], qedModel[[1]]];\nFirst[rows]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nrows = ReadAmplitudes[FileNameJoin[{modelDirectory, \"amps3.mdl\"}], qedModel[[1]]];\nFirst[rows]",
         "evaluate": true
       },
       {
@@ -250,13 +250,13 @@
     "examples": [
       {
         "description": "Translate a massive angle bracket from a three-point row.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nConvertAmplitude[{\"e\", \"E\", \"A.+\", 1, \"<12>\"}, qedModel[[1]]]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nConvertAmplitude[{\"e\", \"E\", \"A.+\", 1, \"<12>\"}, qedModel[[1]]]",
         "evaluate": true,
         "expected": "SpinorChain[Spinor[\"Spin\", \"Angle\", 1], Spinor[\"Spin\", \"Angle\", 2]]"
       },
       {
         "description": "Convert a photon square bracket in a four-point row.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nConvertAmplitude[{\"e\", \"E\", \"A.+\", \"A.+\", 1, \"[34]^2\"}, qedModel[[1]]]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nConvertAmplitude[{\"e\", \"E\", \"A.+\", \"A.+\", 1, \"[34]^2\"}, qedModel[[1]]]",
         "evaluate": true
       }
     ],
@@ -293,7 +293,7 @@
       },
       {
         "description": "Use the current converter for a typed amplitude.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nConvertAmplitude[{\"e\", \"E\", \"A.+\", 1, \"<12>\"}, qedModel[[1]]]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nConvertAmplitude[{\"e\", \"E\", \"A.+\", 1, \"<12>\"}, qedModel[[1]]]",
         "evaluate": true
       }
     ],
@@ -353,18 +353,19 @@
       "Use this function after obtaining and checking a new amplitude. For example, once a five-point result has been established, storing it in a model makes it available when [FactorizationAmplitudeChannels](paclet:HEPCAT/ref/FactorizationAmplitudeChannels) builds six-point channels. The function writes the expressions you supply; it does not derive or validate their physics.",
       "Give the target directory, model number and a list of entries. An entry `{particles, amplitude}` writes the complete expression. The longer form `{particles, factor, amplitudeOverFactor}` separates a common overall factor from the expression stored after it. The particle list uses the same all-ingoing order and names as the expression.",
       "The target model supplies the particle declarations and parameter names. When taking a result from a different model, replace its model-local [ModelParameter](paclet:HEPCAT/ref/ModelParameter) objects with the corresponding parameters of the target model before writing. Matching printed names do not by themselves merge the two parameter scopes.",
+      "Complete amplitudes may retain their explicit [ColorDelta](paclet:HEPCAT/ref/ColorDelta), [ColorGenerator](paclet:HEPCAT/ref/ColorGenerator), [ColorStructure](paclet:HEPCAT/ref/ColorStructure) and [ColorTrace](paclet:HEPCAT/ref/ColorTrace) tensors. Model text preserves external [ColorIndex](paclet:HEPCAT/ref/ColorIndex) slots and dimensioned internal contraction indices. [LookupAmplitude](paclet:HEPCAT/ref/LookupAmplitude) relabels the external color slots and gives saved internal sums a fresh namespace for each lookup. Sewing joins the cut color index to the other lower-point amplitude. Cubic rows with implicit color continue to obtain their tensor from the model particle declarations.",
       "The result reports the destination file and the numbers of added and skipped entries. An identical existing entry is skipped. A conflicting expression for the same particle multiset rejects the batch instead of silently replacing the old result. Every proposed row must be readable again before the amplitude file is replaced.",
       "Existing rows and comments are preserved. Reload with [ReadModel](paclet:HEPCAT/ref/ReadModel) to use the new data. First try a temporary copy of a model, as in the example, and use [CheckAmplitudes](paclet:HEPCAT/ref/CheckAmplitudes) and any independent comparisons appropriate to the process before promoting a result to factorization input."
     ],
     "examples": [
       {
         "description": "Append a known four-point result to a temporary copy of the three-point QED model.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nknownQEDModel = ReadModel[modelDirectory, 3];\ntemporaryModelDirectory = CreateDirectory[];\nScan[CopyFile[FileNameJoin[{modelDirectory, # <> \"2.mdl\"}], FileNameJoin[{temporaryModelDirectory, # <> \"2.mdl\"}]] &, {\"prtcls\", \"amps\", \"vars\", \"func\"}];\nparticles = {\"e\", \"E\", \"A.+\", \"A.+\"};\nknownAmplitude = LookupAmplitude[Thread[{particles, Range[4]}], knownQEDModel, False, {i1, i2, i3, i4}];\n(* Use parameters declared in the target copy. *)\ncopiedModel = ReadModel[temporaryModelDirectory, 2];\nparameterMap = Thread[(First /@ ModelParameterRules[knownQEDModel]) -> (ModelParameter[copiedModel, ModelParameterName[#]] & /@ (First /@ ModelParameterRules[knownQEDModel]))];\nAppendModelAmplitudes[temporaryModelDirectory, 2, {{particles, knownAmplitude /. parameterMap}}]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nknownQEDModel = ReadModel[modelDirectory, 4];\ntemporaryModelDirectory = CreateDirectory[];\nScan[CopyFile[FileNameJoin[{modelDirectory, # <> \"3.mdl\"}], FileNameJoin[{temporaryModelDirectory, # <> \"3.mdl\"}]] &, {\"prtcls\", \"amps\", \"vars\", \"func\"}];\nparticles = {\"e\", \"E\", \"A.+\", \"A.+\"};\nknownAmplitude = LookupAmplitude[Thread[{particles, Range[4]}], knownQEDModel, False, {i1, i2, i3, i4}];\n(* Use parameters declared in the target copy. *)\ncopiedModel = ReadModel[temporaryModelDirectory, 3];\nparameterMap = Thread[(First /@ ModelParameterRules[knownQEDModel]) -> (ModelParameter[copiedModel, ModelParameterName[#]] & /@ (First /@ ModelParameterRules[knownQEDModel]))];\nAppendModelAmplitudes[temporaryModelDirectory, 3, {{particles, knownAmplitude /. parameterMap}}]",
         "evaluate": false
       },
       {
         "description": "An empty batch leaves the target untouched and reports zero additions.",
-        "input": "AppendModelAmplitudes[modelDirectory, 2, {}]",
+        "input": "AppendModelAmplitudes[modelDirectory, 3, {}]",
         "evaluate": true
       }
     ],
@@ -399,13 +400,13 @@
     "examples": [
       {
         "description": "Retrieve a declared electron mass.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nme = ModelParameter[qedModel, \"Me\"];\n{ModelParameterName[me], Conjugate[me] === me}",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nme = ModelParameter[qedModel, \"Me\"];\n{ModelParameterName[me], Conjugate[me] === me}",
         "evaluate": true,
         "expected": "{\"Me\", True}"
       },
       {
         "description": "Override a value locally without assigning Me globally.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nme = ModelParameter[qedModel, \"Me\"];\nme /. ModelParameterRules[qedModel, {\"Me\" -> 1}]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nme = ModelParameter[qedModel, \"Me\"];\nme /. ModelParameterRules[qedModel, {\"Me\" -> 1}]",
         "evaluate": true,
         "expected": "1"
       }
@@ -468,13 +469,13 @@
     "examples": [
       {
         "description": "Read a declared parameter name.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nModelParameterName[ModelParameter[qedModel, \"Me\"]]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nModelParameterName[ModelParameter[qedModel, \"Me\"]]",
         "evaluate": true,
         "expected": "\"Me\""
       },
       {
         "description": "List the names that resolved to numerical parameter values.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nModelParameterName /@ (First /@ ModelParameterRules[qedModel])",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nModelParameterName /@ (First /@ ModelParameterRules[qedModel])",
         "evaluate": true
       }
     ],
@@ -507,12 +508,12 @@
     "examples": [
       {
         "description": "Resolve the bundled QED numerical parameters.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nModelParameterRules[qedModel]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nModelParameterRules[qedModel]",
         "evaluate": true
       },
       {
         "description": "Replay a calculation at unit mass and charge locally.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\n{ModelParameter[qedModel, \"Me\"], ModelParameter[qedModel, \"EE\"]} /. ModelParameterRules[qedModel, {\"Me\" -> 1, \"EE\" -> 1}]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\n{ModelParameter[qedModel, \"Me\"], ModelParameter[qedModel, \"EE\"]} /. ModelParameterRules[qedModel, {\"Me\" -> 1, \"EE\" -> 1}]",
         "evaluate": true,
         "expected": "{1, 1}"
       }
@@ -579,12 +580,12 @@
     "examples": [
       {
         "description": "Retrieve the QED positive-helicity three-point amplitude.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nLookupAmplitude[{{\"e\", 1}, {\"E\", 2}, {\"A.+\", 3}}, qedModel, False, {i1, i2, i3, i4}]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nLookupAmplitude[{{\"e\", 1}, {\"E\", 2}, {\"A.+\", 3}}, qedModel, False, {i1, i2, i3, i4}]",
         "evaluate": true
       },
       {
         "description": "Missing model amplitudes give zero.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nLookupAmplitude[{{\"e\", 1}, {\"e\", 2}, {\"e\", 3}}, qedModel, False, {i1, i2, i3, i4}]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nLookupAmplitude[{{\"e\", 1}, {\"e\", 2}, {\"e\", 3}}, qedModel, False, {i1, i2, i3, i4}]",
         "evaluate": true,
         "expected": "0"
       }
@@ -614,13 +615,13 @@
     "examples": [
       {
         "description": "Generate the electron-exchange channels for four-point QED.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nLength[channels]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nLength[channels]",
         "evaluate": true,
         "expected": "2"
       },
       {
         "description": "Use higher-point model data for a five-point factorization.",
-        "input": "knownQEDModel = ReadModel[modelDirectory, 3];\nfivePointChannels = FactorizationAmplitudeChannels[{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"}, knownQEDModel];\nLength[fivePointChannels]",
+        "input": "knownQEDModel = ReadModel[modelDirectory, 4];\nfivePointChannels = FactorizationAmplitudeChannels[{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"}, knownQEDModel];\nLength[fivePointChannels]",
         "evaluate": true,
         "expected": "6"
       }
@@ -637,7 +638,7 @@
         "title": "Supplying enough lower-point information",
         "paragraphs": [
           "For four-point factorization, the lower amplitudes have three legs. At five points, a channel can involve a three-point and a complete four-point amplitude. At six points, complete four- and five-point amplitudes can be needed. The diagram model can still contain only the allowed vertices; the factorization model serves a different purpose.",
-          "The bundled QED model `2` supplies three-point vertices. Model `3` also stores known complete amplitudes for larger channels. Use [ReadModel](paclet:HEPCAT/ref/ReadModel) to load the model appropriate to the multiplicity you are checking.",
+          "The bundled QED model `3` supplies three-point vertices, sufficient for four-point factorization. Models `4` and `5` also store complete lower-point amplitudes in physical and spurious pole representations for larger channels. For the SM, model `1` supplies elementary interactions and model `2` supplies complete four-point amplitudes for five-point factorization. Use [ReadModel](paclet:HEPCAT/ref/ReadModel) to load the model appropriate to the process and multiplicity you are checking.",
           "An unlisted lower-point amplitude is treated as zero and does not produce a nonzero channel row. The user is responsible for supplying all known nonzero lower-point amplitudes. A CalcHEP [FeynmanModel](paclet:HEPCAT/ref/FeynmanModel) contains bare vertices, so it is not accepted as the factorization model."
         ]
       },
@@ -676,13 +677,13 @@
     "examples": [
       {
         "description": "Generate the two four-point QED orderings.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\nLength[diagrams]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\nLength[diagrams]",
         "evaluate": true,
         "expected": "2"
       },
       {
         "description": "Generate all six photon orderings at five points.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nLength[CreateDiagrams[{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"}, qedModel]]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nLength[CreateDiagrams[{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"}, qedModel]]",
         "evaluate": true,
         "expected": "6"
       }
@@ -717,7 +718,7 @@
     "examples": [
       {
         "description": "Draw the first QED tree.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\nCreateArrowDiagram[First[diagrams]]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\nCreateArrowDiagram[First[diagrams]]",
         "evaluate": true
       },
       {
@@ -754,7 +755,7 @@
     "examples": [
       {
         "description": "Display both QED four-point diagrams.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\nCreateArrowDiagrams[diagrams]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\nCreateArrowDiagrams[diagrams]",
         "evaluate": true
       },
       {
@@ -788,7 +789,7 @@
     "examples": [
       {
         "description": "Inspect the first constructive diagram expression.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\ndiagramAmplitude[First[diagrams]]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\ndiagramAmplitude[First[diagrams]]",
         "evaluate": true
       },
       {
@@ -826,7 +827,7 @@
     "examples": [
       {
         "description": "Get the two separately declared four-point diagram expressions.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\namplitudes = DiagramAmplitudes[diagrams];\nLength[amplitudes]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\namplitudes = DiagramAmplitudes[diagrams];\nLength[amplitudes]",
         "evaluate": true,
         "expected": "2"
       },
@@ -870,7 +871,7 @@
     "examples": [
       {
         "description": "Inspect the original expression and declared physical denominator of one diagram.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\nrecords = DiagramAmplitudeRecords[diagrams];\nKeyTake[First[records], {\"OriginalExpression\", \"PhysicalDenominator\"}]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\nrecords = DiagramAmplitudeRecords[diagrams];\nKeyTake[First[records], {\"OriginalExpression\", \"PhysicalDenominator\"}]",
         "evaluate": true
       },
       {
@@ -945,12 +946,12 @@
     "examples": [
       {
         "description": "Evaluate one QED three-point vertex.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nConstructiveDiagram[{\"e\", \"E\", \"A.+\"}, qedModel]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nConstructiveDiagram[{\"e\", \"E\", \"A.+\"}, qedModel]",
         "evaluate": true
       },
       {
         "description": "Use the modern route for a complete four-point process.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\namplitudes = DiagramAmplitudes[diagrams];\namplitudes",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\namplitudes = DiagramAmplitudes[diagrams];\namplitudes",
         "evaluate": true
       }
     ],
@@ -986,7 +987,7 @@
       },
       {
         "description": "Generate the complete process with the general interface.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\nCreateArrowDiagrams[diagrams]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\nCreateArrowDiagrams[diagrams]",
         "evaluate": true
       }
     ],
@@ -1021,7 +1022,7 @@
       },
       {
         "description": "Generate the complete process with the general interface.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\nCreateArrowDiagrams[diagrams]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\nCreateArrowDiagrams[diagrams]",
         "evaluate": true
       }
     ],
@@ -1056,7 +1057,7 @@
       },
       {
         "description": "Generate the complete process with the general interface.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\nCreateArrowDiagrams[diagrams]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\nCreateArrowDiagrams[diagrams]",
         "evaluate": true
       }
     ],
@@ -1092,7 +1093,7 @@
       },
       {
         "description": "Prepare real channels using the current interface.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nPrepareAmplitudes[channels, qedModel, \"ReturnDetails\" -> True]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nPrepareAmplitudes[channels, qedModel, \"ReturnDetails\" -> True]",
         "evaluate": false
       }
     ],
@@ -1168,7 +1169,7 @@
     "examples": [
       {
         "description": "Extract a formal coefficient using a real diagram's cut record.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\nrecord = First[DiagramAmplitudeRecords[diagrams]];\nchannel = First[record[\"PhysicalPropagators\"]];\ndenominator = channel[\"Propagator\"];\nresidue = PhysicalPoleResidue[3/denominator + 7, channel];\n{residue[\"Status\"], residue[\"StructuralCoefficient\"]}",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\nrecord = First[DiagramAmplitudeRecords[diagrams]];\nchannel = First[record[\"PhysicalPropagators\"]];\ndenominator = channel[\"Propagator\"];\nresidue = PhysicalPoleResidue[3/denominator + 7, channel];\n{residue[\"Status\"], residue[\"StructuralCoefficient\"]}",
         "evaluate": true,
         "expected": "{\"FORMAL\", 3}"
       },
@@ -1214,7 +1215,7 @@
     "examples": [
       {
         "description": "Check a known QED four-point amplitude against channels from three-point vertices.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nknownQEDModel = ReadModel[modelDirectory, 3];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\namplitude = LookupAmplitude[Thread[{process, Range[4]}], knownQEDModel, False, {i1, i2, i3, i4}];\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nCheckAmplitudes[amplitude, channels, knownQEDModel, \"RandomSeed\" -> 314159]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nknownQEDModel = ReadModel[modelDirectory, 4];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\namplitude = LookupAmplitude[Thread[{process, Range[4]}], knownQEDModel, False, {i1, i2, i3, i4}];\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nCheckAmplitudes[amplitude, channels, knownQEDModel, \"RandomSeed\" -> 314159]",
         "evaluate": false
       },
       {
@@ -1294,7 +1295,7 @@
       },
       {
         "description": "Use the modern function name in a notebook.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nCheckAmplitudes[Total[Last /@ DiagramAmplitudes[CreateDiagrams[process, qedModel]]], channels, qedModel]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nCheckAmplitudes[Total[Last /@ DiagramAmplitudes[CreateDiagrams[process, qedModel]]], channels, qedModel]",
         "evaluate": false
       }
     ],
@@ -1338,7 +1339,7 @@
     "examples": [
       {
         "description": "Prepare the two QED diagrams with a physical-pole preference.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\namplitudes = DiagramAmplitudes[diagrams];\nPrepareAmplitudes[amplitudes, qedModel, \"PolePreference\" -> \"AllPhysical\"]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\namplitudes = DiagramAmplitudes[diagrams];\nPrepareAmplitudes[amplitudes, qedModel, \"PolePreference\" -> \"AllPhysical\"]",
         "evaluate": false
       },
       {
@@ -1412,7 +1413,7 @@
       },
       {
         "description": "Use the general name for channel preparation.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nPrepareAmplitudes[channels, qedModel]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nPrepareAmplitudes[channels, qedModel]",
         "evaluate": false
       }
     ],
@@ -1451,7 +1452,7 @@
     "examples": [
       {
         "description": "Prepare the two QED diagrams, solve their residue conditions together, and display the resulting amplitude. Keep the detailed result in factorized for the next stage.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\namplitudes = DiagramAmplitudes[diagrams];\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nprepared = PrepareAmplitudes[amplitudes, qedModel, \"ReturnDetails\" -> True];\nfactorized = CompleteFactorization[prepared, channels, qedModel, \"ReturnDetails\" -> True];\nfactorized[\"Amplitude\"]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\namplitudes = DiagramAmplitudes[diagrams];\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nprepared = PrepareAmplitudes[amplitudes, qedModel, \"ReturnDetails\" -> True];\nfactorized = CompleteFactorization[prepared, channels, qedModel, \"ReturnDetails\" -> True];\nfactorized[\"Amplitude\"]",
         "evaluate": false
       },
       {
@@ -1534,7 +1535,7 @@
     "examples": [
       {
         "description": "Retain the factorization family and pass it into the high-energy stage. The ordinary output keeps the external mass rules next to the completed expression.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\namplitudes = DiagramAmplitudes[diagrams];\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nprepared = PrepareAmplitudes[amplitudes, qedModel, \"ReturnDetails\" -> True];\nfactorized = CompleteFactorization[prepared, channels, qedModel, \"ReturnDetails\" -> True];\nCompleteHighEnergy[factorized, channels, qedModel]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nprocess = {\"e\", \"E\", \"A.+\", \"A.+\"};\ndiagrams = CreateDiagrams[process, qedModel];\namplitudes = DiagramAmplitudes[diagrams];\nchannels = FactorizationAmplitudeChannels[process, qedModel];\nprepared = PrepareAmplitudes[amplitudes, qedModel, \"ReturnDetails\" -> True];\nfactorized = CompleteFactorization[prepared, channels, qedModel, \"ReturnDetails\" -> True];\nCompleteHighEnergy[factorized, channels, qedModel]",
         "evaluate": false
       },
       {
@@ -1607,22 +1608,22 @@
     "examples": [
       {
         "description": "Construct the four-point QED positive-helicity amplitude with normal automatic defaults.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nConstructAmplitude[{\"e\", \"E\", \"A.+\", \"A.+\"}, qedModel, qedModel]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nConstructAmplitude[{\"e\", \"E\", \"A.+\", \"A.+\"}, qedModel, qedModel]",
         "evaluate": false
       },
       {
         "description": "Retain the complete run report while using the default physical-pole preference.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nknownQEDModel = ReadModel[modelDirectory, 3];\nConstructAmplitude[{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"}, qedModel, knownQEDModel, \"Output\" -> \"Details\", \"RandomSeed\" -> 314159]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nknownQEDModel = ReadModel[modelDirectory, 4];\nConstructAmplitude[{\"e\", \"E\", \"A.+\", \"A.+\", \"A.+\"}, qedModel, knownQEDModel, \"Output\" -> \"Details\", \"RandomSeed\" -> 314159]",
         "evaluate": false
       },
       {
         "description": "Include an independent Feynman model and inspect whether a fixed representative was selected. Set feynmanModelDirectory to the directory containing your matching Feynman model.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nfeynmanModel = ReadModel[feynmanModelDirectory, 2];\nreport = ConstructAmplitude[{\"e\", \"E\", \"A.+\", \"A.+\"}, qedModel, qedModel, \"FeynmanModel\" -> feynmanModel, \"Output\" -> \"Details\"];\nreport[\"RepresentativeSelection\"]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nfeynmanModel = ReadModel[feynmanModelDirectory, 2];\nreport = ConstructAmplitude[{\"e\", \"E\", \"A.+\", \"A.+\"}, qedModel, qedModel, \"FeynmanModel\" -> feynmanModel, \"Output\" -> \"Details\"];\nreport[\"RepresentativeSelection\"]",
         "evaluate": false
       },
       {
         "description": "Request an admissible spurious-pole representation explicitly. The checker still requires cancellation of all discovered spurious poles.",
-        "input": "qedModel = ReadModel[modelDirectory, 2];\nknownQEDModel = ReadModel[modelDirectory, 3];\nConstructAmplitude[{\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\"}, qedModel, knownQEDModel, \"PolePreference\" -> \"AllSpurious\"]",
+        "input": "qedModel = ReadModel[modelDirectory, 3];\nknownQEDModel = ReadModel[modelDirectory, 4];\nConstructAmplitude[{\"e\", \"E\", \"A.+\", \"A.+\", \"A.-\"}, qedModel, knownQEDModel, \"PolePreference\" -> \"AllSpurious\"]",
         "evaluate": false
       },
       {

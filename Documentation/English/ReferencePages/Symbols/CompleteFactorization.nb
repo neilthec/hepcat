@@ -397,7 +397,7 @@ Evaluate loading in its own cell before the calculation.", "ExampleText"],
 their residue conditions together, and display the resulting amplitude. Keep \
 the detailed result in factorized for the next stage."}], "ExampleText"],
   Cell[BoxData[RowBox[{"qedModel", " ", "=", " ", "ReadModel", "[",
-      "modelDirectory", ",", " ", "2", "]", ";", "\n", "process", " ", "=",
+      "modelDirectory", ",", " ", "3", "]", ";", "\n", "process", " ", "=",
       " ", "{", "\"e\"", ",", " ", "\"E\"", ",", " ", "\"A.+\"", ",", " ",
       "\"A.+\"", "}", ";", "\n", "diagrams", " ", "=", " ", "CreateDiagrams",
       "[", "process", ",", " ", "qedModel", "]", ";", "\n", "amplitudes",

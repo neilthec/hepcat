@@ -49,7 +49,7 @@ drCheck["direct Get infers its source directory with no global setup",
 drCheck["the CamelCase numerator function changes only existing numerators",
   ApplyToNumerator[drNumerator/drDenominator + (drNumerator + 1)/drOtherDenominator,
     drNumerator -> 2] === 2/drDenominator + 3/drOtherDenominator];
-drQED = ReadModel[FileNameJoin[{drRoot, "models"}], 2];
+drQED = ReadModel[FileNameJoin[{drRoot, "models"}], 3];
 drDiagramPairs = DiagramAmplitudes[CreateDiagrams[{"e", "E", "A.+", "A.-"}, drQED]];
 drCheck["the CamelCase diagram function computes a real small QED amplitude",
   ListQ[drDiagramPairs] && Length[drDiagramPairs] === 2 &&

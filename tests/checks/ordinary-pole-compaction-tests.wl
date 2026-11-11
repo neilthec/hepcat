@@ -467,7 +467,7 @@ check["zero budget and huge prospective numerator expansions retain the original
    The model-specific functions below are example fixtures only. The function
    under test remains the process-independent ordinary compactor. *)
 Get[FileNameJoin[{root, "tests", "checks", "fixtures", "QED-5-point-residues.wl"}]];
-opQEDModel = ReadModel[FileNameJoin[{root, "models"}], 3];
+opQEDModel = ReadModel[FileNameJoin[{root, "models"}], 4];
 opModelHash = Hash[opQEDModel, "SHA256"];
 opPrevious = QEDSixPointPPPMPreviousExample[opQEDModel];
 opCompactTarget = QEDSixPointPPPMCompactExample[opQEDModel];

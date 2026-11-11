@@ -46,7 +46,7 @@ meOriginal = "Export fixture\r\n Amplitudes\r\nP1 | P2 | P3 | P4 | Factor | Ampl
   "e | E | A.- |   | -Sqrt[2]*EE | xt12*[12]\r\n" <>
   "================================================================\r\n";
 meFile = FileNameJoin[{meDirectory, "amps91.mdl"}];
-CopyFile[FileNameJoin[{meRoot, "models", "amps3.mdl"}], meFile];
+CopyFile[FileNameJoin[{meRoot, "models", "amps4.mdl"}], meFile];
 meStream = OpenWrite[meFile, CharacterEncoding -> "UTF-8"];
 WriteString[meStream, meOriginal];
 Close[meStream];
@@ -178,6 +178,108 @@ meTrailingBytes = BinaryReadList[meFile, "Byte"];
 meCheck["trailing data is rejected instead of silently moving it into the model",
   FailureQ[AppendModelAmplitudes[meDirectory, 91, {}]] &&
     BinaryReadList[meFile, "Byte"] === meTrailingBytes];
+
+(* Complete lower-point amplitudes retain their explicit color once.  These
+   algebra fixtures exercise serialization and sewing, not physical residues. *)
+meWrite["prtcls93.mdl", StringRiffle[{
+  "Colored export fixture", "Full Name | P | aP | number | spin2 | mass | width | color | aux | Latex | LatexAnti",
+  "up | u | U | 2 | 1 | Me | 0 | 3 |   | u | U",
+  "charm | c | C | 4 | 1 | Me | 0 | 3 |   | c | C",
+  "gluon | G.+ | G.- | 21 | 2 | 0 | 0 | 8 |   | G | G",
+  "photon | A.+ | A.- | 22 | 2 | 0 | 0 | 1 |   | A | A", "======"}, "\n"] <> "\n"];
+meWrite["vars93.mdl", "Colored export fixture\nName | Value | Comment\nMe | 3/2 | mass\nEE | 1/3 | coupling\n======\n"];
+meWrite["func93.mdl", "Colored export fixture\nName | Expression\n======\n"];
+meWrite["amps93.mdl", "Colored export fixture\nAmplitudes\nP1 | P2 | P3 | P4 | Factor | Amplitude/Factor\n" <>
+  "u | U | G.+ |   | EE | 1\nu | U | A.+ |   | EE | 1\n======\n"];
+meColorModel = ReadModel[meDirectory, 93];
+meColorMass = ModelParameter[meColorModel, "Me"];
+meColorCharge = ModelParameter[meColorModel, "EE"];
+meCI[n_] := ColorIndex[n];
+meInternalColor[label_, dimension_] := ConstructiveDiagrams`Private`colorInternalIndex[label, dimension];
+meColorDummies[expression_] := DeleteDuplicates[Cases[expression,
+  value_ConstructiveDiagrams`Private`colorInternalIndex :> value, Infinity]];
+meFourColor = ColorGenerator[meCI[2], meCI[1], meInternalColor[{5, 6}, 8]] *
+  ColorGenerator[meCI[4], meCI[3], meInternalColor[{5, 6}, 8]];
+meColoredFour = meColorCharge^2 meFourColor meAngle[1, 2] meSquare[3, 4, "Spin", "Spin"] /
+  PropDen[Mom[Multiparticle[1, 2]], meColorMass];
+meColorEntries = {
+  {{"u", "U", "c", "C"}, meColoredFour},
+  {{"u", "U", "G.+", "A.+"}, meColorCharge ColorGenerator[meCI[2], meCI[1], meCI[3]]},
+  {ConstantArray["G.+", 4], 0}};
+meColorAppend = AppendModelAmplitudes[meDirectory, 93, meColorEntries];
+meCheck["complete colored and exact-zero amplitudes append through the public writer",
+  AssociationQ[meColorAppend] && meColorAppend["Added"] === 3];
+meColorReload = ReadModel[meDirectory, 93];
+meCheck["colored model rows round trip with their complete tensor and kinematic expression",
+  ListQ[meColorReload] &&
+    (Times @@ Take[#, -2] & /@ Take[meColorReload[[2]], -3]) === Last /@ meColorEntries];
+meCheck["complete colored entries remain idempotent without rewriting contractions",
+  AppendModelAmplitudes[meDirectory, 93, meColorEntries]["Skipped"] === 3];
+meColorAllHeads = ColorTrace[meCI[1], meCI[2]] +
+  ColorDelta[meCI[1], meCI[2]] ColorStructure[meCI[3], meCI[4], meInternalColor[{"saved", {5, 6}}, 8]] +
+  ColorGenerator[meCI[2], meCI[1], meInternalColor[7, 8]];
+meColorText = PlainText[meColorAllHeads, "Model"];
+meCheck["model text preserves every public color head and dimensioned nested dummy label",
+  StringQ[meColorText] && ConstructiveDiagrams`Private`parseModelExpression[
+    meColorText, ConstructiveDiagrams`Private`modelParameterScope[meDirectory, 93]] === meColorAllHeads];
+meCheck["model text rejects an invalid private color dimension",
+  FailureQ[ConstructiveDiagrams`Private`parseModelExpression["ColorInternalIndex[List[1,2],6]", "fixture"]]];
+meColorLookup = LookupAmplitude[Thread[{{"u", "U", "c", "C"}, {7, 2, 5, 6}}],
+  meColorReload, False, {meI, meJ, meK, meL}];
+meColorLookupAgain = LookupAmplitude[Thread[{{"u", "U", "c", "C"}, {7, 2, 5, 6}}],
+  meColorReload, False, {meI, meJ, meK, meL}];
+meCheck["complete model lookup relabels external color and momentum slots only",
+  Sort[DeleteDuplicates[Cases[meColorLookup, value_ColorIndex :> First[value], Infinity]]] === {2, 5, 6, 7} &&
+    !FreeQ[meColorLookup, Mom[Multiparticle[7, 2]]] &&
+    !FreeQ[meColorLookup, meAngle[7, 2]] &&
+    !FreeQ[meColorLookup, meSquare[5, 6, "Spin", "Spin"]]];
+meCheck["independent saved contractions receive noncolliding namespaces on each lookup",
+  Length[meColorDummies[meColorLookup]] === 1 &&
+    Intersection[meColorDummies[meColorLookup], meColorDummies[meColorLookupAgain]] === {}];
+meCheck["freshening preserves both endpoints and their adjoint representation",
+  With[{dummy = First[meColorDummies[meColorLookup]]},
+    Last[dummy] === 8 && Count[meColorLookup, dummy, Infinity] === 2]];
+meSewnLeft = Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled = True,
+    ConstructiveDiagrams`Private`$colorExternalLegs = Range[5]},
+  LookupAmplitude[{{"u", 1}, {"G.+", 3}, {"A.+", 4}, {"U", Multiparticle[2, 5]}},
+    meColorReload, False, {meI, meJ, meK, meL}]];
+meSewnRight = Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled = True,
+    ConstructiveDiagrams`Private`$colorExternalLegs = Range[5]},
+  LookupAmplitude[{{"U", 2}, {"A.+", 5}, {"u", Multiparticle[1, 3, 4]}},
+    meColorReload, True, {meI, meJ, meK, meL}]];
+meCheck["explicit complete tensors do not acquire another inferred vertex tensor",
+  Count[meSewnLeft, _ColorGenerator, Infinity] === 1 &&
+    meSewnLeft === meColorCharge ColorGenerator[meInternalColor[{2, 5}, 3], meCI[1], meCI[3]]];
+meCheck["complementary lower amplitudes share one canonical cut color port",
+  Intersection[meColorDummies[meSewnLeft], meColorDummies[meSewnRight]] ===
+    {meInternalColor[{2, 5}, 3]}];
+meCheck["sewing the complete amplitude contracts the shared color exactly once",
+  ReduceColor[meSewnLeft meSewnRight] ===
+    meColorCharge^2 ColorGenerator[meCI[2], meCI[1], meCI[3]]];
+meCubicColor = Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled = True,
+    ConstructiveDiagrams`Private`$colorExternalLegs = Range[3]},
+  LookupAmplitude[{{"u", 1}, {"U", 2}, {"G.+", 3}}, meColorReload,
+    False, {meI, meJ, meK, meL}]];
+meCheck["elementary cubic rows retain implicit color inference",
+  meCubicColor === meColorCharge ColorGenerator[meCI[2], meCI[1], meCI[3]]];
+meCheck["a saved exact-zero colored amplitude remains zero without tensor inference",
+  Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled = True,
+      ConstructiveDiagrams`Private`$colorExternalLegs = Range[4]},
+    LookupAmplitude[Thread[{ConstantArray["G.+", 4], Range[4]}], meColorReload,
+      False, {meI, meJ, meK, meL}]] === 0];
+meBadColorModel = meColorReload;
+meBadColorModel[[2, -2, -1]] = ColorGenerator[meCI[2], meCI[1], meCI[4]];
+meCheck["a saved tensor cannot attach external color to a colorless leg",
+  FailureQ[LookupAmplitude[Thread[{{"u", "U", "G.+", "A.+"}, Range[4]}],
+    meBadColorModel, False, {meI, meJ, meK, meL}]]];
+meBadColorModel[[2, -2, -1]] = ColorGenerator[meCI[2], meCI[1], meCI[99]];
+meCheck["a saved tensor rejects an external color slot outside the process",
+  FailureQ[LookupAmplitude[Thread[{{"u", "U", "G.+", "A.+"}, Range[4]}],
+    meBadColorModel, False, {meI, meJ, meK, meL}]]];
+meColorChannels = FactorizationAmplitudeChannels[{"u", "U", "G.+", "A.+", "A.+"}, meColorReload];
+meCheck["the public five-point factorization path accepts complete colored lower amplitudes",
+  ListQ[meColorChannels] && Length[meColorChannels] > 0 && FreeQ[meColorChannels, _Failure] &&
+    !FreeQ[meColorChannels, _ColorGenerator]];
 
 DeleteDirectory[meDirectory, DeleteContents -> True];
 Print["Model export checks: ", meChecks, "; failures: ", Length[meFailures]];
