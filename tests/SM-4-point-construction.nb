@@ -180,7 +180,7 @@ keeps model parameters consistent and disables widths in its private benchmark c
 
 Cell["\<\
 spinasDirectory = FileNameJoin[{ParentDirectory[hepcatDirectory], \"spinas\"}];
-spinasOutputDirectory = FileNameJoin[{hepcatDirectory, \"tests\", \
+spinasOutputDirectory = FileNameJoin[{hepcatDirectory, \"tests\", \"results\", \
 \"spinas-output\", \"SM-4-point\"}];
 calcHEPDirectory = FileNameJoin[{ParentDirectory[hepcatDirectory], \
 \"CalcHEP\", \"calchep_3.9.2\"}];

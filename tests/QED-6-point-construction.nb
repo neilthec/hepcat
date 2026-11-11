@@ -408,7 +408,7 @@ export.\
 \>", "Text",ExpressionUUID->"434e8d10-f994-50ec-b513-28ad794a07e5"],
 
 Cell["\<\
-spinasOutputDirectory = FileNameJoin[{hepcatDirectory,\"tests\", \
+spinasOutputDirectory = FileNameJoin[{hepcatDirectory,\"tests\", \"results\", \
 \"spinas-output\"}];\
 \>", "Input",
  CellChangeTimes->{{4.0023639741745567`*^9, 4.002363979610005*^9}},
