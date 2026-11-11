@@ -31,8 +31,9 @@ outputs record earlier calculations; rerunning generates new results and
 actual random seeds. Numerical projects and their build files go in
 `tests/results/`, which is ignored by Git.
 
-The Wolfram workflows were tested with version 15.0. Numerical export also
-needs SPINAS, CMake and compatible compilers. Independent reference tests need
+The [tested environment](tests/ENVIRONMENT.md) records exact software versions,
+the SPINAS revision, scalar precision and validation scope. Numerical export
+also needs SPINAS, CMake and compatible compilers. Independent reference tests need
 the selected CalcHEP and MadGraph installations. The model and testing guides
 explain the particular input conventions and optional dependencies.
 

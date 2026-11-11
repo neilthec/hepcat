@@ -15385,6 +15385,15 @@ preparationReferenceTrial[expr_, rules_List, dotRules_List, auxiliary_List : {},
     (* Complete cheap factor routes first. Their valid endpoints remain usable
        if a later optional whole-product reduction exceeds its trial budget. *)
     consider[preparationFactorizedReferenceTrial[expr, rules, dotRules, auxiliary, False]];
+    If[best === None || First[bestRank] > 1,
+      (* Checkpoint direct contractions and the helicity-endpoint identity
+         packet before optional whole-product exploration consumes a trial.
+         These are ordinary competing reductions, independent of the model. *)
+      structural[expr, False, False];
+      If[TrueQ[conserve],
+        helicityConserved = preparationConservedMomentumChains[expr, rules, True, dotRules,
+          "HelicityEndpoints"];
+        structural[helicityConserved, False]]];
     If[TrueQ[conserve],
       (* A locally better chain normal form can be worse in its whole product.
          Preserve the earlier conserved route as a completed competitor. *)

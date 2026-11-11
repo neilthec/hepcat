@@ -3470,6 +3470,7 @@ ConstructiveDiagrams`PermuteParticles[amp_, particles_List] := Module[{labels, i
     Spinor[kind:("Spin"|"Helicity"|"Zeta"), variance_, type:("Angle"|"Square"), label_, rest___] :>
       Spinor[kind, variance, type, index[label], rest],
     Mom[label_] :> Mom[index[label]], Mass[label_] :> Mass[index[label]],
+    ConstructiveDiagrams`ColorIndex[label_] :> ConstructiveDiagrams`ColorIndex[index[label]],
     MomProd[a_, b_] :> MomProd[index[a], index[b]],
     Mandelstahm[parts___] :> Mandelstahm @@ (index /@ {parts}),
     xFactor[parts___] :> xFactor @@ (index /@ {parts}),
@@ -4911,6 +4912,7 @@ relabelLegs[expr_, ids_Association] := Module[{idx},
     Spinor[k_, t: ("Angle" | "Square"), i_, rest___] :> Spinor[k, t, idx[i], rest],
     Spinor[k_, ud_, t: ("Angle" | "Square"), i_, rest___] :> Spinor[k, ud, t, idx[i], rest],
     Mom[i_] :> Mom[idx[i]], Mass[i_] :> Mass[idx[i]],
+    ConstructiveDiagrams`ColorIndex[i_] :> ConstructiveDiagrams`ColorIndex[idx[i]],
     MomProd[i_, j_] :> MomProd[idx[i], idx[j]],
     Mandelstahm[i_, j_] :> Mandelstahm[idx[i], idx[j]]
   }

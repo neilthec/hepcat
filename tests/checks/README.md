@@ -40,6 +40,9 @@ integration tests additionally need SPINAS, CMake, C/C++ and Fortran compilers,
 CalcHEP or MadGraph as described below. Exact native Laurent proof tests need
 the backend's documented C++17 and multiprecision-header dependencies.
 
+The [tested environment](../ENVIRONMENT.md) records exact compiler and library
+versions, scalar precision, model settings and completed validation scopes.
+
 These suites test the package implementation. For the paper's measured
 timings, plots, precision statistics and saved physics validations, see
 [the reproduction workflow](../benchmarks/README.md). It distinguishes replay
@@ -1390,7 +1393,7 @@ six-fermion amplitude. Higher-point rows never become new diagram vertices.
 
 ### General all-positive formula and independent eight-point test
 
-The equations and proof scope are in `tests/development/SIMPLIFICATION.md`. The ordered
+Historical derivation notes remain on the `factorization` development branch. The current formulas and validation scope are recorded in the QED notebook and the reproduction guide. The ordered
 scalar-current and determinant-collected subset recurrences are related by
 ordinary identities. The terminal-pair formula for the complete fermion
 amplitude remains an all-multiplicity proposal tested through six photons.
@@ -1436,13 +1439,13 @@ derivations. It does not run 132 constructions or count cached tables as new
 physics tests.
 
 The independent SM benchmark is a validation gate, not a correction source.
-A fresh `u,U,C,c` construction passes all 12 checks, including its two color
-coefficients' Feynman comparisons. A fresh `U,d,Z,W+` construction currently
-passes its physical-cut, high-energy and reference checks but fails the
-full off-cut Feynman comparison. Its pre-high-energy result disagrees too;
-this is an exposed construction discrepancy, not a passing validation or a
-reason to change the benchmark's sign. Resolve it before claiming all SM
-four-point constructions have independent Feynman agreement.
+The SM notebook covers neutral and charged-current sectors, including
+`u,U,C,c` and `U,d,Z,W+`, against complete off-cut Feynman amplitudes and the
+independent numerical programs. A failed comparison prevents a validated
+`ConstructAmplitude` result. Historical development discrepancies do not
+justify changing a benchmark sign or counting an old table as a new pass.
+Use the completed notebook campaign report for the tested model and source
+revision; component and structural tests alone do not certify all SM families.
 
 `color-reduction-tests.wl` checks the unified SU(3) trace algebra against
 independently written Gell-Mann matrices: normalization, Hermitian conjugation,

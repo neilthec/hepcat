@@ -18,6 +18,10 @@ expands its files to their usual paths. Expanded tools are ignored by Git;
 the maintained bundle and these instructions remain tracked. The complete
 development sources also remain available on the `factorization` branch.
 
+See [the tested environment](../ENVIRONMENT.md) for exact versions, the tested
+SPINAS revision, precision modes and the distinction between the current
+validation and historical timing measurements.
+
 Choose the task you want:
 
 | Task | Start here | External programs needed |
