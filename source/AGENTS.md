@@ -1,9 +1,20 @@
-# Working With HEPCAT
+# Using HEPCAT for Amplitude Derivations
 
-Use HEPCAT to simplify expressions, derive and combine diagram amplitudes,
-find compact forms that satisfy physical checks, and compare expressions when
-the task calls for equality. Work through the algebra with the package and
-retain reproducible intermediate steps and their assumptions.
+This guide is for a user who asks an AI to use HEPCAT to support a physics
+calculation. Help derive new amplitudes, simplify expressions, combine
+diagrams, discover useful representations and check proposed results. The AI
+should develop and explain the mathematical reasoning, then use the package
+in a Wolfram kernel to apply identities and test its ideas.
+
+The automatic constructor is one useful tool. A derivation may also require
+choosing reference spinors, exploring identities, comparing alternative forms
+or working through a difficult step explicitly. Keep the user's objective in
+view and retain reproducible intermediate steps and their assumptions.
+
+Read the relevant source and examples as the calculation requires. This guide
+does not replace the implementation or guarantee that every requested
+simplification is known. A user can begin by asking their AI to read
+`source/AGENTS.md` and describing the calculation they want to investigate.
 
 Read this guide before a derivation or code change. Do not use em dashes.
 Show ordinary Mathematica expressions. Avoid adding `// nice` or `nice[...]`
@@ -42,18 +53,23 @@ the author's conventions when available.
 
 ## Load and use the package
 
+Locate the actual checkout from the workspace or Git root. Do not assume a
+particular account, installation directory, or checkout name. All paths below
+are relative to that root. From a Wolfram working directory set to the root:
+
+```wolfram
+Get[FileNameJoin[{"source", "HEPCAT.wl"}]]
+```
+
 Use a licensed Wolfram kernel and load the package before parsing expressions
 that use its symbols. A separate setup cell prevents accidental `Global`
 symbols from being created before the package context exists.
 
-```wolfram
-Get["~/code/hepcat/source/HEPCAT.wl"]
-```
-
-Adjust the checkout path for the local machine. For scripts, the usual macOS
-kernel is `/Applications/Wolfram.app/Contents/MacOS/WolframKernel` with
-`-script script.wl`. Use an independent kernel for tests and derivations.
-Preserve the user's interactive kernel and active calculations.
+Locate the licensed Wolfram kernel using the local configuration or installed
+executables. Its path depends on the operating system and installation. For
+scripts, invoke that kernel with `-script script.wl`. Use an independent kernel
+for tests and derivations. Preserve the user's interactive kernel and active
+calculations.
 
 The normal construction entry point is
 
@@ -72,6 +88,45 @@ Keep examples simple and rely on automatic effort defaults. Specify a model,
 pole preference, or numerical-reference installation when the task needs it.
 `ConstructAmplitude` defaults to `"PolePreference" -> "AllPhysical"`.
 Preserve an explicit supported preference throughout the calculation.
+
+## Work through a derivation
+
+1. Establish the requested task: simplify an expression, derive an amplitude,
+   compare two forms, or reconstruct a form satisfying physical constraints.
+   Record the starting expression, external particles, mass rules and allowed
+   assumptions. A simplification task need not have a known target expression.
+2. Read the relevant functions' `::usage`, `Options` and implementations in
+   `HEPCAT-Base.wl` or `HEPCAT-Model.wl`, and the applicable focused tests.
+   Start with the required identities and tools rather than reading every
+   implementation file. The tutorial
+   `Documentation/English/Tutorials/ApplyingSpinorIdentities.nb` gives a small
+   runnable example of the explicit identity workflow.
+3. Use `SpinorIdentityCandidates[{massRules, expression}, opts]` to inspect
+   legal edits and `ApplySpinorIdentity` to apply a selected edit with the same
+   string-named options. The latter returns an expression, so rebuild
+   `{massRules, expression}` for the next step. Regenerate candidates after
+   each change; reject `$Failed` and stale edits.
+4. Keep a reproducible record of each substantive before/after expression,
+   identity and assumption. For a manually proposed rewrite, test the
+   difference between its before/after expressions using the applicable
+   symbolic identities.
+   Sampled kinematic comparisons help detect errors but are not analytic proofs.
+   Preserve an unresolved step as unresolved.
+5. Track `SpinorExpressionComplexity` when searching for a simpler form, while
+   retaining the best verified expression and respecting the requested pole
+   preference. Mark completion corrections as reconstruction steps and record
+   the physical constraints that determine them.
+6. For a complete amplitude, use `CheckAmplitudes` with the process's actual
+   factorization channels and model. Inspect failed or unresolved rows and run
+   the requested independent Feynman, CalcHEP or MadGraph comparisons. Report
+   both what was established symbolically and what was tested numerically.
+
+If an automatic routine stalls or returns a complicated form, investigate the
+remaining algebra directly. Propose another identity, reference choice or
+organization of terms and check it with the tools. A known expression may be
+used as a comparison, with its source stated. When no target is known, retain
+the best verified form and explain the evidence and remaining uncertainties.
+The package is a means of checking the reasoning, not a substitute for it.
 
 ## Apply identities with their assumptions
 
@@ -103,9 +158,12 @@ again using ordinary identities, without diagram-local internal shells.
 After combining diagrams, use external on-shell identities and momentum
 conservation to compare complete amplitudes. An internal-shell equivalence
 of individual diagrams does not establish equality of the complete forms.
+For explicit identity edits on a combined or final amplitude, pass
+`"OnShellChannels" -> {}` to disable internal-shell assumptions. Enable
+momentum conservation only with the complete declared external particle set.
 Preserve regular remainders when rearranging numerators and denominators.
 
-## Keep the algorithm general
+## Respect the model and theory
 
 Select identities and computational effort from the expression, declared
 masses and spins, channel structure, and available resources. Keep known
@@ -123,23 +181,19 @@ The Laurent helpers verify whether a supplied expression is identically
 zero after a certified symbolic external-kinematic parametrization. They
 use exact polynomial arithmetic, factor witnesses, and all coherent spin
 coefficients. They contain no table of QED or SM amplitude answers.
-Their native C++ backend optionally uses Boost for arbitrary-size integers
-and rational arithmetic. SPINAS itself remains Boost-free.
+This optional proof path has supported-input and resource limits. Inspect its
+status and certificates before accepting an exact zero; a timeout or an
+unsupported expression is unresolved. The source headers explain the backend
+and its limitations when this route is relevant to the calculation.
 
-This optional proof path has supported-chart and resource limits, including
-a bound of 16 algebra variables. Denominator checks establish that clearing
-factors are not identically zero. They preserve the physical pole loci.
-Unsupported input, missing dependencies, nonzero remainders, or a deadline
-must retain the original correction direction with an honest status.
-Accept a zero identity only after every required certificate passes.
+## Check results and maintain reproducibility
 
-## Validate and maintain the package
-
-Use focused exact identity tests while developing. For shared preparation,
-completion, or checking changes, add the affected public call and a small
-cross-multiplicity set with opposite helicities. Run the broad component
-suite once the change settles. See `tests/checks/README.md` for the current
-suite selection and integration settings.
+For a derivation, run the focused symbolic and numerical checks that establish
+its steps and final result. The package regression suites are useful examples
+of how to test an identity. If the task also changes package code, add a
+regression for that change and follow `tests/checks/README.md` for focused and
+broader component testing. Shared preparation and completion changes need
+cross-multiplicity checks with opposite helicities.
 
 ```sh
 python3 tests/checks/run-wolfram-tests.py --timeout 900
