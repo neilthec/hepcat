@@ -9,3 +9,23 @@ spinas-output/
 __pycache__/
 *.py[cod]
 /.venv/
+.DS_Store
+
+# Optional tools and Help are distributed as bundles. Expanded copies are local.
+/Documentation/*
+!/Documentation/README.md
+!/Documentation/HEPCAT-Documentation.zip
+/tests/checks/*
+!/tests/checks/README.md
+!/tests/checks/checks.zip
+!/tests/checks/fixtures/
+/tests/checks/fixtures/*
+!/tests/checks/fixtures/QED-5-point-residues.wl
+/tests/benchmarks/*
+!/tests/benchmarks/README.md
+!/tests/benchmarks/benchmarks.zip
+!/tests/benchmarks/reproduction/
+/tests/benchmarks/reproduction/*
+!/tests/benchmarks/reproduction/README.md
+/tests/history/
+/tests/development/

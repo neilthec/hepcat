@@ -6,67 +6,103 @@ HEPCAT constructs, simplifies and checks scattering amplitudes in Wolfram
 Language. It also exports numerical SPINAS processes and compares them with
 independent CalcHEP and MadGraph calculations.
 
-## Load the package
+## Start here
 
-With the Wolfram working directory set to the HEPCAT checkout root, evaluate:
+With the Wolfram working directory set to this checkout root, evaluate:
 
 ```wolfram
 Get[FileNameJoin[{"source", "HEPCAT.wl"}]]
 ```
 
 Search Mathematica Help for **HEPCAT** for the package guide, public function
-reference pages and examples. `PacletInfo.wl` describes the Help package.
+reference pages and worked examples. The complete Help is included in
+`Documentation/HEPCAT-Documentation.zip`. Loading the package makes it available
+automatically from a writable user cache, including when the checkout itself
+is read-only. There is no separate Help installation step.
+
+Open either notebook in `tests/` and evaluate its Setup:
+
+- `QED-6-point-construction.nb` constructs and checks the QED examples.
+- `SM-4-point-construction.nb` constructs and checks the SM four-point examples.
+
+Each notebook finds this checkout from its own location. Set the external
+SPINAS, CalcHEP and MadGraph paths in Setup for your installations. The saved
+outputs record earlier calculations; rerunning generates new results and
+actual random seeds. Numerical projects and their build files go in
+`tests/results/`, which is ignored by Git.
+
+The Wolfram workflows were tested with version 15.0. Numerical export also
+needs SPINAS, CMake and compatible compilers. Independent reference tests need
+the selected CalcHEP and MadGraph installations. The model and testing guides
+explain the particular input conventions and optional dependencies.
 
 ## Directory guide
 
 | Directory | Contents |
 | --- | --- |
-| `source/` | Loader, spinor algebra and model/construction implementation. Additional modules, numerical adapters and exact-proof helpers are grouped under `internal/`. |
-| `models/` | Constructive SM model 1, elementary QED model 2, and QED factorization models 3 and 4 with physical and spurious pole representations. |
-| `Documentation/` | Native Mathematica Help, its reviewed source and build instructions. |
-| `tests/` | The final QED and SM construction notebooks. |
-| `tests/checks/` | Automated function and integration tests, with known expressions and model variants under `fixtures/`. |
-| `tests/benchmarks/` | Timing studies, general-formula tests and comparisons with published expressions. |
-| `tests/reference-models/` | Matched CalcHEP and MadGraph Feynman-rule models used for independent validation. |
-| `tests/results/` | Local generated numerical projects and build output. |
-| `tests/history/` | Earlier notebooks and manual calculations retained for development. |
-| `tests/development/` | Detailed development notes, migration records and preserved earlier inputs. |
+| `source/` | Package loader, spinor algebra and amplitude construction. Supporting implementations and numerical adapters are under `internal/`. |
+| `models/` | Four constructive models, described below. |
+| `Documentation/` | Full Mathematica Help bundle and its maintenance instructions. |
+| `tests/` | The two construction notebooks and the test runner. |
+| `tests/checks/` | Complete regression-test bundle, a guide and one notebook helper. |
+| `tests/benchmarks/` | Timing and publication-evidence bundle with reproduction guides. |
+| `tests/reference-models/` | Matched CalcHEP and MadGraph Feynman-rule models, with upstream attribution. |
 
-The local `papers/` directory holds development references. It is excluded by
-Git. Experimental models 5 and 6 are retained in
-`tests/checks/fixtures/models/` for development and regression tests.
+Model 1 is the constructive SM. Model 2 contains elementary QED interactions.
+Model 3 adds known QED amplitudes with physical poles; model 4 contains their
+reference-based pole forms. Models 3 and 4 provide complete lower-point input
+for higher-multiplicity factorization. Their known expressions remain in the
+model tables, separate from the general construction algorithms.
 
-## Run the automated checks
+This publication branch excludes old notebooks, migration records and research
+scratch files. They remain on the
+[development branch](https://github.com/neilthec/hepcat/tree/factorization).
+The optional bundles keep the initial checkout small; unpacking makes their
+complete source, tests and inputs inspectable. Expanded files are local and
+ignored by Git.
+
+## Run the checks
 
 From this directory:
 
 ```sh
-python3 tests/checks/run-wolfram-tests.py --timeout 900
-python3 -m unittest discover -s tests/checks -p 'test_*.py' -v
+python3 tests/run-checks.py
 ```
 
-The first command runs the standard suites in independent Wolfram kernels.
-The timeout applies separately to each suite. Use `--kernel /path/to/WolframKernel`
-when the executable is elsewhere. Additional full constructions and external
-program integrations are selected explicitly with `--suite`; see the
-[check guide](tests/checks/README.md). The Python tests exercise the support
-runners and adapters.
+This safely unpacks the included tools, runs the Python support tests and then
+runs the standard Wolfram suites in independent kernels. The Wolfram timeout
+is 900 seconds per suite. Use `--kernel /path/to/WolframKernel` for another
+installation, `--python-only` or `--wolfram-only` for a focused run, and `--list`
+to inspect the suites. Expensive full constructions and external integrations
+are selected explicitly with repeated `--suite` arguments. See the
+[check guide](tests/checks/README.md) for scope and dependencies.
 
-For numerical timing and formula comparisons, start with the
-[benchmark guide](tests/benchmarks/README.md). External integrations use the
-reader's SPINAS, CalcHEP and MadGraph installations and explicitly selected
-models. Each reference model's README records its inputs and conventions.
+To unpack the tools without starting any calculations:
 
-The benchmark guide also gives the notebook steps and terminal commands for
-reproducing the paper figures and rerunning the timing studies. The
-[evidence replay guide](tests/benchmarks/reproduction/README.md) explains how
-to recompute the precision statistics, check the saved validation reports and
-regenerate the amplitude catalog from the included inputs. Saved-data checks
-work without the external numerical programs. Fresh physics calculations use
-the two construction notebooks and the reader's selected installations.
+```sh
+python3 tests/run-checks.py --unpack-only
+```
+
+The original directory structure is restored for direct use of the individual
+runners. Existing identical files are retained; a changed local file is
+reported rather than overwritten.
+
+## Reproduce the paper results
+
+After unpacking, follow the
+[benchmark guide](tests/benchmarks/README.md) for fresh timing runs and plotting.
+The [evidence replay guide](tests/benchmarks/reproduction/README.md) explains
+how to regenerate the catalog and precision statistics from the included saved
+records. These saved-data checks need only Python's standard library. Plots
+use the optional Matplotlib dependency described in the guide.
+
+Saved-data verification, a new numerical run and a new symbolic construction
+are distinct operations. The guides state what each command establishes.
+Reference-model inputs, widths, crossing and normalization must match for
+independent comparisons.
 
 For AI-assisted derivations or code changes, have your AI read
-[AGENTS.md](AGENTS.md). Documentation build instructions are in
+[AGENTS.md](AGENTS.md). Documentation maintenance is described in
 [Documentation/README.md](Documentation/README.md).
 
 ## License

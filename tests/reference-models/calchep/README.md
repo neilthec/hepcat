@@ -1,7 +1,7 @@
 # CalcHEP Models
 
 The four `*1.mdl` files originate from stock model 1, named `SM`, from
-`/Users/neil/code/CalcHEP/calchep_3.9.0/models/`. They contain particles,
+the `models/` directory of CalcHEP 3.9.0. They contain particles,
 Lagrangian vertices, parameters and dependent functions. The local version
 restores electron, muon, up- and down-quark masses and their Higgs/Goldstone
 couplings, and uses fixed charm, bottom and strange masses matching the

@@ -67,7 +67,7 @@ Cell["Setup", "Title",ExpressionUUID->"4816341a-7984-4b8b-988a-1a38dedfcf65"],
 Cell[CellGroupData[{
 
 Cell["\<\
-hepcatDirectory = ExpandFileName[\"~/code/hepcat\"];
+hepcatDirectory = ParentDirectory[NotebookDirectory[]];
 $HEPCATpath = FileNameJoin[{hepcatDirectory, \"source\"}];
 Get[FileNameJoin[{$HEPCATpath, \"HEPCAT.wl\"}]];\
 \>", "Input",
@@ -408,7 +408,7 @@ export.\
 \>", "Text",ExpressionUUID->"434e8d10-f994-50ec-b513-28ad794a07e5"],
 
 Cell["\<\
-spinasOutputDirectory = FileNameJoin[{hepcatDirectory,\"tests\", \
+spinasOutputDirectory = FileNameJoin[{hepcatDirectory,\"tests\", \"results\", \
 \"spinas-output\"}];\
 \>", "Input",
  CellChangeTimes->{{4.0023639741745567`*^9, 4.002363979610005*^9}},

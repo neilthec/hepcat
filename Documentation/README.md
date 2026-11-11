@@ -13,10 +13,18 @@ With the Wolfram working directory set to the HEPCAT checkout root, load:
 Get[FileNameJoin[{"source", "HEPCAT.wl"}]]
 ```
 
-The loader finds its companion
-source files and registers the documentation from this checkout. It does not open
-windows, rebuild the index, install anything into the Mathematica application,
-or evaluate examples. A checkout containing only the source still loads.
+The publication checkout keeps the complete Help in
+`HEPCAT-Documentation.zip`, including the editable documentation source.
+Loading HEPCAT automatically checks and expands this bundle into a writable
+cache under `$UserBaseDirectory/ApplicationData/HEPCAT/Documentation/`, then
+registers those pages. Nothing needs to be unpacked manually to use Help.
+The checkout itself can be read-only. A changed bundle gets a different cache;
+an incomplete or damaged cache is rebuilt from the supplied bundle.
+
+The loader does not open windows, evaluate examples or write into the
+Mathematica application. Loading a source-only checkout without documentation
+remains supported. A development checkout with loose documentation uses that
+local tree directly.
 
 In Mathematica:
 
@@ -26,7 +34,7 @@ In Mathematica:
 - Follow the main guide into topic guides and worked tutorials.
 
 The main documentation URI is `paclet:HEPCAT/guide/HEPCAT`. A reference URI has
-the form `paclet:HEPCAT/ref/PrepareAmplitudes`. The notebooks can also be opened
+the form `paclet:HEPCAT/ref/PrepareAmplitudes`. Contributors who unpack the documentation can also open the notebooks
 directly from `English/Guides`, `English/ReferencePages/Symbols`, and
 `English/Tutorials`.
 
@@ -34,6 +42,18 @@ The manifest version in `PacletInfo.wl` identifies the documentation paclet. It
 does not create separate versions of amplitudes or trained models.
 
 ## Maintain the documentation
+
+The editable content and build tools are preserved in the bundle. To restore
+them at their ordinary checkout paths, run this from the checkout root:
+
+```sh
+python3 tests/run-checks.py --unpack-only
+```
+
+This also restores the bundled tests and benchmark tools. Expanded support
+files are ignored by Git in the publication branch. Keep documentation edits
+in the development branch and rebuild the publication bundle deliberately;
+ordinary package loading never rewrites the supplied bundle.
 
 The editable content lives in `Source`:
 

@@ -1,7 +1,47 @@
 # HEPCAT Regression Tests
 
+The complete regression sources are in `checks.zip`. They are optional for
+using HEPCAT and are restored on the first test run. The publication checkout
+keeps this directory small without dropping any of the development tests.
+
+From the repository root, run both the Python and standard Wolfram checks:
+
+```sh
+python3 tests/run-checks.py
+```
+
+The wrapper first verifies and unpacks the checks, benchmark support and Help
+source bundles. All files are checked against their recorded size and SHA256
+before extraction. A changed local file is preserved and reported; move it
+aside if you want to restore the bundled version. Restored sources are ignored
+by Git. The development branch retains all individual files directly.
+
+Select the part you need:
+
+```sh
+python3 tests/run-checks.py --python-only
+python3 tests/run-checks.py --wolfram-only --suite legacy-algebra-tests.wl
+python3 tests/run-checks.py --list
+python3 tests/run-checks.py --unpack-only
+```
+
+`--unpack-only` makes all sources inspectable without running tests. It also
+restores the original `tests/checks/run-wolfram-tests.py`, which can then be
+used directly. `--kernel /path/to/WolframKernel` selects your licensed kernel.
+`--timeout 900` is the default hard limit for each Wolfram suite, not the whole
+campaign. Repeat `--suite` to select several; full construction and external
+program integrations remain opt-in.
+
+Python 3.9 or later is needed for the runner. Ordinary Python checks use the
+standard library and an available C++ compiler for native-runtime controls;
+three live Wolfram-wrapper checks are explicitly skipped without a kernel.
+The complete Wolfram suite needs a licensed kernel. Selected export and
+integration tests additionally need SPINAS, CMake, C/C++ and Fortran compilers,
+CalcHEP or MadGraph as described below. Exact native Laurent proof tests need
+the backend's documented C++17 and multiprecision-header dependencies.
+
 These suites test the package implementation. For the paper's measured
-timings, plots, precision statistics and recorded physics validations, see
+timings, plots, precision statistics and saved physics validations, see
 [the reproduction workflow](../benchmarks/README.md). It distinguishes replay
 of saved data from a fresh construction or independent numerical comparison.
 
@@ -21,7 +61,7 @@ independent Feynman model. It is opt-in and supplies no known amplitude.
 For one case while developing, run:
 
 ```sh
-HEPCAT_SM_CHARGED_CURRENT_CASES=one python3 tests/checks/run-wolfram-tests.py \
+HEPCAT_SM_CHARGED_CURRENT_CASES=one python3 tests/run-checks.py --wolfram-only \
   --suite sm-charged-current-integration-tests.wl --timeout 600
 ```
 
@@ -39,7 +79,7 @@ and compact final scores. When the constructor selects a point in a retained
 affine family, the suite also checks all three validation parameter assignments.
 
 ```sh
-python3 tests/checks/run-wolfram-tests.py \
+python3 tests/run-checks.py --wolfram-only \
   --suite sm-vector-construction-integration-tests.wl --timeout 1800
 ```
 
@@ -51,7 +91,7 @@ four-leg tensor and high-energy component suites for quicker development checks.
 Run the complete Wolfram suite from the repository root:
 
 ```sh
-python3 tests/checks/run-wolfram-tests.py --timeout 900
+python3 tests/run-checks.py --wolfram-only --timeout 900
 ```
 
 Each suite runs in a fresh kernel. The timeout is a hard per-suite limit;
@@ -75,14 +115,14 @@ parallel replay, nested stage overrides and the recorded seed in final output.
 Run only the suite relevant to a change by selecting it explicitly:
 
 ```sh
-python3 tests/checks/run-wolfram-tests.py --suite legacy-algebra-tests.wl
+python3 tests/run-checks.py --wolfram-only --suite legacy-algebra-tests.wl
 ```
 
 Repeat `--suite` to select several. `--kernel /absolute/path/to/WolframKernel`
 selects a different licensed kernel. Run the Python runner's own tests with:
 
 ```sh
-python3 -m unittest discover -s tests/checks -p test_runner.py -v
+python3 tests/run-checks.py --python-only
 ```
 
 These include a live descendant-process timeout test. Three syntax-wrapper
@@ -217,7 +257,7 @@ No saved final amplitude or process-specific correction basis is supplied.
 Select one case while developing, for example:
 
 ```sh
-HEPCAT_FERMION_INTEGRATION_CASES=PM python3 tests/checks/run-wolfram-tests.py --suite fermion-construction-integration-tests.wl --timeout 3600
+HEPCAT_FERMION_INTEGRATION_CASES=PM python3 tests/run-checks.py --wolfram-only --suite fermion-construction-integration-tests.wl --timeout 3600
 ```
 
 Omit the environment selection to run all four cases sequentially, with a
@@ -315,7 +355,7 @@ proof-budget exhaustion and removal only after an exact zero certificate.
 The expensive fresh six-point parity construction suite is opt-in:
 
 ```sh
-HEPCAT_PHYSICAL_INTEGRATION_CASES=PPPM,PMMM python3 tests/checks/run-wolfram-tests.py --suite physical-construction-integration-tests.wl --timeout 3600
+HEPCAT_PHYSICAL_INTEGRATION_CASES=PPPM,PMMM python3 tests/run-checks.py --wolfram-only --suite physical-construction-integration-tests.wl --timeout 3600
 ```
 
 `PPPM` and `PMMM` are the notebook's `e,E,+++-` and `e,E,+---` calls,
@@ -403,7 +443,7 @@ independent Feynman model, but sets no fitting samples, correction caps, search
 steps or stage clocks:
 
 ```sh
-HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION=1 python3 tests/checks/run-wolfram-tests.py --suite automatic-resource-tests.wl --timeout 1800
+HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION=1 python3 tests/run-checks.py --wolfram-only --suite automatic-resource-tests.wl --timeout 1800
 ```
 
 
@@ -455,7 +495,7 @@ The slower end-to-end regressions reproduce both formerly failing five-point
 notebook cases, their working counterparts and independent Feynman checks:
 
 ```sh
-HEPCAT_TEST_FULL_HELICITY_CONSTRUCTION=1 python3 tests/checks/run-wolfram-tests.py --suite high-energy-family-tests.wl --timeout 900
+HEPCAT_TEST_FULL_HELICITY_CONSTRUCTION=1 python3 tests/run-checks.py --wolfram-only --suite high-energy-family-tests.wl --timeout 900
 ```
 
 The exact default notebook calls for four-fermion photon emission can also be
@@ -463,7 +503,7 @@ replayed with their original failing seeds. They retain the normal algorithm
 settings and add no cached amplitude or special correction basis:
 
 ```sh
-HEPCAT_TEST_NOTEBOOK_FOUR_FERMION=1 python3 tests/checks/run-wolfram-tests.py --suite high-energy-family-tests.wl --timeout 900
+HEPCAT_TEST_NOTEBOOK_FOUR_FERMION=1 python3 tests/run-checks.py --wolfram-only --suite high-energy-family-tests.wl --timeout 900
 ```
 
 This mode runs 87 assertions, including independent Feynman checks and exact
@@ -512,7 +552,7 @@ The four parallel suites require a licensed kernel that can launch and
 communicate with at least two local subkernels:
 
 ```sh
-python3 tests/checks/run-wolfram-tests.py --timeout 600 \
+python3 tests/run-checks.py --wolfram-only --timeout 600 \
   --suite parallel-execution-tests.wl \
   --suite parallel-preparation-tests.wl \
   --suite parallel-amplitude-check-tests.wl \
@@ -726,7 +766,7 @@ definitions are reported; a required missing dependency remains unavailable.
 Enable genuine VEGAS integrals as well as the ordinary callback checks with:
 
 ```sh
-HEPCAT_TEST_CALCHEP_NUMERICAL_INTEGRATION=1 python3 tests/checks/run-wolfram-tests.py --suite spinas-calchep-numerical-tests.wl --timeout 900
+HEPCAT_TEST_CALCHEP_NUMERICAL_INTEGRATION=1 python3 tests/run-checks.py --wolfram-only --suite spinas-calchep-numerical-tests.wl --timeout 900
 ```
 
 The full run has 29 assertions. It compares the integrated `eeAA` cross section
@@ -741,7 +781,7 @@ are finite Monte Carlo validation runs, not analytic equality certificates.
 The real external integration is opt-in:
 
 ```sh
-python3 tests/checks/run-wolfram-tests.py --suite spinas-calchep-integration-tests.wl --timeout 1800
+python3 tests/run-checks.py --wolfram-only --suite spinas-calchep-integration-tests.wl --timeout 1800
 ```
 
 It uses the local CalcHEP dynamic C interface and native SPINAS library to
@@ -763,7 +803,7 @@ test compares complex amplitudes and restricted spin sums at three phase-space
 points, including recombination into the full helicity sum:
 
 ```sh
-python3 tests/checks/run-wolfram-tests.py --suite spinas-polarization-tests.wl --timeout 300
+python3 tests/run-checks.py --wolfram-only --suite spinas-polarization-tests.wl --timeout 300
 ```
 
 The build-tool regression suite checks automatic and explicit CMake lookup,
@@ -772,13 +812,13 @@ macOS GUI-style PATH builds for both fixed helicities and complete families.
 It also exercises a custom executable path containing spaces:
 
 ```sh
-python3 tests/checks/run-wolfram-tests.py --suite spinas-build-tools-tests.wl --timeout 180
+python3 tests/run-checks.py --wolfram-only --suite spinas-build-tools-tests.wl --timeout 180
 ```
 
 The grouped-helicity integration suite is:
 
 ```sh
-python3 tests/checks/run-wolfram-tests.py --suite spinas-helicity-family-tests.wl --timeout 420
+python3 tests/run-checks.py --wolfram-only --suite spinas-helicity-family-tests.wl --timeout 420
 ```
 
 It compiles one project per particle family and independently enumerates every
@@ -796,7 +836,7 @@ compiled comparisons; source-only guards still run if those are unavailable.
 Run the complete C++ export integration suite with:
 
 ```sh
-python3 tests/checks/run-wolfram-tests.py --suite spinas-export-tests.wl --timeout 900
+python3 tests/run-checks.py --wolfram-only --suite spinas-export-tests.wl --timeout 900
 ```
 
 `spinas-export-tests.wl` uses the public `WriteSPINASProcess` API to write,
@@ -1010,7 +1050,7 @@ values, including the remaining affine family. Allow time for preparation in
 addition to the bounded 1200-second completion stage:
 
 ```sh
-HEPCAT_TEST_FULL_SIX_POINT=1 python3 tests/checks/run-wolfram-tests.py \
+HEPCAT_TEST_FULL_SIX_POINT=1 python3 tests/run-checks.py --wolfram-only \
   --suite six-point-completion-tests.wl --timeout 1800
 ```
 
@@ -1020,7 +1060,7 @@ are Bose averaged. Its automatic correction space is larger, so allow for
 preparation, the 7200-second completion budget and independent Feynman checks:
 
 ```sh
-HEPCAT_TEST_FULL_MIXED_SIX_POINT=1 python3 tests/checks/run-wolfram-tests.py \
+HEPCAT_TEST_FULL_MIXED_SIX_POINT=1 python3 tests/run-checks.py --wolfram-only \
   --suite six-point-completion-tests.wl --timeout 9000
 ```
 
@@ -1043,7 +1083,7 @@ and pass the physical and spurious pole, high-energy, reference and
 independent Feynman checks. The suite supplies no final expressions.
 
 ```sh
-python3 tests/checks/run-wolfram-tests.py \
+python3 tests/run-checks.py --wolfram-only \
   --suite spurious-construction-integration-tests.wl --timeout 720
 ```
 
@@ -1056,7 +1096,7 @@ direct pair contraction, complexity at most 120, and all 23 checks including
 the independent Feynman comparison.
 
 ```sh
-HEPCAT_SPURIOUS_INTEGRATION_CASES=PPPP6,MMMM6 python3 tests/checks/run-wolfram-tests.py \
+HEPCAT_SPURIOUS_INTEGRATION_CASES=PPPP6,MMMM6 python3 tests/run-checks.py --wolfram-only \
   --suite spurious-construction-integration-tests.wl --timeout 720
 ```
 
@@ -1067,7 +1107,7 @@ complexity at most 528, no Xi, 14 physical residues, four apparent pole
 cancellations and all three remaining checks.
 
 ```sh
-HEPCAT_SPURIOUS_INTEGRATION_CASES=PPPM6,PMMM6 python3 tests/checks/run-wolfram-tests.py \
+HEPCAT_SPURIOUS_INTEGRATION_CASES=PPPM6,PMMM6 python3 tests/run-checks.py --wolfram-only \
   --suite spurious-construction-integration-tests.wl --timeout 720
 ```
 
@@ -1078,7 +1118,7 @@ result has no complexity ceiling. The same test independently checks the
 separate hard-coded worked form and its complexity ceiling of 1044.
 
 ```sh
-HEPCAT_SPURIOUS_INTEGRATION_CASES=PPMM6 python3 tests/checks/run-wolfram-tests.py \
+HEPCAT_SPURIOUS_INTEGRATION_CASES=PPMM6 python3 tests/run-checks.py --wolfram-only \
   --suite spurious-construction-integration-tests.wl --timeout 720
 ```
 
@@ -1092,7 +1132,7 @@ separately worked formulas as independent examples.
 
 ```sh
 HEPCAT_SPURIOUS_INTEGRATION_CASES=FourFermionsPP6,FourFermionsPM6,FourFermionsMM6 \
-  python3 tests/checks/run-wolfram-tests.py \
+  python3 tests/run-checks.py --wolfram-only \
   --suite spurious-construction-integration-tests.wl --timeout 1800
 ```
 
@@ -1103,7 +1143,7 @@ residues and the independent Feynman comparison. The test requires the
 grouped off-shell exchange route to derive this form from the diagram model.
 
 ```sh
-HEPCAT_SPURIOUS_INTEGRATION_CASES=SixF6 python3 tests/checks/run-wolfram-tests.py \
+HEPCAT_SPURIOUS_INTEGRATION_CASES=SixF6 python3 tests/run-checks.py --wolfram-only \
   --suite spurious-construction-integration-tests.wl --timeout 720
 ```
 
@@ -1205,7 +1245,7 @@ actual seed and first failing common momenta for replay.
 Select the full independent numerical test explicitly:
 
 ```sh
-python3 tests/checks/run-wolfram-tests.py \
+python3 tests/run-checks.py --wolfram-only \
   --suite spinas-madgraph-integration-tests.wl --timeout 900
 ```
 

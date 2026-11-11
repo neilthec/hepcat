@@ -49,7 +49,7 @@ Cell["SM Four-Point Construction and Independent Validation",
 
 Cell["The 73 process sections contain 74 process families, including both charge-conjugate \
 cases in the quark Z W section. The 132 construction calls cover the listed photon and gluon helicity \
-combinations. The original formulas and manual derivations remain in history/SM-4-point.nb.", "Text",
+combinations. The original formulas and manual derivations remain on the factorization development branch.", "Text",
        ExpressionUUID -> "4fc01ccb-5134-4fbf-82ff-b4c6d40517fc"],
 
 Cell["Evaluate Setup first, then run the process sections. Each construction prints its \
@@ -74,8 +74,9 @@ Cell["Setup", "Section", ExpressionUUID ->
 Cell[CellGroupData[{
 
 Cell["\<\
-hepcatDirectory = ExpandFileName[\"~/code/hepcat\"];
-Get[FileNameJoin[{hepcatDirectory, \"source\", \"HEPCAT.wl\"}]]\
+hepcatDirectory = ParentDirectory[NotebookDirectory[]];
+$HEPCATpath = FileNameJoin[{hepcatDirectory, \"source\"}];
+Get[FileNameJoin[{$HEPCATpath, \"HEPCAT.wl\"}]]\
 \>", "Input",
  CellLabel->"In[37]:=",ExpressionUUID->"aba1a8ad-b45a-40b6-a541-86b88ae7ac17"],
 
@@ -180,7 +181,7 @@ keeps model parameters consistent and disables widths in its private benchmark c
 
 Cell["\<\
 spinasDirectory = FileNameJoin[{ParentDirectory[hepcatDirectory], \"spinas\"}];
-spinasOutputDirectory = FileNameJoin[{hepcatDirectory, \"tests\", \
+spinasOutputDirectory = FileNameJoin[{hepcatDirectory, \"tests\", \"results\", \
 \"spinas-output\", \"SM-4-point\"}];
 calcHEPDirectory = FileNameJoin[{ParentDirectory[hepcatDirectory], \
 \"CalcHEP\", \"calchep_3.9.2\"}];

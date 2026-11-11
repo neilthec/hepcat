@@ -40,18 +40,25 @@ Paths in this guide are relative to the repository root.
   physical and reference-based pole representations, respectively.
 - `tests/reference-models/` contains the matched CalcHEP and MadGraph models.
 - `tests/` contains the final QED six-point and SM four-point notebooks.
-- `tests/checks/` contains regression suites and `fixtures/` contains their
-  known expressions and process-specific derivation helpers.
-- `tests/benchmarks/` contains timing studies and direct-formula comparisons.
-- `tests/history/` preserves earlier notebooks.
+- `tests/checks/` contains the complete regression suite in `checks.zip`.
+- `tests/benchmarks/` contains the timing and evidence tools in `benchmarks.zip`.
 
-Start with the native Help guide in
-`Documentation/English/Guides/HEPCAT.nb` and the relevant function pages.
-For detailed development examples, see `tests/development/SIMPLIFICATION.md`.
-The original full guidance is preserved in
-`tests/development/AGENTS-full-history.md`. Treat historical outcomes as records
-at their stated revisions. Consult the relevant papers under `papers/` for
-the author's conventions when available.
+The publication checkout keeps optional material in three readable ZIP
+bundles. Loading HEPCAT automatically makes its full Mathematica Help
+available from a user cache. To inspect documentation source, regression
+tests or reproduction tools, first run this from the checkout root:
+
+```sh
+python3 tests/run-checks.py --unpack-only
+```
+
+Then read `Documentation/English/Guides/HEPCAT.nb` and the relevant function
+pages, or use Mathematica Help. The tutorial
+`Documentation/English/Tutorials/ApplyingSpinorIdentities.nb` gives a small
+runnable example of the explicit identity workflow. Historical notebooks
+and development notes remain on the `factorization` development branch;
+they are not dependencies of this checkout. Consult the author's papers for
+conventions when supplied by the user.
 
 ## Load and use the package
 
@@ -198,12 +205,14 @@ broader component testing. Shared preparation and completion changes need
 cross-multiplicity checks with opposite helicities.
 
 ```sh
-python3 tests/checks/run-wolfram-tests.py --timeout 900
-python3 -m unittest discover -s tests/checks -p 'test_*.py' -v
+python3 tests/run-checks.py
 ```
 
-The first timeout is per suite. Select expensive integrations explicitly
-with repeated `--suite` arguments. Record failures, skips and timeouts.
+The runner unpacks the complete tools, runs the Python tests, then the
+standard Wolfram suites. `--timeout 900` is per Wolfram suite. Select expensive
+integrations explicitly with repeated `--suite` arguments; use
+`--python-only` or `--wolfram-only` for focused work. Record failures, skips
+and timeouts.
 Use the matching SPINAS revision and CTest for numerical-library changes.
 Keep timing sweeps separate from concurrent heavy calculations.
 

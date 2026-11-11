@@ -5,6 +5,19 @@ scripts and verification tools used for the QED and HEPCAT papers. Run the
 commands below from the HEPCAT checkout root. Generated work goes under
 `tests/results/`, outside the maintained inputs.
 
+Unpack the optional test and benchmark tools once before using the commands
+below:
+
+```sh
+python3 tests/run-checks.py --unpack-only
+```
+
+The publication checkout keeps these tools and their data in `benchmarks.zip`
+to keep the directory easy to browse. The command verifies the bundle and
+expands its files to their usual paths. Expanded tools are ignored by Git;
+the maintained bundle and these instructions remain tracked. The complete
+development sources also remain available on the `factorization` branch.
+
 Choose the task you want:
 
 | Task | Start here | External programs needed |
@@ -366,7 +379,7 @@ Reference model selection and parameter matching are taken from those manifests.
 From the HEPCAT repository:
 
 ```sh
-cmake -S benchmarks -B tests/benchmarks/build \
+cmake -S tests/benchmarks -B tests/benchmarks/build \
   -DCALCHEP_ROOT="$HOME/code/CalcHEP/calchep_3.9.2" \
   -DSPINAS_ROOT="$HOME/code/spinas"
 cmake --build tests/benchmarks/build --parallel
@@ -387,7 +400,7 @@ fully summed reference generators.
 To supply other export directories, configure with a semicolon-separated list:
 
 ```sh
-cmake -S benchmarks -B tests/benchmarks/build \
+cmake -S tests/benchmarks -B tests/benchmarks/build \
   -DCALCHEP_ROOT=/path/to/CalcHEP \
   '-DHEPCAT_PROCESS_DIRECTORIES=/path/to/eeAA;/path/to/eeAAA;/path/to/eeAAAA'
 ```

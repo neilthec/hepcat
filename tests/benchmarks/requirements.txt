@@ -1,2 +1,0 @@
-# Optional plotting dependency. Saved-data verification uses the standard library.
-matplotlib>=3.6

@@ -10,6 +10,16 @@ Run commands from the HEPCAT checkout root. All defaults are relative to the
 checkout, not a particular user's home directory. Generated results go under
 `tests/results/reproduction/`, which is ignored by Git.
 
+First unpack the optional tools and data from the publication bundle:
+
+```sh
+python3 tests/run-checks.py --unpack-only
+```
+
+This verifies and expands `tests/benchmarks/benchmarks.zip` to the paths used
+below. Expanded files are ignored by Git. The compact checkout retains this
+guide and the bundle; generated results remain under `tests/results/`.
+
 ## Check the saved evidence
 
 Python 3.9 or later is sufficient. This command needs no Wolfram installation,
