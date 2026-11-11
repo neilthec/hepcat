@@ -43,6 +43,18 @@ the backend's documented C++17 and multiprecision-header dependencies.
 The [tested environment](../ENVIRONMENT.md) records exact compiler and library
 versions, scalar precision, model settings and completed validation scopes.
 
+To include the compiled SPINAS adapter checks in a relocated checkout, supply
+your SPINAS installation explicitly:
+
+```sh
+HEPCAT_SPINAS_DIRECTORY=/path/to/spinas python3 tests/run-checks.py --python-only
+```
+
+Without suitable SPINAS headers, that optional test class is reported as
+skipped. The clean-checkout validation with SPINAS configured ran all 203
+Python checks; the same run without that dependency ran 183 checks and
+reported one class skip. Treat skips separately from passed checks.
+
 These suites test the package implementation. For the paper's measured
 timings, plots, precision statistics and saved physics validations, see
 [the reproduction workflow](../benchmarks/README.md). It distinguishes replay

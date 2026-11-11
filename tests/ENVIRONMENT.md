@@ -138,6 +138,17 @@ python3 tests/run-checks.py --list
 python3 tests/run-checks.py --unpack-only
 ```
 
+To include the compiled adapter tests after moving the checkout, give the
+SPINAS location explicitly:
+
+```sh
+HEPCAT_SPINAS_DIRECTORY=/path/to/spinas python3 tests/run-checks.py --python-only
+```
+
+This clean-checkout command ran all 203 Python checks without skips in the
+tested configuration. Without SPINAS, its optional adapter class is skipped;
+that is not evidence that those native checks passed.
+
 Use `--kernel /path/to/WolframKernel` if discovery does not find your licensed
 kernel. Full construction/integration suites are selected explicitly as
 explained in [the check guide](checks/README.md). Evaluate Setup and the
