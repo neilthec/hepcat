@@ -1,5 +1,12 @@
 # Four fermions with zero, one or two photons
 
+For the complete automatic notebook-to-terminal workflow, start with
+[the benchmark guide](../README.md). `run-timings.py --family four-fermions`
+performs the export, private library build, measurements and plotting described
+below. Add `--smoke` for a ten-point installation check. To redraw the
+published figure from its retained measurements, run
+`python3 tests/benchmarks/plot-four-fermion-timings.py` from the checkout root.
+
 This benchmark compares the complete physical process
 `e- e+ -> e- e+ + N photons`, for `N = 0, 1, 2`, in four implementations:
 

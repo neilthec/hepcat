@@ -57,6 +57,14 @@ For numerical timing and formula comparisons, start with the
 reader's SPINAS, CalcHEP and MadGraph installations and explicitly selected
 models. Each reference model's README records its inputs and conventions.
 
+The benchmark guide also gives the notebook steps and terminal commands for
+reproducing the paper figures and rerunning the timing studies. The
+[evidence replay guide](tests/benchmarks/reproduction/README.md) explains how
+to recompute the precision statistics, check the saved validation reports and
+regenerate the amplitude catalog from the included inputs. Saved-data checks
+work without the external numerical programs. Fresh physics calculations use
+the two construction notebooks and the reader's selected installations.
+
 For AI-assisted derivations or code changes, have your AI read
 [AGENTS.md](AGENTS.md). Documentation build instructions are in
 [Documentation/README.md](Documentation/README.md).

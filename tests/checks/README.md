@@ -1,5 +1,10 @@
 # HEPCAT Regression Tests
 
+These suites test the package implementation. For the paper's measured
+timings, plots, precision statistics and recorded physics validations, see
+[the reproduction workflow](../benchmarks/README.md). It distinguishes replay
+of saved data from a fresh construction or independent numerical comparison.
+
 ## Charged electroweak construction
 
 `feynman-vertex-convention-tests.wl` checks derivative momentum slots, the

@@ -5,5 +5,7 @@
 /tests/reference-models/madgraph/**/*.pkl
 
 /tests/results/
+spinas-output/
 __pycache__/
 *.py[cod]
+/.venv/

@@ -94,7 +94,7 @@ From the HEPCAT repository root, replacing the SPINAS path as appropriate:
 
 ```sh
 clang++ -O2 -std=c++11 -DWITH_LONG_DOUBLE \
-  -I../spinas/include -I../spinas -Isource/internal/export -Ibenchmarks \
+  -I../spinas/include -I../spinas -Isource/internal/export -Itests/benchmarks \
   tests/benchmarks/literature-all-positive-validation.cpp \
   ../spinas/build/libspinas.a -o /private/tmp/literature-all-positive
 /private/tmp/literature-all-positive 1000 /private/tmp/literature-all-positive

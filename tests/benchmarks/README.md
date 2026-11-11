@@ -1,48 +1,158 @@
-# QED photon timing benchmark
+# Reproduce the paper results
 
-For the separate complete `e- e+ -> e- e+ + N photons` comparison at
-`N=0,1,2`, see [the four-fermion benchmark](four-fermion/README.md). It
-includes both saved pole representations, independent CalcHEP/MadGraph,
-all spins/helicities, and absolute and normalized results.
+This directory contains the timing programs, saved measurements, plotting
+scripts and verification tools used for the QED and HEPCAT papers. Run the
+commands below from the HEPCAT checkout root. Generated work goes under
+`tests/results/`, outside the maintained inputs.
 
-This program measures `e- e+ -> N photons` at the **same 10,000 saved phase-space
-points** in HEPCAT/SPINAS, independent CalcHEP, and independent MadGraph. Every
-point includes both photon helicities and both electron/positron spin states.
-Each backend is normalized to its own two-photon elapsed time for plotting.
+Choose the task you want:
 
-The calculation and timers are C++: [qed-photons.cpp](qed-photons.cpp) and
-[benchmark.hpp](benchmark.hpp). A small Python configuration step reads the
-existing export manifests and writes build adapters. It neither changes the
-amplitudes nor regenerates or overwrites the user's exported projects.
+| Task | Start here | External programs needed |
+| --- | --- | --- |
+| Recompute published tables from saved records | [Evidence replay](reproduction/README.md) | Python 3.9 or later; no Wolfram, SPINAS, CalcHEP or MadGraph |
+| Redraw the two timing figures | The saved-data commands below | Python and Matplotlib |
+| Rerun the timing measurements | The notebook and terminal workflow below | Wolfram, SPINAS, CMake, C/C++ and Fortran compilers, CalcHEP and MadGraph |
+| Independently construct and validate the amplitudes | `tests/QED-6-point-construction.nb` and `tests/SM-4-point-construction.nb` | The installations selected in each notebook's Setup |
+| Test package components | [Regression tests](../checks/README.md) | Dependencies described for the selected tests |
 
-## Quick check using the notebook exports
+A replay of saved measurements checks the transcription and statistics. A new
+numerical run tests the amplitudes at freshly generated points. A notebook
+construction tests the symbolic construction procedure. Each has its own
+purpose; none is labeled as another kind of test.
 
-Run this from the HEPCAT checkout root after the QED notebook has exported
-`eeAA`, `eeAAA` and `eeAAAA` to `tests/results/spinas-output/`, with both
-CalcHEP and MadGraph configured. Set the three installation/library paths
-below for your computer. The SPINAS library must match the precision recorded
-in those exports. This short check tests the workflow; use the double-precision
-export recipe below to repeat the paper's measurements.
+## Check and plot the published timing data
+
+The maintained inputs are in `data/timings/one-pair/` and
+`data/timings/two-pair/`. Both studies used 10,000 common phase-space points
+per multiplicity and nine serial timing sweeps. The plotting tools verify the
+medians against the individual sweeps before drawing the figures.
+
+For a standard-library-only check, without installing plotting packages:
 
 ```sh
-cmake -S tests/benchmarks -B tests/benchmarks/build-smoke \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DCALCHEP_ROOT="/path/to/calchep" \
-  -DSPINAS_ROOT="/path/to/spinas" \
-  -DSPINAS_LIBRARY="/path/to/matching/libspinas.a"
-cmake --build tests/benchmarks/build-smoke --parallel 2
-ctest --test-dir tests/benchmarks/build-smoke --output-on-failure
-cd tests/benchmarks/build-smoke
-./qed_photon_benchmark --points 10 --repeats 1 --warmup 1 \
-  --energy 100 --seed 1793918752098091000 --output smoke
+python3 tests/benchmarks/plot-photon-timings.py --analysis-only
+python3 tests/benchmarks/plot-four-fermion-timings.py --analysis-only
 ```
 
-The first run builds independent reference processes. It validates all ten
-points at each photon count before reporting times, and writes `smoke.csv`,
-`smoke-repetitions.csv` and `smoke-metadata.json` in that build directory,
-alongside saved point/value files. The metadata must report `COMPLETE` and
-`PASS`. A downloaded source archive without Git metadata remains supported:
-its build record uses `unversioned-source` and retains the source-file hashes.
+To create the figures as PDF and PNG files:
+
+```sh
+python3 -m venv .venv
+.venv/bin/python -m pip install -r tests/benchmarks/requirements.txt
+.venv/bin/python tests/benchmarks/plot-photon-timings.py
+.venv/bin/python tests/benchmarks/plot-four-fermion-timings.py
+```
+
+The figures and verification reports are written to
+`tests/results/reproduction/figures/`, including `photon-timings.pdf` and
+`four-fermion-timings.pdf`. The PNG versions are convenient for inspection.
+The recorded inputs remain unchanged.
+
+Use `.venv/Scripts/python.exe` on Windows. The numerical reference tools need
+an operating system supported by their installations. The plotting tools
+accept explicit input and output paths, so they also work on another machine
+without the numerical programs.
+
+## Prepare the notebook configuration once
+
+Open `tests/QED-6-point-construction.nb` and evaluate Setup, adjusting the
+HEPCAT, SPINAS, CalcHEP and MadGraph locations for your machine. Select the
+supplied massive-electron QED CalcHEP model and MadGraph model indicated there.
+Both independent calculations restrict particle content to electrons and
+photons, absolute PDGs `{11,22}`.
+
+For the minimum setup needed by the timing runner, evaluate the four-point
+`e,E,A,A` helicity calculations and **Export eeAA to C++**. This writes
+`tests/results/spinas-output/eeAA/manifest.json`, including your explicit
+reference-model selections. Both reference configurations must be available.
+An export only needs to be repeated when these settings change.
+
+To reproduce the amplitude-construction claims, continue through the desired
+QED sections, both pole preferences and their independent validation tables.
+Use the separate SM notebook for the 74 SM families. Full high-multiplicity
+validations can take much longer than the timing check. Their point counts
+are chosen in the notebook; an interrupted run is not a completed validation.
+
+The timing exporter reads the unchanged complete formulas from models 3 and 4,
+which are the physical- and spurious-pole catalogs. It does not use whatever
+amplitude variables happen to be present in an interactive kernel, and it does
+not reconstruct or simplify an amplitude during timing. This makes the formulas
+being measured explicit and reproducible.
+
+## Try the complete timing workflow
+
+Start with a short run:
+
+```sh
+.venv/bin/python tests/benchmarks/run-timings.py --smoke \
+  --configuration tests/results/spinas-output/eeAA/manifest.json \
+  --spinas /path/to/spinas
+```
+
+The runner builds a private double-precision SPINAS library, exports both
+catalogs, builds the numerical drivers, compares every point with CalcHEP and
+MadGraph, combines the paired photon runs and draws the figures. It runs the
+two-fermion and four-fermion studies serially. It preserves the notebook
+exports and installed libraries. `--smoke` uses ten points per multiplicity,
+one timing sweep and one warmup point. These short timings verify the workflow;
+they are not substitutes for the paper's measurements.
+
+Use `--family photons` or `--family four-fermions` to run just one study.
+`--kernel /path/to/WolframKernel` selects an installation not discovered
+locally. `--no-plots` skips the optional plotting step. Use `--dry-run` to see
+the commands before starting. The runner prints its output directory and
+retains logs, source hashes, parameters, seeds, pointwise comparisons, timing
+sweeps and the combined tables. An existing output is retained unless an
+explicit replacement is requested.
+
+For the paper-sized measurements, omit `--smoke`:
+
+```sh
+.venv/bin/python tests/benchmarks/run-timings.py \
+  --configuration tests/results/spinas-output/eeAA/manifest.json \
+  --spinas /path/to/spinas
+```
+
+The defaults are 10,000 points, nine sweeps, 100 warmup points and a
+center-of-mass energy of 100 GeV. The saved one-pair seed is
+`1793918752098091000`; the four-fermion seed is `1794010385397612000`.
+The runner selects these study seeds unless overridden. Use a quiet machine
+and run studies serially. New wall times depend on hardware, compiler,
+selected formulas and system load; exact agreement with the published times
+is not expected.
+
+## What is timed and validated
+
+The one-pair study is `e- e+ -> N photons`, with `N=2,3,4`. The two-pair study
+is `e- e+ -> e- e+ + N photons`, with `N=0,1,2`; its detailed description is
+in [four-fermion/README.md](four-fermion/README.md).
+
+All implementations receive the same saved binary64 momenta and matched
+masses and charge. Every spin and photon helicity is included. The independent
+references use private zero-width configurations. The exported SPINAS sum is
+also checked against exhaustive evaluation of its public complex amplitudes.
+A failed comparison prevents that timing row from being accepted.
+
+The timers include momentum setup and the complete squared-amplitude sum.
+They exclude generation, compilation, initialization, phase-space generation,
+validation, warmup and output. The figures show the median of nine sweeps and
+its central 50 percent range. Each normalized curve uses that method's own
+lowest-multiplicity time. CalcHEP and MadGraph photon timings are taken from
+the designated physical run, rather than selecting whichever reference run
+happened to be faster. The separate spurious-run reference measurements are
+retained as a repeatability check.
+
+The data identify the historical source revisions used in the papers. A new
+run records the current source and library hashes. Rebuilding current code
+is a reproducible new measurement, not a claim to have rerun the historical
+compiler or hardware. See the saved-data provenance and the evidence-replay
+README for the distinction.
+
+## Manual builds and specialized comparisons
+
+The sections below document individual exporters, numerical settings and
+other studies for readers who want control of the separate stages. The
+runner above performs the ordinary complete workflow.
 
 ## All-physical expressions in double precision
 
