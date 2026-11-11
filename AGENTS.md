@@ -1,3 +1,5 @@
+Ask your AI to read this file before working with HEPCAT.
+
 # Using HEPCAT for Amplitude Derivations
 
 This guide is for a user who asks an AI to use HEPCAT to support a physics
@@ -14,7 +16,7 @@ view and retain reproducible intermediate steps and their assumptions.
 Read the relevant source and examples as the calculation requires. This guide
 does not replace the implementation or guarantee that every requested
 simplification is known. A user can begin by asking their AI to read
-`source/AGENTS.md` and describing the calculation they want to investigate.
+`AGENTS.md` and describing the calculation they want to investigate.
 
 Read this guide before a derivation or code change. Do not use em dashes.
 Show ordinary Mathematica expressions. Avoid adding `// nice` or `nice[...]`

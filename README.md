@@ -58,7 +58,7 @@ reader's SPINAS, CalcHEP and MadGraph installations and explicitly selected
 models. Each reference model's README records its inputs and conventions.
 
 For AI-assisted derivations or code changes, have your AI read
-[source/AGENTS.md](source/AGENTS.md). Documentation build instructions are in
+[AGENTS.md](AGENTS.md). Documentation build instructions are in
 [Documentation/README.md](Documentation/README.md).
 
 ## License
