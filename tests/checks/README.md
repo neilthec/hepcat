@@ -55,6 +55,13 @@ skipped. The clean-checkout validation with SPINAS configured ran all 203
 Python checks; the same run without that dependency ran 183 checks and
 reported one class skip. Treat skips separately from passed checks.
 
+Run full construction notebooks and integrations one at a time when checking
+the automatic resource defaults. Each calculation can still use its internal
+parallel workers. Concurrent heavy calculations can change which bounded
+symbolic routes finish, not just their elapsed times. Record a timeout as
+unresolved or failed, and repeat the affected call on an idle machine before
+attributing it to an algebraic regression.
+
 These suites test the package implementation. For the paper's measured
 timings, plots, precision statistics and saved physics validations, see
 [the reproduction workflow](../benchmarks/README.md). It distinguishes replay

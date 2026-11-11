@@ -215,6 +215,11 @@ integrations explicitly with repeated `--suite` arguments; use
 and timeouts.
 Use the matching SPINAS revision and CTest for numerical-library changes.
 Keep timing sweeps separate from concurrent heavy calculations.
+Run wall-clock-limited construction notebooks and integration campaigns one
+at a time when verifying automatic effort defaults. The active calculation
+can use its internal parallel workers. Pause between calculations rather than
+suspending an active `TimeConstrained` call. Parallel reading and code review
+can continue while the scientific workflow runs.
 
 Check physical residues, spurious poles, reference independence, high-energy
 behavior, and the requested independent Feynman comparison. For CalcHEP or
