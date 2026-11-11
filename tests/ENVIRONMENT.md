@@ -38,7 +38,7 @@ Boost.Multiprecision `cpp_int` library and a C++17 compiler; its runtime records
 the discovered header and compiler hashes. It does not link a Boost library.
 For headers outside the compiler's search path, set `BOOST_ROOT=/path/to/boost`
 (the directory containing `include/boost`) before starting the kernel or runner.
-The tested parent shell supplied that variable and its C++ include path.
+The tested kernels inherited that variable and the C++ include path. In a GUI-started kernel, `SetEnvironment["BOOST_ROOT" -> "/path/to/boost"]` supplies the same location for subsequently launched proof helpers.
 Without that optional backend, an unavailable proof must remain unproved.
 
 The publication validation started at HEPCAT commit
@@ -49,7 +49,7 @@ report retains hashes for all package sources, model inputs and reference
 models, rather than relying on a branch name that can later change.
 
 - `source/HEPCAT-Base.wl`: SHA256 `94e437ee2cb818df29dd43182736f726ae39f25e3e75d5bcd462ba6ea68cd98b`.
-- `source/HEPCAT-Model.wl`: SHA256 `60fbadde2560fc1cd36722215e7372c29c06b98a3b01985a56e3bbabcef8c8ab`.
+- `source/HEPCAT-Model.wl`: SHA256 `d18726251bdb55aa797261e1136d2649efead5a6e78003877054dceb042bd406`.
 
 ## Builds and scalar precision
 

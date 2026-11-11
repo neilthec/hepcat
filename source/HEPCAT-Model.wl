@@ -7019,10 +7019,10 @@ completionBoseCycle[expression_, cycle_List] := Module[
     MomHat[label_] :> MomHat[index[label]], MomQ[label_] :> MomQ[index[label]],
     (head:(MomProdHat1|MomProdHat2|MomProdHat12))[a_, b_] :> head[index[a], index[b]],
     MandelstahmHat[parts___] :> MandelstahmHat @@ (index /@ {parts})};
+  (* ColorIndex slots have already moved with the public permutation. *)
   result /. {
     ConstructiveDiagrams`VectorSpinIndex[label_, slot_] :>
-      ConstructiveDiagrams`VectorSpinIndex[index[label], slot],
-    ConstructiveDiagrams`ColorIndex[label_] :> ConstructiveDiagrams`ColorIndex[index[label]]}
+      ConstructiveDiagrams`VectorSpinIndex[index[label], slot]}
 ];
 
 completionBoseProject[expression_, plan_Association] := Module[{permutations = plan["Permutations"], signs},
