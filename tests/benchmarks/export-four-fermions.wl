@@ -95,7 +95,7 @@ Do[
     "ShellScope"->"External on-shell conditions only; no internal on-shell substitutions in export",
     "SourceDirectory"->ffSource,"ModelDirectory"->ffModels,
     "ExporterSHA256"->FileHash[FileNameJoin[{ffSource,"internal","HEPCAT-SPINAS.wl"}],"SHA256","HexString"],
-    "OptimizerSHA256"->FileHash[FileNameJoin[{ffSource,"HEPCAT-SPINAS-Optimize.wl"}],"SHA256","HexString"]|>,"RawJSON"];
+    "OptimizerSHA256"->FileHash[FileNameJoin[{ffSource,"internal","HEPCAT-SPINAS-Optimize.wl"}],"SHA256","HexString"]|>,"RawJSON"];
   Print["Exported ",ffPreference," N=",ffPhotons,": ",ffDirectory],{ffPhotons,0,2}],
  {ffPreference,{"AllPhysical","AllSpurious"}}];
 Quit[0];

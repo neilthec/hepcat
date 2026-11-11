@@ -33,6 +33,23 @@ import re
 import subprocess
 
 
+def repository_revision(repository):
+    """Record a local Git revision when present; source archives use file hashes."""
+    repository = Path(repository).resolve()
+    if not (repository / '.git').exists():
+        return 'unversioned-source'
+    try:
+        result = subprocess.run(['git', '-C', str(repository), 'rev-parse',
+                                 '--show-toplevel', 'HEAD'], text=True, capture_output=True)
+    except OSError:
+        return 'unversioned-source'
+    lines = result.stdout.strip().splitlines()
+    if result.returncode == 0 and len(lines) == 2 and \
+            Path(lines[0]).resolve() == repository and re.fullmatch(r'[0-9a-f]{40,64}', lines[1]):
+        return lines[1]
+    return 'unversioned-source'
+
+
 def load_project(directory):
     directory = Path(directory).resolve()
     data = json.loads((directory / 'manifest.json').read_text())
@@ -168,8 +185,7 @@ def main():
             raise ValueError('Unsupported CMake path: ' + str(path))
         cmake.append('list(APPEND BENCHMARK_SOURCES [==[' + str(path) + ']==])')
     cmake.append('set(BENCHMARK_LONG_DOUBLE ' + ('ON' if projects[0][1]['Precision'] == 'LongDouble' else 'OFF') + ')')
-    revision = subprocess.run(['git', '-C', str(repository), 'rev-parse', 'HEAD'], text=True,
-                              capture_output=True, check=True).stdout.strip()
+    revision = repository_revision(repository)
     support = list((repository / 'tests' / 'benchmarks').glob('*.cpp')) + list((repository / 'tests' / 'benchmarks').glob('*.hpp'))
     support += list(source.glob('*.hpp')) + [source / 'madgraph-runtime.py']
     support += [repository / 'tests' / 'benchmarks' / name for name in ('configure.py', 'CMakeLists.txt')]

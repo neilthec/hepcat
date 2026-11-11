@@ -137,13 +137,17 @@ arXiv:1207.6082. The supplied model source is generated with LanHEP.
 CalcHEP's local `help/s_mdl_3.txt`, `help/s_mdl_4.txt` and
 `model_src/sm.inc` document the particle fields, ordered fermion rules, implicit
 color structures and gauge choices. Preserve this attribution and document
-local model changes. No explicit license file was found in this local installation; confirm
-redistribution terms before publishing the imported files as a separate bundle.
+local model changes. Although no separate license file was found in the local
+installation, the [official CalcHEP download page](https://theory.sinp.msu.ru/~pukhov/calchep.html)
+identifies its license as GPL-3 and links the GNU GPL version 3 text. Preserve
+that upstream attribution and license when distributing these stock-model
+derivatives. The full GNU GPL version 3 text is included in the repository's
+root `LICENSE`; HEPCAT's own code notices allow version 3 or any later version.
 
 ## Shared SM convention
 
 The CalcHEP vertex table is retained in its source field basis. The constructive
-SM tables `models/amps1.mdl` and `models/amps6.mdl` use the same charged-current
+SM tables `models/amps1.mdl` and `tests/checks/fixtures/models/amps6.mdl` use the same charged-current
 sign: `-EE/(MW*SW)` for both W charges and every quark and lepton generation.
 Exact cubic comparisons test this agreement, with neutral and bosonic controls.
 The generic Feynman importer does not infer a process-dependent phase or alter

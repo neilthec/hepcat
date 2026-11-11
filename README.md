@@ -8,10 +8,10 @@ independent CalcHEP and MadGraph calculations.
 
 ## Load the package
 
-Evaluate this in a licensed Wolfram kernel, adjusting the checkout path:
+With the Wolfram working directory set to the HEPCAT checkout root, evaluate:
 
 ```wolfram
-Get["~/code/hepcat/source/HEPCAT.wl"]
+Get[FileNameJoin[{"source", "HEPCAT.wl"}]]
 ```
 
 Search Mathematica Help for **HEPCAT** for the package guide, public function

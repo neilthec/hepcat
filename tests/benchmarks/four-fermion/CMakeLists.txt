@@ -77,7 +77,7 @@ if(NOT HEPCAT_FOUR_FERMION_DOUBLE_ABI_MATCHES)
 endif()
 add_executable(qed_four_fermion_benchmark "${HEPCAT_ROOT}/tests/benchmarks/qed-four-fermions.cpp"
   ${FOUR_FERMION_SOURCES} "${CALCHEP_ROOT}/include/VandPgate.c")
-target_include_directories(qed_four_fermion_benchmark PRIVATE "${HEPCAT_ROOT}/benchmarks"
+target_include_directories(qed_four_fermion_benchmark PRIVATE "${HEPCAT_ROOT}/tests/benchmarks"
   "${HEPCAT_ROOT}/source/internal/export" "${SPINAS_INCLUDE_DIR}" "${CALCHEP_ROOT}/include"
   "${CALCHEP_ROOT}/c_source/dynamicME/include" "${CALCHEP_ROOT}/c_source/ntools/include")
 target_compile_options(qed_four_fermion_benchmark PRIVATE -O3)

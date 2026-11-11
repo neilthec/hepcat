@@ -26,6 +26,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import Mock, patch
 
 spec = importlib.util.spec_from_file_location('photon_benchmark', Path(__file__).resolve().parents[2] / 'tests/benchmarks/configure.py')
 benchmark = importlib.util.module_from_spec(spec)
@@ -89,6 +90,29 @@ class PhotonBenchmarkTests(unittest.TestCase):
         self.data['MadGraphValidation']['ParameterNames'].reverse()
         with self.assertRaisesRegex(ValueError, 'parameter ordering'):
             self.load()
+
+    def test_source_archive_uses_hashes_without_borrowing_parent_revision(self):
+        with patch.object(benchmark.subprocess, 'run') as run:
+            self.assertEqual(benchmark.repository_revision(self.directory), 'unversioned-source')
+            run.assert_not_called()
+
+    def test_local_checkout_records_its_own_revision(self):
+        (self.directory / '.git').mkdir()
+        revision = 'a' * 40
+        result = Mock(returncode=0, stdout=str(self.directory.resolve()) + '\n' + revision + '\n')
+        with patch.object(benchmark.subprocess, 'run', return_value=result):
+            self.assertEqual(benchmark.repository_revision(self.directory), revision)
+
+    def test_missing_git_preserves_source_archive_support(self):
+        (self.directory / '.git').mkdir()
+        with patch.object(benchmark.subprocess, 'run', side_effect=FileNotFoundError):
+            self.assertEqual(benchmark.repository_revision(self.directory), 'unversioned-source')
+
+    def test_unrelated_parent_revision_is_not_reported(self):
+        (self.directory / '.git').mkdir()
+        result = Mock(returncode=0, stdout=str(self.directory.parent) + '\n' + 'b' * 40 + '\n')
+        with patch.object(benchmark.subprocess, 'run', return_value=result):
+            self.assertEqual(benchmark.repository_revision(self.directory), 'unversioned-source')
 
 
 if __name__ == '__main__':

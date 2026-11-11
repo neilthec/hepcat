@@ -7,13 +7,13 @@ functions, and links back to the guides.
 
 ## Use the help
 
-Load the package normally:
+With the Wolfram working directory set to the HEPCAT checkout root, load:
 
 ```wolfram
-Get["~/code/hepcat/source/HEPCAT.wl"]
+Get[FileNameJoin[{"source", "HEPCAT.wl"}]]
 ```
 
-Change the path if your checkout is elsewhere. The loader finds its companion
+The loader finds its companion
 source files and registers the documentation from this checkout. It does not open
 windows, rebuild the index, install anything into the Mathematica application,
 or evaluate examples. A checkout containing only the source still loads.

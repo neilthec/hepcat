@@ -32,6 +32,7 @@ import math
 from pathlib import Path
 import re
 import subprocess
+from configure import repository_revision
 
 
 def literal(value):
@@ -214,7 +215,7 @@ def main():
     lines += ['}', '}', '']
     registry = args.output / 'four-fermion-processes.inc'
     registry.write_text('\n'.join(lines))
-    support = [repository / 'tests' / 'benchmarks' / name for name in ('qed-four-fermions.cpp', 'benchmark.hpp', 'four-fermion-configure.py')]
+    support = [repository / 'tests' / 'benchmarks' / name for name in ('qed-four-fermions.cpp', 'benchmark.hpp', 'four-fermion-configure.py', 'configure.py')]
     support += [repository / 'tests' / 'benchmarks' / 'four-fermion' / 'CMakeLists.txt']
     support += list(source.glob('*.hpp')) + [source / 'madgraph-runtime.py']
     support = sorted({path for path in support if path.is_file()})
@@ -244,7 +245,7 @@ def main():
             raise ValueError('Unsupported CMake path: ' + str(path))
         cmake.append('set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS [==[' + str(path) + ']==])')
     (args.output / 'projects.cmake').write_text('\n'.join(cmake) + '\n')
-    revision = subprocess.run(['git', '-C', str(repository), 'rev-parse', 'HEAD'], text=True, capture_output=True, check=True).stdout.strip()
+    revision = repository_revision(repository)
     info = {'RepositoryRevision': revision, 'Compiler': args.compiler, 'CompilerVersion': args.compiler_version,
             'CXXFlags': args.flags, 'Precision': 'Double', 'Optimization': '-O3',
             'ReferenceOptimization': '-O3 (private builds)', 'ZeroWidths': True,

@@ -15,6 +15,35 @@ The calculation and timers are C++: [qed-photons.cpp](qed-photons.cpp) and
 existing export manifests and writes build adapters. It neither changes the
 amplitudes nor regenerates or overwrites the user's exported projects.
 
+## Quick check using the notebook exports
+
+Run this from the HEPCAT checkout root after the QED notebook has exported
+`eeAA`, `eeAAA` and `eeAAAA` to `tests/results/spinas-output/`, with both
+CalcHEP and MadGraph configured. Set the three installation/library paths
+below for your computer. The SPINAS library must match the precision recorded
+in those exports. This short check tests the workflow; use the double-precision
+export recipe below to repeat the paper's measurements.
+
+```sh
+cmake -S tests/benchmarks -B tests/benchmarks/build-smoke \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCALCHEP_ROOT="/path/to/calchep" \
+  -DSPINAS_ROOT="/path/to/spinas" \
+  -DSPINAS_LIBRARY="/path/to/matching/libspinas.a"
+cmake --build tests/benchmarks/build-smoke --parallel 2
+ctest --test-dir tests/benchmarks/build-smoke --output-on-failure
+cd tests/benchmarks/build-smoke
+./qed_photon_benchmark --points 10 --repeats 1 --warmup 1 \
+  --energy 100 --seed 1793918752098091000 --output smoke
+```
+
+The first run builds independent reference processes. It validates all ten
+points at each photon count before reporting times, and writes `smoke.csv`,
+`smoke-repetitions.csv` and `smoke-metadata.json` in that build directory,
+alongside saved point/value files. The metadata must report `COMPLETE` and
+`PASS`. A downloaded source archive without Git metadata remains supported:
+its build record uses `unversioned-source` and retains the source-file hashes.
+
 ## All-physical expressions in double precision
 
 `export-physical.wl` reads the saved amplitudes from QED factorization model 3.
@@ -45,7 +74,7 @@ cmake -S "$HOME/code/spinas" -B "$benchmark_dir/spinas" \
 cmake --build "$benchmark_dir/spinas" --target spinas_static --parallel
 /Applications/Wolfram.app/Contents/MacOS/WolframKernel \
   -script tests/benchmarks/export-physical.wl
-cmake -S benchmarks -B "$benchmark_dir/optimized" \
+cmake -S tests/benchmarks -B "$benchmark_dir/optimized" \
   -DCALCHEP_ROOT="$HOME/code/CalcHEP/calchep_3.9.2" \
   -DSPINAS_ROOT="$HOME/code/spinas" \
   -DSPINAS_LIBRARY="$benchmark_dir/spinas/libspinas.a" \

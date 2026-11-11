@@ -150,7 +150,7 @@ Do[
     "ShellScope" -> "External masses only; no internal on-shell substitutions during export",
     "SourceDirectory" -> benchmarkSource,
     "ExporterSHA256" -> FileHash[FileNameJoin[{benchmarkSource, "internal", "HEPCAT-SPINAS.wl"}], "SHA256", "HexString"],
-    "OptimizationBackendSHA256" -> FileHash[FileNameJoin[{benchmarkSource, "HEPCAT-SPINAS-Optimize.wl"}], "SHA256", "HexString"],
+    "OptimizationBackendSHA256" -> FileHash[FileNameJoin[{benchmarkSource, "internal", "HEPCAT-SPINAS-Optimize.wl"}], "SHA256", "HexString"],
     "ReferenceConfigurationSHA256" -> FileHash[benchmarkConfigurationFile, "SHA256", "HexString"]|>;
   Export[FileNameJoin[{benchmarkDirectory, "benchmark-amplitudes.json"}], benchmarkProvenance, "RawJSON"];
   Print["Exported N=", photons, " complete ", benchmarkRepresentation, " family: ", benchmarkDirectory],
