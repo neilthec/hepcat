@@ -29,6 +29,7 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 
 SOURCE = Path(__file__).resolve().parents[2] / "source" / "internal" / "proofs"
 RUNTIME_PATH = SOURCE / "laurent-proof-runtime.py"
@@ -54,6 +55,16 @@ def running(pid):
         if status.exists() and status.read_text().split(")", 1)[1].split()[0] == "Z":
             return False
         os.kill(pid, 0)
+        # macOS has no /proc. A killed descendant can briefly remain a zombie
+        # awaiting launchd, even though kill(pid, 0) still finds its PID.
+        if sys.platform == "darwin":
+            result = subprocess.run(["/bin/ps", "-o", "stat=", "-p", str(pid)],
+                                    capture_output=True, text=True, timeout=2)
+            state = result.stdout.strip()
+            if result.returncode == 0 and state:
+                return not state.startswith("Z")
+            if result.returncode == 1 and not result.stderr.strip():
+                return False
         return True
     except ProcessLookupError:
         return False
@@ -232,9 +243,10 @@ Add 19 2 18 11"""
                     wrapper.wait(timeout=5)
 
 class FactorVerificationTests(unittest.TestCase):
-    def sleeper(self, directory):
+    def sleeper(self, directory, startup_delay=0):
         path = directory / "owned-sleeper"
         path.write_text("#!" + sys.executable + "\nimport os,subprocess,sys,time,json\nfrom pathlib import Path\n" +
+            f"time.sleep({startup_delay!r})\n" +
             "child=subprocess.Popen([sys.executable,'-c','import time; time.sleep(60)'])\n" +
             "Path(os.environ['HEPCAT_TEST_PID_FILE']).write_text(json.dumps([os.getpid(),child.pid]))\n" +
             "time.sleep(60)\n")
@@ -243,22 +255,58 @@ class FactorVerificationTests(unittest.TestCase):
 
     @unittest.skipUnless(os.name == "posix", "Owned process groups require POSIX")
     def test_timeout_kills_and_reaps_owned_process_group(self):
-        with tempfile.TemporaryDirectory(prefix="hepcat-native-timeout-") as temporary:
-            directory = Path(temporary)
-            pid_path = directory / "pids"
-            sleeper = self.sleeper(directory)
-            previous = os.environ.get("HEPCAT_TEST_PID_FILE")
-            os.environ["HEPCAT_TEST_PID_FILE"] = str(pid_path)
-            try:
-                with self.assertRaises(subprocess.TimeoutExpired):
-                    RUNTIME.run([str(sleeper)], RUNTIME.Clock(0.3))
-            finally:
-                if previous is None:
-                    os.environ.pop("HEPCAT_TEST_PID_FILE", None)
-                else:
-                    os.environ["HEPCAT_TEST_PID_FILE"] = previous
-            self.assertTrue(pid_path.is_file())
-            assert_not_running(self, json.loads(pid_path.read_text()))
+        for startup_delay in (0, 0.5):
+            with self.subTest(startup_delay=startup_delay), tempfile.TemporaryDirectory(
+                    prefix="hepcat-native-timeout-") as temporary:
+                directory = Path(temporary)
+                pid_path = directory / "pids"
+                sleeper = self.sleeper(directory, startup_delay)
+                launch = subprocess.Popen
+                processes = []
+
+                def launch_ready(*args, **kwargs):
+                    process = launch(*args, **kwargs)
+                    processes.append(process)
+                    # Exercise cleanup after both processes exist. Interpreter
+                    # startup under load must not consume the 0.3-second check.
+                    wait_file(pid_path)
+                    for pid in json.loads(pid_path.read_text()):
+                        self.assertEqual(os.getpgid(pid), process.pid)
+                    return process
+
+                try:
+                    with patch.dict(os.environ, {"HEPCAT_TEST_PID_FILE": str(pid_path)}), \
+                            patch.object(RUNTIME.subprocess, "Popen", side_effect=launch_ready):
+                        with self.assertRaises(subprocess.TimeoutExpired):
+                            RUNTIME.run([str(sleeper)], RUNTIME.Clock(0.3))
+                    owned = json.loads(pid_path.read_text())
+                    assert_not_running(self, owned)
+                    with self.assertRaises(ChildProcessError):
+                        os.waitpid(owned[0], os.WNOHANG)
+                finally:
+                    # Also clean up if the readiness assertion itself fails,
+                    # before RUNTIME.run receives ownership from Popen.
+                    for process in processes:
+                        try:
+                            os.killpg(process.pid, signal.SIGKILL)
+                        except ProcessLookupError:
+                            pass
+                        process.communicate()
+
+    @unittest.skipUnless(os.name == "posix", "Zombie process detection requires POSIX")
+    def test_exited_child_is_not_mistaken_for_a_running_process(self):
+        process = subprocess.Popen([sys.executable, "-c", "import sys; sys.stdin.read()"],
+                                   stdin=subprocess.PIPE)
+        try:
+            self.assertTrue(running(process.pid))
+            process.stdin.close()
+            # Leave the child unreaped until the check, so this exercises the
+            # zombie state rather than only a PID that has already disappeared.
+            assert_not_running(self, [process.pid])
+        finally:
+            if not process.stdin.closed:
+                process.stdin.close()
+            process.wait(timeout=5)
 
     @unittest.skipUnless(os.name == "posix", "Owned process groups require POSIX")
     def test_wrapper_sigterm_cleans_compiler_group_and_returns_unproved(self):
