@@ -1,4 +1,27 @@
 (* Identical fermions transform in the signed exchange representation. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
@@ -205,7 +228,7 @@ check["a large fermion group cannot consume the shared budget before boson excha
    their normalization and all independent physical checks unchanged. *)
 fsRealModel=ReadModel[FileNameJoin[{root,"models"}],3];
 fsDiagramModel=ReadModel[FileNameJoin[{root,"models"}],2];
-fsFeynmanModel=ReadModel[FileNameJoin[{root,"model_feynman"}],2];
+fsFeynmanModel=ReadModel[FileNameJoin[{root,"tests", "reference-models", "calchep"}],2];
 fsLookup[particles_List] := LookupAmplitude[MapIndexed[{#1,First[#2]}&,particles],
   fsRealModel,False,{fsSpin1,fsSpin2,fsSpin3,fsSpin4}];
 fsCanonical[expression_,n_Integer] := ConstructiveDiagrams`Private`canonicalChains[

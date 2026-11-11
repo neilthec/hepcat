@@ -1,5 +1,28 @@
 (* Opt-in notebook-equivalent massive-vector constructions. No amplitude,
    correction basis or numerical effort override is supplied. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 svciRoot=DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Get[FileNameJoin[{svciRoot,"source","HEPCAT.wl"}]];
 $HistoryLength=0;svciChecks=0;svciFailures={};svciResults=<||>;
@@ -13,7 +36,7 @@ svciChoice=If[MemberQ[{$Failed,""},svciChoice],Keys[svciCases],
  DeleteDuplicates[StringTrim/@StringSplit[svciChoice,","]]];
 If[svciChoice==={}||!AllTrue[svciChoice,KeyExistsQ[svciCases,#]&],Quit[2]];
 svciModel=ReadModel[FileNameJoin[{svciRoot,"models"}],1];
-svciFeynman=ReadModel[FileNameJoin[{svciRoot,"model_feynman"}],1];
+svciFeynman=ReadModel[FileNameJoin[{svciRoot,"tests", "reference-models", "calchep"}],1];
 svciBefore={svciModel,svciFeynman};svciDirectory=CreateDirectory[];
 Print["SM VECTOR CONSTRUCTION REPORTS: ",svciDirectory];
 Do[

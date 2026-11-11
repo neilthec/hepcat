@@ -18,8 +18,8 @@ Evaluate loading in its own cell before the calculation.", "ExampleText"],
          "]", ";", "\n", "hepcatDirectory", " ", "=", " ",
          "\"~/code/hepcat\"", ";", "\n", "modelDirectory", " ", "=", " ",
          "\"~/code/hepcat/models\"", ";", "\n", "feynmanModelDirectory", " ",
-         "=", " ", "\"~/code/hepcat/model_feynman\"", ";"}]], "Input",
-      InitializationCell -> True]}, Closed]],
+         "=", " ", "\"~/code/hepcat/tests/reference-models/calchep\"",
+         ";"}]], "Input", InitializationCell -> True]}, Closed]],
   Cell["Collect Analytic Helicity Amplitudes", "TechNoteSection"],
   Cell[TextData[{"This tutorial starts with known, checked QED amplitudes and \
 turns them into one numerical process. It separates source generation, \

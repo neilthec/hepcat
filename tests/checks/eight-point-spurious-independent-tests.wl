@@ -1,6 +1,29 @@
 (* Opt-in: obtain an independent all-spurious eight-point Feynman expression
    before generating the proposed all-N current. No factorization answer or
    general-current expression is supplied to the reference calculation. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 e8Root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Get[FileNameJoin[{e8Root, "source", "HEPCAT.wl"}]];
 $HistoryLength = 0;
@@ -10,14 +33,14 @@ e8Check[name_, test_] := (e8Checks++;
   If[!TrueQ[test], AppendTo[e8Failures, name]; Print["FAIL: ", name]]);
 e8Cubic = ReadModel[FileNameJoin[{e8Root, "models"}], 2];
 e8Model = ReadModel[FileNameJoin[{e8Root, "models"}], 4];
-e8Feynman = ReadModel[FileNameJoin[{e8Root, "model_feynman"}], 2];
+e8Feynman = ReadModel[FileNameJoin[{e8Root, "tests", "reference-models", "calchep"}], 2];
 e8Before = {e8Cubic, e8Model, e8Feynman};
 e8Process = Join[{"e", "E"}, ConstantArray["A.+", 6]];
 e8References = Thread[Range[3, 8] -> RotateLeft[Range[3, 8]]];
 e8Cache = Environment["HEPCAT_EIGHT_SPURIOUS_REFERENCE"];
-e8Inputs = {"source/HEPCAT-Feynman.wl", "source/HEPCAT-Base.wl",
-  "source/HEPCAT-Parameters.wl", "model_feynman/prtcls2.mdl",
-  "model_feynman/lgrng2.mdl", "model_feynman/vars2.mdl", "model_feynman/func2.mdl"};
+e8Inputs = {"source/internal/HEPCAT-Feynman.wl", "source/HEPCAT-Base.wl",
+  "source/internal/HEPCAT-Parameters.wl", "tests/reference-models/calchep/prtcls2.mdl",
+  "tests/reference-models/calchep/lgrng2.mdl", "tests/reference-models/calchep/vars2.mdl", "tests/reference-models/calchep/func2.mdl"};
 If[StringQ[e8Cache] && e8Cache =!= "",
   e8Metadata = Import[FileNameJoin[{DirectoryName[e8Cache], "fresh-conversion-status.json"}], "RawJSON"];
   e8CacheValid = AssociationQ[e8Metadata] &&

@@ -1,4 +1,27 @@
 (* Native Help registration, direct symbol help, local search and safe loading. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 drRoot = FileNameJoin[FileNameSplit[DirectoryName[DirectoryName[DirectoryName[$InputFileName]]]]];
 drSource = FileNameJoin[{drRoot, "source"}];
 drLoader = FileNameJoin[{drSource, "HEPCAT.wl"}];
@@ -97,11 +120,11 @@ drCheck["usage registration preserves symbol protection across reload",
 
 (* Registration is optional for a checkout that includes only source files. *)
 drTemporaryDirectory = CreateDirectory[];
-CreateDirectory[FileNameJoin[{drTemporaryDirectory, "source"}]];
-CopyFile[FileNameJoin[{$HEPCATpath, "HEPCAT-Documentation.wl"}],
-  FileNameJoin[{drTemporaryDirectory, "source", "HEPCAT-Documentation.wl"}]];
+CreateDirectory[FileNameJoin[{drTemporaryDirectory, "source", "internal"}], CreateIntermediateDirectories -> True];
+CopyFile[FileNameJoin[{$HEPCATpath, "internal", "HEPCAT-Documentation.wl"}],
+  FileNameJoin[{drTemporaryDirectory, "source", "internal", "HEPCAT-Documentation.wl"}]];
 drCheck["missing documentation is a quiet optional condition",
-  Get[FileNameJoin[{drTemporaryDirectory, "source", "HEPCAT-Documentation.wl"}]] === Null];
+  Get[FileNameJoin[{drTemporaryDirectory, "source", "internal", "HEPCAT-Documentation.wl"}]] === Null];
 (* The optional registry supplies strings for existing symbols only. *)
 CreateDirectory[FileNameJoin[{drTemporaryDirectory, "Documentation", "English"}],
   CreateIntermediateDirectories -> True];
@@ -115,7 +138,7 @@ Put[<|
   "ConstructiveDiagrams`documentationMissingUsage" -> "New useful description.",
   "ConstructiveDiagrams`documentationUnknownSymbol" -> "Do not create this symbol."|>,
   FileNameJoin[{drTemporaryDirectory, "Documentation", "English", "SymbolUsage.wl"}]];
-Get[FileNameJoin[{drTemporaryDirectory, "source", "HEPCAT-Documentation.wl"}]];
+Get[FileNameJoin[{drTemporaryDirectory, "source", "internal", "HEPCAT-Documentation.wl"}]];
 drCheck["an existing rich usage message is preserved",
   ConstructiveDiagrams`documentationExistingDescription::usage === "Existing useful description."];
 drCheck["a protected placeholder usage is replaced without unprotecting the API",

@@ -1,5 +1,35 @@
 (* ::Package:: *)
 
+(* Models, diagram construction and amplitude completion.
+   Read model data, construct diagrams and factorization channels, and prepare
+   their expressions with explicitly recorded assumptions. Complete missing
+   contributions from physical constraints, then check residues, reference
+   choices, apparent poles, high-energy behavior and independent amplitudes.
+   The algorithms operate on the supplied model and expressions. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
+
 (* ::Subsection::Closed:: *)
 (*Model Reader*)
 
@@ -2574,9 +2604,11 @@ amplitudeResolveRandomSeed[seed_] := seed;
 $amplitudeParallelSourceDirectory = DirectoryName[$InputFileName];
 amplitudeParallelSignature[] := Module[{required, optional},
   required = FileNameJoin[{$amplitudeParallelSourceDirectory, #}] & /@
-    {"HEPCAT.wl", "HEPCAT-Base.wl", "HEPCAT-Parameters.wl", "HEPCAT-Model.wl", "HEPCAT-Feynman.wl", "HEPCAT-Color.wl", "HEPCAT-SPINAS.wl", "HEPCAT-SPINAS-Optimize.wl", "spinas-runtime.hpp"};
-  optional = {"laurent-proof-runtime.cpp", "laurent-proof-runtime.py",
-    "laurent-proof-factor.py", "laurent-proof-verify.py"};
+    {"HEPCAT.wl", "HEPCAT-Base.wl", "internal/HEPCAT-Parameters.wl", "HEPCAT-Model.wl",
+      "internal/HEPCAT-Feynman.wl", "internal/HEPCAT-Color.wl", "internal/HEPCAT-SPINAS.wl",
+      "internal/HEPCAT-SPINAS-Optimize.wl", "internal/export/spinas-runtime.hpp"};
+  optional = {"internal/proofs/laurent-proof-runtime.cpp", "internal/proofs/laurent-proof-runtime.py",
+    "internal/proofs/laurent-proof-factor.py", "internal/proofs/laurent-proof-verify.py"};
   Quiet[Check[Hash[Join[FileHash /@ required, Function[name,
     With[{path = FileNameJoin[{$amplitudeParallelSourceDirectory, name}]},
       If[FileExistsQ[path], FileHash[path], Missing["OptionalProofSourceAbsent", name]]]] /@ optional]], $Failed]]
@@ -19660,7 +19692,8 @@ completionHEPrepareRationalNativeIdentity[expression_, rules_List, seconds_, cha
 ];
 
 completionHENativeRuntimeSources[] := Module[{directory, names, paths},
-  directory = If[StringQ[Global`$HEPCATpath], Global`$HEPCATpath, ""];
+  directory = If[StringQ[Global`$HEPCATpath],
+    FileNameJoin[{Global`$HEPCATpath, "internal", "proofs"}], ""];
   names = {"laurent-proof-runtime.cpp", "laurent-proof-runtime.py", "laurent-proof-factor.py", "laurent-proof-verify.py"};
   paths = FileNameJoin[{directory, #}] & /@ names;
   If[directory === "" || !AllTrue[paths, FileExistsQ], Return[$Failed]];
@@ -19718,7 +19751,7 @@ completionHENativeLaurentRun[prepared_Association, seconds_] := Module[
     If[$OperatingSystem === "Windows", {}, {"/opt/homebrew/bin/python3", "/usr/local/bin/python3", "/usr/bin/python3"}]];
   python = SelectFirst[DeleteDuplicates[paths], FileExistsQ[#] && !DirectoryQ[#] &, ""];
   If[python === "", Return[failure["NativePythonUnavailable"]]];
-  runtime = FileNameJoin[{Global`$HEPCATpath, "laurent-proof-runtime.py"}];
+  runtime = FileNameJoin[{Global`$HEPCATpath, "internal", "proofs", "laurent-proof-runtime.py"}];
   directory = CreateDirectory[FileNameJoin[{$TemporaryDirectory, "hepcat-identity-proof-" <> CreateUUID[]}]];
   input = FileNameJoin[{directory, "input.dag"}]; Export[input, dag["Text"], "Text"];
   expected = prepared["DenominatorRootIndices"];

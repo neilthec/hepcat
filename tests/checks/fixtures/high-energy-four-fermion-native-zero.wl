@@ -1,6 +1,29 @@
 (* A retained affine direction from the fresh general four-fermion/two-photon
    completion. This is a regression fixture, never a production amplitude.
    Its zero certificate uses external identities and generic coherent spins. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 Function[{HEPCATNativeIdentityFixture`mass, HEPCATNativeIdentityFixture`coupling},
  (-4*HEPCATNativeIdentityFixture`coupling^4*MomProd[1, 2]*MomProd[1, 3]*
     SpinorChain[Spinor["Helicity", "Angle", 6], Spinor["Spin", "Angle", 3]]*

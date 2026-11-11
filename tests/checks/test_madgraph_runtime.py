@@ -5,6 +5,26 @@ loading, spin sums, comparison and reporting code. They do not reproduce the
 comparison algorithm. All generated fixtures live in one temporary directory.
 """
 
+# HEPCAT - High Energy Physics Constructive Amplitude Tool
+#
+# Copyright (C) 2026 Neil Christensen
+#
+# This file is part of HEPCAT.
+#
+# HEPCAT is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# HEPCAT is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+
+
 import ctypes
 import importlib.util
 import json
@@ -302,7 +322,7 @@ class MadGraphRuntimeTests(unittest.TestCase):
                         [str(source), "-o", str(cls.directory / (name + cls.suffix))])
         (cls.directory / "helper.py").write_text(HELPER_SOURCE)
         source = (DRIVER_SOURCE
-                  .replace("@RUNTIME_HEADER@", json.dumps(str(cls.repository / "source/madgraph-runtime.hpp")))
+                  .replace("@RUNTIME_HEADER@", json.dumps(str(cls.repository / "source/internal/export/madgraph-runtime.hpp")))
                   .replace("@FIXTURE_DIRECTORY@", json.dumps(str(cls.directory)))
                   .replace("@PYTHON_EXECUTABLE@", json.dumps(sys.executable))
                   .replace("@LIBRARY_SUFFIX@", json.dumps(cls.suffix)))
@@ -491,7 +511,7 @@ class MadGraphRuntimeTests(unittest.TestCase):
 class SummedBridgeTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        path = Path(__file__).resolve().parents[2] / "source/madgraph-runtime.py"
+        path = Path(__file__).resolve().parents[2] / "source/internal/export/madgraph-runtime.py"
         spec = importlib.util.spec_from_file_location("hepcat_madgraph_sum_builder", path)
         cls.builder = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(cls.builder)

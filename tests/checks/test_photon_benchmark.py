@@ -1,4 +1,24 @@
 """Benchmark admission rejects incomplete or mismatched comparisons."""
+
+# HEPCAT - High Energy Physics Constructive Amplitude Tool
+#
+# Copyright (C) 2026 Neil Christensen
+#
+# This file is part of HEPCAT.
+#
+# HEPCAT is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# HEPCAT is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+
 import copy
 import importlib.util
 import itertools
@@ -7,7 +27,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-spec = importlib.util.spec_from_file_location('photon_benchmark', Path(__file__).resolve().parents[2] / 'benchmarks/configure.py')
+spec = importlib.util.spec_from_file_location('photon_benchmark', Path(__file__).resolve().parents[2] / 'tests/benchmarks/configure.py')
 benchmark = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(benchmark)
 

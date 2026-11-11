@@ -61,16 +61,17 @@ Evaluate loading in its own cell before the calculation.", "ExampleText"],
    "ExampleText"], Cell[BoxData[RowBox[{"FeynmanToSpinorProducts", "[",
       "bilinear", "]"}]], "Input"],
   Cell[BoxData[RowBox[{RowBox[{"-", InterpretationBox[
-         TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"",
-             StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"],
-           TemplateBox[{StyleBox["2", Bold, StripOnInput -> False],
-             "\"\[RightAngleBracket]\""}, "RowDefault"]}, "RowDefault"],
-         SpinorChain[Spinor["Spin", "Angle", 1], Spinor["Spin", "Angle", 2]],
-         Editable -> False]}], "-", InterpretationBox[
-       TemplateBox[{TemplateBox[{"\"[\"", StyleBox["1", Bold,
-            StripOnInput -> False]}, "RowDefault"], TemplateBox[
-          {StyleBox["2", Bold, StripOnInput -> False], "\"]\""},
-          "RowDefault"]}, "RowDefault"], SpinorChain[Spinor["Spin", "Square",
+         StyleBox[TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"",
+              StyleBox["1", Bold, StripOnInput -> False]}, "RowDefault"],
+            TemplateBox[{StyleBox["2", Bold, StripOnInput -> False],
+              "\"\[RightAngleBracket]\""}, "RowDefault"]}, "RowDefault"],
+          ShowStringCharacters -> False], SpinorChain[Spinor["Spin", "Angle",
+           1], Spinor["Spin", "Angle", 2]], Editable -> False]}], "-",
+      InterpretationBox[StyleBox[TemplateBox[
+         {TemplateBox[{"\"[\"", StyleBox["1", Bold, StripOnInput -> False]},
+           "RowDefault"], TemplateBox[{StyleBox["2", Bold, StripOnInput ->
+              False], "\"]\""}, "RowDefault"]}, "RowDefault"],
+        ShowStringCharacters -> False], SpinorChain[Spinor["Spin", "Square",
          1], Spinor["Spin", "Square", 2]], Editable -> False]}]], "Output"],
   Cell["See Also", "SeeAlsoSection"],
   Cell[TextData[{ButtonBox["DiracWord", BaseStyle -> "Link",

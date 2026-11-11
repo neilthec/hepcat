@@ -1,6 +1,29 @@
 (* Opt-in public six-point parity regressions. Construction receives fresh
    models, never a prior amplitude, supplied correction basis or saved report.
    Replay controls change only the seed and diagnostic output, not resources. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
@@ -36,13 +59,13 @@ piStrictQuality = Environment["HEPCAT_PHYSICAL_INTEGRATION_STRICT_QUALITY"] === 
 piDiagnosticDirectory = CreateDirectory[];
 piDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 2];
 piFactorizationModel = ReadModel[FileNameJoin[{root, "models"}], 3];
-piFeynmanModel = ReadModel[FileNameJoin[{root, "model_feynman"}], 2];
+piFeynmanModel = ReadModel[FileNameJoin[{root, "tests", "reference-models", "calchep"}], 2];
 piModelsBefore = {piDiagramModel, piFactorizationModel, piFeynmanModel};
-piSourceFiles = Sort[Join[FileNames["*.wl", FileNameJoin[{root, "source"}]],
-  FileNames["laurent-proof-*", FileNameJoin[{root, "source"}]]]];
+piSourceFiles = Sort[Join[FileNames["*.wl", FileNameJoin[{root, "source"}], Infinity],
+  FileNames["laurent-proof-*", FileNameJoin[{root, "source", "internal", "proofs"}]]]];
 piSourceHashes = Association[(# -> FileHash[#, "SHA256", "HexString"] &) /@ piSourceFiles];
 piModelFiles = Sort[Join[FileNames["*.mdl", FileNameJoin[{root, "models"}]],
-  FileNames["*.mdl", FileNameJoin[{root, "model_feynman"}]]]];
+  FileNames["*.mdl", FileNameJoin[{root, "tests", "reference-models", "calchep"}]]]];
 piModelHashes = Association[(# -> FileHash[#, "SHA256", "HexString"] &) /@ piModelFiles];
 piStageFixture[stage_] := If[AssociationQ[stage], KeyTake[stage,
   {"Status", "Amplitude", "OriginalExpression", "ExternalMassRules", "FamilyAmplitude",

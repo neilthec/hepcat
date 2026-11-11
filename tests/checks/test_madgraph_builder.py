@@ -1,4 +1,24 @@
 """Lightweight MadGraph-builder checks; no MadGraph installation is required."""
+
+# HEPCAT - High Energy Physics Constructive Amplitude Tool
+#
+# Copyright (C) 2026 Neil Christensen
+#
+# This file is part of HEPCAT.
+#
+# HEPCAT is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# HEPCAT is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+
 import importlib.util
 import hashlib
 import json
@@ -13,7 +33,7 @@ import unittest
 from unittest.mock import patch
 
 sys.dont_write_bytecode = True
-_HELPER = Path(__file__).resolve().parents[2] / "source" / "madgraph-runtime.py"
+_HELPER = Path(__file__).resolve().parents[2] / "source" / "internal" / "export" / "madgraph-runtime.py"
 _SPEC = importlib.util.spec_from_file_location("hepcat_madgraph_builder", _HELPER)
 builder = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(builder)

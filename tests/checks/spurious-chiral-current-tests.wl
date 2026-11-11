@@ -1,4 +1,27 @@
 (* Equal-chirality currents: ordinary determinant algebra and typed topology. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 scRoot = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Get[FileNameJoin[{scRoot, "source", "HEPCAT.wl"}]];
 $HistoryLength = 0;
@@ -136,7 +159,7 @@ scCheck["the scalar subset bound rejects eight external vectors before expansion
     {1, 2}, Range[3, 10], 1, scMass, ConstantArray[-Sqrt[2] scCharge, 8]]]];
 (* The readable QED example must follow its supplied model rather than
    hard-coded values or globals, without certifying its own prediction. *)
-Get[FileNameJoin[{scRoot, "tests", "QED-5-point-residues.wl"}]];
+Get[FileNameJoin[{scRoot, "tests", "checks", "fixtures", "QED-5-point-residues.wl"}]];
 scExample = QEDAllPositiveSpuriousExample[scDiagramModel, 3];
 scCheck["the formula example retains external mass declarations",
   MatchQ[scExample, {_List, _}] &&

@@ -1,11 +1,34 @@
 (* Fixed-mass, fixed-angle high-energy checks of complete amplitudes. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
 SetOptions[CheckPhysicalResidues, "ReferenceCheck" -> False];
 If[DownValues[ConstructiveDiagrams`Private`highEnergyCheckReport] === {},
   Print["High-energy diagnostics did not load."]; Quit[1]];
-Get[FileNameJoin[{root, "tests", "QED-5-point-residues.wl"}]];
+Get[FileNameJoin[{root, "tests", "checks", "fixtures", "QED-5-point-residues.wl"}]];
 checks = 0; failures = {};
 check[name_, value_] := (checks++; If[!TrueQ[value], AppendTo[failures, name];
   Print["FAIL: ", name]]);
@@ -284,7 +307,7 @@ check["a heavy external self-contraction stays constant rather than scaling with
 
 (* An actual SM cancellation, rather than an invented vector polynomial.
    The known h h Z Z contact is fixed model input and must not be omitted. *)
-Get[FileNameJoin[{root, "tests", "simplification-paths.wl"}]];
+Get[FileNameJoin[{root, "tests", "checks", "fixtures", "simplification-paths.wl"}]];
 heSMRows = Select[simplificationReferences,
   StringStartsQ[#["Name"], "SM-4-point-test.nb / h h -> Z Z / "] &];
 heSMMetadata = <|"ExternalLegs" -> Range[4],

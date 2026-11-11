@@ -19,8 +19,8 @@ Evaluate loading in its own cell before the calculation.", "ExampleText"],
      Cell[BoxData[RowBox[{"Get", "[", "\"~/code/hepcat/source/HEPCAT.wl\"",
          "]", ";", "\n", "modelDirectory", " ", "=", " ",
          "\"~/code/hepcat/models\"", ";", "\n", "feynmanModelDirectory", " ",
-         "=", " ", "\"~/code/hepcat/model_feynman\"", ";"}]], "Input",
-      InitializationCell -> True]}, Closed]],
+         "=", " ", "\"~/code/hepcat/tests/reference-models/calchep\"",
+         ";"}]], "Input", InitializationCell -> True]}, Closed]],
   Cell["Choose Consistent Models", "TechNoteSection"],
   Cell[TextData[{"A useful independent comparison needs the same particle \
 properties, masses, couplings and conventions on both sides. Here the \

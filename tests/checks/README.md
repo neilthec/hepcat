@@ -843,7 +843,7 @@ The regression runner already starts each suite in a fresh kernel.
 ## Feynman Benchmark
 
 `feynman-tests.wl` covers the independent CalcHEP backend in
-`source/HEPCAT-Feynman.wl`. It imports all 139 local SM rules, including the
+`source/internal/HEPCAT-Feynman.wl`. It imports all 139 local SM rules, including the
 fourteen added light-fermion Higgs/Goldstone rules, checks safe
 ordered-gamma parsing and ordinary amplitude-pair output, and verifies the
 unitary-gauge longitudinal numerator and exclusion of Goldstone/ghost exchange.
@@ -1345,7 +1345,7 @@ six-fermion amplitude. Higher-point rows never become new diagram vertices.
 
 ### General all-positive formula and independent eight-point test
 
-The equations and proof scope are in `tests/SIMPLIFICATION.md`. The ordered
+The equations and proof scope are in `tests/development/SIMPLIFICATION.md`. The ordered
 scalar-current and determinant-collected subset recurrences are related by
 ordinary identities. The terminal-pair formula for the complete fermion
 amplitude remains an all-multiplicity proposal tested through six photons.

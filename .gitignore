@@ -1,5 +1,9 @@
 /papers/
 /Papers/
 /tests/checks/__pycache__/
-/model_madgraph/**/__pycache__/
-/model_madgraph/**/*.pkl
+/tests/reference-models/madgraph/**/__pycache__/
+/tests/reference-models/madgraph/**/*.pkl
+
+/tests/results/
+__pycache__/
+*.py[cod]

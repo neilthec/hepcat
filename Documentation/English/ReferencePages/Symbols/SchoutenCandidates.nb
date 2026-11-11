@@ -53,55 +53,62 @@ Evaluate loading in its own cell before the calculation.", "ExampleText"],
   Cell[BoxData[RowBox[{"{", RowBox[{"Association", "[",
         RowBox[{RowBox[{"\"Name\"", "\[Rule]", "\"Schouten\""}], ",",
           RowBox[{"\"Subtract\"", "\[Rule]", RowBox[{InterpretationBox[
-               TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"", "1"},
-                  "RowDefault"], TemplateBox[{"2",
-                   "\"\[RightAngleBracket]\""}, "RowDefault"]},
-                "RowDefault"], SpinorChain[Spinor["Helicity", "Angle", 1],
-                Spinor["Helicity", "Angle", 2]], Editable -> False], " ",
-              InterpretationBox[TemplateBox[{TemplateBox[
-                  {"\"\[LeftAngleBracket]\"", "3"}, "RowDefault"],
-                 TemplateBox[{"4", "\"\[RightAngleBracket]\""},
-                  "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
-                 "Helicity", "Angle", 3], Spinor["Helicity", "Angle", 4]],
-               Editable -> False]}]}], ",", RowBox[{"\"Insert\"", "\[Rule]",
-            RowBox[{RowBox[{"-", RowBox[{"(", RowBox[{InterpretationBox[
-                     TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"",
-                         "1"}, "RowDefault"], TemplateBox[{"4",
-                         "\"\[RightAngleBracket]\""}, "RowDefault"]},
-                      "RowDefault"], SpinorChain[Spinor["Helicity", "Angle",
-                       1], Spinor["Helicity", "Angle", 4]], Editable ->
-                      False], " ", InterpretationBox[TemplateBox[
-                      {TemplateBox[{"\"\[LeftAngleBracket]\"", "2"},
-                        "RowDefault"], TemplateBox[{"3",
-                         "\"\[RightAngleBracket]\""}, "RowDefault"]},
-                      "RowDefault"], SpinorChain[Spinor["Helicity", "Angle",
-                       2], Spinor["Helicity", "Angle", 3]], Editable ->
-                      False]}], ")"}]}], "+", RowBox[{InterpretationBox[
-                 TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"", "1"},
-                    "RowDefault"], TemplateBox[{"3",
-                     "\"\[RightAngleBracket]\""}, "RowDefault"]},
-                  "RowDefault"], SpinorChain[Spinor["Helicity", "Angle", 1],
+               StyleBox[TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"",
+                    "1"}, "RowDefault"], TemplateBox[{"2",
+                    "\"\[RightAngleBracket]\""}, "RowDefault"]},
+                 "RowDefault"], ShowStringCharacters -> False], SpinorChain[
+                Spinor["Helicity", "Angle", 1], Spinor["Helicity", "Angle",
+                 2]], Editable -> False], " ", InterpretationBox[StyleBox[
+                TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"", "3"},
+                   "RowDefault"], TemplateBox[{"4",
+                    "\"\[RightAngleBracket]\""}, "RowDefault"]},
+                 "RowDefault"], ShowStringCharacters -> False], SpinorChain[
+                Spinor["Helicity", "Angle", 3], Spinor["Helicity", "Angle",
+                 4]], Editable -> False]}]}], ",",
+          RowBox[{"\"Insert\"", "\[Rule]", RowBox[{RowBox[{"-",
+                RowBox[{"(", RowBox[{InterpretationBox[StyleBox[TemplateBox[
+                       {TemplateBox[{"\"\[LeftAngleBracket]\"", "1"},
+                         "RowDefault"], TemplateBox[{"4",
+                          "\"\[RightAngleBracket]\""}, "RowDefault"]},
+                       "RowDefault"], ShowStringCharacters -> False],
+                     SpinorChain[Spinor["Helicity", "Angle", 1], Spinor[
+                       "Helicity", "Angle", 4]], Editable -> False], " ",
+                    InterpretationBox[StyleBox[TemplateBox[{TemplateBox[
+                         {"\"\[LeftAngleBracket]\"", "2"}, "RowDefault"],
+                        TemplateBox[{"3", "\"\[RightAngleBracket]\""},
+                         "RowDefault"]}, "RowDefault"],
+                      ShowStringCharacters -> False], SpinorChain[Spinor[
+                       "Helicity", "Angle", 2], Spinor["Helicity", "Angle",
+                       3]], Editable -> False]}], ")"}]}], "+",
+              RowBox[{InterpretationBox[StyleBox[TemplateBox[{TemplateBox[
+                     {"\"\[LeftAngleBracket]\"", "1"}, "RowDefault"],
+                    TemplateBox[{"3", "\"\[RightAngleBracket]\""},
+                     "RowDefault"]}, "RowDefault"], ShowStringCharacters ->
+                   False], SpinorChain[Spinor["Helicity", "Angle", 1],
                   Spinor["Helicity", "Angle", 3]], Editable -> False], " ",
-                InterpretationBox[TemplateBox[{TemplateBox[
-                    {"\"\[LeftAngleBracket]\"", "2"}, "RowDefault"],
-                   TemplateBox[{"4", "\"\[RightAngleBracket]\""},
-                    "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
-                   "Helicity", "Angle", 2], Spinor["Helicity", "Angle", 4]],
-                 Editable -> False]}]}]}], ",", RowBox[{"\"Chains\"",
-            "\[Rule]", RowBox[{"{", RowBox[{InterpretationBox[TemplateBox[
-                  {TemplateBox[{"\"\[LeftAngleBracket]\"", "1"},
-                    "RowDefault"], TemplateBox[{"2",
-                     "\"\[RightAngleBracket]\""}, "RowDefault"]},
-                  "RowDefault"], SpinorChain[Spinor["Helicity", "Angle", 1],
-                  Spinor["Helicity", "Angle", 2]], Editable -> False], ",",
-                InterpretationBox[TemplateBox[{TemplateBox[
-                    {"\"\[LeftAngleBracket]\"", "3"}, "RowDefault"],
-                   TemplateBox[{"4", "\"\[RightAngleBracket]\""},
-                    "RowDefault"]}, "RowDefault"], SpinorChain[Spinor[
-                   "Helicity", "Angle", 3], Spinor["Helicity", "Angle", 4]],
-                 Editable -> False]}], "}"}]}], ",",
-          RowBox[{"\"Splits\"", "\[Rule]", RowBox[{"{", RowBox[{"0", ",",
-                "0"}], "}"}]}]}], "]"}], "}"}]], "Output"],
+                InterpretationBox[StyleBox[TemplateBox[{TemplateBox[
+                     {"\"\[LeftAngleBracket]\"", "2"}, "RowDefault"],
+                    TemplateBox[{"4", "\"\[RightAngleBracket]\""},
+                     "RowDefault"]}, "RowDefault"], ShowStringCharacters ->
+                   False], SpinorChain[Spinor["Helicity", "Angle", 2],
+                  Spinor["Helicity", "Angle", 4]], Editable -> False]}]}]}],
+          ",", RowBox[{"\"Chains\"", "\[Rule]", RowBox[
+             {"{", RowBox[{InterpretationBox[StyleBox[TemplateBox[
+                   {TemplateBox[{"\"\[LeftAngleBracket]\"", "1"},
+                     "RowDefault"], TemplateBox[{"2",
+                      "\"\[RightAngleBracket]\""}, "RowDefault"]},
+                   "RowDefault"], ShowStringCharacters -> False],
+                 SpinorChain[Spinor["Helicity", "Angle", 1], Spinor[
+                   "Helicity", "Angle", 2]], Editable -> False], ",",
+                InterpretationBox[StyleBox[TemplateBox[{TemplateBox[
+                     {"\"\[LeftAngleBracket]\"", "3"}, "RowDefault"],
+                    TemplateBox[{"4", "\"\[RightAngleBracket]\""},
+                     "RowDefault"]}, "RowDefault"], ShowStringCharacters ->
+                   False], SpinorChain[Spinor["Helicity", "Angle", 3],
+                  Spinor["Helicity", "Angle", 4]], Editable -> False]}],
+              "}"}]}], ",", RowBox[{"\"Splits\"", "\[Rule]",
+            RowBox[{"{", RowBox[{"0", ",", "0"}], "}"}]}]}], "]"}], "}"}]],
+   "Output"],
   Cell[TextData[{"Verify that a candidate records its replacement fields."}],
    "ExampleText"], Cell[BoxData[RowBox[{"Keys", "[", "First", "[",
       "SchoutenCandidates", "[", "SpinorChain", "[", "Spinor", "[",

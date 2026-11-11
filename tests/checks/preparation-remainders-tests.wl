@@ -1,4 +1,27 @@
 (* Preparation provenance is explicit data, not an off-cut identity claim. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
@@ -280,7 +303,7 @@ check["atomic inexact complex coefficients also leave the exact preflight undeci
    preferred-source attempt while retaining all preparation provenance. The
    retained common-reference direction still undergoes the ordinary full
    six-channel fit and held-out validation. *)
-Get[FileNameJoin[{root, "tests", "QED-5-point-residues.wl"}]];
+Get[FileNameJoin[{root, "tests", "checks", "fixtures", "QED-5-point-residues.wl"}]];
 rrQEDRaw = DiagramAmplitudes[CreateDiagrams[prParticles, prModel]];
 rrQEDPrepared = PrepareAmplitudes[rrQEDRaw, prModel,
   "PolePreference" -> "AllPhysical", "MaxReferenceChoices" -> 1,

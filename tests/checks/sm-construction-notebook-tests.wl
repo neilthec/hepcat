@@ -1,4 +1,27 @@
 (* Read the user's worked notebook as data, never by evaluating its inputs. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Get[FileNameJoin[{root,"source","HEPCAT.wl"}]];
 checks = 0; failures = {};
@@ -31,7 +54,7 @@ check["the SM calls use the same declared cubic model for four-point factorizati
   AllTrue[constructions, MatchQ[#,HoldComplete[_,sm,sm,_List]] &]];
 check["the separate massive SM Feynman model is loaded in Setup",
   !FreeQ[parsed,HoldPattern[Set[smFeynman,
-    ReadModel[FileNameJoin[{hepcatDirectory,"model_feynman"}],1]]]]];
+    ReadModel[FileNameJoin[{hepcatDirectory,"tests", "reference-models", "calchep"}],1]]]]];
 check["every SM construction explicitly requests its independent Feynman model",
   AllTrue[constructions,
     Count[#,HoldPattern["FeynmanModel"->smFeynman],Infinity]===1 &]];
@@ -53,7 +76,7 @@ check["both independent numerical comparisons are requested in the shared setup"
   AnyTrue[parsed,!FreeQ[#,HoldPattern["RunCalcHEPValidation"->True]] &&
     !FreeQ[#,HoldPattern["RunMadGraphValidation"->True]] &]];
 check["the local massive-quark UFO and diagonal flavor mixing are explicit",
-  AnyTrue[active,StringContainsQ[#,"model_madgraph"] &] &&
+  AnyTrue[active,StringContainsQ[#,"reference-models"] &] &&
     AnyTrue[parsed,!FreeQ[#,HoldPattern["lamWS"->0]] &]];
 check["only setup and live construction or export inputs remain",
   Length[active] === 209 && Length[constructions] === 132 && Length[exports] === 74];

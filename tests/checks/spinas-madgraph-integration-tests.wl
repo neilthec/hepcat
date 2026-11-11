@@ -1,4 +1,27 @@
 (* Opt-in: build an independent MadGraph reference and compare explicit helicities. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 miRoot = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{miRoot, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
@@ -194,7 +217,7 @@ miCombined = WriteSPINASProcess[miPath["madgraph_combined_reference_mismatch"],
   {"e", "E"} -> {"e", "E"}, {{miFermionProcess, miFermionAmplitude}}, miModel,
   "ProcessName" -> "madgraph_combined_reference_mismatch", "ParameterRules" -> miRules,
   "SPINASDirectory" -> miSpinas,
-  "CalcHEPDirectory" -> miCalcHEP, "CalcHEPModel" -> {FileNameJoin[{miRoot, "model_feynman"}], 1},
+  "CalcHEPDirectory" -> miCalcHEP, "CalcHEPModel" -> {FileNameJoin[{miRoot, "tests", "reference-models", "calchep"}], 1},
   "CalcHEPAllowedParticles" -> All, "CalcHEPPoints" -> 3, "CalcHEPSeed" -> 12345,
   "MadGraphDirectory" -> miMadGraph, "MadGraphModel" -> "sm-full",
   "MadGraphAllowedParticles" -> {11, 22}, "MadGraphPoints" -> 3, "MadGraphSeed" -> 12345,

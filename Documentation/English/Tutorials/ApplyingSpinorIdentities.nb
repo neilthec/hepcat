@@ -97,27 +97,30 @@ expression."}], "ExampleText"],
       " ", "\"MomentumConservation\"", " ", "->", " ", "False", "]"}]],
    "Input"],
   Cell[BoxData[RowBox[
-     {RowBox[{"-", RowBox[{"(", RowBox[{InterpretationBox[TemplateBox[
-              {TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, "RowDefault"],
-               TemplateBox[{"4", "\"\[RightAngleBracket]\""}, "RowDefault"]},
-              "RowDefault"], SpinorChain[Spinor["Helicity", "Angle", 1],
-              Spinor["Helicity", "Angle", 4]], Editable -> False], " ",
-            InterpretationBox[TemplateBox[{TemplateBox[
-                {"\"\[LeftAngleBracket]\"", "2"}, "RowDefault"], TemplateBox[
-                {"3", "\"\[RightAngleBracket]\""}, "RowDefault"]},
-              "RowDefault"], SpinorChain[Spinor["Helicity", "Angle", 2],
-              Spinor["Helicity", "Angle", 3]], Editable -> False]}], ")"}]}],
-      "+", RowBox[{InterpretationBox[TemplateBox[
-          {TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, "RowDefault"],
-           TemplateBox[{"3", "\"\[RightAngleBracket]\""}, "RowDefault"]},
-          "RowDefault"], SpinorChain[Spinor["Helicity", "Angle", 1],
-          Spinor["Helicity", "Angle", 3]], Editable -> False], " ",
-        InterpretationBox[TemplateBox[{TemplateBox[
-            {"\"\[LeftAngleBracket]\"", "2"}, "RowDefault"],
-           TemplateBox[{"4", "\"\[RightAngleBracket]\""}, "RowDefault"]},
-          "RowDefault"], SpinorChain[Spinor["Helicity", "Angle", 2],
-          Spinor["Helicity", "Angle", 4]], Editable -> False]}]}]],
-   "Output"],
+     {RowBox[{"-", RowBox[{"(", RowBox[{InterpretationBox[
+             StyleBox[TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"",
+                  "1"}, "RowDefault"], TemplateBox[{"4",
+                  "\"\[RightAngleBracket]\""}, "RowDefault"]}, "RowDefault"],
+              ShowStringCharacters -> False], SpinorChain[Spinor["Helicity",
+               "Angle", 1], Spinor["Helicity", "Angle", 4]],
+             Editable -> False], " ", InterpretationBox[
+             StyleBox[TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"",
+                  "2"}, "RowDefault"], TemplateBox[{"3",
+                  "\"\[RightAngleBracket]\""}, "RowDefault"]}, "RowDefault"],
+              ShowStringCharacters -> False], SpinorChain[Spinor["Helicity",
+               "Angle", 2], Spinor["Helicity", "Angle", 3]],
+             Editable -> False]}], ")"}]}], "+",
+      RowBox[{InterpretationBox[StyleBox[TemplateBox[
+           {TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, "RowDefault"],
+            TemplateBox[{"3", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+           "RowDefault"], ShowStringCharacters -> False],
+         SpinorChain[Spinor["Helicity", "Angle", 1], Spinor["Helicity",
+           "Angle", 3]], Editable -> False], " ", InterpretationBox[
+         StyleBox[TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"", "2"},
+             "RowDefault"], TemplateBox[{"4", "\"\[RightAngleBracket]\""},
+             "RowDefault"]}, "RowDefault"], ShowStringCharacters -> False],
+         SpinorChain[Spinor["Helicity", "Angle", 2], Spinor["Helicity",
+           "Angle", 4]], Editable -> False]}]}]], "Output"],
   Cell[TextData[
     {"Compare the expression complexity before and after that edit."}],
    "ExampleText"], Cell[BoxData[RowBox[{"SpinorExpressionComplexity", " ",

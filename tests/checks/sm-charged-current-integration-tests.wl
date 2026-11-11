@@ -5,6 +5,29 @@
    HEPCAT_SM_CHARGED_CURRENT_SEEDS accepts up to eight comma-separated
    nonnegative integer seeds. Default: the documented reproducer seed.
    The external test runner controls the timeout for the selected batch. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 scciRoot = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Get[FileNameJoin[{scciRoot, "source", "HEPCAT.wl"}]];
 $HistoryLength = 0;
@@ -30,7 +53,7 @@ If[scciSeeds === {} || Length[scciSeeds] > 8 ||
   Print["Provide at most eight nonnegative integer charged-current seeds."]; Quit[2]];
 scciSeeds = DeleteDuplicates[FromDigits /@ scciSeeds];
 scciModel = ReadModel[FileNameJoin[{scciRoot, "models"}], 1];
-scciFeynmanModel = ReadModel[FileNameJoin[{scciRoot, "model_feynman"}], 1];
+scciFeynmanModel = ReadModel[FileNameJoin[{scciRoot, "tests", "reference-models", "calchep"}], 1];
 scciModelsBefore = {scciModel, scciFeynmanModel};
 scciDiagnosticDirectory = CreateDirectory[];
 Print["SM CHARGED-CURRENT REPORTS: ", scciDiagnosticDirectory];

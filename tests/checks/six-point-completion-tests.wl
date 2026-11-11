@@ -1,4 +1,27 @@
 (* Reference-free sewn channels must remain available beyond five points. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
@@ -621,7 +644,7 @@ check["all-zero input directions have the established empty-span result",
   ConstructiveDiagrams`Private`completionIndependentBasis[{0, 0}] === {}];
 (* The balanced-helicity case is an explicit lower-amplitude recursion example,
    not a claim that the bounded automatic correction space is universal. *)
-Get[FileNameJoin[{root, "tests", "QED-5-point-residues.wl"}]];
+Get[FileNameJoin[{root, "tests", "checks", "fixtures", "QED-5-point-residues.wl"}]];
 sixBalancedParticles = {"e", "E", "A.+", "A.+", "A.-", "A.-"};
 sixBalancedEvents = {};
 sixBalancedExample = qedBalancedSixPointAmplitude[sixModel, "ReturnDetails" -> True,
@@ -666,7 +689,7 @@ check["the balanced example passes fresh coherent-spin two-leg and three-leg cut
     AllTrue[sixBalancedPoleProbe["Report"]["Channels"], #["Status"] === "PASS" &]];
 
 (* Generated only after the constructive expression, and used only as a check. *)
-sixBalancedFeynmanModel = ReadModel[FileNameJoin[{root, "model_feynman"}], 2];
+sixBalancedFeynmanModel = ReadModel[FileNameJoin[{root, "tests", "reference-models", "calchep"}], 2];
 sixBalancedFeynmanRaw = DiagramAmplitudes[CreateDiagrams[sixBalancedParticles, sixBalancedFeynmanModel]];
 sixBalancedFeynmanPrepared = PrepareAmplitudes[sixBalancedFeynmanRaw, sixBalancedFeynmanModel,
   "PolePreference" -> "AllSpurious", "MaxSteps" -> 0, "TimeConstraint" -> 60,
@@ -962,7 +985,7 @@ If[Environment["HEPCAT_TEST_FULL_MIXED_SIX_POINT"] === "1",
     check["the public mixed affine family passes independent validation",
       sixMixedCompletion["RefinementHistory"] =!= {} &&
         Last[sixMixedCompletion["RefinementHistory"]]["Status"] === "COMPLETE"];
-    sixMixedFeynmanModel = ReadModel[FileNameJoin[{root, "model_feynman"}], 2];
+    sixMixedFeynmanModel = ReadModel[FileNameJoin[{root, "tests", "reference-models", "calchep"}], 2];
     sixMixedFeynmanRaw = DiagramAmplitudes[
       CreateDiagrams[sixMixedParticles, sixMixedFeynmanModel]];
     sixMixedFeynmanPrepared = PrepareAmplitudes[sixMixedFeynmanRaw, sixMixedFeynmanModel,

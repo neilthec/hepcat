@@ -1,4 +1,27 @@
 (* Independent fermion-word grading and mixed-flavor sewing regressions. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 fsRoot=DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath=FileNameJoin[{fsRoot,"source"}];
 Get[FileNameJoin[{$HEPCATpath,"HEPCAT.wl"}]];
@@ -20,7 +43,7 @@ fsCheck["spectator shuffles associate under successive fermion sewing",
 fsCheck["malformed odd fermion words cannot yield an invented grading",
  ConstructiveDiagrams`Private`factorizationFermionReferenceSign[{{a,b,c},{d,e}}]===$Failed];
 cm=ReadModel[FileNameJoin[{fsRoot,"models"}],2];
-fm=ReadModel[FileNameJoin[{fsRoot,"model_feynman"}],2];
+fm=ReadModel[FileNameJoin[{fsRoot,"tests", "reference-models", "calchep"}],2];
 cMass=ModelParameter[cm,"Me"];cCharge=ModelParameter[cm,"EE"];
 fMass=ModelParameter[fm,"Me"];fCharge=ModelParameter[fm,"EE"];
 flavors={{"e","E",11},{"m","M",13},{"l","L",15}};

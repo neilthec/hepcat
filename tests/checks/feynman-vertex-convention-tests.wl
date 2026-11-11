@@ -1,5 +1,28 @@
 (* Odd derivative vertices must interfere correctly with fermion emission.
    Gauge invariance supplies a reference-free independent sign check. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
@@ -22,7 +45,7 @@ check["scalar momentum products preserve their ordinary bilinear signs",
   Expand[vcRelabel[MomProd[1, 3], vcInternal] + MomProd[2, 13] + MomProd[5, 13]] === 0];
 (* The amplitude model includes both photon helicities for chart metadata. *)
 vcSM = ReadModel[FileNameJoin[{root, "models"}], 1];
-vcFW = ReadModel[FileNameJoin[{root, "model_feynman"}], 1];
+vcFW = ReadModel[FileNameJoin[{root, "tests", "reference-models", "calchep"}], 1];
 vcTripleRow = SelectFirst[vcFW[[2]], Take[#, 4] === {"W+", "W-", "Z", ""} &];
 vcTripleExpected = Last[vcTripleRow] /. {
   Mom[index_Integer] :> Mom[index + 10], LorentzIndex[index_Integer] :> vcMu[index]};

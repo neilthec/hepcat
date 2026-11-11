@@ -1,4 +1,27 @@
 (* CalcHEP import, independent Feynman diagrams, and exact spinor conversion. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 ffRoot = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{ffRoot, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
@@ -166,7 +189,7 @@ ffCheck["derived dependencies retain their own model's parameter identity",
   (ModelParameter[ffOtherModel, "ffDerived"] /. ModelParameterRules[ffOtherModel]) === 50/49 &&
     (ffDerivedParameter /. ModelParameterRules[ffModel]) === 8/9];
 
-ffStockModel = ReadModel[FileNameJoin[{ffRoot, "model_feynman"}], 1];
+ffStockModel = ReadModel[FileNameJoin[{ffRoot, "tests", "reference-models", "calchep"}], 1];
 ffCheck["the complete copied SM parses as Feynman rules",
   MatchQ[ffStockModel, FeynmanModel[_List, _List, _List, _List]] &&
     Length[ffStockModel[[2]]] === 139];
@@ -866,7 +889,7 @@ Do[
     {"G.+", "G.+", "G.+", "G.+"}}}];
 
 (* Derive complete QED amplitudes before loading any known target formula. *)
-ffPhysicalQED = ReadModel[FileNameJoin[{ffRoot, "model_feynman"}], 2];
+ffPhysicalQED = ReadModel[FileNameJoin[{ffRoot, "tests", "reference-models", "calchep"}], 2];
 ffPhysicalParameterRules = ModelParameterRules[ffPhysicalQED,
   {ModelParameter[ffPhysicalQED, "Me"] -> 1, ModelParameter[ffPhysicalQED, "EE"] -> 1}];
 ffCheck["the independent massive-electron QED benchmark is a model, not a patched SM",
@@ -888,7 +911,7 @@ ffPhysicalFourAmplitudes = Table[
 ffCheck["the physical five-point benchmark is independently generated from six diagrams",
   Length[ffPhysicalFiveDiagrams] === 6 && ffFiniteQ[ffPhysicalFiveAmplitude] &&
     FreeQ[ffPhysicalFiveAmplitude, _DiracChain | _PolarizationVector]];
-Get[FileNameJoin[{ffRoot, "tests", "QED-5-point-residues.wl"}]];
+Get[FileNameJoin[{ffRoot, "tests", "checks", "fixtures", "QED-5-point-residues.wl"}]];
 Do[
   ffPhysicalChart = prDoubleChart[ffPhysicalPoint[[1]], ffPhysicalPoint[[2]], ffSpin1, ffSpin2];
   ffPhysicalValue = Cancel[Together[prMapOnChart[

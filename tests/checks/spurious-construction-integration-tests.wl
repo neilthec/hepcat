@@ -1,12 +1,35 @@
 (* Replay the notebook with its actual models and no supplied answer.
    Check any separately worked formulas only after the automatic call. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
 $HistoryLength = 0;
 diagrams = ReadModel[FileNameJoin[{root, "models"}], 2];
 modelDirectory = FileNameJoin[{root, "models"}];
-benchmark = ReadModel[FileNameJoin[{root, "model_feynman"}], 2];
+benchmark = ReadModel[FileNameJoin[{root, "tests", "reference-models", "calchep"}], 2];
 cases = <|
   "PPP" -> {{"e", "E", "A.+", "A.+", "A.+"}, 8085212822663136897, 6, 3, 30},
   "MMM" -> {{"e", "E", "A.-", "A.-", "A.-"}, 1866157270020603678, 6, 3, 30},
@@ -80,7 +103,7 @@ Do[
         Append[Most[sixGraphs], First[sixGraphs]], sixProcess, diagrams, sixMasses]],
       AppendTo[failures, name <> " incomplete attachment inventory"]]];
   If[name === "PPMM6" || KeyExistsQ[fourFermionForms, name],
-    Get[FileNameJoin[{root, "tests", "QED-5-point-residues.wl"}]];
+    Get[FileNameJoin[{root, "tests", "checks", "fixtures", "QED-5-point-residues.wl"}]];
     If[name === "PPMM6",
       compact = QEDSixPointPPMMSpuriousExample[factorization];
       {compactSpurious, compactCeiling} = {spurious, 1044},

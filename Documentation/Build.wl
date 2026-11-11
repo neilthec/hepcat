@@ -3,6 +3,29 @@
 (* Build deployed Mathematica Help notebooks from the reviewed source catalogs.
    Run Get["/absolute/path/to/hepcat/Documentation/Build.wl"] in a licensed
    kernel. Example cells are tokenized as literal source and never evaluated. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 Global`$HEPCATpath = FileNameJoin[{ParentDirectory[DirectoryName[$InputFileName]], "source"}];
 Get[FileNameJoin[{Global`$HEPCATpath, "HEPCAT.wl"}]];
 Needs["CodeParser`"];
@@ -114,7 +137,7 @@ $BuildResult = Module[{documentationRoot, repositoryRoot, sourceRoot, outputRoot
     lines = {setupCode};
     If[StringContainsQ[inputs, "hepcatDirectory"], AppendTo[lines, "hepcatDirectory = \"~/code/hepcat\";"]];
     If[StringContainsQ[inputs, "modelDirectory"], AppendTo[lines, "modelDirectory = \"~/code/hepcat/models\";"]];
-    If[StringContainsQ[inputs, "feynmanModelDirectory"], AppendTo[lines, "feynmanModelDirectory = \"~/code/hepcat/model_feynman\";"]];
+    If[StringContainsQ[inputs, "feynmanModelDirectory"], AppendTo[lines, "feynmanModelDirectory = \"~/code/hepcat/tests/reference-models/calchep\";"]];
     Cell[CellGroupData[{
       Cell["Load HEPCAT if needed", "ExampleSubsection"],
       Cell["Skip this setup if HEPCAT is already loaded. These examples assume the checkout is in ~/code/hepcat; change the paths if yours is elsewhere. Evaluate loading in its own cell before the calculation.", "ExampleText"],
@@ -239,7 +262,7 @@ $BuildResult = Module[{documentationRoot, repositoryRoot, sourceRoot, outputRoot
       {plainText[entry["summary"]]}], "\n"]], catalog];
   Put[usage, FileNameJoin[{outputRoot, "SymbolUsage.wl"}]];
   normalizeText[FileNameJoin[{outputRoot, "SymbolUsage.wl"}]];
-  Get[FileNameJoin[{repositoryRoot, "source", "HEPCAT-Documentation.wl"}]];
+  Get[FileNameJoin[{repositoryRoot, "source", "internal", "HEPCAT-Documentation.wl"}]];
   counts = <|"Symbols" -> Length[catalog], "Guides" -> Length[guides], "Tutorials" -> Length[tutorials]|>;
   Print["Built HEPCAT Help: ", counts];
   indexResult = Get[FileNameJoin[{documentationRoot, "BuildSearchIndex.wl"}]];

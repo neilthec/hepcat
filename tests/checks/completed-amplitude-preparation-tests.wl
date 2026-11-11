@@ -1,4 +1,27 @@
 (* A completed amplitude carries external masses, never diagram-local cuts. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
@@ -202,7 +225,7 @@ check["the checker accepts either the final prepared pair or its bare expression
 
 (* A shared-Xi all-positive QED continuation is known to require that literal
    correlation. Re-preparation must not split it into unrelated per-leg Xi's. *)
-Get[FileNameJoin[{root, "tests", "QED-5-point-residues.wl"}]];
+Get[FileNameJoin[{root, "tests", "checks", "fixtures", "QED-5-point-residues.wl"}]];
 cpQEDPairs = DiagramAmplitudes[CreateDiagrams[prParticles, prModel]];
 cpQEDExternal = ConstructiveDiagrams`Private`preparationExternalRules[First[First[cpQEDPairs]]];
 cpQEDContracted = Map[Function[pair,

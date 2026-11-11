@@ -1,5 +1,28 @@
 (* Automatic effort follows the actual job while explicit controls stay exact.
    Construction regressions receive no numerical tuning options. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
@@ -764,7 +787,7 @@ If[Environment["HEPCAT_TEST_FULL_AUTOMATIC_CONSTRUCTION"] === "1",
 If[Environment["HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION"] === "1",
   arMixedProcess = {"e", "E", "A.+", "A.+", "A.+", "A.-"};
   arMixedChannels = FactorizationAmplitudeChannels[arMixedProcess, arFactorModel];
-  arMixedFeynmanModel = ReadModel[FileNameJoin[{root, "model_feynman"}], 2];
+  arMixedFeynmanModel = ReadModel[FileNameJoin[{root, "tests", "reference-models", "calchep"}], 2];
   arMixedReport = ConstructAmplitude[arMixedProcess, arDiagramModel, arFactorModel,
     "PolePreference" -> "AllPhysical", "FeynmanModel" -> arMixedFeynmanModel,
     "Output" -> "Details", "PrintReport" -> False, "ProgressReporting" -> False];

@@ -1,4 +1,27 @@
 (* Opt-in: generate independent CalcHEP processes and compare shared random points. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
@@ -20,7 +43,7 @@ If[ciCalcHEP === None,
 ciModel = ReadModel[FileNameJoin[{root, "models"}], 3];
 ciModelBefore = ciModel;
 ciRules = {"Me" -> 1, "EE" -> 1/3};
-ciCounterpart = {FileNameJoin[{root, "model_feynman"}], 2};
+ciCounterpart = {FileNameJoin[{root, "tests", "reference-models", "calchep"}], 2};
 ciOriginalFiles = FileNameJoin[{First[ciCounterpart], # <> "2.mdl"}] & /@
   {"prtcls", "vars", "func", "lgrng"};
 ciOriginalBytes = BinaryReadList[#, "Byte"] & /@ ciOriginalFiles;
@@ -76,7 +99,7 @@ ciRestrictionCMake = StringRiffle[{
   "", "add_executable(" <> ciRestrictionTarget <> " " <>
     ConstructiveDiagrams`Private`spinasCppQuoted[ciRestrictionSource] <> ")",
   "target_include_directories(" <> ciRestrictionTarget <> " PRIVATE " <>
-    ConstructiveDiagrams`Private`spinasCppQuoted[FileNameJoin[{root, "source"}]] <>
+    ConstructiveDiagrams`Private`spinasCppQuoted[FileNameJoin[{root, "source", "internal", "export"}]] <>
     " \"${CALCHEP_ROOT}/include\" \"${CALCHEP_ROOT}/c_source/dynamicME/include\" " <>
     "\"${CALCHEP_ROOT}/c_source/ntools/include\")",
   "target_link_libraries(" <> ciRestrictionTarget <> " PRIVATE calchep_positive_calchep_validation)",

@@ -1,5 +1,28 @@
 (* Validate reviewed public Help content and its generated native notebooks.
    This suite parses examples while held; it never evaluates example cells. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 dcRoot = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 dcSourceDirectory = FileNameJoin[{dcRoot, "source"}];
 dcCatalogDirectory = FileNameJoin[{dcRoot, "Documentation", "Source"}];
@@ -129,7 +152,7 @@ dcCheck["the protected API inventory can be inspected", dcProtectedLists =!= {}]
 dcProtectedNames = DeleteDuplicates[dcShortName /@ Flatten[dcProtectedLists]];
 dcCheck["every protected name is documented or explicitly classified",
   Complement[dcProtectedNames, dcCoveredNames] === {}];
-dcSourceFiles = Sort[FileNames["*.wl", dcSourceDirectory]];
+dcSourceFiles = Sort[FileNames["*.wl", dcSourceDirectory, Infinity]];
 dcSourceHeld = dcHeldParse[Import[#, "Text"]] & /@ dcSourceFiles;
 dcCheck["all source declarations can be parsed while held", AllTrue[dcSourceHeld, Head[#] === HoldComplete &]];
 dcUsageSymbols = Flatten[Cases[#,

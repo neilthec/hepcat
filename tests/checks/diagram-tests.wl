@@ -1,4 +1,27 @@
 (* Diagram construction, external factors, masses, helicity sums, and signs. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
@@ -11,7 +34,7 @@ ConstructiveDiagrams`Private`$colorScalarDiagrams = True;
 ubLegacyFixtureModel[model_] := model /. ((# -> Symbol["Global`" <> ModelParameterName[#]]) & /@
   DeleteDuplicates[Cases[model, _ModelParameter, Infinity]]);
 ubModel = ubLegacyFixtureModel[ReadModel[FileNameJoin[{root, "models"}], 1]];
-ubCatalog = Get[FileNameJoin[{root, "tests", "simplification-paths.wl"}]];
+ubCatalog = Get[FileNameJoin[{root, "tests", "checks", "fixtures", "simplification-paths.wl"}]];
 checks = 0; failures = {};
 check[name_, value_] := (checks++; If[!TrueQ[value], AppendTo[failures, name]]);
 vertexSlotRules = <|1 -> 7, 2 -> Multiparticle[3, 4], 3 -> 5|>;

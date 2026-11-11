@@ -1,4 +1,27 @@
 (* Independent workers must preserve ordering, caller state and index scope. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
@@ -167,15 +190,19 @@ If[$ProcessorCount >= 3 && ($MaxLicenseSubprocesses === Infinity ||
 (* Optional native proof sources participate in the worker version check while
    a symbolic-only installation remains usable without those support files. *)
 peSignatureDirectory = CreateDirectory[];
-peRequiredSources = {"HEPCAT.wl", "HEPCAT-Base.wl", "HEPCAT-Parameters.wl",
-  "HEPCAT-Model.wl", "HEPCAT-Feynman.wl", "HEPCAT-Color.wl", "HEPCAT-SPINAS.wl",
-  "HEPCAT-SPINAS-Optimize.wl", "spinas-runtime.hpp"};
-Scan[CopyFile[FileNameJoin[{root, "source", #}], FileNameJoin[{peSignatureDirectory, #}]] &, peRequiredSources];
+peRequiredSources = {"HEPCAT.wl", "HEPCAT-Base.wl", "internal/HEPCAT-Parameters.wl",
+  "HEPCAT-Model.wl", "internal/HEPCAT-Feynman.wl", "internal/HEPCAT-Color.wl", "internal/HEPCAT-SPINAS.wl",
+  "internal/HEPCAT-SPINAS-Optimize.wl", "internal/export/spinas-runtime.hpp"};
+Scan[Function[file, Module[{destination = FileNameJoin[{peSignatureDirectory, file}]},
+  If[!DirectoryQ[DirectoryName[destination]],
+    CreateDirectory[DirectoryName[destination], CreateIntermediateDirectories -> True]];
+  CopyFile[FileNameJoin[{root, "source", file}], destination]]], peRequiredSources];
 peSignature[] := Block[{ConstructiveDiagrams`Private`$amplitudeParallelSourceDirectory = peSignatureDirectory},
   ConstructiveDiagrams`Private`amplitudeParallelSignature[]];
 peSymbolicSignature = peSignature[];
 check["missing optional native sources do not disable symbolic workers", IntegerQ[peSymbolicSignature]];
-peNativeSource = FileNameJoin[{peSignatureDirectory, "laurent-proof-runtime.cpp"}];
+CreateDirectory[FileNameJoin[{peSignatureDirectory, "internal", "proofs"}], CreateIntermediateDirectories -> True];
+peNativeSource = FileNameJoin[{peSignatureDirectory, "internal", "proofs", "laurent-proof-runtime.cpp"}];
 Export[peNativeSource, "// exact optional native proof fixture\n", "Text"];
 peNativeSignature = peSignature[];
 check["adding an optional native source changes the worker signature",

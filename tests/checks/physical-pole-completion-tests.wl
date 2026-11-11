@@ -1,5 +1,28 @@
 (* Representation preference must preserve all physical residue targets and
    ordinary explicit regular input; a smaller source space is only a proposal. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
@@ -330,7 +353,7 @@ check["the one-direction grouped fallback still matches every original channel",
 Print["Constructing the real five-point mixed-helicity QED regression."];
 ppQEDDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 2];
 ppQEDFactorizationModel = ReadModel[FileNameJoin[{root, "models"}], 3];
-ppQEDFeynmanModel = ReadModel[FileNameJoin[{root, "model_feynman"}], 2];
+ppQEDFeynmanModel = ReadModel[FileNameJoin[{root, "tests", "reference-models", "calchep"}], 2];
 ppQEDModelsBefore = {ppQEDDiagramModel, ppQEDFactorizationModel, ppQEDFeynmanModel};
 ppQEDProcess = {"e", "E", "A.+", "A.+", "A.-"};
 ppQEDRules = {"Me" -> 1, "EE" -> 1};

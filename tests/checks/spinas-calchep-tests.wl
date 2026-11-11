@@ -1,4 +1,27 @@
 (* Metadata, unavailable-backend behavior and shared-point validation need no CalcHEP installation. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
@@ -39,7 +62,7 @@ check["an explicitly disabled CalcHEP counterpart is unavailable rather than a p
     StringQ[Lookup[scDisabled, "Reason", None]] && StringLength[scDisabled["Reason"]] > 0];
 check["opposite photon helicities remain one self-conjugate physical species",
   scDisabled["PhysicalPDGs"] === {11, -11, 22, 22}];
-scExplicitOptions = Join[scOptions, <|"CalcHEPModel" -> {FileNameJoin[{root, "model_feynman"}], 2},
+scExplicitOptions = Join[scOptions, <|"CalcHEPModel" -> {FileNameJoin[{root, "tests", "reference-models", "calchep"}], 2},
   "CalcHEPAllowedParticles" -> {22, 11, 22}|>];
 scExplicit = ConstructiveDiagrams`Private`spinasCalcHEPConfiguration[scIR, scModel, scExplicitOptions];
 check["explicit internal particle restrictions are normalized and retained in metadata",
@@ -166,7 +189,7 @@ If[scSucceeded[scCompiler] && scHeaders,
     scExecutable = scPath["validation_runtime_" <> scABI];
     scCompiled = scRun[Join[{"c++", "-std=c++11", "-O1"},
       If[scABI === "long_double", {"-DWITH_LONG_DOUBLE"}, {}],
-      {"-I" <> FileNameJoin[{scSpinas, "include"}], "-I" <> FileNameJoin[{root, "source"}],
+      {"-I" <> FileNameJoin[{scSpinas, "include"}], "-I" <> FileNameJoin[{root, "source", "internal", "export"}],
        FileNameJoin[{root, "tests", "checks", "spinas-validation-runtime-tests.cpp"}],
        "-o", scExecutable}]];
     check["the shared sampler and comparison runtime compiles with the " <> scABI <> " ABI", scSucceeded[scCompiled]];

@@ -1,7 +1,30 @@
 (* Exact color checks preserve coherent interference, independent of spinors. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Get[FileNameJoin[{root, "source", "HEPCAT.wl"}]];
-Get[FileNameJoin[{root, "source", "HEPCAT-Color.wl"}]];
+Get[FileNameJoin[{root, "source", "internal", "HEPCAT-Color.wl"}]];
 $HistoryLength = 0;
 checks = 0; failures = {};
 SetAttributes[check, HoldRest];
@@ -200,7 +223,7 @@ check["current color projection keeps a nontrivial exact basis phase",
 check["singular color amplitude retains every internally summed contribution",
   And @@ MapThread[TrueQ[Expand[#1 - Last[#2]] === 0] &,
     {diagramAmplitude /@ colorDiagrams, colorPairs}]];
-cbSMFeynman = ReadModel[FileNameJoin[{root,"model_feynman"}],1];
+cbSMFeynman = ReadModel[FileNameJoin[{root,"tests", "reference-models", "calchep"}],1];
 cbConstructed = ConstructAmplitude[{"u","U","A.+","A.-"},model,model,
   "FeynmanModel"->cbSMFeynman,"Output"->"Details","RandomSeed"->314159,
   "Parallelization"->False,"TimeConstraint"->60,

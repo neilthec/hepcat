@@ -1,4 +1,27 @@
 (* Complete helicity families preserve spin sums and physical symmetry factors. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
@@ -286,7 +309,7 @@ sfChiralWrong = WriteSPINASProcess[sfChiralWrongPath,
 check["a wrong-chirality amplitude is rejected before writing files",
   FailureQ[sfChiralWrong] && !DirectoryQ[sfChiralWrongPath]];
 sfChiralOptions = Join[Association[Options[WriteSPINASProcess]],
-  <|"ParameterRules" -> sfRules, "CalcHEPModel" -> {FileNameJoin[{root, "model_feynman"}], 1}|>];
+  <|"ParameterRules" -> sfRules, "CalcHEPModel" -> {FileNameJoin[{root, "tests", "reference-models", "calchep"}], 1}|>];
 sfChiralIR = ConstructiveDiagrams`Private`spinasFamilyIR[
   sfChiralEntries, sfChiralModel, sfChiralOptions];
 sfChiralFixedIR = ConstructiveDiagrams`Private`spinasFamilyIR[

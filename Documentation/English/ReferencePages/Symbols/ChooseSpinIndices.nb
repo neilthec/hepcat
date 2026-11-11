@@ -45,15 +45,15 @@ Evaluate loading in its own cell before the calculation.", "ExampleText"],
       ",", " ", "1", "]", ",", " ", "Spinor", "[", "\"Spin\"", ",", " ",
       "\"Angle\"", ",", " ", "2", "]", "]", ",", " ", "1", "/", "2", ",",
       " ", "-", "1", "/", "2", "]"}]], "Input"],
-  Cell[BoxData[InterpretationBox[TemplateBox[
-      {TemplateBox[{"\"\[LeftAngleBracket]\"", TemplateBox[
-          {StyleBox["1", Bold, StripOnInput -> False], FractionBox["1",
-            "2"]}, "Superscript", SyntaxForm -> SuperscriptBox]},
-        "RowDefault"], TemplateBox[
-        {TemplateBox[{StyleBox["2", Bold, StripOnInput -> False],
-           RowBox[{"-", FractionBox["1", "2"]}]}, "Superscript",
-          SyntaxForm -> SuperscriptBox], "\"\[RightAngleBracket]\""},
-        "RowDefault"]}, "RowDefault"], SpinorChain[Spinor["Spin", "Upper",
+  Cell[BoxData[InterpretationBox[StyleBox[TemplateBox[
+       {TemplateBox[{"\"\[LeftAngleBracket]\"", TemplateBox[
+           {StyleBox["1", Bold, StripOnInput -> False], FractionBox["1",
+             "2"]}, "Superscript", SyntaxForm -> SuperscriptBox]},
+         "RowDefault"], TemplateBox[{TemplateBox[{StyleBox["2", Bold,
+             StripOnInput -> False], RowBox[{"-", FractionBox["1", "2"]}]},
+           "Superscript", SyntaxForm -> SuperscriptBox],
+          "\"\[RightAngleBracket]\""}, "RowDefault"]}, "RowDefault"],
+      ShowStringCharacters -> False], SpinorChain[Spinor["Spin", "Upper",
        "Angle", 1, 1/2], Spinor["Spin", "Upper", "Angle", 2, -2^(-1)]],
      Editable -> False]], "Output"], Cell["See Also", "SeeAlsoSection"],
   Cell[TextData[{ButtonBox["ChooseSpinIndex", BaseStyle -> "Link",

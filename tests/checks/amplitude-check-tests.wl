@@ -1,4 +1,27 @@
 (* Complete off-cut Feynman comparisons supplement all existing amplitude checks. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
@@ -234,7 +257,7 @@ check["ordinary chart evaluation does not silently collapse explicit vector indi
 
 (* Build independent Feynman QED from vertices before loading known answers. *)
 Print["Constructing independent four- and five-point Feynman QED benchmarks."];
-qaFeynmanModel = ReadModel[FileNameJoin[{root, "model_feynman"}], 2];
+qaFeynmanModel = ReadModel[FileNameJoin[{root, "tests", "reference-models", "calchep"}], 2];
 qaElectronRow = First[FirstPosition[qaFeynmanModel[[1, All, 2]], "e"]];
 qaProcesses = {{"e", "E", "A.+", "A.+"}, {"e", "E", "A.+", "A.-"},
   {"e", "E", "A.+", "A.+", "A.+"}, {"e", "E", "A.+", "A.+", "A.-"}};
@@ -244,7 +267,7 @@ qaSpinorBenchmarks = FeynmanToSpinorProducts[#,
 check["independent benchmarks come from two four-point and six five-point diagrams",
   Length /@ qaRawBenchmarks === {2, 2, 6, 6} &&
     FreeQ[qaSpinorBenchmarks, _DiracChain | _PolarizationVector | _Failure | $Failed]];
-Get[FileNameJoin[{root, "tests", "QED-5-point-residues.wl"}]];
+Get[FileNameJoin[{root, "tests", "checks", "fixtures", "QED-5-point-residues.wl"}]];
 qaPreparedRawFeynman = PrepareAmplitudes[First[qaRawBenchmarks], qaFeynmanModel,
   "PolePreference" -> None, "InternalOnShell" -> True, "MaxSteps" -> 0,
   "TimeConstraint" -> 60, "ProgressReporting" -> False, "ReturnDetails" -> True];

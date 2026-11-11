@@ -125,11 +125,12 @@ bc79fa19d6792772af2948585b673a998d4f95927eaad", "Real"], Editable ->
                     False]}], ",", RowBox[{SubscriptBox["M", "3"], "\[Rule]",
                   "0"}], ",", RowBox[{SubscriptBox["M", "4"], "\[Rule]",
                   "0"}]}], "}"}]}], ",", RowBox[{"\"Propagator\"", "\[Rule]",
-            InterpretationBox[RowBox[{"(", RowBox[{RowBox[{"-",
-                   SuperscriptBox[InterpretationBox["Me", ModelParameter[
-                      "Me", "c290c11592fdb153523bc79fa19d6792772af2948585b673\
-a998d4f95927eaad", "Real"], Editable -> False], "2"]}], "+", SubscriptBox[
-                  "\"s\"", "\"13\""]}], ")"}], PropDen[Mom[Multiparticle[1,
+            InterpretationBox[StyleBox[RowBox[{"(", RowBox[
+                 {RowBox[{"-", SuperscriptBox[InterpretationBox["Me",
+                      ModelParameter["Me", "c290c11592fdb153523bc79fa19d67927\
+72af2948585b673a998d4f95927eaad", "Real"], Editable -> False], "2"]}], "+",
+                  SubscriptBox["\"s\"", "\"13\""]}], ")"}],
+              ShowStringCharacters -> False], PropDen[Mom[Multiparticle[1,
                 3]], ModelParameter["Me", "c290c11592fdb153523bc79fa19d679277\
 2af2948585b673a998d4f95927eaad", "Real"]], Editable -> False]}]}], "]"}],
       "}"}]], "Output"], Cell["See Also", "SeeAlsoSection"],

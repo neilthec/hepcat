@@ -1,6 +1,29 @@
 (* The constructive SM uses the original CalcHEP W-field basis. Check the
    amplitude phases themselves, including every coherent massive-spin
    coefficient. No fitted normalization or process-level sign is used. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
@@ -10,8 +33,8 @@ check[name_, value_] := (checks++;
   If[!TrueQ[value], AppendTo[failures, name]; Print["FAIL: ", name]]);
 
 fcConstructiveModel = ReadModel[FileNameJoin[{root, "models"}], 1];
-fcDiagramModel = ReadModel[FileNameJoin[{root, "models"}], 6];
-fcFeynmanModel = ReadModel[FileNameJoin[{root, "model_feynman"}], 1];
+fcDiagramModel = ReadModel[FileNameJoin[{root, "tests", "checks", "fixtures", "models"}], 6];
+fcFeynmanModel = ReadModel[FileNameJoin[{root, "tests", "reference-models", "calchep"}], 1];
 fcOriginalConstructiveModel = fcConstructiveModel;
 fcOriginalDiagramModel = fcDiagramModel;
 fcOriginalFeynmanModel = fcFeynmanModel;

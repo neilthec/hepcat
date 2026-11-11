@@ -1,10 +1,33 @@
 (* Bounded diagram/channel preparation and simultaneous amplitude completion. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Global`$HEPCATpath = FileNameJoin[{root, "source"}];
 Get[FileNameJoin[{$HEPCATpath, "HEPCAT.wl"}]];
 If[AnyTrue[{PrepareAmplitudes, CompleteFactorization, CompleteHighEnergy},
     DownValues[#] === {} &], Print["Amplitude-completion APIs did not load."]; Quit[1]];
-Get[FileNameJoin[{root, "tests", "QED-5-point-residues.wl"}]];
+Get[FileNameJoin[{root, "tests", "checks", "fixtures", "QED-5-point-residues.wl"}]];
 checks = 0; failures = {};
 check[name_, value_] := (checks++;
   If[Mod[checks, 25] === 0, Print["Completed ", checks, " amplitude-completion checks."]];
@@ -1460,7 +1483,7 @@ check["the reconstructed expression equals H on an external-shell chart away fro
   Flatten[acQEDFiveOffCutDifferences] === ConstantArray[0, 4]];
 
 (* Exercise the notebook's completed result, not only a supplied known answer. *)
-acQEDFeynmanModel = ReadModel[FileNameJoin[{root, "model_feynman"}], 2];
+acQEDFeynmanModel = ReadModel[FileNameJoin[{root, "tests", "reference-models", "calchep"}], 2];
 acQEDFeynmanPairs = DiagramAmplitudes[CreateDiagrams[prParticles, acQEDFeynmanModel]];
 Do[
   acQEDFeynmanPrepared = PrepareAmplitudes[acQEDFeynmanPairs, acQEDFeynmanModel,
@@ -2514,7 +2537,7 @@ acUnder = acEnergy[acFree, acScalarFourChannels, acScalarModel,
 check["acceptable-growth contact freedom is honestly underdetermined",
   acUnder["Status"] === "UNDERDETERMINED" && acUnder["FreeParameters"] =!= {} &&
     acAllPass[acUnder["AfterReport"]]];
-Get[FileNameJoin[{root, "tests", "simplification-paths.wl"}]];
+Get[FileNameJoin[{root, "tests", "checks", "fixtures", "simplification-paths.wl"}]];
 acSMModel = ReadModel[FileNameJoin[{root, "models"}], 1];
 acSMReferenceParameters = {Mh -> ModelParameter[acSMModel, "Mh"],
   MZ -> ModelParameter[acSMModel, "MZ"], MW -> ModelParameter[acSMModel, "MW"],

@@ -1,10 +1,33 @@
 (* Exact public notebook call: no supplied answer, correction basis or tuning. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Get[FileNameJoin[{root, "source", "HEPCAT.wl"}]];
 $HistoryLength = 0;
 diagramModel = ReadModel[FileNameJoin[{root, "models"}], 2];
 model = ReadModel[FileNameJoin[{root, "models"}], 4];
-benchmark = ReadModel[FileNameJoin[{root, "model_feynman"}], 2];
+benchmark = ReadModel[FileNameJoin[{root, "tests", "reference-models", "calchep"}], 2];
 before = {diagramModel, model, benchmark};
 process = Join[{"e", "E"}, ConstantArray["A.+", 5]];
 report = ConstructAmplitude[process, diagramModel, model,

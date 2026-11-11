@@ -1,5 +1,33 @@
 (* ::Package:: *)
 
+(* Load HEPCAT through this entry point with Get[".../source/HEPCAT.wl"].
+   It checks the required files, loads the algebra and model implementations,
+   then registers the public functions and the Mathematica Help pages.
+   Supporting implementation modules live in source/internal. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
+
 (* ::Subsection:: *)
 (*Begin Package*)
 
@@ -7,9 +35,11 @@
 Module[{sourceDirectory = If[ValueQ[Global`$HEPCATpath], Global`$HEPCATpath,
     DirectoryName[ExpandFileName[$InputFileName]]], sourceFiles, missingFiles},
 sourceFiles = If[StringQ[sourceDirectory],
-  FileNameJoin[{sourceDirectory, #}] & /@ {"HEPCAT-Base.wl", "HEPCAT-Parameters.wl", "HEPCAT-Model.wl", "HEPCAT-Feynman.wl", "HEPCAT-Color.wl", "HEPCAT-SPINAS.wl", "HEPCAT-MadGraph.wl"}, {}];
+  FileNameJoin[{sourceDirectory, #}] & /@ {"HEPCAT-Base.wl", "internal/HEPCAT-Parameters.wl", "HEPCAT-Model.wl",
+    "internal/HEPCAT-Feynman.wl", "internal/HEPCAT-Color.wl", "internal/HEPCAT-SPINAS.wl",
+    "internal/HEPCAT-MadGraph.wl"}, {}];
 missingFiles = Select[Join[sourceFiles, If[StringQ[sourceDirectory],
-  {FileNameJoin[{sourceDirectory, "HEPCAT-SPINAS-Optimize.wl"}]}, {}]],
+  {FileNameJoin[{sourceDirectory, "internal", "HEPCAT-SPINAS-Optimize.wl"}]}, {}]],
   !FileExistsQ[#] || DirectoryQ[#] &];
 If[!StringQ[sourceDirectory] || missingFiles =!= {},
   Message[Get::noopen, If[StringQ[sourceDirectory], StringRiffle[missingFiles, ", "],
@@ -74,7 +104,7 @@ EndPackage[];
 
 (* Make local reference pages available to F1 and the Documentation Center.
    This optional registration never opens the help browser during loading. *)
-With[{documentationLoader = FileNameJoin[{sourceDirectory, "HEPCAT-Documentation.wl"}]},
+With[{documentationLoader = FileNameJoin[{sourceDirectory, "internal", "HEPCAT-Documentation.wl"}]},
   If[FileExistsQ[documentationLoader], Get[documentationLoader]]
 ];
 ]

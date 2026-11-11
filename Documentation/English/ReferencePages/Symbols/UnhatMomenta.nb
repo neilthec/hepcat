@@ -43,9 +43,10 @@ Evaluate loading in its own cell before the calculation.", "ExampleText"],
       "\"Helicity\"", ",", " ", "\"Angle\"", ",", " ", "2", "]", "]", " ",
       "Mom", "[", "3", "]", "]", "]"}]], "Input"],
   Cell[BoxData[RowBox[{SubscriptBox["p", "3"], " ",
-      InterpretationBox[TemplateBox[{TemplateBox[{"\"\[LeftAngleBracket]\"",
-           "1"}, "RowDefault"], TemplateBox[
-          {"2", "\"\[RightAngleBracket]\""}, "RowDefault"]}, "RowDefault"],
+      InterpretationBox[StyleBox[TemplateBox[
+         {TemplateBox[{"\"\[LeftAngleBracket]\"", "1"}, "RowDefault"],
+          TemplateBox[{"2", "\"\[RightAngleBracket]\""}, "RowDefault"]},
+         "RowDefault"], ShowStringCharacters -> False],
        SpinorChain[Spinor["Helicity", "Angle", 1], Spinor["Helicity",
          "Angle", 2]], Editable -> False]}]], "Output"],
   Cell["See Also", "SeeAlsoSection"],

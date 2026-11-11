@@ -4,6 +4,29 @@
    HEPCAT_FIVE_POINT_INTEGRATION_SEEDS optionally runs those cases at each
    supplied comma-separated nonnegative integer seed (at most eight).
    Use the external runner's timeout for the complete selected batch. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 fpciRoot = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Get[FileNameJoin[{fpciRoot, "source", "HEPCAT.wl"}]];
 $HistoryLength = 0;
@@ -51,7 +74,7 @@ fpciRuns = Flatten[Table[<|"Case" -> case, "Seed" -> seed,
 fpciDiagnosticDirectory = CreateDirectory[];
 fpciDiagramModel = ReadModel[FileNameJoin[{fpciRoot, "models"}], 2];
 fpciFactorizationModel = ReadModel[FileNameJoin[{fpciRoot, "models"}], 3];
-fpciFeynmanModel = ReadModel[FileNameJoin[{fpciRoot, "model_feynman"}], 2];
+fpciFeynmanModel = ReadModel[FileNameJoin[{fpciRoot, "tests", "reference-models", "calchep"}], 2];
 fpciModelsBefore = {fpciDiagramModel, fpciFactorizationModel, fpciFeynmanModel};
 Do[
   fpciCase = fpciRun["Case"]; fpciSeed = fpciRun["Seed"]; fpciResultKey = fpciRun["ResultKey"];

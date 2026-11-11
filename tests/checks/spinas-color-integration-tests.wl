@@ -1,4 +1,27 @@
 (* Opt-in independent comparisons of complete color sums and their interference. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Get[FileNameJoin[{root, "source", "HEPCAT.wl"}]];
 $HistoryLength = 0;
@@ -9,13 +32,13 @@ directory = CreateDirectory[];
 sm = ReadModel[FileNameJoin[{root, "models"}], 1];
 qed = ReadModel[FileNameJoin[{root, "models"}], 3];
 spinas = Replace[Environment["HEPCAT_SPINAS_DIRECTORY"], $Failed | "" -> FileNameJoin[{ParentDirectory[root], "spinas"}]];
-madgraph = FileNameJoin[{root, "model_madgraph", "sm"}];
+madgraph = FileNameJoin[{root, "tests", "reference-models", "madgraph", "sm"}];
 mgRoot = Replace[Environment["HEPCAT_MADGRAPH_DIRECTORY"], $Failed | "" -> FileNameJoin[{ParentDirectory[root], "MadGraph"}]];
 calchep = Replace[Environment["HEPCAT_CALCHEP_DIRECTORY"], $Failed | "" -> FileNameJoin[{ParentDirectory[root], "CalcHEP", "calchep_3.9.2"}]];
 compare[name_, entries_, allowed_, helicityCount_] := Module[{report, ch, mg},
   report = WriteSPINASProcess[FileNameJoin[{directory, name}], entries, sm,
     "ProcessName" -> name, "SPINASDirectory" -> spinas,
-    "CalcHEPDirectory" -> calchep, "CalcHEPModel" -> {FileNameJoin[{root, "model_feynman"}], 1},
+    "CalcHEPDirectory" -> calchep, "CalcHEPModel" -> {FileNameJoin[{root, "tests", "reference-models", "calchep"}], 1},
     "CalcHEPAllowedParticles" -> allowed, "CalcHEPPoints" -> 20, "CalcHEPSeed" -> 12789, "RunCalcHEPValidation" -> True,
     "MadGraphDirectory" -> mgRoot, "MadGraphModel" -> madgraph, "MadGraphAllowedParticles" -> allowed,
     "MadGraphPoints" -> 20, "MadGraphSeed" -> 12789, "RunMadGraphValidation" -> True, "ReturnDetails" -> True];
