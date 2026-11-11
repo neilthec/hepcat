@@ -40,7 +40,9 @@ Paths in this guide are relative to the repository root.
   for factorization. Model 3 is elementary QED, and models 4 and 5 add known QED
   amplitudes with physical and reference-based pole representations, respectively.
 - `tests/reference-models/` contains the matched CalcHEP and MadGraph models.
-- `tests/` contains the final QED six-point and SM four-point notebooks.
+- `tests/` contains the QED six-point, SM four-point and SM five-point notebooks.
+  `tests/SM-5-point/` holds the complete five-point inventory and resumable
+  construction/validation ledger.
 - `tests/checks/` contains regression suites and `fixtures/` contains their
   known expressions and process-specific derivation helpers.
 - `tests/benchmarks/` contains timing studies and direct-formula comparisons.

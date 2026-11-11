@@ -1,0 +1,219 @@
+{
+  "SchemaVersion": 1,
+  "ModelFiles": {
+    "models/amps1.mdl": "9a82028aabcd810067062943e3dc09065ef8ed50765cc387a637b6ba589efd78",
+    "models/prtcls1.mdl": "c80f9f080061c9b2adc69b55bd447b62b21e2573ad21953d6d2ba50a2fbdf42d",
+    "models/vars1.mdl": "0818d43bbe803a4f1c35b6954c1677fcaa2d1243ce8ddb59bea6714859c40866",
+    "models/func1.mdl": "d8324bfd399b39e34f904dc8dbd57c7a0ea7d7b8048ab9439de2f2f3db10cab2"
+  },
+  "Checks": [
+    {
+      "Particles": [
+        "h",
+        "h",
+        "h",
+        "h",
+        "h"
+      ],
+      "ExpectedHasDiagrams": true,
+      "DiagramCount": 25,
+      "Seconds": 0.275447,
+      "Status": "PASS"
+    },
+    {
+      "Particles": [
+        "W+",
+        "W-",
+        "h",
+        "h",
+        "h"
+      ],
+      "ExpectedHasDiagrams": true,
+      "DiagramCount": 25,
+      "Seconds": 0.035267,
+      "Status": "PASS"
+    },
+    {
+      "Particles": [
+        "Z",
+        "Z",
+        "h",
+        "h",
+        "h"
+      ],
+      "ExpectedHasDiagrams": true,
+      "DiagramCount": 25,
+      "Seconds": 0.037604,
+      "Status": "PASS"
+    },
+    {
+      "Particles": [
+        "e",
+        "E",
+        "h",
+        "h",
+        "h"
+      ],
+      "ExpectedHasDiagrams": true,
+      "DiagramCount": 16,
+      "Seconds": 0.032325,
+      "Status": "PASS"
+    },
+    {
+      "Particles": [
+        "u",
+        "U",
+        "h",
+        "h",
+        "h"
+      ],
+      "ExpectedHasDiagrams": true,
+      "DiagramCount": 16,
+      "Seconds": 0.028344,
+      "Status": "PASS"
+    },
+    {
+      "Particles": [
+        "Ne",
+        "e",
+        "h",
+        "h",
+        "W+"
+      ],
+      "ExpectedHasDiagrams": true,
+      "DiagramCount": 9,
+      "Seconds": 0.014992,
+      "Status": "PASS"
+    },
+    {
+      "Particles": [
+        "e",
+        "E",
+        "A.+",
+        "A.-",
+        "h"
+      ],
+      "ExpectedHasDiagrams": true,
+      "DiagramCount": 6,
+      "Seconds": 0.012614,
+      "Status": "PASS"
+    },
+    {
+      "Particles": [
+        "u",
+        "U",
+        "G.+",
+        "A.+",
+        "h"
+      ],
+      "ExpectedHasDiagrams": true,
+      "DiagramCount": 6,
+      "Seconds": 0.013119,
+      "Status": "PASS"
+    },
+    {
+      "Particles": [
+        "e",
+        "E",
+        "e",
+        "E",
+        "h"
+      ],
+      "ExpectedHasDiagrams": true,
+      "DiagramCount": 28,
+      "Seconds": 0.040509,
+      "Status": "PASS"
+    },
+    {
+      "Particles": [
+        "u",
+        "D",
+        "e",
+        "Ne",
+        "h"
+      ],
+      "ExpectedHasDiagrams": true,
+      "DiagramCount": 4,
+      "Seconds": 0.009139,
+      "Status": "PASS"
+    },
+    {
+      "Particles": [
+        "u",
+        "U",
+        "C",
+        "c",
+        "A.+"
+      ],
+      "ExpectedHasDiagrams": true,
+      "DiagramCount": 16,
+      "Seconds": 0.025278,
+      "Status": "PASS"
+    },
+    {
+      "Particles": [
+        "G.+",
+        "G.+",
+        "G.+",
+        "G.-",
+        "G.-"
+      ],
+      "ExpectedHasDiagrams": true,
+      "DiagramCount": 15,
+      "Seconds": 0.031997,
+      "Status": "PASS"
+    },
+    {
+      "Particles": [
+        "G.+",
+        "G.+",
+        "G.+",
+        "G.+",
+        "G.-"
+      ],
+      "ExpectedHasDiagrams": true,
+      "DiagramCount": 15,
+      "Seconds": 0.052523,
+      "Status": "PASS"
+    },
+    {
+      "Particles": [
+        "G.+",
+        "G.+",
+        "G.+",
+        "G.+",
+        "G.+"
+      ],
+      "ExpectedHasDiagrams": false,
+      "DiagramCount": 0,
+      "Seconds": 0.028616,
+      "Status": "PASS"
+    },
+    {
+      "Particles": [
+        "h",
+        "h",
+        "h",
+        "h",
+        "Z"
+      ],
+      "ExpectedHasDiagrams": false,
+      "DiagramCount": 0,
+      "Seconds": 0.00909,
+      "Status": "PASS"
+    },
+    {
+      "Particles": [
+        "ne",
+        "Ne",
+        "A.+",
+        "A.+",
+        "A.+"
+      ],
+      "ExpectedHasDiagrams": false,
+      "DiagramCount": 0,
+      "Seconds": 0.003476,
+      "Status": "PASS"
+    }
+  ]
+}

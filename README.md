@@ -24,7 +24,7 @@ reference pages and examples. `PacletInfo.wl` describes the Help package.
 | `source/` | Loader, spinor algebra and model/construction implementation. Additional modules, numerical adapters and exact-proof helpers are grouped under `internal/`. |
 | `models/` | SM elementary model 1 and factorization model 2, elementary QED model 3, and QED factorization models 4 and 5 with physical and spurious pole representations. |
 | `Documentation/` | Native Mathematica Help, its reviewed source and build instructions. |
-| `tests/` | The final QED and SM construction notebooks. |
+| `tests/` | QED six-point and SM four- and five-point construction notebooks. The SM five-point inventory and resumable workflow are in `SM-5-point/`. |
 | `tests/checks/` | Automated function and integration tests, with known expressions and model variants under `fixtures/`. |
 | `tests/benchmarks/` | Timing studies, general-formula tests and comparisons with published expressions. |
 | `tests/reference-models/` | Matched CalcHEP and MadGraph Feynman-rule models used for independent validation. |

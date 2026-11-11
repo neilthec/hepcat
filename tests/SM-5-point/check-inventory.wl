@@ -1,0 +1,36 @@
+(* Graph support only: no amplitude construction or numerical validation. *)
+smFiveRoot=DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
+Get[FileNameJoin[{smFiveRoot,"source","HEPCAT.wl"}]];
+smFiveModel=ReadModel[FileNameJoin[{smFiveRoot,"models"}],1];
+smFiveInventory=Import[FileNameJoin[{smFiveRoot,"tests","SM-5-point","inventory.json"}],"RawJSON"];
+smFiveSamples={
+ {"h","h","h","h","h"},
+ {"W+","W-","h","h","h"},
+ {"Z","Z","h","h","h"},
+ {"e","E","h","h","h"},
+ {"u","U","h","h","h"},
+ {"Ne","e","h","h","W+"},
+ {"e","E","A.+","A.-","h"},
+ {"u","U","G.+","A.+","h"},
+ {"e","E","e","E","h"},
+ {"u","D","e","Ne","h"},
+ {"u","U","C","c","A.+"},
+ {"G.+","G.+","G.+","G.-","G.-"},
+ {"G.+","G.+","G.+","G.+","G.-"},
+ {"G.+","G.+","G.+","G.+","G.+"},
+ {"h","h","h","h","Z"},
+ {"ne","Ne","A.+","A.+","A.+"}
+};
+smFiveChecks=Table[
+ (* Python canonical signatures and Wolfram string sorting differ. Sort both here. *)
+ smFiveExpected=AnyTrue[smFiveInventory["Cases"],Sort[#["Signature"]]===Sort[process]&&TrueQ[#["HasDiagrams"]]&];
+ smFiveTime=AbsoluteTiming[smFiveDiagrams=TimeConstrained[CreateDiagrams[process,smFiveModel],30,$TimedOut];][[1]];
+ <|"Particles"->process,"ExpectedHasDiagrams"->smFiveExpected,
+   "DiagramCount"->If[ListQ[smFiveDiagrams],Length[smFiveDiagrams],Null],
+   "Seconds"->smFiveTime,"Status"->If[ListQ[smFiveDiagrams]&&((Length[smFiveDiagrams]>0)===smFiveExpected),"PASS","FAIL"]|>,
+ {process,smFiveSamples}];
+Export[FileNameJoin[{smFiveRoot,"tests","SM-5-point","diagram-crosschecks.json"}],
+ <|"SchemaVersion"->1,"ModelFiles"->KeySelect[smFiveInventory["Files"],StringStartsQ[#,"models/"]&],
+   "Checks"->smFiveChecks|>,"RawJSON"];
+Print[smFiveChecks];
+Quit[If[AllTrue[smFiveChecks,#["Status"]==="PASS"&],0,1]];

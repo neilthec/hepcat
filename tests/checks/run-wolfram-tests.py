@@ -94,7 +94,7 @@ TEST_SUITES = (
     "numerator-spectator-tests.wl",
     "ordinary-pole-compaction-tests.wl", "scalar-pole-tests.wl",
     "whole-fraction-schouten-tests.wl",
-    "qed-worked-example-tests.wl", "qed-construction-notebook-tests.wl", "sm-construction-notebook-tests.wl",
+    "qed-worked-example-tests.wl", "qed-construction-notebook-tests.wl", "sm-construction-notebook-tests.wl", "sm-five-point-notebook-tests.wl",
     "parallel-execution-tests.wl", "parallel-preparation-tests.wl", "preparation-parallel-policy-tests.wl",
     "parallel-amplitude-check-tests.wl", "parallel-completion-tests.wl",
     "construct-amplitude-tests.wl", "automatic-resource-tests.wl", "random-seed-tests.wl",

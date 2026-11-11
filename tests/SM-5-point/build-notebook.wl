@@ -1,0 +1,263 @@
+(* Rebuild the five-point worked notebook from the process inventory and actual
+   captured runs. This script never evaluates a construction or validation.
+   Run explicitly: WolframKernel -script tests/SM-5-point/build-notebook.wl
+   Options: --inventory FILE --results DIRECTORY --output FILE --families IDS. *)
+
+(*
+HEPCAT - High Energy Physics Constructive Amplitude Tool
+
+Copyright (C) 2026 Neil Christensen
+
+This file is part of HEPCAT.
+
+HEPCAT is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+HEPCAT is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
+*)
+
+$CharacterEncoding = "UTF-8";
+sm5NotebookRoot = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
+sm5NotebookArguments = If[$ScriptCommandLine =!= {}, Rest[$ScriptCommandLine], {}];
+If[OddQ[Length[sm5NotebookArguments]], Print["Expected option/value pairs."]; Quit[1]];
+sm5NotebookOptions = Association[Rule @@@ Partition[sm5NotebookArguments, 2]];
+If[Complement[Keys[sm5NotebookOptions], {"--inventory", "--results", "--output", "--families"}] =!= {},
+  Print["Unknown notebook option."]; Quit[1]];
+sm5NotebookInventoryPath = ExpandFileName[Lookup[sm5NotebookOptions, "--inventory",
+  FileNameJoin[{sm5NotebookRoot, "tests", "SM-5-point", "inventory.json"}]]];
+sm5NotebookResultsPath = ExpandFileName[Lookup[sm5NotebookOptions, "--results",
+  FileNameJoin[{sm5NotebookRoot, "tests", "results", "SM-5-point"}]]];
+sm5NotebookOutputPath = ExpandFileName[Lookup[sm5NotebookOptions, "--output",
+  FileNameJoin[{sm5NotebookRoot, "tests", "SM-5-point-construction.nb"}]]];
+If[!FileExistsQ[sm5NotebookInventoryPath],
+  Print["Generate the SM five-point inventory first: ", sm5NotebookInventoryPath]; Quit[1]];
+Get[FileNameJoin[{sm5NotebookRoot, "source", "HEPCAT.wl"}]];
+sm5NotebookInventory = Import[sm5NotebookInventoryPath, "RawJSON"];
+sm5NotebookCases = Lookup[sm5NotebookInventory, "Cases", {}];
+sm5NotebookFamilies = Lookup[sm5NotebookInventory, "Families", {}];
+If[!VectorQ[sm5NotebookCases, AssociationQ] || !VectorQ[sm5NotebookFamilies, AssociationQ] ||
+    sm5NotebookCases === {} || sm5NotebookFamilies === {},
+  Print["Inventory Cases and Families must be nonempty lists."]; Quit[1]];
+sm5NotebookCasesByID = AssociationThread[Lookup[sm5NotebookCases, "ID"], sm5NotebookCases];
+sm5NotebookFamilyIDs = Lookup[sm5NotebookFamilies, "ID"];
+sm5NotebookFamiliesByID = AssociationThread[sm5NotebookFamilyIDs, sm5NotebookFamilies];
+If[!DuplicateFreeQ[Lookup[sm5NotebookCases, "ID"]] || !DuplicateFreeQ[sm5NotebookFamilyIDs],
+  Print["Duplicate inventory IDs."]; Quit[1]];
+sm5NotebookStarterSignatures = Sort /@ {
+  {"h", "h", "h", "h", "h"}, {"h", "h", "h", "Z", "Z"},
+  {"h", "h", "h", "W+", "W-"}, {"e", "E", "h", "h", "h"}};
+sm5NotebookStarterFamilies = DeleteDuplicates[Lookup[Select[sm5NotebookCases,
+  MemberQ[sm5NotebookStarterSignatures, Sort[#["Particles"]]] &], "FamilyID"]];
+sm5NotebookRecordedFamilies = Select[sm5NotebookFamilies,
+  FileExistsQ[FileNameJoin[{sm5NotebookResultsPath, #["ID"] <> "-export.wxf"}]] ||
+    AnyTrue[Lookup[#, "CaseIDs", {}],
+      FileExistsQ[FileNameJoin[{sm5NotebookResultsPath, # <> ".wxf"}]] &] &];
+sm5NotebookSelectedIDs = If[KeyExistsQ[sm5NotebookOptions, "--families"],
+  DeleteDuplicates[StringSplit[sm5NotebookOptions["--families"], ","]],
+  DeleteDuplicates[Join[sm5NotebookStarterFamilies, Lookup[sm5NotebookRecordedFamilies, "ID", {}]]]];
+If[Complement[sm5NotebookSelectedIDs, sm5NotebookFamilyIDs] =!= {},
+  Print["Unknown family IDs: ", Complement[sm5NotebookSelectedIDs, sm5NotebookFamilyIDs]]; Quit[1]];
+sm5NotebookSelectedFamilies = Select[sm5NotebookFamilies, MemberQ[sm5NotebookSelectedIDs, #["ID"]] &];
+sm5NotebookSectors = DeleteDuplicates[Lookup[sm5NotebookCases, "Sector"]];
+sm5NotebookSectorTitles = <|
+  "PureHiggs" -> "Higgs amplitudes", "MassiveElectroweak" -> "Higgs and massive electroweak vectors",
+  "ElectroweakPhoton" -> "Electroweak amplitudes with photons", "PureGluon" -> "Gluons",
+  "TwoFermionHiggs" -> "Two fermions with Higgs bosons",
+  "TwoFermionElectroweak" -> "Two fermions and electroweak bosons",
+  "TwoFermionQCD" -> "Two fermions and QCD bosons",
+  "FourFermionHiggs" -> "Four fermions with a Higgs boson",
+  "FourFermionElectroweak" -> "Four fermions with a massive electroweak vector",
+  "FourFermionPhoton" -> "Four fermions with a photon",
+  "FourFermionGluon" -> "Four fermions with a gluon"|>;
+
+sm5NotebookParticleToken[name_String] := StringReplace[name, {
+  "A.+" -> "Aplus", "A.-" -> "Aminus", "G.+" -> "Gplus", "G.-" -> "Gminus",
+  "+" -> "p", "-" -> "m", "." -> ""}];
+sm5NotebookProcessName[particles_List] := StringJoin[sm5NotebookParticleToken /@ particles];
+sm5NotebookVariable[id_String] := Module[{item},
+  item = Lookup[sm5NotebookCasesByID, id, Lookup[sm5NotebookFamiliesByID, id, <||>]];
+  "sm5" <> sm5NotebookProcessName[item["Particles"]]
+];
+sm5NotebookSource[expression_] := ToString[expression, InputForm];
+(* Put can leave spaces at syntax line breaks. Scan quotes and backslashes
+   explicitly so closing quotes cannot start overlapping string matches. *)
+sm5NotebookTrimSyntaxWhitespace[text_String] := Module[
+  {markers, strings, whitespace, outside, quoted = False, escapedThrough = 0,
+   stringStart = 1, position, stringIndex = 1, starts, ends},
+  markers = StringPosition[text, "\"" | "\\", Overlaps -> False];
+  strings = Flatten[Last[Reap[
+    Do[
+      position = marker[[1]];
+      If[position <= escapedThrough, Continue[]];
+      If[StringTake[text, marker] === "\"",
+        If[quoted, Sow[{stringStart, position}]; quoted = False,
+          stringStart = position; quoted = True],
+        If[quoted, escapedThrough = position + 1]],
+      {marker, markers}];
+    If[quoted, Sow[{stringStart, StringLength[text]}]]]], 1];
+  whitespace = StringPosition[text, RegularExpression["(?m)[ \\t]+$"], Overlaps -> False];
+  outside = Select[whitespace, Function[span,
+    While[stringIndex <= Length[strings] && strings[[stringIndex, 2]] < span[[1]], stringIndex++];
+    stringIndex > Length[strings] || span[[2]] < strings[[stringIndex, 1]]]];
+  If[outside === {}, Return[text]];
+  starts = Prepend[(Last /@ outside) + 1, 1];
+  ends = Append[(First /@ outside) - 1, StringLength[text]];
+  StringJoin[MapThread[If[#1 <= #2, StringTake[text, {#1, #2}], ""] &, {starts, ends}]]
+];
+
+sm5NotebookText[text_String] := Cell[text, "Text"];
+sm5NotebookCount[n_Integer, singular_String, plural_String] := ToString[n] <> " " <> If[n === 1, singular, plural];
+sm5NotebookInput[text_String, tag_String] := Cell[text, "Input", CellTags -> tag];
+sm5NotebookGroup[cells_List] := Cell[CellGroupData[cells, Open]];
+sm5NotebookRecord[path_String] := If[FileExistsQ[path],
+  Quiet[Check[Import[path, "WXF"], <||>]], <||>];
+sm5NotebookOutput[value_, style_String] := Cell[BoxData[ToBoxes[value, StandardForm]], style,
+  GeneratedCell -> True, CellAutoOverwrite -> True];
+sm5NotebookRecordedFailure[record_Association] := Module[{failure, status},
+  status = Lookup[record, "Status", "UNKNOWN"];
+  If[!MemberQ[{"FAIL", "TIMEOUT", "ERROR", "INTERRUPTED"}, status], Return[Missing["NoFailure"]]];
+  failure = FirstCase[record, _Failure, Missing["NoFailureDetails"], Infinity];
+  If[!MissingQ[failure], Return[failure]];
+  Failure["RecordedSMFivePointRun", <|
+    "MessageTemplate" -> "The saved run ended with status `` after `` seconds and did not return a completed result.",
+    "MessageParameters" -> {status, Lookup[record, "Seconds", "unknown"]},
+    "Status" -> status, "Seconds" -> Lookup[record, "Seconds", Missing["Unknown"]]|>]
+];
+sm5NotebookCaptured[record_Association, kind_String] := Module[{cells, prints, output, failure},
+  cells = Lookup[record, "NotebookCells", Missing["NoCapturedCells"]];
+  failure = sm5NotebookRecordedFailure[record];
+  If[ListQ[cells] && AllTrue[cells, MatchQ[#, _Cell] &],
+    Return[If[!MissingQ[failure] && FreeQ[cells, Cell[_, "Output", ___]],
+      Append[cells, sm5NotebookOutput[failure, "Output"]], cells]]];
+  prints = sm5NotebookOutput[#, "Print"] & /@ Lookup[record, "Prints", {}];
+  output = If[kind === "Construction", Lookup[record, "Expression", Missing["NoOutput"]],
+    With[{result = Lookup[record, "Result", Missing["NoOutput"]]},
+      If[AssociationQ[result] && KeyExistsQ[result, "Directory"], result["Directory"], result]]];
+  If[MissingQ[output] && !MissingQ[failure], output = failure];
+  Join[prints, If[MissingQ[output], {}, {sm5NotebookOutput[output, "Output"]}]]
+];
+sm5NotebookCaptured[_, _] := {};
+sm5NotebookCalculation[case_Association] := Module[{id, variable, code, record, cells},
+  id = case["ID"]; variable = sm5NotebookVariable[id];
+  code = variable <> "Particles = " <> sm5NotebookSource[case["Particles"]] <> ";\n" <>
+    variable <> "Amplitude = ConstructAmplitude[" <> variable <>
+    "Particles, sm, smFactorization,\n  \"FeynmanModel\" -> smFeynman]";
+  record = sm5NotebookRecord[FileNameJoin[{sm5NotebookResultsPath, id <> ".wxf"}]];
+  cells = sm5NotebookCaptured[record, "Construction"];
+  sm5NotebookGroup[Prepend[cells, sm5NotebookInput[code, "sm5-construction-" <> id]]]
+];
+sm5NotebookFamily[family_Association] := Module[
+  {id, variable, exportName, cases, labels, cells, code, entries, record, physical},
+  id = family["ID"]; variable = sm5NotebookVariable[id]; exportName = family["ExportName"];
+  cases = Lookup[sm5NotebookCasesByID, family["CaseIDs"]];
+  If[!VectorQ[cases, AssociationQ], Print["Unknown case in family ", id]; Quit[1]];
+  labels = StringRiffle[family["Particles"], ", "];
+  physical = StringRiffle[family["Incoming"], ", "] <> " -> " <>
+    StringRiffle[family["Outgoing"], ", "];
+  cells = {Cell[labels, "Subsection", CellTags -> "sm5-family-" <> id],
+    sm5NotebookText["Physical export: " <> physical <>
+      ". The construction lists below use all momenta ingoing."]};
+  Do[
+    If[Length[cases] > 1, AppendTo[cells,
+      Cell[StringRiffle[case["Particles"], ", "], "Subsubsection"]]];
+    AppendTo[cells, sm5NotebookCalculation[case]], {case, cases}];
+  AppendTo[cells, sm5NotebookText["After the amplitudes above complete, run this export. " <>
+    "One C++ process contains the helicity family. It builds SPINAS and compares " <>
+    "the squared amplitudes with CalcHEP and MadGraph at 1000 phase-space points each. " <>
+    "The complete reports and random seeds remain in the Export variable."]];
+  entries = StringRiffle[("    {" <> sm5NotebookVariable[#["ID"]] <> "Particles, " <>
+      sm5NotebookVariable[#["ID"]] <> "Amplitude}") & /@ cases, ",\n"];
+  code = variable <> "Export = WriteSPINASProcess[\n" <>
+    "  FileNameJoin[{spinasOutputDirectory, \"" <> exportName <> "\"}],\n  " <>
+    sm5NotebookSource[family["Incoming"]] <> " -> " <> sm5NotebookSource[family["Outgoing"]] <>
+    ",\n  {\n" <> entries <> "\n  }, sm,\n  \"ProcessName\" -> \"" <>
+    "sm5" <> exportName <> "\", Sequence @@ validationOptions];\n" <>
+    "If[AssociationQ[" <> variable <> "Export], " <> variable <> "Export[\"Directory\"], " <>
+    variable <> "Export]";
+  record = sm5NotebookRecord[FileNameJoin[{sm5NotebookResultsPath, id <> "-export.wxf"}]];
+  AppendTo[cells, sm5NotebookGroup[Prepend[sm5NotebookCaptured[record, "Export"],
+    sm5NotebookInput[code, "sm5-export-" <> id]]]];
+  sm5NotebookGroup[cells]
+];
+
+sm5NotebookSetup = sm5NotebookGroup[{
+  Cell["Setup", "Section"],
+  sm5NotebookInput["hepcatDirectory = ExpandFileName[\"~/code/hepcat\"];\n" <>
+    "Get[FileNameJoin[{hepcatDirectory, \"source\", \"HEPCAT.wl\"}]]", "sm5-setup-load"],
+  sm5NotebookInput["sm = ReadModel[FileNameJoin[{hepcatDirectory, \"models\"}], 1];\n" <>
+    "smFactorization = ReadModel[FileNameJoin[{hepcatDirectory, \"models\"}], 2];\n" <>
+    "smFeynman = ReadModel[FileNameJoin[{hepcatDirectory, \"tests\", \"reference-models\", \"calchep\"}], 1];",
+    "sm5-setup-models"],
+  sm5NotebookText["Model 1 supplies elementary SM interactions for the diagrams. Model 2 " <>
+    "supplies complete four-point amplitudes for the five-point factorization channels. " <>
+    "The Feynman calculation uses the separate SM Feynman-rule model. Change the paths below " <>
+    "to match your installation. Independent numerical comparisons match the parameters " <>
+    "and turn off widths in their private benchmark copies."],
+  sm5NotebookInput[StringRiffle[{
+    "spinasDirectory = FileNameJoin[{ParentDirectory[hepcatDirectory], \"spinas\"}];",
+    "spinasOutputDirectory = FileNameJoin[{hepcatDirectory, \"tests\", \"results\", \"spinas-output\", \"SM-5-point\"}];",
+    "calcHEPDirectory = FileNameJoin[{ParentDirectory[hepcatDirectory], \"CalcHEP\", \"calchep_3.9.2\"}];",
+    "calcHEPModel = {FileNameJoin[{hepcatDirectory, \"tests\", \"reference-models\", \"calchep\"}], 1};",
+    "madGraphDirectory = FileNameJoin[{ParentDirectory[hepcatDirectory], \"MadGraph\"}];",
+    "madGraphModel = FileNameJoin[{hepcatDirectory, \"tests\", \"reference-models\", \"madgraph\", \"sm\"}];",
+    "madGraphParameterRules = {\"lamWS\" -> 0};",
+    "validationPoints = 1000;",
+    "validationOptions = {",
+    "  \"SPINASDirectory\" -> spinasDirectory,",
+    "  \"Build\" -> True, \"RunExamples\" -> True, \"Overwrite\" -> True,",
+    "  \"CalcHEPDirectory\" -> calcHEPDirectory, \"CalcHEPModel\" -> calcHEPModel,",
+    "  \"CalcHEPPoints\" -> validationPoints, \"RunCalcHEPValidation\" -> True,",
+    "  \"MadGraphDirectory\" -> madGraphDirectory, \"MadGraphModel\" -> madGraphModel,",
+    "  \"MadGraphParameterRules\" -> madGraphParameterRules,",
+    "  \"MadGraphPoints\" -> validationPoints, \"RunMadGraphValidation\" -> True,",
+    "  \"ReturnDetails\" -> True};"}, "\n"], "sm5-setup-validation"],
+  sm5NotebookText["Both reference programs retain the full SM. The lamWS setting selects " <>
+    "diagonal quark flavor mixing to match the constructive model. The massive-quark " <>
+    "reference models include their Higgs couplings. No electron/photon-only restriction is applied."]
+}];
+sm5NotebookOverview = sm5NotebookGroup[Join[{
+  Cell["Sector overview", "Section"],
+  sm5NotebookText["The full inventory contains " <> ToString[Length[sm5NotebookCases]] <>
+    " construction cases in " <> ToString[Length[sm5NotebookFamilies]] <> " export families. " <>
+    "This notebook develops the sectors in stages. The explicit calculations below cover " <>
+    ToString[Length[sm5NotebookSelectedFamilies]] <> " families; the remaining families are listed " <>
+    "in tests/SM-5-point/inventory.json. Validation results appear after each calculation or comparison runs."],
+  sm5NotebookText["The cells retain output only from actual captured runs. Missing output " <>
+    "means the cell has not been run here. Evaluate Setup, then an amplitude cell, then its " <>
+    "family export to obtain fresh construction and numerical comparison tables."]},
+  Table[sm5NotebookText[Lookup[sm5NotebookSectorTitles, sector, sector] <> ": " <>
+    sm5NotebookCount[Count[Lookup[sm5NotebookFamilies, "Sector"], sector], "export family", "export families"] <> ", " <>
+    sm5NotebookCount[Count[Lookup[sm5NotebookCases, "Sector"], sector], "construction case", "construction cases"] <> "."],
+    {sector, sm5NotebookSectors}]]];
+sm5NotebookSectorGroups = Table[With[
+  {families = Select[sm5NotebookSelectedFamilies, #["Sector"] === sector &]},
+  If[families === {}, Nothing, sm5NotebookGroup[Join[
+    {Cell[Lookup[sm5NotebookSectorTitles, sector, sector], "Section", CellTags -> "sm5-sector-" <> sector]},
+    sm5NotebookFamily /@ families]]]], {sector, sm5NotebookSectors}];
+sm5NotebookDocument = Notebook[{sm5NotebookGroup[Join[{
+  Cell["SM Five-Point Construction and Independent Validation", "Title"],
+  sm5NotebookText["Construct the five-point SM amplitudes from elementary diagrams and " <>
+    "complete lower-point factorization amplitudes. Each construction checks physical poles, " <>
+    "spurious-pole cancellation, high-energy behavior, reference independence and independent " <>
+    "Feynman diagrams. Each process family has its own SPINAS export with CalcHEP and MadGraph comparisons."],
+  sm5NotebookText["All construction momenta are ingoing. The export states a physical " <>
+    "two-to-three process and crosses the outgoing particles consistently. Photon and gluon " <>
+    "helicities remain explicit; the numerical comparisons perform the required spin and color sums."],
+  sm5NotebookSetup, sm5NotebookOverview}, sm5NotebookSectorGroups]]},
+  WindowTitle -> "SM Five-Point Construction and Validation", StyleDefinitions -> "Default.nb",
+  TaggingRules -> <|"GeneratedBy" -> "tests/SM-5-point/build-notebook.wl",
+    "Inventory" -> "tests/SM-5-point/inventory.json"|>];
+If[!DirectoryQ[DirectoryName[sm5NotebookOutputPath]],
+  CreateDirectory[DirectoryName[sm5NotebookOutputPath], CreateIntermediateDirectories -> True]];
+Put[sm5NotebookDocument, sm5NotebookOutputPath];
+Export[sm5NotebookOutputPath,
+  sm5NotebookTrimSyntaxWhitespace[Import[sm5NotebookOutputPath, "Text"]], "Text"];
+Print["Wrote ", sm5NotebookOutputPath, " with ", Length[sm5NotebookSelectedFamilies], " families."];
