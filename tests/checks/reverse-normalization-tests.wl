@@ -91,10 +91,16 @@ rfFixtures = {
    ModelParameter["mb", "reverse-factor-b", "Real"]}]
 };
 Do[
+ (* Derive the target cost from the independent factored fixture. Momentum
+    weights are a declared ranking policy, not a fixed numerical constant. *)
+ rfKnownFactoredScore = SpinorExpressionComplexity[fixture["Factored"]];
+ rfKnownOriginalScore = SpinorExpressionComplexity[fixture["Original"]];
  rfResult = ConstructiveDiagrams`Private`rspReverseNormalizationFactor[
    fixture["Original"], fixture["MassRules"], 5];
  check["general factor recovery " <> ToString[index],
-   rfResult["Status"] === "IMPROVED" && First[rfResult["Rank"]] <= 52 &&
+   rfResult["Status"] === "IMPROVED" && First[rfResult["Rank"]] <= rfKnownFactoredScore &&
+   First[rfResult["Rank"]] < rfKnownOriginalScore &&
+   rfMatrixZero[rfResult["Amplitude"] - fixture["Factored"], fixture] &&
    Length[rfResult["Route"]] <= 3 && rfResult["ForwardNormalizationCertificate"] &&
    !rfResult["InverseKinematicsIntroduced"] && rfResult["InternalOnShellConditions"] === {}];
  check["exact forward normalization and replay " <> ToString[index],
@@ -107,20 +113,24 @@ Do[
    fixture["FormalWitness"] === 0 && AllTrue[fixture["Relations"], rfMatrixZero[#, fixture] &]];
  rfOnce = ReduceSpinorProducts[fixture["Factored"]];
  check["factored polynomial is retained and idempotent " <> ToString[index],
-   SpinorExpressionComplexity[rfOnce] <= 52 && ReduceSpinorProducts[rfOnce] === rfOnce],
+   SpinorExpressionComplexity[rfOnce] <= rfKnownFactoredScore &&
+   rfMatrixZero[rfOnce - fixture["Factored"], fixture] && ReduceSpinorProducts[rfOnce] === rfOnce],
  {index, Length[rfFixtures]}, {fixture, {rfFixtures[[index]]}}];
 
 rfBase = First[rfFixtures];
+rfKnownForwardPolynomial = rfForward[rfBase["Original"], rfBase["MassRules"]];
+rfKnownBaseFactoredScore = SpinorExpressionComplexity[rfBase["Factored"]];
 rfBasisFlagBefore = OwnValues[ConstructiveDiagrams`Private`$rspCanonicalProductBasis];
 rfCanonicalPolynomial = Block[{ConstructiveDiagrams`Private`$rspCanonicalProductBasis = True},
  ReduceSpinorProducts[rfBase["Factored"]]];
 check["a private coordinate-basis scope requests forward canonical product reduction",
- SpinorExpressionComplexity[rfCanonicalPolynomial] === 103 &&
- rfForward[rfCanonicalPolynomial, rfBase["MassRules"]] ===
-   rfForward[rfBase["Original"], rfBase["MassRules"]]];
+ SpinorExpressionComplexity[rfCanonicalPolynomial] ===
+   SpinorExpressionComplexity[rfKnownForwardPolynomial] &&
+ SpinorExpressionComplexity[rfCanonicalPolynomial] > rfKnownBaseFactoredScore &&
+ rfForward[rfCanonicalPolynomial, rfBase["MassRules"]] === rfKnownForwardPolynomial];
 check["the private basis scope does not leak into ordinary polynomial preparation",
  OwnValues[ConstructiveDiagrams`Private`$rspCanonicalProductBasis] === rfBasisFlagBefore &&
- SpinorExpressionComplexity[ReduceSpinorProducts[rfBase["Factored"]]] <= 52 &&
+ SpinorExpressionComplexity[ReduceSpinorProducts[rfBase["Factored"]]] <= rfKnownBaseFactoredScore &&
  OwnValues[ConstructiveDiagrams`Private`$rspCanonicalProductBasis] === rfBasisFlagBefore];
 rfStopped = ConstructiveDiagrams`Private`rspReverseNormalizationFactor[
  rfBase["Original"], rfBase["MassRules"], 0];

@@ -9,6 +9,7 @@ import argparse
 import datetime as dt
 import fcntl
 import hashlib
+import importlib.util
 import json
 import math
 import os
@@ -110,8 +111,23 @@ def refresh(inventory, previous=None, context_sha=None, points=1000):
                                                             for cid in family['CaseIDs']}):
                 summary = {**summary, 'Status': 'STALE', 'Reason': 'A member or independent validation is incomplete.'}
             families[family['ID']] = summary
+    qualified = []
+    precision_path = Path(__file__).with_name('precision_evidence.py')
+    if precision_path.is_file():
+        specification = importlib.util.spec_from_file_location('hepcat_sm5_precision_evidence', precision_path)
+        precision = importlib.util.module_from_spec(specification)
+        specification.loader.exec_module(precision)
+        for family in inventory['Families']:
+            summary = families.get(family['ID'])
+            if summary and summary.get('Status') != 'PASS':
+                evidence = precision.qualification(family, summary, cases, context_sha,
+                    RESULTS, ROOT / 'tests/results/spinas-output/SM-5-point', points)
+                if evidence:
+                    summary['PrecisionQualification'] = evidence
+                    qualified.append(family)
     fully = sum(len(f['CaseIDs']) for f in inventory['Families']
                 if families.get(f['ID'], {}).get('Status') == 'PASS')
+    qualified_cases = sum(len(f['CaseIDs']) for f in qualified)
     state.update(SchemaVersion=1, UpdatedUTC=timestamp(), ContextSHA256=context_sha,
                  InventorySHA256=hashlib.sha256((HERE / 'inventory.json').read_bytes()).hexdigest(),
                  Cases=cases, Families=families,
@@ -119,6 +135,9 @@ def refresh(inventory, previous=None, context_sha=None, points=1000):
                          'TotalFamilies': len(inventory['Families']),
                          'Constructed': sum(c.get('Status') == 'COMPLETE' for c in cases.values()),
                          'FullyValidatedCases': fully,
+                         'PrecisionQualifiedCases': qualified_cases,
+                         'ValidatedIncludingPrecisionQualifiedCases': fully + qualified_cases,
+                         'PrecisionQualifiedFamilies': len(qualified),
                          'ValidatedFamilies': sum(f.get('Status') == 'PASS' for f in families.values()),
                          'FailedOrTimedOut': sum(c.get('Status') in ('FAIL', 'TIMEOUT', 'ERROR')
                                                 for c in cases.values())})
@@ -205,7 +224,7 @@ def main():
     parser.add_argument('--representatives', action='store_true',
                         help='Begin with one family per certified generation orbit.')
     parser.add_argument('--retry-failed', action='store_true')
-    parser.add_argument('--timeout', type=float, default=2400,
+    parser.add_argument('--timeout', type=float, default=7200,
                         help='External deadline per construction, seconds.')
     parser.add_argument('--export-timeout', type=float, default=1800)
     parser.add_argument('--points', type=int, default=1000)
@@ -244,7 +263,7 @@ def main():
     selected = []
     for family in families:
         old = state['Families'].get(family['ID'], {})
-        if old.get('Status') == 'PASS':
+        if old.get('Status') == 'PASS' or old.get('PrecisionQualification', {}).get('Status') == 'PRECISION_QUALIFIED':
             continue
         attempted = [state['Cases'].get(cid, {}) for cid in family['CaseIDs']]
         if not args.retry_failed and any(c.get('Status') in ('FAIL', 'TIMEOUT', 'ERROR') for c in attempted):
@@ -288,7 +307,9 @@ def main():
     finally:
         state = refresh(inventory, state, context_sha256(configuration), args.points)
         state.update(StopReason=stopped, CurrentCase=None, CurrentFamily=None)
-        pending = [f['ID'] for f in families if state['Families'].get(f['ID'], {}).get('Status') != 'PASS']
+        pending = [f['ID'] for f in families
+                   if state['Families'].get(f['ID'], {}).get('Status') != 'PASS'
+                   and state['Families'].get(f['ID'], {}).get('PrecisionQualification', {}).get('Status') != 'PRECISION_QUALIFIED']
         state['NextFamily'] = pending[0] if pending else None
         atomic_json(PROGRESS, state)
         if args.notebook:

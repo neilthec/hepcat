@@ -93,7 +93,9 @@ sm5ntCheck["export filenames remain distinct on case-insensitive filesystems",
   DuplicateFreeQ[ToLowerCase /@ Lookup[sm5ntInventory["Families"], "ExportName"]]];
 sm5ntCheck["the remaining work is stated without a synthetic validation table",
   !FreeQ[sm5ntNotebook, text_String /; StringContainsQ[text, "tests/SM-5-point/inventory.json"]] &&
-    FreeQ[sm5ntParsed, _Dataset | _Grid]];
+    FreeQ[sm5ntParsed, _Grid] &&
+    Count[sm5ntParsed, _Dataset, Infinity] === Count[sm5ntTags, tag_String /;
+      StringStartsQ[tag, "sm5-precision-replay-"]]];
 
 (* Test replay with small synthetic payloads, never substituting them for a
    physics result. The builder only renders cells and never calls constructors. *)
@@ -146,6 +148,46 @@ sm5ntBuild[];
 sm5ntReplayTimeout = sm5ntRead[sm5ntFixtureNotebook];
 sm5ntCheck["an interrupted run without detailed output displays its recorded status",
   !FreeQ[sm5ntReplayTimeout, "RecordedSMFivePointRun"] && !FreeQ[sm5ntReplayTimeout, "TIMEOUT"]];
+Export[FileNameJoin[{sm5ntTemporary, sm5ntSampleID <> ".wxf"}],
+  <|"ID" -> sm5ntSampleID, "Prints" -> {"synthetic original construction"}, "Expression" -> 3/7,
+    "RevalidationPrints" -> {"synthetic current native checks"}, "RevalidationSeconds" -> 1.25|>, "WXF"];
+sm5ntBuild[];
+sm5ntReplayRevalidation = sm5ntRead[sm5ntFixtureNotebook];
+sm5ntRecheckGroups = Cases[sm5ntReplayRevalidation,
+  HoldPattern[CellGroupData[{Cell[_, "Input", options___], rest___}, _]] /;
+      MemberQ[{options}, CellTags -> "sm5-construction-" <> sm5ntSampleID] :> {rest}, Infinity];
+sm5ntCheck["actual revalidation prints follow construction prints and precede the amplitude",
+  Length[sm5ntRecheckGroups] === 1 &&
+    (Cases[First[sm5ntRecheckGroups], Cell[_, style_String, ___] :> style, {1}] ===
+      {"Print", "Text", "Print", "Output"}) &&
+    !FreeQ[sm5ntReplayRevalidation, text_String /; StringContainsQ[text, "unchanged saved amplitude"]]];
+sm5ntCheck["fresh input evaluation can replace the generated revalidation provenance",
+  !FreeQ[sm5ntReplayRevalidation, Cell[_, "Text", GeneratedCell -> True, CellAutoOverwrite -> True,
+    CellTags -> "sm5-revalidation-" <> sm5ntSampleID]]];
+sm5ntRevalidator = sm5ntRead[FileNameJoin[{sm5ntRoot, "tests", "SM-5-point", "revalidate.wl"}]];
+sm5ntCheck["the retained-amplitude revalidator parses and never invokes construction",
+  MatchQ[sm5ntRevalidator, _HoldComplete] && FreeQ[sm5ntRevalidator, _Syntax | _ConstructAmplitude]];
+sm5ntCheck["revalidation retains native default mandatory checks",
+  !FreeQ[sm5ntRevalidator, HoldPattern[CheckAmplitudes[expression, channels, factorizationModel,
+      "FeynmanAmplitudes" -> benchmark, "FeynmanModel" -> feynmanModel,
+      "Output" -> "Details", "RandomSeed" -> seed]]] &&
+    FreeQ[sm5ntRevalidator, HoldPattern[(("HighEnergyCheck" | "ReferenceCheck") -> False) |
+      ("SpuriousPoles" -> {})]]];
+sm5ntPrecisionSample = <|"Results" -> <|
+  "Native" -> <|"MantissaBits" -> 53, "Points" -> 1000, "Mismatches" -> 17, "Errors" -> 0,
+    "MaximumRelativeError" -> 4.*^-7, "Status" -> "FAIL"|>,
+  "GCC53" -> <|"MantissaBits" -> 53, "Points" -> 1000, "Mismatches" -> 18, "Errors" -> 0,
+    "MaximumRelativeError" -> 5.*^-7, "Status" -> "FAIL"|>,
+  "GCC128" -> <|"MantissaBits" -> 113, "Points" -> 1000, "Mismatches" -> 0, "Errors" -> 0,
+    "MaximumRelativeError" -> 2.*^-8, "Status" -> "PASS"|>|>|>;
+sm5ntPrecisionRows = sm5NotebookPrecisionRows[sm5ntPrecisionSample];
+sm5ntCheck["precision replay presentation preserves raw default failures and actual numerical fields",
+  Lookup[sm5ntPrecisionRows, "Status"] === {"FAIL", "FAIL", "PASS"} &&
+    Lookup[sm5ntPrecisionRows, "Mismatches"] === {17, 18, 0} &&
+    Lookup[sm5ntPrecisionRows, "MantissaBits"] === {53, 53, 113}];
+sm5ntCheck["repeated notebook replacement leaves a complete notebook and no temporary output",
+  MatchQ[sm5ntRead[sm5ntFixtureNotebook], HoldComplete[_Notebook]] &&
+    FileNames[".*.tmp", sm5ntTemporary] === {}];
 sm5ntCheck["syntax whitespace cleanup preserves spaces inside multiline string literals",
   sm5NotebookTrimSyntaxWhitespace["Notebook[{  \nCell[\"kept  \nkept\\\"  \n\", \"Text\"]  \n}]  \n"] ===
     "Notebook[{\nCell[\"kept  \nkept\\\"  \n\", \"Text\"]\n}]\n"];

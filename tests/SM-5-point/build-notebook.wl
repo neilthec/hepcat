@@ -131,18 +131,36 @@ sm5NotebookRecordedFailure[record_Association] := Module[{failure, status},
     "MessageParameters" -> {status, Lookup[record, "Seconds", "unknown"]},
     "Status" -> status, "Seconds" -> Lookup[record, "Seconds", Missing["Unknown"]]|>]
 ];
+sm5NotebookWithRevalidation[cells_List, record_Association] := Module[
+  {prints, additions, positions, index, seconds},
+  prints = Lookup[record, "RevalidationPrints", {}];
+  If[!ListQ[prints] || prints === {}, Return[cells]];
+  seconds = Lookup[record, "RevalidationSeconds", Missing["Unknown"]];
+  additions = Join[{Cell[
+    "Revalidation of the retained expression" <>
+      If[NumberQ[seconds], ": " <> ToString[NumberForm[seconds, {8, 2}], OutputForm] <> " s", ""] <>
+      ". The original construction output and timing remain above; the following checks use the unchanged saved amplitude with the current package.",
+    "Text", GeneratedCell -> True, CellAutoOverwrite -> True,
+    CellTags -> "sm5-revalidation-" <> Lookup[record, "ID", "retained"]]},
+    sm5NotebookOutput[#, "Print"] & /@ prints];
+  positions = Position[cells, Cell[_, "Output", ___], {1}, 1];
+  index = If[positions === {}, Length[cells] + 1, First[First[positions]]];
+  Join[Take[cells, index - 1], additions, Drop[cells, index - 1]]
+];
 sm5NotebookCaptured[record_Association, kind_String] := Module[{cells, prints, output, failure},
   cells = Lookup[record, "NotebookCells", Missing["NoCapturedCells"]];
   failure = sm5NotebookRecordedFailure[record];
   If[ListQ[cells] && AllTrue[cells, MatchQ[#, _Cell] &],
-    Return[If[!MissingQ[failure] && FreeQ[cells, Cell[_, "Output", ___]],
-      Append[cells, sm5NotebookOutput[failure, "Output"]], cells]]];
+    Return[sm5NotebookWithRevalidation[
+      If[!MissingQ[failure] && FreeQ[cells, Cell[_, "Output", ___]],
+        Append[cells, sm5NotebookOutput[failure, "Output"]], cells], record]]];
   prints = sm5NotebookOutput[#, "Print"] & /@ Lookup[record, "Prints", {}];
   output = If[kind === "Construction", Lookup[record, "Expression", Missing["NoOutput"]],
     With[{result = Lookup[record, "Result", Missing["NoOutput"]]},
       If[AssociationQ[result] && KeyExistsQ[result, "Directory"], result["Directory"], result]]];
   If[MissingQ[output] && !MissingQ[failure], output = failure];
-  Join[prints, If[MissingQ[output], {}, {sm5NotebookOutput[output, "Output"]}]]
+  sm5NotebookWithRevalidation[
+    Join[prints, If[MissingQ[output], {}, {sm5NotebookOutput[output, "Output"]}]], record]
 ];
 sm5NotebookCaptured[_, _] := {};
 sm5NotebookCalculation[case_Association] := Module[{id, variable, code, record, cells},
@@ -153,6 +171,68 @@ sm5NotebookCalculation[case_Association] := Module[{id, variable, code, record, 
   record = sm5NotebookRecord[FileNameJoin[{sm5NotebookResultsPath, id <> ".wxf"}]];
   cells = sm5NotebookCaptured[record, "Construction"];
   sm5NotebookGroup[Prepend[cells, sm5NotebookInput[code, "sm5-construction-" <> id]]]
+];
+sm5NotebookPathSource[path_String] := Module[{absolute, parts, rootParts},
+  absolute = ExpandFileName[path]; parts = FileNameSplit[absolute]; rootParts = FileNameSplit[sm5NotebookRoot];
+  If[Length[parts] >= Length[rootParts] && Take[parts, Length[rootParts]] === rootParts,
+    "FileNameJoin[{hepcatDirectory, " <>
+      StringRiffle[sm5NotebookSource /@ Drop[parts, Length[rootParts]], ", "] <> "}]",
+    sm5NotebookSource[absolute]]
+];
+sm5NotebookPrecisionRows[report_Association] := Table[
+  Join[<|"Evaluation" -> name|>, KeyTake[report["Results"][name], {
+    "MantissaBits", "Points", "Mismatches", "Errors", "MaximumRelativeError", "Status"}]],
+  {name, {"Native", "GCC53", "GCC128"}}];
+sm5NotebookPrecisionCells[family_Association] := Module[
+  {id, link, verification, qualification, reportPath, report, pointsPath, pointsOption,
+   variable, exportName, code, table, outputDirectorySource, note},
+  id = family["ID"];
+  link = FileNameJoin[{sm5NotebookResultsPath, id <> "-precision.json"}];
+  If[!FileExistsQ[link], Return[{}]];
+  verification = Quiet[Check[RunProcess[{
+    "python3", FileNameJoin[{sm5NotebookRoot, "tests", "SM-5-point", "precision_evidence.py"}],
+    "--family", id, "--results", sm5NotebookResultsPath,
+    "--export-root", FileNameJoin[{sm5NotebookRoot, "tests", "results", "spinas-output", "SM-5-point"}],
+    "--inventory", sm5NotebookInventoryPath}], $Failed]];
+  qualification = If[AssociationQ[verification] && Lookup[verification, "ExitCode", 1] === 0,
+    Quiet[Check[ImportString[verification["StandardOutput"], "RawJSON"], <||>]], <||>];
+  If[!AssociationQ[qualification] || Lookup[qualification, "Status", None] =!= "PRECISION_QUALIFIED",
+    Print["Precision replay binding is not current: ", id]; Return[{}]];
+  reportPath = FileNameJoin[{sm5NotebookResultsPath, qualification["Report"]}];
+  If[!FileExistsQ[reportPath] || IntegerString[FileHash[reportPath, "SHA256"], 16, 64] =!=
+      Lookup[qualification, "ReportSHA256", None], Return[{}]];
+  report = Import[reportPath, "RawJSON"];
+  If[!AssociationQ[report] || !AssociationQ[Lookup[report, "Results", None]], Return[{}]];
+  pointsPath = FileNameJoin[{DirectoryName[reportPath], "points.csv"}];
+  pointsOption = If[FileExistsQ[pointsPath],
+    "  \"--points-csv\", " <> sm5NotebookPathSource[pointsPath] <> ",\n",
+    "  \"--points\", \"1000\",\n"];
+  variable = sm5NotebookVariable[id]; exportName = family["ExportName"];
+  outputDirectorySource = "FileNameJoin[{hepcatDirectory, \"tests\", \"results\", \"SM-5-point\", " <>
+    "\"precision\", \"" <> exportName <> "-replay\",\n  " <>
+    "DateString[{\"Year\", \"Month\", \"Day\", \"-\", \"Hour\", \"Minute\", \"Second\"}]}]";
+  code = variable <> "PrecisionDirectory = " <> outputDirectorySource <> ";\n" <>
+    variable <> "PrecisionRun = RunProcess[{\n  \"python3\",\n  " <>
+    "FileNameJoin[{hepcatDirectory, \"tests\", \"SM-5-point\", \"replay-calchep-precision.py\"}],\n  " <>
+    "FileNameJoin[{spinasOutputDirectory, \"" <> exportName <> "\"}],\n" <>
+    pointsOption <> "  \"--seed\", \"" <> ToString[report["Seed"], InputForm] <> "\",\n  " <>
+    "\"--output\", " <> variable <> "PrecisionDirectory}];\n" <>
+    variable <> "PrecisionSummaryFile = FileNameJoin[{" <> variable <> "PrecisionDirectory, \"precision-summary.json\"}];\n" <>
+    "If[FileExistsQ[" <> variable <> "PrecisionSummaryFile],\n  " <>
+    variable <> "PrecisionReport = Import[" <> variable <> "PrecisionSummaryFile, \"RawJSON\"];\n  " <>
+    "Dataset[Table[\n    Join[<|\"Evaluation\" -> name|>, KeyTake[" <> variable <>
+    "PrecisionReport[\"Results\"][name],\n      {\"MantissaBits\", \"Points\", \"Mismatches\", \"Errors\", \"MaximumRelativeError\", \"Status\"}]],\n    " <>
+    "{name, {\"Native\", \"GCC53\", \"GCC128\"}}]],\n  " <> variable <> "PrecisionRun]";
+  note = "The default CalcHEP comparison above retains its raw residuals. This separate replay " <>
+    "uses the same saved phase-space points and CalcHEP expressions. With " <>
+    ToString[report["Results"]["GCC128"]["MantissaBits"]] <> " mantissa bits, all " <>
+    ToString[report["Points"]] <> " points agree at the unchanged tolerance. This behavior is " <>
+    "consistent with roundoff in cancellations at ordinary precision. The native and GCC53 controls " <>
+    "remain visible below. Run this optional cell for a fresh replay; each run keeps its own output directory.";
+  table = Dataset[sm5NotebookPrecisionRows[report], MaxItems -> {All, All}];
+  {Cell["CalcHEP precision replay (optional)", "Subsubsection"], sm5NotebookText[note],
+    sm5NotebookGroup[{sm5NotebookInput[code, "sm5-precision-replay-" <> id],
+      sm5NotebookOutput[table, "Output"]}]}
 ];
 sm5NotebookFamily[family_Association] := Module[
   {id, variable, exportName, cases, labels, cells, code, entries, record, physical},
@@ -185,6 +265,7 @@ sm5NotebookFamily[family_Association] := Module[
   record = sm5NotebookRecord[FileNameJoin[{sm5NotebookResultsPath, id <> "-export.wxf"}]];
   AppendTo[cells, sm5NotebookGroup[Prepend[sm5NotebookCaptured[record, "Export"],
     sm5NotebookInput[code, "sm5-export-" <> id]]]];
+  cells = Join[cells, sm5NotebookPrecisionCells[family]];
   sm5NotebookGroup[cells]
 ];
 
@@ -257,7 +338,15 @@ sm5NotebookDocument = Notebook[{sm5NotebookGroup[Join[{
     "Inventory" -> "tests/SM-5-point/inventory.json"|>];
 If[!DirectoryQ[DirectoryName[sm5NotebookOutputPath]],
   CreateDirectory[DirectoryName[sm5NotebookOutputPath], CreateIntermediateDirectories -> True]];
-Put[sm5NotebookDocument, sm5NotebookOutputPath];
-Export[sm5NotebookOutputPath,
-  sm5NotebookTrimSyntaxWhitespace[Import[sm5NotebookOutputPath, "Text"]], "Text"];
+sm5NotebookTemporaryPath = FileNameJoin[{DirectoryName[sm5NotebookOutputPath],
+  "." <> FileNameTake[sm5NotebookOutputPath] <> "." <> CreateUUID[] <> ".tmp"}];
+sm5NotebookWriteResult = CheckAbort[
+  Check[
+    Put[sm5NotebookDocument, sm5NotebookTemporaryPath];
+    Export[sm5NotebookTemporaryPath,
+      sm5NotebookTrimSyntaxWhitespace[Import[sm5NotebookTemporaryPath, "Text"]], "Text"];
+    RenameFile[sm5NotebookTemporaryPath, sm5NotebookOutputPath, OverwriteTarget -> True]; True,
+    If[FileExistsQ[sm5NotebookTemporaryPath], DeleteFile[sm5NotebookTemporaryPath]]; $Failed],
+  If[FileExistsQ[sm5NotebookTemporaryPath], DeleteFile[sm5NotebookTemporaryPath]]; Abort[]];
+If[!TrueQ[sm5NotebookWriteResult], Print["The notebook replacement did not complete."]; Quit[1]];
 Print["Wrote ", sm5NotebookOutputPath, " with ", Length[sm5NotebookSelectedFamilies], " families."];

@@ -7315,7 +7315,12 @@ completionFactorizationResourceMetrics[input_,channelInput_,model_,requested_Ass
   metrics=amplitudeResourceMetrics[input,channelInput,
     Lookup[requested,"ExternalParticles",Automatic],If[ListQ[basis],Length[basis],Automatic]];
   degrees=Values[Lookup[metrics,"CoherentSpinDegrees",<||>]];
-  eligible=Lookup[metrics,"CoherentComponents",1]>=27 && AnyTrue[degrees,#>=2&];
+  (* Higher-point tensors with two massive spin-one legs already require
+     nine coherent components. Include their consumed continuation sources
+     while retaining the established four-point and spin-half policies. *)
+  eligible=AnyTrue[degrees,#>=2&] &&
+    (Lookup[metrics,"CoherentComponents",1]>=27 ||
+      Lookup[metrics,"ExternalParticles",4]>=5 && Lookup[metrics,"CoherentComponents",1]>=9);
   If[!eligible,Return[Join[metrics,<|"FactorizationSourceWorkAdmitted"->False,
     "FactorizationSourceWorkLeaves"->0,
     "FactorizationSourceMetricScope"->"EstablishedSmallOrDegreeOneOnlyTensorPolicy"|>]]];

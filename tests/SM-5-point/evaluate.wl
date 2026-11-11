@@ -79,10 +79,13 @@ writeRecord[target,record];
 summary=KeyTake[record,{"ID","FamilyID","Particles","Status","Seconds","Complexity","RandomSeed","Points","ContextSHA256"}];
 If[kind==="construct",AssociateTo[summary,{"Rows"->Length[rows],"FeynmanRows"->Count[Lookup[rows,"Type",{}],"Feynman"],"CheckStatuses"->Counts[Lookup[rows,"Status",{}]],
  "FailureStage"->If[AssociationQ[details]&&FailureQ[Lookup[details,"Failure",None]],Lookup[details["Failure"][[2]],"Stage",Null],Null]}]];
-If[kind==="export",AssociateTo[summary,{"CaseIDs"->family["CaseIDs"],
+If[kind==="export",
+ partial=If[FailureQ[result],Lookup[result[[2]],"ExportResult",<||>],result];
+ backendStatus[value_]:=If[FailureQ[value],"FAIL",If[AssociationQ[value],Lookup[value,"Status","NOT RUN"],"NOT RUN"]];
+ AssociateTo[summary,{"CaseIDs"->family["CaseIDs"],
  "CaseCapsulesSHA256"->Association[(#->IntegerString[FileHash[FileNameJoin[{outputDirectory,#<>".wxf"}],"SHA256"],16,64])&/@family["CaseIDs"]],
- "CalcHEPStatus"->If[AssociationQ[result],Lookup[Lookup[result,"CalcHEPValidation",<||>],"Status","NOT RUN"],"NOT RUN"],
- "MadGraphStatus"->If[AssociationQ[result],Lookup[Lookup[result,"MadGraphValidation",<||>],"Status","NOT RUN"],"NOT RUN"]}]];
+ "CalcHEPStatus"->backendStatus[If[AssociationQ[partial],Lookup[partial,"CalcHEPValidation",None],None]],
+ "MadGraphStatus"->backendStatus[If[AssociationQ[partial],Lookup[partial,"MadGraphValidation",None],None]]}]];
 AssociateTo[summary,"CapsuleSHA256"->IntegerString[FileHash[target,"SHA256"],16,64]];
 summary=summary/._Missing->Null;
 summaryFile=StringReplace[target,".wxf"->".json"];

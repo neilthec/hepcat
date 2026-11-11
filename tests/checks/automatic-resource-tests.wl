@@ -577,6 +577,100 @@ check["primitive QED spin tensors do not acquire additional factorization source
  arFactorQEDMetrics["CoherentComponents"]===4 && !arFactorQEDMetrics["FactorizationSourceWorkAdmitted"] &&
  arPolicy["Factorization",arFactorRequests,arFactorQEDMetrics]["Settings"]===
  arPolicy["Factorization",arFactorRequests,arMetrics[arFactorQEDReport]]["Settings"]];
+
+(* Five-point sources can couple two massive vector spin spaces even when
+   the other external particles carry no coherent spin indices. *)
+arFactorPairExpression=SpinorChain[Spinor["Spin","Angle",1],Spinor["Spin","Angle",2]]^2;
+arFactorPairRules={Mass[1]->arMass,Mass[2]->arMass,Mass[3]->0,Mass[4]->arMass,Mass[5]->arMass};
+arFactorPairReport=Join[arSourceReport,<|"Amplitude"->arFactorPairExpression,
+ "FamilyAmplitude"->arFactorPairExpression,"ExternalMassRules"->arFactorPairRules|>];
+arFactorPairHash=Hash[arFactorPairReport,"SHA256"];
+arFactorPairSlots=ConstructiveDiagrams`Private`completionHERetainedSourceMetrics[
+ arFactorPairReport,arSourcePreparedChannels];
+arFactorPairMetrics=arFactorSourceMetrics[
+ arFactorPairReport,arSourcePreparedChannels,arFactorSM,arFactorRequests];
+arFactorPairBaseline=arMetrics[arFactorPairReport,arSourcePreparedChannels];
+arFactorPairPolicy=arPolicy["Factorization",arFactorRequests,arFactorPairMetrics];
+check["a five-leg two-vector tensor admits its nine coherent source components",
+ arFactorPairMetrics["ExternalParticles"]===5 && arFactorPairMetrics["CoherentComponents"]===9 &&
+ Lookup[arFactorPairMetrics["CoherentSpinDegrees"],{1,2}] === {2,2} &&
+ TrueQ[arFactorPairMetrics["FactorizationSourceWorkAdmitted"]]];
+check["nine-component source work follows the shell and reference slots actually consumed",
+ arFactorPairSlots["RetainedSourceExpressionSlots"]>0 &&
+ arFactorPairMetrics["FactorizationRetainedSourceLeaves"]===arFactorPairSlots["RetainedSourceExpressionLeaves"] &&
+ arFactorPairMetrics["FactorizationRetainedSourceSlots"]===arFactorPairSlots["RetainedSourceExpressionSlots"] &&
+ arFactorPairMetrics["FactorizationSourceWorkLeaves"]===Ceiling[
+  arFactorPairMetrics["FactorizationSourceCoherentWeight"]*
+  arFactorPairMetrics["FactorizationSourceAssignmentWeight"]*
+  arFactorPairSlots["RetainedSourceExpressionLeaves"]] &&
+ arFactorPairMetrics["FactorizationSourceCoherentWeight"]===3];
+check["a retained two-vector five-point family receives a larger finite prefit clock",
+ arFinite[arFactorPairPolicy["Settings"]["TimeConstraint"]] &&
+ arFactorPairPolicy["Settings"]["TimeConstraint"]>
+  arPolicy["Factorization",arFactorRequests,arFactorPairBaseline]["Settings"]["TimeConstraint"] &&
+ arFactorPairMetrics["FactorizationResourceResolutionPhase"]==="BeforeCatalogConstructionAndCoreDeadline"];
+check["newly admitted source work changes no automatic cap or sampling controls",
+ KeyTake[arFactorPairPolicy["Settings"],{"MaxCorrectionTerms","Samples","ValidationSamples","MaxRefinements"}]===
+ KeyTake[arPolicy["Factorization",arFactorRequests,arFactorPairBaseline]["Settings"],
+  {"MaxCorrectionTerms","Samples","ValidationSamples","MaxRefinements"}]];
+arFactorPairNoSources=KeyDrop[arFactorPairReport,{"RemainderData","ChannelRemainderData"}];
+arFactorPairEmptyMetrics=arFactorSourceMetrics[
+ arFactorPairNoSources,{},arFactorSM,arFactorRequests];
+check["empty retained slots do not inflate an otherwise eligible two-vector clock",
+ TrueQ[arFactorPairEmptyMetrics["FactorizationSourceWorkAdmitted"]] &&
+ arFactorPairEmptyMetrics["FactorizationSourceWorkLeaves"]===0 &&
+ arPolicy["Factorization",arFactorRequests,arFactorPairEmptyMetrics]["Settings"]===
+ arPolicy["Factorization",arFactorRequests,arMetrics[arFactorPairNoSources]]["Settings"]];
+check["the two-vector source allowance ignores unused histories and preserves the caller report",
+ arFactorSourceMetrics[arFactorPairReport/.arUnconsumedHistory->arDifferentUnusedHistory,
+  arSourcePreparedChannels,arFactorSM,arFactorRequests]===arFactorPairMetrics &&
+ Hash[arFactorPairReport,"SHA256"]===arFactorPairHash];
+arFactorPairFourReport=Join[arFactorPairReport,<|"ExternalMassRules"->Most[arFactorPairRules]|>];
+arFactorPairFourMetrics=arFactorSourceMetrics[
+ arFactorPairFourReport,arSourcePreparedChannels,arFactorSM,arFactorRequests];
+check["a four-leg nine-component vector pair retains its established factorization policy",
+ arFactorPairFourMetrics["ExternalParticles"]===4 && arFactorPairFourMetrics["CoherentComponents"]===9 &&
+ !TrueQ[arFactorPairFourMetrics["FactorizationSourceWorkAdmitted"]] &&
+ arFactorPairFourMetrics["FactorizationSourceWorkLeaves"]===0 &&
+ arPolicy["Factorization",arFactorRequests,arFactorPairFourMetrics]["Settings"]===
+ arPolicy["Factorization",arFactorRequests,arMetrics[arFactorPairFourReport,arSourcePreparedChannels]]["Settings"]];
+arFactorDegreeOneProfiles=Table[
+ arFactorDegreeOneExpression=Times@@Map[
+  SpinorChain[Spinor["Spin","Angle",First[#]],Spinor["Spin","Angle",Last[#]]] &,
+  Partition[Range[profile[[2]]],2]];
+ arFactorDegreeOneRules=Thread[(Mass/@Range[profile[[1]]])->
+  Join[ConstantArray[arMass,profile[[2]]],ConstantArray[0,profile[[1]]-profile[[2]]]]];
+ arFactorDegreeOneReport=Join[arSourceReport,<|"Amplitude"->arFactorDegreeOneExpression,
+  "FamilyAmplitude"->arFactorDegreeOneExpression,"ExternalMassRules"->arFactorDegreeOneRules|>];
+ <|"ExpectedExternalParticles"->profile[[1]],"ExpectedCoherentComponents"->profile[[3]],
+   "Report"->arFactorDegreeOneReport,
+   "Metrics"->arFactorSourceMetrics[arFactorDegreeOneReport,arSourcePreparedChannels,arFactorSM,arFactorRequests]|>,
+ {profile,{{4,2,4},{5,4,16},{6,6,64}}}];
+check["four-, five- and six-leg degree-one-only tensors remain source-ineligible",
+ AllTrue[arFactorDegreeOneProfiles,Function[profile,
+  With[{metrics=profile["Metrics"]},
+   metrics["ExternalParticles"]===profile["ExpectedExternalParticles"] &&
+   metrics["CoherentComponents"]===profile["ExpectedCoherentComponents"] &&
+   AllTrue[Values[metrics["CoherentSpinDegrees"]],#===1&] &&
+   !TrueQ[metrics["FactorizationSourceWorkAdmitted"]] && metrics["FactorizationSourceWorkLeaves"]===0]]]];
+check["degree-one-only QED and fermion profiles retain their old clocks caps and samples",
+ AllTrue[arFactorDegreeOneProfiles,Function[profile,
+  arPolicy["Factorization",arFactorRequests,profile["Metrics"]]["Settings"]===
+  arPolicy["Factorization",arFactorRequests,arMetrics[profile["Report"],arSourcePreparedChannels]]["Settings"]]]];
+arFactorPairExplicitRequest=Join[arFactorRequests,<|"TimeConstraint"->11/3,
+ "MaxCorrectionTerms"->19,"Samples"->2,"ValidationSamples"->3|>];
+check["new two-vector eligibility cannot change explicit factorization clocks caps or samples",
+ KeyTake[arPolicy["Factorization",arFactorPairExplicitRequest,arFactorPairMetrics]["Settings"],
+  {"TimeConstraint","MaxCorrectionTerms","Samples","ValidationSamples"}]===
+ KeyTake[arFactorPairExplicitRequest,{"TimeConstraint","MaxCorrectionTerms","Samples","ValidationSamples"}]];
+arFactorPairBasisMetrics=arFactorSourceMetrics[arFactorPairReport,arSourcePreparedChannels,arFactorSM,
+ Join[arFactorPairExplicitRequest,<|"CorrectionBasis"->{arFactorPairExpression}|>]];
+check["an explicit two-vector correction basis excludes unused retained-source generation",
+ TrueQ[arFactorPairBasisMetrics["FactorizationSourceWorkAdmitted"]] &&
+ arFactorPairBasisMetrics["FactorizationRetainedSourceLeaves"]===0 &&
+ arFactorPairBasisMetrics["FactorizationRetainedSourceSlots"]===0 &&
+ arFactorPairBasisMetrics["FactorizationExplicitBasisLeaves"]===LeafCount[arFactorPairExpression]];
+
 check["the source counter uses current channel flags without deduplicating complete histories",
  arFactorMeasured["RetainedSourceRecords"]===4 &&
  arMetrics[Join[arSourceReport,<|"ChannelRemainderData"->ConstantArray[arSourceRecord,99]|>],
@@ -812,7 +906,7 @@ If[Environment["HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION"] === "1",
       AllTrue[arMixedReport["Checks"]["Checks"], #["Status"] === "PASS" &] &&
       arMixedReport["Checks"]["FeynmanCheck"]["Status"] === "PASS"],
   Print["SKIP: set HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION=1 for the full AllPhysical mixed six-point constructor regression."]];
-arExpected = 126 + If[Environment["HEPCAT_TEST_FULL_AUTOMATIC_CONSTRUCTION"] === "1", 2, 0] +
+arExpected = 137 + If[Environment["HEPCAT_TEST_FULL_AUTOMATIC_CONSTRUCTION"] === "1", 2, 0] +
   If[Environment["HEPCAT_TEST_FULL_PHYSICAL_MIXED_CONSTRUCTION"] === "1", 3, 0];
 If[checks =!= arExpected, AppendTo[failures, "Not every automatic-resource assertion executed."]];
 Print["AUTOMATIC RESOURCE CHECKS: ", checks, "; FAILURES: ", Length[failures]];

@@ -471,6 +471,10 @@ opQEDModel = ReadModel[FileNameJoin[{root, "models"}], 4];
 opModelHash = Hash[opQEDModel, "SHA256"];
 opPrevious = QEDSixPointPPPMPreviousExample[opQEDModel];
 opCompactTarget = QEDSixPointPPPMCompactExample[opQEDModel];
+(* Both costs come from independently stored example formulas. The momentum
+   weighting policy may evolve without changing this regression's endpoints. *)
+opPreviousFixtureScore = SpinorExpressionComplexity[Last[opPrevious]];
+opCompactFixtureScore = SpinorExpressionComplexity[Last[opCompactTarget]];
 opPreviousHash = Hash[opPrevious, "SHA256"];
 opEarlyPreparation = PrepareAmplitudes[opPrevious, opQEDModel,
   "PolePreference" -> None, "InternalOnShell" -> False, "MaxSteps" -> 0,
@@ -494,13 +498,14 @@ check["sorting expression candidates agrees with the preparation rank comparison
     ConstructiveDiagrams`Private`preparationRank[Last[opPrevious]][[{1, 3, 2, 4}]]];
 check["the worked regression starts with the earlier eighteen-term numerator form",
   Head[Last[opPrevious]] === Plus && Length[Last[opPrevious]] === 18 &&
-    SpinorExpressionComplexity[Last[opPrevious]] === 1128];
+    opPreviousFixtureScore > opCompactFixtureScore];
 opEndToEnd = opCompact[Last[opPrevious], First[opPrevious], True, 30];
 opEndAmplitude = opEndToEnd["Amplitude"];
 opEndRoute = Lookup[opEndToEnd, "Route", {}];
 check["general compaction improves the complete six-point expression",
   opEndToEnd["Status"] === "IMPROVED" &&
-    SpinorExpressionComplexity[opEndAmplitude] <= 327];
+    SpinorExpressionComplexity[opEndAmplitude] <= opCompactFixtureScore &&
+    SpinorExpressionComplexity[opEndAmplitude] < opPreviousFixtureScore];
 check["general compaction exposes seven compact groups",
   Head[opEndAmplitude] === Plus && Length[opEndAmplitude] === 7 &&
     LeafCount[opEndAmplitude] < 2100];

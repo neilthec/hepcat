@@ -446,5 +446,120 @@ class FivePointWorkflowTests(unittest.TestCase):
                 self.assertEqual(raised.exception.code, 2)
 
 
+class PrecisionReplayInputTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        path = SCRIPT.with_name('replay-calchep-precision.py')
+        spec = importlib.util.spec_from_file_location('sm_five_precision_replay', path)
+        cls.tool = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(cls.tool)
+
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory(prefix='hepcat-precision-inputs-')
+        self.addCleanup(temporary.cleanup)
+        self.directory = Path(temporary.name)
+
+    def manifest(self, count=5, **changes):
+        value = {'Class': 'SyntheticProcess', 'Masses': [0] * count,
+                 'IncomingLegs': [1, 2], 'ParameterOrder': ['coupling'],
+                 'CalcHEPValidation': {'Status': 'AVAILABLE', 'Supported': True,
+                    'PhysicalPDGs': list(range(1, count + 1)),
+                    'LegOrder': list(range(1, count + 1)), 'ParameterNames': ['coupling']}}
+        value.update(changes)
+        (self.directory / 'manifest.json').write_text(json.dumps(value))
+        return value
+
+    def points(self, count=5, rows=2):
+        path = self.directory / 'input.csv'
+        import csv
+        columns = ['point', 'hepcat', 'calchep'] + [f'p{i}_{j}' for i in range(1, count + 1) for j in range(4)]
+        with path.open('w', newline='') as stream:
+            writer = csv.writer(stream)
+            writer.writerow(columns)
+            for number in range(1, rows + 1):
+                writer.writerow([number, 12345, 67890, *[float(i) + .125 for i in range(4 * count)]])
+        return path
+
+    def test_leg_count_and_parameters_come_from_any_supported_export(self):
+        for count in (4, 5, 6, 8):
+            with self.subTest(count=count):
+                self.manifest(count)
+                data, config, actual = self.tool.load_manifest(self.directory)
+                self.assertEqual(actual, count)
+                self.assertEqual(config['ParameterNames'], ['coupling'])
+                self.assertEqual(data['Class'], 'SyntheticProcess')
+
+    def test_bad_class_and_inconsistent_particle_counts_are_rejected(self):
+        self.manifest(Class='bad();class')
+        with self.assertRaises(ValueError):
+            self.tool.load_manifest(self.directory)
+        value = self.manifest()
+        value['CalcHEPValidation']['PhysicalPDGs'].pop()
+        (self.directory / 'manifest.json').write_text(json.dumps(value))
+        with self.assertRaises(ValueError):
+            self.tool.load_manifest(self.directory)
+
+    def test_unsupported_or_polarized_reference_is_not_silently_compared(self):
+        value = self.manifest()
+        value['CalcHEPValidation']['Supported'] = False
+        (self.directory / 'manifest.json').write_text(json.dumps(value))
+        with self.assertRaises(ValueError):
+            self.tool.load_manifest(self.directory)
+
+    def test_nonstandard_input_order_is_explicitly_outside_replay_support(self):
+        self.manifest(IncomingLegs=[2, 4])
+        with self.assertRaisesRegex(ValueError, 'incoming legs first'):
+            self.tool.load_manifest(self.directory)
+
+    def test_saved_values_are_not_reused_as_the_new_candidate_amplitude(self):
+        source = self.points()
+        target = self.directory / 'normalized.csv'
+        self.assertEqual(self.tool.normalize_points(source, target, 5), 2)
+        import csv
+        with target.open(newline='') as stream:
+            rows = list(csv.DictReader(stream))
+        self.assertNotIn('hepcat', rows[0])
+        self.assertNotIn('calchep', rows[0])
+        self.assertEqual(float(rows[0]['p5_3']), 19.125)
+
+    def test_saved_momenta_must_be_finite_and_have_unique_positive_ids(self):
+        for replacement in ('nan', 'inf', '-inf'):
+            with self.subTest(value=replacement):
+                source = self.points()
+                source.write_text(source.read_text().replace(',0.125,', ',' + replacement + ','))
+                with self.assertRaisesRegex(ValueError, 'finite'):
+                    self.tool.normalize_points(source, self.directory / 'out.csv', 5)
+        source = self.points()
+        text = source.read_text().splitlines()
+        text[2] = text[2].replace('2,', '1,', 1)
+        source.write_text('\n'.join(text) + '\n')
+        with self.assertRaisesRegex(ValueError, 'distinct positive'):
+            self.tool.normalize_points(source, self.directory / 'out.csv', 5)
+
+    def test_incomplete_and_empty_saved_point_sets_are_rejected(self):
+        source = self.directory / 'invalid.csv'
+        source.write_text('point,p1_0\n1,1\n')
+        with self.assertRaises(ValueError):
+            self.tool.normalize_points(source, self.directory / 'out.csv', 5)
+        source = self.points(rows=0)
+        with self.assertRaisesRegex(ValueError, 'empty'):
+            self.tool.normalize_points(source, self.directory / 'out.csv', 5)
+
+    def test_generated_sources_require_all_placeholders_resolved(self):
+        with self.assertRaises(ValueError):
+            self.tool.render('@CLASS@ @OTHER@', {'CLASS': 'Synthetic'})
+        self.assertEqual(self.tool.render('@CLASS@', {'CLASS': 'Synthetic'}), 'Synthetic')
+
+    def test_cli_rejects_unbounded_or_invalid_replay_limits(self):
+        for option, value in (('--timeout', 'nan'), ('--timeout', 'inf'), ('--timeout', '0'),
+                              ('--points', '0'), ('--seed', '-1'), ('--relative-tolerance', 'nan')):
+            with self.subTest(option=option, value=value), \
+                    mock.patch.object(sys, 'argv', ['replay.py', '.', '--gcc', 'synthetic-gcc', option, value]), \
+                    redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit) as raised:
+                    self.tool.main()
+                self.assertEqual(raised.exception.code, 2)
+
+
 if __name__ == '__main__':
     unittest.main()

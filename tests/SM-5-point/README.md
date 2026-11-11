@@ -177,3 +177,33 @@ python3 tests/SM-5-point/run.py --refresh-only --notebook
 
 Notebook regeneration is explicit. Preserve a separately edited copy before
 regenerating if you have added manual derivations or comments.
+
+
+## Precision and retained-expression checks
+
+`FullyValidatedCases` counts families passing the ordinary native, CalcHEP
+and MadGraph runs. `PrecisionQualifiedCases` is separate. A precision
+qualification retains the raw CalcHEP failure and requires a current,
+checksum-bound replay at genuine 113-bit precision on at least 1,000 common
+points, the same 1e-7 relative tolerance, zero mismatches/errors, and a passing
+MadGraph comparison. The replay also verifies that its native 53-bit control
+reproduces the captured ordinary values. The notebook shows both results.
+
+`replay-calchep-precision.py` derives the process from an existing numerical
+export. It supports GCC/libquadmath with a built Unix-Makefiles export and
+two incoming legs first. It reports evidence separately and never changes a
+raw result to PASS. `precision_evidence.py` checks the optional evidence link
+against the current amplitude capsules, export sources, libraries and saved
+points before the ledger or notebook recognizes a qualification.
+
+`revalidate.wl` can check a previously completed expression after a package
+change using fresh physical/spurious/high-energy/reference and native Feynman
+checks. It preserves the original constructor expression, details, outputs,
+time and seed and records the new validation separately. Failed rechecks do
+not replace a valid archived construction. After a successful recheck,
+external comparisons are repeated for the new checksum-bound capsule.
+
+The external construction watchdog defaults to two hours so that it does not
+cut off the larger automatic five-point budgets. The package's own finite
+Automatic limits and the worker's memory limit remain active. An explicit
+`--timeout` overrides the external guard.

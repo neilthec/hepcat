@@ -32,6 +32,53 @@ ubModel = ubLegacyFixtureModel[ReadModel[FileNameJoin[{root, "models"}], 1]];
 ubCatalog = Get[FileNameJoin[{root, "tests", "checks", "fixtures", "simplification-paths.wl"}]];
 checks = 0; failures = {};
 check[name_, value_] := (checks++; If[!TrueQ[value], AppendTo[failures, name]]);
+(* Historical derivations are scalar spinor identities in the former W-field
+   basis. Restore the declared color currents and the already certified field
+   rephasing only at the boundary comparison; leave every saved state alone.
+   sm-field-convention-tests checks the same W phases against the SM cubics. *)
+ubHistoricalFieldPhase[particles_List] := (-1)^Count[particles, "W+" | "W-"];
+ubHistoricalParticleRow[name_String] := SelectFirst[ubModel[[1]],
+  MemberQ[#[[{2, 3}]], name] &, Missing["UnknownHistoricalParticle", name]];
+ubHistoricalQuarkRole[name_String] := Module[{row = ubHistoricalParticleRow[name]},
+  If[MissingQ[row] || Abs[row[[8]]] =!= 3 || !OddQ[row[[5]]], Return[0]];
+  If[name === row[[2]], 1, -1]
+];
+ubHistoricalColorTensor[particles_List, lines_List] := Module[
+  {roles, rows, colored, factors},
+  rows = ubHistoricalParticleRow /@ particles;
+  If[AnyTrue[rows, MissingQ] || !AllTrue[rows, MemberQ[{1, 3}, Abs[#[[8]]]] &], Return[$Failed]];
+  roles = ubHistoricalQuarkRole /@ particles;
+  colored = Flatten[Position[roles, 1 | -1]];
+  If[!MatchQ[lines, {RepeatedNull[{_Integer, _Integer}]}] ||
+      Sort[Flatten[lines]] =!= colored, Return[$Failed]];
+  factors = Map[Function[line, With[{orientation = roles[[line]]},
+    If[Sort[orientation] =!= {-1, 1}, $Failed,
+      With[{ordered = If[First[orientation] === 1, line, Reverse[line]]},
+        ColorDelta[ColorIndex[First[ordered]], ColorIndex[Last[ordered]]]]]]], lines];
+  If[MemberQ[factors, $Failed], $Failed, Times @@ factors]
+];
+ubHistoricalBoundaryQ[historical_, current_, particles_List, lines_List] := Module[
+  {tensor = ubHistoricalColorTensor[particles, lines]},
+  tensor =!= $Failed && ConstructiveDiagrams`Private`samePoly[
+    ubHistoricalFieldPhase[particles] tensor historical, current]
+];
+check["the declared historical W rephasing cancels on every internal particle-antiparticle edge",
+  AllTrue[ubModel[[1]], ubHistoricalFieldPhase[#[[{2, 3}]]] === 1 &]];
+check["one external W has the fixed migrated sign and two external Ws retain positive phase",
+  ubHistoricalFieldPhase[{"ne", "E", "W-", "h"}] === -1 &&
+    ubHistoricalFieldPhase[{"Z", "h", "W-", "W+"}] === 1];
+check["a charged internal exchange with no external W retains positive phase",
+  ubHistoricalFieldPhase[{"u", "D", "T", "b"}] === 1];
+check["historical current colors keep the model's fundamental-antifundamental orientation",
+  ubHistoricalColorTensor[{"u", "U", "C", "c"}, {{1, 2}, {3, 4}}] ===
+    ColorDelta[ColorIndex[1], ColorIndex[2]] ColorDelta[ColorIndex[4], ColorIndex[3]] &&
+  ubHistoricalColorTensor[{"U", "d", "Z", "W+"}, {{1, 2}}] ===
+    ColorDelta[ColorIndex[2], ColorIndex[1]]];
+check["historical boundary matching cannot silently omit a color current or accept either overall sign",
+  ubHistoricalColorTensor[{"u", "U", "C", "c"}, {}] === $Failed &&
+    ubHistoricalBoundaryQ[1, -1, {"ne", "E", "W-", "h"}, {}] &&
+    !ubHistoricalBoundaryQ[1, 1, {"ne", "E", "W-", "h"}, {}]];
+
 ubMediator[d_] := Module[{props = Values[d["Propagators"]], particle},
   If[props === {}, Return["contact"]];
   particle = First[props]["Particle"];
@@ -156,6 +203,7 @@ zCompositeOriginal = ConstructiveDiagrams`Private`canonicalAmplitude[
 zCompositePropagators = DeleteDuplicates[Cases[zCompositeOriginal, _PropDen, Infinity]];
 Print["Constructing the curated identity paths."];
 allCuratedRoutes = simplificationRoutes;
+ubHistoricalRoutesHash = Hash[allCuratedRoutes, "SHA256"];
 check["reference catalog retains 195 physical SM examples", Length[ubCatalog] === 195 &&
   !AnyTrue[Lookup[ubCatalog, "Name"], StringStartsQ[#, "Synthetic5Point"] &]];
 check["curated paths do not load a neural package", Names["Unscrambling`*"] === {}];
@@ -179,9 +227,10 @@ quarkZPairs = DiagramAmplitudes[ubSelect[
 quarkZRoute = SelectFirst[allCuratedRoutes, #["Name"] === "u, U, C, c / Z exchange" &];
 check["handwritten quark Z path begins at fresh public diagrams",
   Length[quarkZPairs] === 1 && quarkZRoute["Masses"] === First[quarkZPairs][[1]] &&
-    ConstructiveDiagrams`Private`samePoly[First[quarkZRoute["States"]],
+    ubHistoricalBoundaryQ[First[quarkZRoute["States"]],
       ConstructiveDiagrams`Private`canonicalAmplitude[
-        ReduceSpinContractions[First[quarkZPairs][[2]]], First[quarkZPairs][[1]]]]];
+        ReduceSpinContractions[First[quarkZPairs][[2]]], First[quarkZPairs][[1]]],
+      {"u", "U", "C", "c"}, {{1, 2}, {3, 4}}]];
 check["handwritten quark Z endpoint agrees without a spinor reducer",
   ConstructiveDiagrams`Private`samePoly[
     ExtractMandelstahm[Last[quarkZRoute["States"]]] /. MW -> MZ CW,
@@ -440,8 +489,9 @@ Do[
     chargedCurrentPole = {PropDen[Mom[Multiparticle[1, 2]], MW]};
     check["charged-current route begins at its public diagram boundary " <> chargedCurrentSpecification[[1]],
       chargedCurrentRoute["Masses"] === chargedCurrentPair[[1]] &&
-        ConstructiveDiagrams`Private`samePoly[First[chargedCurrentStates],
-          ConstructiveDiagrams`Private`canonicalAmplitude[chargedCurrentPair[[2]], chargedCurrentPair[[1]]]]];
+        ubHistoricalBoundaryQ[First[chargedCurrentStates],
+          ConstructiveDiagrams`Private`canonicalAmplitude[chargedCurrentPair[[2]], chargedCurrentPair[[1]]],
+          chargedCurrentSpecification[[2]], chargedCurrentSpecification[[5]]]];
     check["charged-current endpoint exactly matches the original notebook " <> chargedCurrentSpecification[[1]],
       Together[ConstructiveDiagrams`Private`canonicalChains[ExtractMandelstahm[Last[chargedCurrentStates]] -
         ubReference[chargedCurrentSpecification[[3]], "W+"]]] === 0];
@@ -477,17 +527,17 @@ Do[
       {chargedCurrentJob, selectedPermutations[chargedCurrentJobs]}]
   ],
   {chargedCurrentSpecification, {
-    {"ne, E, W-, h / W+ exchange", {"ne", "E", "W-", "h"}, "ne E -> W- h", {37, 6}},
-    {"u, D, W-, h / W+ exchange", {"u", "D", "W-", "h"}, "u D -> W- h", {37, 11}}}}];
+    {"ne, E, W-, h / W+ exchange", {"ne", "E", "W-", "h"}, "ne E -> W- h", {37, 6}, {}},
+    {"u, D, W-, h / W+ exchange", {"u", "D", "W-", "h"}, "u D -> W- h", {37, 11}, {{1, 2}}}}}];
 (* The new massive-external channels use independently generated diagram
    boundaries and the notebook's existing channel references. *)
 Print["Checking the remaining massive-vector paths against fresh diagrams."];
 newCuratedSpecifications = {
-  {"u, D, T, b / W+ exchange", {"u", "D", "T", "b"}, "u D -> T b", "W+", 1, 24},
-  {"E, ne, Z, W- / W+ exchange", {"E", "ne", "Z", "W-"}, "E ne -> Z W-", "W+", 1, 109},
-  {"U, d, Z, W+ / W+ exchange", {"U", "d", "Z", "W+"}, "U d -> Z W+", "W+", 1, 155},
-  {"Z, h, W-, W+ / T-channel W exchange", {"Z", "h", "W-", "W+"}, "Z h -> W- W+", "W+:T", -1, 72},
-  {"Z, h, W-, W+ / U-channel W exchange", {"Z", "h", "W-", "W+"}, "Z h -> W- W+", "W+:U", -1, 72}
+  {"u, D, T, b / W+ exchange", {"u", "D", "T", "b"}, "u D -> T b", "W+", 1, 24, {{1, 2}, {3, 4}}},
+  {"E, ne, Z, W- / W+ exchange", {"E", "ne", "Z", "W-"}, "E ne -> Z W-", "W+", 1, 109, {}},
+  {"U, d, Z, W+ / W+ exchange", {"U", "d", "Z", "W+"}, "U d -> Z W+", "W+", 1, 155, {{1, 2}}},
+  {"Z, h, W-, W+ / T-channel W exchange", {"Z", "h", "W-", "W+"}, "Z h -> W- W+", "W+:T", -1, 72, {}},
+  {"Z, h, W-, W+ / U-channel W exchange", {"Z", "h", "W-", "W+"}, "Z h -> W- W+", "W+:U", -1, 72, {}}
 };
 check["new curated channels have no external photon or gluon",
   AllTrue[newCuratedSpecifications, FreeQ[#[[2]], "A.+" | "A.-" | "G.+" | "G.-"] &]];
@@ -507,8 +557,9 @@ Do[
     check["new curated route matches fresh mass rules " <> newCuratedName,
       Sort[newCuratedRoute["Masses"]] === Sort[newCuratedPair[[1]]]];
     check["new curated route starts at the public spin-contraction boundary " <> newCuratedName,
-      ConstructiveDiagrams`Private`samePoly[First[newCuratedStates],
-        ConstructiveDiagrams`Private`canonicalAmplitude[newCuratedPair[[2]], newCuratedPair[[1]]]]];
+      ubHistoricalBoundaryQ[First[newCuratedStates],
+        ConstructiveDiagrams`Private`canonicalAmplitude[newCuratedPair[[2]], newCuratedPair[[1]]],
+        newCuratedSpecification[[2]], newCuratedSpecification[[7]]]];
     check["new curated endpoint agrees with the independent notebook reference " <> newCuratedName,
       !MissingQ[newCuratedReference] &&
         Together[ConstructiveDiagrams`Private`canonicalChains[ExtractMandelstahm[Last[newCuratedStates]] -
@@ -739,6 +790,8 @@ Do[
   check["every stored transition is an exact legal identity: " <> route["Name"],
     AssociationQ[verifiedRoute[route]]],
   {route, allCuratedRoutes}];
+check["boundary adaptation leaves every historical identity state and endpoint unchanged",
+  Hash[allCuratedRoutes, "SHA256"] === ubHistoricalRoutesHash];
 Print[<|"Checks" -> checks, "Failed" -> Length[failures], "Failures" -> failures|>];
 Print["HEPCAT_TEST_COMPLETED:simplification-path-tests.wl"];
 Quit[If[failures === {}, 0, 1]];
