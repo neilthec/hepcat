@@ -103,7 +103,8 @@ TEST_SUITES = (
 
 # These execute full expensive notebook constructions rather than component
 # regressions. Select them explicitly and give the external runner enough time.
-INTEGRATION_TEST_SUITES = ("sm-factorization-sewing-tests.wl",
+INTEGRATION_TEST_SUITES = ("sm-generation-transport-tests.wl",
+                          "sm-factorization-sewing-tests.wl",
                           "sm-charged-current-integration-tests.wl",
                           "sm-vector-construction-integration-tests.wl",
                           "physical-construction-integration-tests.wl",

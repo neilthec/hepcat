@@ -354,3 +354,21 @@ reference, runtime or tracked-path changes close the bridge and require fresh
 validation. The ordinary runner records the new full context when starting a
 batch. Neither sealing nor metadata admission calculates an amplitude or
 runs an external validation.
+
+## Certified generation transport candidates
+
+`generation-transport.wl` is a campaign helper for reusing a known amplitude
+under the inventory's bijective generation maps. It verifies the map against
+every elementary vertex and particle role, checks the exact model source files,
+and records their checksums with the complete map. Typed leg permutations move
+spinors, momenta, mass rules and color indices together. The fermion reference
+sign follows the separately ordered particle and antiparticle blocks.
+
+Its result is deliberately `CANDIDATE`. It does not construct a new amplitude,
+run checks or mark another process validated. A campaign worker must bind the
+saved source capsule, then run fresh target factorization, high-energy,
+reference and independent Feynman checks, followed by CalcHEP and MadGraph
+comparisons. The notebook must show that transport and its actual checks rather
+than attach reused output to a default `ConstructAmplitude` call. The focused
+`sm-generation-transport-tests.wl` suite checks all 36 elementary maps and five
+strict-phase four-point examples without relying on saved five-point capsules.
