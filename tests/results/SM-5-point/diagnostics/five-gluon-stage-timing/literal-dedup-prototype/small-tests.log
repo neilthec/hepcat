@@ -1,0 +1,13 @@
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+COLOR TENSOR DEDUP PROTOTYPE CHECKS: 23; FAILURES: 0
+COLOR TENSOR DEDUP SMALL TIMINGS: InputForm[<|RepeatedOldSeconds -> 0.026879, RepeatedDedupSeconds -> 0.014614, TraceOldSeconds -> 0.226463, TraceDedupSeconds -> 0.147452|>]
+HEPCAT_TEST_COMPLETED:color-tensor-dedup-prototype-tests.wl

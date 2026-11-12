@@ -1,0 +1,12 @@
+{
+  "Scope": "Isolated prototype, exact comparison with unchanged package; no construction or canonical promotion",
+  "Status": "PASS",
+  "ExitCode": 0,
+  "Seconds": 4.240552334,
+  "FilesSHA256": {
+    "source/internal/HEPCAT-Color.wl": "50890c888ad521fdf0460dd01b598afd4b18bb029c4ffb231b3561f03e6c8487",
+    "tests/SM-5-point/color-tensor-dedup-prototype.wl": "2d17003a47e9542a210e719877d695e5eb6c78af9e31adadf8a11a5b739ceea7",
+    "tests/checks/color-tensor-dedup-prototype-tests.wl": "01c80c9edc9db4692de48061889a13046e9a764c8d9c52e21d2aa0f50c88cf50"
+  },
+  "UTC": "2026-11-12T22:34:23.540687+00:00"
+}

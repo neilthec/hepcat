@@ -1,0 +1,69 @@
+HEPCATColorSparseMetric`Private`root="/Users/neil/code/hepcat";
+Get[FileNameJoin[{HEPCATColorSparseMetric`Private`root,"source","HEPCAT.wl"}]];
+Begin["HEPCATColorSparseMetric`Private`"];$ContextPath={"System`"};$HistoryLength=0;
+directory=FileNameJoin[{root,"tests","results","SM-5-point","diagnostics","five-gluon-stage-timing"}];
+output=FileNameJoin[{directory,"sparse-network-prototype"}];
+prototype=FileNameJoin[{root,"tests","SM-5-point","color-tensor-network-prototype.wl"}];
+Get[prototype];
+Begin["HEPCATColorSparseMetric`Private`"];$ContextPath={"System`"};
+sourceFiles=Sort[FileNames["*.wl",FileNameJoin[{root,"source"}],Infinity]];
+hashes=Association[(StringDrop[#,StringLength[root]+1]->IntegerString[FileHash[#,"SHA256"],16,64]&)/@sourceFiles];
+saved=FileNameJoin[{directory,"automatic-reference-conversion.wxf"}];started=AbsoluteTime[];events={};
+summary=<|"Scope"->"Isolated exact finite-sum color prototype. One full five-gluon tensor is compared componentwise with the unchanged legacy evaluator; the45-unique-tensor Gram is then measured. No constructor, source edit, kinematic fit or canonical promotion.",
+ "Status"->"RUNNING","MetricTimeConstraint"->180,"OldVectorTimeConstraint"->60,"MemoryBytes"->2*2^30,
+ "SourceSHA256"->hashes,"PrototypeSHA256"->IntegerString[FileHash[prototype,"SHA256"],16,64],
+ "SavedConversionSHA256"->IntegerString[FileHash[saved,"SHA256"],16,64]|>;
+save[]:=Module[{target=FileNameJoin[{output,"five-gluon.json"}],temp},temp=target<>".tmp";
+ Export[temp,summary,"RawJSON"];RenameFile[temp,target,OverwriteTarget->True]];
+progress[name_,data_:<||>]:=(AppendTo[events,Join[<|"Phase"->name,"ElapsedSeconds"->N[AbsoluteTime[]-started]|>,data]];
+ AssociateTo[summary,<|"LastPhase"->name,"Events"->events,"ElapsedSeconds"->N[AbsoluteTime[]-started]|>];save[];Print[name," ",InputForm[data]]);
+auto=Import[saved,"WXF"];terms=ConstructiveDiagrams`Private`colorExpressionTerms[Last[#]]&/@auto;
+tensors=First/@Flatten[terms,1];unique=DeleteDuplicates[tensors,SameQ];
+occurrence=(Function[tensor,First@FirstPosition[unique,value_/;SameQ[value,tensor],Missing["NotFound"],{1},Heads->False]]/@tensors);
+AssociateTo[summary,<|"OriginalOccurrences"->Length[tensors],"UniqueTensors"->Length[unique],
+ "ExternalColorStates"->8^5,"OccurrenceReconstructionVerified"->SameQ[unique[[occurrence]],tensors]|>];save[];
+If[Length[tensors]=!=3960||Length[unique]=!=45||!summary["OccurrenceReconstructionVerified"],Quit[2]];
+progress["LegacyOneVectorStart"];
+oldSeconds=First@AbsoluteTiming[oldVector=TimeConstrained[MemoryConstrained[
+ ConstructiveDiagrams`Private`colorTensorVector[First[unique],ConstantArray[8,5]],2*2^30,Missing["MemoryConstraint"]],60,Missing["TimeConstraint"]]];
+networkSeconds=First@AbsoluteTiming[networkOne=HEPCATColorTensorNetworkPrototype`Private`vectorDetails[First[unique],ConstantArray[8,5]]];
+sameVector=ListQ[oldVector]&&AssociationQ[networkOne]&&Normal[networkOne["Value"]]===oldVector;
+AssociateTo[summary,<|"LegacyOneVectorSeconds"->oldSeconds,"NetworkOneVectorSeconds"->networkSeconds,
+ "OneVectorComponentwiseSameQ"->sameVector,"OneVectorComponents"->If[ListQ[oldVector],Length[oldVector],0],
+ "OneVectorNetworkBackend"->networkOne["Backend"]|>];progress["OneVectorComparisonComplete"];
+If[!sameVector,AssociateTo[summary,<|"Status"->"UNRESOLVED","Reason"->"LegacyOneVectorComparisonIncompleteOrDifferent"|>];save[];Quit[3]];
+baselineArtifact=FileNameJoin[{output,"one-vector.wxf"}];
+BinaryWrite[baselineArtifact,BinarySerialize[<|"Tensor"->First[unique],"LegacyVector"->oldVector,
+ "NetworkVector"->networkOne,"Summary"->summary|>,PerformanceGoal->"Size"]];Close[baselineArtifact];
+AssociateTo[summary,"OneVectorArtifactSHA256"->IntegerString[FileHash[baselineArtifact,"SHA256"],16,64]];save[];
+metricStarted=AbsoluteTime[];
+metric=TimeConstrained[MemoryConstrained[Module[{details={},vectors,gram,pivots,basisGram,solve,coordinates,certificate},
+ Do[AppendTo[details,HEPCATColorTensorNetworkPrototype`Private`vectorDetails[unique[[i]],ConstantArray[8,5]]];
+  If[!AssociationQ[Last[details]]||Last[details]["Backend"]=!="ExactSparseTensorNetwork",Return[Failure["UnsupportedFiveGluonNetwork",<|"Index"->i|>]]];
+  progress["UniqueVectorComplete",<|"Index"->i,"Count"->Length[unique]|>],{i,Length[unique]}];
+ vectors=Lookup[details,"Value"];progress["SparseUniqueGramStart"];
+ gram=HEPCATColorTensorNetworkPrototype`Private`gram[vectors];
+ If[!MatrixQ[gram,NumericQ],Return[Failure["SparseUniqueGramIncomplete",<||>]]];
+ pivots=First/@DeleteCases[Map[FirstPosition[#,Except[0],Missing["Zero"],{1},Heads->False]&,RowReduce[gram]],_Missing];
+ basisGram=gram[[pivots,pivots]];solve=LinearSolve[basisGram];
+ coordinates=Simplify[solve[gram[[pivots,#]]]]&/@Range[Length[unique]];
+ certificate=TrueQ[Simplify[gram-Conjugate[coordinates].basisGram.Transpose[coordinates]]===ConstantArray[0,Dimensions[gram]]];
+ <|"UniqueTensors"->unique,"OccurrenceToUnique"->occurrence,"NetworkCertificates"->details,
+   "UniqueGramMatrix"->gram,"UniqueBasisPositions"->pivots,"Basis"->unique[[pivots]],
+   "UniqueCoordinates"->coordinates,"OriginalCoordinates"->coordinates[[occurrence]],
+   "UniqueGramReconstructionVerified"->certificate,
+   "LegacyOneVectorNormAgrees"->TrueQ[Conjugate[oldVector].oldVector===First[First[gram]]]|>],
+ 2*2^30,Missing["MemoryConstraint"]],180,Missing["TimeConstraint"]];
+sameSource=hashes===Association[(StringDrop[#,StringLength[root]+1]->IntegerString[FileHash[#,"SHA256"],16,64]&)/@sourceFiles];
+AssociateTo[summary,<|"MetricSeconds"->N[AbsoluteTime[]-metricStarted],"SourceFilesUnchanged"->sameSource,
+ "ElapsedSeconds"->N[AbsoluteTime[]-started]|>];
+If[AssociationQ[metric]&&TrueQ[metric["UniqueGramReconstructionVerified"]]&&TrueQ[metric["LegacyOneVectorNormAgrees"]]&&sameSource,
+ AssociateTo[summary,<|"Status"->"COMPLETE","Rank"->Length[metric["Basis"]],
+  "UniqueGramReconstructionVerified"->True,"LegacyOneVectorNormAgrees"->True,
+  "ExpandedCoordinateDimensions"->Dimensions[metric["OriginalCoordinates"]],"OriginalGramMaterialized"->False|>],
+ AssociateTo[summary,<|"Status"->"UNRESOLVED","Failure"->ToString[metric,InputForm]|>]];
+artifact=FileNameJoin[{output,"five-gluon.wxf"}];
+BinaryWrite[artifact,BinarySerialize[<|"Summary"->summary,"Metric"->metric,
+ "LegacyOneVector"->oldVector,"NetworkOneVector"->networkOne|>,PerformanceGoal->"Size"]];Close[artifact];
+AssociateTo[summary,"ArtifactSHA256"->IntegerString[FileHash[artifact,"SHA256"],16,64]];save[];
+Print[InputForm[summary]];Quit[If[summary["Status"]==="COMPLETE",0,3]];

@@ -1,0 +1,13 @@
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+COLOR TENSOR NETWORK PROTOTYPE CHECKS: 42; FAILURES: 0
+COLOR TENSOR NETWORK SMALL TIMINGS: InputForm[{<|Name -> single generator axis order, OldSeconds -> 0.001537, NetworkSeconds -> 0.000384|>, <|Name -> conjugated generator phase, OldSeconds -> 0.000925, NetworkSeconds -> 0.001059|>, <|Name -> disconnected singlet products, OldSeconds -> 0.002089, NetworkSeconds -> 0.001058|>, <|Name -> crossed singlet products, OldSeconds -> 0.002072, NetworkSeconds -> 0.000477|>, <|Name -> fundamental completeness network, OldSeconds -> 0.007036, NetworkSeconds -> 0.000531|>, <|Name -> ordered quark gluons, OldSeconds -> 0.019093, NetworkSeconds -> 0.000622|>, <|Name -> complex ordered quark interference, OldSeconds -> 0.038545, NetworkSeconds -> 0.0014|>, <|Name -> four-adjoint network, OldSeconds -> 0.393234, NetworkSeconds -> 0.000828|>, <|Name -> complex adjoint polynomial, OldSeconds -> 0.729017, NetworkSeconds -> 0.002211|>, <|Name -> two-generator trace network, OldSeconds -> 0.006303, NetworkSeconds -> 0.000576|>, <|Name -> three-generator conjugated trace, OldSeconds -> 0.165387, NetworkSeconds -> 0.001202|>, <|Name -> independent trace powers use exact fallback, OldSeconds -> 0.071094, NetworkSeconds -> 0.069312|>, <|Name -> polynomial trace terms preserve local dummies, OldSeconds -> 0.077556, NetworkSeconds -> 0.075997|>, <|Name -> external repeated port uses exact fallback, OldSeconds -> 0.000204, NetworkSeconds -> 0.000348|>, <|Name -> self-contracted primitive uses exact fallback, OldSeconds -> 0.000345, NetworkSeconds -> 0.000507|>, <|Name -> closed tensor network, OldSeconds -> 0.000301, NetworkSeconds -> 0.000439|>, <|Name -> zero tensor, OldSeconds -> 0.000103, NetworkSeconds -> 0.000039|>, <|Name -> singlet scalar phase, OldSeconds -> 0.000157, NetworkSeconds -> 0.000188|>}]
+HEPCAT_TEST_COMPLETED:color-tensor-network-prototype-tests.wl
