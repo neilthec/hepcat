@@ -10,10 +10,14 @@
 
 Begin["SMFivePointRevalidation`Private`"];
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
-Get[FileNameJoin[{root, "source", "HEPCAT.wl"}]];
-Get[FileNameJoin[{root, "tests", "SM-5-point", "revalidate-benchmark.wl"}]];
-$HistoryLength = 0;
 sha[file_String] := IntegerString[FileHash[file, "SHA256"], 16, 64];
+revalidationScriptPath = $InputFileName;
+benchmarkPolicyPath = FileNameJoin[{root, "tests", "SM-5-point", "revalidate-benchmark.wl"}];
+revalidationScriptHash = sha[revalidationScriptPath];
+benchmarkPolicyHash = sha[benchmarkPolicyPath];
+Get[FileNameJoin[{root, "source", "HEPCAT.wl"}]];
+Get[benchmarkPolicyPath];
+$HistoryLength = 0;
 fail[tag_String, message_String] := (Print[Failure[tag, <|"MessageTemplate" -> message|>]]; Quit[2]);
 configurationPath = Environment["HEPCAT_SM5_CONFIGURATION"];
 id = Environment["HEPCAT_SM5_ID"];
@@ -23,6 +27,8 @@ If[!StringQ[configurationPath] || !FileExistsQ[configurationPath],
 If[!StringQ[id] || !StringQ[seedText] || !StringMatchQ[seedText, DigitCharacter ..],
   fail["MissingRevalidationIdentity", "Supply the case ID and an explicit integer HEPCAT_SM5_SEED."]];
 seed = FromDigits[seedText];
+nativeCheckSeconds = nativeRevalidationCheckAllowance[Environment["HEPCAT_SM5_REVALIDATION_CHECK_SECONDS"]];
+If[FailureQ[nativeCheckSeconds], Print[nativeCheckSeconds]; Quit[2]];
 configuration = Import[configurationPath, "RawJSON"];
 inventoryPath = FileNameJoin[{root, "tests", "SM-5-point", "inventory.json"}];
 inventory = Import[inventoryPath, "RawJSON"];
@@ -91,7 +97,9 @@ capture[body_] := Internal`InheritedBlock[{Print},
 report = capture[MemoryConstrained[
   Print["Revalidating retained amplitude: ", StringRiffle[process, ", "]];
   channels = FactorizationAmplitudeChannels[process, factorizationModel];
-  rawFeynman = DiagramAmplitudes[CreateDiagrams[process, feynmanModel]];
+  feynmanDiagrams = CreateDiagrams[process, feynmanModel];
+  rawFeynman = independentBenchmarkInput[feynmanDiagrams,
+    DiagramAmplitudes[feynmanDiagrams], process, feynmanModel];
   benchmarkDetails = prepareIndependentBenchmark[rawFeynman, feynmanModel, 900];
   benchmark = Lookup[benchmarkDetails, "BenchmarkAmplitudes", Missing["BenchmarkNotReady"]];
   If[FailureQ[channels] || channels === $Failed ||
@@ -100,24 +108,24 @@ report = capture[MemoryConstrained[
       "Channels" -> channels, "FeynmanBenchmarkDetails" -> benchmarkDetails|>],
     CheckAmplitudes[expression, channels, factorizationModel,
       "FeynmanAmplitudes" -> benchmark, "FeynmanModel" -> feynmanModel,
-      "Output" -> "Details", "RandomSeed" -> seed]],
+      "Output" -> "Details", "RandomSeed" -> seed,
+      "TimeConstraint" -> nativeCheckSeconds]],
   Lookup[configuration, "MemoryGiB", 4] 2^30,
   Failure["RevalidationMemoryLimit", <|"MessageTemplate" -> "The retained-amplitude recheck exceeded its memory limit."|>]]];
 seconds = N[AbsoluteTime[] - started];
 rows = If[AssociationQ[report] && MatchQ[Lookup[report, "Table", None], _Dataset],
   Normal[report["Table"]], {}];
-requiredTypes = {"Physical", "HighEnergy", "Reference", "Feynman"};
-ok = AssociationQ[report] && !FailureQ[report] && ListQ[rows] && rows =!= {} &&
-  AllTrue[rows, AssociationQ[#] && Lookup[#, "Status", None] === "PASS" &] &&
-  ContainsAll[Lookup[rows, "Type", {}], requiredTypes];
+ok = AssociationQ[report] && !FailureQ[report] &&
+  nativeRevalidationRowsPassQ[rows, channels];
 capture[Print["Retained-amplitude revalidation time: ", seconds, " s"];
   If[AssociationQ[report] && KeyExistsQ[report, "Table"], Print[report["Table"]], Print[report]]];
 Close[live];
 If[sha[sourcePath] =!= sourceHash || sha[sourceSummaryPath] =!= sourceSummaryHash ||
-    sha[configurationPath] =!= configurationHash || sha[inventoryPath] =!= inventoryHash,
+    sha[configurationPath] =!= configurationHash || sha[inventoryPath] =!= inventoryHash ||
+    sha[revalidationScriptPath] =!= revalidationScriptHash || sha[benchmarkPolicyPath] =!= benchmarkPolicyHash,
   ok = False;
   report = Failure["RevalidationInputChanged", <|
-    "MessageTemplate" -> "A source capsule, configuration or inventory changed during the recheck.",
+    "MessageTemplate" -> "A source capsule, configuration, inventory or loaded revalidation policy changed during the recheck.",
     "CheckReport" -> report|>]];
 record = Join[source, <|
   "Status" -> If[ok, "COMPLETE", "FAIL"],
@@ -129,8 +137,9 @@ record = Join[source, <|
   "RevalidationStatus" -> If[ok, "PASS", "FAIL"],
   "RevalidationDetails" -> report, "RevalidationPrints" -> printed,
   "RevalidationFeynmanBenchmark" -> If[AssociationQ[benchmarkDetails], benchmarkDetails, Missing["NotCompleted"]],
-  "RevalidationScriptSHA256" -> sha[$InputFileName],
-  "RevalidationBenchmarkPolicySHA256" -> sha[FileNameJoin[{root, "tests", "SM-5-point", "revalidate-benchmark.wl"}]],
+  "RevalidationScriptSHA256" -> revalidationScriptHash,
+  "RevalidationBenchmarkPolicySHA256" -> benchmarkPolicyHash,
+  "RevalidationCheckTimeConstraint" -> If[nativeCheckSeconds === Automatic, "Automatic", nativeCheckSeconds],
   "RevalidationSeconds" -> seconds, "RevalidationRandomSeed" -> seed,
   "SourceCapsuleSHA256" -> sourceHash, "SourceSummarySHA256" -> sourceSummaryHash,
   "SourceCapsuleArchive" -> FileNameJoin[{"revalidation-history", id <> "-" <> sourceHash <> ".wxf"}],
@@ -138,12 +147,14 @@ record = Join[source, <|
   "RevalidationInventorySHA256" -> inventoryHash|>];
 target = If[ok, sourcePath, FileNameJoin[{outputDirectory,
   id <> "-revalidation-" <> StringTake[configuration["ContextSHA256"], UpTo[12]] <> "-" <> ToString[seed] <> ".wxf"}]];
+If[!ok && FileExistsQ[target], target = StringReplace[target,
+  ".wxf" -> "-" <> IntegerString[Round[AbsoluteTime[] 10^6]] <> ".wxf"]];
 writeRecord[target, record];
 summary = KeyTake[record, {"ID", "Particles", "Status", "Seconds", "Complexity", "RandomSeed",
   "ContextSHA256", "PreviousContextSHA256", "ConstructionContextSHA256", "RevalidationStatus",
   "RevalidationSeconds", "RevalidationRandomSeed", "SourceCapsuleSHA256", "SourceSummarySHA256",
   "SourceCapsuleArchive", "RevalidationConfigurationSHA256", "RevalidationInventorySHA256",
-  "RevalidationScriptSHA256", "RevalidationBenchmarkPolicySHA256"}];
+  "RevalidationScriptSHA256", "RevalidationBenchmarkPolicySHA256", "RevalidationCheckTimeConstraint"}];
 AssociateTo[summary, {"Rows" -> Length[rows], "FeynmanRows" -> Count[Lookup[rows, "Type", {}], "Feynman"],
   "CheckStatuses" -> Counts[Lookup[rows, "Status", {}]],
   "FailureStage" -> If[ok, Null, "Revalidating retained amplitude"],

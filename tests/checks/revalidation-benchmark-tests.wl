@@ -71,7 +71,42 @@ check["the complete conversion cannot outlive the shared allowance",rbConvertSlo
 check["an infinite allowance is rejected",rbPrepare[rbRaw,rbModel,Infinity]["Status"]==="FAIL"];
 check["a nonpositive allowance is rejected",rbPrepare[rbRaw,rbModel,0]["Status"]==="FAIL"];
 check["an invalid raw list is rejected before either attempt",rbRun["Complete",5,{}]["Status"]==="FAIL"&&rbPreparationCalls==={}&&rbConversionCalls==={}];
-If[checks=!=20,AppendTo[failures,"Not every benchmark-workflow assertion executed."]];
+rbInput=SMFivePointRevalidation`Private`independentBenchmarkInput;
+rbAdmit=SMFivePointRevalidation`Private`nativeRevalidationRowsPassQ;
+rbZero=Internal`InheritedBlock[{ConstructiveDiagrams`Private`constructExternalMasses},
+ Clear[ConstructiveDiagrams`Private`constructExternalMasses];
+ ConstructiveDiagrams`Private`constructExternalMasses[___]:={rbMass,rbMass,0,0,0};
+ rbInput[{},{},{"f","F","v","v","v"},rbModel]];
+check["two successful empty lists produce the exact external-mass zero pair",
+ rbZero==={{Thread[(Mass/@Range[5])->{rbMass,rbMass,0,0,0}],0}}];
+check["a failed graph list is never promoted to zero",FailureQ[rbInput[$Failed,{},{"x"},rbModel]]];
+check["a failed amplitude list is never promoted to zero",FailureQ[rbInput[{},$Failed,{"x"},rbModel]]];
+check["a nonempty graph with missing amplitudes is never promoted to zero",FailureQ[rbInput[{rbGraph},{},{"x"},rbModel]]];
+check["a graph-empty nonzero amplitude is rejected",FailureQ[rbInput[{},rbRaw,{"x"},rbModel]]];
+check["a complete nonempty graph map is retained literally",rbInput[{rbGraph1,rbGraph2},rbRaw,{"x","y"},rbModel]===rbRaw];
+rbNoCutRows=(<|"Type"->#,"Status"->"PASS"|>&/@{"HighEnergy","Reference","Feynman"});
+check["all applicable no-cut checks suffice without inventing physical rows",rbAdmit[rbNoCutRows,{}]];
+check["a supplied physical channel still requires physical checks",!rbAdmit[rbNoCutRows,{rbChannel}]];
+check["independent Feynman comparison remains mandatory",!rbAdmit[Most[rbNoCutRows],{}]];
+check["a failed applicable row can never pass admission",!rbAdmit[Prepend[Rest[rbNoCutRows],<|"Type"->"HighEnergy","Status"->"FAIL"|>],{}]];
+rbRealModel=ReadModel[FileNameJoin[{root,"models"}],3];
+rbNullRules=Thread[(Mass/@Range[5])->ConstantArray[0,5]];
+rbNullReport=CheckAmplitudes[{rbNullRules,0},{},rbRealModel,"Output"->"Details",
+ "FeynmanAmplitudes"->{{rbNullRules,0}},"RandomSeed"->223711,"Samples"->1,
+ "HighEnergySamples"->1,"ReferenceSamples"->1,"FeynmanSamples"->1,
+ "Parallelization"->False,"TimeConstraint"->20];
+rbNullRows=If[AssociationQ[rbNullReport]&&MatchQ[Lookup[rbNullReport,"Table",None],_Dataset],Normal[rbNullReport["Table"]],{}];
+check["the real normal checker can validate a formal no-cut zero benchmark",
+ rbAdmit[rbNullRows,{}]&&!MemberQ[Lookup[rbNullRows,"Type",{}],"Physical"]];
+rbAllowance=SMFivePointRevalidation`Private`nativeRevalidationCheckAllowance;
+check["an omitted native check clock retains Automatic",rbAllowance[$Failed]===Automatic&&rbAllowance[""]===Automatic];
+check["the same-seed larger-clock replay accepts finite600",rbAllowance["600"]===600];
+check["finite decimal allowances are supported",rbAllowance["12.5"]===12.5];
+check["an explicit Automatic allowance remains Automatic",rbAllowance["Automatic"]===Automatic];
+check["zero and negative allowances are rejected",FailureQ[rbAllowance["0"]]&&FailureQ[rbAllowance["-1"]]];
+check["unbounded and nonfinite allowances are rejected",AllTrue[{"Infinity","inf","NaN","1e999"},FailureQ[rbAllowance[#]]&]];
+check["environment text cannot introduce a Wolfram expression",FailureQ[rbAllowance["1;Quit[]"]]&&FailureQ[rbAllowance["2^100"]]];
+If[checks=!=38,AppendTo[failures,"Not every benchmark-workflow assertion executed."]];
 Print["REVALIDATION BENCHMARK CHECKS: ",checks,"; FAILURES: ",Length[failures]];
 If[failures=!={},Print[failures],Print["HEPCAT_TEST_COMPLETED:revalidation-benchmark-tests.wl"]];
 Quit[If[failures==={},0,1]];

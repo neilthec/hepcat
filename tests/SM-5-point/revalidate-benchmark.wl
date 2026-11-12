@@ -59,4 +59,40 @@ prepareIndependentBenchmark[raw_, model_, seconds_] := Module[
     "ConvertedDiagrams" -> Length[converted], "CompleteOrderedCoverage" -> True|>];
   record["COMPLETE", converted, {}]
 ];
+
+(* A zero pair is justified only by two successful empty lists, never by a
+   failure, a dropped amplitude or an incomplete graph-to-expression map. *)
+independentBenchmarkInput[diagrams_, amplitudes_, process_List, model_] := Module[{masses},
+  If[!ListQ[diagrams] || !ListQ[amplitudes] || Length[diagrams] =!= Length[amplitudes],
+    Return[Failure["RevalidationFeynmanCoverage", <|"MessageTemplate" ->
+      "The successful complete graph and amplitude lists must have matching coverage."|>]]];
+  If[diagrams === {} && amplitudes === {},
+    masses = ConstructiveDiagrams`Private`constructExternalMasses[process, model];
+    If[!ListQ[masses] || Length[masses] =!= Length[process] ||
+        !ConstructiveDiagrams`Private`residueFiniteQ[masses],
+      Return[Failure["RevalidationExternalMasses", <|"MessageTemplate" ->
+        "External mass metadata is required for a graph-empty zero benchmark."|>]]];
+    Return[{{Thread[(Mass /@ Range[Length[process]]) -> masses], 0}}]];
+  amplitudes
+];
+
+(* Physical rows are required when channels exist. With no physical cuts,
+   retain every applicable native check without fabricating a cut row. *)
+nativeRevalidationRowsPassQ[rows_, channels_] := ListQ[rows] && rows =!= {} &&
+  ListQ[channels] && AllTrue[rows, AssociationQ[#] && Lookup[#, "Status", None] === "PASS" &] &&
+  ContainsAll[Lookup[rows, "Type", {}], {"HighEnergy", "Reference", "Feynman"}] &&
+  (channels === {} || MemberQ[Lookup[rows, "Type", {}], "Physical"]);
+
+(* Parse only decimal numbers. Environment text is never executable code. *)
+nativeRevalidationCheckAllowance[text_] := Module[{value},
+  If[MemberQ[{$Failed, "", "Automatic"}, text], Return[Automatic]];
+  If[!StringQ[text] || !StringMatchQ[text,
+      RegularExpression["(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)"]],
+    Return[Failure["RevalidationCheckTimeConstraint", <|"MessageTemplate" ->
+      "HEPCAT_SM5_REVALIDATION_CHECK_SECONDS must be Automatic or a finite positive decimal number."|>]]];
+  value = ToExpression[text, InputForm];
+  If[NumberQ[value] && TrueQ[0 < value < Infinity], value,
+    Failure["RevalidationCheckTimeConstraint", <|"MessageTemplate" ->
+      "HEPCAT_SM5_REVALIDATION_CHECK_SECONDS must be finite and positive."|>]]
+];
 End[];
