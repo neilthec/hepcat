@@ -9,6 +9,7 @@ not a qualification. This module performs no amplitude calculation or writes.
 # SPDX-License-Identifier: GPL-3.0-or-later
 from __future__ import annotations
 import csv
+import importlib.util
 import hashlib
 import json
 import math
@@ -16,6 +17,18 @@ from pathlib import Path
 import re
 import shlex
 import struct
+
+
+_stage_spec = importlib.util.spec_from_file_location(
+    'hepcat_sm5_precision_stage_context', Path(__file__).with_name('stage_context.py'))
+stage_context = importlib.util.module_from_spec(_stage_spec)
+_stage_spec.loader.exec_module(stage_context)
+
+
+def _admitted_context(summary, current, proof, path):
+    recorded = summary.get('ContextSHA256')
+    return recorded == current or (stage_context.admits(recorded, current, proof)
+        and stage_context.checkpoint_matches(path, summary, proof))
 
 
 def _digest(path):
@@ -175,7 +188,7 @@ def _current_failure_control(link, report, results, report_path, family_id,
 
 
 def qualification(family, export_summary, cases, context_sha, results_dir,
-                  export_root, required_points=1000):
+                  export_root, required_points=1000, context_compatibility=None):
     """Return verified precision evidence, or None. Raw statuses are untouched.
 
     Report paths are relative to results_dir. export_root is the common export
@@ -190,11 +203,13 @@ def qualification(family, export_summary, cases, context_sha, results_dir,
             return None
         results = Path(results_dir).resolve()
         link = _json(results / (identifier + '-precision.json'))
-        if link.get('FamilyID') != identifier or link.get('ContextSHA256') != context_sha:
+        raw_context = export_summary.get('ContextSHA256') if isinstance(export_summary, dict) else None
+        if link.get('FamilyID') != identifier or link.get('ContextSHA256') != raw_context:
             return None
         if (not isinstance(export_summary, dict)
                 or export_summary.get('FamilyID') != identifier
-                or export_summary.get('ContextSHA256') != context_sha
+                or not _admitted_context(export_summary, context_sha, context_compatibility,
+                    results / (identifier + '-export.json'))
                 or export_summary.get('MadGraphStatus') != 'PASS'
                 or export_summary.get('CalcHEPStatus') not in ('PASS', 'FAIL')
                 or export_summary.get('Status') not in ('PASS', 'FAIL')
@@ -211,10 +226,12 @@ def qualification(family, export_summary, cases, context_sha, results_dir,
                 or export_summary.get('CaseIDs') != members):
             return None
         member_hashes = {}
+        member_contexts = {}
         for member in members:
             case = cases.get(member, {})
             if (case.get('ID') != member or case.get('Status') != 'COMPLETE'
-                    or case.get('ContextSHA256') != context_sha
+                    or not _admitted_context(case, context_sha, context_compatibility,
+                        results / (member + '.json'))
                     or not _positive_integer(case.get('Rows'))
                     or not _positive_integer(case.get('FeynmanRows'))
                     or case['FeynmanRows'] > case['Rows']
@@ -222,8 +239,14 @@ def qualification(family, export_summary, cases, context_sha, results_dir,
                     or not _matches(results / (member + '.wxf'), case.get('CapsuleSHA256'))):
                 return None
             member_hashes[member] = case['CapsuleSHA256']
+            member_contexts[member] = case['ContextSHA256']
+        mixed = any(value != raw_context for value in member_contexts.values())
         if (link.get('CaseCapsulesSHA256') != member_hashes
-                or export_summary.get('CaseCapsulesSHA256') != member_hashes):
+                or export_summary.get('CaseCapsulesSHA256') != member_hashes
+                or (('ExporterContextSHA256' in export_summary or mixed)
+                    and export_summary.get('ExporterContextSHA256') != raw_context)
+                or (('NativeCaseContexts' in export_summary or mixed)
+                    and export_summary.get('NativeCaseContexts') != member_contexts)):
             return None
         report_path = _inside(results, link.get('Report'))
         if not _matches(report_path, link.get('ReportSHA256')):
@@ -289,10 +312,10 @@ def qualification(family, export_summary, cases, context_sha, results_dir,
         verified_control = None
         if export_summary['CalcHEPStatus'] == 'FAIL':
             verified_control = _current_failure_control(link, report, results, report_path,
-                identifier, context_sha, export_hash, legs)
+                identifier, raw_context, export_hash, legs)
             if verified_control is None:
                 return None
-        verified = {'FamilyID': identifier, 'Status': 'PRECISION_QUALIFIED', 'ContextSHA256': context_sha,
+        verified = {'FamilyID': identifier, 'Status': 'PRECISION_QUALIFIED', 'ContextSHA256': raw_context,
                 'CaseIDs': list(members), 'CaseCapsulesSHA256': member_hashes,
                 'ExportCapsuleSHA256': export_hash, 'Report': link['Report'],
                 'ReportSHA256': link['ReportSHA256'], 'Points': count,
@@ -301,6 +324,11 @@ def qualification(family, export_summary, cases, context_sha, results_dir,
                 'MaximumAbsoluteError': extended['MaximumAbsoluteError'],
                 'RawCalcHEPStatus': export_summary.get('CalcHEPStatus', 'NOT RUN'),
                 'MadGraphStatus': 'PASS'}
+        if raw_context != context_sha or mixed:
+            verified['ActiveExporterContextSHA256'] = context_sha
+            verified['NativeCaseContexts'] = member_contexts
+            verified['ContextCompatibility'] = stage_context.public_proof(
+                context_compatibility, 'PrecisionEvidence')
         if verified_control is not None:
             verified['CurrentFailureControl'] = verified_control
         return verified
@@ -314,7 +342,13 @@ def _current_context(configuration):
         'hepcat_sm5_precision_context', Path(__file__).with_name('run.py'))
     workflow = importlib.util.module_from_spec(specification)
     specification.loader.exec_module(workflow)
-    return workflow.context_sha256(configuration)
+    current = workflow.context_sha256(configuration)
+    return current
+
+
+def _current_compatibility(configuration, current):
+    return stage_context.verified_bridge(Path(__file__).resolve().parents[2],
+        Path(__file__).resolve().parent, configuration, current)
 
 
 def main():
@@ -333,8 +367,10 @@ def main():
         family = next(row for row in inventory['Families'] if row.get('ID') == args.family)
         export = _json(args.results / (args.family + '-export.json'))
         cases = {member: _json(args.results / (member + '.json')) for member in family['CaseIDs']}
-        verified = qualification(family, export, cases, _current_context(configuration),
-                                 args.results, args.export_root, args.required_points)
+        current = _current_context(configuration)
+        compatibility = _current_compatibility(configuration, current)
+        verified = qualification(family, export, cases, current, args.results, args.export_root,
+                                 args.required_points, context_compatibility=compatibility)
     except (OSError, ValueError, TypeError, KeyError, StopIteration):
         pass
     print(json.dumps(verified or {'FamilyID': args.family, 'Status': 'UNQUALIFIED'}, indent=2))

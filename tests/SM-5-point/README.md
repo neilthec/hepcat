@@ -289,3 +289,39 @@ The color implementation has not been changed. See
 These timings are concurrent campaign logs, not a controlled performance
 benchmark. The tracked progress ledger is consolidated at batch boundaries;
 individual workers also save their own checksum-bound records immediately.
+
+
+## One exporter-only compatibility checkpoint
+
+The reviewed helicity-closure update changes only
+`source/internal/HEPCAT-SPINAS.wl`. A finite compatibility record preserves
+native calculations already saved before that update. It checks the archived
+full source/model/reference/runtime manifest, including all tracked paths and
+program locations, and permits exactly the pinned old/new exporter hashes.
+Every other byte must match. Each admitted old native or export record must
+also match its prepatch summary and capsule hashes. Newly written old-context
+records cannot enter through this exception.
+
+An old native record keeps its original `ContextSHA256`; compatibility does
+not claim that its checks ran again. An old export remains a historical
+validation report from the old exporter. Its preserved report and capsule do
+not, by themselves, identify today's mutable generated C++ files or binaries.
+Existing extended-precision evidence continues to verify its own exact
+project, library, point-stream and raw-report hashes at the report's original
+context. A new export records the current `ExporterContextSHA256`, each
+input's actual `NativeCaseContexts`, and their unchanged capsule hashes.
+These bindings are checked before and after exporting.
+
+The bridge starts pending. After reviewing and freezing the exporter, seal
+this one transition with the exact reviewed file checksum:
+
+```sh
+python3 tests/SM-5-point/stage_context.py --seal-exporter-sha REVIEWED_SHA256
+```
+
+Sealing refuses any second changed file or a second transition. It archives
+the exact postpatch manifest and pins its checksum. Later source, model,
+reference, runtime or tracked-path changes close the bridge and require fresh
+validation. The ordinary runner records the new full context when starting a
+batch. Neither sealing nor metadata admission calculates an amplitude or
+runs an external validation.

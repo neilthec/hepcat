@@ -43,32 +43,22 @@ def read_json(path, default=None):
         return default
 
 
+_stage_spec = importlib.util.spec_from_file_location(
+    'hepcat_sm5_stage_context', Path(__file__).with_name('stage_context.py'))
+stage_context = importlib.util.module_from_spec(_stage_spec)
+_stage_spec.loader.exec_module(stage_context)
+
+
 def context_sha256(configuration):
-    paths = [path for path in (ROOT / 'source').rglob('*')
-             if path.is_file() and path.suffix in ('.wl', '.py', '.cpp', '.hpp', '.h')]
-    paths += [ROOT / 'models' / f'{stem}{number}.mdl'
-              for number in (1, 2) for stem in ('amps', 'prtcls', 'vars', 'func', 'extlib')]
-    paths += list((ROOT / 'tests/reference-models/calchep').glob('*1.mdl'))
-    paths += list((ROOT / 'tests/reference-models/madgraph/sm').glob('*.py'))
-    paths += [HERE / 'inventory.json']
-    hashes = {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest()
-              for path in sorted(paths) if path.is_file()}
-    spinas = Path(configuration.get('SPINASDirectory', '/nonexistent'))
-    runtime = list((spinas / 'include').rglob('*.h')) + list((spinas / 'include').rglob('*.hpp'))
-    runtime += [path for path in spinas.rglob('libspinas*')
-                if path.is_file() and path.suffix in ('.a', '.so', '.dylib')]
-    for program in ('MadGraphDirectory', 'CalcHEPDirectory'):
-        location = Path(configuration.get(program, '/nonexistent'))
-        runtime += [location / 'VERSION', location / 'VERSION.txt']
-    hashes.update({str(path): hashlib.sha256(path.read_bytes()).hexdigest()
-                   for path in sorted(set(runtime)) if path.is_file()})
-    paths_config = {key: str(configuration.get(key, '')) for key in
-                    ('SPINASDirectory', 'CalcHEPDirectory', 'MadGraphDirectory')}
-    return hashlib.sha256(json.dumps({'Files': hashes, 'Programs': paths_config},
-                                    sort_keys=True).encode()).hexdigest()
+    return stage_context.fingerprint(stage_context.manifest(ROOT, HERE, configuration))
 
 
-def checked_summary(identifier, suffix, context_sha):
+def context_compatibility(configuration, current_context=None):
+    return stage_context.verified_bridge(ROOT, HERE, configuration,
+        current_context or context_sha256(configuration))
+
+
+def checked_summary(identifier, suffix, context_sha, compatibility=None):
     path = RESULTS / (identifier + suffix + '.json')
     summary = read_json(path)
     if not isinstance(summary, dict):
@@ -78,7 +68,15 @@ def checked_summary(identifier, suffix, context_sha):
     if summary.get(identity) != identifier:
         return {**summary, 'Status': 'STALE', 'Reason': 'Checkpoint identity differs.'}
     if summary.get('ContextSHA256') != context_sha:
-        return {**summary, 'Status': 'STALE', 'Reason': 'Source/model/reference context differs.'}
+        if (not stage_context.admits(summary.get('ContextSHA256'), context_sha, compatibility)
+                or not stage_context.checkpoint_matches(path, summary, compatibility)):
+            return {**summary, 'Status': 'STALE', 'Reason': 'Source/model/reference context differs.'}
+        summary['ContextCompatibility'] = stage_context.public_proof(compatibility,
+            'HistoricalExportReport' if suffix else 'NativeCalculation')
+        capsule = RESULTS / (identifier + suffix + '.wxf')
+        if (summary.get('CapsuleSHA256') is not None
+                and (not capsule.is_file() or stage_context.digest(capsule) != summary['CapsuleSHA256'])):
+            return {**summary, 'Status': 'STALE', 'Reason': 'Archived checkpoint bytes differ.'}
     if summary.get('Status') in ('COMPLETE', 'PASS'):
         capsule = RESULTS / (identifier + suffix + '.wxf')
         if not capsule.is_file() or summary.get('CapsuleSHA256') != hashlib.sha256(capsule.read_bytes()).hexdigest():
@@ -87,20 +85,68 @@ def checked_summary(identifier, suffix, context_sha):
                              or set(summary.get('CheckStatuses', {})) != {'PASS'}
                              or summary.get('CheckStatuses', {}).get('PASS') != summary.get('Rows')):
             return {**summary, 'Status': 'STALE', 'Reason': 'Mandatory native checks are incomplete.'}
+    if suffix and summary.get('Status') in ('PASS', 'FAIL'):
+        members = summary.get('CaseIDs')
+        if not isinstance(members, list) or not members or len(set(members)) != len(members):
+            return {**summary, 'Status': 'STALE', 'Reason': 'Export member bindings are missing.'}
+        cases = {cid: checked_summary(cid, '', context_sha, compatibility) for cid in members}
+        if not all(isinstance(row, dict) and row.get('Status') == 'COMPLETE' for row in cases.values()):
+            return {**summary, 'Status': 'STALE', 'Reason': 'An export member is unavailable.'}
+        hashes = {cid: row.get('CapsuleSHA256') for cid, row in cases.items()}
+        contexts = {cid: row.get('ContextSHA256') for cid, row in cases.items()}
+        mixed = any(value != summary.get('ContextSHA256') for value in contexts.values())
+        if (summary.get('CaseCapsulesSHA256') != hashes
+                or (('ExporterContextSHA256' in summary or mixed)
+                    and summary.get('ExporterContextSHA256') != summary.get('ContextSHA256'))
+                or (('NativeCaseContexts' in summary or mixed)
+                    and summary.get('NativeCaseContexts') != contexts)):
+            return {**summary, 'Status': 'STALE', 'Reason': 'Export inputs or native contexts differ.'}
     return summary
+
+
+def export_input_admission(identifier, configuration):
+    """Check exact native inputs before an export; perform no calculation or write."""
+    current = context_sha256(configuration)
+    rejected = {'Status': 'REJECTED', 'FamilyID': identifier,
+                'Reason': 'Configuration or native input checkpoint is unavailable.'}
+    if configuration.get('ContextSHA256') != current:
+        return rejected
+    inventory = read_json(HERE / 'inventory.json', {})
+    family = next((row for row in inventory.get('Families', []) if row.get('ID') == identifier), None)
+    if (not family or not isinstance(family.get('CaseIDs'), list) or not family['CaseIDs']
+            or not all(isinstance(cid, str) for cid in family['CaseIDs'])
+            or len(set(family['CaseIDs'])) != len(family['CaseIDs'])):
+        return rejected
+    proof = context_compatibility(configuration, current)
+    cases = {cid: checked_summary(cid, '', current, proof) for cid in family['CaseIDs']}
+    definitions = {row['ID']: row for row in inventory['Cases']}
+    if not all(cid in definitions for cid in cases):
+        return rejected
+    if not all(isinstance(row, dict) and row.get('Status') == 'COMPLETE'
+               and row.get('Particles') == definitions[cid]['Particles'] for cid, row in cases.items()):
+        return rejected
+    result = {'Status': 'APPROVED', 'FamilyID': identifier, 'ExporterContextSHA256': current,
+              'CaseIDs': family['CaseIDs'],
+              'CaseCapsulesSHA256': {cid: row['CapsuleSHA256'] for cid, row in cases.items()},
+              'NativeCaseContexts': {cid: row['ContextSHA256'] for cid, row in cases.items()}}
+    if any(row['ContextSHA256'] != current for row in cases.values()):
+        result['NativeContextCompatibility'] = stage_context.public_proof(proof, 'NativeCalculation')
+    return result
 
 
 def refresh(inventory, previous=None, context_sha=None, points=1000):
     state = previous or {}
-    context_sha = context_sha or context_sha256(read_json(RESULTS / 'configuration.json', {}))
+    configuration = read_json(RESULTS / 'configuration.json', {})
+    context_sha = context_sha or context_sha256(configuration)
+    compatibility = context_compatibility(configuration, context_sha)
     cases = {}
     for case in inventory['Cases']:
-        summary = checked_summary(case['ID'], '', context_sha)
+        summary = checked_summary(case['ID'], '', context_sha, compatibility)
         if summary:
             cases[case['ID']] = summary
     families = {}
     for family in inventory['Families']:
-        summary = checked_summary(family['ID'], '-export', context_sha)
+        summary = checked_summary(family['ID'], '-export', context_sha, compatibility)
         if summary:
             if summary.get('Status') == 'PASS' and (
                     summary.get('CalcHEPStatus') != 'PASS' or summary.get('MadGraphStatus') != 'PASS'
@@ -121,7 +167,8 @@ def refresh(inventory, previous=None, context_sha=None, points=1000):
             summary = families.get(family['ID'])
             if summary and summary.get('Status') != 'PASS':
                 evidence = precision.qualification(family, summary, cases, context_sha,
-                    RESULTS, ROOT / 'tests/results/spinas-output/SM-5-point', points)
+                    RESULTS, ROOT / 'tests/results/spinas-output/SM-5-point', points,
+                    context_compatibility=compatibility)
                 if evidence:
                     summary['PrecisionQualification'] = evidence
                     qualified.append(family)
@@ -209,7 +256,8 @@ def run_worker(args, kind, identifier, config_path):
                    'Message': 'Worker exited without a completed checkpoint.'}
         atomic_json(summary_path, summary)
     if summary.get('Status') in ('COMPLETE', 'PASS'):
-        summary = checked_summary(identifier, suffix, context_sha)
+        summary = checked_summary(identifier, suffix, context_sha,
+            context_compatibility(configuration, context_sha))
     print(f"{identifier}: {summary['Status']}", flush=True)
     return summary
 

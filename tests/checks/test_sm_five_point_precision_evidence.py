@@ -431,6 +431,70 @@ class PrecisionQualificationTests(unittest.TestCase):
         self.export_summary['CalcHEPStatus'] = 'NOT RUN'
         self.assertIsNone(self.qualify())
 
+    def compatibility_fixture(self):
+        current = 'b' * 64
+        checkpoints = {}
+        for stem, row in [(member, self.cases[member]) for member in self.family['CaseIDs']] + [
+                ('family_demo-export', self.export_summary)]:
+            path = self.results / (stem + '.json')
+            checkpoints[path.name] = {'RecordedContextSHA256': self.context,
+                'SummarySHA256': digest(path), 'CapsuleSHA256': row['CapsuleSHA256']}
+        return current, {'Status': 'EXACT_EXPORTER_ONLY_COMPATIBILITY',
+            'NativeContextSHA256': self.context, 'ExporterContextSHA256': current,
+            'NativeRevalidationPerformed': False, '_checkpoints': checkpoints}
+
+    def test_exact_exporter_compatibility_retains_actual_old_precision_context(self):
+        current, proof = self.compatibility_fixture()
+        verified = self.qualify(context_sha=current, context_compatibility=proof)
+        self.assertIsNotNone(verified)
+        self.assertEqual(verified['ContextSHA256'], self.context)
+        self.assertEqual(verified['ActiveExporterContextSHA256'], current)
+        self.assertFalse(verified['ContextCompatibility']['NativeRevalidationPerformed'])
+        self.assertEqual(self.link['ContextSHA256'], self.context)
+        self.assertEqual(self.export_summary['Status'], 'FAIL')
+
+    def test_compatible_precision_still_requires_pinned_old_native_summary(self):
+        current, proof = self.compatibility_fixture()
+        path = self.results / 'case_a.json'
+        row = json.loads(path.read_text()); row['Seconds'] = 9; write(path, row)
+        self.assertIsNone(self.qualify(context_sha=current, context_compatibility=proof))
+
+    def test_compatible_precision_still_rejects_changed_project_or_library(self):
+        current, proof = self.compatibility_fixture()
+        for path in (self.export / 'process.cpp', self.root / 'runtime/libspinas.a'):
+            with self.subTest(path=str(path)):
+                original = path.read_bytes(); path.write_bytes(original + b'changed')
+                self.assertIsNone(self.qualify(context_sha=current, context_compatibility=proof))
+                path.write_bytes(original)
+
+    def test_new_export_with_old_native_requires_exact_context_map(self):
+        current, proof = self.compatibility_fixture()
+        self.export_summary['ContextSHA256'] = current
+        self.export_summary['ExporterContextSHA256'] = current
+        self.link['ContextSHA256'] = current
+        self.raw_failure['ContextSHA256'] = current
+        self.seal_failure(); self.seal()
+        self.assertIsNone(self.qualify(context_sha=current, context_compatibility=proof))
+        self.export_summary['NativeCaseContexts'] = {'case_a': current, 'case_b': self.context}
+        self.assertIsNone(self.qualify(context_sha=current, context_compatibility=proof))
+        self.export_summary['NativeCaseContexts'] = dict.fromkeys(self.family['CaseIDs'], self.context)
+        verified = self.qualify(context_sha=current, context_compatibility=proof)
+        self.assertIsNotNone(verified)
+        self.assertEqual(verified['ContextSHA256'], current)
+        self.assertEqual(verified['NativeCaseContexts'], dict.fromkeys(self.family['CaseIDs'], self.context))
+
+    def test_mixed_precision_requires_consistent_explicit_exporter_context(self):
+        current, proof = self.compatibility_fixture()
+        self.export_summary.update(ContextSHA256=current,
+            NativeCaseContexts=dict.fromkeys(self.family['CaseIDs'], self.context))
+        self.link['ContextSHA256'] = current; self.raw_failure['ContextSHA256'] = current
+        self.seal_failure(); self.seal()
+        for producer in (None, self.context, {}, 'unrelated'):
+            with self.subTest(producer=producer):
+                self.export_summary.pop('ExporterContextSHA256', None)
+                if producer is not None:self.export_summary['ExporterContextSHA256'] = producer
+                self.assertIsNone(self.qualify(context_sha=current, context_compatibility=proof))
+
     def test_metadata_cli_rechecks_context_without_running_physics(self):
         write(self.results / 'configuration.json', {'Points': 1000, 'ContextSHA256': self.context})
         inventory = self.root / 'inventory.json'
