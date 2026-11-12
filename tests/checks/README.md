@@ -51,9 +51,8 @@ HEPCAT_SPINAS_DIRECTORY=/path/to/spinas python3 tests/run-checks.py --python-onl
 ```
 
 Without suitable SPINAS headers, that optional test class is reported as
-skipped. The clean-checkout validation with SPINAS configured ran all 203
-Python checks; the same run without that dependency ran 183 checks and
-reported one class skip. Treat skips separately from passed checks.
+skipped. The clean-checkout validation with SPINAS configured ran all 207
+Python checks without skips. Treat skips separately from passed checks.
 
 Run full construction notebooks and integrations one at a time when checking
 the automatic resource defaults. Each calculation can still use its internal
@@ -120,8 +119,9 @@ Each suite runs in a fresh kernel. The timeout is a hard per-suite limit;
 the runner terminates the kernel process group, including descendants, on a
 timeout or interruption. A syntax-validation wrapper checks the entire source
 before any test executes, and the runner requires an explicit completion
-marker as well as a zero exit status. Wolfram's zero exit status alone is not
-sufficient. It does not use the server or the user's notebook kernel.
+marker as well as a zero exit status. Emitted recursion- or iteration-limit
+errors fail the run even if a later completion marker is printed. Wolfram's
+zero exit status alone is not sufficient. It does not use the server or the user's notebook kernel.
 Individual assertions in the legacy suites also have short limits.
 An end-of-suite count guards against a recursion error silently skipping a
 test loop.

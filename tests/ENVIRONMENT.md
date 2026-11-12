@@ -145,7 +145,7 @@ SPINAS location explicitly:
 HEPCAT_SPINAS_DIRECTORY=/path/to/spinas python3 tests/run-checks.py --python-only
 ```
 
-This clean-checkout command ran all 203 Python checks without skips in the
+This clean-checkout command ran all 207 Python checks without skips in the
 tested configuration. Without SPINAS, its optional adapter class is skipped;
 that is not evidence that those native checks passed.
 
