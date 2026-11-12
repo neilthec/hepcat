@@ -169,14 +169,17 @@ sm5NotebookRecordedFailure[record_Association] := Module[{failure, status},
     "Status" -> status, "Seconds" -> Lookup[record, "Seconds", Missing["Unknown"]]|>]
 ];
 sm5NotebookWithRevalidation[cells_List, record_Association] := Module[
-  {prints, additions, positions, index, seconds},
+  {prints, additions, positions, index, seconds, checkLimit},
   prints = sm5NotebookVisiblePrints[Lookup[record, "RevalidationPrints", {}]];
   If[!ListQ[prints] || prints === {}, Return[cells]];
   seconds = Lookup[record, "RevalidationSeconds", Missing["Unknown"]];
+  checkLimit = Lookup[record, "RevalidationCheckTimeConstraint", Automatic];
   additions = Join[{Cell[
     "Revalidation of the retained expression" <>
       If[NumberQ[seconds], ": " <> ToString[NumberForm[seconds, {8, 2}], OutputForm] <> " s", ""] <>
-      ". The original construction output and timing remain above; the following checks use the unchanged saved amplitude with the current package.",
+      ". The original construction output and timing remain above; the following checks use the unchanged saved amplitude with the current package." <>
+      If[NumberQ[checkLimit], " These revalidation checks used an explicit " <>
+        ToString[checkLimit, InputForm] <> " s checker limit.", ""],
     "Text", GeneratedCell -> True, CellAutoOverwrite -> True,
     CellTags -> "sm5-revalidation-" <> Lookup[record, "ID", "retained"]]},
     sm5NotebookOutput[#, "Print"] & /@ prints];

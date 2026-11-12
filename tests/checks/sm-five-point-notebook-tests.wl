@@ -164,6 +164,14 @@ sm5ntCheck["actual revalidation prints follow construction prints and precede th
 sm5ntCheck["fresh input evaluation can replace the generated revalidation provenance",
   !FreeQ[sm5ntReplayRevalidation, Cell[_, "Text", GeneratedCell -> True, CellAutoOverwrite -> True,
     CellTags -> "sm5-revalidation-" <> sm5ntSampleID]]];
+Export[FileNameJoin[{sm5ntTemporary, sm5ntSampleID <> ".wxf"}],
+  <|"ID" -> sm5ntSampleID, "Prints" -> {"synthetic construction"}, "Expression" -> 3/7,
+    "RevalidationPrints" -> {"synthetic native checks"}, "RevalidationSeconds" -> 1.25,
+    "RevalidationCheckTimeConstraint" -> 600|>, "WXF"];
+sm5ntBuild[];
+sm5ntCheck["an explicit retained-check allowance is visible without changing construction timing",
+  !FreeQ[sm5ntRead[sm5ntFixtureNotebook], text_String /;
+    StringContainsQ[text, "explicit 600 s checker limit"]]];
 sm5ntRevalidator = sm5ntRead[FileNameJoin[{sm5ntRoot, "tests", "SM-5-point", "revalidate.wl"}]];
 sm5ntCheck["the retained-amplitude revalidator parses and never invokes construction",
   MatchQ[sm5ntRevalidator, _HoldComplete] && FreeQ[sm5ntRevalidator, _Syntax | _ConstructAmplitude]];
