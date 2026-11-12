@@ -1,0 +1,11 @@
+{
+  "BackendResult": {
+    "ExitCode": 0,
+    "Points": 1000,
+    "Seed": 1794521991987577000,
+    "StandardError": "",
+    "StandardOutput": "PROCESS: e,E->M,m,h\nAmplitude validation: 100/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 200/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 300/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 400/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 500/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 600/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 700/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 800/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 900/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 1000/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: PASS\nSeed: 1794521991987577000\nPoints requested/generated/compared: 1000/1000/1000\nMismatches/errors: 0/0\nMaximum relative/absolute error: 1.553910200411641e-13/1.27675647831893e-15\nEvery requested common phase-space point agrees.\n",
+    "Status": "PASS"
+  },
+  "SourceExportCapsuleSHA256": "e57a47df5dce70eda9ebbdf3281a6eb212ddbe5985497a5b0defb1f2c6ab5433"
+}

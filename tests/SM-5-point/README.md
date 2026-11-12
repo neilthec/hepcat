@@ -436,3 +436,54 @@ campaign ledger. The opt-in `covariant-current-source-tests.wl` suite exercises
 synthetic scalar/pseudoscalar models, model and namespace isolation, particle and
 coupling renames, unsupported vertices, and fresh distinct/identical fermion
 diagram coverage without importing saved amplitudes.
+
+
+## Source-certified constructor proposals
+
+The package now uses the certified-current method as an optional early stage of
+ordinary `ConstructAmplitude` calls with an independent Feynman model. The
+supported five-leg classes are four massive color-singlet Dirac fermions with
+one scalar, and two such fermions with one massive vector and two identical
+scalars. Used cubic vertices must match the minimal covariant templates exactly.
+Every ordered graph, physical propagator and fermion endpoint must be covered;
+internal momenta remain off shell throughout the conversion.
+
+For the second class, an existing metric quartic continuation is fixed from the
+complete known four-point amplitude in the factorization model after subtracting
+the chosen source-derived cubic exchanges. This is a symbolic reconstruction of
+a declared operator, including all nine coherent vector-spin components. It does
+not fit sampled coefficients, introduce an independent contact interaction or
+read the independent Feynman benchmark to construct the candidate.
+
+Candidates receive external-only preparation and all the normal checks at the
+requested parameter assignments. Default inputs with distinct independent Dirac
+mass parameters additionally test an equal-mass assignment. A rejected or
+unsupported proposal falls through to the existing completion path. These
+restrictions matter: the current source extension does not yet certify chiral
+massless fermion currents, three-vector currents or colored currents.
+
+The actual public-call pilots and canonical workers are separate records. Pilot
+timings are not substituted for notebook timings. The canonical worker writes
+compressed WXF; new integration captures do the same. Both preserve the exact
+expressions, check reports, options and seeds. The additional equal-mass probe
+has now been rerun on the repaired distinct-lepton expression, with fresh full
+Feynman diagrams, and all 13 rows pass. Its superseded failure remains in the
+supplemental registry's history and the original artifacts are unchanged.
+
+## Finite constructor-history compatibility
+
+`constructor-context-bridge.json` retains a fixed set of earlier validation
+records across the reviewed constructor-only update. Two independent cold
+loads before and after compare all ten definition fields of every existing
+package symbol. Mathematical definitions outside `ConstructAmplitude` are
+unchanged; its usage message, the exactly recomputed loader hash cache and
+empty temporary local symbols are explicitly accounted for. New private source
+modules were separately reviewed for side effects and model isolation.
+
+Each admitted historical summary and capsule must still match its frozen
+checksum. It keeps its actual source context, options, seed and timing. This
+admission neither reruns the constructor nor asserts that today's constructor
+reproduces the historical result. Existing counterexample guards and the strict
+precision-evidence checks remain mandatory. New canonical constructions and
+exports record the current context and actual input capsules normally. Any
+unreviewed source, model or runtime change closes this finite exception.
