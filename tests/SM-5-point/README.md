@@ -417,3 +417,22 @@ produces an unavailable note and no supplemental result. A recorded failure is
 a limitation of that saved formula at the additional inputs; the probe never
 overwrites its construction or export records. `build-notebook.wl --probes FILE`
 selects another registry for a separate notebook.
+
+
+`covariant-current-sources.wl` is a source-only candidate prototype for five legs
+containing four massive color-singlet Dirac fermions and one scalar. It matches
+every used elementary vertex symbolically to a minimal covariant current,
+preserves model-owned masses and couplings, and checks ordered vertex ports,
+physical propagators and fermion endpoint flow against every original diagram.
+Internal lines remain off shell. Used contact or nonminimal vertices are rejected;
+no independent reference model, saved amplitude or numerical coefficient fit is
+used to generate the candidate.
+
+The result is `UNVALIDATED_CANDIDATE`, with its external mass rules and certificates.
+It still requires the ordinary independent factorization, high-energy, reference
+and Feynman checks, then the requested CalcHEP and MadGraph comparisons. A local
+vertex certificate alone does not establish a complete amplitude or update the
+campaign ledger. The opt-in `covariant-current-source-tests.wl` suite exercises
+synthetic scalar/pseudoscalar models, model and namespace isolation, particle and
+coupling renames, unsupported vertices, and fresh distinct/identical fermion
+diagram coverage without importing saved amplitudes.
