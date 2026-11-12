@@ -169,9 +169,16 @@ sfCompton = WriteSPINASProcess[sfComptonPath, {
   {{"e", "A.+", "E", "A.+"}, sfComptonPP},
   {{"e", "A.+", "E", "A.-"}, sfComptonPM},
   {{"e", "A.-", "E", "A.-"}, sfComptonMM}}, sfModel,
-  "ParameterRules" -> sfRules, "SPINASDirectory" -> sfSpinas];
-check["helicity closure never exchanges an incoming and outgoing photon",
-  FailureQ[sfCompton] && !DirectoryQ[sfComptonPath]];
+  "ParameterRules" -> sfRules, "SPINASDirectory" -> sfSpinas, "ReturnDetails" -> True];
+check["analytic Bose closure supplies the missing Compton helicity before crossing",
+  AssociationQ[sfCompton] && Length[sfCompton["HelicityConfigurations"]] === 4 &&
+    sfCompton["InputBranchCount"] === 3 && sfCompton["GeneratedBranchCount"] === 1 &&
+    sfCompton["AnalyticHelicityClosure"]["AddedBranchCount"] === 1];
+If[AssociationQ[sfCompton],
+  sfComptonManifest = Import[sfCompton["Files"]["Manifest"], "RawJSON"];
+  check["Compton runtime dispatch still preserves incoming and outgoing roles",
+    AllTrue[sfComptonManifest["Branches"], Sort[#["LegPermutation"][[{1, 2}]]] === {1, 2} &] &&
+      Length[sfComptonManifest["InputProcesses"]] === 3]];
 check["family generation changes neither its model nor global parameter symbols",
   sfModel === sfModelBefore &&
     {OwnValues[Global`Me], OwnValues[Global`EE]} === sfGlobalsBefore];

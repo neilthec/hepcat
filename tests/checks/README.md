@@ -709,6 +709,15 @@ diagram model is unchanged.
 
 ## SPINAS Process Export
 
+`spinas-analytic-closure-tests.wl` checks missing identical-boson helicity
+arrangements across incoming and outgoing roles. It verifies typed transport
+of mass rules, composite momenta, spin slots and complete color tensors before
+crossing, while keeping runtime permutations within their original physical
+roles. Compiled Compton examples compare complex amplitudes against separately
+supplied helicities, including all explicit quark and gluon colors. Fixed
+polarizations, invalid original branches and model-local parameters remain
+part of the admission checks.
+
 `spinas-optimized-tests.wl` compiles both numerical export modes and compares
 complex amplitudes, complete helicity families and spin sums at the same
 kinematics. Its C++ oracle covers model/mass updates, copies, invalid/stale
