@@ -170,7 +170,7 @@ sm5ntCheck["the retained-amplitude revalidator parses and never invokes construc
 sm5ntCheck["revalidation retains native default mandatory checks",
   !FreeQ[sm5ntRevalidator, HoldPattern[CheckAmplitudes[expression, channels, factorizationModel,
       "FeynmanAmplitudes" -> benchmark, "FeynmanModel" -> feynmanModel,
-      "Output" -> "Details", "RandomSeed" -> seed]]] &&
+      "Output" -> "Details", "RandomSeed" -> seed, "TimeConstraint" -> nativeCheckSeconds]]] &&
     FreeQ[sm5ntRevalidator, HoldPattern[(("HighEnergyCheck" | "ReferenceCheck") -> False) |
       ("SpuriousPoles" -> {})]]];
 sm5ntPrecisionSample = <|"Results" -> <|
@@ -205,6 +205,43 @@ sm5ntCheck["saved previews omit only routine heartbeats and retain milestones an
 sm5ntCheck["plain and multi-argument heartbeats use the same presentation filter",
   sm5NotebookVisiblePrints[{"Preparing diagrams: working; stage 1 s; total 2 s",
     SequenceForm["Preparing diagrams", ": working; stage ", 1], "actual warning"}] === {"actual warning"}];
+(* Summary-only attempts select nonstarter families but never invent output. *)
+sm5ntGluonFamily = SelectFirst[sm5ntInventory["Families"], #["Sector"] === "PureGluon" &];
+sm5ntGluonCases = Select[sm5ntInventory["Cases"], MemberQ[sm5ntGluonFamily["CaseIDs"], #["ID"]] &];
+sm5ntGluonID = First[sm5ntGluonCases]["ID"];
+Export[sm5ntFixtureInventory, <|"Cases" -> sm5ntGluonCases, "Families" -> {sm5ntGluonFamily}|>, "RawJSON"];
+sm5ntSummaryPath = FileNameJoin[{sm5ntTemporary, sm5ntGluonID <> ".json"}];
+Export[sm5ntSummaryPath, <|"ID" -> sm5ntGluonID, "Status" -> "TIMEOUT", "Seconds" -> 42,
+  "Message" -> "synthetic external deadline", "Expression" -> "NOT_AN_AMPLITUDE"|>, "RawJSON"];
+sm5ntBuild[]; sm5ntSummaryTimeout = sm5ntRead[sm5ntFixtureNotebook];
+sm5ntCheck["a JSON-only attempted nonstarter family is included automatically",
+  !FreeQ[sm5ntSummaryTimeout, "sm5-family-" <> sm5ntGluonFamily["ID"]] &&
+    !FreeQ[sm5ntSummaryTimeout, "RecordedSMFivePointRun"] && !FreeQ[sm5ntSummaryTimeout, "TIMEOUT"]];
+sm5ntCheck["a summary-only timeout retains its recorded time without an expression or validation",
+  sm5NotebookRecord[FileNameJoin[{sm5ntTemporary, sm5ntGluonID <> ".wxf"}]]["Seconds"] === 42 &&
+    FreeQ[sm5ntSummaryTimeout, "NOT_AN_AMPLITUDE" | _Dataset]];
+Do[Export[sm5ntSummaryPath, <|"ID" -> sm5ntGluonID, "Status" -> status, "Seconds" -> 19|>, "RawJSON"];
+  sm5ntBuild[];
+  sm5ntCheck["summary-only " <> status <> " retains its actual unsuccessful status",
+    !FreeQ[sm5ntRead[sm5ntFixtureNotebook], status]], {status, {"ERROR", "INTERRUPTED"}}];
+Export[sm5ntSummaryPath, <|"ID" -> sm5ntGluonID, "Status" -> "COMPLETE", "Seconds" -> 7,
+  "Expression" -> "NOT_AN_AMPLITUDE"|>, "RawJSON"];
+sm5ntBuild[];sm5ntMissingComplete = sm5ntRead[sm5ntFixtureNotebook];
+sm5ntCheck["a COMPLETE summary without its capsule is not displayed as a completed amplitude",
+  !FreeQ[sm5ntMissingComplete, "MissingSavedSMFivePointCapsule"] &&
+    FreeQ[sm5ntMissingComplete, "NOT_AN_AMPLITUDE"]];
+Export[FileNameJoin[{sm5ntTemporary, sm5ntGluonFamily["ID"] <> "-export.json"}],
+  <|"FamilyID" -> sm5ntGluonFamily["ID"], "Status" -> "PASS", "Seconds" -> 8,
+    "Result" -> <|"Directory" -> "NOT_AN_EXPORT"|>|>, "RawJSON"];
+sm5ntBuild[];sm5ntMissingExport = sm5ntRead[sm5ntFixtureNotebook];
+sm5ntCheck["a PASS summary without its export capsule supplies no successful output",
+  !FreeQ[sm5ntMissingExport, "MissingSavedSMFivePointCapsule"] &&
+    FreeQ[sm5ntMissingExport, "NOT_AN_EXPORT"]];
+DeleteFile[sm5ntSummaryPath];DeleteFile[FileNameJoin[{sm5ntTemporary, sm5ntGluonFamily["ID"] <> "-export.json"}]];
+Export[sm5ntSummaryPath, <|"ID" -> "different-case", "Status" -> "TIMEOUT"|>, "RawJSON"];
+sm5ntBuild[];
+sm5ntCheck["a mismatched JSON identity is not attributed to a different process family",
+  FreeQ[sm5ntRead[sm5ntFixtureNotebook], "sm5-family-" <> sm5ntGluonFamily["ID"]]];
 DeleteDirectory[sm5ntTemporary, DeleteContents -> True];
 Print["SM FIVE-POINT NOTEBOOK CHECKS: ", sm5ntChecks, "; FAILURES: ", Length[sm5ntFailures]];
 If[sm5ntFailures === {}, Print["HEPCAT_TEST_COMPLETED:sm-five-point-notebook-tests.wl"], Print[sm5ntFailures]];

@@ -55,11 +55,18 @@ sm5NotebookStarterSignatures = Sort /@ {
   {"h", "h", "h", "h", "h"}, {"h", "h", "h", "Z", "Z"},
   {"h", "h", "h", "W+", "W-"}, {"e", "E", "h", "h", "h"}};
 sm5NotebookStarterFamilies = DeleteDuplicates[Lookup[Select[sm5NotebookCases,
-  MemberQ[sm5NotebookStarterSignatures, Sort[#["Particles"]]] &], "FamilyID"]];
+  MemberQ[sm5NotebookStarterSignatures, Sort[#["Particles"]]] &], "FamilyID", {}]];
+sm5NotebookRecordedAttemptQ[id_String, suffix_: ""] := Module[{base, summary},
+  base = FileNameJoin[{sm5NotebookResultsPath, id <> suffix}];
+  If[FileExistsQ[base <> ".wxf"], Return[True]];
+  summary = If[FileExistsQ[base <> ".json"],
+    Quiet[Check[Import[base <> ".json", "RawJSON"], <||>]], <||>];
+  AssociationQ[summary] && Lookup[summary, If[suffix === "", "ID", "FamilyID"], None] === id &&
+    StringQ[Lookup[summary, "Status", None]]
+];
 sm5NotebookRecordedFamilies = Select[sm5NotebookFamilies,
-  FileExistsQ[FileNameJoin[{sm5NotebookResultsPath, #["ID"] <> "-export.wxf"}]] ||
-    AnyTrue[Lookup[#, "CaseIDs", {}],
-      FileExistsQ[FileNameJoin[{sm5NotebookResultsPath, # <> ".wxf"}]] &] &];
+  sm5NotebookRecordedAttemptQ[#["ID"], "-export"] ||
+    AnyTrue[Lookup[#, "CaseIDs", {}], sm5NotebookRecordedAttemptQ[#] &] &];
 sm5NotebookSelectedIDs = If[KeyExistsQ[sm5NotebookOptions, "--families"],
   DeleteDuplicates[StringSplit[sm5NotebookOptions["--families"], ","]],
   DeleteDuplicates[Join[sm5NotebookStarterFamilies, Lookup[sm5NotebookRecordedFamilies, "ID", {}]]]];
@@ -117,8 +124,23 @@ sm5NotebookText[text_String] := Cell[text, "Text"];
 sm5NotebookCount[n_Integer, singular_String, plural_String] := ToString[n] <> " " <> If[n === 1, singular, plural];
 sm5NotebookInput[text_String, tag_String] := Cell[text, "Input", CellTags -> tag];
 sm5NotebookGroup[cells_List] := Cell[CellGroupData[cells, Open]];
-sm5NotebookRecord[path_String] := If[FileExistsQ[path],
-  Quiet[Check[Import[path, "WXF"], <||>]], <||>];
+sm5NotebookRecord[path_String] := Module[{record, summaryPath, summary, stem, export, id},
+  record = If[FileExistsQ[path], Quiet[Check[Import[path, "WXF"], <||>]], <||>];
+  If[AssociationQ[record] && record =!= <||>, Return[record]];
+  summaryPath = FileNameJoin[{DirectoryName[path], FileBaseName[path] <> ".json"}];
+  summary = If[FileExistsQ[summaryPath],
+    Quiet[Check[Import[summaryPath, "RawJSON"], <||>]], <||>];
+  stem = FileBaseName[path]; export = StringEndsQ[stem, "-export"];
+  id = If[export, StringDrop[stem, -StringLength["-export"]], stem];
+  If[!AssociationQ[summary] || Lookup[summary, If[export, "FamilyID", "ID"], None] =!= id ||
+      !StringQ[Lookup[summary, "Status", None]], Return[<||>]];
+  (* A status summary is evidence of an attempted run, never a saved amplitude,
+     export directory, captured cell or validation table. *)
+  Join[KeyTake[summary, {"ID", "FamilyID", "Status", "Seconds", "ElapsedSeconds", "RandomSeed",
+      "ContextSHA256", "Log", "Message", "FailureStage"}],
+    <|"SummaryOnly" -> True, "Expression" -> Missing["NoSavedAmplitude"],
+      "Result" -> Missing["NoSavedExport"], "Prints" -> {}|>]
+];
 sm5NotebookOutput[value_, style_String] := Cell[BoxData[ToBoxes[value, StandardForm]], style,
   GeneratedCell -> True, CellAutoOverwrite -> True];
 (* Repeated headless heartbeats belong in the preserved raw log, rather than
@@ -130,6 +152,14 @@ sm5NotebookHeartbeatQ[value_] := (StringQ[value] || MatchQ[value, _Row | _Sequen
 sm5NotebookVisiblePrints[prints_List] := Select[prints, !sm5NotebookHeartbeatQ[#] &];
 sm5NotebookRecordedFailure[record_Association] := Module[{failure, status},
   status = Lookup[record, "Status", "UNKNOWN"];
+  If[TrueQ[Lookup[record, "SummaryOnly", False]],
+    Return[Failure[If[MemberQ[{"COMPLETE", "PASS"}, status],
+      "MissingSavedSMFivePointCapsule", "RecordedSMFivePointRun"], <|
+      "MessageTemplate" -> If[MemberQ[{"COMPLETE", "PASS"}, status],
+        "The saved summary reports `` after `` seconds, but its amplitude or export capsule is missing or unreadable. No completed result is displayed.",
+        "The saved run ended with status `` after `` seconds. No amplitude or validation capsule was saved."],
+      "MessageParameters" -> {status, Lookup[record, "Seconds", Lookup[record, "ElapsedSeconds", "unrecorded"]]},
+      "RecordedSummary" -> KeyDrop[record, {"Expression", "Result", "Prints", "SummaryOnly"}]|>]]];
   If[!MemberQ[{"FAIL", "TIMEOUT", "ERROR", "INTERRUPTED"}, status], Return[Missing["NoFailure"]]];
   failure = FirstCase[record, _Failure, Missing["NoFailureDetails"], Infinity];
   If[!MissingQ[failure], Return[failure]];
