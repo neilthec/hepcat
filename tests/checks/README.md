@@ -959,6 +959,15 @@ exact pairs, with sum `2 H`, and recover `H` without channel subtraction terms.
 These tests treat overlap removal as a residue-validated candidate, never as
 an arithmetic identity for adding diagrams.
 
+The timeout-fallback checks preserve an unexpanded pole-bearing input as one
+correlated direction when ordinary term collection runs out of time. They verify
+that the formal regular part stays fixed, that each inverse-propagator
+replacement reconstructs the input exactly, and that positive propagators,
+unsupported rational dependence and inconsistent record totals are rejected.
+The fallback explicitly leaves duplicate-term coverage incomplete. Tiny or
+higher-order pole contributions are retained for the normal validation rules;
+none is silently dropped to obtain agreement.
+
 The completion suite includes the notebook's actual five-point QED
 `AllSpurious` diagram preparation followed by automatic completion, without
 supplying a known answer as a correction basis. It also completes the

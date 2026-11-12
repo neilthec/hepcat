@@ -126,6 +126,7 @@ symbolic construction or a fresh independent-reference calculation.
 | Focused completion-input regressions | 102 passed, including 31 conservative timeout-fallback safeguards |
 | Focused four-leg preparation regressions | 50 passed, including final-only scheduling, exact-identity safeguards, rational-proof normalization, and bounded fallback; this is not an end-to-end construction pass |
 | Fresh public SM vector integration | 19 passed, including both automatic constructors, unchanged compactness bounds and final checks at three parameter assignments |
+| Fresh public mixed-helicity six-point QED call | Scientific report COMPLETE; 121 final checks passed, including 14 physical cuts, 104 spurious checks, high energy, references and Feynman. The requested all-physical preference was not achieved |
 | Full 117-suite default and 15-suite integration campaigns | In progress; a complete release pass has not yet been established |
 | Actual QED and SM notebook campaigns | In progress, with unresolved construction and simplification regressions under investigation; archived passes are not substituted for fresh results |
 
@@ -136,6 +137,14 @@ Both selected representatives pass all mandatory final checks and all three
 independent parameter assignments, with physical poles and unchanged models.
 The complete fresh notebook campaigns remain pending. These two end-to-end
 results are not a full release pass.
+
+The isolated QED call used the literal notebook defaults and completed in
+730.3 seconds. Its shifted-channel fit took 87.4 seconds of a 90-second
+allocation, so timing robustness remains under investigation. The scientific
+report was saved before a private audit harness made an invalid metadata
+update and exited with code 1. That separate telemetry error is retained;
+it is not counted as an official test-runner pass. The complete fresh notebook
+run still needs to finish with the corrected harness.
 
 The deliberately low-precision float discrepancies are measured
 conditioning results, not failed high-precision agreement tests. One newly
