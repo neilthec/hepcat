@@ -29,3 +29,4 @@ __pycache__/
 !/tests/benchmarks/reproduction/README.md
 /tests/history/
 /tests/development/
+/drafts/
