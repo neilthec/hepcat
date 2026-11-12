@@ -91,7 +91,18 @@ combined bound. The overall ", ButtonBox["ConstructAmplitude",
       BaseStyle -> "Link", ButtonData ->
        "paclet:HEPCAT/ref/ConstructAmplitude"],
      " deadline remains authoritative."}], "Notes"],
-  Cell["Why the channels are solved together", "NotesSection"],
+  Cell[TextData[{"During that failure-only renewed attempt, physical-source \
+construction retries only ordinary source reductions that actually timed out. \
+Each retry shares the original finite source-build deadline and uses at most \
+one second and 64 MiB. Original source forms remain available alongside \
+accepted reduced forms. The usual physical-denominator, correction-cap, \
+identical-particle projection and correlated regular-term checks still apply. \
+This introduces no new identity or independent contact interaction. Detailed \
+physical-source reports include ",
+     Cell[BoxData[RowBox[{"OrdinarySourceClosure"}]], "InlineFormula"], ", \
+with the retried slots and their outcomes. Successful first attempts and \
+direct calls with explicit stage clocks keep their existing path."}],
+   "Notes"], Cell["Why the channels are solved together", "NotesSection"],
   Cell[TextData[{"A factorization channel determines an amplitude on one \
 pole. Extending its expression away from that pole is not unique, and \
 different channels can share double or higher simultaneous poles. Simply \

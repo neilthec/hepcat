@@ -45,7 +45,7 @@ TEST_SUITES = (
     "native-laurent-identity-tests.wl",
     "native-rest-null-dual-tests.wl",
     "thesis-preparation-tests.wl", "diagram-tests.wl",
-    "simplification-path-tests.wl", "physical-residue-tests.wl", "factorization-simplification-budget-tests.wl", "factorization-source-timeout-retry-tests.wl", "massless-sewing-tests.wl",
+    "simplification-path-tests.wl", "physical-residue-tests.wl", "factorization-simplification-budget-tests.wl", "factorization-source-timeout-retry-tests.wl", "ordinary-source-closure-tests.wl", "massless-sewing-tests.wl",
     "fermion-sewing-grading-tests.wl", "fermion-row-reference-tests.wl",
     "spurious-pole-tests.wl", "qed-five-point-simplification-tests.wl",
     "high-energy-tests.wl", "high-energy-power-counting-tests.wl", "high-energy-family-tests.wl", "cubic-current-source-tests.wl",
@@ -97,7 +97,8 @@ TEST_SUITES = (
     "qed-worked-example-tests.wl", "qed-construction-notebook-tests.wl", "sm-construction-notebook-tests.wl", "sm-five-point-notebook-tests.wl",
     "parallel-execution-tests.wl", "parallel-preparation-tests.wl", "preparation-parallel-policy-tests.wl",
     "parallel-amplitude-check-tests.wl", "parallel-completion-tests.wl",
-    "construct-amplitude-tests.wl", "automatic-resource-tests.wl", "random-seed-tests.wl",
+    "construct-amplitude-tests.wl", "construct-benchmark-recovery-tests.wl",
+    "automatic-resource-tests.wl", "random-seed-tests.wl",
 )
 
 # These execute full expensive notebook constructions rather than component

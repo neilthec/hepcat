@@ -7477,7 +7477,8 @@ amplitudeAutomaticSettings[stage_String, requested_Association, metrics_Associat
 
 (* Resource-only retries use the same original amplitudes and channel targets.
    An explicitly supplied numeric cap or clock is never increased. *)
-amplitudeAutomaticFactorization[input_, channelInput_, model_, supplied_List] := Block[{$completionAutomaticCorrectionTermCeiling = None}, Module[
+amplitudeAutomaticFactorization[input_, channelInput_, model_, supplied_List] := Block[{$completionAutomaticCorrectionTermCeiling = None,
+  $completionOrdinarySourceClosure = False}, Module[
   {requested = Join[Association[Options[CompleteFactorization]], Association[Reverse[supplied]]],
    resolution, metrics, settings, originalOutput, details, automaticKeys, resolvedSupplied,
    started = AbsoluteTime[],
@@ -7550,6 +7551,7 @@ amplitudeAutomaticFactorization[input_, channelInput_, model_, supplied_List] :=
     attemptCap = cap;
     report = Block[{$completionAutomaticFitSamples = automaticSamples,
       $completionAutomaticPoleSearch = automaticPole,
+      $completionOrdinarySourceClosure = TrueQ[timeoutRecoveryUsed],
       $completionAutomaticCorrectionTermCeiling = If[MemberQ[automaticKeys, "MaxCorrectionTerms"], ceiling, None]},
       completionFactorizationCore[input, channelInput, model, Sequence @@ Normal[numericOptions]]];
     If[!AssociationQ[report], If[AssociationQ[bestReport], Break[], Return[report]]];
@@ -9446,6 +9448,43 @@ completionNormalizePhysicalColumns[basis_List, massRules_List, seconds_ : 30] :=
 ];
 
 
+
+(* Only a failure-only caller grants this recovery. Retry actual timed-out
+   ordinary source slots, keeping the original build deadline and its one-second
+   per-slot maximum. Failed or unsupported rewrites supply no new coordinates. *)
+completionRetryTimedOutOrdinarySources[records_List, indices_List, external_List,
+    deadline_, supported_] := Module[
+  {admitted={},reports={},record,index,remaining,allowance,started,reduced,status,
+   memoryLimit=67108864,valid},
+  valid=DuplicateFreeQ[indices] && AllTrue[indices,IntegerQ[#] && 1<=#<=Length[records]&] &&
+    AllTrue[indices,AssociationQ[records[[#]]] && KeyExistsQ[records[[#]],"Expression"]&];
+  If[!valid,Return[<|"Status"->"NOT_ATTEMPTED","Reason"->"InvalidSourceSlots",
+    "Sources"->{},"Reports"->{},"Attempted"->False|>]];
+  If[!NumericQ[deadline] || !TrueQ[0<deadline<Infinity],
+    Return[<|"Status"->"NOT_ATTEMPTED","Reason"->"NoFiniteBuildDeadline",
+      "Sources"->{},"Reports"->{},"Attempted"->False|>]];
+  Do[
+    remaining=deadline-AbsoluteTime[];If[remaining<=0.001,Break[]];
+    allowance=Min[1,remaining];record=records[[index]];started=AbsoluteTime[];
+    reduced=TimeConstrained[MemoryConstrained[
+      Block[{$rspCanonicalProductBasis=True},completionExternalReduce[record["Expression"],external]],
+      memoryLimit,Missing["OrdinarySourceMemoryLimit"]],allowance,$TimedOut];
+    status=Which[reduced===$TimedOut,"TIMEOUT",
+      reduced===Missing["OrdinarySourceMemoryLimit"],"MEMORY_LIMIT",
+      !residueFiniteQ[reduced] || !FreeQ[reduced,_List|_Association|_Rule|_RuleDelayed|_Failure|_Missing],"REJECTED",
+      !TrueQ[supported[reduced]],"REJECTED",True,"ADMITTED"];
+    If[status==="ADMITTED",AppendTo[admitted,<|"SourceIndex"->index,"Expression"->reduced|>]];
+    AppendTo[reports,<|"SourceIndex"->index,"Source"->Lookup[record,"Source",Missing["UnrecordedSource"]],
+      "FirstPassStatus"->"TIMEOUT","Status"->status,"TimeConstraint"->allowance,
+      "MemoryConstraintBytes"->memoryLimit,"Seconds"->N[AbsoluteTime[]-started]|>],
+    {index,indices}];
+  <|"Status"->Which[indices==={},"NOT_NEEDED",Length[reports]<Length[indices],"DEADLINE",
+      AllTrue[reports,#["Status"]==="ADMITTED"&],"COMPLETE",True,"PARTIAL"],
+    "Sources"->admitted,"Reports"->reports,"Attempted"->(reports=!={}),
+    "RequestedSourceIndices"->indices,"OriginalBuildDeadline"->deadline,
+    "Method"->"OnlyTimedOutOrdinarySourceSlotsWithinTheOriginalFiniteBuildDeadline"|>
+];
+
 completionPhysicalChannelBasis[normalized_Association, channelPreparation_,
     exchangePlan_Association, constructionLimit_Integer, limit_Integer, seconds_,
     reducedChannels_: Missing["NotProvided"]] := Module[
@@ -9458,7 +9497,9 @@ completionPhysicalChannelBasis[normalized_Association, channelPreparation_,
    closedQ, physicalQ, supportedQ, appendSource, channelNormalized, sourceCount = 0, rawCount = 0, basis = {},
    automaticCeiling, constructionBound, effectiveLimit = limit, capChanges = {}, nextLimit,
    columnNormalization = Missing["NotRequested"], normalizationBudget, normalizedColumns,
-   rejectedColumns = {}},
+   rejectedColumns = {},ordinaryClosureEnabled=TrueQ[$completionOrdinarySourceClosure],
+   ordinaryIndex=0,ordinaryTimedOut={},ordinaryReductionReports={},ordinarySlotStarted,
+   ordinaryClosure=Missing["NotRequested"],ordinaryRecord,ordinaryAdmission},
   (* The public wrapper grants this permission only for an Automatic cap.
      Every explicit numeric child call resets it at its own wrapper entry. *)
   automaticCeiling = If[IntegerQ[$completionAutomaticCorrectionTermCeiling] &&
@@ -9535,11 +9576,17 @@ completionPhysicalChannelBasis[normalized_Association, channelPreparation_,
       "No closed source with only catalogued physical propagator denominators was available."];
       Throw[False, tag]];
     Do[
+      If[ordinaryClosureEnabled,ordinaryIndex++;ordinarySlotStarted=AbsoluteTime[]];
       value = record["Expression"];
       (* Retain the original source if optional ordinary reduction times out
          or exposes a denominator outside the supplied physical catalog. *)
       reduced = TimeConstrained[completionExternalReduce[value, external],
         Max[0.000001, Min[1, seconds/Max[1, 2 sourceCount]]], $TimedOut];
+      If[ordinaryClosureEnabled,
+        If[reduced===$TimedOut,AppendTo[ordinaryTimedOut,ordinaryIndex]];
+        AppendTo[ordinaryReductionReports,<|"SourceIndex"->ordinaryIndex,"Source"->record["Source"],
+          "Status"->If[reduced===$TimedOut,"TIMEOUT","RETURNED"],
+          "Seconds"->N[AbsoluteTime[]-ordinarySlotStarted]|>]];
       sources = DeleteDuplicates[Join[sources, {value},
         If[residueFiniteQ[reduced] && supportedQ[reduced], {reduced}, {}]]];
       If[TrueQ[Lookup[record, "CorrelatedRegularQuotient", False]],
@@ -9550,6 +9597,19 @@ completionPhysicalChannelBasis[normalized_Association, channelPreparation_,
         groupedSources = DeleteDuplicates[Join[groupedSources, {value},
           If[residueFiniteQ[reduced] && supportedQ[reduced], {reduced}, {}]]]],
       {record, sourceRecords}];
+    If[ordinaryClosureEnabled,
+      ordinaryClosure=completionRetryTimedOutOrdinarySources[sourceRecords,ordinaryTimedOut,
+        external,started+seconds,supportedQ];
+      Do[
+        ordinaryRecord=sourceRecords[[ordinaryAdmission["SourceIndex"]]];
+        reduced=ordinaryAdmission["Expression"];
+        sources=DeleteDuplicates[Join[sources,{reduced}]];
+        If[TrueQ[Lookup[ordinaryRecord,"CorrelatedRegularQuotient",False]],
+          quotientSources=DeleteDuplicates[Join[quotientSources,{reduced}]]];
+        If[ordinaryRecord["Source"]==="ReducedPhysicalChannelDirection" ||
+            TrueQ[Lookup[ordinaryRecord,"CorrelatedRegularQuotient",False]],
+          groupedSources=DeleteDuplicates[Join[groupedSources,{reduced}]]],
+        {ordinaryAdmission,ordinaryClosure["Sources"]}]];
     Do[
       Which[
         MemberQ[groupedSources, source], terms = {source},
@@ -9618,7 +9678,7 @@ completionPhysicalChannelBasis[normalized_Association, channelPreparation_,
     "The physical-only proposal exceeds its source or final correction-term cap; no arbitrary directions were discarded."]];
   If[!TrueQ[complete] && diagnostics === {}, AppendTo[diagnostics,
     "Physical-only source construction exceeded its shared time budget."]];
-  <|"Status" -> If[TrueQ[complete] && basis =!= {}, "AVAILABLE", "UNAVAILABLE"],
+  Join[<|"Status" -> If[TrueQ[complete] && basis =!= {}, "AVAILABLE", "UNAVAILABLE"],
     "Basis" -> If[TrueQ[complete], basis, {}], "RegularExpression" -> regular,
     "Sources" -> sourceRecords, "RawDirectionCount" -> rawCount,
     "CandidateMode" -> candidateMode, "OversizedUnionDirections" -> fullCount,
@@ -9628,7 +9688,14 @@ completionPhysicalChannelBasis[normalized_Association, channelPreparation_,
     "ColumnNormalization" -> columnNormalization,
     "ElapsedTime" -> AbsoluteTime[] - started,
     "Diagnostics" -> DeleteDuplicates[diagnostics],
-    "Scope" -> "SourceDerivedPhysicalDenominatorOnlyProposalRequiringAllChannelValidation"|>
+    "Scope" -> "SourceDerivedPhysicalDenominatorOnlyProposalRequiringAllChannelValidation"|>,
+    If[ordinaryClosureEnabled,<|"OrdinarySourceReductionReports"->ordinaryReductionReports,
+      "OrdinarySourceClosure"->Join[If[AssociationQ[ordinaryClosure],KeyDrop[ordinaryClosure,"Sources"],
+          <|"Status"->"NOT_REACHED","Reports"->{},"Attempted"->False|>],
+        <|"TimedOutSourceIndices"->ordinaryTimedOut,"OriginalSourcesRetained"->True,
+          "ExistingDenominatorAndGroupingChecksRetained"->True,
+          "OriginalBuildTimeConstraint"->seconds,
+          "Activation"->"FailureOnlyAutomaticTimeoutRecovery"|>]|>,<||>]]
 ];
 
 (* A correlated proposal for large coherent-spin systems. It uses only supplied
@@ -21154,6 +21221,40 @@ constructPreparationUsableQ[report_] := Module[{items, keepReferences},
         Lookup[#["PolePreference"], "Status", None] === "COMPLETE") &]
 ];
 
+(* An unfinished default benchmark simplification is not an unfinished
+   constructive fit. Retry only its complete independent diagram list, with
+   ordinary off-shell conversion and the same per-leg references in every row.
+   Literal preparation controls remain literal, including a caller's clock. *)
+constructBenchmarkConversionRecoveryQ[report_, pairs_, requested_, seconds_] := Module[
+  {items, controls},
+  If[!AssociationQ[report] || Lookup[report, "Status", None] =!= "PARTIAL" ||
+      constructPreparationUsableQ[report] || !constructSecondsQ[seconds] ||
+      !ListQ[pairs] || pairs === {} || !AllTrue[pairs, preparationPairQ] ||
+      !(AssociationQ[requested] || ListQ[requested]), Return[False]];
+  controls = constructRuleOptions[requested];
+  If[!AllTrue[Values[controls], # === Automatic &] ||
+      Lookup[report, "OriginalAmplitudes", None] =!= pairs ||
+      Lookup[Lookup[report, "Options", <||>], "InternalOnShell", True] =!= False,
+    Return[False]];
+  items = Lookup[report, "ItemReports", None];
+  ListQ[items] && Length[items] === Length[pairs] && AllTrue[items,
+    AssociationQ[#] && TrueQ[Lookup[#, "DenominatorsKeptOffShell", False]] &&
+      Lookup[#, "InternalOnShellChannels", None] === {} &&
+      !FailureQ[Lookup[#, "JointInvariantFailure", None]] &&
+      (Lookup[#, "Status", None] === "PREPARED" ||
+        Lookup[#, "Status", None] === "PARTIAL" &&
+          MemberQ[{"TimeConstraint", "FeynmanConversionFailed"}, Lookup[#, "StopReason", None]]) &]
+];
+
+(* Conversion is accepted only for the complete ordered pair list. In
+   particular, a finite proper subset or a retained raw tensor is not a
+   usable independent benchmark. No internal mass replacement may be added. *)
+constructBenchmarkConversionCompleteQ[pairs_, converted_] :=
+  ListQ[pairs] && pairs =!= {} && AllTrue[pairs, preparationPairQ] &&
+    ListQ[converted] && Length[converted] === Length[pairs] &&
+    AllTrue[converted, preparationPairQ[#] && !feynmanRawExpressionQ[Last[#]] &] &&
+    Map[First, converted] === Map[First, pairs];
+
 (* Alternate validation assignments must override only values that changed
    from the caller's base assignment. Preserve each independent model's own
    defaults, and use name rules only for these deliberately shared changes. *)
@@ -22142,7 +22243,8 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
    save, emit, child, remaining, stageOptions, run, require, requirePreparation, prepareFinal, workflow,
    completed = False, resultStatus, totalTime, resourceResolution, requestedOptions,
    finalComplexity = Missing["NotValidated"],
-   prepareBenchmark, benchmarkReady = False, validateRepresentative, effectivePolePreference,
+   prepareBenchmark, benchmarkReady = False, benchmarkRecovery = False,
+   validateRepresentative, effectivePolePreference,
    retainFinalReferences, resolveFinalReferences,
    completeEnergy, recoverReciprocalReferences, trySpuriousForms, tryCompactSpuriousResult,
    trySpuriousVectorLine, tryPhysicalVectorLine,
@@ -22342,14 +22444,39 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
        reducing its numerator. Keep the complete pair list for both parameter
        assignments instead of preparing or reconverting its full sum. *)
     If[raw === "SpinorProducts",
-      benchmark = run["Converting Feynman amplitudes", ConstructiveDiagrams`FeynmanToSpinorProducts[
-        feynmanPairs, "ReduceSpinorProducts" -> False,
-        "TimeConstraint" -> Max[0.000001, remaining[]]]];
-      require[benchmark]; benchmarkReady = True; Return[benchmark]];
+      benchmark = run[If[TrueQ[benchmarkRecovery], "Recovering complete Feynman benchmark",
+        "Converting Feynman amplitudes"], Module[{converted},
+          converted = ConstructiveDiagrams`FeynmanToSpinorProducts[
+            feynmanPairs, "ReferenceSpinors" -> Automatic, "ReduceSpinorProducts" -> False,
+            "TimeConstraint" -> Max[0.000001, remaining[]]];
+          If[FailureQ[converted] || converted === $Failed || converted === $Aborted,
+            converted,
+            If[constructBenchmarkConversionCompleteQ[feynmanPairs, converted], converted,
+              constructFailure[currentStage,
+                {"The independent benchmark conversion did not preserve every complete original diagram and its mass rules."}]]]]];
+      require[benchmark];
+      If[TrueQ[benchmarkRecovery], save["Feynman benchmark recovery", <|
+        "Status" -> "COMPLETE", "Reason" -> "DefaultPreparationIncomplete",
+        "OriginalPreparationStage" -> "Preparing Feynman amplitudes",
+        "InputDiagrams" -> Length[feynmanPairs], "ConvertedDiagrams" -> Length[benchmark],
+        "CompleteOrderedCoverage" -> True, "ReferenceSpinors" -> Automatic,
+        "InternalOnShell" -> False, "ReduceSpinorProducts" -> False,
+        "BenchmarkOnly" -> True, "TimeBudgetScope" -> "RemainingOverallConstructionBudget"|>]];
+      benchmarkReady = True; Return[benchmark]];
 
     feynmanPrepared = run["Preparing Feynman amplitudes", PrepareAmplitudes[feynmanPairs, feynmanModel,
       Sequence @@ stageOptions[PrepareAmplitudes, options["FeynmanPreparationOptions"],
         <|"ReturnDetails" -> True, "InternalOnShell" -> False, "ExternalParticles" -> Automatic|>]]];
+    If[constructBenchmarkConversionRecoveryQ[feynmanPrepared, feynmanPairs,
+        options["FeynmanPreparationOptions"], remaining[]],
+      benchmarkRecovery = True;
+      save["Feynman benchmark recovery", <|"Status" -> "ATTEMPTED",
+        "Reason" -> "DefaultPreparationIncomplete",
+        "OriginalPreparationStage" -> "Preparing Feynman amplitudes",
+        "InputDiagrams" -> Length[feynmanPairs], "ReferenceSpinors" -> Automatic,
+        "InternalOnShell" -> False, "ReduceSpinorProducts" -> False,
+        "BenchmarkOnly" -> True, "TimeBudgetScope" -> "RemainingOverallConstructionBudget"|>];
+      Return[prepareBenchmark["SpinorProducts"]]];
     requirePreparation[feynmanPrepared];
     benchmark = feynmanPrepared["PreparedAmplitudes"]; benchmarkReady = True; benchmark
   ];

@@ -177,7 +177,19 @@ resulting fixed expression must still pass every normal ",
 requested independent comparisons. Detailed output retains the rejected fit, \
 the zero certificates and the retry; this is a bounded recovery, not a \
 guarantee for arbitrary processes."}], "Notes"],
-  Cell["What happens during a construction", "NotesSection"],
+  Cell[TextData[{"If the default preparation of an independent Feynman \
+benchmark reaches its time limit before every diagram is usable, the \
+constructor can retry the complete original diagram list using ",
+     ButtonBox["FeynmanToSpinorProducts", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/FeynmanToSpinorProducts"], " without \
+numerator simplification. All internal lines remain off shell, each external \
+reference is consistent across the diagrams, and every original diagram must \
+finish conversion. This retry uses only the remaining overall construction \
+time. It does not construct a correction from the benchmark or relax any \
+comparison. Explicit FeynmanPreparationOptions are honored instead of \
+triggering this automatic recovery. Details retain the original PARTIAL \
+preparation, the recovery stage and its complete diagram counts."}],
+   "Notes"], Cell["What happens during a construction", "NotesSection"],
   Cell[TextData[{"HEPCAT generates the diagrams and prepares their \
 expressions, then builds the known factorization channels. ",
      ButtonBox["CompleteFactorization", BaseStyle -> "Link",
