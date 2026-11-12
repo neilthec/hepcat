@@ -36,7 +36,7 @@ class WorkerStartupContextTests(unittest.TestCase):
                 '"{\\"Status\\":\\"APPROVED\\",\\"SyntheticAdmission\\":29}"|>;Protect[RunProcess];\n')
         # A file Get parses each startup expression in its actual current context.
         # ToExpression on the whole prefix would bind every name before Get.
-        tail = r''' 
+        tail = r'''
 smoke=<|"Kind"->kind,"ID"->id,"Configuration"->configuration,
  "Inventory"->inventory,"Root"->root,"OutputDirectory"->outputDirectory,"Seed"->seed,
  "Admission"->readAdmission[],"LaunchAdmission"->If[launchAdmission===None,"None",launchAdmission],

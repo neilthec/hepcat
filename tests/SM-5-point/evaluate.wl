@@ -87,7 +87,7 @@ If[kind==="construct",
    "ExporterContextSHA256"->admission["ExporterContextSHA256"],
    "NativeCaseContexts"->admission["NativeCaseContexts"],
    "CaseIDs"->admission["CaseIDs"],"CaseCapsulesSHA256"->admission["CaseCapsulesSHA256"],
-   "NativeContextCompatibility"->Lookup[admission,"NativeContextCompatibility",None]|>;
+   "NativeContextCompatibility"->Lookup[admission,"NativeContextCompatibility",Null]|>;
   target=FileNameJoin[{outputDirectory,id<>"-export.wxf"}],
   Print["Unknown work kind ",kind];Quit[2]]];
 Close[live];
@@ -105,8 +105,12 @@ If[kind==="export",
 AssociateTo[summary,"CapsuleSHA256"->IntegerString[FileHash[target,"SHA256"],16,64]];
 summary=summary/._Missing->Null;
 summaryFile=StringReplace[target,".wxf"->".json"];
-Export[summaryFile<>".tmp",summary,"RawJSON"];
-RenameFile[summaryFile<>".tmp",summaryFile,OverwriteTarget->True];
+summaryWrite=Quiet[Check[Export[summaryFile<>".tmp",summary,"RawJSON"],$Failed]];
+If[!StringQ[summaryWrite]||!FileExistsQ[summaryFile<>".tmp"],
+ Print["Checkpoint summary JSON could not be written; preserved WXF: ",target];Quit[2]];
+summaryCommit=Quiet[Check[RenameFile[summaryFile<>".tmp",summaryFile,OverwriteTarget->True],$Failed]];
+If[!StringQ[summaryCommit]||!FileExistsQ[summaryFile],
+ Print["Checkpoint summary JSON could not be committed; preserved WXF: ",target];Quit[2]];
 Print[summary];
 End[];
 Quit[If[TrueQ[SMFivePointRun`Private`ok],0,1]];

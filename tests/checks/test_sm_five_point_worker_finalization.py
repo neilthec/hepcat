@@ -1,0 +1,107 @@
+"""Run the full worker with real WXF checkpoints and a synthetic exporter.
+
+Package loading and serialization are real. Construction, model reads and all
+external numerical programs are stubbed, and every output is temporary.
+"""
+# HEPCAT - High Energy Physics Constructive Amplitude Tool
+# Copyright (C) 2026 Neil Christensen
+# SPDX-License-Identifier: GPL-3.0-or-later
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import tempfile
+import unittest
+
+ROOT=Path(__file__).resolve().parents[2]
+WORKER=ROOT/'tests/SM-5-point/evaluate.wl'
+KERNEL=shutil.which('WolframKernel') or '/Applications/Wolfram.app/Contents/MacOS/WolframKernel'
+
+@unittest.skipUnless(Path(KERNEL).is_file(),'A licensed Wolfram kernel is required.')
+class WorkerFinalizationTests(unittest.TestCase):
+    def run_export(self, *, mixed=False, break_json=False):
+        with tempfile.TemporaryDirectory(prefix='hepcat-sm5-worker-finalization-') as directory:
+            output=Path(directory)
+            configuration={'ContextSHA256':'a'*64,'Points':1000,'MemoryGiB':4,
+                'SPINASDirectory':'/synthetic/spinas','CalcHEPDirectory':'/synthetic/calchep',
+                'MadGraphDirectory':'/synthetic/madgraph'}
+            family={'ID':'synthetic_family','CaseIDs':['synthetic_case'],'ExportName':'Synthetic',
+                'Particles':['h']*5,'Incoming':['h']*2,'Outgoing':['h']*3}
+            admission={'Status':'APPROVED','FamilyID':'synthetic_family',
+                'ExporterContextSHA256':'a'*64,'CaseIDs':['synthetic_case'],
+                'NativeCaseContexts':{'synthetic_case':('b' if mixed else 'a')*64},
+                'CaseCapsulesSHA256':{'synthetic_case':'REPLACE_WITH_ACTUAL_WXF_HASH'}}
+            if mixed:
+                admission['NativeContextCompatibility']={'Status':'EXACT_EXPORTER_ONLY_COMPATIBILITY',
+                    'NativeContextSHA256':'b'*64,'ExporterContextSHA256':'a'*64,
+                    'NativeRevalidationPerformed':False}
+            literal=lambda value: 'ImportString['+json.dumps(json.dumps(value))+',"RawJSON"]'
+            prelude='''fixtureDirectory=FIXTURE_DIRECTORY;
+fixtureEntry=<|"Status"->"COMPLETE","Particles"->Table["h",5],"Expression"->1|>;
+fixtureFile=FileNameJoin[{fixtureDirectory,"synthetic_case.wxf"}];
+fixtureStream=OpenWrite[fixtureFile,BinaryFormat->True];
+BinaryWrite[fixtureStream,Normal[BinarySerialize[fixtureEntry,PerformanceGoal->"Size"]],"Byte"];Close[fixtureStream];
+fixtureAdmission=FIXTURE_ADMISSION;
+fixtureAdmission["CaseCapsulesSHA256"]=<|"synthetic_case"->IntegerString[FileHash[fixtureFile,"SHA256"],16,64]|>;
+Unprotect[RunProcess];Clear[RunProcess];
+RunProcess[_List]:=<|"ExitCode"->0,"StandardOutput"->ExportString[fixtureAdmission,"RawJSON"]|>;Protect[RunProcess];
+'''.replace('FIXTURE_DIRECTORY',json.dumps(str(output))).replace('FIXTURE_ADMISSION',literal(admission))
+            worker=WORKER.read_text().replace('root=DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];',
+                                              'root='+json.dumps(str(ROOT))+';')
+            worker=worker.replace('configuration=Import[Environment["HEPCAT_SM5_CONFIGURATION"],"RawJSON"];',
+                                  'configuration='+literal(configuration)+';')
+            worker=worker.replace('inventory=Import[FileNameJoin[{root,"tests","SM-5-point","inventory.json"}],"RawJSON"];',
+                                  'inventory='+literal({'Families':[family]})+';')
+            worker=worker.replace('outputDirectory=FileNameJoin[{root,"tests","results","SM-5-point"}];',
+                                  'outputDirectory='+json.dumps(str(output))+';')
+            worker=worker.replace('kind=Environment["HEPCAT_SM5_KIND"];id=Environment["HEPCAT_SM5_ID"];',
+                                  'kind="export";id="synthetic_family";')
+            worker=worker.replace('seed=FromDigits[Environment["HEPCAT_SM5_SEED"]];','seed=17;')
+            stubs='''
+Unprotect[ReadModel,WriteSPINASProcess];Clear[ReadModel,WriteSPINASProcess];
+ReadModel[___]:={"synthetic model"};
+WriteSPINASProcess[___]:=<|"CalcHEPValidation"-><|"Status"->"PASS"|>,"MadGraphValidation"-><|"Status"->"PASS"|>|>;
+Protect[ReadModel,WriteSPINASProcess];
+'''
+            if break_json:
+                # Preserve real WXF writing, but make the following RawJSON summary invalid.
+                stubs+='summarySerializationFailure=indeterminateSyntheticSymbol;\n'
+                worker=worker.replace('summary=summary/._Missing->Null;',
+                    'summary=summary/._Missing->Null;AssociateTo[summary,"SyntheticUnserializable"->summarySerializationFailure];')
+            worker=worker.replace('$HistoryLength=0;','$HistoryLength=0;\n'+stubs)
+            script=output/'full-worker.wl';script.write_text(prelude+worker)
+            process=subprocess.run([KERNEL,'-script',str(script)],cwd=ROOT,capture_output=True,text=True,
+                timeout=60,env=dict(os.environ,OMP_NUM_THREADS='1',OPENBLAS_NUM_THREADS='1'))
+            capsule=output/'synthetic_family-export.wxf'
+            self.assertTrue(capsule.is_file(),process.stdout+process.stderr)
+            summary_path=output/'synthetic_family-export.json'
+            if break_json:
+                self.assertEqual(process.returncode,2,process.stdout+process.stderr)
+                self.assertFalse(summary_path.is_file())
+                self.assertIn('Checkpoint summary JSON could not be written',process.stdout)
+                return
+            self.assertEqual(process.returncode,0,process.stdout+process.stderr)
+            self.assertTrue(summary_path.is_file(),process.stdout+process.stderr)
+            summary=json.loads(summary_path.read_text())
+            self.assertEqual(summary['Status'],'PASS')
+            self.assertEqual(summary['CalcHEPStatus'],'PASS')
+            self.assertEqual(summary['MadGraphStatus'],'PASS')
+            self.assertEqual(summary['Points'],1000)
+            self.assertEqual(summary['ContextSHA256'],'a'*64)
+            self.assertEqual(summary['ExporterContextSHA256'],'a'*64)
+            self.assertEqual(summary['NativeCaseContexts'],admission['NativeCaseContexts'])
+            self.assertEqual(summary['CaseCapsulesSHA256']['synthetic_case'],
+                hashlib.sha256((output/'synthetic_case.wxf').read_bytes()).hexdigest())
+            self.assertEqual(summary['CapsuleSHA256'],hashlib.sha256(capsule.read_bytes()).hexdigest())
+            self.assertEqual(summary['NativeContextCompatibility'],
+                admission.get('NativeContextCompatibility'))
+    def test_current_context_export_completes_actual_wxf_and_json_finalization(self):
+        self.run_export()
+    def test_mixed_context_export_retains_actual_input_context_in_both_checkpoints(self):
+        self.run_export(mixed=True)
+    def test_summary_serialization_failure_exits_nonzero_and_retains_wxf(self):
+        self.run_export(break_json=True)
+
+if __name__=='__main__':unittest.main()
