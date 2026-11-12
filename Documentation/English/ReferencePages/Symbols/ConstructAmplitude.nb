@@ -163,6 +163,20 @@ includes structures present only in the benchmark, so a missing color \
 component cannot escape the comparison. Each coefficient retains the separate \
 benchmark model and its parameter scope; the benchmark is used for \
 validation, not as a construction source."}], "Notes"],
+  Cell[TextData[{"If a bounded high-energy fit finds an exact contradiction, \
+the constructor can check whether its inherited free coefficients multiply \
+only identically zero expressions. It removes those coefficients only after \
+retaining an exact certificate for every one, then retries the existing \
+diagram and amplitude source directions within the remaining finite stage \
+allowance. This recovery runs only after that specific failure; successful \
+calculations keep their usual path. It adds no independent contact \
+interaction and uses no Feynman expression to construct a correction. The \
+resulting fixed expression must still pass every normal ",
+     ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"], " test and the \
+requested independent comparisons. Detailed output retains the rejected fit, \
+the zero certificates and the retry; this is a bounded recovery, not a \
+guarantee for arbitrary processes."}], "Notes"],
   Cell["What happens during a construction", "NotesSection"],
   Cell[TextData[{"HEPCAT generates the diagrams and prepares their \
 expressions, then builds the known factorization channels. ",

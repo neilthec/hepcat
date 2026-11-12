@@ -227,6 +227,13 @@ independent validation checks are still evaluated."}], "Notes"],
      ", using ordinary external identities only, and checked with ",
      ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"], "."}], "Notes"],
+  Cell[TextData[{"During the optional representative search in ",
+     ButtonBox["ConstructAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ConstructAmplitude"], ", an exact \
+failed fit can trigger a bounded retry after all inherited directions have \
+been proved identically zero. The original source expressions, channels and \
+proof records remain available. Calling CompleteHighEnergy directly retains \
+its strict treatment of genuine or unresolved affine freedom."}], "Notes"],
   Cell["The physical conditions", "NotesSection"],
   Cell[TextData[{"The automatic high-energy bound is ",
      Cell[BoxData[RowBox[{"E", "^", "(", "4", "-", "n", ")"}]],

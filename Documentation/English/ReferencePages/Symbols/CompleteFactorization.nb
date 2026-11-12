@@ -77,6 +77,20 @@ fitter will use. It does not expand the sources or inspect unrelated \
 derivation histories. This estimate changes no correction cap, fit sample \
 count or held-out sample count; explicit stage limits and the overall \
 construction deadline remain authoritative."}], "Notes"],
+  Cell[TextData[{"If an automatic higher-point attempt remains unresolved \
+because a retained-preparation remainder fit timed out, completion can make \
+one renewed attempt when the consumed retained source expressions are larger \
+than the displayed amplitude. The renewed allowance uses the same finite \
+source-work estimate, keeps the discovered correction cap, original channel \
+targets, parameter assignments, random seed and validation settings, and does \
+not increase an explicit stage clock or correction basis. A previously \
+complete result is kept without this retry. Detailed output records ",
+     Cell[BoxData[RowBox[{"AutomaticTimeoutRecovery"}]], "InlineFormula"], ", \
+including the original failure, both resource policies and their finite \
+combined bound. The overall ", ButtonBox["ConstructAmplitude",
+      BaseStyle -> "Link", ButtonData ->
+       "paclet:HEPCAT/ref/ConstructAmplitude"],
+     " deadline remains authoritative."}], "Notes"],
   Cell["Why the channels are solved together", "NotesSection"],
   Cell[TextData[{"A factorization channel determines an amplitude on one \
 pole. Extending its expression away from that pole is not unique, and \

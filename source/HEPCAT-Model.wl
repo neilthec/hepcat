@@ -1145,6 +1145,14 @@ factorizationExternalFermionSign[channel_List, model_List] := Module[
     Select[MapIndexed[{#1, First[#2] /. rules} &, Drop[row, -2]],
       MemberQ[species, First[#]] &]
   ], channel];
+  (* Lower coefficients use ordered particle and antiparticle state blocks,
+     as does the Feynman pairing parity. Their cross-role interleaving in a
+     stored model row has no physical phase. Partition stably: moving ports
+     within either role would change the lower state's reference, especially
+     for an internal fermion or identical external particles. No species rank,
+     declaration order or global/cut momentum label chooses those orders. *)
+  lowerWords = (Join[Select[#, Function[port, roles[First[port]] === 0]],
+      Select[#, Function[port, roles[First[port]] === 1]]] &) /@ lowerWords;
   words = Flatten[lowerWords, 1];
   If[AnyTrue[words, MemberQ[ambiguous, First[#]] &], Return[$Failed]];
   If[!AllTrue[lowerWords, With[{wordRoles = roles /@ (First /@ #)},
@@ -7307,7 +7315,7 @@ completionHighEnergyResourceMetrics[input_, channels_: {}, correctionBasis_: Aut
    before catalog construction or fitting. A short displayed center can seed
    hundreds of coupled columns. The multiplier follows actual massive spin
    components and the unchanged model-consistent parameter assignments. *)
-completionFactorizationResourceMetrics[input_,channelInput_,model_,requested_Association] := Module[
+completionFactorizationResourceMetrics[input_,channelInput_,model_,requested_Association, forceSourceAdmission_:False] := Module[
   {basis=Lookup[requested,"CorrectionBasis",Automatic],metrics,degrees,eligible,
    rawRows,preparedRows,expressionLeaves,channelLeaves,preparedLeaves,sourceMetrics,
    sourceLeaves=0,sourceSlots=0,basisLeaves=0,sets={},assignmentCount=1,
@@ -7318,7 +7326,7 @@ completionFactorizationResourceMetrics[input_,channelInput_,model_,requested_Ass
   (* Higher-point tensors with two massive spin-one legs already require
      nine coherent components. Include their consumed continuation sources
      while retaining the established four-point and spin-half policies. *)
-  eligible=AnyTrue[degrees,#>=2&] &&
+  eligible=TrueQ[forceSourceAdmission] || AnyTrue[degrees,#>=2&] &&
     (Lookup[metrics,"CoherentComponents",1]>=27 ||
       Lookup[metrics,"ExternalParticles",4]>=5 && Lookup[metrics,"CoherentComponents",1]>=9);
   If[!eligible,Return[Join[metrics,<|"FactorizationSourceWorkAdmitted"->False,
@@ -7363,6 +7371,36 @@ completionFactorizationResourceMetrics[input_,channelInput_,model_,requested_Ass
     "FactorizationSourceWorkLeaves"->weighted,
     "FactorizationSourceMetricScope"->sourceScope,
     "FactorizationResourceResolutionPhase"->"BeforeCatalogConstructionAndCoreDeadline"|>]
+];
+
+
+(* This diagnostic is consulted only after an unresolved retained-remainder
+   fit actually times out. Its one renewed allowance uses the same measured
+   source heuristic; it does not change successful small-job defaults. *)
+completionFactorizationTimeoutRecovery[input_,channels_,model_,requested_Association,report_] := Module[
+  {metrics,resolution,allowance,sourceLeaves,displayLeaves},
+  If[Lookup[requested,"TimeConstraint",Automatic]=!=Automatic,
+    Return[<|"Eligible"->False,"Reason"->"ExplicitTimeConstraint"|>]];
+  If[!AssociationQ[report] || Lookup[report,"Status",None]=!="UNRESOLVED" ||
+      Lookup[report,"PreparationRemainderFit",None]=!=Missing["RemainderFitTimeout"],
+    Return[<|"Eligible"->False,"Reason"->"NoUnresolvedRetainedFitTimeout"|>]];
+  If[Lookup[requested,"CorrectionBasis",Automatic]=!=Automatic,
+    Return[<|"Eligible"->False,"Reason"->"ExplicitCorrectionBasis"|>]];
+  metrics=completionFactorizationResourceMetrics[input,channels,model,requested,True];
+  sourceLeaves=Lookup[metrics,"FactorizationRetainedSourceLeaves",0];
+  displayLeaves=Lookup[metrics,"ExpressionLeaves",0];
+  If[Lookup[metrics,"ExternalParticles",4]<5 || sourceLeaves<=displayLeaves ||
+      Lookup[metrics,"FactorizationRetainedSourceSlots",0]<1,
+    Return[<|"Eligible"->False,"Reason"->"NoLargerRetainedHigherPointSourceWork",
+      "Metrics"->metrics|>]];
+  resolution=amplitudeAutomaticSettings["Factorization",requested,metrics];
+  allowance=Lookup[resolution["Settings"],"TimeConstraint",None];
+  If[!NumericQ[allowance] || !TrueQ[0<allowance<Infinity],
+    Return[<|"Eligible"->False,"Reason"->"NoFiniteSourceAllowance"|>]];
+  <|"Eligible"->True,"Reason"->"RetainedRemainderFitTimeout",
+    "FailureEvidence"->Missing["RemainderFitTimeout"],
+    "TimeConstraint"->allowance,"ResourcePolicy"->resolution["ResourcePolicy"],
+    "Scope"->"OneFailureOnlyRenewedAllowanceWithOriginalTargetsAndValidation"|>
 ];
 
 amplitudeAutomaticFitSamples[metrics_Association] := Max[4,
@@ -7446,7 +7484,8 @@ amplitudeAutomaticFactorization[input_, channelInput_, model_, supplied_List] :=
    budget, remaining, cap, ceiling, report, attempts = {}, needed, diagnostics, retry, next,
    automaticSamples, numericOptions, core, measured, automaticPole, initialPole, poleMode,
    recordedChoices, poleFallbackPending, attemptCap, effectiveCap, bestReport = Missing["NotValidated"],
-   bestRank = {Infinity, Infinity}, candidateRank, physicalOnly, normalizedCandidate, rows, requestedPole, annotateOutcome},
+   bestRank = {Infinity, Infinity}, candidateRank, physicalOnly, normalizedCandidate, rows, requestedPole, annotateOutcome,
+   timeoutRecovery = Missing["NotNeeded"], timeoutRecoveryUsed = False, recoveryDecision, recoveryElapsed},
   requested["RandomSeed"] = amplitudeResolveRandomSeed[requested["RandomSeed"]];
   resolvedSupplied = Normal[requested];
   originalOutput = Lookup[requested, "Output", "Amplitude"];
@@ -7546,7 +7585,7 @@ amplitudeAutomaticFactorization[input_, channelInput_, model_, supplied_List] :=
       If[OrderedQ[{candidateRank, bestRank}], bestReport = report; bestRank = candidateRank];
       If[poleMode =!= "AllPhysical" || physicalOnly, Break[]]];
     diagnostics = StringRiffle[Cases[Lookup[report, "Diagnostics", {}], _String, Infinity], " "];
-    retry = MemberQ[automaticKeys, "MaxCorrectionTerms"] && cap < ceiling && Length[attempts] < 4 &&
+    retry = !timeoutRecoveryUsed && MemberQ[automaticKeys, "MaxCorrectionTerms"] && cap < ceiling && Length[attempts] < 4 &&
       remaining[] > 1 && (measured > cap || StringContainsQ[diagnostics,
         {"exceeds MaxCorrectionTerms", "exceeds its", "correction space exceeds", "correction-term cap"}]);
     If[TrueQ[retry],
@@ -7555,23 +7594,42 @@ amplitudeAutomaticFactorization[input_, channelInput_, model_, supplied_List] :=
       completionProgress[settings["ProgressFunction"], settings["ProgressReporting"],
         <|"Stage" -> "Expanding automatic correction space", "Terms" -> cap,
           "Elapsed" -> AbsoluteTime[] - started|>]; Continue[]];
-    If[poleFallbackPending && remaining[] > 1,
+    If[!timeoutRecoveryUsed && poleFallbackPending && remaining[] > 1,
       poleMode = Automatic; poleFallbackPending = False;
       completionProgress[settings["ProgressFunction"], settings["ProgressReporting"],
         <|"Stage" -> "Trying alternative automatic pole continuations", "Elapsed" -> AbsoluteTime[] - started|>];
       Continue[]];
+    If[!timeoutRecoveryUsed && !AssociationQ[bestReport],
+      recoveryDecision=completionFactorizationTimeoutRecovery[input,channelInput,model,requested,report];
+      If[TrueQ[Lookup[recoveryDecision,"Eligible",False]],
+        timeoutRecoveryUsed=True;recoveryElapsed=AbsoluteTime[]-started;
+        timeoutRecovery=Join[recoveryDecision,<|"InitialFailedReport"->report,
+          "InitialResourcePolicy"->resolution["ResourcePolicy"],
+          "InitialTimeConstraint"->budget,"InitialElapsedTime"->recoveryElapsed,
+          "RetryTimeConstraint"->recoveryDecision["TimeConstraint"],
+          "MaximumCombinedTimeConstraint"->Max[budget,recoveryElapsed]+recoveryDecision["TimeConstraint"],
+          "EffectiveMaxCorrectionTerms"->cap,"PriorAdaptiveAttempts"->attempts|>];
+        budget=recoveryElapsed+recoveryDecision["TimeConstraint"];poleFallbackPending=False;
+        completionProgress[settings["ProgressFunction"],settings["ProgressReporting"],
+          <|"Stage"->"Retrying timed-out retained-source factorization",
+            "TimeConstraint"->recoveryDecision["TimeConstraint"],"Terms"->cap,
+            "Elapsed"->recoveryElapsed|>];
+        Continue[]]];
     Break[]
   ];
   If[AssociationQ[bestReport] && (report["Status"] =!= "COMPLETE" ||
       OrderedQ[{bestRank, candidateRank}]), report = bestReport];
   report = Join[report, <|"ResourcePolicy" -> Join[resolution["ResourcePolicy"],
       <|"Resolved" -> Join[resolution["ResourcePolicy"]["Resolved"],
-        <|"MaxCorrectionTerms" -> cap, "Samples" -> Lookup[report, "FitSamples", settings["Samples"]],
+        <|"TimeConstraint" -> budget,"MaxCorrectionTerms" -> cap,
+          "Samples" -> Lookup[report, "FitSamples", settings["Samples"]],
           "PolePreference" -> Lookup[report, "PolePreference", poleMode]|>],
       "AutomaticPoleSearch" -> automaticPole|>], "AdaptiveAttempts" -> attempts,
     "EffectiveMaxCorrectionTerms" -> cap,
     "CapChanges" -> Flatten[Lookup[attempts, "CapChanges", {}], 1],
     "ElapsedTime" -> AbsoluteTime[] - started|>];
+  If[TrueQ[timeoutRecoveryUsed],
+    report=Join[report,<|"AutomaticTimeoutRecovery"->timeoutRecovery|>]];
   report = annotateOutcome[report];
   completionFormat[report, If[TrueQ[details], "Details", originalOutput], False]
 ]];
@@ -20595,6 +20653,116 @@ completionHighEnergyWork[input_, channels_List, model_List, settings_Association
     "Diagnostics" -> diagnostics|>]
 ];
 
+(* A point-first fit may keep coordinates whose directions are exact zero.
+   They must not permanently suppress the ordinary source family after an
+   exact contradiction. Successful fits do not enter this bounded recovery. *)
+completionHEExactInconsistencyWitnessQ[certificate_Association] := Module[{method, rows},
+  method = Lookup[certificate, "Method", None];
+  rows = Lookup[certificate, "ReachedEquations", {}];
+  If[!ListQ[rows] || rows === {} || !FreeQ[rows, _Real] ||
+      !AllTrue[rows, residueFiniteQ] ||
+      !ListQ[Lookup[certificate, "OriginalCoordinates", None]] ||
+      !ListQ[Lookup[certificate, "PriorAffineRestrictionRules", None]] ||
+      !AllTrue[certificate["PriorAffineRestrictionRules"], MatchQ[#, _Rule] &], Return[False]];
+  Switch[method,
+    "ExactParameterFamilyIntersectionContradiction",
+      Lookup[certificate, "UncheckedParameterAssignmentsClaimed", None] === False &&
+        completionHEExactInconsistencyWitnessQ[Lookup[certificate, "ChartContradiction", None]],
+    "ExactAffineLinearContradiction",
+      ListQ[Lookup[certificate, "WorkingCoordinates", None]] &&
+        Lookup[certificate, "UncheckedChartsClaimed", None] === False &&
+        Lookup[Lookup[certificate, "LinearSystem", <||>], "Status", None] === "INCONSISTENT",
+    _, False]
+];
+completionHEExactInconsistencyWitnessQ[___] := False;
+
+completionHEZeroFamilyRetryEligibleQ[normalized_Association, report_Association,
+    settings_Association, pointFirst_] := TrueQ[pointFirst] &&
+  Lookup[settings, "CorrectionBasis", None] === Automatic &&
+  ListQ[Lookup[normalized, "FreeParameters", None]] &&
+  Lookup[normalized, "FreeParameters", {}] =!= {} &&
+  Lookup[report, "Status", None] === "UNRESOLVED" &&
+  completionHEExactInconsistencyWitnessQ[Lookup[report, "HighEnergyInconsistencyCertificate", None]] &&
+  Lookup[Lookup[Lookup[report, "ConstraintData", <||>], "HighEnergy", <||>],
+    "Status", None] === "INCONSISTENT";
+completionHEZeroFamilyRetryEligibleQ[___] := False;
+
+completionHEEntireInheritedFamilyZeroQ[proof_, parameters_List] := Module[{certificates},
+  If[!AssociationQ[proof] || parameters === {} || !DuplicateFreeQ[parameters] ||
+      !TrueQ[Lookup[proof, "AffineFamily", False]] ||
+      Lookup[proof, "FreeParameters", None] =!= {} ||
+      Lookup[proof, "RemainingBasis", None] =!= {} ||
+      Sort[Lookup[proof, "RemovedParameters", {}]] =!= Sort[parameters] ||
+      !TrueQ[Lookup[Lookup[proof, "FamilyRepresentationCertificate", <||>],
+        "OnlyCertifiedZeroDirectionsRemoved", False]] ||
+      !KeyExistsQ[proof, "FamilyAmplitude"] ||
+      !residueFiniteQ[proof["FamilyAmplitude"]] ||
+      !FreeQ[proof["FamilyAmplitude"], Alternatives @@ parameters], Return[False]];
+  certificates = Lookup[proof, "Certificates", {}];
+  ListQ[certificates] && Length[certificates] === Length[parameters] &&
+    AllTrue[certificates, AssociationQ[#] && Lookup[#, "Status", None] === "PROVED_ZERO" &] &&
+    Sort[Lookup[certificates, "Parameter", {}]] === Sort[parameters]
+];
+completionHEEntireInheritedFamilyZeroQ[___] := False;
+
+completionHERecoverZeroInheritedFamily[normalized_Association, originalReport_Association,
+    channels_List, model_List, settings_Association, seconds_, pointFirst_, automaticSamples_] := Module[
+  {started = AbsoluteTime[], deadline, left, proofBudget, proof, reduced, retrySettings,
+   retry, retained, record, parameters = Lookup[normalized, "FreeParameters", {}], selected},
+  If[!completionHEZeroFamilyRetryEligibleQ[normalized, originalReport, settings, pointFirst],
+    Return[Missing["NoSuppressedOrdinarySourceRecovery"]]];
+  record = <|"Attempted" -> False, "Retried" -> False,
+    "Trigger" -> "ExactHighEnergyContradictionWithInheritedCoordinates",
+    "OriginalReport" -> originalReport, "OriginalInheritedParameters" -> parameters,
+    "OriginalChannelsRetained" -> True, "OriginalRemaindersRetained" -> True,
+    "IndependentInteractionAdded" -> False, "BenchmarkUsedForConstruction" -> False|>;
+  If[!(NumericQ[seconds] && TrueQ[0 < seconds < Infinity]) || seconds < 4,
+    Return[Join[record, <|"Status" -> "NOT_RETRIED", "Diagnostics" -> {
+      "The finite stage allowance cannot fund a certified-zero family recovery."}|>]]];
+  deadline = started + seconds; left[] := Max[0, deadline - AbsoluteTime[]];
+  proofBudget = Min[60, seconds/4];
+  completionProgress[settings["ProgressFunction"], settings["ProgressReporting"],
+    <|"Stage" -> "HighEnergy", "Phase" -> "Checking rejected inherited directions exactly",
+      "Terms" -> Length[parameters], "SecondsAvailable" -> proofBudget|>];
+  proof = TimeConstrained[completionHEPruneIdentityFamily[
+    Lookup[normalized, "FamilyAmplitude", normalized["Expression"]], parameters,
+    normalized["ExternalMassRules"], Lookup[settings, "IdentityProofModel", model],
+    proofBudget, Lookup[normalized, "RemainingBasis", Automatic],
+    Function[event, completionProgress[settings["ProgressFunction"], settings["ProgressReporting"], event]]],
+    Max[0.000001, proofBudget], Missing["InheritedFamilyProofTimeConstraint"]];
+  record = Join[record, <|"Attempted" -> True, "IdentityReduction" -> proof,
+    "IdentityProofTimeConstraint" -> proofBudget|>];
+  If[!completionHEEntireInheritedFamilyZeroQ[proof, parameters],
+    Return[Join[record, <|"Status" -> "NOT_RETRIED", "ElapsedSeconds" -> AbsoluteTime[] - started,
+      "Diagnostics" -> {"At least one inherited direction lacks an exact zero certificate; the original family and failure remain unchanged."}|>]]];
+  If[left[] < 1, Return[Join[record, <|"Status" -> "NOT_RETRIED",
+    "ElapsedSeconds" -> AbsoluteTime[] - started, "Diagnostics" -> {
+      "The identity proof consumed the available retry allowance; the original failure remains unchanged."}|>]]];
+  reduced = Join[normalized, <|"FamilyAmplitude" -> proof["FamilyAmplitude"],
+    "FreeParameters" -> {}, "RemainingBasis" -> {}|>];
+  retrySettings = Join[settings, <|"TimeConstraint" -> left[],
+    "BeforeReport" -> Lookup[originalReport, "BeforeReport", Missing["NoCachedInitialCheck"]]|>];
+  record = Join[record, <|"Retried" -> True, "CertifiedRemovedCoordinates" -> Length[parameters],
+    "OrdinaryBasisReenabled" -> True, "RetryTimeConstraint" -> retrySettings["TimeConstraint"]|>];
+  completionProgress[settings["ProgressFunction"], settings["ProgressReporting"],
+    <|"Stage" -> "HighEnergy", "Phase" -> "Retrying ordinary sources after exact zero proofs",
+      "Terms" -> Length[parameters], "SecondsAvailable" -> left[]|>];
+  retained = originalReport;
+  retry = TimeConstrained[Block[{$completionHighEnergyPointFirst = TrueQ[pointFirst],
+      $completionAutomaticFitSamples = TrueQ[automaticSamples]},
+    completionHighEnergyWork[reduced, channels, model, retrySettings, reduced,
+      Function[value, retained = value]]], Max[0.000001, left[]],
+    Join[retained, <|"Status" -> "UNRESOLVED", "Diagnostics" -> {
+      "The certified-zero ordinary-source retry exceeded the remaining stage allowance."}|>]];
+  selected = AssociationQ[retry] && KeyExistsQ[retry, "Amplitude"] &&
+    residueFiniteQ[retry["Amplitude"]] &&
+    (Lookup[retry, "Status", None] === "COMPLETE" || TrueQ[Lookup[retry, "PointReady", False]]);
+  Join[record, <|"Status" -> If[AssociationQ[retry], Lookup[retry, "Status", "UNRESOLVED"], "UNRESOLVED"],
+    "PointReady" -> TrueQ[If[AssociationQ[retry], Lookup[retry, "PointReady", False], False]],
+    "SelectedRetryReport" -> selected, "RetryReport" -> retry,
+    "Report" -> If[selected, retry, originalReport], "ElapsedSeconds" -> AbsoluteTime[] - started|>]
+];
+
 completionHighEnergyStage[input_, channels_List, model_List, requestedSettings_Association,
     channelPreparation_: None] := Block[{$completionParallelSettings =
     KeyTake[requestedSettings, {"Parallelization", "MaxKernels"}]}, Module[
@@ -20607,7 +20775,7 @@ completionHighEnergyStage[input_, channels_List, model_List, requestedSettings_A
    cubicSource, preferredBudget, preferredStarted, preferredReport,
    sourceAttempts = {}, preferredProvenance = Missing["NoPreferredSource"],
    wholeSource=Missing["NotRequested"],wholeBudget,wholeStarted,wholeReport,wholeRetained,
-   initialCheck=Missing["NotRequested"],precheckProofBudget},
+   initialCheck=Missing["NotRequested"],precheckProofBudget,zeroFamilyRecovery},
   settings = resolution["Settings"];
   settings["RandomSeed"] = amplitudeResolveRandomSeed[settings["RandomSeed"]];
   seconds = settings["TimeConstraint"]; output = settings["Output"];
@@ -20738,6 +20906,12 @@ completionHighEnergyStage[input_, channels_List, model_List, requestedSettings_A
     Join[retained, <|"Status" -> "UNRESOLVED", "Diagnostics" -> Append[
       Lookup[retained, "Diagnostics", {}],
       "High-energy completion exceeded TimeConstraint. The best retained candidate is provided for inspection, not claimed complete."]|>]]];
+  remaining = If[seconds === Infinity, Infinity, Max[0, seconds - (AbsoluteTime[] - started)]];
+  zeroFamilyRecovery = completionHERecoverZeroInheritedFamily[normalized, report, channels, model,
+    effectiveSettings, remaining, TrueQ[$completionHighEnergyPointFirst],
+    requestedSettings["Samples"] === Automatic];
+  If[AssociationQ[zeroFamilyRecovery], report = Join[Lookup[zeroFamilyRecovery, "Report", report],
+    <|"CertifiedZeroOrdinarySourceRetry" -> KeyDrop[zeroFamilyRecovery, "Report"]|>]];
   If[sourceAttempts =!= {}, report = Join[report, <|"AutomaticSourceAttempts" -> sourceAttempts,
     "PreferredCubicCurrentSource" -> preferredProvenance|>]];
   If[AssociationQ[wholeSource],report=Join[report,<|"WholeCorrelatedSourceProposal"->KeyDrop[wholeSource,"Basis"]|>]];

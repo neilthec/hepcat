@@ -41,14 +41,23 @@ the list unchanged to ", ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
 functions interpret the channel information and sewing convention. Do not \
 remove ", Cell[BoxData[RowBox[{"z"}]], "InlineFormula"], ", fit an overall \
 sign or simply sum the channel expressions to make a candidate full \
-amplitude."}], "Notes"], Cell[TextData[{"Colored channels sew the internal \
-color indices as well as the internal spin state. The expression therefore \
-retains the same explicit SU(3) tensors as ", ButtonBox["DiagramAmplitudes",
-      BaseStyle -> "Link", ButtonData ->
-       "paclet:HEPCAT/ref/DiagramAmplitudes"], ". This is important when \
-photon, gluon and weak exchange contribute to the same reaction: their color \
-tensors interfere differently. Missing or ambiguous color information is not \
-replaced by an overall multiplicity."}], "Notes"],
+amplitude."}], "Notes"], Cell[TextData[{"Lower fermion amplitudes use an \
+ordered particle block and an ordered antiparticle block. Sewing removes only \
+their cross-role interleaving in a stored model row: it puts the particle \
+block first while preserving the relative order within each block. This \
+stable partition uses the declared particle and antiparticle roles, without \
+sorting by species, momentum labels or particle-table order. Reordering \
+fermions within either block changes the ordered-state reference and requires \
+its corresponding exchange sign; it is not an unsigned rewriting of a model \
+row. The existing internal contraction, spectator and identical-fermion signs \
+are retained."}], "Notes"],
+  Cell[TextData[{"Colored channels sew the internal color indices as well as \
+the internal spin state. The expression therefore retains the same explicit \
+SU(3) tensors as ", ButtonBox["DiagramAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/DiagramAmplitudes"], ". This is \
+important when photon, gluon and weak exchange contribute to the same \
+reaction: their color tensors interfere differently. Missing or ambiguous \
+color information is not replaced by an overall multiplicity."}], "Notes"],
   Cell["Supplying enough lower-point information", "NotesSection"],
   Cell[TextData[{"For four-point factorization, the lower amplitudes have \
 three legs. At five points, a channel can involve a three-point and a \
