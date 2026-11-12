@@ -99,8 +99,33 @@ Do[
     check[qwNames[[i]] <> " ordinary displayed identity " <> ToString[j],
       Lookup[qwProof, "Status", None] === "PROVED_ZERO"], {j, 6}],
   {i, 2}];
-check["the physical reference keeps weighted complexity bounded",
-  SpinorExpressionComplexity[Last[QEDSixPointPPMMPhysicalCurrentExample[qwModel]]] <= 3224];
+(* The fixed reference has38current groups and284expanded monomials. An
+   independent count of their numerator momentum degrees0through7 is below.
+   Probe the current metric on simple unit chains instead of retaining a
+   ceiling tied to an earlier momentum-weighting policy. No formula changes. *)
+qwPhysicalReference = Last[QEDSixPointPPMMPhysicalCurrentExample[qwModel]];
+qwReferenceGroups = Cases[qwPhysicalReference, sum_Plus :> Length[sum], {0, 1}];
+qwReferenceExpanded = Expand[qwPhysicalReference];
+qwReferenceMonomials = If[Head[qwReferenceExpanded] === Plus,
+  List @@ qwReferenceExpanded, {qwReferenceExpanded}];
+qwKnownMomentumDegreeCounts = {6, 30, 71, 91, 55, 19, 8, 4};
+qwMomentumScale = Unique["qwMomentumScale"];
+qwScaledNumeratorDegree[term_] := Exponent[
+  (term /. Power[_, _Integer?Negative] -> 1) /. {
+    chain_SpinorChain :> qwMomentumScale^Count[List @@ chain, _Mom],
+    _PropDen -> 1, _MomProd | _Mandelstahm -> qwMomentumScale^2,
+    _Mom -> qwMomentumScale}, qwMomentumScale];
+qwActualMomentumDegrees = KeySort[Counts[qwScaledNumeratorDegree /@ qwReferenceMonomials]];
+qwUnitMomentumCost[degree_Integer] := SpinorExpressionComplexity[SpinorChain @@ Join[
+  {Spinor["Helicity", "Angle", 81]}, Table[Mom[100 + i], {i, degree}],
+  {Spinor["Helicity", If[EvenQ[degree], "Angle", "Square"], 82]}]];
+qwReferenceMetricBound = Total[MapIndexed[
+  Function[{count, position}, count qwUnitMomentumCost[First[position] - 1]],
+  qwKnownMomentumDegreeCounts]];
+check["the physical reference retains its fixed current groups and momentum profile under the current metric",
+  qwReferenceGroups === {38} && Length[qwReferenceMonomials] === 284 &&
+    qwActualMomentumDegrees === AssociationThread[Range[0, 7], qwKnownMomentumDegreeCounts] &&
+    SpinorExpressionComplexity[qwPhysicalReference] === qwReferenceMetricBound];
 check["the seven-group reference keeps weighted complexity bounded",
   SpinorExpressionComplexity[Last[QEDSixPointPPPMCompactExample[qwModel]]] <= 327];
 If[checks =!= 39, AppendTo[failures, "Not every worked-example assertion executed."]];

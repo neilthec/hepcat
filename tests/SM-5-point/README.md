@@ -207,3 +207,31 @@ The external construction watchdog defaults to two hours so that it does not
 cut off the larger automatic five-point budgets. The package's own finite
 Automatic limits and the worker's memory limit remain active. An explicit
 `--timeout` overrides the external guard.
+
+## Regression audit
+
+The baseline audit executed all 119 standard Wolfram suites against package
+source fingerprint `208ed946f731511ac2a2d85036d0727d4bda163f083514dd53a9d63ebbf4051a`.
+There were 111 initial passes and eight initially failing suites. Five strict
+historical-test migrations then passed their complete focused replays: color
+and W-field conventions, two obsolete score expectations, the worked-reference
+momentum-degree profile, and a renamed notebook section checked by its actual
+formula and MadGraph-validation inputs. The resulting status is 116 passing
+suites and three unresolved bounded-quality suites. The Python support tests
+passed 282 of 282.
+
+The remaining failures are recorded in `paired-spectator-tests.wl`,
+`native-laurent-identity-tests.wl`, and `thesis-preparation-tests.wl`. They concern
+bounded simplification or exact-proof preparation. Their original strict
+assertions remain in place. The original logs, pre-policy controls, elevated
+replays and successful test migrations are retained separately rather than
+presenting this audit as entirely green.
+
+The local machine-readable report is
+`tests/results/SM-5-point/regressions/summary.json`; its `PackageSourceFiles`
+records exact file hashes, and its `Artifacts` entries locate the full log,
+per-suite progress, repaired replays and diagnostic details. Generated files
+under `tests/results/` are local audit artifacts. This baseline applies to the
+recorded source bytes; later production changes require their own delta checks.
+Use the standard commands in the repository README and the testing tiers in
+`tests/checks/README.md` to repeat checks for a later revision.

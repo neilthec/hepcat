@@ -60,6 +60,10 @@ program integrations are selected explicitly with `--suite`; see the
 [check guide](tests/checks/README.md). The Python tests exercise the support
 runners and adapters.
 
+The source-pinned [SM five-point regression audit](tests/SM-5-point/README.md#regression-audit)
+records the full standard sweep, verified historical-test migrations and the
+remaining bounded-search failures, with links to its local logs and summary.
+
 For numerical timing and formula comparisons, start with the
 [benchmark guide](tests/benchmarks/README.md). External integrations use the
 reader's SPINAS, CalcHEP and MadGraph installations and explicitly selected

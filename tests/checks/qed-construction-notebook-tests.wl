@@ -37,8 +37,23 @@ check["top-level entries are individual cells, never products of cells",
 groups = Cases[held, HoldPattern[CellGroupData[children_, ___]] :> HoldComplete[children], Infinity];
 check["every group contains a proper list of separate cells",
   groups =!= {} && AllTrue[groups, MatchQ[#, HoldComplete[{___Cell}]] &]];
-check["the seven-point spurious example is retained",
-  !FreeQ[held, "Seven-Point Amplitudes (Max Spurious)"]];
+(* Inspect active inputs as held code. The user may rename a section or its
+   amplitude variable; a matching formula assignment and actual validation
+   call preserve the example independently of those presentation choices. *)
+inputForms = Join[
+  Cases[held, Cell[text_String, "Input", ___] :>
+    Quiet[Check[ToExpression[text, InputForm, HoldComplete], $Failed]], Infinity],
+  Cases[held, Cell[BoxData[boxes_], "Input", ___] :>
+    Quiet[Check[ToExpression[boxes, StandardForm, HoldComplete], $Failed]], Infinity]];
+sevenSpuriousFormulaBindings = Cases[inputForms,
+  HoldPattern[Set[target_Symbol, Part[qedAllPositiveSpuriousFormula[model_, 5], 2]]] :>
+    HoldComplete[target, model], Infinity];
+sevenSpuriousValidatedBindings = Cases[inputForms,
+  HoldPattern[ValidateMadGraph[
+    {"e", "E", "A.+", "A.+", "A.+", "A.+", "A.+"}, amplitude_Symbol, model_, ___]] :>
+      HoldComplete[amplitude, model], Infinity];
+check["the seven-point AllSpurious formula and its explicit MadGraph validation are retained",
+  AnyTrue[sevenSpuriousValidatedBindings, MemberQ[sevenSpuriousFormulaBindings, #] &]];
 check["the independent eight-point prediction test is retained",
   !FreeQ[held, "All-Positive Photons: A General AllSpurious Formula"]];
 Print["QED NOTEBOOK STRUCTURE CHECKS: ", checks, "; FAILURES: ", Length[failures]];
