@@ -124,8 +124,69 @@ sm5NotebookText[text_String] := Cell[text, "Text"];
 sm5NotebookCount[n_Integer, singular_String, plural_String] := ToString[n] <> " " <> If[n === 1, singular, plural];
 sm5NotebookInput[text_String, tag_String] := Cell[text, "Input", CellTags -> tag];
 sm5NotebookGroup[cells_List] := Cell[CellGroupData[cells, Open]];
+(* A display cache contains only data already consumed below. It is never
+   validation evidence: the real capsule must exist and match its checksum.
+   Bind formatting/projection changes to this whole builder's source as well. *)
+sm5NotebookDisplayCacheSchema = 1;
+sm5NotebookDisplaySourceSHA256 = IntegerString[FileHash[$InputFileName, "SHA256"], 16, 64];
+sm5NotebookDisplayHash[path_String] := Quiet[Check[
+  IntegerString[FileHash[path, "SHA256"], 16, 64], $Failed]];
+sm5NotebookDisplayProjection[record_Association] := Module[{projection, details, result},
+  If[!MemberQ[{"COMPLETE", "PASS"}, Lookup[record, "Status", None]], Return[$Failed]];
+  projection = KeyTake[record, {"ID", "Status", "Seconds", "Expression", "Prints", "NotebookCells",
+    "RevalidationPrints", "RevalidationSeconds", "RevalidationCheckTimeConstraint"}];
+  details = Lookup[record, "Details", <||>];
+  If[AssociationQ[details] && KeyExistsQ[details, "RequestedOptions"],
+    AssociateTo[projection, "Details" -> KeyTake[details, {"RequestedOptions"}]]];
+  If[KeyExistsQ[record, "Result"],
+    result = record["Result"];
+    If[!AssociationQ[result] || !KeyExistsQ[result, "Directory"], Return[$Failed]];
+    AssociateTo[projection, "Result" -> KeyTake[result, {"Directory"}]]];
+  projection
+];
+sm5NotebookDisplayWrite[payload_String, manifest_String, projection_Association,
+    expected_Association] := Module[{temporary, completed},
+  temporary = (# <> "." <> CreateUUID[] <> ".tmp") & /@ {payload, manifest};
+  completed = CheckAbort[Catch[Quiet[Check[
+    If[!DirectoryQ[DirectoryName[payload]],
+      CreateDirectory[DirectoryName[payload], CreateIntermediateDirectories -> True]];
+    If[Export[temporary[[1]], projection, "WXF"] =!= temporary[[1]],
+      Throw[$Failed, "DisplayCacheWrite"]];
+    If[Export[temporary[[2]], Join[expected, <|"PayloadSHA256" ->
+        sm5NotebookDisplayHash[temporary[[1]]]|>], "RawJSON"] =!= temporary[[2]],
+      Throw[$Failed, "DisplayCacheWrite"]];
+    RenameFile[temporary[[1]], payload, OverwriteTarget -> True];
+    RenameFile[temporary[[2]], manifest, OverwriteTarget -> True]; True, $Failed]], "DisplayCacheWrite"],
+    Scan[If[FileExistsQ[#], Quiet[DeleteFile[#]]] &, temporary]; Abort[]];
+  Scan[If[FileExistsQ[#], Quiet[DeleteFile[#]]] &, temporary]; completed
+];
+sm5NotebookDisplayRecord[path_String] := Module[
+  {capsuleHash, directory, payload, manifest, expected, metadata, cached, record, projection},
+  If[!FileExistsQ[path], Return[<||>]];
+  capsuleHash = sm5NotebookDisplayHash[path];
+  directory = FileNameJoin[{DirectoryName[path], "notebook-display-cache"}];
+  payload = FileNameJoin[{directory, FileBaseName[path] <> ".wxf"}];
+  manifest = FileNameJoin[{directory, FileBaseName[path] <> ".json"}];
+  expected = <|"SchemaVersion" -> sm5NotebookDisplayCacheSchema,
+    "CapsuleSHA256" -> capsuleHash, "DisplaySourceSHA256" -> sm5NotebookDisplaySourceSHA256|>;
+  metadata = If[FileExistsQ[manifest], Quiet[Check[Import[manifest, "RawJSON"], <||>]], <||>];
+  If[StringQ[capsuleHash] && AssociationQ[metadata] &&
+      KeyTake[metadata, Keys[expected]] === expected &&
+      StringQ[Lookup[metadata, "PayloadSHA256", None]] &&
+      sm5NotebookDisplayHash[payload] === metadata["PayloadSHA256"],
+    cached = Quiet[Check[Import[payload, "WXF"], <||>]];
+    If[AssociationQ[cached] && MemberQ[{"COMPLETE", "PASS"}, Lookup[cached, "Status", None]] &&
+        sm5NotebookDisplayHash[payload] === metadata["PayloadSHA256"] &&
+        sm5NotebookDisplayHash[path] === capsuleHash, Return[cached]]];
+  record = Quiet[Check[Import[path, "WXF"], <||>]];
+  If[AssociationQ[record] && StringQ[capsuleHash],
+    projection = sm5NotebookDisplayProjection[record];
+    If[AssociationQ[projection] && sm5NotebookDisplayHash[path] === capsuleHash,
+      sm5NotebookDisplayWrite[payload, manifest, projection, expected]]];
+  record
+];
 sm5NotebookRecord[path_String] := Module[{record, summaryPath, summary, stem, export, id},
-  record = If[FileExistsQ[path], Quiet[Check[Import[path, "WXF"], <||>]], <||>];
+  record = sm5NotebookDisplayRecord[path];
   If[AssociationQ[record] && record =!= <||>, Return[record]];
   summaryPath = FileNameJoin[{DirectoryName[path], FileBaseName[path] <> ".json"}];
   summary = If[FileExistsQ[summaryPath],

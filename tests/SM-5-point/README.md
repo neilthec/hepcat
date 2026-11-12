@@ -270,13 +270,20 @@ Its last retained fit did generate all 600 equations for 415 unknowns; the first
 exact linear solve timed out. The coefficient field has degree four. Neither
 distinct-coefficient simplification nor conversion to one common number field
 finished the solve cheaply. A rational-parameter diagnostic also found an exact
-inconsistency in this particular final fallback space across its three test
-assignments. This does not establish that the separate physical-only proposal
-is insufficient. The relevant stored four-point electron/Z/Higgs, two-electron/
-two-Higgs and two-Z/two-Higgs amplitudes all pass independent native checks at
-an order-one, model-consistent input set. No model entry was changed. The
-scripts, matrices, certificates and qualified conclusions are in
-`diagnostics/eEZhh/`.
+inconsistency in that 415-direction constant-coefficient space across three
+test assignments. A subsequent controlled replay tested the separate retained
+325-direction physical space with its own affine seed. It solved the first
+system, then returned an exact all-column contradiction after 2,040 rows from
+three parameter assignments and fresh held-out charts. The full affine union,
+including the exact seed offset, has 508 directions and was also inconsistent
+on all 2,040 rows. These certificates concern those finite constant-coefficient
+spaces; they do not exclude further source-derived continuations. No result
+from either diagnostic was promoted. The relevant stored four-point
+electron/Z/Higgs, two-electron/two-Higgs and two-Z/two-Higgs amplitudes pass
+independent native checks at an order-one, model-consistent input set. A full
+five-point Feynman-versus-channel audit is the next check before extending the
+source space. No model entry was changed. Scripts, matrices and certificates
+are in `diagnostics/eEZhh/`, including `physical325/` and `affine-union/`.
 
 The five-gluon attempt is separately incomplete. A bounded stage probe measured
 quick graph generation and an 83-second unreduced conversion, then a timeout
@@ -289,6 +296,16 @@ The color implementation has not been changed. See
 These timings are concurrent campaign logs, not a controlled performance
 benchmark. The tracked progress ledger is consolidated at batch boundaries;
 individual workers also save their own checksum-bound records immediately.
+
+
+## Notebook display cache
+
+The notebook builder keeps a local display-only cache under
+`tests/results/SM-5-point/notebook-display-cache/`. It verifies the actual
+calculation capsule, builder version and cached payload checksums before reuse.
+Exact amplitudes, captured validation tables and explicit controls are retained;
+solver diagnostics remain in the original capsules. This cache can be deleted
+safely. It never supplies validation evidence or a missing calculation result.
 
 
 ## One exporter-only compatibility checkpoint

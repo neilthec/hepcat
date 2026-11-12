@@ -44,7 +44,9 @@ sm5ntExports = Flatten[Cases[#, HoldPattern[WriteSPINASProcess[args___]] :>
   HoldComplete[args], Infinity] & /@ sm5ntParsed];
 sm5ntTags = Cases[sm5ntNotebook, HoldPattern[CellTags -> value_String] :> value, Infinity];
 sm5ntFamilyTags = Select[sm5ntTags, StringStartsQ[#, "sm5-family-"] &];
-sm5ntConstructionTags = Select[sm5ntTags, StringStartsQ[#, "sm5-construction-"] &];
+sm5ntInputTags = Flatten[Cases[sm5ntNotebook, Cell[_, "Input", options___] :>
+  Cases[{options}, HoldPattern[CellTags -> value_String] :> value], Infinity]];
+sm5ntConstructionTags = Select[sm5ntInputTags, StringStartsQ[#, "sm5-construction-"] &];
 sm5ntCheck["the worked file is one held native notebook", MatchQ[sm5ntNotebook, HoldComplete[_Notebook]]];
 sm5ntCheck["all cell groups contain cells", FreeQ[sm5ntNotebook,
   HoldPattern[CellGroupData[children_List, _]] /; !MatchQ[children, {___Cell}]]];
@@ -125,6 +127,87 @@ sm5ntCheck["captured prints and the exact amplitude output are rendered",
 sm5ntCheck["successful export output is its actual directory rather than a diagnostic dump",
   !FreeQ[sm5ntReplay, Cell[BoxData[ToBoxes["synthetic-export-directory", StandardForm]], "Output", ___]] &&
     Count[sm5ntReplay, Cell[_, "Print", ___], Infinity] === 2];
+(* A local rendering cache must reproduce actual saved content, not become
+   an alternate source of amplitudes or validation status. *)
+sm5ntCacheCapsule = FileNameJoin[{sm5ntTemporary, sm5ntSampleID <> ".wxf"}];
+sm5ntCacheDirectory = FileNameJoin[{sm5ntTemporary, "notebook-display-cache"}];
+sm5ntCachePayload = FileNameJoin[{sm5ntCacheDirectory, sm5ntSampleID <> ".wxf"}];
+sm5ntCacheManifest = FileNameJoin[{sm5ntCacheDirectory, sm5ntSampleID <> ".json"}];
+sm5ntCacheTable = Dataset[{<|"Type" -> "Physical", "Status" -> "PASS", "Value" -> 5/13|>}];
+sm5ntCacheRecord = <|"ID" -> sm5ntSampleID, "Status" -> "COMPLETE", "Seconds" -> 7/2,
+  "Expression" -> {{Mass[1] -> 7}, 3/7 + SpinorChain["Angle", 1, "Angle", 2]},
+  "Prints" -> {SequenceForm["actual fixture milestone ", 17], sm5ntCacheTable},
+  "NotebookCells" -> {Cell["actual fixture captured cell", "Print"]},
+  "RevalidationPrints" -> {"actual fixture recheck", sm5ntCacheTable},
+  "RevalidationSeconds" -> 3/5, "RevalidationCheckTimeConstraint" -> 600,
+  "CacheMissWitness" -> "original capsule only",
+  "Details" -> <|"RequestedOptions" -> <|"TimeConstraint" -> 3600,
+    "CheckOptions" -> {"FeynmanTimeConstraint" -> 600}|>,
+    "UnusedSolverDiagnostics" -> Range[4096]|>|>;
+Export[sm5ntCacheCapsule, sm5ntCacheRecord, "WXF"];
+sm5ntUncached = sm5NotebookRecord[sm5ntCacheCapsule];
+sm5ntCached = sm5NotebookRecord[sm5ntCacheCapsule];
+sm5ntCheck["display cache preserves the exact amplitude and actual Dataset print objects",
+  sm5ntCached["Expression"] === sm5ntCacheRecord["Expression"] &&
+  sm5ntCached["Prints"] === sm5ntCacheRecord["Prints"] &&
+  sm5ntCached["NotebookCells"] === sm5ntCacheRecord["NotebookCells"] &&
+  sm5ntCached["RevalidationPrints"] === sm5ntCacheRecord["RevalidationPrints"] &&
+  sm5ntCached["RevalidationSeconds"] === 3/5 &&
+  sm5ntCached["RevalidationCheckTimeConstraint"] === 600];
+sm5ntCheck["cached rendering and explicit controls equal the uncached saved record",
+  sm5NotebookCaptured[sm5ntCached, "Construction"] === sm5NotebookCaptured[sm5ntUncached, "Construction"] &&
+  sm5NotebookConstructionControls[sm5ntCached] === sm5NotebookConstructionControls[sm5ntUncached] &&
+  sm5ntCached["Status"] === sm5ntCacheRecord["Status"]];
+sm5ntCheck["display projection omits unconsumed solver diagnostics and binds both file checksums",
+  !KeyExistsQ[sm5ntCached, "CacheMissWitness"] &&
+  Keys[sm5ntCached["Details"]] === {"RequestedOptions"} &&
+  With[{metadata = Import[sm5ntCacheManifest, "RawJSON"]},
+    metadata["CapsuleSHA256"] === sm5NotebookDisplayHash[sm5ntCacheCapsule] &&
+    metadata["PayloadSHA256"] === sm5NotebookDisplayHash[sm5ntCachePayload] &&
+    metadata["DisplaySourceSHA256"] === sm5NotebookDisplaySourceSHA256]];
+sm5ntChangedCacheRecord = Join[sm5ntCacheRecord, <|"Expression" -> 11/13|>];
+Export[sm5ntCacheCapsule, sm5ntChangedCacheRecord, "WXF"];
+sm5ntChangedCapsule = sm5NotebookRecord[sm5ntCacheCapsule];
+sm5ntCheck["changing the real capsule rejects an otherwise intact old display cache",
+  sm5ntChangedCapsule["Expression"] === 11/13 && KeyExistsQ[sm5ntChangedCapsule, "CacheMissWitness"]];
+sm5ntChangedSource = Block[{sm5NotebookDisplaySourceSHA256 = "different builder source"},
+  sm5NotebookRecord[sm5ntCacheCapsule]];
+sm5ntCheck["changing the display source fingerprint reloads the original capsule",
+  KeyExistsQ[sm5ntChangedSource, "CacheMissWitness"] && sm5ntChangedSource["Expression"] === 11/13];
+sm5ntChangedSchema = Block[{sm5NotebookDisplayCacheSchema = 2}, sm5NotebookRecord[sm5ntCacheCapsule]];
+sm5ntCheck["changing the display schema reloads the original capsule",
+  KeyExistsQ[sm5ntChangedSchema, "CacheMissWitness"] && sm5ntChangedSchema["Expression"] === 11/13];
+(* Populate the real schema again, then corrupt only the cached payload. *)
+sm5NotebookRecord[sm5ntCacheCapsule];
+Export[sm5ntCachePayload, <|"Status" -> "PASS", "Expression" -> "NOT_A_VALIDATED_AMPLITUDE"|>, "WXF"];
+sm5ntCorruptCache = sm5NotebookRecord[sm5ntCacheCapsule];
+sm5ntCheck["a corrupt payload cannot replace the real amplitude or status",
+  sm5ntCorruptCache["Status"] === "COMPLETE" && sm5ntCorruptCache["Expression"] === 11/13 &&
+  KeyExistsQ[sm5ntCorruptCache, "CacheMissWitness"]];
+DeleteFile[sm5ntCacheManifest];
+sm5ntMissingCacheManifest = sm5NotebookRecord[sm5ntCacheCapsule];
+sm5ntCheck["a payload without its checksum manifest cannot supply output",
+  KeyExistsQ[sm5ntMissingCacheManifest, "CacheMissWitness"] &&
+  sm5ntMissingCacheManifest["Expression"] === 11/13];
+DeleteFile[sm5ntCacheCapsule];
+sm5ntCheck["a display cache cannot supply an amplitude when the actual capsule is absent",
+  sm5NotebookRecord[sm5ntCacheCapsule] === <||>];
+sm5ntFailedCacheRecord = <|"Status" -> "FAIL", "Expression" -> Missing["NoAmplitude"],
+  "Prints" -> {"actual fixture failure"}, "Details" -> Failure["ActualFixtureFailure",
+    <|"MessageTemplate" -> "actual fixture failure", "Diagnostics" -> Range[4096]|>]|>;
+Export[sm5ntCacheCapsule, sm5ntFailedCacheRecord, "WXF"];
+sm5ntCheck["failed records retain their entire original failure and bypass the success cache",
+  sm5NotebookRecord[sm5ntCacheCapsule] === sm5ntFailedCacheRecord &&
+  sm5NotebookRecord[sm5ntCacheCapsule] === sm5ntFailedCacheRecord];
+sm5ntExportProjection = sm5NotebookDisplayProjection[<|"Status" -> "PASS",
+  "Prints" -> {"actual fixture export"}, "Result" -> <|"Directory" -> "actual-fixture-directory",
+    "UnusedBackendDiagnostics" -> Range[4096]|>|>];
+sm5ntCheck["successful export projection preserves its real displayed directory and prints",
+  sm5ntExportProjection === <|"Status" -> "PASS", "Prints" -> {"actual fixture export"},
+    "Result" -> <|"Directory" -> "actual-fixture-directory"|>|> &&
+  sm5NotebookDisplayProjection[<|"Status" -> "FAIL", "Result" ->
+    Failure["ActualFixtureExportFailure", <||>]|>] === $Failed];
+
 (* Explicit controls come from RequestedOptions, never resolved resource policy. *)
 sm5ntDefaultControlRecord = <|"Expression" -> 3/7, "Prints" -> {}, "Details" -> <|
   "RequestedOptions" -> <|"TimeConstraint" -> Automatic, "CheckOptions" -> {},
