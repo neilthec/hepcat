@@ -11,6 +11,7 @@
 Begin["SMFivePointRevalidation`Private`"];
 root = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Get[FileNameJoin[{root, "source", "HEPCAT.wl"}]];
+Get[FileNameJoin[{root, "tests", "SM-5-point", "revalidate-benchmark.wl"}]];
 $HistoryLength = 0;
 sha[file_String] := IntegerString[FileHash[file, "SHA256"], 16, 64];
 fail[tag_String, message_String] := (Print[Failure[tag, <|"MessageTemplate" -> message|>]]; Quit[2]);
@@ -91,11 +92,12 @@ report = capture[MemoryConstrained[
   Print["Revalidating retained amplitude: ", StringRiffle[process, ", "]];
   channels = FactorizationAmplitudeChannels[process, factorizationModel];
   rawFeynman = DiagramAmplitudes[CreateDiagrams[process, feynmanModel]];
-  benchmark = PrepareAmplitudes[rawFeynman, feynmanModel,
-    "PolePreference" -> "IndependentXi", "MaxSteps" -> 0, "InternalOnShell" -> False];
-  If[FailureQ[channels] || FailureQ[benchmark] || channels === $Failed || benchmark === $Failed,
-    Failure["RevalidationInputs", <|"MessageTemplate" -> "The native channels or independent Feynman preparation failed.",
-      "Channels" -> channels, "FeynmanAmplitudes" -> benchmark|>],
+  benchmarkDetails = prepareIndependentBenchmark[rawFeynman, feynmanModel, 900];
+  benchmark = Lookup[benchmarkDetails, "BenchmarkAmplitudes", Missing["BenchmarkNotReady"]];
+  If[FailureQ[channels] || channels === $Failed ||
+      !AssociationQ[benchmarkDetails] || Lookup[benchmarkDetails, "Status", None] =!= "COMPLETE",
+    Failure["RevalidationInputs", <|"MessageTemplate" -> "The native channels or complete independent Feynman benchmark failed.",
+      "Channels" -> channels, "FeynmanBenchmarkDetails" -> benchmarkDetails|>],
     CheckAmplitudes[expression, channels, factorizationModel,
       "FeynmanAmplitudes" -> benchmark, "FeynmanModel" -> feynmanModel,
       "Output" -> "Details", "RandomSeed" -> seed]],
@@ -126,6 +128,9 @@ record = Join[source, <|
   "Rows" -> rows,
   "RevalidationStatus" -> If[ok, "PASS", "FAIL"],
   "RevalidationDetails" -> report, "RevalidationPrints" -> printed,
+  "RevalidationFeynmanBenchmark" -> If[AssociationQ[benchmarkDetails], benchmarkDetails, Missing["NotCompleted"]],
+  "RevalidationScriptSHA256" -> sha[$InputFileName],
+  "RevalidationBenchmarkPolicySHA256" -> sha[FileNameJoin[{root, "tests", "SM-5-point", "revalidate-benchmark.wl"}]],
   "RevalidationSeconds" -> seconds, "RevalidationRandomSeed" -> seed,
   "SourceCapsuleSHA256" -> sourceHash, "SourceSummarySHA256" -> sourceSummaryHash,
   "SourceCapsuleArchive" -> FileNameJoin[{"revalidation-history", id <> "-" <> sourceHash <> ".wxf"}],
@@ -137,7 +142,8 @@ writeRecord[target, record];
 summary = KeyTake[record, {"ID", "Particles", "Status", "Seconds", "Complexity", "RandomSeed",
   "ContextSHA256", "PreviousContextSHA256", "ConstructionContextSHA256", "RevalidationStatus",
   "RevalidationSeconds", "RevalidationRandomSeed", "SourceCapsuleSHA256", "SourceSummarySHA256",
-  "SourceCapsuleArchive", "RevalidationConfigurationSHA256", "RevalidationInventorySHA256"}];
+  "SourceCapsuleArchive", "RevalidationConfigurationSHA256", "RevalidationInventorySHA256",
+  "RevalidationScriptSHA256", "RevalidationBenchmarkPolicySHA256"}];
 AssociateTo[summary, {"Rows" -> Length[rows], "FeynmanRows" -> Count[Lookup[rows, "Type", {}], "Feynman"],
   "CheckStatuses" -> Counts[Lookup[rows, "Status", {}]],
   "FailureStage" -> If[ok, Null, "Revalidating retained amplitude"],
