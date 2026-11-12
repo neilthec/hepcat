@@ -17,8 +17,11 @@ ciGuardFiles=Join[Sort[FileNames["*.wl",FileNameJoin[{root,"source"}],Infinity]]
  Flatten[Table[FileNameJoin[{root,"models",stem<>ToString[number]<>".mdl"}],
  {number,{1,2}},{stem,{"amps","prtcls","vars","func","extlib"}}]],
  Sort[FileNames["*1.mdl",FileNameJoin[{root,"tests","reference-models","calchep"}]]]];
-ciHashes[]:=Association[(StringDrop[#,StringLength[root]+1]->ciSHA[#])&/@ciGuardFiles];
+ciHashes[]:=Association[(FileNameJoin[Drop[FileNameSplit[#],Length[FileNameSplit[root]]]]->ciSHA[#])&/@ciGuardFiles];
 ciBeforeHashes=ciHashes[];ciReports={};
+ciWriteRecord[path_,record_]:=Module[{stream},
+ stream=OpenWrite[path,BinaryFormat->True];
+ BinaryWrite[stream,Normal[BinarySerialize[record,PerformanceGoal->"Size"]],"Byte"];Close[stream]];
 Print["Covariant constructor integration records: ",ciDirectory];
 Do[
  ciReport=MemoryConstrained[ConstructAmplitude[First[one],ciModel,ciLower,
@@ -26,7 +29,7 @@ Do[
  AppendTo[ciReports,<|"Particles"->First[one],"Report"->ciReport,
   "SourceAndModelHashesBefore"->ciBeforeHashes,"SourceAndModelHashesAfter"->ciHashes[],
   "ActualPublicOptions"->{"FeynmanModel"->"MatchedIndependentModel","Output"->"Details"}|>];
- Export[FileNameJoin[{ciDirectory,"case-"<>ToString[Length[ciReports]]<>".wxf"}],Last[ciReports],"WXF"];
+ ciWriteRecord[FileNameJoin[{ciDirectory,"case-"<>ToString[Length[ciReports]]<>".wxf"}],Last[ciReports]];
  check["actual public construction completed "<>ToString[First[one],InputForm],
   AssociationQ[ciReport]&&Lookup[ciReport,"Status",None]==="COMPLETE"];
  check["the complete source candidate was accepted only by independent native validation",
