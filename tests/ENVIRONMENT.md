@@ -49,7 +49,7 @@ retains hashes for all package sources, model inputs and reference
 models, rather than relying on a branch name that can later change.
 
 - `source/HEPCAT-Base.wl`: SHA256 `21e53c34902eb67ed144bf407d68aa43ebde806608834d5fb91dffa6b338ebf6`.
-- `source/HEPCAT-Model.wl`: SHA256 `d18726251bdb55aa797261e1136d2649efead5a6e78003877054dceb042bd406`.
+- `source/HEPCAT-Model.wl`: SHA256 `80f719c833510f002028316eb74bf25a2e4aa3d8deac07e1c4bfbb52a67d1ade`.
 
 ## Builds and scalar precision
 
@@ -97,9 +97,11 @@ bound compile time, as recorded in each generated reference manifest.
   or a fixed, declared phase convention.
 - Colored processes retain coherent color structures, their interference,
   and the appropriate incoming color averages. Spin/helicity sums, initial
-  averages and identical-final-particle symmetry factors must match. The
-  fixed-helicity MG formula harness uses raw color-summed rates without
-  initial averages or a final symmetry factor.
+  averages and identical-final-particle symmetry factors must match. The standalone literature-formula harness uses raw spin/color sums without
+  initial averages or a final symmetry factor. The notebook public-API
+  all-positive formula checks instead average the four incoming massive-spin
+  states by `1/4`, with all photons fixed to positive helicity and no final
+  `1/N!`. Keep the normalization attached to each report.
 - The precision replay preserves the documented input parsing policy. The
   high-multiplicity references are archived binary64 MG rates. Restoring
   external mass shells and momentum conservation is a separate experiment;
@@ -118,9 +120,22 @@ symbolic construction or a fresh independent-reference calculation.
 | Fresh formula/MG comparisons with new private references | 5,200 one-negative and 6,000 two-pair all-positive points passed, with the original counts and seeds |
 | Exact supplementary symbolic comparisons | 32 one-negative and 258 two-pair tests passed; the literature comparison passed 576 shell/conservation/component checks and two negative controls |
 | Fresh precision replay | All 20 Intel-compatible groups completed at 24, 53 and 64 bits, plus the native rounding control; all 72 printed precision values reproduced at their stated rounding |
+| Fresh notebook formula/MG checks | 100,000 points each at seven and eight positive-helicity photons, in both pole forms; three pass at unchanged relative tolerance `1e-7`, while the native eight-photon spurious form has 16 discrepancies, maximum `4.93e-6`, and no evaluation errors |
+| Larger-sample diagnostic replay | All 16 original failures recovered in a 1,600-point subset; unchanged binary64 inputs promoted to true 64-bit-significand arithmetic reduce 15 below tolerance, with one remaining at `1.59e-7`. A separate changed-input, formula-to-formula control is not a replacement MG validation |
 | Saved catalog, tables and timing data | Catalog transcription checks, all 72 precision entries, and 36 printed timing entries from 24 unique medians verified |
+| Focused completion-input regressions | 102 passed, including 31 conservative timeout-fallback safeguards |
+| Focused four-leg preparation regressions | 50 passed, including final-only scheduling, exact-identity safeguards, rational-proof normalization, and bounded fallback; this is not an end-to-end construction pass |
+| Fresh public SM vector integration | 19 passed, including both automatic constructors, unchanged compactness bounds and final checks at three parameter assignments |
 | Full 117-suite default and 15-suite integration campaigns | In progress; a complete release pass has not yet been established |
 | Actual QED and SM notebook campaigns | In progress, with unresolved construction and simplification regressions under investigation; archived passes are not substituted for fresh results |
+
+The repaired fixed-seed public vector integration passes all 19 checks.
+`Z,Z,W-,W+` completes with complexity 53, below the maintained bound of 63;
+`W+,W-,W-,W+` completes with complexity 213, below the maintained bound of 216.
+Both selected representatives pass all mandatory final checks and all three
+independent parameter assignments, with physical poles and unchanged models.
+The complete fresh notebook campaigns remain pending. These two end-to-end
+results are not a full release pass.
 
 The deliberately low-precision float discrepancies are measured
 conditioning results, not failed high-precision agreement tests. One newly

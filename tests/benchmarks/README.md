@@ -486,6 +486,11 @@ or libraries change. Rebuild before recording publication results.
 
 ## Direct all-positive formula checks above six photons
 
+For the separate 100,000-point N7/N8 campaign and portable replay of its
+selected precision failures, see [the generated-graph precision workflow](reproduction/README.md#new-100000-point-formula-checks-and-same-input-precision-replay).
+Its original native N8 AllSpurious result is retained as FAIL (16/100000).
+
+
 `all-positive-formulas.hpp` evaluates the previously fixed physical and spurious
 all-positive QED recurrences directly, using memoized photon subsets.
 `all-positive-validation.cpp` compares both with an independent MadGraph

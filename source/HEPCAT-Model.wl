@@ -11144,6 +11144,84 @@ completionAlternativeChannelBasis[input_, normalized_Association, rows_List,
 
 (* These are candidate continuations, not identities for adding diagrams.
    Keep complete signed coefficients and preserve explicit regular input. *)
+(* A conservative timeout fallback separates the exact formal regular part
+   without expanding the input. Treat inverse PropDen factors as independent
+   polynomial variables; reject positive or unsupported propagator occurrences.
+   Keep the regular part fixed and retain the pole core as one correlated
+   direction. This is a formal decomposition, not a complete Laurent analysis. *)
+
+completionCorrelatedInputProposals[normalized_Association, seconds_: .5] := Module[
+  {records = Lookup[normalized, "Records", Missing["NoRecords"]], external, expressions,
+   regularByRecord = {}, certificates = {}, result, started = AbsoluteTime[], separate,
+   original, canonical, propagators, variables, positions, formal, tracked, domain,
+   regular, restored, direction, proposals, unavailable, firstFailure = Missing["NoFailure"]},
+  unavailable[reason_] := <|"Status" -> "UNRESOLVED", "Reason" -> reason,
+    "Proposals" -> {}, "Diagnostics" -> {
+      "The ordinary input collector exceeded its time budget; no complete conservative whole-core fallback was available."},
+    "InputCollectionMethod" -> "ConservativeFormalInversePolynomial",
+    "CoreDecompositionComplete" -> False, "OverlapComplete" -> False|>;
+  If[!TrueQ[seconds > 0] || !KeyExistsQ[normalized, "Expression"] || !ListQ[records] ||
+      !AllTrue[records, AssociationQ[#] && KeyExistsQ[#, "Expression"] &],
+    Return[unavailable["UnsupportedCorrelatedInputRecords"]]];
+  external = Cases[Lookup[normalized, "ExternalMassRules", {}],
+    HoldPattern[Mass[i_Integer] -> _] :> i];
+  expressions = Lookup[records, "Expression"];
+  separate[value_] := Module[{},
+    original = value;
+    canonical = residueCanonicalPropagators[original, external];
+    propagators = DeleteDuplicates[Cases[canonical,
+      HoldPattern[Power[p_PropDen, n_Integer?Negative]] :> p, Infinity]];
+    variables = Table[Unique["formalInputInverse"], {Length[propagators]}];
+    positions = AssociationThread[propagators, variables];
+    formal = canonical /. HoldPattern[Power[p_PropDen, n_Integer?Negative]] :>
+      positions[p]^(-n);
+    If[!FreeQ[formal, _PropDen],
+      Return[firstFailure = unavailable["PositiveOrUnmappedInputPropagator"]]];
+    tracked = Alternatives @@ variables;
+    domain[part_] := Which[
+      variables === {} || FreeQ[part, tracked], True,
+      MemberQ[variables, part], True,
+      MemberQ[{Plus, Times}, Head[part]], AllTrue[List @@ part, domain],
+      Head[part] === Power && IntegerQ[part[[2]]] && part[[2]] >= 0,
+        domain[First[part]],
+      True, False];
+    If[!TrueQ[domain[formal]],
+      Return[firstFailure = unavailable["UnsupportedInversePropagatorDependence"]]];
+    regular = formal /. Thread[variables -> 0];
+    restored = formal /. Thread[variables -> (1/# & /@ propagators)];
+    If[!SameQ[restored, canonical] || !FreeQ[regular, _PropDen] || !residueFiniteQ[regular],
+      Return[firstFailure = unavailable["UncertifiedFormalInputRoundtrip"]]];
+    AppendTo[regularByRecord, regular];
+    AppendTo[certificates, <|"InverseCount" -> Length[variables],
+      "InverseReplacementRoundtripExact" -> True, "OriginalExpression" -> original,
+      "RegularExpression" -> regular, "PoleCore" -> original - regular,
+      "OriginalEqualsRegularPlusCore" -> SameQ[regular + (original - regular), original]|>];
+    True];
+  result = TimeConstrained[MemoryConstrained[
+    If[!SameQ[normalized["Expression"], Total[expressions]],
+      unavailable["GlobalExpressionDoesNotMatchRecords"],
+      If[!AllTrue[expressions, TrueQ[separate[#]] &],
+        If[AssociationQ[firstFailure], firstFailure, False],
+        regular = Total[regularByRecord];
+        direction = normalized["Expression"] - regular;
+        proposals = If[direction === 0, {}, {
+          <|"Mode" -> "InputRescaling", "Direction" -> direction,
+            "RepeatedTermGroups" -> 0, "RemovedCopies" -> 0,
+            "ColumnMode" -> "WholeCorrelatedColumn"|>}];
+        <|"Status" -> "AVAILABLE", "RegularExpression" -> regular,
+          "RegularByRecord" -> regularByRecord,
+          "PoleBearingByRecord" -> MapThread[Subtract, {expressions, regularByRecord}],
+          "Proposals" -> proposals,
+          "InputCollectionMethod" -> "ConservativeFormalInversePolynomial",
+          "CoreDecompositionComplete" -> True, "OverlapComplete" -> False,
+          "OverlapEnumeration" -> "NotAttempted", "CoreColumnMode" -> "WholeCorrelatedColumn",
+          "RecordCertificates" -> certificates, "OrdinaryCollectorStatus" -> "UNRESOLVED",
+          "OrdinaryCollectorDiagnostics" -> {"Input term collection exceeded its bounded time budget."},
+          "ElapsedTime" -> N[AbsoluteTime[] - started], "Diagnostics" -> {}|>]],
+    268435456, False], seconds, False];
+  If[AssociationQ[result], result, unavailable["ConservativeInputCoreUnavailable"]]
+];
+
 completionInputProposals[normalized_Association, limit_Integer : 4096] := Module[
   {external = normalized["ExternalMassRules"], records = normalized["Records"],
    expanded, terms, indexed, groups, repeated, regular, regularByRecord,
@@ -11771,8 +11849,14 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
       inputFitBudget = If[seconds === Infinity, 30,
         Min[30, Max[0, seconds - (inputFitStart - start)]/5]];
       inputProposals = TimeConstrained[completionInputProposals[normalized],
-        Min[2, Max[0.000001, inputFitBudget/4]], <|"Status" -> "UNRESOLVED", "Proposals" -> {},
-          "Diagnostics" -> {"Input term collection exceeded its bounded time budget."}|>];
+        Min[2, Max[0.000001, inputFitBudget/4]], completionCorrelatedInputProposals[normalized,
+          Min[.5, Max[0, seconds - (AbsoluteTime[] - start)]]]];
+      If[Lookup[inputProposals, "InputCollectionMethod", None] === "ConservativeFormalInversePolynomial" &&
+          Lookup[inputProposals, "Status", None] === "AVAILABLE",
+        AppendTo[inputAttempts, <|"Mode" -> "InputCollection", "Status" -> "AVAILABLE",
+          "Method" -> inputProposals["InputCollectionMethod"], "CoreDecompositionComplete" -> True,
+          "OverlapComplete" -> False, "OrdinaryCollectorStatus" -> inputProposals["OrdinaryCollectorStatus"],
+          "Diagnostics" -> inputProposals["OrdinaryCollectorDiagnostics"]|>]];
       If[inputProposals["Status"] =!= "AVAILABLE",
         AppendTo[inputAttempts, <|"Mode" -> "InputCollection", "Status" -> "UNRESOLVED",
           "Diagnostics" -> inputProposals["Diagnostics"]|>],
@@ -12155,7 +12239,8 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
       If[shiftedPairs =!= {},
       shiftedInput = If[AssociationQ[inputProposals], inputProposals,
         TimeConstrained[completionInputProposals[normalized], Min[2, shiftedBudget/8],
-          <|"Status" -> "UNRESOLVED"|>]];
+          completionCorrelatedInputProposals[normalized,
+            Min[.5, Max[0, shiftedBudget - (AbsoluteTime[] - shiftedStarted)]]]]];
       shiftedCore = 0; shiftedSeed = projectedSeed;
       If[inputReweighting === Automatic && Lookup[shiftedInput, "Status", None] === "AVAILABLE",
         shiftedSeed = project[shiftedInput["RegularExpression"]];
@@ -15839,7 +15924,8 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
    rankSnapshots = 0, groupedCompaction, fractionCompaction, fractionSeconds, pairNormalization,
    diracCompaction, displayCompaction, displaySeconds, modelCompaction, conservationCompaction,
    currentCompaction, schoutenCompaction, tensorTrial, tensorCheckpoint = None,
-   tensorSource, tensorSeconds, tensorReport, tensorLabel, tensorEligible},
+   tensorSource, tensorSeconds, tensorReport, tensorLabel, tensorEligible,
+   termCompactionReport, termCompactionSeconds},
   progressMetadata = Join[<|"Item" -> index, "Items" -> count, "InputType" -> kind|>,
     If[MemberQ[{"Diagram", "FeynmanDiagram"}, kind], <|"Diagram" -> index, "Diagrams" -> count|>, <||>]];
   channels = If[TrueQ[options["InternalOnShell"]],
@@ -15961,6 +16047,32 @@ preparationOneAmplitude[pair_, index_, count_, options_Association, model_, pair
       tensorTrial[preparationNumerators[original, Function[num,
         preparationReplaceMasses[num, preparationExternalRules[rules]]]],
         "OriginalFourLegTensorIdentities", 6]];
+    (* Complete external amplitudes can contain regular pieces distributed
+       between different physical-pole sectors. Reweight only existing terms
+       and accept a cheaper result solely after a generic ordinary proof.
+       Compare after the ordinary tensor packet exposes its certified terms. *)
+    If[TrueQ[tensorEligible] && TrueQ[admittedOriginal] && channels === {} &&
+        !TrueQ[$deferExactTensorSupportPolish] &&
+        !TrueQ[options["InternalOnShell"]] &&
+        (TrueQ[wholeAmplitude] || kind === "Amplitude"),
+      termCompactionSeconds = If[options["TimeConstraint"] === Infinity, 15,
+        Min[15, (Max[0, options["TimeConstraint"] - (AbsoluteTime[] - started)]/2)]];
+      If[termCompactionSeconds > 0.01,
+        stage = "OriginalRationalTermDependence"; before = expression;
+        termCompactionReport = preparationExistingTermCompaction[before,
+          preparationExternalRules[rules], termCompactionSeconds];
+        after = Lookup[termCompactionReport, "Amplitude", before];
+        If[residueFiniteQ[after],
+          rememberCompleted[after, stage];
+          If[preparationBetterQ[snapshotRank[after], snapshotRank[expression]],
+            expression = after]];
+        AppendTo[reductions, <|"Operation" -> stage, "Before" -> before,
+          "After" -> after, "AlternativeRoute" -> True,
+          "InternalOnShellIdentity" -> False, "OnShellChannels" -> {},
+          "IdentityRoute" -> Lookup[termCompactionReport, "Route", {}],
+          "SearchTimedOut" -> Lookup[termCompactionReport, "TimedOut", False],
+          "StopReason" -> Lookup[termCompactionReport, "StopReason", None]|>];
+        event[stage]]];
     stage = "PolePreference";
     before = expression;
     referenceInput = expression;
@@ -18249,6 +18361,215 @@ completionHECovariantScalarQ[expression_, external_List, allowReferences_: False
     AllTrue[Rest[List @@ value], scalar];
   scalar[_] := False;
   TrueQ[scalar[expression]]
+];
+
+(* Detect removable dependence only among a completed expression's own
+   rational monomials. The exact generic certificate, rather than the sampled
+   fit, authorizes every accepted change. *)
+preparationExistingTermCompaction[expression_, externalRules_List, seconds_: 3] := Module[
+  {started = AbsoluteTime[], unchanged, tag = Unique["existingTermCompaction"],
+   outcome, legs, masses, terms, factors, chainsOf, eligible, ordered, parameters,
+   abstract, source, abstractRules, chart, coordinates, spins, powers,
+   coefficientVector, assignments, matrix = {}, targets = {}, values, sample,
+   rows, solution, pivot, candidate, difference, proofValue, beforeRank,
+   candidateRank, rank, parameterAssignment, attempts, accepted, rejected = 0,
+   samplingStarted, samplingSeconds, solvingStarted, solvingSeconds, proofStarted,
+   budget, termLimit = 128, leafLimit = 24000, memoryLimit = 512 1024^2,
+   unsupportedInverses, denominators, mappedScalarQ, mappedPolynomialQ,
+   basisRecords, basisEpsilon = {{0, 1}, {-1, 0}}, genericPatch, invariantJacobian,
+   expectedJacobian, denominatorValues, sampleWitnesses = {}, covariancePassed},
+  unchanged[reason_] := <|"Status" -> "UNCHANGED", "Amplitude" -> expression,
+    "StopReason" -> reason, "ElapsedTime" -> N[AbsoluteTime[] - started],
+    "InternalOnShellConditions" -> {}, "TimedOut" -> MemberQ[{"BoundedTimeLimit", "BoundedMemoryLimit"}, reason]|>;
+  budget = If[NumericQ[seconds] && TrueQ[seconds > 0], N[seconds], 0.];
+  If[budget <= 0., Return[unchanged["NoBudget"]]];
+  (* All expression traversal, expansion, exact sampling, elimination and
+     certification belongs to the same bounded allocation. Propagator
+     arguments and compound inverse bases are never distributed. *)
+  outcome = TimeConstrained[MemoryConstrained[Catch[
+    If[LeafCount[expression] > leafLimit, Throw[unchanged["LeafCountGuard"], tag]];
+    legs = Sort[Cases[externalRules, HoldPattern[Mass[i_Integer] -> _] :> i]];
+    If[Length[legs] =!= 4 || !DuplicateFreeQ[legs],
+      Throw[unchanged["NotFourExternalLegs"], tag]];
+    masses = (Mass /@ legs) /. externalRules;
+    If[AnyTrue[masses, # === 0 || !FreeQ[#, _Mass | _Spinor | _SpinorChain |
+        _Mom | _MomProd | _PropDen | _List | _Association] &],
+      Throw[unchanged["NotFourMassiveLegs"], tag]];
+    If[!FreeQ[expression, PropDen[_, _, _]],
+      Throw[unchanged["WidthRequiresSeparateSupport"], tag]];
+    unsupportedInverses = Cases[expression, inverse : Power[base_, exponent_] /;
+      !TrueQ[exponent >= 0] && Head[base] =!= PropDen &&
+        !FreeQ[base, _PropDen | _SpinorChain | _MomProd | _Mom | _Spinor] :> inverse,
+      {0, Infinity}];
+    If[unsupportedInverses =!= {},
+      Throw[unchanged["UnsupportedCompoundInverse"], tag]];
+    covariancePassed = completionHECovariantScalarQ[expression, legs];
+    If[!TrueQ[covariancePassed],
+      Throw[unchanged["UnsupportedCovariantStructure"], tag]];
+    If[!FreeQ[expression, Power[_SpinorChain, exponent_Integer?Positive] /; exponent > 4],
+      Throw[unchanged["ChainPowerGuard"], tag]];
+    If[rspSandwichExpansionCount[expression] > termLimit,
+      Throw[unchanged["ProspectiveExpansionGuard"], tag]];
+    terms = withProtectedPropagators[expression, Function[body,
+      With[{expanded = Expand[body]}, If[Head[expanded] === Plus,
+        List @@ expanded, {expanded}]]]];
+    If[Length[terms] < 2 || Length[terms] > termLimit,
+      Throw[unchanged["TermCountGuard"], tag]];
+    factors[body_] := If[Head[body] === Times, List @@ body, {body}];
+    chainsOf[body_] := Flatten[Map[Which[Head[#] === SpinorChain, {#},
+        MatchQ[#, Power[_SpinorChain, _Integer?Positive]],
+          ConstantArray[First[#], Last[#]], True, {}] &, factors[body]], 1];
+    eligible[body_] := With[{nodes = chainsOf[body]}, Length[nodes] === 4 &&
+      Sort[Flatten[Cases[nodes, Spinor["Spin", "Angle" | "Square", i_Integer] :> i,
+        Infinity]]] === Sort[Join[legs, legs]] &&
+      AllTrue[nodes, AllTrue[{First[#], Last[#]},
+        MatchQ[#, Spinor["Spin", "Angle" | "Square", _Integer]] &] &]];
+    If[!AllTrue[terms, eligible],
+      Throw[unchanged["NotFourCoherentVectorSlots"], tag]];
+    rank[body_] := {expressionComplexity[body], LeafCount[body]};
+    beforeRank = rank[expression];
+    ordered = SortBy[terms, {expressionComplexity, LeafCount, ToString[#, InputForm] &}];
+    parameters = DeleteDuplicates[Cases[{ordered, externalRules}, _ModelParameter, Infinity]];
+    abstract = Thread[parameters -> Table[Unique["ordinaryIdentityParameter"],
+      Length[parameters]]];
+    source = ordered /. abstract; abstractRules = externalRules /. abstract;
+    chart = completionHESymbolicExternalChart[abstractRules];
+    If[!AssociationQ[chart] || !TrueQ[chart["ExternalMassShellsValidated"]] ||
+        !TrueQ[chart["MomentumConservationValidated"]] ||
+        Lookup[chart, "InternalOnShellConditions", None] =!= {},
+      Throw[unchanged["NoGenericExternalChart"], tag]];
+    coordinates = chart["ExternalIdentityCoordinates"]; spins = chart["SpinVariables"];
+    If[Length[coordinates] =!= 3 || Length[spins] =!= 4 || !DuplicateFreeQ[spins] ||
+        !AllTrue[spins, MatchQ[#, _Symbol] &],
+      Throw[unchanged["UnsupportedChartCoordinates"], tag]];
+    mappedScalarQ[body_] := !ListQ[body] && !AssociationQ[body] &&
+      residueFiniteQ[body] && !residueUnmappedQ[body] && FreeQ[body, _Real];
+    mappedPolynomialQ[body_] := mappedScalarQ[body] && PolynomialQ[body, spins] &&
+      AllTrue[spins, Exponent[body, #] <= 2 &];
+    basisRecords = MapThread[Function[{leg, spin}, Module[
+        {mass = Mass[leg] /. abstractRules, angleBasis, squareBasis, momentum,
+         shell, determinants, reconstruction, dirac, coherent},
+      angleBasis = Lookup[chart["AngleBasis"], leg, Missing["NoAngleBasis"]];
+      squareBasis = Lookup[chart["SquareBasis"], leg, Missing["NoSquareBasis"]];
+      momentum = Lookup[chart["Momenta"], leg, Missing["NoMomentum"]];
+      If[!AllTrue[{angleBasis, squareBasis, momentum},
+          MatrixQ[#, mappedScalarQ] && Dimensions[#] === {2, 2} &&
+            FreeQ[#, Alternatives @@ spins] &],
+        Return[<|"Leg" -> leg, "Validated" -> False|>]];
+      shell = residueExactZero[Det[momentum] - mass^2];
+      determinants = residueExactZero[{Det[angleBasis] - mass, Det[squareBasis] - mass}];
+      reconstruction = residueExactZero[angleBasis.basisEpsilon.Transpose[squareBasis] - momentum];
+      dirac = residueExactZero[{momentum.basisEpsilon.squareBasis + mass angleBasis,
+        residueAdjugate[momentum].angleBasis + mass basisEpsilon.squareBasis}];
+      coherent = residueExactZero[{chart["Angle"][leg] - angleBasis.{1, spin},
+        chart["Square"][leg] - squareBasis.{1, spin}}];
+      <|"Leg" -> leg, "Mass" -> mass, "SpinVariable" -> spin,
+        "BasisDeterminantsEqualMass" -> determinants, "ExternalShell" -> shell,
+        "MomentumReconstruction" -> reconstruction, "ExternalDiracReconstruction" -> dirac,
+        "CoherentBasisCoverage" -> coherent,
+        "Validated" -> And[shell, determinants, reconstruction, dirac, coherent]|>]], {legs, spins}];
+    If[!AllTrue[basisRecords, TrueQ[#["Validated"]] &],
+      Throw[unchanged["InvalidMassiveSpinBasis"], tag]];
+    genericPatch = Join[masses /. abstract,
+      {coordinates[[1]], coordinates[[3]], First[masses /. abstract] + coordinates[[1]],
+       coordinates[[1]]^2 - (masses /. abstract)[[2]]^2}];
+    expectedJacobian = (masses /. abstract)[[1]]^2*
+      (coordinates[[1]]^2 - (masses /. abstract)[[2]]^2)^2/
+      (coordinates[[1]]^3*((masses /. abstract)[[1]] + coordinates[[1]]));
+    invariantJacobian = Det[Outer[D, {Det[chart["Momenta"][legs[[1]]] + chart["Momenta"][legs[[2]]]],
+      Det[chart["Momenta"][legs[[1]]] + chart["Momenta"][legs[[3]]]]}, coordinates[[{1, 2}]]]];
+    If[AnyTrue[genericPatch, residueExactZero] ||
+        !residueExactZero[invariantJacobian - expectedJacobian],
+      Throw[unchanged["DegenerateExternalChartPatch"], tag]];
+    powers = Tuples[Range[0, 2], 4];
+    coefficientVector[body_] := If[!mappedPolynomialQ[body], $Failed,
+      With[{coefficients = Association[CoefficientRules[Expand[body], spins]]},
+        Lookup[coefficients, powers, 0]]];
+    assignments = Table[Thread[(Last /@ abstract) ->
+      Prime[Range[2 + shift, 1 + shift + Length[parameters]]]], {shift, {0, 2, 4}}];
+    denominators = DeleteDuplicates[Cases[source, _PropDen, Infinity]];
+    samplingStarted = AbsoluteTime[];
+    Do[
+      accepted = 0; attempts = 0;
+      While[accepted < 3 && attempts < 8,
+        attempts++;
+        sample = (chart /. parameterAssignment) /. Thread[coordinates ->
+          Prime[Range[20 + 3 attempts, 19 + 3 attempts + Length[coordinates]]]];
+        (* A singular chart is discarded, never turned into a zero row. All
+           valid coherent rows from previous charts stay in the system. *)
+        denominatorValues = Quiet[spuriousEvaluateCurve[#, sample, parameterAssignment] & /@
+          denominators, {Power::infy, Infinity::indet}];
+        If[!AllTrue[denominatorValues, mappedScalarQ[#] && NumberQ[#] && # =!= 0 &],
+          rejected++; Continue[]];
+        values = Quiet[
+          coefficientVector[spuriousEvaluateCurve[#, sample, parameterAssignment]] & /@ source,
+          {Power::infy, Infinity::indet}];
+        If[!MatrixQ[values, NumberQ[#] && FreeQ[#, _Real] &] ||
+            !residueFiniteQ[values], rejected++; Continue[]];
+        matrix = Join[matrix, Transpose[values]];
+        targets = Join[targets, Total[values]]; accepted++;
+        AppendTo[sampleWitnesses, <|"ParameterAssignment" -> parameterAssignment,
+          "Coordinates" -> (coordinates /. Thread[coordinates ->
+            Prime[Range[20 + 3 attempts, 19 + 3 attempts + Length[coordinates]]]]),
+          "OriginalDenominatorValues" -> denominatorValues,
+          "EveryOriginalDenominatorRegular" -> True|>]];
+      If[accepted < 3, Throw[Join[unchanged["InsufficientRegularCharts"],
+        <|"RejectedCharts" -> rejected, "EquationCount" -> Length[targets]|>], tag]],
+      {parameterAssignment, assignments}];
+    samplingSeconds = AbsoluteTime[] - samplingStarted;
+    solvingStarted = AbsoluteTime[];
+    rows = RowReduce[MapThread[Append, {matrix, targets}]];
+    If[AnyTrue[rows, Most[#] === ConstantArray[0, Length[ordered]] && Last[#] =!= 0 &],
+      Throw[unchanged["InconsistentIdentitySystem"], tag]];
+    solution = ConstantArray[0, Length[ordered]];
+    Do[pivot = FirstPosition[Most[row], nonzero_ /; nonzero =!= 0,
+        Missing["NoPivot"], {1}, Heads -> False];
+      If[!MissingQ[pivot], solution[[First[pivot]]] = Last[row]], {row, rows}];
+    If[!TrueQ[matrix.solution - targets === ConstantArray[0, Length[targets]]],
+      Throw[unchanged["ExactSampleResidualGuard"], tag]];
+    solvingSeconds = AbsoluteTime[] - solvingStarted;
+    candidate = Expand[solution.ordered]; candidateRank = rank[candidate];
+    If[candidate === expression || candidateRank === beforeRank ||
+        !OrderedQ[{candidateRank, beforeRank}],
+      Throw[unchanged["NoStrictRankImprovement"], tag]];
+    proofStarted = AbsoluteTime[];
+    difference = (candidate - expression) /. abstract;
+    (* The fit is only a proposal. Here all original model parameters, all
+       external momenta on their declared shells, and all coherent vector-spin
+       variables remain symbolic. No internal line is put on shell. *)
+    proofValue = spuriousEvaluateCurve[difference, chart, {}];
+    If[!mappedScalarQ[proofValue],
+      Throw[unchanged["UnsupportedGenericTypedMap"], tag]];
+    proofValue = Cancel[Together[proofValue]];
+    If[!mappedPolynomialQ[proofValue],
+      Throw[unchanged["UnsupportedGenericTypedMap"], tag]];
+    If[!TrueQ[proofValue === 0],
+      Throw[unchanged["GenericOrdinaryProofDidNotClose"], tag]];
+    <|"Status" -> "IMPROVED", "Amplitude" -> candidate, "Rank" -> candidateRank,
+      "ElapsedTime" -> N[AbsoluteTime[] - started], "TimedOut" -> False,
+      "Route" -> {<|"Operation" -> "ExactExistingRationalTermDependence",
+        "Before" -> expression, "After" -> candidate,
+        "OriginalTerms" -> ordered, "ConstantReweights" -> solution,
+        "OriginalTermCount" -> Length[ordered],
+        "RetainedTermCount" -> Count[solution, nonzero_ /; nonzero =!= 0],
+        "OriginalRank" -> beforeRank, "Rank" -> candidateRank,
+        "OriginalDenominators" -> (denominators /. (Reverse /@ abstract)),
+        "ExternalMassRules" -> externalRules, "AbstractParameterRules" -> abstract,
+        "GenericExternalChart" -> chart, "ExactGenericResidual" -> proofValue,
+        "DenseFourMassiveExternalChart" -> True, "RequiredNonzeroPatchFactors" -> genericPatch,
+        "InvariantJacobian" -> expectedJacobian, "MassiveBasisCertificates" -> basisRecords,
+        "SpinVariablesByLeg" -> AssociationThread[legs, spins],
+        "CoherentDegreeBounds" -> {2, 2, 2, 2},
+        "SymmetricSpinOneTensorInterpretation" -> True, "CovariantTypedScalar" -> covariancePassed,
+        "FullTypedMapCoverage" -> True, "NumericalSamplesProposeConstantsOnly" -> True,
+        "OriginalDenominatorRegularityWitnesses" -> sampleWitnesses,
+        "EquationCount" -> Length[targets], "RejectedCharts" -> rejected,
+        "StageTimings" -> <|"Sampling" -> N[samplingSeconds],
+          "Elimination" -> N[solvingSeconds], "Certification" -> N[AbsoluteTime[] - proofStarted]|>,
+        "InternalOnShellConditions" -> {}, "KnownAmplitudeOrAddedTensorUsed" -> False|>},
+      "InternalOnShellConditions" -> {}|>, tag], memoryLimit,
+    unchanged["BoundedMemoryLimit"]], budget, unchanged["BoundedTimeLimit"]];
+  outcome
 ];
 
 (* This structural bound may overestimate degree. Native symbolic derivatives
