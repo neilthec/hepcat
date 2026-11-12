@@ -9010,13 +9010,102 @@ completionSparseValueState[value_, variables_List] := Module[{values, states},
     AllTrue[states, # === "Zero" &], "Zero", True, "Unknown"]
 ];
 
+(* Solved-family component cancellations are exact algebraic identities.
+   Prepare them once before dispatch and retain the original affine coordinates
+   for any failed or unresolved heldout chart. *)
+completionSolvedComponentGroups[components_List, unknowns_List, solutionRules_List,
+    free_List, seconds_: 1] := Module[
+  {unavailable, result, coordinates, forbidden, parts, scales, bodies, groups,
+   rows = {}, coefficient, active, canceled, factor, factors, exactNumericQ, scalarCoefficients},
+  unavailable[reason_] := <|"Status" -> "UNAVAILABLE", "Reason" -> reason,
+    "OriginalComponents" -> components, "OriginalUnknowns" -> unknowns,
+    "OriginalSolutionRules" -> solutionRules, "FullFreeFamily" -> free|>;
+  If[!TrueQ[seconds > 0] ||
+      !FreeQ[{components, solutionRules}, _Missing | _Failure | Indeterminate | _DirectedInfinity | $Failed | $Aborted | $TimedOut] ||
+      Length[components] =!= Length[unknowns] + 1 ||
+      !DuplicateFreeQ[unknowns] || !DuplicateFreeQ[free] ||
+      !AllTrue[solutionRules, Head[#] === Rule && MemberQ[unknowns, First[#]] &] ||
+      !DuplicateFreeQ[First /@ solutionRules] ||
+      !AllTrue[Join[unknowns, free], MatchQ[#, _Symbol] &] ||
+      !FreeQ[components, Alternatives @@ DeleteDuplicates[Join[unknowns, free]]],
+    Return[unavailable["UnsupportedComponentCoordinates"]]];
+  result = TimeConstrained[MemoryConstrained[
+    coordinates = Prepend[unknowns /. solutionRules, 1];
+    forbidden = Complement[unknowns, free];
+    If[!FreeQ[coordinates, _Missing | _Failure | Indeterminate | _DirectedInfinity | $Failed | $Aborted | $TimedOut] ||
+        !FreeQ[coordinates, Alternatives @@ forbidden] ||
+        !AllTrue[coordinates, PolynomialQ[#, free] &],
+      Return[unavailable["IncompleteSolvedFamilyMap"]]];
+    exactNumericQ[value_] := NumericQ[value] && Precision[value] === Infinity &&
+      Cases[value, symbol_Symbol /; Context[symbol] =!= "System`",
+        {0, Infinity}, Heads -> True] === {};
+    scalarCoefficients = If[free === {}, coordinates,
+      Flatten[(Last /@ CoefficientRules[#, free]) & /@ coordinates]];
+    If[!AllTrue[scalarCoefficients, exactNumericQ],
+      Return[unavailable["SolvedFamilyCoordinatesNotExactScalarPolynomials"]]];
+    factor[component_] := Module[{componentFactors, scalar, body},
+      componentFactors = If[Head[component] === Times, List @@ component, {component}];
+      scalar = Times @@ Select[componentFactors, exactNumericQ];
+      body = Times @@ Select[componentFactors, !exactNumericQ[#] &];
+      {scalar, body}];
+    parts = factor /@ components;
+    scales = First /@ parts; bodies = Last /@ parts;
+    If[!And @@ MapThread[SameQ[#1 #2, #3] &, {scales, bodies, components}],
+      Return[unavailable["LiteralFactorizationNotCertified"]]];
+    groups = GatherBy[Range[Length[components]], bodies[[#]] &];
+    Do[coefficient = Expand[Total[coordinates[[indices]] scales[[indices]]]];
+      If[!FreeQ[coefficient, _Missing | _Failure | Indeterminate | _DirectedInfinity | $Failed | $Aborted | $TimedOut],
+        Return[unavailable["NonfiniteExpandedFamilyCoefficient"]]];
+      AppendTo[rows, <|"Indices" -> indices, "ExactScales" -> scales[[indices]],
+        "Component" -> bodies[[First[indices]]], "FamilyCoefficient" -> coefficient,
+        "CanceledForEntireFamily" -> SameQ[coefficient, 0]|>], {indices, groups}];
+    active = Select[rows, !TrueQ[#["CanceledForEntireFamily"]] &];
+    canceled = Select[rows, TrueQ[#["CanceledForEntireFamily"]] &];
+    <|"Status" -> "AVAILABLE", "OriginalComponents" -> components,
+      "OriginalUnknowns" -> unknowns, "OriginalSolutionRules" -> solutionRules,
+      "FullFreeFamily" -> free, "OriginalFamilyCoordinates" -> coordinates,
+      "Groups" -> rows, "ActiveGroups" -> active, "CanceledGroups" -> canceled,
+      "ExactLiteralFactorizationCertified" -> True,
+      "CandidateOnlyCancellationUsed" -> False,
+      "OriginalFeedbackCoordinatesRetained" -> True|>,
+    134217728, $Failed], seconds, $Failed];
+  If[AssociationQ[result], result, unavailable["ComponentGroupingBudget"]]
+];
+
+completionSolvedComponentPlan[components_List, unknowns_List, solutionRules_List,
+    free_List, external_List, seconds_: 1] := Module[
+  {started = AbsoluteTime[], result, groups, active, variables, profiles},
+  result = TimeConstrained[
+    groups = completionSolvedComponentGroups[components, unknowns, solutionRules, free, seconds];
+    If[Lookup[groups, "Status", None] =!= "AVAILABLE" ||
+        !AnyTrue[Lookup[groups, "CanceledGroups", {}], !NumericQ[#["Component"]] &],
+      <|"UseGroupedValidation" -> False|>,
+      active = groups["ActiveGroups"];
+      variables = Table[Unique["solvedComponentGroup"], {Length[active]}];
+      profiles = completionComponentPoleProfiles[Prepend[Lookup[active, "Component", {}], 0],
+        external, Min[.5, seconds]];
+      <|"UseGroupedValidation" -> True,
+        "Components" -> Prepend[Lookup[active, "Component", {}], 0],
+        "Unknowns" -> variables,
+        "SolutionRules" -> Thread[variables -> Lookup[active, "FamilyCoefficient", {}]],
+        "Profiles" -> profiles,
+        "CanceledOriginalIndices" -> Flatten[Lookup[groups["CanceledGroups"], "Indices", {}]],
+        "FullFreeFamily" -> free, "ExactLiteralFactorizationCertified" -> True,
+        "OriginalComponentCount" -> Length[components],
+        "ActiveComponentCount" -> Length[active],
+        "PreparedOnceBeforeDispatch" -> True, "ElapsedTime" -> N[AbsoluteTime[] - started]|>],
+    seconds, <|"UseGroupedValidation" -> False, "Reason" -> "GroupingPlanBudget"|>];
+  result
+];
+
 completionSparseValidationSample[components_List, unknowns_List, targets_List,
     job_List, solutionRules_List, candidateRules_List, free_List, zeroFree_List,
-    seed_Integer, rules_List, seconds_, deadline_, profiles_: Automatic] := Module[
+    seed_Integer, rules_List, seconds_, deadline_, profiles_: Automatic,
+    grouped_: None, fixedChart_: Automatic] := Module[
   {channel = targets[[First[job]]], sample = Last[job], chart, calculation, variable,
    expected, difference, coefficients, candidateDifference, candidateResidue, opposite,
    candidateState, oppositeState, signs, status, familyCoefficients, oneFamilyPass,
-   pointRules, familyCoordinates, familyRows,
+   pointRules, familyCoordinates, familyRows, groupedResult, groupedDeadline,
    result, remaining, completed, laurent, tag = Unique["completionHeldOutSample"]},
   If[!TrueQ[Lookup[channel, "Complete", False]] ||
       MissingQ[Lookup[channel, "StateSum", Missing[]]],
@@ -9030,9 +9119,34 @@ completionSparseValidationSample[components_List, unknowns_List, targets_List,
     pointRules = Thread[unknowns -> ((unknowns /. solutionRules) /. candidateRules)];
     familyCoordinates = DeleteDuplicates[Join[free, zeroFree]];
     Do[
-      chart = completionCutChart[channel, sample + 4 attempt,
-        seed + 104729 attempt, rules];
+      chart = If[AssociationQ[fixedChart], fixedChart,
+        completionCutChart[channel, sample + 4 attempt, seed + 104729 attempt, rules]];
       If[FailureQ[chart], Continue[]];
+      If[AssociationQ[grouped] && TrueQ[Lookup[grouped, "UseGroupedValidation", False]],
+        groupedDeadline = AbsoluteTime[] + Min[5,
+          If[deadline === Infinity, If[seconds === Infinity, 5, seconds/4],
+            Max[0, deadline - AbsoluteTime[]]/4]];
+        groupedResult = completionSparseValidationSample[grouped["Components"],
+          grouped["Unknowns"], targets, job, grouped["SolutionRules"], candidateRules,
+          free, zeroFree, seed, rules, seconds, groupedDeadline, grouped["Profiles"], None, chart];
+        If[Lookup[groupedResult, "Status", None] === "COMPLETE" &&
+            TrueQ[Lookup[groupedResult, "FamilyPass", False]] &&
+            Lookup[groupedResult["Result"], "Status", None] === "PASS" &&
+            !KeyExistsQ[groupedResult["Result"], "PrincipalPartCertificate"],
+          groupedResult["Result"] = Join[groupedResult["Result"], <|
+            "ChartSampleIndex" -> sample + 4 attempt, "Attempt" -> attempt + 1,
+            "SolvedComponentCancellation" -> <|
+              "OriginalComponentCount" -> Length[components],
+              "ActiveComponentCount" -> grouped["ActiveComponentCount"],
+              "CanceledOriginalIndices" -> grouped["CanceledOriginalIndices"],
+              "FullFreeFamily" -> DeleteDuplicates[Join[free, zeroFree]],
+              "ExactFullFamilyCoefficientCancellation" -> True,
+              "FeedbackScope" -> "OriginalCoordinatesOnFailure"|>|>];
+          groupedResult["Equations"] = {};
+          groupedResult["Sample"] = Join[groupedResult["Sample"], <|
+            "Difference" -> 0,
+            "ConstraintMethod" -> "ExactSolvedFamilyComponentCancellation"|>];
+          Throw[groupedResult, tag]]];
       calculation = completionLinearResidue[components, unknowns, channel, targets, chart, seconds, profiles];
       If[!AssociationQ[calculation] || FailureQ[calculation], Continue[]];
       laurent = None;
@@ -9092,7 +9206,7 @@ completionSparseValidationSample[components_List, unknowns_List, targets_List,
           "Sample" -> sample, "RandomSeed" -> seed, "ParameterRules" -> rules,
           "Chart" -> chart["Chart"], "SpinVariables" -> chart["SpinVariables"],
           "Difference" -> difference|>, "FamilyPass" -> oneFamilyPass, "Diagnostics" -> {}|>, tag],
-      {attempt, 0, 5}]; False, tag], remaining, False];
+      {attempt, 0, If[AssociationQ[fixedChart], 0, 5]}]; False, tag], remaining, False];
   If[AssociationQ[completed], Return[completed]];
   <|"Status" -> "UNRESOLVED", "Diagnostics" -> {
     "A regular exact held-out cut chart could not validate all sparse correction components within TimeConstraint."}|>
@@ -9104,19 +9218,25 @@ completionSparseValidation[trial_, unknowns_List, solution_Association,
   {targets = completionTargets[normalized["Targets"]], components, rows, jobs, worker, run,
    results, valid, equations, used, diagnostics, familyPass, sampleRows, rowSigns, status,
    summary, report, feedback, started = AbsoluteTime[], deadline, settings, candidateRules, completedSamples = 0,
-   componentProfiles},
+   componentProfiles, groupedPlan},
   components = completionLinearComponents[trial, unknowns, False];
   componentProfiles = completionComponentPoleProfiles[components,
     Cases[normalized["ExternalMassRules"], HoldPattern[Mass[leg_Integer] -> _] :> leg], Min[5, seconds/10]];
   candidateRules = Thread[Lookup[solution, "FreeParameters", {}] -> 0];
   jobs = Tuples[{Range[Length[targets]], Range[samples]}];
   deadline = If[seconds === Infinity, Infinity, started + seconds];
+  groupedPlan = completionSolvedComponentPlan[components, unknowns,
+    solution["SolutionRules"], DeleteDuplicates[Join[free, zeroFree]],
+    Cases[normalized["ExternalMassRules"], HoldPattern[Mass[leg_Integer] -> _] :> leg],
+    Min[1, If[deadline === Infinity, Infinity, Max[0, deadline - AbsoluteTime[]]]]];
   settings = If[AssociationQ[$completionParallelSettings], $completionParallelSettings,
     <|"Parallelization" -> False, "MaxKernels" -> Automatic|>];
   worker = With[{c = components, u = unknowns, t = targets,
       sol = solution["SolutionRules"], cand = candidateRules, f = free, z = zeroFree,
-      se = seed, r = rules, sec = seconds, until = deadline, profiles = componentProfiles},
-    Function[job, completionSparseValidationSample[c, u, t, job, sol, cand, f, z, se, r, sec, until, profiles]]];
+      se = seed, r = rules, sec = seconds, until = deadline,
+      profiles = componentProfiles, groups = groupedPlan},
+    Function[job, completionSparseValidationSample[c, u, t, job, sol, cand,
+      f, z, se, r, sec, until, profiles, groups]]];
   run = TimeConstrained[amplitudeParallelMap[worker, jobs,
       Join[settings, <|"WarmOnly" -> completionWarmOnlyQ[jobs, unknowns, components]|>], Function[{result, index, total},
         completedSamples++;
@@ -9124,7 +9244,7 @@ completionSparseValidation[trial_, unknowns_List, solution_Association,
           "Completed" -> completedSamples, "Total" -> Length[jobs],
           "Cut" -> targets[[First[jobs[[index]]]]]["Cut"],
           "Unknowns" -> Length[free], "Elapsed" -> AbsoluteTime[] - started|>]]],
-    seconds, $TimedOut];
+    If[deadline === Infinity, Infinity, Max[0.000001, deadline - AbsoluteTime[]]], $TimedOut];
   results = If[AssociationQ[run], Lookup[run, "Results", {}], {}];
   valid = Select[results, AssociationQ[#] && Lookup[#, "Status", None] === "COMPLETE" &];
   equations = Flatten[Lookup[valid, "Equations", {}], 1];

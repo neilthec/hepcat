@@ -296,14 +296,26 @@ and refuses to overwrite a nonempty output directory. It uses the isolated
 library builder described above; the installed SPINAS checkout stays unchanged.
 This replay compares saved MadGraph rates and does not rerun MadGraph.
 
-The original diagnostic found:
+The retained diagnostic results are:
 
 | Form/arithmetic | Selected points | Mismatches at unchanged tolerance | Maximum relative difference |
 | --- | ---: | ---: | ---: |
 |AllPhysical, native ARM53|1,600|0|7.630177579219658e-12|
 |AllSpurious, native ARM53|1,600|16|4.928238669979738e-6|
+|AllPhysical, Intel53 control|1,600|0|1.705691416540108e-12|
+|AllSpurious, Intel53 control|1,600|16|5.182441343791541e-6|
 |AllPhysical, Intel64|1,600|0|1.863108212539769e-11|
 |AllSpurious, Intel64|1,600|1|1.592686254325058e-7|
+
+The new same-target 53-bit control retains all 16 failures. Moving to the
+Intel target alone therefore does not remove them. The fixture includes its
+1,600 rate pairs and compiler/type/flags metadata; `--verify-only` recomputes
+these statistics from the saved rates. `portable-command-checks.json` records
+three completed public-command tests: this full 1,600-point 53-bit control,
+a new unchanged-input 64-bit smoke on the 16 original failures, and the separate
+changed-input 16-point control below. The earlier full 1,600-point 64-bit results
+remain distinct from the new 16-point smoke; a subset is not relabeled as a
+new full-sample validation.
 
 The remaining 64-bit mismatch is point 77413. More arithmetic precision therefore
 helps substantially but does not make every unchanged rounded input agree at
