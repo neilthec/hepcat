@@ -11266,15 +11266,66 @@ completionAlternativeChannelBasis[input_, normalized_Association, rows_List,
    Keep complete signed coefficients and preserve explicit regular input. *)
 (* A conservative timeout fallback separates the exact formal regular part
    without expanding the input. Treat inverse PropDen factors as independent
-   polynomial variables; reject positive or unsupported propagator occurrences.
+   polynomial variables. Positive numerator factors additionally require an
+   unavoidable formal pole; otherwise keep their regular part unresolved.
    Keep the regular part fixed and retain the pole core as one correlated
    direction. This is a formal decomposition, not a complete Laurent analysis. *)
+
+(* A positive numerator propagator is safe in the conservative core when
+   a formal Laurent-degree enclosure proves that another propagator remains
+   in every monomial. Spinor coefficients stay unexpanded. These are formal
+   independent propagator variables, not internal on-shell substitutions. *)
+completionUnavoidableInputPole[canonical_] := Module[
+  {propagators, variables, formal, restored, tracked, zero,
+   bounds, unavoidable, walk, tag = Unique["inputPoleBounds"], visits = 0},
+  If[!residueFiniteQ[canonical], Return[Missing["NonfiniteInput"]]];
+  propagators = DeleteDuplicates[Cases[canonical, _PropDen, Infinity]];
+  If[propagators === {} || Length[propagators] > 64,
+    Return[Missing["InputPropagatorCount"]]];
+  variables = Table[Unique["formalInputPropagator"], {Length[propagators]}];
+  formal = canonical /. Thread[propagators -> variables];
+  restored = formal /. Thread[variables -> propagators];
+  If[!SameQ[restored, canonical] || !FreeQ[formal, _PropDen],
+    Return[Missing["InputPropagatorRoundtrip"]]];
+  tracked = Alternatives @@ variables; zero = ConstantArray[0, Length[variables]];
+  walk[part_] := Module[{children, position, power},
+    If[++visits > 100000, Throw[Missing["InputDegreeNodeLimit"], tag]];
+    If[FreeQ[part, tracked], Return[{zero, zero}]];
+    position = FirstPosition[variables, part, Missing["NotAVariable"], {1}];
+    If[ListQ[position], Return[With[{unit = UnitVector[Length[variables], First[position]]},
+      {unit, unit}]]];
+    Which[
+      Head[part] === Plus,
+        children = walk /@ List @@ part;
+        {Min /@ Transpose[First /@ children], Max /@ Transpose[Last /@ children]},
+      Head[part] === Times,
+        children = walk /@ List @@ part;
+        {Total[First /@ children], Total[Last /@ children]},
+      Head[part] === Power && IntegerQ[part[[2]]] && part[[2]] >= 0,
+        part[[2]] walk[First[part]],
+      Head[part] === Power && IntegerQ[part[[2]]] && part[[2]] < 0 &&
+          MemberQ[variables, First[part]],
+        power = part[[2]];
+        position = First[FirstPosition[variables, First[part]]];
+        With[{unit = power UnitVector[Length[variables], position]}, {unit, unit}],
+      True, Throw[Missing["UnsupportedInputLaurentDependence"], tag]]];
+  bounds = Catch[walk[formal], tag];
+  If[MissingQ[bounds], Return[bounds]];
+  unavoidable = Pick[propagators, (# < 0 &) /@ Last[bounds]];
+  If[unavoidable === {}, Return[Missing["NoUnavoidableFormalPole"]]];
+  <|"Method" -> "UnavoidableFormalLaurentPole", "RegularExpression" -> 0,
+    "Propagators" -> propagators, "MinimumExponentBounds" -> First[bounds],
+    "MaximumExponentBounds" -> Last[bounds], "UnavoidablePropagators" -> unavoidable,
+    "ExactPropagatorReplacementRoundtrip" -> True,
+    "SpinorCoefficientsExpanded" -> False, "Scope" -> "IndependentFormalPropagatorDegrees"|>
+];
 
 completionCorrelatedInputProposals[normalized_Association, seconds_: .5] := Module[
   {records = Lookup[normalized, "Records", Missing["NoRecords"]], external, expressions,
    regularByRecord = {}, certificates = {}, result, started = AbsoluteTime[], separate,
    original, canonical, propagators, variables, positions, formal, tracked, domain,
-   regular, restored, direction, proposals, unavailable, firstFailure = Missing["NoFailure"]},
+   regular, restored, direction, proposals, unavailable, poleCertificate,
+   firstFailure = Missing["NoFailure"]},
   unavailable[reason_] := <|"Status" -> "UNRESOLVED", "Reason" -> reason,
     "Proposals" -> {}, "Diagnostics" -> {
       "The ordinary input collector exceeded its time budget; no complete conservative whole-core fallback was available."},
@@ -11296,7 +11347,15 @@ completionCorrelatedInputProposals[normalized_Association, seconds_: .5] := Modu
     formal = canonical /. HoldPattern[Power[p_PropDen, n_Integer?Negative]] :>
       positions[p]^(-n);
     If[!FreeQ[formal, _PropDen],
-      Return[firstFailure = unavailable["PositiveOrUnmappedInputPropagator"]]];
+      poleCertificate = completionUnavoidableInputPole[canonical];
+      If[!AssociationQ[poleCertificate],
+        Return[firstFailure = unavailable["PositiveOrUnmappedInputPropagator"]]];
+      AppendTo[regularByRecord, 0];
+      AppendTo[certificates, Join[<|"InverseCount" -> Length[variables],
+        "InverseReplacementRoundtripExact" -> True, "OriginalExpression" -> original,
+        "RegularExpression" -> 0, "PoleCore" -> original,
+        "OriginalEqualsRegularPlusCore" -> True|>, poleCertificate]];
+      Return[True]];
     tracked = Alternatives @@ variables;
     domain[part_] := Which[
       variables === {} || FreeQ[part, tracked], True,
@@ -11978,8 +12037,9 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
           "OverlapComplete" -> False, "OrdinaryCollectorStatus" -> inputProposals["OrdinaryCollectorStatus"],
           "Diagnostics" -> inputProposals["OrdinaryCollectorDiagnostics"]|>]];
       If[inputProposals["Status"] =!= "AVAILABLE",
-        AppendTo[inputAttempts, <|"Mode" -> "InputCollection", "Status" -> "UNRESOLVED",
-          "Diagnostics" -> inputProposals["Diagnostics"]|>],
+        AppendTo[inputAttempts, Join[<|"Mode" -> "InputCollection", "Status" -> "UNRESOLVED",
+          "Diagnostics" -> inputProposals["Diagnostics"]|>,
+          KeyTake[inputProposals, {"Reason", "InputCollectionMethod", "CoreDecompositionComplete"}]]],
         Do[
           remainingSeconds = inputFitBudget - (AbsoluteTime[] - inputFitStart);
           If[remainingSeconds <= 0.01, Break[]];

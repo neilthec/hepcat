@@ -49,7 +49,7 @@ retains hashes for all package sources, model inputs and reference
 models, rather than relying on a branch name that can later change.
 
 - `source/HEPCAT-Base.wl`: SHA256 `21e53c34902eb67ed144bf407d68aa43ebde806608834d5fb91dffa6b338ebf6`.
-- `source/HEPCAT-Model.wl`: SHA256 `b445a58bfa35a50e7bf72f0611d5c2f7c39bea74fd377cfbda3fddc0b1a77cc1`.
+- `source/HEPCAT-Model.wl`: SHA256 `11adb7621af6845fb2a98b510fa8f91dbeeb71baa45bd90ef0445f91059c6c4b`.
 
 ## Builds and scalar precision
 
@@ -123,7 +123,7 @@ symbolic construction or a fresh independent-reference calculation.
 | Fresh notebook formula/MG checks | 100,000 points each at seven and eight positive-helicity photons, in both pole forms; three pass at unchanged relative tolerance `1e-7`, while the native eight-photon spurious form has 16 discrepancies, maximum `4.93e-6`, and no evaluation errors |
 | Larger-sample diagnostic replay | All 16 original failures recovered in a 1,600-point subset; unchanged binary64 inputs promoted to true 64-bit-significand arithmetic reduce 15 below tolerance, with one remaining at `1.59e-7`. A separate changed-input, formula-to-formula control is not a replacement MG validation |
 | Saved catalog, tables and timing data | Catalog transcription checks, all 72 precision entries, and 36 printed timing entries from 24 unique medians verified |
-| Focused completion regressions on the current runtime | 102 input-fit, 69 retained-affine and 27 serial/parallel checks passed, including exact family cancellation, original-coordinate feedback, timeout and retry guards |
+| Focused completion regressions | 117 input-fit checks pass on the numerator-propagator repair. The immediately preceding runtime passed 69 retained-affine and 27 serial/parallel checks, including exact family cancellation, original-coordinate feedback, timeout and retry guards |
 | Focused four-leg preparation regressions | 50 passed, including final-only scheduling, exact-identity safeguards, rational-proof normalization, and bounded fallback; this is not an end-to-end construction pass |
 | Fresh public SM vector integration | 19 passed, including both automatic constructors, unchanged compactness bounds and final checks at three parameter assignments |
 | Fresh public mixed-helicity six-point QED call | Scientific report COMPLETE; 121 final checks passed, including 14 physical cuts, 104 spurious checks, high energy, references and Feynman. The requested all-physical preference was not achieved |
@@ -151,6 +151,8 @@ report was saved before a private audit harness made an invalid metadata
 update and exited with code 1. That separate telemetry error is retained;
 it is not counted as an official test-runner pass. The complete fresh notebook
 run still needs to finish with the corrected harness.
+
+The fresh default QED notebook reached input 23 after passing the earlier constructions and four grouped exports. That six-point mixed-helicity call remained unresolved on the `d37cc17` runtime: its prepared numerator contained a positive propagator factor, and the conservative input fallback rejected the complete input column. The repaired fallback now uses exact formal Laurent-degree bounds to retain such a column only when a denominator pole is unavoidable. It preserves explicit regular records and rejects a numerator that could expose an unaccounted regular term. The 117 focused input-fit checks pass; the failed seed and the complete notebook still require a fresh construction replay on this snapshot.
 
 The deliberately low-precision float discrepancies are measured
 conditioning results, not failed high-precision agreement tests. One newly
