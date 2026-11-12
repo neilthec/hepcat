@@ -235,3 +235,57 @@ under `tests/results/` are local audit artifacts. This baseline applies to the
 recorded source bytes; later production changes require their own delta checks.
 Use the standard commands in the repository README and the testing tiers in
 `tests/checks/README.md` to repeat checks for a later revision.
+
+## Construction and validation bottlenecks
+
+The source changes made during this campaign retain the distinction between a
+construction source and an independent benchmark. Feynman expressions never
+supply a fitted correction. The failure-only ordinary-source retry redoes only
+reductions that actually timed out, within the original finite source-building
+deadline. Both electron/photon/two-Higgs helicities needed this retry and then
+passed the normal construction and both external comparisons. Their final
+complexity scores are both 310.
+
+Default independent Feynman preparation may time out while trying to simplify
+a diagram. The constructor now retains that partial report and can instead
+convert the complete original off-shell diagram list. Every original mass-rule
+pair must survive. Explicit preparation controls are honored, and the resulting
+benchmark still has to pass all normal amplitude comparisons. This recovered
+the W-pair/three-photon benchmark. Its conversion can dominate the total run
+although the constructive factorization stage is quick.
+
+A separate checker-budget limitation is recorded for that W-pair family. Its
+independent converted benchmark has 2,591,628 leaves, whereas its constructive
+candidates have only hundreds. The automatic checker metric currently sizes its
+clock using the candidate and channels. Two default attempts therefore retained
+Feynman UNRESOLVED rows despite passing the other native checks. The original
+failures, unchanged candidates, complete benchmarks, and controlled checks with
+larger finite limits are saved under `diagnostics/WWAAA/`. A separate successful
+candidate check is not labeled as a successful default constructor. Actual
+public constructor retries with explicit limits have their own scripts and
+output records.
+
+The electron/Z/two-Higgs process remains unresolved in factorization completion.
+Its last retained fit did generate all 600 equations for 415 unknowns; the first
+exact linear solve timed out. The coefficient field has degree four. Neither
+distinct-coefficient simplification nor conversion to one common number field
+finished the solve cheaply. A rational-parameter diagnostic also found an exact
+inconsistency in this particular final fallback space across its three test
+assignments. This does not establish that the separate physical-only proposal
+is insufficient. The relevant stored four-point electron/Z/Higgs, two-electron/
+two-Higgs and two-Z/two-Higgs amplitudes all pass independent native checks at
+an order-one, model-consistent input set. No model entry was changed. The
+scripts, matrices, certificates and qualified conclusions are in
+`diagnostics/eEZhh/`.
+
+The five-gluon attempt is separately incomplete. A bounded stage probe measured
+quick graph generation and an 83-second unreduced conversion, then a timeout
+in color projection. There are 3,960 tensor occurrences but only 45 literal
+distinct tensors. Exact deduplication with an occurrence map is a candidate
+improvement; it must preserve every original scalar coefficient and sign.
+The color implementation has not been changed. See
+`diagnostics/five-gluon-stage-timing/findings.json`.
+
+These timings are concurrent campaign logs, not a controlled performance
+benchmark. The tracked progress ledger is consolidated at batch boundaries;
+individual workers also save their own checksum-bound records immediately.

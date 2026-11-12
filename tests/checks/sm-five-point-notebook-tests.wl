@@ -60,7 +60,8 @@ sm5ntCheck["elementary and complete lower-point SM model roles are separate",
     ReadModel[FileNameJoin[{hepcatDirectory, "tests", "reference-models", "calchep"}], 1]]]]];
 sm5ntCheck["each calculation directly requests the independent Feynman model",
   Length[sm5ntConstructors] >= 4 && AllTrue[sm5ntConstructors,
-    MatchQ[#, HoldComplete[_Symbol, sm, smFactorization, {"FeynmanModel" -> smFeynman}]] &]];
+    MatchQ[#, HoldComplete[_Symbol, sm, smFactorization, {"FeynmanModel" -> smFeynman, ___Rule}]] &&
+      FreeQ[#, HoldPattern[("RandomSeed" | "Output") -> _]] &]];
 sm5ntCheck["each visible family has its own explicit physical numerical export",
   Length[sm5ntExports] === Length[sm5ntFamilyTags] &&
     AllTrue[sm5ntExports, MatchQ[#, HoldComplete[_, _Rule, _List, sm, ___]] &]];
@@ -124,6 +125,59 @@ sm5ntCheck["captured prints and the exact amplitude output are rendered",
 sm5ntCheck["successful export output is its actual directory rather than a diagnostic dump",
   !FreeQ[sm5ntReplay, Cell[BoxData[ToBoxes["synthetic-export-directory", StandardForm]], "Output", ___]] &&
     Count[sm5ntReplay, Cell[_, "Print", ___], Infinity] === 2];
+(* Explicit controls come from RequestedOptions, never resolved resource policy. *)
+sm5ntDefaultControlRecord = <|"Expression" -> 3/7, "Prints" -> {}, "Details" -> <|
+  "RequestedOptions" -> <|"TimeConstraint" -> Automatic, "CheckOptions" -> {},
+    "RandomSeed" -> 12345, "Output" -> "Details"|>,
+  "Options" -> <|"TimeConstraint" -> 3600|>|>|>;
+sm5ntCheck["automatic construction effort and internal output/seed remain omitted",
+  sm5NotebookConstructionControls[sm5ntDefaultControlRecord] === {}];
+sm5ntExplicitRecord = <|"Expression" -> 3/7, "Prints" -> {"synthetic controlled run"}, "Details" -> <|
+  "RequestedOptions" -> <|"TimeConstraint" -> 3600,
+    "CheckOptions" -> {"FeynmanTimeConstraint" -> 600, "RandomSeed" -> 12345,
+      "Output" -> "Details", "HighEnergyTimeConstraint" -> Automatic},
+    "RandomSeed" -> 12345, "Output" -> "Details"|>|>|>;
+Export[FileNameJoin[{sm5ntTemporary, sm5ntSampleID <> ".wxf"}], sm5ntExplicitRecord, "WXF"];
+sm5ntBuild[]; sm5ntExplicitReplay = sm5ntRead[sm5ntFixtureNotebook];
+sm5ntExplicitInputs = ToExpression[#, InputForm, HoldComplete] & /@
+  Cases[sm5ntExplicitReplay, Cell[text_String, "Input", ___] :> text, Infinity];
+sm5ntCheck["saved explicit construction and Feynman allowances appear in the literal input",
+  !FreeQ[sm5ntExplicitInputs, HoldPattern[ConstructAmplitude[_, sm, smFactorization,
+    "FeynmanModel" -> smFeynman, "TimeConstraint" -> 3600,
+    "CheckOptions" -> {"FeynmanTimeConstraint" -> 600}]]]];
+sm5ntCheck["diagnostic RandomSeed and Output never leak into the generated construction input",
+  FreeQ[sm5ntExplicitInputs, HoldPattern[("RandomSeed" | "Output") -> _]]];
+sm5ntCheck["explicit controls add a short replaceable provenance note",
+  !FreeQ[sm5ntExplicitReplay, Cell[_, "Text", GeneratedCell -> True, CellAutoOverwrite -> True,
+    CellTags -> "sm5-construction-controls-" <> sm5ntSampleID]]];
+Export[FileNameJoin[{sm5ntTemporary, sm5ntSampleID <> ".wxf"}], sm5ntDefaultControlRecord, "WXF"];
+sm5ntBuild[];sm5ntDefaultReplay = sm5ntRead[sm5ntFixtureNotebook];
+sm5ntCheck["ordinary default records retain simple input and no explicit-control note",
+  FreeQ[sm5ntDefaultReplay, "sm5-construction-controls-" <> sm5ntSampleID] &&
+    FreeQ[Cases[sm5ntDefaultReplay, Cell[txt_String, "Input", ___] :> txt, Infinity],
+      txt_String /; StringContainsQ[txt, "CheckOptions" | "TimeConstraint"]]];
+sm5ntCheck["checker associations retain first-rule semantics without internal options",
+  sm5NotebookConstructionControls[<|"Details" -> <|"RequestedOptions" -> <|"CheckOptions" ->
+    <|"FeynmanTimeConstraint" -> 600, "Output" -> "Details", "RandomSeed" -> 123|>|>|>|>] ===
+      {"CheckOptions" -> {"FeynmanTimeConstraint" -> 600}}];
+sm5ntCheck["duplicate checker options preserve the package's first-rule precedence",
+  sm5NotebookConstructionControls[<|"Details" -> <|"RequestedOptions" -> <|"CheckOptions" ->
+    {"FeynmanTimeConstraint" -> 600, "FeynmanTimeConstraint" -> 1200}|>|>|>] ===
+      {"CheckOptions" -> {"FeynmanTimeConstraint" -> 600}}];
+sm5ntCheck["meaningful empty-list checker values are retained rather than treated as an empty bag",
+  sm5NotebookConstructionControls[<|"Details" -> <|"RequestedOptions" -> <|"CheckOptions" ->
+    {"SpuriousPoles" -> {}, "ParameterRules" -> Automatic}|>|>|>] ===
+      {"CheckOptions" -> {"SpuriousPoles" -> {}}}];
+sm5ntCheck["retained-check allowances are not misrepresented as original constructor options",
+  sm5NotebookConstructionControls[<|"RevalidationCheckTimeConstraint" -> 600|>] === {}];
+sm5ntCheck["failure details are not misread as requested options",
+  Quiet[Check[sm5NotebookConstructionControls[<|"Details" -> Failure["Synthetic", <||>]|>], $Failed]] === {}];
+sm5ntCheck["a checker bag containing only internal modes adds no control",
+  sm5NotebookConstructionControls[<|"Details" -> <|"RequestedOptions" -> <|"CheckOptions" ->
+    {"RandomSeed" -> 123, "Output" -> "Details"}|>|>|>] === {}];
+sm5ntCheck["an all-Automatic checker bag adds no control",
+  sm5NotebookConstructionControls[<|"Details" -> <|"RequestedOptions" -> <|"CheckOptions" ->
+    {"FeynmanTimeConstraint" -> Automatic, "TimeConstraint" -> Automatic}|>|>|>] === {}];
 sm5ntRetainedCell = Cell["synthetic preserved output", "Print"];
 Export[FileNameJoin[{sm5ntTemporary, sm5ntSampleID <> ".wxf"}],
   <|"NotebookCells" -> {sm5ntRetainedCell}, "Prints" -> {"unused fallback"}, "Expression" -> 99|>, "WXF"];

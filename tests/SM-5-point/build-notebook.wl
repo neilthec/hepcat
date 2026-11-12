@@ -203,13 +203,39 @@ sm5NotebookCaptured[record_Association, kind_String] := Module[{cells, prints, o
     Join[prints, If[MissingQ[output], {}, {sm5NotebookOutput[output, "Output"]}]], record]
 ];
 sm5NotebookCaptured[_, _] := {};
-sm5NotebookCalculation[case_Association] := Module[{id, variable, code, record, cells},
+(* Reproduce only explicit public controls recorded for the construction.
+   Resolved automatic effort and diagnostic seeds/output modes are not inputs. *)
+sm5NotebookConstructionControls[record_] := Module[{details, requested, limit, checks, controls = {}},
+  details = If[AssociationQ[record], Lookup[record, "Details", <||>], <||>];
+  requested = If[AssociationQ[details], Lookup[details, "RequestedOptions", <||>], <||>];
+  If[!AssociationQ[requested], Return[{}]];
+  limit = Lookup[requested, "TimeConstraint", Automatic];
+  If[limit === Infinity || NumericQ[limit] && TrueQ[0 < limit < Infinity],
+    AppendTo[controls, "TimeConstraint" -> limit]];
+  checks = Lookup[requested, "CheckOptions", {}];
+  If[AssociationQ[checks], checks = Normal[checks]];
+  If[!ListQ[checks] || !OptionQ[checks], checks = {}];
+  (* The package's option bags use first-rule precedence. Preserve that when
+     rendering one literal value for each checker key. *)
+  checks = Normal[Association[Reverse[checks]]];
+  checks = Select[checks, StringQ[First[#]] &&
+    !MemberQ[{"RandomSeed", "Output"}, First[#]] && Last[#] =!= Automatic &];
+  If[checks =!= {}, AppendTo[controls, "CheckOptions" -> checks]];
+  controls
+];
+sm5NotebookCalculation[case_Association] := Module[{id, variable, code, record, cells, controls},
   id = case["ID"]; variable = sm5NotebookVariable[id];
+  record = sm5NotebookRecord[FileNameJoin[{sm5NotebookResultsPath, id <> ".wxf"}]];
+  controls = sm5NotebookConstructionControls[record];
   code = variable <> "Particles = " <> sm5NotebookSource[case["Particles"]] <> ";\n" <>
     variable <> "Amplitude = ConstructAmplitude[" <> variable <>
-    "Particles, sm, smFactorization,\n  \"FeynmanModel\" -> smFeynman]";
-  record = sm5NotebookRecord[FileNameJoin[{sm5NotebookResultsPath, id <> ".wxf"}]];
+    "Particles, sm, smFactorization,\n  \"FeynmanModel\" -> smFeynman" <>
+    If[controls === {}, "", ",\n  " <> StringRiffle[sm5NotebookSource /@ controls, ",\n  "]] <> "]";
   cells = sm5NotebookCaptured[record, "Construction"];
+  If[controls =!= {}, cells = Prepend[cells, Cell[
+    "This saved run used explicit construction controls, retained in the input above.",
+    "Text", GeneratedCell -> True, CellAutoOverwrite -> True,
+    CellTags -> "sm5-construction-controls-" <> id]]];
   sm5NotebookGroup[Prepend[cells, sm5NotebookInput[code, "sm5-construction-" <> id]]]
 ];
 sm5NotebookPathSource[path_String] := Module[{absolute, parts, rootParts},
