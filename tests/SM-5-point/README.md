@@ -236,6 +236,21 @@ recorded source bytes; later production changes require their own delta checks.
 Use the standard commands in the repository README and the testing tiers in
 `tests/checks/README.md` to repeat checks for a later revision.
 
+## Current recorded coverage
+
+The 12 November checkpoint contains 185 native completed records with passing
+comparisons at their recorded inputs: 183 ordinary CalcHEP/MadGraph passes and
+two separately recorded CalcHEP precision qualifications. One subsequently
+found parameter counterexample is excluded from the fully validated total,
+leaving 182 ordinary passes plus two precision qualifications. Its raw original
+passes are retained. Two other constructions remain incomplete.
+
+All nine charged-fermion-pair/three-photon families are covered: three charged
+leptons and six quarks, each with four helicity multisets and all eight labeled
+helicity assignments in its MadGraph export. Every export uses 1,000 common
+points for each requested comparison. These are the recorded parameter and
+kinematic checks, not proofs of identities at arbitrary parameters.
+
 ## Construction and validation bottlenecks
 
 The source changes made during this campaign retain the distinction between a
@@ -296,6 +311,26 @@ No final expression or external numerical comparison is claimed for this pilot.
 Its four unattempted pure charged-lepton/Higgs siblings remain pending. The
 already validated distinct-electron/muon/Higgs case has not been changed.
 Records are under `diagnostics/pure-charged-lepton-higgs/`.
+
+An additional parameter test exposed a limitation in the previously accepted
+distinct-electron/muon/Higgs expression. With the expression, channels and
+fresh Feynman benchmark unchanged, the public override `"Mm" -> 1/2000`
+(equal to the declared electron mass) gives exact failures at two Z cuts and
+in the full Feynman comparison. The original model values still pass. The
+source had genuinely passed all three recorded, distinct completion and
+Feynman parameter assignments, so this is not an ignored-option diagnosis.
+Its existing validations remain evidence at those recorded inputs; the
+expression must not be reused as a certified identity in arbitrary masses.
+
+The proposed identical-flavor assembly has exact diagram coverage and sign
+certificates in both backends: two disjoint sets of 14 diagrams with relative
+minus sign cover the 28 target diagrams. Its failed validation is already
+present in the mass-degenerate distinct-flavor source, before antisymmetrizing.
+Neither candidate was accepted or exported. Fresh target Feynman conversion
+is exactly identical to the earlier symbolic cache. Evidence and exact
+counterexamples are in `fermion-flow-reuse-20261112T195125/` beneath the
+four-fermion/Higgs diagnostic directory. Parameter-feedback completion and
+source-derived covariant-current proposals remain under investigation.
 
 The five-gluon attempt is separately incomplete. A bounded stage probe measured
 quick graph generation and an 83-second unreduced conversion, then a timeout
@@ -372,3 +407,13 @@ comparisons. The notebook must show that transport and its actual checks rather
 than attach reused output to a default `ConstructAmplitude` call. The focused
 `sm-generation-transport-tests.wl` suite checks all 36 elementary maps and five
 strict-phase four-point examples without relying on saved five-point capsules.
+
+
+The optional `supplemental-probes.json` registry binds additional parameter checks
+to the exact source amplitude, probe capsule, JSON summary and control scripts.
+The notebook preserves the original results and shows the actual extra table
+beside a literal input for repeating the check. Missing or changed evidence
+produces an unavailable note and no supplemental result. A recorded failure is
+a limitation of that saved formula at the additional inputs; the probe never
+overwrites its construction or export records. `build-notebook.wl --probes FILE`
+selects another registry for a separate notebook.

@@ -38,6 +38,10 @@ sm5ntNotebook = sm5ntRead[sm5ntPath];
 sm5ntInventory = Import[FileNameJoin[{sm5ntRoot, "tests", "SM-5-point", "inventory.json"}], "RawJSON"];
 sm5ntInputs = Cases[sm5ntNotebook, Cell[text_String, "Input", ___] :> text, Infinity];
 sm5ntParsed = ToExpression[#, InputForm, HoldComplete] & /@ sm5ntInputs;
+sm5ntOrdinaryInputs = Cases[sm5ntNotebook, Cell[text_String, "Input", opts___] /;
+  FreeQ[{opts}, HoldPattern[CellTags -> tag_String] /;
+    StringStartsQ[tag, "sm5-supplemental-probe-"]] :> text, Infinity];
+sm5ntOrdinaryParsed = ToExpression[#, InputForm, HoldComplete] & /@ sm5ntOrdinaryInputs;
 sm5ntConstructors = Flatten[Cases[#, HoldPattern[ConstructAmplitude[p_, d_, f_, opts___]] :>
   HoldComplete[p, d, f, {opts}], Infinity] & /@ sm5ntParsed];
 sm5ntExports = Flatten[Cases[#, HoldPattern[WriteSPINASProcess[args___]] :>
@@ -86,7 +90,7 @@ sm5ntCheck["the output stays below tests/results/spinas-output",
   !FreeQ[sm5ntParsed, HoldPattern[Set[spinasOutputDirectory,
     FileNameJoin[{hepcatDirectory, "tests", "results", "spinas-output", "SM-5-point"}]]]]];
 sm5ntCheck["the notebook exposes normal constructors without formatting or stage wrappers",
-  FreeQ[sm5ntParsed, _nice | _CreateDiagrams | _PrepareAmplitudes | _CheckAmplitudes] &&
+  FreeQ[sm5ntOrdinaryParsed, _nice | _CreateDiagrams | _PrepareAmplitudes | _CheckAmplitudes] &&
     !AnyTrue[sm5ntInputs, StringContainsQ[#, "// nice" | "//nice"] &]];
 sm5ntCheck["user-facing symbols are readable particle names rather than inventory hashes",
   AnyTrue[sm5ntInputs, StringContainsQ[#, "sm5hhhhhAmplitude"] &] &&
@@ -387,6 +391,153 @@ Export[sm5ntSummaryPath, <|"ID" -> "different-case", "Status" -> "TIMEOUT"|>, "R
 sm5ntBuild[];
 sm5ntCheck["a mismatched JSON identity is not attributed to a different process family",
   FreeQ[sm5ntRead[sm5ntFixtureNotebook], "sm5-family-" <> sm5ntGluonFamily["ID"]]];
+(* Supplemental parameter probes use synthetic, hash-bound captures here.
+   No real local capsule or scattering calculation is required by these tests. *)
+sm5ntProbeSource = FileNameJoin[{sm5ntTemporary, sm5ntSampleID <> ".wxf"}];
+sm5ntProbeDirectory = FileNameJoin[{sm5ntTemporary, "probes"}];
+CreateDirectory[sm5ntProbeDirectory];
+sm5ntProbeCapsule = FileNameJoin[{sm5ntProbeDirectory, "probe.wxf"}];
+sm5ntProbeSummary = FileNameJoin[{sm5ntProbeDirectory, "probe.json"}];
+sm5ntProbeScript = FileNameJoin[{sm5ntProbeDirectory, "probe.wl"}];
+sm5ntProbeConversion = FileNameJoin[{sm5ntProbeDirectory, "conversion.wl"}];
+sm5ntProbeTable = Dataset[{<|"Type" -> "Physical", "Test" -> "synthetic exact cut", "Status" -> "FAIL"|>}];
+sm5ntProbeOriginal = <|"ID" -> sm5ntSampleID, "Status" -> "COMPLETE", "Expression" -> 3/7,
+  "Prints" -> {Dataset[{<|"Status" -> "PASS", "Test" -> "original declared-input fixture"|>}]}|>;
+Export[sm5ntProbeSource, sm5ntProbeOriginal, "WXF"];
+sm5ntProbeSourceHash = sm5NotebookDisplayHash[sm5ntProbeSource];
+sm5ntProbeRecord = <|"SourceCaseID" -> sm5ntSampleID,
+  "SourceCapsuleSHA256" -> sm5ntProbeSourceHash, "ContextSHA256" -> "fixture-context",
+  "Status" -> "CHECKS_NOT_ALL_PASS", "StatusCounts" -> <|"FAIL" -> 1|>,
+  "SourceAmplitudeUnchanged" -> True, "NoExpressionMassSlotOrFlavorTransport" -> True,
+  "ParameterRules" -> {"fixtureMass" -> 1/2000}, "RandomSeed" -> 101,
+  "Report" -> <|"Checks" -> {<|"Type" -> "Physical", "Status" -> "FAIL"|>},
+    "Table" -> sm5ntProbeTable|>|>;
+Export[sm5ntProbeCapsule, sm5ntProbeRecord, "WXF"];
+Export[sm5ntProbeSummary, KeyDrop[sm5ntProbeRecord, {"Report", "ParameterRules"}], "RawJSON"];
+Export[sm5ntProbeScript, "(* synthetic captured public checker *)", "Text"];
+Export[sm5ntProbeConversion, "(* synthetic captured independent conversion *)", "Text"];
+sm5ntProbeEntry = <|"ID" -> "fixture-parameter-check", "CaseID" -> sm5ntSampleID,
+  "Kind" -> "ParameterCheck", "Title" -> "Additional fixture parameter check",
+  "Note" -> "The original fixture result is retained; this supplementary input fails.",
+  "InputTemplate" -> "$CASEProbe = CheckAmplitudes[$CASEAmplitude, {}, smFactorization, " <>
+    "\"ParameterRules\" -> $PARAMETER_RULES, \"RandomSeed\" -> $RANDOM_SEED, " <>
+    "\"TimeConstraint\" -> $CHECK_SECONDS, \"Output\" -> \"Details\"];\n$CASEProbe[\"Table\"]",
+  "SourceCapsuleSHA256" -> sm5ntProbeSourceHash, "ProbeContextSHA256" -> "fixture-context",
+  "Status" -> "CHECKS_NOT_ALL_PASS", "StatusCounts" -> <|"FAIL" -> 1|>, "CheckTimeConstraint" -> 90,
+  "Files" -> AssociationThread[{"Capsule", "Summary", "Script", "ConversionScript"},
+    (<|"Path" -> FileNameJoin[{"probes", FileNameTake[#]}], "SHA256" -> sm5NotebookDisplayHash[#]|> & /@
+      {sm5ntProbeCapsule, sm5ntProbeSummary, sm5ntProbeScript, sm5ntProbeConversion})]|>;
+sm5ntProbeVerified = sm5NotebookVerifiedProbe[sm5ntProbeEntry, sm5ntSampleID];
+sm5ntCheck["supplemental fixture admission retains the actual failed checker table",
+  AssociationQ[sm5ntProbeVerified] && sm5ntProbeVerified["Table"] === sm5ntProbeTable];
+sm5ntProbeCells = Block[{sm5NotebookProbes = {sm5ntProbeEntry},
+    sm5NotebookCasesByID = AssociationThread[Lookup[sm5ntSampleCases, "ID"], sm5ntSampleCases]},
+  sm5NotebookSupplementalProbeCells[First[sm5ntSampleCases]]];
+sm5ntProbeInput = First[Cases[sm5ntProbeCells, Cell[text_String, "Input", ___] :> text, Infinity]];
+sm5ntProbeParsed = ToExpression[sm5ntProbeInput, InputForm, HoldComplete];
+sm5ntCheck["supplemental literal input uses the same case variable and actual public parameters",
+  StringContainsQ[sm5ntProbeInput, "sm5" <> sm5NotebookProcessName[First[sm5ntSampleCases]["Particles"]] <> "Amplitude"] &&
+  !StringContainsQ[sm5ntProbeInput, "$CASE" | "$PARAMETER_RULES" | "$RANDOM_SEED" | "$CHECK_SECONDS"] &&
+  !FreeQ[sm5ntProbeParsed, HoldPattern["ParameterRules" -> {"fixtureMass" -> 1/2000}]] &&
+  !FreeQ[sm5ntProbeParsed, HoldPattern["RandomSeed" -> 101]] &&
+  !FreeQ[sm5ntProbeParsed, HoldPattern["TimeConstraint" -> 90]]];
+sm5ntCheck["rendering a supplemental input does not run the checker or mutate its source",
+  Import[sm5ntProbeSource, "WXF"] === sm5ntProbeOriginal &&
+    !FreeQ[sm5ntProbeCells, "synthetic exact cut"] &&
+    Count[sm5ntProbeCells, Cell[_, "Output", ___], Infinity] === 1];
+sm5ntCheck["supplemental evidence for a different source identity is rejected",
+  sm5NotebookVerifiedProbe[Join[sm5ntProbeEntry, <|"CaseID" -> "different-case"|>], sm5ntSampleID] === $Failed];
+sm5ntCheck["a changed source capsule rejects the supplemental capture",
+  sm5NotebookVerifiedProbe[Join[sm5ntProbeEntry, <|"SourceCapsuleSHA256" -> "wrong"|>], sm5ntSampleID] === $Failed];
+sm5ntCheck["a forged raw status count cannot supply a supplemental table",
+  sm5NotebookVerifiedProbe[Join[sm5ntProbeEntry, <|"StatusCounts" -> <|"PASS" -> 1|>|>], sm5ntSampleID] === $Failed];
+sm5ntProbeBadFile = Join[sm5ntProbeEntry, <|"Files" -> Join[sm5ntProbeEntry["Files"],
+  <|"Script" -> <|"Path" -> "../outside.wl", "SHA256" -> "wrong"|>|>]|>];
+sm5ntCheck["supplemental artifact paths cannot escape the result directory",
+  sm5NotebookVerifiedProbe[sm5ntProbeBadFile, sm5ntSampleID] === $Failed &&
+  sm5NotebookProbeFile["/tmp/absolute.wxf"] === $Failed];
+Export[sm5ntProbeScript, "(* modified fixture checker *)", "Text"];
+sm5ntUnavailable = Block[{sm5NotebookProbes = {sm5ntProbeEntry}},
+  sm5NotebookSupplementalProbeCells[First[sm5ntSampleCases]]];
+sm5ntCheck["a changed supporting script produces only an unavailable note",
+  Length[sm5ntUnavailable] === 1 && FreeQ[sm5ntUnavailable, _Dataset | Cell[_, "Input", ___]] &&
+    !FreeQ[sm5ntUnavailable, text_String /; StringContainsQ[text, "unavailable"]]];
+Export[sm5ntProbeScript, "(* synthetic captured public checker *)", "Text"];
+DeleteFile[sm5ntProbeCapsule];
+sm5ntCheck["a missing raw probe capsule never displays its formerly passing or failing table",
+  sm5NotebookVerifiedProbe[sm5ntProbeEntry, sm5ntSampleID] === $Failed];
+Export[sm5ntProbeCapsule, sm5ntProbeRecord, "WXF"];
+sm5ntCheck["an unrelated case gains no supplemental cells",
+  Block[{sm5NotebookProbes = {sm5ntProbeEntry}},
+    sm5NotebookSupplementalProbeCells[<|"ID" -> "unrelated"|>]] === {}];
+sm5ntProbeRegistryPath = FileNameJoin[{sm5ntTemporary, "supplemental-probes.json"}];
+Export[sm5ntProbeRegistryPath, <|"SchemaVersion" -> 1, "Probes" -> {sm5ntProbeEntry}|>, "RawJSON"];
+Export[sm5ntFixtureInventory, <|"Cases" -> sm5ntSampleCases, "Families" -> {sm5ntSampleFamily}|>, "RawJSON"];
+Block[{$ScriptCommandLine = {sm5ntBuilder, "--inventory", sm5ntFixtureInventory,
+    "--results", sm5ntTemporary, "--output", sm5ntFixtureNotebook, "--probes", sm5ntProbeRegistryPath}},
+  Get[sm5ntBuilder]];
+sm5ntProbeNotebook = sm5ntRead[sm5ntFixtureNotebook];
+sm5ntCheck["supplemental failed output follows and preserves the original passed construction table",
+  !FreeQ[sm5ntProbeNotebook, "original declared-input fixture"] &&
+    !FreeQ[sm5ntProbeNotebook, "sm5-supplemental-probe-fixture-parameter-check"] &&
+    !FreeQ[sm5ntProbeNotebook, "synthetic exact cut"] &&
+    Count[sm5ntProbeNotebook, Cell[_, "Print", ___], Infinity] >= 1 &&
+    Count[sm5ntProbeNotebook, Cell[_, "Output", ___], Infinity] >= 2];
+sm5ntCheck["supplemental rendering does not add a constructor or numerical export",
+  Length[Cases[ToExpression[#, InputForm, HoldComplete] & /@
+    Cases[sm5ntProbeNotebook, Cell[text_String, "Input", ___] :> text, Infinity],
+      HoldPattern[ConstructAmplitude[args___]] :> HoldComplete[args], Infinity]] === 1 &&
+  Import[sm5ntProbeSource, "WXF"] === sm5ntProbeOriginal];
+
+sm5ntProbeRebind[entry_, key_, path_] := Join[entry, <|"Files" -> Join[entry["Files"],
+  <|key -> Join[entry["Files"][key], <|"SHA256" -> sm5NotebookDisplayHash[path]|>]|>]|>];
+sm5ntBadSummary = Join[KeyDrop[sm5ntProbeRecord, {"Report", "ParameterRules"}],
+  <|"ContextSHA256" -> "different-context"|>];
+Export[sm5ntProbeSummary, sm5ntBadSummary, "RawJSON"];
+sm5ntCheck["a rebound summary with a different context cannot supply probe evidence",
+  sm5NotebookVerifiedProbe[sm5ntProbeRebind[sm5ntProbeEntry, "Summary", sm5ntProbeSummary],
+    sm5ntSampleID] === $Failed];
+Export[sm5ntProbeSummary, KeyDrop[sm5ntProbeRecord, {"Report", "ParameterRules"}], "RawJSON"];
+sm5ntBadTableRecord = Join[sm5ntProbeRecord, <|"Report" -> <|
+  "Checks" -> sm5ntProbeRecord["Report"]["Checks"],
+  "Table" -> Dataset[{<|"Type" -> "Physical", "Status" -> "PASS"|>}]|>|>];
+Export[sm5ntProbeCapsule, sm5ntBadTableRecord, "WXF"];
+sm5ntCheck["a rebound table with different statuses from the actual checks is rejected",
+  sm5NotebookVerifiedProbe[sm5ntProbeRebind[sm5ntProbeEntry, "Capsule", sm5ntProbeCapsule],
+    sm5ntSampleID] === $Failed];
+Export[sm5ntProbeCapsule, Join[sm5ntProbeRecord,
+  <|"NoExpressionMassSlotOrFlavorTransport" -> False|>], "WXF"];
+sm5ntCheck["a parameter probe cannot silently transport its captured source expression",
+  sm5NotebookVerifiedProbe[sm5ntProbeRebind[sm5ntProbeEntry, "Capsule", sm5ntProbeCapsule],
+    sm5ntSampleID] === $Failed];
+Export[sm5ntProbeCapsule, sm5ntProbeRecord, "WXF"];
+Export[sm5ntProbeSummary, Join[KeyDrop[sm5ntProbeRecord, {"Report", "ParameterRules"}],
+  <|"SourceAmplitudeUnchanged" -> False|>], "RawJSON"];
+sm5ntCheck["the summary must independently declare the unchanged source too",
+  sm5NotebookVerifiedProbe[sm5ntProbeRebind[sm5ntProbeEntry, "Summary", sm5ntProbeSummary],
+    sm5ntSampleID] === $Failed];
+Export[sm5ntProbeSummary, KeyDrop[sm5ntProbeRecord, {"Report", "ParameterRules"}], "RawJSON"];
+sm5ntFamilyScopeNote = Block[{sm5NotebookProbes = {sm5ntProbeEntry}},
+  sm5NotebookSupplementalFamilyNote[sm5ntSampleFamily]];
+sm5ntCheck["family export scope preserves prior comparisons while stating the extra failure",
+  !FreeQ[sm5ntFamilyScopeNote, text_String /; StringContainsQ[text, "CalcHEP and MadGraph"] &&
+    StringContainsQ[text, "recorded inputs"] && StringContainsQ[text, "not validated for mass changes"]]];
+sm5ntProgressCounts = <|"Constructed" -> 185, "RecordedInputPassCases" -> 185,
+  "FullyValidatedCases" -> 182, "PrecisionQualifiedCases" -> 2,
+  "ValidatedIncludingPrecisionQualifiedCases" -> 184, "SupplementalParameterProbeFailedCases" -> 1|>;
+sm5ntProgressCells = sm5NotebookProgressCells[sm5ntProgressCounts];
+sm5ntCheck["recorded input successes and the current validated total are distinguished",
+  !FreeQ[sm5ntProgressCells, text_String /; StringContainsQ[text, "Recorded constructions: 185"] &&
+    StringContainsQ[text, "current validated total is 184"] &&
+    StringContainsQ[text, "1 saved amplitude"] && StringContainsQ[text, "excluded"]]];
+sm5ntCheck["an old or internally inconsistent progress file cannot claim a new validation total",
+  sm5NotebookProgressCells[KeyDrop[sm5ntProgressCounts, "RecordedInputPassCases"]] === {} &&
+  sm5NotebookProgressCells[Join[sm5ntProgressCounts,
+    <|"ValidatedIncludingPrecisionQualifiedCases" -> 185|>]] === {}];
+sm5ntCheck["a zero-failure progress summary adds no parameter-failure claim",
+  FreeQ[sm5NotebookProgressCells[Join[sm5ntProgressCounts,
+      <|"SupplementalParameterProbeFailedCases" -> 0|>]],
+    text_String /; StringContainsQ[text, "parameter probe failed"]]];
 DeleteDirectory[sm5ntTemporary, DeleteContents -> True];
 Print["SM FIVE-POINT NOTEBOOK CHECKS: ", sm5ntChecks, "; FAILURES: ", Length[sm5ntFailures]];
 If[sm5ntFailures === {}, Print["HEPCAT_TEST_COMPLETED:sm-five-point-notebook-tests.wl"], Print[sm5ntFailures]];

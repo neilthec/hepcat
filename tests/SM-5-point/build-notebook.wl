@@ -1,7 +1,9 @@
 (* Rebuild the five-point worked notebook from the process inventory and actual
    captured runs. This script never evaluates a construction or validation.
    Run explicitly: WolframKernel -script tests/SM-5-point/build-notebook.wl
-   Options: --inventory FILE --results DIRECTORY --output FILE --families IDS. *)
+   Options: --inventory FILE --results DIRECTORY --output FILE --families IDS
+   --probes FILE selects the optional supplemental-check registry;
+   --progress FILE selects an optional recorded-count summary. *)
 
 (*
 HEPCAT - High Energy Physics Constructive Amplitude Tool
@@ -29,7 +31,7 @@ sm5NotebookRoot = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 sm5NotebookArguments = If[$ScriptCommandLine =!= {}, Rest[$ScriptCommandLine], {}];
 If[OddQ[Length[sm5NotebookArguments]], Print["Expected option/value pairs."]; Quit[1]];
 sm5NotebookOptions = Association[Rule @@@ Partition[sm5NotebookArguments, 2]];
-If[Complement[Keys[sm5NotebookOptions], {"--inventory", "--results", "--output", "--families"}] =!= {},
+If[Complement[Keys[sm5NotebookOptions], {"--inventory", "--results", "--output", "--families", "--probes", "--progress"}] =!= {},
   Print["Unknown notebook option."]; Quit[1]];
 sm5NotebookInventoryPath = ExpandFileName[Lookup[sm5NotebookOptions, "--inventory",
   FileNameJoin[{sm5NotebookRoot, "tests", "SM-5-point", "inventory.json"}]]];
@@ -40,6 +42,20 @@ sm5NotebookOutputPath = ExpandFileName[Lookup[sm5NotebookOptions, "--output",
 If[!FileExistsQ[sm5NotebookInventoryPath],
   Print["Generate the SM five-point inventory first: ", sm5NotebookInventoryPath]; Quit[1]];
 Get[FileNameJoin[{sm5NotebookRoot, "source", "HEPCAT.wl"}]];
+sm5NotebookProgressPath = Lookup[sm5NotebookOptions, "--progress",
+  If[sm5NotebookResultsPath === FileNameJoin[{sm5NotebookRoot, "tests", "results", "SM-5-point"}] &&
+      sm5NotebookInventoryPath === FileNameJoin[{sm5NotebookRoot, "tests", "SM-5-point", "inventory.json"}],
+    FileNameJoin[{sm5NotebookRoot, "tests", "SM-5-point", "progress.json"}], None]];
+sm5NotebookProgress = If[StringQ[sm5NotebookProgressPath] && FileExistsQ[sm5NotebookProgressPath],
+  Quiet[Check[Import[sm5NotebookProgressPath, "RawJSON"], <||>]], <||>];
+sm5NotebookProbeRegistryPath = ExpandFileName[Lookup[sm5NotebookOptions, "--probes",
+  FileNameJoin[{sm5NotebookRoot, "tests", "SM-5-point", "supplemental-probes.json"}]]];
+sm5NotebookProbeRegistry = If[FileExistsQ[sm5NotebookProbeRegistryPath],
+  Quiet[Check[Import[sm5NotebookProbeRegistryPath, "RawJSON"], <||>]], <||>];
+sm5NotebookProbes = If[AssociationQ[sm5NotebookProbeRegistry] &&
+    Lookup[sm5NotebookProbeRegistry, "SchemaVersion", None] === 1 &&
+    ListQ[Lookup[sm5NotebookProbeRegistry, "Probes", None]],
+  Select[sm5NotebookProbeRegistry["Probes"], AssociationQ], {}];
 sm5NotebookInventory = Import[sm5NotebookInventoryPath, "RawJSON"];
 sm5NotebookCases = Lookup[sm5NotebookInventory, "Cases", {}];
 sm5NotebookFamilies = Lookup[sm5NotebookInventory, "Families", {}];
@@ -284,6 +300,84 @@ sm5NotebookConstructionControls[record_] := Module[{details, requested, limit, c
   If[checks =!= {}, AppendTo[controls, "CheckOptions" -> checks]];
   controls
 ];
+(* Supplemental checks are historical evidence about the same saved formula.
+   They never change a construction result, export result, or progress count.
+   The input is rendered as text; rebuilding never evaluates that input. *)
+sm5NotebookProbeFile[relative_String] := Module[{parts},
+  parts = StringSplit[StringReplace[relative, "\\" -> "/"], "/"];
+  If[relative === "" || StringStartsQ[relative, "/" | "\\"] ||
+      StringContainsQ[relative, ":"] || MemberQ[parts, ".." | "." | ""], Return[$Failed]];
+  FileNameJoin[Prepend[parts, sm5NotebookResultsPath]]
+];
+sm5NotebookProbeFile[_] := $Failed;
+sm5NotebookVerifiedProbe[entry_Association, id_String] := Module[
+  {source, files, paths, record, summary, report, rows, table, tableRows, counts, valid},
+  If[Lookup[entry, "CaseID", None] =!= id ||
+      Lookup[entry, "Kind", None] =!= "ParameterCheck" ||
+      !StringQ[Lookup[entry, "ID", None]] ||
+      !StringMatchQ[entry["ID"], RegularExpression["[A-Za-z0-9][A-Za-z0-9_-]*"]] ||
+      !And @@ (StringQ[Lookup[entry, #, None]] & /@ {"Title", "Note", "InputTemplate", "Status"}) ||
+      !StringQ[Lookup[entry, "ProbeContextSHA256", None]] ||
+      !NumberQ[Lookup[entry, "CheckTimeConstraint", None]] ||
+      !TrueQ[entry["CheckTimeConstraint"] > 0], Return[$Failed]];
+  source = FileNameJoin[{sm5NotebookResultsPath, id <> ".wxf"}];
+  If[sm5NotebookDisplayHash[source] =!= Lookup[entry, "SourceCapsuleSHA256", None], Return[$Failed]];
+  files = Lookup[entry, "Files", <||>];
+  If[!AssociationQ[files] || !ContainsAll[Keys[files], {"Capsule", "Summary", "Script", "ConversionScript"}] ||
+      !AllTrue[Values[files], AssociationQ[#] && StringQ[Lookup[#, "Path", None]] &&
+        StringQ[Lookup[#, "SHA256", None]] &], Return[$Failed]];
+  paths = Map[sm5NotebookProbeFile[#["Path"]] &, files];
+  If[!AllTrue[Values[paths], StringQ] || !And @@ KeyValueMap[
+      sm5NotebookDisplayHash[paths[#1]] === #2["SHA256"] &, files], Return[$Failed]];
+  record = Quiet[Check[Import[paths["Capsule"], "WXF"], $Failed]];
+  summary = Quiet[Check[Import[paths["Summary"], "RawJSON"], $Failed]];
+  If[!AssociationQ[record] || !AssociationQ[summary] ||
+      Lookup[record, "SourceCaseID", None] =!= id || Lookup[summary, "SourceCaseID", None] =!= id ||
+      Lookup[record, "SourceCapsuleSHA256", None] =!= entry["SourceCapsuleSHA256"] ||
+      Lookup[summary, "SourceCapsuleSHA256", None] =!= entry["SourceCapsuleSHA256"] ||
+      Lookup[record, "Status", None] =!= entry["Status"] ||
+      Lookup[summary, "Status", None] =!= entry["Status"] ||
+      Lookup[record, "ContextSHA256", None] =!= Lookup[entry, "ProbeContextSHA256", None] ||
+      Lookup[summary, "ContextSHA256", None] =!= Lookup[entry, "ProbeContextSHA256", None] ||
+      !AllTrue[{record, summary}, TrueQ[Lookup[#, "SourceAmplitudeUnchanged", False]] &&
+        TrueQ[Lookup[#, "NoExpressionMassSlotOrFlavorTransport", False]] &] ||
+      !ListQ[Lookup[record, "ParameterRules", None]] ||
+      !AllTrue[record["ParameterRules"], MatchQ[#, _Rule] &] ||
+      !IntegerQ[Lookup[record, "RandomSeed", None]], Return[$Failed]];
+  report = Lookup[record, "Report", <||>];
+  If[!AssociationQ[report], Return[$Failed]];
+  rows = Lookup[report, "Checks", {}]; table = Lookup[report, "Table", Missing["NoTable"]];
+  If[!ListQ[rows] || rows === {} || !AllTrue[rows, AssociationQ] || !MatchQ[table, _Dataset], Return[$Failed]];
+  tableRows = Quiet[Check[Normal[table], $Failed]];
+  If[!ListQ[tableRows] || !AllTrue[tableRows, AssociationQ], Return[$Failed]];
+  counts = Counts[Lookup[rows, "Status", {}]];
+  If[!AllTrue[Lookup[{record, summary, entry}, "StatusCounts", None], AssociationQ] ||
+      !AllTrue[Lookup[{record, summary, entry}, "StatusCounts"], KeySort[#] === KeySort[counts] &] ||
+      Length[tableRows] =!= Length[rows] ||
+      KeySort[Counts[Lookup[tableRows, "Status", {}]]] =!= KeySort[counts], Return[$Failed]];
+  (* Close a changed-file race before publishing any captured table. *)
+  valid = sm5NotebookDisplayHash[source] === entry["SourceCapsuleSHA256"] &&
+    And @@ KeyValueMap[sm5NotebookDisplayHash[paths[#1]] === #2["SHA256"] &, files];
+  If[!TrueQ[valid], Return[$Failed]];
+  <|"Record" -> record, "Table" -> table|>
+];
+sm5NotebookSupplementalProbeCells[case_Association] := Flatten[Map[Function[entry,
+  Module[{verified, variable, code, tag},
+    tag = "sm5-supplemental-probe-" <> ToString[Lookup[entry, "ID", "unavailable"]];
+    verified = sm5NotebookVerifiedProbe[entry, case["ID"]];
+    If[!AssociationQ[verified], Return[{Cell[
+      "Supplemental parameter check unavailable: its saved record or checksum binding could not be verified. " <>
+        "No additional validation result is displayed.", "Text", CellTags -> tag <> "-unavailable"]}]];
+    variable = sm5NotebookVariable[case["ID"]];
+    code = StringReplace[entry["InputTemplate"], {
+      "$CASE" -> variable,
+      "$PARAMETER_RULES" -> sm5NotebookSource[verified["Record"]["ParameterRules"]],
+      "$RANDOM_SEED" -> ToString[verified["Record"]["RandomSeed"], InputForm],
+      "$CHECK_SECONDS" -> ToString[entry["CheckTimeConstraint"], InputForm]}];
+    {Cell[entry["Title"], "Subsubsection"], sm5NotebookText[entry["Note"]],
+      sm5NotebookGroup[{sm5NotebookInput[code, tag],
+        sm5NotebookOutput[verified["Table"], "Output"]}]}
+  ]], Select[sm5NotebookProbes, Lookup[#, "CaseID", None] === case["ID"] &]], 1];
 sm5NotebookCalculation[case_Association] := Module[{id, variable, code, record, cells, controls},
   id = case["ID"]; variable = sm5NotebookVariable[id];
   record = sm5NotebookRecord[FileNameJoin[{sm5NotebookResultsPath, id <> ".wxf"}]];
@@ -297,7 +391,8 @@ sm5NotebookCalculation[case_Association] := Module[{id, variable, code, record, 
     "This saved run used explicit construction controls, retained in the input above.",
     "Text", GeneratedCell -> True, CellAutoOverwrite -> True,
     CellTags -> "sm5-construction-controls-" <> id]]];
-  sm5NotebookGroup[Prepend[cells, sm5NotebookInput[code, "sm5-construction-" <> id]]]
+  sm5NotebookGroup[Join[Prepend[cells, sm5NotebookInput[code, "sm5-construction-" <> id]],
+    sm5NotebookSupplementalProbeCells[case]]]
 ];
 sm5NotebookPathSource[path_String] := Module[{absolute, parts, rootParts},
   absolute = ExpandFileName[path]; parts = FileNameSplit[absolute]; rootParts = FileNameSplit[sm5NotebookRoot];
@@ -361,6 +456,24 @@ sm5NotebookPrecisionCells[family_Association] := Module[
     sm5NotebookGroup[{sm5NotebookInput[code, "sm5-precision-replay-" <> id],
       sm5NotebookOutput[table, "Output"]}]}
 ];
+sm5NotebookSupplementalFamilyNote[family_Association] := Module[
+  {entries, verified, failed, unavailable, note},
+  entries = Select[sm5NotebookProbes, MemberQ[Lookup[family, "CaseIDs", {}], Lookup[#, "CaseID", None]] &];
+  If[entries === {}, Return[{}]];
+  verified = sm5NotebookVerifiedProbe[#, #["CaseID"]] & /@ entries;
+  failed = AnyTrue[verified, AssociationQ[#] &&
+    AnyTrue[Lookup[#["Record"]["Report"], "Checks", {}],
+      MemberQ[{"FAIL", "Opp Sign"}, Lookup[#, "Status", None]] &] &];
+  unavailable = AnyTrue[verified, !AssociationQ[#] &];
+  note = "The previous CalcHEP and MadGraph tables below retain their results at the recorded inputs. ";
+  note = note <> Which[failed,
+    "The additional parameter failure above means this saved formula and its export are not validated for mass changes. " <>
+      "Repeating the export at its original inputs does not resolve that failure.",
+    unavailable,
+    "Supplemental parameter evidence is unavailable; these original comparisons do not establish agreement after mass changes.",
+    True, "The supplemental checks above cover their stated assignments, not arbitrary mass changes."];
+  {Cell[note, "Text", CellTags -> "sm5-supplemental-export-note-" <> family["ID"]]}
+];
 sm5NotebookFamily[family_Association] := Module[
   {id, variable, exportName, cases, labels, cells, code, entries, record, physical},
   id = family["ID"]; variable = sm5NotebookVariable[id]; exportName = family["ExportName"];
@@ -376,6 +489,7 @@ sm5NotebookFamily[family_Association] := Module[
     If[Length[cases] > 1, AppendTo[cells,
       Cell[StringRiffle[case["Particles"], ", "], "Subsubsection"]]];
     AppendTo[cells, sm5NotebookCalculation[case]], {case, cases}];
+  cells = Join[cells, sm5NotebookSupplementalFamilyNote[family]];
   AppendTo[cells, sm5NotebookText["After the amplitudes above complete, run this export. " <>
     "One C++ process contains the helicity family. It builds SPINAS and compares " <>
     "the squared amplitudes with CalcHEP and MadGraph at 1000 phase-space points each. " <>
@@ -431,6 +545,30 @@ sm5NotebookSetup = sm5NotebookGroup[{
     "diagonal quark flavor mixing to match the constructive model. The massive-quark " <>
     "reference models include their Higgs couplings. No electron/photon-only restriction is applied."]
 }];
+sm5NotebookProgressCells[counts_Association] := Module[{required, text, failed, unavailable},
+  required = {"Constructed", "RecordedInputPassCases", "FullyValidatedCases", "PrecisionQualifiedCases",
+    "ValidatedIncludingPrecisionQualifiedCases", "SupplementalParameterProbeFailedCases"};
+  If[!ContainsAll[Keys[counts], required] ||
+      !AllTrue[Lookup[counts, required], IntegerQ[#] && # >= 0 &] ||
+      counts["ValidatedIncludingPrecisionQualifiedCases"] =!=
+        counts["FullyValidatedCases"] + counts["PrecisionQualifiedCases"] ||
+      counts["RecordedInputPassCases"] < counts["ValidatedIncludingPrecisionQualifiedCases"], Return[{}]];
+  text = "Recorded constructions: " <> ToString[counts["Constructed"]] <>
+    ". Tests at their recorded inputs passed for " <> ToString[counts["RecordedInputPassCases"]] <>
+    " amplitudes. The current validated total is " <>
+    ToString[counts["ValidatedIncludingPrecisionQualifiedCases"]] <> ": " <>
+    ToString[counts["FullyValidatedCases"]] <> " with ordinary comparisons and " <>
+    ToString[counts["PrecisionQualifiedCases"]] <> " with separately qualified precision replays.";
+  failed = counts["SupplementalParameterProbeFailedCases"];
+  unavailable = Lookup[counts, "SupplementalParameterProbeUnavailableCases", 0];
+  If[failed > 0, text = text <> " An additional parameter probe failed for " <>
+    sm5NotebookCount[failed, "saved amplitude", "saved amplitudes"] <>
+    ". The original results remain below, but known parameter failures are excluded from the current validated total."];
+  If[IntegerQ[unavailable] && unavailable > 0, text = text <> " Supplemental evidence is unavailable for " <>
+    sm5NotebookCount[unavailable, "saved amplitude", "saved amplitudes"] <> "."];
+  {Cell[text, "Text", CellTags -> "sm5-progress-summary"]}
+];
+sm5NotebookProgressCells[_] := {};
 sm5NotebookOverview = sm5NotebookGroup[Join[{
   Cell["Sector overview", "Section"],
   sm5NotebookText["The full inventory contains " <> ToString[Length[sm5NotebookCases]] <>
@@ -441,6 +579,7 @@ sm5NotebookOverview = sm5NotebookGroup[Join[{
   sm5NotebookText["The cells retain output only from actual captured runs. Missing output " <>
     "means the cell has not been run here. Evaluate Setup, then an amplitude cell, then its " <>
     "family export to obtain fresh construction and numerical comparison tables."]},
+  sm5NotebookProgressCells[Lookup[sm5NotebookProgress, "Counts", <||>]],
   Table[sm5NotebookText[Lookup[sm5NotebookSectorTitles, sector, sector] <> ": " <>
     sm5NotebookCount[Count[Lookup[sm5NotebookFamilies, "Sector"], sector], "export family", "export families"] <> ", " <>
     sm5NotebookCount[Count[Lookup[sm5NotebookCases, "Sector"], sector], "construction case", "construction cases"] <> "."],

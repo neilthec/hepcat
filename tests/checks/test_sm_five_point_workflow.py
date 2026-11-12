@@ -47,6 +47,7 @@ class FivePointWorkflowTests(unittest.TestCase):
                           'Sector': 'SyntheticFixtures'}],
         }
         self.write_json(self.here / 'inventory.json', self.inventory)
+        self.write_json(self.here / 'supplemental-probes.json', {'SchemaVersion': 1, 'Probes': []})
         self.configuration = self.results / 'configuration.json'
         self.write_json(self.configuration, {'ContextSHA256': self.context, 'Points': 1000})
         for key, value in {'ROOT': self.root, 'HERE': self.here,
@@ -111,6 +112,78 @@ class FivePointWorkflowTests(unittest.TestCase):
         self.assertEqual(counts['Constructed'], 2)
         self.assertEqual(counts['FullyValidatedCases'], 2)
         self.assertEqual(counts['ValidatedFamilies'], 1)
+
+    def supplemental_probe(self, status='FAIL'):
+        source = json.loads((self.results / 'case_a.json').read_text())
+        counts = {status: 1}
+        summary = {'SourceCaseID': 'case_a', 'SourceCapsuleSHA256': source['CapsuleSHA256'],
+                   'ContextSHA256': self.context,
+                   'Status': 'ALL_PASS' if status == 'PASS' else 'CHECKS_NOT_ALL_PASS',
+                   'StatusCounts': counts, 'Rows': [{'Status': status}],
+                   'SourceAmplitudeUnchanged': True,
+                   'NoExpressionMassSlotOrFlavorTransport': True}
+        entry = {'ID': 'synthetic-probe', 'CaseID': 'case_a', 'Kind': 'ParameterCheck',
+                 'SourceCapsuleSHA256': source['CapsuleSHA256'],
+                 'ProbeContextSHA256': self.context, 'Status': summary['Status'],
+                 'StatusCounts': counts, 'Files': {}}
+        for name in ('Capsule', 'Summary', 'Script', 'ConversionScript'):
+            path = self.results / ('probe-' + name)
+            path.write_text(json.dumps(summary) if name == 'Summary' else 'synthetic ' + name)
+            entry['Files'][name] = {'Path': path.name,
+                                   'SHA256': hashlib.sha256(path.read_bytes()).hexdigest()}
+        self.write_json(self.here / 'supplemental-probes.json', {'SchemaVersion': 1, 'Probes': [entry]})
+        return entry
+
+    def test_known_parameter_failure_qualifies_counts_without_rewriting_raw_pass(self):
+        self.valid_family()
+        self.supplemental_probe()
+        state = self.refresh()
+        self.assertEqual(state['Counts']['Constructed'], 2)
+        self.assertEqual(state['Counts']['RecordedInputPassCases'], 2)
+        self.assertEqual(state['Counts']['SupplementalParameterProbeFailedCases'], 1)
+        self.assertEqual(state['Families']['family_ab']['Status'], 'PASS')
+        self.assertEqual(state['Families']['family_ab']['RecordedInputStatus'], 'PASS')
+        self.assertEqual(state['Cases']['case_a']['Status'], 'COMPLETE')
+        self.assertEqual(state['Cases']['case_a']['SupplementalParameterProbes']['Status'], 'FAIL')
+        self.assert_not_fully_validated(state)
+        self.assertNotIn('SupplementalParameterProbes', json.loads((self.results / 'case_a.json').read_text()))
+
+    def test_unavailable_probe_blocks_full_validation_without_inventing_a_failure(self):
+        self.valid_family()
+        entry = self.supplemental_probe()
+        (self.results / entry['Files']['Capsule']['Path']).unlink()
+        state = self.refresh()
+        self.assertEqual(state['Counts']['SupplementalParameterProbeFailedCases'], 0)
+        self.assertEqual(state['Counts']['SupplementalParameterProbeUnavailableCases'], 1)
+        self.assert_not_fully_validated(state)
+
+    def test_bound_passing_supplement_does_not_block_a_complete_family(self):
+        self.valid_family()
+        self.supplemental_probe('PASS')
+        state = self.refresh()
+        self.assertEqual(state['Counts']['FullyValidatedCases'], 2)
+        self.assertEqual(state['Counts']['ValidatedFamilies'], 1)
+        self.assertEqual(state['Counts']['SupplementalParameterProbeFailedCases'], 0)
+
+    def test_malformed_probe_registry_cannot_write_a_new_green_ledger(self):
+        self.valid_family()
+        self.write_json(self.here / 'supplemental-probes.json', [])
+        with self.assertRaises(ValueError):
+            self.refresh()
+        self.assertFalse((self.here / 'progress.json').exists())
+
+    def test_known_parameter_failure_blocks_automatic_new_export(self):
+        self.valid_family()
+        config = {'ContextSHA256': self.context}
+        with mock.patch.object(WORKFLOW, 'context_sha256', return_value=self.context), \
+             mock.patch.object(WORKFLOW, 'context_compatibility', return_value=None):
+            self.assertEqual(WORKFLOW.export_input_admission('family_ab', config)['Status'], 'APPROVED')
+            entry = self.supplemental_probe()
+            rejected = WORKFLOW.export_input_admission('family_ab', config)
+            self.assertEqual(rejected['Status'], 'REJECTED')
+            self.assertIn('supplemental parameter', rejected['Reason'])
+            (self.results / entry['Files']['Capsule']['Path']).unlink()
+            self.assertEqual(WORKFLOW.export_input_admission('family_ab', config)['Status'], 'REJECTED')
 
     def test_family_pass_alone_does_not_imply_constructed_members(self):
         self.record('family_ab', export=True)

@@ -35,6 +35,7 @@ class ExactExporterTransitionTests(unittest.TestCase):
         self.inventory = {'Cases':[{'ID':'case_a','Particles':['h']*5}],
             'Families':[{'ID':'family_a','CaseIDs':['case_a']}]}
         self.write(self.here/'inventory.json', self.inventory)
+        self.write(self.here/'supplemental-probes.json', {'SchemaVersion':1,'Probes':[]})
         for relative in (STAGE.EXPORTER, 'source/HEPCAT.wl','models/amps2.mdl',
              'tests/reference-models/calchep/lgrng1.mdl',
              'tests/reference-models/madgraph/sm/parameters.py',

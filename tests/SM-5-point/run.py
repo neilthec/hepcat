@@ -48,6 +48,11 @@ _stage_spec = importlib.util.spec_from_file_location(
 stage_context = importlib.util.module_from_spec(_stage_spec)
 _stage_spec.loader.exec_module(stage_context)
 
+_probe_spec = importlib.util.spec_from_file_location(
+    'hepcat_sm5_supplemental_probes', Path(__file__).with_name('supplemental_probes.py'))
+supplemental_probes = importlib.util.module_from_spec(_probe_spec)
+_probe_spec.loader.exec_module(supplemental_probes)
+
 
 def context_sha256(configuration):
     return stage_context.fingerprint(stage_context.manifest(ROOT, HERE, configuration))
@@ -125,6 +130,15 @@ def export_input_admission(identifier, configuration):
     if not all(isinstance(row, dict) and row.get('Status') == 'COMPLETE'
                and row.get('Particles') == definitions[cid]['Particles'] for cid, row in cases.items()):
         return rejected
+    try:
+        entries = supplemental_probes.read_registry(HERE / 'supplemental-probes.json')
+        probes = [supplemental_probes.case_report(cid, row['CapsuleSHA256'],
+                  entries, RESULTS, current) for cid, row in cases.items()]
+        if any(probe and probe.get('Status') != 'PASS' for probe in probes):
+            return {**rejected, 'Reason':
+                    'A supplemental parameter check failed or requires a verified recheck.'}
+    except (OSError, ValueError, KeyError, TypeError):
+        return {**rejected, 'Reason': 'Supplemental parameter evidence cannot be verified.'}
     result = {'Status': 'APPROVED', 'FamilyID': identifier, 'ExporterContextSHA256': current,
               'CaseIDs': family['CaseIDs'],
               'CaseCapsulesSHA256': {cid: row['CapsuleSHA256'] for cid, row in cases.items()},
@@ -144,6 +158,15 @@ def refresh(inventory, previous=None, context_sha=None, points=1000):
         summary = checked_summary(case['ID'], '', context_sha, compatibility)
         if summary:
             cases[case['ID']] = summary
+    entries = supplemental_probes.read_registry(HERE / 'supplemental-probes.json')
+    for cid, summary in cases.items():
+        probe = supplemental_probes.case_report(cid, summary.get('CapsuleSHA256'),
+            entries, RESULTS, context_sha)
+        if probe:
+            summary['SupplementalParameterProbes'] = probe
+    def known_checks_pass(family):
+        return all(cases.get(cid, {}).get('SupplementalParameterProbes', {}).get(
+            'Status', 'PASS') == 'PASS' for cid in family['CaseIDs'])
     families = {}
     for family in inventory['Families']:
         summary = checked_summary(family['ID'], '-export', context_sha, compatibility)
@@ -156,6 +179,9 @@ def refresh(inventory, previous=None, context_sha=None, points=1000):
                     or summary.get('CaseCapsulesSHA256') != {cid: cases.get(cid, {}).get('CapsuleSHA256')
                                                             for cid in family['CaseIDs']}):
                 summary = {**summary, 'Status': 'STALE', 'Reason': 'A member or independent validation is incomplete.'}
+            if not known_checks_pass(family):
+                summary['SupplementalParameterProbeStatus'] = 'NOT_ALL_PASS'
+                summary['RecordedInputStatus'] = summary.get('Status')
             families[family['ID']] = summary
     qualified = []
     precision_path = Path(__file__).with_name('precision_evidence.py')
@@ -172,8 +198,12 @@ def refresh(inventory, previous=None, context_sha=None, points=1000):
                 if evidence:
                     summary['PrecisionQualification'] = evidence
                     qualified.append(family)
+    recorded = sum(len(f['CaseIDs']) for f in inventory['Families']
+                   if families.get(f['ID'], {}).get('Status') == 'PASS')
     fully = sum(len(f['CaseIDs']) for f in inventory['Families']
-                if families.get(f['ID'], {}).get('Status') == 'PASS')
+                if families.get(f['ID'], {}).get('Status') == 'PASS' and known_checks_pass(f))
+    recorded_qualified = sum(len(f['CaseIDs']) for f in qualified)
+    qualified = [f for f in qualified if known_checks_pass(f)]
     qualified_cases = sum(len(f['CaseIDs']) for f in qualified)
     state.update(SchemaVersion=1, UpdatedUTC=timestamp(), ContextSHA256=context_sha,
                  InventorySHA256=hashlib.sha256((HERE / 'inventory.json').read_bytes()).hexdigest(),
@@ -185,7 +215,15 @@ def refresh(inventory, previous=None, context_sha=None, points=1000):
                          'PrecisionQualifiedCases': qualified_cases,
                          'ValidatedIncludingPrecisionQualifiedCases': fully + qualified_cases,
                          'PrecisionQualifiedFamilies': len(qualified),
-                         'ValidatedFamilies': sum(f.get('Status') == 'PASS' for f in families.values()),
+                         'ValidatedFamilies': sum(families.get(f['ID'], {}).get('Status') == 'PASS'
+                                                  and known_checks_pass(f) for f in inventory['Families']),
+                         'RecordedInputPassCases': recorded + recorded_qualified,
+                         'SupplementalParameterProbeFailedCases': sum(
+                             c.get('SupplementalParameterProbes', {}).get('Status') == 'FAIL'
+                             for c in cases.values()),
+                         'SupplementalParameterProbeUnavailableCases': sum(
+                             c.get('SupplementalParameterProbes', {}).get('Status') == 'UNAVAILABLE'
+                             for c in cases.values()),
                          'FailedOrTimedOut': sum(c.get('Status') in ('FAIL', 'TIMEOUT', 'ERROR')
                                                 for c in cases.values())})
     atomic_json(PROGRESS, state)
