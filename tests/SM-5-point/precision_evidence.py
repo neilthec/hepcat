@@ -25,10 +25,14 @@ stage_context = importlib.util.module_from_spec(_stage_spec)
 _stage_spec.loader.exec_module(stage_context)
 
 
+_constructor_spec = importlib.util.spec_from_file_location(
+    'hepcat_sm5_precision_constructor_context', Path(__file__).with_name('constructor_context.py'))
+constructor_context = importlib.util.module_from_spec(_constructor_spec)
+_constructor_spec.loader.exec_module(constructor_context)
+
+
 def _admitted_context(summary, current, proof, path):
-    recorded = summary.get('ContextSHA256')
-    return recorded == current or (stage_context.admits(recorded, current, proof)
-        and stage_context.checkpoint_matches(path, summary, proof))
+    return constructor_context.admits_record(path, summary, current, proof)
 
 
 def _digest(path):
@@ -327,7 +331,7 @@ def qualification(family, export_summary, cases, context_sha, results_dir,
         if raw_context != context_sha or mixed:
             verified['ActiveExporterContextSHA256'] = context_sha
             verified['NativeCaseContexts'] = member_contexts
-            verified['ContextCompatibility'] = stage_context.public_proof(
+            verified['ContextCompatibility'] = constructor_context.public_proof(
                 context_compatibility, 'PrecisionEvidence')
         if verified_control is not None:
             verified['CurrentFailureControl'] = verified_control
@@ -347,7 +351,7 @@ def _current_context(configuration):
 
 
 def _current_compatibility(configuration, current):
-    return stage_context.verified_bridge(Path(__file__).resolve().parents[2],
+    return constructor_context.resolve(Path(__file__).resolve().parents[2],
         Path(__file__).resolve().parent, configuration, current)
 
 

@@ -1,0 +1,17 @@
+{
+  "AfterExporterSHA256": "e9a2493e0421dbb1ca89b7dbdde7e125d376f044b769af7ed823779487da0abf",
+  "AfterManifest": "tests/results/SM-5-point/compatibility/postpatch-370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a/manifest.json",
+  "AfterManifestSHA256": "43ec32f78269461d98210aa9024301cfecf219a3b44cdd2edbd946f90a23efb6",
+  "BeforeExporterSHA256": "e010562c975739cf08311201a98ae9de5db3369d5e89fef2b4b9c6c53d9d67f6",
+  "BeforeManifest": "tests/results/SM-5-point/compatibility/prepatch-43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9/manifest.json",
+  "BeforeManifestSHA256": "4198e6f89cf8a18a82d75295fdf1aa1ff5ae84ae46351d62c54c702ae1ec836d",
+  "ChangedFile": "source/internal/HEPCAT-SPINAS.wl",
+  "CheckpointSnapshot": "tests/results/SM-5-point/compatibility/prepatch-43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9/checkpoint-hashes.json",
+  "CheckpointSnapshotSHA256": "7d758d02fcef5daeb34b15e30bfae7a6c8cce196a33cf19cd0b4cfb5a2f0fd90",
+  "ExporterContextSHA256": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+  "Kind": "ExactExporterOnlyTransition",
+  "NativeContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+  "ReviewScope": "Exporter-local helicity closure only; no native callers or native algebra changed.",
+  "SchemaVersion": 1,
+  "Status": "SEALED"
+}

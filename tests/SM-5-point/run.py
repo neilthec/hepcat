@@ -58,8 +58,14 @@ def context_sha256(configuration):
     return stage_context.fingerprint(stage_context.manifest(ROOT, HERE, configuration))
 
 
+_constructor_spec = importlib.util.spec_from_file_location(
+    'hepcat_sm5_constructor_context', Path(__file__).with_name('constructor_context.py'))
+constructor_context = importlib.util.module_from_spec(_constructor_spec)
+_constructor_spec.loader.exec_module(constructor_context)
+
+
 def context_compatibility(configuration, current_context=None):
-    return stage_context.verified_bridge(ROOT, HERE, configuration,
+    return constructor_context.resolve(ROOT, HERE, configuration,
         current_context or context_sha256(configuration))
 
 
@@ -73,11 +79,10 @@ def checked_summary(identifier, suffix, context_sha, compatibility=None):
     if summary.get(identity) != identifier:
         return {**summary, 'Status': 'STALE', 'Reason': 'Checkpoint identity differs.'}
     if summary.get('ContextSHA256') != context_sha:
-        if (not stage_context.admits(summary.get('ContextSHA256'), context_sha, compatibility)
-                or not stage_context.checkpoint_matches(path, summary, compatibility)):
+        evidence = constructor_context.record_evidence(path, summary, context_sha, compatibility)
+        if evidence is None:
             return {**summary, 'Status': 'STALE', 'Reason': 'Source/model/reference context differs.'}
-        summary['ContextCompatibility'] = stage_context.public_proof(compatibility,
-            'HistoricalExportReport' if suffix else 'NativeCalculation')
+        summary['ContextCompatibility'] = evidence
         capsule = RESULTS / (identifier + suffix + '.wxf')
         if (summary.get('CapsuleSHA256') is not None
                 and (not capsule.is_file() or stage_context.digest(capsule) != summary['CapsuleSHA256'])):
@@ -144,7 +149,7 @@ def export_input_admission(identifier, configuration):
               'CaseCapsulesSHA256': {cid: row['CapsuleSHA256'] for cid, row in cases.items()},
               'NativeCaseContexts': {cid: row['ContextSHA256'] for cid, row in cases.items()}}
     if any(row['ContextSHA256'] != current for row in cases.values()):
-        result['NativeContextCompatibility'] = stage_context.public_proof(proof, 'NativeCalculation')
+        result['NativeContextCompatibility'] = constructor_context.public_proof(proof, 'HistoricalNativeValidation')
     return result
 
 

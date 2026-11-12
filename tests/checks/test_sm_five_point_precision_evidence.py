@@ -495,6 +495,50 @@ class PrecisionQualificationTests(unittest.TestCase):
                 if producer is not None:self.export_summary['ExporterContextSHA256'] = producer
                 self.assertIsNone(self.qualify(context_sha=current, context_compatibility=proof))
 
+    def constructor_compatibility_fixture(self):
+        current = 'b' * 64
+        base = EVIDENCE.constructor_context.BASE_CONTEXT
+        snapshot = {}
+        for stem, row in [(member, self.cases[member]) for member in self.family['CaseIDs']] + [
+                ('family_demo-export', self.export_summary)]:
+            path = self.results / (stem + '.json')
+            snapshot[path.name] = {'RecordedContextSHA256': self.context, 'SummaryValidJSON': True,
+                'SummarySHA256': digest(path), 'Status': row['Status'], 'CapsuleExists': True,
+                'DeclaredCapsuleMatches': True, 'CapsuleSHA256': row['CapsuleSHA256']}
+        baseline = {'Snapshot': snapshot, 'Record': {'ExistingExporterBridgeSHA256': 'old-exporter-bridge'},
+                    'ExporterBridge': {'NativeContextSHA256': self.context},
+                    'ExporterArchives': {'CheckpointSnapshot': copy.deepcopy(snapshot)}}
+        return current, {'_VerifiedCurrentContext': True, '_Baseline': baseline, '_ProofSHA256': 'proof-sha',
+            'Status': 'SEALED', 'BeforeContextSHA256': base, 'AfterContextSHA256': current,
+            'Kind': 'ExactConstructorOnlyHistoricalValidationTransition', 'AnalysisSHA256': 'analysis-sha',
+            'CodeReviewFileSHA256': 'review-sha', 'HistoricalEvidenceOnly': True,
+            'CurrentConstructorSuccessClaimed': False}
+
+    def test_constructor_history_preserves_actual_precision_report_context(self):
+        current, proof = self.constructor_compatibility_fixture()
+        verified = self.qualify(context_sha=current, context_compatibility=proof)
+        self.assertIsNotNone(verified)
+        self.assertEqual(verified['ContextSHA256'], self.context)
+        self.assertEqual(verified['ActiveExporterContextSHA256'], current)
+        self.assertFalse(verified['ContextCompatibility']['ValidationRerunPerformed'])
+        self.assertFalse(verified['ContextCompatibility']['CurrentConstructorSuccessClaimed'])
+        self.assertEqual(self.export_summary['Status'], 'FAIL')
+
+    def test_constructor_history_keeps_project_and_original_capsule_checks(self):
+        current, proof = self.constructor_compatibility_fixture()
+        for path in (self.export / 'process.cpp', self.results / 'case_a.wxf'):
+            original = path.read_bytes()
+            path.write_bytes(original + b'changed')
+            with self.subTest(path=str(path)):
+                self.assertIsNone(self.qualify(context_sha=current, context_compatibility=proof))
+            path.write_bytes(original)
+
+    def test_constructor_history_never_qualifies_a_new_old_context_summary(self):
+        current, proof = self.constructor_compatibility_fixture()
+        path = self.results / 'family_demo-export.json'
+        path.write_text(path.read_text() + ' ')
+        self.assertIsNone(self.qualify(context_sha=current, context_compatibility=proof))
+
     def test_metadata_cli_rechecks_context_without_running_physics(self):
         write(self.results / 'configuration.json', {'Points': 1000, 'ContextSHA256': self.context})
         inventory = self.root / 'inventory.json'

@@ -22229,6 +22229,9 @@ constructVectorLineForm[diagrams_List, process_List, model_List, external_List,
     "Chirality" -> angle, "ReferenceLegs" -> {opposite, ref}|>
 ];
 
+ConstructAmplitude::usage = ConstructAmplitude::usage <>
+  " With an independent FeynmanModel, supported five-leg color-singlet massive Dirac/scalar processes can first propose covariant currents matched exactly to every used elementary vertex and ordered diagram. A supported existing metric quartic is calibrated only from the complete known lower amplitude. Internal lines stay off shell, masses and couplings remain symbolic, and no benchmark or sampled coefficient fit constructs the proposal. It is accepted only after the original channels and all independent checks pass at every requested validation assignment. Default distinct-fermion inputs also receive an equal-independent-mass probe; explicit parameter and validation choices remain authoritative. Rejected or unsupported proposals retain the ordinary completion path.";
+
 ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     opts : OptionsPattern[]] := Module[
   {options = Join[Association[Options[ConstructAmplitude]], Association[Reverse[{opts}]]],
@@ -22244,7 +22247,7 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
    completed = False, resultStatus, totalTime, resourceResolution, requestedOptions,
    finalComplexity = Missing["NotValidated"],
    prepareBenchmark, benchmarkReady = False, benchmarkRecovery = False,
-   validateRepresentative, effectivePolePreference,
+   validateRepresentative, effectivePolePreference, tryCovariantSource, covariantExtraValidationSets,
    retainFinalReferences, resolveFinalReferences,
    completeEnergy, recoverReciprocalReferences, trySpuriousForms, tryCompactSpuriousResult,
    trySpuriousVectorLine, tryPhysicalVectorLine,
@@ -22481,7 +22484,7 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     benchmark = feynmanPrepared["PreparedAmplitudes"]; benchmarkReady = True; benchmark
   ];
   validateRepresentative[source_Association, origin_String, budget_,
-      requireBenchmark_: True] := Module[
+      requireBenchmark_: True, extraValidationSets_: {}] := Module[
     {pair, parameters, parameterRules, validationSets, validationReports = {}, settings,
      checked, selected = True, began, allowance, left, record, i = 1, seedBase, overrides},
     If[(TrueQ[requireBenchmark] && feynmanModel === None) ||
@@ -22511,6 +22514,10 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     validationSets = completionValidationRuleSets[factorizationModel, parameterRules,
       Lookup[constructRuleOptions[options["HighEnergyOptions"]], "ValidationParameterRules", Automatic]];
     If[!ListQ[validationSets] || validationSets === {}, Return[False]];
+    If[extraValidationSets =!= {},
+      If[!ListQ[extraValidationSets] || !AllTrue[extraValidationSets, completionParameterRulesQ],
+        Return[False]];
+      validationSets = DeleteDuplicates[Join[validationSets, extraValidationSets]]];
     If[feynmanModel =!= None, prepareBenchmark[]];
     began = AbsoluteTime[];
     allowance = Min[budget, remaining[]];
@@ -22552,6 +22559,93 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     representativeSelection = record; save["Representative selection", record];
     If[selected, checkReport = First[validationReports]["Report"]];
     selected
+  ];
+  (* A default supplemental assignment probes equal independent Dirac masses.
+     Model names are used only to resolve the same declared parameter in each
+     supplied model. Explicit parameter or validation choices remain literal. *)
+  covariantExtraValidationSets[fermions_List] := Module[
+    {masses, parameters, baseRules, overrides, resolved},
+    If[options["ParameterRules"] =!= Automatic ||
+        Lookup[constructRuleOptions[options["CheckOptions"]], "ParameterRules", Automatic] =!= Automatic ||
+        Lookup[constructRuleOptions[options["FactorizationOptions"]], "ParameterRules", Automatic] =!= Automatic ||
+        Lookup[constructRuleOptions[options["HighEnergyOptions"]], "ParameterRules", Automatic] =!= Automatic ||
+        Lookup[constructRuleOptions[options["FactorizationOptions"]], "ValidationParameterRules", Automatic] =!= Automatic ||
+        Lookup[constructRuleOptions[options["HighEnergyOptions"]], "ValidationParameterRules", Automatic] =!= Automatic,
+      Return[{}]];
+    masses = DeleteDuplicates[fermions[[All, 6]]];
+    If[Length[masses] < 2 || !AllTrue[masses, MatchQ[#, _ModelParameter] &], Return[{}]];
+    parameters = ModelParameter[factorizationModel, ModelParameterName[#]] & /@ masses;
+    If[!AllTrue[parameters, MemberQ[First /@ factorizationModel[[3]], #] &], Return[{}]];
+    baseRules = residueParameterRules[factorizationModel, Automatic];
+    If[baseRules === $Failed || !NumericQ[First[parameters] /. baseRules], Return[{}]];
+    overrides = (# -> (First[parameters] /. baseRules)) & /@ Rest[parameters];
+    resolved = residueParameterRules[factorizationModel, overrides];
+    If[resolved === $Failed, {}, {resolved}]
+  ];
+  tryCovariantSource[] := Module[
+    {rows, fermions, vectors, scalars, class, proposal, candidate, extraSets = {}, checked,
+     previousPair = finalPair, previousPrepared = lastPreparedPair,
+     previousSelection = representativeSelection, previousReport = checkReport,
+     previousBenchmark = benchmark, previousReady = benchmarkReady,
+     previousRecovery = benchmarkRecovery, certificates},
+    If[feynmanModel === None || TrueQ[$colorConstructingProjection] ||
+        !completionModelQ[diagramModel] || Length[process] =!= 5 || remaining[] <= 0.01,
+      Return[False]];
+    rows = HEPCATCovariantCurrentSources`Private`particleRow[#, diagramModel] & /@ process;
+    If[!AllTrue[rows, ListQ] || !AllTrue[rows, #[[8]] === 1 &], Return[False]];
+    fermions = Select[rows, #[[5]] === 1 &];
+    vectors = Select[rows, #[[5]] === 2 &]; scalars = Select[rows, #[[5]] === 0 &];
+    If[!AllTrue[fermions, #[[6]] =!= 0 && #[[2]] =!= #[[3]] &&
+        !MemberQ[{"L", "R"}, #[[9]]] &], Return[False]];
+    class = Which[
+      Length[fermions] === 4 && Length[scalars] === 1, "Cubic currents",
+      Length[fermions] === 2 && Length[vectors] === 1 && Length[scalars] === 2 &&
+        First[vectors][[6]] =!= 0 && SameQ @@ scalars[[All, 6]], "Calibrated metric currents",
+      True, Return[False]];
+    proposal = run["Building certified covariant source",
+      If[class === "Cubic currents",
+        HEPCATCovariantCurrentSources`Private`covariantCurrentSource[process, diagramModel,
+          "TimeConstraint" -> Min[60, Max[0.000001, remaining[]]]],
+        HEPCATCovariantContactCalibration`Private`calibratedCovariantSource[
+          process, diagramModel, factorizationModel,
+          "TimeConstraint" -> Min[60, Max[0.000001, remaining[]]]]]];
+    save["Covariant source proposal", proposal];
+    If[!AssociationQ[proposal] || Lookup[proposal, "Status", None] =!= "UNVALIDATED_CANDIDATE" ||
+        !AllTrue[{"EveryOriginalDiagramCovered", "EveryUsedOrderedVertexCertified",
+          "CompleteOffShellConversionCoverage", "RequiresCheckAmplitudes"}, TrueQ[Lookup[proposal, #, False]] &] ||
+        !AllTrue[{"NumericalCoefficientFit", "IndependentBenchmarkRead", "NativeValidationPerformed",
+          "NewIndependentContacts"}, Lookup[proposal, #, None] === False &] ||
+        Lookup[proposal, "InternalOnShellConditions", None] =!= {} ||
+        Lookup[proposal, "NumericalParameterAssignments", None] =!= {} ||
+        Lookup[proposal, "SourceModelSHA256", None] =!= HEPCATCovariantCurrentSources`Private`objectSHA[diagramModel] ||
+        Lookup[proposal, "OriginalDiagramCount", None] =!= Length[diagramData] ||
+        Lookup[proposal, "LiftedDiagramCount", None] =!= Length[diagramData] ||
+        !ListQ[Lookup[proposal, "OrderedGraphCertificates", None]] ||
+        !ListQ[Lookup[proposal, "LiftedGraphCertificates", None]] ||
+        Sort[Lookup[proposal, "OrderedGraphCertificates", {}]] =!=
+          Sort[Lookup[proposal, "LiftedGraphCertificates", None]] ||
+        !preparationPairQ[Lookup[proposal, "Amplitude", None]] ||
+        First[proposal["Amplitude"]] =!= external ||
+        Lookup[proposal, "Expression", None] =!= Last[proposal["Amplitude"]], Return[False]];
+    certificates = Lookup[proposal, "VertexCertificates", {}];
+    If[certificates === {} || !AllTrue[certificates, AssociationQ] ||
+        (class === "Calibrated metric currents" &&
+          Lookup[proposal, "LowerModelSHA256", None] =!= HEPCATCovariantCurrentSources`Private`objectSHA[factorizationModel]),
+      Return[False]];
+    If[class === "Cubic currents", extraSets = covariantExtraValidationSets[fermions]];
+    save["Covariant source validation policy", <|"SourceClass" -> class,
+      "AdditionalResolvedParameterRules" -> extraSets,
+      "BenchmarkUsedForConstruction" -> False, "OriginalTargetsRetained" -> True|>];
+    candidate = Join[proposal, <|"Status" -> "COMPLETE", "Amplitude" -> proposal["Expression"],
+      "FreeParameters" -> {}|>];
+    checked = validateRepresentative[candidate, "Certified covariant source",
+      remaining[], True, extraSets];
+    If[!TrueQ[checked],
+      finalPair = previousPair; lastPreparedPair = previousPrepared;
+      representativeSelection = previousSelection; checkReport = previousReport;
+      benchmark = previousBenchmark; benchmarkReady = previousReady; benchmarkRecovery = previousRecovery;
+      save["Representative selection", previousSelection]];
+    TrueQ[checked]
   ];
   completeEnergy[name_, overrides_: <||>, pointFirst_: Automatic] := run[name,
     Block[{$completionHighEnergyPointFirst = feynmanModel =!= None &&
@@ -22759,6 +22853,7 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
       Sequence @@ stageOptions[PrepareAmplitudes, options["ChannelPreparationOptions"],
         Join[<|"ReturnDetails" -> True|>, If[channels === {}, <|"ExternalParticles" -> Automatic|>, <||>]]]]];
     requirePreparation[channelPreparation];
+    If[tryCovariantSource[], completed = True; Throw[finalPair, tag]];
     If[trySpuriousForms[], completed = True; Throw[finalPair, tag]];
     factorization = run["Completing factorization", CompleteFactorization[diagramPreparation,
       channelPreparation, factorizationModel, Sequence @@ stageOptions[CompleteFactorization,

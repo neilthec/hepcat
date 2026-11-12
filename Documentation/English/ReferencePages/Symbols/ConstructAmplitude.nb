@@ -189,7 +189,27 @@ time. It does not construct a correction from the benchmark or relax any \
 comparison. Explicit FeynmanPreparationOptions are honored instead of \
 triggering this automatic recovery. Details retain the original PARTIAL \
 preparation, the recovery stage and its complete diagram counts."}],
-   "Notes"], Cell["What happens during a construction", "NotesSection"],
+   "Notes"], Cell[TextData[{"With an independent ",
+     Cell[BoxData[RowBox[{"\"FeynmanModel\""}]], "InlineFormula"], ", \
+supported five-leg color-singlet processes containing four massive Dirac \
+fermions and one scalar can try minimal covariant currents before numerical \
+completion. Every used elementary vertex, ordered graph, propagator and \
+fermion endpoint is certified symbolically from the diagram model. Supported \
+two-fermion, massive-vector and equal-scalar processes can calibrate an \
+existing metric contact from the complete lower amplitude in the \
+factorization model. Neither route reads the independent benchmark to \
+construct its candidate or fits sampled coefficients. Internal lines remain \
+off shell and all masses and couplings stay model-owned. The candidate \
+receives external-only ", ButtonBox["PrepareAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/PrepareAmplitudes"],
+     " and all mandatory ", ButtonBox["CheckAmplitudes", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/CheckAmplitudes"], " checks at the \
+requested validation assignments, including independent Feynman comparisons. \
+Default distinct-fermion inputs additionally probe equal independent masses, \
+with dependent functions recomputed normally. Explicit parameter and \
+validation choices stay authoritative. Failed or unsupported proposals are \
+retained in Details and continue through the original completion workflow."}]\
+, "Notes"], Cell["What happens during a construction", "NotesSection"],
   Cell[TextData[{"HEPCAT generates the diagrams and prepares their \
 expressions, then builds the known factorization channels. ",
      ButtonBox["CompleteFactorization", BaseStyle -> "Link",
