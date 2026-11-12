@@ -42,13 +42,13 @@ The tested kernels inherited that variable and the C++ include path. In a GUI-st
 Without that optional backend, an unavailable proof must remain unproved.
 
 The publication validation started at HEPCAT commit
-`749a4c9d6becb727cf1a46dbe053ddf9d0ac3df4`. Two general runtime repairs made
-during validation are identified by the source hashes below; the publication
-freeze commit will identify their committed version. The detailed environment
-report retains hashes for all package sources, model inputs and reference
+`749a4c9d6becb727cf1a46dbe053ddf9d0ac3df4`. Runtime repairs made during
+validation are identified by the source hashes below; the publication freeze
+commit will identify their committed version. The detailed environment report
+retains hashes for all package sources, model inputs and reference
 models, rather than relying on a branch name that can later change.
 
-- `source/HEPCAT-Base.wl`: SHA256 `94e437ee2cb818df29dd43182736f726ae39f25e3e75d5bcd462ba6ea68cd98b`.
+- `source/HEPCAT-Base.wl`: SHA256 `21e53c34902eb67ed144bf407d68aa43ebde806608834d5fb91dffa6b338ebf6`.
 - `source/HEPCAT-Model.wl`: SHA256 `d18726251bdb55aa797261e1136d2649efead5a6e78003877054dceb042bd406`.
 
 ## Builds and scalar precision
@@ -112,15 +112,15 @@ symbolic construction or a fresh independent-reference calculation.
 
 | Validation | Status at this environment snapshot |
 | --- | --- |
-| Python component regressions | 203 passed after the reader regression was added |
+| Python component regressions | 207 passed, including the reader and evaluation-exhaustion regressions |
 | Private SPINAS component and SM tests | 2 of 2 passed |
 | Fresh published-formula numerical comparisons | 5,000 all-positive and 12,000 one-negative points passed, including complex components and negative controls |
 | Fresh formula/MG comparisons with new private references | 5,200 one-negative and 6,000 two-pair all-positive points passed, with the original counts and seeds |
 | Exact supplementary symbolic comparisons | 32 one-negative and 258 two-pair tests passed; the literature comparison passed 576 shell/conservation/component checks and two negative controls |
 | Fresh precision replay | All 20 Intel-compatible groups completed at 24, 53 and 64 bits, plus the native rounding control; all 72 printed precision values reproduced at their stated rounding |
 | Saved catalog, tables and timing data | Catalog transcription checks, all 72 precision entries, and 36 printed timing entries from 24 unique medians verified |
-| Full 117-suite default and 15-suite integration campaigns | Running at this snapshot; use their final reports for completion status |
-| Actual QED and SM notebook campaigns | Running at this snapshot; archived passes are not substituted for fresh results |
+| Full 117-suite default and 15-suite integration campaigns | In progress; a complete release pass has not yet been established |
+| Actual QED and SM notebook campaigns | In progress, with unresolved construction and simplification regressions under investigation; archived passes are not substituted for fresh results |
 
 The deliberately low-precision float discrepancies are measured
 conditioning results, not failed high-precision agreement tests. One newly

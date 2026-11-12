@@ -294,13 +294,14 @@ TeX[PropDen[p_,m_,w_]]:="\\left["<>TeX[p]<>"^2-"<>TeX[m]<>"^2+i"<>TeX[m]<>TeX[w]
 TeX[Coupling[a_]]:="g_{"<>ToString[a]<>"} "
 TeX[Sqrt[a__]]:="\\sqrt{"<>TeX[a]<>"}"
 (*TeX[a_+b_]:="\\left("<>TeX[a]<>"+"<>TeX[b]<>"\\right)"*)
-TeX[Plus[a__]]:=a/.Plus->TeXPlus;
+TeX[sum_Plus]:=TeXPlus@@(List@@sum);
 TeXPlus[a__]:="\\left("<>StringJoin[Riffle[TeX[#]&/@List[a],"+"]]<>"\\right)";
-TeX[a_*b_]:=TeX[a]<>TeX[b]
+TeX[a_*b_]:=ConstructiveDiagrams`Private`texProductFactor[a]<>ConstructiveDiagrams`Private`texProductFactor[b]
 TeX[Rational[a_,b_]]:="\\frac{"<>TeX[a]<>"}{"<>TeX[b]<>"} "
 TeX[a_/b_]:="\\frac{"<>TeX[Numerator[a/b]]<>"}{"<>TeX[Denominator[a/b]]<>"} "
-TeX[a_^b_]:=TeX[a]<>"^{"<>ToString[b]<>"} "
-TeX[a_/;NumberQ[a]]:=ToString[a]
+TeX[a_^b_]:=ConstructiveDiagrams`Private`texExpressionPower[a,b]
+TeX[a_/;NumberQ[a]]:=ToString[a,TeXForm]
+TeX[symbol_Symbol]:=ToString[symbol,TeXForm]
 TeX[Mandelstahm[i_,j_]]:="s_{"<>ToString[i]<>ToString[j]<>"}"
 
 
@@ -366,13 +367,13 @@ PlainText[PropDen[p_,m_,w_]]:="("<>PlainText[p]<>"^2-"<>PlainText[m]<>"^2+i"<>Pl
 PlainText[Coupling[a_]]:="g_{"<>ToString[a]<>"} "
 PlainText[Sqrt[a__]]:="sqrt("<>PlainText[a]<>")"
 (*PlainText[a_+b_]:="("<>PlainText[a]<>"+"<>PlainText[b]<>")"*)
-PlainText[Plus[a__]]:=PlainTextPlus[a];
+PlainText[sum_Plus]:=PlainTextPlus@@(List@@sum);
 PlainTextPlus[a__]:="("<>StringJoin[Riffle[PlainText[#]&/@List[a],"+"]]<>")";
-PlainText[a_*b_]:=PlainText[a]<>"*"<>PlainText[b]
+PlainText[a_*b_]:=ConstructiveDiagrams`Private`plainTextProductFactor[a]<>"*"<>ConstructiveDiagrams`Private`plainTextProductFactor[b]
 PlainText[Rational[a_,b_]]:="("<>PlainText[a]<>")/("<>PlainText[b]<>") "
 PlainText[a_/b_]:="("<>PlainText[Numerator[a/b]]<>")/("<>PlainText[Denominator[a/b]]<>") "
 PlainText[a_^b_]:=ConstructiveDiagrams`Private`plainTextPower[a,b]
-PlainText[a_/;NumberQ[a]]:=ToString[a]
+PlainText[a_/;NumberQ[a]]:=ToString[a,InputForm]
 PlainText[Mandelstahm[i_,j_]]:="s"<>ToString[i]<>ToString[j]
 PlainText[a_Symbol]:=SymbolName[a]
 PlainText[a_String]:=a
@@ -395,6 +396,39 @@ colorTextIndex[index_, tex_] := colorTextLabel[index, tex];
 
 plainTextParticleLabels[labels_List] := If[AllTrue[labels, IntegerQ[#] && 0 <= # <= 9 &],
   StringJoin[ToString /@ labels], StringRiffle[ToString /@ labels, ","]];
+
+(* Complex is atomic in Wolfram Language, although its printed real and
+   imaginary parts form a sum. Group that sum when it is a product factor. *)
+mixedComplexNumericFactorQ[value_] := Head[value] === Complex &&
+  (!SameQ[Re[value], 0] || Head[Im[value]] === Real);
+plainTextProductFactor[value_] := With[{text = PlainText[value]},
+  If[mixedComplexNumericFactorQ[value], "(" <> text <> ")", text]];
+texProductFactor[value_] := With[{text = TeX[value]},
+  If[mixedComplexNumericFactorQ[value], "\\left(" <> text <> "\\right)", text]];
+
+(* Scalar power formatting visits its base and exponent recursively.
+   Existing sum formatters already group their output. *)
+texExpressionPower[base_, exponent_] := Module[{left = TeX[base], right = TeX[exponent]},
+  If[!StringQ[left] || !StringQ[right], Return[Failure["UnsupportedTeXPower", <||>]]];
+  If[MemberQ[{Times, Power, Rational, Complex}, Head[base]] || TrueQ[base < 0],
+    left = "\\left(" <> left <> "\\right)"];
+  left <> "^{" <> right <> "} "
+];
+spinasExpressionPower[base_, exponent_] := Module[{left = ConstructiveDiagrams`SPINAS[base], right, factor},
+  If[!StringQ[left], Return[Failure["UnsupportedSPINASPower", <||>]]];
+  If[exponent === 0, Return[spinasCppNumber[1]]];
+  If[exponent === 1, Return[left]];
+  If[IntegerQ[exponent] && 2 <= exponent <= 4,
+    factor = If[Head[base] === Times, "(" <> left <> ")", left];
+    Return[StringRiffle[ConstantArray[factor, exponent], "*"]]];
+  If[IntegerQ[exponent] && -4 <= exponent <= -1,
+    Return["(" <> spinasCppNumber[1] <> "/(" <>
+      spinasExpressionPower[base, -exponent] <> "))"]];
+  right = If[IntegerQ[exponent] && Abs[exponent] <= 2147483647,
+    ToString[exponent, InputForm], ConstructiveDiagrams`SPINAS[exponent]];
+  If[!StringQ[right], Return[Failure["UnsupportedSPINASPower", <||>]]];
+  "std::pow(cdouble(" <> left <> ")," <> right <> ")"
+];
 
 plainTextPower[base_, exponent_] := Module[{left = PlainText[base], right = PlainText[exponent]},
   If[MemberQ[{Plus, Times, Power, Rational, Complex}, Head[base]] || TrueQ[base < 0],
@@ -507,13 +541,14 @@ SPINAS[MomProd[a_,b_]]:=SPINAS[ExtractMandelstahm[MomProd[a,b]]];
 SPINAS[PropDen[p_,m_]]:="("<>SPINAS[ExtractMandelstahm[MomProd[p,p]]]<>"-"<>SPINAS[m]<>"*"<>SPINAS[m]<>")";
 SPINAS[PropDen[p_,m_,w_]]:="("<>SPINAS[ExtractMandelstahm[MomProd[p,p]]]<>"-"<>SPINAS[m]<>"*"<>SPINAS[m]<>"+cdouble(0,1)*"<>SPINAS[m]<>"*"<>SPINAS[w]<>")";
 SPINAS[Coupling[a_]]:="g"<>ToString[a];
-SPINAS[Sqrt[a__]]:="sqrt"<>ToString[a];
-SPINAS[Plus[a__]]:=a/.Plus->SPINASPlus;
+SPINAS[Sqrt[a_]]:="std::sqrt(cdouble("<>SPINAS[a]<>"))";
+SPINAS[sum_Plus]:=SPINASPlus@@(List@@sum);
 SPINASPlus[a__]:="("<>StringJoin[Riffle[SPINAS[#]&/@List[a],"+"]]<>")";SPINAS[a_*b_]:=SPINAS[a]<>"*"<>SPINAS[b];
-SPINAS[Rational[a_,b_]]:="("<>SPINAS[a]<>")/("<>SPINAS[b]<>") ";
+SPINAS[Rational[a_,b_]]:=ConstructiveDiagrams`Private`spinasCppNumber[a/b];
 SPINAS[a_/b_]:="("<>SPINAS[Numerator[a/b]]<>")/("<>SPINAS[Denominator[a/b]]<>") ";
-SPINAS[a_^b_]:=Riffle[Table[ToString[a],b],"*"]/.List[c__]:>StringJoin[c]
-SPINAS[a_/;NumberQ[a]]:=ToString[a];
+SPINAS[a_^b_]:=ConstructiveDiagrams`Private`spinasExpressionPower[a,b]
+SPINAS[a_/;NumberQ[a]]:=ConstructiveDiagrams`Private`spinasCppNumber[a];
+SPINAS[symbol_Symbol] /; Context[symbol] =!= "System`" := SymbolName[symbol];
 SPINAS[Mandelstahm[i_,j_]]:="m"<>ToString[i]<>ToString[j];
 
 
