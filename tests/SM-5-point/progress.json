@@ -1,6 +1,6 @@
 {
   "SchemaVersion": 1,
-  "UpdatedUTC": "2026-11-12T18:05:42.990893+00:00",
+  "UpdatedUTC": "2026-11-12T19:42:25.456252+00:00",
   "InventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
   "Cases": {
     "sm5_7f553e102e15": {
@@ -1862,6 +1862,28 @@
         "Stage": "NativeCalculation"
       }
     },
+    "sm5_1c93ccede818": {
+      "ID": "sm5_1c93ccede818",
+      "Particles": [
+        "e",
+        "E",
+        "e",
+        "E",
+        "h"
+      ],
+      "Status": "FAIL",
+      "Seconds": 1133.98475,
+      "Complexity": null,
+      "RandomSeed": 835652940,
+      "ContextSHA256": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+      "Rows": 1,
+      "FeynmanRows": 0,
+      "CheckStatuses": {
+        "NOT RUN": 1
+      },
+      "FailureStage": "Completing factorization",
+      "CapsuleSHA256": "751c99a672b23f8876b8066bee8ba40942f5e248d5e9689327a0271a8ac6dc28"
+    },
     "sm5_402e97e4d880": {
       "ID": "sm5_402e97e4d880",
       "Particles": [
@@ -2058,6 +2080,28 @@
       "FailureStage": null,
       "CapsuleSHA256": "efd2fbd9aaca3ccbc44233d20f3323c34def27ad34f01003ed6a9b5ff21e5e4e"
     },
+    "sm5_e2765b38e04f": {
+      "ID": "sm5_e2765b38e04f",
+      "Particles": [
+        "E",
+        "ne",
+        "m",
+        "Nm",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 66.062181,
+      "Complexity": 37,
+      "RandomSeed": 66142600,
+      "ContextSHA256": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+      "Rows": 7,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 7
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "b1e2b266a0f30a00fb1609dee2007a5788c6a93497708ff1b259c70953e7b9d4"
+    },
     "sm5_f508e8259839": {
       "ID": "sm5_f508e8259839",
       "Particles": [
@@ -2206,6 +2250,28 @@
         "NativeRevalidationPerformed": false,
         "Stage": "NativeCalculation"
       }
+    },
+    "sm5_98ec6fb7bcf5": {
+      "ID": "sm5_98ec6fb7bcf5",
+      "Particles": [
+        "e",
+        "Ne",
+        "M",
+        "nm",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 70.608416,
+      "Complexity": 66,
+      "RandomSeed": 630929540,
+      "ContextSHA256": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+      "Rows": 7,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 7
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "95a8fa23f77dfa0cc13757d8c03e3936f30d858ad2dced2522a9c8392ac18017"
     },
     "sm5_fe3668dc8328": {
       "ID": "sm5_fe3668dc8328",
@@ -2479,6 +2545,28 @@
       "FailureStage": null,
       "CapsuleSHA256": "476d230edee86a72a394773c62eb5e5fdda60e73c408c0c6ea942474c32a0e2e"
     },
+    "sm5_500f064b2156": {
+      "ID": "sm5_500f064b2156",
+      "Particles": [
+        "E",
+        "ne",
+        "l",
+        "Nl",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 59.274099,
+      "Complexity": 37,
+      "RandomSeed": 1373565199,
+      "ContextSHA256": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+      "Rows": 7,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 7
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "c60854ed6996ca72b2f6406398816be0c56edfa11bdd3ff7d0f8563d2de8f50b"
+    },
     "sm5_8605d425fbaf": {
       "ID": "sm5_8605d425fbaf",
       "Particles": [
@@ -2513,6 +2601,28 @@
         "NativeRevalidationPerformed": false,
         "Stage": "NativeCalculation"
       }
+    },
+    "sm5_2bcd06cdf246": {
+      "ID": "sm5_2bcd06cdf246",
+      "Particles": [
+        "e",
+        "Ne",
+        "L",
+        "nl",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 42.624656,
+      "Complexity": 66,
+      "RandomSeed": 1955432112,
+      "ContextSHA256": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+      "Rows": 7,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 7
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "e622df4a6495d98ecce3321d113aca13c58f7b492149c58ef9cc6e3df51dfb7c"
     },
     "sm5_ac7fd944e3ea": {
       "ID": "sm5_ac7fd944e3ea",
@@ -2956,6 +3066,50 @@
       },
       "FailureStage": null,
       "CapsuleSHA256": "98a753a837f90857b4631b4d1473692b6aad9ef779a018b26e983213be659593"
+    },
+    "sm5_c456a985c116": {
+      "ID": "sm5_c456a985c116",
+      "Particles": [
+        "m",
+        "Nm",
+        "L",
+        "nl",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 43.180889,
+      "Complexity": 66,
+      "RandomSeed": 1376216954,
+      "ContextSHA256": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+      "Rows": 7,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 7
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "f4b7ba0b5cc626c5a62b3a19c69aa1c913888974c2efeaf4fc9ba2138dabae6a"
+    },
+    "sm5_6f1408a45a7f": {
+      "ID": "sm5_6f1408a45a7f",
+      "Particles": [
+        "M",
+        "nm",
+        "l",
+        "Nl",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 37.371828,
+      "Complexity": 37,
+      "RandomSeed": 775369409,
+      "ContextSHA256": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+      "Rows": 7,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 7
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "251c9ee8f9e5dd07ac08901ab875cab5b7397bea16202220054e75fb7c51b871"
     },
     "sm5_3763aa4337b2": {
       "ID": "sm5_3763aa4337b2",
@@ -6538,6 +6692,27 @@
         "EvidenceDirectory": "tests/results/SM-5-point/diagnostics/export-summary-recovery/20261112T174330Z"
       }
     },
+    "sm5f_e2765b38e04f": {
+      "FamilyID": "sm5f_e2765b38e04f",
+      "Status": "PASS",
+      "Seconds": 20.953417,
+      "Points": 1000,
+      "ContextSHA256": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+      "ExporterContextSHA256": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+      "NativeCaseContexts": {
+        "sm5_e2765b38e04f": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a"
+      },
+      "NativeContextCompatibility": null,
+      "CaseIDs": [
+        "sm5_e2765b38e04f"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_e2765b38e04f": "b1e2b266a0f30a00fb1609dee2007a5788c6a93497708ff1b259c70953e7b9d4"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "a78a9bc24e5e411b74dc6996f03b0d86465d3861dc9ac03fdc67a8e70c86337d"
+    },
     "sm5f_f508e8259839": {
       "FamilyID": "sm5f_f508e8259839",
       "Status": "PASS",
@@ -6682,6 +6857,27 @@
         "NativeRevalidationPerformed": false,
         "Stage": "HistoricalExportReport"
       }
+    },
+    "sm5f_98ec6fb7bcf5": {
+      "FamilyID": "sm5f_98ec6fb7bcf5",
+      "Status": "PASS",
+      "Seconds": 15.128325,
+      "Points": 1000,
+      "ContextSHA256": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+      "ExporterContextSHA256": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+      "NativeCaseContexts": {
+        "sm5_98ec6fb7bcf5": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a"
+      },
+      "NativeContextCompatibility": null,
+      "CaseIDs": [
+        "sm5_98ec6fb7bcf5"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_98ec6fb7bcf5": "95a8fa23f77dfa0cc13757d8c03e3936f30d858ad2dced2522a9c8392ac18017"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "4c22fcba2a3e7093dbe18db95d11e587e26531ef56a62aa5a764a5e8d575a935"
     },
     "sm5f_fe3668dc8328": {
       "FamilyID": "sm5f_fe3668dc8328",
@@ -6925,6 +7121,27 @@
       "MadGraphStatus": "PASS",
       "CapsuleSHA256": "e5ee33a89589ab1c1e7bf0eef09ddde8a37ed5800ca7d2a245dc04dd43d4d232"
     },
+    "sm5f_500f064b2156": {
+      "FamilyID": "sm5f_500f064b2156",
+      "Status": "PASS",
+      "Seconds": 12.512725,
+      "Points": 1000,
+      "ContextSHA256": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+      "ExporterContextSHA256": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+      "NativeCaseContexts": {
+        "sm5_500f064b2156": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a"
+      },
+      "NativeContextCompatibility": null,
+      "CaseIDs": [
+        "sm5_500f064b2156"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_500f064b2156": "c60854ed6996ca72b2f6406398816be0c56edfa11bdd3ff7d0f8563d2de8f50b"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "aa9ff392181341b9348fcdecf89b20ab0f9b8dad65ca540916111bc5003f8e11"
+    },
     "sm5f_8605d425fbaf": {
       "FamilyID": "sm5f_8605d425fbaf",
       "Status": "PASS",
@@ -6953,6 +7170,27 @@
         "NativeRevalidationPerformed": false,
         "Stage": "HistoricalExportReport"
       }
+    },
+    "sm5f_2bcd06cdf246": {
+      "FamilyID": "sm5f_2bcd06cdf246",
+      "Status": "PASS",
+      "Seconds": 13.766887,
+      "Points": 1000,
+      "ContextSHA256": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+      "ExporterContextSHA256": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+      "NativeCaseContexts": {
+        "sm5_2bcd06cdf246": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a"
+      },
+      "NativeContextCompatibility": null,
+      "CaseIDs": [
+        "sm5_2bcd06cdf246"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_2bcd06cdf246": "e622df4a6495d98ecce3321d113aca13c58f7b492149c58ef9cc6e3df51dfb7c"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "de3e3c3b3118016bd222523e1e2f66e418dbec9df93e873b24247c9e64be6e56"
     },
     "sm5f_ac7fd944e3ea": {
       "FamilyID": "sm5f_ac7fd944e3ea",
@@ -7345,6 +7583,48 @@
       "CalcHEPStatus": "PASS",
       "MadGraphStatus": "PASS",
       "CapsuleSHA256": "f1206649c2f48c3b0f00a3abfd56fc155e38530083e014451b7031c6a4aba099"
+    },
+    "sm5f_c456a985c116": {
+      "FamilyID": "sm5f_c456a985c116",
+      "Status": "PASS",
+      "Seconds": 12.768574,
+      "Points": 1000,
+      "ContextSHA256": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+      "ExporterContextSHA256": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+      "NativeCaseContexts": {
+        "sm5_c456a985c116": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a"
+      },
+      "NativeContextCompatibility": null,
+      "CaseIDs": [
+        "sm5_c456a985c116"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_c456a985c116": "f4b7ba0b5cc626c5a62b3a19c69aa1c913888974c2efeaf4fc9ba2138dabae6a"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "ce3c9ab984d4decc39e946d264333ec99287584eeaf322b30b17dd3aecfaa656"
+    },
+    "sm5f_6f1408a45a7f": {
+      "FamilyID": "sm5f_6f1408a45a7f",
+      "Status": "PASS",
+      "Seconds": 15.442135,
+      "Points": 1000,
+      "ContextSHA256": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+      "ExporterContextSHA256": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+      "NativeCaseContexts": {
+        "sm5_6f1408a45a7f": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a"
+      },
+      "NativeContextCompatibility": null,
+      "CaseIDs": [
+        "sm5_6f1408a45a7f"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_6f1408a45a7f": "251c9ee8f9e5dd07ac08901ab875cab5b7397bea16202220054e75fb7c51b871"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "f2a35d0f0f153be6274a9d3468d9d7dfcef5c7015130cdd350c090a5f81fc3eb"
     },
     "sm5f_3763aa4337b2": {
       "FamilyID": "sm5f_3763aa4337b2",
@@ -8692,13 +8972,13 @@
   "Counts": {
     "TotalCases": 1422,
     "TotalFamilies": 869,
-    "Constructed": 155,
-    "FullyValidatedCases": 153,
+    "Constructed": 161,
+    "FullyValidatedCases": 159,
     "PrecisionQualifiedCases": 2,
-    "ValidatedIncludingPrecisionQualifiedCases": 155,
+    "ValidatedIncludingPrecisionQualifiedCases": 161,
     "PrecisionQualifiedFamilies": 2,
-    "ValidatedFamilies": 108,
-    "FailedOrTimedOut": 1
+    "ValidatedFamilies": 114,
+    "FailedOrTimedOut": 2
   },
   "CurrentFamily": null,
   "StopReason": "BatchComplete",

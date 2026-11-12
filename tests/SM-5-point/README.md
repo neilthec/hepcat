@@ -266,24 +266,36 @@ public constructor retries with explicit limits have their own scripts and
 output records.
 
 The electron/Z/two-Higgs process remains unresolved in factorization completion.
-Its last retained fit did generate all 600 equations for 415 unknowns; the first
-exact linear solve timed out. The coefficient field has degree four. Neither
-distinct-coefficient simplification nor conversion to one common number field
-finished the solve cheaply. A rational-parameter diagnostic also found an exact
-inconsistency in that 415-direction constant-coefficient space across three
-test assignments. A subsequent controlled replay tested the separate retained
-325-direction physical space with its own affine seed. It solved the first
-system, then returned an exact all-column contradiction after 2,040 rows from
-three parameter assignments and fresh held-out charts. The full affine union,
-including the exact seed offset, has 508 directions and was also inconsistent
-on all 2,040 rows. These certificates concern those finite constant-coefficient
-spaces; they do not exclude further source-derived continuations. No result
-from either diagnostic was promoted. The relevant stored four-point
-electron/Z/Higgs, two-electron/two-Higgs and two-Z/two-Higgs amplitudes pass
-independent native checks at an order-one, model-consistent input set. A full
-five-point Feynman-versus-channel audit is the next check before extending the
-source space. No model entry was changed. Scripts, matrices and certificates
-are in `diagnostics/eEZhh/`, including `physical325/` and `affine-union/`.
+Its original 415-direction solve timed out. Controlled exact replays of the
+retained 325-direction physical space, its full 508-direction affine union,
+and a 758-direction selected-source extension found contradictions across three
+model-consistent parameter assignments. These exclude a single constant
+coefficient vector in those particular finite spaces, not a physical amplitude.
+The independent complete off-shell Feynman expression agrees with all ten
+factorization cuts at all three assignments: 120 valid charts and 1,440 exact
+coherent-spin comparisons. The targets are therefore supported at those points.
+
+A further diagnostic grouped the saved 325-direction equations by their actual
+parameter metadata. Each assignment separately fits with rank 194 and 131 free
+coordinates, including all 1,080 rows at the initial assignment and 480 rows at
+each other assignment. All 2,040 equations were reproduced exactly. This points
+to investigating the model-parameter factors carried by the source tensors
+before expanding the kinematic space again. It is sampled evidence about this
+space, not a validated new expression or a proof at arbitrary parameters.
+No diagnostic result has been promoted. Scripts, matrices and certificates are
+in `diagnostics/eEZhh/`, including `physical325/`, `affine-union/`,
+`selected-source-union-preflight758/`, and `physical325-parameter-blocks/`.
+
+The identical-four-electron/one-Higgs pilot also remains incomplete. Its default
+constructor and a controlled rational-parameter retry stopped in factorization
+completion. A replay of the saved 843-direction physical space found an exact
+all-column contradiction in 1,792 equations across three assignments. The
+independent complete 28-diagram Feynman expression agrees with every one of its
+16 cuts at all three assignments, with 3,072 exact coherent-spin comparisons.
+No final expression or external numerical comparison is claimed for this pilot.
+Its four unattempted pure charged-lepton/Higgs siblings remain pending. The
+already validated distinct-electron/muon/Higgs case has not been changed.
+Records are under `diagnostics/pure-charged-lepton-higgs/`.
 
 The five-gluon attempt is separately incomplete. A bounded stage probe measured
 quick graph generation and an 83-second unreduced conversion, then a timeout
