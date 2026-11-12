@@ -1,6 +1,6 @@
 {
   "SchemaVersion": 1,
-  "UpdatedUTC": "2026-11-12T01:44:39.041868+00:00",
+  "UpdatedUTC": "2026-11-12T05:30:54.521384+00:00",
   "InventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
   "Cases": {
     "sm5_7f553e102e15": {
@@ -16,24 +16,26 @@
       "Seconds": 25.085054,
       "Complexity": 25,
       "RandomSeed": 1628116669,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
-      "PreviousContextSHA256": "b7a316bd091a48dababda5c42e3c950c6ca96ce434bdf8bdaf917459c3f6cc9d",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "PreviousContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
       "ConstructionContextSHA256": "89596226666b1133c1e3cea431a34165b78878a5f0155b1e8c040d8effd10b4d",
       "RevalidationStatus": "PASS",
-      "RevalidationSeconds": 5.923216,
-      "RevalidationRandomSeed": 199664935,
-      "SourceCapsuleSHA256": "a8732c11c98b284f5687b89949a7d8814718bf1908f8084b4eb2173da77be18b",
-      "SourceSummarySHA256": "9b6d7bbf538867db21f65f890be85971dc6d2b02d8a78726ae8f5aafc6bb3701",
-      "SourceCapsuleArchive": "revalidation-history/sm5_7f553e102e15-a8732c11c98b284f5687b89949a7d8814718bf1908f8084b4eb2173da77be18b.wxf",
-      "RevalidationConfigurationSHA256": "3e131918aa90854bbeba5f2bab6e7b38eadefb390dcde57e9233a2bfb6b04c3b",
+      "RevalidationSeconds": 8.005809,
+      "RevalidationRandomSeed": 1090920214,
+      "SourceCapsuleSHA256": "8ba829a0b1dd0d2378161d3a39625cab0afd0de09860c91c6c17b02e6269a42f",
+      "SourceSummarySHA256": "55c45c8fadd2673026e02a3cbc84775059bc4fa524b7c12019eb583676d8ab24",
+      "SourceCapsuleArchive": "revalidation-history/sm5_7f553e102e15-8ba829a0b1dd0d2378161d3a39625cab0afd0de09860c91c6c17b02e6269a42f.wxf",
+      "RevalidationConfigurationSHA256": "e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
       "RevalidationInventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+      "RevalidationScriptSHA256": "40dcfa1156a1d21704ce876906bb9da9fcd0236d3e8c3c8e01ba6c814321b761",
+      "RevalidationBenchmarkPolicySHA256": "31a277855acf4cd566e5ab7a70ecd7b1f491ddf7121d4d0162cd32870068a228",
       "Rows": 13,
       "FeynmanRows": 1,
       "CheckStatuses": {
         "PASS": 13
       },
       "FailureStage": null,
-      "CapsuleSHA256": "8ba829a0b1dd0d2378161d3a39625cab0afd0de09860c91c6c17b02e6269a42f"
+      "CapsuleSHA256": "85dec78af07b9dcca9d2ecd3c99c4c6ac20c8b21d2fda650e306dc14e721da9b"
     },
     "sm5_b80ee23ca123": {
       "ID": "sm5_b80ee23ca123",
@@ -48,24 +50,27 @@
       "Seconds": 1804.618059,
       "Complexity": 2134,
       "RandomSeed": 1736878893,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
-      "PreviousContextSHA256": "b7a316bd091a48dababda5c42e3c950c6ca96ce434bdf8bdaf917459c3f6cc9d",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "PreviousContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
       "ConstructionContextSHA256": "b7a316bd091a48dababda5c42e3c950c6ca96ce434bdf8bdaf917459c3f6cc9d",
       "RevalidationStatus": "PASS",
-      "RevalidationSeconds": 53.765919,
-      "RevalidationRandomSeed": 1619185599,
-      "SourceCapsuleSHA256": "99d11fa1207fe7202baebec16efc7194007f94788f46e3537643876c98973747",
-      "SourceSummarySHA256": "be159bf28724ea4517f36b3d2afbd217c9259939e4e76422772abd376c962396",
-      "SourceCapsuleArchive": "revalidation-history/sm5_b80ee23ca123-99d11fa1207fe7202baebec16efc7194007f94788f46e3537643876c98973747.wxf",
-      "RevalidationConfigurationSHA256": "3e131918aa90854bbeba5f2bab6e7b38eadefb390dcde57e9233a2bfb6b04c3b",
+      "RevalidationSeconds": 45.378879,
+      "RevalidationRandomSeed": 233606278,
+      "SourceCapsuleSHA256": "e14b227c44dadd2f48df54666c5c517d8b4e06765e799896ba5da1a36587f327",
+      "SourceSummarySHA256": "5922ca1ba8d0a736eb0b777ec17a2ace1db8b8e5da1116cd3992a8d5541812ad",
+      "SourceCapsuleArchive": "revalidation-history/sm5_b80ee23ca123-e14b227c44dadd2f48df54666c5c517d8b4e06765e799896ba5da1a36587f327.wxf",
+      "RevalidationConfigurationSHA256": "e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
       "RevalidationInventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+      "RevalidationScriptSHA256": "3dcb364850b4a34a7aabd2f756782461fe2ed23a2df6b4db18d8a074a3c4f24b",
+      "RevalidationBenchmarkPolicySHA256": "ffc86825574f78f646857ec9fa173ac7417a050c0473d89eb5e2547d2709d9b6",
+      "RevalidationCheckTimeConstraint": 600,
       "Rows": 13,
       "FeynmanRows": 1,
       "CheckStatuses": {
         "PASS": 13
       },
       "FailureStage": null,
-      "CapsuleSHA256": "e14b227c44dadd2f48df54666c5c517d8b4e06765e799896ba5da1a36587f327"
+      "CapsuleSHA256": "a6024ecd2097d8fa12082a48b954dfaa07df884b909231df603c78c83d306c3d"
     },
     "sm5_345126cb84c0": {
       "ID": "sm5_345126cb84c0",
@@ -80,24 +85,27 @@
       "Seconds": 1581.737593,
       "Complexity": 2080,
       "RandomSeed": 541495071,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
-      "PreviousContextSHA256": "b7a316bd091a48dababda5c42e3c950c6ca96ce434bdf8bdaf917459c3f6cc9d",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "PreviousContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
       "ConstructionContextSHA256": "b7a316bd091a48dababda5c42e3c950c6ca96ce434bdf8bdaf917459c3f6cc9d",
       "RevalidationStatus": "PASS",
-      "RevalidationSeconds": 74.287885,
-      "RevalidationRandomSeed": 1654297240,
-      "SourceCapsuleSHA256": "48f17c83e1b1bbdfd6b84ac162495b2c5e2fb9dea0a1d55e625347461a1f2b3d",
-      "SourceSummarySHA256": "ec3182206bea47877a834e688990d5c21561fd127e43b31d7b4e3bb08408977a",
-      "SourceCapsuleArchive": "revalidation-history/sm5_345126cb84c0-48f17c83e1b1bbdfd6b84ac162495b2c5e2fb9dea0a1d55e625347461a1f2b3d.wxf",
-      "RevalidationConfigurationSHA256": "3e131918aa90854bbeba5f2bab6e7b38eadefb390dcde57e9233a2bfb6b04c3b",
+      "RevalidationSeconds": 51.497848,
+      "RevalidationRandomSeed": 1765150431,
+      "SourceCapsuleSHA256": "254bff1da406819bdd66957085258ee33fc76723c5fabaa5afccc03bf33b9301",
+      "SourceSummarySHA256": "987546fd9671a303e9963a1207fd2925415772c4a41d93dd897369ac9315a1f0",
+      "SourceCapsuleArchive": "revalidation-history/sm5_345126cb84c0-254bff1da406819bdd66957085258ee33fc76723c5fabaa5afccc03bf33b9301.wxf",
+      "RevalidationConfigurationSHA256": "e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
       "RevalidationInventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+      "RevalidationScriptSHA256": "3dcb364850b4a34a7aabd2f756782461fe2ed23a2df6b4db18d8a074a3c4f24b",
+      "RevalidationBenchmarkPolicySHA256": "ffc86825574f78f646857ec9fa173ac7417a050c0473d89eb5e2547d2709d9b6",
+      "RevalidationCheckTimeConstraint": 600,
       "Rows": 13,
       "FeynmanRows": 1,
       "CheckStatuses": {
         "PASS": 13
       },
       "FailureStage": null,
-      "CapsuleSHA256": "254bff1da406819bdd66957085258ee33fc76723c5fabaa5afccc03bf33b9301"
+      "CapsuleSHA256": "22b957a913fab083b3d35e37efbfff95a870fc703188068f9c4005efd224980b"
     },
     "sm5_43f5c0ace4ab": {
       "ID": "sm5_43f5c0ace4ab",
@@ -108,18 +116,93 @@
         "W+",
         "W-"
       ],
-      "Status": "FAIL",
-      "Seconds": 414.830284,
-      "Complexity": null,
-      "RandomSeed": 210060789,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
-      "Rows": 1,
-      "FeynmanRows": 0,
+      "Status": "COMPLETE",
+      "Seconds": 968.397528,
+      "Complexity": 27,
+      "RandomSeed": 342093868,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 9,
+      "FeynmanRows": 1,
       "CheckStatuses": {
-        "NOT RUN": 1
+        "PASS": 9
       },
-      "FailureStage": "Preparing Feynman amplitudes",
-      "CapsuleSHA256": "e5d1118f3031cc2153dc0a6a7c26088a9638314f00c8476c8df528ca9d7a6c61"
+      "FailureStage": null,
+      "CapsuleSHA256": "ecfc517563e9a16b76fef43c31df60011e60faae75a55c8c8561b17571ec8258"
+    },
+    "sm5_5f433be3f76d": {
+      "ID": "sm5_5f433be3f76d",
+      "Particles": [
+        "A.+",
+        "A.+",
+        "A.-",
+        "W+",
+        "W-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 1447.626213,
+      "Complexity": 74,
+      "RandomSeed": 1293196898,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 9,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 9
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "daeeb11ecd3a251cae48601837559214a4061ac9edd52830b8e310791c3e67aa"
+    },
+    "sm5_956b05f2868f": {
+      "ID": "sm5_956b05f2868f",
+      "Particles": [
+        "A.+",
+        "A.-",
+        "A.-",
+        "W+",
+        "W-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 1682.532804,
+      "Complexity": 84,
+      "RandomSeed": 1571740797,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 9,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 9
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "2d1dbcc3341523aaf429a1fa70cf6564a52c668412e6b502226dfcec8bb5135c"
+    },
+    "sm5_b56207402f30": {
+      "ID": "sm5_b56207402f30",
+      "Particles": [
+        "A.-",
+        "A.-",
+        "A.-",
+        "W+",
+        "W-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 897.636514,
+      "Complexity": 27,
+      "RandomSeed": 210629238,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 9,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 9
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "58accd9de242e404e8feca3c752a4ae03fdc7e95c746c185bec8449560708584"
+    },
+    "sm5_c4885d0a4a7e": {
+      "ID": "sm5_c4885d0a4a7e",
+      "Status": "STALE",
+      "RandomSeed": 868620146,
+      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "Log": "tests/results/SM-5-point/sm5_c4885d0a4a7e.log",
+      "Message": "External deadline reached; not validated.",
+      "Reason": "Source/model/reference context differs."
     },
     "sm5_e86c5e8437a1": {
       "ID": "sm5_e86c5e8437a1",
@@ -134,24 +217,26 @@
       "Seconds": 87.418495,
       "Complexity": 346,
       "RandomSeed": 996061509,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
-      "PreviousContextSHA256": "b7a316bd091a48dababda5c42e3c950c6ca96ce434bdf8bdaf917459c3f6cc9d",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "PreviousContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
       "ConstructionContextSHA256": "89596226666b1133c1e3cea431a34165b78878a5f0155b1e8c040d8effd10b4d",
       "RevalidationStatus": "PASS",
-      "RevalidationSeconds": 31.769163,
-      "RevalidationRandomSeed": 1461075474,
-      "SourceCapsuleSHA256": "fd06157877fccf48356b668a45cbc2002588c95ea71b3afb0bbf88939895471f",
-      "SourceSummarySHA256": "0f44fbf45e7f97e61905df0a9105d5d51ec9c80dc0b31160e5a1d99f92388844",
-      "SourceCapsuleArchive": "revalidation-history/sm5_e86c5e8437a1-fd06157877fccf48356b668a45cbc2002588c95ea71b3afb0bbf88939895471f.wxf",
-      "RevalidationConfigurationSHA256": "3e131918aa90854bbeba5f2bab6e7b38eadefb390dcde57e9233a2bfb6b04c3b",
+      "RevalidationSeconds": 36.899996,
+      "RevalidationRandomSeed": 1549083514,
+      "SourceCapsuleSHA256": "cf6dad5b71394a3aabff37af57c7f7d7f0d22a1276515fa7d6f5504779c52288",
+      "SourceSummarySHA256": "9a56854b157c931de5bc536846d266f0cb15c63afd9288c6a362cf14cb56d920",
+      "SourceCapsuleArchive": "revalidation-history/sm5_e86c5e8437a1-cf6dad5b71394a3aabff37af57c7f7d7f0d22a1276515fa7d6f5504779c52288.wxf",
+      "RevalidationConfigurationSHA256": "e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
       "RevalidationInventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+      "RevalidationScriptSHA256": "40dcfa1156a1d21704ce876906bb9da9fcd0236d3e8c3c8e01ba6c814321b761",
+      "RevalidationBenchmarkPolicySHA256": "31a277855acf4cd566e5ab7a70ecd7b1f491ddf7121d4d0162cd32870068a228",
       "Rows": 13,
       "FeynmanRows": 1,
       "CheckStatuses": {
         "PASS": 13
       },
       "FailureStage": null,
-      "CapsuleSHA256": "cf6dad5b71394a3aabff37af57c7f7d7f0d22a1276515fa7d6f5504779c52288"
+      "CapsuleSHA256": "c5900ded7a0c0d72ade55915f5228cdfb1a51e0daa38ccccbfd199aa0412923f"
     },
     "sm5_63a03af59f4c": {
       "ID": "sm5_63a03af59f4c",
@@ -166,16 +251,16 @@
       "Seconds": 140.696995,
       "Complexity": 308,
       "RandomSeed": 1764876692,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
-      "PreviousContextSHA256": "b7a316bd091a48dababda5c42e3c950c6ca96ce434bdf8bdaf917459c3f6cc9d",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "PreviousContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
       "ConstructionContextSHA256": "89596226666b1133c1e3cea431a34165b78878a5f0155b1e8c040d8effd10b4d",
       "RevalidationStatus": "PASS",
-      "RevalidationSeconds": 14.398416,
-      "RevalidationRandomSeed": 1029084403,
-      "SourceCapsuleSHA256": "3df36d9bf0c583a50ae9de054ba7003e33e1328feb0b6fb653d2ad140e09a067",
-      "SourceSummarySHA256": "a56ba6e24c6578113c3e9bef692009bfc43cf1ebed923088367514b59b4d49bb",
-      "SourceCapsuleArchive": "revalidation-history/sm5_63a03af59f4c-3df36d9bf0c583a50ae9de054ba7003e33e1328feb0b6fb653d2ad140e09a067.wxf",
-      "RevalidationConfigurationSHA256": "3e131918aa90854bbeba5f2bab6e7b38eadefb390dcde57e9233a2bfb6b04c3b",
+      "RevalidationSeconds": 14.218807,
+      "RevalidationRandomSeed": 1782151398,
+      "SourceCapsuleSHA256": "8fba7921cd88aed5790a0ffc25246a5e3055b9cc99602e79fbe45026826e9672",
+      "SourceSummarySHA256": "52b1eabb9f69419066f12a61f8f0a38e58912a22440e2f07eda5c5abd75c0dc4",
+      "SourceCapsuleArchive": "revalidation-history/sm5_63a03af59f4c-8fba7921cd88aed5790a0ffc25246a5e3055b9cc99602e79fbe45026826e9672.wxf",
+      "RevalidationConfigurationSHA256": "e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
       "RevalidationInventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
       "Rows": 13,
       "FeynmanRows": 1,
@@ -183,7 +268,7 @@
         "PASS": 13
       },
       "FailureStage": null,
-      "CapsuleSHA256": "8fba7921cd88aed5790a0ffc25246a5e3055b9cc99602e79fbe45026826e9672"
+      "CapsuleSHA256": "7823b1b5bebc9c885f7b297a977d32c2e4a42d8f1756d5c59cfc56f3546690f6"
     },
     "sm5_bafa131ff2e6": {
       "ID": "sm5_bafa131ff2e6",
@@ -198,16 +283,16 @@
       "Seconds": 99.531617,
       "Complexity": 346,
       "RandomSeed": 1356066153,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
-      "PreviousContextSHA256": "b7a316bd091a48dababda5c42e3c950c6ca96ce434bdf8bdaf917459c3f6cc9d",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "PreviousContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
       "ConstructionContextSHA256": "89596226666b1133c1e3cea431a34165b78878a5f0155b1e8c040d8effd10b4d",
       "RevalidationStatus": "PASS",
-      "RevalidationSeconds": 27.948462,
-      "RevalidationRandomSeed": 347106532,
-      "SourceCapsuleSHA256": "25842f3e91117d5a76b38dc75b857322495a338ab9d781b377a837911068a255",
-      "SourceSummarySHA256": "b6508b0b0578dcbac8e1ef9def3852516adf04fd9e13192bbcaa896293cce5ac",
-      "SourceCapsuleArchive": "revalidation-history/sm5_bafa131ff2e6-25842f3e91117d5a76b38dc75b857322495a338ab9d781b377a837911068a255.wxf",
-      "RevalidationConfigurationSHA256": "3e131918aa90854bbeba5f2bab6e7b38eadefb390dcde57e9233a2bfb6b04c3b",
+      "RevalidationSeconds": 33.494611,
+      "RevalidationRandomSeed": 137929806,
+      "SourceCapsuleSHA256": "1b00f8413239410514059bea31cc67a96b52e6f98616216a7fd3f08b7dea5c6e",
+      "SourceSummarySHA256": "14dfe1c23755118355140c38ee098dccdab255431a65bbd63622b7ebc224d567",
+      "SourceCapsuleArchive": "revalidation-history/sm5_bafa131ff2e6-1b00f8413239410514059bea31cc67a96b52e6f98616216a7fd3f08b7dea5c6e.wxf",
+      "RevalidationConfigurationSHA256": "e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
       "RevalidationInventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
       "Rows": 13,
       "FeynmanRows": 1,
@@ -215,7 +300,7 @@
         "PASS": 13
       },
       "FailureStage": null,
-      "CapsuleSHA256": "1b00f8413239410514059bea31cc67a96b52e6f98616216a7fd3f08b7dea5c6e"
+      "CapsuleSHA256": "7c68f652bfa63e1b862e423b1f2a8aedcb47f11c1b6c85fe4df651d80009bbcd"
     },
     "sm5_de1f7f653ad4": {
       "ID": "sm5_de1f7f653ad4",
@@ -226,18 +311,18 @@
         "h",
         "h"
       ],
-      "Status": "FAIL",
-      "Seconds": 363.2895,
-      "Complexity": null,
-      "RandomSeed": 131801765,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
-      "Rows": 1,
-      "FeynmanRows": 0,
+      "Status": "COMPLETE",
+      "Seconds": 350.842362,
+      "Complexity": 310,
+      "RandomSeed": 346696818,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 10,
+      "FeynmanRows": 1,
       "CheckStatuses": {
-        "NOT RUN": 1
+        "PASS": 10
       },
-      "FailureStage": "Completing factorization",
-      "CapsuleSHA256": "fca3d351bb18ad294cac854016be4f82472a6e3e5202fdf8473622b0bf42c033"
+      "FailureStage": null,
+      "CapsuleSHA256": "1dfa569215e1b40b3d47f09ffe66bd7916c02b71ee0c9f8cca323bf15b2dd2d8"
     },
     "sm5_475437787ce7": {
       "ID": "sm5_475437787ce7",
@@ -248,18 +333,40 @@
         "h",
         "h"
       ],
+      "Status": "COMPLETE",
+      "Seconds": 479.458334,
+      "Complexity": 310,
+      "RandomSeed": 1237760439,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 10,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 10
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "6ae4ec2275bd74a52bfcf08d014f14bfb1fae4fca04500e46699365de3e0c875"
+    },
+    "sm5_33c3db088b44": {
+      "ID": "sm5_33c3db088b44",
+      "Particles": [
+        "e",
+        "E",
+        "Z",
+        "h",
+        "h"
+      ],
       "Status": "FAIL",
-      "Seconds": 364.808996,
+      "Seconds": 1638.310147,
       "Complexity": null,
-      "RandomSeed": 436293499,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "RandomSeed": 438377466,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
       "Rows": 1,
       "FeynmanRows": 0,
       "CheckStatuses": {
         "NOT RUN": 1
       },
       "FailureStage": "Completing factorization",
-      "CapsuleSHA256": "a123af008ef729d00a822335b3f368b314b402a20d69d194ad2544ec7bc5df99"
+      "CapsuleSHA256": "6b3d0f0705f0139f90e7a1aae89f1e7be03d688ba4b0e8eede428c8e50be14f1"
     },
     "sm5_42d2baa06efc": {
       "ID": "sm5_42d2baa06efc",
@@ -274,14 +381,26 @@
       "Seconds": 845.29962,
       "Complexity": 157,
       "RandomSeed": 214524636,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "PreviousContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ConstructionContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "RevalidationStatus": "PASS",
+      "RevalidationSeconds": 36.320158,
+      "RevalidationRandomSeed": 529234960,
+      "SourceCapsuleSHA256": "7f6544d0c6362bb79256f4fe3a074e77f9ca96982c9a531968c3edbdc92fa8a7",
+      "SourceSummarySHA256": "2ed170d45e8b7b0a200c90a4be008d0c906b30d2d3bf746536ac99474a233ba9",
+      "SourceCapsuleArchive": "revalidation-history/sm5_42d2baa06efc-7f6544d0c6362bb79256f4fe3a074e77f9ca96982c9a531968c3edbdc92fa8a7.wxf",
+      "RevalidationConfigurationSHA256": "e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
+      "RevalidationInventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+      "RevalidationScriptSHA256": "40dcfa1156a1d21704ce876906bb9da9fcd0236d3e8c3c8e01ba6c814321b761",
+      "RevalidationBenchmarkPolicySHA256": "31a277855acf4cd566e5ab7a70ecd7b1f491ddf7121d4d0162cd32870068a228",
       "Rows": 10,
       "FeynmanRows": 1,
       "CheckStatuses": {
         "PASS": 10
       },
       "FailureStage": null,
-      "CapsuleSHA256": "7f6544d0c6362bb79256f4fe3a074e77f9ca96982c9a531968c3edbdc92fa8a7"
+      "CapsuleSHA256": "5af1f27a8ec17253c581b33486192b4f48a852e2b421989a6fb1d2ef0c44040d"
     },
     "sm5_de9e05710e5e": {
       "ID": "sm5_de9e05710e5e",
@@ -296,24 +415,26 @@
       "Seconds": 46.202478,
       "Complexity": 44,
       "RandomSeed": 1687220858,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
-      "PreviousContextSHA256": "b7a316bd091a48dababda5c42e3c950c6ca96ce434bdf8bdaf917459c3f6cc9d",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "PreviousContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
       "ConstructionContextSHA256": "b7a316bd091a48dababda5c42e3c950c6ca96ce434bdf8bdaf917459c3f6cc9d",
       "RevalidationStatus": "PASS",
-      "RevalidationSeconds": 7.046931,
-      "RevalidationRandomSeed": 359123841,
-      "SourceCapsuleSHA256": "8dc971b1ae1b47cd96d250916e570971b60531d8f126d82a7e110c0897607ac6",
-      "SourceSummarySHA256": "4b5ab5d965e30cc7dac056ce827b526b74a57b0a87712bbb27a9fa8dad4f6628",
-      "SourceCapsuleArchive": "revalidation-history/sm5_de9e05710e5e-8dc971b1ae1b47cd96d250916e570971b60531d8f126d82a7e110c0897607ac6.wxf",
-      "RevalidationConfigurationSHA256": "3e131918aa90854bbeba5f2bab6e7b38eadefb390dcde57e9233a2bfb6b04c3b",
+      "RevalidationSeconds": 7.954166,
+      "RevalidationRandomSeed": 2031639234,
+      "SourceCapsuleSHA256": "4a2a18fae3fd2060cb0a5f6093c03c8bbee31b0c098518569b62f65dbc75f23e",
+      "SourceSummarySHA256": "447f149cd40ba9014ad3128ad5407524057e7324041d5ab3bd73109843b56e89",
+      "SourceCapsuleArchive": "revalidation-history/sm5_de9e05710e5e-4a2a18fae3fd2060cb0a5f6093c03c8bbee31b0c098518569b62f65dbc75f23e.wxf",
+      "RevalidationConfigurationSHA256": "e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
       "RevalidationInventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+      "RevalidationScriptSHA256": "40dcfa1156a1d21704ce876906bb9da9fcd0236d3e8c3c8e01ba6c814321b761",
+      "RevalidationBenchmarkPolicySHA256": "31a277855acf4cd566e5ab7a70ecd7b1f491ddf7121d4d0162cd32870068a228",
       "Rows": 7,
       "FeynmanRows": 1,
       "CheckStatuses": {
         "PASS": 7
       },
       "FailureStage": null,
-      "CapsuleSHA256": "4a2a18fae3fd2060cb0a5f6093c03c8bbee31b0c098518569b62f65dbc75f23e"
+      "CapsuleSHA256": "d855e96374d7e9015d121b04cf725c340d7cafff20cf26f43fccc8216ae8a47e"
     },
     "sm5_05c47f93b22d": {
       "ID": "sm5_05c47f93b22d",
@@ -328,14 +449,26 @@
       "Seconds": 195.674327,
       "Complexity": 536,
       "RandomSeed": 1206374245,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "PreviousContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ConstructionContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "RevalidationStatus": "PASS",
+      "RevalidationSeconds": 31.612435,
+      "RevalidationRandomSeed": 692421834,
+      "SourceCapsuleSHA256": "ed2fda9f74c9d0f6636155b7cc1709ef723d7c7cc06891e3da95270c0e10ab58",
+      "SourceSummarySHA256": "f06e25b30e4d874c05d336ad577633ddd36d0499b85d9741c0ff088aa147b2c3",
+      "SourceCapsuleArchive": "revalidation-history/sm5_05c47f93b22d-ed2fda9f74c9d0f6636155b7cc1709ef723d7c7cc06891e3da95270c0e10ab58.wxf",
+      "RevalidationConfigurationSHA256": "e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
+      "RevalidationInventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+      "RevalidationScriptSHA256": "40dcfa1156a1d21704ce876906bb9da9fcd0236d3e8c3c8e01ba6c814321b761",
+      "RevalidationBenchmarkPolicySHA256": "31a277855acf4cd566e5ab7a70ecd7b1f491ddf7121d4d0162cd32870068a228",
       "Rows": 9,
       "FeynmanRows": 1,
       "CheckStatuses": {
         "PASS": 9
       },
       "FailureStage": null,
-      "CapsuleSHA256": "ed2fda9f74c9d0f6636155b7cc1709ef723d7c7cc06891e3da95270c0e10ab58"
+      "CapsuleSHA256": "0e46b1402057c2030c9ffa270fc46cee16ced076bf070e4604e6a09bf6b76d66"
     },
     "sm5_64823f01bbe6": {
       "ID": "sm5_64823f01bbe6",
@@ -350,14 +483,26 @@
       "Seconds": 100.560178,
       "Complexity": 214,
       "RandomSeed": 514838329,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "PreviousContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ConstructionContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "RevalidationStatus": "PASS",
+      "RevalidationSeconds": 18.412224,
+      "RevalidationRandomSeed": 1755600935,
+      "SourceCapsuleSHA256": "5c275299a7d8ba684459f207481b330749b1c4a442ea181c718ae327a7ae889a",
+      "SourceSummarySHA256": "737fdc0326e1e89176a2c52e272213f37226ca90ab72f51563f45b8bdfcd21ac",
+      "SourceCapsuleArchive": "revalidation-history/sm5_64823f01bbe6-5c275299a7d8ba684459f207481b330749b1c4a442ea181c718ae327a7ae889a.wxf",
+      "RevalidationConfigurationSHA256": "e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
+      "RevalidationInventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+      "RevalidationScriptSHA256": "40dcfa1156a1d21704ce876906bb9da9fcd0236d3e8c3c8e01ba6c814321b761",
+      "RevalidationBenchmarkPolicySHA256": "31a277855acf4cd566e5ab7a70ecd7b1f491ddf7121d4d0162cd32870068a228",
       "Rows": 9,
       "FeynmanRows": 1,
       "CheckStatuses": {
         "PASS": 9
       },
       "FailureStage": null,
-      "CapsuleSHA256": "5c275299a7d8ba684459f207481b330749b1c4a442ea181c718ae327a7ae889a"
+      "CapsuleSHA256": "30841c5f679aebef8293ab6a987c9b5a52803de48b006ba6e3b17d9d089c99bb"
     },
     "sm5_499ea8e82c92": {
       "ID": "sm5_499ea8e82c92",
@@ -372,14 +517,26 @@
       "Seconds": 151.957982,
       "Complexity": 125,
       "RandomSeed": 1585176084,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "PreviousContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ConstructionContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "RevalidationStatus": "PASS",
+      "RevalidationSeconds": 18.980457,
+      "RevalidationRandomSeed": 222894880,
+      "SourceCapsuleSHA256": "7312d9f3bbe991bc9c76638937b9fc959828b68967b2d2502ed93f9ead3ea8dc",
+      "SourceSummarySHA256": "4f07b2705501d696d902408587586f90330ae7403bd814d6be483981b409ed84",
+      "SourceCapsuleArchive": "revalidation-history/sm5_499ea8e82c92-7312d9f3bbe991bc9c76638937b9fc959828b68967b2d2502ed93f9ead3ea8dc.wxf",
+      "RevalidationConfigurationSHA256": "e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
+      "RevalidationInventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+      "RevalidationScriptSHA256": "40dcfa1156a1d21704ce876906bb9da9fcd0236d3e8c3c8e01ba6c814321b761",
+      "RevalidationBenchmarkPolicySHA256": "31a277855acf4cd566e5ab7a70ecd7b1f491ddf7121d4d0162cd32870068a228",
       "Rows": 9,
       "FeynmanRows": 1,
       "CheckStatuses": {
         "PASS": 9
       },
       "FailureStage": null,
-      "CapsuleSHA256": "7312d9f3bbe991bc9c76638937b9fc959828b68967b2d2502ed93f9ead3ea8dc"
+      "CapsuleSHA256": "274cc96907f216ba068e194dd6c3332107b1b0c5f3eb013257f570f1b6c67f4f"
     },
     "sm5_0252db13573a": {
       "ID": "sm5_0252db13573a",
@@ -394,24 +551,26 @@
       "Seconds": 135.124111,
       "Complexity": 346,
       "RandomSeed": 1056217689,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
-      "PreviousContextSHA256": "b7a316bd091a48dababda5c42e3c950c6ca96ce434bdf8bdaf917459c3f6cc9d",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "PreviousContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
       "ConstructionContextSHA256": "89596226666b1133c1e3cea431a34165b78878a5f0155b1e8c040d8effd10b4d",
       "RevalidationStatus": "PASS",
-      "RevalidationSeconds": 34.009774,
-      "RevalidationRandomSeed": 609788749,
-      "SourceCapsuleSHA256": "3c8e519e74b70fe363233897c93eb14510719947d95b04b895fb21366ba4727e",
-      "SourceSummarySHA256": "35c53abe9de5dc9da8b5ef3a6651a33acda8f193f28f14d17016bec79e8df656",
-      "SourceCapsuleArchive": "revalidation-history/sm5_0252db13573a-3c8e519e74b70fe363233897c93eb14510719947d95b04b895fb21366ba4727e.wxf",
-      "RevalidationConfigurationSHA256": "3e131918aa90854bbeba5f2bab6e7b38eadefb390dcde57e9233a2bfb6b04c3b",
+      "RevalidationSeconds": 24.475098,
+      "RevalidationRandomSeed": 1473370502,
+      "SourceCapsuleSHA256": "13f785ff44dc9922a4df04bcd6c664e0c927a19080132565f7071688e34d5ab7",
+      "SourceSummarySHA256": "c6f74fe5222cd7625ba39361a580ade8a64c7acdecbaeb1dec683d45847e7b8f",
+      "SourceCapsuleArchive": "revalidation-history/sm5_0252db13573a-13f785ff44dc9922a4df04bcd6c664e0c927a19080132565f7071688e34d5ab7.wxf",
+      "RevalidationConfigurationSHA256": "e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
       "RevalidationInventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+      "RevalidationScriptSHA256": "40dcfa1156a1d21704ce876906bb9da9fcd0236d3e8c3c8e01ba6c814321b761",
+      "RevalidationBenchmarkPolicySHA256": "31a277855acf4cd566e5ab7a70ecd7b1f491ddf7121d4d0162cd32870068a228",
       "Rows": 13,
       "FeynmanRows": 1,
       "CheckStatuses": {
         "PASS": 13
       },
       "FailureStage": null,
-      "CapsuleSHA256": "13f785ff44dc9922a4df04bcd6c664e0c927a19080132565f7071688e34d5ab7"
+      "CapsuleSHA256": "b66b369f9423dc82132ca170bf3b4013ee7fafc947f84ec400a67be93a6644a1"
     },
     "sm5_c12ab07caf13": {
       "ID": "sm5_c12ab07caf13",
@@ -426,24 +585,26 @@
       "Seconds": 99.470543,
       "Complexity": 308,
       "RandomSeed": 596137297,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
-      "PreviousContextSHA256": "b7a316bd091a48dababda5c42e3c950c6ca96ce434bdf8bdaf917459c3f6cc9d",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "PreviousContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
       "ConstructionContextSHA256": "89596226666b1133c1e3cea431a34165b78878a5f0155b1e8c040d8effd10b4d",
       "RevalidationStatus": "PASS",
-      "RevalidationSeconds": 19.740855,
-      "RevalidationRandomSeed": 1977010575,
-      "SourceCapsuleSHA256": "69c7b7d9a1127e83a82b63cc49252c8e5343292a8850559d6f9113017892135f",
-      "SourceSummarySHA256": "0637955c423140bdb3ec5ed954795e21ae3e20de29640da2e0108de67a5054d6",
-      "SourceCapsuleArchive": "revalidation-history/sm5_c12ab07caf13-69c7b7d9a1127e83a82b63cc49252c8e5343292a8850559d6f9113017892135f.wxf",
-      "RevalidationConfigurationSHA256": "3e131918aa90854bbeba5f2bab6e7b38eadefb390dcde57e9233a2bfb6b04c3b",
+      "RevalidationSeconds": 30.077195,
+      "RevalidationRandomSeed": 24396384,
+      "SourceCapsuleSHA256": "f5db19f65f68a02a72c7deb28df89486f3259a1c83614f8e896b68eebd5fc6aa",
+      "SourceSummarySHA256": "c944bc6fae1fc17b7075fa949ad33ca8f6ddb52011a0c506e2bb0db122f89ef8",
+      "SourceCapsuleArchive": "revalidation-history/sm5_c12ab07caf13-f5db19f65f68a02a72c7deb28df89486f3259a1c83614f8e896b68eebd5fc6aa.wxf",
+      "RevalidationConfigurationSHA256": "e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
       "RevalidationInventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+      "RevalidationScriptSHA256": "40dcfa1156a1d21704ce876906bb9da9fcd0236d3e8c3c8e01ba6c814321b761",
+      "RevalidationBenchmarkPolicySHA256": "31a277855acf4cd566e5ab7a70ecd7b1f491ddf7121d4d0162cd32870068a228",
       "Rows": 13,
       "FeynmanRows": 1,
       "CheckStatuses": {
         "PASS": 13
       },
       "FailureStage": null,
-      "CapsuleSHA256": "f5db19f65f68a02a72c7deb28df89486f3259a1c83614f8e896b68eebd5fc6aa"
+      "CapsuleSHA256": "8a3a79a4ea42e7bc48a4fafe0109644669967809f5cadb075559b226a197d7a1"
     },
     "sm5_d875d509c99a": {
       "ID": "sm5_d875d509c99a",
@@ -458,24 +619,26 @@
       "Seconds": 68.654068,
       "Complexity": 346,
       "RandomSeed": 1845687491,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
-      "PreviousContextSHA256": "b7a316bd091a48dababda5c42e3c950c6ca96ce434bdf8bdaf917459c3f6cc9d",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "PreviousContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
       "ConstructionContextSHA256": "89596226666b1133c1e3cea431a34165b78878a5f0155b1e8c040d8effd10b4d",
       "RevalidationStatus": "PASS",
-      "RevalidationSeconds": 41.762374,
-      "RevalidationRandomSeed": 1785343747,
-      "SourceCapsuleSHA256": "7ba58d6289fba77a33d982dedf674fa2758a257b67a8dc34b6d932d484b8385f",
-      "SourceSummarySHA256": "da0ce1e2498676e6373ba39d00eb79fc4d5e115cb7d4996749c3436c7cd77fe2",
-      "SourceCapsuleArchive": "revalidation-history/sm5_d875d509c99a-7ba58d6289fba77a33d982dedf674fa2758a257b67a8dc34b6d932d484b8385f.wxf",
-      "RevalidationConfigurationSHA256": "3e131918aa90854bbeba5f2bab6e7b38eadefb390dcde57e9233a2bfb6b04c3b",
+      "RevalidationSeconds": 23.944514,
+      "RevalidationRandomSeed": 761829352,
+      "SourceCapsuleSHA256": "a8c8b29e1a7587acfd900c245af0d11213c0a2963ab13d673d3116956a63fa73",
+      "SourceSummarySHA256": "2bf6c71641ef82f0c51005676bbfb6b6949c7c6166cecd44686803b401b6b805",
+      "SourceCapsuleArchive": "revalidation-history/sm5_d875d509c99a-a8c8b29e1a7587acfd900c245af0d11213c0a2963ab13d673d3116956a63fa73.wxf",
+      "RevalidationConfigurationSHA256": "e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
       "RevalidationInventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+      "RevalidationScriptSHA256": "40dcfa1156a1d21704ce876906bb9da9fcd0236d3e8c3c8e01ba6c814321b761",
+      "RevalidationBenchmarkPolicySHA256": "31a277855acf4cd566e5ab7a70ecd7b1f491ddf7121d4d0162cd32870068a228",
       "Rows": 13,
       "FeynmanRows": 1,
       "CheckStatuses": {
         "PASS": 13
       },
       "FailureStage": null,
-      "CapsuleSHA256": "a8c8b29e1a7587acfd900c245af0d11213c0a2963ab13d673d3116956a63fa73"
+      "CapsuleSHA256": "abcebfa0afcd8f6637f8e4ab10e2f8a6b4e9a7a37669bbf52a45e491dccaf277"
     },
     "sm5_e37f70365148": {
       "ID": "sm5_e37f70365148",
@@ -490,24 +653,26 @@
       "Seconds": 64.434488,
       "Complexity": 346,
       "RandomSeed": 1611512888,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
-      "PreviousContextSHA256": "b7a316bd091a48dababda5c42e3c950c6ca96ce434bdf8bdaf917459c3f6cc9d",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "PreviousContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
       "ConstructionContextSHA256": "89596226666b1133c1e3cea431a34165b78878a5f0155b1e8c040d8effd10b4d",
       "RevalidationStatus": "PASS",
-      "RevalidationSeconds": 42.194126,
-      "RevalidationRandomSeed": 1373900224,
-      "SourceCapsuleSHA256": "93ff68ca255ed5da43b2066de6305e87db7b1ee3b30379b9bd5b04b8f45b04c9",
-      "SourceSummarySHA256": "18ca7a4a5b060324737843dc4237d9f9e7b39055eb82a3584b57652616b3e89a",
-      "SourceCapsuleArchive": "revalidation-history/sm5_e37f70365148-93ff68ca255ed5da43b2066de6305e87db7b1ee3b30379b9bd5b04b8f45b04c9.wxf",
-      "RevalidationConfigurationSHA256": "3e131918aa90854bbeba5f2bab6e7b38eadefb390dcde57e9233a2bfb6b04c3b",
+      "RevalidationSeconds": 27.785092,
+      "RevalidationRandomSeed": 1437686812,
+      "SourceCapsuleSHA256": "70d0f2c4b2a99107f556715083a3b84d1bf41f4002e864af6f06c06a56d01afe",
+      "SourceSummarySHA256": "dc30e10204b8b4e46212b1d2e976bf0505d3f05c79f7401e7b2a3a4a798f54a0",
+      "SourceCapsuleArchive": "revalidation-history/sm5_e37f70365148-70d0f2c4b2a99107f556715083a3b84d1bf41f4002e864af6f06c06a56d01afe.wxf",
+      "RevalidationConfigurationSHA256": "e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
       "RevalidationInventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+      "RevalidationScriptSHA256": "40dcfa1156a1d21704ce876906bb9da9fcd0236d3e8c3c8e01ba6c814321b761",
+      "RevalidationBenchmarkPolicySHA256": "31a277855acf4cd566e5ab7a70ecd7b1f491ddf7121d4d0162cd32870068a228",
       "Rows": 13,
       "FeynmanRows": 1,
       "CheckStatuses": {
         "PASS": 13
       },
       "FailureStage": null,
-      "CapsuleSHA256": "70d0f2c4b2a99107f556715083a3b84d1bf41f4002e864af6f06c06a56d01afe"
+      "CapsuleSHA256": "0806b2db3ca784ed0487a446b7bad53aa4ba3c636e238d4be851b9ec5f1ce9fb"
     },
     "sm5_2b62c112ba71": {
       "ID": "sm5_2b62c112ba71",
@@ -522,24 +687,26 @@
       "Seconds": 75.622658,
       "Complexity": 308,
       "RandomSeed": 447752672,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
-      "PreviousContextSHA256": "b7a316bd091a48dababda5c42e3c950c6ca96ce434bdf8bdaf917459c3f6cc9d",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "PreviousContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
       "ConstructionContextSHA256": "89596226666b1133c1e3cea431a34165b78878a5f0155b1e8c040d8effd10b4d",
       "RevalidationStatus": "PASS",
-      "RevalidationSeconds": 18.781594,
-      "RevalidationRandomSeed": 137354781,
-      "SourceCapsuleSHA256": "315ec41cc23bb8973b555816695ebec53fae4551a3d01d4eca1fec60f04ff00d",
-      "SourceSummarySHA256": "b9bcc362b44f2beebf08bedd85eb320c78eed1195ef6fd622cc75659895f8b75",
-      "SourceCapsuleArchive": "revalidation-history/sm5_2b62c112ba71-315ec41cc23bb8973b555816695ebec53fae4551a3d01d4eca1fec60f04ff00d.wxf",
-      "RevalidationConfigurationSHA256": "3e131918aa90854bbeba5f2bab6e7b38eadefb390dcde57e9233a2bfb6b04c3b",
+      "RevalidationSeconds": 25.266655,
+      "RevalidationRandomSeed": 668534061,
+      "SourceCapsuleSHA256": "b1e89e6fb7cf7824827d84966f96c68547092770d2ac399fb71b7d201e0fb8cb",
+      "SourceSummarySHA256": "1c814b8537c289a30f9424842da09c0566fc007b82098f7f20e2ca42cb425726",
+      "SourceCapsuleArchive": "revalidation-history/sm5_2b62c112ba71-b1e89e6fb7cf7824827d84966f96c68547092770d2ac399fb71b7d201e0fb8cb.wxf",
+      "RevalidationConfigurationSHA256": "e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
       "RevalidationInventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+      "RevalidationScriptSHA256": "40dcfa1156a1d21704ce876906bb9da9fcd0236d3e8c3c8e01ba6c814321b761",
+      "RevalidationBenchmarkPolicySHA256": "31a277855acf4cd566e5ab7a70ecd7b1f491ddf7121d4d0162cd32870068a228",
       "Rows": 13,
       "FeynmanRows": 1,
       "CheckStatuses": {
         "PASS": 13
       },
       "FailureStage": null,
-      "CapsuleSHA256": "b1e89e6fb7cf7824827d84966f96c68547092770d2ac399fb71b7d201e0fb8cb"
+      "CapsuleSHA256": "def405040852dfa99a34b6e518ef99b2aa3908c0b731b96e30d908d5ad2bc377"
     },
     "sm5_f054d78b1de0": {
       "ID": "sm5_f054d78b1de0",
@@ -554,24 +721,26 @@
       "Seconds": 63.820824,
       "Complexity": 346,
       "RandomSeed": 1948179260,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
-      "PreviousContextSHA256": "b7a316bd091a48dababda5c42e3c950c6ca96ce434bdf8bdaf917459c3f6cc9d",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "PreviousContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
       "ConstructionContextSHA256": "89596226666b1133c1e3cea431a34165b78878a5f0155b1e8c040d8effd10b4d",
       "RevalidationStatus": "PASS",
-      "RevalidationSeconds": 49.923354,
-      "RevalidationRandomSeed": 1128614923,
-      "SourceCapsuleSHA256": "55012ec1e1dc7a142865f1c4b514fd4cd4835f81e5cfaade72e6126fb0c1d96d",
-      "SourceSummarySHA256": "bbf8eb76a9ac20fc1df8c0d2b3861d7c3c441febbc7b37b74f5fe03c1cf39dea",
-      "SourceCapsuleArchive": "revalidation-history/sm5_f054d78b1de0-55012ec1e1dc7a142865f1c4b514fd4cd4835f81e5cfaade72e6126fb0c1d96d.wxf",
-      "RevalidationConfigurationSHA256": "3e131918aa90854bbeba5f2bab6e7b38eadefb390dcde57e9233a2bfb6b04c3b",
+      "RevalidationSeconds": 47.22029,
+      "RevalidationRandomSeed": 1236746792,
+      "SourceCapsuleSHA256": "ab7ab100949bfe1515cfc0d2e304d2982367ab93167e9fddf71317b048d0e1ec",
+      "SourceSummarySHA256": "646d8582d799989ffeb6aad58b4b6a4af775454844dbb01dea1c6c5d2cf6fce9",
+      "SourceCapsuleArchive": "revalidation-history/sm5_f054d78b1de0-ab7ab100949bfe1515cfc0d2e304d2982367ab93167e9fddf71317b048d0e1ec.wxf",
+      "RevalidationConfigurationSHA256": "e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
       "RevalidationInventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+      "RevalidationScriptSHA256": "40dcfa1156a1d21704ce876906bb9da9fcd0236d3e8c3c8e01ba6c814321b761",
+      "RevalidationBenchmarkPolicySHA256": "31a277855acf4cd566e5ab7a70ecd7b1f491ddf7121d4d0162cd32870068a228",
       "Rows": 13,
       "FeynmanRows": 1,
       "CheckStatuses": {
         "PASS": 13
       },
       "FailureStage": null,
-      "CapsuleSHA256": "ab7ab100949bfe1515cfc0d2e304d2982367ab93167e9fddf71317b048d0e1ec"
+      "CapsuleSHA256": "27d0fe586b14c421a7d2db892a0c056f4f9253a4e046466118472ade78773608"
     },
     "sm5_5e6899a354d5": {
       "ID": "sm5_5e6899a354d5",
@@ -586,24 +755,26 @@
       "Seconds": 29.135759,
       "Complexity": 44,
       "RandomSeed": 1729200919,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
-      "PreviousContextSHA256": "b7a316bd091a48dababda5c42e3c950c6ca96ce434bdf8bdaf917459c3f6cc9d",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "PreviousContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
       "ConstructionContextSHA256": "b7a316bd091a48dababda5c42e3c950c6ca96ce434bdf8bdaf917459c3f6cc9d",
       "RevalidationStatus": "PASS",
-      "RevalidationSeconds": 7.614886,
-      "RevalidationRandomSeed": 994284078,
-      "SourceCapsuleSHA256": "0fa7d0d1e34a8fd0d2fbb41c1474c528e3de1d6bdfbb29100bb04a377d71cb7e",
-      "SourceSummarySHA256": "7138949b73bc2663cc7ed38cf1ef9c2fee55a00bfef8ff4c51a13a490837aceb",
-      "SourceCapsuleArchive": "revalidation-history/sm5_5e6899a354d5-0fa7d0d1e34a8fd0d2fbb41c1474c528e3de1d6bdfbb29100bb04a377d71cb7e.wxf",
-      "RevalidationConfigurationSHA256": "3e131918aa90854bbeba5f2bab6e7b38eadefb390dcde57e9233a2bfb6b04c3b",
+      "RevalidationSeconds": 7.329294,
+      "RevalidationRandomSeed": 984046136,
+      "SourceCapsuleSHA256": "c7086d983caeeb32ec246a583e6cd3553af87fb5595f70acf13939273e2d16f7",
+      "SourceSummarySHA256": "7e80c41a7f833205c1fbbd9970fe90ad36e801cde7ddd69a54589cfe9a81d016",
+      "SourceCapsuleArchive": "revalidation-history/sm5_5e6899a354d5-c7086d983caeeb32ec246a583e6cd3553af87fb5595f70acf13939273e2d16f7.wxf",
+      "RevalidationConfigurationSHA256": "e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
       "RevalidationInventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+      "RevalidationScriptSHA256": "40dcfa1156a1d21704ce876906bb9da9fcd0236d3e8c3c8e01ba6c814321b761",
+      "RevalidationBenchmarkPolicySHA256": "31a277855acf4cd566e5ab7a70ecd7b1f491ddf7121d4d0162cd32870068a228",
       "Rows": 7,
       "FeynmanRows": 1,
       "CheckStatuses": {
         "PASS": 7
       },
       "FailureStage": null,
-      "CapsuleSHA256": "c7086d983caeeb32ec246a583e6cd3553af87fb5595f70acf13939273e2d16f7"
+      "CapsuleSHA256": "d43bdda18599ea6fe3b0243b7799d37d3ecd172da012f996a82dfc04e288a04e"
     },
     "sm5_6de51e54965d": {
       "ID": "sm5_6de51e54965d",
@@ -618,24 +789,26 @@
       "Seconds": 29.299778,
       "Complexity": 44,
       "RandomSeed": 1410724701,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
-      "PreviousContextSHA256": "b7a316bd091a48dababda5c42e3c950c6ca96ce434bdf8bdaf917459c3f6cc9d",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "PreviousContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
       "ConstructionContextSHA256": "b7a316bd091a48dababda5c42e3c950c6ca96ce434bdf8bdaf917459c3f6cc9d",
       "RevalidationStatus": "PASS",
-      "RevalidationSeconds": 7.920441,
-      "RevalidationRandomSeed": 1938002536,
-      "SourceCapsuleSHA256": "bf55f2a30324fbc97eadb62be18854fde88b8bc535bd2ff53b92a9a118301fbb",
-      "SourceSummarySHA256": "f637c9b8f9bdc46dfdde7da010c5016ea18d81d02457c2bbe99cea5ed1a6cdb9",
-      "SourceCapsuleArchive": "revalidation-history/sm5_6de51e54965d-bf55f2a30324fbc97eadb62be18854fde88b8bc535bd2ff53b92a9a118301fbb.wxf",
-      "RevalidationConfigurationSHA256": "3e131918aa90854bbeba5f2bab6e7b38eadefb390dcde57e9233a2bfb6b04c3b",
+      "RevalidationSeconds": 6.698305,
+      "RevalidationRandomSeed": 405337664,
+      "SourceCapsuleSHA256": "a1e3639f388ebacb905b5130b317ff9b0f3b3a435cee1f4c915d09a356ff838b",
+      "SourceSummarySHA256": "6efc9a527dd62b8274f5c49bfa3c41b641b373d0411cf4daf8442849648c5975",
+      "SourceCapsuleArchive": "revalidation-history/sm5_6de51e54965d-a1e3639f388ebacb905b5130b317ff9b0f3b3a435cee1f4c915d09a356ff838b.wxf",
+      "RevalidationConfigurationSHA256": "e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
       "RevalidationInventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+      "RevalidationScriptSHA256": "40dcfa1156a1d21704ce876906bb9da9fcd0236d3e8c3c8e01ba6c814321b761",
+      "RevalidationBenchmarkPolicySHA256": "31a277855acf4cd566e5ab7a70ecd7b1f491ddf7121d4d0162cd32870068a228",
       "Rows": 7,
       "FeynmanRows": 1,
       "CheckStatuses": {
         "PASS": 7
       },
       "FailureStage": null,
-      "CapsuleSHA256": "a1e3639f388ebacb905b5130b317ff9b0f3b3a435cee1f4c915d09a356ff838b"
+      "CapsuleSHA256": "80e169ac283092d44c2973e0b11bc06bae73891caa44c0f612d33a946b9748da"
     },
     "sm5_35ce57835a02": {
       "ID": "sm5_35ce57835a02",
@@ -650,14 +823,26 @@
       "Seconds": 24.916666,
       "Complexity": 27,
       "RandomSeed": 827371164,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "PreviousContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ConstructionContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "RevalidationStatus": "PASS",
+      "RevalidationSeconds": 14.316894,
+      "RevalidationRandomSeed": 17256573,
+      "SourceCapsuleSHA256": "81fa265af91b068de9ca636a77f30ee21e26a4f852a2b605d7f0344da76092f3",
+      "SourceSummarySHA256": "fbfcd2d38879985029c88a7cbcdfece94b73c1eca0e75716c059180055f1cf97",
+      "SourceCapsuleArchive": "revalidation-history/sm5_35ce57835a02-81fa265af91b068de9ca636a77f30ee21e26a4f852a2b605d7f0344da76092f3.wxf",
+      "RevalidationConfigurationSHA256": "e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
+      "RevalidationInventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+      "RevalidationScriptSHA256": "40dcfa1156a1d21704ce876906bb9da9fcd0236d3e8c3c8e01ba6c814321b761",
+      "RevalidationBenchmarkPolicySHA256": "31a277855acf4cd566e5ab7a70ecd7b1f491ddf7121d4d0162cd32870068a228",
       "Rows": 9,
       "FeynmanRows": 1,
       "CheckStatuses": {
         "PASS": 9
       },
       "FailureStage": null,
-      "CapsuleSHA256": "81fa265af91b068de9ca636a77f30ee21e26a4f852a2b605d7f0344da76092f3"
+      "CapsuleSHA256": "70d0cbb33ed622e11f4a32eb429144d9baed2a2dd1e20c75b535768a558b1d7a"
     },
     "sm5_880ff0404201": {
       "ID": "sm5_880ff0404201",
@@ -672,14 +857,26 @@
       "Seconds": 81.421822,
       "Complexity": 114,
       "RandomSeed": 1659721616,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "PreviousContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ConstructionContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "RevalidationStatus": "PASS",
+      "RevalidationSeconds": 26.806883,
+      "RevalidationRandomSeed": 1812989167,
+      "SourceCapsuleSHA256": "662d716e89768985bb3b2a51f8a0784e40a7a88985e03bdc89b22ca7a5cd7f84",
+      "SourceSummarySHA256": "967a060cddd1d337864ad70dad9062381266a2abf56bc6336eeedd1e07b0e9da",
+      "SourceCapsuleArchive": "revalidation-history/sm5_880ff0404201-662d716e89768985bb3b2a51f8a0784e40a7a88985e03bdc89b22ca7a5cd7f84.wxf",
+      "RevalidationConfigurationSHA256": "e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
+      "RevalidationInventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+      "RevalidationScriptSHA256": "40dcfa1156a1d21704ce876906bb9da9fcd0236d3e8c3c8e01ba6c814321b761",
+      "RevalidationBenchmarkPolicySHA256": "31a277855acf4cd566e5ab7a70ecd7b1f491ddf7121d4d0162cd32870068a228",
       "Rows": 9,
       "FeynmanRows": 1,
       "CheckStatuses": {
         "PASS": 9
       },
       "FailureStage": null,
-      "CapsuleSHA256": "662d716e89768985bb3b2a51f8a0784e40a7a88985e03bdc89b22ca7a5cd7f84"
+      "CapsuleSHA256": "0e5cd308de71e1e9e60f53430f823c527831ad1dec063a6a4275fddf967c08d1"
     },
     "sm5_ab268fdb92fa": {
       "ID": "sm5_ab268fdb92fa",
@@ -694,14 +891,26 @@
       "Seconds": 100.73431,
       "Complexity": 133,
       "RandomSeed": 1640905464,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "PreviousContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ConstructionContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "RevalidationStatus": "PASS",
+      "RevalidationSeconds": 29.312377,
+      "RevalidationRandomSeed": 960102854,
+      "SourceCapsuleSHA256": "c9d483a8059bf7fafdb595b9d9093a3002f341f6fe700b49435570838e4931de",
+      "SourceSummarySHA256": "de807b7d96118fb7412da4682ec4ee5c48e20018853d31db7556a8481e176ba8",
+      "SourceCapsuleArchive": "revalidation-history/sm5_ab268fdb92fa-c9d483a8059bf7fafdb595b9d9093a3002f341f6fe700b49435570838e4931de.wxf",
+      "RevalidationConfigurationSHA256": "e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
+      "RevalidationInventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+      "RevalidationScriptSHA256": "40dcfa1156a1d21704ce876906bb9da9fcd0236d3e8c3c8e01ba6c814321b761",
+      "RevalidationBenchmarkPolicySHA256": "31a277855acf4cd566e5ab7a70ecd7b1f491ddf7121d4d0162cd32870068a228",
       "Rows": 9,
       "FeynmanRows": 1,
       "CheckStatuses": {
         "PASS": 9
       },
       "FailureStage": null,
-      "CapsuleSHA256": "c9d483a8059bf7fafdb595b9d9093a3002f341f6fe700b49435570838e4931de"
+      "CapsuleSHA256": "d2a232fa39ce6509b728f412fd2a01546a5d08d4b674a5c9117827905bd4aa3f"
     },
     "sm5_1a226d4c246a": {
       "ID": "sm5_1a226d4c246a",
@@ -716,14 +925,246 @@
       "Seconds": 39.050314,
       "Complexity": 27,
       "RandomSeed": 1050533546,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "PreviousContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ConstructionContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "RevalidationStatus": "PASS",
+      "RevalidationSeconds": 24.224921,
+      "RevalidationRandomSeed": 582112657,
+      "SourceCapsuleSHA256": "288f77d98fae1f60ce950e7fc3fa7e3ff7ee34d3f68f3f0825cb1daa7602b9f5",
+      "SourceSummarySHA256": "afa007fe5f903cd83a1856e8741223beb610ac441c617b7810a08a795c7a344c",
+      "SourceCapsuleArchive": "revalidation-history/sm5_1a226d4c246a-288f77d98fae1f60ce950e7fc3fa7e3ff7ee34d3f68f3f0825cb1daa7602b9f5.wxf",
+      "RevalidationConfigurationSHA256": "e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
+      "RevalidationInventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+      "RevalidationScriptSHA256": "40dcfa1156a1d21704ce876906bb9da9fcd0236d3e8c3c8e01ba6c814321b761",
+      "RevalidationBenchmarkPolicySHA256": "31a277855acf4cd566e5ab7a70ecd7b1f491ddf7121d4d0162cd32870068a228",
       "Rows": 9,
       "FeynmanRows": 1,
       "CheckStatuses": {
         "PASS": 9
       },
       "FailureStage": null,
-      "CapsuleSHA256": "288f77d98fae1f60ce950e7fc3fa7e3ff7ee34d3f68f3f0825cb1daa7602b9f5"
+      "CapsuleSHA256": "0054f8a0e027c220f8d30e6ad8701c37e5158cb5cc28ffef0db624e91dac16a5"
+    },
+    "sm5_e0545bdcd724": {
+      "ID": "sm5_e0545bdcd724",
+      "Particles": [
+        "m",
+        "M",
+        "A.+",
+        "A.+",
+        "A.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 29.737559,
+      "Complexity": 27,
+      "RandomSeed": 2050183197,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 9,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 9
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "291e78f151465d8b71d55697a2582dfc520e185e3a42cf24fd9a2b9e9dc6ea53"
+    },
+    "sm5_26d38e383edc": {
+      "ID": "sm5_26d38e383edc",
+      "Particles": [
+        "m",
+        "M",
+        "A.+",
+        "A.+",
+        "A.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 91.030652,
+      "Complexity": 132,
+      "RandomSeed": 1903614335,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 9,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 9
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "f3258a5c5d671491fe593a4b0f23ca0cbf1e54cee72dd909243f232bbebdd477"
+    },
+    "sm5_c5f65a3d17b7": {
+      "ID": "sm5_c5f65a3d17b7",
+      "Particles": [
+        "m",
+        "M",
+        "A.+",
+        "A.-",
+        "A.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 88.518316,
+      "Complexity": 133,
+      "RandomSeed": 519057430,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 9,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 9
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "a74cd24ee41989410a42ce23818974e531fe7ba34834563ddb999b19e7b28f3d"
+    },
+    "sm5_65c3bd4f49f8": {
+      "ID": "sm5_65c3bd4f49f8",
+      "Particles": [
+        "m",
+        "M",
+        "A.-",
+        "A.-",
+        "A.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 29.673882,
+      "Complexity": 27,
+      "RandomSeed": 851262224,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 9,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 9
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "d11f8f44d09f9e2ec09d44837925531bc16f0fe9060cc65a075aed1d7e17f517"
+    },
+    "sm5_a3e116df3cc8": {
+      "ID": "sm5_a3e116df3cc8",
+      "Particles": [
+        "l",
+        "L",
+        "A.+",
+        "A.+",
+        "A.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 26.892981,
+      "Complexity": 27,
+      "RandomSeed": 144624786,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 9,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 9
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "7c0284093d4f9f0719d3ad3fc9324c79137a433227cebb9321928af93dc3985b"
+    },
+    "sm5_0f922be8a65d": {
+      "ID": "sm5_0f922be8a65d",
+      "Particles": [
+        "l",
+        "L",
+        "A.+",
+        "A.+",
+        "A.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 80.410127,
+      "Complexity": 132,
+      "RandomSeed": 1095469081,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 9,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 9
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "8eea9e3b5e04ec8aa5e71889b5f20b4f67642ae35b30908dd953898b2783f2b0"
+    },
+    "sm5_10cddd0102e1": {
+      "ID": "sm5_10cddd0102e1",
+      "Particles": [
+        "l",
+        "L",
+        "A.+",
+        "A.-",
+        "A.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 78.419784,
+      "Complexity": 133,
+      "RandomSeed": 1249953360,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 9,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 9
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "a662945fcaad51d9022e0657b285a32cc3c721024ab58a3f75d9348a322ce918"
+    },
+    "sm5_5793a58b92b9": {
+      "ID": "sm5_5793a58b92b9",
+      "Particles": [
+        "l",
+        "L",
+        "A.-",
+        "A.-",
+        "A.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 33.311157,
+      "Complexity": 27,
+      "RandomSeed": 352109885,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 9,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 9
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "8e3a008ebf80e58482fd1b815556d673f5aae5551ba49e486f68a7773c5a8729"
+    },
+    "sm5_5d1ac95681bd": {
+      "ID": "sm5_5d1ac95681bd",
+      "Particles": [
+        "d",
+        "D",
+        "G.+",
+        "h",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 234.858607,
+      "Complexity": 727,
+      "RandomSeed": 645900029,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 10,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 10
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "b6c970da1b5cb6d60de356497ad724be41444b31f849f8754f3126f794d1eafd"
+    },
+    "sm5_c096b4bb2dde": {
+      "ID": "sm5_c096b4bb2dde",
+      "Particles": [
+        "d",
+        "D",
+        "G.-",
+        "h",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 225.259684,
+      "Complexity": 658,
+      "RandomSeed": 1198937894,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 10,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 10
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "0aac894228d7888615674d9f119f15ba57b67da8a4b3b9a5d5d4f44a4a15e6c2"
     },
     "sm5_084ff504b71a": {
       "ID": "sm5_084ff504b71a",
@@ -738,14 +1179,26 @@
       "Seconds": 213.814046,
       "Complexity": 727,
       "RandomSeed": 1746389500,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "PreviousContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ConstructionContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "RevalidationStatus": "PASS",
+      "RevalidationSeconds": 63.366844,
+      "RevalidationRandomSeed": 1639366477,
+      "SourceCapsuleSHA256": "3b0b64d1e326c74fc0cc629213fbb19b774270c0d85669eb8ec762182211c1e9",
+      "SourceSummarySHA256": "4c47fe35a9588cd84c87a5da6cefa76f6624be8a3eaceb7cc708a871cd75b511",
+      "SourceCapsuleArchive": "revalidation-history/sm5_084ff504b71a-3b0b64d1e326c74fc0cc629213fbb19b774270c0d85669eb8ec762182211c1e9.wxf",
+      "RevalidationConfigurationSHA256": "e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
+      "RevalidationInventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+      "RevalidationScriptSHA256": "40dcfa1156a1d21704ce876906bb9da9fcd0236d3e8c3c8e01ba6c814321b761",
+      "RevalidationBenchmarkPolicySHA256": "31a277855acf4cd566e5ab7a70ecd7b1f491ddf7121d4d0162cd32870068a228",
       "Rows": 10,
       "FeynmanRows": 1,
       "CheckStatuses": {
         "PASS": 10
       },
       "FailureStage": null,
-      "CapsuleSHA256": "3b0b64d1e326c74fc0cc629213fbb19b774270c0d85669eb8ec762182211c1e9"
+      "CapsuleSHA256": "851cd468d34e26f1a061661e8c7e59d276debacda96ccc52542c9fd3ecc21d67"
     },
     "sm5_84ab33486d0e": {
       "ID": "sm5_84ab33486d0e",
@@ -760,14 +1213,48 @@
       "Seconds": 209.736376,
       "Complexity": 633,
       "RandomSeed": 283676376,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "PreviousContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ConstructionContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "RevalidationStatus": "PASS",
+      "RevalidationSeconds": 65.68345,
+      "RevalidationRandomSeed": 882663536,
+      "SourceCapsuleSHA256": "b85809c8b1f02861799a00537efb70860caa73acc9a17b3c3e39a5e87d38eb41",
+      "SourceSummarySHA256": "e269f061767f9fab6b912548e5de5cb76492b0eece7fe4db1e43a5310b868fa0",
+      "SourceCapsuleArchive": "revalidation-history/sm5_84ab33486d0e-b85809c8b1f02861799a00537efb70860caa73acc9a17b3c3e39a5e87d38eb41.wxf",
+      "RevalidationConfigurationSHA256": "e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
+      "RevalidationInventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+      "RevalidationScriptSHA256": "40dcfa1156a1d21704ce876906bb9da9fcd0236d3e8c3c8e01ba6c814321b761",
+      "RevalidationBenchmarkPolicySHA256": "31a277855acf4cd566e5ab7a70ecd7b1f491ddf7121d4d0162cd32870068a228",
       "Rows": 10,
       "FeynmanRows": 1,
       "CheckStatuses": {
         "PASS": 10
       },
       "FailureStage": null,
-      "CapsuleSHA256": "b85809c8b1f02861799a00537efb70860caa73acc9a17b3c3e39a5e87d38eb41"
+      "CapsuleSHA256": "d35d45754d04c35abffed8a45bb5400c0476b11df53c70de29fabdb8f62ea8be"
+    },
+    "sm5_b36ee12dfba9": {
+      "ID": "sm5_b36ee12dfba9",
+      "Particles": [
+        "ne",
+        "Ne",
+        "d",
+        "D",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 76.969548,
+      "Complexity": 36,
+      "RandomSeed": 1898113073,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 7,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 7
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "cd4b321ef0c1e622d15889837d88d7b3bee1bb84413eed3079d141660a8f73cd"
     },
     "sm5_37f9f9b4075f": {
       "ID": "sm5_37f9f9b4075f",
@@ -782,14 +1269,92 @@
       "Seconds": 82.802239,
       "Complexity": 98,
       "RandomSeed": 2020729688,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "PreviousContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ConstructionContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "RevalidationStatus": "PASS",
+      "RevalidationSeconds": 34.899253,
+      "RevalidationRandomSeed": 1521883661,
+      "SourceCapsuleSHA256": "35462a51e4d895038d454f9cb3f2731003bbb9236a2c22c5bd3dcdd09c8bd618",
+      "SourceSummarySHA256": "c169ed2fbd98e8a54499b84b6a7a0c40dfe159f65162677e53c90ecdb3df3d7d",
+      "SourceCapsuleArchive": "revalidation-history/sm5_37f9f9b4075f-35462a51e4d895038d454f9cb3f2731003bbb9236a2c22c5bd3dcdd09c8bd618.wxf",
+      "RevalidationConfigurationSHA256": "e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
+      "RevalidationInventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+      "RevalidationScriptSHA256": "40dcfa1156a1d21704ce876906bb9da9fcd0236d3e8c3c8e01ba6c814321b761",
+      "RevalidationBenchmarkPolicySHA256": "31a277855acf4cd566e5ab7a70ecd7b1f491ddf7121d4d0162cd32870068a228",
       "Rows": 8,
       "FeynmanRows": 1,
       "CheckStatuses": {
         "PASS": 8
       },
       "FailureStage": null,
-      "CapsuleSHA256": "35462a51e4d895038d454f9cb3f2731003bbb9236a2c22c5bd3dcdd09c8bd618"
+      "CapsuleSHA256": "51d4441c314922aebf4d87f19344ee9c939ddfc466d6eee2df72713ad5299d93"
+    },
+    "sm5_402e97e4d880": {
+      "ID": "sm5_402e97e4d880",
+      "Particles": [
+        "e",
+        "E",
+        "ne",
+        "Ne",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 124.143678,
+      "Complexity": 94,
+      "RandomSeed": 1074655986,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 9,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 9
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "8d99aec4908d2f54437cf84f4b41c798426b1fe7aabd01c5c8cbadad23d4d935"
+    },
+    "sm5_da857dc86c70": {
+      "ID": "sm5_da857dc86c70",
+      "Particles": [
+        "E",
+        "ne",
+        "U",
+        "d",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 82.285914,
+      "Complexity": 98,
+      "RandomSeed": 1505918225,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 8,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 8
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "1aa7b5ffc31f478b5417b2a41ea4abe469adc01b4891bd845f6d5d277ba8ef6a"
+    },
+    "sm5_0670438f36bf": {
+      "ID": "sm5_0670438f36bf",
+      "Particles": [
+        "ne",
+        "Ne",
+        "ne",
+        "Ne",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 26.12454,
+      "Complexity": 2,
+      "RandomSeed": 1057527777,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 7,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 7
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "915f0a2feeb38cfd673a344b0be58929cd92c10b6c2090bc74535fc272a803ec"
     },
     "sm5_46dff720d04e": {
       "ID": "sm5_46dff720d04e",
@@ -804,76 +1369,1914 @@
       "Seconds": 962.649004,
       "Complexity": 2194,
       "RandomSeed": 1075377241,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "PreviousContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ConstructionContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "RevalidationStatus": "PASS",
+      "RevalidationSeconds": 66.39216,
+      "RevalidationRandomSeed": 455307313,
+      "SourceCapsuleSHA256": "b61ed1a0cae271b79c7554271505ed9c8db9cdcc133d5ff4516604ed287a8c4b",
+      "SourceSummarySHA256": "0a1dceaa06d1b3948eb47f188d9784694c48996b791058912401be86c91d6d10",
+      "SourceCapsuleArchive": "revalidation-history/sm5_46dff720d04e-b61ed1a0cae271b79c7554271505ed9c8db9cdcc133d5ff4516604ed287a8c4b.wxf",
+      "RevalidationConfigurationSHA256": "e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
+      "RevalidationInventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+      "RevalidationScriptSHA256": "40dcfa1156a1d21704ce876906bb9da9fcd0236d3e8c3c8e01ba6c814321b761",
+      "RevalidationBenchmarkPolicySHA256": "31a277855acf4cd566e5ab7a70ecd7b1f491ddf7121d4d0162cd32870068a228",
       "Rows": 13,
       "FeynmanRows": 1,
       "CheckStatuses": {
         "PASS": 13
       },
       "FailureStage": null,
-      "CapsuleSHA256": "b61ed1a0cae271b79c7554271505ed9c8db9cdcc133d5ff4516604ed287a8c4b"
+      "CapsuleSHA256": "41a651e642a0fb57adf6a128a1df11b2d7eb196fccca581d7b19850e0dddcfd9"
+    },
+    "sm5_f508e8259839": {
+      "ID": "sm5_f508e8259839",
+      "Particles": [
+        "ne",
+        "Ne",
+        "nm",
+        "Nm",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 10.223298,
+      "Complexity": 1,
+      "RandomSeed": 637541073,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 5,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 5
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "e73d6dd8d44d4f440a8d5e0b3d910eda32b04d7a1985d0829887a49ccff5ccbd"
+    },
+    "sm5_5ee27a525e6f": {
+      "ID": "sm5_5ee27a525e6f",
+      "Particles": [
+        "E",
+        "ne",
+        "C",
+        "s",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 77.438347,
+      "Complexity": 98,
+      "RandomSeed": 421533749,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 8,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 8
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "92a14cbb18ab6bd39fcf1ce46556b76c3f7c9d82cfe047a431d1b9cf54565215"
+    },
+    "sm5_d1a96c671577": {
+      "ID": "sm5_d1a96c671577",
+      "Particles": [
+        "u",
+        "D",
+        "m",
+        "Nm",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 64.16918,
+      "Complexity": 98,
+      "RandomSeed": 994190182,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 8,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 8
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "4aaf2b7fc2831453f228fd94f503b6f8419c07290220c1273c40abbad43b0b36"
+    },
+    "sm5_7767f6e9f98e": {
+      "ID": "sm5_7767f6e9f98e",
+      "Particles": [
+        "U",
+        "d",
+        "M",
+        "nm",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 67.866845,
+      "Complexity": 98,
+      "RandomSeed": 660732695,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 8,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 8
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "bf372c6f0968eb15d332166331e0098aa4f12a7fbac0473f74f8278a52aace39"
+    },
+    "sm5_f7742d3aed97": {
+      "ID": "sm5_f7742d3aed97",
+      "Particles": [
+        "e",
+        "Ne",
+        "c",
+        "S",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 98.904382,
+      "Complexity": 98,
+      "RandomSeed": 1588045514,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 8,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 8
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "407de4381dd07de31dff97d81090002aee5eac59caa8be084fa14f98f79da257"
+    },
+    "sm5_91637842c938": {
+      "ID": "sm5_91637842c938",
+      "Particles": [
+        "e",
+        "Ne",
+        "t",
+        "B",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 140.615197,
+      "Complexity": 98,
+      "RandomSeed": 1023182958,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 8,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 8
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "51093e67af19917121ce2283b8b680cdccbf1ce291a80713dee350dadffb759d"
+    },
+    "sm5_2fd20d2de292": {
+      "ID": "sm5_2fd20d2de292",
+      "Particles": [
+        "u",
+        "D",
+        "l",
+        "Nl",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 61.877204,
+      "Complexity": 98,
+      "RandomSeed": 2025355955,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 8,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 8
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "5d1c1be25886955c7f7111c999cd90ce74ae1e035b47376d35d570b279fe0bd2"
+    },
+    "sm5_8605d425fbaf": {
+      "ID": "sm5_8605d425fbaf",
+      "Particles": [
+        "E",
+        "ne",
+        "T",
+        "b",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 122.102858,
+      "Complexity": 98,
+      "RandomSeed": 334113249,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 8,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 8
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "74eb62bf9e187e16e44d14256c08f01039ab02979ca5ae32b6c89dbebb885dcf"
+    },
+    "sm5_74733e3c96c4": {
+      "ID": "sm5_74733e3c96c4",
+      "Particles": [
+        "U",
+        "d",
+        "L",
+        "nl",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 63.891284,
+      "Complexity": 98,
+      "RandomSeed": 629998501,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 8,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 8
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "32221f3f93d88e370599854399a6c1881a3cc89e62c064a083126e953b0ad0af"
+    },
+    "sm5_e023676f6986": {
+      "ID": "sm5_e023676f6986",
+      "Particles": [
+        "ne",
+        "Ne",
+        "nl",
+        "Nl",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 11.456848,
+      "Complexity": 1,
+      "RandomSeed": 1897305696,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 5,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 5
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "ed28b0f57dd08a8129d17a82d6bd98c797335e2a8f726442cb58e2814cf6ae49"
+    },
+    "sm5_bae6ff8caa93": {
+      "ID": "sm5_bae6ff8caa93",
+      "Particles": [
+        "M",
+        "nm",
+        "C",
+        "s",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 127.412334,
+      "Complexity": 98,
+      "RandomSeed": 1184562691,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 8,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 8
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "57e9361b587ebb15e2736b4879444a99f437a37d9d55bb0c97dc9ce665260da4"
+    },
+    "sm5_8c112cf47858": {
+      "ID": "sm5_8c112cf47858",
+      "Particles": [
+        "nm",
+        "Nm",
+        "nm",
+        "Nm",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 14.941823,
+      "Complexity": 2,
+      "RandomSeed": 2070079847,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 7,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 7
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "f8f24c8ff7afcf295f1412cf008dbf5ac78f90baad0f321495746b42d3581270"
+    },
+    "sm5_842135ff836d": {
+      "ID": "sm5_842135ff836d",
+      "Particles": [
+        "m",
+        "Nm",
+        "c",
+        "S",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 85.919136,
+      "Complexity": 98,
+      "RandomSeed": 1374109607,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 8,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 8
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "10919707935254e2e81d1730bc87fa60f7defb6f618c6351265eb97df2b4cbd5"
+    },
+    "sm5_50a9d461bcbd": {
+      "ID": "sm5_50a9d461bcbd",
+      "Particles": [
+        "m",
+        "Nm",
+        "t",
+        "B",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 83.458492,
+      "Complexity": 98,
+      "RandomSeed": 513653558,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 8,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 8
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "96d2a98e0929d382dcecf12806c408463c270858b9a0cc38eb6dce494681213c"
+    },
+    "sm5_af1c593193b7": {
+      "ID": "sm5_af1c593193b7",
+      "Particles": [
+        "C",
+        "s",
+        "L",
+        "nl",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 87.717195,
+      "Complexity": 98,
+      "RandomSeed": 2033526446,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 8,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 8
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "766a4b389e91ffc24bda212fd50c0608a98e58bf50388645f21e3cff21666f74"
+    },
+    "sm5_b97866bac15b": {
+      "ID": "sm5_b97866bac15b",
+      "Particles": [
+        "M",
+        "nm",
+        "T",
+        "b",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 82.419083,
+      "Complexity": 98,
+      "RandomSeed": 363929133,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 8,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 8
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "c1f52fb02bd786a527e90c223f7e0b809cd23412874fd393d65db4476b71939f"
+    },
+    "sm5_060cd6d92ebd": {
+      "ID": "sm5_060cd6d92ebd",
+      "Particles": [
+        "nm",
+        "Nm",
+        "nl",
+        "Nl",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 11.2633,
+      "Complexity": 1,
+      "RandomSeed": 1993123594,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 5,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 5
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "2ed2a5c6525123e4ffbabcc9fa39eeef730414a42b91b5e745631b21fadf079b"
+    },
+    "sm5_710b020e11fc": {
+      "ID": "sm5_710b020e11fc",
+      "Particles": [
+        "c",
+        "S",
+        "l",
+        "Nl",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 87.005434,
+      "Complexity": 98,
+      "RandomSeed": 603053809,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 8,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 8
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "e4e0143918e7a65fcb7c2bf3c956249453eb3d6c9adaff5c532eadbc8ad9cead"
+    },
+    "sm5_693568bc5d03": {
+      "ID": "sm5_693568bc5d03",
+      "Particles": [
+        "l",
+        "Nl",
+        "t",
+        "B",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 84.522625,
+      "Complexity": 98,
+      "RandomSeed": 2076595585,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 8,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 8
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "615392737e23e3c7a5de5d8d3fd93babf5c20a83053d3b0839321f3e8ee79ddc"
+    },
+    "sm5_4e216e4868c5": {
+      "ID": "sm5_4e216e4868c5",
+      "Particles": [
+        "L",
+        "nl",
+        "T",
+        "b",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 77.890402,
+      "Complexity": 98,
+      "RandomSeed": 570430930,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 8,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 8
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "399903a2af93f2412de1b4328f91165378b67828cda0c3f0f767354ed73e1add"
+    },
+    "sm5_f78b3f6e8279": {
+      "ID": "sm5_f78b3f6e8279",
+      "Particles": [
+        "nl",
+        "Nl",
+        "nl",
+        "Nl",
+        "h"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 12.418577,
+      "Complexity": 2,
+      "RandomSeed": 455774590,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 7,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 7
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "624587b27de2db7527a1bbf4f35f82db9f66f4f3b24662154cfe6404c4fba6b9"
+    },
+    "sm5_acc142e348c6": {
+      "ID": "sm5_acc142e348c6",
+      "Particles": [
+        "ne",
+        "Ne",
+        "ne",
+        "Ne",
+        "Z"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 67.246973,
+      "Complexity": 16,
+      "RandomSeed": 757909178,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 11,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 11
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "0047037c0b58727ef87a749d9a93100c07c3c485d17b506bdc8fc36f577eaa60"
+    },
+    "sm5_247da7a2e65f": {
+      "ID": "sm5_247da7a2e65f",
+      "Particles": [
+        "ne",
+        "Ne",
+        "nm",
+        "Nm",
+        "Z"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 53.393549,
+      "Complexity": 8,
+      "RandomSeed": 1141123872,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 9,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 9
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "359adf2fac1c2beb8d550b85272b703f85e0b9624d0c8457141b90b9f9108fd8"
+    },
+    "sm5_794a46674f15": {
+      "ID": "sm5_794a46674f15",
+      "Particles": [
+        "ne",
+        "Ne",
+        "nl",
+        "Nl",
+        "Z"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 43.435555,
+      "Complexity": 8,
+      "RandomSeed": 182723551,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 9,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 9
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "4ceb195f3e019a8da6404b7205129c22a07adeb1e16526bb587f49f01bb04757"
+    },
+    "sm5_d0c24d3c8d56": {
+      "ID": "sm5_d0c24d3c8d56",
+      "Particles": [
+        "nm",
+        "Nm",
+        "nm",
+        "Nm",
+        "Z"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 60.415409,
+      "Complexity": 16,
+      "RandomSeed": 1125969985,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 11,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 11
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "7e0407ef7f5d4ac21fd9eb6478c662e01c3553a65abda0203894bacdd99df71c"
+    },
+    "sm5_da998d74aedd": {
+      "ID": "sm5_da998d74aedd",
+      "Particles": [
+        "nm",
+        "Nm",
+        "nl",
+        "Nl",
+        "Z"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 38.355112,
+      "Complexity": 8,
+      "RandomSeed": 1657835667,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 9,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 9
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "2663c9224a66e7de4e732b16414f915cf4b356217b37168df9a956609e15993e"
+    },
+    "sm5_10e5245de2d6": {
+      "ID": "sm5_10e5245de2d6",
+      "Particles": [
+        "nl",
+        "Nl",
+        "nl",
+        "Nl",
+        "Z"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 54.203592,
+      "Complexity": 16,
+      "RandomSeed": 730930589,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 11,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 11
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "3cf3444662cd2514b28ea1497f58413bf19c137f56f69d0d22834b18a8d9b068"
+    },
+    "sm5_ed50686c6842": {
+      "ID": "sm5_ed50686c6842",
+      "Particles": [
+        "e",
+        "E",
+        "ne",
+        "Ne",
+        "A.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 144.209631,
+      "Complexity": 59,
+      "RandomSeed": 490609394,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 8,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 8
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "60b3640991f566d444a9a33e192e92c0b91fa0fac791d61d49affac4899bc21b"
+    },
+    "sm5_665132fc0406": {
+      "ID": "sm5_665132fc0406",
+      "Particles": [
+        "e",
+        "E",
+        "ne",
+        "Ne",
+        "A.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 160.610786,
+      "Complexity": 77,
+      "RandomSeed": 1169421982,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 8,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 8
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "deb09b724e26ac3aeb75a51b84e7dbb3be43687e3533b4c3c70ad4b20dbf48ef"
+    },
+    "sm5_2bca096ec482": {
+      "ID": "sm5_2bca096ec482",
+      "Particles": [
+        "e",
+        "E",
+        "m",
+        "M",
+        "A.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 456.719185,
+      "Complexity": 320,
+      "RandomSeed": 503146453,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 13,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 13
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "7aee9e25607053d592a22120065c5b9c8e5f12c721ae08da1ccbcf0955b24bcc"
+    },
+    "sm5_0179e71cada6": {
+      "ID": "sm5_0179e71cada6",
+      "Particles": [
+        "e",
+        "E",
+        "m",
+        "M",
+        "A.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 465.785792,
+      "Complexity": 320,
+      "RandomSeed": 2108245182,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 13,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 13
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "b70f2272d770751f6920dcd9b754d94196f17ba5f7b7054b6e600c86f363c29c"
+    },
+    "sm5_efd652a3d826": {
+      "ID": "sm5_efd652a3d826",
+      "Particles": [
+        "e",
+        "E",
+        "nm",
+        "Nm",
+        "A.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 23.257176,
+      "Complexity": 20,
+      "RandomSeed": 759081118,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "03d8664021faa2fd8f6e6183acab8f3b272b517fe542275aafd42f16e319691e"
+    },
+    "sm5_df42e5b0241e": {
+      "ID": "sm5_df42e5b0241e",
+      "Particles": [
+        "e",
+        "E",
+        "nm",
+        "Nm",
+        "A.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 25.916414,
+      "Complexity": 20,
+      "RandomSeed": 633775845,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "721ee5ff256199b0935f462ee33824e93262011ec58dc2462ec6596c24811c8a"
+    },
+    "sm5_9215f7cc443f": {
+      "ID": "sm5_9215f7cc443f",
+      "Particles": [
+        "ne",
+        "Ne",
+        "m",
+        "M",
+        "A.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 27.002156,
+      "Complexity": 20,
+      "RandomSeed": 2058103775,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "a68dc4d663b9c6f5deb35b020438422c7974e7438289410a1d79c050e5dc4b63"
+    },
+    "sm5_a034b719e441": {
+      "ID": "sm5_a034b719e441",
+      "Particles": [
+        "ne",
+        "Ne",
+        "m",
+        "M",
+        "A.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 27.573836,
+      "Complexity": 20,
+      "RandomSeed": 193596315,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "1d601438f2fb976f124f76c9074e14e4d7f7ff15c6b6edc3f6f334e87d4599a5"
+    },
+    "sm5_e4bffc8612a4": {
+      "ID": "sm5_e4bffc8612a4",
+      "Particles": [
+        "e",
+        "E",
+        "nl",
+        "Nl",
+        "A.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 29.428367,
+      "Complexity": 20,
+      "RandomSeed": 520257346,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "0623dce0c45486fccde6121180bed7a8f8be9adb4d990721878c9d316b9a1763"
+    },
+    "sm5_13a6bf87861c": {
+      "ID": "sm5_13a6bf87861c",
+      "Particles": [
+        "e",
+        "E",
+        "nl",
+        "Nl",
+        "A.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 23.777084,
+      "Complexity": 20,
+      "RandomSeed": 1890104250,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "6a33ee1702c3eb4ba35336c26deee6ae0779e81ca28b1e80114751614802418d"
+    },
+    "sm5_710691be6702": {
+      "ID": "sm5_710691be6702",
+      "Particles": [
+        "ne",
+        "Ne",
+        "l",
+        "L",
+        "A.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 55.297966,
+      "Complexity": 20,
+      "RandomSeed": 1289103353,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "e219cdf6f5df059c4ffb997cc352704d8faf0a2a08562d95020dd3ee335fda8e"
+    },
+    "sm5_319a49889cfe": {
+      "ID": "sm5_319a49889cfe",
+      "Particles": [
+        "ne",
+        "Ne",
+        "l",
+        "L",
+        "A.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 46.247133,
+      "Complexity": 20,
+      "RandomSeed": 918700239,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "3e55e192eb32ac2ff95eb484117e9af6913ed4effd4e9759e3e4dab610bc79b2"
+    },
+    "sm5_1461e7c05888": {
+      "ID": "sm5_1461e7c05888",
+      "Particles": [
+        "m",
+        "M",
+        "nm",
+        "Nm",
+        "A.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 197.74514,
+      "Complexity": 59,
+      "RandomSeed": 1109327670,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 8,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 8
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "b64270127b8d501fb7cd77fda52c2cbba0dd9294d5c06cd0fe566b1a5fe910ea"
+    },
+    "sm5_0359273da6b7": {
+      "ID": "sm5_0359273da6b7",
+      "Particles": [
+        "m",
+        "M",
+        "nm",
+        "Nm",
+        "A.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 179.006287,
+      "Complexity": 77,
+      "RandomSeed": 1199899520,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 8,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 8
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "7d5ed6438e2554b52df8ba12c0c11977bb4ca4e92a3892c93d6a270a55b35ac1"
+    },
+    "sm5_11ffd4411831": {
+      "ID": "sm5_11ffd4411831",
+      "Particles": [
+        "nm",
+        "Nm",
+        "l",
+        "L",
+        "A.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 62.365179,
+      "Complexity": 20,
+      "RandomSeed": 228258508,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "c0b60e2339eb41554aa1380e342d29c899d0433e4bd1de5589eca279f1031c8b"
+    },
+    "sm5_089415ad5f94": {
+      "ID": "sm5_089415ad5f94",
+      "Particles": [
+        "nm",
+        "Nm",
+        "l",
+        "L",
+        "A.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 29.557926,
+      "Complexity": 20,
+      "RandomSeed": 406760952,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "60014332263ef1f26543b53eaf8ea6eb4188ccbf006b23cb440e6658c74af7ff"
+    },
+    "sm5_f85fa7caeff5": {
+      "ID": "sm5_f85fa7caeff5",
+      "Particles": [
+        "m",
+        "M",
+        "nl",
+        "Nl",
+        "A.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 30.719911,
+      "Complexity": 20,
+      "RandomSeed": 1306852447,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "19fc9f9738d34fea423c1d87ab6b3e46c666d45166409d6737be9ec3a6937438"
+    },
+    "sm5_f146805f0d86": {
+      "ID": "sm5_f146805f0d86",
+      "Particles": [
+        "m",
+        "M",
+        "nl",
+        "Nl",
+        "A.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 31.44952,
+      "Complexity": 20,
+      "RandomSeed": 1951536933,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "521c6a2527d8667a62f9d52d9742a26551696d17d528b6ace3dcfe39352b376d"
+    },
+    "sm5_4bc32809acdc": {
+      "ID": "sm5_4bc32809acdc",
+      "Particles": [
+        "l",
+        "L",
+        "nl",
+        "Nl",
+        "A.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 162.430406,
+      "Complexity": 59,
+      "RandomSeed": 536150566,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 8,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 8
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "cc448ef317e67aab8d4d9f32b0fea5848e97f74c885c90a6679b86f652b51000"
+    },
+    "sm5_a1a8f35eef64": {
+      "ID": "sm5_a1a8f35eef64",
+      "Particles": [
+        "l",
+        "L",
+        "nl",
+        "Nl",
+        "A.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 165.951877,
+      "Complexity": 77,
+      "RandomSeed": 231096297,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 8,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 8
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "224c69745ce593ecc7c00b7def99e0dded626adc3a60fb76f627cd1d37f24ea3"
+    },
+    "sm5_c3cb0c4e8ff8": {
+      "ID": "sm5_c3cb0c4e8ff8",
+      "Particles": [
+        "ne",
+        "Ne",
+        "d",
+        "D",
+        "G.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 36.917035,
+      "Complexity": 20,
+      "RandomSeed": 1772367582,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "b65e74f06c5d4f6ed78c5aa36d4893a51c18a713b12b33456ce6020231517fca"
+    },
+    "sm5_70a731739cd0": {
+      "ID": "sm5_70a731739cd0",
+      "Particles": [
+        "ne",
+        "Ne",
+        "d",
+        "D",
+        "G.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 28.519446,
+      "Complexity": 20,
+      "RandomSeed": 1967411996,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "33de90ec706ab8bb3b0e49a3881eff1c2b3eff72769b5d8d2323c98a8e441d0f"
+    },
+    "sm5_303da8dad9d5": {
+      "ID": "sm5_303da8dad9d5",
+      "Particles": [
+        "ne",
+        "Ne",
+        "u",
+        "U",
+        "G.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 27.70916,
+      "Complexity": 20,
+      "RandomSeed": 637501858,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "b52a5d4019a28cd6eefe1956b80a4d2b00b3e68f40af5efa53212743c2b8ae5c"
+    },
+    "sm5_f040c00c955b": {
+      "ID": "sm5_f040c00c955b",
+      "Particles": [
+        "ne",
+        "Ne",
+        "u",
+        "U",
+        "G.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 30.207785,
+      "Complexity": 20,
+      "RandomSeed": 841357721,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "a85036f47b8981a4e591b09976d6347a6a9a72364978c4c815e372a1d32df7ee"
+    },
+    "sm5_e2456b113351": {
+      "ID": "sm5_e2456b113351",
+      "Particles": [
+        "ne",
+        "Ne",
+        "c",
+        "C",
+        "G.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 27.082723,
+      "Complexity": 20,
+      "RandomSeed": 1407145057,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "ea4ccfe348b9fd164b4eaae8346047363efef4a5225b44847b6e840943be1a21"
+    },
+    "sm5_b96b171e970a": {
+      "ID": "sm5_b96b171e970a",
+      "Particles": [
+        "ne",
+        "Ne",
+        "c",
+        "C",
+        "G.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 28.322636,
+      "Complexity": 20,
+      "RandomSeed": 948962670,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "a12e99179b893159eacaca4b510c5ea20c59557bd2708b42852f940b00e73f7e"
+    },
+    "sm5_23903971ec01": {
+      "ID": "sm5_23903971ec01",
+      "Particles": [
+        "d",
+        "D",
+        "nm",
+        "Nm",
+        "G.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 42.834375,
+      "Complexity": 20,
+      "RandomSeed": 1962429229,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "2cf25521f3fa1dfb7403f5f4fd9dda07103e61b8669bfce652e778470af49943"
+    },
+    "sm5_b177f3f3099c": {
+      "ID": "sm5_b177f3f3099c",
+      "Particles": [
+        "d",
+        "D",
+        "nm",
+        "Nm",
+        "G.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 29.64648,
+      "Complexity": 20,
+      "RandomSeed": 97450798,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "59c59f7c014491959ce5531bca56301c7756832f86a7686edf45d356a94883fd"
+    },
+    "sm5_0f7aff31e386": {
+      "ID": "sm5_0f7aff31e386",
+      "Particles": [
+        "ne",
+        "Ne",
+        "s",
+        "S",
+        "G.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 31.101887,
+      "Complexity": 20,
+      "RandomSeed": 1728227769,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "d2bde0f435112d0fb134b2220c2d40a61a2d619b650711742348edb6fb9977a5"
+    },
+    "sm5_af34bef46e30": {
+      "ID": "sm5_af34bef46e30",
+      "Particles": [
+        "ne",
+        "Ne",
+        "s",
+        "S",
+        "G.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 33.473022,
+      "Complexity": 20,
+      "RandomSeed": 855388477,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "6040af14d6652d70ea5711d55a70558e3a46baf8b2b83089937945dcb8b66d52"
+    },
+    "sm5_f3dc6921a011": {
+      "ID": "sm5_f3dc6921a011",
+      "Particles": [
+        "u",
+        "U",
+        "nm",
+        "Nm",
+        "G.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 30.362392,
+      "Complexity": 20,
+      "RandomSeed": 303542173,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "e48af24545bdc25efa2151c8db3a41a69b1d6265bd494f0f3ec2f2c8ee8c2fba"
+    },
+    "sm5_2705f473209b": {
+      "ID": "sm5_2705f473209b",
+      "Particles": [
+        "u",
+        "U",
+        "nm",
+        "Nm",
+        "G.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 31.085963,
+      "Complexity": 20,
+      "RandomSeed": 1403033929,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "d71f6fe51524661c9613c204775858441109d03196200e0c5e74d230adbafe71"
+    },
+    "sm5_d2dd863e7a0b": {
+      "ID": "sm5_d2dd863e7a0b",
+      "Particles": [
+        "ne",
+        "Ne",
+        "b",
+        "B",
+        "G.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 33.928098,
+      "Complexity": 20,
+      "RandomSeed": 2083436280,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "f033859fd01bdc08983f6e821d9584997f74bb626ab1b581a7b588a1155f12c7"
+    },
+    "sm5_88cab0c885fd": {
+      "ID": "sm5_88cab0c885fd",
+      "Particles": [
+        "ne",
+        "Ne",
+        "b",
+        "B",
+        "G.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 60.095463,
+      "Complexity": 20,
+      "RandomSeed": 1826319633,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "245eeca589f38dab84de0e5db39c1789492984efc1100ad3095ec20181607687"
+    },
+    "sm5_c481602bdfd8": {
+      "ID": "sm5_c481602bdfd8",
+      "Particles": [
+        "d",
+        "D",
+        "nl",
+        "Nl",
+        "G.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 42.86331,
+      "Complexity": 20,
+      "RandomSeed": 1078389732,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "78a0f46ef917a60e78423a6debac9af15bbe2f6e722032d9c84fb665ea4d1713"
+    },
+    "sm5_afa80d50f34b": {
+      "ID": "sm5_afa80d50f34b",
+      "Particles": [
+        "d",
+        "D",
+        "nl",
+        "Nl",
+        "G.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 53.379696,
+      "Complexity": 20,
+      "RandomSeed": 1900130526,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "d16e5862c60f0e417eab1bd53f69b206e980cd984b370e93a373e3f7df64657e"
+    },
+    "sm5_ca8b27416c32": {
+      "ID": "sm5_ca8b27416c32",
+      "Particles": [
+        "ne",
+        "Ne",
+        "t",
+        "T",
+        "G.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 30.33248,
+      "Complexity": 20,
+      "RandomSeed": 1871958547,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "b261a94c3342d9107da0f49f1b2e857f1333c627c3f3390ce378f3b113da72c3"
+    },
+    "sm5_a851eac41ec0": {
+      "ID": "sm5_a851eac41ec0",
+      "Particles": [
+        "ne",
+        "Ne",
+        "t",
+        "T",
+        "G.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 28.858949,
+      "Complexity": 20,
+      "RandomSeed": 1947753893,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "62791e04c9018d3f8006e7aa37b0b65038dc275cb1417acc5659f43ba60ddf69"
+    },
+    "sm5_00292ff44fac": {
+      "ID": "sm5_00292ff44fac",
+      "Particles": [
+        "u",
+        "U",
+        "nl",
+        "Nl",
+        "G.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 26.137207,
+      "Complexity": 20,
+      "RandomSeed": 1220001519,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "6ed0ac9cd64ed7ca4727c831f2e38fd5ac935e30b47911efb3af3caed639cdc2"
+    },
+    "sm5_5c2f6cb0ace1": {
+      "ID": "sm5_5c2f6cb0ace1",
+      "Particles": [
+        "u",
+        "U",
+        "nl",
+        "Nl",
+        "G.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 25.694101,
+      "Complexity": 20,
+      "RandomSeed": 2107778915,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "9d12c18f3ce6559a98d49a6505097962bb3a9c25dedcba0d559a84947f9bf459"
+    },
+    "sm5_8872209a2887": {
+      "ID": "sm5_8872209a2887",
+      "Particles": [
+        "nm",
+        "Nm",
+        "c",
+        "C",
+        "G.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 27.81666,
+      "Complexity": 20,
+      "RandomSeed": 2057999370,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "cb0beec51d402a42e5ffcf2ff62f0516a6d913835ad59e9ace18e74a1583ca15"
+    },
+    "sm5_abd5f4720a2a": {
+      "ID": "sm5_abd5f4720a2a",
+      "Particles": [
+        "nm",
+        "Nm",
+        "c",
+        "C",
+        "G.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 27.896146,
+      "Complexity": 20,
+      "RandomSeed": 891635227,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "c91ded46f92c3bbaab4fcacf2a43e9b2934c135714f0f90208e2a1e1f41303c4"
+    },
+    "sm5_0ef4ff72d155": {
+      "ID": "sm5_0ef4ff72d155",
+      "Particles": [
+        "nm",
+        "Nm",
+        "s",
+        "S",
+        "G.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 28.702683,
+      "Complexity": 20,
+      "RandomSeed": 1524750045,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "c267ed8e49323f7898b4a43aa3af30dceda6e6980f709b68380f5975b94673aa"
+    },
+    "sm5_ff6b9efc52cd": {
+      "ID": "sm5_ff6b9efc52cd",
+      "Particles": [
+        "nm",
+        "Nm",
+        "s",
+        "S",
+        "G.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 29.595099,
+      "Complexity": 20,
+      "RandomSeed": 1541866948,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "637765127ee993cb7251467a5ac80a2e8c28a344a7c8ef908d8b51470db1924a"
+    },
+    "sm5_5ef4c4aefbc5": {
+      "ID": "sm5_5ef4c4aefbc5",
+      "Particles": [
+        "nm",
+        "Nm",
+        "b",
+        "B",
+        "G.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 27.109577,
+      "Complexity": 20,
+      "RandomSeed": 665872002,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "f32efc47932792521fa8a6892e81755716b2c64138c8694a35d2daa281b3e44c"
+    },
+    "sm5_5e2073109c75": {
+      "ID": "sm5_5e2073109c75",
+      "Particles": [
+        "nm",
+        "Nm",
+        "b",
+        "B",
+        "G.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 28.831881,
+      "Complexity": 20,
+      "RandomSeed": 1422290158,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "0714cd86b67d4f7ccaea052f5bba4db81f8ef77efca6ee0373959a539a5dbcdd"
+    },
+    "sm5_9e0462fe698f": {
+      "ID": "sm5_9e0462fe698f",
+      "Particles": [
+        "c",
+        "C",
+        "nl",
+        "Nl",
+        "G.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 21.634783,
+      "Complexity": 20,
+      "RandomSeed": 163947635,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "635ff36ee4ab1f6a86e2635b3fdcd3227485b27e42555b82580fa228dd118a37"
+    },
+    "sm5_d5caa4a7cbbc": {
+      "ID": "sm5_d5caa4a7cbbc",
+      "Particles": [
+        "c",
+        "C",
+        "nl",
+        "Nl",
+        "G.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 21.863229,
+      "Complexity": 20,
+      "RandomSeed": 1029826280,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "4145d1caa72557a12901702fc3e8fac12cbbf8948980823e9b7e9f7ee6cec150"
+    },
+    "sm5_d8b88eb0be66": {
+      "ID": "sm5_d8b88eb0be66",
+      "Particles": [
+        "s",
+        "S",
+        "nl",
+        "Nl",
+        "G.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 21.333771,
+      "Complexity": 20,
+      "RandomSeed": 884761222,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "068a80acefbf9d2b58d5264799ae4e2b6c1390422c35b9281f70add1b8162eed"
+    },
+    "sm5_f4e0b778ca50": {
+      "ID": "sm5_f4e0b778ca50",
+      "Particles": [
+        "s",
+        "S",
+        "nl",
+        "Nl",
+        "G.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 20.554528,
+      "Complexity": 20,
+      "RandomSeed": 1513901330,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "b6484a7aff0367fdc4697ac50ccfc57526052fcda72cdf6e490c75ce730048dc"
+    },
+    "sm5_e583ff10b7b9": {
+      "ID": "sm5_e583ff10b7b9",
+      "Particles": [
+        "nm",
+        "Nm",
+        "t",
+        "T",
+        "G.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 21.169781,
+      "Complexity": 20,
+      "RandomSeed": 930010588,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "a4f49ee9a08becac433f846bb3700b28cc3b0268f9c2ab99fa78e288fe865a93"
+    },
+    "sm5_b60d50f4f97b": {
+      "ID": "sm5_b60d50f4f97b",
+      "Particles": [
+        "nm",
+        "Nm",
+        "t",
+        "T",
+        "G.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 21.434257,
+      "Complexity": 20,
+      "RandomSeed": 1815045821,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "3a884794b091b09f01ad235bc233ad52265a03b4c7e656424068b25ebb0fe187"
+    },
+    "sm5_6f8cb50daa8c": {
+      "ID": "sm5_6f8cb50daa8c",
+      "Particles": [
+        "nl",
+        "Nl",
+        "b",
+        "B",
+        "G.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 21.195641,
+      "Complexity": 20,
+      "RandomSeed": 1901428165,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "853da1e39fa3450d898b63c43354cd065e4b4928291428323988713f0f12f322"
+    },
+    "sm5_10a5b0871a4d": {
+      "ID": "sm5_10a5b0871a4d",
+      "Particles": [
+        "nl",
+        "Nl",
+        "b",
+        "B",
+        "G.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 22.211223,
+      "Complexity": 20,
+      "RandomSeed": 876373759,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "6b857ad120c516d3882ce84db36c1e397362b6f7407f2aee42305cf17e7ae5be"
+    },
+    "sm5_b989214702cc": {
+      "ID": "sm5_b989214702cc",
+      "Particles": [
+        "nl",
+        "Nl",
+        "t",
+        "T",
+        "G.+"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 20.61485,
+      "Complexity": 20,
+      "RandomSeed": 1046439479,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "0e3128b26eeb6fe6d5ad924b30aa81fafd65d25e912e5270aa5bf359129675f6"
+    },
+    "sm5_ec545c42f568": {
+      "ID": "sm5_ec545c42f568",
+      "Particles": [
+        "nl",
+        "Nl",
+        "t",
+        "T",
+        "G.-"
+      ],
+      "Status": "COMPLETE",
+      "Seconds": 20.900173,
+      "Complexity": 20,
+      "RandomSeed": 1230338012,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "Rows": 6,
+      "FeynmanRows": 1,
+      "CheckStatuses": {
+        "PASS": 6
+      },
+      "FailureStage": null,
+      "CapsuleSHA256": "1c41eb0fd218e3fedce28085d986fb30dc372b9f98c44871aefc63d90fae73a3"
     }
   },
   "Families": {
     "sm5f_7f553e102e15": {
       "FamilyID": "sm5f_7f553e102e15",
       "Status": "PASS",
-      "Seconds": 10.401425,
+      "Seconds": 17.805847,
       "Points": 1000,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
       "CaseIDs": [
         "sm5_7f553e102e15"
       ],
       "CaseCapsulesSHA256": {
-        "sm5_7f553e102e15": "8ba829a0b1dd0d2378161d3a39625cab0afd0de09860c91c6c17b02e6269a42f"
+        "sm5_7f553e102e15": "85dec78af07b9dcca9d2ecd3c99c4c6ac20c8b21d2fda650e306dc14e721da9b"
       },
       "CalcHEPStatus": "PASS",
       "MadGraphStatus": "PASS",
-      "CapsuleSHA256": "f52498a9550fbb66931bbbc5dcd535d67e0fe09f475c557090027ad3abd581bb"
+      "CapsuleSHA256": "4c83df0b8f8048f511c80347c1b926005f95e132668a47dafd323b0a01f052d2"
     },
     "sm5f_b80ee23ca123": {
       "FamilyID": "sm5f_b80ee23ca123",
       "Status": "FAIL",
-      "Seconds": 35.003139,
+      "Seconds": 26.168425,
       "Points": 1000,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
       "CaseIDs": [
         "sm5_b80ee23ca123"
       ],
       "CaseCapsulesSHA256": {
-        "sm5_b80ee23ca123": "e14b227c44dadd2f48df54666c5c517d8b4e06765e799896ba5da1a36587f327"
+        "sm5_b80ee23ca123": "a6024ecd2097d8fa12082a48b954dfaa07df884b909231df603c78c83d306c3d"
       },
       "CalcHEPStatus": "FAIL",
       "MadGraphStatus": "PASS",
-      "CapsuleSHA256": "01be2debf97f40d80a1d24078cd0a55b019ff9ee96362f630849d12b4c8a477a",
+      "CapsuleSHA256": "bcb5a3249128fd6bf4e495acae2aa21cc3d6324c5d1079697aa30a9039cc1d82",
       "PrecisionQualification": {
         "FamilyID": "sm5f_b80ee23ca123",
         "Status": "PRECISION_QUALIFIED",
-        "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+        "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
         "CaseIDs": [
           "sm5_b80ee23ca123"
         ],
         "CaseCapsulesSHA256": {
-          "sm5_b80ee23ca123": "e14b227c44dadd2f48df54666c5c517d8b4e06765e799896ba5da1a36587f327"
+          "sm5_b80ee23ca123": "a6024ecd2097d8fa12082a48b954dfaa07df884b909231df603c78c83d306c3d"
         },
-        "ExportCapsuleSHA256": "01be2debf97f40d80a1d24078cd0a55b019ff9ee96362f630849d12b4c8a477a",
-        "Report": "precision/WpWmhhh-04eb-c55e6b/precision-summary.json",
-        "ReportSHA256": "37bd2323780aa09f241b5a51107e102199d874876f89b1f3b2dff053e9fc6211",
+        "ExportCapsuleSHA256": "bcb5a3249128fd6bf4e495acae2aa21cc3d6324c5d1079697aa30a9039cc1d82",
+        "Report": "precision/WpWmhhh-43615-3638bc/precision-summary.json",
+        "ReportSHA256": "baac0885a6c677ee5877c56242f6b80d5f8bc349f058967869490cbcd5fa61b7",
         "Points": 1000,
         "MantissaBits": 113,
         "REALBytes": 16,
         "RelativeTolerance": 1e-07,
-        "MaximumRelativeError": 2.7768398609644276e-08,
-        "MaximumAbsoluteError": 2.658963476373337e-16,
+        "MaximumRelativeError": 1.8734249204499767e-08,
+        "MaximumAbsoluteError": 4.990311549407656e-16,
         "RawCalcHEPStatus": "FAIL",
         "MadGraphStatus": "PASS",
         "CurrentFailureControl": {
-          "Report": "precision/WpWmhhh-04eb-c55e6b/current-failure-control.json",
-          "ReportSHA256": "bae0081be77a5d195c704ebd1ffb0689fdafc3c6892dcabf6eab84efbbf43a13",
-          "RawFailureReport": "diagnostics/sm5f_b80ee23ca123-current-calchep-failure.json",
-          "RawFailureReportSHA256": "cd3b98cbb3c17340d9edadfb9c746ea1dba09e66b0298c4c28f269d45b97b98c",
-          "Seed": 1794445433115009000,
-          "FirstFailedPoint": 3,
+          "Report": "precision/WpWmhhh-43615-3638bc/current-failure-control.json",
+          "ReportSHA256": "63ff7da9327d4083daef42de1ebf1d49f23c66db9e44156888e4c342297b9e46",
+          "RawFailureReport": "diagnostics/sm5f_b80ee23ca123-calchep-bcb5a3249128fd6b.json",
+          "RawFailureReportSHA256": "911554b812ca86d016f3e791045576ab28d3c6cf9d1da108085137d2d59a3614",
+          "Seed": 1794453841927700000,
+          "FirstFailedPoint": 46,
           "MomentumComponents": 20,
           "BitwiseMatchVerified": true
         }
@@ -882,285 +3285,325 @@
     "sm5f_345126cb84c0": {
       "FamilyID": "sm5f_345126cb84c0",
       "Status": "FAIL",
-      "Seconds": 48.47179,
+      "Seconds": 38.122774,
       "Points": 1000,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
       "CaseIDs": [
         "sm5_345126cb84c0"
       ],
       "CaseCapsulesSHA256": {
-        "sm5_345126cb84c0": "254bff1da406819bdd66957085258ee33fc76723c5fabaa5afccc03bf33b9301"
+        "sm5_345126cb84c0": "22b957a913fab083b3d35e37efbfff95a870fc703188068f9c4005efd224980b"
       },
       "CalcHEPStatus": "FAIL",
       "MadGraphStatus": "PASS",
-      "CapsuleSHA256": "fb2b33b21740fbee90505441fcb076c4a186a1a8deb56f10fe28451060cb2553",
+      "CapsuleSHA256": "5b4bf5175953557785b2be2a257adc49ff7974d7c3a440cba0f39449e0bf3a78",
       "PrecisionQualification": {
         "FamilyID": "sm5f_345126cb84c0",
         "Status": "PRECISION_QUALIFIED",
-        "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+        "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
         "CaseIDs": [
           "sm5_345126cb84c0"
         ],
         "CaseCapsulesSHA256": {
-          "sm5_345126cb84c0": "254bff1da406819bdd66957085258ee33fc76723c5fabaa5afccc03bf33b9301"
+          "sm5_345126cb84c0": "22b957a913fab083b3d35e37efbfff95a870fc703188068f9c4005efd224980b"
         },
-        "ExportCapsuleSHA256": "fb2b33b21740fbee90505441fcb076c4a186a1a8deb56f10fe28451060cb2553",
-        "Report": "precision/ZZhhh-04eb-4bff54/precision-summary.json",
-        "ReportSHA256": "d864b02f761898347c99c5480e74e1834f5555f7b0837ece8524c15dd049f43c",
+        "ExportCapsuleSHA256": "5b4bf5175953557785b2be2a257adc49ff7974d7c3a440cba0f39449e0bf3a78",
+        "Report": "precision/ZZhhh-43615-74b022/precision-summary.json",
+        "ReportSHA256": "c5b6b4b6c3bb9a884181a9d749a993d00c1c9572e663cff5bd4ce46ca4ec1174",
         "Points": 1000,
         "MantissaBits": 113,
         "REALBytes": 16,
         "RelativeTolerance": 1e-07,
-        "MaximumRelativeError": 1.1360429172383462e-08,
-        "MaximumAbsoluteError": 7.546819614547007e-15,
+        "MaximumRelativeError": 1.658895155994898e-08,
+        "MaximumAbsoluteError": 2.4123633863074034e-15,
         "RawCalcHEPStatus": "FAIL",
         "MadGraphStatus": "PASS",
         "CurrentFailureControl": {
-          "Report": "precision/ZZhhh-04eb-4bff54/current-failure-control.json",
-          "ReportSHA256": "953ee0a22ccf5c16a5477a5b8e025f31fb8d7f5d99376e6d15c3fd122b1ae4f5",
-          "RawFailureReport": "diagnostics/sm5f_345126cb84c0-current-calchep-failure.json",
-          "RawFailureReportSHA256": "925f98a10d361637e221bb69da27e0eca2e81705fac66d92553d0ab81f6ca0ef",
-          "Seed": 1794445853893102000,
-          "FirstFailedPoint": 28,
+          "Report": "precision/ZZhhh-43615-74b022/current-failure-control.json",
+          "ReportSHA256": "e27e57c0a7a5cc802bfe43268a420b3072cfe8fa531a3b020f5147da0c8b5fbd",
+          "RawFailureReport": "diagnostics/sm5f_345126cb84c0-calchep-5b4bf51759535577.json",
+          "RawFailureReportSHA256": "ef744b72adcc9a80e0f239ab091a3ff35d1741c02d806bac02350947680f5f2b",
+          "Seed": 1794454037653150000,
+          "FirstFailedPoint": 462,
           "MomentumComponents": 20,
           "BitwiseMatchVerified": true
         }
       }
     },
+    "sm5f_6ec0623f8fe4": {
+      "FamilyID": "sm5f_6ec0623f8fe4",
+      "Status": "FAIL",
+      "Seconds": 36.430217,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_43f5c0ace4ab",
+        "sm5_5f433be3f76d",
+        "sm5_956b05f2868f",
+        "sm5_b56207402f30"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_43f5c0ace4ab": "ecfc517563e9a16b76fef43c31df60011e60faae75a55c8c8561b17571ec8258",
+        "sm5_5f433be3f76d": "daeeb11ecd3a251cae48601837559214a4061ac9edd52830b8e310791c3e67aa",
+        "sm5_956b05f2868f": "2d1dbcc3341523aaf429a1fa70cf6564a52c668412e6b502226dfcec8bb5135c",
+        "sm5_b56207402f30": "58accd9de242e404e8feca3c752a4ae03fdc7e95c746c185bec8449560708584"
+      },
+      "CalcHEPStatus": "NOT RUN",
+      "MadGraphStatus": "NOT RUN",
+      "CapsuleSHA256": "2981cb159fa24f393c0bf61fe4e8fee6427c9bebc7baa53453cbf5f865308d64"
+    },
     "sm5f_e86c5e8437a1": {
       "FamilyID": "sm5f_e86c5e8437a1",
       "Status": "PASS",
-      "Seconds": 18.915109,
+      "Seconds": 10.196684,
       "Points": 1000,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
       "CaseIDs": [
         "sm5_e86c5e8437a1"
       ],
       "CaseCapsulesSHA256": {
-        "sm5_e86c5e8437a1": "cf6dad5b71394a3aabff37af57c7f7d7f0d22a1276515fa7d6f5504779c52288"
+        "sm5_e86c5e8437a1": "c5900ded7a0c0d72ade55915f5228cdfb1a51e0daa38ccccbfd199aa0412923f"
       },
       "CalcHEPStatus": "PASS",
       "MadGraphStatus": "PASS",
-      "CapsuleSHA256": "7c016260a768b775eb4bfe7823a8723384455b27c67fb345b6a9ebd6e62e236e"
+      "CapsuleSHA256": "5d429fff0ebf18eec6aa038627cea15c755b083920c41748ea1fefd0b0c38aef"
     },
     "sm5f_63a03af59f4c": {
       "FamilyID": "sm5f_63a03af59f4c",
       "Status": "PASS",
-      "Seconds": 10.430232,
+      "Seconds": 10.433747,
       "Points": 1000,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
       "CaseIDs": [
         "sm5_63a03af59f4c"
       ],
       "CaseCapsulesSHA256": {
-        "sm5_63a03af59f4c": "8fba7921cd88aed5790a0ffc25246a5e3055b9cc99602e79fbe45026826e9672"
+        "sm5_63a03af59f4c": "7823b1b5bebc9c885f7b297a977d32c2e4a42d8f1756d5c59cfc56f3546690f6"
       },
       "CalcHEPStatus": "PASS",
       "MadGraphStatus": "PASS",
-      "CapsuleSHA256": "87e36be225f312650d058bc0c8e2c575f8bc1952be9bf5e9197f3713fca5742e"
+      "CapsuleSHA256": "27b73d9bf6792e46588e362c25e0ddbf7201262cebbd22ee0ac9d6ec8bab8aa6"
     },
     "sm5f_bafa131ff2e6": {
       "FamilyID": "sm5f_bafa131ff2e6",
       "Status": "PASS",
-      "Seconds": 10.057025,
+      "Seconds": 13.810941,
       "Points": 1000,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
       "CaseIDs": [
         "sm5_bafa131ff2e6"
       ],
       "CaseCapsulesSHA256": {
-        "sm5_bafa131ff2e6": "1b00f8413239410514059bea31cc67a96b52e6f98616216a7fd3f08b7dea5c6e"
+        "sm5_bafa131ff2e6": "7c68f652bfa63e1b862e423b1f2a8aedcb47f11c1b6c85fe4df651d80009bbcd"
       },
       "CalcHEPStatus": "PASS",
       "MadGraphStatus": "PASS",
-      "CapsuleSHA256": "cf9e6ffcf2730cef33f902afdc49957b31dffca47e322188e385fb739a408e8c"
+      "CapsuleSHA256": "8ec3f8564ea6eded410c715d39f4cd5b36b6f803a9569390f76f9efc1ece8299"
+    },
+    "sm5f_49ce3fca1665": {
+      "FamilyID": "sm5f_49ce3fca1665",
+      "Status": "PASS",
+      "Seconds": 22.49662,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_de1f7f653ad4",
+        "sm5_475437787ce7"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_de1f7f653ad4": "1dfa569215e1b40b3d47f09ffe66bd7916c02b71ee0c9f8cca323bf15b2dd2d8",
+        "sm5_475437787ce7": "6ae4ec2275bd74a52bfcf08d014f14bfb1fae4fca04500e46699365de3e0c875"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "3fe3de28e43ab796301921354137288a8ba3dab029b986bd3a4e56473eab71ba"
     },
     "sm5f_42d2baa06efc": {
       "FamilyID": "sm5f_42d2baa06efc",
       "Status": "PASS",
-      "Seconds": 21.05985,
+      "Seconds": 28.329635,
       "Points": 1000,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
       "CaseIDs": [
         "sm5_42d2baa06efc"
       ],
       "CaseCapsulesSHA256": {
-        "sm5_42d2baa06efc": "7f6544d0c6362bb79256f4fe3a074e77f9ca96982c9a531968c3edbdc92fa8a7"
+        "sm5_42d2baa06efc": "5af1f27a8ec17253c581b33486192b4f48a852e2b421989a6fb1d2ef0c44040d"
       },
       "CalcHEPStatus": "PASS",
       "MadGraphStatus": "PASS",
-      "CapsuleSHA256": "fad83fec6ced610eff0364bc4dbb4175234d693c2ff7c3852eb277eaffee6b49"
+      "CapsuleSHA256": "b6bc5e30bb59d0499000669ce3d9eedae5321255a345c635e3d5229806ee19cf"
     },
     "sm5f_de9e05710e5e": {
       "FamilyID": "sm5f_de9e05710e5e",
       "Status": "PASS",
-      "Seconds": 9.055303,
+      "Seconds": 9.16381,
       "Points": 1000,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
       "CaseIDs": [
         "sm5_de9e05710e5e"
       ],
       "CaseCapsulesSHA256": {
-        "sm5_de9e05710e5e": "4a2a18fae3fd2060cb0a5f6093c03c8bbee31b0c098518569b62f65dbc75f23e"
+        "sm5_de9e05710e5e": "d855e96374d7e9015d121b04cf725c340d7cafff20cf26f43fccc8216ae8a47e"
       },
       "CalcHEPStatus": "PASS",
       "MadGraphStatus": "PASS",
-      "CapsuleSHA256": "75bfd7d3ec4296bcf2e9c91df3dc4b61c2d33c4e80350b125d1078ab539ba55d"
+      "CapsuleSHA256": "26fb407e8437bd463209f8f08e0323a5a0f4bbd64dfcc587b801af76fdd0b05d"
     },
     "sm5f_30366d614206": {
       "FamilyID": "sm5f_30366d614206",
       "Status": "PASS",
-      "Seconds": 21.772157,
+      "Seconds": 15.355246,
       "Points": 1000,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
       "CaseIDs": [
         "sm5_05c47f93b22d",
         "sm5_64823f01bbe6",
         "sm5_499ea8e82c92"
       ],
       "CaseCapsulesSHA256": {
-        "sm5_05c47f93b22d": "ed2fda9f74c9d0f6636155b7cc1709ef723d7c7cc06891e3da95270c0e10ab58",
-        "sm5_64823f01bbe6": "5c275299a7d8ba684459f207481b330749b1c4a442ea181c718ae327a7ae889a",
-        "sm5_499ea8e82c92": "7312d9f3bbe991bc9c76638937b9fc959828b68967b2d2502ed93f9ead3ea8dc"
+        "sm5_05c47f93b22d": "0e46b1402057c2030c9ffa270fc46cee16ced076bf070e4604e6a09bf6b76d66",
+        "sm5_64823f01bbe6": "30841c5f679aebef8293ab6a987c9b5a52803de48b006ba6e3b17d9d089c99bb",
+        "sm5_499ea8e82c92": "274cc96907f216ba068e194dd6c3332107b1b0c5f3eb013257f570f1b6c67f4f"
       },
       "CalcHEPStatus": "PASS",
       "MadGraphStatus": "PASS",
-      "CapsuleSHA256": "24dfa14e3c613f9ecd18bb8f56e5c96e3a97ced04c792547fe7c506d8e5b800f"
+      "CapsuleSHA256": "ef0973703372d62bd81517b3cc0b5018c3cdbde5f98a9ff9b555fac2314a70fb"
     },
     "sm5f_0252db13573a": {
       "FamilyID": "sm5f_0252db13573a",
       "Status": "PASS",
-      "Seconds": 13.136781,
+      "Seconds": 11.910719,
       "Points": 1000,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
       "CaseIDs": [
         "sm5_0252db13573a"
       ],
       "CaseCapsulesSHA256": {
-        "sm5_0252db13573a": "13f785ff44dc9922a4df04bcd6c664e0c927a19080132565f7071688e34d5ab7"
+        "sm5_0252db13573a": "b66b369f9423dc82132ca170bf3b4013ee7fafc947f84ec400a67be93a6644a1"
       },
       "CalcHEPStatus": "PASS",
       "MadGraphStatus": "PASS",
-      "CapsuleSHA256": "128d6c4d83ec0d8adfda7254ce51d23dd7a5d5bec72d82a40968b3db333f49e4"
+      "CapsuleSHA256": "f1ec7ccf7cc4dca0a1dc1bea013442cbd9e7b354e72dc6156a6037842810bb23"
     },
     "sm5f_c12ab07caf13": {
       "FamilyID": "sm5f_c12ab07caf13",
       "Status": "PASS",
-      "Seconds": 17.470804,
+      "Seconds": 20.17613,
       "Points": 1000,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
       "CaseIDs": [
         "sm5_c12ab07caf13"
       ],
       "CaseCapsulesSHA256": {
-        "sm5_c12ab07caf13": "f5db19f65f68a02a72c7deb28df89486f3259a1c83614f8e896b68eebd5fc6aa"
+        "sm5_c12ab07caf13": "8a3a79a4ea42e7bc48a4fafe0109644669967809f5cadb075559b226a197d7a1"
       },
       "CalcHEPStatus": "PASS",
       "MadGraphStatus": "PASS",
-      "CapsuleSHA256": "6a27ed7059c5393dbf7a192d39b2a738a1cff7df7c06f890f1b652085802ab6e"
+      "CapsuleSHA256": "9dbeb373cdba4255b505a9987624cefe5629c32bd528b3bdb708b0efc1906459"
     },
     "sm5f_d875d509c99a": {
       "FamilyID": "sm5f_d875d509c99a",
       "Status": "PASS",
-      "Seconds": 17.690916,
+      "Seconds": 9.314495,
       "Points": 1000,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
       "CaseIDs": [
         "sm5_d875d509c99a"
       ],
       "CaseCapsulesSHA256": {
-        "sm5_d875d509c99a": "a8c8b29e1a7587acfd900c245af0d11213c0a2963ab13d673d3116956a63fa73"
+        "sm5_d875d509c99a": "abcebfa0afcd8f6637f8e4ab10e2f8a6b4e9a7a37669bbf52a45e491dccaf277"
       },
       "CalcHEPStatus": "PASS",
       "MadGraphStatus": "PASS",
-      "CapsuleSHA256": "659ed19562f1cf8cd623d063f0341b3f30c302f9de6e407575ee35db85e2cb41"
+      "CapsuleSHA256": "f206f03628f7cb59c8d553663427cc89c4d1aa3822e6d59ffaa1a4e1db4b5d41"
     },
     "sm5f_e37f70365148": {
       "FamilyID": "sm5f_e37f70365148",
       "Status": "PASS",
-      "Seconds": 15.834366,
+      "Seconds": 18.001221,
       "Points": 1000,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
       "CaseIDs": [
         "sm5_e37f70365148"
       ],
       "CaseCapsulesSHA256": {
-        "sm5_e37f70365148": "70d0f2c4b2a99107f556715083a3b84d1bf41f4002e864af6f06c06a56d01afe"
+        "sm5_e37f70365148": "0806b2db3ca784ed0487a446b7bad53aa4ba3c636e238d4be851b9ec5f1ce9fb"
       },
       "CalcHEPStatus": "PASS",
       "MadGraphStatus": "PASS",
-      "CapsuleSHA256": "f5571865f66565ab7f7eaaa913e576b23de333f35411a3e9e055a7be107e199f"
+      "CapsuleSHA256": "89cef19da25d9adde04d23f7aa0d5b12248678f03dbd2467def29522f6f596d2"
     },
     "sm5f_2b62c112ba71": {
       "FamilyID": "sm5f_2b62c112ba71",
       "Status": "PASS",
-      "Seconds": 13.021744,
+      "Seconds": 15.145084,
       "Points": 1000,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
       "CaseIDs": [
         "sm5_2b62c112ba71"
       ],
       "CaseCapsulesSHA256": {
-        "sm5_2b62c112ba71": "b1e89e6fb7cf7824827d84966f96c68547092770d2ac399fb71b7d201e0fb8cb"
+        "sm5_2b62c112ba71": "def405040852dfa99a34b6e518ef99b2aa3908c0b731b96e30d908d5ad2bc377"
       },
       "CalcHEPStatus": "PASS",
       "MadGraphStatus": "PASS",
-      "CapsuleSHA256": "2411a7690254d6c25aa01e046e113c93204c841bbcd4914a19468f89dda64703"
+      "CapsuleSHA256": "13bdfb82f5ff86ecc02a993afc2a450ed0f6e57031fd5cf357603068b9dc8eff"
     },
     "sm5f_f054d78b1de0": {
       "FamilyID": "sm5f_f054d78b1de0",
       "Status": "PASS",
-      "Seconds": 19.769481,
+      "Seconds": 17.091295,
       "Points": 1000,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
       "CaseIDs": [
         "sm5_f054d78b1de0"
       ],
       "CaseCapsulesSHA256": {
-        "sm5_f054d78b1de0": "ab7ab100949bfe1515cfc0d2e304d2982367ab93167e9fddf71317b048d0e1ec"
+        "sm5_f054d78b1de0": "27d0fe586b14c421a7d2db892a0c056f4f9253a4e046466118472ade78773608"
       },
       "CalcHEPStatus": "PASS",
       "MadGraphStatus": "PASS",
-      "CapsuleSHA256": "3b7247975ab57bf2c7eda943d32704e233aa88566e2b0cc6c8862a5cc5c16a65"
+      "CapsuleSHA256": "4ed68fe5ddc7b8befc8abd8544d8ed5d588db14d2e2d0d517ac860db0b11042b"
     },
     "sm5f_5e6899a354d5": {
       "FamilyID": "sm5f_5e6899a354d5",
       "Status": "PASS",
-      "Seconds": 8.328107,
+      "Seconds": 7.105791,
       "Points": 1000,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
       "CaseIDs": [
         "sm5_5e6899a354d5"
       ],
       "CaseCapsulesSHA256": {
-        "sm5_5e6899a354d5": "c7086d983caeeb32ec246a583e6cd3553af87fb5595f70acf13939273e2d16f7"
+        "sm5_5e6899a354d5": "d43bdda18599ea6fe3b0243b7799d37d3ecd172da012f996a82dfc04e288a04e"
       },
       "CalcHEPStatus": "PASS",
       "MadGraphStatus": "PASS",
-      "CapsuleSHA256": "b8843b877018cd3a89f77fff6d87fb1bbe488263e9192fdad0f866b7a071f6df"
+      "CapsuleSHA256": "0dfbc2a269a2dbb0f3df89dd4a6c867f7e8ab0b8cbf0fe6096462e49cfd4707a"
     },
     "sm5f_6de51e54965d": {
       "FamilyID": "sm5f_6de51e54965d",
       "Status": "PASS",
-      "Seconds": 7.827747,
+      "Seconds": 6.97652,
       "Points": 1000,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
       "CaseIDs": [
         "sm5_6de51e54965d"
       ],
       "CaseCapsulesSHA256": {
-        "sm5_6de51e54965d": "a1e3639f388ebacb905b5130b317ff9b0f3b3a435cee1f4c915d09a356ff838b"
+        "sm5_6de51e54965d": "80e169ac283092d44c2973e0b11bc06bae73891caa44c0f612d33a946b9748da"
       },
       "CalcHEPStatus": "PASS",
       "MadGraphStatus": "PASS",
-      "CapsuleSHA256": "f892b7535b4626f56c9a5451aa8f5177a0d0d43265ed066d0d99b3325b2b8d19"
+      "CapsuleSHA256": "7825c9967b4e1c51505a02856177e4703f3a6e3ab872959541d3ead3cd8cb5c2"
     },
     "sm5f_092efd0fdd4e": {
       "FamilyID": "sm5f_092efd0fdd4e",
       "Status": "PASS",
-      "Seconds": 16.439968,
+      "Seconds": 18.084011,
       "Points": 1000,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
       "CaseIDs": [
         "sm5_35ce57835a02",
         "sm5_880ff0404201",
@@ -1168,82 +3611,1144 @@
         "sm5_1a226d4c246a"
       ],
       "CaseCapsulesSHA256": {
-        "sm5_35ce57835a02": "81fa265af91b068de9ca636a77f30ee21e26a4f852a2b605d7f0344da76092f3",
-        "sm5_880ff0404201": "662d716e89768985bb3b2a51f8a0784e40a7a88985e03bdc89b22ca7a5cd7f84",
-        "sm5_ab268fdb92fa": "c9d483a8059bf7fafdb595b9d9093a3002f341f6fe700b49435570838e4931de",
-        "sm5_1a226d4c246a": "288f77d98fae1f60ce950e7fc3fa7e3ff7ee34d3f68f3f0825cb1daa7602b9f5"
+        "sm5_35ce57835a02": "70d0cbb33ed622e11f4a32eb429144d9baed2a2dd1e20c75b535768a558b1d7a",
+        "sm5_880ff0404201": "0e5cd308de71e1e9e60f53430f823c527831ad1dec063a6a4275fddf967c08d1",
+        "sm5_ab268fdb92fa": "d2a232fa39ce6509b728f412fd2a01546a5d08d4b674a5c9117827905bd4aa3f",
+        "sm5_1a226d4c246a": "0054f8a0e027c220f8d30e6ad8701c37e5158cb5cc28ffef0db624e91dac16a5"
       },
       "CalcHEPStatus": "PASS",
       "MadGraphStatus": "PASS",
-      "CapsuleSHA256": "6ea814555a014c1f97335b5c603a87587137739550c20f0f6887768e55e8c9e9"
+      "CapsuleSHA256": "4a97c51d9282bcc4a1b2758baea47f5b2838258e40020920b2d7420670fed05f"
+    },
+    "sm5f_55f8d81899f6": {
+      "FamilyID": "sm5f_55f8d81899f6",
+      "Status": "PASS",
+      "Seconds": 21.692292,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_e0545bdcd724",
+        "sm5_26d38e383edc",
+        "sm5_c5f65a3d17b7",
+        "sm5_65c3bd4f49f8"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_e0545bdcd724": "291e78f151465d8b71d55697a2582dfc520e185e3a42cf24fd9a2b9e9dc6ea53",
+        "sm5_26d38e383edc": "f3258a5c5d671491fe593a4b0f23ca0cbf1e54cee72dd909243f232bbebdd477",
+        "sm5_c5f65a3d17b7": "a74cd24ee41989410a42ce23818974e531fe7ba34834563ddb999b19e7b28f3d",
+        "sm5_65c3bd4f49f8": "d11f8f44d09f9e2ec09d44837925531bc16f0fe9060cc65a075aed1d7e17f517"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "f14931339ca66fe54a007001ca274fc285672f51a0ba6a5f1bf5ac37d79edd57"
+    },
+    "sm5f_adf3dadc7384": {
+      "FamilyID": "sm5f_adf3dadc7384",
+      "Status": "PASS",
+      "Seconds": 23.164508,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_a3e116df3cc8",
+        "sm5_0f922be8a65d",
+        "sm5_10cddd0102e1",
+        "sm5_5793a58b92b9"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_a3e116df3cc8": "7c0284093d4f9f0719d3ad3fc9324c79137a433227cebb9321928af93dc3985b",
+        "sm5_0f922be8a65d": "8eea9e3b5e04ec8aa5e71889b5f20b4f67642ae35b30908dd953898b2783f2b0",
+        "sm5_10cddd0102e1": "a662945fcaad51d9022e0657b285a32cc3c721024ab58a3f75d9348a322ce918",
+        "sm5_5793a58b92b9": "8e3a008ebf80e58482fd1b815556d673f5aae5551ba49e486f68a7773c5a8729"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "dffec9d9c61f0984b3dd5de9209815c08deeafef277b6102d0931aa754ee71fa"
+    },
+    "sm5f_4471fc84bad3": {
+      "FamilyID": "sm5f_4471fc84bad3",
+      "Status": "PASS",
+      "Seconds": 25.134071,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_5d1ac95681bd",
+        "sm5_c096b4bb2dde"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_5d1ac95681bd": "b6c970da1b5cb6d60de356497ad724be41444b31f849f8754f3126f794d1eafd",
+        "sm5_c096b4bb2dde": "0aac894228d7888615674d9f119f15ba57b67da8a4b3b9a5d5d4f44a4a15e6c2"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "20a6c791e4b397ce78fbe3f43ee17c87e9cfc91de689f2c7fa20b4372e9e0528"
     },
     "sm5f_e0b814f933e5": {
       "FamilyID": "sm5f_e0b814f933e5",
       "Status": "PASS",
-      "Seconds": 22.590749,
+      "Seconds": 36.638638,
       "Points": 1000,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
       "CaseIDs": [
         "sm5_084ff504b71a",
         "sm5_84ab33486d0e"
       ],
       "CaseCapsulesSHA256": {
-        "sm5_084ff504b71a": "3b0b64d1e326c74fc0cc629213fbb19b774270c0d85669eb8ec762182211c1e9",
-        "sm5_84ab33486d0e": "b85809c8b1f02861799a00537efb70860caa73acc9a17b3c3e39a5e87d38eb41"
+        "sm5_084ff504b71a": "851cd468d34e26f1a061661e8c7e59d276debacda96ccc52542c9fd3ecc21d67",
+        "sm5_84ab33486d0e": "d35d45754d04c35abffed8a45bb5400c0476b11df53c70de29fabdb8f62ea8be"
       },
       "CalcHEPStatus": "PASS",
       "MadGraphStatus": "PASS",
-      "CapsuleSHA256": "fc5b2522e4ee2881dfb1ce895c0d4d56a232ba80364fc6bac695597e3b6cbd95"
+      "CapsuleSHA256": "889980d1e74eb30547e3a0fa68946e0af4bcfc9a07bb90a2adaa3bda6b5dcb94"
+    },
+    "sm5f_b36ee12dfba9": {
+      "FamilyID": "sm5f_b36ee12dfba9",
+      "Status": "PASS",
+      "Seconds": 16.136096,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_b36ee12dfba9"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_b36ee12dfba9": "cd4b321ef0c1e622d15889837d88d7b3bee1bb84413eed3079d141660a8f73cd"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "8ae330cfa214a0931764c4a23c1bc20f4f5d56ca6b046ead6f81bb5b5a1250a7"
     },
     "sm5f_37f9f9b4075f": {
       "FamilyID": "sm5f_37f9f9b4075f",
       "Status": "PASS",
-      "Seconds": 12.691009,
+      "Seconds": 15.834182,
       "Points": 1000,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
       "CaseIDs": [
         "sm5_37f9f9b4075f"
       ],
       "CaseCapsulesSHA256": {
-        "sm5_37f9f9b4075f": "35462a51e4d895038d454f9cb3f2731003bbb9236a2c22c5bd3dcdd09c8bd618"
+        "sm5_37f9f9b4075f": "51d4441c314922aebf4d87f19344ee9c939ddfc466d6eee2df72713ad5299d93"
       },
       "CalcHEPStatus": "PASS",
       "MadGraphStatus": "PASS",
-      "CapsuleSHA256": "ae576cfe5bb1f481eada953dffe78454a1b65e2f3014652c5a1f029621d9a930"
+      "CapsuleSHA256": "aeb5f2c8e46fc956b6cac71d2f914a046fdcca6d2f5cf784c558b37e51c3d77e"
+    },
+    "sm5f_402e97e4d880": {
+      "FamilyID": "sm5f_402e97e4d880",
+      "Status": "PASS",
+      "Seconds": 23.91617,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_402e97e4d880"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_402e97e4d880": "8d99aec4908d2f54437cf84f4b41c798426b1fe7aabd01c5c8cbadad23d4d935"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "51fdd78e7d6b7bdcc454b8786162df3351e480d9b575882316e8f4352ec34ef3"
+    },
+    "sm5f_da857dc86c70": {
+      "FamilyID": "sm5f_da857dc86c70",
+      "Status": "PASS",
+      "Seconds": 12.048037,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_da857dc86c70"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_da857dc86c70": "1aa7b5ffc31f478b5417b2a41ea4abe469adc01b4891bd845f6d5d277ba8ef6a"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "eba4c9944ce4cd7ed0f2634c88304a449ecbbc71db55a33938f1257047160310"
+    },
+    "sm5f_0670438f36bf": {
+      "FamilyID": "sm5f_0670438f36bf",
+      "Status": "PASS",
+      "Seconds": 18.410704,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_0670438f36bf"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_0670438f36bf": "915f0a2feeb38cfd673a344b0be58929cd92c10b6c2090bc74535fc272a803ec"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "566e1bf79cc67d3de8ce5cad7c78772a8213a59f7b9862275f78e03f187fee84"
     },
     "sm5f_46dff720d04e": {
       "FamilyID": "sm5f_46dff720d04e",
       "Status": "PASS",
-      "Seconds": 53.814685,
+      "Seconds": 42.045931,
       "Points": 1000,
-      "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
       "CaseIDs": [
         "sm5_46dff720d04e"
       ],
       "CaseCapsulesSHA256": {
-        "sm5_46dff720d04e": "b61ed1a0cae271b79c7554271505ed9c8db9cdcc133d5ff4516604ed287a8c4b"
+        "sm5_46dff720d04e": "41a651e642a0fb57adf6a128a1df11b2d7eb196fccca581d7b19850e0dddcfd9"
       },
       "CalcHEPStatus": "PASS",
       "MadGraphStatus": "PASS",
-      "CapsuleSHA256": "ba109f87bf7f81df011686e95abfccb3eac24a9cb2220e76be7f31406ff18bcf"
+      "CapsuleSHA256": "351de92e6b3435967cb740c9834c36df608a9226c133a1055183fc1c58201dc5"
+    },
+    "sm5f_f508e8259839": {
+      "FamilyID": "sm5f_f508e8259839",
+      "Status": "PASS",
+      "Seconds": 16.91264,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_f508e8259839"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_f508e8259839": "e73d6dd8d44d4f440a8d5e0b3d910eda32b04d7a1985d0829887a49ccff5ccbd"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "fddf1854d2ea4866f9a7751d4663dc0ab0cae79861b9ebf8a983f6553eca4295"
+    },
+    "sm5f_5ee27a525e6f": {
+      "FamilyID": "sm5f_5ee27a525e6f",
+      "Status": "PASS",
+      "Seconds": 12.077242,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_5ee27a525e6f"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_5ee27a525e6f": "92a14cbb18ab6bd39fcf1ce46556b76c3f7c9d82cfe047a431d1b9cf54565215"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "e9e8a49ffe098e0ce7bc380d0fb20fc9a9c0ff24b5a27a71c34d328b48c99ec6"
+    },
+    "sm5f_d1a96c671577": {
+      "FamilyID": "sm5f_d1a96c671577",
+      "Status": "PASS",
+      "Seconds": 11.628729,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_d1a96c671577"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_d1a96c671577": "4aaf2b7fc2831453f228fd94f503b6f8419c07290220c1273c40abbad43b0b36"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "dd23a7e0e0d6fef17bd2628ec06fd82e32a80d6cf3837bd8b2a879a218a597a3"
+    },
+    "sm5f_7767f6e9f98e": {
+      "FamilyID": "sm5f_7767f6e9f98e",
+      "Status": "PASS",
+      "Seconds": 9.418194,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_7767f6e9f98e"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_7767f6e9f98e": "bf372c6f0968eb15d332166331e0098aa4f12a7fbac0473f74f8278a52aace39"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "77e37567174bca7a4d1c42c30f8785e1b005be2a149f1275e81508e8e6625d70"
+    },
+    "sm5f_f7742d3aed97": {
+      "FamilyID": "sm5f_f7742d3aed97",
+      "Status": "PASS",
+      "Seconds": 11.709819,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_f7742d3aed97"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_f7742d3aed97": "407de4381dd07de31dff97d81090002aee5eac59caa8be084fa14f98f79da257"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "5ad7255efeffefc2bd5979f6dd09057fb7732f1c95b6f361089ab126dc842b04"
+    },
+    "sm5f_91637842c938": {
+      "FamilyID": "sm5f_91637842c938",
+      "Status": "PASS",
+      "Seconds": 15.583914,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_91637842c938"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_91637842c938": "51093e67af19917121ce2283b8b680cdccbf1ce291a80713dee350dadffb759d"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "3f02e2bdca75351ef6b0be1177ef987ee8efd7d0c1e973ce1de9c35c48ec18b7"
+    },
+    "sm5f_2fd20d2de292": {
+      "FamilyID": "sm5f_2fd20d2de292",
+      "Status": "PASS",
+      "Seconds": 10.463805,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_2fd20d2de292"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_2fd20d2de292": "5d1c1be25886955c7f7111c999cd90ce74ae1e035b47376d35d570b279fe0bd2"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "ab2de5087f734444678adad2570dce7644e16addf9304f627f6bfd126237c55a"
+    },
+    "sm5f_8605d425fbaf": {
+      "FamilyID": "sm5f_8605d425fbaf",
+      "Status": "PASS",
+      "Seconds": 13.424257,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_8605d425fbaf"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_8605d425fbaf": "74eb62bf9e187e16e44d14256c08f01039ab02979ca5ae32b6c89dbebb885dcf"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "1002b73b3f0740c3ad08c310a07b63ff2bd65224aa1fbc2f383802c326a1697e"
+    },
+    "sm5f_74733e3c96c4": {
+      "FamilyID": "sm5f_74733e3c96c4",
+      "Status": "PASS",
+      "Seconds": 11.492746,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_74733e3c96c4"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_74733e3c96c4": "32221f3f93d88e370599854399a6c1881a3cc89e62c064a083126e953b0ad0af"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "ee089236fce3612cb856528c10bf0254cda5ef182cb1ea29084f5654e32298e3"
+    },
+    "sm5f_e023676f6986": {
+      "FamilyID": "sm5f_e023676f6986",
+      "Status": "PASS",
+      "Seconds": 20.091016,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_e023676f6986"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_e023676f6986": "ed28b0f57dd08a8129d17a82d6bd98c797335e2a8f726442cb58e2814cf6ae49"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "d7dc458e17e8b24fea6e9563993980e0014903efd586700d381e412d95a523a0"
+    },
+    "sm5f_bae6ff8caa93": {
+      "FamilyID": "sm5f_bae6ff8caa93",
+      "Status": "PASS",
+      "Seconds": 13.7024,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_bae6ff8caa93"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_bae6ff8caa93": "57e9361b587ebb15e2736b4879444a99f437a37d9d55bb0c97dc9ce665260da4"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "121538c30cd4ef8e93f83b4b3e5d1e1b5e378956fb4ff32f54debc20ae92db28"
+    },
+    "sm5f_8c112cf47858": {
+      "FamilyID": "sm5f_8c112cf47858",
+      "Status": "PASS",
+      "Seconds": 17.353023,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_8c112cf47858"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_8c112cf47858": "f8f24c8ff7afcf295f1412cf008dbf5ac78f90baad0f321495746b42d3581270"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "975a1ce705a8f98a4945f019b2b7e1ac5d84c6d49626b53782d154831c6960f0"
+    },
+    "sm5f_842135ff836d": {
+      "FamilyID": "sm5f_842135ff836d",
+      "Status": "PASS",
+      "Seconds": 13.366821,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_842135ff836d"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_842135ff836d": "10919707935254e2e81d1730bc87fa60f7defb6f618c6351265eb97df2b4cbd5"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "8bdc31a56b33c30d84b1eb266a8822b81fb1959d6e7881398d99453366176665"
+    },
+    "sm5f_50a9d461bcbd": {
+      "FamilyID": "sm5f_50a9d461bcbd",
+      "Status": "PASS",
+      "Seconds": 12.621499,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_50a9d461bcbd"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_50a9d461bcbd": "96d2a98e0929d382dcecf12806c408463c270858b9a0cc38eb6dce494681213c"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "4bbae7de94346d68d72aaac0805674503e1a09e288f1f72c10e84f7846b1868f"
+    },
+    "sm5f_af1c593193b7": {
+      "FamilyID": "sm5f_af1c593193b7",
+      "Status": "PASS",
+      "Seconds": 13.885973,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_af1c593193b7"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_af1c593193b7": "766a4b389e91ffc24bda212fd50c0608a98e58bf50388645f21e3cff21666f74"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "0c84950f41ec91bd829a7429bb578e538ae03b55578c651481363565a331108b"
+    },
+    "sm5f_b97866bac15b": {
+      "FamilyID": "sm5f_b97866bac15b",
+      "Status": "PASS",
+      "Seconds": 12.071096,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_b97866bac15b"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_b97866bac15b": "c1f52fb02bd786a527e90c223f7e0b809cd23412874fd393d65db4476b71939f"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "a43734f8e0c883724fe7206d996248f81c10dd82152dcd583cbda6c29b78c631"
+    },
+    "sm5f_060cd6d92ebd": {
+      "FamilyID": "sm5f_060cd6d92ebd",
+      "Status": "PASS",
+      "Seconds": 20.089939,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_060cd6d92ebd"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_060cd6d92ebd": "2ed2a5c6525123e4ffbabcc9fa39eeef730414a42b91b5e745631b21fadf079b"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "6aadade04fe72cb24de4f9c077d7e6b7224859e6b12e3922a670bf828be76763"
+    },
+    "sm5f_710b020e11fc": {
+      "FamilyID": "sm5f_710b020e11fc",
+      "Status": "PASS",
+      "Seconds": 14.386883,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_710b020e11fc"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_710b020e11fc": "e4e0143918e7a65fcb7c2bf3c956249453eb3d6c9adaff5c532eadbc8ad9cead"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "2c49c4a2c217cacc2a1dd3f2b97c843d4397abf888535f1570499b25b821c8fd"
+    },
+    "sm5f_693568bc5d03": {
+      "FamilyID": "sm5f_693568bc5d03",
+      "Status": "PASS",
+      "Seconds": 12.2022,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_693568bc5d03"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_693568bc5d03": "615392737e23e3c7a5de5d8d3fd93babf5c20a83053d3b0839321f3e8ee79ddc"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "9bfb8d758cbc5f9a84869d0581939e6d83de593c2004f638f1beff9e7e2df2e6"
+    },
+    "sm5f_4e216e4868c5": {
+      "FamilyID": "sm5f_4e216e4868c5",
+      "Status": "PASS",
+      "Seconds": 13.99818,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_4e216e4868c5"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_4e216e4868c5": "399903a2af93f2412de1b4328f91165378b67828cda0c3f0f767354ed73e1add"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "d6410583f80022ee495a694c298dadddcf2c5d41b46844d82f82183138cea7c9"
+    },
+    "sm5f_f78b3f6e8279": {
+      "FamilyID": "sm5f_f78b3f6e8279",
+      "Status": "PASS",
+      "Seconds": 14.133243,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_f78b3f6e8279"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_f78b3f6e8279": "624587b27de2db7527a1bbf4f35f82db9f66f4f3b24662154cfe6404c4fba6b9"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "579c193aeb756a3a69b10ab24d8868fee3595be9b3c3b28b1b24dbd6ab9d8fd9"
+    },
+    "sm5f_acc142e348c6": {
+      "FamilyID": "sm5f_acc142e348c6",
+      "Status": "PASS",
+      "Seconds": 25.384279,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_acc142e348c6"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_acc142e348c6": "0047037c0b58727ef87a749d9a93100c07c3c485d17b506bdc8fc36f577eaa60"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "36416b0c9bc3b57d4a868417dc7c163c84281025fb296a3ee578c7b305a901ea"
+    },
+    "sm5f_247da7a2e65f": {
+      "FamilyID": "sm5f_247da7a2e65f",
+      "Status": "PASS",
+      "Seconds": 14.978714,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_247da7a2e65f"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_247da7a2e65f": "359adf2fac1c2beb8d550b85272b703f85e0b9624d0c8457141b90b9f9108fd8"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "bb9d5f37b119837a4ec66a4a7cba36bc81d9ef15bf253c9fadaccf4008905b9b"
+    },
+    "sm5f_794a46674f15": {
+      "FamilyID": "sm5f_794a46674f15",
+      "Status": "PASS",
+      "Seconds": 17.609371,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_794a46674f15"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_794a46674f15": "4ceb195f3e019a8da6404b7205129c22a07adeb1e16526bb587f49f01bb04757"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "ee8086588ecb1ea94b9be094c34af5862bdc7ec0b5ca1f9b869cc93414a6a51d"
+    },
+    "sm5f_d0c24d3c8d56": {
+      "FamilyID": "sm5f_d0c24d3c8d56",
+      "Status": "PASS",
+      "Seconds": 20.26871,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_d0c24d3c8d56"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_d0c24d3c8d56": "7e0407ef7f5d4ac21fd9eb6478c662e01c3553a65abda0203894bacdd99df71c"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "7bcda88c1a8df07c157e4a7c29bebc89b982be6fb07bb8554298b6d6cee63a31"
+    },
+    "sm5f_da998d74aedd": {
+      "FamilyID": "sm5f_da998d74aedd",
+      "Status": "PASS",
+      "Seconds": 13.845178,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_da998d74aedd"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_da998d74aedd": "2663c9224a66e7de4e732b16414f915cf4b356217b37168df9a956609e15993e"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "60d9fa6e61d6b2e40848c29420a2e1a3889ac96e1bfc287137da8bc771e132a0"
+    },
+    "sm5f_10e5245de2d6": {
+      "FamilyID": "sm5f_10e5245de2d6",
+      "Status": "PASS",
+      "Seconds": 29.184862,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_10e5245de2d6"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_10e5245de2d6": "3cf3444662cd2514b28ea1497f58413bf19c137f56f69d0d22834b18a8d9b068"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "60f61e40ea2f44642c910422c7b8c9c79628a345c676a01ec906e93378dc7674"
+    },
+    "sm5f_88b734fbc9bf": {
+      "FamilyID": "sm5f_88b734fbc9bf",
+      "Status": "PASS",
+      "Seconds": 19.196141,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_ed50686c6842",
+        "sm5_665132fc0406"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_ed50686c6842": "60b3640991f566d444a9a33e192e92c0b91fa0fac791d61d49affac4899bc21b",
+        "sm5_665132fc0406": "deb09b724e26ac3aeb75a51b84e7dbb3be43687e3533b4c3c70ad4b20dbf48ef"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "dec763f973e2800acdbd8c78f5c935d7ac39b425f549356e2abe2f642726d620"
+    },
+    "sm5f_8b0edde767da": {
+      "FamilyID": "sm5f_8b0edde767da",
+      "Status": "PASS",
+      "Seconds": 27.097307,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_2bca096ec482",
+        "sm5_0179e71cada6"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_2bca096ec482": "7aee9e25607053d592a22120065c5b9c8e5f12c721ae08da1ccbcf0955b24bcc",
+        "sm5_0179e71cada6": "b70f2272d770751f6920dcd9b754d94196f17ba5f7b7054b6e600c86f363c29c"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "5fe657d8d2e95dbd10e9e76cd0cdb074095739aa1442479bfefca7933d0165a3"
+    },
+    "sm5f_d9ee8359d94d": {
+      "FamilyID": "sm5f_d9ee8359d94d",
+      "Status": "PASS",
+      "Seconds": 16.529697,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_efd652a3d826",
+        "sm5_df42e5b0241e"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_efd652a3d826": "03d8664021faa2fd8f6e6183acab8f3b272b517fe542275aafd42f16e319691e",
+        "sm5_df42e5b0241e": "721ee5ff256199b0935f462ee33824e93262011ec58dc2462ec6596c24811c8a"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "44524b8723e73718dd88619d2cf1e37fefc0ceaf7ac12eda418fa8203892d577"
+    },
+    "sm5f_9e18228d83de": {
+      "FamilyID": "sm5f_9e18228d83de",
+      "Status": "PASS",
+      "Seconds": 16.875835,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_9215f7cc443f",
+        "sm5_a034b719e441"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_9215f7cc443f": "a68dc4d663b9c6f5deb35b020438422c7974e7438289410a1d79c050e5dc4b63",
+        "sm5_a034b719e441": "1d601438f2fb976f124f76c9074e14e4d7f7ff15c6b6edc3f6f334e87d4599a5"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "35ab4a66fa4d5441d5a041ccdf473dfdecd430460312d7e6a75084a15224153b"
+    },
+    "sm5f_cb920cfa5642": {
+      "FamilyID": "sm5f_cb920cfa5642",
+      "Status": "PASS",
+      "Seconds": 14.556103,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_e4bffc8612a4",
+        "sm5_13a6bf87861c"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_e4bffc8612a4": "0623dce0c45486fccde6121180bed7a8f8be9adb4d990721878c9d316b9a1763",
+        "sm5_13a6bf87861c": "6a33ee1702c3eb4ba35336c26deee6ae0779e81ca28b1e80114751614802418d"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "5559aa9291fa10c2733df5065e425cce1a1789cb6238540dc89d046aa89a8f8d"
+    },
+    "sm5f_d0ae3962285e": {
+      "FamilyID": "sm5f_d0ae3962285e",
+      "Status": "PASS",
+      "Seconds": 22.186071,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_710691be6702",
+        "sm5_319a49889cfe"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_710691be6702": "e219cdf6f5df059c4ffb997cc352704d8faf0a2a08562d95020dd3ee335fda8e",
+        "sm5_319a49889cfe": "3e55e192eb32ac2ff95eb484117e9af6913ed4effd4e9759e3e4dab610bc79b2"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "2fc7715e7c28b529ed367a212611b6855d6363a2c2a59bce68afe3af4cb3fe99"
+    },
+    "sm5f_a1ca7d11b780": {
+      "FamilyID": "sm5f_a1ca7d11b780",
+      "Status": "PASS",
+      "Seconds": 23.34563,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_1461e7c05888",
+        "sm5_0359273da6b7"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_1461e7c05888": "b64270127b8d501fb7cd77fda52c2cbba0dd9294d5c06cd0fe566b1a5fe910ea",
+        "sm5_0359273da6b7": "7d5ed6438e2554b52df8ba12c0c11977bb4ca4e92a3892c93d6a270a55b35ac1"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "1531f77fa7d1d885c85ef81359eebd2ec2d7eef96fe77a18c0b8c2b17decbaae"
+    },
+    "sm5f_5901b95de745": {
+      "FamilyID": "sm5f_5901b95de745",
+      "Status": "PASS",
+      "Seconds": 16.84179,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_11ffd4411831",
+        "sm5_089415ad5f94"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_11ffd4411831": "c0b60e2339eb41554aa1380e342d29c899d0433e4bd1de5589eca279f1031c8b",
+        "sm5_089415ad5f94": "60014332263ef1f26543b53eaf8ea6eb4188ccbf006b23cb440e6658c74af7ff"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "6cf0fedecbbc98d7c0171fc0e449f2055b5bed1af4b3109f4e9b24340277d8f1"
+    },
+    "sm5f_d25360650191": {
+      "FamilyID": "sm5f_d25360650191",
+      "Status": "PASS",
+      "Seconds": 22.653928,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_f85fa7caeff5",
+        "sm5_f146805f0d86"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_f85fa7caeff5": "19fc9f9738d34fea423c1d87ab6b3e46c666d45166409d6737be9ec3a6937438",
+        "sm5_f146805f0d86": "521c6a2527d8667a62f9d52d9742a26551696d17d528b6ace3dcfe39352b376d"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "7b9838850d08711bf88bcff50ee8f3847724d9b5955e40543e18ed550fb8dfcf"
+    },
+    "sm5f_8468e3356042": {
+      "FamilyID": "sm5f_8468e3356042",
+      "Status": "PASS",
+      "Seconds": 21.064692,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_4bc32809acdc",
+        "sm5_a1a8f35eef64"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_4bc32809acdc": "cc448ef317e67aab8d4d9f32b0fea5848e97f74c885c90a6679b86f652b51000",
+        "sm5_a1a8f35eef64": "224c69745ce593ecc7c00b7def99e0dded626adc3a60fb76f627cd1d37f24ea3"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "c563d0f842c697ff7ba0bc50dd894e392aa7a28cd532aedb7ea0e09fcd875bc9"
+    },
+    "sm5f_867948ee3e9f": {
+      "FamilyID": "sm5f_867948ee3e9f",
+      "Status": "PASS",
+      "Seconds": 8.854248,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_c3cb0c4e8ff8",
+        "sm5_70a731739cd0"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_c3cb0c4e8ff8": "b65e74f06c5d4f6ed78c5aa36d4893a51c18a713b12b33456ce6020231517fca",
+        "sm5_70a731739cd0": "33de90ec706ab8bb3b0e49a3881eff1c2b3eff72769b5d8d2323c98a8e441d0f"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "7ac8710fd331de82d265163a4e0306df7d735b767a69f49b7d2f2668f326db77"
+    },
+    "sm5f_529977af6fa3": {
+      "FamilyID": "sm5f_529977af6fa3",
+      "Status": "PASS",
+      "Seconds": 9.880024,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_303da8dad9d5",
+        "sm5_f040c00c955b"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_303da8dad9d5": "b52a5d4019a28cd6eefe1956b80a4d2b00b3e68f40af5efa53212743c2b8ae5c",
+        "sm5_f040c00c955b": "a85036f47b8981a4e591b09976d6347a6a9a72364978c4c815e372a1d32df7ee"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "af1a8346d27fcc0d16ba2d55cba453716ef2407d5db5e6262223d2fcf9c85a1e"
+    },
+    "sm5f_28c081f40098": {
+      "FamilyID": "sm5f_28c081f40098",
+      "Status": "PASS",
+      "Seconds": 14.659203,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_e2456b113351",
+        "sm5_b96b171e970a"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_e2456b113351": "ea4ccfe348b9fd164b4eaae8346047363efef4a5225b44847b6e840943be1a21",
+        "sm5_b96b171e970a": "a12e99179b893159eacaca4b510c5ea20c59557bd2708b42852f940b00e73f7e"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "20d6c7ceab5c25224343282454a1ac4d79121fb5638c3cef6b268975d71433ab"
+    },
+    "sm5f_d22c9cfe2cf5": {
+      "FamilyID": "sm5f_d22c9cfe2cf5",
+      "Status": "PASS",
+      "Seconds": 12.045238,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_23903971ec01",
+        "sm5_b177f3f3099c"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_23903971ec01": "2cf25521f3fa1dfb7403f5f4fd9dda07103e61b8669bfce652e778470af49943",
+        "sm5_b177f3f3099c": "59c59f7c014491959ce5531bca56301c7756832f86a7686edf45d356a94883fd"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "6bfac63f67dd3bf05c9de430f9d86a8225c5aa71b3650312746eef80028d5cbd"
+    },
+    "sm5f_dedee899b10d": {
+      "FamilyID": "sm5f_dedee899b10d",
+      "Status": "PASS",
+      "Seconds": 11.625582,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_0f7aff31e386",
+        "sm5_af34bef46e30"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_0f7aff31e386": "d2bde0f435112d0fb134b2220c2d40a61a2d619b650711742348edb6fb9977a5",
+        "sm5_af34bef46e30": "6040af14d6652d70ea5711d55a70558e3a46baf8b2b83089937945dcb8b66d52"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "5d3c914cb35b26f550643f301d436f82593d4a36223b76b530c6631b2d853e1b"
+    },
+    "sm5f_d7d021ff8a8c": {
+      "FamilyID": "sm5f_d7d021ff8a8c",
+      "Status": "PASS",
+      "Seconds": 14.437453,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_f3dc6921a011",
+        "sm5_2705f473209b"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_f3dc6921a011": "e48af24545bdc25efa2151c8db3a41a69b1d6265bd494f0f3ec2f2c8ee8c2fba",
+        "sm5_2705f473209b": "d71f6fe51524661c9613c204775858441109d03196200e0c5e74d230adbafe71"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "33425030f079025b53b4dc36ff648644cc9ebed8d935442f5152a046789e439a"
+    },
+    "sm5f_135c5a6cb98a": {
+      "FamilyID": "sm5f_135c5a6cb98a",
+      "Status": "PASS",
+      "Seconds": 16.065642,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_d2dd863e7a0b",
+        "sm5_88cab0c885fd"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_d2dd863e7a0b": "f033859fd01bdc08983f6e821d9584997f74bb626ab1b581a7b588a1155f12c7",
+        "sm5_88cab0c885fd": "245eeca589f38dab84de0e5db39c1789492984efc1100ad3095ec20181607687"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "7ca677a2855936b7159d4d248c1d0b468d1f25422f1fbe28b1028310baabd937"
+    },
+    "sm5f_4e78482d042b": {
+      "FamilyID": "sm5f_4e78482d042b",
+      "Status": "PASS",
+      "Seconds": 15.789622,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_c481602bdfd8",
+        "sm5_afa80d50f34b"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_c481602bdfd8": "78a0f46ef917a60e78423a6debac9af15bbe2f6e722032d9c84fb665ea4d1713",
+        "sm5_afa80d50f34b": "d16e5862c60f0e417eab1bd53f69b206e980cd984b370e93a373e3f7df64657e"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "21d48f645d9d22d1a25850c1f89e6cb2e0ee9a4b72dce41fdb326c7e27575ad4"
+    },
+    "sm5f_e404c062ed33": {
+      "FamilyID": "sm5f_e404c062ed33",
+      "Status": "PASS",
+      "Seconds": 10.120371,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_ca8b27416c32",
+        "sm5_a851eac41ec0"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_ca8b27416c32": "b261a94c3342d9107da0f49f1b2e857f1333c627c3f3390ce378f3b113da72c3",
+        "sm5_a851eac41ec0": "62791e04c9018d3f8006e7aa37b0b65038dc275cb1417acc5659f43ba60ddf69"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "eaf56720e2e610889503246b4fa5eef838c47083331bbca7665357b625f90abd"
+    },
+    "sm5f_9d64a951dab6": {
+      "FamilyID": "sm5f_9d64a951dab6",
+      "Status": "PASS",
+      "Seconds": 10.824942,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_00292ff44fac",
+        "sm5_5c2f6cb0ace1"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_00292ff44fac": "6ed0ac9cd64ed7ca4727c831f2e38fd5ac935e30b47911efb3af3caed639cdc2",
+        "sm5_5c2f6cb0ace1": "9d12c18f3ce6559a98d49a6505097962bb3a9c25dedcba0d559a84947f9bf459"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "ad801b0a65da7cfb78ce3ae4bacd503bc7113561ad6eb079163e61f17b2227ff"
+    },
+    "sm5f_6bf9e82d8fe4": {
+      "FamilyID": "sm5f_6bf9e82d8fe4",
+      "Status": "PASS",
+      "Seconds": 9.815293,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_8872209a2887",
+        "sm5_abd5f4720a2a"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_8872209a2887": "cb0beec51d402a42e5ffcf2ff62f0516a6d913835ad59e9ace18e74a1583ca15",
+        "sm5_abd5f4720a2a": "c91ded46f92c3bbaab4fcacf2a43e9b2934c135714f0f90208e2a1e1f41303c4"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "15a0e14a3633ec4f185ab7bfbc25152f0e3499074bc5deffa9cbb5e8567bbf3b"
+    },
+    "sm5f_0ec2a53d034e": {
+      "FamilyID": "sm5f_0ec2a53d034e",
+      "Status": "PASS",
+      "Seconds": 10.159379,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_0ef4ff72d155",
+        "sm5_ff6b9efc52cd"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_0ef4ff72d155": "c267ed8e49323f7898b4a43aa3af30dceda6e6980f709b68380f5975b94673aa",
+        "sm5_ff6b9efc52cd": "637765127ee993cb7251467a5ac80a2e8c28a344a7c8ef908d8b51470db1924a"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "a60f3df129c74ac18e9ab821170ad7fc0fc1d1eb0e7854d0a8ea334e32e616c8"
+    },
+    "sm5f_532575693947": {
+      "FamilyID": "sm5f_532575693947",
+      "Status": "PASS",
+      "Seconds": 8.636196,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_5ef4c4aefbc5",
+        "sm5_5e2073109c75"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_5ef4c4aefbc5": "f32efc47932792521fa8a6892e81755716b2c64138c8694a35d2daa281b3e44c",
+        "sm5_5e2073109c75": "0714cd86b67d4f7ccaea052f5bba4db81f8ef77efca6ee0373959a539a5dbcdd"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "96a704280dfe8cde6b37360180b1a80e7b221c0d6de013b3041963deb191c9c8"
+    },
+    "sm5f_5f3f57ffa322": {
+      "FamilyID": "sm5f_5f3f57ffa322",
+      "Status": "PASS",
+      "Seconds": 7.956534,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_9e0462fe698f",
+        "sm5_d5caa4a7cbbc"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_9e0462fe698f": "635ff36ee4ab1f6a86e2635b3fdcd3227485b27e42555b82580fa228dd118a37",
+        "sm5_d5caa4a7cbbc": "4145d1caa72557a12901702fc3e8fac12cbbf8948980823e9b7e9f7ee6cec150"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "20daade91f7567a7e17df90acd17a56ba6bde7859fa1ad5bc976b32fc0118ce6"
+    },
+    "sm5f_107cf6a82791": {
+      "FamilyID": "sm5f_107cf6a82791",
+      "Status": "PASS",
+      "Seconds": 8.378882,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_d8b88eb0be66",
+        "sm5_f4e0b778ca50"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_d8b88eb0be66": "068a80acefbf9d2b58d5264799ae4e2b6c1390422c35b9281f70add1b8162eed",
+        "sm5_f4e0b778ca50": "b6484a7aff0367fdc4697ac50ccfc57526052fcda72cdf6e490c75ce730048dc"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "94e1423aa7a299461f31579e39b6d6ad81c75a987870f37d6ae6d5f7bc3d0156"
+    },
+    "sm5f_c2daa6c186be": {
+      "FamilyID": "sm5f_c2daa6c186be",
+      "Status": "PASS",
+      "Seconds": 8.18141,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_e583ff10b7b9",
+        "sm5_b60d50f4f97b"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_e583ff10b7b9": "a4f49ee9a08becac433f846bb3700b28cc3b0268f9c2ab99fa78e288fe865a93",
+        "sm5_b60d50f4f97b": "3a884794b091b09f01ad235bc233ad52265a03b4c7e656424068b25ebb0fe187"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "7e9b9ce4ec76f222a2889eeea52dcd05c2a6ad582ddbc1b014d7789f1615cb72"
+    },
+    "sm5f_ebb0e3f9dca7": {
+      "FamilyID": "sm5f_ebb0e3f9dca7",
+      "Status": "PASS",
+      "Seconds": 8.356096,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_6f8cb50daa8c",
+        "sm5_10a5b0871a4d"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_6f8cb50daa8c": "853da1e39fa3450d898b63c43354cd065e4b4928291428323988713f0f12f322",
+        "sm5_10a5b0871a4d": "6b857ad120c516d3882ce84db36c1e397362b6f7407f2aee42305cf17e7ae5be"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "04ea305da420099221bff50012a870856e085a90c236388cc08659e0142ba9a7"
+    },
+    "sm5f_14a96074e650": {
+      "FamilyID": "sm5f_14a96074e650",
+      "Status": "PASS",
+      "Seconds": 8.507119,
+      "Points": 1000,
+      "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+      "CaseIDs": [
+        "sm5_b989214702cc",
+        "sm5_ec545c42f568"
+      ],
+      "CaseCapsulesSHA256": {
+        "sm5_b989214702cc": "0e3128b26eeb6fe6d5ad924b30aa81fafd65d25e912e5270aa5bf359129675f6",
+        "sm5_ec545c42f568": "1c41eb0fd218e3fedce28085d986fb30dc372b9f98c44871aefc63d90fae73a3"
+      },
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "CapsuleSHA256": "12cc26aaa45cbcc9b6cc4666712678491ad83d767dcbe161be4b6202ef4616c5"
     }
   },
   "Counts": {
     "TotalCases": 1422,
     "TotalFamilies": 869,
-    "Constructed": 27,
-    "FullyValidatedCases": 25,
+    "Constructed": 130,
+    "FullyValidatedCases": 124,
     "PrecisionQualifiedCases": 2,
-    "ValidatedIncludingPrecisionQualifiedCases": 27,
+    "ValidatedIncludingPrecisionQualifiedCases": 126,
     "PrecisionQualifiedFamilies": 2,
-    "ValidatedFamilies": 19,
-    "FailedOrTimedOut": 3
+    "ValidatedFamilies": 82,
+    "FailedOrTimedOut": 1
   },
   "CurrentFamily": null,
   "StopReason": "BatchComplete",
-  "LastAttemptedFamily": "sm5f_46dff720d04e",
-  "LastCompletedFamily": "sm5f_46dff720d04e",
+  "LastAttemptedFamily": "sm5f_6ec0623f8fe4",
+  "LastCompletedFamily": "sm5f_8b0edde767da",
   "CurrentCase": null,
-  "NextFamily": "sm5f_49ce3fca1665",
-  "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712"
+  "NextFamily": "sm5f_6ec0623f8fe4",
+  "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9"
 }
