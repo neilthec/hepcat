@@ -121,6 +121,13 @@ sm5NotebookRecord[path_String] := If[FileExistsQ[path],
   Quiet[Check[Import[path, "WXF"], <||>]], <||>];
 sm5NotebookOutput[value_, style_String] := Cell[BoxData[ToBoxes[value, StandardForm]], style,
   GeneratedCell -> True, CellAutoOverwrite -> True];
+(* Repeated headless heartbeats belong in the preserved raw log, rather than
+   thousands of saved notebook cells. Milestones, diagnostics and check tables
+   remain actual captured outputs. *)
+sm5NotebookHeartbeatQ[value_] := (StringQ[value] || MatchQ[value, _Row | _SequenceForm]) &&
+  StringContainsQ[If[StringQ[value], value, StringJoin[Cases[value, text_String :> text, Infinity]]],
+    ": working; stage "];
+sm5NotebookVisiblePrints[prints_List] := Select[prints, !sm5NotebookHeartbeatQ[#] &];
 sm5NotebookRecordedFailure[record_Association] := Module[{failure, status},
   status = Lookup[record, "Status", "UNKNOWN"];
   If[!MemberQ[{"FAIL", "TIMEOUT", "ERROR", "INTERRUPTED"}, status], Return[Missing["NoFailure"]]];
@@ -133,7 +140,7 @@ sm5NotebookRecordedFailure[record_Association] := Module[{failure, status},
 ];
 sm5NotebookWithRevalidation[cells_List, record_Association] := Module[
   {prints, additions, positions, index, seconds},
-  prints = Lookup[record, "RevalidationPrints", {}];
+  prints = sm5NotebookVisiblePrints[Lookup[record, "RevalidationPrints", {}]];
   If[!ListQ[prints] || prints === {}, Return[cells]];
   seconds = Lookup[record, "RevalidationSeconds", Missing["Unknown"]];
   additions = Join[{Cell[
@@ -154,7 +161,7 @@ sm5NotebookCaptured[record_Association, kind_String] := Module[{cells, prints, o
     Return[sm5NotebookWithRevalidation[
       If[!MissingQ[failure] && FreeQ[cells, Cell[_, "Output", ___]],
         Append[cells, sm5NotebookOutput[failure, "Output"]], cells], record]]];
-  prints = sm5NotebookOutput[#, "Print"] & /@ Lookup[record, "Prints", {}];
+  prints = sm5NotebookOutput[#, "Print"] & /@ sm5NotebookVisiblePrints[Lookup[record, "Prints", {}]];
   output = If[kind === "Construction", Lookup[record, "Expression", Missing["NoOutput"]],
     With[{result = Lookup[record, "Result", Missing["NoOutput"]]},
       If[AssociationQ[result] && KeyExistsQ[result, "Directory"], result["Directory"], result]]];

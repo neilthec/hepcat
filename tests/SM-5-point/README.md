@@ -152,7 +152,7 @@ full native diagnostics, random seeds, native check rows and numerical reports
 are saved as compressed WXF records in `tests/results/SM-5-point/`. Live stage
 logs and short JSON summaries are in that directory too. Generated numerical
 projects go to `tests/results/spinas-output/SM-5-point/` with readable names.
-The worked notebook retains the actual printed results and expressions.
+The worked notebook retains the actual stage milestones, check tables and expressions. Repeated working heartbeats are omitted from its saved preview; the complete prints remain in the WXF records and live logs.
 
 An amplitude counts as fully validated only when its native construction
 passes all required checks, including the Feynman comparison, and its complete

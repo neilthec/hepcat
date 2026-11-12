@@ -194,6 +194,17 @@ sm5ntCheck["syntax whitespace cleanup preserves spaces inside multiline string l
 sm5ntCheck["closing quotes do not hide syntax whitespace before the next string",
   sm5NotebookTrimSyntaxWhitespace["Cell[\"first\",  \n\"Text\"]  \nCell[\"second\",  \n\"Output\"]  \n"] ===
     "Cell[\"first\",\n\"Text\"]\nCell[\"second\",\n\"Output\"]\n"];
+sm5ntHeartbeat = Row[{"Preparing diagrams", ": working; stage ", 1.25, " s; total ", 2.5}];
+sm5ntMilestone = Row[{"Total time: ", 2.5}];
+sm5ntVisible = sm5NotebookVisiblePrints[{sm5ntHeartbeat, sm5ntMilestone,
+  "Completing factorization: UNRESOLVED", Dataset[{<|"Status" -> "FAIL"|>}]}];
+sm5ntCheck["saved previews omit only routine heartbeats and retain milestones and failures",
+  Length[sm5ntVisible] === 3 && FreeQ[sm5ntVisible, sm5ntHeartbeat] &&
+  MemberQ[sm5ntVisible, sm5ntMilestone] && !FreeQ[sm5ntVisible, _Dataset] &&
+  !FreeQ[sm5ntVisible, "Completing factorization: UNRESOLVED"]];
+sm5ntCheck["plain and multi-argument heartbeats use the same presentation filter",
+  sm5NotebookVisiblePrints[{"Preparing diagrams: working; stage 1 s; total 2 s",
+    SequenceForm["Preparing diagrams", ": working; stage ", 1], "actual warning"}] === {"actual warning"}];
 DeleteDirectory[sm5ntTemporary, DeleteContents -> True];
 Print["SM FIVE-POINT NOTEBOOK CHECKS: ", sm5ntChecks, "; FAILURES: ", Length[sm5ntFailures]];
 If[sm5ntFailures === {}, Print["HEPCAT_TEST_COMPLETED:sm-five-point-notebook-tests.wl"], Print[sm5ntFailures]];

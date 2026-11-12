@@ -15,6 +15,7 @@ import math
 from pathlib import Path
 import re
 import shlex
+import struct
 
 
 def _digest(path):
@@ -89,6 +90,90 @@ def _points_match(path, count, legs):
     return len(seen) == count
 
 
+
+def _unsigned_seed(value):
+    """A recorded RNG seed must stay exact, never pass through binary64."""
+    if isinstance(value, str) and re.fullmatch(r'0|[1-9][0-9]*', value):
+        value = int(value)
+    return value if type(value) is int and 0 <= value < 2**64 else None
+
+
+def _current_failure_control(link, report, results, report_path, family_id,
+                             context_sha, export_hash, legs):
+    """Reconstruct the current failed sample from raw output and CSV bytes.
+
+    The raw default report retains the first failed sample, not every event.
+    The replay must use that report's exact seed for its full point stream;
+    every saved component of that first failure is independently bit-checked.
+    A self-reported success boolean is insufficient evidence.
+    """
+    control_path = _inside(results, link.get('CurrentFailureControl'))
+    if not _matches(control_path, link.get('CurrentFailureControlSHA256')):
+        return None
+    control = _json(control_path)
+    raw_path = _inside(results, control.get('RawFailureReport'))
+    if not _matches(raw_path, control.get('RawFailureReportSHA256')):
+        return None
+    raw = _json(raw_path)
+    if (raw.get('FamilyID') != family_id or raw.get('ContextSHA256') != context_sha
+            or raw.get('ExportCapsuleSHA256') != export_hash
+            or control.get('ExportCapsuleSHA256') != export_hash):
+        return None
+    stdout = raw.get('CommandResult', {}).get('StandardOutput')
+    if not isinstance(stdout, str):
+        return None
+    seeds = re.findall(r'^Seed: ([0-9]+)\s*$', stdout, re.MULTILINE)
+    failures = re.findall(r'^First failing point: ([0-9]+)\s*$', stdout, re.MULTILINE)
+    counts = re.findall(r'^Points requested/generated/compared: ([0-9]+)/([0-9]+)/([0-9]+)\s*$',
+                        stdout, re.MULTILINE)
+    errors = re.findall(r'^Mismatches/errors: ([0-9]+)/([0-9]+)\s*$', stdout, re.MULTILINE)
+    if len(seeds) != 1 or len(failures) != 1 or len(counts) != 1 or len(errors) != 1:
+        return None
+    seed = _unsigned_seed(seeds[0])
+    if seed is None or any(_unsigned_seed(value) != seed for value in
+                          (raw.get('Seed'), control.get('Seed'), report.get('Seed'))):
+        return None
+    count = report['Points']
+    failed_point = int(failures[0])
+    mismatches, evaluation_errors = map(int, errors[0])
+    if (not 1 <= failed_point <= count or not 1 <= mismatches <= count or evaluation_errors != 0
+            or tuple(map(int, counts[0])) != (count, count, count)
+            or report['Results']['Native'].get('Mismatches') != mismatches
+            or type(control.get('CurrentFirstFailedPoint')) is not int
+            or control['CurrentFirstFailedPoint'] != failed_point
+            or type(control.get('MomentumComponents')) is not int
+            or control['MomentumComponents'] != 4 * legs
+            or type(control.get('MomentumComponentsBitMatched')) is not int
+            or control['MomentumComponentsBitMatched'] != 4 * legs
+            or control.get('AllSavedMomentumComponentsBitMatched') is not True):
+        return None
+    saved_momenta = re.findall(r'^\s*p([0-9]+) = ([^\r\n]*)$', stdout, re.MULTILINE)
+    if len(saved_momenta) != legs or {int(leg) for leg, _ in saved_momenta} != set(range(1, legs + 1)):
+        return None
+    momenta = {int(leg): [float(value) for value in text.split()] for leg, text in saved_momenta}
+    if any(len(values) != 4 or not all(math.isfinite(value) for value in values)
+           for values in momenta.values()):
+        return None
+    point_path = report_path.parent / 'points.csv'
+    if not _matches(point_path, report.get('PointsSHA256')) or not _points_match(point_path, count, legs):
+        return None
+    with point_path.open(newline='') as stream:
+        retained = [row for row in csv.DictReader(stream) if int(row['point']) == failed_point]
+    if len(retained) != 1:
+        return None
+    row = retained[0]
+    if not all(struct.pack('>d', float(row[f'p{leg}_{component}'])) ==
+               struct.pack('>d', momenta[leg][component])
+               for leg in range(1, legs + 1) for component in range(4)):
+        return None
+    return {'Report': link['CurrentFailureControl'],
+            'ReportSHA256': link['CurrentFailureControlSHA256'],
+            'RawFailureReport': control['RawFailureReport'],
+            'RawFailureReportSHA256': control['RawFailureReportSHA256'],
+            'Seed': seed, 'FirstFailedPoint': failed_point,
+            'MomentumComponents': 4 * legs, 'BitwiseMatchVerified': True}
+
+
 def qualification(family, export_summary, cases, context_sha, results_dir,
                   export_root, required_points=1000):
     """Return verified precision evidence, or None. Raw statuses are untouched.
@@ -111,6 +196,7 @@ def qualification(family, export_summary, cases, context_sha, results_dir,
                 or export_summary.get('FamilyID') != identifier
                 or export_summary.get('ContextSHA256') != context_sha
                 or export_summary.get('MadGraphStatus') != 'PASS'
+                or export_summary.get('CalcHEPStatus') not in ('PASS', 'FAIL')
                 or export_summary.get('Status') not in ('PASS', 'FAIL')
                 or not _positive_integer(export_summary.get('Points'))
                 or export_summary['Points'] < required_points):
@@ -200,7 +286,13 @@ def qualification(family, export_summary, cases, context_sha, results_dir,
                 return None
         if 'PointsSHA256' in report and not _points_match(report_path.parent / 'points.csv', count, legs):
             return None
-        return {'FamilyID': identifier, 'Status': 'PRECISION_QUALIFIED', 'ContextSHA256': context_sha,
+        verified_control = None
+        if export_summary['CalcHEPStatus'] == 'FAIL':
+            verified_control = _current_failure_control(link, report, results, report_path,
+                identifier, context_sha, export_hash, legs)
+            if verified_control is None:
+                return None
+        verified = {'FamilyID': identifier, 'Status': 'PRECISION_QUALIFIED', 'ContextSHA256': context_sha,
                 'CaseIDs': list(members), 'CaseCapsulesSHA256': member_hashes,
                 'ExportCapsuleSHA256': export_hash, 'Report': link['Report'],
                 'ReportSHA256': link['ReportSHA256'], 'Points': count,
@@ -209,7 +301,10 @@ def qualification(family, export_summary, cases, context_sha, results_dir,
                 'MaximumAbsoluteError': extended['MaximumAbsoluteError'],
                 'RawCalcHEPStatus': export_summary.get('CalcHEPStatus', 'NOT RUN'),
                 'MadGraphStatus': 'PASS'}
-    except (OSError, ValueError, TypeError, KeyError, AttributeError, csv.Error):
+        if verified_control is not None:
+            verified['CurrentFailureControl'] = verified_control
+        return verified
+    except (OSError, ValueError, TypeError, KeyError, AttributeError, OverflowError, struct.error, csv.Error):
         return None
 
 

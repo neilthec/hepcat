@@ -81,6 +81,7 @@ class PrecisionQualificationTests(unittest.TestCase):
         (self.audit / 'replay-tool.py').write_text('# synthetic archived replay method')
         self.report = {'SchemaVersion': 1, 'Status': 'PRECISION_REPLAY_PASS', 'Points': 1000,
             'ExternalCount': 4, 'RelativeTolerance': 1e-7, 'NativeControlReproducesCapture': True,
+            'Seed': 2**63 + 123,
             'Results': {'Native': {'MantissaBits': 53, 'REALBytes': 8, 'Points': 1000,
                 'OriginalBitMatches': 1000, 'Mismatches': 29, 'Errors': 0, 'Status': 'FAIL'},
                 'GCC128': {'MantissaBits': 113, 'REALBytes': 16, 'Points': 1000,
@@ -96,7 +97,30 @@ class PrecisionQualificationTests(unittest.TestCase):
         self.link = {'FamilyID': 'family_demo', 'ContextSHA256': self.context,
             'ExportCapsuleSHA256': digest(raw), 'CaseCapsulesSHA256': dict(case_hashes),
             'Report': 'precision/Demo/precision-summary.json'}
+        self.raw_path = self.results / 'diagnostics/current-raw-failure.json'
+        self.control_path = self.audit / 'current-failure-control.json'
+        seed = self.report['Seed']
+        self.raw_failure = {'FamilyID': self.family['ID'], 'ContextSHA256': self.context,
+            'ExportCapsuleSHA256': self.export_summary['CapsuleSHA256'], 'Seed': seed,
+            'CommandResult': {'ExitCode': 1, 'StandardOutput':
+                f'Amplitude validation: FAIL\nSeed: {seed}\n'
+                'Points requested/generated/compared: 1000/1000/1000\n'
+                'Mismatches/errors: 29/0\nFirst failing point: 3\n' +
+                ''.join(f'  p{leg} = 0 0 0 0\n' for leg in range(1, 5))}}
+        self.control = {'Seed': seed, 'CurrentFirstFailedPoint': 3,
+            'MomentumComponents': 16, 'MomentumComponentsBitMatched': 16,
+            'AllSavedMomentumComponentsBitMatched': True,
+            'ExportCapsuleSHA256': self.export_summary['CapsuleSHA256'],
+            'RawFailureReport': 'diagnostics/current-raw-failure.json'}
+        self.seal_failure()
         self.seal()
+
+    def seal_failure(self):
+        write(self.raw_path, self.raw_failure)
+        self.control['RawFailureReportSHA256'] = digest(self.raw_path)
+        write(self.control_path, self.control)
+        self.link['CurrentFailureControl'] = 'precision/Demo/current-failure-control.json'
+        self.link['CurrentFailureControlSHA256'] = digest(self.control_path)
 
     def seal(self):
         write(self.audit / 'precision-summary.json', self.report)
@@ -274,6 +298,138 @@ class PrecisionQualificationTests(unittest.TestCase):
 
     def test_family_filename_cannot_traverse(self):
         self.assertIsNone(self.qualify(family={**self.family, 'ID': '../family_demo'}))
+
+
+    def test_current_failed_sample_is_recomputed_rather_than_trusting_success_flags(self):
+        verified = self.qualify()
+        self.assertEqual(verified['CurrentFailureControl']['MomentumComponents'], 16)
+        self.assertTrue(verified['CurrentFailureControl']['BitwiseMatchVerified'])
+        points = self.audit / 'points.csv'
+        text = points.read_text().splitlines()
+        row = text[3].split(',')
+        row[3] = '1e-300'
+        text[3] = ','.join(row)
+        points.write_text('\n'.join(text) + '\n')
+        self.report['PointsSHA256'] = digest(points)
+        self.seal()
+        self.assertTrue(self.control['AllSavedMomentumComponentsBitMatched'])
+        self.assertIsNone(self.qualify())
+
+    def test_old_or_missing_current_failure_controls_are_not_qualifications(self):
+        for field in ('CurrentFailureControl', 'CurrentFailureControlSHA256'):
+            with self.subTest(field=field):
+                value = self.link.pop(field)
+                self.seal()
+                self.assertIsNone(self.qualify())
+                self.link[field] = value
+        self.control_path.write_text('{}')
+        self.assertIsNone(self.qualify())
+
+    def test_raw_failure_and_control_must_bind_the_current_export(self):
+        for target, field in ((self.raw_failure, 'ExportCapsuleSHA256'),
+                              (self.raw_failure, 'ContextSHA256'),
+                              (self.raw_failure, 'FamilyID'),
+                              (self.control, 'ExportCapsuleSHA256')):
+            with self.subTest(field=field, target=target is self.control):
+                original = target[field]
+                target[field] = 'b' * 64
+                self.seal_failure()
+                self.seal()
+                self.assertIsNone(self.qualify())
+                target[field] = original
+
+    def test_raw_failure_json_checksum_is_verified(self):
+        self.raw_path.write_text('{}')
+        self.assertIsNone(self.qualify())
+
+    def test_seed_stays_exact_above_the_binary64_integer_range(self):
+        self.assertIsNotNone(self.qualify())
+        self.raw_failure['Seed'] = str(self.report['Seed'])
+        self.seal_failure()
+        self.seal()
+        self.assertIsNotNone(self.qualify())
+        self.raw_failure['Seed'] = float(self.report['Seed'])
+        self.seal_failure()
+        self.seal()
+        self.assertIsNone(self.qualify())
+
+    def test_replay_control_and_raw_seeds_must_all_match(self):
+        for target in (self.report, self.control, self.raw_failure):
+            with self.subTest(target=target is self.report):
+                original = target['Seed']
+                target['Seed'] = original + 1
+                self.seal_failure()
+                self.seal()
+                self.assertIsNone(self.qualify())
+                target['Seed'] = original
+
+    def test_invalid_seed_types_and_bounds_are_rejected(self):
+        for seed in (None, True, -1, 2**64, float(2**63 + 123), '1.5'):
+            with self.subTest(seed=seed):
+                self.report['Seed'] = seed
+                self.seal()
+                self.assertIsNone(self.qualify())
+
+    def test_failed_point_index_and_component_counts_are_not_boolean_claims(self):
+        for field, value in (('CurrentFirstFailedPoint', 4), ('CurrentFirstFailedPoint', True),
+                             ('MomentumComponents', 20), ('MomentumComponentsBitMatched', 15),
+                             ('AllSavedMomentumComponentsBitMatched', False)):
+            with self.subTest(field=field, value=value):
+                original = self.control[field]
+                self.control[field] = value
+                self.seal_failure()
+                self.seal()
+                self.assertIsNone(self.qualify())
+                self.control[field] = original
+
+    def test_incomplete_or_duplicated_raw_momenta_are_rejected(self):
+        original = self.raw_failure['CommandResult']['StandardOutput']
+        for text in (original.replace('  p4 = 0 0 0 0\n', ''),
+                     original + '  p1 = 0 0 0 0\n',
+                     original.replace('  p1 = 0 0 0 0', '  p1 = 0 0 0'),
+                     original.replace('  p1 = 0 0 0 0', '  p1 = nan 0 0 0')):
+            with self.subTest(text=text):
+                self.raw_failure['CommandResult']['StandardOutput'] = text
+                self.seal_failure()
+                self.seal()
+                self.assertIsNone(self.qualify())
+
+    def test_bitwise_comparison_preserves_signed_zero(self):
+        self.raw_failure['CommandResult']['StandardOutput'] = self.raw_failure['CommandResult']['StandardOutput'].replace(
+            '  p1 = 0 0 0 0', '  p1 = -0 0 0 0')
+        self.seal_failure()
+        self.seal()
+        self.assertIsNone(self.qualify())
+
+    def test_current_raw_stream_counts_and_first_failure_must_be_present(self):
+        original = self.raw_failure['CommandResult']['StandardOutput']
+        for old, new in (('1000/1000/1000', '1000/999/999'), ('29/0', '28/0'),
+                         ('29/0', '29/1'), ('First failing point: 3', 'First failing point: 1001'),
+                         ('First failing point: 3', 'No saved failure')):
+            with self.subTest(old=old, new=new):
+                self.raw_failure['CommandResult']['StandardOutput'] = original.replace(old, new)
+                self.seal_failure()
+                self.seal()
+                self.assertIsNone(self.qualify())
+
+    def test_current_failure_artifact_paths_cannot_traverse(self):
+        self.link['CurrentFailureControl'] = '../current-failure-control.json'
+        self.seal()
+        self.assertIsNone(self.qualify())
+        self.seal_failure()
+        self.control['RawFailureReport'] = '../current-raw-failure.json'
+        self.seal_failure()
+        self.seal()
+        self.assertIsNone(self.qualify())
+
+    def test_a_failed_raw_stream_requires_the_hashed_full_point_set(self):
+        del self.report['PointsSHA256']
+        self.seal()
+        self.assertIsNone(self.qualify())
+
+    def test_unrun_reference_backend_is_not_precision_qualified(self):
+        self.export_summary['CalcHEPStatus'] = 'NOT RUN'
+        self.assertIsNone(self.qualify())
 
     def test_metadata_cli_rechecks_context_without_running_physics(self):
         write(self.results / 'configuration.json', {'Points': 1000, 'ContextSHA256': self.context})
