@@ -1,0 +1,31 @@
+2026-11-13T06:44:37.043514+00:00 construct sm5_51eb5a827022
+sm5_51eb5a827022: COMPLETE
+2026-11-13T06:48:59.510342+00:00 export sm5f_51eb5a827022
+sm5f_51eb5a827022: PASS
+2026-11-13T06:49:52.620050+00:00 construct sm5_619ecdeac8d4
+sm5_619ecdeac8d4: COMPLETE
+2026-11-13T06:57:42.574655+00:00 export sm5f_619ecdeac8d4
+sm5f_619ecdeac8d4: PASS
+2026-11-13T06:59:05.805564+00:00 construct sm5_725f57f32f37
+sm5_725f57f32f37: COMPLETE
+2026-11-13T07:03:31.466840+00:00 export sm5f_725f57f32f37
+sm5f_725f57f32f37: PASS
+2026-11-13T07:04:26.104058+00:00 construct sm5_ace9abacd0ed
+sm5_ace9abacd0ed: COMPLETE
+2026-11-13T07:12:53.874401+00:00 export sm5f_ace9abacd0ed
+sm5f_ace9abacd0ed: PASS
+{
+  "TotalCases": 1422,
+  "TotalFamilies": 869,
+  "Constructed": 251,
+  "FullyValidatedCases": 243,
+  "PrecisionQualifiedCases": 8,
+  "ValidatedIncludingPrecisionQualifiedCases": 251,
+  "PrecisionQualifiedFamilies": 3,
+  "ValidatedFamilies": 172,
+  "RecordedInputPassCases": 251,
+  "SupplementalParameterProbeFailedCases": 0,
+  "SupplementalParameterProbeUnavailableCases": 0,
+  "FailedOrTimedOut": 0
+}
+Checkpoint: /Users/neil/code/hepcat/tests/SM-5-point/progress.json

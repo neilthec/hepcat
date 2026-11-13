@@ -1,0 +1,76 @@
+00:59:12 Generating diagrams: RUNNING; stage 0.0 s; total 0.1 s
+00:59:12 Generating diagrams: COMPLETE; stage 0.2 s; total 0.3 s
+00:59:12 Building diagram amplitudes: RUNNING; stage 0.0 s; total 0.3 s
+00:59:12 Building diagram amplitudes: COMPLETE; stage 0.0 s; total 0.3 s
+00:59:12 Preparing diagrams: RUNNING; stage 0.0 s; total 0.3 s
+00:59:14 Preparing diagrams: working; stage 1.1 s; total 1.4 s
+00:59:19 Preparing diagrams: working; stage 6.5 s; total 6.9 s
+00:59:24 Preparing diagrams: working; stage 11.8 s; total 12.1 s
+00:59:26 Preparing diagrams: working; stage 13.5 s; total 13.9 s
+00:59:27 Preparing diagrams: working; stage 14.6 s; total 14.9 s
+00:59:28 Preparing diagrams: working; stage 15.6 s; total 15.9 s
+00:59:29 Preparing diagrams: working; stage 16.8 s; total 17.1 s
+00:59:30 Preparing diagrams: working; stage 17.8 s; total 18.1 s
+00:59:35 Preparing diagrams: working; stage 22.7 s; total 23.0 s
+00:59:37 Preparing diagrams: working; stage 24.3 s; total 24.6 s
+00:59:43 Preparing diagrams: working; stage 30.3 s; total 30.6 s
+00:59:44 Preparing diagrams: working; stage 31.9 s; total 32.2 s
+00:59:44 Preparing diagrams: PREPARED; stage 32.0 s; total 32.3 s
+00:59:44 Generating factorization channels: RUNNING; stage 0.0 s; total 32.3 s
+00:59:49 Generating factorization channels: COMPLETE; stage 4.7 s; total 37.0 s
+00:59:49 Preparing factorization channels: RUNNING; stage 0.0 s; total 37.0 s
+00:59:50 Preparing factorization channels: working; stage 1.1 s; total 38.1 s
+00:59:54 Preparing factorization channels: working; stage 5.0 s; total 42.0 s
+00:59:56 Preparing factorization channels: working; stage 6.8 s; total 43.8 s
+01:00:00 Preparing factorization channels: working; stage 11.1 s; total 48.1 s
+01:00:03 Preparing factorization channels: working; stage 13.7 s; total 50.7 s
+01:00:04 Preparing factorization channels: working; stage 15.2 s; total 52.1 s
+01:00:06 Preparing factorization channels: working; stage 16.9 s; total 53.9 s
+01:00:08 Preparing factorization channels: working; stage 18.5 s; total 55.5 s
+01:00:09 Preparing factorization channels: working; stage 20.2 s; total 57.2 s
+01:00:10 Preparing factorization channels: working; stage 21.3 s; total 58.3 s
+01:00:12 Preparing factorization channels: working; stage 22.5 s; total 59.4 s
+01:00:12 Preparing factorization channels: PREPARED; stage 22.5 s; total 59.4 s
+01:00:12 Building certified covariant source: RUNNING; stage 0.0 s; total 59.4 s
+01:00:12 Building certified covariant source: UNVALIDATED_CANDIDATE; stage 0.8 s; total 60.3 s
+01:00:12 Preparing certified covariant source representative: RUNNING; stage 0.0 s; total 60.3 s
+01:00:14 Preparing certified covariant source representative: working; stage 1.8 s; total 62.1 s
+01:00:19 Preparing certified covariant source representative: working; stage 6.9 s; total 67.2 s
+01:00:22 Preparing certified covariant source representative: working; stage 9.9 s; total 70.2 s
+01:00:24 Preparing certified covariant source representative: working; stage 11.9 s; total 72.2 s
+01:00:24 Preparing certified covariant source representative: COMPLETE; stage 11.9 s; total 72.2 s
+01:00:24 Generating Feynman diagrams: RUNNING; stage 0.0 s; total 72.2 s
+01:00:24 Generating Feynman diagrams: COMPLETE; stage 0.0 s; total 72.3 s
+01:00:24 Building Feynman amplitudes: RUNNING; stage 0.0 s; total 72.3 s
+01:00:24 Building Feynman amplitudes: COMPLETE; stage 0.0 s; total 72.3 s
+01:00:24 Preparing Feynman amplitudes: RUNNING; stage 0.0 s; total 72.3 s
+01:00:26 Preparing Feynman amplitudes: working; stage 1.9 s; total 74.2 s
+01:00:28 Preparing Feynman amplitudes: working; stage 4.0 s; total 76.2 s
+01:00:35 Preparing Feynman amplitudes: working; stage 10.9 s; total 83.2 s
+01:00:36 Preparing Feynman amplitudes: working; stage 12.0 s; total 84.2 s
+01:00:43 Preparing Feynman amplitudes: working; stage 18.6 s; total 90.9 s
+01:00:46 Preparing Feynman amplitudes: working; stage 21.4 s; total 93.6 s
+01:00:48 Preparing Feynman amplitudes: working; stage 23.3 s; total 95.6 s
+01:00:50 Preparing Feynman amplitudes: working; stage 25.2 s; total 97.5 s
+01:00:51 Preparing Feynman amplitudes: working; stage 27.0 s; total 99.3 s
+01:00:54 Preparing Feynman amplitudes: working; stage 29.1 s; total 101.4 s
+01:01:02 Preparing Feynman amplitudes: working; stage 37.6 s; total 109.9 s
+01:01:05 Preparing Feynman amplitudes: working; stage 40.4 s; total 112.6 s
+01:01:07 Preparing Feynman amplitudes: working; stage 42.3 s; total 114.6 s
+01:01:17 Preparing Feynman amplitudes: working; stage 52.9 s; total 125.2 s
+01:01:20 Preparing Feynman amplitudes: working; stage 55.6 s; total 127.8 s
+01:01:20 Preparing Feynman amplitudes: PREPARED; stage 55.7 s; total 128.0 s
+01:01:20 Validating certified covariant source representative (1/4): RUNNING; stage 0.0 s; total 128.0 s
+01:01:48 Validating certified covariant source representative (1/4): COMPLETE; stage 28.3 s; total 156.3 s
+01:01:49 Validating certified covariant source representative (2/4): RUNNING; stage 0.0 s; total 156.3 s
+01:02:12 Validating certified covariant source representative (2/4): COMPLETE; stage 23.9 s; total 180.2 s
+01:02:12 Validating certified covariant source representative (3/4): RUNNING; stage 0.0 s; total 180.3 s
+01:02:41 Validating certified covariant source representative (3/4): COMPLETE; stage 28.1 s; total 208.3 s
+01:02:41 Validating certified covariant source representative (4/4): RUNNING; stage 0.0 s; total 208.4 s
+01:03:09 Validating certified covariant source representative (4/4): COMPLETE; stage 28.5 s; total 236.8 s
+01:03:09 Random seed: 1649520239
+01:03:09 Total time: 237.0 s
+01:03:09 Complexity: 2008
+01:03:09                                         2                                                                                                      2                                                                                                                                                                                                      2                                                                                                      2                                                                                                                                                                                                      2                                                                                                      2                                                                                                      2                                                                                                      2
+Dataset[{<|Type -> Physical, Test -> -Mm  + s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> -Mh  + s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> -Mm  + s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> -MZ  + s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> -Ml  + s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> -Mh  + s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> -Ml  + s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> -MZ  + s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> HighEnergy, Test -> Fixed-angle high energy, Status -> PASS, ObservedGrowth -> E^(-1), ExpectedGrowth -> At most E^(-1)|>, <|Type -> Reference, Test -> No explicit Xi dependence, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Feynman, Test -> Full Feynman amplitude, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>}, TypeSystem`Vector[TypeSystem`Struct[{Type, Test, Status, ObservedGrowth, ExpectedGrowth}, {TypeSystem`Atom[TypeSystem`Enumeration[Feynman, HighEnergy, Physical, Reference]], TypeSystem`AnyType, TypeSystem`Atom[TypeSystem`Enumeration[PASS]], TypeSystem`Atom[TypeSystem`Enumeration[, E^(-1)]], TypeSystem`Atom[TypeSystem`Enumeration[, At most E^(-1)]]}], 13], <|MaxItems -> {All, All}|>]
+                                             15                                                                                                     34                                                                                              34                                                                                                     25                                                                                                     12                                                                                              12                                                                                                     35                                                                                                     12                                                                                                     45                                                                                                     34

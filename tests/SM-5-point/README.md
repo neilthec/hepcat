@@ -670,3 +670,40 @@ claimed. Earlier C6 records remain historical evidence admitted through the
 reviewed finite compatibility chain. They are not relabeled as fresh C7 runs.
 The frozen cohort summary and per-record hashes are in
 `tests/results/SM-5-point/diagnostics/C7-spectator-cohort-20261113/summary.json`.
+
+
+## Recorded C8 coverage
+
+The C8 checkpoint uses source context
+`48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363`.
+It records **251 native-complete cases**: **243** with strict ordinary CalcHEP
+and MadGraph comparisons and **8** with separate precision qualification.
+Their raw comparison results are retained. There are 172 ordinary validated
+families and three precision-qualified families; most of the 869-family work
+list remains pending.
+
+C8 adds all six combinations of two massive charged-lepton pairs and one Z.
+The source proposal matches every used elementary current symbolically and
+preserves the ordered diagrams, physical poles and fermion endpoints. Its
+massive-vector tensor is encoded in the same symmetric spin polynomial as
+other vector amplitudes, with the raw tensor retained in Details. Four-fermion
+photon processes keep their previous construction path. No new public option
+or numerical coefficient fit is introduced.
+
+Two cases preserve byte-for-byte capsules from actual public calls using the
+reviewed isolated source tree; the canonical import does not rerun construction
+or native validation. The other four use the ordinary campaign constructor.
+All six retain their normal three validation assignments, plus the automatic
+equal-mass assignment for distinct independent fermion masses, and every final
+native/Feynman row passes. Every actual canonical output was then exported and
+compared afresh with both CalcHEP and MadGraph at 1,000 common points. The
+separate prototype backend comparisons are not substituted for these runs.
+The exact records and hashes are in
+`tests/results/SM-5-point/cohort-C8-four-fermion-Z-summary.json`.
+
+Earlier records retain their actual source contexts and timings through the
+finite, independently reviewed C7-to-C8 compatibility proof. The checkers,
+models, Feynman converter and numerical exporter are unchanged. This preserves
+historical validation evidence without claiming that old constructors were
+rerun under C8. The additional equal-mass parameter probe was rerun with fresh
+independent Feynman diagrams and passed all 13 rows under C8.

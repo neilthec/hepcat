@@ -1,0 +1,265 @@
+{
+  "ContextSHA256": "48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363",
+  "Families": [
+    {
+      "ID": "sm5f_51eb5a827022",
+      "ExportName": "eebarllbarZ",
+      "Signature": [
+        "E",
+        "L",
+        "Z",
+        "e",
+        "l"
+      ],
+      "Particles": [
+        "e",
+        "E",
+        "l",
+        "L",
+        "Z"
+      ],
+      "CaseIDs": [
+        "sm5_51eb5a827022"
+      ],
+      "Sector": "FourFermionElectroweak",
+      "FermionCount": 4,
+      "BosonContent": {
+        "Z": 1
+      },
+      "Incoming": [
+        "e",
+        "E"
+      ],
+      "Outgoing": [
+        "L",
+        "l",
+        "Z"
+      ],
+      "Kinematics": {
+        "IncomingThresholdGeV": 0.001,
+        "OutgoingThresholdGeV": 94.84614308315318,
+        "SuggestedSqrtSGeV": 1000.0
+      },
+      "MasslessBosonLegs": [],
+      "LabeledHelicityAssignmentCount": 1,
+      "RepresentativeFamilyID": "sm5f_49b4f9754212",
+      "FlavorMap": 1,
+      "IsRepresentative": false,
+      "HelicityAssignments": [
+        {
+          "Particles": [
+            "e",
+            "E",
+            "l",
+            "L",
+            "Z"
+          ],
+          "CaseID": "sm5_51eb5a827022",
+          "SourcePermutation": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ]
+    },
+    {
+      "ID": "sm5f_619ecdeac8d4",
+      "ExportName": "mmbarmmbarZ",
+      "Signature": [
+        "M",
+        "M",
+        "Z",
+        "m",
+        "m"
+      ],
+      "Particles": [
+        "m",
+        "M",
+        "m",
+        "M",
+        "Z"
+      ],
+      "CaseIDs": [
+        "sm5_619ecdeac8d4"
+      ],
+      "Sector": "FourFermionElectroweak",
+      "FermionCount": 4,
+      "BosonContent": {
+        "Z": 1
+      },
+      "Incoming": [
+        "m",
+        "M"
+      ],
+      "Outgoing": [
+        "M",
+        "m",
+        "Z"
+      ],
+      "Kinematics": {
+        "IncomingThresholdGeV": 0.21,
+        "OutgoingThresholdGeV": 91.50214308315317,
+        "SuggestedSqrtSGeV": 1000.0
+      },
+      "MasslessBosonLegs": [],
+      "LabeledHelicityAssignmentCount": 1,
+      "RepresentativeFamilyID": "sm5f_15253344f741",
+      "FlavorMap": 2,
+      "IsRepresentative": false,
+      "HelicityAssignments": [
+        {
+          "Particles": [
+            "m",
+            "M",
+            "m",
+            "M",
+            "Z"
+          ],
+          "CaseID": "sm5_619ecdeac8d4",
+          "SourcePermutation": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ]
+    },
+    {
+      "ID": "sm5f_725f57f32f37",
+      "ExportName": "mmbarllbarZ",
+      "Signature": [
+        "L",
+        "M",
+        "Z",
+        "l",
+        "m"
+      ],
+      "Particles": [
+        "m",
+        "M",
+        "l",
+        "L",
+        "Z"
+      ],
+      "CaseIDs": [
+        "sm5_725f57f32f37"
+      ],
+      "Sector": "FourFermionElectroweak",
+      "FermionCount": 4,
+      "BosonContent": {
+        "Z": 1
+      },
+      "Incoming": [
+        "m",
+        "M"
+      ],
+      "Outgoing": [
+        "L",
+        "l",
+        "Z"
+      ],
+      "Kinematics": {
+        "IncomingThresholdGeV": 0.21,
+        "OutgoingThresholdGeV": 94.84614308315318,
+        "SuggestedSqrtSGeV": 1000.0
+      },
+      "MasslessBosonLegs": [],
+      "LabeledHelicityAssignmentCount": 1,
+      "RepresentativeFamilyID": "sm5f_49b4f9754212",
+      "FlavorMap": 3,
+      "IsRepresentative": false,
+      "HelicityAssignments": [
+        {
+          "Particles": [
+            "m",
+            "M",
+            "l",
+            "L",
+            "Z"
+          ],
+          "CaseID": "sm5_725f57f32f37",
+          "SourcePermutation": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ]
+    },
+    {
+      "ID": "sm5f_ace9abacd0ed",
+      "ExportName": "llbarllbarZ",
+      "Signature": [
+        "L",
+        "L",
+        "Z",
+        "l",
+        "l"
+      ],
+      "Particles": [
+        "l",
+        "L",
+        "l",
+        "L",
+        "Z"
+      ],
+      "CaseIDs": [
+        "sm5_ace9abacd0ed"
+      ],
+      "Sector": "FourFermionElectroweak",
+      "FermionCount": 4,
+      "BosonContent": {
+        "Z": 1
+      },
+      "Incoming": [
+        "l",
+        "L"
+      ],
+      "Outgoing": [
+        "L",
+        "l",
+        "Z"
+      ],
+      "Kinematics": {
+        "IncomingThresholdGeV": 3.554,
+        "OutgoingThresholdGeV": 94.84614308315318,
+        "SuggestedSqrtSGeV": 1000.0
+      },
+      "MasslessBosonLegs": [],
+      "LabeledHelicityAssignmentCount": 1,
+      "RepresentativeFamilyID": "sm5f_15253344f741",
+      "FlavorMap": 4,
+      "IsRepresentative": false,
+      "HelicityAssignments": [
+        {
+          "Particles": [
+            "l",
+            "L",
+            "l",
+            "L",
+            "Z"
+          ],
+          "CaseID": "sm5_ace9abacd0ed",
+          "SourcePermutation": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ]
+        }
+      ]
+    }
+  ],
+  "StandardDefaultConstruction": true,
+  "NativeExternalSeconds": 900,
+  "ExportExternalSeconds": 600,
+  "PointsPerBackend": 1000
+}

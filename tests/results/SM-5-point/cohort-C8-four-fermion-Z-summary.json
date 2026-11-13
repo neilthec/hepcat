@@ -1,0 +1,235 @@
+{
+  "Status": "ALL_SIX_FAMILIES_NATIVE_AND_EXTERNAL_PASS",
+  "ContextSHA256": "48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363",
+  "FreshOrdinaryConstructions": 4,
+  "ExactActualPublicCapsuleAdoptions": 2,
+  "FreshCanonicalBackendRuns": 6,
+  "Families": [
+    {
+      "FamilyID": "sm5f_15253344f741",
+      "CaseID": "sm5_15253344f741",
+      "Particles": [
+        "e",
+        "E",
+        "e",
+        "E",
+        "Z"
+      ],
+      "SourceContextSHA256": "48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363",
+      "NativeSeconds": 429.423602,
+      "Complexity": 6112,
+      "FinalRows": 19,
+      "FinalCheckStatuses": {
+        "PASS": 19
+      },
+      "CompletedRepresentativeParameterGroups": 3,
+      "OriginalPublicShadowImportedByteExact": true,
+      "ConstructorRerunOnImport": false,
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "PointsPerBackend": 1000,
+      "ExportSeconds": 58.830696,
+      "FilesSHA256": {
+        "tests/results/SM-5-point/sm5_15253344f741.wxf": "5ac84f1c153af08a547bccc30c7e1b2510b471bf8fe30247a612c7146df00021",
+        "tests/results/SM-5-point/sm5_15253344f741.json": "64ddc5e9d004e04833c5dbad381756532a6ce60af6cd55a3e14c4e1f7197d068",
+        "tests/results/SM-5-point/sm5_15253344f741.log": "ed14bdbc5f5a0bbbd5344a790d6afb32c326e443dd0e9b00ce8dcab2a53cbfc7",
+        "tests/results/SM-5-point/sm5_15253344f741.live.txt": "1e248797ad473bbc8e5dede5c72fd3f0c96250019a4aa91d0df36ab21118f492",
+        "tests/results/SM-5-point/sm5f_15253344f741-export.wxf": "985e8fa87c60259672ee6a2d66d5a933d9e7948cb7ed35d2706d8e16e67cc063",
+        "tests/results/SM-5-point/sm5f_15253344f741-export.json": "5c0279c8f323ba1e96d9ce0abe76fe4d8a0560d1f304f1a9cebf2bd4dadedd0c",
+        "tests/results/SM-5-point/sm5f_15253344f741-export.log": "292188f65d69d9a63b9664f2d02e5b0f08fae43b0e6ff813f48ea6bfed58a2cb",
+        "tests/results/SM-5-point/sm5f_15253344f741-export.live.txt": "4e389f80f575acf5c8dbb8f21d2a08e4069706f6661a4871d7caab535dd84b9b"
+      }
+    },
+    {
+      "FamilyID": "sm5f_49b4f9754212",
+      "CaseID": "sm5_49b4f9754212",
+      "Particles": [
+        "e",
+        "E",
+        "m",
+        "M",
+        "Z"
+      ],
+      "SourceContextSHA256": "48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363",
+      "NativeSeconds": 235.841507,
+      "Complexity": 1160,
+      "FinalRows": 13,
+      "FinalCheckStatuses": {
+        "PASS": 13
+      },
+      "CompletedRepresentativeParameterGroups": 4,
+      "OriginalPublicShadowImportedByteExact": true,
+      "ConstructorRerunOnImport": false,
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "PointsPerBackend": 1000,
+      "ExportSeconds": 26.304289,
+      "FilesSHA256": {
+        "tests/results/SM-5-point/sm5_49b4f9754212.wxf": "9af6bb6f8d6be0e674d43ea1354929847be24bbc03cc26e9ebbdfa813e97ac2b",
+        "tests/results/SM-5-point/sm5_49b4f9754212.json": "7d28195131c193104fe2bf94a7815bcc42a7edaeec013917855c5e03415db27f",
+        "tests/results/SM-5-point/sm5_49b4f9754212.log": "6605cd29b3c80760e87a52f98aaa8bd046c5659176852bcebf38ac71e16b1a0f",
+        "tests/results/SM-5-point/sm5_49b4f9754212.live.txt": "f284e3f3cd0ebca925e4343e453f2aef3c074011ceb1e18458e8b5476cb456f9",
+        "tests/results/SM-5-point/sm5f_49b4f9754212-export.wxf": "2d5ae00fd73ba455ac4e9a4cb7c5d82a85248bc3de2eb1f2c720e567d03989bd",
+        "tests/results/SM-5-point/sm5f_49b4f9754212-export.json": "47af502605588c34e58bca755b0bb266e507df77bfb43816462154d1b5ab2383",
+        "tests/results/SM-5-point/sm5f_49b4f9754212-export.log": "3994414c6d3f8a8858a1b25e85da07b30d0a2a9cef99b1f3b359d12e13d4f44f",
+        "tests/results/SM-5-point/sm5f_49b4f9754212-export.live.txt": "4b8c603e68c5f095f0afaab6c31983fc888186f70748d29c6446a5f7c95d6825"
+      }
+    },
+    {
+      "FamilyID": "sm5f_51eb5a827022",
+      "CaseID": "sm5_51eb5a827022",
+      "Particles": [
+        "e",
+        "E",
+        "l",
+        "L",
+        "Z"
+      ],
+      "SourceContextSHA256": "48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363",
+      "NativeSeconds": 234.973329,
+      "Complexity": 2008,
+      "FinalRows": 13,
+      "FinalCheckStatuses": {
+        "PASS": 13
+      },
+      "CompletedRepresentativeParameterGroups": 4,
+      "OriginalPublicShadowImportedByteExact": false,
+      "ConstructorRerunOnImport": null,
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "PointsPerBackend": 1000,
+      "ExportSeconds": 26.749432,
+      "FilesSHA256": {
+        "tests/results/SM-5-point/sm5_51eb5a827022.wxf": "c076988cb625ca9e3d6fb2339dd912cedea12b70e13552098ed619b244a12692",
+        "tests/results/SM-5-point/sm5_51eb5a827022.json": "56481ca631add5ae2f57703f1ee69d195661d23696ff98e59ac6b888037ac529",
+        "tests/results/SM-5-point/sm5_51eb5a827022.log": "ef87e0677823ff43a02d50bc7898a28868c898790041ba1093058cca6b8f87e9",
+        "tests/results/SM-5-point/sm5_51eb5a827022.live.txt": "8edf31a82fef566429415386bdd63ca727013a9acbdde9e4eb086b0a2ba81903",
+        "tests/results/SM-5-point/sm5f_51eb5a827022-export.wxf": "3f6392af0a0ab9ac3547f49381cd74d696143be7fcc172c8e937a18a296a0e49",
+        "tests/results/SM-5-point/sm5f_51eb5a827022-export.json": "4e0892873c7060ea8d9f626ef67ae8889ae56ac9fc170a7d05dddafd6e9e939c",
+        "tests/results/SM-5-point/sm5f_51eb5a827022-export.log": "dccfea05a2773b3057e68e49538cd7e9fbc028247596120a2f41f3dae4f27439",
+        "tests/results/SM-5-point/sm5f_51eb5a827022-export.live.txt": "46d7245d3093aca007049d521c9f359352361e5aa91f625a10cd8634ca8b8abf"
+      }
+    },
+    {
+      "FamilyID": "sm5f_619ecdeac8d4",
+      "CaseID": "sm5_619ecdeac8d4",
+      "Particles": [
+        "m",
+        "M",
+        "m",
+        "M",
+        "Z"
+      ],
+      "SourceContextSHA256": "48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363",
+      "NativeSeconds": 437.203646,
+      "Complexity": 6128,
+      "FinalRows": 19,
+      "FinalCheckStatuses": {
+        "PASS": 19
+      },
+      "CompletedRepresentativeParameterGroups": 3,
+      "OriginalPublicShadowImportedByteExact": false,
+      "ConstructorRerunOnImport": null,
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "PointsPerBackend": 1000,
+      "ExportSeconds": 56.676666,
+      "FilesSHA256": {
+        "tests/results/SM-5-point/sm5_619ecdeac8d4.wxf": "1dda8ccf368dedcbfbcfeaae18bfb7aa0dae72810083227b90d765b2fc6dc3b4",
+        "tests/results/SM-5-point/sm5_619ecdeac8d4.json": "73813cbc2a1f2ab1707556f0c483877fa7eb1d9fbc4b311f96452c8718b73aad",
+        "tests/results/SM-5-point/sm5_619ecdeac8d4.log": "6235c2fd32299deba4a1a3ad1b9612e23ed36dca25204e371bbdd9765c00d1e8",
+        "tests/results/SM-5-point/sm5_619ecdeac8d4.live.txt": "6063f7870be441ec97dfaddfd331f7b080b119a0e429b18135cfc711d41cf824",
+        "tests/results/SM-5-point/sm5f_619ecdeac8d4-export.wxf": "243bb02f76d1079901712d3637cc4cb0903a664e373af51c6230e7df0cbb7af6",
+        "tests/results/SM-5-point/sm5f_619ecdeac8d4-export.json": "d2f85faaf0d92c2c1beafe98f3fcd53f234bb94da5f8ffe708d8006977649d3e",
+        "tests/results/SM-5-point/sm5f_619ecdeac8d4-export.log": "8245f964983d99c0e059b71fea30cd82cb719148afb605b367aedb2bfb982636",
+        "tests/results/SM-5-point/sm5f_619ecdeac8d4-export.live.txt": "b436c33069851b1520ae36149a51115d42e53f719aef8b2aba7aa897d68fa962"
+      }
+    },
+    {
+      "FamilyID": "sm5f_725f57f32f37",
+      "CaseID": "sm5_725f57f32f37",
+      "Particles": [
+        "m",
+        "M",
+        "l",
+        "L",
+        "Z"
+      ],
+      "SourceContextSHA256": "48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363",
+      "NativeSeconds": 237.075607,
+      "Complexity": 2008,
+      "FinalRows": 13,
+      "FinalCheckStatuses": {
+        "PASS": 13
+      },
+      "CompletedRepresentativeParameterGroups": 4,
+      "OriginalPublicShadowImportedByteExact": false,
+      "ConstructorRerunOnImport": null,
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "PointsPerBackend": 1000,
+      "ExportSeconds": 27.612452,
+      "FilesSHA256": {
+        "tests/results/SM-5-point/sm5_725f57f32f37.wxf": "3777f74d7dfe8958779fcd6aa1ee5667ef75507f08275248a0a61aab0d889061",
+        "tests/results/SM-5-point/sm5_725f57f32f37.json": "7db183a73907f97df683a2525fcb128e33e66a4ff0e2499183119a70f92f48ff",
+        "tests/results/SM-5-point/sm5_725f57f32f37.log": "d08ecc86fa80bb0ab1d46d9dd4514799c4e142428733d5d3951dec3a4db7fadf",
+        "tests/results/SM-5-point/sm5_725f57f32f37.live.txt": "499c29a7ed50cef52cbb64a4066a3e965e99fc4ac82c42cf469bc7bb500679d2",
+        "tests/results/SM-5-point/sm5f_725f57f32f37-export.wxf": "80b92ec7ba3f6edf770c5390f82243677502cc3bd242cbb70d71e5242f811ee9",
+        "tests/results/SM-5-point/sm5f_725f57f32f37-export.json": "97adb58db533bce543bf1083d0f739221a29bcf333de0b38f619a9589b18a8ef",
+        "tests/results/SM-5-point/sm5f_725f57f32f37-export.log": "f86226e249f7354eb9dbcebaa64f415d0ee04aeef5ed4dc10dae3dcd013ed3a0",
+        "tests/results/SM-5-point/sm5f_725f57f32f37-export.live.txt": "6a852c4ee2ab2c56c2786a4dd2257259fa37f6346dd4d925f15d56c21a727da2"
+      }
+    },
+    {
+      "FamilyID": "sm5f_ace9abacd0ed",
+      "CaseID": "sm5_ace9abacd0ed",
+      "Particles": [
+        "l",
+        "L",
+        "l",
+        "L",
+        "Z"
+      ],
+      "SourceContextSHA256": "48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363",
+      "NativeSeconds": 474.471838,
+      "Complexity": 6128,
+      "FinalRows": 19,
+      "FinalCheckStatuses": {
+        "PASS": 19
+      },
+      "CompletedRepresentativeParameterGroups": 3,
+      "OriginalPublicShadowImportedByteExact": false,
+      "ConstructorRerunOnImport": null,
+      "CalcHEPStatus": "PASS",
+      "MadGraphStatus": "PASS",
+      "PointsPerBackend": 1000,
+      "ExportSeconds": 56.517809,
+      "FilesSHA256": {
+        "tests/results/SM-5-point/sm5_ace9abacd0ed.wxf": "78059737aeb9b2eba732b1c949d72f7970d1bb76c2056508907b603e87eb1163",
+        "tests/results/SM-5-point/sm5_ace9abacd0ed.json": "48abed8b6c6f123b2adf494d25b5697d854e1a5ce34cac5ed9995ac661a7e1ee",
+        "tests/results/SM-5-point/sm5_ace9abacd0ed.log": "860ca3483b515b8bf75a3d22c84ee4fc1187f914641b53a349654b94093d4e2c",
+        "tests/results/SM-5-point/sm5_ace9abacd0ed.live.txt": "115d29677fee0dd75b9eab8f46e90e046f624547e7fb77ac52994ea294421a39",
+        "tests/results/SM-5-point/sm5f_ace9abacd0ed-export.wxf": "33f3084b680928742499985350797a01d11aff29aadf3dd2bf8082a32768dfb7",
+        "tests/results/SM-5-point/sm5f_ace9abacd0ed-export.json": "f6f64c89954bfe2d7a09e3954e1c32180cad4591c76df78510dda4b1f3bb19cf",
+        "tests/results/SM-5-point/sm5f_ace9abacd0ed-export.log": "8a3d7f42c8e33bead1dc621c8d2981dac5696d0be22a3e6d559f38f3602b1f8c",
+        "tests/results/SM-5-point/sm5f_ace9abacd0ed-export.live.txt": "5b1be773ebb669d3a9595961bd36d4c52c3cdfffe6831ef37dabe6371505a420"
+      }
+    }
+  ],
+  "Scope": "All massive charged-lepton pair combinations with one external Z; not the whole SM five-point inventory",
+  "GlobalCounts": {
+    "TotalCases": 1422,
+    "TotalFamilies": 869,
+    "Constructed": 251,
+    "FullyValidatedCases": 243,
+    "PrecisionQualifiedCases": 8,
+    "ValidatedIncludingPrecisionQualifiedCases": 251,
+    "PrecisionQualifiedFamilies": 3,
+    "ValidatedFamilies": 172,
+    "RecordedInputPassCases": 251,
+    "SupplementalParameterProbeFailedCases": 0,
+    "SupplementalParameterProbeUnavailableCases": 0,
+    "FailedOrTimedOut": 0
+  },
+  "NoThresholdOrSourceChangesDuringCohort": true
+}
