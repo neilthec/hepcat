@@ -1,0 +1,32 @@
+{
+	"Status":"COMPLETE",
+	"CallType":"ActualPublicDefaultFullShadow",
+	"Process":[
+		"u",
+		"U",
+		"c",
+		"C",
+		"h"
+	],
+	"Seconds":1.12715089e2,
+	"PublicOptionsSupplied":[
+		"FeynmanModel",
+		"Output"
+	],
+	"PublicRandomSeedRequested":"Automatic",
+	"RecordedAmplitudeInputs":false,
+	"SingleKernelScopedExecutionEnvironment":true,
+	"InstalledProductionChanged":false,
+	"InstalledProductionContextSHA256":"48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363",
+	"ProspectiveShadowContextSHA256":"15ec8a88eaca261d3fd071c79b159b819abe70303f4c2024fbd7d8dc51ba4c9f",
+	"CanonicalWritten":false,
+	"Rows":26,
+	"StatusCounts":{
+		"PASS":26
+	},
+	"Rank":2,
+	"ParameterGroupReports":6,
+	"SourceSelected":true,
+	"Complexity":4328,
+	"CapsuleSHA256":"cc0d02584d89391c112e6c2aaa19e5e3b9f059c1aa1c0f87bdfed84df79b27e7"
+}

@@ -1,0 +1,21 @@
+{
+	"Status":"PASS",
+	"Process":[
+		"u",
+		"U",
+		"c",
+		"C",
+		"h"
+	],
+	"FamilyID":"sm5f_01fcb01f2783",
+	"NativeResultSHA256":"a9725a8e2ec151edf261fc1999fa18ded0ac81bfa40a9683d11a23470e169fcf",
+	"NativeProductionContextSHA256":"4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167",
+	"ExporterProductionContextSHA256":"48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363",
+	"PointsRequestedPerBackend":1000,
+	"Seconds":1.3343671e1,
+	"DiagnosticOnly":true,
+	"PublicDefaultConstructionSuccessClaimed":false,
+	"ProductionChanged":false,
+	"NativeAmplitudeUnchanged":true,
+	"ExportCapsuleSHA256":"3a0b7c16a7594e93bb153f5cc67b80de0f2ac7b00b6688d0847af9ba0c179840"
+}

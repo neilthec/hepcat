@@ -1,0 +1,14 @@
+Running qed-five-point-simplification-tests.wl
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+<|Checks -> 138, Failed -> 0, Failures -> {}, Scope -> Exact local identities, symbolic reference cancellation and sampled physical residues|>
+HEPCAT_TEST_COMPLETED:qed-five-point-simplification-tests.wl
+

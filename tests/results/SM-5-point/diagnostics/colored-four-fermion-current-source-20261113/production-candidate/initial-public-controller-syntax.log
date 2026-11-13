@@ -1,0 +1,4 @@
+  File "/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/colored-four-fermion-current-source-20261113/production-candidate/run-public-shadow.py", line 17
+    try:code=proc.wait(timeout=300 if index==0 else1260)
+                                               ^
+SyntaxError: invalid syntax

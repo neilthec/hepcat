@@ -1,0 +1,11 @@
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+<|Status -> COMPLETE, CallType -> ActualPublicDefaultFullShadow, Process -> {u, U, u, U, h}, Seconds -> 403.748676, PublicOptionsSupplied -> {FeynmanModel, Output}, PublicRandomSeedRequested -> Automatic, RecordedAmplitudeInputs -> False, SingleKernelScopedExecutionEnvironment -> True, InstalledProductionChanged -> False, InstalledProductionContextSHA256 -> 48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363, ProspectiveShadowContextSHA256 -> 15ec8a88eaca261d3fd071c79b159b819abe70303f4c2024fbd7d8dc51ba4c9f, CanonicalWritten -> False, Rows -> 38, StatusCounts -> <|PASS -> 38|>, Rank -> 2, ParameterGroupReports -> 6, SourceSelected -> True, Complexity -> 12984, CapsuleSHA256 -> 6a607c29d5b53f3f437509304236159827245cba9e1350efd7d2cb56d1233593|>

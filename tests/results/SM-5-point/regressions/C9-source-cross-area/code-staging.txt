@@ -1,0 +1,7 @@
+source/HEPCAT.wl
+source/HEPCAT-Model.wl
+source/internal/HEPCAT-Color.wl
+source/internal/HEPCAT-ColoredCurrents.wl
+tests/checks/color-current-source-tests.wl
+tests/checks/parallel-source-signature-tests.wl
+tests/checks/run-wolfram-tests.py

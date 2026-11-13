@@ -1,0 +1,11 @@
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+<|Status -> ALL_PASS, Process -> {u, U, c, C, h}, OriginalNativeCapsuleSHA256 -> a9725a8e2ec151edf261fc1999fa18ded0ac81bfa40a9683d11a23470e169fcf, ParameterOverrides -> <|Mu -> 13/10, Mc -> 13/10|>, ResolvedNativeExternalMasses -> {13/10, 13/10, 13/10, 13/10, 125}, ResolvedReferenceExternalMasses -> {13/10, 13/10, 13/10, 13/10, 125}, FlavorsRemainDistinct -> True, SourceExpressionUnchanged -> True, NoExpressionMassSlotOrFlavorTransport -> True, FreshIndependentFeynmanGraphs -> 18, Seconds -> 38.726981, ProductionContextSHA256 -> 48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363, DiagnosticOnly -> True, Rows -> 26, StatusCounts -> <|PASS -> 26|>, CapsuleSHA256 -> da6c5d7dfee13ed24c3d8db5f1b0654fa24897a1fb4d118110c8f197ee3b1c53|>

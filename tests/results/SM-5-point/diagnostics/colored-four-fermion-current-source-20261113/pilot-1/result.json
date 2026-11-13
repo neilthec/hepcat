@@ -1,0 +1,83 @@
+{
+	"Status":"ALL_NATIVE_CHECKS_PASS",
+	"Process":[
+		"u",
+		"U",
+		"c",
+		"C",
+		"h"
+	],
+	"RuntimeSourceMode":"IsolatedPerGraphColoredCurrentSource",
+	"ProductionContextSHA256":"4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167",
+	"DraftFileSHA256":{
+		"source.wl":"22fcc552464d21f694880c2b61808395185c0560b9802b1fb08682d0de814799"
+	},
+	"RandomSeed":161803400,
+	"StageTimings":[
+		{
+			"Stage":"Building source-only per-graph colored-current candidate",
+			"Seconds":0.568197,
+			"TotalSeconds":4.169246
+		},
+		{
+			"Stage":"Preparing candidate with external identities only",
+			"Seconds":7.03491,
+			"TotalSeconds":1.122975e1
+		},
+		{
+			"Stage":"Generating all original lower-amplitude channels",
+			"Seconds":7.24179,
+			"TotalSeconds":1.8603894e1
+		},
+		{
+			"Stage":"Generating fresh independent Feynman diagrams",
+			"Seconds":3.6774e-2,
+			"TotalSeconds":1.8753354e1
+		},
+		{
+			"Stage":"Building fresh independent Feynman amplitudes",
+			"Seconds":5.5975e-2,
+			"TotalSeconds":1.8809347e1
+		},
+		{
+			"Stage":"Converting complete off-shell Feynman benchmark",
+			"Seconds":1.067756,
+			"TotalSeconds":1.9877122e1
+		},
+		{
+			"Stage":"Checking all native tests at standard assignment 1\/3",
+			"Seconds":2.4252518e1,
+			"TotalSeconds":4.4155578e1
+		},
+		{
+			"Stage":"Checking all native tests at standard assignment 2\/3",
+			"Seconds":2.8116582e1,
+			"TotalSeconds":7.2696631e1
+		},
+		{
+			"Stage":"Checking all native tests at standard assignment 3\/3",
+			"Seconds":2.7003991e1,
+			"TotalSeconds":1.00413796e2
+		}
+	],
+	"Seconds":1.01398413e2,
+	"LastStage":"Checking all native tests at standard assignment 3\/3",
+	"PublicDefaultConstructionSuccessClaimed":false,
+	"ProductionChanged":false,
+	"ParameterGroupsCompleted":3,
+	"AllGroupStatusCounts":[
+		{
+			"PASS":26
+		},
+		{
+			"PASS":26
+		},
+		{
+			"PASS":26
+		}
+	],
+	"OriginalDiagramCount":18,
+	"ContactCalibrationCount":0,
+	"ResultCapsuleSHA256":"a9725a8e2ec151edf261fc1999fa18ded0ac81bfa40a9683d11a23470e169fcf",
+	"Failure":null
+}

@@ -1,0 +1,23 @@
+00:50:16 Building source-only per-graph colored-current candidate
+00:50:16 Preparing candidate with external identities only
+Preparation: Starting; amplitude 1/1; complexity 949; terms 5; 0. s
+Preparation: ReduceSpinContractions; amplitude 1/1; complexity 949; terms 5; 0. s
+Preparation: PolePreference; amplitude 1/1; complexity 949; terms 5; 0. s
+Preparation: OrdinaryPairVirtualityCancellation; amplitude 1/1; complexity 949; terms 5; 0. s
+Preparation: CompactExternalAmplitude; amplitude 1/1; complexity 949; terms 5; 0. s
+Preparation: OrdinaryMultilinearIdentityNormalization; amplitude 1/1; complexity 949; terms 5; 0. s
+Preparation: SharedMatrixOrdinaryCofactors; amplitude 1/1; complexity 949; terms 5; 0. s
+Preparation: CompareConservedMomentumRoutes; amplitude 1/1; complexity 949; terms 5; 5. s
+Preparation: ReduceSpinorProducts; amplitude 1/1; complexity 505; terms 5; 6.2 s
+Preparation: CancelAuxiliaryReferencePoles; amplitude 1/1; complexity 505; terms 5; 6.2 s
+Preparation: OrdinaryEndpointSchoutenCompaction; amplitude 1/1; complexity 505; terms 5; 6.2 s
+Preparation: SingleMomentumConservation; amplitude 1/1; complexity 369; terms 5; 8.3 s
+Preparation: FinalExternalCompaction; amplitude 1/1; complexity 369; terms 5; 8.3 s
+Preparation: Prepared; amplitude 1/1; complexity 369; terms 1; 9.600000000000001 s
+00:50:26 Generating all original lower-amplitude channels
+00:50:29 Generating fresh independent Feynman diagrams
+00:50:29 Building fresh independent Feynman amplitudes
+00:50:29 Converting complete off-shell Feynman benchmark
+00:50:29 Checking all native tests at standard assignment 1/3
+00:50:35 Checking all native tests at standard assignment 2/3
+00:50:42 Checking all native tests at standard assignment 3/3

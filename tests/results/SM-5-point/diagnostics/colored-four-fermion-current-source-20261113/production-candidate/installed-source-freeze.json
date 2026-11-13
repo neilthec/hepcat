@@ -1,0 +1,30 @@
+{
+  "InstalledContextSHA256": "15ec8a88eaca261d3fd071c79b159b819abe70303f4c2024fbd7d8dc51ba4c9f",
+  "PriorContextSHA256": "48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363",
+  "RootAuthorizedExactCandidateInstall": true,
+  "Files": {
+    "source/HEPCAT.wl": {
+      "BeforeSHA256": "345d4a49267b73b6c33f8d484df65af259584cac0402007f17ac955e535cbfd4",
+      "InstalledSHA256": "05b0c8813ba74bc7a77207ad016308b7a4a978f7b8f856d1056c2787dedb4982",
+      "CandidateSHA256": "05b0c8813ba74bc7a77207ad016308b7a4a978f7b8f856d1056c2787dedb4982"
+    },
+    "source/HEPCAT-Model.wl": {
+      "BeforeSHA256": "f7beb266244d4ded9124c74f1fafd649f15f1c01a93e5813d354d64429dd0e9b",
+      "InstalledSHA256": "7b343ccd21428a215cb97369ba64301991c75d56d3383aca5924570d34e40b03",
+      "CandidateSHA256": "7b343ccd21428a215cb97369ba64301991c75d56d3383aca5924570d34e40b03"
+    },
+    "source/internal/HEPCAT-Color.wl": {
+      "BeforeSHA256": "d6c8d37a2a1ea96abf93feb2e1ba0173a7afe6aa65175a43ffb0aeb2edca5768",
+      "InstalledSHA256": "3fcff2af7873b1e565149ef159792c3f0afa54ace04eca71ecdb9d7b614e1c1c",
+      "CandidateSHA256": "3fcff2af7873b1e565149ef159792c3f0afa54ace04eca71ecdb9d7b614e1c1c"
+    },
+    "source/internal/HEPCAT-ColoredCurrents.wl": {
+      "BeforeSHA256": null,
+      "InstalledSHA256": "68ea2d6d68f47b7223b5f62b8fd8beb5395b5cdc4bcaaab3a5a2ae956f6c5eb7",
+      "CandidateSHA256": "68ea2d6d68f47b7223b5f62b8fd8beb5395b5cdc4bcaaab3a5a2ae956f6c5eb7"
+    }
+  },
+  "CompleteProspectiveManifestMatched": true,
+  "CanonicalOutputsModified": false,
+  "GlobalConfigurationModified": false
+}

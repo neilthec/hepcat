@@ -1,0 +1,18 @@
+{
+  "Records": [
+    {
+      "Suite": "color-current-source-tests",
+      "ExitCode": 0,
+      "Seconds": 4.886852084,
+      "ProductionChanged": false,
+      "ActualShadowPhysicsRun": false
+    },
+    {
+      "Suite": "parallel-source-signature-tests",
+      "ExitCode": 0,
+      "Seconds": 3.4964321249999992,
+      "ProductionChanged": false,
+      "ActualShadowPhysicsRun": false
+    }
+  ]
+}

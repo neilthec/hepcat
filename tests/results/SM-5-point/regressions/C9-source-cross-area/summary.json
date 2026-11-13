@@ -1,0 +1,135 @@
+{
+  "ContextSHA256": "15ec8a88eaca261d3fd071c79b159b819abe70303f4c2024fbd7d8dc51ba4c9f",
+  "SuiteOrder": [
+    "color-current-source-tests.wl",
+    "parallel-source-signature-tests.wl",
+    "color-basis-tests.wl",
+    "color-reduction-tests.wl",
+    "color-orbit-construction-tests.wl",
+    "color-handedness-tests.wl",
+    "covariant-constructor-tests.wl",
+    "construct-amplitude-tests.wl",
+    "sm-factorization-model-tests.wl",
+    "qed-five-point-simplification-tests.wl",
+    "six-point-completion-tests.wl"
+  ],
+  "Records": [
+    {
+      "Suite": "color-current-source-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 5.1150213749999995,
+      "SuiteSHA256": "635d4b3a1d961dd5651174429e8a96427c8b2f1ec6c4e7a4eab61ddfe2e6c9f7",
+      "LogSHA256": "2efd0def5702e2d3f8de0ffd92117501a271914376cc1d865dfebad0cae61c01",
+      "SourceModelsRuntimeUnchanged": true,
+      "PassedChecks": 44,
+      "FailedChecks": 0
+    },
+    {
+      "Suite": "parallel-source-signature-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 3.8344329999999998,
+      "SuiteSHA256": "4374320dc8a77d6e20c7f14aa107cf65d73a6c24eb65b313c7ac76e08cf315c8",
+      "LogSHA256": "bfe47f0ce5f89ebb60d7e35ec51a28752ecbce9f1c04cf9aa2a3f26b903bcdf3",
+      "SourceModelsRuntimeUnchanged": true,
+      "PassedChecks": 17,
+      "FailedChecks": 0
+    },
+    {
+      "Suite": "color-basis-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 8.68750775,
+      "SuiteSHA256": "2b3a0bb025adda80e54ef158e56777cfa1abe22588efc3d263d496e18cadb2b1",
+      "LogSHA256": "52ed96789affefec9a45cf5a0c1dc394233b408fd7fcb836aa0272e7b814aa29",
+      "SourceModelsRuntimeUnchanged": true,
+      "PassedChecks": 47,
+      "FailedChecks": 0
+    },
+    {
+      "Suite": "color-reduction-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 4.021891458999999,
+      "SuiteSHA256": "6d3ee1ef4a712fe76c8e657d7a6dc5a904f06eef3fd1f3c2cb03f42bb3dcda69",
+      "LogSHA256": "f6a61cf6744344652b8492d997b7faa1ee3b0779168ab4d2cda9d6f427240043",
+      "SourceModelsRuntimeUnchanged": true,
+      "PassedChecks": 55,
+      "FailedChecks": 0
+    },
+    {
+      "Suite": "color-orbit-construction-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 3.907973040999998,
+      "SuiteSHA256": "9886fae8707d4a7470aac1d980baef0cbd43606a73a6b3916e1f6e114e484b68",
+      "LogSHA256": "4f08c16656d912dfb072875e90293c2be6698cfe414bd2de21d63b2a8da8225c",
+      "SourceModelsRuntimeUnchanged": true,
+      "PassedChecks": 31,
+      "FailedChecks": 0
+    },
+    {
+      "Suite": "color-handedness-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 8.531400582999996,
+      "SuiteSHA256": "817cf83c200eff1934846c0cc6a01cdc4e8ae41fb4d6e1e56c773eef3660f467",
+      "LogSHA256": "8d2beda9290c04a4695458bc5a29391db5b074f9695b7361f970d45deb4e5bdf",
+      "SourceModelsRuntimeUnchanged": true,
+      "PassedChecks": 26,
+      "FailedChecks": 0
+    },
+    {
+      "Suite": "covariant-constructor-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 10.812933375,
+      "SuiteSHA256": "2e645673d77053ba59cb5407ecef43751518cf02aab215fb13a814219816ac03",
+      "LogSHA256": "0b530b039e103fe3365dd7a5ad745973a20d71c7a0ebc752413bd19e2d401f07",
+      "SourceModelsRuntimeUnchanged": true,
+      "PassedChecks": 20,
+      "FailedChecks": 0
+    },
+    {
+      "Suite": "construct-amplitude-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 43.307448875,
+      "SuiteSHA256": "e4ab02ee0d093384c9002f29b68f65421a95436db8fe20e992ad9cbb489a8502",
+      "LogSHA256": "fa63d4e699463c740d3540dc4cd9ba8657594523b8dfc757f0704aa7c837c004",
+      "SourceModelsRuntimeUnchanged": true,
+      "PassedChecks": 82,
+      "FailedChecks": 0
+    },
+    {
+      "Suite": "sm-factorization-model-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 8.220867375000012,
+      "SuiteSHA256": "9962db343dbf60687505405c05b5244fb7723ce05f46b6b570c11972e5869c2d",
+      "LogSHA256": "822c35d595a8d5630b4cbec9310e40db57d3004bcf5596662049dc86b42cfaf1",
+      "SourceModelsRuntimeUnchanged": true,
+      "PassedChecks": 405,
+      "FailedChecks": 0
+    },
+    {
+      "Suite": "qed-five-point-simplification-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 123.77282691699999,
+      "SuiteSHA256": "6681001cbf8d612b0c3f4b98ef2969769bc569420543c3c5a7e2625e35487fde",
+      "LogSHA256": "5dfcbf68ee40cd5a0ee4a2e24195c4f386ac8a565f5e5003e55ff5a3cefc3544",
+      "SourceModelsRuntimeUnchanged": true,
+      "PassedChecks": 138,
+      "FailedChecks": 0
+    },
+    {
+      "Suite": "six-point-completion-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 144.49836125,
+      "SuiteSHA256": "636721c3d43b175fc299d9dd1c1e2d44738230cdf72cac6dd32b3e0232c3800b",
+      "LogSHA256": "e1e4aef61d08199dd1c87d49a06065dd55b6ac62e9fee07bde5d7bcfd1d27a3e",
+      "SourceModelsRuntimeUnchanged": true,
+      "PassedChecks": 131,
+      "FailedChecks": 0
+    }
+  ],
+  "Status": "ALL_PASS",
+  "OneKernelAtATime": true,
+  "ElapsedSeconds": 364.84999845799996,
+  "PassedChecks": 996,
+  "FailedChecks": 0,
+  "RunnerSHA256": "424fc0b003e858a309c333d6c17bdd8c4fe1952dc33763f5ad208301bf2fcd65",
+  "All11SuitesHaveOfficialCompletionMarker": true
+}

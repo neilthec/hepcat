@@ -1,0 +1,30 @@
+Get["/Users/neil/code/hepcat/source/HEPCAT.wl"];
+Begin["HEPCATColoredEqualMassProbe`Private`"];$ContextPath=Prepend[DeleteCases[$ContextPath,"HEPCATColoredEqualMassProbe`Private`"],"HEPCATColoredEqualMassProbe`Private`"];
+$HistoryLength=0;emRoot="/Users/neil/code/hepcat";emD=DirectoryName[$InputFileName];emOut=emD<>"/equal-mass-probe";If[!DirectoryQ[emOut],CreateDirectory[emOut]];
+emSHA[p_]:=IntegerString[FileHash[p,"SHA256"],16,64];emSourceFile=emD<>"/pilot-1/result.wxf";emSourceSHA=emSHA[emSourceFile];emSource=Import[emSourceFile,"WXF"];emPair=emSource["PreparedPair"];emOriginal=emPair;
+emProcess=emSource["Process"];emModel=ReadModel[emRoot<>"/models",2];emOverrides={"Mu"->13/10,"Mc"->13/10};emStarted=AbsoluteTime[];
+emChannels=FactorizationAmplitudeChannels[emProcess,emModel];
+emFeynman=ReadModel[emRoot<>"/tests/reference-models/calchep",1];emGraphs=CreateDiagrams[emProcess,emFeynman];emRaw=DiagramAmplitudes[emGraphs];
+emBenchmark=FeynmanToSpinorProducts[emRaw,"ReferenceSpinors"->Automatic,"ReduceSpinorProducts"->False,"TimeConstraint"->120];
+If[!TrueQ[ConstructiveDiagrams`Private`constructBenchmarkConversionCompleteQ[emRaw,emBenchmark]],Print["INCOMPLETE_FRESH_BENCHMARK"];Quit[2]];
+emNativeRules=ConstructiveDiagrams`Private`residueParameterRules[emModel,emOverrides];emReferenceRules=ConstructiveDiagrams`Private`residueParameterRules[List@@emFeynman,emOverrides];
+emNativeMasses=(Mass/@Range[5]/.First[emPair])/.emNativeRules;emReferenceMasses=(Mass/@Range[5]/.First[First[emBenchmark]])/.emReferenceRules;
+If[Take[emNativeMasses,4]=!=ConstantArray[13/10,4]||Take[emReferenceMasses,4]=!=ConstantArray[13/10,4]||!DuplicateFreeQ[Take[emProcess,4]],Print["EQUAL_MASS_SCOPE_REJECTED ",emNativeMasses," ",emReferenceMasses];Quit[2]];
+emOptions={"ParameterRules"->emOverrides,"RandomSeed"->271828183,"Samples"->4,"HighEnergySamples"->4,"ReferenceSamples"->4,"FeynmanSamples"->4,
+ "SpuriousPoles"->Automatic,"HighEnergyCheck"->True,"ReferenceCheck"->True,"FeynmanAmplitudes"->emBenchmark,"FeynmanModel"->emFeynman,
+ "FeynmanTimeConstraint"->120,"TimeConstraint"->180,"Output"->"Details"};
+emReport=MemoryConstrained[TimeConstrained[Block[{ConstructiveDiagrams`Private`$amplitudeParallelActive=True},CheckAmplitudes[emPair,emChannels,emModel,Sequence@@emOptions]],240,Missing["EqualMassProbeDeadline"]],4 2^30,Missing["EqualMassProbeMemory"]];
+emProjection=ConstructiveDiagrams`Private`colorProjectionData[{emPair},emChannels,ConstructiveDiagrams`Private`colorParticleRepresentation[#,emModel]&/@emProcess,emBenchmark];
+emChildren=If[AssociationQ[emReport],Lookup[emReport,"ColorCoefficientReports",{}],{}];emRows=If[AssociationQ[emReport],Lookup[emReport,"Checks",{}],{}];
+emOK=AssociationQ[emProjection]&&Length[emChildren]===Length[emProjection["Basis"]]&&Length[emChildren]>0&&AllTrue[Range[Length[emChildren]],
+ ConstructiveDiagrams`Private`constructAllChecksPassQ[emChildren[[#]],First[emProjection["ProjectedDiagrams"][[#]]],emProjection["ProjectedChannels"][[#]],emModel,emProjection["ProjectedFeynmanAmplitudes"][[#]]]&]&&
+ AllTrue[emRows,Lookup[#,"Status",None]==="PASS"&]&&Lookup[Lookup[emReport,"FeynmanPhaseAgreement",<||>],"Status",None]==="PASS"&&SameQ[emPair,emOriginal]&&emSHA[emSourceFile]===emSourceSHA;
+emRecord=<|"Status"->If[emOK,"ALL_PASS","NOT_ALL_PASS"],"Process"->emProcess,"InputPair"->emPair,"OriginalNativeCapsuleSHA256"->emSourceSHA,
+ "ParameterOverrides"->emOverrides,"ResolvedNativeExternalMasses"->emNativeMasses,"ResolvedReferenceExternalMasses"->emReferenceMasses,
+ "FlavorsRemainDistinct"->True,"SourceExpressionUnchanged"->SameQ[emPair,emOriginal],"NoExpressionMassSlotOrFlavorTransport"->True,
+ "FreshIndependentFeynmanGraphs"->Length[emGraphs],"FreshIndependentFeynmanBenchmark"->emBenchmark,"Channels"->emChannels,"Options"->emOptions,"Report"->emReport,
+ "Rows"->emRows,"Seconds"->N[AbsoluteTime[]-emStarted],"ProductionContextSHA256"->"48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363","DiagnosticOnly"->True|>;
+emFile=emOut<>"/result.wxf";emStream=OpenWrite[emFile,BinaryFormat->True];BinaryWrite[emStream,Normal[BinarySerialize[emRecord,PerformanceGoal->"Size"]],"Byte"];Close[emStream];
+emSummary=Join[KeyTake[emRecord,{"Status","Process","OriginalNativeCapsuleSHA256","ParameterOverrides","ResolvedNativeExternalMasses","ResolvedReferenceExternalMasses","FlavorsRemainDistinct","SourceExpressionUnchanged","NoExpressionMassSlotOrFlavorTransport","FreshIndependentFeynmanGraphs","Seconds","ProductionContextSHA256","DiagnosticOnly"}],<|"Rows"->Length[emRows],"StatusCounts"->Counts[Lookup[emRows,"Status",{}]],"CapsuleSHA256"->emSHA[emFile]|>];
+AssociateTo[emSummary,{"ParameterOverrides"->Association[Map[First[#]->ToString[Last[#],InputForm]&,emOverrides]],"ResolvedNativeExternalMasses"->(ToString[#,InputForm]&/@emNativeMasses),"ResolvedReferenceExternalMasses"->(ToString[#,InputForm]&/@emReferenceMasses)}];
+Export[emOut<>"/result.json",emSummary,"RawJSON"];Print[emSummary];End[];Quit[If[emOK,0,1]];

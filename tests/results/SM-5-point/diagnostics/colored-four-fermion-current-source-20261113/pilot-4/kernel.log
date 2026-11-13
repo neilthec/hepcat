@@ -1,0 +1,11 @@
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+<|Status -> ALL_NATIVE_CHECKS_PASS, Process -> {u, D, C, s, h}, RuntimeSourceMode -> IsolatedPerGraphColoredCurrentSource, ProductionContextSHA256 -> 48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363, DraftFileSHA256 -> <|source-mixed.wl -> 978577573c5cf05a4516bed81a0aaade9014dc37bc12949c4a1aa75e19bbaf22|>, RandomSeed -> 161803403, StageTimings -> {<|Stage -> Building source-only per-graph colored-current candidate, Seconds -> 0.342753, TotalSeconds -> 4.046273|>, <|Stage -> Preparing candidate with external identities only, Seconds -> 9.939531, TotalSeconds -> 13.991176|>, <|Stage -> Generating all original lower-amplitude channels, Seconds -> 2.839492, TotalSeconds -> 16.863111|>, <|Stage -> Generating fresh independent Feynman diagrams, Seconds -> 0.017342, TotalSeconds -> 16.99371|>, <|Stage -> Building fresh independent Feynman amplitudes, Seconds -> 0.020498, TotalSeconds -> 17.014219|>, <|Stage -> Converting complete off-shell Feynman benchmark, Seconds -> 0.08177, TotalSeconds -> 17.096|>, <|Stage -> Checking all native tests at standard assignment 1/3, Seconds -> 6.0266, TotalSeconds -> 23.140574|>, <|Stage -> Checking all native tests at standard assignment 2/3, Seconds -> 6.765129, TotalSeconds -> 30.014734|>, <|Stage -> Checking all native tests at standard assignment 3/3, Seconds -> 5.469561, TotalSeconds -> 35.671656|>}, Seconds -> 35.923997, LastStage -> Checking all native tests at standard assignment 3/3, PublicDefaultConstructionSuccessClaimed -> False, ProductionChanged -> False, ParameterGroupsCompleted -> 3, AllGroupStatusCounts -> {<|PASS -> 9|>, <|PASS -> 9|>, <|PASS -> 9|>}, OriginalDiagramCount -> 5, ContactCalibrationCount -> 0, ResultCapsuleSHA256 -> 539b307b9b47765c8e1994c2c5ab8b412913049a695b066de5213991c85aa8eb, Failure -> Null|>

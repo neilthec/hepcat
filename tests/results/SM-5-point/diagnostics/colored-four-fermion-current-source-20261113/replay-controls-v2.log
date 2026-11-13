@@ -1,0 +1,51 @@
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+<|Status -> CERTIFICATE_VERIFIED, Graphs -> 18, ColorRank -> 2, ColorStates -> 81, EveryGraphColorVectorExactlyReconstructed -> True, EveryWickSignAndOrderedPortRecomputed -> True, CompleteLorentzConversionRecomputed -> True, ReferenceBenchmarkRead -> False, NativeAmplitudeValidationClaimed -> False|>
+PASS complete exact source/color/sign replay 1
+<|Status -> CERTIFICATE_VERIFIED, Graphs -> 36, ColorRank -> 2, ColorStates -> 81, EveryGraphColorVectorExactlyReconstructed -> True, EveryWickSignAndOrderedPortRecomputed -> True, CompleteLorentzConversionRecomputed -> True, ReferenceBenchmarkRead -> False, NativeAmplitudeValidationClaimed -> False|>
+PASS complete exact source/color/sign replay 2
+<|Status -> CERTIFICATE_VERIFIED, Graphs -> 14, ColorRank -> 1, ColorStates -> 9, EveryGraphColorVectorExactlyReconstructed -> True, EveryWickSignAndOrderedPortRecomputed -> True, CompleteLorentzConversionRecomputed -> True, ReferenceBenchmarkRead -> False, NativeAmplitudeValidationClaimed -> False|>
+PASS complete exact source/color/sign replay 3
+<|Status -> CERTIFICATE_VERIFIED, Graphs -> 5, ColorRank -> 1, ColorStates -> 81, EveryGraphColorVectorExactlyReconstructed -> True, EveryWickSignAndOrderedPortRecomputed -> True, CompleteLorentzConversionRecomputed -> True, ReferenceBenchmarkRead -> False, NativeAmplitudeValidationClaimed -> False|>
+PASS complete exact source/color/sign replay 4
+PASS changed Wick sign rejects
+  failure tag PerGraphWickSignMatch
+PASS nonbijective graph assignment rejects
+  failure tag PerGraphBijection
+PASS changed graph color coordinate rejects
+  failure tag PerGraphColorCoordinateMatch
+PASS changed Gram normalization rejects
+  failure tag ExactColorGramBinding
+PASS misassigned original color-vector row rejects
+  failure tag EveryGraphColorCoordinateReconstruction
+PASS changed declared vertex-row certificate rejects
+  failure tag EveryLocalColorOperatorAndRowBinding
+PASS a fabricated COMPLETE label rejects
+  failure tag ProposalStatusMustRemainUnvalidated
+PASS altered full expression rejects
+  failure tag CompleteAmplitudeAssembly
+PASS indistinguishable graphs with different color vectors abort
+PASS ambiguous-bucket mock restores exact production definition
+PASS nonminimal momentum coefficient rejects whole source
+PASS undeclared foreign model parameter rejects whole source
+PASS all existing chiral classes remain excluded
+PASS all-color-singlet old massive source class remains excluded
+PASS metadata inventory contains45massive and36chiral coloredHfamilies
+PASS all45massive coloredHfamilies reach graph generation
+PASS all36historicalchiral coloredHfamilies stay outside admission
+PASS nonemptybalancedcoloredpair is mandatory
+PASS QEDfourfermionphoton class stays outside admission
+PASS QEDthreephoton class stays outside admission
+PASS fourpointSM class stays outside admission
+PASS twofermionHiggs class stays outside admission
+PASS fourfermionmassivevector class stays outside admission
+PASS classification mock restores exact diagram generator
+<|Status -> PASS, Passed -> 28, Failed -> 0, Records -> {<|Test -> complete exact source/color/sign replay 1, Pass -> True|>, <|Test -> complete exact source/color/sign replay 2, Pass -> True|>, <|Test -> complete exact source/color/sign replay 3, Pass -> True|>, <|Test -> complete exact source/color/sign replay 4, Pass -> True|>, <|Test -> changed Wick sign rejects, Pass -> True|>, <|Test -> nonbijective graph assignment rejects, Pass -> True|>, <|Test -> changed graph color coordinate rejects, Pass -> True|>, <|Test -> changed Gram normalization rejects, Pass -> True|>, <|Test -> misassigned original color-vector row rejects, Pass -> True|>, <|Test -> changed declared vertex-row certificate rejects, Pass -> True|>, <|Test -> a fabricated COMPLETE label rejects, Pass -> True|>, <|Test -> altered full expression rejects, Pass -> True|>, <|Test -> indistinguishable graphs with different color vectors abort, Pass -> True|>, <|Test -> ambiguous-bucket mock restores exact production definition, Pass -> True|>, <|Test -> nonminimal momentum coefficient rejects whole source, Pass -> True|>, <|Test -> undeclared foreign model parameter rejects whole source, Pass -> True|>, <|Test -> all existing chiral classes remain excluded, Pass -> True|>, <|Test -> all-color-singlet old massive source class remains excluded, Pass -> True|>, <|Test -> metadata inventory contains45massive and36chiral coloredHfamilies, Pass -> True|>, <|Test -> all45massive coloredHfamilies reach graph generation, Pass -> True|>, <|Test -> all36historicalchiral coloredHfamilies stay outside admission, Pass -> True|>, <|Test -> nonemptybalancedcoloredpair is mandatory, Pass -> True|>, <|Test -> QEDfourfermionphoton class stays outside admission, Pass -> True|>, <|Test -> QEDthreephoton class stays outside admission, Pass -> True|>, <|Test -> fourpointSM class stays outside admission, Pass -> True|>, <|Test -> twofermionHiggs class stays outside admission, Pass -> True|>, <|Test -> fourfermionmassivevector class stays outside admission, Pass -> True|>, <|Test -> classification mock restores exact diagram generator, Pass -> True|>}, ProductionSourceChanged -> False, IndependentBenchmarkRead -> False|>

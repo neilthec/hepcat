@@ -1545,7 +1545,8 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
    orbitAttempt = <|"Attempted" -> False|>, orbitSelected = False,
    handednessAttempt = <|"Attempted" -> False, "Selected" -> False|>,
    handednessProjection, handednessValidation,
-   spectatorAttempt=<|"Attempted"->False,"Selected"->False|>,spectatorProjection,spectatorValidation},
+   spectatorAttempt=<|"Attempted"->False,"Selected"->False|>,spectatorProjection,spectatorValidation,
+   currentAttempt=<|"Attempted"->False,"Selected"->False|>,currentProjection,currentValidation},
   Catch[
   seconds = Replace[settings["TimeConstraint"], Automatic ->
     amplitudeAutomaticSettings["Construction", settings,
@@ -1558,11 +1559,15 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
   If[FailureQ[pairs] || FailureQ[channels], Return[SelectFirst[{pairs, channels}, FailureQ]]];
   reps = colorParticleRepresentation[#, diagramModel] & /@ process;
   If[AnyTrue[reps, FailureQ], Return[SelectFirst[reps, FailureQ]]];
-  spectatorAttempt=ConstructiveDiagrams`Private`colorSpectatorPrepare[process,diagramModel,factorizationModel,settings,deadline,diagrams];
-  If[Lookup[spectatorAttempt,"Status",None]=!="PROPOSED",
-    handednessAttempt = colorHandednessPrepare[process, diagramModel, factorizationModel,
-      settings, channels, deadline],
-    handednessAttempt=<|"Attempted"->False,"Selected"->False,"Reason"->"DeferredForSpectatorSource"|>];
+  currentAttempt=ConstructiveDiagrams`Private`colorCurrentPrepare[process,diagramModel,factorizationModel,settings,deadline,diagrams];
+  If[ConstructiveDiagrams`Private`colorCurrentSourceClass[process,diagramModel],
+    spectatorAttempt=<|"Attempted"->False,"Selected"->False,"Reason"->"DisjointColoredCurrentClass"|>;
+    handednessAttempt=<|"Attempted"->False,"Selected"->False,"Reason"->"DisjointColoredCurrentClass"|>,
+    spectatorAttempt=ConstructiveDiagrams`Private`colorSpectatorPrepare[process,diagramModel,factorizationModel,settings,deadline,diagrams];
+    If[Lookup[spectatorAttempt,"Status",None]=!="PROPOSED",
+      handednessAttempt = colorHandednessPrepare[process, diagramModel, factorizationModel,
+        settings, channels, deadline],
+      handednessAttempt=<|"Attempted"->False,"Selected"->False,"Reason"->"DeferredForSpectatorSource"|>]];
   If[feynmanModel =!= None,
     If[TrueQ[settings["ProgressReporting"]], Print["Building independent colored Feynman benchmark."]];
     feynmanDiagrams = CreateDiagrams[process,feynmanModel];
@@ -1623,7 +1628,19 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
   If[TrueQ[settings["ProgressReporting"]], Print["Constructing ", rank,
     " independent color coefficients."]];
   reports = ConstantArray[Missing["NotConstructed"], rank];
-  If[Lookup[spectatorAttempt,"Status",None]==="PROPOSED",
+  If[Lookup[currentAttempt,"Status",None]==="PROPOSED",
+    currentProjection=ConstructiveDiagrams`Private`colorCurrentProjection[currentAttempt,pairs,channels,reps,feynmanPairs];
+    AssociateTo[currentAttempt,"Projection"->currentProjection];
+    If[AssociationQ[currentProjection],
+      currentValidation=colorOrbitValidate[process,currentProjection["Amplitudes"],
+        First[currentAttempt["PreparedPair"]],currentProjection["Data"],factorizationModel,settings,deadline];
+      AssociateTo[currentAttempt,"Validation"->currentValidation];
+      If[Lookup[currentValidation,"Status",None]==="COMPLETE",
+        data=currentProjection["Data"];rank=Length[data["Basis"]];
+        reports=Join[#,<|"ConstructionMethod"->"CertifiedPerGraphColoredCurrent"|>]&/@currentValidation["CoefficientReports"];
+        orbitSelected=True;orbitAttempt=<|"Attempted"->False,"Reason"->"ValidatedColoredCurrentSource"|>;
+        AssociateTo[currentAttempt,"Selected"->True]]]];
+  If[!orbitSelected&&Lookup[spectatorAttempt,"Status",None]==="PROPOSED",
     spectatorProjection=ConstructiveDiagrams`Private`colorSpectatorProjection[spectatorAttempt,pairs,channels,reps,feynmanPairs];
     AssociateTo[spectatorAttempt,"Projection"->spectatorProjection];
     If[AssociationQ[spectatorProjection],
@@ -1704,14 +1721,14 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
         <|"CompletedColorCoefficients" -> Count[reports, item_Association /;
             Lookup[item, "Status", None] === "COMPLETE"], "ColorCoefficients" -> rank,
           "ColorBasis" -> data["Basis"], "ColorCoefficientReports" -> reports,
-          "ColorOrbitAttempt" -> orbitAttempt, "ColorHandednessAttempt" -> handednessAttempt, "ColorSpectatorAttempt" -> spectatorAttempt|>], tag]];
+          "ColorOrbitAttempt" -> orbitAttempt, "ColorHandednessAttempt" -> handednessAttempt, "ColorSpectatorAttempt" -> spectatorAttempt, "ColorCurrentAttempt" -> currentAttempt|>], tag]];
       report = constructCoefficient[i];
       If[!AssociationQ[report] || Lookup[report, "Status", None] =!= "COMPLETE",
         Throw[colorFailure["IncompleteColorAmplitude",
           "An independent color coefficient did not complete. No full color amplitude was returned.",
           <|"ColorCoefficient" -> i, "ColorBasis" -> data["Basis"], "Report" -> report,
             "ColorCoefficientReports" -> reports, "ColorOrbitAttempt" -> orbitAttempt,
-            "ColorHandednessAttempt" -> handednessAttempt, "ColorSpectatorAttempt" -> spectatorAttempt|>], tag]],
+            "ColorHandednessAttempt" -> handednessAttempt, "ColorSpectatorAttempt" -> spectatorAttempt, "ColorCurrentAttempt" -> currentAttempt|>], tag]],
       {i, rank}]];
   amplitudes = Lookup[reports, "Amplitude"];
   expression = data["Basis"].amplitudes;
@@ -1725,7 +1742,7 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
     Throw[colorFailure["InconsistentFeynmanColorPhases",
       "The independent color coefficients require different Feynman signs. No common overall phase relates the full amplitudes.",
       <|"ColorBasis" -> data["Basis"], "Reports" -> reports,
-        "ColorOrbitAttempt" -> orbitAttempt, "ColorHandednessAttempt" -> handednessAttempt, "ColorSpectatorAttempt" -> spectatorAttempt,
+        "ColorOrbitAttempt" -> orbitAttempt, "ColorHandednessAttempt" -> handednessAttempt, "ColorSpectatorAttempt" -> spectatorAttempt, "ColorCurrentAttempt" -> currentAttempt,
         "PhaseAgreement" -> phaseAgreement|>], tag]];
   checkRows = Map[Function[row, <|"Color" -> row["ColorCoefficient"],
     "Type" -> row["Type"], "Test" -> row["Pole"], "Status" -> row["Status"]|>], combinedChecks];
@@ -1733,7 +1750,7 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
     "AmplitudePair" -> {external, expression}, "TotalTime" -> AbsoluteTime[] - started,
     "Complexity" -> constructComplexity[expression], "ColorBasis" -> data["Basis"],
     "ColorGramMatrix" -> data["GramMatrix"], "ColorCoefficientReports" -> reports,
-    "ColorOrbitAttempt" -> orbitAttempt, "ColorHandednessAttempt" -> handednessAttempt, "ColorSpectatorAttempt" -> spectatorAttempt,
+    "ColorOrbitAttempt" -> orbitAttempt, "ColorHandednessAttempt" -> handednessAttempt, "ColorSpectatorAttempt" -> spectatorAttempt, "ColorCurrentAttempt" -> currentAttempt,
     "FeynmanModel" -> feynmanModel,
     "FeynmanPreparation" -> If[feynmanModel===None,Missing["NotRequested"],feynmanPrepared],
     "Checks" -> <|"Summary" -> summary, "Checks" -> combinedChecks,

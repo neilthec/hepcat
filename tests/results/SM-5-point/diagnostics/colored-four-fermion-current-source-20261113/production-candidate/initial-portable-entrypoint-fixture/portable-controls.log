@@ -1,0 +1,11 @@
+
+Replace::level: Level specification _ :> ccTDefaultRoot is not of the form n, {n} or {m, n}.
+
+Replace::level: Level specification _ :> FileNameJoin[{ccTRoot, source, HEPCAT.wl}] is not of the form n, {n} or {m, n}.
+
+Get::stream: Replace[/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/colored-four-fermion-current-source-20261113/production-candidate/shadow/source/HEPCAT.wl, value_String /; StringLength[value] > 0 :> value, _ :> FileNameJoin[{ccTRoot, source, HEPCAT.wl}]] is not a string, SocketObject, InputStream[ ] or OutputStream[ ].
+
+Replace::level: Level specification _ :> DirectoryName[DirectoryName[DirectoryName[$InputFileName]]] is not of the form n, {n} or {m, n}.
+
+General::stop: Further output of Replace::level will be suppressed during this calculation.
+FAIL five private source heads loaded

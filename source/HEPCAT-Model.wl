@@ -2622,6 +2622,8 @@ amplitudeParallelSignature[] := Module[{required, optional},
   required = FileNameJoin[{$amplitudeParallelSourceDirectory, #}] & /@
     {"HEPCAT.wl", "HEPCAT-Base.wl", "internal/HEPCAT-Parameters.wl", "HEPCAT-Model.wl",
       "internal/HEPCAT-Feynman.wl", "internal/HEPCAT-Color.wl", "internal/HEPCAT-SPINAS.wl",
+      "internal/HEPCAT-MadGraph.wl", "internal/HEPCAT-CovariantSources.wl",
+      "internal/HEPCAT-CovariantContacts.wl", "internal/HEPCAT-ColoredCurrents.wl",
       "internal/HEPCAT-SPINAS-Optimize.wl", "internal/export/spinas-runtime.hpp"};
   optional = {"internal/proofs/laurent-proof-runtime.cpp", "internal/proofs/laurent-proof-runtime.py",
     "internal/proofs/laurent-proof-factor.py", "internal/proofs/laurent-proof-verify.py"};

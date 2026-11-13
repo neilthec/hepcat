@@ -1,0 +1,53 @@
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+PASS five private source heads loaded
+PASS massive fourquark scalar class admitted
+PASS massive mixed color scalar class admitted
+PASS nonconjugate weak fourquark class admitted
+PASS massless chiral pairs excluded
+PASS one massless chiral endpoint excluded
+PASS old colorless massive scalar class excluded
+PASS unbalanced colored pair excluded
+PASS QED photon classes excluded
+PASS fourpoint SM and fourfermionvector classes excluded
+PASS twofermion scalar class excluded
+PASS all45new massive coloredHfamilies eligible
+PASS all36historical chiral coloredHfamilies excluded
+PASS fresh exact color and graph replay u,U,c,C,h
+PASS fresh exact color and graph replay e,E,u,U,h
+PASS fresh exact color and graph replay u,D,C,s,h
+PASS source only receives declared process and diagram model
+PASS completed pair prepared without diagram wrapper
+PASS source preparation always uses external identities
+PASS allphysical default forwarded
+FAIL proposal remains unselected until independent validation
+PASS preparation mocks restore exact definitions
+PASS caller child clock preserved while internal shells remain disabled
+PASS allspurious preference forwarded literally
+FAIL explicit Xi choice retained
+FAIL explicit None choice retained
+PASS default cannot retain unresolved Xi
+PASS source cannot fabricate COMPLETE acceptance
+PASS certificate failure prevents preparation and retains diagnostics
+PASS internal shell mass rule cannot become completed source
+PASS independent benchmark is mandatory
+PASS expired source budget skips safely
+PASS common projection keeps all diagrams channels candidate and full benchmark
+PASS all independent color coefficients retained
+PASS benchmark-only extra color direction is never dropped
+PASS projection cannot omit independent benchmark
+PASS failed source validation falls back to original coefficient inputs
+PASS failed source diagnostics retained without selection
+PASS validated source skips ordinary coefficient reconstruction
+PASS selection uses the fully validated common color basis
+PASS all new helpers remain private
+<|Status -> FAIL, Passed -> 38, Failed -> 3, Records -> {<|Test -> five private source heads loaded, Pass -> True|>, <|Test -> massive fourquark scalar class admitted, Pass -> True|>, <|Test -> massive mixed color scalar class admitted, Pass -> True|>, <|Test -> nonconjugate weak fourquark class admitted, Pass -> True|>, <|Test -> massless chiral pairs excluded, Pass -> True|>, <|Test -> one massless chiral endpoint excluded, Pass -> True|>, <|Test -> old colorless massive scalar class excluded, Pass -> True|>, <|Test -> unbalanced colored pair excluded, Pass -> True|>, <|Test -> QED photon classes excluded, Pass -> True|>, <|Test -> fourpoint SM and fourfermionvector classes excluded, Pass -> True|>, <|Test -> twofermion scalar class excluded, Pass -> True|>, <|Test -> all45new massive coloredHfamilies eligible, Pass -> True|>, <|Test -> all36historical chiral coloredHfamilies excluded, Pass -> True|>, <|Test -> fresh exact color and graph replay u,U,c,C,h, Pass -> True|>, <|Test -> fresh exact color and graph replay e,E,u,U,h, Pass -> True|>, <|Test -> fresh exact color and graph replay u,D,C,s,h, Pass -> True|>, <|Test -> source only receives declared process and diagram model, Pass -> True|>, <|Test -> completed pair prepared without diagram wrapper, Pass -> True|>, <|Test -> source preparation always uses external identities, Pass -> True|>, <|Test -> allphysical default forwarded, Pass -> True|>, <|Test -> proposal remains unselected until independent validation, Pass -> False|>, <|Test -> preparation mocks restore exact definitions, Pass -> True|>, <|Test -> caller child clock preserved while internal shells remain disabled, Pass -> True|>, <|Test -> allspurious preference forwarded literally, Pass -> True|>, <|Test -> explicit Xi choice retained, Pass -> False|>, <|Test -> explicit None choice retained, Pass -> False|>, <|Test -> default cannot retain unresolved Xi, Pass -> True|>, <|Test -> source cannot fabricate COMPLETE acceptance, Pass -> True|>, <|Test -> certificate failure prevents preparation and retains diagnostics, Pass -> True|>, <|Test -> internal shell mass rule cannot become completed source, Pass -> True|>, <|Test -> independent benchmark is mandatory, Pass -> True|>, <|Test -> expired source budget skips safely, Pass -> True|>, <|Test -> common projection keeps all diagrams channels candidate and full benchmark, Pass -> True|>, <|Test -> all independent color coefficients retained, Pass -> True|>, <|Test -> benchmark-only extra color direction is never dropped, Pass -> True|>, <|Test -> projection cannot omit independent benchmark, Pass -> True|>, <|Test -> failed source validation falls back to original coefficient inputs, Pass -> True|>, <|Test -> failed source diagnostics retained without selection, Pass -> True|>, <|Test -> validated source skips ordinary coefficient reconstruction, Pass -> True|>, <|Test -> selection uses the fully validated common color basis, Pass -> True|>, <|Test -> all new helpers remain private, Pass -> True|>}, SavedAmplitudeRead -> False, NativePhaseSpaceChecksPerformed -> False|>
+HEPCAT_TEST_COMPLETED:color-current-source-tests.wl
