@@ -1,0 +1,33 @@
+Get["/Users/neil/code/hepcat/source/HEPCAT.wl"];
+Begin["HEPCATC7ActualPublicPilot`Private`"];
+$ContextPath=Prepend[DeleteCases[$ContextPath,"HEPCATC7ActualPublicPilot`Private`"],"HEPCATC7ActualPublicPilot`Private`"];
+$HistoryLength=0;dvRoot="/Users/neil/code/hepcat";dvDirectory=Environment["HEPCAT_C7_SHADOW_OUTPUT"];
+dvIndex=FromDigits[Environment["HEPCAT_C7_SHADOW_INDEX"]];
+dvModel=ReadModel[FileNameJoin[{dvRoot,"models"}],1];dvLower=ReadModel[FileNameJoin[{dvRoot,"models"}],2];
+dvFeynman=ReadModel[FileNameJoin[{dvRoot,"tests","reference-models","calchep"}],1];
+dvProcess=Switch[dvIndex,1,{"m","M","A.+","h","h"},2,{"u","U","Z","h","h"},_,Quit[2]];
+dvPrinted={};dvStarted=AbsoluteTime[];dvLive=OpenWrite[FileNameJoin[{dvDirectory,"construct.live.txt"}]];
+SetAttributes[dvCapture,HoldAll];dvCapture[body_]:=Internal`InheritedBlock[{Print},Unprotect[Print];Print[]:=Null;
+ Print[args__]:=(AppendTo[dvPrinted,If[Length[{args}]===1,First[{args}],SequenceForm[args]]];
+ WriteString[dvLive,DateString[{"Hour",":","Minute",":","Second"}]," ",ToString[Last[dvPrinted],OutputForm],"\n"];FlushWrite[dvLive];Null);
+ Protect[Print];body];
+dvDetails=dvCapture[MemoryConstrained[TimeConstrained[Block[{ConstructiveDiagrams`Private`$amplitudeParallelActive=True},
+ ConstructAmplitude[dvProcess,dvModel,dvLower,"FeynmanModel"->dvFeynman,"Output"->"Details"]],900,
+ Failure["ShadowExternalInnerDeadline",<||>]],4 2^30,Failure["ShadowMemoryLimit",<||>]]];
+Close[dvLive];dvRows=If[AssociationQ[dvDetails],Lookup[Lookup[dvDetails,"Checks",<||>],"Checks",{}],{}];
+dvComplete=AssociationQ[dvDetails]&&Lookup[dvDetails,"Status",None]==="COMPLETE"&&dvRows=!={}&&
+ AllTrue[dvRows,Lookup[#,"Status",None]==="PASS"&]&&AnyTrue[dvRows,Lookup[#,"Type",None]==="Feynman"&];
+dvRecord=<|"Status"->If[dvComplete,"COMPLETE","NOT_COMPLETE"],"CallType"->"ActualPublicDefaultC7",
+ "CanonicalRecord"->False,"ProductionSourceChanged"->False,"ContextSHA256"->"4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167",
+ "ProspectiveInstalledContextSHA256"->Environment["HEPCAT_C7_PROSPECTIVE_CONTEXT"],"Particles"->dvProcess,"Details"->dvDetails,
+ "Prints"->dvPrinted,"Rows"->dvRows,"Expression"->If[dvComplete,dvDetails["Amplitude"],Missing["NotValidated"]],
+ "AmplitudePair"->If[dvComplete,dvDetails["AmplitudePair"],Missing["NotValidated"]],"SingleKernelScopedExecutionEnvironment"->True,
+ "PublicOptionsSupplied"->{"FeynmanModel","Output"},"RecordedAmplitudeInputs"->False,"Seconds"->N[AbsoluteTime[]-dvStarted]|>;
+dvPath=FileNameJoin[{dvDirectory,"construction.wxf"}];dvStream=OpenWrite[dvPath,BinaryFormat->True];
+BinaryWrite[dvStream,Normal[BinarySerialize[dvRecord,PerformanceGoal->"Size"]],"Byte"];Close[dvStream];
+dvSummary=KeyDrop[dvRecord,{"Details","Prints","Rows","Expression","AmplitudePair"}];
+If[AssociationQ[dvDetails],AssociateTo[dvSummary,KeyTake[dvDetails,{"Complexity","RandomSeed","StageTimings"}]]];
+AssociateTo[dvSummary,{"Rows"->Length[dvRows],"CheckStatuses"->Counts[Lookup[dvRows,"Status",{}]],
+ "FeynmanRows"->Count[Lookup[dvRows,"Type",{}],"Feynman"],"CapsuleSHA256"->IntegerString[FileHash[dvPath,"SHA256"],16,64]}];
+Export[FileNameJoin[{dvDirectory,"construction.json"}],dvSummary/._Missing->Null/.None->Null,"RawJSON"];Print[dvSummary];
+End[];Quit[If[dvComplete,0,1]];

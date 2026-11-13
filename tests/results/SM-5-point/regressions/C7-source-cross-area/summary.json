@@ -1,0 +1,147 @@
+{
+  "Status": "PASS",
+  "CreatedUTC": "2026-11-13T04:53:19.103073+00:00",
+  "ContextSHA256": "4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167",
+  "Suites": [
+    {
+      "Suite": "covariant-current-source-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 5.089380792,
+      "FrozenSourceModelsRuntimeUnchanged": true,
+      "Log": "tests/results/SM-5-point/regressions/C7-source-cross-area/covariant-current-source-tests.wl.log",
+      "LogSHA256": "1f1be0002cb7428746728ed2ff2f1036923f4cfd39adf46f909657883715eff2",
+      "Checks": 24,
+      "Failures": 0
+    },
+    {
+      "Suite": "covariant-constructor-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 11.061755042000001,
+      "FrozenSourceModelsRuntimeUnchanged": true,
+      "Log": "tests/results/SM-5-point/regressions/C7-source-cross-area/covariant-constructor-tests.wl.log",
+      "LogSHA256": "0b530b039e103fe3365dd7a5ad745973a20d71c7a0ebc752413bd19e2d401f07",
+      "Checks": 20,
+      "Failures": 0
+    },
+    {
+      "Suite": "covariant-contact-calibration-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 21.773723209,
+      "FrozenSourceModelsRuntimeUnchanged": true,
+      "Log": "tests/results/SM-5-point/regressions/C7-source-cross-area/covariant-contact-calibration-tests.wl.log",
+      "LogSHA256": "af5f6d8f78db72c79b80b1706bb9ce57e242da6a14914287e43dd41449ef9cb5",
+      "Checks": 31,
+      "Failures": 0
+    },
+    {
+      "Suite": "construct-amplitude-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 43.383862958,
+      "FrozenSourceModelsRuntimeUnchanged": true,
+      "Log": "tests/results/SM-5-point/regressions/C7-source-cross-area/construct-amplitude-tests.wl.log",
+      "LogSHA256": "fa63d4e699463c740d3540dc4cd9ba8657594523b8dfc757f0704aa7c837c004",
+      "Checks": 82,
+      "Failures": 0
+    },
+    {
+      "Suite": "color-handedness-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 9.043757874999999,
+      "FrozenSourceModelsRuntimeUnchanged": true,
+      "Log": "tests/results/SM-5-point/regressions/C7-source-cross-area/color-handedness-tests-rerun.wl.log",
+      "LogSHA256": "8d2beda9290c04a4695458bc5a29391db5b074f9695b7361f970d45deb4e5bdf",
+      "Checks": 26,
+      "Failures": 0
+    },
+    {
+      "Suite": "color-orbit-construction-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 4.318063041,
+      "FrozenSourceModelsRuntimeUnchanged": true,
+      "Log": "tests/results/SM-5-point/regressions/C7-source-cross-area/color-orbit-construction-tests-rerun.wl.log",
+      "LogSHA256": "4f08c16656d912dfb072875e90293c2be6698cfe414bd2de21d63b2a8da8225c",
+      "Checks": 31,
+      "Failures": 0
+    },
+    {
+      "Suite": "qed-five-point-simplification-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 129.217725833,
+      "FrozenSourceModelsRuntimeUnchanged": true,
+      "Log": "tests/results/SM-5-point/regressions/C7-source-cross-area/qed-five-point-simplification-tests-rerun.wl.log",
+      "LogSHA256": "5dfcbf68ee40cd5a0ee4a2e24195c4f386ac8a565f5e5003e55ff5a3cefc3544",
+      "Checks": 138,
+      "Failures": 0
+    },
+    {
+      "Suite": "six-point-completion-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 144.63848425,
+      "FrozenSourceModelsRuntimeUnchanged": true,
+      "Log": "tests/results/SM-5-point/regressions/C7-source-cross-area/six-point-completion-tests-rerun.wl.log",
+      "LogSHA256": "e1e4aef61d08199dd1c87d49a06065dd55b6ac62e9fee07bde5d7bcfd1d27a3e",
+      "Checks": 131,
+      "Failures": 0
+    },
+    {
+      "Suite": "sm-factorization-model-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 8.765227541999991,
+      "FrozenSourceModelsRuntimeUnchanged": true,
+      "Log": "tests/results/SM-5-point/regressions/C7-source-cross-area/sm-factorization-model-tests-rerun.wl.log",
+      "LogSHA256": "822c35d595a8d5630b4cbec9310e40db57d3004bcf5596662049dc86b42cfaf1",
+      "Checks": 405,
+      "Failures": 0
+    },
+    {
+      "Suite": "covariant-cubic-spectator-source-tests.wl",
+      "ExitCode": 0,
+      "Checks": 35,
+      "Failures": 0,
+      "Log": "tests/results/SM-5-point/regressions/C7-source-cross-area/new-controls.log",
+      "LogSHA256": "d13d042a2b7746872c65e6c4cfe60cb0a5a3211b8f6f184937ce42d2b27870b9",
+      "ProductionLoad": true,
+      "SavedAmplitudeOrDiagnosticDependency": false
+    },
+    {
+      "Suite": "color-spectator-source-tests.wl",
+      "ExitCode": 0,
+      "Checks": 27,
+      "Failures": 0,
+      "Log": "tests/results/SM-5-point/regressions/C7-source-cross-area/new-controls.log",
+      "LogSHA256": "d13d042a2b7746872c65e6c4cfe60cb0a5a3211b8f6f184937ce42d2b27870b9",
+      "ProductionLoad": true,
+      "SavedAmplitudeOrDiagnosticDependency": false
+    }
+  ],
+  "SuiteCount": 11,
+  "Checks": 950,
+  "Failures": 0,
+  "ExistingCrossAreaChecks": 888,
+  "NewPortableProductionChecks": 62,
+  "NewSuiteCount": 2,
+  "ExistingSuiteCount": 9,
+  "SequentialExistingSuiteSeconds": 377.291980542,
+  "FrozenSourceHashes": {
+    "source/HEPCAT-Model.wl": "08d4012f6c3c5827f5ffb90d52c81f1ab5c5d5be01288f9063d3528b74474fe7",
+    "source/internal/HEPCAT-Color.wl": "d6c8d37a2a1ea96abf93feb2e1ba0173a7afe6aa65175a43ffb0aeb2edca5768",
+    "source/internal/HEPCAT-CovariantSources.wl": "6b061d63fc485371208521dd91a9dcb0ade2d0cddd0b811dfda7d2b04f321ad1"
+  },
+  "SourceModelsRuntimeUnchangedBeforeAfterEveryExistingSuite": true,
+  "SourceEditsDuringTier": false,
+  "TestHarnessRepairs": [
+    {
+      "Suite": "color-handedness-tests.wl",
+      "Change": "Added official completion marker only; all26 original assertions had passed. Original incomplete runner log preserved.",
+      "OriginalLog": "tests/results/SM-5-point/regressions/C7-source-cross-area/color-handedness-tests.wl.log",
+      "OriginalLogSHA256": "f334f9a026fc7bcb0d2b9ac1476e941434c2fdcc52bd407ba7eec5dbcec2b828"
+    },
+    {
+      "Suite": "color-orbit-construction-tests.wl",
+      "Change": "Added missing official completion marker before dispatch; all31 unchanged assertions passed."
+    }
+  ],
+  "ExpensiveOptInIntegrationsEnabled": false,
+  "FreshSixPointCoverage": "Twenty-four fresh AllPhysical diagrams and all fourteen channels; standard native checks, independent Feynman coverage as defined by unchanged suite.",
+  "NoClaimOfWholeStandardSuiteSweep": true
+}

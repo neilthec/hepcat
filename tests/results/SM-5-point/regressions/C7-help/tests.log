@@ -1,0 +1,28 @@
+Running documentation-content-tests.wl
+Documentation content: 1490 / 1490 checks passed.
+HEPCAT_TEST_COMPLETED:documentation-content-tests.wl
+
+Running documentation-registration-tests.wl
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+Documentation registration: 58 / 58 checks passed.
+HEPCAT_TEST_COMPLETED:documentation-registration-tests.wl
+

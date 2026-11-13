@@ -1,0 +1,103 @@
+Running covariant-cubic-spectator-source-tests.wl
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+PASS new preparation and projection helpers loaded
+PASS required existing algebra helpers are available
+PASS positive-helicity cubic class reaches graph generation
+PASS negative-helicity cubic class reaches graph generation
+PASS old massive four-fermion source class preserved
+PASS chiral four-fermion source class remains excluded
+PASS two-vector calibrated class not added to cubic helper
+PASS three-photon class not added
+PASS massless undeclared Dirac endpoints remain excluded
+PASS colored current cannot bypass spectator proof
+PASS massive L/R inconsistency remains excluded
+PASS explicit positive photon signed weight
+PASS explicit negative photon signed weight
+PASS old chiral and massive-vector weights unchanged
+PASS spectator source requires independent benchmark
+PASS three-photon spectator shape does not attempt a source
+PASS four-colored-fermion spectator shape excluded
+PASS zero remaining clock skips spectator attempt
+PASS projection retains all original diagrams targets and benchmark
+PASS projection remains unvalidated candidate data
+PASS rank-one common Gram remains exact
+PASS independent benchmark-only direction rejects
+PASS missing independent benchmark rejects
+PASS source rejection cannot become projected amplitude
+Building certified spectator-color source.
+Preparing completed spectator source with external identities.
+PASS completed pair is passed without a diagram-list wrapper
+PASS source preparation always disables internal shells
+PASS all-physical preference forwarded
+PASS source preparation mock definitions restore
+Building certified spectator-color source.
+Preparing completed spectator source with external identities.
+PASS explicit Xi preference forwarded and retained
+Building certified spectator-color source.
+Preparing completed spectator source with external identities.
+PASS explicit None preference retained
+Building certified spectator-color source.
+Preparing completed spectator source with external identities.
+PASS unresolved references prevent default source selection
+Building certified spectator-color source.
+Preparing completed spectator source with external identities.
+PASS explicit child clock retained but shells stay external-only
+Building certified spectator-color source.
+PASS source may never bypass independent validation with a COMPLETE label
+PASS existing matchers reducers preparation and checkers restored
+PASS all thirty-four preceding controls ran
+<|Status -> PASS, Passed -> 35, Failed -> 0, Records -> {<|Test -> new preparation and projection helpers loaded, Pass -> True|>, <|Test -> required existing algebra helpers are available, Pass -> True|>, <|Test -> positive-helicity cubic class reaches graph generation, Pass -> True|>, <|Test -> negative-helicity cubic class reaches graph generation, Pass -> True|>, <|Test -> old massive four-fermion source class preserved, Pass -> True|>, <|Test -> chiral four-fermion source class remains excluded, Pass -> True|>, <|Test -> two-vector calibrated class not added to cubic helper, Pass -> True|>, <|Test -> three-photon class not added, Pass -> True|>, <|Test -> massless undeclared Dirac endpoints remain excluded, Pass -> True|>, <|Test -> colored current cannot bypass spectator proof, Pass -> True|>, <|Test -> massive L/R inconsistency remains excluded, Pass -> True|>, <|Test -> explicit positive photon signed weight, Pass -> True|>, <|Test -> explicit negative photon signed weight, Pass -> True|>, <|Test -> old chiral and massive-vector weights unchanged, Pass -> True|>, <|Test -> spectator source requires independent benchmark, Pass -> True|>, <|Test -> three-photon spectator shape does not attempt a source, Pass -> True|>, <|Test -> four-colored-fermion spectator shape excluded, Pass -> True|>, <|Test -> zero remaining clock skips spectator attempt, Pass -> True|>, <|Test -> projection retains all original diagrams targets and benchmark, Pass -> True|>, <|Test -> projection remains unvalidated candidate data, Pass -> True|>, <|Test -> rank-one common Gram remains exact, Pass -> True|>, <|Test -> independent benchmark-only direction rejects, Pass -> True|>, <|Test -> missing independent benchmark rejects, Pass -> True|>, <|Test -> source rejection cannot become projected amplitude, Pass -> True|>, <|Test -> completed pair is passed without a diagram-list wrapper, Pass -> True|>, <|Test -> source preparation always disables internal shells, Pass -> True|>, <|Test -> all-physical preference forwarded, Pass -> True|>, <|Test -> source preparation mock definitions restore, Pass -> True|>, <|Test -> explicit Xi preference forwarded and retained, Pass -> True|>, <|Test -> explicit None preference retained, Pass -> True|>, <|Test -> unresolved references prevent default source selection, Pass -> True|>, <|Test -> explicit child clock retained but shells stay external-only, Pass -> True|>, <|Test -> source may never bypass independent validation with a COMPLETE label, Pass -> True|>, <|Test -> existing matchers reducers preparation and checkers restored, Pass -> True|>, <|Test -> all thirty-four preceding controls ran, Pass -> True|>}, ActualFivePointConstructionPerformed -> False, NativeKinematicsEvaluated -> False, ExistingMatchersReducersAndCheckersUnchanged -> True|>
+CHECKS: 35; FAILURES: 0
+HEPCAT_TEST_COMPLETED:covariant-cubic-spectator-source-tests.wl
+
+Running color-spectator-source-tests.wl
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+PASS ordinary fundamental path certifies
+PASS positive path has both external endpoints
+PASS all three ordered vertex certificates retained
+PASS positive path declares no adjoint or closed loop
+PASS explicit color in second vertex aborts whole certificate
+PASS explicit color in last vertex cannot emit partial certificate
+PASS two fundamental ports reject
+PASS one colored port rejects
+PASS unknown vertex particle rejects
+PASS unsupported particle representation rejects
+PASS colored scalar vertex ports reject
+PASS colored external spectator boson rejects
+PASS internal adjoint rejects
+PASS internal fundamental scalar rejects
+PASS unknown internal representation rejects
+PASS split colored path rejects
+PASS closed color loop rejects
+PASS disconnected extra color flow rejects
+PASS unknown external field rejects before generation
+PASS two fundamental pairs reject before generation
+PASS nonunit or extra color tensor rejects: 1
+PASS nonunit or extra color tensor rejects: 2
+PASS nonunit or extra color tensor rejects: 3
+PASS nonunit or extra color tensor rejects: 4
+PASS nonunit or extra color tensor rejects: 5
+PASS all twenty-five path and scope cases executed
+PASS mocked production definitions restore exactly
+<|Status -> PASS, Passed -> 27, Failed -> 0, Records -> {<|Test -> ordinary fundamental path certifies, Pass -> True|>, <|Test -> positive path has both external endpoints, Pass -> True|>, <|Test -> all three ordered vertex certificates retained, Pass -> True|>, <|Test -> positive path declares no adjoint or closed loop, Pass -> True|>, <|Test -> explicit color in second vertex aborts whole certificate, Pass -> True, FailureTag -> ExplicitVertexColorRequiresSeparateTransportCertificate|>, <|Test -> explicit color in last vertex cannot emit partial certificate, Pass -> True, FailureTag -> ExplicitVertexColorRequiresSeparateTransportCertificate|>, <|Test -> two fundamental ports reject, Pass -> True, FailureTag -> NonDeltaVertexColorFlow|>, <|Test -> one colored port rejects, Pass -> True, FailureTag -> NonDeltaVertexColorFlow|>, <|Test -> unknown vertex particle rejects, Pass -> True, FailureTag -> UnsupportedVertexColorRepresentation|>, <|Test -> unsupported particle representation rejects, Pass -> True, FailureTag -> NonSpectatorInternalColorRepresentation|>, <|Test -> colored scalar vertex ports reject, Pass -> True, FailureTag -> NonFermionColoredPath|>, <|Test -> colored external spectator boson rejects, Pass -> True, FailureTag -> NonSpectatorInternalColorRepresentation|>, <|Test -> internal adjoint rejects, Pass -> True, FailureTag -> NonSpectatorInternalColorRepresentation|>, <|Test -> internal fundamental scalar rejects, Pass -> True, FailureTag -> NonSpectatorInternalColorRepresentation|>, <|Test -> unknown internal representation rejects, Pass -> True, FailureTag -> NonSpectatorInternalColorRepresentation|>, <|Test -> split colored path rejects, Pass -> True, FailureTag -> ColoredEdgesAreNotOneOpenFermionPath|>, <|Test -> closed color loop rejects, Pass -> True, FailureTag -> ColoredEdgesAreNotOneOpenFermionPath|>, <|Test -> disconnected extra color flow rejects, Pass -> True, FailureTag -> ColoredEdgesAreNotOneOpenFermionPath|>, <|Test -> unknown external field rejects before generation, Pass -> True|>, <|Test -> two fundamental pairs reject before generation, Pass -> True|>, <|Test -> nonunit or extra color tensor rejects: 1, Pass -> True|>, <|Test -> nonunit or extra color tensor rejects: 2, Pass -> True|>, <|Test -> nonunit or extra color tensor rejects: 3, Pass -> True|>, <|Test -> nonunit or extra color tensor rejects: 4, Pass -> True|>, <|Test -> nonunit or extra color tensor rejects: 5, Pass -> True|>, <|Test -> all twenty-five path and scope cases executed, Pass -> True|>, <|Test -> mocked production definitions restore exactly, Pass -> True|>}, ProductionDefinitionsRestored -> True, FivePointSourceConstructionRun -> False, IndependentBenchmarkRead -> False|>
+CHECKS: 27; FAILURES: 0
+HEPCAT_TEST_COMPLETED:color-spectator-source-tests.wl
+

@@ -167,4 +167,5 @@ check["the new helper names remain private",
   Names["ConstructiveDiagrams`colorOrbit*"] === {}];
 Print["Checks: ", checks, "; failures: ", Length[failures]];
 If[failures =!= {}, Print[failures]];
+Print["HEPCAT_TEST_COMPLETED:color-orbit-construction-tests.wl"];
 Quit[If[failures === {}, 0, 1]];

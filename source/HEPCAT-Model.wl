@@ -22718,6 +22718,8 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
       Length[fermions] === 4 && Length[scalars] === 1 &&
         AllTrue[fermions, #[[6]] =!= 0 &], "Cubic currents",
       Length[fermions] === 2 && Length[vectors] === 1 && Length[scalars] === 2 &&
+        First[vectors][[6]] === 0 && AllTrue[fermions, #[[6]] =!= 0 &], "Cubic currents",
+      Length[fermions] === 2 && Length[vectors] === 1 && Length[scalars] === 2 &&
         First[vectors][[6]] =!= 0 && SameQ @@ scalars[[All, 6]], "Calibrated metric currents",
       Length[fermions] === 2 && Length[vectors] === 2 && Length[scalars] === 1 &&
         AllTrue[vectors, #[[6]] =!= 0 &], "Calibrated metric currents",

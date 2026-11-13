@@ -1,0 +1,53 @@
+{
+  "ContextSHA256": "4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167",
+  "StartedUTC": "2026-11-13T04:41:18.746682+00:00",
+  "Records": [
+    {
+      "Suite": "covariant-current-source-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 5.089380792,
+      "FrozenSourceModelsRuntimeUnchanged": true,
+      "Log": "tests/results/SM-5-point/regressions/C7-source-cross-area/covariant-current-source-tests.wl.log",
+      "LogSHA256": "1f1be0002cb7428746728ed2ff2f1036923f4cfd39adf46f909657883715eff2"
+    },
+    {
+      "Suite": "covariant-constructor-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 11.061755042000001,
+      "FrozenSourceModelsRuntimeUnchanged": true,
+      "Log": "tests/results/SM-5-point/regressions/C7-source-cross-area/covariant-constructor-tests.wl.log",
+      "LogSHA256": "0b530b039e103fe3365dd7a5ad745973a20d71c7a0ebc752413bd19e2d401f07"
+    },
+    {
+      "Suite": "covariant-contact-calibration-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 21.773723209,
+      "FrozenSourceModelsRuntimeUnchanged": true,
+      "Log": "tests/results/SM-5-point/regressions/C7-source-cross-area/covariant-contact-calibration-tests.wl.log",
+      "LogSHA256": "af5f6d8f78db72c79b80b1706bb9ce57e242da6a14914287e43dd41449ef9cb5"
+    },
+    {
+      "Suite": "construct-amplitude-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 43.383862958,
+      "FrozenSourceModelsRuntimeUnchanged": true,
+      "Log": "tests/results/SM-5-point/regressions/C7-source-cross-area/construct-amplitude-tests.wl.log",
+      "LogSHA256": "fa63d4e699463c740d3540dc4cd9ba8657594523b8dfc757f0704aa7c837c004"
+    },
+    {
+      "Suite": "color-handedness-tests.wl",
+      "ExitCode": 1,
+      "Seconds": 8.475001458000008,
+      "FrozenSourceModelsRuntimeUnchanged": true,
+      "Log": "tests/results/SM-5-point/regressions/C7-source-cross-area/color-handedness-tests.wl.log",
+      "LogSHA256": "f334f9a026fc7bcb0d2b9ac1476e941434c2fdcc52bd407ba7eec5dbcec2b828"
+    }
+  ],
+  "PendingSuites": [
+    "color-orbit-construction-tests.wl",
+    "qed-five-point-simplification-tests.wl",
+    "six-point-completion-tests.wl",
+    "sm-factorization-model-tests.wl"
+  ],
+  "Status": "IN_PROGRESS_OR_STOPPED"
+}

@@ -1,0 +1,184 @@
+{
+  "ContextSHA256": "4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167",
+  "Files": [
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/C7-spectator-cubic-source-candidate-20261113/installation.json",
+      "SHA256": "aa5ad0fc864a1b203c7569f0b39b70a7fbd6f462cff8d1a8948e01f4f25d6f14",
+      "Bytes": 1064
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/C7-spectator-cubic-source-candidate-20261113/installed-manifest.json",
+      "SHA256": "acd895e92c52c03e9e9b3fa7ff4c577382c523820fdfc7d9902f19f82b815256",
+      "Bytes": 7127
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/C7-spectator-cubic-source-candidate-20261113/shadow-controller-summary.json",
+      "SHA256": "d0dfc4a954db5da911b79d42f6718400815c5ba229f06e400082f14f357d0bc7",
+      "Bytes": 5451
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/C7-spectator-cubic-source-candidate-20261113/shadow-manifest.json",
+      "SHA256": "c8b906c55f41b122681df68b17be2fab8d7f8e83b1bc3b5d1c02263ef45adfc8",
+      "Bytes": 13172
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/c7-default-source-pilots-20261113/construct.wl",
+      "SHA256": "f015721027fae6b654872e08b1dd0731169c204dd9fd094d81b286a3c8f5e799",
+      "Bytes": 3276
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/c7-default-source-pilots-20261113/control.py",
+      "SHA256": "52e8bcf0c6e432bc1d8703d73440ba1eb4f4debe977dce708ec1fe58bc0cfcb6",
+      "Bytes": 3019
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/c7-default-source-pilots-20261113/controller-summary.json",
+      "SHA256": "1270c5bc54b84e4307f34e5cb3c2014b397be129236f3cf31197b91d63bdc01f",
+      "Bytes": 5408
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/c7-default-source-pilots-20261113/controller.log",
+      "SHA256": "7803d3892bbaa8432aece8c14cefa19524fdeeaa1b9d21ecebda1ea083906bc2",
+      "Bytes": 4665
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/c7-default-source-pilots-20261113/public-muAHH/construct.live.txt",
+      "SHA256": "1b4c8e2b4d5e4870bd86e7455ae24501e90a6bd0fff0ef736545bd4e6ecff444",
+      "Bytes": 6750
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/c7-default-source-pilots-20261113/public-muAHH/construct.log",
+      "SHA256": "cb01a7ef30ccc33fae771a9cddfffef46ac3b364efd4224f3e0af38a4ec3d9b4",
+      "Bytes": 3068
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/c7-default-source-pilots-20261113/public-muAHH/construction.json",
+      "SHA256": "6b7771b8f538d3f03cfd863164862b43993d1edf6522906e5fcca93cd3aa3e0f",
+      "Bytes": 2635
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/c7-default-source-pilots-20261113/public-muAHH/construction.wxf",
+      "SHA256": "5b1738617af9c926556e9f075cf7dd8a76ec1cd4f056b7753b5c4ad4e0a3065b",
+      "Bytes": 2543460
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/c7-default-source-pilots-20261113/public-muAHH/controller.json",
+      "SHA256": "499d6ffaa6624ea6f34f50b71d2da70dc25c2a6b08a20454eb9ef0d47e1704b4",
+      "Bytes": 3511
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/c7-default-source-pilots-20261113/public-uUZhh/construct.live.txt",
+      "SHA256": "393ad15a39f502c11d84e9917909c1fcfdd9b74afe021ac14bd18992c5c0a36a",
+      "Bytes": 4714
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/c7-default-source-pilots-20261113/public-uUZhh/construct.log",
+      "SHA256": "86f4654406a94be11231027ed53e68377e0300c099daaae090c57f63fe017ad1",
+      "Bytes": 883
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/c7-default-source-pilots-20261113/public-uUZhh/construction.json",
+      "SHA256": "0512bfe3f8b31743ca1b39f34bb595ed5d0bf3da3bd2512d15b4a594e95b3b34",
+      "Bytes": 701
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/c7-default-source-pilots-20261113/public-uUZhh/construction.wxf",
+      "SHA256": "dfe1c7188bbfc3f972fc3936589fd35e2e6558bd2e286314c016fd58624418b4",
+      "Bytes": 4791335
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/c7-default-source-pilots-20261113/public-uUZhh/controller.json",
+      "SHA256": "3a74aeb1ddd734a9c6948efb2f4d4d81b5db265e13d7ddd8ed7ef90f3555be75",
+      "Bytes": 1154
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/c7-default-source-pilots-20261113/source-runtime-manifest.json",
+      "SHA256": "acd895e92c52c03e9e9b3fa7ff4c577382c523820fdfc7d9902f19f82b815256",
+      "Bytes": 7127
+    },
+    {
+      "Path": "tests/results/SM-5-point/regressions/C7-source-cross-area/color-handedness-tests-rerun.wl.log",
+      "SHA256": "8d2beda9290c04a4695458bc5a29391db5b074f9695b7361f970d45deb4e5bdf",
+      "Bytes": 336
+    },
+    {
+      "Path": "tests/results/SM-5-point/regressions/C7-source-cross-area/color-handedness-tests.wl.log",
+      "SHA256": "f334f9a026fc7bcb0d2b9ac1476e941434c2fdcc52bd407ba7eec5dbcec2b828",
+      "Bytes": 369
+    },
+    {
+      "Path": "tests/results/SM-5-point/regressions/C7-source-cross-area/color-orbit-construction-tests-rerun.wl.log",
+      "SHA256": "4f08c16656d912dfb072875e90293c2be6698cfe414bd2de21d63b2a8da8225c",
+      "Bytes": 352
+    },
+    {
+      "Path": "tests/results/SM-5-point/regressions/C7-source-cross-area/construct-amplitude-tests.wl.log",
+      "SHA256": "fa63d4e699463c740d3540dc4cd9ba8657594523b8dfc757f0704aa7c837c004",
+      "Bytes": 342
+    },
+    {
+      "Path": "tests/results/SM-5-point/regressions/C7-source-cross-area/covariant-constructor-tests.wl.log",
+      "SHA256": "0b530b039e103fe3365dd7a5ad745973a20d71c7a0ebc752413bd19e2d401f07",
+      "Bytes": 368
+    },
+    {
+      "Path": "tests/results/SM-5-point/regressions/C7-source-cross-area/covariant-contact-calibration-tests.wl.log",
+      "SHA256": "af5f6d8f78db72c79b80b1706bb9ce57e242da6a14914287e43dd41449ef9cb5",
+      "Bytes": 589
+    },
+    {
+      "Path": "tests/results/SM-5-point/regressions/C7-source-cross-area/covariant-current-source-tests.wl.log",
+      "SHA256": "1f1be0002cb7428746728ed2ff2f1036923f4cfd39adf46f909657883715eff2",
+      "Bytes": 373
+    },
+    {
+      "Path": "tests/results/SM-5-point/regressions/C7-source-cross-area/cross-tier-continuation-controller.log",
+      "SHA256": "7807488d7fb10d7a19da767f3e41525ed980f818438417049d49a717133f03d1",
+      "Bytes": 1612
+    },
+    {
+      "Path": "tests/results/SM-5-point/regressions/C7-source-cross-area/cross-tier-continuation-progress.json",
+      "SHA256": "a0d23cc4ce260f5a6ee27929a8149406906b0796b57c0f14241a126eead25c57",
+      "Bytes": 2051
+    },
+    {
+      "Path": "tests/results/SM-5-point/regressions/C7-source-cross-area/cross-tier-controller.log",
+      "SHA256": "784f7dca1008714adf0e568d8f2159f930b6b406df8b5aa798ac7b96e1cd2e96",
+      "Bytes": 1578
+    },
+    {
+      "Path": "tests/results/SM-5-point/regressions/C7-source-cross-area/cross-tier-progress.json",
+      "SHA256": "43b2eb92ae8cda93d4af84a5aae587391b7a2a8e3c37ccaf092551d65cb4dbca",
+      "Bytes": 2200
+    },
+    {
+      "Path": "tests/results/SM-5-point/regressions/C7-source-cross-area/new-controls.log",
+      "SHA256": "d13d042a2b7746872c65e6c4cfe60cb0a5a3211b8f6f184937ce42d2b27870b9",
+      "Bytes": 9897
+    },
+    {
+      "Path": "tests/results/SM-5-point/regressions/C7-source-cross-area/qed-five-point-simplification-tests-rerun.wl.log",
+      "SHA256": "5dfcbf68ee40cd5a0ee4a2e24195c4f386ac8a565f5e5003e55ff5a3cefc3544",
+      "Bytes": 481
+    },
+    {
+      "Path": "tests/results/SM-5-point/regressions/C7-source-cross-area/six-point-completion-tests-rerun.wl.log",
+      "SHA256": "e1e4aef61d08199dd1c87d49a06065dd55b6ac62e9fee07bde5d7bcfd1d27a3e",
+      "Bytes": 501
+    },
+    {
+      "Path": "tests/results/SM-5-point/regressions/C7-source-cross-area/sm-factorization-model-tests-rerun.wl.log",
+      "SHA256": "822c35d595a8d5630b4cbec9310e40db57d3004bcf5596662049dc86b42cfaf1",
+      "Bytes": 372
+    },
+    {
+      "Path": "tests/results/SM-5-point/regressions/C7-source-cross-area/summary.json",
+      "SHA256": "e2fa1ce328d35964e39d5533e6081d67a6efebf3315000fd3f2fdf328d2c847d",
+      "Bytes": 6196
+    }
+  ],
+  "FileCount": 35,
+  "Bytes": 7436137,
+  "CompiledBinariesIncluded": false,
+  "CanonicalRecordsIncluded": false
+}

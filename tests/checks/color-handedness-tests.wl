@@ -79,4 +79,5 @@ check["an expired small explicit budget cannot start a new partner",Constructive
 check["an explicit reference-spinor choice is preserved literally",ConstructiveDiagrams`Private`colorHandednessPrepare[target,model,lower,Join[settings,<|"PolePreference"->"Xi"|>],nonzeroChannels,AbsoluteTime[]+400]["Attempted"]===False];
 check["all new helpers are private",Names["ConstructiveDiagrams`colorHandedness*"]==={}];
 Print["Checks: ",checks,"; failures: ",Length[failures]];If[failures=!={},Print[failures]];
+Print["HEPCAT_TEST_COMPLETED:color-handedness-tests.wl"];
 Quit[If[failures==={},0,1]];

@@ -1,0 +1,48 @@
+{
+  "ContextSHA256": "4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167",
+  "StartedUTC": "2026-11-13T04:52:21.422530+00:00",
+  "Records": [
+    {
+      "Suite": "color-handedness-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 9.043757874999999,
+      "FrozenSourceModelsRuntimeUnchanged": true,
+      "Log": "tests/results/SM-5-point/regressions/C7-source-cross-area/color-handedness-tests-rerun.wl.log",
+      "LogSHA256": "8d2beda9290c04a4695458bc5a29391db5b074f9695b7361f970d45deb4e5bdf"
+    },
+    {
+      "Suite": "color-orbit-construction-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 4.318063041,
+      "FrozenSourceModelsRuntimeUnchanged": true,
+      "Log": "tests/results/SM-5-point/regressions/C7-source-cross-area/color-orbit-construction-tests-rerun.wl.log",
+      "LogSHA256": "4f08c16656d912dfb072875e90293c2be6698cfe414bd2de21d63b2a8da8225c"
+    },
+    {
+      "Suite": "qed-five-point-simplification-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 129.217725833,
+      "FrozenSourceModelsRuntimeUnchanged": true,
+      "Log": "tests/results/SM-5-point/regressions/C7-source-cross-area/qed-five-point-simplification-tests-rerun.wl.log",
+      "LogSHA256": "5dfcbf68ee40cd5a0ee4a2e24195c4f386ac8a565f5e5003e55ff5a3cefc3544"
+    },
+    {
+      "Suite": "six-point-completion-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 144.63848425,
+      "FrozenSourceModelsRuntimeUnchanged": true,
+      "Log": "tests/results/SM-5-point/regressions/C7-source-cross-area/six-point-completion-tests-rerun.wl.log",
+      "LogSHA256": "e1e4aef61d08199dd1c87d49a06065dd55b6ac62e9fee07bde5d7bcfd1d27a3e"
+    },
+    {
+      "Suite": "sm-factorization-model-tests.wl",
+      "ExitCode": 0,
+      "Seconds": 8.765227541999991,
+      "FrozenSourceModelsRuntimeUnchanged": true,
+      "Log": "tests/results/SM-5-point/regressions/C7-source-cross-area/sm-factorization-model-tests-rerun.wl.log",
+      "LogSHA256": "822c35d595a8d5630b4cbec9310e40db57d3004bcf5596662049dc86b42cfaf1"
+    }
+  ],
+  "PendingSuites": [],
+  "Status": "PASS"
+}

@@ -97,7 +97,7 @@ TEST_SUITES = (
     "qed-worked-example-tests.wl", "qed-construction-notebook-tests.wl", "sm-construction-notebook-tests.wl", "sm-five-point-notebook-tests.wl",
     "parallel-execution-tests.wl", "parallel-preparation-tests.wl", "preparation-parallel-policy-tests.wl",
     "parallel-amplitude-check-tests.wl", "parallel-completion-tests.wl",
-    "construct-amplitude-tests.wl", "construction-failure-display-tests.wl", "factorization-fitted-point-tests.wl", "covariant-chiral-source-tests.wl", "covariant-constructor-tests.wl", "construct-benchmark-recovery-tests.wl", "revalidation-benchmark-tests.wl",
+    "construct-amplitude-tests.wl", "construction-failure-display-tests.wl", "factorization-fitted-point-tests.wl", "covariant-chiral-source-tests.wl", "covariant-cubic-spectator-source-tests.wl", "color-spectator-source-tests.wl", "covariant-constructor-tests.wl", "construct-benchmark-recovery-tests.wl", "revalidation-benchmark-tests.wl",
     "automatic-resource-tests.wl", "random-seed-tests.wl",
 )
 

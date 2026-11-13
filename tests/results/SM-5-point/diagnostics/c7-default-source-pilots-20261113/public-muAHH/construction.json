@@ -1,0 +1,110 @@
+{
+	"Status":"COMPLETE",
+	"CallType":"ActualPublicDefaultC7",
+	"CanonicalRecord":false,
+	"ProductionSourceChanged":false,
+	"ContextSHA256":"4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167",
+	"ProspectiveInstalledContextSHA256":"4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167",
+	"Particles":[
+		"m",
+		"M",
+		"A.+",
+		"h",
+		"h"
+	],
+	"SingleKernelScopedExecutionEnvironment":true,
+	"PublicOptionsSupplied":[
+		"FeynmanModel",
+		"Output"
+	],
+	"RecordedAmplitudeInputs":false,
+	"Seconds":6.3641261e1,
+	"Complexity":559,
+	"RandomSeed":5821015455766801618,
+	"StageTimings":[
+		{
+			"Stage":"Generating diagrams",
+			"ElapsedTime":0.225820,
+			"TotalElapsedTime":0.285934,
+			"Status":"COMPLETE"
+		},
+		{
+			"Stage":"Building diagram amplitudes",
+			"ElapsedTime":0.007008,
+			"TotalElapsedTime":0.293239,
+			"Status":"COMPLETE"
+		},
+		{
+			"Stage":"Preparing diagrams",
+			"ElapsedTime":14.091384,
+			"TotalElapsedTime":14.384846,
+			"Status":"PREPARED"
+		},
+		{
+			"Stage":"Generating factorization channels",
+			"ElapsedTime":2.660414,
+			"TotalElapsedTime":17.046020,
+			"Status":"COMPLETE"
+		},
+		{
+			"Stage":"Preparing factorization channels",
+			"ElapsedTime":5.800030,
+			"TotalElapsedTime":22.846447,
+			"Status":"PREPARED"
+		},
+		{
+			"Stage":"Building certified covariant source",
+			"ElapsedTime":0.145341,
+			"TotalElapsedTime":22.996650,
+			"Status":"UNVALIDATED_CANDIDATE"
+		},
+		{
+			"Stage":"Preparing certified covariant source representative",
+			"ElapsedTime":20.951719,
+			"TotalElapsedTime":43.961128,
+			"Status":"COMPLETE"
+		},
+		{
+			"Stage":"Generating Feynman diagrams",
+			"ElapsedTime":0.017257,
+			"TotalElapsedTime":44.003459,
+			"Status":"COMPLETE"
+		},
+		{
+			"Stage":"Building Feynman amplitudes",
+			"ElapsedTime":0.004943,
+			"TotalElapsedTime":44.008661,
+			"Status":"COMPLETE"
+		},
+		{
+			"Stage":"Preparing Feynman amplitudes",
+			"ElapsedTime":6.482221,
+			"TotalElapsedTime":50.491105,
+			"Status":"PREPARED"
+		},
+		{
+			"Stage":"Validating certified covariant source representative (1\/3)",
+			"ElapsedTime":4.223953,
+			"TotalElapsedTime":54.723605,
+			"Status":"COMPLETE"
+		},
+		{
+			"Stage":"Validating certified covariant source representative (2\/3)",
+			"ElapsedTime":4.522370,
+			"TotalElapsedTime":59.267989,
+			"Status":"COMPLETE"
+		},
+		{
+			"Stage":"Validating certified covariant source representative (3\/3)",
+			"ElapsedTime":4.259273,
+			"TotalElapsedTime":63.549989,
+			"Status":"COMPLETE"
+		}
+	],
+	"Rows":10,
+	"CheckStatuses":{
+		"PASS":10
+	},
+	"FeynmanRows":1,
+	"CapsuleSHA256":"5b1738617af9c926556e9f075cf7dd8a76ec1cd4f056b7753b5c4ad4e0a3065b"
+}
