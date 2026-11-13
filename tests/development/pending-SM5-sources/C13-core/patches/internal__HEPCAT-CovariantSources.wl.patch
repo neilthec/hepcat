@@ -1,0 +1,12 @@
+--- a/source/internal/HEPCAT-CovariantSources.wl
++++ b/source/internal/HEPCAT-CovariantSources.wl
+@@ -362,6 +362,9 @@
+      (Length[fermions] === 2 && Length[vectors] === 1 && Length[scalars] === 2 && First[vectors][[6]] === 0))) ||
+      (Length[fermions] === 2 && Length[vectors] === 3 && scalars === {} &&
+        AnyTrue[vectors, #[[6]] =!= 0 &] && AllTrue[fermions,
++         HEPCATCovariantCurrentSources`Private`supportedFermionRowQ]) ||
++     (Length[fermions] === 2 && Length[vectors] === 2 && Length[scalars] === 1 &&
++       AnyTrue[vectors, #[[6]] === 0 &] && AllTrue[fermions,
+          HEPCATCovariantCurrentSources`Private`supportedFermionRowQ])),
+    Return[HEPCATCovariantCurrentSources`Private`reject["UnsupportedExternalCurrentClass"]]];
+  diagrams = CreateDiagrams[process, model];

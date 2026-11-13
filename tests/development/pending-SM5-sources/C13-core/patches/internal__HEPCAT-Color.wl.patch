@@ -1,0 +1,10 @@
+--- a/source/internal/HEPCAT-Color.wl
++++ b/source/internal/HEPCAT-Color.wl
+@@ -1395,6 +1395,7 @@
+    Length[vectors]===3&&scalars==={}&&AnyTrue[vectors,#[[6]]=!=0&],"Cubic currents",
+    Length[vectors]===1&&Length[scalars]===2&&First[vectors][[6]]=!=0&&
+     Length[DeleteDuplicates[Pick[process,rows[[All,5]],0]]]===1,"Calibrated metric currents",
++   Length[vectors]===2&&Length[scalars]===1&&AnyTrue[vectors,#[[6]]===0&],"Cubic currents",
+    Length[vectors]===2&&Length[scalars]===1&&AllTrue[vectors,#[[6]]=!=0&],"Calibrated metric currents",
+    True,Throw[ConstructiveDiagrams`Private`colorSpectatorReject["UnsupportedSpectatorExternalClass"],tag]];
+   reps=ConstructiveDiagrams`Private`colorParticleRepresentation[#,model]&/@process;

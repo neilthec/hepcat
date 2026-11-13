@@ -1,0 +1,11 @@
+--- a/source/HEPCAT-Model.wl
++++ b/source/HEPCAT-Model.wl
+@@ -22821,6 +22821,8 @@
+       Length[fermions] === 4 &&
+         (Length[scalars] === 1 || (Length[vectors] === 1 && First[vectors][[6]] =!= 0)) &&
+         AllTrue[fermions, #[[6]] =!= 0 &], "Cubic currents",
++      Length[fermions] === 4 && Length[vectors] === 1 && scalars === {} &&
++        AllTrue[fermions, HEPCATCovariantCurrentSources`Private`supportedFermionRowQ], "Cubic currents",
+       Length[fermions] === 2 && Length[vectors] === 1 && Length[scalars] === 2 &&
+         First[vectors][[6]] === 0 && AllTrue[fermions, #[[6]] =!= 0 &], "Cubic currents",
+       Length[fermions] === 2 && Length[vectors] === 3 && scalars === {} &&

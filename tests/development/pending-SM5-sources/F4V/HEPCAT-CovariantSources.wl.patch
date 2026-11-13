@@ -1,0 +1,13 @@
+--- a/source/internal/HEPCAT-CovariantSources.wl
++++ b/source/internal/HEPCAT-CovariantSources.wl
+@@ -357,7 +357,9 @@
+  fermions = Select[rows, #[[5]] === 1 &]; vectors = Select[rows, #[[5]] === 2 &]; scalars = Select[rows, #[[5]] === 0 &];
+  massiveDiracQ=AllTrue[fermions, #[[6]] =!= 0 && #[[2]] =!= #[[3]] && !MemberQ[{"L", "R"}, #[[9]]] &];
+  If[!AllTrue[rows, #[[8]] === 1 &] ||
+-   !((massiveDiracQ && ((Length[fermions] === 4 && (Length[scalars] === 1 ||
++   !((Length[fermions] === 4 && Length[vectors] === 1 && scalars === {} &&
++       AllTrue[fermions, HEPCATCovariantCurrentSources`Private`supportedFermionRowQ]) ||
++     (massiveDiracQ && ((Length[fermions] === 4 && (Length[scalars] === 1 ||
+      (Length[vectors] === 1 && First[vectors][[6]] =!= 0))) ||
+      (Length[fermions] === 2 && Length[vectors] === 1 && Length[scalars] === 2 && First[vectors][[6]] === 0))) ||
+      (Length[fermions] === 2 && Length[vectors] === 3 && scalars === {} &&

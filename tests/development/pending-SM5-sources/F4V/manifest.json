@@ -1,0 +1,35 @@
+{
+  "Status": "UNINSTALLED_DEVELOPMENT_PATCHES",
+  "AutomaticallyLoaded": false,
+  "RuntimeSourceChanged": false,
+  "Changes": [
+    {
+      "Path": "source/internal/HEPCAT-CovariantSources.wl",
+      "ProductionBaselineSHA256": "187cb9fe2505f7fa85da25daa84348ff7ac5e24a7abdc69f9b75af7ef284896a",
+      "CandidateSHA256": "70531be18a9c331ca438b30272548468ecaa4a335e53fcbeeba7c2e0e60d967d",
+      "Patch": "HEPCAT-CovariantSources.wl.patch",
+      "PatchSHA256": "c5c10462c49c232d074093e6e1fa7162ff1185a568e7cc9d0cd135cece6f2876"
+    },
+    {
+      "Path": "source/internal/HEPCAT-ColoredCurrents.wl",
+      "ProductionBaselineSHA256": "68ea2d6d68f47b7223b5f62b8fd8beb5395b5cdc4bcaaab3a5a2ae956f6c5eb7",
+      "CandidateSHA256": "df7545ce16dbd4c1597780e3e1b72d5e437a759ca700df25831cbd76f0c3bd23",
+      "Patch": "HEPCAT-ColoredCurrents.wl.patch",
+      "PatchSHA256": "f966e102dffb255faa4b783e70d5b2f62256a1357ee4b89f5c4c2b3a52d286f2"
+    },
+    {
+      "Path": "source/HEPCAT-Model.wl",
+      "ProductionBaselineSHA256": "87365f4c9c7fb194afad038cf9eee9373c35f8c84bbee03ae16a30f243d12940",
+      "CandidateSHA256": "bb90cfc15256916f469cdefdb73497515411b6a91693fcae9ce5894d8a962b8c",
+      "Patch": "HEPCAT-Model.wl.patch",
+      "PatchSHA256": "39ccedad60876a7ec6452960c223d0004a08a19193b727eb29e482d523ba04ee"
+    }
+  ],
+  "Notes": [
+    "Model gate is a pending dispatch sketch, not a tested integrated public constructor.",
+    "Two private helper overrides passed nine actual native pilot cases and seven complete CH/MG1000 families; these are diagnostics, not new canonical results.",
+    "Before integration, preserve the old pure-Abelian QED photon path with a typed used-vertex guard and qualify all new symbol names.",
+    "Merge overlapping source/model gate hunks with C13-core; do not apply overlapping drafts blindly.",
+    "Actual calculation outputs and raw evidence remain disposable scratch and are intentionally not included."
+  ]
+}

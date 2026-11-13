@@ -1,0 +1,150 @@
+--- a/source/internal/HEPCAT-ColoredCurrents.wl
++++ b/source/internal/HEPCAT-ColoredCurrents.wl
+@@ -5,7 +5,7 @@
+    Copyright (C) 2026 Neil Christensen. SPDX-License-Identifier: GPL-3.0-or-later *)
+ Begin["ConstructiveDiagrams`Private`"];
+ 
+-ConstructiveDiagrams`Private`colorCurrentSourceClass[process_List,model_List]:=Module[
++ConstructiveDiagrams`Private`colorCurrentScalarSourceClass[process_List,model_List]:=Module[
+  {rows,fermions,scalars,reps,colored},
+  If[Length[process]=!=5||!AllTrue[process,StringQ]||Length[model]=!=4||!AllTrue[model,ListQ],Return[False]];
+  rows=HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@process;
+@@ -17,17 +17,70 @@
+  If[AnyTrue[reps,FailureQ],Return[False]];colored=DeleteCases[reps,1];
+  MemberQ[{2,4},Length[colored]]&&Count[colored,3]===Count[colored,-3]
+ ];
++ConstructiveDiagrams`Private`colorCurrentScalarSourceClass[___]:=False;
++
++(* One new external class: four supported Dirac/Weyl endpoints and one singlet
++   vector. Its used rows must still pass the exact local-operator catalogue. *)
++ConstructiveDiagrams`Private`colorCurrentVectorSourceClass[process_List,model_List]:=Module[
++ {rows,fermions,vectors,reps,colored},
++ If[Length[process]=!=5||!AllTrue[process,StringQ]||Length[model]=!=4||!AllTrue[model,ListQ],Return[False]];
++ rows=HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@process;
++ If[!AllTrue[rows,ListQ],Return[False]];
++ fermions=Select[rows,#[[5]]===1&];vectors=Select[rows,#[[5]]===2&];
++ If[Length[fermions]=!=4||Length[vectors]=!=1||First[vectors][[8]]=!=1||
++  !AllTrue[fermions,HEPCATCovariantCurrentSources`Private`supportedFermionRowQ[#]&&MemberQ[{1,3},Abs[#[[8]]]]&],Return[False]];
++ reps=ConstructiveDiagrams`Private`colorParticleRepresentation[#,model]&/@process;
++ If[AnyTrue[reps,FailureQ],Return[False]];colored=DeleteCases[reps,1];
++ MemberQ[{2,4},Length[colored]]&&Count[colored,3]===Count[colored,-3]
++];
++ConstructiveDiagrams`Private`colorCurrentVectorSourceClass[___]:=False;
++ConstructiveDiagrams`Private`colorCurrentSourceClass[process_List,model_List]:=
++ ConstructiveDiagrams`Private`colorCurrentScalarSourceClass[process,model]||
++ ConstructiveDiagrams`Private`colorCurrentVectorSourceClass[process,model];
+ ConstructiveDiagrams`Private`colorCurrentSourceClass[___]:=False;
++
++(* The same injective symmetric-spin polynomial encoding used by the existing
++   colorless source. Only declared external massive-vector slots are mapped. *)
++ConstructiveDiagrams`Private`colorCurrentEncodeVector[expression_,process_List,model_List]:=Module[{rows,legs},
++ rows=HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@process;
++ If[!AllTrue[rows,ListQ],Return[Failure["UnknownExternalVectorMetadata",<||>]]];
++ legs=Select[Range[Length[process]],rows[[#,5]]===2&&rows[[#,6]]=!=0&];
++ expression/.((HoldPattern[Spinor["Spin","Upper",kind:("Angle"|"Square"),leg_Integer,
++   VectorSpinIndex[leg_Integer,1|2]]]/;MemberQ[legs,leg]):>Spinor["Spin",kind,leg])
++];
++(* Source flow comes from the model-owned ordered endpoint certificate. Actual
++   differentiated Feynman paths are read only from genuine lifted diagrams. *)
++ConstructiveDiagrams`Private`colorCurrentWickWitness[certificates_List,diagrams_:None]:=Module[
++ {pairs,paths,actual,signs,required={"Graph","ExternalParticles","CanonicalExternalParticles","Spin2","FermionRole","Propagators","LeafVertices"}},
++ If[!AllTrue[certificates,AssociationQ[#]&&ListQ[Lookup[#,"OrientedFermionEndpoints",None]]&],
++  Return[Failure["MissingOrderedSourceFermionEndpoints",<||>]]];
++ pairs=(Reverse/@#["OrientedFermionEndpoints"]&/@certificates);
++ If[!AllTrue[pairs,Function[lines,lines=!={}&&AllTrue[lines,MatchQ[#,{_Integer?Positive,_Integer?Positive}]&&First[#]=!=Last[#]&]&&DuplicateFreeQ[Flatten[lines]]]],
++  Return[Failure["MalformedOrderedSourceFermionEndpoints",<||>]]];
++ signs=ConstructiveDiagrams`Private`feynmanFermionPairSign/@pairs;
++ If[!AllTrue[signs,MemberQ[{-1,1},#]&],Return[Failure["UnresolvedSourcePairingWickParity",<||>]]];
++ If[diagrams=!=None,
++  If[!ListQ[diagrams]||Length[diagrams]=!=Length[certificates]||!AllTrue[diagrams,AssociationQ[#]&&ContainsAll[Keys[#],required]&],
++   Return[Failure["MissingDifferentiatedFeynmanDiagramMetadata",<||>]]];
++  paths=ConstructiveDiagrams`Private`feynmanFermionPaths/@diagrams;
++  If[!AllTrue[paths,ListQ]||!FreeQ[paths,_Failure],Return[Failure["UnresolvedDifferentiatedFermionFlow",<||>]]];
++  actual=Map[({First[#],Last[#]}&),paths,{2}];
++  If[!And@@MapThread[Sort[#1]===Sort[#2]&,{actual,pairs}]||
++    (ConstructiveDiagrams`Private`feynmanFermionPairSign/@actual)=!=signs,
++   Return[Failure["ActualFeynmanEndpointsOrWickParityDifferFromSource",<||>]]]];
++ MapThread[<|"BarToKetEndpoints"->Sort[#1],"WickParity"->#2|>&,{pairs,signs}]
++];
+ 
+ ConstructiveDiagrams`Private`colorCurrentSource[ccsProcess_List,ccsModel_List]:=Module[
+  {ccsTag=Unique["coloredCurrent"],ccsAbort,ccsRows,ccsFermions,ccsScalars,ccsBefore,ccsOriginal,ccsData,ccsDiagrams,
+  ccsUsed,ccsNeeded,ccsTemporary,ccsCatalog,ccsLifted,ccsOriginalCertificates,ccsLiftedCertificates,ccsOriginalSigns,
+  ccsLiftedSigns,ccsRepresentations,ccsColoredRepresentations,ccsCandidates,ccsCoordinates,ccsMappedCoordinates,ccsMapping={},ccsMatches,ccsUnmatched,ccsOriginalPairs,
+  ccsConverted,ccsExternal,ccsTerms,ccsExpression,ccsExpected,ccsWeights,ccsLocal={},ccsStructure,ccsLegs,ccsTensor,
+- ccsRow,ccsVertex,ccsI,ccsJ,ccsKind,ccsRowsByName,ccsAlias,ccsReconstructed},
++ ccsRow,ccsVertex,ccsI,ccsJ,ccsKind,ccsRowsByName,ccsAlias,ccsReconstructed,ccsRawExpression,ccsVectorQ,ccsOriginalWick,ccsLiftedWick},
+  Catch[
+  ccsAbort[ccsReason_,ccsDetails_:<||>]:=Throw[Failure[ccsReason,ccsDetails],ccsTag];
+  ccsBefore=HEPCATCovariantCurrentSources`Private`objectSHA[ccsModel];
++ ccsVectorQ=ConstructiveDiagrams`Private`colorCurrentVectorSourceClass[ccsProcess,ccsModel];
+  If[!ConstructiveDiagrams`Private`colorCurrentSourceClass[ccsProcess,ccsModel],
+   ccsAbort["UnsupportedExternalMassiveColoredFourFermionScalarClass"]];
+  ccsOriginal=CreateDiagrams[ccsProcess,ccsModel];
+@@ -61,9 +114,14 @@
+  ccsOriginalSigns=ConstructiveDiagrams`diagramFermionSign/@ccsDiagrams;
+  ccsLiftedSigns=ConstructiveDiagrams`diagramFermionSign/@ccsLifted;
+  If[!AllTrue[Join[ccsOriginalSigns,ccsLiftedSigns],MemberQ[{-1,1},#]&],ccsAbort["UnresolvedGraphFermionSign"]];
++ If[ccsVectorQ,
++  ccsOriginalWick=ConstructiveDiagrams`Private`colorCurrentWickWitness[ccsOriginalCertificates];
++  ccsLiftedWick=ConstructiveDiagrams`Private`colorCurrentWickWitness[ccsLiftedCertificates,ccsLifted];
++  If[FailureQ[ccsOriginalWick]||FailureQ[ccsLiftedWick],ccsAbort["UnresolvedDifferentiatedFermionFlow"]]];
+  ccsCoordinates=ccsData["DiagramCoordinates"];ccsUnmatched=Range[Length[ccsDiagrams]];
+  Do[
+-  ccsMatches=Select[ccsUnmatched,SameQ[ccsOriginalCertificates[[#]],ccsLiftedCertificates[[ccsJ]]]&&ccsOriginalSigns[[#]]===ccsLiftedSigns[[ccsJ]]&];
++  ccsMatches=Select[ccsUnmatched,SameQ[ccsOriginalCertificates[[#]],ccsLiftedCertificates[[ccsJ]]]&&ccsOriginalSigns[[#]]===ccsLiftedSigns[[ccsJ]]&&
++   (!ccsVectorQ||ccsOriginalWick[[#]]===ccsLiftedWick[[ccsJ]])&];
+   If[ccsMatches==={},ccsAbort["NoOrderedGraphColorCorrespondence",<|"LiftedIndex"->ccsJ|>]];
+   If[Length[ccsMatches]>1&&!TrueQ[SameQ@@ccsCoordinates[[ccsMatches]]],ccsAbort["AmbiguousGraphColorCorrespondence"]];
+   ccsI=First[ccsMatches];AppendTo[ccsMapping,<|"LiftedIndex"->ccsJ,"OriginalIndex"->ccsI,"OriginalOrigin"->ccsData["DiagramOrigins"][[ccsI]],
+@@ -78,12 +136,14 @@
+  If[!AllTrue[ccsConverted,First[#]===ccsExternal&],ccsAbort["ExternalMassOrderingMismatch"]];
+  ccsMappedCoordinates=Lookup[ccsMapping,"ColorCoordinates"];
+  ccsTerms=MapThread[Times,{Last/@ccsConverted,(#.ccsData["Basis"]&/@ccsMappedCoordinates)}];
+- ccsExpression=Total[ccsTerms];
++ ccsRawExpression=Total[ccsTerms];
++ ccsExpression=If[ccsVectorQ,ConstructiveDiagrams`Private`colorCurrentEncodeVector[ccsRawExpression,ccsProcess,ccsTemporary],ccsRawExpression];
++ If[!FreeQ[ccsExpression,_VectorSpinIndex],ccsAbort["UnencodedCoherentVectorSlot"]];
+  ccsExpected=HEPCATCovariantCurrentSources`Private`declaredExternalSpinWeights[ccsProcess,ccsTemporary];
+  ccsWeights=ConstructiveDiagrams`Private`completionExternalSpinWeights[ccsExpression,ccsExternal];
+  If[ccsWeights=!=ccsExpected,ccsAbort["ExternalSpinWeightMismatch",<|"Expected"->ccsExpected,"Actual"->ccsWeights|>]];
+  If[ccsBefore=!=HEPCATCovariantCurrentSources`Private`objectSHA[ccsModel],ccsAbort["OriginalModelChanged"]];
+- <|"Status"->"UNVALIDATED_CANDIDATE","Amplitude"->{ccsExternal,ccsExpression},"Expression"->ccsExpression,
++ Join[<|"Status"->"UNVALIDATED_CANDIDATE","Amplitude"->{ccsExternal,ccsExpression},"Expression"->ccsExpression,
+  "ExternalMassRules"->ccsExternal,"ExternalParticles"->ccsProcess,"CompleteSpinWeights"->ccsWeights,
+  "NumericalParameterAssignments"->{},"NewIndependentContacts"->False,
+  "EveryOriginalDiagramCovered"->True,"EveryUsedOrderedVertexCertified"->True,
+@@ -97,7 +157,12 @@
+  "SourceModelSHA256"->ccsBefore,"TemporaryModelSHA256"->HEPCATCovariantCurrentSources`Private`objectSHA[ccsTemporary],
+  "EveryOriginalOrderedGraphAndFermionSignMatched"->True,"CompleteOffShellConversionCoverage"->True,
+  "NumericalCoefficientFit"->False,"IndependentBenchmarkRead"->False,"NativeValidationPerformed"->False,
+- "InternalOnShellConditions"->{},"RequiresCheckAmplitudes"->True|>
++ "InternalOnShellConditions"->{},"RequiresCheckAmplitudes"->True|>,
++ If[ccsVectorQ,<|"RawTensorExpression"->ccsRawExpression,
++  "CoherentExternalVectorEncoding"-><|"Method"->"InjectiveHomogeneousSymmetricSpinPolynomial",
++   "VectorLegs"->Select[Range[Length[ccsProcess]],With[{r=HEPCATCovariantCurrentSources`Private`particleRow[ccsProcess[[#]],ccsTemporary]},r[[5]]===2&&r[[6]]=!=0]&],
++   "RawTensorRetained"->True,"CompleteSpinWeights"->ccsWeights,"OffShellKinematicsChanged"->False|>,
++  "OriginalOrderedEndpointWickWitnesses"->ccsOriginalWick,"LiftedDifferentiatedWickWitnesses"->ccsLiftedWick|>,<||>]]
+  ,ccsTag]
+ ];
+ 
+@@ -151,7 +216,18 @@
+  cvRequire[cvPairs===cvExpectedPairs,"OffShellLorentzConversionReplay"];
+  cvTerms=MapThread[#1(#2.cvData["Basis"])&,{Last/@cvPairs,Lookup[cvMap,"ColorCoordinates"]}];
+  cvRequire[cvTerms===cvSource["ColoredGraphTerms"],"PerGraphColorLorentzAssembly"];
+- cvExpression=Total[cvTerms];
++ cvExpression=If[ConstructiveDiagrams`Private`colorCurrentVectorSourceClass[cvSource["Process"],cvModel],
++  cvRequire[cvSource["RawTensorExpression"]===Total[cvTerms],"RawVectorTensorRetained"];
++  cvRequire[cvSource["CoherentExternalVectorEncoding"]===<|"Method"->"InjectiveHomogeneousSymmetricSpinPolynomial",
++   "VectorLegs"->Select[Range[Length[cvSource["Process"]]],With[{r=HEPCATCovariantCurrentSources`Private`particleRow[cvSource["Process"][[#]],cvTemporary]},r[[5]]===2&&r[[6]]=!=0]&],
++   "RawTensorRetained"->True,"CompleteSpinWeights"->HEPCATCovariantCurrentSources`Private`declaredExternalSpinWeights[cvSource["Process"],cvTemporary],"OffShellKinematicsChanged"->False|>,"CompleteCoherentEncodingCertificateBinding"];
++  cvRequire[AllTrue[Range[Length[cvMap]],cvSource["OriginalOrderedEndpointWickWitnesses"][[cvMap[[#]]["OriginalIndex"]]]===cvSource["LiftedDifferentiatedWickWitnesses"][[#]]&],"MappedActualWickSignBinding"];
++  cvRequire[cvSource["OriginalOrderedEndpointWickWitnesses"]===ConstructiveDiagrams`Private`colorCurrentWickWitness[cvOriginalCertificates]&&
++   cvSource["LiftedDifferentiatedWickWitnesses"]===ConstructiveDiagrams`Private`colorCurrentWickWitness[cvLiftedCertificates,cvLifted],"ActualDifferentiatedWickWitnessBinding"];
++  ConstructiveDiagrams`Private`colorCurrentEncodeVector[Total[cvTerms],cvSource["Process"],cvTemporary],Total[cvTerms]];
++ cvRequire[FreeQ[cvExpression,_VectorSpinIndex],"NoUnencodedExternalVectorSlot"];
++ cvRequire[ConstructiveDiagrams`Private`completionExternalSpinWeights[cvExpression,First[First[cvPairs]]]===
++  HEPCATCovariantCurrentSources`Private`declaredExternalSpinWeights[cvSource["Process"],cvTemporary],"CompleteDeclaredSpinWeightReplay"];
+  cvRequire[cvExpression===cvSource["Expression"]&&cvSource["Amplitude"]==={First[First[cvPairs]],cvExpression},"CompleteAmplitudeAssembly"];
+  <|"Status"->"CERTIFICATE_VERIFIED","Graphs"->Length[cvDiagrams],"ColorRank"->Length[cvBasisVectors],
+   "ColorStates"->Length[First[cvBasisVectors]],"EveryGraphColorVectorExactlyReconstructed"->True,

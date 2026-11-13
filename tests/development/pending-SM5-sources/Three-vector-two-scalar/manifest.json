@@ -1,0 +1,28 @@
+{
+  "Status": "UNINSTALLED_DEVELOPMENT_PATCHES",
+  "AutomaticallyLoaded": false,
+  "RuntimeSourceChanged": false,
+  "Changes": [
+    {
+      "Path": "source/HEPCAT-Model.wl",
+      "ProductionBaselineSHA256": "87365f4c9c7fb194afad038cf9eee9373c35f8c84bbee03ae16a30f243d12940",
+      "CandidateSHA256": "371fa0e1fd514c18a824e1482ba94f57857e09f571108b377193fdfe1e648c65",
+      "Patch": "HEPCAT-Model.wl.patch",
+      "PatchSHA256": "da2ddf396706041b1a2047f57d1b09f7891486815d95a8b68630e605924fd755"
+    },
+    {
+      "Path": "source/internal/HEPCAT-CovariantContacts.wl",
+      "ProductionBaselineSHA256": "62577a3b07efc6a9d5a73a948b5819b161982ffc3f20d59266a1118773eb32b6",
+      "CandidateSHA256": "b1e39a8093c9a6dc64976f1764625a95a1107dc86416bd736c69f72768bea4f6",
+      "Patch": "HEPCAT-CovariantContacts.wl.patch",
+      "PatchSHA256": "6a7db0c58ddbf612dab1c2645455d5db25f25f4b79c5df7536b059592ca6fee9"
+    }
+  ],
+  "Notes": [
+    "Only two eligibility insertions; no operator, coefficient or validator changed.",
+    "Private default WWZhh public call passed three native groups, MG1000 and the same-stream genuine113-bit CalcHEP replay after native precision discrepancies.",
+    "This does not fix the separate WWWWh private memory-limit failure.",
+    "Before installation, rebase on current source and run typed exclusion controls and the integrated public call.",
+    "No amplitude expressions or numerical research outputs are included."
+  ]
+}

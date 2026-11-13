@@ -1,0 +1,11 @@
+--- a/source/internal/HEPCAT-CovariantContacts.wl
++++ b/source/internal/HEPCAT-CovariantContacts.wl
+@@ -512,7 +512,7 @@
+   rows=HEPCATCovariantCurrentSources`Private`particleRow[#,diagramModel]&/@process;
+   If[!AllTrue[rows,ListQ],fail["UnknownCalibratedSourceParticle"]];
+   fermions=Select[rows,#[[5]]===1&];vectors=Select[rows,#[[5]]===2&];scalars=Select[rows,#[[5]]===0&];
+-  If[!(MemberQ[{{2,1,2},{2,2,1},{0,4,1}},{Length[fermions],Length[vectors],Length[scalars]}]||TrueQ[augment]&&MemberQ[{{2,3,0},{0,5,0}},{Length[fermions],Length[vectors],Length[scalars]}])||
++  If[!(MemberQ[{{2,1,2},{2,2,1},{0,3,2},{0,4,1}},{Length[fermions],Length[vectors],Length[scalars]}]||TrueQ[augment]&&MemberQ[{{2,3,0},{0,5,0}},{Length[fermions],Length[vectors],Length[scalars]}])||
+     !AllTrue[rows,#[[8]]===1&]||!AllTrue[fermions,HEPCATCovariantCurrentSources`Private`supportedFermionRowQ]||
+     (!TrueQ[augment]&&!AllTrue[vectors,#[[6]]=!=0&])||(scalars=!={}&&Length[DeleteDuplicates[Pick[process,rows[[All,5]],0]]]=!=1),
+     fail["UnsupportedExternalCalibratedCurrentClass"]];

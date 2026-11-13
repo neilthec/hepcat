@@ -1,0 +1,130 @@
+{
+  "SchemaVersion": 1,
+  "Status": "PENDING_CODE_ONLY_NOT_PRODUCTION_LOADED",
+  "BaselineContextSHA256": "1a9929f037dca092fb9c41b8d55a8f94954a17fa0fd8f7de5293bf312a85f31b",
+  "VerifiedBaselineGitCommit": "9b13f7f18f75d7451a40e6543f95eea7f516ca8f",
+  "Files": [
+    {
+      "Path": "source/HEPCAT-Model.wl",
+      "BaselineSHA256": "87365f4c9c7fb194afad038cf9eee9373c35f8c84bbee03ae16a30f243d12940",
+      "CandidateSHA256": "8a3a2c7ad4884c4d90a2bfe32baba80aa9ab9c66ffb7480b5e5c5a9ba43f0183",
+      "Patch": "patches/HEPCAT-Model.wl.patch",
+      "PatchSHA256": "55e56e5217e999c9430834d11201e2874f44f3cede913a5712eedc4208188e51"
+    },
+    {
+      "Path": "source/internal/HEPCAT-Color.wl",
+      "BaselineSHA256": "e6cd05634224a1332d8f7b88687339a6a330bc053b1437309a057b72e9443872",
+      "CandidateSHA256": "f18ed1fed23d385a4166b5f98ef85c54f62b7ecfde007b698e798c9f5cb7bfa5",
+      "Patch": "patches/internal__HEPCAT-Color.wl.patch",
+      "PatchSHA256": "f48d89e60ab5f61e1651d5ce77d2fbb3bd7d2b475e5983202ccb312d5c2cd05b"
+    },
+    {
+      "Path": "source/internal/HEPCAT-CovariantSources.wl",
+      "BaselineSHA256": "187cb9fe2505f7fa85da25daa84348ff7ac5e24a7abdc69f9b75af7ef284896a",
+      "CandidateSHA256": "d8db9e7e112777d1016a64d8f182e4bc48ed044174230cc83940eaeec4f93934",
+      "Patch": "patches/internal__HEPCAT-CovariantSources.wl.patch",
+      "PatchSHA256": "4fcd207cdad905993d6df19b878323e1d27ad90e44e0afdeeaa3111fdefffa5f"
+    },
+    {
+      "Path": "source/internal/HEPCAT-QCDCurrents.wl",
+      "BaselineSHA256": "34740ae99b1dd57b46e2ed8ee1bf4ef3cf394d87944e558fdfc5565dd0a56961",
+      "CandidateSHA256": "8756bcfbebcece6ca1959623a6e1846307f079ed2ed8820cb7a257b9807870c6",
+      "Patch": "patches/internal__HEPCAT-QCDCurrents.wl.patch",
+      "PatchSHA256": "ffd1f76719fccaeafe8e2a356c86a5693df417e446d1747bfde84173054f47c5"
+    }
+  ],
+  "BaselineFilesSHA256": {
+    "source/HEPCAT.wl": "477d6b3d1360b656e21154c7c8f448aa2e22a855a44e8e2bc28be78e417ff772",
+    "source/HEPCAT-Base.wl": "5e55dc97c82a5c0cef13c3f58a9ac9e1b08bff9331ec172a0efbcda3ed404e73",
+    "source/HEPCAT-Model.wl": "87365f4c9c7fb194afad038cf9eee9373c35f8c84bbee03ae16a30f243d12940",
+    "source/internal/HEPCAT-QCDCurrents.wl": "34740ae99b1dd57b46e2ed8ee1bf4ef3cf394d87944e558fdfc5565dd0a56961",
+    "source/internal/HEPCAT-CovariantSources.wl": "187cb9fe2505f7fa85da25daa84348ff7ac5e24a7abdc69f9b75af7ef284896a",
+    "source/internal/HEPCAT-SPINAS.wl": "e9a2493e0421dbb1ca89b7dbdde7e125d376f044b769af7ed823779487da0abf",
+    "source/internal/HEPCAT-Color.wl": "e6cd05634224a1332d8f7b88687339a6a330bc053b1437309a057b72e9443872",
+    "source/internal/HEPCAT-CovariantContacts.wl": "62577a3b07efc6a9d5a73a948b5819b161982ffc3f20d59266a1118773eb32b6",
+    "source/internal/HEPCAT-Parameters.wl": "0840e42f11595d07f752d9b11f750e6efae20d9b8a56ee6f0a1b44114b2e2440",
+    "source/internal/HEPCAT-Documentation.wl": "6a1f315c5421e4eb6417a746ca5e753f4f0f2e4b97b3306bdd400e84c384770f",
+    "source/internal/HEPCAT-ColoredCurrents.wl": "68ea2d6d68f47b7223b5f62b8fd8beb5395b5cdc4bcaaab3a5a2ae956f6c5eb7",
+    "source/internal/HEPCAT-SPINAS-Optimize.wl": "af2775e526c3a7d0e1a103f2231e7203da44b95a5cdd05f339abb8d03f22009d",
+    "source/internal/HEPCAT-Feynman.wl": "fdc0158cc077120b817a577c4d377a29e581e260fbc5ec3df493379e0275fc03",
+    "source/internal/HEPCAT-MadGraph.wl": "c5a1187db173a8faae9ff11d5948364e6492d8b17c417c567fd9e8a0cdc626a3",
+    "source/internal/proofs/laurent-proof-verify.py": "3efa8f6b212a26971073eabc9376880427db154f74c3bfb67353c0501398f079",
+    "source/internal/proofs/laurent-proof-factor.py": "7e96d54abd14fd02c0ec3dbc66b31d8a2e625b6e82b37287266c51e6fda57df8",
+    "source/internal/proofs/laurent-proof-runtime.py": "a0ceca184dd1bc090635a6af4d524f9241594d9714188274c4a8b4f8bb4b7c93",
+    "source/internal/proofs/laurent-proof-runtime.cpp": "a050945cf5cadb3302ed1a59f1d59b7e218a55fa71f5fe3ecdc8f0aa02222288",
+    "source/internal/export/madevent-runtime.py": "d5e91d879bd622ddadd639427f6dd522f671d979d15786d88d20296a87728f65",
+    "source/internal/export/madgraph-runtime.py": "85113596e904fb6f84cdf18195264c935af7a4dd88d1bc35ea9ddd3dd7c4c63a",
+    "source/internal/export/spinas-validation.hpp": "b2b57bb992d095d592d4def8b6da9dc294de1ae58812aaea2b009a0274888d27",
+    "source/internal/export/calchep-spinas-runtime.hpp": "2a6e46a36673994266a46adbf7398377b1892191456cf3bef07b83a2d7fd86d9",
+    "source/internal/export/calchep-runtime.hpp": "be6e219266915314f8fbf83e07ab49af75084cf99ebb2a16e632b689b140df82",
+    "source/internal/export/madgraph-runtime.hpp": "a20e5cb3f68896df13f4705c01606185330e19e83881b1f825e4ac41c7b2965d",
+    "source/internal/export/spinas-runtime.hpp": "ced1d9711cedde398877587b0cd6f314726d9ed054de1e2ce401f2bb7e732a7a",
+    "Documentation/English/SymbolUsage.wl": "95860f39a469025e1e4fc62e61264434c53503e029c5b1c3438f28565ad74285",
+    "models/amps1.mdl": "9a82028aabcd810067062943e3dc09065ef8ed50765cc387a637b6ba589efd78",
+    "models/extlib1.mdl": "e7ab5a110976d3f9555358e6ba311edc23cb5d0079de97ed3cfd4ffe94c4783c",
+    "models/func1.mdl": "d8324bfd399b39e34f904dc8dbd57c7a0ea7d7b8048ab9439de2f2f3db10cab2",
+    "models/prtcls1.mdl": "c80f9f080061c9b2adc69b55bd447b62b21e2573ad21953d6d2ba50a2fbdf42d",
+    "models/vars1.mdl": "0818d43bbe803a4f1c35b6954c1677fcaa2d1243ce8ddb59bea6714859c40866",
+    "models/amps2.mdl": "653426e635dc9d8af8067bb66ffe12f08cb3dabeca3f7efe709b24bb6bc74809",
+    "models/extlib2.mdl": "e7ab5a110976d3f9555358e6ba311edc23cb5d0079de97ed3cfd4ffe94c4783c",
+    "models/func2.mdl": "d8324bfd399b39e34f904dc8dbd57c7a0ea7d7b8048ab9439de2f2f3db10cab2",
+    "models/prtcls2.mdl": "c80f9f080061c9b2adc69b55bd447b62b21e2573ad21953d6d2ba50a2fbdf42d",
+    "models/vars2.mdl": "0818d43bbe803a4f1c35b6954c1677fcaa2d1243ce8ddb59bea6714859c40866",
+    "models/amps3.mdl": "24ac575267f0b7f4c7698636028479f6faee02c431f6ec3a9c1b6809d2066fff",
+    "models/extlib3.mdl": "e7ab5a110976d3f9555358e6ba311edc23cb5d0079de97ed3cfd4ffe94c4783c",
+    "models/func3.mdl": "d1c3434016a6e1fe56639577d4d21d8bbd0ef42ceadf14dbd68ac7d80de2dd86",
+    "models/prtcls3.mdl": "f1acd28ff3bfd428e6a7a32bd6622c9de06dbc118c2dbea26232440484d32357",
+    "models/vars3.mdl": "b956e668670476648d95f26816f6503dd03b94cb923b36798bf527f058713a36"
+  },
+  "LoaderUnchanged": true,
+  "LoaderInputs": 18,
+  "NewModuleFiles": [],
+  "AppendedQCDBasePrefixBytes": 85742,
+  "AppendedQCDDefinitionsSHA256": "31764c3cd406600536aaeaeab7c23a1729ebc883e18f32d6407ab4847c6e18f8",
+  "MetadataValidation": {
+    "Passed": 67,
+    "Failed": 0,
+    "DefinitionBinderNamespaceChecks": 27,
+    "BlockedAPIDispatchChecks": 40,
+    "MaxSeconds": 11.376172792,
+    "PeakRSSBytes": 434503680,
+    "Limits": {
+      "SecondsPerSuite": 30,
+      "RSSBytes": 536870912
+    },
+    "NoPhysicsCalls": true,
+    "All13OldHelpersAll10FieldsLiteral": true,
+    "New3HelpersCompiledFieldsAndBindersIdenticalToTestedPrototype": true,
+    "OldWrapperRulesAndOtherNineFieldsLiteral": true,
+    "GlobalSentinelsPreserved": true,
+    "SM4QED4To6GateExclusion": true,
+    "AllGenerationLeptonQuarkAAhAZhDispatch": true
+  },
+  "OpenValidation": [
+    "GWW/multi-massive-vector2FQCD physics not tested",
+    "New rank1 spectator massless2V1S arm has metadata dispatch coverage only",
+    "Merged prospective tree needs public controls before production installation",
+    "Parent F4V and3V2S gate candidates are not included"
+  ],
+  "ExcludedPayloads": [
+    "amplitudes",
+    "physics raw outputs",
+    "capturedWXF",
+    "notebooks",
+    "generated projects",
+    "full source snapshots"
+  ],
+  "CodeFilesSHA256": {
+    "tests/definition-isolation.wl": "7cb347e8ad3a606387e7cc519749deca4818ed080876ea4b1a65285801f8410c",
+    "tests/metadata-dispatch.wl": "01be12ed8a2612574c8c11257315c710fa604bf199f5ef59b746fbe669ca606d",
+    "restore.py": "592f36ea34258e98aa91c4ccc66bc93d1f3d20b12d38806f7cc28a4b220a3813",
+    "verify-metadata.py": "d46ce5b84de3a237ed98db4f6000c0c9c4ccda3f88f7a6fb042fd7347725a42d",
+    "README.md": "c305117616db08e6829c014b3b0464b060c61adab9e786881a1427378a829709"
+  },
+  "PatchRestoreVerification": {
+    "Status": "PASS",
+    "FourCandidateSourceSHA256Exact": true,
+    "BaselineUnchanged": true,
+    "CodeOnlyNoPackageLoad": true
+  }
+}
