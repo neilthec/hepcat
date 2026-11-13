@@ -20,6 +20,8 @@ import shutil
 import stat
 import subprocess
 import sys
+import tempfile
+import time
 import uuid
 
 
@@ -87,16 +89,127 @@ def _lock(results, borrowed):
             stream.close()
 
 
+_ACTIVITY_SECONDS = 10
+_ACTIVITY_BYTES = 8 * 1024 ** 2
+_PROC_ROOT = Path('/proc')
+
+
+def _activity_output(command):
+    # A file, rather than PIPE, also bounds memory if an OS tool is unexpectedly noisy.
+    with tempfile.TemporaryFile() as output, tempfile.TemporaryFile() as errors:
+        result = subprocess.run(command, stdout=output, stderr=errors, timeout=_ACTIVITY_SECONDS)
+        if output.tell() > _ACTIVITY_BYTES or errors.tell() > _ACTIVITY_BYTES:
+            raise CleanupRefused('Process inspection exceeded its output limit.')
+        errors.seek(0)
+        if result.returncode or errors.read():
+            raise CleanupRefused('Process inspection is unavailable or incomplete.')
+        output.seek(0)
+        return output.read()
+
+
+def _pid_alive(pid):
+    try:
+        os.kill(pid, 0)  # Existence probe only; never signal or stop another process.
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _uses_target(value, target):
+    # Both OS interfaces supply resolved absolute paths; do not follow user symlinks.
+    value = os.fsdecode(value)
+    if value.endswith(' (deleted)'):
+        value = value[:-10]
+    path = Path(value)
+    if not path.is_absolute():
+        raise CleanupRefused('A process path could not be verified.')
+    path = Path(os.path.normpath(path))
+    return path == target or target in path.parents
+
+
+def _mac_process_paths(pids):
+    executable = shutil.which('lsof')
+    if executable is None:
+        raise CleanupRefused('lsof is required to verify process working directories.')
+    raw = _activity_output([executable, '-nP', '-a', '-u', str(os.getuid()),
+                            '-d', 'cwd,txt', '-F0pfn'])
+    if raw and not raw.rstrip(b'\n').endswith(b'\0'):
+        raise CleanupRefused('Truncated lsof process-path inventory.')
+    paths = {}; pid = None; descriptor = None
+    for field in raw.split(b'\0'):
+        field = field.lstrip(b'\n')
+        if not field:
+            continue
+        tag, value = field[:1], field[1:]
+        if tag == b'p' and value.isdigit():
+            pid = int(value); descriptor = None
+            paths.setdefault(pid, {'cwd': [], 'txt': []})
+        elif tag == b'f' and pid is not None and value in (b'cwd', b'txt'):
+            descriptor = value.decode('ascii')
+        elif tag == b'n' and pid is not None and descriptor is not None:
+            paths[pid][descriptor].append(value)
+        else:
+            raise CleanupRefused('Malformed lsof process-path inventory.')
+    # Check new same-user processes seen by lsof as well as the preceding ps snapshot.
+    for pid in pids | paths.keys():
+        values = paths.get(pid, {})
+        if not values.get('cwd') or not values.get('txt'):
+            if _pid_alive(pid):
+                raise CleanupRefused('A live process working directory or executable is unverifiable.')
+            paths.pop(pid, None)
+    return paths
+
+
+def _linux_process_paths(pids):
+    if not _PROC_ROOT.is_dir():
+        raise CleanupRefused('/proc is required to verify process working directories.')
+    paths = {}; deadline = time.monotonic() + _ACTIVITY_SECONDS
+    for pid in pids:
+        if time.monotonic() >= deadline:
+            raise CleanupRefused('Process-path inspection exceeded its time limit.')
+        try:
+            paths[pid] = {'cwd': [os.readlink(_PROC_ROOT / str(pid) / 'cwd')],
+                          'txt': [os.readlink(_PROC_ROOT / str(pid) / 'exe')]}
+        except OSError as error:
+            if _pid_alive(pid):
+                raise CleanupRefused('A live process working directory or executable is unverifiable.') from error
+    return paths
+
+
 def _active_jobs(root, target):
-    result = subprocess.run(['ps', '-axo', 'pid=,command='], capture_output=True, text=True, check=True)
+    rows = _activity_output(['ps', '-axo', 'pid=,uid=,stat=,command='])
+    if not rows.strip():
+        raise CleanupRefused('Empty process inventory.')
     workers = [str(root / 'tests/SM-5-point' / name) for name in ('evaluate.wl', 'revalidate.wl')]
-    found = []
-    for line in result.stdout.splitlines():
-        parts = line.strip().split(None, 1)
-        if len(parts) == 2 and int(parts[0]) != os.getpid() and (
-                str(target) in parts[1] or any(name in parts[1] for name in workers)):
-            found.append(int(parts[0]))
-    return found
+    found = set(); pids = set()
+    for line in os.fsdecode(rows).splitlines():
+        parts = line.strip().split(None, 3)
+        if len(parts) != 4 or not parts[0].isdigit() or not parts[1].isdigit():
+            raise CleanupRefused('Malformed process inventory.')
+        pid, uid, state, command = int(parts[0]), int(parts[1]), parts[2], parts[3]
+        if state.startswith('Z'):
+            continue
+        # Retain the original command-path guard across users. OS cwd/executable
+        # inspection is available for this user's processes; missing own-user data
+        # refuses cleanup rather than treating an inaccessible process as idle.
+        if pid != os.getpid() and (str(target) in command or any(name in command for name in workers)):
+            found.add(pid)
+        if uid == os.getuid():
+            pids.add(pid)
+    if found:
+        return sorted(found)
+    if sys.platform == 'darwin':
+        paths = _mac_process_paths(pids)
+    elif sys.platform.startswith('linux'):
+        paths = _linux_process_paths(pids)
+    else:
+        raise CleanupRefused('This OS cannot verify process working directories and executables.')
+    for pid, descriptors in paths.items():
+        if any(_uses_target(value, target) for values in descriptors.values() for value in values):
+            found.add(pid)
+    return sorted(found)
 
 
 def _scan(target):

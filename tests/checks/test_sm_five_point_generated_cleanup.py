@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import subprocess
 import tempfile
+import sys
 import unittest
 from unittest import mock
 
@@ -206,6 +207,16 @@ class GeneratedCleanupTests(unittest.TestCase):
     def test_unavailable_process_snapshot_is_retained(self):
         with mock.patch.object(CLEANUP,'_active_jobs',side_effect=OSError('no process inventory')):self.assert_kept(self.call())
 
+    def test_second_activity_check_retains_root_without_removing_it(self):
+        with mock.patch.object(CLEANUP, '_active_jobs', side_effect=[[], [1234]]) as activity:
+            self.assert_kept(self.call())
+        self.assertEqual(activity.call_count, 2)
+        self.assertFalse(list(self.target.parent.glob('.toyFive.cleanup-*')))
+
+    def test_unverifiable_second_activity_check_retains_root(self):
+        with mock.patch.object(CLEANUP, '_active_jobs', side_effect=[[], CLEANUP.CleanupRefused('unverifiable cwd')]):
+            self.assert_kept(self.call())
+
     def test_another_runner_lock_prevents_cleanup(self):
         with (self.results/'run.lock').open('w') as lease:
             fcntl.flock(lease,fcntl.LOCK_EX|fcntl.LOCK_NB);self.assert_kept(self.call())
@@ -245,6 +256,182 @@ class GeneratedCleanupTests(unittest.TestCase):
         for name,value in self.canonical.items():self.assertEqual((self.results/name).read_bytes(),value)
 
     def test_invalid_required_point_count_is_retained(self):self.assert_kept(self.call(required_points=0))
+
+
+class ProcessActivityTests(unittest.TestCase):
+    def setUp(self):
+        self.root = Path('/owned/repository')
+        self.target = self.root / 'tests/results/spinas-output/SM-5-point/toyFive'
+        for name, value in (('getuid', 501), ('getpid', 900)):
+            patcher = mock.patch.object(CLEANUP.os, name, return_value=value)
+            patcher.start(); self.addCleanup(patcher.stop)
+
+    @staticmethod
+    def lsof(pid, cwd, executable, extra=()):
+        fields = [b'p' + str(pid).encode(), b'fcwd', b'n' + os.fsencode(cwd),
+                  b'ftxt', b'n' + os.fsencode(executable)]
+        for path in extra:
+            fields.extend((b'ftxt', b'n' + os.fsencode(path)))
+        return b'\0\n'.join(fields) + b'\0\n'
+
+    def mac(self, raw, ps=b'123 501 S ./n_calchep\n'):
+        def output(command):
+            return ps if command[0] == 'ps' else raw
+        with mock.patch.object(CLEANUP.sys, 'platform', 'darwin'), \
+                mock.patch.object(CLEANUP.shutil, 'which', return_value='/usr/sbin/lsof'), \
+                mock.patch.object(CLEANUP, '_activity_output', side_effect=output), \
+                mock.patch.object(CLEANUP, '_pid_alive', return_value=True):
+            return CLEANUP._active_jobs(self.root, self.target)
+
+    def test_mac_relative_calc_hep_is_found_by_build_cwd(self):
+        raw = self.lsof(123, self.target / 'build', '/usr/bin/n_calchep')
+        self.assertEqual(self.mac(raw), [123])
+
+    def test_mac_relative_madevent_is_found_by_executable(self):
+        raw = self.lsof(123, '/outside', self.target / 'PROC/bin/madevent')
+        self.assertEqual(self.mac(raw, b'123 501 S ./madevent\n'), [123])
+
+    def test_mac_text_mapping_inside_generated_project_is_active(self):
+        raw = self.lsof(123, '/outside', '/usr/bin/python3', [self.target / 'build/libmodel.so'])
+        self.assertEqual(self.mac(raw), [123])
+
+    def test_mac_sibling_prefix_is_not_a_descendant(self):
+        sibling = self.target.with_name('toyFiveElsewhere')
+        self.assertEqual(self.mac(self.lsof(123, sibling, sibling / 'program')), [])
+
+    def test_mac_null_delimited_paths_preserve_spaces_and_newlines(self):
+        self.target = self.target / 'project with space\nand newline'
+        self.assertEqual(self.mac(self.lsof(123, self.target / 'build', '/bin/sleep')), [123])
+
+    def test_mac_new_process_between_snapshots_is_checked(self):
+        raw = self.lsof(123, '/outside', '/bin/sleep') + self.lsof(124, self.target, '/bin/sleep')
+        self.assertEqual(self.mac(raw), [124])
+
+    def test_cleanup_process_itself_cannot_use_generated_cwd(self):
+        self.assertEqual(self.mac(self.lsof(900, self.target, '/bin/python3'), b'900 501 S python3 cleanup\n'), [900])
+
+    def test_mac_missing_live_cwd_or_executable_is_unverifiable(self):
+        for raw in (b'p123\0\nftxt\0n/bin/sleep\0', b'p123\0\nfcwd\0n/outside\0', b''):
+            with self.subTest(raw=raw), self.assertRaises(CLEANUP.CleanupRefused):
+                self.mac(raw)
+
+    def test_mac_opaque_or_malformed_path_record_is_rejected(self):
+        for raw in (self.lsof(123, 'unavailable', '/bin/sleep'), b'p123\0xunknown\0'):
+            with self.subTest(raw=raw), self.assertRaises(CLEANUP.CleanupRefused):
+                self.mac(raw)
+
+    def test_mac_truncated_path_inventory_is_rejected(self):
+        with self.assertRaises(CLEANUP.CleanupRefused):
+            self.mac(self.lsof(123, '/outside', '/bin/sleep').rstrip(b'\0\n'))
+
+    def test_mac_exited_process_does_not_make_inspection_incomplete(self):
+        with mock.patch.object(CLEANUP, '_activity_output', return_value=b''), \
+                mock.patch.object(CLEANUP.shutil, 'which', return_value='/usr/sbin/lsof'), \
+                mock.patch.object(CLEANUP, '_pid_alive', return_value=False):
+            self.assertEqual(CLEANUP._mac_process_paths({123}), {})
+
+    def test_mac_missing_lsof_is_fail_closed(self):
+        with mock.patch.object(CLEANUP.shutil, 'which', return_value=None), self.assertRaises(CLEANUP.CleanupRefused):
+            CLEANUP._mac_process_paths({123})
+
+    def test_command_guard_is_retained_for_workers_and_other_users(self):
+        for line in (f'123 0 S python {self.root}/tests/SM-5-point/evaluate.wl\n',
+                     f'123 0 S {self.target}/build/n_calchep\n'):
+            with self.subTest(line=line), mock.patch.object(CLEANUP, '_activity_output', return_value=line.encode()), \
+                    mock.patch.object(CLEANUP, '_mac_process_paths', side_effect=AssertionError('command guard must run first')):
+                self.assertEqual(CLEANUP._active_jobs(self.root, self.target), [123])
+
+    def test_ps_empty_malformed_or_missing_identity_is_fail_closed(self):
+        for raw in (b'', b'not a process inventory', b'123 501 S'):
+            with self.subTest(raw=raw), mock.patch.object(CLEANUP, '_activity_output', return_value=raw), \
+                    self.assertRaises(CLEANUP.CleanupRefused):
+                CLEANUP._active_jobs(self.root, self.target)
+
+    def test_zombie_process_is_not_an_active_generated_job(self):
+        with mock.patch.object(CLEANUP, '_activity_output', return_value=f'123 501 Z {self.target}/program\n'.encode()), \
+                mock.patch.object(CLEANUP.sys, 'platform', 'linux'), \
+                mock.patch.object(CLEANUP, '_linux_process_paths', return_value={}) as paths:
+            self.assertEqual(CLEANUP._active_jobs(self.root, self.target), [])
+            paths.assert_called_once_with(set())
+
+    def test_unsupported_os_refuses_cleanup(self):
+        with mock.patch.object(CLEANUP, '_activity_output', return_value=b'123 501 S ./program\n'), \
+                mock.patch.object(CLEANUP.sys, 'platform', 'unsupported'), self.assertRaises(CLEANUP.CleanupRefused):
+            CLEANUP._active_jobs(self.root, self.target)
+
+    def test_linux_proc_cwd_and_executable_paths_are_inspected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            proc = Path(temporary); (proc / '123').mkdir()
+            (proc / '123/cwd').symlink_to(self.target / 'build')
+            (proc / '123/exe').symlink_to('/usr/bin/n_calchep')
+            with mock.patch.object(CLEANUP, '_PROC_ROOT', proc), \
+                    mock.patch.object(CLEANUP.sys, 'platform', 'linux'), \
+                    mock.patch.object(CLEANUP, '_activity_output', return_value=b'123 501 S ./n_calchep\n'):
+                self.assertEqual(CLEANUP._active_jobs(self.root, self.target), [123])
+            (proc / '123/cwd').unlink(); (proc / '123/cwd').symlink_to('/outside')
+            (proc / '123/exe').unlink(); (proc / '123/exe').symlink_to(self.target / 'bin/program')
+            with mock.patch.object(CLEANUP, '_PROC_ROOT', proc):
+                values = CLEANUP._linux_process_paths({123})
+                self.assertTrue(CLEANUP._uses_target(values[123]['txt'][0], self.target))
+
+    def test_linux_inaccessible_live_process_is_fail_closed(self):
+        with tempfile.TemporaryDirectory() as temporary, mock.patch.object(CLEANUP, '_PROC_ROOT', Path(temporary)), \
+                mock.patch.object(CLEANUP, '_pid_alive', return_value=True), self.assertRaises(CLEANUP.CleanupRefused):
+            CLEANUP._linux_process_paths({123})
+
+    def test_linux_exited_process_is_ignored(self):
+        with tempfile.TemporaryDirectory() as temporary, mock.patch.object(CLEANUP, '_PROC_ROOT', Path(temporary)), \
+                mock.patch.object(CLEANUP, '_pid_alive', return_value=False):
+            self.assertEqual(CLEANUP._linux_process_paths({123}), {})
+
+    def test_linux_inspection_deadline_is_finite(self):
+        with tempfile.TemporaryDirectory() as temporary, mock.patch.object(CLEANUP, '_PROC_ROOT', Path(temporary)), \
+                mock.patch.object(CLEANUP.time, 'monotonic', side_effect=[0, CLEANUP._ACTIVITY_SECONDS]), \
+                self.assertRaises(CLEANUP.CleanupRefused):
+            CLEANUP._linux_process_paths({123})
+
+    def test_deleted_executable_suffix_does_not_hide_active_path(self):
+        self.assertTrue(CLEANUP._uses_target(str(self.target / 'program') + ' (deleted)', self.target))
+
+    def test_process_tool_calls_have_timeout_and_bounded_output(self):
+        def run(command, **options):
+            self.assertEqual(options['timeout'], CLEANUP._ACTIVITY_SECONDS)
+            options['stdout'].write(b'123 501 S ./program\n')
+            return subprocess.CompletedProcess(command, 0)
+        with mock.patch.object(CLEANUP.subprocess, 'run', side_effect=run):
+            self.assertEqual(CLEANUP._activity_output(['ps']), b'123 501 S ./program\n')
+        with mock.patch.object(CLEANUP, '_ACTIVITY_BYTES', 4), \
+                mock.patch.object(CLEANUP.subprocess, 'run', side_effect=run), self.assertRaises(CLEANUP.CleanupRefused):
+            CLEANUP._activity_output(['ps'])
+
+    def test_process_tool_stderr_nonzero_and_timeouts_are_fail_closed(self):
+        for returncode, error in ((1, b''), (0, b'permission denied')):
+            def run(command, **options):
+                options['stderr'].write(error)
+                return subprocess.CompletedProcess(command, returncode)
+            with self.subTest(returncode=returncode, error=error), \
+                    mock.patch.object(CLEANUP.subprocess, 'run', side_effect=run), self.assertRaises(CLEANUP.CleanupRefused):
+                CLEANUP._activity_output(['ps'])
+        with mock.patch.object(CLEANUP.subprocess, 'run', side_effect=subprocess.TimeoutExpired('ps', 10)), \
+                self.assertRaises(subprocess.TimeoutExpired):
+            CLEANUP._activity_output(['ps'])
+
+
+class OwnedProcessActivityIntegrationTests(unittest.TestCase):
+    @unittest.skipUnless(sys.platform == 'darwin' or sys.platform.startswith('linux'), 'cwd/executable inspection is OS-specific')
+    def test_owned_sleep_with_generated_cwd_is_detected_without_deletion(self):
+        with tempfile.TemporaryDirectory(prefix='hepcat-active-cleanup-test-') as temporary:
+            root = Path(temporary).resolve()
+            target = root / 'tests/results/spinas-output/SM-5-point/toyFive'
+            build = target / 'build'; build.mkdir(parents=True)
+            child = subprocess.Popen(['/bin/sleep', '30'], cwd=build)
+            try:
+                self.assertIn(child.pid, CLEANUP._active_jobs(root, target))
+                self.assertIsNone(child.poll())
+                self.assertTrue(build.is_dir())
+            finally:
+                child.terminate()  # Only the subprocess created by this test.
+                child.wait(timeout=5)
 
 
 if __name__=='__main__':unittest.main()
