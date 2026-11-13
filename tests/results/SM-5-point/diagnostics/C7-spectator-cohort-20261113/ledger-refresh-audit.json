@@ -1,0 +1,541 @@
+{
+  "Status": "COMPLETE",
+  "ControllerPID": 62663,
+  "Lock": "tests/results/SM-5-point/run.lock",
+  "ContextSHA256": "4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167",
+  "CompanionScriptSHA256": "9480ebc821c4b3425df5ebf1b7a0133ccc38cace9b9ff3b962a5b22abcfe34f0",
+  "StartedUTC": "2026-11-13T05:02:31.477244+00:00",
+  "NoScatteringKernelLaunched": true,
+  "NoConfigurationOrSourceWrites": true,
+  "Refreshes": [
+    {
+      "UTC": "2026-11-13T05:02:47.049083+00:00",
+      "NewExportFamilies": [
+        "sm5f_caa5ca0e3ee5"
+      ],
+      "Counts": {
+        "TotalCases": 1422,
+        "TotalFamilies": 869,
+        "Constructed": 216,
+        "FullyValidatedCases": 208,
+        "PrecisionQualifiedCases": 8,
+        "ValidatedIncludingPrecisionQualifiedCases": 216,
+        "PrecisionQualifiedFamilies": 3,
+        "ValidatedFamilies": 143,
+        "RecordedInputPassCases": 216,
+        "SupplementalParameterProbeFailedCases": 0,
+        "SupplementalParameterProbeUnavailableCases": 0,
+        "FailedOrTimedOut": 0
+      },
+      "ProgressSHA256": "e05c011ae8bee16211dd5bc09e6a5cfa481869a59f04973bb47e2b14698f4c62",
+      "SourceModelRuntimeGuard": true
+    },
+    {
+      "UTC": "2026-11-13T05:03:41.090684+00:00",
+      "NewExportFamilies": [
+        "sm5f_10a73b4e70cc"
+      ],
+      "Counts": {
+        "TotalCases": 1422,
+        "TotalFamilies": 869,
+        "Constructed": 217,
+        "FullyValidatedCases": 209,
+        "PrecisionQualifiedCases": 8,
+        "ValidatedIncludingPrecisionQualifiedCases": 217,
+        "PrecisionQualifiedFamilies": 3,
+        "ValidatedFamilies": 144,
+        "RecordedInputPassCases": 217,
+        "SupplementalParameterProbeFailedCases": 0,
+        "SupplementalParameterProbeUnavailableCases": 0,
+        "FailedOrTimedOut": 0
+      },
+      "ProgressSHA256": "7e3591ffb84ca0e21734a0f5811347de2bc43c5cac8a2c02e4c84451d0c0807f",
+      "SourceModelRuntimeGuard": true
+    },
+    {
+      "UTC": "2026-11-13T05:06:32.608144+00:00",
+      "NewExportFamilies": [
+        "sm5f_5ff8bc223a86"
+      ],
+      "Counts": {
+        "TotalCases": 1422,
+        "TotalFamilies": 869,
+        "Constructed": 218,
+        "FullyValidatedCases": 210,
+        "PrecisionQualifiedCases": 8,
+        "ValidatedIncludingPrecisionQualifiedCases": 218,
+        "PrecisionQualifiedFamilies": 3,
+        "ValidatedFamilies": 145,
+        "RecordedInputPassCases": 218,
+        "SupplementalParameterProbeFailedCases": 0,
+        "SupplementalParameterProbeUnavailableCases": 0,
+        "FailedOrTimedOut": 0
+      },
+      "ProgressSHA256": "e1b2cb99754ff28f2394f620490a868e9cfb957748474ecc85ca9890a6539d6a",
+      "SourceModelRuntimeGuard": true
+    },
+    {
+      "UTC": "2026-11-13T05:09:22.154746+00:00",
+      "NewExportFamilies": [
+        "sm5f_6b05d2ec8219"
+      ],
+      "Counts": {
+        "TotalCases": 1422,
+        "TotalFamilies": 869,
+        "Constructed": 219,
+        "FullyValidatedCases": 211,
+        "PrecisionQualifiedCases": 8,
+        "ValidatedIncludingPrecisionQualifiedCases": 219,
+        "PrecisionQualifiedFamilies": 3,
+        "ValidatedFamilies": 146,
+        "RecordedInputPassCases": 219,
+        "SupplementalParameterProbeFailedCases": 0,
+        "SupplementalParameterProbeUnavailableCases": 0,
+        "FailedOrTimedOut": 0
+      },
+      "ProgressSHA256": "7348998ff87736da0b7e340fd7062ec7243539432a321b8090f50d483958670e",
+      "SourceModelRuntimeGuard": true
+    },
+    {
+      "UTC": "2026-11-13T05:12:15.926459+00:00",
+      "NewExportFamilies": [
+        "sm5f_12f5b131b136"
+      ],
+      "Counts": {
+        "TotalCases": 1422,
+        "TotalFamilies": 869,
+        "Constructed": 220,
+        "FullyValidatedCases": 212,
+        "PrecisionQualifiedCases": 8,
+        "ValidatedIncludingPrecisionQualifiedCases": 220,
+        "PrecisionQualifiedFamilies": 3,
+        "ValidatedFamilies": 147,
+        "RecordedInputPassCases": 220,
+        "SupplementalParameterProbeFailedCases": 0,
+        "SupplementalParameterProbeUnavailableCases": 0,
+        "FailedOrTimedOut": 0
+      },
+      "ProgressSHA256": "e94b895318cd268375b3c955d43f84b769ef4410b6acda91b3d68f63ab6a688e",
+      "SourceModelRuntimeGuard": true
+    },
+    {
+      "UTC": "2026-11-13T05:15:04.788488+00:00",
+      "NewExportFamilies": [
+        "sm5f_04420c556a4a"
+      ],
+      "Counts": {
+        "TotalCases": 1422,
+        "TotalFamilies": 869,
+        "Constructed": 221,
+        "FullyValidatedCases": 213,
+        "PrecisionQualifiedCases": 8,
+        "ValidatedIncludingPrecisionQualifiedCases": 221,
+        "PrecisionQualifiedFamilies": 3,
+        "ValidatedFamilies": 148,
+        "RecordedInputPassCases": 221,
+        "SupplementalParameterProbeFailedCases": 0,
+        "SupplementalParameterProbeUnavailableCases": 0,
+        "FailedOrTimedOut": 0
+      },
+      "ProgressSHA256": "e26dd4230637ae8adde93b8f14c1a472db3236feefb04573a6de732cebd7b8cf",
+      "SourceModelRuntimeGuard": true
+    },
+    {
+      "UTC": "2026-11-13T05:17:43.548711+00:00",
+      "NewExportFamilies": [
+        "sm5f_2509fb732a6d"
+      ],
+      "Counts": {
+        "TotalCases": 1422,
+        "TotalFamilies": 869,
+        "Constructed": 222,
+        "FullyValidatedCases": 214,
+        "PrecisionQualifiedCases": 8,
+        "ValidatedIncludingPrecisionQualifiedCases": 222,
+        "PrecisionQualifiedFamilies": 3,
+        "ValidatedFamilies": 149,
+        "RecordedInputPassCases": 222,
+        "SupplementalParameterProbeFailedCases": 0,
+        "SupplementalParameterProbeUnavailableCases": 0,
+        "FailedOrTimedOut": 0
+      },
+      "ProgressSHA256": "127e1f4fce258b7d6e241a9c87639836b1da89aa504f8543142e315917fabd15",
+      "SourceModelRuntimeGuard": true
+    },
+    {
+      "UTC": "2026-11-13T05:20:23.991854+00:00",
+      "NewExportFamilies": [
+        "sm5f_05b8db72ec96"
+      ],
+      "Counts": {
+        "TotalCases": 1422,
+        "TotalFamilies": 869,
+        "Constructed": 223,
+        "FullyValidatedCases": 215,
+        "PrecisionQualifiedCases": 8,
+        "ValidatedIncludingPrecisionQualifiedCases": 223,
+        "PrecisionQualifiedFamilies": 3,
+        "ValidatedFamilies": 150,
+        "RecordedInputPassCases": 223,
+        "SupplementalParameterProbeFailedCases": 0,
+        "SupplementalParameterProbeUnavailableCases": 0,
+        "FailedOrTimedOut": 0
+      },
+      "ProgressSHA256": "f5ded42a704530cb7a9ae82875c57326d1b001865f076995559b53f096f6d123",
+      "SourceModelRuntimeGuard": true
+    },
+    {
+      "UTC": "2026-11-13T05:23:07.817346+00:00",
+      "NewExportFamilies": [
+        "sm5f_1edc3c82a2d0"
+      ],
+      "Counts": {
+        "TotalCases": 1422,
+        "TotalFamilies": 869,
+        "Constructed": 224,
+        "FullyValidatedCases": 216,
+        "PrecisionQualifiedCases": 8,
+        "ValidatedIncludingPrecisionQualifiedCases": 224,
+        "PrecisionQualifiedFamilies": 3,
+        "ValidatedFamilies": 151,
+        "RecordedInputPassCases": 224,
+        "SupplementalParameterProbeFailedCases": 0,
+        "SupplementalParameterProbeUnavailableCases": 0,
+        "FailedOrTimedOut": 0
+      },
+      "ProgressSHA256": "5c82d98108904ced5e87d22f5656c720f1e1e613045e54095ba33364213360dc",
+      "SourceModelRuntimeGuard": true
+    },
+    {
+      "UTC": "2026-11-13T05:26:01.512656+00:00",
+      "NewExportFamilies": [
+        "sm5f_6fdc186a74a1"
+      ],
+      "Counts": {
+        "TotalCases": 1422,
+        "TotalFamilies": 869,
+        "Constructed": 225,
+        "FullyValidatedCases": 217,
+        "PrecisionQualifiedCases": 8,
+        "ValidatedIncludingPrecisionQualifiedCases": 225,
+        "PrecisionQualifiedFamilies": 3,
+        "ValidatedFamilies": 152,
+        "RecordedInputPassCases": 225,
+        "SupplementalParameterProbeFailedCases": 0,
+        "SupplementalParameterProbeUnavailableCases": 0,
+        "FailedOrTimedOut": 0
+      },
+      "ProgressSHA256": "1434276c72bf97e557d8af3b92773c9b88b6e066d91e2db838daec89e152ae05",
+      "SourceModelRuntimeGuard": true
+    },
+    {
+      "UTC": "2026-11-13T05:28:46.141797+00:00",
+      "NewExportFamilies": [
+        "sm5f_37b799a748bd"
+      ],
+      "Counts": {
+        "TotalCases": 1422,
+        "TotalFamilies": 869,
+        "Constructed": 226,
+        "FullyValidatedCases": 218,
+        "PrecisionQualifiedCases": 8,
+        "ValidatedIncludingPrecisionQualifiedCases": 226,
+        "PrecisionQualifiedFamilies": 3,
+        "ValidatedFamilies": 153,
+        "RecordedInputPassCases": 226,
+        "SupplementalParameterProbeFailedCases": 0,
+        "SupplementalParameterProbeUnavailableCases": 0,
+        "FailedOrTimedOut": 0
+      },
+      "ProgressSHA256": "ffb20c9f7f0691c210b93d02b18f705f29410ad2f1ccc78e1d954e7d180480f0",
+      "SourceModelRuntimeGuard": true
+    },
+    {
+      "UTC": "2026-11-13T05:31:26.802319+00:00",
+      "NewExportFamilies": [
+        "sm5f_6188ec26ac7e"
+      ],
+      "Counts": {
+        "TotalCases": 1422,
+        "TotalFamilies": 869,
+        "Constructed": 227,
+        "FullyValidatedCases": 219,
+        "PrecisionQualifiedCases": 8,
+        "ValidatedIncludingPrecisionQualifiedCases": 227,
+        "PrecisionQualifiedFamilies": 3,
+        "ValidatedFamilies": 154,
+        "RecordedInputPassCases": 227,
+        "SupplementalParameterProbeFailedCases": 0,
+        "SupplementalParameterProbeUnavailableCases": 0,
+        "FailedOrTimedOut": 0
+      },
+      "ProgressSHA256": "b0be1ace070646b1508f88f9027ad09ffc5d231c8dcea6c593ab6f1681961719",
+      "SourceModelRuntimeGuard": true
+    },
+    {
+      "UTC": "2026-11-13T05:33:20.900144+00:00",
+      "NewExportFamilies": [
+        "sm5f_f3b1e3715fb2"
+      ],
+      "Counts": {
+        "TotalCases": 1422,
+        "TotalFamilies": 869,
+        "Constructed": 229,
+        "FullyValidatedCases": 221,
+        "PrecisionQualifiedCases": 8,
+        "ValidatedIncludingPrecisionQualifiedCases": 229,
+        "PrecisionQualifiedFamilies": 3,
+        "ValidatedFamilies": 155,
+        "RecordedInputPassCases": 229,
+        "SupplementalParameterProbeFailedCases": 0,
+        "SupplementalParameterProbeUnavailableCases": 0,
+        "FailedOrTimedOut": 0
+      },
+      "ProgressSHA256": "a0993b59135b40247b56a4c9e6461e012eda8b0f88c76fc18e493684fdd8211c",
+      "SourceModelRuntimeGuard": true
+    },
+    {
+      "UTC": "2026-11-13T05:35:15.469318+00:00",
+      "NewExportFamilies": [
+        "sm5f_0f712c5d218c"
+      ],
+      "Counts": {
+        "TotalCases": 1422,
+        "TotalFamilies": 869,
+        "Constructed": 231,
+        "FullyValidatedCases": 223,
+        "PrecisionQualifiedCases": 8,
+        "ValidatedIncludingPrecisionQualifiedCases": 231,
+        "PrecisionQualifiedFamilies": 3,
+        "ValidatedFamilies": 156,
+        "RecordedInputPassCases": 231,
+        "SupplementalParameterProbeFailedCases": 0,
+        "SupplementalParameterProbeUnavailableCases": 0,
+        "FailedOrTimedOut": 0
+      },
+      "ProgressSHA256": "bc24f576dab843d686c2c424f9da349389a6dd621608622f813a9fd037193bea",
+      "SourceModelRuntimeGuard": true
+    },
+    {
+      "UTC": "2026-11-13T05:37:23.212792+00:00",
+      "NewExportFamilies": [
+        "sm5f_955133ce6d2c"
+      ],
+      "Counts": {
+        "TotalCases": 1422,
+        "TotalFamilies": 869,
+        "Constructed": 233,
+        "FullyValidatedCases": 225,
+        "PrecisionQualifiedCases": 8,
+        "ValidatedIncludingPrecisionQualifiedCases": 233,
+        "PrecisionQualifiedFamilies": 3,
+        "ValidatedFamilies": 157,
+        "RecordedInputPassCases": 233,
+        "SupplementalParameterProbeFailedCases": 0,
+        "SupplementalParameterProbeUnavailableCases": 0,
+        "FailedOrTimedOut": 0
+      },
+      "ProgressSHA256": "2ce3659c9160f2a00cdc48cf186eb0c409f25c16ea20e6d421be33559d77f8d6",
+      "SourceModelRuntimeGuard": true
+    },
+    {
+      "UTC": "2026-11-13T05:39:29.279779+00:00",
+      "NewExportFamilies": [
+        "sm5f_f7af588cbb56"
+      ],
+      "Counts": {
+        "TotalCases": 1422,
+        "TotalFamilies": 869,
+        "Constructed": 235,
+        "FullyValidatedCases": 227,
+        "PrecisionQualifiedCases": 8,
+        "ValidatedIncludingPrecisionQualifiedCases": 235,
+        "PrecisionQualifiedFamilies": 3,
+        "ValidatedFamilies": 158,
+        "RecordedInputPassCases": 235,
+        "SupplementalParameterProbeFailedCases": 0,
+        "SupplementalParameterProbeUnavailableCases": 0,
+        "FailedOrTimedOut": 0
+      },
+      "ProgressSHA256": "828cce9f50a359119b0f783f6c620f7af860e546f381b7cbbd06b74ed1db4709",
+      "SourceModelRuntimeGuard": true
+    },
+    {
+      "UTC": "2026-11-13T05:41:33.113983+00:00",
+      "NewExportFamilies": [
+        "sm5f_89f41cdbbd35"
+      ],
+      "Counts": {
+        "TotalCases": 1422,
+        "TotalFamilies": 869,
+        "Constructed": 237,
+        "FullyValidatedCases": 229,
+        "PrecisionQualifiedCases": 8,
+        "ValidatedIncludingPrecisionQualifiedCases": 237,
+        "PrecisionQualifiedFamilies": 3,
+        "ValidatedFamilies": 159,
+        "RecordedInputPassCases": 237,
+        "SupplementalParameterProbeFailedCases": 0,
+        "SupplementalParameterProbeUnavailableCases": 0,
+        "FailedOrTimedOut": 0
+      },
+      "ProgressSHA256": "130697cff8eb8da1ae7f8ff15cc7e0df12f471fac6f6e4e6a40823134d4aaa31",
+      "SourceModelRuntimeGuard": true
+    },
+    {
+      "UTC": "2026-11-13T05:43:43.212849+00:00",
+      "NewExportFamilies": [
+        "sm5f_189d7e6fc8d4"
+      ],
+      "Counts": {
+        "TotalCases": 1422,
+        "TotalFamilies": 869,
+        "Constructed": 239,
+        "FullyValidatedCases": 231,
+        "PrecisionQualifiedCases": 8,
+        "ValidatedIncludingPrecisionQualifiedCases": 239,
+        "PrecisionQualifiedFamilies": 3,
+        "ValidatedFamilies": 160,
+        "RecordedInputPassCases": 239,
+        "SupplementalParameterProbeFailedCases": 0,
+        "SupplementalParameterProbeUnavailableCases": 0,
+        "FailedOrTimedOut": 0
+      },
+      "ProgressSHA256": "6983a1ac6a92cfca037adb8220919690b7e58dc153be95fa9bb60ba25148cd70",
+      "SourceModelRuntimeGuard": true
+    },
+    {
+      "UTC": "2026-11-13T05:45:19.146381+00:00",
+      "NewExportFamilies": [
+        "sm5f_c70524ea43a5"
+      ],
+      "Counts": {
+        "TotalCases": 1422,
+        "TotalFamilies": 869,
+        "Constructed": 240,
+        "FullyValidatedCases": 232,
+        "PrecisionQualifiedCases": 8,
+        "ValidatedIncludingPrecisionQualifiedCases": 240,
+        "PrecisionQualifiedFamilies": 3,
+        "ValidatedFamilies": 161,
+        "RecordedInputPassCases": 240,
+        "SupplementalParameterProbeFailedCases": 0,
+        "SupplementalParameterProbeUnavailableCases": 0,
+        "FailedOrTimedOut": 0
+      },
+      "ProgressSHA256": "32c0908f0cf917e903e3b7e9e3bf6aae51beb611f7a8501ed0c44da78b25fdc7",
+      "SourceModelRuntimeGuard": true
+    },
+    {
+      "UTC": "2026-11-13T05:47:01.255436+00:00",
+      "NewExportFamilies": [
+        "sm5f_ebaa0ceeee8b"
+      ],
+      "Counts": {
+        "TotalCases": 1422,
+        "TotalFamilies": 869,
+        "Constructed": 241,
+        "FullyValidatedCases": 233,
+        "PrecisionQualifiedCases": 8,
+        "ValidatedIncludingPrecisionQualifiedCases": 241,
+        "PrecisionQualifiedFamilies": 3,
+        "ValidatedFamilies": 162,
+        "RecordedInputPassCases": 241,
+        "SupplementalParameterProbeFailedCases": 0,
+        "SupplementalParameterProbeUnavailableCases": 0,
+        "FailedOrTimedOut": 0
+      },
+      "ProgressSHA256": "1c5452940bc4476c359fcd86bd186f1ee30106e1e198939b3e7c4617c06970c8",
+      "SourceModelRuntimeGuard": true
+    },
+    {
+      "UTC": "2026-11-13T05:48:43.224378+00:00",
+      "NewExportFamilies": [
+        "sm5f_2f642dc1344f"
+      ],
+      "Counts": {
+        "TotalCases": 1422,
+        "TotalFamilies": 869,
+        "Constructed": 242,
+        "FullyValidatedCases": 234,
+        "PrecisionQualifiedCases": 8,
+        "ValidatedIncludingPrecisionQualifiedCases": 242,
+        "PrecisionQualifiedFamilies": 3,
+        "ValidatedFamilies": 163,
+        "RecordedInputPassCases": 242,
+        "SupplementalParameterProbeFailedCases": 0,
+        "SupplementalParameterProbeUnavailableCases": 0,
+        "FailedOrTimedOut": 0
+      },
+      "ProgressSHA256": "fb2c0b1f0ea2bbfbcc95e58c202711442b06816b9235c36fbf600f569bf08f4c",
+      "SourceModelRuntimeGuard": true
+    },
+    {
+      "UTC": "2026-11-13T05:50:23.570237+00:00",
+      "NewExportFamilies": [
+        "sm5f_df2d142028cb"
+      ],
+      "Counts": {
+        "TotalCases": 1422,
+        "TotalFamilies": 869,
+        "Constructed": 243,
+        "FullyValidatedCases": 235,
+        "PrecisionQualifiedCases": 8,
+        "ValidatedIncludingPrecisionQualifiedCases": 243,
+        "PrecisionQualifiedFamilies": 3,
+        "ValidatedFamilies": 164,
+        "RecordedInputPassCases": 243,
+        "SupplementalParameterProbeFailedCases": 0,
+        "SupplementalParameterProbeUnavailableCases": 0,
+        "FailedOrTimedOut": 0
+      },
+      "ProgressSHA256": "e62bce061d79a16e5ba316c3128160867583a4d23b63832a33b32531c0f02b93",
+      "SourceModelRuntimeGuard": true
+    },
+    {
+      "UTC": "2026-11-13T05:52:03.858323+00:00",
+      "NewExportFamilies": [
+        "sm5f_f47f37de5e38"
+      ],
+      "Counts": {
+        "TotalCases": 1422,
+        "TotalFamilies": 869,
+        "Constructed": 244,
+        "FullyValidatedCases": 236,
+        "PrecisionQualifiedCases": 8,
+        "ValidatedIncludingPrecisionQualifiedCases": 244,
+        "PrecisionQualifiedFamilies": 3,
+        "ValidatedFamilies": 165,
+        "RecordedInputPassCases": 244,
+        "SupplementalParameterProbeFailedCases": 0,
+        "SupplementalParameterProbeUnavailableCases": 0,
+        "FailedOrTimedOut": 0
+      },
+      "ProgressSHA256": "5047cb55fb34a36a0674df454c28b29209e0826d85d99dae0e9469c610362350",
+      "SourceModelRuntimeGuard": true
+    },
+    {
+      "UTC": "2026-11-13T05:53:45.257133+00:00",
+      "NewExportFamilies": [
+        "sm5f_92e2210bc1af"
+      ],
+      "Counts": {
+        "TotalCases": 1422,
+        "TotalFamilies": 869,
+        "Constructed": 245,
+        "FullyValidatedCases": 237,
+        "PrecisionQualifiedCases": 8,
+        "ValidatedIncludingPrecisionQualifiedCases": 245,
+        "PrecisionQualifiedFamilies": 3,
+        "ValidatedFamilies": 166,
+        "RecordedInputPassCases": 245,
+        "SupplementalParameterProbeFailedCases": 0,
+        "SupplementalParameterProbeUnavailableCases": 0,
+        "FailedOrTimedOut": 0
+      },
+      "ProgressSHA256": "dd595668be74af5da9aa3e7b5265014cfdb59b7925e7db0de0c36a06b5607521",
+      "SourceModelRuntimeGuard": true
+    }
+  ],
+  "FinalUTC": "2026-11-13T05:53:45.258508+00:00"
+}

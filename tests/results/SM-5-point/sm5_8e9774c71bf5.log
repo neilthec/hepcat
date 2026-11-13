@@ -1,0 +1,11 @@
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+<|ID -> sm5_8e9774c71bf5, Particles -> {u, U, A.+, h, h}, Status -> COMPLETE, Seconds -> 36.81591, Complexity -> 353, RandomSeed -> 1173896878, ContextSHA256 -> 4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167, Rows -> 10, FeynmanRows -> 1, CheckStatuses -> <|PASS -> 10|>, FailureStage -> Null, CapsuleSHA256 -> de866254c0acab4456ba0cb164edb66d294f7858a187052f107ea0915c7b910e|>

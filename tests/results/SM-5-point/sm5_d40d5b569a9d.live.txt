@@ -1,0 +1,30 @@
+23:33:17 Building certified spectator-color source.
+23:33:18 Preparing completed spectator source with external identities.
+23:33:19 Preparation: Starting; amplitude 1/1; complexity 728; terms 1; 0. s
+23:33:19 Preparation: ReduceSpinContractions; amplitude 1/1; complexity 728; terms 1; 0.1 s
+23:33:19 Preparation: Choosing references; amplitude 1/1: 1/2; complexity 579; terms 1; 0.30000000000000004 s
+23:33:21 Preparation: Choosing references; amplitude 1/1: 1/2; complexity 579; terms 1; 2.6 s
+23:33:21 Preparation: Choosing references; amplitude 1/1: 2/2; complexity 579; terms 1; 2.8000000000000003 s
+23:33:24 Preparation: Choosing references; amplitude 1/1: 2/2; complexity 579; terms 1; 5.1000000000000005 s
+23:33:24 Preparation: PolePreference; amplitude 1/1; complexity 1208; terms 1; 5.1000000000000005 s
+23:33:24 Preparation: OrdinaryPairVirtualityCancellation; amplitude 1/1; complexity 1208; terms 1; 5.1000000000000005 s
+23:33:24 Preparation: CompactExternalAmplitude; amplitude 1/1; complexity 1208; terms 1; 5.1000000000000005 s
+23:33:24 Preparation: OrdinaryMultilinearIdentityNormalization; amplitude 1/1; complexity 1208; terms 1; 5.1000000000000005 s
+23:33:24 Preparation: SharedMatrixOrdinaryCofactors; amplitude 1/1; complexity 1208; terms 1; 5.1000000000000005 s
+23:33:24 Preparation: RetainedReferenceTrial; amplitude 1/1; complexity 579; terms 1; 5.2 s
+23:33:25 Preparation: ReduceSpinorProducts; amplitude 1/1; complexity 579; terms 1; 6.1000000000000005 s
+23:33:25 Preparation: CancelAuxiliaryReferencePoles; amplitude 1/1; complexity 579; terms 1; 6.1000000000000005 s
+23:33:27 Preparation: OrdinaryEndpointSchoutenCompaction; amplitude 1/1; complexity 383; terms 1; 8.3 s
+23:33:29 Preparation: SingleMomentumConservation; amplitude 1/1; complexity 383; terms 1; 10.4 s
+23:33:29 Preparation: PropagatorGroupedSpinorIdentities; amplitude 1/1; complexity 383; terms 1; 10.5 s
+23:33:29 Preparation: Prepared; amplitude 1/1; complexity 383; terms 1; 10.5 s
+23:33:29 Building independent colored Feynman benchmark.
+23:33:30 Constructing 1 independent color coefficients.
+23:33:30 Validating color symmetry coefficient 1/1; parameter set 1/3
+23:33:34 Validating color symmetry coefficient 1/1; parameter set 2/3
+23:33:39 Validating color symmetry coefficient 1/1; parameter set 3/3
+23:33:44 Total time: 30.4 s
+23:33:44 Complexity: 383
+23:33:44                                                     2                                                                          2                                                                          2                                                                          2                                                                          2                                                                          2                                                                          2
+Dataset[{<|Color -> 1, Type -> Physical, Test -> -Mc  + s   == 0, Status -> PASS|>, <|Color -> 1, Type -> Physical, Test -> -Mc  + s   == 0, Status -> PASS|>, <|Color -> 1, Type -> Physical, Test -> -Mc  + s   == 0, Status -> PASS|>, <|Color -> 1, Type -> Physical, Test -> -Mc  + s   == 0, Status -> PASS|>, <|Color -> 1, Type -> Physical, Test -> -Mc  + s   == 0, Status -> PASS|>, <|Color -> 1, Type -> Physical, Test -> -Mc  + s   == 0, Status -> PASS|>, <|Color -> 1, Type -> Physical, Test -> -Mh  + s   == 0, Status -> PASS|>, <|Color -> 1, Type -> HighEnergy, Test -> Fixed-angle high energy, Status -> PASS|>, <|Color -> 1, Type -> Reference, Test -> No explicit Xi dependence, Status -> PASS|>, <|Color -> 1, Type -> Feynman, Test -> Full Feynman amplitude, Status -> PASS|>}, TypeSystem`Vector[TypeSystem`Struct[{Color, Type, Test, Status}, {TypeSystem`Atom[Integer], TypeSystem`Atom[TypeSystem`Enumeration[Feynman, HighEnergy, Physical, Reference]], TypeSystem`AnyType, TypeSystem`Atom[TypeSystem`Enumeration[PASS]]}], 10], <|MaxItems -> {All, All}|>]
+                                                         13                                                                         23                                                                         14                                                                         15                                                                         24                                                                         25                                                                         45

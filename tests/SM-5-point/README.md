@@ -642,3 +642,31 @@ new favorable samples. Unfinished affine-family classification does not become
 a claim of uniqueness. The exact C5 dependency manifest binds its cold
 captures, code review, controls and prior proof chain; later development is
 not admitted through that sealed transition automatically.
+
+
+## Recorded C7 coverage
+
+The C7 checkpoint uses source context
+`4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167`.
+It records **245 native-complete cases**: **237** with strict ordinary
+CalcHEP/MadGraph validation and **8** with the separately reviewed precision
+qualification. The latter retain their raw comparison results. This is partial
+coverage of the 1,422-case inventory, not a claim that every SM five-point
+amplitude has been completed.
+
+C7 adds 24 quark families, containing 30 explicit amplitudes: six quark-pair
+Zhh families, six quark-pair ZZh families, six photon/hh families with both
+photon helicities constructed independently, and six charged-vector/hh
+families. Every new case uses the current source, retains all three normal
+parameter validation groups and passes physical residues, automatic spurious
+poles, high energy, reference independence and the independent full Feynman
+comparison. Each family also passes 1,000 phase-space points against both
+CalcHEP and MadGraph in the normal canonical export.
+
+There were 29 fresh ordinary worker constructions and one exact adoption of
+an already completed actual public default uUZhh call. The adoption preserves
+its expression, reports, prints and original timing; no constructor rerun is
+claimed. Earlier C6 records remain historical evidence admitted through the
+reviewed finite compatibility chain. They are not relabeled as fresh C7 runs.
+The frozen cohort summary and per-record hashes are in
+`tests/results/SM-5-point/diagnostics/C7-spectator-cohort-20261113/summary.json`.
