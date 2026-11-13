@@ -236,10 +236,13 @@ HEPCATCovariantCurrentSources`Private`covariantCurrentSource[process_List, model
  If[!AllTrue[rows, ListQ], Return[HEPCATCovariantCurrentSources`Private`reject["UnknownExternalParticle"]]];
  fermions = Select[rows, #[[5]] === 1 &]; vectors = Select[rows, #[[5]] === 2 &]; scalars = Select[rows, #[[5]] === 0 &];
  massiveDiracQ=AllTrue[fermions, #[[6]] =!= 0 && #[[2]] =!= #[[3]] && !MemberQ[{"L", "R"}, #[[9]]] &];
- If[!AllTrue[rows, #[[8]] === 1 &] || !massiveDiracQ ||
-   !((Length[fermions] === 4 && (Length[scalars] === 1 ||
+ If[!AllTrue[rows, #[[8]] === 1 &] ||
+   !((massiveDiracQ && ((Length[fermions] === 4 && (Length[scalars] === 1 ||
      (Length[vectors] === 1 && First[vectors][[6]] =!= 0))) ||
-     (Length[fermions] === 2 && Length[vectors] === 1 && Length[scalars] === 2 && First[vectors][[6]] === 0)),
+     (Length[fermions] === 2 && Length[vectors] === 1 && Length[scalars] === 2 && First[vectors][[6]] === 0))) ||
+     (Length[fermions] === 2 && Length[vectors] === 3 && scalars === {} &&
+       AnyTrue[vectors, #[[6]] =!= 0 &] && AllTrue[fermions,
+         HEPCATCovariantCurrentSources`Private`supportedFermionRowQ])),
    Return[HEPCATCovariantCurrentSources`Private`reject["UnsupportedExternalCurrentClass"]]];
  diagrams = CreateDiagrams[process, model];
  If[!ListQ[diagrams] || diagrams === {} || !AllTrue[diagrams, AssociationQ],

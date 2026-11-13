@@ -1392,6 +1392,7 @@ ConstructiveDiagrams`Private`colorSpectatorSource[process_List,model_List,lower_
    Throw[ConstructiveDiagrams`Private`colorSpectatorReject["UnsupportedSpectatorFermionMetadata"],tag]];
   sourceClass=Which[
    Length[vectors]===1&&Length[scalars]===2&&First[vectors][[6]]===0,"Cubic currents",
+   Length[vectors]===3&&scalars==={}&&AnyTrue[vectors,#[[6]]=!=0&],"Cubic currents",
    Length[vectors]===1&&Length[scalars]===2&&First[vectors][[6]]=!=0&&
     Length[DeleteDuplicates[Pick[process,rows[[All,5]],0]]]===1,"Calibrated metric currents",
    Length[vectors]===2&&Length[scalars]===1&&AllTrue[vectors,#[[6]]=!=0&],"Calibrated metric currents",
@@ -1465,7 +1466,8 @@ ConstructiveDiagrams`Private`colorSpectatorPrepare[process_List,model_List,lower
  If[!AllTrue[rows,ListQ],Return[<|"Attempted"->False,"Status"->"NOT_APPLICABLE"|>]];
  reps=colorParticleRepresentation[#,model]&/@process;spins=rows[[All,5]];
  If[Sort[reps]=!={-3,1,1,1,3}||Count[spins,1]=!=2||
-   !MemberQ[{{1,2},{2,1}},{Count[spins,2],Count[spins,0]}]||
+   !(MemberQ[{{1,2},{2,1}},{Count[spins,2],Count[spins,0]}]||
+     (Count[spins,2]===3&&Count[spins,0]===0&&AnyTrue[Pick[rows,spins,2],#[[6]]=!=0&]))||
    !AllTrue[Pick[rows,spins,1],#[[6]]=!=0&&HEPCATCovariantCurrentSources`Private`supportedFermionRowQ[#]&],
   Return[<|"Attempted"->False,"Status"->"NOT_APPLICABLE"|>]];
  remaining=Max[0,deadline-AbsoluteTime[]];

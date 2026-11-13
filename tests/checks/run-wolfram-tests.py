@@ -48,7 +48,7 @@ TEST_SUITES = (
     "simplification-path-tests.wl", "physical-residue-tests.wl", "factorization-simplification-budget-tests.wl", "factorization-source-timeout-retry-tests.wl", "ordinary-source-closure-tests.wl", "massless-sewing-tests.wl",
     "fermion-sewing-grading-tests.wl", "fermion-row-reference-tests.wl",
     "spurious-pole-tests.wl", "qed-five-point-simplification-tests.wl",
-    "high-energy-tests.wl", "high-energy-power-counting-tests.wl", "high-energy-family-tests.wl", "cubic-current-source-tests.wl",
+    "high-energy-tests.wl", "high-energy-power-counting-tests.wl", "high-energy-family-tests.wl", "cubic-current-source-tests.wl", "two-fermion-three-vector-source-tests.wl",
     "high-energy-compact-retry-tests.wl", "high-energy-zero-family-retry-tests.wl", "five-point-identity-proof-tests.wl",
     "reference-independence-tests.wl",
     "reference-affine-row-tests.wl",
