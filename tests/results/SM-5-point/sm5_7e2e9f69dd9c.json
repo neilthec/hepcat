@@ -7,14 +7,33 @@
 		"G.-",
 		"G.-"
 	],
-	"Status":"FAIL",
-	"Seconds":5.54430631e2,
-	"Complexity":null,
-	"RandomSeed":42828794,
-	"ContextSHA256":"b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd",
-	"Rows":0,
-	"FeynmanRows":0,
-	"CheckStatuses":{},
+	"Status":"COMPLETE",
+	"Seconds":3.165323e2,
+	"Complexity":14,
+	"RandomSeed":8487013554719926114,
+	"ContextSHA256":"47026bedc2844622616e46a05069c2682cc4306872799bbe8e02d4a01291cc04",
+	"CallType":"ActualPublicDefaultC6",
+	"ResolvedRandomSeed":8487013554719926114,
+	"PublicOptionsSupplied":[
+		"FeynmanModel",
+		"Output"
+	],
+	"CanonicalImport":{
+		"Status":"EXACT_DEFAULT_CONSTRUCTION_ADOPTED",
+		"ConstructorRerun":false,
+		"OriginalDiagnosticCapsule":"tests\/results\/SM-5-point\/diagnostics\/c6-default-five-gluon-20261113\/construction.wxf",
+		"OriginalDiagnosticCapsuleSHA256":"a343c8dfb8b721d787e5f0f5f0b0216b116701b2c30fff9baa35ea65aed6aa3f",
+		"OriginalCallRandomSeedWasAutomatic":true,
+		"PublicOptionsSupplied":[
+			"FeynmanModel",
+			"Output"
+		]
+	},
+	"Rows":72,
+	"FeynmanRows":6,
+	"CheckStatuses":{
+		"PASS":72
+	},
 	"FailureStage":null,
-	"CapsuleSHA256":"d25e82248db54b43d05eebb773c99f9dd396da93d63b4235f3a44c9949fbbd29"
+	"CapsuleSHA256":"03f931e2e62e2ddec912279d315292de0e9cd7bc88e72676dcda709463a48f45"
 }

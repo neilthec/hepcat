@@ -1,0 +1,420 @@
+{
+  "Point": 719,
+  "Seed": 1794538767447593000,
+  "Momenta": [
+    [
+      2.186839504325539,
+      0,
+      0,
+      2.186839504325539
+    ],
+    [
+      2.186839504325539,
+      0,
+      0,
+      -2.186839504325539
+    ],
+    [
+      1.4734358844330988,
+      0.9588400166937172,
+      1.0927394610760475,
+      -0.23991581467083176
+    ],
+    [
+      2.1864796490875724,
+      -1.4469496588211046,
+      -1.5961491489485333,
+      0.37327983473859655
+    ],
+    [
+      0.7137634751304069,
+      0.4881096421273875,
+      0.5034096878724857,
+      -0.13336402006776482
+    ]
+  ],
+  "FailedRows": [
+    {
+      "Helicities": [
+        -2,
+        -2,
+        -2,
+        -2,
+        2
+      ],
+      "ExpectedExactZero": true,
+      "ZeroAbsoluteTolerance": 1e-22,
+      "Status": "FAIL",
+      "Passed": false,
+      "Points": 1000,
+      "RequestedPoints": 1000,
+      "GeneratedPoints": 1000,
+      "ComparedPoints": 1000,
+      "Mismatches": 1,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 1,
+      "MaximumAbsoluteError": 3.076734267896465e-22,
+      "MinimumCenterOfMassEnergy": 1.5,
+      "MaximumCenterOfMassEnergy": 6,
+      "Message": "The requested validation did not pass; inspect counts and the first failing point.",
+      "FirstFailure": {
+        "Point": 719,
+        "Momenta": [
+          [
+            2.186839504325539,
+            0,
+            0,
+            2.186839504325539
+          ],
+          [
+            2.186839504325539,
+            0,
+            0,
+            -2.186839504325539
+          ],
+          [
+            1.4734358844330988,
+            0.9588400166937172,
+            1.0927394610760475,
+            -0.23991581467083176
+          ],
+          [
+            2.1864796490875724,
+            -1.4469496588211046,
+            -1.5961491489485333,
+            0.37327983473859655
+          ],
+          [
+            0.7137634751304069,
+            0.4881096421273875,
+            0.5034096878724857,
+            -0.13336402006776482
+          ]
+        ],
+        "HEPCATValue": 0,
+        "MadGraphValue": 3.076734267896465e-22,
+        "AbsoluteError": 3.076734267896465e-22,
+        "RelativeError": 1,
+        "Message": "The squared amplitudes disagree beyond the supplied tolerances."
+      }
+    },
+    {
+      "Helicities": [
+        -2,
+        -2,
+        2,
+        -2,
+        -2
+      ],
+      "ExpectedExactZero": true,
+      "ZeroAbsoluteTolerance": 1e-22,
+      "Status": "FAIL",
+      "Passed": false,
+      "Points": 1000,
+      "RequestedPoints": 1000,
+      "GeneratedPoints": 1000,
+      "ComparedPoints": 1000,
+      "Mismatches": 1,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 1,
+      "MaximumAbsoluteError": 3.072756771788048e-22,
+      "MinimumCenterOfMassEnergy": 1.5,
+      "MaximumCenterOfMassEnergy": 6,
+      "Message": "The requested validation did not pass; inspect counts and the first failing point.",
+      "FirstFailure": {
+        "Point": 719,
+        "Momenta": [
+          [
+            2.186839504325539,
+            0,
+            0,
+            2.186839504325539
+          ],
+          [
+            2.186839504325539,
+            0,
+            0,
+            -2.186839504325539
+          ],
+          [
+            1.4734358844330988,
+            0.9588400166937172,
+            1.0927394610760475,
+            -0.23991581467083176
+          ],
+          [
+            2.1864796490875724,
+            -1.4469496588211046,
+            -1.5961491489485333,
+            0.37327983473859655
+          ],
+          [
+            0.7137634751304069,
+            0.4881096421273875,
+            0.5034096878724857,
+            -0.13336402006776482
+          ]
+        ],
+        "HEPCATValue": 0,
+        "MadGraphValue": 3.072756771788048e-22,
+        "AbsoluteError": 3.072756771788048e-22,
+        "RelativeError": 1,
+        "Message": "The squared amplitudes disagree beyond the supplied tolerances."
+      }
+    },
+    {
+      "Helicities": [
+        -2,
+        -2,
+        2,
+        -2,
+        2
+      ],
+      "ExpectedExactZero": false,
+      "Status": "FAIL",
+      "Passed": false,
+      "Points": 1000,
+      "RequestedPoints": 1000,
+      "GeneratedPoints": 1000,
+      "ComparedPoints": 1000,
+      "Mismatches": 1,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 3.424276612955905e-07,
+      "MaximumAbsoluteError": 1.0058283805847168e-07,
+      "MinimumCenterOfMassEnergy": 1.5,
+      "MaximumCenterOfMassEnergy": 6,
+      "Message": "The requested validation did not pass; inspect counts and the first failing point.",
+      "FirstFailure": {
+        "Point": 719,
+        "Momenta": [
+          [
+            2.186839504325539,
+            0,
+            0,
+            2.186839504325539
+          ],
+          [
+            2.186839504325539,
+            0,
+            0,
+            -2.186839504325539
+          ],
+          [
+            1.4734358844330988,
+            0.9588400166937172,
+            1.0927394610760475,
+            -0.23991581467083176
+          ],
+          [
+            2.1864796490875724,
+            -1.4469496588211046,
+            -1.5961491489485333,
+            0.37327983473859655
+          ],
+          [
+            0.7137634751304069,
+            0.4881096421273875,
+            0.5034096878724857,
+            -0.13336402006776482
+          ]
+        ],
+        "HEPCATValue": 2.9861322737377486e-11,
+        "MadGraphValue": 2.9861332962723895e-11,
+        "AbsoluteError": 1.022534640959447e-17,
+        "RelativeError": 3.424276612955905e-07,
+        "Message": "The squared amplitudes disagree beyond the supplied tolerances."
+      }
+    },
+    {
+      "Helicities": [
+        2,
+        2,
+        -2,
+        2,
+        -2
+      ],
+      "ExpectedExactZero": false,
+      "Status": "FAIL",
+      "Passed": false,
+      "Points": 1000,
+      "RequestedPoints": 1000,
+      "GeneratedPoints": 1000,
+      "ComparedPoints": 1000,
+      "Mismatches": 1,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 3.424276612955905e-07,
+      "MaximumAbsoluteError": 1.0058283805847168e-07,
+      "MinimumCenterOfMassEnergy": 1.5,
+      "MaximumCenterOfMassEnergy": 6,
+      "Message": "The requested validation did not pass; inspect counts and the first failing point.",
+      "FirstFailure": {
+        "Point": 719,
+        "Momenta": [
+          [
+            2.186839504325539,
+            0,
+            0,
+            2.186839504325539
+          ],
+          [
+            2.186839504325539,
+            0,
+            0,
+            -2.186839504325539
+          ],
+          [
+            1.4734358844330988,
+            0.9588400166937172,
+            1.0927394610760475,
+            -0.23991581467083176
+          ],
+          [
+            2.1864796490875724,
+            -1.4469496588211046,
+            -1.5961491489485333,
+            0.37327983473859655
+          ],
+          [
+            0.7137634751304069,
+            0.4881096421273875,
+            0.5034096878724857,
+            -0.13336402006776482
+          ]
+        ],
+        "HEPCATValue": 2.9861322737377486e-11,
+        "MadGraphValue": 2.9861332962723895e-11,
+        "AbsoluteError": 1.022534640959447e-17,
+        "RelativeError": 3.424276612955905e-07,
+        "Message": "The squared amplitudes disagree beyond the supplied tolerances."
+      }
+    },
+    {
+      "Helicities": [
+        2,
+        2,
+        -2,
+        2,
+        2
+      ],
+      "ExpectedExactZero": true,
+      "ZeroAbsoluteTolerance": 1e-22,
+      "Status": "FAIL",
+      "Passed": false,
+      "Points": 1000,
+      "RequestedPoints": 1000,
+      "GeneratedPoints": 1000,
+      "ComparedPoints": 1000,
+      "Mismatches": 1,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 1,
+      "MaximumAbsoluteError": 3.072756771788048e-22,
+      "MinimumCenterOfMassEnergy": 1.5,
+      "MaximumCenterOfMassEnergy": 6,
+      "Message": "The requested validation did not pass; inspect counts and the first failing point.",
+      "FirstFailure": {
+        "Point": 719,
+        "Momenta": [
+          [
+            2.186839504325539,
+            0,
+            0,
+            2.186839504325539
+          ],
+          [
+            2.186839504325539,
+            0,
+            0,
+            -2.186839504325539
+          ],
+          [
+            1.4734358844330988,
+            0.9588400166937172,
+            1.0927394610760475,
+            -0.23991581467083176
+          ],
+          [
+            2.1864796490875724,
+            -1.4469496588211046,
+            -1.5961491489485333,
+            0.37327983473859655
+          ],
+          [
+            0.7137634751304069,
+            0.4881096421273875,
+            0.5034096878724857,
+            -0.13336402006776482
+          ]
+        ],
+        "HEPCATValue": 0,
+        "MadGraphValue": 3.072756771788048e-22,
+        "AbsoluteError": 3.072756771788048e-22,
+        "RelativeError": 1,
+        "Message": "The squared amplitudes disagree beyond the supplied tolerances."
+      }
+    },
+    {
+      "Helicities": [
+        2,
+        2,
+        2,
+        2,
+        -2
+      ],
+      "ExpectedExactZero": true,
+      "ZeroAbsoluteTolerance": 1e-22,
+      "Status": "FAIL",
+      "Passed": false,
+      "Points": 1000,
+      "RequestedPoints": 1000,
+      "GeneratedPoints": 1000,
+      "ComparedPoints": 1000,
+      "Mismatches": 1,
+      "EvaluationErrors": 0,
+      "MaximumRelativeError": 1,
+      "MaximumAbsoluteError": 3.076734267896465e-22,
+      "MinimumCenterOfMassEnergy": 1.5,
+      "MaximumCenterOfMassEnergy": 6,
+      "Message": "The requested validation did not pass; inspect counts and the first failing point.",
+      "FirstFailure": {
+        "Point": 719,
+        "Momenta": [
+          [
+            2.186839504325539,
+            0,
+            0,
+            2.186839504325539
+          ],
+          [
+            2.186839504325539,
+            0,
+            0,
+            -2.186839504325539
+          ],
+          [
+            1.4734358844330988,
+            0.9588400166937172,
+            1.0927394610760475,
+            -0.23991581467083176
+          ],
+          [
+            2.1864796490875724,
+            -1.4469496588211046,
+            -1.5961491489485333,
+            0.37327983473859655
+          ],
+          [
+            0.7137634751304069,
+            0.4881096421273875,
+            0.5034096878724857,
+            -0.13336402006776482
+          ]
+        ],
+        "HEPCATValue": 0,
+        "MadGraphValue": 3.076734267896465e-22,
+        "AbsoluteError": 3.076734267896465e-22,
+        "RelativeError": 1,
+        "Message": "The squared amplitudes disagree beyond the supplied tolerances."
+      }
+    }
+  ]
+}

@@ -1,238 +1,110 @@
-19:11:19 Building independent colored Feynman benchmark.
-19:12:22 Constructing 6 independent color coefficients.
-19:12:23 Using identical-particle color symmetry: 1 construction seeds for 6 coefficients.
-19:12:23 Color coefficient 1/6
-19:12:23 Generating diagrams: RUNNING; stage 0.0 s; total 0.1 s
-19:12:23 Generating diagrams: COMPLETE; stage 0.0 s; total 0.1 s
-19:12:23 Building diagram amplitudes: RUNNING; stage 0.0 s; total 0.1 s
-19:12:23 Building diagram amplitudes: COMPLETE; stage 0.0 s; total 0.1 s
-19:12:23 Preparing diagrams: RUNNING; stage 0.0 s; total 0.1 s
-19:12:24 Preparing diagrams: PREPARED; stage 0.8 s; total 0.9 s
-19:12:24 Generating factorization channels: RUNNING; stage 0.0 s; total 0.9 s
-19:12:24 Generating factorization channels: COMPLETE; stage 0.0 s; total 0.9 s
-19:12:24 Preparing factorization channels: RUNNING; stage 0.0 s; total 0.9 s
-19:12:25 Preparing factorization channels: working; stage 1.2 s; total 2.0 s
-19:12:25 Preparing factorization channels: PREPARED; stage 1.4 s; total 2.2 s
-19:12:25 Completing factorization: RUNNING; stage 0.0 s; total 2.3 s
-19:12:31 Completing factorization: working; stage 5.9 s; total 8.1 s
-19:12:32 Completing factorization: working; stage 7.1 s; total 9.4 s
-19:12:34 Completing factorization: working; stage 8.2 s; total 10.5 s
-19:12:35 Completing factorization: working; stage 9.3 s; total 11.5 s
-19:12:36 Completing factorization: working; stage 10.3 s; total 12.6 s
-19:12:40 Completing factorization: working; stage 14.4 s; total 16.7 s
-19:12:42 Completing factorization: working; stage 16.5 s; total 18.7 s
-19:12:44 Completing factorization: working; stage 18.7 s; total 21.0 s
-19:12:47 Completing factorization: working; stage 21.4 s; total 23.6 s
-19:12:48 Completing factorization: working; stage 23.0 s; total 25.3 s
-19:12:49 Completing factorization: working; stage 24.1 s; total 26.3 s
-19:12:51 Completing factorization: working; stage 25.2 s; total 27.4 s
-19:12:52 Completing factorization: working; stage 26.2 s; total 28.5 s
-19:12:53 Completing factorization: working; stage 27.2 s; total 29.5 s
-19:12:54 Completing factorization: working; stage 28.4 s; total 30.7 s
-19:12:55 Completing factorization: working; stage 29.7 s; total 32.0 s
-19:12:56 Completing factorization: working; stage 30.7 s; total 33.0 s
-19:12:57 Completing factorization: working; stage 31.7 s; total 34.0 s
-19:12:58 Completing factorization: working; stage 32.8 s; total 35.1 s
-19:12:59 Completing factorization: working; stage 33.8 s; total 36.1 s
-19:13:00 Completing factorization: working; stage 34.9 s; total 37.2 s
-19:13:01 Completing factorization: working; stage 35.9 s; total 38.2 s
-19:13:02 Completing factorization: working; stage 37.0 s; total 39.2 s
-19:13:03 Completing factorization: working; stage 38.0 s; total 40.3 s
-19:13:04 Completing factorization: working; stage 39.1 s; total 41.3 s
-19:13:06 Completing factorization: working; stage 40.5 s; total 42.7 s
-19:13:07 Completing factorization: working; stage 41.5 s; total 43.8 s
-19:13:08 Completing factorization: working; stage 42.6 s; total 44.9 s
-19:13:09 Completing factorization: working; stage 43.7 s; total 45.9 s
-19:13:10 Completing factorization: working; stage 44.7 s; total 47.0 s
-19:13:11 Completing factorization: working; stage 46.0 s; total 48.3 s
-19:13:13 Completing factorization: working; stage 48.1 s; total 50.4 s
-19:13:16 Completing factorization: working; stage 50.2 s; total 52.5 s
-19:13:18 Completing factorization: working; stage 52.5 s; total 54.7 s
-19:13:20 Completing factorization: working; stage 54.3 s; total 56.5 s
-19:13:21 Completing factorization: working; stage 55.3 s; total 57.5 s
-19:13:22 Completing factorization: working; stage 56.3 s; total 58.6 s
-19:13:23 Completing factorization: working; stage 57.5 s; total 59.8 s
-19:13:25 Completing factorization: working; stage 59.4 s; total 61.7 s
-19:13:27 Completing factorization: working; stage 61.3 s; total 63.5 s
-19:13:29 Completing factorization: working; stage 63.8 s; total 66.0 s
-19:13:31 Completing factorization: working; stage 65.6 s; total 67.8 s
-19:13:32 Completing factorization: working; stage 66.7 s; total 68.9 s
-19:13:33 Completing factorization: working; stage 67.7 s; total 70.0 s
-19:13:34 Completing factorization: working; stage 68.7 s; total 71.0 s
-19:13:36 Completing factorization: working; stage 70.4 s; total 72.7 s
-19:13:38 Completing factorization: working; stage 72.2 s; total 74.5 s
-19:13:40 Completing factorization: working; stage 74.5 s; total 76.8 s
-19:13:42 Completing factorization: working; stage 76.2 s; total 78.5 s
-19:13:43 Completing factorization: working; stage 77.3 s; total 79.6 s
-19:13:44 Completing factorization: working; stage 78.3 s; total 80.6 s
-19:13:45 Completing factorization: working; stage 79.4 s; total 81.6 s
-19:13:46 Completing factorization: working; stage 81.0 s; total 83.3 s
-19:13:48 Completing factorization: working; stage 82.7 s; total 85.0 s
-19:13:51 Completing factorization: working; stage 85.3 s; total 87.5 s
-19:13:52 Completing factorization: working; stage 86.7 s; total 88.9 s
-19:13:54 Completing factorization: working; stage 88.4 s; total 90.6 s
-19:13:55 Completing factorization: working; stage 89.4 s; total 91.7 s
-19:13:56 Completing factorization: working; stage 90.6 s; total 92.8 s
-19:13:56 Completing factorization: COMPLETE; stage 90.7 s; total 92.9 s
-19:13:56 Preparing factorization result: RUNNING; stage 0.0 s; total 92.9 s
-19:13:57 Preparing factorization result: working; stage 1.0 s; total 94.0 s
-19:13:58 Preparing factorization result: working; stage 2.4 s; total 95.3 s
-19:14:00 Preparing factorization result: working; stage 4.0 s; total 96.9 s
-19:14:00 Preparing factorization result: COMPLETE; stage 4.0 s; total 96.9 s
-19:14:00 Completing high-energy behavior: RUNNING; stage 0.0 s; total 96.9 s
-19:14:10 Completing high-energy behavior: working; stage 9.8 s; total 106.8 s
-19:14:12 Completing high-energy behavior: working; stage 12.1 s; total 109.0 s
-19:14:15 Completing high-energy behavior: working; stage 15.0 s; total 111.9 s
-19:14:17 Completing high-energy behavior: working; stage 16.7 s; total 113.6 s
-19:14:18 Completing high-energy behavior: working; stage 18.3 s; total 115.2 s
-19:14:20 Completing high-energy behavior: working; stage 20.0 s; total 116.9 s
-19:14:24 Completing high-energy behavior: working; stage 23.9 s; total 120.8 s
-19:14:29 Completing high-energy behavior: working; stage 29.1 s; total 126.0 s
-19:14:31 Completing high-energy behavior: working; stage 30.8 s; total 127.7 s
-19:14:33 Completing high-energy behavior: working; stage 32.6 s; total 129.5 s
-19:14:34 Completing high-energy behavior: working; stage 33.7 s; total 130.6 s
-19:14:36 Completing high-energy behavior: working; stage 35.7 s; total 132.6 s
-19:14:39 Completing high-energy behavior: working; stage 39.2 s; total 136.1 s
-19:14:41 Completing high-energy behavior: working; stage 40.7 s; total 137.6 s
-19:14:45 Completing high-energy behavior: working; stage 45.2 s; total 142.2 s
-19:14:47 Completing high-energy behavior: working; stage 46.8 s; total 143.7 s
-19:14:51 Completing high-energy behavior: working; stage 50.7 s; total 147.6 s
-19:14:55 Completing high-energy behavior: working; stage 54.5 s; total 151.5 s
-19:14:58 Completing high-energy behavior: working; stage 57.6 s; total 154.5 s
-19:15:01 Completing high-energy behavior: working; stage 61.2 s; total 158.1 s
-19:15:03 Completing high-energy behavior: working; stage 62.8 s; total 159.7 s
-19:15:05 Completing high-energy behavior: working; stage 64.5 s; total 161.4 s
-19:15:06 Completing high-energy behavior: working; stage 66.3 s; total 163.2 s
-19:15:08 Completing high-energy behavior: working; stage 67.8 s; total 164.7 s
-19:15:10 Completing high-energy behavior: working; stage 70.2 s; total 167.1 s
-19:15:12 Completing high-energy behavior: working; stage 72.4 s; total 169.4 s
-19:15:15 Completing high-energy behavior: working; stage 75.4 s; total 172.3 s
-19:15:17 Completing high-energy behavior: working; stage 77.0 s; total 173.9 s
-19:15:18 Completing high-energy behavior: working; stage 78.1 s; total 175.0 s
-19:15:20 Completing high-energy behavior: working; stage 79.7 s; total 176.6 s
-19:15:25 Completing high-energy behavior: working; stage 84.5 s; total 181.4 s
-19:15:29 Completing high-energy behavior: working; stage 89.4 s; total 186.3 s
-19:15:31 Completing high-energy behavior: working; stage 91.2 s; total 188.2 s
-19:15:33 Completing high-energy behavior: working; stage 93.4 s; total 190.3 s
-19:15:34 Completing high-energy behavior: working; stage 94.5 s; total 191.4 s
-19:15:36 Completing high-energy behavior: working; stage 96.4 s; total 193.3 s
-19:15:40 Completing high-energy behavior: working; stage 100.0 s; total 196.9 s
-19:15:42 Completing high-energy behavior: working; stage 101.6 s; total 198.5 s
-19:15:44 Completing high-energy behavior: working; stage 104.3 s; total 201.2 s
-19:15:46 Completing high-energy behavior: working; stage 105.8 s; total 202.8 s
-19:15:47 Completing high-energy behavior: working; stage 107.0 s; total 203.9 s
-19:15:50 Completing high-energy behavior: working; stage 110.0 s; total 206.9 s
-19:15:54 Completing high-energy behavior: working; stage 113.7 s; total 210.6 s
-19:15:57 Completing high-energy behavior: working; stage 116.6 s; total 213.5 s
-19:16:00 Completing high-energy behavior: working; stage 120.2 s; total 217.1 s
-19:16:02 Completing high-energy behavior: working; stage 121.9 s; total 218.8 s
-19:16:04 Completing high-energy behavior: working; stage 123.6 s; total 220.5 s
-19:16:05 Completing high-energy behavior: working; stage 125.3 s; total 222.2 s
-19:16:07 Completing high-energy behavior: working; stage 126.8 s; total 223.7 s
-19:16:09 Completing high-energy behavior: working; stage 129.1 s; total 226.0 s
-19:16:11 Completing high-energy behavior: working; stage 131.4 s; total 228.3 s
-19:16:14 Completing high-energy behavior: working; stage 134.3 s; total 231.2 s
-19:16:16 Completing high-energy behavior: working; stage 135.9 s; total 232.8 s
-19:16:18 Completing high-energy behavior: working; stage 137.5 s; total 234.4 s
-19:16:19 Completing high-energy behavior: working; stage 139.2 s; total 236.1 s
-19:16:23 Completing high-energy behavior: working; stage 143.2 s; total 240.1 s
-19:16:28 Completing high-energy behavior: working; stage 148.3 s; total 245.2 s
-19:16:30 Completing high-energy behavior: working; stage 150.1 s; total 247.1 s
-19:16:32 Completing high-energy behavior: working; stage 151.9 s; total 248.8 s
-19:16:33 Completing high-energy behavior: working; stage 153.0 s; total 249.9 s
-19:16:35 Completing high-energy behavior: working; stage 154.9 s; total 251.9 s
-19:16:38 Completing high-energy behavior: working; stage 158.5 s; total 255.4 s
-19:16:40 Completing high-energy behavior: working; stage 160.1 s; total 257.0 s
-19:16:43 Completing high-energy behavior: working; stage 162.8 s; total 259.7 s
-19:16:44 Completing high-energy behavior: working; stage 164.3 s; total 261.2 s
-19:16:48 Completing high-energy behavior: working; stage 168.0 s; total 265.0 s
-19:16:52 Completing high-energy behavior: working; stage 172.0 s; total 268.9 s
-19:16:55 Completing high-energy behavior: working; stage 174.9 s; total 271.9 s
-19:16:59 Completing high-energy behavior: working; stage 178.5 s; total 275.4 s
-19:17:00 Completing high-energy behavior: working; stage 180.1 s; total 277.1 s
-19:17:02 Completing high-energy behavior: working; stage 181.8 s; total 278.8 s
-19:17:04 Completing high-energy behavior: working; stage 183.5 s; total 280.5 s
-19:17:05 Completing high-energy behavior: working; stage 185.0 s; total 281.9 s
-19:17:07 Completing high-energy behavior: working; stage 187.3 s; total 284.3 s
-19:17:08 Completing high-energy behavior: UNRESOLVED; stage 187.6 s; total 284.5 s
-19:17:08 Completing high-energy behavior after rejected representative: RUNNING; stage 0.0 s; total 284.5 s
-19:17:18 Completing high-energy behavior after rejected representative: working; stage 10.2 s; total 294.8 s
-19:17:20 Completing high-energy behavior after rejected representative: working; stage 12.5 s; total 297.0 s
-19:17:23 Completing high-energy behavior after rejected representative: working; stage 15.4 s; total 299.9 s
-19:17:25 Completing high-energy behavior after rejected representative: working; stage 17.1 s; total 301.6 s
-19:17:26 Completing high-energy behavior after rejected representative: working; stage 18.6 s; total 303.2 s
-19:17:28 Completing high-energy behavior after rejected representative: working; stage 20.3 s; total 304.9 s
-19:17:32 Completing high-energy behavior after rejected representative: working; stage 24.5 s; total 309.0 s
-19:17:38 Completing high-energy behavior after rejected representative: working; stage 30.2 s; total 314.7 s
-19:17:40 Completing high-energy behavior after rejected representative: working; stage 32.0 s; total 316.5 s
-19:17:41 Completing high-energy behavior after rejected representative: working; stage 33.7 s; total 318.3 s
-19:17:42 Completing high-energy behavior after rejected representative: working; stage 34.8 s; total 319.4 s
-19:17:44 Completing high-energy behavior after rejected representative: working; stage 36.7 s; total 321.3 s
-19:17:48 Completing high-energy behavior after rejected representative: working; stage 40.6 s; total 325.2 s
-19:17:50 Completing high-energy behavior after rejected representative: working; stage 42.1 s; total 326.7 s
-19:17:53 Completing high-energy behavior after rejected representative: working; stage 45.3 s; total 329.9 s
-19:17:55 Completing high-energy behavior after rejected representative: working; stage 46.9 s; total 331.4 s
-19:17:58 Completing high-energy behavior after rejected representative: working; stage 50.7 s; total 335.2 s
-19:18:02 Completing high-energy behavior after rejected representative: working; stage 54.4 s; total 339.0 s
-19:18:05 Completing high-energy behavior after rejected representative: working; stage 57.3 s; total 341.9 s
-19:18:09 Completing high-energy behavior after rejected representative: working; stage 61.0 s; total 345.5 s
-19:18:10 Completing high-energy behavior after rejected representative: working; stage 62.6 s; total 347.1 s
-19:18:12 Completing high-energy behavior after rejected representative: working; stage 64.3 s; total 348.8 s
-19:18:14 Completing high-energy behavior after rejected representative: working; stage 66.0 s; total 350.5 s
-19:18:15 Completing high-energy behavior after rejected representative: working; stage 67.5 s; total 352.0 s
-19:18:17 Completing high-energy behavior after rejected representative: working; stage 69.8 s; total 354.4 s
-19:18:20 Completing high-energy behavior after rejected representative: working; stage 72.1 s; total 356.6 s
-19:18:23 Completing high-energy behavior after rejected representative: working; stage 75.0 s; total 359.5 s
-19:18:24 Completing high-energy behavior after rejected representative: working; stage 76.6 s; total 361.2 s
-19:18:26 Completing high-energy behavior after rejected representative: working; stage 78.2 s; total 362.8 s
-19:18:28 Completing high-energy behavior after rejected representative: working; stage 79.9 s; total 364.5 s
-19:18:32 Completing high-energy behavior after rejected representative: working; stage 84.1 s; total 368.6 s
-19:18:37 Completing high-energy behavior after rejected representative: working; stage 89.6 s; total 374.2 s
-19:18:39 Completing high-energy behavior after rejected representative: working; stage 91.4 s; total 375.9 s
-19:18:41 Completing high-energy behavior after rejected representative: working; stage 93.1 s; total 377.7 s
-19:18:42 Completing high-energy behavior after rejected representative: working; stage 94.2 s; total 378.7 s
-19:18:44 Completing high-energy behavior after rejected representative: working; stage 96.0 s; total 380.5 s
-19:18:48 Completing high-energy behavior after rejected representative: working; stage 100.2 s; total 384.8 s
-19:18:50 Completing high-energy behavior after rejected representative: working; stage 101.9 s; total 386.5 s
-19:18:53 Completing high-energy behavior after rejected representative: working; stage 105.3 s; total 389.8 s
-19:18:55 Completing high-energy behavior after rejected representative: working; stage 107.1 s; total 391.7 s
-19:18:59 Completing high-energy behavior after rejected representative: working; stage 111.0 s; total 395.5 s
-19:19:02 Completing high-energy behavior after rejected representative: working; stage 114.8 s; total 399.4 s
-19:19:07 Completing high-energy behavior after rejected representative: working; stage 118.9 s; total 403.4 s
-19:19:08 Completing high-energy behavior after rejected representative: working; stage 119.9 s; total 404.4 s
-19:19:11 Completing high-energy behavior after rejected representative: working; stage 123.6 s; total 408.1 s
-19:19:13 Completing high-energy behavior after rejected representative: working; stage 125.2 s; total 409.8 s
-19:19:15 Completing high-energy behavior after rejected representative: working; stage 127.0 s; total 411.5 s
-19:19:16 Completing high-energy behavior after rejected representative: working; stage 128.7 s; total 413.2 s
-19:19:18 Completing high-energy behavior after rejected representative: working; stage 130.2 s; total 414.7 s
-19:19:20 Completing high-energy behavior after rejected representative: working; stage 132.5 s; total 417.1 s
-19:19:22 Completing high-energy behavior after rejected representative: working; stage 134.8 s; total 419.3 s
-19:19:25 Completing high-energy behavior after rejected representative: working; stage 137.7 s; total 422.2 s
-19:19:27 Completing high-energy behavior after rejected representative: working; stage 139.3 s; total 423.8 s
-19:19:28 Completing high-energy behavior after rejected representative: working; stage 140.3 s; total 424.9 s
-19:19:30 Completing high-energy behavior after rejected representative: working; stage 141.9 s; total 426.5 s
-19:19:35 Completing high-energy behavior after rejected representative: working; stage 147.0 s; total 431.5 s
-19:19:40 Completing high-energy behavior after rejected representative: working; stage 152.8 s; total 437.4 s
-19:19:42 Completing high-energy behavior after rejected representative: working; stage 154.7 s; total 439.2 s
-19:19:44 Completing high-energy behavior after rejected representative: working; stage 156.4 s; total 440.9 s
-19:19:45 Completing high-energy behavior after rejected representative: working; stage 157.5 s; total 442.0 s
-19:19:47 Completing high-energy behavior after rejected representative: working; stage 159.3 s; total 443.9 s
-19:19:51 Completing high-energy behavior after rejected representative: working; stage 163.2 s; total 447.8 s
-19:19:52 Completing high-energy behavior after rejected representative: working; stage 164.8 s; total 449.3 s
-19:19:56 Completing high-energy behavior after rejected representative: working; stage 168.0 s; total 452.5 s
-19:19:57 Completing high-energy behavior after rejected representative: working; stage 169.5 s; total 454.1 s
-19:20:01 Completing high-energy behavior after rejected representative: working; stage 173.3 s; total 457.8 s
-19:20:05 Completing high-energy behavior after rejected representative: working; stage 177.2 s; total 461.7 s
-19:20:08 Completing high-energy behavior after rejected representative: working; stage 180.1 s; total 464.7 s
-19:20:12 Completing high-energy behavior after rejected representative: working; stage 184.0 s; total 468.5 s
-19:20:13 Completing high-energy behavior after rejected representative: working; stage 185.7 s; total 470.2 s
-19:20:15 Completing high-energy behavior after rejected representative: working; stage 187.4 s; total 471.9 s
-19:20:17 Completing high-energy behavior after rejected representative: working; stage 189.1 s; total 473.6 s
-19:20:18 Completing high-energy behavior after rejected representative: working; stage 190.6 s; total 475.1 s
-19:20:21 Completing high-energy behavior after rejected representative: working; stage 192.9 s; total 477.4 s
-19:20:22 Completing high-energy behavior after rejected representative: working; stage 194.2 s; total 478.8 s
-19:20:24 Completing high-energy behavior after rejected representative: working; stage 196.2 s; total 480.8 s
-19:20:25 Completing high-energy behavior after rejected representative: working; stage 197.6 s; total 482.1 s
-19:20:26 Completing high-energy behavior after rejected representative: working; stage 198.6 s; total 483.1 s
-19:20:27 Completing high-energy behavior after rejected representative: working; stage 199.9 s; total 484.4 s
-19:20:28 Completing high-energy behavior after rejected representative: UNRESOLVED; stage 200.6 s; total 485.1 s
+20:38:30 Constructing the model-certified helicity partner {G.+, G.+, G.+, G.-, G.-}.
+20:38:35 Building independent colored Feynman benchmark.
+20:39:52 Constructing 6 independent color coefficients.
+20:39:53 Using identical-particle color symmetry: 1 construction seeds for 6 coefficients.
+20:39:53 Color coefficient 1/6
+20:39:53 Generating diagrams: RUNNING; stage 0.0 s; total 0.1 s
+20:39:53 Generating diagrams: COMPLETE; stage 0.0 s; total 0.1 s
+20:39:53 Building diagram amplitudes: RUNNING; stage 0.0 s; total 0.1 s
+20:39:53 Building diagram amplitudes: COMPLETE; stage 0.0 s; total 0.1 s
+20:39:53 Preparing diagrams: RUNNING; stage 0.0 s; total 0.1 s
+20:39:54 Preparing diagrams: PREPARED; stage 0.8 s; total 0.8 s
+20:39:54 Generating factorization channels: RUNNING; stage 0.0 s; total 0.8 s
+20:39:54 Generating factorization channels: COMPLETE; stage 0.0 s; total 0.8 s
+20:39:54 Preparing factorization channels: RUNNING; stage 0.0 s; total 0.8 s
+20:39:55 Preparing factorization channels: working; stage 1.1 s; total 1.9 s
+20:39:55 Preparing factorization channels: PREPARED; stage 1.2 s; total 2.0 s
+20:39:55 Completing factorization: RUNNING; stage 0.0 s; total 2.0 s
+20:40:01 Completing factorization: working; stage 6.2 s; total 8.2 s
+20:40:02 Completing factorization: working; stage 7.3 s; total 9.3 s
+20:40:04 Completing factorization: working; stage 8.5 s; total 10.5 s
+20:40:05 Completing factorization: working; stage 9.5 s; total 11.5 s
+20:40:06 Completing factorization: working; stage 10.6 s; total 12.6 s
+20:40:07 Completing factorization: working; stage 11.8 s; total 13.7 s
+20:40:10 Completing factorization: working; stage 15.3 s; total 17.3 s
+20:40:13 Completing factorization: working; stage 17.6 s; total 19.6 s
+20:40:14 Completing factorization: working; stage 18.7 s; total 20.6 s
+20:40:16 Completing factorization: working; stage 21.3 s; total 23.3 s
+20:40:18 Completing factorization: working; stage 23.1 s; total 25.0 s
+20:40:19 Completing factorization: working; stage 24.1 s; total 26.1 s
+20:40:20 Completing factorization: working; stage 25.2 s; total 27.2 s
+20:40:21 Completing factorization: working; stage 26.3 s; total 28.3 s
+20:40:22 Completing factorization: working; stage 27.3 s; total 29.3 s
+20:40:23 Completing factorization: working; stage 28.3 s; total 30.3 s
+20:40:25 Completing factorization: working; stage 29.5 s; total 31.4 s
+20:40:26 Completing factorization: working; stage 30.5 s; total 32.5 s
+20:40:27 Completing factorization: working; stage 31.6 s; total 33.6 s
+20:40:28 Completing factorization: working; stage 32.6 s; total 34.6 s
+20:40:29 Completing factorization: working; stage 33.7 s; total 35.7 s
+20:40:30 Completing factorization: working; stage 34.8 s; total 36.8 s
+20:40:31 Completing factorization: working; stage 35.9 s; total 37.9 s
+20:40:32 Completing factorization: working; stage 36.9 s; total 38.9 s
+20:40:33 Completing factorization: working; stage 38.0 s; total 39.9 s
+20:40:34 Completing factorization: working; stage 39.0 s; total 41.0 s
+20:40:35 Completing factorization: working; stage 40.0 s; total 42.0 s
+20:40:36 Completing factorization: working; stage 41.0 s; total 43.0 s
+20:40:37 Completing factorization: working; stage 42.1 s; total 44.1 s
+20:40:38 Completing factorization: working; stage 43.2 s; total 45.2 s
+20:40:39 Completing factorization: working; stage 44.3 s; total 46.2 s
+20:40:40 Completing factorization: working; stage 45.3 s; total 47.2 s
+20:40:41 Completing factorization: working; stage 46.3 s; total 48.3 s
+20:40:42 Completing factorization: working; stage 47.4 s; total 49.3 s
+20:40:44 Completing factorization: working; stage 48.4 s; total 50.4 s
+20:40:45 Completing factorization: working; stage 49.4 s; total 51.4 s
+20:40:46 Completing factorization: working; stage 50.5 s; total 52.5 s
+20:40:47 Completing factorization: working; stage 51.6 s; total 53.6 s
+20:40:48 Completing factorization: working; stage 52.7 s; total 54.7 s
+20:40:49 Completing factorization: working; stage 53.7 s; total 55.7 s
+20:40:50 Completing factorization: working; stage 54.8 s; total 56.7 s
+20:40:51 Completing factorization: COMPLETE; stage 55.7 s; total 57.7 s
+20:40:51 Preparing factorization result: RUNNING; stage 0.0 s; total 57.7 s
+20:40:51 Preparing factorization result: COMPLETE; stage 0.1 s; total 57.7 s
+20:40:51 Completing high-energy behavior: RUNNING; stage 0.0 s; total 57.7 s
+20:40:52 Completing high-energy behavior: working; stage 1.2 s; total 59.0 s
+20:40:56 Completing high-energy behavior: COMPLETE; stage 4.7 s; total 62.4 s
+20:40:56 Preparing final amplitude: RUNNING; stage 0.0 s; total 62.4 s
+20:40:56 Preparing final amplitude: COMPLETE; stage 0.1 s; total 62.5 s
+20:40:56 Checking final amplitude: RUNNING; stage 0.0 s; total 62.5 s
+20:40:58 Checking final amplitude: COMPLETE; stage 2.7 s; total 65.2 s
+20:40:59 Validating color symmetry coefficient 1/6; parameter set 1/3
+20:41:01 Validating color symmetry coefficient 2/6; parameter set 1/3
+20:41:04 Validating color symmetry coefficient 3/6; parameter set 1/3
+20:41:07 Validating color symmetry coefficient 4/6; parameter set 1/3
+20:41:10 Validating color symmetry coefficient 5/6; parameter set 1/3
+20:41:13 Validating color symmetry coefficient 6/6; parameter set 1/3
+20:41:16 Validating color symmetry coefficient 1/6; parameter set 2/3
+20:41:18 Validating color symmetry coefficient 2/6; parameter set 2/3
+20:41:21 Validating color symmetry coefficient 3/6; parameter set 2/3
+20:41:24 Validating color symmetry coefficient 4/6; parameter set 2/3
+20:41:27 Validating color symmetry coefficient 5/6; parameter set 2/3
+20:41:30 Validating color symmetry coefficient 6/6; parameter set 2/3
+20:41:33 Validating color symmetry coefficient 1/6; parameter set 3/3
+20:41:35 Validating color symmetry coefficient 2/6; parameter set 3/3
+20:41:38 Validating color symmetry coefficient 3/6; parameter set 3/3
+20:41:41 Validating color symmetry coefficient 4/6; parameter set 3/3
+20:41:44 Validating color symmetry coefficient 5/6; parameter set 3/3
+20:41:47 Validating color symmetry coefficient 6/6; parameter set 3/3
+20:41:49 Building independent colored Feynman benchmark.
+20:42:47 Constructing 6 independent color coefficients.
+20:42:51 Validating color symmetry coefficient 1/6; parameter set 1/3
+20:42:54 Validating color symmetry coefficient 2/6; parameter set 1/3
+20:42:57 Validating color symmetry coefficient 3/6; parameter set 1/3
+20:42:59 Validating color symmetry coefficient 4/6; parameter set 1/3
+20:43:02 Validating color symmetry coefficient 5/6; parameter set 1/3
+20:43:05 Validating color symmetry coefficient 6/6; parameter set 1/3
+20:43:07 Validating color symmetry coefficient 1/6; parameter set 2/3
+20:43:10 Validating color symmetry coefficient 2/6; parameter set 2/3
+20:43:13 Validating color symmetry coefficient 3/6; parameter set 2/3
+20:43:15 Validating color symmetry coefficient 4/6; parameter set 2/3
+20:43:18 Validating color symmetry coefficient 5/6; parameter set 2/3
+20:43:21 Validating color symmetry coefficient 6/6; parameter set 2/3
+20:43:23 Validating color symmetry coefficient 1/6; parameter set 3/3
+20:43:26 Validating color symmetry coefficient 2/6; parameter set 3/3
+20:43:29 Validating color symmetry coefficient 3/6; parameter set 3/3
+20:43:32 Validating color symmetry coefficient 4/6; parameter set 3/3
+20:43:34 Validating color symmetry coefficient 5/6; parameter set 3/3
+20:43:37 Validating color symmetry coefficient 6/6; parameter set 3/3
+20:43:40 Total time: 316.5 s
+20:43:40 Complexity: 14
+20:43:40 Dataset[{<|Color -> 1, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 1, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 1, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 1, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 1, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 1, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 1, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 1, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 1, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 1, Type -> HighEnergy, Test -> Fixed-angle high energy, Status -> PASS|>, <|Color -> 1, Type -> Reference, Test -> No explicit Xi dependence, Status -> PASS|>, <|Color -> 1, Type -> Feynman, Test -> Full Feynman amplitude, Status -> PASS|>, <|Color -> 2, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 2, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 2, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 2, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 2, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 2, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 2, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 2, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 2, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 2, Type -> HighEnergy, Test -> Fixed-angle high energy, Status -> PASS|>, <|Color -> 2, Type -> Reference, Test -> No explicit Xi dependence, Status -> PASS|>, <|Color -> 2, Type -> Feynman, Test -> Full Feynman amplitude, Status -> PASS|>, <|Color -> 3, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 3, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 3, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 3, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 3, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 3, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 3, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 3, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 3, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 3, Type -> HighEnergy, Test -> Fixed-angle high energy, Status -> PASS|>, <|Color -> 3, Type -> Reference, Test -> No explicit Xi dependence, Status -> PASS|>, <|Color -> 3, Type -> Feynman, Test -> Full Feynman amplitude, Status -> PASS|>, <|Color -> 4, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 4, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 4, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 4, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 4, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 4, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 4, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 4, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 4, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 4, Type -> HighEnergy, Test -> Fixed-angle high energy, Status -> PASS|>, <|Color -> 4, Type -> Reference, Test -> No explicit Xi dependence, Status -> PASS|>, <|Color -> 4, Type -> Feynman, Test -> Full Feynman amplitude, Status -> PASS|>, <|Color -> 5, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 5, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 5, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 5, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 5, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 5, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 5, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 5, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 5, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 5, Type -> HighEnergy, Test -> Fixed-angle high energy, Status -> PASS|>, <|Color -> 5, Type -> Reference, Test -> No explicit Xi dependence, Status -> PASS|>, <|Color -> 5, Type -> Feynman, Test -> Full Feynman amplitude, Status -> PASS|>, <|Color -> 6, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 6, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 6, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 6, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 6, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 6, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 6, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 6, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 6, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 6, Type -> HighEnergy, Test -> Fixed-angle high energy, Status -> PASS|>, <|Color -> 6, Type -> Reference, Test -> No explicit Xi dependence, Status -> PASS|>, <|Color -> 6, Type -> Feynman, Test -> Full Feynman amplitude, Status -> PASS|>}, TypeSystem`Vector[TypeSystem`Struct[{Color, Type, Test, Status}, {TypeSystem`Atom[Integer], TypeSystem`Atom[TypeSystem`Enumeration[Feynman, HighEnergy, Physical, Reference]], TypeSystem`AnyType, TypeSystem`Atom[TypeSystem`Enumeration[PASS]]}], 72], <|MaxItems -> {All, All}|>]
+                                                  13                                                                  14                                                                  15                                                                  23                                                                  24                                                                  25                                                                  34                                                                  35                                                                  45                                                                                                                                                                                                                                                                                                                              13                                                                  14                                                                  15                                                                  23                                                                  24                                                                  25                                                                  34                                                                  35                                                                  45                                                                                                                                                                                                                                                                                                                              13                                                                  14                                                                  15                                                                  23                                                                  24                                                                  25                                                                  34                                                                  35                                                                  45                                                                                                                                                                                                                                                                                                                              13                                                                  14                                                                  15                                                                  23                                                                  24                                                                  25                                                                  34                                                                  35                                                                  45                                                                                                                                                                                                                                                                                                                              13                                                                  14                                                                  15                                                                  23                                                                  24                                                                  25                                                                  34                                                                  35                                                                  45                                                                                                                                                                                                                                                                                                                              13                                                                  14                                                                  15                                                                  23                                                                  24                                                                  25                                                                  34                                                                  35                                                                  45

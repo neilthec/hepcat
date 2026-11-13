@@ -1,0 +1,33 @@
+d="/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/c6-default-five-gluon-20261113";
+base="/Users/neil/code/hepcat/tests/results/SM-5-point";id="sm5_7e2e9f69dd9c";input=d<>"/construction.wxf";
+r=Import[input,"WXF"];inventory=Import["/Users/neil/code/hepcat/tests/SM-5-point/inventory.json","RawJSON"];
+entry=SelectFirst[inventory["Cases"],#["ID"]===id&];detail=r["Details"];
+validations=detail["ColorHandednessAttempt"]["Validation"]["ValidationReports"];
+sourceValidations=detail["ColorHandednessAttempt"]["PartnerReport"]["ColorOrbitAttempt"]["Validation"]["ValidationReports"];
+If[r["Status"]=!="COMPLETE"||r["CallType"]=!="ActualPublicDefaultC6"||r["Particles"]=!=entry["Particles"]||
+ r["ContextSHA256"]=!="47026bedc2844622616e46a05069c2682cc4306872799bbe8e02d4a01291cc04"||
+ r["Expression"]=!=detail["Amplitude"]||r["AmplitudePair"]=!=detail["AmplitudePair"]||
+ Length[sourceValidations]=!=18||!TrueQ[detail["ColorHandednessAttempt"]["PartnerConstructedFresh"]]||TrueQ[detail["ColorHandednessAttempt"]["SavedAmplitudeInput"]]||
+ !AllTrue[Flatten[Lookup[Lookup[sourceValidations,"Report"],"Checks"],1],Lookup[#,"Status",None]==="PASS"&]||Length[validations]=!=18||!AllTrue[Flatten[Lookup[Lookup[validations,"Report"],"Checks"],1],Lookup[#,"Status",None]==="PASS"&]||
+ !AllTrue[r["Rows"],Lookup[#,"Status",None]==="PASS"&]||!IntegerQ[r["ResolvedRandomSeed"]],Quit[2]];
+record=Join[r,<|"ID"->id,"RandomSeed"->r["ResolvedRandomSeed"],"Complexity"->detail["Complexity"],
+ "CanonicalImport"-><|"Status"->"EXACT_DEFAULT_CONSTRUCTION_ADOPTED","ConstructorRerun"->False,
+ "OriginalDiagnosticCapsule"->"tests/results/SM-5-point/diagnostics/c6-default-five-gluon-20261113/construction.wxf",
+ "OriginalDiagnosticCapsuleSHA256"->IntegerString[FileHash[input,"SHA256"],16,64],
+ "OriginalCallRandomSeedWasAutomatic"->True,"PublicOptionsSupplied"->r["PublicOptionsSupplied"]|>|>];
+target=base<>"/"<>id<>".wxf";temporary=target<>".tmp";
+stream=OpenWrite[temporary,BinaryFormat->True];BinaryWrite[stream,Normal[BinarySerialize[record,PerformanceGoal->"Size"]],"Byte"];Close[stream];
+saved=Import[temporary,"WXF"];
+proof=Association[Map[#->SameQ[saved[#],r[#]]&,{"Expression","AmplitudePair","Details","Prints","Rows","Seconds","ContextSHA256","ResolvedRandomSeed"}]];
+If[!And@@Values[proof],Print[proof];Quit[2]];
+RenameFile[temporary,target,OverwriteTarget->True];
+summary=KeyTake[record,{"ID","Particles","Status","Seconds","Complexity","RandomSeed","ContextSHA256","CallType","ResolvedRandomSeed","PublicOptionsSupplied","CanonicalImport"}];
+AssociateTo[summary,{"Rows"->Length[record["Rows"]],"FeynmanRows"->Count[Lookup[record["Rows"],"Type"],"Feynman"],
+ "CheckStatuses"->Counts[Lookup[record["Rows"],"Status"]],"FailureStage"->Null,
+ "CapsuleSHA256"->IntegerString[FileHash[target,"SHA256"],16,64]}];
+Export[base<>"/"<>id<>".json.tmp",summary,"RawJSON"];RenameFile[base<>"/"<>id<>".json.tmp",base<>"/"<>id<>".json",OverwriteTarget->True];
+audit=<|"Status"->"EXACT_TYPED_IMPORT_VERIFIED","ID"->id,"ConstructorRerun"->False,"SameQFields"->proof,
+ "OriginalCapsuleSHA256"->IntegerString[FileHash[input,"SHA256"],16,64],"CanonicalCapsuleSHA256"->summary["CapsuleSHA256"],
+ "CanonicalSummarySHA256"->IntegerString[FileHash[base<>"/"<>id<>".json","SHA256"],16,64],"RandomSeed"->record["RandomSeed"],
+ "ContextSHA256"->record["ContextSHA256"]|>;
+Export[d<>"/canonical-import-audit.json",audit,"RawJSON"];Print[audit];Quit[];

@@ -1,0 +1,26 @@
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+Wrote /Users/neil/code/hepcat/tests/SM-5-point-construction.nb with 143 families.
+{
+  "TotalCases": 1422,
+  "TotalFamilies": 869,
+  "Constructed": 211,
+  "FullyValidatedCases": 203,
+  "PrecisionQualifiedCases": 2,
+  "ValidatedIncludingPrecisionQualifiedCases": 205,
+  "PrecisionQualifiedFamilies": 2,
+  "ValidatedFamilies": 140,
+  "RecordedInputPassCases": 205,
+  "SupplementalParameterProbeFailedCases": 0,
+  "SupplementalParameterProbeUnavailableCases": 0,
+  "FailedOrTimedOut": 0
+}
+Checkpoint: /Users/neil/code/hepcat/tests/SM-5-point/progress.json

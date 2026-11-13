@@ -1,0 +1,345 @@
+{
+  "Status": "PREPARED_NOT_DISPATCHED",
+  "PreparedUTC": "2026-11-13T02:36:10.376421+00:00",
+  "SourceRequirement": "Wait for final jointly frozen C6 source, sealed historical bridge, global configuration, and root physics dispatch authorization.",
+  "InventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+  "ExpectedFamilies": 12,
+  "ExpectedCases": 12,
+  "Families": [
+    {
+      "ID": "sm5f_268bfd2334c3",
+      "Particles": [
+        "E",
+        "ne",
+        "W-",
+        "h",
+        "h"
+      ],
+      "CaseIDs": [
+        "sm5_268bfd2334c3"
+      ],
+      "ExportName": "ebarneWmhh",
+      "Incoming": [
+        "E",
+        "ne"
+      ],
+      "Outgoing": [
+        "W+",
+        "h",
+        "h"
+      ],
+      "Group": "ChargedCurrentHiggsPair",
+      "CurrentNativeRecords": []
+    },
+    {
+      "ID": "sm5f_42d2baa06efc",
+      "Particles": [
+        "e",
+        "Ne",
+        "W+",
+        "h",
+        "h"
+      ],
+      "CaseIDs": [
+        "sm5_42d2baa06efc"
+      ],
+      "ExportName": "enebarWphh",
+      "Incoming": [
+        "e",
+        "Ne"
+      ],
+      "Outgoing": [
+        "W-",
+        "h",
+        "h"
+      ],
+      "Group": "ChargedCurrentHiggsPair",
+      "CurrentNativeRecords": [
+        {
+          "ID": "sm5_42d2baa06efc",
+          "Status": "COMPLETE",
+          "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+          "Seconds": 845.29962,
+          "CapsuleSHA256": "5af1f27a8ec17253c581b33486192b4f48a852e2b421989a6fb1d2ef0c44040d"
+        }
+      ]
+    },
+    {
+      "ID": "sm5f_de9e05710e5e",
+      "Particles": [
+        "ne",
+        "Ne",
+        "Z",
+        "h",
+        "h"
+      ],
+      "CaseIDs": [
+        "sm5_de9e05710e5e"
+      ],
+      "ExportName": "nenebarZhh",
+      "Incoming": [
+        "ne",
+        "Ne"
+      ],
+      "Outgoing": [
+        "Z",
+        "h",
+        "h"
+      ],
+      "Group": "NeutralChiralPairs",
+      "CurrentNativeRecords": [
+        {
+          "ID": "sm5_de9e05710e5e",
+          "Status": "COMPLETE",
+          "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+          "Seconds": 46.202478,
+          "CapsuleSHA256": "d855e96374d7e9015d121b04cf725c340d7cafff20cf26f43fccc8216ae8a47e"
+        }
+      ]
+    },
+    {
+      "ID": "sm5f_756b05ecded5",
+      "Particles": [
+        "ne",
+        "Ne",
+        "Z",
+        "Z",
+        "h"
+      ],
+      "CaseIDs": [
+        "sm5_756b05ecded5"
+      ],
+      "ExportName": "nenebarZZh",
+      "Incoming": [
+        "ne",
+        "Ne"
+      ],
+      "Outgoing": [
+        "Z",
+        "Z",
+        "h"
+      ],
+      "Group": "NeutralChiralPairs",
+      "CurrentNativeRecords": []
+    },
+    {
+      "ID": "sm5f_eb0ab21427be",
+      "Particles": [
+        "M",
+        "nm",
+        "W-",
+        "h",
+        "h"
+      ],
+      "CaseIDs": [
+        "sm5_eb0ab21427be"
+      ],
+      "ExportName": "mbarnmWmhh",
+      "Incoming": [
+        "M",
+        "nm"
+      ],
+      "Outgoing": [
+        "W+",
+        "h",
+        "h"
+      ],
+      "Group": "ChargedCurrentHiggsPair",
+      "CurrentNativeRecords": []
+    },
+    {
+      "ID": "sm5f_0c1bb49d8b71",
+      "Particles": [
+        "m",
+        "Nm",
+        "W+",
+        "h",
+        "h"
+      ],
+      "CaseIDs": [
+        "sm5_0c1bb49d8b71"
+      ],
+      "ExportName": "mnmbarWphh",
+      "Incoming": [
+        "m",
+        "Nm"
+      ],
+      "Outgoing": [
+        "W-",
+        "h",
+        "h"
+      ],
+      "Group": "ChargedCurrentHiggsPair",
+      "CurrentNativeRecords": []
+    },
+    {
+      "ID": "sm5f_5e6899a354d5",
+      "Particles": [
+        "nm",
+        "Nm",
+        "Z",
+        "h",
+        "h"
+      ],
+      "CaseIDs": [
+        "sm5_5e6899a354d5"
+      ],
+      "ExportName": "nmnmbarZhh",
+      "Incoming": [
+        "nm",
+        "Nm"
+      ],
+      "Outgoing": [
+        "Z",
+        "h",
+        "h"
+      ],
+      "Group": "NeutralChiralPairs",
+      "CurrentNativeRecords": [
+        {
+          "ID": "sm5_5e6899a354d5",
+          "Status": "COMPLETE",
+          "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+          "Seconds": 29.135759,
+          "CapsuleSHA256": "d43bdda18599ea6fe3b0243b7799d37d3ecd172da012f996a82dfc04e288a04e"
+        }
+      ]
+    },
+    {
+      "ID": "sm5f_05518162bb93",
+      "Particles": [
+        "L",
+        "nl",
+        "W-",
+        "h",
+        "h"
+      ],
+      "CaseIDs": [
+        "sm5_05518162bb93"
+      ],
+      "ExportName": "lbarnlWmhh",
+      "Incoming": [
+        "L",
+        "nl"
+      ],
+      "Outgoing": [
+        "W+",
+        "h",
+        "h"
+      ],
+      "Group": "ChargedCurrentHiggsPair",
+      "CurrentNativeRecords": []
+    },
+    {
+      "ID": "sm5f_8cb37028d3af",
+      "Particles": [
+        "l",
+        "Nl",
+        "W+",
+        "h",
+        "h"
+      ],
+      "CaseIDs": [
+        "sm5_8cb37028d3af"
+      ],
+      "ExportName": "lnlbarWphh",
+      "Incoming": [
+        "l",
+        "Nl"
+      ],
+      "Outgoing": [
+        "W-",
+        "h",
+        "h"
+      ],
+      "Group": "ChargedCurrentHiggsPair",
+      "CurrentNativeRecords": []
+    },
+    {
+      "ID": "sm5f_6de51e54965d",
+      "Particles": [
+        "nl",
+        "Nl",
+        "Z",
+        "h",
+        "h"
+      ],
+      "CaseIDs": [
+        "sm5_6de51e54965d"
+      ],
+      "ExportName": "nlnlbarZhh",
+      "Incoming": [
+        "nl",
+        "Nl"
+      ],
+      "Outgoing": [
+        "Z",
+        "h",
+        "h"
+      ],
+      "Group": "NeutralChiralPairs",
+      "CurrentNativeRecords": [
+        {
+          "ID": "sm5_6de51e54965d",
+          "Status": "COMPLETE",
+          "ContextSHA256": "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+          "Seconds": 29.299778,
+          "CapsuleSHA256": "80e169ac283092d44c2973e0b11bc06bae73891caa44c0f612d33a946b9748da"
+        }
+      ]
+    },
+    {
+      "ID": "sm5f_8ee50a230e68",
+      "Particles": [
+        "nm",
+        "Nm",
+        "Z",
+        "Z",
+        "h"
+      ],
+      "CaseIDs": [
+        "sm5_8ee50a230e68"
+      ],
+      "ExportName": "nmnmbarZZh",
+      "Incoming": [
+        "nm",
+        "Nm"
+      ],
+      "Outgoing": [
+        "Z",
+        "Z",
+        "h"
+      ],
+      "Group": "NeutralChiralPairs",
+      "CurrentNativeRecords": []
+    },
+    {
+      "ID": "sm5f_74dcf49c34ab",
+      "Particles": [
+        "nl",
+        "Nl",
+        "Z",
+        "Z",
+        "h"
+      ],
+      "CaseIDs": [
+        "sm5_74dcf49c34ab"
+      ],
+      "ExportName": "nlnlbarZZh",
+      "Incoming": [
+        "nl",
+        "Nl"
+      ],
+      "Outgoing": [
+        "Z",
+        "Z",
+        "h"
+      ],
+      "Group": "NeutralChiralPairs",
+      "CurrentNativeRecords": []
+    }
+  ],
+  "Command": "python3 tests/SM-5-point/run.py --retry-failed --timeout 7200 --export-timeout 1800 --points 1000 --memory-gib 4 --family sm5f_268bfd2334c3 --family sm5f_42d2baa06efc --family sm5f_de9e05710e5e --family sm5f_756b05ecded5 --family sm5f_eb0ab21427be --family sm5f_0c1bb49d8b71 --family sm5f_5e6899a354d5 --family sm5f_05518162bb93 --family sm5f_8cb37028d3af --family sm5f_6de51e54965d --family sm5f_8ee50a230e68 --family sm5f_74dcf49c34ab",
+  "ExistingRawRecordsPreserved": true,
+  "NoConstructorOrExportRun": true
+}

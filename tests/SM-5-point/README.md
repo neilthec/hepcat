@@ -279,6 +279,44 @@ This section describes frozen C5 evidence. Later experimental source changes
 or prototype successes are not new validated campaign records unless their
 actual inputs, checks and context have been admitted and checkpointed.
 
+## Recorded C6 coverage
+
+The current C6 checkpoint uses source context
+`47026bedc2844622616e46a05069c2682cc4306872799bbe8e02d4a01291cc04`.
+It contains 211 completed native case records. Of these, 203 have ordinary
+full-family CalcHEP and MadGraph passes, and two have separately verified
+CalcHEP precision qualifications, giving 205 validated cases. The ledger has
+140 ordinary PASS families and two precision-qualified families. These totals
+include checksum-bound historical records admitted by the finite reviewed
+compatibility chain; they do not claim 211 fresh C6 constructions.
+
+C6 extends the source-certified current path to declared massless chiral
+fermion endpoints. The endpoint state comes from the model metadata, and the
+used vertices, ordered graphs and normal independent checks remain mandatory.
+It also permits a model-certified helicity partner as a construction proposal:
+the exact declared vertex transformation is checked before transport, and the
+target still receives its own factorization, high-energy, reference and
+Feynman checks. Neither relation marks an unrun process validated.
+
+The completed chiral cohort includes charged lepton/neutrino pairs with a W
+and two Higgs bosons, in both charge choices and all three generations, and
+neutrino pairs with either Z/h/h or Z/Z/h. Fresh runs and previously completed,
+checksum-bound records are distinguished in
+`tests/results/SM-5-point/cohort-chiral-C6-summary.json`. Every recorded family
+has both 1,000-point numerical comparisons passing.
+
+All six five-gluon helicity multisets now have completed native constructions.
+The grouped export passes CalcHEP at 1,000 points. Its exhaustive MadGraph
+comparison retains a raw FAIL: six of the 32 labeled helicity comparisons have
+one mismatch, all at point 719 of the same 1,000-point stream. Four analytically
+zero components have residuals about `3.08e-22`, and two small nonzero components
+of order `2.99e-11` differ by about `3.42e-7` relatively. The original values,
+point, seed and unchanged tolerances are retained under
+`diagnostics/c6-default-five-gluon-20261113/full-family-numerical-failure/`.
+Same-point numerical-precision investigations are separate diagnostics. The
+six gluon cases are not counted as fully validated while this comparison is
+open. There is no claim that the complete SM five-point inventory is finished.
+
 ## Construction and validation bottlenecks
 
 The source changes made during this campaign retain the distinction between a

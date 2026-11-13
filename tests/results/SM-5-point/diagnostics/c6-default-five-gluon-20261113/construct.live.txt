@@ -1,0 +1,110 @@
+20:38:30 Constructing the model-certified helicity partner {G.+, G.+, G.+, G.-, G.-}.
+20:38:35 Building independent colored Feynman benchmark.
+20:39:52 Constructing 6 independent color coefficients.
+20:39:53 Using identical-particle color symmetry: 1 construction seeds for 6 coefficients.
+20:39:53 Color coefficient 1/6
+20:39:53 Generating diagrams: RUNNING; stage 0.0 s; total 0.1 s
+20:39:53 Generating diagrams: COMPLETE; stage 0.0 s; total 0.1 s
+20:39:53 Building diagram amplitudes: RUNNING; stage 0.0 s; total 0.1 s
+20:39:53 Building diagram amplitudes: COMPLETE; stage 0.0 s; total 0.1 s
+20:39:53 Preparing diagrams: RUNNING; stage 0.0 s; total 0.1 s
+20:39:54 Preparing diagrams: PREPARED; stage 0.8 s; total 0.8 s
+20:39:54 Generating factorization channels: RUNNING; stage 0.0 s; total 0.8 s
+20:39:54 Generating factorization channels: COMPLETE; stage 0.0 s; total 0.8 s
+20:39:54 Preparing factorization channels: RUNNING; stage 0.0 s; total 0.8 s
+20:39:55 Preparing factorization channels: working; stage 1.1 s; total 1.9 s
+20:39:55 Preparing factorization channels: PREPARED; stage 1.2 s; total 2.0 s
+20:39:55 Completing factorization: RUNNING; stage 0.0 s; total 2.0 s
+20:40:01 Completing factorization: working; stage 6.2 s; total 8.2 s
+20:40:02 Completing factorization: working; stage 7.3 s; total 9.3 s
+20:40:04 Completing factorization: working; stage 8.5 s; total 10.5 s
+20:40:05 Completing factorization: working; stage 9.5 s; total 11.5 s
+20:40:06 Completing factorization: working; stage 10.6 s; total 12.6 s
+20:40:07 Completing factorization: working; stage 11.8 s; total 13.7 s
+20:40:10 Completing factorization: working; stage 15.3 s; total 17.3 s
+20:40:13 Completing factorization: working; stage 17.6 s; total 19.6 s
+20:40:14 Completing factorization: working; stage 18.7 s; total 20.6 s
+20:40:16 Completing factorization: working; stage 21.3 s; total 23.3 s
+20:40:18 Completing factorization: working; stage 23.1 s; total 25.0 s
+20:40:19 Completing factorization: working; stage 24.1 s; total 26.1 s
+20:40:20 Completing factorization: working; stage 25.2 s; total 27.2 s
+20:40:21 Completing factorization: working; stage 26.3 s; total 28.3 s
+20:40:22 Completing factorization: working; stage 27.3 s; total 29.3 s
+20:40:23 Completing factorization: working; stage 28.3 s; total 30.3 s
+20:40:25 Completing factorization: working; stage 29.5 s; total 31.4 s
+20:40:26 Completing factorization: working; stage 30.5 s; total 32.5 s
+20:40:27 Completing factorization: working; stage 31.6 s; total 33.6 s
+20:40:28 Completing factorization: working; stage 32.6 s; total 34.6 s
+20:40:29 Completing factorization: working; stage 33.7 s; total 35.7 s
+20:40:30 Completing factorization: working; stage 34.8 s; total 36.8 s
+20:40:31 Completing factorization: working; stage 35.9 s; total 37.9 s
+20:40:32 Completing factorization: working; stage 36.9 s; total 38.9 s
+20:40:33 Completing factorization: working; stage 38.0 s; total 39.9 s
+20:40:34 Completing factorization: working; stage 39.0 s; total 41.0 s
+20:40:35 Completing factorization: working; stage 40.0 s; total 42.0 s
+20:40:36 Completing factorization: working; stage 41.0 s; total 43.0 s
+20:40:37 Completing factorization: working; stage 42.1 s; total 44.1 s
+20:40:38 Completing factorization: working; stage 43.2 s; total 45.2 s
+20:40:39 Completing factorization: working; stage 44.3 s; total 46.2 s
+20:40:40 Completing factorization: working; stage 45.3 s; total 47.2 s
+20:40:41 Completing factorization: working; stage 46.3 s; total 48.3 s
+20:40:42 Completing factorization: working; stage 47.4 s; total 49.3 s
+20:40:44 Completing factorization: working; stage 48.4 s; total 50.4 s
+20:40:45 Completing factorization: working; stage 49.4 s; total 51.4 s
+20:40:46 Completing factorization: working; stage 50.5 s; total 52.5 s
+20:40:47 Completing factorization: working; stage 51.6 s; total 53.6 s
+20:40:48 Completing factorization: working; stage 52.7 s; total 54.7 s
+20:40:49 Completing factorization: working; stage 53.7 s; total 55.7 s
+20:40:50 Completing factorization: working; stage 54.8 s; total 56.7 s
+20:40:51 Completing factorization: COMPLETE; stage 55.7 s; total 57.7 s
+20:40:51 Preparing factorization result: RUNNING; stage 0.0 s; total 57.7 s
+20:40:51 Preparing factorization result: COMPLETE; stage 0.1 s; total 57.7 s
+20:40:51 Completing high-energy behavior: RUNNING; stage 0.0 s; total 57.7 s
+20:40:52 Completing high-energy behavior: working; stage 1.2 s; total 59.0 s
+20:40:56 Completing high-energy behavior: COMPLETE; stage 4.7 s; total 62.4 s
+20:40:56 Preparing final amplitude: RUNNING; stage 0.0 s; total 62.4 s
+20:40:56 Preparing final amplitude: COMPLETE; stage 0.1 s; total 62.5 s
+20:40:56 Checking final amplitude: RUNNING; stage 0.0 s; total 62.5 s
+20:40:58 Checking final amplitude: COMPLETE; stage 2.7 s; total 65.2 s
+20:40:59 Validating color symmetry coefficient 1/6; parameter set 1/3
+20:41:01 Validating color symmetry coefficient 2/6; parameter set 1/3
+20:41:04 Validating color symmetry coefficient 3/6; parameter set 1/3
+20:41:07 Validating color symmetry coefficient 4/6; parameter set 1/3
+20:41:10 Validating color symmetry coefficient 5/6; parameter set 1/3
+20:41:13 Validating color symmetry coefficient 6/6; parameter set 1/3
+20:41:16 Validating color symmetry coefficient 1/6; parameter set 2/3
+20:41:18 Validating color symmetry coefficient 2/6; parameter set 2/3
+20:41:21 Validating color symmetry coefficient 3/6; parameter set 2/3
+20:41:24 Validating color symmetry coefficient 4/6; parameter set 2/3
+20:41:27 Validating color symmetry coefficient 5/6; parameter set 2/3
+20:41:30 Validating color symmetry coefficient 6/6; parameter set 2/3
+20:41:33 Validating color symmetry coefficient 1/6; parameter set 3/3
+20:41:35 Validating color symmetry coefficient 2/6; parameter set 3/3
+20:41:38 Validating color symmetry coefficient 3/6; parameter set 3/3
+20:41:41 Validating color symmetry coefficient 4/6; parameter set 3/3
+20:41:44 Validating color symmetry coefficient 5/6; parameter set 3/3
+20:41:47 Validating color symmetry coefficient 6/6; parameter set 3/3
+20:41:49 Building independent colored Feynman benchmark.
+20:42:47 Constructing 6 independent color coefficients.
+20:42:51 Validating color symmetry coefficient 1/6; parameter set 1/3
+20:42:54 Validating color symmetry coefficient 2/6; parameter set 1/3
+20:42:57 Validating color symmetry coefficient 3/6; parameter set 1/3
+20:42:59 Validating color symmetry coefficient 4/6; parameter set 1/3
+20:43:02 Validating color symmetry coefficient 5/6; parameter set 1/3
+20:43:05 Validating color symmetry coefficient 6/6; parameter set 1/3
+20:43:07 Validating color symmetry coefficient 1/6; parameter set 2/3
+20:43:10 Validating color symmetry coefficient 2/6; parameter set 2/3
+20:43:13 Validating color symmetry coefficient 3/6; parameter set 2/3
+20:43:15 Validating color symmetry coefficient 4/6; parameter set 2/3
+20:43:18 Validating color symmetry coefficient 5/6; parameter set 2/3
+20:43:21 Validating color symmetry coefficient 6/6; parameter set 2/3
+20:43:23 Validating color symmetry coefficient 1/6; parameter set 3/3
+20:43:26 Validating color symmetry coefficient 2/6; parameter set 3/3
+20:43:29 Validating color symmetry coefficient 3/6; parameter set 3/3
+20:43:32 Validating color symmetry coefficient 4/6; parameter set 3/3
+20:43:34 Validating color symmetry coefficient 5/6; parameter set 3/3
+20:43:37 Validating color symmetry coefficient 6/6; parameter set 3/3
+20:43:40 Total time: 316.5 s
+20:43:40 Complexity: 14
+20:43:40 Dataset[{<|Color -> 1, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 1, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 1, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 1, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 1, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 1, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 1, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 1, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 1, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 1, Type -> HighEnergy, Test -> Fixed-angle high energy, Status -> PASS|>, <|Color -> 1, Type -> Reference, Test -> No explicit Xi dependence, Status -> PASS|>, <|Color -> 1, Type -> Feynman, Test -> Full Feynman amplitude, Status -> PASS|>, <|Color -> 2, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 2, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 2, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 2, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 2, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 2, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 2, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 2, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 2, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 2, Type -> HighEnergy, Test -> Fixed-angle high energy, Status -> PASS|>, <|Color -> 2, Type -> Reference, Test -> No explicit Xi dependence, Status -> PASS|>, <|Color -> 2, Type -> Feynman, Test -> Full Feynman amplitude, Status -> PASS|>, <|Color -> 3, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 3, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 3, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 3, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 3, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 3, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 3, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 3, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 3, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 3, Type -> HighEnergy, Test -> Fixed-angle high energy, Status -> PASS|>, <|Color -> 3, Type -> Reference, Test -> No explicit Xi dependence, Status -> PASS|>, <|Color -> 3, Type -> Feynman, Test -> Full Feynman amplitude, Status -> PASS|>, <|Color -> 4, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 4, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 4, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 4, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 4, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 4, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 4, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 4, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 4, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 4, Type -> HighEnergy, Test -> Fixed-angle high energy, Status -> PASS|>, <|Color -> 4, Type -> Reference, Test -> No explicit Xi dependence, Status -> PASS|>, <|Color -> 4, Type -> Feynman, Test -> Full Feynman amplitude, Status -> PASS|>, <|Color -> 5, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 5, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 5, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 5, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 5, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 5, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 5, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 5, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 5, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 5, Type -> HighEnergy, Test -> Fixed-angle high energy, Status -> PASS|>, <|Color -> 5, Type -> Reference, Test -> No explicit Xi dependence, Status -> PASS|>, <|Color -> 5, Type -> Feynman, Test -> Full Feynman amplitude, Status -> PASS|>, <|Color -> 6, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 6, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 6, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 6, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 6, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 6, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 6, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 6, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 6, Type -> Physical, Test -> s   == 0, Status -> PASS|>, <|Color -> 6, Type -> HighEnergy, Test -> Fixed-angle high energy, Status -> PASS|>, <|Color -> 6, Type -> Reference, Test -> No explicit Xi dependence, Status -> PASS|>, <|Color -> 6, Type -> Feynman, Test -> Full Feynman amplitude, Status -> PASS|>}, TypeSystem`Vector[TypeSystem`Struct[{Color, Type, Test, Status}, {TypeSystem`Atom[Integer], TypeSystem`Atom[TypeSystem`Enumeration[Feynman, HighEnergy, Physical, Reference]], TypeSystem`AnyType, TypeSystem`Atom[TypeSystem`Enumeration[PASS]]}], 72], <|MaxItems -> {All, All}|>]
+                                                  13                                                                  14                                                                  15                                                                  23                                                                  24                                                                  25                                                                  34                                                                  35                                                                  45                                                                                                                                                                                                                                                                                                                              13                                                                  14                                                                  15                                                                  23                                                                  24                                                                  25                                                                  34                                                                  35                                                                  45                                                                                                                                                                                                                                                                                                                              13                                                                  14                                                                  15                                                                  23                                                                  24                                                                  25                                                                  34                                                                  35                                                                  45                                                                                                                                                                                                                                                                                                                              13                                                                  14                                                                  15                                                                  23                                                                  24                                                                  25                                                                  34                                                                  35                                                                  45                                                                                                                                                                                                                                                                                                                              13                                                                  14                                                                  15                                                                  23                                                                  24                                                                  25                                                                  34                                                                  35                                                                  45                                                                                                                                                                                                                                                                                                                              13                                                                  14                                                                  15                                                                  23                                                                  24                                                                  25                                                                  34                                                                  35                                                                  45
