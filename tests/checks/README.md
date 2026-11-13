@@ -1326,6 +1326,14 @@ controls cover the one bounded coverage/resource retry, terminal failures and
 shared parent clocks. System message state and replaced definitions must restore
 exactly. The suite reads no model, saved amplitude or research WXF fixture.
 
+`lower-vector-graph-union-tests.wl` checks the integrity of lower-amplitude
+contact certificates and ordered graph unions using synthetic metadata. Missing
+or duplicated proof components, nonzero residuals, fitted/benchmark contacts,
+unknown emitters and changed graph multiplicities reject. Toy particle tables
+exercise paired-mass charts and declared cubic attachment discovery. The actual
+union builder is exercised with scoped certificate-extraction callbacks; no
+amplitude, saved research report or81-component calibration is computed.
+
 `reference-affine-row-tests.wl` checks exact affine-first reference equations
 for large coherent-spin families. Every coefficient and the constant offset
 reconstructs exactly, while reference differences are recombined before any

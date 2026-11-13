@@ -56,6 +56,7 @@ TEST_SUITES = (
     "high-energy-dispatch-tests.wl", "high-energy-laurent-rows-tests.wl",
     "high-energy-laurent-jet-tests.wl",
     "high-energy-whole-warning-tests.wl",
+    "lower-vector-graph-union-tests.wl",
     "high-energy-scalar-cache-tests.wl",
     "high-energy-constraint-basis-tests.wl",
     "high-energy-tensor-zero-tests.wl",
