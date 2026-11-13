@@ -29,7 +29,14 @@ along with HEPCAT.  If not, see <https://www.gnu.org/licenses/>.
 
 $CharacterEncoding = "UTF-8";
 sm5NotebookRoot = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
-sm5NotebookArguments = If[$ScriptCommandLine =!= {}, Rest[$ScriptCommandLine], {}];
+(* Native WolframKernel -script leaves $ScriptCommandLine empty on some
+   installations. Its literal argument vector remains in $CommandLine. *)
+sm5NotebookScriptArguments[script_List, command_List] := Module[{position},
+  If[script =!= {}, Return[Rest[script]]];
+  position = FirstPosition[command, "-script", Missing["NotScriptInvocation"]];
+  If[MissingQ[position], {}, Drop[command, First[position] + 1]]
+];
+sm5NotebookArguments = sm5NotebookScriptArguments[$ScriptCommandLine, $CommandLine];
 If[OddQ[Length[sm5NotebookArguments]], Print["Expected option/value pairs."]; Quit[1]];
 sm5NotebookOptions = Association[Rule @@@ Partition[sm5NotebookArguments, 2]];
 If[Complement[Keys[sm5NotebookOptions], {"--inventory", "--results", "--output", "--families", "--probes", "--progress", "--max-notebook-bytes"}] =!= {},
@@ -759,9 +766,14 @@ sm5NotebookStage[document_Notebook, path_String] := Module[{temporary, result},
     If[FileExistsQ[temporary], DeleteFile[temporary]]; Abort[]];
   result
 ];
+sm5NotebookFinish[temporary_String, path_String] := Module[{result},
+  result = Check[RenameFile[temporary, path, OverwriteTarget -> True]; True, $Failed];
+  If[result === $Failed && FileExistsQ[temporary], Quiet[DeleteFile[temporary]]];
+  result
+];
 sm5NotebookPublish[document_Notebook, path_String] := Module[{temporary = sm5NotebookStage[document, path]},
   If[temporary === $Failed, Return[$Failed]];
-  RenameFile[temporary, path, OverwriteTarget -> True]; True
+  sm5NotebookFinish[temporary, path]
 ];
 sm5NotebookTemporaryPath = sm5NotebookStage[sm5NotebookDocument, sm5NotebookOutputPath];
 If[sm5NotebookTemporaryPath === $Failed, Print["The notebook replacement did not complete."]; Quit[1]];
@@ -791,7 +803,7 @@ If[sm5NotebookSplitOutput,
          "Each has its own Setup and can be run independently. Keep these files together when moving the catalog."]},
        sm5NotebookSectorLinks]]}], <|"SectorNotebooks" -> sm5NotebookSectorFiles|>];
   sm5NotebookWriteResult = sm5NotebookPublish[sm5NotebookDocument, sm5NotebookOutputPath],
-  sm5NotebookWriteResult = (RenameFile[sm5NotebookTemporaryPath, sm5NotebookOutputPath, OverwriteTarget -> True]; True)
+  sm5NotebookWriteResult = sm5NotebookFinish[sm5NotebookTemporaryPath, sm5NotebookOutputPath]
 ];
 If[!TrueQ[sm5NotebookWriteResult], Print["The notebook replacement did not complete."]; Quit[1]];
 Print["Wrote ", sm5NotebookOutputPath, " with ", Length[sm5NotebookSelectedFamilies], " families",

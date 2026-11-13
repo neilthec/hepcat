@@ -676,6 +676,25 @@ sm5ntCheck["each sector retains its own simple setup and original process tags",
   !FreeQ[sm5ntSplitSectors, "sm5-setup-load"] &&
     !FreeQ[sm5ntSplitSectors, "sm5-construction-" <> sm5ntSampleID] &&
     !FreeQ[sm5ntSplitSectors, "sm5-family-" <> sm5ntSampleFamilyID]];
+sm5ntCheck["both Wolfram script argument conventions retain explicit filtering options",
+  sm5NotebookScriptArguments[{"builder.wl", "--families", "chosen"}, {"kernel"}] === {"--families", "chosen"} &&
+  sm5NotebookScriptArguments[{}, {"kernel", "-script", "builder.wl", "--families", "chosen"}] === {"--families", "chosen"} &&
+  sm5NotebookScriptArguments[{}, {"kernel", "-noinit", "-script", "builder.wl", "--progress", "snapshot.json"}] === {"--progress", "snapshot.json"} &&
+  sm5NotebookScriptArguments[{}, {"kernel"}] === {}];
+sm5ntBlockedTarget = CreateDirectory[FileNameJoin[{sm5ntTemporary, "blocked.nb"}]];
+sm5ntCheck["a failed atomic publication preserves its target and reports failure",
+  Quiet[sm5NotebookPublish[Notebook[{Cell["synthetic blocked output", "Text"]}], sm5ntBlockedTarget]] === $Failed &&
+    DirectoryQ[sm5ntBlockedTarget] && FileNames[".blocked.nb.*.tmp", sm5ntTemporary] === {}];
+sm5ntNativeCLIPath = FileNameJoin[{sm5ntTemporary, "native-cli.nb"}];
+sm5ntNativeCLI = RunProcess[{First[$CommandLine], "-script", sm5ntBuilder,
+  "--inventory", sm5ntFixtureInventory, "--results", sm5ntTemporary,
+  "--output", sm5ntNativeCLIPath, "--families", sm5ntSampleFamilyID,
+  "--max-notebook-bytes", "1"}];
+sm5ntCheck["the actual native-kernel CLI honors output, inventory and sector filtering",
+  sm5ntNativeCLI["ExitCode"] === 0 && FileExistsQ[sm5ntNativeCLIPath] &&
+    MatchQ[sm5ntRead[sm5ntNativeCLIPath], HoldComplete[_Notebook]] &&
+    StringContainsQ[sm5ntNativeCLI["StandardOutput"], "with 1 families in 1 linked sector notebooks"] &&
+    FileExistsQ[FileNameJoin[{sm5ntTemporary, "native-cli-" <> sm5ntSampleFamily["Sector"] <> ".nb"}]]];
 DeleteDirectory[sm5ntTemporary, DeleteContents -> True];
 Print["SM FIVE-POINT NOTEBOOK CHECKS: ", sm5ntChecks, "; FAILURES: ", Length[sm5ntFailures]];
 If[sm5ntFailures === {}, Print["HEPCAT_TEST_COMPLETED:sm-five-point-notebook-tests.wl"], Print[sm5ntFailures]];
