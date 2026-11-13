@@ -1,0 +1,122 @@
+19:03:54 Generating diagrams: RUNNING; stage 0.0 s; total 0.1 s
+19:03:55 Generating diagrams: COMPLETE; stage 0.3 s; total 0.3 s
+19:03:55 Building diagram amplitudes: RUNNING; stage 0.0 s; total 0.3 s
+19:03:55 Building diagram amplitudes: COMPLETE; stage 0.0 s; total 0.3 s
+19:03:55 Preparing diagrams: RUNNING; stage 0.0 s; total 0.3 s
+19:03:56 Preparing diagrams: working; stage 1.2 s; total 1.6 s
+19:03:57 Preparing diagrams: working; stage 2.4 s; total 2.7 s
+19:03:58 Preparing diagrams: working; stage 3.6 s; total 3.9 s
+19:03:58 Preparing diagrams: PREPARED; stage 3.9 s; total 4.2 s
+19:03:58 Generating factorization channels: RUNNING; stage 0.0 s; total 4.2 s
+19:04:01 Generating factorization channels: COMPLETE; stage 2.6 s; total 6.8 s
+19:04:01 Preparing factorization channels: RUNNING; stage 0.0 s; total 6.8 s
+19:04:02 Preparing factorization channels: working; stage 1.1 s; total 7.9 s
+19:04:03 Preparing factorization channels: working; stage 2.2 s; total 9.0 s
+19:04:04 Preparing factorization channels: working; stage 3.3 s; total 10.1 s
+19:04:05 Preparing factorization channels: working; stage 4.4 s; total 11.2 s
+19:04:06 Preparing factorization channels: PREPARED; stage 4.9 s; total 11.7 s
+19:04:06 Building certified covariant source: RUNNING; stage 0.0 s; total 11.7 s
+19:04:12 Building certified covariant source: UNVALIDATED_CANDIDATE; stage 5.8 s; total 17.5 s
+19:04:12 Preparing certified covariant source representative: RUNNING; stage 0.0 s; total 17.7 s
+19:04:14 Preparing certified covariant source representative: working; stage 1.7 s; total 19.4 s
+19:04:16 Preparing certified covariant source representative: working; stage 4.0 s; total 21.7 s
+19:04:20 Preparing certified covariant source representative: working; stage 7.8 s; total 25.5 s
+19:04:20 Preparing certified covariant source representative: COMPLETE; stage 7.8 s; total 25.5 s
+19:04:20 Generating Feynman diagrams: RUNNING; stage 0.0 s; total 25.5 s
+19:04:20 Generating Feynman diagrams: COMPLETE; stage 0.0 s; total 25.5 s
+19:04:20 Building Feynman amplitudes: RUNNING; stage 0.0 s; total 25.5 s
+19:04:20 Building Feynman amplitudes: COMPLETE; stage 0.0 s; total 25.5 s
+19:04:20 Preparing Feynman amplitudes: RUNNING; stage 0.0 s; total 25.5 s
+19:04:23 Preparing Feynman amplitudes: working; stage 2.9 s; total 28.4 s
+19:04:25 Preparing Feynman amplitudes: working; stage 5.5 s; total 31.1 s
+19:04:26 Preparing Feynman amplitudes: working; stage 6.5 s; total 32.1 s
+19:04:29 Preparing Feynman amplitudes: working; stage 9.0 s; total 34.5 s
+19:04:31 Preparing Feynman amplitudes: working; stage 11.7 s; total 37.2 s
+19:04:33 Preparing Feynman amplitudes: working; stage 12.7 s; total 38.3 s
+19:04:35 Preparing Feynman amplitudes: working; stage 15.3 s; total 40.8 s
+19:04:38 Preparing Feynman amplitudes: working; stage 17.9 s; total 43.5 s
+19:04:41 Preparing Feynman amplitudes: working; stage 21.0 s; total 46.5 s
+19:04:44 Preparing Feynman amplitudes: working; stage 23.7 s; total 49.2 s
+19:04:46 Preparing Feynman amplitudes: working; stage 26.5 s; total 52.0 s
+19:04:49 Preparing Feynman amplitudes: working; stage 29.7 s; total 55.2 s
+19:04:53 Preparing Feynman amplitudes: working; stage 32.7 s; total 58.3 s
+19:04:55 Preparing Feynman amplitudes: working; stage 35.2 s; total 60.8 s
+19:04:56 Preparing Feynman amplitudes: PREPARED; stage 35.8 s; total 61.4 s
+19:04:56 Validating certified covariant source representative (1/3): RUNNING; stage 0.0 s; total 61.4 s
+19:07:52 Validating certified covariant source representative (1/3): COMPLETE; stage 176.0 s; total 237.3 s
+19:07:52 Validating certified covariant source representative (2/3): RUNNING; stage 0.0 s; total 237.4 s
+19:11:17 Validating certified covariant source representative (2/3): COMPLETE; stage 204.9 s; total 442.2 s
+19:11:17 Validating certified covariant source representative (3/3): RUNNING; stage 0.0 s; total 442.3 s
+19:15:05 Validating certified covariant source representative (3/3): FAILED; stage 228.4 s; total 670.7 s
+19:15:05 Completing factorization: RUNNING; stage 0.0 s; total 670.7 s
+19:15:06 Completing factorization: working; stage 1.2 s; total 671.9 s
+19:15:08 Completing factorization: working; stage 3.1 s; total 673.8 s
+19:15:09 Completing factorization: working; stage 4.3 s; total 675.0 s
+19:15:10 Completing factorization: working; stage 5.4 s; total 676.1 s
+19:15:11 Completing factorization: working; stage 6.5 s; total 677.2 s
+19:15:13 Completing factorization: working; stage 7.5 s; total 678.3 s
+19:15:14 Completing factorization: working; stage 8.7 s; total 679.4 s
+19:15:15 Completing factorization: working; stage 9.7 s; total 680.4 s
+19:15:16 Completing factorization: working; stage 10.8 s; total 681.5 s
+19:15:17 Completing factorization: working; stage 12.0 s; total 682.8 s
+19:15:18 Completing factorization: working; stage 13.1 s; total 683.8 s
+19:15:20 Completing factorization: working; stage 14.6 s; total 685.3 s
+19:15:21 Completing factorization: working; stage 15.9 s; total 686.6 s
+19:15:22 Completing factorization: working; stage 17.0 s; total 687.7 s
+19:15:23 Completing factorization: working; stage 18.0 s; total 688.7 s
+19:15:24 Completing factorization: working; stage 19.1 s; total 689.8 s
+19:15:25 Completing factorization: working; stage 20.3 s; total 691.0 s
+19:15:27 Completing factorization: working; stage 21.8 s; total 692.5 s
+19:15:28 Completing factorization: working; stage 22.8 s; total 693.5 s
+19:15:29 Completing factorization: working; stage 23.8 s; total 694.5 s
+19:15:31 Completing factorization: working; stage 25.7 s; total 696.4 s
+19:15:32 Completing factorization: working; stage 26.8 s; total 697.5 s
+19:15:33 Completing factorization: working; stage 27.8 s; total 698.6 s
+19:15:34 Completing factorization: working; stage 28.9 s; total 699.6 s
+19:15:35 Completing factorization: working; stage 30.3 s; total 701.0 s
+19:15:38 Completing factorization: working; stage 32.8 s; total 703.5 s
+19:15:39 Completing factorization: working; stage 34.5 s; total 705.2 s
+19:15:41 Completing factorization: working; stage 36.1 s; total 706.8 s
+19:15:43 Completing factorization: working; stage 38.0 s; total 708.7 s
+19:15:44 Completing factorization: working; stage 39.0 s; total 709.7 s
+19:15:45 Completing factorization: working; stage 40.1 s; total 710.8 s
+19:15:46 Completing factorization: working; stage 41.1 s; total 711.8 s
+19:15:47 Completing factorization: COMPLETE; stage 41.7 s; total 712.4 s
+19:15:47 Preparing factorization result: RUNNING; stage 0.0 s; total 712.4 s
+19:15:49 Preparing factorization result: working; stage 2.0 s; total 714.4 s
+19:15:50 Preparing factorization result: working; stage 3.3 s; total 715.7 s
+19:15:53 Preparing factorization result: working; stage 6.4 s; total 718.8 s
+19:15:53 Preparing factorization result: COMPLETE; stage 6.4 s; total 718.8 s
+19:15:53 Completing high-energy behavior: RUNNING; stage 0.0 s; total 718.8 s
+19:16:13 Completing high-energy behavior: working; stage 20.2 s; total 739.0 s
+19:17:06 Completing high-energy behavior: COMPLETE; stage 73.0 s; total 791.8 s
+19:17:06 Preparing final amplitude: RUNNING; stage 0.0 s; total 791.8 s
+19:17:07 Preparing final amplitude: working; stage 1.2 s; total 793.0 s
+19:17:08 Preparing final amplitude: working; stage 2.4 s; total 794.2 s
+19:17:14 Preparing final amplitude: working; stage 7.6 s; total 799.4 s
+19:17:17 Preparing final amplitude: working; stage 10.7 s; total 802.6 s
+19:17:17 Preparing final amplitude: COMPLETE; stage 10.7 s; total 802.6 s
+19:17:17 Preparing Feynman amplitudes: RUNNING; stage 0.0 s; total 802.6 s
+19:17:20 Preparing Feynman amplitudes: working; stage 3.0 s; total 805.6 s
+19:17:23 Preparing Feynman amplitudes: working; stage 5.9 s; total 808.4 s
+19:17:24 Preparing Feynman amplitudes: working; stage 6.9 s; total 809.5 s
+19:17:26 Preparing Feynman amplitudes: working; stage 9.4 s; total 811.9 s
+19:17:29 Preparing Feynman amplitudes: working; stage 12.2 s; total 814.8 s
+19:17:30 Preparing Feynman amplitudes: working; stage 13.3 s; total 815.9 s
+19:17:33 Preparing Feynman amplitudes: working; stage 16.0 s; total 818.6 s
+19:17:36 Preparing Feynman amplitudes: working; stage 18.7 s; total 821.3 s
+19:17:39 Preparing Feynman amplitudes: working; stage 22.0 s; total 824.5 s
+19:17:42 Preparing Feynman amplitudes: working; stage 24.8 s; total 827.4 s
+19:17:44 Preparing Feynman amplitudes: working; stage 27.6 s; total 830.2 s
+19:17:48 Preparing Feynman amplitudes: working; stage 31.0 s; total 833.6 s
+19:17:51 Preparing Feynman amplitudes: working; stage 34.2 s; total 836.8 s
+19:17:54 Preparing Feynman amplitudes: working; stage 37.1 s; total 839.7 s
+19:17:55 Preparing Feynman amplitudes: PREPARED; stage 37.8 s; total 840.4 s
+19:17:55 Checking final amplitude: RUNNING; stage 0.0 s; total 840.4 s
+19:18:14 Checking final amplitude: COMPLETE; stage 19.6 s; total 860.0 s
+19:18:14 Random seed: 1844381560
+19:18:14 Total time: 860.1 s
+19:18:14 Complexity: 249
+19:18:14                                         2                                                                                                      2                                                                                                      2                                                                                                      2                                                                                                      2                                                                                                      2                                                                                                      2                                                                                                      2                                                                                                      2                                                                                                      2
+Dataset[{<|Type -> Physical, Test -> -Mh  + s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> -Mh  + s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> -Mh  + s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> -MZ  + s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> -MZ  + s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> -Mh  + s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> -Mh  + s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> -MZ  + s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> -Mh  + s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> -MZ  + s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> HighEnergy, Test -> Fixed-angle high energy, Status -> PASS, ObservedGrowth -> E^(-1), ExpectedGrowth -> At most E^(-1)|>, <|Type -> Reference, Test -> No explicit Xi dependence, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Feynman, Test -> Full Feynman amplitude, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>}, TypeSystem`Vector[TypeSystem`Struct[{Type, Test, Status, ObservedGrowth, ExpectedGrowth}, {TypeSystem`Atom[TypeSystem`Enumeration[Feynman, HighEnergy, Physical, Reference]], TypeSystem`AnyType, TypeSystem`Atom[TypeSystem`Enumeration[PASS]], TypeSystem`Atom[TypeSystem`Enumeration[, E^(-1)]], TypeSystem`Atom[TypeSystem`Enumeration[, At most E^(-1)]]}], 13], <|MaxItems -> {All, All}|>]
+                                             12                                                                                                     13                                                                                                     14                                                                                                     15                                                                                                     25                                                                                                     34                                                                                                     24                                                                                                     35                                                                                                     23                                                                                                     45

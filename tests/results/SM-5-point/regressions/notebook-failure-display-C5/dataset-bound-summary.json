@@ -1,0 +1,19 @@
+{
+  "Status": "PASS",
+  "Checks": 90,
+  "Failures": 0,
+  "Scope": "Display-only bounded failed Dataset preview; no physics calculation or production-source change by this task",
+  "FailureDatasetByteLimit": 1048576,
+  "FailureOtherPrintByteLimit": 65536,
+  "BuilderSHA256": "b9bd8c4924b69ffa16ff25deb228627adfe5fb19bd53a8da655f989311f52ad6",
+  "TestSHA256": "09f5f292eeb56fcae62a85dbaafa48630c65b5ce77d404ac34dc340e085867b8",
+  "TestLogSHA256": "df89fe68daa63f2d8fa340e9a1851aac6e689b96efa05a2de6eeaeed38e72a7f",
+  "CanonicalNotebookRebuilt": false,
+  "CanonicalNotebookContext": "Recorded C5 view preserved during C6 source development",
+  "CanonicalNotebookBytes": 43348135,
+  "CanonicalNotebookSHA256": "bc0477940849cf69a2e7a40e1fd235388885235bde135f305d5144c5b86cb6c5",
+  "CachePolicy": "Current builder fingerprint invalidates older projections at the next normal refresh. Cache metadata is display-only, never validation evidence.",
+  "OversizedDatasetPreservedInOriginalFixtureWXF": true,
+  "NormalValidationTablesPreserved": true,
+  "CompletedRecordLargeDatasetPreserved": true
+}

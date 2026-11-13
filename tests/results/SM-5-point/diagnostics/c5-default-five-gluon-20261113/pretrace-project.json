@@ -1,0 +1,35 @@
+{
+  "OriginalReportSHA256": "bb3345f608d2fada4d8f41a1d2517f427a433ae11ec71d77b76fcc7216fb9996",
+  "Seed": 1794531437669646000,
+  "HistoricalPerPointCSVExisted": false,
+  "Files": [
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/c5-default-five-gluon-20261113/spinas-output/fivegluonfixed/process.cpp",
+      "SHA256": "13ba62d5691ffe6b0d42b7d4e6191b91efd39aa0d30e8472769064bfd81b6826"
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/c5-default-five-gluon-20261113/spinas-output/fivegluonfixed/process.hpp",
+      "SHA256": "b07331db306477854437febaa0a970760073376bb5e2fb4bcb85eb91137a4154"
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/c5-default-five-gluon-20261113/spinas-output/fivegluonfixed/spinas-validation.hpp",
+      "SHA256": "c6bd01091f44248d9edb6a5dcfdad5ba43fff8a4cc8610698e921819ef34f9f5"
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/c5-default-five-gluon-20261113/spinas-output/fivegluonfixed/madgraph-runtime.hpp",
+      "SHA256": "7891d66656e9ca44be29d8ee3588f7847e9b6f072a2b54f5cd668612f7c272c6"
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/c5-default-five-gluon-20261113/spinas-output/fivegluonfixed/madgraph-validation.cpp",
+      "SHA256": "2e80f935447fc19ab8a2764f05f7ee56150e24cd6d0a17ced7422d576e31025c"
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/c5-default-five-gluon-20261113/spinas-output/fivegluonfixed/manifest.json",
+      "SHA256": "7644e3e0ec5861a103c020e2300a9d5733f793c3f5dd6336b0beb122c69f1611"
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/c5-default-five-gluon-20261113/spinas-output/fivegluonfixed/build/fivegluonfixed_validate_madgraph",
+      "SHA256": "037e4f50c73c835ed50ccc43b0c94f6bf5220af0500332028829bfa5b80c1b6d"
+    }
+  ]
+}

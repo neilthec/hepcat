@@ -1,0 +1,17 @@
+Get["/Users/neil/code/hepcat/source/HEPCAT.wl"];
+Begin["HEPCATFiveGluonFailureMetadata`Private`"];
+$ContextPath=Prepend[DeleteCases[$ContextPath,"HEPCATFiveGluonFailureMetadata`Private`"],"HEPCATFiveGluonFailureMetadata`Private`"];
+$HistoryLength=0;
+gfRoot="/Users/neil/code/hepcat";gfRecord=Import[gfRoot<>"/tests/results/SM-5-point/sm5_7e2e9f69dd9c.wxf","WXF"];gfFailure=gfRecord["Details"][[2]];gfSeed=gfFailure["Report"];gfPlan=gfFailure["ColorOrbitAttempt"]["Plan"];gfProcess=gfRecord["Particles"];
+gfModel=ReadModel[gfRoot<>"/models",1];gfLower=ReadModel[gfRoot<>"/models",2];gfBasis=gfFailure["ColorBasis"];gfExternal=Thread[(Mass/@Range[Length[gfProcess]])->ConstantArray[0,Length[gfProcess]]];
+gfGraph=CreateDiagrams[gfProcess,gfModel];gfPairs=DiagramAmplitudes[gfGraph];gfChannels=FactorizationAmplitudeChannels[gfProcess,gfLower];
+gfPrefix=({gfExternal,#}&/@gfBasis);gfData=ConstructiveDiagrams`Private`colorProjectionData[Join[gfPrefix,gfPairs],gfChannels,gfPlan["Representations"]];
+If[!AssociationQ[gfData]||gfData["Basis"]=!=gfBasis,Quit[2]];
+gfRank=Length[gfBasis];gfProjected=Drop[#,gfRank]&/@gfData["ProjectedDiagrams"];
+gfOrbitRank[index_]:=Module[{rows={UnitVector[gfRank,index]},cursor=1,row},While[cursor<=Length[rows]&&Length[rows]<gfRank,Do[row=rows[[cursor]].action;If[MatrixRank[Append[rows,row]]>Length[rows],AppendTo[rows,row]];If[Length[rows]===gfRank,Break[]],{action,Lookup[gfPlan["Generators"],"CoefficientAction"]}];cursor++];MatrixRank[rows]];
+gfCosts=Table[<|"Coefficient"->i,"NonzeroSourceDiagrams"->Count[Last/@gfProjected[[i]],value_/;value=!=0],"NonzeroChannels"->Count[Last/@gfData["ProjectedChannels"][[i]],value_/;value=!=0],"SourceLeaves"->Total[LeafCount/@(Last/@gfProjected[[i]])],"ChannelLeaves"->Total[LeafCount/@(Last/@gfData["ProjectedChannels"][[i]])],"RowOrbitRank"->gfOrbitRank[i]|>,{i,gfRank}];
+gfExprInfo[value_]:=<|"Leaves"->LeafCount[value],"XiLabels"->DeleteDuplicates[Cases[value,(Spinor|SpinorHat)["Xi",___,label_]:>ToString[label,InputForm],Infinity]],"ContainsBareZ"->!FreeQ[value,ConstructiveDiagrams`z],"CompositeHelicitySpinors"->Length[Cases[value,Spinor["Helicity",_,_Multiparticle],Infinity]]|>;
+gfStages=gfSeed["Stages"];gfInfo=Association[KeyValueMap[Function[{name,value},name->If[AssociationQ[value],Join[KeyTake[value,{"Status","PointReady","ExpectedPower"}],<|"Amplitude"->gfExprInfo[Lookup[value,"Amplitude",0]],"FreeParametersCount"->Length[Lookup[value,"FreeParameters",{}]],"PointCheckpoint"->If[AssociationQ[Lookup[value,"PointReadyCheckpoint",None]],<|"Keys"->Keys[value["PointReadyCheckpoint"]],"Amplitude"->gfExprInfo[Lookup[value["PointReadyCheckpoint"],"Amplitude",0]]|>,Null]|>],If[MatchQ[value,{_List,_}],gfExprInfo[Last[value]],Null]]],KeySelect[gfStages,StringContainsQ[#,"factorization result"]||StringContainsQ[#,"high-energy"]&]]];
+gfSummary=<|"Status"->"READ_ONLY_SOURCE_AND_CHECKPOINT_METADATA","ContextSHA256"->"b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd","Particles"->gfProcess,"ActualBasisForcedAsPrefixAndVerified"->True,"SourceDiagramCount"->Length[gfPairs],"ChannelCount"->Length[gfChannels],"SourceCosts"->gfCosts,"PointShapes"->gfInfo,"NoNewFitOrCandidate"->True|>;
+safe[x_]:=Which[AssociationQ[x],Association[KeyValueMap[ToString[#1]->safe[#2]&,x]],ListQ[x],safe/@x,StringQ[x]||IntegerQ[x]||Head[x]===Real||MemberQ[{True,False,Null},x],x,MissingQ[x]||x===None,Null,True,ToString[x,InputForm]];
+Export["/private/tmp/c5-opposite-source-costs.json",safe[gfSummary],"RawJSON"];Print[gfCosts];End[];Quit[];

@@ -31,6 +31,7 @@ sm5ntCheck[name_, assertion_] := Module[{value},
   value = Quiet[Check[assertion, $Failed]];
   If[!TrueQ[value], AppendTo[sm5ntFailures, name]; Print["FAIL: ", name]]
 ];
+sm5ntContains[expression_, fragment_String] := !FreeQ[expression, text_String /; StringContainsQ[text, fragment]];
 sm5ntRead[path_] := DeleteCases[
   Quiet[Check[ToExpression[Import[path, "Text"], InputForm, HoldComplete], $Failed]], Null, {1}];
 sm5ntPath = FileNameJoin[{sm5ntRoot, "tests", "SM-5-point-construction.nb"}];
@@ -178,7 +179,7 @@ sm5ntChangedSource = Block[{sm5NotebookDisplaySourceSHA256 = "different builder 
   sm5NotebookRecord[sm5ntCacheCapsule]];
 sm5ntCheck["changing the display source fingerprint reloads the original capsule",
   KeyExistsQ[sm5ntChangedSource, "CacheMissWitness"] && sm5ntChangedSource["Expression"] === 11/13];
-sm5ntChangedSchema = Block[{sm5NotebookDisplayCacheSchema = 2}, sm5NotebookRecord[sm5ntCacheCapsule]];
+sm5ntChangedSchema = Block[{sm5NotebookDisplayCacheSchema = sm5NotebookDisplayCacheSchema + 1}, sm5NotebookRecord[sm5ntCacheCapsule]];
 sm5ntCheck["changing the display schema reloads the original capsule",
   KeyExistsQ[sm5ntChangedSchema, "CacheMissWitness"] && sm5ntChangedSchema["Expression"] === 11/13];
 (* Populate the real schema again, then corrupt only the cached payload. *)
@@ -200,9 +201,13 @@ sm5ntFailedCacheRecord = <|"Status" -> "FAIL", "Expression" -> Missing["NoAmplit
   "Prints" -> {"actual fixture failure"}, "Details" -> Failure["ActualFixtureFailure",
     <|"MessageTemplate" -> "actual fixture failure", "Diagnostics" -> Range[4096]|>]|>;
 Export[sm5ntCacheCapsule, sm5ntFailedCacheRecord, "WXF"];
-sm5ntCheck["failed records retain their entire original failure and bypass the success cache",
-  sm5NotebookRecord[sm5ntCacheCapsule] === sm5ntFailedCacheRecord &&
-  sm5NotebookRecord[sm5ntCacheCapsule] === sm5ntFailedCacheRecord];
+sm5ntFailedCached = sm5NotebookRecord[sm5ntCacheCapsule];
+sm5ntFailedWarm = sm5NotebookRecord[sm5ntCacheCapsule];
+sm5ntCheck["failed display cache preserves status and reason while the original full report stays intact",
+  sm5ntFailedCached === sm5ntFailedWarm && sm5ntFailedWarm["Status"] === "FAIL" &&
+  sm5ntFailedWarm["FailurePreview"]["Reason"] === "actual fixture failure" &&
+  FreeQ[sm5ntFailedWarm, _Failure] && !KeyExistsQ[sm5ntFailedWarm, "Expression"] &&
+  Import[sm5ntCacheCapsule, "WXF"] === sm5ntFailedCacheRecord];
 sm5ntExportProjection = sm5NotebookDisplayProjection[<|"Status" -> "PASS",
   "Prints" -> {"actual fixture export"}, "Result" -> <|"Directory" -> "actual-fixture-directory",
     "UnusedBackendDiagnostics" -> Range[4096]|>|>];
@@ -210,7 +215,77 @@ sm5ntCheck["successful export projection preserves its real displayed directory 
   sm5ntExportProjection === <|"Status" -> "PASS", "Prints" -> {"actual fixture export"},
     "Result" -> <|"Directory" -> "actual-fixture-directory"|>|> &&
   sm5NotebookDisplayProjection[<|"Status" -> "FAIL", "Result" ->
-    Failure["ActualFixtureExportFailure", <||>]|>] === $Failed];
+    Failure["ActualFixtureExportFailure", <||>]|>]["FailurePreview"]["Status"] === "FAIL"];
+
+(* A failed constructor can retain enormous affine fits and previous color
+   coefficients. Display never embeds them, even in captured native cells. *)
+sm5ntFullDataWitness = "DO_NOT_EMBED_FULL_FAILED_DIAGNOSTICS";
+sm5ntLargeFailure = Failure["ActualLargeFixtureFailure", <|
+  "MessageTemplate" -> "actual coefficient remained unresolved", "Stage" -> "Completing factorization",
+  "ColorCoefficientReports" -> ConstantArray[sm5ntFullDataWitness, 20000],
+  "FittedPointCheckpoint" -> Range[20000]|>];
+sm5ntFailureTable = Dataset[{<|"Type" -> "Physical", "Status" -> "FAIL", "Test" -> "actual failed fixture cut"|>}];
+sm5ntLargeRecord = <|"ID" -> sm5ntSampleID, "Status" -> "UNRESOLVED", "Seconds" -> 23,
+ "Expression" -> sm5ntLargeFailure, "Details" -> sm5ntLargeFailure,
+ "Prints" -> {"actual unresolved fixture milestone", sm5ntFailureTable,
+   <|"FullData" -> ConstantArray[sm5ntFullDataWitness, 5000]|>},
+ "NotebookCells" -> {Cell[BoxData[RowBox[{sm5ntFullDataWitness}]], "Output"]}|>;
+Export[sm5ntCacheCapsule, sm5ntLargeRecord, "WXF"];
+sm5ntOriginalFailureHash = sm5NotebookDisplayHash[sm5ntCacheCapsule];
+sm5ntLargeCold = sm5NotebookRecord[sm5ntCacheCapsule];sm5ntLargeWarm = sm5NotebookRecord[sm5ntCacheCapsule];
+sm5ntFailureCells = sm5NotebookCaptured[sm5ntLargeWarm, "Construction"];
+sm5ntCheck["cold and warm failed records never embed full affine diagnostics or captured failure boxes",
+ sm5ntLargeCold === sm5ntLargeWarm && ByteCount[sm5ntLargeWarm] < 30000 &&
+ FreeQ[sm5ntLargeWarm, sm5ntFullDataWitness | _Failure] &&
+ FreeQ[sm5ntFailureCells, sm5ntFullDataWitness | _Failure] && ByteCount[sm5ntFailureCells] < 100000];
+sm5ntCheck["the actual unresolved status stage reason and exact capsule path remain visible",
+ !FreeQ[sm5ntFailureCells, text_String /; StringContainsQ[text, "UNRESOLVED"] &&
+   StringContainsQ[text, "Completing factorization"] && StringContainsQ[text, "actual coefficient remained unresolved"] &&
+   StringContainsQ[text, ExpandFileName[sm5ntCacheCapsule]]]];
+sm5ntInspectionCells = Cases[sm5ntFailureCells, Cell[text_String, "Input", opts___] :> {text, {opts}}, Infinity];
+sm5ntCheck["the full report is available through an explicitly disabled valid Import command",
+ Length[sm5ntInspectionCells] === 1 && MemberQ[sm5ntInspectionCells[[1, 2]], Evaluatable -> False] &&
+ !FreeQ[ToExpression[sm5ntInspectionCells[[1, 1]], InputForm, HoldComplete], HoldPattern[Import[_, "WXF"]]]];
+sm5ntCheck["actual failed validation tables and milestones are retained without a synthetic pass",
+ MemberQ[sm5ntLargeWarm["Prints"], sm5ntFailureTable] &&
+ MemberQ[sm5ntLargeWarm["Prints"], "actual unresolved fixture milestone"] &&
+ sm5ntContains[sm5ntFailureCells, "actual unresolved fixture milestone"] &&
+ sm5ntContains[sm5ntFailureCells, "actual failed fixture cut"] &&
+ Lookup[Normal[sm5ntFailureTable], "Status"] === {"FAIL"} &&
+ sm5ntLargeWarm["FailurePreview"]["Status"] === "UNRESOLVED"];
+sm5ntCheck["omitted diagnostic payloads are explicitly identified and original proof bytes do not change",
+ !FreeQ[sm5ntFailureCells, text_String /; StringContainsQ[text, "saved report"] && StringContainsQ[text, "not been removed"]] &&
+ Import[sm5ntCacheCapsule, "WXF"] === sm5ntLargeRecord &&
+ sm5NotebookDisplayHash[sm5ntCacheCapsule] === sm5ntOriginalFailureHash];
+sm5ntHugeDatasetWitness = "OVERSIZED_FAILED_DATASET_REMAINS_IN_WXF";
+sm5ntHugeFailureTable = Dataset[{<|"Type" -> "Physical", "Status" -> "UNRESOLVED",
+ "Test" -> sm5ntHugeDatasetWitness, "ResidualData" -> Range[400000]|>}];
+sm5ntHugeTableRecord = Join[sm5ntLargeRecord, <|"Prints" -> {
+ "actual unresolved fixture milestone", sm5ntFailureTable, sm5ntHugeFailureTable}|>];
+Export[sm5ntCacheCapsule, sm5ntHugeTableRecord, "WXF"];
+sm5ntHugeTableHash = sm5NotebookDisplayHash[sm5ntCacheCapsule];
+sm5ntHugeTablePreview = sm5NotebookRecord[sm5ntCacheCapsule];
+sm5ntHugeTableCells = sm5NotebookCaptured[sm5ntHugeTablePreview, "Construction"];
+sm5ntCheck["an oversized failed Dataset is omitted explicitly without changing its original table",
+ ByteCount[sm5ntHugeFailureTable] > 2^20 &&
+ MemberQ[sm5ntHugeTablePreview["Prints"], sm5ntFailureTable] &&
+ !MemberQ[sm5ntHugeTablePreview["Prints"], sm5ntHugeFailureTable] &&
+ FreeQ[sm5ntHugeTableCells, sm5ntHugeDatasetWitness] &&
+ sm5ntContains[sm5ntHugeTableCells, "not been removed"] &&
+ Import[sm5ntCacheCapsule, "WXF"] === sm5ntHugeTableRecord &&
+ sm5NotebookDisplayHash[sm5ntCacheCapsule] === sm5ntHugeTableHash];
+sm5ntCheck["completed-record projections retain full Dataset data irrespective of failure preview limits",
+ !sm5NotebookSmallDiagnosticQ[sm5ntHugeFailureTable] &&
+ sm5NotebookDisplayProjection[<|"Status" -> "COMPLETE", "Prints" -> {sm5ntHugeFailureTable},
+   "Expression" -> 3/7|>]["Prints"] === {sm5ntHugeFailureTable}];
+sm5ntLargeRecord2 = Join[sm5ntLargeRecord, <|"Status" -> "FAIL"|>];
+Export[sm5ntCacheCapsule, sm5ntLargeRecord2, "WXF"];
+sm5ntCheck["a changed real failed capsule invalidates its old compact preview",
+ sm5NotebookRecord[sm5ntCacheCapsule]["FailurePreview"]["Status"] === "FAIL"];
+sm5ntCheck["successful formulas and successful captured cells retain their existing exact output",
+ !FreeQ[sm5NotebookCaptured[<|"Status" -> "COMPLETE", "Expression" -> 3/7,
+   "Prints" -> {sm5ntCacheTable}|>, "Construction"], Cell[BoxData[ToBoxes[3/7, StandardForm]], "Output", ___]] &&
+ sm5NotebookCaptured[<|"Status" -> "COMPLETE", "NotebookCells" -> {Cell["exact successful captured cell", "Print"]}|>, "Construction"] === {Cell["exact successful captured cell", "Print"]}];
 
 (* Explicit controls come from RequestedOptions, never resolved resource policy. *)
 sm5ntDefaultControlRecord = <|"Expression" -> 3/7, "Prints" -> {}, "Details" -> <|
@@ -281,14 +356,14 @@ Export[FileNameJoin[{sm5ntTemporary, sm5ntSampleID <> ".wxf"}],
 sm5ntBuild[];
 sm5ntReplayFailure = sm5ntRead[sm5ntFixtureNotebook];
 sm5ntCheck["a missing amplitude retains the actual recorded failure details",
-  !FreeQ[sm5ntReplayFailure, "synthetic solver failure"]];
+  sm5ntContains[sm5ntReplayFailure, "synthetic solver failure"]];
 Export[FileNameJoin[{sm5ntTemporary, sm5ntSampleID <> ".wxf"}],
   <|"Prints" -> {}, "Status" -> "TIMEOUT", "Seconds" -> 42,
     "Expression" -> Missing["NoAmplitude"]|>, "WXF"];
 sm5ntBuild[];
 sm5ntReplayTimeout = sm5ntRead[sm5ntFixtureNotebook];
 sm5ntCheck["an interrupted run without detailed output displays its recorded status",
-  !FreeQ[sm5ntReplayTimeout, "RecordedSMFivePointRun"] && !FreeQ[sm5ntReplayTimeout, "TIMEOUT"]];
+  sm5ntContains[sm5ntReplayTimeout, "RecordedSMFivePointRun"] && sm5ntContains[sm5ntReplayTimeout, "TIMEOUT"]];
 Export[FileNameJoin[{sm5ntTemporary, sm5ntSampleID <> ".wxf"}],
   <|"ID" -> sm5ntSampleID, "Prints" -> {"synthetic original construction"}, "Expression" -> 3/7,
     "RevalidationPrints" -> {"synthetic current native checks"}, "RevalidationSeconds" -> 1.25|>, "WXF"];
@@ -365,26 +440,26 @@ Export[sm5ntSummaryPath, <|"ID" -> sm5ntGluonID, "Status" -> "TIMEOUT", "Seconds
 sm5ntBuild[]; sm5ntSummaryTimeout = sm5ntRead[sm5ntFixtureNotebook];
 sm5ntCheck["a JSON-only attempted nonstarter family is included automatically",
   !FreeQ[sm5ntSummaryTimeout, "sm5-family-" <> sm5ntGluonFamily["ID"]] &&
-    !FreeQ[sm5ntSummaryTimeout, "RecordedSMFivePointRun"] && !FreeQ[sm5ntSummaryTimeout, "TIMEOUT"]];
+    sm5ntContains[sm5ntSummaryTimeout, "RecordedSMFivePointRun"] && sm5ntContains[sm5ntSummaryTimeout, "TIMEOUT"]];
 sm5ntCheck["a summary-only timeout retains its recorded time without an expression or validation",
   sm5NotebookRecord[FileNameJoin[{sm5ntTemporary, sm5ntGluonID <> ".wxf"}]]["Seconds"] === 42 &&
     FreeQ[sm5ntSummaryTimeout, "NOT_AN_AMPLITUDE" | _Dataset]];
 Do[Export[sm5ntSummaryPath, <|"ID" -> sm5ntGluonID, "Status" -> status, "Seconds" -> 19|>, "RawJSON"];
   sm5ntBuild[];
   sm5ntCheck["summary-only " <> status <> " retains its actual unsuccessful status",
-    !FreeQ[sm5ntRead[sm5ntFixtureNotebook], status]], {status, {"ERROR", "INTERRUPTED"}}];
+    sm5ntContains[sm5ntRead[sm5ntFixtureNotebook], status]], {status, {"ERROR", "INTERRUPTED"}}];
 Export[sm5ntSummaryPath, <|"ID" -> sm5ntGluonID, "Status" -> "COMPLETE", "Seconds" -> 7,
   "Expression" -> "NOT_AN_AMPLITUDE"|>, "RawJSON"];
 sm5ntBuild[];sm5ntMissingComplete = sm5ntRead[sm5ntFixtureNotebook];
 sm5ntCheck["a COMPLETE summary without its capsule is not displayed as a completed amplitude",
-  !FreeQ[sm5ntMissingComplete, "MissingSavedSMFivePointCapsule"] &&
+  sm5ntContains[sm5ntMissingComplete, "MissingSavedSMFivePointCapsule"] &&
     FreeQ[sm5ntMissingComplete, "NOT_AN_AMPLITUDE"]];
 Export[FileNameJoin[{sm5ntTemporary, sm5ntGluonFamily["ID"] <> "-export.json"}],
   <|"FamilyID" -> sm5ntGluonFamily["ID"], "Status" -> "PASS", "Seconds" -> 8,
     "Result" -> <|"Directory" -> "NOT_AN_EXPORT"|>|>, "RawJSON"];
 sm5ntBuild[];sm5ntMissingExport = sm5ntRead[sm5ntFixtureNotebook];
 sm5ntCheck["a PASS summary without its export capsule supplies no successful output",
-  !FreeQ[sm5ntMissingExport, "MissingSavedSMFivePointCapsule"] &&
+  sm5ntContains[sm5ntMissingExport, "MissingSavedSMFivePointCapsule"] &&
     FreeQ[sm5ntMissingExport, "NOT_AN_EXPORT"]];
 DeleteFile[sm5ntSummaryPath];DeleteFile[FileNameJoin[{sm5ntTemporary, sm5ntGluonFamily["ID"] <> "-export.json"}]];
 Export[sm5ntSummaryPath, <|"ID" -> "different-case", "Status" -> "TIMEOUT"|>, "RawJSON"];

@@ -1,0 +1,11 @@
+{
+  "ExitCode": 0,
+  "Seconds": 21.552649332999998,
+  "SourceContext": "b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd",
+  "SourceContextUnchanged": true,
+  "LoadedScriptSHA256": {
+    "export.wl": "c5402ed5152064ed8d3ff545a640b730dbe8554012995bd79546402ef5765090"
+  },
+  "NoKnownAmplitudeInput": true,
+  "CanonicalRecordsModified": false
+}

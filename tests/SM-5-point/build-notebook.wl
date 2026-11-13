@@ -143,11 +143,21 @@ sm5NotebookGroup[cells_List] := Cell[CellGroupData[cells, Open]];
 (* A display cache contains only data already consumed below. It is never
    validation evidence: the real capsule must exist and match its checksum.
    Bind formatting/projection changes to this whole builder's source as well. *)
-sm5NotebookDisplayCacheSchema = 1;
+sm5NotebookDisplayCacheSchema = 2;
 sm5NotebookDisplaySourceSHA256 = IntegerString[FileHash[$InputFileName, "SHA256"], 16, 64];
 sm5NotebookDisplayHash[path_String] := Quiet[Check[
   IntegerString[FileHash[path, "SHA256"], 16, 64], $Failed]];
 sm5NotebookDisplayProjection[record_Association] := Module[{projection, details, result},
+  If[sm5NotebookFailureDisplayQ[record],
+    projection = KeyTake[record, {"ID", "FamilyID", "Status", "Seconds", "ElapsedSeconds", "FailureStage"}];
+    projection = Join[projection, <|"FailurePreview" -> sm5NotebookFailurePreview[record],
+      "Prints" -> sm5NotebookFailurePrints[record],
+      "NotebookCells" -> sm5NotebookFailurePrintCells[record],
+      "OmittedDiagnosticPrints" -> sm5NotebookOmittedDiagnostics[record]|>];
+    details = Lookup[record, "Details", <||>];
+    If[AssociationQ[details] && KeyExistsQ[details, "RequestedOptions"],
+      AssociateTo[projection, "Details" -> KeyTake[details, {"RequestedOptions"}]]];
+    Return[projection]];
   If[!MemberQ[{"COMPLETE", "PASS"}, Lookup[record, "Status", None]], Return[$Failed]];
   projection = KeyTake[record, {"ID", "Status", "Seconds", "Expression", "Prints", "NotebookCells",
     "RevalidationPrints", "RevalidationSeconds", "RevalidationCheckTimeConstraint"}];
@@ -191,19 +201,21 @@ sm5NotebookDisplayRecord[path_String] := Module[
       StringQ[Lookup[metadata, "PayloadSHA256", None]] &&
       sm5NotebookDisplayHash[payload] === metadata["PayloadSHA256"],
     cached = Quiet[Check[Import[payload, "WXF"], <||>]];
-    If[AssociationQ[cached] && MemberQ[{"COMPLETE", "PASS"}, Lookup[cached, "Status", None]] &&
+    If[AssociationQ[cached] && (MemberQ[{"COMPLETE", "PASS"}, Lookup[cached, "Status", None]] ||
+          AssociationQ[Lookup[cached, "FailurePreview", None]]) &&
         sm5NotebookDisplayHash[payload] === metadata["PayloadSHA256"] &&
         sm5NotebookDisplayHash[path] === capsuleHash, Return[cached]]];
   record = Quiet[Check[Import[path, "WXF"], <||>]];
   If[AssociationQ[record] && StringQ[capsuleHash],
     projection = sm5NotebookDisplayProjection[record];
     If[AssociationQ[projection] && sm5NotebookDisplayHash[path] === capsuleHash,
-      sm5NotebookDisplayWrite[payload, manifest, projection, expected]]];
+      sm5NotebookDisplayWrite[payload, manifest, projection, expected];
+      If[sm5NotebookFailureDisplayQ[record], Return[projection]]]];
   record
 ];
 sm5NotebookRecord[path_String] := Module[{record, summaryPath, summary, stem, export, id},
   record = sm5NotebookDisplayRecord[path];
-  If[AssociationQ[record] && record =!= <||>, Return[record]];
+  If[AssociationQ[record] && record =!= <||>, Return[Join[record, <|"CanonicalCapsulePath" -> ExpandFileName[path]|>]]];
   summaryPath = FileNameJoin[{DirectoryName[path], FileBaseName[path] <> ".json"}];
   summary = If[FileExistsQ[summaryPath],
     Quiet[Check[Import[summaryPath, "RawJSON"], <||>]], <||>];
@@ -215,8 +227,8 @@ sm5NotebookRecord[path_String] := Module[{record, summaryPath, summary, stem, ex
      export directory, captured cell or validation table. *)
   Join[KeyTake[summary, {"ID", "FamilyID", "Status", "Seconds", "ElapsedSeconds", "RandomSeed",
       "ContextSHA256", "Log", "Message", "FailureStage"}],
-    <|"SummaryOnly" -> True, "Expression" -> Missing["NoSavedAmplitude"],
-      "Result" -> Missing["NoSavedExport"], "Prints" -> {}|>]
+    <|"SummaryOnly" -> True, "CanonicalCapsulePath" -> ExpandFileName[path],
+      "Expression" -> Missing["NoSavedAmplitude"], "Result" -> Missing["NoSavedExport"], "Prints" -> {}|>]
 ];
 sm5NotebookOutput[value_, style_String] := Cell[BoxData[ToBoxes[value, StandardForm]], style,
   GeneratedCell -> True, CellAutoOverwrite -> True];
@@ -227,23 +239,72 @@ sm5NotebookHeartbeatQ[value_] := (StringQ[value] || MatchQ[value, _Row | _Sequen
   StringContainsQ[If[StringQ[value], value, StringJoin[Cases[value, text_String :> text, Infinity]]],
     ": working; stage "];
 sm5NotebookVisiblePrints[prints_List] := Select[prints, !sm5NotebookHeartbeatQ[#] &];
-sm5NotebookRecordedFailure[record_Association] := Module[{failure, status},
+(* Keep failed diagnostic objects in their checksum-bound WXF, not in a
+   Failure summary box whose hidden Interpretation can contain the whole fit. *)
+sm5NotebookFailureDisplayQ[record_Association] := TrueQ[Lookup[record, "SummaryOnly", False]] ||
+  With[{status = Lookup[record, "Status", None]}, StringQ[status] &&
+    !MemberQ[{"COMPLETE", "PASS"}, status]] || FailureQ[Lookup[record, "Expression", None]] ||
+  FailureQ[Lookup[record, "Result", None]];
+sm5NotebookShortDiagnostic[text_String] := StringTake[text, UpTo[600]];
+sm5NotebookShortDiagnostic[_] := "";
+sm5NotebookFailurePreview[record_Association] := Module[
+  {saved = Lookup[record, "FailurePreview", None], status, values, groups, next, failures,
+   stage, reasons, diagnostics, reason, tag, index},
+  If[AssociationQ[saved], Return[saved]];
   status = Lookup[record, "Status", "UNKNOWN"];
-  If[TrueQ[Lookup[record, "SummaryOnly", False]],
-    Return[Failure[If[MemberQ[{"COMPLETE", "PASS"}, status],
-      "MissingSavedSMFivePointCapsule", "RecordedSMFivePointRun"], <|
-      "MessageTemplate" -> If[MemberQ[{"COMPLETE", "PASS"}, status],
-        "The saved summary reports `` after `` seconds, but its amplitude or export capsule is missing or unreadable. No completed result is displayed.",
-        "The saved run ended with status `` after `` seconds. No amplitude or validation capsule was saved."],
-      "MessageParameters" -> {status, Lookup[record, "Seconds", Lookup[record, "ElapsedSeconds", "unrecorded"]]},
-      "RecordedSummary" -> KeyDrop[record, {"Expression", "Result", "Prints", "SummaryOnly"}]|>]]];
-  If[!MemberQ[{"FAIL", "TIMEOUT", "ERROR", "INTERRUPTED"}, status], Return[Missing["NoFailure"]]];
-  failure = FirstCase[record, _Failure, Missing["NoFailureDetails"], Infinity];
-  If[!MissingQ[failure], Return[failure]];
-  Failure["RecordedSMFivePointRun", <|
-    "MessageTemplate" -> "The saved run ended with status `` after `` seconds and did not return a completed result.",
-    "MessageParameters" -> {status, Lookup[record, "Seconds", "unknown"]},
-    "Status" -> status, "Seconds" -> Lookup[record, "Seconds", Missing["Unknown"]]|>]
+  values = Lookup[record, {"Details", "Expression", "Result"}, None]; groups = {record}; failures = {};
+  Do[next = {};
+    Do[If[FailureQ[value], AppendTo[failures, First[value]];
+        If[AssociationQ[value[[2]]], AppendTo[groups, value[[2]]];
+          next = Join[next, Lookup[value[[2]], {"Failure", "Report"}, None]]],
+      If[AssociationQ[value], AppendTo[groups, value];
+        next = Join[next, Lookup[value, {"Failure", "Report"}, None]]]], {value, values}];
+    values = DeleteCases[next, None], {index, 3}];
+  stage = SelectFirst[Flatten[Lookup[groups, {"FailureStage", "Stage"}, None]],
+    StringQ[#] && # =!= "" &, "Unrecorded stage"];
+  diagnostics = Flatten[Map[Function[g, With[{d = Lookup[g, "Diagnostics", {}]},
+      If[StringQ[d], {d}, If[ListQ[d], Select[d, StringQ], {}]]]], groups], 1];
+  reasons = Select[Join[Flatten[Lookup[groups, {"Message", "MessageTemplate"}, None]], diagnostics], StringQ];
+  reason = If[TrueQ[Lookup[record, "SummaryOnly", False]],
+    If[MemberQ[{"COMPLETE", "PASS"}, status],
+      "The status summary has no readable saved capsule. No completed amplitude or export is displayed.",
+      "The run ended without a saved amplitude or validation capsule."],
+    If[reasons === {}, "No short diagnostic was recorded; inspect the saved report.", First[reasons]]];
+  tag = If[failures === {}, "RecordedSMFivePointRun", First[failures]];
+  <|"Status" -> status, "Stage" -> stage, "Reason" -> sm5NotebookShortDiagnostic[reason],
+    "FailureTag" -> tag, "Seconds" -> Lookup[record, "Seconds", Lookup[record, "ElapsedSeconds", "unrecorded"]],
+    "MissingCapsule" -> TrueQ[Lookup[record, "SummaryOnly", False]]|>
+];
+sm5NotebookSmallDiagnosticQ[value_] :=
+  ByteCount[value] <= If[MatchQ[value, _Dataset], 2^20, 65536] && FreeQ[value, _Failure];
+sm5NotebookFailurePrints[record_Association] := Select[
+  sm5NotebookVisiblePrints[Lookup[record, "Prints", {}]], sm5NotebookSmallDiagnosticQ];
+sm5NotebookFailurePrintCells[record_Association] := If[Lookup[record, "Prints", {}] =!= {}, {},
+  Select[Lookup[record, "NotebookCells", {}], MatchQ[#, Cell[_, "Print", ___]] &&
+    ByteCount[#] <= 2^20 && FreeQ[#, _Failure] &]];
+sm5NotebookOmittedDiagnostics[record_Association] := Lookup[record, "OmittedDiagnosticPrints",
+  Length[sm5NotebookVisiblePrints[Lookup[record, "Prints", {}]]] - Length[sm5NotebookFailurePrints[record]] +
+    Count[Lookup[record, "NotebookCells", {}], Cell[_, "Output", ___]]];
+sm5NotebookRecordedFailure[record_Association] := If[!sm5NotebookFailureDisplayQ[record],
+  Missing["NoFailure"], sm5NotebookFailurePreview[record]];
+sm5NotebookFailureCells[record_Association, kind_String] := Module[
+  {preview = sm5NotebookFailurePreview[record], path, label, text, prints, import, id, omitted},
+  path = Lookup[record, "CanonicalCapsulePath", None]; id = Lookup[record, "ID", Lookup[record, "FamilyID", "saved"]];
+  label = If[TrueQ[preview["MissingCapsule"]] && MemberQ[{"COMPLETE", "PASS"}, preview["Status"]],
+    "MissingSavedSMFivePointCapsule", "RecordedSMFivePointRun"];
+  text = label <> ": " <> ToString[preview["Status"]] <> "; stage: " <> ToString[preview["Stage"]] <>
+    "; time: " <> ToString[preview["Seconds"], InputForm] <> " s.\n" <>
+    preview["Reason"] <> "\nDiagnostic: " <> ToString[preview["FailureTag"], InputForm] <>
+    If[StringQ[path], "\nFull saved report: " <> path, ""];
+  omitted = sm5NotebookOmittedDiagnostics[record];
+  If[omitted > 0, text = text <> "\nDetailed diagnostic output is shown only in the saved report; its data have not been removed."];
+  prints = Join[sm5NotebookOutput[#, "Print"] & /@ sm5NotebookFailurePrints[record],
+    sm5NotebookFailurePrintCells[record]];
+  import = If[StringQ[path], {Cell[
+      "Optional full diagnostics: copy this disabled inspection command into a new input cell when needed. It is excluded from normal notebook evaluation.", "Text"],
+    Cell["Import[" <> sm5NotebookPathSource[path] <> ", \"WXF\"]", "Input", Evaluatable -> False,
+      CellTags -> "sm5-saved-report-" <> id]}, {}];
+  Join[prints, {Cell[text, "Text", GeneratedCell -> True, CellAutoOverwrite -> True]}, import]
 ];
 sm5NotebookWithRevalidation[cells_List, record_Association] := Module[
   {prints, additions, positions, index, seconds, checkLimit},
@@ -265,6 +326,8 @@ sm5NotebookWithRevalidation[cells_List, record_Association] := Module[
   Join[Take[cells, index - 1], additions, Drop[cells, index - 1]]
 ];
 sm5NotebookCaptured[record_Association, kind_String] := Module[{cells, prints, output, failure},
+  If[record === <||>, Return[{}]];
+  If[sm5NotebookFailureDisplayQ[record], Return[sm5NotebookFailureCells[record, kind]]];
   cells = Lookup[record, "NotebookCells", Missing["NoCapturedCells"]];
   failure = sm5NotebookRecordedFailure[record];
   If[ListQ[cells] && AllTrue[cells, MatchQ[#, _Cell] &],

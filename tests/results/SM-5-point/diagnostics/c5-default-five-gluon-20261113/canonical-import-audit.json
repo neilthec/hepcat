@@ -1,0 +1,20 @@
+{
+	"Status":"EXACT_TYPED_IMPORT_VERIFIED",
+	"ID":"sm5_7b4f5da14469",
+	"ConstructorRerun":false,
+	"SameQFields":{
+		"Expression":true,
+		"AmplitudePair":true,
+		"Details":true,
+		"Prints":true,
+		"Rows":true,
+		"Seconds":true,
+		"ContextSHA256":true,
+		"ResolvedRandomSeed":true
+	},
+	"OriginalCapsuleSHA256":"1873a2e93f4bec0a61cefdce4451cad69ff728578c090d30d8b76631dad8a93b",
+	"CanonicalCapsuleSHA256":"9abe5ee534201cc99488f1fb22eb7d8372459fca53d869f051f2db15a9b959eb",
+	"CanonicalSummarySHA256":"63aca878f1c01796d73d8fe98db3656b4a5d86d0d2d79980d8b73a33bb16ccc5",
+	"RandomSeed":3083748757624704569,
+	"ContextSHA256":"b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd"
+}

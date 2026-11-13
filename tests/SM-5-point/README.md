@@ -236,20 +236,48 @@ recorded source bytes; later production changes require their own delta checks.
 Use the standard commands in the repository README and the testing tiers in
 `tests/checks/README.md` to repeat checks for a later revision.
 
-## Current recorded coverage
+## Frozen C5 recorded coverage
 
-The 12 November checkpoint contains 185 native completed records with passing
-comparisons at their recorded inputs: 183 ordinary CalcHEP/MadGraph passes and
-two separately recorded CalcHEP precision qualifications. One subsequently
-found parameter counterexample is excluded from the fully validated total,
-leaving 182 ordinary passes plus two precision qualifications. Its raw original
-passes are retained. Two other constructions remain incomplete.
+The recorded C5 checkpoint uses source context
+`b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd`.
+Its ledger contains 200 completed native case records. Of these, 195 have
+ordinary full-family CalcHEP and MadGraph passes and two have separately
+verified CalcHEP precision qualifications, giving 197 validated cases.
+The historical records admitted by the finite compatibility proofs keep their
+original contexts and timings; these totals do not claim 200 fresh C5 runs.
+There is no outstanding supplemental mass-counterexample exclusion in this
+checkpoint. Earlier counterexamples and rejected candidates remain archived.
+
+All six pure charged-lepton/four-fermion/Higgs families now pass their native
+and 1,000-point CalcHEP/MadGraph comparisons, including identical fermions.
+The electron, muon and tau pair with two Z bosons and one Higgs are also
+validated. The four-Z/Higgs ordinary call completed through the existing
+factorization/high-energy fallback after one optional source check reached its
+high-energy clock; its final native checks and both 1,000-point comparisons pass.
+
+| Newly recorded process | Native construction time | Final complexity | CalcHEP / MadGraph points |
+| --- | ---: | ---: | ---: |
+| Z, Z, Z, Z, h | 860.1 s | 249 | 1,000 / 1,000, both PASS |
+| m, M, Z, Z, h | 226.4 s | 1,094 | 1,000 / 1,000, both PASS |
+| l, L, Z, Z, h | 226.8 s | 1,094 | 1,000 / 1,000, both PASS |
+
+The remaining three completed native cases belong to the unfinished
+five-gluon family: `+++++` and `++++-` calculate to zero, while `+++--`
+returns a nonzero result. The latter actual default constructor call also has
+a separate fixed-helicity MadGraph comparison. These partial-family checks
+are not counted as a completed full-helicity-family CalcHEP/MadGraph export.
+The `++---` case remains failed in C5; `+----` and `-----` have not been
+completed in that checkpoint. Thus the five-gluon family is still incomplete.
 
 All nine charged-fermion-pair/three-photon families are covered: three charged
 leptons and six quarks, each with four helicity multisets and all eight labeled
 helicity assignments in its MadGraph export. Every export uses 1,000 common
 points for each requested comparison. These are the recorded parameter and
 kinematic checks, not proofs of identities at arbitrary parameters.
+
+This section describes frozen C5 evidence. Later experimental source changes
+or prototype successes are not new validated campaign records unless their
+actual inputs, checks and context have been admitted and checkpointed.
 
 ## Construction and validation bottlenecks
 
@@ -269,7 +297,7 @@ benchmark still has to pass all normal amplitude comparisons. This recovered
 the W-pair/three-photon benchmark. Its conversion can dominate the total run
 although the constructive factorization stage is quick.
 
-A separate checker-budget limitation is recorded for that W-pair family. Its
+An earlier checker-budget limitation was recorded for that W-pair family. Its
 independent converted benchmark has 2,591,628 leaves, whereas its constructive
 candidates have only hundreds. The automatic checker metric currently sizes its
 clock using the candidate and channels. Two default attempts therefore retained
@@ -280,8 +308,8 @@ candidate check is not labeled as a successful default constructor. Actual
 public constructor retries with explicit limits have their own scripts and
 output records.
 
-The electron/Z/two-Higgs process remains unresolved in factorization completion.
-Its original 415-direction solve timed out. Controlled exact replays of the
+The early electron/Z/two-Higgs completion failed before the source-certified
+repair. Its original 415-direction solve timed out. Controlled exact replays of the
 retained 325-direction physical space, its full 508-direction affine union,
 and a 758-direction selected-source extension found contradictions across three
 model-consistent parameter assignments. These exclude a single constant
@@ -297,20 +325,21 @@ each other assignment. All 2,040 equations were reproduced exactly. This points
 to investigating the model-parameter factors carried by the source tensors
 before expanding the kinematic space again. It is sampled evidence about this
 space, not a validated new expression or a proof at arbitrary parameters.
-No diagnostic result has been promoted. Scripts, matrices and certificates are
+Those matrix diagnostics were not promoted into an amplitude. The later
+source-certified construction and ordinary native/CalcHEP/MadGraph validation
+resolved this process. The earlier scripts, matrices and certificates remain
 in `diagnostics/eEZhh/`, including `physical325/`, `affine-union/`,
 `selected-source-union-preflight758/`, and `physical325-parameter-blocks/`.
 
-The identical-four-electron/one-Higgs pilot also remains incomplete. Its default
-constructor and a controlled rational-parameter retry stopped in factorization
-completion. A replay of the saved 843-direction physical space found an exact
+The early identical-four-electron/one-Higgs pilot also stopped in factorization
+completion, both at default inputs and in a controlled rational-parameter retry. A replay of the saved 843-direction physical space found an exact
 all-column contradiction in 1,792 equations across three assignments. The
 independent complete 28-diagram Feynman expression agrees with every one of its
 16 cuts at all three assignments, with 3,072 exact coherent-spin comparisons.
-No final expression or external numerical comparison is claimed for this pilot.
-Its four unattempted pure charged-lepton/Higgs siblings remain pending. The
-already validated distinct-electron/muon/Higgs case has not been changed.
-Records are under `diagnostics/pure-charged-lepton-higgs/`.
+Those early attempts did not produce a validated result. The source-certified
+repair subsequently completed this case and all its pure charged-lepton/Higgs
+siblings, with ordinary external comparisons. The failed attempts remain under
+`diagnostics/pure-charged-lepton-higgs/`.
 
 An additional parameter test exposed a limitation in the previously accepted
 distinct-electron/muon/Higgs expression. With the expression, channels and
@@ -319,26 +348,47 @@ fresh Feynman benchmark unchanged, the public override `"Mm" -> 1/2000`
 in the full Feynman comparison. The original model values still pass. The
 source had genuinely passed all three recorded, distinct completion and
 Feynman parameter assignments, so this is not an ignored-option diagnosis.
-Its existing validations remain evidence at those recorded inputs; the
-expression must not be reused as a certified identity in arbitrary masses.
+Its original validations remain evidence at those recorded inputs. That
+superseded expression is not a certified identity in arbitrary masses and was
+replaced by the source-derived, symbolically coupled form.
 
 The proposed identical-flavor assembly has exact diagram coverage and sign
 certificates in both backends: two disjoint sets of 14 diagrams with relative
 minus sign cover the 28 target diagrams. Its failed validation is already
 present in the mass-degenerate distinct-flavor source, before antisymmetrizing.
-Neither candidate was accepted or exported. Fresh target Feynman conversion
-is exactly identical to the earlier symbolic cache. Evidence and exact
-counterexamples are in `fermion-flow-reuse-20261112T195125/` beneath the
-four-fermion/Higgs diagnostic directory. Parameter-feedback completion and
-source-derived covariant-current proposals remain under investigation.
+Neither of those early assembly candidates was accepted or exported. Fresh
+target Feynman conversion was exactly identical to the earlier symbolic cache.
+Evidence and exact counterexamples remain in
+`fermion-flow-reuse-20261112T195125/` beneath the four-fermion/Higgs diagnostic
+directory. The subsequent source-certified method keeps the masses and
+couplings symbolic, passes the additional equal-mass probe, and supplies the
+validated current expressions. The rejected numeric-fit source is not reused.
 
-The five-gluon attempt is separately incomplete. A bounded stage probe measured
-quick graph generation and an 83-second unreduced conversion, then a timeout
-in color projection. There are 3,960 tensor occurrences but only 45 literal
-distinct tensors. Exact deduplication with an occurrence map is a candidate
-improvement; it must preserve every original scalar coefficient and sign.
-The color implementation has not been changed. See
-`diagnostics/five-gluon-stage-timing/findings.json`.
+The initial five-gluon bottleneck was color projection. A bounded stage probe
+measured quick graph generation and an 83-second unreduced conversion, then a
+timeout in the original color projection. It found 3,960 tensor occurrences
+but only 45 literal distinct tensors. C4 implemented exact duplicate sharing
+and sparse tensor-network contraction, preserving every scalar contribution,
+original coordinate row and sign. C5 added certified graded identical-leg
+transport between color coefficients, with fresh amplitude checks. These are
+production changes, not merely proposed optimizations. The original timing
+record remains at `diagnostics/five-gluon-stage-timing/findings.json`.
+
+The C5 actual default `+++--` call completes in 180.3 s with recorded complexity
+14. Its canonical import preserves the actual expression, prints, options,
+seed and timing rather than rerunning or replacing the amplitude. The
+`++---` default attempt remains incomplete and its full failed report is
+preserved. No opposite-helicity or unattempted sibling is marked validated
+from the successful result alone.
+
+An independent C5 source proposal for ZZZZh passed all ten physical cuts,
+reference independence and the full Feynman comparison at all three parameter
+assignments. Its third high-energy check completed three of four exact Laurent
+directions, all passing, before reaching its shared finite deadline. The
+constructor correctly rejected that unfinished proposal and completed the
+ordinary fallback. This explains most of the 860.1 s run without indicating
+an amplitude mismatch. Metadata and exact retained timings are under
+`diagnostics/ZZZZh-C5-source-validation/`. No check was disabled or relaxed.
 
 These timings are concurrent campaign logs, not a controlled performance
 benchmark. The tracked progress ledger is consolidated at batch boundaries;
@@ -351,8 +401,13 @@ The notebook builder keeps a local display-only cache under
 `tests/results/SM-5-point/notebook-display-cache/`. It verifies the actual
 calculation capsule, builder version and cached payload checksums before reuse.
 Exact amplitudes, captured validation tables and explicit controls are retained;
-solver diagnostics remain in the original capsules. This cache can be deleted
-safely. It never supplies validation evidence or a missing calculation result.
+solver diagnostics remain in the original capsules. Failed or unresolved runs
+show a compact actual status, stage, reason and exact WXF path. An optional,
+disabled Import command can be copied into an input cell to inspect the full
+report. Oversized failed diagnostic previews, including Datasets over 1 MiB,
+are omitted with an explicit note; their original data are not changed.
+Successful formulas and validation tables retain their normal exact display.
+This cache can be deleted safely. It never supplies validation evidence or a missing calculation result.
 
 
 ## One exporter-only compatibility checkpoint
@@ -376,8 +431,9 @@ context. A new export records the current `ExporterContextSHA256`, each
 input's actual `NativeCaseContexts`, and their unchanged capsule hashes.
 These bindings are checked before and after exporting.
 
-The bridge starts pending. After reviewing and freezing the exporter, seal
-this one transition with the exact reviewed file checksum:
+That exporter transition is already sealed. The original sealing command was
+the following, with the reviewed checksum substituted; it is not a way to
+approve a later unrelated source change:
 
 ```sh
 python3 tests/SM-5-point/stage_context.py --seal-exporter-sha REVIEWED_SHA256
@@ -419,7 +475,8 @@ overwrites its construction or export records. `build-notebook.wl --probes FILE`
 selects another registry for a separate notebook.
 
 
-`covariant-current-sources.wl` is a source-only candidate prototype for five legs
+The historical `covariant-current-sources.wl` campaign prototype is retained
+for isolated derivation and regression work on five legs
 containing four massive color-singlet Dirac fermions and one scalar. It matches
 every used elementary vertex symbolically to a minimal covariant current,
 preserves model-owned masses and couplings, and checks ordered vertex ports,
@@ -440,16 +497,17 @@ diagram coverage without importing saved amplitudes.
 
 ## Source-certified constructor proposals
 
-The package now uses the certified-current method as an optional early stage of
-ordinary `ConstructAmplitude` calls with an independent Feynman model. The
-supported five-leg classes are four massive color-singlet Dirac fermions with
-one scalar, and two such fermions with either one massive vector and two
-identical scalars or two massive vectors and one scalar. Used cubic vertices
+The frozen C5 package uses the certified-current method as an optional early
+stage of ordinary `ConstructAmplitude` calls with an independent Feynman model.
+Its supported five-leg classes are four massive color-singlet Dirac fermions
+with one scalar; two such fermions with either one massive vector and two
+identical scalars or two massive vectors and one scalar; and four massive
+color-singlet vectors with one scalar. Used cubic vertices
 must match the minimal covariant templates exactly.
 Every ordered graph, physical propagator and fermion endpoint must be covered;
 internal momenta remain off shell throughout the conversion.
 
-For the second class, an existing metric quartic continuation is fixed from the
+For a supported metric-current class, an existing metric quartic continuation is fixed from the
 complete known four-point amplitude in the factorization model after subtracting
 the chosen source-derived cubic exchanges. This is a symbolic reconstruction of
 a declared operator, including all nine coherent vector-spin components. It does
@@ -460,8 +518,9 @@ Candidates receive external-only preparation and all the normal checks at the
 requested parameter assignments. Default inputs with distinct independent Dirac
 mass parameters additionally test an equal-mass assignment. A rejected or
 unsupported proposal falls through to the existing completion path. These
-restrictions matter: the current source extension does not yet certify chiral
-massless fermion currents, three-vector currents or colored currents.
+restrictions matter: the frozen C5 source extension does not certify chiral
+massless fermion currents, three-vector currents or colored currents. Later
+prototype work is outside the C5 coverage claimed here.
 
 The actual public-call pilots and canonical workers are separate records. Pilot
 timings are not substituted for notebook timings. The canonical worker writes
@@ -473,8 +532,8 @@ supplemental registry's history and the original artifacts are unchanged.
 
 ## Finite constructor-history compatibility
 
-`constructor-context-bridge.json` retains a fixed set of earlier validation
-records across the reviewed constructor-only update. Two independent cold
+The initial C3 `constructor-context-bridge.json` retains a fixed set of earlier
+validation records across that reviewed constructor-only update. Two independent cold
 loads before and after compare all ten definition fields of every existing
 package symbol. Mathematical definitions outside `ConstructAmplitude` are
 unchanged; its usage message, the exactly recomputed loader hash cache and
@@ -512,3 +571,15 @@ On those same 1000 momenta, the maximum relative difference fell from 5.68e-8
 at native precision to 2.20e-13 at 113 bits. Raw results and tolerance are retained;
 this optional study is not used to relabel a raw comparison or construct an
 amplitude.
+
+
+The C5 transition is separately sealed in `constructor-C4-C5-context-bridge.json`.
+It reviews retained fitted-point checkpoints and certified graded color
+transport, together with the metadata-only four-vector/scalar admission.
+A recorded sparse fit is not itself a validated amplitude: a particular point
+is accepted only after ordinary external preparation and every mandatory
+independent check. Known failed held-out point rows cannot be overridden by
+new favorable samples. Unfinished affine-family classification does not become
+a claim of uniqueness. The exact C5 dependency manifest binds its cold
+captures, code review, controls and prior proof chain; later development is
+not admitted through that sealed transition automatically.

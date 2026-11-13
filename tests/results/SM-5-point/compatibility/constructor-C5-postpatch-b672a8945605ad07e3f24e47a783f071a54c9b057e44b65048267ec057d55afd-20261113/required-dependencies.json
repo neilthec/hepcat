@@ -1,6 +1,6 @@
 {
   "CompiledFilesIncluded": false,
-  "FileCount": 391,
+  "FileCount": 392,
   "Files": {
     "tests/SM-5-point/C5-CONTEXT-WORKFLOW.md": {
       "Bytes": 4308,
@@ -1462,6 +1462,10 @@
       "Bytes": 1355,
       "SHA256": "dfa12686e769fcfd7c8f09a9a3f301c22e0084a6d1d49fe4ee66ee07c024d51e"
     },
+    "tests/results/SM-5-point/compatibility/constructor-C5-postpatch-b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd-20261113/read-only-refresh.json": {
+      "Bytes": 1542,
+      "SHA256": "9b707292d012d6d1ba36915ea321cc4ce8b5f36000c454cf5118289f43f5c2e8"
+    },
     "tests/results/SM-5-point/compatibility/constructor-C5-postpatch-b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd-20261113/recompute-loader-signature.wl": {
       "Bytes": 2675,
       "SHA256": "b604035f05f749367eef922f743f6b02cd52321a5dc8934cf18af893a6b5deba"
@@ -1574,5 +1578,5 @@
   "SourcePhysicsContext": "b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd",
   "Status": "EXACT_C5_DEPENDENCIES_VERIFIED",
   "SupersededIntermediateIncluded": false,
-  "TotalBytes": 17651968
+  "TotalBytes": 17653510
 }

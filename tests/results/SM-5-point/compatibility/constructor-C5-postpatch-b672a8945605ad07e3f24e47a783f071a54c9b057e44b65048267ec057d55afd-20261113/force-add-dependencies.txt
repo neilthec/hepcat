@@ -364,6 +364,7 @@ tests/results/SM-5-point/compatibility/constructor-C5-postpatch-b672a8945605ad07
 tests/results/SM-5-point/compatibility/constructor-C5-postpatch-b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd-20261113/python-full.log
 tests/results/SM-5-point/compatibility/constructor-C5-postpatch-b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd-20261113/python-regression-summary.json
 tests/results/SM-5-point/compatibility/constructor-C5-postpatch-b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd-20261113/read-only-refresh-before-probe.json
+tests/results/SM-5-point/compatibility/constructor-C5-postpatch-b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd-20261113/read-only-refresh.json
 tests/results/SM-5-point/compatibility/constructor-C5-postpatch-b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd-20261113/recompute-loader-signature.wl
 tests/results/SM-5-point/compatibility/constructor-C5-postpatch-b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd-20261113/required-dependencies.json
 tests/results/SM-5-point/compatibility/constructor-C5-postpatch-b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd-20261113/root-code-review.json

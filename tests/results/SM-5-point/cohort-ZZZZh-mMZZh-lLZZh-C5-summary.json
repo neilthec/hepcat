@@ -1,0 +1,133 @@
+{
+  "Status": "PASS",
+  "ContextSHA256": "b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd",
+  "Families": [
+    {
+      "ID": "sm5_f6c76904211c",
+      "FamilyID": "sm5f_f6c76904211c",
+      "Particles": [
+        "Z",
+        "Z",
+        "Z",
+        "Z",
+        "h"
+      ],
+      "Native": {
+        "Status": "COMPLETE",
+        "Seconds": 860.102444,
+        "Complexity": 249,
+        "RandomSeed": 1844381560,
+        "Rows": 13,
+        "FeynmanRows": 1,
+        "CheckStatuses": {
+          "PASS": 13
+        },
+        "CapsuleSHA256": "5307bd1fad14e2218ac37a243acb51fb800b79d65a3a58f58e5920c570cbdc2c"
+      },
+      "External": {
+        "Status": "PASS",
+        "Points": 1000,
+        "Seconds": 24.59371,
+        "CalcHEPStatus": "PASS",
+        "MadGraphStatus": "PASS",
+        "CapsuleSHA256": "a8cca3668b5425b077021d0d0a2ae55c9d5f562fb31abd817f56d20c2eb04b96"
+      },
+      "SummarySHA256": {
+        "Native": "6db985df941f2146409189720b1538ada5a7cdc2900ead4c5a1eaf9ffbcc4316",
+        "Export": "dabc14ed5c81eca75d63ea2bae83c6afc97cd7074ddeac62f3f1915582ab28a1"
+      },
+      "ActualCapsuleHashesVerified": true
+    },
+    {
+      "ID": "sm5_e6768adfa63d",
+      "FamilyID": "sm5f_e6768adfa63d",
+      "Particles": [
+        "m",
+        "M",
+        "Z",
+        "Z",
+        "h"
+      ],
+      "Native": {
+        "Status": "COMPLETE",
+        "Seconds": 226.419971,
+        "Complexity": 1094,
+        "RandomSeed": 1551368803,
+        "Rows": 13,
+        "FeynmanRows": 1,
+        "CheckStatuses": {
+          "PASS": 13
+        },
+        "CapsuleSHA256": "6e098f134bd6424edfe2188d351e5d07f9b2fb51412087b5e02628de68eaef0a"
+      },
+      "External": {
+        "Status": "PASS",
+        "Points": 1000,
+        "Seconds": 24.534659,
+        "CalcHEPStatus": "PASS",
+        "MadGraphStatus": "PASS",
+        "CapsuleSHA256": "566f5d87ad4931f0e67ea24fe9cc47dbe9b01e29bcd66f282a43ea85620f43bf"
+      },
+      "SummarySHA256": {
+        "Native": "c64e2068869c9a1eb353111037c6d596698f84b82ef0f98484563862805a62cf",
+        "Export": "c00879e9b3c7a3bc9c4bb3ba4fb6e0af19d3fd0a9bd84fe2e7461eed814edb57"
+      },
+      "ActualCapsuleHashesVerified": true
+    },
+    {
+      "ID": "sm5_2102cdc58431",
+      "FamilyID": "sm5f_2102cdc58431",
+      "Particles": [
+        "l",
+        "L",
+        "Z",
+        "Z",
+        "h"
+      ],
+      "Native": {
+        "Status": "COMPLETE",
+        "Seconds": 226.765958,
+        "Complexity": 1094,
+        "RandomSeed": 115409397,
+        "Rows": 13,
+        "FeynmanRows": 1,
+        "CheckStatuses": {
+          "PASS": 13
+        },
+        "CapsuleSHA256": "27eb47edb858c22321717537e5d24c159f1da8f2c22f4ab5b43b2488749fcc89"
+      },
+      "External": {
+        "Status": "PASS",
+        "Points": 1000,
+        "Seconds": 25.364765,
+        "CalcHEPStatus": "PASS",
+        "MadGraphStatus": "PASS",
+        "CapsuleSHA256": "bac44bdf0a46ded64ec5340c12bbc10ed8d4fd33b33bdc52fbe7b987d70de337"
+      },
+      "SummarySHA256": {
+        "Native": "ea1de04175e752750712f58fa09b736d9eb902be452efb6b75716721dd695b5d",
+        "Export": "3f99d1b72323bac29d126aaaf724a3c5f9daa863df93045be8b469f5386539c3"
+      },
+      "ActualCapsuleHashesVerified": true
+    }
+  ],
+  "SourceChangesMade": false,
+  "NotebookRefreshStatus": "COMPLETE_DISPLAY_REPAIRED",
+  "ZZZZhRejectedSourceDiagnostic": "diagnostics/ZZZZh-C5-source-validation/metadata.json",
+  "ZZZZhSourceRejection": "Only third high-energy assignment unresolved after3of4directions; all physical and Feynman comparisons passed. Ordinary fallback completed and all final checks/backends passed.",
+  "Notebook": {
+    "Path": "tests/SM-5-point-construction.nb",
+    "Bytes": 43348135,
+    "SHA256": "bc0477940849cf69a2e7a40e1fd235388885235bde135f305d5144c5b86cb6c5",
+    "FamilyCount": 135
+  },
+  "DriverExitCode": 0,
+  "PreviousNotebookOutput": {
+    "Path": "tests/SM-5-point-construction.nb",
+    "Bytes": 405306852,
+    "SHA256": "49d9c941ab834e25edd6927c6f66e9924e09fd820a8e75b92ea8c8e6b2fa9260",
+    "FamilyCount": 135,
+    "SizeDiagnostic": "Most expansion is the actual pure-five-gluon failed result, including full ColorCoefficientReports and FittedPointCheckpoint boxes. No output was removed."
+  },
+  "NotebookDisplayRepair": "regressions/notebook-failure-display-C5/summary.json"
+}
