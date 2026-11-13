@@ -1,6 +1,0 @@
-required = {"HEPCAT.wl", "HEPCAT-Base.wl", "internal/HEPCAT-Parameters.wl", "HEPCAT-Model.wl", "internal/HEPCAT-Feynman.wl", "internal/HEPCAT-Color.wl", "internal/HEPCAT-SPINAS.wl", "internal/HEPCAT-SPINAS-Optimize.wl", "internal/export/spinas-runtime.hpp"};
-optional={"internal/proofs/laurent-proof-runtime.cpp", "internal/proofs/laurent-proof-runtime.py", "internal/proofs/laurent-proof-factor.py", "internal/proofs/laurent-proof-verify.py"};
-signature[directory_] := Hash[Join[FileHash /@ (FileNameJoin[{directory, #}] & /@ required), Function[name, With[{path=FileNameJoin[{directory,name}]},If[FileExistsQ[path],FileHash[path],Missing["OptionalProofSourceAbsent",name]]]] /@ optional]];
-record=<|"Before"->signature["/Users/neil/code/hepcat/tests/results/SM-5-point/compatibility/constructor-prepatch-370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a-20261112T211458Z/source"],"After"->signature["/Users/neil/code/hepcat/source"],"Method"->"UnchangedLoaderFileHashFormulaNoPackageGet","PhysicsCalculationsPerformed"->False|>;
-Export["/Users/neil/code/hepcat/tests/results/SM-5-point/compatibility/constructor-postpatch-55701e7a9f6d674b7f37aa1ced637de0e9e1934badd54be9dce03244084725f9-20261112T214641Z/loader-signature-values.json",record,"RawJSON"];
-Print[record];

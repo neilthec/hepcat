@@ -713,3 +713,28 @@ models, Feynman converter and numerical exporter are unchanged. This preserves
 historical validation evidence without claiming that old constructors were
 rerun under C8. The additional equal-mass parameter probe was rerun with fresh
 independent Feynman diagrams and passed all 13 rows under C8.
+
+
+## Disposable generated results
+
+Everything under `tests/results/` is local, ignored scratch output. It is not a
+package dependency and must not be force-added to Git. The package source,
+models, regression fixtures and saved worked notebooks live outside this tree.
+Deleting a scratch checkpoint makes that cached validation unavailable; the
+runner reconstructs and validates it again rather than trusting old counts in
+`progress.json`. Saved notebook output remains a historical result at its stated
+revision, not evidence of a new run.
+
+The batch runner now removes each generated numerical project after strict native,
+CalcHEP and MadGraph validation has passed. Amplitude/check capsules and compact
+raw reports remain local checkpoints for resuming the current campaign. Use
+`--keep-generated` when investigating generated code, or `--cleanup-only` to
+reclaim completed numerical projects without starting new calculations.
+`--refresh-only` performs no cleanup.
+
+Cleanup is bounded to the generated SM five-point project directories. It checks
+input capsule hashes, member bindings and the actual validation status, saves a
+small local report journal, and avoids active jobs and tracked files. Raw failed
+or precision-qualified projects remain while their precision verifier still
+requires those exact dependencies. These are temporary retention requirements,
+not a reason to make generated projects permanent repository content.

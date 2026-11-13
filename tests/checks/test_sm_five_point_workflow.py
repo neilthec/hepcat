@@ -450,9 +450,49 @@ class FivePointWorkflowTests(unittest.TestCase):
 
     def invoke_main(self, *options):
         with mock.patch.object(sys, 'argv', ['run.py', '--family', 'family_ab', *options]), \
+                mock.patch.object(WORKFLOW, 'cleanup_family_generated',
+                    return_value={'Status': 'ALREADY_ABSENT'}) as cleanup, \
                 redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+            self.last_cleanup = cleanup
             WORKFLOW.main()
         return json.loads((self.here / 'progress.json').read_text())
+
+    def test_default_cleans_already_validated_generated_projects(self):
+        self.valid_family()
+        with mock.patch.object(WORKFLOW, 'context_sha256', return_value=self.context):
+            self.invoke_main()
+        self.last_cleanup.assert_called_once()
+
+    def test_keep_generated_preserves_completed_projects(self):
+        self.valid_family()
+        with mock.patch.object(WORKFLOW, 'context_sha256', return_value=self.context):
+            self.invoke_main('--keep-generated')
+        self.last_cleanup.assert_not_called()
+
+    def test_refresh_only_does_not_remove_generated_files(self):
+        self.valid_family()
+        with mock.patch.object(WORKFLOW, 'context_sha256', return_value=self.context):
+            self.invoke_main('--refresh-only')
+        self.last_cleanup.assert_not_called()
+
+    def test_cleanup_only_runs_no_physics_workers(self):
+        self.valid_family()
+        with mock.patch.object(WORKFLOW, 'context_sha256', return_value=self.context), \
+                mock.patch.object(WORKFLOW, 'run_worker') as worker:
+            self.invoke_main('--cleanup-only')
+        self.last_cleanup.assert_called_once()
+        worker.assert_not_called()
+
+    def test_deleted_results_do_not_retain_stale_validation_counts(self):
+        self.valid_family()
+        previous = self.refresh()
+        for path in self.results.iterdir():
+            if path.is_file(): path.unlink()
+        state = WORKFLOW.refresh(self.inventory, previous, self.context)
+        self.assert_not_fully_validated(state)
+        self.assertEqual(state['Counts']['Constructed'], 0)
+        self.assertEqual(state['Cases'], {})
+        self.assertEqual(state['Families'], {})
 
     def test_context_change_before_worker_stops_batch_without_running_it(self):
         calls = [0]

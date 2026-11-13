@@ -1,8 +1,0 @@
-{
-	"ExitCode":0,
-	"StandardOutput":"PROCESS: ne,Ne->Z,h,h\nAmplitude validation: 100\/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 200\/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 300\/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 400\/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 500\/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 600\/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 700\/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 800\/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 900\/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 1000\/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: PASS\nSeed: 1794534113441348000\nPoints requested\/generated\/compared: 1000\/1000\/1000\nMismatches\/errors: 0\/0\nMaximum relative\/absolute error: 2.4452965167491877e-12\/1.1723465385591551e-19\nEvery requested common phase-space point agrees.\n",
-	"StandardError":"",
-	"Status":"PASS",
-	"Points":1000,
-	"Seed":1794534113441348000
-}

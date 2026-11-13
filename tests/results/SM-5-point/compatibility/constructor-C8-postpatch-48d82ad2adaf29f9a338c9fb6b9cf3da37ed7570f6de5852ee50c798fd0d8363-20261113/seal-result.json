@@ -1,7 +1,0 @@
-{
-  "Status": "SEALED",
-  "Registry": "tests/SM-5-point/constructor-C7-C8-context-bridge.json",
-  "RegistrySHA256": "e76b8976ca0c2a448aebc73819c12962b29e9b4442d9a05b573bf43fa8ef5fbe",
-  "IndependentRootReviewSHA256": "f15845a4552a6e9a3f4212323ebcb2a36691b2d721e09d327973e8b5c7666fb0",
-  "NoCanonicalOrConfigurationWrite": true
-}

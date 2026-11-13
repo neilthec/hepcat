@@ -1,8 +1,0 @@
-{
-  "SPINASDirectory": "/Users/neil/code/spinas",
-  "CalcHEPDirectory": "/Users/neil/code/CalcHEP/calchep_3.9.2",
-  "MadGraphDirectory": "/Users/neil/code/MadGraph",
-  "MemoryGiB": 4,
-  "Points": 1000,
-  "ContextSHA256": "15ec8a88eaca261d3fd071c79b159b819abe70303f4c2024fbd7d8dc51ba4c9f"
-}

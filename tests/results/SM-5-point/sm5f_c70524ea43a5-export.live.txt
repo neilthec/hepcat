@@ -1,5 +1,0 @@
-23:44:57 Dataset[{<|Reference -> CalcHEP, Status -> PASS, RequestedPoints -> 1000|>}, TypeSystem`Vector[TypeSystem`Struct[{Reference, Status, RequestedPoints}, {TypeSystem`Atom[String], TypeSystem`Atom[String], TypeSystem`Atom[Integer]}], 1], <||>]
-23:44:57 Comparing HEPCAT with independent MadGraph: 1000 common points for each requested massless-helicity combination.
-23:45:00 MadGraph random seed: 1794548697599368000
-23:45:00                                                                                                                    -14                                    -22
-Dataset[{<|Helicities -> No massless helicities, Status -> PASS, Points -> 1000, MaximumRelativeError -> 1.46162 10   , MaximumAbsoluteError -> 1.19114 10   , ZeroAbsoluteTolerance -> None|>}, TypeSystem`Vector[TypeSystem`Struct[{Helicities, Status, Points, MaximumRelativeError, MaximumAbsoluteError, ZeroAbsoluteTolerance}, {TypeSystem`Atom[String], TypeSystem`Atom[String], TypeSystem`Atom[Integer], TypeSystem`Atom[Real], TypeSystem`Atom[Real], TypeSystem`AnyType}], 1], <|MaxItems -> {All, All}|>]

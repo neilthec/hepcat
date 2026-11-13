@@ -22,6 +22,22 @@ Read this guide before a derivation or code change. Do not use em dashes.
 Show ordinary Mathematica expressions. Avoid adding `// nice` or `nice[...]`
 unless the user explicitly requests that formatting.
 
+## Treat results as disposable scratch
+
+`tests/results/` is ignored temporary output. Do not force-add generated projects,
+builds, captured runs, caches or research diagnostics from this directory to Git.
+Package loading and ordinary calculations must work when it is absent. Keep
+handwritten source, models, regression fixtures and saved example notebooks in
+their appropriate directories outside it.
+
+Keep temporary checkpoints while a calculation or validation needs them. After
+successful validation, remove the generated numerical project and build trees;
+retain compact reports only as useful local cache. Protect active jobs and any
+files still needed for a pending precision replay. Missing caches must trigger
+regeneration or an explicit unavailable status, never an invented validation pass.
+Under disk pressure, reclaim reproducible completed outputs before requesting
+new hardware. Do not modify user files outside generated-output boundaries.
+
 ## Find the implementation
 
 Paths in this guide are relative to the repository root.

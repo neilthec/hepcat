@@ -153,6 +153,25 @@ def export_input_admission(identifier, configuration):
     return result
 
 
+def cleanup_family_generated(family, state, configuration, *, runner_lock=None):
+    """Remove a completed numerical project, retaining its actual evidence."""
+    current = context_sha256(configuration)
+    proof = context_compatibility(configuration, current)
+    export = checked_summary(family['ID'], '-export', current, proof)
+    if not isinstance(export, dict) or export.get('Status') != 'PASS':
+        return {'Status': 'RETAINED', 'Reason': 'Ordinary independent validation is not PASS.'}
+    cases = {cid: checked_summary(cid, '', current, proof) for cid in family['CaseIDs']}
+    if any(state.get('Cases', {}).get(cid, {}).get('SupplementalParameterProbes', {}).get(
+            'Status', 'PASS') != 'PASS' for cid in family['CaseIDs']):
+        return {'Status': 'RETAINED', 'Reason': 'A supplemental check is unresolved.'}
+    specification = importlib.util.spec_from_file_location(
+        'hepcat_sm5_generated_cleanup', HERE / 'generated_cleanup.py')
+    cleanup = importlib.util.module_from_spec(specification)
+    specification.loader.exec_module(cleanup)
+    return cleanup.cleanup_completed_family(ROOT, RESULTS, family, cases, export,
+        runner_lock=runner_lock)
+
+
 def refresh(inventory, previous=None, context_sha=None, points=1000):
     state = previous or {}
     configuration = read_json(RESULTS / 'configuration.json', {})
@@ -325,6 +344,10 @@ def main():
     parser.add_argument('--madgraph', type=Path, default=ROOT.parent / 'MadGraph')
     parser.add_argument('--notebook', action='store_true', help='Refresh the worked notebook at the end.')
     parser.add_argument('--refresh-only', action='store_true')
+    parser.add_argument('--keep-generated', action='store_true',
+                        help='Keep successful generated numerical projects instead of cleaning them.')
+    parser.add_argument('--cleanup-only', action='store_true',
+                        help='Clean already validated generated projects without calculating amplitudes.')
     args = parser.parse_args()
     if (not all(math.isfinite(v) and v > 0 for v in (args.timeout, args.export_timeout))
             or min(args.points, args.memory_gib) <= 0 or (args.limit is not None and args.limit < 1)):
@@ -347,6 +370,15 @@ def main():
     config_path = RESULTS / 'configuration.json'
     atomic_json(config_path, configuration)
     state = refresh(inventory, read_json(PROGRESS, {}), context_sha, args.points)
+    if not args.refresh_only and not args.keep_generated:
+        for family in inventory['Families']:
+            if state['Families'].get(family['ID'], {}).get('Status') == 'PASS':
+                cleanup = cleanup_family_generated(family, state, configuration, runner_lock=lock)
+                if cleanup.get('Status') not in ('ABSENT', 'ALREADY_REMOVED'):
+                    print(f"{family['ID']} generated files: {cleanup.get('Status')}", flush=True)
+    if args.cleanup_only:
+        print(json.dumps(state['Counts'], indent=2), flush=True)
+        return
     families = [f for f in inventory['Families']
                 if (not args.family or f['ID'] in args.family)
                 and (not args.sector or f['Sector'] in args.sector)
@@ -390,6 +422,9 @@ def main():
                 state['LastAttemptedFamily'] = family['ID']
                 if state['Families'].get(family['ID'], {}).get('Status') == 'PASS':
                     state['LastCompletedFamily'] = family['ID']
+                    if not args.keep_generated:
+                        cleanup = cleanup_family_generated(family, state, configuration, runner_lock=lock)
+                        print(f"{family['ID']} generated files: {cleanup.get('Status')}", flush=True)
                 atomic_json(PROGRESS, state)
     except KeyboardInterrupt:
         stopped = 'InterruptedWithCheckpointsSaved'
