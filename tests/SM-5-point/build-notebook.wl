@@ -31,10 +31,10 @@ $CharacterEncoding = "UTF-8";
 sm5NotebookRoot = DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 (* Native WolframKernel -script leaves $ScriptCommandLine empty on some
    installations. Its literal argument vector remains in $CommandLine. *)
-sm5NotebookScriptArguments[script_List, command_List] := Module[{position},
-  If[script =!= {}, Return[Rest[script]]];
-  position = FirstPosition[command, "-script", Missing["NotScriptInvocation"]];
-  If[MissingQ[position], {}, Drop[command, First[position] + 1]]
+sm5NotebookScriptArguments[sm5naScript_List, sm5naCommand_List] := Module[{sm5naPosition},
+  If[sm5naScript =!= {}, Return[Rest[sm5naScript]]];
+  sm5naPosition = FirstPosition[sm5naCommand, "-script", Missing["NotScriptInvocation"]];
+  If[MissingQ[sm5naPosition], {}, Drop[sm5naCommand, First[sm5naPosition] + 1]]
 ];
 sm5NotebookArguments = sm5NotebookScriptArguments[$ScriptCommandLine, $CommandLine];
 If[OddQ[Length[sm5NotebookArguments]], Print["Expected option/value pairs."]; Quit[1]];

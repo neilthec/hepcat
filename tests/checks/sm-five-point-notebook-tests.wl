@@ -695,6 +695,8 @@ sm5ntCheck["the actual native-kernel CLI honors output, inventory and sector fil
     MatchQ[sm5ntRead[sm5ntNativeCLIPath], HoldComplete[_Notebook]] &&
     StringContainsQ[sm5ntNativeCLI["StandardOutput"], "with 1 families in 1 linked sector notebooks"] &&
     FileExistsQ[FileNameJoin[{sm5ntTemporary, "native-cli-" <> sm5ntSampleFamily["Sector"] <> ".nb"}]]];
+sm5ntCheck["the native builder does not create generic globals before package loading",
+  !StringContainsQ[sm5ntNativeCLI["StandardOutput"] <> sm5ntNativeCLI["StandardError"], "::shdw"]];
 DeleteDirectory[sm5ntTemporary, DeleteContents -> True];
 Print["SM FIVE-POINT NOTEBOOK CHECKS: ", sm5ntChecks, "; FAILURES: ", Length[sm5ntFailures]];
 If[sm5ntFailures === {}, Print["HEPCAT_TEST_COMPLETED:sm-five-point-notebook-tests.wl"], Print[sm5ntFailures]];
