@@ -13,6 +13,7 @@ import importlib.util
 import json
 import math
 import os
+import re
 from pathlib import Path
 import secrets
 import shutil
@@ -155,6 +156,23 @@ def export_input_admission(identifier, configuration):
 
 def cleanup_family_generated(family, state, configuration, *, runner_lock=None):
     """Remove a completed numerical project, retaining its actual evidence."""
+    name = family.get('ExportName')
+    if isinstance(name, str) and re.fullmatch(r'[A-Za-z][A-Za-z0-9]*', name):
+        target = ROOT / 'tests/results/spinas-output/SM-5-point' / name
+        # Nothing can be deleted at a truly absent target. Do not rehash the
+        # entire campaign merely to rediscover a completed project's absence.
+        # Any existing file, directory or symlink retains all old admission guards.
+        absent = not target.exists() and not target.is_symlink()
+        ancestor = target.parent
+        while absent:
+            if ancestor.is_symlink() or (ancestor.exists() and not ancestor.is_dir()):
+                absent = False
+                break
+            if ancestor == ROOT:
+                break
+            ancestor = ancestor.parent
+        if absent:
+            return {'Status': 'ALREADY_ABSENT', 'GeneratedRoot': str(target), 'FilesRemoved': 0}
     current = context_sha256(configuration)
     proof = context_compatibility(configuration, current)
     export = checked_summary(family['ID'], '-export', current, proof)
@@ -374,7 +392,7 @@ def main():
         for family in inventory['Families']:
             if state['Families'].get(family['ID'], {}).get('Status') == 'PASS':
                 cleanup = cleanup_family_generated(family, state, configuration, runner_lock=lock)
-                if cleanup.get('Status') not in ('ABSENT', 'ALREADY_REMOVED'):
+                if cleanup.get('Status') not in ('ABSENT', 'ALREADY_ABSENT', 'ALREADY_REMOVED'):
                     print(f"{family['ID']} generated files: {cleanup.get('Status')}", flush=True)
     if args.cleanup_only:
         print(json.dumps(state['Counts'], indent=2), flush=True)
@@ -424,7 +442,8 @@ def main():
                     state['LastCompletedFamily'] = family['ID']
                     if not args.keep_generated:
                         cleanup = cleanup_family_generated(family, state, configuration, runner_lock=lock)
-                        print(f"{family['ID']} generated files: {cleanup.get('Status')}", flush=True)
+                        if cleanup.get('Status') not in ('ABSENT', 'ALREADY_ABSENT', 'ALREADY_REMOVED'):
+                            print(f"{family['ID']} generated files: {cleanup.get('Status')}", flush=True)
                 atomic_json(PROGRESS, state)
     except KeyboardInterrupt:
         stopped = 'InterruptedWithCheckpointsSaved'

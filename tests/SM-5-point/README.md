@@ -738,3 +738,16 @@ small local report journal, and avoids active jobs and tracked files. Raw failed
 or precision-qualified projects remain while their precision verifier still
 requires those exact dependencies. These are temporary retention requirements,
 not a reason to make generated projects permanent repository content.
+
+Rebuilding a notebook does not reconstruct deleted amplitudes. If its saved
+capsules are missing, changed, or incomplete, the builder shows a cache-unavailable
+note and the ordinary calculation cells rather than repeating old validation
+totals from `progress.json`. A precision qualification is counted only when its
+verified replay table was actually rendered. Existing saved notebooks are left
+unchanged until an explicit rebuild. Display-only caches bind the whole builder
+hash; `prime-notebook-display-cache.py` can regenerate them from the remaining
+exact capsules without importing solver diagnostics or claiming a new validation.
+
+Cleanup skips expensive campaign admission when the exact generated `ExportName`
+path is already absent. Any existing path, broken symlink, or symlink ancestor
+still goes through all normal ownership and validation guards.

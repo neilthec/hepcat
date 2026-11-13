@@ -131,6 +131,15 @@ class ProjectionTests(unittest.TestCase):
         third=self.prime(source);self.assertEqual(third['Status'],'PRIMED')
         self.assertEqual(third['CachePayloadSHA256'],first['CachePayloadSHA256'])
 
+    def test_builder_metadata_change_invalidates_existing_display_cache(self):
+        source=self.source();self.prime(source)
+        changed=self.root/'builder.wl'
+        changed.write_text(PRIMER.DEFAULT_BUILDER.read_text()+'\n(* changed metadata display policy *)\n')
+        second=PRIMER.prime_record(source,self.cache,builder=changed,executable=self.tool,seconds=10)
+        self.assertEqual(second['Status'],'PRIMED')
+        self.assertEqual(second['BuilderSHA256'],PRIMER.sha(changed))
+        self.assertEqual(second['ProjectionDefinitionSHA256'],PRIMER.PROJECTION_SHA256)
+
     def test_status_failure_never_creates_a_success_cache(self):
         source=self.source([('Status',S('FAIL')),('Prints',self.prints),('Expression',self.expression)])
         with self.assertRaisesRegex(ValueError,'Only successful'):self.prime(source)

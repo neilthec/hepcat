@@ -449,19 +449,66 @@ class FivePointWorkflowTests(unittest.TestCase):
             self.assertEqual(self.worker()['Status'], 'COMPLETE')
 
     def invoke_main(self, *options):
+        output=io.StringIO()
         with mock.patch.object(sys, 'argv', ['run.py', '--family', 'family_ab', *options]), \
                 mock.patch.object(WORKFLOW, 'cleanup_family_generated',
                     return_value={'Status': 'ALREADY_ABSENT'}) as cleanup, \
-                redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+                redirect_stdout(output), redirect_stderr(io.StringIO()):
             self.last_cleanup = cleanup
             WORKFLOW.main()
+        self.last_output=output.getvalue()
         return json.loads((self.here / 'progress.json').read_text())
+
+    def test_absent_generated_root_skips_expensive_context_checks(self):
+        family={**self.inventory['Families'][0],'ExportName':'ToyProcess'}
+        with mock.patch.object(WORKFLOW,'context_sha256')as context, \
+                mock.patch.object(WORKFLOW,'context_compatibility')as proof, \
+                mock.patch.object(WORKFLOW,'checked_summary')as checked:
+            result=WORKFLOW.cleanup_family_generated(family,{}, {})
+        self.assertEqual(result['Status'],'ALREADY_ABSENT')
+        self.assertEqual(result['FilesRemoved'],0)
+        context.assert_not_called();proof.assert_not_called();checked.assert_not_called()
+
+    def assert_cleanup_still_uses_context(self,family):
+        with mock.patch.object(WORKFLOW,'context_sha256',return_value=self.context)as context, \
+                mock.patch.object(WORKFLOW,'context_compatibility',return_value=None), \
+                mock.patch.object(WORKFLOW,'checked_summary',return_value=None):
+            result=WORKFLOW.cleanup_family_generated(family,{}, {})
+        context.assert_called_once();self.assertEqual(result['Status'],'RETAINED')
+
+    def test_existing_generated_root_keeps_all_admission_guards(self):
+        family={**self.inventory['Families'][0],'ExportName':'ToyProcess'}
+        target=self.root/'tests/results/spinas-output/SM-5-point/ToyProcess';target.mkdir(parents=True)
+        self.assert_cleanup_still_uses_context(family);self.assertTrue(target.is_dir())
+
+    def test_broken_target_symlink_is_not_treated_as_absent(self):
+        family={**self.inventory['Families'][0],'ExportName':'ToyProcess'}
+        target=self.root/'tests/results/spinas-output/SM-5-point/ToyProcess';target.parent.mkdir(parents=True)
+        target.symlink_to(self.root/'missing-outside')
+        self.assert_cleanup_still_uses_context(family);self.assertTrue(target.is_symlink())
+
+    def test_symlink_ancestor_is_not_treated_as_absent(self):
+        family={**self.inventory['Families'][0],'ExportName':'ToyProcess'}
+        parent=self.root/'tests/results/spinas-output';parent.symlink_to(self.root/'missing-outside')
+        self.assert_cleanup_still_uses_context(family);self.assertTrue(parent.is_symlink())
+
+    def test_file_ancestor_is_not_treated_as_absent(self):
+        family={**self.inventory['Families'][0],'ExportName':'ToyProcess'}
+        parent=self.root/'tests/results/spinas-output';parent.write_text('manual file retained')
+        self.assert_cleanup_still_uses_context(family);self.assertEqual(parent.read_text(),'manual file retained')
+
+    def test_unknown_or_unsafe_export_name_keeps_old_guards(self):
+        for name in (None,'../manual','path/name','a-b'):
+            with self.subTest(name=name):
+                family={**self.inventory['Families'][0],'ExportName':name}
+                self.assert_cleanup_still_uses_context(family)
 
     def test_default_cleans_already_validated_generated_projects(self):
         self.valid_family()
         with mock.patch.object(WORKFLOW, 'context_sha256', return_value=self.context):
             self.invoke_main()
         self.last_cleanup.assert_called_once()
+        self.assertNotIn('ALREADY_ABSENT',self.last_output)
 
     def test_keep_generated_preserves_completed_projects(self):
         self.valid_family()

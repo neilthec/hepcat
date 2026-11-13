@@ -478,6 +478,7 @@ sm5NotebookPathSource[path_String] := Module[{absolute, parts, rootParts},
       StringRiffle[sm5NotebookSource /@ Drop[parts, Length[rootParts]], ", "] <> "}]",
     sm5NotebookSource[absolute]]
 ];
+sm5NotebookVerifiedPrecisionFamilies = {};
 sm5NotebookPrecisionRows[report_Association] := Table[
   Join[<|"Evaluation" -> name|>, KeyTake[report["Results"][name], {
     "MantissaBits", "Points", "Mismatches", "Errors", "MaximumRelativeError", "Status"}]],
@@ -529,6 +530,7 @@ sm5NotebookPrecisionCells[family_Association] := Module[
     "consistent with roundoff in cancellations at ordinary precision. The native and GCC53 controls " <>
     "remain visible below. Run this optional cell for a fresh replay; each run keeps its own output directory.";
   table = Dataset[sm5NotebookPrecisionRows[report], MaxItems -> {All, All}];
+  AppendTo[sm5NotebookVerifiedPrecisionFamilies, id];
   {Cell["CalcHEP precision replay (optional)", "Subsubsection"], sm5NotebookText[note],
     sm5NotebookGroup[{sm5NotebookInput[code, "sm5-precision-replay-" <> id],
       sm5NotebookOutput[table, "Output"]}]}
@@ -589,6 +591,7 @@ sm5NotebookMadGraphPrecisionCells[family_Association] := Module[
   raw = Import[rawPath, "RawJSON"]; rows = sm5NotebookMadGraphPrecisionRows[qualification, raw];
   If[rows === {}, Return[{}]];
   variable = sm5NotebookVariable[id]; table = Dataset[rows, MaxItems -> {All, All}];
+  AppendTo[sm5NotebookVerifiedPrecisionFamilies, id];
   note = "The original MadGraph comparison above keeps its raw FAIL and residuals. " <>
     "A separate verified replay uses the same uncorrected binary64 inputs, the same generated reference expressions, " <>
     "and 113-bit reference arithmetic. All " <> ToString[qualification["ComparedHelicityPoints"]] <>
@@ -715,7 +718,33 @@ sm5NotebookProgressCells[counts_Association] := Module[{required, text, failed, 
   {Cell[text, "Text", CellTags -> "sm5-progress-summary"]}
 ];
 sm5NotebookProgressCells[_] := {};
-sm5NotebookOverview = sm5NotebookGroup[Join[{
+(* The durable ledger is an index, not a replacement for deleted scratch evidence. *)
+sm5NotebookSavedProgressCells[] := Module[
+  {counts, native, families, qualified, precision, records, available, unavailable},
+  unavailable = {Cell[
+    "Saved validation caches are unavailable or incomplete. Run Setup, then the construction and export cells " <>
+      "to rebuild them. No cached validation total is claimed.", "Text", CellTags -> "sm5-progress-unavailable"]};
+  counts = Lookup[sm5NotebookProgress, "Counts", <||>];
+  If[!AssociationQ[counts] || !KeyExistsQ[counts, "Constructed"], Return[{}]];
+  native = Lookup[sm5NotebookProgress, "Cases", <||>];
+  families = Lookup[sm5NotebookProgress, "Families", <||>];
+  If[!AssociationQ[native] || !AssociationQ[families] || !DirectoryQ[sm5NotebookResultsPath], Return[unavailable]];
+  native = Select[native, AssociationQ[#] && Lookup[#, "Status", None] === "COMPLETE" &];
+  qualified = Select[families, AssociationQ[#] && (Lookup[#, "Status", None] === "PASS" ||
+    Lookup[Lookup[#, "PrecisionQualification", <||>], "Status", None] === "PRECISION_QUALIFIED") &];
+  precision = Keys[Select[qualified,
+    Lookup[Lookup[#, "PrecisionQualification", <||>], "Status", None] === "PRECISION_QUALIFIED" &]];
+  records = Join[KeyValueMap[{#1, #2, ""} &, native], KeyValueMap[{#1, #2, "-export"} &, qualified]];
+  available = Length[native] === counts["Constructed"] &&
+    ContainsAll[sm5NotebookVerifiedPrecisionFamilies, precision] && AllTrue[records,
+      Function[item, StringMatchQ[item[[1]], RegularExpression["[A-Za-z][A-Za-z0-9_-]*"]] &&
+        StringQ[Lookup[item[[2]], "CapsuleSHA256", None]] &&
+        sm5NotebookDisplayHash[FileNameJoin[{sm5NotebookResultsPath, item[[1]] <> item[[3]] <> ".wxf"}]] ===
+          item[[2]]["CapsuleSHA256"]]];
+  If[TrueQ[available], sm5NotebookProgressCells[counts], unavailable]
+];
+(* Delay the overview until sector replay has verified any precision tables. *)
+sm5NotebookOverview := sm5NotebookGroup[Join[{
   Cell["Sector overview", "Section"],
   sm5NotebookText["The full inventory contains " <> ToString[Length[sm5NotebookCases]] <>
     " construction cases in " <> ToString[Length[sm5NotebookFamilies]] <> " export families. " <>
@@ -725,7 +754,7 @@ sm5NotebookOverview = sm5NotebookGroup[Join[{
   sm5NotebookText["The cells retain output only from actual captured runs. Missing output " <>
     "means the cell has not been run here. Evaluate Setup, then an amplitude cell, then its " <>
     "family export to obtain fresh construction and numerical comparison tables."]},
-  sm5NotebookProgressCells[Lookup[sm5NotebookProgress, "Counts", <||>]],
+  sm5NotebookSavedProgressCells[],
   Table[sm5NotebookText[Lookup[sm5NotebookSectorTitles, sector, sector] <> ": " <>
     sm5NotebookCount[Count[Lookup[sm5NotebookFamilies, "Sector"], sector], "export family", "export families"] <> ", " <>
     sm5NotebookCount[Count[Lookup[sm5NotebookCases, "Sector"], sector], "construction case", "construction cases"] <> "."],
