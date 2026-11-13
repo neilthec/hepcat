@@ -1,0 +1,36 @@
+{
+  "ID": "sm5_15253344f741",
+  "Particles": [
+    "e",
+    "E",
+    "e",
+    "E",
+    "Z"
+  ],
+  "Status": "COMPLETE",
+  "Seconds": 429.423602,
+  "Complexity": 6112,
+  "RandomSeed": 6046334304350982578,
+  "Points": 1000,
+  "ContextSHA256": "48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363",
+  "CapsuleSHA256": "5ac84f1c153af08a547bccc30c7e1b2510b471bf8fe30247a612c7146df00021",
+  "Rows": 19,
+  "FeynmanRows": 1,
+  "CheckStatuses": {
+    "PASS": 19
+  },
+  "ActualPublicCall": "ConstructAmplitude[process, model1, model2, \"FeynmanModel\" -> reference1, \"Output\" -> \"Details\"]",
+  "RequestedOptions": {},
+  "ImportedActualPublicShadowRun": true,
+  "OriginalPublicCapsule": "tests/results/SM-5-point/diagnostics/four-fermion-vector-source-prototype-C7-20261113/shadow/identical-z-public/result.wxf",
+  "OriginalPublicCapsuleSHA256": "5ac84f1c153af08a547bccc30c7e1b2510b471bf8fe30247a612c7146df00021",
+  "PublicCapsuleBytesUnchanged": true,
+  "OriginalPublicSourceContextSHA256": "48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363",
+  "OriginalPublicSourceManifest": "tests/results/SM-5-point/diagnostics/four-fermion-vector-source-prototype-C7-20261113/shadow/identical-z-public/shadow-runtime-manifest.json",
+  "OriginalPublicSourceManifestSHA256": "f42589e9e087e85c31f0ec9198b07b9cbedec52c4b81803c0daf55964cd128c1",
+  "CapturedCapsuleMetadataDescribesOriginalExecution": true,
+  "NativeValidationRerunOnImport": false,
+  "ConstructorRerunOnImport": false,
+  "IndependentBackendsStillRequiredForThisActualOutput": true,
+  "ImportScriptSHA256": "0d0908379d6130e6fb919f7165d10358d8f3a528db829acbffeced4d9df686a0"
+}

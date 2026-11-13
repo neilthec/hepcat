@@ -1,0 +1,11 @@
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+<|Status -> COMPLETE, Particles -> {e, E, m, M, Z}, FamilyID -> sm5f_49b4f9754212, Seconds -> 235.841507, ShadowSourceContextSHA256 -> 48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363, OriginalProductionContextSHA256 -> 4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167, PublicCall -> ConstructAmplitude[process, model1, model2, "FeynmanModel" -> reference1, "Output" -> "Details"], PublicOptions -> {FeynmanModel, Output}, AllOtherOptionsDefault -> True, RandomSeedChoice -> Automatic, ProductionSourceEdited -> False, CanonicalPromotion -> False, ActualPublicConstructorExecuted -> True, Rows -> 13, RowStatuses -> <|PASS -> 13|>, FeynmanRows -> 1, Complexity -> 1160|>

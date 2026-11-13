@@ -1,0 +1,15 @@
+{
+  "TotalCases": 1422,
+  "TotalFamilies": 869,
+  "Constructed": 245,
+  "FullyValidatedCases": 237,
+  "PrecisionQualifiedCases": 8,
+  "ValidatedIncludingPrecisionQualifiedCases": 245,
+  "PrecisionQualifiedFamilies": 3,
+  "ValidatedFamilies": 166,
+  "RecordedInputPassCases": 245,
+  "SupplementalParameterProbeFailedCases": 0,
+  "SupplementalParameterProbeUnavailableCases": 0,
+  "FailedOrTimedOut": 0
+}
+Checkpoint: /Users/neil/code/hepcat/tests/SM-5-point/progress.json

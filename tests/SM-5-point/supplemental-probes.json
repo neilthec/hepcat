@@ -9,7 +9,7 @@
       "Note": "The retained expression also passes this equal-mass assignment with the current checker and fresh independent Feynman diagrams. The numerical parameter values change; the expression and external labels do not. The earlier failure and subsequent passing rechecks remain archived with their original source contexts.",
       "InputTemplate": "$CASEParameterProbeChannels = FactorizationAmplitudeChannels[\n  $CASEParticles, smFactorization];\n$CASEParameterProbeFeynman = FeynmanToSpinorProducts[\n  DiagramAmplitudes[CreateDiagrams[$CASEParticles, smFeynman]],\n  \"ReferenceSpinors\" -> Automatic, \"ReduceSpinorProducts\" -> False,\n  \"TimeConstraint\" -> 30];\n$CASEParameterProbe = CheckAmplitudes[\n  $CASEAmplitude, $CASEParameterProbeChannels, smFactorization,\n  \"FeynmanAmplitudes\" -> $CASEParameterProbeFeynman,\n  \"FeynmanModel\" -> smFeynman, \"ParameterRules\" -> $PARAMETER_RULES,\n  \"RandomSeed\" -> $RANDOM_SEED, \"TimeConstraint\" -> $CHECK_SECONDS,\n  \"Output\" -> \"Details\"];\n$CASEParameterProbe[\"Table\"]",
       "SourceCapsuleSHA256": "33b43a0075b17bd081d1fa8123ca09007e1cf3becef9c861c6771069c5b1afde",
-      "ProbeContextSHA256": "4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167",
+      "ProbeContextSHA256": "48d82ad2adaf29f9a338c9fb6b9cf3da37ed7570f6de5852ee50c798fd0d8363",
       "Status": "ALL_PASS",
       "StatusCounts": {
         "PASS": 13
@@ -17,19 +17,19 @@
       "CheckTimeConstraint": 90,
       "Files": {
         "Capsule": {
-          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C7-20261113/canonical-Mm-override.wxf",
-          "SHA256": "c0473e4fbfb384de7e010a293fd2b25a235f1dc0c1d3ee2567bf01291d4e8ab7"
+          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C8-20261113/canonical-Mm-override.wxf",
+          "SHA256": "119e5d5febb2d683977f56020e82da383316cd377ad3eda237172220b823da00"
         },
         "Summary": {
-          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C7-20261113/canonical-Mm-override.json",
-          "SHA256": "d4c1e08dd9084e528371d4fa981ee06b2536c4bffb8fcf436647e74f27f67584"
+          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C8-20261113/canonical-Mm-override.json",
+          "SHA256": "241914e2cc8c6b519ee6f61f772587c97f5b4afe9b6388a08cf45fb577c38b53"
         },
         "Script": {
-          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C7-20261113/canonical-Mm-override.wl",
-          "SHA256": "c50f5f554bc3e9e5dcc1868d665ac185dd361db31c892254fc2b5fe7be5441b1"
+          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C8-20261113/canonical-Mm-override.wl",
+          "SHA256": "e614b2a93380628533efafd02c4ad7c27fdbe7d31d53590ec0b951121be78e77"
         },
         "ConversionScript": {
-          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C7-20261113/fresh-feynman-conversion.wl",
+          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C8-20261113/fresh-feynman-conversion.wl",
           "SHA256": "bc675712d6855c6b2c29ed430814a3053cb2071529a8e0ddd97dbe88c100450e"
         }
       }
@@ -206,6 +206,39 @@
         }
       },
       "SupersededByProbeContextSHA256": "4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167"
+    },
+    {
+      "ID": "muon-mass-equal-electron",
+      "CaseID": "sm5_46dff720d04e",
+      "Kind": "ParameterCheck",
+      "Title": "Additional mass-parameter check",
+      "Note": "The retained expression also passes this equal-mass assignment with the current checker and fresh independent Feynman diagrams. The numerical parameter values change; the expression and external labels do not. The earlier failure and subsequent passing rechecks remain archived with their original source contexts.",
+      "InputTemplate": "$CASEParameterProbeChannels = FactorizationAmplitudeChannels[\n  $CASEParticles, smFactorization];\n$CASEParameterProbeFeynman = FeynmanToSpinorProducts[\n  DiagramAmplitudes[CreateDiagrams[$CASEParticles, smFeynman]],\n  \"ReferenceSpinors\" -> Automatic, \"ReduceSpinorProducts\" -> False,\n  \"TimeConstraint\" -> 30];\n$CASEParameterProbe = CheckAmplitudes[\n  $CASEAmplitude, $CASEParameterProbeChannels, smFactorization,\n  \"FeynmanAmplitudes\" -> $CASEParameterProbeFeynman,\n  \"FeynmanModel\" -> smFeynman, \"ParameterRules\" -> $PARAMETER_RULES,\n  \"RandomSeed\" -> $RANDOM_SEED, \"TimeConstraint\" -> $CHECK_SECONDS,\n  \"Output\" -> \"Details\"];\n$CASEParameterProbe[\"Table\"]",
+      "SourceCapsuleSHA256": "33b43a0075b17bd081d1fa8123ca09007e1cf3becef9c861c6771069c5b1afde",
+      "ProbeContextSHA256": "4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167",
+      "Status": "ALL_PASS",
+      "StatusCounts": {
+        "PASS": 13
+      },
+      "CheckTimeConstraint": 90,
+      "Files": {
+        "Capsule": {
+          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C7-20261113/canonical-Mm-override.wxf",
+          "SHA256": "c0473e4fbfb384de7e010a293fd2b25a235f1dc0c1d3ee2567bf01291d4e8ab7"
+        },
+        "Summary": {
+          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C7-20261113/canonical-Mm-override.json",
+          "SHA256": "d4c1e08dd9084e528371d4fa981ee06b2536c4bffb8fcf436647e74f27f67584"
+        },
+        "Script": {
+          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C7-20261113/canonical-Mm-override.wl",
+          "SHA256": "c50f5f554bc3e9e5dcc1868d665ac185dd361db31c892254fc2b5fe7be5441b1"
+        },
+        "ConversionScript": {
+          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C7-20261113/fresh-feynman-conversion.wl",
+          "SHA256": "bc675712d6855c6b2c29ed430814a3053cb2071529a8e0ddd97dbe88c100450e"
+        }
+      }
     }
   ]
 }
