@@ -1,0 +1,12 @@
+{
+  "ExitCode": -9,
+  "Seconds": 685.664479,
+  "SourceContext": "4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167",
+  "SourceAndScriptsUnchanged": true,
+  "LoadedScriptsSHA256": {
+    "check.wl": "a017ce6901813906c9ae1e35e13537edc96d5c0d15343ba21212c5e9c65e1915"
+  },
+  "CanonicalOrProductionChanges": false,
+  "IndependentBenchmarkReadAfterCandidateFreeze": true,
+  "InputCertificatesFromC6RetainedWithExactCurrentModelHashes": true
+}

@@ -1,0 +1,16 @@
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+Verifying exact denominator-group atom-ring factorization of the original fixed pair.
+<|Stage -> EXACT_ATOM_RING_FACTORING, Seconds -> 1.990751, File -> /private/tmp/hepcat-four-vector-scalar-candidate/factored-native-validation/exact-atom-ring-factoring.wxf, SHA256 -> 3a5b6588cc48dd033950190c7fc717e1385c4c6601c4220a87cd37da53e2fe76|>
+<|Stage -> FIXED_PREPARED_CANDIDATE, Seconds -> 2.080171, File -> /private/tmp/hepcat-four-vector-scalar-candidate/factored-native-validation/fixed-prepared-candidate.wxf, SHA256 -> 7e46623fff9dd8cd8f431377a3964363e3b07378e6559270e3ad398df85db357|>
+Reusing the complete independently converted benchmark, with original coverage and exact checkpoint hashes.
+<|Stage -> REUSED_INDEPENDENT_FEYNMAN_COMPLETE, Seconds -> 11.401999, File -> /private/tmp/hepcat-four-vector-scalar-candidate/factored-native-validation/reused-independent-feynman-complete.wxf, SHA256 -> 4b24dc410e2cf082c669463941b84ab087fa6c2b226b3c1c9f35c57593dab61a|>
+Ordinary native validation parameter set 1/3; seed 1409237488; time allowance 600 s

@@ -1,0 +1,89 @@
+{
+	"Event":"ENTER",
+	"ID":1,
+	"Function":"residueSimpleInputs",
+	"Seconds":1.2311438e1,
+	"OuterProfileSecondsRemaining":167.688562,
+	"ParameterSetIndex":1
+}
+{
+	"Event":"EXIT",
+	"ID":1,
+	"Function":"residueSimpleInputs",
+	"Seconds":1.2522609e1,
+	"ElapsedSeconds":0.211177,
+	"ReturnedAssociation":true,
+	"Status":null
+}
+{
+	"Event":"ENTER",
+	"ID":2,
+	"Function":"residueCheckPlan",
+	"Seconds":1.2523125e1,
+	"OuterProfileSecondsRemaining":167.476875,
+	"ParameterSetIndex":1
+}
+{
+	"Event":"EXIT",
+	"ID":2,
+	"Function":"residueCheckPlan",
+	"Seconds":1.2623424e1,
+	"ElapsedSeconds":0.100304,
+	"ReturnedAssociation":true,
+	"Status":null
+}
+{
+	"Event":"ENTER",
+	"ID":3,
+	"Function":"poleDiscoverDenominators",
+	"Seconds":1.2624029e1,
+	"OuterProfileSecondsRemaining":167.375971,
+	"ParameterSetIndex":1
+}
+{
+	"Event":"EXIT",
+	"ID":3,
+	"Function":"poleDiscoverDenominators",
+	"Seconds":1.2700274e1,
+	"ElapsedSeconds":7.6249e-2,
+	"ReturnedAssociation":false,
+	"Status":"List"
+}
+{
+	"Event":"ENTER",
+	"ID":4,
+	"Function":"highEnergyCheckPlan",
+	"Seconds":1.270071e1,
+	"OuterProfileSecondsRemaining":167.299290,
+	"ParameterSetIndex":1
+}
+{
+	"Event":"EXIT",
+	"ID":4,
+	"Function":"highEnergyCheckPlan",
+	"Seconds":1.2703437e1,
+	"ElapsedSeconds":2.729e-3,
+	"ReturnedAssociation":true,
+	"Status":null
+}
+{
+	"Event":"ENTER",
+	"ID":5,
+	"Function":"amplitudeCheckDispatch",
+	"Seconds":1.2896256e1,
+	"OuterProfileSecondsRemaining":167.103744,
+	"ParameterSetIndex":1
+}
+{
+	"Event":"ENTER",
+	"ID":6,
+	"Function":"amplitudeCheckJob",
+	"Seconds":1.3085291e1,
+	"OuterProfileSecondsRemaining":166.914709,
+	"ParameterSetIndex":1,
+	"Kind":"HighEnergySample",
+	"Sample":1,
+	"SharedHighEnergyDeadlineSecondsRemaining":599.615912
+}
+$Aborted
+$Aborted

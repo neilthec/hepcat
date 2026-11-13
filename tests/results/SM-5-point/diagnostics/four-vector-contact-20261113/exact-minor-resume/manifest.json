@@ -1,0 +1,74 @@
+{
+  "Files": {
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/coefficients-fixed.wxf": "1059f3a292461d60184c6b7b3bf7887f8db43b8f15433add0ae74a0dd629b90b",
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/components-18.wxf": "1b72e1a99fbb742102cf9a0dd05b7b894529bc27dcb56a24a2a8817e6ae2e313",
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/components-27.wxf": "dc66fb198a613de35197b30b24775e1176c6640436cc413e548a94211c0c434f",
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/components-36.wxf": "afe3fe3c5516204a827e49f13c1ea99eac70208027815ac4092930774244d7a1",
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/components-45.wxf": "269397ce43a2b1791d08f83d57bfc50fc9262c10ff000e77276759bcba74ced2",
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/components-54.wxf": "83debad5f6c0510e2324ffa9db6e76f9124cce967e2e574e30f1455c2c13ff8e",
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/components-63.wxf": "b4f54bd04abda125279337a4cca4ea41e843f20413ff535b189943c739f11f68",
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/components-72.wxf": "a0837d23c0bf98cac59dfc25303534d3ce0e2eb44eeffd77ff029e501001819b",
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/components-81.wxf": "a8905f9d182ea5405a4dc0b32c6310b9293216c46164895aca8053b68c7a3bdd",
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/components-9.wxf": "05c76215786f8f3a92eb46fc73dfc5a54c3f0a0da855d54d6b7f592dfaa1459c",
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/control.py": "9ec860670f0e81bf71fd0d1957303572ff15bc2b8b816d0f150803392fd0d00d",
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/controller.json": "ea4fe9855fc3ba80c7fdae8335e9bf0c6fbd97dbeb025c122f6ef25b4354b73f",
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/independent-minor.wxf": "1c968bc0c809b5017a5f123a319970367475361ab90cd1f8d00bd1caa9c946bc",
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/pilot.log": "18e2c6d6e2de46f86a3d365686a95bf74f90ebf754400a88579aaaf773a8ab5e",
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/recover-summary.log": "94e55d041a7198d94c3e09461ef37d71818f9c4632a9db86d83b927265b3adba",
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/recover-summary.wl": "0b4916a9cbc0866b98184415143e8318a3b4a2ad108407b4a985acd552c31710",
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/result.wxf": "061dc00843dbaa4c52503379881691a1a319a31037586c685c568deb0ef38253",
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/solve.wl": "1dd58d6a38329b30bd278d2c53659e91f7023ba5bd3d7bddb433fc51e1ee889b",
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/summary-before-metadata-recovery.json": "3f16c77a9590aea158eb4563a58a9aae619be3b022d3e070a2df18909cfc9dc6",
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/summary.json": "a63d05acf671c35b1932395370151a443c9b26609f7d0bf40e7bf86e441118a3"
+  },
+  "IndependentReferenceRead": false,
+  "MappedInput": {
+    "Path": "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run/mapped.wxf",
+    "SHA256": "3725820a15f2c9e528233679ad0f4c90e45146045c694e5ca10842c720fdaa81"
+  },
+  "NoCanonicalOrProductionChanges": true,
+  "NumericalKinematicOrParameterSamples": 0,
+  "Original600SecondAttemptPreservedAsResourceLimit": true,
+  "ResultCapsuleSHA256": "061dc00843dbaa4c52503379881691a1a319a31037586c685c568deb0ef38253",
+  "ResultMetadata": {
+    "AdditionalLowerDerivedContactGraphCount": 1,
+    "AllEightyOneComponentsProvedZero": true,
+    "BoseExchangeChecks": [
+      true
+    ],
+    "Coefficients": [
+      "(2*ConstructiveDiagrams`ModelParameter[\"EE\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"]^2*(-1 + ConstructiveDiagrams`ModelParameter[\"SW\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"]^2))/ConstructiveDiagrams`ModelParameter[\"SW\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"]^2",
+      "-((ConstructiveDiagrams`ModelParameter[\"EE\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"]^2*(-1 + ConstructiveDiagrams`ModelParameter[\"SW\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"]^2))/ConstructiveDiagrams`ModelParameter[\"SW\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"]^2)",
+      "-((ConstructiveDiagrams`ModelParameter[\"EE\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"]^2*(-1 + ConstructiveDiagrams`ModelParameter[\"SW\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"]^2))/ConstructiveDiagrams`ModelParameter[\"SW\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"]^2)"
+    ],
+    "ContactImplementationIdentityVerified": true,
+    "ExactOriginalCubicGraphCoverage": true,
+    "InternalOnShellConditions": [],
+    "LiftedCubicGraphCount": 3,
+    "NewIndependentCoupling": false,
+    "NoIndependentBenchmarkRead": true,
+    "NoNumericalKinematicOrModelAssignments": true,
+    "OneToOneOriginalGraphCoverageClaimedForContactExtendedModel": false,
+    "OriginalCubicGraphCount": 3,
+    "Process": [
+      "W+",
+      "W-",
+      "Z",
+      "Z"
+    ],
+    "SelectedMinorRows": [
+      5,
+      11,
+      20
+    ],
+    "Status": "EXACT_LOWER_DERIVED_FOUR_VECTOR_CONTACT"
+  },
+  "Seconds": 100.730767,
+  "SourceContext": "47026bedc2844622616e46a05069c2682cc4306872799bbe8e02d4a01291cc04",
+  "SourceReadyInput": {
+    "Path": "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run/source-ready.wxf",
+    "SHA256": "60be8db0a7c3bac91597069f5a9b340d2aaaca0b8150f3235a077ebb25da650d"
+  },
+  "Status": "EXACT_SYMBOLIC_LOWER_DERIVED_CONTACT",
+  "SummaryOnlyMetadataRecovery": true
+}

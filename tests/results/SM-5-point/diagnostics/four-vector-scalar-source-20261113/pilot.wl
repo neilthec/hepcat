@@ -1,0 +1,22 @@
+Get["/Users/neil/code/hepcat/source/HEPCAT.wl"];
+Get["/private/tmp/hepcat-four-vector-scalar-candidate/build.wl"];
+Begin["HEPCATFourVectorScalarPilot`Private`"];
+$ContextPath=Prepend[DeleteCases[$ContextPath,"HEPCATFourVectorScalarPilot`Private`"],"HEPCATFourVectorScalarPilot`Private`"];
+$HistoryLength=0;v5Root="/Users/neil/code/hepcat";v5Directory="/private/tmp/hepcat-four-vector-scalar-candidate";v5Started=AbsoluteTime[];v5Stages={};
+v5InputSource=v5Root<>"/tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run/source-ready.wxf";
+v5InputContact=v5Root<>"/tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/result.wxf";
+v5SHA[path_]:=IntegerString[FileHash[path,"SHA256"],16,64];
+If[v5SHA[v5InputSource]=!="60be8db0a7c3bac91597069f5a9b340d2aaaca0b8150f3235a077ebb25da650d"||v5SHA[v5InputContact]=!="061dc00843dbaa4c52503379881691a1a319a31037586c685c568deb0ef38253",Quit[2]];
+v5SavedCubics=Import[v5InputSource,"WXF"];v5ContactEnvelope=Import[v5InputContact,"WXF"];v5ContactProof=v5ContactEnvelope["Result"];
+v5Source=ReadModel[v5Root<>"/models",1];v5Lower=ReadModel[v5Root<>"/models",2];v5Process={"W+","W-","Z","Z","h"};
+v5Emit[name_,data_]:=Module[{path,stream},path=v5Directory<>"/"<>ToLowerCase[StringReplace[name,"_"->"-"]]<>".wxf";
+ stream=OpenWrite[path,BinaryFormat->True];BinaryWrite[stream,Normal[BinarySerialize[data,PerformanceGoal->"Size"]],"Byte"];Close[stream];AppendTo[v5Stages,<|"Stage"->name,"Seconds"->N[AbsoluteTime[]-v5Started],"File"->path,"SHA256"->v5SHA[path]|>];Print[Last[v5Stages]]];
+v5Outcome=MemoryConstrained[TimeConstrained[HEPCATFourVectorScalarCandidate`Private`build[v5Process,v5Source,v5Lower,v5SavedCubics,v5ContactProof,v5Emit],900,Failure["VectorScalarSourceClock",<||>]],4 2^30,Failure["VectorScalarSourceMemory",<||>]];
+v5Ready=AssociationQ[v5Outcome]&&Lookup[v5Outcome,"Status",None]==="UNVALIDATED_SOURCE_ONLY_FOUR_VECTOR_SCALAR_CANDIDATE";
+v5Record=<|"Status"->If[v5Ready,"SOURCE_CANDIDATE_SEALED_NOT_VALIDATED","NOT_COMPLETE"],"Particles"->v5Process,"SourceContext"->Environment["HEPCAT_V5_CONTEXT"],
+ "Result"->v5Outcome,"Stages"->v5Stages,"Seconds"->N[AbsoluteTime[]-v5Started],"OriginalLowerSourceCapsuleSHA256"->v5SHA[v5InputSource],"ExactFourVectorContactCapsuleSHA256"->v5SHA[v5InputContact],
+ "NoIndependentBenchmarkRead"->True,"NoSavedKnownFivePointAmplitudeRead"->True,"CanonicalOrProductionChanges"->False|>;
+v5Stream=OpenWrite[v5Directory<>"/proposal.wxf",BinaryFormat->True];BinaryWrite[v5Stream,Normal[BinarySerialize[v5Record,PerformanceGoal->"Size"]],"Byte"];Close[v5Stream];
+v5Safe[x_]:=Which[AssociationQ[x],Association[KeyValueMap[ToString[#1]->v5Safe[#2]&,x]],ListQ[x],v5Safe/@x,StringQ[x]||IntegerQ[x]||Head[x]===Real||MemberQ[{True,False,Null},x],x,MissingQ[x]||x===None,Null,True,ToString[x,InputForm]];
+v5Summary=Join[KeyDrop[v5Record,{"Result"}],<|"ResultMetadata"->If[AssociationQ[v5Outcome],KeyTake[v5Outcome,{"Status","OriginalDiagramCount","AdditionalLowerDerivedContactDiagramCount","TotalDiagramCount","ExactOriginalGraphCoverage","OneToOneOriginalFullGraphEqualityClaimed","CoherentExternalVectorEncoding","CompleteOffShellConversionCoverage","ForeignModelParameters","InternalOnShellConditions","SourceModelSHA256","LowerModelSHA256"}],v5Outcome],"ProposalSHA256"->v5SHA[v5Directory<>"/proposal.wxf"]|>];
+Export[v5Directory<>"/summary.json",v5Safe[v5Summary],"RawJSON"];Print[v5Safe[v5Summary]];End[];Quit[If[v5Ready,0,1]];

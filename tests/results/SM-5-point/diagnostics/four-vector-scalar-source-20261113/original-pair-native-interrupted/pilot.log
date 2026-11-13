@@ -1,0 +1,25 @@
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+Preparing the completed source pair with external identities only.
+Preparation: Starting; amplitude 1/1; complexity 270841; terms 2891; 0.1 s
+Preparation: ReduceSpinContractions; amplitude 1/1; complexity 231161; terms 2491; 1.2000000000000002 s
+Preparation: PolePreference; amplitude 1/1; complexity 231161; terms 2491; 1.5 s
+Preparation: OrdinaryPairVirtualityCancellation; amplitude 1/1; complexity 231161; terms 2491; 2.1 s
+Preparation: CompactExternalAmplitude; amplitude 1/1; complexity 231161; terms 2491; 2.5 s
+Preparation: OrdinaryMultilinearIdentityNormalization; amplitude 1/1; complexity 231161; terms 2491; 3. s
+Preparation: SharedMatrixOrdinaryCofactors; amplitude 1/1; complexity 231161; terms 2491; 3.6 s
+Preparation: Time limit reached; amplitude 1/1; complexity 124041; terms 1323; 120.30000000000001 s
+<|Stage -> EXTERNAL_ONLY_PREPARATION, Seconds -> 123.742837, File -> /private/tmp/hepcat-four-vector-scalar-candidate/native-validation/external-only-preparation.wxf, SHA256 -> a57c44ab1ceb8c55a22098faa44e68fc631bc86bdf4ebf8f2032460ebb086fa8|>
+<|Stage -> FIXED_PREPARED_CANDIDATE, Seconds -> 123.845353, File -> /private/tmp/hepcat-four-vector-scalar-candidate/native-validation/fixed-prepared-candidate.wxf, SHA256 -> 7e3985d7314ac7bc3c555be438ef8de1318509abdca8afcdbb142367ae7b4a86|>
+Reading the independent Feynman model after the source and prepared candidates are frozen.
+<|Stage -> INDEPENDENT_FEYNMAN_RAW, Seconds -> 131.279084, File -> /private/tmp/hepcat-four-vector-scalar-candidate/native-validation/independent-feynman-raw.wxf, SHA256 -> b351452c3e02a5ce95ec609163c013f13068821da317b7648a17d978c5455999|>
+<|Stage -> INDEPENDENT_FEYNMAN_COMPLETE, Seconds -> 180.552211, File -> /private/tmp/hepcat-four-vector-scalar-candidate/native-validation/independent-feynman-complete.wxf, SHA256 -> 1ed29aa431c1ec79419eb1978ddaa5f088d4e44aaad28453a22c7bc724e84988|>
+Ordinary native validation parameter set 1/3; seed 1409237488; time allowance 600 s

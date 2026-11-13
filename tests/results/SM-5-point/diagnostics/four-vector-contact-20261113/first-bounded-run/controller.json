@@ -1,0 +1,14 @@
+{
+  "ExitCode": 1,
+  "Seconds": 607.176622458,
+  "SourceContext": "47026bedc2844622616e46a05069c2682cc4306872799bbe8e02d4a01291cc04",
+  "SourceAndScriptsUnchanged": true,
+  "LoadedScriptsSHA256": {
+    "vvv-matcher.wl": "f956912b25a77407c3f58a0162cfdb305ce2515c3dcc0dbf4c5427e27f7c105b",
+    "calibrate.wl": "0859dab4f0427dae588e51ec20f6585abd1cac1bf62d8715d7f323ab04b7555f",
+    "pilot.wl": "228c29820c6fa407b0483dc2b5f8cd04daaf9d3911134ae8300b3340acce7027"
+  },
+  "CanonicalRecordsModified": false,
+  "NoIndependentBenchmarkRead": true,
+  "CompleteKnownLowerFourAmplitudeRead": true
+}

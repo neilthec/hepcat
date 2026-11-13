@@ -1,0 +1,28 @@
+{
+	"Status":"NOT_CERTIFIED",
+	"Process":[
+		"W+",
+		"W-",
+		"Z",
+		"Z"
+	],
+	"SourceContext":"47026bedc2844622616e46a05069c2682cc4306872799bbe8e02d4a01291cc04",
+	"Stages":[
+		{
+			"Stage":"SOURCE_READY",
+			"Seconds":3.8997127e1,
+			"File":"\/private\/tmp\/hepcat-four-vector-contact\/source-ready.wxf",
+			"SHA256":"60be8db0a7c3bac91597069f5a9b340d2aaaca0b8150f3235a077ebb25da650d"
+		},
+		{
+			"Stage":"MAPPED",
+			"Seconds":2.53359422e2,
+			"File":"\/private\/tmp\/hepcat-four-vector-contact\/mapped.wxf",
+			"SHA256":"3725820a15f2c9e528233679ad0f4c90e45146045c694e5ca10842c720fdaa81"
+		}
+	],
+	"Seconds":6.00039011e2,
+	"CanonicalOrProductionChanges":false,
+	"IndependentBenchmarkRead":false,
+	"ResultMetadata":"Failure[\"FourVectorContactClock\", <||>]"
+}

@@ -1,0 +1,106 @@
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+<|Stage -> INDEPENDENT_MINOR, Seconds -> 6.071824, Path -> /private/tmp/hepcat-four-vector-contact/resume-minor/independent-minor.wxf, SHA256 -> 1c968bc0c809b5017a5f123a319970367475361ab90cd1f8d00bd1caa9c946bc|>
+<|Stage -> COEFFICIENTS_FIXED, Seconds -> 6.119613, Path -> /private/tmp/hepcat-four-vector-contact/resume-minor/coefficients-fixed.wxf, SHA256 -> 1059f3a292461d60184c6b7b3bf7887f8db43b8f15433add0ae74a0dd629b90b|>
+Component 1/81: PROVED_ZERO; 0.000319 s
+Component 2/81: PROVED_ZERO; 0.000284 s
+Component 3/81: PROVED_ZERO; 0.062955 s
+Component 4/81: PROVED_ZERO; 0.00033800000000000003 s
+Component 5/81: PROVED_ZERO; 0.051461 s
+Component 6/81: PROVED_ZERO; 0.614228 s
+Component 7/81: PROVED_ZERO; 0.048253 s
+Component 8/81: PROVED_ZERO; 0.561554 s
+Component 9/81: PROVED_ZERO; 0.907636 s
+<|Stage -> COMPONENTS_9, Seconds -> 8.36795, Path -> /private/tmp/hepcat-four-vector-contact/resume-minor/components-9.wxf, SHA256 -> 05c76215786f8f3a92eb46fc73dfc5a54c3f0a0da855d54d6b7f592dfaa1459c|>
+Component 10/81: PROVED_ZERO; 0.000336 s
+Component 11/81: PROVED_ZERO; 0.284058 s
+Component 12/81: PROVED_ZERO; 1.59278 s
+Component 13/81: PROVED_ZERO; 0.247557 s
+Component 14/81: PROVED_ZERO; 0.391614 s
+Component 15/81: PROVED_ZERO; 6.236096 s
+Component 16/81: PROVED_ZERO; 1.568773 s
+Component 17/81: PROVED_ZERO; 5.920594 s
+Component 18/81: PROVED_ZERO; 0.599199 s
+<|Stage -> COMPONENTS_18, Seconds -> 25.211436, Path -> /private/tmp/hepcat-four-vector-contact/resume-minor/components-18.wxf, SHA256 -> 1b72e1a99fbb742102cf9a0dd05b7b894529bc27dcb56a24a2a8817e6ae2e313|>
+Component 19/81: PROVED_ZERO; 0.006024 s
+Component 20/81: PROVED_ZERO; 1.87609 s
+Component 21/81: PROVED_ZERO; 0.513987 s
+Component 22/81: PROVED_ZERO; 1.802175 s
+Component 23/81: PROVED_ZERO; 1.296355 s
+Component 24/81: PROVED_ZERO; 1.594657 s
+Component 25/81: PROVED_ZERO; 0.531171 s
+Component 26/81: PROVED_ZERO; 1.491897 s
+Component 27/81: PROVED_ZERO; 0.007261 s
+<|Stage -> COMPONENTS_27, Seconds -> 34.333861, Path -> /private/tmp/hepcat-four-vector-contact/resume-minor/components-27.wxf, SHA256 -> dc66fb198a613de35197b30b24775e1176c6640436cc413e548a94211c0c434f|>
+Component 28/81: PROVED_ZERO; 0.000313 s
+Component 29/81: PROVED_ZERO; 0.242571 s
+Component 30/81: PROVED_ZERO; 1.699621 s
+Component 31/81: PROVED_ZERO; 0.242096 s
+Component 32/81: PROVED_ZERO; 0.380211 s
+Component 33/81: PROVED_ZERO; 5.64846 s
+Component 34/81: PROVED_ZERO; 1.673226 s
+Component 35/81: PROVED_ZERO; 5.524726 s
+Component 36/81: PROVED_ZERO; 0.566567 s
+<|Stage -> COMPONENTS_36, Seconds -> 50.315048, Path -> /private/tmp/hepcat-four-vector-contact/resume-minor/components-36.wxf, SHA256 -> afe3fe3c5516204a827e49f13c1ea99eac70208027815ac4092930774244d7a1|>
+Component 37/81: PROVED_ZERO; 0.112537 s
+Component 38/81: PROVED_ZERO; 1.171951 s
+Component 39/81: PROVED_ZERO; 1.878516 s
+Component 40/81: PROVED_ZERO; 1.160324 s
+Component 41/81: PROVED_ZERO; 0.620136 s
+Component 42/81: PROVED_ZERO; 1.412323 s
+Component 43/81: PROVED_ZERO; 1.84299 s
+Component 44/81: PROVED_ZERO; 1.380954 s
+Component 45/81: PROVED_ZERO; 0.118087 s
+<|Stage -> COMPONENTS_45, Seconds -> 60.017156, Path -> /private/tmp/hepcat-four-vector-contact/resume-minor/components-45.wxf, SHA256 -> 269397ce43a2b1791d08f83d57bfc50fc9262c10ff000e77276759bcba74ced2|>
+Component 46/81: PROVED_ZERO; 0.43028 s
+Component 47/81: PROVED_ZERO; 5.055315 s
+Component 48/81: PROVED_ZERO; 1.644742 s
+Component 49/81: PROVED_ZERO; 4.952736 s
+Component 50/81: PROVED_ZERO; 0.370727 s
+Component 51/81: PROVED_ZERO; 0.353395 s
+Component 52/81: PROVED_ZERO; 1.629305 s
+Component 53/81: PROVED_ZERO; 0.291743 s
+Component 54/81: PROVED_ZERO; 0.000331 s
+<|Stage -> COMPONENTS_54, Seconds -> 74.750713, Path -> /private/tmp/hepcat-four-vector-contact/resume-minor/components-54.wxf, SHA256 -> 83debad5f6c0510e2324ffa9db6e76f9124cce967e2e574e30f1455c2c13ff8e|>
+Component 55/81: PROVED_ZERO; 0.006137 s
+Component 56/81: PROVED_ZERO; 1.241732 s
+Component 57/81: PROVED_ZERO; 0.520518 s
+Component 58/81: PROVED_ZERO; 1.22359 s
+Component 59/81: PROVED_ZERO; 1.256684 s
+Component 60/81: PROVED_ZERO; 2.119069 s
+Component 61/81: PROVED_ZERO; 0.468979 s
+Component 62/81: PROVED_ZERO; 2.102768 s
+Component 63/81: PROVED_ZERO; 0.006789 s
+<|Stage -> COMPONENTS_63, Seconds -> 83.70244, Path -> /private/tmp/hepcat-four-vector-contact/resume-minor/components-63.wxf, SHA256 -> b4f54bd04abda125279337a4cca4ea41e843f20413ff535b189943c739f11f68|>
+Component 64/81: PROVED_ZERO; 0.402275 s
+Component 65/81: PROVED_ZERO; 5.260608 s
+Component 66/81: PROVED_ZERO; 1.526219 s
+Component 67/81: PROVED_ZERO; 5.211886 s
+Component 68/81: PROVED_ZERO; 0.359394 s
+Component 69/81: PROVED_ZERO; 0.278895 s
+Component 70/81: PROVED_ZERO; 1.50642 s
+Component 71/81: PROVED_ZERO; 0.281568 s
+Component 72/81: PROVED_ZERO; 0.00032900000000000003 s
+<|Stage -> COMPONENTS_72, Seconds -> 98.536272, Path -> /private/tmp/hepcat-four-vector-contact/resume-minor/components-72.wxf, SHA256 -> a0837d23c0bf98cac59dfc25303534d3ce0e2eb44eeffd77ff029e501001819b|>
+Component 73/81: PROVED_ZERO; 0.570674 s
+Component 74/81: PROVED_ZERO; 0.511171 s
+Component 75/81: PROVED_ZERO; 0.050333 s
+Component 76/81: PROVED_ZERO; 0.478742 s
+Component 77/81: PROVED_ZERO; 0.049364 s
+Component 78/81: PROVED_ZERO; 0.000312 s
+Component 79/81: PROVED_ZERO; 0.0491 s
+Component 80/81: PROVED_ZERO; 0.00030700000000000004 s
+Component 81/81: PROVED_ZERO; 0.000294 s
+<|Stage -> COMPONENTS_81, Seconds -> 100.253105, Path -> /private/tmp/hepcat-four-vector-contact/resume-minor/components-81.wxf, SHA256 -> a8905f9d182ea5405a4dc0b32c6310b9293216c46164895aca8053b68c7a3bdd|>
+<|Stage -> RESULT, Seconds -> 100.742856, Path -> /private/tmp/hepcat-four-vector-contact/resume-minor/result.wxf, SHA256 -> 061dc00843dbaa4c52503379881691a1a319a31037586c685c568deb0ef38253|>
+
+AssociateTo::argrx: AssociateTo called with 4 arguments; 2 arguments are expected.
+<|Status -> EXACT_CONTACT_CERTIFICATE, SourceContext -> 47026bedc2844622616e46a05069c2682cc4306872799bbe8e02d4a01291cc04, SourceReadySHA256 -> 60be8db0a7c3bac91597069f5a9b340d2aaaca0b8150f3235a077ebb25da650d, MappedSHA256 -> 3725820a15f2c9e528233679ad0f4c90e45146045c694e5ca10842c720fdaa81, Stages -> {<|Stage -> INDEPENDENT_MINOR, Seconds -> 6.071824, Path -> /private/tmp/hepcat-four-vector-contact/resume-minor/independent-minor.wxf, SHA256 -> 1c968bc0c809b5017a5f123a319970367475361ab90cd1f8d00bd1caa9c946bc|>, <|Stage -> COEFFICIENTS_FIXED, Seconds -> 6.119613, Path -> /private/tmp/hepcat-four-vector-contact/resume-minor/coefficients-fixed.wxf, SHA256 -> 1059f3a292461d60184c6b7b3bf7887f8db43b8f15433add0ae74a0dd629b90b|>, <|Stage -> COMPONENTS_9, Seconds -> 8.36795, Path -> /private/tmp/hepcat-four-vector-contact/resume-minor/components-9.wxf, SHA256 -> 05c76215786f8f3a92eb46fc73dfc5a54c3f0a0da855d54d6b7f592dfaa1459c|>, <|Stage -> COMPONENTS_18, Seconds -> 25.211436, Path -> /private/tmp/hepcat-four-vector-contact/resume-minor/components-18.wxf, SHA256 -> 1b72e1a99fbb742102cf9a0dd05b7b894529bc27dcb56a24a2a8817e6ae2e313|>, <|Stage -> COMPONENTS_27, Seconds -> 34.333861, Path -> /private/tmp/hepcat-four-vector-contact/resume-minor/components-27.wxf, SHA256 -> dc66fb198a613de35197b30b24775e1176c6640436cc413e548a94211c0c434f|>, <|Stage -> COMPONENTS_36, Seconds -> 50.315048, Path -> /private/tmp/hepcat-four-vector-contact/resume-minor/components-36.wxf, SHA256 -> afe3fe3c5516204a827e49f13c1ea99eac70208027815ac4092930774244d7a1|>, <|Stage -> COMPONENTS_45, Seconds -> 60.017156, Path -> /private/tmp/hepcat-four-vector-contact/resume-minor/components-45.wxf, SHA256 -> 269397ce43a2b1791d08f83d57bfc50fc9262c10ff000e77276759bcba74ced2|>, <|Stage -> COMPONENTS_54, Seconds -> 74.750713, Path -> /private/tmp/hepcat-four-vector-contact/resume-minor/components-54.wxf, SHA256 -> 83debad5f6c0510e2324ffa9db6e76f9124cce967e2e574e30f1455c2c13ff8e|>, <|Stage -> COMPONENTS_63, Seconds -> 83.70244, Path -> /private/tmp/hepcat-four-vector-contact/resume-minor/components-63.wxf, SHA256 -> b4f54bd04abda125279337a4cca4ea41e843f20413ff535b189943c739f11f68|>, <|Stage -> COMPONENTS_72, Seconds -> 98.536272, Path -> /private/tmp/hepcat-four-vector-contact/resume-minor/components-72.wxf, SHA256 -> a0837d23c0bf98cac59dfc25303534d3ce0e2eb44eeffd77ff029e501001819b|>, <|Stage -> COMPONENTS_81, Seconds -> 100.253105, Path -> /private/tmp/hepcat-four-vector-contact/resume-minor/components-81.wxf, SHA256 -> a8905f9d182ea5405a4dc0b32c6310b9293216c46164895aca8053b68c7a3bdd|>}, Seconds -> 100.730767, CanonicalOrProductionChanges -> False|>

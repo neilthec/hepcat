@@ -1,0 +1,528 @@
+{
+  "BytesExcludingThisIndex": 8049837,
+  "ExternalDependencyPolicy": "Each executed controller retains its complete actual source/model/runtime manifest. This roster includes all diagnostic data and executed script dependencies. Normal tracked package/model/reference files and historical context archives are committed separately. No binaries/build trees or unlaunched draft scripts are included.",
+  "Files": {
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/coefficients-fixed.wxf": {
+      "Bytes": 732,
+      "SHA256": "1059f3a292461d60184c6b7b3bf7887f8db43b8f15433add0ae74a0dd629b90b"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/components-18.wxf": {
+      "Bytes": 1858,
+      "SHA256": "1b72e1a99fbb742102cf9a0dd05b7b894529bc27dcb56a24a2a8817e6ae2e313"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/components-27.wxf": {
+      "Bytes": 2684,
+      "SHA256": "dc66fb198a613de35197b30b24775e1176c6640436cc413e548a94211c0c434f"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/components-36.wxf": {
+      "Bytes": 3521,
+      "SHA256": "afe3fe3c5516204a827e49f13c1ea99eac70208027815ac4092930774244d7a1"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/components-45.wxf": {
+      "Bytes": 4537,
+      "SHA256": "269397ce43a2b1791d08f83d57bfc50fc9262c10ff000e77276759bcba74ced2"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/components-54.wxf": {
+      "Bytes": 5484,
+      "SHA256": "83debad5f6c0510e2324ffa9db6e76f9124cce967e2e574e30f1455c2c13ff8e"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/components-63.wxf": {
+      "Bytes": 6300,
+      "SHA256": "b4f54bd04abda125279337a4cca4ea41e843f20413ff535b189943c739f11f68"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/components-72.wxf": {
+      "Bytes": 7248,
+      "SHA256": "a0837d23c0bf98cac59dfc25303534d3ce0e2eb44eeffd77ff029e501001819b"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/components-81.wxf": {
+      "Bytes": 7898,
+      "SHA256": "a8905f9d182ea5405a4dc0b32c6310b9293216c46164895aca8053b68c7a3bdd"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/components-9.wxf": {
+      "Bytes": 926,
+      "SHA256": "05c76215786f8f3a92eb46fc73dfc5a54c3f0a0da855d54d6b7f592dfaa1459c"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/control.py": {
+      "Bytes": 1824,
+      "SHA256": "9ec860670f0e81bf71fd0d1957303572ff15bc2b8b816d0f150803392fd0d00d"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/controller.json": {
+      "Bytes": 414,
+      "SHA256": "ea4fe9855fc3ba80c7fdae8335e9bf0c6fbd97dbeb025c122f6ef25b4354b73f"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/independent-minor.wxf": {
+      "Bytes": 1474,
+      "SHA256": "1c968bc0c809b5017a5f123a319970367475361ab90cd1f8d00bd1caa9c946bc"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/manifest.json": {
+      "Bytes": 6476,
+      "SHA256": "c2045e7e6011a85527e28343f5d17347b23ca50b963a44b9ea44e12e9345415b"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/pilot.log": {
+      "Bytes": 8761,
+      "SHA256": "18e2c6d6e2de46f86a3d365686a95bf74f90ebf754400a88579aaaf773a8ab5e"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/recover-summary.log": {
+      "Bytes": 1354,
+      "SHA256": "94e55d041a7198d94c3e09461ef37d71818f9c4632a9db86d83b927265b3adba"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/recover-summary.wl": {
+      "Bytes": 2081,
+      "SHA256": "0b4916a9cbc0866b98184415143e8318a3b4a2ad108407b4a985acd552c31710"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/result.wxf": {
+      "Bytes": 20756,
+      "SHA256": "061dc00843dbaa4c52503379881691a1a319a31037586c685c568deb0ef38253"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/solve.wl": {
+      "Bytes": 9323,
+      "SHA256": "1dd58d6a38329b30bd278d2c53659e91f7023ba5bd3d7bddb433fc51e1ee889b"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/summary-before-metadata-recovery.json": {
+      "Bytes": 2925,
+      "SHA256": "3f16c77a9590aea158eb4563a58a9aae619be3b022d3e070a2df18909cfc9dc6"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume/summary.json": {
+      "Bytes": 5241,
+      "SHA256": "a63d05acf671c35b1932395370151a443c9b26609f7d0bf40e7bf86e441118a3"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run/calibrate.wl": {
+      "Bytes": 16312,
+      "SHA256": "0859dab4f0427dae588e51ec20f6585abd1cac1bf62d8715d7f323ab04b7555f"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run/control.py": {
+      "Bytes": 1908,
+      "SHA256": "4a87f88d228da9177fabcd37654d06acb0d273550354c6fe6043ec9a8a96d725"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run/controller.json": {
+      "Bytes": 587,
+      "SHA256": "7416a2c49aee16f2e6459f27c55840820ac9d3d3599416c5a15739ca94d10ea1"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run/manifest.json": {
+      "Bytes": 5078,
+      "SHA256": "abf8aa357d83ca1300656ceecc08a24387d26dbe157033d25a81cbe47e5cee65"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run/mapped.wxf": {
+      "Bytes": 1080276,
+      "SHA256": "3725820a15f2c9e528233679ad0f4c90e45146045c694e5ca10842c720fdaa81"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run/pilot.log": {
+      "Bytes": 1500,
+      "SHA256": "c6c84a35488d3b9010945168cadd00a416a82a858fccacb41ae4e2eba20a43d3"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run/pilot.wl": {
+      "Bytes": 2743,
+      "SHA256": "228c29820c6fa407b0483dc2b5f8cd04daaf9d3911134ae8300b3340acce7027"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run/result.wxf": {
+      "Bytes": 476,
+      "SHA256": "7c72c1b331ceb28b7e678302aeda62af55ec091845c375cddad56869262f6834"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run/setup-recursion-attempt/calibrate.wl": {
+      "Bytes": 15916,
+      "SHA256": "f2b7256b3e83db51d00ac77f25e2b7efd3e3975bdae04bdfdbd50d3055274415"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run/setup-recursion-attempt/control.py": {
+      "Bytes": 1908,
+      "SHA256": "4a87f88d228da9177fabcd37654d06acb0d273550354c6fe6043ec9a8a96d725"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run/setup-recursion-attempt/controller.json": {
+      "Bytes": 585,
+      "SHA256": "3c250d76bc0f653375a1f585cb8a0c8cee1aebf39c47c046f8e7defd005417fe"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run/setup-recursion-attempt/pilot.log": {
+      "Bytes": 564,
+      "SHA256": "98716c93364c7f49b30da11886b1635087b71b8a6ac7669a2582b83ddeedd9a6"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run/setup-recursion-attempt/pilot.wl": {
+      "Bytes": 2667,
+      "SHA256": "bd9c7d8ea1edcc641705af5ad33feec55635b034481ccf43d53918ab51201778"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run/setup-recursion-attempt/result.wxf": {
+      "Bytes": 267,
+      "SHA256": "460becb0f427dac736179ce7fdc729c252d804f10117908b8ce3fc4eb43cfee7"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run/setup-recursion-attempt/summary.json": {
+      "Bytes": 299,
+      "SHA256": "c52077600d68aa56377c37ccc70dabec9a2612c90a75b2bda4ccdd317ff8dcc5"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run/setup-recursion-trace/calibrate.wl": {
+      "Bytes": 16240,
+      "SHA256": "69ce50d2678478fceae404c7a4ea10549742e8ad8db7a1f78d70554014cc8965"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run/setup-recursion-trace/controller.json": {
+      "Bytes": 585,
+      "SHA256": "b9b324b46aeb39bdb3cb02e4ba2607772eb1bd361c709109b756589c6762846a"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run/setup-recursion-trace/pilot.log": {
+      "Bytes": 789,
+      "SHA256": "64f72044e8c6f790c19c36265708b479b3b35932f70871593199e796c53803d3"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run/setup-recursion-trace/pilot.wl": {
+      "Bytes": 2667,
+      "SHA256": "bd9c7d8ea1edcc641705af5ad33feec55635b034481ccf43d53918ab51201778"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run/setup-recursion-trace/result.wxf": {
+      "Bytes": 268,
+      "SHA256": "74dee1dad245f10f495124b5a761bd5a04e9a97286fa7987d3ca2e146df107d8"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run/setup-recursion-trace/summary.json": {
+      "Bytes": 299,
+      "SHA256": "a855efa8db30750b0292bede08879efec3770014d6928cc2df597a076bfd2c22"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run/source-ready.wxf": {
+      "Bytes": 73307,
+      "SHA256": "60be8db0a7c3bac91597069f5a9b340d2aaaca0b8150f3235a077ebb25da650d"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run/summary.json": {
+      "Bytes": 756,
+      "SHA256": "0a79fbe30f0c7407f0d897176a221502fbbacf6db6ae57945837c1dfe57e3cc5"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run/vvv-matcher.wl": {
+      "Bytes": 8218,
+      "SHA256": "f956912b25a77407c3f58a0162cfdb305ce2515c3dcc0dbf4c5427e27f7c105b"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/all-source-graphs-sealed.wxf": {
+      "Bytes": 38378,
+      "SHA256": "14cc480576858235008839aed8fd1687fe175a51fb64750905b6ec5fecda9d1a"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/build.wl": {
+      "Bytes": 10834,
+      "SHA256": "7bb23f11ef283738f2a9e69c14fbce348fa0dce2b6b86ec5d0f28a9a34e3c59c"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/control.py": {
+      "Bytes": 2459,
+      "SHA256": "f4d87baee6f6e4191bbc34e13b6cdaeb7c03b7117b806edc87d5919000ec28e5"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/controller.json": {
+      "Bytes": 519,
+      "SHA256": "d3a1fd640db93c4e961949b7833268944cfe96620c10b63aa2fdef12098a8a25"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/factored-native-interrupted/README.txt": {
+      "Bytes": 2861,
+      "SHA256": "fb2cc2ee2193584715f269630a32f16833a0a121f7742032c3bee8b9e24e889e"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/factored-native-interrupted/check.wl": {
+      "Bytes": 9313,
+      "SHA256": "a017ce6901813906c9ae1e35e13537edc96d5c0d15343ba21212c5e9c65e1915"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/factored-native-interrupted/control.py": {
+      "Bytes": 2457,
+      "SHA256": "d9729e62e070558b27a7ffeb9e18d970cdfba30c27daf3f236677ff999162486"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/factored-native-interrupted/controller.json": {
+      "Bytes": 452,
+      "SHA256": "ccd508ace2e32d8d136e07b7abca3b70cd5b23198bf546648d2bc141706a0423"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/factored-native-interrupted/exact-atom-ring-factoring.wxf": {
+      "Bytes": 32457,
+      "SHA256": "3a5b6588cc48dd033950190c7fc717e1385c4c6601c4220a87cd37da53e2fe76"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/factored-native-interrupted/fixed-prepared-candidate.wxf": {
+      "Bytes": 74531,
+      "SHA256": "7e46623fff9dd8cd8f431377a3964363e3b07378e6559270e3ad398df85db357"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/factored-native-interrupted/inspect-wwzzh-factor-groups-v2.wl": {
+      "Bytes": 2281,
+      "SHA256": "1201b0a14a359a9e08aa29f3cce39d369b67f6d1beb2c85ab823483b2bb5cc0e"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/factored-native-interrupted/intervention.json": {
+      "Bytes": 592,
+      "SHA256": "3348b3c808108aa5e858c15c41aab1a5f818f9bc0610708042f4d32514e83504"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/factored-native-interrupted/manifest.json": {
+      "Bytes": 2818,
+      "SHA256": "eff0f86324d62b0792499a26c68edb173af9ecc0f26ee1d527e21a1606cddffc"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/factored-native-interrupted/pilot.log": {
+      "Bytes": 1279,
+      "SHA256": "72b0bd1c97093da049f62bd8afd14eeb2bccf70b8f3badbb065887ee8e2188c2"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/factored-native-interrupted/reused-independent-feynman-complete.wxf": {
+      "Bytes": 421625,
+      "SHA256": "4b24dc410e2cf082c669463941b84ab087fa6c2b226b3c1c9f35c57593dab61a"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/factored-native-interrupted/source-runtime-manifest.json": {
+      "Bytes": 7127,
+      "SHA256": "acd895e92c52c03e9e9b3fa7ff4c577382c523820fdfc7d9902f19f82b815256"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/factored-native-interrupted/wwzzh-factor-inspection-v2.json": {
+      "Bytes": 2973,
+      "SHA256": "73c7619416ed3e7441bf5acbd66c640cdcf89b88d1edd67f51364cdadd0a26e1"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/factored-native-interrupted/wwzzh-offshell-factor-inspection-v2.wxf": {
+      "Bytes": 41203,
+      "SHA256": "5e76a18d2fbc68f3be943d7285871d1f13c29f712601cf98bb0a4e3f8b42d63a"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/hhvv-contact-1.wxf": {
+      "Bytes": 3714,
+      "SHA256": "58c0bdb0e7fc6b57bdd01726af0f5e1ca7e3f44ffc682b49fac1c76f5078ff30"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/hhvv-contact-2.wxf": {
+      "Bytes": 3718,
+      "SHA256": "5d0887a8b7c161888222170ee0ed20207ccbf8d2c4ba171b1ee80c19752d2a56"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/manifest.json": {
+      "Bytes": 3419,
+      "SHA256": "2828d628fde584543511dd16ba00af377bb2613e32f4a82ddb49baca2e237812"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/original-pair-native-interrupted/check.wl": {
+      "Bytes": 7285,
+      "SHA256": "3232c3e44805c95eed3ed88e82b231cf2320bcdf2f950ddecac89ca12c18f86f"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/original-pair-native-interrupted/control.py": {
+      "Bytes": 2437,
+      "SHA256": "72bca14e4d0b0fa777187b9f6f17bc6dc8ddfa768d42744ac31cfbf7eebc9781"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/original-pair-native-interrupted/controller.json": {
+      "Bytes": 459,
+      "SHA256": "2396815892f88168ea4f1d4ab5458231444a979053dc080f0983fe0300eef3c5"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/original-pair-native-interrupted/external-only-preparation.wxf": {
+      "Bytes": 1507370,
+      "SHA256": "a57c44ab1ceb8c55a22098faa44e68fc631bc86bdf4ebf8f2032460ebb086fa8"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/original-pair-native-interrupted/fixed-prepared-candidate.wxf": {
+      "Bytes": 64905,
+      "SHA256": "7e3985d7314ac7bc3c555be438ef8de1318509abdca8afcdbb142367ae7b4a86"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/original-pair-native-interrupted/independent-feynman-complete.wxf": {
+      "Bytes": 421399,
+      "SHA256": "1ed29aa431c1ec79419eb1978ddaa5f088d4e44aaad28453a22c7bc724e84988"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/original-pair-native-interrupted/independent-feynman-raw.wxf": {
+      "Bytes": 40659,
+      "SHA256": "b351452c3e02a5ce95ec609163c013f13068821da317b7648a17d978c5455999"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/original-pair-native-interrupted/inspect-wwzzh-factor-groups-v2.wl": {
+      "Bytes": 2281,
+      "SHA256": "1201b0a14a359a9e08aa29f3cce39d369b67f6d1beb2c85ab823483b2bb5cc0e"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/original-pair-native-interrupted/inspect-wwzzh-factor-groups.wl": {
+      "Bytes": 2233,
+      "SHA256": "a5a3807d4d4afad2363545a9b956fadefd24f82b6bb66924005973580b906134"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/original-pair-native-interrupted/intervention.json": {
+      "Bytes": 868,
+      "SHA256": "a828faefdd49ff985dfac71ab681540d391dccaa9a9e765014e74aa3b7d75737"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/original-pair-native-interrupted/manifest.json": {
+      "Bytes": 2859,
+      "SHA256": "d55bef477fe454d24f10442f3f22788a2f67acee779d7a542b14fd6e01edcc46"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/original-pair-native-interrupted/pilot.log": {
+      "Bytes": 2201,
+      "SHA256": "e0425d966dddd32ece242f742dde7fdfc448544f6fae29d8aae37f79c7b9fe82"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/original-pair-native-interrupted/source-runtime-manifest.json": {
+      "Bytes": 7127,
+      "SHA256": "acd895e92c52c03e9e9b3fa7ff4c577382c523820fdfc7d9902f19f82b815256"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/original-pair-native-interrupted/wwzzh-factor-inspection-v2.json": {
+      "Bytes": 2973,
+      "SHA256": "73c7619416ed3e7441bf5acbd66c640cdcf89b88d1edd67f51364cdadd0a26e1"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/original-pair-native-interrupted/wwzzh-factor-inspection.json": {
+      "Bytes": 2986,
+      "SHA256": "ecf1ee8a4bfda0d6382b17e81481afb0daaf6a7007652922ec3cbb9534422cbb"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/original-pair-native-interrupted/wwzzh-offshell-factor-inspection-v2.wxf": {
+      "Bytes": 41203,
+      "SHA256": "5e76a18d2fbc68f3be943d7285871d1f13c29f712601cf98bb0a4e3f8b42d63a"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/pilot.log": {
+      "Bytes": 3283,
+      "SHA256": "01829f2f082bb8bed702fc00c5b87db8837fd63c34bc09636cc86e606df5d89c"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/pilot.wl": {
+      "Bytes": 3470,
+      "SHA256": "48b86a4b5f93e97c7d92d3d04ada0ee356ea10659d668adbcd24742fd77a4d02"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/proposal.wxf": {
+      "Bytes": 1642060,
+      "SHA256": "fa50dc691aa5264cc89bee9e818d307756061c734e1b0a2b9f390d4a22bd1dc7"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/source-candidate-frozen.wxf": {
+      "Bytes": 1641333,
+      "SHA256": "cb2f1ce20ef7d0ca08ece590b8f9a56dfd4950403f450617686544be0df86ca3"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/source-runtime-manifest.json": {
+      "Bytes": 7127,
+      "SHA256": "acd895e92c52c03e9e9b3fa7ff4c577382c523820fdfc7d9902f19f82b815256"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/stage-profile-180s/check.wl": {
+      "Bytes": 17177,
+      "SHA256": "0dc1e41ffd2043ab092b2b7afdc0080c2ed008c81e5cf29f4e261b06e1ebb59e"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/stage-profile-180s/control.py": {
+      "Bytes": 2440,
+      "SHA256": "9d3d92f5712b0cb08a6c87419391b98f76b7b16b52d460492a6de4e1fcb95509"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/stage-profile-180s/controller.json": {
+      "Bytes": 454,
+      "SHA256": "17d39f91a865bfc58200e99793b0dc688c88ae23d49dfa78e1f2e91e4de5fa33"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/stage-profile-180s/exact-atom-ring-factoring.wxf": {
+      "Bytes": 32457,
+      "SHA256": "3a5b6588cc48dd033950190c7fc717e1385c4c6601c4220a87cd37da53e2fe76"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/stage-profile-180s/fixed-prepared-candidate.wxf": {
+      "Bytes": 74531,
+      "SHA256": "7e46623fff9dd8cd8f431377a3964363e3b07378e6559270e3ad398df85db357"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/stage-profile-180s/instrumentation.wxf": {
+      "Bytes": 647,
+      "SHA256": "a427edee654f2342182ee069204710ad73b00968ebbbb4ab5ef4a0122c52118d"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/stage-profile-180s/manifest.json": {
+      "Bytes": 1719,
+      "SHA256": "c77fe139185a471d657bb3add9289ff2102aff0e5b882cccdfd4a606791ea419"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/stage-profile-180s/pilot.log": {
+      "Bytes": 1508,
+      "SHA256": "98109f33786a0e49cd8e45bf7f165c90f1d98e5b60e104ae04db3b754f145bbd"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/stage-profile-180s/profile-summary.json": {
+      "Bytes": 3102,
+      "SHA256": "3ec0b0aeec3efd63fa4e773a6c5d01799e4775a3e9c358d085704536653d3fc7"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/stage-profile-180s/reused-independent-feynman-complete.wxf": {
+      "Bytes": 421625,
+      "SHA256": "4b24dc410e2cf082c669463941b84ab087fa6c2b226b3c1c9f35c57593dab61a"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/stage-profile-180s/source-runtime-manifest.json": {
+      "Bytes": 7127,
+      "SHA256": "acd895e92c52c03e9e9b3fa7ff4c577382c523820fdfc7d9902f19f82b815256"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/stage-profile-180s/stage-timeline.jsonl": {
+      "Bytes": 1709,
+      "SHA256": "d027df49b06afb18cd8e9fb9784b1dd3b963476b70f3705999dc4c17099dea56"
+    },
+    "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/summary.json": {
+      "Bytes": 2414,
+      "SHA256": "35f69120589b6a0bd60ba9dabed01767a67df7fb89bd45936ee0cac82bcea408"
+    },
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/control.py": {
+      "Bytes": 1817,
+      "SHA256": "e39c224f4a28681e2f3bcfdb2685ba3c6d755b58597853d007c0d5464c2e0942"
+    },
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/controller.json": {
+      "Bytes": 461,
+      "SHA256": "17565dbf8adea5cc3c03ea46794e6d28bc8e50aa88866a10579da4f0fb8a989d"
+    },
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/extended-controls/control.py": {
+      "Bytes": 1817,
+      "SHA256": "e39c224f4a28681e2f3bcfdb2685ba3c6d755b58597853d007c0d5464c2e0942"
+    },
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/extended-controls/controller.json": {
+      "Bytes": 461,
+      "SHA256": "0f36e42e71f3ae3b3fb81baf78157034ceb6c2435f2eaecccb900a01c9b67a57"
+    },
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/extended-controls/manifest.json": {
+      "Bytes": 1496,
+      "SHA256": "f8e5028b71e2f1a052400e47d6d57735b68a0cab82d0d2f8f7181fdf1ef23e9f"
+    },
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/extended-controls/matcher.wl": {
+      "Bytes": 8218,
+      "SHA256": "f956912b25a77407c3f58a0162cfdb305ce2515c3dcc0dbf4c5427e27f7c105b"
+    },
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/extended-controls/pilot.log": {
+      "Bytes": 9374,
+      "SHA256": "a1e45c2a5f7bbf8e62f8dc68c085e7737d9f6fd066035ae5ce4fdb4df81e4ad4"
+    },
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/extended-controls/pilot.wl": {
+      "Bytes": 6423,
+      "SHA256": "0f8d3d1c297f57af17d5a21f0a6286d2987119d5ecd28f18af66b4c8204df2b8"
+    },
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/extended-controls/results.wxf": {
+      "Bytes": 18368,
+      "SHA256": "4d62d4aa7293b40d5076d81e8fe5009cf5e464743052aa7b523f552394307031"
+    },
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/extended-controls/summary.json": {
+      "Bytes": 10930,
+      "SHA256": "69a6055e1490c3dd8fb9537d33eddbe83c9cd678ad7ef8f32823983f6c83bfdd"
+    },
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/manifest.json": {
+      "Bytes": 1591,
+      "SHA256": "1723694b04cec4356c47aef2069127f7f0687312873ff2cab433c49d080e3366"
+    },
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/matcher.wl": {
+      "Bytes": 6215,
+      "SHA256": "b1c0f6907c1e58c6a3da8f5332bbbd59fc3d870bca674193547ddef9bcd8abc5"
+    },
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/pilot.log": {
+      "Bytes": 1283,
+      "SHA256": "94b4b283c5f30114256e053a9502312781e17e392dc66f2f1ddfe428eec262fe"
+    },
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/pilot.wl": {
+      "Bytes": 2333,
+      "SHA256": "6380cf9605de370b27098b3fa2ef82a5c4c7b9b992aa5baddbbcac4187fa97a7"
+    },
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/proposal.wxf": {
+      "Bytes": 3410,
+      "SHA256": "8ed4819cbd87584df8733dd4fe1053c9b6f3db057520db80c3898fdcd7d528e0"
+    },
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/summary.json": {
+      "Bytes": 1170,
+      "SHA256": "b56047d2cf9b653eda1d4f08cdd26753aa97036b8044ce61f045ffe64e59e47f"
+    }
+  },
+  "FilesExcludingThisIndex": 116,
+  "FivePointBackendsRun": false,
+  "FivePointNativeParameterSetsCompleted": 0,
+  "NoCanonicalOrProductionChangesByDiagnostics": true,
+  "NoPublicDefaultConstructorSuccessClaimed": true,
+  "Schema": "HEPCAT.experimentalVectorEvidence.v1",
+  "ScratchReplayPolicy": "Executed scripts retain original /private/tmp prefixes. Restore each archived stage under its recorded scratch prefix, or change only those path prefixes and recompute script hashes. The source candidate directly imports the durable lower-contact source-ready/result capsules by pinned digests. Original raw/converted reference checkpoints are under original-pair-native-interrupted and must be restored for the factored/profile replays.",
+  "Stages": [
+    {
+      "Details": "Massive WWZ all27coherent coefficients and both WWA helicities all9coefficients;13extended symbolic controls. Coefficients fixed only by constructive3point model rows; no independent Feynman model or numerical coefficient fit.",
+      "Directory": "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113",
+      "Name": "Exact minimal VVV match",
+      "Status": "SYMBOLIC_MATCH_WITH_CONTROLS"
+    },
+    {
+      "Details": "Exact original3cubic graph coverage, complete known lower amplitude,3metric template basis, symbolic shell ideal and81mapped component rows are checkpointed. Original setup-recursion failures and bounded incomplete solve remain preserved.",
+      "Directory": "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/first-bounded-run",
+      "Name": "Known lower4 contact extraction input",
+      "Status": "RESOURCE_LIMIT_NOT_MATHEMATICAL_CONTRADICTION"
+    },
+    {
+      "Details": "Exact3row minor fixes3model-scalar coefficients; all81symbolic residuals zero and converted contact implementation exact. No new independent coupling or numerical sample fitting. Metadata-only summary recovery is separately recorded.",
+      "Directory": "tests/results/SM-5-point/diagnostics/four-vector-contact-20261113/exact-minor-resume",
+      "Name": "Exact lower-derived four-vector contact",
+      "Status": "EXACT_ALL_81_COMPONENTS"
+    },
+    {
+      "Details": "17original cubic/existing-contact graphs plus4explicit additional lower-derived seagull+hVV graphs,21complete off-shell conversions. Full symbolic candidate and graph/operator/calibration certificates frozen before independent reference access.",
+      "Directory": "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113",
+      "Name": "Five-point WWZZh source candidate",
+      "SourceContext": "4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167",
+      "Status": "SOURCE_CANDIDATE_SEALED_NOT_VALIDATED"
+    },
+    {
+      "Details": "Original completed source,120s external-only usable partial preparation,124041-leaf fixed pair, full raw independent Feynman graph/model data and complete conversion. Native set1 intentionally stopped after975.25s without a completed parameter-set report; no physics failure or validation pass inferred.",
+      "Directory": "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/original-pair-native-interrupted",
+      "Name": "Original external-only prepared candidate/native attempt",
+      "Status": "INTERRUPTED_FOR_EXACT_ALGEBRAIC_SIZE_REDUCTION"
+    },
+    {
+      "Details": "All21physical-denominator group differences re-expand to zero in protected independent-atom ring. Factored candidate38097leaves, same masses/seeds/parameters/reference. Native attempt intentionally stopped685.66s without a completed parameter-set report.",
+      "Directory": "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/factored-native-interrupted",
+      "Name": "Exactly factored candidate/native attempt",
+      "Status": "INTERRUPTED_FOR_VALUES_PRESERVING_STAGE_PROFILING"
+    },
+    {
+      "Details": "Input/planning/discovery fast; first actual high-energy sample remains active to180s outer abort. Original definitions/worker hashes and entry timings saved. Logger cleanup was also interrupted, so no post-scope restoration hash or native report is claimed. Exit0 is explicitly not a validation pass.",
+      "Directory": "tests/results/SM-5-point/diagnostics/four-vector-scalar-source-20261113/stage-profile-180s",
+      "Name": "Bounded ordinary-check stage profile",
+      "Status": "BOUNDED_PROFILE_INCOMPLETE_IN_FIRST_HIGH_ENERGY_SAMPLE"
+    }
+  ],
+  "Status": "EXACT_LOWER_OPERATOR_PROOFS_AND_UNQUALIFIED_FIVE_POINT_SOURCE_CANDIDATE",
+  "TrackedExternalDependencies": [
+    "Full package/model/runtime path-and-hash sets in each executed source-runtime-manifest.json",
+    "models numbered1 and2 ordinary components, already tracked",
+    "tests/reference-models/calchep numbered1 components, already tracked"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "Checks": 13,
+  "Files": {
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/extended-controls/control.py": "e39c224f4a28681e2f3bcfdb2685ba3c6d755b58597853d007c0d5464c2e0942",
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/extended-controls/controller.json": "0f36e42e71f3ae3b3fb81baf78157034ceb6c2435f2eaecccb900a01c9b67a57",
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/extended-controls/matcher.wl": "f956912b25a77407c3f58a0162cfdb305ce2515c3dcc0dbf4c5427e27f7c105b",
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/extended-controls/pilot.log": "a1e45c2a5f7bbf8e62f8dc68c085e7737d9f6fd066035ae5ce4fdb4df81e4ad4",
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/extended-controls/pilot.wl": "0f8d3d1c297f57af17d5a21f0a6286d2987119d5ecd28f18af66b4c8204df2b8",
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/extended-controls/results.wxf": "4d62d4aa7293b40d5076d81e8fe5009cf5e464743052aa7b523f552394307031",
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/extended-controls/summary.json": "69a6055e1490c3dd8fb9537d33eddbe83c9cd678ad7ef8f32823983f6c83bfdd"
+  },
+  "IndependentBenchmarkOrFullAmplitudeRead": false,
+  "ProductionChanges": false,
+  "PrototypeOnly": true,
+  "SourceContext": "47026bedc2844622616e46a05069c2682cc4306872799bbe8e02d4a01291cc04",
+  "Status": "ALL_EXACT_VVV_CONTROLS_PASS"
+}

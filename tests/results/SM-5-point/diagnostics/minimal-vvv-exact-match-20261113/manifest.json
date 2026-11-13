@@ -1,0 +1,24 @@
+{
+  "All27CoherentRemaindersExactlyZero": true,
+  "CompleteAmplitudeRead": false,
+  "Files": {
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/control.py": "e39c224f4a28681e2f3bcfdb2685ba3c6d755b58597853d007c0d5464c2e0942",
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/controller.json": "17565dbf8adea5cc3c03ea46794e6d28bc8e50aa88866a10579da4f0fb8a989d",
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/matcher.wl": "b1c0f6907c1e58c6a3da8f5332bbbd59fc3d870bca674193547ddef9bcd8abc5",
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/pilot.log": "94b4b283c5f30114256e053a9502312781e17e392dc66f2f1ddfe428eec262fe",
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/pilot.wl": "6380cf9605de370b27098b3fa2ef82a5c4c7b9b992aa5baddbbcac4187fa97a7",
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/proposal.wxf": "8ed4819cbd87584df8733dd4fe1053c9b6f3db057520db80c3898fdcd7d528e0",
+    "tests/results/SM-5-point/diagnostics/minimal-vvv-exact-match-20261113/summary.json": "b56047d2cf9b653eda1d4f08cdd26753aa97036b8044ce61f045ffe64e59e47f"
+  },
+  "IndependentBenchmarkRead": false,
+  "NumericalAssignments": [],
+  "OperatorClass": "Minimal parity-even one-derivative three-massive-vector covariant operator",
+  "PilotParticles": [
+    "W+",
+    "W-",
+    "Z"
+  ],
+  "ProductionOrCanonicalChanges": false,
+  "SourceContext": "47026bedc2844622616e46a05069c2682cc4306872799bbe8e02d4a01291cc04",
+  "Status": "EXACT_SYMBOLIC_DIAGNOSTIC_ONLY"
+}

@@ -1,0 +1,17 @@
+Get["/Users/neil/code/hepcat/source/HEPCAT.wl"];
+Get["/private/tmp/hepcat-four-vector-contact/vvv-matcher.wl"];
+$ContextPath=DeleteCases[$ContextPath,"HEPCATMinimalVVVExtended`Private`"];
+Get["/private/tmp/hepcat-four-vector-contact/calibrate.wl"];
+Begin["HEPCATFourVectorContactPilot`Private`"];
+$ContextPath=Prepend[DeleteCases[$ContextPath,"HEPCATFourVectorContactPilot`Private`"],"HEPCATFourVectorContactPilot`Private`"];
+$HistoryLength=0;v4Root="/Users/neil/code/hepcat";v4Directory="/private/tmp/hepcat-four-vector-contact";v4Model=ReadModel[v4Root<>"/models",1];v4Lower=ReadModel[v4Root<>"/models",2];
+v4Process={"W+","W-","Z","Z"};v4Started=AbsoluteTime[];v4Stages={};
+v4Emit[name_,data_]:=Module[{stream,path},path=v4Directory<>"/"<>ToLowerCase[StringReplace[name,"_"->"-"]]<>".wxf";
+ stream=OpenWrite[path,BinaryFormat->True];BinaryWrite[stream,Normal[BinarySerialize[data,PerformanceGoal->"Size"]],"Byte"];Close[stream];AppendTo[v4Stages,<|"Stage"->name,"Seconds"->N[AbsoluteTime[]-v4Started],"File"->path,"SHA256"->IntegerString[FileHash[path,"SHA256"],16,64]|>];Print[Last[v4Stages]]];
+v4Result=MemoryConstrained[TimeConstrained[HEPCATFourVectorContactPrototype`Private`calibrate[v4Process,v4Model,v4Lower,v4Emit],600,Failure["FourVectorContactClock",<||>]],4 2^30,Failure["FourVectorContactMemory",<||>]];
+v4Passed=AssociationQ[v4Result]&&Lookup[v4Result,"Status",None]==="EXACT_COMPLETE_LOWER_FOUR_VECTOR_CONTACT";
+v4Record=<|"Status"->If[v4Passed,"EXACT_CONTACT_CERTIFICATE","NOT_CERTIFIED"],"Process"->v4Process,"SourceContext"->Environment["HEPCAT_V4_CONTEXT"],"Result"->v4Result,"Stages"->v4Stages,"Seconds"->N[AbsoluteTime[]-v4Started],"CanonicalOrProductionChanges"->False,"IndependentBenchmarkRead"->False|>;
+v4Stream=OpenWrite[v4Directory<>"/result.wxf",BinaryFormat->True];BinaryWrite[v4Stream,Normal[BinarySerialize[v4Record,PerformanceGoal->"Size"]],"Byte"];Close[v4Stream];
+v4Safe[x_]:=Which[AssociationQ[x],Association[KeyValueMap[ToString[#1]->v4Safe[#2]&,x]],ListQ[x],v4Safe/@x,StringQ[x]||IntegerQ[x]||Head[x]===Real||MemberQ[{True,False,Null},x],x,MissingQ[x]||x===None,Null,True,ToString[x,InputForm]];
+v4Summary=KeyDrop[v4Record,{"Result"}];AssociateTo[v4Summary,"ResultMetadata"->If[AssociationQ[v4Result],KeyTake[v4Result,{"Status","Process","Coefficients","OriginalCubicGraphCount","LiftedCubicGraphCount","AdditionalLowerDerivedContactGraphCount","OneToOneOriginalGraphCoverageClaimedForContactExtendedModel","ExactOriginalCubicGraphCoverage","CoherentComponentCount","AllCoherentCoefficientRemainders","BoseExchangeChecks","ContactOnlyConvertedTemplateIdentityVerified"}],v4Result]];
+Export[v4Directory<>"/summary.json",v4Safe[v4Summary],"RawJSON"];Print[v4Safe[v4Summary]];End[];Quit[If[v4Passed,0,1]];

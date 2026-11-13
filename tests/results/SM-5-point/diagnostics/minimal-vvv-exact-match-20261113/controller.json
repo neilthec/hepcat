@@ -1,0 +1,12 @@
+{
+  "ExitCode": 0,
+  "Seconds": 3.920075667,
+  "SourceContext": "47026bedc2844622616e46a05069c2682cc4306872799bbe8e02d4a01291cc04",
+  "SourceAndScriptsUnchanged": true,
+  "LoadedScriptsSHA256": {
+    "matcher.wl": "b1c0f6907c1e58c6a3da8f5332bbbd59fc3d870bca674193547ddef9bcd8abc5",
+    "pilot.wl": "6380cf9605de370b27098b3fa2ef82a5c4c7b9b992aa5baddbbcac4187fa97a7"
+  },
+  "CanonicalRecordsModified": false,
+  "NoIndependentBenchmarkOrFullAmplitudeRead": true
+}
