@@ -334,9 +334,19 @@ and reorganized by exact identities before ordinary external-only \
 preparation. This avoids repeatedly expanding equivalent spin tensors. \
 Explicit Feynman preparation choices remain authoritative, and both this work \
 and any additional vector-source checks stay inside the overall construction \
-deadline."}], "Notes"], Cell["What happens during a construction",
-   "NotesSection"], Cell[TextData[{"HEPCAT generates the diagrams and \
-prepares their expressions, then builds the known factorization channels. ",
+deadline."}], "Notes"], Cell[TextData[{"For supported five-point processes \
+with four massive fundamental Dirac fermions and one massless adjoint vector, \
+a model-derived current source keeps the complete ordered color tensor and \
+fermion exchange sign of each graph. Its three-adjoint operator is matched \
+exactly to both elementary helicity amplitudes on both complex three-point \
+branches, including every ordered Bose permutation. All color directions from \
+the original diagrams, the candidate, the channels and the independent \
+benchmark enter the shared projection basis. The supplied elementary model \
+determines the candidate; the full independent Feynman amplitude and all \
+ordinary checks determine its acceptance."}], "Notes"],
+  Cell["What happens during a construction", "NotesSection"],
+  Cell[TextData[{"HEPCAT generates the diagrams and prepares their \
+expressions, then builds the known factorization channels. ",
      ButtonBox["CompleteFactorization", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/CompleteFactorization"],
      " solves any physical residue deficits. The usual route then uses ",

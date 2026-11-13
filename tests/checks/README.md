@@ -1484,3 +1484,13 @@ suites require the selected installations and a built SPINAS library.
 `test_sm_reference_model.py` checks the independent UFO's light-quark masses,
 Higgs Yukawa interactions and unitary-gauge declaration without requiring a
 MadGraph installation. These are model-content checks, not amplitude validation.
+
+The five `qcd-*-tests.wl` component suites check the model-derived adjoint-current
+source without reading saved research results. They cover the exact three-vector
+operator on both complex three-point branches, its ordered color tensors and
+Bose transformations, the local delta/generator catalog, graph and Wick-sign
+certificates, complete color-basis projection, deadline and fallback behavior,
+and private namespace isolation. Ambient symbol sentinels test full package
+loading and direct internal-module reloading. These are local symbolic and
+controlled acceptance tests; full five-point constructions and the independent
+CalcHEP/MadGraph comparisons remain separate integration calculations.

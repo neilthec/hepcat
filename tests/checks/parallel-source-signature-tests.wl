@@ -16,9 +16,9 @@ required = {"HEPCAT.wl", "HEPCAT-Base.wl", "internal/HEPCAT-Parameters.wl", "HEP
  "internal/HEPCAT-Feynman.wl", "internal/HEPCAT-Color.wl", "internal/HEPCAT-SPINAS.wl",
  "internal/HEPCAT-MadGraph.wl", "internal/HEPCAT-CovariantSources.wl",
  "internal/HEPCAT-CovariantContacts.wl", "internal/HEPCAT-ColoredCurrents.wl",
- "internal/HEPCAT-SPINAS-Optimize.wl", "internal/export/spinas-runtime.hpp"};
+ "internal/HEPCAT-QCDCurrents.wl", "internal/HEPCAT-SPINAS-Optimize.wl", "internal/export/spinas-runtime.hpp"};
 newRequired = {"internal/HEPCAT-MadGraph.wl", "internal/HEPCAT-CovariantSources.wl",
- "internal/HEPCAT-CovariantContacts.wl", "internal/HEPCAT-ColoredCurrents.wl"};
+ "internal/HEPCAT-CovariantContacts.wl", "internal/HEPCAT-ColoredCurrents.wl", "internal/HEPCAT-QCDCurrents.wl"};
 optional = {"internal/proofs/laurent-proof-runtime.cpp", "internal/proofs/laurent-proof-runtime.py",
  "internal/proofs/laurent-proof-factor.py", "internal/proofs/laurent-proof-verify.py"};
 check["all declared required modules exist", AllTrue[FileNameJoin[{sourceRoot, #}] & /@ required, FileExistsQ]];
@@ -63,7 +63,7 @@ Internal`WithLocalSettings[Null,
 check["the loaded source directory and cached signature are untouched",
  ConstructiveDiagrams`Private`$amplitudeParallelSourceDirectory === originalDirectory &&
  ConstructiveDiagrams`Private`$amplitudeParallelLoadedSignature === originalLoadedSignature];
-If[checks =!= 17, AppendTo[failures, "Not every source-signature control executed"]];
+If[checks =!= 19, AppendTo[failures, "Not every source-signature control executed"]];
 Print[ToString[checks - Length[failures]] <> "/" <> ToString[checks] <> " parallel source-signature checks passed"];
 If[failures =!= {}, Print[failures]];
 If[failures === {}, Print["HEPCAT_TEST_COMPLETED:parallel-source-signature-tests.wl"]];

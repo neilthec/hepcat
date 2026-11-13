@@ -100,6 +100,9 @@ TEST_SUITES = (
     "parallel-execution-tests.wl", "parallel-source-signature-tests.wl", "parallel-preparation-tests.wl", "preparation-parallel-policy-tests.wl",
     "parallel-amplitude-check-tests.wl", "parallel-completion-tests.wl",
     "construct-amplitude-tests.wl", "construction-failure-display-tests.wl", "factorization-fitted-point-tests.wl", "covariant-chiral-source-tests.wl", "covariant-cubic-spectator-source-tests.wl", "color-spectator-source-tests.wl", "covariant-constructor-tests.wl", "construct-benchmark-recovery-tests.wl", "revalidation-benchmark-tests.wl",
+    "qcd-three-adjoint-primitive-tests.wl", "qcd-local-library-tests.wl",
+    "qcd-metadata-cold-tests.wl", "qcd-source-admission-tests.wl",
+    "qcd-namespace-hygiene-tests.wl",
     "automatic-resource-tests.wl", "random-seed-tests.wl",
 )
 

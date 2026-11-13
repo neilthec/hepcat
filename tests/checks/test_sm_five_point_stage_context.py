@@ -185,7 +185,11 @@ class ExactExporterTransitionTests(unittest.TestCase):
         self.assertLess(worker.index('launchAdmission=If['),worker.index('Get['))
         self.assertIn('admission=!=launchAdmission',worker)
         self.assertLess(worker.index('admission=readAdmission[]'),worker.index('WriteSPINASProcess['))
-        self.assertGreater(worker.index('If[readAdmission[]=!=admission'),worker.index('WriteSPINASProcess['))
+        export_call = worker.index('WriteSPINASProcess[')
+        projection_guard = worker.index('If[readAdmission[]=!=admission')
+        self.assertGreater(projection_guard, worker.index('entries=MapThread[projectNativeForExport'))
+        self.assertLess(projection_guard, export_call)
+        self.assertGreater(worker.index('If[readAdmission[]=!=admission', export_call), export_call)
         self.assertIn('"NativeCaseContexts"->admission["NativeCaseContexts"]',worker)
         self.assertIn('"ExporterContextSHA256"->admission["ExporterContextSHA256"]',worker)
 
