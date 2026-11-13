@@ -11,7 +11,10 @@ def run_family_queue(families, worker, on_result, *, max_workers=2):
 
     A false callback stops dispatch and drains already running jobs. Exceptions
     from a worker are delivered to that same callback instead of dropping its
-    record. An interrupt similarly drains active jobs before it is re-raised.
+    record. An interrupt caught while waiting stops dispatch, drains active
+    jobs through the callback, and is then re-raised. A callback exception
+    propagates after the executor waits for active workers to finish; callbacks
+    not yet invoked are not replayed. Their raw job files remain worker-owned.
     Each worker owns its distinct case/export files; the callback owns ledgers.
     """
     if not isinstance(max_workers, int) or isinstance(max_workers, bool) or not 1 <= max_workers <= 2:
