@@ -21,7 +21,7 @@ KERNEL=shutil.which('WolframKernel') or '/Applications/Wolfram.app/Contents/MacO
 
 @unittest.skipUnless(Path(KERNEL).is_file(),'A licensed Wolfram kernel is required.')
 class WorkerFinalizationTests(unittest.TestCase):
-    def run_export(self, *, mixed=False, break_json=False):
+    def run_export(self, *, mixed=False, break_json=False, schema="Particles", inventory_mismatch=False, rejected=False):
         with tempfile.TemporaryDirectory(prefix='hepcat-sm5-worker-finalization-') as directory:
             output=Path(directory)
             configuration={'ContextSHA256':'a'*64,'Points':1000,'MemoryGiB':4,
@@ -37,23 +37,30 @@ class WorkerFinalizationTests(unittest.TestCase):
                 admission['NativeContextCompatibility']={'Status':'EXACT_EXPORTER_ONLY_COMPATIBILITY',
                     'NativeContextSHA256':'b'*64,'ExporterContextSHA256':'a'*64,
                     'NativeRevalidationPerformed':False}
+            fixture_entry={'Status':'COMPLETE','Expression':1}
+            if schema in ('Particles','Both','Conflict','Malformed'):
+                fixture_entry['Particles']=42 if schema=='Malformed' else ['h']*5
+            if schema in ('Process','Both','Conflict'):
+                fixture_entry['Process']=(['Z']+['h']*4) if schema=='Conflict' else ['h']*5
+            expected_particles=(['Z']+['h']*4) if inventory_mismatch else ['h']*5
             literal=lambda value: 'ImportString['+json.dumps(json.dumps(value))+',"RawJSON"]'
             prelude='''fixtureDirectory=FIXTURE_DIRECTORY;
-fixtureEntry=<|"Status"->"COMPLETE","Particles"->Table["h",5],"Expression"->1|>;
+fixtureEntry=FIXTURE_ENTRY;
 fixtureFile=FileNameJoin[{fixtureDirectory,"synthetic_case.wxf"}];
 fixtureStream=OpenWrite[fixtureFile,BinaryFormat->True];
 BinaryWrite[fixtureStream,Normal[BinarySerialize[fixtureEntry,PerformanceGoal->"Size"]],"Byte"];Close[fixtureStream];
+Export[FileNameJoin[{fixtureDirectory,"native-before.sha256"}],IntegerString[FileHash[fixtureFile,"SHA256"],16,64],"Text"];
 fixtureAdmission=FIXTURE_ADMISSION;
 fixtureAdmission["CaseCapsulesSHA256"]=<|"synthetic_case"->IntegerString[FileHash[fixtureFile,"SHA256"],16,64]|>;
 Unprotect[RunProcess];Clear[RunProcess];
 RunProcess[_List]:=<|"ExitCode"->0,"StandardOutput"->ExportString[fixtureAdmission,"RawJSON"]|>;Protect[RunProcess];
-'''.replace('FIXTURE_DIRECTORY',json.dumps(str(output))).replace('FIXTURE_ADMISSION',literal(admission))
+'''.replace('FIXTURE_DIRECTORY',json.dumps(str(output))).replace('FIXTURE_ADMISSION',literal(admission)).replace('FIXTURE_ENTRY',literal(fixture_entry))
             worker=WORKER.read_text().replace('root=DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];',
                                               'root='+json.dumps(str(ROOT))+';')
             worker=worker.replace('configuration=Import[Environment["HEPCAT_SM5_CONFIGURATION"],"RawJSON"];',
                                   'configuration='+literal(configuration)+';')
             worker=worker.replace('inventory=Import[FileNameJoin[{root,"tests","SM-5-point","inventory.json"}],"RawJSON"];',
-                                  'inventory='+literal({'Families':[family]})+';')
+                                  'inventory='+literal({'Families':[family],'Cases':[{'ID':'synthetic_case','Particles':expected_particles}]})+';')
             worker=worker.replace('outputDirectory=FileNameJoin[{root,"tests","results","SM-5-point"}];',
                                   'outputDirectory='+json.dumps(str(output))+';')
             worker=worker.replace('kind=Environment["HEPCAT_SM5_KIND"];id=Environment["HEPCAT_SM5_ID"];',
@@ -74,7 +81,15 @@ Protect[ReadModel,WriteSPINASProcess];
             script=output/'full-worker.wl';script.write_text(prelude+worker)
             process=subprocess.run([KERNEL,'-script',str(script)],cwd=ROOT,capture_output=True,text=True,
                 timeout=60,env=dict(os.environ,OMP_NUM_THREADS='1',OPENBLAS_NUM_THREADS='1'))
+            self.assertEqual(hashlib.sha256((output/'synthetic_case.wxf').read_bytes()).hexdigest(),
+                (output/'native-before.sha256').read_text().strip())
             capsule=output/'synthetic_family-export.wxf'
+            if rejected:
+                self.assertEqual(process.returncode,2,process.stdout+process.stderr)
+                self.assertIn('Native record external particles disagree with inventory',process.stdout)
+                self.assertFalse(capsule.exists())
+                self.assertFalse((output/'synthetic_family-export.json').exists())
+                return
             self.assertTrue(capsule.is_file(),process.stdout+process.stderr)
             summary_path=output/'synthetic_family-export.json'
             if break_json:
@@ -103,5 +118,18 @@ Protect[ReadModel,WriteSPINASProcess];
         self.run_export(mixed=True)
     def test_summary_serialization_failure_exits_nonzero_and_retains_wxf(self):
         self.run_export(break_json=True)
+    def test_process_spelling_exports_without_rewriting_native_capsule(self):
+        self.run_export(schema='Process')
+    def test_agreeing_particles_and_process_are_accepted(self):
+        self.run_export(schema='Both')
+    def test_conflicting_particle_spellings_are_rejected(self):
+        self.run_export(schema='Conflict',rejected=True)
+    def test_missing_particle_spellings_are_rejected(self):
+        self.run_export(schema='Missing',rejected=True)
+    def test_nonlist_particle_spelling_is_rejected(self):
+        self.run_export(schema='Malformed',rejected=True)
+    def test_inventory_particle_disagreement_is_rejected(self):
+        self.run_export(schema='Process',inventory_mismatch=True,rejected=True)
+
 
 if __name__=='__main__':unittest.main()

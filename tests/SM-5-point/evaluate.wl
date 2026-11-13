@@ -28,6 +28,16 @@ writeRecord[file_,value_]:=Module[{temporary=file<>".tmp",stream,bytes},
  bytes=BinarySerialize[value,PerformanceGoal->"Size"];
  stream=OpenWrite[temporary,BinaryFormat->True];BinaryWrite[stream,Normal[bytes],"Byte"];Close[stream];
  RenameFile[temporary,file,OverwriteTarget->True]];
+(* Public-call captures may spell the exact all-incoming list Process.  Keep
+   the source WXF byte-for-byte and verify both spellings against inventory. *)
+recordParticlesForExport[checkpoint_,expected_]:=Module[{hasParticles,hasProcess,particles,process},
+ If[!AssociationQ[checkpoint]||!ListQ[expected]||expected==={}||!AllTrue[expected,StringQ],Return[$Failed]];
+ hasParticles=KeyExistsQ[checkpoint,"Particles"];hasProcess=KeyExistsQ[checkpoint,"Process"];
+ If[!hasParticles&&!hasProcess,Return[$Failed]];
+ particles=Lookup[checkpoint,"Particles",Missing["Absent"]];process=Lookup[checkpoint,"Process",Missing["Absent"]];
+ If[hasParticles&&(!ListQ[particles]||particles=!=expected),Return[$Failed]];
+ If[hasProcess&&(!ListQ[process]||process=!=expected),Return[$Failed]];
+ If[hasParticles,particles,process]];
 printed={};started=AbsoluteTime[];
 liveFile=FileNameJoin[{outputDirectory,id<>If[kind==="export","-export",""]<>".live.txt"}];
 live=OpenWrite[liveFile];
@@ -62,12 +72,15 @@ If[kind==="construct",
   admission=readAdmission[];
   If[!AssociationQ[admission]||admission=!=launchAdmission,Print["Native export inputs changed during package load ",id];Quit[2]];
   entries=Import[FileNameJoin[{outputDirectory,#<>".wxf"}],"WXF"]&/@family["CaseIDs"];
-  If[!AllTrue[entries,Lookup[#,"Status",None]==="COMPLETE"&],Print["Incomplete family ",id];Quit[2]];
+  If[!AllTrue[entries,AssociationQ[#]&&Lookup[#,"Status",None]==="COMPLETE"&],Print["Incomplete family ",id];Quit[2]];
+  expectedProcesses=Function[caseID,Lookup[SelectFirst[inventory["Cases"],Lookup[#,"ID",None]===caseID&,<||>],"Particles",Missing["AbsentInventoryCase"]]]/@family["CaseIDs"];
+  entryProcesses=MapThread[recordParticlesForExport,{entries,expectedProcesses}];
+  If[!AllTrue[entryProcesses,ListQ],Print["Native record external particles disagree with inventory ",id];Quit[2]];
   exportName=Lookup[family,"ExportName",StringJoin[StringReplace[family["Particles"],{"W+"->"Wp","W-"->"Wm"}]]];
   result=capture[WriteSPINASProcess[
    FileNameJoin[{root,"tests","results","spinas-output","SM-5-point",exportName}],
    family["Incoming"]->family["Outgoing"],
-   ({#["Particles"],#["Expression"]}&/@entries),model,
+   MapThread[{#1,#2["Expression"]}&,{entryProcesses,entries}],model,
    "ProcessName"->("sm5"<>exportName),
    "SPINASDirectory"->configuration["SPINASDirectory"],
    "Build"->True,"RunExamples"->True,"Overwrite"->True,
