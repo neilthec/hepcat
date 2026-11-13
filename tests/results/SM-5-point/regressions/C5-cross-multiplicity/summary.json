@@ -1,0 +1,50 @@
+{
+  "Status": "PASS",
+  "ExitCode": 0,
+  "Suites": [
+    {
+      "Suite": "sm-factorization-model-tests.wl",
+      "Checks": 405,
+      "Failures": 0,
+      "CompletionMarker": true
+    },
+    {
+      "Suite": "six-point-completion-tests.wl",
+      "Checks": 131,
+      "Failures": 0,
+      "CompletionMarker": true
+    },
+    {
+      "Suite": "qed-five-point-simplification-tests.wl",
+      "Checks": 138,
+      "Failures": 0,
+      "CompletionMarker": true
+    },
+    {
+      "Suite": "fermion-sewing-grading-tests.wl",
+      "Checks": 22,
+      "Failures": 0,
+      "CompletionMarker": true
+    },
+    {
+      "Suite": "documentation-content-tests.wl",
+      "Checks": 1490,
+      "Failures": 0,
+      "CompletionMarker": true
+    },
+    {
+      "Suite": "documentation-registration-tests.wl",
+      "Checks": 58,
+      "Failures": 0,
+      "CompletionMarker": true
+    }
+  ],
+  "TotalChecks": 2244,
+  "LogSHA256": "c32abe2c6d705006f8fda27974864c14b2ad57359c56e02a46cae7747778ad54",
+  "ModelSourceScope": "C5 development wave. The final subsequent change only rejects known failed points in the new private materializer; that guard is covered separately by its final 28-check suite. The existing algebra, catalogs, scalar completion and checked Help interfaces did not change during this wave.",
+  "FinalRelevantSourceSHA256": {
+    "source/HEPCAT-Model.wl": "9d9dfabc99abc50ff547d1ed541b50319093a6574213dec6a8d899a117ac4b5a",
+    "source/internal/HEPCAT-Color.wl": "f04cd741832237f522b9a9471070a9bd5413166927885a6d7d9fe1d169dbcd0c",
+    "source/internal/HEPCAT-CovariantContacts.wl": "dd3e4483cc93b949e324496182c6dc8106e9883ec75854e95d8207f53933236a"
+  }
+}

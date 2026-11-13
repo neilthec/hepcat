@@ -1,0 +1,20 @@
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+18:30:19 total 3.608336s Building source from exactly certified cubics and calibrated existing metric quartics
+18:30:22 total 6.589231s <|Status -> UNVALIDATED_CANDIDATE, Leaves -> 2737, Graphs -> 21|>
+18:30:24 total 9.165286s Building separate Feynman reference
+18:30:25 total 10.162174s Checking parameter assignment 1/3
+18:30:41 total 26.231471s <|Assignment -> 1, AllChecksPass -> True, Summary -> <|PASS -> 13|>|>
+18:30:41 total 26.23198s Checking parameter assignment 2/3
+18:30:56 total 41.133082s <|Assignment -> 2, AllChecksPass -> True, Summary -> <|PASS -> 13|>|>
+18:30:56 total 41.133206s Checking parameter assignment 3/3
+18:31:13 total 57.383343s <|Assignment -> 3, AllChecksPass -> True, Summary -> <|PASS -> 13|>|>
+18:31:13 total 57.386254s <|Status -> ALL_NATIVE_CHECKS_PASS, Process -> {Z, Z, Z, Z, h}, CompletedAssignments -> 3, ExpectedAssignments -> 3, Seconds -> 57.383412, Leaves -> 2737, CanonicalRecordsModified -> False, ProductionSourceChanged -> False|>

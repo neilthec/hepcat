@@ -70,7 +70,7 @@ TEST_SUITES = (
     "null-pair-shift-tests.wl", "null-channel-completion-tests.wl",
     "bose-symmetry-tests.wl", "fermion-symmetry-tests.wl",
     "model-parameter-tests.wl", "model-scalar-compaction-tests.wl", "linear-row-normalization-tests.wl",
-    "completion-numeric-matrix-tests.wl", "color-basis-tests.wl", "color-tensor-dedup-tests.wl", "color-tensor-network-tests.wl", "color-reduction-tests.wl", "color-display-tests.wl", "feynman-tests.wl", "feynman-coefficient-comparison-tests.wl", "spinas-export-tests.wl",
+    "completion-numeric-matrix-tests.wl", "color-basis-tests.wl", "color-orbit-construction-tests.wl", "color-tensor-dedup-tests.wl", "color-tensor-network-tests.wl", "color-reduction-tests.wl", "color-display-tests.wl", "feynman-tests.wl", "feynman-coefficient-comparison-tests.wl", "spinas-export-tests.wl",
     "spinas-helicity-family-tests.wl", "spinas-analytic-closure-tests.wl", "spinas-color-tests.wl",
     "spinas-build-tools-tests.wl",
     "spinas-calchep-tests.wl",
@@ -97,7 +97,7 @@ TEST_SUITES = (
     "qed-worked-example-tests.wl", "qed-construction-notebook-tests.wl", "sm-construction-notebook-tests.wl", "sm-five-point-notebook-tests.wl",
     "parallel-execution-tests.wl", "parallel-preparation-tests.wl", "preparation-parallel-policy-tests.wl",
     "parallel-amplitude-check-tests.wl", "parallel-completion-tests.wl",
-    "construct-amplitude-tests.wl", "covariant-constructor-tests.wl", "construct-benchmark-recovery-tests.wl", "revalidation-benchmark-tests.wl",
+    "construct-amplitude-tests.wl", "factorization-fitted-point-tests.wl", "covariant-constructor-tests.wl", "construct-benchmark-recovery-tests.wl", "revalidation-benchmark-tests.wl",
     "automatic-resource-tests.wl", "random-seed-tests.wl",
 )
 

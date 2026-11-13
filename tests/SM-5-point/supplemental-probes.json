@@ -9,7 +9,7 @@
       "Note": "The retained expression also passes this equal-mass assignment with the current checker and fresh independent Feynman diagrams. The numerical parameter values change; the expression and external labels do not. The earlier failure and subsequent passing rechecks remain archived with their original source contexts.",
       "InputTemplate": "$CASEParameterProbeChannels = FactorizationAmplitudeChannels[\n  $CASEParticles, smFactorization];\n$CASEParameterProbeFeynman = FeynmanToSpinorProducts[\n  DiagramAmplitudes[CreateDiagrams[$CASEParticles, smFeynman]],\n  \"ReferenceSpinors\" -> Automatic, \"ReduceSpinorProducts\" -> False,\n  \"TimeConstraint\" -> 30];\n$CASEParameterProbe = CheckAmplitudes[\n  $CASEAmplitude, $CASEParameterProbeChannels, smFactorization,\n  \"FeynmanAmplitudes\" -> $CASEParameterProbeFeynman,\n  \"FeynmanModel\" -> smFeynman, \"ParameterRules\" -> $PARAMETER_RULES,\n  \"RandomSeed\" -> $RANDOM_SEED, \"TimeConstraint\" -> $CHECK_SECONDS,\n  \"Output\" -> \"Details\"];\n$CASEParameterProbe[\"Table\"]",
       "SourceCapsuleSHA256": "33b43a0075b17bd081d1fa8123ca09007e1cf3becef9c861c6771069c5b1afde",
-      "ProbeContextSHA256": "a91edec8580c2721ccbe8d5304442e9e506f9fd89dc911c250a550c31723a238",
+      "ProbeContextSHA256": "b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd",
       "Status": "ALL_PASS",
       "StatusCounts": {
         "PASS": 13
@@ -17,19 +17,19 @@
       "CheckTimeConstraint": 90,
       "Files": {
         "Capsule": {
-          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C4-20261112/canonical-Mm-override.wxf",
-          "SHA256": "a2194a28d600080ebcda6e1e0d974703f127f6dcd4a1cb14a0e98ff8f288b5ae"
+          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C5-20261113/canonical-Mm-override.wxf",
+          "SHA256": "eb10d36064b38fb68527087928c0a34c8aa3d59cdea65377e956c9952b944e0d"
         },
         "Summary": {
-          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C4-20261112/canonical-Mm-override.json",
-          "SHA256": "26496ad8d0b2dc048c1e040922121dfbe4b803ba9df08d32cea0ef24129b5304"
+          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C5-20261113/canonical-Mm-override.json",
+          "SHA256": "30f6c9a735c1a8afbb7036e2d37315f2f745294c1c143ff6148cda6675a1230a"
         },
         "Script": {
-          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C4-20261112/canonical-Mm-override.wl",
-          "SHA256": "d454c439a4fcb7b58afedb7091ce6b8c666256e7c54be89b54b4bbf86b34c268"
+          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C5-20261113/canonical-Mm-override.wl",
+          "SHA256": "6eaaca0f7d455967afeed4ba9710f2a58537f1f4fc0fd0307b1f74c44d99ffba"
         },
         "ConversionScript": {
-          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C4-20261112/fresh-feynman-conversion.wl",
+          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C5-20261113/fresh-feynman-conversion.wl",
           "SHA256": "bc675712d6855c6b2c29ed430814a3053cb2071529a8e0ddd97dbe88c100450e"
         }
       }
@@ -104,6 +104,40 @@
         }
       },
       "SupersededByProbeContextSHA256": "a91edec8580c2721ccbe8d5304442e9e506f9fd89dc911c250a550c31723a238"
+    },
+    {
+      "ID": "muon-mass-equal-electron",
+      "CaseID": "sm5_46dff720d04e",
+      "Kind": "ParameterCheck",
+      "Title": "Additional mass-parameter check",
+      "Note": "The retained expression also passes this equal-mass assignment with the current checker and fresh independent Feynman diagrams. The numerical parameter values change; the expression and external labels do not. The earlier failure and subsequent passing rechecks remain archived with their original source contexts.",
+      "InputTemplate": "$CASEParameterProbeChannels = FactorizationAmplitudeChannels[\n  $CASEParticles, smFactorization];\n$CASEParameterProbeFeynman = FeynmanToSpinorProducts[\n  DiagramAmplitudes[CreateDiagrams[$CASEParticles, smFeynman]],\n  \"ReferenceSpinors\" -> Automatic, \"ReduceSpinorProducts\" -> False,\n  \"TimeConstraint\" -> 30];\n$CASEParameterProbe = CheckAmplitudes[\n  $CASEAmplitude, $CASEParameterProbeChannels, smFactorization,\n  \"FeynmanAmplitudes\" -> $CASEParameterProbeFeynman,\n  \"FeynmanModel\" -> smFeynman, \"ParameterRules\" -> $PARAMETER_RULES,\n  \"RandomSeed\" -> $RANDOM_SEED, \"TimeConstraint\" -> $CHECK_SECONDS,\n  \"Output\" -> \"Details\"];\n$CASEParameterProbe[\"Table\"]",
+      "SourceCapsuleSHA256": "33b43a0075b17bd081d1fa8123ca09007e1cf3becef9c861c6771069c5b1afde",
+      "ProbeContextSHA256": "a91edec8580c2721ccbe8d5304442e9e506f9fd89dc911c250a550c31723a238",
+      "Status": "ALL_PASS",
+      "StatusCounts": {
+        "PASS": 13
+      },
+      "CheckTimeConstraint": 90,
+      "Files": {
+        "Capsule": {
+          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C4-20261112/canonical-Mm-override.wxf",
+          "SHA256": "a2194a28d600080ebcda6e1e0d974703f127f6dcd4a1cb14a0e98ff8f288b5ae"
+        },
+        "Summary": {
+          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C4-20261112/canonical-Mm-override.json",
+          "SHA256": "26496ad8d0b2dc048c1e040922121dfbe4b803ba9df08d32cea0ef24129b5304"
+        },
+        "Script": {
+          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C4-20261112/canonical-Mm-override.wl",
+          "SHA256": "d454c439a4fcb7b58afedb7091ce6b8c666256e7c54be89b54b4bbf86b34c268"
+        },
+        "ConversionScript": {
+          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C4-20261112/fresh-feynman-conversion.wl",
+          "SHA256": "bc675712d6855c6b2c29ed430814a3053cb2071529a8e0ddd97dbe88c100450e"
+        }
+      },
+      "SupersededByProbeContextSHA256": "b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd"
     }
   ]
 }

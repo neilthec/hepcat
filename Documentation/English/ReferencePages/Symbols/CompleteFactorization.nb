@@ -102,7 +102,18 @@ physical-source reports include ",
      Cell[BoxData[RowBox[{"OrdinarySourceClosure"}]], "InlineFormula"], ", \
 with the retried slots and their outcomes. Successful first attempts and \
 direct calls with explicit stage clocks keep their existing path."}],
-   "Notes"], Cell["Why the channels are solved together", "NotesSection"],
+   "Notes"], Cell[TextData[{"Detailed output may contain \
+FittedPointCheckpoint when a main sparse fit has produced a finite particular \
+solution. It records the exact fit recipe before later affine-family checks, \
+even if those checks reach their limit and the ordinary returned amplitude \
+remains the original expression. The checkpoint is explicitly unvalidated and \
+does not change an UNRESOLVED status into COMPLETE. ",
+     ButtonBox["ConstructAmplitude", BaseStyle -> "Link",
+      ButtonData -> "paclet:HEPCAT/ref/ConstructAmplitude"], " can separately \
+prepare and fully validate this point with an independent Feynman model. \
+Inspect that wrapper report to distinguish an accepted fixed expression from \
+an unfinished family classification."}], "Notes"],
+  Cell["Why the channels are solved together", "NotesSection"],
   Cell[TextData[{"A factorization channel determines an amplitude on one \
 pole. Extending its expression away from that pole is not unique, and \
 different channels can share double or higher simultaneous poles. Simply \

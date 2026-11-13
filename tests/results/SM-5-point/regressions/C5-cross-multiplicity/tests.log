@@ -1,0 +1,86 @@
+Running sm-factorization-model-tests.wl
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+SM FACTORIZATION MODEL CHECKS: 405; FAILURES: 0
+HEPCAT_TEST_COMPLETED:sm-factorization-model-tests.wl
+
+Running six-point-completion-tests.wl
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+Preparing twenty-four fresh all-positive physical-reference diagrams.
+Completing all fourteen channels using source-derived companions.
+131 six-point-completion checks; 0 failures.
+HEPCAT_TEST_COMPLETED:six-point-completion-tests.wl
+
+Running qed-five-point-simplification-tests.wl
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+<|Checks -> 138, Failed -> 0, Failures -> {}, Scope -> Exact local identities, symbolic reference cancellation and sampled physical residues|>
+HEPCAT_TEST_COMPLETED:qed-five-point-simplification-tests.wl
+
+Running fermion-sewing-grading-tests.wl
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+FERMION_SEWING_GRADING_CHECKS=22; FAILURES=0
+HEPCAT_TEST_COMPLETED:fermion-sewing-grading-tests.wl
+
+Running documentation-content-tests.wl
+Documentation content: 1490 / 1490 checks passed.
+HEPCAT_TEST_COMPLETED:documentation-content-tests.wl
+
+Running documentation-registration-tests.wl
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+Documentation registration: 58 / 58 checks passed.
+HEPCAT_TEST_COMPLETED:documentation-registration-tests.wl
+

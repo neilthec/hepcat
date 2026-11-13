@@ -1,0 +1,21 @@
+{
+	"FamilyID":"sm5f_048974334b22",
+	"Status":"PASS",
+	"Seconds":1.8300254e1,
+	"Points":1000,
+	"ContextSHA256":"370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+	"ExporterContextSHA256":"370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+	"NativeCaseContexts":{
+		"sm5_048974334b22":"370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a"
+	},
+	"NativeContextCompatibility":null,
+	"CaseIDs":[
+		"sm5_048974334b22"
+	],
+	"CaseCapsulesSHA256":{
+		"sm5_048974334b22":"476d230edee86a72a394773c62eb5e5fdda60e73c408c0c6ea942474c32a0e2e"
+	},
+	"CalcHEPStatus":"PASS",
+	"MadGraphStatus":"PASS",
+	"CapsuleSHA256":"e5ee33a89589ab1c1e7bf0eef09ddde8a37ed5800ca7d2a245dc04dd43d4d232"
+}

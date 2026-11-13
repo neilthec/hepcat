@@ -1,0 +1,15 @@
+{
+  "CopiedRawDefinitions": false,
+  "DefinitionsSHA256": "f4c8922fe99daf9dd74d3882721a3536a3d0f4fdcc5047236e93c2749c7c9cc5",
+  "NoPhysicsOrModelsRead": true,
+  "ReusedOnlyAfterExactCurrentManifestMatch": true,
+  "SourceCaptureSHA256": [
+    "801b49e8953003b4020167bfd6b76f9c73809be3b782ba3068737a95bbb0ea57",
+    "6d966bae5717a5f725d2a3898eef6084b406f617461cd4c6131a83bf6fb5ba03"
+  ],
+  "SourceCaptures": [
+    "tests/results/SM-5-point/compatibility/constructor-C4-postpatch-a91edec8580c2721ccbe8d5304442e9e506f9fd89dc911c250a550c31723a238-20261112/definitions-1-raw.json",
+    "tests/results/SM-5-point/compatibility/constructor-C4-postpatch-a91edec8580c2721ccbe8d5304442e9e506f9fd89dc911c250a550c31723a238-20261112/definitions-2-raw.json"
+  ],
+  "SymbolCount": 8160
+}

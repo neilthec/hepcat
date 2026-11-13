@@ -83,6 +83,9 @@ check["four-point processes never enter the new source stage",cvFour["Sources"]=
 cvTwoVectors=cvRun[{"e","E","Z","Z","h"},"good"];
 check["two massive vectors and one scalar use the same certified metric-current route",
  cvTwoVectors["Result"]["Status"]==="COMPLETE"&&cvTwoVectors["Sources"]===1&&cvTwoVectors["Fits"]===0];
+cvFourVectors=cvRun[{"Z","Z","Z","Z","h"},"good"];
+check["four massive vectors and one scalar use the same certified metric-current route",
+ cvFourVectors["Result"]["Status"]==="COMPLETE"&&cvFourVectors["Sources"]===1&&cvFourVectors["Fits"]===0&&Length[cvFourVectors["Checks"]]===3];
 cvMasslessVector=cvRun[{"e","E","Z","A.+","h"},"good"];
 check["a massless vector cannot enter the two-massive-vector source class",
  cvMasslessVector["Sources"]===0&&cvMasslessVector["Fits"]===1];
@@ -118,7 +121,7 @@ check["the calibrated-contact class uses the same independent three-assignment a
 check["controlled dispatch probes restore all existing production and source definitions",
  cvOriginalDefinitions==={DownValues[ConstructAmplitude],DownValues[CheckAmplitudes],DownValues[CompleteFactorization],
  DownValues[PrepareAmplitudes],DownValues[HEPCATCovariantCurrentSources`Private`covariantCurrentSource]}];
-If[checks=!=19,AppendTo[failures,"Not every constructor-source assertion executed"]];
+If[checks=!=20,AppendTo[failures,"Not every constructor-source assertion executed"]];
 Print["COVARIANT CONSTRUCTOR CHECKS: ",checks,"; FAILURES: ",Length[failures]];
 If[failures=!={},Print[failures]];
 If[failures==={},Print["HEPCAT_TEST_COMPLETED:covariant-constructor-tests.wl"]];

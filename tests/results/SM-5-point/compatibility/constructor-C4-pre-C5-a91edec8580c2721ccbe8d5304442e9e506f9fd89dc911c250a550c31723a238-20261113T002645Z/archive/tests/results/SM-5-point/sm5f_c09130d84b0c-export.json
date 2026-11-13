@@ -1,0 +1,29 @@
+{
+  "FamilyID": "sm5f_c09130d84b0c",
+  "Status": "PASS",
+  "Seconds": 14.935045,
+  "Points": 1000,
+  "ContextSHA256": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+  "ExporterContextSHA256": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+  "NativeCaseContexts": {
+    "sm5_c09130d84b0c": "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a"
+  },
+  "CaseIDs": [
+    "sm5_c09130d84b0c"
+  ],
+  "CaseCapsulesSHA256": {
+    "sm5_c09130d84b0c": "efd2fbd9aaca3ccbc44233d20f3323c34def27ad34f01003ed6a9b5ff21e5e4e"
+  },
+  "NativeContextCompatibility": null,
+  "CalcHEPStatus": "PASS",
+  "MadGraphStatus": "PASS",
+  "CapsuleSHA256": "ba6f983e39a24bd7328edf07a3fa7b17cbbeff6f76a1eda0e2d1c140009c786f",
+  "SummaryRecoveredFromCapsule": true,
+  "SummaryRecovery": {
+    "Reason": "Optional None compatibility value prevented RawJSON serialization after successful numerical validation.",
+    "Source": "Intact actual PASS export WXF, independently inspected and input-hash checked.",
+    "NumericalBackendsRerun": false,
+    "OriginalErrorSummarySHA256": "3769b42d540bd82ae5fad4701a8a4cda15ac4be401a4d3d435184f46271ad55e",
+    "EvidenceDirectory": "tests/results/SM-5-point/diagnostics/export-summary-recovery/20261112T174330Z"
+  }
+}

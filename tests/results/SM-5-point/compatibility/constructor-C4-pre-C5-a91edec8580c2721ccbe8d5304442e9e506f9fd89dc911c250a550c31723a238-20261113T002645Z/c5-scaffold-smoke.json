@@ -1,0 +1,15 @@
+{
+  "Status": "FROZEN_BASELINE_AND_PRIOR_CHAIN_LOAD_PASS",
+  "CheckpointBindings": 326,
+  "ColdSymbols": 8160,
+  "BeforeSourceFiles": [
+    "source/HEPCAT-Model.wl",
+    "source/internal/HEPCAT-Color.wl",
+    "source/internal/HEPCAT-CovariantContacts.wl"
+  ],
+  "PreviousProofStatus": "SEALED",
+  "PreviousContext": "a91edec8580c2721ccbe8d5304442e9e506f9fd89dc911c250a550c31723a238",
+  "RecursiveArchiveCopies": false,
+  "NoCompatibilityGranted": true,
+  "NoSourceChanges": true
+}

@@ -1,0 +1,12 @@
+    // Diagnostic-only I/O: preserve the actual shared stream and raw values.
+    // This does not alter generation, evaluations, comparisons or return values.
+    if (const char* trace_path = std::getenv("HEPCAT_DIAGNOSTIC_POINT_CSV")) {
+      std::ofstream trace(trace_path, std::ios::app);
+      if (!trace) throw std::runtime_error("Could not open diagnostic point CSV.");
+      trace << std::setprecision(std::numeric_limits<ldouble>::max_digits10)
+            << options.seed << ',' << point_index + 1;
+      for (const auto& momentum : point)
+        for (const auto component : momentum) trace << ',' << component;
+      trace << ',' << hepcat_squared << ',' << reference_squared
+            << ',' << (point_error.empty() ? 0 : 1) << '\n';
+    }

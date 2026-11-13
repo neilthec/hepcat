@@ -1,0 +1,240 @@
+{
+  "Artifacts": [
+    {
+      "Bytes": 2729,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/madgraph-fixed-helicity/export.wl",
+      "SHA256": "e9c308b9c9598f9366e04e5d65e04aa85372b141c73f11916ea677da13b53b37"
+    },
+    {
+      "Bytes": 1916,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/madgraph-fixed-helicity/control.py",
+      "SHA256": "74994c6e9e1973d1c8166c55e0bf4a53ba676890610f54e82950347644dab70b"
+    },
+    {
+      "Bytes": 359,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/madgraph-fixed-helicity/controller.json",
+      "SHA256": "f2a24ec262e0869732d7daed283148cadf13b6e353c604bfa2172e8022570068"
+    },
+    {
+      "Bytes": 5692,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/madgraph-fixed-helicity/export.wxf",
+      "SHA256": "719a5d66a6776b16c0323ff26149d86dd76a3781c161604cfb352b2c1a199ef5"
+    },
+    {
+      "Bytes": 636,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/madgraph-fixed-helicity/export.json",
+      "SHA256": "9067e9e106114b00af3eb57b92371dec3140ca7be63264afb4e8b74f389de0f5"
+    },
+    {
+      "Bytes": 3817,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/madgraph-fixed-helicity/raw-madgraph-original.json",
+      "SHA256": "22e032882dab462c047b1ac7f13fa469341091d6b9baab5293631ee1a6ad3d67"
+    },
+    {
+      "Bytes": 3817,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/madgraph-fixed-helicity/raw-madgraph-replay.json",
+      "SHA256": "f34a4811451c43f7f4ffcb140c781d2098f2f1df78aa272434aa293eaee4cd9a"
+    },
+    {
+      "Bytes": 391293,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/madgraph-fixed-helicity/raw-points-replay.csv",
+      "SHA256": "fc60ea9a3f213a3b9ebe62767106d835292cdc528c4a358bd29fc2ecfd073e70"
+    },
+    {
+      "Bytes": 2373,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/madgraph-fixed-helicity/pretrace-project.json",
+      "SHA256": "8388568deaf63a81d953a6e8786ee9feec31022d79b76f29b82d1c77fc6be886"
+    },
+    {
+      "Bytes": 25087,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/madgraph-fixed-helicity/spinas-validation-original.hpp",
+      "SHA256": "c6bd01091f44248d9edb6a5dcfdad5ba43fff8a4cc8610698e921819ef34f9f5"
+    },
+    {
+      "Bytes": 755,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/madgraph-fixed-helicity/trace-insertion.txt",
+      "SHA256": "7249748af14bfff9723d1d68c2a0ca4bc9aa8f03ad848521a66fca192c8cf5e6"
+    },
+    {
+      "Bytes": 1097500,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/madgraph-fixed-helicity/spinas-output/fivegluonfixed/process.cpp",
+      "SHA256": "13ba62d5691ffe6b0d42b7d4e6191b91efd39aa0d30e8472769064bfd81b6826"
+    },
+    {
+      "Bytes": 24534,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/madgraph-fixed-helicity/spinas-output/fivegluonfixed/process.hpp",
+      "SHA256": "b07331db306477854437febaa0a970760073376bb5e2fb4bcb85eb91137a4154"
+    },
+    {
+      "Bytes": 15872,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/madgraph-fixed-helicity/spinas-output/fivegluonfixed/manifest.json",
+      "SHA256": "8e734276820df1b5784291b61b178c6228228239911a0be2ec23ba5def9e09db"
+    },
+    {
+      "Bytes": 25899,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/madgraph-fixed-helicity/spinas-output/fivegluonfixed/spinas-validation.hpp",
+      "SHA256": "ea84525b76203a97664c80d1763025bddbde4c4f163bbf4b4224d31a3e35d72c"
+    },
+    {
+      "Bytes": 34175,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/madgraph-fixed-helicity/spinas-output/fivegluonfixed/madgraph-runtime.hpp",
+      "SHA256": "7891d66656e9ca44be29d8ee3588f7847e9b6f072a2b54f5cd668612f7c272c6"
+    },
+    {
+      "Bytes": 2054,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/madgraph-fixed-helicity/spinas-output/fivegluonfixed/madgraph-validation.cpp",
+      "SHA256": "78225cf4a6c408c8bc92ef0cd403d7e80fb51ea05b816d3df31c44b157e4299e"
+    },
+    {
+      "Bytes": 50506,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/madgraph-fixed-helicity/spinas-output/fivegluonfixed/madgraph-runtime.py",
+      "SHA256": "f701ed00b92af0969cb82466f9bdf0db83eb8cc633c2cbe7840718668f4c2653"
+    }
+  ],
+  "CalcHEPComparisonRequested": false,
+  "CanonicalRecordsModified": false,
+  "CapturePolicy": "Ordinary public validation ran first without instrumentation. A subsequent same-seed replay of the unchanged generated process/reference mathematics inserted only CSV output after each ordinary comparison. The historical first run had no per-point CSV. Recompiling with diagnostic I/O slightly changes floating-point rounding: maximum relative residual changes by about2.6e-15; both untouched raw reports remain PASS. No bit-identical historical-value claim is made.",
+  "CrossingConvention": "The exporter crosses all outgoing momenta and angle spinors exactly once. The established SPINAS vector-helicity labels are retained; the independent MadGraph adapter reverses outgoing massless-vector labels to the HELAS convention.",
+  "DefaultConstructorSuccessClaimed": false,
+  "FixedAllIncomingHelicities": [
+    2,
+    2,
+    2,
+    -2,
+    -2
+  ],
+  "FixedSPINASPhysicalHelicities": [
+    2,
+    2,
+    2,
+    -2,
+    -2
+  ],
+  "IncomingColorAverageDivisor": 64,
+  "IncomingLegs": [
+    1,
+    2
+  ],
+  "IncomingSpinAverageApplied": false,
+  "MadGraphHELASHelicities": [
+    1,
+    1,
+    -1,
+    1,
+    1
+  ],
+  "OriginalAndReplayAllRowFieldsExactlyMatch": false,
+  "OriginalAndReplayCountsAndRangesExactlyMatch": true,
+  "OutgoingIdenticalPhaseSpaceFactorApplied": false,
+  "PhysicalIncoming": [
+    "G",
+    "G"
+  ],
+  "PhysicalOutgoing": [
+    "G",
+    "G",
+    "G"
+  ],
+  "PublicReport": {
+    "BuildLog": "MadGraph reference ready: g g > g g g\n",
+    "Message": "Every requested massless-helicity comparison agrees.",
+    "Passed": true,
+    "ReferenceBuildJSON": "{\n  \"Status\": \"READY\",\n  \"Library\": \"/private/var/folders/6w/pnfj3t151x93v_scggh5rw8w0000gn/T/hepcat-madgraph-IlASho/reference/libhepcat_madgraph.dylib\",\n  \"ExternalCount\": 5,\n  \"Process\": \"g g > g g g\",\n  \"PhysicalPDGs\": [\n    21,\n    21,\n    21,\n    21,\n    21\n  ],\n  \"Masses\": [\n    0.0,\n    0.0,\n    0.0,\n    0.0,\n    0.0\n  ],\n  \"AllowedParticlePDGs\": [],\n  \"ExcludedParticles\": [],\n  \"DiagramCount\": 45,\n  \"MadGraphModel\": \"/Users/neil/code/hepcat/tests/reference-models/madgraph/sm\",\n  \"MadGraphVersion\": {\n    \"Version\": \"3.8.1\",\n    \"Date\": \"2026-10-09\"\n  },\n  \"MadGraphModelPath\": \"/Users/neil/code/hepcat/tests/reference-models/madgraph/sm\",\n  \"MadGraphRestriction\": null,\n  \"FortranCompiler\": \"/opt/homebrew/Cellar/gcc/16.1.0/bin/gfortran-16\",\n  \"ParameterMatching\": [\n    {\n      \"HEPCAT\": \"GG\",\n      \"MadGraph\": \"G\",\n      \"RequestedValue\": 1.117,\n      \"MadGraphValue\": 1.117\n    }\n  ],\n  \"MassMatching\": [\n    {\n      \"PDG\": 21,\n      \"MadGraph\": \"ZERO\",\n      \"RequestedMass\": 0.0,\n      \"DirectInput\": false\n    },\n    {\n      \"PDG\": 21,\n      \"MadGraph\": \"ZERO\",\n      \"RequestedMass\": 0.0,\n      \"DirectInput\": false\n    },\n    {\n      \"PDG\": 21,\n      \"MadGraph\": \"ZERO\",\n      \"RequestedMass\": 0.0,\n      \"DirectInput\": false\n    },\n    {\n      \"PDG\": 21,\n      \"MadGraph\": \"ZERO\",\n      \"RequestedMass\": 0.0,\n      \"DirectInput\": false\n    },\n    {\n      \"PDG\": 21,\n      \"MadGraph\": \"ZERO\",\n      \"RequestedMass\": 0.0,\n      \"DirectInput\": false\n    }\n  ],\n  \"WidthPolicy\": \"Bare tree validation: all widths disabled. External DECAY inputs and every declared particle width are zero in a private UFO copy, including explicit, matched and dependent widths.\",\n  \"ZeroedWidths\": [\n    {\n      \"Name\": \"WZ\",\n      \"Value\": 0.0\n    },\n    {\n      \"Name\": \"WW\",\n      \"Value\": 0.0\n    },\n    {\n      \"Name\": \"WT\",\n      \"Value\": 0.0\n    },\n    {\n      \"Name\": \"WH\",\n      \"Value\": 0.0\n    },\n    {\n      \"Name\": \"WTau\",\n      \"Value\": 0.0\n    }\n  ],\n  \"PreservedWidths\": [],\n  \"ParameterRules\": {\n    \"Gf\": 1.19542477614741e-05,\n    \"MZ\": 91.29214308315318,\n    \"aEWM1\": 127.99880250556788,\n    \"lamWS\": 0.0,\n    \"aS\": 0.0992879358956919,\n    \"WZ\": 0.0,\n    \"WW\": 0.0,\n    \"WT\": 0.0,\n    \"WH\": 0.0,\n    \"WTau\": 0.0\n  },\n  \"CouplingOrders\": {\n    \"QED\": 6,\n    \"QCD\": 6\n  },\n  \"Scope\": \"Complete tree amplitude within the supplied UFO expansion limits and declared allowed particle content.\",\n  \"Normalization\": \"Raw fixed-helicity, color-summed squared amplitude; no initial averages or final symmetry factor.\",\n  \"SpinSum\": \"Exhaustive generated helicity table; no pruning, sampling, initial average or final symmetry factor.\",\n  \"HelicityStates\": 32,\n  \"OptimizationLevel\": 0,\n  \"FortranFlags\": \"-w -fPIC -ffixed-line-length-none\",\n  \"JampSplit\": 0,\n  \"JampAccumulationPolicy\": \"NativeDefault\",\n  \"JampBootstrap\": null\n}\n",
+    "Rows": [
+      {
+        "ComparedPoints": 1000,
+        "EvaluationErrors": 0,
+        "ExpectedExactZero": false,
+        "FirstFailure": null,
+        "GeneratedPoints": 1000,
+        "Helicities": [
+          2,
+          2,
+          2,
+          -2,
+          -2
+        ],
+        "MaximumAbsoluteError": 2.4633482098579407e-07,
+        "MaximumCenterOfMassEnergy": 6,
+        "MaximumRelativeError": 9.178885252562407e-12,
+        "Message": "Every requested common phase-space point agrees.",
+        "MinimumCenterOfMassEnergy": 1.5,
+        "Mismatches": 0,
+        "Passed": true,
+        "Points": 1000,
+        "RequestedPoints": 1000,
+        "Status": "PASS"
+      }
+    ],
+    "Seed": 1794529536030830000,
+    "Status": "PASS"
+  },
+  "RawCSVColumns": [
+    "Seed",
+    "PointIndex",
+    "p1_0",
+    "p1_1",
+    "p1_2",
+    "p1_3",
+    "p2_0",
+    "p2_1",
+    "p2_2",
+    "p2_3",
+    "p3_0",
+    "p3_1",
+    "p3_2",
+    "p3_3",
+    "p4_0",
+    "p4_1",
+    "p4_2",
+    "p4_3",
+    "p5_0",
+    "p5_1",
+    "p5_2",
+    "p5_3",
+    "HEPCAT",
+    "MadGraph",
+    "EvaluationError"
+  ],
+  "RawCSVMaximumRelativeError": 9.181451447712458e-12,
+  "RawReplayRows": 1000,
+  "ReplayReport": {
+    "BuildLog": "MadGraph reference ready: g g > g g g\n",
+    "Message": "Every requested massless-helicity comparison agrees.",
+    "Passed": true,
+    "ReferenceBuildJSON": "{\n  \"Status\": \"READY\",\n  \"Library\": \"/private/var/folders/6w/pnfj3t151x93v_scggh5rw8w0000gn/T/hepcat-madgraph-QCRy8D/reference/libhepcat_madgraph.dylib\",\n  \"ExternalCount\": 5,\n  \"Process\": \"g g > g g g\",\n  \"PhysicalPDGs\": [\n    21,\n    21,\n    21,\n    21,\n    21\n  ],\n  \"Masses\": [\n    0.0,\n    0.0,\n    0.0,\n    0.0,\n    0.0\n  ],\n  \"AllowedParticlePDGs\": [],\n  \"ExcludedParticles\": [],\n  \"DiagramCount\": 45,\n  \"MadGraphModel\": \"/Users/neil/code/hepcat/tests/reference-models/madgraph/sm\",\n  \"MadGraphVersion\": {\n    \"Version\": \"3.8.1\",\n    \"Date\": \"2026-10-09\"\n  },\n  \"MadGraphModelPath\": \"/Users/neil/code/hepcat/tests/reference-models/madgraph/sm\",\n  \"MadGraphRestriction\": null,\n  \"FortranCompiler\": \"/opt/homebrew/Cellar/gcc/16.1.0/bin/gfortran-16\",\n  \"ParameterMatching\": [\n    {\n      \"HEPCAT\": \"GG\",\n      \"MadGraph\": \"G\",\n      \"RequestedValue\": 1.117,\n      \"MadGraphValue\": 1.117\n    }\n  ],\n  \"MassMatching\": [\n    {\n      \"PDG\": 21,\n      \"MadGraph\": \"ZERO\",\n      \"RequestedMass\": 0.0,\n      \"DirectInput\": false\n    },\n    {\n      \"PDG\": 21,\n      \"MadGraph\": \"ZERO\",\n      \"RequestedMass\": 0.0,\n      \"DirectInput\": false\n    },\n    {\n      \"PDG\": 21,\n      \"MadGraph\": \"ZERO\",\n      \"RequestedMass\": 0.0,\n      \"DirectInput\": false\n    },\n    {\n      \"PDG\": 21,\n      \"MadGraph\": \"ZERO\",\n      \"RequestedMass\": 0.0,\n      \"DirectInput\": false\n    },\n    {\n      \"PDG\": 21,\n      \"MadGraph\": \"ZERO\",\n      \"RequestedMass\": 0.0,\n      \"DirectInput\": false\n    }\n  ],\n  \"WidthPolicy\": \"Bare tree validation: all widths disabled. External DECAY inputs and every declared particle width are zero in a private UFO copy, including explicit, matched and dependent widths.\",\n  \"ZeroedWidths\": [\n    {\n      \"Name\": \"WZ\",\n      \"Value\": 0.0\n    },\n    {\n      \"Name\": \"WW\",\n      \"Value\": 0.0\n    },\n    {\n      \"Name\": \"WT\",\n      \"Value\": 0.0\n    },\n    {\n      \"Name\": \"WH\",\n      \"Value\": 0.0\n    },\n    {\n      \"Name\": \"WTau\",\n      \"Value\": 0.0\n    }\n  ],\n  \"PreservedWidths\": [],\n  \"ParameterRules\": {\n    \"Gf\": 1.19542477614741e-05,\n    \"MZ\": 91.29214308315318,\n    \"aEWM1\": 127.99880250556788,\n    \"lamWS\": 0.0,\n    \"aS\": 0.0992879358956919,\n    \"WZ\": 0.0,\n    \"WW\": 0.0,\n    \"WT\": 0.0,\n    \"WH\": 0.0,\n    \"WTau\": 0.0\n  },\n  \"CouplingOrders\": {\n    \"QED\": 6,\n    \"QCD\": 6\n  },\n  \"Scope\": \"Complete tree amplitude within the supplied UFO expansion limits and declared allowed particle content.\",\n  \"Normalization\": \"Raw fixed-helicity, color-summed squared amplitude; no initial averages or final symmetry factor.\",\n  \"SpinSum\": \"Exhaustive generated helicity table; no pruning, sampling, initial average or final symmetry factor.\",\n  \"HelicityStates\": 32,\n  \"OptimizationLevel\": 0,\n  \"FortranFlags\": \"-w -fPIC -ffixed-line-length-none\",\n  \"JampSplit\": 0,\n  \"JampAccumulationPolicy\": \"NativeDefault\",\n  \"JampBootstrap\": null\n}\n",
+    "Rows": [
+      {
+        "ComparedPoints": 1000,
+        "EvaluationErrors": 0,
+        "ExpectedExactZero": false,
+        "FirstFailure": null,
+        "GeneratedPoints": 1000,
+        "Helicities": [
+          2,
+          2,
+          2,
+          -2,
+          -2
+        ],
+        "MaximumAbsoluteError": 2.4633482098579407e-07,
+        "MaximumCenterOfMassEnergy": 6,
+        "MaximumRelativeError": 9.181451447712458e-12,
+        "Message": "Every requested common phase-space point agrees.",
+        "MinimumCenterOfMassEnergy": 1.5,
+        "Mismatches": 0,
+        "Passed": true,
+        "Points": 1000,
+        "RequestedPoints": 1000,
+        "Status": "PASS"
+      }
+    ],
+    "Seed": 1794529536030830000,
+    "Status": "PASS"
+  },
+  "SPINASAndReferenceComparisonNormalization": 0.015625,
+  "Seed": 1794529536030830000,
+  "SourceContext": "a91edec8580c2721ccbe8d5304442e9e506f9fd89dc911c250a550c31723a238",
+  "Status": "PUBLIC_FIXED_HELICITY_MG_PASS_AND_RAW_STREAM_REPLAY_PASS",
+  "UnpolarizedClaim": false
+}

@@ -1,0 +1,24 @@
+{
+  "ConstructorRerunPerformed": false,
+  "Counts": {
+    "Constructed": 194,
+    "FailedOrTimedOut": 0,
+    "FullyValidatedCases": 192,
+    "PrecisionQualifiedCases": 2,
+    "PrecisionQualifiedFamilies": 2,
+    "RecordedInputPassCases": 194,
+    "SupplementalParameterProbeFailedCases": 0,
+    "SupplementalParameterProbeUnavailableCases": 0,
+    "TotalCases": 1422,
+    "TotalFamilies": 869,
+    "ValidatedFamilies": 129,
+    "ValidatedIncludingPrecisionQualifiedCases": 194
+  },
+  "SharedProgressAfterSHA256": "91f52ac58821994b122ea059cb906a5ea57246e5e01dd76c0efbda6c2ebd68e4",
+  "SharedProgressBeforeSHA256": "91f52ac58821994b122ea059cb906a5ea57246e5e01dd76c0efbda6c2ebd68e4",
+  "Status": "PASS",
+  "SuppressedWrites": [
+    "/Users/neil/code/hepcat/tests/SM-5-point/progress.json"
+  ],
+  "ValidationRerunPerformed": false
+}

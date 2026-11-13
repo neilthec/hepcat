@@ -1,7 +1,7 @@
 (* Portable exact lower-amplitude contact matching. No saved WXF or reference model. *)
 root=DirectoryName[DirectoryName[DirectoryName[$InputFileName]]];
 Get[FileNameJoin[{root,"source","HEPCAT.wl"}]];
-Get[FileNameJoin[{root,"tests","SM-5-point","covariant-current-sources.wl"}]];
+Get[FileNameJoin[{root,"source","internal","HEPCAT-CovariantSources.wl"}]];
 checks=0;failures={};$HistoryLength=0;
 SetAttributes[check,HoldRest];check[name_,condition_]:=(checks++;If[!TrueQ[condition],AppendTo[failures,name];Print["FAIL: ",name]]);
 Global`metricContactCalibration[___]:=Failure["AmbientCollision",<||>];
@@ -9,7 +9,7 @@ Global`parameterTransport="ambient parameter transport";Global`rowParticles="amb
 qcAmbientBefore={DownValues[Global`metricContactCalibration],OwnValues[Global`parameterTransport],OwnValues[Global`rowParticles]};
 qcNames=Sort[DeleteDuplicates[Join[Names["ConstructiveDiagrams`*"],Names["ConstructiveDiagrams`Private`*"]]]];
 qcDefinitions=ToExpression[#,InputForm,Function[s,{DownValues[Unevaluated[s]],UpValues[Unevaluated[s]],SubValues[Unevaluated[s]],OwnValues[Unevaluated[s]],Options[Unevaluated[s]],Attributes[Unevaluated[s]],Messages[Unevaluated[s]]},HoldAllComplete]]&/@qcNames;
-Get[FileNameJoin[{root,"tests","SM-5-point","covariant-contact-calibration.wl"}]];
+Get[FileNameJoin[{root,"source","internal","HEPCAT-CovariantContacts.wl"}]];
 check["loading the helper preserves ambient names and every existing package definition",
  qcAmbientBefore==={DownValues[Global`metricContactCalibration],OwnValues[Global`parameterTransport],OwnValues[Global`rowParticles]}&&
  qcDefinitions===(ToExpression[#,InputForm,Function[s,{DownValues[Unevaluated[s]],UpValues[Unevaluated[s]],SubValues[Unevaluated[s]],OwnValues[Unevaluated[s]],Options[Unevaluated[s]],Attributes[Unevaluated[s]],Messages[Unevaluated[s]]},HoldAllComplete]]&/@qcNames)];
@@ -144,6 +144,16 @@ check["the fresh SM metadata class obtains all sixteen source-derived graphs wit
 check["the fresh SM wrapper keeps source ownership and all nine lower-contact component certificates",
  AssociationQ[qcSMCandidate]&&Complement[DeleteDuplicates[Cases[qcSMCandidate["Expression"],_ModelParameter,Infinity]],First/@Join[qcSM[[3]],qcSM[[4]]]]==={}&&
  AllTrue[qcSMCandidate["ContactCalibrations"],#["AllCoherentCoefficientRemainders"]===ConstantArray[0,9]&]];
+qcPureVectors=qcCandidateBuild[{"V","V","V","V","phi"},qcSource,qcLower];
+check["a purely bosonic four-vector source uses the same model-derived metric-current class",
+ AssociationQ[qcPureVectors]&&qcPureVectors["Status"]==="UNVALIDATED_CANDIDATE"&&
+ qcPureVectors["EveryOriginalDiagramCovered"]&&qcPureVectors["CompleteOffShellConversionCoverage"]&&
+ Sort[qcPureVectors["OrderedGraphCertificates"]]===Sort[qcPureVectors["LiftedGraphCertificates"]]];
+check["all four vector coherent degrees are retained without an internal shell or new contact",
+ AssociationQ[qcPureVectors]&&qcPureVectors["CoherentExternalVectorEncoding"]["CompleteSpinDegrees"]==={2,2,2,2,0}&&
+ qcPureVectors["InternalOnShellConditions"]==={}&&!qcPureVectors["NewIndependentContacts"]&&
+ !qcPureVectors["IndependentBenchmarkRead"]&&!qcPureVectors["NumericalCoefficientFit"]&&
+ !FreeQ[qcPureVectors["RawTensorExpression"],_VectorSpinIndex]];
 Print["COVARIANT CONTACT CALIBRATION CHECKS: ",checks,"; FAILURES: ",Length[failures]];
 If[failures=!={},Print[failures]];
 Print["HEPCAT_TEST_COMPLETED:covariant-contact-calibration-tests.wl"];

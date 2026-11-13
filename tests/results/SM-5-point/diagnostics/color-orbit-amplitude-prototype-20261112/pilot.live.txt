@@ -1,0 +1,85 @@
+17:55:23 total 3.96512s REBUILDING_COMMON_PROJECTION
+17:55:35 total 15.8924s <|Stage -> COMMON_PROJECTION_READY, SourceLiteralSameQ -> False, ProjectionLiteralSameQ -> True, Rank -> 6|>
+17:55:35 total 15.8926s RECONSTRUCTING_ONLY_SEED
+17:55:35 total 15.9527s Generating diagrams: RUNNING; stage 0.0 s; total 0.1 s
+17:55:35 total 15.9533s Generating diagrams: COMPLETE; stage 0.0 s; total 0.1 s
+17:55:35 total 15.9535s Building diagram amplitudes: RUNNING; stage 0.0 s; total 0.1 s
+17:55:35 total 15.9537s Building diagram amplitudes: COMPLETE; stage 0.0 s; total 0.1 s
+17:55:35 total 15.9539s Preparing diagrams: RUNNING; stage 0.0 s; total 0.1 s
+17:55:36 total 16.7572s Preparing diagrams: PREPARED; stage 0.8 s; total 0.9 s
+17:55:36 total 16.758s Generating factorization channels: RUNNING; stage 0.0 s; total 0.9 s
+17:55:36 total 16.7582s Generating factorization channels: COMPLETE; stage 0.0 s; total 0.9 s
+17:55:36 total 16.7584s Preparing factorization channels: RUNNING; stage 0.0 s; total 0.9 s
+17:55:37 total 17.8307s Preparing factorization channels: working; stage 1.1 s; total 1.9 s
+17:55:37 total 17.9208s Preparing factorization channels: PREPARED; stage 1.2 s; total 2.0 s
+17:55:37 total 17.9284s Completing factorization: RUNNING; stage 0.0 s; total 2.0 s
+17:55:43 total 24.0814s Completing factorization: working; stage 6.2 s; total 8.2 s
+17:55:44 total 25.1726s Completing factorization: working; stage 7.2 s; total 9.3 s
+17:55:45 total 26.2681s Completing factorization: working; stage 8.3 s; total 10.4 s
+17:55:46 total 27.3092s Completing factorization: working; stage 9.4 s; total 11.4 s
+17:55:47 total 28.4182s Completing factorization: working; stage 10.5 s; total 12.5 s
+17:55:48 total 29.467s Completing factorization: working; stage 11.5 s; total 13.6 s
+17:55:52 total 33.0021s Completing factorization: working; stage 15.1 s; total 17.1 s
+17:55:54 total 35.3873s Completing factorization: working; stage 17.5 s; total 19.5 s
+17:55:55 total 36.4111s Completing factorization: working; stage 18.5 s; total 20.5 s
+17:55:59 total 39.9883s Completing factorization: working; stage 22.1 s; total 24.1 s
+17:56:01 total 41.7064s Completing factorization: working; stage 23.8 s; total 25.8 s
+17:56:02 total 42.7771s Completing factorization: working; stage 24.8 s; total 26.9 s
+17:56:03 total 43.9609s Completing factorization: working; stage 26.0 s; total 28.1 s
+17:56:04 total 44.9817s Completing factorization: working; stage 27.1 s; total 29.1 s
+17:56:05 total 46.0809s Completing factorization: working; stage 28.2 s; total 30.2 s
+17:56:06 total 47.0927s Completing factorization: working; stage 29.2 s; total 31.2 s
+17:56:07 total 48.196s Completing factorization: working; stage 30.3 s; total 32.3 s
+17:56:08 total 49.2979s Completing factorization: working; stage 31.4 s; total 33.4 s
+17:56:09 total 50.3258s Completing factorization: working; stage 32.4 s; total 34.4 s
+17:56:10 total 51.3325s Completing factorization: working; stage 33.4 s; total 35.4 s
+17:56:11 total 52.3535s Completing factorization: working; stage 34.4 s; total 36.5 s
+17:56:12 total 53.393s Completing factorization: working; stage 35.5 s; total 37.5 s
+17:56:13 total 54.5908s Completing factorization: working; stage 36.7 s; total 38.7 s
+17:56:14 total 55.5964s Completing factorization: working; stage 37.7 s; total 39.7 s
+17:56:15 total 56.6015s Completing factorization: working; stage 38.7 s; total 40.7 s
+17:56:17 total 57.638s Completing factorization: working; stage 39.7 s; total 41.7 s
+17:56:18 total 58.7004s Completing factorization: working; stage 40.8 s; total 42.8 s
+17:56:19 total 59.8131s Completing factorization: working; stage 41.9 s; total 43.9 s
+17:56:20 total 60.8393s Completing factorization: working; stage 42.9 s; total 44.9 s
+17:56:21 total 61.9027s Completing factorization: working; stage 44.0 s; total 46.0 s
+17:56:22 total 62.953s Completing factorization: working; stage 45.0 s; total 47.1 s
+17:56:23 total 63.9715s Completing factorization: working; stage 46.0 s; total 48.1 s
+17:56:24 total 64.9736s Completing factorization: working; stage 47.0 s; total 49.1 s
+17:56:25 total 66.0011s Completing factorization: working; stage 48.1 s; total 50.1 s
+17:56:26 total 67.0626s Completing factorization: working; stage 49.1 s; total 51.2 s
+17:56:27 total 68.157s Completing factorization: working; stage 50.2 s; total 52.3 s
+17:56:28 total 69.1803s Completing factorization: working; stage 51.3 s; total 53.3 s
+17:56:29 total 70.1863s Completing factorization: working; stage 52.3 s; total 54.3 s
+17:56:30 total 71.2838s Completing factorization: working; stage 53.4 s; total 55.4 s
+17:56:31 total 72.3159s Completing factorization: working; stage 54.4 s; total 56.4 s
+17:56:32 total 73.0405s Completing factorization: COMPLETE; stage 55.1 s; total 57.1 s
+17:56:32 total 73.0408s Preparing factorization result: RUNNING; stage 0.0 s; total 57.1 s
+17:56:32 total 73.1123s Preparing factorization result: COMPLETE; stage 0.1 s; total 57.2 s
+17:56:32 total 73.1127s Completing high-energy behavior: RUNNING; stage 0.0 s; total 57.2 s
+17:56:33 total 74.2779s Completing high-energy behavior: working; stage 1.2 s; total 58.4 s
+17:56:36 total 77.5789s Completing high-energy behavior: COMPLETE; stage 4.5 s; total 61.7 s
+17:56:36 total 77.5805s Preparing final amplitude: RUNNING; stage 0.0 s; total 61.7 s
+17:56:37 total 77.6523s Preparing final amplitude: COMPLETE; stage 0.1 s; total 61.8 s
+17:56:37 total 77.6526s Checking final amplitude: RUNNING; stage 0.0 s; total 61.8 s
+17:56:39 total 80.2174s Checking final amplitude: COMPLETE; stage 2.6 s; total 64.3 s
+17:56:39 total 80.2545s AllPhysical was not achieved: the validated expression still displays apparent spurious denominators.
+17:56:39 total 80.2546s Random seed: 1771908891469674741
+17:56:39 total 80.2548s Total time: 64.4 s
+17:56:39 total 80.2549s Complexity: 1
+17:56:39 total 80.2551s Dataset[{<|Type -> Physical, Test -> s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Physical, Test -> s   == 0, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> HighEnergy, Test -> Fixed-angle high energy, Status -> PASS, ObservedGrowth -> E^(-1), ExpectedGrowth -> At most E^(-1)|>, <|Type -> Reference, Test -> No explicit Xi dependence, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>, <|Type -> Feynman, Test -> Full Feynman amplitude, Status -> PASS, ObservedGrowth -> , ExpectedGrowth -> |>}, TypeSystem`Vector[TypeSystem`Struct[{Type, Test, Status, ObservedGrowth, ExpectedGrowth}, {TypeSystem`Atom[TypeSystem`Enumeration[Feynman, HighEnergy, Physical, Reference]], TypeSystem`AnyType, TypeSystem`Atom[TypeSystem`Enumeration[PASS]], TypeSystem`Atom[TypeSystem`Enumeration[, E^(-1)]], TypeSystem`Atom[TypeSystem`Enumeration[, At most E^(-1)]]}], 12], <|MaxItems -> {All, All}|>]
+                                      15                                                                                              23                                                                                              12                                                                                              13                                                                                              14                                                                                              24                                                                                              25                                                                                              34                                                                                              35
+17:56:40 total 80.8852s EXACT_COLOR_ORBIT_TRANSPORT
+17:56:40 total 80.9169s VALIDATING_COEFFICIENT_1_PARAMETER_1
+17:56:43 total 83.676s <|Stage -> VALIDATING_COEFFICIENT_1_PARAMETER_1, AllChecksPass -> True, Seconds -> 2.689|>
+17:56:43 total 83.6761s VALIDATING_COEFFICIENT_2_PARAMETER_1
+17:56:46 total 86.8752s <|Stage -> VALIDATING_COEFFICIENT_2_PARAMETER_1, AllChecksPass -> True, Seconds -> 3.12606|>
+17:56:46 total 86.8753s VALIDATING_COEFFICIENT_3_PARAMETER_1
+17:56:49 total 89.882s <|Stage -> VALIDATING_COEFFICIENT_3_PARAMETER_1, AllChecksPass -> True, Seconds -> 2.93915|>
+17:56:49 total 89.8822s VALIDATING_COEFFICIENT_4_PARAMETER_1
+17:56:52 total 93.2741s <|Stage -> VALIDATING_COEFFICIENT_4_PARAMETER_1, AllChecksPass -> True, Seconds -> 3.32088|>
+17:56:52 total 93.2742s VALIDATING_COEFFICIENT_5_PARAMETER_1
+17:56:56 total 96.7284s <|Stage -> VALIDATING_COEFFICIENT_5_PARAMETER_1, AllChecksPass -> True, Seconds -> 3.38313|>
+17:56:56 total 96.7285s VALIDATING_COEFFICIENT_6_PARAMETER_1
+17:57:00 total 101.096s <|Stage -> VALIDATING_COEFFICIENT_6_PARAMETER_1, AllChecksPass -> False, Seconds -> 4.29709|>
+17:57:01 total 101.624s <|Status -> CHECKS_NOT_ALL_PASS, SeedStatus -> COMPLETE, CompletedChecks -> 6, ExpectedChecks -> 18, AllChecksPass -> False, FeynmanPhaseAgreement -> <|Status -> PASS, MatchingSigns -> {1}, Scope -> OneOverallSignForEveryIndependentColorCoefficient|>, FixedCandidateSHA256 -> ff8b1ececab3e5c30ba1689dd02a5b5fa31d5f5db9299bd3296ea5b6e4fc6be8, SourceContext -> a91edec8580c2721ccbe8d5304442e9e506f9fd89dc911c250a550c31723a238, DefaultConstructorSuccessClaimed -> False, CanonicalRecordsModified -> False, Seconds -> 101.622|>

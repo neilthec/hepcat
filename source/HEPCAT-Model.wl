@@ -9244,6 +9244,71 @@ completionSparseValidation[trial_, unknowns_List, solution_Association,
     "FamilyPass" -> (feedback["Status"] === "COMPLETE" && familyPass)|>
 ];
 
+(* Retain the exact particular-point recipe used by sparse cut validation before
+   an unfinished affine-family proof can leave the original amplitude in place.
+   A recorded fit is construction data, not an independent amplitude check. *)
+ConstructiveDiagrams`Private`completionFactorizationPointCheckpoint[trial_, variables_List,
+    solution_Association, externalRules_List, provenance_Association : <||>] := Module[
+  {rules = Lookup[solution, "SolutionRules", None], free = Lookup[solution, "FreeParameters", None], solved},
+  If[!MemberQ[{"COMPLETE", "UNDERDETERMINED"}, Lookup[solution, "Status", None]] ||
+      !AllTrue[variables, MatchQ[#, _Symbol] &] || !DuplicateFreeQ[variables] ||
+      !ListQ[rules] || !AllTrue[rules, MatchQ[#, _Rule] &] ||
+      !ListQ[free] || !DuplicateFreeQ[free], Return[Missing["NoFiniteFittedPoint"]]];
+  solved = First /@ rules;
+  If[!DuplicateFreeQ[solved] || Intersection[solved, free] =!= {} ||
+      Sort[Join[solved, free]] =!= Sort[variables] ||
+      !residueFiniteQ[trial] || !AllTrue[Last /@ rules, residueFiniteQ] ||
+      !FreeQ[Last /@ rules, Alternatives @@ solved], Return[Missing["NoFiniteFittedPoint"]]];
+  Join[provenance, <|"Status" -> "UNVALIDATED_RECORDED_POINT",
+    "TrialAmplitude" -> trial, "FitVariables" -> variables,
+    "SolutionRules" -> rules, "FreeParameters" -> free,
+    "ParticularAssignment" -> Thread[free -> 0], "ExternalMassRules" -> externalRules,
+    "CoordinatePolicy" -> "SameZeroFreeCoordinatesAsSparseValidation",
+    "IndependentPointValidationPerformed" -> False, "FamilyUniquenessEstablished" -> False,
+    "BenchmarkUsedForConstruction" -> False|>]
+];
+
+(* Materialize only the recorded fit, preserving the formal affine family.
+   No channel, benchmark, new coefficient or internal-shell identity enters. *)
+ConstructiveDiagrams`Private`constructFactorizationFittedPoint[source_Association, seconds_] :=
+  TimeConstrained[Module[{checkpoint = Lookup[source, "FittedPointCheckpoint", None],
+      fit, variables, solution, recorded, family, point, directions, free, trial},
+    If[!AssociationQ[checkpoint] || !AssociationQ[Lookup[source, "ConstraintData", None]],
+      Return[Missing["NoRecordedFittedPoint"]]];
+    fit = source["ConstraintData"]; variables = Lookup[fit, "FitVariables", None];
+    solution = Lookup[fit, "LinearSolution", None];
+    If[!ListQ[variables] || !AssociationQ[solution] ||
+        !ListQ[Lookup[source, "CorrectionBasis", None]] ||
+        Length[source["CorrectionBasis"]] =!= Length[variables] ||
+        Lookup[checkpoint, "ExternalMassRules", None] =!= Lookup[source, "ExternalMassRules", None],
+      Return[Missing["MismatchedFittedPoint"]]];
+    trial = completionCanonicalReduce[fit["FitSeed"], source["ExternalMassRules"]] +
+      variables.source["CorrectionBasis"];
+    recorded = ConstructiveDiagrams`Private`completionFactorizationPointCheckpoint[
+      trial, variables, solution, source["ExternalMassRules"]];
+    If[!AssociationQ[recorded] ||
+        KeyTake[checkpoint, Keys[recorded]] =!= recorded,
+      Return[Missing["MismatchedFittedPoint"]]];
+    (* A known failed held-out point cannot be superseded by favourable new
+       samples. Unproved affine directions are a separate obligation. *)
+    If[AnyTrue[Lookup[checkpoint, "SparseValidationReports", {}], Function[entry,
+        AssociationQ[Lookup[entry, "Report", None]] &&
+          AnyTrue[Lookup[entry["Report"], "Checks", {}],
+            MemberQ[{"FAIL", "Opp Sign"}, Lookup[#, "Status", None]] &]]],
+      Return[Missing["KnownFailedFittedPoint"]]];
+    free = recorded["FreeParameters"];
+    family = trial /. recorded["SolutionRules"];
+    point = family /. recorded["ParticularAssignment"];
+    If[!residueFiniteQ[point] || !FreeQ[point, Alternatives @@ variables] ||
+        !residueFiniteQ[family], Return[Missing["NonfiniteFittedPoint"]]];
+    directions = (Coefficient[family, #] & /@ free);
+    Join[source, <|"Amplitude" -> point, "FamilyAmplitude" -> family,
+      "FreeParameters" -> free, "RemainingBasis" -> directions,
+      "FittedPointCheckpoint" -> Join[checkpoint, <|"Materialized" -> True,
+        "ReturnedAmplitudeWasRecordedPoint" -> SameQ[point, Lookup[source, "Amplitude", None]],
+        "FormalAffineDirectionsClassified" -> False|>]|>]
+  ], seconds, Missing["FittedPointMaterializationTimeConstraint"]];
+
 completionNormalizeBasis[terms_List] := DeleteDuplicates[DeleteCases[Map[Function[term,
   Module[{factors, numeric}, factors = If[Head[term] === Times, List @@ term, {term}];
     numeric = Times @@ Select[factors, NumericQ];
@@ -11750,7 +11815,7 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
    diagnostics = {}, status = "UNRESOLVED", continuations = <||>, history = {},
    trial, allEquations = {}, allSamples = {}, feedback = <||>, roundReports, round,
    validationSeed, validationCount, familyPass, zeroFree, cleaned, cleanup, fastPath, sparseValidation,
-   weights, familyMaterialized = False,
+   weights, familyMaterialized = False, fittedPointCheckpoint = Missing["NotFitted"],
    reducedChannels = Missing["NotRequested"], selectedChannels = Missing["NotRequested"],
    space = "NotRequired", fallbackBasis, literalBasis, channelLiteralBasis, groupedBasis,
    budgetSpaces = {}, inputProposals, inputAttempt, inputAttempts = {}, inputFitStart, inputFitBudget,
@@ -12491,6 +12556,10 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
                   "EquationCount" -> Length[allEquations], "Rank" -> solution["Rank"],
                   "Status" -> solution["Status"]|>];
                 diagnostics = Join[diagnostics, solution["Diagnostics"]]; Break[]];
+              fittedPointCheckpoint = ConstructiveDiagrams`Private`completionFactorizationPointCheckpoint[
+                trial, unknowns, solution, normalized["ExternalMassRules"],
+                <|"Round" -> round, "FitEquationCount" -> Length[allEquations],
+                  "FitRandomSeed" -> seed, "CorrectionSpace" -> space|>];
               free = solution["FreeParameters"];
               zeroFree = {};
               validationSeed = seed + 1000003 + 10000019 round;
@@ -12512,7 +12581,9 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
                   "Diagnostics" -> Join[feedback["Diagnostics"], sparseValidation["Feedback"]["Diagnostics"]]|>;
                 familyPass = familyPass && TrueQ[sparseValidation["FamilyPass"]];
                 AppendTo[roundReports, <|"ParameterRules" -> validationSet,
-                  "RandomSeed" -> validationSeed, "Round" -> round, "Report" -> validation|>],
+                  "RandomSeed" -> validationSeed, "Round" -> round, "Report" -> validation|>];
+                If[AssociationQ[fittedPointCheckpoint], fittedPointCheckpoint = Join[
+                  fittedPointCheckpoint, <|"SparseValidationReports" -> roundReports|>]],
                 {validationSet, validationSets}];
               validationReports = Join[validationReports, roundReports];
               AppendTo[history, <|"Round" -> round, "FitSeed" -> seed,
@@ -12591,6 +12662,7 @@ ConstructiveDiagrams`Private`completionFactorizationCore[input_, channelInput : 
     "Amplitude" -> candidate, "OriginalExpression" -> original,
     "Correction" -> candidate - original, "CorrectionBasis" -> basis,
     "FamilyAmplitude" -> family, "RemainingBasis" -> remaining, "FreeParameters" -> free,
+    "FittedPointCheckpoint" -> fittedPointCheckpoint,
     "ExternalMassRules" -> normalized["ExternalMassRules"],
     "InitialReport" -> initial, "ValidationReport" -> validation,
     "ParameterRules" -> rules,
@@ -22247,7 +22319,7 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
    completed = False, resultStatus, totalTime, resourceResolution, requestedOptions,
    finalComplexity = Missing["NotValidated"],
    prepareBenchmark, benchmarkReady = False, benchmarkRecovery = False,
-   validateRepresentative, effectivePolePreference, tryCovariantSource, covariantExtraValidationSets,
+   validateRepresentative, tryRetainedFactorizationPoint, effectivePolePreference, tryCovariantSource, covariantExtraValidationSets,
    retainFinalReferences, resolveFinalReferences,
    completeEnergy, recoverReciprocalReferences, trySpuriousForms, tryCompactSpuriousResult,
    trySpuriousVectorLine, tryPhysicalVectorLine,
@@ -22498,8 +22570,6 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     If[!preparationPairQ[pair] || !residueFiniteQ[Last[pair]] ||
         !ListQ[parameters] || parameters =!= {} &&
           !FreeQ[Last[pair], Alternatives @@ parameters], Return[False]];
-    pair = resolveFinalReferences[pair];
-    If[FailureQ[pair], Return[False]];
     (* A selected point can finish the wrapper immediately. Give it the same
        ordinary final preparation as the normal completed-stage path before
        running its independent checks; otherwise an early return publishes
@@ -22509,6 +22579,10 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
       pair = run["Preparing " <> ToLowerCase[origin] <> " representative",
         prepareFinal[pair]]];
     If[FailureQ[pair] || !preparationPairQ[pair], Return[False]];
+    (* Ordinary external identities can cancel a shared Xi before choosing a
+       reference. Never split one literal reference into per-leg replacements. *)
+    pair = resolveFinalReferences[pair];
+    If[FailureQ[pair], Return[False]];
     parameterRules = Lookup[constructRuleOptions[options["CheckOptions"]], "ParameterRules",
       options["ParameterRules"]];
     validationSets = completionValidationRuleSets[factorizationModel, parameterRules,
@@ -22554,11 +22628,30 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
       "RetainedFreeParameters" -> parameters,
       "RetainedFamilyAmplitude" -> Lookup[source, "FamilyAmplitude", Last[pair]],
       "RetainedDirections" -> Lookup[source, "RemainingBasis", {}],
+      "FittedPointCheckpoint" -> Lookup[source, "FittedPointCheckpoint", Missing["NotSupplied"]],
       "ValidationReports" -> validationReports, "ElapsedTime" -> AbsoluteTime[] - began|>;
     AppendTo[representativeAttempts, record];
     representativeSelection = record; save["Representative selection", record];
     If[selected, checkReport = First[validationReports]["Report"]];
     selected
+  ];
+  tryRetainedFactorizationPoint[] := Module[{pointSource, selected,
+      previousPair = finalPair, previousPrepared = lastPreparedPair, previousCheck = checkReport,
+      previousSelection = representativeSelection},
+    If[feynmanModel === None || !AssociationQ[factorization] ||
+        !MemberQ[{"UNRESOLVED", "UNDERDETERMINED"}, Lookup[factorization, "Status", None]] ||
+        !AssociationQ[Lookup[factorization, "FittedPointCheckpoint", None]] || remaining[] <= .001,
+      Return[False]];
+    pointSource = run["Materializing retained factorization point",
+      ConstructiveDiagrams`Private`constructFactorizationFittedPoint[
+        factorization, Min[5, Max[.001, remaining[]]]]];
+    If[!AssociationQ[pointSource], Return[False]];
+    selected = validateRepresentative[pointSource, "Retained factorization point", Min[60, remaining[]/10]];
+    If[!TrueQ[selected], finalPair = previousPair; lastPreparedPair = previousPrepared;
+      checkReport = previousCheck; representativeSelection = previousSelection;
+      save["Representative selection", previousSelection];
+      save["Rejected retained factorization point", pointSource]];
+    TrueQ[selected]
   ];
   (* A default supplemental assignment probes equal independent Dirac masses.
      Model names are used only to resolve the same declared parameter in each
@@ -22602,6 +22695,8 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
       Length[fermions] === 2 && Length[vectors] === 1 && Length[scalars] === 2 &&
         First[vectors][[6]] =!= 0 && SameQ @@ scalars[[All, 6]], "Calibrated metric currents",
       Length[fermions] === 2 && Length[vectors] === 2 && Length[scalars] === 1 &&
+        AllTrue[vectors, #[[6]] =!= 0 &], "Calibrated metric currents",
+      Length[fermions] === 0 && Length[vectors] === 4 && Length[scalars] === 1 &&
         AllTrue[vectors, #[[6]] =!= 0 &], "Calibrated metric currents",
       True, Return[False]];
     proposal = run["Building certified covariant source",
@@ -22860,6 +22955,7 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     factorization = run["Completing factorization", CompleteFactorization[diagramPreparation,
       channelPreparation, factorizationModel, Sequence @@ stageOptions[CompleteFactorization,
         options["FactorizationOptions"], <|"ReturnDetails" -> True, "ExternalParticles" -> process|>]]];
+    If[tryRetainedFactorizationPoint[], completed = True; Throw[finalPair, tag]];
     require[factorization, {"COMPLETE"}];
     finalPair = {factorization["ExternalMassRules"], factorization["Amplitude"]};
     factorizedPair = run["Preparing factorization result", prepareFinal[finalPair, <||>, False]];

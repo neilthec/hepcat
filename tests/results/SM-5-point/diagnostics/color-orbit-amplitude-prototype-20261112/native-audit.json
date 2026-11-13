@@ -1,0 +1,2923 @@
+{
+  "AfterLeaves": [
+    70,
+    189,
+    70,
+    189,
+    254,
+    178
+  ],
+  "Artifacts": [
+    {
+      "Bytes": 7127,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/source-runtime-manifest.json",
+      "SHA256": "0b3d8187af1eabcd6a85611acaeb19186fdbdbc73716085129a49642f4689590"
+    },
+    {
+      "Bytes": 2668,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/reconstruct.wl",
+      "SHA256": "ee0f9708740c764323adb7a9c729c70196459345427ee1a9a8346a750ed52409"
+    },
+    {
+      "Bytes": 10516,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/pilot.wl",
+      "SHA256": "df66b6d3e0ed0e89263b55cb08992264921e312958dd00c511f7a1fc113a52d7"
+    },
+    {
+      "Bytes": 1943,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/control.py",
+      "SHA256": "d03a31e112fd7f6030a0ae9d4d5987f8a6408f54810fd86c364f4f44806ef9ee"
+    },
+    {
+      "Bytes": 443,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/controller.json",
+      "SHA256": "271a78557e4114af9a60b7d46183c042b1ef2e906cc38e92a0bbb5524f8870b1"
+    },
+    {
+      "Bytes": 9970,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/pilot.live.txt",
+      "SHA256": "cbf5cc310503f4b9ad7c62d487a34c4b5b60e357fd6b1143529ffb9b6ddacb21"
+    },
+    {
+      "Bytes": 344346,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/common-inputs.wxf",
+      "SHA256": "1f2a16e6f3b4373e9a08f382ba29fc4c486e08b60c4599cfdb813931ab820610"
+    },
+    {
+      "Bytes": 1224862,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/seed1.wxf",
+      "SHA256": "f35e393e7ee743d9b52b0ab9c8ce62ee5f0d83644290541b65fec787e202a461"
+    },
+    {
+      "Bytes": 2163,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/fixed-candidate.wxf",
+      "SHA256": "ff8b1ececab3e5c30ba1689dd02a5b5fa31d5f5db9299bd3296ea5b6e4fc6be8"
+    },
+    {
+      "Bytes": 721754,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/validation.wxf",
+      "SHA256": "3e7a8db29b454df6880f34d107fdeb49c383c95fde6757aad69f5ac5dd3fd266"
+    },
+    {
+      "Bytes": 9367,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/schouten-inverse-normalization/pilot.wl",
+      "SHA256": "200ef59697a0d52605bc52ceaf3f033fd6c454c7ad44f40ebee4f14e8cb6ab09"
+    },
+    {
+      "Bytes": 1927,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/schouten-inverse-normalization/control.py",
+      "SHA256": "f398ed7e17482c7b5c313e3b8c41c172bbf56631540347db5f965bb7e8c43eaf"
+    },
+    {
+      "Bytes": 352,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/schouten-inverse-normalization/controller.json",
+      "SHA256": "c291ba85f7b47200a9ec7ee661358666fe401511712647db5f97c3f8116193ea"
+    },
+    {
+      "Bytes": 4016,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/schouten-inverse-normalization/pilot.live.txt",
+      "SHA256": "27751df3ba6f8d0feb9a3dc7c479fcb19b1aab26a4f987c4d46aabc1d298ff3c"
+    },
+    {
+      "Bytes": 1580,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/schouten-inverse-normalization/ordinary-reduction.wxf",
+      "SHA256": "16b8ec38fd232d063234d1c893ccc50dbb6a1c9a86fd00de6f8e826868bac7fc"
+    },
+    {
+      "Bytes": 2053,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/schouten-inverse-normalization/fixed-candidate.wxf",
+      "SHA256": "be56cf2e701831f71221c607140e02ac2550fd9b2444c88fa0875c4de48ce2ab"
+    },
+    {
+      "Bytes": 2213569,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/schouten-inverse-normalization/validation.wxf",
+      "SHA256": "6cf773caef6428b662a339938a1661d29260f8ecdf7aceb779045409001b6298"
+    },
+    {
+      "Bytes": 565,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/schouten-inverse-normalization/summary.json",
+      "SHA256": "e292ba96a5665d434b1d7f9e4597bbc20099cfd67cca3bdf9479e969a5c282e2"
+    },
+    {
+      "Bytes": 1974,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/extract-audit.wl",
+      "SHA256": "5a21913e8bdad07013cd08118c104000683a8e815358a086c3c44d2e93a56eea"
+    },
+    {
+      "Bytes": 54824,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/schouten-inverse-normalization/fixed-input-c1-p1.wxf",
+      "SHA256": "2355300993aa5d8aedc7412c9a754b685e2b03a8dfa0ee6cde5b9cfcc3eea3a8"
+    },
+    {
+      "Bytes": 55333,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/schouten-inverse-normalization/fixed-input-c1-p2.wxf",
+      "SHA256": "71156a620050a850305ad318cd36d5ddf9bbfea0dd4187052ffb995877646343"
+    },
+    {
+      "Bytes": 55370,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/schouten-inverse-normalization/fixed-input-c1-p3.wxf",
+      "SHA256": "4faede18d419e840930b72e84870eaab4f521ca709fd3b3414aa678d09ed83ae"
+    },
+    {
+      "Bytes": 55003,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/schouten-inverse-normalization/fixed-input-c2-p1.wxf",
+      "SHA256": "44c2b4d564caf488724a11a1a6372b6b8c37cbdf4dcd07a24aa6f5afead7fb4f"
+    },
+    {
+      "Bytes": 55518,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/schouten-inverse-normalization/fixed-input-c2-p2.wxf",
+      "SHA256": "f20d887e2873fe4495154ef6b1ebbc1b9406c0ee365941737468fad94ed0f116"
+    },
+    {
+      "Bytes": 55548,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/schouten-inverse-normalization/fixed-input-c2-p3.wxf",
+      "SHA256": "f7c3deefd1c957838b2aef319c08fe2c3c9bf023dcd7767d523bb93bdb8d0a35"
+    },
+    {
+      "Bytes": 55226,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/schouten-inverse-normalization/fixed-input-c3-p1.wxf",
+      "SHA256": "cb163f9af437f803c4228ca7c0f8dcc9788e1d8dd3f043f92367c200bddcbf94"
+    },
+    {
+      "Bytes": 55740,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/schouten-inverse-normalization/fixed-input-c3-p2.wxf",
+      "SHA256": "7a4e335e87d659a2ecfc1d72d9d1e0a59b34e6c7448cc7a9b45c8b8ac5fb8c2d"
+    },
+    {
+      "Bytes": 55771,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/schouten-inverse-normalization/fixed-input-c3-p3.wxf",
+      "SHA256": "d8a0eec554fdaea9a37fd079df596ecf005d95075cfc79cc64199aca04daafae"
+    },
+    {
+      "Bytes": 55318,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/schouten-inverse-normalization/fixed-input-c4-p1.wxf",
+      "SHA256": "4f8a4f2b3c5b2830e79979c6e702f1ca6b8043d9a1f5178f9bb77e5f73e6c40b"
+    },
+    {
+      "Bytes": 55837,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/schouten-inverse-normalization/fixed-input-c4-p2.wxf",
+      "SHA256": "37983610a22ea51532ad37416b7e86ace878fc2a6861139a26792f7c69b3eb01"
+    },
+    {
+      "Bytes": 55868,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/schouten-inverse-normalization/fixed-input-c4-p3.wxf",
+      "SHA256": "54a91c53f704a620eb9a153aada590e52e552a8ef8fb32af1ccacd2c997dadfd"
+    },
+    {
+      "Bytes": 55477,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/schouten-inverse-normalization/fixed-input-c5-p1.wxf",
+      "SHA256": "b59df28773b0b13402650c1ba295488cbaccc5dc13c7bc441ac53f09bb5f106d"
+    },
+    {
+      "Bytes": 55982,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/schouten-inverse-normalization/fixed-input-c5-p2.wxf",
+      "SHA256": "8f7ddf98d625987e9dba032a561998cf6c093a6a8f3b2711b497d249efcb4f4a"
+    },
+    {
+      "Bytes": 56016,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/schouten-inverse-normalization/fixed-input-c5-p3.wxf",
+      "SHA256": "730780f176f72211db7901ca763a579f2b2fb68af62b0c4b122fe7b4e8a5c44a"
+    },
+    {
+      "Bytes": 55444,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/schouten-inverse-normalization/fixed-input-c6-p1.wxf",
+      "SHA256": "640a7aaae63874469d4d25f27d480ddf0072f6f647cbb4b965682827a3e7a149"
+    },
+    {
+      "Bytes": 55954,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/schouten-inverse-normalization/fixed-input-c6-p2.wxf",
+      "SHA256": "89ff851b793ea1e0c76968313f0dcc018a02665d2c1c93d93a5010fded6d3a86"
+    },
+    {
+      "Bytes": 55987,
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/schouten-inverse-normalization/fixed-input-c6-p3.wxf",
+      "SHA256": "527cb68efc066c191a59a72db21daecacb8701a250daf3dea307e26aefc2a346"
+    },
+    {
+      "Bytes": 8438,
+      "Path": "tests/results/SM-5-point/diagnostics/color-coefficient-permutation-rank-20261112/retry-2/probe.wxf",
+      "SHA256": "d17139cbf319ef9178d96d66c4156f00a2751c0f66c8ba7aa82cb0680726dd4a"
+    },
+    {
+      "Bytes": 260611,
+      "Path": "tests/results/SM-5-point/diagnostics/five-gluon-construction-C4/current-helicity-feynman-benchmark.wxf",
+      "SHA256": "9fd34adeb136b96c5d52aa09e65c374a3631f3992376f44477bf07f8993110de"
+    },
+    {
+      "Bytes": 373,
+      "Path": "tests/results/SM-5-point/diagnostics/five-gluon-construction-C4/actual-color-basis.wxf",
+      "SHA256": "e65e9888b5725633dbe959b027164e583b7aaeb36c6a0901efbc37fc7f3d3853"
+    }
+  ],
+  "BeforeLeaves": [
+    113,
+    340,
+    113,
+    340,
+    340,
+    340
+  ],
+  "CanonicalRecordsModified": false,
+  "CompletedGroups": 18,
+  "ConstructionMethod": "One source-derived projected coefficient plus exact metadata-derived graded color representation orbit",
+  "Controllers": [
+    {
+      "CanonicalRecordsModified": false,
+      "ExitCode": 1,
+      "LoadedScriptSHA256": {
+        "pilot.wl": "df66b6d3e0ed0e89263b55cb08992264921e312958dd00c511f7a1fc113a52d7",
+        "reconstruct.wl": "ee0f9708740c764323adb7a9c729c70196459345427ee1a9a8346a750ed52409"
+      },
+      "NoKnownAmplitudeInput": true,
+      "Seconds": 106.559975042,
+      "SourceContext": "a91edec8580c2721ccbe8d5304442e9e506f9fd89dc911c250a550c31723a238",
+      "SourceContextUnchanged": true
+    },
+    {
+      "CanonicalRecordsModified": false,
+      "ExitCode": 0,
+      "LoadedScriptSHA256": {
+        "pilot.wl": "200ef59697a0d52605bc52ceaf3f033fd6c454c7ad44f40ebee4f14e8cb6ab09"
+      },
+      "NoKnownAmplitudeInput": true,
+      "Seconds": 79.529980792,
+      "SourceContext": "a91edec8580c2721ccbe8d5304442e9e506f9fd89dc911c250a550c31723a238",
+      "SourceContextUnchanged": true
+    }
+  ],
+  "Counts": {
+    "PASS": 216
+  },
+  "DefaultConstructorSuccessClaimed": false,
+  "ExactIdentityProofs": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+  ],
+  "ExplicitSeedBoseSymmetryGroups": [],
+  "ExplicitSeedFermionSymmetryGroups": [],
+  "ExplicitSeedTimeConstraint": 900,
+  "FeynmanPhaseAgreement": {
+    "MatchingSigns": [
+      1
+    ],
+    "Scope": "OneOverallSignForEveryIndependentColorCoefficient",
+    "Status": "PASS"
+  },
+  "FinalStatus": "ALL_COLOR_ORBIT_NATIVE_CHECKS_PASS",
+  "FixedCandidateSHA256": "be56cf2e701831f71221c607140e02ac2550fd9b2444c88fa0875c4de48ce2ab",
+  "IndependentBenchmarkUsedForConstruction": false,
+  "IndependentFeynmanOverallMatchingSign": 1,
+  "InternalOnShellConditions": [],
+  "Interpretation": "This is an isolated existing-core construction and exact symmetry reconstruction, not a successful default full-color ConstructAmplitude call. All mandatory checks were run on the fixed transported coefficients. The initial unnormalized candidate had one apparent composite-pole UNRESOLVED, resolved by a certified ordinary Schouten identity, with original diagnostics retained.",
+  "NoKnownFiveGluonAmplitudeInput": true,
+  "Process": [
+    "G.+",
+    "G.+",
+    "G.+",
+    "G.-",
+    "G.-"
+  ],
+  "Records": [
+    {
+      "AllChecksPass": true,
+      "Coefficient": 1,
+      "ParameterSetIndex": 1,
+      "RandomSeed": 1771908891476674742,
+      "Rows": [
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 3,
+          "Method": "ExactFixedAngleLaurentExpansion",
+          "ObservedPower": -1,
+          "Scope": "SampledDirectionsAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "HighEnergy"
+        },
+        {
+          "CompletedSamples": 0,
+          "Method": "ExactJointReferencePolynomialDifference",
+          "Scope": "NoExplicitReferences",
+          "Status": "PASS",
+          "Type": "Reference"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "ExactSampledFullAmplitudeSpinPolynomialComparison",
+          "RequestedSamples": 4,
+          "Scope": "SampledOffCutMomentaAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "Feynman"
+        }
+      ],
+      "Samples": 4,
+      "Seconds": 2.984733
+    },
+    {
+      "AllChecksPass": true,
+      "Coefficient": 2,
+      "ParameterSetIndex": 1,
+      "RandomSeed": 1771908891476682661,
+      "Rows": [
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 3,
+          "Method": "ExactFixedAngleLaurentExpansion",
+          "ObservedPower": -1,
+          "Scope": "SampledDirectionsAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "HighEnergy"
+        },
+        {
+          "CompletedSamples": 0,
+          "Method": "ExactJointReferencePolynomialDifference",
+          "Scope": "NoExplicitReferences",
+          "Status": "PASS",
+          "Type": "Reference"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "ExactSampledFullAmplitudeSpinPolynomialComparison",
+          "RequestedSamples": 4,
+          "Scope": "SampledOffCutMomentaAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "Feynman"
+        }
+      ],
+      "Samples": 4,
+      "Seconds": 2.833372
+    },
+    {
+      "AllChecksPass": true,
+      "Coefficient": 3,
+      "ParameterSetIndex": 1,
+      "RandomSeed": 1771908891476690580,
+      "Rows": [
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 3,
+          "Method": "ExactFixedAngleLaurentExpansion",
+          "ObservedPower": -1,
+          "Scope": "SampledDirectionsAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "HighEnergy"
+        },
+        {
+          "CompletedSamples": 0,
+          "Method": "ExactJointReferencePolynomialDifference",
+          "Scope": "NoExplicitReferences",
+          "Status": "PASS",
+          "Type": "Reference"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "ExactSampledFullAmplitudeSpinPolynomialComparison",
+          "RequestedSamples": 4,
+          "Scope": "SampledOffCutMomentaAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "Feynman"
+        }
+      ],
+      "Samples": 4,
+      "Seconds": 2.677929
+    },
+    {
+      "AllChecksPass": true,
+      "Coefficient": 4,
+      "ParameterSetIndex": 1,
+      "RandomSeed": 1771908891476698499,
+      "Rows": [
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 3,
+          "Method": "ExactFixedAngleLaurentExpansion",
+          "ObservedPower": -1,
+          "Scope": "SampledDirectionsAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "HighEnergy"
+        },
+        {
+          "CompletedSamples": 0,
+          "Method": "ExactJointReferencePolynomialDifference",
+          "Scope": "NoExplicitReferences",
+          "Status": "PASS",
+          "Type": "Reference"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "ExactSampledFullAmplitudeSpinPolynomialComparison",
+          "RequestedSamples": 4,
+          "Scope": "SampledOffCutMomentaAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "Feynman"
+        }
+      ],
+      "Samples": 4,
+      "Seconds": 2.812253
+    },
+    {
+      "AllChecksPass": true,
+      "Coefficient": 5,
+      "ParameterSetIndex": 1,
+      "RandomSeed": 1771908891476706418,
+      "Rows": [
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 3,
+          "Method": "ExactFixedAngleLaurentExpansion",
+          "ObservedPower": -1,
+          "Scope": "SampledDirectionsAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "HighEnergy"
+        },
+        {
+          "CompletedSamples": 0,
+          "Method": "ExactJointReferencePolynomialDifference",
+          "Scope": "NoExplicitReferences",
+          "Status": "PASS",
+          "Type": "Reference"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "ExactSampledFullAmplitudeSpinPolynomialComparison",
+          "RequestedSamples": 4,
+          "Scope": "SampledOffCutMomentaAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "Feynman"
+        }
+      ],
+      "Samples": 4,
+      "Seconds": 2.890179
+    },
+    {
+      "AllChecksPass": true,
+      "Coefficient": 6,
+      "ParameterSetIndex": 1,
+      "RandomSeed": 1771908891476714337,
+      "Rows": [
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 3,
+          "Method": "ExactFixedAngleLaurentExpansion",
+          "ObservedPower": -1,
+          "Scope": "SampledDirectionsAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "HighEnergy"
+        },
+        {
+          "CompletedSamples": 0,
+          "Method": "ExactJointReferencePolynomialDifference",
+          "Scope": "NoExplicitReferences",
+          "Status": "PASS",
+          "Type": "Reference"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "ExactSampledFullAmplitudeSpinPolynomialComparison",
+          "RequestedSamples": 4,
+          "Scope": "SampledOffCutMomentaAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "Feynman"
+        }
+      ],
+      "Samples": 4,
+      "Seconds": 2.893987
+    },
+    {
+      "AllChecksPass": true,
+      "Coefficient": 1,
+      "ParameterSetIndex": 2,
+      "RandomSeed": 1771908891476779471,
+      "Rows": [
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 3,
+          "Method": "ExactFixedAngleLaurentExpansion",
+          "ObservedPower": -1,
+          "Scope": "SampledDirectionsAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "HighEnergy"
+        },
+        {
+          "CompletedSamples": 0,
+          "Method": "ExactJointReferencePolynomialDifference",
+          "Scope": "NoExplicitReferences",
+          "Status": "PASS",
+          "Type": "Reference"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "ExactSampledFullAmplitudeSpinPolynomialComparison",
+          "RequestedSamples": 4,
+          "Scope": "SampledOffCutMomentaAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "Feynman"
+        }
+      ],
+      "Samples": 4,
+      "Seconds": 2.621835
+    },
+    {
+      "AllChecksPass": true,
+      "Coefficient": 2,
+      "ParameterSetIndex": 2,
+      "RandomSeed": 1771908891476787390,
+      "Rows": [
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 3,
+          "Method": "ExactFixedAngleLaurentExpansion",
+          "ObservedPower": -1,
+          "Scope": "SampledDirectionsAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "HighEnergy"
+        },
+        {
+          "CompletedSamples": 0,
+          "Method": "ExactJointReferencePolynomialDifference",
+          "Scope": "NoExplicitReferences",
+          "Status": "PASS",
+          "Type": "Reference"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "ExactSampledFullAmplitudeSpinPolynomialComparison",
+          "RequestedSamples": 4,
+          "Scope": "SampledOffCutMomentaAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "Feynman"
+        }
+      ],
+      "Samples": 4,
+      "Seconds": 2.851969
+    },
+    {
+      "AllChecksPass": true,
+      "Coefficient": 3,
+      "ParameterSetIndex": 2,
+      "RandomSeed": 1771908891476795309,
+      "Rows": [
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 3,
+          "Method": "ExactFixedAngleLaurentExpansion",
+          "ObservedPower": -1,
+          "Scope": "SampledDirectionsAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "HighEnergy"
+        },
+        {
+          "CompletedSamples": 0,
+          "Method": "ExactJointReferencePolynomialDifference",
+          "Scope": "NoExplicitReferences",
+          "Status": "PASS",
+          "Type": "Reference"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "ExactSampledFullAmplitudeSpinPolynomialComparison",
+          "RequestedSamples": 4,
+          "Scope": "SampledOffCutMomentaAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "Feynman"
+        }
+      ],
+      "Samples": 4,
+      "Seconds": 2.657805
+    },
+    {
+      "AllChecksPass": true,
+      "Coefficient": 4,
+      "ParameterSetIndex": 2,
+      "RandomSeed": 1771908891476803228,
+      "Rows": [
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 3,
+          "Method": "ExactFixedAngleLaurentExpansion",
+          "ObservedPower": -1,
+          "Scope": "SampledDirectionsAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "HighEnergy"
+        },
+        {
+          "CompletedSamples": 0,
+          "Method": "ExactJointReferencePolynomialDifference",
+          "Scope": "NoExplicitReferences",
+          "Status": "PASS",
+          "Type": "Reference"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "ExactSampledFullAmplitudeSpinPolynomialComparison",
+          "RequestedSamples": 4,
+          "Scope": "SampledOffCutMomentaAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "Feynman"
+        }
+      ],
+      "Samples": 4,
+      "Seconds": 2.823497
+    },
+    {
+      "AllChecksPass": true,
+      "Coefficient": 5,
+      "ParameterSetIndex": 2,
+      "RandomSeed": 1771908891476811147,
+      "Rows": [
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 3,
+          "Method": "ExactFixedAngleLaurentExpansion",
+          "ObservedPower": -1,
+          "Scope": "SampledDirectionsAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "HighEnergy"
+        },
+        {
+          "CompletedSamples": 0,
+          "Method": "ExactJointReferencePolynomialDifference",
+          "Scope": "NoExplicitReferences",
+          "Status": "PASS",
+          "Type": "Reference"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "ExactSampledFullAmplitudeSpinPolynomialComparison",
+          "RequestedSamples": 4,
+          "Scope": "SampledOffCutMomentaAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "Feynman"
+        }
+      ],
+      "Samples": 4,
+      "Seconds": 2.898041
+    },
+    {
+      "AllChecksPass": true,
+      "Coefficient": 6,
+      "ParameterSetIndex": 2,
+      "RandomSeed": 1771908891476819066,
+      "Rows": [
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 3,
+          "Method": "ExactFixedAngleLaurentExpansion",
+          "ObservedPower": -1,
+          "Scope": "SampledDirectionsAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "HighEnergy"
+        },
+        {
+          "CompletedSamples": 0,
+          "Method": "ExactJointReferencePolynomialDifference",
+          "Scope": "NoExplicitReferences",
+          "Status": "PASS",
+          "Type": "Reference"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "ExactSampledFullAmplitudeSpinPolynomialComparison",
+          "RequestedSamples": 4,
+          "Scope": "SampledOffCutMomentaAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "Feynman"
+        }
+      ],
+      "Samples": 4,
+      "Seconds": 2.807695
+    },
+    {
+      "AllChecksPass": true,
+      "Coefficient": 1,
+      "ParameterSetIndex": 3,
+      "RandomSeed": 1771908891476884200,
+      "Rows": [
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 3,
+          "Method": "ExactFixedAngleLaurentExpansion",
+          "ObservedPower": -1,
+          "Scope": "SampledDirectionsAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "HighEnergy"
+        },
+        {
+          "CompletedSamples": 0,
+          "Method": "ExactJointReferencePolynomialDifference",
+          "Scope": "NoExplicitReferences",
+          "Status": "PASS",
+          "Type": "Reference"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "ExactSampledFullAmplitudeSpinPolynomialComparison",
+          "RequestedSamples": 4,
+          "Scope": "SampledOffCutMomentaAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "Feynman"
+        }
+      ],
+      "Samples": 4,
+      "Seconds": 2.516201
+    },
+    {
+      "AllChecksPass": true,
+      "Coefficient": 2,
+      "ParameterSetIndex": 3,
+      "RandomSeed": 1771908891476892119,
+      "Rows": [
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 3,
+          "Method": "ExactFixedAngleLaurentExpansion",
+          "ObservedPower": -1,
+          "Scope": "SampledDirectionsAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "HighEnergy"
+        },
+        {
+          "CompletedSamples": 0,
+          "Method": "ExactJointReferencePolynomialDifference",
+          "Scope": "NoExplicitReferences",
+          "Status": "PASS",
+          "Type": "Reference"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "ExactSampledFullAmplitudeSpinPolynomialComparison",
+          "RequestedSamples": 4,
+          "Scope": "SampledOffCutMomentaAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "Feynman"
+        }
+      ],
+      "Samples": 4,
+      "Seconds": 2.735051
+    },
+    {
+      "AllChecksPass": true,
+      "Coefficient": 3,
+      "ParameterSetIndex": 3,
+      "RandomSeed": 1771908891476900038,
+      "Rows": [
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 3,
+          "Method": "ExactFixedAngleLaurentExpansion",
+          "ObservedPower": -1,
+          "Scope": "SampledDirectionsAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "HighEnergy"
+        },
+        {
+          "CompletedSamples": 0,
+          "Method": "ExactJointReferencePolynomialDifference",
+          "Scope": "NoExplicitReferences",
+          "Status": "PASS",
+          "Type": "Reference"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "ExactSampledFullAmplitudeSpinPolynomialComparison",
+          "RequestedSamples": 4,
+          "Scope": "SampledOffCutMomentaAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "Feynman"
+        }
+      ],
+      "Samples": 4,
+      "Seconds": 2.605003
+    },
+    {
+      "AllChecksPass": true,
+      "Coefficient": 4,
+      "ParameterSetIndex": 3,
+      "RandomSeed": 1771908891476907957,
+      "Rows": [
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 3,
+          "Method": "ExactFixedAngleLaurentExpansion",
+          "ObservedPower": -1,
+          "Scope": "SampledDirectionsAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "HighEnergy"
+        },
+        {
+          "CompletedSamples": 0,
+          "Method": "ExactJointReferencePolynomialDifference",
+          "Scope": "NoExplicitReferences",
+          "Status": "PASS",
+          "Type": "Reference"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "ExactSampledFullAmplitudeSpinPolynomialComparison",
+          "RequestedSamples": 4,
+          "Scope": "SampledOffCutMomentaAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "Feynman"
+        }
+      ],
+      "Samples": 4,
+      "Seconds": 2.790656
+    },
+    {
+      "AllChecksPass": true,
+      "Coefficient": 5,
+      "ParameterSetIndex": 3,
+      "RandomSeed": 1771908891476915876,
+      "Rows": [
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 3,
+          "Method": "ExactFixedAngleLaurentExpansion",
+          "ObservedPower": -1,
+          "Scope": "SampledDirectionsAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "HighEnergy"
+        },
+        {
+          "CompletedSamples": 0,
+          "Method": "ExactJointReferencePolynomialDifference",
+          "Scope": "NoExplicitReferences",
+          "Status": "PASS",
+          "Type": "Reference"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "ExactSampledFullAmplitudeSpinPolynomialComparison",
+          "RequestedSamples": 4,
+          "Scope": "SampledOffCutMomentaAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "Feynman"
+        }
+      ],
+      "Samples": 4,
+      "Seconds": 2.904105
+    },
+    {
+      "AllChecksPass": true,
+      "Coefficient": 6,
+      "ParameterSetIndex": 3,
+      "RandomSeed": 1771908891476923795,
+      "Rows": [
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            -1,
+            1
+          ],
+          "Method": "AutomaticRationalCutCharts",
+          "RequestedSamples": 4,
+          "Scope": "SampledAgreementOnly",
+          "Status": "PASS",
+          "Type": "Physical"
+        },
+        {
+          "CompletedSamples": 3,
+          "Method": "ExactFixedAngleLaurentExpansion",
+          "ObservedPower": -1,
+          "Scope": "SampledDirectionsAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "HighEnergy"
+        },
+        {
+          "CompletedSamples": 0,
+          "Method": "ExactJointReferencePolynomialDifference",
+          "Scope": "NoExplicitReferences",
+          "Status": "PASS",
+          "Type": "Reference"
+        },
+        {
+          "CompletedSamples": 4,
+          "MatchingSigns": [
+            1
+          ],
+          "Method": "ExactSampledFullAmplitudeSpinPolynomialComparison",
+          "RequestedSamples": 4,
+          "Scope": "SampledOffCutMomentaAllImplicitMassiveSpinComponents",
+          "Status": "PASS",
+          "Type": "Feynman"
+        }
+      ],
+      "Samples": 4,
+      "Seconds": 2.86569
+    }
+  ],
+  "Schema": "HEPCAT_COLOR_ORBIT_NATIVE_PROTOTYPE_AUDIT_V1",
+  "SchoutenRouteCount": 1,
+  "SeedComplexity": 1,
+  "SeedKeys": [
+    "Status",
+    "Process",
+    "RandomSeed",
+    "Complexity",
+    "Amplitude",
+    "AmplitudePair",
+    "CandidateAmplitude",
+    "Checks",
+    "TotalTime",
+    "StageTimings",
+    "RequestedPolePreference",
+    "AchievedPhysicalDenominators",
+    "PreferenceFallbackReason",
+    "Stages",
+    "ResourcePolicy",
+    "RepresentativeSelection",
+    "RepresentativeSelectionAttempts",
+    "RequestedOptions",
+    "Failure"
+  ],
+  "SeedRandomSeed": 1771908891469674741,
+  "SeedRequestedOptionsWL": {
+    "BoseSymmetryGroups": [],
+    "ChannelPreparationOptions": [],
+    "CheckOptions": [],
+    "FactorizationOptions": [],
+    "FermionSymmetryGroups": [],
+    "FeynmanModel": "ConstructiveDiagrams`FeynmanModel[{{\"photon\", \"A\", \"A\", 22, 2, 0, \"0\", 1, \"G\", \"A\", \"A\"}, {\"Z boson\", \"Z\", \"Z\", 23, 2, ConstructiveDiagrams`ModelParameter[\"MZ\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], \"!wZ\", 1, \"G\", \"Z\", \"Z\"}, {\"gluon\", \"G\", \"G\", 21, 2, 0, \"0\", 8, \"G\", \"G\", \"G\"}, {\"W boson\", \"W+\", \"W-\", 24, 2, ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], \"!wW\", 1, \"G\", \"W^+\", \"W^-\"}, {\"neutrino\", \"ne\", \"Ne\", 12, 1, 0, \"0\", 1, \"L\", \"\\\\nu^e\", \"\\\\bar{\\\\nu}^e\"}, {\"electron\", \"e\", \"E\", 11, 1, ConstructiveDiagrams`ModelParameter[\"Me\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], \"0\", 1, \"\", \"e\", \"\\\\bar{e}\"}, {\"mu-neutrino\", \"nm\", \"Nm\", 14, 1, 0, \"0\", 1, \"L\", \"\\\\nu^\\\\mu\", \"\\\\bar{\\\\nu}^\\\\mu\"}, {\"muon\", \"m\", \"M\", 13, 1, ConstructiveDiagrams`ModelParameter[\"Mm\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], \"0\", 1, \"\", \"\\\\mu\", \"\\\\bar{\\\\mu}\"}, {\"tau-neutrino\", \"nl\", \"Nl\", 16, 1, 0, \"0\", 1, \"L\", \"\\\\nu^\\\\tau\", \"\\\\bar{\\\\nu}^\\\\tau\"}, {\"tau-lepton\", \"l\", \"L\", 15, 1, ConstructiveDiagrams`ModelParameter[\"Ml\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], \"0\", 1, \"\", \"\\\\tau\", \"\\\\bar{\\\\tau}\"}, {\"u-quark\", \"u\", \"U\", 2, 1, ConstructiveDiagrams`ModelParameter[\"Mu\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], \"0\", 3, \"\", \"u\", \"\\\\bar{u}\"}, {\"d-quark\", \"d\", \"D\", 1, 1, ConstructiveDiagrams`ModelParameter[\"Md\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], \"0\", 3, \"\", \"d\", \"\\\\bar{d}\"}, {\"c-quark\", \"c\", \"C\", 4, 1, ConstructiveDiagrams`ModelParameter[\"Mc\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], \"0\", 3, \"\", \"c\", \"\\\\bar{c}\"}, {\"s-quark\", \"s\", \"S\", 3, 1, ConstructiveDiagrams`ModelParameter[\"Ms\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], \"0\", 3, \"\", \"s\", \"\\\\bar{s}\"}, {\"t-quark\", \"t\", \"T\", 6, 1, ConstructiveDiagrams`ModelParameter[\"Mtp\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], \"!wt\", 3, \"\", \"t\", \"\\\\bar{t}\"}, {\"b-quark\", \"b\", \"B\", 5, 1, ConstructiveDiagrams`ModelParameter[\"Mb\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], \"0\", 3, \"\", \"b\", \"\\\\bar{b}\"}, {\"Higgs\", \"h\", \"h\", 25, 0, ConstructiveDiagrams`ModelParameter[\"Mh\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], \"!wh\", 1, \"\", \"h\", \"h\"}}, {{\"A\", \"W+\", \"W-\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[3]]*ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[1], ConstructiveDiagrams`LorentzIndex[2]] - ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[2]]*ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[1], ConstructiveDiagrams`LorentzIndex[3]] - ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[2], ConstructiveDiagrams`LorentzIndex[3]]*ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[2], ConstructiveDiagrams`LorentzIndex[1]] + ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[2]]*ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[2], ConstructiveDiagrams`LorentzIndex[3]] + ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[2], ConstructiveDiagrams`LorentzIndex[3]]*ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[3], ConstructiveDiagrams`LorentzIndex[1]] - ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[3]]*ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[3], ConstructiveDiagrams`LorentzIndex[2]]}, {\"A\", \"W+\", \"W-.f\", \"\", (-I)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[2]]}, {\"A\", \"W+.f\", \"W-\", \"\", I*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[3]]}, {\"A\", \"W+.f\", \"W-.f\", \"\", -ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], -ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[2], ConstructiveDiagrams`LorentzIndex[1]] + ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[3], ConstructiveDiagrams`LorentzIndex[1]]}, {\"A.C\", \"W+.c\", \"W-\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[1], ConstructiveDiagrams`LorentzIndex[3]]}, {\"A.C\", \"W-.c\", \"W+\", \"\", -ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[1], ConstructiveDiagrams`LorentzIndex[3]]}, {\"B\", \"b\", \"A\", \"\", -1/3*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]]}, {\"B\", \"b\", \"G\", \"\", ConstructiveDiagrams`ModelParameter[\"GG\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]]}, {\"B\", \"b\", \"Z\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/(12*ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), -3*ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]] + 3*ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]], ConstructiveDiagrams`DiracGamma5] + 4*ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2}, {\"B\", \"b\", \"Z.f\", \"\", ((I/2)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"Mb\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma5]}, {\"B\", \"b\", \"h\", \"\", -1/2*(ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"Mb\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), 1}, {\"B\", \"t\", \"W-\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/(2*Sqrt[2]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]] - ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]], ConstructiveDiagrams`DiracGamma5]}, {\"B\", \"t\", \"W-.f\", \"\", ((I/2)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(Sqrt[2]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`ModelParameter[\"Mb\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"] - ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma5]*ConstructiveDiagrams`ModelParameter[\"Mb\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"] - ConstructiveDiagrams`ModelParameter[\"Mtp\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"] - ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma5]*ConstructiveDiagrams`ModelParameter[\"Mtp\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]}, {\"C\", \"c\", \"A\", \"\", (2*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/3, ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]]}, {\"C\", \"c\", \"G\", \"\", ConstructiveDiagrams`ModelParameter[\"GG\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]]}, {\"C\", \"c\", \"Z\", \"\", -1/12*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/(ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), -3*ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]] + 3*ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]], ConstructiveDiagrams`DiracGamma5] + 8*ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2}, {\"C\", \"c\", \"Z.f\", \"\", ((-1/2*I)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"Mc\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma5]}, {\"C\", \"c\", \"h\", \"\", -1/2*(ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"Mc\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), 1}, {\"C\", \"s\", \"W+\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/(2*Sqrt[2]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]] - ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]], ConstructiveDiagrams`DiracGamma5]}, {\"C\", \"s\", \"W+.f\", \"\", ((-1/2*I)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(Sqrt[2]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), -ConstructiveDiagrams`ModelParameter[\"Mc\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"] + ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma5]*ConstructiveDiagrams`ModelParameter[\"Mc\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"] + ConstructiveDiagrams`ModelParameter[\"Ms\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"] + ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma5]*ConstructiveDiagrams`ModelParameter[\"Ms\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]}, {\"D\", \"d\", \"A\", \"\", -1/3*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]]}, {\"D\", \"d\", \"G\", \"\", ConstructiveDiagrams`ModelParameter[\"GG\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]]}, {\"D\", \"d\", \"Z\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/(12*ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), -3*ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]] + 3*ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]], ConstructiveDiagrams`DiracGamma5] + 4*ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2}, {\"D\", \"d\", \"Z.f\", \"\", ((I/2)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"Md\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma5]}, {\"D\", \"d\", \"h\", \"\", -1/2*(ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"Md\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), 1}, {\"D\", \"u\", \"W-\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/(2*Sqrt[2]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]] - ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]], ConstructiveDiagrams`DiracGamma5]}, {\"D\", \"u\", \"W-.f\", \"\", ((I/2)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(Sqrt[2]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`ModelParameter[\"Md\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"] - ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma5]*ConstructiveDiagrams`ModelParameter[\"Md\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"] - ConstructiveDiagrams`ModelParameter[\"Mu\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"] - ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma5]*ConstructiveDiagrams`ModelParameter[\"Mu\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]}, {\"E\", \"e\", \"A\", \"\", -ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]]}, {\"E\", \"e\", \"Z\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/(4*ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), -ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]] + ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]], ConstructiveDiagrams`DiracGamma5] + 4*ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2}, {\"E\", \"e\", \"Z.f\", \"\", ((I/2)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"Me\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma5]}, {\"E\", \"e\", \"h\", \"\", -1/2*(ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"Me\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), 1}, {\"E\", \"ne\", \"W-\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/(2*Sqrt[2]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]] - ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]], ConstructiveDiagrams`DiracGamma5]}, {\"E\", \"ne\", \"W-.f\", \"\", ((I/2)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"Me\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(Sqrt[2]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), 1 - ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma5]}, {\"G\", \"G\", \"G\", \"\", ConstructiveDiagrams`ModelParameter[\"GG\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], -(ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[3]]*ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[1], ConstructiveDiagrams`LorentzIndex[2]]) + ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[2]]*ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[1], ConstructiveDiagrams`LorentzIndex[3]] + ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[2], ConstructiveDiagrams`LorentzIndex[3]]*ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[2], ConstructiveDiagrams`LorentzIndex[1]] - ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[2]]*ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[2], ConstructiveDiagrams`LorentzIndex[3]] - ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[2], ConstructiveDiagrams`LorentzIndex[3]]*ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[3], ConstructiveDiagrams`LorentzIndex[1]] + ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[3]]*ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[3], ConstructiveDiagrams`LorentzIndex[2]]}, {\"G.C\", \"G.c\", \"G\", \"\", ConstructiveDiagrams`ModelParameter[\"GG\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[2], ConstructiveDiagrams`LorentzIndex[3]]}, {\"L\", \"l\", \"A\", \"\", -ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]]}, {\"L\", \"l\", \"Z\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/(4*ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), -ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]] + ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]], ConstructiveDiagrams`DiracGamma5] + 4*ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2}, {\"L\", \"l\", \"Z.f\", \"\", ((I/2)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"Ml\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma5]}, {\"L\", \"l\", \"h\", \"\", -1/2*(ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"Ml\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), 1}, {\"L\", \"nl\", \"W-\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/(2*Sqrt[2]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]] - ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]], ConstructiveDiagrams`DiracGamma5]}, {\"L\", \"nl\", \"W-.f\", \"\", ((I/2)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"Ml\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(Sqrt[2]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), 1 - ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma5]}, {\"M\", \"m\", \"A\", \"\", -ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]]}, {\"M\", \"m\", \"Z\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/(4*ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), -ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]] + ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]], ConstructiveDiagrams`DiracGamma5] + 4*ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2}, {\"M\", \"m\", \"Z.f\", \"\", ((I/2)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"Mm\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma5]}, {\"M\", \"m\", \"h\", \"\", -1/2*(ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"Mm\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), 1}, {\"M\", \"nm\", \"W-\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/(2*Sqrt[2]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]] - ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]], ConstructiveDiagrams`DiracGamma5]}, {\"M\", \"nm\", \"W-.f\", \"\", ((I/2)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"Mm\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(Sqrt[2]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), 1 - ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma5]}, {\"Ne\", \"e\", \"W+\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/(2*Sqrt[2]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]] - ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]], ConstructiveDiagrams`DiracGamma5]}, {\"Ne\", \"e\", \"W+.f\", \"\", ((-1/2*I)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"Me\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(Sqrt[2]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), 1 + ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma5]}, {\"Ne\", \"ne\", \"Z\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/(4*ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]] - ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]], ConstructiveDiagrams`DiracGamma5]}, {\"Nl\", \"l\", \"W+\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/(2*Sqrt[2]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]] - ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]], ConstructiveDiagrams`DiracGamma5]}, {\"Nl\", \"l\", \"W+.f\", \"\", ((-1/2*I)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"Ml\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(Sqrt[2]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), 1 + ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma5]}, {\"Nl\", \"nl\", \"Z\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/(4*ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]] - ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]], ConstructiveDiagrams`DiracGamma5]}, {\"Nm\", \"m\", \"W+\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/(2*Sqrt[2]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]] - ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]], ConstructiveDiagrams`DiracGamma5]}, {\"Nm\", \"m\", \"W+.f\", \"\", ((-1/2*I)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"Mm\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(Sqrt[2]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), 1 + ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma5]}, {\"Nm\", \"nm\", \"Z\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/(4*ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]] - ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]], ConstructiveDiagrams`DiracGamma5]}, {\"S\", \"c\", \"W-\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/(2*Sqrt[2]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]] - ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]], ConstructiveDiagrams`DiracGamma5]}, {\"S\", \"c\", \"W-.f\", \"\", ((I/2)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(Sqrt[2]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), -ConstructiveDiagrams`ModelParameter[\"Mc\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"] - ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma5]*ConstructiveDiagrams`ModelParameter[\"Mc\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"] + ConstructiveDiagrams`ModelParameter[\"Ms\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"] - ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma5]*ConstructiveDiagrams`ModelParameter[\"Ms\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]}, {\"S\", \"s\", \"A\", \"\", -1/3*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]]}, {\"S\", \"s\", \"G\", \"\", ConstructiveDiagrams`ModelParameter[\"GG\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]]}, {\"S\", \"s\", \"Z\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/(12*ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), -3*ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]] + 3*ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]], ConstructiveDiagrams`DiracGamma5] + 4*ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2}, {\"S\", \"s\", \"Z.f\", \"\", ((I/2)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"Ms\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma5]}, {\"S\", \"s\", \"h\", \"\", -1/2*(ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"Ms\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), 1}, {\"T\", \"b\", \"W+\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/(2*Sqrt[2]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]] - ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]], ConstructiveDiagrams`DiracGamma5]}, {\"T\", \"b\", \"W+.f\", \"\", ((-1/2*I)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(Sqrt[2]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`ModelParameter[\"Mb\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"] + ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma5]*ConstructiveDiagrams`ModelParameter[\"Mb\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"] - ConstructiveDiagrams`ModelParameter[\"Mtp\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"] + ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma5]*ConstructiveDiagrams`ModelParameter[\"Mtp\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]}, {\"T\", \"t\", \"A\", \"\", (2*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/3, ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]]}, {\"T\", \"t\", \"G\", \"\", ConstructiveDiagrams`ModelParameter[\"GG\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]]}, {\"T\", \"t\", \"Z\", \"\", -1/12*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/(ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), -3*ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]] + 3*ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]], ConstructiveDiagrams`DiracGamma5] + 8*ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2}, {\"T\", \"t\", \"Z.f\", \"\", ((-1/2*I)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"Mtp\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma5]}, {\"T\", \"t\", \"h\", \"\", -1/2*(ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"Mtp\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), 1}, {\"U\", \"d\", \"W+\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/(2*Sqrt[2]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]] - ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]], ConstructiveDiagrams`DiracGamma5]}, {\"U\", \"d\", \"W+.f\", \"\", ((-1/2*I)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(Sqrt[2]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`ModelParameter[\"Md\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"] + ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma5]*ConstructiveDiagrams`ModelParameter[\"Md\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"] - ConstructiveDiagrams`ModelParameter[\"Mu\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"] + ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma5]*ConstructiveDiagrams`ModelParameter[\"Mu\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]}, {\"U\", \"u\", \"A\", \"\", (2*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/3, ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]]}, {\"U\", \"u\", \"G\", \"\", ConstructiveDiagrams`ModelParameter[\"GG\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]]}, {\"U\", \"u\", \"Z\", \"\", -1/12*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/(ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), -3*ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]] + 3*ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]], ConstructiveDiagrams`DiracGamma5] + 8*ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma[ConstructiveDiagrams`LorentzIndex[3]]]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2}, {\"U\", \"u\", \"Z.f\", \"\", ((-1/2*I)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"Mu\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`DiracWord[ConstructiveDiagrams`DiracGamma5]}, {\"U\", \"u\", \"h\", \"\", -1/2*(ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"Mu\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), 1}, {\"W+\", \"W-\", \"Z\", \"\", (ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[3]]*ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[1], ConstructiveDiagrams`LorentzIndex[2]] - ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[2]]*ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[1], ConstructiveDiagrams`LorentzIndex[3]] - ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[2], ConstructiveDiagrams`LorentzIndex[3]]*ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[2], ConstructiveDiagrams`LorentzIndex[1]] + ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[2]]*ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[2], ConstructiveDiagrams`LorentzIndex[3]] + ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[2], ConstructiveDiagrams`LorentzIndex[3]]*ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[3], ConstructiveDiagrams`LorentzIndex[1]] - ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[3]]*ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[3], ConstructiveDiagrams`LorentzIndex[2]]}, {\"W+\", \"W-\", \"h\", \"\", (ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[2]]}, {\"W+\", \"W-.f\", \"Z\", \"\", (I*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[3]]}, {\"W+\", \"W-.f\", \"Z.f\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/(2*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[2], ConstructiveDiagrams`LorentzIndex[1]] - ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[3], ConstructiveDiagrams`LorentzIndex[1]]}, {\"W+\", \"W-.f\", \"h\", \"\", ((I/2)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[2], ConstructiveDiagrams`LorentzIndex[1]] - ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[3], ConstructiveDiagrams`LorentzIndex[1]]}, {\"W+.C\", \"A.c\", \"W-\", \"\", -ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[1], ConstructiveDiagrams`LorentzIndex[3]]}, {\"W+.C\", \"A.c\", \"W-.f\", \"\", I*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], 1}, {\"W+.C\", \"W-.c\", \"A\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[1], ConstructiveDiagrams`LorentzIndex[3]]}, {\"W+.C\", \"W-.c\", \"Z\", \"\", (ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[1], ConstructiveDiagrams`LorentzIndex[3]]}, {\"W+.C\", \"W-.c\", \"Z.f\", \"\", ((-1/2*I)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], 1}, {\"W+.C\", \"W-.c\", \"h\", \"\", -1/2*(ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], 1}, {\"W+.C\", \"Z.c\", \"W-\", \"\", -((ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[1], ConstructiveDiagrams`LorentzIndex[3]]}, {\"W+.C\", \"Z.c\", \"W-.f\", \"\", ((-1/2*I)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), -ConstructiveDiagrams`ModelParameter[\"B00000\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]}, {\"W+.f\", \"W-\", \"Z\", \"\", ((-I)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[2], ConstructiveDiagrams`LorentzIndex[3]]}, {\"W+.f\", \"W-\", \"Z.f\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/(2*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), -ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[1], ConstructiveDiagrams`LorentzIndex[2]] + ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[3], ConstructiveDiagrams`LorentzIndex[2]]}, {\"W+.f\", \"W-\", \"h\", \"\", ((-1/2*I)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], -ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[1], ConstructiveDiagrams`LorentzIndex[2]] + ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[3], ConstructiveDiagrams`LorentzIndex[2]]}, {\"W+.f\", \"W-.f\", \"Z\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/(2*ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[1], ConstructiveDiagrams`LorentzIndex[3]]*ConstructiveDiagrams`ModelParameter[\"B00000\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"] - ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[2], ConstructiveDiagrams`LorentzIndex[3]]*ConstructiveDiagrams`ModelParameter[\"B00000\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]}, {\"W+.f\", \"W-.f\", \"h\", \"\", -1/2*(ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"Mh\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2)/(ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), 1}, {\"W-.C\", \"A.c\", \"W+\", \"\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[1], ConstructiveDiagrams`LorentzIndex[3]]}, {\"W-.C\", \"A.c\", \"W+.f\", \"\", (-I)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], 1}, {\"W-.C\", \"W+.c\", \"A\", \"\", -ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[1], ConstructiveDiagrams`LorentzIndex[3]]}, {\"W-.C\", \"W+.c\", \"Z\", \"\", -((ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[1], ConstructiveDiagrams`LorentzIndex[3]]}, {\"W-.C\", \"W+.c\", \"Z.f\", \"\", ((I/2)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], 1}, {\"W-.C\", \"W+.c\", \"h\", \"\", -1/2*(ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], 1}, {\"W-.C\", \"Z.c\", \"W+\", \"\", (ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[1], ConstructiveDiagrams`LorentzIndex[3]]}, {\"W-.C\", \"Z.c\", \"W+.f\", \"\", ((I/2)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), -ConstructiveDiagrams`ModelParameter[\"B00000\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]}, {\"Z\", \"Z\", \"h\", \"\", (ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[2]]}, {\"Z\", \"Z.f\", \"h\", \"\", ((I/2)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[2], ConstructiveDiagrams`LorentzIndex[1]] - ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[3], ConstructiveDiagrams`LorentzIndex[1]]}, {\"Z.C\", \"W+.c\", \"W-\", \"\", (ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[1], ConstructiveDiagrams`LorentzIndex[3]]}, {\"Z.C\", \"W+.c\", \"W-.f\", \"\", ((-1/2*I)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), 1}, {\"Z.C\", \"W-.c\", \"W+\", \"\", -((ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`LorentzMomentum[ConstructiveDiagrams`Mom[1], ConstructiveDiagrams`LorentzIndex[3]]}, {\"Z.C\", \"W-.c\", \"W+.f\", \"\", ((I/2)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), 1}, {\"Z.C\", \"Z.c\", \"h\", \"\", -1/2*(ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])/(ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), 1}, {\"Z.f\", \"Z.f\", \"h\", \"\", -1/2*(ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"Mh\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2)/(ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), 1}, {\"h\", \"h\", \"h\", \"\", (-3*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"Mh\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2)/(2*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), 1}, {\"A\", \"A\", \"W+\", \"W-\", -ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2, -(ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[4]]*ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[2], ConstructiveDiagrams`LorentzIndex[3]]) - ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[3]]*ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[2], ConstructiveDiagrams`LorentzIndex[4]] + 2*ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[2]]*ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[3], ConstructiveDiagrams`LorentzIndex[4]]}, {\"A\", \"A\", \"W+.f\", \"W-.f\", 2*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2, ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[2]]}, {\"A\", \"W+\", \"W-\", \"Z\", -((ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2)/ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), 2*ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[4]]*ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[2], ConstructiveDiagrams`LorentzIndex[3]] - ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[3]]*ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[2], ConstructiveDiagrams`LorentzIndex[4]] - ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[2]]*ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[3], ConstructiveDiagrams`LorentzIndex[4]]}, {\"A\", \"W+\", \"W-.f\", \"Z.f\", -1/2*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2/ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[2]]}, {\"A\", \"W+\", \"W-.f\", \"h\", ((-1/2*I)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2)/ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[2]]}, {\"A\", \"W+.f\", \"W-\", \"Z.f\", -1/2*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2/ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[3]]}, {\"A\", \"W+.f\", \"W-\", \"h\", ((I/2)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2)/ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[3]]}, {\"A\", \"W+.f\", \"W-.f\", \"Z\", -(ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2/(ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])), -(ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[4]]*ConstructiveDiagrams`ModelParameter[\"B00000\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"])}, {\"G\", \"G\", \"G.t\", \"\", ConstructiveDiagrams`ModelParameter[\"GG\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/Sqrt[2], -(ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[3, 2]]*ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[2], ConstructiveDiagrams`LorentzIndex[3]]) + ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[3]]*ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[2], ConstructiveDiagrams`LorentzIndex[3, 2]]}, {\"W+\", \"W+\", \"W-\", \"W-\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2/ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2, -(ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[4]]*ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[2], ConstructiveDiagrams`LorentzIndex[3]]) - ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[3]]*ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[2], ConstructiveDiagrams`LorentzIndex[4]] + 2*ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[2]]*ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[3], ConstructiveDiagrams`LorentzIndex[4]]}, {\"W+\", \"W+.f\", \"W-\", \"W-.f\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2/(2*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2), ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[3]]}, {\"W+\", \"W-\", \"Z\", \"Z\", -((ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2)/ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2), -(ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[4]]*ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[2], ConstructiveDiagrams`LorentzIndex[3]]) - ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[3]]*ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[2], ConstructiveDiagrams`LorentzIndex[4]] + 2*ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[2]]*ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[3], ConstructiveDiagrams`LorentzIndex[4]]}, {\"W+\", \"W-\", \"Z.f\", \"Z.f\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2/(2*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2), ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[2]]}, {\"W+\", \"W-\", \"h\", \"h\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2/(2*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2), ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[2]]}, {\"W+\", \"W-.f\", \"Z\", \"Z.f\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2/(2*ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[3]]}, {\"W+\", \"W-.f\", \"Z\", \"h\", ((I/2)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2)/ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[3]]}, {\"W+.f\", \"W+.f\", \"W-.f\", \"W-.f\", -1/2*(ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2*ConstructiveDiagrams`ModelParameter[\"Mh\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2)/(ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2), 1}, {\"W+.f\", \"W-\", \"Z\", \"Z.f\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2/(2*ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]), ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[2], ConstructiveDiagrams`LorentzIndex[3]]}, {\"W+.f\", \"W-\", \"Z\", \"h\", ((-1/2*I)*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2)/ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[2], ConstructiveDiagrams`LorentzIndex[3]]}, {\"W+.f\", \"W-.f\", \"Z\", \"Z\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2/(2*ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2), ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[3], ConstructiveDiagrams`LorentzIndex[4]]*ConstructiveDiagrams`ModelParameter[\"B00001\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]}, {\"W+.f\", \"W-.f\", \"Z.f\", \"Z.f\", -1/4*(ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2*ConstructiveDiagrams`ModelParameter[\"Mh\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2)/(ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2), 1}, {\"W+.f\", \"W-.f\", \"h\", \"h\", -1/4*(ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2*ConstructiveDiagrams`ModelParameter[\"Mh\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2)/(ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2), 1}, {\"Z\", \"Z\", \"Z.f\", \"Z.f\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2/(2*ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2), ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[2]]}, {\"Z\", \"Z\", \"h\", \"h\", ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2/(2*ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2), ConstructiveDiagrams`LorentzMetric[ConstructiveDiagrams`LorentzIndex[1], ConstructiveDiagrams`LorentzIndex[2]]}, {\"Z.f\", \"Z.f\", \"Z.f\", \"Z.f\", (-3*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2*ConstructiveDiagrams`ModelParameter[\"Mh\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2)/(4*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2), 1}, {\"Z.f\", \"Z.f\", \"h\", \"h\", -1/4*(ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2*ConstructiveDiagrams`ModelParameter[\"Mh\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2)/(ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2), 1}, {\"h\", \"h\", \"h\", \"h\", (-3*ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2*ConstructiveDiagrams`ModelParameter[\"Mh\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2)/(4*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2), 1}}, {{ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], 31333/100000, \"Electromagnetic coupling constant (<->1/128)\"}, {ConstructiveDiagrams`ModelParameter[\"GG\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], 1117/1000, \"Strong coupling constant (Z point)  (PDG-94)\"}, {ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], 237/500, \"sin of the Weinberg angle 0.474 - \\\"on-shell\\\",481 - \\\"MS-bar\\\" )\"}, {ConstructiveDiagrams`ModelParameter[\"Q\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], 100, \"Scale of effective running masses\"}, {ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], 16077/200, \"W boson mass\"}, {ConstructiveDiagrams`ModelParameter[\"Mtp\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], 345/2, \"Top quark pole mass\"}, {ConstructiveDiagrams`ModelParameter[\"McMc\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], 123/100, \"Mc(Mc)  MS-BAR\"}, {ConstructiveDiagrams`ModelParameter[\"MbMb\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], 17/4, \"Mb(Mb)  MS-BAR\"}, {ConstructiveDiagrams`ModelParameter[\"alphaSMZ\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], 74/625, \"Srtong alpha(MZ)\"}, {ConstructiveDiagrams`ModelParameter[\"Ml\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], 1777/1000, \"mass of tau-lepton\"}, {ConstructiveDiagrams`ModelParameter[\"Mh\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], 125, \"mass of Higgs\"}, {ConstructiveDiagrams`ModelParameter[\"Me\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], 1/2000, \"Electron mass, matching constructive model 1 [GeV]\"}, {ConstructiveDiagrams`ModelParameter[\"Mm\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], 21/200, \"Muon mass, matching constructive model 1 [GeV]\"}, {ConstructiveDiagrams`ModelParameter[\"Mu\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], 27/12500, \"Up MSbar mass at 2 GeV [GeV], PDG 2026\"}, {ConstructiveDiagrams`ModelParameter[\"Md\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], 47/10000, \"Down MSbar mass at 2 GeV [GeV], PDG 2026\"}, {ConstructiveDiagrams`ModelParameter[\"Mb\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], 21/5, \"Fixed bottom mass, matching constructive model 1 [GeV]\"}, {ConstructiveDiagrams`ModelParameter[\"Mc\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], 13/10, \"Fixed charm mass, matching constructive model 1 [GeV]\"}, {ConstructiveDiagrams`ModelParameter[\"Ms\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], 19/200, \"Fixed strange mass, matching constructive model 1 [GeV]\"}}, {{ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], Sqrt[1 - ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2], \"cos of the Weinberg angle\"}, {ConstructiveDiagrams`ModelParameter[\"GF\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`ModelParameter[\"EE\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2/(4*Sqrt[2]*ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2), \"experimental value 1.166E-5 [1/GeV^2]\"}, {ConstructiveDiagrams`ModelParameter[\"MZ\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`ModelParameter[\"MW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]/ConstructiveDiagrams`ModelParameter[\"CW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], \"Z boson mass\"}, {ConstructiveDiagrams`ModelParameter[\"LamQCD\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`ModelFunction[\"initQCD5\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", {ConstructiveDiagrams`ModelParameter[\"alphaSMZ\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`ModelParameter[\"McMc\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`ModelParameter[\"MbMb\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], ConstructiveDiagrams`ModelParameter[\"Mtp\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]}], \"\"}, {ConstructiveDiagrams`ModelParameter[\"B00000\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], 1 - 2*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2, \"\"}, {ConstructiveDiagrams`ModelParameter[\"B00001\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"], 1 - 4*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^2 + 4*ConstructiveDiagrams`ModelParameter[\"SW\", \"86330dcabd0de6ac37861445405b7dcaf7fa7f69c3628be26eaf34bdd645b4cd\", \"Real\"]^4, \"\"}}]",
+    "FeynmanPreparationOptions": [],
+    "FinalPreparationOptions": [],
+    "HighEnergyBound": "Automatic",
+    "HighEnergyOptions": [],
+    "MaxKernels": "Automatic",
+    "Output": "Details",
+    "Parallelization": "Automatic",
+    "ParameterRules": "Automatic",
+    "PolePreference": "AllPhysical",
+    "PreparationOptions": [],
+    "PrintReport": true,
+    "ProgressFunction": "Automatic",
+    "ProgressReporting": true,
+    "RandomSeed": 1771908891469674741,
+    "Samples": "Automatic",
+    "TimeConstraint": 900,
+    "ValidationSamples": "Automatic"
+  },
+  "SeedRowSummary": null,
+  "SeedSeconds": 64.396515,
+  "SeedStageTimings": [
+    {
+      "ElapsedTime": 0.00199,
+      "Stage": "Generating diagrams",
+      "Status": "COMPLETE",
+      "TotalElapsedTime": 0.060461
+    },
+    {
+      "ElapsedTime": 0.000201,
+      "Stage": "Building diagram amplitudes",
+      "Status": "COMPLETE",
+      "TotalElapsedTime": 0.06091
+    },
+    {
+      "ElapsedTime": 0.803209,
+      "Stage": "Preparing diagrams",
+      "Status": "PREPARED",
+      "TotalElapsedTime": 0.864316
+    },
+    {
+      "ElapsedTime": 0.000198,
+      "Stage": "Generating factorization channels",
+      "Status": "COMPLETE",
+      "TotalElapsedTime": 0.865357
+    },
+    {
+      "ElapsedTime": 1.162279,
+      "Stage": "Preparing factorization channels",
+      "Status": "PREPARED",
+      "TotalElapsedTime": 2.027872
+    },
+    {
+      "ElapsedTime": 55.112017,
+      "Stage": "Completing factorization",
+      "Status": "COMPLETE",
+      "TotalElapsedTime": 57.147577
+    },
+    {
+      "ElapsedTime": 0.071492,
+      "Stage": "Preparing factorization result",
+      "Status": "COMPLETE",
+      "TotalElapsedTime": 57.219441
+    },
+    {
+      "ElapsedTime": 4.466087,
+      "Stage": "Completing high-energy behavior",
+      "Status": "COMPLETE",
+      "TotalElapsedTime": 61.685994
+    },
+    {
+      "ElapsedTime": 0.071789,
+      "Stage": "Preparing final amplitude",
+      "Status": "COMPLETE",
+      "TotalElapsedTime": 61.759422
+    },
+    {
+      "ElapsedTime": 2.564615,
+      "Stage": "Checking final amplitude",
+      "Status": "COMPLETE",
+      "TotalElapsedTime": 64.324443
+    }
+  ],
+  "SeedStatus": "COMPLETE",
+  "SourceContext": "a91edec8580c2721ccbe8d5304442e9e506f9fd89dc911c250a550c31723a238",
+  "SourceContextUnchanged": true,
+  "Status": "ALL_COLOR_ORBIT_NATIVE_CHECKS_PASS",
+  "StoppedProofOnlySetup": "ordinary-reduced-retry used an insufficient Cancel-only proof normalization and stopped before physics; no negative physics inference.",
+  "TotalRows": 216,
+  "TypeCounts": {
+    "Feynman": 18,
+    "HighEnergy": 18,
+    "Physical": 162,
+    "Reference": 18
+  },
+  "ValidationParameterSets": 3,
+  "ValidationSamplesPerRow": 4
+}

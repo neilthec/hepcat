@@ -1,0 +1,19 @@
+Running covariant-contact-calibration-tests.wl
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+
+rowParticles::shdw: Symbol rowParticles appears in multiple contexts {ConstructiveDiagrams`, Global`}; definitions in context ConstructiveDiagrams` may shadow or be shadowed by other definitions.
+FAIL: a purely bosonic four-vector source uses the same model-derived metric-current class
+FAIL: all four vector coherent degrees are retained without an internal shell or new contact
+COVARIANT CONTACT CALIBRATION CHECKS: 29; FAILURES: 2
+{a purely bosonic four-vector source uses the same model-derived metric-current class, all four vector coherent degrees are retained without an internal shell or new contact}
+HEPCAT_TEST_COMPLETED:covariant-contact-calibration-tests.wl
+

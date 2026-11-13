@@ -1,0 +1,51 @@
+Running amplitude-completion-tests.wl
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+Completed 25 amplitude-completion checks.
+Completed 50 amplitude-completion checks.
+Completed 75 amplitude-completion checks.
+Completed 100 amplitude-completion checks.
+Completed 125 amplitude-completion checks.
+Completed 150 amplitude-completion checks.
+Checking scalar-tree completion and exact linear refinement.
+Completed 175 amplitude-completion checks.
+Checking existing QED amplitudes and a missing physical pole.
+Completed 200 amplitude-completion checks.
+Preparing the actual five-point AllSpurious diagrams.
+Checking the automatically reconstructed five-point amplitude.
+Completed 225 amplitude-completion checks.
+Completed 250 amplitude-completion checks.
+Completing the four-fermion single-photon process from actual diagrams.
+Checking optimized Mixed references through five-point completion.
+Checking mixed photon helicities from cyclic diagram preparation.
+Checking completion with prepared factorization-channel inputs.
+Completed 275 amplitude-completion checks.
+Checking retained affine families, validation feedback, and bounded failures.
+Completed 300 amplitude-completion checks.
+Completed 325 amplitude-completion checks.
+Checking high-energy completion and preserved physical residues.
+Completed 350 amplitude-completion checks.
+Completed 375 amplitude-completion checks.
+Completed 400 amplitude-completion checks.
+Completed 425 amplitude-completion checks.
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+430 amplitude-completion checks; 0 failures.
+HEPCAT_TEST_COMPLETED:amplitude-completion-tests.wl
+

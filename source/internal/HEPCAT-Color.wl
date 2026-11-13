@@ -873,6 +873,257 @@ colorFeynmanSignAgreement[checks_List] := Module[{rows, signs},
     "Scope" -> "OneOverallSignForEveryIndependentColorCoefficient"|>
 ];
 
+(* Identical external states act on the whole color vector, not on its
+   individual scalar coefficients. All matrices below are exact SU(3) data. *)
+colorOrbitZeroQ[value_] := TrueQ[value === 0] || TrueQ[Cancel[Together[value]] === 0];
+colorOrbitMatrixEqualQ[left_List, right_List] := Dimensions[left] === Dimensions[right] &&
+  AllTrue[Flatten[left - right], colorOrbitZeroQ];
+
+colorOrbitStateGroups[process_List, model_List] := Module[{rows, keys},
+  rows = colorParticleRow[#, model] & /@ process;
+  If[!AllTrue[rows, ListQ[#] && Length[#] >= 8 && IntegerQ[#[[5]]] &],
+    Return[Missing["UnsupportedExternalState"]]];
+  (* The literal state name distinguishes helicities sharing one model row. *)
+  keys = MapIndexed[{#1[[2]], #1[[3]], process[[First[#2]]]} &, rows];
+  <|"Rows" -> rows, "Groups" -> Select[GatherBy[Range[Length[process]], keys[[#]] &],
+    Length[#] > 1 &]|>
+];
+
+colorOrbitRelabel[tensor_, permutation_List] := tensor /.
+  ColorIndex[leg_Integer] /; 1 <= leg <= Length[permutation] :>
+    ColorIndex[permutation[[leg]]];
+
+colorOrbitPlan[process_List, model_List, data_Association, representations_List,
+    seconds_: 12] := Module[
+  {basis = Lookup[data, "Basis", {}], gram = Lookup[data, "GramMatrix", {}],
+   state, groups, particleRows, rank, count = Length[process], generators,
+   vectors, representation, result, generatorData, actions, rows = {},
+   permutations = {}, grades = {}, rowSeeds = {}, seeds = {}, attempts = {},
+   cursor = 1, row, permutation, grade, seed, direct, inverse, outcome},
+  rank = Length[basis];
+  If[count < 5 || rank < 2 || rank > 16 || Dimensions[gram] =!= {rank, rank} ||
+      Length[representations] =!= count || !TrueQ[seconds > 0],
+    Return[Missing["ColorOrbitNotApplicable"]]];
+  state = colorOrbitStateGroups[process, model];
+  If[!AssociationQ[state], Return[state]];
+  groups = state["Groups"]; particleRows = state["Rows"];
+  If[groups === {}, Return[Missing["NoIdenticalExternalStates"]]];
+  outcome = TimeConstrained[Catch[
+    generators = Flatten[Table[Table[With[{a = group[[j]], b = group[[j + 1]]},
+      <|"Permutation" -> ReplacePart[Range[count], {a -> b, b -> a}],
+        "Legs" -> {a, b}, "Spin2" -> particleRows[[a, 5]],
+        "FermionGrade" -> If[OddQ[Abs[particleRows[[a, 5]]]], -1, 1]|>],
+      {j, Length[group] - 1}], {group, groups}], 1];
+    If[!AllTrue[generators, representations[[#["Permutation"]]] === representations &],
+      Throw[Missing["ExternalRepresentationPermutation"]]];
+    vectors = colorTensorVectorSparse[#, representations] & /@ basis;
+    If[AnyTrue[vectors, FailureQ], Throw[Missing["UnsupportedSparseColorVector"]]];
+    representation[p_List] := representation[p] = Module[
+      {images, projected, matrix, imageVectors, reconstructed, exact, gramInvariant},
+      images = colorOrbitRelabel[#, p] & /@ basis;
+      projected = colorTensorBasis[Join[basis, images], representations, 65536, False];
+      If[!AssociationQ[projected] || projected["Basis"] =!= basis,
+        Return[Missing["ColorPermutationLeavesBasis"]]];
+      matrix = Take[projected["DiagramCoordinates"], -rank];
+      imageVectors = colorTensorVectorSparse[#, representations] & /@ images;
+      If[AnyTrue[imageVectors, FailureQ], Return[Missing["UnsupportedSparseColorImage"]]];
+      reconstructed = Table[Total[MapThread[#1 #2 &, {matrix[[i]], vectors}]], {i, rank}];
+      exact = And @@ Table[AllTrue[SparseArray[imageVectors[[i]] - reconstructed[[i]]]["NonzeroValues"],
+        colorOrbitZeroQ], {i, rank}];
+      gramInvariant = colorOrbitMatrixEqualQ[Conjugate[matrix].gram.Transpose[matrix], gram];
+      If[!exact || !gramInvariant || MatrixRank[matrix] =!= rank,
+        Return[Missing["UncertifiedColorPermutation"]]];
+      <|"Permutation" -> p, "D" -> matrix, "ExactSparseComponentClosure" -> True,
+        "GramInvariant" -> True|>
+    ];
+    generatorData = Map[Function[g, result = representation[g["Permutation"]];
+      If[!AssociationQ[result], Throw[result]];
+      Join[g, result, <|"CoefficientAction" ->
+        g["FermionGrade"] Transpose[Inverse[result["D"]]]|>]], generators];
+    actions = Lookup[generatorData, "CoefficientAction"];
+    (* A new coordinate seed is needed only after closing the current row span.
+       At most rank independent rows and rank*generators edges are admitted. *)
+    Do[
+      If[MatrixRank[Append[rows, UnitVector[rank, seed]]] === Length[rows], Continue[]];
+      AppendTo[seeds, seed]; AppendTo[rows, UnitVector[rank, seed]];
+      AppendTo[permutations, Range[count]]; AppendTo[grades, 1]; AppendTo[rowSeeds, seed];
+      While[cursor <= Length[rows] && Length[rows] < rank,
+        Do[
+          row = Together /@ (rows[[cursor]].actions[[j]]);
+          permutation = generatorData[[j, "Permutation"]][[permutations[[cursor]]]];
+          grade = grades[[cursor]] generatorData[[j, "FermionGrade"]];
+          AppendTo[attempts, <|"ParentRow" -> cursor, "Generator" -> j,
+            "Permutation" -> permutation, "RankAfter" -> MatrixRank[Append[rows, row]]|>];
+          If[Last[attempts]["RankAfter"] > Length[rows],
+            direct = representation[permutation];
+            If[!AssociationQ[direct] || !AllTrue[
+                row - grade UnitVector[rank, rowSeeds[[cursor]]].Transpose[Inverse[direct["D"]]],
+                colorOrbitZeroQ], Throw[Missing["UncertifiedLiteralColorOrbit"]]];
+            AppendTo[rows, row]; AppendTo[permutations, permutation];
+            AppendTo[grades, grade]; AppendTo[rowSeeds, rowSeeds[[cursor]]]];
+          If[Length[rows] === rank, Break[]], {j, Length[actions]}];
+        cursor++];
+      If[Length[rows] === rank, Break[]], {seed, rank}];
+    If[Length[seeds] >= rank || Dimensions[rows] =!= {rank, rank},
+      Throw[Missing["NoColorCoefficientReuse"]]];
+    inverse = Inverse[rows];
+    If[!colorOrbitMatrixEqualQ[rows.inverse, IdentityMatrix[rank]] ||
+        !colorOrbitMatrixEqualQ[inverse.rows, IdentityMatrix[rank]],
+      Throw[Missing["UncertifiedColorOrbitInverse"]]];
+    <|"Status" -> "AVAILABLE", "Method" -> "ExactGradedColorRepresentationOrbit",
+      "Process" -> process, "Basis" -> basis, "Representations" -> representations,
+      "IdenticalStateGroups" -> groups, "Generators" -> generatorData,
+      "SeedIndices" -> seeds, "Rows" -> rows, "InverseRows" -> inverse,
+      "RowSeeds" -> rowSeeds, "Permutations" -> permutations, "FermionGrades" -> grades,
+      "Attempts" -> attempts, "ExactMatrixInverseVerified" -> True,
+      "NoAmplitudeOrBenchmarkCoefficientInput" -> True|>
+  ], Max[0.001, seconds], Missing["ColorOrbitTimeConstraint"]];
+  outcome
+];
+
+colorOrbitTransport[plan_Association, seedReports_Association] := Module[
+  {images, cycles, seed, report, amplitudes, rank = Length[plan["Basis"]]},
+  If[Lookup[plan, "Status", None] =!= "AVAILABLE" ||
+      !AllTrue[plan["SeedIndices"], KeyExistsQ[seedReports, #] &&
+        AssociationQ[seedReports[#]] && Lookup[seedReports[#], "Status", None] === "COMPLETE" &],
+    Return[Missing["IncompleteColorOrbitSeeds"]]];
+  images = Table[seed = plan["RowSeeds"][[i]]; report = seedReports[seed];
+    cycles = completionBoseCycles[Range[Length[plan["Process"]]], plan["Permutations"][[i]]];
+    Fold[completionBoseCycle, report["Amplitude"], cycles], {i, rank}];
+  (* The orbit row already includes the statistics grade, so its image is not
+     multiplied by that grade a second time. *)
+  amplitudes = plan["InverseRows"].images;
+  If[!residueFiniteQ[amplitudes], Return[Missing["NonfiniteColorOrbitTransport"]]];
+  <|"Status" -> "UNVALIDATED", "Amplitudes" -> amplitudes,
+    "TransportedSeedImages" -> images, "InternalOnShellConditions" -> {}|>
+];
+
+(* Inverse sums can hide a simple physical bracket behind Schouten. This
+   bounded pass uses only declared external rank-one momenta and exact
+   polynomial identities; an unproved proposal is discarded unchanged. *)
+colorOrbitPolish[expression_, external_List, seconds_: 2] := Module[
+  {massless, split, normalize, angle, square, invariantRules, inverseNormalize,
+   shorten, routes = {}, formal, component, candidate, proofs, outcome, started = AbsoluteTime[]},
+  If[LeafCount[expression] > 8000 || !preparationScalarExternalRulesQ[external] ||
+      !FreeQ[external, Mass[_Multiparticle]],
+    Return[<|"Status" -> "UNCHANGED", "Amplitude" -> expression,
+      "InternalOnShellConditions" -> {}|>]];
+  massless = Cases[external, HoldPattern[Mass[i_Integer] -> 0] :> i];
+  outcome = TimeConstrained[
+    split[chain_SpinorChain] := Module[{value}, Catch[
+      Do[value = rspSplitMasslessMomentum[chain, leg];
+        If[!MissingQ[value], Throw[value]], {leg, massless}]; chain]];
+    angle[i_, j_] := SpinorChain[Spinor["Helicity", "Angle", i], Spinor["Helicity", "Angle", j]];
+    square[i_, j_] := SpinorChain[Spinor["Helicity", "Square", i], Spinor["Helicity", "Square", j]];
+    invariantRules = DeleteDuplicates[Cases[expression,
+      prop : PropDen[Mom[Multiparticle[i_Integer, j_Integer]], 0] /;
+        MemberQ[massless, i] && MemberQ[massless, j] :> (prop -> -angle[i, j] square[i, j]), Infinity]];
+    normalize[value_] := FixedPoint[(# /. chain_SpinorChain :> split[chain]) &, value, 8] /. invariantRules;
+    shorten[poly_Plus] := Module[{moves, trials, best},
+      If[LeafCount[poly] > 1000, Return[poly]];
+      moves = TimeConstrained[Take[SchoutenCandidates[poly], UpTo[64]], 0.2, {}];
+      trials = Join[{<|"Expression" -> poly, "Move" -> None|>},
+        (<|"Expression" -> Expand[poly - #["Subtract"] + #["Insert"]], "Move" -> #|> & /@ moves)];
+      best = First[MinimalBy[trials, LeafCount[#["Expression"]] &]];
+      If[best["Expression"] =!= poly,
+        AppendTo[routes, <|"Before" -> poly, "After" -> best["Expression"], "Move" -> best["Move"]|>]];
+      best["Expression"]];
+    inverseNormalize[value_] := value /. HoldPattern[Power[base_, exponent_Integer?Negative]] :>
+      Power[(base /. poly_Plus :> shorten[poly]), exponent];
+    candidate = normalize[expression] /. HoldPattern[Power[base_, exponent_Integer?Negative]] :>
+      Power[Factor[ReduceSpinorProducts[Expand[base]]], exponent];
+    candidate = ReduceSpinorProducts[Cancel[Together[candidate]]];
+    candidate = FixedPoint[Cancel[Together[inverseNormalize[#]]] &, candidate, 4];
+    formal[value_] := normalize[value] /. HoldPattern[
+      SpinorChain[Spinor["Helicity", kind : ("Angle" | "Square"), i_Integer],
+        Spinor["Helicity", kind_, j_Integer]]] :>
+      (component[kind, i, 1] component[kind, j, 2] - component[kind, i, 2] component[kind, j, 1]);
+    proofs = TrueQ[Cancel[Together[Expand[formal[candidate] - formal[expression]]]] === 0];
+    If[!proofs || !residueFiniteQ[candidate] || LeafCount[candidate] > LeafCount[expression],
+      <|"Status" -> "UNCHANGED", "Amplitude" -> expression,
+        "ExactIdentityVerified" -> proofs, "InternalOnShellConditions" -> {}|>,
+      <|"Status" -> If[candidate === expression, "UNCHANGED", "REDUCED"],
+        "Amplitude" -> candidate, "ExactIdentityVerified" -> True,
+        "ProofMethod" -> "ExternalRankOneSplittingAndIndependentTwoComponentPolynomialIdentity",
+        "ExternalMassRules" -> external, "PhysicalInvariantRules" -> invariantRules,
+        "OfficialSchoutenRoutes" -> routes, "InternalOnShellConditions" -> {},
+        "BeforeLeaves" -> LeafCount[expression], "AfterLeaves" -> LeafCount[candidate]|>],
+    Max[0.001, seconds], <|"Status" -> "UNCHANGED", "Amplitude" -> expression,
+      "Reason" -> "ColorOrbitPolishTimeConstraint", "InternalOnShellConditions" -> {}|>];
+  Join[outcome, <|"ElapsedTime" -> AbsoluteTime[] - started|>]
+];
+
+colorOrbitValidate[process_List, amplitudes_List, external_List, data_Association,
+    model_List, settings_Association, deadline_] := Module[
+  {bag = constructRuleOptions[settings["CheckOptions"]], common, baseParameters,
+   assignments, checkSettings, overrides, report, reports = {}, byCoefficient,
+   passed = True, pair, benchmark, seedBase, seconds, combined, phase, began = AbsoluteTime[]},
+  If[!MemberQ[{Automatic, True}, Lookup[bag, "HighEnergyCheck", Automatic]] ||
+      !MemberQ[{Automatic, True}, Lookup[bag, "ReferenceCheck", Automatic]] ||
+      Lookup[bag, "SpuriousPoles", Automatic] =!= Automatic,
+    Return[<|"Status" -> "NOT_SELECTED", "Reason" -> "DisabledConstructionChecks"|>]];
+  baseParameters = Lookup[bag, "ParameterRules", settings["ParameterRules"]];
+  assignments = completionValidationRuleSets[model, baseParameters,
+    Lookup[constructRuleOptions[settings["HighEnergyOptions"]], "ValidationParameterRules", Automatic]];
+  If[!ListQ[assignments] || assignments === {},
+    Return[<|"Status" -> "NOT_SELECTED", "Reason" -> "InvalidValidationAssignments"|>]];
+  common = KeyTake[settings, {"ParameterRules", "Samples", "HighEnergyBound", "Parallelization", "MaxKernels"}];
+  common = Join[common, <|"HighEnergySamples" -> settings["Samples"],
+    "ReferenceSamples" -> settings["Samples"], "FeynmanSamples" -> settings["Samples"]|>];
+  seedBase = Lookup[bag, "RandomSeed", settings["RandomSeed"] + 2000003] /.
+    Automatic -> settings["RandomSeed"] + 2000003;
+  Do[
+    overrides = constructValidationOverrides[model, baseParameters, assignments[[parameter]]];
+    If[overrides === $Failed, passed = False; Break[]];
+    Do[
+      seconds = Max[0, deadline - AbsoluteTime[]];
+      If[seconds <= 0.001, passed = False; Break[]];
+      pair = {external, amplitudes[[coefficient]]};
+      benchmark = If[settings["FeynmanModel"] === None, None,
+        data["ProjectedFeynmanAmplitudes"][[coefficient]]];
+      checkSettings = Join[<|"TimeConstraint" -> Automatic|>, common, bag,
+        <|"Output" -> "Details", "SpuriousPoles" -> Automatic, "HighEnergyCheck" -> True,
+          "ReferenceCheck" -> True, "ParameterRules" -> overrides,
+          "RandomSeed" -> seedBase + 104729 (parameter - 1) + 7919 (coefficient - 1)|>,
+        If[benchmark === None, <||>, <|"FeynmanAmplitudes" -> benchmark,
+          "FeynmanModel" -> settings["FeynmanModel"]|>]];
+      checkSettings = amplitudeAutomaticSettings["Checks", checkSettings,
+        amplitudeResourceMetrics[pair, data["ProjectedChannels"][[coefficient]], process]]["Settings"];
+      Do[If[Lookup[checkSettings, name, None] === Automatic,
+        checkSettings[name] = Lookup[checkSettings, "Samples", 4]],
+        {name, {"HighEnergySamples", "ReferenceSamples", "FeynmanSamples"}}];
+      checkSettings["TimeConstraint"] = Min[checkSettings["TimeConstraint"], seconds];
+      If[TrueQ[settings["ProgressReporting"]], Print["Validating color symmetry coefficient ",
+        coefficient, "/", Length[amplitudes], "; parameter set ", parameter, "/", Length[assignments]]];
+      report = TimeConstrained[Block[{$colorCheckingProjection = True},
+        CheckAmplitudes[pair, data["ProjectedChannels"][[coefficient]], model,
+          Sequence @@ Normal[checkSettings]]], Max[0.000001, seconds],
+        Missing["ColorOrbitValidationTimeConstraint"]];
+      AppendTo[reports, <|"ColorCoefficient" -> coefficient, "ParameterSetIndex" -> parameter,
+        "ParameterRules" -> assignments[[parameter]], "CheckParameterOverrides" -> overrides,
+        "CheckOptions" -> checkSettings, "Report" -> report|>];
+      If[!constructAllChecksPassQ[report, pair, data["ProjectedChannels"][[coefficient]], model, benchmark],
+        passed = False; Break[]], {coefficient, Length[amplitudes]}];
+    If[!passed, Break[]], {parameter, Length[assignments]}];
+  passed = passed && Length[reports] === Length[assignments] Length[amplitudes];
+  If[!passed, Return[<|"Status" -> "NOT_SELECTED", "ValidationReports" -> reports,
+    "ExpectedReports" -> Length[assignments] Length[amplitudes], "ElapsedTime" -> AbsoluteTime[] - began|>]];
+  combined = Flatten[Lookup[Lookup[reports, "Report"], "Checks"], 1];
+  phase = colorFeynmanSignAgreement[combined];
+  If[Lookup[phase, "Status", None] === "FAIL" ||
+      settings["FeynmanModel"] =!= None && Lookup[phase, "Status", None] =!= "PASS",
+    Return[<|"Status" -> "NOT_SELECTED", "ValidationReports" -> reports,
+      "FeynmanPhaseAgreement" -> phase, "ElapsedTime" -> AbsoluteTime[] - began|>]];
+  byCoefficient = Table[With[{selected = Select[reports, #["ColorCoefficient"] === i &]},
+    <|"Status" -> "COMPLETE", "Amplitude" -> amplitudes[[i]],
+      "AmplitudePair" -> {external, amplitudes[[i]]}, "Checks" -> First[selected]["Report"],
+      "ColorOrbitValidationReports" -> selected,
+      "ConstructionMethod" -> "ExactGradedColorOrbitTransport"|>], {i, Length[amplitudes]}];
+  <|"Status" -> "COMPLETE", "CoefficientReports" -> byCoefficient,
+    "ValidationReports" -> reports, "FeynmanPhaseAgreement" -> phase,
+    "ElapsedTime" -> AbsoluteTime[] - began|>
+];
+
 colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List,
     settings_Association] := Module[
   {started = AbsoluteTime[], diagrams, pairs, channels, reps, data, reports = {},
@@ -881,7 +1132,9 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
    callback = settings["ProgressFunction"], tag = Unique["colorConstruction"], zeroResult,
    currentColorCertificate, feynmanModel = Lookup[settings,"FeynmanModel",None],
    feynmanDiagrams, feynmanRaw, feynmanPrepared, feynmanPairs = {}, benchmarkSettings,
-   benchmarkSeconds, phaseAgreement},
+   benchmarkSeconds, phaseAgreement, constructCoefficient, coefficientCache = <||>,
+   orbitPlan, orbitTransport, orbitPolishReports = {}, orbitValidation,
+   orbitAttempt = <|"Attempted" -> False|>, orbitSelected = False},
   Catch[
   seconds = Replace[settings["TimeConstraint"], Automatic ->
     amplitudeAutomaticSettings["Construction", settings,
@@ -953,27 +1206,68 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
     diagrams,diagramModel,data,reps];
   If[TrueQ[settings["ProgressReporting"]], Print["Constructing ", rank,
     " independent color coefficients."]];
-  Do[
-    If[AbsoluteTime[] >= deadline, Throw[colorFailure["ColorConstructionTimeConstraint",
-      "The shared color construction clock expired before every coefficient was validated.",
-      <|"CompletedColorCoefficients" -> Length[reports], "ColorCoefficients" -> rank|>],tag]];
-    options = Join[settings, <|"Output" -> "Details", "PrintReport" -> False,
+  reports = ConstantArray[Missing["NotConstructed"], rank];
+  constructCoefficient[index_Integer] := Module[{coefficientOptions, coefficientInput, value},
+    If[KeyExistsQ[coefficientCache, index], Return[coefficientCache[index]]];
+    If[AbsoluteTime[] >= deadline, Return[Missing["ColorConstructionTimeConstraint"]]];
+    coefficientOptions = Join[settings, <|"Output" -> "Details", "PrintReport" -> False,
       "BoseSymmetryGroups" -> {}, "FermionSymmetryGroups" -> {},
       "TimeConstraint" -> Max[0.001, deadline - AbsoluteTime[]]|>];
-    If[TrueQ[settings["ProgressReporting"]], Print["Color coefficient ", i, "/", rank]];
-    projected = <|"Diagrams" -> diagrams, "DiagramAmplitudes" -> data["ProjectedDiagrams"][[i]],
-      "Channels" -> data["ProjectedChannels"][[i]],
+    If[TrueQ[settings["ProgressReporting"]], Print["Color coefficient ", index, "/", rank]];
+    coefficientInput = <|"Diagrams" -> diagrams,
+      "DiagramAmplitudes" -> data["ProjectedDiagrams"][[index]],
+      "Channels" -> data["ProjectedChannels"][[index]],
       "ColorProjectionCertificate" -> currentColorCertificate|>;
-    If[feynmanModel =!= None,
-      AssociateTo[projected,"FeynmanAmplitudes"->data["ProjectedFeynmanAmplitudes"][[i]]]];
-    report = Block[{$colorConstructingProjection = True, $colorConstructionInput = projected},
-      ConstructAmplitude[process, diagramModel, factorizationModel, Sequence @@ Normal[options]]];
-    AppendTo[reports, report];
-    If[!AssociationQ[report] || Lookup[report, "Status", None] =!= "COMPLETE",
-      Throw[colorFailure["IncompleteColorAmplitude",
-        "An independent color coefficient did not complete. No full color amplitude was returned.",
-        <|"ColorCoefficient" -> i, "ColorBasis" -> data["Basis"], "Report" -> report|>],tag]],
-    {i, rank}];
+    If[feynmanModel =!= None, AssociateTo[coefficientInput,
+      "FeynmanAmplitudes" -> data["ProjectedFeynmanAmplitudes"][[index]]]];
+    value = Block[{$colorConstructingProjection = True, $colorConstructionInput = coefficientInput},
+      ConstructAmplitude[process, diagramModel, factorizationModel,
+        Sequence @@ Normal[coefficientOptions]]];
+    AssociateTo[coefficientCache, index -> value]; reports[[index]] = value; value
+  ];
+  orbitPlan = If[settings["BoseSymmetryGroups"] === Automatic &&
+      settings["FermionSymmetryGroups"] === Automatic,
+    colorOrbitPlan[process, diagramModel, data, reps,
+      Min[12, Max[0.001, (deadline - AbsoluteTime[])/10]]],
+    Missing["ExplicitSymmetryOverride"]];
+  If[AssociationQ[orbitPlan] && Lookup[orbitPlan, "Status", None] === "AVAILABLE",
+    orbitAttempt = <|"Attempted" -> True, "Selected" -> False, "Plan" -> orbitPlan|>;
+    If[TrueQ[settings["ProgressReporting"]], Print["Using identical-particle color symmetry: ",
+      Length[orbitPlan["SeedIndices"]], " construction seeds for ", rank, " coefficients."]];
+    Do[report = constructCoefficient[index];
+      If[!AssociationQ[report] || Lookup[report, "Status", None] =!= "COMPLETE", Break[]],
+      {index, orbitPlan["SeedIndices"]}];
+    orbitTransport = colorOrbitTransport[orbitPlan, coefficientCache];
+    AssociateTo[orbitAttempt, {"OriginalSeedReports" -> coefficientCache,
+      "Transport" -> orbitTransport}];
+    If[AssociationQ[orbitTransport],
+      external = First[coefficientCache[First[orbitPlan["SeedIndices"]]]["AmplitudePair"]];
+      orbitPolishReports = Map[colorOrbitPolish[#, external,
+        Min[2, Max[0.001, (deadline - AbsoluteTime[])/(2 rank)]]] &, orbitTransport["Amplitudes"]];
+      amplitudes = Lookup[orbitPolishReports, "Amplitude"];
+      AssociateTo[orbitAttempt, {"ExternalIdentityPolish" -> orbitPolishReports,
+        "FixedCandidateAmplitudes" -> amplitudes}];
+      orbitValidation = colorOrbitValidate[process, amplitudes, external, data,
+        factorizationModel, settings, deadline];
+      AssociateTo[orbitAttempt, "Validation" -> orbitValidation];
+      If[Lookup[orbitValidation, "Status", None] === "COMPLETE",
+        reports = orbitValidation["CoefficientReports"]; orbitSelected = True;
+        AssociateTo[orbitAttempt, "Selected" -> True]]]];
+  If[!orbitSelected,
+    Do[
+      If[AbsoluteTime[] >= deadline, Throw[colorFailure["ColorConstructionTimeConstraint",
+        "The shared color construction clock expired before every coefficient was validated.",
+        <|"CompletedColorCoefficients" -> Count[reports, item_Association /;
+            Lookup[item, "Status", None] === "COMPLETE"], "ColorCoefficients" -> rank,
+          "ColorBasis" -> data["Basis"], "ColorCoefficientReports" -> reports,
+          "ColorOrbitAttempt" -> orbitAttempt|>], tag]];
+      report = constructCoefficient[i];
+      If[!AssociationQ[report] || Lookup[report, "Status", None] =!= "COMPLETE",
+        Throw[colorFailure["IncompleteColorAmplitude",
+          "An independent color coefficient did not complete. No full color amplitude was returned.",
+          <|"ColorCoefficient" -> i, "ColorBasis" -> data["Basis"], "Report" -> report,
+            "ColorCoefficientReports" -> reports, "ColorOrbitAttempt" -> orbitAttempt|>], tag]],
+      {i, rank}]];
   amplitudes = Lookup[reports, "Amplitude"];
   expression = data["Basis"].amplitudes;
   external = First[First[reports]["AmplitudePair"]];
@@ -986,13 +1280,14 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
     Throw[colorFailure["InconsistentFeynmanColorPhases",
       "The independent color coefficients require different Feynman signs. No common overall phase relates the full amplitudes.",
       <|"ColorBasis" -> data["Basis"], "Reports" -> reports,
-        "PhaseAgreement" -> phaseAgreement|>], tag]];
+        "ColorOrbitAttempt" -> orbitAttempt, "PhaseAgreement" -> phaseAgreement|>], tag]];
   checkRows = Map[Function[row, <|"Color" -> row["ColorCoefficient"],
     "Type" -> row["Type"], "Test" -> row["Pole"], "Status" -> row["Status"]|>], combinedChecks];
   report = <|"Status" -> "COMPLETE", "Process" -> process, "Amplitude" -> expression,
     "AmplitudePair" -> {external, expression}, "TotalTime" -> AbsoluteTime[] - started,
     "Complexity" -> constructComplexity[expression], "ColorBasis" -> data["Basis"],
     "ColorGramMatrix" -> data["GramMatrix"], "ColorCoefficientReports" -> reports,
+    "ColorOrbitAttempt" -> orbitAttempt,
     "FeynmanModel" -> feynmanModel,
     "FeynmanPreparation" -> If[feynmanModel===None,Missing["NotRequested"],feynmanPrepared],
     "Checks" -> <|"Summary" -> summary, "Checks" -> combinedChecks,

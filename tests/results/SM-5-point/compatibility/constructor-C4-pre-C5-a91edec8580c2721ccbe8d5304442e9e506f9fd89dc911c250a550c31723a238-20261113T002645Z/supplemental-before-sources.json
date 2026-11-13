@@ -1,0 +1,8 @@
+{
+  "ManifestPath": "source/internal/HEPCAT-CovariantContacts.wl",
+  "Path": "tests/results/SM-5-point/compatibility/constructor-C4-pre-C5-a91edec8580c2721ccbe8d5304442e9e506f9fd89dc911c250a550c31723a238-20261113T002645Z/supplemental-before-sources/source/internal/HEPCAT-CovariantContacts.wl",
+  "RecoveryGitCommit": "7062bef",
+  "SHA256": "d20635b7a2603b13d62e011c2639b04e79314edebefe34a9a4db1a2cbbddca48",
+  "SealedBaselineUnchanged": true,
+  "Status": "HASH_MATCHED_TO_SEALED_C4_MANIFEST"
+}

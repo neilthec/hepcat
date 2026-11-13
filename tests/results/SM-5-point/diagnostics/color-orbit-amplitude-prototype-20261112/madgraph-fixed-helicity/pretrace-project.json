@@ -1,0 +1,37 @@
+{
+  "OriginalPublicReportSHA256": "22e032882dab462c047b1ac7f13fa469341091d6b9baab5293631ee1a6ad3d67",
+  "OriginalReportPath": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/madgraph-fixed-helicity/spinas-output/fivegluonfixed/madgraph-validation-report-0ecbc15e-ce80-4a5e-a19b-3c400b0ed449.json",
+  "Seed": 1794529536030830000,
+  "SourceContext": "a91edec8580c2721ccbe8d5304442e9e506f9fd89dc911c250a550c31723a238",
+  "OriginalProjectFiles": [
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/madgraph-fixed-helicity/spinas-output/fivegluonfixed/process.cpp",
+      "SHA256": "13ba62d5691ffe6b0d42b7d4e6191b91efd39aa0d30e8472769064bfd81b6826"
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/madgraph-fixed-helicity/spinas-output/fivegluonfixed/process.hpp",
+      "SHA256": "b07331db306477854437febaa0a970760073376bb5e2fb4bcb85eb91137a4154"
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/madgraph-fixed-helicity/spinas-output/fivegluonfixed/spinas-validation.hpp",
+      "SHA256": "c6bd01091f44248d9edb6a5dcfdad5ba43fff8a4cc8610698e921819ef34f9f5"
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/madgraph-fixed-helicity/spinas-output/fivegluonfixed/madgraph-runtime.hpp",
+      "SHA256": "7891d66656e9ca44be29d8ee3588f7847e9b6f072a2b54f5cd668612f7c272c6"
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/madgraph-fixed-helicity/spinas-output/fivegluonfixed/madgraph-validation.cpp",
+      "SHA256": "78225cf4a6c408c8bc92ef0cd403d7e80fb51ea05b816d3df31c44b157e4299e"
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/madgraph-fixed-helicity/spinas-output/fivegluonfixed/manifest.json",
+      "SHA256": "8e734276820df1b5784291b61b178c6228228239911a0be2ec23ba5def9e09db"
+    },
+    {
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/madgraph-fixed-helicity/spinas-output/fivegluonfixed/build/fivegluonfixed_validate_madgraph",
+      "SHA256": "6dac59f195aed0d39eb8c3463d94c72641aea1fb8b69ab4d8685bb357a8599d9"
+    }
+  ],
+  "HistoricalPerPointCSVExisted": false
+}
