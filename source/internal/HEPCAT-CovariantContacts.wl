@@ -167,7 +167,7 @@ HEPCATCovariantContactCalibration`Private`calibratedCovariantSource[process_List
   If[!AllTrue[rows,ListQ],fail["UnknownCalibratedSourceParticle"]];
   fermions=Select[rows,#[[5]]===1&];vectors=Select[rows,#[[5]]===2&];scalars=Select[rows,#[[5]]===0&];
   If[!MemberQ[{{2,1,2},{2,2,1},{0,4,1}},{Length[fermions],Length[vectors],Length[scalars]}]||
-    !AllTrue[rows,#[[8]]===1&]||!AllTrue[fermions,#[[6]]=!=0&&#[[2]]=!=#[[3]]&&!MemberQ[{"L","R"},#[[9]]]&]||
+    !AllTrue[rows,#[[8]]===1&]||!AllTrue[fermions,HEPCATCovariantCurrentSources`Private`supportedFermionRowQ]||
     !AllTrue[vectors,#[[6]]=!=0&]||Length[DeleteDuplicates[Pick[process,rows[[All,5]],0]]]=!=1,
     fail["UnsupportedExternalCalibratedCurrentClass"]];
   diagrams=CreateDiagrams[process,diagramModel];
@@ -175,7 +175,7 @@ HEPCATCovariantContactCalibration`Private`calibratedCovariantSource[process_List
   used=HEPCATCovariantCurrentSources`Private`usedRows[diagrams];
   cubics=Select[used,Length[HEPCATCovariantContactCalibration`Private`rowParticles[#]]===3&];
   quartics=Select[used,Length[HEPCATCovariantContactCalibration`Private`rowParticles[#]]===4&];
-  If[quartics==={}||Length[cubics]+Length[quartics]=!=Length[used],fail["UnsupportedCalibratedSourceVertexArity"]];
+  If[cubics==={}||Length[cubics]+Length[quartics]=!=Length[used],fail["UnsupportedCalibratedSourceVertexArity"]];
   catalog=HEPCATCovariantCurrentSources`Private`sourceCatalog[diagramModel,cubics];
   If[!AssociationQ[catalog],fail["UsedCubicCurrentNotCertified",<|"Reason"->catalog|>]];
   certificates=catalog["Certificates"];liftedRows=catalog["Model"][[2]];
@@ -213,13 +213,14 @@ HEPCATCovariantContactCalibration`Private`calibratedCovariantSource[process_List
   external=First[First[converted]];
   If[!AllTrue[converted,First[#]===external&],fail["CalibratedExternalMassOrderingMismatch"]];
   rawExpression=Total[Last/@converted];expression=HEPCATCovariantContactCalibration`Private`coherent[rawExpression];
-  vectorLegs=Flatten[Position[rows[[All,5]],2]];expected=rows[[All,5]];
+  vectorLegs=Flatten[Position[rows[[All,5]],2]];expected=HEPCATCovariantCurrentSources`Private`declaredExternalSpinWeights[process,diagramModel];
+  If[FailureQ[expected],fail["UnsupportedDeclaredExternalSpinWeights",<|"Reason"->expected|>]];
   weights=ConstructiveDiagrams`Private`completionExternalSpinWeights[expression,external];
   If[!FreeQ[expression,_VectorSpinIndex]||weights=!=expected,fail["UnsupportedCoherentExternalTensorEncoding"]];
   <|"Status"->"UNVALIDATED_CANDIDATE","Amplitude"->{external,expression},"Expression"->expression,
    "RawTensorExpression"->rawExpression,"ExternalMassRules"->external,"ExternalParticles"->process,
    "CoherentExternalVectorEncoding"-><|"Method"->"InjectiveHomogeneousSymmetricSpinPolynomial","VectorLegs"->vectorLegs,
-    "RawTensorRetained"->True,"CompleteSpinDegrees"->weights,"OffShellKinematicsChanged"->False|>,
+    "RawTensorRetained"->True,"CompleteSpinDegrees"->Abs[weights],"CompleteSpinWeights"->weights,"OffShellKinematicsChanged"->False|>,
    "VertexCertificates"->certificates,"ContactCalibrations"->calibrations,"SourceUsedRows"->used,
    "OrderedGraphCertificates"->sourceSignatures,"LiftedGraphCertificates"->liftedSignatures,
    "EveryOriginalDiagramCovered"->True,"EveryUsedOrderedVertexCertified"->True,"CompleteOffShellConversionCoverage"->True,

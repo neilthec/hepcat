@@ -154,6 +154,28 @@ check["all four vector coherent degrees are retained without an internal shell o
  qcPureVectors["InternalOnShellConditions"]==={}&&!qcPureVectors["NewIndependentContacts"]&&
  !qcPureVectors["IndependentBenchmarkRead"]&&!qcPureVectors["NumericalCoefficientFit"]&&
  !FreeQ[qcPureVectors["RawTensorExpression"],_VectorSpinIndex]];
+(* Generic renamed chiral field: no Yukawa row, so the one-scalar route is cubic-only. *)
+qcChiralSource=qcFFSource;qcChiralSource[[1,-1,6]]=0;qcChiralSource[[1,-1,9]]="L";
+qcChiralSource[[2]]=Select[qcChiralSource[[2]],Sort[DeleteCases[Drop[#,-2],""]]=!=Sort[{"f","F","phi"}]&];
+qcChiralUnit=qcCoherent[FeynmanToSpinorProducts[
+ (DiracChain[FermionBar[2,0,"L"],DiracWord[DiracGamma[LorentzIndex[3]]],FermionKet[1,0,"L"]]-
+  DiracChain[FermionBar[2,0,"L"],DiracWord[DiracGamma[LorentzIndex[3]],DiracGamma5],FermionKet[1,0,"L"]])*
+ PolarizationVector[3,LorentzIndex[3],qcVmass,Automatic]/2,"ReduceSpinorProducts"->False]];
+qcChiralSource[[2]]=qcChiralSource[[2]]/.row_List/;MatchQ[row,{"f","F","V","",_,_}]:>ReplacePart[row,-1->qcChiralUnit];
+qcChiralWithContact=qcCandidateBuild[{"f","F","V","phi","phi"},qcChiralSource,qcFFLower];
+check["a declared chiral field uses the same exact known-lower HHVV calibration",
+ AssociationQ[qcChiralWithContact]&&qcChiralWithContact["Status"]==="UNVALIDATED_CANDIDATE"&&
+ Length[qcChiralWithContact["ContactCalibrations"]]===1&&
+ qcChiralWithContact["CoherentExternalVectorEncoding"]["CompleteSpinWeights"]==={1,-1,2,0,0}&&
+ Sort[qcChiralWithContact["OrderedGraphCertificates"]]===Sort[qcChiralWithContact["LiftedGraphCertificates"]]&&
+ !qcChiralWithContact["NumericalCoefficientFit"]&&!qcChiralWithContact["IndependentBenchmarkRead"]];
+qcChiralCubicOnly=qcCandidateBuild[{"f","F","V","V","phi"},qcChiralSource,qcFFLower];
+check["a cubic-only chiral source keeps full graph coverage without inventing a quartic",
+ AssociationQ[qcChiralCubicOnly]&&qcChiralCubicOnly["Status"]==="UNVALIDATED_CANDIDATE"&&
+ qcChiralCubicOnly["ContactCalibrations"]==={}&&
+ qcChiralCubicOnly["CoherentExternalVectorEncoding"]["CompleteSpinWeights"]==={1,-1,2,2,0}&&
+ Sort[qcChiralCubicOnly["OrderedGraphCertificates"]]===Sort[qcChiralCubicOnly["LiftedGraphCertificates"]]&&
+ qcChiralCubicOnly["CompleteOffShellConversionCoverage"]&&qcChiralCubicOnly["InternalOnShellConditions"]==={}];
 Print["COVARIANT CONTACT CALIBRATION CHECKS: ",checks,"; FAILURES: ",Length[failures]];
 If[failures=!={},Print[failures]];
 Print["HEPCAT_TEST_COMPLETED:covariant-contact-calibration-tests.wl"];

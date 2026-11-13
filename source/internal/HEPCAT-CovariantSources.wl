@@ -22,22 +22,45 @@ HEPCATCovariantCurrentSources`Private`modelScalarQ[value_, model_List] := Module
   True, False];
  TrueQ[scalar[value]]
 ];
+(* Declared field metadata fixes a massless Weyl endpoint; no helicity is guessed. *)
+HEPCATCovariantCurrentSources`Private`fermionEndpointHand[name_,model_List]:=Module[{r=HEPCATCovariantCurrentSources`Private`particleRow[name,model]},
+ If[!ListQ[r]||r[[5]]=!=1||r[[2]]===r[[3]],Return[HEPCATCovariantCurrentSources`Private`reject["UnsupportedFermionEndpointMetadata"]]];
+ If[r[[6]]=!=0,Return[If[MemberQ[{"L","R"},r[[9]]],HEPCATCovariantCurrentSources`Private`reject["InconsistentMassiveChiralEndpointMetadata"],"Dirac"]]];
+ If[MemberQ[{"L","R"},r[[9]]],r[[9]],HEPCATCovariantCurrentSources`Private`reject["UndeclaredMasslessFermionChirality"]]
+];
+HEPCATCovariantCurrentSources`Private`supportedFermionRowQ[r_List]:=Length[r]===11&&r[[5]]===1&&r[[2]]=!=r[[3]]&&
+ If[r[[6]]===0,MemberQ[{"L","R"},r[[9]]],!MemberQ[{"L","R"},r[[9]]]];
+HEPCATCovariantCurrentSources`Private`declaredExternalSpinWeights[process_List,model_List]:=Module[
+ {rows=HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@process,weights,hand,role},
+ If[!AllTrue[rows,ListQ],Return[HEPCATCovariantCurrentSources`Private`reject["UnknownExternalSpinMetadata"]]];
+ weights=MapThread[Function[{name,r},Which[
+  r[[6]]=!=0,r[[5]],
+  r[[5]]===0,0,
+  r[[5]]===1,hand=HEPCATCovariantCurrentSources`Private`fermionEndpointHand[name,model];
+   If[FailureQ[hand],hand,role=If[name===r[[2]],1,-1];If[hand==="L",role,-role]],
+  True,HEPCATCovariantCurrentSources`Private`reject["UnsupportedMasslessExternalSpinMetadata"]]],{process,rows}];
+ If[AnyTrue[weights,FailureQ],First[Select[weights,FailureQ]],weights]
+];
 HEPCATCovariantCurrentSources`Private`exactVertexMatch[target_,rawTemplates_List,vectorLegs_List,model_List]:=Module[
- {indices,explicitTarget,templates,atoms,variables,unknowns,polynomial,equations,solutions,coefficients,difference},
+ {indices,explicitTarget,templates,activePositions,activeTemplates,activeCoefficients,atoms,variables,unknowns,polynomial,equations,solutions,coefficients,difference},
  indices=AssociationThread[vectorLegs,Table[{Unique["vectorSlot"],Unique["vectorSlot"]},{Length[vectorLegs]}]];
  explicitTarget=Fold[SymmetrizeSpin[Expand[#1],#2,indices[#2]]&,target,vectorLegs];
  explicitTarget=ConstructiveDiagrams`Private`canonicalChains[Expand[explicitTarget]];
  templates=FeynmanToSpinorProducts[#,"ReduceSpinorProducts"->False,"TimeConstraint"->10]&/@rawTemplates;
  If[AnyTrue[templates,FailureQ],Return[Failure["TemplateConversionIncomplete",<||>]]];
  templates=ConstructiveDiagrams`Private`canonicalChains[Expand[#/.VectorSpinIndex[leg_Integer,slot_Integer]:>indices[leg][[slot]]]]&/@templates;
- atoms=DeleteDuplicates[Cases[{explicitTarget,templates},_SpinorChain,Infinity]];
- variables=Table[Unique["formalSpinorAtom"],{Length[atoms]}];unknowns=Table[Unique["vertexCoefficient"],{Length[templates]}];
- polynomial=Expand[(explicitTarget-unknowns.templates)/.Thread[atoms->variables]];
+ activePositions=Select[Range[Length[templates]],templates[[#]]=!=0&];
+ If[activePositions==={},Return[Failure["NoNonzeroMinimalCurrentTemplate",<||>]]];
+ activeTemplates=templates[[activePositions]];
+ atoms=DeleteDuplicates[Cases[{explicitTarget,activeTemplates},_SpinorChain,Infinity]];
+ variables=Table[Unique["formalSpinorAtom"],{Length[atoms]}];unknowns=Table[Unique["vertexCoefficient"],{Length[activeTemplates]}];
+ polynomial=Expand[(explicitTarget-unknowns.activeTemplates)/.Thread[atoms->variables]];
  If[variables =!= {} && !PolynomialQ[polynomial,variables],Return[Failure["NonminimalVertexStructure",<||>]]];
  equations=If[variables==={},{polynomial},Last/@CoefficientRules[polynomial,variables]];
  solutions=TimeConstrained[Solve[Thread[equations==0],unknowns],10,Missing["SymbolicMatchTimeConstraint"]];
  If[!ListQ[solutions]||Length[solutions]=!=1,Return[Failure["VertexMatchNotUnique",<||>]]];
- coefficients=unknowns/.First[solutions];
+ activeCoefficients=unknowns/.First[solutions];
+ coefficients=ConstantArray[0,Length[templates]];coefficients[[activePositions]]=activeCoefficients;
  If[!AllTrue[coefficients,HEPCATCovariantCurrentSources`Private`modelScalarQ[#,model]&],
    Return[Failure["NonModelScalarVertexCoefficients",<||>]]];
  If[!FreeQ[coefficients,_Spinor|_SpinorChain|_Mom|_MomProd|_PropDen|_Mass|_Real]||!FreeQ[coefficients,Alternatives@@unknowns],
@@ -46,18 +69,20 @@ HEPCATCovariantCurrentSources`Private`exactVertexMatch[target_,rawTemplates_List
  If[difference=!=0,Return[Failure["SymbolicVertexMatchFailed",<||>]]];
  <|"Status"->"EXACT_SYMBOLIC_MATCH","Coefficients"->coefficients,"OriginalAmplitude"->target,
   "OriginalSymmetricTensor"->explicitTarget,"ConvertedTemplates"->templates,
+  "ActiveTemplatePositions"->activePositions,"IdenticallyZeroTemplatePositions"->Complement[Range[Length[templates]],activePositions],
+  "VanishingTemplatesDiscardedOnlyAfterExactConversion"->True,
   "ExactDifference"->difference,"ModelDefinitionExpandedDifference"->ConstructiveDiagrams`Private`modelExpandParameterDefinitions[difference,model],
   "NumericalParameterAssignments"->{},"InternalOnShellConditions"->{},
   "ContinuationAssumption"->"MinimalRenormalizableCovariantCurrent"|>
 ];
 HEPCATCovariantCurrentSources`Private`liftVertex[row_List,model_List]:=Module[
  {parts=HEPCATCovariantCurrentSources`Private`rowParticles[row],rows,spins,fermions,vectors,scalars,canonical,masses,mu,word,axial,pol,raw,body,vectorLegs={},
-  type,match,coefficients,liftedRow,particleNames,antiNames,target},
+  type,match,coefficients,liftedRow,particleNames,antiNames,target,hands},
  rows=HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@parts;
  If[!AllTrue[rows,ListQ]||!AllTrue[rows,#[[8]]===1&],Return[Missing["ColoredOrUnknownVertex"]]];
  spins=rows[[All,5]];fermions=Pick[parts,spins,1];vectors=Pick[parts,spins,2];scalars=Pick[parts,spins,0];
  Which[
- Length[parts]===3&&Length[fermions]===2&&Length[vectors]===1&&AllTrue[rows,#[[6]]=!=0&],type="FermionFermionMassiveVector",
+ Length[parts]===3&&Length[fermions]===2&&Length[vectors]===1&&AllTrue[HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@vectors,#[[6]]=!=0&]&&AllTrue[HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@fermions,HEPCATCovariantCurrentSources`Private`supportedFermionRowQ],type="FermionFermionMassiveVector",
  Length[parts]===3&&Length[fermions]===2&&Length[scalars]===1&&AllTrue[HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@fermions,#[[6]]=!=0&],type="FermionFermionScalar",
  Length[parts]===3&&Length[vectors]===2&&Length[scalars]===1&&AllTrue[HEPCATCovariantCurrentSources`Private`particleRow[#,model]&/@vectors,#[[6]]=!=0&],type="VectorVectorScalar",
  Length[parts]===3&&Length[scalars]===3,type="ScalarCubic",
@@ -69,19 +94,21 @@ HEPCATCovariantCurrentSources`Private`liftVertex[row_List,model_List]:=Module[
   canonical=Join[vectors,scalars]];
  masses=HEPCATCovariantCurrentSources`Private`particleRow[#,model][[6]]&/@canonical;
  If[!AllTrue[masses,HEPCATCovariantCurrentSources`Private`modelScalarQ[#,model]&],Return[Missing["NonModelScalarParticleMass"]]];
+ hands=If[Length[fermions]===2,HEPCATCovariantCurrentSources`Private`fermionEndpointHand[#,model]&/@Take[canonical,2],{}];
+ If[AnyTrue[hands,FailureQ],Return[First[Select[hands,FailureQ]]]];
  pol[leg_]:=PolarizationVector[leg,LorentzIndex[leg],masses[[leg]],Automatic];
  target=Block[{ConstructiveDiagrams`Private`$colorFactorizationEnabled=False},
   LookupAmplitude[MapIndexed[{#1,First[#2]}&,canonical],ReplacePart[model,2->{row}],False,Table[Unique["vertexSpin"],{4}]]];
  Switch[type,
  "FermionFermionMassiveVector",
-  word=DiracChain[FermionBar[2,masses[[2]],"Dirac"],DiracWord[DiracGamma[LorentzIndex[3]]],FermionKet[1,masses[[1]],"Dirac"]];
-  axial=DiracChain[FermionBar[2,masses[[2]],"Dirac"],DiracWord[DiracGamma[LorentzIndex[3]],DiracGamma5],FermionKet[1,masses[[1]],"Dirac"]];
+  word=DiracChain[FermionBar[2,masses[[2]],hands[[2]]],DiracWord[DiracGamma[LorentzIndex[3]]],FermionKet[1,masses[[1]],hands[[1]]]];
+  axial=DiracChain[FermionBar[2,masses[[2]],hands[[2]]],DiracWord[DiracGamma[LorentzIndex[3]],DiracGamma5],FermionKet[1,masses[[1]],hands[[1]]]];
   raw={(word-axial)pol[3]/2,(word+axial)pol[3]/2};
   body={(DiracWord[DiracGamma[LorentzIndex[3]]]-DiracWord[DiracGamma[LorentzIndex[3]],DiracGamma5])/2,
         (DiracWord[DiracGamma[LorentzIndex[3]]]+DiracWord[DiracGamma[LorentzIndex[3]],DiracGamma5])/2};vectorLegs={3},
  "FermionFermionScalar",
-  raw={DiracChain[FermionBar[2,masses[[2]],"Dirac"],DiracWord[],FermionKet[1,masses[[1]],"Dirac"]],
-       DiracChain[FermionBar[2,masses[[2]],"Dirac"],DiracWord[DiracGamma5],FermionKet[1,masses[[1]],"Dirac"]]};
+  raw={DiracChain[FermionBar[2,masses[[2]],hands[[2]]],DiracWord[],FermionKet[1,masses[[1]],hands[[1]]]],
+       DiracChain[FermionBar[2,masses[[2]],hands[[2]]],DiracWord[DiracGamma5],FermionKet[1,masses[[1]],hands[[1]]]]};
   body={DiracWord[],DiracWord[DiracGamma5]},
  "VectorVectorScalar",
   raw={LorentzMetric[LorentzIndex[1],LorentzIndex[2]]pol[1]pol[2]};body={LorentzMetric[LorentzIndex[1],LorentzIndex[2]]};vectorLegs={1,2},
@@ -90,7 +117,7 @@ HEPCATCovariantCurrentSources`Private`liftVertex[row_List,model_List]:=Module[
  coefficients=match["Coefficients"];
  liftedRow=Join[If[Length[fermions]===2,Join[Reverse[Take[canonical,2]],Drop[canonical,2]],canonical],
   If[Length[canonical]===3,{""},{}],{1,coefficients.body}];
- Join[match,<|"Class"->type,"Particles"->canonical,"SourceRows"->{row},"LiftedRow"->liftedRow|>]
+ Join[match,<|"Class"->type,"Particles"->canonical,"DeclaredFermionEndpointHands"->hands,"SourceRows"->{row},"LiftedRow"->liftedRow|>]
 ];
 
 (* Only used rows enter this catalog. A row that is unsupported cannot disappear. *)

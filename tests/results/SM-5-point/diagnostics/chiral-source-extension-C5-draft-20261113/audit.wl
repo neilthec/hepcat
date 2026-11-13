@@ -1,0 +1,31 @@
+Get["/Users/neil/code/hepcat/source/HEPCAT.wl"];
+Begin["HEPCATChiralDraftAudit`Private`"];$ContextPath=Prepend[DeleteCases[$ContextPath,"HEPCATChiralDraftAudit`Private`"],"HEPCATChiralDraftAudit`Private`"];
+directory=DirectoryName[$InputFileName];$HistoryLength=0;
+sha[p_]:=IntegerString[FileHash[p,"SHA256"],16,64];
+safe[a_Association]:=Association@KeyValueMap[(If[StringQ[#1],#1,ToString[#1,InputForm]]->safe[#2])&,a];safe[a_List]:=safe/@a;
+safe[a_]:=If[StringQ[a]||IntegerQ[a]||Head[a]===Real||MemberQ[{True,False,Null},a],a,ToString[a,InputForm]];
+rows=Table[Module[{out=FileNameJoin[{directory,"pilot-"<>ToString[index]}],record,export,groups,counts,feynman,candidate,backend,calc},
+ record=Import[FileNameJoin[{out,"result.wxf"}],"WXF"];export=Import[FileNameJoin[{out,"export.wxf"}],"WXF"];
+ candidate=record["Candidate"];groups=record["Records"];counts=Counts[Lookup[#["Report"]["Checks"],"Type"]]&/@groups;
+ feynman=KeyTake[#["Report"]["FeynmanCheck"],{"Status","RequestedSamples","CompletedSamples","InternalOnShell","NormalizationFitted","MatchingSigns","OverallSign"}]&/@groups;
+ If[record["Status"]=!="ALL_NATIVE_CHECKS_PASS"||export["Status"]=!="PASS"||Length[groups]=!=3||
+  !AllTrue[groups,TrueQ[#["AllChecksPass"]]&&AllTrue[#["Report"]["Checks"],Lookup[#,"Status",None]==="PASS"&]&]||
+  !AllTrue[feynman,#["Status"]==="PASS"&&#["CompletedSamples"]===#["RequestedSamples"]&&#["InternalOnShell"]===False&&#["NormalizationFitted"]===False&],Quit[2]];
+ backend=export["Result"];calc=backend["CalcHEPValidation"];
+ Print["CALCHEP_KEYS ",index," ",If[AssociationQ[calc],Keys[calc],Head[calc]]];
+ Export[FileNameJoin[{out,"raw-calchep-validation.json"}],safe[calc],"RawJSON"];
+ Export[FileNameJoin[{out,"raw-madgraph-validation.json"}],safe[backend["MadGraphValidation"]],"RawJSON"];
+ <|"Process"->record["Process"],"NativeResultSHA256"->sha[FileNameJoin[{out,"result.wxf"}]],"ExportCapsuleSHA256"->sha[FileNameJoin[{out,"export.wxf"}]],
+  "Status"->record["Status"],"NativeSeconds"->record["Seconds"],"ExportSeconds"->export["Seconds"],"Seed"->record["RandomSeed"],
+  "ParameterGroups"->Length[groups],"TypeCountsByParameterGroup"->counts,"StatusCountsByParameterGroup"->Lookup[groups,"StatusCounts"],"StrictFeynmanChecks"->feynman,
+  "SourceGraphCount"->candidate["OriginalDiagramCount"],"LiftedGraphCount"->candidate["LiftedDiagramCount"],"OrderedGraphCertificatesAgree"->(Sort[candidate["OrderedGraphCertificates"]]===Sort[candidate["LiftedGraphCertificates"]]),
+  "ContactCalibrations"->Length[candidate["ContactCalibrations"]],"SourceModelSHA256"->candidate["SourceModelSHA256"],"LowerModelSHA256"->candidate["LowerModelSHA256"],
+  "CompleteSpinWeights"->candidate["CoherentExternalVectorEncoding"]["CompleteSpinWeights"],"RawComplexity"->SpinorExpressionComplexity[Last[candidate["Amplitude"]]],
+  "PreparedComplexity"->SpinorExpressionComplexity[Last[record["PreparedPair"]]],"IndependentFeynmanDiagrams"->Length[record["IndependentFeynmanPairs"]],
+  "NoBenchmarkReadForConstruction"->!candidate["IndependentBenchmarkRead"],"NoNumericalCoefficientFit"->!candidate["NumericalCoefficientFit"],"InternalShells"->candidate["InternalOnShellConditions"],
+  "IndependentBackendStatuses"-><|"CalcHEP"->calc["Status"],"MadGraph"->backend["MadGraphValidation"]["Status"]|>,
+  "PublicDefaultConstructionSuccessClaimed"->False,"CanonicalChanged"->False|>
+],{index,2}];
+Export[FileNameJoin[{directory,"native-and-export-audit.json"}],safe[<|"Status"->"ISOLATED_DRAFT_BOTH_PILOTS_NATIVE_AND_BACKENDS_PASS","Pilots"->rows,"ProductionChanged"->False,"CanonicalChanged"->False|>],"RawJSON"];
+Print["ISOLATED_DRAFT_AUDIT_PASS"];
+End[];Quit[];

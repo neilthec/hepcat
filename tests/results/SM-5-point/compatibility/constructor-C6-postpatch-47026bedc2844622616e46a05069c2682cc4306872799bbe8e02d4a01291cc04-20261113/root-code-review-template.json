@@ -1,0 +1,61 @@
+{
+  "AllNewHelpersPrivateAndNoLoadTimeSideEffects": false,
+  "AllUsedCubicsCertifiedWhenQuarticsEmpty": false,
+  "AnalysisSHA256": "7fa3c3865c3dc816703a12c9cbaeaf09e60e26a2d312660d61575b8ae018d069",
+  "CompactFailureRetainsFullEvidenceAndNeverPromotes": false,
+  "DeclaredChiralEndpointConventionReviewed": false,
+  "EveryHandednessCandidateUsesAllIndependentChecks": false,
+  "EveryOriginalOrderedGraphPoleAndFermionFlowRetained": false,
+  "EvidenceFiles": {},
+  "ExistingCheckersReducersModelsAndNumericalRuntimeUnchanged": false,
+  "ExistingMetricContactCalibrationUnchanged": false,
+  "ExpectedChangedDefinitionFields": {
+    "ConstructiveDiagrams`ConstructAmplitude": [
+      "DownValues",
+      "Messages"
+    ],
+    "ConstructiveDiagrams`Private`$amplitudeParallelLoadedSignature": [
+      "OwnValues"
+    ],
+    "ConstructiveDiagrams`Private`colorConstructAmplitude": [
+      "DownValues"
+    ],
+    "HEPCATCovariantContactCalibration`Private`calibratedCovariantSource": [
+      "DownValues"
+    ],
+    "HEPCATCovariantCurrentSources`Private`exactVertexMatch": [
+      "DownValues"
+    ],
+    "HEPCATCovariantCurrentSources`Private`liftVertex": [
+      "DownValues"
+    ]
+  },
+  "ExpectedNewDefinedPrivateSymbols": [
+    "ConstructiveDiagrams`Private`colorHandednessCanonicalMap",
+    "ConstructiveDiagrams`Private`colorHandednessCertificate",
+    "ConstructiveDiagrams`Private`colorHandednessFlip",
+    "ConstructiveDiagrams`Private`colorHandednessFourPointProof",
+    "ConstructiveDiagrams`Private`colorHandednessParticles",
+    "ConstructiveDiagrams`Private`colorHandednessPrepare",
+    "ConstructiveDiagrams`Private`colorHandednessProjection",
+    "ConstructiveDiagrams`Private`colorHandednessPropose",
+    "ConstructiveDiagrams`Private`colorHandednessStateData",
+    "ConstructiveDiagrams`Private`constructFailureSummary",
+    "HEPCATCovariantCurrentSources`Private`declaredExternalSpinWeights",
+    "HEPCATCovariantCurrentSources`Private`fermionEndpointHand",
+    "HEPCATCovariantCurrentSources`Private`supportedFermionRowQ"
+  ],
+  "HandednessProposalHasExactModelLevelCertification": false,
+  "LiteralSourceAndDefinitionChangesReviewed": false,
+  "MasslessDiracHelicityNotGuessed": false,
+  "MechanicalLoaderSignatureReviewed": false,
+  "NoAnswerOrIndependentBenchmarkForSourceConstruction": false,
+  "NoNewFourFermionSourceClass": false,
+  "OnlyIdenticallyZeroTemplatesOmitted": false,
+  "ReviewedBy": "",
+  "SignedMasslessExternalWeightsReviewed": false,
+  "SourceAndNegativeRegressionsReviewed": false,
+  "SourceDiffsSHA256": "874aa087827c664a68a89b762804d9ba144406972b85273bd3a7723e71fe2a16",
+  "Status": "PENDING_INDEPENDENT_REVIEW",
+  "ZeroCoefficientsRestoredWithoutFitting": false
+}

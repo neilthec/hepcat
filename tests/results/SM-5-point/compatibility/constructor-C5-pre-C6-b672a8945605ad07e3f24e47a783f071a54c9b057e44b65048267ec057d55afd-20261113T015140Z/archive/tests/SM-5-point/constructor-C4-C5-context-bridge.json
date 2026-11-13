@@ -1,0 +1,210 @@
+{
+  "AfterCaptureSHA256": [
+    "735e6b49c38146212d4954ddab60ad2381fe9756498fba4f1df4810a4f328ba5",
+    "5cfa425c7ef4a68676467303e48c9a3180b9a3d8223cb09f5d5cde15703e9bf1"
+  ],
+  "AfterCaptures": [
+    "tests/results/SM-5-point/compatibility/constructor-C5-postpatch-b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd-20261113/definitions-1-raw.json",
+    "tests/results/SM-5-point/compatibility/constructor-C5-postpatch-b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd-20261113/definitions-2-raw.json"
+  ],
+  "AfterColdDefinitionsSHA256": "99e68cc12472fb3ec98a3d0559c1681cdb4a244472e5d77481275de681a4c3fa",
+  "AfterContextSHA256": "b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd",
+  "AfterManifest": "tests/results/SM-5-point/compatibility/constructor-C5-postpatch-b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd-20261113/after-manifest.json",
+  "AfterManifestSHA256": "952d7ddeb388388b042277258e0fddb97ff2235d68c44afbef09ec8655464fe9",
+  "AllOtherTenFieldDefinitionsExactlyUnchanged": true,
+  "AnalysisSHA256": "73a628893046a499e2af1c4ffe476185fa1d9c3a5dbb5fd0adf8a07f9a4f611c",
+  "BaselineDirectory": "tests/results/SM-5-point/compatibility/constructor-C4-pre-C5-a91edec8580c2721ccbe8d5304442e9e506f9fd89dc911c250a550c31723a238-20261113T002645Z",
+  "BaselineSHA256": "afcc27a0bb823dc0f9ed4c53e18eb6dafd2c737d2edf4b876dfa350168862677",
+  "BeforeColdDefinitionsSHA256": "f4c8922fe99daf9dd74d3882721a3536a3d0f4fdcc5047236e93c2749c7c9cc5",
+  "BeforeContextSHA256": "a91edec8580c2721ccbe8d5304442e9e506f9fd89dc911c250a550c31723a238",
+  "ChangedDefinitionFields": {
+    "ConstructiveDiagrams`ConstructAmplitude": [
+      "DownValues"
+    ],
+    "ConstructiveDiagrams`Private`$amplitudeParallelLoadedSignature": [
+      "OwnValues"
+    ],
+    "ConstructiveDiagrams`Private`colorConstructAmplitude": [
+      "DownValues"
+    ],
+    "ConstructiveDiagrams`Private`completionFactorizationCore": [
+      "DownValues"
+    ],
+    "HEPCATCovariantContactCalibration`Private`calibratedCovariantSource": [
+      "DownValues"
+    ]
+  },
+  "ChangedExistingFiles": [
+    "source/HEPCAT-Model.wl",
+    "source/internal/HEPCAT-Color.wl",
+    "source/internal/HEPCAT-CovariantContacts.wl"
+  ],
+  "CodeReview": "tests/results/SM-5-point/compatibility/constructor-C5-postpatch-b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd-20261113/root-code-review.json",
+  "CodeReviewFileSHA256": "83846a4e00435c28915df3553c0cdc515d76dfcfadd517bf3378fb20a9bc3668",
+  "CodeReviewSHA256": "5abb2087405162404d7c5a85b340bee15982f12587bc968b5c7e5c8ba47b6d48",
+  "ConstructorRerunPerformed": false,
+  "CurrentConstructorSuccessClaimed": false,
+  "ExistingSymbolsChecked": 8160,
+  "HistoricalEvidenceOnly": true,
+  "Kind": "ExactCheckpointAndGradedColourHistoricalValidationTransition",
+  "LoaderSignatureEvidenceDirectory": "tests/results/SM-5-point/compatibility/constructor-C5-postpatch-b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd-20261113",
+  "MechanicalLoaderSignatureEvidence": {
+    "After": 3538383784636655803,
+    "Before": 684725953818090502,
+    "InputCount": 13,
+    "InputsSHA256": "ea0869dca711e11500a635cc51299b76576224ae5d451811230bca5b6e81cc41",
+    "ScriptSHA256": "b604035f05f749367eef922f743f6b02cd52321a5dc8934cf18af893a6b5deba",
+    "ValuesSHA256": "5fd12ca71abb4cccbc6e2fef56c512472b0c5e9fd8dade0eb84820b351e0808b"
+  },
+  "NewDefinedPrivateSymbols": [
+    "ConstructiveDiagrams`Private`colorOrbitMatrixEqualQ",
+    "ConstructiveDiagrams`Private`colorOrbitPlan",
+    "ConstructiveDiagrams`Private`colorOrbitPolish",
+    "ConstructiveDiagrams`Private`colorOrbitRelabel",
+    "ConstructiveDiagrams`Private`colorOrbitStateGroups",
+    "ConstructiveDiagrams`Private`colorOrbitTransport",
+    "ConstructiveDiagrams`Private`colorOrbitValidate",
+    "ConstructiveDiagrams`Private`colorOrbitZeroQ",
+    "ConstructiveDiagrams`Private`completionFactorizationPointCheckpoint",
+    "ConstructiveDiagrams`Private`constructFactorizationFittedPoint"
+  ],
+  "NewEmptyPrivateSymbols": [
+    "ConstructiveDiagrams`Private`actions",
+    "ConstructiveDiagrams`Private`baseParameters",
+    "ConstructiveDiagrams`Private`byCoefficient",
+    "ConstructiveDiagrams`Private`coefficientCache",
+    "ConstructiveDiagrams`Private`coefficientInput",
+    "ConstructiveDiagrams`Private`constructCoefficient",
+    "ConstructiveDiagrams`Private`fittedPointCheckpoint",
+    "ConstructiveDiagrams`Private`generatorData",
+    "ConstructiveDiagrams`Private`grade",
+    "ConstructiveDiagrams`Private`grades",
+    "ConstructiveDiagrams`Private`gramInvariant",
+    "ConstructiveDiagrams`Private`imageVectors",
+    "ConstructiveDiagrams`Private`images",
+    "ConstructiveDiagrams`Private`invariantRules",
+    "ConstructiveDiagrams`Private`inverseNormalize",
+    "ConstructiveDiagrams`Private`orbitAttempt",
+    "ConstructiveDiagrams`Private`orbitPlan",
+    "ConstructiveDiagrams`Private`orbitPolishReports",
+    "ConstructiveDiagrams`Private`orbitSelected",
+    "ConstructiveDiagrams`Private`orbitTransport",
+    "ConstructiveDiagrams`Private`orbitValidation",
+    "ConstructiveDiagrams`Private`passed",
+    "ConstructiveDiagrams`Private`pointSource",
+    "ConstructiveDiagrams`Private`previousCheck",
+    "ConstructiveDiagrams`Private`rowSeeds",
+    "ConstructiveDiagrams`Private`seedReports",
+    "ConstructiveDiagrams`Private`shorten",
+    "ConstructiveDiagrams`Private`tryRetainedFactorizationPoint"
+  ],
+  "NewSymbolsChecked": 65,
+  "NewTemporaryPrivateSymbols": [
+    "ConstructiveDiagrams`Private`actions$",
+    "ConstructiveDiagrams`Private`baseParameters$",
+    "ConstructiveDiagrams`Private`byCoefficient$",
+    "ConstructiveDiagrams`Private`coefficientCache$",
+    "ConstructiveDiagrams`Private`coefficientInput$",
+    "ConstructiveDiagrams`Private`constructCoefficient$",
+    "ConstructiveDiagrams`Private`fittedPointCheckpoint$",
+    "ConstructiveDiagrams`Private`generatorData$",
+    "ConstructiveDiagrams`Private`grade$",
+    "ConstructiveDiagrams`Private`grades$",
+    "ConstructiveDiagrams`Private`gramInvariant$",
+    "ConstructiveDiagrams`Private`imageVectors$",
+    "ConstructiveDiagrams`Private`images$",
+    "ConstructiveDiagrams`Private`invariantRules$",
+    "ConstructiveDiagrams`Private`inverseNormalize$",
+    "ConstructiveDiagrams`Private`orbitAttempt$",
+    "ConstructiveDiagrams`Private`orbitPlan$",
+    "ConstructiveDiagrams`Private`orbitPolishReports$",
+    "ConstructiveDiagrams`Private`orbitSelected$",
+    "ConstructiveDiagrams`Private`orbitTransport$",
+    "ConstructiveDiagrams`Private`orbitValidation$",
+    "ConstructiveDiagrams`Private`passed$",
+    "ConstructiveDiagrams`Private`pointSource$",
+    "ConstructiveDiagrams`Private`previousCheck$",
+    "ConstructiveDiagrams`Private`rowSeeds$",
+    "ConstructiveDiagrams`Private`shorten$",
+    "ConstructiveDiagrams`Private`tryRetainedFactorizationPoint$"
+  ],
+  "PrecisionQualificationUnchangedRequired": true,
+  "PriorProofSHA256": "22f297d0ed6747f17b16a077ca4e9f9bea3a5f531904371a34c77f899a71ee0c",
+  "RecursiveProofArchivesCopied": false,
+  "ReviewEvidenceFiles": {
+    "ColourRegressionProvenance": {
+      "Path": "tests/results/SM-5-point/regressions/C5-color-orbit/manifest.json",
+      "SHA256": "0bafb802d88fc4f5df2059407880298b01c4a1a8bf3142abfebce849c4e60f44"
+    },
+    "ExactColourOrbitControlLog": {
+      "Path": "tests/results/SM-5-point/regressions/C5-color-orbit/focused-final.log",
+      "SHA256": "d2bcca938b028af4c84a3aae4a2e58613f018053405dc62d207f02a7d3a0ec2b"
+    },
+    "ExistingColourRegressionLog": {
+      "Path": "tests/results/SM-5-point/regressions/C5-color-orbit/existing-color-regressions.log",
+      "SHA256": "c1676cd14bb675328520e2b8d2d4c1deffb6e52c49355e36859559bc6c663962"
+    },
+    "FinalKnownFailedPointControls": {
+      "Path": "tests/results/SM-5-point/regressions/C5-model-wave/fitted-point-guard-final.log",
+      "SHA256": "788be793ff3d14519c79c4cf5fbab957360939a6f098ecd93b3c170cf13cc2d9"
+    },
+    "FittedPointControls": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C5-postpatch-b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd-20261113/semantic-controls/factorization-fitted-point-tests.wl",
+      "SHA256": "4a6d443b9a1c986ff3e39f00637101416de24882f6aecabc0600ac4bcf36761c"
+    },
+    "GradedColourControls": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C5-postpatch-b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd-20261113/semantic-controls/color-orbit-construction-tests.wl",
+      "SHA256": "b39ca49de3a5d88955b5ea26f6b34398e406e2fde66da510eb94ba0f2dfff493"
+    },
+    "LowerMultiplicityRegressionLog": {
+      "Path": "tests/results/SM-5-point/regressions/C5-cross-multiplicity/tests.log",
+      "SHA256": "c32abe2c6d705006f8fda27974864c14b2ad57359c56e02a46cae7747778ad54"
+    },
+    "LowerMultiplicityRegressionWave": {
+      "Path": "tests/results/SM-5-point/regressions/C5-cross-multiplicity/summary.json",
+      "SHA256": "45bd259c82bd1b4bcb53e58302d2564bdf98116df7d0629e24ecf40c43546ac0"
+    },
+    "ModelRegressionWave": {
+      "Path": "tests/results/SM-5-point/regressions/C5-model-wave/combined-summary.json",
+      "SHA256": "8c43526a986ba025a6651cb44535956d8de0bbe6c09f0e06647468e02b0896b5"
+    },
+    "NeutralVectorNativeValidation": {
+      "Path": "tests/results/SM-5-point/diagnostics/neutral-metric-four-vector-source-C4-20261112/validation.wxf",
+      "SHA256": "d9eec295d1dc045ed669e699731ad751e7acf77575b4ceaade3f24ba7828a83d"
+    },
+    "NeutralVectorProvenance": {
+      "Path": "tests/results/SM-5-point/diagnostics/neutral-metric-four-vector-source-C4-20261112/manifest.json",
+      "SHA256": "f26c624eaefbf3089bab14735581fffd9965d696b9e87897cfe590dace9c2f79"
+    },
+    "OrbitMadGraphFixedHelicityAudit": {
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/madgraph-fixed-helicity/fixed-helicity-backend-audit.json",
+      "SHA256": "0bf6546612e67205f58c071fa10fd1a2e73995acc15c4e2a44ff4fbd804051bf"
+    },
+    "OrbitNativeAudit": {
+      "Path": "tests/results/SM-5-point/diagnostics/color-orbit-amplitude-prototype-20261112/native-audit.json",
+      "SHA256": "75f3a94c7245ae6b07e16d91e5b0deafc9379ff3b4dea281f30dcd4a82e94187"
+    },
+    "PortableContactAndFourVectorControls": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C5-postpatch-b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd-20261113/semantic-controls/covariant-contact-calibration-tests.wl",
+      "SHA256": "0cd52633f6c095cce6fee943bcbce7095f5efc09bdad9dfc1be0c0509339f54a"
+    },
+    "ProductionContactReplay": {
+      "Path": "tests/results/SM-5-point/regressions/C5-model-wave/covariant-contact-production-final.log",
+      "SHA256": "dbac00b052aa0b7f291885fa3917f1f4fa4503f89258f058d749715e132ffc90"
+    },
+    "SourceClassDispatchControls": {
+      "Path": "tests/results/SM-5-point/compatibility/constructor-C5-postpatch-b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd-20261113/semantic-controls/covariant-constructor-tests.wl",
+      "SHA256": "2e645673d77053ba59cb5407ecef43751518cf02aab215fb13a814219816ac03"
+    }
+  },
+  "ReviewEvidenceSHA256": "5a584ffe1e347ab99952c66a86e1daaf4c74777c1f099392deba13075b1dd210",
+  "SourceDiffsSHA256": "dd18f18afc9213b06f086a2369630d19107702c521736cbf634e9940dd8dd110",
+  "Status": "SEALED",
+  "SupplementalCounterexampleChecksStillRequired": true,
+  "ValidationRerunPerformed": false,
+  "VerifierToolsSHA256": {
+    "tests/SM-5-point/constructor_context.py": "a3310c96bd1f481dd4e652ac5299b8984f6d0076374c027b204d0be7248a0ad4",
+    "tests/SM-5-point/stage_context.py": "1b59c5d9fbd569e1092c2b10bf90a9ed30004641b30f312a0237e2dc3f47bf98",
+    "tests/SM-5-point/validation_context_c5.py": "0eb53ebba4cdcf6f4805242afe5bd24c6ba3bfd3a958ae4ab31b1d97916cb0db"
+  }
+}

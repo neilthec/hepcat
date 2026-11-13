@@ -1,0 +1,15 @@
+{
+  "Changes": [
+    "Reject nonzero-mass field metadata marked L/R at endpoint helper itself",
+    "Require a nonempty cubic source catalog in every supported five-leg tree"
+  ],
+  "FilesSHA256": {
+    "draft-contacts.wl": "d85c5cb433b75024054f3c40c893f8b464a3bf4eda9b437ec908e23c5b92a814",
+    "draft-sources.wl": "e0dedc2fb0f3e6aba8dd6311d54fc3e3dd9b2d8b7d3a4931883c8d752f03e966",
+    "strictness-only.diff": "1e415a7f9af40ccf6e497533c170fe9cc98865c5121bd8ac9f3fbcbe473ec187"
+  },
+  "OriginalSuccessfulDraftFilesUnchanged": true,
+  "ProductionChanged": false,
+  "Status": "ISOLATED_V2_STRICTNESS_DRAFT",
+  "V1NativeAndBackendSuccessNotRelabeledAsV2": true
+}

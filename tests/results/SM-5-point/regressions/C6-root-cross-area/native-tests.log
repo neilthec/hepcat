@@ -1,0 +1,104 @@
+Running construction-failure-display-tests.wl
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+CONSTRUCTION FAILURE DISPLAY CHECKS: 11; FAILURES: 0
+HEPCAT_TEST_COMPLETED:construction-failure-display-tests.wl
+
+Running covariant-chiral-source-tests.wl
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+
+Solve::svars: Equations may not give solutions for all "solve" variables.
+COVARIANT CHIRAL SOURCE CHECKS: 22; FAILURES: 0
+HEPCAT_TEST_COMPLETED:covariant-chiral-source-tests.wl
+
+Running covariant-constructor-tests.wl
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+COVARIANT CONSTRUCTOR CHECKS: 20; FAILURES: 0
+HEPCAT_TEST_COMPLETED:covariant-constructor-tests.wl
+
+Running covariant-contact-calibration-tests.wl
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+
+rowParticles::shdw: Symbol rowParticles appears in multiple contexts {ConstructiveDiagrams`, Global`}; definitions in context ConstructiveDiagrams` may shadow or be shadowed by other definitions.
+COVARIANT CONTACT CALIBRATION CHECKS: 31; FAILURES: 0
+HEPCAT_TEST_COMPLETED:covariant-contact-calibration-tests.wl
+
+Running sm-factorization-model-tests.wl
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+SM FACTORIZATION MODEL CHECKS: 405; FAILURES: 0
+HEPCAT_TEST_COMPLETED:sm-factorization-model-tests.wl
+
+Running qed-five-point-simplification-tests.wl
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+<|Checks -> 138, Failed -> 0, Failures -> {}, Scope -> Exact local identities, symbolic reference cancellation and sampled physical residues|>
+HEPCAT_TEST_COMPLETED:qed-five-point-simplification-tests.wl
+
+Running six-point-completion-tests.wl
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+Preparing twenty-four fresh all-positive physical-reference diagrams.
+Completing all fourteen channels using source-derived companions.
+131 six-point-completion checks; 0 failures.
+HEPCAT_TEST_COMPLETED:six-point-completion-tests.wl
+

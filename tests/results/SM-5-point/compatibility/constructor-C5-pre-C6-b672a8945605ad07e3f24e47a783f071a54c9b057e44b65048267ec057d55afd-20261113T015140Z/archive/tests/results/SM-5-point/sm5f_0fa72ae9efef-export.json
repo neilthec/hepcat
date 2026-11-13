@@ -1,0 +1,30 @@
+{
+	"FamilyID":"sm5f_0fa72ae9efef",
+	"Status":"PASS",
+	"Seconds":1.2194683e1,
+	"Points":1000,
+	"ContextSHA256":"370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+	"ExporterContextSHA256":"370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+	"NativeCaseContexts":{
+		"sm5_f9eb7cb8bf11":"370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+		"sm5_74f2de83f407":"370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+		"sm5_6f4d159deac4":"370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+		"sm5_3bd2408a59e5":"370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a"
+	},
+	"NativeContextCompatibility":null,
+	"CaseIDs":[
+		"sm5_f9eb7cb8bf11",
+		"sm5_74f2de83f407",
+		"sm5_6f4d159deac4",
+		"sm5_3bd2408a59e5"
+	],
+	"CaseCapsulesSHA256":{
+		"sm5_f9eb7cb8bf11":"a73ad5258f864ea8297bedafbe23b9242b8d83dca8d3f63293928999b0ac1954",
+		"sm5_74f2de83f407":"35b8dbb0465cef44790a66d92ad41027a8585aef050ad9bd32c08472cd799ece",
+		"sm5_6f4d159deac4":"164d94d200008a90b396b882c1938351b55bf57252f18610c7ca378a458e37f7",
+		"sm5_3bd2408a59e5":"dabec2bdf0ac29ade922ad06b39145ee0fb460148fdf4bcd626809b5748f4983"
+	},
+	"CalcHEPStatus":"PASS",
+	"MadGraphStatus":"PASS",
+	"CapsuleSHA256":"2f10272d4b48d5efc62f01544143a76ec724653cd04a7d1308a5b0d96e99b026"
+}

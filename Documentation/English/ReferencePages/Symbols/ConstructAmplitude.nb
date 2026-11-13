@@ -242,9 +242,37 @@ choice is attempted, then requires every normal check at every validation \
 assignment. The original unfinished stage and unclassified family stay \
 visible; a sparse residue pass by itself never completes an amplitude. \
 Already completed factorization stages retain their usual path."}], "Notes"],
-  Cell["What happens during a construction", "NotesSection"],
-  Cell[TextData[{"HEPCAT generates the diagrams and prepares their \
-expressions, then builds the known factorization channels. ",
+  Cell[TextData[{"Supported two-fermion current sources also accept massless \
+fields whose chirality is explicitly declared as L or R in the model. The \
+zero-mass declaration alone does not choose a helicity. Each endpoint follows \
+that field declaration, and a projector is removed from symbolic coefficient \
+matching only when its converted spinor tensor is exactly zero; its \
+coefficient remains recorded as zero. The signed helicity weights and the \
+full massive-vector coherent degrees are retained separately. A source using \
+certified cubic vertices alone needs no metric-contact calibration. \
+Unsupported field metadata continues through the ordinary construction path."}\
+], "Notes"], Cell[TextData[{"An ordinary colored failure is a compact error \
+containing its actual status, stage, coefficient and short diagnostic. It \
+does not embed the complete partial fit in a notebook. Request ",
+     Cell[BoxData[RowBox[{"\"Output\"", " ", "->", " ", "\"Details\""}]],
+      "InlineFormula"], " when you need the original coefficient reports, \
+rejected proposals and retained checkpoints. This changes only the amount of \
+diagnostic information returned; a failure never becomes an amplitude."}],
+   "Notes"], Cell[TextData[{"For a supported five-point process of massless \
+vectors, the model can certify an exchange of angle and square spinors \
+between its two declared helicity states. The constructor checks the used \
+cubic vertices and complete known four-point amplitudes symbolically before \
+using this relation. It then constructs the canonical helicity partner \
+afresh, transports the result with the corresponding momentum and color \
+labels, and checks every target color component at all normal parameter \
+assignments against the originally requested channels and independent Feynman \
+diagrams. The transformation preserves the complex scalar coefficients \
+specified by its certificate; it is not a numerical phase adjustment. A \
+missing certificate or any failed target check returns to the ordinary \
+construction within the remaining clock. No stored answer is read by this \
+route."}], "Notes"], Cell["What happens during a construction",
+   "NotesSection"], Cell[TextData[{"HEPCAT generates the diagrams and \
+prepares their expressions, then builds the known factorization channels. ",
      ButtonBox["CompleteFactorization", BaseStyle -> "Link",
       ButtonData -> "paclet:HEPCAT/ref/CompleteFactorization"],
      " solves any physical residue deficits. The usual route then uses ",

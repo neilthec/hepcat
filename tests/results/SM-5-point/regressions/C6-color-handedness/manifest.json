@@ -1,0 +1,47 @@
+{
+  "Records": [
+    {
+      "ExitCode": 0,
+      "Log": "tests/results/SM-5-point/regressions/C6-color-handedness/c6-color-handedness-tests.wl.log",
+      "LogSHA256": "e1ea50214c2408471fa7937f4e3b1693d9757f48ed4173d7bd7af40188470d90",
+      "Name": "color-handedness-tests.wl",
+      "Seconds": 8.57121625,
+      "TestSHA256": "e1f0513d3a308fb60694a746316b7672ea445c5d18230445e88412b20cace9a6"
+    },
+    {
+      "ExitCode": 0,
+      "Log": "tests/results/SM-5-point/regressions/C6-color-handedness/c6-color-orbit-construction-tests.wl.log",
+      "LogSHA256": "d2bcca938b028af4c84a3aae4a2e58613f018053405dc62d207f02a7d3a0ec2b",
+      "Name": "color-orbit-construction-tests.wl",
+      "Seconds": 4.00867225,
+      "TestSHA256": "b39ca49de3a5d88955b5ea26f6b34398e406e2fde66da510eb94ba0f2dfff493"
+    },
+    {
+      "ExitCode": 0,
+      "Log": "tests/results/SM-5-point/regressions/C6-color-handedness/c6-color-basis-tests.wl.log",
+      "LogSHA256": "f043462ac8e796f6862f32867ce7c22360fedf417725ac457edda00727407caa",
+      "Name": "color-basis-tests.wl",
+      "Seconds": 8.463559459000003,
+      "TestSHA256": "2b3a0bb025adda80e54ef158e56777cfa1abe22588efc3d263d496e18cadb2b1"
+    },
+    {
+      "ExitCode": 0,
+      "Log": "tests/results/SM-5-point/regressions/C6-color-handedness/c6-color-tensor-dedup-tests.wl.log",
+      "LogSHA256": "a2d05a358e838088f1c8a96e158b8779d85f2e8e5634398cf8a871133b8c3e6a",
+      "Name": "color-tensor-dedup-tests.wl",
+      "Seconds": 4.090347749999999,
+      "TestSHA256": "0640f1ae98a7a7594bb2be38bf062d7ca3a505221ddf2ba9eef1002cf84d4190"
+    },
+    {
+      "ExitCode": 0,
+      "Log": "tests/results/SM-5-point/regressions/C6-color-handedness/c6-color-tensor-network-tests.wl.log",
+      "LogSHA256": "b8ef4f2e74984d8435a436a3a92065d0f734c6a970bb89d82b66b2cb80f3d8b1",
+      "Name": "color-tensor-network-tests.wl",
+      "Seconds": 5.216739083,
+      "TestSHA256": "264ce40cef3d0cd72065a3ac250ca71460b0422051c5082c06d1949afd2dfeda"
+    }
+  ],
+  "Scope": "Focused native handedness and existing exact color regression suites on final C6 Color source. Other package modules were unchanged during these sequential runs.",
+  "SourcePath": "source/internal/HEPCAT-Color.wl",
+  "SourceSHA256": "aca5ca21f73a8246997efcc1ac40941c984c4d4061a4f0deafd0cc5b663b2063"
+}

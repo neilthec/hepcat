@@ -1,0 +1,9 @@
+{
+  "ExitCode": 0,
+  "Seconds": 44.319948792000005,
+  "ContextSHA256": "47026bedc2844622616e46a05069c2682cc4306872799bbe8e02d4a01291cc04",
+  "SourceAndScriptUnchanged": true,
+  "LoadedScriptSHA256": "36f21e306be77f4defbe4ef825ef18265933460a171d8a9c7d10a2575bb097b7",
+  "CanonicalRecordsModified": false,
+  "CallType": "ActualPublicDefaultC6"
+}

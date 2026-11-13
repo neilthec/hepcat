@@ -1,0 +1,18 @@
+{
+	"FamilyID":"sm5f_8468e3356042",
+	"Status":"PASS",
+	"Seconds":2.1064692e1,
+	"Points":1000,
+	"ContextSHA256":"43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+	"CaseIDs":[
+		"sm5_4bc32809acdc",
+		"sm5_a1a8f35eef64"
+	],
+	"CaseCapsulesSHA256":{
+		"sm5_4bc32809acdc":"cc448ef317e67aab8d4d9f32b0fea5848e97f74c885c90a6679b86f652b51000",
+		"sm5_a1a8f35eef64":"224c69745ce593ecc7c00b7def99e0dded626adc3a60fb76f627cd1d37f24ea3"
+	},
+	"CalcHEPStatus":"PASS",
+	"MadGraphStatus":"PASS",
+	"CapsuleSHA256":"c563d0f842c697ff7ba0bc50dd894e392aa7a28cd532aedb7ea0e09fcd875bc9"
+}

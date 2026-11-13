@@ -21120,6 +21120,29 @@ constructFailure[stage_, diagnostics_List] := Failure["AmplitudeConstructionFail
   "MessageParameters" -> {stage}, "Stage" -> stage, "Status" -> "FAILED",
   "Diagnostics" -> diagnostics|>];
 
+(* Ordinary output must not embed whole partial color fits in a notebook.
+   Detailed output retains the original failure, reports and checkpoints. *)
+constructFailureSummary[Failure[tag_, data_Association]] := Module[
+  {child = Lookup[data, "Report", None], cause, causeData, base, stage, diagnostics},
+  cause = Which[FailureQ[child], child,
+    AssociationQ[child], Lookup[child, "Failure", None], True, None];
+  causeData = If[FailureQ[cause] && AssociationQ[cause[[2]]], cause[[2]], <||>];
+  base = Select[KeyTake[data, {"MessageTemplate", "ColorCoefficient", "ColorCoefficients",
+    "CompletedColorCoefficients"}], StringQ[#] || IntegerQ[#] &];
+  stage = Lookup[causeData, "Stage", Lookup[data, "Stage", "Constructing colored amplitude"]];
+  If[!StringQ[stage], stage = "Constructing colored amplitude"];
+  diagnostics = Cases[{Lookup[causeData, "Diagnostics", {}],
+    If[AssociationQ[child], Lookup[child, "Diagnostics", {}], {}],
+    Lookup[data, "Diagnostics", {}]}, _String, {1, 2}];
+  diagnostics = Take[DeleteDuplicates[diagnostics], UpTo[4]];
+  diagnostics = (If[StringLength[#] > 400, StringTake[#, 397] <> "...", #] &) /@ diagnostics;
+  Failure[tag, Join[base, <|"Status" -> "FAILED", "Stage" -> stage,
+    "Diagnostics" -> diagnostics,
+    "Details" -> "Use \"Output\" -> \"Details\" to retain the complete partial report."|>]]
+];
+constructFailureSummary[failure_Failure] := failure;
+
+
 (* Whole-amplitude preparation is an ordinary external identity. Shift the
    retained affine family by that same identity, preserving every free direction. *)
 constructPreparedFamily[report_Association, pair_List] := Module[
@@ -22302,7 +22325,7 @@ constructVectorLineForm[diagrams_List, process_List, model_List, external_List,
 ];
 
 ConstructAmplitude::usage = ConstructAmplitude::usage <>
-  " With an independent FeynmanModel, supported five-leg color-singlet massive Dirac/scalar processes can first propose covariant currents matched exactly to every used elementary vertex and ordered diagram. A supported existing metric quartic is calibrated only from the complete known lower amplitude. Internal lines stay off shell, masses and couplings remain symbolic, and no benchmark or sampled coefficient fit constructs the proposal. It is accepted only after the original channels and all independent checks pass at every requested validation assignment. Default distinct-fermion inputs also receive an equal-independent-mass probe; explicit parameter and validation choices remain authoritative. Rejected or unsupported proposals retain the ordinary completion path.";
+  " With an independent FeynmanModel, supported five-leg color-singlet Dirac, declared chiral-fermion, vector and scalar processes can first propose covariant currents matched exactly to every used elementary vertex and ordered diagram. A supported existing metric quartic is calibrated only from the complete known lower amplitude. Internal lines stay off shell, masses and couplings remain symbolic, and no benchmark or sampled coefficient fit constructs the proposal. It is accepted only after the original channels and all independent checks pass at every requested validation assignment. Default distinct-fermion inputs also receive an equal-independent-mass probe; explicit parameter and validation choices remain authoritative. Rejected or unsupported proposals retain the ordinary completion path.";
 
 ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     opts : OptionsPattern[]] := Module[
@@ -22361,7 +22384,9 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
       "MessageTemplate" -> "Invalid process, model or construction options."|>]]];
   If[!TrueQ[$colorConstructingProjection] && completionModelQ[diagramModel] &&
       colorProcessQ[process,diagramModel],
-    Return[colorConstructAmplitude[process,diagramModel,factorizationModel,options]]];
+    With[{coloredResult = colorConstructAmplitude[process,diagramModel,factorizationModel,options]},
+      Return[If[output === "Details" || !FailureQ[coloredResult], coloredResult,
+        constructFailureSummary[coloredResult]]]]];
   resourceResolution = amplitudeAutomaticSettings["Construction", options,
     amplitudeConstructionResourceMetrics[process, factorizationModel]];
   options["TimeConstraint"] = resourceResolution["Settings"]["TimeConstraint"];
@@ -22688,10 +22713,10 @@ ConstructAmplitude[process_List, diagramModel_, factorizationModel_List,
     If[!AllTrue[rows, ListQ] || !AllTrue[rows, #[[8]] === 1 &], Return[False]];
     fermions = Select[rows, #[[5]] === 1 &];
     vectors = Select[rows, #[[5]] === 2 &]; scalars = Select[rows, #[[5]] === 0 &];
-    If[!AllTrue[fermions, #[[6]] =!= 0 && #[[2]] =!= #[[3]] &&
-        !MemberQ[{"L", "R"}, #[[9]]] &], Return[False]];
+    If[!AllTrue[fermions, HEPCATCovariantCurrentSources`Private`supportedFermionRowQ], Return[False]];
     class = Which[
-      Length[fermions] === 4 && Length[scalars] === 1, "Cubic currents",
+      Length[fermions] === 4 && Length[scalars] === 1 &&
+        AllTrue[fermions, #[[6]] =!= 0 &], "Cubic currents",
       Length[fermions] === 2 && Length[vectors] === 1 && Length[scalars] === 2 &&
         First[vectors][[6]] =!= 0 && SameQ @@ scalars[[All, 6]], "Calibrated metric currents",
       Length[fermions] === 2 && Length[vectors] === 2 && Length[scalars] === 1 &&

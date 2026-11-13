@@ -1,0 +1,35 @@
+{
+	"ID":"sm5_345126cb84c0",
+	"Particles":[
+		"Z",
+		"Z",
+		"h",
+		"h",
+		"h"
+	],
+	"Status":"COMPLETE",
+	"Seconds":1.581737593e3,
+	"Complexity":2080,
+	"RandomSeed":541495071,
+	"ContextSHA256":"43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+	"PreviousContextSHA256":"04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+	"ConstructionContextSHA256":"b7a316bd091a48dababda5c42e3c950c6ca96ce434bdf8bdaf917459c3f6cc9d",
+	"RevalidationStatus":"PASS",
+	"RevalidationSeconds":5.1497848e1,
+	"RevalidationRandomSeed":1765150431,
+	"SourceCapsuleSHA256":"254bff1da406819bdd66957085258ee33fc76723c5fabaa5afccc03bf33b9301",
+	"SourceSummarySHA256":"987546fd9671a303e9963a1207fd2925415772c4a41d93dd897369ac9315a1f0",
+	"SourceCapsuleArchive":"revalidation-history\/sm5_345126cb84c0-254bff1da406819bdd66957085258ee33fc76723c5fabaa5afccc03bf33b9301.wxf",
+	"RevalidationConfigurationSHA256":"e0d4facf91722bde43d31d07fd2e556ffa8fc0f94896d04c29dfb79bed922e41",
+	"RevalidationInventorySHA256":"e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+	"RevalidationScriptSHA256":"3dcb364850b4a34a7aabd2f756782461fe2ed23a2df6b4db18d8a074a3c4f24b",
+	"RevalidationBenchmarkPolicySHA256":"ffc86825574f78f646857ec9fa173ac7417a050c0473d89eb5e2547d2709d9b6",
+	"RevalidationCheckTimeConstraint":600,
+	"Rows":13,
+	"FeynmanRows":1,
+	"CheckStatuses":{
+		"PASS":13
+	},
+	"FailureStage":null,
+	"CapsuleSHA256":"22b957a913fab083b3d35e37efbfff95a870fc703188068f9c4005efd224980b"
+}

@@ -1,0 +1,24 @@
+{
+  "AllZeroTemplateSetRejected": true,
+  "BaseSourceSHA256": {
+    "source/HEPCAT-Model.wl": "9d9dfabc99abc50ff547d1ed541b50319093a6574213dec6a8d899a117ac4b5a",
+    "source/internal/HEPCAT-CovariantContacts.wl": "dd3e4483cc93b949e324496182c6dc8106e9883ec75854e95d8207f53933236a",
+    "source/internal/HEPCAT-CovariantSources.wl": "c5037e82988e98cb559d01be94d8a24b04a97ec56b7f27f961815e4a63580e9e"
+  },
+  "DraftFilesSHA256": {
+    "draft-contacts.wl": "53b8d5a8bc746af93dbe9a0ec4f28c735cca6acd6573aad8a58505e058c73e56",
+    "draft-sources.wl": "a412aab9f2621269b4d21609d7f4671e710885107b56a6cb6cfbd36d2e9b735b",
+    "isolated-proposal.patch": "6c694e55c7bfbd91f4c1d7803eb87742b43bbf7fbd98bfa992ae8cc5ed36ca13"
+  },
+  "FivePointPhysicsJobStarted": false,
+  "LiveModelParameterValuesUsedForSymbolicMatch": false,
+  "MasslessScalarYukawaMatchingExpanded": false,
+  "MetricContactCalibrationBodyChanged": false,
+  "NewFourFermionExternalClassesEnabled": false,
+  "NewMasslessVectorHandling": false,
+  "NumericalCoefficientFit": false,
+  "ProductionFilesChanged": false,
+  "SourceContext": "b672a8945605ad07e3f24e47a783f071a54c9b057e44b65048267ec057d55afd",
+  "Status": "ISOLATED_UNVALIDATED_DRAFT",
+  "UnknownMasslessDiracHelicityGuessed": false
+}

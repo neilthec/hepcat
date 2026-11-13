@@ -1124,6 +1124,217 @@ colorOrbitValidate[process_List, amplitudes_List, external_List, data_Associatio
     "ElapsedTime" -> AbsoluteTime[] - began|>
 ];
 
+(* Exact, model-derived handedness is a unitary state map: I is retained. *)
+ConstructiveDiagrams`Private`colorHandednessFlip[expression_] := expression /.
+  HoldPattern[Spinor["Helicity", kind : ("Angle" | "Square"), leg_]] :>
+    Spinor["Helicity", If[kind === "Angle", "Square", "Angle"], leg];
+ConstructiveDiagrams`Private`colorHandednessParticles[row_List] := DeleteCases[Drop[row, -2], ""];
+ConstructiveDiagrams`Private`colorHandednessStateData[model_List] := Module[{rows, rules, order},
+ rows = Select[model[[1]], Length[#] >= 8 && #[[5]] === 2 && #[[6]] === 0 &&
+   #[[2]] =!= #[[3]] && ConstructiveDiagrams`Private`spinasBareHelicityName[#[[2]]] ===
+    ConstructiveDiagrams`Private`spinasBareHelicityName[#[[3]]] &];
+ rules = Flatten[({#[[2]] -> #[[3]], #[[3]] -> #[[2]]} & /@ rows)];
+ order = Association[Flatten[MapIndexed[{#1[[2]] -> {First[#2], 0}, #1[[3]] -> {First[#2], 1}} &, rows]]];
+ <|"Rows" -> rows, "FlipRules" -> rules, "Order" -> order|>
+];
+ConstructiveDiagrams`Private`colorHandednessCanonicalMap[target_List, model_List] := Module[
+ {states = ConstructiveDiagrams`Private`colorHandednessStateData[model], partner, flipped, image = {}, unused},
+ If[!ContainsAll[Keys[states["Order"]], target], Return[Failure["NotDeclaredMasslessVectors", <||>]]];
+ partner = SortBy[target /. states["FlipRules"], states["Order"][#] &];
+ flipped = partner /. states["FlipRules"]; unused = Range[Length[target]];
+ Do[With[{position = SelectFirst[unused, target[[#]] === name &, Missing["Absent"]]},
+   If[!MissingQ[position], AppendTo[image, position]; unused = DeleteCases[unused, position]]], {name, flipped}];
+ If[Length[image] =!= Length[target] || Sort[image] =!= Range[Length[target]] ||
+     target[[image]] =!= flipped, Return[Failure["NoStatePermutation", <||>]]];
+ <|"Target" -> target, "Partner" -> partner, "FlipRules" -> states["FlipRules"],
+   "PermutationImage" -> image, "BosonGrade" -> 1|>
+];
+ConstructiveDiagrams`Private`colorHandednessFourPointProof[expression_] := Module[
+ {value = expression, lambda, square, matrix, components, bracket, map, unsupported, result},
+ If[value === 0, Return[<|"Proved" -> True, "Method" -> "LiteralZero"|>]];
+ lambda = Partition[Table[Unique["handAngle"], {8}], 2];
+ square = Join[ConstantArray[{0, 0}, 2], Partition[Table[Unique["handSquare"], {4}], 2]];
+ matrix = Transpose[lambda[[{1, 2}]]];
+ Do[components = -Inverse[matrix].(lambda[[3]] square[[3, k]] + lambda[[4]] square[[4, k]]);
+   square[[1, k]] = components[[1]]; square[[2, k]] = components[[2]], {k, 2}];
+ bracket["Angle", i_, j_] := Det[{lambda[[i]], lambda[[j]]}];
+ bracket["Square", i_, j_] := -Det[{square[[i]], square[[j]]}];
+ value = value /. HoldPattern[PropDen[Mom[Multiparticle[i_Integer, j_Integer]], 0]] :>
+    -bracket["Angle", i, j] bracket["Square", i, j];
+ value = FixedPoint[(# /. chain_SpinorChain :> Module[{v = chain, trial},
+    Do[trial = ConstructiveDiagrams`Private`rspSplitMasslessMomentum[v, leg];
+      If[!MissingQ[trial], v = trial; Break[]], {leg, 4}]; v]) &, value, 8];
+ value = value /. HoldPattern[SpinorChain[Spinor["Helicity", kind : ("Angle" | "Square"), i_Integer],
+      Spinor["Helicity", kind_, j_Integer]]] :> bracket[kind, i, j];
+ unsupported = !FreeQ[value, _SpinorChain | _Mom | _MomProd | _PropDen | _Spinor | _Xi];
+ If[unsupported, Return[<|"Proved" -> False, "Reason" -> "UnsupportedFourPointHead"|>]];
+ result = TimeConstrained[Cancel[Together[Expand[value]]], 15, Missing["ExactProofTimeConstraint"]];
+ <|"Proved" -> TrueQ[result === 0], "Method" -> "GenericTwelveVariableMasslessMomentumConservationChart",
+   "Remainder" -> result, "NumericalDefaultsUsed" -> False|>
+];
+ConstructiveDiagrams`Private`colorHandednessCertificate[target_List, model_List, lower_List] := Module[
+ {map, diagrams, used, phases = {}, names, partner, matches, difference, bare, vectors,
+  lowerRows, lowerProofs = {}, before, after, data, coefficientProofs, tagged, ext, reps, arities, states, usedNames, scale, body, scaled, indices,
+  tag = Unique["colorHandednessCertificate"], abort},
+ Catch[
+ abort[value_] := Throw[value, tag];
+ map = ConstructiveDiagrams`Private`colorHandednessCanonicalMap[target, model]; If[FailureQ[map], abort[map]];
+ states = ConstructiveDiagrams`Private`colorHandednessStateData[model];
+ diagrams = CreateDiagrams[target, model]; used = HEPCATCovariantCurrentSources`Private`usedRows[diagrams];
+ arities = Length[ConstructiveDiagrams`Private`colorHandednessParticles[#]] & /@ used;
+ If[used === {} || !AllTrue[arities, # === 3 &], abort[Failure["NotPureUsedCubics", <|"Arities" -> arities|>]]];
+ usedNames = DeleteDuplicates[Flatten[ConstructiveDiagrams`Private`colorHandednessParticles /@ used]];
+ If[!ContainsAll[Keys[states["Order"]], usedNames], abort[Failure["NotPureMasslessVectorCubics", <||>]]];
+ Do[names = ConstructiveDiagrams`Private`colorHandednessParticles[row]; partner = names /. map["FlipRules"];
+   body = row[[-2]] row[[-1]]; scale = Unique["vectorHomogeneity"];
+   If[AnyTrue[Cases[{body}, _SpinorChain, Infinity], Length[#] =!= 2 &] ||
+       !FreeQ[body, _Mom | _MomProd | _PropDen | Spinor["Xi", ___]],
+     abort[Failure["UnsupportedMinimalVectorCubic", <||>]]];
+   scaled = body /. chain_SpinorChain :> scale chain;
+   If[!TrueQ[Cancel[Together[scaled - scale body]] === 0],
+     abort[Failure["NonminimalMasslessVectorCubic", <||>]]];
+   matches = Select[model[[2]], ConstructiveDiagrams`Private`colorHandednessParticles[#] === partner &];
+   If[Length[matches] =!= 1, abort[Failure["CubicPartnerNotUnique", <|"Particles" -> names|>]]];
+   difference = Cancel[Together[Expand[ConstructiveDiagrams`Private`colorHandednessFlip[row[[-2]] row[[-1]]] -
+      matches[[1, -2]] matches[[1, -1]]]]];
+   bare = ConstructiveDiagrams`Private`spinasBareHelicityName /@ names;
+   vectors = ConstructiveDiagrams`Private`colorParticleRepresentation[#, model] & /@ names;
+   If[difference =!= 0 || bare =!= (ConstructiveDiagrams`Private`spinasBareHelicityName /@ partner) ||
+      vectors =!= (ConstructiveDiagrams`Private`colorParticleRepresentation[#, model] & /@ partner),
+     abort[Failure["CubicHandednessNotCertified", <|"Particles" -> names, "Difference" -> difference|>]]];
+   AppendTo[phases, <|"Particles" -> names, "PartnerParticles" -> partner, "ExactDifference" -> difference,
+     "Phase" -> 1, "OrderedBareSpeciesAndColorRolesUnchanged" -> True|>], {row, used}];
+ indices = Table[Unique["handednessIndex"], {4}];
+ lowerRows = Select[lower[[2]], With[{p = ConstructiveDiagrams`Private`colorHandednessParticles[#]},
+    Length[p] === 4 && AllTrue[p, MemberQ[Union[ConstructiveDiagrams`Private`spinasBareHelicityName /@ usedNames],
+      ConstructiveDiagrams`Private`spinasBareHelicityName[#]] &]] &];
+ Do[names = ConstructiveDiagrams`Private`colorHandednessParticles[row]; partner = names /. map["FlipRules"];
+   tagged[p_] := MapIndexed[{#1, First[#2]} &, p];
+   before = LookupAmplitude[tagged[names], lower, False, indices];
+   after = LookupAmplitude[tagged[partner], lower, False, indices];
+   difference = ConstructiveDiagrams`Private`colorHandednessFlip[before] - after;
+   If[difference === 0, coefficientProofs = {<|"Proved" -> True, "Method" -> "LiteralEquality"|>},
+     ext = Thread[(Mass /@ Range[4]) -> ConstantArray[0, 4]];
+     reps = ConstructiveDiagrams`Private`colorParticleRepresentation[#, lower] & /@ names;
+     data = ConstructiveDiagrams`Private`colorProjectionData[{{ext, difference}}, {}, reps];
+     If[!AssociationQ[data], abort[Failure["LowerColorProjection", <||>]]];
+     coefficientProofs = ConstructiveDiagrams`Private`colorHandednessFourPointProof[Last[First[#]]] & /@ data["ProjectedDiagrams"]];
+   AppendTo[lowerProofs, <|"Particles" -> names, "PartnerParticles" -> partner,
+      "CoefficientProofs" -> coefficientProofs, "Proved" -> And @@ Lookup[coefficientProofs, "Proved"]|>], {row, lowerRows}];
+ If[lowerProofs === {} || !And @@ Lookup[lowerProofs, "Proved"], abort[Failure["LowerHandednessUnproved", <|"Reports" -> lowerProofs|>]]];
+ Join[map, <|"Status" -> "MODEL_CERTIFIED", "UsedCubicCertificates" -> phases,
+   "CompleteLowerFourPointCertificates" -> lowerProofs, "EveryUsedVertexCubic" -> True,
+   "DiagramCount" -> Length[diagrams], "SewingMinusSignsUnchanged" -> True,
+   "PropagatorInvariantsUnchanged" -> True, "DerivedAmplitudePhase" -> 1,
+   "ImaginaryUnitConjugated" -> False, "NumericPhaseFit" -> False,
+   "SourceModelSHA256" -> HEPCATCovariantCurrentSources`Private`objectSHA[model],
+   "LowerModelSHA256" -> HEPCATCovariantCurrentSources`Private`objectSHA[lower]|>]
+, tag]
+];
+ConstructiveDiagrams`Private`colorHandednessPropose[sourcePair : {_List, _}, sourceProcess_List,
+    certificate_Association] := Module[{expression = Last[sourcePair], cycles, transported, spinors},
+ If[certificate["Status"] =!= "MODEL_CERTIFIED" || sourceProcess =!= certificate["Partner"],
+   Return[Failure["SourcePartnerMismatch", <||>]]];
+ spinors = DeleteDuplicates[Cases[{expression}, _Spinor, Infinity]];
+ If[!AllTrue[spinors, MatchQ[#, Spinor["Helicity", "Angle" | "Square", _Integer]] &] ||
+    AnyTrue[Cases[{expression}, _SpinorChain, Infinity], Length[#] =!= 2 &] ||
+    !FreeQ[expression, _MomProd | _MomHat | _MomQ] ||
+    AnyTrue[Cases[{expression}, _PropDen, Infinity], Last[#] =!= 0 &],
+   Return[Failure["UnsupportedSourceExpressionHeads", <||>]]];
+ cycles = ConstructiveDiagrams`Private`completionBoseCycles[Range[Length[sourceProcess]], certificate["PermutationImage"]];
+ transported = Fold[ConstructiveDiagrams`Private`completionBoseCycle,
+   ConstructiveDiagrams`Private`colorHandednessFlip[expression], cycles];
+ <|"Status" -> "UNVALIDATED_MODEL_CERTIFIED_PROPOSAL", "Process" -> certificate["Target"],
+   "Expression" -> certificate["DerivedAmplitudePhase"] transported,
+   "ExternalMassRules" -> First[sourcePair], "TypedCycles" -> cycles,
+   "Certificate" -> certificate, "ConjugatedImaginaryUnit" -> False,
+   "NoBenchmarkAmplitudeInput" -> True, "DefaultConstructorSuccessClaimed" -> False|>
+];
+
+colorHandednessPrepare[process_List, model_List, lower_List, settings_Association,
+    channels_List, deadline_] := Module[
+  {map, states, canonical, partner, remaining, certificate, partnerOptions, partnerReport,
+   sourcePair, proposal, budget, began = AbsoluteTime[]},
+  remaining = deadline - began;
+  If[TrueQ[colorHandednessActive] || Length[process] =!= 5 || remaining <= 120 ||
+      settings["FeynmanModel"] === None || settings["BoseSymmetryGroups"] =!= Automatic ||
+      settings["FermionSymmetryGroups"] =!= Automatic ||
+      MemberQ[{"Xi", "IndependentXi", None}, settings["PolePreference"]] ||
+      !AnyTrue[channels, Last[#] =!= 0 &],
+    Return[<|"Attempted" -> False, "Selected" -> False|>]];
+  map = colorHandednessCanonicalMap[process, model];
+  If[!AssociationQ[map], Return[<|"Attempted" -> False, "Selected" -> False|>]];
+  states = colorHandednessStateData[model];
+  canonical = SortBy[process, states["Order"][#] &]; partner = map["Partner"];
+  If[partner === canonical || !OrderedQ[{states["Order"] /@ partner, states["Order"] /@ canonical}],
+    Return[<|"Attempted" -> False, "Selected" -> False|>]];
+  certificate = TimeConstrained[colorHandednessCertificate[process, model, lower],
+    Min[20, remaining/12], Missing["HandednessCertificateTimeConstraint"]];
+  If[!AssociationQ[certificate], Return[<|"Attempted" -> True, "Selected" -> False,
+    "Reason" -> "ModelCertificateUnavailable", "Certificate" -> certificate|>]];
+  budget = Max[0.001, (deadline - AbsoluteTime[])/2];
+  partnerOptions = Join[settings, <|"Output" -> "Details", "PrintReport" -> False,
+    "TimeConstraint" -> budget|>];
+  If[TrueQ[settings["ProgressReporting"]],
+    Print["Constructing the model-certified helicity partner ", partner, "."]];
+  partnerReport = TimeConstrained[Block[{colorHandednessActive = True,
+      $colorConstructingProjection = False},
+    ConstructAmplitude[partner, model, lower, Sequence @@ Normal[partnerOptions]]],
+    budget, Missing["HandednessPartnerTimeConstraint"]];
+  If[!AssociationQ[partnerReport] || Lookup[partnerReport, "Status", None] =!= "COMPLETE" ||
+      !ListQ[Lookup[partnerReport, "ColorBasis", None]] || Length[partnerReport["ColorBasis"]] < 2,
+    Return[<|"Attempted" -> True, "Selected" -> False, "Reason" -> "PartnerNotComplete",
+      "Certificate" -> certificate, "PartnerReport" -> partnerReport|>]];
+  sourcePair = Lookup[partnerReport, "AmplitudePair", Missing["NoPair"]];
+  proposal = If[MatchQ[sourcePair, {_List, _}],
+    colorHandednessPropose[sourcePair, partner, certificate], Missing["UnsupportedPartnerPair"]];
+  If[!AssociationQ[proposal], Return[<|"Attempted" -> True, "Selected" -> False,
+    "Reason" -> "UnsupportedPartnerExpression", "Certificate" -> certificate,
+    "PartnerReport" -> partnerReport, "Proposal" -> proposal|>]];
+  <|"Attempted" -> True, "Selected" -> False, "Status" -> "PROPOSED",
+    "Method" -> "ModelCertifiedCanonicalHandedness", "Certificate" -> certificate,
+    "PartnerReport" -> partnerReport, "Proposal" -> proposal,
+    "RandomSeed" -> settings["RandomSeed"], "PartnerConstructedFresh" -> True,
+    "SavedAmplitudeInput" -> False, "BenchmarkUsedForConstruction" -> False,
+    "ElapsedTime" -> AbsoluteTime[] - began|>
+];
+
+colorHandednessProjection[attempt_Association, pairs_List, channels_List,
+    representations_List, feynmanPairs_List] := Module[
+  {proposal, prefix, prefixPairs, external, data, count, amplitudes, expectedCount},
+  If[Lookup[attempt, "Status", None] =!= "PROPOSED", Return[Missing["NoHandednessProposal"]]];
+  proposal = attempt["Proposal"]; external = proposal["ExternalMassRules"];
+  prefix = Fold[completionBoseCycle, #, proposal["TypedCycles"]] & /@
+    attempt["PartnerReport"]["ColorBasis"];
+  prefixPairs = ({external, #} & /@ prefix); count = Length[prefix];
+  (* Every original source, target and independent benchmark tensor participates.
+     Prefix probes choose coordinates only; they are never construction terms. *)
+  data = colorProjectionData[Join[prefixPairs, pairs, {{external, proposal["Expression"]}}],
+    channels, representations, feynmanPairs];
+  If[!AssociationQ[data] || Length[data["Basis"]] < count ||
+      Take[data["Basis"], count] =!= prefix ||
+      !TrueQ[Lookup[Lookup[data, "ColorTensorDeduplication", <||>],
+        "UniqueGramReconstructionVerified", False]],
+    Return[Missing["UncertifiedHandednessColorUnion"]]];
+  amplitudes = Last /@ (Last /@ data["ProjectedDiagrams"]);
+  If[Drop[amplitudes, count] =!= ConstantArray[0, Length[amplitudes] - count],
+    Return[Missing["UncertifiedExtraColorCoefficients"]]];
+  expectedCount = count + Length[pairs] + 1;
+  If[!AllTrue[data["ProjectedDiagrams"], Length[#] === expectedCount &] ||
+      !AllTrue[data["ProjectedChannels"], Length[#] === Length[channels] &] ||
+      !AllTrue[data["ProjectedFeynmanAmplitudes"], Length[#] === Length[feynmanPairs] &],
+    Return[Missing["IncompleteHandednessColorUnion"]]];
+  <|"Status" -> "PROJECTED", "Data" -> data, "Amplitudes" -> amplitudes,
+    "Certificate" -> <|"MappedPrefixRank" -> count, "CommonUnionRank" -> Length[amplitudes],
+      "ExtraIndependentDirections" -> Length[amplitudes] - count,
+      "ExtraCandidateCoefficientsExactlyZero" -> True,
+      "AllOriginalDiagramPairsIncluded" -> Length[pairs],
+      "AllOriginalTargetRowsIncluded" -> Length[channels],
+      "AllIndependentFeynmanPairsIncluded" -> Length[feynmanPairs],
+      "ExactCommonUnionGramReconstruction" -> True,
+      "CandidateCoefficientReconstructionCertified" -> True|>|>
+];
+
 colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List,
     settings_Association] := Module[
   {started = AbsoluteTime[], diagrams, pairs, channels, reps, data, reports = {},
@@ -1134,7 +1345,9 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
    feynmanDiagrams, feynmanRaw, feynmanPrepared, feynmanPairs = {}, benchmarkSettings,
    benchmarkSeconds, phaseAgreement, constructCoefficient, coefficientCache = <||>,
    orbitPlan, orbitTransport, orbitPolishReports = {}, orbitValidation,
-   orbitAttempt = <|"Attempted" -> False|>, orbitSelected = False},
+   orbitAttempt = <|"Attempted" -> False|>, orbitSelected = False,
+   handednessAttempt = <|"Attempted" -> False, "Selected" -> False|>,
+   handednessProjection, handednessValidation},
   Catch[
   seconds = Replace[settings["TimeConstraint"], Automatic ->
     amplitudeAutomaticSettings["Construction", settings,
@@ -1147,6 +1360,8 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
   If[FailureQ[pairs] || FailureQ[channels], Return[SelectFirst[{pairs, channels}, FailureQ]]];
   reps = colorParticleRepresentation[#, diagramModel] & /@ process;
   If[AnyTrue[reps, FailureQ], Return[SelectFirst[reps, FailureQ]]];
+  handednessAttempt = colorHandednessPrepare[process, diagramModel, factorizationModel,
+    settings, channels, deadline];
   If[feynmanModel =!= None,
     If[TrueQ[settings["ProgressReporting"]], Print["Building independent colored Feynman benchmark."]];
     feynmanDiagrams = CreateDiagrams[process,feynmanModel];
@@ -1207,6 +1422,21 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
   If[TrueQ[settings["ProgressReporting"]], Print["Constructing ", rank,
     " independent color coefficients."]];
   reports = ConstantArray[Missing["NotConstructed"], rank];
+  If[Lookup[handednessAttempt, "Status", None] === "PROPOSED",
+    handednessProjection = colorHandednessProjection[handednessAttempt, pairs, channels, reps, feynmanPairs];
+    AssociateTo[handednessAttempt, "Projection" -> handednessProjection];
+    If[AssociationQ[handednessProjection],
+      handednessValidation = colorOrbitValidate[process, handednessProjection["Amplitudes"],
+        handednessAttempt["Proposal"]["ExternalMassRules"], handednessProjection["Data"],
+        factorizationModel, settings, deadline];
+      AssociateTo[handednessAttempt, "Validation" -> handednessValidation];
+      If[Lookup[handednessValidation, "Status", None] === "COMPLETE",
+        data = handednessProjection["Data"]; rank = Length[data["Basis"]];
+        reports = Join[#, <|"ConstructionMethod" -> "ModelCertifiedHandednessTransport"|>] & /@
+          handednessValidation["CoefficientReports"];
+        orbitSelected = True;
+        orbitAttempt = <|"Attempted" -> False, "Reason" -> "ValidatedModelHandedness"|>;
+        AssociateTo[handednessAttempt, "Selected" -> True]]]];
   constructCoefficient[index_Integer] := Module[{coefficientOptions, coefficientInput, value},
     If[KeyExistsQ[coefficientCache, index], Return[coefficientCache[index]]];
     If[AbsoluteTime[] >= deadline, Return[Missing["ColorConstructionTimeConstraint"]]];
@@ -1225,7 +1455,7 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
         Sequence @@ Normal[coefficientOptions]]];
     AssociateTo[coefficientCache, index -> value]; reports[[index]] = value; value
   ];
-  orbitPlan = If[settings["BoseSymmetryGroups"] === Automatic &&
+  orbitPlan = If[!orbitSelected && settings["BoseSymmetryGroups"] === Automatic &&
       settings["FermionSymmetryGroups"] === Automatic,
     colorOrbitPlan[process, diagramModel, data, reps,
       Min[12, Max[0.001, (deadline - AbsoluteTime[])/10]]],
@@ -1260,13 +1490,14 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
         <|"CompletedColorCoefficients" -> Count[reports, item_Association /;
             Lookup[item, "Status", None] === "COMPLETE"], "ColorCoefficients" -> rank,
           "ColorBasis" -> data["Basis"], "ColorCoefficientReports" -> reports,
-          "ColorOrbitAttempt" -> orbitAttempt|>], tag]];
+          "ColorOrbitAttempt" -> orbitAttempt, "ColorHandednessAttempt" -> handednessAttempt|>], tag]];
       report = constructCoefficient[i];
       If[!AssociationQ[report] || Lookup[report, "Status", None] =!= "COMPLETE",
         Throw[colorFailure["IncompleteColorAmplitude",
           "An independent color coefficient did not complete. No full color amplitude was returned.",
           <|"ColorCoefficient" -> i, "ColorBasis" -> data["Basis"], "Report" -> report,
-            "ColorCoefficientReports" -> reports, "ColorOrbitAttempt" -> orbitAttempt|>], tag]],
+            "ColorCoefficientReports" -> reports, "ColorOrbitAttempt" -> orbitAttempt,
+            "ColorHandednessAttempt" -> handednessAttempt|>], tag]],
       {i, rank}]];
   amplitudes = Lookup[reports, "Amplitude"];
   expression = data["Basis"].amplitudes;
@@ -1280,14 +1511,15 @@ colorConstructAmplitude[process_List, diagramModel_List, factorizationModel_List
     Throw[colorFailure["InconsistentFeynmanColorPhases",
       "The independent color coefficients require different Feynman signs. No common overall phase relates the full amplitudes.",
       <|"ColorBasis" -> data["Basis"], "Reports" -> reports,
-        "ColorOrbitAttempt" -> orbitAttempt, "PhaseAgreement" -> phaseAgreement|>], tag]];
+        "ColorOrbitAttempt" -> orbitAttempt, "ColorHandednessAttempt" -> handednessAttempt,
+        "PhaseAgreement" -> phaseAgreement|>], tag]];
   checkRows = Map[Function[row, <|"Color" -> row["ColorCoefficient"],
     "Type" -> row["Type"], "Test" -> row["Pole"], "Status" -> row["Status"]|>], combinedChecks];
   report = <|"Status" -> "COMPLETE", "Process" -> process, "Amplitude" -> expression,
     "AmplitudePair" -> {external, expression}, "TotalTime" -> AbsoluteTime[] - started,
     "Complexity" -> constructComplexity[expression], "ColorBasis" -> data["Basis"],
     "ColorGramMatrix" -> data["GramMatrix"], "ColorCoefficientReports" -> reports,
-    "ColorOrbitAttempt" -> orbitAttempt,
+    "ColorOrbitAttempt" -> orbitAttempt, "ColorHandednessAttempt" -> handednessAttempt,
     "FeynmanModel" -> feynmanModel,
     "FeynmanPreparation" -> If[feynmanModel===None,Missing["NotRequested"],feynmanPrepared],
     "Checks" -> <|"Summary" -> summary, "Checks" -> combinedChecks,
