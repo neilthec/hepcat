@@ -1,0 +1,31 @@
+Get["/Users/neil/code/hepcat/source/HEPCAT.wl"];
+Begin["HEPCATC4DefaultPilot`Private`"];
+$ContextPath=Prepend[DeleteCases[$ContextPath,"HEPCATC4DefaultPilot`Private`"],"HEPCATC4DefaultPilot`Private`"];
+$HistoryLength=0;
+dvRoot="/Users/neil/code/hepcat";
+dvDirectory="/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/c4-default-eEZZh-20261112";
+dvStarted=AbsoluteTime[];
+dvSaved=Import[FileNameJoin[{dvDirectory,"construction.wxf"}],"WXF"];
+If[Lookup[dvSaved,"Status",None]=!="COMPLETE"||Lookup[dvSaved,"CallType",None]=!="ActualPublicDefaultC4",Quit[2]];
+dvInputSHA=IntegerString[FileHash[FileNameJoin[{dvDirectory,"construction.wxf"}],"SHA256"],16,64];
+dvProcess=dvSaved["Particles"];dvExpression=dvSaved["Expression"];
+dvModel=ReadModel[FileNameJoin[{dvRoot,"models"}],1];
+dvInventory=Import[FileNameJoin[{dvRoot,"tests","SM-5-point","inventory.json"}],"RawJSON"];
+dvCase=SelectFirst[dvInventory["Cases"],#["Particles"]===dvProcess&];dvFamily=SelectFirst[dvInventory["Families"],#["ID"]===dvCase["FamilyID"]&];
+dvResult=WriteSPINASProcess[FileNameJoin[{dvDirectory,"spinas-output","eebarZZh"}],dvFamily["Incoming"]->dvFamily["Outgoing"],
+ {{dvProcess,dvExpression}},dvModel,"ProcessName"->"c4eebarZZh","SPINASDirectory"->"/Users/neil/code/spinas",
+ "Build"->True,"RunExamples"->True,"Overwrite"->True,
+ "CalcHEPDirectory"->"/Users/neil/code/CalcHEP/calchep_3.9.2","CalcHEPModel"->{FileNameJoin[{dvRoot,"tests","reference-models","calchep"}],1},
+ "CalcHEPPoints"->1000,"RunCalcHEPValidation"->True,
+ "MadGraphDirectory"->"/Users/neil/code/MadGraph","MadGraphModel"->FileNameJoin[{dvRoot,"tests","reference-models","madgraph","sm"}],
+ "MadGraphParameterRules"->{"lamWS"->0},"MadGraphPoints"->1000,"RunMadGraphValidation"->True,"ReturnDetails"->True];
+dvPassed=AssociationQ[dvResult]&&Lookup[Lookup[dvResult,"CalcHEPValidation",<||>],"Status",None]==="PASS"&&
+ Lookup[Lookup[dvResult,"MadGraphValidation",<||>],"Status",None]==="PASS";
+dvRecord=<|"Status"->If[dvPassed,"PASS","BACKENDS_NOT_ALL_PASS"],"CallType"->"ActualPublicDefaultC4FinalPreparedExport",
+ "CanonicalRecord"->False,"ContextSHA256"->"a91edec8580c2721ccbe8d5304442e9e506f9fd89dc911c250a550c31723a238",
+ "ConstructionCapsuleSHA256"->dvInputSHA,"FamilyID"->dvFamily["ID"],"Particles"->dvProcess,"PointsRequestedPerBackend"->1000,
+ "Result"->dvResult,"Seconds"->N[AbsoluteTime[]-dvStarted]|>;
+dvStream=OpenWrite[FileNameJoin[{dvDirectory,"export.wxf"}],BinaryFormat->True];BinaryWrite[dvStream,Normal[BinarySerialize[dvRecord,PerformanceGoal->"Size"]],"Byte"];Close[dvStream];
+Export[FileNameJoin[{dvDirectory,"export.json"}],KeyDrop[dvRecord,{"Result"}]/._Missing->Null/.None->Null,"RawJSON"];
+Print[KeyDrop[dvRecord,{"Result"}]];
+End[];Quit[If[dvPassed,0,1]];

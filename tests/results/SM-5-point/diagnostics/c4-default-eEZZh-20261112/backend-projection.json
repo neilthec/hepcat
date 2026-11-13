@@ -1,0 +1,303 @@
+{
+  "BackendResult": {
+    "CalcHEPValidation": {
+      "ExitCode": 0,
+      "Points": 1000,
+      "Seed": 1794525377327526000,
+      "StandardError": "",
+      "StandardOutput": "PROCESS: e,E->Z,Z,h\nAmplitude validation: 100/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 200/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 300/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 400/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 500/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 600/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 700/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 800/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 900/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 1000/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: PASS\nSeed: 1794525377327526000\nPoints requested/generated/compared: 1000/1000/1000\nMismatches/errors: 0/0\nMaximum relative/absolute error: 4.8764249210119561e-08/1.6928728519111154e-16\nEvery requested common phase-space point agrees.\n",
+      "Status": "PASS"
+    },
+    "Files": {
+      "CMake": "/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/c4-default-eEZZh-20261112/spinas-output/eebarZZh/CMakeLists.txt",
+      "CalcHEPMain": "/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/c4-default-eEZZh-20261112/spinas-output/eebarZZh/calchep-main.cpp",
+      "CalcHEPNumericalRuntime": "/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/c4-default-eEZZh-20261112/spinas-output/eebarZZh/calchep-spinas-runtime.hpp",
+      "CalcHEPNumericalSource": "/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/c4-default-eEZZh-20261112/spinas-output/eebarZZh/calchep-spinas.cpp",
+      "CalcHEPRuntime": "/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/c4-default-eEZZh-20261112/spinas-output/eebarZZh/calchep-runtime.hpp",
+      "CalcHEPSource": "/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/c4-default-eEZZh-20261112/spinas-output/eebarZZh/calchep-validation.cpp",
+      "Demo": "/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/c4-default-eEZZh-20261112/spinas-output/eebarZZh/main.cpp",
+      "Header": "/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/c4-default-eEZZh-20261112/spinas-output/eebarZZh/process.hpp",
+      "MadEventBuilder": "/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/c4-default-eEZZh-20261112/spinas-output/eebarZZh/madevent-runtime.py",
+      "MadEventConfiguration": "/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/c4-default-eEZZh-20261112/spinas-output/eebarZZh/madevent-config.json",
+      "MadEventSource": "/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/c4-default-eEZZh-20261112/spinas-output/eebarZZh/madevent-spinas.cpp",
+      "MadGraphBuilder": "/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/c4-default-eEZZh-20261112/spinas-output/eebarZZh/madgraph-runtime.py",
+      "MadGraphMain": "/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/c4-default-eEZZh-20261112/spinas-output/eebarZZh/madgraph-main.cpp",
+      "MadGraphRuntime": "/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/c4-default-eEZZh-20261112/spinas-output/eebarZZh/madgraph-runtime.hpp",
+      "MadGraphSource": "/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/c4-default-eEZZh-20261112/spinas-output/eebarZZh/madgraph-validation.cpp",
+      "Manifest": "/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/c4-default-eEZZh-20261112/spinas-output/eebarZZh/manifest.json",
+      "README": "/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/c4-default-eEZZh-20261112/spinas-output/eebarZZh/README.md",
+      "Runtime": "/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/c4-default-eEZZh-20261112/spinas-output/eebarZZh/spinas-runtime.hpp",
+      "Source": "/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/c4-default-eEZZh-20261112/spinas-output/eebarZZh/process.cpp",
+      "ValidationRuntime": "/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/c4-default-eEZZh-20261112/spinas-output/eebarZZh/spinas-validation.hpp"
+    },
+    "MadGraphValidation": {
+      "BuildLog": "MadGraph reference ready: e- e+ > z z h\n",
+      "Directory": "/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/c4-default-eEZZh-20261112/spinas-output/eebarZZh",
+      "Message": "Every requested massless-helicity comparison agrees.",
+      "Passed": true,
+      "Reference": {
+        "AllowedParticlePDGs": [],
+        "CouplingOrders": {
+          "QCD": 6,
+          "QED": 6
+        },
+        "DiagramCount": 16,
+        "ExcludedParticles": [],
+        "ExternalCount": 5,
+        "FortranCompiler": "/opt/homebrew/Cellar/gcc/16.1.0/bin/gfortran-16",
+        "FortranFlags": "-w -fPIC -ffixed-line-length-none",
+        "HelicityStates": 36,
+        "JampAccumulationPolicy": "NativeDefault",
+        "JampBootstrap": null,
+        "JampSplit": 0,
+        "Library": "/private/var/folders/6w/pnfj3t151x93v_scggh5rw8w0000gn/T/hepcat-madgraph-BHVibJ/reference/libhepcat_madgraph.dylib",
+        "MadGraphModel": "/Users/neil/code/hepcat/tests/reference-models/madgraph/sm",
+        "MadGraphModelPath": "/Users/neil/code/hepcat/tests/reference-models/madgraph/sm",
+        "MadGraphRestriction": null,
+        "MadGraphVersion": {
+          "Date": "2026-10-09",
+          "Version": "3.8.1"
+        },
+        "MassMatching": [
+          {
+            "DirectInput": true,
+            "MadGraph": "Me",
+            "PDG": 11,
+            "RequestedMass": 0.0005
+          },
+          {
+            "DirectInput": true,
+            "MadGraph": "Me",
+            "PDG": -11,
+            "RequestedMass": 0.0005
+          },
+          {
+            "DirectInput": true,
+            "MadGraph": "MZ",
+            "PDG": 23,
+            "RequestedMass": 91.29214308315318
+          },
+          {
+            "DirectInput": true,
+            "MadGraph": "MZ",
+            "PDG": 23,
+            "RequestedMass": 91.29214308315318
+          },
+          {
+            "DirectInput": true,
+            "MadGraph": "MH",
+            "PDG": 25,
+            "RequestedMass": 125.0
+          }
+        ],
+        "Masses": [
+          0.0005,
+          0.0005,
+          91.29214308315318,
+          91.29214308315318,
+          125.0
+        ],
+        "Normalization": "Raw fixed-helicity, color-summed squared amplitude; no initial averages or final symmetry factor.",
+        "OptimizationLevel": 0,
+        "ParameterMatching": [
+          {
+            "HEPCAT": "Me",
+            "MadGraph": "Me",
+            "MadGraphValue": 0.0005,
+            "RequestedValue": 0.0005
+          },
+          {
+            "HEPCAT": "MZ",
+            "MadGraph": "MZ",
+            "MadGraphValue": 91.29214308315318,
+            "RequestedValue": 91.29214308315318
+          },
+          {
+            "HEPCAT": "Mh",
+            "MadGraph": "MH",
+            "MadGraphValue": 125.0,
+            "RequestedValue": 125.0
+          },
+          {
+            "HEPCAT": "EE",
+            "MadGraph": "ee",
+            "MadGraphValue": 0.31332999999999994,
+            "RequestedValue": 0.31333
+          },
+          {
+            "HEPCAT": "MW",
+            "MadGraph": "MW",
+            "MadGraphValue": 80.385,
+            "RequestedValue": 80.385
+          },
+          {
+            "HEPCAT": "SW",
+            "MadGraph": "sw",
+            "MadGraphValue": 0.474,
+            "RequestedValue": 0.474
+          }
+        ],
+        "ParameterRules": {
+          "Gf": 1.19542477614741e-05,
+          "MH": 125.0,
+          "MZ": 91.29214308315318,
+          "Me": 0.0005,
+          "WH": 0.0,
+          "WT": 0.0,
+          "WTau": 0.0,
+          "WW": 0.0,
+          "WZ": 0.0,
+          "aEWM1": 127.99880250556788,
+          "lamWS": 0.0,
+          "yme": 0.0005
+        },
+        "PhysicalPDGs": [
+          11,
+          -11,
+          23,
+          23,
+          25
+        ],
+        "PreservedWidths": [],
+        "Process": "e- e+ > z z h",
+        "Scope": "Complete tree amplitude within the supplied UFO expansion limits and declared allowed particle content.",
+        "SpinSum": "Exhaustive generated helicity table; no pruning, sampling, initial average or final symmetry factor.",
+        "Status": "READY",
+        "WidthPolicy": "Bare tree validation: all widths disabled. External DECAY inputs and every declared particle width are zero in a private UFO copy, including explicit, matched and dependent widths.",
+        "ZeroedWidths": [
+          {
+            "Name": "WZ",
+            "Value": 0.0
+          },
+          {
+            "Name": "WW",
+            "Value": 0.0
+          },
+          {
+            "Name": "WT",
+            "Value": 0.0
+          },
+          {
+            "Name": "WH",
+            "Value": 0.0
+          },
+          {
+            "Name": "WTau",
+            "Value": 0.0
+          }
+        ]
+      },
+      "ReportFile": "/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/c4-default-eEZZh-20261112/spinas-output/eebarZZh/madgraph-validation-report-8f47c0f6-61d9-4f9c-b7ab-e82ea9ec7bbe.json",
+      "Rows": [
+        {
+          "ComparedPoints": 1000,
+          "EvaluationErrors": 0,
+          "ExpectedExactZero": false,
+          "FirstFailure": null,
+          "GeneratedPoints": 1000,
+          "Helicities": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "MaximumAbsoluteError": 3.2425480012078685e-20,
+          "MaximumCenterOfMassEnergy": 1845.5057169978381,
+          "MaximumRelativeError": 1.2724512320797922e-12,
+          "Message": "Every requested common phase-space point agrees.",
+          "MinimumCenterOfMassEnergy": 461.37642924945953,
+          "Mismatches": 0,
+          "Passed": true,
+          "Points": 1000,
+          "RequestedPoints": 1000,
+          "Status": "PASS"
+        }
+      ],
+      "Seed": 1794525382290478000,
+      "StandardError": "",
+      "StandardOutput": "Preparing independent MadGraph reference...\nChecking doubled helicities: 0 0 0 0 0 (massive spins summed)\nAmplitude validation: 100/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 200/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 300/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 400/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 500/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 600/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 700/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 800/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 900/1000 points; 0 mismatches; 0 errors.\nAmplitude validation: 1000/1000 points; 0 mismatches; 0 errors.\nMadGraph helicity validation: PASS\nSeed: 1794525382290478000\nEvery requested massless-helicity comparison agrees.\n  Helicity 0 0 0 0 0: PASS; 1000/1000 points; max relative error 1.27245e-12; max absolute error 3.24255e-20; mismatches 0; evaluation errors 0\n",
+      "Status": "PASS"
+    }
+  },
+  "Complexity": 1094,
+  "Construction": {
+    "CallType": "ActualPublicDefaultC4",
+    "CanonicalRecord": false,
+    "ContextSHA256": "a91edec8580c2721ccbe8d5304442e9e506f9fd89dc911c250a550c31723a238",
+    "Particles": [
+      "e",
+      "E",
+      "Z",
+      "Z",
+      "h"
+    ],
+    "PublicOptionsSupplied": [
+      "FeynmanModel",
+      "Output"
+    ],
+    "Seconds": 228.841378,
+    "SingleKernelScopedExecutionEnvironment": true,
+    "Status": "COMPLETE"
+  },
+  "Export": {
+    "CallType": "ActualPublicDefaultC4FinalPreparedExport",
+    "ConstructionCapsuleSHA256": "859a8e655aa871ea34cbb6e62a4648a5f9f4917bf665992ba846f7f7ac53bddd",
+    "ContextSHA256": "a91edec8580c2721ccbe8d5304442e9e506f9fd89dc911c250a550c31723a238",
+    "FamilyID": "sm5f_f13b4237bc07",
+    "Particles": [
+      "e",
+      "E",
+      "Z",
+      "Z",
+      "h"
+    ],
+    "PointsRequestedPerBackend": 1000,
+    "Seconds": 21.098196,
+    "Status": "PASS"
+  },
+  "FinalExpressionHeldSHA256": "57e939b87ab5277e4dca64fd658aca2b8fcde7100642a4c34b9a4a0565015fd3",
+  "ParameterChecks": [
+    {
+      "ParameterRules": "{ConstructiveDiagrams`ModelParameter[\"EE\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 31333/100000, ConstructiveDiagrams`ModelParameter[\"GG\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 1117/1000, ConstructiveDiagrams`ModelParameter[\"SW\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 237/500, ConstructiveDiagrams`ModelParameter[\"Q\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 100, ConstructiveDiagrams`ModelParameter[\"MW\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 16077/200, ConstructiveDiagrams`ModelParameter[\"Mtp\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 345/2, ConstructiveDiagrams`ModelParameter[\"McMc\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 123/100, ConstructiveDiagrams`ModelParameter[\"MbMb\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 17/4, ConstructiveDiagrams`ModelParameter[\"alphaSMZ\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 74/625, ConstructiveDiagrams`ModelParameter[\"Ml\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 1777/1000, ConstructiveDiagrams`ModelParameter[\"Mh\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 125, ConstructiveDiagrams`ModelParameter[\"Me\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 1/2000, ConstructiveDiagrams`ModelParameter[\"Mm\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 21/200, ConstructiveDiagrams`ModelParameter[\"Mu\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 27/12500, ConstructiveDiagrams`ModelParameter[\"Md\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 47/10000, ConstructiveDiagrams`ModelParameter[\"Mb\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 21/5, ConstructiveDiagrams`ModelParameter[\"Mc\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 13/10, ConstructiveDiagrams`ModelParameter[\"Ms\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 19/200, ConstructiveDiagrams`ModelParameter[\"CW\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> Sqrt[193831]/500, ConstructiveDiagrams`ModelParameter[\"GF\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 981756889/(58071989768004*Sqrt[2]), ConstructiveDiagrams`ModelParameter[\"B00000\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 68831/125000, ConstructiveDiagrams`ModelParameter[\"B00001\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 4737706561/15625000000, ConstructiveDiagrams`ModelParameter[\"gLe\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> -68831/125000, ConstructiveDiagrams`ModelParameter[\"gRe\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 56169/125000, ConstructiveDiagrams`ModelParameter[\"gLu\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 43777/62500, ConstructiveDiagrams`ModelParameter[\"gRu\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> -18723/62500, ConstructiveDiagrams`ModelParameter[\"gLd\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> -106277/125000, ConstructiveDiagrams`ModelParameter[\"gRd\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 18723/125000, ConstructiveDiagrams`ModelParameter[\"MZ\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 80385/(2*Sqrt[193831])}",
+      "StatusCounts": {
+        "PASS": 13
+      }
+    },
+    {
+      "ParameterRules": "{ConstructiveDiagrams`ModelParameter[\"EE\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 93999/400000, ConstructiveDiagrams`ModelParameter[\"GG\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 1117/1250, ConstructiveDiagrams`ModelParameter[\"SW\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 79/200, ConstructiveDiagrams`ModelParameter[\"Q\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 600/7, ConstructiveDiagrams`ModelParameter[\"MW\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 112539/1600, ConstructiveDiagrams`ModelParameter[\"Mtp\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 460/3, ConstructiveDiagrams`ModelParameter[\"McMc\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 1107/1000, ConstructiveDiagrams`ModelParameter[\"MbMb\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 85/22, ConstructiveDiagrams`ModelParameter[\"alphaSMZ\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 407/3750, ConstructiveDiagrams`ModelParameter[\"Ml\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 5331/3250, ConstructiveDiagrams`ModelParameter[\"Mh\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 1625/14, ConstructiveDiagrams`ModelParameter[\"Me\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 7/15000, ConstructiveDiagrams`ModelParameter[\"Mm\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 63/640, ConstructiveDiagrams`ModelParameter[\"Mu\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 108/53125, ConstructiveDiagrams`ModelParameter[\"Md\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 799/180000, ConstructiveDiagrams`ModelParameter[\"Mb\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 378/95, ConstructiveDiagrams`ModelParameter[\"Mc\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 247/200, ConstructiveDiagrams`ModelParameter[\"Ms\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 19/210, ConstructiveDiagrams`ModelParameter[\"CW\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> (33*Sqrt[31])/200, ConstructiveDiagrams`ModelParameter[\"GF\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> (1963513778*Sqrt[2])/219562306993225, ConstructiveDiagrams`ModelParameter[\"B00000\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 13759/20000, ConstructiveDiagrams`ModelParameter[\"B00001\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 189310081/400000000, ConstructiveDiagrams`ModelParameter[\"gLe\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> -13759/20000, ConstructiveDiagrams`ModelParameter[\"gRe\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 6241/20000, ConstructiveDiagrams`ModelParameter[\"gLu\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 23759/30000, ConstructiveDiagrams`ModelParameter[\"gRu\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> -6241/30000, ConstructiveDiagrams`ModelParameter[\"gLd\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> -53759/60000, ConstructiveDiagrams`ModelParameter[\"gRd\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 6241/60000, ConstructiveDiagrams`ModelParameter[\"MZ\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 37513/(88*Sqrt[31])}",
+      "StatusCounts": {
+        "PASS": 13
+      }
+    },
+    {
+      "ParameterRules": "{ConstructiveDiagrams`ModelParameter[\"EE\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 31333/125000, ConstructiveDiagrams`ModelParameter[\"GG\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 1117/1200, ConstructiveDiagrams`ModelParameter[\"SW\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 711/1750, ConstructiveDiagrams`ModelParameter[\"Q\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 175/2, ConstructiveDiagrams`ModelParameter[\"MW\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 5359/75, ConstructiveDiagrams`ModelParameter[\"Mtp\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 621/4, ConstructiveDiagrams`ModelParameter[\"McMc\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 123/110, ConstructiveDiagrams`ModelParameter[\"MbMb\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 187/48, ConstructiveDiagrams`ModelParameter[\"alphaSMZ\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 888/8125, ConstructiveDiagrams`ModelParameter[\"Ml\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 23101/14000, ConstructiveDiagrams`ModelParameter[\"Mh\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 350/3, ConstructiveDiagrams`ModelParameter[\"Me\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 3/6400, ConstructiveDiagrams`ModelParameter[\"Mm\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 42/425, ConstructiveDiagrams`ModelParameter[\"Mu\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 51/25000, ConstructiveDiagrams`ModelParameter[\"Md\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 423/95000, ConstructiveDiagrams`ModelParameter[\"Mb\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 399/100, ConstructiveDiagrams`ModelParameter[\"Mc\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 26/21, ConstructiveDiagrams`ModelParameter[\"Ms\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 399/4400, ConstructiveDiagrams`ModelParameter[\"CW\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> Sqrt[2556979]/1750, ConstructiveDiagrams`ModelParameter[\"GF\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 48106087561/(2580977323022400*Sqrt[2]), ConstructiveDiagrams`ModelParameter[\"B00000\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 1025729/1531250, ConstructiveDiagrams`ModelParameter[\"B00001\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 1052119981441/2344726562500, ConstructiveDiagrams`ModelParameter[\"gLe\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> -1025729/1531250, ConstructiveDiagrams`ModelParameter[\"gRe\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 505521/1531250, ConstructiveDiagrams`ModelParameter[\"gLu\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 597118/765625, ConstructiveDiagrams`ModelParameter[\"gRu\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> -168507/765625, ConstructiveDiagrams`ModelParameter[\"gLd\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> -1362743/1531250, ConstructiveDiagrams`ModelParameter[\"gRd\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> 168507/1531250, ConstructiveDiagrams`ModelParameter[\"MZ\", \"30a3398a0cbb88a8e4517e90d53df2fd406e010fb396af82ff422d9b7ebd77e7\", \"Real\"] -> (16310*Sqrt[23/111173])/3}",
+      "StatusCounts": {
+        "PASS": 13
+      }
+    }
+  ],
+  "RandomSeed": 6782590582154204676,
+  "StageNames": [
+    "Generating diagrams",
+    "Building diagram amplitudes",
+    "Preparing diagrams",
+    "Generating factorization channels",
+    "Preparing factorization channels",
+    "Building certified covariant source",
+    "Covariant source proposal",
+    "Covariant source validation policy",
+    "Preparing certified covariant source representative details",
+    "Preparing certified covariant source representative",
+    "Generating Feynman diagrams",
+    "Building Feynman amplitudes",
+    "Preparing Feynman amplitudes",
+    "Validating certified covariant source representative (1/3)",
+    "Validating certified covariant source representative (2/3)",
+    "Validating certified covariant source representative (3/3)",
+    "Representative selection"
+  ],
+  "TopLevelStatusCounts": {
+    "PASS": 13
+  }
+}

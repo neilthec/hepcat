@@ -80,6 +80,12 @@ check["without an independent benchmark the old completion path stays authoritat
  cvNoBenchmark["Sources"]===0&&cvNoBenchmark["Fits"]===1];
 cvFour=cvRun[{"e","E","h","h"},"good"];
 check["four-point processes never enter the new source stage",cvFour["Sources"]===0&&cvFour["Fits"]===1];
+cvTwoVectors=cvRun[{"e","E","Z","Z","h"},"good"];
+check["two massive vectors and one scalar use the same certified metric-current route",
+ cvTwoVectors["Result"]["Status"]==="COMPLETE"&&cvTwoVectors["Sources"]===1&&cvTwoVectors["Fits"]===0];
+cvMasslessVector=cvRun[{"e","E","Z","A.+","h"},"good"];
+check["a massless vector cannot enter the two-massive-vector source class",
+ cvMasslessVector["Sources"]===0&&cvMasslessVector["Fits"]===1];
 cvPhotons=cvRun[{"e","E","A.+","A.+","A.+"},"good"];
 check["QED photon processes retain the old completion path",cvPhotons["Sources"]===0&&cvPhotons["Fits"]===1];
 cvBad=cvRun[cvCase,"bad certificate"];
@@ -112,7 +118,7 @@ check["the calibrated-contact class uses the same independent three-assignment a
 check["controlled dispatch probes restore all existing production and source definitions",
  cvOriginalDefinitions==={DownValues[ConstructAmplitude],DownValues[CheckAmplitudes],DownValues[CompleteFactorization],
  DownValues[PrepareAmplitudes],DownValues[HEPCATCovariantCurrentSources`Private`covariantCurrentSource]}];
-If[checks=!=17,AppendTo[failures,"Not every constructor-source assertion executed"]];
+If[checks=!=19,AppendTo[failures,"Not every constructor-source assertion executed"]];
 Print["COVARIANT CONSTRUCTOR CHECKS: ",checks,"; FAILURES: ",Length[failures]];
 If[failures=!={},Print[failures]];
 If[failures==={},Print["HEPCAT_TEST_COMPLETED:covariant-constructor-tests.wl"]];

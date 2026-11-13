@@ -1,0 +1,8 @@
+{
+  "ID": "sm5_c4885d0a4a7e",
+  "Status": "TIMEOUT",
+  "RandomSeed": 868620146,
+  "ContextSHA256": "04ebf50292a6ca739b1f1b8e5ee06611855dfb49cb333276cbd616aac0486712",
+  "Log": "tests/results/SM-5-point/sm5_c4885d0a4a7e.log",
+  "Message": "External deadline reached; not validated."
+}

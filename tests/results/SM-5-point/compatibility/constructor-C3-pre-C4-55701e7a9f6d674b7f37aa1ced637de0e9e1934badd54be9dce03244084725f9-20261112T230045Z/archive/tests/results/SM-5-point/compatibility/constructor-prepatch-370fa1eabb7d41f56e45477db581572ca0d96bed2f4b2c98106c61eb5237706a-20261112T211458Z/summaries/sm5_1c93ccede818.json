@@ -1,0 +1,22 @@
+{
+	"ID":"sm5_1c93ccede818",
+	"Particles":[
+		"e",
+		"E",
+		"e",
+		"E",
+		"h"
+	],
+	"Status":"FAIL",
+	"Seconds":1.13398475e3,
+	"Complexity":null,
+	"RandomSeed":835652940,
+	"ContextSHA256":"370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+	"Rows":1,
+	"FeynmanRows":0,
+	"CheckStatuses":{
+		"NOT RUN":1
+	},
+	"FailureStage":"Completing factorization",
+	"CapsuleSHA256":"751c99a672b23f8876b8066bee8ba40942f5e248d5e9689327a0271a8ac6dc28"
+}

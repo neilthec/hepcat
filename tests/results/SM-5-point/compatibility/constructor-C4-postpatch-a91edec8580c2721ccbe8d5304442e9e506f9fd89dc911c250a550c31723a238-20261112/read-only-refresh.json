@@ -1,0 +1,31 @@
+{
+  "ConstructorRerunPerformed": false,
+  "ContextSHA256": "a91edec8580c2721ccbe8d5304442e9e506f9fd89dc911c250a550c31723a238",
+  "Counts": {
+    "Constructed": 193,
+    "FailedOrTimedOut": 0,
+    "FullyValidatedCases": 191,
+    "PrecisionQualifiedCases": 2,
+    "PrecisionQualifiedFamilies": 2,
+    "RecordedInputPassCases": 193,
+    "SupplementalParameterProbeFailedCases": 0,
+    "SupplementalParameterProbeUnavailableCases": 0,
+    "TotalCases": 1422,
+    "TotalFamilies": 869,
+    "ValidatedFamilies": 128,
+    "ValidatedIncludingPrecisionQualifiedCases": 193
+  },
+  "CurrentConstructorSuccessClaimed": false,
+  "ProgressAfterSHA256": "4ff1a811dff88862d2a20eee175dd91c4df938effd76beff7118fc8a9d9adf22",
+  "ProgressBeforeSHA256": "4ff1a811dff88862d2a20eee175dd91c4df938effd76beff7118fc8a9d9adf22",
+  "RawProducerContextsPreserved": [
+    "370fa1eabb7d41f56e45477db581572ca0d96bed2f4b2c98106c61eb5237706a",
+    "43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+    "55701e7a9f6d674b7f37aa1ced637de0e9e1934badd54be9dce03244084725f9"
+  ],
+  "Status": "READ_ONLY_REFRESH_PASSED",
+  "ValidationRerunPerformed": false,
+  "WriteCallsSuppressed": [
+    "/Users/neil/code/hepcat/tests/SM-5-point/progress.json"
+  ]
+}

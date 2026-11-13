@@ -474,8 +474,18 @@ def verified_proof(root, here, configuration, current_context, proof_path):
         return None
 
 
+def c4_module():
+    spec = importlib.util.spec_from_file_location('hepcat_c4_validation_context',
+                                                 Path(__file__).with_name('validation_context_c4.py'))
+    value = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(value)
+    return value
+
+
 def public_proof(proof, stage=None):
     """Describe the actual provenance without repeating cached definition tables."""
+    if proof.get('_C4VerifiedCurrentContext') is True:
+        return c4_module().public_proof(proof, stage)
     if stage is None:
         return {key: value for key, value in proof.items() if not key.startswith('_')}
     if proof.get('_VerifiedCurrentContext') is not True:
@@ -495,6 +505,10 @@ def public_proof(proof, stage=None):
 
 def resolve(root, here, configuration, current_context):
     """Resolve one exact reviewed historical transition; never infer a migration."""
+    extended = c4_module().verified_proof(root, here, configuration, current_context,
+                                         Path(here) / 'constructor-C3-C4-context-bridge.json')
+    if extended is not None:
+        return extended
     proof = verified_proof(root, here, configuration, current_context,
                            Path(here) / 'constructor-context-bridge.json')
     return proof or stage_module().verified_bridge(root, here, configuration, current_context)
@@ -506,6 +520,8 @@ def record_evidence(summary_path, summary, current_context, proof):
         return None
     if not isinstance(proof, dict):
         return None
+    if proof.get('_C4VerifiedCurrentContext') is True:
+        return c4_module().record_evidence(summary_path, summary, current_context, proof)
     if proof.get('_VerifiedCurrentContext') is True:
         if proof.get('AfterContextSHA256') != current_context:
             return None

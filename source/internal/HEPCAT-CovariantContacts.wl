@@ -166,9 +166,9 @@ HEPCATCovariantContactCalibration`Private`calibratedCovariantSource[process_List
   rows=HEPCATCovariantCurrentSources`Private`particleRow[#,diagramModel]&/@process;
   If[!AllTrue[rows,ListQ],fail["UnknownCalibratedSourceParticle"]];
   fermions=Select[rows,#[[5]]===1&];vectors=Select[rows,#[[5]]===2&];scalars=Select[rows,#[[5]]===0&];
-  If[Length[fermions]=!=2||Length[vectors]=!=1||Length[scalars]=!=2||
+  If[!MemberQ[{{2,1,2},{2,2,1}},{Length[fermions],Length[vectors],Length[scalars]}]||
     !AllTrue[rows,#[[8]]===1&]||!AllTrue[fermions,#[[6]]=!=0&&#[[2]]=!=#[[3]]&&!MemberQ[{"L","R"},#[[9]]]&]||
-    First[vectors][[6]]===0||Length[DeleteDuplicates[Pick[process,rows[[All,5]],0]]]=!=1,
+    !AllTrue[vectors,#[[6]]=!=0&]||Length[DeleteDuplicates[Pick[process,rows[[All,5]],0]]]=!=1,
     fail["UnsupportedExternalCalibratedCurrentClass"]];
   diagrams=CreateDiagrams[process,diagramModel];
   If[!ListQ[diagrams]||diagrams==={}||!AllTrue[diagrams,AssociationQ],fail["OriginalCalibratedSourceGraphsIncomplete"]];

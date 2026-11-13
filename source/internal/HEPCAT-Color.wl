@@ -438,7 +438,9 @@ colorNormalizeInternalIndices[tensor_, representations_List] := Module[
     tensor /. (Rule[#, colorInternalIndex[#, dimension[#]]] & /@ unknown), tag]
 ];
 
-colorTensorVector[input_, representations_List] := Module[
+(* Retain the original finite-state enumerator as the exact fallback.
+   Unsupported incidence patterns do not change their previous semantics. *)
+ConstructiveDiagrams`Private`colorTensorVectorEnumerated[input_, representations_List] := Module[
   {tensor, n = Length[representations], external, internal, indices, dimensions, states, internalStates,
    generators = colorSU3Generators[], structure, rules, values, terms, stripped, vectors},
   terms=colorExpressionTerms[input];
@@ -449,7 +451,7 @@ colorTensorVector[input_, representations_List] := Module[
   (* Dummy sums belong to a monomial, not to the union of labels in a sum.
      Evaluate each color polynomial term before combining its vector. *)
   If[Length[terms]>1,
-    vectors=Map[Function[term,With[{vector=colorTensorVector[First[term],representations]},
+    vectors=Map[Function[term,With[{vector=ConstructiveDiagrams`Private`colorTensorVectorEnumerated[First[term],representations]},
       If[FailureQ[vector],vector,Last[term] vector]]],terms];
     Return[If[AnyTrue[vectors,FailureQ],SelectFirst[vectors,FailureQ],Total[vectors]]]];
   tensor=colorNormalizeInternalIndices[colorExpandTraces[input],representations];
@@ -480,37 +482,168 @@ colorTensorVector[input_, representations_List] := Module[
       {inner, internalStates}]], {state, states}]
 ];
 
+
+(* Sparse primitive contraction reorders only exact finite sums/products.
+   Each internal index joins two distinct primitive factors, and external
+   indices occur once; repeated/self ports use the retained enumerator. *)
+ConstructiveDiagrams`Private`colorNetworkIndexDimension[index_,representations_List]:=Which[
+ MatchQ[index,ColorIndex[i_Integer]/;1<=i<=Length[representations]],Abs[representations[[First[index]]]],
+ MatchQ[index,colorInternalIndex[_,d_Integer]/;MemberQ[{1,3,8},d]],Last[index],
+ True,Missing["UnsupportedIndex"]];
+ConstructiveDiagrams`Private`colorNetworkAxisOrder[array_,axes_List,order_List]:=Module[{positions},
+ positions=(First@FirstPosition[axes,#]&)/@order;
+ If[positions===Range[Length[axes]],array,Transpose[array,Ordering[positions]]]];
+ConstructiveDiagrams`Private`colorNetworkContract[left_Association,right_Association,representations_List]:=Module[
+ {shared,freeLeft,freeRight,axes,dimensions,inner,leftWidth,rightWidth,a,b,product},
+ shared=Select[left["Axes"],MemberQ[right["Axes"],#]&&MatchQ[#,colorInternalIndex[_,_]]&];
+ freeLeft=Select[left["Axes"],!MemberQ[shared,#]&];freeRight=Select[right["Axes"],!MemberQ[shared,#]&];
+ axes=Join[freeLeft,freeRight];dimensions=ConstructiveDiagrams`Private`colorNetworkIndexDimension[#,representations]&/@axes;
+ inner=Times@@(ConstructiveDiagrams`Private`colorNetworkIndexDimension[#,representations]&/@shared);
+ leftWidth=Times@@(ConstructiveDiagrams`Private`colorNetworkIndexDimension[#,representations]&/@freeLeft);
+ rightWidth=Times@@(ConstructiveDiagrams`Private`colorNetworkIndexDimension[#,representations]&/@freeRight);
+ a=ArrayReshape[ConstructiveDiagrams`Private`colorNetworkAxisOrder[left["Data"],left["Axes"],Join[freeLeft,shared]],{leftWidth,inner}];
+ b=ArrayReshape[ConstructiveDiagrams`Private`colorNetworkAxisOrder[right["Data"],right["Axes"],Join[shared,freeRight]],{inner,rightWidth}];
+ product=SparseArray[a].SparseArray[b];
+ <|"Axes"->axes,"Data"->If[axes==={},First[First[Normal[product]]],ArrayReshape[product,dimensions]],
+   "ContractedInternalAxes"->shared|>
+];
+ConstructiveDiagrams`Private`colorNetworkMonomial[tensor_,representations_List]:=Module[
+ {normalized,factors,primitive,scalar,nodes,axes,allIndices,internal,external,expected,dimensions,head,data,
+  pairs,shared,free,width,choices,pair,joined,steps={},closed,vector,generators,tag=Unique["network"]},
+ Catch[
+ normalized=colorNormalizeInternalIndices[
+  colorExpandTraces[tensor],representations];
+ If[FailureQ[normalized],Throw[Missing["NormalizationRejected"],tag]];
+ factors=If[Head[normalized]===Times,List@@normalized,{normalized}];
+ factors=Flatten[Map[If[MatchQ[#,Power[_,_Integer?Positive]],ConstantArray[#[[1]],#[[2]]],{#}]&,factors],1];
+ scalar=Times@@Select[factors,NumericQ];primitive=Select[factors,!NumericQ[#]&];
+ If[!FreeQ[scalar,_Real]||!AllTrue[primitive,MatchQ[#,_ColorDelta|
+   _ColorGenerator|_ColorStructure]&],Throw[Missing["UnsupportedPrimitiveGrammar"],tag]];
+ axes=List@@#&/@primitive;
+ If[AnyTrue[axes,!DuplicateFreeQ[#]&],Throw[Missing["RepeatedPortWithinPrimitive"],tag]];
+ allIndices=Flatten[axes,1];internal=Select[DeleteDuplicates[allIndices],MatchQ[#,colorInternalIndex[_,_]]&];
+ external=Select[DeleteDuplicates[allIndices],MatchQ[#,_ColorIndex]&];
+ expected=ColorIndex/@Select[Range[Length[representations]],Abs[representations[[#]]]>1&];
+ If[Sort[external]=!=Sort[expected]||!AllTrue[expected,Count[allIndices,#]===1&],Throw[Missing["RepeatedOrMissingExternalPorts"],tag]];
+ If[!AllTrue[internal,Count[allIndices,#]===2&]||Length[allIndices]=!=Length[external]+2Length[internal],
+  Throw[Missing["UnsupportedInternalIncidence"],tag]];
+ dimensions=ConstructiveDiagrams`Private`colorNetworkIndexDimension[#,representations]&/@allIndices;
+ If[AnyTrue[dimensions,MissingQ],Throw[Missing["UnsupportedIndexDimension"],tag]];
+ generators=colorSU3Generators[];
+ nodes=MapThread[Function[{object,indices},
+  head=Head[object];dimensions=ConstructiveDiagrams`Private`colorNetworkIndexDimension[#,representations]&/@indices;
+  data=Which[
+   head===ColorDelta&&Length[indices]===2&&SameQ@@dimensions,SparseArray[IdentityMatrix[First[dimensions]]],
+   head===ColorGenerator&&dimensions==={3,3,8},
+    SparseArray[Table[generators[[a,i,j]],{i,3},{j,3},{a,8}]],
+   head===ColorStructure&&dimensions==={8,8,8},colorSU3StructureConstants[],
+   True,Throw[Missing["PrimitiveDimensionMismatch"],tag]];
+  <|"Axes"->indices,"Data"->data|>],{primitive,axes}];
+ While[Length[nodes]>1,
+  pairs=Subsets[Range[Length[nodes]],{2}];
+  choices=Map[Function[positions,
+   shared=Select[nodes[[First[positions]]]["Axes"],MemberQ[nodes[[Last[positions]]]["Axes"],#]&&MemberQ[internal,#]&];
+   free=Join[Complement[nodes[[First[positions]]]["Axes"],shared],Complement[nodes[[Last[positions]]]["Axes"],shared]];
+   width=Times@@(ConstructiveDiagrams`Private`colorNetworkIndexDimension[#,representations]&/@free);
+   {If[shared==={},1,0],width,positions}],pairs];
+  pair=Last[First[Sort[choices]]];
+  joined=ConstructiveDiagrams`Private`colorNetworkContract[nodes[[First[pair]]],nodes[[Last[pair]]],representations];
+  AppendTo[steps,<|"ContractedInternalAxes"->joined["ContractedInternalAxes"],"OutputAxes"->joined["Axes"]|>];
+  nodes=Append[Delete[nodes,List/@pair],KeyDrop[joined,"ContractedInternalAxes"]];
+  closed=Select[nodes,#["Axes"]==={}&];scalar*=Times@@Lookup[closed,"Data",{}];
+  nodes=Select[nodes,#["Axes"]=!={}&]];
+ If[nodes==={},vector=SparseArray[{1->scalar},{1}],
+  If[Sort[First[nodes]["Axes"]]=!=Sort[expected],Throw[Missing["UncontractedInternalAxes"],tag]];
+  data=ConstructiveDiagrams`Private`colorNetworkAxisOrder[First[nodes]["Data"],First[nodes]["Axes"],expected];
+  vector=scalar ArrayReshape[data,{Times@@Abs[representations]}]];
+ <|"Value"->SparseArray[vector],"ContractionPlan"->steps,"EveryInternalIndexPaired"->True,
+   "EveryExternalIndexAppearsOnce"->True|>,tag]
+];
+ConstructiveDiagrams`Private`colorTensorVectorSparseDetails[input_,representations_List]:=Module[
+ {terms,results,value,reason,fallback},
+ terms=colorExpressionTerms[input];
+ reason=Which[!AllTrue[representations,MemberQ[{1,3,-3,8},#]&],"UnsupportedRepresentation",
+  FailureQ[terms],"UnsupportedColorPolynomial",!FreeQ[input,_Real]||!AllTrue[terms,NumericQ[Last[#]]&],"NonexactTensorCoefficient",True,None];
+ If[reason===None,
+  results=ConstructiveDiagrams`Private`colorNetworkMonomial[First[#],representations]&/@terms;
+  If[AllTrue[results,AssociationQ],
+   value=If[terms==={},SparseArray[{},{Times@@Abs[representations]}],Total[MapThread[Last[#1] #2["Value"]&,{terms,results}]]];
+   Return[<|"Backend"->"ExactSparseTensorNetwork","Value"->SparseArray[value],"TermCertificates"->results,
+     "FiniteSumReorderingOnly"->True|>]];
+  reason=ToString[SelectFirst[results,!AssociationQ[#]&],InputForm]];
+ fallback=ConstructiveDiagrams`Private`colorTensorVectorEnumerated[input,representations];
+ <|"Backend"->"LegacyFallback","FallbackReason"->reason,
+   "Value"->If[ListQ[fallback],SparseArray[fallback],fallback],"FiniteSumReorderingOnly"->False|>
+];
+ConstructiveDiagrams`Private`colorTensorVectorSparse[input_,representations_List]:=
+ ConstructiveDiagrams`Private`colorTensorVectorSparseDetails[input,representations]["Value"];
+ConstructiveDiagrams`Private`colorSparseTensorGram[vectors_List]:=Module[{rules,matrix,states},
+ If[vectors==={}||!AllTrue[vectors,Head[#]===SparseArray&&Length[Dimensions[#]]===1&],Return[Failure["ColorSparseVectorShape",<||>]]];
+ states=First[Dimensions[First[vectors]]];
+ If[!AllTrue[vectors,Dimensions[#]==={states}&],Return[Failure["ColorSparseVectorShape",<||>]]];
+ rules=Flatten[MapIndexed[Function[{v,row},
+   (Most[ArrayRules[v]]/.Rule[{column_Integer},value_]:>Rule[{First[row],column},value])],vectors],1];
+ matrix=SparseArray[rules,{Length[vectors],states}];
+ Simplify[Normal[Conjugate[matrix].Transpose[matrix]]]
+];
+
+(* Preserve the existing dense list interface for private callers. Basis
+   construction uses the sparse provider directly, without expanding zeros. *)
+colorTensorVector[input_,representations_List] := With[
+  {value=ConstructiveDiagrams`Private`colorTensorVectorSparse[input,representations]},
+  If[Head[value]===SparseArray,Normal[value],value]];
+
 (* For amplitude coefficients a_i, the color sum is Conjugate[a].G.a.
    DiagramCoordinates[[d,i]] obey C_d = Sum_i coordinates[[d,i]] C_i.
    Gram rank selects an independent tensor basis exactly, including all
    cross terms. No color multiplicity is guessed from a single diagram. *)
-colorTensorBasis[tensors_List, representations_List, maxStates_Integer:65536] := Module[
-  {vectors, gram, reduced, pivots, basis, coordinates, states},
-  If[!AllTrue[representations, MemberQ[{1, 3, -3, 8}, #] &],
-    Return[colorFailure["ColorRepresentation", "Only SU(3) singlet, fundamental, antifundamental and adjoint external states are supported."]]];
-  states = Times @@ Abs[representations];
-  If[states > maxStates, Return[colorFailure["ColorBudget", "The exact external-color state space exceeds the configured allowance.",
-    <|"ColorStateCount" -> states, "MaxColorStates" -> maxStates|>]]];
-  If[tensors === {}, Return[colorFailure["ColorTensor", "At least one diagram tensor is required."]]];
-  vectors = colorTensorVector[#, representations] & /@ tensors;
-  If[AnyTrue[vectors, FailureQ], Return[SelectFirst[vectors, FailureQ]]];
-  gram = Simplify[Conjugate[vectors].Transpose[vectors]];
-  If[!MatrixQ[gram, NumericQ], Return[colorFailure["ColorContraction", "The color contractions did not evaluate to an exact numeric Gram matrix."]]];
-  reduced = RowReduce[gram];
-  pivots = DeleteCases[Map[FirstPosition[#, Except[0], Missing["Zero"], {1}, Heads -> False] &, reduced], _Missing];
-  pivots = First /@ pivots;
-  basis = tensors[[pivots]];
-  coordinates = If[pivots === {}, ConstantArray[{}, Length[tensors]],
-    Simplify[LinearSolve[gram[[pivots, pivots]], gram[[pivots, #]]]] & /@ Range[Length[tensors]]];
-  If[pivots =!= {} && !TrueQ[Simplify[gram -
-      Conjugate[coordinates].gram[[pivots, pivots]].Transpose[coordinates]] ===
-        ConstantArray[0, Dimensions[gram]]],
-    Return[colorFailure["ColorBasis", "The exact color basis failed its reconstruction certificate."]]];
-  <|"Status" -> "COMPLETE", "Representations" -> representations,
-    "ExternalIndices" -> (ColorIndex /@ Select[Range[Length[representations]], Abs[representations[[#]]] > 1 &]),
-    "DiagramTensors" -> tensors, "Basis" -> basis, "BasisPositions" -> pivots,
-    "DiagramCoordinates" -> coordinates, "GramMatrix" -> gram[[pivots, pivots]],
-    "DiagramGramMatrix" -> gram, "ColorStateCount" -> states|>
+colorTensorBasis[tensors_List, representations_List,
+    maxStates_Integer:65536, materializeOriginalGram_:True] := Module[
+  {unique, occurrence, firstPositions, vectors, gram, reduced, pivots, basisGram,
+   solve, uniqueCoordinates, coordinates, states, reconstructed, originalGram},
+  If[!AllTrue[representations, MemberQ[{1,3,-3,8},#]&],
+    Return[colorFailure["ColorRepresentation",
+      "Only SU(3) singlet, fundamental, antifundamental and adjoint external states are supported."]]];
+  states=Times@@Abs[representations];
+  If[states>maxStates,Return[colorFailure["ColorBudget",
+    "The exact external-color state space exceeds the configured allowance.",
+    <|"ColorStateCount"->states,"MaxColorStates"->maxStates|>]]];
+  If[tensors==={},Return[colorFailure["ColorTensor",
+    "At least one diagram tensor is required."]]];
+  If[!MemberQ[{True,False},materializeOriginalGram],Return[Failure["ColorGramMode",<||>]]];
+  unique=DeleteDuplicates[tensors,SameQ];
+  occurrence=Map[Function[tensor,First@FirstPosition[unique,
+    value_/;SameQ[value,tensor],Missing["NotFound"],{1},Heads->False]],tensors];
+  If[!VectorQ[occurrence,IntegerQ]||unique[[occurrence]]=!=tensors,
+    Return[Failure["ColorOccurrenceReconstruction",<||>]]];
+  firstPositions=Table[First@FirstPosition[occurrence,i],{i,Length[unique]}];
+  vectors=ConstructiveDiagrams`Private`colorTensorVectorSparse[#,representations]&/@unique;
+  If[AnyTrue[vectors,FailureQ],Return[SelectFirst[vectors,FailureQ]]];
+  gram=ConstructiveDiagrams`Private`colorSparseTensorGram[vectors];
+  If[!MatrixQ[gram,NumericQ],Return[colorFailure["ColorContraction",
+    "The color contractions did not evaluate to an exact numeric Gram matrix."]]];
+  reduced=RowReduce[gram];
+  pivots=First/@DeleteCases[Map[FirstPosition[#,Except[0],Missing["Zero"],{1},Heads->False]&,reduced],_Missing];
+  basisGram=gram[[pivots,pivots]];
+  uniqueCoordinates=If[pivots==={},ConstantArray[{},Length[unique]],
+    solve=LinearSolve[basisGram];Simplify[solve[gram[[pivots,#]]]]&/@Range[Length[unique]]];
+  reconstructed=If[pivots==={},True,
+    TrueQ[Simplify[gram-Conjugate[uniqueCoordinates].basisGram.Transpose[uniqueCoordinates]]===
+      ConstantArray[0,Dimensions[gram]]]];
+  If[!reconstructed,Return[colorFailure["ColorBasis",
+    "The exact color basis failed its reconstruction certificate."]]];
+  coordinates=uniqueCoordinates[[occurrence]];
+  originalGram=If[TrueQ[materializeOriginalGram],gram[[occurrence,occurrence]],Missing["NotMaterialized"]];
+  <|"Status"->"COMPLETE","Representations"->representations,
+    "ExternalIndices"->(ColorIndex/@Select[Range[Length[representations]],Abs[representations[[#]]]>1&]),
+    "DiagramTensors"->tensors,"Basis"->unique[[pivots]],"BasisPositions"->firstPositions[[pivots]],
+    "DiagramCoordinates"->coordinates,"GramMatrix"->basisGram,"DiagramGramMatrix"->originalGram,
+    "ColorStateCount"->states,"ColorTensorDeduplication"-><|
+      "OriginalTensorCount"->Length[tensors],"UniqueTensorCount"->Length[unique],
+      "UniqueTensors"->unique,"OccurrenceToUnique"->occurrence,"UniqueGramMatrix"->gram,
+      "UniqueCoordinates"->uniqueCoordinates,"UniqueBasisPositions"->pivots,
+      "OccurrenceReconstructionVerified"->True,"UniqueGramReconstructionVerified"->reconstructed,
+      "OriginalGramMaterialized"->TrueQ[materializeOriginalGram]|>|>
 ];
 
 (* Distribute only color-bearing sums. Spinor numerators and their factored
@@ -646,7 +779,7 @@ colorProjectionData[pairs_List, channels_List, representations_List,
   terms = Join[diagramTerms, channelTerms, benchmarkTerms]; counts = Length /@ terms;
   If[Total[counts] === 0, Return[colorFailure["ZeroColorProjection",
     "A zero expression without any color tensor needs a nonzero channel or diagram to define its color basis."]]];
-  data = colorTensorBasis[First /@ Flatten[terms, 1], representations];
+  data = colorTensorBasis[First /@ Flatten[terms, 1], representations, 65536, False];
   If[FailureQ[data], Return[data]];
   rank = Length[data["Basis"]]; coordinates = data["DiagramCoordinates"];
   split = Table[With[{start = offset + 1, count = counts[[i]]},

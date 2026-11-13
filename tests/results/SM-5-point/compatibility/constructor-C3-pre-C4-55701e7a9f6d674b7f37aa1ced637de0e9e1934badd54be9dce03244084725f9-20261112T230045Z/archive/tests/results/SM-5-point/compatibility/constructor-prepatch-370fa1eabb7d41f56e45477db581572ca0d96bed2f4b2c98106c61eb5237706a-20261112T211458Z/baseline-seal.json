@@ -1,0 +1,9 @@
+{
+  "AdmissionPolicyChanged": false,
+  "BaselineSHA256": "0829405d4d190383443120f5e0abf4a3591ed0f4fe5afa5a9296c28b0ce1e1a5",
+  "CheckpointSnapshotSHA256": "cf61300bce6184c9948dac42b7b356a052fd4fdeb205e9f61af619911956b62c",
+  "DefinitionFingerprintsSHA256": "98e503150f0abf1c9c46c854feebee407ed842b28685051a73e96e4e2869a49b",
+  "DesignSHA256": "d94f1127374ad7b0f723566f5d1db2a71788d11184288249e10d92808409d45e",
+  "ManifestSHA256": "43ec32f78269461d98210aa9024301cfecf219a3b44cdd2edbd946f90a23efb6",
+  "Status": "SEALED_BASELINE_ONLY"
+}

@@ -443,8 +443,9 @@ diagram coverage without importing saved amplitudes.
 The package now uses the certified-current method as an optional early stage of
 ordinary `ConstructAmplitude` calls with an independent Feynman model. The
 supported five-leg classes are four massive color-singlet Dirac fermions with
-one scalar, and two such fermions with one massive vector and two identical
-scalars. Used cubic vertices must match the minimal covariant templates exactly.
+one scalar, and two such fermions with either one massive vector and two
+identical scalars or two massive vectors and one scalar. Used cubic vertices
+must match the minimal covariant templates exactly.
 Every ordered graph, physical propagator and fermion endpoint must be covered;
 internal momenta remain off shell throughout the conversion.
 
@@ -487,3 +488,27 @@ reproduces the historical result. Existing counterexample guards and the strict
 precision-evidence checks remain mandatory. New canonical constructions and
 exports record the current context and actual input capsules normally. Any
 unreviewed source, model or runtime change closes this finite exception.
+
+
+The subsequent C4 transition additionally reviews three private colour helpers.
+Primitive delta, generator and structure-constant tensors can be contracted as
+exact sparse arrays. Literal repeated tensors share that work, while every
+original scalar contribution and coordinate row is retained. Unsupported index
+incidence uses the original enumerator. Only projection diagnostics omit the
+large repeated Gram matrix; the unique Gram and occurrence map reconstruct it.
+The finite-sum argument, 65 exact controls,45-tensor rank-six certificate and 360
+production checks are bound to the C4 review. This retains historical evidence;
+it does not claim a fresh full five-gluon construction.
+
+The ordinary default electron-pair/ZZ/Higgs call now passes all standard native
+parameter assignments and 1000-point CalcHEP and MadGraph comparisons. Its actual
+public-call record is imported with exact expression/prints/seed/timing equality
+and explicit provenance; the constructor was not rerun merely to change its
+storage location. The canonical numerical export is a fresh normal writer run
+in the standard output directory. A separate same-stream CH precision study
+regenerated the original binary64 stream, reproduced the original native
+aggregate output, and verified every regenerated native value bit-for-bit.
+On those same 1000 momenta, the maximum relative difference fell from 5.68e-8
+at native precision to 2.20e-13 at 113 bits. Raw results and tolerance are retained;
+this optional study is not used to relabel a raw comparison or construct an
+amplitude.

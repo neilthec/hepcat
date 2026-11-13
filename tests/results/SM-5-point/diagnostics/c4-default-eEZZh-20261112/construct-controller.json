@@ -1,0 +1,10 @@
+{
+  "Kind": "construct",
+  "ExitCode": 0,
+  "Seconds": 239.51569583399998,
+  "ExternalDeadline": 2400,
+  "SourceContextSHA256": "a91edec8580c2721ccbe8d5304442e9e506f9fd89dc911c250a550c31723a238",
+  "SourceContextUnchanged": true,
+  "LoadedScriptSHA256": "63c892ad562ca5bca9cef00c83e00cd512ecae7e62f4a17c87bb605182b34ee3",
+  "CanonicalRecordsModified": false
+}

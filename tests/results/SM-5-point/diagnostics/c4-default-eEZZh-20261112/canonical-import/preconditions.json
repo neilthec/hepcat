@@ -1,0 +1,24 @@
+{
+  "ActualAllParameterPassRows": 39,
+  "ActualDefaultOptions": [
+    "FeynmanModel",
+    "Output"
+  ],
+  "ActualParameterGroups": 3,
+  "ActualResolvedAutomaticSeed": 6782590582154204676,
+  "AllSourceModelRuntimeFilesMatched": 61,
+  "ConstructorRerunPerformed": false,
+  "ContextSHA256": "a91edec8580c2721ccbe8d5304442e9e506f9fd89dc911c250a550c31723a238",
+  "DiagnosticScripts": {
+    "construct.wl": "63c892ad562ca5bca9cef00c83e00cd512ecae7e62f4a17c87bb605182b34ee3",
+    "control.py": "59fe5929c1debc5fbe32e6d6d209f05d851b337411e774d6f3305b30318450b8",
+    "export.wl": "caf70c2ceb64e0c35398a59bfc586454cde4777147c58b56833ae731d2f8549a"
+  },
+  "ExistingPriorStatus": "ABORTED",
+  "ID": "sm5_f13b4237bc07",
+  "InventorySHA256": "e3db698de04a37908363c90229db4f61d0a85841adadb16339466e29d8a52475",
+  "OriginalSeconds": 228.841378,
+  "SourceAuditSHA256": "d0f37d2b969f9ac36fb53dc3437f302c1914131bd7fdf7df431ee30b1260927a",
+  "SourceCapsuleSHA256": "859a8e655aa871ea34cbb6e62a4648a5f9f4917bf665992ba846f7f7ac53bddd",
+  "Status": "METADATA_PRECONDITIONS_PASS"
+}

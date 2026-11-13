@@ -1,0 +1,14 @@
+{
+  "AllCaptureBytesCopied": true,
+  "ColdCapturePaths": [
+    "tests/results/SM-5-point/compatibility/constructor-postpatch-55701e7a9f6d674b7f37aa1ced637de0e9e1934badd54be9dce03244084725f9-20261112T214641Z/definitions-1-raw.json",
+    "tests/results/SM-5-point/compatibility/constructor-postpatch-55701e7a9f6d674b7f37aa1ced637de0e9e1934badd54be9dce03244084725f9-20261112T214641Z/definitions-2-raw.json"
+  ],
+  "ColdCaptureSHA256": [
+    "9ecd0fe59aef0004b783f1b94e35c777887df50673d74acdedd5c336f1e6d05a",
+    "f243c2e9efc904193fba5534a93d3632231bfb2b54e002e4cd7d8f8aa215c3af"
+  ],
+  "DefinitionTableSHA256": "8cbf7a5dc9416d1b49c97b3f9f99d654469d8776a2c20ac8f187c687ee73003a",
+  "ExactTenFieldDefinitionCount": 8131,
+  "NewKernelLaunched": false
+}

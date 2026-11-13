@@ -1,0 +1,17 @@
+{
+	"Status":"PASS",
+	"CallType":"ActualPublicDefaultC4FinalPreparedExport",
+	"CanonicalRecord":false,
+	"ContextSHA256":"a91edec8580c2721ccbe8d5304442e9e506f9fd89dc911c250a550c31723a238",
+	"ConstructionCapsuleSHA256":"859a8e655aa871ea34cbb6e62a4648a5f9f4917bf665992ba846f7f7ac53bddd",
+	"FamilyID":"sm5f_f13b4237bc07",
+	"Particles":[
+		"e",
+		"E",
+		"Z",
+		"Z",
+		"h"
+	],
+	"PointsRequestedPerBackend":1000,
+	"Seconds":2.1098196e1
+}

@@ -1,0 +1,21 @@
+{
+  "Command": [
+    "python3",
+    "/Users/neil/code/hepcat/tests/SM-5-point/replay-calchep-precision.py",
+    "/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/covariant-two-vector-scalar-prototype-20261112/spinas-output/eebarZZh",
+    "--output",
+    "/Users/neil/code/hepcat/tests/results/SM-5-point/diagnostics/covariant-two-vector-scalar-prototype-20261112/precision-same-native-stream",
+    "--seed",
+    "1794524287008317000",
+    "--points",
+    "1000",
+    "--relative-tolerance",
+    "1e-7",
+    "--timeout",
+    "900"
+  ],
+  "OriginalNativeControl": "same-stream-native-control.json",
+  "SameStreamMethod": "Regenerate frozen native53 generator once at original seed, capture fixed binary64 momenta and values, then feed the identical CSV to native53/GCC53/GCC128; no quad kinematic generation",
+  "HistoricalPerPointCSVExisted": false,
+  "QualificationOrRawStatusChangeRequested": false
+}

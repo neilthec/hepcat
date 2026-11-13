@@ -1,5 +1,11 @@
 # Exact color performance prototypes
 
+This is the historical C3 prototype record. The reviewed C4 implementation now
+lives in `source/internal/HEPCAT-Color.wl` and passed 360 production checks. The
+measurements below remain records of the isolated prototype runs; their original
+evidence is preserved. The proposed production contract below was subsequently
+implemented without changing the scalar amplitude contributions.
+
 These opt-in files do not participate in HEPCAT construction or replace package
 definitions. They examine two independent sources of repeated work:
 

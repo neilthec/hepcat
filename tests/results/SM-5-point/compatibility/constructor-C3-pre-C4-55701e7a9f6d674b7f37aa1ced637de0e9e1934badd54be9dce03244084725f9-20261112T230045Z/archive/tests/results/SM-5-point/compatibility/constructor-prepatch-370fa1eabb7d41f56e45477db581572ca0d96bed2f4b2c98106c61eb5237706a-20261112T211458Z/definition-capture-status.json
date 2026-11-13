@@ -1,0 +1,28 @@
+[
+  {
+    "Pass": 1,
+    "StartedUTC": "2026-11-12T21:17:32.624831+00:00",
+    "ExternalSeconds": 120,
+    "PackageLoadedOnce": true,
+    "PhysicsCalculationsPerformed": false,
+    "ExitCode": 0,
+    "Seconds": 4.315107166,
+    "ContextUnchanged": true,
+    "OutputExists": true,
+    "RawSHA256": "a6a0bd7ded1f7852b890ebce833a0cabe9b3e4b1898b1ea9ace0e8ee8293ee54",
+    "RawBytes": 5793435
+  },
+  {
+    "Pass": 2,
+    "StartedUTC": "2026-11-12T21:17:36.986308+00:00",
+    "ExternalSeconds": 120,
+    "PackageLoadedOnce": true,
+    "PhysicsCalculationsPerformed": false,
+    "ExitCode": 0,
+    "Seconds": 4.413744208,
+    "ContextUnchanged": true,
+    "OutputExists": true,
+    "RawSHA256": "5e6b7b2c980f0c6a56d7ac5adb685a04860df61d3236b30375ddb5e671094f4e",
+    "RawBytes": 5793435
+  }
+]

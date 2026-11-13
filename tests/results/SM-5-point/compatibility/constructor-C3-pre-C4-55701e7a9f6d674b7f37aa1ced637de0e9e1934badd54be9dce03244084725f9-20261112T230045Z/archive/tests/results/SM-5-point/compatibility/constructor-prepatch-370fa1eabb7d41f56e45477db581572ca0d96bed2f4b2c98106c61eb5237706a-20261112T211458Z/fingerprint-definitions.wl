@@ -1,0 +1,25 @@
+Get["/Users/neil/code/hepcat/source/HEPCAT.wl"];
+Begin["HEPCATColdDefinitionFingerprint`Private`"];
+$HistoryLength=0;
+fpDirectory=Environment["HEPCAT_FINGERPRINT_DIRECTORY"];
+fpPass=Environment["HEPCAT_FINGERPRINT_PASS"];
+fpStarted=AbsoluteTime[];
+fpNames=Sort[DeleteDuplicates[Join[Names["ConstructiveDiagrams`*"],Names["ConstructiveDiagrams`Private`*"]]]];
+fpText[expr_]:=ToString[expr,InputForm,PageWidth->Infinity];
+fpData=Association@Table[name->ToExpression[name,InputForm,Function[s,<|
+ "DownValues"->fpText[DownValues[Unevaluated[s]]],
+ "UpValues"->fpText[UpValues[Unevaluated[s]]],
+ "SubValues"->fpText[SubValues[Unevaluated[s]]],
+ "NValues"->fpText[NValues[Unevaluated[s]]],
+ "OwnValues"->fpText[OwnValues[Unevaluated[s]]],
+ "DefaultValues"->fpText[DefaultValues[Unevaluated[s]]],
+ "FormatValues"->fpText[FormatValues[Unevaluated[s]]],
+ "Options"->fpText[Options[Unevaluated[s]]],
+ "Attributes"->fpText[Attributes[Unevaluated[s]]],
+ "Messages"->fpText[Messages[Unevaluated[s]]]|>,HoldAllComplete]],{name,fpNames}];
+fpRecord=<|"Scope"->"ColdLoadedConstructiveDiagramsDefinitions","WolframVersion"->$Version,"SystemID"->$SystemID,
+ "KernelID"->$KernelID,"PackageLoadedOnce"->True,"ModelsRead"->{},"PhysicsCalculationsPerformed"->False,
+ "SymbolCount"->Length[fpNames],"Definitions"->fpData,"Seconds"->N[AbsoluteTime[]-fpStarted]|>;
+Export[FileNameJoin[{fpDirectory,"definitions-"<>fpPass<>"-raw.json.tmp"}],fpRecord,"RawJSON"];
+RenameFile[FileNameJoin[{fpDirectory,"definitions-"<>fpPass<>"-raw.json.tmp"}],FileNameJoin[{fpDirectory,"definitions-"<>fpPass<>"-raw.json"}],OverwriteTarget->True];
+Print["COLD_DEFINITIONS_CAPTURED ",Length[fpNames]," ",fpRecord["Seconds"]];End[];Quit[];

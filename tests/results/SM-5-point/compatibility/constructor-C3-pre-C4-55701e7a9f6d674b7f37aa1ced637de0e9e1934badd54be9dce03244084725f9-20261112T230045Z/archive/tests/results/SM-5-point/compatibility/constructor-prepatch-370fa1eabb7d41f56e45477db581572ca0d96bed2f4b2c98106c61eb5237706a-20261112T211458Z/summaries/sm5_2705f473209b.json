@@ -1,0 +1,22 @@
+{
+	"ID":"sm5_2705f473209b",
+	"Particles":[
+		"u",
+		"U",
+		"nm",
+		"Nm",
+		"G.-"
+	],
+	"Status":"COMPLETE",
+	"Seconds":3.1085963e1,
+	"Complexity":20,
+	"RandomSeed":1403033929,
+	"ContextSHA256":"43615a32129a68bb932f0af00b1196bc943afa4c51422fe8bb65c08c32421dd9",
+	"Rows":6,
+	"FeynmanRows":1,
+	"CheckStatuses":{
+		"PASS":6
+	},
+	"FailureStage":null,
+	"CapsuleSHA256":"d71f6fe51524661c9613c204775858441109d03196200e0c5e74d230adbafe71"
+}

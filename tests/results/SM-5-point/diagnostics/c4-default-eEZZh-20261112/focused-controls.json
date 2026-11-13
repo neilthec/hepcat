@@ -1,0 +1,12 @@
+[
+  {
+    "Suite": "covariant-constructor-tests.wl",
+    "ExitCode": 0,
+    "Seconds": 10.849860708
+  },
+  {
+    "Suite": "covariant-contact-calibration-tests.wl",
+    "ExitCode": 0,
+    "Seconds": 21.431796417
+  }
+]

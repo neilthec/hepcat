@@ -6,10 +6,10 @@
       "CaseID": "sm5_46dff720d04e",
       "Kind": "ParameterCheck",
       "Title": "Additional mass-parameter check",
-      "Note": "The current expression also passes the additional equal-mass assignment below, including the independent full Feynman comparison. A previous expression failed at this assignment; its raw reports and the superseded probe remain archived. This fresh check changes only the numerical parameter values, with no relabeling or alteration of the expression.",
+      "Note": "The retained expression also passes this equal-mass assignment with the current checker and fresh independent Feynman diagrams. The numerical parameter values change; the expression and external labels do not. The earlier failure and subsequent passing rechecks remain archived with their original source contexts.",
       "InputTemplate": "$CASEParameterProbeChannels = FactorizationAmplitudeChannels[\n  $CASEParticles, smFactorization];\n$CASEParameterProbeFeynman = FeynmanToSpinorProducts[\n  DiagramAmplitudes[CreateDiagrams[$CASEParticles, smFeynman]],\n  \"ReferenceSpinors\" -> Automatic, \"ReduceSpinorProducts\" -> False,\n  \"TimeConstraint\" -> 30];\n$CASEParameterProbe = CheckAmplitudes[\n  $CASEAmplitude, $CASEParameterProbeChannels, smFactorization,\n  \"FeynmanAmplitudes\" -> $CASEParameterProbeFeynman,\n  \"FeynmanModel\" -> smFeynman, \"ParameterRules\" -> $PARAMETER_RULES,\n  \"RandomSeed\" -> $RANDOM_SEED, \"TimeConstraint\" -> $CHECK_SECONDS,\n  \"Output\" -> \"Details\"];\n$CASEParameterProbe[\"Table\"]",
       "SourceCapsuleSHA256": "33b43a0075b17bd081d1fa8123ca09007e1cf3becef9c861c6771069c5b1afde",
-      "ProbeContextSHA256": "55701e7a9f6d674b7f37aa1ced637de0e9e1934badd54be9dce03244084725f9",
+      "ProbeContextSHA256": "a91edec8580c2721ccbe8d5304442e9e506f9fd89dc911c250a550c31723a238",
       "Status": "ALL_PASS",
       "StatusCounts": {
         "PASS": 13
@@ -17,19 +17,19 @@
       "CheckTimeConstraint": 90,
       "Files": {
         "Capsule": {
-          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-20261112T2207-v2/canonical-Mm-override.wxf",
-          "SHA256": "e00974b79ab863e3ad8079e0e38361523d7434da7d888e896d4a9e618e58f229"
+          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C4-20261112/canonical-Mm-override.wxf",
+          "SHA256": "a2194a28d600080ebcda6e1e0d974703f127f6dcd4a1cb14a0e98ff8f288b5ae"
         },
         "Summary": {
-          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-20261112T2207-v2/canonical-Mm-override.json",
-          "SHA256": "f0578e5f4239a73a37608617e4b25f9e484660940ff4a4ff4057c5ce56f06290"
+          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C4-20261112/canonical-Mm-override.json",
+          "SHA256": "26496ad8d0b2dc048c1e040922121dfbe4b803ba9df08d32cea0ef24129b5304"
         },
         "Script": {
-          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-20261112T2207-v2/canonical-Mm-override.wl",
-          "SHA256": "08e9959ea9d6ad1179b4a27afb1f3fb23a4f6a609697dff17514be41a7ba1d2e"
+          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C4-20261112/canonical-Mm-override.wl",
+          "SHA256": "d454c439a4fcb7b58afedb7091ce6b8c666256e7c54be89b54b4bbf86b34c268"
         },
         "ConversionScript": {
-          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-20261112T2207-v2/fresh-feynman-conversion.wl",
+          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-C4-20261112/fresh-feynman-conversion.wl",
           "SHA256": "bc675712d6855c6b2c29ed430814a3053cb2071529a8e0ddd97dbe88c100450e"
         }
       }
@@ -70,6 +70,40 @@
         }
       },
       "SupersededBySourceCapsuleSHA256": "33b43a0075b17bd081d1fa8123ca09007e1cf3becef9c861c6771069c5b1afde"
+    },
+    {
+      "ID": "muon-mass-equal-electron",
+      "CaseID": "sm5_46dff720d04e",
+      "Kind": "ParameterCheck",
+      "Title": "Additional mass-parameter check",
+      "Note": "The current expression also passes the additional equal-mass assignment below, including the independent full Feynman comparison. A previous expression failed at this assignment; its raw reports and the superseded probe remain archived. This fresh check changes only the numerical parameter values, with no relabeling or alteration of the expression.",
+      "InputTemplate": "$CASEParameterProbeChannels = FactorizationAmplitudeChannels[\n  $CASEParticles, smFactorization];\n$CASEParameterProbeFeynman = FeynmanToSpinorProducts[\n  DiagramAmplitudes[CreateDiagrams[$CASEParticles, smFeynman]],\n  \"ReferenceSpinors\" -> Automatic, \"ReduceSpinorProducts\" -> False,\n  \"TimeConstraint\" -> 30];\n$CASEParameterProbe = CheckAmplitudes[\n  $CASEAmplitude, $CASEParameterProbeChannels, smFactorization,\n  \"FeynmanAmplitudes\" -> $CASEParameterProbeFeynman,\n  \"FeynmanModel\" -> smFeynman, \"ParameterRules\" -> $PARAMETER_RULES,\n  \"RandomSeed\" -> $RANDOM_SEED, \"TimeConstraint\" -> $CHECK_SECONDS,\n  \"Output\" -> \"Details\"];\n$CASEParameterProbe[\"Table\"]",
+      "SourceCapsuleSHA256": "33b43a0075b17bd081d1fa8123ca09007e1cf3becef9c861c6771069c5b1afde",
+      "ProbeContextSHA256": "55701e7a9f6d674b7f37aa1ced637de0e9e1934badd54be9dce03244084725f9",
+      "Status": "ALL_PASS",
+      "StatusCounts": {
+        "PASS": 13
+      },
+      "CheckTimeConstraint": 90,
+      "Files": {
+        "Capsule": {
+          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-20261112T2207-v2/canonical-Mm-override.wxf",
+          "SHA256": "e00974b79ab863e3ad8079e0e38361523d7434da7d888e896d4a9e618e58f229"
+        },
+        "Summary": {
+          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-20261112T2207-v2/canonical-Mm-override.json",
+          "SHA256": "f0578e5f4239a73a37608617e4b25f9e484660940ff4a4ff4057c5ce56f06290"
+        },
+        "Script": {
+          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-20261112T2207-v2/canonical-Mm-override.wl",
+          "SHA256": "08e9959ea9d6ad1179b4a27afb1f3fb23a4f6a609697dff17514be41a7ba1d2e"
+        },
+        "ConversionScript": {
+          "Path": "diagnostics/constructive-covariant-lift/canonical-equal-mass-recheck-20261112T2207-v2/fresh-feynman-conversion.wl",
+          "SHA256": "bc675712d6855c6b2c29ed430814a3053cb2071529a8e0ddd97dbe88c100450e"
+        }
+      },
+      "SupersededByProbeContextSHA256": "a91edec8580c2721ccbe8d5304442e9e506f9fd89dc911c250a550c31723a238"
     }
   ]
 }

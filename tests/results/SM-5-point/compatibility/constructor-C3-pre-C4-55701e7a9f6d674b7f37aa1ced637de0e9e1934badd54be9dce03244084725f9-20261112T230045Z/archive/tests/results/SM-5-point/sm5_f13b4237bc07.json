@@ -1,0 +1,24 @@
+{
+  "ID": "sm5_f13b4237bc07",
+  "Particles": [
+    "e",
+    "E",
+    "Z",
+    "Z",
+    "h"
+  ],
+  "Status": "ABORTED",
+  "StopKind": "CONTROLLED_STOP",
+  "ContextSHA256": "55701e7a9f6d674b7f37aa1ced637de0e9e1934badd54be9dce03244084725f9",
+  "RandomSeed": 338800312,
+  "Seconds": 1018.803583,
+  "OriginalExternalTimeoutSeconds": 7200,
+  "DeadlineExpired": false,
+  "NativeProofFailed": false,
+  "Rows": 0,
+  "FeynmanRows": 0,
+  "CheckStatuses": {},
+  "FailureStage": null,
+  "Message": "Parent-requested controlled stop during synchronous exact factorization algebra; no complete native validation or proof outcome was produced.",
+  "ControlledStopRecord": "tests/results/SM-5-point/construction-batches/old-path-eEZZh-20261112T223837Z/controlled-stop.json"
+}
