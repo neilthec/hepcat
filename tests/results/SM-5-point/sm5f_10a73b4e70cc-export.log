@@ -1,0 +1,11 @@
+----------HEPCAT----------
+
+Version: 
+Authors: N. Christensen
+Please cite: ...
+Contributions by: ...
+Instructions can be found...
+
+We welcome contributors.  Please contact Neil if interested.
+------------------------------------
+<|FamilyID -> sm5f_10a73b4e70cc, Status -> PASS, Seconds -> 20.967493, Points -> 1000, ContextSHA256 -> 4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167, ExporterContextSHA256 -> 4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167, NativeCaseContexts -> <|sm5_10a73b4e70cc -> 4165f24c7d5501c40c03ea91f850a5cde77389a1236e3af397fb6d7e2344a167|>, NativeContextCompatibility -> Null, CaseIDs -> {sm5_10a73b4e70cc}, CaseCapsulesSHA256 -> <|sm5_10a73b4e70cc -> f2742a26cb9e87e6dec829f19cfb063e54802de9f8d883f7ed36be830bca978b|>, CalcHEPStatus -> PASS, MadGraphStatus -> PASS, CapsuleSHA256 -> 2ae6016b37a4ae83912608f192cedda21e6c02d08e217fefb83560011b71354a|>
